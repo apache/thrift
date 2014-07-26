@@ -49,6 +49,87 @@ struct CRYPTO_dynlock_value {
 
 namespace apache { namespace thrift { namespace transport {
 
+// OpenSSL initialization/cleanup
+
+static bool openSSLInitialized = false;
+static boost::shared_array<Mutex> mutexes;
+
+static void callbackLocking(int mode, int n, const char*, int) {
+  if (mode & CRYPTO_LOCK) {
+    mutexes[n].lock();
+  } else {
+    mutexes[n].unlock();
+  }
+}
+
+#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
+static unsigned long callbackThreadID() {
+  return (unsigned long) pthread_self();
+}
+#endif
+
+static CRYPTO_dynlock_value* dyn_create(const char*, int) {
+  return new CRYPTO_dynlock_value;
+}
+
+static void dyn_lock(int mode,
+                     struct CRYPTO_dynlock_value* lock,
+                     const char*, int) {
+  if (lock != NULL) {
+    if (mode & CRYPTO_LOCK) {
+      lock->mutex.lock();
+    } else {
+      lock->mutex.unlock();
+    }
+  }
+}
+
+static void dyn_destroy(struct CRYPTO_dynlock_value* lock, const char*, int) {
+  delete lock;
+}
+
+void initializeOpenSSL() {
+  if (openSSLInitialized) {
+    return;
+  }
+  openSSLInitialized = true;
+  SSL_library_init();
+  SSL_load_error_strings();
+  // static locking
+  mutexes = boost::shared_array<Mutex>(new Mutex[::CRYPTO_num_locks()]);
+  if (mutexes == NULL) {
+    throw TTransportException(TTransportException::INTERNAL_ERROR,
+          "initializeOpenSSL() failed, "
+          "out of memory while creating mutex array");
+  }
+#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
+  CRYPTO_set_id_callback(callbackThreadID);
+#endif
+  CRYPTO_set_locking_callback(callbackLocking);
+  // dynamic locking
+  CRYPTO_set_dynlock_create_callback(dyn_create);
+  CRYPTO_set_dynlock_lock_callback(dyn_lock);
+  CRYPTO_set_dynlock_destroy_callback(dyn_destroy);
+}
+
+void cleanupOpenSSL() {
+  if (!openSSLInitialized) {
+    return;
+  }
+  openSSLInitialized = false;
+#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
+  CRYPTO_set_id_callback(NULL);
+#endif
+  CRYPTO_set_locking_callback(NULL);
+  CRYPTO_set_dynlock_create_callback(NULL);
+  CRYPTO_set_dynlock_lock_callback(NULL);
+  CRYPTO_set_dynlock_destroy_callback(NULL);
+  CRYPTO_cleanup_all_ex_data();
+  ERR_free_strings();
+  EVP_cleanup();
+  ERR_remove_state(0);
+  mutexes.reset();
+}
 
 static void buildErrors(string& message, int error = 0);
 static bool matchName(const char* host, const char* pattern, int size);
@@ -377,7 +458,6 @@ void TSSLSocket::authorize() {
 }
 
 // TSSLSocketFactory implementation
-bool     TSSLSocketFactory::initialized = false;
 uint64_t TSSLSocketFactory::count_ = 0;
 Mutex    TSSLSocketFactory::mutex_;
 
@@ -518,85 +598,6 @@ int TSSLSocketFactory::passwordCallback(char* password,
   }
   strncpy(password, userPassword.c_str(), length);
   return length;
-}
-
-static boost::shared_array<Mutex> mutexes;
-
-static void callbackLocking(int mode, int n, const char*, int) {
-  if (mode & CRYPTO_LOCK) {
-    mutexes[n].lock();
-  } else {
-    mutexes[n].unlock();
-  }
-}
-
-#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
-static unsigned long callbackThreadID() {
-  return (unsigned long) pthread_self();
-}
-#endif
-
-static CRYPTO_dynlock_value* dyn_create(const char*, int) {
-  return new CRYPTO_dynlock_value;
-}
-
-static void dyn_lock(int mode,
-                     struct CRYPTO_dynlock_value* lock,
-                     const char*, int) {
-  if (lock != NULL) {
-    if (mode & CRYPTO_LOCK) {
-      lock->mutex.lock();
-    } else {
-      lock->mutex.unlock();
-    }
-  }
-}
-
-static void dyn_destroy(struct CRYPTO_dynlock_value* lock, const char*, int) {
-  delete lock;
-}
-
-void TSSLSocketFactory::initializeOpenSSL() {
-  if (initialized) {
-    return;
-  }
-  initialized = true;
-  SSL_library_init();
-  SSL_load_error_strings();
-  // static locking
-  mutexes = boost::shared_array<Mutex>(new Mutex[::CRYPTO_num_locks()]);
-  if (mutexes == NULL) {
-    throw TTransportException(TTransportException::INTERNAL_ERROR,
-          "initializeOpenSSL() failed, "
-          "out of memory while creating mutex array");
-  }
-#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
-  CRYPTO_set_id_callback(callbackThreadID);
-#endif
-  CRYPTO_set_locking_callback(callbackLocking);
-  // dynamic locking
-  CRYPTO_set_dynlock_create_callback(dyn_create);
-  CRYPTO_set_dynlock_lock_callback(dyn_lock);
-  CRYPTO_set_dynlock_destroy_callback(dyn_destroy);
-}
-
-void TSSLSocketFactory::cleanupOpenSSL() {
-  if (!initialized) {
-    return;
-  }
-  initialized = false;
-#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
-  CRYPTO_set_id_callback(NULL);
-#endif
-  CRYPTO_set_locking_callback(NULL);
-  CRYPTO_set_dynlock_create_callback(NULL);
-  CRYPTO_set_dynlock_lock_callback(NULL);
-  CRYPTO_set_dynlock_destroy_callback(NULL);
-  CRYPTO_cleanup_all_ex_data();
-  ERR_free_strings();
-  EVP_cleanup();
-  ERR_remove_state(0);
-  mutexes.reset();
 }
 
 // extract error messages from error queue
