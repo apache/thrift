@@ -934,7 +934,7 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
         indent(out) <<
-          "bool " << (*m_iter)->get_name() << ";" << endl;
+          "bool " << (*m_iter)->get_name() << " :1;" << endl;
         }
       }
 
