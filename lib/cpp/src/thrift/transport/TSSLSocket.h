@@ -42,6 +42,21 @@ enum SSLProtocol {
 
 
 /**
+ * Initialize OpenSSL library.  This function, or some other
+ * equivalent function to initialize OpenSSL, must be called before
+ * TSSLSocket is used.  Currently TSSLSocketFactory automatically
+ * calls this function, so you should not.
+ */
+void initializeOpenSSL();
+/**
+ * Cleanup OpenSSL library.  This function should be called to clean
+ * up OpenSSL after use of OpenSSL functionality is finished.
+ * Currently TSSLSocketFactory automatically calls this function, so
+ * you should not.
+ */
+void cleanupOpenSSL();
+
+/**
  * OpenSSL implementation for SSL socket interface.
  */
 class TSSLSocket: public TSocket {
@@ -204,8 +219,6 @@ class TSSLSocketFactory {
  protected:
   boost::shared_ptr<SSLContext> ctx_;
 
-  static void initializeOpenSSL();
-  static void cleanupOpenSSL();
   /**
    * Override this method for custom password callback. It may be called
    * multiple times at any time during a session as necessary.
@@ -217,7 +230,6 @@ class TSSLSocketFactory {
  private:
   bool server_;
   boost::shared_ptr<AccessManager> access_;
-  static bool initialized;
   static concurrency::Mutex mutex_;
   static uint64_t count_;
   void setup(boost::shared_ptr<TSSLSocket> ssl);
