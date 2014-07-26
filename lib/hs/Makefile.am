@@ -26,8 +26,7 @@ EXTRA_DIST = \
   src
 
 all-local:
-	$(CABAL) configure $(CABAL_CONFIGURE_FLAGS)
-	$(CABAL) build
+	$(CABAL) install
 
 install-exec-hook:
 	$(CABAL) install
