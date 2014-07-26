@@ -460,11 +460,14 @@ void TSSLSocket::authorize() {
 // TSSLSocketFactory implementation
 uint64_t TSSLSocketFactory::count_ = 0;
 Mutex    TSSLSocketFactory::mutex_;
+bool     TSSLSocketFactory::manualOpenSSLInitialization_ = false;
 
 TSSLSocketFactory::TSSLSocketFactory(const SSLProtocol& protocol): server_(false) {
   Guard guard(mutex_);
   if (count_ == 0) {
-    initializeOpenSSL();
+    if (!manualOpenSSLInitialization_) {
+      initializeOpenSSL();
+    }
     randomize();
   }
   count_++;
@@ -475,7 +478,7 @@ TSSLSocketFactory::~TSSLSocketFactory() {
   Guard guard(mutex_);
   ctx_.reset();
   count_--;
-  if (count_ == 0) {
+  if (count_ == 0 && !manualOpenSSLInitialization_) {
     cleanupOpenSSL();
   }
 }
