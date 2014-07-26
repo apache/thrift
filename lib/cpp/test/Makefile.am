@@ -64,7 +64,8 @@ check_PROGRAMS = \
 	ZlibTest \
 	TFileTransportTest \
 	UnitTests \
-	link_test
+	link_test \
+	OpenSSLManualInitTest
 # disable these test ... too strong
 #       processor_test
 #	concurrency_test
@@ -215,6 +216,14 @@ processor_test_LDADD = libprocessortest.la \
                        $(BOOST_LDFLAGS) \
                        -levent \
                        -l:libboost_unit_test_framework.a
+
+OpenSSLManualInitTest_SOURCES = \
+	OpenSSLManualInitTest.cpp
+
+OpenSSLManualInitTest_LDADD = \
+	$(top_builddir)/lib/cpp/libthrift.la \
+	-l:libboost_unit_test_framework.a
+
 #
 # Common thrift code generation rules
 #

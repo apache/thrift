@@ -89,6 +89,7 @@ test-driver
 /lib/cpp/test/TransportTest
 /lib/cpp/test/UnitTests
 /lib/cpp/test/ZlibTest
+/lib/cpp/test/OpenSSLManualInitTest
 /lib/cpp/test/concurrency_test
 /lib/cpp/test/link_test
 /lib/cpp/test/processor_test
