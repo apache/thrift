@@ -45,7 +45,7 @@ bin/stress: gopath
 	GOPATH=`pwd` $(GO) install bin/stress
 
 clean-local:
-	$(RM) -r src/gen/* src/code.google.com src/thrift bin pkg gopath ThriftTest.thrift
+	$(RM) -r src/gen src/code.google.com src/thrift bin pkg gopath ThriftTest.thrift
 
 check: gopath
 	GOPATH=`pwd` $(GO) test -v common/...
