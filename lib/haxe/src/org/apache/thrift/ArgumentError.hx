@@ -16,24 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+ 
+package org.apache.thrift;
 
-/**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
- */
-
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
-
-struct SharedStruct {
-  1: i32 key
-  2: string value
+#if ! flash
+// predefined for flash only
+class ArgumentError extends TException {
+	public function new(msg : String = "") {
+		super(msg);
+	}
 }
-
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
-}
+#end

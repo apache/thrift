@@ -17,23 +17,32 @@
  * under the License.
  */
 
-/**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
- */
+ 
+package;
 
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
+import org.apache.thrift.*;
+import org.apache.thrift.protocol.*;
+import org.apache.thrift.transport.*;
+import org.apache.thrift.server.*;
+import org.apache.thrift.meta_data.*;
 
-struct SharedStruct {
-  1: i32 key
-  2: string value
-}
+import thrift.test.*;  // generated code
 
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
+class Main
+{
+	static function main() {
+		try {
+			var args = new Arguments();
+			
+			if (args.server)
+				TestServer.Execute(args);
+			else 
+				TestClient.Execute(args);
+			
+			trace("Completed.");
+		} catch (e : String) {
+			trace(e);
+		}
+	}
+
 }

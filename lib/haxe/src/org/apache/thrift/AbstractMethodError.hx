@@ -16,24 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+ 
+package org.apache.thrift;
 
-/**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
- */
+#if flash
+import flash.errors.IllegalOperationError;
+#else
+import org.apache.thrift.TException;
+#end
 
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
+class AbstractMethodError 
+#if flash
+extends IllegalOperationError 
+#else
+extends TException
+#end
+{
 
-struct SharedStruct {
-  1: i32 key
-  2: string value
-}
+	public function new(message : String="") {
+  		super("Attempt to call an abstract method");
+	}
 
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
 }

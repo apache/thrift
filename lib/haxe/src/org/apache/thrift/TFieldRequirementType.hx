@@ -17,23 +17,15 @@
  * under the License.
  */
 
-/**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
- */
+package org.apache.thrift;
 
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
-
-struct SharedStruct {
-  1: i32 key
-  2: string value
-}
-
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
+  /**
+   * Requirement type constants.
+   *
+   */
+class TFieldRequirementType {
+    public static inline var REQUIRED : Int  = 1;
+    public static inline var OPTIONAL : Int = 2;
+    public static inline var DEFAULT : Int = 3;
+  
 }
