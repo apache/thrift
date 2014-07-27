@@ -16,24 +16,40 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+ 
+package org.apache.thrift;
+  
+// there seems no built-in equivalent for the Error object in Haxe (or it is very well hidden)
+// http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/Error.html
+class Error {
 
-/**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
- */
+	private var _id : Int;
+	private var _msg : String;
+	
+	public var errorID(default,never) : Int;
+	public var message(default,never) : String;
+	private var name(default,never) : String;  	// NOT IMPLEMENTED
 
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
+	
+	function new(message : String = "", id : Int = 0) {
+		//super();
+		_id = id;
+		_msg = message;
+	}
+	
+	function get_errorID() : Int {
+		return _id;
+	}
+	
+	function get_message() : String {
+		return _msg;
+	}
+	
 
-struct SharedStruct {
-  1: i32 key
-  2: string value
-}
-
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
+	// NOT IMPLEMENTED
+	// see http://haxe.org/manual/cr-rtti-structure.html
+	private function get_name() : String {
+		throw "not implemented";
+	}
+	
 }

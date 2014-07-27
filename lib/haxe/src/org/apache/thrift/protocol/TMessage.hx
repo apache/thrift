@@ -16,24 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-/**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
- */
-
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
-
-struct SharedStruct {
-  1: i32 key
-  2: string value
-}
-
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
+ 
+package org.apache.thrift.protocol;
+  
+class TMessage {
+    
+    public var name : String;
+    public var type : Int;
+    public var seqid : Int;
+  
+    public function new(n : String = "", t : Int = 0, s : Int = 0) {
+      name = n;
+      type = t;
+      seqid = s;
+    }
+    
+    public function toString() : String {
+      return "<TMessage name:'" + name + "' type: " + type + " seqid:" + seqid + ">";
+    }
+    
+    public function equals(other:TMessage) : Bool {
+      return name == other.name && type == other.type && seqid == other.seqid;
+    }
 }

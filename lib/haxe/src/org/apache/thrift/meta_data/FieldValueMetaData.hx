@@ -17,23 +17,27 @@
  * under the License.
  */
 
+package org.apache.thrift.meta_data;
+
+import org.apache.thrift.protocol.TType;
+
 /**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
+ * FieldValueMetaData and collection of subclasses to store metadata about
+ * the value(s) of a field
  */
-
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
-
-struct SharedStruct {
-  1: i32 key
-  2: string value
-}
-
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
+class FieldValueMetaData {
+  
+  public var type : Int;  
+ 
+  public function FieldValueMetaData(type : Int) {
+    this.type = type;
+  }
+  
+  public function isStruct() : Bool {
+    return type == TType.STRUCT; 
+  }
+  
+  public function isContainer() : Bool {
+    return type == TType.LIST || type == TType.MAP || type == TType.SET;
+  }
 }

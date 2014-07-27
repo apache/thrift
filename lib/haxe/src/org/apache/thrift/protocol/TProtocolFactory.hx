@@ -17,23 +17,10 @@
  * under the License.
  */
 
-/**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
- */
+package org.apache.thrift.protocol;
 
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
-
-struct SharedStruct {
-  1: i32 key
-  2: string value
-}
-
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
+import org.apache.thrift.transport.TTransport;
+  
+interface TProtocolFactory {
+     function getProtocol(trans:TTransport):TProtocol;
 }

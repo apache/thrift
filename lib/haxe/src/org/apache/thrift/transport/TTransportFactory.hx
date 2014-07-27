@@ -17,23 +17,25 @@
  * under the License.
  */
 
+package org.apache.thrift.transport;
+
 /**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
+ * Factory class used to create wrapped instance of Transports.
+ * This is used primarily in servers, which get Transports from
+ * a ServerTransport and then may want to mutate them (i.e. create
+ * a BufferedTransport from the underlying base transport)
+ *
  */
+class TTransportFactory {
 
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
+  /**
+   * Return a wrapped instance of the base Transport.
+   *
+   * @param trans The base transport
+   * @return Wrapped Transport
+   */
+  public function getTransport( trans : TTransport) : TTransport {
+    return trans;
+  }
 
-struct SharedStruct {
-  1: i32 key
-  2: string value
-}
-
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
 }
