@@ -17,23 +17,24 @@
  * under the License.
  */
 
+package org.apache.thrift.protocol;
+
+import org.apache.thrift.transport.TTransport;
+
+
 /**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
- */
+* JSON Protocol Factory
+*/
+class TJSONProtocolFactory implements TProtocolFactory {
+	
+	public function new() {
+	}
 
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
-
-struct SharedStruct {
-  1: i32 key
-  2: string value
+	public function getProtocol( trans : TTransport) : TProtocol  {
+		return new TJSONProtocol( trans);
+	}
 }
 
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
-}
+
+
+	

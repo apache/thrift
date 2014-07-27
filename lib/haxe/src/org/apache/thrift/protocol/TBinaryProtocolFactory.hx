@@ -17,23 +17,29 @@
  * under the License.
  */
 
+package org.apache.thrift.protocol;
+
+import org.apache.thrift.transport.TTransport;
+
+
 /**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
- */
+* Binary Protocol Factory
+*/
+class TBinaryProtocolFactory implements TProtocolFactory {
+	
+	private var strictRead_ : Bool = false;
+	private var strictWrite_ : Bool = true;
 
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
+	public function new( strictRead : Bool = false, strictWrite : Bool = true) {
+		strictRead_  = strictRead;
+		strictWrite_ = strictWrite;
+	}
 
-struct SharedStruct {
-  1: i32 key
-  2: string value
+	public function getProtocol( trans : TTransport) : TProtocol  {
+		return new TBinaryProtocol( trans, strictRead_, strictWrite_);
+	}
 }
 
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
-}
+
+
+	
