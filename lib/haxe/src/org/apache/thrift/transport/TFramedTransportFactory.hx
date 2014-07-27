@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *   http : //www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -17,23 +17,21 @@
  * under the License.
  */
 
-/**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
- */
+package org.apache.thrift.transport;
 
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
+import org.apache.thrift.transport.*;
 
-struct SharedStruct {
-  1: i32 key
-  2: string value
-}
 
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
+class TFramedTransportFactory extends TTransportFactory {
+
+    var maxLength_ : Int;
+
+    public function new(maxLength : Int = TFramedTransport.DEFAULT_MAX_LENGTH) {
+		super();
+    	maxLength_ = maxLength;
+    }
+
+    public override function getTransport(base : TTransport) : TTransport {
+    	return new TFramedTransport(base, maxLength_);
+    }
 }

@@ -17,23 +17,22 @@
  * under the License.
  */
 
-/**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
- */
+package org.apache.thrift.protocol;
+  
+class TType {
+    
+    public static inline var STOP : Int   = 0;
+    public static inline var VOID : Int   = 1;
+    public static inline var BOOL : Int   = 2;
+    public static inline var BYTE : Int   = 3;
+    public static inline var DOUBLE : Int = 4;
+    public static inline var I16 : Int    = 6;
+    public static inline var I32 : Int    = 8;
+    public static inline var I64 : Int    = 10;
+    public static inline var STRING : Int = 11;
+    public static inline var STRUCT : Int = 12;
+    public static inline var MAP : Int    = 13;
+    public static inline var SET : Int    = 14;
+    public static inline var LIST : Int   = 15;
 
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
-
-struct SharedStruct {
-  1: i32 key
-  2: string value
-}
-
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
 }

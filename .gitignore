@@ -229,6 +229,7 @@ test-driver
 /test/go/src/code.google.com/
 /test/go/src/gen/
 /test/go/src/thrift
+/test/haxe/bin
 /test/hs/TestClient
 /test/hs/TestServer
 /test/py.twisted/_trial_temp/
@@ -250,6 +251,7 @@ test-driver
 /tutorial/go/src/shared
 /tutorial/go/src/tutorial
 /tutorial/go/src/git.apache.org
+/tutorial/haxe/bin
 /tutorial/hs/dist/
 /tutorial/java/build/
 /tutorial/js/build/

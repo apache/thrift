@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -17,23 +17,27 @@
  * under the License.
  */
 
-/**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
- */
+package org.apache.thrift.transport;
 
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
+class TServerTransport {
 
-struct SharedStruct {
-  1: i32 key
-  2: string value
-}
-
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
+	public function Accept() : TTransport {
+		var transport = AcceptImpl();
+		if (transport == null) {
+		  throw new TTransportException( TTransportException.UNKNOWN, "accept() may not return NULL");
+		}
+		return transport;
+	}
+	
+	public function Listen() : Void {
+		throw new AbstractMethodError();
+	}
+	
+	public function Close() : Void {
+		throw new AbstractMethodError();
+	}
+	
+	private function AcceptImpl() : TTransport {
+		throw new AbstractMethodError();
+	}
 }
