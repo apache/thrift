@@ -205,10 +205,10 @@ for server in data["server"]:
                       % (server_executable, protocol, transport, getSocketArgs(sock), ' '.join(server_extra_args)))
                     print (' Client: %s --protocol=%s --transport=%s %s %s'
                       % (client_executable, protocol, transport, getSocketArgs(sock), ''.join(client_extra_args)))
-                    results_json.write("\t\t\"failure (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
+                    results_json.write("\t\t\"failure\",\n")
                   else:
-                    results_json.write("\t\t\"success (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
-                  results_json.write("\t]")
+                    results_json.write("\t\t\"success\",\n")
+                  results_json.write("\t\t{\n\t\t\t\"Client\":\"log/" + test_name + "_client.log\",\n\t\t\t\"Server\":\"log/" + test_name + "_server.log\"\n\t\t}\n\t]")
                   test_count += 1
             if protocol == 'binary' and 'accel' in client["protocols"]:
               if transport in client["transports"]:
@@ -227,10 +227,10 @@ for server in data["server"]:
                       % (server_executable, protocol, transport, getSocketArgs(sock), ' '.join(server_extra_args)))
                     print (' Client: %s --protocol=%s --transport=%s %s %s'
                       % (client_executable, protocol, transport , getSocketArgs(sock), ''.join(client_extra_args)))
-                    results_json.write("\t\t\"failure (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
+                    results_json.write("\t\t\"failure\",\n")
                   else:
-                    results_json.write("\t\t\"success (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
-                  results_json.write("\t]")
+                    results_json.write("\t\t\"success\",\n")
+                  results_json.write("\t\t{\n\t\t\t\"Client\":\"log/" + test_name + "_client.log\",\n\t\t\t\"Server\":\"log/" + test_name + "_server.log\"\n\t\t}\n\t]")
                   test_count += 1
             if protocol == 'accel' and 'binary' in client["protocols"]:
               if transport in client["transports"]:
@@ -239,7 +239,7 @@ for server in data["server"]:
                     results_json.write(",\n")
                   count = 1
                   results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"binary-accel\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
-                  test_name = server_lib + "_" + client_lib + "_accel-binary_" + transport + "_" + sock
+                  test_name = server_lib + "_" + client_lib + "_binary-accel_" + transport + "_" + sock
                   ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, 'binary', transport, 9090, 0, sock)
                   if ret != None:
                     failed += 1
@@ -249,10 +249,10 @@ for server in data["server"]:
                       % (server_executable, protocol, transport + sock, getSocketArgs(sock), ' '.join(server_extra_args)))
                     print (' Client: %s --protocol=%s --transport=%s %s %s'
                       % (client_executable, protocol, transport + sock, getSocketArgs(sock), ''.join(client_extra_args)))
-                    results_json.write("\t\t\"failure (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
+                    results_json.write("\t\t\"failure\",\n")
                   else:
-                    results_json.write("\t\t\"success (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
-                  results_json.write("\t]")
+                    results_json.write("\t\t\"success\",\n")
+                  results_json.write("\t\t{\n\t\t\t\"Client\":\"log/" + test_name + "_client.log\",\n\t\t\t\"Server\":\"log/" + test_name + "_server.log\"\n\t\t}\n\t]")
                   test_count += 1
 results_json.write("\n]")
 results_json.flush()

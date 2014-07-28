@@ -7,19 +7,26 @@
 <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
 <script type="text/javascript" charset="utf-8" src="http://cdn.datatables.net/1.10.0/js/jquery.dataTables.js"></script>
 <script>
-  var test_data;
-  
+ var test_data;
+
     $(document).ready( function () {
-      $.getJSON('/results.json', function(testData) {
+      $.getJSON('results.json', function(testData) {
           testTable = $('#test_results').DataTable( {
-            data: testData
+            data: testData,
+      "columnDefs": [
+            {
+                "render": function ( data, type, row ) {
+                    return data +' ('+ '<a href="'+row[5].Client+'">Client</a>,<a href="'+row[5].Server+'">Server</a>'+')';
+                },
+                "targets": 4
+            }
+        ]
           });
         $('#test_results_filter label input')
           .focus()
           .val('failure');
         });
       });
-    
 </script>
 </head>
 <body>
