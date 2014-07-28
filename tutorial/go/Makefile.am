@@ -49,7 +49,7 @@ tutorialsecureclient: all
 	GOPATH=`pwd` $(GO) run src/*.go -secure=true
 
 clean-local:
-	$(RM) -r gen-*
+	$(RM) -r gen-* src/shared src/tutorial src/git.apache.org go-tutorial calculator-remote
 
 EXTRA_DIST = \
 	src/client.go \
