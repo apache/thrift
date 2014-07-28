@@ -27,6 +27,7 @@ import sys
 import os
 import signal
 import json
+import platform
 import shutil
 import threading
 from optparse import OptionParser
@@ -159,7 +160,7 @@ def runServiceTest(test_name, server_executable, server_extra_args, client_execu
 
 test_count = 0
 failed = 0
-
+platform = platform.system()
 if os.path.exists('log'): shutil.rmtree('log')
 os.makedirs('log')
 if os.path.exists('results.json'): os.remove('results.json')
@@ -181,80 +182,78 @@ for server in data["server"]:
     for transport in server["transports"]:
       for sock in server["sockets"]:
         for client in data["client"]:
-          client_executable = client["executable"]
-          client_extra_args = ""
-          client_lib = client["lib"]
-          if "extra_args" in client:
-            client_extra_args = client["extra_args"]
-          if protocol in client["protocols"]:
-            if transport in client["transports"]:
-              if sock in client["sockets"]:
-                if count != 0:
-                  results_json.write(",\n")
-                count = 1
-                results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"" + protocol + "\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
-                test_name = server_lib + "_" + client_lib + "_" + protocol + "_" + transport + "_" + sock
-                ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, protocol, transport, 9090, 0, sock)
-                if ret != None:
-                  failed += 1
-                  print "Error: %s" % ret
-                  print "Using"
-                  print (' Server: %s --protocol=%s --transport=%s %s %s'
-                    % (server_executable, protocol, transport, getSocketArgs(sock), ' '.join(server_extra_args)))
-                  print (' Client: %s --protocol=%s --transport=%s %s %s'
-                    % (client_executable, protocol, transport, getSocketArgs(sock), ''.join(client_extra_args)))
-                  results_json.write("\t\t\"failure (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
-                else:
-                  results_json.write("\t\t\"success (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
-                results_json.write("\t]")
-                test_count += 1
-          if protocol == 'binary' and 'accel' in client["protocols"]:
-            if transport in client["transports"]:
-              if sock in client["sockets"]:
-                if count != 0:
-                  results_json.write(",\n")
-                count = 1
-                results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"accel-binary\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
-                test_name = server_lib + "_" + client_lib + "_accel-binary_" + transport + "_" + sock
-                ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, 'accel', transport, 9090, 0, sock)
-                if ret != None:
-                  failed += 1
-                  print "Error: %s" % ret
-                  print "Using"
-                  print (' Server: %s --protocol=%s --transport=%s %s %s'
-                    % (server_executable, protocol, transport, getSocketArgs(sock), ' '.join(server_extra_args)))
-                  print (' Client: %s --protocol=%s --transport=%s %s %s'
-                    % (client_executable, protocol, transport , getSocketArgs(sock), ''.join(client_extra_args)))
-                  results_json.write("\t\t\"failure (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
-                else:
-                  results_json.write("\t\t\"success (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
-                results_json.write("\t]")
-                test_count += 1
-          if protocol == 'accel' and 'binary' in client["protocols"]:
-            if transport in client["transports"]:
-              if sock in client["sockets"]:
-                if count != 0:
-                  results_json.write(",\n")
-                count = 1
-                results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"binary-accel\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
-                test_name = server_lib + "_" + client_lib + "_accel-binary_" + transport + "_" + sock
-                ssl = 0
-                if sock == 'ip-ssl':
-                  ssl = 1
-                ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, 'binary', transport, 9090, 0, sock)
-                if ret != None:
-                  failed += 1
-                  print "Error: %s" % ret
-                  print "Using"
-                  print (' Server: %s --protocol=%s --transport=%s %s %s'
-                    % (server_executable, protocol, transport + sock, getSocketArgs(sock), ' '.join(server_extra_args)))
-                  print (' Client: %s --protocol=%s --transport=%s %s %s'
-                    % (client_executable, protocol, transport + sock, getSocketArgs(sock), ''.join(client_extra_args)))
-                  results_json.write("\t\t\"failure (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
-                else:
-                  results_json.write("\t\t\"success (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
-                results_json.write("\t]")
-                test_count += 1
+          if platform in server["platform"] and platform in client["platform"]:
+            client_executable = client["executable"]
+            client_extra_args = ""
+            client_lib = client["lib"]
+            if "extra_args" in client:
+              client_extra_args = client["extra_args"]
+            if protocol in client["protocols"]:
+              if transport in client["transports"]:
+                if sock in client["sockets"]:
+                  if count != 0:
+                    results_json.write(",\n")
+                  count = 1
+                  results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"" + protocol + "\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
+                  test_name = server_lib + "_" + client_lib + "_" + protocol + "_" + transport + "_" + sock
+                  ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, protocol, transport, 9090, 0, sock)
+                  if ret != None:
+                    failed += 1
+                    print "Error: %s" % ret
+                    print "Using"
+                    print (' Server: %s --protocol=%s --transport=%s %s %s'
+                      % (server_executable, protocol, transport, getSocketArgs(sock), ' '.join(server_extra_args)))
+                    print (' Client: %s --protocol=%s --transport=%s %s %s'
+                      % (client_executable, protocol, transport, getSocketArgs(sock), ''.join(client_extra_args)))
+                    results_json.write("\t\t\"failure (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
+                  else:
+                    results_json.write("\t\t\"success (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
+                  results_json.write("\t]")
+                  test_count += 1
+            if protocol == 'binary' and 'accel' in client["protocols"]:
+              if transport in client["transports"]:
+                if sock in client["sockets"]:
+                  if count != 0:
+                    results_json.write(",\n")
+                  count = 1
+                  results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"accel-binary\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
+                  test_name = server_lib + "_" + client_lib + "_accel-binary_" + transport + "_" + sock
+                  ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, 'accel', transport, 9090, 0, sock)
+                  if ret != None:
+                    failed += 1
+                    print "Error: %s" % ret
+                    print "Using"
+                    print (' Server: %s --protocol=%s --transport=%s %s %s'
+                      % (server_executable, protocol, transport, getSocketArgs(sock), ' '.join(server_extra_args)))
+                    print (' Client: %s --protocol=%s --transport=%s %s %s'
+                      % (client_executable, protocol, transport , getSocketArgs(sock), ''.join(client_extra_args)))
+                    results_json.write("\t\t\"failure (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
+                  else:
+                    results_json.write("\t\t\"success (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
+                  results_json.write("\t]")
+                  test_count += 1
+            if protocol == 'accel' and 'binary' in client["protocols"]:
+              if transport in client["transports"]:
+                if sock in client["sockets"]:
+                  if count != 0:
+                    results_json.write(",\n")
+                  count = 1
+                  results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"binary-accel\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
+                  test_name = server_lib + "_" + client_lib + "_accel-binary_" + transport + "_" + sock
+                  ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, 'binary', transport, 9090, 0, sock)
+                  if ret != None:
+                    failed += 1
+                    print "Error: %s" % ret
+                    print "Using"
+                    print (' Server: %s --protocol=%s --transport=%s %s %s'
+                      % (server_executable, protocol, transport + sock, getSocketArgs(sock), ' '.join(server_extra_args)))
+                    print (' Client: %s --protocol=%s --transport=%s %s %s'
+                      % (client_executable, protocol, transport + sock, getSocketArgs(sock), ''.join(client_extra_args)))
+                    results_json.write("\t\t\"failure (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
+                  else:
+                    results_json.write("\t\t\"success (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
+                  results_json.write("\t]")
+                  test_count += 1
 results_json.write("\n]")
 results_json.flush()
 results_json.close()
