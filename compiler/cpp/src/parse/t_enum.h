@@ -66,6 +66,51 @@ class t_enum : public t_type {
     return NULL;
   }
 
+  t_enum_value* get_min_value() {
+    const std::vector<t_enum_value*>& enum_values = get_constants();
+    std::vector<t_enum_value*>::const_iterator c_iter;
+    t_enum_value* min_value;
+    if (enum_values.size() == 0) {
+      min_value = NULL;
+    }
+    else {
+      int min_value_value;
+      min_value = enum_values.front();
+      min_value_value = (min_value->has_value() ? min_value->get_value() : 1);
+      for (c_iter = enum_values.begin(); c_iter != enum_values.end(); ++c_iter) {
+        if ((*c_iter)->has_value() &&
+            ((*c_iter)->get_value() < min_value_value)) {
+          min_value = (*c_iter);
+          min_value_value = min_value->get_value();
+        }
+      }
+    }
+    return min_value;
+  }
+
+  t_enum_value* get_max_value() {
+    const std::vector<t_enum_value*>& enum_values = get_constants();
+    std::vector<t_enum_value*>::const_iterator c_iter;
+    t_enum_value* max_value;
+    if (enum_values.size() == 0) {
+      max_value = NULL;
+    }
+    else {
+      int max_value_value;
+      max_value = enum_values.back();
+      max_value_value =
+        (max_value->has_value() ? max_value->get_value() : enum_values.size());
+      for (c_iter = enum_values.begin(); c_iter != enum_values.end(); ++c_iter) {
+        if ((*c_iter)->has_value() &&
+            ((*c_iter)->get_value() > max_value_value)) {
+          max_value = (*c_iter);
+          max_value_value = max_value->get_value();
+        }
+      }
+    }
+    return max_value;
+  }
+
   bool is_enum() const {
     return true;
   }
