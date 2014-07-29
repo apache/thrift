@@ -223,6 +223,7 @@ test-driver
 /test/rb/Gemfile.lock
 /tutorial/cpp/TutorialClient
 /tutorial/cpp/TutorialServer
+/tutorial/c_glib/tutorial_client
 /tutorial/delphi/*.dsk
 /tutorial/delphi/*.local
 /tutorial/delphi/DelphiClient/dcu
