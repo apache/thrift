@@ -663,6 +663,7 @@ AC_CONFIG_FILES([
   test/py.tornado/Makefile
   test/rb/Makefile
   tutorial/Makefile
+  tutorial/c_glib/Makefile
   tutorial/cpp/Makefile
   tutorial/go/Makefile
   tutorial/hs/Makefile
