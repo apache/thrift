@@ -23,6 +23,10 @@ if MINGW
 # do nothing, just build the compiler
 else
 
+if WITH_C_GLIB
+SUBDIRS += c_glib
+endif
+
 if WITH_CPP
 SUBDIRS += cpp
 endif
