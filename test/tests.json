@@ -87,6 +87,27 @@
             "platform": [
                 "Linux"
             ]
+        },
+        {
+            "description": "Java TestClient",
+            "lib": "java",
+            "executable": ["ant","-f","../lib/java/build.xml","-Dno-gen-thrift=\"\""],
+            "extra_args": ["run-testclient"],
+            "protocols": [
+                "binary",
+                "compact",
+                "json"
+            ],
+            "transports": [
+                "buffered",
+                "framed"
+            ],
+            "sockets": [
+                "ip"
+            ],
+            "platform": [
+                "Linux"
+            ]
         }
     ],
     "server": [
@@ -174,6 +195,27 @@
             "sockets": [
                 "ip",
                 "ip-ssl"
+            ],
+            "platform": [
+                "Linux"
+            ]
+        },
+        {
+            "description": "Java TestServer",
+            "lib": "java",
+            "executable": ["ant","-f","../lib/java/build.xml","-Dno-gen-thrift=\"\""],
+            "extra_args": ["run-testserver"],
+            "protocols": [
+                "binary",
+                "compact",
+                "json"
+            ],
+            "transports": [
+                "buffered",
+                "framed"
+            ],
+            "sockets": [
+                "ip"
             ],
             "platform": [
                 "Linux"

@@ -55,10 +55,23 @@ def getSocketArgs(socket_type):
   elif socket_type == 'domain':
     return "--domain-socket=/tmp/ThriftTest.thrift"
 
-def runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, server_protocol, client_protocol, transport, port, use_zlib, socket_type):
+def runServiceTest(test_name, server_lib, server_executable, server_extra_args, client_lib, client_executable, client_extra_args, server_protocol, client_protocol, transport, port, use_zlib, socket_type):
   # Build command line arguments
-  server_args = [relfile(server_executable)]
-  cli_args = [relfile(client_executable)]
+  server_args = []
+  cli_args = []
+  if server_lib == 'java':
+    server_executable[2] = relfile(server_executable[2])
+    server_args.extend(server_executable)
+    server_args.extend(['-Dtestargs','\"'])
+  else:
+    server_args = [relfile(server_executable)]
+  if client_lib == 'java':
+    client_executable[2] = relfile(client_executable[2])
+    cli_args.extend(client_executable)
+    cli_args.extend(['-Dtestargs','\"'])
+  else:
+    cli_args = [relfile(client_executable)]
+
   server_args.append('--protocol=%s' % server_protocol)
   cli_args.append('--protocol=%s' % client_protocol)
 
@@ -75,9 +88,17 @@ def runServiceTest(test_name, server_executable, server_extra_args, client_execu
 #      which.append('-q')
 #    if options.verbose == 2:
 #      which.append('-v')
+  if server_lib == 'java':
+    server_args.append('\"')
+  if client_lib == 'java':
+    cli_args.append('\"')
 
   server_args.extend(server_extra_args)
   cli_args.extend(client_extra_args)
+
+  print server_args
+  print cli_args
+  print '---------------------------------------------------------------------------'
   server_log=open("log/" + test_name + "_server.log","a")
   client_log=open("log/" + test_name + "_client.log","a")
 
@@ -196,7 +217,7 @@ for server in data["server"]:
                   count = 1
                   results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"" + protocol + "\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
                   test_name = server_lib + "_" + client_lib + "_" + protocol + "_" + transport + "_" + sock
-                  ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, protocol, transport, 9090, 0, sock)
+                  ret = runServiceTest(test_name, server_lib, server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, protocol, transport, 9090, 0, sock)
                   if ret != None:
                     failed += 1
                     print "Error: %s" % ret
@@ -218,7 +239,7 @@ for server in data["server"]:
                   count = 1
                   results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"accel-binary\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
                   test_name = server_lib + "_" + client_lib + "_accel-binary_" + transport + "_" + sock
-                  ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, 'accel', transport, 9090, 0, sock)
+                  ret = runServiceTest(test_name, server_lib,server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, 'accel', transport, 9090, 0, sock)
                   if ret != None:
                     failed += 1
                     print "Error: %s" % ret
@@ -240,7 +261,7 @@ for server in data["server"]:
                   count = 1
                   results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"binary-accel\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
                   test_name = server_lib + "_" + client_lib + "_binary-accel_" + transport + "_" + sock
-                  ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, 'binary', transport, 9090, 0, sock)
+                  ret = runServiceTest(test_name, server_lib,server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, 'binary', transport, 9090, 0, sock)
                   if ret != None:
                     failed += 1
                     print "Error: %s" % ret
