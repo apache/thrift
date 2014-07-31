@@ -100,7 +100,6 @@ buildBinaryValue (TByte b) = int8 b
 buildBinaryValue (TI16 i) = int16BE i
 buildBinaryValue (TI32 i) = int32BE i
 buildBinaryValue (TI64 i) = int64BE i
-buildBinaryValue (TFloat f) = floatBE f
 buildBinaryValue (TDouble d) = doubleBE d
 buildBinaryValue (TString s) = int32BE len <> lazyByteString s
   where
@@ -141,8 +140,7 @@ parseBinaryValue T_BYTE = TByte . Binary.decode . LBS.fromStrict <$> P.take 1
 parseBinaryValue T_I16 = TI16 . Binary.decode . LBS.fromStrict <$> P.take 2
 parseBinaryValue T_I32 = TI32 . Binary.decode . LBS.fromStrict <$> P.take 4
 parseBinaryValue T_I64 = TI64 . Binary.decode . LBS.fromStrict <$> P.take 8
-parseBinaryValue T_FLOAT = TFloat . bsToFloating byteSwap32 <$> P.take 4
-parseBinaryValue T_DOUBLE = TDouble . bsToFloating byteSwap64 <$> P.take 8
+parseBinaryValue T_DOUBLE = TDouble . bsToDouble <$> P.take 8
 parseBinaryValue T_STRING = do
   i :: Int32  <- Binary.decode . LBS.fromStrict <$> P.take 4
   TString . LBS.fromStrict <$> P.take (fromIntegral i)
@@ -188,7 +186,6 @@ buildTypeOf v = buildType $ case v of
   TI32{} -> T_I32
   TI64{} -> T_I64
   TString{} -> T_STRING
-  TFloat{} -> T_FLOAT
   TDouble{} -> T_DOUBLE
 
 -- | Read a byte as though it were a ThriftType

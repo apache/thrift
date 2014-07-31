@@ -93,9 +93,6 @@ instance Calculator_Iface CalculatorHandler where
      logid = mlogid
      work = mwork
 
-
-    --return val
-
   zip _ =
     print "zip()"
 

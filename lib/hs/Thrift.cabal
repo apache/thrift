@@ -18,7 +18,7 @@
 --
 
 Name:           thrift
-Version:        2.0.0-dev
+Version:        1.0.0-dev
 Cabal-Version:  >= 1.8
 License:        OtherLicense
 Category:       Foreign
@@ -36,7 +36,7 @@ Library
   Hs-Source-Dirs:
     src
   Build-Depends:
-    base >= 4, base < 5, containers, network, ghc-prim, attoparsec, binary, bytestring, hashable, HTTP, text, unordered-containers, vector, QuickCheck
+    base >= 4, base < 5, containers, network, ghc-prim, attoparsec, binary, bytestring >= 0.10, hashable, HTTP, text, unordered-containers, vector, QuickCheck
   Exposed-Modules:
     Thrift,
     Thrift.Arbitraries

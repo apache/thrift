@@ -27,9 +27,7 @@ module Thrift.Protocol
     , runParser
     , versionMask
     , version1
-    , bsToFloating
-    , byteSwap32
-    , byteSwap64
+    , bsToDouble
     ) where
 
 import Control.Exception
@@ -99,9 +97,8 @@ handleEOF = const $ return mempty
 -- The ByteString is assumed to be encoded in network order (Big Endian)
 -- therefore the behavior of this function varies based on whether the local
 -- machine is big endian or little endian.
-bsToFloating :: (Floating f, Storable f, Storable a)
-                => (a -> a) -> BS.ByteString -> f
-bsToFloating byteSwap bs = unsafeDupablePerformIO $ unsafeUseAsCString bs castBs
+bsToDouble :: BS.ByteString -> Double
+bsToDouble bs = unsafeDupablePerformIO $ unsafeUseAsCString bs castBs
   where
 #if __BYTE_ORDER == __LITTLE_ENDIAN
     castBs chrPtr = do
@@ -112,20 +109,15 @@ bsToFloating byteSwap bs = unsafeDupablePerformIO $ unsafeUseAsCString bs castBs
     castBs = peek . castPtr
 #endif
 
--- | Swap endianness of a 32-bit word
-byteSwap32 :: Word32 -> Word32
-byteSwap32 w = (w `shiftL` 24 .&. 0xF000) .|.
-	       (w `shiftL` 16 .&. 0x0F00) .|.
-	       (w `shiftL` 8  .&. 0x00F0) .|.
-	       (w .&. 0x000F)
-
+#if __BYTE_ORDER == __LITTLE_ENDIAN
 -- | Swap endianness of a 64-bit word
-byteSwap64 :: Word64 -> Word64
-byteSwap64 w = (w `shiftL` 56 .&. 0xF0000000) .|.
-	       (w `shiftL` 48 .&. 0x0F000000) .|.
-	       (w `shiftL` 40 .&. 0x00F00000) .|.
-	       (w `shiftL` 32 .&. 0x000F0000) .|.
-	       (w `shiftL` 24 .&. 0x0000F000) .|.
-	       (w `shiftL` 16 .&. 0x00000F00) .|.
-	       (w `shiftL` 8  .&. 0x000000F0) .|.
-	       (w .&. 0x0000000F)
+byteSwap :: Word64 -> Word64
+byteSwap w = (w `shiftL` 56 .&. 0xFF00000000000000) .|.
+             (w `shiftL` 40 .&. 0x00FF000000000000) .|.
+             (w `shiftL` 24 .&. 0x0000FF0000000000) .|.
+             (w `shiftL` 8  .&. 0x000000FF00000000) .|.
+             (w `shiftR` 8  .&. 0x00000000FF000000) .|.
+             (w `shiftR` 24 .&. 0x0000000000FF0000) .|.
+             (w `shiftR` 40 .&. 0x000000000000FF00) .|.
+             (w `shiftR` 56 .&. 0x00000000000000FF)
+#endif

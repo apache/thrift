@@ -53,7 +53,6 @@ data ThriftVal = TStruct (Map.HashMap Int16 (Text, ThriftVal))
                | TI32 Int32
                | TI64 Int64
                | TString LBS.ByteString
-               | TFloat Float
                | TDouble Double
                  deriving (Eq, Show)
 
@@ -75,7 +74,6 @@ data ThriftType
     | T_MAP ThriftType ThriftType
     | T_SET ThriftType
     | T_LIST ThriftType
-    | T_FLOAT
       deriving ( Eq, Show )
 
 -- NOTE: when using toEnum information about parametized types is NOT preserved.
@@ -95,7 +93,6 @@ instance Enum ThriftType where
     fromEnum (T_MAP _ _)  = 13
     fromEnum (T_SET _)    = 14
     fromEnum (T_LIST _)   = 15
-    fromEnum T_FLOAT      = 19
 
     toEnum 0  = T_STOP
     toEnum 1  = T_VOID
@@ -110,7 +107,6 @@ instance Enum ThriftType where
     toEnum 13 = T_MAP T_VOID T_VOID
     toEnum 14 = T_SET T_VOID
     toEnum 15 = T_LIST T_VOID
-    toEnum 19 = T_FLOAT
     toEnum t = error $ "Invalid ThriftType " ++ show t
 
 data MessageType
