@@ -115,6 +115,25 @@ extern char* g_doctext;
 extern int g_doctext_lineno;
 
 /**
+ * Status of program level doctext candidate
+ */
+enum PROGDOCTEXT_STATUS {
+  INVALID = 0,
+  STILL_CANDIDATE = 1,      // the text may or may not be the program doctext
+  ALREADY_PROCESSED = 2,    // doctext has been used and is no longer available
+  ABSOLUTELY_SURE = 3,      // this is the program doctext
+  NO_PROGRAM_DOCTEXT = 4    // there is no program doctext
+};
+
+
+/**
+ * The program level doctext. Stored seperately to make parsing easier.
+ */
+extern char* g_program_doctext_candidate;
+extern int   g_program_doctext_lineno;
+extern PROGDOCTEXT_STATUS  g_program_doctext_status;
+
+/**
  * Whether or not negative field keys are accepted.
  *
  * When a field does not have a user-specified key, thrift automatically

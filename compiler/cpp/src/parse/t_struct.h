@@ -147,10 +147,18 @@ class t_struct : public t_type {
 
   virtual std::string get_fingerprint_material() const {
     std::string rv = "{";
+    bool do_reserve = (members_in_id_order_.size() > 1);
+    size_t estimation = 0;
     members_type::const_iterator m_iter;
     for (m_iter = members_in_id_order_.begin(); m_iter != members_in_id_order_.end(); ++m_iter) {
       rv += (*m_iter)->get_fingerprint_material();
       rv += ";";
+      
+      if( do_reserve) {
+        estimation = members_in_id_order_.size() * rv.size() + 16;
+        rv.reserve( estimation);
+        do_reserve = false;
+      }
     }
     rv += "}";
     return rv;

@@ -39,7 +39,7 @@ VALUE rb_thrift_memory_buffer_read_into_buffer(VALUE self, VALUE buffer_value, V
 VALUE rb_thrift_memory_buffer_write(VALUE self, VALUE str) {
   VALUE buf = GET_BUF(self);
   str = force_binary_encoding(str);
-  rb_str_buf_cat(buf, RSTRING_PTR(str), RSTRING_LEN(str));
+  rb_str_buf_cat(buf, StringValuePtr(str), RSTRING_LEN(str));
   return Qnil;
 }
 

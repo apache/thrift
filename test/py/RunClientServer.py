@@ -21,6 +21,7 @@
 
 from __future__ import division
 import time
+import socket
 import subprocess
 import sys
 import os
@@ -33,10 +34,10 @@ parser.add_option('--genpydirs', type='string', dest='genpydirs',
     help='directory extensions for generated code, used as suffixes for \"gen-py-*\" added sys.path for individual tests')
 parser.add_option("--port", type="int", dest="port", default=9090,
     help="port number for server to listen on")
-parser.add_option('-v', '--verbose', action="store_const", 
+parser.add_option('-v', '--verbose', action="store_const",
     dest="verbose", const=2,
     help="verbose output")
-parser.add_option('-q', '--quiet', action="store_const", 
+parser.add_option('-q', '--quiet', action="store_const",
     dest="verbose", const=0,
     help="minimal output")
 parser.set_defaults(verbose=1)
@@ -106,14 +107,14 @@ def runScriptTest(genpydir, script):
   ret = subprocess.call(script_args)
   if ret != 0:
     raise Exception("Script subprocess failed, retcode=%d, args: %s" % (ret, ' '.join(script_args)))
-  
+
 def runServiceTest(genpydir, server_class, proto, port, use_zlib, use_ssl):
   # Build command line arguments
   server_args = [sys.executable, relfile('TestServer.py') ]
   cli_args = [sys.executable, relfile('TestClient.py') ]
   for which in (server_args, cli_args):
     which.append('--genpydir=%s' % genpydir)
-    which.append('--proto=%s' % proto) # accel, binary or compact
+    which.append('--protocol=%s' % proto) # accel, binary or compact
     which.append('--port=%d' % port) # default to 9090
     if use_zlib:
       which.append('--zlib')
@@ -127,13 +128,38 @@ def runServiceTest(genpydir, server_class, proto, port, use_zlib, use_ssl):
   server_args.append(server_class)
   # client-specific cmdline options
   if server_class in FRAMED:
-    cli_args.append('--framed')
+    cli_args.append('--transport=framed')
+  else:
+     cli_args.append('--transport=buffered')
   if server_class == 'THttpServer':
     cli_args.append('--http=/')
   if options.verbose > 0:
     print 'Testing server %s: %s' % (server_class, ' '.join(server_args))
   serverproc = subprocess.Popen(server_args)
-  time.sleep(0.15)
+
+  def ensureServerAlive():
+    if serverproc.poll() is not None:
+      print ('FAIL: Server process (%s) failed with retcode %d'
+             % (' '.join(server_args), serverproc.returncode))
+      raise Exception('Server subprocess %s died, args: %s'
+                      % (server_class, ' '.join(server_args)))
+
+  # Wait for the server to start accepting connections on the given port.
+  sock = socket.socket()
+  sleep_time = 0.1  # Seconds
+  max_attempts = 100
+  try:
+    attempt = 0
+    while sock.connect_ex(('127.0.0.1', port)) != 0:
+      attempt += 1
+      if attempt >= max_attempts:
+        raise Exception("TestServer not ready on port %d after %.2f seconds"
+                        % (port, sleep_time * attempt))
+      ensureServerAlive()
+      time.sleep(sleep_time)
+  finally:
+    sock.close()
+
   try:
     if options.verbose > 0:
       print 'Testing client: %s' % (' '.join(cli_args))
@@ -142,19 +168,15 @@ def runServiceTest(genpydir, server_class, proto, port, use_zlib, use_ssl):
       raise Exception("Client subprocess failed, retcode=%d, args: %s" % (ret, ' '.join(cli_args)))
   finally:
     # check that server didn't die
-    serverproc.poll()
-    if serverproc.returncode is not None:
-      print 'FAIL: Server process (%s) failed with retcode %d' % (' '.join(server_args), serverproc.returncode)
-      raise Exception('Server subprocess %s died, args: %s' % (server_class, ' '.join(server_args)))
-    else:
-      extra_sleep = EXTRA_DELAY.get(server_class, 0)
-      if extra_sleep > 0 and options.verbose > 0:
-        print 'Giving %s (proto=%s,zlib=%s,ssl=%s) an extra %d seconds for child processes to terminate via alarm' % (server_class,
-              proto, use_zlib, use_ssl, extra_sleep)
-        time.sleep(extra_sleep)
-      os.kill(serverproc.pid, signal.SIGKILL)
-  # wait for shutdown
-  time.sleep(0.05)
+    ensureServerAlive()
+    extra_sleep = EXTRA_DELAY.get(server_class, 0)
+    if extra_sleep > 0 and options.verbose > 0:
+      print ('Giving %s (proto=%s,zlib=%s,ssl=%s) an extra %d seconds for child'
+             'processes to terminate via alarm'
+             % (server_class, proto, use_zlib, use_ssl, extra_sleep))
+      time.sleep(extra_sleep)
+    os.kill(serverproc.pid, signal.SIGKILL)
+    serverproc.wait()
 
 test_count = 0
 # run tests without a client/server first
@@ -166,7 +188,7 @@ print '----------------'
 for genpydir in generated_dirs:
   for script in SCRIPTS:
     runScriptTest(genpydir, script)
-  
+
 print '----------------'
 print ' Executing Client/Server tests with various generated code directories'
 print ' Servers to be tested: ' + ', '.join(SERVERS)

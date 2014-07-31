@@ -20,6 +20,7 @@ package main
  */
 
 import (
+	"crypto/tls"
 	"fmt"
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"tutorial"
@@ -36,12 +37,15 @@ func handleClient(client *tutorial.CalculatorClient) (err error) {
 	work.Op = tutorial.Operation_DIVIDE
 	work.Num1 = 1
 	work.Num2 = 0
-	quotient, ouch, err := client.Calculate(1, work)
+	quotient, err := client.Calculate(1, work)
 	if err != nil {
-		fmt.Println("Error during operation:", err)
+		switch v := err.(type) {
+		case *tutorial.InvalidOperation:
+			fmt.Println("Invalid operation:", v)
+		default:
+			fmt.Println("Error during operation:", err)
+		}
 		return err
-	} else if ouch != nil {
-		fmt.Println("Invalid operation:", ouch)
 	} else {
 		fmt.Println("Whoa we can divide by 0 with new value:", quotient)
 	}
@@ -49,12 +53,15 @@ func handleClient(client *tutorial.CalculatorClient) (err error) {
 	work.Op = tutorial.Operation_SUBTRACT
 	work.Num1 = 15
 	work.Num2 = 10
-	diff, ouch, err := client.Calculate(1, work)
+	diff, err := client.Calculate(1, work)
 	if err != nil {
-		fmt.Println("Error during operation:", err)
+		switch v := err.(type) {
+		case *tutorial.InvalidOperation:
+			fmt.Println("Invalid operation:", v)
+		default:
+			fmt.Println("Error during operation:", err)
+		}
 		return err
-	} else if ouch != nil {
-		fmt.Println("Invalid operation:", ouch)
 	} else {
 		fmt.Print("15-10=", diff, "\n")
 	}
@@ -69,9 +76,16 @@ func handleClient(client *tutorial.CalculatorClient) (err error) {
 	return err
 }
 
-func runClient(transportFactory thrift.TTransportFactory, protocolFactory thrift.TProtocolFactory) error {
+func runClient(transportFactory thrift.TTransportFactory, protocolFactory thrift.TProtocolFactory, addr string, secure bool) error {
 	var transport thrift.TTransport
-	transport, err := thrift.NewTSocket("localhost:9090")
+	var err error
+	if secure {
+		cfg := new(tls.Config)
+		cfg.InsecureSkipVerify = true
+		transport, err = thrift.NewTSSLSocket(addr, cfg)
+	} else {
+		transport, err = thrift.NewTSocket(addr)
+	}
 	if err != nil {
 		fmt.Println("Error opening socket:", err)
 		return err

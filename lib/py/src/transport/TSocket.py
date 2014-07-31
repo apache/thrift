@@ -33,7 +33,7 @@ class TSocketBase(TTransportBase):
     else:
       return socket.getaddrinfo(self.host,
                                 self.port,
-                                socket.AF_UNSPEC,
+                                self._socket_family,
                                 socket.SOCK_STREAM,
                                 0,
                                 socket.AI_PASSIVE | socket.AI_ADDRCONFIG)
@@ -47,19 +47,21 @@ class TSocketBase(TTransportBase):
 class TSocket(TSocketBase):
   """Socket implementation of TTransport base."""
 
-  def __init__(self, host='localhost', port=9090, unix_socket=None):
+  def __init__(self, host='localhost', port=9090, unix_socket=None, socket_family=socket.AF_UNSPEC):
     """Initialize a TSocket
 
     @param host(str)  The host to connect to.
     @param port(int)  The (TCP) port to connect to.
     @param unix_socket(str)  The filename of a unix socket to connect to.
                              (host and port will be ignored.)
+    @param socket_family(int)  The socket family to use with this socket.
     """
     self.host = host
     self.port = port
     self.handle = None
     self._unix_socket = unix_socket
     self._timeout = None
+    self._socket_family = socket_family
 
   def setHandle(self, h):
     self.handle = h
@@ -139,16 +141,18 @@ class TSocket(TSocketBase):
 class TServerSocket(TSocketBase, TServerTransportBase):
   """Socket implementation of TServerTransport base."""
 
-  def __init__(self, host=None, port=9090, unix_socket=None):
+  def __init__(self, host=None, port=9090, unix_socket=None, socket_family=socket.AF_UNSPEC):
     self.host = host
     self.port = port
     self._unix_socket = unix_socket
+    self._socket_family = socket_family
     self.handle = None
 
   def listen(self):
     res0 = self._resolveAddr()
+    socket_family = self._socket_family == socket.AF_UNSPEC and socket.AF_INET6 or self._socket_family
     for res in res0:
-      if res[0] is socket.AF_INET6 or res is res0[-1]:
+      if res[0] is socket_family or res is res0[-1]:
         break
 
     # We need remove the old unix socket if the file exists and

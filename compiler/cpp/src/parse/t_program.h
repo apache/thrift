@@ -73,6 +73,15 @@ class t_program : public t_doc {
     scope_ = new t_scope();
   }
 
+  ~t_program()
+  {
+   if(scope_)
+   {
+     delete scope_; 
+     scope_ = NULL; 
+   }
+  } 
+
   // Path accessor
   const std::string& get_path() const { return path_; }
 
@@ -123,13 +132,110 @@ class t_program : public t_doc {
     }
   }
 
+  // Typename collision detection
+  /**
+   * Search for typename collisions
+   * @param t    the type to test for collisions
+   * @return     true if a certain collision was found, otherwise false
+   */
+  bool is_unique_typename(t_type * t) {
+    int occurances = program_typename_count(this, t);
+    for (std::vector<t_program*>::iterator it = includes_.begin();
+         it != includes_.end(); ++it) {
+      occurances += program_typename_count(*it, t);
+    }
+    return 0 == occurances;
+  }
+
+  /**
+   * Search all type collections for duplicate typenames
+   * @param prog the program to search
+   * @param t    the type to test for collisions
+   * @return     the number of certain typename collisions
+   */
+  int program_typename_count(t_program * prog, t_type * t) {
+    int occurances = 0;
+    occurances += collection_typename_count(prog, prog->typedefs_, t);
+    occurances += collection_typename_count(prog, prog->enums_, t);
+    occurances += collection_typename_count(prog, prog->objects_, t);
+    occurances += collection_typename_count(prog, prog->services_, t);
+    return occurances;
+  }
+
+  /**
+   * Search a type collection for duplicate typenames
+   * @param prog            the program to search
+   * @param type_collection the type collection to search
+   * @param t               the type to test for collisions
+   * @return                the number of certain typename collisions
+   */
+  template <class T>
+  int collection_typename_count(t_program * prog, T type_collection, t_type * t) {
+    int occurances = 0;
+    for (typename T::iterator it = type_collection.begin(); it != type_collection.end(); ++it)
+      if (t != *it && 0 == t->get_name().compare((*it)->get_name()) && is_common_namespace(prog, t))
+        ++occurances;
+    return occurances;
+  }
+
+  /**
+   * Determine whether identical typenames will collide based on namespaces.
+   *
+   * Because we do not know which languages the user will generate code for,
+   * collisions within programs (IDL files) having namespace declarations can be
+   * difficult to determine. Only guaranteed collisions return true (cause an error).
+   * Possible collisions involving explicit namespace declarations produce a warning.
+   * Other possible collisions go unreported.
+   * @param prog the program containing the preexisting typename
+   * @param t    the type containing the typename match
+   * @return     true if a collision within namespaces is found, otherwise false
+   */
+  bool is_common_namespace(t_program * prog, t_type * t) {
+    //Case 1: Typenames are in the same program [collision]
+    if (prog == t->get_program()) {
+      pwarning(1, "Duplicate typename %s found in %s",
+               t->get_name().c_str(), t->get_program()->get_name().c_str());
+      return true;
+    }
+
+    //Case 2: Both programs have identical namespace scope/name declarations [collision]
+    bool match = true;
+    for (std::map<std::string, std::string>::iterator it = prog->namespaces_.begin();
+         it != prog->namespaces_.end(); ++it) {
+      if (0 == it->second.compare(t->get_program()->get_namespace(it->first))) {
+        pwarning(1, "Duplicate typename %s found in %s,%s,%s and %s,%s,%s [file,scope,ns]",
+                 t->get_name().c_str(),
+                 t->get_program()->get_name().c_str(), it->first.c_str(), it->second.c_str(),
+                 prog->get_name().c_str(), it->first.c_str(), it->second.c_str());
+      } else {
+        match = false;
+      }
+    }
+    for (std::map<std::string, std::string>::iterator it = t->get_program()->namespaces_.begin();
+         it != t->get_program()->namespaces_.end(); ++it) {
+      if (0 == it->second.compare(prog->get_namespace(it->first))) {
+        pwarning(1, "Duplicate typename %s found in %s,%s,%s and %s,%s,%s [file,scope,ns]",
+                 t->get_name().c_str(),
+                 t->get_program()->get_name().c_str(), it->first.c_str(), it->second.c_str(),
+                 prog->get_name().c_str(), it->first.c_str(), it->second.c_str());
+      } else {
+        match = false;
+      }
+    }
+    if (0 == prog->namespaces_.size() && 0 == t->get_program()->namespaces_.size()) {
+      pwarning(1, "Duplicate typename %s found in %s and %s",
+        t->get_name().c_str(), t->get_program()->get_name().c_str(),  prog->get_name().c_str());
+    }
+    return match;
+  }
+
   // Scoping and namespacing
   void set_namespace(std::string name) {
     namespace_ = name;
   }
 
   // Scope accessor
-  t_scope* scope() {
+  t_scope* scope() const {
     return scope_;
   }
 

@@ -54,6 +54,18 @@ namespace Thrift.Transport
 			}
 		}
 
+		private void CloseBuffers()
+		{
+			if (inputBuffer != null && inputBuffer.CanRead)
+			{
+				inputBuffer.Close();
+			}
+			if (outputBuffer != null && outputBuffer.CanWrite)
+			{
+				outputBuffer.Close();
+			}
+		}
+
 		public TTransport UnderlyingTransport
 		{
 			get { return transport; }
@@ -72,14 +84,8 @@ namespace Thrift.Transport
 
 		public override void Close()
 		{
-			if (inputBuffer != null && inputBuffer.CanRead)
-			{
-				inputBuffer.Close();
-			}
-			if (outputBuffer != null && outputBuffer.CanWrite)
-			{
-				outputBuffer.Close();
-			}
+			CloseBuffers();
+			transport.Close();
 		}
 
 		public override int Read(byte[] buf, int off, int len)

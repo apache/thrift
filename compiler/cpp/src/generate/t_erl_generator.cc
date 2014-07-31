@@ -301,10 +301,10 @@ void t_erl_generator::close_generator() {
   f_types_file_ << "-export([" << export_types_lines_.str() << "])." << endl << endl;
 
   f_types_file_ << f_info_.str();
-  f_types_file_ << "struct_info('i am a dummy struct') -> undefined." << endl << endl;
+  f_types_file_ << "struct_info(_) -> erlang:error(function_clause)." << endl << endl;
 
   f_types_file_ << f_info_ext_.str();
-  f_types_file_ << "struct_info_ext('i am a dummy struct') -> undefined." << endl << endl;
+  f_types_file_ << "struct_info_ext(_) -> erlang:error(function_clause)." << endl << endl;
 
   hrl_footer(f_types_hrl_file_, string("BOGUS"));
 
@@ -508,7 +508,7 @@ string t_erl_generator::render_member_type(t_field * field) {
   } else if (type->is_enum()) {
     return "integer()";
   } else if (type->is_struct() || type->is_xception()) {
-    return "#" + uncapitalize(type->get_name()) + "{}";
+    return uncapitalize(type->get_name()) + "()";
   } else if (type->is_map()) {
     return "dict()";
   } else if (type->is_set()) {
@@ -577,7 +577,10 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out, t_struct* tst
   }
   buf << "}).";
 
-  out << buf.str() << endl << endl;
+  out << buf.str() << endl;
+  out <<
+    "-type "+type_name (tstruct) << "() :: #" + type_name (tstruct) + "{}."
+      << endl << endl;
 }
 
 /**
@@ -586,7 +589,7 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out, t_struct* tst
 
 void t_erl_generator::generate_erl_struct_member(ostream & out, t_field * tmember)
 {
-  out << uncapitalize(tmember->get_name());
+  out << "'" << tmember->get_name() << "'";
   if (has_default_value(tmember))
     out << " = "  << render_member_value(tmember);
   out << " :: " << render_member_type(tmember);
@@ -713,7 +716,7 @@ void t_erl_generator::generate_service_helpers(t_service* tservice) {
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     generate_erl_function_helpers(*f_iter);
   }
-  f_service_    << "struct_info('i am a dummy struct') -> undefined." << endl;
+  f_service_    << "struct_info(_) -> erlang:error(function_clause)." << endl;
 }
 
 /**
@@ -752,8 +755,9 @@ void t_erl_generator::generate_service_interface(t_service* tservice) {
                          << "_thrift:function_info(Function, InfoType)." << endl;
       indent_down();
   } else {
-      // Use a special return code for nonexistent functions
-      indent(f_service_) << "function_info(_Func, _Info) -> no_function." << endl;
+      // return function_clause error for non-existent functions
+      indent(f_service_) << "function_info(_Func, _Info) -> erlang:error(function_clause)."
+                         << endl;
   }
 
   indent(f_service_) << endl;
@@ -980,7 +984,7 @@ std::string t_erl_generator::render_type_term(t_type* type, bool expand_structs,
           buf << "{" << key << ", "  << type << "}";
         } else {
           // Convert to format: {struct, [{Fid, Req, Type, Name, Def}|...]}
-          string  name         = uncapitalize(member->get_name());
+          string  name         = member->get_name();
           string  value        = render_member_value(member);
           string  requiredness = render_member_requiredness(member);
           buf << "{" << key << ", "  << requiredness << ", "  << type << ", '" << name << "'"<< ", "  << value << "}";

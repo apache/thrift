@@ -35,7 +35,6 @@
 
 #include "Service.h"
 
-#include <unistd.h>
 #include <boost/shared_ptr.hpp>
 
 #include <iostream>
@@ -43,9 +42,11 @@
 #include <stdexcept>
 #include <sstream>
 #include <map>
+#if _WIN32
+   #include <thrift/windows/TWinsockSingleton.h>
+#endif
 
 using namespace std;
-using namespace boost;
 
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -84,7 +85,7 @@ class Server : public ServiceIf {
   void echoVoid() {
     count("echoVoid");
     // Sleep to simulate work
-    usleep(5000);
+    THRIFT_SLEEP_USEC(1);
     return;
   }
 
@@ -175,6 +176,7 @@ public:
       int8_t arg = 1;
       int8_t result;
       result =_client->echoByte(arg);
+      (void)result;
       assert(result == arg);
     }
   }
@@ -184,6 +186,7 @@ public:
       int32_t arg = 1;
       int32_t result;
       result =_client->echoI32(arg);
+      (void)result;
       assert(result == arg);
     }
   }
@@ -193,6 +196,7 @@ public:
       int64_t arg = 1;
       int64_t result;
       result =_client->echoI64(arg);
+      (void)result;
       assert(result == arg);
     }
   }
@@ -220,13 +224,16 @@ public:
 
 
 int main(int argc, char **argv) {
+#if _WIN32
+  transport::TWinsockSingleton::create();
+#endif
 
   int port = 9091;
   string serverType = "simple";
   string protocolType = "binary";
-  size_t workerCount = 4;
-  size_t clientCount = 20;
-  size_t loopCount = 50000;
+  uint32_t workerCount = 4;
+  uint32_t clientCount = 20;
+  uint32_t loopCount = 1000;
   TType loopType  = T_VOID;
   string callName = "echoVoid";
   bool runServer = true;
@@ -318,7 +325,7 @@ int main(int argc, char **argv) {
 
   } catch(std::exception& e) {
     cerr << e.what() << endl;
-    cerr << usage;
+    cerr << usage.str();
   }
 
   boost::shared_ptr<PlatformThreadFactory> threadFactory = boost::shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
@@ -397,7 +404,7 @@ int main(int argc, char **argv) {
       serverThread2->join();
     }
   }
-  sleep(1);
+  THRIFT_SLEEP_SEC(1);
 
   if (clientCount > 0) {
 
@@ -414,7 +421,7 @@ int main(int argc, char **argv) {
     else if (callName == "echoString") { loopType = T_STRING;}
     else {throw invalid_argument("Unknown service call "+callName);}
 
-    for (size_t ix = 0; ix < clientCount; ix++) {
+    for (uint32_t ix = 0; ix < clientCount; ix++) {
 
       boost::shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port + (ix % 2)));
       boost::shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
@@ -456,7 +463,7 @@ int main(int argc, char **argv) {
 
     for (set<boost::shared_ptr<Thread> >::iterator ix = clientThreads.begin(); ix != clientThreads.end(); ix++) {
 
-      boost::shared_ptr<ClientThread> client = dynamic_pointer_cast<ClientThread>((*ix)->runnable());
+      boost::shared_ptr<ClientThread> client = boost::dynamic_pointer_cast<ClientThread>((*ix)->runnable());
 
       int64_t delta = client->_endTime - client->_startTime;
 

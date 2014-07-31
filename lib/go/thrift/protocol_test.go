@@ -58,8 +58,20 @@ func init() {
 }
 
 type HTTPEchoServer struct{}
+type HTTPHeaderEchoServer struct{}
 
 func (p *HTTPEchoServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	buf, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(buf)
+	} else {
+		w.WriteHeader(http.StatusOK)
+		w.Write(buf)
+	}
+}
+
+func (p *HTTPHeaderEchoServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	buf, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -82,6 +94,21 @@ func HttpClientSetupForTest(t *testing.T) (net.Listener, net.Addr) {
 		return l, addr
 	}
 	go http.Serve(l, &HTTPEchoServer{})
+	return l, addr
+}
+
+func HttpClientSetupForHeaderTest(t *testing.T) (net.Listener, net.Addr) {
+	addr, err := FindAvailableTCPServerPort(40000)
+	if err != nil {
+		t.Fatalf("Unable to find available tcp port addr: %s", err)
+		return nil, addr
+	}
+	l, err := net.Listen(addr.Network(), addr.String())
+	if err != nil {
+		t.Fatalf("Unable to setup tcp listener on %s: %s", addr.String(), err)
+		return l, addr
+	}
+	go http.Serve(l, &HTTPHeaderEchoServer{})
 	return l, addr
 }
 
@@ -143,20 +170,18 @@ func ReadWriteProtocolTest(t *testing.T, protocolFactory TProtocolFactory) {
 		ReadWriteBinary(t, p, trans)
 		trans.Close()
 	}
-
 	for _, tf := range transports {
-	  trans := tf.GetTransport(nil)
-	  p := protocolFactory.GetProtocol(trans);
-	  ReadWriteI64(t, p, trans);
-	  ReadWriteDouble(t, p, trans);
-	  ReadWriteBinary(t, p, trans);
-	  ReadWriteByte(t, p, trans);
-	  trans.Close()
+		trans := tf.GetTransport(nil)
+		p := protocolFactory.GetProtocol(trans)
+		ReadWriteI64(t, p, trans)
+		ReadWriteDouble(t, p, trans)
+		ReadWriteBinary(t, p, trans)
+		ReadWriteByte(t, p, trans)
+		trans.Close()
 	}
-
 }
 
-func ReadWriteBool(t *testing.T, p TProtocol, trans TTransport) {
+func ReadWriteBool(t testing.TB, p TProtocol, trans TTransport) {
 	thetype := TType(BOOL)
 	thelen := len(BOOL_VALUES)
 	err := p.WriteListBegin(thetype, thelen)
@@ -202,7 +227,7 @@ func ReadWriteBool(t *testing.T, p TProtocol, trans TTransport) {
 	}
 }
 
-func ReadWriteByte(t *testing.T, p TProtocol, trans TTransport) {
+func ReadWriteByte(t testing.TB, p TProtocol, trans TTransport) {
 	thetype := TType(BYTE)
 	thelen := len(BYTE_VALUES)
 	err := p.WriteListBegin(thetype, thelen)
@@ -251,7 +276,7 @@ func ReadWriteByte(t *testing.T, p TProtocol, trans TTransport) {
 	}
 }
 
-func ReadWriteI16(t *testing.T, p TProtocol, trans TTransport) {
+func ReadWriteI16(t testing.TB, p TProtocol, trans TTransport) {
 	thetype := TType(I16)
 	thelen := len(INT16_VALUES)
 	p.WriteListBegin(thetype, thelen)
@@ -288,7 +313,7 @@ func ReadWriteI16(t *testing.T, p TProtocol, trans TTransport) {
 	}
 }
 
-func ReadWriteI32(t *testing.T, p TProtocol, trans TTransport) {
+func ReadWriteI32(t testing.TB, p TProtocol, trans TTransport) {
 	thetype := TType(I32)
 	thelen := len(INT32_VALUES)
 	p.WriteListBegin(thetype, thelen)
@@ -324,7 +349,7 @@ func ReadWriteI32(t *testing.T, p TProtocol, trans TTransport) {
 	}
 }
 
-func ReadWriteI64(t *testing.T, p TProtocol, trans TTransport) {
+func ReadWriteI64(t testing.TB, p TProtocol, trans TTransport) {
 	thetype := TType(I64)
 	thelen := len(INT64_VALUES)
 	p.WriteListBegin(thetype, thelen)
@@ -360,7 +385,7 @@ func ReadWriteI64(t *testing.T, p TProtocol, trans TTransport) {
 	}
 }
 
-func ReadWriteDouble(t *testing.T, p TProtocol, trans TTransport) {
+func ReadWriteDouble(t testing.TB, p TProtocol, trans TTransport) {
 	thetype := TType(DOUBLE)
 	thelen := len(DOUBLE_VALUES)
 	p.WriteListBegin(thetype, thelen)
@@ -369,13 +394,9 @@ func ReadWriteDouble(t *testing.T, p TProtocol, trans TTransport) {
 	}
 	p.WriteListEnd()
 	p.Flush()
-	wrotebuffer := ""
-	if memtrans, ok := trans.(*TMemoryBuffer); ok {
-		wrotebuffer = memtrans.String()
-	}
 	thetype2, thelen2, err := p.ReadListBegin()
 	if err != nil {
-		t.Errorf("%s: %T %T %q Error reading list: %q, wrote: %v", "ReadWriteDouble", p, trans, err, DOUBLE_VALUES, wrotebuffer)
+		t.Errorf("%s: %T %T %q Error reading list: %q", "ReadWriteDouble", p, trans, err, DOUBLE_VALUES)
 	}
 	if thetype != thetype2 {
 		t.Errorf("%s: %T %T type %s != type %s", "ReadWriteDouble", p, trans, thetype, thetype2)
@@ -402,7 +423,7 @@ func ReadWriteDouble(t *testing.T, p TProtocol, trans TTransport) {
 	}
 }
 
-func ReadWriteString(t *testing.T, p TProtocol, trans TTransport) {
+func ReadWriteString(t testing.TB, p TProtocol, trans TTransport) {
 	thetype := TType(STRING)
 	thelen := len(STRING_VALUES)
 	p.WriteListBegin(thetype, thelen)
@@ -438,7 +459,7 @@ func ReadWriteString(t *testing.T, p TProtocol, trans TTransport) {
 	}
 }
 
-func ReadWriteBinary(t *testing.T, p TProtocol, trans TTransport) {
+func ReadWriteBinary(t testing.TB, p TProtocol, trans TTransport) {
 	v := protocol_bdata
 	p.WriteBinary(v)
 	p.Flush()

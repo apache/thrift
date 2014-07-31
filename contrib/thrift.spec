@@ -17,6 +17,10 @@
 # under the License.
 #
 
+%define without_java 1
+%define without_python 1
+%define without_tests 1
+
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 %{!?python_sitearch: %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
 
@@ -24,7 +28,7 @@ Name:           thrift
 License:        Apache License v2.0
 Group:          Development
 Summary:        RPC and serialization framework
-Version:        0.9.0
+Version:        0.9.1
 Release:        0
 URL:            http://thrift.apache.org
 Packager:       Thrift Developers <dev@thrift.apache.org>
@@ -40,6 +44,12 @@ BuildRequires:  ant >= 0:1.6.5
 
 %if 0%{!?without_python:1}
 BuildRequires:  python-devel
+%endif
+
+%if 0%{!?without_ruby:1}
+%define gem_name %{name}
+BuildRequires:  ruby-devel
+BuildRequires:  rubygems-devel
 %endif
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -120,19 +130,55 @@ Python libraries for Thrift.
 %endif
 
 
+%if 0%{!?without_ruby:1}
+%package -n rubygem-%{gem_name}
+Summary: Thrift Ruby library
+Group:   Libraries
+Obsoletes: %{name}-lib-ruby
+
+%description -n rubygem-%{gem_name}
+Ruby libraries for Thrift.
+
+%files -n rubygem-%{gem_name}
+%defattr(-,root,root)
+%{gem_dir}/*
+%endif
+
+
+%if 0%{!?without_php:1}
+%package lib-php
+Summary: Thrift PHP library
+Group:   Libraries
+
+%description lib-php
+PHP libraries for Thrift.
+
+%files lib-php
+%defattr(-,root,root)
+/usr/lib/php/*
+%endif
+
+
 %prep
 %setup -q
 
 %build
+[[ -e Makefile.in ]] || ./bootstrap.sh
+export GEM_HOME=${PWD}/.gem-home
+export RUBYLIB=${PWD}/lib/rb/lib
 %configure \
   %{?without_libevent: --without-libevent } \
   %{?without_zlib:     --without-zlib     } \
-  --without-java \
+  %{?without_tests:    --without-tests    } \
+  %{?without_java:     --without-java     } \
+  %{?without_python:   --without-python   } \
+  %{?without_ruby:     --without-ruby     } \
+  %{?without_php:      --without-php      } \
+  %{!?without_php:     PHP_PREFIX=${RPM_BUILD_ROOT}/usr/lib/php } \
   --without-csharp \
-  --without-python \
   --without-erlang \
 
-make
+make %{?_smp_mflags}
 
 %if 0%{!?without_java:1}
 cd lib/java
@@ -146,7 +192,13 @@ CFLAGS="%{optflags}" %{__python} setup.py build
 cd ../..
 %endif
 
+%if 0%{!?without_ruby:1}
+%gem_install -n lib/rb/thrift*.gem
+%endif
+
 %install
+export GEM_HOME=${PWD}/.gem-home
+export RUBYLIB=${PWD}/lib/rb/lib
 %makeinstall
 ln -s libthrift-%{version}.so ${RPM_BUILD_ROOT}%{_libdir}/libthrift.so.0
 ln -s libthriftnb-%{version}.so ${RPM_BUILD_ROOT}%{_libdir}/libthriftnb.so.0
@@ -154,7 +206,7 @@ ln -s libthriftz-%{version}.so ${RPM_BUILD_ROOT}%{_libdir}/libthriftz.so.0
 
 %if 0%{!?without_java:1}
 mkdir -p $RPM_BUILD_ROOT%{_javadir}
-cp -p lib/java/*.jar $RPM_BUILD_ROOT%{_javadir}
+cp -p lib/java/build/*.jar $RPM_BUILD_ROOT%{_javadir}
 %endif
 
 %if 0%{!?without_python:1}
@@ -163,6 +215,10 @@ cd lib/py
 cd ../..
 %endif
 
+%if 0%{!?without_ruby:1}
+mkdir -p %{buildroot}%{gem_dir}
+cp -a ./%{gem_dir}/* %{buildroot}%{gem_dir}/
+%endif
 
 %clean
 rm -rf ${RPM_BUILD_ROOT}

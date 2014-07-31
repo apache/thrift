@@ -44,7 +44,8 @@ namespace Thrift.Transport
 			}
 		}
 
-		public TSocket(string host, int port) : this(host, port, 0)
+		public TSocket(string host, int port) 
+		    : this(host, port, 0)
 		{
 		}
 
@@ -176,16 +177,21 @@ namespace Thrift.Transport
                     if( hlp.Client.Client != null)
                         hlp.Client.EndConnect(asyncres);
                 }
-                catch (SocketException)
+                catch (Exception)
                 {
                     // catch that away
                 }
 
                 if (hlp.DoCleanup) 
                 {
-                    asyncres.AsyncWaitHandle.Close();
-                    if (hlp.Client is IDisposable)
-                        ((IDisposable)hlp.Client).Dispose();
+                	try {
+                    	asyncres.AsyncWaitHandle.Close();
+                	} catch (Exception) {}
+                	
+                	try {
+                    	if (hlp.Client is IDisposable)
+	                        ((IDisposable)hlp.Client).Dispose();
+                	} catch (Exception) {}
                     hlp.Client = null;
                 }
             }

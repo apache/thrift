@@ -32,19 +32,35 @@
  */
 class t_typedef : public t_type {
  public:
-  t_typedef(t_program* program, t_type* type, std::string symbolic) :
+  t_typedef(t_program* program, t_type* type, const std::string& symbolic) :
     t_type(program, symbolic),
     type_(type),
-    symbolic_(symbolic) {}
+    symbolic_(symbolic),
+    forward_(false),
+    seen_(false) {}
+
+  /**
+   * This constructor is used to refer to a type that is lazily
+   * resolved at a later time, like for forward declarations or
+   * recursive types.
+   */
+  t_typedef(t_program* program, const std::string& symbolic, bool forward) :
+    t_type(program, symbolic),
+    type_(NULL),
+    symbolic_(symbolic),
+    forward_(forward),
+    seen_(false) {}
 
   ~t_typedef() {}
 
-  t_type* get_type() const {
-    return type_;
-  }
+  t_type* get_type() const;
 
   const std::string& get_symbolic() const {
     return symbolic_;
+  }
+
+  bool is_forward_typedef() const {
+    return forward_;
   }
 
   bool is_typedef() const {
@@ -52,19 +68,27 @@ class t_typedef : public t_type {
   }
 
   virtual std::string get_fingerprint_material() const {
-    return type_->get_fingerprint_material();
+    if (!seen_) {
+      seen_ = true;
+      std::string ret = get_type()->get_fingerprint_material();
+      seen_ = false;
+      return ret;
+    } 
+    return "";
   }
 
   virtual void generate_fingerprint() {
     t_type::generate_fingerprint();
-    if (!type_->has_fingerprint()) {
-      type_->generate_fingerprint();
+    if (!get_type()->has_fingerprint()) {
+      get_type()->generate_fingerprint();
     }
   }
 
  private:
   t_type* type_;
   std::string symbolic_;
+  bool forward_;
+  mutable bool seen_;
 };
 
 #endif

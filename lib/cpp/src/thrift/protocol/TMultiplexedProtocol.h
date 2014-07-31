@@ -22,11 +22,11 @@
 
 #include <thrift/protocol/TProtocolDecorator.h>
 
-namespace apache 
-{ 
-    namespace thrift 
-    { 
-        namespace protocol 
+namespace apache
+{
+    namespace thrift
+    {
+        namespace protocol
         {
             using boost::shared_ptr;
 
@@ -35,7 +35,7 @@ namespace apache
              * that allows a Thrift client to communicate with a multiplexing Thrift server,
              * by prepending the service name to the function name during function calls.
              *
-             * \note THIS IS NOT USED BY SERVERS.  On the server, use 
+             * \note THIS IS NOT USED BY SERVERS.  On the server, use
              * {@link apache::thrift::TMultiplexedProcessor TMultiplexedProcessor} to handle requests
              * from a multiplexing client.
              *
@@ -71,7 +71,7 @@ namespace apache
                  * \param _protocol    Your communication protocol of choice, e.g. <code>TBinaryProtocol</code>.
                  * \param _serviceName The service name of the service communicating via this protocol.
                  */
-                 TMultiplexedProtocol( shared_ptr<TProtocol> _protocol, const std::string& _serviceName ) 
+                 TMultiplexedProtocol( shared_ptr<TProtocol> _protocol, const std::string& _serviceName )
                     : TProtocolDecorator(_protocol),
                       serviceName(_serviceName),
                       separator(":")
@@ -88,8 +88,8 @@ namespace apache
                  * \throws TException  Passed through from wrapped <code>TProtocol</code> instance.
                  */
                 uint32_t writeMessageBegin_virt(
-                    const std::string& _name, 
-                    const TMessageType _type, 
+                    const std::string& _name,
+                    const TMessageType _type,
                     const int32_t _seqid);
             private:
                 const std::string serviceName;

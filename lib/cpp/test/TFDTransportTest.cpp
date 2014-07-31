@@ -19,6 +19,7 @@
 
 #include <cstdlib>
 #include <stdexcept>
+#include <iostream>
 #include <thrift/Thrift.h>
 #include <thrift/transport/TFDTransport.h>
 using apache::thrift::transport::TTransportException;
@@ -35,9 +36,12 @@ int main() {
   try {
     {
       TFDTransport t(256, TFDTransport::CLOSE_ON_DESTROY);
+      t.close();
     }
+    std::cout << "NOT OK 0!" << std::endl;
     std::abort();
   } catch (TTransportException) {
+    std::cout << "OK!" << std::endl;
   }
 
   try {
@@ -47,7 +51,7 @@ int main() {
     }
     std::abort();
   } catch (TTransportException&) {
-    abort();
+    std::abort();
   } catch (DummyException&) {
   }
 

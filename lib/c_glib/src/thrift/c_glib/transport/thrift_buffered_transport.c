@@ -69,6 +69,7 @@ thrift_buffered_transport_read_slow (ThriftTransport *transport, gpointer buf,
                                      guint32 len, GError **error)
 {
   ThriftBufferedTransport *t = THRIFT_BUFFERED_TRANSPORT (transport);
+  gint ret = 0;
   guint32 want = len;
   guint32 got = 0;
   guchar tmpdata[len];
@@ -90,19 +91,25 @@ thrift_buffered_transport_read_slow (ThriftTransport *transport, gpointer buf,
   // enough to satisfy the read.
   if (t->r_buf_size < want)
   {
-    got += THRIFT_TRANSPORT_GET_CLASS (t->transport)->read (t->transport,
-                                                            tmpdata,
-                                                            want,
-                                                            error);
+    if ((ret = THRIFT_TRANSPORT_GET_CLASS (t->transport)->read (t->transport,
+                                                                tmpdata,
+                                                                want,
+                                                                error)) < 0) {
+      return ret;
+    }
+    got += ret;
 
     // copy the data starting from where we left off
     memcpy (buf + have, tmpdata, got);
     return got + have; 
   } else {
-    got += THRIFT_TRANSPORT_GET_CLASS (t->transport)->read (t->transport,
-                                                            tmpdata,
-                                                            want,
-                                                            error);
+    if ((ret = THRIFT_TRANSPORT_GET_CLASS (t->transport)->read (t->transport,
+                                                                tmpdata,
+                                                                want,
+                                                                error)) < 0) {
+      return ret;
+    }
+    got += ret;
     t->r_buf = g_byte_array_append (t->r_buf, tmpdata, got);
     
     // hand over what we have up to what the caller wants
@@ -157,30 +164,32 @@ thrift_buffered_transport_write_slow (ThriftTransport *transport, gpointer buf,
 
   // we need two syscalls because the buffered data plus the buffer itself
   // is too big.
-  if ((have_bytes + len >= 2*t->w_buf->len) || (have_bytes == 0))
+  if ((have_bytes + len >= 2*t->w_buf_size) || (have_bytes == 0))
   {
     if (have_bytes > 0)
     {
-      THRIFT_TRANSPORT_GET_CLASS (t->transport)->write (t->transport,
-                                                        t->w_buf->data,
-                                                        have_bytes,
-                                                        error);
+      if (!THRIFT_TRANSPORT_GET_CLASS (t->transport)->write (t->transport,
+                                                             t->w_buf->data,
+                                                             have_bytes,
+                                                             error)) {
+        return FALSE;
+      }
+      t->w_buf = g_byte_array_remove_range (t->w_buf, 0, have_bytes);
     }
-    THRIFT_TRANSPORT_GET_CLASS (t->transport)->write (t->transport,
-                                                      buf, len, error);
-    if (t->w_buf->len > 0)
-    {
-      t->w_buf = g_byte_array_remove_range (t->w_buf, 0, t->w_buf->len);
+    if (!THRIFT_TRANSPORT_GET_CLASS (t->transport)->write (t->transport,
+                                                           buf, len, error)) {
+      return FALSE;
     }
-
     return TRUE;
   }
 
   t->w_buf = g_byte_array_append (t->w_buf, buf, space);
-  THRIFT_TRANSPORT_GET_CLASS (t->transport)->write (t->transport,
-                                                    t->w_buf->data,
-                                                    t->w_buf->len,
-                                                    error);
+  if (!THRIFT_TRANSPORT_GET_CLASS (t->transport)->write (t->transport,
+                                                         t->w_buf->data,
+                                                         t->w_buf->len,
+                                                         error)) {
+    return FALSE;
+  }
 
   t->w_buf = g_byte_array_remove_range (t->w_buf, 0, t->w_buf->len);
   t->w_buf = g_byte_array_append (t->w_buf, buf+space, len-space);
@@ -226,10 +235,12 @@ thrift_buffered_transport_flush (ThriftTransport *transport, GError **error)
   if (t->w_buf != NULL && t->w_buf->len > 0)
   {
     // write the buffer and then empty it
-    THRIFT_TRANSPORT_GET_CLASS (t->transport)->write (t->transport,
-                                                      t->w_buf->data,
-                                                      t->w_buf->len,
-                                                      error);
+    if (!THRIFT_TRANSPORT_GET_CLASS (t->transport)->write (t->transport,
+                                                           t->w_buf->data,
+                                                           t->w_buf->len,
+                                                           error)) {
+      return FALSE;
+    }
     t->w_buf = g_byte_array_remove_range (t->w_buf, 0, t->w_buf->len);
   }
   THRIFT_TRANSPORT_GET_CLASS (t->transport)->flush (t->transport,

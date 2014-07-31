@@ -19,27 +19,38 @@
 
 ACLOCAL_AMFLAGS = -I ./aclocal
 
-SUBDIRS = compiler/cpp lib tutorial
+SUBDIRS = compiler/cpp lib
 
 if WITH_TESTS
 SUBDIRS += test
 endif
 
+if WITH_TUTORIAL
+SUBDIRS += tutorial
+endif
+
 dist-hook:
-	find $(distdir) -type f \( -iname ".deps" -or -iname ".libs" -or -iname ".gitignore" \
-		-or -iname ".DS_Store" -or -iname "._*" \) | xargs rm -rf
+	find $(distdir) -type f \( -iname ".DS_Store" -or -iname "._*" -or -iname ".gitignore" \) | xargs rm -rf
+	find $(distdir) -type d \( -iname ".deps" -or -iname ".libs" \) | xargs rm -rf
 	find $(distdir) -type d \( -iname ".svn" -or -iname ".git" \) | xargs rm -rf
 
 print-version:
 	@echo $(VERSION)
 
+
+cross: check
+	sh test/test.sh
+
 EXTRA_DIST = \
-			.travis.yml \
-			contrib \
-			doc \
-			doap.rdf \
-			sonar-project.properties \
-			tutorial \
-			LICENSE \
-			CHANGES \
-			NOTICE
+	.travis.yml \
+	bower.json \
+	composer.json \
+	contrib \
+	debian \
+	doc \
+	doap.rdf \
+	sonar-project.properties \
+	LICENSE \
+	CHANGES \
+	NOTICE \
+	README.md

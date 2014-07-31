@@ -42,6 +42,8 @@ public class THttpClient extends TTransport {
 
   private InputStream inputStream_ = null;
 
+  private HttpConnection connection = null;
+
   private int connectTimeout_ = 0;
 
   private int readTimeout_ = 0;
@@ -49,7 +51,7 @@ public class THttpClient extends TTransport {
   private Hashtable customHeaders_ = null;
 
   public THttpClient(String url) throws TTransportException {
-                url_ = url;
+    url_ = url;
   }
 
   public void setConnectTimeout(int timeout) {
@@ -81,6 +83,14 @@ public class THttpClient extends TTransport {
       }
       inputStream_ = null;
     }
+
+    if (connection != null) {
+      try {
+        connection.close();
+      } catch (IOException ioe) {
+      }
+      connection = null;
+    }
   }
 
   public boolean isOpen() {
@@ -106,62 +116,48 @@ public class THttpClient extends TTransport {
     requestBuffer_.write(buf, off, len);
   }
   
-    public void flush() throws TTransportException {
+  public void flush() throws TTransportException {
     // Extract request and reset buffer
-        byte[] data = requestBuffer_.toByteArray();
-        requestBuffer_.reset();
+    byte[] data = requestBuffer_.toByteArray();
+    requestBuffer_.reset();
 
-        try {
-            // Create connection object
-            HttpConnection connection = (HttpConnection)Connector.open(url_);
-    
-            // Timeouts, only if explicitly set
-            if (connectTimeout_ > 0) {
-            //  XXX: not available
-            //  connection.setConnectTimeout(connectTimeout_);
-            }   
-            if (readTimeout_ > 0) {
-            //  XXX: not available
-            //  connection.setReadTimeout(readTimeout_);
-            }
-    
-            // Make the request
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/x-thrift");
-            connection.setRequestProperty("Accept", "application/x-thrift");
-            connection.setRequestProperty("User-Agent", "JavaME/THttpClient");
+    try {
+      // Create connection object
+      connection = (HttpConnection)Connector.open(url_);
+  
+      // Make the request
+      connection.setRequestMethod("POST");
+      connection.setRequestProperty("Content-Type", "application/x-thrift");
+      connection.setRequestProperty("Accept", "application/x-thrift");
+      connection.setRequestProperty("User-Agent", "JavaME/THttpClient");
 
-            connection.setRequestProperty("Connection", "Keep-Alive");
-            connection.setRequestProperty("Keep-Alive", "5000");
-            connection.setRequestProperty("Http-version", "HTTP/1.1");
-            connection.setRequestProperty("Cache-Control", "no-transform");
+      connection.setRequestProperty("Connection", "Keep-Alive");
+      connection.setRequestProperty("Keep-Alive", "5000");
+      connection.setRequestProperty("Http-version", "HTTP/1.1");
+      connection.setRequestProperty("Cache-Control", "no-transform");
 
-
-            if (customHeaders_ != null) {
-                for (Enumeration e = customHeaders_.keys() ; e.hasMoreElements() ;) {
-                    String key = (String)e.nextElement();
-                    String value = (String)customHeaders_.get(key);
-                    connection.setRequestProperty(key, value);
-                }
-            }
-            // connection.setDoOutput(true);
-            //  connection.connect();
-    
-            OutputStream os = connection.openOutputStream();
-            os.write(data);
-            os.close();
-
-            int responseCode = connection.getResponseCode();
-            if (responseCode != HttpConnection.HTTP_OK) {
-                throw new TTransportException("HTTP Response code: " + responseCode);
-            }
-
-            // Read the responses
-            inputStream_ = connection.openInputStream();
-
-        } catch (IOException iox) {
-            System.out.println(iox.toString());
-            throw new TTransportException(iox);
+      if (customHeaders_ != null) {
+        for (Enumeration e = customHeaders_.keys() ; e.hasMoreElements() ;) {
+          String key = (String)e.nextElement();
+          String value = (String)customHeaders_.get(key);
+          connection.setRequestProperty(key, value);
         }
+      }
+  
+      OutputStream os = connection.openOutputStream();
+      os.write(data);
+      os.close();
+
+      int responseCode = connection.getResponseCode();
+      if (responseCode != HttpConnection.HTTP_OK) {
+        throw new TTransportException("HTTP Response code: " + responseCode);
+      }
+
+      // Read the responses
+      inputStream_ = connection.openInputStream();
+    } catch (IOException iox) {
+      System.out.println(iox.toString());
+      throw new TTransportException(iox);
     }
+  }
 }

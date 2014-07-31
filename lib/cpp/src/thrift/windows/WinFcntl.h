@@ -28,6 +28,10 @@
 #error This is a MSVC header only.
 #endif
 
+#ifdef _WIN32_WCE
+#include <string>
+#endif
+
 // Win32
 #include <Winsock2.h>
 #include <thrift/transport/PlatformSocket.h>
@@ -44,5 +48,9 @@ extern "C" {
 int thrift_fcntl(THRIFT_SOCKET fd, int cmd, int flags);
 int thrift_poll(THRIFT_POLLFD *fdArray, ULONG nfds, INT timeout);
 }
+
+#ifdef _WIN32_WCE
+std::string thrift_wstr2str(std::wstring ws);
+#endif
 
 #endif // _THRIFT_WINDOWS_FCNTL_H_

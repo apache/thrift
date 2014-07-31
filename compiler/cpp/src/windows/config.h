@@ -37,6 +37,10 @@
 #define PRIu64 "I64d"
 #define PRIi64 "I64d"
 
+// squelch deprecation warnings
 #pragma warning(disable:4996)
+// squelch bool conversion performance warning
+#pragma warning(disable:4800)
+
 
 #endif // _THRIFT_WINDOWS_CONFIG_H_

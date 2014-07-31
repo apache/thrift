@@ -65,7 +65,8 @@ public abstract class TAsyncMethodCall<T> {
   private final AsyncMethodCallback<T> callback;
   private final boolean isOneway;
   private long sequenceId;
-  
+  private final long timeout;
+
   private ByteBuffer sizeBuffer;
   private final byte[] sizeBufferArray = new byte[4];
   private ByteBuffer frameBuffer;
@@ -79,6 +80,7 @@ public abstract class TAsyncMethodCall<T> {
     this.client = client;
     this.isOneway = isOneway;
     this.sequenceId = TAsyncMethodCall.sequenceIdCounter.getAndIncrement();
+    this.timeout = client.getTimeout();
   }
 
   protected State getState() {
@@ -102,11 +104,11 @@ public abstract class TAsyncMethodCall<T> {
   }
   
   public boolean hasTimeout() {
-    return client.hasTimeout();
+    return timeout > 0;
   }
   
   public long getTimeoutTimestamp() {
-    return client.getTimeout() + startTime;
+    return timeout + startTime;
   }
 
   protected abstract void write_args(TProtocol protocol) throws TException;

@@ -145,9 +145,6 @@ class TNonblockingServer : public TServer {
   /// # of IO threads to use by default
   static const int DEFAULT_IO_THREADS = 1;
 
-  /// File descriptor of an invalid socket
-  static const THRIFT_SOCKET INVALID_SOCKET_VALUE = -1;
-
   /// # of IO threads this server will use
   size_t numIOThreads_;
 
@@ -277,7 +274,7 @@ class TNonblockingServer : public TServer {
   void handleEvent(THRIFT_SOCKET fd, short which);
 
   void init(int port) {
-    serverSocket_ = -1;
+    serverSocket_ = THRIFT_INVALID_SOCKET;
     numIOThreads_ = DEFAULT_IO_THREADS;
     nextIOThread_ = 0;
     useHighPriorityIOThreads_ = false;

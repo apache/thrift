@@ -34,5 +34,6 @@ clean-local:
 	$(RM) -r gen-*
 
 EXTRA_DIST = \
+	PythonClient.py \
 	PythonServer.py \
-	PythonClient.py
+	PythonServer.tac

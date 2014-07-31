@@ -23,6 +23,10 @@ if MINGW
 # do nothing, just build the compiler
 else
 
+if WITH_C_GLIB
+SUBDIRS += c_glib
+endif
+
 if WITH_CPP
 SUBDIRS += cpp
 endif
@@ -30,14 +34,6 @@ endif
 if WITH_JAVA
 SUBDIRS += java
 SUBDIRS += js
-endif
-
-if WITH_PERL
-#SUBDIRS += perl
-endif
-
-if WITH_PHP
-#SUBDIRS += php
 endif
 
 if WITH_PYTHON
@@ -51,11 +47,15 @@ SUBDIRS += rb
 endif
 
 if WITH_HASKELL
-#SUBDIRS += hs
+SUBDIRS += hs
 endif
 
 if WITH_GO
 SUBDIRS += go
+endif
+
+if WITH_NODEJS
+SUBDIRS += nodejs
 endif
 
 #
@@ -63,5 +63,20 @@ endif
 #
 all-local:
 	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/tutorial/tutorial.thrift
-
 endif
+
+# Any folders or files not listed above being added to SUBDIR need to be placed here in
+# EXTRA_DIST to be included in the release
+EXTRA_DIST = \
+	as3 \
+	csharp \
+	d \
+	delphi \
+	erl \
+	hs \
+	ocaml \
+	perl \
+	php \
+	shared.thrift \
+	tutorial.thrift \
+	README.md

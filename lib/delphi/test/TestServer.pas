@@ -39,6 +39,7 @@ uses
   Thrift.Test,
   Thrift,
   TestConstants,
+  TestServerEvents,
   Contnrs;
 
 type
@@ -482,7 +483,7 @@ var
   UseBufferedSockets : Boolean;
   UseFramed : Boolean;
   Port : Integer;
-  AnonPipe : Boolean;
+  AnonPipe, ServerEvents : Boolean;
   sPipeName : string;
   testHandler : ITestHandler;
   testProcessor : IProcessor;
@@ -498,13 +499,14 @@ var
 const
   // pipe timeouts to be used
   DEBUG_TIMEOUT   = 30 * 1000;
-  RELEASE_TIMEOUT = 0;  // server-side default
+  RELEASE_TIMEOUT = DEFAULT_THRIFT_PIPE_TIMEOUT;  // server-side default
   TIMEOUT         = RELEASE_TIMEOUT;
 begin
   try
     UseBufferedSockets := False;
     UseFramed := False;
     AnonPipe := FALSE;
+    ServerEvents := FALSE;
     protType := prot_Binary;
     Port := 9090;
     sPipeName := '';
@@ -549,8 +551,12 @@ begin
             Break;
           end;
         end;
-      end else
+      end
+      else if ( s = '-events' ) then
       begin
+        ServerEvents := True;
+      end
+      else begin
         // Fall back to the older boolean syntax
         UseBufferedSockets := StrToBoolDef( args[1], UseBufferedSockets);
       end
@@ -606,6 +612,12 @@ begin
                                           ProtocolFactory);
 
     testHandler.SetServer( ServerEngine);
+
+    // test events?
+    if ServerEvents then begin
+      Console.WriteLine('- server events test enabled');
+      ServerEngine.ServerEvents := TServerEventsImpl.Create;
+    end;
 
     // start the client now when we have the anon handles, but before the server starts
     if AnonPipe

@@ -41,7 +41,6 @@
 #define OPENSSL_VERSION_NO_THREAD_ID 0x10000000L
 
 using namespace std;
-using namespace boost;
 using namespace apache::thrift::concurrency;
 
 struct CRYPTO_dynlock_value {
@@ -50,20 +49,132 @@ struct CRYPTO_dynlock_value {
 
 namespace apache { namespace thrift { namespace transport {
 
+// OpenSSL initialization/cleanup
+
+static bool openSSLInitialized = false;
+static boost::shared_array<Mutex> mutexes;
+
+static void callbackLocking(int mode, int n, const char*, int) {
+  if (mode & CRYPTO_LOCK) {
+    mutexes[n].lock();
+  } else {
+    mutexes[n].unlock();
+  }
+}
+
+#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
+static unsigned long callbackThreadID() {
+  return (unsigned long) pthread_self();
+}
+#endif
+
+static CRYPTO_dynlock_value* dyn_create(const char*, int) {
+  return new CRYPTO_dynlock_value;
+}
+
+static void dyn_lock(int mode,
+                     struct CRYPTO_dynlock_value* lock,
+                     const char*, int) {
+  if (lock != NULL) {
+    if (mode & CRYPTO_LOCK) {
+      lock->mutex.lock();
+    } else {
+      lock->mutex.unlock();
+    }
+  }
+}
+
+static void dyn_destroy(struct CRYPTO_dynlock_value* lock, const char*, int) {
+  delete lock;
+}
+
+void initializeOpenSSL() {
+  if (openSSLInitialized) {
+    return;
+  }
+  openSSLInitialized = true;
+  SSL_library_init();
+  SSL_load_error_strings();
+  // static locking
+  mutexes = boost::shared_array<Mutex>(new Mutex[::CRYPTO_num_locks()]);
+  if (mutexes == NULL) {
+    throw TTransportException(TTransportException::INTERNAL_ERROR,
+          "initializeOpenSSL() failed, "
+          "out of memory while creating mutex array");
+  }
+#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
+  CRYPTO_set_id_callback(callbackThreadID);
+#endif
+  CRYPTO_set_locking_callback(callbackLocking);
+  // dynamic locking
+  CRYPTO_set_dynlock_create_callback(dyn_create);
+  CRYPTO_set_dynlock_lock_callback(dyn_lock);
+  CRYPTO_set_dynlock_destroy_callback(dyn_destroy);
+}
+
+void cleanupOpenSSL() {
+  if (!openSSLInitialized) {
+    return;
+  }
+  openSSLInitialized = false;
+#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
+  CRYPTO_set_id_callback(NULL);
+#endif
+  CRYPTO_set_locking_callback(NULL);
+  CRYPTO_set_dynlock_create_callback(NULL);
+  CRYPTO_set_dynlock_lock_callback(NULL);
+  CRYPTO_set_dynlock_destroy_callback(NULL);
+  CRYPTO_cleanup_all_ex_data();
+  ERR_free_strings();
+  EVP_cleanup();
+  ERR_remove_state(0);
+  mutexes.reset();
+}
 
 static void buildErrors(string& message, int error = 0);
 static bool matchName(const char* host, const char* pattern, int size);
 static char uppercase(char c);
 
 // SSLContext implementation
-SSLContext::SSLContext() {
-  ctx_ = SSL_CTX_new(TLSv1_method());
+SSLContext::SSLContext(const SSLProtocol& protocol) {
+  if(protocol == SSLTLS)
+  {
+    ctx_ = SSL_CTX_new(SSLv23_method());
+  }
+  else if(protocol == SSLv3)
+  {
+    ctx_ = SSL_CTX_new(SSLv3_method());
+  }
+  else if(protocol == TLSv1_0)
+  {
+    ctx_ = SSL_CTX_new(TLSv1_method());
+  }
+  else if(protocol == TLSv1_1)
+  {
+    ctx_ = SSL_CTX_new(TLSv1_1_method());
+  }
+  else if(protocol == TLSv1_2)
+  {
+    ctx_ = SSL_CTX_new(TLSv1_2_method());
+  }
+  else
+  {
+    /// UNKNOWN PROTOCOL!
+    throw TSSLException("SSL_CTX_new: Unknown protocol");
+  }
+
   if (ctx_ == NULL) {
     string errors;
     buildErrors(errors);
     throw TSSLException("SSL_CTX_new: " + errors);
   }
   SSL_CTX_set_mode(ctx_, SSL_MODE_AUTO_RETRY);
+
+  // Disable horribly insecure SSLv2!
+  if(protocol == SSLTLS)
+  {
+    SSL_CTX_set_options(ctx_, SSL_OP_NO_SSLv2);
+  }
 }
 
 SSLContext::~SSLContext() {
@@ -88,7 +199,7 @@ TSSLSocket::TSSLSocket(boost::shared_ptr<SSLContext> ctx):
   TSocket(), server_(false), ssl_(NULL), ctx_(ctx) {
 }
 
-TSSLSocket::TSSLSocket(boost::shared_ptr<SSLContext> ctx, int socket):
+TSSLSocket::TSSLSocket(boost::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket):
   TSocket(socket), server_(false), ssl_(NULL), ctx_(ctx) {
 }
 
@@ -334,7 +445,7 @@ void TSSLSocket::authorize() {
       ASN1_STRING* common = X509_NAME_ENTRY_get_data(entry);
       int size = ASN1_STRING_to_UTF8(&utf8, common);
       if (host.empty()) {
-        host = (server() ? getHost() : getHost());
+        host = (server() ? getPeerHost() : getHost());
       }
       decision = access_->verify(host, (char*)utf8, size);
       OPENSSL_free(utf8);
@@ -347,24 +458,27 @@ void TSSLSocket::authorize() {
 }
 
 // TSSLSocketFactory implementation
-bool     TSSLSocketFactory::initialized = false;
 uint64_t TSSLSocketFactory::count_ = 0;
 Mutex    TSSLSocketFactory::mutex_;
+bool     TSSLSocketFactory::manualOpenSSLInitialization_ = false;
 
-TSSLSocketFactory::TSSLSocketFactory(): server_(false) {
+TSSLSocketFactory::TSSLSocketFactory(const SSLProtocol& protocol): server_(false) {
   Guard guard(mutex_);
   if (count_ == 0) {
-    initializeOpenSSL();
+    if (!manualOpenSSLInitialization_) {
+      initializeOpenSSL();
+    }
     randomize();
   }
   count_++;
-  ctx_ = boost::shared_ptr<SSLContext>(new SSLContext);
+  ctx_ = boost::shared_ptr<SSLContext>(new SSLContext(protocol));
 }
 
 TSSLSocketFactory::~TSSLSocketFactory() {
   Guard guard(mutex_);
+  ctx_.reset();
   count_--;
-  if (count_ == 0) {
+  if (count_ == 0 && !manualOpenSSLInitialization_) {
     cleanupOpenSSL();
   }
 }
@@ -375,7 +489,7 @@ boost::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket() {
   return ssl;
 }
 
-boost::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(int socket) {
+boost::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(THRIFT_SOCKET socket) {
   boost::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, socket));
   setup(ssl);
   return ssl;
@@ -489,85 +603,6 @@ int TSSLSocketFactory::passwordCallback(char* password,
   return length;
 }
 
-static shared_array<Mutex> mutexes;
-
-static void callbackLocking(int mode, int n, const char*, int) {
-  if (mode & CRYPTO_LOCK) {
-    mutexes[n].lock();
-  } else {
-    mutexes[n].unlock();
-  }
-}
-
-#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
-static unsigned long callbackThreadID() {
-  return (unsigned long) pthread_self();
-}
-#endif
-
-static CRYPTO_dynlock_value* dyn_create(const char*, int) {
-  return new CRYPTO_dynlock_value;
-}
-
-static void dyn_lock(int mode,
-                     struct CRYPTO_dynlock_value* lock,
-                     const char*, int) {
-  if (lock != NULL) {
-    if (mode & CRYPTO_LOCK) {
-      lock->mutex.lock();
-    } else {
-      lock->mutex.unlock();
-    }
-  }
-}
-
-static void dyn_destroy(struct CRYPTO_dynlock_value* lock, const char*, int) {
-  delete lock;
-}
-
-void TSSLSocketFactory::initializeOpenSSL() {
-  if (initialized) {
-    return;
-  }
-  initialized = true;
-  SSL_library_init();
-  SSL_load_error_strings();
-  // static locking
-  mutexes = shared_array<Mutex>(new Mutex[::CRYPTO_num_locks()]);
-  if (mutexes == NULL) {
-    throw TTransportException(TTransportException::INTERNAL_ERROR,
-          "initializeOpenSSL() failed, "
-          "out of memory while creating mutex array");
-  }
-#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
-  CRYPTO_set_id_callback(callbackThreadID);
-#endif
-  CRYPTO_set_locking_callback(callbackLocking);
-  // dynamic locking
-  CRYPTO_set_dynlock_create_callback(dyn_create);
-  CRYPTO_set_dynlock_lock_callback(dyn_lock);
-  CRYPTO_set_dynlock_destroy_callback(dyn_destroy);
-}
-
-void TSSLSocketFactory::cleanupOpenSSL() {
-  if (!initialized) {
-    return;
-  }
-  initialized = false;
-#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
-  CRYPTO_set_id_callback(NULL);
-#endif
-  CRYPTO_set_locking_callback(NULL);
-  CRYPTO_set_dynlock_create_callback(NULL);
-  CRYPTO_set_dynlock_lock_callback(NULL);
-  CRYPTO_set_dynlock_destroy_callback(NULL);
-  CRYPTO_cleanup_all_ex_data();
-  ERR_free_strings();
-  EVP_cleanup();
-  ERR_remove_state(0);
-  mutexes.reset();
-}
-
 // extract error messages from error queue
 void buildErrors(string& errors, int errno_copy) {
   unsigned long  errorCode;
@@ -591,7 +626,7 @@ void buildErrors(string& errors, int errno_copy) {
     }
   }
   if (errors.empty()) {
-    errors = "error code: " + lexical_cast<string>(errno_copy);
+    errors = "error code: " + boost::lexical_cast<string>(errno_copy);
   }
 }
 

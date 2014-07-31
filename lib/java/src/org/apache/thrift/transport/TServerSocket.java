@@ -46,19 +46,27 @@ public class TServerSocket extends TServerTransport {
    */
   private int clientTimeout_ = 0;
 
+  public static class ServerSocketTransportArgs extends AbstractServerTransportArgs<ServerSocketTransportArgs> {
+    ServerSocket serverSocket;
+
+    public ServerSocketTransportArgs serverSocket(ServerSocket serverSocket) {
+      this.serverSocket = serverSocket;
+      return this;
+    }
+  }
+
   /**
    * Creates a server socket from underlying socket object
    */
-  public TServerSocket(ServerSocket serverSocket) {
+  public TServerSocket(ServerSocket serverSocket) throws TTransportException {
     this(serverSocket, 0);
   }
 
   /**
    * Creates a server socket from underlying socket object
    */
-  public TServerSocket(ServerSocket serverSocket, int clientTimeout) {
-    serverSocket_ = serverSocket;
-    clientTimeout_ = clientTimeout;
+  public TServerSocket(ServerSocket serverSocket, int clientTimeout) throws TTransportException {
+    this(new ServerSocketTransportArgs().serverSocket(serverSocket).clientTimeout(clientTimeout));
   }
 
   /**
@@ -80,17 +88,25 @@ public class TServerSocket extends TServerTransport {
   }
 
   public TServerSocket(InetSocketAddress bindAddr, int clientTimeout) throws TTransportException {
-    clientTimeout_ = clientTimeout;
+    this(new ServerSocketTransportArgs().bindAddr(bindAddr).clientTimeout(clientTimeout));
+  }
+
+  public TServerSocket(ServerSocketTransportArgs args) throws TTransportException {
+    clientTimeout_ = args.clientTimeout;
+    if (args.serverSocket != null) {
+      this.serverSocket_ = args.serverSocket;
+      return;
+    }
     try {
       // Make server socket
       serverSocket_ = new ServerSocket();
       // Prevent 2MSL delay problem on server restarts
       serverSocket_.setReuseAddress(true);
       // Bind to listening port
-      serverSocket_.bind(bindAddr);
+      serverSocket_.bind(args.bindAddr, args.backlog);
     } catch (IOException ioe) {
       serverSocket_ = null;
-      throw new TTransportException("Could not create ServerSocket on address " + bindAddr.toString() + ".");
+      throw new TTransportException("Could not create ServerSocket on address " + args.bindAddr.toString() + ".");
     }
   }
 

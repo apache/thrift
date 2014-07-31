@@ -86,6 +86,7 @@ implementation
 constructor TSerializer.Create();
 // Create a new TSerializer that uses the TBinaryProtocol by default.
 begin
+  //no inherited;  
   Create( TBinaryProtocolImpl.TFactory.Create);
 end;
 
@@ -156,6 +157,7 @@ end;
 constructor TDeserializer.Create();
 // Create a new TDeserializer that uses the TBinaryProtocol by default.
 begin
+  //no inherited;  
   Create( TBinaryProtocolImpl.TFactory.Create);
 end;
 

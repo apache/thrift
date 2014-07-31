@@ -320,6 +320,7 @@ end;
 
 constructor TThriftDictionaryImpl<TKey, TValue>.Create(ACapacity: Integer);
 begin
+  inherited Create;
   FDictionaly := TDictionary<TKey,TValue>.Create( ACapacity );
 end;
 
@@ -449,6 +450,7 @@ end;
 
 constructor TThriftListImpl<T>.Create;
 begin
+  inherited;
   FList := TList<T>.Create;
 end;
 

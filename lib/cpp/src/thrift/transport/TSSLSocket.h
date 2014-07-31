@@ -31,6 +31,33 @@ namespace apache { namespace thrift { namespace transport {
 class AccessManager;
 class SSLContext;
 
+enum SSLProtocol {
+	SSLTLS		= 0,	// Supports SSLv3 and TLSv1.
+	//SSLv2		= 1,	// HORRIBLY INSECURE!
+	SSLv3		= 2,	// Supports SSLv3 only.
+	TLSv1_0		= 3,	// Supports TLSv1_0 only.
+	TLSv1_1		= 4,	// Supports TLSv1_1 only.
+	TLSv1_2		= 5 	// Supports TLSv1_2 only.
+};
+
+
+/**
+ * Initialize OpenSSL library.  This function, or some other
+ * equivalent function to initialize OpenSSL, must be called before
+ * TSSLSocket is used.  If you set TSSLSocketFactory to use manual
+ * OpenSSL initialization, you should call this function or otherwise
+ * ensure OpenSSL is initialized yourself.
+ */
+void initializeOpenSSL();
+/**
+ * Cleanup OpenSSL library.  This function should be called to clean
+ * up OpenSSL after use of OpenSSL functionality is finished.  If you
+ * set TSSLSocketFactory to use manual OpenSSL initialization, you
+ * should call this function yourself or ensure that whatever
+ * initialized OpenSSL cleans it up too.
+ */
+void cleanupOpenSSL();
+
 /**
  * OpenSSL implementation for SSL socket interface.
  */
@@ -75,7 +102,7 @@ protected:
    *
    * @param socket An existing socket
    */
-  TSSLSocket(boost::shared_ptr<SSLContext> ctx, int socket);
+  TSSLSocket(boost::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket);
   /**
    * Constructor.
    *
@@ -108,8 +135,10 @@ class TSSLSocketFactory {
  public:
   /**
    * Constructor/Destructor
+   *
+   * @param protocol The SSL/TLS protocol to use.
    */
-  TSSLSocketFactory();
+  TSSLSocketFactory(const SSLProtocol& protocol = SSLTLS);
   virtual ~TSSLSocketFactory();
   /**
    * Create an instance of TSSLSocket with a fresh new socket.
@@ -120,7 +149,7 @@ class TSSLSocketFactory {
    *
    * @param socket An existing socket.
    */
-  virtual boost::shared_ptr<TSSLSocket> createSocket(int socket);
+  virtual boost::shared_ptr<TSSLSocket> createSocket(THRIFT_SOCKET socket);
    /**
    * Create an instance of TSSLSocket.
    *
@@ -189,11 +218,12 @@ class TSSLSocketFactory {
   virtual void access(boost::shared_ptr<AccessManager> manager) {
     access_ = manager;
   }
+  static void setManualOpenSSLInitialization(bool manualOpenSSLInitialization) {
+    manualOpenSSLInitialization_ = manualOpenSSLInitialization;
+  }
  protected:
   boost::shared_ptr<SSLContext> ctx_;
 
-  static void initializeOpenSSL();
-  static void cleanupOpenSSL();
   /**
    * Override this method for custom password callback. It may be called
    * multiple times at any time during a session as necessary.
@@ -205,9 +235,9 @@ class TSSLSocketFactory {
  private:
   bool server_;
   boost::shared_ptr<AccessManager> access_;
-  static bool initialized;
   static concurrency::Mutex mutex_;
   static uint64_t count_;
+  static bool manualOpenSSLInitialization_;
   void setup(boost::shared_ptr<TSSLSocket> ssl);
   static int passwordCallback(char* password, int size, int, void* data);
 };
@@ -234,7 +264,7 @@ class TSSLException: public TTransportException {
  */
 class SSLContext {
  public:
-  SSLContext();
+  SSLContext(const SSLProtocol& protocol = SSLTLS);
   virtual ~SSLContext();
   SSL* createSSL();
   SSL_CTX* get() { return ctx_; }

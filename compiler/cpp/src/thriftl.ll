@@ -33,13 +33,30 @@
  * We should revert the Makefile.am changes once Apple ships a reasonable
  * GCC.
  */
+#ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wunused-label"
+#endif
 
+#ifdef _MSC_VER
+//warning C4102: 'find_rule' : unreferenced label
+#pragma warning(disable:4102)
+//avoid isatty redefinition
+#define YY_NEVER_INTERACTIVE 1
+#endif
+
+#include <cassert>
 #include <string>
 #include <errno.h>
 #include <stdlib.h>
 
+#ifdef _MSC_VER
+#include "windows/config.h"
+#else
+#ifndef _WIN32
+#include "config.h"
+#endif
+#endif
 #include "main.h"
 #include "globals.h"
 #include "parse/t_program.h"
@@ -48,7 +65,11 @@
  * Must be included AFTER parse/t_program.h, but I can't remember why anymore
  * because I wrote this a while ago.
  */
+#if defined(BISON_USE_PARSER_H_EXTENSION)
+#include "thrifty.h"
+#else
 #include "thrifty.hh"
+#endif
 
 void thrift_reserved_keyword(char* keyword) {
   yyerror("Cannot use reserved language keyword: \"%s\"\n", keyword);
@@ -170,6 +191,7 @@ literal_begin (['\"])
   pwarning(0, "\"async\" is deprecated.  It is called \"oneway\" now.\n");
   return tok_oneway;
 }
+"&"                  { return tok_reference;            }
 
 
 "BEGIN"              { thrift_reserved_keyword(yytext); }
@@ -366,9 +388,17 @@ literal_begin (['\"])
   if (g_parse_mode == PROGRAM) {
     clear_doctext();
     g_doctext = strdup(yytext + 3);
-    g_doctext[strlen(g_doctext) - 2] = '\0';
+    assert(strlen(g_doctext) >= 2);
+    g_doctext[strlen(g_doctext) - 2] = ' ';
+    g_doctext[strlen(g_doctext) - 1] = '\0';
     g_doctext = clean_up_doctext(g_doctext);
     g_doctext_lineno = yylineno;
+    if( (g_program_doctext_candidate == NULL) && (g_program_doctext_status == INVALID)){
+      g_program_doctext_candidate = strdup(g_doctext);
+      g_program_doctext_lineno = g_doctext_lineno;
+      g_program_doctext_status = STILL_CANDIDATE;
+      pdebug("%s","program doctext set to STILL_CANDIDATE");
+    }
   }
 }
 

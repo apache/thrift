@@ -76,7 +76,7 @@ using boost::shared_ptr;
 
 TServerSocket::TServerSocket(int port) :
   port_(port),
-  serverSocket_(-1),
+  serverSocket_(THRIFT_INVALID_SOCKET),
   acceptBacklog_(DEFAULT_BACKLOG),
   sendTimeout_(0),
   recvTimeout_(0),
@@ -85,12 +85,14 @@ TServerSocket::TServerSocket(int port) :
   retryDelay_(0),
   tcpSendBuffer_(0),
   tcpRecvBuffer_(0),
-  intSock1_(-1),
-  intSock2_(-1) {}
+  keepAlive_(false),
+  intSock1_(THRIFT_INVALID_SOCKET),
+  intSock2_(THRIFT_INVALID_SOCKET)
+{}
 
 TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout) :
   port_(port),
-  serverSocket_(-1),
+  serverSocket_(THRIFT_INVALID_SOCKET),
   acceptBacklog_(DEFAULT_BACKLOG),
   sendTimeout_(sendTimeout),
   recvTimeout_(recvTimeout),
@@ -99,13 +101,15 @@ TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout) :
   retryDelay_(0),
   tcpSendBuffer_(0),
   tcpRecvBuffer_(0),
-  intSock1_(-1),
-  intSock2_(-1) {}
+  keepAlive_(false),
+  intSock1_(THRIFT_INVALID_SOCKET),
+  intSock2_(THRIFT_INVALID_SOCKET)
+{}
 
 TServerSocket::TServerSocket(string path) :
   port_(0),
   path_(path),
-  serverSocket_(-1),
+  serverSocket_(THRIFT_INVALID_SOCKET),
   acceptBacklog_(DEFAULT_BACKLOG),
   sendTimeout_(0),
   recvTimeout_(0),
@@ -114,8 +118,10 @@ TServerSocket::TServerSocket(string path) :
   retryDelay_(0),
   tcpSendBuffer_(0),
   tcpRecvBuffer_(0),
-  intSock1_(-1),
-  intSock2_(-1) {}
+  keepAlive_(false),
+  intSock1_(THRIFT_INVALID_SOCKET),
+  intSock2_(THRIFT_INVALID_SOCKET)
+{}
 
 TServerSocket::~TServerSocket() {
   close();
@@ -154,11 +160,14 @@ void TServerSocket::setTcpRecvBuffer(int tcpRecvBuffer) {
 }
 
 void TServerSocket::listen() {
+#ifdef _WIN32
+    TWinsockSingleton::create();
+#endif // _WIN32
   THRIFT_SOCKET sv[2];
   if (-1 == THRIFT_SOCKETPAIR(AF_LOCAL, SOCK_STREAM, 0, sv)) {
     GlobalOutput.perror("TServerSocket::listen() socketpair() ", THRIFT_GET_SOCKET_ERROR);
-    intSock1_ = -1;
-    intSock2_ = -1;
+    intSock1_ = THRIFT_INVALID_SOCKET;
+    intSock2_ = THRIFT_INVALID_SOCKET;
   } else {
     intSock1_ = sv[1];
     intSock2_ = sv[0];
@@ -194,7 +203,7 @@ void TServerSocket::listen() {
     serverSocket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
   }
 
-  if (serverSocket_ == -1) {
+  if (serverSocket_ == THRIFT_INVALID_SOCKET) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
     GlobalOutput.perror("TServerSocket::listen() socket() ", errno_copy);
     close();
@@ -304,21 +313,20 @@ void TServerSocket::listen() {
 #ifndef _WIN32
 
     // Unix Domain Socket
-    struct sockaddr_un address;
-    socklen_t len;
-
-    if (path_.length() > sizeof(address.sun_path)) {
+    size_t len = path_.size() + 1;
+    if (len > sizeof(sockaddr_un::sun_path)) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       GlobalOutput.perror("TSocket::listen() Unix Domain socket path too long", errno_copy);
       throw TTransportException(TTransportException::NOT_OPEN, " Unix Domain socket path too long");
     }
 
+    struct sockaddr_un address;
     address.sun_family = AF_UNIX;
-    THRIFT_SNPRINTF(address.sun_path, sizeof(address.sun_path), "%s", path_.c_str());
-    len = sizeof(address);
+    memcpy(address.sun_path, path_.c_str(), len);
+    socklen_t structlen = static_cast<socklen_t>(sizeof(address));
 
     do {
-      if (0 == ::bind(serverSocket_, (struct sockaddr *) &address, len)) {
+      if (0 == ::bind(serverSocket_, (struct sockaddr *) &address, structlen)) {
         break;
       }
       // use short circuit evaluation here to only sleep if we need to
@@ -337,6 +345,29 @@ void TServerSocket::listen() {
 
     // free addrinfo
     freeaddrinfo(res0);
+
+    // retrieve bind info
+    if (port_ == 0 && retries <= retryLimit_) {
+      struct sockaddr sa;
+      socklen_t len = sizeof(sa);
+      std::memset(&sa, 0, len);
+      if (::getsockname(serverSocket_, &sa, &len) < 0) {
+        int errno_copy = errno;
+        GlobalOutput.perror("TServerSocket::getPort() getsockname() ", errno_copy);
+      }
+      else {
+        if (sa.sa_family == AF_INET6) {
+          const struct sockaddr_in6*
+            sin = reinterpret_cast<const struct sockaddr_in6 *>(&sa);
+          port_ = ntohs(sin->sin6_port);
+        }
+        else {
+          const struct sockaddr_in*
+            sin = reinterpret_cast<const struct sockaddr_in *>(&sa);
+          port_ = ntohs(sin->sin_port);
+        }
+      }
+    }
   }
 
   // throw an error if we failed to bind properly
@@ -354,6 +385,8 @@ void TServerSocket::listen() {
                               THRIFT_GET_SOCKET_ERROR);
   }
 
+  if(listenCallback_) listenCallback_(serverSocket_);
+
   // Call listen
   if (-1 == ::listen(serverSocket_, acceptBacklog_)) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
@@ -365,8 +398,12 @@ void TServerSocket::listen() {
   // The socket is now listening!
 }
 
+int TServerSocket::getPort() {
+    return port_;
+}
+
 shared_ptr<TTransport> TServerSocket::acceptImpl() {
-  if (serverSocket_ == -1) {
+  if (serverSocket_ == THRIFT_INVALID_SOCKET) {
     throw TTransportException(TTransportException::NOT_OPEN, "TServerSocket not listening");
   }
 
@@ -379,7 +416,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     std::memset(fds, 0 , sizeof(fds));
     fds[0].fd = serverSocket_;
     fds[0].events = THRIFT_POLLIN;
-    if (intSock2_ != -1) {
+    if (intSock2_ != THRIFT_INVALID_SOCKET) {
       fds[1].fd = intSock2_;
       fds[1].events = THRIFT_POLLIN;
     }
@@ -401,7 +438,8 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
       throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
     } else if (ret > 0) {
       // Check for an interrupt signal
-      if (intSock2_ != -1 && (fds[1].revents & THRIFT_POLLIN)) {
+      if (intSock2_ != THRIFT_INVALID_SOCKET
+          && (fds[1].revents & THRIFT_POLLIN)) {
         int8_t buf;
         if (-1 == recv(intSock2_, cast_sockopt(&buf), sizeof(int8_t), 0)) {
           GlobalOutput.perror("TServerSocket::acceptImpl() recv() interrupt ", THRIFT_GET_SOCKET_ERROR);
@@ -452,7 +490,12 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   if (recvTimeout_ > 0) {
     client->setRecvTimeout(recvTimeout_);
   }
+  if (keepAlive_) {
+    client->setKeepAlive(keepAlive_);
+  }
   client->setCachedAddress((sockaddr*) &clientAddress, size);
+
+  if(acceptCallback_) acceptCallback_(clientSocket);
 
   return client;
 }
@@ -462,7 +505,7 @@ shared_ptr<TSocket> TServerSocket::createSocket(THRIFT_SOCKET clientSocket) {
 }
 
 void TServerSocket::interrupt() {
-  if (intSock1_ != -1) {
+  if (intSock1_ != THRIFT_INVALID_SOCKET) {
     int8_t byte = 0;
     if (-1 == send(intSock1_, cast_sockopt(&byte), sizeof(int8_t), 0)) {
       GlobalOutput.perror("TServerSocket::interrupt() send() ", THRIFT_GET_SOCKET_ERROR);
@@ -471,19 +514,19 @@ void TServerSocket::interrupt() {
 }
 
 void TServerSocket::close() {
-  if (serverSocket_ != -1) {
+  if (serverSocket_ != THRIFT_INVALID_SOCKET) {
     shutdown(serverSocket_, THRIFT_SHUT_RDWR);
     ::THRIFT_CLOSESOCKET(serverSocket_);
   }
-  if (intSock1_ != -1) {
+  if (intSock1_ != THRIFT_INVALID_SOCKET) {
       ::THRIFT_CLOSESOCKET(intSock1_);
   }
-  if (intSock2_ != -1) {
+  if (intSock2_ != THRIFT_INVALID_SOCKET) {
     ::THRIFT_CLOSESOCKET(intSock2_);
   }
-  serverSocket_ = -1;
-  intSock1_ = -1;
-  intSock2_ = -1;
+  serverSocket_ = THRIFT_INVALID_SOCKET;
+  intSock1_ = THRIFT_INVALID_SOCKET;
+  intSock2_ = THRIFT_INVALID_SOCKET;
 }
 
 }}} // apache::thrift::transport

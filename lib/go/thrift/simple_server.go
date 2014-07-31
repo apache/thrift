@@ -21,11 +21,12 @@ package thrift
 
 import (
 	"log"
+	"runtime/debug"
 )
 
 // Simple, non-concurrent server for testing.
 type TSimpleServer struct {
-	stopped bool
+	quit chan struct{}
 
 	processorFactory       TProcessorFactory
 	serverTransport        TServerTransport
@@ -78,12 +79,14 @@ func NewTSimpleServerFactory4(processorFactory TProcessorFactory, serverTranspor
 }
 
 func NewTSimpleServerFactory6(processorFactory TProcessorFactory, serverTransport TServerTransport, inputTransportFactory TTransportFactory, outputTransportFactory TTransportFactory, inputProtocolFactory TProtocolFactory, outputProtocolFactory TProtocolFactory) *TSimpleServer {
-	return &TSimpleServer{processorFactory: processorFactory,
+	return &TSimpleServer{
+		processorFactory:       processorFactory,
 		serverTransport:        serverTransport,
 		inputTransportFactory:  inputTransportFactory,
 		outputTransportFactory: outputTransportFactory,
 		inputProtocolFactory:   inputProtocolFactory,
 		outputProtocolFactory:  outputProtocolFactory,
+		quit: make(chan struct{}, 1),
 	}
 }
 
@@ -111,38 +114,58 @@ func (p *TSimpleServer) OutputProtocolFactory() TProtocolFactory {
 	return p.outputProtocolFactory
 }
 
+func (p *TSimpleServer) Listen() error {
+	return p.serverTransport.Listen()
+}
+
+func (p *TSimpleServer) AcceptLoop() error {
+	for {
+		select {
+		case <-p.quit:
+			return nil
+		default:
+		}
+
+		client, err := p.serverTransport.Accept()
+		if err != nil {
+			log.Println("Accept err: ", err)
+		}
+		if client != nil {
+			go func() {
+				if err := p.processRequests(client); err != nil {
+					log.Println("error processing request:", err)
+				}
+			}()
+		}
+	}
+}
+
 func (p *TSimpleServer) Serve() error {
-	p.stopped = false
-	err := p.serverTransport.Listen()
+	err := p.Listen()
 	if err != nil {
 		return err
 	}
-	for !p.stopped {
-		client, err := p.serverTransport.Accept()
-		if err != nil {
-			return err
-		}
-		if client != nil {
-			if err := p.processRequest(client); err != nil {
-				log.Println("error processing request:", err)
-			}
-		}
-	}
+	p.AcceptLoop()
 	return nil
 }
 
 func (p *TSimpleServer) Stop() error {
-	p.stopped = true
+	p.quit <- struct{}{}
 	p.serverTransport.Interrupt()
 	return nil
 }
 
-func (p *TSimpleServer) processRequest(client TTransport) error {
+func (p *TSimpleServer) processRequests(client TTransport) error {
 	processor := p.processorFactory.GetProcessor(client)
 	inputTransport := p.inputTransportFactory.GetTransport(client)
 	outputTransport := p.outputTransportFactory.GetTransport(client)
 	inputProtocol := p.inputProtocolFactory.GetProtocol(inputTransport)
 	outputProtocol := p.outputProtocolFactory.GetProtocol(outputTransport)
+	defer func() {
+		if e := recover(); e != nil {
+			log.Printf("panic in processor: %s: %s", e, debug.Stack())
+		}
+	}()
 	if inputTransport != nil {
 		defer inputTransport.Close()
 	}
@@ -151,12 +174,13 @@ func (p *TSimpleServer) processRequest(client TTransport) error {
 	}
 	for {
 		ok, err := processor.Process(inputProtocol, outputProtocol)
-		if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE{
+		if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE {
 			return nil
 		} else if err != nil {
+			log.Printf("error processing request: %s", err)
 			return err
 		}
-		if !ok || !inputProtocol.Transport().Peek() {
+		if !ok {
 			break
 		}
 	}

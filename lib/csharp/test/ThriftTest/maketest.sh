@@ -26,4 +26,5 @@ gmcs  /out:TestClientServer.exe /reference:../../Thrift.dll /reference:ThriftImp
 export MONO_PATH=../../
 
 timeout 120 ./TestClientServer.exe server &
+sleep 1
 ./TestClientServer.exe client

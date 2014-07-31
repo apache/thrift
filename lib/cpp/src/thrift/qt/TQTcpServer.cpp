@@ -80,11 +80,11 @@ void TQTcpServer::processIncoming()
     // when the QTcpServer is destroyed, but any real app should delete this
     // class before deleting the QTcpServer that we are using
     shared_ptr<QTcpSocket> connection(server_->nextPendingConnection());
-    
+
     shared_ptr<TTransport> transport;
     shared_ptr<TProtocol> iprot;
     shared_ptr<TProtocol> oprot;
-    
+
     try {
       transport = shared_ptr<TTransport>(new TQIODeviceTransport(connection));
       iprot = shared_ptr<TProtocol>(pfact_->getProtocol(transport));
@@ -93,13 +93,13 @@ void TQTcpServer::processIncoming()
       qWarning("[TQTcpServer] Failed to initialize transports/protocols");
       continue;
     }
-    
+
     ctxMap_[connection.get()] =
       shared_ptr<ConnectionContext>(
          new ConnectionContext(connection, transport, iprot, oprot));
-    
+
     connect(connection.get(), SIGNAL(readyRead()), SLOT(beginDecode()));
-    
+
     // need to use QueuedConnection since we will be deleting the socket in the slot
     connect(connection.get(), SIGNAL(disconnected()), SLOT(socketClosed()),
             Qt::QueuedConnection);
@@ -115,9 +115,9 @@ void TQTcpServer::beginDecode()
     qWarning("[TQTcpServer] Got data on an unknown QTcpSocket");
     return;
   }
-  
+
   shared_ptr<ConnectionContext> ctx = ctxMap_[connection];
-  
+
   try {
     processor_->process(
       bind(&TQTcpServer::finish, this,
@@ -142,7 +142,7 @@ void TQTcpServer::socketClosed()
     qWarning("[TQTcpServer] Unknown QTcpSocket closed");
     return;
   }
-  
+
   ctxMap_.erase(connection);
 }
 

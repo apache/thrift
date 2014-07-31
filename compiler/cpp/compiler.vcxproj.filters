@@ -164,6 +164,9 @@
     </ClCompile>
     <ClCompile Include="src\thriftl.cc" />
     <ClCompile Include="src\thrifty.cc" />
+    <ClCompile Include="src\parse\t_typedef.cc">
+      <Filter>parse</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\thriftl.ll" />

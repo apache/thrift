@@ -255,7 +255,7 @@ string t_as3_generator::as3_package() {
   if (!package_name_.empty()) {
     return string("package ") + package_name_ + " ";
   }
-  return "";
+  return "package ";
 }
 
 /**
@@ -1442,7 +1442,17 @@ void t_as3_generator::generate_service(t_service* tservice) {
   f_service_ << endl <<
     as3_type_imports() <<
     as3_thrift_imports() <<
-    as3_thrift_gen_imports(tservice) << endl;
+    as3_thrift_gen_imports(tservice);
+
+  if(tservice->get_extends() != NULL) {
+    t_type* parent = tservice->get_extends();
+    string parent_namespace = parent->get_program()->get_namespace("as3");
+    if(!parent_namespace.empty() && parent_namespace != package_name_) {
+      f_service_ << "import " << type_name(parent) << ";" << endl;
+    }
+  }
+
+  f_service_ << endl;
 
   generate_service_interface(tservice);
 
@@ -1461,15 +1471,28 @@ void t_as3_generator::generate_service(t_service* tservice) {
   f_service_ << endl <<
   as3_type_imports() <<
   as3_thrift_imports() <<
-  as3_thrift_gen_imports(tservice) << endl;
-  
+  as3_thrift_gen_imports(tservice);
+
+
+  if(tservice->get_extends() != NULL) {
+    t_type* parent = tservice->get_extends();
+    string parent_namespace = parent->get_program()->get_namespace("as3");
+    if(!parent_namespace.empty() && parent_namespace != package_name_) {
+      f_service_ << "import " << type_name(parent) << "Impl;" << endl;
+    }
+  }
+
+  f_service_ << endl;
+
   generate_service_client(tservice);
   scope_down(f_service_);
   
   f_service_ << as3_type_imports();
   f_service_ << as3_thrift_imports();
   f_service_ << as3_thrift_gen_imports(tservice);
-  f_service_ << "import " << package_name_ << ".*;" << endl;
+  if(!package_name_.empty()) {
+    f_service_ << "import " << package_name_ << ".*;" << endl;
+  }
   
   generate_service_helpers(tservice);
   
@@ -1495,7 +1518,9 @@ void t_as3_generator::generate_service(t_service* tservice) {
   f_service_ << as3_type_imports();
   f_service_ << as3_thrift_imports();
   f_service_ << as3_thrift_gen_imports(tservice) <<endl;
-  f_service_ << "import " << package_name_ << ".*;" << endl;
+  if(!package_name_.empty()) {
+    f_service_ << "import " << package_name_ << ".*;" << endl;
+  }
   
   generate_service_helpers(tservice);
   
@@ -1509,11 +1534,9 @@ void t_as3_generator::generate_service(t_service* tservice) {
  * @param tservice The service to generate a header definition for
  */
 void t_as3_generator::generate_service_interface(t_service* tservice) {
-  string extends = "";
   string extends_iface = "";
   if (tservice->get_extends() != NULL) {
-    extends = type_name(tservice->get_extends());
-    extends_iface = " extends " + extends;
+    extends_iface = " extends " + tservice->get_extends()->get_name();
   }
 
   generate_as3_doc(f_service_, tservice);
@@ -1567,7 +1590,7 @@ void t_as3_generator::generate_service_client(t_service* tservice) {
   string extends = "";
   string extends_client = "";
   if (tservice->get_extends() != NULL) {
-    extends = type_name(tservice->get_extends());
+    extends = tservice->get_extends()->get_name();
     extends_client = " extends " + extends + "Impl";
   }
 
@@ -2476,7 +2499,7 @@ string t_as3_generator::base_type_name(t_base_type* type,
   case t_base_type::TYPE_DOUBLE:
     return "Number";
   default:
-    throw "compiler error: no C++ name for base type " + t_base_type::t_base_name(tbase);
+    throw "compiler error: no As3 name for base type " + t_base_type::t_base_name(tbase);
   }
 }
 

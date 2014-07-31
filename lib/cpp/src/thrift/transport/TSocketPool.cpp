@@ -37,7 +37,7 @@ using boost::shared_ptr;
 TSocketPoolServer::TSocketPoolServer()
   : host_(""),
     port_(0),
-    socket_(-1),
+    socket_(THRIFT_INVALID_SOCKET),
     lastFailTime_(0),
     consecutiveFailures_(0) {}
 
@@ -47,7 +47,7 @@ TSocketPoolServer::TSocketPoolServer()
 TSocketPoolServer::TSocketPoolServer(const string &host, int port)
   : host_(host),
     port_(port),
-    socket_(-1),
+    socket_(THRIFT_INVALID_SOCKET),
     lastFailTime_(0),
     consecutiveFailures_(0) {}
 
@@ -178,7 +178,7 @@ void TSocketPool::open() {
 
   size_t numServers = servers_.size();
   if (numServers == 0) {
-    socket_ = -1;
+    socket_ = THRIFT_INVALID_SOCKET;
     throw TTransportException(TTransportException::NOT_OPEN);
   }
 
@@ -219,7 +219,7 @@ void TSocketPool::open() {
         } catch (TException e) {
           string errStr = "TSocketPool::open failed "+getSocketInfo()+": "+e.what();
           GlobalOutput(errStr.c_str());
-          socket_ = -1;
+          socket_ = THRIFT_INVALID_SOCKET;
           continue;
         }
 
@@ -247,7 +247,7 @@ void TSocketPool::open() {
 void TSocketPool::close() {
   TSocket::close();
   if (currentServer_) {
-    currentServer_->socket_ = -1;
+    currentServer_->socket_ = THRIFT_INVALID_SOCKET;
   }
 }
 

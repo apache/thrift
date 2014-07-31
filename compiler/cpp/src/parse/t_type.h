@@ -66,6 +66,10 @@ class t_type : public t_doc {
     return program_;
   }
 
+  const t_program* get_program() const {
+    return program_;
+  }
+
   t_type* get_true_type();
 
   // Return a string that uniquely identifies this type
@@ -91,11 +95,13 @@ class t_type : public t_doc {
     return false;
   }
 
-  const uint8_t* get_binary_fingerprint() const {
+  const uint8_t* get_binary_fingerprint()  {
+    if(! has_fingerprint())  // lazy fingerprint generation, right now only used with the c++ generator
+      generate_fingerprint();
     return fingerprint_;
   }
 
-  std::string get_ascii_fingerprint() const {
+  std::string get_ascii_fingerprint() {
     std::string rv;
     const uint8_t* fp = get_binary_fingerprint();
     for (int i = 0; i < fingerprint_len; i++) {

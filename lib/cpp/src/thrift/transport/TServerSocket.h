@@ -22,6 +22,7 @@
 
 #include <thrift/transport/TServerTransport.h>
 #include <thrift/transport/PlatformSocket.h>
+#include <thrift/cxxfunctional.h>
 #include <boost/shared_ptr.hpp>
 
 namespace apache { namespace thrift { namespace transport {
@@ -35,6 +36,8 @@ class TSocket;
  */
 class TServerSocket : public TServerTransport {
  public:
+  typedef apache::thrift::stdcxx::function<void(THRIFT_SOCKET fd)> socket_func_t;
+
   const static int DEFAULT_BACKLOG = 1024;
 
   TServerSocket(int port);
@@ -52,13 +55,27 @@ class TServerSocket : public TServerTransport {
   void setRetryLimit(int retryLimit);
   void setRetryDelay(int retryDelay);
 
+  void setKeepAlive(bool keepAlive) {keepAlive_ = keepAlive;}
+
   void setTcpSendBuffer(int tcpSendBuffer);
   void setTcpRecvBuffer(int tcpRecvBuffer);
+
+  // listenCallback gets called just before listen, and after all Thrift
+  // setsockopt calls have been made.  If you have custom setsockopt
+  // things that need to happen on the listening socket, this is the place to do it.
+  void setListenCallback(const socket_func_t &listenCallback) { listenCallback_ = listenCallback; }
+
+  // acceptCallback gets called after each accept call, on the newly created socket.
+  // It is called after all Thrift setsockopt calls have been made.  If you have
+  // custom setsockopt things that need to happen on the accepted
+  // socket, this is the place to do it.
+  void setAcceptCallback(const socket_func_t &acceptCallback) { acceptCallback_ = acceptCallback; }
 
   void listen();
   void close();
 
   void interrupt();
+  int getPort();
 
  protected:
   boost::shared_ptr<TTransport> acceptImpl();
@@ -76,9 +93,13 @@ class TServerSocket : public TServerTransport {
   int retryDelay_;
   int tcpSendBuffer_;
   int tcpRecvBuffer_;
+  bool keepAlive_;
 
   THRIFT_SOCKET intSock1_;
   THRIFT_SOCKET intSock2_;
+
+  socket_func_t listenCallback_;
+  socket_func_t acceptCallback_;
 };
 
 }}} // apache::thrift::transport

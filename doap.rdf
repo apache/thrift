@@ -54,10 +54,15 @@
     <category rdf:resource="http://projects.apache.org/category/library" />
     <category rdf:resource="http://projects.apache.org/category/network-client" />
     <category rdf:resource="http://projects.apache.org/category/network-server" />
-    <release>
+    <release rdf:parseType="Collection">
       <Version>
         <name>Apache Thrift</name>
-        <created>2011-10-15</created>
+        <created>2013-08-22</created>
+        <revision>0.9.1</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2012-10-15</created>
         <revision>0.9.0</revision>
       </Version>
       <Version>

@@ -69,7 +69,7 @@
 #define THRIFT_OVERLOAD_IF(T, Y) \
   THRIFT_OVERLOAD_IF_DEFN(T, Y) = NULL
 
-#define THRIFT_UNUSED_VARIABLE(x) ((x)=(x))
+#define THRIFT_UNUSED_VARIABLE(x) ((void)(x))
 
 namespace apache { namespace thrift {
 
@@ -86,6 +86,7 @@ class TEnumIterator : public std::iterator<std::forward_iterator_tag, std::pair<
   }
 
   bool operator !=(const TEnumIterator& end) {
+    (void)end;  // avoid "unused" warning with NDEBUG
     assert(end.n_ == -1);
     return (ii_ != n_);
   }

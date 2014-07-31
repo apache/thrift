@@ -22,7 +22,7 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <title>Thrift Javascript Bindings - Tutorial Example</title>
 
-  <script src="../../lib/js/thrift.js"                   type="text/javascript"></script>
+  <script src="../../lib/js/src/thrift.js"  type="text/javascript"></script>
   <script src="gen-js/tutorial_types.js"    type="text/javascript"></script>
   <script src="gen-js/shared_types.js"      type="text/javascript"></script>
   <script src="gen-js/SharedService.js"     type="text/javascript"></script>
@@ -49,7 +49,7 @@
     var protocol  = new Thrift.Protocol(transport);
     var client    = new CalculatorClient(protocol);
 
-    var work = new Work()
+    var work = new Work();
     work.num1 = $("#num1").val();
     work.num2 = $("#num2").val();
     work.op = $("#op").val();

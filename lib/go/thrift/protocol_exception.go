@@ -36,6 +36,7 @@ const (
 	SIZE_LIMIT                 = 3
 	BAD_VERSION                = 4
 	NOT_IMPLEMENTED            = 5
+	DEPTH_LIMIT                = 6
 )
 
 type tProtocolException struct {

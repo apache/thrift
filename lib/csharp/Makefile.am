@@ -46,6 +46,7 @@ THRIFTCODE= \
             src/Server/TThreadPoolServer.cs \
             src/Server/TSimpleServer.cs \
             src/Server/TServer.cs \
+            src/Server/TServerEventHandler.cs \
             src/Transport/TBufferedTransport.cs \
             src/Transport/TTransport.cs \
             src/Transport/TSocket.cs \
@@ -58,6 +59,10 @@ THRIFTCODE= \
             src/Transport/THttpClient.cs \
             src/Transport/THttpHandler.cs \
             src/Transport/TMemoryBuffer.cs \
+            src/Transport/TNamedPipeClientTransport.cs \
+            src/Transport/TNamedPipeServerTransport.cs \
+            src/Transport/TTLSSocket.cs \
+            src/Transport/TTLSServerSocket.cs \
             src/TProcessor.cs \
             src/TException.cs \
             src/TApplicationException.cs
@@ -78,9 +83,9 @@ clean-local:
 
 # run csharp tests?
 # check:
-# 	cd test/ThriftTest && ./maketest.sh 
+# 	cd test/ThriftTest && ./maketest.sh
 # 	cd test/Multiplex && ./maketest.sh
-    
+
 EXTRA_DIST = \
              $(THRIFTCODE) \
              ThriftMSBuildTask \
@@ -88,4 +93,6 @@ EXTRA_DIST = \
              src/Thrift.sln \
              src/Thrift.WP7.csproj \
              src/Properties/AssemblyInfo.WP7.cs \
-             test
+             src/Transport/TSilverlightSocket.cs \
+             test \
+             README.md

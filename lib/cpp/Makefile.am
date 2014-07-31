@@ -100,7 +100,7 @@ endif
 libthriftnb_la_SOURCES = src/thrift/server/TNonblockingServer.cpp \
                          src/thrift/async/TAsyncProtocolProcessor.cpp \
                          src/thrift/async/TEvhttpServer.cpp \
-                         src/thrift/async/TEvhttpClientChannel.cpp 
+                         src/thrift/async/TEvhttpClientChannel.cpp
 
 libthriftz_la_SOURCES = src/thrift/transport/TZlibTransport.cpp
 
@@ -141,6 +141,10 @@ include_concurrency_HEADERS = \
                          src/thrift/concurrency/Monitor.h \
                          src/thrift/concurrency/PlatformThreadFactory.h \
                          src/thrift/concurrency/PosixThreadFactory.h \
+                         src/thrift/concurrency/StdMonitor.cpp \
+                         src/thrift/concurrency/StdMutex.cpp \
+                         src/thrift/concurrency/StdThreadFactory.cpp \
+                         src/thrift/concurrency/StdThreadFactory.h \
                          src/thrift/concurrency/Thread.h \
                          src/thrift/concurrency/ThreadManager.h \
                          src/thrift/concurrency/TimerManager.h \
@@ -221,17 +225,16 @@ include_qt_HEADERS = \
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 WINDOWS_DIST = \
-             README_WINDOWS \
              src/thrift/windows \
              thrift.sln \
              libthrift.vcxproj \
              libthrift.vcxproj.filters \
              libthriftnb.vcxproj \
-             libthriftnb.vcxproj.filters
+             libthriftnb.vcxproj.filters \
+             3rdparty.props
 
 EXTRA_DIST = \
-             README \
-             README.SSL \
+             README.md \
              thrift-nb.pc.in \
              thrift.pc.in \
              thrift-z.pc.in \

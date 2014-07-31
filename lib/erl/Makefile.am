@@ -78,6 +78,12 @@ clean:
 maintainer-clean-local:
 	rm -rf ebin
 
-EXTRA_DIST = include src rebar rebar.config test
+EXTRA_DIST = \
+	include \
+	src \
+	rebar \
+	rebar.config \
+	test \
+	README.md
 
 MAINTAINERCLEANFILES = Makefile.in

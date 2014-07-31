@@ -72,13 +72,14 @@ type
 
   TProtocolException = class( Exception )
   public
-    const
+    const // TODO(jensg): change into enum
       UNKNOWN : Integer = 0;
       INVALID_DATA : Integer = 1;
       NEGATIVE_SIZE : Integer = 2;
       SIZE_LIMIT : Integer = 3;
       BAD_VERSION : Integer = 4;
       NOT_IMPLEMENTED : Integer = 5;
+      DEPTH_LIMIT : Integer = 6;
   protected
     FType : Integer;
   public
@@ -370,13 +371,11 @@ type
   protected
     FStrictRead : Boolean;
     FStrictWrite : Boolean;
-    FReadLength : Integer;
-    FCheckReadLength : Boolean;
 
   private
     function ReadAll( var buf: TBytes; off: Integer; len: Integer ): Integer;
     function ReadStringBody( size: Integer): string;
-    procedure CheckReadLength( len: Integer );
+
   public
 
     type
@@ -434,7 +433,6 @@ type
     function ReadDouble:Double; override;
     function ReadBinary: TBytes; override;
 
-    procedure SetReadLength( readLength: Integer );
   end;
 
 
@@ -500,6 +498,44 @@ type
   end;
 
 
+type
+  IRequestEvents = interface
+    ['{F926A26A-5B00-4560-86FA-2CAE3BA73DAF}']
+    // Called before reading arguments.
+    procedure PreRead;
+    // Called between reading arguments and calling the handler.
+    procedure PostRead;
+    // Called between calling the handler and writing the response.
+    procedure PreWrite;
+    // Called after writing the response.
+    procedure PostWrite;
+    // Called when an oneway (async) function call completes successfully.
+    procedure OnewayComplete;
+    // Called if the handler throws an undeclared exception.
+    procedure UnhandledError( const e : Exception);
+    // Called when a client has finished request-handling to clean up
+    procedure CleanupContext;
+  end;
+
+
+  IProcessorEvents = interface
+    ['{A8661119-657C-447D-93C5-512E36162A45}']
+    // Called when a client is about to call the processor.
+    procedure Processing( const transport : ITransport);
+    // Called on any service function invocation
+    function  CreateRequestContext( const aFunctionName : string) : IRequestEvents;
+    // Called when a client has finished request-handling to clean up
+    procedure CleanupContext;
+  end;
+
+
+  IProcessor = interface
+    ['{7BAE92A5-46DA-4F13-B6EA-0EABE233EE5F}']
+    function Process( const iprot :IProtocol; const oprot: IProtocol; const events : IProcessorEvents = nil): Boolean;
+  end;
+
+
+
 implementation
 
 function ConvertInt64ToDouble( const n: Int64): Double;
@@ -519,6 +555,7 @@ end;
 constructor TFieldImpl.Create(const AName: string; const AType: TType;
   AId: SmallInt);
 begin
+  inherited Create;
   FName := AName;
   FType := AType;
   FId := AId;
@@ -526,6 +563,7 @@ end;
 
 constructor TFieldImpl.Create;
 begin
+  inherited Create;
   FName := '';
   FType := Low(TType);
   FId   := 0;
@@ -705,7 +743,7 @@ end;
 
 constructor TMapImpl.Create;
 begin
-
+  inherited Create;
 end;
 
 function TMapImpl.GetCount: Integer;
@@ -795,7 +833,7 @@ end;
 
 constructor TSetImpl.Create;
 begin
-
+  inherited Create;
 end;
 
 function TSetImpl.GetCount: Integer;
@@ -829,7 +867,7 @@ end;
 
 constructor TListImpl.Create;
 begin
-
+  inherited Create;
 end;
 
 function TListImpl.GetCount: Integer;
@@ -856,19 +894,8 @@ end;
 
 constructor TBinaryProtocolImpl.Create( const trans: ITransport);
 begin
+  //no inherited
   Create( trans, False, True);
-end;
-
-procedure TBinaryProtocolImpl.CheckReadLength(len: Integer);
-begin
-  if FCheckReadLength then
-  begin
-    Dec( FReadLength, len);
-    if FReadLength < 0 then
-    begin
-      raise Exception.Create( 'Message length exceeded: ' + IntToStr( len ) );
-    end;
-  end;
 end;
 
 constructor TBinaryProtocolImpl.Create( const trans: ITransport; strictRead,
@@ -882,7 +909,6 @@ end;
 function TBinaryProtocolImpl.ReadAll( var buf: TBytes; off,
   len: Integer): Integer;
 begin
-  CheckReadLength( len );
   Result := FTrans.ReadAll( buf, off, len );
 end;
 
@@ -892,7 +918,6 @@ var
   buf : TBytes;
 begin
   size := ReadI32;
-  CheckReadLength( size );
   SetLength( buf, size );
   FTrans.ReadAll( buf, 0, size);
   Result := buf;
@@ -1063,7 +1088,6 @@ function TBinaryProtocolImpl.ReadStringBody( size: Integer): string;
 var
   buf : TBytes;
 begin
-  CheckReadLength( size );
   SetLength( buf, size );
   FTrans.ReadAll( buf, 0, size );
   Result := TEncoding.UTF8.GetString( buf);
@@ -1078,12 +1102,6 @@ procedure TBinaryProtocolImpl.ReadStructEnd;
 begin
   inherited;
 
-end;
-
-procedure TBinaryProtocolImpl.SetReadLength(readLength: Integer);
-begin
-  FReadLength := readLength;
-  FCheckReadLength := True;
 end;
 
 procedure TBinaryProtocolImpl.WriteBinary( const b: TBytes);
@@ -1277,12 +1295,14 @@ end;
 
 constructor TBinaryProtocolImpl.TFactory.Create(AStrictRead, AStrictWrite: Boolean);
 begin
+  inherited Create;
   FStrictRead := AStrictRead;
   FStrictWrite := AStrictWrite;
 end;
 
 constructor TBinaryProtocolImpl.TFactory.Create;
 begin
+  //no inherited;  
   Create( False, True )
 end;
 

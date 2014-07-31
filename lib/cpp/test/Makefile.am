@@ -25,6 +25,8 @@ nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/ThriftTest_types.cpp \
 	gen-cpp/DebugProtoTest_types.h \
 	gen-cpp/OptionalRequiredTest_types.h \
+	gen-cpp/Recursive_types.cpp \
+	gen-cpp/Recursive_types.h \
 	gen-cpp/ThriftTest_types.h \
 	ThriftTest_extras.cpp \
 	DebugProtoTest_extras.cpp
@@ -55,12 +57,15 @@ check_PROGRAMS = \
 	DebugProtoTest \
 	JSONProtoTest \
 	OptionalRequiredTest \
+	RecursiveTest \
 	SpecializationTest \
 	AllProtocolsTest \
 	TransportTest \
 	ZlibTest \
 	TFileTransportTest \
-	UnitTests
+	UnitTests \
+	link_test \
+	OpenSSLManualInitTest
 # disable these test ... too strong
 #       processor_test
 #	concurrency_test
@@ -86,7 +91,7 @@ endif
 
 UnitTests_LDADD = \
   libtestgencpp.la \
-  $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a
+  -l:libboost_unit_test_framework.a
 
 TransportTest_SOURCES = \
 	TransportTest.cpp
@@ -94,7 +99,7 @@ TransportTest_SOURCES = \
 TransportTest_LDADD = \
   libtestgencpp.la \
   $(top_builddir)/lib/cpp/libthriftz.la \
-  $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a \
+  -l:libboost_unit_test_framework.a \
   -lz
 
 ZlibTest_SOURCES = \
@@ -103,7 +108,7 @@ ZlibTest_SOURCES = \
 ZlibTest_LDADD = \
   libtestgencpp.la \
   $(top_builddir)/lib/cpp/libthriftz.la \
-  $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a \
+  -l:libboost_unit_test_framework.a \
   -lz
 
 TFileTransportTest_SOURCES = \
@@ -111,7 +116,7 @@ TFileTransportTest_SOURCES = \
 
 TFileTransportTest_LDADD = \
   libtestgencpp.la \
-  $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a
+  -l:libboost_unit_test_framework.a
 
 #
 # TFDTransportTest
@@ -168,6 +173,14 @@ OptionalRequiredTest_SOURCES = \
 OptionalRequiredTest_LDADD = libtestgencpp.la
 
 #
+# OptionalRequiredTest
+#
+RecursiveTest_SOURCES = \
+	RecursiveTest.cpp
+
+RecursiveTest_LDADD = libtestgencpp.la
+
+#
 # SpecializationTest
 #
 SpecializationTest_SOURCES = \
@@ -184,6 +197,11 @@ concurrency_test_SOURCES = \
 concurrency_test_LDADD = \
   $(top_builddir)/lib/cpp/libthrift.la
 
+link_test_SOURCES = \
+  link/LinkTest.cpp \
+  link/TemplatedService1.cpp \
+  link/TemplatedService2.cpp
+
 processor_test_SOURCES = \
 	processor/ProcessorTest.cpp \
 	processor/EventLog.cpp \
@@ -197,7 +215,15 @@ processor_test_LDADD = libprocessortest.la \
                        $(top_builddir)/lib/cpp/libthriftnb.la \
                        $(BOOST_LDFLAGS) \
                        -levent \
-                       $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a
+                       -l:libboost_unit_test_framework.a
+
+OpenSSLManualInitTest_SOURCES = \
+	OpenSSLManualInitTest.cpp
+
+OpenSSLManualInitTest_LDADD = \
+	$(top_builddir)/lib/cpp/libthrift.la \
+	-l:libboost_unit_test_framework.a
+
 #
 # Common thrift code generation rules
 #
@@ -208,6 +234,9 @@ gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h: $(top_srcdir)/t
 
 gen-cpp/OptionalRequiredTest_types.cpp gen-cpp/OptionalRequiredTest_types.h: $(top_srcdir)/test/OptionalRequiredTest.thrift
 	$(THRIFT) --gen cpp:dense $<
+
+gen-cpp/Recursive_types.cpp gen-cpp/Recursive_types.h: $(top_srcdir)/test/Recursive.thrift
+	$(THRIFT) --gen cpp $<
 
 gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp: $(top_srcdir)/test/StressTest.thrift
 	$(THRIFT) --gen cpp:dense $<

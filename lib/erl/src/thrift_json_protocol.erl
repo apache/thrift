@@ -294,7 +294,7 @@ write(This0, {string, Str}) -> write_values(This0, [
         {context_pre_item, false},
         case is_binary(Str) of
             true -> Str;
-            false -> jsx:term_to_json(list_to_binary(Str), [{strict, false}])
+            false -> <<"\"", (list_to_binary(Str))/binary, "\"">>
         end,
         {context_post_item, false}
     ]);
@@ -325,10 +325,11 @@ write_values(This0, ValueList) ->
 %% Subsequent calls to read actually operate on the events returned by JSX.
 read_all(#json_protocol{transport = Transport0} = State) ->
     {Transport1, Bin} = read_all_1(Transport0, []),
-    P = jsx:parser(),
+    P = thrift_json_parser:parser(),
+    [First|Rest] = P(Bin),
     State#json_protocol{
         transport = Transport1,
-        jsx = P(Bin)
+        jsx = {event, First, Rest}
     }.
 
 read_all_1(Transport0, IoList) ->
@@ -346,8 +347,8 @@ read_all_1(Transport0, IoList) ->
 % type as input. Comparing the read event from the one is was passed, it
 % returns an error if something other than the expected value is encountered.
 % Expect also maintains the context stack in #json_protocol.
-expect(#json_protocol{jsx={event, {Type, Data}=Ev, Next}}=State, ExpectedType) ->
-    NextState = State#json_protocol{jsx=Next()},
+expect(#json_protocol{jsx={event, {Type, Data}=Ev, [Next|Rest]}}=State, ExpectedType) ->
+    NextState = State#json_protocol{jsx={event, Next, Rest}},
     case Type == ExpectedType of
         true -> 
             {NextState, {ok, convert_data(Type, Data)}};
@@ -385,8 +386,8 @@ expect_nodata(This, ExpectedList) ->
             Error
     end.
 
-read_field(#json_protocol{jsx={event, Field, Next}} = State) ->
-    NewState = State#json_protocol{jsx=Next()},
+read_field(#json_protocol{jsx={event, Field, [Next|Rest]}} = State) ->
+    NewState = State#json_protocol{jsx={event, Next, Rest}},
     {NewState, Field}.
 
 read(This0, message_begin) ->
@@ -563,4 +564,3 @@ new_protocol_factory(TransportFactory, _Options) ->
                 thrift_json_protocol:new(Transport, [])
         end,
     {ok, F}.
-

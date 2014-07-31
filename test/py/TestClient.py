@@ -38,24 +38,24 @@ parser.add_option("--zlib", action="store_true", dest="zlib",
     help="use zlib wrapper for compressed transport")
 parser.add_option("--ssl", action="store_true", dest="ssl",
     help="use SSL for encrypted transport")
-parser.add_option("--framed", action="store_true", dest="framed",
-    help="use framed transport")
 parser.add_option("--http", dest="http_path",
     help="Use the HTTP transport with the specified path")
-parser.add_option('-v', '--verbose', action="store_const", 
+parser.add_option('-v', '--verbose', action="store_const",
     dest="verbose", const=2,
     help="verbose output")
-parser.add_option('-q', '--quiet', action="store_const", 
+parser.add_option('-q', '--quiet', action="store_const",
     dest="verbose", const=0,
     help="minimal output")
-parser.add_option('--proto',  dest="proto", type="string",
-    help="protocol to use, one of: accel, binary, compact")
+parser.add_option('--protocol',  dest="proto", type="string",
+    help="protocol to use, one of: accel, binary, compact, json")
+parser.add_option('--transport',  dest="trans", type="string",
+    help="transport to use, one of: buffered, framed")
 parser.set_defaults(framed=False, http_path=None, verbose=1, host='localhost', port=9090, proto='binary')
 options, args = parser.parse_args()
 
 sys.path.insert(0, options.genpydir)
 
-from ThriftTest import ThriftTest
+from ThriftTest import ThriftTest, SecondService
 from ThriftTest.ttypes import *
 from thrift.transport import TTransport
 from thrift.transport import TSocket
@@ -76,10 +76,13 @@ class AbstractTest(unittest.TestCase):
       else:
         socket = TSocket.TSocket(options.host, options.port)
       # frame or buffer depending upon args
-      if options.framed:
+      self.transport = TTransport.TBufferedTransport(socket)
+      if options.trans == 'framed':
         self.transport = TTransport.TFramedTransport(socket)
-      else:
+      elif options.trans == 'buffered':
         self.transport = TTransport.TBufferedTransport(socket)
+      elif options.trans == '':
+        raise AssertionError('Unknown --transport option: %s' % options.trans)
       if options.zlib:
         self.transport = TZlibTransport.TZlibTransport(self.transport, 9)
     self.transport.open()
@@ -170,7 +173,7 @@ class AbstractTest(unittest.TestCase):
           xpected.i64_thing,
           { 0:'abc' },
           Numberz.FIVE,
-          0xf0f0f0)  
+          0xf0f0f0)
     self.assertEqual(y, xpected)
 
   def testException(self):
@@ -198,10 +201,11 @@ class AbstractTest(unittest.TestCase):
     end = time.time()
     self.assertTrue(end - start < 3,
                     "oneway sleep took %f sec" % (end - start))
-  
+
   def testOnewayThenNormal(self):
     self.client.testOneway(1) # type is int, not float
     self.assertEqual(self.client.testString('Python'), 'Python')
+
 
 class NormalBinaryTest(AbstractTest):
   protocol_factory = TBinaryProtocol.TBinaryProtocolFactory()
@@ -227,7 +231,7 @@ def suite():
   elif options.proto == 'json':
     suite.addTest(loader.loadTestsFromTestCase(JSONTest))
   else:
-    raise AssertionError('Unknown protocol given with --proto: %s' % options.proto)
+    raise AssertionError('Unknown protocol given with --protocol: %s' % options.proto)
   return suite
 
 class OwnArgsTestProgram(unittest.TestProgram):

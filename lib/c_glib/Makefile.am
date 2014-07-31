@@ -85,7 +85,7 @@ include_processor_HEADERS = src/thrift/c_glib/processor/thrift_processor.h
 
 
 EXTRA_DIST = \
-             README \
+             README.md \
              test/glib.suppress \
              thrift_c_glib.pc.in
 

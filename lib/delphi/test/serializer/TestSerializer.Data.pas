@@ -283,57 +283,57 @@ class function Fixtures.CreateCompactProtoTestStruct : ICompactProtoTestStruct;
 // superhuge compact proto test struct
 begin
   result := TCompactProtoTestStructImpl.Create;
-  result.A_byte := TConstants.COMPACT_TEST.A_byte;
-  result.A_i16 := TConstants.COMPACT_TEST.A_i16;
-  result.A_i32 := TConstants.COMPACT_TEST.A_i32;
-  result.A_i64 := TConstants.COMPACT_TEST.A_i64;
-  result.A_double := TConstants.COMPACT_TEST.A_double;
-  result.A_string := TConstants.COMPACT_TEST.A_string;
-  result.A_binary := TConstants.COMPACT_TEST.A_binary;
-  result.True_field := TConstants.COMPACT_TEST.True_field;
-  result.False_field := TConstants.COMPACT_TEST.False_field;
-  result.Empty_struct_field := TConstants.COMPACT_TEST.Empty_struct_field;
-  result.Byte_list := TConstants.COMPACT_TEST.Byte_list;
-  result.I16_list := TConstants.COMPACT_TEST.I16_list;
-  result.I32_list := TConstants.COMPACT_TEST.I32_list;
-  result.I64_list := TConstants.COMPACT_TEST.I64_list;
-  result.Double_list := TConstants.COMPACT_TEST.Double_list;
-  result.String_list := TConstants.COMPACT_TEST.String_list;
-  result.Binary_list := TConstants.COMPACT_TEST.Binary_list;
-  result.Boolean_list := TConstants.COMPACT_TEST.Boolean_list;
-  result.Struct_list := TConstants.COMPACT_TEST.Struct_list;
-  result.Byte_set := TConstants.COMPACT_TEST.Byte_set;
-  result.I16_set := TConstants.COMPACT_TEST.I16_set;
-  result.I32_set := TConstants.COMPACT_TEST.I32_set;
-  result.I64_set := TConstants.COMPACT_TEST.I64_set;
-  result.Double_set := TConstants.COMPACT_TEST.Double_set;
-  result.String_set := TConstants.COMPACT_TEST.String_set;
-  result.String_set := TConstants.COMPACT_TEST.String_set;
-  result.String_set := TConstants.COMPACT_TEST.String_set;
-  result.Binary_set := TConstants.COMPACT_TEST.Binary_set;
-  result.Boolean_set := TConstants.COMPACT_TEST.Boolean_set;
-  result.Struct_set := TConstants.COMPACT_TEST.Struct_set;
-  result.Byte_byte_map := TConstants.COMPACT_TEST.Byte_byte_map;
-  result.I16_byte_map := TConstants.COMPACT_TEST.I16_byte_map;
-  result.I32_byte_map := TConstants.COMPACT_TEST.I32_byte_map;
-  result.I64_byte_map := TConstants.COMPACT_TEST.I64_byte_map;
-  result.Double_byte_map := TConstants.COMPACT_TEST.Double_byte_map;
-  result.String_byte_map := TConstants.COMPACT_TEST.String_byte_map;
-  result.Binary_byte_map := TConstants.COMPACT_TEST.Binary_byte_map;
-  result.Boolean_byte_map := TConstants.COMPACT_TEST.Boolean_byte_map;
-  result.Byte_i16_map := TConstants.COMPACT_TEST.Byte_i16_map;
-  result.Byte_i32_map := TConstants.COMPACT_TEST.Byte_i32_map;
-  result.Byte_i64_map := TConstants.COMPACT_TEST.Byte_i64_map;
-  result.Byte_double_map := TConstants.COMPACT_TEST.Byte_double_map;
-  result.Byte_string_map := TConstants.COMPACT_TEST.Byte_string_map;
-  result.Byte_binary_map := TConstants.COMPACT_TEST.Byte_binary_map;
-  result.Byte_boolean_map := TConstants.COMPACT_TEST.Byte_boolean_map;
-  result.List_byte_map := TConstants.COMPACT_TEST.List_byte_map;
-  result.Set_byte_map := TConstants.COMPACT_TEST.Set_byte_map;
-  result.Map_byte_map := TConstants.COMPACT_TEST.Map_byte_map;
-  result.Byte_map_map := TConstants.COMPACT_TEST.Byte_map_map;
-  result.Byte_set_map := TConstants.COMPACT_TEST.Byte_set_map;
-  result.Byte_list_map := TConstants.COMPACT_TEST.Byte_list_map;
+  result.A_byte := TDebugProtoTestConstants.COMPACT_TEST.A_byte;
+  result.A_i16 := TDebugProtoTestConstants.COMPACT_TEST.A_i16;
+  result.A_i32 := TDebugProtoTestConstants.COMPACT_TEST.A_i32;
+  result.A_i64 := TDebugProtoTestConstants.COMPACT_TEST.A_i64;
+  result.A_double := TDebugProtoTestConstants.COMPACT_TEST.A_double;
+  result.A_string := TDebugProtoTestConstants.COMPACT_TEST.A_string;
+  result.A_binary := TDebugProtoTestConstants.COMPACT_TEST.A_binary;
+  result.True_field := TDebugProtoTestConstants.COMPACT_TEST.True_field;
+  result.False_field := TDebugProtoTestConstants.COMPACT_TEST.False_field;
+  result.Empty_struct_field := TDebugProtoTestConstants.COMPACT_TEST.Empty_struct_field;
+  result.Byte_list := TDebugProtoTestConstants.COMPACT_TEST.Byte_list;
+  result.I16_list := TDebugProtoTestConstants.COMPACT_TEST.I16_list;
+  result.I32_list := TDebugProtoTestConstants.COMPACT_TEST.I32_list;
+  result.I64_list := TDebugProtoTestConstants.COMPACT_TEST.I64_list;
+  result.Double_list := TDebugProtoTestConstants.COMPACT_TEST.Double_list;
+  result.String_list := TDebugProtoTestConstants.COMPACT_TEST.String_list;
+  result.Binary_list := TDebugProtoTestConstants.COMPACT_TEST.Binary_list;
+  result.Boolean_list := TDebugProtoTestConstants.COMPACT_TEST.Boolean_list;
+  result.Struct_list := TDebugProtoTestConstants.COMPACT_TEST.Struct_list;
+  result.Byte_set := TDebugProtoTestConstants.COMPACT_TEST.Byte_set;
+  result.I16_set := TDebugProtoTestConstants.COMPACT_TEST.I16_set;
+  result.I32_set := TDebugProtoTestConstants.COMPACT_TEST.I32_set;
+  result.I64_set := TDebugProtoTestConstants.COMPACT_TEST.I64_set;
+  result.Double_set := TDebugProtoTestConstants.COMPACT_TEST.Double_set;
+  result.String_set := TDebugProtoTestConstants.COMPACT_TEST.String_set;
+  result.String_set := TDebugProtoTestConstants.COMPACT_TEST.String_set;
+  result.String_set := TDebugProtoTestConstants.COMPACT_TEST.String_set;
+  result.Binary_set := TDebugProtoTestConstants.COMPACT_TEST.Binary_set;
+  result.Boolean_set := TDebugProtoTestConstants.COMPACT_TEST.Boolean_set;
+  result.Struct_set := TDebugProtoTestConstants.COMPACT_TEST.Struct_set;
+  result.Byte_byte_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_byte_map;
+  result.I16_byte_map := TDebugProtoTestConstants.COMPACT_TEST.I16_byte_map;
+  result.I32_byte_map := TDebugProtoTestConstants.COMPACT_TEST.I32_byte_map;
+  result.I64_byte_map := TDebugProtoTestConstants.COMPACT_TEST.I64_byte_map;
+  result.Double_byte_map := TDebugProtoTestConstants.COMPACT_TEST.Double_byte_map;
+  result.String_byte_map := TDebugProtoTestConstants.COMPACT_TEST.String_byte_map;
+  result.Binary_byte_map := TDebugProtoTestConstants.COMPACT_TEST.Binary_byte_map;
+  result.Boolean_byte_map := TDebugProtoTestConstants.COMPACT_TEST.Boolean_byte_map;
+  result.Byte_i16_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_i16_map;
+  result.Byte_i32_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_i32_map;
+  result.Byte_i64_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_i64_map;
+  result.Byte_double_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_double_map;
+  result.Byte_string_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_string_map;
+  result.Byte_binary_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_binary_map;
+  result.Byte_boolean_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_boolean_map;
+  result.List_byte_map := TDebugProtoTestConstants.COMPACT_TEST.List_byte_map;
+  result.Set_byte_map := TDebugProtoTestConstants.COMPACT_TEST.Set_byte_map;
+  result.Map_byte_map := TDebugProtoTestConstants.COMPACT_TEST.Map_byte_map;
+  result.Byte_map_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_map_map;
+  result.Byte_set_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_set_map;
+  result.Byte_list_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_list_map;
 
   {$IF cDebugProtoTest_Option_AnsiStr_Binary}
   result.A_binary := AnsiString( #0#1#2#3#4#5#6#7#8);
@@ -341,6 +341,8 @@ begin
   not yet impl
   {$IFEND}
 end;
+
+
 
 
 end.

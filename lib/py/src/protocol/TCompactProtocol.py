@@ -250,7 +250,7 @@ class TCompactProtocol(TProtocolBase):
 
   @writer
   def writeDouble(self, dub):
-    self.trans.write(pack('!d', dub))
+    self.trans.write(pack('<d', dub))
 
   def __writeString(self, s):
     self.__writeSize(len(s))
@@ -383,7 +383,7 @@ class TCompactProtocol(TProtocolBase):
   @reader
   def readDouble(self):
     buff = self.trans.readAll(8)
-    val, = unpack('!d', buff)
+    val, = unpack('<d', buff)
     return val
 
   def __readString(self):

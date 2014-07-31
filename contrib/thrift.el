@@ -1,4 +1,7 @@
-;;
+;;; thrift.el --- Major mode for Apache Thrift files
+
+;; Keywords: files
+
 ;; Licensed to the Apache Software Foundation (ASF) under one
 ;; or more contributor license agreements. See the NOTICE file
 ;; distributed with this work for additional information
@@ -17,9 +20,16 @@
 ;; under the License.
 ;;
 
+;;; Commentary:
+
+;;
+
+;;; Code:
+
 (require 'font-lock)
 
 (defvar thrift-mode-hook nil)
+;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.thrift\\'" . thrift-mode))
 
 (defvar thrift-indent-level 2
@@ -28,13 +38,12 @@
 ;; syntax coloring
 (defconst thrift-font-lock-keywords
   (list
-   '("#.*$" . font-lock-comment-face)  ;; perl style comments
    '("\\<\\(include\\|struct\\|exception\\|typedef\\|const\\|enum\\|service\\|extends\\|void\\|oneway\\|throws\\|optional\\|required\\)\\>" . font-lock-keyword-face)  ;; keywords
    '("\\<\\(bool\\|byte\\|i16\\|i32\\|i64\\|double\\|string\\|binary\\|map\\|list\\|set\\)\\>" . font-lock-type-face)  ;; built-in types
    '("\\<\\([0-9]+\\)\\>" . font-lock-variable-name-face)   ;; ordinals
    '("\\<\\(\\w+\\)\\s-*(" (1 font-lock-function-name-face))  ;; functions
    )
-  "Thrift Keywords")
+  "Thrift Keywords.")
 
 ;; indentation
 (defun thrift-indent-line ()
@@ -102,18 +111,20 @@
           (indent-line-to cur-indent)
         (indent-line-to 0)))))
 
-;; C/C++ comments; also allowing underscore in words
+;; C/C++- and sh-style comments; also allowing underscore in words
 (defvar thrift-mode-syntax-table
   (let ((thrift-mode-syntax-table (make-syntax-table)))
     (modify-syntax-entry ?_ "w" thrift-mode-syntax-table)
-    (modify-syntax-entry ?/ ". 1456" thrift-mode-syntax-table)
-    (modify-syntax-entry ?* ". 23" thrift-mode-syntax-table)
-    (modify-syntax-entry ?\n "> b" thrift-mode-syntax-table)
+    (modify-syntax-entry ?# "<" thrift-mode-syntax-table) ; sh-style comments
+    (modify-syntax-entry ?/ ". 124" thrift-mode-syntax-table) ; c/c++-style comments
+    (modify-syntax-entry ?* ". 23b" thrift-mode-syntax-table)
+    (modify-syntax-entry ?\n ">" thrift-mode-syntax-table)
     thrift-mode-syntax-table)
   "Syntax table for thrift-mode")
 
+;;;###autoload
 (defun thrift-mode ()
-  "Mode for editing Thrift files"
+  "Mode for editing Thrift files."
   (interactive)
   (kill-all-local-variables)
   (set-syntax-table thrift-mode-syntax-table)
@@ -123,4 +134,7 @@
   (run-hooks 'thrift-mode-hook)
   (set (make-local-variable 'indent-line-function) 'thrift-indent-line)
   )
-(provide 'thrift-mode)
+
+(provide 'thrift)
+;;; thrift.el ends here
+

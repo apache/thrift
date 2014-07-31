@@ -23,7 +23,7 @@ AC_INIT([thrift], [1.0.0-dev])
 
 AC_CONFIG_AUX_DIR([.])
 
-AM_INIT_AUTOMAKE([1.9 tar-ustar])
+AM_INIT_AUTOMAKE([1.11 tar-ustar])
 PKG_PROG_PKG_CONFIG
 
 AC_ARG_VAR([PY_PREFIX], [Prefix for installing Python modules.
@@ -88,6 +88,7 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
+AC_PROG_BISON(2.5)
 AC_PROG_YACC
 AC_PROG_LEX
 AM_PROG_LEX
@@ -97,11 +98,37 @@ AC_PROG_AWK
 AC_PROG_RANLIB
 
 AC_LANG([C++])
+AX_CXX_COMPILE_STDCXX_11([noext])
+
+AC_ARG_ENABLE([libs],
+  AS_HELP_STRING([--enable-libs], [build the Apache Thrift libraries [default=yes]]),
+  [], enable_libs=yes
+)
+have_libs=yes
+if test "$enable_libs" = "no"; then
+  have_libs="no"
+  with_cpp="no"
+  with_c_glib="no"
+  with_java="no"
+  with_csharp="no"
+  with_python="no"
+  with_ruby="no"
+  with_haskell="no"
+  with_perl="no"
+  with_php="no"
+  with_php_extension="no"
+  with_erlang="no"
+  with_go="no"
+  with_d="no"
+  with_nodejs="no"
+  with_lua="no"
+fi
+
 
 AX_THRIFT_LIB(cpp, [C++], yes)
 have_cpp=no
 if test "$with_cpp" = "yes";  then
-  AX_BOOST_BASE([1.40.0])
+  AX_BOOST_BASE([1.54.0])
   if test "x$succeeded" = "xyes" ; then
     have_cpp="yes"
   fi
@@ -177,6 +204,28 @@ if test "$with_erlang" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_ERLANG, [test "$have_erlang" = "yes"])
 
+AX_THRIFT_LIB(nodejs, [Nodejs], yes)
+have_nodejs=no
+if test "$with_nodejs" = "yes"; then
+  AC_PATH_PROGS([NODEJS], [nodejs node])
+  AC_PATH_PROG([NPM], [npm])
+  if test "x$NODEJS" != "x" -a "x$NPM" != "x"; then
+    have_nodejs="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_NODEJS, [test "$have_nodejs" = "yes"])
+AM_CONDITIONAL(HAVE_NPM, [test "x$NPM" != "x"])
+
+AX_THRIFT_LIB(lua, [Lua], yes)
+have_lua=no
+if test "$with_lua" = "yes"; then
+  AC_PATH_PROGS([LUA], [lua])
+  if test "x$LUA" != "x"; then
+    have_lua="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_LUA, [test "$have_lua" = "yes"])
+
 AX_THRIFT_LIB(python, [Python], yes)
 if test "$with_python" = "yes";  then
   AM_PATH_PYTHON(2.4,, :)
@@ -194,9 +243,13 @@ if test "$with_perl" = "yes"; then
   if test -n "$PERL" ; then
     AC_PROG_PERL_MODULES([Bit::Vector], success="yes", success="no")
     have_perl_bit_vector="$success"
+    AC_PROG_PERL_MODULES([Class::Accessor], success="yes", success="no")
+    have_perl_class_accessor="$success"
   fi
   if test -n "$PERL" -a "$have_perl_bit_vector" = "yes" ; then
-    have_perl="yes"
+    if test -n "$PERL" -a "$have_perl_class_accessor" = "yes" ; then
+      have_perl="yes"
+    fi
   fi
 fi
 AM_CONDITIONAL(WITH_PERL, [test "$have_perl" = "yes"])
@@ -212,10 +265,12 @@ AM_CONDITIONAL(WITH_PHP, [test "$have_php" = "yes"])
 
 AX_THRIFT_LIB(php_extension, [PHP_EXTENSION], yes)
 if test "$with_php_extension" = "yes"; then
-  AC_PATH_PROG([PHP_CONFIG], [php-config])
-  if test -n "$PHP_CONFIG" ; then
-    AC_CONFIG_SUBDIRS([lib/php/src/ext/thrift_protocol])
-    have_php_extension="yes"
+  if test -f "lib/php/src/ext/thrift_protocol/configure"; then
+    AC_PATH_PROG([PHP_CONFIG], [php-config])
+    if test -n "$PHP_CONFIG" ; then
+      AC_CONFIG_SUBDIRS([lib/php/src/ext/thrift_protocol])
+      have_php_extension="yes"
+    fi
   fi
 fi
 AM_CONDITIONAL(WITH_PHP_EXTENSION, [test "$have_php_extension" = "yes"])
@@ -227,9 +282,8 @@ AX_THRIFT_LIB(ruby, [Ruby], yes)
 have_ruby=no
 if test "$with_ruby" = "yes"; then
   AC_PATH_PROG([RUBY], [ruby])
-  AC_PATH_PROG([RAKE], [rake])
   AC_PATH_PROG([BUNDLER], [bundle])
-  if test "x$RUBY" != "x" -a "x$RAKE" != "x"; then
+  if test "x$RUBY" != "x" -a "x$BUNDLER" != "x"; then
     have_ruby="yes"
   fi
 fi
@@ -350,12 +404,25 @@ AM_CONDITIONAL(HAVE_DEIMOS_OPENSSL, [test "$have_deimos_openssl" = "yes"])
 AM_CONDITIONAL(WITH_D_SSL_TESTS, [test "$with_d_ssl_tests" = "yes"])
 AC_SUBST(DMD_OPENSSL_FLAGS)
 
-
+AC_ARG_ENABLE([tests],
+  AS_HELP_STRING([--enable-tests], [build tests [default=yes]]),
+  [], enable_tests=yes
+)
 have_tests=yes
-if test "$with_tests" = "no"; then
+if test "$enable_tests" = "no"; then
   have_tests="no"
 fi
 AM_CONDITIONAL(WITH_TESTS, [test "$have_tests" = "yes"])
+
+AC_ARG_ENABLE([tutorial],
+  AS_HELP_STRING([--enable-tutorial], [build tutorial [default=yes]]),
+  [], enable_tutorial=yes
+)
+have_tutorial=yes
+if test "$enable_tutorial" = "no"; then
+  have_tutorial="no"
+fi
+AM_CONDITIONAL(WITH_TUTORIAL, [test "$have_tutorial" = "yes"])
 
 AM_CONDITIONAL(MINGW, false)
 case "${host_os}" in
@@ -466,6 +533,7 @@ AC_CHECK_FUNCS([strtoul])
 AC_CHECK_FUNCS([bzero])
 AC_CHECK_FUNCS([ftruncate])
 AC_CHECK_FUNCS([gethostbyname])
+AC_CHECK_FUNCS([gethostbyname_r])
 AC_CHECK_FUNCS([gettimeofday])
 AC_CHECK_FUNCS([memmove])
 AC_CHECK_FUNCS([memset])
@@ -484,6 +552,8 @@ AC_CHECK_FUNCS([alarm])
 AC_CHECK_FUNCS([clock_gettime])
 AC_CHECK_FUNCS([sched_get_priority_min])
 AC_CHECK_FUNCS([sched_get_priority_max])
+AC_CHECK_FUNCS([inet_ntoa])
+AC_CHECK_FUNCS([pow])
 
 if test "$cross_compiling" = "no" ; then
   AX_SIGNED_RIGHT_SHIFT
@@ -543,7 +613,7 @@ AC_CONFIG_HEADERS(lib/cpp/src/thrift/config.h:config.hin)
 # gruard against pre defined config.h
 AH_TOP([
 #ifndef CONFIG_H
-#define CONFIG_H 
+#define CONFIG_H
 ])
 AH_BOTTOM([
 #endif
@@ -570,19 +640,22 @@ AC_CONFIG_FILES([
   lib/d/test/Makefile
   lib/erl/Makefile
   lib/go/Makefile
+  lib/go/test/Makefile
   lib/hs/Makefile
   lib/java/Makefile
   lib/js/test/Makefile
+  lib/nodejs/Makefile
   lib/perl/Makefile
   lib/perl/test/Makefile
   lib/php/Makefile
   lib/php/test/Makefile
   lib/py/Makefile
   lib/rb/Makefile
+  lib/lua/Makefile
   test/Makefile
   test/cpp/Makefile
+  test/go/Makefile
   test/hs/Makefile
-  test/nodejs/Makefile
   test/php/Makefile
   test/perl/Makefile
   test/py/Makefile
@@ -590,10 +663,13 @@ AC_CONFIG_FILES([
   test/py.tornado/Makefile
   test/rb/Makefile
   tutorial/Makefile
+  tutorial/c_glib/Makefile
   tutorial/cpp/Makefile
   tutorial/go/Makefile
+  tutorial/hs/Makefile
   tutorial/java/Makefile
   tutorial/js/Makefile
+  tutorial/nodejs/Makefile
   tutorial/py/Makefile
   tutorial/py.twisted/Makefile
   tutorial/py.tornado/Makefile
@@ -618,6 +694,8 @@ echo "Building PHP Library ......... : $have_php"
 echo "Building Erlang Library ...... : $have_erlang"
 echo "Building Go Library .......... : $have_go"
 echo "Building D Library ........... : $have_d"
+echo "Building NodeJS Library ...... : $have_nodejs"
+echo "Building Lua Library ......... : $have_lua"
 
 if test "$have_cpp" = "yes" ; then
   echo
@@ -673,13 +751,25 @@ if test "$have_go" = "yes" ; then
   echo
   echo "Go Library:"
   echo "   Using Go................... : $GO"
-  echo "   Using Go version........... : $(go version)"
+  echo "   Using Go version........... : $($GO version)"
 fi
 if test "$have_d" = "yes" ; then
   echo
-  echo "Using D Compiler ............. : $DMD"
-  echo "Building D libevent tests .... : $with_d_event_tests"
-  echo "Building D SSL tests ......... : $with_d_ssl_tests"
+  echo "D Library:"
+  echo "   Using D Compiler .......... : $DMD"
+  echo "   Building D libevent tests . : $with_d_event_tests"
+  echo "   Building D SSL tests ...... : $with_d_ssl_tests"
+fi
+if test "$have_nodejs" = "yes" ; then
+  echo
+  echo "NodeJS Library:"
+  echo "   Using NodeJS .............. : $NODEJS"
+  echo "   Using NodeJS version....... : $($NODEJS --version)"
+fi
+if test "$have_lua" = "yes" ; then
+  echo
+  echo "Lua Library:"
+  echo "   Using Lua .............. : $LUA"
 fi
 echo
 echo "If something is missing that you think should be present,"

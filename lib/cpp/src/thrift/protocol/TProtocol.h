@@ -75,10 +75,6 @@ static inline To bitwise_cast(From from) {
 }
 
 
-namespace apache { namespace thrift { namespace protocol {
-
-using apache::thrift::transport::TTransport;
-
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
@@ -139,6 +135,10 @@ using apache::thrift::transport::TTransport;
 #else /* __THRIFT_BYTE_ORDER */
 # error "Can't define htonll or ntohll!"
 #endif
+
+namespace apache { namespace thrift { namespace protocol {
+
+using apache::thrift::transport::TTransport;
 
 /**
  * Enumerated definition of the types that the Thrift protocol supports.
@@ -282,6 +282,8 @@ uint32_t skip(Protocol_& prot, TType type) {
   }
   return 0;
 }
+
+static const uint32_t DEFAULT_RECURSION_LIMIT = 64;
 
 /**
  * Abstract class for a thrift protocol driver. These are all the methods that
@@ -660,15 +662,28 @@ class TProtocol {
     return ptrans_;
   }
 
- protected:
-  TProtocol(boost::shared_ptr<TTransport> ptrans):
-    ptrans_(ptrans) {
+  void incrementRecursionDepth() {
+    if (recursion_limit_ < ++recursion_depth_) {
+      throw TProtocolException(TProtocolException::DEPTH_LIMIT);
+    }
   }
+
+  void decrementRecursionDepth() {
+    --recursion_depth_;
+  }
+
+ protected:
+  TProtocol(boost::shared_ptr<TTransport> ptrans)
+    : ptrans_(ptrans)
+    , recursion_depth_(0)
+    , recursion_limit_(DEFAULT_RECURSION_LIMIT) {}
 
   boost::shared_ptr<TTransport> ptrans_;
 
  private:
   TProtocol() {}
+  uint32_t recursion_depth_;
+  uint32_t recursion_limit_;
 };
 
 /**

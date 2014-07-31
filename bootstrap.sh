@@ -38,9 +38,6 @@ else
   exit 1
 fi
 
-# automake <= 1.11 names yacc output .h rather than .hh -- see THRIFT-1614
-echo '#include "thrifty.h"' > compiler/cpp/thrifty.hh
-
 autoscan
 $LIBTOOLIZE --copy --automake
 aclocal -I ./aclocal

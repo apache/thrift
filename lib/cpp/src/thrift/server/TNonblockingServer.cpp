@@ -156,12 +156,6 @@ class TNonblockingServer::TConnection {
   /// Count of the number of calls for use with getResizeBufferEveryN().
   int32_t callsForResize_;
 
-  /// Task handle
-  int taskHandle_;
-
-  /// Task event
-  struct event taskEvent_;
-
   /// Transport to read from
   boost::shared_ptr<TMemoryBuffer> inputTransport_;
 
@@ -271,7 +265,7 @@ class TNonblockingServer::TConnection {
    * @param v void* callback arg where we placed TConnection's "this".
    */
   static void eventHandler(evutil_socket_t fd, short /* which */, void* v) {
-    assert(fd == ((TConnection*)v)->getTSocket()->getSocketFD());
+    assert(fd == static_cast<evutil_socket_t>(((TConnection*)v)->getTSocket()->getSocketFD()));
     ((TConnection*)v)->workSocket();
   }
 
@@ -840,6 +834,9 @@ void TNonblockingServer::TConnection::close() {
   factoryInputTransport_->close();
   factoryOutputTransport_->close();
 
+  // release processor and handler
+  processor_.reset();
+
   // Give this object back to the server that owns it
   server_->returnConnection(this);
 }
@@ -893,7 +890,7 @@ TNonblockingServer::TConnection* TNonblockingServer::createConnection(
   // pick an IO thread to handle this connection -- currently round robin
   assert(nextIOThread_ < ioThreads_.size());
   int selectedThreadIdx = nextIOThread_;
-  nextIOThread_ = (nextIOThread_ + 1) % ioThreads_.size();
+  nextIOThread_ = static_cast<uint32_t>((nextIOThread_ + 1) % ioThreads_.size());
 
   TNonblockingIOThread* ioThread = ioThreads_[selectedThreadIdx].get();
 
@@ -1195,7 +1192,7 @@ void TNonblockingServer::registerEvents(event_base* user_event_base) {
   userEventBase_ = user_event_base;
 
   // init listen socket
-  if (serverSocket_ < 0)
+  if (serverSocket_ == THRIFT_INVALID_SOCKET)
     createAndListenOnSocket();
 
   // set up the IO threads
@@ -1206,7 +1203,7 @@ void TNonblockingServer::registerEvents(event_base* user_event_base) {
 
   for (uint32_t id = 0; id < numIOThreads_; ++id) {
     // the first IO thread also does the listening on server socket
-    THRIFT_SOCKET listenFd = (id == 0 ? serverSocket_ : -1);
+    THRIFT_SOCKET listenFd = (id == 0 ? serverSocket_ : THRIFT_INVALID_SOCKET);
 
     shared_ptr<TNonblockingIOThread> thread(
       new TNonblockingIOThread(this, id, listenFd, useHighPriorityIOThreads_));
@@ -1298,7 +1295,7 @@ TNonblockingIOThread::~TNonblockingIOThread() {
       GlobalOutput.perror("TNonblockingIOThread listenSocket_ close(): ",
                           THRIFT_GET_SOCKET_ERROR);
     }
-    listenSocket_ = TNonblockingServer::INVALID_SOCKET_VALUE;
+    listenSocket_ = THRIFT_INVALID_SOCKET;
   }
 
   for (int i = 0; i < 2; ++i) {
@@ -1307,7 +1304,7 @@ TNonblockingIOThread::~TNonblockingIOThread() {
         GlobalOutput.perror("TNonblockingIOThread notificationPipe close(): ",
                             THRIFT_GET_SOCKET_ERROR);
       }
-      notificationPipeFDs_[i] = TNonblockingServer::INVALID_SOCKET_VALUE;
+      notificationPipeFDs_[i] = THRIFT_INVALID_SOCKET;
     }
   }
 }
@@ -1421,7 +1418,7 @@ void TNonblockingIOThread::notifyHandler(evutil_socket_t fd, short which, void* 
   while (true) {
     TNonblockingServer::TConnection* connection = 0;
     const int kSize = sizeof(connection);
-    int nBytes = recv(fd, cast_sockopt(&connection), kSize, 0);
+    long nBytes = recv(fd, cast_sockopt(&connection), kSize, 0);
     if (nBytes == kSize) {
       if (connection == NULL) {
         // this is the command to stop our thread, exit the handler!
@@ -1503,6 +1500,8 @@ void TNonblockingIOThread::setCurrentThreadHighPriority(bool value) {
   } else {
     GlobalOutput.perror("TNonblocking: pthread_setschedparam(): ", THRIFT_GET_SOCKET_ERROR);
   }
+#else
+  THRIFT_UNUSED_VARIABLE(value);
 #endif
 }
 

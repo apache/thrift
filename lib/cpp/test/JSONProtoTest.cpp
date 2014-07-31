@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#define _USE_MATH_DEFINES
 #include <iostream>
 #include <cmath>
 #include <thrift/transport/TBufferTransports.h>
@@ -133,7 +134,7 @@ int main() {
   dub.neginf = -HUGE_VAL;
   dub.repeating = 10.0/3.0;
   dub.big = 1E+305;
-  dub.small = 1E-305;
+  dub.tiny = 1E-305;
   dub.zero = 0.0;
   dub.negzero = -0.0;
   cout << apache::thrift::ThriftJSONString(dub) << endl << endl;

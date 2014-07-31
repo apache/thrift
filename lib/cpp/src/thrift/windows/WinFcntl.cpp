@@ -75,7 +75,7 @@ int thrift_poll(THRIFT_POLLFD *fdArray, ULONG nfds, INT timeout)
   timeval time_out;
   timeval* time_out_ptr = NULL;
   if(timeout >= 0) {
-    timeval time_out = {timeout / 1000, timeout * 1000};
+    timeval time_out = {timeout / 1000, (timeout % 1000) * 1000};
     time_out_ptr = &time_out;
   }
   else { //to avoid compiler warnings
@@ -102,3 +102,9 @@ int thrift_poll(THRIFT_POLLFD *fdArray, ULONG nfds, INT timeout)
 }
 #endif // WINVER
 
+#ifdef _WIN32_WCE
+std::string thrift_wstr2str(std::wstring ws) {
+	std::string s(ws.begin(), ws.end());
+	return s;
+}
+#endif

@@ -733,7 +733,7 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream &out,
   if (is_exception) {
     out << indent() << "- (id) init" << endl;
     scope_up(out);
-    out << indent() << "return [super initWithName: @\"" << tstruct->get_name() <<
+    out << indent() << "return [super initWithName: @\"" << cocoa_prefix_ << tstruct->get_name() <<
         "\" reason: @\"unknown\" userInfo: nil];" << endl;
     scope_down(out);
     out << endl;
@@ -1175,7 +1175,7 @@ void t_cocoa_generator::generate_cocoa_struct_description(ofstream& out,
 
   out <<
     indent() << "NSMutableString * ms = [NSMutableString stringWithString: @\"" <<
-    tstruct->get_name() << "(\"];" << endl;
+    cocoa_prefix_ << tstruct->get_name() << "(\"];" << endl;
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -2029,7 +2029,7 @@ void t_cocoa_generator::generate_serialize_field(ofstream& out,
         out << "writeDouble: " << fieldName << "];";
         break;
       default:
-        throw "compiler error: no Java name for base type " + t_base_type::t_base_name(tbase);
+        throw "compiler error: no Objective-C name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       out << "writeI32: " << fieldName << "];";
@@ -2211,7 +2211,8 @@ void t_cocoa_generator::generate_serialize_list_element(ofstream& out,
  */
 string t_cocoa_generator::type_name(t_type* ttype, bool class_ref) {
   if (ttype->is_typedef()) {
-    return cocoa_prefix_ + ttype->get_name();
+    t_program* program = ttype->get_program();
+    return program ? (program->get_namespace("cocoa") + ttype->get_name()) : ttype->get_name();
   }
 
   string result;
@@ -2271,7 +2272,7 @@ string t_cocoa_generator::base_type_name(t_base_type* type) {
   case t_base_type::TYPE_DOUBLE:
     return "double";
   default:
-    throw "compiler error: no objective-c name for base type " + t_base_type::t_base_name(tbase);
+    throw "compiler error: no Objective-C name for base type " + t_base_type::t_base_name(tbase);
   }
 }
 

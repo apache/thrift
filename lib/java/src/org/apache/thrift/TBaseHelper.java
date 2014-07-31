@@ -17,6 +17,7 @@
  */
 package org.apache.thrift;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -198,7 +199,7 @@ public final class TBaseHelper {
   /**
    * Comparator to compare items inside a structure (e.g. a list, set, or map).
    */
-  private static class NestedStructureComparator implements Comparator {
+  private static class NestedStructureComparator implements Comparator, Serializable {
     public int compare(Object oA, Object oB) {
       if (oA == null && oB == null) {
         return 0;

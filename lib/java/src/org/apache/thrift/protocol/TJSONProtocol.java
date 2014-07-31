@@ -42,9 +42,16 @@ public class TJSONProtocol extends TProtocol {
    * Factory for JSON protocol objects
    */
   public static class Factory implements TProtocolFactory {
+    protected boolean fieldNamesAsString_ = false;
+
+    public Factory() {}
+
+    public Factory(boolean fieldNamesAsString) {
+      fieldNamesAsString_ = fieldNamesAsString;
+    }
 
     public TProtocol getProtocol(TTransport trans) {
-      return new TJSONProtocol(trans);
+      return new TJSONProtocol(trans, fieldNamesAsString_);
     }
 
   }
@@ -70,10 +77,10 @@ public class TJSONProtocol extends TProtocol {
     1,  1,'"',  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, // 2
   };
 
-  private static final String ESCAPE_CHARS = "\"\\bfnrt";
+  private static final String ESCAPE_CHARS = "\"\\/bfnrt";
 
   private static final byte[] ESCAPE_CHAR_VALS = {
-    '"', '\\', '\b', '\f', '\n', '\r', '\t',
+    '"', '\\', '/', '\b', '\f', '\n', '\r', '\t',
   };
 
   private static final int  DEF_STRING_SIZE = 16;
@@ -285,6 +292,9 @@ public class TJSONProtocol extends TProtocol {
   // Reader that manages a 1-byte buffer
   private LookaheadReader reader_ = new LookaheadReader();
 
+  // Write out the TField names as a string instead of the default integer value
+  private boolean fieldNamesAsString_ = false;
+
   // Push a new JSON context onto the stack.
   private void pushContext(JSONBaseContext c) {
     contextStack_.push(context_);
@@ -301,6 +311,11 @@ public class TJSONProtocol extends TProtocol {
    */
   public TJSONProtocol(TTransport trans) {
     super(trans);
+  }
+
+  public TJSONProtocol(TTransport trans, boolean fieldNamesAsString) {
+    super(trans);
+    fieldNamesAsString_ = fieldNamesAsString;
   }
 
   @Override
@@ -421,7 +436,9 @@ public class TJSONProtocol extends TProtocol {
         special = true;
       }
       break;
-    }
+    default:
+      break;
+  }
 
     boolean escapeNum = special || context_.escapeNum();
     if (escapeNum) {
@@ -513,7 +530,11 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public void writeFieldBegin(TField field) throws TException {
-    writeJSONInteger(field.id);
+    if (fieldNamesAsString_) {
+      writeString(field.name);
+    } else {
+      writeJSONInteger(field.id);
+    }
     writeJSONObjectStart();
     writeJSONString(getTypeNameForTypeID(field.type));
   }

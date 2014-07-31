@@ -88,7 +88,7 @@ int thrift_gettimeofday(struct timeval * tv, struct timezone * tz)
         }
     }
 
-    return -1;
+    return 0;
 }
 
 int thrift_sleep(unsigned int seconds)

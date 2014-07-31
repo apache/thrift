@@ -157,7 +157,7 @@ int main() {
       write_to_read(t2, t3);
       abort();
     }
-    catch (TProtocolException& ex) {}
+    catch (const TProtocolException&) {}
 
     write_to_read(t3, t2);
     assert(t2.__isset.im_optional);

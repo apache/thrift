@@ -98,6 +98,7 @@ end;
 
 constructor TThriftStreamAdapterCOM.Create( const AStream: IStream);
 begin
+  inherited Create;
   FStream := AStream;
 end;
 
@@ -221,6 +222,7 @@ end;
 
 constructor TThriftStreamAdapterDelphi.Create( const AStream: TStream; AOwnsStream: Boolean);
 begin
+  inherited Create;
   FStream := AStream;
   FOwnsStream := AOwnsStream;
 end;

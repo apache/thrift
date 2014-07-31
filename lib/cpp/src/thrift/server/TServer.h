@@ -307,8 +307,9 @@ public:
  * for the current process and all of its children.
  * By default, tries to increase it to as much as 2^24.
  */
+#ifdef HAVE_SYS_RESOURCE_H
  int increase_max_fds(int max_fds=(1<<24));
-
+#endif
 
 }}} // apache::thrift::server
 

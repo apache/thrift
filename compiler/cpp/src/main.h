@@ -21,6 +21,7 @@
 #define T_MAIN_H
 
 #include <string>
+#include "logging.h"
 #include "parse/t_const.h"
 #include "parse/t_field.h"
 
@@ -28,7 +29,9 @@
  * Defined in the flex library
  */
 
-int yylex(void);
+extern "C" {
+  int yylex(void);
+}
 
 int yyparse(void);
 
@@ -38,24 +41,9 @@ int yyparse(void);
 void yyerror(const char* fmt, ...);
 
 /**
- * Parse debugging output, used to print helpful info
+ * Check simple identifier names
  */
-void pdebug(const char* fmt, ...);
-
-/**
- * Parser warning
- */
-void pwarning(int level, const char* fmt, ...);
-
-/**
- * Print verbose output message
- */
-void pverbose(const char* fmt, ...);
-
-/**
- * Failure!
- */
-void failure(const char* fmt, ...);
+void validate_simple_identifier(const char* identifier);
 
 /**
  * Check constant types
@@ -96,6 +84,16 @@ void clear_doctext();
  * Cleans up text commonly found in doxygen-like comments
  */
 char* clean_up_doctext(char* doctext);
+
+/**
+ * We are sure the program doctext candidate is really the program doctext.
+ */
+void declare_valid_program_doctext();
+
+/**
+ * Emits a warning on list<byte>, binary type is typically a much better choice.
+ */
+void check_for_list_of_bytes(t_type* list_elem_type);
 
 /**
  * Flex utilities

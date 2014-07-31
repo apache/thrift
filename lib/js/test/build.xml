@@ -97,10 +97,10 @@
     <get src="http://js-test-driver.googlecode.com/svn/trunk/JsTestDriver/contrib/qunit/src/equiv.js" dest="${build}/js/lib" usetimestamp="true"/>
     <get src="http://js-test-driver.googlecode.com/svn/trunk/JsTestDriver/contrib/qunit/src/QUnitAdapter.js" dest="${build}/js/lib" usetimestamp="true"/>
 
-    <get src="http://code.jquery.com/qunit/git/qunit.js" dest="${build}/js/lib" usetimestamp="true"/>
-    <get src="http://code.jquery.com/qunit/git/qunit.css" dest="${build}/js/lib" usetimestamp="true"/>
+    <get src="http://code.jquery.com/qunit/qunit-1.5.0.js" dest="${build}/js/lib/qunit.js" usetimestamp="true"/>
+    <get src="http://code.jquery.com/qunit/qunit-1.5.0.css" dest="${build}/js/lib/qunit.css" usetimestamp="true"/>
     <!-- js-test-driver has issues with relative path...so we need a copy -->
-    <copy file="../thrift.js" todir="${build}/js/"/>
+    <copy file="../src/thrift.js" todir="${build}/js/"/>
   </target>
 
   <target name="compile" description="compile the test suite" depends="init, generate, resolve">
@@ -216,7 +216,7 @@
     <jsl:jslint options="evil,forin,browser,bitwise,regexp,newcap,immed" encoding="UTF-8">
       <formatter type="plain" />
       <fileset dir="${genjs}" includes="**/*.js" />
-      <fileset dir=".." includes="thrift.js" />
+      <fileset dir="../src" includes="thrift.js" />
 
       <!-- issues with unsafe character -->
       <!-- fileset dir="." includes="*test*.js" /> -->
@@ -234,7 +234,7 @@
     <exec executable="gjslint" failifexecutionfails="no">
       <arg line="--nojsdoc"/>
       <arg line="${genjs}/*.js"/>
-      <arg line="../thrift.js"/>
+      <arg line="../src/thrift.js"/>
 
       <!-- issues with unsafe character, etc. -->
       <!-- <arg line="*test*.js"/> -->

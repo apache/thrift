@@ -38,9 +38,6 @@ package org.apache.thrift.protocol {
     protected var strictRead_:Boolean = false;
     protected var strictWrite_:Boolean = true;
     
-    protected var readLength_:int;
-    protected var checkReadLength_:Boolean = false;
-
   /**
    * Factory
    */
@@ -298,7 +295,6 @@ package org.apache.thrift.protocol {
   
     public function readBinary():ByteArray {
         var size:int = readI32();
-        checkReadLength(size);
         var buf:ByteArray = new ByteArray();
         trans_.readAll(buf, 0, size);
         return buf;
@@ -307,24 +303,9 @@ package org.apache.thrift.protocol {
     private function readAll(len:int):void {
       reset(bytes);
       
-      checkReadLength(len);
         trans_.readAll(bytes, 0, len);
         
         bytes.position = 0;
-      }
-  
-    public function setReadLength(readLength:int):void {
-      readLength_ = readLength;
-      checkReadLength_ = true;
-    }
-  
-    protected function checkReadLength(length:int):void {
-        if (checkReadLength_) {
-            readLength_ -= length;
-            if (readLength_ < 0) {
-              throw new TError("Message length exceeded: " + length);
-            }
-        }
       }
     
     private static function reset(arr:ByteArray):void {

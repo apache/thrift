@@ -52,4 +52,5 @@ EXTRA_DIST = \
 	lib/Thrift/Protocol.pm \
 	lib/Thrift/Server.pm \
 	lib/Thrift/Socket.pm \
-	lib/Thrift/Transport.pm
+	lib/Thrift/Transport.pm \
+	README.md

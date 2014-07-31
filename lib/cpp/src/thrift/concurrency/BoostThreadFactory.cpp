@@ -19,6 +19,8 @@
 
 #include <thrift/thrift-config.h>
 
+#ifdef USE_BOOST_THREAD
+
 #include <thrift/concurrency/BoostThreadFactory.h>
 #include <thrift/concurrency/Exception.h>
 
@@ -78,7 +80,7 @@ class BoostThread: public Thread {
     if (state_ != uninitialized) {
       return;
     }
-  
+
   // Create reference
     shared_ptr<BoostThread>* selfRef = new shared_ptr<BoostThread>();
     *selfRef = self_.lock();
@@ -178,3 +180,5 @@ void BoostThreadFactory::setDetached(bool value) { impl_->setDetached(value); }
 Thread::id_t BoostThreadFactory::getCurrentThreadId() const { return impl_->getCurrentThreadId(); }
 
 }}} // apache::thrift::concurrency
+
+#endif // USE_BOOST_THREAD
