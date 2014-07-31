@@ -1,4 +1,6 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE OverloadedStrings #-}
 --
 -- Licensed to the Apache Software Foundation (ASF) under one
 -- or more contributor license agreements. See the NOTICE file
@@ -20,167 +22,58 @@
 
 module Thrift.Protocol
     ( Protocol(..)
-    , skip
-    , MessageType(..)
-    , ThriftType(..)
     , ProtocolExn(..)
     , ProtocolExnType(..)
+    , getTypeOf
+    , runParser
+    , versionMask
+    , version1
+    , bsToDouble
     ) where
 
-import Control.Monad ( replicateM_, unless )
 import Control.Exception
-import Data.ByteString.Lazy
+import Data.Attoparsec.ByteString
+import Data.Bits
+import Data.ByteString.Lazy (ByteString, toStrict)
+import Data.ByteString.Unsafe
+import Data.Functor ((<$>))
 import Data.Int
-import Data.Text.Lazy ( Text )
-import Data.Typeable ( Typeable )
+import Data.Monoid (mempty)
+import Data.Text.Lazy (Text)
+import Data.Typeable (Typeable)
+import Data.Word
+import Foreign.Ptr (castPtr)
+import Foreign.Storable (Storable, peek, poke)
+import System.IO.Unsafe
+import qualified Data.ByteString as BS
+import qualified Data.HashMap.Strict as Map
 
+import Thrift.Types
 import Thrift.Transport
 
+versionMask :: Int32
+versionMask = fromIntegral (0xffff0000 :: Word32)
 
-data ThriftType
-    = T_STOP
-    | T_VOID
-    | T_BOOL
-    | T_BYTE
-    | T_DOUBLE
-    | T_I16
-    | T_I32
-    | T_I64
-    | T_STRING
-    | T_STRUCT
-    | T_MAP
-    | T_SET
-    | T_LIST
-      deriving ( Eq )
-
-instance Enum ThriftType where
-    fromEnum T_STOP   = 0
-    fromEnum T_VOID   = 1
-    fromEnum T_BOOL   = 2
-    fromEnum T_BYTE   = 3
-    fromEnum T_DOUBLE = 4
-    fromEnum T_I16    = 6
-    fromEnum T_I32    = 8
-    fromEnum T_I64    = 10
-    fromEnum T_STRING = 11
-    fromEnum T_STRUCT = 12
-    fromEnum T_MAP    = 13
-    fromEnum T_SET    = 14
-    fromEnum T_LIST   = 15
-
-    toEnum 0  = T_STOP
-    toEnum 1  = T_VOID
-    toEnum 2  = T_BOOL
-    toEnum 3  = T_BYTE
-    toEnum 4  = T_DOUBLE
-    toEnum 6  = T_I16
-    toEnum 8  = T_I32
-    toEnum 10 = T_I64
-    toEnum 11 = T_STRING
-    toEnum 12 = T_STRUCT
-    toEnum 13 = T_MAP
-    toEnum 14 = T_SET
-    toEnum 15 = T_LIST
-    toEnum t = error $ "Invalid ThriftType " ++ show t
-
-data MessageType
-    = M_CALL
-    | M_REPLY
-    | M_EXCEPTION
-      deriving ( Eq )
-
-instance Enum MessageType where
-    fromEnum M_CALL      =  1
-    fromEnum M_REPLY     =  2
-    fromEnum M_EXCEPTION =  3
-
-    toEnum 1 = M_CALL
-    toEnum 2 = M_REPLY
-    toEnum 3 = M_EXCEPTION
-    toEnum t = error $ "Invalid MessageType " ++ show t
-
+version1 :: Int32
+version1 = fromIntegral (0x80010000 :: Word32)
 
 class Protocol a where
-    getTransport :: Transport t => a t -> t
+  getTransport :: Transport t => a t -> t
 
-    writeMessageBegin :: Transport t => a t -> (Text, MessageType, Int32) -> IO ()
-    writeMessageEnd   :: Transport t => a t -> IO ()
+  writeMessageBegin :: Transport t => a t -> (Text, MessageType, Int32) -> IO ()
+  writeMessageEnd :: Transport t => a t -> IO ()
+  writeMessageEnd _ = return ()
+  
+  readMessageBegin :: Transport t => a t -> IO (Text, MessageType, Int32)
+  readMessageEnd :: Transport t => a t -> IO ()
+  readMessageEnd _ = return ()
 
-    writeStructBegin :: Transport t => a t -> Text -> IO ()
-    writeStructEnd   :: Transport t => a t -> IO ()
-    writeFieldBegin  :: Transport t => a t -> (Text, ThriftType, Int16) -> IO ()
-    writeFieldEnd    :: Transport t => a t -> IO ()
-    writeFieldStop   :: Transport t => a t -> IO ()
-    writeMapBegin    :: Transport t => a t -> (ThriftType, ThriftType, Int32) -> IO ()
-    writeMapEnd      :: Transport t => a t -> IO ()
-    writeListBegin   :: Transport t => a t -> (ThriftType, Int32) -> IO ()
-    writeListEnd     :: Transport t => a t -> IO ()
-    writeSetBegin    :: Transport t => a t -> (ThriftType, Int32) -> IO ()
-    writeSetEnd      :: Transport t => a t -> IO ()
+  serializeVal :: Transport t => a t -> ThriftVal -> ByteString
+  deserializeVal :: Transport t => a t -> ThriftType -> ByteString -> ThriftVal
 
-    writeBool   :: Transport t => a t -> Bool -> IO ()
-    writeByte   :: Transport t => a t -> Int8 -> IO ()
-    writeI16    :: Transport t => a t -> Int16 -> IO ()
-    writeI32    :: Transport t => a t -> Int32 -> IO ()
-    writeI64    :: Transport t => a t -> Int64 -> IO ()
-    writeDouble :: Transport t => a t -> Double -> IO ()
-    writeString :: Transport t => a t -> Text -> IO ()
-    writeBinary :: Transport t => a t -> ByteString -> IO ()
-
-
-    readMessageBegin :: Transport t => a t -> IO (Text, MessageType, Int32)
-    readMessageEnd   :: Transport t => a t -> IO ()
-
-    readStructBegin :: Transport t => a t -> IO Text
-    readStructEnd   :: Transport t => a t -> IO ()
-    readFieldBegin  :: Transport t => a t -> IO (Text, ThriftType, Int16)
-    readFieldEnd    :: Transport t => a t -> IO ()
-    readMapBegin    :: Transport t => a t -> IO (ThriftType, ThriftType, Int32)
-    readMapEnd      :: Transport t => a t -> IO ()
-    readListBegin   :: Transport t => a t -> IO (ThriftType, Int32)
-    readListEnd     :: Transport t => a t -> IO ()
-    readSetBegin    :: Transport t => a t -> IO (ThriftType, Int32)
-    readSetEnd      :: Transport t => a t -> IO ()
-
-    readBool   :: Transport t => a t -> IO Bool
-    readByte   :: Transport t => a t -> IO Int8
-    readI16    :: Transport t => a t -> IO Int16
-    readI32    :: Transport t => a t -> IO Int32
-    readI64    :: Transport t => a t -> IO Int64
-    readDouble :: Transport t => a t -> IO Double
-    readString :: Transport t => a t -> IO Text
-    readBinary :: Transport t => a t -> IO ByteString
-
-
-skip :: (Protocol p, Transport t) => p t -> ThriftType -> IO ()
-skip _ T_STOP = return ()
-skip _ T_VOID = return ()
-skip p T_BOOL = readBool p >> return ()
-skip p T_BYTE = readByte p >> return ()
-skip p T_I16 = readI16 p >> return ()
-skip p T_I32 = readI32 p >> return ()
-skip p T_I64 = readI64 p >> return ()
-skip p T_DOUBLE = readDouble p >> return ()
-skip p T_STRING = readString p >> return ()
-skip p T_STRUCT = do _ <- readStructBegin p
-                     skipFields p
-                     readStructEnd p
-skip p T_MAP = do (k, v, s) <- readMapBegin p
-                  replicateM_ (fromIntegral s) (skip p k >> skip p v)
-                  readMapEnd p
-skip p T_SET = do (t, n) <- readSetBegin p
-                  replicateM_ (fromIntegral n) (skip p t)
-                  readSetEnd p
-skip p T_LIST = do (t, n) <- readListBegin p
-                   replicateM_ (fromIntegral n) (skip p t)
-                   readListEnd p
-
-
-skipFields :: (Protocol p, Transport t) => p t -> IO ()
-skipFields p = do
-    (_, t, _) <- readFieldBegin p
-    unless (t == T_STOP) (skip p t >> readFieldEnd p >> skipFields p)
-
+  writeVal :: Transport t => a t -> ThriftVal -> IO ()
+  writeVal p = tWrite (getTransport p) . serializeVal p
+  readVal :: Transport t => a t -> ThriftType -> IO ThriftVal
 
 data ProtocolExnType
     = PE_UNKNOWN
@@ -189,9 +82,63 @@ data ProtocolExnType
     | PE_SIZE_LIMIT
     | PE_BAD_VERSION
     | PE_NOT_IMPLEMENTED
-    | PE_DEPTH_LIMIT
+    | PE_MISSING_REQUIRED_FIELD
       deriving ( Eq, Show, Typeable )
 
 data ProtocolExn = ProtocolExn ProtocolExnType String
   deriving ( Show, Typeable )
 instance Exception ProtocolExn
+
+getTypeOf :: ThriftVal -> ThriftType
+getTypeOf v =  case v of
+  TStruct{} -> T_STRUCT Map.empty
+  TMap{} -> T_MAP T_VOID T_VOID
+  TList{} -> T_LIST T_VOID
+  TSet{} -> T_SET T_VOID
+  TBool{} -> T_BOOL
+  TByte{} -> T_BYTE
+  TI16{} -> T_I16
+  TI32{} -> T_I32
+  TI64{} -> T_I64
+  TString{} -> T_STRING
+  TDouble{} -> T_DOUBLE
+
+runParser :: (Protocol p, Transport t, Show a) => p t -> Parser a -> IO a
+runParser prot p = refill >>= getResult . parse p
+  where
+    refill = handle handleEOF $ toStrict <$> tRead (getTransport prot) 1
+    getResult (Done _ a) = return a
+    getResult (Partial k) = refill >>= getResult . k
+    getResult f = throw $ ProtocolExn PE_INVALID_DATA (show f)
+
+handleEOF :: SomeException -> IO BS.ByteString
+handleEOF = const $ return mempty
+
+-- | Converts a ByteString to a Floating point number
+-- The ByteString is assumed to be encoded in network order (Big Endian)
+-- therefore the behavior of this function varies based on whether the local
+-- machine is big endian or little endian.
+bsToDouble :: BS.ByteString -> Double
+bsToDouble bs = unsafeDupablePerformIO $ unsafeUseAsCString bs castBs
+  where
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    castBs chrPtr = do
+      w <- peek (castPtr chrPtr)
+      poke (castPtr chrPtr) (byteSwap w)
+      peek (castPtr chrPtr)
+#else
+    castBs = peek . castPtr
+#endif
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+-- | Swap endianness of a 64-bit word
+byteSwap :: Word64 -> Word64
+byteSwap w = (w `shiftL` 56 .&. 0xFF00000000000000) .|.
+             (w `shiftL` 40 .&. 0x00FF000000000000) .|.
+             (w `shiftL` 24 .&. 0x0000FF0000000000) .|.
+             (w `shiftL` 8  .&. 0x000000FF00000000) .|.
+             (w `shiftR` 8  .&. 0x00000000FF000000) .|.
+             (w `shiftR` 24 .&. 0x0000000000FF0000) .|.
+             (w `shiftR` 40 .&. 0x000000000000FF00) .|.
+             (w `shiftR` 56 .&. 0x00000000000000FF)
+#endif

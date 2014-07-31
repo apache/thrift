@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 --
 -- Licensed to the Apache Software Foundation (ASF) under one
 -- or more contributor license agreements. See the NOTICE file
@@ -25,13 +26,10 @@ module Thrift.Transport.Framed
     ) where
 
 import Thrift.Transport
+import Thrift.Transport.IOBuffer
 
-import Control.Monad (liftM)
 import Data.Int (Int32)
-import Data.Monoid (mappend, mempty)
-import Control.Concurrent.MVar
 import qualified Data.Binary as B
-import qualified Data.Binary.Builder as BB
 import qualified Data.ByteString.Lazy as LBS
 
 
@@ -65,8 +63,17 @@ instance Transport t => Transport (FramedTransport t) where
                  then tRead trans n
                  else return bs
          else return bs
+    tPeek trans = do
+      mw <- peekBuf (readBuffer trans)
+      case mw of
+        Just _ -> return mw
+        Nothing -> do
+          len <- readFrame trans
+          if len > 0
+             then tPeek trans
+             else return Nothing
 
-    tWrite trans = writeBuf (writeBuffer trans)
+    tWrite = writeBuf . writeBuffer
 
     tFlush trans = do
       bs <- flushBuf (writeBuffer trans)
@@ -84,37 +91,9 @@ readFrame trans = do
   let sz = fromIntegral (B.decode szBs :: Int32)
 
   -- Read the frame and stuff it into the read buffer.
-  bs   <- tRead (wrappedTrans trans) sz
+  bs <- tRead (wrappedTrans trans) sz
   fillBuf (readBuffer trans) bs
 
   -- Return the frame size so that the caller knows whether to expect
   -- something in the read buffer or not.
   return sz
-
-
--- Mini IO buffers (stolen from HttpClient.hs)
-
-type WriteBuffer = MVar (BB.Builder)
-
-newWriteBuffer :: IO WriteBuffer
-newWriteBuffer = newMVar mempty
-
-writeBuf :: WriteBuffer -> LBS.ByteString -> IO ()
-writeBuf w s = modifyMVar_ w $ return . (\builder ->
-                 builder `mappend` (BB.fromLazyByteString s))
-
-flushBuf :: WriteBuffer -> IO (LBS.ByteString)
-flushBuf w = BB.toLazyByteString `liftM` swapMVar w mempty
-
-
-type ReadBuffer = MVar (LBS.ByteString)
-
-newReadBuffer :: IO ReadBuffer
-newReadBuffer = newMVar mempty
-
-fillBuf :: ReadBuffer -> LBS.ByteString -> IO ()
-fillBuf r s = swapMVar r s >> return ()
-
-readBuf :: ReadBuffer -> Int -> IO (LBS.ByteString)
-readBuf r n = modifyMVar r $ return . flipPair . LBS.splitAt (fromIntegral n)
-    where flipPair (a, b) = (b, a)
