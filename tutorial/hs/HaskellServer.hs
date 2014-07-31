@@ -49,7 +49,7 @@ newCalculatorHandler = do
 instance SharedService_Iface CalculatorHandler where
   getStruct self k = do
     myLog <- readMVar (mathLog self)
-    return $ (myLog ! (fromJust k))
+    return $ (myLog ! k)
 
 
 instance Calculator_Iface CalculatorHandler where
@@ -57,8 +57,8 @@ instance Calculator_Iface CalculatorHandler where
     print "ping()"
 
   add _ n1 n2 = do
-    printf "add(%d,%d)\n" (fromJust n1) (fromJust n2)
-    return ((fromJust n1)+(fromJust n2))
+    printf "add(%d,%d)\n" n1 n2
+    return (n1 + n2)
 
   calculate self mlogid mwork = do
     printf "calculate(%d, %s)\n" logid (show work)
@@ -74,27 +74,24 @@ instance Calculator_Iface CalculatorHandler where
                     if num2 work == 0 then
                         throw $
                               InvalidOperation {
-                                 f_InvalidOperation_what = Just $ fromIntegral $ fromEnum $ op work,
-                                 f_InvalidOperation_why = Just "Cannot divide by 0"
+                                 invalidOperation_what = fromIntegral $ fromEnum $ op work,
+                                 invalidOperation_why = "Cannot divide by 0"
                                             }
                     else
                         num1 work `div` num2 work
 
-    let logEntry = SharedStruct (Just logid) (Just (fromString $ show $ val))
+    let logEntry = SharedStruct logid (fromString $ show $ val)
     modifyMVar_ (mathLog self) $ return .(M.insert logid logEntry)
 
     return $! val
 
    where
      -- stupid dynamic languages f'ing it up
-     num1 = fromJust . f_Work_num1
-     num2 = fromJust . f_Work_num2
-     op = fromJust . f_Work_op
-     logid = fromJust mlogid
-     work = fromJust mwork
-
-
-    --return val
+     num1 = work_num1
+     num2 = work_num2
+     op = work_op
+     logid = mlogid
+     work = mwork
 
   zip _ =
     print "zip()"

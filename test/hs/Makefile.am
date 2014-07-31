@@ -31,5 +31,9 @@ check: stubs
 	sh run-test.sh ThriftTest
 	sh run-test.sh Include
 
+cross: stubs
+	ghc -igen-hs TestServer.hs
+	ghc -igen-hs TestClient.hs
+
 clean-local:
 	$(RM) -r gen-hs

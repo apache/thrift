@@ -18,6 +18,7 @@
 *_ReSharper*
 *.opensdf
 *.swp
+*.hi
 *~
 
 .*project
@@ -219,6 +220,8 @@ test-driver
 /test/go/src/code.google.com/
 /test/go/src/gen/
 /test/go/src/thrift
+/test/hs/TestClient
+/test/hs/TestServer
 /test/py.twisted/_trial_temp/
 /test/rb/Gemfile.lock
 /tutorial/cpp/TutorialClient

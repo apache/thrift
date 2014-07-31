@@ -203,6 +203,60 @@ ruby_protocols="binary compact json accel"
 ruby_transports="buffered framed"
 ruby_sockets="ip"
 
+hs_protocols="binary"
+hs_transports="buffered"
+hs_sockets="ip"
+
+######### hs client - hs server ###############
+for proto in $hs_protocols; do
+  for trans in $hs_transports; do
+    for sock in $hs_sockets; do
+      case "$sock" in
+       "ip" )     extraparam="";;
+       "ip-ssl" ) extraparam="--ssl";;
+       "domain" ) extraparam="--domain-socket=/tmp/ThriftTest.thrift";;
+      esac
+      do_test "hs-hs"   "${proto}" "${trans}-${sock}" \
+              "hs/TestClient --protocol ${proto} --transport ${trans} ${extraparam}" \
+              "hs/TestServer --protocol ${proto} --transport ${trans} ${extraparam}" \
+              "2" "0.1"
+    done
+  done
+done
+
+######### hs client - cpp server ###############
+for proto in $(intersection "${hs_protocols}" "${cpp_protocols}"); do
+  for trans in  $(intersection "${hs_transports}" "${cpp_transports}"); do
+    for sock in $(intersection "${hs_sockets}" "${cpp_sockets}"); do
+      case "$sock" in
+       "ip" )     extraparam="";;
+       "ip-ssl" ) extraparam="--ssl";;
+       "domain" ) extraparam="--domain-socket=/tmp/ThriftTest.thrift";;
+      esac
+      do_test "hs-cpp"   "${proto}" "${trans}-${sock}" \
+              "hs/TestClient --protocol ${proto} --transport ${trans} ${extraparam}" \
+              "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}" \
+              "2" "0.1"
+    done
+  done
+done
+
+######### cpp client - hs server ###############
+for proto in $(intersection "${hs_protocols}" "${cpp_protocols}"); do
+  for trans in  $(intersection "${hs_transports}" "${cpp_transports}"); do
+    for sock in $(intersection "${hs_sockets}" "${cpp_sockets}"); do
+      case "$sock" in
+       "ip" )     extraparam="";;
+       "ip-ssl" ) extraparam="--ssl";;
+       "domain" ) extraparam="--domain-socket=/tmp/ThriftTest.thrift";;
+      esac
+      do_test "cpp-hs"   "${proto}" "${trans}-${sock}" \
+              "cpp/TestClient --protocol=${proto} --transport=${trans} ${extraparam}" \
+              "hs/TestServer --protocol ${proto} --transport ${trans} ${extraparam}" \
+              "2" "0.1"
+    done
+  done
+done
 
 ######### java client - java server #############
 for proto in $java_protocols; do
@@ -854,7 +908,6 @@ for proto in $csharp_protocols; do
     done
   done
 done
-
 
 do_test "js-java"   "json"  "http-ip" \
         "" \
