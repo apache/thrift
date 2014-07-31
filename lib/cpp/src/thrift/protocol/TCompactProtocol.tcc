@@ -817,7 +817,6 @@ TType TCompactProtocolT<Transport_>::getTType(int8_t type) {
     default:
       throw TException(std::string("don't know what type: ") + (char)type);
   }
-  return T_STOP;
 }
 
 }}} // apache::thrift::protocol

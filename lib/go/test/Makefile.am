@@ -57,11 +57,20 @@ check: gopath
 	GOPATH=`pwd`/gopath $(GO) test thrift tests
 
 clean-local:
-	$(RM) -r gopath ThriftTest.thrift
+	$(RM) -r gopath ThriftTest.thrift gen-go
 
 client: stubs
 	$(GO) run TestClient.go
 
 EXTRA_DIST = \
+	tests \
+	BinaryKeyTest.thrift \
+	GoTagTest.thrift \
 	IncludesTest.thrift \
-	NamespacedTest.thrift
+	MultiplexedProtocolTest.thrift \
+	NamespacedTest.thrift \
+	OnewayTest.thrift \
+	OptionalFieldsTest.thrift \
+	RefAnnotationFieldsTest.thrift \
+	ServicesTest.thrift \
+	TypedefFieldTest.thrift

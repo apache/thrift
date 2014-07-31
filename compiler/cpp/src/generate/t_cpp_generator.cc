@@ -874,7 +874,7 @@ void t_cpp_generator::generate_assignment_operator(
 }
 
 /**
- * Writes the struct definition into the header file
+ * Writes the struct declaration into the header file
  *
  * @param out Output stream
  * @param tstruct The struct
@@ -934,7 +934,7 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
         indent(out) <<
-          "bool " << (*m_iter)->get_name() << ";" << endl;
+          "bool " << (*m_iter)->get_name() << " :1;" << endl;
         }
       }
 
@@ -1041,14 +1041,14 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
     }
     if (is_reference((*m_iter))) {
       out <<
-	endl <<
-	indent() << "void __set_" << (*m_iter)->get_name() <<
+        endl <<
+        indent() << "void __set_" << (*m_iter)->get_name() <<
         "(boost::shared_ptr<" << type_name((*m_iter)->get_type(), false, false) << ">";
       out << " val);" << endl;
     } else {
       out <<
-	endl <<
-	indent() << "void __set_" << (*m_iter)->get_name() <<
+        endl <<
+        indent() << "void __set_" << (*m_iter)->get_name() <<
         "(" << type_name((*m_iter)->get_type(), false, true);
       out << " val);" << endl;
     }
@@ -1162,17 +1162,17 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if (is_reference((*m_iter))) {
         std::string type = type_name((*m_iter)->get_type());
-	out <<
-	  endl <<
-	  indent() << "void " << tstruct->get_name() << "::__set_" << (*m_iter)->get_name() <<
-	  "(boost::shared_ptr<" << type_name((*m_iter)->get_type(), false, false) << ">";
-	out << " val) {" << endl;
+        out <<
+          endl <<
+          indent() << "void " << tstruct->get_name() << "::__set_" << (*m_iter)->get_name() <<
+          "(boost::shared_ptr<" << type_name((*m_iter)->get_type(), false, false) << ">";
+        out << " val) {" << endl;
       } else {
-	out <<
-	  endl <<
-	  indent() << "void " << tstruct->get_name() << "::__set_" << (*m_iter)->get_name() <<
-	  "(" << type_name((*m_iter)->get_type(), false, true);
-	out << " val) {" << endl;
+        out <<
+          endl <<
+          indent() << "void " << tstruct->get_name() << "::__set_" << (*m_iter)->get_name() <<
+          "(" << type_name((*m_iter)->get_type(), false, true);
+        out << " val) {" << endl;
       }
       indent_up();
       out << indent() << "this->" << (*m_iter)->get_name() << " = val;" << endl;
@@ -1945,6 +1945,8 @@ void t_cpp_generator::generate_service_interface(t_service* tservice, string sty
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    if ((*f_iter)->has_doc()) f_header_ << endl;
+    generate_java_doc(f_header_, *f_iter);
     f_header_ <<
       indent() << "virtual " << function_signature(*f_iter, style) << " = 0;" << endl;
   }
@@ -3956,6 +3958,7 @@ void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    generate_java_doc(f_skeleton, *f_iter);
     f_skeleton <<
       indent() << function_signature(*f_iter, "") << " {" << endl <<
       indent() << "  // Your implementation goes here" << endl <<

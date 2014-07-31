@@ -156,12 +156,6 @@ class TNonblockingServer::TConnection {
   /// Count of the number of calls for use with getResizeBufferEveryN().
   int32_t callsForResize_;
 
-  /// Task handle
-  int taskHandle_;
-
-  /// Task event
-  struct event taskEvent_;
-
   /// Transport to read from
   boost::shared_ptr<TMemoryBuffer> inputTransport_;
 
@@ -271,7 +265,7 @@ class TNonblockingServer::TConnection {
    * @param v void* callback arg where we placed TConnection's "this".
    */
   static void eventHandler(evutil_socket_t fd, short /* which */, void* v) {
-    assert(fd == ((TConnection*)v)->getTSocket()->getSocketFD());
+    assert(fd == static_cast<evutil_socket_t>(((TConnection*)v)->getTSocket()->getSocketFD()));
     ((TConnection*)v)->workSocket();
   }
 
@@ -839,6 +833,9 @@ void TNonblockingServer::TConnection::close() {
   // close any factory produced transports
   factoryInputTransport_->close();
   factoryOutputTransport_->close();
+
+  // release processor and handler
+  processor_.reset();
 
   // Give this object back to the server that owns it
   server_->returnConnection(this);

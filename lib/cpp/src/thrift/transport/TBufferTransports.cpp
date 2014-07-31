@@ -268,6 +268,17 @@ void TFramedTransport::flush()  {
 
   // Flush the underlying transport.
   transport_->flush();
+
+  // reclaim write buffer
+  if (wBufSize_ > bufReclaimThresh_) {
+    wBufSize_ = DEFAULT_BUFFER_SIZE;
+    wBuf_.reset(new uint8_t[wBufSize_]);
+    setWriteBuffer(wBuf_.get(), wBufSize_);
+
+    // reset wBase_ with a pad for the frame size
+    int32_t pad = 0;
+    wBase_ = wBuf_.get() + sizeof(pad);
+  }
 }
 
 uint32_t TFramedTransport::writeEnd() {
@@ -285,7 +296,15 @@ const uint8_t* TFramedTransport::borrowSlow(uint8_t* buf, uint32_t* len) {
 
 uint32_t TFramedTransport::readEnd() {
   // include framing bytes
-  return static_cast<uint32_t>(rBound_ - rBuf_.get() + sizeof(uint32_t));
+  uint32_t bytes_read = static_cast<uint32_t>(rBound_ - rBuf_.get() + sizeof(uint32_t));
+
+  if (rBufSize_ > bufReclaimThresh_) {
+      rBufSize_ = 0;
+      rBuf_.reset();
+      setReadBuffer(rBuf_.get(), rBufSize_);
+  }
+
+  return bytes_read;
 }
 
 void TMemoryBuffer::computeRead(uint32_t len, uint8_t** out_start, uint32_t* out_give) {

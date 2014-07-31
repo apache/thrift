@@ -17,8 +17,10 @@
 # under the License.
 #
 
+SUBDIRS = .
+
 if WITH_TESTS
-SUBDIRS = test
+SUBDIRS += test
 endif
 
 install:
@@ -34,4 +36,5 @@ check-local:
 all-local: check-local
 
 EXTRA_DIST = \
-	thrift
+	thrift \
+	README.md

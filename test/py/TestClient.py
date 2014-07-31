@@ -38,8 +38,6 @@ parser.add_option("--zlib", action="store_true", dest="zlib",
     help="use zlib wrapper for compressed transport")
 parser.add_option("--ssl", action="store_true", dest="ssl",
     help="use SSL for encrypted transport")
-parser.add_option("--multiple", action="store_true", dest="multiple",
-    help="use Multiple service")
 parser.add_option("--http", dest="http_path",
     help="Use the HTTP transport with the specified path")
 parser.add_option('-v', '--verbose', action="store_const",
@@ -59,7 +57,6 @@ sys.path.insert(0, options.genpydir)
 
 from ThriftTest import ThriftTest, SecondService
 from ThriftTest.ttypes import *
-from thrift.protocol import TMultiplexedProtocol
 from thrift.transport import TTransport
 from thrift.transport import TSocket
 from thrift.transport import THttpClient
@@ -90,14 +87,7 @@ class AbstractTest(unittest.TestCase):
         self.transport = TZlibTransport.TZlibTransport(self.transport, 9)
     self.transport.open()
     protocol = self.protocol_factory.getProtocol(self.transport)
-    if options.multiple:
-        p = TMultiplexedProtocol.TMultiplexedProtocol(protocol, "ThriftTest")
-        self.client = ThriftTest.Client(p)
-        p = TMultiplexedProtocol.TMultiplexedProtocol(protocol, "SecondService")
-        self.client2 = SecondService.Client(p)
-    else:
-        self.client = ThriftTest.Client(protocol)
-        self.client2 = None
+    self.client = ThriftTest.Client(protocol)
 
   def tearDown(self):
     # Close!
@@ -216,9 +206,6 @@ class AbstractTest(unittest.TestCase):
     self.client.testOneway(1) # type is int, not float
     self.assertEqual(self.client.testString('Python'), 'Python')
 
-  def testblahBlah(self):
-    if self.client2:
-       self.assertEqual(self.client2.blahBlah(), None)
 
 class NormalBinaryTest(AbstractTest):
   protocol_factory = TBinaryProtocol.TBinaryProtocolFactory()

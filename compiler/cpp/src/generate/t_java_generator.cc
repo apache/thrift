@@ -138,6 +138,8 @@ public:
   void generate_java_bean_boilerplate(std::ofstream& out, t_struct* tstruct);
 
   void generate_function_helpers(t_function* tfunction);
+  std::string as_camel_case(std::string name, bool ucfirst=true);
+  std::string get_rpc_method_name(std::string name);
   std::string get_cap_name(std::string name);
   std::string generate_isset_check(t_field* field);
   std::string generate_isset_check(std::string field);
@@ -248,18 +250,6 @@ public:
                                           std::string iter,
                                           bool has_metadata = true);
 
-  void generate_java_doc                 (std::ofstream& out,
-                                          t_field*    field);
-
-  void generate_java_doc                 (std::ofstream& out,
-                                          t_doc*      tdoc);
-
-  void generate_java_doc                 (std::ofstream& out,
-                                          t_function* tdoc);
-
-  void generate_java_docstring_comment   (std::ofstream &out,
-                                          string contents);
-
   void generate_deep_copy_container(std::ofstream& out, std::string source_name_p1, std::string source_name_p2, std::string result_name, t_type* type);
   void generate_deep_copy_non_container(std::ofstream& out, std::string source_name, std::string dest_name, t_type* type);
 
@@ -282,7 +272,6 @@ public:
   std::string async_function_call_arglist(t_function* tfunc, bool use_base_method = true, bool include_types = true);
   std::string async_argument_list(t_function* tfunct, t_struct* tstruct, t_type* ttype, bool include_types=false);
   std::string type_to_enum(t_type* ttype);
-  std::string get_enum_class_name(t_type* type);
   void generate_struct_desc(ofstream& out, t_struct* tstruct);
   void generate_field_descs(ofstream& out, t_struct* tstruct);
   void generate_field_name_constants(ofstream& out, t_struct* tstruct);
@@ -1680,7 +1669,7 @@ void t_java_generator::generate_java_struct_reader(ofstream& out,
   indent(out) << "schemes.get(iprot.getScheme()).getScheme().read(iprot, this);" << endl; 
   indent_down();
   indent(out) << "}" << endl <<
-  endl;	
+  endl;
 }
 
 // generates java method to perform various checks
@@ -1740,7 +1729,7 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
   indent(out) << "schemes.get(oprot.getScheme()).getScheme().write(oprot, this);" << endl;
 
   indent_down();
-  indent(out) << "}" << endl << endl;	
+  indent(out) << "}" << endl << endl;
 }
 
 /**
@@ -1759,7 +1748,7 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out,
   indent(out) << "schemes.get(oprot.getScheme()).getScheme().write(oprot, this);" << endl;
   
   indent_down();
-  indent(out) << "  }" << endl << endl;	
+  indent(out) << "  }" << endl << endl;
 }
 
 void t_java_generator::generate_java_struct_field_by_id(ofstream& out, t_struct* tstruct) {
@@ -2395,11 +2384,17 @@ void t_java_generator::generate_service_client(t_service* tservice) {
   vector<t_function*>::const_iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     string funname = (*f_iter)->get_name();
+    string sep = "_";
+    string javaname = funname;
+    if (fullcamel_style_) {
+        sep = "";
+        javaname = as_camel_case(funname);
+    }
 
     // Open function
     indent(f_service_) << "public " << function_signature(*f_iter) << endl;
     scope_up(f_service_);
-    indent(f_service_) << "send_" << funname << "(";
+    indent(f_service_) << "send" << sep << javaname << "(";
 
     // Get the struct of function call params
     t_struct* arg_struct = (*f_iter)->get_arglist();
@@ -2424,13 +2419,13 @@ void t_java_generator::generate_service_client(t_service* tservice) {
         f_service_ << "return ";
       }
       f_service_ <<
-        "recv_" << funname << "();" << endl;
+        "recv" << sep << javaname << "();" << endl;
     }
     scope_down(f_service_);
     f_service_ << endl;
 
     t_function send_function(g_type_void,
-                             string("send_") + (*f_iter)->get_name(),
+                             string("send") + sep + javaname,
                              (*f_iter)->get_arglist());
 
     string argsname = (*f_iter)->get_name() + "_args";
@@ -2457,7 +2452,7 @@ void t_java_generator::generate_service_client(t_service* tservice) {
 
       t_struct noargs(program_);
       t_function recv_function((*f_iter)->get_returntype(),
-                               string("recv_") + (*f_iter)->get_name(),
+                               string("recv") + sep + javaname,
                                &noargs,
                                (*f_iter)->get_xceptions());
       // Open function
@@ -2538,6 +2533,12 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
   vector<t_function*>::const_iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     string funname = (*f_iter)->get_name();
+    string sep = "_";
+    string javaname = funname;
+    if (fullcamel_style_) {
+        sep = "";
+        javaname = as_camel_case(javaname);
+    }
     t_type* ret_type = (*f_iter)->get_returntype();
     t_struct* arg_struct = (*f_iter)->get_arglist();
     string funclassname = funname + "_call";
@@ -2620,7 +2621,7 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
       if (!ret_type->is_void()) {
         f_service_ << "return "; 
       }
-      f_service_ << "(new Client(prot)).recv_" + funname + "();" << endl;
+      f_service_ << "(new Client(prot)).recv" + sep + javaname + "();" << endl;
     }
 
     // Close function
@@ -2809,18 +2810,18 @@ void t_java_generator::generate_process_async_function(t_service* tservice,
   indent(f_service_) << "final org.apache.thrift.AsyncProcessFunction fcall = this;"<<endl;
   indent(f_service_) << "return new AsyncMethodCallback<"<<resulttype<<">() { " << endl;
   indent_up();
-  indent(f_service_) <<	"public void onComplete(" << resulttype <<" o) {" << endl;
+  indent(f_service_) << "public void onComplete(" << resulttype <<" o) {" << endl;
 
   indent_up();
   if (!tfunction->is_oneway()) {
     indent(f_service_) <<resultname<<" result = new "<<resultname<<"();"<<endl;
 
     if (!tfunction->get_returntype()->is_void()) {
-  	  indent(f_service_) << "result.success = o;"<<endl;
+      indent(f_service_) << "result.success = o;"<<endl;
       // Set isset on success field
-  	  if (!type_can_be_null(tfunction->get_returntype())) {
-  	    indent(f_service_) << "result.set" << get_cap_name("success") << get_cap_name("isSet") << "(true);" << endl;
-  	  }
+      if (!type_can_be_null(tfunction->get_returntype())) {
+        indent(f_service_) << "result.set" << get_cap_name("success") << get_cap_name("isSet") << "(true);" << endl;
+      }
     }
 
     indent(f_service_) << "try {"<<endl;
@@ -2840,24 +2841,24 @@ void t_java_generator::generate_process_async_function(t_service* tservice,
 
 
   if (!tfunction->is_oneway()) {
-	 indent(f_service_) <<"byte msgType = org.apache.thrift.protocol.TMessageType.REPLY;"<<endl;
-	 indent(f_service_) <<"org.apache.thrift.TBase msg;"<<endl;
+     indent(f_service_) <<"byte msgType = org.apache.thrift.protocol.TMessageType.REPLY;"<<endl;
+     indent(f_service_) <<"org.apache.thrift.TBase msg;"<<endl;
      indent(f_service_) <<resultname<<" result = new "<<resultname<<"();"<<endl;
 
      t_struct* xs = tfunction->get_xceptions();
      const std::vector<t_field*>& xceptions = xs->get_members();
      vector<t_field*>::const_iterator x_iter;
      if (xceptions.size() > 0) {
-    	 for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-    		 if (x_iter != xceptions.begin()) indent(f_service_) << "else ";
-    		 indent(f_service_) << "if (e instanceof " << type_name((*x_iter)->get_type(), false, false)<<") {" << endl;
-    		 indent(f_service_) << indent() << "result." << (*x_iter)->get_name() << " = (" << type_name((*x_iter)->get_type(), false, false) << ") e;" << endl;
-    	  	 indent(f_service_) << indent() << "result.set" << get_cap_name((*x_iter)->get_name()) << get_cap_name("isSet") << "(true);" << endl;
-    		 indent(f_service_) << indent() << "msg = result;"<<endl;
+       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+         if (x_iter != xceptions.begin()) indent(f_service_) << "else ";
+         indent(f_service_) << "if (e instanceof " << type_name((*x_iter)->get_type(), false, false)<<") {" << endl;
+         indent(f_service_) << indent() << "result." << (*x_iter)->get_name() << " = (" << type_name((*x_iter)->get_type(), false, false) << ") e;" << endl;
+         indent(f_service_) << indent() << "result.set" << get_cap_name((*x_iter)->get_name()) << get_cap_name("isSet") << "(true);" << endl;
+         indent(f_service_) << indent() << "msg = result;"<<endl;
 
-    	  	 indent(f_service_) << "}"<<endl;
-    	 }
-    	 indent(f_service_) << " else "<<endl;
+         indent(f_service_) << "}"<<endl;
+       }
+       indent(f_service_) << " else "<<endl;
      }
 
      indent(f_service_) << "{"<<endl;
@@ -2896,7 +2897,7 @@ void t_java_generator::generate_process_async_function(t_service* tservice,
   vector<t_field*>::const_iterator f_iter;
   f_service_ << indent();
 
-  f_service_ << "iface." << tfunction->get_name() << "(";
+  f_service_ << "iface." << get_rpc_method_name(tfunction->get_name()) << "(";
   bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if (first) {
@@ -2907,7 +2908,7 @@ void t_java_generator::generate_process_async_function(t_service* tservice,
     f_service_ << "args." << (*f_iter)->get_name();
   }
   if (!first)
-	  f_service_ << ",";
+      f_service_ << ",";
   f_service_ << "resultHandler";
   f_service_ << ");" << endl;
 
@@ -2979,7 +2980,7 @@ void t_java_generator::generate_process_function(t_service* tservice,
   if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
     f_service_ << "result.success = ";
   }
-  f_service_ << "iface." << tfunction->get_name() << "(";
+  f_service_ << "iface." << get_rpc_method_name(tfunction->get_name()) << "(";
   bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if (first) {
@@ -3656,8 +3657,9 @@ string t_java_generator::declare_field(t_field* tfield, bool init, bool comment)
 string t_java_generator::function_signature(t_function* tfunction,
                                             string prefix) {
   t_type* ttype = tfunction->get_returntype();
+  std::string fn_name = get_rpc_method_name(tfunction->get_name());
   std::string result =
-    type_name(ttype) + " " + prefix + tfunction->get_name() + "(" + argument_list(tfunction->get_arglist()) + ") throws ";
+    type_name(ttype) + " " + prefix + fn_name + "(" + argument_list(tfunction->get_arglist()) + ") throws ";
   t_struct* xs = tfunction->get_xceptions();
   const std::vector<t_field*>& xceptions = xs->get_members();
   vector<t_field*>::const_iterator x_iter;
@@ -3683,7 +3685,9 @@ string t_java_generator::function_signature_async(t_function* tfunction, bool us
   }
   ret_type += tfunction->get_name() + "_call";
 
-  std::string result = prefix + "void " + tfunction->get_name() + "(" + arglist + ")";
+  std::string fn_name = get_rpc_method_name(tfunction->get_name());
+
+  std::string result = prefix + "void " + fn_name + "(" + arglist + ")";
   return result;
 }
 
@@ -3839,6 +3843,40 @@ std::string t_java_generator::make_valid_java_identifier( std::string const & fr
 }
 
 
+std::string t_java_generator::as_camel_case(std::string name, bool ucfirst) {
+  std::string new_name;
+  size_t i = 0;
+  for (i = 0; i < name.size(); i++) {
+    if (name[i] != '_') break;
+  }
+  if (ucfirst) {
+    new_name += toupper(name[i++]);
+  }
+  else {
+    new_name += tolower(name[i++]);
+  }
+  for (; i < name.size(); i++) {
+    if (name[i] == '_') {
+      if (i < name.size()-1) {
+        i++;
+        new_name += toupper(name[i]);
+      }
+    }
+    else {
+      new_name += name[i];
+    }
+  }
+  return new_name;
+}
+
+std::string t_java_generator::get_rpc_method_name(std::string name) {
+  if (fullcamel_style_) {
+    return as_camel_case(name, false);
+  } else {
+    return name;
+  }
+}
+
 /**
  * Applies the correct style to a string based on the value of nocamel_style_
  * and/or fullcamel_style_
@@ -3846,21 +3884,8 @@ std::string t_java_generator::make_valid_java_identifier( std::string const & fr
 std::string t_java_generator::get_cap_name(std::string name){
   if (nocamel_style_) {
     return "_" + name;
-  } if (fullcamel_style_) {
-    std::string new_name;
-    new_name += toupper(name[0]);
-    for (size_t i = 1; i < name.size(); i++) {
-      if (name[i] == '_') {
-        if (i < name.size()-1) {
-          i++;
-          new_name += toupper(name[i]);
-        }
-      }
-      else {
-        new_name += name[i];
-      }
-    }
-    return new_name;
+  } else if (fullcamel_style_) {
+    return as_camel_case(name);
   } else {
     name[0] = toupper(name[0]);
     return name;
@@ -3887,57 +3912,6 @@ string t_java_generator::constant_name(string name) {
   }
 
   return constant_name;
-}
-
-void t_java_generator::generate_java_docstring_comment(ofstream &out, string contents) {
-  generate_docstring_comment(out,
-                             "/**\n",
-                             " * ", contents,
-                             " */\n");
-}
-
-void t_java_generator::generate_java_doc(ofstream &out,
-                                         t_field* field) {
-  if (field->get_type()->is_enum()) {
-    string combined_message = field->get_doc() + "\n@see " + get_enum_class_name(field->get_type());
-    generate_java_docstring_comment(out, combined_message);
-  } else {
-    generate_java_doc(out, (t_doc*)field);
-  }
-}
-
-/**
- * Emits a JavaDoc comment if the provided object has a doc in Thrift
- */
-void t_java_generator::generate_java_doc(ofstream &out,
-                                         t_doc* tdoc) {
-  if (tdoc->has_doc()) {
-    generate_java_docstring_comment(out, tdoc->get_doc());
-  }
-}
-
-/**
- * Emits a JavaDoc comment if the provided function object has a doc in Thrift
- */
-void t_java_generator::generate_java_doc(ofstream &out,
-                                         t_function* tfunction) {
-  if (tfunction->has_doc()) {
-    stringstream ss;
-    ss << tfunction->get_doc();
-    const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
-    vector<t_field*>::const_iterator p_iter;
-    for (p_iter = fields.begin(); p_iter != fields.end(); ++p_iter) {
-      t_field* p = *p_iter;
-      ss << "\n@param " << p->get_name();
-      if (p->has_doc()) {
-        ss << " " << p->get_doc();
-      }
-    }
-    generate_docstring_comment(out,
-                               "/**\n",
-                               " * ", ss.str(),
-                               " */\n");
-  }
 }
 
 void t_java_generator::generate_deep_copy_container(ofstream &out, std::string source_name_p1, std::string source_name_p2,
@@ -4085,15 +4059,6 @@ void t_java_generator::generate_isset_set(ofstream& out, t_field* field, string 
   if (!type_can_be_null(field->get_type())) {
     indent(out) << prefix << "set" << get_cap_name(field->get_name()) << get_cap_name("isSet") << "(true);" << endl;
   }
-}
-
-std::string t_java_generator::get_enum_class_name(t_type* type) {
-  string package = "";
-  t_program* program = type->get_program();
-  if (program != NULL && program != program_) {
-    package = program->get_namespace("java") + ".";
-  }
-  return package + type->get_name();
 }
 
 void t_java_generator::generate_struct_desc(ofstream& out, t_struct* tstruct) {
@@ -4412,7 +4377,7 @@ void t_java_generator::generate_standard_reader(ofstream& out, t_struct* tstruct
   indent(out) << "struct.validate();" << endl;
 
   indent_down();
-  out << indent() << "}" << endl;	
+  out << indent() << "}" << endl;
 }
 
 void t_java_generator::generate_standard_writer(ofstream& out, t_struct* tstruct, bool is_result) {
@@ -4610,7 +4575,7 @@ THRIFT_REGISTER_GENERATOR(java, "Java",
 "    beans:           Members will be private, and setter methods will return void.\n"
 "    private-members: Members will be private, but setter methods will return 'this' like usual.\n"
 "    nocamel:         Do not use CamelCase field accessors with beans.\n"
-"    fullcamel:       Convert underscored_field_names to CamelCase.\n"
+"    fullcamel:       Convert underscored_accessor_or_service_names to camelCase.\n"
 "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and above).\n"
 "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
 "    reuse-objects:   Data objects will not be allocated, but existing instances will be used (read and write).\n"

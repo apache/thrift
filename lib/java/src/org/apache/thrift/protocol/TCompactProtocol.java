@@ -698,6 +698,12 @@ public class TCompactProtocol extends TProtocol {
     checkStringReadLength(length);
     if (length == 0) return ByteBuffer.wrap(new byte[0]);
 
+    if (trans_.getBytesRemainingInBuffer() >= length) {
+      ByteBuffer bb = ByteBuffer.wrap(trans_.getBuffer(), trans_.getBufferPosition(), length);
+      trans_.consumeBuffer(length);
+      return bb;
+    }
+
     byte[] buf = new byte[length];
     trans_.readAll(buf, 0, length);
     return ByteBuffer.wrap(buf);

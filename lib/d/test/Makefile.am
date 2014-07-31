@@ -17,6 +17,7 @@
 # under the License.
 #
 
+AUTOMAKE_OPTIONS = serial-tests
 
 # Thrift compiler rules
 

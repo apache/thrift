@@ -23,6 +23,10 @@ if MINGW
 # do nothing, just build the compiler
 else
 
+if WITH_C_GLIB
+SUBDIRS += c_glib
+endif
+
 if WITH_CPP
 SUBDIRS += cpp
 endif
@@ -64,14 +68,15 @@ endif
 # Any folders or files not listed above being added to SUBDIR need to be placed here in
 # EXTRA_DIST to be included in the release
 EXTRA_DIST = \
+	as3 \
 	csharp \
 	d \
 	delphi \
 	erl \
-	gen-html \
 	hs \
 	ocaml \
 	perl \
 	php \
 	shared.thrift \
-	tutorial.thrift
+	tutorial.thrift \
+	README.md

@@ -253,15 +253,14 @@ void TSocket::openConnection(struct addrinfo *res) {
 
 #ifndef _WIN32
 
-    struct sockaddr_un address = {0};
-    size_t len = path_.size()+1;
-
-    if (len > sizeof(address.sun_path)) {
+    size_t len = path_.size() + 1;
+    if (len > sizeof(sockaddr_un::sun_path)) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       GlobalOutput.perror("TSocket::open() Unix Domain socket path too long", errno_copy);
       throw TTransportException(TTransportException::NOT_OPEN, " Unix Domain socket path too long");
     }
 
+    struct sockaddr_un address;
     address.sun_family = AF_UNIX;
     memcpy(address.sun_path, path_.c_str(), len);
     socklen_t structlen = static_cast<socklen_t>(sizeof(address));
@@ -623,7 +622,12 @@ void TSocket::setLinger(bool on, int linger) {
     return;
   }
 
+#ifndef _WIN32
   struct linger l = {(lingerOn_ ? 1 : 0), lingerVal_};
+#else
+  struct linger l = {(lingerOn_ ? 1 : 0), static_cast<u_short>(lingerVal_)};
+#endif
+
   int ret = setsockopt(socket_, SOL_SOCKET, SO_LINGER, cast_sockopt(&l), sizeof(l));
   if (ret == -1) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;  // Copy THRIFT_GET_SOCKET_ERROR because we're allocating memory.

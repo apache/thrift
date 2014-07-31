@@ -52,6 +52,10 @@
 
 #ifdef _MSC_VER
 #include "windows/config.h"
+#else
+#ifndef _WIN32
+#include "config.h"
+#endif
 #endif
 #include "main.h"
 #include "globals.h"
@@ -61,7 +65,11 @@
  * Must be included AFTER parse/t_program.h, but I can't remember why anymore
  * because I wrote this a while ago.
  */
+#if defined(BISON_USE_PARSER_H_EXTENSION)
 #include "thrifty.h"
+#else
+#include "thrifty.hh"
+#endif
 
 void thrift_reserved_keyword(char* keyword) {
   yyerror("Cannot use reserved language keyword: \"%s\"\n", keyword);

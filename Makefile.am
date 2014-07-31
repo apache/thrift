@@ -43,6 +43,8 @@ cross: check
 
 EXTRA_DIST = \
 	.travis.yml \
+	bower.json \
+	composer.json \
 	contrib \
 	debian \
 	doc \

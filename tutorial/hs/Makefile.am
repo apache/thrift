@@ -18,9 +18,8 @@
 #
 
 all-local:
-	$(CABAL) configure $(CABAL_CONFIGURE_FLAGS)
 	$(top_builddir)/compiler/cpp/thrift --gen hs -r $(top_srcdir)/tutorial/tutorial.thrift
-	$(CABAL) build
+	$(CABAL) install
 
 install-exec-hook:
 	$(CABAL) install

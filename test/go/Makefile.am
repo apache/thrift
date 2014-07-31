@@ -27,8 +27,8 @@ ThriftTest.thrift: $(THRIFTTEST)
 	grep -v list.*map.*list.*map $(THRIFTTEST) > ThriftTest.thrift
 
 # Thrift for GO has problems with complex map keys: THRIFT-2063
-gopath: $(THRIFT) ThriftTest.thrift 
-	mkdir src/gen
+gopath: $(THRIFT) ThriftTest.thrift
+	mkdir -p src/gen
 	$(THRIFTCMD) ThriftTest.thrift
 	$(THRIFTCMD) ../StressTest.thrift
 	ln -nfs ../../../lib/go/thrift src/thrift
@@ -45,7 +45,7 @@ bin/stress: gopath
 	GOPATH=`pwd` $(GO) install bin/stress
 
 clean-local:
-	$(RM) -r src/gen/* src/code.google.com src/thrift bin pkg gopath ThriftTest.thrift
+	$(RM) -r src/gen src/code.google.com src/thrift bin pkg gopath ThriftTest.thrift
 
 check: gopath
 	GOPATH=`pwd` $(GO) test -v common/...
@@ -54,3 +54,6 @@ genmock: gopath
 	GOPATH=`pwd` $(GO) install code.google.com/p/gomock/mockgen
 	GOPATH=`pwd` bin/mockgen -destination=src/common/mock_handler.go -package=common gen/thrifttest ThriftTest
 
+EXTRA_DIST = \
+	src/bin \
+	src/common

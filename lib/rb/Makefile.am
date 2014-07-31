@@ -17,16 +17,6 @@
 # under the License.
 #
 
-EXTRA_DIST = \
-	Rakefile \
-	Gemfile \
-	thrift.gemspec \
-	lib \
-	ext \
-	benchmark \
-	script \
-	spec
-
 DESTDIR ?= /
 
 if HAVE_BUNDLER
@@ -47,3 +37,13 @@ check-local: all
 
 endif
 
+EXTRA_DIST = \
+	Rakefile \
+	Gemfile \
+	thrift.gemspec \
+	lib \
+	ext \
+	benchmark \
+	script \
+	spec \
+	README.md

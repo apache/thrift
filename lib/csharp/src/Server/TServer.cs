@@ -28,118 +28,100 @@ using System.IO;
 
 namespace Thrift.Server
 {
-	public abstract class TServer
-	{
-		/**
-		 * Core processor
-		 */
-		protected TProcessor processor;
+  public abstract class TServer
+  {
+    //Attributes
+    protected TProcessor processor;
+    protected TServerTransport serverTransport;
+    protected TTransportFactory inputTransportFactory;
+    protected TTransportFactory outputTransportFactory;
+    protected TProtocolFactory inputProtocolFactory;
+    protected TProtocolFactory outputProtocolFactory;
+    protected TServerEventHandler serverEventHandler = null;
 
-		/**
-		 * Server transport
-		 */
-		protected TServerTransport serverTransport;
+    //Methods
+    public void setEventHandler(TServerEventHandler seh)
+    {
+      serverEventHandler = seh;
+    }
+    public TServerEventHandler getEventHandler()
+    {
+      return serverEventHandler;
+    }
 
-		/**
-		 * Input Transport Factory
-		 */
-		protected TTransportFactory inputTransportFactory;
+    //Log delegation
+    public delegate void LogDelegate(string str);
+    private LogDelegate _logDelegate;
+    protected LogDelegate logDelegate
+    {
+      get { return _logDelegate; }
+      set { _logDelegate = (value != null) ? value : DefaultLogDelegate; }
+    }
+    protected static void DefaultLogDelegate(string s)
+    {
+      Console.Error.WriteLine(s);
+    }
 
-		/**
-		 * Output Transport Factory
-		 */
-		protected TTransportFactory outputTransportFactory;
+    //Construction
+    public TServer(TProcessor processor,
+              TServerTransport serverTransport)
+      : this(processor, serverTransport, new TTransportFactory(), new TTransportFactory(), new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(), DefaultLogDelegate)
+    {
+    }
 
-		/**
-		 * Input Protocol Factory
-		 */
-		protected TProtocolFactory inputProtocolFactory;
+    public TServer(TProcessor processor,
+            TServerTransport serverTransport,
+            LogDelegate logDelegate)
+      : this(processor, serverTransport, new TTransportFactory(), new TTransportFactory(), new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(), DefaultLogDelegate)
+    {
+    }
 
-		/**
-		 * Output Protocol Factory
-		 */
-		protected TProtocolFactory outputProtocolFactory;
+    public TServer(TProcessor processor,
+              TServerTransport serverTransport,
+              TTransportFactory transportFactory)
+      : this(processor,
+         serverTransport,
+         transportFactory,
+         transportFactory,
+         new TBinaryProtocol.Factory(),
+         new TBinaryProtocol.Factory(),
+         DefaultLogDelegate)
+    {
+    }
 
-        public delegate void LogDelegate(string str);
-        private LogDelegate _logDelegate;
-        protected LogDelegate logDelegate
-        {
-            get { return _logDelegate; }
-            set { _logDelegate = (value != null) ? value : DefaultLogDelegate; } 
-        }
+    public TServer(TProcessor processor,
+              TServerTransport serverTransport,
+              TTransportFactory transportFactory,
+              TProtocolFactory protocolFactory)
+      : this(processor,
+         serverTransport,
+         transportFactory,
+         transportFactory,
+         protocolFactory,
+         protocolFactory,
+           DefaultLogDelegate)
+    {
+    }
 
-		/**
-		 * Default constructors.
-		 */
+    public TServer(TProcessor processor,
+              TServerTransport serverTransport,
+              TTransportFactory inputTransportFactory,
+              TTransportFactory outputTransportFactory,
+              TProtocolFactory inputProtocolFactory,
+              TProtocolFactory outputProtocolFactory,
+              LogDelegate logDelegate)
+    {
+      this.processor = processor;
+      this.serverTransport = serverTransport;
+      this.inputTransportFactory = inputTransportFactory;
+      this.outputTransportFactory = outputTransportFactory;
+      this.inputProtocolFactory = inputProtocolFactory;
+      this.outputProtocolFactory = outputProtocolFactory;
+      this.logDelegate = (logDelegate != null) ? logDelegate : DefaultLogDelegate;
+    }
 
-		public TServer(TProcessor processor,
-						  TServerTransport serverTransport)
-			:this(processor, serverTransport, new TTransportFactory(), new TTransportFactory(), new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(), DefaultLogDelegate)
-		{
-		}
-
-		public TServer(TProcessor processor,
-						TServerTransport serverTransport,
-						LogDelegate logDelegate)
-			: this(processor, serverTransport, new TTransportFactory(), new TTransportFactory(), new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(), DefaultLogDelegate)
-		{
-		}
-
-		public TServer(TProcessor processor,
-						  TServerTransport serverTransport,
-						  TTransportFactory transportFactory)
-			:this(processor,
-				 serverTransport,
-				 transportFactory,
-				 transportFactory,
-				 new TBinaryProtocol.Factory(),
-				 new TBinaryProtocol.Factory(),
-				 DefaultLogDelegate)
-		{
-		}
-
-		public TServer(TProcessor processor,
-						  TServerTransport serverTransport,
-						  TTransportFactory transportFactory,
-						  TProtocolFactory protocolFactory)
-			:this(processor,
-				 serverTransport,
-				 transportFactory,
-				 transportFactory,
-				 protocolFactory,
-				 protocolFactory,
-			     DefaultLogDelegate)
-		{
-		}
-
-		public TServer(TProcessor processor,
-						  TServerTransport serverTransport,
-						  TTransportFactory inputTransportFactory,
-						  TTransportFactory outputTransportFactory,
-						  TProtocolFactory inputProtocolFactory,
-						  TProtocolFactory outputProtocolFactory,
-						  LogDelegate logDelegate)
-		{
-			this.processor = processor;
-			this.serverTransport = serverTransport;
-			this.inputTransportFactory = inputTransportFactory;
-			this.outputTransportFactory = outputTransportFactory;
-			this.inputProtocolFactory = inputProtocolFactory;
-			this.outputProtocolFactory = outputProtocolFactory;
-			this.logDelegate = (logDelegate != null) ? logDelegate : DefaultLogDelegate;
-		}
-
-		/**
-		 * The run method fires up the server and gets things going.
-		 */
-		public abstract void Serve();
-
-		public abstract void Stop();
-
-		protected static void DefaultLogDelegate(string s)
-		{
-			Console.Error.WriteLine(s);
-		}
-	}
+    //Abstract Interface
+    public abstract void Serve();
+    public abstract void Stop();
+  }
 }
-

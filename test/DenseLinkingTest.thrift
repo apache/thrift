@@ -91,3 +91,8 @@ struct RandomStuffZZ {
 service Srv {
   i32 Janky(1: i32 arg)
 }
+
+service UnderscoreSrv {
+  i64 some_rpc_call(1: string message)
+}
+

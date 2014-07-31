@@ -25,10 +25,10 @@
 #include <thrift/TProcessor.h>
 #include <boost/tokenizer.hpp>
 
-namespace apache 
-{ 
-    namespace thrift 
-    { 
+namespace apache
+{
+    namespace thrift
+    {
         using boost::shared_ptr;
 
         namespace protocol {
@@ -42,7 +42,7 @@ namespace apache
             {
             public:
                 StoredMessageProtocol( shared_ptr<protocol::TProtocol> _protocol,
-                    const std::string& _name, const TMessageType _type, 
+                    const std::string& _name, const TMessageType _type,
                     const int32_t _seqid) :
                     TProtocolDecorator(_protocol),
                     name(_name),
@@ -53,7 +53,7 @@ namespace apache
 
                 uint32_t readMessageBegin_virt(std::string& _name, TMessageType& _type, int32_t& _seqid)
                 {
-                    
+
                     _name  = name;
                     _type  = type;
                     _seqid = seqid;
@@ -109,7 +109,7 @@ namespace apache
              *                         as "handlers", e.g. WeatherReportHandler,
              *                         implementing WeatherReportIf interface.
              */
-            void registerProcessor( const std::string & serviceName, 
+            void registerProcessor( const std::string & serviceName,
                                     shared_ptr<TProcessor> processor )
             {
                 services[serviceName] = processor;
@@ -125,12 +125,12 @@ namespace apache
              *     <li>Dispatch to the processor, with a decorated instance of TProtocol
              *         that allows readMessageBegin() to return the original TMessage.</li>
              * </ol>
-             *  
+             *
              * \throws TException If the message type is not T_CALL or T_ONEWAY, if
              * the service name was not found in the message, or if the service
-             * name was not found in the service map. 
+             * name was not found in the service map.
              */
-            bool process( shared_ptr<protocol::TProtocol> in, 
+            bool process( shared_ptr<protocol::TProtocol> in,
                           shared_ptr<protocol::TProtocol> out,
                           void *connectionContext)
             {
@@ -144,13 +144,13 @@ namespace apache
                 in->readMessageBegin(name, type, seqid);
 
                 if( type != protocol::T_CALL && type != protocol::T_ONEWAY ) {
-                    // Unexpected message type. 
+                    // Unexpected message type.
                     in->skip(::apache::thrift::protocol::T_STRUCT);
                     in->readMessageEnd();
                     in->getTransport()->readEnd();
                     const std::string msg("TMultiplexedProcessor: Unexpected message type");
                     ::apache::thrift::TApplicationException x(
-                        ::apache::thrift::TApplicationException::PROTOCOL_ERROR, 
+                        ::apache::thrift::TApplicationException::PROTOCOL_ERROR,
                         msg);
                     out->writeMessageBegin(name, ::apache::thrift::protocol::T_EXCEPTION, seqid);
                     x.write(out.get());
@@ -161,7 +161,7 @@ namespace apache
                 }
 
                 // Extract the service name
-                
+
                 boost::tokenizer<boost::char_separator<char> > tok( name, boost::char_separator<char>(":") );
 
                 std::vector<std::string> tokens;
@@ -177,24 +177,24 @@ namespace apache
                     if( it != services.end() )
                     {
                         shared_ptr<TProcessor> processor = it->second;
-                        // Let the processor registered for this service name 
+                        // Let the processor registered for this service name
                         // process the message.
-                        return processor->process( 
-                            shared_ptr<protocol::TProtocol>( 
-                                new protocol::StoredMessageProtocol( in, tokens[1], type, seqid ) ), 
+                        return processor->process(
+                            shared_ptr<protocol::TProtocol>(
+                                new protocol::StoredMessageProtocol( in, tokens[1], type, seqid ) ),
                             out, connectionContext );
                     }
                     else
                     {
-                        // Unknown service. 
+                        // Unknown service.
                         in->skip(::apache::thrift::protocol::T_STRUCT);
                         in->readMessageEnd();
                         in->getTransport()->readEnd();
-                        
+
                         std::string msg("TMultiplexedProcessor: Unknown service: ");
                         msg += tokens[0];
                         ::apache::thrift::TApplicationException x(
-                            ::apache::thrift::TApplicationException::PROTOCOL_ERROR, 
+                            ::apache::thrift::TApplicationException::PROTOCOL_ERROR,
                             msg);
                         out->writeMessageBegin(name, ::apache::thrift::protocol::T_EXCEPTION, seqid);
                         x.write(out.get());
@@ -213,6 +213,6 @@ namespace apache
             services_t services;
         };
     }
-} 
+}
 
 #endif // THRIFT_TMULTIPLEXEDPROCESSOR_H_

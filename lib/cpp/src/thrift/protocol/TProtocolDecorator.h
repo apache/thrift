@@ -23,40 +23,40 @@
 #include <thrift/protocol/TProtocol.h>
 #include <boost/shared_ptr.hpp>
 
-namespace apache 
-{ 
-    namespace thrift 
-    { 
-        namespace protocol 
+namespace apache
+{
+    namespace thrift
+    {
+        namespace protocol
         {
             using boost::shared_ptr;
 
             /**
              * <code>TProtocolDecorator</code> forwards all requests to an enclosed
              * <code>TProtocol</code> instance, providing a way to author concise
-             * concrete decorator subclasses.  
+             * concrete decorator subclasses.
              *
              * <p>See p.175 of Design Patterns (by Gamma et al.)</p>
-             * 
+             *
              * @see apache::thrift::protocol::TMultiplexedProtocol
              */
             class TProtocolDecorator : public TProtocol
             {
             public:
                 virtual ~TProtocolDecorator() {}
-                
+
                 // Desc: Initializes the protocol decorator object.
-                TProtocolDecorator( shared_ptr<TProtocol> proto ) 
+                TProtocolDecorator( shared_ptr<TProtocol> proto )
                     : TProtocol(proto->getTransport()), protocol(proto)
                 {
                 }
 
                 virtual uint32_t writeMessageBegin_virt(
-                    const std::string& name, 
-                    const TMessageType messageType, 
+                    const std::string& name,
+                    const TMessageType messageType,
                     const int32_t seqid)
                 {
-                    return protocol->writeMessageBegin(name, messageType, seqid); 
+                    return protocol->writeMessageBegin(name, messageType, seqid);
                 }
                 virtual uint32_t writeMessageEnd_virt() { return protocol->writeMessageEnd(); }
                 virtual uint32_t writeStructBegin_virt(const char* name) { return protocol->writeStructBegin(name); }
@@ -111,7 +111,7 @@ namespace apache
 
                 virtual uint32_t readBool_virt(bool& value) { return protocol->readBool(value); }
                 virtual uint32_t readBool_virt(std::vector<bool>::reference value) { return protocol->readBool(value); }
-                
+
                 virtual uint32_t readByte_virt(int8_t& byte) { return protocol->readByte(byte); }
 
                 virtual uint32_t readI16_virt(int16_t& i16) { return protocol->readI16(i16); }
@@ -124,10 +124,10 @@ namespace apache
                 virtual uint32_t readBinary_virt(std::string& str) { return protocol->readBinary(str); }
 
             private:
-                shared_ptr<TProtocol> protocol;    
+                shared_ptr<TProtocol> protocol;
             };
         }
     }
-} 
+}
 
 #endif // THRIFT_TPROTOCOLDECORATOR_H_

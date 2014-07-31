@@ -55,7 +55,6 @@ def getSocketArgs(socket_type):
   elif socket_type == 'domain':
     return "--domain-socket=/tmp/ThriftTest.thrift"
 
-def runServiceTest(test_name, server_lib, server_executable, server_extra_args, client_lib, client_executable, client_extra_args, server_protocol, client_protocol, transport, port, use_zlib, socket_type):
   # Build command line arguments
   server_args = []
   cli_args = []
@@ -240,6 +239,7 @@ for server in data["server"]:
                   results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"accel-binary\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
                   test_name = server_lib + "_" + client_lib + "_accel-binary_" + transport + "_" + sock
                   ret = runServiceTest(test_name, server_lib,server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, 'accel', transport, 9090, 0, sock)
+
                   if ret != None:
                     failed += 1
                     print "Error: %s" % ret

@@ -7,6 +7,7 @@
 *.log
 *.trs
 *.suo
+*.pyc
 *.cache
 *.user
 *.ipch
@@ -17,7 +18,6 @@
 *_ReSharper*
 *.opensdf
 *.swp
-*.m4
 *~
 
 .*project
@@ -25,6 +25,8 @@ junit*.properties
 gen-*
 Makefile
 Makefile.in
+aclocal.m4
+acinclude.m4
 autom4te.cache
 node_modules
 compile
@@ -35,6 +37,8 @@ test-driver
 .svn
 
 /contrib/.vagrant/
+/aclocal/libtool.m4
+/aclocal/lt*.m4
 /autoscan.log
 /autoscan-*.log
 /compiler/cpp/Debug
@@ -85,6 +89,7 @@ test-driver
 /lib/cpp/test/TransportTest
 /lib/cpp/test/UnitTests
 /lib/cpp/test/ZlibTest
+/lib/cpp/test/OpenSSLManualInitTest
 /lib/cpp/test/concurrency_test
 /lib/cpp/test/link_test
 /lib/cpp/test/processor_test
@@ -101,6 +106,7 @@ test-driver
 /lib/c_glib/test/*.gcno
 /lib/c_glib/test/testwrapper.sh
 /lib/c_glib/test/testwrapper-test*
+/lib/c_glib/test/testapplicationexception
 /lib/c_glib/test/testbinaryprotocol
 /lib/c_glib/test/testbufferedtransport
 /lib/c_glib/test/testdebugproto
@@ -192,6 +198,7 @@ test-driver
 /lib/php/src/packages/
 /lib/php/test/phpunit.xml
 /lib/php/test/packages/
+/lib/py/dist/
 /lib/erl/logs/
 /libtool
 /ltmain.sh
@@ -206,12 +213,17 @@ test-driver
 /lib/go/test/ThriftTest.thrift
 /test/log/
 /test/test.log
+/test/go/ThriftTest.thrift
+/test/go/gopath
+/test/go/pkg/
+/test/go/src/code.google.com/
+/test/go/src/gen/
+/test/go/src/thrift
 /test/py.twisted/_trial_temp/
-/test/py.twisted/test_suite.pyc
-/test/py.tornado/*.pyc
 /test/rb/Gemfile.lock
 /tutorial/cpp/TutorialClient
 /tutorial/cpp/TutorialServer
+/tutorial/c_glib/tutorial_client
 /tutorial/delphi/*.dsk
 /tutorial/delphi/*.local
 /tutorial/delphi/DelphiClient/dcu
@@ -225,6 +237,7 @@ test-driver
 /tutorial/go/src/shared
 /tutorial/go/src/tutorial
 /tutorial/go/src/git.apache.org
+/tutorial/hs/dist/
 /tutorial/java/build/
 /tutorial/js/build/
 /ylwrap
