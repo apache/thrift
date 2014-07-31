@@ -47,7 +47,7 @@ class Main {
 	private static var trns : Trns = socket;
 	
 	private static var targetHost : String = "localhost";
-	private static var targetPort : Int = 80;
+	private static var targetPort : Int = 9090;
 	
     static function main() {
 		try {
@@ -144,14 +144,17 @@ class Main {
 	
 	
 	private static function ClientSetup() : Calculator {
+	 	println("Client configuration:");
 
 		// endpoint transport
 		var transport : TTransport;
 		switch(trns)
 		{
 		case socket:
-		 	transport = new TSocket( targetHost, targetPort);
+		 	println("- socket transport");
+			transport = new TSocket( targetHost, targetPort);
         case http:
+		 	println("- http transport");
 		 	transport = new THttpClient( targetHost);
 		default:
 			throw "Unhandled transport";
@@ -160,8 +163,10 @@ class Main {
 		
 		// optinal layered transport
 		if ( framed) {
+		 	println("- framed transport");
 			transport = new TFramedTransport(transport);
 		} else if ( buffered) {
+		 	println("- buffered transport");
 			throw "TBufferedTransport not implemented yet";
 			//transport = new TBufferedTransport(transport);
 		}
@@ -172,9 +177,11 @@ class Main {
 		switch(prot)
 		{
 		case binary:
+		 	println("- binary protocol");
 		 	protocol = new TBinaryProtocol( transport);
 		/*
         case json:
+		 	println("- json protocol");
 		 	protocol = new TJsonProtocol( transport);
 		*/
 		default:
@@ -183,31 +190,41 @@ class Main {
 
 		
 		// put everything together
+		transport.open();	
 		return new CalculatorImpl(protocol,protocol);
 	}
 	
 	
 	private static function RunClient() : Void {
 		var client = ClientSetup();
-		
-		client.ping();
-		println("ping()");
+
+		client.ping(
+			function(error : Error) : Void { 
+				println("ping() failed: "+error.message); 
+			}, 
+			function() : Void {
+				println("ping()");
+			});
+
 
 		client.add( 1, 1, 
-			null,     
+			function(error : Error) : Void { 
+				println("add() failed: "+error.message); 
+			}, 
 			function( sum : haxe.Int32) : Void {
 				println('1+1= $sum');
 			});
-		
+
 
 		var work = new tutorial.Work();
 		work.op = tutorial.Operation.DIVIDE;
 		work.num1 = 1;
 		work.num2 = 0;
+trace( work.toString());
 		try {
 			client.calculate( 1, work, 
 				function(error : Error) : Void { 
-					println("Error: "+error.message); 
+					println("calculate() failed: "+error.message); 
 				}, 
 				function(quotient : haxe.Int32) : Void { 
 					println('Whoa we can divide by 0! Result = $quotient'); 
@@ -215,32 +232,30 @@ class Main {
 
 		} 
 		catch(e : Error) {
-			println("TODO: exception");
-			/*
-			switch v := err.(type) {
-			case *tutorial.InvalidOperation:;
-				println("Invalid operation:", v);
-			default:;
-				println("Error during operation:", err);
-			}
-			*/
+			println("Exception "+e.message);
 		}
 
 		work.op = tutorial.Operation.SUBTRACT;
 		work.num1 = 15;
 		work.num2 = 10;
 		client.calculate( 1, work,
-			null,     
+			function(error : Error) : Void { 
+				println("calculate() failed: "+error.message); 
+			}, 
 			function( diff : haxe.Int32) : Void {
 				println('15-10=$diff\n');
 			});
-		
+
 
 		client.getStruct( 1,
-			null,     
+			function(error : Error) : Void { 
+				println("getStruct() failed: "+error.message); 
+			}, 
 			function( log : SharedStruct) : Void {
-				println('Check log: $(log.Value)');
+				var logval = log.value;
+				println('Check log: $logval');
 			});
+		
 	}
 	
 	

@@ -17,16 +17,16 @@
  * under the License.
  */
 
-package org.apache.thrift;
+package org.apache.thrift.helper;
   
 import Map;
 
 
-class Set<K> {
+class ObjectSet<K> {
     
-    private var _elements : haxe.ds.ObjectMap<K,Int> = new haxe.ds.ObjectMap<K,Int>();
+    private var _elements = new haxe.ds.ObjectMap<K,Int>();
     private var _size : Int = 0;
-    public var size(default,never) : Int = 0;
+    public var size(get,never) : Int;
     
     public function new( values : Array<K>) {
 		for ( value in values) {
@@ -34,12 +34,24 @@ class Set<K> {
 		}
     }
 
+	public function iterator():Iterator<K> {
+		return _elements.keys();
+	}
+
+	public function traceAll() : Void {
+		trace('$_size entries');
+		for(entry in this) {
+			var yes = contains(entry);
+			trace('- $entry, contains() = $yes');
+		}
+	}
+
     public function add(o : K) : Bool {
 		if( _elements.exists(o)) {
 			return false;
 		}
         _size++;
-        _elements.set(o,0);
+        _elements.set(o,_size);
 		return true;
     }
 
@@ -50,30 +62,29 @@ class Set<K> {
     }
     
     public function contains(o : K) : Bool {
-      return _elements.exists(o);
+		return _elements.exists(o);
     }
     
     public function isEmpty() : Bool {
-      return _size == 0;
+		return _size == 0;
     }
     
     public function remove(o : K) : Bool {
-      if (contains(o)) {
-        _elements.remove(o);
-        _size--;
-        return true;
-      }
-      else {
-        return false;
-      }
+		if (contains(o)) {
+			_elements.remove(o);
+			_size--;
+			return true;
+		} else {
+			return false;
+		}
     }
     
     public function toArray() : Array<K> {
-      var ret : Array<K> = new Array<K>();
-      for (key in _elements.keys()) {
-        ret.push(key);
-      }
-      return ret;
+		var ret : Array<K> = new Array<K>();
+		for (key in _elements.keys()) {
+			ret.push(key);
+		}
+		return ret;
     }
     
     public function get_size() : Int {		

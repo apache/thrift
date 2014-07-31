@@ -20,6 +20,7 @@
 package org.apache.thrift.transport;
 
 import haxe.io.Bytes;
+import haxe.io.BytesBuffer;
 import org.apache.thrift.AbstractMethodError;
   
 class TTransport {
@@ -64,10 +65,10 @@ class TTransport {
      * @param buf Array to read into
      * @param off Index to start reading at
      * @param len Maximum number of bytes to read
-     * @return The number of bytes actually read
+     * @return The bytes count actually read
      * @throws TTransportException if there was an error reading data
      */
-     public function read(buf:Bytes, off : Int, len : Int) : Int {
+     public function read( buf : BytesBuffer, off : Int, len : Int) : Int {
       	throw new AbstractMethodError();
      }
 
@@ -80,7 +81,7 @@ class TTransport {
      * @return The number of bytes actually read, which must be equal to len
      * @throws TTransportException if there was an error reading data
      */
-    public function readAll(buf:Bytes, off : Int, len : Int) : Int {
+    public function readAll(buf : BytesBuffer, off : Int, len : Int) : Int {
 		var got : Int = 0;
 		var ret : Int = 0;
         while (got < len) {

@@ -72,10 +72,13 @@ class TFramedTransport extends TTransport
     	transport_.close();
     }
 
-    public override function read(buf : Bytes, off : Int, len : Int) : Int {
+    public override function read(buf : BytesBuffer, off : Int, len : Int) : Int {
+		var data = Bytes.alloc(len);
+		
     	if (readBuffer_ != null) {
-    		var got : Int = readBuffer_.readBytes(buf, off, len);
+    		var got : Int = readBuffer_.readBytes(data, off, len);
     		if (got > 0) {
+				buf.addBytes(data,0,got);
     			return got;
     		};
     	};
@@ -83,15 +86,17 @@ class TFramedTransport extends TTransport
     	// Read another frame of data
     	readFrame();
 
-    	return readBuffer_.readBytes(buf, off, len);
+    	var got = readBuffer_.readBytes(data, off, len);
+		buf.addBytes(data,0,got);
+		return got;
     }
 
 
     function readFrameSize() : Int {
-    	var bytes : Bytes = (new BytesBuffer()).getBytes();
-    	var len = transport_.readAll(bytes, 0, 4);
-    	var inp = new BytesInput(bytes, 0, 4);
-    	inp.bigEndian = false;
+    	var buffer = new BytesBuffer();
+    	var len = transport_.readAll( buffer, 0, 4);
+    	var inp = new BytesInput( buffer.getBytes(), 0, 4);
+    	inp.bigEndian = true;
     	return inp.readInt32();
     }
 
@@ -106,10 +111,10 @@ class TFramedTransport extends TTransport
     		throw new TTransportError('Frame size ($size) larger than max length ($maxLength_)!');
     	};
 
-    	var bytes : Bytes = (new BytesBuffer()).getBytes();
-    	size = transport_.readAll(bytes, 0, size);
-    	readBuffer_ = new BytesInput(bytes, 0, size);
-    	readBuffer_.bigEndian = false;
+    	var buffer = new BytesBuffer();
+    	size = transport_.readAll( buffer, 0, size);
+    	readBuffer_ = new BytesInput( buffer.getBytes(), 0, size);
+    	readBuffer_.bigEndian = true;
     }
 
     public override function write(buf : Bytes, off : Int, len : Int) : Void {
@@ -118,7 +123,7 @@ class TFramedTransport extends TTransport
 
     function writeFrameSize(len : Int) : Void {
 		var out = new BytesOutput();
-		out.bigEndian = false;
+		out.bigEndian = true;
 		out.writeInt32(len);
 		transport_.write(out.getBytes(), 0, 4);
     }

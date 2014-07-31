@@ -21,6 +21,7 @@ package org.apache.thrift.transport;
 
 	
 import haxe.io.Bytes;
+import haxe.io.BytesBuffer;
 import haxe.io.BytesOutput;
 import haxe.io.BytesInput;
 
@@ -94,7 +95,7 @@ class THttpClient extends TTransport {
       return true;
     }
     
-    public override function read(buf:Bytes, off : Int, len : Int) : Int {
+    public override function read(buf:BytesBuffer, off : Int, len : Int) : Int {
 		if (responseBuffer_ == null) {
         	throw new TTransportError(TTransportError.UNKNOWN, "Response buffer is empty, no request.");
 		}
@@ -108,7 +109,10 @@ class THttpClient extends TTransport {
         }
 			
 		#else
-        responseBuffer_.readBytes(buf, off, len);
+			
+        var data =Bytes.alloc(len);
+		len = responseBuffer_.readBytes(data, off, len);
+		buf.addBytes(data,0,len);
 		return len;
 		
 		#end

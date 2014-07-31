@@ -262,7 +262,7 @@ string t_haxe_generator::haxe_package() {
 string t_haxe_generator::haxe_type_imports() {
   return
     string() +
-    "import org.apache.thrift.Set;\n" +
+    "import org.apache.thrift.helper.*;\n" +
     "import haxe.io.Bytes;\n" +
     //flash only: "import flash.utils.ByteArray;\n" +
     //flash only: "import flash.utils.Dictionary;\n" + 
@@ -374,7 +374,7 @@ void t_haxe_generator::generate_enum(t_enum* tenum) {
   
   // Add haxe imports
   f_enum << string() +
-  "import org.apache.thrift.Set;" << endl <<
+  "import org.apache.thrift.helper.*;" << endl <<
   //flash only: "import flash.utils.Dictionary;" << endl <<
   endl;
   
@@ -394,7 +394,7 @@ void t_haxe_generator::generate_enum(t_enum* tenum) {
   // Create a static Set with all valid values for this enum
   f_enum << endl;
   
-  indent(f_enum) << "public static var VALID_VALUES = { new Set( [";
+  indent(f_enum) << "public static var VALID_VALUES = { new IntSet( [";
   indent_up();
   bool firstValue = true;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
@@ -405,7 +405,7 @@ void t_haxe_generator::generate_enum(t_enum* tenum) {
   indent_down();
   f_enum << "]); };" << endl;
 
-  indent(f_enum) << "public static var VALUES_TO_NAMES = { [" << endl;
+  indent(f_enum) << "public static var VALUES_TO_NAMES = { [";
   indent_up();
   firstValue = true;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
@@ -413,9 +413,9 @@ void t_haxe_generator::generate_enum(t_enum* tenum) {
     indent(f_enum) << (*c_iter)->get_name() << " => \"" << (*c_iter)->get_name() << "\"";
     firstValue = false;
   }
-  f_enum << endl << 
-	"]; };" << endl;
+  f_enum << endl;
   indent_down();
+  indent(f_enum) << "]; };" << endl;
 
   scope_down(f_enum); // end class
   
@@ -438,7 +438,6 @@ void t_haxe_generator::generate_consts(std::vector<t_const*> consts) {
   f_consts <<
     autogen_comment() << haxe_package() << ";" << endl;
   
-  scope_up(f_consts);
   f_consts << endl;
   
   f_consts << haxe_type_imports();
@@ -460,7 +459,6 @@ void t_haxe_generator::generate_consts(std::vector<t_const*> consts) {
   indent_down();
   indent(f_consts) <<
     "}" << endl;
-  scope_down(f_consts);
   f_consts.close();
 }
 
@@ -730,7 +728,7 @@ void t_haxe_generator::generate_haxe_struct_definition(ofstream &out,
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     generate_haxe_doc(out, *m_iter);
     indent(out) << "private var _" << (*m_iter)->get_name() + " : " + type_name((*m_iter)->get_type()) << ";" << endl;
-    indent(out) << "public var " << (*m_iter)->get_name() + "(default,default) : " + type_name((*m_iter)->get_type()) << ";" << endl;
+    indent(out) << "public var " << (*m_iter)->get_name() + "(get,set) : " + type_name((*m_iter)->get_type()) << ";" << endl;
 
     indent(out) << "inline static var " << upcase_string((*m_iter)->get_name()) << " : Int = " << (*m_iter)->get_key() << ";" << endl;
   }
@@ -1188,12 +1186,16 @@ void t_haxe_generator::generate_haxe_bean_boilerplate(ofstream& out,
     // Simple setter
     generate_haxe_doc(out, field);
     std::string propName = tmp("thriftPropertyChange");
-    indent(out) << "public function set_" << field_name << "(" << field_name
-      << ":" << type_name(type) << ") : Void {" << endl;
+    indent(out) << 
+      "public function set_" << field_name << 
+      "(" << field_name << ":" << type_name(type) << ") : " << 
+      type_name(type) << " {" << endl;
     indent_up();
-    indent(out) << "this._" << field_name << " = " << field_name << ";" <<
-    endl;
+    indent(out) << 
+      "this._" << field_name << " = " << field_name << ";" << endl;
     generate_isset_set(out, field);
+    indent(out) << 
+      "return this._" << field_name << ";" << endl;
     
     indent_down();
     indent(out) << "}" << endl << endl;

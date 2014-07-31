@@ -26,9 +26,9 @@ class Error {
 	private var _id : Int;
 	private var _msg : String;
 	
-	public var errorID(default,never) : Int;
-	public var message(default,never) : String;
-	private var name(default,never) : String;  	// NOT IMPLEMENTED
+	public var errorID(get,never) : Int;
+	public var message(get,never) : String;
+	private var name(default,null) : String;  	// NOT IMPLEMENTED
 
 	
 	function new(message : String = "", id : Int = 0) {

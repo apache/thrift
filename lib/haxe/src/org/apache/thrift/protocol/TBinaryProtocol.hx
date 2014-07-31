@@ -115,28 +115,28 @@ class TBinaryProtocol implements TProtocol {
 
 	public function writeByte(b : Int) : Void {
 		var out = new BytesOutput();
-		out.bigEndian = false;
+		out.bigEndian = true;
 		out.writeByte(b);
 		trans_.write(out.getBytes(), 0, 1);
 	}
 
 	public function writeI16(i16 : Int) : Void {
 		var out = new BytesOutput();
-		out.bigEndian = false;
+		out.bigEndian = true;
 		out.writeInt16(i16);
 		trans_.write(out.getBytes(), 0, 2);
 	}
 
 	public function writeI32(i32 : Int) : Void {
 		var out = new BytesOutput();
-		out.bigEndian = false;
+		out.bigEndian = true;
 		out.writeInt32(i32);
 		trans_.write(out.getBytes(), 0, 4);
 	}
 
 	public function writeI64(i64 : haxe.Int64) : Void {
 		var out = new BytesOutput();
-		out.bigEndian = false;
+		out.bigEndian = true;
 		
 		var oneByte = Int64.make(0,0xFF);
 		for(i in 0 ... 7) {
@@ -149,14 +149,14 @@ class TBinaryProtocol implements TProtocol {
 
 	public function writeDouble(dub:Float) : Void {
 		var out = new BytesOutput();
-		out.bigEndian = false;
+		out.bigEndian = true;
 		out.writeDouble(dub);
 		trans_.write(out.getBytes(), 0, 8);
 	}
 
 	public function writeString(str : String) : Void {
 		var out = new BytesOutput();
-		out.bigEndian = false;
+		out.bigEndian = true;
 		out.writeString(str);
 		var bytes = out.getBytes();
 		writeI32( bytes.length);
@@ -232,34 +232,34 @@ class TBinaryProtocol implements TProtocol {
 
 
 	public function readByte() : Int {
-		var bytes : Bytes = (new BytesBuffer()).getBytes();
-		var len = trans_.readAll(bytes, 0, 1);        
-		var inp = new BytesInput(bytes, 0, 1);
-		inp.bigEndian = false;
+		var buffer = new BytesBuffer();
+		var len = trans_.readAll( buffer, 0, 1);        
+		var inp = new BytesInput( buffer.getBytes(), 0, 1);
+		inp.bigEndian = true;
 		return inp.readByte();
 	}
 
 	public function readI16() : Int {
-		var bytes : Bytes = (new BytesBuffer()).getBytes();
-		var len = trans_.readAll(bytes, 0, 2);        
-		var inp = new BytesInput(bytes, 0, 2);
-		inp.bigEndian = false;
+		var buffer = new BytesBuffer();
+		var len = trans_.readAll( buffer, 0, 2);        
+		var inp = new BytesInput( buffer.getBytes(), 0, 2);
+		inp.bigEndian = true;
 		return inp.readInt16();
 	}
 
 	public function readI32() : Int {
-		var bytes : Bytes = (new BytesBuffer()).getBytes();
-		var len = trans_.readAll(bytes, 0, 4);        
-		var inp = new BytesInput(bytes, 0, 4);
-		inp.bigEndian = false;
+		var buffer = new BytesBuffer();
+		var len = trans_.readAll( buffer, 0, 4);        
+		var inp = new BytesInput( buffer.getBytes(), 0, 4);
+		inp.bigEndian = true;
 		return inp.readInt32();
 	}
 
 	public function readI64() : haxe.Int64 {
-		var bytes : Bytes = (new BytesBuffer()).getBytes();
-		var len = trans_.readAll(bytes, 0, 8);        
-		var inp = new BytesInput(bytes, 0, 8);
-		inp.bigEndian = false;
+		var buffer = new BytesBuffer();
+		var len = trans_.readAll( buffer, 0, 8);        
+		var inp = new BytesInput( buffer.getBytes(), 0, 8);
+		inp.bigEndian = true;
 		
 		var mask = Int64.make(0xFFFFFFFF,0xFFFFFF00);
 		var result = Int64.make(0,0);
@@ -274,10 +274,10 @@ class TBinaryProtocol implements TProtocol {
 	}
 
 	public function readDouble():Float {
-		var bytes : Bytes = (new BytesBuffer()).getBytes();
-		var len = trans_.readAll(bytes, 0, 8);        
-		var inp = new BytesInput(bytes, 0, 8);
-		inp.bigEndian = false;
+		var buffer = new BytesBuffer();
+		var len = trans_.readAll( buffer, 0, 8);        
+		var inp = new BytesInput( buffer.getBytes(), 0, 8);
+		inp.bigEndian = true;
 		return inp.readDouble();
 	}
 
@@ -287,10 +287,10 @@ class TBinaryProtocol implements TProtocol {
 
 	public function readStringBody(len : Int) : String {
 		if( len > 0) {
-			var bytes : Bytes = (new BytesBuffer()).getBytes();
-			trans_.readAll(bytes, 0, len);
-			var inp = new BytesInput(bytes, 0, len);
-			inp.bigEndian = false;
+			var buffer = new BytesBuffer();
+			trans_.readAll( buffer, 0, len);
+			var inp = new BytesInput( buffer.getBytes(), 0, len);
+			inp.bigEndian = true;
 			return inp.readString(len);
 		} else {
 			return "";
@@ -299,9 +299,9 @@ class TBinaryProtocol implements TProtocol {
 
 	public function readBinary() : Bytes {
 		var len : Int = readI32();
-		var bytes : Bytes = (new BytesBuffer()).getBytes();
-		trans_.readAll(bytes, 0, len);
-		return bytes;
+		var buffer = new BytesBuffer();
+		trans_.readAll( buffer, 0, len);
+		return buffer.getBytes();
 	}
 
 }
