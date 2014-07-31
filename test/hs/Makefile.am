@@ -35,3 +35,9 @@ check: stubs
 
 clean-local:
 	$(RM) -r gen-hs
+	$(RM) *.hi
+	$(RM) *.o
+
+all: check
+	ghc -igen-hs TestServer.hs
+	ghc -igen-hs TestClient.hs

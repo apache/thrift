@@ -1,5 +1,4 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 --
@@ -31,15 +30,17 @@ module Thrift
     , ThriftException(..)
     ) where
 
-import Control.Monad ( when )
 import Control.Exception
 
-import Data.Text.Lazy ( pack, unpack )
+import Data.Int
+import Data.Text.Lazy ( Text, pack, unpack )
+import Data.Text.Lazy.Encoding
 import Data.Typeable ( Typeable )
+import qualified Data.HashMap.Strict as Map
 
-import Thrift.Transport
 import Thrift.Protocol
-
+import Thrift.Transport
+import Thrift.Types
 
 data ThriftException = ThriftException
   deriving ( Show, Typeable )
@@ -90,44 +91,24 @@ data AppExn = AppExn { ae_type :: AppExnType, ae_message :: String }
 instance Exception AppExn
 
 writeAppExn :: (Protocol p, Transport t) => p t -> AppExn -> IO ()
-writeAppExn pt ae = do
-    writeStructBegin pt "TApplicationException"
-
-    when (ae_message ae /= "") $ do
-        writeFieldBegin pt ("message", T_STRING , 1)
-        writeString pt (pack $ ae_message ae)
-        writeFieldEnd pt
-
-    writeFieldBegin pt ("type", T_I32, 2);
-    writeI32 pt (fromIntegral $ fromEnum (ae_type ae))
-    writeFieldEnd pt
-    writeFieldStop pt
-    writeStructEnd pt
+writeAppExn pt ae = writeVal pt $ TStruct $ Map.fromList
+                    [ (1, ("message", TString $ encodeUtf8 $ pack $ ae_message ae))
+                    , (2, ("type", TI32 $ fromIntegral $ fromEnum (ae_type ae)))
+                    ]
 
 readAppExn :: (Protocol p, Transport t) => p t -> IO AppExn
 readAppExn pt = do
-    _ <- readStructBegin pt
-    record <- readAppExnFields pt (AppExn {ae_type = undefined, ae_message = undefined})
-    readStructEnd pt
-    return record
+    let typemap = Map.fromList [(1,("message",T_STRING)),(2,("type",T_I32))]
+    TStruct fields <- readVal pt $ T_STRUCT typemap
+    return $ readAppExnFields fields
 
-readAppExnFields :: forall (a :: * -> *) t. (Protocol a, Transport t) => a t -> AppExn -> IO AppExn 
-readAppExnFields pt record = do
-    (_, ft, tag) <- readFieldBegin pt
-    if ft == T_STOP
-        then return record
-        else case tag of
-                 1 -> if ft == T_STRING then
-                          do s <- readString pt
-                             readAppExnFields pt record{ae_message = unpack s}
-                          else do skip pt ft
-                                  readAppExnFields pt record
-                 2 -> if ft == T_I32 then
-                          do i <- readI32 pt
-                             readAppExnFields pt record{ae_type = (toEnum $ fromIntegral i)}
-                          else do skip pt ft
-                                  readAppExnFields pt record
-                 _ -> do skip pt ft
-                         readFieldEnd pt
-                         readAppExnFields pt record
-
+readAppExnFields :: Map.HashMap Int16 (Text, ThriftVal) -> AppExn
+readAppExnFields fields = AppExn{
+  ae_message = maybe undefined unwrapMessage $ Map.lookup 1 fields,
+  ae_type    = maybe undefined unwrapType $ Map.lookup 2 fields
+  }
+  where
+    unwrapMessage (_, TString s) = unpack $ decodeUtf8 s
+    unwrapMessage _ = undefined
+    unwrapType (_, TI32 i) = toEnum $ fromIntegral i
+    unwrapType _ = undefined
