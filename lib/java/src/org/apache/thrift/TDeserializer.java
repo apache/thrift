@@ -64,8 +64,20 @@ public class TDeserializer {
    * @param bytes The array to read from
    */
   public void deserialize(TBase base, byte[] bytes) throws TException {
+      deserialize(base, bytes, 0, bytes.length);
+  }
+
+  /**
+   * Deserialize the Thrift object from a byte array.
+   *
+   * @param base The object to read into
+   * @param bytes The array to read from
+   * @param offset The offset into {@code bytes}
+   * @param length The length to read from {@code bytes}
+   */
+  public void deserialize(TBase base, byte[] bytes, int offset, int length) throws TException {
     try {
-      trans_.reset(bytes);
+      trans_.reset(bytes, offset, length);
       base.read(protocol_);
     } finally {
       trans_.clear();
