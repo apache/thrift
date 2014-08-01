@@ -55,6 +55,7 @@ def getSocketArgs(socket_type):
   elif socket_type == 'domain':
     return "--domain-socket=/tmp/ThriftTest.thrift"
 
+def runServiceTest(test_name, server_lib, server_executable, server_extra_args, client_lib,  client_executable, client_extra_args, server_protocol, client_protocol, transport, port, use_zlib, socket_type):
   # Build command line arguments
   server_args = []
   cli_args = []
@@ -95,9 +96,6 @@ def getSocketArgs(socket_type):
   server_args.extend(server_extra_args)
   cli_args.extend(client_extra_args)
 
-  print server_args
-  print cli_args
-  print '---------------------------------------------------------------------------'
   server_log=open("log/" + test_name + "_server.log","a")
   client_log=open("log/" + test_name + "_client.log","a")
 

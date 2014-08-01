@@ -100,10 +100,13 @@
             ],
             "transports": [
                 "buffered",
-                "framed"
+                "framed",
+                "fastframed",
+                "http"
             ],
             "sockets": [
-                "ip"
+                "ip",
+                "ip-ssl"
             ],
             "platform": [
                 "Linux"
@@ -212,10 +215,12 @@
             ],
             "transports": [
                 "buffered",
-                "framed"
+                "framed",
+                "fastframed"
             ],
             "sockets": [
-                "ip"
+                "ip",
+                "ip-ssl"
             ],
             "platform": [
                 "Linux"
