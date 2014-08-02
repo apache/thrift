@@ -19,12 +19,17 @@
 
 THRIFT = $(top_srcdir)/compiler/cpp/thrift
 
-stubs: ../ConstantsDemo.thrift ../DebugProtoTest.thrift ../ThriftTest.thrift
+stubs: ../ConstantsDemo.thrift ../DebugProtoTest.thrift ../ThriftTest.thrift ../Include.thrift
 	$(THRIFT) --gen hs ../ConstantsDemo.thrift
 	$(THRIFT) --gen hs ../DebugProtoTest.thrift
 	$(THRIFT) --gen hs ../ThriftTest.thrift
+	$(THRIFT) --gen hs ../Include.thrift
 
 check: stubs
 	sh run-test.sh ConstantsDemo
 	sh run-test.sh DebugProtoTest
 	sh run-test.sh ThriftTest
+	sh run-test.sh Include
+
+clean-local:
+	$(RM) -r gen-hs
