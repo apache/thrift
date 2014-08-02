@@ -16,21 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
- 
-package org.apache.thrift.transport;
-  
-import org.apache.thrift.TError;
 
-class TTransportError extends TError {
-    
-    public static inline var UNKNOWN : Int = 0;
-    public static inline var NOT_OPEN : Int = 1;
-    public static inline var ALREADY_OPEN : Int = 2;
-    public static inline var TIMED_OUT : Int = 3;
-    public static inline var END_OF_FILE : Int = 4;
-  
-    public function new(error : Int = UNKNOWN, message : String = "") {
-		super(message, error);
-    }
-    
+package org.apache.thrift.protocol;
+
+import org.apache.thrift.transport.TTransport;
+
+
+/**
+* Binary Protocol Factory
+*/
+class TBinaryProtocolFactory implements TProtocolFactory {
+	
+	private var strictRead_ : Bool = false;
+	private var strictWrite_ : Bool = true;
+
+	public function new( strictRead : Bool = false, strictWrite : Bool = true) {
+		strictRead_  = strictRead;
+		strictWrite_ = strictWrite;
+	}
+
+	public function getProtocol( trans : TTransport) : TProtocol  {
+		return new TBinaryProtocol( trans, strictRead_, strictWrite_);
+	}
 }
+
+
+
+	

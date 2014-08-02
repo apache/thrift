@@ -105,10 +105,10 @@ class TFramedTransport extends TTransport
     	var size : Int = readFrameSize();
 		
     	if (size < 0) {
-    		throw new TTransportError('Read a negative frame size ($size)!');
+    		throw new TTransportError(TTransportError.UNKNOWN, 'Read a negative frame size ($size)!');
     	};
     	if (size > maxLength_) {
-    		throw new TTransportError('Frame size ($size) larger than max length ($maxLength_)!');
+    		throw new TTransportError(TTransportError.UNKNOWN, 'Frame size ($size) larger than max length ($maxLength_)!');
     	};
 
     	var buffer = new BytesBuffer();
@@ -140,15 +140,3 @@ class TFramedTransport extends TTransport
 }
 
 
-class TFramedTransportFactory extends TTransportFactory {
-
-    var maxLength_ : Int;
-
-    public function new(maxLength : Int = TFramedTransport.DEFAULT_MAX_LENGTH) {
-    	maxLength_ = maxLength;
-    }
-
-    public override function getTransport(base : TTransport) : TTransport {
-    	return new TFramedTransport(base, maxLength_);
-    }
-}

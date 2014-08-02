@@ -53,6 +53,13 @@ class TSocket extends TTransport  {
 		this.port = port;
     }
 
+	// used by TSocketServer
+    public static function fromSocket( socket : Socket) : TSocket  {
+		var result = new TSocket("",0);
+		result.assignSocket(socket);
+		return result;
+    }
+
     public override function close()  :  Void  {
 		input = null;
 		output = null;
@@ -118,11 +125,15 @@ class TSocket extends TTransport  {
 		try {
 			readCount = 0;
 			output.writeBytes( bytes, 0, bytes.length);
-			ioCallback(null);  // success call 
+			if(ioCallback != null) {
+				ioCallback(null);  // success call 
+			}
 		}
 		catch (e : Error) {
 			trace(e);
-			ioCallback(new TTransportError(TTransportError.UNKNOWN, "Bad IO error :  " + e));
+			if(ioCallback != null) {
+				ioCallback(new TTransportError(TTransportError.UNKNOWN, "Bad IO error :  " + e));
+			}
 		}
     }
 
@@ -137,6 +148,14 @@ class TSocket extends TTransport  {
 		socket.setBlocking(true);
 		socket.connect(host, port);
 		socket.setFastSend(true);
+		
+      	output = socket.output;
+      	input = socket.input;
+    }
+
+    private function assignSocket( socket : Socket)  :  Void
+    {
+		this.socket = socket;
 		
       	output = socket.output;
       	input = socket.input;

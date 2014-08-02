@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *   http : //www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -16,21 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
- 
-package org.apache.thrift.transport;
-  
-import org.apache.thrift.TError;
 
-class TTransportError extends TError {
-    
-    public static inline var UNKNOWN : Int = 0;
-    public static inline var NOT_OPEN : Int = 1;
-    public static inline var ALREADY_OPEN : Int = 2;
-    public static inline var TIMED_OUT : Int = 3;
-    public static inline var END_OF_FILE : Int = 4;
-  
-    public function new(error : Int = UNKNOWN, message : String = "") {
-		super(message, error);
+package org.apache.thrift.transport;
+
+import org.apache.thrift.transport.*;
+
+
+class TFramedTransportFactory extends TTransportFactory {
+
+    var maxLength_ : Int;
+
+    public function new(maxLength : Int = TFramedTransport.DEFAULT_MAX_LENGTH) {
+		super();
+    	maxLength_ = maxLength;
     }
-    
+
+    public override function getTransport(base : TTransport) : TTransport {
+    	return new TFramedTransport(base, maxLength_);
+    }
 }

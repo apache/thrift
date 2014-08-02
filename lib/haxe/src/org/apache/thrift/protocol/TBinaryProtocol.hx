@@ -26,7 +26,6 @@ import haxe.io.BytesBuffer;
 import haxe.Int64;
 
 import org.apache.thrift.TError;
-import org.apache.thrift.transport.THttpClient;
 import org.apache.thrift.transport.TTransport;
 
 /**
@@ -306,28 +305,3 @@ class TBinaryProtocol implements TProtocol {
 
 }
 
-/**
-* Factory
-*/
-/*
-public static class Factory implements TProtocolFactory {
-	protected boolean strictRead_ = false;
-	protected boolean strictWrite_ = true;
-
-	public Factory() {
-	  this(false, true);
-	}
-
-	public Factory(boolean strictRead, boolean strictWrite) {
-	  strictRead_ = strictRead;
-	  strictWrite_ = strictWrite;
-	}
-
-	public TProtocol getProtocol(TTransport trans) {
-	  return new TBinaryProtocol(trans, strictRead_, strictWrite_);
-	}
-}
-*/
-
-
-	

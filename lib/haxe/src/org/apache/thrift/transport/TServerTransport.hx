@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -15,22 +15,33 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Contains some contributions under the Thrift Software License.
+ * Please see doc/old-thrift-license.txt in the Thrift distribution for
+ * details.
  */
- 
-package org.apache.thrift.transport;
-  
-import org.apache.thrift.TError;
 
-class TTransportError extends TError {
-    
-    public static inline var UNKNOWN : Int = 0;
-    public static inline var NOT_OPEN : Int = 1;
-    public static inline var ALREADY_OPEN : Int = 2;
-    public static inline var TIMED_OUT : Int = 3;
-    public static inline var END_OF_FILE : Int = 4;
-  
-    public function new(error : Int = UNKNOWN, message : String = "") {
-		super(message, error);
-    }
-    
+package org.apache.thrift.transport;
+
+class TServerTransport {
+
+	public function Accept() : TTransport {
+		var transport = AcceptImpl();
+		if (transport == null) {
+		  throw new TTransportError( TTransportError.UNKNOWN, "accept() may not return NULL");
+		}
+		return transport;
+	}
+	
+	public function Listen() : Void {
+		throw new AbstractMethodError();
+	}
+	
+	public function Close() : Void {
+		throw new AbstractMethodError();
+	}
+	
+	private function AcceptImpl() : TTransport {
+		throw new AbstractMethodError();
+	}
 }

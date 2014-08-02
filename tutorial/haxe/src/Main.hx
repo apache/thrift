@@ -22,6 +22,7 @@ package;
 import org.apache.thrift.*;
 import org.apache.thrift.protocol.*;
 import org.apache.thrift.transport.*;
+import org.apache.thrift.server.*;
 import org.apache.thrift.meta_data.*;
 
 import tutorial.*;
@@ -151,10 +152,10 @@ class Main {
 		switch(trns)
 		{
 		case socket:
-		 	println("- socket transport");
+		 	println('- socket transport $targetHost:$targetPort');
 			transport = new TSocket( targetHost, targetPort);
         case http:
-		 	println("- http transport");
+		 	println("- http transport $targetHost");
 		 	transport = new THttpClient( targetHost);
 		default:
 			throw "Unhandled transport";
@@ -179,11 +180,10 @@ class Main {
 		case binary:
 		 	println("- binary protocol");
 		 	protocol = new TBinaryProtocol( transport);
-		/*
         case json:
-		 	println("- json protocol");
-		 	protocol = new TJsonProtocol( transport);
-		*/
+			throw "JSON protocol not implemented yet";
+		 	//println("- json protocol");
+		 	//protocol = new TJsonProtocol( transport);
 		default:
 			throw "Unhandled protocol";
 		}
@@ -200,7 +200,7 @@ class Main {
 
 		client.ping(
 			function(error : Error) : Void { 
-				println("ping() failed: "+error.message); 
+				println('ping() failed: $error'); 
 			}, 
 			function() : Void {
 				println("ping()");
@@ -209,7 +209,7 @@ class Main {
 
 		client.add( 1, 1, 
 			function(error : Error) : Void { 
-				println("add() failed: "+error.message); 
+				println('add() failed: $error'); 
 			}, 
 			function( sum : haxe.Int32) : Void {
 				println('1+1= $sum');
@@ -220,11 +220,10 @@ class Main {
 		work.op = tutorial.Operation.DIVIDE;
 		work.num1 = 1;
 		work.num2 = 0;
-trace( work.toString());
 		try {
 			client.calculate( 1, work, 
 				function(error : Error) : Void { 
-					println("calculate() failed: "+error.message); 
+					println('calculate() failed: $error'); 
 				}, 
 				function(quotient : haxe.Int32) : Void { 
 					println('Whoa we can divide by 0! Result = $quotient'); 
@@ -240,7 +239,7 @@ trace( work.toString());
 		work.num2 = 10;
 		client.calculate( 1, work,
 			function(error : Error) : Void { 
-				println("calculate() failed: "+error.message); 
+				println('calculate() failed: $error'); 
 			}, 
 			function( diff : haxe.Int32) : Void {
 				println('15-10=$diff\n');
@@ -249,7 +248,7 @@ trace( work.toString());
 
 		client.getStruct( 1,
 			function(error : Error) : Void { 
-				println("getStruct() failed: "+error.message); 
+				println('getStruct() failed: $error'); 
 			}, 
 			function( log : SharedStruct) : Void {
 				var logval = log.value;
@@ -259,8 +258,70 @@ trace( work.toString());
 	}
 	
 	
+	private static function ServerSetup() : TServer {
+	 	println("Server configuration:");
+
+		// endpoint transport
+		var transport : TServerTransport = null;
+		switch(trns)
+		{
+		case socket:
+		 	println('- socket transport port $targetPort');
+			transport = new TServerSocket( targetPort);
+        case http:
+			throw "HTTP server not implemented yet";
+		 	//println("- http transport");
+		 	//transport = new THttpClient( targetHost);
+		default:
+			throw "Unhandled transport";
+		}
+		
+		// optinal layered transport
+		var transfactory : TTransportFactory = null;
+		if ( framed) {
+		 	println("- framed transport");
+			transfactory = new TFramedTransportFactory();
+		} else if ( buffered) {
+		 	println("- buffered transport");
+			throw "TBufferedTransport not implemented yet";
+			//transfactory = new TBufferedTransportFactory();
+		}
+		
+		// protocol
+		var protfactory : TProtocolFactory = null;
+		switch(prot)
+		{
+		case binary:
+		 	println("- binary protocol");
+		 	protfactory = new TBinaryProtocolFactory();
+        case json:
+			throw "JSON protocol not implemented yet";
+		 	//println("- json protocol");
+		 	//protfactory = new TJsonProtocolFactory();
+		default:
+			throw "Unhandled protocol";
+		}
+		
+		var handler = new CalculatorHandler();
+		var processor = new CalculatorProcessor(handler);
+		var server = new TSimpleServer( processor, transport, transfactory, protfactory);
+		return server;
+	}
+	
+	
 	private static function RunServer() : Void {
-		throw "Not implemented";
+		try
+		{
+			var server = ServerSetup();
+
+			println("\nStarting the server...");
+			server.Serve();
+		}
+		catch( e : Error)
+		{
+			println('RunServer() failed: $e');
+		}
+		println("done.");
 	}
 
 }
