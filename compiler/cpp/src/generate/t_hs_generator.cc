@@ -1192,7 +1192,8 @@ void t_hs_generator::generate_deserialize_type(ofstream &out,
 void t_hs_generator::generate_deserialize_struct(ofstream &out,
                                                  t_struct* tstruct) {
   string name = capitalize(tstruct->get_name());
-  out << "(read_" << name << " iprot)";
+  string module_name = capitalize(tstruct->get_program()->get_name()) + "_Types";
+  out << "(" << module_name << "." << "read_" << name << " iprot)";
 }
 
 /**
