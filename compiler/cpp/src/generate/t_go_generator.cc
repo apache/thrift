@@ -2498,8 +2498,8 @@ void t_go_generator::generate_process_function(t_service* tservice,
                    indent() << "result := " << resultname << "{}" << endl;
     }
     bool need_reference = type_need_reference(tfunction->get_returntype());
-    if (need_reference && !tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
-		f_service_ << "var retval " <<type_to_go_type(tfunction->get_returntype()) <<endl;
+    if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
+        f_service_ << "var retval " <<type_to_go_type(tfunction->get_returntype()) <<endl;
     }
 
     f_service_ <<
@@ -2508,11 +2508,7 @@ void t_go_generator::generate_process_function(t_service* tservice,
 
     if (!tfunction->is_oneway()) {
         if (!tfunction->get_returntype()->is_void()) {
-        	if( need_reference) {
-                f_service_ << "retval, ";
-        	} else {
-                f_service_ << "result.Success, ";
-        	}
+            f_service_ << "retval, ";
         }
     }
 
@@ -2572,11 +2568,23 @@ void t_go_generator::generate_process_function(t_service* tservice,
     }
 
     f_service_ <<
-               indent() << "}" << endl;
+               indent() << "}";  // closes err2 != nil
 
     if (!tfunction->is_oneway()) {
-        if (need_reference && !tfunction->get_returntype()->is_void()) {
-    		f_service_ << "result.Success = &retval" << endl;
+        if (!tfunction->get_returntype()->is_void()) {
+            f_service_ << " else {" << endl; // make sure we set Success retval only on success
+            indent_up();
+            f_service_ << 
+                indent() << "result.Success = ";
+            if(need_reference) {
+                f_service_ << "&";
+            }
+            f_service_ << 
+                "retval" << endl;
+            indent_down();
+            f_service_ << "}"  << endl;
+        } else {
+            f_service_ << endl;
         }
         f_service_ <<
                    indent() << "if err2 = oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name()) << 
@@ -2597,7 +2605,7 @@ void t_go_generator::generate_process_function(t_service* tservice,
                    indent() << "}" << endl <<
                    indent() << "return true, err" << endl;
     } else {
-        f_service_ <<
+        f_service_ << endl <<
                  indent() << "return true, nil" << endl;
     }
     indent_down();
