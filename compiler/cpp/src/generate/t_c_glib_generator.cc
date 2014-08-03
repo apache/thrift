@@ -2448,10 +2448,7 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
           string param_spec_function_name = "g_param_spec_int";
           string min_value;
           string max_value;
-          string default_value =
-            std::to_string((member_value != NULL) ?
-                           member_value->get_integer() :
-                           0);
+          ostringstream default_value;
 
           switch (base_type) {
           case t_base_type::TYPE_BYTE:
@@ -2479,9 +2476,6 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
             param_spec_function_name = "g_param_spec_double";
             min_value = "-INFINITY";
             max_value = "INFINITY";
-            if (member_value != NULL) {
-              default_value = std::to_string(member_value->get_double());
-            }
             break;
 
           default:
@@ -2491,6 +2485,15 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
             break;
           }
 
+          if (member_value != NULL) {
+            default_value <<
+              (base_type == t_base_type::TYPE_DOUBLE ?
+               member_value->get_double() :
+               member_value->get_integer());
+          } else {
+            default_value << "0";
+          }
+
           args_indent += string(param_spec_function_name.length() + 2, ' ');
           f_types_impl_ <<
             param_spec_function_name << " (\"" << member_name << "\"," << endl <<
@@ -2498,7 +2501,7 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
             args_indent << "NULL," << endl <<
             args_indent << min_value << "," << endl <<
             args_indent << max_value << "," << endl <<
-            args_indent << default_value << "," << endl <<
+            args_indent << default_value.str() << "," << endl <<
             args_indent << "G_PARAM_READWRITE));" << endl;
         }
 
