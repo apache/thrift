@@ -37,7 +37,7 @@ Executable HaskellServer
   Hs-Source-Dirs:
     ., gen-hs/
   Build-Depends:
-    base >= 4, base < 5, network, ghc-prim, containers, thrift, vector, unordered-containers, text, hashable, bytestring
+    base >= 4, base < 5, network, ghc-prim, containers, thrift, vector, unordered-containers, text, hashable, bytestring, QuickCheck
   Extensions:
     DeriveDataTypeable,
     ExistentialQuantification,
@@ -53,7 +53,7 @@ Executable HaskellClient
   Hs-Source-Dirs:
     ., gen-hs/
   Build-Depends:
-    base >= 4, base < 5, network, ghc-prim, containers, thrift, vector
+    base >= 4, base < 5, network, ghc-prim, containers, thrift, vector, QuickCheck
   Extensions:
     DeriveDataTypeable,
     ExistentialQuantification,
