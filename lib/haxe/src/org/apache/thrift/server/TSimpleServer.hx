@@ -108,7 +108,7 @@ class TSimpleServer extends TServer  {
 			{
 			  	// Usually a client disconnect, expected
 			}
-			catch( e : Error)
+			catch( e : Dynamic)
 			{
 				// Unexpected
 			  	logDelegate(e); 

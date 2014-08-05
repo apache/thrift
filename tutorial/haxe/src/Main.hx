@@ -230,8 +230,8 @@ class Main {
 				}); 
 
 		} 
-		catch(e : Error) {
-			println("Exception "+e.message);
+		catch(e : Dynamic) {
+			println('Exception $e');
 		}
 
 		work.op = tutorial.Operation.SUBTRACT;
@@ -317,7 +317,7 @@ class Main {
 			println("\nStarting the server...");
 			server.Serve();
 		}
-		catch( e : Error)
+		catch( e : Dynamic)
 		{
 			println('RunServer() failed: $e');
 		}

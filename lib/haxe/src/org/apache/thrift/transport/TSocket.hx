@@ -94,7 +94,7 @@ class TSocket extends TTransport  {
 			trace('Eof $e');
 			throw new TTransportError(TTransportError.END_OF_FILE, "No more data available.");
 		}
-		catch (e : Error)
+		catch (e : Dynamic)
 		{
 			trace('Error $e');
 			throw new TTransportError(TTransportError.UNKNOWN, "Bad IO error :  " + e);
@@ -129,7 +129,7 @@ class TSocket extends TTransport  {
 				ioCallback(null);  // success call 
 			}
 		}
-		catch (e : Error) {
+		catch (e : Dynamic) {
 			trace(e);
 			if(ioCallback != null) {
 				ioCallback(new TTransportError(TTransportError.UNKNOWN, "Bad IO error :  " + e));

@@ -60,10 +60,10 @@ class TServerSocket extends TServerTransport {
 			_socket = new Socket();
 			_socket.bind( new Host('localhost'), port);
 		}
-		catch (e : Error)
+		catch (e : Dynamic)
 		{
 			_socket = null;
-			throw new TTransportError( TTransportError.UNKNOWN, 'Could not create ServerSocket on port $port.');
+			throw new TTransportError( TTransportError.UNKNOWN, 'Could not create ServerSocket on port $port: $e');
 		}
 	}
 
@@ -76,7 +76,7 @@ class TServerSocket extends TServerTransport {
 			{
 				_socket.listen(1);
 			}
-			catch (e : Error)
+			catch (e : Dynamic)
 			{
 				trace('Error $e');
 				throw new TTransportError( TTransportError.UNKNOWN, 'Could not accept on listening socket: $e');
@@ -104,7 +104,7 @@ class TServerSocket extends TServerTransport {
 
 			return result;
 		}
-		catch (e : Error)
+		catch (e : Dynamic)
 		{
 			trace('Error $e');
 			throw new TTransportError( TTransportError.UNKNOWN, '$e');
@@ -119,7 +119,7 @@ class TServerSocket extends TServerTransport {
 			{
 				_socket.close();
 			}
-			catch (e : Error)
+			catch (e : Dynamic)
 			{
 				trace('Error $e');
 				throw new TTransportError( TTransportError.UNKNOWN, 'WARNING: Could not close server socket: $e');
