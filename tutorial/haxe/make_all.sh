@@ -1,3 +1,4 @@
+#!/bin/sh
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -16,23 +17,25 @@
 # specific language governing permissions and limitations
 # under the License.
 #
- 
-#integrate files to classpath
--cp src
--cp gen-haxe
--cp ../../lib/haxe/src
 
-#this class wil be used as entry point for your app.
--main Main
+# invoke Thrift comnpiler
+thrift -r -gen haxe  ../tutorial.thrift
 
-#PHP target
--php bin/Tutorial.php
+# output folder
+if [ ! -d bin ]; then
+  mkdir  bin
+fi
 
-#Add debug information
--debug
+# invoke Haxe compoiler
+for target in *.hxml; do 
+  echo --------------------------
+  echo Building ${target} ...
+  echo --------------------------
+  if [ ! -d bin/${target} ]; then
+    mkdir  bin/${target}
+  fi
+  haxe  --cwd .  ${target} 
+done
 
-#dead code elimination : remove unused code
-#"-dce no" : do not remove unused code
-#"-dce std" : remove unused code in the std lib (default)
-#"-dce full" : remove all unused code
--dce full
+
+#eof

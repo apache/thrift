@@ -19,6 +19,8 @@
  
 #integrate files to classpath
 -cp src
+-cp gen-haxe
+-cp ../../lib/haxe/src 
 
 #this class wil be used as entry point for your app.
 -main Main
