@@ -4,7 +4,7 @@
             "description": "Python TestClient",
             "lib": "py",
             "executable": "py/TestClient.py",
-            "extra_args":  ["--genpydir=py/gen-py"],
+            "exit": "hard",
             "protocols": [
                 "binary",
                 "compact",
@@ -27,6 +27,7 @@
             "description": "C++ TestClient",
             "lib": "cpp",
             "executable": "cpp/TestClient",
+            "exit": "soft",
             "protocols": [
                 "binary",
                 "compact",
@@ -50,6 +51,7 @@
             "description": "Nodejs TestClient",
             "lib": "nodejs",
             "executable": "../lib/nodejs/test/client.js",
+            "exit": "soft",
             "protocols": [
                 "binary",
                 "compact",
@@ -71,6 +73,7 @@
             "description": "Ruby TestClient",
             "lib": "ruby",
             "executable": "rb/integration/TestClient.rb",
+            "exit": "soft",
             "protocols": [
                 "binary",
                 "compact",
@@ -93,6 +96,7 @@
             "lib": "java",
             "executable": ["ant","-f","../lib/java/build.xml","-Dno-gen-thrift=\"\""],
             "extra_args": ["run-testclient"],
+            "exit": "soft",
             "protocols": [
                 "binary",
                 "compact",
@@ -118,8 +122,9 @@
             "description": "Python TSimpleServer",
             "lib": "py",
             "executable": "py/TestServer.py",
-            "extra_args": ["--genpydir=py/gen-py", "TSimpleServer"],
+            "extra_args": ["TSimpleServer"],
             "extra_delay": 0,
+            "exit": "hard",
             "protocols": [
                 "binary",
                 "compact",
@@ -142,6 +147,7 @@
             "description": "C++ TestServer",
             "lib": "cpp",
             "executable": "cpp/TestServer",
+            "exit": "hard",
             "protocols": [
                 "binary",
                 "compact",
@@ -165,6 +171,7 @@
             "description": "Ruby TestServer",
             "lib": "ruby",
             "executable": "rb/integration/TestServer.rb",
+            "exit": "soft",
             "protocols": [
                 "binary",
                 "compact",
@@ -186,6 +193,7 @@
             "description": "Nodejs TestServer",
             "lib": "nodejs",
             "executable": "../lib/nodejs/test/server.js",
+            "exit": "soft",
             "protocols": [
                 "binary",
                 "compact",
@@ -208,6 +216,7 @@
             "lib": "java",
             "executable": ["ant","-f","../lib/java/build.xml","-Dno-gen-thrift=\"\""],
             "extra_args": ["run-testserver"],
+            "exit": "soft",
             "protocols": [
                 "binary",
                 "compact",
