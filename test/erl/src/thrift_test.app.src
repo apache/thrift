@@ -17,36 +17,15 @@
 %% under the License.
 %%
 %%% -*- mode:erlang -*-
-{application, thrift, [
+{application, thrift_test, [
   % A quick description of the application.
-  {description, "Thrift bindings"},
+  {description, "tests for thrift erlang compiler backend"},
 
   % The version of the applicaton
   {vsn, "1.0.0-dev"},
 
   % All modules used by the application.
   {modules, [
-    thrift_base64_transport,
-    thrift_binary_protocol,
-    thrift_buffered_transport,
-    thrift_client_util,
-    thrift_client,
-    thrift_disk_log_transport,
-    thrift_file_transport,
-    thrift_framed_transport,
-    thrift_http_transport,
-    thrift_json_parser,
-    thrift_json_protocol,
-    thrift_memory_buffer,
-    thrift_processor,
-    thrift_protocol,
-    thrift_reconnecting_client,
-    thrift_server,
-    thrift_service,
-    thrift_socket_server,
-    thrift_socket_transport,
-    thrift_transport_state_test,
-    thrift_transport
   ]},
 
   % All of the registered names the application uses. This can be ignored.

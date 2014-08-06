@@ -49,6 +49,10 @@ if WITH_GO
 SUBDIRS += go
 endif
 
+if WITH_ERLANG
+SUBDIRS += erl
+endif
+
 #
 # generate html for ThriftTest.thrift
 #
@@ -61,6 +65,7 @@ EXTRA_DIST = \
 	test.py \
 	tests.json \
 	cpp \
+	erl \
 	hs \
 	lua \
 	ocaml \
