@@ -117,6 +117,12 @@ public class TAsyncClientManager {
           LOGGER.error("Ignoring uncaught exception in SelectThread", exception);
         }
       }
+
+      try {
+        selector.close();
+      } catch (IOException ex) {
+        LOGGER.warn("Could not close selector. This may result in leaked resources!", ex);
+      }
     }
 
     // Transition methods for ready keys
