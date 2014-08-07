@@ -391,7 +391,7 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
     indent(out) << value->get_integer();
 
   } else if (type->is_struct() || type->is_xception()) {
-    out << "#" << uncapitalize(type->get_name()) << "{";
+    out << "#'" << uncapitalize(type->get_name()) << "'{";
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
     const map<t_const_value*, t_const_value*>& val = value->get_map();
@@ -474,7 +474,7 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
 string t_erl_generator::render_default_value(t_field* field) {
   t_type *type = field->get_type();
   if (type->is_struct() || type->is_xception()) {
-    return "#" + uncapitalize(type->get_name()) + "{}";
+    return "#'" + uncapitalize(type->get_name()) + "'{}";
   } else if (type->is_map()) {
     return "dict:new()";
   } else if (type->is_set()) {
@@ -508,7 +508,7 @@ string t_erl_generator::render_member_type(t_field * field) {
   } else if (type->is_enum()) {
     return "integer()";
   } else if (type->is_struct() || type->is_xception()) {
-    return uncapitalize(type->get_name()) + "()";
+    return "'" + uncapitalize(type->get_name()) + "'()";
   } else if (type->is_map()) {
     return "dict()";
   } else if (type->is_set()) {
@@ -627,7 +627,7 @@ string t_erl_generator::render_member_value(t_field * field) {
  * Generates the read method for a struct
  */
 void t_erl_generator::generate_erl_struct_info(ostream& out, t_struct* tstruct) {
-  indent(out) << "struct_info('" << type_name(tstruct) << "') ->" << endl;
+  indent(out) << "struct_info(" << type_name(tstruct) << ") ->" << endl;
   indent_up();
   out << indent() << render_type_term(tstruct, true) << ";" << endl;
   indent_down();
@@ -635,7 +635,7 @@ void t_erl_generator::generate_erl_struct_info(ostream& out, t_struct* tstruct) 
 }
 
 void t_erl_generator::generate_erl_extended_struct_info(ostream& out, t_struct* tstruct) {
-  indent(out) << "struct_info_ext('" << type_name(tstruct) << "') ->" << endl;
+  indent(out) << "struct_info_ext(" << type_name(tstruct) << ") ->" << endl;
   indent_up();
   out << indent() << render_type_term(tstruct, true, true) << ";" << endl;
   indent_down();
@@ -888,7 +888,7 @@ string t_erl_generator::type_name(t_type* ttype) {
   string name = ttype->get_name();
 
   if (ttype->is_struct() || ttype->is_xception() || ttype->is_service()) {
-    name = uncapitalize(ttype->get_name());
+    name = "'" + uncapitalize(ttype->get_name()) + "'";
   }
 
   return prefix + name;
@@ -998,7 +998,7 @@ std::string t_erl_generator::render_type_term(t_type* type, bool expand_structs,
       buf << "]}" << endl;
       return buf.str();
     } else {
-      return "{struct, {'" + type_module(type) + "', '" + type_name(type) + "'}}";
+      return "{struct, {'" + type_module(type) + "', " + type_name(type) + "}}";
     }
   } else if (type->is_map()) {
     // {map, KeyType, ValType}

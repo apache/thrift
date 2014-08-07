@@ -41,6 +41,10 @@ struct of {
   2: string where
 }
 
+struct ofOf {
+  1: of Of
+}
+
 
 struct ClassAndProp {
   1: bool ClassAndProp
