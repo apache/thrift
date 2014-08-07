@@ -60,16 +60,14 @@ def runServiceTest(test_name, server_lib, server_executable, server_extra_args, 
   server_args = []
   cli_args = []
   if server_lib == 'java':
-    server_args.append(server_executable[0])
-    server_args.append(server_executable[1])
-    server_args.append(relfile(server_executable[2]))
+    server_executable[2] = relfile(server_executable[2])
+    server_args.extend(server_executable)
     server_args.extend(['-Dtestargs','\"'])
   else:
     server_args = [relfile(server_executable)]
   if client_lib == 'java':
-    cli_args.append(client_executable[0])
-    cli_args.append(client_executable[1])
-    cli_args.append(relfile(client_executable[2]))
+    client_executable[2] = relfile(client_executable[2])
+    cli_args.extend(client_executable)
     cli_args.extend(['-Dtestargs','\"'])
   else:
     cli_args = [relfile(client_executable)]
@@ -92,18 +90,14 @@ def runServiceTest(test_name, server_lib, server_executable, server_extra_args, 
 #      which.append('-v')
   if server_lib == 'java':
     server_args.append('\"')
-  elif server_lib == 'py':
-    server_args.append('--genpydir=' + relfile('py/gen-py'))
   if client_lib == 'java':
     cli_args.append('\"')
-  elif client_lib == 'py':
-    cli_args.append('--genpydir=' + relfile('py/gen-py'))
 
   server_args.extend(server_extra_args)
   cli_args.extend(client_extra_args)
 
-  server_log=open(relfile("log/" + test_name + "_server.log"),"a")
-  client_log=open(relfile("log/" + test_name + "_client.log"),"a")
+  server_log=open("log/" + test_name + "_server.log","a")
+  client_log=open("log/" + test_name + "_client.log","a")
 
   try:
     if options.verbose > 0:
@@ -175,8 +169,8 @@ def runServiceTest(test_name, server_lib, server_executable, server_extra_args, 
              'processes to terminate via alarm'
              % (protocol, use_zlib, use_ssl, extra_sleep))
       time.sleep(extra_sleep)
-    os.kill(serverproc.pid, signal.SIGTERM)
-    #serverproc.wait()
+    os.kill(serverproc.pid, signal.SIGKILL)
+    serverproc.wait()
   client_log.flush()
   server_log.flush()
   client_log.close()
@@ -184,15 +178,14 @@ def runServiceTest(test_name, server_lib, server_executable, server_extra_args, 
 
 test_count = 0
 failed = 0
-hard_fail_count = 0
 platform = platform.system()
-if os.path.exists(relfile('log')): shutil.rmtree(relfile('log'))
-os.makedirs(relfile('log'))
-if os.path.exists(relfile('results.json')): os.remove(relfile('results.json'))
-results_json = open(relfile("results.json"),"a")
+if os.path.exists('log'): shutil.rmtree('log')
+os.makedirs('log')
+if os.path.exists('results.json'): os.remove('results.json')
+results_json = open("results.json","a")
 results_json.write("[\n")
 
-with open(relfile('tests.json')) as data_file:
+with open('tests.json') as data_file:
     data = json.load(data_file)
 
 #subprocess.call("export NODE_PATH=../lib/nodejs/test:../lib/nodejs/lib:${NODE_PATH}")
@@ -224,8 +217,6 @@ for server in data["server"]:
                   ret = runServiceTest(test_name, server_lib, server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, protocol, transport, 9090, 0, sock)
                   if ret != None:
                     failed += 1
-                    if client["exit"] == "hard" and server["exit"] == "hard":
-                      hard_fail_count +=1
                     print "Error: %s" % ret
                     print "Using"
                     print (' Server: %s --protocol=%s --transport=%s %s %s'
@@ -249,8 +240,6 @@ for server in data["server"]:
 
                   if ret != None:
                     failed += 1
-                    if client["exit"] == "hard" and server["exit"] == "hard":
-                      hard_fail_count +=1
                     print "Error: %s" % ret
                     print "Using"
                     print (' Server: %s --protocol=%s --transport=%s %s %s'
@@ -273,8 +262,6 @@ for server in data["server"]:
                   ret = runServiceTest(test_name, server_lib,server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, 'binary', transport, 9090, 0, sock)
                   if ret != None:
                     failed += 1
-                    if client["exit"] == "hard" and server["exit"] == "hard":
-                      hard_fail_count +=1
                     print "Error: %s" % ret
                     print "Using"
                     print (' Server: %s --protocol=%s --transport=%s %s %s'
@@ -290,4 +277,3 @@ results_json.write("\n]")
 results_json.flush()
 results_json.close()
 print '%s failed of %s tests in total' % (failed, test_count)
-sys.exit(hard_fail_count)
