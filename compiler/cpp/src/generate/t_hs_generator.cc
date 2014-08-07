@@ -604,7 +604,7 @@ void t_hs_generator::generate_hs_struct_reader(ofstream& out, t_struct* tstruct)
     generate_deserialize_field(out, *f_iter,str);
     out << endl;
 
-    string fname = decapitalize((*f_iter)->get_name());
+    string fname = (*f_iter)->get_name();
     indent(out) << "read_" << sname << "_fields iprot record{f_" << sname << "_" << fname << "=P.Just s}" << endl;
 
     indent(out) << "else do" << endl;
@@ -638,7 +638,7 @@ void t_hs_generator::generate_hs_struct_reader(ofstream& out, t_struct* tstruct)
   bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     out << (first ? "" : ",");
-    out << "f_" << sname << "_" << decapitalize((*f_iter)->get_name()) << "=P.Nothing";
+    out << "f_" << sname << "_" << (*f_iter)->get_name() << "=P.Nothing";
     first = false;
   }
 
@@ -882,7 +882,7 @@ void t_hs_generator::generate_service_client(t_service* tservice) {
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       string fieldname = (*fld_iter)->get_name();
       f_client_ << (first ? "" : ",");
-      f_client_ << "f_" << argsname << "_" << fieldname << "=P.Just arg_" << fieldname;
+      f_client_ << "f_" << argsname << "_" << fieldname << "=P.Just arg_" << decapitalize(fieldname);
       first = false;
     }
     f_client_ << "})" << endl;
