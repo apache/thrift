@@ -30,6 +30,9 @@ START_TIME=$SECONDS
 cd "$( dirname "$0" )"
 BASEDIR=$(pwd)
 
+TESTCOUNT=0
+FAILED=0
+
 print_header() {
   printf "%-16s %-13s %-17s %-s\n" "client-server:" "protocol:" "transport:" "result:"
 }
@@ -139,7 +142,9 @@ do_test () {
       tail log/${testname}_client.log >> log/error.log
       echo "======================================================" >> log/error.log
       echo "" >> log/error.log
+      FAILED=$(($FAILED + 1))
     fi
+    TESTCOUNT=$(($TESTCOUNT + 1))
 
     # split client-server string
     client=${client_server%-*}
@@ -876,6 +881,8 @@ echo " or look at file://$BASEDIR/$STATUS_HTML"
 
 ELAPSED_TIME=$(echo "(${SECONDS} - ${START_TIME})" | bc)
 DURATION="${ELAPSED_TIME} seconds"
+
+echo $FAILED failed of $TESTCOUNT tests in total
 echo "test an took" $DURATION
 print_html_footer "$DURATION"
 
