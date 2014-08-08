@@ -547,7 +547,7 @@ bool t_csharp_generator::print_const_value(std::ofstream& out, string name, t_ty
 
   if (!defval || needtype) {
     out <<
-      (in_static ? "" : "public static ") <<
+      (in_static ? "" : type->is_base_type() ? "public const " : "public static ") <<
       type_name(type) << " ";
   }
   if (type->is_base_type()) {

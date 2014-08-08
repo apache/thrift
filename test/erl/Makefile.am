@@ -18,20 +18,20 @@
 #
 
 THRIFT = $(top_srcdir)/compiler/cpp/thrift
+REBAR = $(top_srcdir)/lib/erl/rebar
 
-stubs: ../ConstantsDemo.thrift ../DebugProtoTest.thrift ../ThriftTest.thrift ../Include.thrift ../NameConflictTest.thrift
-	$(THRIFT) --gen hs ../ConstantsDemo.thrift
-	$(THRIFT) --gen hs ../DebugProtoTest.thrift
-	$(THRIFT) --gen hs ../ThriftTest.thrift
-	$(THRIFT) --gen hs ../Include.thrift
-	$(THRIFT) --gen hs ../NameConflictTest.thrift
+THRIFT_FILES = $(wildcard ../*.thrift)
 
-check: stubs
-	sh run-test.sh ConstantsDemo
-	sh run-test.sh DebugProtoTest
-	sh run-test.sh ThriftTest
-	sh run-test.sh Include
-	sh run-test.sh NameConflictTest
+.generated: $(THRIFT_FILES)
+	for f in $(THRIFT_FILES) ; do \
+	  $(THRIFT) --gen erl $$f ; \
+	done ; \
+	touch .generated
 
-clean-local:
-	$(RM) -r gen-hs
+check: .generated
+	$(REBAR) eunit
+
+clean:
+	rm -f .generated
+	rm -rf gen-erl
+	$(REBAR) clean

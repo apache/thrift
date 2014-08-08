@@ -21,6 +21,29 @@ struct partial {
 	1: using using
 }
 
+enum Maybe {
+  JUST = 1,
+  TRUE = 2,
+  FALSE = 3
+}
+
+enum Either {
+  LEFT = 1,
+  RIGHT = 2
+}
+
+struct foldr {
+  1: string id
+}
+
+struct of {
+  1: string let
+  2: string where
+}
+
+struct ofOf {
+  1: of Of
+}
 
 
 struct ClassAndProp {
@@ -78,4 +101,8 @@ service extern {
 	void Foo(1: Nested Foo_args) throws (1: Problem_ Foo_result)
 }
 
+service qualified {
+	Maybe maybe(1: Maybe foldr)
+	Either either(1: foldr of)
+}
 // eof
