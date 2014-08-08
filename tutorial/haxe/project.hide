@@ -51,7 +51,7 @@
             ,"foldedRegions" : [
 
             ]
-            ,"activeLine" : 316
+            ,"activeLine" : 0
         }
         ,{
              "path" : "src\\org\\apache\\thrift\\server\\TServer.hx"
@@ -81,15 +81,6 @@
             ,"activeLine" : 20
         }
         ,{
-             "path" : "src\\CalculatorHandler.hx"
-            ,"useTabs" : true
-            ,"indentSize" : 4
-            ,"foldedRegions" : [
-
-            ]
-            ,"activeLine" : 76
-        }
-        ,{
              "path" : "src\\tutorial\\CalculatorProcessor.hx"
             ,"useTabs" : true
             ,"indentSize" : 4
@@ -98,17 +89,8 @@
             ]
             ,"activeLine" : 79
         }
-        ,{
-             "path" : "cpp.hxml"
-            ,"useTabs" : true
-            ,"indentSize" : 4
-            ,"foldedRegions" : [
-
-            ]
-            ,"activeLine" : 5
-        }
     ]
-    ,"activeFile" : "src\\CalculatorHandler.hx"
+    ,"activeFile" : "src\\Main.hx"
     ,"openFLTarget" : null
     ,"openFLBuildMode" : "Debug"
     ,"runActionType" : null

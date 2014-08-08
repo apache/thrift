@@ -11,10 +11,13 @@ thrift -r -gen haxe   ..\tutorial.thrift
 
 rem # invoke Haxe compiler for all targets
 for %%a in (*.hxml) do (
-	echo --------------------------
-	echo Building %%a ...
-	echo --------------------------
-	haxe  --cwd .  %%a
+	rem * filter Python, as it is not supported by Haxe 3.1.3 (but will be in 3.1.4)
+	if not "%%a"=="python.hxml" (
+		echo --------------------------
+		echo Building %%a ...
+		echo --------------------------
+		haxe  --cwd .  %%a
+	)
 )
 
 

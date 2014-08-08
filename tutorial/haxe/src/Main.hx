@@ -50,15 +50,16 @@ class Main {
 	private static var targetHost : String = "localhost";
 	private static var targetPort : Int = 9090;
 	
-    static function main() {
+	static function main() {
+		#if ! (flash || js)
 		try {
   			ParseArgs();
 		} catch (e : String) {
-			println(e);
-			println(GetHelp());
+			trace(e);
+			trace(GetHelp());
 			return;
 		}
-			
+		#end
 
 		try {
 			if (server)
@@ -66,18 +67,15 @@ class Main {
 			else 
 				RunClient();
 		} catch (e : String) {
-			println(e);
+			trace(e);
 		}
 
-		println("Completed.");
+		trace("Completed.");
     }
+
 	
-	
-	private static function println(txt : String) {
-		Sys.println(txt);
-	}
-	
-	
+	#if ! (flash || js)
+		
 	private static function GetHelp() : String {
 		return Sys.executablePath()+"  modus  trnsOption  transport  protocol\n"
 		+"Options:\n"
@@ -89,7 +87,7 @@ class Main {
 		+"All arguments are optional.\n";
 	}
 	
-	
+
 	private static function ParseArgs() : Void {
 		var step = 0;
 		for (arg in Sys.args()) {
@@ -137,26 +135,31 @@ class Main {
 
 			if ( framed && buffered)
 			{
-				println("WN: framed supersedes buffered");
+				trace("WN: framed supersedes buffered");
 			}
 
 		}
 	}
-	
+
+	#end
 	
 	private static function ClientSetup() : Calculator {
-	 	println("Client configuration:");
+	 	trace("Client configuration:");
 
 		// endpoint transport
 		var transport : TTransport;
 		switch(trns)
 		{
 		case socket:
-		 	println('- socket transport $targetHost:$targetPort');
+		 	trace('- socket transport $targetHost:$targetPort');
 			transport = new TSocket( targetHost, targetPort);
         case http:
-		 	println("- http transport $targetHost");
-		 	transport = new THttpClient( targetHost);
+		 	trace("- http transport $targetHost");
+			#if flash
+		 	transport = new THttpClient( new flash.net.URLRequest(targetHost));
+			#else
+			transport = new THttpClient( targetHost);
+			#end
 		default:
 			throw "Unhandled transport";
 		}
@@ -164,10 +167,10 @@ class Main {
 		
 		// optinal layered transport
 		if ( framed) {
-		 	println("- framed transport");
+		 	trace("- framed transport");
 			transport = new TFramedTransport(transport);
 		} else if ( buffered) {
-		 	println("- buffered transport");
+		 	trace("- buffered transport");
 			throw "TBufferedTransport not implemented yet";
 			//transport = new TBufferedTransport(transport);
 		}
@@ -178,11 +181,11 @@ class Main {
 		switch(prot)
 		{
 		case binary:
-		 	println("- binary protocol");
+		 	trace("- binary protocol");
 		 	protocol = new TBinaryProtocol( transport);
         case json:
 			throw "JSON protocol not implemented yet";
-		 	//println("- json protocol");
+		 	//trace("- json protocol");
 		 	//protocol = new TJsonProtocol( transport);
 		default:
 			throw "Unhandled protocol";
@@ -200,19 +203,19 @@ class Main {
 
 		client.ping(
 			function(error : Error) : Void { 
-				println('ping() failed: $error'); 
+				trace('ping() failed: $error'); 
 			}, 
 			function() : Void {
-				println("ping()");
+				trace("ping()");
 			});
 
 
 		client.add( 1, 1, 
 			function(error : Error) : Void { 
-				println('add() failed: $error'); 
+				trace('add() failed: $error'); 
 			}, 
 			function( sum : haxe.Int32) : Void {
-				println('1+1= $sum');
+				trace('1+1= $sum');
 			});
 
 
@@ -223,15 +226,15 @@ class Main {
 		try {
 			client.calculate( 1, work, 
 				function(error : Error) : Void { 
-					println('calculate() failed: $error'); 
+					trace('calculate() failed: $error'); 
 				}, 
 				function(quotient : haxe.Int32) : Void { 
-					println('Whoa we can divide by 0! Result = $quotient'); 
+					trace('Whoa we can divide by 0! Result = $quotient'); 
 				}); 
 
 		} 
 		catch(e : Dynamic) {
-			println('Exception $e');
+			trace('Exception $e');
 		}
 
 		work.op = tutorial.Operation.SUBTRACT;
@@ -239,38 +242,42 @@ class Main {
 		work.num2 = 10;
 		client.calculate( 1, work,
 			function(error : Error) : Void { 
-				println('calculate() failed: $error'); 
+				trace('calculate() failed: $error'); 
 			}, 
 			function( diff : haxe.Int32) : Void {
-				println('15-10=$diff\n');
+				trace('15-10=$diff\n');
 			});
 
 
 		client.getStruct( 1,
 			function(error : Error) : Void { 
-				println('getStruct() failed: $error'); 
+				trace('getStruct() failed: $error'); 
 			}, 
 			function( log : SharedStruct) : Void {
 				var logval = log.value;
-				println('Check log: $logval');
+				trace('Check log: $logval');
 			});
 		
 	}
 	
 	
 	private static function ServerSetup() : TServer {
-	 	println("Server configuration:");
+	 	trace("Server configuration:");
 
 		// endpoint transport
 		var transport : TServerTransport = null;
 		switch(trns)
 		{
 		case socket:
-		 	println('- socket transport port $targetPort');
+			#if (flash || js)
+			throw 'current platform does not support socket servers';
+			#else
+		 	trace('- socket transport port $targetPort');
 			transport = new TServerSocket( targetPort);
+			#end
         case http:
 			throw "HTTP server not implemented yet";
-		 	//println("- http transport");
+		 	//trace("- http transport");
 		 	//transport = new THttpClient( targetHost);
 		default:
 			throw "Unhandled transport";
@@ -279,10 +286,10 @@ class Main {
 		// optinal layered transport
 		var transfactory : TTransportFactory = null;
 		if ( framed) {
-		 	println("- framed transport");
+		 	trace("- framed transport");
 			transfactory = new TFramedTransportFactory();
 		} else if ( buffered) {
-		 	println("- buffered transport");
+		 	trace("- buffered transport");
 			throw "TBufferedTransport not implemented yet";
 			//transfactory = new TBufferedTransportFactory();
 		}
@@ -292,11 +299,11 @@ class Main {
 		switch(prot)
 		{
 		case binary:
-		 	println("- binary protocol");
+		 	trace("- binary protocol");
 		 	protfactory = new TBinaryProtocolFactory();
         case json:
 			throw "JSON protocol not implemented yet";
-		 	//println("- json protocol");
+		 	//trace("- json protocol");
 		 	//protfactory = new TJsonProtocolFactory();
 		default:
 			throw "Unhandled protocol";
@@ -314,14 +321,14 @@ class Main {
 		{
 			var server = ServerSetup();
 
-			println("\nStarting the server...");
+			trace("\nStarting the server...");
 			server.Serve();
 		}
 		catch( e : Dynamic)
 		{
-			println('RunServer() failed: $e');
+			trace('RunServer() failed: $e');
 		}
-		println("done.");
+		trace("done.");
 	}
-
+	
 }

@@ -269,6 +269,10 @@ string t_haxe_generator::haxe_type_imports() {
     "import haxe.ds.IntMap;\n" +
     "import haxe.ds.StringMap;\n" +
     "import haxe.ds.ObjectMap;\n" +
+    "\n" +
+    "#if flash\n" +
+    "import flash.errors.ArgumentError;\n" +
+    "#end\n" +
     "\n";
 }
 
@@ -280,7 +284,7 @@ string t_haxe_generator::haxe_type_imports() {
 string t_haxe_generator::haxe_thrift_imports() {
   return
     string() +
-    "import org.apache.thrift.*;\n" +
+	"import org.apache.thrift.*;\n" +
     "import org.apache.thrift.meta_data.*;\n" +
     "import org.apache.thrift.protocol.*;\n" +
     "\n";

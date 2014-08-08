@@ -102,8 +102,10 @@ class THttpClient extends TTransport {
 		
 		#if flash
         try {
-            responseBuffer_.readBytes(buf, off, len);
-            return len;
+			var data = Bytes.alloc(len);
+            responseBuffer_.readBytes(data, off, len);
+            buf.addBytes(data,0,len);
+			return len;
         } catch (e : EOFError) {
             throw new TTransportError(TTransportError.UNKNOWN, "No more data available.");
         }
@@ -130,7 +132,7 @@ class THttpClient extends TTransport {
 		
 		if (callback != null) {
 			loader.addEventListener(Event.COMPLETE, function(event:Event) : Void {
-				responseBuffer_ = URLLoader(event.target).data;
+				responseBuffer_ = new URLLoader(event.target).data;
 				callback(null);
 			});
 			loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent) : Void {
@@ -145,7 +147,7 @@ class THttpClient extends TTransport {
 			
 		request_.method = URLRequestMethod.POST;
 		loader.dataFormat = URLLoaderDataFormat.BINARY;
-		requestBuffer_.position = 0;
+		//requestBuffer_.position = 0;
 		request_.data = requestBuffer_;
 		loader.load(request_);
     }
@@ -165,7 +167,13 @@ class THttpClient extends TTransport {
 		request_.onError = function(msg : String) {
 			callback(new TTransportError(TTransportError.UNKNOWN, "IOError: " + msg));
 		};
+		
+		#if js
+		request_.setPostData(buffer.getBytes().toString());
+		request_.request(true/*POST*/);
+		#else
 		request_.customRequest( true/*POST*/, buffer);
+		#end
     }
 		
 	#end

@@ -19,7 +19,14 @@
 
 package org.apache.thrift.transport;
 
+#if flash
+import flash.net.Socket;
+#elseif js
+import js.html.WebSocket;
+#else
 import haxe.remoting.SocketProtocol;	
+#end
+
 import haxe.io.Bytes;
 import haxe.io.BytesBuffer;
 import haxe.io.BytesInput;
@@ -27,7 +34,11 @@ import haxe.io.BytesOutput;
 import haxe.io.Input;
 import haxe.io.Output;
 import haxe.io.Eof;
+
+
+#if ! (flash || js)
 import sys.net.Host;
+#end
 
 
   /**
@@ -37,28 +48,52 @@ import sys.net.Host;
 
 class TSocket extends TTransport  {
 	
-    private var host  :  Host;
-    private var port  :  Int;
-    private var socket : Socket = null;
+    #if (flash || js)
+	private var host  :  String;
+	#else
+	private var host  :  Host;
+	#end
 	
-    private var input : Input = null;
+    private var port  :  Int;
+
+	#if js
+    private var socket : WebSocket = null;
+	#else
+    private var socket : Socket = null;
+	#end
+
+	#if js
+    private var input : Dynamic = null;
+    private var output : WebSocket = null;
+	#elseif flash
+    private var input : Socket = null;
+    private var output : Socket = null;
+	#else 
+	private var input : Input = null;
     private var output : Output = null;
+	#end
 
 	private var obuffer : BytesOutput = new BytesOutput();
     private var ioCallback : TTransportError->Void = null;
 	private var readCount : Int = 0;
 	
     public function new(host : String, port  :  Int)  :  Void  {
+		#if (flash || js)
+		this.host = host;
+		#else
 		this.host = new Host(host);
+		#end
 		this.port = port;
     }
 
+	#if ! (flash || js)
 	// used by TSocketServer
     public static function fromSocket( socket : Socket) : TSocket  {
 		var result = new TSocket("",0);
 		result.assignSocket(socket);
 		return result;
     }
+	#end
 
     public override function close()  :  Void  {
 		input = null;
@@ -70,8 +105,14 @@ class TSocket extends TTransport  {
 		if( (input == null) || (socket == null)) {
 			return false;
 		} else {
+			#if flash 
+			return (input.bytesAvailable > 0);
+			#elseif js
+			return true;
+			#else
 			var ready = Socket.select( [socket], null, null, 0);
 			return (ready.read.length > 0);
+			#end
 		}
     }
 
@@ -79,6 +120,29 @@ class TSocket extends TTransport  {
 	public override function read( buf : BytesBuffer, off : Int, len : Int) : Int   {
 		try
 		{
+			#if flash
+
+			var remaining = len;	
+			while( remaining > 0) {
+				buf.addByte( input.readByte());
+				--remaining;
+			}
+			return len;
+			
+			#elseif js
+			
+			if( input == null) {
+				throw new TTransportError(TTransportError.UNKNOWN, "Still no data ");  // don't block
+			}
+			var nr = len;	
+			while( nr < len) {
+				buf.addByte( input.get(off+nr));
+				++nr;
+			}
+			return len;
+			
+			#else
+			
 			socket.waitForRead();
 			if(readCount < off) {
 				input.read(off-readCount);	
@@ -88,6 +152,8 @@ class TSocket extends TTransport  {
 			readCount += data.length;
 			buf.add(data);
 			return data.length;
+			
+			#end
 		}
 		catch (e : Eof)
 		{
@@ -116,15 +182,46 @@ class TSocket extends TTransport  {
 			throw new TTransportError(TTransportError.NOT_OPEN, "Transport not open");
 		}
 
+		#if flash
+			
+		var bytes = new flash.utils.ByteArray();
+		var data = obuffer.getBytes();
+		var len = 0;
+		while( len < data.length) {
+			bytes.writeByte(data.get(len));
+			++len;
+		}
+
+		#elseif js
+		
+		var data = obuffer.getBytes();
+		var outbuf = new js.html.Int8Array(data.length);
+		var len = 0;
+		while( len < data.length) {
+			outbuf.set( [data.get(len)], len);
+			++len;
+		}
+		var bytes = outbuf.buffer;
+		
+
+		#else
+		
 		var bytes = obuffer.getBytes();
+		var len = bytes.length;
+		
+		#end
+			
 		obuffer = new BytesOutput();
 
-		var len = bytes.length;
 		
 		ioCallback = callback;
 		try {
 			readCount = 0;
+			#if js
+			output.send( bytes);
+			#else
 			output.writeBytes( bytes, 0, bytes.length);
+			#end
 			if(ioCallback != null) {
 				ioCallback(null);  // success call 
 			}
@@ -144,21 +241,44 @@ class TSocket extends TTransport  {
 
     public override function open()  :  Void
     {
-		socket = new Socket();
-		socket.setBlocking(true);
-		socket.connect(host, port);
-		socket.setFastSend(true);
+		#if js
+		var socket = new WebSocket();
+		socket.onmessage = function( event : js.html.MessageEvent) {
+			this.input = event.data;
+		}
 		
-      	output = socket.output;
-      	input = socket.input;
+		#elseif flash
+			
+		var socket = new Socket();
+		socket.connect(host, port);
+
+		#else
+			
+		var socket = new Socket();
+		socket.setBlocking(true);
+		socket.setFastSend(true);
+		socket.connect(host, port);
+
+		#end
+			
+		assignSocket( socket);
     }
 
-    private function assignSocket( socket : Socket)  :  Void
+	#if js
+	private function assignSocket( socket : WebSocket)  :  Void
+	#else
+	private function assignSocket( socket : Socket)  :  Void
+	#end
     {
 		this.socket = socket;
 		
+		#if (flash || js)
+		output = socket;
+      	input = socket;
+		#else
       	output = socket.output;
       	input = socket.input;
+		#end
     }
 
 }

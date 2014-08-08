@@ -31,6 +31,9 @@
 #Add debug information
 -debug
 
+# we need some goodies from sys.net
+# --macro allowPackage("sys")
+
 #dead code elimination : remove unused code
 #"-dce no" : do not remove unused code
 #"-dce std" : remove unused code in the std lib (default)
