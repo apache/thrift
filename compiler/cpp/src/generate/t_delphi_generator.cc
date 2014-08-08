@@ -110,6 +110,7 @@ class t_delphi_generator : public t_oop_generator
     void generate_delphi_struct_reader_impl(ostream& out, std::string cls_prefix, t_struct* tstruct, bool is_exception);
     void generate_delphi_create_exception_impl(ostream& out, string cls_prefix, t_struct* tstruct, bool is_exception);
 
+    bool const_needs_var(t_type* type);
     void print_const_prop(std::ostream& out, string name, t_type* type, t_const_value* value);
     void print_private_field(std::ostream& out, string name, t_type* type, t_const_value* value);
     void print_const_value ( std::ostream& vars, std::ostream& out, std::string name, t_type* type, t_const_value* value);
@@ -680,7 +681,7 @@ void t_delphi_generator::close_generator() {
 
   f_all  << "initialization" << endl;
   if ( has_const ) {    
-    f_all  << "{$IF CompilerVersion < 21.0}" << endl;
+    f_all  << "{$IF CompilerVersion < 21.0}  // D2010" << endl;
     f_all  << "  " << constants_class.c_str() << "_Initialize;" << endl;
     f_all  << "{$IFEND}" << endl;
   }
@@ -691,7 +692,7 @@ void t_delphi_generator::close_generator() {
 
   f_all  << "finalization" << endl;
   if ( has_const ) {    
-    f_all  << "{$IF CompilerVersion < 21.0}" << endl;
+    f_all  << "{$IF CompilerVersion < 21.0}  // D2010" << endl;
     f_all  << "  " << constants_class.c_str() << "_Finalize;" << endl;
     f_all  << "{$IFEND}" << endl;
   }
@@ -906,8 +907,10 @@ void t_delphi_generator::generate_consts(std::vector<t_const*> consts) {
   indent_up();
   vector<t_const*>::iterator c_iter;
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
-    print_private_field(s_const, normalize_name((*c_iter)->get_name()),
-      (*c_iter)->get_type(), (*c_iter)->get_value());
+    if( const_needs_var((*c_iter)->get_type())) {
+      print_private_field(s_const, normalize_name((*c_iter)->get_name()),
+        (*c_iter)->get_type(), (*c_iter)->get_value());
+    }
   }
   indent_down();
   indent(s_const) << "public" << endl;
@@ -950,8 +953,10 @@ void t_delphi_generator::generate_consts(std::vector<t_const*> consts) {
   indent_impl(s_const_impl) << "begin" << endl;
   indent_up_impl();
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
-    finalize_field(s_const_impl, normalize_name( (*c_iter)->get_name()),
-      (*c_iter)->get_type(), (*c_iter)->get_value());
+    if( const_needs_var((*c_iter)->get_type())) {
+      finalize_field(s_const_impl, normalize_name( (*c_iter)->get_name()),
+        (*c_iter)->get_type(), (*c_iter)->get_value());
+    }
   }
   indent_impl(s_const_impl) << "inherited;" << endl;
   indent_down_impl();
@@ -963,8 +968,10 @@ void t_delphi_generator::generate_consts(std::vector<t_const*> consts) {
 
   indent_up_impl();
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
-    initialize_field( vars, code, constants_class + ".F" + prop_name( (*c_iter)->get_name()),
-      (*c_iter)->get_type(), (*c_iter)->get_value());
+    if( const_needs_var((*c_iter)->get_type())) {
+      initialize_field( vars, code, constants_class + ".F" + prop_name( (*c_iter)->get_name()),
+        (*c_iter)->get_type(), (*c_iter)->get_value());
+    }
   }
   indent_down_impl();
 
@@ -1052,9 +1059,25 @@ void t_delphi_generator::print_private_field(std::ostream& out, string name, t_t
   indent(out) << "class var F" << name << ": " << type_name(type) << ";" << endl;
 }
 
+
+bool t_delphi_generator::const_needs_var(t_type* type) {
+  t_type* truetype = type;
+  while (truetype->is_typedef()) {
+    truetype = ((t_typedef*)truetype)->get_type();
+  }
+  return (! truetype->is_base_type());
+}
+
+
 void t_delphi_generator::print_const_prop(std::ostream& out, string name, t_type* type, t_const_value* value) {
   (void) value;
-  indent(out) << "class property " << name << ": " << type_name(type) << " read F" << name << ";" << endl;
+  if (const_needs_var(type)) {
+    indent(out) << "class property " << name << ": " << type_name(type) << " read F" << name << ";" << endl;
+  } else {
+    std::ostringstream vars; // dummy
+    string v2 = render_const_value( vars, out, name, type, value);
+    indent(out) << "const " << name << " = " << v2 << ";" << endl;
+  }
 }
 
 void t_delphi_generator::print_const_value( std::ostream& vars, std::ostream& out, string name, t_type* type, t_const_value* value) {
@@ -1064,8 +1087,9 @@ void t_delphi_generator::print_const_value( std::ostream& vars, std::ostream& ou
   }
 
   if (truetype->is_base_type()) {
-    string v2 = render_const_value( vars, out, name, type, value);
-    indent_impl(out) << name << " := " << v2 << ";" << endl;
+    // already done
+    //string v2 = render_const_value( vars, out, name, type, value);
+    //indent_impl(out) << name << " := " << v2 << ";" << endl;
   } else if (truetype->is_enum()) {
     indent_impl(out) << name << " := " << type_name(type) << "." << value->get_identifier_name() << ";" << endl;
   } else {
@@ -1121,7 +1145,7 @@ string t_delphi_generator::render_const_value(ostream& vars, ostream& out, strin
         break;
       case t_base_type::TYPE_DOUBLE:
         if (value->get_type() == t_const_value::CV_INTEGER) {
-          render << value->get_integer();
+          render << value->get_integer() << ".0";  // make it a double constant by adding ".0"
         } else {
           render << value->get_double();
         }

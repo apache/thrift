@@ -18,8 +18,8 @@
 #
 
 THRIFT = ../../compiler/cpp/thrift
-THRIFT_FILES = $(wildcard ../../test/*.thrift) \
-			   $(wildcard test/*.thrift)
+THRIFT_FILES = $(wildcard test/*.thrift) \
+		  ../../test/ThriftTest.thrift
 
 .generated: $(THRIFT_FILES)
 	for f in $(THRIFT_FILES) ; do \
@@ -47,32 +47,20 @@ uninstall:
 	rm -rf $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)
 
 clean:
-	./rebar clean
 	rm -f .generated
-	rm -f test/secondService_* \
-		  test/aService_* \
-		  test/serviceForExceptionWithAMap_* \
-		  test/annotationTest_* \
-		  test/service_* \
-		  test/constantsDemo_* \
-		  test/smallService_* \
-		  test/smallTest_* \
-		  test/debugProtoTest_* \
-		  test/srv_* \
-		  test/denseLinkingTest_* \
-		  test/stressTest_* \
-		  test/docTest_* \
-		  test/emptyService_* \
-		  test/inherited_* \
-		  test/javaBeansTest_* \
-		  test/thrift1151_* \
-		  test/javaBeansTest_* \
-		  test/manyTypedefs_* \
-		  test/thriftTest_* \
-		  test/optionalRequiredTest_* \
-		  test/yowza_* \
-		  test/reverseOrderService_* \
-		  test/manyOptionals_*
+	rm -f test/thrift1151_types.erl \
+		  test/thrift1151_types.hrl \
+		  test/thrift1151_constants.hrl \
+		  test/thrift1475_types.erl \
+		  test/thrift1475_types.hrl \
+		  test/thrift1475_constants.hrl \
+		  test/thriftTest_types.erl \
+		  test/thriftTest_types.hrl \
+		  test/thriftTest_constants.hrl \
+		  test/thriftTest_thrift.erl \
+		  test/thriftTest_thrift.hrl \
+		  test/secondService_thrift.erl \
+		  test/secondService_thrift.hrl
 	./rebar clean
 
 maintainer-clean-local:
