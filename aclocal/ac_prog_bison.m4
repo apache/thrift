@@ -27,7 +27,7 @@ if test "$have_prog_bison" = "yes" ; then
   if test "$bison_version" \< "$bison_required_version" ; then
     BISON=:
     AC_MSG_RESULT([no])
-    AC_MSG_ERROR([Bison version 2.4 or higher must be installed on the system!])
+    AC_MSG_ERROR([Bison version $bison_required_version or higher must be installed on the system!])
   else
     AC_MSG_RESULT([yes])
     BISON=bison
