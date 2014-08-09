@@ -45,6 +45,7 @@
 #include <sstream>
 
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 #include <thrift/cxxfunctional.h>
 
 #include <signal.h>
@@ -62,6 +63,9 @@ using namespace apache::thrift::server;
 using namespace apache::thrift::async;
 
 using namespace thrift::test;
+
+// Length of argv[0] - Length of script dir
+#define EXECUTABLE_FILE_NAME_LENGTH 19
 
 class TestHandler : public ThriftTestIf {
  public:
@@ -494,7 +498,11 @@ protected:
 
 
 int main(int argc, char **argv) {
-#if _WIN32
+
+  string file_path = boost::filesystem::system_complete(argv[0]).string();
+  string dir_path = file_path.substr(0, file_path.size()-EXECUTABLE_FILE_NAME_LENGTH);
+
+  #if _WIN32
   transport::TWinsockSingleton::create();
 #endif
   int port = 9090;
@@ -600,8 +608,8 @@ int main(int argc, char **argv) {
 
   if (ssl) {
     sslSocketFactory = boost::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
-    sslSocketFactory->loadCertificate("keys/server.crt");
-    sslSocketFactory->loadPrivateKey("keys/server.key");
+    sslSocketFactory->loadCertificate((dir_path + "../keys/server.crt").c_str());
+    sslSocketFactory->loadPrivateKey((dir_path + "../keys/server.key").c_str());
     sslSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
     serverSocket = boost::shared_ptr<TServerSocket>(new TSSLServerSocket(port, sslSocketFactory));
   } else {

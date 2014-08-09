@@ -59,7 +59,7 @@ TestServer_LDADD = \
 	$(top_builddir)/lib/cpp/libthrift.la \
 	$(top_builddir)/lib/cpp/libthriftz.la \
 	$(top_builddir)/lib/cpp/libthriftnb.la \
-	-levent -lboost_program_options
+	-levent -lboost_program_options -lboost_system -lboost_filesystem
 
 TestClient_SOURCES = \
 	src/TestClient.cpp
@@ -69,7 +69,7 @@ TestClient_LDADD = \
 	$(top_builddir)/lib/cpp/libthrift.la \
 	$(top_builddir)/lib/cpp/libthriftz.la \
 	$(top_builddir)/lib/cpp/libthriftnb.la \
-	-levent -lboost_program_options
+	-levent -lboost_program_options -lboost_system -lboost_filesystem
 
 StressTest_SOURCES = \
 	src/StressTest.cpp
