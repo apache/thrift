@@ -33,6 +33,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 #include <thrift/cxxfunctional.h>
 #if _WIN32
    #include <thrift/windows/TWinsockSingleton.h>
@@ -46,6 +47,9 @@ using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace thrift::test;
 using namespace apache::thrift::async;
+
+// Length of argv[0] - Length of script dir
+#define EXECUTABLE_FILE_NAME_LENGTH 19
 
 //extern uint32_t g_socket_syscalls;
 
@@ -92,6 +96,8 @@ static void testVoid_clientReturn(const char* host, int port, event_base *base, 
 }
 
 int main(int argc, char** argv) {
+  string file_path = boost::filesystem::system_complete(argv[0]).string();
+  string dir_path = file_path.substr(0, file_path.size()-EXECUTABLE_FILE_NAME_LENGTH);
 #if _WIN32
   transport::TWinsockSingleton::create();
 #endif
@@ -155,7 +161,7 @@ int main(int argc, char** argv) {
   if (vm.count("ssl")) {
     ssl = true;
   }
-  
+
   if (vm.count("noinsane")) {
     noinsane = true;
   }
@@ -169,7 +175,7 @@ int main(int argc, char** argv) {
   if (ssl) {
     factory = boost::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
     factory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-    factory->loadTrustedCertificates("keys/CA.pem");
+    factory->loadTrustedCertificates((dir_path + "../keys/CA.pem").c_str());
     factory->authenticate(true);
     socket = factory->createSocket(host, port);
   } else {
