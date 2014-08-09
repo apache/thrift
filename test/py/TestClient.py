@@ -53,7 +53,8 @@ parser.add_option('--transport',  dest="trans", type="string",
 parser.set_defaults(framed=False, http_path=None, verbose=1, host='localhost', port=9090, proto='binary')
 options, args = parser.parse_args()
 
-sys.path.insert(0, options.genpydir)
+script_dir = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(script_dir, options.genpydir))
 
 from ThriftTest import ThriftTest, SecondService
 from ThriftTest.ttypes import *
