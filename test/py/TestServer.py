@@ -46,7 +46,8 @@ parser.add_option('--transport',  dest="trans", type="string",
 parser.set_defaults(port=9090, verbose=1, proto='binary')
 options, args = parser.parse_args()
 
-sys.path.insert(0, options.genpydir)
+script_dir = os.path.dirname(__file__) #<-- absolute dir the script is in
+sys.path.insert(0, os.path.join(script_dir, options.genpydir))
 
 from ThriftTest import ThriftTest
 from ThriftTest.ttypes import *
@@ -201,7 +202,6 @@ if server_type == 'THttpServer':
 
 # set up server transport and transport factory
 
-script_dir = os.path.dirname(__file__) #<-- absolute dir the script is in
 rel_path = "../keys/server.pem"
 abs_key_path = os.path.join(script_dir, rel_path)
 
