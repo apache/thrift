@@ -44,8 +44,8 @@ import Data.Monoid
 instance Transport Handle where
     tIsOpen = hIsOpen
     tClose = hClose
-    tRead h n = LBS.hGet h n `catch` handleEOF mempty
-    tPeek h = (Just . c2w <$> hLookAhead h) `catch` handleEOF Nothing
+    tRead h n = LBS.hGet h n `Control.Exception.catch` handleEOF mempty
+    tPeek h = (Just . c2w <$> hLookAhead h) `Control.Exception.catch` handleEOF Nothing
     tWrite = LBS.hPut
     tFlush = hFlush
 

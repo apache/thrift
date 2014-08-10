@@ -40,4 +40,4 @@ if [ ! -e $TEST_SOURCE_FILE ]; then
 fi
 
 printf "Running test... \n"
-runhaskell -Wall -i$BASE/lib/hs/src -igen-hs $TEST_SOURCE_FILE
+runhaskell -Wall -XScopedTypeVariables -i$BASE/lib/hs/src -igen-hs $TEST_SOURCE_FILE
