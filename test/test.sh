@@ -275,7 +275,6 @@ for proto in $(intersection "${hs_protocols}" "${java_protocols}"); do
       do_test "hs-java" "${proto}" "${trans}-${sock}" \
               "hs/TestClient --protocol ${proto} --transport ${trans} ${extraparam}" \
 	      "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testserver" \
-              "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}" \
               "5" "1"
     done
   done
