@@ -42,7 +42,7 @@ class TMessageSenderTransport(TTransport.TTransportBase):
     def flush(self):
         msg = self.__wbuf.getvalue()
         self.__wbuf = StringIO()
-        self.sendMessage(msg)
+        return self.sendMessage(msg)
 
     def sendMessage(self, message):
         raise NotImplementedError
@@ -55,7 +55,7 @@ class TCallbackTransport(TMessageSenderTransport):
         self.func = func
 
     def sendMessage(self, message):
-        self.func(message)
+        return self.func(message)
 
 
 class ThriftClientProtocol(basic.Int32StringReceiver):
