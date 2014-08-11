@@ -1,6 +1,6 @@
 {
      "type" : 0
-    ,"target" : 4
+    ,"target" : 6
     ,"name" : "Apache Thrift Tutorial"
     ,"main" : null
     ,"projectPackage" : ""
@@ -36,6 +36,8 @@
         }
         ,{
              "pathToHxml" : "csharp.hxml"
+            ,"runActionType" : 2
+            ,"runActionText" : "bin\\Tutorial.exe\\bin\\Main-Debug.exe"
         }
         ,{
              "pathToHxml" : "python.hxml"

@@ -99,7 +99,7 @@ class t_haxe_generator : public t_oop_generator {
   void generate_reflection_getters(std::ostringstream& out, t_type* type, std::string field_name, std::string cap_name);
   void generate_generic_field_getters_setters(std::ofstream& out, t_struct* tstruct);
   void generate_generic_isset_method(std::ofstream& out, t_struct* tstruct);
-  void generate_haxe_bean_boilerplate(std::ofstream& out, t_struct* tstruct);
+  void generate_property_getters_setters(std::ofstream& out, t_struct* tstruct);
 
   void generate_function_helpers(t_function* tfunction);
   std::string get_cap_name(std::string name);
@@ -733,9 +733,14 @@ void t_haxe_generator::generate_haxe_struct_definition(ofstream &out,
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     generate_haxe_doc(out, *m_iter);
-    indent(out) << "private var _" << (*m_iter)->get_name() + " : " + type_name((*m_iter)->get_type()) << ";" << endl;
+    //indent(out) << "private var _" << (*m_iter)->get_name() + " : " + type_name((*m_iter)->get_type()) << ";" << endl;
+	indent(out) << "@:isVar" << endl;
     indent(out) << "public var " << (*m_iter)->get_name() + "(get,set) : " + type_name((*m_iter)->get_type()) << ";" << endl;
+  }
+  
+  out << endl;
 
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     indent(out) << "inline static var " << upcase_string((*m_iter)->get_name()) << " : Int = " << (*m_iter)->get_key() << ";" << endl;
   }
   
@@ -776,14 +781,14 @@ void t_haxe_generator::generate_haxe_struct_definition(ofstream &out,
   }
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     if ((*m_iter)->get_value() != NULL) {
-      indent(out) << "this._" << (*m_iter)->get_name() << " = " << (*m_iter)->get_value()->get_integer() << ";" <<
+      indent(out) << "this." << (*m_iter)->get_name() << " = " << (*m_iter)->get_value()->get_integer() << ";" <<
       endl;
     }
   }
   indent_down();
   indent(out) << "}" << endl << endl;
   
-  generate_haxe_bean_boilerplate(out, tstruct);
+  generate_property_getters_setters(out, tstruct);
   generate_generic_field_getters_setters(out, tstruct);
   generate_generic_isset_method(out, tstruct);
 
@@ -1165,12 +1170,11 @@ void t_haxe_generator::generate_generic_isset_method(std::ofstream& out, t_struc
 }
 
 /**
- * Generates a set of haxe Bean boilerplate functions (setters, getters, etc.)
- * for the given struct.
+ * Generates a set of property setters/getters for the given struct.
  *
  * @param tstruct The struct definition
  */
-void t_haxe_generator::generate_haxe_bean_boilerplate(ofstream& out,
+void t_haxe_generator::generate_property_getters_setters(ofstream& out,
                                                       t_struct* tstruct) {
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -1185,23 +1189,22 @@ void t_haxe_generator::generate_haxe_bean_boilerplate(ofstream& out,
     indent(out) << "public function get_" << field_name << "():" <<
       type_name(type) << " {" << endl;
     indent_up();
-    indent(out) << "return this._" << field_name << ";" << endl;
+    indent(out) << "return this." << field_name << ";" << endl;
     indent_down();
     indent(out) << "}" << endl << endl;
     
     // Simple setter
     generate_haxe_doc(out, field);
-    std::string propName = tmp("thriftPropertyChange");
     indent(out) << 
       "public function set_" << field_name << 
       "(" << field_name << ":" << type_name(type) << ") : " << 
       type_name(type) << " {" << endl;
     indent_up();
     indent(out) << 
-      "this._" << field_name << " = " << field_name << ";" << endl;
+      "this." << field_name << " = " << field_name << ";" << endl;
     generate_isset_set(out, field);
     indent(out) << 
-      "return this._" << field_name << ";" << endl;
+      "return this." << field_name << ";" << endl;
     
     indent_down();
     indent(out) << "}" << endl << endl;
@@ -1242,7 +1245,7 @@ void t_haxe_generator::generate_haxe_struct_tostring(ofstream& out,
   indent_up();
 
   out <<
-    indent() << "var ret : String = new String(\"" << tstruct->get_name() << "(\");" << endl;
+    indent() << "var ret : String = \"" << tstruct->get_name() << "(\";" << endl;
   out << indent() << "var first : Bool = true;" << endl << endl;
 
   const vector<t_field*>& fields = tstruct->get_members();
