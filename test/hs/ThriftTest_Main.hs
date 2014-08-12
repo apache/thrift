@@ -47,123 +47,75 @@ data TestHandler = TestHandler
 instance Iface.ThriftTest_Iface TestHandler where
     testVoid _ = return ()
 
-    testString _ (Just s) = do
+    testString _ s = do
         ThriftTestUtils.serverLog $ show s
         return s
 
-    testString _ Nothing = do
-        error $ "Unsupported testString form"
-
-    testByte _ (Just x) = do
+    testByte _ x = do
         ThriftTestUtils.serverLog $ show x
         return x
 
-    testByte _ Nothing = do
-        error $ "Unsupported testByte form"
-
-    testI32 _ (Just x) = do
+    testI32 _ x = do
         ThriftTestUtils.serverLog $ show x
         return x
 
-    testI32 _ Nothing = do
-        error $ "Unsupported testI32 form"
-
-    testI64 _ (Just x) = do
+    testI64 _ x = do
         ThriftTestUtils.serverLog $ show x
         return x
 
-    testI64 _ Nothing = do
-        error $ "Unsupported testI64 form"
-
-    testDouble _ (Just x) = do
+    testDouble _ x = do
         ThriftTestUtils.serverLog $ show x
         return x
 
-    testDouble _ Nothing = do
-        error $ "Unsupported testDouble form"
-
-    testStruct _ (Just x) = do
+    testStruct _ x = do
         ThriftTestUtils.serverLog $ show x
         return x
 
-    testStruct _ Nothing = do
-        error $ "Unsupported testStruct form"
-
-    testNest _ (Just x) = do
+    testNest _ x = do
         ThriftTestUtils.serverLog $ show x
         return x
 
-    testNest _ Nothing = do
-        error $ "Unsupported testNest form"
-
-    testMap _ (Just x) = do
+    testMap _ x = do
         ThriftTestUtils.serverLog $ show x
         return x
 
-    testMap _ Nothing = do
-        error $ "Unsupported testMap form"
-
-    testStringMap _ (Just x) = do
+    testStringMap _ x = do
         ThriftTestUtils.serverLog $ show x
         return x
 
-    testStringMap _ Nothing = do
-        error $ "Unsupported testMap form"
-
-    testSet _ (Just x) = do
+    testSet _ x = do
         ThriftTestUtils.serverLog $ show x
         return x
 
-    testSet _ Nothing = do
-        error $ "Unsupported testSet form"
-
-    testList _ (Just x) = do
+    testList _ x = do
         ThriftTestUtils.serverLog $ show x
         return x
 
-    testList _ Nothing = do
-        error $ "Unsupported testList form"
-
-    testEnum _ (Just x) = do
+    testEnum _ x = do
         ThriftTestUtils.serverLog $ show x
         return x
 
-    testEnum _ Nothing = do
-        error $ "Unsupported testEnum form"
-
-    testTypedef _ (Just x) = do
+    testTypedef _ x = do
         ThriftTestUtils.serverLog $ show x
         return x
 
-    testTypedef _ Nothing = do
-        error $ "Unsupported testTypedef form"
-
-    testMapMap _ (Just _) = do
+    testMapMap _ _ = do
         return (Map.fromList [(1, Map.fromList [(2, 2)])])
 
-    testMapMap _ Nothing = do
-        error $ "Unsupported testMapMap form"
-
-    testInsanity _ (Just x) = do
+    testInsanity _ x = do
         return (Map.fromList [(1, Map.fromList [(Types.ONE, x)])])
 
-    testInsanity _ Nothing = do
-        error $ "Unsupported testInsanity form"
-
     testMulti _ _ _ _ _ _ _ = do
-        return (Types.Xtruct Nothing Nothing Nothing Nothing)
+        return (Types.Xtruct "" 0 0 0)
 
     testException _ _ = do
-        Control.Exception.throw (Types.Xception (Just 1) (Just "bya"))
+        Control.Exception.throw (Types.Xception 1 "bya")
 
     testMultiException _ _ _ = do
-        Control.Exception.throw (Types.Xception (Just 1) (Just "xyz"))
+        Control.Exception.throw (Types.Xception 1 "xyz")
 
-    testOneway _ (Just i) = do
+    testOneway _ i = do
         ThriftTestUtils.serverLog $ show i
-
-    testOneway _ Nothing = do
-        error $ "Unsupported testOneway form"
 
 
 client :: (String, Network.PortID) -> IO ()
@@ -210,7 +162,7 @@ client addr = do
     v13 <- Client.testSet ps (Set.fromList [1,2,3,4,5])
     ThriftTestUtils.clientLog $ show v13
 
-    v14 <- Client.testStruct ps (Types.Xtruct (Just "hi") (Just 4) (Just 5) Nothing)
+    v14 <- Client.testStruct ps (Types.Xtruct "hi" 4 5 0)
     ThriftTestUtils.clientLog $ show v14
 
     (testException ps "bad") `Control.Exception.catch` testExceptionHandler
@@ -222,7 +174,7 @@ client addr = do
 
     tClose to
   where testException ps msg = do
-            Client.testException ps "e"
+            _ <- Client.testException ps "e"
             ThriftTestUtils.clientLog msg
             return ()
 

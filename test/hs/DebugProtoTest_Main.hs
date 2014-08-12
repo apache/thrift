@@ -24,7 +24,9 @@ module Main where
 
 import qualified Control.Exception
 import qualified Data.ByteString.Lazy as DBL
-import qualified Data.Maybe
+import qualified Data.HashMap.Strict as Map
+import qualified Data.HashSet as Set
+import qualified Data.Vector as Vector
 import qualified Network
 
 import Thrift.Protocol.Binary
@@ -61,61 +63,61 @@ instance SIface.Srv_Iface InheritedHandler where
     structMethod _ = do
         ThriftTestUtils.serverLog "Got structMethod call"
         return $ Types.CompactProtoTestStruct {
-            Types.f_CompactProtoTestStruct_a_byte = Just 0x01,
-            Types.f_CompactProtoTestStruct_a_i16 = Just 0x02,
-            Types.f_CompactProtoTestStruct_a_i32 = Just 0x03,
-            Types.f_CompactProtoTestStruct_a_i64 = Just 0x04,
-            Types.f_CompactProtoTestStruct_a_double = Just 0.1,
-            Types.f_CompactProtoTestStruct_a_string = Just "abcdef",
-            Types.f_CompactProtoTestStruct_a_binary = Just DBL.empty,
-            Types.f_CompactProtoTestStruct_true_field = Just True,
-            Types.f_CompactProtoTestStruct_false_field = Just False,
-            Types.f_CompactProtoTestStruct_empty_struct_field = Just Types.Empty,
+            Types.compactProtoTestStruct_a_byte = 0x01,
+            Types.compactProtoTestStruct_a_i16 = 0x02,
+            Types.compactProtoTestStruct_a_i32 = 0x03,
+            Types.compactProtoTestStruct_a_i64 = 0x04,
+            Types.compactProtoTestStruct_a_double = 0.1,
+            Types.compactProtoTestStruct_a_string = "abcdef",
+            Types.compactProtoTestStruct_a_binary = DBL.empty,
+            Types.compactProtoTestStruct_true_field = True,
+            Types.compactProtoTestStruct_false_field = False,
+            Types.compactProtoTestStruct_empty_struct_field = Types.Empty,
             
-            Types.f_CompactProtoTestStruct_byte_list = Nothing,
-            Types.f_CompactProtoTestStruct_i16_list = Nothing,
-            Types.f_CompactProtoTestStruct_i32_list = Nothing,
-            Types.f_CompactProtoTestStruct_i64_list = Nothing,
-            Types.f_CompactProtoTestStruct_double_list = Nothing,
-            Types.f_CompactProtoTestStruct_string_list = Nothing,
-            Types.f_CompactProtoTestStruct_binary_list = Nothing,
-            Types.f_CompactProtoTestStruct_boolean_list = Nothing,
-            Types.f_CompactProtoTestStruct_struct_list = Nothing,
+            Types.compactProtoTestStruct_byte_list = Vector.empty,
+            Types.compactProtoTestStruct_i16_list = Vector.empty,
+            Types.compactProtoTestStruct_i32_list = Vector.empty,
+            Types.compactProtoTestStruct_i64_list = Vector.empty,
+            Types.compactProtoTestStruct_double_list = Vector.empty,
+            Types.compactProtoTestStruct_string_list = Vector.empty,
+            Types.compactProtoTestStruct_binary_list = Vector.empty,
+            Types.compactProtoTestStruct_boolean_list = Vector.empty,
+            Types.compactProtoTestStruct_struct_list = Vector.empty,
 
-            Types.f_CompactProtoTestStruct_byte_set = Nothing,
-            Types.f_CompactProtoTestStruct_i16_set = Nothing,
-            Types.f_CompactProtoTestStruct_i32_set = Nothing,
-            Types.f_CompactProtoTestStruct_i64_set = Nothing,
-            Types.f_CompactProtoTestStruct_double_set = Nothing,
-            Types.f_CompactProtoTestStruct_string_set = Nothing,
-            Types.f_CompactProtoTestStruct_binary_set = Nothing,
-            Types.f_CompactProtoTestStruct_boolean_set = Nothing,
-            Types.f_CompactProtoTestStruct_struct_set = Nothing,
+            Types.compactProtoTestStruct_byte_set = Set.empty,
+            Types.compactProtoTestStruct_i16_set = Set.empty,
+            Types.compactProtoTestStruct_i32_set = Set.empty,
+            Types.compactProtoTestStruct_i64_set = Set.empty,
+            Types.compactProtoTestStruct_double_set = Set.empty,
+            Types.compactProtoTestStruct_string_set = Set.empty,
+            Types.compactProtoTestStruct_binary_set = Set.empty,
+            Types.compactProtoTestStruct_boolean_set = Set.empty,
+            Types.compactProtoTestStruct_struct_set = Set.empty,
 
-            Types.f_CompactProtoTestStruct_byte_byte_map = Nothing,
-            Types.f_CompactProtoTestStruct_i16_byte_map = Nothing,
-            Types.f_CompactProtoTestStruct_i32_byte_map = Nothing,
-            Types.f_CompactProtoTestStruct_i64_byte_map = Nothing,
-            Types.f_CompactProtoTestStruct_double_byte_map = Nothing,
-            Types.f_CompactProtoTestStruct_string_byte_map = Nothing,
-            Types.f_CompactProtoTestStruct_binary_byte_map = Nothing,
-            Types.f_CompactProtoTestStruct_boolean_byte_map = Nothing,
+            Types.compactProtoTestStruct_byte_byte_map = Map.empty,
+            Types.compactProtoTestStruct_i16_byte_map = Map.empty,
+            Types.compactProtoTestStruct_i32_byte_map = Map.empty,
+            Types.compactProtoTestStruct_i64_byte_map = Map.empty,
+            Types.compactProtoTestStruct_double_byte_map = Map.empty,
+            Types.compactProtoTestStruct_string_byte_map = Map.empty,
+            Types.compactProtoTestStruct_binary_byte_map = Map.empty,
+            Types.compactProtoTestStruct_boolean_byte_map = Map.empty,
 
-            Types.f_CompactProtoTestStruct_byte_i16_map = Nothing,
-            Types.f_CompactProtoTestStruct_byte_i32_map = Nothing,
-            Types.f_CompactProtoTestStruct_byte_i64_map = Nothing,
-            Types.f_CompactProtoTestStruct_byte_double_map = Nothing,
-            Types.f_CompactProtoTestStruct_byte_string_map = Nothing,
-            Types.f_CompactProtoTestStruct_byte_binary_map = Nothing,
-            Types.f_CompactProtoTestStruct_byte_boolean_map = Nothing,
+            Types.compactProtoTestStruct_byte_i16_map = Map.empty,
+            Types.compactProtoTestStruct_byte_i32_map = Map.empty,
+            Types.compactProtoTestStruct_byte_i64_map = Map.empty,
+            Types.compactProtoTestStruct_byte_double_map = Map.empty,
+            Types.compactProtoTestStruct_byte_string_map = Map.empty,
+            Types.compactProtoTestStruct_byte_binary_map = Map.empty,
+            Types.compactProtoTestStruct_byte_boolean_map = Map.empty,
 
-            Types.f_CompactProtoTestStruct_list_byte_map = Nothing,
-            Types.f_CompactProtoTestStruct_set_byte_map = Nothing,
-            Types.f_CompactProtoTestStruct_map_byte_map = Nothing,
+            Types.compactProtoTestStruct_list_byte_map = Map.empty,
+            Types.compactProtoTestStruct_set_byte_map = Map.empty,
+            Types.compactProtoTestStruct_map_byte_map = Map.empty,
 
-            Types.f_CompactProtoTestStruct_byte_map_map = Nothing,
-            Types.f_CompactProtoTestStruct_byte_set_map = Nothing,
-            Types.f_CompactProtoTestStruct_byte_list_map = Nothing }
+            Types.compactProtoTestStruct_byte_map_map = Map.empty,
+            Types.compactProtoTestStruct_byte_set_map = Map.empty,
+            Types.compactProtoTestStruct_byte_list_map = Map.empty }
 
     methodWithDefaultArgs _ arg = do
         ThriftTestUtils.serverLog $ "Got methodWithDefaultArgs: " ++ show arg
@@ -127,7 +129,7 @@ instance SIface.Srv_Iface InheritedHandler where
 instance IIface.Inherited_Iface InheritedHandler where
     identity _ arg = do
         ThriftTestUtils.serverLog $ "Got identity method: " ++ show arg
-        return $ Data.Maybe.fromJust arg
+        return arg
 
 client :: (String, Network.PortID) -> IO ()
 client addr = do

@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -27,10 +27,9 @@ module Thrift.Transport.Handle
     , HandleSource(..)
     ) where
 
-import Prelude hiding ( catch )
-
 import Control.Exception ( catch, throw )
-import Control.Monad ()
+import Data.ByteString.Internal (c2w)
+import Data.Functor
 
 import Network
 
@@ -44,9 +43,10 @@ import Data.Monoid
 
 instance Transport Handle where
     tIsOpen = hIsOpen
-    tClose h    = hClose h
-    tRead  h n  = LBS.hGet h n `catch` handleEOF
-    tWrite h s  = LBS.hPut h s
+    tClose = hClose
+    tRead h n = LBS.hGet h n `Control.Exception.catch` handleEOF mempty
+    tPeek h = (Just . c2w <$> hLookAhead h) `Control.Exception.catch` handleEOF Nothing
+    tWrite = LBS.hPut
     tFlush = hFlush
 
 
@@ -62,7 +62,7 @@ instance HandleSource (HostName, PortID) where
     hOpen = uncurry connectTo
 
 
-handleEOF :: forall a (m :: * -> *).(Monoid a, Monad m) => IOError -> m a
-handleEOF e = if isEOFError e
-    then return mempty
+handleEOF :: a -> IOError -> IO a
+handleEOF a e = if isEOFError e
+    then return a
     else throw $ TransportExn "TChannelTransport: Could not read" TE_UNKNOWN

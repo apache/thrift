@@ -60,6 +60,6 @@ runTest server client = do
     Control.Concurrent.threadDelay $ 500 * 1000 -- unit is in _micro_seconds
     Control.Concurrent.yield
 
-    _ <- client serverAddress
+    client serverAddress
 
     testLog "SUCCESS"

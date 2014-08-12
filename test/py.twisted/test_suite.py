@@ -22,7 +22,7 @@ sys.path.insert(0, './gen-py.twisted')
 sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
 
 from ThriftTest import ThriftTest
-from ThriftTest.ttypes import *
+from ThriftTest.ttypes import Xception, Xtruct
 from thrift.transport import TTwisted
 from thrift.protocol import TBinaryProtocol
 
@@ -32,8 +32,6 @@ from twisted.internet.protocol import ClientCreator
 
 from zope.interface import implements
 
-import random
-
 class TestHandler:
     implements(ThriftTest.Iface)
 
@@ -42,28 +40,28 @@ class TestHandler:
 
     def testVoid(self):
         pass
- 
+
     def testString(self, s):
         return s
- 
+
     def testByte(self, b):
         return b
- 
+
     def testI16(self, i16):
         return i16
- 
+
     def testI32(self, i32):
         return i32
- 
+
     def testI64(self, i64):
         return i64
- 
+
     def testDouble(self, dub):
         return dub
- 
+
     def testStruct(self, thing):
         return thing
- 
+
     def testException(self, s):
         if s == 'Xception':
             x = Xception()
@@ -72,28 +70,27 @@ class TestHandler:
             raise x
         elif s == "throw_undeclared":
             raise ValueError("foo")
- 
+
     def testOneway(self, seconds):
         def fireOneway(t):
             self.onewaysQueue.put((t, time.time(), seconds))
         reactor.callLater(seconds, fireOneway, time.time())
-        return d
- 
+
     def testNest(self, thing):
         return thing
- 
+
     def testMap(self, thing):
         return thing
- 
+
     def testSet(self, thing):
         return thing
- 
+
     def testList(self, thing):
         return thing
- 
+
     def testEnum(self, thing):
         return thing
- 
+
     def testTypedef(self, thing):
         return thing
 
@@ -129,7 +126,7 @@ class ThriftTestCase(unittest.TestCase):
     @defer.inlineCallbacks
     def testString(self):
         self.assertEquals((yield self.client.testString('Python')), 'Python')
- 
+
     @defer.inlineCallbacks
     def testByte(self):
         self.assertEquals((yield self.client.testByte(63)), 63)
@@ -147,7 +144,7 @@ class ThriftTestCase(unittest.TestCase):
     def testDouble(self):
         self.assertEquals((yield self.client.testDouble(-5.235098235)), -5.235098235)
 
-    @defer.inlineCallbacks 
+    @defer.inlineCallbacks
     def testStruct(self):
         x = Xtruct()
         x.string_thing = "Zero"
@@ -155,12 +152,12 @@ class ThriftTestCase(unittest.TestCase):
         x.i32_thing = -3
         x.i64_thing = -5
         y = yield self.client.testStruct(x)
- 
+
         self.assertEquals(y.string_thing, "Zero")
         self.assertEquals(y.byte_thing, 1)
         self.assertEquals(y.i32_thing, -3)
         self.assertEquals(y.i64_thing, -5)
- 
+
     @defer.inlineCallbacks
     def testException(self):
         yield self.client.testException('Safe')
@@ -176,9 +173,9 @@ class ThriftTestCase(unittest.TestCase):
             self.fail("should have thrown exception")
         except Exception: # type is undefined
             pass
- 
+
     @defer.inlineCallbacks
     def testOneway(self):
-        yield self.client.testOneway(2)
+        yield self.client.testOneway(1)
         start, end, seconds = yield self.handler.onewaysQueue.get()
-        self.assertAlmostEquals(seconds, (end - start), places=2)
+        self.assertAlmostEquals(seconds, (end - start), places=1)

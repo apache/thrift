@@ -19,7 +19,7 @@
 
 Name:           thrift
 Version:        1.0.0-dev
-Cabal-Version:  >= 1.4
+Cabal-Version:  >= 1.8
 License:        OtherLicense
 Category:       Foreign
 Build-Type:     Simple
@@ -36,16 +36,20 @@ Library
   Hs-Source-Dirs:
     src
   Build-Depends:
-    base >= 4, base < 5, network, ghc-prim, binary, bytestring, hashable, HTTP, text, unordered-containers, vector
+    base >= 4, base < 5, containers, network, ghc-prim, attoparsec, binary, bytestring >= 0.10, hashable, HTTP, text, unordered-containers, vector, QuickCheck
   Exposed-Modules:
     Thrift,
+    Thrift.Arbitraries
     Thrift.Protocol,
     Thrift.Protocol.Binary,
+    Thrift.Protocol.Compact,
+    Thrift.Protocol.JSON,
     Thrift.Server,
     Thrift.Transport,
     Thrift.Transport.Framed,
     Thrift.Transport.Handle,
     Thrift.Transport.HttpClient,
+    Thrift.Transport.IOBuffer,
     Thrift.Types
   Extensions:
     DeriveDataTypeable,
@@ -54,5 +58,16 @@ Library
     KindSignatures,
     MagicHash,
     RankNTypes,
+    RecordWildCards,
     ScopedTypeVariables,
     TypeSynonymInstances
+
+Test-Suite tests
+  Type:
+    exitcode-stdio-1.0
+  Hs-Source-Dirs:
+    tests
+  Build-Depends:
+    base, QuickCheck, binary, bytestring, thrift
+  Main-Is:
+    JSONTests.hs
