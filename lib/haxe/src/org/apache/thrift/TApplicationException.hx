@@ -28,7 +28,7 @@ import org.apache.thrift.protocol.TType;
   /**
    * Application level exception
    */
-class TApplicationError extends TError {
+class TApplicationException extends TException {
 
 	private static var TAPPLICATION_EXCEPTION_STRUCT = { new TStruct("TApplicationException"); };
 	private static var MESSAGE_FIELD = { new TField("message", TType.STRING, 1); };
@@ -50,7 +50,7 @@ class TApplicationError extends TError {
       super(message, type);
     }
 
-    public static function read(iprot:TProtocol):TApplicationError {
+    public static function read(iprot:TProtocol) : TApplicationException {
       var field:TField;
       iprot.readStructBegin();
 
@@ -83,14 +83,14 @@ class TApplicationError extends TError {
         iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-      return new TApplicationError(type, message);
+      return new TApplicationException(type, message);
     }
 
     public function write(oprot:TProtocol) : Void {
         oprot.writeStructBegin(TAPPLICATION_EXCEPTION_STRUCT);
-        if (message != null) {
+        if (errorMsg != null) {
           oprot.writeFieldBegin(MESSAGE_FIELD);
-          oprot.writeString(message);
+          oprot.writeString(errorMsg);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldBegin(TYPE_FIELD);

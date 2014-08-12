@@ -16,40 +16,38 @@
  * specific language governing permissions and limitations
  * under the License.
  */
- 
-package org.apache.thrift;
-  
-// there seems no built-in equivalent for the Error object in Haxe (or it is very well hidden)
-// http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/Error.html
-class Error {
 
-	private var _id : Int;
-	private var _msg : String;
-	
-	public var errorID(get,never) : Int;
-	public var message(get,never) : String;
-	private var name(default,null) : String;  	// NOT IMPLEMENTED
+package;
 
-	
-	function new(message : String = "", id : Int = 0) {
-		//super();
-		_id = id;
-		_msg = message;
-	}
-	
-	function get_errorID() : Int {
-		return _id;
-	}
-	
-	function get_message() : String {
-		return _msg;
-	}
-	
+import org.apache.thrift.*;
+import org.apache.thrift.protocol.*;
+import org.apache.thrift.transport.*;
+import org.apache.thrift.server.*;
+import org.apache.thrift.meta_data.*;
 
-	// NOT IMPLEMENTED
-	// see http://haxe.org/manual/cr-rtti-structure.html
-	private function get_name() : String {
-		throw "not implemented";
+import thrift.test.*;  // generated code
+
+
+public class TestServerEventHandler : TServerEventHandler
+{
+	public int callCount = 0;
+	public void preServe()
+	{
+		callCount++;
 	}
-	
+	public Object createContext(Thrift.Protocol.TProtocol input, Thrift.Protocol.TProtocol output)
+	{
+		callCount++;
+		return null;
+	}
+	public void deleteContext(Object serverContext, Thrift.Protocol.TProtocol input, Thrift.Protocol.TProtocol output)
+	{
+		callCount++;
+	}
+	public void processContext(Object serverContext, Thrift.Transport.TTransport transport)
+	{
+		callCount++;
+	}
 }
+
+	

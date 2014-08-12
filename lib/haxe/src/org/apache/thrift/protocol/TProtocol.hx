@@ -20,7 +20,7 @@
 package org.apache.thrift.protocol;
 
 import haxe.io.Bytes;
-import org.apache.thrift.TError;
+import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
 
 /**

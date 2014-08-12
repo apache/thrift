@@ -16,15 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
- 
-package org.apache.thrift;
 
-import org.apache.thrift.Error;
+package org.apache.thrift.protocol;
   
-class TError extends Error {
+import org.apache.thrift.TException;
+
+class TProtocolException extends TException {
     
-    public function new(msg : String = "", err : Int = 0) {
-		super( msg, err);
+    public static inline var UNKNOWN : Int = 0;
+    public static inline var INVALID_DATA : Int = 1;
+    public static inline var NEGATIVE_SIZE : Int = 2;
+    public static inline var SIZE_LIMIT : Int = 3;
+    public static inline var BAD_VERSION : Int = 4;
+    public static inline var NOT_IMPLEMENTED : Int = 5;
+    public static inline var DEPTH_LIMIT : Int = 6;
+  
+    public function new(error : Int = UNKNOWN, message : String = "") {
+      super(message, error);
     }
     
+  
 }

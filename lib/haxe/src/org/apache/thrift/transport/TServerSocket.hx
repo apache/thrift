@@ -15,10 +15,6 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
- * Contains some contributions under the Thrift Software License.
- * Please see doc/old-thrift-license.txt in the Thrift distribution for
- * details.
  */
 
 package org.apache.thrift.transport;
@@ -67,7 +63,7 @@ class TServerSocket extends TServerTransport {
 		catch (e : Dynamic)
 		{
 			_socket = null;
-			throw new TTransportError( TTransportError.UNKNOWN, 'Could not create ServerSocket on port $port: $e');
+			throw new TTransportException( TTransportException.UNKNOWN, 'Could not create ServerSocket on port $port: $e');
 		}
 	}
 
@@ -83,7 +79,7 @@ class TServerSocket extends TServerTransport {
 			catch (e : Dynamic)
 			{
 				trace('Error $e');
-				throw new TTransportError( TTransportError.UNKNOWN, 'Could not accept on listening socket: $e');
+				throw new TTransportException( TTransportException.UNKNOWN, 'Could not accept on listening socket: $e');
 			}
 		}
 	}
@@ -91,7 +87,7 @@ class TServerSocket extends TServerTransport {
 	private override function AcceptImpl() : TTransport
 	{
 		if (_socket == null) {
-			throw new TTransportError( TTransportError.NOT_OPEN, "No underlying server socket.");
+			throw new TTransportException( TTransportException.NOT_OPEN, "No underlying server socket.");
 		}
 		
 		try
@@ -111,7 +107,7 @@ class TServerSocket extends TServerTransport {
 		catch (e : Dynamic)
 		{
 			trace('Error $e');
-			throw new TTransportError( TTransportError.UNKNOWN, '$e');
+			throw new TTransportException( TTransportException.UNKNOWN, '$e');
 		}
 	}
 
@@ -126,7 +122,7 @@ class TServerSocket extends TServerTransport {
 			catch (e : Dynamic)
 			{
 				trace('Error $e');
-				throw new TTransportError( TTransportError.UNKNOWN, 'WARNING: Could not close server socket: $e');
+				throw new TTransportException( TTransportException.UNKNOWN, 'WARNING: Could not close server socket: $e');
 			}
 			_socket = null;
 		}

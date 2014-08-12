@@ -22,14 +22,14 @@ package org.apache.thrift;
 #if flash
 import flash.errors.IllegalOperationError;
 #else
-import org.apache.thrift.TError;
+import org.apache.thrift.TException;
 #end
 
 class AbstractMethodError 
 #if flash
 extends IllegalOperationError 
 #else
-extends TError
+extends TException
 #end
 {
 

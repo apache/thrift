@@ -17,23 +17,32 @@
  * under the License.
  */
 
-package org.apache.thrift.protocol;
-  
-import org.apache.thrift.TError;
+ 
+package;
 
-class TProtocolError extends TError {
-    
-    public static inline var UNKNOWN : Int = 0;
-    public static inline var INVALID_DATA : Int = 1;
-    public static inline var NEGATIVE_SIZE : Int = 2;
-    public static inline var SIZE_LIMIT : Int = 3;
-    public static inline var BAD_VERSION : Int = 4;
-    public static inline var NOT_IMPLEMENTED : Int = 5;
-    public static inline var DEPTH_LIMIT : Int = 6;
-  
-    public function new(error : Int = UNKNOWN, message : String = "") {
-      super(message, error);
-    }
-    
-  
+import org.apache.thrift.*;
+import org.apache.thrift.protocol.*;
+import org.apache.thrift.transport.*;
+import org.apache.thrift.server.*;
+import org.apache.thrift.meta_data.*;
+
+import thrift.test.*;  // generated code
+
+class Program
+{
+	static function main() {
+		try {
+			var args = new Arguments();
+			
+			if (args.server)
+				TestServer.Execute(args);
+			else 
+				TestClient.Execute(args);
+			
+			trace("Completed.");
+		} catch (e : String) {
+			trace(e);
+		}
+	}
+
 }

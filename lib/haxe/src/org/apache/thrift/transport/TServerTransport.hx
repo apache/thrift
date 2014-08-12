@@ -15,10 +15,6 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
- * Contains some contributions under the Thrift Software License.
- * Please see doc/old-thrift-license.txt in the Thrift distribution for
- * details.
  */
 
 package org.apache.thrift.transport;
@@ -28,7 +24,7 @@ class TServerTransport {
 	public function Accept() : TTransport {
 		var transport = AcceptImpl();
 		if (transport == null) {
-		  throw new TTransportError( TTransportError.UNKNOWN, "accept() may not return NULL");
+		  throw new TTransportException( TTransportException.UNKNOWN, "accept() may not return NULL");
 		}
 		return transport;
 	}

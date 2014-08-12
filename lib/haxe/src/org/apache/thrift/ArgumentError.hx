@@ -21,7 +21,7 @@ package org.apache.thrift;
 
 #if ! flash
 // predefined for flash only
-class ArgumentError extends Error {
+class ArgumentError extends TException {
 	public function new(msg : String = "") {
 		super(msg);
 	}

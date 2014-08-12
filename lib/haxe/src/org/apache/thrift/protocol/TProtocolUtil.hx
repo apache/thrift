@@ -69,7 +69,7 @@ class TProtocolUtil {
      */
     public static function skipMaxDepth(prot:TProtocol, type : Int, maxDepth : Int) : Void {
       if (maxDepth <= 0) {
-        throw new TError("Maximum skip depth exceeded");
+        throw new TException("Maximum skip depth exceeded");
       }
       switch (type) {
         case TType.BOOL: {

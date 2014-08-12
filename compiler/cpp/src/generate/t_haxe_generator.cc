@@ -716,7 +716,7 @@ void t_haxe_generator::generate_haxe_struct_definition(ofstream &out,
      "class " << clsname << " ";
 
   if (is_exception) {
-    out << "extends TError ";
+    out << "extends TException ";
   }
   out << "implements TBase ";
 
@@ -897,7 +897,7 @@ void t_haxe_generator::generate_haxe_struct_reader(ofstream& out,
       if ((*f_iter)->get_req() == t_field::T_REQUIRED && !type_can_be_null((*f_iter)->get_type())) {
         out <<
           indent() << "if (!__isset_" << (*f_iter)->get_name() << ") {" << endl <<
-          indent() << "  throw new TProtocolError(TProtocolError.UNKNOWN, \"Required field '" << (*f_iter)->get_name() << "' was not found in serialized data! Struct: \" + toString());" << endl <<
+          indent() << "  throw new TProtocolException(TProtocolException.UNKNOWN, \"Required field '" << (*f_iter)->get_name() << "' was not found in serialized data! Struct: \" + toString());" << endl <<
           indent() << "}" << endl;
       }
     }
@@ -926,7 +926,7 @@ void t_haxe_generator::generate_haxe_validator(ofstream& out,
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
       if (type_can_be_null((*f_iter)->get_type())) {
         indent(out) << "if (" << (*f_iter)->get_name() << " == null) {" << endl;
-        indent(out) << "  throw new TProtocolError(TProtocolError.UNKNOWN, \"Required field '" << (*f_iter)->get_name() << "' was not present! Struct: \" + toString());" << endl;
+        indent(out) << "  throw new TProtocolException(TProtocolException.UNKNOWN, \"Required field '" << (*f_iter)->get_name() << "' was not present! Struct: \" + toString());" << endl;
         indent(out) << "}" << endl;
       } else {
         indent(out) << "// alas, we cannot check '" << (*f_iter)->get_name() << "' because it's a primitive and you chose the non-beans generator." << endl;
@@ -943,7 +943,7 @@ void t_haxe_generator::generate_haxe_validator(ofstream& out,
     if (type->is_enum()){
       indent(out) << "if (" << generate_isset_check(field) << " && !" << get_enum_class_name(type) << ".VALID_VALUES.contains(" << field->get_name() << ")){" << endl;
       indent_up();
-      indent(out) << "throw new TProtocolError(TProtocolError.UNKNOWN, \"The field '" << field->get_name() << "' has been assigned the invalid value \" + " << field->get_name() << ");" << endl;
+      indent(out) << "throw new TProtocolException(TProtocolException.UNKNOWN, \"The field '" << field->get_name() << "' has been assigned the invalid value \" + " << field->get_name() << ");" << endl;
       indent_down();
       indent(out) << "}" << endl;
     } 
@@ -1575,7 +1575,7 @@ void t_haxe_generator::generate_service_method_signature_normal(t_function* tfun
 void t_haxe_generator::generate_service_method_signature_callback(t_function* tfunction, bool is_interface) {
   if (!tfunction->is_oneway()) {
     std::string on_success_impl = generate_service_method_onsuccess(tfunction, false, false);
-    indent(f_service_) << "// function onError(Error) : Void;" << endl;
+    indent(f_service_) << "// function onError(Dynamic) : Void;" << endl;
     indent(f_service_) << "// function " << on_success_impl.c_str() << ";" << endl;
   }
 
@@ -1740,7 +1740,7 @@ void t_haxe_generator::generate_service_client(t_service* tservice) {
       f_service_ << indent() << "oprot_.getTransport().flush();" << endl;
     }
     else {
-      indent(f_service_) << "oprot_.getTransport().flush(function(error:Error) : Void {" << endl;
+      indent(f_service_) << "oprot_.getTransport().flush(function(error:Dynamic) : Void {" << endl;
       indent_up();
       if( callbacks_) {
         indent(f_service_) << "try {" << endl;
@@ -1760,7 +1760,7 @@ void t_haxe_generator::generate_service_client(t_service* tservice) {
       indent(f_service_) << "var msg : TMessage = iprot_.readMessageBegin();" << endl;
       indent(f_service_) << "if (msg.type == TMessageType.EXCEPTION) {" << endl;
       indent_up();
-      indent(f_service_) << "var x = TApplicationError.read(iprot_);" << endl;
+      indent(f_service_) << "var x = TApplicationException.read(iprot_);" << endl;
       indent(f_service_) << "iprot_.readMessageEnd();" << endl;
       if( callbacks_) {
         indent(f_service_) << "if (onError != null) onError(x);" << endl;
@@ -1815,18 +1815,18 @@ void t_haxe_generator::generate_service_client(t_service* tservice) {
         if( callbacks_) {
           indent(f_service_) << "if (onError != null)" << endl;
           indent_up();
-          indent(f_service_) << "onError( new TApplicationError(TApplicationError.MISSING_RESULT," << endl;
+          indent(f_service_) << "onError( new TApplicationException(TApplicationException.MISSING_RESULT," << endl;
           indent(f_service_) << "                               \"" << (*f_iter)->get_name() << " failed: unknown result\"));" << endl;
           indent_down();
         } else {
-          indent(f_service_) << "throw new TApplicationError(TApplicationError.MISSING_RESULT," << endl;
+          indent(f_service_) << "throw new TApplicationException(TApplicationException.MISSING_RESULT," << endl;
           indent(f_service_) << "                            \"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
         }
       }
 
       if( callbacks_) {
         indent_down();
-        indent(f_service_) << "} catch (e:TError) {" << endl;
+        indent(f_service_) << "} catch( e : TException) {" << endl;
         indent_up();
         indent(f_service_) << "if (onError != null) onError(e);" << endl;
         indent_down();
@@ -1926,7 +1926,7 @@ void t_haxe_generator::generate_service_server(t_service* tservice) {
     indent() << "if (fn == null) {" << endl <<
     indent() << "  TProtocolUtil.skip(iprot, TType.STRUCT);" << endl <<
     indent() << "  iprot.readMessageEnd();" << endl <<
-    indent() << "  var x = new TApplicationError(TApplicationError.UNKNOWN_METHOD, \"Invalid method name: '\"+msg.name+\"'\");" << endl <<
+    indent() << "  var x = new TApplicationException(TApplicationException.UNKNOWN_METHOD, \"Invalid method name: '\"+msg.name+\"'\");" << endl <<
     indent() << "  oprot.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));" << endl <<
     indent() << "  x.write(oprot);" << endl <<
     indent() << "  oprot.writeMessageEnd();" << endl <<
@@ -2118,7 +2118,7 @@ void t_haxe_generator::generate_process_function(t_service* tservice,
   indent_up();
   indent(f_service_) << "trace(\"Internal error processing " << tfunction->get_name() << "\", th);" << endl;
   if( ! tfunction->is_oneway()) {
-    indent(f_service_) << "var x = new TApplicationError(TApplicationError.INTERNAL_ERROR, \"Internal error processing " << tfunction->get_name() << "\");" << endl;
+    indent(f_service_) << "var x = new TApplicationException(TApplicationException.INTERNAL_ERROR, \"Internal error processing " << tfunction->get_name() << "\");" << endl;
     indent(f_service_) << "oprot.writeMessageBegin(new TMessage(\"" << tfunction->get_name() << "\", TMessageType.EXCEPTION, seqid));" << endl;
     indent(f_service_) << "x.write(oprot);" << endl;
     indent(f_service_) << "oprot.writeMessageEnd();" << endl;
@@ -2265,11 +2265,11 @@ void t_haxe_generator::generate_deserialize_container(ofstream& out,
 
   // Declare variables, read header
   if (ttype->is_map()) {
-    indent(out) << "var " << obj << " : TMap = iprot.readMapBegin();" << endl;
+    indent(out) << "var " << obj << " = iprot.readMapBegin();" << endl;
   } else if (ttype->is_set()) {
-    indent(out) << "var " << obj << " : TSet = iprot.readSetBegin();" << endl;
+    indent(out) << "var " << obj << " = iprot.readSetBegin();" << endl;
   } else if (ttype->is_list()) {
-    indent(out) << "var " << obj << " : TList = iprot.readListBegin();" << endl;
+    indent(out) << "var " << obj << " = iprot.readListBegin();" << endl;
   }
 
   indent(out)
@@ -2281,9 +2281,7 @@ void t_haxe_generator::generate_deserialize_container(ofstream& out,
   // For loop iterates over elements
   string i = tmp("_i");
   indent(out) <<
-    "for (var " << i << " : Int = 0; " <<
-    i << " < " << obj << ".size" << "; " <<
-    "++" << i << ")" << endl;
+    "for( " << i << " in 0 ... (" << obj << ".size-1))" << endl;
 
     scope_up(out);
 
@@ -2330,7 +2328,7 @@ void t_haxe_generator::generate_deserialize_map_element(ofstream& out,
   generate_deserialize_field(out, &fval);
 
   indent(out) <<
-    prefix << "[" << key << "] = " << val << ";" << endl;
+    prefix << ".set( " << key << ", " << val << ");" << endl;
 }
 
 /**
@@ -2477,7 +2475,7 @@ void t_haxe_generator::generate_serialize_container(ofstream& out,
     string iter = tmp("_key");
     string counter = tmp("_sizeCounter");
     indent(out) << "var " << counter << " : Int = 0;" << endl;
-    indent(out) << "for (var " << iter << " : Dynamic in " << prefix << ") {" << endl;
+    indent(out) << "for( " << iter << " in " << prefix << ") {" << endl;
     indent(out) << "  " << counter << +"++;" << endl;
     indent(out) << "}" << endl;
     
@@ -2501,26 +2499,26 @@ void t_haxe_generator::generate_serialize_container(ofstream& out,
   string iter = tmp("elem");
   if (ttype->is_map()) {
     indent(out) <<
-      "for (var " << iter << " : Dynamic in " << prefix << ")";
+      "for( " << iter << " in " << prefix << ".keys())" << endl;
   } else if (ttype->is_set()) {
     indent(out) <<
-      "for each (var " << iter << " : Dynamic in " << prefix << ".toArray())";
+      "for( " << iter << " in " << prefix << ".toArray())" << endl;
   } else if (ttype->is_list()) {
     indent(out) <<
-      "for each (var " << iter << " : Dynamic in " << prefix << ")";
+      "for( " << iter << " in " << prefix << ")" << endl;
   }
 
-    scope_up(out);
+  scope_up(out);
 
-    if (ttype->is_map()) {
-      generate_serialize_map_element(out, (t_map*)ttype, iter, prefix);
-    } else if (ttype->is_set()) {
-      generate_serialize_set_element(out, (t_set*)ttype, iter);
-    } else if (ttype->is_list()) {
-      generate_serialize_list_element(out, (t_list*)ttype, iter);
-    }
+  if (ttype->is_map()) {
+    generate_serialize_map_element(out, (t_map*)ttype, iter, prefix);
+  } else if (ttype->is_set()) {
+    generate_serialize_set_element(out, (t_set*)ttype, iter);
+  } else if (ttype->is_list()) {
+    generate_serialize_list_element(out, (t_list*)ttype, iter);
+  }
 
-    scope_down(out);
+  scope_down(out);
 
   if (ttype->is_map()) {
     indent(out) <<
@@ -2545,7 +2543,7 @@ void t_haxe_generator::generate_serialize_map_element(ofstream& out,
                                                       string map) {
   t_field kfield(tmap->get_key_type(), iter);
   generate_serialize_field(out, &kfield, "");
-  t_field vfield(tmap->get_val_type(), map + "[" + iter + "]");
+  t_field vfield(tmap->get_val_type(), map + ".get(" + iter + ")");
   generate_serialize_field(out, &vfield, "");
 }
 
@@ -2585,14 +2583,56 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
 
   if (ttype->is_base_type()) {
     return base_type_name((t_base_type*)ttype, in_container);
-  } else if (ttype->is_enum()) {
+  } 
+  
+  if (ttype->is_enum()) {
     return "Int";
-  } else if (ttype->is_map()) {
-    return "Dictionary";
-  } else if (ttype->is_set()) {
-    return "Set";
-  } else if (ttype->is_list()) {
-    return "Array";
+  }
+  
+  if (ttype->is_map()) {
+    t_type* tkey = ((t_map*)ttype)->get_key_type();
+	t_type* tval = ((t_map*)ttype)->get_val_type();
+ 	if( tkey->is_base_type()) {
+	  t_base_type::t_base tbase = ((t_base_type*)tkey)->get_base();
+      switch (tbase) {
+      case t_base_type::TYPE_STRING:
+        if( ! (((t_base_type*)tkey)->is_binary())) {
+          return "StringMap< "+type_name(tval)+">";
+       }
+      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I16:
+      case t_base_type::TYPE_I32:
+        return "IntMap< "+type_name(tval)+">";
+      default:
+        break;  // default to ObjectMap<>
+      }
+    }
+    return "ObjectMap< "+type_name(tkey)+", "+type_name(tval)+">";
+  }
+  
+  if (ttype->is_set()) {
+    t_type* tkey = ((t_list*)ttype)->get_elem_type();
+ 	if( tkey->is_base_type()) {
+	  t_base_type::t_base tbase = ((t_base_type*)tkey)->get_base();
+      switch (tbase) {
+      case t_base_type::TYPE_STRING:
+        if( ! (((t_base_type*)tkey)->is_binary())) {
+          return "StringSet";
+       }
+      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I16:
+      case t_base_type::TYPE_I32:
+        return "IntSet";
+      default:
+        break;  // default to ObjectSet
+      }
+    }
+    return "ObjectSet< "+type_name(tkey)+">";
+  }
+  
+  if (ttype->is_list()) {
+    t_type* telm = ((t_list*)ttype)->get_elem_type();
+    return "List< "+type_name(telm)+">";
   }
 
   // Check for namespacing
@@ -2623,7 +2663,7 @@ string t_haxe_generator::base_type_name(t_base_type* type,
     return "Void";
   case t_base_type::TYPE_STRING:
     if (type->is_binary()) {
-      return "hyxe.io.Bytes";
+      return "haxe.io.Bytes";
     } else {
       return "String";
     }
@@ -2649,7 +2689,7 @@ string t_haxe_generator::base_type_name(t_base_type* type,
  */
 string t_haxe_generator::declare_field(t_field* tfield, bool init) {
   // TODO(mcslee): do we ever need to initialize the field?
-  string result = "var " + tfield->get_name() + ":" + type_name(tfield->get_type());
+  string result = "var " + tfield->get_name() + " : " + type_name(tfield->get_type());
   if (init) {
     t_type* ttype = get_true_type(tfield->get_type());
     if (ttype->is_base_type() && tfield->get_value() != NULL) {
@@ -2695,7 +2735,7 @@ string t_haxe_generator::declare_field(t_field* tfield, bool init) {
  * @return String of rendered function definition
  */
 string t_haxe_generator::function_signature_callback( t_function* tfunction) {
-  std::string on_error_success = "onError : Error->Void = null, " 
+  std::string on_error_success = "onError : Dynamic->Void = null, " 
                                + generate_service_method_onsuccess(tfunction, true, false);
   
   std::string arguments = argument_list(tfunction->get_arglist());

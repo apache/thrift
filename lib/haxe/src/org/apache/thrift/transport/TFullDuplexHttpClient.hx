@@ -53,7 +53,7 @@ import flash.events.EventDispatcher;
         private var output : IDataOutput;
         private var bytesInChunk  :  Int = 0;
         private var CRLF : Bytes = new Bytes();
-        private var ioCallback : TError->Void = null;
+        private var ioCallback : TException->Void = null;
         private var eventDispatcher : EventDispatcher = new EventDispatcher();
 
         public function new(host  :  String, port  :  Int, resource  :  String)  :  Void
@@ -135,22 +135,22 @@ import flash.events.EventDispatcher;
             catch (e : EOFError)
             {
                 trace(e);
-                throw new TTransportError(TTransportError.UNKNOWN, "No more data available.");
+                throw new TTransportException(TTransportException.UNKNOWN, "No more data available.");
             }
-			catch (e : TError)
+			catch (e : TException)
 			{
-				trace('TError $e');
+				trace('TException $e');
 				throw e;
 			}
             catch (e : Error)
             {
                 trace(e);
-                throw new TTransportError(TTransportError.UNKNOWN, 'Bad IO error: $e');
+                throw new TTransportException(TTransportException.UNKNOWN, 'Bad IO error: $e');
             }
             catch (e : Dynamic)
             {
                 trace(e);
-                throw new TTransportError(TTransportError.UNKNOWN, 'Bad IO error: $e');
+                throw new TTransportException(TTransportException.UNKNOWN, 'Bad IO error: $e');
             }
             return 0;
         }
@@ -204,7 +204,7 @@ import flash.events.EventDispatcher;
             {
                 return;
             }
-            ioCallback(new TTransportError(TTransportError.UNKNOWN, "IOError :  " + event.text));
+            ioCallback(new TTransportException(TTransportException.UNKNOWN, "IOError :  " + event.text));
             this.eventDispatcher.dispatchEvent(event);
         }
 

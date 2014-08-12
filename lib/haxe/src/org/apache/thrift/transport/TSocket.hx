@@ -74,7 +74,7 @@ class TSocket extends TTransport  {
 	#end
 
 	private var obuffer : BytesOutput = new BytesOutput();
-    private var ioCallback : TError->Void = null;
+    private var ioCallback : TException->Void = null;
 	private var readCount : Int = 0;
 	
     public function new(host : String, port  :  Int)  :  Void  {
@@ -132,7 +132,7 @@ class TSocket extends TTransport  {
 			#elseif js
 			
 			if( input == null) {
-				throw new TTransportError(TTransportError.UNKNOWN, "Still no data ");  // don't block
+				throw new TTransportException(TTransportException.UNKNOWN, "Still no data ");  // don't block
 			}
 			var nr = len;	
 			while( nr < len) {
@@ -158,22 +158,17 @@ class TSocket extends TTransport  {
 		catch (e : Eof)
 		{
 			trace('Eof $e');
-			throw new TTransportError(TTransportError.END_OF_FILE, "No more data available.");
+			throw new TTransportException(TTransportException.END_OF_FILE, "No more data available.");
 		}
-		catch (e : TError)
+		catch (e : TException)
 		{
-			trace('TError $e');
+			trace('TException $e');
 			throw e;
-		}
-		catch (e : Error)
-		{
-			trace('Error $e');
-			throw new TTransportError(TTransportError.UNKNOWN, 'Bad IO error : $e');
 		}
 		catch (e : Dynamic)
 		{
 			trace('Error $e');
-			throw new TTransportError(TTransportError.UNKNOWN, 'Bad IO error : $e');
+			throw new TTransportException(TTransportException.UNKNOWN, 'Bad IO error : $e');
 		}
     }
 		
@@ -185,11 +180,11 @@ class TSocket extends TTransport  {
 
 
 		
-    public override function flush(callback : Error->Void = null)  :  Void
+    public override function flush(callback : Dynamic->Void = null)  :  Void
     {
 		if( ! isOpen())
 		{
-			throw new TTransportError(TTransportError.NOT_OPEN, "Transport not open");
+			throw new TTransportException(TTransportException.NOT_OPEN, "Transport not open");
 		}
 
 		#if flash
@@ -236,24 +231,17 @@ class TSocket extends TTransport  {
 				ioCallback(null);  // success call 
 			}
 		}
-		catch (e : TError)
+		catch (e : TException)
 		{
-			trace('TError $e');
+			trace('TException $e');
 			if(ioCallback != null) {
 				ioCallback(e);
-			}
-		}
-		catch (e : Error)
-		{
-			trace('Error $e');
-			if(ioCallback != null) {
-				ioCallback(new TTransportError(TTransportError.UNKNOWN, 'Bad IO error : $e'));
 			}
 		}
 		catch (e : Dynamic) {
 			trace(e);
 			if(ioCallback != null) {
-				ioCallback(new TTransportError(TTransportError.UNKNOWN, 'Bad IO error : $e'));
+				ioCallback(new TTransportException(TTransportException.UNKNOWN, 'Bad IO error : $e'));
 			}
 		}
     }

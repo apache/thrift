@@ -1,7 +1,7 @@
 {
      "type" : 0
     ,"target" : 4
-    ,"name" : "Apache Thrift Tutorial"
+    ,"name" : "Apache Thrift cross-platform test client/server"
     ,"main" : null
     ,"projectPackage" : ""
     ,"company" : "Apache Software Foundation (ASF)"
@@ -36,8 +36,6 @@
         }
         ,{
              "pathToHxml" : "csharp.hxml"
-            ,"runActionType" : 2
-            ,"runActionText" : "bin\\Tutorial.exe\\bin\\Main-Debug.exe"
         }
         ,{
              "pathToHxml" : "python.hxml"
@@ -47,52 +45,70 @@
     ]
     ,"files" : [
          {
-             "path" : "src\\org\\apache\\thrift\\server\\TServer.hx"
+             "path" : "gen-haxe\\thrift\\test\\ThriftTestImpl.hx"
             ,"useTabs" : true
             ,"indentSize" : 4
             ,"foldedRegions" : [
 
             ]
-            ,"activeLine" : 76
+            ,"activeLine" : 3879
         }
         ,{
-             "path" : "src\\org\\apache\\thrift\\server\\TSimpleServer.hx"
+             "path" : "..\\..\\lib\\haxe\\src\\org\\apache\\thrift\\server\\TSimpleServer.hx"
             ,"useTabs" : true
             ,"indentSize" : 4
             ,"foldedRegions" : [
 
             ]
-            ,"activeLine" : 100
+            ,"activeLine" : 102
         }
         ,{
-             "path" : "src\\shared\\SharedServiceProcessor.hx"
+             "path" : "..\\..\\lib\\haxe\\src\\org\\apache\\thrift\\transport\\TServerTransport.hx"
             ,"useTabs" : true
             ,"indentSize" : 4
             ,"foldedRegions" : [
 
             ]
-            ,"activeLine" : 20
+            ,"activeLine" : 26
         }
         ,{
-             "path" : "src\\tutorial\\CalculatorProcessor.hx"
+             "path" : "src\\TestClient.hx"
             ,"useTabs" : true
             ,"indentSize" : 4
             ,"foldedRegions" : [
 
             ]
-            ,"activeLine" : 79
+            ,"activeLine" : 37
         }
         ,{
-             "path" : "src\\Main.hx"
+             "path" : "src\\TestServer.hx"
             ,"useTabs" : true
             ,"indentSize" : 4
             ,"foldedRegions" : [
 
             ]
-            ,"activeLine" : 16
+            ,"activeLine" : 33
+        }
+        ,{
+             "path" : "..\\..\\lib\\haxe\\src\\org\\apache\\thrift\\helper\\IntSet.hx"
+            ,"useTabs" : true
+            ,"indentSize" : 4
+            ,"foldedRegions" : [
+
+            ]
+            ,"activeLine" : 31
+        }
+        ,{
+             "path" : "..\\..\\lib\\haxe\\src\\org\\apache\\thrift\\protocol\\TProtocolException.hx"
+            ,"useTabs" : true
+            ,"indentSize" : 4
+            ,"foldedRegions" : [
+
+            ]
+            ,"activeLine" : 23
         }
     ]
-    ,"activeFile" : "src\\Main.hx"
+    ,"activeFile" : "src\\TestClient.hx"
     ,"openFLTarget" : null
     ,"openFLBuildMode" : "Debug"
     ,"runActionType" : null

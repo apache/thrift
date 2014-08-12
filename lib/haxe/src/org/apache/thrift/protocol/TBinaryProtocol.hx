@@ -25,7 +25,7 @@ import haxe.io.BytesOutput;
 import haxe.io.BytesBuffer;
 import haxe.Int64;
 
-import org.apache.thrift.TError;
+import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
 
 /**
@@ -176,12 +176,12 @@ class TBinaryProtocol implements TProtocol {
 		if (size < 0) {
 			var version : Int = size & VERSION_MASK;
 			if (version != VERSION_1) {
-				throw new TProtocolError(TProtocolError.BAD_VERSION, "Bad version in readMessageBegin");
+				throw new TProtocolException(TProtocolException.BAD_VERSION, "Bad version in readMessageBegin");
 			}
 			return new TMessage(readString(), size & 0x000000ff, readI32());
 		} else {
 			if (strictRead_) {
-				throw new TProtocolError(TProtocolError.BAD_VERSION, "Missing version in readMessageBegin, old client?");
+				throw new TProtocolException(TProtocolException.BAD_VERSION, "Missing version in readMessageBegin, old client?");
 			}
 			return new TMessage(readStringBody(size), readByte(), readI32());
 		}

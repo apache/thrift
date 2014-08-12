@@ -97,7 +97,7 @@ class THttpClient extends TTransport {
     
     public override function read(buf:BytesBuffer, off : Int, len : Int) : Int {
 		if (responseBuffer_ == null) {
-        	throw new TTransportError(TTransportError.UNKNOWN, "Response buffer is empty, no request.");
+        	throw new TTransportException(TTransportException.UNKNOWN, "Response buffer is empty, no request.");
 		}
 		
 		#if flash
@@ -107,7 +107,7 @@ class THttpClient extends TTransport {
             buf.addBytes(data,0,len);
 			return len;
         } catch (e : EOFError) {
-            throw new TTransportError(TTransportError.UNKNOWN, "No more data available.");
+            throw new TTransportException(TTransportException.UNKNOWN, "No more data available.");
         }
 			
 		#else
@@ -136,11 +136,11 @@ class THttpClient extends TTransport {
 				callback(null);
 			});
 			loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent) : Void {
-				callback(new TTransportError(TTransportError.UNKNOWN, "IOError: " + event.text));
+				callback(new TTransportException(TTransportException.UNKNOWN, "IOError: " + event.text));
 				responseBuffer_ = null;
 			});
 			loader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, function(event:SecurityErrorEvent) : Void {
-				callback(new TTransportError(TTransportError.UNKNOWN, "SecurityError: " + event.text));
+				callback(new TTransportException(TTransportException.UNKNOWN, "SecurityError: " + event.text));
 				responseBuffer_ = null;
 			});
 		}
@@ -154,7 +154,7 @@ class THttpClient extends TTransport {
 
 	#else 
 		
-    public override function flush(callback:Error->Void = null) : Void {
+    public override function flush(callback:Dynamic->Void = null) : Void {
 		
 		var buffer = requestBuffer_;
 		requestBuffer_ = new BytesOutput();
@@ -165,7 +165,7 @@ class THttpClient extends TTransport {
 			callback(null);
 		};
 		request_.onError = function(msg : String) {
-			callback(new TTransportError(TTransportError.UNKNOWN, "IOError: " + msg));
+			callback(new TTransportException(TTransportException.UNKNOWN, "IOError: " + msg));
 		};
 		
 		#if js

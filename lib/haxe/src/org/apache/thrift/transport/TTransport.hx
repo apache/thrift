@@ -87,7 +87,7 @@ class TTransport {
         while (got < len) {
             ret = read(buf, off+got, len-got);
             if (ret <= 0) {
-              throw new TTransportError(TTransportError.UNKNOWN, 
+              throw new TTransportException(TTransportException.UNKNOWN, 
 										"Cannot read. Remote side has closed. Tried to read " 
 										+ len + " bytes, but only got " + got + " bytes.");
             }
@@ -123,8 +123,11 @@ class TTransport {
      *
      * @throws TTransportException if there was an error writing out data.
      */
-    public function flush(callback:Error->Void =null) : Void {
-    	throw new AbstractMethodError();
+    public function flush(callback:Dynamic->Void =null) : Void {
+    	if(callback != null)
+			callback(new AbstractMethodError());
+		else
+			throw new AbstractMethodError();
     }
  
 }

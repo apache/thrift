@@ -28,9 +28,11 @@ class StringSet {
     private var _size : Int = 0;
     public var size(get,never) : Int;
     
-    public function new( values : Array<String>) {
-		for ( value in values) {
-			 add(value);
+    public function new( values : Array<String> = null) {
+		if ( values != null) {
+			for ( value in values) {
+				 add(value);
+			}
 		}
     }
 

@@ -19,9 +19,9 @@
  
 package org.apache.thrift.transport;
   
-import org.apache.thrift.TError;
+import org.apache.thrift.TException;
 
-class TTransportError extends TError {
+class TTransportException extends TException {
     
     public static inline var UNKNOWN : Int = 0;
     public static inline var NOT_OPEN : Int = 1;
