@@ -716,7 +716,7 @@ void t_haxe_generator::generate_haxe_struct_definition(ofstream &out,
      "class " << clsname << " ";
 
   if (is_exception) {
-    out << "extends Error ";
+    out << "extends TError ";
   }
   out << "implements TBase ";
 

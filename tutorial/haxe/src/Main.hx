@@ -204,6 +204,8 @@ class Main {
 		try {
 		  	client.ping();
 			trace("ping() successful");
+		} catch(error : TError) { 
+			trace('ping() failed: $error'); 
 		} catch(error : Dynamic) { 
 			trace('ping() failed: $error'); 
 		}
@@ -211,6 +213,8 @@ class Main {
 		try {
 			var sum = client.add( 1, 1); 
 			trace('1+1=$sum');
+		} catch(error : TError) { 
+			trace('add() failed: $error'); 
 		} catch(error : Dynamic) { 
 			trace('add() failed: $error'); 
 		}
@@ -223,6 +227,8 @@ class Main {
 		try {
 			var quotient = client.calculate( 1, work); 
 			trace('Whoa we can divide by 0! Result = $quotient'); 
+		} catch(error : TError) { 
+			trace('calculate() failed: $error'); 
 		} catch(error : Dynamic) { 
 			trace('calculate() failed: $error'); 
 		}
@@ -233,6 +239,8 @@ class Main {
 		try {
 			var diff = client.calculate( 1, work);
 			trace('15-10=$diff');
+		} catch(error : TError) { 
+			trace('calculate() failed: $error'); 
 		} catch(error : Dynamic) { 
 			trace('calculate() failed: $error'); 
 		}
@@ -242,6 +250,8 @@ class Main {
 			var log : SharedStruct = client.getStruct( 1);
 			var logval = log.value;
 			trace('Check log: $logval');
+		} catch(error : TError) { 
+			trace('getStruct() failed: $error'); 
 		} catch(error : Dynamic) { 
 			trace('getStruct() failed: $error'); 
 		}

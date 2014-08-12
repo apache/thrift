@@ -74,7 +74,7 @@ class TSocket extends TTransport  {
 	#end
 
 	private var obuffer : BytesOutput = new BytesOutput();
-    private var ioCallback : TTransportError->Void = null;
+    private var ioCallback : TError->Void = null;
 	private var readCount : Int = 0;
 	
     public function new(host : String, port  :  Int)  :  Void  {
@@ -160,15 +160,20 @@ class TSocket extends TTransport  {
 			trace('Eof $e');
 			throw new TTransportError(TTransportError.END_OF_FILE, "No more data available.");
 		}
+		catch (e : TError)
+		{
+			trace('TError $e');
+			throw e;
+		}
 		catch (e : Error)
 		{
 			trace('Error $e');
-			throw new TTransportError(TTransportError.UNKNOWN, "Bad IO error : "+e.errorID+" "+e.message);
+			throw new TTransportError(TTransportError.UNKNOWN, 'Bad IO error : $e');
 		}
 		catch (e : Dynamic)
 		{
 			trace('Error $e');
-			throw new TTransportError(TTransportError.UNKNOWN, "Bad IO error :  ");
+			throw new TTransportError(TTransportError.UNKNOWN, 'Bad IO error : $e');
 		}
     }
 		
@@ -231,17 +236,24 @@ class TSocket extends TTransport  {
 				ioCallback(null);  // success call 
 			}
 		}
+		catch (e : TError)
+		{
+			trace('TError $e');
+			if(ioCallback != null) {
+				ioCallback(e);
+			}
+		}
 		catch (e : Error)
 		{
 			trace('Error $e');
 			if(ioCallback != null) {
-				ioCallback(new TTransportError(TTransportError.UNKNOWN, "Bad IO error : "+e.errorID+" "+e.message));
+				ioCallback(new TTransportError(TTransportError.UNKNOWN, 'Bad IO error : $e'));
 			}
 		}
 		catch (e : Dynamic) {
 			trace(e);
 			if(ioCallback != null) {
-				ioCallback(new TTransportError(TTransportError.UNKNOWN, "Bad IO error :  " + e));
+				ioCallback(new TTransportError(TTransportError.UNKNOWN, 'Bad IO error : $e'));
 			}
 		}
     }
