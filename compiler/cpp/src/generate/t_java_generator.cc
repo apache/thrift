@@ -60,6 +60,9 @@ public:
     iter = parsed_options.find("beans");
     bean_style_ = (iter != parsed_options.end());
 
+	iter = parsed_options.find("android");
+    android_style_ = (iter != parsed_options.end());
+
     iter = parsed_options.find("private-members");
     private_members_ = (iter != parsed_options.end());
 
@@ -117,6 +120,7 @@ public:
   void generate_java_struct(t_struct* tstruct, bool is_exception);
 
   void generate_java_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false, bool in_class=false, bool is_result=false);
+  void generate_java_struct_parcelable(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_equality(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_compare_to(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_reader(std::ofstream& out, t_struct* tstruct);
@@ -303,6 +307,7 @@ public:
   std::string package_dir_;
 
   bool bean_style_;
+  bool android_style_;
   bool private_members_;
   bool nocamel_style_;
   bool fullcamel_style_;
@@ -1288,6 +1293,10 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   }
   out << "implements org.apache.thrift.TBase<" << tstruct->get_name() << ", " << tstruct->get_name() << "._Fields>, java.io.Serializable, Cloneable, Comparable<" << tstruct->get_name() << ">";
 
+  if (android_style_) {
+    out << ", android.os.Parcelable";
+  }
+
   out << " ";
 
   scope_up(out);
@@ -1319,6 +1328,10 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   }
 
   out << endl;
+
+  if(android_style_) {
+    generate_java_struct_parcelable(out, tstruct);
+  }
 
   generate_field_name_constants(out, tstruct);
 
@@ -1477,6 +1490,8 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   indent(out) << "  return new " << tstruct->get_name() << "(this);" << endl;
   indent(out) << "}" << endl << endl;
 
+
+
   generate_java_struct_clear(out, tstruct);
 
   generate_java_bean_boilerplate(out, tstruct);
@@ -1503,6 +1518,218 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   generate_java_struct_tuple_scheme(out, tstruct);
 
   scope_down(out);
+  out << endl;
+}
+
+/**
+ * generates parcelable interface implementation
+ */
+void t_java_generator::generate_java_struct_parcelable(ofstream& out,
+                                                     t_struct* tstruct) {
+  string tname = tstruct->get_name();
+
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+
+  out << indent() << "@Override" << endl <<
+		  indent() << "public void writeToParcel(android.os.Parcel out, int flags) {" << endl;
+  indent_up();
+  string bitsetPrimitiveType = "";
+  switch(needs_isset(tstruct, &bitsetPrimitiveType)) {
+  case ISSET_NONE:
+	  break;
+  case ISSET_PRIMITIVE:
+	  indent(out) << "//primitive bitfield of type: " << bitsetPrimitiveType << endl;
+	  if(bitsetPrimitiveType=="byte") {
+		  indent(out) << "out.writeByte(__isset_bitfield);" << endl;
+	  } else if(bitsetPrimitiveType=="short") {
+		  indent(out) << "out.writeInt(new Short(__isset_bitfield).intValue());" << endl;
+	  } else if(bitsetPrimitiveType=="int") {
+		  indent(out) << "out.writeInt(__isset_bitfield);" << endl;
+	  } else if(bitsetPrimitiveType=="long") {
+		  indent(out) << "out.writeLong(__isset_bitfield);" << endl;
+	  }
+	  out << endl;
+	  break;
+  case ISSET_BITSET:
+	  indent(out) << "//BitSet" << endl;
+	  indent(out) << "out.writeSerializable(__isset_bit_vector);" << endl;
+	  out << endl;
+	  break;
+  }
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+	  t_type* t = get_true_type((*m_iter)->get_type());
+	  string name = (*m_iter)->get_name();
+
+	  if(t->is_struct()) {
+		  indent(out) << "out.writeParcelable(" << name << ", flags);" << endl;
+	  } else if(type_name(t)=="float") {
+		  indent(out) << "out.writeFloat(" << name << ");" << endl;
+	  } else if(t->is_enum()) {
+		  indent(out) << "out.writeInt(" << name << ".getValue());" << endl;
+	  } else if(t->is_list()) {
+		  if(((t_list*)t)->get_elem_type()->get_true_type()->is_struct()) {
+			  indent(out) << "out.writeTypedList(" << name << ");" << endl;
+		  }else {
+			  indent(out) << "out.writeList(" << name << ");" << endl;
+		  }
+	  } else if(t->is_map()) {
+		  indent(out) << "out.writeMap(" << name << ");" << endl;
+	  } else if(t->is_base_type()) {
+		  if (((t_base_type*)t)->is_binary()) {
+			  indent(out) << "out.writeInt(" << name << "!=null ? 1 : 0);" << endl;
+			  indent(out) << "if(" << name << " != null) { " << endl;
+			  indent_up();
+			  indent(out) << "out.writeByteArray(" << name << ".array(), "
+					  << name << ".position() + " << name << ".arrayOffset(), "
+					  << name << ".limit() - " << name << ".position() );" << endl;
+			  scope_down(out);
+		  } else {
+			  switch(((t_base_type*)t)->get_base()) {
+			  case t_base_type::TYPE_I16:
+				  indent(out) << "out.writeInt(new Short(" << name << ").intValue());" << endl;
+				  break;
+			  case t_base_type::TYPE_I32:
+				  indent(out) << "out.writeInt(" << name << ");" << endl;
+				  break;
+			  case t_base_type::TYPE_I64:
+				  indent(out) << "out.writeLong(" << name << ");" << endl;
+				  break;
+			  case t_base_type::TYPE_BOOL:
+				  indent(out) << "out.writeInt(" << name << " ? 1 : 0);" << endl;
+				  break;
+			  case t_base_type::TYPE_BYTE:
+				  indent(out) << "out.writeByte(" << name << ");" << endl;
+				  break;
+			  case t_base_type::TYPE_DOUBLE:
+				  indent(out) << "out.writeDouble(" << name << ");" << endl;
+				  break;
+			  case t_base_type::TYPE_STRING:
+				  indent(out) << "out.writeString(" << name << ");" << endl;
+				  break;
+			  case t_base_type::TYPE_VOID:
+				  break;
+			  }
+		  }
+	  }
+  }
+  scope_down(out);
+  out << endl;
+
+  out << indent() << "@Override" << endl <<
+          indent() << "public int describeContents() {" << endl;
+  indent_up();
+  out <<
+    indent() << "return 0;" << endl;
+  scope_down(out);
+  out << endl;
+
+  indent(out) << "public " << tname << "(android.os.Parcel in) {" << endl;
+  indent_up();
+  //read in the required bitfield
+  switch(needs_isset(tstruct, &bitsetPrimitiveType)) {
+  case ISSET_NONE:
+	  break;
+  case ISSET_PRIMITIVE:
+	  indent(out) << "//primitive bitfield of type: " << bitsetPrimitiveType << endl;
+	  if(bitsetPrimitiveType=="byte") {
+		  indent(out) << "__isset_bitfield = in.readByte();" << endl;
+	  } else if(bitsetPrimitiveType=="short") {
+		  indent(out) << "__isset_bitfield = (short) in.readInt();" << endl;
+	  } else if(bitsetPrimitiveType=="int") {
+		  indent(out) << "__isset_bitfield = in.readInt();" << endl;
+	  } else if(bitsetPrimitiveType=="long") {
+		  indent(out) << "__isset_bitfield = in.readLong();" << endl;
+	  }
+	  out << endl;
+	  break;
+  case ISSET_BITSET:
+	  indent(out) << "//BitSet" << endl;
+	  indent(out) << "__isset_bit_vector = (BitSet) in.readSerializable();" << endl;
+	  out << endl;
+	  break;
+  }
+  //read all the fields
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+	  t_type* t = get_true_type((*m_iter)->get_type());
+	  string name = (*m_iter)->get_name();
+	  string prefix = "this." + name;
+
+	  if(t->is_struct()) {
+		  indent(out) << prefix << "= in.readParcelable(" << tname << ".class.getClassLoader());" << endl;
+	  } else if(t->is_enum()) {
+		  indent(out) << prefix << " = " << type_name(t) << ".findByValue(in.readInt());" << endl;
+	  } else if(t->is_list()) {
+		  t_list* list = (t_list*)t;
+		  indent(out) << prefix << " = new " << type_name(t, false, true) << "();" << endl;
+		  if(list->get_elem_type()->get_true_type()->is_struct()) {
+			  indent(out) << "in.readTypedList(" << prefix << ", " << type_name(list->get_elem_type()) << ".CREATOR);" << endl;
+		  } else {
+			  indent(out) << "in.readList(" << prefix << ", " << tname << ".class.getClassLoader());" << endl;
+		  }
+	  } else if(t->is_map()) {
+		  indent(out) << prefix << " = new " << type_name(t, false, true) << "();" << endl;
+		  indent(out) << " in.readMap(" << prefix << ", " << tname << ".class.getClassLoader());" << endl;
+	  } else if(type_name(t)=="float") {
+		  indent(out) << prefix << " = in.readFloat();" << endl;
+	  } else if(t->is_base_type()) {
+		  t_base_type* bt = (t_base_type*)t;
+		  if (bt->is_binary()) {
+			  indent(out) << "if(in.readInt()==1) {" << endl;
+			  indent_up();
+			  indent(out) << prefix << " = ByteBuffer.wrap(in.createByteArray());" << endl;
+			  scope_down(out);
+		  } else {
+			  switch(bt->get_base()) {
+			  case t_base_type::TYPE_I16:
+				  indent(out) << prefix << " = (short) in.readInt();" << endl;
+				  break;
+			  case t_base_type::TYPE_I32:
+				  indent(out) << prefix << " = in.readInt();" << endl;
+				  break;
+			  case t_base_type::TYPE_I64:
+				  indent(out) << prefix << " = in.readLong();" << endl;
+				  break;
+			  case t_base_type::TYPE_BOOL:
+				  indent(out) << prefix << " = (in.readInt()==1);" << endl;
+				  break;
+			  case t_base_type::TYPE_BYTE:
+				  indent(out) << prefix << " = in.readByte();" << endl;
+				  break;
+			  case t_base_type::TYPE_DOUBLE:
+				  indent(out) << prefix << " = in.readDouble();" << endl;
+				  break;
+			  case t_base_type::TYPE_STRING:
+				  indent(out) << prefix << "= in.readString();" << endl;
+				  break;
+			  case t_base_type::TYPE_VOID:
+				  break;
+			  }
+		  }
+	  }
+  }
+
+  scope_down(out);
+  out << endl;
+
+  indent(out) << "public static final android.os.Parcelable.Creator<" << tname << "> CREATOR = new android.os.Parcelable.Creator<" << tname << ">() {" << endl;
+  indent_up();
+
+  indent(out) << "@Override" << endl <<
+          indent() << "public " << tname << "[] newArray(int size) {" << endl;
+  indent_up();
+  indent(out) << "return new " << tname << "[size];" << endl;
+  scope_down(out);
+  out << endl;
+
+  indent(out) << "@Override" << endl <<
+        indent() << "public " << tname << " createFromParcel(android.os.Parcel in) {" << endl;
+  indent_up();
+  indent(out) << "return new " << tname << "(in);" << endl;
+  scope_down(out);
+
+  indent_down();
+  indent(out) << "};" << endl;
   out << endl;
 }
 
@@ -4576,6 +4803,7 @@ THRIFT_REGISTER_GENERATOR(java, "Java",
 "    private-members: Members will be private, but setter methods will return 'this' like usual.\n"
 "    nocamel:         Do not use CamelCase field accessors with beans.\n"
 "    fullcamel:       Convert underscored_accessor_or_service_names to camelCase.\n"
+"    android:         Generated structures are Parcelable.\n"
 "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and above).\n"
 "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
 "    reuse-objects:   Data objects will not be allocated, but existing instances will be used (read and write).\n"
