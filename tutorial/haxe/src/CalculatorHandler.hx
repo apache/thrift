@@ -38,25 +38,17 @@ class CalculatorHandler implements Calculator {
 	public function new() {
 	}
 
-	// function onError(Error) : Void;
-	// function onSuccess() : Void;
-	public function ping(onError : Error->Void = null, onSuccess : Void->Void = null) : Void {
+	public function ping() : Void {
 		trace("ping()");
 	}
 
 	
-	// function onError(Error) : Void;
-	// function onSuccess(haxe.Int32) : Void;
-	public function add( num1 : haxe.Int32, num2 : haxe.Int32, 
-						 onError : Error->Void = null, onSuccess : haxe.Int32->Void = null) : Void {
+	public function add( num1 : haxe.Int32, num2 : haxe.Int32) : haxe.Int32 {
 		trace('add( $num1, $num2)');
-		onSuccess( num1 + num2);
+		return num1 + num2;
 	}
 
-	// function onError(Error) : Void;
-	// function onSuccess(haxe.Int32) : Void;
-	public function calculate( logid : haxe.Int32, work : Work, 
-							   onError : Error->Void = null, onSuccess : haxe.Int32->Void = null) : Void  {
+	public function calculate( logid : haxe.Int32, work : Work) : haxe.Int32  {
 		trace('calculate( $logid, '+work.op+","+work.num1+","+work.num2+")");
 		
 		var val : haxe.Int32 = 0;
@@ -93,15 +85,12 @@ class CalculatorHandler implements Calculator {
 		entry.value = '$val';
 		log.set(logid, entry);
 
-		onSuccess( val);
+		return val;
 	}
 
-	// function onError(Error) : Void;
-	// function onSuccess( retval : SharedStruct);
-	public function getStruct( key : haxe.Int32, 
-							 onError : Error->Void = null, onSuccess : SharedStruct->Void = null) : Void {
+	public function getStruct( key : haxe.Int32) : SharedStruct {
 		trace('getStruct($key)');
-		onSuccess( log.get(key));
+		return log.get(key);
 	}
 
 	// oneway method,  no args

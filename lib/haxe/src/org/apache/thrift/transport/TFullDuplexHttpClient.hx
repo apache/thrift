@@ -137,6 +137,11 @@ import flash.events.EventDispatcher;
                 trace(e);
                 throw new TTransportError(TTransportError.UNKNOWN, "No more data available.");
             }
+			catch (e : Error)
+			{
+				trace('Error $e');
+				throw new TTransportError(TTransportError.UNKNOWN, "Bad IO error : "+e.errorID+" "+e.message);
+			}
             catch (e : Dynamic)
             {
                 trace(e);

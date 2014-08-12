@@ -160,10 +160,15 @@ class TSocket extends TTransport  {
 			trace('Eof $e');
 			throw new TTransportError(TTransportError.END_OF_FILE, "No more data available.");
 		}
+		catch (e : Error)
+		{
+			trace('Error $e');
+			throw new TTransportError(TTransportError.UNKNOWN, "Bad IO error : "+e.errorID+" "+e.message);
+		}
 		catch (e : Dynamic)
 		{
 			trace('Error $e');
-			throw new TTransportError(TTransportError.UNKNOWN, "Bad IO error :  " + e);
+			throw new TTransportError(TTransportError.UNKNOWN, "Bad IO error :  ");
 		}
     }
 		
@@ -224,6 +229,13 @@ class TSocket extends TTransport  {
 			#end
 			if(ioCallback != null) {
 				ioCallback(null);  // success call 
+			}
+		}
+		catch (e : Error)
+		{
+			trace('Error $e');
+			if(ioCallback != null) {
+				ioCallback(new TTransportError(TTransportError.UNKNOWN, "Bad IO error : "+e.errorID+" "+e.message));
 			}
 		}
 		catch (e : Dynamic) {

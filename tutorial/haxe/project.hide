@@ -1,6 +1,6 @@
 {
      "type" : 0
-    ,"target" : 6
+    ,"target" : 4
     ,"name" : "Apache Thrift Tutorial"
     ,"main" : null
     ,"projectPackage" : ""
@@ -47,15 +47,6 @@
     ]
     ,"files" : [
          {
-             "path" : "src\\Main.hx"
-            ,"useTabs" : true
-            ,"indentSize" : 4
-            ,"foldedRegions" : [
-
-            ]
-            ,"activeLine" : 0
-        }
-        ,{
              "path" : "src\\org\\apache\\thrift\\server\\TServer.hx"
             ,"useTabs" : true
             ,"indentSize" : 4
@@ -90,6 +81,51 @@
 
             ]
             ,"activeLine" : 79
+        }
+        ,{
+             "path" : "gen-haxe\\tutorial\\CalculatorProcessor.hx"
+            ,"useTabs" : true
+            ,"indentSize" : 4
+            ,"foldedRegions" : [
+
+            ]
+            ,"activeLine" : 136
+        }
+        ,{
+             "path" : "src\\Main.hx"
+            ,"useTabs" : true
+            ,"indentSize" : 4
+            ,"foldedRegions" : [
+
+            ]
+            ,"activeLine" : 235
+        }
+        ,{
+             "path" : "gen-haxe\\tutorial\\CalculatorImpl.hx"
+            ,"useTabs" : true
+            ,"indentSize" : 4
+            ,"foldedRegions" : [
+
+            ]
+            ,"activeLine" : 17
+        }
+        ,{
+             "path" : "gen-haxe\\shared\\SharedServiceImpl.hx"
+            ,"useTabs" : true
+            ,"indentSize" : 4
+            ,"foldedRegions" : [
+
+            ]
+            ,"activeLine" : 0
+        }
+        ,{
+             "path" : "src\\CalculatorHandler.hx"
+            ,"useTabs" : true
+            ,"indentSize" : 4
+            ,"foldedRegions" : [
+
+            ]
+            ,"activeLine" : 95
         }
     ]
     ,"activeFile" : "src\\Main.hx"

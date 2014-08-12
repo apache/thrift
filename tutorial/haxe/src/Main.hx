@@ -201,22 +201,19 @@ class Main {
 	private static function RunClient() : Void {
 		var client = ClientSetup();
 
-		client.ping(
-			function(error : Error) : Void { 
-				trace('ping() failed: $error'); 
-			}, 
-			function() : Void {
-				trace("ping()");
-			});
+		try {
+		  	client.ping();
+			trace("ping() successful");
+		} catch(error : Dynamic) { 
+			trace('ping() failed: $error'); 
+		}
 
-
-		client.add( 1, 1, 
-			function(error : Error) : Void { 
-				trace('add() failed: $error'); 
-			}, 
-			function( sum : haxe.Int32) : Void {
-				trace('1+1= $sum');
-			});
+		try {
+			var sum = client.add( 1, 1); 
+			trace('1+1=$sum');
+		} catch(error : Dynamic) { 
+			trace('add() failed: $error'); 
+		}
 
 
 		var work = new tutorial.Work();
@@ -224,40 +221,30 @@ class Main {
 		work.num1 = 1;
 		work.num2 = 0;
 		try {
-			client.calculate( 1, work, 
-				function(error : Error) : Void { 
-					trace('calculate() failed: $error'); 
-				}, 
-				function(quotient : haxe.Int32) : Void { 
-					trace('Whoa we can divide by 0! Result = $quotient'); 
-				}); 
-
-		} 
-		catch(e : Dynamic) {
-			trace('Exception $e');
+			var quotient = client.calculate( 1, work); 
+			trace('Whoa we can divide by 0! Result = $quotient'); 
+		} catch(error : Dynamic) { 
+			trace('calculate() failed: $error'); 
 		}
 
 		work.op = tutorial.Operation.SUBTRACT;
 		work.num1 = 15;
 		work.num2 = 10;
-		client.calculate( 1, work,
-			function(error : Error) : Void { 
-				trace('calculate() failed: $error'); 
-			}, 
-			function( diff : haxe.Int32) : Void {
-				trace('15-10=$diff\n');
-			});
+		try {
+			var diff = client.calculate( 1, work);
+			trace('15-10=$diff');
+		} catch(error : Dynamic) { 
+			trace('calculate() failed: $error'); 
+		}
 
 
-		client.getStruct( 1,
-			function(error : Error) : Void { 
-				trace('getStruct() failed: $error'); 
-			}, 
-			function( log : SharedStruct) : Void {
-				var logval = log.value;
-				trace('Check log: $logval');
-			});
-		
+		try {
+			var log : SharedStruct = client.getStruct( 1);
+			var logval = log.value;
+			trace('Check log: $logval');
+		} catch(error : Dynamic) { 
+			trace('getStruct() failed: $error'); 
+		}
 	}
 	
 	
