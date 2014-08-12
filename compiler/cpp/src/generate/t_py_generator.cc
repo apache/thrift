@@ -1259,11 +1259,11 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       indent() << "    tr = TTransport.TMemoryBuffer(frame)" << endl <<
       indent() << "    iprot = self._iprot_factory.getProtocol(tr)" << endl <<
       indent() << "    (fname, mtype, rseqid) = iprot.readMessageBegin()" << endl <<
-      indent() << "    method = getattr(self, 'recv_' + fname)" << endl <<
       indent() << "    future = self._reqs.pop(rseqid, None)" << endl <<
       indent() << "    if not future:" << endl <<
       indent() << "      # future has already been discarded" << endl <<
       indent() << "      continue" << endl <<
+      indent() << "    method = getattr(self, 'recv_' + fname)" << endl <<
       indent() << "    try:" << endl <<
       indent() << "      result = method(iprot, mtype, rseqid)" << endl <<
       indent() << "    except Exception as e:" << endl <<
