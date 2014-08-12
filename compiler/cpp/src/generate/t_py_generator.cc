@@ -2043,16 +2043,13 @@ void t_py_generator::generate_process_function(t_service* tservice,
       }
     }
 
-    // Shortcut out here for oneway functions
-    if (tfunction->is_oneway()) {
-      return;
+    if (!tfunction->is_oneway()) {
+      f_service_ <<
+        indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name() << "\", TMessageType.REPLY, seqid)" << endl <<
+        indent() << "result.write(oprot)" << endl <<
+        indent() << "oprot.writeMessageEnd()" << endl <<
+        indent() << "oprot.trans.flush()" << endl;
     }
-
-    f_service_ <<
-      indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name() << "\", TMessageType.REPLY, seqid)" << endl <<
-      indent() << "result.write(oprot)" << endl <<
-      indent() << "oprot.writeMessageEnd()" << endl <<
-      indent() << "oprot.trans.flush()" << endl;
 
     // Close function
     indent_down();
