@@ -458,18 +458,21 @@ public class TestTSaslTransports extends TestCase {
       saslTransport.receiveSaslMessage();
       fail("Should have gotten an error due to incorrect status byte value.");
     } catch (TTransportException e) {
+      assertEquals(e.getMessage(), "Invalid status -1");
     }
     saslTransport = new TSaslServerTransport(new MockTTransport(2));
     try {
       saslTransport.receiveSaslMessage();
       fail("Should have gotten an error due to negative payload length.");
     } catch (TTransportException e) {
+      assertEquals(e.getMessage(), "Invalid payload header length: -1");
     }
     saslTransport = new TSaslServerTransport(new MockTTransport(3));
     try {
       saslTransport.receiveSaslMessage();
       fail("Should have gotten an error due to bogus (large) payload length.");
     } catch (TTransportException e) {
+      assertEquals(e.getMessage(), "Invalid payload header length: 1677721600");
     }
   }
 }
