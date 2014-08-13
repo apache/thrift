@@ -185,7 +185,7 @@ abstract class TSaslTransport extends TTransport {
     }
 
     int payloadBytes = EncodingUtils.decodeBigEndian(messageHeader, STATUS_BYTES);
-    if (payloadBytes <= 0 || payloadBytes > 104857600 /* 100 MB */) {
+    if (payloadBytes < 0 || payloadBytes > 104857600 /* 100 MB */) {
       throw sendAndThrowMessage(
         NegotiationStatus.ERROR, "Invalid payload header length: " + payloadBytes);
     }
