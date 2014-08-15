@@ -23,7 +23,12 @@ Now open the folder build_ec using eclipse.
     cmake -DCMAKE_TOOLCHAIN_FILE=../../../contrib/mingw32-toolchain.cmake ..
     make
 
+### Generate a Windows Installer Package of the Apache Thrift Compiler
 
+    cmake -DCMAKE_TOOLCHAIN_FILE=../../../contrib/mingw32-toolchain.cmake -DTHRIFT_COMPILER_HS=OFF ..
+    cpack
+
+Haskell uses C++ features not supported by mingw32 such as auto or nullptr, that's why we disable it.
 
 ## Build on windows
 
