@@ -24,8 +24,10 @@ import org.apache.thrift.protocol.*;
 import org.apache.thrift.transport.*;
 import org.apache.thrift.server.*;
 import org.apache.thrift.meta_data.*;
-
 import org.apache.thrift.helper.*;
+
+import haxe.Int32;
+import haxe.Int64;
 import haxe.io.Bytes;
 import haxe.ds.IntMap;
 import haxe.ds.StringMap;
@@ -35,20 +37,19 @@ import thrift.test.*;  // generated code
 
 
 class TestServerHandler implements ThriftTest {
-	
-	public var server : TServer;
 
-	public function new() { 
-	}
+    public var server:TServer;
+
+    public function new() {
+    }
 
 	/**
 	* Prints "testVoid()" and returns nothing.
 	*/
-	function testVoid() : Void 
-	{
-		trace("testVoid()");
-	}
-
+    public function testVoid():Void
+    {
+    	trace("testVoid()");
+    }
 
 	/**
 	* Prints 'testString("%s")' with thing as '%s'
@@ -57,11 +58,11 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param thing
 	*/
-	function testString(thing : String) : String
-	{
-		trace("teststring(\"" + thing + "\")");
-		return thing;
-	}
+    public function testString(thing:String):String
+    {
+    	trace("teststring(\"" + thing + "\")");
+    	return thing;
+    }
 
 	/**
 	* Prints 'testByte("%d")' with thing as '%d'
@@ -70,11 +71,11 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param thing
 	*/
-	function testByte(thing : haxe.Int32) : haxe.Int32
-	{
-		trace("testByte(" + thing + ")");
-		return thing;
-	}
+    public function testByte(thing:haxe.Int32):haxe.Int32
+    {
+    	trace("testByte(" + thing + ")");
+    	return thing;
+    }
 
 	/**
 	* Prints 'testI32("%d")' with thing as '%d'
@@ -83,11 +84,11 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param thing
 	*/
-	function testI32(thing : haxe.Int32) : haxe.Int32
-	{
-		trace("testI32(" + thing + ")");
-		return thing;
-	}
+    public function testI32(thing:haxe.Int32):haxe.Int32
+    {
+    	trace("testI32(" + thing + ")");
+    	return thing;
+    }
 
 	/**
 	* Prints 'testI64("%d")' with thing as '%d'
@@ -96,11 +97,11 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param thing
 	*/
-	function testI64(thing : haxe.Int64) : haxe.Int64
-	{
-		trace("testI64(" + thing + ")");
-		return thing;
-	}
+    public function testI64(thing:haxe.Int64):haxe.Int64
+    {
+    	trace("testI64(" + thing + ")");
+    	return thing;
+    }
 
 	/**
 	* Prints 'testDouble("%f")' with thing as '%f'
@@ -109,11 +110,11 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param thing
 	*/
-	function testDouble(thing : Float) : Float
-	{
-		trace("testDouble(" + thing + ")");
-		return thing;
-	}
+    public function testDouble(thing:Float):Float
+    {
+    	trace("testDouble(" + thing + ")");
+    	return thing;
+    }
 
 	/**
 	* Prints 'testStruct("{%s}")' where thing has been formatted 
@@ -123,15 +124,15 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param thing
 	*/
-	function testStruct(thing : Xtruct) : Xtruct
-	{
-		trace("testStruct({" +
-						 "\"" + thing.String_thing + "\", " +
-						 thing.Byte_thing + ", " +
-						 thing.I32_thing + ", " +
-						 thing.I64_thing + "})");
-		return thing;
-	}
+    public function testStruct(thing:Xtruct):Xtruct
+    {
+    	trace("testStruct({" + 
+                          "\"" + thing.string_thing + "\", " + 
+                          thing.byte_thing + ", " + 
+                          thing.i32_thing + ", " + 
+                          thing.i64_thing + "})");
+    	return thing;
+    }
 
 	/**
 	* Prints 'testNest("{%s}")' where thing has been formatted 
@@ -141,18 +142,18 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param thing
 	*/
-	function testNest(thing : Xtruct2) : Xtruct2
-	{
-		var thing : Xtruct = nest.Struct_thing;
-		trace("testNest({" +
-						 nest.Byte_thing + ", {" +
-						 "\"" + thing.String_thing + "\", " +
-						 thing.Byte_thing + ", " +
-						 thing.I32_thing + ", " +
-						 thing.I64_thing + "}, " +
-						 nest.I32_thing + "})");
-		return nest;
-	}
+    public function testNest(nest:Xtruct2):Xtruct2
+    {
+    	var thing:Xtruct = nest.struct_thing;
+    	trace("testNest({" + 
+                          nest.byte_thing + ", {" + 
+                          "\"" + thing.string_thing + "\", " + 
+                          thing.byte_thing + ", " + 
+                          thing.i32_thing + ", " + 
+                          thing.i64_thing + "}, " + 
+                          nest.i32_thing + "})");
+    	return nest;
+    }
 
 	/**
 	* Prints 'testMap("{%s")' where thing has been formatted
@@ -163,25 +164,21 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param thing
 	*/
-	function testMap(thing : IntMap< haxe.Int32>) : IntMap< haxe.Int32>
-	{
-		trace("testMap({");
-		var first : Bool = true;
-		for( key in thing.Keys)
-		{
-			if (first)
-			{
-				first = false;
-			}
-			else
-			{
-				trace(", ");
-			}
-			trace(key + " => " + thing[key]);
-		}
-		trace("})");
-		return thing;
-	}
+    public function testMap(thing:IntMap<haxe.Int32>):IntMap<haxe.Int32>
+    {
+    	trace("testMap({");
+    	var first:Bool = true;
+    	for (key in thing.keys()) {
+    		if (first) {
+    			first = false;
+    		} else {
+    			trace(", ");
+    		};
+    		trace(key + " => " + thing.get(key));
+    	};
+    	trace("})");
+    	return thing;
+    }
 
 	/**
 	* Prints 'testStringMap("{%s}")' where thing has been formatted 
@@ -192,25 +189,21 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param thing
 	*/
-	function testStringMap(thing : StringMap< String>) : StringMap< String>
-	{
-		trace("testStringMap({");
-		var first : Bool = true;
-		for( key in thing.Keys)
-		{
-			if (first)
-			{
-				first = false;
-			}
-			else
-			{
-				trace(", ");
-			}
-			trace(key + " => " + thing[key]);
-		}
-		trace("})");
-		return thing;
-	}
+    public function testStringMap(thing:StringMap<String>):StringMap<String>
+    {
+    	trace("testStringMap({");
+    	var first:Bool = true;
+    	for (key in thing.keys()) {
+    		if (first) {
+    			first = false;
+    		} else {
+    			trace(", ");
+    		};
+    		trace(key + " => " + thing.get(key));
+    	};
+    	trace("})");
+    	return thing;
+    }
 
 	/**
 	* Prints 'testSet("{%s}")' where thing has been formatted 
@@ -221,25 +214,21 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param thing
 	*/
-	function testSet(thing : IntSet) : IntSet
-	{
-		trace("testSet({");
-		var first : Bool = true;
-		for( elem in thing)
-		{
-			if (first)
-			{
-				first = false;
-			}
-			else
-			{
-				trace(", ");
-			}
-			trace(elem);
-		}
-		trace("})");
-		return thing;
-	}
+    public function testSet(thing:IntSet):IntSet
+    {
+    	trace("testSet({");
+    	var first:Bool = true;
+    	for (elem in thing) {
+    		if (first) {
+    			first = false;
+    		} else {
+    			trace(", ");
+    		};
+    		trace(elem);
+    	};
+    	trace("})");
+    	return thing;
+    }
 
 	/**
 	* Prints 'testList("{%s}")' where thing has been formatted 
@@ -250,25 +239,21 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param thing
 	*/
-	function testList(thing : List< haxe.Int32>) : List< haxe.Int32>
-	{
-		trace("testList({");
-		var first : Bool = true;
-		for( elem in thing)
-		{
-			if (first)
-			{
-				first = false;
-			}
-			else
-			{
-				trace(", ");
-			}
-			trace(elem);
-		}
-		trace("})");
-		return thing;
-	}
+    public function testList(thing:List<haxe.Int32>):List<haxe.Int32>
+    {
+    	trace("testList({");
+    	var first:Bool = true;
+    	for (elem in thing) {
+    		if (first) {
+    			first = false;
+    		} else {
+    			trace(", ");
+    		};
+    		trace(elem);
+    	};
+    	trace("})");
+    	return thing;
+    }
 
 	/**
 	* Prints 'testEnum("%d")' where thing has been formatted into it's numeric value
@@ -277,11 +262,11 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param thing
 	*/
-	function testEnum(thing : Int) : Int
-	{
-		trace("testEnum(" + thing + ")");
-		return thing;
-	}
+    public function testEnum(thing:Int):Int
+    {
+    	trace("testEnum(" + thing + ")");
+    	return thing;
+    }
 
 	/**
 	* Prints 'testTypedef("%d")' with thing as '%d'
@@ -290,11 +275,11 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param thing
 	*/
-	function testTypedef(thing : haxe.Int64) : haxe.Int64
-	{
-		trace("testTypedef(" + thing + ")");
-		return thing;
-	}
+    public function testTypedef(thing:haxe.Int64):haxe.Int64
+    {
+    	trace("testTypedef(" + thing + ")");
+    	return thing;
+    }
 
 	/**
 	* Prints 'testMapMap("%d")' with hello as '%d'
@@ -305,24 +290,20 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param hello
 	*/
-	function testMapMap(hello : haxe.Int32) : IntMap< IntMap< haxe.Int32>>
-	{
-		trace("testMapMap(" + hello + ")");
-		var mapmap = new IntMap< IntMap< Int, Int>>();
-
-		var pos = new IntMap< Int>();
-		var neg = new IntMap< Int>();
-		for( i in 1 ... 4)
-		{
-			pos[i] = i;
-			neg[-i] = -i;
-		}
-
-		mapmap[4] = pos;
-		mapmap[-4] = neg;
-
-		return mapmap;
-	}
+    public function testMapMap(hello:haxe.Int32):IntMap<IntMap<haxe.Int32>>
+    {
+    	trace("testMapMap(" + hello + ")");
+    	var mapmap = new IntMap<IntMap<Int>>();
+    	var pos = new IntMap<Int>();
+    	var neg = new IntMap<Int>();
+    	for (i in 1 ... 4) {
+    		pos.set(i, i);
+    		neg.set(-i, -i);
+    	};
+    	mapmap.set(4, pos);
+    	mapmap.set(-4, neg);
+    	return mapmap;
+    }
 
 	/**
 	* So you think you've got this all worked, out eh?
@@ -337,46 +318,45 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param argument
 	*/
-	function testInsanity(argument : Insanity) : ObjectMap< haxe.Int64, ObjectMap< Int, Insanity>>
-	{
-		trace("testInsanity()");
+    public function testInsanity(argument : Insanity) : ObjectMap< haxe.Int64, IntMap< Insanity>>
+    {
+    	trace("testInsanity()");
 
-		var hello = new Xtruct();
-		hello.String_thing = "Hello2";
-		hello.Byte_thing = 2;
-		hello.I32_thing = 2;
-		hello.I64_thing = 2;
+    	var hello = new Xtruct();
+    	hello.string_thing = "Hello2";
+    	hello.byte_thing = 2;
+    	hello.i32_thing = 2;
+    	hello.i64_thing = Int64.make(0, 2);
 
-		var goodbye = new Xtruct();
-		goodbye.String_thing = "Goodbye4";
-		goodbye.Byte_thing = 4;
-		goodbye.I32_thing = 4;
-		goodbye.I64_thing = 4;
+    	var goodbye = new Xtruct();
+    	goodbye.string_thing = "Goodbye4";
+    	goodbye.byte_thing = 4;
+    	goodbye.i32_thing = 4;
+    	goodbye.i64_thing = Int64.make(0, 4);
 
-		var crazy = new Insanity();
-		crazy.UserMap = new ObjectMap< Numberz, haxe.Int32>();
-		crazy.UserMap[Numberz.EIGHT] = 8;
-		crazy.Xtructs = new List<Xtruct>();
-		crazy.Xtructs.Add(goodbye);
+    	var crazy = new Insanity();
+		crazy.userMap = new IntMap< haxe.Int64>();
+    	crazy.userMap.set(Numberz.EIGHT, Int64.make(0,8));
+    	crazy.xtructs = new List<Xtruct>();
+    	crazy.xtructs.add(goodbye);
 
-		var looney = new Insanity();
-		crazy.UserMap[Numberz.FIVE] = 5;
-		crazy.Xtructs.Add(hello);
+    	var looney = new Insanity();
+    	crazy.userMap.set(Numberz.FIVE, Int64.make(0,5));
+    	crazy.xtructs.add(hello);
 
-		var first_map = new ObjectMap< Numberz, Insanity>();
-		var second_map = new ObjectMap< Numberz, Insanity>(); 
+    	var first_map = new IntMap< Insanity>();
+    	first_map.set(Numberz.TWO, crazy);
+    	first_map.set(Numberz.THREE, crazy);
 
-		first_map[Numberz.TWO] = crazy;
-		first_map[Numberz.THREE] = crazy;
+    	var second_map = new IntMap< Insanity>();
+    	second_map.set(Numberz.SIX, looney);
 
-		second_map[Numberz.SIX] = looney;
+		var insane = new ObjectMap< haxe.Int64, IntMap< Insanity>>();
+    	insane.set( Int64.make(0,1), first_map);
+    	insane.set( Int64.make(0,2), second_map);
 
-		var insane = new IntMap< ObjectMap< Numberz, Insanity>>();
-		insane[1] = first_map;
-		insane[2] = second_map;
-
-		return insane;
-	}
+    	return insane;
+    }
 
 	/**
 	* Prints 'testMulti()'
@@ -397,17 +377,17 @@ class TestServerHandler implements ThriftTest {
 	* @param arg4
 	* @param arg5
 	*/
-	function testMulti(arg0 : haxe.Int32, arg1 : haxe.Int32, arg2 : haxe.Int64, arg3 : IntMap< String>, arg4 : Int, arg5 : haxe.Int64) : Xtruct
-	{
-		trace("testMulti()");
-
-		var hello = new Xtruct(); 
-		hello.String_thing = "Hello2";
-		hello.Byte_thing = arg0;
-		hello.I32_thing = arg1;
-		hello.I64_thing = arg2;
-		return hello;
-	}
+    public function testMulti(arg0:haxe.Int32, arg1:haxe.Int32, arg2:haxe.Int64, 
+        arg3:IntMap<String>, arg4:Int, arg5:haxe.Int64):Xtruct
+    {
+    	trace("testMulti()");
+    	var hello = new Xtruct();
+    	hello.string_thing = "Hello2";
+    	hello.byte_thing = arg0;
+    	hello.i32_thing = arg1;
+    	hello.i64_thing = arg2;
+    	return hello;
+    }
 
 	/**
 	* Print 'testException(%s)' with arg as '%s'
@@ -418,18 +398,17 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param arg
 	*/
-	function testException(arg : String) : Void
-	{
-		trace("testException(" + arg + ")");
-		if (arg == "Xception")
-		{
-			var x = new Xception();
-			x.ErrorCode = 1001;
-			x.Message = "This is an Xception";
-			throw x;
-		}
-		return;
-	}
+    public function testException(arg:String):Void
+    {
+    	trace("testException(" + arg + ")");
+    	if (arg == "Xception") {
+    		var x = new Xception();
+    		x.errorCode = 1001;
+    		x.message = "This is an Xception";
+    		throw x;
+    	};
+    	return;
+    }
 
 	/**
 	* Print 'testMultiException(%s, %s)' with arg0 as '%s' and arg1 as '%s'
@@ -444,29 +423,25 @@ class TestServerHandler implements ThriftTest {
 	* @param arg0
 	* @param arg1
 	*/
-	function testMultiException(arg0 : String, arg1 : String) : Xtruct
-	{
-		trace("testMultiException(" + arg0 + ", " + arg1 + ")");
-		if (arg0 == "Xception")
-		{
-			var x = new Xception();
-			x.ErrorCode = 1001;
-			x.Message = "This is an Xception";
-			throw x;
-		}
-		else if (arg0 == "Xception2")
-		{
-			var x = new Xception2();
-			x.ErrorCode = 2002;
-			x.Struct_thing = new Xtruct();
-			x.Struct_thing.String_thing = "This is an Xception2";
-			throw x;
-		}
-
-		var result = new Xtruct();
-		result.String_thing = arg1;
-		return result;
-	}
+    public function testMultiException(arg0:String, arg1:String):Xtruct
+    {
+    	trace("testMultiException(" + arg0 + ", " + arg1 + ")");
+    	if (arg0 == "Xception") {
+    		var x = new Xception();
+    		x.errorCode = 1001;
+    		x.message = "This is an Xception";
+    		throw x;
+    	} else if (arg0 == "Xception2") {
+    		var x = new Xception2();
+    		x.errorCode = 2002;
+    		x.struct_thing = new Xtruct();
+    		x.struct_thing.string_thing = "This is an Xception2";
+    		throw x;
+    	};
+    	var result = new Xtruct();
+    	result.string_thing = arg1;
+    	return result;
+    }
 
 	/**
 	* Print 'testOneway(%d): Sleeping...' with secondsToSleep as '%d'
@@ -476,21 +451,17 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param secondsToSleep
 	*/
-	function testOneway(secondsToSleep : haxe.Int32) : Void
-	{
-		trace("testOneway(" + arg + "), sleeping...");
-		System.Threading.Thread.Sleep(arg * 1000);
-		trace("testOneway finished");
-	}
+    public function testOneway(secondsToSleep:haxe.Int32):Void
+    {
+    	trace("testOneway(" + secondsToSleep + "), sleeping...");
+    	Sys.sleep(secondsToSleep);
+    	trace("testOneway finished");
+    }
 
-	
-	public function testStop() : Void
-	{
-		if (server != null)
-		{
-			server.Stop();
-		}
-	}
-
+    public function testStop():Void
+    {
+    	if (server != null) {
+    		server.Stop();
+    	};
+    }
 }
-

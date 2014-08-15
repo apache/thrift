@@ -43,7 +43,7 @@ class TestServer
 			case http:
 				trace("- http");
 				throw "HTTP server not implemented yet";
-		 		//transport = new THttpClient( targetHost);
+		 		//transport = new THttpServer( targetHost);
 			default:
 				throw "Unhandled transport";
 			}
@@ -67,7 +67,7 @@ class TestServer
 				trace("- binary protocol");
 				protfactory = new TBinaryProtocolFactory();
 			case json:
-				trace("- binary json");
+				trace("- json protocol");
 				throw "JSON protocol not implemented yet";
 				//protfactory = new TJsonProtocolFactory();
 			default:

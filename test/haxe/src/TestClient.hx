@@ -19,11 +19,24 @@
 
 package;
 
+import haxe.Int32;
+import haxe.Int64;
+import haxe.ds.IntMap;
+import haxe.ds.StringMap;
+import haxe.ds.ObjectMap;
+
 import org.apache.thrift.*;
+import org.apache.thrift.helper.*;
 import org.apache.thrift.protocol.*;
 import org.apache.thrift.transport.*;
 import org.apache.thrift.server.*;
 import org.apache.thrift.meta_data.*;
+
+#if cpp
+import cpp.vm.Thread;
+#else
+// no thread support (yet)
+#end
 
 import thrift.test.*;  // generated code
 
@@ -34,146 +47,178 @@ class TestClient {
 	{
 		try
 		{
-			//issue tests on separate threads simultaneously
-			Thread[] threads = new Thread[numThreads];
-			DateTime start = DateTime.Now;
-			for( test in 0 .. (numThreads-1))
-			{
-				Thread t = new Thread(new ParameterizedThreadStart(ClientThread));
-				threads[test] = t;
-				if (url == null)
-				{
-					// endpoint transport
-					TTransport trans = null;
-					if (pipe != null)
-						trans = new TNamedPipeClientTransport(pipe);
-					else
-					{
-						if (encrypted)
-							trans = new TTLSSocket(host, port, "../../../../../keys/client.pem");
-						else
-							trans = new TSocket(host, port);
-					}
-
-					// layered transport
-					if (buffered)
-						trans = new TBufferedTransport(trans as TStreamTransport);
-					if (framed)
-						trans = new TFramedTransport(trans);
-
-					//ensure proper open/close of transport
-					trans.Open();
-					trans.Close();
-					t.Start(trans);
+			var difft = Date.now().getTime();
+			
+			if( args.numThreads > 1) {
+				var threads = new List<Thread>();
+				for( test in 0 ... (args.numThreads-1)) {
+					threads.add( StartThread( args));
+				} 
+				for( thread in threads) {
+					Thread.readMessage(true);
 				}
-				else
-				{
-					THttpClient http = new THttpClient(new Uri(url));
-					t.Start(http);
-				}
+			} else {
+				RunClient(args);
 			}
 
-			for (int test = 0; test < numThreads; test++)
-			{
-				threads[test].Join();
-			}
-			Console.Write("Total time: " + (DateTime.Now - start));
+			difft = Date.now().getTime() - difft;
+			difft = (24 * 60 * 60) * difft;
+			trace('Total time: $difft seconds');
 		}
-		catch (Exception outerEx)
+		catch (e : TException)
 		{
-			Console.WriteLine(outerEx.Message + " ST: " + outerEx.StackTrace);
+			trace('$e');
 		}
-
-		Console.WriteLine();
-		Console.WriteLine();
+		catch (e : Dynamic)
+		{
+			trace('$e');
+		}
 	}
 
-	public static void ClientThread(object obj)
-	{
-		TTransport transport = (TTransport)obj;
-		for (int i = 0; i < numIterations; i++)
-		{
-			ClientTest(transport);
-		}
-		transport.Close();
+	
+	private static function StartThread(args : Arguments) : Thread {
+		var thread = Thread.create(
+			function() : Void {
+				var main : Thread = Thread.readMessage(true);
+				try 
+				{
+					RunClient(args);
+				}
+				catch (e : TException)
+				{
+					trace('$e');
+				}
+				catch (e : Dynamic)
+				{
+					trace('$e');
+				}					
+				main.sendMessage("done");
+			});
+		
+		thread.sendMessage(Thread.current());
+		return thread;
 	}
 
-	public static void ClientTest(TTransport transport)
+	
+	public static function RunClient(args : Arguments)
 	{
-		TProtocol proto;
-		if (protocol == "compact")
-			proto = new TCompactProtocol(transport);
-		else if (protocol == "json")
-			proto = new TJSONProtocol(transport);
-		else
-			proto = new TBinaryProtocol(transport);
+		var transport : TTransport = null;
+		switch (args.transport)
+		{
+			case socket:
+				transport = new TSocket(args.host, args.port);
+			case http:
+				throw "http transport not supported yet";
+				//transport = new THttpClient(args.host);
+			default:
+				throw "Unhandled transport";
+		}
 
-		ThriftTest.Client client = new ThriftTest.Client(proto);
+		// optional: layered transport
+		if ( args.framed) {
+			trace("- framed transport");
+			transport = new TFramedTransport(transport);
+		} else if ( args.buffered) {
+			trace("- buffered transport");
+			throw "TBufferedTransport not implemented yet";
+			//transport = new TBufferedTransport(transport);
+		}
+
+		// protocol
+		var protocol : TProtocol = null;
+		switch( args.protocol)
+		{
+		case binary:
+			trace("- binary protocol");
+			protocol = new TBinaryProtocol(transport);
+		case json:
+			trace("- json protocol");
+			throw "JSON protocol not implemented yet";
+			//protocol = new TJsonProtocol(transport);
+		default:
+			throw "Unhandled protocol";
+		}
+
+
+		ClientTest( transport, protocol);
+					
+	}
+
+	public static function ClientTest( transport : TTransport, protocol : TProtocol) : Void
+	{
+		var client = new ThriftTestImpl(protocol,protocol);
 		try
 		{
-			if (!transport.IsOpen)
+			if (!transport.isOpen())
 			{
-				transport.Open();
+				transport.open();
 			}
 		}
-		catch (TTransportException ttx)
+		catch (e : TException)
 		{
-			Console.WriteLine("Connect failed: " + ttx.Message);
+			trace('$e');
+			return;
+		}
+		catch (e : Dynamic)
+		{
+			trace('$e');
 			return;
 		}
 
-		long start = DateTime.Now.ToFileTime();
+		var start = Date.now();
 
-		Console.Write("testVoid()");
+		trace('testVoid()');
 		client.testVoid();
-		Console.WriteLine(" = void");
+		trace(' = void');
 
-		Console.Write("testString(\"Test\")");
-		string s = client.testString("Test");
-		Console.WriteLine(" = \"" + s + "\"");
+		trace('testString("Test")');
+		var s = client.testString("Test");
+		trace(' = "$s"');
 
-		Console.Write("testByte(1)");
-		sbyte i8 = client.testByte((sbyte)1);
-		Console.WriteLine(" = " + i8);
+		trace('testByte(1)');
+		var i8 = client.testByte(1);
+		trace(' = $i8');
 
-		Console.Write("testI32(-1)");
-		int i32 = client.testI32(-1);
-		Console.WriteLine(" = " + i32);
+		trace('testI32(-1)');
+		var i32 = client.testI32(-1);
+		trace(' = $i32');
 
-		Console.Write("testI64(-34359738368)");
-		long i64 = client.testI64(-34359738368);
-		Console.WriteLine(" = " + i64);
+		trace('testI64(-34359738368)');
+		var i64 = client.testI64( Int64.make( 0xFFFFFFF8, 0x00000000)); // -34359738368
+		trace(' = $i64');
 
-		Console.Write("testDouble(5.325098235)");
-		double dub = client.testDouble(5.325098235);
-		Console.WriteLine(" = " + dub);
+		trace('testDouble(5.325098235)');
+		var dub = client.testDouble(5.325098235);
+		trace(' = $dub');
 
-		Console.Write("testStruct({\"Zero\", 1, -3, -5})");
-		Xtruct o = new Xtruct();
-		o.String_thing = "Zero";
-		o.Byte_thing = (sbyte)1;
-		o.I32_thing = -3;
-		o.I64_thing = -5;
-		Xtruct i = client.testStruct(o);
-		Console.WriteLine(" = {\"" + i.String_thing + "\", " + i.Byte_thing + ", " + i.I32_thing + ", " + i.I64_thing + "}");
+		trace('testStruct({"Zero", 1, -3, -5})');
+		var o = new Xtruct();
+		o.string_thing = "Zero";
+		o.byte_thing = 1;
+		o.i32_thing = -3;
+		o.i64_thing = Int64.make(0,-5);
+		var i = client.testStruct(o);
+		trace(' = {"' + i.string_thing + '", ' + i.byte_thing +', '+ i.i32_thing +', '+ i.i64_thing + '}');
 
-		Console.Write("testNest({1, {\"Zero\", 1, -3, -5}, 5})");
-		Xtruct2 o2 = new Xtruct2();
-		o2.Byte_thing = (sbyte)1;
-		o2.Struct_thing = o;
-		o2.I32_thing = 5;
-		Xtruct2 i2 = client.testNest(o2);
-		i = i2.Struct_thing;
-		Console.WriteLine(" = {" + i2.Byte_thing + ", {\"" + i.String_thing + "\", " + i.Byte_thing + ", " + i.I32_thing + ", " + i.I64_thing + "}, " + i2.I32_thing + "}");
+		trace('testNest({1, {\"Zero\", 1, -3, -5}, 5})');
+		var o2 = new Xtruct2();
+		o2.byte_thing = 1;
+		o2.struct_thing = o;
+		o2.i32_thing = 5;
+		var i2 = client.testNest(o2);
+		i = i2.struct_thing;
+		trace(" = {" + i2.byte_thing + ", {\"" + i.string_thing + "\", " 
+			  + i.byte_thing + ", " + i.i32_thing + ", " + i.i64_thing + "}, " 
+			  + i2.i32_thing + "}");
 
-		Dictionary<int, int> mapout = new Dictionary<int, int>();
-		for (int j = 0; j < 5; j++)
+		var mapout = new IntMap< haxe.Int32>();
+		for ( j in 0 ... 4)
 		{
-			mapout[j] = j - 10;
+			mapout.set(j, j - 10);
 		}
-		Console.Write("testMap({");
-		bool first = true;
-		foreach (int key in mapout.Keys)
+		trace("testMap({");
+		var first : Bool = true;
+		for( key in mapout.keys())
 		{
 			if (first)
 			{
@@ -181,17 +226,17 @@ class TestClient {
 			}
 			else
 			{
-				Console.Write(", ");
+				trace(", ");
 			}
-			Console.Write(key + " => " + mapout[key]);
+			trace(key + " => " + mapout.get(key));
 		}
-		Console.Write("})");
+		trace("})");
 
-		Dictionary<int, int> mapin = client.testMap(mapout);
+		var mapin = client.testMap(mapout);
 
-		Console.Write(" = {");
+		trace(" = {");
 		first = true;
-		foreach (int key in mapin.Keys)
+		for( key in mapin.keys())
 		{
 			if (first)
 			{
@@ -199,20 +244,20 @@ class TestClient {
 			}
 			else
 			{
-				Console.Write(", ");
+				trace(", ");
 			}
-			Console.Write(key + " => " + mapin[key]);
+			trace(key + " => " + mapin.get(key));
 		}
-		Console.WriteLine("}");
+		trace("}");
 
-		List<int> listout = new List<int>();
-		for (int j = -2; j < 3; j++)
+		var listout = new List<Int>();
+		for (j in -2 ... 2)
 		{
-			listout.Add(j);
+			listout.add(j);
 		}
-		Console.Write("testList({");
+		trace("testList({");
 		first = true;
-		foreach (int j in listout)
+		for( j in listout)
 		{
 			if (first)
 			{
@@ -220,17 +265,17 @@ class TestClient {
 			}
 			else
 			{
-				Console.Write(", ");
+				trace(", ");
 			}
-			Console.Write(j);
+			trace(j);
 		}
-		Console.Write("})");
+		trace("})");
 
-		List<int> listin = client.testList(listout);
+		var listin = client.testList(listout);
 
-		Console.Write(" = {");
+		trace(" = {");
 		first = true;
-		foreach (int j in listin)
+		for( j in listin)
 		{
 			if (first)
 			{
@@ -238,21 +283,21 @@ class TestClient {
 			}
 			else
 			{
-				Console.Write(", ");
+				trace(", ");
 			}
-			Console.Write(j);
+			trace(j);
 		}
-		Console.WriteLine("}");
+		trace("}");
 
 		//set
-		THashSet<int> setout = new THashSet<int>();
-		for (int j = -2; j < 3; j++)
+		var setout = new IntSet();
+		for (j in -2 ... 3)
 		{
-			setout.Add(j);
+			setout.add(j);
 		}
-		Console.Write("testSet({");
+		trace("testSet({");
 		first = true;
-		foreach (int j in setout)
+		for( j in setout)
 		{
 			if (first)
 			{
@@ -260,17 +305,17 @@ class TestClient {
 			}
 			else
 			{
-				Console.Write(", ");
+				trace(", ");
 			}
-			Console.Write(j);
+			trace(j);
 		}
-		Console.Write("})");
+		trace("})");
 
-		THashSet<int> setin = client.testSet(setout);
+		var setin = client.testSet(setout);
 
-		Console.Write(" = {");
+		trace(" = {");
 		first = true;
-		foreach (int j in setin)
+		for( j in setin)
 		{
 			if (first)
 			{
@@ -278,132 +323,137 @@ class TestClient {
 			}
 			else
 			{
-				Console.Write(", ");
+				trace(", ");
 			}
-			Console.Write(j);
+			trace(j);
 		}
-		Console.WriteLine("}");
+		trace("}");
 
 
-		Console.Write("testEnum(ONE)");
-		Numberz ret = client.testEnum(Numberz.ONE);
-		Console.WriteLine(" = " + ret);
+		trace("testEnum(ONE)");
+		var ret = client.testEnum(Numberz.ONE);
+		trace(" = " + ret);
 
-		Console.Write("testEnum(TWO)");
+		trace("testEnum(TWO)");
 		ret = client.testEnum(Numberz.TWO);
-		Console.WriteLine(" = " + ret);
+		trace(" = " + ret);
 
-		Console.Write("testEnum(THREE)");
+		trace("testEnum(THREE)");
 		ret = client.testEnum(Numberz.THREE);
-		Console.WriteLine(" = " + ret);
+		trace(" = " + ret);
 
-		Console.Write("testEnum(FIVE)");
+		trace("testEnum(FIVE)");
 		ret = client.testEnum(Numberz.FIVE);
-		Console.WriteLine(" = " + ret);
+		trace(" = " + ret);
 
-		Console.Write("testEnum(EIGHT)");
+		trace("testEnum(EIGHT)");
 		ret = client.testEnum(Numberz.EIGHT);
-		Console.WriteLine(" = " + ret);
+		trace(" = " + ret);
 
-		Console.Write("testTypedef(309858235082523)");
-		long uid = client.testTypedef(309858235082523L);
-		Console.WriteLine(" = " + uid);
+		trace("testTypedef(309858235082523)");
+		var uid = client.testTypedef( Int64.make( 0x119D0, 0x7E08671B));  // 309858235082523
+		trace(" = " + uid);
 
-		Console.Write("testMapMap(1)");
-		Dictionary<int, Dictionary<int, int>> mm = client.testMapMap(1);
-		Console.Write(" = {");
-		foreach (int key in mm.Keys)
+		trace("testMapMap(1)");
+		var mm = client.testMapMap(1);
+		trace(" = {");
+		for( key in mm.keys())
 		{
-			Console.Write(key + " => {");
-			Dictionary<int, int> m2 = mm[key];
-			foreach (int k2 in m2.Keys)
+			trace(key + " => {");
+			var m2 = mm.get(key);
+			for( k2 in m2.keys())
 			{
-				Console.Write(k2 + " => " + m2[k2] + ", ");
+				trace(k2 + " => " + m2.get(k2) + ", ");
 			}
-			Console.Write("}, ");
+			trace("}, ");
 		}
-		Console.WriteLine("}");
+		trace("}");
 
-		Insanity insane = new Insanity();
-		insane.UserMap = new Dictionary<Numberz, long>();
-		insane.UserMap[Numberz.FIVE] = 5000L;
-		Xtruct truck = new Xtruct();
-		truck.String_thing = "Truck";
-		truck.Byte_thing = (sbyte)8;
-		truck.I32_thing = 8;
-		truck.I64_thing = 8;
-		insane.Xtructs = new List<Xtruct>();
-		insane.Xtructs.Add(truck);
-		Console.Write("testInsanity()");
-		Dictionary<long, Dictionary<Numberz, Insanity>> whoa = client.testInsanity(insane);
-		Console.Write(" = {");
-		foreach (long key in whoa.Keys)
+		var insane = new Insanity();
+		insane.userMap = new IntMap< Int64>();
+		insane.userMap.set( Numberz.FIVE, Int64.make(0,5000));
+		var truck = new Xtruct();
+		truck.string_thing = "Truck";
+		truck.byte_thing = 8;
+		truck.i32_thing = 8;
+		truck.i64_thing = Int64.make(0,8);
+		insane.xtructs = new List<Xtruct>();
+		insane.xtructs.add(truck);
+		trace("testInsanity()");
+		var whoa = client.testInsanity(insane);
+		trace(" = {");
+		for( key in whoa.keys())
 		{
-			Dictionary<Numberz, Insanity> val = whoa[key];
-			Console.Write(key + " => {");
+			var val = whoa.get(key);
+			trace(key + " => {");
 
-			foreach (Numberz k2 in val.Keys)
+			for( k2 in val.keys())
 			{
-				Insanity v2 = val[k2];
+				var v2 = val.get(k2);
 
-				Console.Write(k2 + " => {");
-				Dictionary<Numberz, long> userMap = v2.UserMap;
+				trace(k2 + " => {");
+				var userMap = v2.userMap;
 
-				Console.Write("{");
+				trace("{");
 				if (userMap != null)
 				{
-					foreach (Numberz k3 in userMap.Keys)
+					for( k3 in userMap.keys())
 					{
-						Console.Write(k3 + " => " + userMap[k3] + ", ");
+						trace(k3 + " => " + userMap.get(k3) + ", ");
 					}
 				}
 				else
 				{
-					Console.Write("null");
+					trace("null");
 				}
-				Console.Write("}, ");
+				trace("}, ");
 
-				List<Xtruct> xtructs = v2.Xtructs;
+				var xtructs = v2.xtructs;
 
-				Console.Write("{");
+				trace("{");
 				if (xtructs != null)
 				{
-					foreach (Xtruct x in xtructs)
+					for( x in xtructs)
 					{
-						Console.Write("{\"" + x.String_thing + "\", " + x.Byte_thing + ", " + x.I32_thing + ", " + x.I32_thing + "}, ");
+						trace("{\"" + x.string_thing + "\", " 
+							  + x.byte_thing + ", " + x.i32_thing + ", " 
+							  + x.i32_thing + "}, ");
 					}
 				}
 				else
 				{
-					Console.Write("null");
+					trace("null");
 				}
-				Console.Write("}");
+				trace("}");
 
-				Console.Write("}, ");
+				trace("}, ");
 			}
-			Console.Write("}, ");
+			trace("}, ");
 		}
-		Console.WriteLine("}");
+		trace("}");
 
-		sbyte arg0 = 1;
-		int arg1 = 2;
-		long arg2 = long.MaxValue;
-		Dictionary<short, string> multiDict = new Dictionary<short, string>();
-		multiDict[1] = "one";
-		Numberz arg4 = Numberz.FIVE;
-		long arg5 = 5000000;
-		Console.Write("Test Multi(" + arg0 + "," + arg1 + "," + arg2 + "," + multiDict + "," + arg4 + "," + arg5 + ")");
-		Xtruct multiResponse = client.testMulti(arg0, arg1, arg2, multiDict, arg4, arg5);
-		Console.Write(" = Xtruct(byte_thing:" + multiResponse.Byte_thing + ",String_thing:" + multiResponse.String_thing
-					+ ",i32_thing:" + multiResponse.I32_thing + ",i64_thing:" + multiResponse.I64_thing + ")\n");
+		var arg0 = 1;
+		var arg1 = 2;
+		var arg2 = Int64.make( 0x7FFFFFFF,0xFFFFFFFF);
+		var multiDict = new IntMap< String>();
+		multiDict.set(1, "one");
+		var arg4 = Numberz.FIVE;
+		var arg5 = Int64.make(0,5000000);
+		trace("Test Multi(" + arg0 + "," + arg1 + "," + arg2 + "," + multiDict + "," + arg4 + "," + arg5 + ")");
+		var multiResponse = client.testMulti(arg0, arg1, arg2, multiDict, arg4, arg5);
+		trace(" = Xtruct(byte_thing:" + multiResponse.byte_thing + ",string_thing:" + multiResponse.string_thing
+					+ ",i32_thing:" + multiResponse.i32_thing + ",i64_thing:" + multiResponse.i64_thing + ")\n");
 
-		Console.WriteLine("Test Oneway(1)");
+		trace("Test Oneway(1)");
 		client.testOneway(1);
 
-		Console.Write("Test Calltime()");
-		var startt = DateTime.UtcNow;
-		for ( int k=0; k<1000; ++k )
+		trace("Test Calltime()");
+		var difft = Date.now().getTime();
+		for ( k in 0 ... 999) {
 			client.testVoid();
-		Console.WriteLine(" = " + (DateTime.UtcNow - startt).TotalSeconds.ToString() + " ms a testVoid() call" );
+		}
+		difft = Date.now().getTime() - difft;
+		difft = (24.0 * 60 * 60) * difft;
+		trace(' = $difft ms a testVoid() call');
 	}
 }

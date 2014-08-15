@@ -45,40 +45,13 @@
     ]
     ,"files" : [
          {
-             "path" : "gen-haxe\\thrift\\test\\ThriftTestImpl.hx"
+             "path" : "src\\Arguments.hx"
             ,"useTabs" : true
             ,"indentSize" : 4
             ,"foldedRegions" : [
 
             ]
-            ,"activeLine" : 3879
-        }
-        ,{
-             "path" : "..\\..\\lib\\haxe\\src\\org\\apache\\thrift\\server\\TSimpleServer.hx"
-            ,"useTabs" : true
-            ,"indentSize" : 4
-            ,"foldedRegions" : [
-
-            ]
-            ,"activeLine" : 102
-        }
-        ,{
-             "path" : "..\\..\\lib\\haxe\\src\\org\\apache\\thrift\\transport\\TServerTransport.hx"
-            ,"useTabs" : true
-            ,"indentSize" : 4
-            ,"foldedRegions" : [
-
-            ]
-            ,"activeLine" : 26
-        }
-        ,{
-             "path" : "src\\TestClient.hx"
-            ,"useTabs" : true
-            ,"indentSize" : 4
-            ,"foldedRegions" : [
-
-            ]
-            ,"activeLine" : 37
+            ,"activeLine" : 47
         }
         ,{
              "path" : "src\\TestServer.hx"
@@ -87,25 +60,16 @@
             ,"foldedRegions" : [
 
             ]
-            ,"activeLine" : 33
+            ,"activeLine" : 70
         }
         ,{
-             "path" : "..\\..\\lib\\haxe\\src\\org\\apache\\thrift\\helper\\IntSet.hx"
+             "path" : "src\\TestClient.hx"
             ,"useTabs" : true
             ,"indentSize" : 4
             ,"foldedRegions" : [
 
             ]
-            ,"activeLine" : 31
-        }
-        ,{
-             "path" : "..\\..\\lib\\haxe\\src\\org\\apache\\thrift\\protocol\\TProtocolException.hx"
-            ,"useTabs" : true
-            ,"indentSize" : 4
-            ,"foldedRegions" : [
-
-            ]
-            ,"activeLine" : 23
+            ,"activeLine" : 229
         }
     ]
     ,"activeFile" : "src\\TestClient.hx"

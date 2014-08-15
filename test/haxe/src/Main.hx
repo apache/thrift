@@ -28,7 +28,7 @@ import org.apache.thrift.meta_data.*;
 
 import thrift.test.*;  // generated code
 
-class Program
+class Main
 {
 	static function main() {
 		try {

@@ -2592,8 +2592,8 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
   if (ttype->is_map()) {
     t_type* tkey = ((t_map*)ttype)->get_key_type();
 	t_type* tval = ((t_map*)ttype)->get_val_type();
- 	if( tkey->is_base_type()) {
-	  t_base_type::t_base tbase = ((t_base_type*)tkey)->get_base();
+	if (tkey->is_base_type()) {
+		t_base_type::t_base tbase = ((t_base_type*)tkey)->get_base();
       switch (tbase) {
       case t_base_type::TYPE_STRING:
         if( ! (((t_base_type*)tkey)->is_binary())) {
@@ -2606,8 +2606,11 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
       default:
         break;  // default to ObjectMap<>
       }
-    }
-    return "ObjectMap< "+type_name(tkey)+", "+type_name(tval)+">";
+	}
+	if (tkey->is_enum()) {
+		return "IntMap< " + type_name(tval) + ">";
+	}
+	return "ObjectMap< " + type_name(tkey) + ", " + type_name(tval) + ">";
   }
   
   if (ttype->is_set()) {
@@ -2627,7 +2630,10 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
         break;  // default to ObjectSet
       }
     }
-    return "ObjectSet< "+type_name(tkey)+">";
+	if (tkey->is_enum()) {
+		return "IntSet";
+	}
+	return "ObjectSet< " + type_name(tkey) + ">";
   }
   
   if (ttype->is_list()) {
