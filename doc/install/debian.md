@@ -30,7 +30,7 @@ Some other packages depend on what languages you want Thrift to support.
  * Haskell
 	* ghc6 cabal-install libghc6-binary-dev libghc6-network-dev libghc6-http-dev
  * Thrift Compiler for Windows
-	* mingw32 mingw32-binutils mingw32-runtime
+	* mingw32 mingw32-binutils mingw32-runtime nsis
 
 
 ## Additional reading
