@@ -27,7 +27,7 @@ sh ${SCRIPTPATH}/installCXXDependencies.sh
 
 # Java dependencies
 sudo apt-get install -qq ant openjdk-7-jdk
-sudo update-java-alternatives -s java-1.7.0-openjdk-amd64 
+sudo update-java-alternatives -s java-1.7.0-openjdk-amd64
 
 # Python dependencies
 sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools python-support
