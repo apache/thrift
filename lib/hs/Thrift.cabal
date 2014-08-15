@@ -68,6 +68,6 @@ Test-Suite tests
   Hs-Source-Dirs:
     tests
   Build-Depends:
-    base, QuickCheck, binary, bytestring, thrift
+    base, QuickCheck, binary, bytestring, thrift, split
   Main-Is:
     JSONTests.hs
