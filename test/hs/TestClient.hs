@@ -210,12 +210,12 @@ parseFlags (flag : flags) opts = do
     "--host" : arg : _ -> parseFlags flags opts{ host = arg }
     "--transport" : arg : _ -> parseFlags flags opts{ transport = arg }
     "--protocol" : arg : _ -> parseFlags flags opts{ protocol = getProtocol arg }
+    "-n" : arg : _ -> parseFlags flags opts{ testLoops = read arg }
     "--h" : _ -> Nothing
     "--help" : _ -> Nothing
     "--ssl" : _ -> parseFlags flags opts{ ssl = True }
     "--processor-events" : _ -> parseFlags flags opts
-parseFlags (flag : arg : flags) opts
-  | flag == "-n"                    = parseFlags flags opts{ testLoops = read arg }
+    _ -> Nothing
 parseFlags [] opts = Just opts
 
 showHelp :: IO ()
