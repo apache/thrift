@@ -231,7 +231,7 @@ for server in data["server"]:
                     count = 1
                     results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"" + protocol + "\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
                     test_name = server_lib + "_" + client_lib + "_" + protocol + "_" + transport + "_" + sock
-                    ret = runServiceTest(test_name, server_lib, server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, protocol, transport, 9090, 0, sock)
+                    ret = runServiceTest(test_name, server_lib, server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, protocol, transport, options.port, 0, sock)
                     if ret != None:
                       failed += 1
                       if client["exit"] == "hard" and server["exit"] == "hard":
@@ -255,7 +255,7 @@ for server in data["server"]:
                     count = 1
                     results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"accel-binary\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
                     test_name = server_lib + "_" + client_lib + "_accel-binary_" + transport + "_" + sock
-                    ret = runServiceTest(test_name, server_lib,server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, 'accel', transport, 9090, 0, sock)
+                    ret = runServiceTest(test_name, server_lib,server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, 'accel', transport, options.port, 0, sock)
 
                     if ret != None:
                       failed += 1
@@ -280,7 +280,7 @@ for server in data["server"]:
                     count = 1
                     results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"binary-accel\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
                     test_name = server_lib + "_" + client_lib + "_binary-accel_" + transport + "_" + sock
-                    ret = runServiceTest(test_name, server_lib,server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, 'binary', transport, 9090, 0, sock)
+                    ret = runServiceTest(test_name, server_lib,server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, 'binary', transport, options.port, 0, sock)
                     if ret != None:
                       failed += 1
                       if client["exit"] == "hard" and server["exit"] == "hard":
