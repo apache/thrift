@@ -52,10 +52,6 @@
 
 #ifdef _MSC_VER
 #include "windows/config.h"
-#else
-#ifndef _WIN32
-#include "config.h"
-#endif
 #endif
 #include "main.h"
 #include "globals.h"

@@ -149,6 +149,11 @@ target_link_libraries(thrift libparse)
 
 install(TARGETS thrift DESTINATION bin)
 
+# mingw32 does not support c++0x features
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
+set(CMAKE_CXX_FLAGS "-std=c++0x")
+endif()
+
 # create a Distribution Package for the Apache Thrift Compiler
 set(CPACK_PACKAGE_NAME "Apache Thrift")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Apache Thrift Compiler")
