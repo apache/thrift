@@ -51,6 +51,15 @@ using namespace apache::thrift::async;
 // Length of argv[0] - Length of script dir
 #define EXECUTABLE_FILE_NAME_LENGTH 19
 
+#define TEST_BASETYPES 1
+#define TEST_STRUCTS 2
+#define TEST_CONTAINERS 4
+#define TEST_EXCEPTIONS 8
+#define TEST_COMPLEX 16
+#define TEST_ENUMTYPEDEF 32
+#define TEST_ONEWAY 64
+#define TEST_NOTUSED 128
+
 //extern uint32_t g_socket_syscalls;
 
 // Current time, microseconds since the epoch
@@ -96,6 +105,15 @@ static void testVoid_clientReturn(const char* host, int port, event_base *base, 
 }
 
 int main(int argc, char** argv) {
+
+  bool test_basetypes_fails = false;
+  bool test_structs_fails = false;
+  bool test_containers_fails = false;
+  bool test_exceptions_fails = false;
+  bool test_complex_fails = false;
+  bool test_enumtypedef_fails = false;
+  bool test_oneway_fails = false;
+
   string file_path = boost::filesystem::system_complete(argv[0]).string();
   string dir_path = file_path.substr(0, file_path.size()-EXECUTABLE_FILE_NAME_LENGTH);
 #if _WIN32
@@ -279,8 +297,10 @@ int main(int argc, char** argv) {
     string s;
     testClient.testString(s, "Test");
     printf(" = \"%s\"\n", s.c_str());
-    if (s != "Test")
+    if (s != "Test") {
         failCount++;
+        test_basetypes_fails = true;
+    }
 
     /**
      * BYTE TEST
@@ -288,8 +308,10 @@ int main(int argc, char** argv) {
     printf("testByte(1)");
     uint8_t u8 = testClient.testByte(1);
     printf(" = %d\n", (int)u8);
-    if (u8 != 1)
-        failCount++;
+    if (u8 != 1) {
+      failCount++;
+      test_basetypes_fails = true;
+    }
 
     /**
      * I32 TEST
@@ -297,8 +319,10 @@ int main(int argc, char** argv) {
     printf("testI32(-1)");
     int32_t i32 = testClient.testI32(-1);
     printf(" = %d\n", i32);
-    if (i32 != -1)
+    if (i32 != -1) {
         failCount++;
+        test_basetypes_fails = true;
+    }
 
     /**
      * I64 TEST
@@ -306,16 +330,20 @@ int main(int argc, char** argv) {
     printf("testI64(-34359738368)");
     int64_t i64 = testClient.testI64(-34359738368LL);
     printf(" = %" PRId64 "\n", i64);
-    if (i64 != -34359738368LL)
+    if (i64 != -34359738368LL) {
         failCount++;
+        test_basetypes_fails = true;
+    }
     /**
      * DOUBLE TEST
      */
     printf("testDouble(-5.2098523)");
     double dub = testClient.testDouble(-5.2098523);
     printf(" = %f\n", dub);
-    if ((dub - (-5.2098523)) > 0.001)
+    if ((dub - (-5.2098523)) > 0.001) {
         failCount++;
+        test_basetypes_fails = true;
+    }
 
     /**
      * STRUCT TEST
@@ -333,8 +361,10 @@ int main(int argc, char** argv) {
            (int)in.byte_thing,
            in.i32_thing,
            in.i64_thing);
-    if (in != out)
+    if (in != out) {
     	failCount++;
+      test_structs_fails = true;
+    }
 
     /**
      * NESTED STRUCT TEST
@@ -354,8 +384,10 @@ int main(int argc, char** argv) {
            in.i32_thing,
            in.i64_thing,
            in2.i32_thing);
-    if (in2 != out2)
+    if (in2 != out2){
     	failCount++;
+      test_structs_fails = true;
+    }
 
     /**
      * MAP TEST
@@ -389,8 +421,10 @@ int main(int argc, char** argv) {
       printf("%d => %d", m_iter->first, m_iter->second);
     }
     printf("}\n");
-    if (mapin != mapout)
+    if (mapin != mapout) {
     	failCount++;
+      test_containers_fails = true;
+    }
 
     /**
      * STRING MAP TEST
@@ -429,8 +463,10 @@ int main(int argc, char** argv) {
       printf("%d", *s_iter);
     }
     printf("}\n");
-    if (setin != setout)
+    if (setin != setout) {
     	failCount++;
+      test_containers_fails = true;
+    }
 
     /**
      * LIST TEST
@@ -464,8 +500,10 @@ int main(int argc, char** argv) {
       printf("%d", *l_iter);
     }
     printf("}\n");
-    if (listin != listout)
+    if (listin != listout) {
     	failCount++;
+      test_containers_fails = true;
+    }
 
     /**
      * ENUM TEST
@@ -473,32 +511,42 @@ int main(int argc, char** argv) {
     printf("testEnum(ONE)");
     Numberz::type ret = testClient.testEnum(Numberz::ONE);
     printf(" = %d\n", ret);
-    if (ret != Numberz::ONE)
+    if (ret != Numberz::ONE) {
     	failCount++;
+      test_enumtypedef_fails = true;
+    }
 
     printf("testEnum(TWO)");
     ret = testClient.testEnum(Numberz::TWO);
     printf(" = %d\n", ret);
-    if (ret != Numberz::TWO)
-    	failCount++;
+    if (ret != Numberz::TWO) {
+      failCount++;
+      test_enumtypedef_fails = true;
+    }
 
     printf("testEnum(THREE)");
     ret = testClient.testEnum(Numberz::THREE);
     printf(" = %d\n", ret);
-    if (ret != Numberz::THREE)
-    	failCount++;
+    if (ret != Numberz::THREE) {
+      failCount++;
+      test_enumtypedef_fails = true;
+    }
 
     printf("testEnum(FIVE)");
     ret = testClient.testEnum(Numberz::FIVE);
     printf(" = %d\n", ret);
-    if (ret != Numberz::FIVE)
-    	failCount++;
+    if (ret != Numberz::FIVE) {
+      failCount++;
+      test_enumtypedef_fails = true;
+    }
 
     printf("testEnum(EIGHT)");
     ret = testClient.testEnum(Numberz::EIGHT);
     printf(" = %d\n", ret);
-    if (ret != Numberz::EIGHT)
-    	failCount++;
+    if (ret != Numberz::EIGHT) {
+      failCount++;
+      test_enumtypedef_fails = true;
+    }
 
     /**
      * TYPEDEF TEST
@@ -506,8 +554,10 @@ int main(int argc, char** argv) {
     printf("testTypedef(309858235082523)");
     UserId uid = testClient.testTypedef(309858235082523LL);
     printf(" = %" PRId64 "\n", uid);
-    if (uid != 309858235082523LL)
-    	failCount++;
+    if (uid != 309858235082523LL) {
+      failCount++;
+      test_enumtypedef_fails = true;
+    }
 
     /**
      * NESTED MAP TEST
@@ -584,6 +634,7 @@ int main(int argc, char** argv) {
       testClient.testException("Xception");
       printf("  void\nFAILURE\n");
       failCount++;
+      test_exceptions_fails = true;
 
     } catch(Xception& e) {
       printf("  {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
@@ -594,6 +645,7 @@ int main(int argc, char** argv) {
         testClient.testException("TException");
         printf("  void\nFAILURE\n");
         failCount++;
+        test_exceptions_fails = true;
 
       } catch(const TException&) {
         printf("  Caught TException\n");
@@ -606,6 +658,7 @@ int main(int argc, char** argv) {
     } catch(...) {
       printf("  exception\nFAILURE\n");
       failCount++;
+      test_exceptions_fails = true;
     }
 
     /* test multi exception */
@@ -616,6 +669,7 @@ int main(int argc, char** argv) {
       testClient.testMultiException(result, "Xception", "test 1");
       printf("  result\nFAILURE\n");
       failCount++;
+      test_exceptions_fails = true;
     } catch(Xception& e) {
       printf("  {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
     }
@@ -626,7 +680,7 @@ int main(int argc, char** argv) {
       testClient.testMultiException(result, "Xception2", "test 2");
       printf("  result\nFAILURE\n");
       failCount++;
-
+      test_exceptions_fails = true;
     } catch(Xception2& e) {
       printf("  {%u, {\"%s\"}}\n", e.errorCode, e.struct_thing.string_thing.c_str());
     }
@@ -639,6 +693,7 @@ int main(int argc, char** argv) {
     } catch(...) {
       printf("  exception\nFAILURE\n");
       failCount++;
+      test_exceptions_fails = true;
     }
 
     /* test oneway void */
@@ -650,6 +705,7 @@ int main(int argc, char** argv) {
         if (elapsed > 200 * 1000) { // 0.2 seconds
             printf("  FAILURE - took %.2f ms\n", (double)elapsed/1000.0);
             failCount++;
+            test_oneway_fails = true;
         } else {
             printf("  success - took %.2f ms\n", (double)elapsed/1000.0);
         }
@@ -669,8 +725,10 @@ int main(int argc, char** argv) {
     printf("re-test testI32(-1)");
     i32 = testClient.testI32(-1);
     printf(" = %d\n", i32);
-    if (i32 != -1)
+    if (i32 != -1) {
         failCount++;
+        test_basetypes_fails = true;
+    }
 
 
     uint64_t stop = now();
@@ -698,5 +756,28 @@ int main(int argc, char** argv) {
   printf("Max time: %" PRIu64 " us\n", time_max);
   printf("Avg time: %" PRIu64 " us\n", time_avg);
 
-  return failCount;
+  int ret = 255 - TEST_NOTUSED;
+  if(!test_basetypes_fails){
+    ret = ret - TEST_BASETYPES;
+  }
+  if(!test_structs_fails){
+    ret = ret - TEST_STRUCTS;
+  }
+  if(!test_containers_fails){
+    ret = ret - TEST_CONTAINERS;
+  }
+  if(!test_exceptions_fails){
+    ret = ret - TEST_EXCEPTIONS;
+  }
+  if(!test_complex_fails){
+    ret = ret - TEST_COMPLEX;
+  }
+  if(!test_enumtypedef_fails){
+    ret = ret - TEST_ENUMTYPEDEF;
+  }
+  if(!test_oneway_fails){
+    ret = ret - TEST_ONEWAY;
+  }
+
+  return ret;
 }

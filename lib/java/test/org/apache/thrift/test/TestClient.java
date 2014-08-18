@@ -53,6 +53,24 @@ import java.util.ArrayList;
  *
  */
 public class TestClient {
+
+  public static final int TEST_BASETYPES = 1;
+  public static final int TEST_STRUCTS = 2;
+  public static final int TEST_CONTAINERS = 4;
+  public static final int TEST_EXCEPTIONS = 8;
+  public static final int TEST_COMPLEX = 16;
+  public static final int TEST_ENUMTYPEDEF = 32;
+  public static final int TEST_ONEWAY = 64;
+  public static final int TEST_NOTUSED = 128;
+
+  static boolean test_basetypes_fails = false;
+  static boolean test_structs_fails = false;
+  static boolean test_containers_fails = false;
+  static boolean test_exceptions_fails = false;
+  static boolean test_complex_fails = false;
+  static boolean test_enumtypedef_fails = false;
+  static boolean test_oneway_fails = false;
+
   public static void main(String [] args) {
     String host = "localhost";
     int port = 9090;
@@ -69,8 +87,8 @@ public class TestClient {
           host = args[i].split("=")[1];
           host.trim();
         } else if (args[i].startsWith("--port")) {
-          port = Integer.valueOf(args[i].split("=")[1]); 
-        } else if (args[i].startsWith("--n") || 
+          port = Integer.valueOf(args[i].split("=")[1]);
+        } else if (args[i].startsWith("--n") ||
             args[i].startsWith("--testloops")){
           numTests = Integer.valueOf(args[i].split("=")[1]);
         } else if (args[i].equals("--timeout")) {
@@ -85,7 +103,7 @@ public class TestClient {
           ssl = true;
         } else if (args[i].equals("--help")) {
           System.out.println("Allowed options:");
-          System.out.println("  --help\t\t\tProduce help message"); 
+          System.out.println("  --help\t\t\tProduce help message");
           System.out.println("  --host=arg (=" + host + ")\tHost to connect");
           System.out.println("  --port=arg (=" + port + ")\tPort number to connect");
           System.out.println("  --transport=arg (=" + transport_type + ")\n\t\t\t\tTransport: buffered, framed, fastframed, http");
@@ -105,7 +123,7 @@ public class TestClient {
       } else if (protocol_type.equals("compact")) {
       } else if (protocol_type.equals("json")) {
       } else {
-        throw new Exception("Unknown protocol type! " + protocol_type); 
+        throw new Exception("Unknown protocol type! " + protocol_type);
       }
       if (transport_type.equals("buffered")) {
       } else if (transport_type.equals("framed")) {
@@ -206,6 +224,7 @@ public class TestClient {
         System.out.print(" = \"" + s + "\"\n");
         if (!s.equals("Test")) {
           failCount++;
+          test_basetypes_fails = true;
           System.out.println("FAILURE\n");
         }
 
@@ -216,7 +235,8 @@ public class TestClient {
         byte i8 = testClient.testByte((byte)1);
         System.out.print(" = " + i8 + "\n");
         if (i8 != 1) {
-          failCount++; 
+          failCount++;
+          test_basetypes_fails = true;
           System.out.println("FAILURE\n");
         }
 
@@ -227,7 +247,8 @@ public class TestClient {
         int i32 = testClient.testI32(-1);
         System.out.print(" = " + i32 + "\n");
         if (i32 != -1) {
-          failCount++; 
+          failCount++;
+          test_basetypes_fails = true;
           System.out.println("FAILURE\n");
         }
 
@@ -239,6 +260,7 @@ public class TestClient {
         System.out.print(" = " + i64 + "\n");
         if (i64 != -34359738368L) {
           failCount++;
+          test_basetypes_fails = true;
           System.out.println("FAILURE\n");
         }
 
@@ -250,6 +272,7 @@ public class TestClient {
         System.out.print(" = " + dub + "\n");
         if (Math.abs(dub - (-5.325098235)) > 0.001) {
           failCount++;
+          test_basetypes_fails = true;
           System.out.println("FAILURE\n");
         }
 
@@ -263,13 +286,14 @@ public class TestClient {
         out.i32_thing = -3;
         out.i64_thing = -5;
         Xtruct in = testClient.testStruct(out);
-        System.out.print(" = {" + "\"" + 
-                         in.string_thing + "\"," + 
-                         in.byte_thing + ", " + 
-                         in.i32_thing + ", " + 
+        System.out.print(" = {" + "\"" +
+                         in.string_thing + "\"," +
+                         in.byte_thing + ", " +
+                         in.i32_thing + ", " +
                          in.i64_thing + "}\n");
         if (!in.equals(out)) {
-          failCount++; 
+          failCount++;
+          test_structs_fails = true;
           System.out.println("FAILURE\n");
         }
 
@@ -283,14 +307,15 @@ public class TestClient {
         out2.i32_thing = 5;
         Xtruct2 in2 = testClient.testNest(out2);
         in = in2.struct_thing;
-        System.out.print(" = {" + in2.byte_thing + ", {" + "\"" + 
-                         in.string_thing + "\", " + 
+        System.out.print(" = {" + in2.byte_thing + ", {" + "\"" +
+                         in.string_thing + "\", " +
                          in.byte_thing + ", " +
                          in.i32_thing + ", " +
                          in.i64_thing + "}, " +
                          in2.i32_thing + "}\n");
         if (!in2.equals(out2)) {
           failCount++;
+          test_structs_fails = true;
           System.out.println("FAILURE\n");
         }
 
@@ -325,7 +350,8 @@ public class TestClient {
         }
         System.out.print("}\n");
         if (!mapout.equals(mapin)) {
-          failCount++; 
+          failCount++;
+          test_containers_fails = true;
           System.out.println("FAILURE\n");
         }
 
@@ -365,7 +391,8 @@ public class TestClient {
         }
         System.out.print("}\n");
         if (!setout.equals(setin)) {
-          failCount++; 
+          failCount++;
+          test_containers_fails = true;
           System.out.println("FAILURE\n");
         }
 
@@ -400,7 +427,8 @@ public class TestClient {
         }
         System.out.print("}\n");
         if (!listout.equals(listin)) {
-          failCount++; 
+          failCount++;
+          test_containers_fails = true;
           System.out.println("FAILURE\n");
         }
 
@@ -412,6 +440,7 @@ public class TestClient {
         System.out.print(" = " + ret + "\n");
         if (ret != Numberz.ONE) {
           failCount++;
+          test_enumtypedef_fails = true;
           System.out.println("FAILURE\n");
         }
 
@@ -419,7 +448,8 @@ public class TestClient {
         ret = testClient.testEnum(Numberz.TWO);
         System.out.print(" = " + ret + "\n");
         if (ret != Numberz.TWO) {
-          failCount++; 
+          failCount++;
+          test_enumtypedef_fails = true;
           System.out.println("FAILURE\n");
         }
 
@@ -428,6 +458,7 @@ public class TestClient {
         System.out.print(" = " + ret + "\n");
         if (ret != Numberz.THREE) {
           failCount++;
+          test_enumtypedef_fails = true;
           System.out.println("FAILURE\n");
         }
 
@@ -436,6 +467,7 @@ public class TestClient {
         System.out.print(" = " + ret + "\n");
         if (ret != Numberz.FIVE) {
           failCount++;
+          test_enumtypedef_fails = true;
           System.out.println("FAILURE\n");
         }
 
@@ -444,6 +476,7 @@ public class TestClient {
         System.out.print(" = " + ret + "\n");
         if (ret != Numberz.EIGHT) {
           failCount++;
+          test_enumtypedef_fails = true;
           System.out.println("FAILURE\n");
         }
 
@@ -455,6 +488,7 @@ public class TestClient {
         System.out.print(" = " + uid + "\n");
         if (uid != 309858235082523L) {
           failCount++;
+          test_enumtypedef_fails = true;
           System.out.println("FAILURE\n");
         }
 
@@ -523,7 +557,7 @@ public class TestClient {
         }
         System.out.print("}\n");
 
-        
+
         /**
          * EXECPTION TEST
          */
@@ -532,19 +566,21 @@ public class TestClient {
           testClient.testException("Xception");
           System.out.print("  void\nFAILURE\n");
           failCount++;
+          test_exceptions_fails = true;
         } catch(Xception e) {
           System.out.printf("  {%d, \"%s\"}\n", e.errorCode, e.message);
         }
-        
+
         try {
           System.out.print("testClient.testException(\"TException\") =>");
           testClient.testException("TException");
           System.out.print("  void\nFAILURE\n");
           failCount++;
+          test_exceptions_fails = true;
         } catch(TException e) {
           System.out.printf("  {\"%s\"}\n", e.getMessage());
         }
-        
+
         try {
           System.out.print("testClient.testException(\"success\") =>");
           testClient.testException("success");
@@ -552,31 +588,34 @@ public class TestClient {
         }catch(Exception e) {
           System.out.printf("  exception\nFAILURE\n");
           failCount++;
+          test_exceptions_fails = true;
         }
-        
-        
+
+
         /**
          * MULTI EXCEPTION TEST
          */
-        
+
         try {
           System.out.printf("testClient.testMultiException(\"Xception\", \"test 1\") =>");
           testClient.testMultiException("Xception", "test 1");
           System.out.print("  result\nFAILURE\n");
           failCount++;
+          test_exceptions_fails = true;
         } catch(Xception e) {
           System.out.printf("  {%d, \"%s\"}\n", e.errorCode, e.message);
         }
-        
+
         try {
           System.out.printf("testClient.testMultiException(\"Xception2\", \"test 2\") =>");
           testClient.testMultiException("Xception2", "test 2");
           System.out.print("  result\nFAILURE\n");
           failCount++;
+          test_exceptions_fails = true;
         } catch(Xception2 e) {
           System.out.printf("  {%d, {\"%s\"}}\n", e.errorCode, e.struct_thing.string_thing);
         }
-        
+
         try {
           System.out.print("testClient.testMultiException(\"success\", \"test 3\") =>");
           Xtruct result;
@@ -585,10 +624,11 @@ public class TestClient {
         } catch(Exception e) {
           System.out.printf("  exception\nFAILURE\n");
           failCount++;
+          test_exceptions_fails = true;
         }
 
 
-        
+
         /**
          * ONEWAY TEST
          */
@@ -601,6 +641,7 @@ public class TestClient {
                               Long.toString(onewayElapsedMillis) +
                               "ms");
           failCount++;
+          test_oneway_fails = true;
         } else {
           System.out.println("Success - took " +
                              Long.toString(onewayElapsedMillis) +
@@ -625,6 +666,7 @@ public class TestClient {
       } catch (Exception x) {
         x.printStackTrace();
         failCount++;
+        test_oneway_fails = true;
       }
     }
 
@@ -642,7 +684,28 @@ public class TestClient {
       System.exit(1);
     }
 
-
-    System.exit(failCount);
+    int ret = 255 - TEST_NOTUSED;
+    if(!test_basetypes_fails){
+      ret = ret - TEST_BASETYPES;
+    }
+    if(!test_structs_fails){
+      ret = ret - TEST_STRUCTS;
+    }
+    if(!test_containers_fails){
+      ret = ret - TEST_CONTAINERS;
+    }
+    if(!test_exceptions_fails){
+      ret = ret - TEST_EXCEPTIONS;
+    }
+    if(!test_complex_fails){
+      ret = ret - TEST_COMPLEX;
+    }
+    if(!test_enumtypedef_fails){
+      ret = ret - TEST_ENUMTYPEDEF;
+    }
+    if(!test_oneway_fails){
+      ret = ret - TEST_ONEWAY;
+    }
+    System.exit(ret);
   }
 }
