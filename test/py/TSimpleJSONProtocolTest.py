@@ -45,7 +45,7 @@ class SimpleJSONProtocolTest(unittest.TestCase):
       # assertDictEqual only in Python 2.7. Depends on your machine.
       self.assertDictEqual(a, b, msg)
       return
-    
+
     # Substitute implementation not as good as unittest library's
     self.assertEquals(len(a), len(b), msg)
     for k, v in a.iteritems():
@@ -79,7 +79,7 @@ class SimpleJSONProtocolTest(unittest.TestCase):
       actual = json.loads(self._serialize(v1obj))
 
       self._assertDictEqual(expected, actual)
-     
+
   def testComplicated(self):
       v2obj = VersioningTestV2(
           begin_in_both=12345,
@@ -107,7 +107,7 @@ class SimpleJSONProtocolTest(unittest.TestCase):
                       newmap=v2obj.newmap,
                       newstring=v2obj.newstring,
                       end_in_both=v2obj.end_in_both)
-      
+
       # Need to load/dump because map keys get escaped.
       expected = json.loads(json.dumps(expected))
       actual = json.loads(self._serialize(v2obj))
