@@ -29,20 +29,20 @@ __all__ = ['TJSONProtocol',
 
 VERSION = 1
 
-COMMA = ','
-COLON = ':'
-LBRACE = '{'
-RBRACE = '}'
-LBRACKET = '['
-RBRACKET = ']'
-QUOTE = '"'
-BACKSLASH = '\\'
-ZERO = '0'
+COMMA = b','
+COLON = b':'
+LBRACE = b'{'
+RBRACE = b'}'
+LBRACKET = b'['
+RBRACKET = b']'
+QUOTE = b'"'
+BACKSLASH = b'\\'
+ZERO = b'0'
 
-ESCSEQ = '\\u00'
-ESCAPE_CHAR = '"\\bfnrt'
-ESCAPE_CHAR_VALS = ['"', '\\', '\b', '\f', '\n', '\r', '\t']
-NUMERIC_CHAR = '+-.0123456789Ee'
+ESCSEQ = b'\\u00'
+ESCAPE_CHAR = b'"\\bfnrt'
+ESCAPE_CHAR_VALS = [b'"', b'\\', b'\b', b'\f', b'\n', b'\r', b'\t']
+NUMERIC_CHAR = b'+-.0123456789Ee'
 
 CTYPES = {TType.BOOL:       'tf',
           TType.BYTE:       'i8',
