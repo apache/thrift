@@ -20,7 +20,7 @@
 #
 from __future__ import division
 import sys, glob, time, os
-sys.path.insert(0, glob.glob(os.path.join(os.path.dirname(__file__),'../../lib/py/build/lib.*'))[0])
+sys.path.insert(0, glob.glob(os.path.join(os.path.dirname(__file__),'../../lib/py/build/lib*'))[0])
 from optparse import OptionParser
 
 parser = OptionParser()

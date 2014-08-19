@@ -20,7 +20,7 @@
 #
 
 import sys, glob, os
-sys.path.insert(0, glob.glob(os.path.join(os.path.dirname(__file__),'../../lib/py/build/lib.*'))[0])
+sys.path.insert(0, glob.glob(os.path.join(os.path.dirname(__file__),'../../lib/py/build/lib*'))[0])
 
 import unittest
 import time
