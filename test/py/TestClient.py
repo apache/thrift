@@ -22,6 +22,8 @@
 import glob
 import os
 import sys
+sys.path.insert(0, glob.glob(os.path.join(os.path.dirname(__file__),'../../lib/py/build/lib*'))[0])
+
 import time
 import unittest
 from optparse import OptionParser

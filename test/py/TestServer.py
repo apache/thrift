@@ -24,6 +24,8 @@ import logging
 import os
 import sys
 import time
+sys.path.insert(0, glob.glob(os.path.join(os.path.dirname(__file__),'../../lib/py/build/lib*'))[0])
+
 from optparse import OptionParser
 
 # Print TServer log to stdout so that the test-runner can redirect it to log files

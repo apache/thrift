@@ -27,7 +27,7 @@ parser.add_option('--genpydir', type='string', dest='genpydir', default='gen-py'
 options, args = parser.parse_args()
 del sys.argv[1:] # clean up hack so unittest doesn't complain
 sys.path.insert(0, options.genpydir)
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
+sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])
 
 from ThriftTest.ttypes import *
 from thrift.protocol import TJSONProtocol
