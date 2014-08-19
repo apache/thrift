@@ -17,6 +17,7 @@
 # under the License.
 #
 
+from io import StringIO
 import os
 import socket
 import sys
@@ -25,7 +26,6 @@ import warnings
 
 from six.moves.urllib import parse as urlparse
 from six.moves import http_client
-from six.moves import StringIO
 
 from .TTransport import *
 import six

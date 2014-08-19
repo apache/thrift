@@ -119,8 +119,9 @@ class TBinaryProtocol(TProtocolBase):
     self.trans.write(buff)
 
   def writeString(self, str):
-    self.writeI32(len(bytearray(str,'utf-8')))
-    self.trans.write(bytearray(str,'utf-8'))
+    encoded = bytearray(str, 'utf-8')
+    self.writeI32(len(encoded))
+    self.trans.write(encoded)
 
   def readMessageBegin(self):
     sz = self.readI32()

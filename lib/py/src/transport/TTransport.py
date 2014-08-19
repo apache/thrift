@@ -17,7 +17,7 @@
 # under the License.
 #
 
-from six import BytesIO
+from io import BytesIO
 from struct import pack, unpack
 from thrift.Thrift import TException
 
@@ -336,7 +336,7 @@ class TFileObjectTransport(TTransportBase):
 
 class TSaslClientTransport(TTransportBase, CReadableTransport):
   """
-  SASL transport 
+  SASL transport
   """
 
   START = 1
