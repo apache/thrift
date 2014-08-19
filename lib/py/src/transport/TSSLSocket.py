@@ -58,7 +58,7 @@ class TSSLSocket(TSocket.TSocket):
     @type keyfile: str
     @param certfile: The cert file
     @type certfile: str
-    
+
     Raises an IOError exception if validate is True and the ca_certs file is
     None, not present or unreadable.
     """
@@ -200,10 +200,10 @@ class TSSLServerSocket(TSocket.TServerSocket):
     try:
       client = ssl.wrap_socket(plain_client, certfile=self.certfile,
                       server_side=True, ssl_version=self.SSL_VERSION)
-    except ssl.SSLError as ssl_exc:
+    except ssl.SSLError:
       # failed handshake/ssl wrap, close socket to client
       plain_client.close()
-      # raise ssl_exc
+      # raise
       # We can't raise the exception, because it kills most TServer derived
       # serve() methods.
       # Instead, return None, and let the TServer instance deal with it in
