@@ -28,7 +28,7 @@ import unittest
 
 basepath = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, basepath+'/gen-py.tornado')
-sys.path.insert(0, glob.glob(os.path.join(basepath, '../../lib/py/build/lib.*'))[0])
+sys.path.insert(0, glob.glob(os.path.join(basepath, '../../lib/py/build/lib*'))[0])
 
 try:
     __import__('tornado')

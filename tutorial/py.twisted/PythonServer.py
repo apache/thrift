@@ -21,7 +21,7 @@
 
 import sys, glob
 sys.path.append('gen-py.twisted')
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
+sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])
 
 from tutorial import Calculator
 from tutorial.ttypes import *
@@ -36,7 +36,7 @@ from thrift.protocol import TBinaryProtocol
 from thrift.server import TServer
 
 class CalculatorHandler:
-  implements(Calculator.Iface)  
+  implements(Calculator.Iface)
   def __init__(self):
     self.log = {}
 

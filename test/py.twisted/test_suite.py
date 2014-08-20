@@ -19,7 +19,7 @@
 
 import sys, glob, time
 sys.path.insert(0, './gen-py.twisted')
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
+sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])
 
 from ThriftTest import ThriftTest
 from ThriftTest.ttypes import Xception, Xtruct
