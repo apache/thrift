@@ -22,7 +22,7 @@ import socket
 import struct
 import logging
 
-from .thrift.transport.TTransport import TTransportException, TTransportBase, TMemoryBuffer
+from .transport.TTransport import TTransportException, TTransportBase, TMemoryBuffer
 
 from io import BytesIO
 from collections import deque
