@@ -66,7 +66,7 @@ class SimpleJSONProtocolTest(unittest.TestCase):
 
   def testWriteOnly(self):
     self.assertRaises(NotImplementedError,
-                      self._deserialize, VersioningTestV1, '{}')
+                      self._deserialize, VersioningTestV1, b'{}')
 
   def testSimpleMessage(self):
       v1obj = VersioningTestV1(
@@ -76,7 +76,7 @@ class SimpleJSONProtocolTest(unittest.TestCase):
       expected = dict(begin_in_both=v1obj.begin_in_both,
                       old_string=v1obj.old_string,
                       end_in_both=v1obj.end_in_both)
-      actual = json.loads(self._serialize(v1obj))
+      actual = json.loads(self._serialize(v1obj).decode('ascii'))
 
       self._assertDictEqual(expected, actual)
 
@@ -110,7 +110,7 @@ class SimpleJSONProtocolTest(unittest.TestCase):
 
       # Need to load/dump because map keys get escaped.
       expected = json.loads(json.dumps(expected))
-      actual = json.loads(self._serialize(v2obj))
+      actual = json.loads(self._serialize(v2obj).decode('ascii'))
       self._assertDictEqual(expected, actual)
 
 
