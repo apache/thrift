@@ -1151,26 +1151,32 @@ void t_py_generator::generate_service_client(t_service* tservice) {
   }
 
   if (gen_tornado_ && extends.empty()) {
-    f_service_ << indent() << "@gen.engine" << endl << indent()
-               << "def _start_receiving(self):" << endl << indent() << "  while True:" << endl
-               << indent() << "    try:" << endl << indent()
-               << "      frame = yield self._transport.readFrame()" << endl << indent()
-               << "    except TTransport.TTransportException as e:" << endl << indent()
-               << "      for future in self._reqs.itervalues():" << endl << indent()
-               << "        future.set_exception(e)" << endl << indent() << "      self._reqs = {}"
-               << endl << indent() << "      return" << endl << indent()
-               << "    tr = TTransport.TMemoryBuffer(frame)" << endl << indent()
-               << "    iprot = self._iprot_factory.getProtocol(tr)" << endl << indent()
-               << "    (fname, mtype, rseqid) = iprot.readMessageBegin()" << endl << indent()
-               << "    future = self._reqs.pop(rseqid, None)" << endl << indent()
-               << "    if not future:" << endl << indent()
-               << "      # future has already been discarded" << endl << indent()
-               << "      continue" << endl << indent()
-               << "    method = getattr(self, 'recv_' + fname)" << endl << indent()
-               << "    try:" << endl << indent() << "      result = method(iprot, mtype, rseqid)"
-               << endl << indent() << "    except Exception as e:" << endl << indent()
-               << "      future.set_exception(e)" << endl << indent() << "    else:" << endl
-               << indent() << "      future.set_result(result)" << endl << endl;
+    f_service_ <<
+      indent() << "@gen.engine" << endl <<
+      indent() << "def _start_receiving(self):" << endl <<
+      indent() << "  while True:" << endl <<
+      indent() << "    try:" << endl <<
+      indent() << "      frame = yield self._transport.readFrame()" << endl <<
+      indent() << "    except TTransport.TTransportException as e:" << endl <<
+      indent() << "      for future in self._reqs.values():" << endl <<
+      indent() << "        future.set_exception(e)" << endl <<
+      indent() << "      self._reqs = {}" << endl <<
+      indent() << "      return" << endl <<
+      indent() << "    tr = TTransport.TMemoryBuffer(frame)" << endl <<
+      indent() << "    iprot = self._iprot_factory.getProtocol(tr)" << endl <<
+      indent() << "    (fname, mtype, rseqid) = iprot.readMessageBegin()" << endl <<
+      indent() << "    method = getattr(self, 'recv_' + fname)" << endl <<
+      indent() << "    future = self._reqs.pop(rseqid, None)" << endl <<
+      indent() << "    if not future:" << endl <<
+      indent() << "      # future has already been discarded" << endl <<
+      indent() << "      continue" << endl <<
+      indent() << "    try:" << endl <<
+      indent() << "      result = method(iprot, mtype, rseqid)" << endl <<
+      indent() << "    except Exception as e:" << endl <<
+      indent() << "      future.set_exception(e)" << endl <<
+      indent() << "    else:" << endl <<
+      indent() << "      future.set_result(result)" << endl <<
+      endl;
   }
 
   // Generate client method implementations
