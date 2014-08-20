@@ -802,7 +802,7 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
     out <<
       indent() << "def __repr__(self):" << endl <<
       indent() << "  L = ['%s=%r' % (key, value)" << endl <<
-      indent() << "    for key, value in self.__dict__.iteritems()]" << endl <<
+      indent() << "    for key, value in self.__dict__.items()]" << endl <<
       indent() << "  return '%s(%s)' % (self.__class__.__name__, ', '.join(L))" << endl <<
       endl;
 
@@ -2202,7 +2202,7 @@ void t_py_generator::generate_deserialize_container(ofstream &out,
   // For loop iterates over elements
   string i = tmp("_i");
   indent(out) <<
-    "for " << i << " in xrange(" << size << "):" << endl;
+    "for " << i << " in range(" << size << "):" << endl;
 
     indent_up();
 
