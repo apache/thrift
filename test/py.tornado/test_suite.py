@@ -33,7 +33,7 @@ sys.path.insert(0, glob.glob(os.path.join(basepath, '../../lib/py/build/lib*'))[
 try:
     __import__('tornado')
 except ImportError:
-    print "module `tornado` not found, skipping test"
+    print("module `tornado` not found, skipping test")
     sys.exit(0)
 
 from tornado import gen
@@ -190,7 +190,7 @@ class ThriftTestCase(AsyncTestCase):
     def test_oneway(self):
         self.client.testOneway(0.5)
         start, end, seconds = self.wait(timeout=1)
-        self.assertAlmostEquals(seconds, (end - start), places=3)
+        self.assertAlmostEqual(seconds, (end - start), places=3)
 
     @gen_test
     def test_map(self):

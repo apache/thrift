@@ -56,21 +56,21 @@ def communicate(callback=None):
 
     # ping
     yield gen.Task(client.ping)
-    print "ping()"
+    print("ping()")
 
     # add
     sum_ = yield gen.Task(client.add, 1, 1)
-    print "1 + 1 = {}".format(sum_)
+    print("1 + 1 = {}".format(sum_))
 
     # make a oneway call without a callback (schedule the write and continue
     # without blocking)
     client.zip()
-    print "zip() without callback"
+    print("zip() without callback")
 
     # make a oneway call with a callback (we'll wait for the stream write to
     # complete before continuing)
     yield gen.Task(client.zip)
-    print "zip() with callback"
+    print("zip() with callback")
 
     # calculate 1/0
     work = Work()
@@ -80,9 +80,9 @@ def communicate(callback=None):
 
     try:
         quotient = yield gen.Task(client.calculate, 1, work)
-        print "Whoa? You know how to divide by zero?"
+        print("Whoa? You know how to divide by zero?")
     except InvalidOperation as io:
-        print "InvalidOperation: {}".format(io)
+        print("InvalidOperation: {}".format(io))
 
     # calculate 15-10
     work.op = Operation.SUBTRACT
@@ -90,11 +90,11 @@ def communicate(callback=None):
     work.num2 = 10
 
     diff = yield gen.Task(client.calculate, 1, work)
-    print "15 - 10 = {}".format(diff)
+    print("15 - 10 = {}".format(diff))
 
     # getStruct
     log = yield gen.Task(client.getStruct, 1)
-    print "Check log: {}".format(log.value)
+    print("Check log: {}".format(log.value))
 
     # close the transport
     client._transport.close()
