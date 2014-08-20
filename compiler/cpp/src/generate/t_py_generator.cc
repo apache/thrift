@@ -1252,7 +1252,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       indent() << "    try:" << endl <<
       indent() << "      frame = yield self._transport.readFrame()" << endl <<
       indent() << "    except TTransport.TTransportException as e:" << endl <<
-      indent() << "      for future in self._reqs.itervalues():" << endl <<
+      indent() << "      for future in self._reqs.values():" << endl <<
       indent() << "        future.set_exception(e)" << endl <<
       indent() << "      self._reqs = {}" << endl <<
       indent() << "      return" << endl <<
