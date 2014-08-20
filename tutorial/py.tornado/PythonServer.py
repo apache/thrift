@@ -43,15 +43,15 @@ class CalculatorHandler(object):
         self.log = {}
 
     def ping(self, callback):
-        print "ping()"
+        print("ping()")
         callback()
 
     def add(self, n1, n2, callback):
-        print "add({}, {})".format(n1, n2)
+        print("add({}, {})".format(n1, n2))
         callback(n1 + n2)
 
     def calculate(self, logid, work, callback):
-        print "calculate({}, {})".format(logid, work)
+        print("calculate({}, {})".format(logid, work))
 
         if work.op == Operation.ADD:
             val = work.num1 + work.num2
@@ -79,11 +79,11 @@ class CalculatorHandler(object):
         callback(val)
 
     def getStruct(self, key, callback):
-        print "getStruct({})".format(key)
+        print("getStruct({})".format(key))
         callback(self.log[key])
 
     def zip(self, callback):
-        print "zip()"
+        print("zip()")
         callback()
 
 
@@ -93,11 +93,11 @@ def main():
     pfactory = TBinaryProtocol.TBinaryProtocolFactory()
     server = TTornado.TTornadoServer(processor, pfactory)
 
-    print "Starting the server..."
+    print("Starting the server...")
     server.bind(9090)
     server.start(1)
     ioloop.IOLoop.instance().start()
-    print "done."
+    print("done.")
 
 
 if __name__ == "__main__":
