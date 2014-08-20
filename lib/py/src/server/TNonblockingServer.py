@@ -26,10 +26,11 @@ maximum connections
 """
 import threading
 import socket
-import Queue
 import select
 import struct
 import logging
+
+from six.moves import queue
 
 from thrift.transport import TTransport
 from thrift.protocol.TBinaryProtocol import TBinaryProtocolFactory
@@ -55,7 +56,7 @@ class Worker(threading.Thread):
                 callback(True, otrans.getvalue())
             except Exception:
                 logging.exception("Exception while processing request")
-                callback(False, '')
+                callback(False, b'')
 
 WAIT_LEN = 0
 WAIT_MESSAGE = 1
@@ -102,7 +103,7 @@ class Connection:
         self.socket.setblocking(False)
         self.status = WAIT_LEN
         self.len = 0
-        self.message = ''
+        self.message = b''
         self.lock = threading.Lock()
         self.wake_up = wake_up
 
@@ -130,7 +131,7 @@ class Connection:
                 logging.error("empty frame, it's really strange")
                 self.close()
             else:
-                self.message = ''
+                self.message = b''
                 self.status = WAIT_MESSAGE
 
     @socket_exception
@@ -160,7 +161,7 @@ class Connection:
         sent = self.socket.send(self.message)
         if sent == len(self.message):
             self.status = WAIT_LEN
-            self.message = ''
+            self.message = b''
             self.len = 0
         else:
             self.message = self.message[sent:]
@@ -183,10 +184,10 @@ class Connection:
             self.close()
             self.wake_up()
             return
-        self.len = ''
+        self.len = 0
         if len(message) == 0:
             # it was a oneway request, do not write answer
-            self.message = ''
+            self.message = b''
             self.status = WAIT_LEN
         else:
             self.message = struct.pack('!i', len(message)) + message
@@ -234,7 +235,7 @@ class TNonblockingServer:
         self.out_protocol = outputProtocolFactory or self.in_protocol
         self.threads = int(threads)
         self.clients = {}
-        self.tasks = Queue.Queue()
+        self.tasks = queue.Queue()
         self._read, self._write = socket.socketpair()
         self.prepared = False
         self._stop = False
@@ -267,7 +268,7 @@ class TNonblockingServer:
         In this case, we can just write anything to the second socket from
         socketpair.
         """
-        self._write.send('1')
+        self._write.send(b'1')
 
     def stop(self):
         """Stop the server.
@@ -288,7 +289,7 @@ class TNonblockingServer:
         """Does select on open connections."""
         readable = [self.socket.handle.fileno(), self._read.fileno()]
         writable = []
-        for i, connection in self.clients.items():
+        for i, connection in list(self.clients.items()):
             if connection.is_readable():
                 readable.append(connection.fileno())
             if connection.is_writeable():
