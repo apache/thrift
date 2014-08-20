@@ -1141,6 +1141,7 @@ int t_php_generator::get_php_num_required_fields(const vector<t_field*>& fields,
 bool t_php_generator::needs_php_write_validator(t_struct* tstruct) {
   return (validate_ &&
           !tstruct->is_union() &&
+          !tstruct->is_xception() &&
           get_php_num_required_fields(tstruct->get_members(), true) > 0);
 }
 
