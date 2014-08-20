@@ -17,8 +17,8 @@
 # under the License.
 #
 
+from io import BytesIO
 import struct
-from cStringIO import StringIO
 
 from zope.interface import implements, Interface, Attribute
 from twisted.internet.protocol import ServerFactory, ClientFactory, \
@@ -35,14 +35,14 @@ import six
 class TMessageSenderTransport(TTransport.TTransportBase):
 
     def __init__(self):
-        self.__wbuf = StringIO()
+        self.__wbuf = BytesIO()
 
     def write(self, buf):
         self.__wbuf.write(buf)
 
     def flush(self):
         msg = self.__wbuf.getvalue()
-        self.__wbuf = StringIO()
+        self.__wbuf = BytesIO()
         return self.sendMessage(msg)
 
     def sendMessage(self, message):
