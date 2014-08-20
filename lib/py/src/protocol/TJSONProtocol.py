@@ -22,6 +22,8 @@ import base64
 import json
 import math
 
+from six import u, unichr
+
 __all__ = ['TJSONProtocol',
            'TJSONProtocolFactory',
            'TSimpleJSONProtocol',
@@ -40,8 +42,17 @@ BACKSLASH = b'\\'
 ZERO = b'0'
 
 ESCSEQ = b'\\u00'
-ESCAPE_CHAR = b'"\\bfnrt/'
 ESCAPE_CHAR_VALS = [b'"', b'\\', b'\b', b'\f', b'\n', b'\r', b'\t', b'/']
+ESCAPE_CHARS = {
+    b'"': '"',
+    b'\\': '\\',
+    b'b': '\b',
+    b'f': '\f',
+    b'n': '\n',
+    b'r': '\r',
+    b't': '\t',
+    b'/': '/',
+}
 NUMERIC_CHAR = b'+-.0123456789Ee'
 
 CTYPES = {TType.BOOL:       'tf',
@@ -177,7 +188,7 @@ class TJSONProtocolBase(TProtocolBase):
 
   def writeJSONNumber(self, number, formatter='{}'):
     self.context.write()
-    jsNumber = formatter.format(number)
+    jsNumber = str(formatter.format(number)).encode('ascii')
     if self.context.escapeNum():
       jsNumber = "%s%s%s" % (QUOTE, jsNumber, QUOTE)
     self.trans.write(jsNumber)
@@ -224,17 +235,17 @@ class TJSONProtocolBase(TProtocolBase):
       if character == ESCSEQ[0]:
         character = self.reader.read()
         if character == ESCSEQ[1]:
-          self.readJSONSyntaxChar(ZERO)
-          self.readJSONSyntaxChar(ZERO)
-          character = json.JSONDecoder().decode('"\u00%s"' % self.trans.read(2))
+          cp = int(self.trans.read(4), 16)
+          character = unichr(cp)
         else:
-          off = ESCAPE_CHAR.find(character)
-          if off == -1:
+          if character not in ESCAPE_CHARS:
             raise TProtocolException(TProtocolException.INVALID_DATA,
                                      "Expected control char")
-          character = ESCAPE_CHAR_VALS[off]
+          character = ESCAPE_CHARS[character]
+      else:
+        character = character.decode('ascii')
       string.append(character)
-    return ''.join(string)
+    return u('').join(string)
 
   def isJSONNumeric(self, character):
     return (True if NUMERIC_CHAR.find(character) != - 1 else False)
@@ -250,7 +261,7 @@ class TJSONProtocolBase(TProtocolBase):
       if self.isJSONNumeric(character) is False:
         break
       numeric.append(self.reader.read())
-    return ''.join(numeric)
+    return b''.join(numeric).decode('ascii')
 
   def readJSONInteger(self):
     self.context.read()

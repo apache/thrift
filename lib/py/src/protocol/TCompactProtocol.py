@@ -64,7 +64,7 @@ def writeVarint(trans, n):
     else:
       out.append((n & 0xff) | 0x80)
       n = n >> 7
-  trans.write(''.join(map(chr, out)))
+  trans.write(bytearray(out))
 
 
 def readVarint(trans):
@@ -257,8 +257,9 @@ class TCompactProtocol(TProtocolBase):
     self.trans.write(pack('<d', dub))
 
   def __writeString(self, s):
-    self.__writeSize(len(s))
-    self.trans.write(s)
+    b = s.encode('utf8')
+    self.__writeSize(len(b))
+    self.trans.write(b)
   writeString = writer(__writeString)
 
   def readFieldBegin(self):
@@ -392,7 +393,7 @@ class TCompactProtocol(TProtocolBase):
 
   def __readString(self):
     len = self.__readSize()
-    return self.trans.readAll(len)
+    return self.trans.readAll(len).decode('utf8')
   readString = reader(__readString)
 
   def __getTType(self, byte):
