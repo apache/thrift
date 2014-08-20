@@ -188,7 +188,7 @@ class ThriftTestCase(AsyncTestCase):
         self.assertEqual(y.i64_thing, -5)
 
     def test_oneway(self):
-        self.client.testOneway(0.5)
+        self.client.testOneway(0)
         start, end, seconds = self.wait(timeout=1)
         self.assertAlmostEqual(seconds, (end - start), places=3)
 
