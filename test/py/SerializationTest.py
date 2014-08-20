@@ -305,7 +305,7 @@ class AcceleratedFramedTest(unittest.TestCase):
     prot.writeString(bigstring)
     prot.writeI16(24)
     data = databuf.getvalue()
-    cutpoint = len(data)/2
+    cutpoint = len(data) // 2
     parts = [ data[:cutpoint], data[cutpoint:] ]
 
     framed_buffer = TTransport.TMemoryBuffer()
@@ -348,7 +348,7 @@ class SerializersTest(unittest.TestCase):
     self.assertEquals(obj, objcopy)
 
     # test enums
-    for num, name in Numberz._VALUES_TO_NAMES.iteritems():
+    for num, name in Numberz._VALUES_TO_NAMES.items():
       obj = Bonk(message='enum Numberz value %d is string %s' % (num, name), type=num)
       objcopy = Bonk()
       deserialize(objcopy, serialize(obj))

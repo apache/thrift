@@ -99,7 +99,7 @@ class TestEof(unittest.TestCase):
     # TODO: we should make sure this covers more of the code paths
 
     data = self.make_data(pfactory)
-    for i in xrange(0, len(data) + 1):
+    for i in range(0, len(data) + 1):
       trans = TTransport.TMemoryBuffer(data[0:i])
       prot = pfactory.getProtocol(trans)
       try:

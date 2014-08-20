@@ -41,7 +41,7 @@ from optparse import OptionParser
 
 class TimeoutTest(unittest.TestCase):
     def setUp(self):
-        for i in xrange(50):
+        for i in range(50):
             try:
                 # find a port we can use
                 self.listen_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -58,7 +58,7 @@ class TimeoutTest(unittest.TestCase):
 
         try:
             leaky = []
-            for i in xrange(100):
+            for i in range(100):
                 socket = TSocket.TSocket('localhost', self.port)
                 socket.setTimeout(10)
                 socket.open()
