@@ -49,6 +49,8 @@ void THttpServer::parseHeader(char* header) {
   } else if (strncmp(header, "Content-Length", sz) == 0) {
     chunked_ = false;
     contentLength_ = atoi(value);
+  } else if (strncmp(header, "X-Forwarded-For", sz) == 0) {
+    origin_ = value;
   }
 }
 

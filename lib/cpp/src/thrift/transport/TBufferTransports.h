@@ -126,7 +126,6 @@ class TBufferBase : public TVirtualTransport<TBufferBase> {
     }
   }
 
-
  protected:
 
   /// Slow path read.
@@ -253,6 +252,12 @@ class TBufferedTransport
 
   void flush();
 
+  /**
+   * Returns the origin of the underlying transport
+   */
+  virtual const std::string getOrigin() {
+    return transport_->getOrigin();
+  }
 
   /**
    * The following behavior is currently implemented by TBufferedTransport,
@@ -391,6 +396,13 @@ class TFramedTransport
    */
   uint32_t readAll(uint8_t* buf, uint32_t len) {
     return TBufferBase::readAll(buf,len);
+  }
+
+  /**
+   * Returns the origin of the underlying transport
+   */
+  virtual const std::string getOrigin() {
+    return transport_->getOrigin();
   }
 
  protected:
