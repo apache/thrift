@@ -117,15 +117,15 @@ class t_php_generator : public t_oop_generator {
    */
 
   void generate_php_struct(t_struct* tstruct, bool is_exception);
-  void generate_php_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false);
-  void generate_php_struct_reader(std::ofstream& out, t_struct* tstruct);
-  void generate_php_struct_writer(std::ofstream& out, t_struct* tstruct);
+  void generate_php_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false, bool is_result=false);
+  void generate_php_struct_reader(std::ofstream& out, t_struct* tstruct, bool is_result);
+  void generate_php_struct_writer(std::ofstream& out, t_struct* tstruct, bool is_result);
   void generate_php_function_helpers(t_function* tfunction);
   void generate_php_struct_required_validator(ofstream& out, t_struct* tstruct, std::string method_name, bool write_mode);
   void generate_php_struct_read_validator(ofstream& out, t_struct* tstruct);
   void generate_php_struct_write_validator(ofstream& out, t_struct* tstruct);
-  bool needs_php_write_validator(t_struct* tstruct);
-  bool needs_php_read_validator(t_struct* tstruct);
+  bool needs_php_write_validator(t_struct* tstruct, bool is_result);
+  bool needs_php_read_validator(t_struct* tstruct, bool is_result);
   int get_php_num_required_fields(const vector<t_field*>& fields, bool write_mode);
 
   void generate_php_type_spec(std::ofstream &out, t_type* t);
@@ -757,7 +757,8 @@ void t_php_generator::generate_php_struct_spec(ofstream& out,
  */
 void t_php_generator::generate_php_struct_definition(ofstream& out,
                                                      t_struct* tstruct,
-                                                     bool is_exception) {
+                                                     bool is_exception,
+                                                     bool is_result) {
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
 
@@ -829,12 +830,12 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
     indent() << "}" << endl <<
     endl;
 
-  generate_php_struct_reader(out, tstruct);
-  generate_php_struct_writer(out, tstruct);
-  if (needs_php_read_validator(tstruct)) {
+  generate_php_struct_reader(out, tstruct, is_result);
+  generate_php_struct_writer(out, tstruct, is_result);
+  if (needs_php_read_validator(tstruct, is_result)) {
     generate_php_struct_read_validator(out, tstruct);
   }
-  if (needs_php_write_validator(tstruct)) {
+  if (needs_php_write_validator(tstruct, is_result)) {
     generate_php_struct_write_validator(out, tstruct);
   }
 
@@ -848,7 +849,8 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
  * Generates the read() method for a struct
  */
 void t_php_generator::generate_php_struct_reader(ofstream& out,
-                                                 t_struct* tstruct) {
+                                                 t_struct* tstruct,
+                                                 bool is_result) {
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
@@ -857,7 +859,7 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
   scope_up(out);
 
   if (oop_) {
-    if (needs_php_read_validator(tstruct)) {
+    if (needs_php_read_validator(tstruct, is_result)) {
       indent(out) << "$tmp = $this->_read('" << tstruct->get_name() << "', self::$_TSPEC, $input);" << endl;
       indent(out) << "$this->_validateForRead();" << endl;
       indent(out) << "return $tmp;" << endl;
@@ -963,7 +965,7 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
       "$xfer += $input->readStructEnd();" << endl;
   }
 
-  if (needs_php_read_validator(tstruct)) {
+  if (needs_php_read_validator(tstruct, is_result)) {
     indent(out) <<
       "$this->_validateForRead();" << endl;
   }
@@ -981,7 +983,8 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
  * Generates the write() method for a struct
  */
 void t_php_generator::generate_php_struct_writer(ofstream& out,
-                                                 t_struct* tstruct) {
+                                                 t_struct* tstruct,
+                                                 bool is_result) {
   string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
@@ -995,7 +998,7 @@ void t_php_generator::generate_php_struct_writer(ofstream& out,
   }
   indent_up();
 
-  if (needs_php_write_validator(tstruct)) {
+  if (needs_php_write_validator(tstruct, is_result)) {
     indent(out) << "$this->_validateForWrite();" << endl;
   }
 
@@ -1138,14 +1141,16 @@ int t_php_generator::get_php_num_required_fields(const vector<t_field*>& fields,
   return num_req;
 }
 
-bool t_php_generator::needs_php_write_validator(t_struct* tstruct) {
+bool t_php_generator::needs_php_write_validator(t_struct* tstruct, bool is_result) {
   return (validate_ &&
+          !is_result &&
           !tstruct->is_union() &&
           get_php_num_required_fields(tstruct->get_members(), true) > 0);
 }
 
-bool t_php_generator::needs_php_read_validator(t_struct* tstruct) {
+bool t_php_generator::needs_php_read_validator(t_struct* tstruct, bool is_result) {
   return (validate_ &&
+          !is_result &&
           (get_php_num_required_fields(tstruct->get_members(), false) > 0));
 }
 
@@ -1427,7 +1432,7 @@ void t_php_generator::generate_service_helpers(t_service* tservice) {
     t_struct* ts = (*f_iter)->get_arglist();
     string name = ts->get_name();
     ts->set_name(service_name_ + "_" + name);
-    generate_php_struct_definition(f_service_, ts, false);
+    generate_php_struct_definition(f_service_, ts);
     generate_php_function_helpers(*f_iter);
     ts->set_name(name);
   }
@@ -1453,7 +1458,7 @@ void t_php_generator::generate_php_function_helpers(t_function* tfunction) {
       result.append(*f_iter);
     }
 
-    generate_php_struct_definition(f_service_, &result, false);
+    generate_php_struct_definition(f_service_, &result, false, true);
   }
 }
 
