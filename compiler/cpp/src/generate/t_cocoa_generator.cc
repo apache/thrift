@@ -2098,7 +2098,7 @@ void t_cocoa_generator::generate_serialize_container(ofstream& out,
     indent(out) << "id " << key << ";" << endl;
     indent(out) << "while ((" << key << " = [" << iter << " nextObject]))" << endl;
   } else if (ttype->is_list()) {
-    key = tmp("i");
+    key = tmp("idx");
     indent(out) << "int " << key << ";" << endl;
     indent(out) <<
       "for (" << key << " = 0; " << key << " < [" << fieldName << " count]; " << key << "++)" << endl;
