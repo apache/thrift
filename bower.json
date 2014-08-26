@@ -6,7 +6,7 @@
     "Apache Thrift <dev@thrift.apache.org>"
   ],
   "description": "Apache Thrift",
-  "main": "lib/js/thrift.js",
+  "main": "lib/js/src/thrift.js",
   "keywords": [
     "thrift"
   ],
