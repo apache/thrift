@@ -32,11 +32,19 @@ License-File:   ../../LICENSE
 Description:
   Haskell bindings for the Apache Thrift RPC system. Requires the use of the thrift code generator.
 
+flag network-uri
+   description: Get Network.URI from the network-uri package
+   default: True
+
 Library
   Hs-Source-Dirs:
     src
   Build-Depends:
-    base >= 4, base < 5, containers, network, ghc-prim, attoparsec, binary, bytestring >= 0.10, hashable, HTTP, text, unordered-containers, vector, QuickCheck, split
+    base >= 4, base < 5, containers, ghc-prim, attoparsec, binary, bytestring >= 0.10, hashable, HTTP, text, unordered-containers, vector, QuickCheck, split
+  if flag(network-uri)
+     build-depends: network-uri >= 2.6, network >= 2.6
+  else
+     build-depends: network < 2.6
   Exposed-Modules:
     Thrift,
     Thrift.Arbitraries
