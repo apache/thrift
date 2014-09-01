@@ -3423,8 +3423,11 @@ void t_c_glib_generator::declare_local_variable(ofstream &out, t_type *ttype, st
   string ptr = ttype->is_string() || !ttype->is_base_type() ? "" : "*";
 
   if (ttype->is_map()) {
+    t_map *tmap = (t_map *)ttype;
     out <<
-    indent() << tname << ptr << " " << name << " = g_hash_table_new (NULL, NULL);" << endl;
+      indent() << tname << ptr << " " << name << " = " <<
+      generate_new_hash_from_type(tmap->get_key_type(), tmap->get_val_type()) <<
+      endl;
   } else if (ttype->is_enum()) {
     out <<
     indent() << tname << ptr << " " << name << ";" << endl;
@@ -3540,7 +3543,7 @@ string t_c_glib_generator::generate_free_func_from_type (t_type * ttype) {
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
       case t_base_type::TYPE_DOUBLE:
-        return "NULL";
+        return "g_free";
       case t_base_type::TYPE_STRING:
         if (((t_base_type *) ttype)->is_binary()) {
             return "thrift_string_free";
@@ -3649,7 +3652,7 @@ string t_c_glib_generator::generate_cmp_func_from_type (t_type * ttype) {
         throw "compiler error: no hash table info for type";
     }
   } else if (ttype->is_enum()) {
-    return "NULL";
+    return "g_direct_equal";
   } else if (ttype->is_container() || ttype->is_struct()) {
     return "g_direct_equal";
   } else if (ttype->is_typedef()) {
