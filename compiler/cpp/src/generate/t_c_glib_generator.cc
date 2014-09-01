@@ -3415,6 +3415,11 @@ void t_c_glib_generator::generate_deserialize_container (ofstream &out, t_type *
 
 void t_c_glib_generator::declare_local_variable(ofstream &out, t_type *ttype, string &name) {
   string tname = type_name (ttype);
+
+  /* If the given type is a typedef, find its underlying type so we
+     can correctly determine how to generate a pointer to it */
+  ttype = get_true_type(ttype);
+
   string ptr = ttype->is_string() || !ttype->is_base_type() ? "" : "*";
 
   if (ttype->is_map()) {
@@ -3436,13 +3441,20 @@ void t_c_glib_generator::generate_deserialize_map_element(ofstream &out,
                                                           int error_ret) {
   t_type *tkey = tmap->get_key_type();
   t_type *tval = tmap->get_val_type();
-  string tkey_ptr = tkey->is_string() || !tkey->is_base_type() ? "" : "*";
-  string tval_ptr = tval->is_string() || !tval->is_base_type() ? "" : "*";
   string keyname = tmp("key");
   string valname = tmp("val");
 
   declare_local_variable(out, tkey, keyname);
   declare_local_variable(out, tval, valname);
+
+  /* If either the key or value type is a typedef, find its underlying
+     type so we can correctly determine how to generate a pointer to
+     it */
+  tkey = get_true_type(tkey);
+  tval = get_true_type(tval);
+
+  string tkey_ptr = tkey->is_string() || !tkey->is_base_type() ? "" : "*";
+  string tval_ptr = tval->is_string() || !tval->is_base_type() ? "" : "*";
 
   // deserialize the fields of the map element
   t_field fkey (tkey, tkey_ptr + keyname);
