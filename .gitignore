@@ -202,6 +202,7 @@ test-driver
 /missing
 /stamp-h1
 /test/status.html
+/test/c_glib/test_client
 /test/cpp/StressTest
 /test/cpp/StressTestNonBlocking
 /test/cpp/TestClient

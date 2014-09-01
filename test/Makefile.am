@@ -19,6 +19,10 @@
 
 SUBDIRS =
 
+if WITH_C_GLIB
+SUBDIRS += c_glib
+endif
+
 if WITH_CPP
 SUBDIRS += cpp
 endif
@@ -64,6 +68,7 @@ EXTRA_DIST = \
 	test.sh \
 	test.py \
 	tests.json \
+	c_glib \
 	cpp \
 	erl \
 	hs \

@@ -653,6 +653,7 @@ AC_CONFIG_FILES([
   lib/rb/Makefile
   lib/lua/Makefile
   test/Makefile
+  test/c_glib/Makefile
   test/cpp/Makefile
   test/erl/Makefile
   test/go/Makefile
