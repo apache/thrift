@@ -566,11 +566,6 @@ void t_cocoa_generator::generate_cocoa_struct_field_accessor_declarations(ofstre
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    out << indent() << "#if !__has_feature(objc_arc)" << endl;
-    out << indent() << "- (" << type_name((*m_iter)->get_type()) << ") " << decapitalize((*m_iter)->get_name()) << ";" << endl;
-    out << indent() << "- (void) set" << capitalize((*m_iter)->get_name()) <<
-      ": (" << type_name((*m_iter)->get_type()) << ") " << (*m_iter)->get_name() << ";" << endl;
-    out << indent() << "#endif" << endl;
     out << indent() << "- (BOOL) " << (*m_iter)->get_name() << "IsSet;" << endl << endl;
   }
 }
