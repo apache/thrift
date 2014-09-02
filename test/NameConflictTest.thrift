@@ -76,6 +76,15 @@ struct TheEdgeCase {
   6: bool TheEdgeCase__
 }
 
+struct theEdgeCase {
+  1: bool theEdgeCase
+  2: bool theEdgeCase_
+  3: bool theEdgeCase__
+  4: bool TheEdgeCase
+  5: bool TheEdgeCase_
+  6: bool TheEdgeCase__
+}
+
 struct Tricky_ {
   1: bool tricky
   2: bool Tricky

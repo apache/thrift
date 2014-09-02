@@ -128,7 +128,7 @@ class t_erl_generator : public t_generator {
     return in;
   }
 
-  std::string uncapitalize(std::string in) {
+  std::string make_safe_for_module_name(std::string in) {
     in[0] = tolower(in[0]);
     return in;
   }
@@ -249,7 +249,7 @@ string t_erl_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
   for (size_t i = 0; i < includes.size(); ++i) {
-    result += "-include(\"" + uncapitalize(includes[i]->get_name()) + "_types.hrl\").\n";
+    result += "-include(\"" + make_safe_for_module_name(includes[i]->get_name()) + "_types.hrl\").\n";
   }
   if (includes.size() > 0) {
     result += "\n";
@@ -391,7 +391,7 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
     indent(out) << value->get_integer();
 
   } else if (type->is_struct() || type->is_xception()) {
-    out << "#'" << uncapitalize(type->get_name()) << "'{";
+    out << "#'" << type->get_name() << "'{";
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
     const map<t_const_value*, t_const_value*>& val = value->get_map();
@@ -474,7 +474,7 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
 string t_erl_generator::render_default_value(t_field* field) {
   t_type *type = field->get_type();
   if (type->is_struct() || type->is_xception()) {
-    return "#'" + uncapitalize(type->get_name()) + "'{}";
+    return "#'" + type->get_name() + "'{}";
   } else if (type->is_map()) {
     return "dict:new()";
   } else if (type->is_set()) {
@@ -508,7 +508,7 @@ string t_erl_generator::render_member_type(t_field * field) {
   } else if (type->is_enum()) {
     return "integer()";
   } else if (type->is_struct() || type->is_xception()) {
-    return "'" + uncapitalize(type->get_name()) + "'()";
+    return "'" + type->get_name() + "'()";
   } else if (type->is_map()) {
     return "dict()";
   } else if (type->is_set()) {
@@ -666,7 +666,7 @@ void t_erl_generator::generate_service(t_service* tservice) {
 
   if (tservice->get_extends() != NULL) {
     f_service_hrl_ << "-include(\"" <<
-      uncapitalize(tservice->get_extends()->get_name()) << "_thrift.hrl\"). % inherit " << endl;
+      make_safe_for_module_name(tservice->get_extends()->get_name()) << "_thrift.hrl\"). % inherit " << endl;
   }
 
   f_service_hrl_ <<
@@ -686,7 +686,7 @@ void t_erl_generator::generate_service(t_service* tservice) {
     "-behaviour(thrift_service)." << endl << endl <<
     erl_imports() << endl;
 
-  f_service_file_ << "-include(\"" << uncapitalize(tservice->get_name()) << "_thrift.hrl\")." << endl << endl;
+  f_service_file_ << "-include(\"" << make_safe_for_module_name(tservice->get_name()) << "_thrift.hrl\")." << endl << endl;
 
   f_service_file_ << "-export([" << export_lines_.str() << "])." << endl << endl;
 
@@ -751,7 +751,7 @@ void t_erl_generator::generate_service_interface(t_service* tservice) {
   if (tservice->get_extends() != NULL) {
       indent(f_service_) << "function_info(Function, InfoType) ->" << endl;
       indent_up();
-      indent(f_service_) << uncapitalize(tservice->get_extends()->get_name())
+      indent(f_service_) << make_safe_for_module_name(tservice->get_extends()->get_name())
                          << "_thrift:function_info(Function, InfoType)." << endl;
       indent_down();
   } else {
@@ -888,7 +888,7 @@ string t_erl_generator::type_name(t_type* ttype) {
   string name = ttype->get_name();
 
   if (ttype->is_struct() || ttype->is_xception() || ttype->is_service()) {
-    name = "'" + uncapitalize(ttype->get_name()) + "'";
+    name = "'" + ttype->get_name() + "'";
   }
 
   return prefix + name;
@@ -1023,7 +1023,7 @@ std::string t_erl_generator::render_type_term(t_type* type, bool expand_structs,
 }
 
 std::string t_erl_generator::type_module(t_type* ttype) {
-  return uncapitalize(ttype->get_program()->get_name()) + "_types";
+  return make_safe_for_module_name(ttype->get_program()->get_name()) + "_types";
 }
 
 THRIFT_REGISTER_GENERATOR(erl, "Erlang", "")

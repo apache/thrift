@@ -43,8 +43,8 @@ record_generation_test_() ->
       #partial{using=null}
     )},
     {"ClassAndProp record", ?_assertMatch(
-      {classAndProp, _, _, _, _},
-      #classAndProp{
+      {'ClassAndProp', _, _, _, _},
+      #'ClassAndProp'{
         'ClassAndProp'=null,
         'ClassAndProp_'=null,
         'ClassAndProp__'=null,
@@ -61,8 +61,8 @@ record_generation_test_() ->
       }
     )},
     {"NOW_EAT_THIS record", ?_assertMatch(
-      {nOW_EAT_THIS, _, _, _, _},
-      #nOW_EAT_THIS{
+      {'NOW_EAT_THIS', _, _, _, _},
+      #'NOW_EAT_THIS'{
         now_eat_this=null,
         now_eat_this_=null,
         now_eat_this__=null,
@@ -70,6 +70,17 @@ record_generation_test_() ->
       }
     )},
     {"TheEdgeCase record", ?_assertMatch(
+      {'TheEdgeCase', _, _, _, _, _, _},
+      #'TheEdgeCase'{
+        theEdgeCase=null,
+        theEdgeCase_=null,
+        theEdgeCase__=null,
+        'TheEdgeCase'=null,
+        'TheEdgeCase_'=null,
+        'TheEdgeCase__'=null
+      }
+    )},
+    {"theEdgeCase record", ?_assertMatch(
       {theEdgeCase, _, _, _, _, _, _},
       #theEdgeCase{
         theEdgeCase=null,
@@ -81,12 +92,12 @@ record_generation_test_() ->
       }
     )},
     {"Tricky_ record", ?_assertMatch(
-      {tricky_, _, _},
-      #tricky_{tricky=null,'Tricky'=null}
+      {'Tricky_', _, _},
+      #'Tricky_'{tricky=null,'Tricky'=null}
     )},
     {"Nested record", ?_assertMatch(
-      {nested, _, _, _, _, _, _},
-      #nested{
+      {'Nested', _, _, _, _, _, _},
+      #'Nested'{
         'ClassAndProp'=null,
         second_chance=null,
         'NOW_EAT_THIS'=null,
@@ -96,8 +107,8 @@ record_generation_test_() ->
       }
     )},
     {"Problem_ record", ?_assertMatch(
-      {problem_, _, _},
-      #problem_{problem=null,'Problem'=null}
+      {'Problem_', _, _},
+      #'Problem_'{problem=null,'Problem'=null}
     )}
   ].
 
@@ -124,7 +135,7 @@ struct_info_test_() ->
     )},
     {"ClassAndProp definition", ?_assertEqual(
       {struct, [{1, bool},{2, bool},{3, bool},{4, bool}]},
-      nameConflictTest_types:struct_info(classAndProp)
+      nameConflictTest_types:struct_info('ClassAndProp')
     )},
     {"second_chance definition", ?_assertEqual(
       {struct, [{1, bool},{2, bool},{3, bool},{4, bool}]},
@@ -132,30 +143,34 @@ struct_info_test_() ->
     )},
     {"NOW_EAT_THIS definition", ?_assertEqual(
       {struct, [{1, bool},{2, bool},{3, bool},{4, bool}]},
-      nameConflictTest_types:struct_info(nOW_EAT_THIS)
+      nameConflictTest_types:struct_info('NOW_EAT_THIS')
     )},
     {"TheEdgeCase definition", ?_assertEqual(
+      {struct, [{1, bool},{2, bool},{3, bool},{4, bool},{5, bool},{6, bool}]},
+      nameConflictTest_types:struct_info('TheEdgeCase')
+    )},
+    {"theEdgeCase definition", ?_assertEqual(
       {struct, [{1, bool},{2, bool},{3, bool},{4, bool},{5, bool},{6, bool}]},
       nameConflictTest_types:struct_info(theEdgeCase)
     )},
     {"Tricky_ definition", ?_assertEqual(
       {struct, [{1, bool},{2, bool}]},
-      nameConflictTest_types:struct_info(tricky_)
+      nameConflictTest_types:struct_info('Tricky_')
     )},
     {"Nested definition", ?_assertEqual(
       {struct, [
-        {1, {struct, {nameConflictTest_types, classAndProp}}},
+        {1, {struct, {nameConflictTest_types, 'ClassAndProp'}}},
         {2, {struct, {nameConflictTest_types, second_chance}}},
-        {3, {struct, {nameConflictTest_types, nOW_EAT_THIS}}},
-        {4, {struct, {nameConflictTest_types, theEdgeCase}}},
-        {5, {struct, {nameConflictTest_types, tricky_}}},
-        {6, {struct, {nameConflictTest_types, nested}}}
+        {3, {struct, {nameConflictTest_types, 'NOW_EAT_THIS'}}},
+        {4, {struct, {nameConflictTest_types, 'TheEdgeCase'}}},
+        {5, {struct, {nameConflictTest_types, 'Tricky_'}}},
+        {6, {struct, {nameConflictTest_types, 'Nested'}}}
       ]},
-      nameConflictTest_types:struct_info(nested)
+      nameConflictTest_types:struct_info('Nested')
     )},
     {"Problem_ definition", ?_assertEqual(
       {struct, [{1, bool},{2, bool}]},
-      nameConflictTest_types:struct_info(problem_)
+      nameConflictTest_types:struct_info('Problem_')
     )},
     {"using extended definition", ?_assertEqual(
       {struct, [
@@ -188,7 +203,7 @@ struct_info_test_() ->
         {3, undefined, bool, 'ClassAndProp__', undefined},
         {4, undefined, bool, 'ClassAndProper', undefined}
       ]},
-      nameConflictTest_types:struct_info_ext(classAndProp)
+      nameConflictTest_types:struct_info_ext('ClassAndProp')
     )},
     {"second_chance extended definition", ?_assertEqual(
       {struct, [
@@ -206,7 +221,18 @@ struct_info_test_() ->
         {3, undefined, bool, now_eat_this__, undefined},
         {4, undefined, bool, now_eat_this_and_this, undefined}
       ]},
-      nameConflictTest_types:struct_info_ext(nOW_EAT_THIS)
+      nameConflictTest_types:struct_info_ext('NOW_EAT_THIS')
+    )},
+    {"TheEdgeCase extended definition", ?_assertEqual(
+      {struct, [
+        {1, undefined, bool, theEdgeCase, undefined},
+        {2, undefined, bool, theEdgeCase_, undefined},
+        {3, undefined, bool, theEdgeCase__, undefined},
+        {4, undefined, bool, 'TheEdgeCase', undefined},
+        {5, undefined, bool, 'TheEdgeCase_', undefined},
+        {6, undefined, bool, 'TheEdgeCase__', undefined}
+      ]},
+      nameConflictTest_types:struct_info_ext('TheEdgeCase')
     )},
     {"TheEdgeCase extended definition", ?_assertEqual(
       {struct, [
@@ -224,43 +250,43 @@ struct_info_test_() ->
         {1, undefined, bool, tricky, undefined},
         {2, undefined, bool, 'Tricky', undefined}
       ]},
-      nameConflictTest_types:struct_info_ext(tricky_)
+      nameConflictTest_types:struct_info_ext('Tricky_')
     )},
     {"Nested extended definition", ?_assertEqual(
       {struct, [
         {1, undefined, {struct, {
           nameConflictTest_types,
-          classAndProp
-        }}, 'ClassAndProp', #classAndProp{}},
+          'ClassAndProp'
+        }}, 'ClassAndProp', #'ClassAndProp'{}},
         {2, undefined, {struct, {
           nameConflictTest_types,
           second_chance
         }}, second_chance, #second_chance{}},
         {3, undefined, {struct, {
           nameConflictTest_types,
-          nOW_EAT_THIS
-        }}, 'NOW_EAT_THIS', #nOW_EAT_THIS{}},
+          'NOW_EAT_THIS'
+        }}, 'NOW_EAT_THIS', #'NOW_EAT_THIS'{}},
         {4, undefined, {struct, {
           nameConflictTest_types,
-          theEdgeCase
-        }}, 'TheEdgeCase', #theEdgeCase{}},
+          'TheEdgeCase'
+        }}, 'TheEdgeCase', #'TheEdgeCase'{}},
         {5, undefined, {struct, {
           nameConflictTest_types,
-          tricky_
-        }}, 'Tricky_', #tricky_{}},
+          'Tricky_'
+        }}, 'Tricky_', #'Tricky_'{}},
         {6, undefined, {struct, {
           nameConflictTest_types,
-          nested
+          'Nested'
         }}, 'Nested', undefined}
       ]},
-      nameConflictTest_types:struct_info_ext(nested)
+      nameConflictTest_types:struct_info_ext('Nested')
     )},
     {"Problem_ extended definition", ?_assertEqual(
       {struct, [
         {1, undefined, bool, problem, undefined},
         {2, undefined, bool, 'Problem', undefined}
       ]},
-      nameConflictTest_types:struct_info_ext(problem_)
+      nameConflictTest_types:struct_info_ext('Problem_')
     )}
   ].
 
@@ -279,7 +305,7 @@ service_info_test_() ->
       extern_thrift:function_info(event, exceptions)
     )},
     {"Foo params", ?_assertEqual(
-      {struct, [{1, {struct, {nameConflictTest_types, nested}}}]},
+      {struct, [{1, {struct, {nameConflictTest_types, 'Nested'}}}]},
       extern_thrift:function_info('Foo', params_type)
     )},
     {"Foo reply", ?_assertEqual(
@@ -287,7 +313,7 @@ service_info_test_() ->
       extern_thrift:function_info('Foo', reply_type)
     )},
     {"Foo exceptions", ?_assertEqual(
-      {struct, [{1, {struct, {nameConflictTest_types, problem_}}}]},
+      {struct, [{1, {struct, {nameConflictTest_types, 'Problem_'}}}]},
       extern_thrift:function_info('Foo', exceptions)
     )}
   ].
