@@ -127,6 +127,7 @@ class t_cpp_generator : public t_oop_generator {
   void generate_struct_writer        (std::ofstream& out, t_struct* tstruct, bool pointers=false);
   void generate_struct_result_writer (std::ofstream& out, t_struct* tstruct, bool pointers=false);
   void generate_struct_swap          (std::ofstream& out, t_struct* tstruct);
+  void generate_struct_ostream_operator(std::ofstream& out, t_struct* tstruct);
 
   /**
    * Service-level generation functions
@@ -229,6 +230,8 @@ class t_cpp_generator : public t_oop_generator {
                                    const char* prefix,
                                    const char* suffix,
                                    bool include_values);
+
+  void generate_struct_ostream_operator_decl(std::ofstream& f, t_struct* tstruct);
 
   // These handles checking gen_dense_ and checking for duplicates.
   void generate_local_reflection(std::ofstream& out, t_type* ttype, bool is_definition);
@@ -376,6 +379,7 @@ void t_cpp_generator::init_generator() {
 
   // Include base types
   f_types_ <<
+    "#include <iosfwd>" << endl << endl <<
     "#include <thrift/Thrift.h>" << endl <<
     "#include <thrift/TApplicationException.h>" << endl <<
     "#include <thrift/protocol/TProtocol.h>" << endl <<
@@ -432,7 +436,10 @@ void t_cpp_generator::init_generator() {
   }
 
   // The swap() code needs <algorithm> for std::swap()
-  f_types_impl_ << "#include <algorithm>" << endl << endl;
+  f_types_impl_ << "#include <algorithm>" << endl;
+  // for operator<<
+  f_types_impl_ << "#include <ostream>" << endl << endl;
+  f_types_impl_ << "#include <thrift/TToString.h>" << endl << endl;
 
   // Open namespace
   ns_open_ = namespace_open(program_->get_namespace("cpp"));
@@ -817,6 +824,7 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
   generate_struct_swap(f_types_impl_, tstruct);
   generate_copy_constructor(f_types_impl_, tstruct);
   generate_assignment_operator(f_types_impl_, tstruct);
+  generate_struct_ostream_operator(f_types_impl_, tstruct);
 }
 
 void t_cpp_generator::generate_copy_constructor(
@@ -1122,6 +1130,11 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
     }
   }
   out << endl;
+
+  // ostream operator<<
+  out << indent() << "friend ";
+  generate_struct_ostream_operator_decl(out, tstruct);
+  out << ";" << endl;
 
   indent_down();
   indent(out) <<
@@ -1723,6 +1736,95 @@ void t_cpp_generator::generate_struct_swap(ofstream& out, t_struct* tstruct) {
   scope_down(out);
   out << endl;
 }
+
+void t_cpp_generator::generate_struct_ostream_operator_decl(std::ofstream& out,
+                                                            t_struct* tstruct) {
+  out << "std::ostream& operator<<(std::ostream& out, const "
+      << tstruct->get_name() << "& obj)";
+}
+
+namespace struct_ostream_operator_generator
+{
+void generate_required_field_value(std::ofstream& out, const t_field* field)
+{
+  out << " << to_string(obj." << field->get_name() << ")";
+}
+
+void generate_optional_field_value(std::ofstream& out, const t_field* field)
+{
+  out << "; (obj.__isset." << field->get_name() << " ? (out";
+  generate_required_field_value(out, field);
+  out << ") : (out << \"<null>\"))";
+}
+
+void generate_field_value(std::ofstream& out, const t_field* field)
+{
+  if (field->get_req() == t_field::T_OPTIONAL)
+    generate_optional_field_value(out, field);
+  else
+    generate_required_field_value(out, field);
+}
+
+void generate_field_name(std::ofstream& out, const t_field* field)
+{
+  out << "\"" << field->get_name() << "=\"";
+}
+
+void generate_field(std::ofstream& out, const t_field* field)
+{
+  generate_field_name(out, field);
+  generate_field_value(out, field);
+}
+
+void generate_fields(std::ofstream& out,
+                     const vector<t_field*>& fields,
+                     const std::string& indent)
+{
+  const vector<t_field*>::const_iterator beg = fields.begin();
+  const vector<t_field*>::const_iterator end = fields.end();
+
+  for (vector<t_field*>::const_iterator it = beg; it != end; ++it) {
+    out << indent << "out << ";
+
+    if (it != beg) {
+      out << "\", \" << ";
+    }
+
+    generate_field(out, *it);
+    out << ";" << endl;
+  }
+}
+
+
+}
+
+/**
+ * Generates operator<<
+ */
+void t_cpp_generator::generate_struct_ostream_operator(std::ofstream& out,
+                                                       t_struct* tstruct) {
+  out << indent();
+  generate_struct_ostream_operator_decl(out, tstruct);
+  out << " {" << endl;
+
+  indent_up();
+
+  out <<
+    indent() << "using apache::thrift::to_string;" << endl <<
+    indent() << "out << \"" << tstruct->get_name() << "(\";" << endl;
+
+  struct_ostream_operator_generator::generate_fields(out,
+                                                     tstruct->get_members(),
+                                                     indent());
+
+  out <<
+    indent() << "out << \")\";" << endl <<
+    indent() << "return out;" << endl;
+
+  indent_down();
+  out << "}" << endl << endl;
+}
+
 
 /**
  * Generates a thrift service. In C++, this comprises an entirely separate
