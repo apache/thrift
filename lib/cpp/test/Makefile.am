@@ -82,7 +82,8 @@ UnitTests_SOURCES = \
 	UnitTestMain.cpp \
 	TMemoryBufferTest.cpp \
 	TBufferBaseTest.cpp \
-	Base64Test.cpp
+	Base64Test.cpp \
+	ToStringTest.cpp
 
 if !WITH_BOOSTTHREADS
 UnitTests_SOURCES += \
