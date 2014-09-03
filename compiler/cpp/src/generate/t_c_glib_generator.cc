@@ -2971,8 +2971,8 @@ void t_c_glib_generator::generate_serialize_container(ofstream &out,
     t_type *tval = ((t_map *) ttype)->get_val_type();
     string tkey_name = type_name (tkey);
     string tval_name = type_name (tval);
-    string tkey_ptr = tkey->is_string() || !tkey->is_base_type() ? "" : "*";
-    string tval_ptr = tval->is_string() || !tval->is_base_type() ? "" : "*";
+    string tkey_ptr;
+    string tval_ptr;
     string keyname = tmp("key");
     string valname = tmp("val");
 
@@ -2993,6 +2993,15 @@ void t_c_glib_generator::generate_serialize_container(ofstream &out,
       indent() << "GList *key_list = NULL, *iter = NULL;" << endl;
     declare_local_variable(out, tkey, keyname);
     declare_local_variable(out, tval, valname);
+
+    /* If either the key or value type is a typedef, find its underlying type so
+       we can correctly determine how to generate a pointer to it */
+    tkey = get_true_type(tkey);
+    tval = get_true_type(tval);
+
+    tkey_ptr = tkey->is_string() || !tkey->is_base_type() ? "" : "*";
+    tval_ptr = tval->is_string() || !tval->is_base_type() ? "" : "*";
+
     out <<
       indent() << "g_hash_table_foreach ((GHashTable *) " << prefix << 
                    ", thrift_hash_table_get_keys, &key_list);" << endl <<
