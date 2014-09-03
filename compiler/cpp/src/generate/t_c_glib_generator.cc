@@ -2973,6 +2973,8 @@ void t_c_glib_generator::generate_serialize_container(ofstream &out,
     string tval_name = type_name (tval);
     string tkey_ptr = tkey->is_string() || !tkey->is_base_type() ? "" : "*";
     string tval_ptr = tval->is_string() || !tval->is_base_type() ? "" : "*";
+    string keyname = tmp("key");
+    string valname = tmp("val");
 
     /*
      * Some ugliness here.  To maximize backwards compatibility, we
@@ -2988,9 +2990,10 @@ void t_c_glib_generator::generate_serialize_container(ofstream &out,
       indent() << "  return " << error_ret << ";" << endl <<
       indent() << "xfer += ret;" << endl <<
       endl <<
-      indent() << "GList *key_list = NULL, *iter = NULL;" << endl <<
-      indent() << tkey_name << tkey_ptr << " key;" << endl <<
-      indent() << tval_name << tval_ptr << " value;" << endl <<
+      indent() << "GList *key_list = NULL, *iter = NULL;" << endl;
+    declare_local_variable(out, tkey, keyname);
+    declare_local_variable(out, tval, valname);
+    out <<
       indent() << "g_hash_table_foreach ((GHashTable *) " << prefix << 
                    ", thrift_hash_table_get_keys, &key_list);" << endl <<
       indent() << tkey_name << tkey_ptr <<
@@ -3009,13 +3012,16 @@ void t_c_glib_generator::generate_serialize_container(ofstream &out,
 
     scope_up(out);
     out <<
-      indent() << "key = keys[i];" << endl <<
-      indent() << "value = (" << tval_name << tval_ptr <<
+      indent() << keyname << " = keys[i];" << endl <<
+      indent() << valname << " = (" << tval_name << tval_ptr <<
                    ") g_hash_table_lookup (((GHashTable *) " << prefix <<
-                   "), (gpointer) key);" << endl <<
+                   "), (gpointer) " << keyname << ");" << endl <<
       endl;
-    generate_serialize_map_element (out, (t_map *) ttype, tkey_ptr + " key",
-                                    tval_ptr + " value", error_ret);
+    generate_serialize_map_element (out,
+                                    (t_map *) ttype,
+                                    tkey_ptr + " " + keyname,
+                                    tval_ptr + " " + valname,
+                                    error_ret);
     scope_down(out);
 
     out <<
