@@ -1525,8 +1525,11 @@ void t_go_generator::generate_service(t_service* tservice)
 	string test_suffix("_test");
 	string filename = lowercase(service_name_);
 	string f_service_name;
-	if (filename.compare(filename.length() - test_suffix.length(),
-			test_suffix.length(), test_suffix) == 0) {
+	
+	size_t fname_len = filename.length();
+	size_t suffix_len = test_suffix.length();
+	
+	if ((fname_len >= suffix_len) && (filename.compare(fname_len-suffix_len, suffix_len, test_suffix) == 0)) {
 		f_service_name = package_dir_ + "/" + filename + "_.go";
 	} else {
 		f_service_name = package_dir_ + "/" + filename + ".go";
