@@ -524,7 +524,7 @@ void t_cpp_generator::generate_enum_constant_list(std::ofstream& f,
     }
     indent(f)
       << prefix << (*c_iter)->get_name() << suffix;
-    if (include_values && (*c_iter)->has_value()) {
+    if (include_values) {
       f << " = " << (*c_iter)->get_value();
     }
   }
