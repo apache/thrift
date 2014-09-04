@@ -33,17 +33,11 @@ namespace apache { namespace thrift { namespace concurrency { namespace test {
 
 using namespace apache::thrift::concurrency;
 
-/**
- * ThreadManagerTests class
- *
- * @version $Id:$
- */
 class ThreadManagerTests {
 
+  static const double TEST_TOLERANCE;
+
 public:
-
-  static const double ERROR;
-
   class Task: public Runnable {
 
   public:
@@ -190,7 +184,7 @@ public:
       error*= -1.0;
     }
 
-    bool success = error < ERROR;
+    bool success = error < TEST_TOLERANCE;
 
     std::cout << "\t\t\t" << (success ? "Success" : "Failure") << "! expected time: " << expectedTime << "ms elapsed time: "<< time01 - time00 << "ms error%: " << error * 100.0 << std::endl;
 
@@ -373,9 +367,8 @@ public:
  }
 };
 
-const double ThreadManagerTests::ERROR = .20;
+const double ThreadManagerTests::TEST_TOLERANCE = .20;
 
 }}}} // apache::thrift::concurrency
 
 using namespace apache::thrift::concurrency::test;
-
