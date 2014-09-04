@@ -29,17 +29,11 @@ namespace apache { namespace thrift { namespace concurrency { namespace test {
 
 using namespace apache::thrift::concurrency;
 
-/**
- * ThreadManagerTests class
- *
- * @version $Id:$
- */
 class TimerManagerTests {
 
+  static const double TEST_TOLERANCE;
+
  public:
-
-  static const double ERROR;
-
   class Task: public Runnable {
    public:
 
@@ -65,7 +59,7 @@ class TimerManagerTests {
 
       float error = delta / _timeout;
 
-      if(error < ERROR) {
+      if(error < TEST_TOLERANCE) {
         _success = true;
       }
 
@@ -149,7 +143,6 @@ class TimerManagerTests {
   Monitor _monitor;
 };
 
-const double TimerManagerTests::ERROR = .20;
+const double TimerManagerTests::TEST_TOLERANCE = .20;
 
 }}}} // apache::thrift::concurrency
-
