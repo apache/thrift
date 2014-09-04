@@ -38,7 +38,7 @@ class TimerManagerTests {
 
  public:
 
-  static const double ERROR;
+  static const double TEST_ERROR;
 
   class Task: public Runnable {
    public:
@@ -149,7 +149,7 @@ class TimerManagerTests {
   Monitor _monitor;
 };
 
-const double TimerManagerTests::ERROR = .20;
+const double TimerManagerTests::TEST_ERROR = .20;
 
 }}}} // apache::thrift::concurrency
 

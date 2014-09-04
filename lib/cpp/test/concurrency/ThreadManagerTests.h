@@ -42,7 +42,7 @@ class ThreadManagerTests {
 
 public:
 
-  static const double ERROR;
+  static const double TEST_ERROR;
 
   class Task: public Runnable {
 
@@ -373,7 +373,7 @@ public:
  }
 };
 
-const double ThreadManagerTests::ERROR = .20;
+const double ThreadManagerTests::TEST_ERROR = .20;
 
 }}}} // apache::thrift::concurrency
 
