@@ -44,6 +44,9 @@ test-driver
 /autoscan-*.log
 /compiler/cpp/Debug
 /compiler/cpp/libparse.a
+/compiler/cpp/src/thriftl.cc
+/compiler/cpp/src/thrifty.cc
+/compiler/cpp/src/thrifty.hh
 /compiler/cpp/src/windows/version.h
 /compiler/cpp/thrift
 /compiler/cpp/thriftl.cc
