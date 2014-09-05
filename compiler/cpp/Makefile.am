@@ -21,25 +21,30 @@
 # Please see doc/old-thrift-license.txt in the Thrift distribution for
 # details.
 
+SUBDIRS = .
+
+if WITH_TESTS
+SUBDIRS += test
+endif
+
 AM_YFLAGS = -d
 LIBS =
 BUILT_SOURCES = thrifty.cc
 
 bin_PROGRAMS = thrift
 
-noinst_LIBRARIES = libparse.a
+noinst_LIBRARIES = libparse.a libgenerate.a
 
 thrift_OBJDIR = obj
 
 thrift_SOURCES = src/main.cc \
                  src/md5.c \
-                 src/generate/t_generator.cc \
-                 src/generate/t_generator_registry.h \
                  src/globals.h \
                  src/main.h \
                  src/platform.h \
                  src/logging.h \
                  src/md5.h \
+                 src/dummy_registry.cpp \
                  src/parse/t_doc.h \
                  src/parse/t_type.h \
                  src/parse/t_base_type.h \
@@ -60,40 +65,51 @@ thrift_SOURCES = src/main.cc \
                  src/parse/t_const.h \
                  src/parse/t_const_value.h \
                  src/parse/parse.cc \
-                 src/generate/t_generator.h \
-                 src/generate/t_oop_generator.h \
-                 src/generate/t_html_generator.h \
                  src/windows/config.h \
                  src/windows/version.h
 
-# Specific client generator source
-thrift_SOURCES += src/generate/t_c_glib_generator.cc \
-                  src/generate/t_cpp_generator.cc \
-                  src/generate/t_java_generator.cc \
-                  src/generate/t_as3_generator.cc \
-                  src/generate/t_csharp_generator.cc \
-                  src/generate/t_py_generator.cc \
-                  src/generate/t_rb_generator.cc \
-                  src/generate/t_perl_generator.cc \
-                  src/generate/t_php_generator.cc \
-                  src/generate/t_erl_generator.cc \
-                  src/generate/t_cocoa_generator.cc \
-                  src/generate/t_st_generator.cc \
-                  src/generate/t_ocaml_generator.cc \
-                  src/generate/t_hs_generator.cc \
-                  src/generate/t_xsd_generator.cc \
-                  src/generate/t_html_generator.cc \
-                  src/generate/t_js_generator.cc \
-                  src/generate/t_javame_generator.cc \
-                  src/generate/t_delphi_generator.cc \
-                  src/generate/t_go_generator.cc \
-                  src/generate/t_gv_generator.cc \
-                  src/generate/t_d_generator.cc \
-                  src/generate/t_lua_generator.cc
-
 thrift_CPPFLAGS = -I$(srcdir)/src
 thrift_CXXFLAGS = -Wall
-thrift_LDADD = @LEXLIB@ libparse.a
+thrift_LDADD = @LEXLIB@ libparse.a libgenerate.a
+
+libgenerate_a_CPPFLAGS = -I$(srcdir)/src
+libgenerate_a_CXXFLAGS = -Wall
+
+libgenerate_a_SOURCES = \
+	src/generate/t_generator.h \
+	src/generate/t_oop_generator.h \
+	src/generate/t_html_generator.h \
+	src/generate/t_generator.cc \
+	src/generate/t_generator_registry.h \
+	src/generate/t_generator.h \
+	src/generate/t_oop_generator.h
+
+# Language specific generators
+libgenerate_a_SOURCES += \
+	src/generate/t_html_generator.h \
+	src/generate/t_c_glib_generator.cc \
+	src/generate/t_cpp_generator.cc \
+	src/generate/t_java_generator.cc \
+	src/generate/t_as3_generator.cc \
+	src/generate/t_csharp_generator.cc \
+	src/generate/t_py_generator.cc \
+	src/generate/t_rb_generator.cc \
+	src/generate/t_perl_generator.cc \
+	src/generate/t_php_generator.cc \
+	src/generate/t_erl_generator.cc \
+	src/generate/t_cocoa_generator.cc \
+	src/generate/t_st_generator.cc \
+	src/generate/t_ocaml_generator.cc \
+	src/generate/t_hs_generator.cc \
+	src/generate/t_xsd_generator.cc \
+	src/generate/t_html_generator.cc \
+	src/generate/t_js_generator.cc \
+	src/generate/t_javame_generator.cc \
+	src/generate/t_delphi_generator.cc \
+	src/generate/t_go_generator.cc \
+	src/generate/t_gv_generator.cc \
+	src/generate/t_d_generator.cc \
+	src/generate/t_lua_generator.cc
 
 libparse_a_CPPFLAGS = -I$(srcdir)/src
 libparse_a_CXXFLAGS = -Wall -Wno-sign-compare -Wno-unused

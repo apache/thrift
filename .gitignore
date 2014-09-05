@@ -44,6 +44,7 @@ test-driver
 /autoscan-*.log
 /compiler/cpp/Debug
 /compiler/cpp/libparse.a
+/compiler/cpp/libgenerate.a
 /compiler/cpp/src/thriftl.cc
 /compiler/cpp/src/thrifty.cc
 /compiler/cpp/src/thrifty.hh
@@ -54,6 +55,8 @@ test-driver
 /compiler/cpp/thrifty.h
 /compiler/cpp/thrifty.hh
 /compiler/cpp/version.h
+/compiler/cpp/test/CompilerUnitTests
+/compiler/cpp/test/tests.xml
 /config.*
 /configure
 /configure.lineno
