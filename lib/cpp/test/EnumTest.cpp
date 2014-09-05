@@ -18,7 +18,7 @@
  */
 #define BOOST_TEST_MODULE EnumTest
 #include <boost/test/unit_test.hpp>
-#include "thrift/test/gen-cpp/EnumTest_types.h"
+#include "gen-cpp/EnumTest_types.h"
 
 BOOST_AUTO_TEST_SUITE( EnumTest )
 
