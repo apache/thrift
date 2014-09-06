@@ -21,6 +21,7 @@ package;
 
 import haxe.Int32;
 import haxe.Int64;
+import haxe.Timer;
 import haxe.ds.IntMap;
 import haxe.ds.StringMap;
 import haxe.ds.ObjectMap;
@@ -47,11 +48,11 @@ class TestClient {
 	{
 		try
 		{
-			var difft = Date.now().getTime();
+			var difft = Timer.stamp();
 			
 			if( args.numThreads > 1) {
 				var threads = new List<Thread>();
-				for( test in 0 ... (args.numThreads-1)) {
+				for( test in 0 ... args.numThreads) {
 					threads.add( StartThread( args));
 				} 
 				for( thread in threads) {
@@ -61,9 +62,8 @@ class TestClient {
 				RunClient(args);
 			}
 
-			difft = Date.now().getTime() - difft;
-			difft = (24 * 60 * 60) * difft;
-			trace('Total time: $difft seconds');
+    		difft = Timer.stamp() - difft;
+			trace('total test time: $difft seconds');
 		}
 		catch (e : TException)
 		{
@@ -198,7 +198,8 @@ class TestClient {
 		o.i32_thing = -3;
 		o.i64_thing = Int64.make(0,-5);
 		var i = client.testStruct(o);
-		trace(' = {"' + i.string_thing + '", ' + i.byte_thing +', '+ i.i32_thing +', '+ i.i64_thing + '}');
+		trace(' = {"' + i.string_thing + '", ' + i.byte_thing +', ' 
+                      + i.i32_thing +', '+ Int64.toStr(i.i64_thing) + '}');
 
 		trace('testNest({1, {\"Zero\", 1, -3, -5}, 5})');
 		var o2 = new Xtruct2();
@@ -208,11 +209,11 @@ class TestClient {
 		var i2 = client.testNest(o2);
 		i = i2.struct_thing;
 		trace(" = {" + i2.byte_thing + ", {\"" + i.string_thing + "\", " 
-			  + i.byte_thing + ", " + i.i32_thing + ", " + i.i64_thing + "}, " 
+			  + i.byte_thing + ", " + i.i32_thing + ", " + Int64.toStr(i.i64_thing) + "}, " 
 			  + i2.i32_thing + "}");
 
 		var mapout = new IntMap< haxe.Int32>();
-		for ( j in 0 ... 4)
+		for ( j in 0 ... 5)
 		{
 			mapout.set(j, j - 10);
 		}
@@ -251,7 +252,7 @@ class TestClient {
 		trace("}");
 
 		var listout = new List<Int>();
-		for (j in -2 ... 2)
+		for (j in -2 ... 3)
 		{
 			listout.add(j);
 		}
@@ -442,18 +443,18 @@ class TestClient {
 		trace("Test Multi(" + arg0 + "," + arg1 + "," + arg2 + "," + multiDict + "," + arg4 + "," + arg5 + ")");
 		var multiResponse = client.testMulti(arg0, arg1, arg2, multiDict, arg4, arg5);
 		trace(" = Xtruct(byte_thing:" + multiResponse.byte_thing + ",string_thing:" + multiResponse.string_thing
-					+ ",i32_thing:" + multiResponse.i32_thing + ",i64_thing:" + multiResponse.i64_thing + ")\n");
+					+ ",i32_thing:" + multiResponse.i32_thing 
+			        + ",i64_thing:" + Int64.toStr(multiResponse.i64_thing) + ")");
 
 		trace("Test Oneway(1)");
 		client.testOneway(1);
 
 		trace("Test Calltime()");
-		var difft = Date.now().getTime();
-		for ( k in 0 ... 999) {
+		var difft = Timer.stamp();
+		for ( k in 0 ... 1000) {
 			client.testVoid();
 		}
-		difft = Date.now().getTime() - difft;
-		difft = (24.0 * 60 * 60) * difft;
-		trace(' = $difft ms a testVoid() call');
+		difft = Timer.stamp() - difft;
+		trace('$difft ms per testVoid() call');
 	}
 }

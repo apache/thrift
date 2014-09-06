@@ -136,13 +136,10 @@ class TBinaryProtocol implements TProtocol {
 	public function writeI64(i64 : haxe.Int64) : Void {
 		var out = new BytesOutput();
 		out.bigEndian = true;
-		
-		var oneByte = Int64.make(0,0xFF);
-		for(i in 0 ... 7) {
-			out.writeByte( Int64.toInt( Int64.and(oneByte,i64)));
-			i64 = Int64.shr(i64,8);
-		}
-
+		var hi = Int64.getHigh(i64);
+		var lo = Int64.getLow(i64);
+		out.writeInt32(hi);
+		out.writeInt32(lo);
 		trans_.write(out.getBytes(), 0, 8);
 	}
 
@@ -259,17 +256,9 @@ class TBinaryProtocol implements TProtocol {
 		var len = trans_.readAll( buffer, 0, 8);        
 		var inp = new BytesInput( buffer.getBytes(), 0, 8);
 		inp.bigEndian = true;
-		
-		var mask = Int64.make(0xFFFFFFFF,0xFFFFFF00);
-		var result = Int64.make(0,0);
-		for(i in 0 ... 7) {
-			var nextByte = Int64.make(0,inp.readByte());
-			result = Int64.shl( result, 8);
-			result = Int64.and( result, mask);
-			result = Int64.or( result, nextByte);
-		}
-		
-		return result;
+		var hi = inp.readInt32();
+		var lo = inp.readInt32();
+		return Int64.make(hi,lo);
 	}
 
 	public function readDouble():Float {

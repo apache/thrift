@@ -201,11 +201,22 @@ class t_haxe_generator : public t_oop_generator {
   bool type_can_be_null(t_type* ttype) {
     ttype = get_true_type(ttype);
 
-    return
-      ttype->is_container() ||
-      ttype->is_struct() ||
-      ttype->is_xception() ||
-      ttype->is_string();
+	if (ttype->is_container() || ttype->is_struct() || ttype->is_xception() || ttype->is_string()) {
+		return true;
+	}
+
+	if (ttype->is_base_type()) {
+		t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
+		switch (tbase) {
+		case t_base_type::TYPE_STRING:
+		case t_base_type::TYPE_I64:
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	return false;
   }
 
   std::string constant_name(std::string name);
@@ -2281,7 +2292,7 @@ void t_haxe_generator::generate_deserialize_container(ofstream& out,
   // For loop iterates over elements
   string i = tmp("_i");
   indent(out) <<
-    "for( " << i << " in 0 ... (" << obj << ".size-1))" << endl;
+    "for( " << i << " in 0 ... " << obj << ".size)" << endl;
 
     scope_up(out);
 
@@ -2364,7 +2375,7 @@ void t_haxe_generator::generate_deserialize_list_element(ofstream& out,
   generate_deserialize_field(out, &felem);
 
   indent(out) <<
-    prefix << ".push(" << elem << ");" << endl;
+    prefix << ".add(" << elem << ");" << endl;
 }
 
 

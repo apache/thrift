@@ -30,7 +30,7 @@ class Limits {
 	public static var I32_MAX = {
 		var last : Int = 0;
 		var next : Int = 0;
-		for(bit in 0 ... 31) {
+		for(bit in 0 ... 32) {
 			last = next;
 			next = last | (1 << bit);
 			if(next < 0) {

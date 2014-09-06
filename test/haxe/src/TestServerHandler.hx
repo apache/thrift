@@ -130,7 +130,7 @@ class TestServerHandler implements ThriftTest {
                           "\"" + thing.string_thing + "\", " + 
                           thing.byte_thing + ", " + 
                           thing.i32_thing + ", " + 
-                          thing.i64_thing + "})");
+                          Int64.toStr(thing.i64_thing) + "})");
     	return thing;
     }
 
@@ -150,7 +150,7 @@ class TestServerHandler implements ThriftTest {
                           "\"" + thing.string_thing + "\", " + 
                           thing.byte_thing + ", " + 
                           thing.i32_thing + ", " + 
-                          thing.i64_thing + "}, " + 
+                          Int64.toStr(thing.i64_thing) + "}, " + 
                           nest.i32_thing + "})");
     	return nest;
     }
@@ -296,7 +296,7 @@ class TestServerHandler implements ThriftTest {
     	var mapmap = new IntMap<IntMap<Int>>();
     	var pos = new IntMap<Int>();
     	var neg = new IntMap<Int>();
-    	for (i in 1 ... 4) {
+    	for (i in 1 ... 5) {
     		pos.set(i, i);
     		neg.set(-i, -i);
     	};
@@ -404,9 +404,12 @@ class TestServerHandler implements ThriftTest {
     	if (arg == "Xception") {
     		var x = new Xception();
     		x.errorCode = 1001;
-    		x.message = "This is an Xception";
+    		x.message = arg;
     		throw x;
     	};
+    	if (arg == "TException") {
+    		throw new TException();
+    	};		
     	return;
     }
 
