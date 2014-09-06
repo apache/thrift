@@ -17,5 +17,26 @@
  * under the License.
  */
 
-#define BOOST_TEST_MODULE thrift_compiler
-#include <boost/test/auto_unit_test.hpp>
+#include "IndentKeeper.h"
+
+using namespace apache::thrift::compiler;
+
+IndentKeeper::IndentKeeper()
+  : indent_(0)
+{}
+
+std::string IndentKeeper::indent() const {
+  return std::string(indent_ * INDENT_SIZE, ' ');
+}
+
+void IndentKeeper::set_indent(int indent) {
+  indent_ = indent;
+}
+
+void IndentKeeper::indent_up() {
+  ++indent_;
+}
+
+void IndentKeeper::indent_down() {
+  --indent_;
+}

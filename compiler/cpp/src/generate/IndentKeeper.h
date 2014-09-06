@@ -17,5 +17,33 @@
  * under the License.
  */
 
-#define BOOST_TEST_MODULE thrift_compiler
-#include <boost/test/auto_unit_test.hpp>
+#ifndef THRIFT_COMPILER_GENERATE_INDENTKEEPER_H
+#define THRIFT_COMPILER_GENERATE_INDENTKEEPER_H
+
+#include <string>
+#include <iosfwd>
+
+namespace apache { namespace thrift { namespace compiler {
+
+class IndentKeeper {
+public:
+  static const int INDENT_SIZE = 2;
+
+  IndentKeeper();
+
+  std::string indent() const;
+  std::ostream& indent(std::ostream& o) { return o << indent(); }
+
+  void indent_up();
+  void indent_down();
+
+  void set_indent(int indent);
+  int get_indent() const { return indent_; }
+
+private:
+  int indent_;
+};
+
+}}} // apache::thrift::compiler
+
+#endif // THRIFT_COMPILER_GENERATE_INDENTKEEPER_H

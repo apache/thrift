@@ -82,7 +82,9 @@ libgenerate_a_SOURCES = \
 	src/generate/t_generator.cc \
 	src/generate/t_generator_registry.h \
 	src/generate/t_generator.h \
-	src/generate/t_oop_generator.h
+	src/generate/t_oop_generator.h \
+	src/generate/IndentKeeper.cpp \
+	src/generate/IndentKeeper.h
 
 # Language specific generators
 libgenerate_a_SOURCES += \
