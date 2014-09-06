@@ -25,6 +25,7 @@ import Control.Monad
 import Data.Functor
 import Data.HashMap.Strict (HashMap)
 import Data.List
+import Data.List.Split
 import Data.String
 import Network
 import System.Environment
@@ -57,7 +58,7 @@ data Options = Options
   , ssl          :: Bool
   , workers      :: Int
   }
-  
+
 data ServerType = Simple
                 | ThreadPool
                 | Threaded
@@ -93,42 +94,42 @@ defaultOptions = Options
   }
 
 stringifyMap :: (Show a, Show b) => Map.HashMap a b -> String
-stringifyMap = intercalate ", " . map joinKV . Map.toList
+stringifyMap = Data.List.intercalate ", " . Data.List.map joinKV . Map.toList
   where joinKV (k, v) = show k ++ " => " ++ show v
 
 stringifySet :: Show a => Set.HashSet a -> String
-stringifySet = intercalate ", " . map show . Set.toList
+stringifySet = Data.List.intercalate ", " . Data.List.map show . Set.toList
 
 stringifyList :: Show a => Vector.Vector a -> String
-stringifyList = intercalate ", " . map show . Vector.toList
+stringifyList = Data.List.intercalate ", " . Data.List.map show . Vector.toList
 
 data TestHandler = TestHandler
-instance ThriftTest_Iface TestHandler where  
-  testVoid _ = putStrLn "testVoid()"
+instance ThriftTest_Iface TestHandler where
+  testVoid _ = System.IO.putStrLn "testVoid()"
 
   testString _ s = do
-    putStrLn $ "testString(" ++ show s ++ ")"
+    System.IO.putStrLn $ "testString(" ++ show s ++ ")"
     return s
 
   testByte _ x = do
-    putStrLn $ "testByte(" ++ show x ++ ")"
+    System.IO.putStrLn $ "testByte(" ++ show x ++ ")"
     return x
 
   testI32 _ x = do
-    putStrLn $ "testI32(" ++ show x ++ ")"
+    System.IO.putStrLn $ "testI32(" ++ show x ++ ")"
     return x
 
   testI64 _ x = do
-    putStrLn $ "testI64(" ++ show x ++ ")"
+    System.IO.putStrLn $ "testI64(" ++ show x ++ ")"
     return x
-    
+
   testDouble _ x = do
-    putStrLn $ "testDouble(" ++ show x ++ ")"
+    System.IO.putStrLn $ "testDouble(" ++ show x ++ ")"
     return x
 
   testStruct _ struct@Xtruct{..} = do
-    putStrLn $ "testStruct({" ++ show xtruct_string_thing
-                      ++ ", " ++ show xtruct_byte_thing 
+    System.IO.putStrLn $ "testStruct({" ++ show xtruct_string_thing
+                      ++ ", " ++ show xtruct_byte_thing
                       ++ ", " ++ show xtruct_i32_thing
                       ++ ", " ++ show xtruct_i64_thing
                       ++ "})"
@@ -136,7 +137,7 @@ instance ThriftTest_Iface TestHandler where
 
   testNest _ nest@Xtruct2{..} = do
     let Xtruct{..} = xtruct2_struct_thing
-    putStrLn $ "testNest({" ++ show xtruct2_byte_thing
+    System.IO.putStrLn $ "testNest({" ++ show xtruct2_byte_thing
                    ++ "{, " ++ show xtruct_string_thing
                    ++  ", " ++ show xtruct_byte_thing
                    ++  ", " ++ show xtruct_i32_thing
@@ -145,31 +146,31 @@ instance ThriftTest_Iface TestHandler where
     return nest
 
   testMap _ m = do
-    putStrLn $ "testMap({" ++ stringifyMap m ++ "})"
+    System.IO.putStrLn $ "testMap({" ++ stringifyMap m ++ "})"
     return m
-            
+
   testStringMap _ m = do
-    putStrLn $ "testStringMap(" ++ stringifyMap m ++ "})"
+    System.IO.putStrLn $ "testStringMap(" ++ stringifyMap m ++ "})"
     return m
 
   testSet _ x = do
-    putStrLn $ "testSet({" ++ stringifySet x ++ "})"
+    System.IO.putStrLn $ "testSet({" ++ stringifySet x ++ "})"
     return x
 
   testList _ x = do
-    putStrLn $ "testList(" ++ stringifyList x ++ "})"
+    System.IO.putStrLn $ "testList(" ++ stringifyList x ++ "})"
     return x
 
   testEnum _ x = do
-    putStrLn $ "testEnum(" ++ show x ++ ")"
+    System.IO.putStrLn $ "testEnum(" ++ show x ++ ")"
     return x
 
   testTypedef _ x = do
-    putStrLn $ "testTypedef(" ++ show x ++ ")"
+    System.IO.putStrLn $ "testTypedef(" ++ show x ++ ")"
     return x
 
   testMapMap _ x = do
-    putStrLn $ "testMapMap(" ++ show x ++ ")"
+    System.IO.putStrLn $ "testMapMap(" ++ show x ++ ")"
     return $ Map.fromList [ (-4, Map.fromList [ (-4, -4)
                                               , (-3, -3)
                                               , (-2, -2)
@@ -183,7 +184,7 @@ instance ThriftTest_Iface TestHandler where
                           ]
 
   testInsanity _ x = do
-    putStrLn "testInsanity()"
+    System.IO.putStrLn "testInsanity()"
     return $ Map.fromList [ (1, Map.fromList [ (TWO  , x)
                                              , (THREE, x)
                                              ])
@@ -192,32 +193,32 @@ instance ThriftTest_Iface TestHandler where
                           ]
 
   testMulti _ byte i32 i64 _ _ _ = do
-    putStrLn "testMulti()"
+    System.IO.putStrLn "testMulti()"
     return Xtruct{ xtruct_string_thing = Text.pack "Hello2"
                  , xtruct_byte_thing   = byte
                  , xtruct_i32_thing    = i32
                  , xtruct_i64_thing    = i64
                  }
-                                        
+
   testException _ s = do
-    putStrLn $ "testException(" ++ show s ++ ")"
+    System.IO.putStrLn $ "testException(" ++ show s ++ ")"
     case s of
       "Xception"   -> throw $ Xception 1001 s
       "TException" -> throw ThriftException
       _ -> return ()
 
   testMultiException _ s1 s2 = do
-    putStrLn $ "testMultiException(" ++ show s1 ++ ", " ++ show s2 ++  ")"
+    System.IO.putStrLn $ "testMultiException(" ++ show s1 ++ ", " ++ show s2 ++  ")"
     case s1 of
-      "Xception"   -> throw $ Xception 1001 "This is an Xception" 
-      "Xception2"  -> throw $ Xception2 2002 default_Xtruct 
+      "Xception"   -> throw $ Xception 1001 "This is an Xception"
+      "Xception2"  -> throw $ Xception2 2002 default_Xtruct
       "TException" -> throw ThriftException
       _ -> return default_Xtruct{ xtruct_string_thing = s2 }
 
   testOneway _ i = do
-    putStrLn $ "testOneway(" ++ show i ++ "): Sleeping..."
+    System.IO.putStrLn $ "testOneway(" ++ show i ++ "): Sleeping..."
     sleep (fromIntegral i)
-    putStrLn $ "testOneway(" ++ show i ++ "): done sleeping!"
+    System.IO.putStrLn $ "testOneway(" ++ show i ++ "): done sleeping!"
 
 main :: IO ()
 main = do
@@ -225,7 +226,7 @@ main = do
   case options of
     Nothing -> showHelp
     Just Options{..} -> do
-      putStrLn $ "Starting \"" ++ show serverType ++ "\" server (" ++
+      System.IO.putStrLn $ "Starting \"" ++ show serverType ++ "\" server (" ++
         show transport ++ ") listen on: " ++ domainSocket ++ show port
       case protocol of
         Binary  -> runServer BinaryProtocol port
@@ -238,23 +239,25 @@ main = do
           return (p h, p h)
 
 parseFlags :: [String] -> Options -> Maybe Options
-parseFlags (flag : arg : flags) opts
-  | flag == "--port"          = parseFlags flags opts{ port = read arg }
-  | flag == "--domain-socket" = parseFlags flags opts{ domainSocket = arg }
-  | flag == "--server-type"   = parseFlags flags opts{ serverType = fromString arg }
-  | flag == "--transport"     = parseFlags flags opts{ transport = arg }
-  | flag == "--protocol"      = parseFlags flags opts{ protocol = getProtocol arg }
-  | flag == "-n" ||
-    flag == "--workers"       = parseFlags flags opts{ workers = read arg }
-parseFlags (flag : flags) opts
-  | flag == "-h"     = Nothing
-  | flag == "--help" = Nothing
-  | flag == "--ssl"  = parseFlags flags opts{ ssl = True }
-  | flag == "--processor-events" = parseFlags flags opts
+parseFlags (flag : flags) opts = do
+  let pieces = splitOn "=" flag
+  case pieces of
+    "--port" : arg : _ -> parseFlags flags opts{ port = read arg }
+    "--domain-socket" : arg : _ -> parseFlags flags opts{ domainSocket = read arg }
+    "--server-type" : arg : _ -> parseFlags flags opts{ serverType = fromString arg }
+    "--transport" : arg : _ -> parseFlags flags opts{ transport = arg }
+    "--protocol" : arg : _ -> parseFlags flags opts{ protocol = getProtocol arg }
+    "--workers" : arg : _ -> parseFlags flags opts{ workers = read arg }
+    "-n" : arg : _ -> parseFlags flags opts{ workers = read arg }
+    "--h" : _ -> Nothing
+    "--help" : _ -> Nothing
+    "--ssl" : _ -> parseFlags flags opts{ ssl = True }
+    "--processor-events" : _ -> parseFlags flags opts
+    _ -> Nothing
 parseFlags [] opts = Just opts
 
 showHelp :: IO ()
-showHelp = putStrLn
+showHelp = System.IO.putStrLn
   "Allowed options:\n\
   \  -h [ --help ]               produce help message\n\
   \  --port arg (=9090)          Port number to listen\n\
@@ -265,5 +268,5 @@ showHelp = putStrLn
   \  --protocol arg (=binary)    protocol: binary, compact, json\n\
   \  --ssl                       Encrypted Transport using SSL\n\
   \  --processor-events          processor-events\n\
-  \  -n [ --workers ] arg (=4)   Number of thread pools workers. Only valid for\n\ 
+  \  -n [ --workers ] arg (=4)   Number of thread pools workers. Only valid for\n\
   \                              thread-pool server type"

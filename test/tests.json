@@ -28,7 +28,7 @@
             "description": "C++ TestClient",
             "lib": "cpp",
             "executable": "cpp/TestClient",
-            "exit": "soft",
+            "exit": "hard",
             "protocols": [
                 "binary",
                 "compact",
@@ -97,7 +97,7 @@
             "lib": "java",
             "executable": ["ant","-f","../lib/java/build.xml","-Dno-gen-thrift=\"\""],
             "extra_args": ["run-testclient"],
-            "exit": "soft",
+            "exit": "hard",
             "protocols": [
                 "binary",
                 "compact",
@@ -116,6 +116,26 @@
             "platform": [
                 "Linux"
             ]
+        },
+        {
+            "description": "Haskell TestClient",
+            "lib": "hs",
+            "executable": "hs/TestClient",
+            "exit": "hard",
+            "protocols": [
+                "binary",
+                "compact",
+                "json"
+            ],
+            "transports": [
+                "buffered"
+            ],
+            "sockets": [
+                "ip"
+            ],
+            "platform": [
+                "Linux"
+            ]
         }
     ],
     "server": [
@@ -125,7 +145,7 @@
             "executable": "py/TestServer.py",
             "extra_args": ["--genpydir=gen-py", "TSimpleServer"],
             "extra_delay": 0,
-            "exit": "hard",
+            "exit": "soft",
             "protocols": [
                 "binary",
                 "compact",
@@ -217,7 +237,7 @@
             "lib": "java",
             "executable": ["ant","-f","../lib/java/build.xml","-Dno-gen-thrift=\"\""],
             "extra_args": ["run-testserver"],
-            "exit": "soft",
+            "exit": "hard",
             "protocols": [
                 "binary",
                 "compact",
@@ -231,6 +251,26 @@
             "sockets": [
                 "ip",
                 "ip-ssl"
+            ],
+            "platform": [
+                "Linux"
+            ]
+        },
+        {
+            "description": "Haskell TestServer",
+            "lib": "hs",
+            "executable": "hs/TestServer",
+            "exit": "hard",
+            "protocols": [
+                "binary",
+                "compact",
+                "json"
+            ],
+            "transports": [
+                "buffered"
+            ],
+            "sockets": [
+                "ip"
             ],
             "platform": [
                 "Linux"

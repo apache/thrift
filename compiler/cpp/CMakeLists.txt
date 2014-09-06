@@ -148,6 +148,35 @@ add_executable(thrift ${thrift_SOURCES})
 
 target_link_libraries(thrift libparse)
 
-if(NOT WIN32)
-    install(TARGETS thrift DESTINATION bin)
+install(TARGETS thrift DESTINATION bin)
+
+# mingw32 does not support c++0x features
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
+set(CMAKE_CXX_FLAGS "-std=c++0x")
 endif()
+
+# create a Distribution Package for the Apache Thrift Compiler
+set(CPACK_PACKAGE_NAME "Apache Thrift")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Apache Thrift Compiler")
+set(CPACK_PACKAGE_VENDOR "Apache Software Foundation" )
+set(CPACK_PACKAGE_CONTACT "dev@thrift.apache.org")
+set(CPACK_PACKAGE_VERSION ${thrift_VERSION})
+set(CPACK_PACKAGE_VERSION_MAJOR ${thrift_VERSION_MAJOR} )
+set(CPACK_PACKAGE_VERSION_MINOR ${thrift_VERSION_MINOR} )
+set(CPACK_PACKAGE_VERSION_PATCH ${thrift_VERSION_PATCH} )
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../../LICENSE")
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(CPACK_GENERATOR "NSIS")
+    set(CPACK_NSIS_HELP_LINK "http://thrift.apache.org")
+    set(CPACK_NSIS_MENU_LINKS
+        "http://thrift.apache.org" "Apache Thrift - Web Site"
+        "https://issues.apache.org/jira/browse/THRIFT" "Apache Thrift - Issues")
+    set(CPACK_NSIS_CONTACT ${CPACK_PACKAGE_CONTACT})
+    set(CPACK_NSIS_MODIFY_PATH "ON")
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY ${CPACK_PACKAGE_NAME})
+else()
+    set(CPACK_GENERATOR "DEB" )
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER ${CPACK_PACKAGE_CONTACT})
+endif()
+include(CPack)

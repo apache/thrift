@@ -78,7 +78,7 @@ sudo update-alternatives --install /usr/bin/node node /usr/bin/nodejs 10
 
 # CSharp
 sudo apt-get install -qq mono-gmcs mono-devel libmono-system-web2.0-cil
-sudo apt-get install -qq mingw32 mingw32-binutils mingw32-runtime
+sudo apt-get install -qq mingw32 mingw32-binutils mingw32-runtime nsis
 
 # Customize the system
 # ---

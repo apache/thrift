@@ -20,6 +20,8 @@
 noinst_LTLIBRARIES = libtestgencpp.la libprocessortest.la
 nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/DebugProtoTest_types.cpp \
+	gen-cpp/EnumTest_types.cpp \
+	gen-cpp/EnumTest_types.h \
 	gen-cpp/OptionalRequiredTest_types.cpp \
 	gen-cpp/DebugProtoTest_types.cpp \
 	gen-cpp/ThriftTest_types.cpp \
@@ -65,7 +67,8 @@ check_PROGRAMS = \
 	TFileTransportTest \
 	UnitTests \
 	link_test \
-	OpenSSLManualInitTest
+	OpenSSLManualInitTest \
+	EnumTest
 # disable these test ... too strong
 #       processor_test
 #	concurrency_test
@@ -82,7 +85,8 @@ UnitTests_SOURCES = \
 	UnitTestMain.cpp \
 	TMemoryBufferTest.cpp \
 	TBufferBaseTest.cpp \
-	Base64Test.cpp
+	Base64Test.cpp \
+	ToStringTest.cpp
 
 if !WITH_BOOSTTHREADS
 UnitTests_SOURCES += \
@@ -110,6 +114,13 @@ ZlibTest_LDADD = \
   $(top_builddir)/lib/cpp/libthriftz.la \
   -l:libboost_unit_test_framework.a \
   -lz
+
+EnumTest_SOURCES = \
+  EnumTest.cpp
+
+EnumTest_LDADD = \
+  libtestgencpp.la \
+  $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a
 
 TFileTransportTest_SOURCES = \
 	TFileTransportTest.cpp
@@ -231,6 +242,9 @@ THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h: $(top_srcdir)/test/DebugProtoTest.thrift
 	$(THRIFT) --gen cpp:dense $<
+
+gen-cpp/EnumTest_types.cpp gen-cpp/EnumTest_types.h: $(top_srcdir)/test/EnumTest.thrift
+	$(THRIFT) --gen cpp $<
 
 gen-cpp/OptionalRequiredTest_types.cpp gen-cpp/OptionalRequiredTest_types.h: $(top_srcdir)/test/OptionalRequiredTest.thrift
 	$(THRIFT) --gen cpp:dense $<

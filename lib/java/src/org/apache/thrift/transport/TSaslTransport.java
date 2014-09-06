@@ -178,13 +178,22 @@ abstract class TSaslTransport extends TTransport {
     underlyingTransport.readAll(messageHeader, 0, messageHeader.length);
 
     byte statusByte = messageHeader[0];
-    byte[] payload = new byte[EncodingUtils.decodeBigEndian(messageHeader, STATUS_BYTES)];
-    underlyingTransport.readAll(payload, 0, payload.length);
 
     NegotiationStatus status = NegotiationStatus.byValue(statusByte);
     if (status == null) {
       throw sendAndThrowMessage(NegotiationStatus.ERROR, "Invalid status " + statusByte);
-    } else if (status == NegotiationStatus.BAD || status == NegotiationStatus.ERROR) {
+    }
+
+    int payloadBytes = EncodingUtils.decodeBigEndian(messageHeader, STATUS_BYTES);
+    if (payloadBytes < 0 || payloadBytes > 104857600 /* 100 MB */) {
+      throw sendAndThrowMessage(
+        NegotiationStatus.ERROR, "Invalid payload header length: " + payloadBytes);
+    }
+
+    byte[] payload = new byte[payloadBytes];
+    underlyingTransport.readAll(payload, 0, payload.length);
+
+    if (status == NegotiationStatus.BAD || status == NegotiationStatus.ERROR) {
       try {
         String remoteMessage = new String(payload, "UTF-8");
         throw new TTransportException("Peer indicated failure: " + remoteMessage);

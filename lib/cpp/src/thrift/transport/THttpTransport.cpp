@@ -17,6 +17,8 @@
  * under the License.
  */
 
+#include <sstream>
+
 #include <thrift/transport/THttpTransport.h>
 
 namespace apache { namespace thrift { namespace transport {
@@ -29,6 +31,7 @@ const int THttpTransport::CRLF_LEN = 2;
 
 THttpTransport::THttpTransport(boost::shared_ptr<TTransport> transport) :
   transport_(transport),
+  origin_(""),
   readHeaders_(true),
   chunked_(false),
   chunkedDone_(false),
@@ -247,6 +250,15 @@ void THttpTransport::readHeaders() {
 
 void THttpTransport::write(const uint8_t* buf, uint32_t len) {
   writeBuffer_.write(buf, len);
+}
+
+const std::string THttpTransport::getOrigin() {
+  std::ostringstream oss;
+  if ( !origin_.empty()) {
+    oss << origin_ << ", ";
+  }
+  oss << transport_->getOrigin();
+  return oss.str();
 }
 
 }}}

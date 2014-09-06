@@ -237,6 +237,18 @@ class TTransport {
                               "Base TTransport cannot consume.");
   }
 
+  /**
+   * Returns the origin of the transports call. The value depends on the
+   * transport used. An IP based transport for example will return the
+   * IP address of the client making the request.
+   * If the transport doesn't know the origin Unknown is returned.
+   *
+   * The returned value can be used in a log message for example
+   */
+  virtual const std::string getOrigin() {
+    return "Unknown";
+  }
+
  protected:
   /**
    * Simple constructor.

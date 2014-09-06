@@ -314,10 +314,8 @@ void t_c_glib_generator::generate_enum(t_enum *tenum) {
 
     f_types_ <<
       indent() << this->nspace_uc << name_uc << "_" << (*c_iter)->get_name();
-    if ((*c_iter)->has_value()) {
-      f_types_ <<
-        " = " << (*c_iter)->get_value();
-    }
+    f_types_ <<
+      " = " << (*c_iter)->get_value();
   }
 
   indent_down();
@@ -2971,8 +2969,10 @@ void t_c_glib_generator::generate_serialize_container(ofstream &out,
     t_type *tval = ((t_map *) ttype)->get_val_type();
     string tkey_name = type_name (tkey);
     string tval_name = type_name (tval);
-    string tkey_ptr = tkey->is_string() || !tkey->is_base_type() ? "" : "*";
-    string tval_ptr = tval->is_string() || !tval->is_base_type() ? "" : "*";
+    string tkey_ptr;
+    string tval_ptr;
+    string keyname = tmp("key");
+    string valname = tmp("val");
 
     /*
      * Some ugliness here.  To maximize backwards compatibility, we
@@ -2988,9 +2988,19 @@ void t_c_glib_generator::generate_serialize_container(ofstream &out,
       indent() << "  return " << error_ret << ";" << endl <<
       indent() << "xfer += ret;" << endl <<
       endl <<
-      indent() << "GList *key_list = NULL, *iter = NULL;" << endl <<
-      indent() << tkey_name << tkey_ptr << " key;" << endl <<
-      indent() << tval_name << tval_ptr << " value;" << endl <<
+      indent() << "GList *key_list = NULL, *iter = NULL;" << endl;
+    declare_local_variable(out, tkey, keyname);
+    declare_local_variable(out, tval, valname);
+
+    /* If either the key or value type is a typedef, find its underlying type so
+       we can correctly determine how to generate a pointer to it */
+    tkey = get_true_type(tkey);
+    tval = get_true_type(tval);
+
+    tkey_ptr = tkey->is_string() || !tkey->is_base_type() ? "" : "*";
+    tval_ptr = tval->is_string() || !tval->is_base_type() ? "" : "*";
+
+    out <<
       indent() << "g_hash_table_foreach ((GHashTable *) " << prefix << 
                    ", thrift_hash_table_get_keys, &key_list);" << endl <<
       indent() << tkey_name << tkey_ptr <<
@@ -3009,13 +3019,16 @@ void t_c_glib_generator::generate_serialize_container(ofstream &out,
 
     scope_up(out);
     out <<
-      indent() << "key = keys[i];" << endl <<
-      indent() << "value = (" << tval_name << tval_ptr <<
+      indent() << keyname << " = keys[i];" << endl <<
+      indent() << valname << " = (" << tval_name << tval_ptr <<
                    ") g_hash_table_lookup (((GHashTable *) " << prefix <<
-                   "), (gpointer) key);" << endl <<
+                   "), (gpointer) " << keyname << ");" << endl <<
       endl;
-    generate_serialize_map_element (out, (t_map *) ttype, tkey_ptr + " key",
-                                    tval_ptr + " value", error_ret);
+    generate_serialize_map_element (out,
+                                    (t_map *) ttype,
+                                    tkey_ptr + " " + keyname,
+                                    tval_ptr + " " + valname,
+                                    error_ret);
     scope_down(out);
 
     out <<
@@ -3415,11 +3428,19 @@ void t_c_glib_generator::generate_deserialize_container (ofstream &out, t_type *
 
 void t_c_glib_generator::declare_local_variable(ofstream &out, t_type *ttype, string &name) {
   string tname = type_name (ttype);
+
+  /* If the given type is a typedef, find its underlying type so we
+     can correctly determine how to generate a pointer to it */
+  ttype = get_true_type(ttype);
+
   string ptr = ttype->is_string() || !ttype->is_base_type() ? "" : "*";
 
   if (ttype->is_map()) {
+    t_map *tmap = (t_map *)ttype;
     out <<
-    indent() << tname << ptr << " " << name << " = g_hash_table_new (NULL, NULL);" << endl;
+      indent() << tname << ptr << " " << name << " = " <<
+      generate_new_hash_from_type(tmap->get_key_type(), tmap->get_val_type()) <<
+      endl;
   } else if (ttype->is_enum()) {
     out <<
     indent() << tname << ptr << " " << name << ";" << endl;
@@ -3436,13 +3457,20 @@ void t_c_glib_generator::generate_deserialize_map_element(ofstream &out,
                                                           int error_ret) {
   t_type *tkey = tmap->get_key_type();
   t_type *tval = tmap->get_val_type();
-  string tkey_ptr = tkey->is_string() || !tkey->is_base_type() ? "" : "*";
-  string tval_ptr = tval->is_string() || !tval->is_base_type() ? "" : "*";
   string keyname = tmp("key");
   string valname = tmp("val");
 
   declare_local_variable(out, tkey, keyname);
   declare_local_variable(out, tval, valname);
+
+  /* If either the key or value type is a typedef, find its underlying
+     type so we can correctly determine how to generate a pointer to
+     it */
+  tkey = get_true_type(tkey);
+  tval = get_true_type(tval);
+
+  string tkey_ptr = tkey->is_string() || !tkey->is_base_type() ? "" : "*";
+  string tval_ptr = tval->is_string() || !tval->is_base_type() ? "" : "*";
 
   // deserialize the fields of the map element
   t_field fkey (tkey, tkey_ptr + keyname);
@@ -3528,7 +3556,7 @@ string t_c_glib_generator::generate_free_func_from_type (t_type * ttype) {
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
       case t_base_type::TYPE_DOUBLE:
-        return "NULL";
+        return "g_free";
       case t_base_type::TYPE_STRING:
         if (((t_base_type *) ttype)->is_binary()) {
             return "thrift_string_free";
@@ -3637,7 +3665,7 @@ string t_c_glib_generator::generate_cmp_func_from_type (t_type * ttype) {
         throw "compiler error: no hash table info for type";
     }
   } else if (ttype->is_enum()) {
-    return "NULL";
+    return "g_direct_equal";
   } else if (ttype->is_container() || ttype->is_struct()) {
     return "g_direct_equal";
   } else if (ttype->is_typedef()) {

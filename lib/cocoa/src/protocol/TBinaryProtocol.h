@@ -38,7 +38,7 @@
 - (int32_t) messageSizeLimit;
 - (void) setMessageSizeLimit: (int32_t) sizeLimit;
 
-@end;
+@end
 
 
 @interface TBinaryProtocolFactory : NSObject <TProtocolFactory> {
