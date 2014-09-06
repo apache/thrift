@@ -120,7 +120,7 @@ EnumTest_SOURCES = \
 
 EnumTest_LDADD = \
   libtestgencpp.la \
-  $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a
+  -l:libboost_unit_test_framework.a 
 
 TFileTransportTest_SOURCES = \
 	TFileTransportTest.cpp
@@ -244,7 +244,7 @@ gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h: $(top_srcdir)/t
 	$(THRIFT) --gen cpp:dense $<
 
 gen-cpp/EnumTest_types.cpp gen-cpp/EnumTest_types.h: $(top_srcdir)/test/EnumTest.thrift
-	$(THRIFT) --gen cpp $<
+	$(THRIFT) --gen cpp:pure_enums $<
 
 gen-cpp/OptionalRequiredTest_types.cpp gen-cpp/OptionalRequiredTest_types.h: $(top_srcdir)/test/OptionalRequiredTest.thrift
 	$(THRIFT) --gen cpp:dense $<
