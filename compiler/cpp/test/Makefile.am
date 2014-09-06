@@ -29,11 +29,12 @@ TESTS = \
 	$(check_PROGRAMS)
 
 CompilerUnitTests_SOURCES = \
-	CompilerUnitTestMain.cpp
+	CompilerUnitTestMain.cpp \
+	IndentKeeperTests.cpp
 
 CompilerUnitTests_LDADD = \
 	-l:libboost_unit_test_framework.a $(top_builddir)/compiler/cpp/libgenerate.a
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_builddir)/compiler/cpp/src
 AM_LDFLAGS = $(BOOST_LDFLAGS)
 AM_CXXFLAGS = -Wall
