@@ -33,16 +33,19 @@ Work in progress
 ========================
 
 WHAT WORKS:
-- tutorial works with sockets, both client and server
+- socket transport, binary protocol
+- tutorial client and server
+- cross-test client and server 
 - tested with Haxe C++ target
 - designed to work with all other Haxe and OpenFL targets (not tested!)
 
 TODO:
 - build scripts and makefiles for tutorial and test
-- cross-test client and server (currently working on this part)
-- JSON protocol, update tutorial and test accordingly
-- HTTP transport, update tutorial and test accordingly
-- Tests of all components against as much as possible Haxe and/or OpenFL targets
+
+FURTHER DEVELOPMENTS:
+- add JSON protocol, update tutorial and test accordingly
+- add HTTP transport, update tutorial and test accordingly
+- Tests of all components against all Haxe/OpenFL targets
 - Try to minimze or eliminate known restrictions (see below)
 
 

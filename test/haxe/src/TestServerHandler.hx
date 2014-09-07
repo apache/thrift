@@ -318,7 +318,7 @@ class TestServerHandler implements ThriftTest {
 	* 
 	* @param argument
 	*/
-    public function testInsanity(argument : Insanity) : ObjectMap< haxe.Int64, IntMap< Insanity>>
+    public function testInsanity(argument : Insanity) : Int64Map< IntMap< Insanity>>
     {
     	trace("testInsanity()");
 
@@ -351,7 +351,7 @@ class TestServerHandler implements ThriftTest {
     	var second_map = new IntMap< Insanity>();
     	second_map.set(Numberz.SIX, looney);
 
-		var insane = new ObjectMap< haxe.Int64, IntMap< Insanity>>();
+		var insane = new Int64Map< IntMap< Insanity>>();
     	insane.set( Int64.make(0,1), first_map);
     	insane.set( Int64.make(0,2), second_map);
 

@@ -28,7 +28,7 @@ import org.apache.thrift.meta_data.*;
 import thrift.test.*;  // generated code
 
 
-public class TestServerEventHandler : TServerEventHandler
+class TestServerEventHandler : TServerEventHandler
 {
 	public int callCount = 0;
 	public void preServe()

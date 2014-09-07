@@ -42,8 +42,50 @@ import cpp.vm.Thread;
 import thrift.test.*;  // generated code
 
 
-class TestClient {
+class TestResults {
+	private var successCnt : Int = 0;
+	private var errorCnt : Int = 0;
+	private var failedTests : String = "";
+	private var print_direct : Bool = false;
+
+	public function new(direct : Bool) {
+		print_direct = direct;
+	}
 	
+	public function Expect( expr : Bool, msg : String) : Void {
+		if ( expr) {
+			++successCnt;
+		} else {
+			++errorCnt;
+			failedTests += "\n  " + msg;
+			if( print_direct) {
+				trace('FAIL: $msg');
+			}
+		}
+	}
+
+
+	public function PrintSummary() : Void {
+		var total = successCnt + errorCnt;
+		var sp = (100 * successCnt) / total;
+		var ep = (100 * errorCnt) / total;
+		
+		trace('===========================');
+		trace('Tests executed    $total');
+		trace('Tests succeeded   $successCnt ($sp%)');
+		trace('Tests failed      $errorCnt ($ep%)');
+		if ( errorCnt > 0)
+		{
+			trace('===========================');
+  			trace('FAILED TESTS: $failedTests');
+		}
+		trace('===========================');
+	}
+}
+
+
+class TestClient {
+
 	public static function Execute(args : Arguments) :  Void
 	{
 		try
@@ -59,7 +101,9 @@ class TestClient {
 					Thread.readMessage(true);
 				}
 			} else {
-				RunClient(args);
+				var rslt = new TestResults(true);
+				RunClient(args,rslt);
+				rslt.PrintSummary();
 			}
 
     		difft = Timer.stamp() - difft;
@@ -82,7 +126,9 @@ class TestClient {
 				var main : Thread = Thread.readMessage(true);
 				try 
 				{
-					RunClient(args);
+					var rslt = new TestResults(false);
+					RunClient(args,rslt);
+					// TODO: promote rslt values to main thread
 				}
 				catch (e : TException)
 				{
@@ -100,7 +146,7 @@ class TestClient {
 	}
 
 	
-	public static function RunClient(args : Arguments)
+	public static function RunClient(args : Arguments, rslt : TestResults)
 	{
 		var transport : TTransport = null;
 		switch (args.transport)
@@ -140,11 +186,94 @@ class TestClient {
 		}
 
 
-		ClientTest( transport, protocol);
+		// run the test code
+		HaxeBasicsTest( rslt);
+		ClientTest( transport, protocol, rslt);
 					
 	}
 
-	public static function ClientTest( transport : TTransport, protocol : TProtocol) : Void
+
+	public static function HaxeBasicsTest( rslt : TestResults) : Void
+	{
+		// We need to test a few basic things used in the ClientTest
+		// Anything else beyond this scope should go into /lib/haxe/ instead
+		
+		var map32 = new IntMap<Int32>();
+		var map64 = new Int64Map<Int32>();
+
+		rslt.Expect( map32.keys().hasNext() == map64.keys().hasNext(), "Int64Map<Int32> Test #1");
+		rslt.Expect( map32.exists( 4711) == map64.exists( Int64.make(47,11)), "Int64Map<Int32> Test #2");
+		rslt.Expect( map32.remove( 4711) == map64.remove( Int64.make(47,11)), "Int64Map<Int32> Test #3");
+		rslt.Expect( map32.get( 4711) == map64.get( Int64.make(47,11)), "Int64Map<Int32> Test #4");
+		
+		map32.set( 42, 815);
+		map64.set( Int64.make(0,42), 815);
+		map32.set( -517, 23);
+		map64.set( Int64.make(-5,17), 23);
+		map32.set( 0, -123);
+		map64.set( Int64.make(0,0), -123);
+
+		rslt.Expect( map32.keys().hasNext() == map64.keys().hasNext(), "Int64Map<Int32> Test #10");
+		rslt.Expect( map32.exists( 4711) == map64.exists( Int64.make(47,11)), "Int64Map<Int32> Test #11");
+		rslt.Expect( map32.exists( -517) == map64.exists( Int64.make(-5,17)), "Int64Map<Int32> Test #12");
+		rslt.Expect( map32.exists( 42) == map64.exists( Int64.make(0,42)), "Int64Map<Int32> Test #13");
+		rslt.Expect( map32.exists( 0) == map64.exists( Int64.make(0,0)), "Int64Map<Int32> Test #14");
+		rslt.Expect( map32.get( 4711) == map64.get( Int64.make(47,11)), "Int64Map<Int32> Test #15");
+		rslt.Expect( map32.get( -517) == map64.get( Int64.make(-5,17)), "Int64Map<Int32> Test #16");
+		rslt.Expect( map32.get( 42) == map64.get( Int64.make(0,42)), "Int64Map<Int32> Test #Int64.make(-5,17)");
+		rslt.Expect( map32.get( 0) == map64.get( Int64.make(0,0)), "Int64Map<Int32> Test #18");
+		rslt.Expect( map32.remove( 4711) == map64.remove( Int64.make(47,11)), "Int64Map<Int32> Test #19");
+		rslt.Expect( map32.remove( -517) == map64.remove( Int64.make(-5,17)), "Int64Map<Int32> Test #20");
+		rslt.Expect( map32.exists( 4711) == map64.exists( Int64.make(47,11)), "Int64Map<Int32> Test #21");
+		rslt.Expect( map32.exists( -517) == map64.exists( Int64.make(-5,17)), "Int64Map<Int32> Test #22");
+		rslt.Expect( map32.exists( 42) == map64.exists( Int64.make(0,42)), "Int64Map<Int32> Test #23");
+		rslt.Expect( map32.exists( 0) == map64.exists( Int64.make(0,0)), "Int64Map<Int32> Test #24");
+		rslt.Expect( map32.get( 4711) == map64.get( Int64.make(47,11)), "Int64Map<Int32> Test #25");
+		rslt.Expect( map32.get( -517) == map64.get( Int64.make(-5,17)), "Int64Map<Int32> Test #26");
+		rslt.Expect( map32.get( 42) == map64.get( Int64.make(0,42)), "Int64Map<Int32> Test #27");
+		rslt.Expect( map32.get( 0) == map64.get( Int64.make(0,0)), "Int64Map<Int32> Test #28");
+
+		map32.set( 42, 1);
+		map64.set( Int64.make(0,42), 1);
+		map32.set( -517, -2);
+		map64.set( Int64.make(-5,17), -2);
+		map32.set( 0, 3);
+		map64.set( Int64.make(0,0), 3);
+
+		var c32 = 0;
+		for (key in map32.keys()) {
+			++c32;
+		}
+		var c64 = 0;
+		for (key in map64.keys()) {
+			++c64;
+		}
+		rslt.Expect( c32 == c64, "Int64Map<Int32> Test #30");
+
+		var s32 = map32.toString();
+		var s64 = map64.toString();
+		trace("Int64Map<Int32>.toString(): " + ' ("$s32" == "$s64")');
+
+		map32.remove( 42);
+		map64.remove( Int64.make(0,42));
+		map32.remove( -517);
+		map64.remove( Int64.make(-5,17));
+		map32.remove( 0);
+		map64.remove( Int64.make(0,0));
+		
+		rslt.Expect( map32.keys().hasNext() == map64.keys().hasNext(), "Int64Map<Int32> Test #90");
+		rslt.Expect( map32.exists( 4711) == map64.exists( Int64.make(47,11)), "Int64Map<Int32> Test #91");
+		rslt.Expect( map32.exists( -517) == map64.exists( Int64.make(-5,17)), "Int64Map<Int32> Test #92");
+		rslt.Expect( map32.exists( 42) == map64.exists( Int64.make(0,42)), "Int64Map<Int32> Test #93");
+		rslt.Expect( map32.exists( 0) == map64.exists( Int64.make(0,0)), "Int64Map<Int32> Test #94");
+		rslt.Expect( map32.get( 4711) == map64.get( Int64.make(47,11)), "Int64Map<Int32> Test #95");
+		rslt.Expect( map32.get( -517) == map64.get( Int64.make(-5,17)), "Int64Map<Int32> Test #96");
+		rslt.Expect( map32.get( 42) == map64.get( Int64.make(0,42)), "Int64Map<Int32> Test #97");
+		rslt.Expect( map32.get( 0) == map64.get( Int64.make(0,0)), "Int64Map<Int32> Test #98");
+	}
+
+
+	public static function ClientTest( transport : TTransport, protocol : TProtocol, rslt : TestResults) : Void
 	{
 		var client = new ThriftTestImpl(protocol,protocol);
 		try
@@ -170,26 +299,33 @@ class TestClient {
 		trace('testVoid()');
 		client.testVoid();
 		trace(' = void');
+		rslt.Expect(true,"testVoid()");  // bump counter
 
 		trace('testString("Test")');
 		var s = client.testString("Test");
 		trace(' = "$s"');
+		rslt.Expect(s == "Test", '$s == "Test"');
 
 		trace('testByte(1)');
 		var i8 = client.testByte(1);
 		trace(' = $i8');
+		rslt.Expect(i8 == 1, '$i8 == 1');
 
 		trace('testI32(-1)');
 		var i32 = client.testI32(-1);
 		trace(' = $i32');
+		rslt.Expect(i32 == -1, '$i32 == -1');
 
 		trace('testI64(-34359738368)');
 		var i64 = client.testI64( Int64.make( 0xFFFFFFF8, 0x00000000)); // -34359738368
 		trace(' = $i64');
+		rslt.Expect( Int64.compare( i64, Int64.make( 0xFFFFFFF8, 0x00000000)) == 0, 
+		             Int64.toStr(i64) +" == "+Int64.toStr(Int64.make( 0xFFFFFFF8, 0x00000000)));
 
 		trace('testDouble(5.325098235)');
 		var dub = client.testDouble(5.325098235);
 		trace(' = $dub');
+		rslt.Expect(dub == 5.325098235, '$dub == 5.325098235');
 
 		trace('testStruct({"Zero", 1, -3, -5})');
 		var o = new Xtruct();
@@ -200,6 +336,10 @@ class TestClient {
 		var i = client.testStruct(o);
 		trace(' = {"' + i.string_thing + '", ' + i.byte_thing +', ' 
                       + i.i32_thing +', '+ Int64.toStr(i.i64_thing) + '}');
+		rslt.Expect( i.string_thing == o.string_thing, "i.string_thing == o.string_thing");
+		rslt.Expect( i.byte_thing == o.byte_thing, "i.byte_thing == o.byte_thing");
+		rslt.Expect( i.i32_thing == o.i32_thing, "i.i64_thing == o.i64_thing");
+		rslt.Expect( i.i32_thing == o.i32_thing, "i.i64_thing == o.i64_thing");
 
 		trace('testNest({1, {\"Zero\", 1, -3, -5}, 5})');
 		var o2 = new Xtruct2();
@@ -211,6 +351,12 @@ class TestClient {
 		trace(" = {" + i2.byte_thing + ", {\"" + i.string_thing + "\", " 
 			  + i.byte_thing + ", " + i.i32_thing + ", " + Int64.toStr(i.i64_thing) + "}, " 
 			  + i2.i32_thing + "}");
+		rslt.Expect( i2.byte_thing == o2.byte_thing, "i2.byte_thing == o2.byte_thing");
+		rslt.Expect( i2.i32_thing == o2.i32_thing, "i2.i32_thing == o2.i32_thing");
+		rslt.Expect( i.string_thing == o.string_thing, "i.string_thing == o.string_thing");
+		rslt.Expect( i.byte_thing == o.byte_thing, "i.byte_thing == o.byte_thing");
+		rslt.Expect( i.i32_thing == o.i32_thing, "i.i32_thing == o.i32_thing");
+		rslt.Expect( Int64.compare( i.i64_thing, o.i64_thing) == 0, "i.i64_thing == o.i64_thing");
 
 		var mapout = new IntMap< haxe.Int32>();
 		for ( j in 0 ... 5)
@@ -248,8 +394,13 @@ class TestClient {
 				trace(", ");
 			}
 			trace(key + " => " + mapin.get(key));
+			rslt.Expect( mapin.get(key) == mapout.get(key), ' mapin.get($key) == mapout.get($key)');
 		}
 		trace("}");
+		for( key in mapout.keys())
+		{
+			rslt.Expect(mapin.exists(key), 'mapin.exists($key)');
+		}
 
 		var listout = new List<Int>();
 		for (j in -2 ... 3)
@@ -290,6 +441,13 @@ class TestClient {
 		}
 		trace("}");
 
+		rslt.Expect(listin.length == listout.length, "listin.length == listout.length");
+		var literout = listout.iterator();
+		var literin = listin.iterator();
+		while( literin.hasNext()) {
+			rslt.Expect(literin.next() == literout.next(), "literin[i] == literout[i]");
+		}
+	
 		//set
 		var setout = new IntSet();
 		for (j in -2 ... 3)
@@ -327,33 +485,42 @@ class TestClient {
 				trace(", ");
 			}
 			trace(j);
+			rslt.Expect(setout.contains(j), 'setout.contains($j)');
 		}
 		trace("}");
-
+		rslt.Expect(setin.size == setout.size, "setin.length == setout.length");
+	
 
 		trace("testEnum(ONE)");
 		var ret = client.testEnum(Numberz.ONE);
 		trace(" = " + ret);
+		rslt.Expect(ret == Numberz.ONE, '$ret == Numberz.ONE');
 
 		trace("testEnum(TWO)");
 		ret = client.testEnum(Numberz.TWO);
 		trace(" = " + ret);
+		rslt.Expect(ret == Numberz.TWO, '$ret == Numberz.TWO');
 
 		trace("testEnum(THREE)");
 		ret = client.testEnum(Numberz.THREE);
 		trace(" = " + ret);
+		rslt.Expect(ret == Numberz.THREE, '$ret == Numberz.THREE');
 
 		trace("testEnum(FIVE)");
 		ret = client.testEnum(Numberz.FIVE);
 		trace(" = " + ret);
+		rslt.Expect(ret == Numberz.FIVE, '$ret == Numberz.FIVE');
 
 		trace("testEnum(EIGHT)");
 		ret = client.testEnum(Numberz.EIGHT);
 		trace(" = " + ret);
+		rslt.Expect(ret == Numberz.EIGHT, '$ret == Numberz.EIGHT');
 
 		trace("testTypedef(309858235082523)");
 		var uid = client.testTypedef( Int64.make( 0x119D0, 0x7E08671B));  // 309858235082523
 		trace(" = " + uid);
+		rslt.Expect( Int64.compare( uid, Int64.make( 0x119D0, 0x7E08671B)) == 0,
+		             Int64.toStr(uid)+" == "+Int64.toStr(Int64.make( 0x119D0, 0x7E08671B)));
 
 		trace("testMapMap(1)");
 		var mm = client.testMapMap(1);
@@ -369,6 +536,14 @@ class TestClient {
 			trace("}, ");
 		}
 		trace("}");
+
+		var pos = mm.get(4);
+		var neg = mm.get(-4);
+		rslt.Expect( (pos != null) && (neg != null), "(pos != null) && (neg != null)");
+		for (i in 0 ... 5) {
+			rslt.Expect( pos.get(i) == i, 'pos.get($i) == $i');
+			rslt.Expect( neg.get(-i) == -i, 'neg.get(-$i) == -$i');
+	 	}
 
 		var insane = new Insanity();
 		insane.userMap = new IntMap< Int64>();
@@ -433,6 +608,55 @@ class TestClient {
 		}
 		trace("}");
 
+		var first_map = whoa.get(Int64.make(0,1));
+		var second_map = whoa.get(Int64.make(0,2));
+		rslt.Expect( (first_map != null) && (second_map != null), "(first_map != null) && (second_map != null)");
+		if ((first_map != null) && (second_map != null))
+		{
+			var crazy2 = first_map.get(Numberz.TWO);
+			var crazy3 = first_map.get(Numberz.THREE);
+			var looney = second_map.get(Numberz.SIX);
+			rslt.Expect( (crazy2 != null) && (crazy3 != null) && (looney != null), 
+						"(crazy2 != null) && (crazy3 != null) && (looney != null)");
+
+			rslt.Expect( Int64.compare( crazy2.userMap.get(Numberz.EIGHT), Int64.make(0,8)) == 0, 
+						"crazy2.UserMap.get(Numberz.EIGHT) == 8");
+			rslt.Expect( Int64.compare( crazy3.userMap.get(Numberz.EIGHT), Int64.make(0,8)) == 0, 
+						"crazy3.UserMap.get(Numberz.EIGHT) == 8");
+			rslt.Expect( Int64.compare( crazy2.userMap.get(Numberz.FIVE), Int64.make(0,5)) == 0, 
+						"crazy2.UserMap.get(Numberz.FIVE) == 5");
+			rslt.Expect( Int64.compare( crazy3.userMap.get(Numberz.FIVE), Int64.make(0,5)) == 0, 
+						"crazy3.UserMap.get(Numberz.FIVE) == 5");
+
+			var crz2iter = crazy2.xtructs.iterator();
+			var crz3iter = crazy3.xtructs.iterator();
+			rslt.Expect( crz2iter.hasNext() && crz3iter.hasNext(), "crz2iter.hasNext() && crz3iter.hasNext()");
+			var goodbye2 = crz2iter.next();
+			var goodbye3 = crz3iter.next();
+			rslt.Expect( crz2iter.hasNext() && crz3iter.hasNext(), "crz2iter.hasNext() && crz3iter.hasNext()");
+			var hello2 = crz2iter.next();
+			var hello3 = crz3iter.next();
+			rslt.Expect( ! (crz2iter.hasNext() || crz3iter.hasNext()), "! (crz2iter.hasNext() || crz3iter.hasNext())");
+
+			rslt.Expect( hello2.string_thing == "Hello2", 'hello2.String_thing == "Hello2"');
+			rslt.Expect( hello2.byte_thing == 2, 'hello2.Byte_thing == 2');
+			rslt.Expect( hello2.i32_thing == 2, 'hello2.I32_thing == 2');
+			rslt.Expect( Int64.compare( hello2.i64_thing, Int64.make(0,2)) == 0, 'hello2.I64_thing == 2');
+			rslt.Expect( hello3.string_thing == "Hello2", 'hello3.String_thing == "Hello2"');
+			rslt.Expect( hello3.byte_thing == 2, 'hello3.Byte_thing == 2');
+			rslt.Expect( hello3.i32_thing == 2, 'hello3.I32_thing == 2');
+			rslt.Expect( Int64.compare( hello3.i64_thing, Int64.make(0,2)) == 0, 'hello3.I64_thing == 2');
+
+			rslt.Expect( goodbye2.string_thing == "Goodbye4", 'goodbye2.String_thing == "Goodbye4"');
+			rslt.Expect( goodbye2.byte_thing == 4, 'goodbye2.Byte_thing == 4');
+			rslt.Expect( goodbye2.i32_thing == 4, 'goodbye2.I32_thing == 4');
+			rslt.Expect( Int64.compare( goodbye2.i64_thing, Int64.make(0,4)) == 0, 'goodbye2.I64_thing == 4');
+			rslt.Expect( goodbye3.string_thing == "Goodbye4", 'goodbye3.String_thing == "Goodbye4"');
+			rslt.Expect( goodbye3.byte_thing == 4, 'goodbye3.Byte_thing == 4');
+			rslt.Expect( goodbye3.i32_thing == 4, 'goodbye3.I32_thing == 4');
+			rslt.Expect( Int64.compare( goodbye3.i64_thing, Int64.make(0,4)) == 0, 'goodbye3.I64_thing == 4');
+		}
+
 		var arg0 = 1;
 		var arg1 = 2;
 		var arg2 = Int64.make( 0x7FFFFFFF,0xFFFFFFFF);
@@ -445,6 +669,12 @@ class TestClient {
 		trace(" = Xtruct(byte_thing:" + multiResponse.byte_thing + ",string_thing:" + multiResponse.string_thing
 					+ ",i32_thing:" + multiResponse.i32_thing 
 			        + ",i64_thing:" + Int64.toStr(multiResponse.i64_thing) + ")");
+
+		rslt.Expect( multiResponse.string_thing == "Hello2", 'multiResponse.String_thing == "Hello2"');
+		rslt.Expect( multiResponse.byte_thing == arg0, 'multiResponse.Byte_thing == arg0');
+		rslt.Expect( multiResponse.i32_thing == arg1, 'multiResponse.I32_thing == arg1');
+		rslt.Expect( Int64.compare( multiResponse.i64_thing, arg2) == 0, 'multiResponse.I64_thing == arg2');
+
 
 		trace("Test Oneway(1)");
 		client.testOneway(1);

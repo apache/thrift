@@ -2601,20 +2601,22 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
   }
   
   if (ttype->is_map()) {
-    t_type* tkey = ((t_map*)ttype)->get_key_type();
-	t_type* tval = ((t_map*)ttype)->get_val_type();
+    t_type* tkey = get_true_type(((t_map*)ttype)->get_key_type());
+	t_type* tval = get_true_type(((t_map*)ttype)->get_val_type());
 	if (tkey->is_base_type()) {
-		t_base_type::t_base tbase = ((t_base_type*)tkey)->get_base();
+	  t_base_type::t_base tbase = ((t_base_type*)tkey)->get_base();
       switch (tbase) {
       case t_base_type::TYPE_STRING:
         if( ! (((t_base_type*)tkey)->is_binary())) {
           return "StringMap< "+type_name(tval)+">";
-       }
+        }
       case t_base_type::TYPE_BYTE:
       case t_base_type::TYPE_I16:
-      case t_base_type::TYPE_I32:
-        return "IntMap< "+type_name(tval)+">";
-      default:
+	  case t_base_type::TYPE_I32:
+		return "IntMap< " + type_name(tval) + ">";
+	  case t_base_type::TYPE_I64:
+		return "Int64Map< " + type_name(tval) + ">";
+	  default:
         break;  // default to ObjectMap<>
       }
 	}
@@ -2625,7 +2627,7 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
   }
   
   if (ttype->is_set()) {
-    t_type* tkey = ((t_list*)ttype)->get_elem_type();
+    t_type* tkey = get_true_type(((t_list*)ttype)->get_elem_type());
  	if( tkey->is_base_type()) {
 	  t_base_type::t_base tbase = ((t_base_type*)tkey)->get_base();
       switch (tbase) {
@@ -2636,8 +2638,10 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
       case t_base_type::TYPE_BYTE:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
-        return "IntSet";
-      default:
+		  return "IntSet";
+	  case t_base_type::TYPE_I64:
+		  return "Int64Set";
+	  default:
         break;  // default to ObjectSet
       }
     }
