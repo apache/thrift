@@ -17,30 +17,22 @@
  * under the License.
  */
 
-#include <boost/test/unit_test.hpp>
+#ifndef THRIFT_COMPILER_GENERATE_BRACKETGUARD_H
+#define THRIFT_COMPILER_GENERATE_BRACKETGUARD_H
 
-#include <generate/IndentGuard.h>
+#include "PrePostGuard.h"
 
-using namespace apache::thrift::compiler;
+namespace apache { namespace thrift { namespace compiler {
 
-struct IndentGuardTestsFixture {
-  IndentKeeper keeper;
+class BracketGuard : private PrePostGuard {
+public:
+  BracketGuard(std::ostream& out,
+               const std::string& open_bracket = "(",
+               const std::string& close_bracket = ")")
+    : PrePostGuard(out, open_bracket, close_bracket)
+  {}
 };
 
-BOOST_FIXTURE_TEST_SUITE( IndentGuardTests, IndentGuardTestsFixture )
+}}} // apache::thrift::compiler
 
-BOOST_AUTO_TEST_CASE( IndentGuard_increses_indent_on_construction ) {
-  const int start_indent = keeper.get_indent();
-  IndentGuard guard(keeper);
-  BOOST_CHECK_EQUAL(keeper.get_indent(), start_indent + 1);
-}
-
-BOOST_AUTO_TEST_CASE( IndentGuard_restores_original_indent_on_destruction ) {
-  const int start_indent = keeper.get_indent();
-  {
-    IndentGuard guard(keeper);
-  }
-  BOOST_CHECK_EQUAL(keeper.get_indent(), start_indent);
-}
-
-BOOST_AUTO_TEST_SUITE_END()
+#endif // THRIFT_COMPILER_GENERATE_BRACKETGUARD_H

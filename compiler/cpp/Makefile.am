@@ -85,7 +85,10 @@ libgenerate_a_SOURCES = \
 	src/generate/t_oop_generator.h \
 	src/generate/IndentKeeper.cpp \
 	src/generate/IndentKeeper.h \
-	src/generate/IndentGuard.h
+	src/generate/IndentGuard.h \
+	src/generate/BracketGuard.h \
+	src/generate/PrePostGuard.h \
+	src/generate/ScopeGuard.h
 
 # Language specific generators
 libgenerate_a_SOURCES += \

@@ -17,29 +17,41 @@
  * under the License.
  */
 
+#include <sstream>
+
 #include <boost/test/unit_test.hpp>
 
-#include <generate/IndentGuard.h>
+#include <generate/ScopeGuard.h>
+#include <generate/IndentKeeper.h>
 
 using namespace apache::thrift::compiler;
 
-struct IndentGuardTestsFixture {
+struct ScopeGuardTestsFixture {
+  std::ostringstream stream;
   IndentKeeper keeper;
+
+  std::string text() const { return stream.str(); }
 };
 
-BOOST_FIXTURE_TEST_SUITE( IndentGuardTests, IndentGuardTestsFixture )
+BOOST_FIXTURE_TEST_SUITE( ScopeGuardTests, ScopeGuardTestsFixture )
 
-BOOST_AUTO_TEST_CASE( IndentGuard_increses_indent_on_construction ) {
+BOOST_AUTO_TEST_CASE( ScopeGuard_open_bracket_and_increses_indent_on_construction ) {
   const int start_indent = keeper.get_indent();
-  IndentGuard guard(keeper);
+
+  ScopeGuard guard(stream, keeper);
+
+  BOOST_CHECK_EQUAL(text(), "{\n");
   BOOST_CHECK_EQUAL(keeper.get_indent(), start_indent + 1);
 }
 
-BOOST_AUTO_TEST_CASE( IndentGuard_restores_original_indent_on_destruction ) {
+BOOST_AUTO_TEST_CASE( ScopeGuard_closes_bracket_and_restores_indent_on_destruction ) {
   const int start_indent = keeper.get_indent();
+
   {
-    IndentGuard guard(keeper);
+    ScopeGuard guard(stream, keeper);
   }
+
+  BOOST_CHECK_EQUAL(text(), "{\n}\n");
   BOOST_CHECK_EQUAL(keeper.get_indent(), start_indent);
 }
 

@@ -31,7 +31,9 @@ TESTS = \
 CompilerUnitTests_SOURCES = \
 	CompilerUnitTestMain.cpp \
 	IndentKeeperTests.cpp \
-	IndentGuardTests.cpp
+	IndentGuardTests.cpp \
+	BracketGuardTests.cpp \
+	ScopeGuardTests.cpp
 
 CompilerUnitTests_LDADD = \
 	-l:libboost_unit_test_framework.a $(top_builddir)/compiler/cpp/libgenerate.a
