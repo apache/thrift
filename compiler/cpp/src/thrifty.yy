@@ -545,8 +545,16 @@ TypeDefinition:
       }
     }
 
+CommaOrSemicolonOptional:
+  ','
+    {}
+| ';'
+    {}
+|
+    {}
+
 Typedef:
-  tok_typedef FieldType tok_identifier TypeAnnotations
+  tok_typedef FieldType tok_identifier TypeAnnotations CommaOrSemicolonOptional
     {
       pdebug("TypeDef -> tok_typedef FieldType tok_identifier");
       validate_simple_identifier( $3);
@@ -557,14 +565,6 @@ Typedef:
         delete $4;
       }
     }
-
-CommaOrSemicolonOptional:
-  ','
-    {}
-| ';'
-    {}
-|
-    {}
 
 Enum:
   tok_enum tok_identifier '{' EnumDefList '}' TypeAnnotations
