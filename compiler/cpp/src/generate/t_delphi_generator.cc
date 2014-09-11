@@ -836,15 +836,19 @@ void t_delphi_generator::generate_enum(t_enum* tenum) {
     type_name(tenum,true,true) << " = " <<  "("  << endl;
   indent_up();
   vector<t_enum_value*> constants = tenum->get_constants();
-  vector<t_enum_value*>::iterator c_iter;
-  for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    int value = (*c_iter)->get_value();
-    if (c_iter != constants.begin()) {
-      s_enum << ",";
-      s_enum << endl;
+  if (constants.empty()) {
+    indent(s_enum) << "dummy = 0  // empty enums are not allowed";
+  } else {
+    vector<t_enum_value*>::iterator c_iter;
+    for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
+      int value = (*c_iter)->get_value();
+      if (c_iter != constants.begin()) {
+        s_enum << ",";
+        s_enum << endl;
+      }
+      generate_delphi_doc(s_enum, *c_iter);
+      indent(s_enum) << normalize_name((*c_iter)->get_name()) << " = " << value;
     }
-    generate_delphi_doc(s_enum, *c_iter);
-    indent(s_enum) << normalize_name((*c_iter)->get_name()) << " = " << value;
   }
   s_enum << endl;
   indent_down();
