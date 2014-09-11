@@ -36,6 +36,14 @@ enum MyEnum2 {
   ME2_2,
 }
 
+enum MyEnum2_again {
+  // enum value identifiers may appear again in another enum type
+  ME0_1,
+  ME1_1,
+  ME2_1,
+  ME3_1,
+}
+
 enum MyEnum3 {
   ME3_0,
   ME3_1,
