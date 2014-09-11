@@ -616,19 +616,7 @@ EnumDef:
       if ($1 != NULL) {
         $$->set_doc($1);
       }
-      if (g_parse_mode == PROGRAM) {
-        // The scope constants never get deleted, so it's okay for us
-        // to share a single t_const object between our scope and the parent
-        // scope
-        t_const* constant = new t_const(g_type_i32, $2->get_name(),
-                                        new t_const_value($2->get_value()));
-        g_scope->add_constant($2->get_name(), constant);
-        if (g_parent_scope != NULL) {
-          g_parent_scope->add_constant(g_parent_prefix + $2->get_name(),
-                                       constant);
-        }
-      }
-      if ($3 != NULL) {
+	  if ($3 != NULL) {
         $$->annotations_ = $3->annotations_;
         delete $3;
       }
