@@ -241,7 +241,10 @@ class TJSONProtocolBase(TProtocolBase):
                                      "Expected control char")
           character = ESCAPE_CHARS[character]
       else:
-        character = character.decode('ascii')
+        utf8_bytes = bytearray([ord(character)])
+        while utf8_bytes[-1] >= 0x80:
+          utf8_bytes.append(ord(self.reader.read()))
+        character = utf8_bytes.decode('utf8')
       string.append(character)
     return u('').join(string)
 
