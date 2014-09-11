@@ -49,6 +49,10 @@ if WITH_HASKELL
 SUBDIRS += hs
 endif
 
+if WITH_HAXE
+SUBDIRS += haxe
+endif
+
 if WITH_GO
 SUBDIRS += go
 endif

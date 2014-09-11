@@ -1,4 +1,3 @@
-#!/bin/sh
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -18,24 +17,34 @@
 # under the License.
 #
 
-# invoke Thrift comnpiler
-thrift -r -gen haxe  ../ThriftTest.thrift
+THRIFT = $(top_builddir)/compiler/cpp/thrift
 
-# output folder
-if [ ! -d bin ]; then
-  mkdir  bin
-fi
+gen-haxe/tutorial/calculator.hx gen-haxe/shared/shared_service.hx: $(top_srcdir)/tutorial/tutorial.thrift
+	$(THRIFT) --gen haxe -r $<
 
-# invoke Haxe compiler
-for target in *.hxml; do 
-  echo --------------------------
-  echo Building ${target} ...
-  echo --------------------------
-  if [ ! -d bin/${target} ]; then
-    mkdir  bin/${target}
-  fi
-  haxe  --cwd .  ${target} 
-done
+all-local: bin/Main-debug
 
+check: gen-haxe/tutorial/calculator.hx
 
-#eof
+bin/Main-debug:	gen-haxe/tutorial/calculator.hx
+	$(HAXE) --cwd .  cpp.hxml
+	
+tutorialserver: all
+	bin/Main-debug server
+
+tutorialclient: all
+	bin/Main-debug 
+
+tutorialsecureserver: all
+	bin/Main-debug server secure
+
+tutorialsecureclient: all
+	bin/Main-debug secure
+
+clean-local:
+	$(RM) -r gen-haxe bin
+
+EXTRA_DIST = \
+	src/Main.hx \
+	src/CalculatorHandler.hx 
+
