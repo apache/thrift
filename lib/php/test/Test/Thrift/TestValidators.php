@@ -96,6 +96,10 @@ assert_has_no_write_validator('ThriftTest\EmptyStruct');
 // Unions should not get write validators
 assert_has_no_write_validator('TestValidators\UnionOfStrings');
 
+// Service _result classes should not get any validators
+assert_has_no_read_validator('TestValidators\TestService_test_result');
+assert_has_no_write_validator('TestValidators\TestService_test_result');
+
 function assert_has_a_read_validator($class) {
     my_assert(has_read_validator_method($class),
               $class . ' class should have a read validator');

@@ -188,9 +188,7 @@ class t_d_generator : public t_oop_generator {
         f_types_ << "," << endl;
       }
       indent(f_types_) << (*c_iter)->get_name();
-      if ((*c_iter)->has_value()) {
-        f_types_ << " = " << (*c_iter)->get_value();
-      }
+      f_types_ << " = " << (*c_iter)->get_value();
     }
 
     f_types_ << endl;

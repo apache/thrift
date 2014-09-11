@@ -787,7 +787,7 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
 
   out << indent() << "def __hash__(self):" << endl;
   indent_up(); 
-  indent(out) << "value = PYTHONHASHSEED" << endl; 
+  indent(out) << "value = 17" << endl;  // PYTHONHASHSEED would be better, but requires Python 3.2.3
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) { 
     indent(out) << "value = (value * 31) ^ hash(self." << (*m_iter)->get_name() + ")" << endl; 
   } 

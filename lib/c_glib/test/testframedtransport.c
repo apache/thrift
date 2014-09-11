@@ -144,6 +144,92 @@ test_read_and_write(void)
   }
 }
 
+/* test reading from the transport after the peer has unexpectedly
+   closed the connection */
+static void
+test_read_after_peer_close(void)
+{
+  int status;
+  pid_t pid;
+  int port = 51199;
+  GError *err = NULL;
+
+  pid = fork ();
+  g_assert (pid >= 0);
+
+  if (pid == 0)
+  {
+    ThriftServerTransport *server_transport = NULL;
+    ThriftTransport *client_transport = NULL;
+
+    /* child listens */
+    server_transport = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
+                                     "port", port,
+                                     NULL);
+    g_assert (server_transport != NULL);
+
+    thrift_server_transport_listen (server_transport, &err);
+    g_assert (err == NULL);
+
+    /* wrap the client transport in a ThriftFramedTransport */
+    client_transport = g_object_new
+      (THRIFT_TYPE_FRAMED_TRANSPORT,
+       "transport",  thrift_server_transport_accept (server_transport, &err),
+       "r_buf_size", 0,
+       NULL);
+    g_assert (err == NULL);
+    g_assert (client_transport != NULL);
+
+    /* close the connection immediately after the client connects */
+    thrift_transport_close (client_transport, NULL);
+
+    g_object_unref (client_transport);
+    g_object_unref (server_transport);
+
+    exit (0);
+  } else {
+    ThriftSocket *tsocket = NULL;
+    ThriftTransport *transport = NULL;
+    guchar buf[10]; /* a buffer */
+
+    /* parent connects, wait a bit for the socket to be created */
+    sleep (1);
+
+    tsocket = g_object_new (THRIFT_TYPE_SOCKET,
+                            "hostname", "localhost",
+                            "port",     port,
+                            NULL);
+    transport = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT,
+                              "transport",  THRIFT_TRANSPORT (tsocket),
+                              "w_buf_size", 0,
+                              NULL);
+
+    g_assert (thrift_transport_open (transport, NULL) == TRUE);
+    g_assert (thrift_transport_is_open (transport));
+
+    /* attempting to read from the transport after the peer has closed
+       the connection fails gracefully without generating a critical
+       warning or segmentation fault */
+    thrift_transport_read (transport, buf, 10, &err);
+    g_assert (err != NULL);
+
+    g_error_free (err);
+    err = NULL;
+
+    thrift_transport_read_end (transport, &err);
+    g_assert (err == NULL);
+
+    thrift_transport_close (transport, &err);
+    g_assert (err == NULL);
+
+    g_object_unref (transport);
+    g_object_unref (tsocket);
+
+    g_assert (wait (&status) == pid);
+    g_assert (status == 0);
+  }
+}
+
 static void
 thrift_server (const int port)
 {
@@ -191,6 +277,7 @@ main(int argc, char *argv[])
   g_test_add_func ("/testframedtransport/CreateAndDestroy", test_create_and_destroy);
   g_test_add_func ("/testframedtransport/OpenAndClose", test_open_and_close);
   g_test_add_func ("/testframedtransport/ReadAndWrite", test_read_and_write);
+  g_test_add_func ("/testframedtransport/ReadAfterPeerClose", test_read_after_peer_close);
 
   return g_test_run ();
 }

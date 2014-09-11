@@ -131,7 +131,8 @@ include_thrift_HEADERS = \
                          src/thrift/TProcessor.h \
                          src/thrift/TApplicationException.h \
                          src/thrift/TLogging.h \
-                         src/thrift/cxxfunctional.h
+                         src/thrift/cxxfunctional.h \
+                         src/thrift/TToString.h
 
 include_concurrencydir = $(include_thriftdir)/concurrency
 include_concurrency_HEADERS = \

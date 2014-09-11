@@ -26,3 +26,6 @@ union UnionOfStrings {
   2: string bb; 
 } 
 
+service TestService {
+    void test() throws(1: ThriftTest.Xception xception);
+}
