@@ -246,7 +246,7 @@ gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h: $(top_srcdir)/t
 	$(THRIFT) --gen cpp:dense $<
 
 gen-cpp/EnumTest_types.cpp gen-cpp/EnumTest_types.h: $(top_srcdir)/test/EnumTest.thrift
-	$(THRIFT) --gen cpp:pure_enums $<
+	$(THRIFT) --gen cpp $<
 
 gen-cpp/TypedefTest_types.cpp gen-cpp/TypedefTest_types.h: $(top_srcdir)/test/TypedefTest.thrift
 	$(THRIFT) --gen cpp $<
