@@ -20,16 +20,17 @@
 noinst_LTLIBRARIES = libtestgencpp.la libprocessortest.la
 nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/DebugProtoTest_types.cpp \
+	gen-cpp/DebugProtoTest_types.h \
 	gen-cpp/EnumTest_types.cpp \
 	gen-cpp/EnumTest_types.h \
 	gen-cpp/OptionalRequiredTest_types.cpp \
-	gen-cpp/DebugProtoTest_types.cpp \
-	gen-cpp/ThriftTest_types.cpp \
-	gen-cpp/DebugProtoTest_types.h \
 	gen-cpp/OptionalRequiredTest_types.h \
 	gen-cpp/Recursive_types.cpp \
 	gen-cpp/Recursive_types.h \
+	gen-cpp/ThriftTest_types.cpp \
 	gen-cpp/ThriftTest_types.h \
+	gen-cpp/TypedefTest_types.cpp \
+	gen-cpp/TypedefTest_types.h \
 	ThriftTest_extras.cpp \
 	DebugProtoTest_extras.cpp
 
@@ -86,7 +87,8 @@ UnitTests_SOURCES = \
 	TMemoryBufferTest.cpp \
 	TBufferBaseTest.cpp \
 	Base64Test.cpp \
-	ToStringTest.cpp
+	ToStringTest.cpp \
+	TypedefTest.cpp
 
 if !WITH_BOOSTTHREADS
 UnitTests_SOURCES += \
@@ -120,7 +122,7 @@ EnumTest_SOURCES = \
 
 EnumTest_LDADD = \
   libtestgencpp.la \
-  $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a
+  -l:libboost_unit_test_framework.a
 
 TFileTransportTest_SOURCES = \
 	TFileTransportTest.cpp
@@ -244,6 +246,9 @@ gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h: $(top_srcdir)/t
 	$(THRIFT) --gen cpp:dense $<
 
 gen-cpp/EnumTest_types.cpp gen-cpp/EnumTest_types.h: $(top_srcdir)/test/EnumTest.thrift
+	$(THRIFT) --gen cpp $<
+
+gen-cpp/TypedefTest_types.cpp gen-cpp/TypedefTest_types.h: $(top_srcdir)/test/TypedefTest.thrift
 	$(THRIFT) --gen cpp $<
 
 gen-cpp/OptionalRequiredTest_types.cpp gen-cpp/OptionalRequiredTest_types.h: $(top_srcdir)/test/OptionalRequiredTest.thrift

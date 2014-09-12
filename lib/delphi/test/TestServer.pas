@@ -590,7 +590,7 @@ begin
     else begin
       Console.WriteLine('- sockets (port '+IntToStr(port)+')');
       if UseBufferedSockets then Console.WriteLine('- buffered sockets');
-      servertrans := TServerSocketImpl.Create( Port, 0, UseBufferedSockets);
+      servertrans := TServerSocketImpl.Create( Port, 5000, UseBufferedSockets);
     end;
     ASSERT( servertrans <> nil);
 
