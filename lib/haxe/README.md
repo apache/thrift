@@ -29,24 +29,20 @@ To get started, visit the /tutorial/haxe and /test/haxe dirs for examples.
 If you are using HIDE, you'll find the HIDE project files in these folders.
 
 
-Work in progress
+Current status
 ========================
-
-WHAT WORKS:
-- socket transport, binary protocol
-- tutorial client and server
-- cross-test client and server 
 - tested with Haxe C++ target
-- designed to work with all other Haxe and OpenFL targets (not tested!)
+- socket transport, binary protocol available
+- tutorial client and server available
+- cross-test client and server available 
 
-TODO:
-- build scripts and makefiles for tutorial and test
 
-FURTHER DEVELOPMENTS:
-- add JSON protocol, update tutorial and test accordingly
-- add HTTP transport, update tutorial and test accordingly
-- Tests of all components against all Haxe/OpenFL targets
-- Try to minimze or eliminate known restrictions (see below)
+Further developments
+========================
+- add JSON protocol, update tutorial and tests accordingly
+- add HTTP transport, update tutorial and tests accordingly
+- improve to work with C#, Java and JavaScript Haxe/OpenFL targets
+- improve to work with more (ideally all) Haxe/OpenFL targets
 
 
 Dependencies
@@ -57,9 +53,9 @@ Depending on the desired targets, you may have to install the appropriate HaxeLi
 after installing Haxe itself. For example, if you plan to target C#, Java and C++,
 enter the following commands after installing Haxe:
 
-  haxelib install hxcs
-  haxelib install hxjava
   haxelib install hxcpp
+  haxelib install hxjava
+  haxelib install hxcs
 
 For other targets, please consult the Haxe documentation whether or not any additional
 target libraries need to be installed and how to achieve this.
@@ -75,5 +71,5 @@ Although designed with maximum portability in mind, for technical reasons some p
 may only support parts of the library, or not be compatible at all.
 
 Javascript:
-- tutorial fails to build because of Sys.args
+- tutorial fails to build because of unsupported Sys.args
 
