@@ -20,7 +20,11 @@
 #ifndef T_GENERATOR_REGISTRY_H
 #define T_GENERATOR_REGISTRY_H
 
+#include <string>
+#include <map>
+
 class t_generator;
+class t_program;
 
 /**
  * A factory for producing generator classes of a particular language.
@@ -104,6 +108,6 @@ class t_generator_registry {
           #language, long_name, doc)                               \
     {}                                                             \
   };                                                               \
-  static t_##language##_generator_factory_impl _registerer;
+  t_##language##_generator_factory_impl global_##language##_registerer;
 
 #endif
