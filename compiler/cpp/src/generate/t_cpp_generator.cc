@@ -2756,7 +2756,9 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
         indent() << "int32_t cseqid = 0;" << endl <<
         indent() << _this << "oprot_->writeMessageBegin(\"" <<
         (*f_iter)->get_name() <<
-        "\", ::apache::thrift::protocol::T_CALL, cseqid);" << endl <<
+        "\", ::apache::thrift::protocol::" <<
+        ((*f_iter)->is_oneway() ? "T_ONEWAY" : "T_CALL") <<
+        ", cseqid);" << endl <<
         endl <<
         indent() << argsname << " args;" << endl;
 
