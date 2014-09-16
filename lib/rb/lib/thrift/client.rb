@@ -1,4 +1,4 @@
-# 
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -6,16 +6,16 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License. You may obtain a copy of the License at
-# 
+#
 #   http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# 
+#
 
 module Thrift
   module Client
@@ -27,6 +27,15 @@ module Thrift
 
     def send_message(name, args_class, args = {})
       @oprot.write_message_begin(name, MessageTypes::CALL, @seqid)
+      send_message_args(args_class, args)
+    end
+
+    def send_oneway_message(name, args_class, args = {})
+      @oprot.write_message_begin(name, MessageTypes::ONEWAY, @seqid)
+      send_message_args(args_class, args)
+    end
+
+    def send_message_args(args_class, args)
       data = args_class.new
       args.each do |k, v|
         data.send("#{k.to_s}=", v)
