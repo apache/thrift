@@ -2814,7 +2814,10 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
     // Serialize request
     // NOTE we are leaving seqid as 0, for now (see above)
     f_service_ << 
-      indent() << "prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage(\"" << funname << "\", org.apache.thrift.protocol.TMessageType.CALL, 0));" << endl <<
+      indent() << "prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage(\"" <<
+      funname << "\", org.apache.thrift.protocol." <<
+      ((*f_iter)->is_oneway() ? "TMessageType.ONEWAY" : "TMessageType.CALL") <<
+      ", 0));" << endl <<
       indent() << args_name << " args = new " << args_name << "();" << endl;
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
