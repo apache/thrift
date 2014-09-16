@@ -49,8 +49,8 @@ matrix:
        - sh contrib/installCXXDependencies.sh;
       script:
        - make check -j4;
-       - mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make -j4; cd ..;
-       - mkdir build_mingw32 && cd build_mingw32 && cmake -DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake ../compiler/cpp/ && make -j4; cd ..;
+       - mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make -j4 && cd ..;
+       - mkdir build_mingw32 && cd build_mingw32 && cmake -DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake ../compiler/cpp/ && make -j4 && cd ..;
 
     - compiler: clang
       env: CONFIG="--disable-libs"
