@@ -889,8 +889,9 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
     f_service_.indent_up();
 
       std::string argsname = capitalize((*f_iter)->get_name() + "_args");
+      std::string messageSendProc = (*f_iter)->is_oneway() ? "send_oneway_message" : "send_message";
 
-      f_service_.indent() << "send_message('" << funname << "', " << argsname;
+      f_service_.indent() << messageSendProc << "('" << funname << "', " << argsname;
 
       for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
         f_service_ << ", :" << (*fld_iter)->get_name() << " => " << (*fld_iter)->get_name();
