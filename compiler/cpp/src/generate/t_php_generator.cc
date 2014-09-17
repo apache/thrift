@@ -1665,8 +1665,12 @@ void t_php_generator::generate_service_client(t_service* tservice) {
         indent() << "if ($bin_accel)" << endl;
       scope_up(f_service_);
 
+      string messageType = (*f_iter)->is_oneway() ? "TMessageType::ONEWAY" : "TMessageType::CALL";
+
       f_service_ <<
-        indent() << "thrift_protocol_write_binary($this->output_, '" << (*f_iter)->get_name() << "', " << "TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());" << endl;
+        indent() << "thrift_protocol_write_binary($this->output_, '"
+                 << (*f_iter)->get_name() << "', " << messageType
+                 << ", $args, $this->seqid_, $this->output_->isStrictWrite());" << endl;
 
       scope_down(f_service_);
       f_service_ <<
@@ -1676,13 +1680,15 @@ void t_php_generator::generate_service_client(t_service* tservice) {
       // Serialize the request header
       if (binary_inline_) {
         f_service_ <<
-          indent() << "$buff = pack('N', (0x80010000 | " << "TMessageType::CALL));" << endl <<
+          indent() << "$buff = pack('N', (0x80010000 | " << messageType
+                   << "));" << endl <<
           indent() << "$buff .= pack('N', strlen('" << funname << "'));" << endl <<
           indent() << "$buff .= '" << funname << "';" << endl <<
           indent() << "$buff .= pack('N', $this->seqid_);" << endl;
       } else {
         f_service_ <<
-          indent() << "$this->output_->writeMessageBegin('" << (*f_iter)->get_name() << "', " << "TMessageType::CALL, $this->seqid_);" << endl;
+          indent() << "$this->output_->writeMessageBegin('" << (*f_iter)->get_name() << "', "
+                   << messageType << ", $this->seqid_);" << endl;
       }
 
       // Write to the stream

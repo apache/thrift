@@ -499,7 +499,7 @@ var
 const
   // pipe timeouts to be used
   DEBUG_TIMEOUT   = 30 * 1000;
-  RELEASE_TIMEOUT = DEFAULT_THRIFT_PIPE_TIMEOUT;  // server-side default
+  RELEASE_TIMEOUT = DEFAULT_THRIFT_TIMEOUT;  // server-side default
   TIMEOUT         = RELEASE_TIMEOUT;
 begin
   try
@@ -590,7 +590,7 @@ begin
     else begin
       Console.WriteLine('- sockets (port '+IntToStr(port)+')');
       if UseBufferedSockets then Console.WriteLine('- buffered sockets');
-      servertrans := TServerSocketImpl.Create( Port, 5000, UseBufferedSockets);
+      servertrans := TServerSocketImpl.Create( Port, 0, UseBufferedSockets);
     end;
     ASSERT( servertrans <> nil);
 

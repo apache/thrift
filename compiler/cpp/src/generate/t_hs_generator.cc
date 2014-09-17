@@ -1113,7 +1113,8 @@ void t_hs_generator::generate_service_client(t_service* tservice) {
 
     // Serialize the request header
     string fname = (*f_iter)->get_name();
-    indent(f_client_) << "T.writeMessageBegin op (\"" << fname << "\", T.M_CALL, seqn)" << endl;
+    string msgType = (*f_iter)->is_oneway() ? "T.M_ONEWAY" : "T.M_CALL";
+    indent(f_client_) << "T.writeMessageBegin op (\"" << fname << "\", " << msgType << ", seqn)" << endl;
     indent(f_client_) << "write_" << argsname << " op (" << argsname << "{";
 
     bool first = true;

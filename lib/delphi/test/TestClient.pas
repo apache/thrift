@@ -125,7 +125,7 @@ var
 const
   // pipe timeouts to be used
   DEBUG_TIMEOUT   = 30 * 1000;
-  RELEASE_TIMEOUT = DEFAULT_THRIFT_PIPE_TIMEOUT;
+  RELEASE_TIMEOUT = DEFAULT_THRIFT_TIMEOUT;
   TIMEOUT         = RELEASE_TIMEOUT;
 begin
   bBuffered := False;;

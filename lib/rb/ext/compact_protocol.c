@@ -40,6 +40,7 @@ static ID rbuf_ivar_id;
 static int VERSION;
 static int VERSION_MASK;
 static int TYPE_MASK;
+static int TYPE_BITS;
 static int TYPE_SHIFT_AMOUNT;
 static int PROTOCOL_ID;
 
@@ -450,7 +451,7 @@ VALUE rb_thrift_compact_proto_read_message_begin(VALUE self) {
     rb_exc_raise(get_protocol_exception(INT2FIX(-1), rb_str_new2(buf)));
   }
   
-  int8_t type = (version_and_type >> TYPE_SHIFT_AMOUNT) & 0x03;
+  int8_t type = (version_and_type >> TYPE_SHIFT_AMOUNT) & TYPE_BITS;
   int32_t seqid = read_varint64(self);
   VALUE messageName = rb_thrift_compact_proto_read_string(self);
   return rb_ary_new3(3, messageName, INT2FIX(type), INT2NUM(seqid));
@@ -570,6 +571,7 @@ static void Init_constants() {
   VERSION = rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("VERSION")));
   VERSION_MASK = rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("VERSION_MASK")));
   TYPE_MASK = rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("TYPE_MASK")));
+  TYPE_BITS = rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("TYPE_BITS")));
   TYPE_SHIFT_AMOUNT = FIX2INT(rb_const_get(thrift_compact_protocol_class, rb_intern("TYPE_SHIFT_AMOUNT")));
   PROTOCOL_ID = FIX2INT(rb_const_get(thrift_compact_protocol_class, rb_intern("PROTOCOL_ID")));
 

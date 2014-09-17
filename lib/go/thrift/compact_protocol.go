@@ -31,6 +31,7 @@ const (
 	COMPACT_VERSION           = 1
 	COMPACT_VERSION_MASK      = 0x1f
 	COMPACT_TYPE_MASK         = 0x0E0
+	COMPACT_TYPE_BITS         = 0x07
 	COMPACT_TYPE_SHIFT_AMOUNT = 5
 )
 
@@ -335,7 +336,7 @@ func (p *TCompactProtocol) ReadMessageBegin() (name string, typeId TMessageType,
 	}
 	versionAndType, err := p.ReadByte()
 	version := versionAndType & COMPACT_VERSION_MASK
-	typeId = TMessageType((versionAndType >> COMPACT_TYPE_SHIFT_AMOUNT) & 0x03)
+	typeId = TMessageType((versionAndType >> COMPACT_TYPE_SHIFT_AMOUNT) & COMPACT_TYPE_BITS)
 	if err != nil {
 		return
 	}
