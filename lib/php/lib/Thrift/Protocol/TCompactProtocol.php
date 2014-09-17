@@ -61,6 +61,7 @@ class TCompactProtocol extends TProtocol {
   const VERSION = 1;
   const PROTOCOL_ID = 0x82;
   const TYPE_MASK = 0xe0;
+  const TYPE_BITS = 0x07;
   const TYPE_SHIFT_AMOUNT = 5;
 
   protected static $ctypes = array(
@@ -381,8 +382,7 @@ class TCompactProtocol extends TProtocol {
     }
     $verType = 0;
     $result += $this->readUByte($verType);
-    $type = ($verType & TCompactProtocol::TYPE_MASK) >>
-      TCompactProtocol::TYPE_SHIFT_AMOUNT;
+    $type = ($verType >> TCompactProtocol::TYPE_SHIFT_AMOUNT) & TCompactProtocol::TYPE_BITS;
     $version = $verType & TCompactProtocol::VERSION_MASK;
     if ($version != TCompactProtocol::VERSION) {
       throw new TProtocolException('Bad version in TCompact message');

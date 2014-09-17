@@ -1803,7 +1803,10 @@ void t_go_generator::generate_service_client(t_service* tservice)
                    indent() << "  p.OutputProtocol = oprot" << endl <<
                    indent() << "}" << endl <<
                    indent() << "p.SeqId++" << endl <<
-                   indent() << "if err = oprot.WriteMessageBegin(\"" << (*f_iter)->get_name() << "\", thrift.CALL, p.SeqId); err != nil {" << endl;
+                   indent() << "if err = oprot.WriteMessageBegin(\""
+                            << (*f_iter)->get_name() << "\", "
+                            << ((*f_iter)->is_oneway() ? "thrift.ONEWAY" : "thrift.CALL")
+                            << ", p.SeqId); err != nil {" << endl;
         indent_up();
         f_service_ <<
                    indent() << "return" << endl;

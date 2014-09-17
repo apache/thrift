@@ -1517,6 +1517,8 @@ void t_c_glib_generator::generate_service_client(t_service *tservice) {
       function_signature (&send_function) << endl;
     scope_up(f_service_);
 
+    string reqType = (*f_iter)->is_oneway() ? "T_ONEWAY" : "T_CALL";
+
     // Serialize the request
     f_service_ <<
       indent() << "gint32 cseqid = 0;" << endl <<
@@ -1524,8 +1526,8 @@ void t_c_glib_generator::generate_service_client(t_service *tservice) {
         this->nspace_uc << base_service_name_uc <<
         "_CLIENT (iface)->output_protocol;" << endl <<
       endl <<
-      indent() << "if (thrift_protocol_write_message_begin (protocol, \"" <<
-        name << "\", T_CALL, cseqid, error) < 0)" << endl <<
+      indent() << "if (thrift_protocol_write_message_begin (protocol, \""
+               << name << "\", " << reqType << ", cseqid, error) < 0)" << endl <<
       indent() << "  return FALSE;" << endl <<
       endl;
 
