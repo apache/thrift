@@ -1777,7 +1777,9 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
     indent_impl(s_service_impl) <<
       "seqid_ := seqid_ + 1;" << endl;
     indent_impl(s_service_impl) <<
-      msgvar << " := Thrift.Protocol.TMessageImpl.Create('" << funname << "', TMessageType.Call, seqid_);" << endl;
+      msgvar << " := Thrift.Protocol.TMessageImpl.Create('" << funname << "', " <<
+      ((*f_iter)->is_oneway() ? "TMessageType.Oneway" : "TMessageType.Call") <<
+      ", seqid_);" << endl;
 
     indent_impl(s_service_impl) <<
       "oprot_.WriteMessageBegin( " << msgvar << " );" << endl;

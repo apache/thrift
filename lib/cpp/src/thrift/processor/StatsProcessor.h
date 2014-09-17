@@ -50,7 +50,7 @@ public:
     int32_t seqid;
 
     piprot_->readMessageBegin(fname, mtype, seqid);
-    if (mtype != apache::thrift::protocol::T_CALL) {
+    if (mtype != apache::thrift::protocol::T_CALL && mtype != apache::thrift::protocol::T_ONEWAY) {
       if (print_) {
         printf("Unknown message type\n");
       }

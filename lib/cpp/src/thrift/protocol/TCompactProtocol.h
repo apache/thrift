@@ -39,6 +39,7 @@ class TCompactProtocolT
   static const int8_t  VERSION_N = 1;
   static const int8_t  VERSION_MASK = 0x1f; // 0001 1111
   static const int8_t  TYPE_MASK = (int8_t)0xE0u; // 1110 0000
+  static const int8_t  TYPE_BITS = 0x07; // 0000 0111
   static const int32_t TYPE_SHIFT_AMOUNT = 5;
 
   Transport_* trans_;
