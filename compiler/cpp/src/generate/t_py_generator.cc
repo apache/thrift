@@ -1344,17 +1344,18 @@ void t_py_generator::generate_service_client(t_service* tservice) {
     indent_up();
 
     std::string argsname = (*f_iter)->get_name() + "_args";
+    std::string messageType = (*f_iter)->is_oneway() ? "TMessageType.ONEWAY" : "TMessageType.CALL";
 
     // Serialize the request header
     if (gen_twisted_ || gen_tornado_) {
       f_service_ <<
         indent() << "oprot = self._oprot_factory.getProtocol(self._transport)" << endl <<
-        indent() <<
-          "oprot.writeMessageBegin('" << (*f_iter)->get_name() << "', TMessageType.CALL, self._seqid)"
-        << endl;
+        indent() << "oprot.writeMessageBegin('" << (*f_iter)->get_name() << "', "
+                 << messageType << ", self._seqid)" << endl;
     } else {
       f_service_ <<
-        indent() << "self._oprot.writeMessageBegin('" << (*f_iter)->get_name() << "', TMessageType.CALL, self._seqid)" << endl;
+        indent() << "self._oprot.writeMessageBegin('" << (*f_iter)->get_name() << "', "
+                 << messageType << ", self._seqid)" << endl;
     }
 
     f_service_ <<

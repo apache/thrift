@@ -41,6 +41,7 @@ namespace Thrift.Protocol
         private const byte VERSION = 1;
         private const byte VERSION_MASK = 0x1f; // 0001 1111
         private const byte TYPE_MASK = 0xE0; // 1110 0000
+        private const byte TYPE_BITS = 0x07; // 0000 0111
         private const int TYPE_SHIFT_AMOUNT = 5;
 
         /**
@@ -490,7 +491,7 @@ namespace Thrift.Protocol
             {
                 throw new TProtocolException("Expected version " + VERSION + " but got " + version);
             }
-            byte type = (byte)((versionAndType >> TYPE_SHIFT_AMOUNT) & 0x03);
+            byte type = (byte)((versionAndType >> TYPE_SHIFT_AMOUNT) & TYPE_BITS);
             int seqid = (int)ReadVarint32();
             String messageName = ReadString();
             return new TMessage(messageName, (TMessageType)type, seqid);

@@ -60,6 +60,7 @@ protocolID  = 0x82 -- 1000 0010
 version     = 0x01
 versionMask = 0x1f -- 0001 1111
 typeMask    = 0xe0 -- 1110 0000
+typeBits    = 0x07 -- 0000 0111
 typeShiftAmount :: Int
 typeShiftAmount = 5
 
@@ -81,7 +82,7 @@ instance Protocol CompactProtocol where
       w <- fromIntegral <$> P.anyWord8
       let ver = w .&. versionMask 
       when (ver /= version) $ error "Bad Protocol version"
-      let typ = (w `shiftR` typeShiftAmount) .&. 0x03
+      let typ = (w `shiftR` typeShiftAmount) .&. typeBits
       seqId <- parseVarint zigZagToI32
       TString name <- parseCompactValue T_STRING
       return (decodeUtf8 name, toEnum $ fromIntegral $ typ, seqId)

@@ -1401,7 +1401,7 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
     // Serialize the request
     out <<
       indent() << "[outProtocol writeMessageBeginWithName: @\"" << funname << "\"" <<
-      " type: TMessageType_CALL" <<
+      ((*f_iter)->is_oneway() ? " type: TMessageType_ONEWAY" : " type: TMessageType_CALL") <<
       " sequenceID: 0];" << endl;
 
     out <<

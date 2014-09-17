@@ -1105,7 +1105,9 @@ void t_ocaml_generator::generate_service_client(t_service* tservice) {
 
     // Serialize the request header
     f_service_ <<
-      indent() << "oprot#writeMessageBegin (\"" << (*f_iter)->get_name() << "\", Protocol.CALL, seqid);" << endl;
+      indent() << "oprot#writeMessageBegin (\"" << (*f_iter)->get_name() << "\", "
+               << ((*f_iter)->is_oneway() ? "Protocol.ONEWAY" : "Protocol.CALL")
+               << ", seqid);" << endl;
 
     f_service_ <<
       indent() << "let args = new " << argsname << " in" << endl;

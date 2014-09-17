@@ -113,17 +113,20 @@ data MessageType
     = M_CALL
     | M_REPLY
     | M_EXCEPTION
+    | M_ONEWAY
       deriving ( Eq, Show )
 
 instance Enum MessageType where
     fromEnum M_CALL      =  1
     fromEnum M_REPLY     =  2
     fromEnum M_EXCEPTION =  3
+    fromEnum M_ONEWAY    =  4
 
     toEnum 1 = M_CALL
     toEnum 2 = M_REPLY
     toEnum 3 = M_EXCEPTION
+    toEnum 4 = M_ONEWAY
     toEnum t = error $ "Invalid MessageType " ++ show t
 
 instance Arbitrary MessageType where
-  arbitrary = elements [M_CALL, M_REPLY, M_EXCEPTION]
+  arbitrary = elements [M_CALL, M_REPLY, M_EXCEPTION, M_ONEWAY]
