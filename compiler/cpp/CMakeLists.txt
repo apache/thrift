@@ -71,8 +71,6 @@ add_library(libparse STATIC ${libparse_SOURCES})
 set( thrift_SOURCES 
     src/main.cc
     src/md5.c
-    src/generate/t_generator.cc
-    src/generate/t_generator_registry.h
     src/globals.h
     src/main.h
     src/platform.h
@@ -97,9 +95,17 @@ set( thrift_SOURCES
     src/parse/t_const.h
     src/parse/t_const_value.h
     src/parse/parse.cc
+    src/generate/t_generator.cc
+    src/generate/t_generator_registry.h
     src/generate/t_generator.h
     src/generate/t_oop_generator.h
     src/generate/t_html_generator.h
+    src/generate/BracketGuard.h
+    src/generate/IndentGuard.h
+    src/generate/IndentKeeper.cpp
+    src/generate/IndentKeeper.h
+    src/generate/PrePostGuard.h
+    src/generate/ScopeGuard.h
     src/windows/config.h
     version.h
 )
