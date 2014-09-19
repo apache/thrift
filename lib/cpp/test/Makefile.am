@@ -266,10 +266,7 @@ gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cp
 gen-cpp/ChildService.cpp: processor/proc.thrift
 	$(THRIFT) --gen cpp:templates,cob_style $<
 
-INCLUDES = \
-	-I$(top_srcdir)/lib/cpp/src
-
-AM_CPPFLAGS = $(BOOST_CPPFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src
 AM_LDFLAGS = $(BOOST_LDFLAGS)
 AM_CXXFLAGS = -Wall
 

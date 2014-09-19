@@ -96,10 +96,7 @@ gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_constants
 gen-cpp/StressTest_types.cpp gen-cpp/StressTest_constants.cpp: $(top_srcdir)/test/StressTest.thrift
 	$(THRIFT) --gen cpp $<
 
-INCLUDES = \
-	-I$(top_srcdir)/lib/cpp/src -Igen-cpp
-
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -Igen-cpp
 AM_CXXFLAGS = -Wall
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS)
 

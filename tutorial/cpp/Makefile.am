@@ -62,10 +62,7 @@ THRIFT = $(top_builddir)/compiler/cpp/thrift
 gen-cpp/Calculator.cpp gen-cpp/tutorial_types.cpp gen-cpp/tutorial_constants.cpp: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen cpp -r $<
 
-INCLUDES = \
-	-I$(top_srcdir)/lib/cpp/src -Igen-cpp
-
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -Igen-cpp
 AM_CXXFLAGS = -Wall
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS)
 
