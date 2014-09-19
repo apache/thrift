@@ -23,12 +23,18 @@
 
 #include <generate/ScopeGuard.h>
 #include <generate/IndentKeeper.h>
+#include <generate/OutputGenerator.h>
+
 
 using namespace apache::thrift::compiler;
 
 struct ScopeGuardTestsFixture {
   std::ostringstream stream;
-  IndentKeeper keeper;
+  OutputGenerator generator;
+
+  ScopeGuardTestsFixture()
+    : generator(stream)
+  {}
 
   std::string text() const { return stream.str(); }
 };
@@ -36,23 +42,23 @@ struct ScopeGuardTestsFixture {
 BOOST_FIXTURE_TEST_SUITE( ScopeGuardTests, ScopeGuardTestsFixture )
 
 BOOST_AUTO_TEST_CASE( ScopeGuard_open_bracket_and_increses_indent_on_construction ) {
-  const int start_indent = keeper.get_indent();
+  const int start_indent = generator.get_indent();
 
-  ScopeGuard guard(stream, keeper);
+  ScopeGuard guard(generator);
 
   BOOST_CHECK_EQUAL(text(), "{\n");
-  BOOST_CHECK_EQUAL(keeper.get_indent(), start_indent + 1);
+  BOOST_CHECK_EQUAL(generator.get_indent(), start_indent + 1);
 }
 
 BOOST_AUTO_TEST_CASE( ScopeGuard_closes_bracket_and_restores_indent_on_destruction ) {
-  const int start_indent = keeper.get_indent();
+  const int start_indent = generator.get_indent();
 
   {
-    ScopeGuard guard(stream, keeper);
+    ScopeGuard guard(generator);
   }
 
   BOOST_CHECK_EQUAL(text(), "{\n}\n");
-  BOOST_CHECK_EQUAL(keeper.get_indent(), start_indent);
+  BOOST_CHECK_EQUAL(generator.get_indent(), start_indent);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

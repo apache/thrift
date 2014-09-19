@@ -88,7 +88,9 @@ libgenerate_a_SOURCES = \
 	src/generate/IndentGuard.h \
 	src/generate/BracketGuard.h \
 	src/generate/PrePostGuard.h \
-	src/generate/ScopeGuard.h
+	src/generate/ScopeGuard.h \
+	src/generate/OutputGenerator.h \
+	src/generate/OutputGenerator.cpp
 
 # Language specific generators
 libgenerate_a_SOURCES += \

@@ -17,25 +17,10 @@
  * under the License.
  */
 
-#ifndef THRIFT_COMPILER_GENERATE_SCOPEGUARD_H_
-#define THRIFT_COMPILER_GENERATE_SCOPEGUARD_H_
-
-#include "IndentGuard.h"
-#include "PrePostGuard.h"
 #include "OutputGenerator.h"
 
-namespace apache { namespace thrift { namespace compiler {
+using namespace apache::thrift::compiler;
 
-class ScopeGuard
-  : private PrePostGuard,
-    private IndentGuard {
-public:
-  ScopeGuard(OutputGenerator& gen)
-    : PrePostGuard(gen.out(), "{\n", "}\n"),
-      IndentGuard(gen)
-  {}
-};
-
-}}} // apache::thrift::compiler
-
-#endif // THRIFT_COMPILER_GENERATE_SCOPEGUARD_H_
+OutputGenerator::OutputGenerator(std::ostream& out)
+  : out_(out)
+{}
