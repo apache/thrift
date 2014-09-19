@@ -185,8 +185,7 @@ class Main {
 		 	protocol = new TBinaryProtocol( transport);
         case json:
 			throw "JSON protocol not implemented yet";
-		 	//trace("- json protocol");
-		 	//protocol = new TJsonProtocol( transport);
+		 	protocol = new TJSONProtocol( transport);
 		default:
 			throw "Unhandled protocol";
 		}
@@ -300,8 +299,7 @@ class Main {
 		 	protfactory = new TBinaryProtocolFactory();
         case json:
 			throw "JSON protocol not implemented yet";
-		 	//trace("- json protocol");
-		 	//protfactory = new TJsonProtocolFactory();
+		 	protfactory = new TJSONProtocolFactory();
 		default:
 			throw "Unhandled protocol";
 		}

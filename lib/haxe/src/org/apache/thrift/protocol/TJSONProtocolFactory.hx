@@ -18,21 +18,23 @@
  */
 
 package org.apache.thrift.protocol;
-  
-class TType {
-    
-    public static inline var STOP : Int   = 0;
-    public static inline var VOID : Int   = 1;
-    public static inline var BOOL : Int   = 2;
-    public static inline var BYTE : Int   = 3;
-    public static inline var DOUBLE : Int = 4;
-    public static inline var I16 : Int    = 6;
-    public static inline var I32 : Int    = 8;
-    public static inline var I64 : Int    = 10;
-    public static inline var STRING : Int = 11;
-    public static inline var STRUCT : Int = 12;
-    public static inline var MAP : Int    = 13;
-    public static inline var SET : Int    = 14;
-    public static inline var LIST : Int   = 15;
 
+import org.apache.thrift.transport.TTransport;
+
+
+/**
+* JSON Protocol Factory
+*/
+class TJSONProtocolFactory implements TProtocolFactory {
+	
+	public function new() {
+	}
+
+	public function getProtocol( trans : TTransport) : TProtocol  {
+		return new TJSONProtocol( trans);
+	}
 }
+
+
+
+	

@@ -179,8 +179,7 @@ class TestClient {
 			protocol = new TBinaryProtocol(transport);
 		case json:
 			trace("- json protocol");
-			throw "JSON protocol not implemented yet";
-			//protocol = new TJsonProtocol(transport);
+			protocol = new TJSONProtocol(transport);
 		default:
 			throw "Unhandled protocol";
 		}
@@ -321,6 +320,13 @@ class TestClient {
 		trace(' = $i64');
 		rslt.Expect( Int64.compare( i64, Int64.make( 0xFFFFFFF8, 0x00000000)) == 0, 
 		             Int64.toStr(i64) +" == "+Int64.toStr(Int64.make( 0xFFFFFFF8, 0x00000000)));
+
+		// edge case: the largest negative Int64 has no positive Int64 equivalent
+		trace('testI64(-9223372036854775808)');
+		i64 = client.testI64( Int64.make( 0x80000000, 0x00000000)); // -9223372036854775808
+		trace(' = $i64');
+		rslt.Expect( Int64.compare( i64, Int64.make( 0x80000000, 0x00000000)) == 0, 
+		             Int64.toStr(i64) +" == "+Int64.toStr(Int64.make( 0x80000000, 0x00000000)));
 
 		trace('testDouble(5.325098235)');
 		var dub = client.testDouble(5.325098235);

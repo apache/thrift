@@ -59,9 +59,8 @@ class Arguments
 		try {
   			ParseArgs();
 		} catch (e : String) {
-			trace(e);
 			trace(GetHelp());
-			return;
+			throw e;
 		}
 		#else
 		trace("WN: Platform does not support program arguments, using defaults.");
@@ -71,17 +70,24 @@ class Arguments
 	#if sys
 		
 	private static function GetHelp() : String {
-		/*
-		return Sys.executablePath()+"  modus  trnsOption  transport  protocol\n"
-		+"Options:\n"
-		+"  modus:       client, server   (default: client)\n"
-		+"  trnsOption:  framed, buffered (default: none)\n"
-		+"  transport:   socket, http     (default: socket)\n"
-		+"  protocol:    binary, json     (default: binary)\n"
-		+"\n"
-		+"All arguments are optional.\n";
-		*/
-		return "TODO: help screen";
+		return "\n"
+			+Sys.executablePath()+"  [client|server]  [options]\n"
+			+"Modus: Either client or server, the default is client.\n"
+			+"\n"
+			+"Options:\n"
+			+"  -f, --framed         framed transport (supersedes buffered)\n"
+			+"  -b, --buffered       buffered transport\n"
+			+"  --json               JSON protocol\n"
+			+"  --protocol=<prot>    Choose protocol: json, binary (default binary).\n"
+			+"  --port=<port>        Port number for socket transport, default 9090\n"
+			+"\n"
+			+"Client only options:\n"
+			+"  --host=<host>        Host name, IP or URL, default localhost\n"
+			+"  -n=<iterations>      Number of test iterations\n"
+			+"  -t=<threads>         Number of test threads\n"
+			+"  -u=<url>             Target Host/URL (same as --host)\n"
+			+"\n"
+			+"All arguments are optional.\n";
 	}
 	
 
@@ -107,6 +113,8 @@ class Arguments
 					buffered = true;
 				} else if (( arg == "--json") || (arg == "--protocol=json")){
 					protocol = json;
+				} else if (( arg == "--protocol=binary")){
+					protocol = binary;
 				} else if (arg.startsWith("--host=")) {
 					ClientOnlyOption(arg);
 					host = arg.substr(arg.indexOf("=") + 1);
