@@ -133,8 +133,8 @@ final class TCompactProtocol(Transport = TTransport) if (
 
   void writeMessageBegin(TMessage msg) {
     writeByte(cast(byte)PROTOCOL_ID);
-    writeByte((VERSION_N & VERSION_MASK) |
-      ((cast(int)msg.type << TYPE_SHIFT_AMOUNT) & TYPE_MASK));
+    writeByte(cast(byte)((VERSION_N & VERSION_MASK) |
+                         ((cast(int)msg.type << TYPE_SHIFT_AMOUNT) & TYPE_MASK)));
     writeVarint32(msg.seqid);
     writeString(msg.name);
   }
@@ -391,7 +391,7 @@ private:
       writeByte(cast(byte)(size << 4 | toCType(elemType)));
     } else {
       assert(size <= int.max);
-      writeByte(0xf0 | toCType(elemType));
+      writeByte(cast(byte)(0xf0 | toCType(elemType)));
       writeVarint32(cast(int)size);
     }
   }
