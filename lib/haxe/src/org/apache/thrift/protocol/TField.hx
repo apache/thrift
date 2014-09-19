@@ -32,11 +32,12 @@ class TField {
     }
     
     public function toString() : String {
-      return "<TField name:'" + name + "' type:" + type + " field-id:" + id + ">";
+      return '<TField name:"$name" type:"$type" field-id:"$id">';
     }
     
-    public function equals(otherField:TField) : Bool {
-      return type == otherField.type && id == otherField.id;
+    public function equals( otherField : TField) : Bool {
+      return (type == otherField.type) 
+          && (id == otherField.id);
     }
   
 }

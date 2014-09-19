@@ -29,7 +29,7 @@
         ,{
              "pathToHxml" : "cpp.hxml"
             ,"runActionType" : 2
-            ,"runActionText" : "bin/Main-debug.exe"
+            ,"runActionText" : "bin/Main-debug.exe  client --json"
         }
         ,{
              "pathToHxml" : "java.hxml"
@@ -51,16 +51,16 @@
             ,"foldedRegions" : [
 
             ]
-            ,"activeLine" : 47
+            ,"activeLine" : 159
         }
         ,{
-             "path" : "src\\TestServer.hx"
+             "path" : "..\\..\\lib\\haxe\\src\\org\\apache\\thrift\\protocol\\TJSONProtocol.hx"
             ,"useTabs" : true
             ,"indentSize" : 4
             ,"foldedRegions" : [
 
             ]
-            ,"activeLine" : 70
+            ,"activeLine" : 665
         }
         ,{
              "path" : "src\\TestClient.hx"
@@ -69,19 +69,10 @@
             ,"foldedRegions" : [
 
             ]
-            ,"activeLine" : 599
-        }
-        ,{
-             "path" : "src\\TestServerHandler.hx"
-            ,"useTabs" : true
-            ,"indentSize" : 4
-            ,"foldedRegions" : [
-
-            ]
-            ,"activeLine" : 309
+            ,"activeLine" : 325
         }
     ]
-    ,"activeFile" : "src\\TestClient.hx"
+    ,"activeFile" : "..\\..\\lib\\haxe\\src\\org\\apache\\thrift\\protocol\\TJSONProtocol.hx"
     ,"openFLTarget" : null
     ,"openFLBuildMode" : "Debug"
     ,"runActionType" : null

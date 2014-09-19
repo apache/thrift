@@ -68,8 +68,7 @@ class TestServer
 				protfactory = new TBinaryProtocolFactory();
 			case json:
 				trace("- json protocol");
-				throw "JSON protocol not implemented yet";
-				//protfactory = new TJsonProtocolFactory();
+				protfactory = new TJSONProtocolFactory();
 			default:
 				throw "Unhandled protocol";
 			}
