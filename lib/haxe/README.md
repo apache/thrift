@@ -32,14 +32,14 @@ If you are using HIDE, you'll find the HIDE project files in these folders.
 Current status
 ========================
 - tested with Haxe C++ target
-- socket transport, binary protocol available
+- transports: socket 
+- protocols: binary, JSON
 - tutorial client and server available
 - cross-test client and server available 
 
 
 Further developments
 ========================
-- add JSON protocol, update tutorial and tests accordingly
 - add HTTP transport, update tutorial and tests accordingly
 - improve to work with C#, Java and JavaScript Haxe/OpenFL targets
 - improve to work with more (ideally all) Haxe/OpenFL targets
