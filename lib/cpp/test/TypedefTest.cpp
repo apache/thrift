@@ -17,39 +17,11 @@
  * under the License.
  */
 
-#ifndef T_ENUM_VALUE_H
-#define T_ENUM_VALUE_H
+#include <boost/type_traits/is_same.hpp>
+#include <boost/static_assert.hpp>
 
-#include <string>
-#include "t_doc.h"
+#include "gen-cpp/TypedefTest_types.h"
 
-/**
- * A constant. These are used inside of enum definitions. Constants are just
- * symbol identifiers that may or may not have an explicit value associated
- * with them.
- *
- */
-class t_enum_value : public t_doc {
- public:
-  t_enum_value(std::string name, int value) :
-    name_(name),
-    value_(value) {}
-
-  ~t_enum_value() {}
-
-  const std::string& get_name() const {
-    return name_;
-  }
-
-  int get_value() const {
-    return value_;
-  }
-
-  std::map<std::string, std::string> annotations_;
-
- private:
-  std::string name_;
-  int value_;
-};
-
-#endif
+BOOST_STATIC_ASSERT(boost::is_same<int32_t, thrift::test::MyInt32>::value);
+BOOST_STATIC_ASSERT(boost::is_same<std::string, thrift::test::MyString>::value);
+BOOST_STATIC_ASSERT(boost::is_same<thrift::test::TypedefTestStruct, thrift::test::MyStruct>::value);

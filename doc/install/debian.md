@@ -1,7 +1,7 @@
 ## Debian or Ubuntu setup
 The following command install all the required tools and libraries to build and install the Apache Thrift compiler on a Debian/Ubuntu Linux based system.
 
-	sudo apt-get install libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev 
+	sudo apt-get install libboost-dev libboost-test-dev libboost-program-options-dev libboost-system-dev libboost-filesystem-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev 
 
 Then install the Java JDK of your choice. Type **javac** to see a list of available packages, pick the one you prefer and **apt-get install** it.
 
@@ -30,7 +30,7 @@ Some other packages depend on what languages you want Thrift to support.
  * Haskell
 	* ghc6 cabal-install libghc6-binary-dev libghc6-network-dev libghc6-http-dev
  * Thrift Compiler for Windows
-	* mingw32 mingw32-binutils mingw32-runtime
+	* mingw32 mingw32-binutils mingw32-runtime nsis
 
 
 ## Additional reading

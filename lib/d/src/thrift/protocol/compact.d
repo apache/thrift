@@ -133,8 +133,8 @@ final class TCompactProtocol(Transport = TTransport) if (
 
   void writeMessageBegin(TMessage msg) {
     writeByte(cast(byte)PROTOCOL_ID);
-    writeByte((VERSION_N & VERSION_MASK) |
-      ((cast(int)msg.type << TYPE_SHIFT_AMOUNT) & TYPE_MASK));
+    writeByte(cast(byte)((VERSION_N & VERSION_MASK) |
+                         ((cast(int)msg.type << TYPE_SHIFT_AMOUNT) & TYPE_MASK)));
     writeVarint32(msg.seqid);
     writeString(msg.name);
   }
@@ -259,7 +259,7 @@ final class TCompactProtocol(Transport = TTransport) if (
         TProtocolException.Type.BAD_VERSION);
     }
 
-    msg.type = cast(TMessageType)((versionAndType >> TYPE_SHIFT_AMOUNT) & 0x03);
+    msg.type = cast(TMessageType)((versionAndType >> TYPE_SHIFT_AMOUNT) & TYPE_BITS);
     msg.seqid = readVarint32();
     msg.name = readString();
 
@@ -391,7 +391,7 @@ private:
       writeByte(cast(byte)(size << 4 | toCType(elemType)));
     } else {
       assert(size <= int.max);
-      writeByte(0xf0 | toCType(elemType));
+      writeByte(cast(byte)(0xf0 | toCType(elemType)));
       writeVarint32(cast(int)size);
     }
   }
@@ -589,6 +589,7 @@ private:
   enum VERSION_N = 1;
   enum VERSION_MASK = 0b0001_1111;
   enum TYPE_MASK = 0b1110_0000;
+  enum TYPE_BITS = 0b0000_0111;
   enum TYPE_SHIFT_AMOUNT = 5;
 
   // Probably need to implement a better stack at some point.

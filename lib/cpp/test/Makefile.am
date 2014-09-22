@@ -20,14 +20,17 @@
 noinst_LTLIBRARIES = libtestgencpp.la libprocessortest.la
 nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/DebugProtoTest_types.cpp \
-	gen-cpp/OptionalRequiredTest_types.cpp \
-	gen-cpp/DebugProtoTest_types.cpp \
-	gen-cpp/ThriftTest_types.cpp \
 	gen-cpp/DebugProtoTest_types.h \
+	gen-cpp/EnumTest_types.cpp \
+	gen-cpp/EnumTest_types.h \
+	gen-cpp/OptionalRequiredTest_types.cpp \
 	gen-cpp/OptionalRequiredTest_types.h \
 	gen-cpp/Recursive_types.cpp \
 	gen-cpp/Recursive_types.h \
+	gen-cpp/ThriftTest_types.cpp \
 	gen-cpp/ThriftTest_types.h \
+	gen-cpp/TypedefTest_types.cpp \
+	gen-cpp/TypedefTest_types.h \
 	ThriftTest_extras.cpp \
 	DebugProtoTest_extras.cpp
 
@@ -65,7 +68,8 @@ check_PROGRAMS = \
 	TFileTransportTest \
 	UnitTests \
 	link_test \
-	OpenSSLManualInitTest
+	OpenSSLManualInitTest \
+	EnumTest
 # disable these test ... too strong
 #       processor_test
 #	concurrency_test
@@ -82,7 +86,9 @@ UnitTests_SOURCES = \
 	UnitTestMain.cpp \
 	TMemoryBufferTest.cpp \
 	TBufferBaseTest.cpp \
-	Base64Test.cpp
+	Base64Test.cpp \
+	ToStringTest.cpp \
+	TypedefTest.cpp
 
 if !WITH_BOOSTTHREADS
 UnitTests_SOURCES += \
@@ -110,6 +116,13 @@ ZlibTest_LDADD = \
   $(top_builddir)/lib/cpp/libthriftz.la \
   -l:libboost_unit_test_framework.a \
   -lz
+
+EnumTest_SOURCES = \
+  EnumTest.cpp
+
+EnumTest_LDADD = \
+  libtestgencpp.la \
+  -l:libboost_unit_test_framework.a
 
 TFileTransportTest_SOURCES = \
 	TFileTransportTest.cpp
@@ -231,6 +244,12 @@ THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h: $(top_srcdir)/test/DebugProtoTest.thrift
 	$(THRIFT) --gen cpp:dense $<
+
+gen-cpp/EnumTest_types.cpp gen-cpp/EnumTest_types.h: $(top_srcdir)/test/EnumTest.thrift
+	$(THRIFT) --gen cpp $<
+
+gen-cpp/TypedefTest_types.cpp gen-cpp/TypedefTest_types.h: $(top_srcdir)/test/TypedefTest.thrift
+	$(THRIFT) --gen cpp $<
 
 gen-cpp/OptionalRequiredTest_types.cpp gen-cpp/OptionalRequiredTest_types.h: $(top_srcdir)/test/OptionalRequiredTest.thrift
 	$(THRIFT) --gen cpp:dense $<

@@ -76,10 +76,9 @@ class t_enum : public t_type {
     else {
       int min_value_value;
       min_value = enum_values.front();
-      min_value_value = (min_value->has_value() ? min_value->get_value() : 1);
+      min_value_value = min_value->get_value();
       for (c_iter = enum_values.begin(); c_iter != enum_values.end(); ++c_iter) {
-        if ((*c_iter)->has_value() &&
-            ((*c_iter)->get_value() < min_value_value)) {
+        if ((*c_iter)->get_value() < min_value_value) {
           min_value = (*c_iter);
           min_value_value = min_value->get_value();
         }
@@ -98,11 +97,9 @@ class t_enum : public t_type {
     else {
       int max_value_value;
       max_value = enum_values.back();
-      max_value_value =
-        (max_value->has_value() ? max_value->get_value() : enum_values.size());
+      max_value_value = max_value->get_value();
       for (c_iter = enum_values.begin(); c_iter != enum_values.end(); ++c_iter) {
-        if ((*c_iter)->has_value() &&
-            ((*c_iter)->get_value() > max_value_value)) {
+        if ((*c_iter)->get_value() > max_value_value) {
           max_value = (*c_iter);
           max_value_value = max_value->get_value();
         }
@@ -119,18 +116,6 @@ class t_enum : public t_type {
     return "enum";
   }
 
-  void resolve_values() {
-    const std::vector<t_enum_value*>& enum_values = get_constants();
-    std::vector<t_enum_value*>::const_iterator c_iter;
-    int lastValue = -1;
-    for (c_iter = enum_values.begin(); c_iter != enum_values.end(); ++c_iter) {
-      if (! (*c_iter)->has_value()) {
-        (*c_iter)->set_value(++lastValue);
-      } else {
-        lastValue = (*c_iter)->get_value();
-      }
-    }
-  }
 
  private:
   std::vector<t_enum_value*> constants_;

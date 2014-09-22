@@ -125,7 +125,7 @@ var
 const
   // pipe timeouts to be used
   DEBUG_TIMEOUT   = 30 * 1000;
-  RELEASE_TIMEOUT = DEFAULT_THRIFT_PIPE_TIMEOUT;
+  RELEASE_TIMEOUT = DEFAULT_THRIFT_TIMEOUT;
   TIMEOUT         = RELEASE_TIMEOUT;
 begin
   bBuffered := False;;
@@ -406,6 +406,11 @@ begin
     Expect( FALSE, 'testException(''TException''): must trow an exception');
   except
     on e:TTransportException do begin
+      Console.WriteLine( e.ClassName+' = '+e.Message); // this is what we get
+      if FTransport.IsOpen then FTransport.Close;
+      FTransport.Open;   // re-open connection, server has already closed
+    end;
+    on e:TApplicationException do begin
       Console.WriteLine( e.ClassName+' = '+e.Message); // this is what we get
       if FTransport.IsOpen then FTransport.Close;
       FTransport.Open;   // re-open connection, server has already closed
@@ -800,9 +805,11 @@ begin
     i := client.testMultiException( 'need more pizza', 'run out of beer');
     Expect( i.String_thing = 'run out of beer', 'i.String_thing = "' +i.String_thing+ '"');
     Expect( i.__isset_String_thing, 'i.__isset_String_thing = '+BoolToString(i.__isset_String_thing));
-    Expect( not i.__isset_Byte_thing, 'i.__isset_Byte_thing = '+BoolToString(i.__isset_Byte_thing));
+    { this is not necessarily true, these fields are default-serialized
+	Expect( not i.__isset_Byte_thing, 'i.__isset_Byte_thing = '+BoolToString(i.__isset_Byte_thing));
     Expect( not i.__isset_I32_thing, 'i.__isset_I32_thing = '+BoolToString(i.__isset_I32_thing));
     Expect( not i.__isset_I64_thing, 'i.__isset_I64_thing = '+BoolToString(i.__isset_I64_thing));
+	}
   except
     on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'"');
   end;
@@ -832,9 +839,11 @@ begin
       Expect( x.ErrorCode = 2002, 'x.ErrorCode = '+IntToStr(x.ErrorCode));
       Expect( x.Struct_thing.String_thing = 'This is an Xception2', 'x.Struct_thing.String_thing = "'+x.Struct_thing.String_thing+'"');
       Expect( x.Struct_thing.__isset_String_thing, 'x.Struct_thing.__isset_String_thing = '+BoolToString(x.Struct_thing.__isset_String_thing));
+      { this is not necessarily true, these fields are default-serialized
       Expect( not x.Struct_thing.__isset_Byte_thing, 'x.Struct_thing.__isset_Byte_thing = '+BoolToString(x.Struct_thing.__isset_Byte_thing));
       Expect( not x.Struct_thing.__isset_I32_thing, 'x.Struct_thing.__isset_I32_thing = '+BoolToString(x.Struct_thing.__isset_I32_thing));
       Expect( not x.Struct_thing.__isset_I64_thing, 'x.Struct_thing.__isset_I64_thing = '+BoolToString(x.Struct_thing.__isset_I64_thing));
+	  }
     end;
     on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'"');
   end;

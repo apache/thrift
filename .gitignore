@@ -44,6 +44,9 @@ test-driver
 /autoscan-*.log
 /compiler/cpp/Debug
 /compiler/cpp/libparse.a
+/compiler/cpp/src/thriftl.cc
+/compiler/cpp/src/thrifty.cc
+/compiler/cpp/src/thrifty.hh
 /compiler/cpp/src/windows/version.h
 /compiler/cpp/thrift
 /compiler/cpp/thriftl.cc
@@ -79,6 +82,7 @@ test-driver
 /lib/cpp/test/Benchmark
 /lib/cpp/test/AllProtocolsTest
 /lib/cpp/test/DebugProtoTest
+/lib/cpp/test/EnumTest
 /lib/cpp/test/JSONProtoTest
 /lib/cpp/test/OptionalRequiredTest
 /lib/cpp/test/SpecializationTest
@@ -202,6 +206,7 @@ test-driver
 /missing
 /stamp-h1
 /test/status.html
+/test/c_glib/test_client
 /test/cpp/StressTest
 /test/cpp/StressTestNonBlocking
 /test/cpp/TestClient

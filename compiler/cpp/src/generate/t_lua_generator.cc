@@ -601,8 +601,9 @@ void t_lua_generator::generate_service_client(ofstream &out,
     indent(out) << endl << "function " << classname << ":send_" << sig << endl;
       indent_up();
 
-      indent(out) << "self.oprot:writeMessageBegin('" << funcname <<
-        "', TMessageType.CALL, self._seqid)" << endl;
+      indent(out) << "self.oprot:writeMessageBegin('" << funcname << "', "
+                  << ((*f_iter)->is_oneway() ? "TMessageType.ONEWAY" : "TMessageType.CALL")
+                  << ", self._seqid)" << endl;
       indent(out) << "local args = " << funcname << "_args:new{}" << endl;
 
       // Set the args

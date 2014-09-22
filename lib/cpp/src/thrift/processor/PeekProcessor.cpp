@@ -66,7 +66,7 @@ bool PeekProcessor::process(boost::shared_ptr<TProtocol> in,
   int32_t seqid;
   in->readMessageBegin(fname, mtype, seqid);
 
-  if (mtype != T_CALL) {
+  if (mtype != T_CALL && mtype != T_ONEWAY) {
     throw TException("Unexpected message type");
   }
 

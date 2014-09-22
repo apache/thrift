@@ -41,8 +41,21 @@ parser.add_option('-v', '--verbose', action="store_const",
 parser.add_option('-q', '--quiet', action="store_const",
     dest="verbose", const=0,
     help="minimal output")
+parser.add_option("--server", type="string", dest="servers", default="",
+    help="list of servers to test seperated by commas, eg:- --server=cpp,java")
+parser.add_option("--client", type="string", dest="clients", default="",
+    help="list of clients to test seperated by commas, eg:- --client=cpp,java")
 parser.set_defaults(verbose=1)
 options, args = parser.parse_args()
+
+if options.servers == "":
+  serversList = []
+else:
+  serversList = options.servers.split(",")
+if options.clients == "":
+  clientsList = []
+else:
+  clientsList = options.clients.split(",")
 
 def relfile(fname):
     return os.path.join(os.path.dirname(__file__), fname)
@@ -60,14 +73,16 @@ def runServiceTest(test_name, server_lib, server_executable, server_extra_args, 
   server_args = []
   cli_args = []
   if server_lib == 'java':
-    server_executable[2] = relfile(server_executable[2])
-    server_args.extend(server_executable)
+    server_args.append(server_executable[0])
+    server_args.append(server_executable[1])
+    server_args.append(relfile(server_executable[2]))
     server_args.extend(['-Dtestargs','\"'])
   else:
     server_args = [relfile(server_executable)]
   if client_lib == 'java':
-    client_executable[2] = relfile(client_executable[2])
-    cli_args.extend(client_executable)
+    cli_args.append(client_executable[0])
+    cli_args.append(client_executable[1])
+    cli_args.append(relfile(client_executable[2]))
     cli_args.extend(['-Dtestargs','\"'])
   else:
     cli_args = [relfile(client_executable)]
@@ -96,8 +111,8 @@ def runServiceTest(test_name, server_lib, server_executable, server_extra_args, 
   server_args.extend(server_extra_args)
   cli_args.extend(client_extra_args)
 
-  server_log=open("log/" + test_name + "_server.log","a")
-  client_log=open("log/" + test_name + "_client.log","a")
+  server_log=open(relfile("log/" + test_name + "_server.log"),"a")
+  client_log=open(relfile("log/" + test_name + "_client.log"),"a")
 
   try:
     if options.verbose > 0:
@@ -169,8 +184,8 @@ def runServiceTest(test_name, server_lib, server_executable, server_extra_args, 
              'processes to terminate via alarm'
              % (protocol, use_zlib, use_ssl, extra_sleep))
       time.sleep(extra_sleep)
-    os.kill(serverproc.pid, signal.SIGKILL)
-    serverproc.wait()
+    os.kill(serverproc.pid, signal.SIGTERM)
+    #serverproc.wait()
   client_log.flush()
   server_log.flush()
   client_log.close()
@@ -178,102 +193,111 @@ def runServiceTest(test_name, server_lib, server_executable, server_extra_args, 
 
 test_count = 0
 failed = 0
+hard_fail_count = 0
 platform = platform.system()
-if os.path.exists('log'): shutil.rmtree('log')
-os.makedirs('log')
-if os.path.exists('results.json'): os.remove('results.json')
-results_json = open("results.json","a")
+if os.path.exists(relfile('log')): shutil.rmtree(relfile('log'))
+os.makedirs(relfile('log'))
+if os.path.exists(relfile('results.json')): os.remove(relfile('results.json'))
+results_json = open(relfile("results.json"),"a")
 results_json.write("[\n")
 
-with open('tests.json') as data_file:
+with open(relfile('tests.json')) as data_file:
     data = json.load(data_file)
 
 #subprocess.call("export NODE_PATH=../lib/nodejs/test:../lib/nodejs/lib:${NODE_PATH}")
 count = 0
 for server in data["server"]:
-  server_executable = server["executable"]
-  server_extra_args = ""
-  server_lib = server["lib"]
-  if "extra_args" in server:
-    server_extra_args = server["extra_args"]
-  for protocol in server["protocols"]:
-    for transport in server["transports"]:
-      for sock in server["sockets"]:
-        for client in data["client"]:
-          if platform in server["platform"] and platform in client["platform"]:
-            client_executable = client["executable"]
-            client_extra_args = ""
-            client_lib = client["lib"]
-            if "extra_args" in client:
-              client_extra_args = client["extra_args"]
-            if protocol in client["protocols"]:
-              if transport in client["transports"]:
-                if sock in client["sockets"]:
-                  if count != 0:
-                    results_json.write(",\n")
-                  count = 1
-                  results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"" + protocol + "\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
-                  test_name = server_lib + "_" + client_lib + "_" + protocol + "_" + transport + "_" + sock
-                  ret = runServiceTest(test_name, server_lib, server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, protocol, transport, 9090, 0, sock)
-                  if ret != None:
-                    failed += 1
-                    print "Error: %s" % ret
-                    print "Using"
-                    print (' Server: %s --protocol=%s --transport=%s %s %s'
-                      % (server_executable, protocol, transport, getSocketArgs(sock), ' '.join(server_extra_args)))
-                    print (' Client: %s --protocol=%s --transport=%s %s %s'
-                      % (client_executable, protocol, transport, getSocketArgs(sock), ''.join(client_extra_args)))
-                    results_json.write("\t\t\"failure\",\n")
-                  else:
-                    results_json.write("\t\t\"success\",\n")
-                  results_json.write("\t\t{\n\t\t\t\"Client\":\"log/" + test_name + "_client.log\",\n\t\t\t\"Server\":\"log/" + test_name + "_server.log\"\n\t\t}\n\t]")
-                  test_count += 1
-            if protocol == 'binary' and 'accel' in client["protocols"]:
-              if transport in client["transports"]:
-                if sock in client["sockets"]:
-                  if count != 0:
-                    results_json.write(",\n")
-                  count = 1
-                  results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"accel-binary\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
-                  test_name = server_lib + "_" + client_lib + "_accel-binary_" + transport + "_" + sock
-                  ret = runServiceTest(test_name, server_lib,server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, 'accel', transport, 9090, 0, sock)
+  if (server["lib"] in serversList or len(serversList) == 0) and platform in server["platform"]:
+    server_executable = server["executable"]
+    server_extra_args = ""
+    server_lib = server["lib"]
+    if "extra_args" in server:
+      server_extra_args = server["extra_args"]
+    for protocol in server["protocols"]:
+      for transport in server["transports"]:
+        for sock in server["sockets"]:
+          for client in data["client"]:
+            if (client["lib"] in clientsList or len(clientsList) == 0) and platform in client["platform"]:
+              client_executable = client["executable"]
+              client_extra_args = ""
+              client_lib = client["lib"]
+              if "extra_args" in client:
+                client_extra_args = client["extra_args"]
+              if protocol in client["protocols"]:
+                if transport in client["transports"]:
+                  if sock in client["sockets"]:
+                    if count != 0:
+                      results_json.write(",\n")
+                    count = 1
+                    results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"" + protocol + "\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
+                    test_name = server_lib + "_" + client_lib + "_" + protocol + "_" + transport + "_" + sock
+                    ret = runServiceTest(test_name, server_lib, server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, protocol, transport, options.port, 0, sock)
+                    if ret != None:
+                      failed += 1
+                      if client["exit"] == "hard" and server["exit"] == "hard":
+                        hard_fail_count +=1
+                      print "Error: %s" % ret
+                      print "Using"
+                      print (' Server: %s --protocol=%s --transport=%s %s %s'
+                        % (server_executable, protocol, transport, getSocketArgs(sock), ' '.join(server_extra_args)))
+                      print (' Client: %s --protocol=%s --transport=%s %s %s'
+                        % (client_executable, protocol, transport, getSocketArgs(sock), ''.join(client_extra_args)))
+                      results_json.write("\t\t\"failure\",\n")
+                    else:
+                      results_json.write("\t\t\"success\",\n")
+                    results_json.write("\t\t{\n\t\t\t\"Client\":\"log/" + test_name + "_client.log\",\n\t\t\t\"Server\":\"log/" + test_name + "_server.log\"\n\t\t}\n\t]")
+                    test_count += 1
+              if protocol == 'binary' and 'accel' in client["protocols"]:
+                if transport in client["transports"]:
+                  if sock in client["sockets"]:
+                    if count != 0:
+                      results_json.write(",\n")
+                    count = 1
+                    results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"accel-binary\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
+                    test_name = server_lib + "_" + client_lib + "_accel-binary_" + transport + "_" + sock
+                    ret = runServiceTest(test_name, server_lib,server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, 'accel', transport, options.port, 0, sock)
 
-                  if ret != None:
-                    failed += 1
-                    print "Error: %s" % ret
-                    print "Using"
-                    print (' Server: %s --protocol=%s --transport=%s %s %s'
-                      % (server_executable, protocol, transport, getSocketArgs(sock), ' '.join(server_extra_args)))
-                    print (' Client: %s --protocol=%s --transport=%s %s %s'
-                      % (client_executable, protocol, transport , getSocketArgs(sock), ''.join(client_extra_args)))
-                    results_json.write("\t\t\"failure\",\n")
-                  else:
-                    results_json.write("\t\t\"success\",\n")
-                  results_json.write("\t\t{\n\t\t\t\"Client\":\"log/" + test_name + "_client.log\",\n\t\t\t\"Server\":\"log/" + test_name + "_server.log\"\n\t\t}\n\t]")
-                  test_count += 1
-            if protocol == 'accel' and 'binary' in client["protocols"]:
-              if transport in client["transports"]:
-                if sock in client["sockets"]:
-                  if count != 0:
-                    results_json.write(",\n")
-                  count = 1
-                  results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"binary-accel\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
-                  test_name = server_lib + "_" + client_lib + "_binary-accel_" + transport + "_" + sock
-                  ret = runServiceTest(test_name, server_lib,server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, 'binary', transport, 9090, 0, sock)
-                  if ret != None:
-                    failed += 1
-                    print "Error: %s" % ret
-                    print "Using"
-                    print (' Server: %s --protocol=%s --transport=%s %s %s'
-                      % (server_executable, protocol, transport + sock, getSocketArgs(sock), ' '.join(server_extra_args)))
-                    print (' Client: %s --protocol=%s --transport=%s %s %s'
-                      % (client_executable, protocol, transport + sock, getSocketArgs(sock), ''.join(client_extra_args)))
-                    results_json.write("\t\t\"failure\",\n")
-                  else:
-                    results_json.write("\t\t\"success\",\n")
-                  results_json.write("\t\t{\n\t\t\t\"Client\":\"log/" + test_name + "_client.log\",\n\t\t\t\"Server\":\"log/" + test_name + "_server.log\"\n\t\t}\n\t]")
-                  test_count += 1
+                    if ret != None:
+                      failed += 1
+                      if client["exit"] == "hard" and server["exit"] == "hard":
+                        hard_fail_count +=1
+                      print "Error: %s" % ret
+                      print "Using"
+                      print (' Server: %s --protocol=%s --transport=%s %s %s'
+                        % (server_executable, protocol, transport, getSocketArgs(sock), ' '.join(server_extra_args)))
+                      print (' Client: %s --protocol=%s --transport=%s %s %s'
+                        % (client_executable, protocol, transport , getSocketArgs(sock), ''.join(client_extra_args)))
+                      results_json.write("\t\t\"failure\",\n")
+                    else:
+                      results_json.write("\t\t\"success\",\n")
+                    results_json.write("\t\t{\n\t\t\t\"Client\":\"log/" + test_name + "_client.log\",\n\t\t\t\"Server\":\"log/" + test_name + "_server.log\"\n\t\t}\n\t]")
+                    test_count += 1
+              if protocol == 'accel' and 'binary' in client["protocols"]:
+                if transport in client["transports"]:
+                  if sock in client["sockets"]:
+                    if count != 0:
+                      results_json.write(",\n")
+                    count = 1
+                    results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"binary-accel\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
+                    test_name = server_lib + "_" + client_lib + "_binary-accel_" + transport + "_" + sock
+                    ret = runServiceTest(test_name, server_lib,server_executable, server_extra_args, client_lib, client_executable, client_extra_args, protocol, 'binary', transport, options.port, 0, sock)
+                    if ret != None:
+                      failed += 1
+                      if client["exit"] == "hard" and server["exit"] == "hard":
+                        hard_fail_count +=1
+                      print "Error: %s" % ret
+                      print "Using"
+                      print (' Server: %s --protocol=%s --transport=%s %s %s'
+                        % (server_executable, protocol, transport + sock, getSocketArgs(sock), ' '.join(server_extra_args)))
+                      print (' Client: %s --protocol=%s --transport=%s %s %s'
+                        % (client_executable, protocol, transport + sock, getSocketArgs(sock), ''.join(client_extra_args)))
+                      results_json.write("\t\t\"failure\",\n")
+                    else:
+                      results_json.write("\t\t\"success\",\n")
+                    results_json.write("\t\t{\n\t\t\t\"Client\":\"log/" + test_name + "_client.log\",\n\t\t\t\"Server\":\"log/" + test_name + "_server.log\"\n\t\t}\n\t]")
+                    test_count += 1
 results_json.write("\n]")
 results_json.flush()
 results_json.close()
 print '%s failed of %s tests in total' % (failed, test_count)
+sys.exit(hard_fail_count)

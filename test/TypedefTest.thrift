@@ -15,41 +15,22 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- */
-
-#ifndef T_ENUM_VALUE_H
-#define T_ENUM_VALUE_H
-
-#include <string>
-#include "t_doc.h"
-
-/**
- * A constant. These are used inside of enum definitions. Constants are just
- * symbol identifiers that may or may not have an explicit value associated
- * with them.
  *
+ * Contains some contributions under the Thrift Software License.
+ * Please see doc/old-thrift-license.txt in the Thrift distribution for
+ * details.
  */
-class t_enum_value : public t_doc {
- public:
-  t_enum_value(std::string name, int value) :
-    name_(name),
-    value_(value) {}
 
-  ~t_enum_value() {}
+namespace cpp thrift.test
 
-  const std::string& get_name() const {
-    return name_;
-  }
+typedef i32 MyInt32
+typedef string MyString;
 
-  int get_value() const {
-    return value_;
-  }
+struct TypedefTestStruct {
+  1: MyInt32 field_MyInt32;
+  2: MyString field_MyString;
+  3: i32 field_Int32;
+  4: string field_String;
+}
 
-  std::map<std::string, std::string> annotations_;
-
- private:
-  std::string name_;
-  int value_;
-};
-
-#endif
+typedef TypedefTestStruct MyStruct,

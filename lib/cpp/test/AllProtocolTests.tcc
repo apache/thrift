@@ -97,14 +97,16 @@ void testMessage() {
     const char* name;
     TMessageType type;
     int32_t seqid;
-  } messages[4] = {
+  } messages[] = {
     {"short message name", T_CALL, 0},
     {"1", T_REPLY, 12345},
     {"loooooooooooooooooooooooooooooooooong", T_EXCEPTION, 1 << 16},
+    {"one way push", T_ONEWAY, 12},
     {"Janky", T_CALL, 0}
   };
+  const int messages_count = sizeof(messages) / sizeof(TMessage);
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < messages_count; i++) {
     shared_ptr<TTransport> transport(new TMemoryBuffer());
     shared_ptr<TProtocol> protocol(new TProto(transport));
 

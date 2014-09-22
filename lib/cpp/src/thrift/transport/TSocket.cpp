@@ -841,4 +841,10 @@ bool TSocket::getUseLowMinRto() {
   return useLowMinRto_;
 }
 
+const std::string TSocket::getOrigin() {
+  std::ostringstream oss;
+  oss << getPeerHost() << ":" << getPeerPort();
+  return oss.str();
+}
+
 }}} // apache::thrift::transport

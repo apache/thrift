@@ -235,6 +235,13 @@ class TSocket : public TVirtualTransport<TSocket> {
   static bool getUseLowMinRto();
 
   /**
+   * Get the origin the socket is connected to
+   *
+   * @return string peer host identifier and port
+   */
+  virtual const std::string getOrigin();
+
+  /**
    * Constructor to create socket from raw UNIX handle.
    */
   TSocket(THRIFT_SOCKET socket);
