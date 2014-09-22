@@ -60,7 +60,8 @@
     <ClCompile Include="src\generate\t_erl_generator.cc" />
     <ClCompile Include="src\generate\t_generator.cc" />
     <ClCompile Include="src\generate\t_go_generator.cc" />
-	<ClCompile Include="src\generate\t_gv_generator.cc" />
+    <ClCompile Include="src\generate\t_gv_generator.cc" />
+    <ClCompile Include="src\generate\t_haxe_generator.cc" />
     <ClCompile Include="src\generate\t_hs_generator.cc" />
     <ClCompile Include="src\generate\t_html_generator.cc" />
     <ClCompile Include="src\generate\t_javame_generator.cc" />
