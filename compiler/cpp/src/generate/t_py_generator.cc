@@ -786,16 +786,16 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
   }
 
   out << indent() << "def __hash__(self):" << endl;
-  indent_up(); 
-  indent(out) << "value = PYTHONHASHSEED" << endl; 
-  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) { 
-    indent(out) << "value = (value * 31) ^ hash(self." << (*m_iter)->get_name() + ")" << endl; 
-  } 
-  indent(out) << "return value" << endl; 
-  indent_down(); 
-  out << endl; 
-  
-  
+  indent_up();
+  indent(out) << "value = 17" << endl;  // PYTHONHASHSEED would be better, but requires Python 3.2.3
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    indent(out) << "value = (value * 31) ^ hash(self." << (*m_iter)->get_name() + ")" << endl;
+  }
+  indent(out) << "return value" << endl;
+  indent_down();
+  out << endl;
+
+
   if (!gen_slots_) {
     // Printing utilities so that on the command line thrift
     // structs look pretty like dictionaries
@@ -1344,6 +1344,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
     indent_up();
 
     std::string argsname = (*f_iter)->get_name() + "_args";
+    std::string messageType = (*f_iter)->is_oneway() ? "TMessageType.ONEWAY" : "TMessageType.CALL";
 
     // Serialize the request header
     if (gen_twisted_ || gen_tornado_) {
@@ -1353,10 +1354,9 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       f_service_ << indent() << "oprot = self._oprot" << endl;
     }
 
-    f_service_ << indent() <<
-      "oprot.writeMessageBegin('" << (*f_iter)->get_name() << "', TMessageType.CALL, self._seqid)"
-      << endl;
-
+    f_service_ <<
+        indent() << "oprot.writeMessageBegin('" << (*f_iter)->get_name() << "', "
+                 << messageType << ", self._seqid)" << endl;
     f_service_ <<
       indent() << "args = " << argsname << "()" << endl;
 

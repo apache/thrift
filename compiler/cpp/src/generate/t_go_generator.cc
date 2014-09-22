@@ -829,11 +829,7 @@ void t_go_generator::generate_enum(t_enum* tenum)
     int value = -1;
 
     for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-        if ((*c_iter)->has_value()) {
-            value = (*c_iter)->get_value();
-        } else {
-            ++value;
-        }
+      value = (*c_iter)->get_value();
 
         string iter_std_name(escape_string((*c_iter)->get_name()));
         string iter_name((*c_iter)->get_name());
@@ -1525,8 +1521,11 @@ void t_go_generator::generate_service(t_service* tservice)
 	string test_suffix("_test");
 	string filename = lowercase(service_name_);
 	string f_service_name;
-	if (filename.compare(filename.length() - test_suffix.length(),
-			test_suffix.length(), test_suffix) == 0) {
+	
+	size_t fname_len = filename.length();
+	size_t suffix_len = test_suffix.length();
+	
+	if ((fname_len >= suffix_len) && (filename.compare(fname_len-suffix_len, suffix_len, test_suffix) == 0)) {
 		f_service_name = package_dir_ + "/" + filename + "_.go";
 	} else {
 		f_service_name = package_dir_ + "/" + filename + ".go";
@@ -1804,7 +1803,10 @@ void t_go_generator::generate_service_client(t_service* tservice)
                    indent() << "  p.OutputProtocol = oprot" << endl <<
                    indent() << "}" << endl <<
                    indent() << "p.SeqId++" << endl <<
-                   indent() << "if err = oprot.WriteMessageBegin(\"" << (*f_iter)->get_name() << "\", thrift.CALL, p.SeqId); err != nil {" << endl;
+                   indent() << "if err = oprot.WriteMessageBegin(\""
+                            << (*f_iter)->get_name() << "\", "
+                            << ((*f_iter)->is_oneway() ? "thrift.ONEWAY" : "thrift.CALL")
+                            << ", p.SeqId); err != nil {" << endl;
         indent_up();
         f_service_ <<
                    indent() << "return" << endl;

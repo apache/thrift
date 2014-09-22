@@ -325,6 +325,17 @@ begin
       InputProtocol := nil;
       OutputProtocol := nil;
 
+      // close any old connections before before waiting for new clients
+      if client <> nil then try
+        try
+          client.Close;
+        finally
+          client := nil;
+        end;
+      except
+        // catch all, we can't do much about it at this point
+      end;
+
       client := FServerTransport.Accept( procedure
                                          begin
                                            if FServerEvents <> nil

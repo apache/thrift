@@ -116,14 +116,14 @@ do_test () {
     server_exec=$5
     client_timeout=$6
     server_startup_time=$7
-    
+
     testname=${client_server}_${protocol}_${transport}
     server_timeout=$(echo "(${server_startup_time}+${client_timeout})" | bc)
     printf "%-16s %-13s %-17s" ${client_server} ${protocol} ${transport}
-    
+
     timeout $server_timeout $server_exec > log/${testname}_server.log 2>&1 &
     server_pid=$!
-    
+
     sleep $server_startup_time
     timeout $client_timeout $client_exec > log/${testname}_client.log 2>&1
 
@@ -165,6 +165,11 @@ EOF
 }
 
 echo "Apache Thrift - integration test suite"
+if [ "$#" -eq "0" ]; then
+  THRIFT_TEST_PORT=9090
+else
+  THRIFT_TEST_PORT=$1
+fi
 date
 
 
@@ -192,6 +197,10 @@ cpp_sockets="ip domain ip-ssl"
 java_sockets="ip ip-ssl"
 # TODO fastframed java transport is another implementation of framed transport
 
+c_glib_protocols="binary"
+c_glib_transports="buffered framed"
+c_glib_sockets="ip"
+
 nodejs_protocols="binary compact json"
 nodejs_transports="buffered framed"
 nodejs_sockets="ip ip-ssl"
@@ -208,6 +217,9 @@ ruby_protocols="binary compact json accel"
 ruby_transports="buffered framed"
 ruby_sockets="ip"
 
+hs_protocols="binary compact json"
+hs_transports="buffered"
+hs_sockets="ip"
 
 ######### java client - java server #############
 for proto in $java_protocols; do
@@ -218,8 +230,8 @@ for proto in $java_protocols; do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "java-java" "${proto}" "${trans}-${sock}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testclient" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testserver" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testclient" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testserver" \
               "5" "1"
     done
   done
@@ -235,8 +247,8 @@ for proto in $cpp_protocols; do
        "domain" ) extraparam="--domain-socket=/tmp/ThriftTest.thrift";;
       esac
       do_test "cpp-cpp"   "${proto}" "${trans}-${sock}" \
-              "cpp/TestClient --protocol=${proto} --transport=${trans} ${extraparam}" \
-              "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}" \
+              "cpp/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "cpp/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "2" "0.1"
     done
   done
@@ -253,8 +265,8 @@ for proto in $(intersection "${java_protocols}" "${cpp_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "java-cpp" "${proto}" "${trans}-${sock}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testclient" \
-              "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}"\
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testclient" \
+              "cpp/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}"\
               "5" "0.1"
     done
   done
@@ -269,9 +281,42 @@ for proto in $(intersection "${cpp_protocols}" "${java_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "cpp-java" "${proto}" "${trans}-${sock}" \
-              "cpp/TestClient --protocol=${proto} --transport=${trans} ${extraparam}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans}  ${extraparam}\" run-testserver" \
+              "cpp/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT}  ${extraparam}\" run-testserver" \
               "5" "1"
+    done
+  done
+done
+
+######### c_glib client - cpp server ##############
+for proto in $(intersection "${c_glib_protocols}" "${cpp_protocols}"); do
+  for trans in $(intersection "${c_glib_transports}" "${cpp_transports}"); do
+    for sock in $(intersection "${c_glib_sockets}" "${cpp_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+        "domain" ) extraparam="--domain-socket=/tmp/ThriftTest.thrift";;
+      esac
+      do_test "c_glib-cpp" "${proto}" "${trans}-${sock}" \
+              "c_glib/test_client --protocol=${proto}  --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "cpp/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}"\
+              "2" "0.1"
+    done
+  done
+done
+
+######### c_glib client - java server ##############
+for proto in $(intersection "${c_glib_protocols}" "${java_protocols}"); do
+  for trans in $(intersection "${c_glib_transports}" "${java_server_transports}"); do
+    for sock in $(intersection "${c_glib_sockets}" "${java_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "c_glib-java" "${proto}" "${trans}-${sock}" \
+              "c_glib/test_client --protocol=${proto}  --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "ant -f ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testserver" \
+              "2" "2"
     done
   done
 done
@@ -288,8 +333,8 @@ for proto in ${nodejs_protocols}; do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "nodejs-nodejs" "${proto}" "${trans}-${sock}" \
-              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} ${extraparam}" \
-              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} ${extraparam}" \
+              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "0.2"
     done
   done
@@ -304,8 +349,8 @@ for proto in $(intersection "${nodejs_protocols}" "${cpp_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "nodejs-cpp" "${proto}" "${trans}-${sock}" \
-              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} ${extraparam}" \
-              "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}" \
+              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "cpp/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "0.2"
     done
   done
@@ -320,8 +365,8 @@ for proto in $(intersection "${nodejs_protocols}" "${cpp_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "cpp-nodejs" "${proto}" "${trans}-${sock}" \
-              "cpp/TestClient --protocol=${proto} --transport=${trans} ${extraparam}" \
-              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} ${extraparam}" \
+              "cpp/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "2"
     done
   done
@@ -336,8 +381,8 @@ for proto in $(intersection "${nodejs_protocols}" "${java_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "nodejs-java" "${proto}" "${trans}-${sock}" \
-              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} ${extraparam}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testserver" \
+              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testserver" \
               "5" "1"
     done
   done
@@ -352,9 +397,25 @@ for proto in $(intersection "${nodejs_protocols}" "${java_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "java-nodejs" "${proto}" "${trans}-${sock}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testclient" \
-              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} ${extraparam}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testclient" \
+              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "2"
+    done
+  done
+done
+
+######### c_glib client - nodejs server ##############
+for proto in $(intersection "${c_glib_protocols}" "${nodejs_protocols}"); do
+  for trans in $(intersection "${c_glib_transports}" "${nodejs_transports}"); do
+    for sock in $(intersection "${c_glib_sockets}" "${nodejs_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "c_glib-nodejs" "${proto}" "${trans}-${sock}" \
+              "c_glib/test_client --protocol=${proto}  --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "2" "2"
     done
   done
 done
@@ -368,8 +429,8 @@ for proto in ${py_protocols}; do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "py-py" "${proto}" "${trans}-${sock}" \
-              "py/TestClient.py --protocol=${proto} --transport={trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
-              "py/TestServer.py --protocol=${proto} --transport={trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "py/TestClient.py --protocol=${proto} --transport={trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+              "py/TestServer.py --protocol=${proto} --transport={trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
               "10" "2"
     done
   done
@@ -382,12 +443,12 @@ for trans in ${py_transports}; do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "py-py" "accel-binary" "${trans}-${sock}" \
-              "py/TestClient.py --protocol=accel --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
-              "py/TestServer.py --protocol=binary --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "py/TestClient.py --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+              "py/TestServer.py --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
               "10" "2"
       do_test "py-py" "binary-accel" "${trans}-${sock}" \
-              "py/TestClient.py --protocol=binary --transport={trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
-              "py/TestServer.py --protocol=accel --transport={trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "py/TestClient.py --protocol=binary --transport={trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+              "py/TestServer.py --protocol=accel --transport={trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
               "10" "2"
     done
   done
@@ -401,8 +462,8 @@ for proto in $(intersection "${cpp_protocols}" "${py_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "py-cpp" "${proto}" "${trans}-${sock}" \
-              "py/TestClient.py --protocol=${proto} --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
-              "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}" \
+              "py/TestClient.py --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+              "cpp/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "10" "2"
     done
   done
@@ -415,8 +476,8 @@ for trans in $(intersection "${cpp_transports}" "${py_transports}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "py-cpp" "accel-binary" "${trans}-${sock}" \
-              "py/TestClient.py --protocol=accel --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
-              "cpp/TestServer --protocol=binary --transport=${trans} ${extraparam}" \
+              "py/TestClient.py --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+              "cpp/TestServer --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "10" "2"
     done
   done
@@ -430,8 +491,8 @@ for proto in $(intersection "${cpp_protocols}" "${py_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "cpp-py" "${proto}" "${trans}-${sock}" \
-              "cpp/TestClient --protocol=${proto} --transport=${trans} ${extraparam}" \
-              "py/TestServer.py --protocol=${proto} --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "cpp/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "py/TestServer.py --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
               "10" "2"
     done
   done
@@ -444,8 +505,8 @@ for trans in $(intersection "${cpp_transports}" "${py_transports}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "cpp-py" "binary-accel" "${trans}-${sock}" \
-              "cpp/TestClient --protocol=binary --transport=${trans} ${extraparam}" \
-              "py/TestServer.py --protocol=accel --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "cpp/TestClient --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "py/TestServer.py --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
               "10" "2"
     done
   done
@@ -459,8 +520,8 @@ for proto in $(intersection "${py_protocols}" "${java_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "py-java" "${proto}" "${trans}-${sock}" \
-              "py/TestClient.py --protocol=${proto} --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testserver" \
+              "py/TestClient.py --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testserver" \
               "15" "2"
     done
   done
@@ -473,8 +534,8 @@ for trans in $(intersection "${py_transports}" "${java_server_transports}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "py-java" "accel-binary" "${trans}-${sock}" \
-              "py/TestClient.py --protocol=accel --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=binary --transport=${trans} ${extraparam}\" run-testserver" \
+              "py/TestClient.py --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testserver" \
               "15" "2"
     done
   done
@@ -488,8 +549,8 @@ for proto in $(intersection "${py_protocols}" "${java_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "java-py" "${proto}" "${trans}-${sock}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testclient" \
-              "py/TestServer.py --protocol=${proto} --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testclient" \
+              "py/TestServer.py --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
               "10" "5"
     done
   done
@@ -502,11 +563,27 @@ for trans in $(intersection "${py_transports}" "${java_client_transports}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "java-py" "binary-accel" "${trans}-${sock}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=binary --transport=${trans} ${extraparam}\" run-testclient" \
-              "py/TestServer.py --protocol=accel --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testclient" \
+              "py/TestServer.py --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
               "10" "5"
     done
   done
+
+######### c_glib client - py server ##############
+for proto in $(intersection "${c_glib_protocols}" "${py_protocols}"); do
+  for trans in $(intersection "${c_glib_transports}" "${py_transports}"); do
+    for sock in $(intersection "${c_glib_sockets}" "${py_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "c_glib-py" "${proto}" "${trans}-${sock}" \
+              "c_glib/test_client --protocol=${proto}  --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "py/TestServer.py --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
+              "2" "2"
+    done
+  done
+done
 
 ######### py client - nodejs server ##############
 for proto in $(intersection "${py_protocols}" "${nodejs_protocols}"); do
@@ -517,8 +594,8 @@ for proto in $(intersection "${py_protocols}" "${nodejs_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "py-nodejs" "${proto}" "${trans}-${sock}" \
-              "py/TestClient.py --protocol=${proto} --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
-              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} ${extraparam}" \
+              "py/TestClient.py --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "15" "2"
     done
   done
@@ -531,8 +608,8 @@ for trans in $(intersection "${py_transports}" "${nodejs_transports}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "py-nodejs" "${proto}" "${trans}-${sock}" \
-              "py/TestClient.py --protocol=accel --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
-              "node ${NODE_TEST_DIR}/server.js -p binary -t ${trans} ${extraparam}" \
+              "py/TestClient.py --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+              "node ${NODE_TEST_DIR}/server.js -p binary -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "15" "2"
     done
   done
@@ -546,8 +623,8 @@ for proto in $(intersection "${py_protocols}" "${nodejs_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "nodejs-py" "${proto}" "${trans}-${sock}" \
-              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} ${extraparam}" \
-              "py/TestServer.py --protocol=${proto} --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "py/TestServer.py --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
               "10" "2"
     done
   done
@@ -560,8 +637,8 @@ for trans in $(intersection "${py_transports}" "${nodejs_transports}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "nodejs-py" "binary-accel" "${trans}-${sock}" \
-              "node ${NODE_TEST_DIR}/client.js -p binary -t ${trans} ${extraparam}" \
-              "py/TestServer.py --protocol=accel --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "node ${NODE_TEST_DIR}/client.js -p binary -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "py/TestServer.py --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
               "10" "2"
     done
   done
@@ -575,8 +652,8 @@ for proto in ${ruby_protocols}; do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "ruby-ruby" "${proto}" "${trans}-${sock}" \
-              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans} --port=9091" \
-              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans} --port=9091" \
+              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "5"
     done
   done
@@ -589,12 +666,12 @@ for trans in ${ruby_transports}; do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "ruby-ruby" "accel-binary" "${trans}-${sock}" \
-              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans} --port=9091" \
-              "ruby rb/integration/TestServer.rb --protocol=binary --transport=${trans} --port=9091" \
+              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "5"
       do_test "ruby-ruby" "binary-accel" "${trans}-${sock}" \
-              "ruby rb/integration/TestClient.rb --protocol=binary --transport=${trans} --port=9091" \
-              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans} --port=9091" \
+              "ruby rb/integration/TestClient.rb --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "5"
     done
   done
@@ -608,8 +685,8 @@ for proto in $(intersection "${cpp_protocols}" "${ruby_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "ruby-cpp" "${proto}" "${trans}-${sock}" \
-              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans}" \
-              "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}" \
+              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "cpp/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "5"
     done
   done
@@ -622,8 +699,8 @@ for trans in $(intersection "${cpp_transports}" "${ruby_transports}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "ruby-cpp" "accel-binary" "${trans}-${sock}" \
-              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans}" \
-              "cpp/TestServer --protocol=binary --transport=${trans} ${extraparam}" \
+              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "cpp/TestServer --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "5"
     done
   done
@@ -637,8 +714,8 @@ for proto in $(intersection "${cpp_protocols}" "${ruby_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "cpp-ruby" "${proto}" "${trans}-${sock}" \
-              "cpp/TestClient --protocol=${proto} --transport=${trans} ${extraparam}" \
-              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans}" \
+              "cpp/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --port=${THRIFT_TEST_PORT} --port=${THRIFT_TEST_PORT} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --port=${THRIFT_TEST_PORT} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "5"
     done
   done
@@ -651,8 +728,8 @@ for trans in $(intersection "${cpp_transports}" "${ruby_transports}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "cpp-ruby" "binary-accel" "${trans}-${sock}" \
-              "cpp/TestClient --protocol=binary --transport=${trans} ${extraparam}" \
-              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans}" \
+              "cpp/TestClient --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "5"
     done
   done
@@ -666,8 +743,8 @@ for proto in $(intersection "${ruby_protocols}" "${java_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "ruby-java" "${proto}" "${trans}-${sock}" \
-              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testserver" \
+              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testserver" \
               "15" "5"
     done
   done
@@ -680,8 +757,8 @@ for trans in $(intersection "${ruby_transports}" "${java_server_transports}"); d
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "ruby-java" "accel-binary" "${trans}-${sock}" \
-              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=binary --transport=${trans} ${extraparam}\" run-testserver" \
+              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testserver" \
               "15" "5"
     done
   done
@@ -695,8 +772,8 @@ for proto in $(intersection "${ruby_protocols}" "${java_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "java-ruby" "${proto}" "${trans}-${sock}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testclient" \
-              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testclient" \
+              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "10" "5"
     done
   done
@@ -709,11 +786,27 @@ for trans in $(intersection "${ruby_transports}" "${java_client_transports}"); d
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "java-ruby" "binary-accel" "${trans}-${sock}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=binary --transport=${trans} ${extraparam}\" run-testclient" \
-              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testclient" \
+              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "10" "5"
     done
   done
+
+######### c_glib client - ruby server ##############
+for proto in $(intersection "${c_glib_protocols}" "${ruby_protocols}"); do
+  for trans in $(intersection "${c_glib_transports}" "${ruby_transports}"); do
+    for sock in $(intersection "${c_glib_sockets}" "${ruby_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "c_glib-ruby" "${proto}" "${trans}-${sock}" \
+              "c_glib/test_client --protocol=${proto}  --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "2" "2"
+    done
+  done
+done
 
 ######### ruby client - nodejs server ##############
 for proto in $(intersection "${ruby_protocols}" "${nodejs_protocols}"); do
@@ -724,8 +817,8 @@ for proto in $(intersection "${ruby_protocols}" "${nodejs_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "ruby-nodejs" "${proto}" "${trans}-${sock}" \
-              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans}" \
-              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} ${extraparam}" \
+              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "2"
     done
   done
@@ -738,8 +831,8 @@ for trans in $(intersection "${ruby_transports}" "${nodejs_transports}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "ruby-nodejs" "${proto}" "${trans}-${sock}" \
-              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans}" \
-              "node ${NODE_TEST_DIR}/server.js -p binary -t ${trans} ${extraparam}" \
+              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "node ${NODE_TEST_DIR}/server.js -p binary -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "2"
     done
   done
@@ -753,8 +846,8 @@ for proto in $(intersection "${ruby_protocols}" "${nodejs_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "nodejs-ruby" "${proto}" "${trans}-${sock}" \
-              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} ${extraparam}" \
-              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans}" \
+              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "10" "5"
     done
   done
@@ -767,13 +860,13 @@ for trans in $(intersection "${ruby_transports}" "${nodejs_transports}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "nodejs-ruby" "binary-accel" "${trans}-${sock}" \
-              "node ${NODE_TEST_DIR}/client.js -p binary -t ${trans} ${extraparam}" \
-              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans}" \
+              "node ${NODE_TEST_DIR}/client.js -p binary -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "10" "2"
     done
   done
 
-  ######### py client - ruby server ##############
+######### py client - ruby server ##############
 for proto in $(intersection "${py_protocols}" "${ruby_protocols}"); do
   for trans in $(intersection "${py_transports}" "${ruby_transports}"); do
     for sock in $(intersection "${py_sockets}" "${ruby_sockets}"); do
@@ -782,8 +875,8 @@ for proto in $(intersection "${py_protocols}" "${ruby_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "py-ruby" "${proto}" "${trans}-${sock}" \
-              "py/TestClient.py --protocol=${proto} --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
-              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans}" \
+              "py/TestClient.py --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "15" "5"
     done
   done
@@ -796,12 +889,12 @@ for trans in $(intersection "${py_transports}" "${ruby_transports}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "py-ruby" "${proto}" "${trans}-${sock}" \
-              "py/TestClient.py --protocol=accel --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
-              "ruby rb/integration/TestServer.rb --protocol=binary --transport=${trans}" \
+              "py/TestClient.py --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "15" "5"
       do_test "py-ruby" "${proto}" "${trans}-${sock}" \
-              "py/TestClient.py --protocol=binary --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
-              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans}" \
+              "py/TestClient.py --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "15" "5"
     done
   done
@@ -815,8 +908,8 @@ for proto in $(intersection "${py_protocols}" "${ruby_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "ruby-py" "${proto}" "${trans}-${sock}" \
-              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans}" \
-              "py/TestServer.py --protocol=${proto} --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "py/TestServer.py --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
               "5" "2"
     done
   done
@@ -829,13 +922,263 @@ for trans in $(intersection "${py_transports}" "${ruby_transports}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "ruby-py" "binary-accel" "${trans}-${sock}" \
-              "ruby rb/integration/TestClient.rb --protocol=binary --transport=${trans}" \
-              "py/TestServer.py --protocol=accel --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "ruby rb/integration/TestClient.rb --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "py/TestServer.py --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
               "5" "2"
       do_test "ruby-py" "accel-binary" "${trans}-${sock}" \
-              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans}" \
-              "py/TestServer.py --protocol=binary --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "py/TestServer.py --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
               "5" "2"
+    done
+  done
+
+######### hs client - hs server ###############
+for proto in $hs_protocols; do
+  for trans in $hs_transports; do
+    for sock in $hs_sockets; do
+      case "$sock" in
+       "ip" )     extraparam="";;
+       "ip-ssl" ) extraparam="--ssl";;
+       "domain" ) extraparam="--domain-socket=/tmp/ThriftTest.thrift";;
+      esac
+      do_test "hs-hs"   "${proto}" "${trans}-${sock}" \
+              "hs/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "hs/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "2" "0.1"
+    done
+  done
+done
+
+######### hs client - cpp server ###############
+for proto in $(intersection "${hs_protocols}" "${cpp_protocols}"); do
+  for trans in  $(intersection "${hs_transports}" "${cpp_transports}"); do
+    for sock in $(intersection "${hs_sockets}" "${cpp_sockets}"); do
+      case "$sock" in
+       "ip" )     extraparam="";;
+       "ip-ssl" ) extraparam="--ssl";;
+       "domain" ) extraparam="--domain-socket=/tmp/ThriftTest.thrift";;
+      esac
+      do_test "hs-cpp"   "${proto}" "${trans}-${sock}" \
+              "hs/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "cpp/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "2" "0.1"
+    done
+  done
+done
+
+######### cpp client - hs server ###############
+for proto in $(intersection "${hs_protocols}" "${cpp_protocols}"); do
+  for trans in  $(intersection "${hs_transports}" "${cpp_transports}"); do
+    for sock in $(intersection "${hs_sockets}" "${cpp_sockets}"); do
+      case "$sock" in
+       "ip" )     extraparam="";;
+       "ip-ssl" ) extraparam="--ssl";;
+       "domain" ) extraparam="--domain-socket=/tmp/ThriftTest.thrift";;
+      esac
+      do_test "cpp-hs"   "${proto}" "${trans}-${sock}" \
+              "cpp/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "hs/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "2" "0.1"
+    done
+  done
+done
+
+######### hs client - java server ###############
+for proto in $(intersection "${hs_protocols}" "${java_protocols}"); do
+  for trans in  $(intersection "${hs_transports}" "${java_transports}"); do
+    for sock in $(intersection "${hs_sockets}" "${java_sockets}"); do
+      case "$sock" in
+       "ip" )     extraparam="";;
+       "ip-ssl" ) extraparam="--ssl";;
+       "domain" ) extraparam="--domain-socket=/tmp/ThriftTest.thrift";;
+      esac
+      do_test "hs-java" "${proto}" "${trans}-${sock}" \
+              "hs/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+        "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testserver" \
+              "5" "1"
+    done
+  done
+done
+
+######### java client - hs server ###############
+for proto in $(intersection "${hs_protocols}" "${java_protocols}"); do
+  for trans in  $(intersection "${hs_transports}" "${java_transports}"); do
+    for sock in $(intersection "${hs_sockets}" "${java_sockets}"); do
+      case "$sock" in
+       "ip" )     extraparam="";;
+       "ip-ssl" ) extraparam="--ssl";;
+       "domain" ) extraparam="--domain-socket=/tmp/ThriftTest.thrift";;
+      esac
+      do_test "java-hs" "${proto}" "${trans}-${sock}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testclient" \
+              "hs/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "5" "1"
+    done
+  done
+done
+
+######### c_glib client - hs server ###############
+for proto in $(intersection "${c_glib_protocols}" "${hs_protocols}"); do
+  for trans in  $(intersection "${c_glib_transports}" "${hs_transports}"); do
+    for sock in $(intersection "${c_glib_sockets}" "${hs_sockets}"); do
+      case "$sock" in
+       "ip" )     extraparam="";;
+       "ip-ssl" ) extraparam="--ssl";;
+       "domain" ) extraparam="--domain-socket=/tmp/ThriftTest.thrift";;
+      esac
+      do_test "c_glib-hs"   "${proto}" "${trans}-${sock}" \
+              "c_glib/test_client --protocol=${proto}  --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "hs/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "2" "0.1"
+    done
+  done
+done
+
+######### py client -hs server ##############
+for proto in $(intersection "${hs_protocols}" "${py_protocols}"); do
+  for trans in $(intersection "${hs_transports}" "${py_transports}"); do
+    for sock in $(intersection "${hs_sockets}" "${py_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "py-hs" "${proto}" "${trans}-${sock}" \
+              "py/TestClient.py --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+              "hs/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "10" "2"
+    done
+  done
+done
+
+for trans in $(intersection "${hs_transports}" "${py_transports}"); do
+    for sock in $(intersection "${hs_sockets}" "${py_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "py-hs" "accel-binary" "${trans}-${sock}" \
+              "py/TestClient.py --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+              "hs/TestServer --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "10" "2"
+    done
+  done
+
+######### hs client - py server ##############
+for proto in $(intersection "${hs_protocols}" "${py_protocols}"); do
+  for trans in $(intersection "${hs_transports}" "${py_transports}"); do
+    for sock in $(intersection "${hs_sockets}" "${py_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "hs-py" "${proto}" "${trans}-${sock}" \
+              "hs/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "py/TestServer.py --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
+              "10" "2"
+    done
+  done
+done
+
+for trans in $(intersection "${hs_transports}" "${py_transports}"); do
+    for sock in $(intersection "${hs_sockets}" "${py_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "hs-py" "binary-accel" "${trans}-${sock}" \
+              "hs/TestClient --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "py/TestServer.py --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
+              "10" "2"
+    done
+  done
+
+######### nodejs client - hs server ##############
+for proto in $(intersection "${nodejs_protocols}" "${hs_protocols}"); do
+  for trans in $(intersection "${nodejs_transports}" "${hs_transports}"); do
+    for sock in $(intersection "${nodejs_sockets}" "${hs_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "nodejs-hs" "${proto}" "${trans}-${sock}" \
+              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "hs/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "5" "0.2"
+    done
+  done
+done
+
+######### hs client - nodejs server ##############
+for proto in $(intersection "${nodejs_protocols}" "${hs_protocols}"); do
+  for trans in $(intersection "${nodejs_transports}" "${hs_transports}"); do
+    for sock in $(intersection "${nodejs_sockets}" "${hs_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "hs-nodejs" "${proto}" "${trans}-${sock}" \
+              "hs/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "5" "2"
+    done
+  done
+done
+
+######### ruby client - hs server ##############
+for proto in $(intersection "${hs_protocols}" "${ruby_protocols}"); do
+  for trans in $(intersection "${hs_transports}" "${ruby_transports}"); do
+    for sock in $(intersection "${hs_sockets}" "${ruby_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "ruby-hs" "${proto}" "${trans}-${sock}" \
+              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "hs/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "5" "5"
+    done
+  done
+done
+
+for trans in $(intersection "${hs_transports}" "${ruby_transports}"); do
+    for sock in $(intersection "${hs_sockets}" "${ruby_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "ruby-cpp" "accel-binary" "${trans}-${sock}" \
+              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam} ${extraparam}" \
+              "hs/TestServer --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "5" "5"
+    done
+  done
+
+######### hs client - ruby server ##############
+for proto in $(intersection "${hs_protocols}" "${ruby_protocols}"); do
+  for trans in $(intersection "${hs_transports}" "${ruby_transports}"); do
+    for sock in $(intersection "${hs_sockets}" "${ruby_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "hs-ruby" "${proto}" "${trans}-${sock}" \
+              "hs/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "5" "5"
+    done
+  done
+done
+
+for trans in $(intersection "${hs_transports}" "${ruby_transports}"); do
+    for sock in $(intersection "${hs_sockets}" "${ruby_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "hs-ruby" "binary-accel" "${trans}-${sock}" \
+              "hs/TestClient --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "5" "5"
     done
   done
 
@@ -853,13 +1196,12 @@ for proto in $csharp_protocols; do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "csharp-csharp"   "${proto}" "${trans}-${sock}" \
-              "../lib/csharp/test/ThriftTest/TestClientServer.exe client --protocol=${proto} --transport=${trans} ${extraparam}" \
-              "../lib/csharp/test/ThriftTest/TestClientServer.exe server --protocol=${proto} --transport=${trans} ${extraparam}" \
+              "../lib/csharp/test/ThriftTest/TestClientServer.exe client --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "../lib/csharp/test/ThriftTest/TestClientServer.exe server --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "1"
     done
   done
 done
-
 
 do_test "js-java"   "json"  "http-ip" \
         "" \
@@ -867,11 +1209,11 @@ do_test "js-java"   "json"  "http-ip" \
         "2" "2"
 do_test "perl-cpp"  "binary" "buffered-ip" \
         "perl -I perl/gen-perl/ -I../lib/perl/lib/ perl/TestClient.pl" \
-        "cpp/TestServer" \
+        "cpp/TestServer  --port=${THRIFT_TEST_PORT}" \
         "10" "2"
 do_test "php-cpp"  "binary" "buffered-ip" \
         "make -C php/ client" \
-        "cpp/TestServer" \
+        "cpp/TestServer --port=${THRIFT_TEST_PORT}" \
         "10" "2"
 
 echo " failed tests are logged to test/log/error.log"

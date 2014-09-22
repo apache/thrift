@@ -32,12 +32,16 @@ License-File:   ../../LICENSE
 Description:
   Haskell tutorial for the Apache Thrift RPC system. Requires the use of the thrift code generator.
 
+flag network-uri
+   description: Get Network.URI from the network-uri package
+   default: True
+
 Executable HaskellServer
   Main-is: HaskellServer.hs
   Hs-Source-Dirs:
     ., gen-hs/
   Build-Depends:
-    base >= 4, base < 5, network, ghc-prim, containers, thrift, vector, unordered-containers, text, hashable, bytestring
+    base >= 4, base < 5, ghc-prim, containers, thrift, vector, unordered-containers, text, hashable, bytestring, QuickCheck
   Extensions:
     DeriveDataTypeable,
     ExistentialQuantification,
@@ -53,7 +57,11 @@ Executable HaskellClient
   Hs-Source-Dirs:
     ., gen-hs/
   Build-Depends:
-    base >= 4, base < 5, network, ghc-prim, containers, thrift, vector
+    base >= 4, base < 5, ghc-prim, containers, thrift, vector, QuickCheck
+  if flag(network-uri)
+     build-depends: network-uri >= 2.6, network >= 2.6
+  else
+     build-depends: network < 2.6
   Extensions:
     DeriveDataTypeable,
     ExistentialQuantification,
