@@ -54,6 +54,7 @@ Library
     Thrift.Protocol.JSON,
     Thrift.Server,
     Thrift.Transport,
+    Thrift.Transport.Empty,
     Thrift.Transport.Framed,
     Thrift.Transport.Handle,
     Thrift.Transport.HttpClient,
