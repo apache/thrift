@@ -786,16 +786,15 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
   }
 
   out << indent() << "def __hash__(self):" << endl;
-  indent_up(); 
+  indent_up();
   indent(out) << "value = 17" << endl;  // PYTHONHASHSEED would be better, but requires Python 3.2.3
-  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) { 
-    indent(out) << "value = (value * 31) ^ hash(self." << (*m_iter)->get_name() + ")" << endl; 
-  } 
-  indent(out) << "return value" << endl; 
-  indent_down(); 
-  out << endl; 
-  
-  
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    indent(out) << "value = (value * 31) ^ hash(self." << (*m_iter)->get_name() + ")" << endl;
+  }
+  indent(out) << "return value" << endl;
+  indent_down();
+  out << endl;
+
   if (!gen_slots_) {
     // Printing utilities so that on the command line thrift
     // structs look pretty like dictionaries
@@ -1050,8 +1049,8 @@ void t_py_generator::generate_service(t_service* tservice) {
 
   if (gen_twisted_) {
     f_service_ <<
-      "from zope.interface import Interface, implements" << endl <<
       "from twisted.internet import defer" << endl <<
+      "from zope.interface import Interface, implements" << endl << endl <<
       "from thrift.transport import TTwisted" << endl;
   } else if (gen_tornado_) {
     f_service_ << "from tornado import gen" << endl;
@@ -1276,7 +1275,10 @@ void t_py_generator::generate_service_client(t_service* tservice) {
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::const_iterator f_iter;
+  bool is_oneway = false;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    is_oneway = (*f_iter)->is_oneway();
+
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const vector<t_field*>& fields = arg_struct->get_members();
     vector<t_field*>::const_iterator fld_iter;
@@ -1295,7 +1297,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       }
     } else if (gen_tornado_) {
       indent(f_service_) << "self._seqid += 1" << endl;
-      if (!(*f_iter)->is_oneway()) {
+      if (!is_oneway) {
         indent(f_service_) <<
           "future = self._reqs[self._seqid] = concurrent.Future()" << endl;
       }
@@ -1316,7 +1318,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
 
     f_service_ << ")" << endl;
 
-    if (!(*f_iter)->is_oneway()) {
+    if (!is_oneway) {
       f_service_ << indent();
       if (gen_twisted_) {
         f_service_ << "return d" << endl;
@@ -1381,7 +1383,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
 
     indent_down();
 
-    if (!(*f_iter)->is_oneway()) {
+    if (!is_oneway) {
       std::string resultname = (*f_iter)->get_name() + "_result";
       // Open function
       f_service_ <<
@@ -1827,8 +1829,9 @@ void t_py_generator::generate_process_function(t_service* tservice,
   const std::vector<t_field*>& xceptions = xs->get_members();
   vector<t_field*>::const_iterator x_iter;
 
+  bool is_oneway = tfunction->is_oneway();
   // Declare result for non oneway function
-  if (!tfunction->is_oneway()) {
+  if (!is_oneway) {
     f_service_ <<
       indent() << "result = " << resultname << "()" << endl;
   }
@@ -1854,7 +1857,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
     f_service_ << ")" << endl;
 
     // Shortcut out here for oneway functions
-    if (tfunction->is_oneway()) {
+    if (is_oneway) {
       f_service_ <<
         indent() << "return d" << endl;
       indent_down();
@@ -1895,7 +1898,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
     f_service_ << endl;
 
     // Try block for a function with exceptions
-    if (!tfunction->is_oneway() && xceptions.size() > 0) {
+    if (!is_oneway && xceptions.size() > 0) {
       indent(f_service_) <<
         "def write_results_exception_" << tfunction->get_name() <<
         "(self, error, result, seqid, oprot):" << endl;
@@ -1909,7 +1912,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
           indent() << "except " << type_name((*x_iter)->get_type()) << ", " << (*x_iter)->get_name() << ":" << endl;
-        if (!tfunction->is_oneway()) {
+        if (!is_oneway) {
           indent_up();
           f_service_ <<
             indent() << "result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name() << endl;
@@ -1931,7 +1934,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
 
   } else if (gen_tornado_) {
     /*
-    if (!tfunction->is_oneway() && xceptions.size() > 0) {
+    if (!is_oneway && xceptions.size() > 0) {
       f_service_ <<
         endl <<
         indent() << "def handle_exception(xtype, value, traceback):" << endl;
@@ -1939,7 +1942,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
           indent() << "  if xtype == " << type_name((*x_iter)->get_type()) << ":" << endl;
-        if (!tfunction->is_oneway()) {
+        if (!is_oneway) {
           f_service_ <<
             indent() << "    result." << (*x_iter)->get_name() << " = value" << endl;
         }
@@ -1965,7 +1968,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
       indent_up();
     }
     f_service_ << indent();
-    if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
+    if (!is_oneway && !tfunction->get_returntype()->is_void()) {
       f_service_ << "result.success = ";
     }
     f_service_ <<
@@ -1981,12 +1984,12 @@ void t_py_generator::generate_process_function(t_service* tservice,
     }
     f_service_ << "))" << endl;
 
-    if (!tfunction->is_oneway() && xceptions.size() > 0) {
+    if (!is_oneway && xceptions.size() > 0) {
       indent_down();
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
           indent() << "except " << type_name((*x_iter)->get_type()) << ", " << (*x_iter)->get_name() << ":" << endl;
-        if (!tfunction->is_oneway()) {
+        if (!is_oneway) {
           indent_up();
           f_service_ <<
             indent() << "result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name() << endl;
@@ -1999,7 +2002,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
     }
 
     // Shortcut out here for oneway functions
-    if (tfunction->is_oneway()) {
+    if (is_oneway) {
       return;
     }
 
@@ -2027,7 +2030,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
     vector<t_field*>::const_iterator f_iter;
 
     f_service_ << indent();
-    if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
+    if (!is_oneway && !tfunction->get_returntype()->is_void()) {
       f_service_ << "result.success = ";
     }
     f_service_ <<
@@ -2043,12 +2046,12 @@ void t_py_generator::generate_process_function(t_service* tservice,
     }
     f_service_ << ")" << endl;
 
-    if (!tfunction->is_oneway() && xceptions.size() > 0) {
+    if (!is_oneway && xceptions.size() > 0) {
       indent_down();
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
           indent() << "except " << type_name((*x_iter)->get_type()) << ", " << (*x_iter)->get_name() << ":" << endl;
-        if (!tfunction->is_oneway()) {
+        if (!is_oneway) {
           indent_up();
           f_service_ <<
             indent() << "result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name() << endl;
@@ -2061,7 +2064,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
     }
 
     // Shortcut out here for oneway functions
-    if (tfunction->is_oneway()) {
+    if (is_oneway) {
       f_service_ <<
         indent() << "return" << endl;
       indent_down();
