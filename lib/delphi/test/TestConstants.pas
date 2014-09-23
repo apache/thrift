@@ -22,12 +22,46 @@ unit TestConstants;
 interface
 
 type
-  TKnownProtocol = ( prot_Binary,  // default binary protocol
-                     prot_JSON     // JSON protocol
-                   );
+  TKnownProtocol = (
+    prot_Binary,  // default binary protocol
+    prot_JSON,    // JSON protocol
+    prot_Compact
+  );
+
+  TServerType = (
+    srv_Simple,
+    srv_Nonblocking,
+    srv_Threadpool,
+    srv_Threaded
+  );
+
+  TEndpointTransport = (
+    trns_Sockets,
+    trns_Http,
+    trns_NamedPipes,
+    trns_AnonPipes,
+    trns_EvHttp  // as listed on http://thrift.apache.org/test
+  );
+
+  TLayeredTransport = (
+    trns_Buffered,
+    trns_Framed
+  );
+
+  TLayeredTransports = set of TLayeredTransport;
+
 const
-  KNOWN_PROTOCOLS : array[TKnownProtocol] of string
-                  = ('binary', 'JSON');
+  SERVER_TYPES : array[TServerType] of string
+                  = ('Simple', 'Nonblocking', 'Threadpool', 'Threaded');
+
+  THRIFT_PROTOCOLS : array[TKnownProtocol] of string
+                  = ('Binary', 'JSON', 'Compact');
+
+  LAYERED_TRANSPORTS : array[TLayeredTransport] of string
+                  = ('Buffered', 'Framed');
+
+  ENDPOINT_TRANSPORTS : array[TEndpointTransport] of string
+                  = ('Sockets', 'Http', 'Named Pipes','Anon Pipes', 'EvHttp');
 
   // defaults are: read=false, write=true
   BINARY_STRICT_READ  = FALSE;
