@@ -101,7 +101,7 @@ date > /etc/vagrant.provisioned
 echo "Starting Apache Thrift build..."
 cd /thrift
 sh bootstrap.sh
-sh configure --without-erlang
+sh configure
 make
 make check
 echo "Finished building Apache Thrift."
