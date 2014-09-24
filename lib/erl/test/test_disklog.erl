@@ -31,7 +31,7 @@ disklog_test() ->
   {ok, ProtocolFactory} =
     thrift_binary_protocol:new_protocol_factory( TransportFactory, []),
   {ok, Proto} = ProtocolFactory(),
-  {ok, Client0} = thrift_client:new(Proto, thriftTest_thrift),
+  {ok, Client0} = thrift_client:new(Proto, thrift_test_thrift),
 
   io:format("Client started~n"),
 
@@ -63,7 +63,7 @@ disklog_base64_test() ->
   {ok, ProtocolFactory} =
     thrift_binary_protocol:new_protocol_factory(BufFactory, []),
   {ok, Proto} = ProtocolFactory(),
-  {ok, Client0} = thrift_client:new(Proto, thriftTest_thrift),
+  {ok, Client0} = thrift_client:new(Proto, thrift_test_thrift),
 
   io:format("Client started~n"),
 
