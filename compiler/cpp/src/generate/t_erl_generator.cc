@@ -114,7 +114,7 @@ class t_erl_generator : public t_generator {
   std::string erl_autogen_comment();
   std::string erl_imports();
   std::string render_includes();
-  std::string type_name(t_type* ttype, bool force = false);
+  std::string type_name(t_type* ttype);
 
   std::string function_signature(t_function* tfunction, std::string prefix="");
 
@@ -130,13 +130,9 @@ class t_erl_generator : public t_generator {
     }
   }
 
-  std::string atomify(std::string in, bool force = false) {
+  std::string atomify(std::string in) {
     if(legacy_names_) {
-      if(force) {
-        return "'" + decapitalize(in) + "'";
-      } else {
-        return decapitalize(in);
-      }
+      return "'" + decapitalize(in) + "'";
     } else {
       return "'" + in + "'";
     }
@@ -147,14 +143,6 @@ class t_erl_generator : public t_generator {
       return capitalize(in);
     } else {
       return uppercase(in);
-    }
-  }
-
-  std::string maybe_decapitalize(std::string in) {
-    if(legacy_names_) {
-      return decapitalize(in);
-    } else {
-      return in;
     }
   }
 
@@ -365,7 +353,7 @@ void t_erl_generator::generate_enum(t_enum* tenum) {
     string name = (*c_iter)->get_name();
     indent(f_types_hrl_file_) <<
       "-define(" <<
-      maybe_decapitalize(constify(make_safe_for_module_name(program_name_))) <<
+      constify(make_safe_for_module_name(program_name_)) <<
       "_" << constify(tenum->get_name()) <<
       "_" << constify(name) <<
       ", " << value << ")." <<
@@ -384,7 +372,7 @@ void t_erl_generator::generate_const(t_const* tconst) {
   t_const_value* value = tconst->get_value();
 
   f_consts_ <<
-    "-define(" << maybe_decapitalize(constify(make_safe_for_module_name(program_name_))) <<
+    "-define(" << constify(make_safe_for_module_name(program_name_)) <<
     "_" << constify(name) <<
     ", " << render_const_value(type, value) <<
     ")." << endl <<
@@ -665,7 +653,7 @@ string t_erl_generator::render_member_value(t_field * field) {
  * Generates the read method for a struct
  */
 void t_erl_generator::generate_erl_struct_info(ostream& out, t_struct* tstruct) {
-  indent(out) << "struct_info(" << type_name(tstruct, true) << ") ->" << endl;
+  indent(out) << "struct_info(" << type_name(tstruct) << ") ->" << endl;
   indent_up();
   out << indent() << render_type_term(tstruct, true) << ";" << endl;
   indent_down();
@@ -673,7 +661,7 @@ void t_erl_generator::generate_erl_struct_info(ostream& out, t_struct* tstruct) 
 }
 
 void t_erl_generator::generate_erl_extended_struct_info(ostream& out, t_struct* tstruct) {
-  indent(out) << "struct_info_ext(" << type_name(tstruct, true) << ") ->" << endl;
+  indent(out) << "struct_info_ext(" << type_name(tstruct) << ") ->" << endl;
   indent_up();
   out << indent() << render_type_term(tstruct, true, true) << ";" << endl;
   indent_down();
@@ -799,7 +787,6 @@ void t_erl_generator::generate_service_interface(t_service* tservice) {
   indent(f_service_) << endl;
 }
 
-
 /**
  * Generates a function_info(FunctionName, params_type) and
  * function_info(FunctionName, reply_type)
@@ -807,9 +794,7 @@ void t_erl_generator::generate_service_interface(t_service* tservice) {
 void t_erl_generator::generate_function_info(t_service* tservice,
                                                 t_function* tfunction) {
   (void) tservice;
-  string name_atom = atomify(tfunction->get_name(), true);
-
-
+  string name_atom = atomify(tfunction->get_name());
 
   t_struct* xs = tfunction->get_xceptions();
   t_struct* arg_struct = tfunction->get_arglist();
@@ -919,7 +904,7 @@ string t_erl_generator::argument_list(t_struct* tstruct) {
   return result;
 }
 
-string t_erl_generator::type_name(t_type* ttype, bool force) {
+string t_erl_generator::type_name(t_type* ttype) {
   string prefix = "";
   string name = ttype->get_name();
 
@@ -927,7 +912,7 @@ string t_erl_generator::type_name(t_type* ttype, bool force) {
     name = ttype->get_name();
   }
 
-  return atomify(prefix + name, force);
+  return atomify(prefix + name);
 }
 
 /**
@@ -1027,7 +1012,7 @@ std::string t_erl_generator::render_type_term(t_type* type, bool expand_structs,
             "{" << key <<
             ", "  << requiredness <<
             ", "  << type <<
-            ", " << atomify(name, true) <<
+            ", " << atomify(name) <<
             ", "  << value <<
           "}";
         }
@@ -1040,7 +1025,7 @@ std::string t_erl_generator::render_type_term(t_type* type, bool expand_structs,
       buf << "]}" << endl;
       return buf.str();
     } else {
-      return "{struct, {" + atomify(type_module(type), true) + ", " + type_name(type, true) + "}}";
+      return "{struct, {" + atomify(type_module(type)) + ", " + type_name(type) + "}}";
     }
   } else if (type->is_map()) {
     // {map, KeyType, ValType}
