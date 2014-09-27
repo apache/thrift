@@ -212,38 +212,38 @@ begin
         result := $FF;   // all tests failed
         Exit;
       end
-      else if s = '-host' then begin
-        // -host arg (=localhost)     Host to connect
+      else if s = '--host' then begin
+        // --host arg (=localhost)     Host to connect
         host := args[i];
         Inc( i);
       end
-      else if s = '-port' then begin
-        // -port arg (=9090)          Port number to connect
+      else if s = '--port' then begin
+        // --port arg (=9090)          Port number to connect
         s := args[i];
         Inc( i);
         port := StrToIntDef(s,0);
         if port <= 0 then InvalidArgs;
       end
-      else if s = '-domain-socket' then begin
-        // -domain-socket arg         Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port
+      else if s = '--domain-socket' then begin
+        // --domain-socket arg         Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port
         raise Exception.Create('domain-socket not supported');
       end
-      else if s = '-named-pipe' then begin
-        // -named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)
+      else if s = '--named-pipe' then begin
+        // --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)
         endpoint := trns_NamedPipes;
         sPipeName := args[i];
         Inc( i);
       end
-      else if s = '-anon-pipes' then begin
-        // -anon-pipes hRead hWrite   Windows Anonymous Pipes pair (handles)
+      else if s = '--anon-pipes' then begin
+        // --anon-pipes hRead hWrite   Windows Anonymous Pipes pair (handles)
         endpoint := trns_AnonPipes;
         hAnonRead := THandle( StrToIntDef( args[i], Integer(INVALID_HANDLE_VALUE)));
         Inc( i);
         hAnonWrite := THandle( StrToIntDef( args[i], Integer(INVALID_HANDLE_VALUE)));
         Inc( i);
       end
-      else if s = '-transport' then begin
-        // -transport arg (=sockets)  Transport: buffered, framed, http, evhttp
+      else if s = '--transport' then begin
+        // --transport arg (=sockets)  Transport: buffered, framed, http, evhttp
         s := args[i];
         Inc( i);
 
@@ -253,8 +253,8 @@ begin
         else if s = 'evhttp'   then endpoint := trns_AnonPipes
         else InvalidArgs;
       end
-      else if s = '-protocol' then begin
-        // -protocol arg (=binary)    Protocol: binary, compact, json
+      else if s = '--protocol' then begin
+        // --protocol arg (=binary)    Protocol: binary, compact, json
         s := args[i];
         Inc( i);
 
@@ -263,8 +263,8 @@ begin
         else if s = 'json'     then protType := prot_JSON
         else InvalidArgs;
       end
-      else if s = '-ssl' then begin
-        // -ssl                       Encrypted Transport using SSL
+      else if s = '--ssl' then begin
+        // --ssl                       Encrypted Transport using SSL
         UseSSL := TRUE;
 
       end
