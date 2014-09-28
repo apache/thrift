@@ -26,7 +26,7 @@ parser.add_option('--genpydir', type='string', dest='genpydir', default='gen-py'
 options, args = parser.parse_args()
 del sys.argv[1:] # clean up hack so unittest doesn't complain
 sys.path.insert(0, options.genpydir)
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
+sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])
 
 from ThriftTest import ThriftTest
 from ThriftTest.ttypes import *
@@ -41,7 +41,7 @@ from optparse import OptionParser
 
 class TimeoutTest(unittest.TestCase):
     def setUp(self):
-        for i in xrange(50):
+        for i in range(50):
             try:
                 # find a port we can use
                 self.listen_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -58,7 +58,7 @@ class TimeoutTest(unittest.TestCase):
 
         try:
             leaky = []
-            for i in xrange(100):
+            for i in range(100):
                 socket = TSocket.TSocket('localhost', self.port)
                 socket.setTimeout(10)
                 socket.open()

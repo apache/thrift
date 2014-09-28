@@ -21,7 +21,7 @@
 
 import sys, glob
 sys.path.append('gen-py.twisted')
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
+sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])
 
 from tutorial import Calculator
 from tutorial.ttypes import *
@@ -36,19 +36,19 @@ from thrift.protocol import TBinaryProtocol
 from thrift.server import TServer
 
 class CalculatorHandler:
-  implements(Calculator.Iface)  
+  implements(Calculator.Iface)
   def __init__(self):
     self.log = {}
 
   def ping(self):
-    print 'ping()'
+    print('ping()')
 
   def add(self, n1, n2):
-    print 'add(%d,%d)' % (n1, n2)
+    print('add(%d,%d)' % (n1, n2))
     return n1+n2
 
   def calculate(self, logid, work):
-    print 'calculate(%d, %r)' % (logid, work)
+    print('calculate(%d, %r)' % (logid, work))
 
     if work.op == Operation.ADD:
       val = work.num1 + work.num2
@@ -77,11 +77,11 @@ class CalculatorHandler:
     return val
 
   def getStruct(self, key):
-    print 'getStruct(%d)' % (key)
+    print('getStruct(%d)' % (key))
     return self.log[key]
 
   def zip(self):
-    print 'zip()'
+    print('zip()')
 
 if __name__ == '__main__':
     handler = CalculatorHandler()

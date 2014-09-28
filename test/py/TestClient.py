@@ -20,7 +20,7 @@
 #
 
 import sys, glob, os
-sys.path.insert(0, glob.glob(os.path.join(os.path.dirname(__file__),'../../lib/py/build/lib.*'))[0])
+sys.path.insert(0, glob.glob(os.path.join(os.path.dirname(__file__),'../../lib/py/build/lib*'))[0])
 
 import unittest
 import time
@@ -182,7 +182,7 @@ class AbstractTest(unittest.TestCase):
     try:
       self.client.testException('Xception')
       self.fail("should have gotten exception")
-    except Xception, x:
+    except Xception as x:
       self.assertEqual(x.errorCode, 1001)
       self.assertEqual(x.message, 'Xception')
       # TODO ensure same behavior for repr within generated python variants

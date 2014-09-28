@@ -17,7 +17,7 @@
 # under the License.
 #
 
-import BaseHTTPServer
+from six.moves import BaseHTTPServer
 
 from thrift.server import TServer
 from thrift.transport import TTransport
@@ -73,7 +73,7 @@ class THttpServer(TServer.TServer):
         oprot = thttpserver.outputProtocolFactory.getProtocol(otrans)
         try:
           thttpserver.processor.process(iprot, oprot)
-        except ResponseException, exn:
+        except ResponseException as exn:
           exn.handler(self)
         else:
           self.send_response(200)

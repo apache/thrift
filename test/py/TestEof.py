@@ -26,7 +26,7 @@ parser.add_option('--genpydir', type='string', dest='genpydir', default='gen-py'
 options, args = parser.parse_args()
 del sys.argv[1:] # clean up hack so unittest doesn't complain
 sys.path.insert(0, options.genpydir)
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
+sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])
 
 from ThriftTest import ThriftTest
 from ThriftTest.ttypes import *
@@ -99,7 +99,7 @@ class TestEof(unittest.TestCase):
     # TODO: we should make sure this covers more of the code paths
 
     data = self.make_data(pfactory)
-    for i in xrange(0, len(data) + 1):
+    for i in range(0, len(data) + 1):
       trans = TTransport.TMemoryBuffer(data[0:i])
       prot = pfactory.getProtocol(trans)
       try:
