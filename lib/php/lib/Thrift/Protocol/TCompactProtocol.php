@@ -309,7 +309,7 @@ class TCompactProtocol extends TProtocol {
 
   public function writeDouble($value) {
     $data = pack('d', $value);
-    $this->trans_->write(strrev($data), 8);
+    $this->trans_->write($data, 8);
     return 8;
   }
 
@@ -485,7 +485,7 @@ class TCompactProtocol extends TProtocol {
   }
 
   public function readDouble(&$value) {
-    $data = strrev($this->trans_->readAll(8));
+    $data = $this->trans_->readAll(8);
     $arr = unpack('d', $data);
     $value = $arr[1];
     return 8;
