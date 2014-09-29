@@ -216,6 +216,8 @@ test-driver
 /lib/go/test/ThriftTest.thrift
 /test/log/
 /test/test.log
+/test/erl/.eunit/
+/test/erl/.generated
 /test/go/ThriftTest.thrift
 /test/go/gopath
 /test/go/pkg/

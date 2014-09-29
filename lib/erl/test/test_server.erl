@@ -21,7 +21,7 @@
 
 -export([go/0, go/1, start_link/2, handle_function/2]).
 
--include("thriftTest_types.hrl").
+-include("gen-erl/thriftTest_types.hrl").
 
 -record(options, {port = 9090,
                   server_opts = []}).

@@ -1,6 +1,6 @@
 -module(test_thrift_1151).
 
--include("thrift1151_types.hrl").
+-include("gen-erl/thrift1151_types.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").

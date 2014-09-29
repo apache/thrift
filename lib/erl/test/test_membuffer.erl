@@ -22,7 +22,7 @@
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 
--include("thriftTest_types.hrl").
+-include("gen-erl/thriftTest_types.hrl").
 
 test_data() ->
   #xtruct {
