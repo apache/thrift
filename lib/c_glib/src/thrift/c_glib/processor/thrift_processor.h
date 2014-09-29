@@ -56,7 +56,7 @@ struct _ThriftProcessorClass
 
   /* vtable */
   gboolean (*process) (ThriftProcessor *processor, ThriftProtocol *in,
-                       ThriftProtocol *out);
+                       ThriftProtocol *out, GError **error);
 };
 typedef struct _ThriftProcessorClass ThriftProcessorClass;
 
@@ -68,7 +68,8 @@ GType thrift_processor_get_type (void);
  * \public \memberof ThriftProcessorClass
  */
 gboolean thrift_processor_process (ThriftProcessor *processor,
-                                   ThriftProtocol *in, ThriftProtocol *out);
+                                   ThriftProtocol *in, ThriftProtocol *out,
+                                   GError **error);
 
 G_END_DECLS
 

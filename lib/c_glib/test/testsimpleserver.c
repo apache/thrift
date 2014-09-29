@@ -51,7 +51,7 @@ G_DEFINE_TYPE(TestProcessor, test_processor, THRIFT_TYPE_PROCESSOR)
 
 gboolean
 test_processor_process (ThriftProcessor *processor, ThriftProtocol *in,
-                        ThriftProtocol *out)
+                        ThriftProtocol *out, GError **error)
 {
   return FALSE;
 }
@@ -88,7 +88,8 @@ test_server (void)
 
   if (pid == 0)
   {
-    THRIFT_SERVER_GET_CLASS (THRIFT_SERVER (ss))->serve (THRIFT_SERVER (ss));
+    THRIFT_SERVER_GET_CLASS (THRIFT_SERVER (ss))->serve (THRIFT_SERVER (ss),
+                                                         NULL);
     exit (0);
   } else {
     sleep (5);

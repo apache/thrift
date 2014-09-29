@@ -50,6 +50,54 @@ thrift_socket_is_open (ThriftTransport *transport)
   return socket->sd != THRIFT_INVALID_SOCKET;
 }
 
+/* overrides thrift_transport_peek */
+gboolean
+thrift_socket_peek (ThriftTransport *transport, GError **error)
+{
+  gboolean result = FALSE;
+  guint8 buf;
+  int r;
+  int errno_copy;
+
+  ThriftSocket *socket = THRIFT_SOCKET (transport);
+
+  if (thrift_socket_is_open (transport))
+  {
+    r = recv (socket->sd, &buf, 1, MSG_PEEK);
+    if (r == -1)
+    {
+      errno_copy = errno;
+
+      #if defined __FreeBSD__ || defined __MACH__
+      /* FreeBSD returns -1 and ECONNRESET if the socket was closed by the other
+         side */
+      if (errno_copy == ECONNRESET)
+      {
+        thrift_socket_close (transport, error);
+      }
+      else
+      {
+      #endif
+
+      g_set_error (error,
+                   THRIFT_TRANSPORT_ERROR,
+                   THRIFT_TRANSPORT_ERROR_SOCKET,
+                   "failed to peek at socket - %s",
+                   strerror (errno_copy));
+
+      #if defined __FreeBSD__ || defined __MACH__
+      }
+      #endif
+    }
+    else if (r > 0)
+    {
+      result = TRUE;
+    }
+  }
+
+  return result;
+}
+
 /* implements thrift_transport_open */
 gboolean
 thrift_socket_open (ThriftTransport *transport, GError **error)
@@ -311,6 +359,7 @@ thrift_socket_class_init (ThriftSocketClass *cls)
 
   gobject_class->finalize = thrift_socket_finalize;
   ttc->is_open = thrift_socket_is_open;
+  ttc->peek = thrift_socket_peek;
   ttc->open = thrift_socket_open;
   ttc->close = thrift_socket_close;
   ttc->read = thrift_socket_read;

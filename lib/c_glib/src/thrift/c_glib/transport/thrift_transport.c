@@ -32,6 +32,12 @@ thrift_transport_is_open (ThriftTransport *transport)
 }
 
 gboolean
+thrift_transport_peek (ThriftTransport *transport, GError **error)
+{
+  return THRIFT_TRANSPORT_GET_CLASS (transport)->peek (transport, error);
+}
+
+gboolean
 thrift_transport_open (ThriftTransport *transport, GError **error)
 {
   return THRIFT_TRANSPORT_GET_CLASS (transport)->open (transport, error);
@@ -79,6 +85,15 @@ thrift_transport_flush (ThriftTransport *transport, GError **error)
   return THRIFT_TRANSPORT_GET_CLASS (transport)->flush (transport, error);
 }
 
+/* by default, peek returns true if and only if the transport is open */
+static gboolean
+thrift_transport_real_peek (ThriftTransport *transport, GError **error)
+{
+  THRIFT_UNUSED_VAR (error);
+
+  return THRIFT_TRANSPORT_GET_CLASS (transport)->is_open (transport);
+}
+
 /* define the GError domain for Thrift transports */
 GQuark
 thrift_transport_error_quark (void)
@@ -99,6 +114,9 @@ thrift_transport_class_init (ThriftTransportClass *cls)
   cls->write = thrift_transport_write;
   cls->write_end = thrift_transport_write_end;
   cls->flush = thrift_transport_flush;
+
+  /* provide a default implementation for the peek method */
+  cls->peek = thrift_transport_real_peek;
 }
 
 static void
