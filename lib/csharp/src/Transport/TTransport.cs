@@ -32,10 +32,27 @@ namespace Thrift.Transport
 			get;
 		}
 
-		public bool Peek()
-		{
-			return IsOpen;
-		}
+		private byte[] _peekBuffer = new byte[1];
+        private bool _hasPeekByte = false;
+
+        public bool Peek()
+        {
+            //If we already have a byte read but not consumed, do nothing.
+            if (_hasPeekByte) 
+                return true;
+
+            //If transport closed we can't peek.
+            if (!IsOpen) 
+                return false;
+
+            //Try to read one byte. If succeeds we will need to store it for the next read.
+            int bytes = Read(_peekBuffer, 0, 1);
+            if (bytes == 0)
+                return false;
+
+            _hasPeekByte = true;
+            return true;
+        }
 
 		public abstract void Open();
 
@@ -46,21 +63,26 @@ namespace Thrift.Transport
 		public int ReadAll(byte[] buf, int off, int len)
 		{
 			int got = 0;
-			int ret = 0;
 
-			while (got < len)
-			{
-				ret = Read(buf, off + got, len - got);
-				if (ret <= 0)
-				{
-					throw new TTransportException(
-						TTransportException.ExceptionType.EndOfFile,
-						"Cannot read, Remote side has closed");
-				}
-				got += ret;
-			}
+            //If we previously peeked a byte, we need to use that first.
+            if (_hasPeekByte)
+            {
+                buf[off + got++] = _peekBuffer[0];
+                _hasPeekByte = false;
+            }
 
-			return got;
+            while (got < len)
+            {
+                int ret = Read(buf, off + got, len - got);
+                if (ret <= 0)
+                {
+                    throw new TTransportException(
+                        TTransportException.ExceptionType.EndOfFile,
+                        "Cannot read, Remote side has closed");
+                }
+                got += ret;
+            }
+            return got;
 		}
 
 		public virtual void Write(byte[] buf) 
