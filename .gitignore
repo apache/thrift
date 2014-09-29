@@ -207,6 +207,7 @@ test-driver
 /stamp-h1
 /test/status.html
 /test/c_glib/test_client
+/test/c_glib/test_server
 /test/cpp/StressTest
 /test/cpp/StressTestNonBlocking
 /test/cpp/TestClient
