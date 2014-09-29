@@ -43,7 +43,15 @@ libtutorialgencglib_la_LIBADD = \
 
 
 noinst_PROGRAMS = \
+	tutorial_server \
 	tutorial_client
+
+tutorial_server_SOURCES = \
+	c_glib_server.c
+
+tutorial_server_LDADD = \
+	libtutorialgencglib.la \
+	$(top_builddir)/lib/c_glib/libthrift_c_glib.la
 
 tutorial_client_SOURCES = \
 	c_glib_client.c
@@ -59,8 +67,12 @@ $(nodist_libtutorialgencglib_la_SOURCES): $(top_srcdir)/tutorial/tutorial.thrift
 clean-local:
 	$(RM) -r gen-c_glib
 
+tutorialserver: all
+	./tutorial_server
+
 tutorialclient: all
 	./tutorial_client
 
 EXTRA_DIST = \
+	c_glib_server.c \
 	c_glib_client.c
