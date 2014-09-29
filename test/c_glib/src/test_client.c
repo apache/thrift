@@ -38,7 +38,8 @@
    connection prematurely) by outputting an error message before
    exiting. */
 static void
-sigpipe_handler (int signal_number) {
+sigpipe_handler (int signal_number)
+{
   THRIFT_UNUSED_VAR (signal_number);
 
   /* Flush standard output to make sure the test results so far are
@@ -56,7 +57,8 @@ sigpipe_handler (int signal_number) {
 /* Compare two gint32 values. Used for sorting and finding integer
    values within a GList. */
 static gint
-gint32_compare (gconstpointer a, gconstpointer b) {
+gint32_compare (gconstpointer a, gconstpointer b)
+{
   gint32 int32_a = *(gint32 *)a;
   gint32 int32_b = *(gint32 *)b;
   int result = 0;
@@ -70,7 +72,8 @@ gint32_compare (gconstpointer a, gconstpointer b) {
 }
 
 int
-main (int argc, char **argv) {
+main (int argc, char **argv)
+{
   static gchar *host = NULL;
   static gint   port = 9090;
   static gchar *transport_option = NULL;
@@ -115,15 +118,19 @@ main (int argc, char **argv) {
   int fail_count = 0;
   GError *error = NULL;
 
+#if (!GLIB_CHECK_VERSION (2, 36, 0))
+  g_type_init ();
+#endif
+
   /* Configure and parse our command-line options */
   option_context = g_option_context_new (NULL);
   g_option_context_add_main_entries (option_context,
                                      option_entries,
                                      NULL);
-  if (g_option_context_parse (option_context,
-                              &argc,
-                              &argv,
-                              &error) == FALSE) {
+  if (!g_option_context_parse (option_context,
+                               &argc,
+                               &argv,
+                               &error)) {
     fprintf (stderr, "%s\n", error->message);
     return 255;
   }
@@ -151,7 +158,7 @@ main (int argc, char **argv) {
     }
   }
 
-  if (options_valid == FALSE)
+  if (!options_valid)
     return 254;
 
   printf ("Connecting (%s/%s) to: %s:%d\n",
@@ -186,7 +193,7 @@ main (int argc, char **argv) {
 
   /* Execute the actual tests */
   for (test_num = 0; test_num < num_tests; ++test_num) {
-    if (thrift_transport_open (transport, &error) == TRUE) {
+    if (thrift_transport_open (transport, &error)) {
       gchar  *string = NULL;
       gint8   byte   = 0;
       gint32  int32  = 0;
@@ -258,7 +265,7 @@ main (int argc, char **argv) {
        * VOID TEST
        */
       printf ("testVoid()");
-      if (t_test_thrift_test_if_test_void (test_client, &error) == TRUE) {
+      if (t_test_thrift_test_if_test_void (test_client, &error)) {
         printf (" = void\n");
       }
       else {
@@ -276,7 +283,7 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_string (test_client,
                                              &string,
                                              "Test",
-                                             &error) == TRUE) {
+                                             &error)) {
         printf (" = \"%s\"\n", string);
         if (strncmp (string, "Test", 5) != 0)
           fail_count++;
@@ -299,7 +306,7 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_byte (test_client,
                                            &byte,
                                            1,
-                                           &error) == TRUE) {
+                                           &error)) {
         printf (" = %d\n", byte);
         if (byte != 1)
           fail_count++;
@@ -319,7 +326,7 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_i32 (test_client,
                                           &int32,
                                           -1,
-                                          &error) == TRUE) {
+                                          &error)) {
         printf (" = %d\n", int32);
         if (int32 != -1)
           fail_count++;
@@ -339,7 +346,7 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_i64 (test_client,
                                           &int64,
                                           (gint64)-34359738368,
-                                          &error) == TRUE) {
+                                          &error)) {
         printf (" = %" PRId64 "\n", int64);
         if (int64 != (gint64)-34359738368)
           fail_count++;
@@ -359,7 +366,7 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_double (test_client,
                                              &dub,
                                              -5.2098523,
-                                             &error) == TRUE) {
+                                             &error)) {
         printf (" = %f\n", dub);
         if ((dub - (-5.2098523)) > 0.001)
           fail_count++;
@@ -387,7 +394,7 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_struct (test_client,
                                              &xtruct_in,
                                              xtruct_out,
-                                             &error) == TRUE) {
+                                             &error)) {
         g_object_get (xtruct_in,
                       "string_thing", &string,
                       "byte_thing",   &byte_thing,
@@ -429,7 +436,7 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_nest (test_client,
                                            &xtruct2_in,
                                            xtruct2_out,
-                                           &error) == TRUE) {
+                                           &error)) {
         g_object_get (xtruct2_in,
                       "byte_thing",   &byte_thing,
                       "struct_thing", &xtruct_in,
@@ -491,8 +498,8 @@ main (int argc, char **argv) {
       g_hash_table_iter_init (&hash_table_iter, map_out);
       while (g_hash_table_iter_next (&hash_table_iter,
                                      &key,
-                                     &value) == TRUE) {
-        if (first == TRUE)
+                                     &value)) {
+        if (first)
           first = FALSE;
         else
           printf (", ");
@@ -509,14 +516,14 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_map (test_client,
                                           &map_in,
                                           map_out,
-                                          &error) == TRUE) {
+                                          &error)) {
         printf (" = {");
         first = TRUE;
         g_hash_table_iter_init (&hash_table_iter, map_in);
         while (g_hash_table_iter_next (&hash_table_iter,
                                        &key,
-                                       &value) == TRUE) {
-          if (first == TRUE)
+                                       &value)) {
+          if (first)
             first = FALSE;
           else
             printf (", ");
@@ -531,7 +538,7 @@ main (int argc, char **argv) {
           g_hash_table_iter_init (&hash_table_iter, map_out);
           while (g_hash_table_iter_next (&hash_table_iter,
                                          &key,
-                                         &value) == TRUE) {
+                                         &value)) {
             gpointer in_value = g_hash_table_lookup (map_in, key);
             if (in_value == NULL ||
                 *(gint32 *)in_value != *(gint32 *)value) {
@@ -567,8 +574,8 @@ main (int argc, char **argv) {
       g_hash_table_iter_init (&hash_table_iter, map_out);
       while (g_hash_table_iter_next (&hash_table_iter,
                                      &key,
-                                     &value) == TRUE) {
-        if (first == TRUE)
+                                     &value)) {
+        if (first)
           first = FALSE;
         else
           printf (", ");
@@ -585,14 +592,14 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_string_map (test_client,
                                                  &map_in,
                                                  map_out,
-                                                 &error) == TRUE) {
+                                                 &error)) {
         printf (" = {");
         first = TRUE;
         g_hash_table_iter_init (&hash_table_iter, map_in);
         while (g_hash_table_iter_next (&hash_table_iter,
                                        &key,
-                                       &value) == TRUE) {
-          if (first == TRUE)
+                                       &value)) {
+          if (first)
             first = FALSE;
           else
             printf (", ");
@@ -607,7 +614,7 @@ main (int argc, char **argv) {
           g_hash_table_iter_init (&hash_table_iter, map_out);
           while (g_hash_table_iter_next (&hash_table_iter,
                                          &key,
-                                         &value) == TRUE) {
+                                         &value)) {
             gpointer in_value = g_hash_table_lookup (map_in, key);
             if (in_value == NULL ||
                 strcmp ((gchar *)in_value, (gchar *)value) != 0) {
@@ -643,7 +650,7 @@ main (int argc, char **argv) {
       keys_out = g_hash_table_get_keys (set_out);
       keys_elem = keys_out;
       while (keys_elem != NULL) {
-        if (first == TRUE)
+        if (first)
           first = FALSE;
         else
           printf (", ");
@@ -659,13 +666,13 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_set (test_client,
                                           &set_in,
                                           set_out,
-                                          &error) == TRUE) {
+                                          &error)) {
         printf(" = {");
         first = TRUE;
         keys_in = g_hash_table_get_keys (set_in);
         keys_elem = keys_in;
         while (keys_elem != NULL) {
-          if (first == TRUE)
+          if (first)
             first = FALSE;
           else
             printf (", ");
@@ -716,7 +723,7 @@ main (int argc, char **argv) {
       printf ("testList({");
       first = TRUE;
       for (i = 0; i < (gint32)list_out->len; ++i) {
-        if (first == TRUE)
+        if (first)
           first = FALSE;
         else
           printf (", ");
@@ -730,11 +737,11 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_list (test_client,
                                            &list_in,
                                            list_out,
-                                           &error) == TRUE) {
+                                           &error)) {
         printf (" = {");
         first = TRUE;
         for (i = 0; i < (gint32)list_in->len; ++i) {
-          if (first == TRUE)
+          if (first)
             first = FALSE;
           else
             printf (", ");
@@ -767,7 +774,7 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_enum (test_client,
                                            &numberz,
                                            T_TEST_NUMBERZ_ONE,
-                                           &error) == TRUE) {
+                                           &error)) {
         printf(" = %d\n", numberz);
         if (numberz != T_TEST_NUMBERZ_ONE)
           fail_count++;
@@ -784,7 +791,7 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_enum (test_client,
                                            &numberz,
                                            T_TEST_NUMBERZ_TWO,
-                                           &error) == TRUE) {
+                                           &error)) {
         printf(" = %d\n", numberz);
         if (numberz != T_TEST_NUMBERZ_TWO)
           fail_count++;
@@ -801,7 +808,7 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_enum (test_client,
                                            &numberz,
                                            T_TEST_NUMBERZ_THREE,
-                                           &error) == TRUE) {
+                                           &error)) {
         printf(" = %d\n", numberz);
         if (numberz != T_TEST_NUMBERZ_THREE)
           fail_count++;
@@ -818,7 +825,7 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_enum (test_client,
                                            &numberz,
                                            T_TEST_NUMBERZ_FIVE,
-                                           &error) == TRUE) {
+                                           &error)) {
         printf(" = %d\n", numberz);
         if (numberz != T_TEST_NUMBERZ_FIVE)
           fail_count++;
@@ -835,7 +842,7 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_enum (test_client,
                                            &numberz,
                                            T_TEST_NUMBERZ_EIGHT,
-                                           &error) == TRUE) {
+                                           &error)) {
         printf(" = %d\n", numberz);
         if (numberz != T_TEST_NUMBERZ_EIGHT)
           fail_count++;
@@ -855,7 +862,7 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_typedef (test_client,
                                               &user_id,
                                               309858235082523LL,
-                                              &error) == TRUE) {
+                                              &error)) {
         printf(" = %" PRId64 "\n", user_id);
         if (user_id != 309858235082523LL)
           fail_count++;
@@ -879,20 +886,20 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_map_map (test_client,
                                               &map_in,
                                               1,
-                                              &error) == TRUE) {
+                                              &error)) {
         g_hash_table_iter_init (&hash_table_iter, map_in);
 
         printf (" = {");
         while (g_hash_table_iter_next (&hash_table_iter,
                                        &key,
-                                       &value) == TRUE) {
+                                       &value)) {
           printf ("%d => {", *(gint32 *)key);
 
           g_hash_table_iter_init (&inner_hash_table_iter,
                                   (GHashTable *)value);
           while (g_hash_table_iter_next (&inner_hash_table_iter,
                                          &key,
-                                         &value) == TRUE) {
+                                         &value)) {
             printf ("%d => %d, ", *(gint32 *)key, *(gint32 *)value);
           }
 
@@ -984,7 +991,7 @@ main (int argc, char **argv) {
                                  "string_thing", "Truck",
                                  "byte_thing",   8,
                                  "i32_thing",    8,
-                                 "i64_thing",    8,
+                                 "i64_thing",    8LL,
                                  NULL);
       g_ptr_array_add (xtructs, xtruct_out);
       g_ptr_array_unref (xtructs);
@@ -998,19 +1005,19 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_insanity (test_client,
                                                &map_in,
                                                insanity_out,
-                                               &error) == TRUE) {
+                                               &error)) {
         printf (" = {");
         g_hash_table_iter_init (&hash_table_iter, map_in);
         while (g_hash_table_iter_next (&hash_table_iter,
                                        &key,
-                                       &value) == TRUE) {
+                                       &value)) {
           printf ("%" PRId64 " => {", *(TTestUserId *)key);
 
           g_hash_table_iter_init (&inner_hash_table_iter,
                                   (GHashTable *)value);
           while (g_hash_table_iter_next (&inner_hash_table_iter,
                                          &key,
-                                         &value) == TRUE) {
+                                         &value)) {
             printf ("%d => {", (TTestNumberz)key);
 
             g_object_get ((TTestInsanity *)value,
@@ -1022,7 +1029,7 @@ main (int argc, char **argv) {
             g_hash_table_iter_init (&user_map_iter, user_map);
             while (g_hash_table_iter_next (&user_map_iter,
                                            &key,
-                                           &value) == TRUE) {
+                                           &value)) {
               printf ("%d => %" PRId64 ", ",
                       (TTestNumberz)key,
                       *(TTestUserId *)value);
@@ -1204,10 +1211,10 @@ main (int argc, char **argv) {
 
       /* test exception */
       printf ("testClient.testException(\"Xception\") =>");
-      if (t_test_thrift_test_if_test_exception (test_client,
-                                                "Xception",
-                                                &xception,
-                                                &error) == FALSE &&
+      if (!t_test_thrift_test_if_test_exception (test_client,
+                                                 "Xception",
+                                                 &xception,
+                                                 &error) &&
           xception != NULL) {
         g_object_get (xception,
                       "errorCode", &int32,
@@ -1238,10 +1245,10 @@ main (int argc, char **argv) {
       }
 
       printf ("testClient.testException(\"TException\") =>");
-      if (t_test_thrift_test_if_test_exception (test_client,
-                                                "TException",
-                                                &xception,
-                                                &error) == FALSE &&
+      if (!t_test_thrift_test_if_test_exception (test_client,
+                                                 "TException",
+                                                 &xception,
+                                                 &error) &&
           xception == NULL &&
           error != NULL) {
         printf ("  Caught TException\n");
@@ -1268,7 +1275,7 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_exception (test_client,
                                                 "success",
                                                 &xception,
-                                                &error) == TRUE)
+                                                &error))
         printf ("  void\n");
       else {
         printf ("  void\nFAILURE\n");
@@ -1288,13 +1295,13 @@ main (int argc, char **argv) {
       /* test multi exception */
       printf ("testClient.testMultiException(\"Xception\", \"test 1\") =>");
       xtruct_in = g_object_new (T_TEST_TYPE_XTRUCT, NULL);
-      if (t_test_thrift_test_if_test_multi_exception (test_client,
-                                                      &xtruct_in,
-                                                      "Xception",
-                                                      "test 1",
-                                                      &xception,
-                                                      &xception2,
-                                                      &error) == FALSE &&
+      if (!t_test_thrift_test_if_test_multi_exception (test_client,
+                                                       &xtruct_in,
+                                                       "Xception",
+                                                       "test 1",
+                                                       &xception,
+                                                       &xception2,
+                                                       &error) &&
           xception != NULL &&
           xception2 == NULL) {
         g_object_get (xception,
@@ -1333,13 +1340,13 @@ main (int argc, char **argv) {
 
       printf ("testClient.testMultiException(\"Xception2\", \"test 2\") =>");
       xtruct_in = g_object_new (T_TEST_TYPE_XTRUCT, NULL);
-      if (t_test_thrift_test_if_test_multi_exception (test_client,
-                                                      &xtruct_in,
-                                                      "Xception2",
-                                                      "test 2",
-                                                      &xception,
-                                                      &xception2,
-                                                      &error) == FALSE &&
+      if (!t_test_thrift_test_if_test_multi_exception (test_client,
+                                                       &xtruct_in,
+                                                       "Xception2",
+                                                       "test 2",
+                                                       &xception,
+                                                       &xception2,
+                                                       &error) &&
           xception == NULL &&
           xception2 != NULL) {
         g_object_get (xception2,
@@ -1390,7 +1397,7 @@ main (int argc, char **argv) {
                                                       "test 3",
                                                       &xception,
                                                       &xception2,
-                                                      &error) == TRUE &&
+                                                      &error) &&
           xception == NULL &&
           xception2 == NULL) {
         g_object_get (xtruct_in,
@@ -1431,7 +1438,7 @@ main (int argc, char **argv) {
       oneway_elapsed_usec =
         oneway_elapsed.tv_sec * 1000 * 1000 + oneway_elapsed.tv_usec;
 
-      if (oneway_result == TRUE) {
+      if (oneway_result) {
         if (oneway_elapsed_usec > 200 * 1000) {
           printf ("  FAILURE - took %.2f ms\n",
                   (double)oneway_elapsed_usec / 1000.0);
@@ -1465,7 +1472,7 @@ main (int argc, char **argv) {
       if (t_test_thrift_test_if_test_i32 (test_client,
                                           &int32,
                                           -1,
-                                          &error) == TRUE) {
+                                          &error)) {
         printf (" = %d\n", int32);
         if (int32 != -1)
           fail_count++;
