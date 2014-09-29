@@ -36,12 +36,15 @@ libthrift_c_glib_la_SOURCES = src/thrift/c_glib/thrift.c \
                               src/thrift/c_glib/thrift_struct.c \
                               src/thrift/c_glib/thrift_application_exception.c \
                               src/thrift/c_glib/processor/thrift_processor.c \
+                              src/thrift/c_glib/processor/thrift_dispatch_processor.c \
                               src/thrift/c_glib/protocol/thrift_protocol.c \
                               src/thrift/c_glib/protocol/thrift_protocol_factory.c \
                               src/thrift/c_glib/protocol/thrift_binary_protocol.c \
                               src/thrift/c_glib/protocol/thrift_binary_protocol_factory.c \
                               src/thrift/c_glib/transport/thrift_transport.c \
                               src/thrift/c_glib/transport/thrift_transport_factory.c \
+                              src/thrift/c_glib/transport/thrift_buffered_transport_factory.c \
+                              src/thrift/c_glib/transport/thrift_framed_transport_factory.c \
                               src/thrift/c_glib/transport/thrift_socket.c \
                               src/thrift/c_glib/transport/thrift_server_transport.c \
                               src/thrift/c_glib/transport/thrift_server_socket.c \
@@ -74,14 +77,17 @@ include_transport_HEADERS = src/thrift/c_glib/transport/thrift_buffered_transpor
                             src/thrift/c_glib/transport/thrift_server_transport.h \
                             src/thrift/c_glib/transport/thrift_socket.h \
                             src/thrift/c_glib/transport/thrift_transport.h \
-                            src/thrift/c_glib/transport/thrift_transport_factory.h
+                            src/thrift/c_glib/transport/thrift_transport_factory.h \
+                            src/thrift/c_glib/transport/thrift_buffered_transport_factory.h \
+                            src/thrift/c_glib/transport/thrift_framed_transport_factory.h
 
 include_serverdir = $(include_thriftdir)/server
 include_server_HEADERS = src/thrift/c_glib/server/thrift_server.h \
                          src/thrift/c_glib/server/thrift_simple_server.h
 
 include_processordir = $(include_thriftdir)/processor
-include_processor_HEADERS = src/thrift/c_glib/processor/thrift_processor.h
+include_processor_HEADERS = src/thrift/c_glib/processor/thrift_processor.h \
+                            src/thrift/c_glib/processor/thrift_dispatch_processor.h
 
 
 EXTRA_DIST = \

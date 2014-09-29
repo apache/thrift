@@ -52,6 +52,7 @@ testapplicationexception_LDADD = \
 testtransportsocket_SOURCES = testtransportsocket.c
 testtransportsocket_LDADD = \
     ../libthrift_c_glib_la-thrift_transport.o \
+    ../libthrift_c_glib_la-thrift_buffered_transport.o \
     ../libthrift_c_glib_la-thrift_server_transport.o \
     ../libthrift_c_glib_la-thrift_server_socket.o
 

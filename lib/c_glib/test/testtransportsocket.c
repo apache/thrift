@@ -19,8 +19,10 @@
 
 #include <assert.h>
 #include <netdb.h>
+#include <sys/wait.h>
 
 #include <thrift/c_glib/transport/thrift_transport.h>
+#include <thrift/c_glib/transport/thrift_buffered_transport.h>
 #include <thrift/c_glib/transport/thrift_server_transport.h>
 #include <thrift/c_glib/transport/thrift_server_socket.h>
 
@@ -173,6 +175,105 @@ test_read_and_write(void)
   }
 }
 
+/* test ThriftSocket's peek() implementation */
+static void
+test_peek(void)
+{
+  gint status;
+  pid_t pid;
+  guint port = 51199;
+  gchar data = 'A';
+  ThriftTransport *client_transport;
+  GError *error = NULL;
+
+  client_transport = g_object_new (THRIFT_TYPE_SOCKET,
+                                   "hostname", "localhost",
+                                   "port",     port,
+                                   NULL);
+
+  /* thrift_transport_peek returns FALSE when the socket is closed */
+  g_assert (thrift_transport_is_open (client_transport) == FALSE);
+  g_assert (thrift_transport_peek (client_transport, &error) == FALSE);
+  g_assert (error == NULL);
+
+  pid = fork ();
+  g_assert (pid >= 0);
+
+  if (pid == 0)
+  {
+    ThriftServerTransport *server_transport = NULL;
+
+    g_object_unref (client_transport);
+
+    /* child listens */
+    server_transport = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
+                                     "port", port,
+                                     NULL);
+    g_assert (server_transport != NULL);
+
+    thrift_server_transport_listen (server_transport, &error);
+    g_assert (error == NULL);
+
+    client_transport = g_object_new
+      (THRIFT_TYPE_BUFFERED_TRANSPORT,
+       "transport",  thrift_server_transport_accept (server_transport, &error),
+       "r_buf_size", 0,
+       "w_buf_size", sizeof data,
+       NULL);
+    g_assert (error == NULL);
+    g_assert (client_transport != NULL);
+
+    /* write exactly one character to the client */
+    g_assert (thrift_transport_write (client_transport,
+                                      &data,
+                                      sizeof data,
+                                      &error) == TRUE);
+
+    thrift_transport_flush (client_transport, &error);
+    thrift_transport_write_end (client_transport, &error);
+    thrift_transport_close (client_transport, &error);
+
+    g_object_unref (client_transport);
+    g_object_unref (server_transport);
+
+    exit (0);
+  }
+  else {
+    /* parent connects, wait a bit for the socket to be created */
+    sleep (1);
+
+    /* connect to the child */
+    thrift_transport_open (client_transport, &error);
+    g_assert (error == NULL);
+    g_assert (thrift_transport_is_open (client_transport) == TRUE);
+
+    /* thrift_transport_peek returns TRUE when the socket is open and there is
+       data available to be read */
+    g_assert (thrift_transport_peek (client_transport, &error) == TRUE);
+    g_assert (error == NULL);
+
+    /* read exactly one character from the server */
+    g_assert_cmpint (thrift_transport_read (client_transport,
+                                            &data,
+                                            sizeof data,
+                                            &error), ==, sizeof data);
+
+    /* thrift_transport_peek returns FALSE when the socket is open but there is
+       no (more) data available to be read */
+    g_assert (thrift_transport_is_open (client_transport) == TRUE);
+    g_assert (thrift_transport_peek (client_transport, &error) == FALSE);
+    g_assert (error == NULL);
+
+    thrift_transport_read_end (client_transport, &error);
+    thrift_transport_close (client_transport, &error);
+
+    g_object_unref (client_transport);
+
+    g_assert (wait (&status) == pid);
+    g_assert (status == 0);
+  }
+}
+
 static void
 thrift_socket_server (const int port)
 {
@@ -215,6 +316,7 @@ main(int argc, char *argv[])
   g_test_add_func ("/testtransportsocket/CreateAndDestroy", test_create_and_destroy);
   g_test_add_func ("/testtransportsocket/OpenAndClose", test_open_and_close);
   g_test_add_func ("/testtransportsocket/ReadAndWrite", test_read_and_write);
+  g_test_add_func ("/testtransportsocket/Peek", test_peek);
 
   return g_test_run ();
 }
