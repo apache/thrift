@@ -252,9 +252,8 @@ void TSocket::openConnection(struct addrinfo *res) {
   if (! path_.empty()) {
 
 #ifndef _WIN32
-
     size_t len = path_.size() + 1;
-    if (len > sizeof(sockaddr_un::sun_path)) {
+    if (len > sizeof(((sockaddr_un*)NULL)->sun_path)) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       GlobalOutput.perror("TSocket::open() Unix Domain socket path too long", errno_copy);
       throw TTransportException(TTransportException::NOT_OPEN, " Unix Domain socket path too long");
@@ -265,7 +264,6 @@ void TSocket::openConnection(struct addrinfo *res) {
     memcpy(address.sun_path, path_.c_str(), len);
     socklen_t structlen = static_cast<socklen_t>(sizeof(address));
     ret = connect(socket_, (struct sockaddr *) &address, structlen);
-
 #else
       GlobalOutput.perror("TSocket::open() Unix Domain socket path not supported on windows", -99);
       throw TTransportException(TTransportException::NOT_OPEN, " Unix Domain socket path not supported");
