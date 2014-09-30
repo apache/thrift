@@ -985,7 +985,7 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
         if (t->is_enum()) {
           dval += "(" + type_name(t) + ")";
         }
-        dval += t->is_string() ? "" : "0";
+        dval += (t->is_string() || is_reference(*m_iter)) ? "" : "0";
         t_const_value* cv = (*m_iter)->get_value();
         if (cv != NULL) {
           dval = render_const_value(out, (*m_iter)->get_name(), t, cv);
@@ -4193,7 +4193,7 @@ void t_cpp_generator::generate_deserialize_struct(ofstream& out,
 
       indent(out) << "if (" << prefix << "->__isset." << (*f_iter)->get_name() << ") { wasSet = true; }" << endl;
     }
-    indent(out) << "if (!wasSet) { " << prefix << " = NULL; }" << endl;
+    indent(out) << "if (!wasSet) { " << prefix << ".reset(); }" << endl;
   } else {
     indent(out) <<
       "xfer += " << prefix << ".read(iprot);" << endl;
