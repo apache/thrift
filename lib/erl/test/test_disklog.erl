@@ -47,6 +47,13 @@ disklog_test() ->
 
   {_Client3, ok} = thrift_client:close(Client2),
   io:format("Client closed~n"),
+  
+  lists:foreach(fun(File) -> file:delete(File) end, [
+    "/tmp/test_log.1",
+    "/tmp/test_log.idx",
+    "/tmp/test_log.siz"
+  ]),
+  io:format("Cleaning up test files~n"),
 
   ok.
 
@@ -79,6 +86,13 @@ disklog_base64_test() ->
 
   {_Client3, ok} = thrift_client:close(Client2),
   io:format("Client closed~n"),
+
+  lists:foreach(fun(File) -> file:delete(File) end, [
+    "/tmp/test_b64_log.1",
+    "/tmp/test_b64_log.idx",
+    "/tmp/test_b64_log.siz"
+  ]),
+  io:format("Cleaning up test files~n"),
 
   ok.
 
