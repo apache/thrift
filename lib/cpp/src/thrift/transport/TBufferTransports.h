@@ -21,6 +21,7 @@
 #define _THRIFT_TRANSPORT_TBUFFERTRANSPORTS_H_ 1
 
 #include <cstring>
+#include <limits>
 #include <boost/scoped_array.hpp>
 
 #include <thrift/transport/TTransport.h>

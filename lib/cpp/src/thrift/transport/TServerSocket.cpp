@@ -314,7 +314,7 @@ void TServerSocket::listen() {
 
     // Unix Domain Socket
     size_t len = path_.size() + 1;
-    if (len > sizeof(sockaddr_un::sun_path)) {
+    if (len > sizeof(((sockaddr_un*)NULL)->sun_path)) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       GlobalOutput.perror("TSocket::listen() Unix Domain socket path too long", errno_copy);
       throw TTransportException(TTransportException::NOT_OPEN, " Unix Domain socket path too long");
