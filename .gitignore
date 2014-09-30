@@ -36,6 +36,7 @@ test-driver
 .sonar
 .DS_Store
 .svn
+.vagrant
 
 /contrib/.vagrant/
 /aclocal/libtool.m4
