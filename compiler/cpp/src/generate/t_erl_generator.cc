@@ -1053,5 +1053,7 @@ std::string t_erl_generator::type_module(t_type* ttype) {
   return make_safe_for_module_name(ttype->get_program()->get_name()) + "_types";
 }
 
-THRIFT_REGISTER_GENERATOR(erl, "Erlang", "")
+THRIFT_REGISTER_GENERATOR(erl, "Erlang",
+"    legacynames: Output files retain naming conventions of Thrift 0.9.1 and earlier.\n"
+)
 
