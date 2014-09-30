@@ -1,28 +1,75 @@
-## CentOS setup
-The following command installs the required tools and libraries from the base repository needed to build and install the Apache Thrift compiler on a CentOS6/RHEL6 Linux based system. 
+# Building Apache Thrift on CentOS 6.5
 
-	sudo yum install automake libtool flex bison pkgconfig gcc-c++ 
+Starting with a minimal installation, the following steps are required to build Apache Thrift on Centos 6.5. This example builds from source, using the current development master branch. These instructions should also work with Apache Thrift releases beginning with 0.9.2.
 
-The base version of autoconf installed is presently 2.63, however Apache Thrift requires 2.65. A newer version must be installed from a nonstandard repository. For example:
+## Update the System
 
-	sudo curl ftp://ftp.pbone.net/mirror/ftp5.gwdg.de/pub/opensuse/repositories/home:/monkeyiq:/centos6updates/CentOS_CentOS-6/noarch/autoconf-2.69-12.2.noarch.rpm > autoconf-2.69-12.2.noarch.rpm
+	sudo yum -y update
 
-	sudo yum install autoconf-2.69-12.2.noarch.rpm
+## Install the Platform Development Tools
 
-To compile and install the Apache Thrift IDL compiler from the development source you will need to install git, clone the development master, then configure and build the IDL Compiler. For example:
+	sudo yum -y groupinstall "Development Tools"
 
-	sudo yum install git
+## Upgrade autoconf/automake/bison
+
+	sudo yum install -y wget
+
+### Upgrade autoconf
+
+	wget http://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz
+	tar xvf autoconf-2.69.tar.gz
+	cd autoconf-2.69
+	./configure --prefix=/usr
+	make
+	sudo make install
+	cd ..
+
+### Upgrade automake
+
+	wget http://ftp.gnu.org/gnu/automake/automake-1.14.tar.gz
+	tar xvf automake-1.14.tar.gz
+	cd automake-1.14
+	./configure --prefix=/usr
+	make
+	sudo make install
+	cd ..
+
+### Upgrade bison
+
+	wget http://ftp.gnu.org/gnu/bison/bison-2.5.1.tar.gz
+	tar xvf bison-2.5.1.tar.gz
+	cd bison-2.5.1
+	./configure --prefix=/usr
+	make
+	sudo make install
+	cd ..
+
+## Add Optional C++ Language Library Dependencies
+
+All languages require the Apache Thrift IDL Compiler and at this point everything needed to make the IDL Compiler is installed (if you only need the compiler you can skip to the Build step). 
+
+If you will be developing Apache Thrift clients/servers in C++ you will also need additional packages to support the C++ shared library build.
+
+### Install C++ Lib Dependencies
+
+	sudo yum -y install libevent-devel zlib-devel openssl-devel
+
+### Upgrade Boost 
+
+	wget http://sourceforge.net/projects/boost/files/boost/1.55.0/boost_1_55_0.tar.gz
+	tar xvf boost_1_55_0.tar.gz
+	cd boost_1_55_0
+	./bootstrap.sh
+	sudo ./b2 install
+
+## Build and Install the Apache Thrift IDL Compiler
+
 	git clone https://git-wip-us.apache.org/repos/asf/thrift.git
 	cd thrift
 	./bootstrap.sh
-	./configure --enable-libs=no
+	./configure --with-lua=no
 	make
 	sudo make install
 
-This will build the compiler and install it on the path: /usr/local/bin/thrift
-
-#### Additional reading
-
-For more information on the requirements see: [Apache Thrift Requirements](/docs/install)
-
-For more information on building and installing Thrift see: [Building from source](/docs/BuildingFromSource)
+This will build the compiler (thrift/compiler/cpp/thrift --version) and any language libraries supported. The make install step installs the compiler on the path: /usr/local/bin/thrift
+You can use the ./configure --enable-libs=no switch to build the Apache Thrift IDL Compiler only without lib builds. To run tests use "make check".
