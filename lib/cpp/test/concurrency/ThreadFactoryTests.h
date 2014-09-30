@@ -24,7 +24,6 @@
 #include <thrift/concurrency/Util.h>
 
 #include <assert.h>
-#include <unistd.h>
 #include <iostream>
 #include <set>
 
@@ -42,7 +41,7 @@ class ThreadFactoryTests {
 
 public:
 
-  static const double ERROR;
+  static const double TEST_ERROR;
 
   class Task: public Runnable {
 
@@ -279,7 +278,7 @@ public:
       error *= 1.0;
     }
 
-    bool success = error < ThreadFactoryTests::ERROR;
+    bool success = error < ThreadFactoryTests::TEST_ERROR;
 
     std::cout << "\t\t\t" << (success ? "Success" : "Failure") << "! expected time: " << count * timeout << "ms elapsed time: "<< endTime - startTime << "ms error%: " << error * 100.0 << std::endl;
 
@@ -302,7 +301,7 @@ public:
         std::cout << "\t\tthread " << _id << " started" << std::endl;
       }
 
-      usleep(1);
+      THRIFT_SLEEP_USEC(1);
     }
     const size_t _id;
   };
@@ -330,7 +329,7 @@ public:
 
             thread->start();
 
-            usleep(1);
+            THRIFT_SLEEP_USEC(1);
 
           } catch (TException& e) {
 
@@ -349,7 +348,7 @@ public:
   }
 };
 
-const double ThreadFactoryTests::ERROR = .20;
+const double ThreadFactoryTests::TEST_ERROR = .20;
 
 }}}} // apache::thrift::concurrency::test
 
