@@ -1,3 +1,4 @@
+#!/bin/sh
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -17,36 +18,24 @@
 # under the License.
 #
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
-THRIFTCMD = $(THRIFT) --gen haxe -r
-THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
+# invoke Thrift comnpiler
+thrift -r -gen haxe  ../../../test/ThriftTest.thrift
 
-BIN_CPP = bin/Main-debug
+# output folder
+if [ ! -d bin ]; then
+  mkdir  bin
+fi
 
-gen-haxe/thrift/test/ThriftTest.hx: $(THRIFTTEST)
-	$(THRIFTCMD) $(THRIFTTEST)
-
-all-local: $(BIN_CPP)
-
-$(BIN_CPP):    gen-haxe/thrift/test/ThriftTest.hx
-	$(HAXE) --cwd .  cpp.hxml
-
-
-#TODO: other haxe targets
-#    $(HAXE)  --cwd .  csharp
-#    $(HAXE)  --cwd .  flash
-#    $(HAXE)  --cwd .  java
-#    $(HAXE)  --cwd .  javascript
-#    $(HAXE)  --cwd .  neko
-#    $(HAXE)  --cwd .  php
-#    $(HAXE)  --cwd .  python  # needs Haxe 3.1.4
+# invoke Haxe compiler
+for target in *.hxml; do 
+  echo --------------------------
+  echo Building ${target} ...
+  echo --------------------------
+  if [ ! -d bin/${target} ]; then
+    mkdir  bin/${target}
+  fi
+  haxe  --cwd .  ${target} 
+done
 
 
-clean-local:
-	$(RM) -r gen-haxe bin
-
-check: $(BIN_CPP)
-	timeout 120 $(BIN_CPP) server &
-	sleep 1
-	$(BIN_CPP) client
-
+#eof

@@ -1,17 +1,17 @@
 {
      "type" : 0
     ,"target" : 4
-    ,"name" : "Apache Thrift cross-platform test client/server"
+    ,"name" : "Test"
     ,"main" : null
     ,"projectPackage" : ""
-    ,"company" : "Apache Software Foundation (ASF)"
-    ,"license" : "Apache License, Version 2.0"
-    ,"url" : "http://www.apache.org/licenses/LICENSE-2.0"
+    ,"company" : ""
+    ,"license" : ""
+    ,"url" : ""
     ,"targetData" : [
          {
              "pathToHxml" : "flash.hxml"
             ,"runActionType" : 1
-            ,"runActionText" : "bin/Tutorial.swf"
+            ,"runActionText" : "bin/Test.swf"
         }
         ,{
              "pathToHxml" : "javascript.hxml"
@@ -21,7 +21,7 @@
         ,{
              "pathToHxml" : "neko.hxml"
             ,"runActionType" : 2
-            ,"runActionText" : "neko bin/Tutorial.n"
+            ,"runActionText" : "neko bin/Test.n"
         }
         ,{
              "pathToHxml" : "php.hxml"
@@ -29,7 +29,7 @@
         ,{
              "pathToHxml" : "cpp.hxml"
             ,"runActionType" : 2
-            ,"runActionText" : "bin/Main-debug.exe  client --protocol json"
+            ,"runActionText" : "bin/Main-debug.exe"
         }
         ,{
              "pathToHxml" : "java.hxml"
@@ -40,30 +40,21 @@
         ,{
              "pathToHxml" : "python.hxml"
             ,"runActionType" : 2
-            ,"runActionText" : "python bin/Tutorial.py"
+            ,"runActionText" : "python bin/Test.py"
         }
     ]
     ,"files" : [
          {
-             "path" : "src\\TestClient.hx"
+             "path" : "src\\Main.hx"
             ,"useTabs" : true
             ,"indentSize" : 4
             ,"foldedRegions" : [
 
             ]
-            ,"activeLine" : 188
-        }
-        ,{
-             "path" : "src\\TestServer.hx"
-            ,"useTabs" : true
-            ,"indentSize" : 4
-            ,"foldedRegions" : [
-
-            ]
-            ,"activeLine" : 88
+            ,"activeLine" : 13
         }
     ]
-    ,"activeFile" : "src\\TestClient.hx"
+    ,"activeFile" : "src\\Main.hx"
     ,"openFLTarget" : null
     ,"openFLBuildMode" : "Debug"
     ,"runActionType" : null

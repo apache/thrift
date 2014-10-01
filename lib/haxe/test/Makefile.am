@@ -46,7 +46,5 @@ clean-local:
 	$(RM) -r gen-haxe bin
 
 check: $(BIN_CPP)
-	timeout 120 $(BIN_CPP) server &
-	sleep 1
-	$(BIN_CPP) client
+	$(BIN_CPP)
 

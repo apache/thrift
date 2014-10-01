@@ -32,17 +32,17 @@ If you are using HIDE, you'll find the HIDE project files in these folders.
 Current status
 ========================
 - tested with Haxe C++ target
-- transports: socket 
-- protocols: binary, JSON
+- transports: Socket, HTTP (client only), Stream
+- protocols: Binary, JSON
 - tutorial client and server available
 - cross-test client and server available 
 
 
 Further developments
 ========================
-- add HTTP transport, update tutorial and tests accordingly
 - improve to work with C#, Java and JavaScript Haxe/OpenFL targets
 - improve to work with more (ideally all) Haxe/OpenFL targets
+- add HTTP server, update tutorial and tests accordingly
 
 
 Dependencies
@@ -53,9 +53,9 @@ Depending on the desired targets, you may have to install the appropriate HaxeLi
 after installing Haxe itself. For example, if you plan to target C#, Java and C++,
 enter the following commands after installing Haxe:
 
-  haxelib install hxcpp
-  haxelib install hxjava
-  haxelib install hxcs
+    haxelib install hxcpp
+    haxelib install hxjava
+    haxelib install hxcs
 
 For other targets, please consult the Haxe documentation whether or not any additional
 target libraries need to be installed and how to achieve this.
