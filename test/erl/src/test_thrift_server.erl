@@ -219,5 +219,6 @@ handle_function(testMultiException, {Arg0, Arg1}) ->
     end;
 
 handle_function(testOneway, {Seconds}) ->
+    io:format("testOneway: ~p~n", [Seconds]),
     timer:sleep(1000 * Seconds),
     ok.
