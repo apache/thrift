@@ -22,7 +22,7 @@ THRIFT = $(top_srcdir)/compiler/cpp/thrift
 #	$(THRIFT) --gen js:node -o test/ $(top_srcdir)/test/ThriftTest.thrift
 
 deps: package.json
-	$(NPM) install
+	$(NPM) install --no-bin-links
 
 check: deps
 	$(NPM) test
