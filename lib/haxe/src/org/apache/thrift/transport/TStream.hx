@@ -19,19 +19,14 @@
 
 package org.apache.thrift.transport;
 
-import org.apache.thrift.transport.*;
+import haxe.io.Bytes;
+import haxe.io.BytesBuffer;
 
 
-class TFramedTransportFactory extends TTransportFactory {
-
-    var maxLength_ : Int;
-
-    public function new(maxLength : Int = TFramedTransport.DEFAULT_MAX_LENGTH) {
-		super();
-    	maxLength_ = maxLength;
-    }
-
-    public override function getTransport(base : TTransport) : TTransport {
-    	return new TFramedTransport(base, maxLength_);
-    }
+interface TStream {
+	function Close() : Void;
+	function Peek() : Bool;
+	function Read( buf : Bytes, offset : Int, count : Int) : Int;
+	function Write( buf : Bytes, offset : Int, count : Int) : Void;
+	function Flush() : Void;
 }

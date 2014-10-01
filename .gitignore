@@ -161,6 +161,7 @@ test-driver
 /lib/erl/.eunit
 /lib/erl/ebin
 /lib/erl/deps/
+/lib/haxe/test/bin
 /lib/hs/dist
 /lib/java/build
 /lib/js/test/build

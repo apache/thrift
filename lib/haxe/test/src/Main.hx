@@ -17,21 +17,29 @@
  * under the License.
  */
 
-package org.apache.thrift.transport;
+package;
 
+import org.apache.thrift.*;
+import org.apache.thrift.protocol.*;
 import org.apache.thrift.transport.*;
+import org.apache.thrift.server.*;
+import org.apache.thrift.meta_data.*;
 
+import thrift.test.*;  // generated code
 
-class TFramedTransportFactory extends TTransportFactory {
-
-    var maxLength_ : Int;
-
-    public function new(maxLength : Int = TFramedTransport.DEFAULT_MAX_LENGTH) {
-		super();
-    	maxLength_ = maxLength;
-    }
-
-    public override function getTransport(base : TTransport) : TTransport {
-    	return new TFramedTransport(base, maxLength_);
-    }
+class Main
+{
+    static public function main()
+    {
+		try
+		{
+        	StreamTest.Run();
+			
+			trace("All tests completed.");
+		}
+		catch( e: Dynamic)
+		{
+			trace('$e');
+		}
+	}
 }
