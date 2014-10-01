@@ -137,9 +137,7 @@ class TTornadoStreamTransport(TTransportBase):
                 if len(frame_header) == 0:
                     raise iostream.StreamClosedError('Read zero bytes from stream')
                 frame_length, = struct.unpack('!i', frame_header)
-                logger.debug('received frame header, frame length = %d', frame_length)
                 frame = yield self.stream.read_bytes(frame_length)
-                logger.debug('received frame payload: %r', frame)
                 raise gen.Return(frame)
 
     def write(self, buf):
