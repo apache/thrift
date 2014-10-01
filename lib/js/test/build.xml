@@ -93,14 +93,14 @@
   </target>
 
   <target name="jslibs" depends="init, proxy">
-    <get src="http://code.jquery.com/jquery-1.7.2.js" dest="${build}/js/lib" usetimestamp="true"/>
-    <get src="http://js-test-driver.googlecode.com/svn/trunk/JsTestDriver/contrib/qunit/src/equiv.js" dest="${build}/js/lib" usetimestamp="true"/>
-    <get src="http://js-test-driver.googlecode.com/svn/trunk/JsTestDriver/contrib/qunit/src/QUnitAdapter.js" dest="${build}/js/lib" usetimestamp="true"/>
+    <get src="http://code.jquery.com/jquery-1.7.2.js" dest="${build}/js/lib/jquery-1.7.2.js" usetimestamp="true"/>
+    <get src="http://js-test-driver.googlecode.com/svn/trunk/JsTestDriver/contrib/qunit/src/equiv.js" dest="${build}/js/lib/equiv.js" usetimestamp="true"/>
+    <get src="http://js-test-driver.googlecode.com/svn/trunk/JsTestDriver/contrib/qunit/src/QUnitAdapter.js" dest="${build}/js/lib/QUnitAdapter.js" usetimestamp="true"/>
 
     <get src="http://code.jquery.com/qunit/qunit-1.5.0.js" dest="${build}/js/lib/qunit.js" usetimestamp="true"/>
     <get src="http://code.jquery.com/qunit/qunit-1.5.0.css" dest="${build}/js/lib/qunit.css" usetimestamp="true"/>
     <!-- js-test-driver has issues with relative path...so we need a copy -->
-    <copy file="../src/thrift.js" todir="${build}/js/"/>
+    <copy file="../src/thrift.js" todir="${build}/js/thrift.js"/>
   </target>
 
   <target name="compile" description="compile the test suite" depends="init, generate, resolve">
