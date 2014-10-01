@@ -708,8 +708,12 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         out << indent() << indent() << "if (args." << (*m_iter)->get_name() << " !== undefined) {" << endl
-            << indent() << indent() << indent() << "this." << (*m_iter)->get_name() << " = args." << (*m_iter)->get_name()  << ";" << endl
-            << indent() << indent() << "}" << endl;
+            << indent() << indent() << indent() << "this." << (*m_iter)->get_name() << " = args." << (*m_iter)->get_name()  << ";" << endl;
+        if (!(*m_iter)->get_req()) {
+          out << indent() << indent() << "} else {" << endl
+              << indent() << indent() << indent() << "throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field " << (*m_iter)->get_name() << " is unset!');" << endl;
+        }
+        out << indent() << indent() << "}" << endl;
         if (gen_ts_) {
           f_types_ts_ << (*m_iter)->get_name() << ts_get_req(*m_iter) << ": " << ts_get_type((*m_iter)->get_type()) << "; ";
         }
