@@ -136,4 +136,6 @@ start(Args) ->
         ClientS4
     end,
 
-  thrift_client:close(Client19).
+  {Client20, {ok, ok}} = thrift_client:call(Client19, testOneway, [1]),
+
+  thrift_client:close(Client20).
