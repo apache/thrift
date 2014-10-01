@@ -26,14 +26,14 @@ all-local: bin/Main-debug
 
 check: gen-haxe/tutorial/calculator.hx
 
-bin/Main-debug:	gen-haxe/tutorial/calculator.hx
+bin/Main-debug:    gen-haxe/tutorial/calculator.hx
 	$(HAXE) --cwd .  cpp.hxml
-	
+
 tutorialserver: all
 	bin/Main-debug server
 
 tutorialclient: all
-	bin/Main-debug 
+	bin/Main-debug
 
 tutorialsecureserver: all
 	bin/Main-debug server secure
@@ -46,5 +46,5 @@ clean-local:
 
 EXTRA_DIST = \
 	src/Main.hx \
-	src/CalculatorHandler.hx 
+	src/CalculatorHandler.hx
 

@@ -47,9 +47,28 @@ class TestResults {
 	private var errorCnt : Int = 0;
 	private var failedTests : String = "";
 	private var print_direct : Bool = false;
+	
+	public static var EXITCODE_SUCCESS            = 0x00;  // no errors bits set
+	//
+	public static var EXITCODE_FAILBIT_BASETYPES  = 0x01;
+	public static var EXITCODE_FAILBIT_STRUCTS    = 0x02;
+	public static var EXITCODE_FAILBIT_CONTAINERS = 0x04;
+	public static var EXITCODE_FAILBIT_EXCEPTIONS = 0x08;
+	//
+	public static var EXITCODE_ALL_FAILBITS 	  = 0x0F;
+	//
+	private var testsExecuted : Int = 0;
+	private var testsFailed : Int = 0;
+	private var currentTest : Int = 0;
 
+	
 	public function new(direct : Bool) {
 		print_direct = direct;
+	}
+	
+	public function StartTestGroup( groupBit : Int) : Void {
+		currentTest = groupBit;
+		testsExecuted |= groupBit;
 	}
 	
 	public function Expect( expr : Bool, msg : String) : Void {
@@ -57,6 +76,7 @@ class TestResults {
 			++successCnt;
 		} else {
 			++errorCnt;
+			testsFailed |= currentTest;
 			failedTests += "\n  " + msg;
 			if( print_direct) {
 				trace('FAIL: $msg');
@@ -64,6 +84,10 @@ class TestResults {
 		}
 	}
 
+	public function CalculateExitCode() : Int {
+		var notExecuted : Int = EXITCODE_ALL_FAILBITS & (~testsExecuted);
+		return testsFailed | notExecuted;
+	}
 
 	public function PrintSummary() : Void {
 		var total = successCnt + errorCnt;
@@ -88,57 +112,67 @@ class TestClient {
 
 	public static function Execute(args : Arguments) :  Void
 	{
+		var exitCode = 0xFF;
 		try
 		{
 			var difft = Timer.stamp();
-			
+	
 			if( args.numThreads > 1) {
 				var threads = new List<Thread>();
 				for( test in 0 ... args.numThreads) {
 					threads.add( StartThread( args));
 				} 
+				exitCode = 0;
 				for( thread in threads) {
-					Thread.readMessage(true);
+					exitCode |= Thread.readMessage(true);
 				}
 			} else {
 				var rslt = new TestResults(true);
 				RunClient(args,rslt);
 				rslt.PrintSummary();
+				exitCode = rslt.CalculateExitCode();
 			}
 
-    		difft = Timer.stamp() - difft;
+			difft = Timer.stamp() - difft;
 			trace('total test time: $difft seconds');
 		}
 		catch (e : TException)
 		{
 			trace('$e');
+			exitCode = 0xFF;
 		}
 		catch (e : Dynamic)
 		{
 			trace('$e');
+			exitCode = 0xFF;
 		}
+	
+		#if sys
+		Sys.exit( exitCode);
+		#end
 	}
 
 	
 	private static function StartThread(args : Arguments) : Thread {
 		var thread = Thread.create(
 			function() : Void {
+				var rslt = new TestResults(false);
 				var main : Thread = Thread.readMessage(true);
 				try 
 				{
-					var rslt = new TestResults(false);
 					RunClient(args,rslt);
-					// TODO: promote rslt values to main thread
 				}
 				catch (e : TException)
 				{
+					rslt.Expect( false, '$e');
 					trace('$e');
 				}
 				catch (e : Dynamic)
 				{
+					rslt.Expect( false, '$e');
 					trace('$e');
 				}					
-				main.sendMessage("done");
+				main.sendMessage( rslt.CalculateExitCode());
 			});
 		
 		thread.sendMessage(Thread.current());
@@ -154,8 +188,7 @@ class TestClient {
 			case socket:
 				transport = new TSocket(args.host, args.port);
 			case http:
-				throw "http transport not supported yet";
-				//transport = new THttpClient(args.host);
+				transport = new THttpClient(args.host);
 			default:
 				throw "Unhandled transport";
 		}
@@ -164,7 +197,8 @@ class TestClient {
 		if ( args.framed) {
 			trace("- framed transport");
 			transport = new TFramedTransport(transport);
-		} else if ( args.buffered) {
+		} 
+		if ( args.buffered) {
 			trace("- buffered transport");
 			throw "TBufferedTransport not implemented yet";
 			//transport = new TBufferedTransport(transport);
@@ -186,16 +220,18 @@ class TestClient {
 
 
 		// run the test code
-		HaxeBasicsTest( rslt);
-		ClientTest( transport, protocol, rslt);
-					
+		HaxeBasicsTest( args, rslt);
+		for( i in 0 ... args.numIterations) {
+			ClientTest( transport, protocol, args, rslt);
+		}
 	}
 
 
-	public static function HaxeBasicsTest( rslt : TestResults) : Void
+	public static function HaxeBasicsTest( args : Arguments, rslt : TestResults) : Void
 	{
 		// We need to test a few basic things used in the ClientTest
 		// Anything else beyond this scope should go into /lib/haxe/ instead
+		rslt.StartTestGroup( 0);
 		
 		var map32 = new IntMap<Int32>();
 		var map64 = new Int64Map<Int32>();
@@ -272,7 +308,8 @@ class TestClient {
 	}
 
 
-	public static function ClientTest( transport : TTransport, protocol : TProtocol, rslt : TestResults) : Void
+	public static function ClientTest( transport : TTransport, protocol : TProtocol, 
+									   args : Arguments, rslt : TestResults) : Void
 	{
 		var client = new ThriftTestImpl(protocol,protocol);
 		try
@@ -295,6 +332,54 @@ class TestClient {
 
 		var start = Date.now();
 
+		rslt.StartTestGroup( TestResults.EXITCODE_FAILBIT_EXCEPTIONS);
+	
+		// if arg == "Xception" throw Xception with errorCode = 1001 and message = arg
+		trace('testException("Xception")');
+		try {
+			client.testException("Xception");
+			rslt.Expect( false, 'testException("Xception") should throw');
+		}
+		catch (e : Xception)
+		{
+			rslt.Expect( e.message == "Xception", 'testException("Xception")  -  e.message == "Xception"');
+			rslt.Expect( e.errorCode == 1001, 'testException("Xception")  -  e.errorCode == 1001');
+		}
+		catch (e : Dynamic)
+		{
+			rslt.Expect( false, 'testException("Xception")  -  $e');
+		} 
+	
+		// if arg == "TException" throw TException
+		trace('testException("TException")');
+		try {
+			client.testException("TException");
+			rslt.Expect( false, 'testException("TException") should throw');
+		}
+		catch (e : TException)
+		{
+			rslt.Expect( true, 'testException("TException")  -  $e');
+		}
+		catch (e : Dynamic)
+		{
+			rslt.Expect( false, 'testException("TException")  -  $e');
+		} 
+	
+		// else do not throw anything
+		trace('testException("bla")');
+		try {
+			client.testException("bla");
+			rslt.Expect( true, 'testException("bla") should not throw');
+		}
+		catch (e : Dynamic)
+		{
+			rslt.Expect( false, 'testException("bla")  -  $e');
+		} 
+			
+		
+
+		rslt.StartTestGroup( TestResults.EXITCODE_FAILBIT_BASETYPES);
+		
 		trace('testVoid()');
 		client.testVoid();
 		trace(' = void');
@@ -333,6 +418,9 @@ class TestClient {
 		trace(' = $dub');
 		rslt.Expect(dub == 5.325098235, '$dub == 5.325098235');
 
+		
+		rslt.StartTestGroup( TestResults.EXITCODE_FAILBIT_STRUCTS);
+		
 		trace('testStruct({"Zero", 1, -3, -5})');
 		var o = new Xtruct();
 		o.string_thing = "Zero";
@@ -341,7 +429,7 @@ class TestClient {
 		o.i64_thing = Int64.make(0,-5);
 		var i = client.testStruct(o);
 		trace(' = {"' + i.string_thing + '", ' + i.byte_thing +', ' 
-                      + i.i32_thing +', '+ Int64.toStr(i.i64_thing) + '}');
+					  + i.i32_thing +', '+ Int64.toStr(i.i64_thing) + '}');
 		rslt.Expect( i.string_thing == o.string_thing, "i.string_thing == o.string_thing");
 		rslt.Expect( i.byte_thing == o.byte_thing, "i.byte_thing == o.byte_thing");
 		rslt.Expect( i.i32_thing == o.i32_thing, "i.i64_thing == o.i64_thing");
@@ -364,6 +452,9 @@ class TestClient {
 		rslt.Expect( i.i32_thing == o.i32_thing, "i.i32_thing == o.i32_thing");
 		rslt.Expect( Int64.compare( i.i64_thing, o.i64_thing) == 0, "i.i64_thing == o.i64_thing");
 
+		
+		rslt.StartTestGroup( TestResults.EXITCODE_FAILBIT_CONTAINERS);
+		
 		var mapout = new IntMap< haxe.Int32>();
 		for ( j in 0 ... 5)
 		{
@@ -497,6 +588,8 @@ class TestClient {
 		rslt.Expect(setin.size == setout.size, "setin.length == setout.length");
 	
 
+		rslt.StartTestGroup( TestResults.EXITCODE_FAILBIT_BASETYPES);
+
 		trace("testEnum(ONE)");
 		var ret = client.testEnum(Numberz.ONE);
 		trace(" = " + ret);
@@ -528,6 +621,9 @@ class TestClient {
 		rslt.Expect( Int64.compare( uid, Int64.make( 0x119D0, 0x7E08671B)) == 0,
 		             Int64.toStr(uid)+" == "+Int64.toStr(Int64.make( 0x119D0, 0x7E08671B)));
 
+
+		rslt.StartTestGroup( TestResults.EXITCODE_FAILBIT_CONTAINERS);
+
 		trace("testMapMap(1)");
 		var mm = client.testMapMap(1);
 		trace(" = {");
@@ -550,6 +646,9 @@ class TestClient {
 			rslt.Expect( pos.get(i) == i, 'pos.get($i) == $i');
 			rslt.Expect( neg.get(-i) == -i, 'neg.get(-$i) == -$i');
 	 	}
+
+			
+		rslt.StartTestGroup( TestResults.EXITCODE_FAILBIT_STRUCTS);
 
 		var insane = new Insanity();
 		insane.userMap = new IntMap< Int64>();
@@ -613,6 +712,7 @@ class TestClient {
 			trace("}, ");
 		}
 		trace("}");
+
 
 		var first_map = whoa.get(Int64.make(0,1));
 		var second_map = whoa.get(Int64.make(0,2));
@@ -682,15 +782,19 @@ class TestClient {
 		rslt.Expect( Int64.compare( multiResponse.i64_thing, arg2) == 0, 'multiResponse.I64_thing == arg2');
 
 
+		rslt.StartTestGroup( 0);
+
 		trace("Test Oneway(1)");
 		client.testOneway(1);
 
-		trace("Test Calltime()");
-		var difft = Timer.stamp();
-		for ( k in 0 ... 1000) {
-			client.testVoid();
+		if( ! args.skipSpeedTest) {
+			trace("Test Calltime()");
+			var difft = Timer.stamp();
+			for ( k in 0 ... 1000) {
+				client.testVoid();
+			}
+			difft = Timer.stamp() - difft;
+			trace('$difft ms per testVoid() call');
 		}
-		difft = Timer.stamp() - difft;
-		trace('$difft ms per testVoid() call');
 	}
 }

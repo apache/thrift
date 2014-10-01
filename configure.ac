@@ -652,6 +652,7 @@ AC_CONFIG_FILES([
   lib/erl/Makefile
   lib/go/Makefile
   lib/go/test/Makefile
+  lib/haxe/test/Makefile
   lib/hs/Makefile
   lib/java/Makefile
   lib/js/test/Makefile
