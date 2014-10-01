@@ -719,6 +719,7 @@ void t_haxe_generator::generate_haxe_struct_definition(ofstream &out,
                                                        bool is_exception,
                                                        bool in_class,
                                                        bool is_result) {
+  (void) in_class;
   generate_haxe_doc(out, tstruct);
 
   string clsname = get_cap_name( tstruct->get_name());
@@ -759,7 +760,7 @@ void t_haxe_generator::generate_haxe_struct_definition(ofstream &out,
   out << endl;
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    indent(out) << "inline static var " << upcase_string((*m_iter)->get_name()) << " : Int = " << (*m_iter)->get_key() << ";" << endl;
+    indent(out) << "inline static var " << upcase_string((*m_iter)->get_name()) << "_FIELD_ID : Int = " << (*m_iter)->get_key() << ";" << endl;
   }
   
   out << endl;
@@ -869,7 +870,7 @@ void t_haxe_generator::generate_haxe_struct_reader(ofstream& out,
       // Generate deserialization code for known cases
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         indent(out) <<
-          "case " << upcase_string((*f_iter)->get_name()) << ":" << endl;
+          "case " << upcase_string((*f_iter)->get_name()) << "_FIELD_ID:" << endl;
         indent_up();
         indent(out) <<
           "if (field.type == " << type_to_enum((*f_iter)->get_type()) << ") {" << endl;
@@ -1079,7 +1080,7 @@ void t_haxe_generator::generate_haxe_struct_result_writer(ofstream& out,
 void t_haxe_generator::generate_reflection_getters(ostringstream& out, t_type* type, string field_name, string cap_name) {
   (void) type;
   (void) cap_name;
-  indent(out) << "case " << upcase_string(field_name) << ":" << endl;
+  indent(out) << "case " << upcase_string(field_name) << "_FIELD_ID:" << endl;
   indent_up();
   indent(out) << "return this." << field_name << ";" << endl;
   indent_down();
@@ -1088,7 +1089,7 @@ void t_haxe_generator::generate_reflection_getters(ostringstream& out, t_type* t
 void t_haxe_generator::generate_reflection_setters(ostringstream& out, t_type* type, string field_name, string cap_name) {
   (void) type;
   (void) cap_name;
-  indent(out) << "case " << upcase_string(field_name) << ":" << endl;
+  indent(out) << "case " << upcase_string(field_name) << "_FIELD_ID:" << endl;
   indent_up();
   indent(out) << "if (value == null) {" << endl;
   indent(out) << "  unset" << get_cap_name(field_name) << "();" << endl;
@@ -1170,7 +1171,7 @@ void t_haxe_generator::generate_generic_isset_method(std::ofstream& out, t_struc
 
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       t_field* field = *f_iter;
-      indent(out) << "case " << upcase_string(field->get_name()) << ":" << endl;
+      indent(out) << "case " << upcase_string(field->get_name()) << "_FIELD_ID:" << endl;
       indent_up();
       indent(out) << "return " << generate_isset_check(field) << ";" << endl;
       indent_down();
@@ -1347,7 +1348,7 @@ void t_haxe_generator::generate_haxe_meta_data_map(ofstream& out,
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       t_field* field = *f_iter;
       std::string field_name = field->get_name();
-      indent(out) << "metaDataMap[" << upcase_string(field_name) << "] = new FieldMetaData(\"" << field_name << "\", ";
+      indent(out) << "metaDataMap[" << upcase_string(field_name) << "_FIELD_ID] = new FieldMetaData(\"" << field_name << "\", ";
 
       // Set field requirement type (required, optional, etc.)
       if (field->get_req() == t_field::T_REQUIRED) {
@@ -2937,7 +2938,7 @@ void t_haxe_generator::generate_isset_set(ofstream& out, t_field* field) {
 std::string t_haxe_generator::get_enum_class_name(t_type* type) {
   string package = "";
   t_program* program = type->get_program();
-  if (program != NULL && program != program_) {
+  if (program != NULL /*&& program != program_*/) {
     package = program->get_namespace("haxe") + ".";
   }
   return package + type->get_name();

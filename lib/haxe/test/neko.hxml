@@ -16,37 +16,23 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+ 
+#integrate files to classpath
+-cp src
+-cp ../src
+-cp gen-haxe
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
-THRIFTCMD = $(THRIFT) --gen haxe -r
-THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
+#this class wil be used as entry point for your app.
+-main Main
 
-BIN_CPP = bin/Main-debug
+#neko target
+-neko bin/Test.n
 
-gen-haxe/thrift/test/ThriftTest.hx: $(THRIFTTEST)
-	$(THRIFTCMD) $(THRIFTTEST)
+#Add debug information
+-debug
 
-all-local: $(BIN_CPP)
-
-$(BIN_CPP):    gen-haxe/thrift/test/ThriftTest.hx
-	$(HAXE) --cwd .  cpp.hxml
-
-
-#TODO: other haxe targets
-#    $(HAXE)  --cwd .  csharp
-#    $(HAXE)  --cwd .  flash
-#    $(HAXE)  --cwd .  java
-#    $(HAXE)  --cwd .  javascript
-#    $(HAXE)  --cwd .  neko
-#    $(HAXE)  --cwd .  php
-#    $(HAXE)  --cwd .  python  # needs Haxe 3.1.4
-
-
-clean-local:
-	$(RM) -r gen-haxe bin
-
-check: $(BIN_CPP)
-	timeout 120 $(BIN_CPP) server &
-	sleep 1
-	$(BIN_CPP) client
-
+#dead code elimination : remove unused code
+#"-dce no" : do not remove unused code
+#"-dce std" : remove unused code in the std lib (default)
+#"-dce full" : remove all unused code
+-dce full

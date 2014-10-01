@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -58,6 +58,9 @@ class TJSONProtocol implements TProtocol {
 	// Reader that manages a 1-byte buffer
 	private var reader : LookaheadReader;
 
+	// whether the underlying system holds Strings as UTF-8
+	// http://old.haxe.org/manual/encoding
+	private static var utf8Strings = haxe.Utf8.validate("Ç-ß-Æ-Ю-Ш");
 
 	// TJSONProtocol Constructor
 	public function new( trans : TTransport)
@@ -74,7 +77,7 @@ class TJSONProtocol implements TProtocol {
 	public function writeMessageBegin(message:TMessage) : Void {
 		WriteJSONArrayStart();
 		WriteJSONInteger( JSONConstants.VERSION);
-		WriteJSONString( Utf8Encode(message.name));
+		WriteJSONString( BytesFromString(message.name));
 		WriteJSONInteger( message.type);
 		WriteJSONInteger( message.seqid);
 	}
@@ -94,7 +97,7 @@ class TJSONProtocol implements TProtocol {
 	public function writeFieldBegin(field:TField) : Void {
 		WriteJSONInteger( field.id );
 		WriteJSONObjectStart();
-		WriteJSONString( Utf8Encode( JSONConstants.GetTypeNameForTypeID( field.type)));
+		WriteJSONString( BytesFromString( JSONConstants.GetTypeNameForTypeID( field.type)));
 	}
 
 	public function writeFieldEnd() : Void {
@@ -105,8 +108,8 @@ class TJSONProtocol implements TProtocol {
 
 	public function writeMapBegin(map:TMap) : Void {
 		WriteJSONArrayStart();
-		WriteJSONString( Utf8Encode( JSONConstants.GetTypeNameForTypeID( map.keyType)));
-		WriteJSONString( Utf8Encode( JSONConstants.GetTypeNameForTypeID( map.valueType)));
+		WriteJSONString( BytesFromString( JSONConstants.GetTypeNameForTypeID( map.keyType)));
+		WriteJSONString( BytesFromString( JSONConstants.GetTypeNameForTypeID( map.valueType)));
 		WriteJSONInteger( map.size);
 		WriteJSONObjectStart();
 	}
@@ -118,7 +121,7 @@ class TJSONProtocol implements TProtocol {
 
 	public function writeListBegin(list:TList) : Void {
 		WriteJSONArrayStart();
-		WriteJSONString( Utf8Encode( JSONConstants.GetTypeNameForTypeID( list.elemType )));
+		WriteJSONString( BytesFromString( JSONConstants.GetTypeNameForTypeID( list.elemType )));
 		WriteJSONInteger( list.size);
 	}
 
@@ -128,7 +131,7 @@ class TJSONProtocol implements TProtocol {
 
 	public function writeSetBegin(set:TSet) : Void {
 		WriteJSONArrayStart();
-		WriteJSONString( Utf8Encode( JSONConstants.GetTypeNameForTypeID( set.elemType)));
+		WriteJSONString( BytesFromString( JSONConstants.GetTypeNameForTypeID( set.elemType)));
 		WriteJSONInteger( set.size);
 	}
 
@@ -164,7 +167,7 @@ class TJSONProtocol implements TProtocol {
 	}
 
 	public function writeString(str : String) : Void {
-		WriteJSONString( Utf8Encode(str));
+		WriteJSONString( BytesFromString(str));
 	}
 
 	public function writeBinary(bin:Bytes) : Void {
@@ -180,8 +183,7 @@ class TJSONProtocol implements TProtocol {
 										 "Message contained bad version.");
 		}
 
-        var buf = ReadJSONString(false);
-		message.name = Utf8Decode(buf);
+		message.name = ReadJSONString(false);
 		message.type = ReadJSONInteger();
 		message.seqid = ReadJSONInteger();
 		return message;
@@ -211,7 +213,7 @@ class TJSONProtocol implements TProtocol {
 		{
 			field.id = ReadJSONInteger();
 			ReadJSONObjectStart();
-			field.type = JSONConstants.GetTypeIDForTypeName( Utf8Decode( ReadJSONString(false)));
+			field.type = JSONConstants.GetTypeIDForTypeName( ReadJSONString(false));
 		}
 		return field;
 	}
@@ -222,8 +224,8 @@ class TJSONProtocol implements TProtocol {
 
 	public function readMapBegin() : TMap {
 		ReadJSONArrayStart();
-		var KeyType = JSONConstants.GetTypeIDForTypeName( Utf8Decode( ReadJSONString(false)));
-		var ValueType = JSONConstants.GetTypeIDForTypeName( Utf8Decode( ReadJSONString(false)));
+		var KeyType = JSONConstants.GetTypeIDForTypeName( ReadJSONString(false));
+		var ValueType = JSONConstants.GetTypeIDForTypeName( ReadJSONString(false));
 		var Count : Int = ReadJSONInteger();
 		ReadJSONObjectStart();
 
@@ -238,7 +240,7 @@ class TJSONProtocol implements TProtocol {
 
 	public function readListBegin():TList {
 		ReadJSONArrayStart();
-		var ElementType = JSONConstants.GetTypeIDForTypeName( Utf8Decode( ReadJSONString(false)));
+		var ElementType = JSONConstants.GetTypeIDForTypeName( ReadJSONString(false));
 		var Count : Int = ReadJSONInteger();
 
 		var list = new TList( ElementType, Count);
@@ -251,7 +253,7 @@ class TJSONProtocol implements TProtocol {
 
 	public function readSetBegin() : TSet {
 		ReadJSONArrayStart();
-		var ElementType = JSONConstants.GetTypeIDForTypeName( Utf8Decode( ReadJSONString(false)));
+		var ElementType = JSONConstants.GetTypeIDForTypeName( ReadJSONString(false));
 		var Count : Int = ReadJSONInteger();
 
 		var set = new TSet( ElementType, Count);
@@ -263,7 +265,7 @@ class TJSONProtocol implements TProtocol {
 	}
 
 	public function readBool() : Bool {
-		return (ReadJSONInteger() == 0 ? false : true);
+		return (ReadJSONInteger() != 0);
 	}
 
 	public function readByte() : Int {
@@ -287,8 +289,7 @@ class TJSONProtocol implements TProtocol {
 	}
 
 	public function readString() : String {
-        var buf = ReadJSONString(false);
-		return Utf8Decode(buf);
+        return ReadJSONString(false);
 	}
 
 	public function readBinary() : Bytes {
@@ -402,7 +403,6 @@ class TJSONProtocol implements TProtocol {
 			str += JSONConstants.QUOTE;
 		}
 
-trace('WriteJSONInt64($str)');
 		var tmp = BytesFromString( str);
 		trans.write( tmp, 0, tmp.length);
 	}
@@ -502,7 +502,7 @@ trace('WriteJSONInt64($str)');
 
 	// Read in a JSON string, unescaping as appropriate.
     // Skip Reading from the context if skipContext is true.
-	private function ReadJSONString(skipContext : Bool) : Bytes
+	private function ReadJSONString(skipContext : Bool) : String
 	{
 		if (!skipContext)
 		{
@@ -560,7 +560,7 @@ trace('WriteJSONInt64($str)');
 			buffer.addString( String.fromCharCode(charcode));
 		}
 
-		return buffer.getBytes();
+		return StringFromBytes( buffer.getBytes());
 	}
 
 	// Return true if the given byte could be a valid part of a JSON number.
@@ -642,8 +642,6 @@ trace('WriteJSONInt64($str)');
 			ReadJSONSyntaxChar( JSONConstants.QUOTE);
 		}
 
-trace('ReadJSONInt64() = $str');
-		
 	    // process sign
 		var bMinus = false;
 		var startAt = 0;
@@ -689,7 +687,7 @@ trace('ReadJSONInt64() = $str');
 		
 		var str : String = "";
 		if (StringFromBytes(reader.Peek()) == JSONConstants.QUOTE) {
-			str = StringFromBytes( ReadJSONString(true));
+			str = ReadJSONString(true);
 			
 			// special cases
 			if( str == JSONConstants.FLOAT_IS_NAN) {
@@ -729,7 +727,7 @@ trace('ReadJSONInt64() = $str');
 	// Read in a JSON string containing base-64 encoded data and decode it.
 	private function ReadJSONBase64() : Bytes
 	{
-		var str = StringFromBytes( ReadJSONString(false));
+		var str = ReadJSONString(false);
 		return Base64.decode( str);
 	}
 
@@ -758,21 +756,22 @@ trace('ReadJSONInt64() = $str');
 
 	public static function BytesFromString( str : String) : Bytes {
 		var buf = new BytesBuffer();
-		buf.addString( str);
+		if( utf8Strings)
+			buf.addString( str);  // no need to encode on UTF8 targets, the string is just fine
+		else
+			buf.addString( Utf8.encode( str));
 		return buf.getBytes();
 	}
 
 	public static function StringFromBytes( buf : Bytes) : String {
 		var inp = new BytesInput( buf);
-		return inp.readString( buf.length);
-	}
-
-	public static function Utf8Encode(str : String) : Bytes {
-		return BytesFromString( Utf8.encode( str));
-	}
-
-	public static function Utf8Decode( buf : Bytes) : String {
-		return Utf8.decode( StringFromBytes( buf));
+		if( buf.length == 0)
+			return "";  // readString() would return null in that case, which is wrong
+		var str = inp.readString( buf.length);
+		if( utf8Strings)
+			return str;  // no need to decode on UTF8 targets, the string is just fine
+		else
+			return Utf8.decode( str);
 	}
 
 	// Convert a byte containing a hex char ('0'-'9' or 'a'-'f') into its corresponding hex value

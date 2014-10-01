@@ -34,6 +34,9 @@ class Main
 		try {
 			var args = new Arguments();
 			
+			if( args.printHelpOnly) 
+				return;
+			
 			if (args.server)
 				TestServer.Execute(args);
 			else 

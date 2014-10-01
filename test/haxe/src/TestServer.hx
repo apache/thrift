@@ -53,7 +53,8 @@ class TestServer
 			if ( args.framed) {
 				trace("- framed transport");
 				transfactory = new TFramedTransportFactory();
-			} else if ( args.buffered) {
+			} 
+			if ( args.buffered) {
 				trace("- buffered transport");
 				throw "TBufferedTransport not implemented yet";
 				//transfactory = new TBufferedTransportFactory();
@@ -79,14 +80,23 @@ class TestServer
 			var processor = new ThriftTestProcessor(handler);
 
 			// Simple Server
-			var server = new TSimpleServer( processor, transport, transfactory, protfactory);
+			var server : TServer = null; 
+			switch( args.servertype)
+			{
+			case simple:
+				server = new TSimpleServer( processor, transport, transfactory, protfactory);
+			default:
+				throw "Unhandled server type";
+			}
 				
 
 			/*
 			// Server event handler
-			var events = new TestServerEventHandler();
-			server.setEventHandler(serverEvents);
-			handler.server = serverEngine;
+			if( args.serverEvents) {
+				var events = new TestServerEventHandler();
+				server.setEventHandler(serverEvents);
+				handler.server = serverEngine;
+			}
 			*/
 
 			// Run it

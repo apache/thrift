@@ -154,12 +154,8 @@ class Main {
 		 	trace('- socket transport $targetHost:$targetPort');
 			transport = new TSocket( targetHost, targetPort);
         case http:
-		 	trace("- http transport $targetHost");
-			#if flash
-		 	transport = new THttpClient( new flash.net.URLRequest(targetHost));
-			#else
+		 	trace('- HTTP transport $targetHost');
 			transport = new THttpClient( targetHost);
-			#end
 		default:
 			throw "Unhandled transport";
 		}
