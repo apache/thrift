@@ -23,6 +23,7 @@ import sys, glob
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option('--genpydir', type='string', dest='genpydir', default='gen-py')
+parser.add_option('-s', type='string', dest='test', default='test-py')
 options, args = parser.parse_args()
 del sys.argv[1:] # clean up hack so unittest doesn't complain
 sys.path.insert(0, options.genpydir)
@@ -36,6 +37,7 @@ from thrift.protocol import TBinaryProtocol, TCompactProtocol, TJSONProtocol
 from thrift.TSerialization import serialize, deserialize
 import unittest
 import time
+from thrift.protocol.TProtocol import TProtocolException
 
 class AbstractTest(unittest.TestCase):
 
@@ -78,7 +80,7 @@ class AbstractTest(unittest.TestCase):
           )
 
       self.compact_struct = CompactProtoTestStruct(
-          a_byte = 127,
+          a_byte=127,
           a_i16=32000,
           a_i32=1000000000,
           a_i64=0xffffffffff,
@@ -266,6 +268,22 @@ class AbstractTest(unittest.TestCase):
     self.assertEquals(obj, self.compact_struct)
     rep = repr(self.compact_struct)
     self.assertTrue(len(rep) > 0)
+
+  def testUnhappyPath(self):
+    # We expect failures to happen, we are checking for them
+    bad_values = [CompactProtoTestStruct(a_byte=128), CompactProtoTestStruct(a_byte=-129),
+                  CompactProtoTestStruct(a_i16=32768), CompactProtoTestStruct(a_i16=-32769),
+                  CompactProtoTestStruct(a_i32=2147483648), CompactProtoTestStruct(a_i32=-2147483649),
+                  CompactProtoTestStruct(a_i64=9223372036854775808), CompactProtoTestStruct(a_i64=-9223372036854775809)
+                  ]
+
+    for value in bad_values:
+      try:
+        self._serialize(value)
+      except Exception:
+        pass
+      else:
+        raise TProtocolException("We didn't error out using: %s" % value)
 
 class NormalBinaryTest(AbstractTest):
   protocol_factory = TBinaryProtocol.TBinaryProtocolFactory()
