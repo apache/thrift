@@ -27,6 +27,7 @@
 #include "parse/t_program.h"
 #include "globals.h"
 #include "t_generator_registry.h"
+#include "IndentKeeper.h"
 
 /**
  * Base class for a thrift code generator. This class defines the basic
@@ -34,11 +35,10 @@
  * dispatches code generation across various components.
  *
  */
-class t_generator {
+class t_generator : protected apache::thrift::compiler::IndentKeeper {
  public:
   t_generator(t_program* program) {
     tmp_ = 0;
-    indent_ = 0;
     program_ = program;
     program_name_ = get_program_name(program);
     escape_['\n'] = "\\n";
@@ -152,37 +152,6 @@ class t_generator {
   }
 
   /**
-   * Indentation level modifiers
-   */
-
-  void indent_up(){
-    ++indent_;
-  }
-
-  void indent_down() {
-    --indent_;
-  }
-
-  /**
-   * Indentation print function
-   */
-  std::string indent() {
-    std::string ind = "";
-    int i;
-    for (i = 0; i < indent_; ++i) {
-      ind += "  ";
-    }
-    return ind;
-  }
-
-  /**
-   * Indentation utility wrapper
-   */
-  std::ostream& indent(std::ostream &os) {
-    return os << indent();
-  }
-
-  /**
    * Capitalization helpers
    */
   std::string capitalize(std::string in) {
@@ -286,11 +255,6 @@ class t_generator {
   std::map<char, std::string> escape_;
 
  private:
-  /**
-   * Current code indentation level
-   */
-  int indent_;
-
   /**
    * Temporary variable counter, for making unique variable names
    */

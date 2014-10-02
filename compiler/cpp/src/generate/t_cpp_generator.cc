@@ -33,6 +33,7 @@
 
 #include "platform.h"
 #include "t_oop_generator.h"
+#include "ScopeGuard.h"
 
 using std::map;
 using std::ofstream;
@@ -1737,65 +1738,96 @@ void t_cpp_generator::generate_struct_swap(ofstream& out, t_struct* tstruct) {
   out << endl;
 }
 
+class StructOstreamOperatorGenerator
+  : public apache::thrift::compiler::OutputGenerator {
+public:
+  StructOstreamOperatorGenerator(std::ofstream& out)
+    : apache::thrift::compiler::OutputGenerator(out),
+      tstruct_(NULL)
+  {}
+
+  void generate_declaration(t_struct* tstruct) {
+    out() << "std::ostream& operator<<(std::ostream& out, const "
+          << tstruct->get_name() << "& obj)";
+  }
+
+  void generate(t_struct* tstruct) {
+    tstruct_ = tstruct;
+    generate_declaration(tstruct_);
+    generate_body();
+  }
+
+private:
+  void generate_body() {
+    apache::thrift::compiler::ScopeGuard guard(*this);
+    generate_header();
+    generate_output_for_all_items();
+    generate_footer();
+  }
+
+  void generate_header() {
+    indented() << "using apache::thrift::to_string;" << endl;
+    indented() << "out << \"" << tstruct_->get_name() << "(\";" << endl;
+  }
+
+  void generate_output_for_all_items() {
+    const vector<t_field*>::const_iterator beg = tstruct_->get_members().begin();
+    const vector<t_field*>::const_iterator end = tstruct_->get_members().end();
+
+    for (vector<t_field*>::const_iterator it = beg; it != end; ++it) {
+      indented() << "out << ";
+
+      if (it != beg) {
+        out() << "\", \" << ";
+      }
+
+      generate_field(*it);
+      out() << ";" << endl;
+    }
+  }
+
+  void generate_footer() {
+    indented() << "out << \")\";" << endl;
+    indented() << "return out;" << endl;
+  }
+
+  void generate_field(const t_field* field)
+  {
+    generate_field_name(field);
+    generate_field_value(field);
+  }
+
+  void generate_field_value(const t_field* field)
+  {
+    if (field->get_req() == t_field::T_OPTIONAL)
+      generate_optional_field_value(field);
+    else
+      generate_required_field_value(field);
+  }
+
+  void generate_field_name(const t_field* field)
+  {
+    out() << "\"" << field->get_name() << "=\"";
+  }
+
+  void generate_required_field_value(const t_field* field)
+  {
+    out() << " << to_string(obj." << field->get_name() << ")";
+  }
+
+  void generate_optional_field_value(const t_field* field)
+  {
+    out() << "; (obj.__isset." << field->get_name() << " ? (out";
+    generate_required_field_value(field);
+    out() << ") : (out << \"<null>\"))";
+  }
+
+  t_struct* tstruct_;
+};
+
 void t_cpp_generator::generate_struct_ostream_operator_decl(std::ofstream& out,
                                                             t_struct* tstruct) {
-  out << "std::ostream& operator<<(std::ostream& out, const "
-      << tstruct->get_name() << "& obj)";
-}
-
-namespace struct_ostream_operator_generator
-{
-void generate_required_field_value(std::ofstream& out, const t_field* field)
-{
-  out << " << to_string(obj." << field->get_name() << ")";
-}
-
-void generate_optional_field_value(std::ofstream& out, const t_field* field)
-{
-  out << "; (obj.__isset." << field->get_name() << " ? (out";
-  generate_required_field_value(out, field);
-  out << ") : (out << \"<null>\"))";
-}
-
-void generate_field_value(std::ofstream& out, const t_field* field)
-{
-  if (field->get_req() == t_field::T_OPTIONAL)
-    generate_optional_field_value(out, field);
-  else
-    generate_required_field_value(out, field);
-}
-
-void generate_field_name(std::ofstream& out, const t_field* field)
-{
-  out << "\"" << field->get_name() << "=\"";
-}
-
-void generate_field(std::ofstream& out, const t_field* field)
-{
-  generate_field_name(out, field);
-  generate_field_value(out, field);
-}
-
-void generate_fields(std::ofstream& out,
-                     const vector<t_field*>& fields,
-                     const std::string& indent)
-{
-  const vector<t_field*>::const_iterator beg = fields.begin();
-  const vector<t_field*>::const_iterator end = fields.end();
-
-  for (vector<t_field*>::const_iterator it = beg; it != end; ++it) {
-    out << indent << "out << ";
-
-    if (it != beg) {
-      out << "\", \" << ";
-    }
-
-    generate_field(out, *it);
-    out << ";" << endl;
-  }
-}
-
-
+  StructOstreamOperatorGenerator(out).generate_declaration(tstruct);
 }
 
 /**
@@ -1803,26 +1835,9 @@ void generate_fields(std::ofstream& out,
  */
 void t_cpp_generator::generate_struct_ostream_operator(std::ofstream& out,
                                                        t_struct* tstruct) {
-  out << indent();
-  generate_struct_ostream_operator_decl(out, tstruct);
-  out << " {" << endl;
-
-  indent_up();
-
-  out <<
-    indent() << "using apache::thrift::to_string;" << endl <<
-    indent() << "out << \"" << tstruct->get_name() << "(\";" << endl;
-
-  struct_ostream_operator_generator::generate_fields(out,
-                                                     tstruct->get_members(),
-                                                     indent());
-
-  out <<
-    indent() << "out << \")\";" << endl <<
-    indent() << "return out;" << endl;
-
-  indent_down();
-  out << "}" << endl << endl;
+  StructOstreamOperatorGenerator generator(out);
+  generator.set_indent(get_indent());
+  generator.generate(tstruct);
 }
 
 
