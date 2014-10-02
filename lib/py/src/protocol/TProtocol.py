@@ -402,6 +402,12 @@ class TProtocolBase:
     else:
       writer(val)
 
+def checkIntegerLimits(i, bits):
+    lo = -(2 ** (bits - 1))
+    hi = 2 ** (bits - 1) - 1
+    if not lo <= i <= hi:
+        raise TProtocolException(TProtocolException.INVALID_DATA,
+                                 "i%d value: %d is outside range: [%d, %d]" % (bits, i, lo, hi))
 
 class TProtocolFactory:
   def getProtocol(self, trans):
