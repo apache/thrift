@@ -26,6 +26,7 @@ THRIFT_FILES = $(wildcard ../*.thrift)
 	for f in $(THRIFT_FILES) ; do \
 	  $(THRIFT) --gen erl $$f ; \
 	done ; \
+	$(THRIFT) --gen erl:legacynames LegacyNames.thrift
 	touch .generated
 
 check: .generated

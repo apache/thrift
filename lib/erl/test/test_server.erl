@@ -21,7 +21,7 @@
 
 -export([go/0, go/1, start_link/2, handle_function/2]).
 
--include("gen-erl/thriftTest_types.hrl").
+-include("gen-erl/thrift_test_types.hrl").
 
 -record(options, {port = 9090,
                   server_opts = []}).
@@ -82,7 +82,7 @@ handle_function(testDouble, {Double}) when is_float(Double) ->
     {reply, Double};
 
 handle_function(testStruct,
-                {Struct = #xtruct{string_thing = String,
+                {Struct = #'Xtruct'{string_thing = String,
                                  byte_thing = Byte,
                                  i32_thing = I32,
                                  i64_thing = I64}})
@@ -94,8 +94,8 @@ when is_binary(String),
     {reply, Struct};
 
 handle_function(testNest,
-                {Nest}) when is_record(Nest, xtruct2),
-                             is_record(Nest#xtruct2.struct_thing, xtruct) ->
+                {Nest}) when is_record(Nest, 'Xtruct2'),
+                             is_record(Nest#'Xtruct2'.struct_thing, 'Xtruct') ->
     io:format("testNest: ~p~n", [Nest]),
     {reply, Nest};
 
@@ -130,30 +130,30 @@ handle_function(testMapMap, {Hello}) ->
                              {-4, dict:from_list(NegList)}]),
     {reply, MapMap};
 
-handle_function(testInsanity, {Insanity}) when is_record(Insanity, insanity) ->
-    Hello = #xtruct{string_thing = <<"Hello2">>,
+handle_function(testInsanity, {Insanity}) when is_record(Insanity, 'Insanity') ->
+    Hello = #'Xtruct'{string_thing = <<"Hello2">>,
                     byte_thing = 2,
                     i32_thing = 2,
                     i64_thing = 2},
 
-    Goodbye = #xtruct{string_thing = <<"Goodbye4">>,
+    Goodbye = #'Xtruct'{string_thing = <<"Goodbye4">>,
                       byte_thing = 4,
                       i32_thing = 4,
                       i64_thing = 4},
-    Crazy = #insanity{
-      userMap = dict:from_list([{?thriftTest_Numberz_EIGHT, 8}]),
+    Crazy = #'Insanity'{
+      userMap = dict:from_list([{?THRIFT_TEST_NUMBERZ_EIGHT, 8}]),
       xtructs = [Goodbye]
       },
 
-    Looney = #insanity{
-      userMap = dict:from_list([{?thriftTest_Numberz_FIVE, 5}]),
+    Looney = #'Insanity'{
+      userMap = dict:from_list([{?THRIFT_TEST_NUMBERZ_FIVE, 5}]),
       xtructs = [Hello]
       },
 
-    FirstMap = dict:from_list([{?thriftTest_Numberz_TWO, Crazy},
-                               {?thriftTest_Numberz_THREE, Crazy}]),
+    FirstMap = dict:from_list([{?THRIFT_TEST_NUMBERZ_TWO, Crazy},
+                               {?THRIFT_TEST_NUMBERZ_THREE, Crazy}]),
 
-    SecondMap = dict:from_list([{?thriftTest_Numberz_SIX, Looney}]),
+    SecondMap = dict:from_list([{?THRIFT_TEST_NUMBERZ_SIX, Looney}]),
 
     Insane = dict:from_list([{1, FirstMap},
                              {2, SecondMap}]),
@@ -170,7 +170,7 @@ handle_function(testMulti, Args = {Arg0, Arg1, Arg2, _Arg3, Arg4, Arg5})
        is_integer(Arg5) ->
 
     io:format("testMulti(~p)~n", [Args]),
-    {reply, #xtruct{string_thing = <<"Hello2">>,
+    {reply, #'Xtruct'{string_thing = <<"Hello2">>,
                     byte_thing = Arg0,
                     i32_thing = Arg1,
                     i64_thing = Arg2}};
@@ -179,7 +179,7 @@ handle_function(testException, {String}) when is_binary(String) ->
     io:format("testException(~p)~n", [String]),
     case String of
         <<"Xception">> ->
-            throw(#xception{errorCode = 1001,
+            throw(#'Xception'{errorCode = 1001,
                             message = String});
         _ ->
             ok
@@ -189,14 +189,14 @@ handle_function(testMultiException, {Arg0, Arg1}) ->
     io:format("testMultiException(~p, ~p)~n", [Arg0, Arg1]),
     case Arg0 of
         <<"Xception">> ->
-            throw(#xception{errorCode = 1001,
+            throw(#'Xception'{errorCode = 1001,
                                    message = <<"This is an Xception">>});
         <<"Xception2">> ->
-            throw(#xception2{errorCode = 2002,
+            throw(#'Xception2'{errorCode = 2002,
                                     struct_thing =
-                                    #xtruct{string_thing = <<"This is an Xception2">>}});
+                                    #'Xtruct'{string_thing = <<"This is an Xception2">>}});
         _ ->
-            {reply, #xtruct{string_thing = Arg1}}
+            {reply, #'Xtruct'{string_thing = Arg1}}
     end;
 
 handle_function(testOneway, {Seconds}) ->

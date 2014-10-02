@@ -199,6 +199,12 @@ class t_generator {
     }
     return in;
   }
+  static std::string uppercase(std::string in) {
+    for (size_t i = 0; i < in.size(); ++i) {
+      in[i] = toupper(in[i]);
+    }
+    return in;
+  }
   /**
    * Transforms a camel case string to an equivalent one separated by underscores
    * e.g. aMultiWord -> a_multi_word
