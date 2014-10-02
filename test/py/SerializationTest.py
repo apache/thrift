@@ -23,7 +23,6 @@ import sys, glob
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option('--genpydir', type='string', dest='genpydir', default='gen-py')
-parser.add_option('-s', type='string', dest='test', default='test-py')
 options, args = parser.parse_args()
 del sys.argv[1:] # clean up hack so unittest doesn't complain
 sys.path.insert(0, options.genpydir)
@@ -269,7 +268,7 @@ class AbstractTest(unittest.TestCase):
     rep = repr(self.compact_struct)
     self.assertTrue(len(rep) > 0)
 
-  def testUnhappyPath(self):
+  def testIntegerBoundaries(self):
     # We expect failures to happen, we are checking for them
     bad_values = [CompactProtoTestStruct(a_byte=128), CompactProtoTestStruct(a_byte=-129),
                   CompactProtoTestStruct(a_i16=32768), CompactProtoTestStruct(a_i16=-32769),
