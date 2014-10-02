@@ -21,7 +21,7 @@
 
 -export([start/0, start/1]).
 
--include("gen-erl/thriftTest_types.hrl").
+-include("gen-erl/thrift_test_types.hrl").
 
 -record(options, {port = 9090,
                   client_opts = []}).
@@ -50,15 +50,15 @@ start() -> start([]).
 start(Args) ->
   #options{port = Port, client_opts = ClientOpts} = parse_args(Args),
   {ok, Client0} = thrift_client_util:new(
-    "127.0.0.1", Port, thriftTest_thrift, ClientOpts),
+    "127.0.0.1", Port, thrift_test_thrift, ClientOpts),
 
-  DemoXtruct = #xtruct{
+  DemoXtruct = #'Xtruct'{
     string_thing = <<"Zero">>,
     byte_thing = 1,
     i32_thing = 9128361,
     i64_thing = 9223372036854775807},
 
-  DemoNest = #xtruct2{
+  DemoNest = #'Xtruct2'{
     byte_thing = 7,
     struct_thing = DemoXtruct,
     % Note that we don't set i32_thing, it will come back as undefined
@@ -88,7 +88,7 @@ start(Args) ->
   {Client11, {ok, DemoDict}}        = thrift_client:call(Client10, testMap, [DemoDict]),
   {Client12, {ok, DemoSet}}         = thrift_client:call(Client11, testSet, [DemoSet]),
   {Client13, {ok, [-1,2,3]}}        = thrift_client:call(Client12, testList, [[-1,2,3]]),
-  {Client14, {ok, 1}}               = thrift_client:call(Client13, testEnum, [?thriftTest_Numberz_ONE]),
+  {Client14, {ok, 1}}               = thrift_client:call(Client13, testEnum, [?THRIFT_TEST_NUMBERZ_ONE]),
   {Client15, {ok, 309858235082523}} = thrift_client:call(Client14, testTypedef, [309858235082523]),
 
   % No python implementation, but works with C++ and Erlang.
@@ -96,7 +96,7 @@ start(Args) ->
   %io:format("~p~n", [InsaneResult]),
   Client16 = Client15,
 
-  {Client17, {ok, #xtruct{string_thing = <<"Message">>}}} =
+  {Client17, {ok, #'Xtruct'{string_thing = <<"Message">>}}} =
     thrift_client:call(Client16, testMultiException, ["Safe", "Message"]),
 
   Client18 =
@@ -105,10 +105,10 @@ start(Args) ->
       io:format("Unexpected return! ~p~n", [Result1]),
       ClientS1
     catch
-      throw:{ClientS2, {exception, ExnS1 = #xception{}}} ->
-        #xception{errorCode = 1001, message = <<"This is an Xception">>} = ExnS1,
+      throw:{ClientS2, {exception, ExnS1 = #'Xception'{}}} ->
+        #'Xception'{errorCode = 1001, message = <<"This is an Xception">>} = ExnS1,
         ClientS2;
-      throw:{ClientS2, {exception, _ExnS1 = #xception2{}}} ->
+      throw:{ClientS2, {exception, _ExnS1 = #'Xception2'{}}} ->
         io:format("Wrong exception type!~n", []),
         ClientS2
     end,
@@ -119,12 +119,12 @@ start(Args) ->
       io:format("Unexpected return! ~p~n", [Result2]),
       ClientS3
     catch
-      throw:{ClientS4, {exception, _ExnS2 = #xception{}}} ->
+      throw:{ClientS4, {exception, _ExnS2 = #'Xception'{}}} ->
         io:format("Wrong exception type!~n", []),
         ClientS4;
-      throw:{ClientS4, {exception, ExnS2 = #xception2{}}} ->
-        #xception2{errorCode = 2002,
-                   struct_thing = #xtruct{
+      throw:{ClientS4, {exception, ExnS2 = #'Xception2'{}}} ->
+        #'Xception2'{errorCode = 2002,
+                   struct_thing = #'Xtruct'{
                      string_thing = <<"This is an Xception2">>}} = ExnS2,
         ClientS4
     end,
