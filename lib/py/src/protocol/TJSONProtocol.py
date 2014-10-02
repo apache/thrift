@@ -17,7 +17,8 @@
 # under the License.
 #
 
-from TProtocol import TType, TProtocolBase, TProtocolException
+from TProtocol import TType, TProtocolBase, TProtocolException, \
+    checkIntegerLimits
 import base64
 import json
 import math
@@ -449,12 +450,21 @@ class TJSONProtocol(TJSONProtocolBase):
   def writeBool(self, boolean):
     self.writeJSONNumber(1 if boolean is True else 0)
 
-  def writeInteger(self, integer):
-    self.writeJSONNumber(integer)
-  writeByte = writeInteger
-  writeI16 = writeInteger
-  writeI32 = writeInteger
-  writeI64 = writeInteger
+  def writeByte(self, byte):
+    checkIntegerLimits(byte, 8)
+    self.writeJSONNumber(byte)
+
+  def writeI16(self, i16):
+    checkIntegerLimits(i16, 16)
+    self.writeJSONNumber(i16)
+
+  def writeI32(self, i32):
+    checkIntegerLimits(i32, 32)
+    self.writeJSONNumber(i32)
+
+  def writeI64(self, i64):
+    checkIntegerLimits(i64, 64)
+    self.writeJSONNumber(i64)
 
   def writeDouble(self, dbl):
     self.writeJSONNumber(dbl)
@@ -524,12 +534,21 @@ class TSimpleJSONProtocol(TJSONProtocolBase):
     writeSetBegin = _writeCollectionBegin
     writeSetEnd = _writeCollectionEnd
 
-    def writeInteger(self, integer):
-        self.writeJSONNumber(integer)
-    writeByte = writeInteger
-    writeI16 = writeInteger
-    writeI32 = writeInteger
-    writeI64 = writeInteger
+    def writeByte(self, byte):
+        checkIntegerLimits(byte, 8)
+        self.writeJSONNumber(byte)
+
+    def writeI16(self, i16):
+        checkIntegerLimits(i16, 16)
+        self.writeJSONNumber(i16)
+
+    def writeI32(self, i32):
+        checkIntegerLimits(i32, 32)
+        self.writeJSONNumber(i32)
+
+    def writeI64(self, i64):
+        checkIntegerLimits(i64, 64)
+        self.writeJSONNumber(i64)
     
     def writeBool(self, boolean):
         self.writeJSONNumber(1 if boolean is True else 0)
