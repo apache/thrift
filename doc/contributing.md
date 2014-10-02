@@ -1,7 +1,7 @@
 ## How to contribute
 
- 1. Make sure your issue is not all ready in the [Jira issue tracker]({{ conf.jira_url }})
- 1. If not, create a ticket describing the change you're proposing in the [Jira issue tracker]({{ conf.jira_url }})
+ 1. Make sure your issue is not all ready in the [Jira issue tracker]()
+ 1. If not, create a ticket describing the change you're proposing in the [Jira issue tracker]({% block content %} {{ conf.jira_url }} {% endblock %})
  1. Contribute your patch using one of the two methods below
  
 ### Contributing via a patch
