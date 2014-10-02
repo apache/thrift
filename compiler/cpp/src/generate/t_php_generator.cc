@@ -1145,6 +1145,7 @@ bool t_php_generator::needs_php_write_validator(t_struct* tstruct, bool is_resul
   return (validate_ &&
           !is_result &&
           !tstruct->is_union() &&
+          !tstruct->is_xception() &&
           get_php_num_required_fields(tstruct->get_members(), true) > 0);
 }
 
