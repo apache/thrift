@@ -20,12 +20,12 @@
 THRIFT = $(top_srcdir)/compiler/cpp/thrift
 
 stubs: ../ThriftTest.thrift ../SmallTest.thrift
-    $(THRIFT) --gen rb ../ThriftTest.thrift
-    $(THRIFT) --gen rb ../SmallTest.thrift
+	$(THRIFT) --gen rb ../ThriftTest.thrift
+	$(THRIFT) --gen rb ../SmallTest.thrift
 
 check: stubs
 if HAVE_BUNDLER
-    $(BUNDLER) install
-    $(BUNDLER) exec $(RUBY) -I. test_suite.rb
+	$(BUNDLER) install
+	$(BUNDLER) exec $(RUBY) -I. test_suite.rb
 endif
 

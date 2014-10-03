@@ -26,17 +26,17 @@ EXTRA_DIST = \
   src
 
 all-local:
-    $(CABAL) install
+	$(CABAL) install
 
 install-exec-hook:
-    $(CABAL) install
+	$(CABAL) install
 
 # Make sure this doesn't fail if Haskell is not configured.
 clean-local:
-    $(CABAL) clean
+	$(CABAL) clean
 
 maintainer-clean-local:
-    $(CABAL) clean
+	$(CABAL) clean
 
 check-local:
-    $(CABAL) check
+	$(CABAL) check

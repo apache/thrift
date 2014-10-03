@@ -20,42 +20,42 @@
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 gen-go/tutorial/calculator.go gen-go/shared/shared_service.go: $(top_srcdir)/tutorial/tutorial.thrift
-    $(THRIFT) --gen go -r $<
+	$(THRIFT) --gen go -r $<
 
 all-local: gen-go/tutorial/calculator.go
 
 
 check: src/git.apache.org/thrift.git/lib/go/thrift
-    $(THRIFT) -r --gen go $(top_srcdir)/tutorial/tutorial.thrift
-    cp -r gen-go/* src/
-    GOPATH=`pwd` $(GO) build ./...
-    GOPATH=`pwd` $(GO) build -o go-tutorial src/*.go
-    GOPATH=`pwd` $(GO) build -o calculator-remote src/tutorial/calculator-remote/calculator-remote.go
+	$(THRIFT) -r --gen go $(top_srcdir)/tutorial/tutorial.thrift
+	cp -r gen-go/* src/
+	GOPATH=`pwd` $(GO) build ./...
+	GOPATH=`pwd` $(GO) build -o go-tutorial src/*.go
+	GOPATH=`pwd` $(GO) build -o calculator-remote src/tutorial/calculator-remote/calculator-remote.go
 
 src/git.apache.org/thrift.git/lib/go/thrift:
-    mkdir -p src/git.apache.org/thrift.git/lib/go
-    ln -sf $(realpath $(top_srcdir)/lib/go/thrift) src/git.apache.org/thrift.git/lib/go/thrift
+	mkdir -p src/git.apache.org/thrift.git/lib/go
+	ln -sf $(realpath $(top_srcdir)/lib/go/thrift) src/git.apache.org/thrift.git/lib/go/thrift
 
 tutorialserver: all
-    GOPATH=`pwd` $(GO) run src/*.go -server=true
+	GOPATH=`pwd` $(GO) run src/*.go -server=true
 
 tutorialclient: all
-    GOPATH=`pwd` $(GO) run src/*.go
+	GOPATH=`pwd` $(GO) run src/*.go 
 
 tutorialsecureserver: all
-    GOPATH=`pwd` $(GO) run src/*.go -server=true -secure=true
+	GOPATH=`pwd` $(GO) run src/*.go -server=true -secure=true
 
 tutorialsecureclient: all
-    GOPATH=`pwd` $(GO) run src/*.go -secure=true
+	GOPATH=`pwd` $(GO) run src/*.go -secure=true
 
 clean-local:
-    $(RM) -r gen-* src/shared src/tutorial src/git.apache.org go-tutorial calculator-remote
+	$(RM) -r gen-* src/shared src/tutorial src/git.apache.org go-tutorial calculator-remote
 
 EXTRA_DIST = \
-    src/client.go \
-    src/handler.go \
-    src/server.go \
-    src/main.go \
-    server.crt \
-    server.key
+	src/client.go \
+	src/handler.go \
+	src/server.go \
+	src/main.go \
+	server.crt \
+	server.key
 

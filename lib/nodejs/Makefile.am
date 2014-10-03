@@ -19,20 +19,20 @@
 THRIFT = $(top_srcdir)/compiler/cpp/thrift
 
 #stubs: $(top_srcdir)/test/ThriftTest.thrift
-#    $(THRIFT) --gen js:node -o test/ $(top_srcdir)/test/ThriftTest.thrift
+#	$(THRIFT) --gen js:node -o test/ $(top_srcdir)/test/ThriftTest.thrift
 
 deps: package.json
-    $(NPM) install --no-bin-links
+	$(NPM) install --no-bin-links
 
 check: deps
-    $(NPM) test
+	$(NPM) test
 
 clean-local:
-    $(RM) -r test/gen-nodejs
+	$(RM) -r test/gen-nodejs
 
 EXTRA_DIST = \
-    examples \
-    lib \
-    package.json \
-    test \
-    README.md
+	examples \
+	lib \
+	package.json \
+	test \
+	README.md
