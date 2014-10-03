@@ -316,7 +316,7 @@ begin
   Console.WriteLine('testMultiException(' + arg0 + ', ' + arg1 + ')');
   if ( arg0 = 'Xception') then
   begin
-    raise TXception.Create( 1001, 'This is an Xception');  // test the new rich CTOR 
+    raise TXception.Create( 1001, 'This is an Xception');  // test the new rich CTOR
   end else
   if ( arg0 = 'Xception2') then
   begin
@@ -473,8 +473,8 @@ class procedure TTestServer.LaunchAnonPipeChild( const app : string; const trans
 //This is a simple example and does not include elevation or other
 //advanced features.
 var pi : PROCESS_INFORMATION;
-		si : STARTUPINFO;
-		sArg, sHandles, sCmdLine : string;
+        si : STARTUPINFO;
+        sArg, sHandles, sCmdLine : string;
     i : Integer;
 begin
   GetStartupInfo( si);  //set startupinfo for the spawned process
@@ -505,7 +505,7 @@ begin
   Win32Check( CreateProcess( nil, PChar(sCmdLine), nil,nil,TRUE,0,nil,nil,si,pi));
 
   CloseHandle( pi.hThread);
-	CloseHandle( pi.hProcess);
+    CloseHandle( pi.hProcess);
 end;
 
 

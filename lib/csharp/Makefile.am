@@ -76,15 +76,15 @@ endif
 all-local: Thrift.dll
 
 Thrift.dll: $(THRIFTCODE)
-	$(CSC) $(THRIFTCODE) /out:Thrift.dll /target:library /reference:System.Web $(MONO_DEFINES)
+    $(CSC) $(THRIFTCODE) /out:Thrift.dll /target:library /reference:System.Web $(MONO_DEFINES)
 
 clean-local:
-	$(RM) Thrift.dll
+    $(RM) Thrift.dll
 
 # run csharp tests?
 # check:
-# 	cd test/ThriftTest && ./maketest.sh
-# 	cd test/Multiplex && ./maketest.sh
+#     cd test/ThriftTest && ./maketest.sh
+#     cd test/Multiplex && ./maketest.sh
 
 EXTRA_DIST = \
              $(THRIFTCODE) \

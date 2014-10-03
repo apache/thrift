@@ -28,8 +28,8 @@ using Test.Multiplex;
 
 namespace Test.Multiplex.Server
 {
-	public class TestServer
-	{
+    public class TestServer
+    {
         public interface ITestHandler
         {
             void SetServer( TServer aServer);
@@ -38,7 +38,7 @@ namespace Test.Multiplex.Server
         protected class TestHandlerImpl : ITestHandler
         {
             private TServer Server;
-    
+
             public void SetServer( TServer aServer)
             {
                 Server = aServer;
@@ -53,7 +53,7 @@ namespace Test.Multiplex.Server
                 int prev, next, result;
                 prev   = 0;
                 result = 1;
-                while( n > 0) 
+                while( n > 0)
                 {
                     next   = result + prev;
                     prev   = result;
@@ -110,7 +110,7 @@ namespace Test.Multiplex.Server
                (benchHandler as ITestHandler).SetServer(null);
                (aggrHandler as ITestHandler).SetServer(null);
 
-           } 
+           }
            catch( Exception e)
            {
                Console.WriteLine( e.Message);
@@ -118,7 +118,7 @@ namespace Test.Multiplex.Server
            Console.WriteLine( "done.");
        }
 
-        
+
        static void Main(string[] args)
        {
            Execute();

@@ -23,77 +23,77 @@ using System.Reflection;
 using Thrift.Protocol;
 
 namespace Thrift.Transport {
-	public class TMemoryBuffer : TTransport {
+    public class TMemoryBuffer : TTransport {
 
-		private readonly MemoryStream byteStream;
+        private readonly MemoryStream byteStream;
 
-		public TMemoryBuffer() {
-			byteStream = new MemoryStream();
-		}
+        public TMemoryBuffer() {
+            byteStream = new MemoryStream();
+        }
 
-		public TMemoryBuffer(byte[] buf) {
-			byteStream = new MemoryStream(buf);
-		}
+        public TMemoryBuffer(byte[] buf) {
+            byteStream = new MemoryStream(buf);
+        }
 
-		public override void Open() {
-			/** do nothing **/
-		}
+        public override void Open() {
+            /** do nothing **/
+        }
 
-		public override void Close() {
-			/** do nothing **/
-		}
+        public override void Close() {
+            /** do nothing **/
+        }
 
-		public override int Read(byte[] buf, int off, int len) {
-			return byteStream.Read(buf, off, len);
-		}
+        public override int Read(byte[] buf, int off, int len) {
+            return byteStream.Read(buf, off, len);
+        }
 
-		public override void Write(byte[] buf, int off, int len) {
-			byteStream.Write(buf, off, len);
-		}
+        public override void Write(byte[] buf, int off, int len) {
+            byteStream.Write(buf, off, len);
+        }
 
-		public byte[] GetBuffer() {
-			return byteStream.ToArray();
-		}
+        public byte[] GetBuffer() {
+            return byteStream.ToArray();
+        }
 
 
-		public override bool IsOpen {
-			get { return true; }
-		}
+        public override bool IsOpen {
+            get { return true; }
+        }
 
-		public static byte[] Serialize(TAbstractBase s) {
-			var t = new TMemoryBuffer();
-			var p = new TBinaryProtocol(t);
+        public static byte[] Serialize(TAbstractBase s) {
+            var t = new TMemoryBuffer();
+            var p = new TBinaryProtocol(t);
 
-			s.Write(p);
+            s.Write(p);
 
-			return t.GetBuffer();
-		}
+            return t.GetBuffer();
+        }
 
-		public static T DeSerialize<T>(byte[] buf) where T : TAbstractBase {
-			var trans = new TMemoryBuffer(buf);
-			var p = new TBinaryProtocol(trans);
-			if (typeof (TBase).IsAssignableFrom(typeof (T))) {
-				var method = typeof (T).GetMethod("Read", BindingFlags.Instance | BindingFlags.Public);
-				var t = Activator.CreateInstance<T>();
-				method.Invoke(t, new object[] {p});
-				return t;
-			 } else {
-			       var method = typeof (T).GetMethod("Read", BindingFlags.Static | BindingFlags.Public);
-				return (T) method.Invoke(null, new object[] {p});
-			}
-		}
+        public static T DeSerialize<T>(byte[] buf) where T : TAbstractBase {
+            var trans = new TMemoryBuffer(buf);
+            var p = new TBinaryProtocol(trans);
+            if (typeof (TBase).IsAssignableFrom(typeof (T))) {
+                var method = typeof (T).GetMethod("Read", BindingFlags.Instance | BindingFlags.Public);
+                var t = Activator.CreateInstance<T>();
+                method.Invoke(t, new object[] {p});
+                return t;
+             } else {
+                   var method = typeof (T).GetMethod("Read", BindingFlags.Static | BindingFlags.Public);
+                return (T) method.Invoke(null, new object[] {p});
+            }
+        }
 
-		private bool _IsDisposed;
+        private bool _IsDisposed;
 
-		// IDisposable
-		protected override void Dispose(bool disposing) {
-			if (!_IsDisposed) {
-				if (disposing) {
-					if (byteStream != null)
-						byteStream.Dispose();
-				}
-			}
-			_IsDisposed = true;
-		}
-	}
+        // IDisposable
+        protected override void Dispose(bool disposing) {
+            if (!_IsDisposed) {
+                if (disposing) {
+                    if (byteStream != null)
+                        byteStream.Dispose();
+                }
+            }
+            _IsDisposed = true;
+        }
+    }
 }

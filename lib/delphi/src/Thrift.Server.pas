@@ -87,7 +87,7 @@ type
     constructor Create(
       const AProcessor :IProcessor;
       const AServerTransport: IServerTransport
-	  ); overload;
+      ); overload;
 
     constructor Create(
       const AProcessor :IProcessor;
@@ -166,7 +166,7 @@ begin
   InputTransFactory := TTransportFactoryImpl.Create;
   OutputTransFactory := TTransportFactoryImpl.Create;
 
-  //no inherited;  
+  //no inherited;
   Create(
     AProcessor,
     AServerTransport,
@@ -187,7 +187,7 @@ begin
   InputProtocolFactory := TBinaryProtocolImpl.TFactory.Create;
   OutputProtocolFactory := TBinaryProtocolImpl.TFactory.Create;
 
-  //no inherited;  
+  //no inherited;
   Create( AProcessor, AServerTransport, ATransportFactory, ATransportFactory,
     InputProtocolFactory, OutputProtocolFactory, DefaultLogDelegate);
 end;
