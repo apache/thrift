@@ -110,7 +110,7 @@ struct CompactProtoTestStruct {
   8: bool   true_field;
   9: bool   false_field;
   10: Empty empty_struct_field;
-  
+
   // primitives in lists
   11: list<byte>    byte_list;
   12: list<i16>     i16_list;
@@ -121,7 +121,7 @@ struct CompactProtoTestStruct {
   17: list<binary>  binary_list;
   18: list<bool>    boolean_list;
   19: list<Empty>   struct_list;
-  
+
   // primitives in sets
   20: set<byte>     byte_set;
   21: set<i16>      i16_set;
@@ -132,7 +132,7 @@ struct CompactProtoTestStruct {
   26: set<binary>   binary_set;
   27: set<bool>     boolean_set;
   28: set<Empty>    struct_set;
-  
+
   // maps
   // primitives as keys
   29: map<byte, byte>             byte_byte_map;

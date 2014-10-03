@@ -18,7 +18,7 @@
 #
 
 moc_%.cpp: %.h
-	$(QT_MOC) $(QT_CFLAGS) $< -o $@
+    $(QT_MOC) $(QT_CFLAGS) $< -o $@
 
 SUBDIRS = .
 

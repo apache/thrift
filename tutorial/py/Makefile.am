@@ -20,19 +20,19 @@
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 gen-py/tutorial/Calculator.py gen-py/shared/SharedService.py: $(top_srcdir)/tutorial/tutorial.thrift
-	$(THRIFT) --gen py -r $<
+    $(THRIFT) --gen py -r $<
 
 all-local: gen-py/tutorial/Calculator.py
 
 tutorialserver: all
-	${PYTHON} PythonServer.py
+    ${PYTHON} PythonServer.py
 
 tutorialclient: all
-	${PYTHON} PythonClient.py
+    ${PYTHON} PythonClient.py
 
 clean-local:
-	$(RM) -r gen-*
+    $(RM) -r gen-*
 
 EXTRA_DIST = \
-	PythonServer.py \
-	PythonClient.py
+    PythonServer.py \
+    PythonClient.py

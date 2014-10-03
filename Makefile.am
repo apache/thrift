@@ -30,27 +30,27 @@ SUBDIRS += tutorial
 endif
 
 dist-hook:
-	find $(distdir) -type f \( -iname ".DS_Store" -or -iname "._*" -or -iname ".gitignore" \) | xargs rm -rf
-	find $(distdir) -type d \( -iname ".deps" -or -iname ".libs" \) | xargs rm -rf
-	find $(distdir) -type d \( -iname ".svn" -or -iname ".git" \) | xargs rm -rf
+    find $(distdir) -type f \( -iname ".DS_Store" -or -iname "._*" -or -iname ".gitignore" \) | xargs rm -rf
+    find $(distdir) -type d \( -iname ".deps" -or -iname ".libs" \) | xargs rm -rf
+    find $(distdir) -type d \( -iname ".svn" -or -iname ".git" \) | xargs rm -rf
 
 print-version:
-	@echo $(VERSION)
+    @echo $(VERSION)
 
 
 cross: check
-	sh test/test.sh
+    sh test/test.sh
 
 EXTRA_DIST = \
-	.travis.yml \
-	bower.json \
-	composer.json \
-	contrib \
-	debian \
-	doc \
-	doap.rdf \
-	sonar-project.properties \
-	LICENSE \
-	CHANGES \
-	NOTICE \
-	README.md
+    .travis.yml \
+    bower.json \
+    composer.json \
+    contrib \
+    debian \
+    doc \
+    doap.rdf \
+    sonar-project.properties \
+    LICENSE \
+    CHANGES \
+    NOTICE \
+    README.md

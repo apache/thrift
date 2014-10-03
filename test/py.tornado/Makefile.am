@@ -20,11 +20,11 @@
 THRIFT = $(top_srcdir)/compiler/cpp/thrift
 
 thrift_gen: ../ThriftTest.thrift ../SmallTest.thrift
-	$(THRIFT) --gen py:tornado ../ThriftTest.thrift
-	$(THRIFT) --gen py:tornado ../SmallTest.thrift
+    $(THRIFT) --gen py:tornado ../ThriftTest.thrift
+    $(THRIFT) --gen py:tornado ../SmallTest.thrift
 
 check: thrift_gen
-	./test_suite.py
+    ./test_suite.py
 
 clean-local:
-	$(RM) -r gen-py.tornado
+    $(RM) -r gen-py.tornado

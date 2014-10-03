@@ -26,53 +26,53 @@ THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 .NOTPARALLEL:
 noinst_LTLIBRARIES = \
-	libtutorialgencglib.la
+    libtutorialgencglib.la
 
 nodist_libtutorialgencglib_la_SOURCES = \
-	gen-c_glib/calculator.c \
-	gen-c_glib/calculator.h \
-	gen-c_glib/shared_service.c \
-	gen-c_glib/shared_service.h \
-	gen-c_glib/shared_types.c \
-	gen-c_glib/shared_types.h \
-	gen-c_glib/tutorial_types.c \
-	gen-c_glib/tutorial_types.h
+    gen-c_glib/calculator.c \
+    gen-c_glib/calculator.h \
+    gen-c_glib/shared_service.c \
+    gen-c_glib/shared_service.h \
+    gen-c_glib/shared_types.c \
+    gen-c_glib/shared_types.h \
+    gen-c_glib/tutorial_types.c \
+    gen-c_glib/tutorial_types.h
 
 libtutorialgencglib_la_LIBADD = \
-	$(top_builddir)/lib/c_glib/libthrift_c_glib.la
+    $(top_builddir)/lib/c_glib/libthrift_c_glib.la
 
 
 noinst_PROGRAMS = \
-	tutorial_server \
-	tutorial_client
+    tutorial_server \
+    tutorial_client
 
 tutorial_server_SOURCES = \
-	c_glib_server.c
+    c_glib_server.c
 
 tutorial_server_LDADD = \
-	libtutorialgencglib.la \
-	$(top_builddir)/lib/c_glib/libthrift_c_glib.la
+    libtutorialgencglib.la \
+    $(top_builddir)/lib/c_glib/libthrift_c_glib.la
 
 tutorial_client_SOURCES = \
-	c_glib_client.c
+    c_glib_client.c
 
 tutorial_client_LDADD = \
-	libtutorialgencglib.la \
-	$(top_builddir)/lib/c_glib/libthrift_c_glib.la
+    libtutorialgencglib.la \
+    $(top_builddir)/lib/c_glib/libthrift_c_glib.la
 
 
 $(nodist_libtutorialgencglib_la_SOURCES): $(top_srcdir)/tutorial/tutorial.thrift
-	$(THRIFT) --gen c_glib -r $<
+    $(THRIFT) --gen c_glib -r $<
 
 clean-local:
-	$(RM) -r gen-c_glib
+    $(RM) -r gen-c_glib
 
 tutorialserver: all
-	./tutorial_server
+    ./tutorial_server
 
 tutorialclient: all
-	./tutorial_client
+    ./tutorial_client
 
 EXTRA_DIST = \
-	c_glib_server.c \
-	c_glib_client.c
+    c_glib_server.c \
+    c_glib_client.c

@@ -16,15 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
- 
+
 
 service BasicMathServer {
-	oneway void DoTheMath( 1: i32 arg1,  2: i32 arg2)
-	oneway void Ping(1: i64 value)
+    oneway void DoTheMath( 1: i32 arg1,  2: i32 arg2)
+    oneway void Ping(1: i64 value)
 }
 
 service BasicMathClient {
-	oneway void ThreeResults( 1 : i32 added, 2 : i32 multiplied, 3 : i32 subtracted);
-	oneway void FourResults(  1 : i32 added, 2 : i32 multiplied, 3 : i32 subtracted, 4 : i32 divided);
-	oneway void Pong(1: i64 value)
+    oneway void ThreeResults( 1 : i32 added, 2 : i32 multiplied, 3 : i32 subtracted);
+    oneway void FourResults(  1 : i32 added, 2 : i32 multiplied, 3 : i32 subtracted, 4 : i32 divided);
+    oneway void Pong(1: i64 value)
 }
