@@ -1302,7 +1302,7 @@ end;
 
 constructor TBinaryProtocolImpl.TFactory.Create;
 begin
-  //no inherited;  
+  //no inherited;
   Create( False, True )
 end;
 

@@ -506,7 +506,7 @@ end;
 
 constructor TTransportException.Create(AType: TExceptionType);
 begin
-  //no inherited;  
+  //no inherited;
   Create( AType, '' )
 end;
 
@@ -945,7 +945,7 @@ end;
 
 constructor TBufferedTransportImpl.Create( const ATransport: IStreamTransport);
 begin
-  //no inherited;  
+  //no inherited;
   Create( ATransport, 1024 );
 end;
 

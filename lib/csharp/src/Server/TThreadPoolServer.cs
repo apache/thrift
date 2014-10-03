@@ -172,7 +172,7 @@ namespace Thrift.Server
         //Process client requests until client disconnects
         while (true)
         {
-          if (!inputTransport.Peek()) 
+          if (!inputTransport.Peek())
             break;
 
           //Fire processContext server event
