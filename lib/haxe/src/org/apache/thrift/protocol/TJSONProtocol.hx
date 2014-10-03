@@ -765,6 +765,8 @@ class TJSONProtocol implements TProtocol {
 
 	public static function StringFromBytes( buf : Bytes) : String {
 		var inp = new BytesInput( buf);
+		if( buf.length == 0)
+			return "";  // readString() would return null in that case, which is wrong
 		var str = inp.readString( buf.length);
 		if( utf8Strings)
 			return str;  // no need to decode on UTF8 targets, the string is just fine
