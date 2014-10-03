@@ -18,22 +18,22 @@
 #
 
 all-local:
-    $(top_builddir)/compiler/cpp/thrift --gen hs -r $(top_srcdir)/tutorial/tutorial.thrift
-    $(CABAL) install
+	$(top_builddir)/compiler/cpp/thrift --gen hs -r $(top_srcdir)/tutorial/tutorial.thrift
+	$(CABAL) install
 
 install-exec-hook:
-    $(CABAL) install
+	$(CABAL) install
 
 # Make sure this doesn't fail if Haskell is not configured.
 clean-local:
-    $(CABAL) clean
-    $(RM) -r gen-*
+	$(CABAL) clean
+	$(RM) -r gen-*
 
 check-local:
-    $(CABAL) check
+	$(CABAL) check
 
 tutorialserver: all
-    dist/build/HaskellServer/HaskellServer
+	dist/build/HaskellServer/HaskellServer
 
 tutorialclient: all
-    dist/build/HaskellClient/HaskellClient
+	dist/build/HaskellClient/HaskellClient

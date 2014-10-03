@@ -24,17 +24,17 @@ SUBDIRS += test
 endif
 
 install:
-    @echo '##############################################################'
-    @echo '##############################################################'
-    @echo 'The Go client library should be installed via "go get", please see /lib/go/README.md'
-    @echo '##############################################################'
-    @echo '##############################################################'
+	@echo '##############################################################'
+	@echo '##############################################################'
+	@echo 'The Go client library should be installed via "go get", please see /lib/go/README.md'
+	@echo '##############################################################'
+	@echo '##############################################################'
 
 check-local:
-    $(GO) test ./thrift
+	$(GO) test ./thrift
 
 all-local: check-local
 
 EXTRA_DIST = \
-    thrift \
-    README.md
+	thrift \
+	README.md

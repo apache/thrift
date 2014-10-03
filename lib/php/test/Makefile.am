@@ -20,29 +20,29 @@
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 stubs: ../../../test/ThriftTest.thrift  TestValidators.thrift
-    mkdir -p ./packages
-    $(THRIFT) --gen php -r --out ./packages ../../../test/ThriftTest.thrift
-    mkdir -p ./packages/phpv
-    mkdir -p ./packages/phpvo
-    $(THRIFT) --gen php:validate     -r --out ./packages/phpv   TestValidators.thrift
-    $(THRIFT) --gen php:validate,oop -r --out ./packages/phpvo  TestValidators.thrift
+	mkdir -p ./packages
+	$(THRIFT) --gen php -r --out ./packages ../../../test/ThriftTest.thrift
+	mkdir -p ./packages/phpv
+	mkdir -p ./packages/phpvo
+	$(THRIFT) --gen php:validate     -r --out ./packages/phpv   TestValidators.thrift 
+	$(THRIFT) --gen php:validate,oop -r --out ./packages/phpvo  TestValidators.thrift 
+	
+check-validator: stubs 
+	php Test/Thrift/TestValidators.php 
+	php Test/Thrift/TestValidators.php -oop 
 
-check-validator: stubs
-    php Test/Thrift/TestValidators.php
-    php Test/Thrift/TestValidators.php -oop
-
-check-protocol:    stubs
+check-protocol:	stubs
 if HAVE_PHPUNIT
-    $(PHPUNIT) --log-junit=phpunit.xml Test/Thrift/Protocol/TestTJSONProtocol.php
-    $(PHPUNIT) --log-junit=phpunit.xml Test/Thrift/Protocol/TestBinarySerializer.php
+	$(PHPUNIT) --log-junit=phpunit.xml Test/Thrift/Protocol/TestTJSONProtocol.php
+	$(PHPUNIT) --log-junit=phpunit.xml Test/Thrift/Protocol/TestBinarySerializer.php
 endif
-
+	
 check: stubs \
   check-protocol \
   check-validator
 
 clean-local:
-    $(RM) -r ./packages
+	$(RM) -r ./packages
 
 EXTRA_DIST = Test
 

@@ -20,28 +20,28 @@
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 gen-nodejs/Calculator.js gen-nodejs/SharedService.js: $(top_srcdir)/tutorial/tutorial.thrift
-    $(THRIFT) --gen js:node -r $<
+	$(THRIFT) --gen js:node -r $<
 
 all-local: gen-nodejs/Calculator.js
 
 tutorialserver: all
-    NODE_PATH="$(top_builddir)/lib/nodejs:$(top_builddir)/lib/nodejs/lib:$(NODEPATH)" $(NODEJS) NodeServer.js
+	NODE_PATH="$(top_builddir)/lib/nodejs:$(top_builddir)/lib/nodejs/lib:$(NODEPATH)" $(NODEJS) NodeServer.js
 
 tutorialclient: all
-    NODE_PATH="$(top_builddir)/lib/nodejs:$(top_builddir)/lib/nodejs/lib:$(NODEPATH)" $(NODEJS) NodeClient.js
+	NODE_PATH="$(top_builddir)/lib/nodejs:$(top_builddir)/lib/nodejs/lib:$(NODEPATH)" $(NODEJS) NodeClient.js
 
 tutorialserver_promise: all
-    NODE_PATH="$(top_builddir)/lib/nodejs:$(top_builddir)/lib/nodejs/lib:$(NODEPATH)" $(NODEJS) NodeServerPromise.js
+	NODE_PATH="$(top_builddir)/lib/nodejs:$(top_builddir)/lib/nodejs/lib:$(NODEPATH)" $(NODEJS) NodeServerPromise.js
 
 tutorialclient_promise: all
-    NODE_PATH="$(top_builddir)/lib/nodejs:$(top_builddir)/lib/nodejs/lib:$(NODEPATH)" $(NODEJS) NodeClientPromise.js
+	NODE_PATH="$(top_builddir)/lib/nodejs:$(top_builddir)/lib/nodejs/lib:$(NODEPATH)" $(NODEJS) NodeClientPromise.js
 
 
 clean-local:
-    $(RM) -r gen-*
+	$(RM) -r gen-*
 
 EXTRA_DIST = \
-    NodeServer.js \
-    NodeClient.js \
-    NodeServerPromise.js \
-    NodeClientPromise.js
+	NodeServer.js \
+	NodeClient.js \
+	NodeServerPromise.js \
+	NodeClientPromise.js

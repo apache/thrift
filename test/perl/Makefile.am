@@ -20,10 +20,10 @@
 THRIFT = $(top_srcdir)/compiler/cpp/thrift
 
 stubs: ../ThriftTest.thrift
-    $(THRIFT) --gen perl ../ThriftTest.thrift
+	$(THRIFT) --gen perl ../ThriftTest.thrift
 
 check: stubs
 
 clean-local:
-    $(RM) -r gen-perl
+	$(RM) -r gen-perl
 

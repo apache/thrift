@@ -19,47 +19,47 @@
 
 THRIFT = ../../compiler/cpp/thrift
 THRIFT_FILES = $(wildcard test/*.thrift) \
-          ../../test/ThriftTest.thrift
+		  ../../test/ThriftTest.thrift
 
 .generated: $(THRIFT_FILES)
-    for f in $(THRIFT_FILES) ; do \
-      $(THRIFT) --gen erl -o test $$f ; \
-    done ; \
-    touch .generated
+	for f in $(THRIFT_FILES) ; do \
+	  $(THRIFT) --gen erl -o test $$f ; \
+	done ; \
+	touch .generated
 
 all: .generated
-    ./rebar get-deps
-    ./rebar compile
+	./rebar get-deps
+	./rebar compile
 
 check: .generated
-    ./rebar skip_deps=true eunit
+	./rebar skip_deps=true eunit
 
 install: all
-    mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift) ; \
-    mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)/ebin ; \
-    mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)/include ; \
-    mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)/src ; \
-    for p in ebin/*.app* ebin/*.beam include/*.hrl src/*.erl ; \
-        do $(INSTALL) $$p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)/$$p ; \
-    done
+	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift) ; \
+	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)/ebin ; \
+	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)/include ; \
+	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)/src ; \
+	for p in ebin/*.app* ebin/*.beam include/*.hrl src/*.erl ; \
+		do $(INSTALL) $$p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)/$$p ; \
+	done
 
 uninstall:
-    rm -rf $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)
+	rm -rf $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)
 
 clean:
-    rm -f .generated
-    rm -rf test/gen-erl/
-    ./rebar clean
+	rm -f .generated
+	rm -rf test/gen-erl/
+	./rebar clean
 
 maintainer-clean-local:
-    rm -rf ebin
+	rm -rf ebin
 
 EXTRA_DIST = \
-    include \
-    src \
-    rebar \
-    rebar.config \
-    test \
-    README.md
+	include \
+	src \
+	rebar \
+	rebar.config \
+	test \
+	README.md
 
 MAINTAINERCLEANFILES = Makefile.in

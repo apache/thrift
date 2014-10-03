@@ -20,13 +20,13 @@
 THRIFT = $(top_srcdir)/compiler/cpp/thrift
 
 stubs: ../ThriftTest.thrift
-    $(THRIFT) --gen php ../ThriftTest.thrift
-    $(THRIFT) --gen php:inlined ../ThriftTest.thrift
+	$(THRIFT) --gen php ../ThriftTest.thrift
+	$(THRIFT) --gen php:inlined ../ThriftTest.thrift
 
 check: stubs
 
 clean-local:
-    $(RM) -r gen-php gen-phpi
+	$(RM) -r gen-php gen-phpi
 
 client: stubs
-    php TestClient.php
+	php TestClient.php

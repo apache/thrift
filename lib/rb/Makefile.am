@@ -22,28 +22,28 @@ DESTDIR ?= /
 if HAVE_BUNDLER
 
 all-local:
-    $(BUNDLER) install
-    $(BUNDLER) exec rake
+	$(BUNDLER) install
+	$(BUNDLER) exec rake
 
 install-exec-hook:
-    $(BUNDLER) exec rake install
+	$(BUNDLER) exec rake install
 
 clean-local:
-    $(BUNDLER) exec rake clean
+	$(BUNDLER) exec rake clean
 
 check-local: all
-    $(BUNDLER) install
-    $(BUNDLER) exec rake
+	$(BUNDLER) install
+	$(BUNDLER) exec rake
 
 endif
 
 EXTRA_DIST = \
-    Rakefile \
-    Gemfile \
-    thrift.gemspec \
-    lib \
-    ext \
-    benchmark \
-    script \
-    spec \
-    README.md
+	Rakefile \
+	Gemfile \
+	thrift.gemspec \
+	lib \
+	ext \
+	benchmark \
+	script \
+	spec \
+	README.md
