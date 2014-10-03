@@ -23,12 +23,12 @@ struct RecTree {
 }
 
 struct RecList {
-  1: RecList & nextitem 
+  1: RecList & nextitem
   3: i16 item
 }
 
 struct CoRec {
-  1:  CoRec2 & other 
+  1:  CoRec2 & other
 }
 
 struct CoRec2 {

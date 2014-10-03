@@ -52,7 +52,7 @@ enum weekdays {
 /* Note that annotations on senum values are not supported. */
 senum seasons {
   "Spring",
-  "Summer", 
+  "Summer",
   "Fall",
   "Winter"
 } ( foo = "bar" )

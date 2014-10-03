@@ -159,16 +159,16 @@ libtestgencpp_la_CPPFLAGS = -I../../cpp/src $(BOOST_CPPFLAGS) -I./gen-cpp
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 gen-c_glib/t_test_debug_proto_test_types.c gen-c_glib/t_test_debug_proto_test_types.h gen-c_glib/t_test_empty_service.c gen-c_glib/t_test_empty_service.h gen-c_glib/t_test_inherited.c gen-c_glib/t_test_inherited.h gen-c_glib/t_test_reverse_order_service.c gen-c_glib/t_test_reverse_order_service.h gen-c_glib/t_test_service_for_exception_with_a_map.c gen-c_glib/t_test_service_for_exception_with_a_map.h gen-c_glib/t_test_srv.c gen-c_glib/t_test_srv.h: ../../../test/DebugProtoTest.thrift
-	$(THRIFT) --gen c_glib $<
+    $(THRIFT) --gen c_glib $<
 
 gen-c_glib/t_test_optional_required_test_types.c gen-c_glib/t_test_optional_required_test_types.h: ../../../test/OptionalRequiredTest.thrift
-	$(THRIFT) --gen c_glib $<
+    $(THRIFT) --gen c_glib $<
 
 gen-c_glib/t_test_second_service.c gen-c_glib/t_test_thrift_test.c gen-c_glib/t_test_thrift_test_types.c gen-c_glib/t_test_second_service.h gen-c_glib/t_test_thrift_test-.h gen-c_glib/t_test_thrift_test_types.h: ../../../test/ThriftTest.thrift
-	$(THRIFT) --gen c_glib $<
+    $(THRIFT) --gen c_glib $<
 
 gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest.h: ../../../test/ThriftTest.thrift
-	$(THRIFT) --gen cpp $<
+    $(THRIFT) --gen cpp $<
 
 TESTS = \
   $(check_PROGRAMS) \
@@ -191,39 +191,39 @@ VALGRIND_LEAK_OPTS = --tool=memcheck \
                      ${myextravalgrindleakopts}
 
 memcheck: $(check_PROGRAMS)
-	@for x in $(check_PROGRAMS);                                     \
-	  do                                                             \
-	    $(MAKE) memcheck-$$x;                                        \
-	  done
+    @for x in $(check_PROGRAMS);                                     \
+      do                                                             \
+        $(MAKE) memcheck-$$x;                                        \
+      done
 
 leakcheck: $(check_PROGRAMS)
-	@for x in $(check_PROGRAMS);                                     \
-	  do                                                             \
-	    $(MAKE) leakcheck-$$x;                                       \
-	done
+    @for x in $(check_PROGRAMS);                                     \
+      do                                                             \
+        $(MAKE) leakcheck-$$x;                                       \
+    done
 
 memcheck-%: %
-	@echo "*****************************************";               \
-	echo "MEMCHECK: $<";                                             \
-	echo "ARGS: ${VALGRIND_OPTS} ${VALGRIND_MEM_OPTS} ${$<_VALGRIND_MEM_OPTS}";                                                                      \
-	$(LIBTOOL) --mode=execute                                        \
-	  valgrind                                                       \
-	    ${VALGRIND_OPTS}                                             \
-	    ${VALGRIND_MEM_OPTS}                                         \
-	    ${$<_VALGRIND_MEM_OPTS} ./$<
+    @echo "*****************************************";               \
+    echo "MEMCHECK: $<";                                             \
+    echo "ARGS: ${VALGRIND_OPTS} ${VALGRIND_MEM_OPTS} ${$<_VALGRIND_MEM_OPTS}";                                                                      \
+    $(LIBTOOL) --mode=execute                                        \
+      valgrind                                                       \
+        ${VALGRIND_OPTS}                                             \
+        ${VALGRIND_MEM_OPTS}                                         \
+        ${$<_VALGRIND_MEM_OPTS} ./$<
 
 leakcheck-%: %
-	@echo "*****************************************";              \
-	echo "LEAKCHECK: $<";                                           \
-	echo "ARGS: ${VALGRIND_OPTS} ${VALGRIND_LEAK_OPTS} ${$<_VALGRIND_LEAK_OPTS}";                                                                   \
-	G_SLICE=always-malloc $(LIBTOOL) --mode=execute                 \
-	  valgrind                                                      \
-	    ${VALGRIND_OPTS}                                            \
-	    ${VALGRIND_LEAK_OPTS}                                       \
-	    ${$<_VALGRIND_LEAK_OPTS}  ./$<
+    @echo "*****************************************";              \
+    echo "LEAKCHECK: $<";                                           \
+    echo "ARGS: ${VALGRIND_OPTS} ${VALGRIND_LEAK_OPTS} ${$<_VALGRIND_LEAK_OPTS}";                                                                   \
+    G_SLICE=always-malloc $(LIBTOOL) --mode=execute                 \
+      valgrind                                                      \
+        ${VALGRIND_OPTS}                                            \
+        ${VALGRIND_LEAK_OPTS}                                       \
+        ${$<_VALGRIND_LEAK_OPTS}  ./$<
 
 clean-local:
-	$(RM) -r gen-c_glib gen-cpp
+    $(RM) -r gen-c_glib gen-cpp
 
 CLEANFILES =                            \
     *.bb                                \

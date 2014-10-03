@@ -20,23 +20,23 @@
 DESTDIR ?= /
 
 all-local:
-	$(PYTHON) setup.py build
+    $(PYTHON) setup.py build
 
 # We're ignoring prefix here because site-packages seems to be
 # the equivalent of /usr/local/lib in Python land.
 # Old version (can't put inline because it's not portable).
 #$(PYTHON) setup.py install --prefix=$(prefix) --root=$(DESTDIR) $(PYTHON_SETUPUTIL_ARGS)
 install-exec-hook:
-	$(PYTHON) setup.py install --root=$(DESTDIR) --prefix=$(PY_PREFIX) $(PYTHON_SETUPUTIL_ARGS)
+    $(PYTHON) setup.py install --root=$(DESTDIR) --prefix=$(PY_PREFIX) $(PYTHON_SETUPUTIL_ARGS)
 
 clean-local:
-	$(RM) -r build
+    $(RM) -r build
 
 check-local: all
 
 EXTRA_DIST = \
-	compat \
-	setup.py \
-	setup.cfg \
-	src \
-	README.md
+    compat \
+    setup.py \
+    setup.cfg \
+    src \
+    README.md

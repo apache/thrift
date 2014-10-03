@@ -23,16 +23,16 @@ REBAR = $(top_srcdir)/lib/erl/rebar
 THRIFT_FILES = $(wildcard ../*.thrift)
 
 .generated: $(THRIFT_FILES)
-	for f in $(THRIFT_FILES) ; do \
-	  $(THRIFT) --gen erl $$f ; \
-	done ; \
-	$(THRIFT) --gen erl:legacynames LegacyNames.thrift
-	touch .generated
+    for f in $(THRIFT_FILES) ; do \
+      $(THRIFT) --gen erl $$f ; \
+    done ; \
+    $(THRIFT) --gen erl:legacynames LegacyNames.thrift
+    touch .generated
 
 check: .generated
-	$(REBAR) eunit
+    $(REBAR) eunit
 
 clean:
-	rm -f .generated
-	rm -rf gen-erl
-	$(REBAR) clean
+    rm -f .generated
+    rm -rf gen-erl
+    $(REBAR) clean

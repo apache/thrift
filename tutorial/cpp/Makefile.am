@@ -19,40 +19,40 @@
 .NOTPARALLEL:
 noinst_LTLIBRARIES = libtutorialgencpp.la
 nodist_libtutorialgencpp_la_SOURCES = \
-	gen-cpp/Calculator.cpp \
-	gen-cpp/Calculator.h \
-	gen-cpp/SharedService.cpp \
-	gen-cpp/SharedService.h \
-	gen-cpp/shared_constants.cpp \
-	gen-cpp/shared_constants.h \
-	gen-cpp/shared_types.cpp \
-	gen-cpp/shared_types.h \
-	gen-cpp/tutorial_constants.cpp \
-	gen-cpp/tutorial_constants.h \
-	gen-cpp/tutorial_types.cpp \
-	gen-cpp/tutorial_types.h
+    gen-cpp/Calculator.cpp \
+    gen-cpp/Calculator.h \
+    gen-cpp/SharedService.cpp \
+    gen-cpp/SharedService.h \
+    gen-cpp/shared_constants.cpp \
+    gen-cpp/shared_constants.h \
+    gen-cpp/shared_types.cpp \
+    gen-cpp/shared_types.h \
+    gen-cpp/tutorial_constants.cpp \
+    gen-cpp/tutorial_constants.h \
+    gen-cpp/tutorial_types.cpp \
+    gen-cpp/tutorial_types.h
 
 
 
 libtutorialgencpp_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
 
 noinst_PROGRAMS = \
-	TutorialServer \
-	TutorialClient
+    TutorialServer \
+    TutorialClient
 
 TutorialServer_SOURCES = \
-	CppServer.cpp
+    CppServer.cpp
 
 TutorialServer_LDADD = \
-	libtutorialgencpp.la \
-	$(top_builddir)/lib/cpp/libthrift.la
+    libtutorialgencpp.la \
+    $(top_builddir)/lib/cpp/libthrift.la
 
 TutorialClient_SOURCES = \
-	CppClient.cpp
+    CppClient.cpp
 
 TutorialClient_LDADD = \
-	libtutorialgencpp.la \
-	$(top_builddir)/lib/cpp/libthrift.la
+    libtutorialgencpp.la \
+    $(top_builddir)/lib/cpp/libthrift.la
 
 #
 # Common thrift code generation rules
@@ -60,21 +60,21 @@ TutorialClient_LDADD = \
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 gen-cpp/Calculator.cpp gen-cpp/tutorial_types.cpp gen-cpp/tutorial_constants.cpp: $(top_srcdir)/tutorial/tutorial.thrift
-	$(THRIFT) --gen cpp -r $<
+    $(THRIFT) --gen cpp -r $<
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -Igen-cpp
 AM_CXXFLAGS = -Wall
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS)
 
 clean-local:
-	$(RM) -r gen-cpp
+    $(RM) -r gen-cpp
 
 tutorialserver: all
-	./TutorialServer
+    ./TutorialServer
 
 tutorialclient: all
-	./TutorialClient
+    ./TutorialClient
 
 EXTRA_DIST = \
-	CppClient.cpp \
-	CppServer.cpp
+    CppClient.cpp \
+    CppServer.cpp

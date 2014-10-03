@@ -20,23 +20,23 @@
 export CLASSPATH
 
 all-local:
-	$(ANT) $(ANT_FLAGS)
+    $(ANT) $(ANT_FLAGS)
 
 install-exec-hook:
-	$(ANT) $(ANT_FLAGS) install -Dinstall.path=$(DESTDIR)$(JAVA_PREFIX) \
-		-Dinstall.javadoc.path=$(DESTDIR)$(docdir)/java
+    $(ANT) $(ANT_FLAGS) install -Dinstall.path=$(DESTDIR)$(JAVA_PREFIX) \
+        -Dinstall.javadoc.path=$(DESTDIR)$(docdir)/java
 
 # Make sure this doesn't fail if ant is not configured.
 clean-local:
-	ANT=$(ANT) ; if test -z "$$ANT" ; then ANT=: ; fi ; \
-	$$ANT $(ANT_FLAGS) clean
+    ANT=$(ANT) ; if test -z "$$ANT" ; then ANT=: ; fi ; \
+    $$ANT $(ANT_FLAGS) clean
 
 check-local: all
-	$(ANT) $(ANT_FLAGS) test
+    $(ANT) $(ANT_FLAGS) test
 
 EXTRA_DIST = \
-	build.xml \
-	build.properties \
-	src \
-	test \
-	README.md
+    build.xml \
+    build.properties \
+    src \
+    test \
+    README.md

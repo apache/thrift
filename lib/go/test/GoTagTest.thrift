@@ -18,6 +18,6 @@
 #
 
 struct tagged {
-	1: string string_thing,
-	2: i64 int_thing (go.tag = "json:\"int_thing,string\"")
+    1: string string_thing,
+    2: i64 int_thing (go.tag = "json:\"int_thing,string\"")
 }

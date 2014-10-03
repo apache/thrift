@@ -4,21 +4,21 @@
 
 
 struct using {
-	1: double single
-	2: double integer
+    1: double single
+    2: double integer
 }
 
 struct delegate {
-	1: string partial
-	2: delegate delegate
+    1: string partial
+    2: delegate delegate
 }
 
 struct get {
-	1: bool sbyte
+    1: bool sbyte
 }
 
 struct partial {
-	1: using using
+    1: using using
 }
 
 enum Maybe {
@@ -91,11 +91,11 @@ struct Tricky_ {
 }
 
 struct Nested {
-  1: ClassAndProp ClassAndProp 
-  2: second_chance second_chance 
-  3: NOW_EAT_THIS NOW_EAT_THIS 
-  4: TheEdgeCase TheEdgeCase 
-  5: Tricky_ Tricky_ 
+  1: ClassAndProp ClassAndProp
+  2: second_chance second_chance
+  3: NOW_EAT_THIS NOW_EAT_THIS
+  4: TheEdgeCase TheEdgeCase
+  5: Tricky_ Tricky_
   6: Nested Nested
 }
 
@@ -106,12 +106,12 @@ exception Problem_ {
 
 
 service extern {
-	delegate event(1: partial get)
-	void Foo(1: Nested Foo_args) throws (1: Problem_ Foo_result)
+    delegate event(1: partial get)
+    void Foo(1: Nested Foo_args) throws (1: Problem_ Foo_result)
 }
 
 service qualified {
-	Maybe maybe(1: Maybe foldr)
-	Either either(1: foldr of)
+    Maybe maybe(1: Maybe foldr)
+    Either either(1: foldr of)
 }
 // eof

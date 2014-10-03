@@ -61,42 +61,42 @@ endif
 # generate html for ThriftTest.thrift
 #
 check-local:
-	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/test/ThriftTest.thrift
+    $(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/test/ThriftTest.thrift
 
 EXTRA_DIST = \
-	keys \
-	test.sh \
-	test.py \
-	tests.json \
-	c_glib \
-	cpp \
-	erl \
-	hs \
-	lua \
-	ocaml \
-	perl \
-	php \
-	py \
-	py.twisted \
-	py.tornado \
-	rb \
-	threads \
-	AnnotationTest.thrift \
-	BrokenConstants.thrift \
-	ConstantsDemo.thrift \
-	DebugProtoTest.thrift \
-	DenseLinkingTest.thrift \
-	DocTest.thrift \
-	Include.thrift \
-	JavaBeansTest.thrift \
-	ManyOptionals.thrift \
-	ManyTypedefs.thrift \
-	NameConflictTest.thrift \
-	OptionalRequiredTest.thrift \
-	Recursive.thrift \
-	ReuseObjects.thrift \
-	SmallTest.thrift \
-	StressTest.thrift \
-	ThriftTest.thrift \
-	FastbinaryTest.py \
-	README.md
+    keys \
+    test.sh \
+    test.py \
+    tests.json \
+    c_glib \
+    cpp \
+    erl \
+    hs \
+    lua \
+    ocaml \
+    perl \
+    php \
+    py \
+    py.twisted \
+    py.tornado \
+    rb \
+    threads \
+    AnnotationTest.thrift \
+    BrokenConstants.thrift \
+    ConstantsDemo.thrift \
+    DebugProtoTest.thrift \
+    DenseLinkingTest.thrift \
+    DocTest.thrift \
+    Include.thrift \
+    JavaBeansTest.thrift \
+    ManyOptionals.thrift \
+    ManyTypedefs.thrift \
+    NameConflictTest.thrift \
+    OptionalRequiredTest.thrift \
+    Recursive.thrift \
+    ReuseObjects.thrift \
+    SmallTest.thrift \
+    StressTest.thrift \
+    ThriftTest.thrift \
+    FastbinaryTest.py \
+    README.md

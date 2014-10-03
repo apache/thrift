@@ -26,33 +26,33 @@ THRIFT = $(top_builddir)/compiler/cpp/thrift
 debug_proto_gen = $(addprefix gen-d/, DebugProtoTest_types.d)
 
 $(debug_proto_gen): $(top_srcdir)/test/DebugProtoTest.thrift
-	$(THRIFT) --gen d -nowarn $<
+    $(THRIFT) --gen d -nowarn $<
 
 stress_test_gen = $(addprefix gen-d/thrift/test/stress/, Service.d \
-	StressTest_types.d)
+    StressTest_types.d)
 
 $(stress_test_gen): $(top_srcdir)/test/StressTest.thrift
-	$(THRIFT) --gen d $<
+    $(THRIFT) --gen d $<
 
 thrift_test_gen = $(addprefix gen-d/thrift/test/, SecondService.d \
-	ThriftTest.d ThriftTest_constants.d ThriftTest_types.d)
+    ThriftTest.d ThriftTest_constants.d ThriftTest_types.d)
 
 $(thrift_test_gen): $(top_srcdir)/test/ThriftTest.thrift
-	$(THRIFT) --gen d $<
+    $(THRIFT) --gen d $<
 
 
 # The actual test targets.
 # There just must be some way to reassign a variable without warnings in
 # Automake...
 targets__ = async_test client_pool_test serialization_benchmark \
-	stress_test_server thrift_test_client thrift_test_server transport_test
+    stress_test_server thrift_test_client thrift_test_server transport_test
 ran_tests__ = client_pool_test \
-	transport_test \
-	async_test_runner.sh \
-	thrift_test_runner.sh
+    transport_test \
+    async_test_runner.sh \
+    thrift_test_runner.sh
 
 libevent_dependent_targets = async_test_client client_pool_test \
-	stress_test_server thrift_test_server
+    stress_test_server thrift_test_server
 libevent_dependent_ran_tests = client_pool_test async_test_runner.sh thrift_test_runner.sh
 
 openssl_dependent_targets = async_test thrift_test_client thrift_test_server
@@ -79,23 +79,23 @@ ran_tests = $(filter-out $(openssl_dependent_ran_tests), $(ran_tests_))
 endif
 
 d_test_flags += -w -wi -O -release -inline -I$(top_srcdir)/lib/d/src -Igen-d \
-	$(top_builddir)/lib/d/$(D_LIB_NAME)
+    $(top_builddir)/lib/d/$(D_LIB_NAME)
 
 
 async_test client_pool_test transport_test: %: %.d
-	$(DMD) $(d_test_flags) -of$@ $^
+    $(DMD) $(d_test_flags) -of$@ $^
 
 serialization_benchmark: %: %.d $(debug_proto_gen)
-	$(DMD) $(d_test_flags) -of$@ $^
+    $(DMD) $(d_test_flags) -of$@ $^
 
 stress_test_server: %: %.d test_utils.d $(stress_test_gen)
-	$(DMD) $(d_test_flags) -of$@ $^
+    $(DMD) $(d_test_flags) -of$@ $^
 
 thrift_test_client: %: %.d thrift_test_common.d $(thrift_test_gen)
-	$(DMD) $(d_test_flags) -of$@ $^
+    $(DMD) $(d_test_flags) -of$@ $^
 
 thrift_test_server: %: %.d thrift_test_common.d test_utils.d $(thrift_test_gen)
-	$(DMD) $(d_test_flags) -of$@ $^
+    $(DMD) $(d_test_flags) -of$@ $^
 
 
 # Certificate generation targets (for the SSL tests).
@@ -103,22 +103,22 @@ thrift_test_server: %: %.d thrift_test_common.d test_utils.d $(thrift_test_gen)
 # replaced by a more elaborate mechanism.
 
 server-certificate.pem: openssl.test.cnf
-	openssl req -new -x509 -nodes -config openssl.test.cnf \
-		-out server-certificate.pem
+    openssl req -new -x509 -nodes -config openssl.test.cnf \
+        -out server-certificate.pem
 
 trusted-ca-certificate.pem: server-certificate.pem
-	cat server-certificate.pem > $@
+    cat server-certificate.pem > $@
 
 check-local: $(targets)
 
 clean-local:
-	$(RM) -rf gen-d $(targets) $(addsuffix .o, $(targets))
+    $(RM) -rf gen-d $(targets) $(addsuffix .o, $(targets))
 
 
 # Tests ran as part of make check.
 
 async_test_runner.sh: async_test trusted-ca-certificate.pem server-certificate.pem
 thrift_test_runner.sh: thrift_test_client thrift_test_server \
-	trusted-ca-certificate.pem server-certificate.pem
+    trusted-ca-certificate.pem server-certificate.pem
 
 TESTS = $(ran_tests)

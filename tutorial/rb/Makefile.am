@@ -20,19 +20,19 @@
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 gen-py/calculator.rb gen-py/shared_service.rb: $(top_srcdir)/tutorial/tutorial.thrift
-	$(THRIFT) --gen rb -r $<
+    $(THRIFT) --gen rb -r $<
 
 all-local: gen-py/calculator.rb
 
 tutorialserver: all
-	${RUBY} RubyServer.rb
+    ${RUBY} RubyServer.rb
 
 tutorialclient: all
-	${RUBY} RubyClient.rb
+    ${RUBY} RubyClient.rb
 
 clean-local:
-	$(RM) -r gen-*
+    $(RM) -r gen-*
 
 EXTRA_DIST = \
-	RubyServer.rb \
-	RubyClient.rb
+    RubyServer.rb \
+    RubyClient.rb

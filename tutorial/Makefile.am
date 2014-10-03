@@ -62,21 +62,21 @@ endif
 # generate html for ThriftTest.thrift
 #
 all-local:
-	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/tutorial/tutorial.thrift
+    $(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/tutorial/tutorial.thrift
 endif
 
 # Any folders or files not listed above being added to SUBDIR need to be placed here in
 # EXTRA_DIST to be included in the release
 EXTRA_DIST = \
-	as3 \
-	csharp \
-	d \
-	delphi \
-	erl \
-	hs \
-	ocaml \
-	perl \
-	php \
-	shared.thrift \
-	tutorial.thrift \
-	README.md
+    as3 \
+    csharp \
+    d \
+    delphi \
+    erl \
+    hs \
+    ocaml \
+    perl \
+    php \
+    shared.thrift \
+    tutorial.thrift \
+    README.md
