@@ -94,7 +94,7 @@ class THttpClient(TTransportBase):
     self.__custom_headers = headers
 
   def read(self, sz):
-    return self.__http.file.read(sz)
+    return self.__http.file.read(min(sz, 50000))
 
   def write(self, buf):
     self.__wbuf.write(buf)
