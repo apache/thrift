@@ -80,17 +80,6 @@ record_generation_test_() ->
         'TheEdgeCase__'=null
       }
     )},
-    {"theEdgeCase record", ?_assertMatch(
-      {theEdgeCase, _, _, _, _, _, _},
-      #theEdgeCase{
-        theEdgeCase=null,
-        theEdgeCase_=null,
-        theEdgeCase__=null,
-        'TheEdgeCase'=null,
-        'TheEdgeCase_'=null,
-        'TheEdgeCase__'=null
-      }
-    )},
     {"Tricky_ record", ?_assertMatch(
       {'Tricky_', _, _},
       #'Tricky_'{tricky=null,'Tricky'=null}
@@ -148,10 +137,6 @@ struct_info_test_() ->
     {"TheEdgeCase definition", ?_assertEqual(
       {struct, [{1, bool},{2, bool},{3, bool},{4, bool},{5, bool},{6, bool}]},
       name_conflict_test_types:struct_info('TheEdgeCase')
-    )},
-    {"theEdgeCase definition", ?_assertEqual(
-      {struct, [{1, bool},{2, bool},{3, bool},{4, bool},{5, bool},{6, bool}]},
-      name_conflict_test_types:struct_info(theEdgeCase)
     )},
     {"Tricky_ definition", ?_assertEqual(
       {struct, [{1, bool},{2, bool}]},
@@ -233,17 +218,6 @@ struct_info_test_() ->
         {6, undefined, bool, 'TheEdgeCase__', undefined}
       ]},
       name_conflict_test_types:struct_info_ext('TheEdgeCase')
-    )},
-    {"TheEdgeCase extended definition", ?_assertEqual(
-      {struct, [
-        {1, undefined, bool, theEdgeCase, undefined},
-        {2, undefined, bool, theEdgeCase_, undefined},
-        {3, undefined, bool, theEdgeCase__, undefined},
-        {4, undefined, bool, 'TheEdgeCase', undefined},
-        {5, undefined, bool, 'TheEdgeCase_', undefined},
-        {6, undefined, bool, 'TheEdgeCase__', undefined}
-      ]},
-      name_conflict_test_types:struct_info_ext(theEdgeCase)
     )},
     {"Tricky_ extended definition", ?_assertEqual(
       {struct, [
