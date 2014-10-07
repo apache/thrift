@@ -43,7 +43,7 @@ import std.algorithm : find;
 import std.array : empty, front;
 import std.conv : to;
 import std.exception : enforce;
-import std.traits : BaseTypeTuple, isPointer, isSomeFunction, pointerTarget,
+import std.traits : BaseTypeTuple, isPointer, isSomeFunction, PointerTarget,
   ReturnType;
 import thrift.base;
 import thrift.internal.codegen;
@@ -673,7 +673,7 @@ void readStruct(T, Protocol, alias fieldMetaData = cast(TFieldMeta[])null,
     string readFieldCode(FieldType)(string name, short id, TReq req) {
       static if (pointerStruct && isPointer!FieldType) {
         immutable v = "(*s." ~ name ~ ")";
-        alias pointerTarget!FieldType F;
+        alias PointerTarget!FieldType F;
       } else {
         immutable v = "s." ~ name;
         alias FieldType F;
@@ -861,7 +861,7 @@ void writeStruct(T, Protocol, alias fieldMetaData = cast(TFieldMeta[])null,
 
       static if (pointerStruct && isPointer!FieldType) {
         immutable v = "(*s." ~ name ~ ")";
-        alias pointerTarget!FieldType F;
+        alias PointerTarget!FieldType F;
       } else {
         immutable v = "s." ~ name;
         alias FieldType F;
