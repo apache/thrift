@@ -1223,7 +1223,6 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     indent(f_service_) << "Thrift.inherits(" <<
         js_namespace(tservice->get_program()) <<
         service_name_ << "Client, " <<
-        js_namespace(tservice->get_extends()->get_program()) <<
         tservice->get_extends()->get_name() << "Client);" << endl;
   } else {
       //init prototype
