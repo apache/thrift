@@ -2674,7 +2674,8 @@ void t_java_generator::generate_service_client(t_service* tservice) {
       indent(f_service_) << "args.set" << get_cap_name((*fld_iter)->get_name()) << "(" << (*fld_iter)->get_name() << ");" << endl;
     }
 
-    indent(f_service_) << "sendBase(\"" << funname << "\", args);" << endl;
+    const string sendBaseName = (*f_iter)->is_oneway() ? "sendBaseOneway" : "sendBase";
+    indent(f_service_) << sendBaseName << "(\"" << funname << "\", args);" << endl;
 
     scope_down(f_service_);
     f_service_ << endl;
