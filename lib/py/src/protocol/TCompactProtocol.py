@@ -16,7 +16,6 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
 from TProtocol import *
 from struct import pack, unpack
 
@@ -45,6 +44,7 @@ reader = make_helper(VALUE_READ, CONTAINER_READ)
 
 
 def makeZigZag(n, bits):
+  check_boundaries(n, bits)
   return (n << 1) ^ (n >> (bits - 1))
 
 

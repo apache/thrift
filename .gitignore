@@ -23,6 +23,7 @@
 
 .*project
 junit*.properties
+.idea
 gen-*
 Makefile
 Makefile.in

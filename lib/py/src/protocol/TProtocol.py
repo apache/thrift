@@ -402,6 +402,19 @@ class TProtocolBase:
     else:
       writer(val)
 
+def check_boundaries(n, bits):
+  if bits == 8 and (n < -128 or n > 127):
+    raise TProtocolException(TProtocolException.INVALID_DATA,
+                             "i16 requires -128 <= number <= 127")
+  elif bits == 16 and (n < -32768 or n > 32767):
+    raise TProtocolException(TProtocolException.INVALID_DATA,
+                             "i16 requires -32768 <= number <= 32767")
+  elif bits == 32 and (n < -2147483648 or n > 2147483647):
+    raise TProtocolException(TProtocolException.INVALID_DATA,
+                             "i32 requires -2147483648 <= number <= 2147483647")
+  elif bits == 64 and (n < -9223372036854775808 or n > 9223372036854775807):
+    raise TProtocolException(TProtocolException.INVALID_DATA,
+                             "i64 requires -9223372036854775808 <= number <= 9223372036854775807")
 
 class TProtocolFactory:
   def getProtocol(self, trans):
