@@ -1104,6 +1104,10 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
       out <<
         indent() << "bool operator < (const "
                  << tstruct->get_name() << " & ) const;" << endl << endl;
+
+      out <<
+        indent() << "bool operator > (const "
+                 << tstruct->get_name() << " & ) const;" << endl << endl;
     }
   }
 
