@@ -1,7 +1,6 @@
-Thrift Erlang Software Library
+# Thrift Erlang Software Library #
 
-License
-=======
+## License ##
 
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements. See the NOTICE file
@@ -20,8 +19,15 @@ KIND, either express or implied. See the License for the
 specific language governing permissions and limitations
 under the License.
 
-Example
-=======
+## Release Notes ##
+
+### 0.9.2 ###
+
+as of 0.9.2 struct and function naming conventions have changed. to retain the
+old naming conventions (for backwards compatibility) use the compiler option
+`legacynames`
+
+## Example ##
 
 Example session using thrift_client:
 
@@ -41,8 +47,3 @@ ok
 {ok,ok}
 8> {C7, R7} = (catch thrift_client:call(C6, testException, ["Xception"])), R7.
 {exception,{xception,1001,<<"Xception">>}}
-
-Notes
-=====
-To use the JSON protocol client, you will need jsx.  This will be pulled in
-via rebar for building but not automatically installed by make install.
