@@ -58,14 +58,22 @@ public abstract class TServiceClient {
     return this.oprot_;
   }
 
-  protected void sendBase(String methodName, TBase args) throws TException {
-    oprot_.writeMessageBegin(new TMessage(methodName, TMessageType.CALL, ++seqid_));
+  protected void sendBase(String methodName, TBase<?,?> args) throws TException {
+    sendBase(methodName, args, TMessageType.CALL);
+  }
+
+  protected void sendBaseOneway(String methodName, TBase<?,?> args) throws TException {
+    sendBase(methodName, args, TMessageType.ONEWAY);
+  }
+
+  private void sendBase(String methodName, TBase<?,?> args, byte type) throws TException {
+    oprot_.writeMessageBegin(new TMessage(methodName, type, ++seqid_));
     args.write(oprot_);
     oprot_.writeMessageEnd();
     oprot_.getTransport().flush();
   }
 
-  protected void receiveBase(TBase result, String methodName) throws TException {
+  protected void receiveBase(TBase<?,?> result, String methodName) throws TException {
     TMessage msg = iprot_.readMessageBegin();
     if (msg.type == TMessageType.EXCEPTION) {
       TApplicationException x = TApplicationException.read(iprot_);
