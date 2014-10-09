@@ -64,7 +64,10 @@ class t_js_generator : public t_oop_generator {
        iter = parsed_options.find("ts");
        gen_ts_ = (iter != parsed_options.end());
      }
-     
+     else {
+       gen_ts_ = false;
+     } 
+    
      if (gen_node_ && gen_jquery_) {
        throw "Invalid switch: [-gen js:node,jquery] options not compatible, try: [-gen js:node -gen js:jquery]";
      }
