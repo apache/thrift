@@ -53,7 +53,7 @@
   <property name="jar.file" location="${build.dir}/${final.name}.jar"/>
   <property name="test.jar.file" location="${build.dir}/${final.name}-test.jar"/>
   <property name="javadoc.jar.file" location="${build.dir}/${final.name}-javadoc.jar"/>
-  <property name="source.tar.gz" location="${build.dir}/${final.name}-src.tar.gz"/>
+  <property name="source.jar.file" location="${build.dir}/${final.name}-sources.jar"/>
 
   <!-- Junit properties -->
   <property name="test.junit.output.format" value="plain"/>
@@ -137,7 +137,11 @@
   </target>
 
   <target name="pack.src">
-    <tar destfile="${source.tar.gz}" basedir="${src}" compression="gzip"/>
+    <jar jarfile="${source.jar.file}">
+      <fileset dir="${src}">
+        <include name="**/*.java"/>
+      </fileset>
+    </jar>
   </target>
 
   <target name="install" depends="dist,javadoc">
@@ -405,6 +409,6 @@
     <signAndDeploy file="${pom.xml}" packaging="pom" classifier="" pom="${pom.xml}"/>
     <signAndDeploy file="${jar.file}" packaging="jar" classifier="" pom="${pom.xml}"/>
     <signAndDeploy file="${javadoc.jar.file}" packaging="jar" classifier="javadoc" pom="${pom.xml}"/>
-    <signAndDeploy file="${source.tar.gz}" packaging="src" classifier="tar.gz" pom="${pom.xml}"/>
+    <signAndDeploy file="${source.jar.file}" packaging="src" classifier="sources" pom="${pom.xml}"/>
   </target>
 </project>
