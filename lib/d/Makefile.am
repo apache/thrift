@@ -41,7 +41,10 @@ d_asyncdir = $(d_thriftdir)/async
 d_async_DATA = $(addprefix src/, $(addsuffix .d, $(d_asyncmodules)))
 
 d_codegenmodules = $(addprefix thrift/codegen/, async_client \
-	async_client_pool base client client_pool idlgen processor)
+	async_client_pool base client client_pool processor)
+#d_codegenmodules = $(addprefix thrift/codegen/, async_client \
+#	async_client_pool base client client_pool idlgen processor)
+
 d_codegendir = $(d_thriftdir)/codegen
 d_codegen_DATA = $(addprefix src/, $(addsuffix .d, $(d_codegenmodules)))
 
