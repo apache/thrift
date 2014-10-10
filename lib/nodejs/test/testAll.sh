@@ -1,6 +1,6 @@
 #! /bin/sh
 
-#
+
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -43,7 +43,7 @@ testMultiplexedClientServer()
   SERVERPID=$!
   sleep 1
   node ${DIR}/multiplex_client.js -p $1 -t $2 $3 || RET=1
-  kill -9 $SERVERPID || RET=1 #f
+  kill -9 $SERVERPID || RET=1
   return $RET
 }
 

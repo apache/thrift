@@ -30,8 +30,8 @@ using Thrift.Server;
 
 namespace Test.Multiplex
 {
-	public class Constants
-	{
+    public class Constants
+    {
         public const string NAME_BENCHMARKSERVICE = "BenchmarkService";
         public const string NAME_AGGR             = "Aggr";
     }

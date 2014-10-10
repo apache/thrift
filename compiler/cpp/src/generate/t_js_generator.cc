@@ -64,7 +64,10 @@ class t_js_generator : public t_oop_generator {
        iter = parsed_options.find("ts");
        gen_ts_ = (iter != parsed_options.end());
      }
-     
+     else {
+       gen_ts_ = false;
+     } 
+    
      if (gen_node_ && gen_jquery_) {
        throw "Invalid switch: [-gen js:node,jquery] options not compatible, try: [-gen js:node -gen js:jquery]";
      }
@@ -708,8 +711,12 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         out << indent() << indent() << "if (args." << (*m_iter)->get_name() << " !== undefined) {" << endl
-            << indent() << indent() << indent() << "this." << (*m_iter)->get_name() << " = args." << (*m_iter)->get_name()  << ";" << endl
-            << indent() << indent() << "}" << endl;
+            << indent() << indent() << indent() << "this." << (*m_iter)->get_name() << " = args." << (*m_iter)->get_name()  << ";" << endl;
+        if (!(*m_iter)->get_req()) {
+          out << indent() << indent() << "} else {" << endl
+              << indent() << indent() << indent() << "throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field " << (*m_iter)->get_name() << " is unset!');" << endl;
+        }
+        out << indent() << indent() << "}" << endl;
         if (gen_ts_) {
           f_types_ts_ << (*m_iter)->get_name() << ts_get_req(*m_iter) << ": " << ts_get_type((*m_iter)->get_type()) << "; ";
         }
@@ -1223,6 +1230,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     indent(f_service_) << "Thrift.inherits(" <<
         js_namespace(tservice->get_program()) <<
         service_name_ << "Client, " <<
+        js_namespace(tservice->get_extends()->get_program()) <<
         tservice->get_extends()->get_name() << "Client);" << endl;
   } else {
       //init prototype

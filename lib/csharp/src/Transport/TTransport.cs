@@ -25,24 +25,24 @@ using System;
 
 namespace Thrift.Transport
 {
-	public abstract class TTransport : IDisposable
-	{
-		public abstract bool IsOpen
-		{
-			get;
-		}
+    public abstract class TTransport : IDisposable
+    {
+        public abstract bool IsOpen
+        {
+            get;
+        }
 
-		private byte[] _peekBuffer = new byte[1];
+        private byte[] _peekBuffer = new byte[1];
         private bool _hasPeekByte = false;
 
         public bool Peek()
         {
             //If we already have a byte read but not consumed, do nothing.
-            if (_hasPeekByte) 
+            if (_hasPeekByte)
                 return true;
 
             //If transport closed we can't peek.
-            if (!IsOpen) 
+            if (!IsOpen)
                 return false;
 
             //Try to read one byte. If succeeds we will need to store it for the next read.
@@ -54,15 +54,15 @@ namespace Thrift.Transport
             return true;
         }
 
-		public abstract void Open();
+        public abstract void Open();
 
-		public abstract void Close();
+        public abstract void Close();
 
-		public abstract int Read(byte[] buf, int off, int len);
+        public abstract int Read(byte[] buf, int off, int len);
 
-		public int ReadAll(byte[] buf, int off, int len)
-		{
-			int got = 0;
+        public int ReadAll(byte[] buf, int off, int len)
+        {
+            int got = 0;
 
             //If we previously peeked a byte, we need to use that first.
             if (_hasPeekByte)
@@ -83,19 +83,19 @@ namespace Thrift.Transport
                 got += ret;
             }
             return got;
-		}
+        }
 
-		public virtual void Write(byte[] buf) 
-		{
-			Write (buf, 0, buf.Length);
-		}
+        public virtual void Write(byte[] buf)
+        {
+            Write (buf, 0, buf.Length);
+        }
 
-		public abstract void Write(byte[] buf, int off, int len);
+        public abstract void Write(byte[] buf, int off, int len);
 
-		public virtual void Flush()
-		{
-		}
-        
+        public virtual void Flush()
+        {
+        }
+
         public virtual IAsyncResult BeginFlush(AsyncCallback callback, object state)
         {
             throw new TTransportException(
@@ -110,16 +110,16 @@ namespace Thrift.Transport
                 "Asynchronous operations are not supported by this transport.");
         }
 
-		#region " IDisposable Support "
-		// IDisposable
-		protected abstract void Dispose(bool disposing);
+        #region " IDisposable Support "
+        // IDisposable
+        protected abstract void Dispose(bool disposing);
 
-		public void Dispose()
-		{
-			// Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-		#endregion
-	}
+        public void Dispose()
+        {
+            // Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
+    }
 }

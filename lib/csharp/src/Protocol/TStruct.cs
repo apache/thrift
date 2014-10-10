@@ -27,20 +27,20 @@ using System.Text;
 
 namespace Thrift.Protocol
 {
-	public struct TStruct
-	{
-		private string name;
+    public struct TStruct
+    {
+        private string name;
 
-		public TStruct(string name)
-			:this()
-		{
-			this.name = name;
-		}
+        public TStruct(string name)
+            :this()
+        {
+            this.name = name;
+        }
 
-		public string Name
-		{
-			get { return name; }
-			set { name = value; }
-		}
-	}
+        public string Name
+        {
+            get { return name; }
+            set { name = value; }
+        }
+    }
 }

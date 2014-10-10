@@ -18,13 +18,13 @@
  */
 
 namespace php TestValidators
- 
+
 include "../../../test/ThriftTest.thrift"
 
-union UnionOfStrings { 
-  1: string aa; 
-  2: string bb; 
-} 
+union UnionOfStrings {
+  1: string aa;
+  2: string bb;
+}
 
 service TestService {
     void test() throws(1: ThriftTest.Xception xception);

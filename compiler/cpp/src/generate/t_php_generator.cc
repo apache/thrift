@@ -73,6 +73,9 @@ class t_php_generator : public t_oop_generator {
     iter = parsed_options.find("validate");
     validate_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("json");
+    json_serializable_ = (iter != parsed_options.end());
+
     iter = parsed_options.find("nsglobal");
     if(iter != parsed_options.end()) {
       nsglobal_ = iter->second;
@@ -124,6 +127,7 @@ class t_php_generator : public t_oop_generator {
   void generate_php_struct_required_validator(ofstream& out, t_struct* tstruct, std::string method_name, bool write_mode);
   void generate_php_struct_read_validator(ofstream& out, t_struct* tstruct);
   void generate_php_struct_write_validator(ofstream& out, t_struct* tstruct);
+  void generate_php_struct_json_serialize(ofstream& out, t_struct* tstruct, bool is_result);
   bool needs_php_write_validator(t_struct* tstruct, bool is_result);
   bool needs_php_read_validator(t_struct* tstruct, bool is_result);
   int get_php_num_required_fields(const vector<t_field*>& fields, bool write_mode);
@@ -378,6 +382,11 @@ class t_php_generator : public t_oop_generator {
   bool validate_;
 
   /**
+   * Whether to generate JsonSerializable classes
+   */
+  bool json_serializable_;
+
+  /**
    * Global namespace for PHP 5.3
    */
   std::string nsglobal_;
@@ -425,16 +434,23 @@ void t_php_generator::init_generator() {
  * Prints standard php includes
  */
 string t_php_generator::php_includes() {
-  string TBase = "use Thrift\\Base\\TBase;\n";
-  string TType = "use Thrift\\Type\\TType;\n";
-  string TMessageType = "use Thrift\\Type\\TMessageType;\n";
-  string TException = "use Thrift\\Exception\\TException;\n";
-  string TProtocolException = "use Thrift\\Exception\\TProtocolException;\n";
-  string TProtocol = "use Thrift\\Protocol\\TProtocol;\n";
-  string TBinaryProtocolAccelerated = "use Thrift\\Protocol\\TBinaryProtocolAccelerated;\n";
-  string TApplicationException = "use Thrift\\Exception\\TApplicationException;\n\n";
+  string includes =
+    "use Thrift\\Base\\TBase;\n"
+    "use Thrift\\Type\\TType;\n"
+    "use Thrift\\Type\\TMessageType;\n"
+    "use Thrift\\Exception\\TException;\n"
+    "use Thrift\\Exception\\TProtocolException;\n"
+    "use Thrift\\Protocol\\TProtocol;\n"
+    "use Thrift\\Protocol\\TBinaryProtocolAccelerated;\n"
+    "use Thrift\\Exception\\TApplicationException;\n";
 
-  return TBase + TType + TMessageType + TException + TProtocolException + TProtocol + TBinaryProtocolAccelerated + TApplicationException;
+  if (json_serializable_) {
+    includes +=
+      "use JsonSerializable;\n"
+      "use stdClass;\n";
+  }
+
+  return includes + "\n";
 }
 
 /**
@@ -770,6 +786,9 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
   } else if (oop_) {
     out << " extends " << "TBase";
   }
+  if (json_serializable_) {
+    out << " implements JsonSerializable";
+  }
   out <<
     " {" << endl;
   indent_up();
@@ -837,6 +856,9 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
   }
   if (needs_php_write_validator(tstruct, is_result)) {
     generate_php_struct_write_validator(out, tstruct);
+  }
+  if (json_serializable_) {
+    generate_php_struct_json_serialize(out, tstruct, is_result);
   }
 
   indent_down();
@@ -1122,6 +1144,47 @@ void t_php_generator::generate_php_struct_required_validator(ofstream& out,
   }
 
   indent_down();
+  indent(out) << "}" << endl << endl;
+}
+
+
+
+void t_php_generator::generate_php_struct_json_serialize(ofstream& out,
+                                                         t_struct* tstruct,
+                                                         bool is_result) {
+  indent(out) <<
+    "public function jsonSerialize() {" << endl;
+  indent_up();
+
+  if (needs_php_write_validator(tstruct, is_result)) {
+    indent(out) << "$this->_validateForWrite();" << endl;
+  }
+
+  indent(out) << "$json = new stdClass;" << endl;
+
+  const vector<t_field*>& fields = tstruct->get_members();
+
+  if (fields.size() > 0) {
+    vector<t_field*>::const_iterator f_iter;
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      t_field* field = (*f_iter);
+      t_type* type = field->get_type();
+      const string& name = field->get_name();
+      if (type->is_map() && !((t_map*)type)->get_key_type()->is_string()) {
+        // JSON object keys must be strings
+        continue;
+      }
+      indent(out) << "if ($this->" << name << " !== null) {" << endl;
+      indent_up();
+      indent(out) << "$json->" << name << " = $this->" << name << ";" << endl;
+      indent_down();
+      indent(out) << "}" << endl;
+    }
+  }
+
+  indent(out) << "return $json;" << endl;
+  indent_down();
+
   indent(out) << "}" << endl << endl;
 }
 
@@ -2695,5 +2758,6 @@ THRIFT_REGISTER_GENERATOR(php, "PHP",
 "    rest:            Generate PHP REST processors\n"
 "    nsglobal=NAME:   Set global namespace\n"
 "    validate:        Generate PHP validator methods\n"
+"    json:            Generate JsonSerializable classes (requires PHP >= 5.4)\n"
 )
 

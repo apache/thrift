@@ -72,7 +72,7 @@ type
     TAggrImpl = class( TTestHandlerImpl, TAggr.Iface)
     protected
       FList : IThriftList<Integer>;
-    
+
       // TAggr.Iface
       procedure addValue(value: Integer);
       function getValues(): IThriftList<Integer>;
@@ -85,7 +85,7 @@ type
     class procedure Execute( const args: array of string);
   end;
 
-  
+
 implementation
 
 
@@ -121,13 +121,13 @@ begin
 end;
 
 
-destructor TTestServer.TAggrImpl.Destroy;  
+destructor TTestServer.TAggrImpl.Destroy;
 begin
   try
     FreeAndNil( FList);
   finally
     inherited Destroy;
-  end;                  
+  end;
 end;
 
 
@@ -143,7 +143,7 @@ begin
 end;
 
 
-{ TTestServer }    
+{ TTestServer }
 
 class procedure TTestServer.Execute( const args: array of string);
 var

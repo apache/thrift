@@ -45,6 +45,7 @@ reader = make_helper(VALUE_READ, CONTAINER_READ)
 
 
 def makeZigZag(n, bits):
+  checkIntegerLimits(n, bits)
   return (n << 1) ^ (n >> (bits - 1))
 
 

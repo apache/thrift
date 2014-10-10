@@ -781,7 +781,7 @@ begin
     FWriteHandle     := hPipeW;
 
     result := TRUE;
-  
+
   finally
     if sd <> nil then LocalFree( Cardinal(sd));
   end;

@@ -29,8 +29,8 @@ using Test.Multiplex;
 
 namespace Test.Multiplex.Client
 {
-	public class TestClient
-	{
+    public class TestClient
+    {
         private void Run()
         {
             try
@@ -49,7 +49,7 @@ namespace Test.Multiplex.Client
 
                 multiplex = new TMultiplexedProtocol( Protocol, Constants.NAME_AGGR);
                 Aggr.Iface aggr = new Aggr.Client( multiplex);
-                
+
                 sbyte i;
                 for( i = 1; 10 >= i; ++i)
                 {

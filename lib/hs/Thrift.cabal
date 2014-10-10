@@ -54,6 +54,7 @@ Library
     Thrift.Protocol.JSON,
     Thrift.Server,
     Thrift.Transport,
+    Thrift.Transport.Empty,
     Thrift.Transport.Framed,
     Thrift.Transport.Handle,
     Thrift.Transport.HttpClient,
@@ -69,13 +70,3 @@ Library
     RecordWildCards,
     ScopedTypeVariables,
     TypeSynonymInstances
-
-Test-Suite tests
-  Type:
-    exitcode-stdio-1.0
-  Hs-Source-Dirs:
-    tests
-  Build-Depends:
-    base, QuickCheck, binary, bytestring, thrift, split
-  Main-Is:
-    JSONTests.hs

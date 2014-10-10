@@ -23,6 +23,7 @@
 
 .*project
 junit*.properties
+.idea
 gen-*
 Makefile
 Makefile.in
@@ -167,6 +168,7 @@ test-driver
 /lib/js/test/build
 /lib/nodejs/node_modules/
 /lib/perl/MANIFEST
+/lib/perl/MYMETA.json
 /lib/perl/MYMETA.yml
 /lib/perl/Makefile-perl.mk
 /lib/perl/blib
@@ -198,7 +200,7 @@ test-driver
 /lib/php/src/ext/thrift_protocol/thrift_protocol.la
 /lib/php/src/ext/thrift_protocol/tmp-php.ini
 /lib/php/src/packages/
-/lib/php/test/phpunit.xml
+/lib/php/test/TEST-*.xml
 /lib/php/test/packages/
 /lib/py/dist/
 /lib/erl/logs/

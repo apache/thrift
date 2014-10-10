@@ -121,7 +121,7 @@ if test "x$want_boost" = "xyes"; then
                 fi
         done
     elif test "$cross_compiling" != yes; then
-        for ac_boost_path_tmp in /usr /usr/local /opt /opt/local ; do
+        for ac_boost_path_tmp in $lt_sysroot/usr $lt_sysroot/usr/local $lt_sysroot/opt $lt_sysroot/opt/local ; do
             if test -d "$ac_boost_path_tmp/include/boost" && test -r "$ac_boost_path_tmp/include/boost"; then
                 for libsubdir in $libsubdirs ; do
                     if ls "$ac_boost_path_tmp/$libsubdir/libboost_"* >/dev/null 2>&1 ; then break; fi
@@ -185,7 +185,7 @@ if test "x$want_boost" = "xyes"; then
             fi
         else
             if test "$cross_compiling" != yes; then
-                for ac_boost_path in /usr /usr/local /opt /opt/local ; do
+                for ac_boost_path in $lt_sysroot/usr $lt_sysroot/usr/local $lt_sysroot/opt $lt_sysroot/opt/local ; do
                     if test -d "$ac_boost_path" && test -r "$ac_boost_path"; then
                         for i in `ls -d $ac_boost_path/include/boost-* 2>/dev/null`; do
                             _version_tmp=`echo $i | sed "s#$ac_boost_path##" | sed 's/\/include\/boost-//' | sed 's/_/./'`
