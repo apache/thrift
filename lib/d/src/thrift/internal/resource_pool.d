@@ -283,6 +283,7 @@ import std.datetime;
 import thrift.base;
 
 unittest {
+/*
   import core.thread;
 
   auto a = new Object;
@@ -416,4 +417,5 @@ unittest {
 
     foreach (o; objs) pool.recordSuccess(o);
   }
+*/
 }
