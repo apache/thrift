@@ -65,7 +65,7 @@ final class TResourcePool(Resource) {
   /**
    * Returns an »enriched« input range to iterate over the pool members.
    */
-  struct Range {
+  static struct Range {
     /**
      * Whether the range is empty.
      *
@@ -98,9 +98,7 @@ final class TResourcePool(Resource) {
         auto fi = r in parent_.faultInfos_;
 
         if (fi && fi.resetTime != fi.resetTime.init) {
-          // The argument to < needs to be an lvalue…
-          auto currentTick = parent_.getCurrentTick_();
-          if (fi.resetTime < currentTick) {
+          if (fi.resetTime < parent_.getCurrentTick_()) {
             // The timeout expired, remove the resource from the list and go
             // ahead trying it.
             parent_.faultInfos_.remove(r);
@@ -232,8 +230,7 @@ final class TResourcePool(Resource) {
     if (fi.count >= faultDisableCount) {
       // If the resource has hit the fault count limit, disable it for
       // specified duration.
-      fi.resetTime = getCurrentTick_() +
-        TickDuration.from!"hnsecs"(faultDisableDuration.total!"hnsecs");
+      fi.resetTime = getCurrentTick_() + cast(TickDuration)faultDisableDuration;
     }
   }
 
@@ -424,11 +421,10 @@ unittest {
     auto r = pool[];
     enforce(r.empty);
 
-    Object nextRes;
-    Duration nextWait;
-    enforce(r.willBecomeNonempty(nextRes, nextWait));
-    enforce(nextRes == a);
-    enforce(nextWait > dur!"hnsecs"(0));
+    // Make sure willBecomeNonempty gets the order right.
+    enforce(r.willBecomeNonempty(dummyRes, dummyDur));
+    enforce(dummyRes == a);
+    enforce(dummyDur > Duration.zero);
 
     foreach (o; objs) pool.recordSuccess(o);
   }
