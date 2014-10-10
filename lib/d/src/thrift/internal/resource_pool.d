@@ -99,7 +99,7 @@ final class TResourcePool(Resource) {
 
         if (fi && fi.resetTime != fi.resetTime.init) {
           // The argument to < needs to be an lvalue…
-          auto currentTick = TickDuration.currSystemTick;
+          auto currentTick = parent_.getCurrentTick_();
           if (fi.resetTime < currentTick) {
             // The timeout expired, remove the resource from the list and go
             // ahead trying it.
@@ -167,7 +167,7 @@ final class TResourcePool(Resource) {
       ).front;
 
       next = nextPair[0];
-      waitTime = to!Duration(nextPair[1].resetTime - TickDuration.currSystemTick);
+      waitTime = to!Duration(nextPair[1].resetTime - parent_.getCurrentTick_());
 
       return true;
     }
@@ -232,7 +232,7 @@ final class TResourcePool(Resource) {
     if (fi.count >= faultDisableCount) {
       // If the resource has hit the fault count limit, disable it for
       // specified duration.
-      fi.resetTime = TickDuration.currSystemTick +
+      fi.resetTime = getCurrentTick_() +
         TickDuration.from!"hnsecs"(faultDisableDuration.total!"hnsecs");
     }
   }
@@ -270,6 +270,15 @@ final class TResourcePool(Resource) {
 private:
   Resource[] resources_;
   FaultInfo[Resource] faultInfos_;
+
+  /// Function to get the current timestamp from some monotonic system clock.
+  ///
+  /// This is overridable to be able to write timing-insensitive unit tests.
+  /// The extra indirection should not matter much performance-wise compared to
+  /// the actual system call, and by its very nature thisshould not be on a hot
+  /// path anyway.
+  typeof(&TickDuration.currSystemTick) getCurrentTick_ =
+    &TickDuration.currSystemTick;
 }
 
 private {
@@ -279,12 +288,9 @@ private {
   }
 }
 
-import std.datetime;
-import thrift.base;
-
 unittest {
-/*
-  import core.thread;
+  import std.datetime;
+  import thrift.base;
 
   auto a = new Object;
   auto b = new Object;
@@ -292,7 +298,10 @@ unittest {
   auto objs = [a, b, c];
   auto pool = new TResourcePool!Object(objs);
   pool.permute = false;
-  pool.faultDisableDuration = dur!"msecs"(5);
+
+  static Duration fakeClock;
+  pool.getCurrentTick_ = () => cast(TickDuration)fakeClock;
+
   Object dummyRes = void;
   Duration dummyDur = void;
 
@@ -329,7 +338,7 @@ unittest {
     enforce(r.empty);
     enforce(!r.willBecomeNonempty(dummyRes, dummyDur));
 
-    Thread.sleep(dur!"msecs"(5));
+    fakeClock += 2.seconds;
     // Not in cycle mode, has to be still empty after the timeouts expired.
     enforce(r.empty);
     enforce(!r.willBecomeNonempty(dummyRes, dummyDur));
@@ -341,9 +350,7 @@ unittest {
     pool.faultDisableCount = 1;
 
     pool.recordFault(a);
-    Thread.sleep(dur!"usecs"(1));
     pool.recordFault(b);
-    Thread.sleep(dur!"usecs"(1));
     pool.recordFault(c);
 
     auto r = pool[];
@@ -384,7 +391,7 @@ unittest {
     r.popFront();
     enforce(r.front == b);
 
-    Thread.sleep(dur!"msecs"(5));
+    fakeClock += 2.seconds;
 
     r.popFront();
     enforce(r.front == c);
@@ -401,9 +408,9 @@ unittest {
     pool.faultDisableCount = 1;
 
     pool.recordFault(a);
-    Thread.sleep(dur!"usecs"(1));
+    fakeClock += 1.msecs;
     pool.recordFault(b);
-    Thread.sleep(dur!"usecs"(1));
+    fakeClock += 1.msecs;
     pool.recordFault(c);
 
     auto r = pool[];
@@ -417,5 +424,4 @@ unittest {
 
     foreach (o; objs) pool.recordSuccess(o);
   }
-*/
 }
