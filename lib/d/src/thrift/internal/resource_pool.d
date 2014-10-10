@@ -154,7 +154,7 @@ final class TResourcePool(Resource) {
      */
     bool willBecomeNonempty(out Resource next, out Duration waitTime) {
       // If no resources are in the pool, the range will never become non-empty.
-      if (resources_.empty) return true;
+      if (resources_.empty) return false;
 
       // If cycle mode is not enabled, a range never becomes non-empty after
       // being empty once, because all the elements have already been
@@ -286,6 +286,14 @@ private {
     ushort count;
     TickDuration resetTime;
   }
+}
+
+unittest {
+  auto pool = new TResourcePool!Object([]);
+  enforce(pool[].empty);
+  Object dummyRes;
+  Duration dummyDur;
+  enforce(!pool[].willBecomeNonempty(dummyRes, dummyDur));
 }
 
 unittest {
