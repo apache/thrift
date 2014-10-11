@@ -149,26 +149,57 @@ func (p *StreamTransport) Flush() error {
 	return nil
 }
 
+func (p *StreamTransport) Read(c []byte) (n int, err error) {
+	n, err = p.Reader.Read(c)
+	if err != nil {
+		err = NewTTransportExceptionFromError(err)
+	}
+	return
+}
+
 func (p *StreamTransport) ReadByte() (c byte, err error) {
 	f, ok := p.Reader.(io.ByteReader)
 	if ok {
-		return f.ReadByte()
+		c, err = f.ReadByte()
+	} else {
+		c, err = readByte(p.Reader)
 	}
-	return readByte(p.Reader)
+	if err != nil {
+		err = NewTTransportExceptionFromError(err)
+	}
+	return
 }
 
-func (p *StreamTransport) WriteByte(c byte) error {
+func (p *StreamTransport) Write(c []byte) (n int, err error) {
+	n, err = p.Writer.Write(c)
+	if err != nil {
+		err = NewTTransportExceptionFromError(err)
+	}
+	return
+}
+
+func (p *StreamTransport) WriteByte(c byte) (err error) {
 	f, ok := p.Writer.(io.ByteWriter)
 	if ok {
-		return f.WriteByte(c)
+		err = f.WriteByte(c)
+	} else {
+		err = writeByte(p.Writer, c)
 	}
-	return writeByte(p.Writer, c)
+	if err != nil {
+		err = NewTTransportExceptionFromError(err)
+	}
+	return
 }
 
 func (p *StreamTransport) WriteString(s string) (n int, err error) {
 	f, ok := p.Writer.(stringWriter)
 	if ok {
-		return f.WriteString(s)
+		n, err = f.WriteString(s)
+	} else {
+		n, err = p.Writer.Write([]byte(s))
 	}
-	return p.Writer.Write([]byte(s))
+	if err != nil {
+		err = NewTTransportExceptionFromError(err)
+	}
+	return
 }
