@@ -376,10 +376,12 @@ void t_json_generator::generate_field(t_field * field){
 	write_key("name", field->get_name());
 	write_key("type", get_type_name(field->get_type()));
 	if (field->has_doc()) write_key("doc", field->get_doc());
-	switch (field->get_req()){
-	case t_field::e_req::T_REQUIRED:
-		write_key("required", "true");
-		break;
+	switch (field->get_req()) {
+        case t_field::e_req::T_REQUIRED:
+            write_key("required", "true");
+            break;
+        default:
+            write_key("required", "false");
 	}
 	if (field->get_value())
 		write_key("default", get_const_value(field->get_value()));
@@ -442,9 +444,7 @@ string t_json_generator::get_type_name(t_type* ttype){
 	else if (ttype->is_base_type()) {
 		return (((t_base_type*)ttype)->is_binary() ? "binary" : ttype->get_name());
 	}
-	else {
-		return ttype->get_name();
-	}
+	return ttype->get_name();
 }
 
 THRIFT_REGISTER_GENERATOR(json, "JSON", "Export program metadata to json format for easy consumption")
