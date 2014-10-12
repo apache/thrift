@@ -104,7 +104,7 @@ void t_json_generator::init_generator() {
 
 string t_json_generator::escapeJsonString(const string& input) {
 	std::ostringstream ss;
-	for (auto iter = input.cbegin(); iter != input.cend(); iter++) {
+	for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
 		switch (*iter) {
 		case '\\': ss << "\\\\"; break;
 		case '"': ss << "\\\""; break;
@@ -400,7 +400,7 @@ void t_json_generator::generate_field(t_field * field){
 	write_key("type", get_type_name(field->get_type()));
 	if (field->has_doc()) write_key("doc", field->get_doc());
 	switch (field->get_req()) {
-        case t_field::e_req::T_REQUIRED:
+        case t_field::T_REQUIRED:
             write_key("required", "true");
             break;
         default:
@@ -416,9 +416,9 @@ string t_json_generator::get_const_value(t_const_value* tvalue){
 
 	switch (tvalue->get_type()) {
 	case t_const_value::CV_INTEGER:
-		return std::to_string(tvalue->get_integer());
+		return tvalue->get_string();
 	case t_const_value::CV_DOUBLE:
-		return std::to_string(tvalue->get_double());
+		return tvalue->get_string();
 	case t_const_value::CV_STRING:
 		return tvalue->get_string();
 	case t_const_value::CV_LIST:
