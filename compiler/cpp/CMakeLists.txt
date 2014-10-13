@@ -152,8 +152,13 @@ install(TARGETS thrift DESTINATION bin)
 
 # mingw32 does not support c++0x features
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
-set(CMAKE_CXX_FLAGS "-std=c++0x")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 endif()
+
+if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
+endif()
+
 
 # create a Distribution Package for the Apache Thrift Compiler
 set(CPACK_PACKAGE_NAME "Apache Thrift")

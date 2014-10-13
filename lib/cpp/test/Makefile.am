@@ -268,7 +268,7 @@ gen-cpp/ChildService.cpp: processor/proc.thrift
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src
 AM_LDFLAGS = $(BOOST_LDFLAGS)
-AM_CXXFLAGS = -Wall
+AM_CXXFLAGS = -Wall -Wextra
 
 clean-local:
 	$(RM) -r gen-cpp

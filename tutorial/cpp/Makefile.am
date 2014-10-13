@@ -63,7 +63,7 @@ gen-cpp/Calculator.cpp gen-cpp/tutorial_types.cpp gen-cpp/tutorial_constants.cpp
 	$(THRIFT) --gen cpp -r $<
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -Igen-cpp
-AM_CXXFLAGS = -Wall
+AM_CXXFLAGS = -Wall -Wextra -pedantic
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS)
 
 clean-local:
