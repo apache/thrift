@@ -120,7 +120,7 @@ class t_cpp_generator : public t_oop_generator {
                                       bool write=true,
                                       bool swap=false);
   void generate_struct_definition   (std::ofstream& out, std::ofstream& force_cpp_out, t_struct* tstruct, bool setters=true);
-  void generate_copy_constructor     (std::ofstream& out, t_struct* tstruct);
+  void generate_copy_constructor     (std::ofstream& out, t_struct* tstruct, bool is_exception);
   void generate_assignment_operator  (std::ofstream& out, t_struct* tstruct);
   void generate_struct_fingerprint   (std::ofstream& out, t_struct* tstruct, bool is_definition);
   void generate_struct_reader        (std::ofstream& out, t_struct* tstruct, bool pointers=false);
@@ -159,7 +159,7 @@ class t_cpp_generator : public t_oop_generator {
                                           t_struct*   tstruct,
                                           std::string prefix="",
                                           bool pointer=false);
-  
+
   void generate_deserialize_container    (std::ofstream& out,
                                           t_type*     ttype,
                                           std::string prefix="");
@@ -822,22 +822,31 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
   generate_struct_reader(out, tstruct);
   generate_struct_writer(out, tstruct);
   generate_struct_swap(f_types_impl_, tstruct);
-  generate_copy_constructor(f_types_impl_, tstruct);
+  generate_copy_constructor(f_types_impl_, tstruct, is_exception);
   generate_assignment_operator(f_types_impl_, tstruct);
   generate_struct_ostream_operator(f_types_impl_, tstruct);
 }
 
 void t_cpp_generator::generate_copy_constructor(
   ofstream& out,
-  t_struct* tstruct) {
+  t_struct* tstruct,
+  bool is_exception) {
   std::string tmp_name = tmp("other");
 
   indent(out) << tstruct->get_name() << "::" <<
     tstruct->get_name() << "(const " << tstruct->get_name() <<
-    "& " << tmp_name << ") {" << endl;
+    "& " << tmp_name << ") ";
+  if (is_exception)
+    out << ": TException() ";
+  out << "{" << endl;
   indent_up();
 
   const vector<t_field*>& members = tstruct->get_members();
+
+  // eliminate compiler unused warning
+  if (members.empty())
+    indent(out) << "(void) " << tmp_name << ";" << endl;
+
   vector<t_field*>::const_iterator f_iter;
   bool has_nonrequired_fields = false;
   for (f_iter = members.begin(); f_iter != members.end(); ++f_iter) {
@@ -859,12 +868,17 @@ void t_cpp_generator::generate_assignment_operator(
   t_struct* tstruct) {
   std::string tmp_name = tmp("other");
 
-  indent(out) << tstruct->get_name() << "& " << tstruct->get_name() << "::" 
+  indent(out) << tstruct->get_name() << "& " << tstruct->get_name() << "::"
     "operator=(const " << tstruct->get_name() <<
     "& " << tmp_name << ") {" << endl;
   indent_up();
 
   const vector<t_field*>& members = tstruct->get_members();
+
+  // eliminate compiler unused warning
+  if (members.empty())
+    indent(out) << "(void) " << tmp_name << ";" << endl;
+
   vector<t_field*>::const_iterator f_iter;
   bool has_nonrequired_fields = false;
   for (f_iter = members.begin(); f_iter != members.end(); ++f_iter) {
@@ -965,7 +979,7 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
 
   if (!pointers) {
     // Copy constructor
-    indent(out) << 
+    indent(out) <<
       tstruct->get_name() << "(const " << tstruct->get_name() << "&);" << endl;
 
     // Assignment Operator
@@ -974,7 +988,7 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
     // Default constructor
     indent(out) <<
       tstruct->get_name() << "()";
-    
+
 
     bool init_ctor = false;
 
@@ -997,7 +1011,7 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
         } else {
           out << ", " << (*m_iter)->get_name() << "(" << dval << ")";
         }
-      } 
+      }
     }
     out << " {" << endl;
     indent_up();
@@ -1810,11 +1824,18 @@ void t_cpp_generator::generate_struct_ostream_operator(std::ofstream& out,
   indent_up();
 
   out <<
-    indent() << "using apache::thrift::to_string;" << endl <<
+    indent() << "using apache::thrift::to_string;" << endl;
+
+  // eliminate compiler unused warning
+  const vector<t_field*>& fields = tstruct->get_members();
+  if (fields.empty())
+    out << indent() << "(void) obj;" << endl;
+
+  out <<
     indent() << "out << \"" << tstruct->get_name() << "(\";" << endl;
 
   struct_ostream_operator_generator::generate_fields(out,
-                                                     tstruct->get_members(),
+                                                     fields,
                                                      indent());
 
   out <<
@@ -4350,7 +4371,7 @@ void t_cpp_generator::generate_serialize_field(ofstream& out,
   if (type->is_struct() || type->is_xception()) {
     generate_serialize_struct(out,
                               (t_struct*)type,
-                              name, 
+                              name,
                               is_reference(tfield));
   } else if (type->is_container()) {
     generate_serialize_container(out, type, name);
