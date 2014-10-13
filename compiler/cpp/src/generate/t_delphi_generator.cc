@@ -276,7 +276,7 @@ string t_delphi_generator::replace_all( string contents, string search, string r
   }
   
   return str;
-};
+}
 
 // XML encoding 
 string t_delphi_generator::xml_encode( string contents) {
@@ -321,7 +321,7 @@ void t_delphi_generator::generate_delphi_docstring_comment(ostream &out, string 
                                "/// ", "<para>" + contents + "</para>",
                                "/// </summary>\n{$ENDREGION}\n");
   }
-};
+}
 
 void t_delphi_generator::generate_delphi_doc(ostream &out, t_field* field) {
   if( xmldoc_) {
@@ -3479,5 +3479,5 @@ THRIFT_REGISTER_GENERATOR(delphi, "delphi",
 "                     and container instances by interface or TypeInfo()\n"
 "    constprefix:     Name TConstants classes after IDL to reduce ambiguities\n"
 "    events:          Enable and use processing events in the generated code.\n"
-"    xmldoc:          Enable XMLDoc comments for Help Insight etc.\n");
+"    xmldoc:          Enable XMLDoc comments for Help Insight etc.\n")
 

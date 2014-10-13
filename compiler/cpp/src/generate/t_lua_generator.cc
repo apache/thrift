@@ -1224,4 +1224,4 @@ string t_lua_generator::type_to_enum(t_type* type) {
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
 }
 
-THRIFT_REGISTER_GENERATOR(lua, "Lua", "");
+THRIFT_REGISTER_GENERATOR(lua, "Lua", "")
