@@ -35,6 +35,7 @@
 
 using namespace std;
 using namespace apache::thrift;
+using namespace apache::thrift::concurrency;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace apache::thrift::server;
@@ -124,6 +125,8 @@ int main(int argc, char **argv) {
 
   /**
    * Or you could do one of these
+
+  const int workerCount = 4;
 
   boost::shared_ptr<ThreadManager> threadManager =
     ThreadManager::newSimpleThreadManager(workerCount);
