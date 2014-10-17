@@ -21,6 +21,7 @@ package org.apache.thrift.transport;
 
 import org.apache.thrift.transport.*;
 
+import haxe.io.Eof;
 import haxe.io.Bytes;
 import haxe.io.BytesBuffer;
 import haxe.io.BytesOutput;
@@ -73,31 +74,41 @@ class TFramedTransport extends TTransport
     }
 
     public override function read(buf : BytesBuffer, off : Int, len : Int) : Int {
-        var data = Bytes.alloc(len);
+        try {
+            var data = Bytes.alloc(len);
 
-        if (readBuffer_ != null) {
-            var got : Int = readBuffer_.readBytes(data, off, len);
-            if (got > 0) {
-                buf.addBytes(data,0,got);
-                return got;
+            if ((readBuffer_ != null) && (readBuffer_.position < readBuffer_.length)) {
+                var got : Int = readBuffer_.readBytes(data, off, len);
+                if (got > 0) {
+                    buf.addBytes(data,0,got);
+                    return got;
+                };
             };
-        };
 
-        // Read another frame of data
-        readFrame();
+            // Read another frame of data
+            readFrame();
 
-        var got = readBuffer_.readBytes(data, off, len);
-        buf.addBytes(data,0,got);
-        return got;
+            var got = readBuffer_.readBytes(data, off, len);
+            buf.addBytes(data,0,got);
+            return got;
+        }
+        catch (eof : Eof) {
+            throw new TTransportException(TTransportException.END_OF_FILE, 'Can\'t read $len bytes!');
+        }
     }
 
 
     function readFrameSize() : Int {
-        var buffer = new BytesBuffer();
-        var len = transport_.readAll( buffer, 0, 4);
-        var inp = new BytesInput( buffer.getBytes(), 0, 4);
-        inp.bigEndian = true;
-        return inp.readInt32();
+        try {
+            var buffer = new BytesBuffer();
+            var len = transport_.readAll( buffer, 0, 4);
+            var inp = new BytesInput( buffer.getBytes(), 0, 4);
+            inp.bigEndian = true;
+            return inp.readInt32();
+        }
+        catch(eof : Eof) {
+            throw new TTransportException(TTransportException.END_OF_FILE, 'Can\'t read 4 bytes!');
+        }
     }
 
 
@@ -111,10 +122,15 @@ class TFramedTransport extends TTransport
             throw new TTransportException(TTransportException.UNKNOWN, 'Frame size ($size) larger than max length ($maxLength_)!');
         };
 
-        var buffer = new BytesBuffer();
-        size = transport_.readAll( buffer, 0, size);
-        readBuffer_ = new BytesInput( buffer.getBytes(), 0, size);
-        readBuffer_.bigEndian = true;
+        try {
+            var buffer = new BytesBuffer();
+            size = transport_.readAll( buffer, 0, size);
+            readBuffer_ = new BytesInput( buffer.getBytes(), 0, size);
+            readBuffer_.bigEndian = true;
+        }
+        catch(eof : Eof) {
+            throw new TTransportException(TTransportException.END_OF_FILE, 'Can\'t read $size bytes!');
+        }
     }
 
     public override function write(buf : Bytes, off : Int, len : Int) : Void {
@@ -135,7 +151,7 @@ class TFramedTransport extends TTransport
 
         writeFrameSize(len);
         transport_.write(buf, 0, len);
-        transport_.flush();
+        transport_.flush(callback);
     }
 }
 
