@@ -68,6 +68,7 @@ public class TSocket extends TIOStreamTransport {
     try {
       socket_.setSoLinger(false, 0);
       socket_.setTcpNoDelay(true);
+      socket_.setKeepAlive(true);
     } catch (SocketException sx) {
       LOGGER.warn("Could not configure socket.", sx);
     }
@@ -117,6 +118,7 @@ public class TSocket extends TIOStreamTransport {
     try {
       socket_.setSoLinger(false, 0);
       socket_.setTcpNoDelay(true);
+      socket_.setKeepAlive(true);
       socket_.setSoTimeout(timeout_);
     } catch (SocketException sx) {
       LOGGER.error("Could not configure socket.", sx);
