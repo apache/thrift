@@ -2414,10 +2414,15 @@ std::string t_java_generator::get_java_type_string(t_type* type) {
       case t_base_type::TYPE_I32    : return       "org.apache.thrift.protocol.TType.I32"; break;
       case t_base_type::TYPE_I64    : return       "org.apache.thrift.protocol.TType.I64"; break;
       case t_base_type::TYPE_DOUBLE : return    "org.apache.thrift.protocol.TType.DOUBLE"; break;
-      default : throw std::runtime_error("Unknown thrift type \"" + type->get_name() + "\" passed to t_java_generator::get_java_type_string!"); break; // This should never happen!
+      default :
+        throw std::runtime_error("Unknown thrift type \"" + type->get_name() + "\" passed to t_java_generator::get_java_type_string!");
+        return "Unknown thrift type \"" + type->get_name() + "\" passed to t_java_generator::get_java_type_string!";
+        break; // This should never happen!
     }
   } else {
-    throw std::runtime_error("Unknown thrift type \"" + type->get_name() + "\" passed to t_java_generator::get_java_type_string!"); // This should never happen!
+      throw std::runtime_error("Unknown thrift type \"" + type->get_name() + "\" passed to t_java_generator::get_java_type_string!");
+      return "Unknown thrift type \"" + type->get_name() + "\" passed to t_java_generator::get_java_type_string!";
+      // This should never happen!
   }
 }
 
@@ -3922,6 +3927,7 @@ string t_java_generator::function_signature_async(t_function* tfunction, bool us
 }
 
 string t_java_generator::async_function_call_arglist(t_function* tfunc, bool use_base_method, bool include_types) {
+  (void) use_base_method;
   std::string arglist = "";
   if (tfunc->get_arglist()->get_members().size() > 0) {
     arglist = argument_list(tfunc->get_arglist(), include_types) + ", ";
@@ -3959,6 +3965,7 @@ string t_java_generator::argument_list(t_struct* tstruct, bool include_types) {
 }
 
 string t_java_generator::async_argument_list(t_function* tfunct, t_struct* tstruct, t_type* ttype, bool include_types) {
+  (void) tfunct;
   (void) ttype;
   string result = "";
   const vector<t_field*>& fields = tstruct->get_members();

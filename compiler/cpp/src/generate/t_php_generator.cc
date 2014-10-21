@@ -250,6 +250,7 @@ class t_php_generator : public t_oop_generator {
 
   //add a directory to allready existing namespace
   string php_namespace_directory(string directory, bool end = true) {
+    (void) directory;
     if(end) {
       return ";";
     } else {
@@ -413,8 +414,8 @@ void t_php_generator::init_generator() {
   package_dir_ = get_out_dir();
 
   for (size_t i = 0; i < NSx.size(); ++i) {
-	package_dir_ = package_dir_ + "/" + NSx[i] + "/";
-	MKDIR(package_dir_.c_str());
+    package_dir_ = package_dir_ + "/" + NSx[i] + "/";
+    MKDIR(package_dir_.c_str());
   }
 
   // Make output file

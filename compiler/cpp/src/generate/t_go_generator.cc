@@ -73,7 +73,8 @@ public:
         const std::map<std::string, std::string>& parsed_options,
         const std::string& option_string)
         : t_generator(program) {
-        std::map<std::string, std::string>::const_iterator iter;
+    	(void) option_string;
+    	std::map<std::string, std::string>::const_iterator iter;
         out_dir_base_ = "gen-go";
         gen_thrift_import_ = default_thrift_import;
 
@@ -344,6 +345,7 @@ static bool type_need_reference(t_type* type) {
 
 //returns false if field could not use comparison to default value as !IsSet*
 bool t_go_generator::is_pointer_field(t_field* tfield, bool in_container_value) {
+	(void) in_container_value;
 	if (tfield->annotations_.count("cpp.ref")!=0) {
 		return true;
 	}
@@ -1250,6 +1252,7 @@ void t_go_generator::generate_isset_helpers(ofstream& out,
         const string& tstruct_name,
         bool is_result)
 {
+    (void) is_result;
     const vector<t_field*>& fields = tstruct->get_members();
     vector<t_field*>::const_iterator f_iter;
     const string escaped_tstruct_name(escape_string(tstruct->get_name()));
@@ -1292,7 +1295,8 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
         const string& tstruct_name,
         bool is_result)
 {
-    const vector<t_field*>& fields = tstruct->get_members();
+	(void) is_result;
+	const vector<t_field*>& fields = tstruct->get_members();
     vector<t_field*>::const_iterator f_iter;
     string escaped_tstruct_name(escape_string(tstruct->get_name()));
     out <<
@@ -1416,7 +1420,8 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
         const string& tstruct_name,
         bool is_result)
 {
-    string name(tstruct->get_name());
+	(void) is_result;
+	string name(tstruct->get_name());
     const vector<t_field*>& fields = tstruct->get_sorted_members();
     vector<t_field*>::const_iterator f_iter;
     indent(out) <<
@@ -2627,7 +2632,9 @@ void t_go_generator::generate_deserialize_field(ofstream &out,
         bool inkey,
         bool in_container_value)
 {
-    t_type* orig_type = tfield->get_type();
+    (void) inclass;
+    (void) coerceData;
+	t_type* orig_type = tfield->get_type();
     t_type* type = get_true_type(orig_type);
     string name(prefix + publicize(variable_name_to_go_name(tfield->get_name())));
 
@@ -2848,6 +2855,7 @@ void t_go_generator::generate_deserialize_map_element(ofstream &out,
         bool   declare,
         string prefix)
 {
+    (void) declare;
     string key = tmp("_key");
     string val = tmp("_val");
     t_field fkey(tmap->get_key_type(), key);
@@ -2869,6 +2877,7 @@ void t_go_generator::generate_deserialize_set_element(ofstream &out,
         bool   declare,
         string prefix)
 {
+    (void) declare;
     string elem = tmp("_elem");
     t_field felem(tset->get_elem_type(), elem);
     felem.set_req(t_field::T_OPT_IN_REQ_OUT);
@@ -2885,6 +2894,7 @@ void t_go_generator::generate_deserialize_list_element(ofstream &out,
         bool   declare,
         string prefix)
 {
+    (void) declare;
     string elem = tmp("_elem");
     t_field felem(((t_list*)tlist)->get_elem_type(), elem);
     felem.set_req(t_field::T_OPT_IN_REQ_OUT);
@@ -2997,6 +3007,7 @@ void t_go_generator::generate_serialize_struct(ofstream &out,
         t_struct* tstruct,
         string prefix)
 {
+    (void) tstruct;
     out <<
         indent() << "if err := " << prefix << ".Write(oprot); err != nil {" << endl <<
         indent() << "  return fmt.Errorf(\"%T error writing struct: %s\", " << prefix << ", err)" << endl <<
@@ -3428,7 +3439,8 @@ string t_go_generator::type_to_go_type(t_type* type, bool is_container_value) {
  */
 string t_go_generator::type_to_go_type_with_opt(t_type* type, bool optional_field, bool is_container_value)
 {
-    string maybe_pointer(optional_field ? "*" : "");
+	(void) is_container_value;
+	string maybe_pointer(optional_field ? "*" : "");
     if (type->is_base_type()) {
         t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
 

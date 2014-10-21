@@ -51,6 +51,8 @@ public:
     const std::string& option_string)
     : t_generator(program)
   {
+    (void) parsed_options;
+    (void) option_string;
     out_dir_base_ = "gen-json";
   }
 
@@ -405,6 +407,7 @@ void t_json_generator::generate_field(t_field * field){
             break;
         default:
             write_key("required", "false");
+            break;
   }
   if (field->get_value())
     write_key("default", get_const_value(field->get_value()));
