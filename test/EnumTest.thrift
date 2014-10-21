@@ -64,12 +64,6 @@ enum MyEnum4 {
   // represented with an i32.
 }
 
-enum MyEnum5 {
-  // attempting to explicitly use values out of the i32 range will also fail
-  // ME5_A = 0x80000000,
-  // ME5_B = 0x100000000,
-}
-
 struct MyStruct {
   1: MyEnum2 me2_2 = MyEnum1.ME2_2
   2: MyEnum3 me3_n2 = MyEnum3.ME3_N2
