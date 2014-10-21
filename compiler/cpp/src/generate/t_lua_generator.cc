@@ -40,6 +40,7 @@ class t_lua_generator : public t_oop_generator {
       const std::string& option_string)
     : t_oop_generator(program)
   {
+    (void) option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
     iter = parsed_options.find("omit_requires");
@@ -1057,6 +1058,7 @@ void t_lua_generator::generate_serialize_field(ofstream &out,
 void t_lua_generator::generate_serialize_struct(ofstream &out,
                                                 t_struct* tstruct,
                                                 string prefix) {
+  (void) tstruct;
   indent(out) << prefix << ":write(oprot)" << endl;
 }
 
@@ -1167,6 +1169,7 @@ string t_lua_generator::get_namespace(const t_program* program) {
 
 string t_lua_generator::function_signature(t_function* tfunction,
                                            string prefix) {
+  (void) prefix;
   std::string ret = tfunction->get_name() + "(" +
     argument_list(tfunction->get_arglist()) + ")";
   return ret;

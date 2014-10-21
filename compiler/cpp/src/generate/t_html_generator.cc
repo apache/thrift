@@ -620,7 +620,7 @@ std::string t_html_generator::escape_html(std::string const & str) {
     }
 
     // some control code?
-    if( (0 <= ic) && (31 >= ic))
+    if(ic <= 31)
     {
       switch( c)
       {
@@ -764,6 +764,7 @@ void t_html_generator::print_const_value(t_type* type, t_const_value* tvalue) {
         break;
       default:
           f_out_ << "UNKNOWN BASE TYPE";
+          break;
     }
   } else if (truetype->is_enum()) {
     f_out_ << escape_html(truetype->get_name()) << "." << escape_html(tvalue->get_identifier_name());

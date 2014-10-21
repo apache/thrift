@@ -215,7 +215,7 @@ class t_as3_generator : public t_oop_generator {
   std::ofstream f_service_;
   std::string package_dir_;
   
-  bool bindable_;	
+  bool bindable_; 
 };
 
 
@@ -332,8 +332,8 @@ string t_as3_generator::as3_thrift_gen_imports(t_service* tservice) {
       }
     }
 
-    as3_thrift_gen_imports((*f_iter)->get_arglist(), imports);	    
-    as3_thrift_gen_imports((*f_iter)->get_xceptions(), imports);	    
+    as3_thrift_gen_imports((*f_iter)->get_arglist(), imports);      
+    as3_thrift_gen_imports((*f_iter)->get_xceptions(), imports);      
 
   }
  

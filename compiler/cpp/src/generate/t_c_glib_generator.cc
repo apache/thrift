@@ -3506,12 +3506,12 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
       if (t->is_map() || t->is_set()) {
         f_types_impl_ << indent() << "if (tobject->" << name << " != NULL)" << endl;
         f_types_impl_ << indent() << "{" << endl;
-	indent_up();
-	f_types_impl_ <<
-	indent() << "g_hash_table_destroy (tobject->" << name << ");" << endl;
-	f_types_impl_ << indent() << "tobject->" << name << " = NULL;" << endl;
-	indent_down();
-	f_types_impl_ << indent() << "}" << endl;
+        indent_up();
+        f_types_impl_ <<
+        indent() << "g_hash_table_destroy (tobject->" << name << ");" << endl;
+        f_types_impl_ << indent() << "tobject->" << name << " = NULL;" << endl;
+        indent_down();
+        f_types_impl_ << indent() << "}" << endl;
       } else if (t->is_list()) {
         t_type *etype = ((t_list *) t)->get_elem_type();
         string destructor_function = "g_ptr_array_unref";

@@ -57,7 +57,10 @@ class t_delphi_generator : public t_oop_generator
       : t_oop_generator(program)
     {
       (void) option_string;
-
+      indent_impl_ = 0;
+      has_forward = false;
+      has_enum = false;
+      has_const = false;
       std::map<std::string, std::string>::const_iterator iter;
 
       iter = parsed_options.find("ansistr_binary");
@@ -1338,7 +1341,7 @@ void t_delphi_generator::print_delphi_struct_type_factory_func(  ostream& out, t
 
 
 void t_delphi_generator::generate_delphi_struct_type_factory( ostream& out, string cls_prefix, t_struct* tstruct, bool is_exception, bool is_result, bool is_x_factory) {
-  
+  (void) cls_prefix;
   if (is_exception)
     return;
   if (is_result)
@@ -1362,6 +1365,7 @@ void t_delphi_generator::generate_delphi_struct_type_factory( ostream& out, stri
 }
 
 void t_delphi_generator::generate_delphi_struct_type_factory_registration( ostream& out, string cls_prefix, t_struct* tstruct, bool is_exception, bool is_result, bool is_x_factory) {
+  (void) cls_prefix;
   if (is_exception)
     return;
   if (is_result)
@@ -2952,8 +2956,13 @@ void t_delphi_generator::generate_delphi_isset_reader_definition(ostream& out, t
   indent(out) << "function Get__isset_" << prop_name( tfield, is_xception) << ": Boolean;" << endl;
 }
 
-void t_delphi_generator::generate_delphi_clear_union_value(ostream& out, std::string cls_prefix, std::string name, t_type* type, t_field* tfield, std::string fieldPrefix, bool is_xception_class, bool is_union, bool is_xception_factory, std::string xception_factroy_name) {
+void t_delphi_generator::generate_delphi_clear_union_value(ostream& out, std::string cls_prefix, std::string name, t_type* type, t_field* tfield, std::string fieldPrefix, bool is_xception_class, bool is_union, bool is_xception_factory, std::string xception_factory_name) {
+  (void) cls_prefix;
+  (void) name;
   (void) type;
+  (void) is_union;
+  (void) is_xception_factory;
+  (void) xception_factory_name;
 
   t_type * ftype = tfield->get_type();
   bool is_xception = ftype->is_xception();
