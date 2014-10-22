@@ -30,6 +30,8 @@ nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/Recursive_types.h \
 	gen-cpp/ThriftTest_types.cpp \
 	gen-cpp/ThriftTest_types.h \
+	gen-cpp/ThriftTest_constants.cpp \
+	gen-cpp/ThriftTest_constants.h \
 	gen-cpp/TypedefTest_types.cpp \
 	gen-cpp/TypedefTest_types.h \
 	ThriftTest_extras.cpp \
@@ -48,7 +50,9 @@ DebugProtoTest_extras.o: gen-cpp/DebugProtoTest_types.h
 
 libtestgencpp_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
 
-noinst_PROGRAMS = Benchmark
+noinst_PROGRAMS = Benchmark \
+	processor_test \
+	concurrency_test
 
 Benchmark_SOURCES = \
 	Benchmark.cpp
@@ -71,9 +75,6 @@ check_PROGRAMS = \
 	link_test \
 	OpenSSLManualInitTest \
 	EnumTest
-# disable these test ... too strong
-#       processor_test
-#	concurrency_test
 
 TESTS_ENVIRONMENT= \
 	BOOST_TEST_LOG_SINK=tests.xml \
@@ -264,7 +265,7 @@ gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp: $(top_srcdir)/test/StressTest.
 gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_types.h: $(top_srcdir)/test/ThriftTest.thrift
 	$(THRIFT) --gen cpp:dense $<
 
-gen-cpp/ChildService.cpp: processor/proc.thrift
+gen-cpp/ChildService.cpp gen-cpp/ParentService.cpp gen-cpp/proc_types.cpp: processor/proc.thrift
 	$(THRIFT) --gen cpp:templates,cob_style $<
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src
