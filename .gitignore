@@ -3,6 +3,7 @@
 *.lo
 *.o
 *.deps
+*.dirstamp
 *.libs
 *.log
 *.trs
@@ -221,6 +222,7 @@ test-driver
 /test/test.log
 /test/erl/.eunit/
 /test/erl/.generated
+/test/go/bin/
 /test/go/ThriftTest.thrift
 /test/go/gopath
 /test/go/pkg/
