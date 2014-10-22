@@ -16,15 +16,14 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+AUTOMAKE_OPTIONS = subdir-objects serial-tests
 
-AM_CFLAGS = -g -Wall -Wextra $(GLIB_CFLAGS) $(GOBJECT_CFLAGS) @GCOV_CFLAGS@
+AM_CFLAGS = -g -Wall -Wextra -pedantic $(GLIB_CFLAGS) $(GOBJECT_CFLAGS) @GCOV_CFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir)/lib/c_glib/src -Igen-c_glib
 AM_LDFLAGS = $(GLIB_LIBS) $(GOBJECT_LIBS) @GCOV_LDFLAGS@
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
-
-.NOTPARALLEL:
 noinst_LTLIBRARIES = \
 	libtutorialgencglib.la
 

@@ -16,7 +16,8 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-.NOTPARALLEL:
+AUTOMAKE_OPTIONS = serial-tests
+
 THRIFT = $(top_srcdir)/compiler/cpp/thrift
 
 py_unit_tests = RunClientServer.py
