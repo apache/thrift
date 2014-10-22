@@ -16,7 +16,8 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-.NOTPARALLEL:
+AUTOMAKE_OPTIONS = serial-tests
+
 SUBDIRS =
 
 AM_CPPFLAGS = -g -Wall -I../src $(GLIB_CFLAGS)

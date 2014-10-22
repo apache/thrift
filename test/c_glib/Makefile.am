@@ -16,7 +16,8 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-.NOTPARALLEL:
+AUTOMAKE_OPTIONS = subdir-objects serial-tests
+
 noinst_LTLIBRARIES = libtestcglib.la
 nodist_libtestcglib_la_SOURCES = \
 	gen-c_glib/t_test_second_service.c \

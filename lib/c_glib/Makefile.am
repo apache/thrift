@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-.NOTPARALLEL:
+AUTOMAKE_OPTIONS = serial-tests
 SUBDIRS = . test
 
 pkgconfigdir = $(libdir)/pkgconfig

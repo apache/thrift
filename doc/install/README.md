@@ -9,7 +9,7 @@
 ## Requirements for building from source
 * GNU build tools: 
     * autoconf 2.65
-    * automake 1.9
+    * automake 1.13
     * libtool 1.5.24
 * pkg-config autoconf macros (pkg.m4)
 * lex and yacc (developed primarily with flex and bison)

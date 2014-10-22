@@ -17,6 +17,8 @@
 # under the License.
 #
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 moc_%.cpp: %.h
 	$(QT_MOC) $(QT_CFLAGS) $< -o $@
 

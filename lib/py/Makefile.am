@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-.NOTPARALLEL:
+AUTOMAKE_OPTIONS = serial-tests
 DESTDIR ?= /
 
 all-local:
