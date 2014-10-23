@@ -22,6 +22,7 @@
  */
 
 using System;
+using System.IO;
 
 namespace Thrift.Transport
 {
@@ -46,9 +47,16 @@ namespace Thrift.Transport
                 return false;
 
             //Try to read one byte. If succeeds we will need to store it for the next read.
-            int bytes = Read(_peekBuffer, 0, 1);
-            if (bytes == 0)
-                return false;
+            try
+            {
+                int bytes = Read(_peekBuffer, 0, 1);
+                if (bytes == 0)
+                    return false;
+            }
+            catch( IOException)
+            {
+                return false;  
+            }
 
             _hasPeekByte = true;
             return true;
