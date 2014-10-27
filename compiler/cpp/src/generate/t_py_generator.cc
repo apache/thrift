@@ -2159,7 +2159,7 @@ void t_py_generator::generate_deserialize_field(ofstream &out,
         break;
       case t_base_type::TYPE_STRING:
         if (((t_base_type*)type)->is_binary() || !gen_utf8strings_) {
-          out << "readString();";
+          out << "readString()";
         } else {
           out << "readString().decode('utf-8')";
         }
