@@ -114,6 +114,7 @@ if test "$enable_libs" = "no"; then
   with_python="no"
   with_ruby="no"
   with_haskell="no"
+  with_haxe="no"
   with_perl="no"
   with_php="no"
   with_php_extension="no"
@@ -316,6 +317,16 @@ if test "$with_go" = "yes";  then
   fi
 fi
 AM_CONDITIONAL(WITH_GO, [test "$have_go" = "yes"])
+
+
+AX_THRIFT_LIB(haxe, [Haxe], yes)
+if test "$with_haxe" = "yes";  then
+  AC_PATH_PROG([HAXE], [haxe])
+  if [[ -x "$HAXE" ]] ; then
+    have_haxe="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_HAXE, [test "$have_haxe" = "yes"])
 
 
 AX_THRIFT_LIB(d, [D], yes)
@@ -641,6 +652,7 @@ AC_CONFIG_FILES([
   lib/erl/Makefile
   lib/go/Makefile
   lib/go/test/Makefile
+  lib/haxe/test/Makefile
   lib/hs/Makefile
   lib/java/Makefile
   lib/js/test/Makefile
@@ -657,6 +669,7 @@ AC_CONFIG_FILES([
   test/cpp/Makefile
   test/erl/Makefile
   test/go/Makefile
+  test/haxe/Makefile
   test/hs/Makefile
   test/php/Makefile
   test/perl/Makefile
@@ -668,6 +681,7 @@ AC_CONFIG_FILES([
   tutorial/c_glib/Makefile
   tutorial/cpp/Makefile
   tutorial/go/Makefile
+  tutorial/haxe/Makefile
   tutorial/hs/Makefile
   tutorial/java/Makefile
   tutorial/js/Makefile
@@ -690,6 +704,7 @@ echo "Building Java Library ........ : $have_java"
 echo "Building C# Library .......... : $have_csharp"
 echo "Building Python Library ...... : $have_python"
 echo "Building Ruby Library ........ : $have_ruby"
+echo "Building Haxe Library ........ : $have_haxe"
 echo "Building Haskell Library ..... : $have_haskell"
 echo "Building Perl Library ........ : $have_perl"
 echo "Building PHP Library ......... : $have_php"
@@ -738,6 +753,11 @@ if test "$have_haskell" = "yes" ; then
   echo "Haskell Library:"
   echo "   Using Haskell ............. : $RUNHASKELL"
   echo "   Using Cabal ............... : $CABAL"
+fi
+if test "$have_haxe" = "yes" ; then
+  echo
+  echo "Haxe Library:"
+  echo "   Using Haxe ................ : $HAXE"
 fi
 if test "$have_perl" = "yes" ; then
   echo
