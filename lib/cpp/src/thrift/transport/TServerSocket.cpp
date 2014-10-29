@@ -248,7 +248,7 @@ void TServerSocket::listen() {
 
   // Defer accept
   #ifdef TCP_DEFER_ACCEPT
-  if (-1 == setsockopt(serverSocket_, SOL_SOCKET, TCP_DEFER_ACCEPT,
+  if (-1 == setsockopt(serverSocket_, IPPROTO_TCP, TCP_DEFER_ACCEPT,
                        &one, sizeof(one))) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
     GlobalOutput.perror("TServerSocket::listen() setsockopt() TCP_DEFER_ACCEPT ", errno_copy);
