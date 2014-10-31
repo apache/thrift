@@ -52,6 +52,11 @@ public:
     (void)parsed_options;
     (void)option_string;
     out_dir_base_ = "gen-json";
+
+    std::map<std::string, std::string>::const_iterator iter;
+    iter = parsed_options.find("merge");
+    should_merge_includes_ = (iter != parsed_options.end());
+
   }
 
   virtual ~t_json_generator() {}
@@ -74,8 +79,11 @@ public:
   void generate_struct(t_struct* tstruct);
 
 private:
+  bool should_merge_includes_;
+
   std::ofstream f_json_;
   std::stack<bool> _commaNeeded;
+
   string get_type_name(t_type* type);
   string get_const_value(t_const_value* val);
 
@@ -98,8 +106,10 @@ void t_json_generator::init_generator() {
   string f_json_name = get_out_dir() + program_->get_name() + ".json";
   f_json_.open(f_json_name.c_str());
 
-  // Merge all included programs into this one so we can output one big file.
-  merge_includes(program_);
+  //Merge all included programs into this one so we can output one big file.
+  if (should_merge_includes_) {
+    merge_includes(program_);
+  }
 }
 
 string t_json_generator::escapeJsonString(const string& input) {
@@ -502,4 +512,6 @@ string t_json_generator::get_type_name(t_type* ttype) {
   return ttype->get_name();
 }
 
-THRIFT_REGISTER_GENERATOR(json, "JSON", "")
+THRIFT_REGISTER_GENERATOR(json, "JSON",
+"    merge:           Generate output with included files merged\n"
+)
