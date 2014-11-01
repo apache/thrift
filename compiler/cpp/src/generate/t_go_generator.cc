@@ -2793,7 +2793,7 @@ void t_go_generator::generate_deserialize_container(ofstream &out,
             indent() << "if err != nil {" << endl <<
             indent() << "  return fmt.Errorf(\"error reading set begin: %s\", err)" << endl <<
             indent() << "}" << endl <<
-            indent() << "tSet := make(map[" << type_to_go_key_type(t->get_elem_type()) << "]bool, size)" << endl <<
+            indent() << "tSet := make(map[" << type_to_go_key_type(t->get_elem_type()->get_true_type()) << "]bool, size)" << endl <<
             indent() << prefix << eq << " " << (pointer_field ? "&" : "") << "tSet" << endl;
     } else if (ttype->is_list()) {
         out <<
@@ -3412,7 +3412,7 @@ string t_go_generator::type_to_go_key_type(t_type* type)
     t_type* resolved_type = type;
 
     while (resolved_type->is_typedef()) {
-        resolved_type = ((t_typedef*)resolved_type)->get_type();
+        resolved_type = ((t_typedef*)resolved_type)->get_type()->get_true_type();
     }
 
     if (resolved_type->is_map() || resolved_type->is_list() || resolved_type->is_set()) {
@@ -3423,7 +3423,7 @@ string t_go_generator::type_to_go_key_type(t_type* type)
         ((t_base_type*) resolved_type)->is_binary())
         return "string";
 
-    return type_to_go_type(type);
+    return type_to_go_type(type, true);
 }
 
 /**
@@ -3484,11 +3484,11 @@ string t_go_generator::type_to_go_type_with_opt(t_type* type, bool optional_fiel
         return maybe_pointer + string("map[") + keyType + "]" + valueType;
     } else if (type->is_set()) {
         t_set* t = (t_set*)type;
-        string elemType = type_to_go_key_type(t->get_elem_type());
+        string elemType = type_to_go_key_type(t->get_elem_type()->get_true_type());
         return maybe_pointer + string("map[") + elemType + string("]bool");
     } else if (type->is_list()) {
         t_list* t = (t_list*)type;
-        string elemType = type_to_go_type(t->get_elem_type(), true);
+        string elemType = type_to_go_type(t->get_elem_type()->get_true_type(), true);
         return maybe_pointer + string("[]") + elemType;
     } else if (type->is_typedef()) {
         return maybe_pointer + publicize(type_name(type));
