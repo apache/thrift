@@ -25,7 +25,7 @@
 #include "thrift/transport/TBufferTransports.h"
 #include "thrift/protocol/TBinaryProtocol.h"
 #include "gen-cpp/DebugProtoTest_types.h"
-#include <time.h>
+
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
