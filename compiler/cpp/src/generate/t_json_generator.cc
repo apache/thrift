@@ -42,6 +42,7 @@ using std::stack;
 
 static const string endl = "\n";
 static const string quot = "\"";
+static const bool with_newline = true;
 
 class t_json_generator : public t_generator {
 public:
@@ -71,9 +72,8 @@ public:
   void generate_typedef(t_typedef* ttypedef);
   void generate_enum(t_enum* tenum);
   void generate_program();
-  void generate_consts(vector<t_const*>);
-  void generate_function(t_function* tfunc);
-  void generate_field(t_field* field);
+  void generate_function(t_function * tfunc);
+  void generate_field(t_field * field);
 
   void generate_service(t_service* tservice);
   void generate_struct(t_struct* tstruct);
@@ -82,22 +82,35 @@ private:
   bool should_merge_includes_;
 
   std::ofstream f_json_;
-  std::stack<bool> _commaNeeded;
+  std::stack<bool> comma_needed_;
 
-  string get_type_name(t_type* type);
-  string get_const_value(t_const_value* val);
+  string get_type_name(t_type* ttype);
+  string get_qualified_name(t_type* ttype);
 
-  void start_object();
-  void start_array();
-  void write_key(string key, string val);
-  void write_key_int(string key, int val);
-  void end_object(bool newLine);
-  void end_array(bool newLine);
+  void start_object(bool add_newline=false);
+  void start_array(bool add_newline=false);
+  void end_object(bool add_newline=false);
+  void end_array(bool add_newline=false);
   void write_comma_if_needed();
   void indicate_comma_needed();
-  string escapeJsonString(const string& input);
-
+  string escape_json_string(const string& input);
+  string json_str(const string& str);
   void merge_includes(t_program*);
+
+  void generate_constant(t_const* con);
+
+  void write_type_spec_entry(const char* name, t_type* ttype);
+  void write_type_spec_object(const char* name, t_type* ttype);
+  void write_type_spec(t_type* ttype);
+  void write_string(const string& value);
+  void write_integer(long value);
+  void write_double(double value);
+  void write_value(t_type* tvalue);
+  void write_const_value(t_const_value* value, bool force_string=false);
+  void write_key_and(string key);
+  void write_key_and_string(string key, string val);
+  void write_key_and_integer(string key, int val);
+  void write_key_and_bool(string key, bool val);
 };
 
 void t_json_generator::init_generator() {
@@ -112,7 +125,7 @@ void t_json_generator::init_generator() {
   }
 }
 
-string t_json_generator::escapeJsonString(const string& input) {
+string t_json_generator::escape_json_string(const string& input) {
   std::ostringstream ss;
   for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
     switch (*iter) {
@@ -148,50 +161,99 @@ string t_json_generator::escapeJsonString(const string& input) {
   return ss.str();
 }
 
-void t_json_generator::start_object() {
+void t_json_generator::start_object(bool add_newline) {
   f_json_ << "{";
-  _commaNeeded.push(false);
+  if (add_newline) f_json_ << endl;
+  comma_needed_.push(false);
 }
 
-void t_json_generator::start_array() {
+void t_json_generator::start_array(bool add_newline) {
   f_json_ << "[";
-  _commaNeeded.push(false);
+  if (add_newline) f_json_ << endl;
+  comma_needed_.push(false);
 }
 
 void t_json_generator::write_comma_if_needed() {
-  if (_commaNeeded.top())
-    f_json_ << ",";
+  if (comma_needed_.top()) f_json_ << ",";
 }
 
 void t_json_generator::indicate_comma_needed() {
-  _commaNeeded.pop();
-  _commaNeeded.push(true);
+  comma_needed_.pop();
+  comma_needed_.push(true);
 }
 
-void t_json_generator::write_key(string key, string val) {
+void t_json_generator::write_key_and(string key) {
   write_comma_if_needed();
-  f_json_ << quot << key << quot << ":" << quot << escapeJsonString(val) << quot;
+  f_json_ << json_str(key) << ":";
   indicate_comma_needed();
 }
 
-void t_json_generator::write_key_int(string key, int val) {
+void t_json_generator::write_key_and_integer(string key, int val) {
   write_comma_if_needed();
-  f_json_ << quot << key << quot << ":" << quot << val << quot;
+  f_json_ << json_str(key) << ":" << std::to_string(val);
   indicate_comma_needed();
 }
 
-void t_json_generator::end_object(bool newLine) {
+void t_json_generator::write_key_and_string(string key, string val) {
+  write_comma_if_needed();
+  f_json_ << json_str(key) << ":" << json_str(val);
+  indicate_comma_needed();
+}
+
+void t_json_generator::write_key_and_bool(string key, bool val) {
+  write_comma_if_needed();
+  f_json_ << json_str(key) << ":" << (val ? "true" : "false");
+  indicate_comma_needed();
+}
+
+void t_json_generator::end_object(bool add_newline) {
   f_json_ << "}";
-  if (newLine)
-    f_json_ << endl;
-  _commaNeeded.pop();
+  if (add_newline) f_json_ << endl;
+  comma_needed_.pop();
 }
 
-void t_json_generator::end_array(bool newLine) {
+void t_json_generator::end_array(bool add_newline) {
   f_json_ << "]";
-  if (newLine)
-    f_json_ << endl;
-  _commaNeeded.pop();
+  if (add_newline) f_json_ << endl;
+  comma_needed_.pop();
+}
+
+void t_json_generator::write_type_spec_object(const char* name, t_type* ttype) {
+  ttype = ttype->get_true_type();
+  if (ttype->is_struct() || ttype->is_xception() || ttype->is_container()) {
+    write_key_and(name);
+    start_object();
+    write_key_and("typeId");
+    write_type_spec(ttype);
+    end_object();
+  }
+}
+
+void t_json_generator::write_type_spec_entry(const char* name, t_type* ttype) {
+  write_key_and(name);
+  write_type_spec(ttype);
+}
+
+void t_json_generator::write_type_spec(t_type* ttype) {
+  ttype = ttype->get_true_type();
+
+  write_string(get_type_name(ttype));
+
+  if (ttype->is_struct() || ttype->is_xception()) {
+    write_key_and_string("class", get_qualified_name(ttype));
+  } else if (ttype->is_map()) {
+    t_type* ktype = ((t_map*)ttype)->get_key_type();
+    t_type* vtype = ((t_map*)ttype)->get_val_type();
+    write_key_and_string("keyTypeId", get_type_name(ktype));
+    write_key_and_string("valueTypeId", get_type_name(vtype));
+    write_type_spec_object("keyType", ktype);
+    write_type_spec_object("valueType", vtype);
+  } else if (ttype->is_list() || ttype->is_set()) {
+    t_type* etype = ((t_list*)ttype)->get_elem_type();
+    write_key_and_string("elemTypeId", get_type_name(etype));
+    write_type_spec_object("elemType", etype);
+  }
+
 }
 
 void t_json_generator::close_generator() {
@@ -240,46 +302,71 @@ void t_json_generator::merge_includes(t_program* program) {
 }
 
 void t_json_generator::generate_program() {
-  // Initialize the generator
-  init_generator();
-  start_object();
 
-  write_key("name", program_->get_name());
-  if (program_->has_doc())
-    write_key("doc", program_->get_doc());
+  init_generator();
+
+  start_object();
+  write_key_and_string("name", program_->get_name());
+  if (program_->has_doc()) {
+    write_key_and_string("doc", program_->get_doc());
+  }
+
+  // When merging includes, the "namespaces" and "includes" sections
+  // become ambiguous, so just skip them.
+  if (!should_merge_includes_) {
+    // Generate namespaces
+    write_key_and("namespaces");
+    start_object(with_newline);
+    const map<string,string>& namespaces = program_->get_namespaces();
+    map<string,string>::const_iterator ns_it;
+    for (ns_it = namespaces.begin(); ns_it != namespaces.end(); ++ns_it) {
+      write_key_and_string(ns_it->first, ns_it->second);
+      indicate_comma_needed();
+    }
+    end_object(with_newline);
+
+    // Generate includes
+    write_key_and("includes");
+    start_array(with_newline);
+    const vector<t_program*> includes = program_->get_includes();
+    vector<t_program*>::const_iterator inc_it;
+    for (inc_it = includes.begin(); inc_it != includes.end(); ++inc_it) {
+      write_comma_if_needed();
+      write_string((*inc_it)->get_name());
+      indicate_comma_needed();
+    }
+    end_array(with_newline);
+  }
 
   // Generate enums
+  write_key_and("enums");
+  start_array(with_newline);
   vector<t_enum*> enums = program_->get_enums();
   vector<t_enum*>::iterator en_iter;
-  f_json_ << ",\"enums\":";
-  start_array();
-  f_json_ << endl;
   for (en_iter = enums.begin(); en_iter != enums.end(); ++en_iter) {
     write_comma_if_needed();
     generate_enum(*en_iter);
     indicate_comma_needed();
   }
-  end_array(true);
+  end_array(with_newline);
 
   // Generate typedefs
+  write_key_and("typedefs");
+  start_array(with_newline);
   vector<t_typedef*> typedefs = program_->get_typedefs();
   vector<t_typedef*>::iterator td_iter;
-  f_json_ << ",\"typedefs\":";
-  start_array();
-  f_json_ << endl;
   for (td_iter = typedefs.begin(); td_iter != typedefs.end(); ++td_iter) {
     write_comma_if_needed();
     generate_typedef(*td_iter);
     indicate_comma_needed();
   }
-  end_array(true);
+  end_array(with_newline);
 
   // Generate structs, exceptions, and unions in declared order
+  write_key_and("structs");
+  start_array(with_newline);
   vector<t_struct*> objects = program_->get_objects();
   vector<t_struct*>::iterator o_iter;
-  f_json_ << ",\"structs\":";
-  start_array();
-  f_json_ << endl;
   for (o_iter = objects.begin(); o_iter != objects.end(); ++o_iter) {
     write_comma_if_needed();
     if ((*o_iter)->is_xception()) {
@@ -289,228 +376,321 @@ void t_json_generator::generate_program() {
     }
     indicate_comma_needed();
   }
-  end_array(true);
+  end_array(with_newline);
 
   // Generate constants
+  write_key_and("constants");
+  start_array();
   vector<t_const*> consts = program_->get_consts();
-  generate_consts(consts);
+  vector<t_const*>::iterator c_iter;
+  for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+    write_comma_if_needed();
+    generate_constant(*c_iter);
+    indicate_comma_needed();
+  }
+  end_array(with_newline);
 
   // Generate services
+  write_key_and("services");
+  start_array();
   vector<t_service*> services = program_->get_services();
   vector<t_service*>::iterator sv_iter;
-  f_json_ << ",\"services\":";
-  start_array();
-  f_json_ << endl;
   for (sv_iter = services.begin(); sv_iter != services.end(); ++sv_iter) {
     write_comma_if_needed();
-    service_name_ = get_service_name(*sv_iter);
     generate_service(*sv_iter);
     indicate_comma_needed();
   }
-  end_array(false);
-  end_object(true);
+  end_array();
+
+  end_object(with_newline);
+
   // Close the generator
   close_generator();
 }
 
 void t_json_generator::generate_typedef(t_typedef* ttypedef) {
   start_object();
-  write_key("name", ttypedef->get_name());
-  write_key("type", get_type_name(ttypedef->get_true_type()));
-  if (ttypedef->has_doc())
-    write_key("doc", ttypedef->get_doc());
-  end_object(true);
+  write_key_and_string("name", get_qualified_name(ttypedef));
+  write_key_and_string("typeId", get_type_name(ttypedef->get_true_type()));
+  write_type_spec_object("type", ttypedef->get_true_type());
+  if (ttypedef->has_doc()) {
+    write_key_and_string("doc", ttypedef->get_doc());
+  }
+  end_object(with_newline);
 }
 
-void t_json_generator::generate_consts(vector<t_const*> consts) {
-  vector<t_const*>::iterator c_iter;
-  f_json_ << ",\"constants\":";
-  start_array();
-  f_json_ << endl;
-  for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
-    write_comma_if_needed();
-    indicate_comma_needed();
-    start_object();
-    t_const* con = (*c_iter);
-    write_key("name", con->get_name());
-    write_key("type", get_type_name(con->get_type()));
-    if (con->has_doc())
-      write_key("doc", con->get_doc());
-    write_key("value", get_const_value(con->get_value()));
-    end_object(true);
+
+void t_json_generator::write_string(const string& value) {
+  f_json_ << quot << escape_json_string(value) << quot;
+}
+
+void t_json_generator::write_integer(long value) {
+  f_json_ << std::to_string(value);
+}
+
+void t_json_generator::write_double(double value) {
+  f_json_ << std::to_string(value);
+}
+
+void t_json_generator::write_const_value(t_const_value* value, bool force_string) {
+
+  switch (value->get_type()) {
+
+    case t_const_value::CV_IDENTIFIER:
+    case t_const_value::CV_INTEGER:
+      if (force_string) {
+        write_string(std::to_string(value->get_integer()));
+      } else {
+        write_integer(value->get_integer());
+      }
+      break;
+
+    case t_const_value::CV_DOUBLE:
+      if (force_string) {
+        write_string(std::to_string(value->get_double()));
+      } else {
+        write_double(value->get_double());
+      }
+      break;
+
+    case t_const_value::CV_STRING:
+      write_string(value->get_string());
+      break;
+
+    case t_const_value::CV_LIST: {
+      start_array();
+      std::vector<t_const_value*> list = value->get_list();
+      std::vector<t_const_value*>::iterator lit;
+      for (lit = list.begin(); lit != list.end(); ++lit) {
+        write_comma_if_needed();
+        write_const_value(*lit);
+        indicate_comma_needed();
+      }
+      end_array();
+      break;
+    }
+
+    case t_const_value::CV_MAP: {
+      start_object();
+      std::map<t_const_value*, t_const_value*> map = value->get_map();
+      std::map<t_const_value*, t_const_value*>::iterator mit;
+      for (mit = map.begin(); mit != map.end(); ++mit) {
+        write_comma_if_needed();
+        // JSON objects only allow string keys
+        write_const_value(mit->first, true);
+        f_json_ << ":";
+        write_const_value(mit->second);
+        indicate_comma_needed();
+      }
+      end_object();
+      break;
+    }
+
+    default:
+      f_json_ << "null";
+      break;
   }
-  end_array(true);
+}
+
+string t_json_generator::json_str(const string& str) {
+  return quot + escape_json_string(str) + quot;
+}
+
+void t_json_generator::generate_constant(t_const* con) {
+  start_object(with_newline);
+
+  write_key_and_string("name", con->get_name());
+
+  write_key_and_string("typeId", get_type_name(con->get_type()));
+
+  write_type_spec_object("type", con->get_type());
+
+  if (con->has_doc()) {
+    write_key_and_string("doc", con->get_doc());
+  }
+
+  write_key_and("value");
+  write_const_value(con->get_value());
+
+  end_object(with_newline);
 }
 
 void t_json_generator::generate_enum(t_enum* tenum) {
-  start_object();
-  write_key("name", tenum->get_name());
-  if (tenum->has_doc())
-    write_key("doc", tenum->get_doc());
-  f_json_ << ",\"members\":";
+  start_object(with_newline);
+
+  write_key_and_string("name", tenum->get_name());
+
+  if (tenum->has_doc()) {
+    write_key_and_string("doc", tenum->get_doc());
+  }
+
+  write_key_and("members");
   start_array();
   vector<t_enum_value*> values = tenum->get_constants();
   vector<t_enum_value*>::iterator val_iter;
   for (val_iter = values.begin(); val_iter != values.end(); ++val_iter) {
-    t_enum_value* val = (*val_iter);
     write_comma_if_needed();
+    t_enum_value* val = (*val_iter);
     start_object();
-    write_key("name", val->get_name());
-    write_key_int("value", val->get_value());
-    if (val->has_doc())
-      write_key("doc", val->get_doc());
-    end_object(false);
+    write_key_and_string("name", val->get_name());
+    write_key_and_integer("value", val->get_value());
+    if (val->has_doc()) {
+      write_key_and_string("doc", val->get_doc());
+    }
+    end_object();
     indicate_comma_needed();
   }
-  end_array(false);
-  end_object(true);
+  end_array();
+
+  end_object();
 }
 
 void t_json_generator::generate_struct(t_struct* tstruct) {
-  start_object();
-  write_key("name", tstruct->get_name());
-  if (tstruct->has_doc())
-    write_key("doc", tstruct->get_doc());
-  if (tstruct->is_xception())
-    write_key("isException", "true");
-  vector<t_field*> members = tstruct->get_members();
-  vector<t_field*>::iterator mem_iter = members.begin();
-  f_json_ << ",\"fields\":";
-  start_array();
-  for (; mem_iter != members.end(); mem_iter++) {
-    generate_field((*mem_iter));
+  start_object(with_newline);
+
+  write_key_and_string("name", tstruct->get_name());
+
+  if (tstruct->has_doc()) {
+    write_key_and_string("doc", tstruct->get_doc());
   }
-  end_array(false);
-  end_object(true);
+
+  write_key_and_bool("isException", tstruct->is_xception());
+
+  write_key_and_bool("isUnion", tstruct->is_union());
+
+  write_key_and("fields");
+  start_array(with_newline);
+  vector<t_field*> members = tstruct->get_members();
+  vector<t_field*>::iterator mem_iter;
+  for (mem_iter = members.begin(); mem_iter != members.end(); mem_iter++) {
+    write_comma_if_needed();
+    generate_field(*mem_iter);
+    indicate_comma_needed();
+  }
+  end_array(with_newline);
+
+  end_object(with_newline);
 }
 
 void t_json_generator::generate_service(t_service* tservice) {
-  start_object();
-  write_key("name", tservice->get_name());
-  if (tservice->get_extends())
-    write_key("extendsType", tservice->get_extends()->get_name());
-  if (tservice->has_doc())
-    write_key("doc", tservice->get_doc());
+  start_object(with_newline);
+
+  write_key_and_string("name", get_qualified_name(tservice));
+
+  if (tservice->get_extends()) {
+    write_key_and_string("extends", get_qualified_name(tservice->get_extends()));
+  }
+
+  if (tservice->has_doc()) {
+    write_key_and_string("doc", tservice->get_doc());
+  }
+
+  write_key_and("functions");
+  start_array(with_newline);
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator fn_iter = functions.begin();
-  f_json_ << ",\"functions\":";
-  start_array();
   for (; fn_iter != functions.end(); fn_iter++) {
-    t_function* func = (*fn_iter);
     write_comma_if_needed();
+    generate_function(*fn_iter);
     indicate_comma_needed();
-    generate_function(func);
   }
-  end_array(false);
-  end_object(true);
+  end_array(with_newline);
+
+  end_object(with_newline);
 }
 
 void t_json_generator::generate_function(t_function* tfunc) {
-  start_object();
-  write_key("name", tfunc->get_name());
-  write_key("returnType", get_type_name(tfunc->get_returntype()));
-  if (tfunc->is_oneway())
-    write_key("oneWay", "true");
-  if (tfunc->has_doc())
-    write_key("doc", tfunc->get_doc());
+  start_object(with_newline);
+
+  write_key_and_string("name", tfunc->get_name());
+
+  write_type_spec_object("returnType", tfunc->get_returntype());
+
+  write_key_and_bool("oneway", tfunc->is_oneway());
+
+  if (tfunc->has_doc()) {
+    write_key_and_string("doc", tfunc->get_doc());
+  }
+
+  write_key_and("arguments");
+  start_array(with_newline);
   vector<t_field*> members = tfunc->get_arglist()->get_members();
   vector<t_field*>::iterator mem_iter = members.begin();
-  f_json_ << ",\"arguments\":";
-  start_array();
   for (; mem_iter != members.end(); mem_iter++) {
-    generate_field((*mem_iter));
+    write_comma_if_needed();
+    generate_field(*mem_iter);
+    indicate_comma_needed();
   }
-  end_array(false);
+  end_array(with_newline);
 
+  write_key_and("exceptions");
+  start_array(with_newline);
   vector<t_field*> excepts = tfunc->get_xceptions()->get_members();
   vector<t_field*>::iterator ex_iter = excepts.begin();
-  f_json_ << ",\"exceptions\":";
-  start_array();
   for (; ex_iter != excepts.end(); ex_iter++) {
-    generate_field((*ex_iter));
+    write_comma_if_needed();
+    generate_field(*ex_iter);
+    indicate_comma_needed();
   }
-  end_array(false);
-  end_object(false);
+  end_array(with_newline);
+
+  end_object(with_newline);
 }
 
-void t_json_generator::generate_field(t_field* field) {
-  write_comma_if_needed();
-  start_object();
-  write_key_int("index", field->get_key());
-  write_key("name", field->get_name());
-  write_key("type", get_type_name(field->get_type()));
-  if (field->has_doc())
-    write_key("doc", field->get_doc());
+void t_json_generator::generate_field(t_field * field) {
+  start_object(with_newline);
+
+  write_key_and_integer("key", field->get_key());
+
+  write_key_and_string("name", field->get_name());
+
+  write_key_and_string("typeId", get_type_name(field->get_type()));
+
+  write_type_spec_object("type", field->get_type());
+
+  if (field->has_doc()) {
+    write_key_and_string("doc", field->get_doc());
+  }
+
+  write_key_and("required");
   switch (field->get_req()) {
-  case t_field::T_REQUIRED:
-    write_key("required", "true");
-    break;
-  default:
-    write_key("required", "false");
-    break;
+    case t_field::T_REQUIRED:
+      write_string("required");
+      break;
+    case t_field::T_OPT_IN_REQ_OUT:
+      write_string("req_out");
+      break;
+    default:
+      write_string("optional");
+      break;
   }
-  if (field->get_value())
-    write_key("default", get_const_value(field->get_value()));
 
-  end_object(false);
-  indicate_comma_needed();
-}
-string t_json_generator::get_const_value(t_const_value* tvalue) {
+  if (field->get_value()) {
+    write_key_and("default");
+    write_const_value(field->get_value());
+  }
 
-  switch (tvalue->get_type()) {
-  case t_const_value::CV_INTEGER:
-    return tvalue->get_string();
-  case t_const_value::CV_DOUBLE:
-    return tvalue->get_string();
-  case t_const_value::CV_STRING:
-    return tvalue->get_string();
-  case t_const_value::CV_LIST: {
-    string list = "[";
-    vector<t_const_value*> list_elems = tvalue->get_list();
-    ;
-    vector<t_const_value*>::iterator list_iter;
-    bool first = true;
-    for (list_iter = list_elems.begin(); list_iter != list_elems.end(); list_iter++) {
-      if (!first)
-        list += ",";
-      first = false;
-      list += get_const_value(*list_iter);
-    }
-    return list + "]";
-  }
-  case t_const_value::CV_IDENTIFIER:
-    return tvalue->get_identifier_name();
-  case t_const_value::CV_MAP:
-    map<t_const_value*, t_const_value*> map_elems = tvalue->get_map();
-    map<t_const_value*, t_const_value*>::iterator map_iter;
-    string map = "[";
-    bool first = true;
-    for (map_iter = map_elems.begin(); map_iter != map_elems.end(); map_iter++) {
-      if (!first)
-        map += ",";
-      first = false;
-      map += get_const_value(map_iter->first) + ":";
-      map += get_const_value(map_iter->second);
-    }
-    return map + "]";
-  }
-  return "UNKNOWN";
+  end_object(with_newline);
 }
+
 string t_json_generator::get_type_name(t_type* ttype) {
-  if (ttype->is_container()) {
-    if (ttype->is_list()) {
-      return "list<" + get_type_name(((t_list*)ttype)->get_elem_type()) + ">";
-    } else if (ttype->is_set()) {
-      return "set<" + get_type_name(((t_set*)ttype)->get_elem_type()) + ">";
-    } else if (ttype->is_map()) {
-      return "map<" + get_type_name(((t_map*)ttype)->get_key_type()) + +","
-             + get_type_name(((t_map*)ttype)->get_val_type()) + ">";
-    }
-  } else if (ttype->is_base_type()) {
-    return (((t_base_type*)ttype)->is_binary() ? "binary" : ttype->get_name());
-  }
-  return ttype->get_name();
+  ttype = ttype->get_true_type();
+  if (ttype->is_list())     return "list";
+  if (ttype->is_set())      return "set";
+  if (ttype->is_map())      return "map";
+  if (ttype->is_enum())     return "i32";
+  if (ttype->is_struct())   return ((t_struct*)ttype)->is_union() ? "union" : "struct";
+  if (ttype->is_base_type() && ((t_base_type*)ttype)->is_binary()) return "binary";
+  return ttype->get_fingerprint_material();
 }
+
+string t_json_generator::get_qualified_name(t_type* ttype) {
+  if (should_merge_includes_ || ttype->get_program() == program_) {
+    return ttype->get_name();
+  }
+  return ttype->get_program()->get_name() + "." + ttype->get_name();
+}
+
 
 THRIFT_REGISTER_GENERATOR(json, "JSON",
 "    merge:           Generate output with included files merged\n"
