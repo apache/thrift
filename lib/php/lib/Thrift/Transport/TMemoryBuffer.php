@@ -22,7 +22,6 @@
 
 namespace Thrift\Transport;
 
-use Thrift\Transport\TTransport;
 use Thrift\Exception\TTransportException;
 use Thrift\Factory\TStringFuncFactory;
 
@@ -34,19 +33,21 @@ use Thrift\Factory\TStringFuncFactory;
  *
  * @package thrift.transport
  */
-class TMemoryBuffer extends TTransport {
-
+class TMemoryBuffer extends TTransport
+{
   /**
    * Constructor. Optionally pass an initial value
    * for the buffer.
    */
-  public function __construct($buf = '') {
+  public function __construct($buf = '')
+  {
     $this->buf_ = $buf;
   }
 
   protected $buf_ = '';
 
-  public function isOpen() {
+  public function isOpen()
+  {
     return true;
   }
 
@@ -54,11 +55,13 @@ class TMemoryBuffer extends TTransport {
 
   public function close() {}
 
-  public function write($buf) {
+  public function write($buf)
+  {
     $this->buf_ .= $buf;
   }
 
-  public function read($len) {
+  public function read($len)
+  {
     $bufLength = TStringFuncFactory::create()->strlen($this->buf_);
 
     if ($bufLength === 0) {
@@ -70,6 +73,7 @@ class TMemoryBuffer extends TTransport {
     if ($bufLength <= $len) {
       $ret = $this->buf_;
       $this->buf_ = '';
+
       return $ret;
     }
 
@@ -79,11 +83,13 @@ class TMemoryBuffer extends TTransport {
     return $ret;
   }
 
-  function getBuffer() {
+  public function getBuffer()
+  {
     return $this->buf_;
   }
 
-  public function available() {
+  public function available()
+  {
     return TStringFuncFactory::create()->strlen($this->buf_);
   }
 }

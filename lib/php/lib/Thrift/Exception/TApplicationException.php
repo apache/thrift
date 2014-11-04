@@ -22,10 +22,10 @@
 
 namespace Thrift\Exception;
 
-use Thrift\Exception\TException;
 use Thrift\Type\TType;
 
-class TApplicationException extends TException {
+class TApplicationException extends TException
+{
   static $_TSPEC =
     array(1 => array('var' => 'message',
                      'type' => TType::STRING),
@@ -44,15 +44,18 @@ class TApplicationException extends TException {
   const INVALID_PROTOCOL = 9;
   const UNSUPPORTED_CLIENT_TYPE = 10;
 
-  function __construct($message=null, $code=0) {
+  public function __construct($message=null, $code=0)
+  {
     parent::__construct($message, $code);
   }
 
-  public function read($output) {
+  public function read($output)
+  {
     return $this->_read('TApplicationException', self::$_TSPEC, $output);
   }
 
-  public function write($output) {
+  public function write($output)
+  {
     $xfer = 0;
     $xfer += $output->writeStructBegin('TApplicationException');
     if ($message = $this->getMessage()) {
@@ -67,6 +70,7 @@ class TApplicationException extends TException {
     }
     $xfer += $output->writeFieldStop();
     $xfer += $output->writeStructEnd();
+
     return $xfer;
   }
 }

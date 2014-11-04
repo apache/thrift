@@ -79,7 +79,7 @@ abstract class TProtocolDecorator extends TProtocol
      * @param string $name Struct name
      *
      * @throws TException on write error
-     * @return int How many bytes written
+     * @return int        How many bytes written
      */
     public function writeStructBegin($name)
     {
@@ -90,7 +90,7 @@ abstract class TProtocolDecorator extends TProtocol
      * Close a struct.
      *
      * @throws TException on write error
-     * @return int How many bytes written
+     * @return int        How many bytes written
      */
     public function writeStructEnd()
     {

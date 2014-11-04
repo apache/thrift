@@ -21,7 +21,8 @@
 
 namespace Thrift\StringFunc;
 
-interface TStringFunc {
+interface TStringFunc
+{
     public function substr($str, $start, $length = null);
     public function strlen($str);
 }
