@@ -50,7 +50,8 @@ use Thrift\Type\TMessageType;
  * </code></blockquote>
  */
 
-class TMultiplexedProcessor {
+class TMultiplexedProcessor
+{
     private $serviceProcessorMap_;
 
     /**
@@ -63,7 +64,8 @@ class TMultiplexedProcessor {
      * @param processor Implementation of a service, ususally referred to
      * as "handlers", e.g. WeatherReportHandler implementing WeatherReport.Iface.
      */
-    public function registerProcessor($serviceName, $processor) {
+    public function registerProcessor($serviceName, $processor)
+    {
         $this->serviceProcessorMap_[$serviceName] = $processor;
     }
 
@@ -79,10 +81,11 @@ class TMultiplexedProcessor {
      * </ol>
      *
      * @throws TException If the message type is not CALL or ONEWAY, if
-     * the service name was not found in the message, or if the service
-     * name was not found in the service map.
+     *                    the service name was not found in the message, or if the service
+     *                    name was not found in the service map.
      */
-    public function process(TProtocol $input, TProtocol $output) {
+    public function process(TProtocol $input, TProtocol $output)
+    {
         /*
             Use the actual underlying protocol (e.g. TBinaryProtocol) to read the
             message header. This pulls the message "off the wire", which we'll
@@ -107,6 +110,7 @@ class TMultiplexedProcessor {
 
         // Dispatch processing to the stored processor
         $processor = $this->serviceProcessorMap_[$serviceName];
+
         return $processor->process(
             new StoredMessageProtocol($input, $messageName, $mtype, $rseqid), $output
         );
@@ -118,17 +122,20 @@ class TMultiplexedProcessor {
  *  to allow them to call readMessageBegin() and get the Message in exactly
  *  the standard format, without the service name prepended to the Message name.
  */
-class StoredMessageProtocol extends TProtocolDecorator {
+class StoredMessageProtocol extends TProtocolDecorator
+{
     private $fname_, $mtype_, $rseqid_;
 
-    public function __construct(TProtocol $protocol, $fname, $mtype, $rseqid) {
+    public function __construct(TProtocol $protocol, $fname, $mtype, $rseqid)
+    {
         parent::__construct($protocol);
         $this->fname_  = $fname;
         $this->mtype_  = $mtype;
         $this->rseqid_ = $rseqid;
     }
 
-    public function readMessageBegin(&$name, &$type, &$seqid) {
+    public function readMessageBegin(&$name, &$type, &$seqid)
+    {
         $name  = $this->fname_;
         $type  = $this->mtype_;
         $seqid = $this->rseqid_;

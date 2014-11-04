@@ -52,12 +52,9 @@ class Fixtures
 
     self::$testArgs['testI32'] = pow( 2, 30 );
 
-    if ( PHP_INT_SIZE == 8 )
-    {
+    if (PHP_INT_SIZE == 8) {
       self::$testArgs['testI64'] = pow( 2, 60 );
-    }
-    else
-    {
+    } else {
       self::$testArgs['testI64'] = "1152921504606847000";
     }
 
