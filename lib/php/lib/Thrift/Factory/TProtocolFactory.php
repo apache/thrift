@@ -25,7 +25,8 @@ namespace Thrift\Factory;
 /**
  * Protocol factory creates protocol objects from transports
  */
-interface TProtocolFactory {
+interface TProtocolFactory
+{
   /**
    * Build a protocol from the base transport
    *

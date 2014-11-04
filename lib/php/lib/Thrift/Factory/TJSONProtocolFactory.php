@@ -22,7 +22,6 @@
 
 namespace Thrift\Factory;
 
-use Thrift\Factory\TProtocolFactory;
 use Thrift\Protocol\TJSONProtocol;
 
 /**

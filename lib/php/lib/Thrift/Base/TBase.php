@@ -31,8 +31,8 @@ use Thrift\Type\TType;
  * of PHP. Note that code is intentionally duplicated in here to avoid making
  * function calls for every field or member of a container..
  */
-abstract class TBase {
-
+abstract class TBase
+{
   static $tmethod = array(TType::BOOL   => 'Bool',
                           TType::BYTE   => 'Byte',
                           TType::I16    => 'I16',
@@ -41,11 +41,12 @@ abstract class TBase {
                           TType::DOUBLE => 'Double',
                           TType::STRING => 'String');
 
-  abstract function read($input);
+  abstract public function read($input);
 
-  abstract function write($output);
+  abstract public function write($output);
 
-  public function __construct($spec=null, $vals=null) {
+  public function __construct($spec=null, $vals=null)
+  {
     if (is_array($spec) && is_array($vals)) {
       foreach ($spec as $fid => $fspec) {
         $var = $fspec['var'];
@@ -61,7 +62,8 @@ abstract class TBase {
     $this->__construct(get_object_vars($this));
   }
 
-  private function _readMap(&$var, $spec, $input) {
+  private function _readMap(&$var, $spec, $input)
+  {
     $xfer = 0;
     $ktype = $spec['ktype'];
     $vtype = $spec['vtype'];
@@ -124,10 +126,12 @@ abstract class TBase {
       $var[$key] = $val;
     }
     $xfer += $input->readMapEnd();
+
     return $xfer;
   }
 
-  private function _readList(&$var, $spec, $input, $set=false) {
+  private function _readList(&$var, $spec, $input, $set=false)
+  {
     $xfer = 0;
     $etype = $spec['etype'];
     $eread = $vread = null;
@@ -177,10 +181,12 @@ abstract class TBase {
     } else {
       $xfer += $input->readListEnd();
     }
+
     return $xfer;
   }
 
-  protected function _read($class, $spec, $input) {
+  protected function _read($class, $spec, $input)
+  {
     $xfer = 0;
     $fname = null;
     $ftype = 0;
@@ -226,10 +232,12 @@ abstract class TBase {
       $xfer += $input->readFieldEnd();
     }
     $xfer += $input->readStructEnd();
+
     return $xfer;
   }
 
-  private function _writeMap($var, $spec, $output) {
+  private function _writeMap($var, $spec, $output)
+  {
     $xfer = 0;
     $ktype = $spec['ktype'];
     $vtype = $spec['vtype'];
@@ -284,10 +292,12 @@ abstract class TBase {
       }
     }
     $xfer += $output->writeMapEnd();
+
     return $xfer;
   }
 
-  private function _writeList($var, $spec, $output, $set=false) {
+  private function _writeList($var, $spec, $output, $set=false)
+  {
     $xfer = 0;
     $etype = $spec['etype'];
     $ewrite = null;
@@ -327,10 +337,12 @@ abstract class TBase {
     } else {
       $xfer += $output->writeListEnd();
     }
+
     return $xfer;
   }
 
-  protected function _write($class, $spec, $output) {
+  protected function _write($class, $spec, $output)
+  {
     $xfer = 0;
     $xfer += $output->writeStructBegin($class);
     foreach ($spec as $fid => $fspec) {
@@ -362,6 +374,7 @@ abstract class TBase {
     }
     $xfer += $output->writeFieldStop();
     $xfer += $output->writeStructEnd();
+
     return $xfer;
   }
 }

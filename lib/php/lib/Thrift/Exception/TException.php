@@ -38,8 +38,10 @@ use Thrift\Base\TBase;
  * @param mixed $p1 Message (string) or type-spec (array)
  * @param mixed $p2 Code (integer) or values (array)
  */
-class TException extends \Exception {
-  function __construct($p1=null, $p2=0) {
+class TException extends \Exception
+{
+  public function __construct($p1=null, $p2=0)
+  {
     if (is_array($p1) && is_array($p2)) {
       $spec = $p1;
       $vals = $p2;
@@ -62,7 +64,8 @@ class TException extends \Exception {
                           TType::DOUBLE => 'Double',
                           TType::STRING => 'String');
 
-  private function _readMap(&$var, $spec, $input) {
+  private function _readMap(&$var, $spec, $input)
+  {
     $xfer = 0;
     $ktype = $spec['ktype'];
     $vtype = $spec['vtype'];
@@ -125,10 +128,12 @@ class TException extends \Exception {
       $var[$key] = $val;
     }
     $xfer += $input->readMapEnd();
+
     return $xfer;
   }
 
-  private function _readList(&$var, $spec, $input, $set=false) {
+  private function _readList(&$var, $spec, $input, $set=false)
+  {
     $xfer = 0;
     $etype = $spec['etype'];
     $eread = $vread = null;
@@ -178,10 +183,12 @@ class TException extends \Exception {
     } else {
       $xfer += $input->readListEnd();
     }
+
     return $xfer;
   }
 
-  protected function _read($class, $spec, $input) {
+  protected function _read($class, $spec, $input)
+  {
     $xfer = 0;
     $fname = null;
     $ftype = 0;
@@ -227,10 +234,12 @@ class TException extends \Exception {
       $xfer += $input->readFieldEnd();
     }
     $xfer += $input->readStructEnd();
+
     return $xfer;
   }
 
-  private function _writeMap($var, $spec, $output) {
+  private function _writeMap($var, $spec, $output)
+  {
     $xfer = 0;
     $ktype = $spec['ktype'];
     $vtype = $spec['vtype'];
@@ -285,10 +294,12 @@ class TException extends \Exception {
       }
     }
     $xfer += $output->writeMapEnd();
+
     return $xfer;
   }
 
-  private function _writeList($var, $spec, $output, $set=false) {
+  private function _writeList($var, $spec, $output, $set=false)
+  {
     $xfer = 0;
     $etype = $spec['etype'];
     $ewrite = null;
@@ -328,10 +339,12 @@ class TException extends \Exception {
     } else {
       $xfer += $output->writeListEnd();
     }
+
     return $xfer;
   }
 
-  protected function _write($class, $spec, $output) {
+  protected function _write($class, $spec, $output)
+  {
     $xfer = 0;
     $xfer += $output->writeStructBegin($class);
     foreach ($spec as $fid => $fspec) {
@@ -363,6 +376,7 @@ class TException extends \Exception {
     }
     $xfer += $output->writeFieldStop();
     $xfer += $output->writeStructEnd();
+
     return $xfer;
   }
 

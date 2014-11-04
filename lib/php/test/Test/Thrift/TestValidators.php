@@ -38,11 +38,11 @@ $loader->register();
 
 // Would be nice to have PHPUnit here, but for now just hack it.
 
-set_exception_handler(function($e) {
+set_exception_handler(function ($e) {
     my_assert(false, "Unexpected exception caught: " . $e->getMessage());
 });
 
-set_error_handler(function($errno, $errmsg) {
+set_error_handler(function ($errno, $errmsg) {
     my_assert(false, "Unexpected PHP error: " . $errmsg);
 });
 
@@ -66,7 +66,7 @@ assert_has_no_write_validator('ThriftTest\EmptyStruct');
         $bonk = new \ThriftTest\Bonk();
         $transport = new TMemoryBuffer();
         $protocol = new TBinaryProtocol($transport);
-        assert_protocol_exception_thrown(function() use ($bonk, $protocol) { $bonk->write($protocol); },
+        assert_protocol_exception_thrown(function () use ($bonk, $protocol) { $bonk->write($protocol); },
                                          'Bonk was able to write an empty object');
     }
 }
@@ -80,7 +80,7 @@ assert_has_no_write_validator('ThriftTest\EmptyStruct');
         $structa = new \ThriftTest\StructA();
         $transport = new TMemoryBuffer();
         $protocol = new TBinaryProtocol($transport);
-        assert_protocol_exception_thrown(function() use ($structa, $protocol) { $structa->write($protocol); },
+        assert_protocol_exception_thrown(function () use ($structa, $protocol) { $structa->write($protocol); },
                                          'StructA was able to write an empty object');
     }
     {
@@ -100,27 +100,32 @@ assert_has_no_write_validator('TestValidators\UnionOfStrings');
 assert_has_no_read_validator('TestValidators\TestService_test_result');
 assert_has_no_write_validator('TestValidators\TestService_test_result');
 
-function assert_has_a_read_validator($class) {
+function assert_has_a_read_validator($class)
+{
     my_assert(has_read_validator_method($class),
               $class . ' class should have a read validator');
 }
 
-function assert_has_no_read_validator($class) {
+function assert_has_no_read_validator($class)
+{
     my_assert(!has_read_validator_method($class),
               $class . ' class should not have a read validator');
 }
 
-function assert_has_a_write_validator($class) {
+function assert_has_a_write_validator($class)
+{
     my_assert(has_write_validator_method($class),
               $class . ' class should have a write validator');
 }
 
-function assert_has_no_write_validator($class) {
+function assert_has_no_write_validator($class)
+{
     my_assert(!has_write_validator_method($class),
               $class . ' class should not have a write validator');
 }
 
-function assert_protocol_exception_thrown($callable, $message) {
+function assert_protocol_exception_thrown($callable, $message)
+{
     try {
         call_user_func($callable);
         my_assert(false, $message);
@@ -128,17 +133,22 @@ function assert_protocol_exception_thrown($callable, $message) {
     }
 }
 
-function has_write_validator_method($class) {
+function has_write_validator_method($class)
+{
     $rc = new \ReflectionClass($class);
+
     return $rc->hasMethod('_validateForWrite');
 }
 
-function has_read_validator_method($class) {
+function has_read_validator_method($class)
+{
     $rc = new \ReflectionClass($class);
+
     return $rc->hasMethod('_validateForRead');
 }
 
-function my_assert($something, $message) {
+function my_assert($something, $message)
+{
     if (!$something) {
         fwrite(STDERR, basename(__FILE__) . " FAILED: $message\n");
         exit(1);

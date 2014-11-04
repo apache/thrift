@@ -25,7 +25,8 @@ namespace Thrift\Type;
 /**
  * Data types that can be sent via Thrift
  */
-class TType {
+class TType
+{
   const STOP   = 0;
   const VOID   = 1;
   const BOOL   = 2;

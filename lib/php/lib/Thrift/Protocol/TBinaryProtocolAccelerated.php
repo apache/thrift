@@ -22,18 +22,19 @@
 
 namespace Thrift\Protocol;
 
-use Thrift\Protocol\TBinaryProtocol;
 use Thrift\Transport\TBufferedTransport;
 
 /**
  * Accelerated binary protocol: used in conjunction with the thrift_protocol
  * extension for faster deserialization
  */
-class TBinaryProtocolAccelerated extends TBinaryProtocol {
-  public function __construct($trans, $strictRead=false, $strictWrite=true) {
+class TBinaryProtocolAccelerated extends TBinaryProtocol
+{
+  public function __construct($trans, $strictRead=false, $strictWrite=true)
+  {
     // If the transport doesn't implement putBack, wrap it in a
     // TBufferedTransport (which does)
-    
+
     // NOTE (t.heintz): This is very evil to do, because the TBufferedTransport may swallow bytes, which
     // are then never written to the underlying transport. This happens precisely when a number of bytes
     // less than the max buffer size (512 by default) is written to the transport and then flush() is NOT
@@ -47,16 +48,18 @@ class TBinaryProtocolAccelerated extends TBinaryProtocol {
     // I am leaving this code in nonetheless, because there may be applications depending on this behavior.
     //
     // @see THRIFT-1579
-    
+
     if (!method_exists($trans, 'putBack')) {
       $trans = new TBufferedTransport($trans);
     }
     parent::__construct($trans, $strictRead, $strictWrite);
   }
-  public function isStrictRead() {
+  public function isStrictRead()
+  {
     return $this->strictRead_;
   }
-  public function isStrictWrite() {
+  public function isStrictWrite()
+  {
     return $this->strictWrite_;
   }
 }

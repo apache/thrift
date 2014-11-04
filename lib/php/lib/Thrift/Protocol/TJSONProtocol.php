@@ -23,7 +23,6 @@
 
 namespace Thrift\Protocol;
 
-use Thrift\Protocol\TProtocol;
 use Thrift\Type\TType;
 use Thrift\Exception\TProtocolException;
 use Thrift\Protocol\JSON\BaseContext;
@@ -142,8 +141,7 @@ class TJSONProtocol extends TProtocol
                 case 's':
                     if (substr($name, 1, 1) == 't') {
                         $result = TType::STRING;
-                    }
-                    else if (substr($name, 1, 1) == 'e') {
+                    } elseif (substr($name, 1, 1) == 'e') {
                         $result = TType::SET;
                     }
                     break;
@@ -155,6 +153,7 @@ class TJSONProtocol extends TProtocol
         if ($result == TType::STOP) {
             throw new TProtocolException("Unrecognized type", TProtocolException::INVALID_DATA);
         }
+
         return $result;
     }
 
@@ -162,22 +161,26 @@ class TJSONProtocol extends TProtocol
     public $context_;
     public $reader_;
 
-    private function pushContext($c) {
+    private function pushContext($c)
+    {
         array_push($this->contextStack_, $this->context_);
         $this->context_ = $c;
     }
 
-    private function popContext() {
+    private function popContext()
+    {
         $this->context_ = array_pop($this->contextStack_);
     }
 
-    public function __construct($trans) {
+    public function __construct($trans)
+    {
         parent::__construct($trans);
         $this->context_ = new BaseContext();
         $this->reader_ = new LookaheadReader($this);
     }
 
-    public function reset() {
+    public function reset()
+    {
         $this->contextStack_ = array();
         $this->context_ = new BaseContext();
         $this->reader_ = new LookaheadReader($this);
@@ -185,7 +188,8 @@ class TJSONProtocol extends TProtocol
 
     private $tmpbuf_ = array(4);
 
-    public function readJSONSyntaxChar($b) {
+    public function readJSONSyntaxChar($b)
+    {
         $ch = $this->reader_->read();
 
         if (substr($ch, 0, 1) != $b) {
@@ -193,7 +197,8 @@ class TJSONProtocol extends TProtocol
         }
     }
 
-    private function hexVal($s) {
+    private function hexVal($s)
+    {
         for ($i = 0; $i < strlen($s); $i++) {
             $ch = substr($s, $i, 1);
 
@@ -205,11 +210,13 @@ class TJSONProtocol extends TProtocol
         return hexdec($s);
     }
 
-    private function hexChar($val) {
+    private function hexChar($val)
+    {
         return dechex($val);
     }
 
-    private function writeJSONString($b) {
+    private function writeJSONString($b)
+    {
         $this->context_->write();
 
         if (is_numeric($b) && $this->context_->escapeNum()) {
@@ -223,7 +230,8 @@ class TJSONProtocol extends TProtocol
         }
     }
 
-    private function writeJSONInteger($num) {
+    private function writeJSONInteger($num)
+    {
         $this->context_->write();
 
         if ($this->context_->escapeNum()) {
@@ -237,7 +245,8 @@ class TJSONProtocol extends TProtocol
         }
     }
 
-    private function writeJSONDouble($num) {
+    private function writeJSONDouble($num)
+    {
         $this->context_->write();
 
         if ($this->context_->escapeNum()) {
@@ -251,42 +260,48 @@ class TJSONProtocol extends TProtocol
         }
     }
 
-    private function writeJSONBase64($data) {
+    private function writeJSONBase64($data)
+    {
         $this->context_->write();
         $this->trans_->write(self::QUOTE);
         $this->trans_->write(json_encode(base64_encode($data)));
         $this->trans_->write(self::QUOTE);
     }
 
-    private function writeJSONObjectStart() {
+    private function writeJSONObjectStart()
+    {
       $this->context_->write();
       $this->trans_->write(self::LBRACE);
       $this->pushContext(new PairContext($this));
     }
 
-    private function writeJSONObjectEnd() {
+    private function writeJSONObjectEnd()
+    {
       $this->popContext();
       $this->trans_->write(self::RBRACE);
     }
 
-    private function writeJSONArrayStart() {
+    private function writeJSONArrayStart()
+    {
       $this->context_->write();
       $this->trans_->write(self::LBRACKET);
       $this->pushContext(new ListContext($this));
     }
 
-    private function writeJSONArrayEnd() {
+    private function writeJSONArrayEnd()
+    {
       $this->popContext();
       $this->trans_->write(self::RBRACKET);
     }
 
-    private function readJSONString($skipContext) {
+    private function readJSONString($skipContext)
+    {
       if (!$skipContext) {
         $this->context_->read();
       }
 
       $jsonString = '';
-      $lastChar = NULL;
+      $lastChar = null;
       while (true) {
         $ch = $this->reader_->read();
         $jsonString .= $ch;
@@ -301,10 +316,12 @@ class TJSONProtocol extends TProtocol
           $lastChar = $ch;
         }
       }
+
       return json_decode($jsonString);
     }
 
-    private function isJSONNumeric($b) {
+    private function isJSONNumeric($b)
+    {
         switch ($b) {
             case '+':
             case '-':
@@ -323,10 +340,12 @@ class TJSONProtocol extends TProtocol
             case 'e':
               return true;
             }
+
         return false;
     }
 
-    private function readJSONNumericChars() {
+    private function readJSONNumericChars()
+    {
         $strbld = array();
 
         while (true) {
@@ -342,7 +361,8 @@ class TJSONProtocol extends TProtocol
         return implode("", $strbld);
     }
 
-    private function readJSONInteger() {
+    private function readJSONInteger()
+    {
         $this->context_->read();
 
         if ($this->context_->escapeNum()) {
@@ -368,7 +388,8 @@ class TJSONProtocol extends TProtocol
      * separate function?  So we don't have to force the rest of the
      * use cases through the extra conditional.
      */
-    private function readJSONIntegerAsString() {
+    private function readJSONIntegerAsString()
+    {
         $this->context_->read();
 
         if ($this->context_->escapeNum()) {
@@ -388,7 +409,8 @@ class TJSONProtocol extends TProtocol
         return $str;
     }
 
-    private function readJSONDouble() {
+    private function readJSONDouble()
+    {
         $this->context_->read();
 
         if (substr($this->reader_->peek(), 0, 1) == self::QUOTE) {
@@ -396,9 +418,9 @@ class TJSONProtocol extends TProtocol
 
             if ($arr == "NaN") {
                 return NAN;
-            } else if ($arr == "Infinity") {
+            } elseif ($arr == "Infinity") {
                 return INF;
-            } else if (!$this->context_->escapeNum()) {
+            } elseif (!$this->context_->escapeNum()) {
                 throw new TProtocolException("Numeric data unexpectedly quoted " . $arr,
                                               TProtocolException::INVALID_DATA);
             }
@@ -413,7 +435,8 @@ class TJSONProtocol extends TProtocol
         }
     }
 
-    private function readJSONBase64() {
+    private function readJSONBase64()
+    {
         $arr = $this->readJSONString(false);
         $data = base64_decode($arr, true);
 
@@ -424,13 +447,15 @@ class TJSONProtocol extends TProtocol
         return $data;
     }
 
-    private function readJSONObjectStart() {
+    private function readJSONObjectStart()
+    {
         $this->context_->read();
         $this->readJSONSyntaxChar(self::LBRACE);
         $this->pushContext(new PairContext($this));
     }
 
-    private function readJSONObjectEnd() {
+    private function readJSONObjectEnd()
+    {
         $this->readJSONSyntaxChar(self::RBRACE);
         $this->popContext();
     }
@@ -442,7 +467,8 @@ class TJSONProtocol extends TProtocol
         $this->pushContext(new ListContext($this));
     }
 
-    private function readJSONArrayEnd() {
+    private function readJSONArrayEnd()
+    {
         $this->readJSONSyntaxChar(self::RBRACKET);
         $this->popContext();
     }
@@ -450,11 +476,12 @@ class TJSONProtocol extends TProtocol
     /**
      * Writes the message header
      *
-     * @param string $name Function name
-     * @param int $type message type TMessageType::CALL or TMessageType::REPLY
-     * @param int $seqid The sequence id of this message
+     * @param string $name  Function name
+     * @param int    $type  message type TMessageType::CALL or TMessageType::REPLY
+     * @param int    $seqid The sequence id of this message
      */
-    public function writeMessageBegin($name, $type, $seqid) {
+    public function writeMessageBegin($name, $type, $seqid)
+    {
         $this->writeJSONArrayStart();
         $this->writeJSONInteger(self::VERSION);
         $this->writeJSONString($name);
@@ -465,18 +492,20 @@ class TJSONProtocol extends TProtocol
     /**
      * Close the message
      */
-    public function writeMessageEnd() {
+    public function writeMessageEnd()
+    {
         $this->writeJSONArrayEnd();
     }
 
     /**
      * Writes a struct header.
      *
-     * @param string     $name Struct name
+     * @param  string     $name Struct name
      * @throws TException on write error
-     * @return int How many bytes written
+     * @return int        How many bytes written
      */
-    public function writeStructBegin($name) {
+    public function writeStructBegin($name)
+    {
         $this->writeJSONObjectStart();
     }
 
@@ -484,26 +513,31 @@ class TJSONProtocol extends TProtocol
      * Close a struct.
      *
      * @throws TException on write error
-     * @return int How many bytes written
+     * @return int        How many bytes written
      */
-    public function writeStructEnd() {
+    public function writeStructEnd()
+    {
         $this->writeJSONObjectEnd();
     }
 
-    public function writeFieldBegin($fieldName, $fieldType, $fieldId) {
+    public function writeFieldBegin($fieldName, $fieldType, $fieldId)
+    {
         $this->writeJSONInteger($fieldId);
         $this->writeJSONObjectStart();
         $this->writeJSONString($this->getTypeNameForTypeID($fieldType));
     }
 
-    public function writeFieldEnd() {
+    public function writeFieldEnd()
+    {
         $this->writeJsonObjectEnd();
     }
 
-    public function writeFieldStop() {
+    public function writeFieldStop()
+    {
     }
 
-    public function writeMapBegin($keyType, $valType, $size) {
+    public function writeMapBegin($keyType, $valType, $size)
+    {
         $this->writeJSONArrayStart();
         $this->writeJSONString($this->getTypeNameForTypeID($keyType));
         $this->writeJSONString($this->getTypeNameForTypeID($valType));
@@ -511,56 +545,68 @@ class TJSONProtocol extends TProtocol
         $this->writeJSONObjectStart();
     }
 
-    public function writeMapEnd() {
+    public function writeMapEnd()
+    {
         $this->writeJSONObjectEnd();
         $this->writeJSONArrayEnd();
     }
 
-    public function writeListBegin($elemType, $size) {
+    public function writeListBegin($elemType, $size)
+    {
         $this->writeJSONArrayStart();
         $this->writeJSONString($this->getTypeNameForTypeID($elemType));
         $this->writeJSONInteger($size);
     }
 
-    public function writeListEnd() {
+    public function writeListEnd()
+    {
         $this->writeJSONArrayEnd();
     }
 
-    public function writeSetBegin($elemType, $size) {
+    public function writeSetBegin($elemType, $size)
+    {
         $this->writeJSONArrayStart();
         $this->writeJSONString($this->getTypeNameForTypeID($elemType));
         $this->writeJSONInteger($size);
     }
 
-    public function writeSetEnd() {
+    public function writeSetEnd()
+    {
         $this->writeJSONArrayEnd();
     }
 
-    public function writeBool($bool) {
+    public function writeBool($bool)
+    {
         $this->writeJSONInteger($bool ? 1 : 0);
     }
 
-    public function writeByte($byte) {
+    public function writeByte($byte)
+    {
         $this->writeJSONInteger($byte);
     }
 
-    public function writeI16($i16) {
+    public function writeI16($i16)
+    {
         $this->writeJSONInteger($i16);
     }
 
-    public function writeI32($i32) {
+    public function writeI32($i32)
+    {
         $this->writeJSONInteger($i32);
     }
 
-    public function writeI64($i64) {
+    public function writeI64($i64)
+    {
         $this->writeJSONInteger($i64);
     }
 
-    public function writeDouble($dub) {
+    public function writeDouble($dub)
+    {
         $this->writeJSONDouble($dub);
     }
 
-    public function writeString($str) {
+    public function writeString($str)
+    {
         $this->writeJSONString($str);
     }
 
@@ -568,10 +614,11 @@ class TJSONProtocol extends TProtocol
      * Reads the message header
      *
      * @param string $name Function name
-     * @param int $type message type TMessageType::CALL or TMessageType::REPLY
+     * @param int    $type message type TMessageType::CALL or TMessageType::REPLY
      * @parem int $seqid The sequence id of this message
      */
-    public function readMessageBegin(&$name, &$type, &$seqid) {
+    public function readMessageBegin(&$name, &$type, &$seqid)
+    {
         $this->readJSONArrayStart();
 
         if ($this->readJSONInteger() != self::VERSION) {
@@ -588,20 +635,25 @@ class TJSONProtocol extends TProtocol
     /**
      * Read the close of message
      */
-    public function readMessageEnd() {
+    public function readMessageEnd()
+    {
         $this->readJSONArrayEnd();
     }
 
-    public function readStructBegin(&$name) {
+    public function readStructBegin(&$name)
+    {
         $this->readJSONObjectStart();
+
         return 0;
     }
 
-    public function readStructEnd() {
+    public function readStructEnd()
+    {
         $this->readJSONObjectEnd();
     }
 
-    public function readFieldBegin(&$name, &$fieldType, &$fieldId) {
+    public function readFieldBegin(&$name, &$fieldType, &$fieldId)
+    {
         $ch = $this->reader_->peek();
         $name = "";
 
@@ -614,11 +666,13 @@ class TJSONProtocol extends TProtocol
         }
     }
 
-    public function readFieldEnd() {
+    public function readFieldEnd()
+    {
         $this->readJSONObjectEnd();
     }
 
-    public function readMapBegin(&$keyType, &$valType, &$size) {
+    public function readMapBegin(&$keyType, &$valType, &$size)
+    {
         $this->readJSONArrayStart();
         $keyType = $this->getTypeIDForTypeName($this->readJSONString(false));
         $valType = $this->getTypeIDForTypeName($this->readJSONString(false));
@@ -626,69 +680,90 @@ class TJSONProtocol extends TProtocol
         $this->readJSONObjectStart();
     }
 
-    public function readMapEnd() {
+    public function readMapEnd()
+    {
         $this->readJSONObjectEnd();
         $this->readJSONArrayEnd();
     }
 
-    public function readListBegin(&$elemType, &$size) {
+    public function readListBegin(&$elemType, &$size)
+    {
         $this->readJSONArrayStart();
         $elemType = $this->getTypeIDForTypeName($this->readJSONString(false));
         $size = $this->readJSONInteger();
+
         return true;
     }
 
-    public function readListEnd() {
+    public function readListEnd()
+    {
         $this->readJSONArrayEnd();
     }
 
-    public function readSetBegin(&$elemType, &$size) {
+    public function readSetBegin(&$elemType, &$size)
+    {
         $this->readJSONArrayStart();
         $elemType = $this->getTypeIDForTypeName($this->readJSONString(false));
         $size = $this->readJSONInteger();
+
         return true;
     }
 
-    public function readSetEnd() {
+    public function readSetEnd()
+    {
         $this->readJSONArrayEnd();
     }
 
-    public function readBool(&$bool) {
+    public function readBool(&$bool)
+    {
         $bool = $this->readJSONInteger() == 0 ? false : true;
+
         return true;
     }
 
-    public function readByte(&$byte) {
+    public function readByte(&$byte)
+    {
         $byte = $this->readJSONInteger();
+
         return true;
     }
 
-    public function readI16(&$i16) {
+    public function readI16(&$i16)
+    {
         $i16 = $this->readJSONInteger();
+
         return true;
     }
 
-    public function readI32(&$i32) {
+    public function readI32(&$i32)
+    {
         $i32 = $this->readJSONInteger();
+
         return true;
     }
 
-    public function readI64(&$i64) {
-        if ( PHP_INT_SIZE === 4 ) {
+    public function readI64(&$i64)
+    {
+        if (PHP_INT_SIZE === 4) {
             $i64 = $this->readJSONIntegerAsString();
         } else {
             $i64 = $this->readJSONInteger();
         }
+
         return true;
     }
 
-    public function readDouble(&$dub) {
+    public function readDouble(&$dub)
+    {
         $dub = $this->readJSONDouble();
+
         return true;
     }
 
-    public function readString(&$str) {
+    public function readString(&$str)
+    {
         $str = $this->readJSONString(false);
+
         return true;
     }
 }

@@ -22,7 +22,6 @@
 
 namespace Thrift\Transport;
 
-use Thrift\Transport\TTransport;
 use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
 use Thrift\Factory\TStringFuncFactory;
@@ -32,8 +31,8 @@ use Thrift\Factory\TStringFuncFactory;
  *
  * @package thrift.transport
  */
-class TSocket extends TTransport {
-
+class TSocket extends TTransport
+{
   /**
    * Handle to PHP socket
    *
@@ -96,14 +95,14 @@ class TSocket extends TTransport {
    *
    * @var bool
    */
-  protected $persist_ = FALSE;
+  protected $persist_ = false;
 
   /**
    * Debugging on?
    *
    * @var bool
    */
-  protected $debug_ = FALSE;
+  protected $debug_ = false;
 
   /**
    * Debug handler
@@ -122,7 +121,7 @@ class TSocket extends TTransport {
    */
   public function __construct($host='localhost',
                               $port=9090,
-                              $persist=FALSE,
+                              $persist=false,
                               $debugHandler=null) {
     $this->host_ = $host;
     $this->port_ = $port;
@@ -134,7 +133,8 @@ class TSocket extends TTransport {
    * @param resource $handle
    * @return void
    */
-  public function setHandle($handle) {
+  public function setHandle($handle)
+  {
     $this->handle_ = $handle;
   }
 
@@ -143,7 +143,8 @@ class TSocket extends TTransport {
    *
    * @param int $timeout  Timeout in milliseconds.
    */
-  public function setSendTimeout($timeout) {
+  public function setSendTimeout($timeout)
+  {
     $this->sendTimeoutSec_ = floor($timeout / 1000);
     $this->sendTimeoutUsec_ =
             ($timeout - ($this->sendTimeoutSec_ * 1000)) * 1000;
@@ -154,7 +155,8 @@ class TSocket extends TTransport {
    *
    * @param int $timeout  Timeout in milliseconds.
    */
-  public function setRecvTimeout($timeout) {
+  public function setRecvTimeout($timeout)
+  {
     $this->recvTimeoutSec_ = floor($timeout / 1000);
     $this->recvTimeoutUsec_ =
             ($timeout - ($this->recvTimeoutSec_ * 1000)) * 1000;
@@ -165,7 +167,8 @@ class TSocket extends TTransport {
    *
    * @param bool $debug
    */
-  public function setDebug($debug) {
+  public function setDebug($debug)
+  {
     $this->debug_ = $debug;
   }
 
@@ -174,7 +177,8 @@ class TSocket extends TTransport {
    *
    * @return string host
    */
-  public function getHost() {
+  public function getHost()
+  {
     return $this->host_;
   }
 
@@ -183,7 +187,8 @@ class TSocket extends TTransport {
    *
    * @return int port
    */
-  public function getPort() {
+  public function getPort()
+  {
     return $this->port_;
   }
 
@@ -192,14 +197,16 @@ class TSocket extends TTransport {
    *
    * @return bool true if the socket is open
    */
-  public function isOpen() {
+  public function isOpen()
+  {
     return is_resource($this->handle_);
   }
 
   /**
    * Connects the socket.
    */
-  public function open() {
+  public function open()
+  {
     if ($this->isOpen()) {
       throw new TTransportException('Socket already connected', TTransportException::ALREADY_OPEN);
     }
@@ -239,7 +246,8 @@ class TSocket extends TTransport {
   /**
    * Closes the socket.
    */
-  public function close() {
+  public function close()
+  {
     if (!$this->persist_) {
       @fclose($this->handle_);
       $this->handle_ = null;
@@ -255,7 +263,8 @@ class TSocket extends TTransport {
    * @param int $len Maximum number of bytes to read.
    * @return string Binary data
    */
-  public function read($len) {
+  public function read($len)
+  {
     $null = null;
     $read = array($this->handle_);
     $readable = @stream_select($read, $null, $null, $this->recvTimeoutSec_, $this->recvTimeoutUsec_);
@@ -265,12 +274,12 @@ class TSocket extends TTransport {
       if ($data === false) {
           throw new TTransportException('TSocket: Could not read '.$len.' bytes from '.
                                $this->host_.':'.$this->port_);
-      } elseif($data == '' && feof($this->handle_)) {
+      } elseif ($data == '' && feof($this->handle_)) {
           throw new TTransportException('TSocket read 0 bytes');
         }
 
       return $data;
-    } else if ($readable === 0) {
+    } elseif ($readable === 0) {
         throw new TTransportException('TSocket: timed out reading '.$len.' bytes from '.
                              $this->host_.':'.$this->port_);
       } else {
@@ -284,7 +293,8 @@ class TSocket extends TTransport {
    *
    * @param string $buf The data to write
    */
-  public function write($buf) {
+  public function write($buf)
+  {
     $null = null;
     $write = array($this->handle_);
 
@@ -301,7 +311,7 @@ class TSocket extends TTransport {
         }
         // determine how much of the buffer is left to write
         $buf = TStringFuncFactory::create()->substr($buf, $written);
-      } else if ($writable === 0) {
+      } elseif ($writable === 0) {
           throw new TTransportException('TSocket: timed out writing '.TStringFuncFactory::create()->strlen($buf).' bytes from '.
                                $this->host_.':'.$this->port_);
         } else {
@@ -320,7 +330,8 @@ class TSocket extends TTransport {
    * If you wish to have flushable buffering behaviour, wrap this TSocket
    * in a TBufferedTransport.
    */
-  public function flush() {
+  public function flush()
+  {
     // no-op
     }
   }
