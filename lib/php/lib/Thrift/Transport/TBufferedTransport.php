@@ -22,7 +22,6 @@
 
 namespace Thrift\Transport;
 
-use Thrift\Transport\TTransport;
 use Thrift\Factory\TStringFuncFactory;
 
 /**
@@ -32,12 +31,13 @@ use Thrift\Factory\TStringFuncFactory;
  *
  * @package thrift.transport
  */
-class TBufferedTransport extends TTransport {
-
+class TBufferedTransport extends TTransport
+{
   /**
    * Constructor. Creates a buffered transport around an underlying transport
    */
-  public function __construct($transport=null, $rBufSize=512, $wBufSize=512) {
+  public function __construct($transport=null, $rBufSize=512, $wBufSize=512)
+  {
     $this->transport_ = $transport;
     $this->rBufSize_ = $rBufSize;
     $this->wBufSize_ = $wBufSize;
@@ -78,19 +78,23 @@ class TBufferedTransport extends TTransport {
    */
   protected $rBuf_ = '';
 
-  public function isOpen() {
+  public function isOpen()
+  {
     return $this->transport_->isOpen();
   }
 
-  public function open() {
+  public function open()
+  {
     $this->transport_->open();
   }
 
-  public function close() {
+  public function close()
+  {
     $this->transport_->close();
   }
 
-  public function putBack($data) {
+  public function putBack($data)
+  {
     if (TStringFuncFactory::create()->strlen($this->rBuf_) === 0) {
       $this->rBuf_ = $data;
     } else {
@@ -107,25 +111,28 @@ class TBufferedTransport extends TTransport {
    * Therefore, use the readAll method of the wrapped transport inside
    * the buffered readAll.
    */
-  public function readAll($len) {
+  public function readAll($len)
+  {
     $have = TStringFuncFactory::create()->strlen($this->rBuf_);
     if ($have == 0) {
       $data = $this->transport_->readAll($len);
-    } else if ($have < $len) {
+    } elseif ($have < $len) {
       $data = $this->rBuf_;
       $this->rBuf_ = '';
       $data .= $this->transport_->readAll($len - $have);
-    } else if ($have == $len) {
+    } elseif ($have == $len) {
       $data = $this->rBuf_;
       $this->rBuf_ = '';
-    } else if ($have > $len) {
+    } elseif ($have > $len) {
       $data = TStringFuncFactory::create()->substr($this->rBuf_, 0, $len);
       $this->rBuf_ = TStringFuncFactory::create()->substr($this->rBuf_, $len);
     }
+
     return $data;
   }
 
-  public function read($len) {
+  public function read($len)
+  {
     if (TStringFuncFactory::create()->strlen($this->rBuf_) === 0) {
       $this->rBuf_ = $this->transport_->read($this->rBufSize_);
     }
@@ -133,15 +140,18 @@ class TBufferedTransport extends TTransport {
     if (TStringFuncFactory::create()->strlen($this->rBuf_) <= $len) {
       $ret = $this->rBuf_;
       $this->rBuf_ = '';
+
       return $ret;
     }
 
     $ret = TStringFuncFactory::create()->substr($this->rBuf_, 0, $len);
     $this->rBuf_ = TStringFuncFactory::create()->substr($this->rBuf_, $len);
+
     return $ret;
   }
 
-  public function write($buf) {
+  public function write($buf)
+  {
     $this->wBuf_ .= $buf;
     if (TStringFuncFactory::create()->strlen($this->wBuf_) >= $this->wBufSize_) {
       $out = $this->wBuf_;
@@ -154,7 +164,8 @@ class TBufferedTransport extends TTransport {
     }
   }
 
-  public function flush() {
+  public function flush()
+  {
     if (TStringFuncFactory::create()->strlen($this->wBuf_) > 0) {
       $out = $this->wBuf_;
 
