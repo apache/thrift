@@ -16,24 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-/**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
- */
-
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
-
-struct SharedStruct {
-  1: i32 key
-  2: string value
-}
-
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
+ 
+package org.apache.thrift.protocol;
+    
+class TField {
+    
+    public var name : String;
+    public var type : Int;
+    public var id : Int;
+      
+    public function new(n : String = "", t : Int = 0, i : Int = 0) {
+      name = n;
+      type = t;
+      id = i;
+    }
+    
+    public function toString() : String {
+      return '<TField name:"$name" type:"$type" field-id:"$id">';
+    }
+    
+    public function equals( otherField : TField) : Bool {
+      return (type == otherField.type) 
+          && (id == otherField.id);
+    }
+  
 }
