@@ -186,7 +186,7 @@ class t_rb_generator : public t_oop_generator {
                                           t_list*     tlist,
                                           std::string iter);
 
-  void generate_rdoc                     (t_rb_ofstream& out, 
+  void generate_rdoc                     (t_rb_ofstream& out,
                                           t_doc* tdoc);
 
   /**
@@ -383,7 +383,7 @@ void t_rb_generator::generate_enum(t_enum* tenum) {
     generate_rdoc(f_types_, *c_iter);
     f_types_.indent() << name << " = " << value << endl;
   }
-  
+
   // Create a hash mapping values back to their names (as strings) since ruby has no native enum type
   f_types_.indent() << "VALUE_MAP = {";
   for(c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
@@ -393,7 +393,7 @@ void t_rb_generator::generate_enum(t_enum* tenum) {
     f_types_ << value << " => \"" << capitalize((*c_iter)->get_name()) << "\"";
   }
   f_types_ << "}" << endl;
-  
+
   // Create a set with valid values for this enum
   f_types_.indent() << "VALID_VALUES = Set.new([";
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
@@ -615,7 +615,7 @@ void t_rb_generator::generate_field_constructors(t_rb_ofstream& out, t_struct* t
     out.indent() << "  " << tstruct->get_name() << ".new(:" << field_name << ", val)" << endl;
     out.indent() << "end" << endl;
   }
-  
+
   out.indent_down();
   out.indent() << "end" << endl;
 
@@ -652,7 +652,7 @@ void t_rb_generator::generate_field_constants(t_rb_ofstream& out, t_struct* tstr
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     std::string field_name = (*f_iter)->get_name();
     std::string cap_field_name = upcase_string(field_name);
-    
+
     out.indent() << cap_field_name << " = " << (*f_iter)->get_key() << endl;
   }
   out << endl;
@@ -674,15 +674,15 @@ void t_rb_generator::generate_field_defns(t_rb_ofstream& out, t_struct* tstruct)
 
     out.indent() << upcase_string((*f_iter)->get_name()) << " => ";
 
-    generate_field_data(out, (*f_iter)->get_type(), (*f_iter)->get_name(), (*f_iter)->get_value(), 
+    generate_field_data(out, (*f_iter)->get_type(), (*f_iter)->get_name(), (*f_iter)->get_value(),
       (*f_iter)->get_req() == t_field::T_OPTIONAL);
   }
   out.indent_down();
   out << endl;
   out.indent() << "}" << endl << endl;
-  
+
   out.indent() << "def struct_fields; FIELDS; end" << endl << endl;
-  
+
 }
 
 void t_rb_generator::generate_field_data(t_rb_ofstream& out, t_type* field_type,
@@ -721,7 +721,7 @@ void t_rb_generator::generate_field_data(t_rb_ofstream& out, t_type* field_type,
       out << ", :binary => true";
     }
   }
-  
+
   if(optional) {
     out << ", :optional => true";
   }
@@ -1191,7 +1191,7 @@ void t_rb_generator::generate_rdoc(t_rb_ofstream& out, t_doc* tdoc) {
   }
 }
 
-void t_rb_generator::generate_rb_struct_required_validator(t_rb_ofstream& out, 
+void t_rb_generator::generate_rb_struct_required_validator(t_rb_ofstream& out,
                                                            t_struct* tstruct) {
   out.indent() << "def validate" << endl;
   out.indent_up();
@@ -1218,14 +1218,14 @@ void t_rb_generator::generate_rb_struct_required_validator(t_rb_ofstream& out,
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field* field = (*f_iter);
 
-    if (field->get_type()->is_enum()){      
+    if (field->get_type()->is_enum()){
       out.indent() << "unless @" << field->get_name() << ".nil? || " <<
         full_type_name(field->get_type()) << "::VALID_VALUES.include?(@" <<
         field->get_name() << ")" << endl;
       out.indent_up();
       out.indent() <<
         "raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Invalid value of field " <<
-        field->get_name() << "!')" << endl;  
+        field->get_name() << "!')" << endl;
       out.indent_down();
       out.indent() << "end" << endl;
     }
@@ -1235,7 +1235,7 @@ void t_rb_generator::generate_rb_struct_required_validator(t_rb_ofstream& out,
   out.indent() << "end" << endl << endl;
 }
 
-void t_rb_generator::generate_rb_union_validator(t_rb_ofstream& out, 
+void t_rb_generator::generate_rb_union_validator(t_rb_ofstream& out,
                                                  t_struct* tstruct) {
   out.indent() << "def validate" << endl;
   out.indent_up();
@@ -1250,12 +1250,12 @@ void t_rb_generator::generate_rb_union_validator(t_rb_ofstream& out,
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     const t_field* field = (*f_iter);
 
-    if (field->get_type()->is_enum()){      
+    if (field->get_type()->is_enum()){
       out.indent() << "if get_set_field == :" << field->get_name() << endl;
       out.indent() <<
         "  raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Invalid value of field " <<
         field->get_name() << "!') unless " << full_type_name(field->get_type()) <<
-        "::VALID_VALUES.include?(get_value)" << endl;  
+        "::VALID_VALUES.include?(get_value)" << endl;
       out.indent() << "end" << endl;
     }
   }

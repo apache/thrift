@@ -56,14 +56,14 @@ class t_html_generator : public t_generator {
     : t_generator(program)
   {
     (void) parsed_options;
-    (void) option_string;  
+    (void) option_string;
     out_dir_base_ = "gen-html";
     input_type_ = INPUT_UNKNOWN;
-    
+
     std::map<std::string, std::string>::const_iterator iter;
     iter = parsed_options.find("standalone");
     standalone_ = (iter != parsed_options.end());
-    
+
     escape_.clear();
     escape_['&']  = "&amp;";
     escape_['<']  = "&lt;";
@@ -89,7 +89,7 @@ class t_html_generator : public t_generator {
   bool is_utf8_sequence(std::string const & str, size_t firstpos);
   void detect_input_encoding(std::string const & str, size_t firstpos);
   void init_allowed__markup();
-  
+
   /**
    * Program-level generation functions
    */
@@ -110,8 +110,8 @@ class t_html_generator : public t_generator {
   std::ofstream f_out_;
   std::string  current_file_;
   input_type input_type_;
-  std::map<std::string, int> allowed_markup; 
-  bool standalone_; 
+  std::map<std::string, int> allowed_markup;
+  bool standalone_;
 };
 
 
@@ -321,7 +321,7 @@ void t_html_generator::generate_program() {
 
   f_out_ << "</div></body></html>" << endl;
   f_out_.close();
-  
+
   generate_index();
   generate_css();
 }
@@ -372,7 +372,7 @@ void t_html_generator::generate_css_content(std::ofstream & f_target) {
 }
 
 /**
- * Generates the CSS tag. 
+ * Generates the CSS tag.
  * Depending on "standalone", either a CSS file link (default), or the entire CSS is embedded inline.
  */
 void t_html_generator::generate_style_tag() {
@@ -382,11 +382,11 @@ void t_html_generator::generate_style_tag() {
     f_out_ << "<style type=\"text/css\"/><!--" << endl;
     generate_css_content( f_out_);
     f_out_ << "--></style>" << endl;
-  } 
+  }
 }
 
 /**
- * Returns the target file for a <a href> link 
+ * Returns the target file for a <a href> link
  * The returned string is empty, whenever filename refers to the current file.
  */
 std::string t_html_generator::make_file_link( std::string filename) {
@@ -430,11 +430,11 @@ bool t_html_generator::is_utf8_sequence(std::string const & str, size_t firstpos
     if( (c & 0xC0) !=  0x80) {
       //pdebug("UTF-8 test: char '%c' (%d) is not a valid UTF-8 following byte", c, int(c));
       return false;  // no UTF-8
-    }    
+    }
     --count;
     ++pos;
   }
-  
+
   // true if the sequence is complete
   return (0 == count);
 }
@@ -447,7 +447,7 @@ void t_html_generator::detect_input_encoding(std::string const & str, size_t fir
     return;
   }
 
-  // fallback 
+  // fallback
   pwarning( 1, "Input is not UTF-8, treating as plain ANSI");
   input_type_ = INPUT_PLAIN;
 }
@@ -510,7 +510,7 @@ void t_html_generator::init_allowed__markup() {
   allowed_markup["h6"] = 1;
   allowed_markup["/h6"] = 1;
 }
-  
+
 std::string t_html_generator::escape_html_tags(std::string const & str) {
   std::ostringstream result;
 
@@ -519,8 +519,8 @@ std::string t_html_generator::escape_html_tags(std::string const & str) {
   size_t firstpos = 0;
   while( firstpos < str.length()) {
 
-    // look for non-ASCII char  
-    lastpos = firstpos;    
+    // look for non-ASCII char
+    lastpos = firstpos;
     while( lastpos < str.length()) {
       c = str.at(lastpos);
       if( ('<' == c) || ('>' == c)) {
@@ -528,13 +528,13 @@ std::string t_html_generator::escape_html_tags(std::string const & str) {
       }
       ++lastpos;
     }
-    
-    // copy what we got so far    
+
+    // copy what we got so far
     if( lastpos > firstpos) {
       result << str.substr( firstpos, lastpos-firstpos);
       firstpos = lastpos;
     }
-    
+
     // reached the end?
     if( firstpos >= str.length()) {
       break;
@@ -572,13 +572,13 @@ std::string t_html_generator::escape_html_tags(std::string const & str) {
       tag_key[i] = tolower(tag_key[i]);
     }
     if( allowed_markup.find(tag_key) != allowed_markup.end()) {
-      result << "<" << tag_content << ">"; 
+      result << "<" << tag_content << ">";
     } else {
-      result << "&lt;" << tagstream.str() << "&gt;"; 
+      result << "&lt;" << tagstream.str() << "&gt;";
       pverbose("illegal markup <%s> in doc-comment\n", tag_key.c_str());
     }
   }
-  
+
   return result.str();
 }
 
@@ -588,7 +588,7 @@ std::string t_html_generator::escape_html(std::string const & str) {
   if( input_type_ == INPUT_UTF8) {
     return escape_html_tags(str);
   }
-  
+
   // convert unsafe chars to their &#<num>; equivalent
   std::ostringstream result;
   unsigned char c = '?';
@@ -597,8 +597,8 @@ std::string t_html_generator::escape_html(std::string const & str) {
   size_t firstpos = 0;
   while( firstpos < str.length()) {
 
-    // look for non-ASCII char  
-    lastpos = firstpos;    
+    // look for non-ASCII char
+    lastpos = firstpos;
     while( lastpos < str.length()) {
       c = str.at(lastpos);
       ic = c;
@@ -607,8 +607,8 @@ std::string t_html_generator::escape_html(std::string const & str) {
       }
       ++lastpos;
     }
-    
-    // copy what we got so far    
+
+    // copy what we got so far
     if( lastpos > firstpos) {
       result << str.substr( firstpos, lastpos-firstpos);
       firstpos = lastpos;
@@ -624,8 +624,8 @@ std::string t_html_generator::escape_html(std::string const & str) {
     {
       switch( c)
       {
-        case '\r' :  
-        case '\n' :  
+        case '\r' :
+        case '\n' :
         case '\t' :
           result << c;
           break;
@@ -633,9 +633,9 @@ std::string t_html_generator::escape_html(std::string const & str) {
           break;
       }
       ++firstpos;
-      continue;        
+      continue;
     }
-    
+
     // reached the end?
     if( firstpos >= str.length()) {
       break;
@@ -650,18 +650,18 @@ std::string t_html_generator::escape_html(std::string const & str) {
         break;
       }
     }
-    
+
     // convert the character to something useful based on the detected encoding
     switch( input_type_) {
-      case INPUT_PLAIN: 
-        result << "&#" << ic << ";";  
+      case INPUT_PLAIN:
+        result << "&#" << ic << ";";
         ++firstpos;
         break;
       default:
         throw "Unexpected or unrecognized input encoding";
     }
   }
-  
+
   return escape_html_tags(result.str());
 }
 
@@ -727,12 +727,12 @@ void t_html_generator::print_const_value(t_type* type, t_const_value* tvalue) {
     f_out_ << "<code><a href=\"" + make_file_link(fname) + "#Const_" + name +"\">" + name + "</a></code>";
     return;
   }
-  
+
   t_type* truetype = type;
   while (truetype->is_typedef()) {
     truetype = ((t_typedef*)truetype)->get_type();
   }
-  
+
   bool first = true;
   if (truetype->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)truetype)->get_base();

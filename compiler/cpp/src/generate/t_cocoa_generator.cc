@@ -52,13 +52,13 @@ class t_cocoa_generator : public t_oop_generator {
   {
     (void) option_string;
     std::map<std::string, std::string>::const_iterator iter;
-    
+
     iter = parsed_options.find("log_unexpected");
-    log_unexpected_ = (iter != parsed_options.end());    
-    
+    log_unexpected_ = (iter != parsed_options.end());
+
     iter = parsed_options.find("validate_required");
-    validate_required_ = (iter != parsed_options.end());    
-    
+    validate_required_ = (iter != parsed_options.end());
+
     out_dir_base_ = "gen-cocoa";
   }
 
@@ -408,7 +408,7 @@ void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
     if ((*c_iter)->get_type()->is_container() ||
         (*c_iter)->get_type()->is_struct()) {
-      print_const_value(f_impl_, 
+      print_const_value(f_impl_,
            cocoa_prefix_+(*c_iter)->get_name(),
            (*c_iter)->get_type(),
            (*c_iter)->get_value(),
@@ -582,7 +582,7 @@ void t_cocoa_generator::generate_cocoa_struct_field_accessor_declarations(ofstre
  */
 void t_cocoa_generator::generate_cocoa_struct_init_with_coder_method(ofstream &out,
                                                                      t_struct* tstruct,
-                                                                     bool is_exception) 
+                                                                     bool is_exception)
 {
   indent(out) << "- (id) initWithCoder: (NSCoder *) decoder" << endl;
   scope_up(out);
@@ -601,45 +601,45 @@ void t_cocoa_generator::generate_cocoa_struct_init_with_coder_method(ofstream &o
     out << indent() << "if ([decoder containsValueForKey: @\""<< (*m_iter)->get_name() <<"\"])" << endl;
     scope_up(out);
     out << indent() << "__" << (*m_iter)->get_name() << " = ";
-    if (type_can_be_null(t)) 
+    if (type_can_be_null(t))
     {
       out << "[[decoder decodeObjectForKey: @\"" << (*m_iter)->get_name() << "\"] retain_stub];" << endl;
     }
-    else if (t->is_enum()) 
+    else if (t->is_enum())
     {
-      out << "[decoder decodeIntForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;      
+      out << "[decoder decodeIntForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
     }
-    else 
+    else
     {
       t_base_type::t_base tbase = ((t_base_type *) t)->get_base();
       switch (tbase)
       {
         case t_base_type::TYPE_BOOL:
-          out << "[decoder decodeBoolForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;      
+          out << "[decoder decodeBoolForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
           break;
         case t_base_type::TYPE_BYTE:
-          out << "[decoder decodeIntForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;      
+          out << "[decoder decodeIntForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
           break;
         case t_base_type::TYPE_I16:
-          out << "[decoder decodeIntForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;      
+          out << "[decoder decodeIntForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
           break;
         case t_base_type::TYPE_I32:
-          out << "[decoder decodeInt32ForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;      
+          out << "[decoder decodeInt32ForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
           break;
         case t_base_type::TYPE_I64:
-          out << "[decoder decodeInt64ForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;      
+          out << "[decoder decodeInt64ForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
           break;
         case t_base_type::TYPE_DOUBLE:
-          out << "[decoder decodeDoubleForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;      
+          out << "[decoder decodeDoubleForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
           break;
-        default:    
+        default:
           throw "compiler error: don't know how to decode thrift type: " + t_base_type::t_base_name(tbase);
       }
     }
     out << indent() << "__" << (*m_iter)->get_name() << "_isset = YES;" << endl;
     scope_down(out);
   }
-  
+
   out << indent() << "return self;" << endl;
   scope_down(out);
   out << endl;
@@ -652,7 +652,7 @@ void t_cocoa_generator::generate_cocoa_struct_init_with_coder_method(ofstream &o
  */
 void t_cocoa_generator::generate_cocoa_struct_encode_with_coder_method(ofstream &out,
                                                                        t_struct* tstruct,
-                                                                       bool is_exception) 
+                                                                       bool is_exception)
 {
   indent(out) << "- (void) encodeWithCoder: (NSCoder *) encoder" << endl;
   scope_up(out);
@@ -660,24 +660,24 @@ void t_cocoa_generator::generate_cocoa_struct_encode_with_coder_method(ofstream 
     // NSExceptions conform to NSCoding, so we can call super
     out << indent() << "[super encodeWithCoder: encoder];" << endl;
   }
-  
+
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
-  
+
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_type* t = get_true_type((*m_iter)->get_type());
     out << indent() << "if (__"<< (*m_iter)->get_name() <<"_isset)" << endl;
     scope_up(out);
     //out << indent() << "__" << (*m_iter)->get_name() << " = ";
-    if (type_can_be_null(t)) 
+    if (type_can_be_null(t))
     {
       out << indent() << "[encoder encodeObject: __" << (*m_iter)->get_name() << " forKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
     }
-    else if (t->is_enum()) 
+    else if (t->is_enum())
     {
       out << indent() << "[encoder encodeInt: __" << (*m_iter)->get_name() << " forKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
     }
-    else 
+    else
     {
       t_base_type::t_base tbase = ((t_base_type *) t)->get_base();
       switch (tbase)
@@ -700,13 +700,13 @@ void t_cocoa_generator::generate_cocoa_struct_encode_with_coder_method(ofstream 
         case t_base_type::TYPE_DOUBLE:
           out << indent() << "[encoder encodeDouble: __" << (*m_iter)->get_name() << " forKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
           break;
-        default:    
+        default:
           throw "compiler error: don't know how to encode thrift type: " + t_base_type::t_base_name(tbase);
       }
     }
     scope_down(out);
   }
-  
+
   scope_down(out);
   out << endl;
 }
@@ -786,11 +786,11 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream &out,
     scope_down(out);
     out << endl;
   }
-  
+
   // initWithCoder for NSCoding
   generate_cocoa_struct_init_with_coder_method(out, tstruct, is_exception);
   // encodeWithCoder for NSCoding
-  generate_cocoa_struct_encode_with_coder_method(out, tstruct, is_exception);  
+  generate_cocoa_struct_encode_with_coder_method(out, tstruct, is_exception);
 
   // dealloc
   if (!members.empty()) {
@@ -1077,7 +1077,7 @@ void t_cocoa_generator::generate_cocoa_struct_validator(ofstream& out,
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
-    
+
   out << indent() << "// check for required fields" << endl;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field* field = (*f_iter);
@@ -1228,7 +1228,7 @@ void t_cocoa_generator::generate_cocoa_service_helpers(t_service* tservice) {
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* ts = (*f_iter)->get_arglist();
     generate_cocoa_struct_interface(f_impl_, ts, false);
-    generate_cocoa_struct_implementation(f_impl_, ts, false, false);  
+    generate_cocoa_struct_implementation(f_impl_, ts, false, false);
     generate_function_helpers(*f_iter);
   }
 }
@@ -1274,7 +1274,7 @@ void t_cocoa_generator::generate_function_helpers(t_function* tfunction) {
 
   // generate the result struct
   generate_cocoa_struct_interface(f_impl_, &result, false);
-  generate_cocoa_struct_implementation(f_impl_, &result, false, true);  
+  generate_cocoa_struct_implementation(f_impl_, &result, false, true);
 }
 
 
@@ -1334,12 +1334,12 @@ void t_cocoa_generator::generate_cocoa_service_client_interface(ofstream& out,
 void t_cocoa_generator::generate_cocoa_service_server_interface(ofstream& out,
                                                                 t_service* tservice) {
   out << "@interface " << cocoa_prefix_ << tservice->get_name() << "Processor : NSObject <TProcessor> ";
-  
+
   scope_up(out);
   out << indent() << "id <" << cocoa_prefix_ << tservice->get_name() <<"> mService;" << endl;
   out << indent() << "NSDictionary * mMethodMap;" << endl;
   scope_down(out);
-  
+
   out << "- (id) initWith" << tservice->get_name() << ": (id <" << cocoa_prefix_ << tservice->get_name() << ">) service;" << endl;
   out << "- (id<"<<cocoa_prefix_ << tservice->get_name() << ">) service;" << endl;
 
@@ -1557,7 +1557,7 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
                                                                      t_service* tservice) {
   out << "@implementation " << cocoa_prefix_ << tservice->get_name() << "Processor" << endl;
   indent_up();
-  
+
   // initializer
   out << endl;
   out << "- (id) initWith" << tservice->get_name() << ": (id <" << cocoa_prefix_ << tservice->get_name() << ">) service" << endl;
@@ -1568,7 +1568,7 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
   out << indent() << "}" << endl;
   out << indent() << "mService = [service retain_stub];" << endl;
   out << indent() << "mMethodMap = [[NSMutableDictionary dictionary] retain_stub];" << endl;
-  
+
   // generate method map for routing incoming calls
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::const_iterator f_iter;
@@ -1585,7 +1585,7 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
   }
   out << indent() << "return self;" << endl;
   scope_down(out);
-  
+
   // implementation of the 'service' method which returns the service associated with this
   // processor
   out << endl;
@@ -1593,7 +1593,7 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
   out << indent() << "{" << endl;
   out << indent() << "  return [[mService retain_stub] autorelease_stub];" << endl;
   out << indent() << "}" << endl;
-  
+
   // implementation of the TProcess method, which dispatches the incoming call using the method map
   out << endl;
   out << indent() << "- (BOOL) processOnInputProtocol: (id <TProtocol>) inProtocol" << endl;
@@ -1628,7 +1628,7 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
   out << indent() << "  [i invoke];" << endl;
   out << indent() << "  return YES;" << endl;
   out << indent() << "}" << endl;
-  
+
   // generate a process_XXXX method for each service function, which reads args, calls the service, and writes results
   functions = tservice->get_functions();
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -1640,7 +1640,7 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
     out << indent() << argstype << " * args = [[" << argstype << " alloc] init];" << endl;
     out << indent() << "[args read: inProtocol];" << endl;
     out << indent() << "[inProtocol readMessageEnd];" << endl;
-    
+
     // prepare the result if not oneway
     if (!(*f_iter)->is_oneway()) {
         string resulttype = cocoa_prefix_ + function_result_helper_struct_type(*f_iter);
@@ -1672,7 +1672,7 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
       out << "]";
     }
     out << ";" << endl;
-    
+
     // write out the result if not oneway
     if (!(*f_iter)->is_oneway()) {
         out << indent() << "[outProtocol writeMessageBeginWithName: @\"" << funname << "\"" << endl;
@@ -1684,10 +1684,10 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
         out << indent() << "[result release_stub];" << endl;
     }
     out << indent() << "[args release_stub];" << endl;
-    
+
     scope_down(out);
   }
-  
+
   // dealloc
   out << endl;
   out << "- (void) dealloc" << endl;
@@ -2380,7 +2380,7 @@ string t_cocoa_generator::render_const_value(ofstream& out, t_type* type, t_cons
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
-      // We must handle binary constant but the syntax of IDL defines 
+      // We must handle binary constant but the syntax of IDL defines
       // nothing about binary constant.
       //   if ((t_base_type*)type)->is_binary())
       //      // binary code
@@ -2469,7 +2469,7 @@ string t_cocoa_generator::render_const_value(string name,
       render << "[[" << type_name(type, true) << " alloc] init";
     bool first = true;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      // FIXME The generated code does not match with initWithXXX 
+      // FIXME The generated code does not match with initWithXXX
       //       initializer and causes compile error.
       //       Try: test/DebugProtoTest.thrift and test/SmallTest.thrift
       t_type* field_type = NULL;
@@ -2579,7 +2579,7 @@ string t_cocoa_generator::declare_property(t_field* tfield) {
 
   if (type_can_be_null(tfield->get_type()))
     render << "retain, ";
-  
+
   render << "getter=" << decapitalize(tfield->get_name()) <<
     ", setter=set" << capitalize(tfield->get_name()) + ":) " <<
     type_name(tfield->get_type()) << " " << tfield->get_name() << ";";

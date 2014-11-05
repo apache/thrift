@@ -275,7 +275,7 @@ void t_gv_generator::print_const_value(t_type* type, t_const_value* tvalue) {
             print_const_value( ((t_list*)type)->get_elem_type(), *list_iter);
           } else {
             print_const_value( ((t_set*)type)->get_elem_type(), *list_iter);
-          } 
+          }
         }
         f_out_ << " \\}";
       }

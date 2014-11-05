@@ -65,7 +65,6 @@ class t_scope {
     } else {
       constants_[name] = constant;
     }
-		   
   }
 
   t_const* get_constant(std::string name) {
