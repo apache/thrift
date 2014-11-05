@@ -1162,7 +1162,7 @@ void t_perl_generator::generate_service_client(t_service* tservice) {
     // Serialize the request header
     f_service_ <<
       indent() << "$self->{output}->writeMessageBegin('" << (*f_iter)->get_name() << "', " <<
-      ((*f_iter)->is_oneway() ? "TMessageType::ONEWAY" : "TMessageType::CALL") << 
+      ((*f_iter)->is_oneway() ? "TMessageType::ONEWAY" : "TMessageType::CALL") <<
       ", $self->{seqid});" << endl;
 
     f_service_ <<

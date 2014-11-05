@@ -66,8 +66,8 @@ class t_js_generator : public t_oop_generator {
      }
      else {
        gen_ts_ = false;
-     } 
-    
+     }
+
      if (gen_node_ && gen_jquery_) {
        throw "Invalid switch: [-gen js:node,jquery] options not compatible, try: [-gen js:node -gen js:jquery]";
      }
@@ -289,7 +289,7 @@ class t_js_generator : public t_oop_generator {
     if (tdoc->has_doc()) {
       std::stringstream doc(tdoc->get_doc());
       string item;
-      
+
       result += ts_indent() + "/**" + endl;
       while (std::getline(doc, item)) {
         result += ts_indent() + " * " + item + endl;
@@ -2178,7 +2178,7 @@ std::string t_js_generator::ts_function_signature(t_function* tfunction, bool in
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     str += (*f_iter)->get_name() + ts_get_req(*f_iter) + ": " + ts_get_type((*f_iter)->get_type());
-    
+
     if (f_iter + 1 != fields.end()) {
       str += ", ";
     }

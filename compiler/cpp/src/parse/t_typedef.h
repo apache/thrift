@@ -73,7 +73,7 @@ class t_typedef : public t_type {
       std::string ret = get_type()->get_fingerprint_material();
       seen_ = false;
       return ret;
-    } 
+    }
     return "";
   }
 

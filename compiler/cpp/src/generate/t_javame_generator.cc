@@ -389,14 +389,14 @@ void t_javame_generator::generate_enum(t_enum* tenum) {
     indent(f_enum) << "case " << value << ":" << endl;
     indent(f_enum) << "  return " << (*c_iter)->get_name() << ";" << endl;
   }
-  
+
   indent(f_enum) << "default:" << endl;
-  indent(f_enum) << "  return null;" << endl;  
+  indent(f_enum) << "  return null;" << endl;
 
   indent_down();
 
   indent(f_enum) << "}" << endl;
-  
+
   indent_down();
 
   indent(f_enum) << "}" << endl;
@@ -617,7 +617,7 @@ string t_javame_generator::box_type(t_type* type, string value) {
 }
 
 /**
- * Generates a struct definition for a thrift data type. This will be a TBase 
+ * Generates a struct definition for a thrift data type. This will be a TBase
  * implementor.
  *
  * @param tstruct The struct definition
@@ -705,7 +705,7 @@ void t_javame_generator::generate_java_union(t_struct* tstruct) {
   f_struct << endl;
 
   generate_union_getters_and_setters(f_struct, tstruct);
-  
+
   f_struct << endl;
 
   generate_union_comparisons(f_struct, tstruct);
@@ -746,14 +746,14 @@ void t_javame_generator::generate_union_constructor(ofstream& out, t_struct* tst
     indent(out) << "  " << type_name(tstruct) << " x = new " << type_name(tstruct) << "();" << endl;
     indent(out) << "  x.set" << get_cap_name((*m_iter)->get_name()) << "(value);" << endl;
     indent(out) << "  return x;" << endl;
-    indent(out) << "}" << endl << endl; 
+    indent(out) << "}" << endl << endl;
   }
 }
 
 void t_javame_generator::generate_union_getters_and_setters(ofstream& out, t_struct* tstruct) {
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
-  
+
   bool first = true;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     if (first) {
@@ -769,11 +769,11 @@ void t_javame_generator::generate_union_getters_and_setters(ofstream& out, t_str
     indent(out) << "  if (getSetField() == _Fields." << constant_name(field->get_name()) << ") {" << endl;
     indent(out) << "    return (" << type_name(field->get_type(), true) << ")getFieldValue();" << endl;
     indent(out) << "  } else {" << endl;
-    indent(out) << "    throw new RuntimeException(\"Cannot get field '" << field->get_name() 
+    indent(out) << "    throw new RuntimeException(\"Cannot get field '" << field->get_name()
       << "' because union is currently set to \" + getFieldDesc(getSetField()).name);" << endl;
     indent(out) << "  }" << endl;
     indent(out) << "}" << endl;
-    
+
     out << endl;
 
     generate_java_doc(out, field);
@@ -812,23 +812,23 @@ void t_javame_generator::generate_check_type(ofstream& out, t_struct* tstruct) {
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_field* field = (*m_iter);
-    
+
     indent(out) << "case " << constant_name(field->get_name()) << ":" << endl;
     indent(out) << "  if (value instanceof " << type_name(field->get_type(), true, false, true) << ") {" << endl;
     indent(out) << "    break;" << endl;
     indent(out) << "  }" << endl;
-    indent(out) << "  throw new ClassCastException(\"Was expecting value of type " 
-      << type_name(field->get_type(), true, false) << " for field '" << field->get_name() 
+    indent(out) << "  throw new ClassCastException(\"Was expecting value of type "
+      << type_name(field->get_type(), true, false) << " for field '" << field->get_name()
       << "', but got \" + value.getClass().getSimpleName());" << endl;
     // do the real check here
   }
-  
+
   indent(out) << "default:" << endl;
   indent(out) << "  throw new IllegalArgumentException(\"Unknown field id \" + setField);" << endl;
 
   indent_down();
   indent(out) << "}" << endl;
-  
+
   indent_down();
   indent(out) << "}" << endl;
 }
@@ -849,7 +849,7 @@ void t_javame_generator::generate_read_value(ofstream& out, t_struct* tstruct) {
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_field* field = (*m_iter);
-    
+
     indent(out) << "case " << constant_name(field->get_name()) << ":" << endl;
     indent_up();
     indent(out) << "if (field.type == " << constant_name(field->get_name()) << "_FIELD_DESC.type) {" << endl;
@@ -896,16 +896,16 @@ void t_javame_generator::generate_write_value(ofstream& out, t_struct* tstruct) 
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_field* field = (*m_iter);
-    
+
     indent(out) << "case " << constant_name(field->get_name()) << ":" << endl;
     indent_up();
-    indent(out) << type_name(field->get_type(), true, false) << " " << field->get_name() 
+    indent(out) << type_name(field->get_type(), true, false) << " " << field->get_name()
       << " = (" <<  type_name(field->get_type(), true, false) << ")value_;" << endl;
     generate_serialize_field(out, field, "");
     indent(out) << "return;" << endl;
     indent_down();
   }
-  
+
   indent(out) << "default:" << endl;
   indent(out) << "  throw new IllegalStateException(\"Cannot write union with unknown field \" + setField_);" << endl;
 
@@ -922,7 +922,7 @@ void t_javame_generator::generate_write_value(ofstream& out, t_struct* tstruct) 
 void t_javame_generator::generate_get_field_desc(ofstream& out, t_struct* tstruct) {
   indent(out) << "protected TField getFieldDesc(_Fields setField) {" << endl;
   indent_up();
-  
+
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
 
@@ -1509,7 +1509,7 @@ void t_javame_generator::generate_java_struct_result_writer(ofstream& out,
     out << "(this." << generate_isset_check(*f_iter) << ") {" << endl;
 
     indent_up();
-    
+
     indent(out) << "oprot.writeFieldBegin(" << constant_name((*f_iter)->get_name()) << "_FIELD_DESC);" << endl;
 
     // Write field contents
@@ -1737,7 +1737,7 @@ void t_javame_generator::generate_java_bean_boilerplate(ofstream& out,
       indent(out) << "__isset_vector[" << isset_field_id(field) << "] = value;" << endl;
     }
     indent_down();
-    indent(out) << "}" << endl << endl; 
+    indent(out) << "}" << endl << endl;
   }
 }
 
@@ -1778,13 +1778,13 @@ void t_javame_generator::generate_java_struct_tostring(ofstream& out,
       indent(out) << "} else {" << endl;
       indent_up();
     }
-    
+
     if (field->get_type()->is_base_type() && ((t_base_type*)(field->get_type()))->is_binary()) {
       indent(out) << "TBaseHelper.toString(this." << field->get_name() << ", sb);" << endl;
     } else {
       indent(out) << "sb.append(this." << (*f_iter)->get_name() << ");" << endl;
     }
-    
+
     if (can_be_null) {
       indent_down();
       indent(out) << "}" << endl;
@@ -1806,7 +1806,7 @@ void t_javame_generator::generate_java_struct_tostring(ofstream& out,
     endl;
 }
 
-/** 
+/**
  * Returns a string with the java representation of the given thrift type
  * (e.g. for the type struct it returns "TType.STRUCT")
  */
@@ -1849,12 +1849,12 @@ void t_javame_generator::generate_field_value_meta_data(std::ofstream& out, t_ty
   } else if (type->is_container()){
     if (type->is_list()){
       indent(out) << "new ListMetaData(TType.LIST, ";
-      t_type* elem_type = ((t_list*)type)->get_elem_type();    
-      generate_field_value_meta_data(out, elem_type);   
+      t_type* elem_type = ((t_list*)type)->get_elem_type();
+      generate_field_value_meta_data(out, elem_type);
     } else if (type->is_set()){
       indent(out) << "new SetMetaData(TType.SET, ";
-      t_type* elem_type = ((t_list*)type)->get_elem_type();    
-      generate_field_value_meta_data(out, elem_type); 
+      t_type* elem_type = ((t_list*)type)->get_elem_type();
+      generate_field_value_meta_data(out, elem_type);
     } else{ // map
       indent(out) << "new MapMetaData(TType.MAP, ";
       t_type* key_type = ((t_map*)type)->get_key_type();
@@ -1930,7 +1930,7 @@ void t_javame_generator::generate_primitive_service_interface(t_service* tservic
   if (tservice->get_extends() != NULL) {
     extends_iface = " extends " + type_name(tservice->get_extends()) + "Iface";
   }
-  
+
   f_iface <<
     autogen_comment() <<
     java_package() <<
@@ -2346,7 +2346,7 @@ void t_javame_generator::generate_process_function(t_service* tservice,
   f_service_ <<
     indent() << "args.read(iprot);" << endl;
   indent_down();
-  f_service_ << 
+  f_service_ <<
     indent() << "} catch (TProtocolException e) {" << endl;
   indent_up();
   f_service_ <<
@@ -3238,7 +3238,7 @@ void t_javame_generator::generate_deep_copy_container(ofstream &out, std::string
     }
 
     indent(out)
-      << "for (Enumeration " << enumeration_name << " = " << source_name << ".elements(); " 
+      << "for (Enumeration " << enumeration_name << " = " << source_name << ".elements(); "
       << enumeration_name << ".hasMoreElements(); ) {" << endl;
     indent_up();
     indent(out)

@@ -271,7 +271,7 @@ string t_hs_generator::hs_imports() {
       "import qualified Control.Exception as X\n"
       "import qualified Control.Monad as M ( liftM, ap, when )\n"
       "import Data.Functor ( (<$>) )\n"
-      "import qualified Data.ByteString.Lazy as LBS\n" 
+      "import qualified Data.ByteString.Lazy as LBS\n"
       "import qualified Data.Hashable as H\n"
       "import qualified Data.Int as I\n"
       "import qualified Data.Maybe as M (catMaybes)\n"
@@ -1149,7 +1149,7 @@ void t_hs_generator::generate_service_client(t_service* tservice) {
     }
     f_client_ << "})" << endl;
     indent(f_client_) << "T.writeMessageEnd op" << endl;
-    
+
     // Write to the stream
     indent(f_client_) << "T.tFlush (T.getTransport op)" << endl;
     indent_down();
@@ -1187,7 +1187,7 @@ void t_hs_generator::generate_service_client(t_service* tservice) {
         indent(f_client_) << "P.return $ " << field_name(resultname, "success") << " res" << endl;
       else
         indent(f_client_) << "P.return ()" << endl;
- 
+
       // Close function
       indent_down();
     }
@@ -1379,7 +1379,7 @@ void t_hs_generator::generate_process_function(t_service* tservice,
     f_service_ << ") :: X.SomeException -> P.IO ()))" << endl;
     indent_down();
     indent_down();
-      
+
   }
   // Close function
   indent_down();

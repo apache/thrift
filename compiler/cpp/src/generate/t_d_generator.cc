@@ -743,7 +743,7 @@ class t_d_generator : public t_oop_generator {
         ss << "Compiler error: Invalid requirement level " << req;
         throw ss.str();
       }
-    
+
     }
   }
 
