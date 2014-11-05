@@ -77,10 +77,10 @@ class t_program : public t_doc {
   {
    if(scope_)
    {
-     delete scope_; 
-     scope_ = NULL; 
+     delete scope_;
+     scope_ = NULL;
    }
-  } 
+  }
 
   // Path accessor
   const std::string& get_path() const { return path_; }

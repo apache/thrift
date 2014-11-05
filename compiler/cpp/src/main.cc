@@ -146,7 +146,7 @@ char* g_doctext;
  */
 int g_doctext_lineno;
 
-/** 
+/**
  * The First doctext comment
  */
 char* g_program_doctext_candidate;
@@ -414,10 +414,10 @@ void reset_program_doctext_info() {
  */
 void declare_valid_program_doctext() {
   if((g_program_doctext_candidate != NULL) && (g_program_doctext_status == STILL_CANDIDATE)) {
-    g_program_doctext_status = ABSOLUTELY_SURE;  
+    g_program_doctext_status = ABSOLUTELY_SURE;
     pdebug("%s","program doctext set to ABSOLUTELY_SURE");
   } else {
-    g_program_doctext_status = NO_PROGRAM_DOCTEXT;  
+    g_program_doctext_status = NO_PROGRAM_DOCTEXT;
     pdebug("%s","program doctext set to NO_PROGRAM_DOCTEXT");
   }
 }
@@ -908,11 +908,11 @@ bool skip_utf8_bom(FILE* f) {
     if( fgetc(f) == 0xBB) {
       if( fgetc(f) == 0xBF) {
         return true;
-      } 
-    } 
-  } 
-  
-  rewind(f); 
+      }
+    }
+  }
+
+  rewind(f);
   return false;
 }
 
@@ -935,7 +935,7 @@ void parse(t_program* program, t_program* parent_program) {
   }
   if( skip_utf8_bom( yyin))
     pverbose("Skipped UTF-8 BOM at %s\n", path.c_str());
-  
+
   // Create new scope and scan for includes
   pverbose("Scanning %s for includes\n", path.c_str());
   g_parse_mode = INCLUDES;
@@ -977,7 +977,7 @@ void parse(t_program* program, t_program* parent_program) {
   }
   if( skip_utf8_bom( yyin))
     pverbose("Skipped UTF-8 BOM at %s\n", path.c_str());
-  
+
   pverbose("Parsing %s for types\n", path.c_str());
   yylineno = 1;
   try {

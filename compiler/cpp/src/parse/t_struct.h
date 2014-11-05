@@ -81,7 +81,7 @@ class t_struct : public t_type {
         }
       }
     }
-    
+
   }
 
   void validate_union_members() {
@@ -90,7 +90,7 @@ class t_struct : public t_type {
       for (m_iter = members_in_id_order_.begin(); m_iter != members_in_id_order_.end(); ++m_iter) {
         validate_union_member( *m_iter);
       }
-      members_validated = true;          
+      members_validated = true;
     }
   }
 
@@ -117,7 +117,7 @@ class t_struct : public t_type {
     }
     // returns false when there is a conflict of field names
     if (get_field_by_name(elem->get_name()) != NULL) {
-      return false; 
+      return false;
     }
     members_.push_back(elem);
     members_in_id_order_.insert(bounds.second, elem);
@@ -140,7 +140,7 @@ class t_struct : public t_type {
   bool is_xception() const {
     return is_xception_;
   }
-  
+
   bool is_union() const {
     return is_union_;
   }
@@ -153,7 +153,7 @@ class t_struct : public t_type {
     for (m_iter = members_in_id_order_.begin(); m_iter != members_in_id_order_.end(); ++m_iter) {
       rv += (*m_iter)->get_fingerprint_material();
       rv += ";";
-      
+
       if( do_reserve) {
         estimation = members_in_id_order_.size() * rv.size() + 16;
         rv.reserve( estimation);

@@ -1328,7 +1328,7 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
     if( have_switch) {
         indent(out) << "switch fieldId {" << endl;
     }
-    
+
     // All the fields we know
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         field_id = (*f_iter)->get_key();
@@ -1341,7 +1341,7 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
             field_id *= -1;
         }
 
-        out << 
+        out <<
             indent() <<"case " << field_id << ":" << endl;
         indent_up();
         thriftFieldTypeId = type_to_enum((*f_iter)->get_type());
@@ -1357,13 +1357,13 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
         indent_down();
     }
 
-    // Begin switch default case 
+    // Begin switch default case
     if( have_switch) {
         out <<
             indent() << "default:" << endl;
             indent_up();
     }
-            
+
     // Skip unknown fields in either case
     out <<
         indent() << "if err := iprot.Skip(fieldTypeId); err != nil {" << endl <<
@@ -1526,10 +1526,10 @@ void t_go_generator::generate_service(t_service* tservice)
 	string test_suffix("_test");
 	string filename = lowercase(service_name_);
 	string f_service_name;
-	
+
 	size_t fname_len = filename.length();
 	size_t suffix_len = test_suffix.length();
-	
+
 	if ((fname_len >= suffix_len) && (filename.compare(fname_len-suffix_len, suffix_len, test_suffix) == 0)) {
 		f_service_name = package_dir_ + "/" + filename + "_.go";
 	} else {
@@ -2538,7 +2538,7 @@ void t_go_generator::generate_process_function(t_service* tservice,
     }
 
     f_service_ << "); err2 != nil {" << endl;
-    
+
     t_struct* exceptions = tfunction->get_xceptions();
     const vector<t_field*>& x_fields = exceptions->get_members();
     if( ! x_fields.empty()) {
@@ -2551,14 +2551,14 @@ void t_go_generator::generate_process_function(t_service* tservice,
                         indent() << "  case " << type_to_go_type(((*xf_iter)->get_type())) << ":" << endl <<
                         indent() << "result." << publicize(variable_name_to_go_name((*xf_iter)->get_name())) << " = v" << endl;
         }
-        
+
         f_service_ <<
                    indent() << "  default:" << endl;
     }
 
     if (!tfunction->is_oneway()) {
         f_service_ <<
-                   indent() << "  x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, \"Internal error processing " << 
+                   indent() << "  x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, \"Internal error processing " <<
                                escape_string(tfunction->get_name()) << ": \" + err2.Error())" << endl <<
                    indent() << "  oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name()) << "\", thrift.EXCEPTION, seqId)" << endl <<
                    indent() << "  x.Write(oprot)" << endl <<
@@ -2581,12 +2581,12 @@ void t_go_generator::generate_process_function(t_service* tservice,
         if (!tfunction->get_returntype()->is_void()) {
             f_service_ << " else {" << endl; // make sure we set Success retval only on success
             indent_up();
-            f_service_ << 
+            f_service_ <<
                 indent() << "result.Success = ";
             if(need_reference) {
                 f_service_ << "&";
             }
-            f_service_ << 
+            f_service_ <<
                 "retval" << endl;
             indent_down();
             f_service_ << "}"  << endl;
@@ -2594,7 +2594,7 @@ void t_go_generator::generate_process_function(t_service* tservice,
             f_service_ << endl;
         }
         f_service_ <<
-                   indent() << "if err2 = oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name()) << 
+                   indent() << "if err2 = oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name()) <<
                                "\", thrift.REPLY, seqId); err2 != nil {" << endl <<
                    indent() << "  err = err2" << endl <<
                    indent() << "}" << endl <<
