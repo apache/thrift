@@ -25,7 +25,7 @@ uses
   SysUtils, Thrift.Protocol;
 
 const
-  Version = '1.0.0-dev';
+  Version = '0.9.2';
 
 type
   TApplicationException = class( SysUtils.Exception )

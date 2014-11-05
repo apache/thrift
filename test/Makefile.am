@@ -87,6 +87,7 @@ EXTRA_DIST = \
 	DebugProtoTest.thrift \
 	DenseLinkingTest.thrift \
 	DocTest.thrift \
+	EnumTest.thrift \
 	Include.thrift \
 	JavaBeansTest.thrift \
 	ManyOptionals.thrift \
@@ -98,5 +99,7 @@ EXTRA_DIST = \
 	SmallTest.thrift \
 	StressTest.thrift \
 	ThriftTest.thrift \
+	TypedefTest.thrift \
 	FastbinaryTest.py \
+	result.html \
 	README.md

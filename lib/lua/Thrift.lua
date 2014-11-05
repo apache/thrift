@@ -40,7 +40,7 @@ function terror(e)
   error(e)
 end
 
-version = 1.0
+version = 0.9.2
 
 TType = {
   STOP   = 0,
