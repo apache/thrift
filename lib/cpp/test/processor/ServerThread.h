@@ -61,7 +61,7 @@ class ServerState {
    * Subclasses may override this method if they wish to record the final
    * port that was used for the server.
    */
-  virtual void bindSuccessful(uint16_t port) {
+  virtual void bindSuccessful(uint16_t /*port*/) {
   }
 };
 

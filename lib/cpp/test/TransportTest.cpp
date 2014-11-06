@@ -1046,6 +1046,8 @@ struct global_fixture {
 BOOST_GLOBAL_FIXTURE(global_fixture)
 
 boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
+  THRIFT_UNUSED_VARIABLE(argc);
+  THRIFT_UNUSED_VARIABLE(argv);
   struct timeval tv;
   THRIFT_GETTIMEOFDAY(&tv, NULL);
   int seed = tv.tv_sec ^ tv.tv_usec;
