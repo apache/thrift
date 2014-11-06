@@ -109,8 +109,7 @@ protected:
 
 };
 
-int main(int argc, char **argv) {
-
+int main() {
   boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
   boost::shared_ptr<CalculatorHandler> handler(new CalculatorHandler());
   boost::shared_ptr<TProcessor> processor(new CalculatorProcessor(handler));
