@@ -932,10 +932,9 @@ DEFINE_NOFRAME_TESTS(TSimpleServer, Untemplated)
 
 // TODO: We should test TEventServer in the future.
 // For now, it is known not to work correctly with TProcessorEventHandler.
-
 unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
-  unit_test::framework::master_test_suite().p_name.value =
-    "ProcessorTest";
-
+  THRIFT_UNUSED_VARIABLE(argc);
+  THRIFT_UNUSED_VARIABLE(argv);
+  unit_test::framework::master_test_suite().p_name.value = "ProcessorTest";
   return NULL;
 }

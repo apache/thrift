@@ -244,6 +244,9 @@ class ServerEventHandler : public server::TServerEventHandler {
 #if 0
     ConnContext* context = reinterpret_cast<ConnContext*>(serverContext);
     log_->append(EventLog::ET_PROCESS, context->id, 0);
+#else
+    THRIFT_UNUSED_VARIABLE(serverContext);
+    THRIFT_UNUSED_VARIABLE(transport);
 #endif
   }
 
@@ -285,6 +288,7 @@ class ProcessorEventHandler : public TProcessorEventHandler {
   }
 
   void postRead(void* ctx, const char* fnName, uint32_t bytes) {
+    THRIFT_UNUSED_VARIABLE(bytes);
     CallContext* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
     log_->append(EventLog::ET_POST_READ, context->connContext->id, context->id,
@@ -299,6 +303,7 @@ class ProcessorEventHandler : public TProcessorEventHandler {
   }
 
   void postWrite(void* ctx, const char* fnName, uint32_t bytes) {
+    THRIFT_UNUSED_VARIABLE(bytes);
     CallContext* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
     log_->append(EventLog::ET_POST_WRITE, context->connContext->id,

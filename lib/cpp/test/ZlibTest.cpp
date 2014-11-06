@@ -386,6 +386,8 @@ void print_usage(FILE* f, const char* argv0) {
 }
 
 boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
+  THRIFT_UNUSED_VARIABLE(argc);
+  THRIFT_UNUSED_VARIABLE(argv);
   uint32_t seed = static_cast<uint32_t>(time(NULL));
   printf("seed: %" PRIu32 "\n", seed);
   rng.seed(seed);
