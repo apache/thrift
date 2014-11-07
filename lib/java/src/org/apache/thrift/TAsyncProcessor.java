@@ -16,28 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.thrift;
 
-import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.protocol.*;
 
-/**
- * The default processor factory just returns a singleton
- * instance.
- */
-public class TProcessorFactory {
+import org.apache.thrift.server.AbstractNonblockingServer.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-  private final TProcessor processor_;
+import java.util.Collections;
+import java.util.Map;
 
-  public TProcessorFactory(TProcessor processor) {
-    processor_ = processor;
-  }
-
-  public TProcessor getProcessor(TTransport trans) {
-    return processor_;
-  }
-
-  public boolean isAsyncProcessor() {
-      return processor_ instanceof TAsyncProcessor;
-  }
+public interface TAsyncProcessor {
+    /**
+     * Implementations must call fb.responseReady() once processing is complete
+     */
+    public boolean process(final AsyncFrameBuffer fb) throws TException;
 }
