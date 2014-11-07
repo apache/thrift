@@ -28,7 +28,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.thrift.TBaseAsyncProcessor;
+import org.apache.thrift.TAsyncProcessor;
 import org.apache.thrift.TByteArrayOutputStream;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
@@ -597,7 +597,7 @@ public abstract class AbstractNonblockingServer extends TServer {
         if (eventHandler_ != null) {
           eventHandler_.processContext(context_, inTrans_, outTrans_);
         }
-        ((TBaseAsyncProcessor)processorFactory_.getProcessor(inTrans_)).process(this);
+        ((TAsyncProcessor)processorFactory_.getProcessor(inTrans_)).process(this);
         return;
       } catch (TException te) {
         LOGGER.warn("Exception while invoking!", te);
