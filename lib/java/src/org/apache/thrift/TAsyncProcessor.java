@@ -28,5 +28,8 @@ import java.util.Collections;
 import java.util.Map;
 
 public interface TAsyncProcessor {
+    /**
+     * Implementations must call fb.responseReady() once processing is complete
+     */
     public boolean process(final AsyncFrameBuffer fb) throws TException;
 }
