@@ -48,16 +48,16 @@ matrix:
       before_install:
        - sh contrib/installCXXDependencies.sh;
       script:
-       - make check -j4;
-       - mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make -j4 && cd ..;
-       - mkdir build_mingw32 && cd build_mingw32 && cmake -DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake ../compiler/cpp/ && make -j4 && cd ..;
+       - make check -j2;
+       - mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make -j2 && cd ..;
+       - mkdir build_mingw32 && cd build_mingw32 && cmake -DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake ../compiler/cpp/ && make -j2 && cd ..;
 
     - compiler: clang
       env: CONFIG="--disable-libs"
       before_install:
        - sh contrib/installCXXDependencies.sh;
       script:
-       - make check -j4;
+       - make check -j2;
 
 
 
@@ -72,7 +72,7 @@ install:
  - sh configure $CONFIG;
 
 script:
- - make -j4 && make dist;
- - make cross -j4;
+ - make -j2 && make dist;
+ - make cross -j2;
 # TODO: add these steps
 #  - sh bootstrap.sh ; dpkg-buildpackage -tc
