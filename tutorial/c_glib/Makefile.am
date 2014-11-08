@@ -60,7 +60,7 @@ tutorial_client_LDADD = \
 	$(top_builddir)/lib/c_glib/libthrift_c_glib.la
 
 
-$(nodist_libtutorialgencglib_la_SOURCES): $(top_srcdir)/tutorial/tutorial.thrift
+gen-c_glib/calculator.c gen-c_glib/calculator.h gen-c_glib/shared_service.c gen-c_glib/shared_service.h gen-c_glib/shared_types.c gen-c_glib/shared_types.h gen-c_glib/tutorial_types.c gen-c_glib/tutorial_types.h: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen c_glib -r $<
 
 clean-local:
