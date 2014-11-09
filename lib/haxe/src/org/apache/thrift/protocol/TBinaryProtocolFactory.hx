@@ -26,20 +26,20 @@ import org.apache.thrift.transport.TTransport;
 * Binary Protocol Factory
 */
 class TBinaryProtocolFactory implements TProtocolFactory {
-	
-	private var strictRead_ : Bool = false;
-	private var strictWrite_ : Bool = true;
 
-	public function new( strictRead : Bool = false, strictWrite : Bool = true) {
-		strictRead_  = strictRead;
-		strictWrite_ = strictWrite;
-	}
+    private var strictRead_ : Bool = false;
+    private var strictWrite_ : Bool = true;
 
-	public function getProtocol( trans : TTransport) : TProtocol  {
-		return new TBinaryProtocol( trans, strictRead_, strictWrite_);
-	}
+    public function new( strictRead : Bool = false, strictWrite : Bool = true) {
+        strictRead_  = strictRead;
+        strictWrite_ = strictWrite;
+    }
+
+    public function getProtocol( trans : TTransport) : TProtocol  {
+        return new TBinaryProtocol( trans, strictRead_, strictWrite_);
+    }
 }
 
 
 
-	
+    

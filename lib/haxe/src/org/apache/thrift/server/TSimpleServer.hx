@@ -30,92 +30,92 @@ class TSimpleServer extends TServer  {
     private var stop : Bool = false;
 
     public function new( processor : TProcessor,
-						 serverTransport : TServerTransport,
-						 transportFactory : TTransportFactory = null,
-						 protocolFactory : TProtocolFactory = null,
-						 logDelegate : Dynamic->Void = null) {
+                         serverTransport : TServerTransport,
+                         transportFactory : TTransportFactory = null,
+                         protocolFactory : TProtocolFactory = null,
+                         logDelegate : Dynamic->Void = null) {
       super( processor, serverTransport,
-			 transportFactory, transportFactory,
-			 protocolFactory, protocolFactory,
-			 logDelegate);
+             transportFactory, transportFactory,
+             protocolFactory, protocolFactory,
+             logDelegate);
     }
 
 
-	
-    public override function Serve() : Void 
-	{
-		try
-		{
-			serverTransport.Listen();
-		}
-		catch (ttx : TTransportException)
-		{
-			logDelegate(ttx);
-			return;
-		}
 
-		// Fire the preServe server event when server is up, 
-		// but before any client connections
-		if (serverEventHandler != null) {
-			serverEventHandler.preServe();
-		}
+    public override function Serve() : Void
+    {
+        try
+        {
+            serverTransport.Listen();
+        }
+        catch (ttx : TTransportException)
+        {
+            logDelegate(ttx);
+            return;
+        }
 
-		while( ! stop)
-		{
-			var client : TTransport = null;
-			var inputTransport : TTransport = null;
-			var outputTransport : TTransport = null;
-			var inputProtocol : TProtocol = null;
-			var outputProtocol : TProtocol = null;
-			var connectionContext : Dynamic = null;
-			try
-			{
-				client = serverTransport.Accept();
-				if (client != null) {
-					inputTransport = inputTransportFactory.getTransport( client);
-					outputTransport = outputTransportFactory.getTransport( client);
-					inputProtocol = inputProtocolFactory.getProtocol( inputTransport);
-					outputProtocol = outputProtocolFactory.getProtocol( outputTransport);
+        // Fire the preServe server event when server is up,
+        // but before any client connections
+        if (serverEventHandler != null) {
+            serverEventHandler.preServe();
+        }
 
-					// Recover event handler (if any) and fire createContext 
-					// server event when a client connects
-					if (serverEventHandler != null) {
-						connectionContext = serverEventHandler.createContext(inputProtocol, outputProtocol);
-					}
+        while( ! stop)
+        {
+            var client : TTransport = null;
+            var inputTransport : TTransport = null;
+            var outputTransport : TTransport = null;
+            var inputProtocol : TProtocol = null;
+            var outputProtocol : TProtocol = null;
+            var connectionContext : Dynamic = null;
+            try
+            {
+                client = serverTransport.Accept();
+                if (client != null) {
+                    inputTransport = inputTransportFactory.getTransport( client);
+                    outputTransport = outputTransportFactory.getTransport( client);
+                    inputProtocol = inputProtocolFactory.getProtocol( inputTransport);
+                    outputProtocol = outputProtocolFactory.getProtocol( outputTransport);
 
-					// Process client requests until client disconnects
-					while( true) {
-						// Fire processContext server event
-						// N.B. This is the pattern implemented in C++ and the event fires provisionally.
-						// That is to say it may be many minutes between the event firing and the client request
-						// actually arriving or the client may hang up without ever makeing a request.
-						if (serverEventHandler != null) {
-							serverEventHandler.processContext(connectionContext, inputTransport);
-						}
-							
-						//Process client request (blocks until transport is readable)
-						if( ! processor.process( inputProtocol, outputProtocol)) {
-							break;
-						}
-					}
-				}
-			}
-			catch( ttx : TTransportException)
-			{
-			  	// Usually a client disconnect, expected
-			}
-			catch( e : Dynamic)
-			{
-				// Unexpected
-			  	logDelegate(e); 
-			}
+                    // Recover event handler (if any) and fire createContext
+                    // server event when a client connects
+                    if (serverEventHandler != null) {
+                        connectionContext = serverEventHandler.createContext(inputProtocol, outputProtocol);
+                    }
 
-			// Fire deleteContext server event after client disconnects
-			if (serverEventHandler != null) {
-				serverEventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
-			}
-		}
-	}
+                    // Process client requests until client disconnects
+                    while( true) {
+                        // Fire processContext server event
+                        // N.B. This is the pattern implemented in C++ and the event fires provisionally.
+                        // That is to say it may be many minutes between the event firing and the client request
+                        // actually arriving or the client may hang up without ever makeing a request.
+                        if (serverEventHandler != null) {
+                            serverEventHandler.processContext(connectionContext, inputTransport);
+                        }
+
+                        //Process client request (blocks until transport is readable)
+                        if( ! processor.process( inputProtocol, outputProtocol)) {
+                            break;
+                        }
+                    }
+                }
+            }
+            catch( ttx : TTransportException)
+            {
+                  // Usually a client disconnect, expected
+            }
+            catch( e : Dynamic)
+            {
+                // Unexpected
+                  logDelegate(e);
+            }
+
+            // Fire deleteContext server event after client disconnects
+            if (serverEventHandler != null) {
+                serverEventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
+            }
+        }
+    }
 
     public override function Stop() : Void
     {

@@ -21,23 +21,23 @@ package org.apache.thrift.transport;
 
 class TServerTransport {
 
-	public function Accept() : TTransport {
-		var transport = AcceptImpl();
-		if (transport == null) {
-		  throw new TTransportException( TTransportException.UNKNOWN, "accept() may not return NULL");
-		}
-		return transport;
-	}
-	
-	public function Listen() : Void {
-		throw new AbstractMethodError();
-	}
-	
-	public function Close() : Void {
-		throw new AbstractMethodError();
-	}
-	
-	private function AcceptImpl() : TTransport {
-		throw new AbstractMethodError();
-	}
+    public function Accept() : TTransport {
+        var transport = AcceptImpl();
+        if (transport == null) {
+          throw new TTransportException( TTransportException.UNKNOWN, "accept() may not return NULL");
+        }
+        return transport;
+    }
+
+    public function Listen() : Void {
+        throw new AbstractMethodError();
+    }
+
+    public function Close() : Void {
+        throw new AbstractMethodError();
+    }
+
+    private function AcceptImpl() : TTransport {
+        throw new AbstractMethodError();
+    }
 }

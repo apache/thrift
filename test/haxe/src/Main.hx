@@ -17,7 +17,7 @@
  * under the License.
  */
 
- 
+
 package;
 
 import org.apache.thrift.*;
@@ -30,22 +30,22 @@ import thrift.test.*;  // generated code
 
 class Main
 {
-	static function main() {
-		try {
-			var args = new Arguments();
-			
-			if( args.printHelpOnly) 
-				return;
-			
-			if (args.server)
-				TestServer.Execute(args);
-			else 
-				TestClient.Execute(args);
-			
-			trace("Completed.");
-		} catch (e : String) {
-			trace(e);
-		}
-	}
+    static function main() {
+        try {
+            var args = new Arguments();
+
+            if( args.printHelpOnly)
+                return;
+
+            if (args.server)
+                TestServer.Execute(args);
+            else
+                TestClient.Execute(args);
+
+            trace("Completed.");
+        } catch (e : String) {
+            trace(e);
+        }
+    }
 
 }

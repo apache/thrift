@@ -26,15 +26,15 @@ import org.apache.thrift.transport.TTransport;
 * JSON Protocol Factory
 */
 class TJSONProtocolFactory implements TProtocolFactory {
-	
-	public function new() {
-	}
 
-	public function getProtocol( trans : TTransport) : TProtocol  {
-		return new TJSONProtocol( trans);
-	}
+    public function new() {
+    }
+
+    public function getProtocol( trans : TTransport) : TProtocol  {
+        return new TJSONProtocol( trans);
+    }
 }
 
 
 
-	
+    

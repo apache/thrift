@@ -27,11 +27,11 @@ class TFramedTransportFactory extends TTransportFactory {
     var maxLength_ : Int;
 
     public function new(maxLength : Int = TFramedTransport.DEFAULT_MAX_LENGTH) {
-		super();
-    	maxLength_ = maxLength;
+        super();
+        maxLength_ = maxLength;
     }
 
     public override function getTransport(base : TTransport) : TTransport {
-    	return new TFramedTransport(base, maxLength_);
+        return new TFramedTransport(base, maxLength_);
     }
 }

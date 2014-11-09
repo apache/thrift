@@ -26,38 +26,38 @@ import org.apache.thrift.protocol.TProtocol;
    *
    */
 interface TBase {
-  
+
     /**
      * Reads the TObject from the given input protocol.
      *
      * @param iprot Input protocol
      */
     function read(iprot:TProtocol) : Void;
-  
+
     /**
      * Writes the objects out to the protocol
      *
      * @param oprot Output protocol
      */
     function write(oprot:TProtocol) : Void;
-  
+
     /**
      * Check if a field is currently set or unset.
      *
      * @param fieldId The field's id tag as found in the IDL.
      */
     function isSet(fieldId : Int) : Bool;
-  
+
     /**
-     * Get a field's value by id. Primitive types will be wrapped in the 
+     * Get a field's value by id. Primitive types will be wrapped in the
      * appropriate "boxed" types.
      *
      * @param fieldId The field's id tag as found in the IDL.
      */
     function getFieldValue(fieldId : Int) : Dynamic;
-  
+
     /**
-     * Set a field's value by id. Primitive types must be "boxed" in the 
+     * Set a field's value by id. Primitive types must be "boxed" in the
      * appropriate object wrapper type.
      *
      * @param fieldId The field's id tag as found in the IDL.

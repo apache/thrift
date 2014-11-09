@@ -20,13 +20,14 @@
 package org.apache.thrift.meta_data;
 
 class MapMetaData extends FieldValueMetaData {
-  
+
     public var keyMetaData:FieldValueMetaData;
     public var valueMetaData:FieldValueMetaData;
-  
+
     public function MapMetaData(type : Int, kMetaData:FieldValueMetaData, vMetaData:FieldValueMetaData) {
       super(type);
       this.keyMetaData = kMetaData;
       this.valueMetaData = vMetaData;
     }
-}    
+}
+   

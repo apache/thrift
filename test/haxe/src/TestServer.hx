@@ -30,87 +30,87 @@ import thrift.test.*;  // generated code
 
 class TestServer
 {
-	public static function Execute(args : Arguments) :  Void
-	{
-		try
-		{
-			// Transport
-			var transport : TServerTransport = null;
-			switch( args.transport) {
-			case socket:
-				trace("- socket port "+args.port);
-				transport = new TServerSocket( args.port);
-			case http:
-				trace("- http");
-				throw "HTTP server not implemented yet";
-		 		//transport = new THttpServer( targetHost);
-			default:
-				throw "Unhandled transport";
-			}
+    public static function Execute(args : Arguments) :  Void
+    {
+        try
+        {
+            // Transport
+            var transport : TServerTransport = null;
+            switch( args.transport) {
+            case socket:
+                trace("- socket port "+args.port);
+                transport = new TServerSocket( args.port);
+            case http:
+                trace("- http");
+                throw "HTTP server not implemented yet";
+                 //transport = new THttpServer( targetHost);
+            default:
+                throw "Unhandled transport";
+            }
 
-			// optional: layered transport
-			var transfactory : TTransportFactory = null;
-			if ( args.framed) {
-				trace("- framed transport");
-				transfactory = new TFramedTransportFactory();
-			} 
-			if ( args.buffered) {
-				trace("- buffered transport");
-				throw "TBufferedTransport not implemented yet";
-				//transfactory = new TBufferedTransportFactory();
-			}
+            // optional: layered transport
+            var transfactory : TTransportFactory = null;
+            if ( args.framed) {
+                trace("- framed transport");
+                transfactory = new TFramedTransportFactory();
+            }
+            if ( args.buffered) {
+                trace("- buffered transport");
+                throw "TBufferedTransport not implemented yet";
+                //transfactory = new TBufferedTransportFactory();
+            }
 
-			// protocol
-			var protfactory : TProtocolFactory = null;
-			switch( args.protocol)
-			{
-			case binary:
-				trace("- binary protocol");
-				protfactory = new TBinaryProtocolFactory();
-			case json:
-				trace("- json protocol");
-				protfactory = new TJSONProtocolFactory();
-			default:
-				throw "Unhandled protocol";
-			}
+            // protocol
+            var protfactory : TProtocolFactory = null;
+            switch( args.protocol)
+            {
+            case binary:
+                trace("- binary protocol");
+                protfactory = new TBinaryProtocolFactory();
+            case json:
+                trace("- json protocol");
+                protfactory = new TJSONProtocolFactory();
+            default:
+                throw "Unhandled protocol";
+            }
 
-		
-			// Processor
-			var handler = new TestServerHandler();
-			var processor = new ThriftTestProcessor(handler);
 
-			// Simple Server
-			var server : TServer = null; 
-			switch( args.servertype)
-			{
-			case simple:
-				server = new TSimpleServer( processor, transport, transfactory, protfactory);
-			default:
-				throw "Unhandled server type";
-			}
-				
+            // Processor
+            var handler = new TestServerHandler();
+            var processor = new ThriftTestProcessor(handler);
 
-			/*
-			// Server event handler
-			if( args.serverEvents) {
-				var events = new TestServerEventHandler();
-				server.setEventHandler(serverEvents);
-				handler.server = serverEngine;
-			}
-			*/
+            // Simple Server
+            var server : TServer = null;
+            switch( args.servertype)
+            {
+            case simple:
+                server = new TSimpleServer( processor, transport, transfactory, protfactory);
+            default:
+                throw "Unhandled server type";
+            }
 
-			// Run it
-			server.Serve();
-			trace("done.");
 
-		}
-		catch (x : TException)
-		{
-			trace('$x');
-		}
-		catch (x : Dynamic)
-		{
-			trace('$x');
-		}
-	}
+            /*
+            // Server event handler
+            if( args.serverEvents) {
+                var events = new TestServerEventHandler();
+                server.setEventHandler(serverEvents);
+                handler.server = serverEngine;
+            }
+            */
+
+            // Run it
+            server.Serve();
+            trace("done.");
+
+        }
+        catch (x : TException)
+        {
+            trace('$x');
+        }
+        catch (x : Dynamic)
+        {
+            trace('$x');
+        }
+    }
 }

@@ -18,15 +18,15 @@
  */
 
 package org.apache.thrift.protocol;
-  
+
 class TSet {
 
     public var elemType : Int;
     public var size : Int;
-  
+
       public function new(t : Int = 0, s : Int = 0) {
         elemType = t;
         size = s;
       }
-      
-}
+
+}    

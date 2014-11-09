@@ -20,9 +20,9 @@
 package org.apache.thrift.meta_data;
 
 class StructMetaData extends FieldValueMetaData {
-    
+
     public var structClass:Class;
-  
+
     public function StructMetaData(type : Int, sClass:Class) {
       super(type);
       this.structClass = sClass;
