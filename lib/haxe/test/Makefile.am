@@ -20,15 +20,25 @@
 THRIFT = $(top_srcdir)/compiler/cpp/thrift
 THRIFTCMD = $(THRIFT) --gen haxe -r
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
+AGGR = $(top_srcdir)/contrib/async-test/aggr.thrift
+BENCHMARK = $(top_srcdir)/lib/rb/benchmark/Benchmark.thrift
 
 BIN_CPP = bin/Main-debug
 
 gen-haxe/thrift/test/ThriftTest.hx: $(THRIFTTEST)
 	$(THRIFTCMD) $(THRIFTTEST)
 
+gen-haxe/thrift/test/Aggr.hx: $(AGGR)
+	$(THRIFTCMD) $(AGGR)
+
+gen-haxe/thrift/test/BenchmarkService.hx: $(BENCHMARK)
+	$(THRIFTCMD) $(BENCHMARK)
+
 all-local: $(BIN_CPP)
 
-$(BIN_CPP):    gen-haxe/thrift/test/ThriftTest.hx
+$(BIN_CPP): gen-haxe/thrift/test/ThriftTest.hx \
+			gen-haxe/thrift/test/Aggr.hx \
+			gen-haxe/thrift/test/BenchmarkService.hx
 	$(HAXE) --cwd .  cpp.hxml
 
 
