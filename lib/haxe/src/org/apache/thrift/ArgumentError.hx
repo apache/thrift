@@ -16,14 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
- 
+
 package org.apache.thrift;
 
 #if ! flash
 // predefined for flash only
 class ArgumentError extends TException {
-	public function new(msg : String = "") {
-		super(msg);
-	}
+    public function new(msg : String = "") {
+        super(msg);
+    }
 }
 #end

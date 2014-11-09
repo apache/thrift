@@ -27,5 +27,5 @@ class TFieldRequirementType {
     public static inline var REQUIRED : Int  = 1;
     public static inline var OPTIONAL : Int = 2;
     public static inline var DEFAULT : Int = 3;
-  
+
 }

@@ -16,29 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
- 
+
 package org.apache.thrift;
 
 class Limits {
-    
-	// Haxe limits are not fixed values, they depend on the target platform
-	// For example, neko limits an int to 31 bits instead of 32. So we detect 
-	// the values once during intialisation in order to
-	// (a) get the right values for the current  platform, and 
-	// (b) prevent us from dependecies to a bunch of defines
-	
-	public static var I32_MAX = {
-		var last : Int = 0;
-		var next : Int = 0;
-		for(bit in 0 ... 32) {
-			last = next;
-			next = last | (1 << bit);
-			if(next < 0) {
-				break;
-			}
-		}
-		last; // final value
-	}
 
-	// add whatever you need 
+    // Haxe limits are not fixed values, they depend on the target platform
+    // For example, neko limits an int to 31 bits instead of 32. So we detect
+    // the values once during intialisation in order to
+    // (a) get the right values for the current  platform, and
+    // (b) prevent us from dependecies to a bunch of defines
+
+    public static var I32_MAX = {
+        var last : Int = 0;
+        var next : Int = 0;
+        for(bit in 0 ... 32) {
+            last = next;
+            next = last | (1 << bit);
+            if(next < 0) {
+                break;
+            }
+        }
+        last; // final value
+    }
+
+    // add whatever you need
 }

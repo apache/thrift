@@ -16,20 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
- 
+
 package org.apache.thrift;
 
 class TException {
-    
-	@:isVar 
-	public var errorID(default,null) : Int;
-	@:isVar 
-	public var errorMsg(default,null) : String;
 
-	
-	public function new(msg : String = "", id : Int = 0) {
-		errorID = id;
-		errorMsg = msg;
-	}
-    
+    @:isVar
+    public var errorID(default,null) : Int;
+    @:isVar
+    public var errorMsg(default,null) : String;
+
+
+    public function new(msg : String = "", id : Int = 0) {
+        errorID = id;
+        errorMsg = msg;
+    }
+
 }
+ 

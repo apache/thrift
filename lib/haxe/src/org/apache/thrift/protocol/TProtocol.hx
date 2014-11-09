@@ -27,7 +27,7 @@ import org.apache.thrift.transport.TTransport;
 * Protocol interface definition
 */
 interface TProtocol {
-  
+
     function getTransport() : TTransport;
 
     /**
@@ -39,44 +39,44 @@ interface TProtocol {
     function writeStructEnd() : Void;
     function writeFieldBegin(field:TField) : Void;
     function writeFieldEnd() : Void;
-    function writeFieldStop() : Void;    
-    function writeMapBegin(map:TMap) : Void;    
-    function writeMapEnd() : Void;    
-    function writeListBegin(list:TList) : Void;    
-    function writeListEnd() : Void;    
-    function writeSetBegin(set:TSet) : Void;    
-    function writeSetEnd() : Void;    
-    function writeBool(b : Bool) : Void;    
-    function writeByte(b : Int) : Void;    
-    function writeI16(i16 : Int) : Void;    
-    function writeI32(i32 : Int) : Void;    
-    function writeI64(i64 : haxe.Int64) : Void;    
-    function writeDouble(dub : Float) : Void;    
-    function writeString(str : String) : Void;    
-    function writeBinary(bin : Bytes) : Void;    
-	
+    function writeFieldStop() : Void;
+    function writeMapBegin(map:TMap) : Void;
+    function writeMapEnd() : Void;
+    function writeListBegin(list:TList) : Void;
+    function writeListEnd() : Void;
+    function writeSetBegin(set:TSet) : Void;
+    function writeSetEnd() : Void;
+    function writeBool(b : Bool) : Void;
+    function writeByte(b : Int) : Void;
+    function writeI16(i16 : Int) : Void;
+    function writeI32(i32 : Int) : Void;
+    function writeI64(i64 : haxe.Int64) : Void;
+    function writeDouble(dub : Float) : Void;
+    function writeString(str : String) : Void;
+    function writeBinary(bin : Bytes) : Void;
+
     /**
      * Reading methods.
      */
-    function readMessageBegin():TMessage;   
-    function readMessageEnd() : Void;    
-    function readStructBegin():TStruct;    
-    function readStructEnd() : Void;    
-    function readFieldBegin():TField;    
-    function readFieldEnd() : Void;    
-    function readMapBegin():TMap;    
-    function readMapEnd() : Void;    
-    function readListBegin():TList;    
-    function readListEnd() : Void;    
-    function readSetBegin():TSet;    
-    function readSetEnd() : Void;    
-    function readBool() : Bool;    
-    function readByte() : Int;    
-    function readI16() : Int;    
-    function readI32() : Int;    
-    function readI64() : haxe.Int64;     
-    function readDouble() : Float;    
-    function readString() : String;    
+    function readMessageBegin():TMessage;
+    function readMessageEnd() : Void;
+    function readStructBegin():TStruct;
+    function readStructEnd() : Void;
+    function readFieldBegin():TField;
+    function readFieldEnd() : Void;
+    function readMapBegin():TMap;
+    function readMapEnd() : Void;
+    function readListBegin():TList;
+    function readListEnd() : Void;
+    function readSetBegin():TSet;
+    function readSetEnd() : Void;
+    function readBool() : Bool;
+    function readByte() : Int;
+    function readI16() : Int;
+    function readI32() : Int;
+    function readI64() : haxe.Int64;
+    function readDouble() : Float;
+    function readString() : String;
     function readBinary() : Bytes;
 
 }

@@ -30,9 +30,9 @@ import org.apache.thrift.protocol.TType;
    */
 class TApplicationException extends TException {
 
-	private static var TAPPLICATION_EXCEPTION_STRUCT = { new TStruct("TApplicationException"); };
-	private static var MESSAGE_FIELD = { new TField("message", TType.STRING, 1); };
-	private static var TYPE_FIELD = { new TField("type", TType.I32, 2); };
+    private static var TAPPLICATION_EXCEPTION_STRUCT = { new TStruct("TApplicationException"); };
+    private static var MESSAGE_FIELD = { new TField("message", TType.STRING, 1); };
+    private static var TYPE_FIELD = { new TField("type", TType.I32, 2); };
 
     public static inline var UNKNOWN : Int = 0;
     public static inline var UNKNOWN_METHOD : Int = 1;

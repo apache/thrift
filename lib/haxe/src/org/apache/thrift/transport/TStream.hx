@@ -24,9 +24,9 @@ import haxe.io.BytesBuffer;
 
 
 interface TStream {
-	function Close() : Void;
-	function Peek() : Bool;
-	function Read( buf : Bytes, offset : Int, count : Int) : Int;
-	function Write( buf : Bytes, offset : Int, count : Int) : Void;
-	function Flush() : Void;
+    function Close() : Void;
+    function Peek() : Bool;
+    function Read( buf : Bytes, offset : Int, count : Int) : Int;
+    function Write( buf : Bytes, offset : Int, count : Int) : Void;
+    function Flush() : Void;
 }

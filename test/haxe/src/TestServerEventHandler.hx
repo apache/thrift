@@ -30,24 +30,24 @@ import thrift.test.*;  // generated code
 
 class TestServerEventHandler : TServerEventHandler
 {
-	public int callCount = 0;
-	public void preServe()
-	{
-		callCount++;
-	}
-	public Object createContext(Thrift.Protocol.TProtocol input, Thrift.Protocol.TProtocol output)
-	{
-		callCount++;
-		return null;
-	}
-	public void deleteContext(Object serverContext, Thrift.Protocol.TProtocol input, Thrift.Protocol.TProtocol output)
-	{
-		callCount++;
-	}
-	public void processContext(Object serverContext, Thrift.Transport.TTransport transport)
-	{
-		callCount++;
-	}
+    public int callCount = 0;
+    public void preServe()
+    {
+        callCount++;
+    }
+    public Object createContext(Thrift.Protocol.TProtocol input, Thrift.Protocol.TProtocol output)
+    {
+        callCount++;
+        return null;
+    }
+    public void deleteContext(Object serverContext, Thrift.Protocol.TProtocol input, Thrift.Protocol.TProtocol output)
+    {
+        callCount++;
+    }
+    public void processContext(Object serverContext, Thrift.Transport.TTransport transport)
+    {
+        callCount++;
+    }
 }
 
-	
+    
