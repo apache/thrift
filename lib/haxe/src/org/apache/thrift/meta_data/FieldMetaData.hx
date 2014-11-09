@@ -27,19 +27,19 @@ import flash.utils.Dictionary;
 *
 */
 class FieldMetaData {
-  
+
   public var fieldName : String;
   public var requirementType : Int;
   public var valueMetaData:FieldValueMetaData;
-  
+
   private static var structMap:Dictionary = new Dictionary();
-  
+
   public function FieldMetaData(name : String, req : Int, vMetaData:FieldValueMetaData) {
     this.fieldName = name;
     this.requirementType = req;
     this.valueMetaData = vMetaData;
   }
-  
+
   public static function addStructMetaDataMap(sClass:Class, map:Dictionary) : Void{
     structMap[sClass] = map;
   }

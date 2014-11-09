@@ -26,5 +26,5 @@ import org.apache.thrift.protocol.TProtocol;
  * writes to some output stream.
  */
 interface TProcessor {
-	function process(input:TProtocol, output:TProtocol) : Bool;
+    function process(input:TProtocol, output:TProtocol) : Bool;
 }

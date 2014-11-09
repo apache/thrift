@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
- 
+
 package org.apache.thrift;
 
 #if flash
@@ -25,16 +25,16 @@ import flash.errors.IllegalOperationError;
 import org.apache.thrift.TException;
 #end
 
-class AbstractMethodError 
+class AbstractMethodError
 #if flash
-extends IllegalOperationError 
+extends IllegalOperationError
 #else
 extends TException
 #end
 {
 
-	public function new(message : String="") {
-  		super("Attempt to call an abstract method");
-	}
+    public function new(message : String="") {
+          super("Attempt to call an abstract method");
+    }
 
 }

@@ -18,13 +18,14 @@
  */
 
 package org.apache.thrift.meta_data;
-  
+
 class ListMetaData extends FieldValueMetaData {
-    
+
     public var elemMetaData:FieldValueMetaData;
-  
+
     public function ListMetaData(type : Int, eMetaData:FieldValueMetaData) {
       super(type);
       this.elemMetaData = eMetaData;
-    }    
+    }
 }
+ 

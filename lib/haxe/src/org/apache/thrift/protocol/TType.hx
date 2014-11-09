@@ -18,9 +18,9 @@
  */
 
 package org.apache.thrift.protocol;
-  
+
 class TType {
-    
+
     public static inline var STOP : Int   = 0;
     public static inline var VOID : Int   = 1;
     public static inline var BOOL : Int   = 2;

@@ -32,70 +32,70 @@ import shared.*;
 
 
 class CalculatorHandler implements Calculator {
-	
-	private var log = new IntMap<SharedStruct>();
-	
-	public function new() {
-	}
 
-	public function ping() : Void {
-		trace("ping()");
-	}
+    private var log = new IntMap<SharedStruct>();
 
-	
-	public function add( num1 : haxe.Int32, num2 : haxe.Int32) : haxe.Int32 {
-		trace('add( $num1, $num2)');
-		return num1 + num2;
-	}
+    public function new() {
+    }
 
-	public function calculate( logid : haxe.Int32, work : Work) : haxe.Int32  {
-		trace('calculate( $logid, '+work.op+","+work.num1+","+work.num2+")");
-		
-		var val : haxe.Int32 = 0;
-		switch (work.op)
-		{
-			case Operation.ADD:
-				val = work.num1 + work.num2;
+    public function ping() : Void {
+        trace("ping()");
+    }
 
-			case Operation.SUBTRACT:
-				val = work.num1 - work.num2;
 
-			case Operation.MULTIPLY:
-				val = work.num1 * work.num2;
+    public function add( num1 : haxe.Int32, num2 : haxe.Int32) : haxe.Int32 {
+        trace('add( $num1, $num2)');
+        return num1 + num2;
+    }
 
-			case Operation.DIVIDE:
-				if (work.num2 == 0)
-				{
-					var io = new InvalidOperation();
-					io.what = work.op;
-					io.why = "Cannot divide by 0";
-					throw io;
-				}
-				val = Std.int( work.num1 / work.num2);
+    public function calculate( logid : haxe.Int32, work : Work) : haxe.Int32  {
+        trace('calculate( $logid, '+work.op+","+work.num1+","+work.num2+")");
 
-			default:
-				var io = new InvalidOperation();
-				io.what = work.op;
-				io.why = "Unknown operation";
-				throw io;
-		}
+        var val : haxe.Int32 = 0;
+        switch (work.op)
+        {
+            case Operation.ADD:
+                val = work.num1 + work.num2;
 
-		var entry = new SharedStruct();
-		entry.key = logid;
-		entry.value = '$val';
-		log.set(logid, entry);
+            case Operation.SUBTRACT:
+                val = work.num1 - work.num2;
 
-		return val;
-	}
+            case Operation.MULTIPLY:
+                val = work.num1 * work.num2;
 
-	public function getStruct( key : haxe.Int32) : SharedStruct {
-		trace('getStruct($key)');
-		return log.get(key);
-	}
+            case Operation.DIVIDE:
+                if (work.num2 == 0)
+                {
+                    var io = new InvalidOperation();
+                    io.what = work.op;
+                    io.why = "Cannot divide by 0";
+                    throw io;
+                }
+                val = Std.int( work.num1 / work.num2);
 
-	// oneway method,  no args
-	public function zip() : Void {
-		trace("zip()");
-	}
+            default:
+                var io = new InvalidOperation();
+                io.what = work.op;
+                io.why = "Unknown operation";
+                throw io;
+        }
+
+        var entry = new SharedStruct();
+        entry.key = logid;
+        entry.value = '$val';
+        log.set(logid, entry);
+
+        return val;
+    }
+
+    public function getStruct( key : haxe.Int32) : SharedStruct {
+        trace('getStruct($key)');
+        return log.get(key);
+    }
+
+    // oneway method,  no args
+    public function zip() : Void {
+        trace("zip()");
+    }
 
 }

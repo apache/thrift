@@ -26,17 +26,17 @@ import org.apache.thrift.protocol.TType;
  * the value(s) of a field
  */
 class FieldValueMetaData {
-  
-  public var type : Int;  
- 
+
+  public var type : Int;
+
   public function FieldValueMetaData(type : Int) {
     this.type = type;
   }
-  
+
   public function isStruct() : Bool {
-    return type == TType.STRUCT; 
+    return type == TType.STRUCT;
   }
-  
+
   public function isContainer() : Bool {
     return type == TType.LIST || type == TType.MAP || type == TType.SET;
   }

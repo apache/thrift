@@ -20,7 +20,7 @@
 package org.apache.thrift.protocol;
 
 import org.apache.thrift.transport.TTransport;
-  
+
 interface TProtocolFactory {
      function getProtocol(trans:TTransport):TProtocol;
 }

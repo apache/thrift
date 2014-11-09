@@ -29,75 +29,75 @@ import haxe.io.BytesInput;
 
 
 class TStreamTransport extends TTransport {
-	
-	public var InputStream(default,null) : TStream;
-	public var OutputStream(default,null) : TStream;
+
+    public var InputStream(default,null) : TStream;
+    public var OutputStream(default,null) : TStream;
 
 
-	public function new( input : TStream, output : TStream) {
-		this.InputStream = input;
-		this.OutputStream = output;
-	}
-	
-	public override function isOpen() : Bool {
-		return true;
-	}
-	
+    public function new( input : TStream, output : TStream) {
+        this.InputStream = input;
+        this.OutputStream = output;
+    }
+
+    public override function isOpen() : Bool {
+        return true;
+    }
+
     public override function peek() : Bool {
-		return (InputStream != null);
-	}
+        return (InputStream != null);
+    }
 
     public override function open() : Void {
-	}
+    }
 
-	public override function close() : Void {
-		if (InputStream != null)
-		{
-			InputStream.Close();
-			InputStream = null;
-		}
-		if (OutputStream != null)
-		{
-			OutputStream.Close();
-			OutputStream = null;
-		}
-	}
+    public override function close() : Void {
+        if (InputStream != null)
+        {
+            InputStream.Close();
+            InputStream = null;
+        }
+        if (OutputStream != null)
+        {
+            OutputStream.Close();
+            OutputStream = null;
+        }
+    }
 
-	public override function read( buf : BytesBuffer, off : Int, len : Int) : Int {
-		if (InputStream == null)
-		{
-			throw new TTransportException( TTransportException.NOT_OPEN, 
-								  		   "Cannot read from null InputStream");
-		}
+    public override function read( buf : BytesBuffer, off : Int, len : Int) : Int {
+        if (InputStream == null)
+        {
+            throw new TTransportException( TTransportException.NOT_OPEN,
+                                             "Cannot read from null InputStream");
+        }
 
-		var data : Bytes =  Bytes.alloc(len);
-		var size = InputStream.Read( data, off, len);
-		buf.addBytes( data, 0, size);
-		return size;
-	}
+        var data : Bytes =  Bytes.alloc(len);
+        var size = InputStream.Read( data, off, len);
+        buf.addBytes( data, 0, size);
+        return size;
+    }
 
     public override function write(buf:Bytes, off : Int, len : Int) : Void {
-		if (OutputStream == null)
-		{
-			throw new TTransportException( TTransportException.NOT_OPEN, 
-										   "Cannot write to null OutputStream");
-		}
+        if (OutputStream == null)
+        {
+            throw new TTransportException( TTransportException.NOT_OPEN,
+                                           "Cannot write to null OutputStream");
+        }
 
-		OutputStream.Write(buf, off, len);
-	}
+        OutputStream.Write(buf, off, len);
+    }
 
     public override function flush(callback:Dynamic->Void =null) : Void {
-		if (OutputStream == null)
-		{
-			var err = new TTransportException( TTransportException.NOT_OPEN,
-											   "Cannot flush null OutputStream");
-	    	if(callback != null)
-				callback(err);
-			else
-				throw err;
-		}
+        if (OutputStream == null)
+        {
+            var err = new TTransportException( TTransportException.NOT_OPEN,
+                                               "Cannot flush null OutputStream");
+            if(callback != null)
+                callback(err);
+            else
+                throw err;
+        }
 
-		OutputStream.Flush();
-	}
+        OutputStream.Flush();
+    }
 
 }

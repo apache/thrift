@@ -31,62 +31,62 @@ import thrift.test.*;  // generated code
 
 
 class StreamTest extends TestBase {
-	
 
-	private inline static var tmpfile : String = "bin/data.tmp";
-	
 
-	private static function Expect( expr : Bool, info : String, ?pos : haxe.PosInfos) : Void {
-		if( ! expr) {
-			throw ('Test "$info" failed at '+pos.methodName+' in '+pos.fileName+':'+pos.lineNumber);
-		}			
-	}
-	
-	private static function MakeTestData() : Xtruct {
-		var data : Xtruct = new Xtruct();
-		data.string_thing = "Streamtest";
-		data.byte_thing = -128;
-		data.i32_thing = 4711;
-		data.i64_thing = Int64.make(0x12345678,0x9ABCDEF0);
-		return data;
-	}
-	
-	public static function WriteData() : Xtruct
-	{
-		var stream : TStream = new TFileStream( tmpfile, CreateNew);
-		var trans : TTransport = new TStreamTransport( null, stream);
-		var prot = new TJSONProtocol( trans);
+    private inline static var tmpfile : String = "bin/data.tmp";
 
-		var data = MakeTestData();	
-		data.write(prot);
-		trans.close();
-		
-		return data;
-	}
-	
-	public static function ReadData() : Xtruct
-	{
-		var stream : TStream = new TFileStream( tmpfile, Read);
-		var trans : TTransport = new TStreamTransport( stream, null);
-		var prot = new TJSONProtocol( trans);
 
-		var data : Xtruct = new Xtruct();
-		data.read(prot);
-		trans.close();
-		
-		return data;
-	}
-	
-	public static override function Run() : Void
-	{
-		var written = WriteData();
-		var read = ReadData();
+    private static function Expect( expr : Bool, info : String, ?pos : haxe.PosInfos) : Void {
+        if( ! expr) {
+            throw ('Test "$info" failed at '+pos.methodName+' in '+pos.fileName+':'+pos.lineNumber);
+        }
+    }
 
-		Expect( read.string_thing == written.string_thing, "string data");
-		Expect( read.byte_thing == written.byte_thing, "byte data");
-		Expect( read.i32_thing == written.i32_thing, "i32 data");
-		Expect( Int64.compare( read.i64_thing, written.i64_thing) == 0, "i64 data");
-	}
+    private static function MakeTestData() : Xtruct {
+        var data : Xtruct = new Xtruct();
+        data.string_thing = "Streamtest";
+        data.byte_thing = -128;
+        data.i32_thing = 4711;
+        data.i64_thing = Int64.make(0x12345678,0x9ABCDEF0);
+        return data;
+    }
+
+    public static function WriteData() : Xtruct
+    {
+        var stream : TStream = new TFileStream( tmpfile, CreateNew);
+        var trans : TTransport = new TStreamTransport( null, stream);
+        var prot = new TJSONProtocol( trans);
+
+        var data = MakeTestData();
+        data.write(prot);
+        trans.close();
+
+        return data;
+    }
+
+    public static function ReadData() : Xtruct
+    {
+        var stream : TStream = new TFileStream( tmpfile, Read);
+        var trans : TTransport = new TStreamTransport( stream, null);
+        var prot = new TJSONProtocol( trans);
+
+        var data : Xtruct = new Xtruct();
+        data.read(prot);
+        trans.close();
+
+        return data;
+    }
+
+    public static override function Run() : Void
+    {
+        var written = WriteData();
+        var read = ReadData();
+
+        Expect( read.string_thing == written.string_thing, "string data");
+        Expect( read.byte_thing == written.byte_thing, "byte data");
+        Expect( read.i32_thing == written.i32_thing, "i32 data");
+        Expect( Int64.compare( read.i64_thing, written.i64_thing) == 0, "i64 data");
+    }
 
 }
 

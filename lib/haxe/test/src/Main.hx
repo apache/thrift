@@ -31,15 +31,15 @@ class Main
 {
     static public function main()
     {
-		try
-		{
-        	StreamTest.Run();
-			
-			trace("All tests completed.");
-		}
-		catch( e: Dynamic)
-		{
-			trace('$e');
-		}
-	}
+        try
+        {
+            StreamTest.Run();
+
+            trace("All tests completed.");
+        }
+        catch( e: Dynamic)
+        {
+            trace('$e');
+        }
+    }
 }

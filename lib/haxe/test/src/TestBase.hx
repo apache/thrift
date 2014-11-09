@@ -28,12 +28,13 @@ import org.apache.thrift.meta_data.*;
 import thrift.test.*;  // generated code
 
 class TestBase {
-	
-	private function new() {
-		// override, if necessary
-	}
-	
-	public static function Run() : Void {
-      	throw new AbstractMethodError();
-	}	
+
+    private function new() {
+        // override, if necessary
+    }
+
+    public static function Run() : Void {
+          throw new AbstractMethodError();
+    }
 }
+ 
