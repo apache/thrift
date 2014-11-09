@@ -86,9 +86,9 @@ class t_haxe_generator : public t_oop_generator {
    * Service-level generation functions
    */
 
-  void generate_haxe_struct(t_struct* tstruct, bool is_exception);
+  void generate_haxe_struct(t_struct* tstruct, bool is_exception, bool is_result = false);
 
-  void generate_haxe_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false, bool in_class=false, bool is_result=false);
+  void generate_haxe_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false, bool is_result=false);
   //removed -- equality,compare_to
   void generate_haxe_struct_reader(std::ofstream& out, t_struct* tstruct);
   void generate_haxe_validator(std::ofstream& out, t_struct* tstruct);
@@ -201,22 +201,22 @@ class t_haxe_generator : public t_oop_generator {
   bool type_can_be_null(t_type* ttype) {
     ttype = get_true_type(ttype);
 
-	if (ttype->is_container() || ttype->is_struct() || ttype->is_xception() || ttype->is_string()) {
-		return true;
-	}
+    if (ttype->is_container() || ttype->is_struct() || ttype->is_xception() || ttype->is_string()) {
+      return true;
+    }
 
-	if (ttype->is_base_type()) {
-		t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
-		switch (tbase) {
-		case t_base_type::TYPE_STRING:
-		case t_base_type::TYPE_I64:
-			return true;
-		default:
-			return false;
-		}
-	}
+    if (ttype->is_base_type()) {
+      t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
+      switch (tbase) {
+      case t_base_type::TYPE_STRING:
+      case t_base_type::TYPE_I64:
+        return true;
+      default:
+        return false;
+      }
+    }
 
-	return false;
+    return false;
   }
 
   std::string constant_name(std::string name);
@@ -388,14 +388,14 @@ void t_haxe_generator::generate_typedef(t_typedef* ttypedef) {
  */
 void t_haxe_generator::generate_enum(t_enum* tenum) {
   // Make output file
-  string f_enum_name = package_dir_+"/"+(tenum->get_name()) + ".hx";
+  string f_enum_name = package_dir_ + "/" + get_cap_name(tenum->get_name()) + ".hx";
   ofstream f_enum;
   f_enum.open(f_enum_name.c_str());
 
   // Comment and package it
   f_enum <<
     autogen_comment() <<
-    haxe_package() << ";" << endl;
+    haxe_package() << ";" << endl << endl;
   
   // Add haxe imports
   f_enum << string() +
@@ -403,7 +403,7 @@ void t_haxe_generator::generate_enum(t_enum* tenum) {
   endl;
   
   indent(f_enum) <<
-    "class " << tenum->get_name() << " ";
+    "class " << get_cap_name(tenum->get_name()) << " ";
   scope_up(f_enum);
 
   vector<t_enum_value*> constants = tenum->get_constants();
@@ -454,13 +454,13 @@ void t_haxe_generator::generate_consts(std::vector<t_const*> consts) {
     return;
   }
 
-  string f_consts_name = package_dir_+ "/" + program_name_ + "Constants.hx";
+  string f_consts_name = package_dir_ + "/" + get_cap_name(program_name_) + "Constants.hx";
   ofstream f_consts;
   f_consts.open(f_consts_name.c_str());
 
   // Print header
   f_consts <<
-    autogen_comment() << haxe_package() << ";" << endl;
+    autogen_comment() << haxe_package() << ";" << endl << endl;
   
   f_consts << endl;
   
@@ -469,7 +469,7 @@ void t_haxe_generator::generate_consts(std::vector<t_const*> consts) {
  
   
   indent(f_consts) <<
-    "class " << program_name_ << 
+    "class " << get_cap_name(program_name_) <<
     "Constants {" << endl << endl;
   indent_up();
   vector<t_const*>::iterator c_iter;
@@ -678,9 +678,10 @@ void t_haxe_generator::generate_xception(t_struct* txception) {
  * @param tstruct The struct definition
  */
 void t_haxe_generator::generate_haxe_struct(t_struct* tstruct,
-                                            bool is_exception) {
+                                            bool is_exception,
+                                            bool is_result) {
   // Make output file
-  string f_struct_name = package_dir_+"/"+(tstruct->get_name()) + ".hx";
+  string f_struct_name = package_dir_ + "/" + get_cap_name(tstruct->get_name()) + ".hx";
   ofstream f_struct;
   f_struct.open(f_struct_name.c_str());
 
@@ -697,9 +698,7 @@ void t_haxe_generator::generate_haxe_struct(t_struct* tstruct,
     haxe_thrift_imports() << 
     haxe_thrift_gen_imports(tstruct, imports) << endl;
   
-  generate_haxe_struct_definition(f_struct,
-                                  tstruct,
-                                  is_exception);
+  generate_haxe_struct_definition(f_struct, tstruct, is_exception, is_result);
   
   f_struct.close();
 }
@@ -717,9 +716,7 @@ void t_haxe_generator::generate_haxe_struct(t_struct* tstruct,
 void t_haxe_generator::generate_haxe_struct_definition(ofstream &out,
                                                        t_struct* tstruct,
                                                        bool is_exception,
-                                                       bool in_class,
                                                        bool is_result) {
-  (void) in_class;
   generate_haxe_doc(out, tstruct);
 
   string clsname = get_cap_name( tstruct->get_name());
@@ -754,7 +751,7 @@ void t_haxe_generator::generate_haxe_struct_definition(ofstream &out,
     generate_haxe_doc(out, *m_iter);
     //indent(out) << "private var _" << (*m_iter)->get_name() + " : " + type_name((*m_iter)->get_type()) << ";" << endl;
     indent(out) << "@:isVar" << endl;
-    indent(out) << "public var " << (*m_iter)->get_name() + "(get,set) : " + type_name((*m_iter)->get_type()) << ";" << endl;
+    indent(out) << "public var " << (*m_iter)->get_name() + "(get,set) : " + get_cap_name(type_name((*m_iter)->get_type())) << ";" << endl;
   }
   
   out << endl;
@@ -1205,8 +1202,8 @@ void t_haxe_generator::generate_property_getters_setters(ofstream& out,
         
     // Simple getter
     generate_haxe_doc(out, field);
-    indent(out) << "public function get_" << field_name << "():" <<
-      type_name(type) << " {" << endl;
+    indent(out) << "public function get_" << field_name << "() : " <<
+      get_cap_name(type_name(type)) << " {" << endl;
     indent_up();
     indent(out) << "return this." << field_name << ";" << endl;
     indent_down();
@@ -1216,8 +1213,8 @@ void t_haxe_generator::generate_property_getters_setters(ofstream& out,
     generate_haxe_doc(out, field);
     indent(out) << 
       "public function set_" << field_name << 
-      "(" << field_name << ":" << type_name(type) << ") : " << 
-      type_name(type) << " {" << endl;
+      "(" << field_name << ":" << get_cap_name(type_name(type)) << ") : " <<
+      get_cap_name(type_name(type)) << " {" << endl;
     indent_up();
     indent(out) << 
       "this." << field_name << " = " << field_name << ";" << endl;
@@ -1443,7 +1440,7 @@ void t_haxe_generator::generate_field_value_meta_data(std::ofstream& out, t_type
  */
 void t_haxe_generator::generate_service(t_service* tservice) {
   // Make interface file
-  string f_service_name = package_dir_+"/"+service_name_ + ".hx";
+  string f_service_name = package_dir_ + "/" + get_cap_name(service_name_) + ".hx";
   f_service_.open(f_service_name.c_str());
 
   f_service_ <<
@@ -1469,7 +1466,7 @@ void t_haxe_generator::generate_service(t_service* tservice) {
   f_service_.close();
   
   // Now make the implementation/client file
-  f_service_name = package_dir_+"/"+service_name_+"Impl.hx";
+  f_service_name = package_dir_+"/"+get_cap_name(service_name_)+"Impl.hx";
   f_service_.open(f_service_name.c_str());
   
   f_service_ <<
@@ -1491,12 +1488,14 @@ void t_haxe_generator::generate_service(t_service* tservice) {
   f_service_ << endl;
 
   generate_service_client(tservice);
-  generate_service_helpers(tservice);
-  
+
   f_service_.close();
-  
+
+  // Now make the helper class files
+  generate_service_helpers(tservice);
+
   // Now make the processor/server file
-  f_service_name = package_dir_+"/"+service_name_+"Processor.hx";
+  f_service_name = package_dir_+"/"+get_cap_name(service_name_)+"Processor.hx";
   f_service_.open(f_service_name.c_str());
   
   f_service_ <<
@@ -1508,12 +1507,11 @@ void t_haxe_generator::generate_service(t_service* tservice) {
   
   if(!package_name_.empty()) {
     f_service_ << "import " << package_name_ << ".*;" << endl;
-    f_service_ << "import " << package_name_ << "." << service_name_.c_str() << "Impl;" << endl;
+    f_service_ << "import " << package_name_ << "." << get_cap_name(service_name_).c_str() << "Impl;" << endl;
     f_service_ << endl;
   }
   
   generate_service_server(tservice);
-  //generate_service_helpers(tservice); - once is enough, see client file
   
   f_service_.close();
     
@@ -1612,7 +1610,7 @@ void t_haxe_generator::generate_service_interface(t_service* tservice) {
   }
 
   generate_haxe_doc(f_service_, tservice);
-  f_service_ << indent() << "interface " << service_name_ << extends_iface <<
+  f_service_ << indent() << "interface " << get_cap_name(service_name_) << extends_iface <<
     " {" << endl << endl;
   indent_up();
   vector<t_function*> functions = tservice->get_functions();
@@ -1638,7 +1636,7 @@ void t_haxe_generator::generate_service_helpers(t_service* tservice) {
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* ts = (*f_iter)->get_arglist();
-    generate_haxe_struct_definition(f_service_, ts, false, true);
+    generate_haxe_struct(ts, false);
     generate_function_helpers(*f_iter);
   }
 }
@@ -1653,14 +1651,14 @@ void t_haxe_generator::generate_service_client(t_service* tservice) {
   string extends = "";
   string extends_client = "";
   if (tservice->get_extends() != NULL) {
-    extends = tservice->get_extends()->get_name();
+    extends = get_cap_name(tservice->get_extends()->get_name());
     extends_client = " extends " + extends + "Impl";
   }
 
   indent(f_service_) <<
-    "class " << service_name_ << 
-    "Impl" << extends_client << 
-    " implements " << service_name_ << 
+    "class " << get_cap_name(service_name_) <<
+    "Impl" << extends_client <<
+    " implements " << get_cap_name(service_name_) <<
     " {" << endl << endl;
   indent_up();
 
@@ -1731,7 +1729,7 @@ void t_haxe_generator::generate_service_client(t_service* tservice) {
     const vector<t_field*>& fields = arg_struct->get_members();
 
     // Serialize the request
-	string calltype = (*f_iter)->is_oneway() ? "ONEWAY" : "CALL";
+    string calltype = (*f_iter)->is_oneway() ? "ONEWAY" : "CALL";
     f_service_ <<
       indent() << "oprot_.writeMessageBegin(new TMessage(\"" << funname << "\", TMessageType." << calltype << ", seqid_));" << endl <<
       indent() << "var args : " << argsname << " = new " << argsname << "();" << endl;
@@ -1879,20 +1877,20 @@ void t_haxe_generator::generate_service_server(t_service* tservice) {
   string extends = "";
   string extends_processor = "";
   if (tservice->get_extends() != NULL) {
-    extends = type_name(tservice->get_extends());
+    extends = get_cap_name(type_name(tservice->get_extends()));
     extends_processor = " extends " + extends + "Processor";
   }
 
   // Generate the header portion
   indent(f_service_) <<
-    "class " << service_name_ << 
-    "Processor" << extends_processor << 
+    "class " << get_cap_name(service_name_) <<
+    "Processor" << extends_processor <<
     " implements TProcessor {" << 
     endl << endl;
   indent_up();
 
   f_service_ <<
-    indent() << "private var " << service_name_ << "_iface_ : " << service_name_ << ";" << endl;
+    indent() << "private var " << get_cap_name(service_name_) << "_iface_ : " << get_cap_name(service_name_) << ";" << endl;
 
   if (extends.empty()) {
     f_service_ <<
@@ -1902,14 +1900,14 @@ void t_haxe_generator::generate_service_server(t_service* tservice) {
   f_service_ << endl;
 
   indent(f_service_) <<
-    "public function new( iface : " << service_name_ << ")" << endl;
+    "public function new( iface : " << get_cap_name(service_name_) << ")" << endl;
   scope_up(f_service_);
   if (!extends.empty()) {
     f_service_ <<
       indent() << "super(iface);" << endl;
   }
   f_service_ <<
-    indent() << service_name_ << "_iface_ = iface;" << endl;
+    indent() << get_cap_name(service_name_) << "_iface_ = iface;" << endl;
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_service_ <<
@@ -1989,7 +1987,7 @@ void t_haxe_generator::generate_function_helpers(t_function* tfunction) {
     result.append(*f_iter);
   }
 
-  generate_haxe_struct_definition(f_service_, &result, false, true, true);
+  generate_haxe_struct(&result, false, true);
 }
 
 /**
@@ -2044,7 +2042,7 @@ void t_haxe_generator::generate_process_function(t_service* tservice,
   
     f_service_ << indent();
     f_service_ <<
-      service_name_ << "_iface_." << tfunction->get_name() << "(";
+      get_cap_name(service_name_) << "_iface_." << tfunction->get_name() << "(";
     bool first = true;
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       if (first) {
@@ -2094,7 +2092,7 @@ void t_haxe_generator::generate_process_function(t_service* tservice,
       f_service_ << "result.success = ";
     }
     f_service_ <<
-      service_name_ << "_iface_." << tfunction->get_name() << "(";
+      get_cap_name(service_name_) << "_iface_." << tfunction->get_name() << "(";
     bool first = true;
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       if (first) {
@@ -2113,7 +2111,7 @@ void t_haxe_generator::generate_process_function(t_service* tservice,
   if( ! tfunction->is_oneway()) {
     // catch exceptions defined in the IDL
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-      f_service_ << " catch (" << (*x_iter)->get_name() << ":" << type_name((*x_iter)->get_type(), false, false) << ") {" << endl;
+      f_service_ << " catch (" << (*x_iter)->get_name() << ":" << get_cap_name(type_name((*x_iter)->get_type(), false, false)) << ") {" << endl;
       if (!tfunction->is_oneway()) {
         indent_up();
         f_service_ <<
@@ -2254,7 +2252,7 @@ void t_haxe_generator::generate_deserialize_struct(ofstream& out,
                                                    t_struct* tstruct,
                                                    string prefix) {
   out <<
-    indent() << prefix << " = new " << type_name(tstruct) << "();" << endl <<
+    indent() << prefix << " = new " << get_cap_name(type_name(tstruct)) << "();" << endl <<
     indent() << prefix << ".read(iprot);" << endl;
 }
 
@@ -2604,9 +2602,9 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
   
   if (ttype->is_map()) {
     t_type* tkey = get_true_type(((t_map*)ttype)->get_key_type());
-	t_type* tval = get_true_type(((t_map*)ttype)->get_val_type());
-	if (tkey->is_base_type()) {
-	  t_base_type::t_base tbase = ((t_base_type*)tkey)->get_base();
+    t_type* tval = get_true_type(((t_map*)ttype)->get_val_type());
+    if (tkey->is_base_type()) {
+      t_base_type::t_base tbase = ((t_base_type*)tkey)->get_base();
       switch (tbase) {
       case t_base_type::TYPE_STRING:
         if( ! (((t_base_type*)tkey)->is_binary())) {
@@ -2614,24 +2612,24 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
         }
       case t_base_type::TYPE_BYTE:
       case t_base_type::TYPE_I16:
-	  case t_base_type::TYPE_I32:
-		return "IntMap< " + type_name(tval) + ">";
-	  case t_base_type::TYPE_I64:
-		return "Int64Map< " + type_name(tval) + ">";
-	  default:
+      case t_base_type::TYPE_I32:
+        return "IntMap< " + type_name(tval) + ">";
+      case t_base_type::TYPE_I64:
+        return "Int64Map< " + type_name(tval) + ">";
+      default:
         break;  // default to ObjectMap<>
       }
-	}
-	if (tkey->is_enum()) {
-		return "IntMap< " + type_name(tval) + ">";
-	}
-	return "ObjectMap< " + type_name(tkey) + ", " + type_name(tval) + ">";
+    }
+    if (tkey->is_enum()) {
+        return "IntMap< " + type_name(tval) + ">";
+    }
+    return "ObjectMap< " + type_name(tkey) + ", " + type_name(tval) + ">";
   }
   
   if (ttype->is_set()) {
     t_type* tkey = get_true_type(((t_list*)ttype)->get_elem_type());
- 	if( tkey->is_base_type()) {
-	  t_base_type::t_base tbase = ((t_base_type*)tkey)->get_base();
+     if( tkey->is_base_type()) {
+      t_base_type::t_base tbase = ((t_base_type*)tkey)->get_base();
       switch (tbase) {
       case t_base_type::TYPE_STRING:
         if( ! (((t_base_type*)tkey)->is_binary())) {
@@ -2640,17 +2638,17 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
       case t_base_type::TYPE_BYTE:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
-		  return "IntSet";
-	  case t_base_type::TYPE_I64:
-		  return "Int64Set";
-	  default:
+          return "IntSet";
+      case t_base_type::TYPE_I64:
+          return "Int64Set";
+      default:
         break;  // default to ObjectSet
       }
     }
-	if (tkey->is_enum()) {
-		return "IntSet";
-	}
-	return "ObjectSet< " + type_name(tkey) + ">";
+    if (tkey->is_enum()) {
+        return "IntSet";
+    }
+    return "ObjectSet< " + type_name(tkey) + ">";
   }
   
   if (ttype->is_list()) {
@@ -2745,7 +2743,7 @@ string t_haxe_generator::declare_field(t_field* tfield, bool init) {
     } else if (ttype->is_container()) {
       result += " = new " + type_name(ttype, false, true) + "()";
     } else {
-      result += " = new " + type_name(ttype, false, true) + "()";;
+      result += " = new " + type_name(ttype, false, true) + "()";
     }
   }
   return result + ";";
@@ -2855,10 +2853,20 @@ string t_haxe_generator::type_to_enum(t_type* type) {
 }
 
 /**
- * Applies the correct style to a string based on the value of nocamel_style_
+ * Haxe class names must start with uppercase letter, but Haxe namespaces must not.
  */
 std::string t_haxe_generator::get_cap_name(std::string name){
-  name[0] = toupper(name[0]);  // class name must start with uppercase letter
+  size_t index = name.rfind('.');
+  if (index != std::string::npos) {
+    ++index;
+  } else {
+    index = 0;
+  }
+
+  if (index < name.length()) {
+    name[index] = toupper(name[index]);
+  }
+
   return name;
 }
 
