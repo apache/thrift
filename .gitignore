@@ -152,14 +152,17 @@ test-driver
 /lib/delphi/test/serializer/*.dproj
 /lib/delphi/test/serializer/*.local
 /lib/delphi/test/serializer/*.2007
+/lib/delphi/test/serializer/*.dcu
 /lib/delphi/test/multiplexed/*.dproj
 /lib/delphi/test/multiplexed/*.2007
 /lib/delphi/test/multiplexed/*.local
 /lib/delphi/test/multiplexed/*.identcache
+/lib/delphi/test/multiplexed/*.dcu
 /lib/delphi/test/typeregistry/*.2007
 /lib/delphi/test/typeregistry/*.dproj
 /lib/delphi/test/typeregistry/*.identcache
 /lib/delphi/test/typeregistry/*.local
+/lib/delphi/test/typeregistry/*.dcu
 /lib/erl/.generated
 /lib/erl/.eunit
 /lib/erl/ebin
@@ -206,6 +209,8 @@ test-driver
 /lib/php/test/packages/
 /lib/py/dist/
 /lib/erl/logs/
+/lib/go/test/gopath/
+/lib/go/test/ThriftTest.thrift
 /libtool
 /ltmain.sh
 /missing
@@ -217,8 +222,6 @@ test-driver
 /test/cpp/StressTestNonBlocking
 /test/cpp/TestClient
 /test/cpp/TestServer
-/lib/go/test/gopath/
-/lib/go/test/ThriftTest.thrift
 /test/log/
 /test/test.log
 /test/erl/.eunit/
@@ -241,6 +244,7 @@ test-driver
 /tutorial/c_glib/tutorial_server
 /tutorial/delphi/*.dsk
 /tutorial/delphi/*.local
+/tutorial/delphi/*.tvsconfig
 /tutorial/delphi/DelphiClient/dcu
 /tutorial/delphi/DelphiServer/dcu
 /tutorial/delphi/DelphiClient/*.local
