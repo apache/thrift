@@ -34,6 +34,7 @@ uses
   Thrift.Server in '..\..\src\Thrift.Server.pas',
   Thrift.Console in '..\..\src\Thrift.Console.pas',
   Thrift.Utils in '..\..\src\Thrift.Utils.pas',
+  Thrift.TypeRegistry in '..\..\src\Thrift.TypeRegistry.pas',
   Thrift.Stream in '..\..\src\Thrift.Stream.pas';
 
 var
