@@ -22,7 +22,7 @@ package org.apache.thrift.transport;
 import haxe.io.Bytes;
 import haxe.io.BytesBuffer;
 import org.apache.thrift.AbstractMethodError;
-  
+
 class TTransport {
 
     /**
@@ -31,16 +31,16 @@ class TTransport {
      * @return True if the transport is open.
      */
     public function isOpen() : Bool {
-      	throw new AbstractMethodError();
+          throw new AbstractMethodError();
     }
-    
+
     /**
      * Is there more data to be read?
      *
      * @return True if the remote side is still alive and feeding us
      */
     public function peek() : Bool {
-      	return isOpen();
+          return isOpen();
     }
 
     /**
@@ -49,14 +49,14 @@ class TTransport {
      * @throws TTransportException if the transport could not be opened
      */
     public function open() : Void {
-      	throw new AbstractMethodError();
+          throw new AbstractMethodError();
     }
 
     /**
      * Closes the transport.
      */
     public function close() : Void {
-      	throw new AbstractMethodError();
+          throw new AbstractMethodError();
     };
 
     /**
@@ -69,7 +69,7 @@ class TTransport {
      * @throws TTransportException if there was an error reading data
      */
      public function read( buf : BytesBuffer, off : Int, len : Int) : Int {
-      	throw new AbstractMethodError();
+          throw new AbstractMethodError();
      }
 
     /**
@@ -82,14 +82,14 @@ class TTransport {
      * @throws TTransportException if there was an error reading data
      */
     public function readAll(buf : BytesBuffer, off : Int, len : Int) : Int {
-		var got : Int = 0;
-		var ret : Int = 0;
+        var got : Int = 0;
+        var ret : Int = 0;
         while (got < len) {
             ret = read(buf, off+got, len-got);
             if (ret <= 0) {
-              throw new TTransportException(TTransportException.UNKNOWN, 
-										"Cannot read. Remote side has closed. Tried to read " 
-										+ len + " bytes, but only got " + got + " bytes.");
+              throw new TTransportException(TTransportException.UNKNOWN,
+                                        "Cannot read. Remote side has closed. Tried to read "
+                                        + len + " bytes, but only got " + got + " bytes.");
             }
             got += ret;
         }
@@ -103,7 +103,7 @@ class TTransport {
      * @throws TTransportException if an error occurs writing data
      */
     public function writeAll(buf:Bytes) : Void {
-		write(buf, 0, buf.length);
+        write(buf, 0, buf.length);
     }
 
     /**
@@ -115,7 +115,7 @@ class TTransport {
      * @throws TTransportException if there was an error writing data
      */
     public function write(buf:Bytes, off : Int, len : Int) : Void {
-    	throw new AbstractMethodError();
+        throw new AbstractMethodError();
     }
 
     /**
@@ -124,10 +124,10 @@ class TTransport {
      * @throws TTransportException if there was an error writing out data.
      */
     public function flush(callback:Dynamic->Void =null) : Void {
-    	if(callback != null)
-			callback(new AbstractMethodError());
-		else
-			throw new AbstractMethodError();
+        if(callback != null)
+            callback(new AbstractMethodError());
+        else
+            throw new AbstractMethodError();
     }
- 
+
 }

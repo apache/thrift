@@ -20,11 +20,11 @@
 package org.apache.thrift.meta_data;
 
 class SetMetaData extends FieldValueMetaData {
-  
+
     public var elemMetaData:FieldValueMetaData;
-  
+
     public function SetMetaData(type : Int, eMetaData:FieldValueMetaData) {
       super(type);
-      this.elemMetaData = eMetaData; 
+      this.elemMetaData = eMetaData;
     }
 }

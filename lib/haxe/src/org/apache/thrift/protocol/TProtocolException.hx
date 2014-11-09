@@ -18,11 +18,11 @@
  */
 
 package org.apache.thrift.protocol;
-  
+
 import org.apache.thrift.TException;
 
 class TProtocolException extends TException {
-    
+
     public static inline var UNKNOWN : Int = 0;
     public static inline var INVALID_DATA : Int = 1;
     public static inline var NEGATIVE_SIZE : Int = 2;
@@ -30,10 +30,10 @@ class TProtocolException extends TException {
     public static inline var BAD_VERSION : Int = 4;
     public static inline var NOT_IMPLEMENTED : Int = 5;
     public static inline var DEPTH_LIMIT : Int = 6;
-  
+
     public function new(error : Int = UNKNOWN, message : String = "") {
       super(message, error);
     }
-    
-  
-}
+
+
+} 

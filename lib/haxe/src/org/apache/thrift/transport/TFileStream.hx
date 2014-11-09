@@ -26,75 +26,76 @@ import haxe.io.Output;
 
 
 enum TFileMode {
-	CreateNew;
-	Append;
-	Read;
+    CreateNew;
+    Append;
+    Read;
 }
-	
+
 
 class TFileStream implements TStream {
 
-	public var FileName(default,null) : String;
-	
-	private var Input  : sys.io.FileInput;
-	private var Output : sys.io.FileOutput;
-	
-	
-	public function new( fname : String, mode : TFileMode) {
-		FileName = fname;	
-		switch ( mode)
-		{
-			case TFileMode.CreateNew:
-				Output = sys.io.File.write( fname, true);
+    public var FileName(default,null) : String;
 
-			case TFileMode.Append:
-				Output = sys.io.File.append( fname, true);
+    private var Input  : sys.io.FileInput;
+    private var Output : sys.io.FileOutput;
 
-			case TFileMode.Read:
-				Input = sys.io.File.read( fname, true);
 
-			default:
-				throw new TTransportException( TTransportException.UNKNOWN,
-											   "Unsupported mode");
-		}
+    public function new( fname : String, mode : TFileMode) {
+        FileName = fname;
+        switch ( mode)
+        {
+            case TFileMode.CreateNew:
+                Output = sys.io.File.write( fname, true);
 
-	}
-	
-	public function Close() : Void {
-		if( Input != null) {
-			Input.close();
-			Input = null;
-		}
-		if( Output != null) { 
-			Output.close();
-			Output = null;
-		}
-	}
-	
-	public function Peek() : Bool {
-		if( Input == null)
-			throw new TTransportException( TTransportException.NOT_OPEN, "File not open for input");
+            case TFileMode.Append:
+                Output = sys.io.File.append( fname, true);
 
-		return (! Input.eof());
-	}
-	
-	public function Read( buf : Bytes, offset : Int, count : Int) : Int {
-		if( Input == null)
-			throw new TTransportException( TTransportException.NOT_OPEN, "File not open for input");
+            case TFileMode.Read:
+                Input = sys.io.File.read( fname, true);
 
-		return Input.readBytes( buf, offset, count);
-	}
-	
-	public function Write( buf : Bytes, offset : Int, count : Int) : Void {
-		if( Output == null)
-			throw new TTransportException( TTransportException.NOT_OPEN, "File not open for output");
-		
-		Output.writeBytes( buf, offset, count);			
-	}
+            default:
+                throw new TTransportException( TTransportException.UNKNOWN,
+                                               "Unsupported mode");
+        }
 
-	public function Flush() : Void {
-		if( Output != null) 
-			Output.flush();
-	}
-	
+    }
+
+    public function Close() : Void {
+        if( Input != null) {
+            Input.close();
+            Input = null;
+        }
+        if( Output != null) {
+            Output.close();
+            Output = null;
+        }
+    }
+
+    public function Peek() : Bool {
+        if( Input == null)
+            throw new TTransportException( TTransportException.NOT_OPEN, "File not open for input");
+
+        return (! Input.eof());
+    }
+
+    public function Read( buf : Bytes, offset : Int, count : Int) : Int {
+        if( Input == null)
+            throw new TTransportException( TTransportException.NOT_OPEN, "File not open for input");
+
+        return Input.readBytes( buf, offset, count);
+    }
+
+    public function Write( buf : Bytes, offset : Int, count : Int) : Void {
+        if( Output == null)
+            throw new TTransportException( TTransportException.NOT_OPEN, "File not open for output");
+
+        Output.writeBytes( buf, offset, count);
+    }
+
+    public function Flush() : Void {
+        if( Output != null)
+            Output.flush();
+    }
+
 }
+ 

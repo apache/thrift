@@ -73,15 +73,15 @@ import flash.events.EventDispatcher;
             socket.close()
         }
 
-    	public override function peek()  :  Bool
-    	{
-			if(socket.connected)
-			{
-				trace("Bytes remained:" + socket.bytesAvailable);
-				return socket.bytesAvailable>0;
-			}
-			return false;
-		}
+        public override function peek()  :  Bool
+        {
+            if(socket.connected)
+            {
+                trace("Bytes remained:" + socket.bytesAvailable);
+                return socket.bytesAvailable>0;
+            }
+            return false;
+        }
 
         public override function read(buf : Bytes, off  :  Int, len  :  Int)  :  Int
         {
@@ -137,11 +137,11 @@ import flash.events.EventDispatcher;
                 trace(e);
                 throw new TTransportException(TTransportException.UNKNOWN, "No more data available.");
             }
-			catch (e : TException)
-			{
-				trace('TException $e');
-				throw e;
-			}
+            catch (e : TException)
+            {
+                trace('TException $e');
+                throw e;
+            }
             catch (e : Error)
             {
                 trace(e);
@@ -217,7 +217,7 @@ import flash.events.EventDispatcher;
 
         public function socketDataHandler(event : ProgressEvent)  :  Void
         {
-        	trace("Got Data call:" +ioCallback);
+            trace("Got Data call:" +ioCallback);
             if (ioCallback != null)
             {
                 ioCallback(null);

@@ -18,13 +18,13 @@
  */
 
 package org.apache.thrift.protocol;
-  
+
 class TStruct {
-    
+
     public var name : String;
-    
+
     public function new(n : String = "") {
       name = n;
     }
-    
-}
+
+}  

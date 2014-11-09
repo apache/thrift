@@ -33,73 +33,74 @@ class TServer
     private var inputProtocolFactory : TProtocolFactory = null;
     private var outputProtocolFactory : TProtocolFactory = null;
 
-	// server events
-	public var serverEventHandler : TServerEventHandler = null;
+    // server events
+    public var serverEventHandler : TServerEventHandler = null;
 
     // Log delegation
     private var _logDelegate : Dynamic->Void  = null;
     public var logDelegate(default,set) : Dynamic->Void;
-	
+
     public function new( processor : TProcessor,
-						 serverTransport : TServerTransport,
-						 inputTransportFactory : TTransportFactory = null,
-						 outputTransportFactory : TTransportFactory = null,
-						 inputProtocolFactory : TProtocolFactory = null,
-						 outputProtocolFactory : TProtocolFactory = null,
-						 logDelegate : Dynamic->Void = null)
+                         serverTransport : TServerTransport,
+                         inputTransportFactory : TTransportFactory = null,
+                         outputTransportFactory : TTransportFactory = null,
+                         inputProtocolFactory : TProtocolFactory = null,
+                         outputProtocolFactory : TProtocolFactory = null,
+                         logDelegate : Dynamic->Void = null)
     {
       this.processor = processor;
       this.serverTransport = serverTransport;
-      this.inputTransportFactory = inputTransportFactory;	
+      this.inputTransportFactory = inputTransportFactory;
       this.outputTransportFactory = outputTransportFactory;
       this.inputProtocolFactory = inputProtocolFactory;
       this.outputProtocolFactory = outputProtocolFactory;
       this.logDelegate = logDelegate;
 
-	  ApplyMissingDefaults();
-	}
-	
-	private function ApplyMissingDefaults() {
-		if( processor == null) 
-			throw "Invalid server configuration: processor missing";
-		if( serverTransport == null)
-			throw "Invalid server configuration: serverTransport missing";
-		if( inputTransportFactory == null)
-			inputTransportFactory = new TTransportFactory();
-		if( outputTransportFactory  == null)
-			outputTransportFactory = new TTransportFactory();
-		if( inputProtocolFactory  == null)
-			inputProtocolFactory = new TBinaryProtocolFactory();
-		if( outputProtocolFactory == null)
-			outputProtocolFactory= new TBinaryProtocolFactory();
-		if( logDelegate == null)
-			logDelegate = DefaultLogDelegate;
+      ApplyMissingDefaults();
+    }
+
+    private function ApplyMissingDefaults() {
+        if( processor == null)
+            throw "Invalid server configuration: processor missing";
+        if( serverTransport == null)
+            throw "Invalid server configuration: serverTransport missing";
+        if( inputTransportFactory == null)
+            inputTransportFactory = new TTransportFactory();
+        if( outputTransportFactory  == null)
+            outputTransportFactory = new TTransportFactory();
+        if( inputProtocolFactory  == null)
+            inputProtocolFactory = new TBinaryProtocolFactory();
+        if( outputProtocolFactory == null)
+            outputProtocolFactory= new TBinaryProtocolFactory();
+        if( logDelegate == null)
+            logDelegate = DefaultLogDelegate;
     }
 
 
-	private function set_logDelegate(value : Dynamic->Void) : Dynamic->Void {
-		if(value != null) {
-			_logDelegate = value;
-		} else {
-			_logDelegate = DefaultLogDelegate; 
-		}
-		return _logDelegate;
-    }
-    
-		
-	private function DefaultLogDelegate(value : Dynamic) : Void  {
-		trace( value);
+    private function set_logDelegate(value : Dynamic->Void) : Dynamic->Void {
+        if(value != null) {
+            _logDelegate = value;
+        } else {
+            _logDelegate = DefaultLogDelegate;
+        }
+        return _logDelegate;
     }
 
-    
-		
+
+    private function DefaultLogDelegate(value : Dynamic) : Void  {
+        trace( value);
+    }
+
+
+
     public function Serve() : Void {
-		throw new AbstractMethodError();
-	}
-		
-	
+        throw new AbstractMethodError();
+    }
+
+
     public function Stop() : Void {
-		throw new AbstractMethodError();
-	}
-	
+        throw new AbstractMethodError();
+    }
+
 }
+ 

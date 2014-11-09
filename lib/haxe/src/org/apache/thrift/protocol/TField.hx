@@ -16,28 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
- 
+
 package org.apache.thrift.protocol;
-    
+
 class TField {
-    
+
     public var name : String;
     public var type : Int;
     public var id : Int;
-      
+
     public function new(n : String = "", t : Int = 0, i : Int = 0) {
       name = n;
       type = t;
       id = i;
     }
-    
+
     public function toString() : String {
       return '<TField name:"$name" type:"$type" field-id:"$id">';
     }
-    
+
     public function equals( otherField : TField) : Bool {
-      return (type == otherField.type) 
+      return (type == otherField.type)
           && (id == otherField.id);
     }
-  
+
 }

@@ -19,7 +19,7 @@
 
 package org.apache.thrift.transport;
 
-import haxe.remoting.SocketProtocol;	
+import haxe.remoting.SocketProtocol;
 import haxe.io.Bytes;
 import haxe.io.BytesBuffer;
 import haxe.io.BytesInput;
@@ -29,104 +29,104 @@ import haxe.io.Output;
 import haxe.io.Eof;
 
 //import flash.net.ServerSocket; - not yet available on Haxe 3.1.3
-#if ! (flash || html5) 
-	
+#if ! (flash || html5)
+
 import sys.net.Host;
 
 
 class TServerSocket extends TServerTransport {
 
-	// Underlying server with socket
-	private var _socket : Socket= null;
+    // Underlying server with socket
+    private var _socket : Socket= null;
 
-	// Port to listen on
-	private var _port : Int = 0;
+    // Port to listen on
+    private var _port : Int = 0;
 
-	// Timeout for client sockets from accept
-	private var _clientTimeout : Int = 0;
+    // Timeout for client sockets from accept
+    private var _clientTimeout : Int = 0;
 
-	// Whether or not to wrap new TSocket connections in buffers
-	private var _useBufferedSockets : Bool = false;
-
-	
-	public function new( port : Int, clientTimeout : Int = 0, useBufferedSockets : Bool = false)
-	{
-		_port = port;
-		_clientTimeout = clientTimeout;
-		_useBufferedSockets = useBufferedSockets;
-
-		try
-		{
-			_socket = new Socket();
-			_socket.bind( new Host('localhost'), port);
-		}
-		catch (e : Dynamic)
-		{
-			_socket = null;
-			throw new TTransportException( TTransportException.UNKNOWN, 'Could not create ServerSocket on port $port: $e');
-		}
-	}
+    // Whether or not to wrap new TSocket connections in buffers
+    private var _useBufferedSockets : Bool = false;
 
 
-	public override function Listen() : Void
-	{
-		// Make sure not to block on accept
-		if (_socket != null)	{
-			try
-			{
-				_socket.listen(1);
-			}
-			catch (e : Dynamic)
-			{
-				trace('Error $e');
-				throw new TTransportException( TTransportException.UNKNOWN, 'Could not accept on listening socket: $e');
-			}
-		}
-	}
+    public function new( port : Int, clientTimeout : Int = 0, useBufferedSockets : Bool = false)
+    {
+        _port = port;
+        _clientTimeout = clientTimeout;
+        _useBufferedSockets = useBufferedSockets;
 
-	private override function AcceptImpl() : TTransport
-	{
-		if (_socket == null) {
-			throw new TTransportException( TTransportException.NOT_OPEN, "No underlying server socket.");
-		}
-		
-		try
-		{
-			var accepted = _socket.accept();
-			var result = TSocket.fromSocket(accepted);
-			accepted.setTimeout( _clientTimeout);
+        try
+        {
+            _socket = new Socket();
+            _socket.bind( new Host('localhost'), port);
+        }
+        catch (e : Dynamic)
+        {
+            _socket = null;
+            throw new TTransportException( TTransportException.UNKNOWN, 'Could not create ServerSocket on port $port: $e');
+        }
+    }
 
-			if( _useBufferedSockets)
-			{
-				throw "buffered transport not yet supported";  // TODO
-				//result = new TBufferedTransport(result);
-			}
 
-			return result;
-		}
-		catch (e : Dynamic)
-		{
-			trace('Error $e');
-			throw new TTransportException( TTransportException.UNKNOWN, '$e');
-		}
-	}
+    public override function Listen() : Void
+    {
+        // Make sure not to block on accept
+        if (_socket != null)    {
+            try
+            {
+                _socket.listen(1);
+            }
+            catch (e : Dynamic)
+            {
+                trace('Error $e');
+                throw new TTransportException( TTransportException.UNKNOWN, 'Could not accept on listening socket: $e');
+            }
+        }
+    }
 
-	public override function Close() : Void
-	{
-		if (_socket != null)
-		{
-			try
-			{
-				_socket.close();
-			}
-			catch (e : Dynamic)
-			{
-				trace('Error $e');
-				throw new TTransportException( TTransportException.UNKNOWN, 'WARNING: Could not close server socket: $e');
-			}
-			_socket = null;
-		}
-	}
+    private override function AcceptImpl() : TTransport
+    {
+        if (_socket == null) {
+            throw new TTransportException( TTransportException.NOT_OPEN, "No underlying server socket.");
+        }
+
+        try
+        {
+            var accepted = _socket.accept();
+            var result = TSocket.fromSocket(accepted);
+            accepted.setTimeout( _clientTimeout);
+
+            if( _useBufferedSockets)
+            {
+                throw "buffered transport not yet supported";  // TODO
+                //result = new TBufferedTransport(result);
+            }
+
+            return result;
+        }
+        catch (e : Dynamic)
+        {
+            trace('Error $e');
+            throw new TTransportException( TTransportException.UNKNOWN, '$e');
+        }
+    }
+
+    public override function Close() : Void
+    {
+        if (_socket != null)
+        {
+            try
+            {
+                _socket.close();
+            }
+            catch (e : Dynamic)
+            {
+                trace('Error $e');
+                throw new TTransportException( TTransportException.UNKNOWN, 'WARNING: Could not close server socket: $e');
+            }
+            _socket = null;
+        }
+    }
 }
 
 #end

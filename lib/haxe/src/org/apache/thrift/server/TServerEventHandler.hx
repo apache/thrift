@@ -27,15 +27,15 @@ import org.apache.thrift.protocol.*;
 // Interface implemented by server users to handle events from the server
 interface TServerEventHandler {
 
-	// Called before the server begins 
+    // Called before the server begins
     function preServe() : Void;
-	
-    // Called when a new client has connected and is about to being processing 
+
+    // Called when a new client has connected and is about to being processing
     function createContext( input : TProtocol, output : TProtocol) : Dynamic;
-    
-	// Called when a client has finished request-handling to delete server context 
+
+    // Called when a client has finished request-handling to delete server context
     function deleteContext( serverContext : Dynamic, input : TProtocol, output : TProtocol) : Void;
-    
-	// Called when a client is about to call the processor 
+
+    // Called when a client is about to call the processor
     function processContext( serverContext : Dynamic, transport : TTransport) : Void;
 }

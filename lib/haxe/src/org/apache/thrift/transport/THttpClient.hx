@@ -19,7 +19,7 @@
 
 package org.apache.thrift.transport;
 
-	
+
 import haxe.io.Bytes;
 import haxe.io.BytesBuffer;
 import haxe.io.BytesOutput;
@@ -28,76 +28,76 @@ import haxe.io.BytesInput;
 import haxe.Http;
 
 
-	
+
 /**
 * HTTP implementation of the TTransport interface. Used for working with a
 * Thrift web services implementation.
 */
-	
+
 class THttpClient extends TTransport {
 
     private var requestBuffer_  : BytesOutput = new BytesOutput();
     private var responseBuffer_ : BytesInput = null;
 
-	private var request_        : Http = null;
+    private var request_        : Http = null;
 
-    
-	public function new( requestUrl : String) : Void {
-	  	request_ = new Http(requestUrl);
-		request_.addHeader( "contentType", "application/x-thrift");
+
+    public function new( requestUrl : String) : Void {
+          request_ = new Http(requestUrl);
+        request_.addHeader( "contentType", "application/x-thrift");
     }
-    
-   
+
+
     public override function open() : Void {
     }
 
     public override function close() : Void {
     }
- 
+
     public override function isOpen() : Bool {
       return true;
     }
-    
+
     public override function read(buf:BytesBuffer, off : Int, len : Int) : Int {
-		if (responseBuffer_ == null) {
-        	throw new TTransportException(TTransportException.UNKNOWN, "Response buffer is empty, no request.");
-		}
-		
+        if (responseBuffer_ == null) {
+            throw new TTransportException(TTransportException.UNKNOWN, "Response buffer is empty, no request.");
+        }
+
         var data =Bytes.alloc(len);
-		len = responseBuffer_.readBytes(data, off, len);
-		buf.addBytes(data,0,len);
-		return len;
+        len = responseBuffer_.readBytes(data, off, len);
+        buf.addBytes(data,0,len);
+        return len;
     }
 
     public override function write(buf:Bytes, off : Int, len : Int) : Void {
       requestBuffer_.writeBytes(buf, off, len);
     }
 
-	
+
     public override function flush(callback:Dynamic->Void = null) : Void {
-		var buffer = requestBuffer_;
-		requestBuffer_ = new BytesOutput();
-		responseBuffer_ = null;
-			
-		request_.onData = function(data : String) { 
-			var tmp = new BytesBuffer();
-			tmp.addString(data);
-			responseBuffer_ = new BytesInput(tmp.getBytes());
-			if( callback != null) {
-				callback(null);
-			}
-		};
-		
-		request_.onError = function(msg : String) {
-			if( callback != null) {
-				callback(new TTransportException(TTransportException.UNKNOWN, "IOError: " + msg));
-			}
-		};
-		
-		request_.setPostData(buffer.getBytes().toString());
-		request_.request(true/*POST*/);
+        var buffer = requestBuffer_;
+        requestBuffer_ = new BytesOutput();
+        responseBuffer_ = null;
+
+        request_.onData = function(data : String) {
+            var tmp = new BytesBuffer();
+            tmp.addString(data);
+            responseBuffer_ = new BytesInput(tmp.getBytes());
+            if( callback != null) {
+                callback(null);
+            }
+        };
+
+        request_.onError = function(msg : String) {
+            if( callback != null) {
+                callback(new TTransportException(TTransportException.UNKNOWN, "IOError: " + msg));
+            }
+        };
+
+        request_.setPostData(buffer.getBytes().toString());
+        request_.request(true/*POST*/);
     }
-		
+
 }
 
-	
+    
