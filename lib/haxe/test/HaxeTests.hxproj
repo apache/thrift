@@ -53,14 +53,16 @@
     <hidden path="python.hxml" />
   </hiddenPaths>
   <!-- Executed before build -->
-  <preBuildCommand>thrift -r -gen haxe  ../../../test/ThriftTest.thrift</preBuildCommand>
+  <preBuildCommand>thrift -r -gen haxe  ../../../test/ThriftTest.thrift
+thrift -r -gen haxe  ../../../contrib/async-test/aggr.thrift
+thrift -r -gen haxe  ../../../lib/rb/benchmark/Benchmark.thrift</preBuildCommand>
   <!-- Executed after build -->
   <postBuildCommand alwaysRun="False" />
   <!-- Other project options -->
   <options>
     <option showHiddenPaths="False" />
-    <option testMovie="Unknown" />
-    <option testMovieCommand="" />
+    <option testMovie="Custom" />
+    <option testMovieCommand="bin/HaxeTests/Main.exe server multiplex" />
   </options>
   <!-- Plugin storage -->
   <storage />

@@ -25,7 +25,6 @@ import org.apache.thrift.transport.*;
 import org.apache.thrift.server.*;
 import org.apache.thrift.meta_data.*;
 
-import thrift.test.*;  // generated code
 
 class TestBase {
 
@@ -33,8 +32,15 @@ class TestBase {
         // override, if necessary
     }
 
-    public static function Run() : Void {
+    public static function Run(server : Bool) : Void {
           throw new AbstractMethodError();
     }
+
+    public static function Expect( expr : Bool, info : String, ?pos : haxe.PosInfos) : Void {
+        if( ! expr) {
+            throw ('Test "$info" failed at '+pos.methodName+' in '+pos.fileName+':'+pos.lineNumber);
+        }
+    }
+
 }
  

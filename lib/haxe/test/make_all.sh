@@ -20,6 +20,8 @@
 
 # invoke Thrift comnpiler
 thrift -r -gen haxe  ../../../test/ThriftTest.thrift
+thrift -r -gen haxe  ../../../contrib/async-test/aggr.thrift
+thrift -r -gen haxe  ../../../lib/rb/benchmark/Benchmark.thrift
 
 # output folder
 if [ ! -d bin ]; then
