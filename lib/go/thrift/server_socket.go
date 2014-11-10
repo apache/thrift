@@ -44,7 +44,7 @@ func NewTServerSocketTimeout(listenAddr string, clientTimeout time.Duration) (*T
 	if err != nil {
 		return nil, err
 	}
-	return &TServerSocket{addr: addr, clientTimeout: clientTimeout, BufferSize: 1024}, nil
+	return &TServerSocket{addr: addr, clientTimeout: clientTimeout}, nil
 }
 
 func (p *TServerSocket) Listen() error {
