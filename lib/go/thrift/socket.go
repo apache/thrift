@@ -126,6 +126,11 @@ func (p *TSocket) Close() error {
 	return nil
 }
 
+//Returns the remote address of the socket.
+func (p *TSocket) Addr() net.Addr {
+	return p.addr
+}
+
 func (p *TSocket) Read(buf []byte) (int, error) {
 	if !p.IsOpen() {
 		return 0, NewTTransportException(NOT_OPEN, "Connection not open")
