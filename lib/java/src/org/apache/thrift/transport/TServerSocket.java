@@ -105,8 +105,8 @@ public class TServerSocket extends TServerTransport {
       // Bind to listening port
       serverSocket_.bind(args.bindAddr, args.backlog);
     } catch (IOException ioe) {
-      serverSocket_ = null;
-      throw new TTransportException("Could not create ServerSocket on address " + args.bindAddr.toString() + ".");
+      close();
+      throw new TTransportException("Could not create ServerSocket on address " + args.bindAddr.toString() + ".", ioe);
     }
   }
 
