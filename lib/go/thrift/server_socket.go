@@ -33,10 +33,6 @@ type TServerSocket struct {
 	// Protects the interrupted value to make it thread safe.
 	mu          sync.RWMutex
 	interrupted bool
-
-	//Size of buffer to use for socket. Defaults to 1024.
-	//Set to 0 to disable bufferring server transport altogether.
-	BufferSize int
 }
 
 func NewTServerSocket(listenAddr string) (*TServerSocket, error) {
@@ -78,12 +74,7 @@ func (p *TServerSocket) Accept() (TTransport, error) {
 	if err != nil {
 		return nil, NewTTransportExceptionFromError(err)
 	}
-	var trans TTransport
-	trans = NewTSocketFromConnTimeout(conn, p.clientTimeout)
-	if p.BufferSize != 0 {
-		trans = NewTBufferedTransport(trans, p.BufferSize)
-	}
-	return trans, nil
+	return NewTSocketFromConnTimeout(conn, p.clientTimeout), nil
 }
 
 // Checks whether the socket is listening.
