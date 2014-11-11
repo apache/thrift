@@ -43,13 +43,13 @@ class TServerSocket extends TServerTransport {
     private var _port : Int = 0;
 
     // Timeout for client sockets from accept
-    private var _clientTimeout : Int = 0;
+    private var _clientTimeout : Float = 0;
 
     // Whether or not to wrap new TSocket connections in buffers
     private var _useBufferedSockets : Bool = false;
 
 
-    public function new( port : Int, clientTimeout : Int = 0, useBufferedSockets : Bool = false)
+    public function new( port : Int, clientTimeout : Float = 0, useBufferedSockets : Bool = false)
     {
         _port = port;
         _clientTimeout = clientTimeout;

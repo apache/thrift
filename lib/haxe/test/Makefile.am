@@ -48,3 +48,17 @@ clean-local:
 check: $(BIN_CPP)
 	$(BIN_CPP)
 
+EXTRA_DIST = \
+             src \
+             cpp.hxml \
+             csharp.hxml \
+             flash.hxml \
+             java.hxml \
+             javascript.hxml \
+             neko.hxml \
+             php.hxml \
+             python.hxml \
+             project.hide \
+             HaxeTests.hxproj \
+             make_all.bat \
+             make_all.sh
