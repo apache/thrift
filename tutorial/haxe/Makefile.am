@@ -45,6 +45,16 @@ clean-local:
 	$(RM) -r gen-haxe bin
 
 EXTRA_DIST = \
-	src/Main.hx \
-	src/CalculatorHandler.hx
-
+             src \
+             cpp.hxml \
+             csharp.hxml \
+             flash.hxml \
+             java.hxml \
+             javascript.hxml \
+             neko.hxml \
+             php.hxml \
+             python.hxml \
+             project.hide \
+             Tutorial.hxproj \
+             make_all.bat \
+             make_all.sh
