@@ -27,19 +27,67 @@ import org.apache.thrift.meta_data.*;
 
 import thrift.test.*;  // generated code
 
+
+enum WhatTests {
+    Normal;
+    Multiplex;
+}
+
 class Main
 {
+    static private var tests : WhatTests = Normal;
+    static private var server : Bool = false;
+
+    static private inline var CMDLINEHELP : String
+        = "\nHaxeTests  [client|server]  [multiplex]\n"
+        + "  client|server  ... determines run mode for some tests, default is client\n"
+        + "  multiplex ........ run multiplex test server or client\n";
+
+    static private function ParseArgs() {
+        #if sys
+
+        var args = Sys.args();
+        if ( args != null) {
+            for ( arg in args) {
+                switch(arg.toLowerCase()) {
+                    case "client":
+                        server = false;
+                    case "server" :
+                        server = true;
+                    case "multiplex" :
+                        tests = Multiplex;
+                    default:
+                throw 'Invalid argument "$arg"\n'+CMDLINEHELP;
+                }
+            }
+        }
+
+        #end
+    }
+
     static public function main()
     {
         try
         {
-            StreamTest.Run();
+            ParseArgs();
+
+            switch( tests) {
+                case Normal:
+                    StreamTest.Run(server);
+                case Multiplex:
+                    MultiplexTest.Run(server);
+                default:
+                    throw "Unhandled test mode $tests";
+            }
 
             trace("All tests completed.");
         }
         catch( e: Dynamic)
         {
             trace('$e');
+            #if sys
+            Sys.exit(1);  // indicate error
+            #end
         }
     }
 }
