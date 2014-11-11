@@ -20,6 +20,7 @@
 package;
 
 import haxe.Int64;
+import sys.FileSystem;
 
 import org.apache.thrift.*;
 import org.apache.thrift.protocol.*;
@@ -33,14 +34,8 @@ import thrift.test.*;  // generated code
 class StreamTest extends TestBase {
 
 
-    private inline static var tmpfile : String = "bin/data.tmp";
+    private inline static var tmpfile : String = "data.tmp";
 
-
-    private static function Expect( expr : Bool, info : String, ?pos : haxe.PosInfos) : Void {
-        if( ! expr) {
-            throw ('Test "$info" failed at '+pos.methodName+' in '+pos.fileName+':'+pos.lineNumber);
-        }
-    }
 
     private static function MakeTestData() : Xtruct {
         var data : Xtruct = new Xtruct();
@@ -77,15 +72,22 @@ class StreamTest extends TestBase {
         return data;
     }
 
-    public static override function Run() : Void
+    public static override function Run(server : Bool) : Void
     {
-        var written = WriteData();
-        var read = ReadData();
+        try {
+            var written = WriteData();
+            var read = ReadData();
+            FileSystem.deleteFile(tmpfile);
 
-        Expect( read.string_thing == written.string_thing, "string data");
-        Expect( read.byte_thing == written.byte_thing, "byte data");
-        Expect( read.i32_thing == written.i32_thing, "i32 data");
-        Expect( Int64.compare( read.i64_thing, written.i64_thing) == 0, "i64 data");
+            TestBase.Expect( read.string_thing == written.string_thing, "string data");
+            TestBase.Expect( read.byte_thing == written.byte_thing, "byte data");
+            TestBase.Expect( read.i32_thing == written.i32_thing, "i32 data");
+            TestBase.Expect( Int64.compare( read.i64_thing, written.i64_thing) == 0, "i64 data");
+
+        } catch(e:Dynamic) {
+            FileSystem.deleteFile(tmpfile);
+            throw e;
+        }
     }
 
 }
