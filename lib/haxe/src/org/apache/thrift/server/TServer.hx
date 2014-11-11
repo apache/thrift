@@ -38,7 +38,7 @@ class TServer
 
     // Log delegation
     private var _logDelegate : Dynamic->Void  = null;
-    public var logDelegate(default,set) : Dynamic->Void;
+    public var logDelegate(get,set) : Dynamic->Void;
 
     public function new( processor : TProcessor,
                          serverTransport : TServerTransport,
@@ -83,6 +83,11 @@ class TServer
         } else {
             _logDelegate = DefaultLogDelegate;
         }
+        return _logDelegate;
+    }
+
+
+    private function get_logDelegate() : Dynamic->Void {
         return _logDelegate;
     }
 

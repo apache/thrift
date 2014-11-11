@@ -33,13 +33,12 @@ class TSimpleServer extends TServer  {
                          serverTransport : TServerTransport,
                          transportFactory : TTransportFactory = null,
                          protocolFactory : TProtocolFactory = null,
-                         logDelegate : Dynamic->Void = null) {
+                         logger : Dynamic->Void = null) {
       super( processor, serverTransport,
              transportFactory, transportFactory,
              protocolFactory, protocolFactory,
-             logDelegate);
+             logger);
     }
-
 
 
     public override function Serve() : Void
@@ -102,12 +101,15 @@ class TSimpleServer extends TServer  {
             }
             catch( ttx : TTransportException)
             {
-                  // Usually a client disconnect, expected
+                // Usually a client disconnect, expected
+            }
+            catch( pex : TProtocolException)
+            {
+                logDelegate(pex); // Unexpected
             }
             catch( e : Dynamic)
             {
-                // Unexpected
-                  logDelegate(e);
+                logDelegate(e); // Unexpected
             }
 
             // Fire deleteContext server event after client disconnects

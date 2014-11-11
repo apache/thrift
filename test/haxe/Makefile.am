@@ -50,3 +50,17 @@ check: $(BIN_CPP)
 	sleep 1
 	$(BIN_CPP) client
 
+EXTRA_DIST = \
+             src \
+             cpp.hxml \
+             csharp.hxml \
+             flash.hxml \
+             java.hxml \
+             javascript.hxml \
+             neko.hxml \
+             php.hxml \
+             python.hxml \
+             project.hide \
+             TestClientServer.hxproj \
+             make_all.bat \
+             make_all.sh

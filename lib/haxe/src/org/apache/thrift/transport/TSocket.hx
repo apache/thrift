@@ -83,6 +83,7 @@ class TSocket extends TTransport  {
         #else
         this.host = new Host(host);
         #end
+
         this.port = port;
     }
 
@@ -143,7 +144,7 @@ class TSocket extends TTransport  {
 
             #else
 
-            socket.waitForRead();
+            //socket.waitForRead();  -  no, this ignores timeout and blocks infinitely
             if(readCount < off) {
                 input.read(off-readCount);
                 readCount = off;
@@ -208,7 +209,6 @@ class TSocket extends TTransport  {
         }
         var bytes = outbuf.buffer;
 
-
         #else
 
         var bytes = obuffer.getBytes();
@@ -222,11 +222,13 @@ class TSocket extends TTransport  {
         ioCallback = callback;
         try {
             readCount = 0;
+
             #if js
             output.send( bytes);
             #else
             output.writeBytes( bytes, 0, bytes.length);
             #end
+
             if(ioCallback != null) {
                 ioCallback(null);  // success call
             }
@@ -260,15 +262,14 @@ class TSocket extends TTransport  {
         }
 
         #elseif flash
-
         var socket = new Socket();
         socket.connect(host, port);
 
         #else
-
         var socket = new Socket();
         socket.setBlocking(true);
         socket.setFastSend(true);
+        socket.setTimeout(5.0);
         socket.connect(host, port);
 
         #end
@@ -286,10 +287,12 @@ class TSocket extends TTransport  {
 
         #if (flash || js)
         output = socket;
-          input = socket;
+        input = socket;
+
         #else
-          output = socket.output;
-          input = socket.input;
+        output = socket.output;
+        input = socket.input;
+
         #end
     }
 
