@@ -28,20 +28,16 @@
 using namespace apache::thrift::protocol;
 using apache::thrift::transport::TTransportException;
 
-namespace apache { namespace thrift { namespace async {
+namespace apache {
+namespace thrift {
+namespace async {
 
-
-TEvhttpClientChannel::TEvhttpClientChannel(
-    const std::string& host,
-    const std::string& path,
-    const char* address,
-    int port,
-    struct event_base* eb)
-  : host_(host)
-  , path_(path)
-  , recvBuf_(NULL)
-  , conn_(NULL)
-{
+TEvhttpClientChannel::TEvhttpClientChannel(const std::string& host,
+                                           const std::string& path,
+                                           const char* address,
+                                           int port,
+                                           struct event_base* eb)
+  : host_(host), path_(path), recvBuf_(NULL), conn_(NULL) {
   conn_ = evhttp_connection_new(address, port);
   if (conn_ == NULL) {
     throw TException("evhttp_connection_new failed");
@@ -49,18 +45,15 @@ TEvhttpClientChannel::TEvhttpClientChannel(
   evhttp_connection_set_base(conn_, eb);
 }
 
-
 TEvhttpClientChannel::~TEvhttpClientChannel() {
   if (conn_ != NULL) {
     evhttp_connection_free(conn_);
   }
 }
 
-
-void TEvhttpClientChannel::sendAndRecvMessage(
-    const VoidCallback& cob,
-    apache::thrift::transport::TMemoryBuffer* sendBuf,
-    apache::thrift::transport::TMemoryBuffer* recvBuf) {
+void TEvhttpClientChannel::sendAndRecvMessage(const VoidCallback& cob,
+                                              apache::thrift::transport::TMemoryBuffer* sendBuf,
+                                              apache::thrift::transport::TMemoryBuffer* recvBuf) {
   cob_ = cob;
   recvBuf_ = recvBuf;
 
@@ -95,68 +88,64 @@ void TEvhttpClientChannel::sendAndRecvMessage(
   }
 }
 
-
-void TEvhttpClientChannel::sendMessage(
-    const VoidCallback& cob, apache::thrift::transport::TMemoryBuffer* message) {
-  (void) cob;
-  (void) message;
+void TEvhttpClientChannel::sendMessage(const VoidCallback& cob,
+                                       apache::thrift::transport::TMemoryBuffer* message) {
+  (void)cob;
+  (void)message;
   throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
-			   "Unexpected call to TEvhttpClientChannel::sendMessage");
+                           "Unexpected call to TEvhttpClientChannel::sendMessage");
 }
 
-
-void TEvhttpClientChannel::recvMessage(
-    const VoidCallback& cob, apache::thrift::transport::TMemoryBuffer* message) {
-  (void) cob;
-  (void) message;
+void TEvhttpClientChannel::recvMessage(const VoidCallback& cob,
+                                       apache::thrift::transport::TMemoryBuffer* message) {
+  (void)cob;
+  (void)message;
   throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
-			   "Unexpected call to TEvhttpClientChannel::recvMessage");
+                           "Unexpected call to TEvhttpClientChannel::recvMessage");
 }
-
 
 void TEvhttpClientChannel::finish(struct evhttp_request* req) {
   if (req == NULL) {
-  try {
-    cob_();
-  } catch(const TTransportException& e) {
-    if(e.getType() == TTransportException::END_OF_FILE)
-      throw TException("connect failed");
-    else
-      throw;
-  }
-  return;
+    try {
+      cob_();
+    } catch (const TTransportException& e) {
+      if (e.getType() == TTransportException::END_OF_FILE)
+        throw TException("connect failed");
+      else
+        throw;
+    }
+    return;
   } else if (req->response_code != 200) {
-  try {
-    cob_();
-  } catch(const TTransportException& e) {
-    std::stringstream ss;
-    ss << "server returned code " << req->response_code;
-	if(req->response_code_line)
-		ss << ": " << req->response_code_line;
-    if(e.getType() == TTransportException::END_OF_FILE)
-      throw TException(ss.str());
-    else
-      throw;
+    try {
+      cob_();
+    } catch (const TTransportException& e) {
+      std::stringstream ss;
+      ss << "server returned code " << req->response_code;
+      if (req->response_code_line)
+        ss << ": " << req->response_code_line;
+      if (e.getType() == TTransportException::END_OF_FILE)
+        throw TException(ss.str());
+      else
+        throw;
+    }
+    return;
   }
-  return;
-  }
-  recvBuf_->resetBuffer(
-      EVBUFFER_DATA(req->input_buffer),
-      static_cast<uint32_t>(EVBUFFER_LENGTH(req->input_buffer)));
+  recvBuf_->resetBuffer(EVBUFFER_DATA(req->input_buffer),
+                        static_cast<uint32_t>(EVBUFFER_LENGTH(req->input_buffer)));
   cob_();
   return;
 }
-
 
 /* static */ void TEvhttpClientChannel::response(struct evhttp_request* req, void* arg) {
   TEvhttpClientChannel* self = (TEvhttpClientChannel*)arg;
   try {
     self->finish(req);
-  } catch(std::exception& e) {
+  } catch (std::exception& e) {
     // don't propagate a C++ exception in C code (e.g. libevent)
-    std::cerr << "TEvhttpClientChannel::response exception thrown (ignored): " << e.what() << std::endl;
+    std::cerr << "TEvhttpClientChannel::response exception thrown (ignored): " << e.what()
+              << std::endl;
   }
 }
-
-
-}}} // apache::thrift::async
+}
+}
+} // apache::thrift::async

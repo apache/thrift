@@ -27,7 +27,7 @@
 
 using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::protocol::TBinaryProtocol;
-    using boost::shared_ptr;
+using boost::shared_ptr;
 
 int main() {
   shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer());
@@ -71,5 +71,4 @@ int main() {
     assert(false);
   } catch (const apache::thrift::protocol::TProtocolException& e) {
   }
-
 }

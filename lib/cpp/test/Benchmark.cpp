@@ -34,12 +34,8 @@ class Timer {
 public:
   timeval vStart;
 
-  Timer() {
-    THRIFT_GETTIMEOFDAY(&vStart, 0);
-  }
-  void start() {
-    THRIFT_GETTIMEOFDAY(&vStart, 0);
-  }
+  Timer() { THRIFT_GETTIMEOFDAY(&vStart, 0); }
+  void start() { THRIFT_GETTIMEOFDAY(&vStart, 0); }
 
   double frame() {
     timeval vEnd;
@@ -48,7 +44,6 @@ public:
     double dend = vEnd.tv_sec + ((double)vEnd.tv_usec / 1000000.0);
     return dend - dstart;
   }
-
 };
 
 int main() {
@@ -59,15 +54,15 @@ int main() {
   using namespace boost;
 
   OneOfEach ooe;
-  ooe.im_true   = true;
-  ooe.im_false  = false;
-  ooe.a_bite    = 0x7f;
+  ooe.im_true = true;
+  ooe.im_false = false;
+  ooe.a_bite = 0x7f;
   ooe.integer16 = 27000;
-  ooe.integer32 = 1<<24;
+  ooe.integer32 = 1 << 24;
   ooe.integer64 = (uint64_t)6000 * 1000 * 1000;
   ooe.double_precision = M_PI;
-  ooe.some_characters  = "JSON THIS! \"\1";
-  ooe.zomg_unicode     = "\xd7\n\a\t";
+  ooe.some_characters = "JSON THIS! \"\1";
+  ooe.zomg_unicode = "\xd7\n\a\t";
   ooe.base64 = "\1\2\3\255";
 
   boost::shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer());
@@ -77,7 +72,7 @@ int main() {
   {
     Timer timer;
 
-    for (int i = 0; i < num; i ++) {
+    for (int i = 0; i < num; i++) {
       buf->resetBuffer();
       TBinaryProtocolT<TBufferBase> prot(buf);
       ooe.write(&prot);
@@ -94,18 +89,17 @@ int main() {
 
     Timer timer;
 
-    for (int i = 0; i < num; i ++) {
+    for (int i = 0; i < num; i++) {
       OneOfEach ooe2;
       boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
-      //buf2->resetBuffer(data, datasize);
+      // buf2->resetBuffer(data, datasize);
       TBinaryProtocolT<TBufferBase> prot(buf2);
       ooe2.read(&prot);
 
-      //cout << apache::thrift::ThriftDebugString(ooe2) << endl << endl;
+      // cout << apache::thrift::ThriftDebugString(ooe2) << endl << endl;
     }
     cout << " Read: " << num / (1000 * timer.frame()) << " kHz" << endl;
   }
-
 
   return 0;
 }

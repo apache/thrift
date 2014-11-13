@@ -26,16 +26,19 @@
 #include <sys/time.h>
 #endif
 
-namespace apache { namespace thrift { namespace concurrency {
+namespace apache {
+namespace thrift {
+namespace concurrency {
 
 int64_t Util::currentTimeTicks(int64_t ticksPerSec) {
   int64_t result;
   struct timeval now;
   int ret = THRIFT_GETTIMEOFDAY(&now, NULL);
   assert(ret == 0);
-  THRIFT_UNUSED_VARIABLE(ret); //squelching "unused variable" warning
+  THRIFT_UNUSED_VARIABLE(ret); // squelching "unused variable" warning
   toTicks(result, now, ticksPerSec);
   return result;
 }
-
-}}} // apache::thrift::concurrency
+}
+}
+} // apache::thrift::concurrency

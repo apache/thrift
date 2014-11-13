@@ -29,9 +29,7 @@
  * Defined in the flex library
  */
 
-extern "C" {
-  int yylex(void);
-}
+extern "C" { int yylex(void); }
 
 int yyparse(void);
 
@@ -99,8 +97,8 @@ void check_for_list_of_bytes(t_type* list_elem_type);
  * Flex utilities
  */
 
-extern int   yylineno;
-extern char  yytext[];
+extern int yylineno;
+extern char yytext[];
 extern FILE* yyin;
 
 #endif

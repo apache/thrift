@@ -29,30 +29,26 @@
  */
 class t_doc {
 
- public:
+public:
   t_doc() : has_doc_(false) {}
 
   void set_doc(const std::string& doc) {
     doc_ = doc;
     has_doc_ = true;
-    if( (g_program_doctext_lineno == g_doctext_lineno) &&  (g_program_doctext_status == STILL_CANDIDATE)) {
+    if ((g_program_doctext_lineno == g_doctext_lineno)
+        && (g_program_doctext_status == STILL_CANDIDATE)) {
       g_program_doctext_status = ALREADY_PROCESSED;
-      pdebug("%s","program doctext set to ALREADY_PROCESSED");
+      pdebug("%s", "program doctext set to ALREADY_PROCESSED");
     }
   }
 
-  const std::string& get_doc() const {
-    return doc_;
-  }
+  const std::string& get_doc() const { return doc_; }
 
-  bool has_doc() {
-    return has_doc_;
-  }
+  bool has_doc() { return has_doc_; }
 
- private:
+private:
   std::string doc_;
   bool has_doc_;
-
 };
 
 #endif

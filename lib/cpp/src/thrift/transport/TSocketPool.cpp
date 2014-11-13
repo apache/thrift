@@ -24,7 +24,9 @@
 
 #include <thrift/transport/TSocketPool.h>
 
-namespace apache { namespace thrift { namespace transport {
+namespace apache {
+namespace thrift {
+namespace transport {
 
 using namespace std;
 
@@ -35,43 +37,41 @@ using boost::shared_ptr;
  *
  */
 TSocketPoolServer::TSocketPoolServer()
-  : host_(""),
-    port_(0),
-    socket_(THRIFT_INVALID_SOCKET),
-    lastFailTime_(0),
-    consecutiveFailures_(0) {}
+  : host_(""), port_(0), socket_(THRIFT_INVALID_SOCKET), lastFailTime_(0), consecutiveFailures_(0) {
+}
 
 /**
  * Constructor for TSocketPool server
  */
-TSocketPoolServer::TSocketPoolServer(const string &host, int port)
+TSocketPoolServer::TSocketPoolServer(const string& host, int port)
   : host_(host),
     port_(port),
     socket_(THRIFT_INVALID_SOCKET),
     lastFailTime_(0),
-    consecutiveFailures_(0) {}
+    consecutiveFailures_(0) {
+}
 
 /**
  * TSocketPool implementation.
  *
  */
 
-TSocketPool::TSocketPool() : TSocket(),
-  numRetries_(1),
-  retryInterval_(60),
-  maxConsecutiveFailures_(1),
-  randomize_(true),
-  alwaysTryLast_(true) {
+TSocketPool::TSocketPool()
+  : TSocket(),
+    numRetries_(1),
+    retryInterval_(60),
+    maxConsecutiveFailures_(1),
+    randomize_(true),
+    alwaysTryLast_(true) {
 }
 
-TSocketPool::TSocketPool(const vector<string> &hosts,
-                         const vector<int> &ports) : TSocket(),
-  numRetries_(1),
-  retryInterval_(60),
-  maxConsecutiveFailures_(1),
-  randomize_(true),
-  alwaysTryLast_(true)
-{
+TSocketPool::TSocketPool(const vector<string>& hosts, const vector<int>& ports)
+  : TSocket(),
+    numRetries_(1),
+    retryInterval_(60),
+    maxConsecutiveFailures_(1),
+    randomize_(true),
+    alwaysTryLast_(true) {
   if (hosts.size() != ports.size()) {
     GlobalOutput("TSocketPool::TSocketPool: hosts.size != ports.size");
     throw TTransportException(TTransportException::BAD_ARGS);
@@ -82,41 +82,41 @@ TSocketPool::TSocketPool(const vector<string> &hosts,
   }
 }
 
-TSocketPool::TSocketPool(const vector<pair<string, int> >& servers) : TSocket(),
-  numRetries_(1),
-  retryInterval_(60),
-  maxConsecutiveFailures_(1),
-  randomize_(true),
-  alwaysTryLast_(true)
-{
+TSocketPool::TSocketPool(const vector<pair<string, int> >& servers)
+  : TSocket(),
+    numRetries_(1),
+    retryInterval_(60),
+    maxConsecutiveFailures_(1),
+    randomize_(true),
+    alwaysTryLast_(true) {
   for (unsigned i = 0; i < servers.size(); ++i) {
     addServer(servers[i].first, servers[i].second);
   }
 }
 
-TSocketPool::TSocketPool(const vector< shared_ptr<TSocketPoolServer> >& servers) : TSocket(),
-  servers_(servers),
-  numRetries_(1),
-  retryInterval_(60),
-  maxConsecutiveFailures_(1),
-  randomize_(true),
-  alwaysTryLast_(true)
-{
+TSocketPool::TSocketPool(const vector<shared_ptr<TSocketPoolServer> >& servers)
+  : TSocket(),
+    servers_(servers),
+    numRetries_(1),
+    retryInterval_(60),
+    maxConsecutiveFailures_(1),
+    randomize_(true),
+    alwaysTryLast_(true) {
 }
 
-TSocketPool::TSocketPool(const string& host, int port) : TSocket(),
-  numRetries_(1),
-  retryInterval_(60),
-  maxConsecutiveFailures_(1),
-  randomize_(true),
-  alwaysTryLast_(true)
-{
+TSocketPool::TSocketPool(const string& host, int port)
+  : TSocket(),
+    numRetries_(1),
+    retryInterval_(60),
+    maxConsecutiveFailures_(1),
+    randomize_(true),
+    alwaysTryLast_(true) {
   addServer(host, port);
 }
 
 TSocketPool::~TSocketPool() {
-  vector< shared_ptr<TSocketPoolServer> >::const_iterator iter = servers_.begin();
-  vector< shared_ptr<TSocketPoolServer> >::const_iterator iterEnd = servers_.end();
+  vector<shared_ptr<TSocketPoolServer> >::const_iterator iter = servers_.begin();
+  vector<shared_ptr<TSocketPoolServer> >::const_iterator iterEnd = servers_.end();
   for (; iter != iterEnd; ++iter) {
     setCurrentServer(*iter);
     TSocketPool::close();
@@ -127,17 +127,17 @@ void TSocketPool::addServer(const string& host, int port) {
   servers_.push_back(shared_ptr<TSocketPoolServer>(new TSocketPoolServer(host, port)));
 }
 
-void TSocketPool::addServer(shared_ptr<TSocketPoolServer> &server) {
+void TSocketPool::addServer(shared_ptr<TSocketPoolServer>& server) {
   if (server) {
     servers_.push_back(server);
   }
 }
 
-void TSocketPool::setServers(const vector< shared_ptr<TSocketPoolServer> >& servers) {
+void TSocketPool::setServers(const vector<shared_ptr<TSocketPoolServer> >& servers) {
   servers_ = servers;
 }
 
-void TSocketPool::getServers(vector< shared_ptr<TSocketPoolServer> >& servers) {
+void TSocketPool::getServers(vector<shared_ptr<TSocketPoolServer> >& servers) {
   servers = servers_;
 }
 
@@ -148,7 +148,6 @@ void TSocketPool::setNumRetries(int numRetries) {
 void TSocketPool::setRetryInterval(int retryInterval) {
   retryInterval_ = retryInterval;
 }
-
 
 void TSocketPool::setMaxConsecutiveFailures(int maxConsecutiveFailures) {
   maxConsecutiveFailures_ = maxConsecutiveFailures;
@@ -162,7 +161,7 @@ void TSocketPool::setAlwaysTryLast(bool alwaysTryLast) {
   alwaysTryLast_ = alwaysTryLast;
 }
 
-void TSocketPool::setCurrentServer(const shared_ptr<TSocketPoolServer> &server) {
+void TSocketPool::setCurrentServer(const shared_ptr<TSocketPoolServer>& server) {
   currentServer_ = server;
   host_ = server->host_;
   port_ = server->port_;
@@ -192,7 +191,7 @@ void TSocketPool::open() {
 
   for (size_t i = 0; i < numServers; ++i) {
 
-    shared_ptr<TSocketPoolServer> &server = servers_[i];
+    shared_ptr<TSocketPoolServer>& server = servers_[i];
     // Impersonate the server socket
     setCurrentServer(server);
 
@@ -217,7 +216,7 @@ void TSocketPool::open() {
         try {
           TSocket::open();
         } catch (TException e) {
-          string errStr = "TSocketPool::open failed "+getSocketInfo()+": "+e.what();
+          string errStr = "TSocketPool::open failed " + getSocketInfo() + ": " + e.what();
           GlobalOutput(errStr.c_str());
           socket_ = THRIFT_INVALID_SOCKET;
           continue;
@@ -250,5 +249,6 @@ void TSocketPool::close() {
     currentServer_->socket_ = THRIFT_INVALID_SOCKET;
   }
 }
-
-}}} // apache::thrift::transport
+}
+}
+} // apache::thrift::transport
