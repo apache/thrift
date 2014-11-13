@@ -28,31 +28,27 @@
 #include <thrift/transport/TTransport.h>
 #include <thrift/transport/TVirtualTransport.h>
 
-namespace apache { namespace thrift { namespace transport {
+namespace apache {
+namespace thrift {
+namespace transport {
 
 /**
  * Dead-simple wrapper around a file descriptor.
  *
  */
 class TFDTransport : public TVirtualTransport<TFDTransport> {
- public:
-  enum ClosePolicy
-  { NO_CLOSE_ON_DESTROY = 0
-  , CLOSE_ON_DESTROY = 1
-  };
+public:
+  enum ClosePolicy { NO_CLOSE_ON_DESTROY = 0, CLOSE_ON_DESTROY = 1 };
 
   TFDTransport(int fd, ClosePolicy close_policy = NO_CLOSE_ON_DESTROY)
-    : fd_(fd)
-    , close_policy_(close_policy)
-  {}
+    : fd_(fd), close_policy_(close_policy) {}
 
   ~TFDTransport() {
     if (close_policy_ == CLOSE_ON_DESTROY) {
       try {
         close();
-      } catch(TTransportException& ex) {
-        GlobalOutput.printf("~TFDTransport TTransportException: '%s'",
-                            ex.what());
+      } catch (TTransportException& ex) {
+        GlobalOutput.printf("~TFDTransport TTransportException: '%s'", ex.what());
       }
     }
   }
@@ -70,11 +66,12 @@ class TFDTransport : public TVirtualTransport<TFDTransport> {
   void setFD(int fd) { fd_ = fd; }
   int getFD() { return fd_; }
 
- protected:
+protected:
   int fd_;
   ClosePolicy close_policy_;
 };
-
-}}} // apache::thrift::transport
+}
+}
+} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TFDTRANSPORT_H_

@@ -24,34 +24,32 @@
 #include <thrift/async/TAsyncBufferProcessor.h>
 #include <thrift/protocol/TProtocol.h>
 
-namespace apache { namespace thrift { namespace async {
+namespace apache {
+namespace thrift {
+namespace async {
 
 class TAsyncProtocolProcessor : public TAsyncBufferProcessor {
- public:
-  TAsyncProtocolProcessor(
-      boost::shared_ptr<TAsyncProcessor> underlying,
-      boost::shared_ptr<apache::thrift::protocol::TProtocolFactory> pfact)
-    : underlying_(underlying)
-    , pfact_(pfact)
-  {}
+public:
+  TAsyncProtocolProcessor(boost::shared_ptr<TAsyncProcessor> underlying,
+                          boost::shared_ptr<apache::thrift::protocol::TProtocolFactory> pfact)
+    : underlying_(underlying), pfact_(pfact) {}
 
-  virtual void process(
-      apache::thrift::stdcxx::function<void(bool healthy)> _return,
-      boost::shared_ptr<apache::thrift::transport::TBufferBase> ibuf,
-      boost::shared_ptr<apache::thrift::transport::TBufferBase> obuf);
+  virtual void process(apache::thrift::stdcxx::function<void(bool healthy)> _return,
+                       boost::shared_ptr<apache::thrift::transport::TBufferBase> ibuf,
+                       boost::shared_ptr<apache::thrift::transport::TBufferBase> obuf);
 
   virtual ~TAsyncProtocolProcessor() {}
 
- private:
-  static void finish(
-      apache::thrift::stdcxx::function<void(bool healthy)> _return,
-      boost::shared_ptr<apache::thrift::protocol::TProtocol> oprot,
-      bool healthy);
+private:
+  static void finish(apache::thrift::stdcxx::function<void(bool healthy)> _return,
+                     boost::shared_ptr<apache::thrift::protocol::TProtocol> oprot,
+                     bool healthy);
 
   boost::shared_ptr<TAsyncProcessor> underlying_;
   boost::shared_ptr<apache::thrift::protocol::TProtocolFactory> pfact_;
 };
-
-}}} // apache::thrift::async
+}
+}
+} // apache::thrift::async
 
 #endif // #ifndef _THRIFT_TNAME_ME_H_

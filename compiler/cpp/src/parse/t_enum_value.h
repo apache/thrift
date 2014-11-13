@@ -30,24 +30,18 @@
  *
  */
 class t_enum_value : public t_doc {
- public:
-  t_enum_value(std::string name, int value) :
-    name_(name),
-    value_(value) {}
+public:
+  t_enum_value(std::string name, int value) : name_(name), value_(value) {}
 
   ~t_enum_value() {}
 
-  const std::string& get_name() const {
-    return name_;
-  }
+  const std::string& get_name() const { return name_; }
 
-  int get_value() const {
-    return value_;
-  }
+  int get_value() const { return value_; }
 
   std::map<std::string, std::string> annotations_;
 
- private:
+private:
   std::string name_;
   int value_;
 };

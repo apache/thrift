@@ -243,3 +243,6 @@ EXTRA_DIST = \
              thrift-z.pc.in \
              thrift-qt.pc.in \
              $(WINDOWS_DIST)
+
+style-local:
+	$(CPPSTYLE_CMD)

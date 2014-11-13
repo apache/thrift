@@ -48,26 +48,24 @@ boost::mt19937 rng;
  */
 
 class SizeGenerator {
- public:
+public:
   virtual ~SizeGenerator() {}
   virtual unsigned int getSize() = 0;
 };
 
 class ConstantSizeGenerator : public SizeGenerator {
- public:
+public:
   ConstantSizeGenerator(unsigned int value) : value_(value) {}
-  virtual unsigned int getSize() {
-    return value_;
-  }
+  virtual unsigned int getSize() { return value_; }
 
- private:
+private:
   unsigned int value_;
 };
 
 class LogNormalSizeGenerator : public SizeGenerator {
- public:
-  LogNormalSizeGenerator(double mean, double std_dev) :
-      gen_(rng, boost::lognormal_distribution<double>(mean, std_dev)) {}
+public:
+  LogNormalSizeGenerator(double mean, double std_dev)
+    : gen_(rng, boost::lognormal_distribution<double>(mean, std_dev)) {}
 
   virtual unsigned int getSize() {
     // Loop until we get a size of 1 or more
@@ -79,8 +77,8 @@ class LogNormalSizeGenerator : public SizeGenerator {
     }
   }
 
- private:
-  boost::variate_generator< boost::mt19937, boost::lognormal_distribution<double> > gen_;
+private:
+  boost::variate_generator<boost::mt19937, boost::lognormal_distribution<double> > gen_;
 };
 
 uint8_t* gen_uniform_buffer(uint32_t buf_len, uint8_t c) {
@@ -95,10 +93,10 @@ uint8_t* gen_compressible_buffer(uint32_t buf_len) {
   // Generate small runs of alternately increasing and decreasing bytes
   boost::uniform_smallint<uint32_t> run_length_distribution(1, 64);
   boost::uniform_smallint<uint8_t> byte_distribution(0, UINT8_MAX);
-  boost::variate_generator< boost::mt19937, boost::uniform_smallint<uint8_t> >
-    byte_generator(rng, byte_distribution);
-  boost::variate_generator< boost::mt19937, boost::uniform_smallint<uint32_t> >
-    run_len_generator(rng, run_length_distribution);
+  boost::variate_generator<boost::mt19937, boost::uniform_smallint<uint8_t> >
+      byte_generator(rng, byte_distribution);
+  boost::variate_generator<boost::mt19937, boost::uniform_smallint<uint32_t> >
+      run_len_generator(rng, run_length_distribution);
 
   uint32_t idx = 0;
   int8_t step = 1;
@@ -125,8 +123,8 @@ uint8_t* gen_random_buffer(uint32_t buf_len) {
   uint8_t* buf = new uint8_t[buf_len];
 
   boost::uniform_smallint<uint8_t> distribution(0, UINT8_MAX);
-  boost::variate_generator< boost::mt19937, boost::uniform_smallint<uint8_t> >
-    generator(rng, distribution);
+  boost::variate_generator<boost::mt19937, boost::uniform_smallint<uint8_t> >
+      generator(rng, distribution);
 
   for (uint32_t n = 0; n < buf_len; ++n) {
     buf[n] = generator();
@@ -167,7 +165,7 @@ void test_separate_checksum(const uint8_t* buf, uint32_t buf_len) {
   membuf->appendBufferToString(tmp_buf);
   zlib_trans.reset(new TZlibTransport(membuf,
                                       TZlibTransport::DEFAULT_URBUF_SIZE,
-                                      static_cast<uint32_t>(tmp_buf.length()-1)));
+                                      static_cast<uint32_t>(tmp_buf.length() - 1)));
 
   boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
   uint32_t got = zlib_trans->readAll(mirror.get(), buf_len);
@@ -186,8 +184,7 @@ void test_incomplete_checksum(const uint8_t* buf, uint32_t buf_len) {
   string tmp_buf;
   membuf->appendBufferToString(tmp_buf);
   tmp_buf.erase(tmp_buf.length() - 1);
-  membuf->resetBuffer(const_cast<uint8_t*>(
-                        reinterpret_cast<const uint8_t*>(tmp_buf.data())),
+  membuf->resetBuffer(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(tmp_buf.data())),
                       static_cast<uint32_t>(tmp_buf.length()));
 
   boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
@@ -202,7 +199,8 @@ void test_incomplete_checksum(const uint8_t* buf, uint32_t buf_len) {
   }
 }
 
-void test_read_write_mix(const uint8_t* buf, uint32_t buf_len,
+void test_read_write_mix(const uint8_t* buf,
+                         uint32_t buf_len,
                          const boost::shared_ptr<SizeGenerator>& write_gen,
                          const boost::shared_ptr<SizeGenerator>& read_gen) {
   // Try it with a mix of read/write sizes.
@@ -232,7 +230,7 @@ void test_read_write_mix(const uint8_t* buf, uint32_t buf_len,
     }
     uint32_t got = zlib_trans->read(mirror.get() + tot, read_len);
     BOOST_REQUIRE_LE(got, expected_read_len);
-    BOOST_REQUIRE_NE(got, (uint32_t) 0);
+    BOOST_REQUIRE_NE(got, (uint32_t)0);
     tot += got;
   }
 
@@ -264,8 +262,7 @@ void test_invalid_checksum(const uint8_t* buf, uint32_t buf_len) {
   // error when only modifying checksum bytes.
   int index = static_cast<int>(tmp_buf.size() - 1);
   tmp_buf[index]++;
-  membuf->resetBuffer(const_cast<uint8_t*>(
-                        reinterpret_cast<const uint8_t*>(tmp_buf.data())),
+  membuf->resetBuffer(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(tmp_buf.data())),
                       static_cast<uint32_t>(tmp_buf.length()));
 
   boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
@@ -323,21 +320,22 @@ void test_no_write() {
     TZlibTransport w_zlib_trans(membuf);
   }
 
-  BOOST_CHECK_EQUAL(membuf->available_read(), (uint32_t) 0);
+  BOOST_CHECK_EQUAL(membuf->available_read(), (uint32_t)0);
 }
 
 /*
  * Initialization
  */
 
-#define ADD_TEST_CASE(suite, name, function, ...) \
-  do { \
-    ::std::ostringstream name_ss; \
-    name_ss << name << "-" << BOOST_STRINGIZE(function); \
-    ::boost::unit_test::test_case* tc = ::boost::unit_test::make_test_case( \
-        ::apache::thrift::stdcxx::bind(function, ## __VA_ARGS__), \
-        name_ss.str()); \
-    (suite)->add(tc); \
+#define ADD_TEST_CASE(suite, name, function, ...)                                                  \
+  do {                                                                                             \
+    ::std::ostringstream name_ss;                                                                  \
+    name_ss << name << "-" << BOOST_STRINGIZE(function);                                           \
+    ::boost::unit_test::test_case* tc                                                              \
+        = ::boost::unit_test::make_test_case(::apache::thrift::stdcxx::bind(function,              \
+                                                                            ##__VA_ARGS__),        \
+                                             name_ss.str());                                       \
+    (suite)->add(tc);                                                                              \
   } while (0)
 
 void add_tests(boost::unit_test::test_suite* suite,
@@ -350,20 +348,30 @@ void add_tests(boost::unit_test::test_suite* suite,
   ADD_TEST_CASE(suite, name, test_invalid_checksum, buf, buf_len);
   ADD_TEST_CASE(suite, name, test_write_after_flush, buf, buf_len);
 
-  boost::shared_ptr<SizeGenerator> size_32k(new ConstantSizeGenerator(1<<15));
+  boost::shared_ptr<SizeGenerator> size_32k(new ConstantSizeGenerator(1 << 15));
   boost::shared_ptr<SizeGenerator> size_lognormal(new LogNormalSizeGenerator(20, 30));
-  ADD_TEST_CASE(suite, name << "-constant",
-                test_read_write_mix, buf, buf_len,
-                size_32k, size_32k);
-  ADD_TEST_CASE(suite, name << "-lognormal-write",
-                test_read_write_mix, buf, buf_len,
-                size_lognormal, size_32k);
-  ADD_TEST_CASE(suite, name << "-lognormal-read",
-                test_read_write_mix, buf, buf_len,
-                size_32k, size_lognormal);
-  ADD_TEST_CASE(suite, name << "-lognormal-both",
-                test_read_write_mix, buf, buf_len,
-                size_lognormal, size_lognormal);
+  ADD_TEST_CASE(suite, name << "-constant", test_read_write_mix, buf, buf_len, size_32k, size_32k);
+  ADD_TEST_CASE(suite,
+                name << "-lognormal-write",
+                test_read_write_mix,
+                buf,
+                buf_len,
+                size_lognormal,
+                size_32k);
+  ADD_TEST_CASE(suite,
+                name << "-lognormal-read",
+                test_read_write_mix,
+                buf,
+                buf_len,
+                size_32k,
+                size_lognormal);
+  ADD_TEST_CASE(suite,
+                name << "-lognormal-both",
+                test_read_write_mix,
+                buf,
+                buf_len,
+                size_lognormal,
+                size_lognormal);
 
   // Test with a random size distribution,
   // but use the exact same distribution for reading as for writing.
@@ -373,9 +381,13 @@ void add_tests(boost::unit_test::test_suite* suite,
   // both start with random number generators in the same state.
   boost::shared_ptr<SizeGenerator> write_size_gen(new LogNormalSizeGenerator(20, 30));
   boost::shared_ptr<SizeGenerator> read_size_gen(new LogNormalSizeGenerator(20, 30));
-  ADD_TEST_CASE(suite, name << "-lognormal-same-distribution",
-                test_read_write_mix, buf, buf_len,
-                write_size_gen, read_size_gen);
+  ADD_TEST_CASE(suite,
+                name << "-lognormal-same-distribution",
+                test_read_write_mix,
+                buf,
+                buf_len,
+                write_size_gen,
+                read_size_gen);
 }
 
 void print_usage(FILE* f, const char* argv0) {
@@ -392,11 +404,10 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   printf("seed: %" PRIu32 "\n", seed);
   rng.seed(seed);
 
-  boost::unit_test::test_suite* suite =
-    &boost::unit_test::framework::master_test_suite();
+  boost::unit_test::test_suite* suite = &boost::unit_test::framework::master_test_suite();
   suite->p_name.value = "ZlibTest";
 
-  uint32_t buf_len = 1024*32;
+  uint32_t buf_len = 1024 * 32;
   add_tests(suite, gen_uniform_buffer(buf_len, 'a'), buf_len, "uniform");
   add_tests(suite, gen_compressible_buffer(buf_len), buf_len, "compressible");
   add_tests(suite, gen_random_buffer(buf_len), buf_len, "random");

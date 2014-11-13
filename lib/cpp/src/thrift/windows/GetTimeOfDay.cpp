@@ -24,89 +24,73 @@
 #include <time.h>
 
 #if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
-#   define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
+#define DELTA_EPOCH_IN_MICROSECS 11644473600000000Ui64
 #else
-#   define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL
+#define DELTA_EPOCH_IN_MICROSECS 11644473600000000ULL
 #endif
 
-struct timezone
-{
-    int  tz_minuteswest; /* minutes W of Greenwich */
-    int  tz_dsttime;     /* type of dst correction */
+struct timezone {
+  int tz_minuteswest; /* minutes W of Greenwich */
+  int tz_dsttime;     /* type of dst correction */
 };
 
-int thrift_gettimeofday(struct timeval * tv, struct timezone * tz)
-{
-    FILETIME         ft;
-    unsigned __int64 tmpres(0);
-    static int       tzflag;
+int thrift_gettimeofday(struct timeval* tv, struct timezone* tz) {
+  FILETIME ft;
+  unsigned __int64 tmpres(0);
+  static int tzflag;
 
-    if (NULL != tv)
-    {
-        GetSystemTimeAsFileTime(&ft);
+  if (NULL != tv) {
+    GetSystemTimeAsFileTime(&ft);
 
-        tmpres |= ft.dwHighDateTime;
-        tmpres <<= 32;
-        tmpres |= ft.dwLowDateTime;
+    tmpres |= ft.dwHighDateTime;
+    tmpres <<= 32;
+    tmpres |= ft.dwLowDateTime;
 
-        /*converting file time to unix epoch*/
-        tmpres -= DELTA_EPOCH_IN_MICROSECS;
-        tmpres /= 10;  /*convert into microseconds*/
-        tv->tv_sec = (long)(tmpres / 1000000UL);
-        tv->tv_usec = (long)(tmpres % 1000000UL);
+    /*converting file time to unix epoch*/
+    tmpres -= DELTA_EPOCH_IN_MICROSECS;
+    tmpres /= 10; /*convert into microseconds*/
+    tv->tv_sec = (long)(tmpres / 1000000UL);
+    tv->tv_usec = (long)(tmpres % 1000000UL);
+  }
+
+  if (NULL != tz) {
+    if (!tzflag) {
+      _tzset();
+      tzflag++;
     }
 
-    if (NULL != tz)
-    {
-        if (!tzflag)
-        {
-            _tzset();
-            tzflag++;
-        }
-
-        long time_zone(0);
-        errno_t err(_get_timezone(&time_zone));
-        if (err == NO_ERROR)
-        {
-            tz->tz_minuteswest = time_zone / 60;
-        }
-        else
-        {
-            return -1;
-        }
-
-        int day_light(0);
-        err = (_get_daylight(&day_light));
-        if (err == NO_ERROR)
-        {
-            tz->tz_dsttime = day_light;
-            return 0;
-        }
-        else
-        {
-            return -1;
-        }
+    long time_zone(0);
+    errno_t err(_get_timezone(&time_zone));
+    if (err == NO_ERROR) {
+      tz->tz_minuteswest = time_zone / 60;
+    } else {
+      return -1;
     }
 
-    return 0;
+    int day_light(0);
+    err = (_get_daylight(&day_light));
+    if (err == NO_ERROR) {
+      tz->tz_dsttime = day_light;
+      return 0;
+    } else {
+      return -1;
+    }
+  }
+
+  return 0;
 }
 
-int thrift_sleep(unsigned int seconds)
-{
+int thrift_sleep(unsigned int seconds) {
   ::Sleep(seconds * 1000);
   return 0;
 }
-int thrift_usleep(unsigned int microseconds)
-{
-  unsigned int milliseconds = (microseconds + 999)/ 1000;
+int thrift_usleep(unsigned int microseconds) {
+  unsigned int milliseconds = (microseconds + 999) / 1000;
   ::Sleep(milliseconds);
   return 0;
 }
 
-char *thrift_ctime_r(const time_t *_clock, char *_buf)
-{
-   strcpy(_buf, ctime(_clock));
-   return _buf;
+char* thrift_ctime_r(const time_t* _clock, char* _buf) {
+  strcpy(_buf, ctime(_clock));
+  return _buf;
 }
-
-

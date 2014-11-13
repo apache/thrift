@@ -26,7 +26,9 @@
 #include <string>
 #include <iostream>
 
-namespace apache { namespace thrift { namespace server {
+namespace apache {
+namespace thrift {
+namespace server {
 
 using boost::shared_ptr;
 using namespace std;
@@ -38,24 +40,21 @@ using namespace apache::thrift::transport;
 class TThreadPoolServer::Task : public Runnable {
 
 public:
-
-  Task(TThreadPoolServer &server,
+  Task(TThreadPoolServer& server,
        shared_ptr<TProcessor> processor,
        shared_ptr<TProtocol> input,
        shared_ptr<TProtocol> output,
-       shared_ptr<TTransport> transport) :
-    server_(server),
-    processor_(processor),
-    input_(input),
-    output_(output),
-    transport_(transport) {
-  }
+       shared_ptr<TTransport> transport)
+    : server_(server),
+      processor_(processor),
+      input_(input),
+      output_(output),
+      transport_(transport) {}
 
   ~Task() {}
 
   void run() {
-    boost::shared_ptr<TServerEventHandler> eventHandler =
-      server_.getEventHandler();
+    boost::shared_ptr<TServerEventHandler> eventHandler = server_.getEventHandler();
     void* connectionContext = NULL;
     if (eventHandler) {
       connectionContext = eventHandler->createContext(input_, output_);
@@ -65,8 +64,8 @@ public:
         if (eventHandler) {
           eventHandler->processContext(connectionContext, transport_);
         }
-        if (!processor_->process(input_, output_, connectionContext) ||
-            !input_->getTransport()->peek()) {
+        if (!processor_->process(input_, output_, connectionContext)
+            || !input_->getTransport()->peek()) {
           break;
         }
       }
@@ -76,11 +75,11 @@ public:
       // string errStr = string("TThreadPoolServer client died: ") + ttx.what();
       // GlobalOutput(errStr.c_str());
     } catch (const std::exception& x) {
-      GlobalOutput.printf("TThreadPoolServer exception %s: %s",
-                          typeid(x).name(), x.what());
+      GlobalOutput.printf("TThreadPoolServer exception %s: %s", typeid(x).name(), x.what());
     } catch (...) {
-      GlobalOutput("TThreadPoolServer, unexpected exception in "
-                   "TThreadPoolServer::Task::run()");
+      GlobalOutput(
+          "TThreadPoolServer, unexpected exception in "
+          "TThreadPoolServer::Task::run()");
     }
 
     if (eventHandler) {
@@ -99,10 +98,9 @@ public:
       string errStr = string("TThreadPoolServer output close failed: ") + ttx.what();
       GlobalOutput(errStr.c_str());
     }
-
   }
 
- private:
+private:
   TServer& server_;
   shared_ptr<TProcessor> processor_;
   shared_ptr<TProtocol> input_;
@@ -110,7 +108,8 @@ public:
   shared_ptr<TTransport> transport_;
 };
 
-TThreadPoolServer::~TThreadPoolServer() {}
+TThreadPoolServer::~TThreadPoolServer() {
+}
 
 void TThreadPoolServer::serve() {
   shared_ptr<TTransport> client;
@@ -144,34 +143,51 @@ void TThreadPoolServer::serve() {
       inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
       outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
 
-      shared_ptr<TProcessor> processor = getProcessor(inputProtocol,
-                                                      outputProtocol, client);
+      shared_ptr<TProcessor> processor = getProcessor(inputProtocol, outputProtocol, client);
 
       // Add to threadmanager pool
-      shared_ptr<TThreadPoolServer::Task> task(new TThreadPoolServer::Task(
-            *this, processor, inputProtocol, outputProtocol, client));
+      shared_ptr<TThreadPoolServer::Task> task(
+          new TThreadPoolServer::Task(*this, processor, inputProtocol, outputProtocol, client));
       threadManager_->add(task, timeout_, taskExpiration_);
 
     } catch (TTransportException& ttx) {
-      if (inputTransport) { inputTransport->close(); }
-      if (outputTransport) { outputTransport->close(); }
-      if (client) { client->close(); }
+      if (inputTransport) {
+        inputTransport->close();
+      }
+      if (outputTransport) {
+        outputTransport->close();
+      }
+      if (client) {
+        client->close();
+      }
       if (!stop_ || ttx.getType() != TTransportException::INTERRUPTED) {
         string errStr = string("TThreadPoolServer: TServerTransport died on accept: ") + ttx.what();
         GlobalOutput(errStr.c_str());
       }
       continue;
     } catch (TException& tx) {
-      if (inputTransport) { inputTransport->close(); }
-      if (outputTransport) { outputTransport->close(); }
-      if (client) { client->close(); }
+      if (inputTransport) {
+        inputTransport->close();
+      }
+      if (outputTransport) {
+        outputTransport->close();
+      }
+      if (client) {
+        client->close();
+      }
       string errStr = string("TThreadPoolServer: Caught TException: ") + tx.what();
       GlobalOutput(errStr.c_str());
       continue;
     } catch (string s) {
-      if (inputTransport) { inputTransport->close(); }
-      if (outputTransport) { outputTransport->close(); }
-      if (client) { client->close(); }
+      if (inputTransport) {
+        inputTransport->close();
+      }
+      if (outputTransport) {
+        outputTransport->close();
+      }
+      if (client) {
+        client->close();
+      }
       string errStr = "TThreadPoolServer: Unknown exception: " + s;
       GlobalOutput(errStr.c_str());
       break;
@@ -183,13 +199,12 @@ void TThreadPoolServer::serve() {
     try {
       serverTransport_->close();
       threadManager_->join();
-    } catch (TException &tx) {
+    } catch (TException& tx) {
       string errStr = string("TThreadPoolServer: Exception shutting down: ") + tx.what();
       GlobalOutput(errStr.c_str());
     }
     stop_ = false;
   }
-
 }
 
 int64_t TThreadPoolServer::getTimeout() const {
@@ -207,5 +222,6 @@ int64_t TThreadPoolServer::getTaskExpiration() const {
 void TThreadPoolServer::setTaskExpiration(int64_t value) {
   taskExpiration_ = value;
 }
-
-}}} // apache::thrift::server
+}
+}
+} // apache::thrift::server

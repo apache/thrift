@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
 
   std::string arg;
 
-  std::vector<std::string>  args(argc - 1 > 1 ? argc - 1 : 1);
+  std::vector<std::string> args(argc - 1 > 1 ? argc - 1 : 1);
 
   args[0] = "all";
 
@@ -45,9 +45,9 @@ int main(int argc, char** argv) {
 
     std::cout << "ThreadFactory tests..." << std::endl;
 
-    size_t count =  1000;
-    size_t floodLoops =  1;
-    size_t floodCount =  100000;
+    size_t count = 1000;
+    size_t floodLoops = 1;
+    size_t floodCount = 100000;
 
     std::cout << "\t\tThreadFactory reap N threads test: N = " << count << std::endl;
 
@@ -89,7 +89,6 @@ int main(int argc, char** argv) {
     std::cout << "\t\t\tscall per ms: " << count / (time01 - time00) << std::endl;
   }
 
-
   if (runAll || args[0].compare("timer-manager") == 0) {
 
     std::cout << "TimerManager tests..." << std::endl;
@@ -113,16 +112,17 @@ int main(int argc, char** argv) {
 
       int64_t delay = 10LL;
 
-      std::cout << "\t\tThreadManager load test: worker count: " << workerCount << " task count: " << taskCount << " delay: " << delay << std::endl;
+      std::cout << "\t\tThreadManager load test: worker count: " << workerCount
+                << " task count: " << taskCount << " delay: " << delay << std::endl;
 
       ThreadManagerTests threadManagerTests;
 
       assert(threadManagerTests.loadTest(taskCount, delay, workerCount));
 
-      std::cout << "\t\tThreadManager block test: worker count: " << workerCount << " delay: " << delay << std::endl;
+      std::cout << "\t\tThreadManager block test: worker count: " << workerCount
+                << " delay: " << delay << std::endl;
 
       assert(threadManagerTests.blockTest(delay, workerCount));
-
     }
   }
 
@@ -140,11 +140,12 @@ int main(int argc, char** argv) {
 
       int64_t delay = 10LL;
 
-      for (size_t workerCount = minWorkerCount; workerCount < maxWorkerCount; workerCount*= 2) {
+      for (size_t workerCount = minWorkerCount; workerCount < maxWorkerCount; workerCount *= 2) {
 
         size_t taskCount = workerCount * tasksPerWorker;
 
-        std::cout << "\t\tThreadManager load test: worker count: " << workerCount << " task count: " << taskCount << " delay: " << delay << std::endl;
+        std::cout << "\t\tThreadManager load test: worker count: " << workerCount
+                  << " task count: " << taskCount << " delay: " << delay << std::endl;
 
         ThreadManagerTests threadManagerTests;
 

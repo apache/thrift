@@ -23,15 +23,17 @@
 #include <boost/shared_ptr.hpp>
 #include <thrift/transport/TServerSocket.h>
 
-namespace apache { namespace thrift { namespace transport {
+namespace apache {
+namespace thrift {
+namespace transport {
 
 class TSSLSocketFactory;
 
 /**
  * Server socket that accepts SSL connections.
  */
-class TSSLServerSocket: public TServerSocket {
- public:
+class TSSLServerSocket : public TServerSocket {
+public:
   /**
    * Constructor.
    *
@@ -47,13 +49,17 @@ class TSSLServerSocket: public TServerSocket {
    * @param recvTimeout Socket receive timeout
    * @param factory     SSL socket factory implementation
    */
-  TSSLServerSocket(int port, int sendTimeout, int recvTimeout,
+  TSSLServerSocket(int port,
+                   int sendTimeout,
+                   int recvTimeout,
                    boost::shared_ptr<TSSLSocketFactory> factory);
- protected:
+
+protected:
   boost::shared_ptr<TSocket> createSocket(THRIFT_SOCKET socket);
   boost::shared_ptr<TSSLSocketFactory> factory_;
 };
-
-}}}
+}
+}
+}
 
 #endif

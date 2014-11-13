@@ -26,12 +26,14 @@ struct event_base;
 struct evhttp;
 struct evhttp_request;
 
-namespace apache { namespace thrift { namespace async {
+namespace apache {
+namespace thrift {
+namespace async {
 
 class TAsyncBufferProcessor;
 
 class TEvhttpServer {
- public:
+public:
   /**
    * Create a TEvhttpServer for use with an external evhttp instance.
    * Must be manually installed with evhttp_set_cb, using
@@ -55,7 +57,7 @@ class TEvhttpServer {
 
   struct event_base* getEventBase();
 
- private:
+private:
   struct RequestContext;
 
   void process(struct evhttp_request* req);
@@ -65,7 +67,8 @@ class TEvhttpServer {
   struct event_base* eb_;
   struct evhttp* eh_;
 };
-
-}}} // apache::thrift::async
+}
+}
+} // apache::thrift::async
 
 #endif // #ifndef _THRIFT_TEVHTTP_SERVER_H_

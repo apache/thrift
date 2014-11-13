@@ -29,7 +29,7 @@
  *
  */
 class t_base_type : public t_type {
- public:
+public:
   /**
    * Enumeration of thrift base types
    */
@@ -44,64 +44,34 @@ class t_base_type : public t_type {
     TYPE_DOUBLE
   };
 
-  t_base_type(std::string name, t_base base) :
-    t_type(name),
-    base_(base),
-    string_list_(false),
-    binary_(false),
-    string_enum_(false){}
+  t_base_type(std::string name, t_base base)
+    : t_type(name), base_(base), string_list_(false), binary_(false), string_enum_(false) {}
 
-  t_base get_base() const {
-    return base_;
-  }
+  t_base get_base() const { return base_; }
 
-  bool is_void() const {
-    return base_ == TYPE_VOID;
-  }
+  bool is_void() const { return base_ == TYPE_VOID; }
 
-  bool is_string() const {
-    return base_ == TYPE_STRING;
-  }
+  bool is_string() const { return base_ == TYPE_STRING; }
 
-  bool is_bool() const {
-    return base_ == TYPE_BOOL;
-  }
+  bool is_bool() const { return base_ == TYPE_BOOL; }
 
-  void set_string_list(bool val) {
-    string_list_ = val;
-  }
+  void set_string_list(bool val) { string_list_ = val; }
 
-  bool is_string_list() const {
-    return (base_ == TYPE_STRING) && string_list_;
-  }
+  bool is_string_list() const { return (base_ == TYPE_STRING) && string_list_; }
 
-  void set_binary(bool val) {
-    binary_ = val;
-  }
+  void set_binary(bool val) { binary_ = val; }
 
-  bool is_binary() const {
-    return (base_ == TYPE_STRING) && binary_;
-  }
+  bool is_binary() const { return (base_ == TYPE_STRING) && binary_; }
 
-  void set_string_enum(bool val) {
-    string_enum_ = val;
-  }
+  void set_string_enum(bool val) { string_enum_ = val; }
 
-  bool is_string_enum() const {
-    return base_ == TYPE_STRING && string_enum_;
-  }
+  bool is_string_enum() const { return base_ == TYPE_STRING && string_enum_; }
 
-  void add_string_enum_val(std::string val) {
-    string_enum_vals_.push_back(val);
-  }
+  void add_string_enum_val(std::string val) { string_enum_vals_.push_back(val); }
 
-  const std::vector<std::string>& get_string_enum_vals() const {
-    return string_enum_vals_;
-  }
+  const std::vector<std::string>& get_string_enum_vals() const { return string_enum_vals_; }
 
-  bool is_base_type() const {
-    return true;
-  }
+  bool is_base_type() const { return true; }
 
   virtual std::string get_fingerprint_material() const {
     std::string rv = t_base_name(base_);
@@ -113,19 +83,37 @@ class t_base_type : public t_type {
 
   static std::string t_base_name(t_base tbase) {
     switch (tbase) {
-      case TYPE_VOID   : return      "void"; break;
-      case TYPE_STRING : return    "string"; break;
-      case TYPE_BOOL   : return      "bool"; break;
-      case TYPE_BYTE   : return      "byte"; break;
-      case TYPE_I16    : return       "i16"; break;
-      case TYPE_I32    : return       "i32"; break;
-      case TYPE_I64    : return       "i64"; break;
-      case TYPE_DOUBLE : return    "double"; break;
-      default          : return "(unknown)"; break;
+    case TYPE_VOID:
+      return "void";
+      break;
+    case TYPE_STRING:
+      return "string";
+      break;
+    case TYPE_BOOL:
+      return "bool";
+      break;
+    case TYPE_BYTE:
+      return "byte";
+      break;
+    case TYPE_I16:
+      return "i16";
+      break;
+    case TYPE_I32:
+      return "i32";
+      break;
+    case TYPE_I64:
+      return "i64";
+      break;
+    case TYPE_DOUBLE:
+      return "double";
+      break;
+    default:
+      return "(unknown)";
+      break;
     }
   }
 
- private:
+private:
   t_base base_;
 
   bool string_list_;
