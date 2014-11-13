@@ -25,7 +25,9 @@
 #include <sys/types.h>
 #include <thrift/concurrency/Thread.h>
 
-namespace apache { namespace thrift { namespace concurrency {
+namespace apache {
+namespace thrift {
+namespace concurrency {
 
 /**
  * Thread Pool Manager and related classes
@@ -53,10 +55,10 @@ class ThreadManager;
  */
 class ThreadManager {
 
- protected:
+protected:
   ThreadManager() {}
 
- public:
+public:
   typedef apache::thrift::stdcxx::function<void(boost::shared_ptr<Runnable>)> ExpireCallback;
 
   virtual ~ThreadManager() {}
@@ -83,14 +85,7 @@ class ThreadManager {
    */
   virtual void join() = 0;
 
-  enum STATE {
-    UNINITIALIZED,
-    STARTING,
-    STARTED,
-    JOINING,
-    STOPPING,
-    STOPPED
-  };
+  enum STATE { UNINITIALIZED, STARTING, STARTED, JOINING, STOPPING, STOPPED };
 
   virtual STATE state() const = 0;
 
@@ -98,9 +93,9 @@ class ThreadManager {
 
   virtual void threadFactory(boost::shared_ptr<ThreadFactory> value) = 0;
 
-  virtual void addWorker(size_t value=1) = 0;
+  virtual void addWorker(size_t value = 1) = 0;
 
-  virtual void removeWorker(size_t value=1) = 0;
+  virtual void removeWorker(size_t value = 1) = 0;
 
   /**
    * Gets the current number of idle worker threads
@@ -115,7 +110,7 @@ class ThreadManager {
   /**
    * Gets the current number of pending tasks
    */
-  virtual size_t pendingTaskCount() const  = 0;
+  virtual size_t pendingTaskCount() const = 0;
 
   /**
    * Gets the current number of pending and executing tasks
@@ -151,9 +146,9 @@ class ThreadManager {
    *
    * @throws TooManyPendingTasksException Pending task count exceeds max pending task count
    */
-  virtual void add(boost::shared_ptr<Runnable>task,
-                   int64_t timeout=0LL,
-                   int64_t expiration=0LL) = 0;
+  virtual void add(boost::shared_ptr<Runnable> task,
+                   int64_t timeout = 0LL,
+                   int64_t expiration = 0LL) = 0;
 
   /**
    * Removes a pending task
@@ -187,7 +182,8 @@ class ThreadManager {
    * a pendingTaskCountMax maximum pending tasks. The default, 0, specified no limit
    * on pending tasks
    */
-  static boost::shared_ptr<ThreadManager> newSimpleThreadManager(size_t count=4, size_t pendingTaskCountMax=0);
+  static boost::shared_ptr<ThreadManager> newSimpleThreadManager(size_t count = 4,
+                                                                 size_t pendingTaskCountMax = 0);
 
   class Task;
 
@@ -195,7 +191,8 @@ class ThreadManager {
 
   class Impl;
 };
-
-}}} // apache::thrift::concurrency
+}
+}
+} // apache::thrift::concurrency
 
 #endif // #ifndef _THRIFT_CONCURRENCY_THREADMANAGER_H_

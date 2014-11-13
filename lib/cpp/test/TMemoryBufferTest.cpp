@@ -25,84 +25,84 @@
 #include <thrift/protocol/TBinaryProtocol.h>
 #include "gen-cpp/ThriftTest_types.h"
 
-BOOST_AUTO_TEST_SUITE( TMemoryBufferTest )
+BOOST_AUTO_TEST_SUITE(TMemoryBufferTest)
 
-BOOST_AUTO_TEST_CASE( test_roundtrip ) {
-    using apache::thrift::transport::TMemoryBuffer;
-    using apache::thrift::protocol::TBinaryProtocol;
-    using boost::shared_ptr;
+BOOST_AUTO_TEST_CASE(test_roundtrip) {
+  using apache::thrift::transport::TMemoryBuffer;
+  using apache::thrift::protocol::TBinaryProtocol;
+  using boost::shared_ptr;
 
-    shared_ptr<TMemoryBuffer> strBuffer(new TMemoryBuffer());
-    shared_ptr<TBinaryProtocol> binaryProtcol(new TBinaryProtocol(strBuffer));
+  shared_ptr<TMemoryBuffer> strBuffer(new TMemoryBuffer());
+  shared_ptr<TBinaryProtocol> binaryProtcol(new TBinaryProtocol(strBuffer));
 
-    thrift::test::Xtruct a;
-    a.i32_thing = 10;
-    a.i64_thing = 30;
-    a.string_thing ="holla back a";
+  thrift::test::Xtruct a;
+  a.i32_thing = 10;
+  a.i64_thing = 30;
+  a.string_thing = "holla back a";
 
-    a.write(binaryProtcol.get());
-    std::string serialized = strBuffer->getBufferAsString();
+  a.write(binaryProtcol.get());
+  std::string serialized = strBuffer->getBufferAsString();
 
-    shared_ptr<TMemoryBuffer> strBuffer2(new TMemoryBuffer());
-    shared_ptr<TBinaryProtocol> binaryProtcol2(new TBinaryProtocol(strBuffer2));
+  shared_ptr<TMemoryBuffer> strBuffer2(new TMemoryBuffer());
+  shared_ptr<TBinaryProtocol> binaryProtcol2(new TBinaryProtocol(strBuffer2));
 
-    strBuffer2->resetBuffer((uint8_t*)serialized.data(), static_cast<uint32_t>(serialized.length()));
-    thrift::test::Xtruct a2;
-    a2.read(binaryProtcol2.get());
+  strBuffer2->resetBuffer((uint8_t*)serialized.data(), static_cast<uint32_t>(serialized.length()));
+  thrift::test::Xtruct a2;
+  a2.read(binaryProtcol2.get());
 
-    assert(a == a2);
+  assert(a == a2);
+}
+
+BOOST_AUTO_TEST_CASE(test_copy) {
+  using apache::thrift::transport::TMemoryBuffer;
+  using std::string;
+  using std::cout;
+  using std::endl;
+
+  string* str1 = new string("abcd1234");
+  const char* data1 = str1->data();
+  TMemoryBuffer buf((uint8_t*)str1->data(),
+                    static_cast<uint32_t>(str1->length()),
+                    TMemoryBuffer::COPY);
+  delete str1;
+  string* str2 = new string("plsreuse");
+  bool obj_reuse = (str1 == str2);
+  bool dat_reuse = (data1 == str2->data());
+  cout << "Object reuse: " << obj_reuse << "   Data reuse: " << dat_reuse
+       << ((obj_reuse && dat_reuse) ? "   YAY!" : "") << endl;
+  delete str2;
+
+  string str3 = "wxyz", str4 = "6789";
+  buf.readAppendToString(str3, 4);
+  buf.readAppendToString(str4, INT_MAX);
+
+  assert(str3 == "wxyzabcd");
+  assert(str4 == "67891234");
+}
+
+BOOST_AUTO_TEST_CASE(test_exceptions) {
+  using apache::thrift::transport::TTransportException;
+  using apache::thrift::transport::TMemoryBuffer;
+  using std::string;
+
+  char data[] = "foo\0bar";
+
+  TMemoryBuffer buf1((uint8_t*)data, 7, TMemoryBuffer::OBSERVE);
+  string str = buf1.getBufferAsString();
+  assert(str.length() == 7);
+  buf1.resetBuffer();
+  try {
+    buf1.write((const uint8_t*)"foo", 3);
+    assert(false);
+  } catch (TTransportException&) {
   }
 
-BOOST_AUTO_TEST_CASE( test_copy )
-  {
-    using apache::thrift::transport::TMemoryBuffer;
-    using std::string;
-    using std::cout;
-    using std::endl;
-
-    string* str1 = new string("abcd1234");
-    const char* data1 = str1->data();
-    TMemoryBuffer buf((uint8_t*)str1->data(), static_cast<uint32_t>(str1->length()), TMemoryBuffer::COPY);
-    delete str1;
-    string* str2 = new string("plsreuse");
-    bool obj_reuse = (str1 == str2);
-    bool dat_reuse = (data1 == str2->data());
-    cout << "Object reuse: " << obj_reuse << "   Data reuse: " << dat_reuse
-      << ((obj_reuse && dat_reuse) ? "   YAY!" : "") << endl;
-    delete str2;
-
-    string str3 = "wxyz", str4 = "6789";
-    buf.readAppendToString(str3, 4);
-    buf.readAppendToString(str4, INT_MAX);
-
-    assert(str3 == "wxyzabcd");
-    assert(str4 == "67891234");
+  TMemoryBuffer buf2((uint8_t*)data, 7, TMemoryBuffer::COPY);
+  try {
+    buf2.write((const uint8_t*)"bar", 3);
+  } catch (TTransportException&) {
+    assert(false);
   }
-
-BOOST_AUTO_TEST_CASE( test_exceptions )
-  {
-    using apache::thrift::transport::TTransportException;
-    using apache::thrift::transport::TMemoryBuffer;
-    using std::string;
-
-    char data[] = "foo\0bar";
-
-    TMemoryBuffer buf1((uint8_t*)data, 7, TMemoryBuffer::OBSERVE);
-    string str = buf1.getBufferAsString();
-    assert(str.length() == 7);
-    buf1.resetBuffer();
-    try {
-      buf1.write((const uint8_t*)"foo", 3);
-      assert(false);
-    } catch (TTransportException&) {}
-
-    TMemoryBuffer buf2((uint8_t*)data, 7, TMemoryBuffer::COPY);
-    try {
-      buf2.write((const uint8_t*)"bar", 3);
-    } catch (TTransportException&) {
-      assert(false);
-    }
-  }
+}
 
 BOOST_AUTO_TEST_SUITE_END()
-

@@ -22,28 +22,29 @@
 
 #include <thrift/transport/THttpTransport.h>
 
-namespace apache { namespace thrift { namespace transport {
+namespace apache {
+namespace thrift {
+namespace transport {
 
 class THttpClient : public THttpTransport {
- public:
-  THttpClient(boost::shared_ptr<TTransport> transport, std::string host, std::string path="");
+public:
+  THttpClient(boost::shared_ptr<TTransport> transport, std::string host, std::string path = "");
 
-  THttpClient(std::string host, int port, std::string path="");
+  THttpClient(std::string host, int port, std::string path = "");
 
   virtual ~THttpClient();
 
   virtual void flush();
 
- protected:
-
+protected:
   std::string host_;
   std::string path_;
 
   virtual void parseHeader(char* header);
   virtual bool parseStatusLine(char* status);
-
 };
-
-}}} // apache::thrift::transport
+}
+}
+} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_THTTPCLIENT_H_

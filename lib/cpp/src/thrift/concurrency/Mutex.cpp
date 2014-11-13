@@ -31,7 +31,9 @@
 
 using boost::shared_ptr;
 
-namespace apache { namespace thrift { namespace concurrency {
+namespace apache {
+namespace thrift {
+namespace concurrency {
 
 #ifndef THRIFT_NO_CONTENTION_PROFILING
 
@@ -40,40 +42,38 @@ static MutexWaitCallback mutexProfilingCallback = 0;
 
 volatile static sig_atomic_t mutexProfilingCounter = 0;
 
-void enableMutexProfiling(int32_t profilingSampleRate,
-                          MutexWaitCallback callback) {
+void enableMutexProfiling(int32_t profilingSampleRate, MutexWaitCallback callback) {
   mutexProfilingSampleRate = profilingSampleRate;
   mutexProfilingCallback = callback;
 }
 
-#define PROFILE_MUTEX_START_LOCK() \
-    int64_t _lock_startTime = maybeGetProfilingStartTime();
+#define PROFILE_MUTEX_START_LOCK() int64_t _lock_startTime = maybeGetProfilingStartTime();
 
-#define PROFILE_MUTEX_NOT_LOCKED() \
-  do { \
-    if (_lock_startTime > 0) { \
-      int64_t endTime = Util::currentTimeUsec(); \
-      (*mutexProfilingCallback)(this, endTime - _lock_startTime); \
-    } \
+#define PROFILE_MUTEX_NOT_LOCKED()                                                                 \
+  do {                                                                                             \
+    if (_lock_startTime > 0) {                                                                     \
+      int64_t endTime = Util::currentTimeUsec();                                                   \
+      (*mutexProfilingCallback)(this, endTime - _lock_startTime);                                  \
+    }                                                                                              \
   } while (0)
 
-#define PROFILE_MUTEX_LOCKED() \
-  do { \
-    profileTime_ = _lock_startTime; \
-    if (profileTime_ > 0) { \
-      profileTime_ = Util::currentTimeUsec() - profileTime_; \
-    } \
+#define PROFILE_MUTEX_LOCKED()                                                                     \
+  do {                                                                                             \
+    profileTime_ = _lock_startTime;                                                                \
+    if (profileTime_ > 0) {                                                                        \
+      profileTime_ = Util::currentTimeUsec() - profileTime_;                                       \
+    }                                                                                              \
   } while (0)
 
-#define PROFILE_MUTEX_START_UNLOCK() \
-  int64_t _temp_profileTime = profileTime_; \
+#define PROFILE_MUTEX_START_UNLOCK()                                                               \
+  int64_t _temp_profileTime = profileTime_;                                                        \
   profileTime_ = 0;
 
-#define PROFILE_MUTEX_UNLOCKED() \
-  do { \
-    if (_temp_profileTime > 0) { \
-      (*mutexProfilingCallback)(this, _temp_profileTime); \
-    } \
+#define PROFILE_MUTEX_UNLOCKED()                                                                   \
+  do {                                                                                             \
+    if (_temp_profileTime > 0) {                                                                   \
+      (*mutexProfilingCallback)(this, _temp_profileTime);                                          \
+    }                                                                                              \
   } while (0)
 
 static inline int64_t maybeGetProfilingStartTime() {
@@ -101,11 +101,11 @@ static inline int64_t maybeGetProfilingStartTime() {
 }
 
 #else
-#  define PROFILE_MUTEX_START_LOCK()
-#  define PROFILE_MUTEX_NOT_LOCKED()
-#  define PROFILE_MUTEX_LOCKED()
-#  define PROFILE_MUTEX_START_UNLOCK()
-#  define PROFILE_MUTEX_UNLOCKED()
+#define PROFILE_MUTEX_START_LOCK()
+#define PROFILE_MUTEX_NOT_LOCKED()
+#define PROFILE_MUTEX_LOCKED()
+#define PROFILE_MUTEX_START_UNLOCK()
+#define PROFILE_MUTEX_UNLOCKED()
 #endif // THRIFT_NO_CONTENTION_PROFILING
 
 /**
@@ -114,7 +114,7 @@ static inline int64_t maybeGetProfilingStartTime() {
  * @version $Id:$
  */
 class Mutex::impl {
- public:
+public:
   impl(Initializer init) : initialized_(false) {
 #ifndef THRIFT_NO_CONTENTION_PROFILING
     profileTime_ = 0;
@@ -182,9 +182,9 @@ class Mutex::impl {
     PROFILE_MUTEX_UNLOCKED();
   }
 
-  void* getUnderlyingImpl() const { return (void*) &pthread_mutex_; }
+  void* getUnderlyingImpl() const { return (void*)&pthread_mutex_; }
 
- private:
+private:
   mutable pthread_mutex_t pthread_mutex_;
   mutable bool initialized_;
 #ifndef THRIFT_NO_CONTENTION_PROFILING
@@ -192,17 +192,28 @@ class Mutex::impl {
 #endif
 };
 
-Mutex::Mutex(Initializer init) : impl_(new Mutex::impl(init)) {}
+Mutex::Mutex(Initializer init) : impl_(new Mutex::impl(init)) {
+}
 
-void* Mutex::getUnderlyingImpl() const { return impl_->getUnderlyingImpl(); }
+void* Mutex::getUnderlyingImpl() const {
+  return impl_->getUnderlyingImpl();
+}
 
-void Mutex::lock() const { impl_->lock(); }
+void Mutex::lock() const {
+  impl_->lock();
+}
 
-bool Mutex::trylock() const { return impl_->trylock(); }
+bool Mutex::trylock() const {
+  return impl_->trylock();
+}
 
-bool Mutex::timedlock(int64_t ms) const { return impl_->timedlock(ms); }
+bool Mutex::timedlock(int64_t ms) const {
+  return impl_->timedlock(ms);
+}
 
-void Mutex::unlock() const { impl_->unlock(); }
+void Mutex::unlock() const {
+  impl_->unlock();
+}
 
 void Mutex::DEFAULT_INITIALIZER(void* arg) {
   pthread_mutex_t* pthread_mutex = (pthread_mutex_t*)arg;
@@ -211,7 +222,8 @@ void Mutex::DEFAULT_INITIALIZER(void* arg) {
   assert(ret == 0);
 }
 
-#if defined(PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP) || defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP)
+#if defined(PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP)                                                 \
+    || defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP)
 static void init_with_kind(pthread_mutex_t* mutex, int kind) {
   pthread_mutexattr_t mutexattr;
   int ret = pthread_mutexattr_init(&mutexattr);
@@ -250,7 +262,6 @@ void Mutex::RECURSIVE_INITIALIZER(void* arg) {
 }
 #endif
 
-
 /**
  * Implementation of ReadWriteMutex class using POSIX rw lock
  *
@@ -269,7 +280,7 @@ public:
   }
 
   ~impl() {
-    if(initialized_) {
+    if (initialized_) {
       initialized_ = false;
       int ret = pthread_rwlock_destroy(&rw_lock_);
       THRIFT_UNUSED_VARIABLE(ret);
@@ -280,7 +291,7 @@ public:
   void acquireRead() const {
     PROFILE_MUTEX_START_LOCK();
     pthread_rwlock_rdlock(&rw_lock_);
-    PROFILE_MUTEX_NOT_LOCKED();  // not exclusive, so use not-locked path
+    PROFILE_MUTEX_NOT_LOCKED(); // not exclusive, so use not-locked path
   }
 
   void acquireWrite() const {
@@ -307,22 +318,33 @@ private:
 #endif
 };
 
-ReadWriteMutex::ReadWriteMutex() : impl_(new ReadWriteMutex::impl()) {}
+ReadWriteMutex::ReadWriteMutex() : impl_(new ReadWriteMutex::impl()) {
+}
 
-void ReadWriteMutex::acquireRead() const { impl_->acquireRead(); }
+void ReadWriteMutex::acquireRead() const {
+  impl_->acquireRead();
+}
 
-void ReadWriteMutex::acquireWrite() const { impl_->acquireWrite(); }
+void ReadWriteMutex::acquireWrite() const {
+  impl_->acquireWrite();
+}
 
-bool ReadWriteMutex::attemptRead() const { return impl_->attemptRead(); }
+bool ReadWriteMutex::attemptRead() const {
+  return impl_->attemptRead();
+}
 
-bool ReadWriteMutex::attemptWrite() const { return impl_->attemptWrite(); }
+bool ReadWriteMutex::attemptWrite() const {
+  return impl_->attemptWrite();
+}
 
-void ReadWriteMutex::release() const { impl_->release(); }
+void ReadWriteMutex::release() const {
+  impl_->release();
+}
 
-NoStarveReadWriteMutex::NoStarveReadWriteMutex() : writerWaiting_(false) {}
+NoStarveReadWriteMutex::NoStarveReadWriteMutex() : writerWaiting_(false) {
+}
 
-void NoStarveReadWriteMutex::acquireRead() const
-{
+void NoStarveReadWriteMutex::acquireRead() const {
   if (writerWaiting_) {
     // writer is waiting, block on the writer's mutex until he's done with it
     mutex_.lock();
@@ -332,8 +354,7 @@ void NoStarveReadWriteMutex::acquireRead() const
   ReadWriteMutex::acquireRead();
 }
 
-void NoStarveReadWriteMutex::acquireWrite() const
-{
+void NoStarveReadWriteMutex::acquireWrite() const {
   // if we can acquire the rwlock the easy way, we're done
   if (attemptWrite()) {
     return;
@@ -348,6 +369,6 @@ void NoStarveReadWriteMutex::acquireWrite() const
   writerWaiting_ = false;
   mutex_.unlock();
 }
-
-}}} // apache::thrift::concurrency
-
+}
+}
+} // apache::thrift::concurrency

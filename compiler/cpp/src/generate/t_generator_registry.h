@@ -30,7 +30,7 @@ class t_generator;
  *  - Providing documentation for the generators it produces.
  */
 class t_generator_factory {
- public:
+public:
   t_generator_factory(const std::string& short_name,
                       const std::string& long_name,
                       const std::string& documentation);
@@ -43,8 +43,7 @@ class t_generator_factory {
       // Note: parsed_options will not exist beyond the call to get_generator.
       const std::map<std::string, std::string>& parsed_options,
       // Note: option_string might not exist beyond the call to get_generator.
-      const std::string& option_string)
-    = 0;
+      const std::string& option_string) = 0;
 
   virtual bool is_valid_namespace(const std::string& sub_namespace) = 0;
 
@@ -52,7 +51,7 @@ class t_generator_factory {
   std::string get_long_name() { return long_name_; }
   std::string get_documentation() { return documentation_; }
 
- private:
+private:
   std::string short_name_;
   std::string long_name_;
   std::string documentation_;
@@ -60,17 +59,15 @@ class t_generator_factory {
 
 template <typename generator>
 class t_generator_factory_impl : public t_generator_factory {
- public:
+public:
   t_generator_factory_impl(const std::string& short_name,
                            const std::string& long_name,
                            const std::string& documentation)
-    : t_generator_factory(short_name, long_name, documentation)
-  {}
+    : t_generator_factory(short_name, long_name, documentation) {}
 
-  virtual t_generator* get_generator(
-      t_program* program,
-      const std::map<std::string, std::string>& parsed_options,
-      const std::string& option_string) {
+  virtual t_generator* get_generator(t_program* program,
+                                     const std::map<std::string, std::string>& parsed_options,
+                                     const std::string& option_string) {
     return new generator(program, parsed_options, option_string);
   }
 
@@ -80,30 +77,26 @@ class t_generator_factory_impl : public t_generator_factory {
 };
 
 class t_generator_registry {
- public:
+public:
   static void register_generator(t_generator_factory* factory);
 
-  static t_generator* get_generator(t_program* program,
-                                    const std::string& options);
+  static t_generator* get_generator(t_program* program, const std::string& options);
 
   typedef std::map<std::string, t_generator_factory*> gen_map_t;
   static gen_map_t& get_generator_map();
 
- private:
+private:
   t_generator_registry();
   t_generator_registry(const t_generator_registry&);
 };
 
-#define THRIFT_REGISTER_GENERATOR(language, long_name, doc)        \
-  class t_##language##_generator_factory_impl                      \
-    : public t_generator_factory_impl<t_##language##_generator>    \
-  {                                                                \
-   public:                                                         \
-    t_##language##_generator_factory_impl()                        \
-      : t_generator_factory_impl<t_##language##_generator>(        \
-          #language, long_name, doc)                               \
-    {}                                                             \
-  };                                                               \
+#define THRIFT_REGISTER_GENERATOR(language, long_name, doc)                                        \
+  class t_##language##_generator_factory_impl                                                      \
+      : public t_generator_factory_impl<t_##language##_generator> {                                \
+  public:                                                                                          \
+    t_##language##_generator_factory_impl()                                                        \
+      : t_generator_factory_impl<t_##language##_generator>(#language, long_name, doc) {}           \
+  };                                                                                               \
   static t_##language##_generator_factory_impl _registerer;
 
 #endif

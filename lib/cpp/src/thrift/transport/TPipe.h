@@ -23,11 +23,13 @@
 #include <thrift/transport/TTransport.h>
 #include <thrift/transport/TVirtualTransport.h>
 #ifndef _WIN32
-#  include <thrift/transport/TSocket.h>
+#include <thrift/transport/TSocket.h>
 #endif
 #include <boost/noncopyable.hpp>
 
-namespace apache { namespace thrift { namespace transport {
+namespace apache {
+namespace thrift {
+namespace transport {
 
 /**
  * Windows Pipes implementation of the TTransport interface.
@@ -39,14 +41,14 @@ namespace apache { namespace thrift { namespace transport {
 class TPipeImpl;
 
 class TPipe : public TVirtualTransport<TPipe> {
- public:
+public:
   // Constructs a new pipe object.
   TPipe();
   // Named pipe constructors -
-  explicit TPipe(HANDLE Pipe); //HANDLE is a void*
-  //need a const char * overload so string literals don't go to the HANDLE overload
-  explicit TPipe(const char *pipename);
-  explicit TPipe(const std::string &pipename);
+  explicit TPipe(HANDLE Pipe); // HANDLE is a void*
+  // need a const char * overload so string literals don't go to the HANDLE overload
+  explicit TPipe(const char* pipename);
+  explicit TPipe(const std::string& pipename);
   // Anonymous pipe -
   TPipe(HANDLE PipeRd, HANDLE PipeWrt);
 
@@ -71,21 +73,21 @@ class TPipe : public TVirtualTransport<TPipe> {
   // Writes to the pipe.
   virtual void write(const uint8_t* buf, uint32_t len);
 
-
-  //Accessors
+  // Accessors
   std::string getPipename();
-  void setPipename(const std::string &pipename);
-  HANDLE getPipeHandle(); //doubles as the read handle for anon pipe
+  void setPipename(const std::string& pipename);
+  HANDLE getPipeHandle(); // doubles as the read handle for anon pipe
   void setPipeHandle(HANDLE pipehandle);
   HANDLE getWrtPipeHandle();
   void setWrtPipeHandle(HANDLE pipehandle);
   long getConnectTimeout();
   void setConnectTimeout(long seconds);
 
-  //this function is intended to be used in generic / template situations,
-  //so its name needs to be the same as TPipeServer's
+  // this function is intended to be used in generic / template situations,
+  // so its name needs to be the same as TPipeServer's
   HANDLE getNativeWaitHandle();
- private:
+
+private:
   boost::shared_ptr<TPipeImpl> impl_;
 
   std::string pipename_;
@@ -97,8 +99,8 @@ class TPipe : public TVirtualTransport<TPipe> {
 #else
 typedef TSocket TPipe;
 #endif
-
-}}} // apache::thrift::transport
+}
+}
+} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TPIPE_H_
-

@@ -27,16 +27,18 @@
 #include <thrift/thrift-config.h>
 
 #if USE_BOOST_THREAD
-#  include <boost/thread.hpp>
+#include <boost/thread.hpp>
 #elif USE_STD_THREAD
-#  include <thread>
+#include <thread>
 #else
-#  ifdef HAVE_PTHREAD_H
-#    include <pthread.h>
-#  endif
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
 #endif
 
-namespace apache { namespace thrift { namespace concurrency {
+namespace apache {
+namespace thrift {
+namespace concurrency {
 
 class Thread;
 
@@ -47,8 +49,8 @@ class Thread;
  */
 class Runnable {
 
- public:
-  virtual ~Runnable() {};
+public:
+  virtual ~Runnable(){};
   virtual void run() = 0;
 
   /**
@@ -63,7 +65,7 @@ class Runnable {
    */
   virtual void thread(boost::shared_ptr<Thread> value) { thread_ = value; }
 
- private:
+private:
   boost::weak_ptr<Thread> thread_;
 };
 
@@ -78,8 +80,7 @@ class Runnable {
  */
 class Thread {
 
- public:
-
+public:
 #if USE_BOOST_THREAD
   typedef boost::thread::id id_t;
 
@@ -97,7 +98,7 @@ class Thread {
   static inline id_t get_current() { return pthread_self(); }
 #endif
 
-  virtual ~Thread() {};
+  virtual ~Thread(){};
 
   /**
    * Starts the thread. Does platform specific thread creation and
@@ -122,12 +123,11 @@ class Thread {
    */
   virtual boost::shared_ptr<Runnable> runnable() const { return _runnable; }
 
- protected:
+protected:
   virtual void runnable(boost::shared_ptr<Runnable> value) { _runnable = value; }
 
- private:
+private:
   boost::shared_ptr<Runnable> _runnable;
-
 };
 
 /**
@@ -136,17 +136,19 @@ class Thread {
  */
 class ThreadFactory {
 
- public:
+public:
   virtual ~ThreadFactory() {}
   virtual boost::shared_ptr<Thread> newThread(boost::shared_ptr<Runnable> runnable) const = 0;
 
-  /** Gets the current thread id or unknown_thread_id if the current thread is not a thrift thread */
+  /** Gets the current thread id or unknown_thread_id if the current thread is not a thrift thread
+   */
 
   static const Thread::id_t unknown_thread_id;
 
   virtual Thread::id_t getCurrentThreadId() const = 0;
 };
-
-}}} // apache::thrift::concurrency
+}
+}
+} // apache::thrift::concurrency
 
 #endif // #ifndef _THRIFT_CONCURRENCY_THREAD_H_

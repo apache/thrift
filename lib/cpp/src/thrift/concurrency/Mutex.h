@@ -23,7 +23,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
-namespace apache { namespace thrift { namespace concurrency {
+namespace apache {
+namespace thrift {
+namespace concurrency {
 
 #ifndef THRIFT_NO_CONTENTION_PROFILING
 
@@ -46,8 +48,7 @@ namespace apache { namespace thrift { namespace concurrency {
  * particular time period.
  */
 typedef void (*MutexWaitCallback)(const void* id, int64_t waitTimeMicros);
-void enableMutexProfiling(int32_t profilingSampleRate,
-                          MutexWaitCallback callback);
+void enableMutexProfiling(int32_t profilingSampleRate, MutexWaitCallback callback);
 
 #endif
 
@@ -57,7 +58,7 @@ void enableMutexProfiling(int32_t profilingSampleRate,
  * @version $Id:$
  */
 class Mutex {
- public:
+public:
   typedef void (*Initializer)(void*);
 
   Mutex(Initializer init = DEFAULT_INITIALIZER);
@@ -73,8 +74,7 @@ class Mutex {
   static void ADAPTIVE_INITIALIZER(void*);
   static void RECURSIVE_INITIALIZER(void*);
 
- private:
-
+private:
   class impl;
   boost::shared_ptr<impl> impl_;
 };
@@ -96,7 +96,6 @@ public:
   virtual void release() const;
 
 private:
-
   class impl;
   boost::shared_ptr<impl> impl_;
 };
@@ -121,7 +120,7 @@ private:
 };
 
 class Guard : boost::noncopyable {
- public:
+public:
   Guard(const Mutex& value, int64_t timeout = 0) : mutex_(&value) {
     if (timeout == 0) {
       value.lock();
@@ -141,48 +140,40 @@ class Guard : boost::noncopyable {
     }
   }
 
-  operator bool() const {
-    return (mutex_ != NULL);
-  }
+  operator bool() const { return (mutex_ != NULL); }
 
- private:
+private:
   const Mutex* mutex_;
 };
 
 // Can be used as second argument to RWGuard to make code more readable
 // as to whether we're doing acquireRead() or acquireWrite().
-enum RWGuardType {
-  RW_READ = 0,
-  RW_WRITE = 1
-};
-
+enum RWGuardType { RW_READ = 0, RW_WRITE = 1 };
 
 class RWGuard : boost::noncopyable {
-  public:
-    RWGuard(const ReadWriteMutex& value, bool write = false)
-         : rw_mutex_(value) {
-      if (write) {
-        rw_mutex_.acquireWrite();
-      } else {
-        rw_mutex_.acquireRead();
-      }
+public:
+  RWGuard(const ReadWriteMutex& value, bool write = false) : rw_mutex_(value) {
+    if (write) {
+      rw_mutex_.acquireWrite();
+    } else {
+      rw_mutex_.acquireRead();
     }
+  }
 
-    RWGuard(const ReadWriteMutex& value, RWGuardType type)
-         : rw_mutex_(value) {
-      if (type == RW_WRITE) {
-        rw_mutex_.acquireWrite();
-      } else {
-        rw_mutex_.acquireRead();
-      }
+  RWGuard(const ReadWriteMutex& value, RWGuardType type) : rw_mutex_(value) {
+    if (type == RW_WRITE) {
+      rw_mutex_.acquireWrite();
+    } else {
+      rw_mutex_.acquireRead();
     }
-    ~RWGuard() {
-      rw_mutex_.release();
-    }
-  private:
-    const ReadWriteMutex& rw_mutex_;
+  }
+  ~RWGuard() { rw_mutex_.release(); }
+
+private:
+  const ReadWriteMutex& rw_mutex_;
 };
-
-}}} // apache::thrift::concurrency
+}
+}
+} // apache::thrift::concurrency
 
 #endif // #ifndef _THRIFT_CONCURRENCY_MUTEX_H_

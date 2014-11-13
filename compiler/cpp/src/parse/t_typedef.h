@@ -31,41 +31,31 @@
  *
  */
 class t_typedef : public t_type {
- public:
-  t_typedef(t_program* program, t_type* type, const std::string& symbolic) :
-    t_type(program, symbolic),
-    type_(type),
-    symbolic_(symbolic),
-    forward_(false),
-    seen_(false) {}
+public:
+  t_typedef(t_program* program, t_type* type, const std::string& symbolic)
+    : t_type(program, symbolic), type_(type), symbolic_(symbolic), forward_(false), seen_(false) {}
 
   /**
    * This constructor is used to refer to a type that is lazily
    * resolved at a later time, like for forward declarations or
    * recursive types.
    */
-  t_typedef(t_program* program, const std::string& symbolic, bool forward) :
-    t_type(program, symbolic),
-    type_(NULL),
-    symbolic_(symbolic),
-    forward_(forward),
-    seen_(false) {}
+  t_typedef(t_program* program, const std::string& symbolic, bool forward)
+    : t_type(program, symbolic),
+      type_(NULL),
+      symbolic_(symbolic),
+      forward_(forward),
+      seen_(false) {}
 
   ~t_typedef() {}
 
   t_type* get_type() const;
 
-  const std::string& get_symbolic() const {
-    return symbolic_;
-  }
+  const std::string& get_symbolic() const { return symbolic_; }
 
-  bool is_forward_typedef() const {
-    return forward_;
-  }
+  bool is_forward_typedef() const { return forward_; }
 
-  bool is_typedef() const {
-    return true;
-  }
+  bool is_typedef() const { return true; }
 
   virtual std::string get_fingerprint_material() const {
     if (!seen_) {
@@ -84,7 +74,7 @@ class t_typedef : public t_type {
     }
   }
 
- private:
+private:
   t_type* type_;
   std::string symbolic_;
   bool forward_;

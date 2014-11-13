@@ -19,54 +19,46 @@
 
 #include <thrift/windows/WinFcntl.h>
 
-int thrift_fcntl(THRIFT_SOCKET fd, int cmd, int flags)
-{
-    if(cmd != THRIFT_F_GETFL && cmd != THRIFT_F_SETFL)
-    {
-        return -1;
-    }
+int thrift_fcntl(THRIFT_SOCKET fd, int cmd, int flags) {
+  if (cmd != THRIFT_F_GETFL && cmd != THRIFT_F_SETFL) {
+    return -1;
+  }
 
-    if(flags != THRIFT_O_NONBLOCK && flags != 0)
-    {
-        return -1;
-    }
+  if (flags != THRIFT_O_NONBLOCK && flags != 0) {
+    return -1;
+  }
 
-    if(cmd == THRIFT_F_GETFL)
-    {
-        return 0;
-    }
+  if (cmd == THRIFT_F_GETFL) {
+    return 0;
+  }
 
-    int res;
-    if(flags)
-    {
-        res = ioctlsocket(fd, FIONBIO, reinterpret_cast<u_long *>(&(flags = 1)));
-    }
-    else
-    {
-        res = ioctlsocket(fd, FIONBIO, reinterpret_cast<u_long *>(&(flags = 0)));
-    }
+  int res;
+  if (flags) {
+    res = ioctlsocket(fd, FIONBIO, reinterpret_cast<u_long*>(&(flags = 1)));
+  } else {
+    res = ioctlsocket(fd, FIONBIO, reinterpret_cast<u_long*>(&(flags = 0)));
+  }
 
-    return res;
+  return res;
 }
 
-#if WINVER <= 0x0502 //XP, Server2003
-int thrift_poll(THRIFT_POLLFD *fdArray, ULONG nfds, INT timeout)
-{
+#if WINVER <= 0x0502 // XP, Server2003
+int thrift_poll(THRIFT_POLLFD* fdArray, ULONG nfds, INT timeout) {
   fd_set read_fds, write_fds;
-  fd_set* read_fds_ptr  = NULL;
+  fd_set* read_fds_ptr = NULL;
   fd_set* write_fds_ptr = NULL;
 
   FD_ZERO(&read_fds);
   FD_ZERO(&write_fds);
 
-  for(ULONG i=0; i<nfds; i++) {
-    //Read (in) socket
-    if((fdArray[i].events & THRIFT_POLLIN) == THRIFT_POLLIN) {
+  for (ULONG i = 0; i < nfds; i++) {
+    // Read (in) socket
+    if ((fdArray[i].events & THRIFT_POLLIN) == THRIFT_POLLIN) {
       read_fds_ptr = &read_fds;
       FD_SET(fdArray[i].fd, &read_fds);
     }
-    //Write (out) socket
-    else if((fdArray[i].events & THRIFT_POLLOUT) == THRIFT_POLLOUT) {
+    // Write (out) socket
+    else if ((fdArray[i].events & THRIFT_POLLOUT) == THRIFT_POLLOUT) {
       write_fds_ptr = &write_fds;
       FD_SET(fdArray[i].fd, &write_fds);
     }
@@ -74,37 +66,35 @@ int thrift_poll(THRIFT_POLLFD *fdArray, ULONG nfds, INT timeout)
 
   timeval time_out;
   timeval* time_out_ptr = NULL;
-  if(timeout >= 0) {
+  if (timeout >= 0) {
     timeval time_out = {timeout / 1000, (timeout % 1000) * 1000};
     time_out_ptr = &time_out;
-  }
-  else { //to avoid compiler warnings
+  } else { // to avoid compiler warnings
     (void)time_out;
     (void)timeout;
   }
 
   int sktready = select(1, read_fds_ptr, write_fds_ptr, NULL, time_out_ptr);
-  if(sktready > 0) {
-    for(ULONG i=0; i<nfds; i++) {
+  if (sktready > 0) {
+    for (ULONG i = 0; i < nfds; i++) {
       fdArray[i].revents = 0;
-      if(FD_ISSET(fdArray[i].fd, &read_fds))
+      if (FD_ISSET(fdArray[i].fd, &read_fds))
         fdArray[i].revents |= THRIFT_POLLIN;
-      if(FD_ISSET(fdArray[i].fd, &write_fds))
+      if (FD_ISSET(fdArray[i].fd, &write_fds))
         fdArray[i].revents |= THRIFT_POLLOUT;
     }
   }
   return sktready;
 }
-#else //Vista, Win7...
-int thrift_poll(THRIFT_POLLFD *fdArray, ULONG nfds, INT timeout)
-{
+#else  // Vista, Win7...
+int thrift_poll(THRIFT_POLLFD* fdArray, ULONG nfds, INT timeout) {
   return WSAPoll(fdArray, nfds, timeout);
 }
 #endif // WINVER
 
 #ifdef _WIN32_WCE
 std::string thrift_wstr2str(std::wstring ws) {
-	std::string s(ws.begin(), ws.end());
-	return s;
+  std::string s(ws.begin(), ws.end());
+  return s;
 }
 #endif

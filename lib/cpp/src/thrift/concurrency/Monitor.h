@@ -25,8 +25,9 @@
 
 #include <boost/utility.hpp>
 
-
-namespace apache { namespace thrift { namespace concurrency {
+namespace apache {
+namespace thrift {
+namespace concurrency {
 
 /**
  * A monitor is a combination mutex and condition-event.  Waiting and
@@ -47,7 +48,7 @@ namespace apache { namespace thrift { namespace concurrency {
  * @version $Id:$
  */
 class Monitor : boost::noncopyable {
- public:
+public:
   /** Creates a new mutex, and takes ownership of it. */
   Monitor();
 
@@ -101,30 +102,28 @@ class Monitor : boost::noncopyable {
    */
   void wait(int64_t timeout_ms = 0LL) const;
 
-
   /** Wakes up one thread waiting on this monitor. */
   virtual void notify() const;
 
   /** Wakes up all waiting threads on this monitor. */
   virtual void notifyAll() const;
 
- private:
-
+private:
   class Impl;
 
   Impl* impl_;
 };
 
 class Synchronized {
- public:
- Synchronized(const Monitor* monitor) : g(monitor->mutex()) { }
- Synchronized(const Monitor& monitor) : g(monitor.mutex()) { }
+public:
+  Synchronized(const Monitor* monitor) : g(monitor->mutex()) {}
+  Synchronized(const Monitor& monitor) : g(monitor.mutex()) {}
 
- private:
+private:
   Guard g;
 };
-
-
-}}} // apache::thrift::concurrency
+}
+}
+} // apache::thrift::concurrency
 
 #endif // #ifndef _THRIFT_CONCURRENCY_MONITOR_H_

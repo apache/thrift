@@ -76,6 +76,9 @@ tutorialserver: all
 tutorialclient: all
 	./TutorialClient
 
+style-local:
+	$(CPPSTYLE_CMD)
+
 EXTRA_DIST = \
 	CppClient.cpp \
 	CppServer.cpp

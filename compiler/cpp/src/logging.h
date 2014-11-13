@@ -42,5 +42,4 @@ void pverbose(const char* fmt, ...);
  */
 void failure(const char* fmt, ...);
 
-
 #endif
