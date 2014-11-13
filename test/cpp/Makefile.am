@@ -104,6 +104,9 @@ AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS)
 clean-local:
 	$(RM) -r gen-cpp
 
+style-local:
+	$(CPPSTYLE_CMD)
+
 EXTRA_DIST = \
 	src/TestClient.cpp \
 	src/TestServer.cpp \

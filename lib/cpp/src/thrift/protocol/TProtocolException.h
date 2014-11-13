@@ -22,7 +22,9 @@
 
 #include <string>
 
-namespace apache { namespace thrift { namespace protocol {
+namespace apache {
+namespace thrift {
+namespace protocol {
 
 /**
  * Class to encapsulate all the possible types of protocol errors that may
@@ -33,36 +35,29 @@ namespace apache { namespace thrift { namespace protocol {
  *
  */
 class TProtocolException : public apache::thrift::TException {
- public:
-
+public:
   /**
    * Error codes for the various types of exceptions.
    */
-  enum TProtocolExceptionType
-  { UNKNOWN = 0
-  , INVALID_DATA = 1
-  , NEGATIVE_SIZE = 2
-  , SIZE_LIMIT = 3
-  , BAD_VERSION = 4
-  , NOT_IMPLEMENTED = 5
-  , DEPTH_LIMIT = 6
+  enum TProtocolExceptionType {
+    UNKNOWN = 0,
+    INVALID_DATA = 1,
+    NEGATIVE_SIZE = 2,
+    SIZE_LIMIT = 3,
+    BAD_VERSION = 4,
+    NOT_IMPLEMENTED = 5,
+    DEPTH_LIMIT = 6
   };
 
-  TProtocolException() :
-    apache::thrift::TException(),
-    type_(UNKNOWN) {}
+  TProtocolException() : apache::thrift::TException(), type_(UNKNOWN) {}
 
-  TProtocolException(TProtocolExceptionType type) :
-    apache::thrift::TException(),
-    type_(type) {}
+  TProtocolException(TProtocolExceptionType type) : apache::thrift::TException(), type_(type) {}
 
-  TProtocolException(const std::string& message) :
-    apache::thrift::TException(message),
-    type_(UNKNOWN) {}
+  TProtocolException(const std::string& message)
+    : apache::thrift::TException(message), type_(UNKNOWN) {}
 
-  TProtocolException(TProtocolExceptionType type, const std::string& message) :
-    apache::thrift::TException(message),
-    type_(type) {}
+  TProtocolException(TProtocolExceptionType type, const std::string& message)
+    : apache::thrift::TException(message), type_(type) {}
 
   virtual ~TProtocolException() throw() {}
 
@@ -72,34 +67,39 @@ class TProtocolException : public apache::thrift::TException {
    *
    * @return Error code
    */
-  TProtocolExceptionType getType() {
-    return type_;
-  }
+  TProtocolExceptionType getType() { return type_; }
 
   virtual const char* what() const throw() {
     if (message_.empty()) {
       switch (type_) {
-        case UNKNOWN         : return "TProtocolException: Unknown protocol exception";
-        case INVALID_DATA    : return "TProtocolException: Invalid data";
-        case NEGATIVE_SIZE   : return "TProtocolException: Negative size";
-        case SIZE_LIMIT      : return "TProtocolException: Exceeded size limit";
-        case BAD_VERSION     : return "TProtocolException: Invalid version";
-        case NOT_IMPLEMENTED : return "TProtocolException: Not implemented";
-        default              : return "TProtocolException: (Invalid exception type)";
+      case UNKNOWN:
+        return "TProtocolException: Unknown protocol exception";
+      case INVALID_DATA:
+        return "TProtocolException: Invalid data";
+      case NEGATIVE_SIZE:
+        return "TProtocolException: Negative size";
+      case SIZE_LIMIT:
+        return "TProtocolException: Exceeded size limit";
+      case BAD_VERSION:
+        return "TProtocolException: Invalid version";
+      case NOT_IMPLEMENTED:
+        return "TProtocolException: Not implemented";
+      default:
+        return "TProtocolException: (Invalid exception type)";
       }
     } else {
       return message_.c_str();
     }
   }
 
- protected:
+protected:
   /**
    * Error code
    */
   TProtocolExceptionType type_;
-
 };
-
-}}} // apache::thrift::protocol
+}
+}
+} // apache::thrift::protocol
 
 #endif // #ifndef _THRIFT_PROTOCOL_TPROTOCOLEXCEPTION_H_

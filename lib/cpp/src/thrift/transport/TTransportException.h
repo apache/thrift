@@ -23,7 +23,9 @@
 #include <string>
 #include <thrift/Thrift.h>
 
-namespace apache { namespace thrift { namespace transport {
+namespace apache {
+namespace thrift {
+namespace transport {
 
 /**
  * Class to encapsulate all the possible types of transport errors that may
@@ -34,42 +36,33 @@ namespace apache { namespace thrift { namespace transport {
  *
  */
 class TTransportException : public apache::thrift::TException {
- public:
+public:
   /**
    * Error codes for the various types of exceptions.
    */
-  enum TTransportExceptionType
-  { UNKNOWN = 0
-  , NOT_OPEN = 1
-  , TIMED_OUT = 2
-  , END_OF_FILE = 3
-  , INTERRUPTED = 4
-  , BAD_ARGS = 5
-  , CORRUPTED_DATA = 6
-  , INTERNAL_ERROR = 7
+  enum TTransportExceptionType {
+    UNKNOWN = 0,
+    NOT_OPEN = 1,
+    TIMED_OUT = 2,
+    END_OF_FILE = 3,
+    INTERRUPTED = 4,
+    BAD_ARGS = 5,
+    CORRUPTED_DATA = 6,
+    INTERNAL_ERROR = 7
   };
 
-  TTransportException() :
-    apache::thrift::TException(),
-    type_(UNKNOWN) {}
+  TTransportException() : apache::thrift::TException(), type_(UNKNOWN) {}
 
-  TTransportException(TTransportExceptionType type) :
-    apache::thrift::TException(),
-    type_(type) {}
+  TTransportException(TTransportExceptionType type) : apache::thrift::TException(), type_(type) {}
 
-  TTransportException(const std::string& message) :
-    apache::thrift::TException(message),
-    type_(UNKNOWN) {}
+  TTransportException(const std::string& message)
+    : apache::thrift::TException(message), type_(UNKNOWN) {}
 
-  TTransportException(TTransportExceptionType type, const std::string& message) :
-    apache::thrift::TException(message),
-    type_(type) {}
+  TTransportException(TTransportExceptionType type, const std::string& message)
+    : apache::thrift::TException(message), type_(type) {}
 
-  TTransportException(TTransportExceptionType type,
-                      const std::string& message,
-                      int errno_copy) :
-    apache::thrift::TException(message + ": " + TOutput::strerror_s(errno_copy)),
-    type_(type) {}
+  TTransportException(TTransportExceptionType type, const std::string& message, int errno_copy)
+    : apache::thrift::TException(message + ": " + TOutput::strerror_s(errno_copy)), type_(type) {}
 
   virtual ~TTransportException() throw() {}
 
@@ -79,21 +72,19 @@ class TTransportException : public apache::thrift::TException {
    *
    * @return Error code
    */
-  TTransportExceptionType getType() const throw() {
-    return type_;
-  }
+  TTransportExceptionType getType() const throw() { return type_; }
 
   virtual const char* what() const throw();
 
- protected:
+protected:
   /** Just like strerror_r but returns a C++ string object. */
   std::string strerror_s(int errno_copy);
 
   /** Error code */
   TTransportExceptionType type_;
-
 };
-
-}}} // apache::thrift::transport
+}
+}
+} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TTRANSPORTEXCEPTION_H_

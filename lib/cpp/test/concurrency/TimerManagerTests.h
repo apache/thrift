@@ -25,7 +25,10 @@
 #include <assert.h>
 #include <iostream>
 
-namespace apache { namespace thrift { namespace concurrency { namespace test {
+namespace apache {
+namespace thrift {
+namespace concurrency {
+namespace test {
 
 using namespace apache::thrift::concurrency;
 
@@ -33,16 +36,15 @@ class TimerManagerTests {
 
   static const double TEST_TOLERANCE;
 
- public:
-  class Task: public Runnable {
-   public:
-
-    Task(Monitor& monitor, int64_t timeout) :
-      _timeout(timeout),
-      _startTime(Util::currentTime()),
-      _monitor(monitor),
-      _success(false),
-      _done(false) {}
+public:
+  class Task : public Runnable {
+  public:
+    Task(Monitor& monitor, int64_t timeout)
+      : _timeout(timeout),
+        _startTime(Util::currentTime()),
+        _monitor(monitor),
+        _success(false),
+        _done(false) {}
 
     ~Task() { std::cerr << this << std::endl; }
 
@@ -54,20 +56,20 @@ class TimerManagerTests {
 
       int64_t delta = _endTime - _startTime;
 
-
-      delta = delta > _timeout ?  delta - _timeout : _timeout - delta;
+      delta = delta > _timeout ? delta - _timeout : _timeout - delta;
 
       float error = delta / _timeout;
 
-      if(error < TEST_TOLERANCE) {
+      if (error < TEST_TOLERANCE) {
         _success = true;
       }
 
       _done = true;
 
-      std::cout << "\t\t\tTimerManagerTests::Task[" << this << "] done" << std::endl; //debug
+      std::cout << "\t\t\tTimerManagerTests::Task[" << this << "] done" << std::endl; // debug
 
-      {Synchronized s(_monitor);
+      {
+        Synchronized s(_monitor);
         _monitor.notifyAll();
       }
     }
@@ -86,9 +88,10 @@ class TimerManagerTests {
    * properly clean up itself and the remaining orphaned timeout task when the
    * manager goes out of scope and its destructor is called.
    */
-  bool test00(int64_t timeout=1000LL) {
+  bool test00(int64_t timeout = 1000LL) {
 
-    shared_ptr<TimerManagerTests::Task> orphanTask = shared_ptr<TimerManagerTests::Task>(new TimerManagerTests::Task(_monitor, 10 * timeout));
+    shared_ptr<TimerManagerTests::Task> orphanTask
+        = shared_ptr<TimerManagerTests::Task>(new TimerManagerTests::Task(_monitor, 10 * timeout));
 
     {
 
@@ -113,12 +116,13 @@ class TimerManagerTests {
           // Wait for 1 second in order to give timerManager a chance to start sleeping in response
           // to adding orphanTask. We need to do this so we can verify that adding the second task
           // kicks the dispatcher out of the current wait and starts the new 1 second wait.
-          _monitor.wait (1000);
-          assert (0 == "ERROR: This wait should time out. TimerManager dispatcher may have a problem.");
-        } catch (TimedOutException &ex) {
+          _monitor.wait(1000);
+          assert(
+              0 == "ERROR: This wait should time out. TimerManager dispatcher may have a problem.");
+        } catch (TimedOutException& ex) {
         }
 
-        task.reset (new TimerManagerTests::Task(_monitor, timeout));
+        task.reset(new TimerManagerTests::Task(_monitor, timeout));
 
         timerManager.add(task, timeout);
 
@@ -126,7 +130,6 @@ class TimerManagerTests {
       }
 
       assert(task->_done);
-
 
       std::cout << "\t\t\t" << (task->_success ? "Success" : "Failure") << "!" << std::endl;
     }
@@ -144,5 +147,7 @@ class TimerManagerTests {
 };
 
 const double TimerManagerTests::TEST_TOLERANCE = .20;
-
-}}}} // apache::thrift::concurrency
+}
+}
+}
+} // apache::thrift::concurrency

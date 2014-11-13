@@ -38,7 +38,6 @@ using namespace apache::thrift;
 using namespace apache::thrift::transport;
 using namespace apache::thrift::protocol;
 
-
 /*
 template<typename Struct>
 void trywrite(const Struct& s, bool should_work) {
@@ -55,12 +54,11 @@ void trywrite(const Struct& s, bool should_work) {
 */
 
 template <typename Struct1, typename Struct2>
-void write_to_read(const Struct1 & w, Struct2 & r) {
+void write_to_read(const Struct1& w, Struct2& r) {
   TBinaryProtocol protocol(boost::shared_ptr<TTransport>(new TMemoryBuffer));
   w.write(&protocol);
   r.read(&protocol);
 }
-
 
 int main() {
 
@@ -98,22 +96,22 @@ int main() {
     Simple s1, s2, s3;
     s1.im_optional = 10;
     assert(!s1.__isset.im_default);
-  //assert(!s1.__isset.im_required);  // Compile error.
+    // assert(!s1.__isset.im_required);  // Compile error.
     assert(!s1.__isset.im_optional);
 
     write_to_read(s1, s2);
 
-    assert( s2.__isset.im_default);
-  //assert( s2.__isset.im_required);  // Compile error.
+    assert(s2.__isset.im_default);
+    // assert( s2.__isset.im_required);  // Compile error.
     assert(!s2.__isset.im_optional);
     assert(s3.im_optional == 0);
 
     s1.__isset.im_optional = true;
     write_to_read(s1, s3);
 
-    assert( s3.__isset.im_default);
-  //assert( s3.__isset.im_required);  // Compile error.
-    assert( s3.__isset.im_optional);
+    assert(s3.__isset.im_default);
+    // assert( s3.__isset.im_required);  // Compile error.
+    assert(s3.__isset.im_optional);
     assert(s3.im_optional == 10);
   }
 
@@ -126,7 +124,7 @@ int main() {
     write_to_read(t2, t1);
     write_to_read(t1, t2);
     assert(!t1.__isset.im_default);
-    assert( t2.__isset.im_optional);
+    assert(t2.__isset.im_optional);
     assert(t1.im_default == t2.im_optional);
     assert(t1.im_default == 0);
   }
@@ -156,8 +154,8 @@ int main() {
     try {
       write_to_read(t2, t3);
       abort();
+    } catch (const TProtocolException&) {
     }
-    catch (const TProtocolException&) {}
 
     write_to_read(t3, t2);
     assert(t2.__isset.im_optional);
@@ -168,7 +166,6 @@ int main() {
     Complex c;
     cout << ThriftDebugString(c) << endl;
   }
-
 
   {
     Tricky1 t1;
@@ -194,12 +191,12 @@ int main() {
     assert(o1 == o2);
     o1.__isset.im_str = o2.__isset.im_str = true;
     assert(o1 == o2);
-    map<int32_t,string> mymap;
+    map<int32_t, string> mymap;
     mymap[1] = "bar";
     mymap[2] = "baz";
-    o1.im_big.push_back(map<int32_t,string>());
+    o1.im_big.push_back(map<int32_t, string>());
     assert(o1 != o2);
-    o2.im_big.push_back(map<int32_t,string>());
+    o2.im_big.push_back(map<int32_t, string>());
     assert(o1 == o2);
     o2.im_big.push_back(mymap);
     assert(o1 != o2);
@@ -220,7 +217,7 @@ int main() {
     o3.im_big.push_back(mymap);
     assert(o1 == o3);
 
-    //cout << ThriftDebugString(o3) << endl;
+    // cout << ThriftDebugString(o3) << endl;
   }
 
   {

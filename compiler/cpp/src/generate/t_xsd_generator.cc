@@ -35,22 +35,20 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-static const string endl = "\n";  // avoid ostream << std::endl flushes
+static const string endl = "\n"; // avoid ostream << std::endl flushes
 
 /**
  * XSD generator, creates an XSD for the base types etc.
  *
  */
 class t_xsd_generator : public t_generator {
- public:
-  t_xsd_generator(
-      t_program* program,
-      const std::map<std::string, std::string>& parsed_options,
-      const std::string& option_string)
-    : t_generator(program)
-  {
-    (void) parsed_options;
-    (void) option_string;
+public:
+  t_xsd_generator(t_program* program,
+                  const std::map<std::string, std::string>& parsed_options,
+                  const std::string& option_string)
+    : t_generator(program) {
+    (void)parsed_options;
+    (void)option_string;
     out_dir_base_ = "gen-xsd";
   }
 
@@ -68,24 +66,23 @@ class t_xsd_generator : public t_generator {
    */
 
   void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum) {
-    (void) tenum;
-  }
+  void generate_enum(t_enum* tenum) { (void)tenum; }
 
   void generate_service(t_service* tservice);
   void generate_struct(t_struct* tstruct);
 
- private:
+private:
+  void generate_element(std::ostream& out,
+                        std::string name,
+                        t_type* ttype,
+                        t_struct* attrs = NULL,
+                        bool optional = false,
+                        bool nillable = false,
+                        bool list_element = false);
 
-  void generate_element(std::ostream& out, std::string name, t_type* ttype, t_struct* attrs=NULL, bool optional=false, bool nillable=false, bool list_element=false);
+  std::string ns(std::string in, std::string ns) { return ns + ":" + in; }
 
-  std::string ns(std::string in, std::string ns) {
-    return ns + ":" + in;
-  }
-
-  std::string xsd(std::string in) {
-    return ns(in, "xsd");
-  }
+  std::string xsd(std::string in) { return ns(in, "xsd"); }
 
   std::string type_name(t_type* ttype);
   std::string base_type_name(t_base_type::t_base tbase);
@@ -100,21 +97,17 @@ class t_xsd_generator : public t_generator {
    * Output string stream
    */
   std::ostringstream s_xsd_types_;
-
 };
-
 
 void t_xsd_generator::init_generator() {
   // Make output directory
   MKDIR(get_out_dir().c_str());
 
   // Make output file
-  string f_php_name = get_out_dir()+program_->get_name()+"_xsd.php";
+  string f_php_name = get_out_dir() + program_->get_name() + "_xsd.php";
   f_php_.open(f_php_name.c_str());
 
-  f_php_ <<
-    "<?php" << endl;
-
+  f_php_ << "<?php" << endl;
 }
 
 void t_xsd_generator::close_generator() {
@@ -123,29 +116,25 @@ void t_xsd_generator::close_generator() {
 }
 
 void t_xsd_generator::generate_typedef(t_typedef* ttypedef) {
-  indent(s_xsd_types_) <<
-    "<xsd:simpleType name=\"" << ttypedef->get_name() << "\">" << endl;
+  indent(s_xsd_types_) << "<xsd:simpleType name=\"" << ttypedef->get_name() << "\">" << endl;
   indent_up();
   if (ttypedef->get_type()->is_string() && ((t_base_type*)ttypedef->get_type())->is_string_enum()) {
-    indent(s_xsd_types_) <<
-      "<xsd:restriction base=\"" << type_name(ttypedef->get_type()) << "\">" << endl;
+    indent(s_xsd_types_) << "<xsd:restriction base=\"" << type_name(ttypedef->get_type()) << "\">"
+                         << endl;
     indent_up();
     const vector<string>& values = ((t_base_type*)ttypedef->get_type())->get_string_enum_vals();
     vector<string>::const_iterator v_iter;
     for (v_iter = values.begin(); v_iter != values.end(); ++v_iter) {
-      indent(s_xsd_types_) <<
-        "<xsd:enumeration value=\"" << (*v_iter) << "\" />" << endl;
+      indent(s_xsd_types_) << "<xsd:enumeration value=\"" << (*v_iter) << "\" />" << endl;
     }
     indent_down();
-    indent(s_xsd_types_) <<
-      "</xsd:restriction>" << endl;
+    indent(s_xsd_types_) << "</xsd:restriction>" << endl;
   } else {
-    indent(s_xsd_types_) <<
-      "<xsd:restriction base=\"" << type_name(ttypedef->get_type()) << "\" />" << endl;
+    indent(s_xsd_types_) << "<xsd:restriction base=\"" << type_name(ttypedef->get_type()) << "\" />"
+                         << endl;
   }
   indent_down();
-  indent(s_xsd_types_) <<
-    "</xsd:simpleType>" << endl << endl;
+  indent(s_xsd_types_) << "</xsd:simpleType>" << endl << endl;
 }
 
 void t_xsd_generator::generate_struct(t_struct* tstruct) {
@@ -163,7 +152,12 @@ void t_xsd_generator::generate_struct(t_struct* tstruct) {
   indent_up();
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    generate_element(s_xsd_types_, (*m_iter)->get_name(), (*m_iter)->get_type(), (*m_iter)->get_xsd_attrs(), (*m_iter)->get_xsd_optional() || xsd_all, (*m_iter)->get_xsd_nillable());
+    generate_element(s_xsd_types_,
+                     (*m_iter)->get_name(),
+                     (*m_iter)->get_type(),
+                     (*m_iter)->get_xsd_attrs(),
+                     (*m_iter)->get_xsd_optional() || xsd_all,
+                     (*m_iter)->get_xsd_nillable());
   }
 
   indent_down();
@@ -173,9 +167,7 @@ void t_xsd_generator::generate_struct(t_struct* tstruct) {
     indent(s_xsd_types_) << "</xsd:sequence>" << endl;
   }
   indent_down();
-  indent(s_xsd_types_) <<
-    "</xsd:complexType>" << endl <<
-    endl;
+  indent(s_xsd_types_) << "</xsd:complexType>" << endl << endl;
 }
 
 void t_xsd_generator::generate_element(ostream& out,
@@ -191,15 +183,12 @@ void t_xsd_generator::generate_element(ostream& out,
   string snillable = nillable ? " nillable=\"true\"" : "";
 
   if (ttype->is_void() || ttype->is_list()) {
-    indent(out) <<
-      "<xsd:element name=\"" << name << "\"" << soptional << snillable << ">" << endl;
+    indent(out) << "<xsd:element name=\"" << name << "\"" << soptional << snillable << ">" << endl;
     indent_up();
     if (attrs == NULL && ttype->is_void()) {
-      indent(out) <<
-        "<xsd:complexType />" << endl;
+      indent(out) << "<xsd:complexType />" << endl;
     } else {
-      indent(out) <<
-        "<xsd:complexType>" << endl;
+      indent(out) << "<xsd:complexType>" << endl;
       indent_up();
       if (ttype->is_list()) {
         indent(out) << "<xsd:sequence minOccurs=\"0\" maxOccurs=\"unbounded\">" << endl;
@@ -211,7 +200,8 @@ void t_xsd_generator::generate_element(ostream& out,
         } else {
           subname = type_name(subtype);
         }
-        f_php_ << "$GLOBALS['" << program_->get_name() << "_xsd_elt_" << name << "'] = '" << subname << "';" << endl;
+        f_php_ << "$GLOBALS['" << program_->get_name() << "_xsd_elt_" << name << "'] = '" << subname
+               << "';" << endl;
         generate_element(out, subname, subtype, NULL, false, false, true);
         indent_down();
         indent(out) << "</xsd:sequence>" << endl;
@@ -221,23 +211,24 @@ void t_xsd_generator::generate_element(ostream& out,
         const vector<t_field*>& members = attrs->get_members();
         vector<t_field*>::const_iterator a_iter;
         for (a_iter = members.begin(); a_iter != members.end(); ++a_iter) {
-          indent(out) << "<xsd:attribute name=\"" << (*a_iter)->get_name() << "\" type=\"" << type_name((*a_iter)->get_type()) << "\" />" << endl;
+          indent(out) << "<xsd:attribute name=\"" << (*a_iter)->get_name() << "\" type=\""
+                      << type_name((*a_iter)->get_type()) << "\" />" << endl;
         }
       }
       indent_down();
-      indent(out) <<
-        "</xsd:complexType>" << endl;
+      indent(out) << "</xsd:complexType>" << endl;
     }
     indent_down();
-    indent(out) <<
-      "</xsd:element>" << endl;
+    indent(out) << "</xsd:element>" << endl;
   } else {
     if (attrs == NULL) {
-      indent(out) <<
-        "<xsd:element name=\"" << name << "\"" << " type=\"" << type_name(ttype) << "\"" << soptional << snillable << " />" << endl;
+      indent(out) << "<xsd:element name=\"" << name << "\""
+                  << " type=\"" << type_name(ttype) << "\"" << soptional << snillable << " />"
+                  << endl;
     } else {
       // Wow, all this work for a SIMPLE TYPE with attributes?!?!?!
-      indent(out) << "<xsd:element name=\"" << name << "\"" << soptional << snillable << ">" << endl;
+      indent(out) << "<xsd:element name=\"" << name << "\"" << soptional << snillable << ">"
+                  << endl;
       indent_up();
       indent(out) << "<xsd:complexType>" << endl;
       indent_up();
@@ -248,7 +239,8 @@ void t_xsd_generator::generate_element(ostream& out,
       const vector<t_field*>& members = attrs->get_members();
       vector<t_field*>::const_iterator a_iter;
       for (a_iter = members.begin(); a_iter != members.end(); ++a_iter) {
-        indent(out) << "<xsd:attribute name=\"" << (*a_iter)->get_name() << "\" type=\"" << type_name((*a_iter)->get_type()) << "\" />" << endl;
+        indent(out) << "<xsd:attribute name=\"" << (*a_iter)->get_name() << "\" type=\""
+                    << type_name((*a_iter)->get_type()) << "\" />" << endl;
       }
       indent_down();
       indent(out) << "</xsd:extension>" << endl;
@@ -264,22 +256,19 @@ void t_xsd_generator::generate_element(ostream& out,
 
 void t_xsd_generator::generate_service(t_service* tservice) {
   // Make output file
-  string f_xsd_name = get_out_dir()+tservice->get_name()+".xsd";
+  string f_xsd_name = get_out_dir() + tservice->get_name() + ".xsd";
   f_xsd_.open(f_xsd_name.c_str());
 
   string ns = program_->get_namespace("xsd");
   if (ns.size() > 0) {
-    ns = " targetNamespace=\"" + ns + "\" xmlns=\"" + ns + "\" " +
-      "elementFormDefault=\"qualified\"";
+    ns = " targetNamespace=\"" + ns + "\" xmlns=\"" + ns + "\" "
+         + "elementFormDefault=\"qualified\"";
   }
 
   // Print the XSD header
-  f_xsd_ <<
-    "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>" << endl <<
-    "<xsd:schema xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"" << ns << ">" << endl <<
-    endl <<
-    "<!-- Yo yo yo, this XSD woz be generated by Thrift. -->" << endl <<
-    endl;
+  f_xsd_ << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>" << endl
+         << "<xsd:schema xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"" << ns << ">" << endl
+         << endl << "<!-- Yo yo yo, this XSD woz be generated by Thrift. -->" << endl << endl;
 
   // Print out the type definitions
   indent(f_xsd_) << s_xsd_types_.str();
@@ -364,4 +353,3 @@ string t_xsd_generator::base_type_name(t_base_type::t_base tbase) {
 }
 
 THRIFT_REGISTER_GENERATOR(xsd, "XSD", "")
-

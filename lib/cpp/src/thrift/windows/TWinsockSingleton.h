@@ -42,47 +42,43 @@
 #error For windows you must choose USE_BOOST_THREAD or USE_STD_THREAD
 #endif
 
-namespace apache { namespace thrift { namespace transport {
+namespace apache {
+namespace thrift {
+namespace transport {
 
 /**
  * Winsock2 must be intialised once only in order to create sockets. This class
  * performs a one time initialisation when create is called.
  */
-class TWinsockSingleton : private boost::noncopyable
-{
+class TWinsockSingleton : private boost::noncopyable {
 
 public:
-
-    typedef boost::scoped_ptr<TWinsockSingleton> instance_ptr;
+  typedef boost::scoped_ptr<TWinsockSingleton> instance_ptr;
 
 private:
-
-    TWinsockSingleton(void);
+  TWinsockSingleton(void);
 
 public:
-
-    ~TWinsockSingleton(void);
+  ~TWinsockSingleton(void);
 
 public:
-
-    static void create(void);
-
-private:
-
-    static void init(void);
+  static void create(void);
 
 private:
+  static void init(void);
 
-    static instance_ptr     instance_ptr_;
+private:
+  static instance_ptr instance_ptr_;
 #if USE_BOOST_THREAD
-    static boost::once_flag flags_;
+  static boost::once_flag flags_;
 #elif USE_STD_THREAD
-    static std::once_flag flags_;
+  static std::once_flag flags_;
 #else
 #error Need a non-Boost non-C++11 way to track single initialization here.
 #endif
 };
-
-}}} // apache::thrift::transport
+}
+}
+} // apache::thrift::transport
 
 #endif // _THRIFT_TRANSPORT_WINDOWS_TWINSOCKSINGLETON_H_

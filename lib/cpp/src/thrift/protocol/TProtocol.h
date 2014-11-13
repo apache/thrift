@@ -34,7 +34,6 @@
 #include <map>
 #include <vector>
 
-
 // Use this to get around strict aliasing rules.
 // For example, uint64_t i = bitwise_cast<uint64_t>(returns_double());
 // The most obvious implementation is to just cast a pointer,
@@ -136,7 +135,9 @@ static inline To bitwise_cast(From from) {
 # error "Can't define htonll or ntohll!"
 #endif
 
-namespace apache { namespace thrift { namespace protocol {
+namespace apache {
+namespace thrift {
+namespace protocol {
 
 using apache::thrift::transport::TTransport;
 
@@ -186,98 +187,91 @@ enum TMessageType {
 template <class Protocol_>
 uint32_t skip(Protocol_& prot, TType type) {
   switch (type) {
-  case T_BOOL:
-    {
-      bool boolv;
-      return prot.readBool(boolv);
-    }
-  case T_BYTE:
-    {
-      int8_t bytev;
-      return prot.readByte(bytev);
-    }
-  case T_I16:
-    {
-      int16_t i16;
-      return prot.readI16(i16);
-    }
-  case T_I32:
-    {
-      int32_t i32;
-      return prot.readI32(i32);
-    }
-  case T_I64:
-    {
-      int64_t i64;
-      return prot.readI64(i64);
-    }
-  case T_DOUBLE:
-    {
-      double dub;
-      return prot.readDouble(dub);
-    }
-  case T_STRING:
-    {
-      std::string str;
-      return prot.readBinary(str);
-    }
-  case T_STRUCT:
-    {
-      uint32_t result = 0;
-      std::string name;
-      int16_t fid;
-      TType ftype;
-      result += prot.readStructBegin(name);
-      while (true) {
-        result += prot.readFieldBegin(name, ftype, fid);
-        if (ftype == T_STOP) {
-          break;
-        }
-        result += skip(prot, ftype);
-        result += prot.readFieldEnd();
+  case T_BOOL: {
+    bool boolv;
+    return prot.readBool(boolv);
+  }
+  case T_BYTE: {
+    int8_t bytev;
+    return prot.readByte(bytev);
+  }
+  case T_I16: {
+    int16_t i16;
+    return prot.readI16(i16);
+  }
+  case T_I32: {
+    int32_t i32;
+    return prot.readI32(i32);
+  }
+  case T_I64: {
+    int64_t i64;
+    return prot.readI64(i64);
+  }
+  case T_DOUBLE: {
+    double dub;
+    return prot.readDouble(dub);
+  }
+  case T_STRING: {
+    std::string str;
+    return prot.readBinary(str);
+  }
+  case T_STRUCT: {
+    uint32_t result = 0;
+    std::string name;
+    int16_t fid;
+    TType ftype;
+    result += prot.readStructBegin(name);
+    while (true) {
+      result += prot.readFieldBegin(name, ftype, fid);
+      if (ftype == T_STOP) {
+        break;
       }
-      result += prot.readStructEnd();
-      return result;
+      result += skip(prot, ftype);
+      result += prot.readFieldEnd();
     }
-  case T_MAP:
-    {
-      uint32_t result = 0;
-      TType keyType;
-      TType valType;
-      uint32_t i, size;
-      result += prot.readMapBegin(keyType, valType, size);
-      for (i = 0; i < size; i++) {
-        result += skip(prot, keyType);
-        result += skip(prot, valType);
-      }
-      result += prot.readMapEnd();
-      return result;
+    result += prot.readStructEnd();
+    return result;
+  }
+  case T_MAP: {
+    uint32_t result = 0;
+    TType keyType;
+    TType valType;
+    uint32_t i, size;
+    result += prot.readMapBegin(keyType, valType, size);
+    for (i = 0; i < size; i++) {
+      result += skip(prot, keyType);
+      result += skip(prot, valType);
     }
-  case T_SET:
-    {
-      uint32_t result = 0;
-      TType elemType;
-      uint32_t i, size;
-      result += prot.readSetBegin(elemType, size);
-      for (i = 0; i < size; i++) {
-        result += skip(prot, elemType);
-      }
-      result += prot.readSetEnd();
-      return result;
+    result += prot.readMapEnd();
+    return result;
+  }
+  case T_SET: {
+    uint32_t result = 0;
+    TType elemType;
+    uint32_t i, size;
+    result += prot.readSetBegin(elemType, size);
+    for (i = 0; i < size; i++) {
+      result += skip(prot, elemType);
     }
-  case T_LIST:
-    {
-      uint32_t result = 0;
-      TType elemType;
-      uint32_t i, size;
-      result += prot.readListBegin(elemType, size);
-      for (i = 0; i < size; i++) {
-        result += skip(prot, elemType);
-      }
-      result += prot.readListEnd();
-      return result;
+    result += prot.readSetEnd();
+    return result;
+  }
+  case T_LIST: {
+    uint32_t result = 0;
+    TType elemType;
+    uint32_t i, size;
+    result += prot.readListBegin(elemType, size);
+    for (i = 0; i < size; i++) {
+      result += skip(prot, elemType);
     }
-  case T_STOP: case T_VOID: case T_U64: case T_UTF8: case T_UTF16:
+    result += prot.readListEnd();
+    return result;
+  }
+  case T_STOP:
+  case T_VOID:
+  case T_U64:
+  case T_UTF8:
+  case T_UTF16:
     break;
   }
   return 0;
@@ -300,7 +294,7 @@ static const uint32_t DEFAULT_RECURSION_LIMIT = 64;
  *
  */
 class TProtocol {
- public:
+public:
   virtual ~TProtocol() {}
 
   /**
@@ -312,7 +306,6 @@ class TProtocol {
                                           const int32_t seqid) = 0;
 
   virtual uint32_t writeMessageEnd_virt() = 0;
-
 
   virtual uint32_t writeStructBegin_virt(const char* name) = 0;
 
@@ -326,19 +319,16 @@ class TProtocol {
 
   virtual uint32_t writeFieldStop_virt() = 0;
 
-  virtual uint32_t writeMapBegin_virt(const TType keyType,
-                                      const TType valType,
-                                      const uint32_t size) = 0;
+  virtual uint32_t writeMapBegin_virt(const TType keyType, const TType valType, const uint32_t size)
+      = 0;
 
   virtual uint32_t writeMapEnd_virt() = 0;
 
-  virtual uint32_t writeListBegin_virt(const TType elemType,
-                                       const uint32_t size) = 0;
+  virtual uint32_t writeListBegin_virt(const TType elemType, const uint32_t size) = 0;
 
   virtual uint32_t writeListEnd_virt() = 0;
 
-  virtual uint32_t writeSetBegin_virt(const TType elemType,
-                                      const uint32_t size) = 0;
+  virtual uint32_t writeSetBegin_virt(const TType elemType, const uint32_t size) = 0;
 
   virtual uint32_t writeSetEnd_virt() = 0;
 
@@ -370,7 +360,6 @@ class TProtocol {
     return writeMessageEnd_virt();
   }
 
-
   uint32_t writeStructBegin(const char* name) {
     T_VIRTUAL_CALL();
     return writeStructBegin_virt(name);
@@ -381,9 +370,7 @@ class TProtocol {
     return writeStructEnd_virt();
   }
 
-  uint32_t writeFieldBegin(const char* name,
-                           const TType fieldType,
-                           const int16_t fieldId) {
+  uint32_t writeFieldBegin(const char* name, const TType fieldType, const int16_t fieldId) {
     T_VIRTUAL_CALL();
     return writeFieldBegin_virt(name, fieldType, fieldId);
   }
@@ -398,9 +385,7 @@ class TProtocol {
     return writeFieldStop_virt();
   }
 
-  uint32_t writeMapBegin(const TType keyType,
-                         const TType valType,
-                         const uint32_t size) {
+  uint32_t writeMapBegin(const TType keyType, const TType valType, const uint32_t size) {
     T_VIRTUAL_CALL();
     return writeMapBegin_virt(keyType, valType, size);
   }
@@ -485,24 +470,19 @@ class TProtocol {
   virtual uint32_t readStructEnd_virt() = 0;
 
   virtual uint32_t readFieldBegin_virt(std::string& name,
-                                       TType& fieldType,
-                                       int16_t& fieldId) = 0;
+  virtual uint32_t readFieldBegin_virt(std::string& name, TType& fieldType, int16_t& fieldId) = 0;
 
   virtual uint32_t readFieldEnd_virt() = 0;
 
-  virtual uint32_t readMapBegin_virt(TType& keyType,
-                                     TType& valType,
-                                     uint32_t& size) = 0;
+  virtual uint32_t readMapBegin_virt(TType& keyType, TType& valType, uint32_t& size) = 0;
 
   virtual uint32_t readMapEnd_virt() = 0;
 
-  virtual uint32_t readListBegin_virt(TType& elemType,
-                                      uint32_t& size) = 0;
+  virtual uint32_t readListBegin_virt(TType& elemType, uint32_t& size) = 0;
 
   virtual uint32_t readListEnd_virt() = 0;
 
-  virtual uint32_t readSetBegin_virt(TType& elemType,
-                                     uint32_t& size) = 0;
+  virtual uint32_t readSetBegin_virt(TType& elemType, uint32_t& size) = 0;
 
   virtual uint32_t readSetEnd_virt() = 0;
 
@@ -524,9 +504,7 @@ class TProtocol {
 
   virtual uint32_t readBinary_virt(std::string& str) = 0;
 
-  uint32_t readMessageBegin(std::string& name,
-                            TMessageType& messageType,
-                            int32_t& seqid) {
+  uint32_t readMessageBegin(std::string& name, TMessageType& messageType, int32_t& seqid) {
     T_VIRTUAL_CALL();
     return readMessageBegin_virt(name, messageType, seqid);
   }
@@ -546,9 +524,7 @@ class TProtocol {
     return readStructEnd_virt();
   }
 
-  uint32_t readFieldBegin(std::string& name,
-                          TType& fieldType,
-                          int16_t& fieldId) {
+  uint32_t readFieldBegin(std::string& name, TType& fieldType, int16_t& fieldId) {
     T_VIRTUAL_CALL();
     return readFieldBegin_virt(name, fieldType, fieldId);
   }
@@ -645,22 +621,14 @@ class TProtocol {
     T_VIRTUAL_CALL();
     return skip_virt(type);
   }
-  virtual uint32_t skip_virt(TType type) {
-    return ::apache::thrift::protocol::skip(*this, type);
-  }
+  virtual uint32_t skip_virt(TType type) { return ::apache::thrift::protocol::skip(*this, type); }
 
-  inline boost::shared_ptr<TTransport> getTransport() {
-    return ptrans_;
-  }
+  inline boost::shared_ptr<TTransport> getTransport() { return ptrans_; }
 
   // TODO: remove these two calls, they are for backwards
   // compatibility
-  inline boost::shared_ptr<TTransport> getInputTransport() {
-    return ptrans_;
-  }
-  inline boost::shared_ptr<TTransport> getOutputTransport() {
-    return ptrans_;
-  }
+  inline boost::shared_ptr<TTransport> getInputTransport() { return ptrans_; }
+  inline boost::shared_ptr<TTransport> getOutputTransport() { return ptrans_; }
 
   void incrementRecursionDepth() {
     if (recursion_limit_ < ++recursion_depth_) {
@@ -668,19 +636,15 @@ class TProtocol {
     }
   }
 
-  void decrementRecursionDepth() {
-    --recursion_depth_;
-  }
+  void decrementRecursionDepth() { --recursion_depth_; }
 
- protected:
+protected:
   TProtocol(boost::shared_ptr<TTransport> ptrans)
-    : ptrans_(ptrans)
-    , recursion_depth_(0)
-    , recursion_limit_(DEFAULT_RECURSION_LIMIT) {}
+    : ptrans_(ptrans), recursion_depth_(0), recursion_limit_(DEFAULT_RECURSION_LIMIT) {}
 
   boost::shared_ptr<TTransport> ptrans_;
 
- private:
+private:
   TProtocol() {}
   uint32_t recursion_depth_;
   uint32_t recursion_limit_;
@@ -690,7 +654,7 @@ class TProtocol {
  * Constructs input and output protocol objects given transports.
  */
 class TProtocolFactory {
- public:
+public:
   TProtocolFactory() {}
 
   virtual ~TProtocolFactory() {}
@@ -704,9 +668,9 @@ class TProtocolFactory {
  * This class does nothing, and should never be instantiated.
  * It is used only by the generator code.
  */
-class TDummyProtocol : public TProtocol {
-};
-
-}}} // apache::thrift::protocol
+class TDummyProtocol : public TProtocol {};
+}
+}
+} // apache::thrift::protocol
 
 #endif // #define _THRIFT_PROTOCOL_TPROTOCOL_H_ 1

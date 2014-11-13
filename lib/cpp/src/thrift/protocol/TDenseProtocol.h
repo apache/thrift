@@ -22,7 +22,9 @@
 
 #include <thrift/protocol/TBinaryProtocol.h>
 
-namespace apache { namespace thrift { namespace protocol {
+namespace apache {
+namespace thrift {
+namespace protocol {
 
 /**
  * !!!WARNING!!!
@@ -56,14 +58,13 @@ namespace apache { namespace thrift { namespace protocol {
  * methods within our versions.
  *
  */
-class TDenseProtocol
-  : public TVirtualProtocol<TDenseProtocol, TBinaryProtocol> {
- protected:
+class TDenseProtocol : public TVirtualProtocol<TDenseProtocol, TBinaryProtocol> {
+protected:
   static const int32_t VERSION_MASK = ((int32_t)0xffff0000);
   // VERSION_1 (0x80010000)  is taken by TBinaryProtocol.
   static const int32_t VERSION_2 = ((int32_t)0x80020000);
 
- public:
+public:
   typedef apache::thrift::reflection::local::TypeSpec TypeSpec;
   static const int FP_PREFIX_LEN;
 
@@ -71,20 +72,13 @@ class TDenseProtocol
    * @param tran       The transport to use.
    * @param type_spec  The TypeSpec of the structures using this protocol.
    */
-  TDenseProtocol(boost::shared_ptr<TTransport> trans,
-                 TypeSpec* type_spec = NULL) :
-    TVirtualProtocol<TDenseProtocol, TBinaryProtocol>(trans),
-    type_spec_(type_spec),
-    standalone_(true)
-  {}
+  TDenseProtocol(boost::shared_ptr<TTransport> trans, TypeSpec* type_spec = NULL)
+    : TVirtualProtocol<TDenseProtocol, TBinaryProtocol>(trans),
+      type_spec_(type_spec),
+      standalone_(true) {}
 
-  void setTypeSpec(TypeSpec* type_spec) {
-    type_spec_ = type_spec;
-  }
-  TypeSpec* getTypeSpec() {
-    return type_spec_;
-  }
-
+  void setTypeSpec(TypeSpec* type_spec) { type_spec_ = type_spec; }
+  TypeSpec* getTypeSpec() { return type_spec_; }
 
   /*
    * Writing functions.
@@ -96,22 +90,17 @@ class TDenseProtocol
 
   uint32_t writeMessageEnd();
 
-
   uint32_t writeStructBegin(const char* name);
 
   uint32_t writeStructEnd();
 
-  uint32_t writeFieldBegin(const char* name,
-                           const TType fieldType,
-                           const int16_t fieldId);
+  uint32_t writeFieldBegin(const char* name, const TType fieldType, const int16_t fieldId);
 
   uint32_t writeFieldEnd();
 
   uint32_t writeFieldStop();
 
-  uint32_t writeMapBegin(const TType keyType,
-                         const TType valType,
-                         const uint32_t size);
+  uint32_t writeMapBegin(const TType keyType, const TType valType, const uint32_t size);
 
   uint32_t writeMapEnd();
 
@@ -139,7 +128,6 @@ class TDenseProtocol
 
   uint32_t writeBinary(const std::string& str);
 
-
   /*
    * Helper writing functions (don't do state transitions).
    */
@@ -147,18 +135,13 @@ class TDenseProtocol
 
   inline uint32_t subWriteString(const std::string& str);
 
-  uint32_t subWriteBool(const bool value) {
-    return TBinaryProtocol::writeBool(value);
-  }
-
+  uint32_t subWriteBool(const bool value) { return TBinaryProtocol::writeBool(value); }
 
   /*
    * Reading functions
    */
 
-  uint32_t readMessageBegin(std::string& name,
-                            TMessageType& messageType,
-                            int32_t& seqid);
+  uint32_t readMessageBegin(std::string& name, TMessageType& messageType, int32_t& seqid);
 
   uint32_t readMessageEnd();
 
@@ -166,25 +149,19 @@ class TDenseProtocol
 
   uint32_t readStructEnd();
 
-  uint32_t readFieldBegin(std::string& name,
-                          TType& fieldType,
-                          int16_t& fieldId);
+  uint32_t readFieldBegin(std::string& name, TType& fieldType, int16_t& fieldId);
 
   uint32_t readFieldEnd();
 
-  uint32_t readMapBegin(TType& keyType,
-                        TType& valType,
-                        uint32_t& size);
+  uint32_t readMapBegin(TType& keyType, TType& valType, uint32_t& size);
 
   uint32_t readMapEnd();
 
-  uint32_t readListBegin(TType& elemType,
-                         uint32_t& size);
+  uint32_t readListBegin(TType& elemType, uint32_t& size);
 
   uint32_t readListEnd();
 
-  uint32_t readSetBegin(TType& elemType,
-                        uint32_t& size);
+  uint32_t readSetBegin(TType& elemType, uint32_t& size);
 
   uint32_t readSetEnd();
 
@@ -213,13 +190,9 @@ class TDenseProtocol
 
   inline uint32_t subReadString(std::string& str);
 
-  uint32_t subReadBool(bool& value) {
-    return TBinaryProtocol::readBool(value);
-  }
+  uint32_t subReadBool(bool& value) { return TBinaryProtocol::readBool(value); }
 
-
- private:
-
+private:
   // Implementation functions, documented in the .cpp.
   inline void checkTType(const TType ttype);
   inline void stateTransition();
@@ -240,15 +213,16 @@ class TDenseProtocol
   // for standalone protocol objects.
   TypeSpec* type_spec_;
 
-  std::vector<TypeSpec*> ts_stack_;   // TypeSpec stack.
-  std::vector<int>       idx_stack_;  // InDeX stack.
-  std::vector<bool>      mkv_stack_;  // Map Key/Vlue stack.
-                                      // True = key, False = value.
+  std::vector<TypeSpec*> ts_stack_; // TypeSpec stack.
+  std::vector<int> idx_stack_;      // InDeX stack.
+  std::vector<bool> mkv_stack_;     // Map Key/Vlue stack.
+                                    // True = key, False = value.
 
   // True iff this is a standalone instance (no RPC).
   bool standalone_;
 };
-
-}}} // apache::thrift::protocol
+}
+}
+} // apache::thrift::protocol
 
 #endif // #ifndef _THRIFT_PROTOCOL_TDENSEPROTOCOL_H_

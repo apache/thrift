@@ -33,16 +33,13 @@ using boost::unit_test::framework::master_test_suite;
 using namespace apache::thrift::concurrency;
 using namespace std;
 
-class Locker : public Runnable
-{
+class Locker : public Runnable {
 protected:
-  Locker(boost::shared_ptr<ReadWriteMutex> rwlock, bool writer) :
-    rwlock_(rwlock), writer_(writer),
-    started_(false), gotLock_(false), signaled_(false) { }
+  Locker(boost::shared_ptr<ReadWriteMutex> rwlock, bool writer)
+    : rwlock_(rwlock), writer_(writer), started_(false), gotLock_(false), signaled_(false) {}
 
 public:
-  virtual void run()
-  {
+  virtual void run() {
     started_ = true;
     if (writer_) {
       rwlock_->acquireWrite();
@@ -68,20 +65,17 @@ protected:
   volatile bool signaled_;
 };
 
-class Reader : public Locker
-{
+class Reader : public Locker {
 public:
-  Reader(boost::shared_ptr<ReadWriteMutex> rwlock) : Locker(rwlock, false) { }
+  Reader(boost::shared_ptr<ReadWriteMutex> rwlock) : Locker(rwlock, false) {}
 };
 
-class Writer : public Locker
-{
+class Writer : public Locker {
 public:
-  Writer(boost::shared_ptr<ReadWriteMutex> rwlock) : Locker(rwlock, true) { }
+  Writer(boost::shared_ptr<ReadWriteMutex> rwlock) : Locker(rwlock, true) {}
 };
 
-void test_starve(PosixThreadFactory::POLICY policy)
-{
+void test_starve(PosixThreadFactory::POLICY policy) {
   // the man pages for pthread_wrlock_rdlock suggest that any OS guarantee about
   // writer starvation may be influenced by the scheduling policy, so let's try
   // all 3 policies to see if any of them work.
@@ -148,20 +142,17 @@ void test_starve(PosixThreadFactory::POLICY policy)
   BOOST_CHECK_MESSAGE(success, "writer is starving");
 }
 
-BOOST_AUTO_TEST_SUITE( RWMutexStarveTest )
+BOOST_AUTO_TEST_SUITE(RWMutexStarveTest)
 
-BOOST_AUTO_TEST_CASE( test_starve_other )
-{
+BOOST_AUTO_TEST_CASE(test_starve_other) {
   test_starve(PosixThreadFactory::OTHER);
 }
 
-BOOST_AUTO_TEST_CASE( test_starve_rr )
-{
+BOOST_AUTO_TEST_CASE(test_starve_rr) {
   test_starve(PosixThreadFactory::ROUND_ROBIN);
 }
 
-BOOST_AUTO_TEST_CASE( test_starve_fifo )
-{
+BOOST_AUTO_TEST_CASE(test_starve_fifo) {
   test_starve(PosixThreadFactory::FIFO);
 }
 
