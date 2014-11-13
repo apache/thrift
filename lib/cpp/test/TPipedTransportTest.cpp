@@ -36,18 +36,17 @@ int main() {
 
   underlying->write((uint8_t*)"abcd", 4);
   trans->readAll(buffer, 2);
-  assert( string((char*)buffer, 2) == "ab" );
+  assert(string((char*)buffer, 2) == "ab");
   trans->readEnd();
-  assert( pipe->getBufferAsString() == "ab" );
+  assert(pipe->getBufferAsString() == "ab");
   pipe->resetBuffer();
   underlying->write((uint8_t*)"ef", 2);
   trans->readAll(buffer, 2);
-  assert( string((char*)buffer, 2) == "cd" );
+  assert(string((char*)buffer, 2) == "cd");
   trans->readAll(buffer, 2);
-  assert( string((char*)buffer, 2) == "ef" );
+  assert(string((char*)buffer, 2) == "ef");
   trans->readEnd();
-  assert( pipe->getBufferAsString() == "cdef" );
+  assert(pipe->getBufferAsString() == "cdef");
 
   return 0;
-
 }

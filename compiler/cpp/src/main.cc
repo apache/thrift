@@ -40,7 +40,7 @@
 #include <limits.h>
 
 #ifdef _WIN32
-# include <windows.h> /* for GetFullPathName */
+#include <windows.h> /* for GetFullPathName */
 #endif
 
 // Careful: must include globals first for extern definitions
@@ -150,8 +150,8 @@ int g_doctext_lineno;
  * The First doctext comment
  */
 char* g_program_doctext_candidate;
-int  g_program_doctext_lineno = 0;
-PROGDOCTEXT_STATUS  g_program_doctext_status = INVALID;
+int g_program_doctext_lineno = 0;
+PROGDOCTEXT_STATUS g_program_doctext_status = INVALID;
 
 /**
  * Whether or not negative field keys are accepted.
@@ -172,12 +172,12 @@ bool gen_recurse = false;
  * Win32 doesn't have realpath, so use fallback implementation in that case,
  * otherwise this just calls through to realpath
  */
-char *saferealpath(const char *path, char *resolved_path) {
+char* saferealpath(const char* path, char* resolved_path) {
 #ifdef _WIN32
   char buf[MAX_PATH];
   char* basename;
   DWORD len = GetFullPathName(path, MAX_PATH, buf, &basename);
-  if (len == 0 || len > MAX_PATH - 1){
+  if (len == 0 || len > MAX_PATH - 1) {
     strcpy(resolved_path, path);
   } else {
     strcpy(resolved_path, buf);
@@ -197,14 +197,17 @@ char *saferealpath(const char *path, char *resolved_path) {
 #endif
 }
 
-bool check_is_directory(const char *dir_name) {
+bool check_is_directory(const char* dir_name) {
 #ifdef _WIN32
   DWORD attributes = ::GetFileAttributesA(dir_name);
-  if(attributes == INVALID_FILE_ATTRIBUTES) {
-    fprintf(stderr, "Output directory %s is unusable: GetLastError() = %ld\n", dir_name, GetLastError());
+  if (attributes == INVALID_FILE_ATTRIBUTES) {
+    fprintf(stderr,
+            "Output directory %s is unusable: GetLastError() = %ld\n",
+            dir_name,
+            GetLastError());
     return false;
   }
-  if((attributes & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY) {
+  if ((attributes & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY) {
     fprintf(stderr, "Output directory %s exists but is not a directory\n", dir_name);
     return false;
   }
@@ -215,7 +218,7 @@ bool check_is_directory(const char *dir_name) {
     fprintf(stderr, "Output directory %s is unusable: %s\n", dir_name, strerror(errno));
     return false;
   }
-  if (! S_ISDIR(sb.st_mode)) {
+  if (!S_ISDIR(sb.st_mode)) {
     fprintf(stderr, "Output directory %s exists but is not a directory\n", dir_name);
     return false;
   }
@@ -233,11 +236,7 @@ bool check_is_directory(const char *dir_name) {
  */
 void yyerror(const char* fmt, ...) {
   va_list args;
-  fprintf(stderr,
-          "[ERROR:%s:%d] (last token was '%s')\n",
-          g_curpath.c_str(),
-          yylineno,
-          yytext);
+  fprintf(stderr, "[ERROR:%s:%d] (last token was '%s')\n", g_curpath.c_str(), yylineno, yytext);
 
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
@@ -316,7 +315,7 @@ void failure(const char* fmt, ...) {
 string program_name(string filename) {
   string::size_type slash = filename.rfind("/");
   if (slash != string::npos) {
-    filename = filename.substr(slash+1);
+    filename = filename.substr(slash + 1);
   }
   string::size_type dot = filename.rfind(".");
   if (dot != string::npos) {
@@ -400,25 +399,25 @@ void clear_doctext() {
  * Reset program doctext information after processing a file
  */
 void reset_program_doctext_info() {
-  if(g_program_doctext_candidate != NULL) {
+  if (g_program_doctext_candidate != NULL) {
     free(g_program_doctext_candidate);
     g_program_doctext_candidate = NULL;
   }
   g_program_doctext_lineno = 0;
   g_program_doctext_status = INVALID;
-  pdebug("%s","program doctext set to INVALID");
+  pdebug("%s", "program doctext set to INVALID");
 }
 
 /**
  * We are sure the program doctext candidate is really the program doctext.
  */
 void declare_valid_program_doctext() {
-  if((g_program_doctext_candidate != NULL) && (g_program_doctext_status == STILL_CANDIDATE)) {
+  if ((g_program_doctext_candidate != NULL) && (g_program_doctext_status == STILL_CANDIDATE)) {
     g_program_doctext_status = ABSOLUTELY_SURE;
-    pdebug("%s","program doctext set to ABSOLUTELY_SURE");
+    pdebug("%s", "program doctext set to ABSOLUTELY_SURE");
   } else {
     g_program_doctext_status = NO_PROGRAM_DOCTEXT;
-    pdebug("%s","program doctext set to NO_PROGRAM_DOCTEXT");
+    pdebug("%s", "program doctext set to NO_PROGRAM_DOCTEXT");
   }
 }
 
@@ -431,16 +430,14 @@ void declare_valid_program_doctext() {
 char* clean_up_doctext(char* doctext) {
   // Convert to C++ string, and remove Windows's carriage returns.
   string docstring = doctext;
-  docstring.erase(
-      remove(docstring.begin(), docstring.end(), '\r'),
-      docstring.end());
+  docstring.erase(remove(docstring.begin(), docstring.end(), '\r'), docstring.end());
 
   // Separate into lines.
   vector<string> lines;
   string::size_type pos = string::npos;
   string::size_type last;
   while (true) {
-    last = (pos == string::npos) ? 0 : pos+1;
+    last = (pos == string::npos) ? 0 : pos + 1;
     pos = docstring.find('\n', last);
     if (pos == string::npos) {
       // First bit of cleaning.  If the last line is only whitespace, drop it.
@@ -450,7 +447,7 @@ char* clean_up_doctext(char* doctext) {
       }
       break;
     }
-    lines.push_back(docstring.substr(last, pos-last));
+    lines.push_back(docstring.substr(last, pos - last));
   }
 
   // A very profound docstring.
@@ -468,7 +465,7 @@ char* clean_up_doctext(char* doctext) {
   bool found_prefix = false;
   string::size_type prefix_len = 0;
   vector<string>::iterator l_iter;
-  for (l_iter = lines.begin()+1; l_iter != lines.end(); ++l_iter) {
+  for (l_iter = lines.begin() + 1; l_iter != lines.end(); ++l_iter) {
     if (l_iter->empty()) {
       continue;
     }
@@ -487,9 +484,7 @@ char* clean_up_doctext(char* doctext) {
         // Whitespace-only line.  Truncate it.
         l_iter->clear();
       }
-    } else if (l_iter->size() > pos
-        && l_iter->at(pos) == '*'
-        && pos == prefix_len) {
+    } else if (l_iter->size() > pos && l_iter->at(pos) == '*' && pos == prefix_len) {
       // Business as usual.
     } else if (pos == string::npos) {
       // Whitespace-only line.  Let's truncate it for them.
@@ -505,27 +500,26 @@ char* clean_up_doctext(char* doctext) {
   if (have_prefix) {
     // Get the star too.
     prefix_len++;
-    for (l_iter = lines.begin()+1; l_iter != lines.end(); ++l_iter) {
+    for (l_iter = lines.begin() + 1; l_iter != lines.end(); ++l_iter) {
       l_iter->erase(0, prefix_len);
     }
   }
 
   // Now delete the minimum amount of leading whitespace from each line.
   prefix_len = string::npos;
-  for (l_iter = lines.begin()+1; l_iter != lines.end(); ++l_iter) {
+  for (l_iter = lines.begin() + 1; l_iter != lines.end(); ++l_iter) {
     if (l_iter->empty()) {
       continue;
     }
     pos = l_iter->find_first_not_of(" \t");
-    if (pos != string::npos
-        && (prefix_len == string::npos || pos < prefix_len)) {
+    if (pos != string::npos && (prefix_len == string::npos || pos < prefix_len)) {
       prefix_len = pos;
     }
   }
 
   // If our prefix survived, delete it from every line.
   if (prefix_len != string::npos) {
-    for (l_iter = lines.begin()+1; l_iter != lines.end(); ++l_iter) {
+    for (l_iter = lines.begin() + 1; l_iter != lines.end(); ++l_iter) {
       l_iter->erase(0, prefix_len);
     }
   }
@@ -533,8 +527,8 @@ char* clean_up_doctext(char* doctext) {
   // Remove trailing whitespace from every line.
   for (l_iter = lines.begin(); l_iter != lines.end(); ++l_iter) {
     pos = l_iter->find_last_not_of(" \t");
-    if (pos != string::npos && pos != l_iter->length()-1) {
-      l_iter->erase(pos+1);
+    if (pos != string::npos && pos != l_iter->length() - 1) {
+      l_iter->erase(pos + 1);
     }
   }
 
@@ -551,11 +545,11 @@ char* clean_up_doctext(char* doctext) {
     docstring += '\n';
   }
 
-  //assert(docstring.length() <= strlen(doctext));  may happen, see THRIFT-1755
-  if(docstring.length() <= strlen(doctext)) {
+  // assert(docstring.length() <= strlen(doctext));  may happen, see THRIFT-1755
+  if (docstring.length() <= strlen(doctext)) {
     strcpy(doctext, docstring.c_str());
   } else {
-    free(doctext);  // too short
+    free(doctext); // too short
     doctext = strdup(docstring.c_str());
   }
   return doctext;
@@ -661,19 +655,17 @@ void generate_all_fingerprints(t_program* program) {
   */
 }
 
-
 /**
  * Emits a warning on list<byte>, binary type is typically a much better choice.
  */
 void check_for_list_of_bytes(t_type* list_elem_type) {
-  if((g_parse_mode == PROGRAM) && (list_elem_type != NULL) && list_elem_type->is_base_type()) {
+  if ((g_parse_mode == PROGRAM) && (list_elem_type != NULL) && list_elem_type->is_base_type()) {
     t_base_type* tbase = (t_base_type*)list_elem_type;
-    if(tbase->get_base() == t_base_type::TYPE_BYTE) {
-      pwarning(1,"Consider using the more efficient \"binary\" type instead of \"list<byte>\".");
+    if (tbase->get_base() == t_base_type::TYPE_BYTE) {
+      pwarning(1, "Consider using the more efficient \"binary\" type instead of \"list<byte>\".");
     }
   }
 }
-
 
 /**
  * Prints the version number
@@ -701,7 +693,7 @@ void help() {
   fprintf(stderr, "  -o dir      Set the output directory for gen-* packages\n");
   fprintf(stderr, "               (default: current directory)\n");
   fprintf(stderr, "  -out dir    Set the ouput location for generated files.\n");
-  fprintf(stderr,"               (no gen-* folder will be created)\n");
+  fprintf(stderr, "               (no gen-* folder will be created)\n");
   fprintf(stderr, "  -I dir      Add a directory to the list of directories\n");
   fprintf(stderr, "                searched for include directives\n");
   fprintf(stderr, "  -nowarn     Suppress all compiler warnings (BAD!)\n");
@@ -709,7 +701,8 @@ void help() {
   fprintf(stderr, "  -v[erbose]  Verbose mode\n");
   fprintf(stderr, "  -r[ecurse]  Also generate included files\n");
   fprintf(stderr, "  -debug      Parse debug trace to stdout\n");
-  fprintf(stderr, "  --allow-neg-keys  Allow negative field keys (Used to "
+  fprintf(stderr,
+          "  --allow-neg-keys  Allow negative field keys (Used to "
           "preserve protocol\n");
   fprintf(stderr, "                compatibility with older .thrift files)\n");
   fprintf(stderr, "  --allow-64bit-consts  Do not print warnings about using 64-bit constants\n");
@@ -723,9 +716,10 @@ void help() {
   t_generator_registry::gen_map_t gen_map = t_generator_registry::get_generator_map();
   t_generator_registry::gen_map_t::iterator iter;
   for (iter = gen_map.begin(); iter != gen_map.end(); ++iter) {
-    fprintf(stderr, "  %s (%s):\n",
-        iter->second->get_short_name().c_str(),
-        iter->second->get_long_name().c_str());
+    fprintf(stderr,
+            "  %s (%s):\n",
+            iter->second->get_short_name().c_str(),
+            iter->second->get_long_name().c_str());
     fprintf(stderr, "%s", iter->second->get_documentation().c_str());
   }
   exit(1);
@@ -778,8 +772,8 @@ void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
       }
       break;
     case t_base_type::TYPE_DOUBLE:
-      if (value->get_type() != t_const_value::CV_INTEGER &&
-          value->get_type() != t_const_value::CV_DOUBLE) {
+      if (value->get_type() != t_const_value::CV_INTEGER
+          && value->get_type() != t_const_value::CV_DOUBLE) {
         throw "type error: const \"" + name + "\" was declared as double";
       }
       break;
@@ -805,9 +799,9 @@ void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
       }
     }
     if (!found) {
-      throw "type error: const " + name + " was declared as type "
-        + type->get_name() + " which is an enum, but "
-        + value->get_identifier() + " is not a valid value for that enum";
+      throw "type error: const " + name + " was declared as type " + type->get_name()
+          + " which is an enum, but " + value->get_identifier()
+          + " is not a valid value for that enum";
     }
   } else if (type->is_struct() || type->is_xception()) {
     if (value->get_type() != t_const_value::CV_MAP) {
@@ -863,8 +857,8 @@ void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
  * It's easier to do it this way instead of rewriting the whole grammar etc.
  */
 void validate_simple_identifier(const char* identifier) {
-  string name( identifier);
-  if( name.find(".") != string::npos) {
+  string name(identifier);
+  if (name.find(".") != string::npos) {
     yyerror("Identifier %s can't have a dot.", identifier);
     exit(1);
   }
@@ -904,9 +898,9 @@ bool validate_throws(t_struct* throws) {
 bool skip_utf8_bom(FILE* f) {
 
   // pretty straightforward, but works
-  if( fgetc(f) == 0xEF) {
-    if( fgetc(f) == 0xBB) {
-      if( fgetc(f) == 0xBF) {
+  if (fgetc(f) == 0xEF) {
+    if (fgetc(f) == 0xBB) {
+      if (fgetc(f) == 0xBF) {
         return true;
       }
     }
@@ -933,7 +927,7 @@ void parse(t_program* program, t_program* parent_program) {
   if (yyin == 0) {
     failure("Could not open input file: \"%s\"", path.c_str());
   }
-  if( skip_utf8_bom( yyin))
+  if (skip_utf8_bom(yyin))
     pverbose("Skipped UTF-8 BOM at %s\n", path.c_str());
 
   // Create new scope and scan for includes
@@ -975,7 +969,7 @@ void parse(t_program* program, t_program* parent_program) {
   if (yyin == 0) {
     failure("Could not open input file: \"%s\"", path.c_str());
   }
-  if( skip_utf8_bom( yyin))
+  if (skip_utf8_bom(yyin))
     pverbose("Skipped UTF-8 BOM at %s\n", path.c_str());
 
   pverbose("Parsing %s for types\n", path.c_str());
@@ -1010,7 +1004,7 @@ void generate(t_program* program, const vector<string>& generator_strings) {
     pverbose("Program: %s\n", program->get_path().c_str());
 
     // Compute fingerprints. - not anymore, we do it on the fly now
-    //generate_all_fingerprints(program);
+    // generate_all_fingerprints(program);
 
     if (dump_docs) {
       dump_docstrings(program);
@@ -1028,13 +1022,11 @@ void generate(t_program* program, const vector<string>& generator_strings) {
         delete generator;
       }
     }
-
   } catch (string s) {
     printf("Error: %s\n", s.c_str());
   } catch (const char* exc) {
     printf("Error: %s\n", exc);
   }
-
 }
 
 /**
@@ -1062,7 +1054,7 @@ int main(int argc, char** argv) {
   g_curpath = "arguments";
 
   // Hacky parameter handling... I didn't feel like using a library sorry!
-  for (i = 1; i < argc-1; i++) {
+  for (i = 1; i < argc - 1; i++) {
     char* arg;
 
     arg = strtok(argv[i], " ");
@@ -1084,9 +1076,9 @@ int main(int argc, char** argv) {
       } else if (strcmp(arg, "-strict") == 0) {
         g_strict = 255;
         g_warn = 2;
-      } else if (strcmp(arg, "-v") == 0 || strcmp(arg, "-verbose") == 0 ) {
+      } else if (strcmp(arg, "-v") == 0 || strcmp(arg, "-verbose") == 0) {
         g_verbose = 1;
-      } else if (strcmp(arg, "-r") == 0 || strcmp(arg, "-recurse") == 0 ) {
+      } else if (strcmp(arg, "-r") == 0 || strcmp(arg, "-recurse") == 0) {
         gen_recurse = true;
       } else if (strcmp(arg, "-allow-neg-keys") == 0) {
         g_allow_neg_field_keys = true;
@@ -1118,10 +1110,9 @@ int main(int argc, char** argv) {
         out_path = arg;
 
 #ifdef _WIN32
-        //strip out trailing \ on Windows
-        int last = out_path.length()-1;
-        if (out_path[last] == '\\')
-        {
+        // strip out trailing \ on Windows
+        int last = out_path.length() - 1;
+        if (out_path[last] == '\\') {
           out_path.erase(last);
         }
 #endif
@@ -1138,12 +1129,12 @@ int main(int argc, char** argv) {
   }
 
   // display help
-  if ((strcmp(argv[argc-1], "-help") == 0) || (strcmp(argv[argc-1], "--help") == 0)) {
+  if ((strcmp(argv[argc - 1], "-help") == 0) || (strcmp(argv[argc - 1], "--help") == 0)) {
     help();
   }
 
   // if you're asking for version, you have a right not to pass a file
-  if ((strcmp(argv[argc-1], "-version") == 0) || (strcmp(argv[argc-1], "--version") == 0)) {
+  if ((strcmp(argv[argc - 1], "-version") == 0) || (strcmp(argv[argc - 1], "--version") == 0)) {
     version();
     exit(0);
   }
@@ -1184,17 +1175,17 @@ int main(int argc, char** argv) {
   program->set_include_prefix(include_prefix);
 
   // Initialize global types
-  g_type_void   = new t_base_type("void",   t_base_type::TYPE_VOID);
+  g_type_void = new t_base_type("void", t_base_type::TYPE_VOID);
   g_type_string = new t_base_type("string", t_base_type::TYPE_STRING);
   g_type_binary = new t_base_type("string", t_base_type::TYPE_STRING);
   ((t_base_type*)g_type_binary)->set_binary(true);
-  g_type_slist  = new t_base_type("string", t_base_type::TYPE_STRING);
+  g_type_slist = new t_base_type("string", t_base_type::TYPE_STRING);
   ((t_base_type*)g_type_slist)->set_string_list(true);
-  g_type_bool   = new t_base_type("bool",   t_base_type::TYPE_BOOL);
-  g_type_byte   = new t_base_type("byte",   t_base_type::TYPE_BYTE);
-  g_type_i16    = new t_base_type("i16",    t_base_type::TYPE_I16);
-  g_type_i32    = new t_base_type("i32",    t_base_type::TYPE_I32);
-  g_type_i64    = new t_base_type("i64",    t_base_type::TYPE_I64);
+  g_type_bool = new t_base_type("bool", t_base_type::TYPE_BOOL);
+  g_type_byte = new t_base_type("byte", t_base_type::TYPE_BYTE);
+  g_type_i16 = new t_base_type("i16", t_base_type::TYPE_I16);
+  g_type_i32 = new t_base_type("i32", t_base_type::TYPE_I32);
+  g_type_i64 = new t_base_type("i64", t_base_type::TYPE_I64);
   g_type_double = new t_base_type("double", t_base_type::TYPE_DOUBLE);
 
   // Parse it!

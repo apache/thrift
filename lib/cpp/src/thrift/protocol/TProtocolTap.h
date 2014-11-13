@@ -22,7 +22,9 @@
 
 #include <thrift/protocol/TVirtualProtocol.h>
 
-namespace apache { namespace thrift { namespace protocol {
+namespace apache {
+namespace thrift {
+namespace protocol {
 
 using apache::thrift::transport::TTransport;
 
@@ -33,17 +35,11 @@ using apache::thrift::transport::TTransport;
  *
  */
 class TProtocolTap : public TVirtualProtocol<TProtocolTap> {
- public:
-   TProtocolTap(boost::shared_ptr<TProtocol> source,
-                boost::shared_ptr<TProtocol> sink)
-     : TVirtualProtocol<TProtocolTap>(source->getTransport())
-     , source_(source)
-     , sink_(sink)
-  {}
+public:
+  TProtocolTap(boost::shared_ptr<TProtocol> source, boost::shared_ptr<TProtocol> sink)
+    : TVirtualProtocol<TProtocolTap>(source->getTransport()), source_(source), sink_(sink) {}
 
-  uint32_t readMessageBegin(std::string& name,
-                            TMessageType& messageType,
-                            int32_t& seqid) {
+  uint32_t readMessageBegin(std::string& name, TMessageType& messageType, int32_t& seqid) {
     uint32_t rv = source_->readMessageBegin(name, messageType, seqid);
     sink_->writeMessageBegin(name, messageType, seqid);
     return rv;
@@ -67,9 +63,7 @@ class TProtocolTap : public TVirtualProtocol<TProtocolTap> {
     return rv;
   }
 
-  uint32_t readFieldBegin(std::string& name,
-                          TType& fieldType,
-                          int16_t& fieldId) {
+  uint32_t readFieldBegin(std::string& name, TType& fieldType, int16_t& fieldId) {
     uint32_t rv = source_->readFieldBegin(name, fieldType, fieldId);
     if (fieldType == T_STOP) {
       sink_->writeFieldStop();
@@ -79,21 +73,17 @@ class TProtocolTap : public TVirtualProtocol<TProtocolTap> {
     return rv;
   }
 
-
   uint32_t readFieldEnd() {
     uint32_t rv = source_->readFieldEnd();
     sink_->writeFieldEnd();
     return rv;
   }
 
-  uint32_t readMapBegin(TType& keyType,
-                        TType& valType,
-                        uint32_t& size) {
+  uint32_t readMapBegin(TType& keyType, TType& valType, uint32_t& size) {
     uint32_t rv = source_->readMapBegin(keyType, valType, size);
     sink_->writeMapBegin(keyType, valType, size);
     return rv;
   }
-
 
   uint32_t readMapEnd() {
     uint32_t rv = source_->readMapEnd();
@@ -107,7 +97,6 @@ class TProtocolTap : public TVirtualProtocol<TProtocolTap> {
     return rv;
   }
 
-
   uint32_t readListEnd() {
     uint32_t rv = source_->readListEnd();
     sink_->writeListEnd();
@@ -119,7 +108,6 @@ class TProtocolTap : public TVirtualProtocol<TProtocolTap> {
     sink_->writeSetBegin(elemType, size);
     return rv;
   }
-
 
   uint32_t readSetEnd() {
     uint32_t rv = source_->readSetEnd();
@@ -178,11 +166,12 @@ class TProtocolTap : public TVirtualProtocol<TProtocolTap> {
     return rv;
   }
 
- private:
+private:
   boost::shared_ptr<TProtocol> source_;
   boost::shared_ptr<TProtocol> sink_;
 };
-
-}}} // apache::thrift::protocol
+}
+}
+} // apache::thrift::protocol
 
 #endif // #define _THRIFT_PROTOCOL_TPROTOCOLTAP_H_ 1

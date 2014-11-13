@@ -33,53 +33,55 @@
   code, use the classes found in the concurrency namespace
 */
 
-namespace apache { namespace thrift {
+namespace apache {
+namespace thrift {
 
 struct TCriticalSection : boost::noncopyable {
   CRITICAL_SECTION cs;
-  TCriticalSection() {InitializeCriticalSection(&cs);}
-  ~TCriticalSection() {DeleteCriticalSection(&cs);}
+  TCriticalSection() { InitializeCriticalSection(&cs); }
+  ~TCriticalSection() { DeleteCriticalSection(&cs); }
 };
 
 class TAutoCrit : boost::noncopyable {
 private:
-  CRITICAL_SECTION *cs_;
+  CRITICAL_SECTION* cs_;
+
 public:
-  explicit TAutoCrit(TCriticalSection &cs) : cs_(&cs.cs) {EnterCriticalSection(cs_);}
-  ~TAutoCrit() {LeaveCriticalSection(cs_);}
+  explicit TAutoCrit(TCriticalSection& cs) : cs_(&cs.cs) { EnterCriticalSection(cs_); }
+  ~TAutoCrit() { LeaveCriticalSection(cs_); }
 };
 
 struct TAutoResetEvent : boost::noncopyable {
   HANDLE h;
 
   TAutoResetEvent() {
-    h = CreateEvent( NULL, FALSE, FALSE, NULL);
-    if(h == NULL) {
+    h = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (h == NULL) {
       GlobalOutput.perror("TAutoResetEvent unable to create event, GLE=", GetLastError());
       throw apache::thrift::concurrency::SystemResourceException("CreateEvent failed");
     }
   }
-  ~TAutoResetEvent() {CloseHandle(h);}
+  ~TAutoResetEvent() { CloseHandle(h); }
 };
 
 struct TManualResetEvent : boost::noncopyable {
   HANDLE h;
 
   TManualResetEvent() {
-    h = CreateEvent( NULL, TRUE, FALSE, NULL);
-    if(h == NULL) {
+    h = CreateEvent(NULL, TRUE, FALSE, NULL);
+    if (h == NULL) {
       GlobalOutput.perror("TManualResetEvent unable to create event, GLE=", GetLastError());
       throw apache::thrift::concurrency::SystemResourceException("CreateEvent failed");
     }
   }
-  ~TManualResetEvent() {CloseHandle(h);}
+  ~TManualResetEvent() { CloseHandle(h); }
 };
 
 struct TAutoHandle : boost::noncopyable {
   HANDLE h;
   explicit TAutoHandle(HANDLE h_ = INVALID_HANDLE_VALUE) : h(h_) {}
   ~TAutoHandle() {
-    if(h != INVALID_HANDLE_VALUE)
+    if (h != INVALID_HANDLE_VALUE)
       CloseHandle(h);
   }
 
@@ -89,14 +91,14 @@ struct TAutoHandle : boost::noncopyable {
     return retval;
   }
   void reset(HANDLE h_ = INVALID_HANDLE_VALUE) {
-    if(h_ == h)
+    if (h_ == h)
       return;
-    if(h != INVALID_HANDLE_VALUE)
+    if (h != INVALID_HANDLE_VALUE)
       CloseHandle(h);
     h = h_;
   }
 };
-
-}} //apache::thrift
+}
+} // apache::thrift
 
 #endif

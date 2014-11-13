@@ -117,23 +117,23 @@ using std::string;
 #define UNLIKELY(val) (val)
 #endif
 
-namespace apache { namespace thrift { namespace protocol {
+namespace apache {
+namespace thrift {
+namespace protocol {
 
-const int TDenseProtocol::FP_PREFIX_LEN =
-  apache::thrift::reflection::local::FP_PREFIX_LEN;
+const int TDenseProtocol::FP_PREFIX_LEN = apache::thrift::reflection::local::FP_PREFIX_LEN;
 
 // Top TypeSpec.  TypeSpec of the structure being encoded.
-#define TTS  (ts_stack_.back())  // type = TypeSpec*
+#define TTS (ts_stack_.back()) // type = TypeSpec*
 // InDeX.  Index into TTS of the current/next field to encode.
-#define IDX (idx_stack_.back())  // type = int
+#define IDX (idx_stack_.back()) // type = int
 // Field TypeSpec.  TypeSpec of the current/next field to encode.
-#define FTS (TTS->tstruct.specs[IDX])  // type = TypeSpec*
+#define FTS (TTS->tstruct.specs[IDX]) // type = TypeSpec*
 // Field MeTa.  Metadata of the current/next field to encode.
-#define FMT (TTS->tstruct.metas[IDX])  // type = FieldMeta
+#define FMT (TTS->tstruct.metas[IDX]) // type = FieldMeta
 // SubType 1/2.  TypeSpec of the first/second subtype of this container.
 #define ST1 (TTS->tcontainer.subtype1)
 #define ST2 (TTS->tcontainer.subtype2)
-
 
 /**
  * Checks that @c ttype is indeed the ttype that we should be writing,
@@ -161,29 +161,27 @@ inline void TDenseProtocol::stateTransition() {
 
   switch (TTS->ttype) {
 
-    case T_STRUCT:
-      assert(old_tts == FTS);
-      break;
+  case T_STRUCT:
+    assert(old_tts == FTS);
+    break;
 
-    case T_LIST:
-    case T_SET:
-      assert(old_tts == ST1);
-      ts_stack_.push_back(old_tts);
-      break;
+  case T_LIST:
+  case T_SET:
+    assert(old_tts == ST1);
+    ts_stack_.push_back(old_tts);
+    break;
 
-    case T_MAP:
-      assert(old_tts == (mkv_stack_.back() ? ST1 : ST2));
-      mkv_stack_.back() = !mkv_stack_.back();
-      ts_stack_.push_back(mkv_stack_.back() ? ST1 : ST2);
-      break;
+  case T_MAP:
+    assert(old_tts == (mkv_stack_.back() ? ST1 : ST2));
+    mkv_stack_.back() = !mkv_stack_.back();
+    ts_stack_.push_back(mkv_stack_.back() ? ST1 : ST2);
+    break;
 
-    default:
-      assert(!"Invalid TType in stateTransition.");
-      break;
-
+  default:
+    assert(!"Invalid TType in stateTransition.");
+    break;
   }
 }
-
 
 /*
  * Variable-length quantity functions.
@@ -192,7 +190,7 @@ inline void TDenseProtocol::stateTransition() {
 inline uint32_t TDenseProtocol::vlqRead(uint64_t& vlq) {
   uint32_t used = 0;
   uint64_t val = 0;
-  uint8_t buf[10];  // 64 bits / (7 bits/byte) = 10 bytes.
+  uint8_t buf[10]; // 64 bits / (7 bits/byte) = 10 bytes.
   uint32_t buf_size = sizeof(buf);
   const uint8_t* borrowed = trans_->borrow(buf, &buf_size);
 
@@ -210,7 +208,8 @@ inline uint32_t TDenseProtocol::vlqRead(uint64_t& vlq) {
       // Have to check for invalid data so we don't crash.
       if (UNLIKELY(used == sizeof(buf))) {
         resetState();
-        throw TProtocolException(TProtocolException::INVALID_DATA, "Variable-length int over 10 bytes.");
+        throw TProtocolException(TProtocolException::INVALID_DATA,
+                                 "Variable-length int over 10 bytes.");
       }
     }
   }
@@ -228,14 +227,15 @@ inline uint32_t TDenseProtocol::vlqRead(uint64_t& vlq) {
       // Might as well check for invalid data on the slow path too.
       if (UNLIKELY(used >= sizeof(buf))) {
         resetState();
-        throw TProtocolException(TProtocolException::INVALID_DATA, "Variable-length int over 10 bytes.");
+        throw TProtocolException(TProtocolException::INVALID_DATA,
+                                 "Variable-length int over 10 bytes.");
       }
     }
   }
 }
 
 inline uint32_t TDenseProtocol::vlqWrite(uint64_t vlq) {
-  uint8_t buf[10];  // 64 bits / (7 bits/byte) = 10 bytes.
+  uint8_t buf[10]; // 64 bits / (7 bits/byte) = 10 bytes.
   int32_t pos = sizeof(buf) - 1;
 
   // Write the thing from back to front.
@@ -253,11 +253,9 @@ inline uint32_t TDenseProtocol::vlqWrite(uint64_t vlq) {
   // Back up one step before writing.
   pos++;
 
-  trans_->write(buf+pos, static_cast<uint32_t>(sizeof(buf) - pos));
+  trans_->write(buf + pos, static_cast<uint32_t>(sizeof(buf) - pos));
   return static_cast<uint32_t>(sizeof(buf) - pos);
 }
-
-
 
 /*
  * Writing functions.
@@ -281,7 +279,7 @@ uint32_t TDenseProtocol::writeMessageEnd() {
 }
 
 uint32_t TDenseProtocol::writeStructBegin(const char* name) {
-  (void) name;
+  (void)name;
   uint32_t xfer = 0;
 
   // The TypeSpec stack should be empty if this is the top-level read/write.
@@ -315,7 +313,7 @@ uint32_t TDenseProtocol::writeStructEnd() {
 uint32_t TDenseProtocol::writeFieldBegin(const char* name,
                                          const TType fieldType,
                                          const int16_t fieldId) {
-  (void) name;
+  (void)name;
   uint32_t xfer = 0;
 
   // Skip over optional fields.
@@ -380,8 +378,7 @@ uint32_t TDenseProtocol::writeMapEnd() {
   return 0;
 }
 
-uint32_t TDenseProtocol::writeListBegin(const TType elemType,
-                                        const uint32_t size) {
+uint32_t TDenseProtocol::writeListBegin(const TType elemType, const uint32_t size) {
   checkTType(T_LIST);
 
   assert(elemType == ST1->ttype);
@@ -396,8 +393,7 @@ uint32_t TDenseProtocol::writeListEnd() {
   return 0;
 }
 
-uint32_t TDenseProtocol::writeSetBegin(const TType elemType,
-                                       const uint32_t size) {
+uint32_t TDenseProtocol::writeSetBegin(const TType elemType, const uint32_t size) {
   checkTType(T_SET);
 
   assert(elemType == ST1->ttype);
@@ -463,7 +459,7 @@ inline uint32_t TDenseProtocol::subWriteI32(const int32_t i32) {
 }
 
 uint32_t TDenseProtocol::subWriteString(const std::string& str) {
-  if(str.size() > static_cast<size_t>((std::numeric_limits<int32_t>::max)()))
+  if (str.size() > static_cast<size_t>((std::numeric_limits<int32_t>::max)()))
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   uint32_t size = static_cast<uint32_t>(str.size());
   uint32_t xfer = subWriteI32((int32_t)size);
@@ -472,8 +468,6 @@ uint32_t TDenseProtocol::subWriteString(const std::string& str) {
   }
   return xfer + size;
 }
-
-
 
 /*
  * Reading functions
@@ -501,7 +495,8 @@ uint32_t TDenseProtocol::readMessageBegin(std::string& name,
     xfer += subReadString(name);
     xfer += subReadI32(seqid);
   } else {
-    throw TProtocolException(TProtocolException::BAD_VERSION, "No version identifier... old protocol client in strict mode?");
+    throw TProtocolException(TProtocolException::BAD_VERSION,
+                             "No version identifier... old protocol client in strict mode?");
   }
   return xfer;
 }
@@ -511,7 +506,7 @@ uint32_t TDenseProtocol::readMessageEnd() {
 }
 
 uint32_t TDenseProtocol::readStructBegin(string& name) {
-  (void) name;
+  (void)name;
   uint32_t xfer = 0;
 
   if (ts_stack_.empty()) {
@@ -530,7 +525,7 @@ uint32_t TDenseProtocol::readStructBegin(string& name) {
       if (std::memcmp(buf, type_spec_->fp_prefix, FP_PREFIX_LEN) != 0) {
         resetState();
         throw TProtocolException(TProtocolException::INVALID_DATA,
-            "Fingerprint in data does not match type_spec.");
+                                 "Fingerprint in data does not match type_spec.");
       }
     }
   }
@@ -546,10 +541,8 @@ uint32_t TDenseProtocol::readStructEnd() {
   return 0;
 }
 
-uint32_t TDenseProtocol::readFieldBegin(string& name,
-                                        TType& fieldType,
-                                        int16_t& fieldId) {
-  (void) name;
+uint32_t TDenseProtocol::readFieldBegin(string& name, TType& fieldType, int16_t& fieldId) {
+  (void)name;
   uint32_t xfer = 0;
 
   // For optional fields, check to see if they are there.
@@ -565,7 +558,7 @@ uint32_t TDenseProtocol::readFieldBegin(string& name,
   // Once we hit a mandatory field, or an optional field that is present,
   // we know that FMT and FTS point to the appropriate field.
 
-  fieldId   = FMT.tag;
+  fieldId = FMT.tag;
   fieldType = FTS->ttype;
 
   // Normally, we push the TypeSpec that we are about to read,
@@ -581,9 +574,7 @@ uint32_t TDenseProtocol::readFieldEnd() {
   return 0;
 }
 
-uint32_t TDenseProtocol::readMapBegin(TType& keyType,
-                                      TType& valType,
-                                      uint32_t& size) {
+uint32_t TDenseProtocol::readMapBegin(TType& keyType, TType& valType, uint32_t& size) {
   checkTType(T_MAP);
 
   uint32_t xfer = 0;
@@ -614,8 +605,7 @@ uint32_t TDenseProtocol::readMapEnd() {
   return 0;
 }
 
-uint32_t TDenseProtocol::readListBegin(TType& elemType,
-                                       uint32_t& size) {
+uint32_t TDenseProtocol::readListBegin(TType& elemType, uint32_t& size) {
   checkTType(T_LIST);
 
   uint32_t xfer = 0;
@@ -643,8 +633,7 @@ uint32_t TDenseProtocol::readListEnd() {
   return 0;
 }
 
-uint32_t TDenseProtocol::readSetBegin(TType& elemType,
-                                      uint32_t& size) {
+uint32_t TDenseProtocol::readSetBegin(TType& elemType, uint32_t& size) {
   checkTType(T_SET);
 
   uint32_t xfer = 0;
@@ -692,8 +681,7 @@ uint32_t TDenseProtocol::readI16(int16_t& i16) {
   int64_t val = (int64_t)u64;
   if (UNLIKELY(val > INT16_MAX || val < INT16_MIN)) {
     resetState();
-    throw TProtocolException(TProtocolException::INVALID_DATA,
-                             "i16 out of range.");
+    throw TProtocolException(TProtocolException::INVALID_DATA, "i16 out of range.");
   }
   i16 = (int16_t)val;
   return rv;
@@ -707,8 +695,7 @@ uint32_t TDenseProtocol::readI32(int32_t& i32) {
   int64_t val = (int64_t)u64;
   if (UNLIKELY(val > INT32_MAX || val < INT32_MIN)) {
     resetState();
-    throw TProtocolException(TProtocolException::INVALID_DATA,
-                             "i32 out of range.");
+    throw TProtocolException(TProtocolException::INVALID_DATA, "i32 out of range.");
   }
   i32 = (int32_t)val;
   return rv;
@@ -722,8 +709,7 @@ uint32_t TDenseProtocol::readI64(int64_t& i64) {
   int64_t val = (int64_t)u64;
   if (UNLIKELY(val > INT64_MAX || val < INT64_MIN)) {
     resetState();
-    throw TProtocolException(TProtocolException::INVALID_DATA,
-                             "i64 out of range.");
+    throw TProtocolException(TProtocolException::INVALID_DATA, "i64 out of range.");
   }
   i64 = (int64_t)val;
   return rv;
@@ -751,8 +737,7 @@ uint32_t TDenseProtocol::subReadI32(int32_t& i32) {
   int64_t val = (int64_t)u64;
   if (UNLIKELY(val > INT32_MAX || val < INT32_MIN)) {
     resetState();
-    throw TProtocolException(TProtocolException::INVALID_DATA,
-                             "i32 out of range.");
+    throw TProtocolException(TProtocolException::INVALID_DATA, "i32 out of range.");
   }
   i32 = (int32_t)val;
   return rv;
@@ -764,5 +749,6 @@ uint32_t TDenseProtocol::subReadString(std::string& str) {
   xfer = subReadI32(size);
   return xfer + readStringBody(str, size);
 }
-
-}}} // apache::thrift::protocol
+}
+}
+} // apache::thrift::protocol

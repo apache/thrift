@@ -36,7 +36,7 @@
 #include <boost/filesystem.hpp>
 #include <thrift/cxxfunctional.h>
 #if _WIN32
-   #include <thrift/windows/TWinsockSingleton.h>
+#include <thrift/windows/TWinsockSingleton.h>
 #endif
 
 #include "ThriftTest.h"
@@ -51,24 +51,27 @@ using namespace apache::thrift::async;
 // Length of argv[0] - Length of script dir
 #define EXECUTABLE_FILE_NAME_LENGTH 19
 
-//extern uint32_t g_socket_syscalls;
+// extern uint32_t g_socket_syscalls;
 
 // Current time, microseconds since the epoch
-uint64_t now()
-{
+uint64_t now() {
   int64_t ret;
   struct timeval tv;
 
   THRIFT_GETTIMEOFDAY(&tv, NULL);
   ret = tv.tv_sec;
-  ret = ret*1000*1000 + tv.tv_usec;
+  ret = ret * 1000 * 1000 + tv.tv_usec;
   return ret;
 }
 
-static void testString_clientReturn(const char* host, int port, event_base *base, TProtocolFactory* protocolFactory, ThriftTestCobClient* client) {
-  (void) host;
-  (void) port;
-  (void) protocolFactory;
+static void testString_clientReturn(const char* host,
+                                    int port,
+                                    event_base* base,
+                                    TProtocolFactory* protocolFactory,
+                                    ThriftTestCobClient* client) {
+  (void)host;
+  (void)port;
+  (void)protocolFactory;
   try {
     string s;
     client->recv_testString(s);
@@ -80,7 +83,11 @@ static void testString_clientReturn(const char* host, int port, event_base *base
   event_base_loopbreak(base); // end test
 }
 
-static void testVoid_clientReturn(const char* host, int port, event_base *base, TProtocolFactory* protocolFactory, ThriftTestCobClient* client) {
+static void testVoid_clientReturn(const char* host,
+                                  int port,
+                                  event_base* base,
+                                  TProtocolFactory* protocolFactory,
+                                  ThriftTestCobClient* client) {
   try {
     client->recv_testVoid();
     cout << "testVoid" << endl;
@@ -89,7 +96,13 @@ static void testVoid_clientReturn(const char* host, int port, event_base *base, 
     delete client;
     boost::shared_ptr<TAsyncChannel> channel(new TEvhttpClientChannel(host, "/", host, port, base));
     client = new ThriftTestCobClient(channel, protocolFactory);
-    client->testString(tcxx::bind(testString_clientReturn, host, port, base, protocolFactory, tcxx::placeholders::_1), "Test");
+    client->testString(tcxx::bind(testString_clientReturn,
+                                  host,
+                                  port,
+                                  base,
+                                  protocolFactory,
+                                  tcxx::placeholders::_1),
+                       "Test");
   } catch (TException& exn) {
     cout << "Error: " << exn.what() << endl;
   }
@@ -97,7 +110,7 @@ static void testVoid_clientReturn(const char* host, int port, event_base *base, 
 
 int main(int argc, char** argv) {
   string file_path = boost::filesystem::system_complete(argv[0]).string();
-  string dir_path = file_path.substr(0, file_path.size()-EXECUTABLE_FILE_NAME_LENGTH);
+  string dir_path = file_path.substr(0, file_path.size() - EXECUTABLE_FILE_NAME_LENGTH);
 #if _WIN32
   transport::TWinsockSingleton::create();
 #endif
@@ -111,17 +124,26 @@ int main(int argc, char** argv) {
   bool noinsane = false;
 
   boost::program_options::options_description desc("Allowed options");
-  desc.add_options()
-      ("help,h", "produce help message")
-      ("host", boost::program_options::value<string>(&host)->default_value(host), "Host to connect")
-      ("port", boost::program_options::value<int>(&port)->default_value(port), "Port number to connect")
-	  ("domain-socket", boost::program_options::value<string>(&domain_socket)->default_value(domain_socket), "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")
-      ("transport", boost::program_options::value<string>(&transport_type)->default_value(transport_type), "Transport: buffered, framed, http, evhttp")
-      ("protocol", boost::program_options::value<string>(&protocol_type)->default_value(protocol_type), "Protocol: binary, compact, json")
-	  ("ssl", "Encrypted Transport using SSL")
-      ("testloops,n", boost::program_options::value<int>(&numTests)->default_value(numTests), "Number of Tests")
-      ("noinsane", "Do not run insanity test")
-  ;
+  desc.add_options()("help,h",
+                     "produce help message")("host",
+                                             boost::program_options::value<string>(&host)
+                                                 ->default_value(host),
+                                             "Host to connect")("port",
+                                                                boost::program_options::value<int>(
+                                                                    &port)->default_value(port),
+                                                                "Port number to connect")(
+      "domain-socket",
+      boost::program_options::value<string>(&domain_socket)->default_value(domain_socket),
+      "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")(
+      "transport",
+      boost::program_options::value<string>(&transport_type)->default_value(transport_type),
+      "Transport: buffered, framed, http, evhttp")(
+      "protocol",
+      boost::program_options::value<string>(&protocol_type)->default_value(protocol_type),
+      "Protocol: binary, compact, json")("ssl", "Encrypted Transport using SSL")(
+      "testloops,n",
+      boost::program_options::value<int>(&numTests)->default_value(numTests),
+      "Number of Tests")("noinsane", "Do not run insanity test");
 
   boost::program_options::variables_map vm;
   boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
@@ -138,17 +160,17 @@ int main(int argc, char** argv) {
       } else if (protocol_type == "compact") {
       } else if (protocol_type == "json") {
       } else {
-          throw invalid_argument("Unknown protocol type "+protocol_type);
+        throw invalid_argument("Unknown protocol type " + protocol_type);
       }
     }
 
-	if (!transport_type.empty()) {
+    if (!transport_type.empty()) {
       if (transport_type == "buffered") {
       } else if (transport_type == "framed") {
       } else if (transport_type == "http") {
       } else if (transport_type == "evhttp") {
       } else {
-          throw invalid_argument("Unknown transport type "+transport_type);
+        throw invalid_argument("Unknown transport type " + transport_type);
       }
     }
 
@@ -182,8 +204,7 @@ int main(int argc, char** argv) {
     if (domain_socket != "") {
       socket = boost::shared_ptr<TSocket>(new TSocket(domain_socket));
       port = 0;
-    }
-    else {
+    } else {
       socket = boost::shared_ptr<TSocket>(new TSocket(host, port));
     }
   }
@@ -191,10 +212,10 @@ int main(int argc, char** argv) {
   if (transport_type.compare("http") == 0) {
     boost::shared_ptr<TTransport> httpSocket(new THttpClient(socket, host, "/service"));
     transport = httpSocket;
-  } else if (transport_type.compare("framed") == 0){
+  } else if (transport_type.compare("framed") == 0) {
     boost::shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
     transport = framedSocket;
-  } else{
+  } else {
     boost::shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket));
     transport = bufferedSocket;
   }
@@ -205,7 +226,7 @@ int main(int argc, char** argv) {
   } else if (protocol_type.compare("compact") == 0) {
     boost::shared_ptr<TProtocol> compactProtocol(new TCompactProtocol(transport));
     protocol = compactProtocol;
-  } else{
+  } else {
     boost::shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol(transport));
     protocol = binaryProtocol;
   }
@@ -218,7 +239,7 @@ int main(int argc, char** argv) {
   cout << endl;
 
   if (transport_type.compare("evhttp") == 0) {
-    event_base *base = event_base_new();
+    event_base* base = event_base_new();
     cout << "Libevent Version: " << event_get_version() << endl;
     cout << "Libevent Method: " << event_base_get_method(base) << endl;
 #if LIBEVENT_VERSION_NUMBER >= 0x02000000
@@ -227,14 +248,19 @@ int main(int argc, char** argv) {
 
     boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
-    boost::shared_ptr<TAsyncChannel> channel(new TEvhttpClientChannel(host.c_str(), "/", host.c_str(), port, base));
+    boost::shared_ptr<TAsyncChannel> channel(
+        new TEvhttpClientChannel(host.c_str(), "/", host.c_str(), port, base));
     ThriftTestCobClient* client = new ThriftTestCobClient(channel, protocolFactory.get());
-    client->testVoid(tcxx::bind(testVoid_clientReturn, host.c_str(), port, base, protocolFactory.get(), tcxx::placeholders::_1));
+    client->testVoid(tcxx::bind(testVoid_clientReturn,
+                                host.c_str(),
+                                port,
+                                base,
+                                protocolFactory.get(),
+                                tcxx::placeholders::_1));
 
     event_base_loop(base, 0);
     return 0;
   }
-
 
   ThriftTestClient testClient(protocol);
 
@@ -256,7 +282,7 @@ int main(int argc, char** argv) {
     /**
      * CONNECT TEST
      */
-    printf("Test #%d, connect %s:%d\n", test+1, host.c_str(), port);
+    printf("Test #%d, connect %s:%d\n", test + 1, host.c_str(), port);
 
     uint64_t start = now();
 
@@ -280,7 +306,7 @@ int main(int argc, char** argv) {
     testClient.testString(s, "Test");
     printf(" = \"%s\"\n", s.c_str());
     if (s != "Test")
-        failCount++;
+      failCount++;
 
     /**
      * BYTE TEST
@@ -289,7 +315,7 @@ int main(int argc, char** argv) {
     uint8_t u8 = testClient.testByte(1);
     printf(" = %d\n", (int)u8);
     if (u8 != 1)
-        failCount++;
+      failCount++;
 
     /**
      * I32 TEST
@@ -298,7 +324,7 @@ int main(int argc, char** argv) {
     int32_t i32 = testClient.testI32(-1);
     printf(" = %d\n", i32);
     if (i32 != -1)
-        failCount++;
+      failCount++;
 
     /**
      * I64 TEST
@@ -307,7 +333,7 @@ int main(int argc, char** argv) {
     int64_t i64 = testClient.testI64(-34359738368LL);
     printf(" = %" PRId64 "\n", i64);
     if (i64 != -34359738368LL)
-        failCount++;
+      failCount++;
     /**
      * DOUBLE TEST
      */
@@ -315,7 +341,7 @@ int main(int argc, char** argv) {
     double dub = testClient.testDouble(-5.2098523);
     printf(" = %f\n", dub);
     if ((dub - (-5.2098523)) > 0.001)
-        failCount++;
+      failCount++;
 
     /**
      * STRUCT TEST
@@ -334,7 +360,7 @@ int main(int argc, char** argv) {
            in.i32_thing,
            in.i64_thing);
     if (in != out)
-    	failCount++;
+      failCount++;
 
     /**
      * NESTED STRUCT TEST
@@ -355,14 +381,14 @@ int main(int argc, char** argv) {
            in.i64_thing,
            in2.i32_thing);
     if (in2 != out2)
-    	failCount++;
+      failCount++;
 
     /**
      * MAP TEST
      */
-    map<int32_t,int32_t> mapout;
+    map<int32_t, int32_t> mapout;
     for (int32_t i = 0; i < 5; ++i) {
-      mapout.insert(make_pair(i, i-10));
+      mapout.insert(make_pair(i, i - 10));
     }
     printf("testMap({");
     map<int32_t, int32_t>::const_iterator m_iter;
@@ -376,7 +402,7 @@ int main(int argc, char** argv) {
       printf("%d => %d", m_iter->first, m_iter->second);
     }
     printf("})");
-    map<int32_t,int32_t> mapin;
+    map<int32_t, int32_t> mapin;
     testClient.testMap(mapin, mapout);
     printf(" = {");
     first = true;
@@ -390,7 +416,7 @@ int main(int argc, char** argv) {
     }
     printf("}\n");
     if (mapin != mapout)
-    	failCount++;
+      failCount++;
 
     /**
      * STRING MAP TEST
@@ -430,7 +456,7 @@ int main(int argc, char** argv) {
     }
     printf("}\n");
     if (setin != setout)
-    	failCount++;
+      failCount++;
 
     /**
      * LIST TEST
@@ -465,7 +491,7 @@ int main(int argc, char** argv) {
     }
     printf("}\n");
     if (listin != listout)
-    	failCount++;
+      failCount++;
 
     /**
      * ENUM TEST
@@ -474,31 +500,31 @@ int main(int argc, char** argv) {
     Numberz::type ret = testClient.testEnum(Numberz::ONE);
     printf(" = %d\n", ret);
     if (ret != Numberz::ONE)
-    	failCount++;
+      failCount++;
 
     printf("testEnum(TWO)");
     ret = testClient.testEnum(Numberz::TWO);
     printf(" = %d\n", ret);
     if (ret != Numberz::TWO)
-    	failCount++;
+      failCount++;
 
     printf("testEnum(THREE)");
     ret = testClient.testEnum(Numberz::THREE);
     printf(" = %d\n", ret);
     if (ret != Numberz::THREE)
-    	failCount++;
+      failCount++;
 
     printf("testEnum(FIVE)");
     ret = testClient.testEnum(Numberz::FIVE);
     printf(" = %d\n", ret);
     if (ret != Numberz::FIVE)
-    	failCount++;
+      failCount++;
 
     printf("testEnum(EIGHT)");
     ret = testClient.testEnum(Numberz::EIGHT);
     printf(" = %d\n", ret);
     if (ret != Numberz::EIGHT)
-    	failCount++;
+      failCount++;
 
     /**
      * TYPEDEF TEST
@@ -507,7 +533,7 @@ int main(int argc, char** argv) {
     UserId uid = testClient.testTypedef(309858235082523LL);
     printf(" = %" PRId64 "\n", uid);
     if (uid != 309858235082523LL)
-    	failCount++;
+      failCount++;
 
     /**
      * NESTED MAP TEST
@@ -540,16 +566,14 @@ int main(int argc, char** argv) {
       truck.i64_thing = 8;
       insane.xtructs.push_back(truck);
       printf("testInsanity()");
-      map<UserId, map<Numberz::type,Insanity> > whoa;
+      map<UserId, map<Numberz::type, Insanity> > whoa;
       testClient.testInsanity(whoa, insane);
       printf(" = {");
-      map<UserId, map<Numberz::type,Insanity> >::const_iterator i_iter;
+      map<UserId, map<Numberz::type, Insanity> >::const_iterator i_iter;
       for (i_iter = whoa.begin(); i_iter != whoa.end(); ++i_iter) {
         printf("%" PRId64 " => {", i_iter->first);
-        map<Numberz::type,Insanity>::const_iterator i2_iter;
-        for (i2_iter = i_iter->second.begin();
-             i2_iter != i_iter->second.end();
-             ++i2_iter) {
+        map<Numberz::type, Insanity>::const_iterator i2_iter;
+        for (i2_iter = i_iter->second.begin(); i2_iter != i_iter->second.end(); ++i2_iter) {
           printf("%d => {", i2_iter->first);
           map<Numberz::type, UserId> userMap = i2_iter->second.userMap;
           map<Numberz::type, UserId>::const_iterator um;
@@ -585,25 +609,25 @@ int main(int argc, char** argv) {
       printf("  void\nFAILURE\n");
       failCount++;
 
-    } catch(Xception& e) {
+    } catch (Xception& e) {
       printf("  {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
     }
 
     try {
-        printf("testClient.testException(\"TException\") =>");
-        testClient.testException("TException");
-        printf("  void\nFAILURE\n");
-        failCount++;
+      printf("testClient.testException(\"TException\") =>");
+      testClient.testException("TException");
+      printf("  void\nFAILURE\n");
+      failCount++;
 
-      } catch(const TException&) {
-        printf("  Caught TException\n");
-      }
+    } catch (const TException&) {
+      printf("  Caught TException\n");
+    }
 
     try {
       printf("testClient.testException(\"success\") =>");
       testClient.testException("success");
       printf("  void\n");
-    } catch(...) {
+    } catch (...) {
       printf("  exception\nFAILURE\n");
       failCount++;
     }
@@ -616,7 +640,7 @@ int main(int argc, char** argv) {
       testClient.testMultiException(result, "Xception", "test 1");
       printf("  result\nFAILURE\n");
       failCount++;
-    } catch(Xception& e) {
+    } catch (Xception& e) {
       printf("  {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
     }
 
@@ -627,7 +651,7 @@ int main(int argc, char** argv) {
       printf("  result\nFAILURE\n");
       failCount++;
 
-    } catch(Xception2& e) {
+    } catch (Xception2& e) {
       printf("  {%u, {\"%s\"}}\n", e.errorCode, e.struct_thing.string_thing.c_str());
     }
 
@@ -636,23 +660,23 @@ int main(int argc, char** argv) {
       Xtruct result;
       testClient.testMultiException(result, "success", "test 3");
       printf("  {{\"%s\"}}\n", result.string_thing.c_str());
-    } catch(...) {
+    } catch (...) {
       printf("  exception\nFAILURE\n");
       failCount++;
     }
 
     /* test oneway void */
     {
-        printf("testClient.testOneway(1) =>");
-        uint64_t startOneway = now();
-        testClient.testOneway(1);
-        uint64_t elapsed = now() - startOneway;
-        if (elapsed > 200 * 1000) { // 0.2 seconds
-            printf("  FAILURE - took %.2f ms\n", (double)elapsed/1000.0);
-            failCount++;
-        } else {
-            printf("  success - took %.2f ms\n", (double)elapsed/1000.0);
-        }
+      printf("testClient.testOneway(1) =>");
+      uint64_t startOneway = now();
+      testClient.testOneway(1);
+      uint64_t elapsed = now() - startOneway;
+      if (elapsed > 200 * 1000) { // 0.2 seconds
+        printf("  FAILURE - took %.2f ms\n", (double)elapsed / 1000.0);
+        failCount++;
+      } else {
+        printf("  success - took %.2f ms\n", (double)elapsed / 1000.0);
+      }
     }
 
     /**
@@ -670,13 +694,12 @@ int main(int argc, char** argv) {
     i32 = testClient.testI32(-1);
     printf(" = %d\n", i32);
     if (i32 != -1)
-        failCount++;
-
+      failCount++;
 
     uint64_t stop = now();
-    uint64_t tot = stop-start;
+    uint64_t tot = stop - start;
 
-    printf("Total time: %" PRIu64 " us\n", stop-start);
+    printf("Total time: %" PRIu64 " us\n", stop - start);
 
     time_tot += tot;
     if (time_min == 0 || tot < time_min) {

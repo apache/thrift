@@ -30,8 +30,9 @@
 
 using apache::thrift::transport::TMemoryBuffer;
 
-namespace apache { namespace thrift { namespace async {
-
+namespace apache {
+namespace thrift {
+namespace async {
 
 struct TEvhttpServer::RequestContext {
   struct evhttp_request* req;
@@ -41,19 +42,12 @@ struct TEvhttpServer::RequestContext {
   RequestContext(struct evhttp_request* req);
 };
 
-
 TEvhttpServer::TEvhttpServer(boost::shared_ptr<TAsyncBufferProcessor> processor)
-  : processor_(processor)
-  , eb_(NULL)
-  , eh_(NULL)
-{}
-
+  : processor_(processor), eb_(NULL), eh_(NULL) {
+}
 
 TEvhttpServer::TEvhttpServer(boost::shared_ptr<TAsyncBufferProcessor> processor, int port)
-  : processor_(processor)
-  , eb_(NULL)
-  , eh_(NULL)
-{
+  : processor_(processor), eb_(NULL), eh_(NULL) {
   // Create event_base and evhttp.
   eb_ = event_base_new();
   if (eb_ == NULL) {
@@ -70,7 +64,7 @@ TEvhttpServer::TEvhttpServer(boost::shared_ptr<TAsyncBufferProcessor> processor,
   if (ret < 0) {
     evhttp_free(eh_);
     event_base_free(eb_);
-	throw TException("evhttp_bind_socket failed");
+    throw TException("evhttp_bind_socket failed");
   }
 
   // Register a handler.  If you use the other constructor,
@@ -78,7 +72,6 @@ TEvhttpServer::TEvhttpServer(boost::shared_ptr<TAsyncBufferProcessor> processor,
   // Don't forget to unregister before destorying this TEvhttpServer.
   evhttp_set_cb(eh_, "/", request, (void*)this);
 }
-
 
 TEvhttpServer::~TEvhttpServer() {
   if (eh_ != NULL) {
@@ -89,7 +82,6 @@ TEvhttpServer::~TEvhttpServer() {
   }
 }
 
-
 int TEvhttpServer::serve() {
   if (eb_ == NULL) {
     throw TException("Unexpected call to TEvhttpServer::serve");
@@ -97,37 +89,33 @@ int TEvhttpServer::serve() {
   return event_base_dispatch(eb_);
 }
 
-
-TEvhttpServer::RequestContext::RequestContext(struct evhttp_request* req) : req(req)
-  , ibuf(new TMemoryBuffer(EVBUFFER_DATA(req->input_buffer), static_cast<uint32_t>(EVBUFFER_LENGTH(req->input_buffer))))
-  , obuf(new TMemoryBuffer())
-{}
-
+TEvhttpServer::RequestContext::RequestContext(struct evhttp_request* req)
+  : req(req),
+    ibuf(new TMemoryBuffer(EVBUFFER_DATA(req->input_buffer),
+                           static_cast<uint32_t>(EVBUFFER_LENGTH(req->input_buffer)))),
+    obuf(new TMemoryBuffer()) {
+}
 
 void TEvhttpServer::request(struct evhttp_request* req, void* self) {
   try {
     static_cast<TEvhttpServer*>(self)->process(req);
-  } catch(std::exception& e) {
+  } catch (std::exception& e) {
     evhttp_send_reply(req, HTTP_INTERNAL, e.what(), 0);
   }
 }
 
-
 void TEvhttpServer::process(struct evhttp_request* req) {
   RequestContext* ctx = new RequestContext(req);
-  return processor_->process(
-      apache::thrift::stdcxx::bind(
-        &TEvhttpServer::complete,
-        this,
-        ctx,
-        apache::thrift::stdcxx::placeholders::_1),
-      ctx->ibuf,
-      ctx->obuf);
+  return processor_->process(apache::thrift::stdcxx::bind(&TEvhttpServer::complete,
+                                                          this,
+                                                          ctx,
+                                                          apache::thrift::stdcxx::placeholders::_1),
+                             ctx->ibuf,
+                             ctx->obuf);
 }
 
-
 void TEvhttpServer::complete(RequestContext* ctx, bool success) {
-  (void) success;
+  (void)success;
   std::auto_ptr<RequestContext> ptr(ctx);
 
   int code = success ? 200 : 400;
@@ -142,7 +130,7 @@ void TEvhttpServer::complete(RequestContext* ctx, bool success) {
   struct evbuffer* buf = evbuffer_new();
   if (buf == NULL) {
     // TODO: Log an error.
-      std::cerr << "evbuffer_new failed " << __FILE__ << ":" <<  __LINE__ << std::endl;
+    std::cerr << "evbuffer_new failed " << __FILE__ << ":" << __LINE__ << std::endl;
   } else {
     uint8_t* obuf;
     uint32_t sz;
@@ -150,7 +138,8 @@ void TEvhttpServer::complete(RequestContext* ctx, bool success) {
     int ret = evbuffer_add(buf, obuf, sz);
     if (ret != 0) {
       // TODO: Log an error.
-      std::cerr << "evhttp_add failed with " << ret << " " << __FILE__ << ":" <<  __LINE__ << std::endl;
+      std::cerr << "evhttp_add failed with " << ret << " " << __FILE__ << ":" << __LINE__
+                << std::endl;
     }
   }
 
@@ -160,10 +149,9 @@ void TEvhttpServer::complete(RequestContext* ctx, bool success) {
   }
 }
 
-
 struct event_base* TEvhttpServer::getEventBase() {
   return eb_;
 }
-
-
-}}} // apache::thrift::async
+}
+}
+} // apache::thrift::async

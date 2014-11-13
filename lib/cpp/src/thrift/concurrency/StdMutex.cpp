@@ -26,30 +26,42 @@
 #include <chrono>
 #include <mutex>
 
-namespace apache { namespace thrift { namespace concurrency {
+namespace apache {
+namespace thrift {
+namespace concurrency {
 
 /**
  * Implementation of Mutex class using C++11 std::timed_mutex
  *
  * @version $Id:$
  */
-class Mutex::impl : public std::timed_mutex {
-};
+class Mutex::impl : public std::timed_mutex {};
 
-Mutex::Mutex(Initializer init) : impl_(new Mutex::impl()) {}
+Mutex::Mutex(Initializer init) : impl_(new Mutex::impl()) {
+}
 
-void* Mutex::getUnderlyingImpl() const { return impl_.get(); }
+void* Mutex::getUnderlyingImpl() const {
+  return impl_.get();
+}
 
-void Mutex::lock() const { impl_->lock(); }
+void Mutex::lock() const {
+  impl_->lock();
+}
 
-bool Mutex::trylock() const { return impl_->try_lock(); }
+bool Mutex::trylock() const {
+  return impl_->try_lock();
+}
 
-bool Mutex::timedlock(int64_t ms) const { return impl_->try_lock_for(std::chrono::milliseconds(ms)); }
+bool Mutex::timedlock(int64_t ms) const {
+  return impl_->try_lock_for(std::chrono::milliseconds(ms));
+}
 
-void Mutex::unlock() const { impl_->unlock(); }
+void Mutex::unlock() const {
+  impl_->unlock();
+}
 
 void Mutex::DEFAULT_INITIALIZER(void* arg) {
 }
-
-}}} // apache::thrift::concurrency
-
+}
+}
+} // apache::thrift::concurrency

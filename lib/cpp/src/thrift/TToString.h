@@ -28,7 +28,8 @@
 #include <string>
 #include <sstream>
 
-namespace apache { namespace thrift {
+namespace apache {
+namespace thrift {
 
 template <typename T>
 std::string to_string(const T& t) {
@@ -52,8 +53,7 @@ std::string to_string(const typename std::pair<K, V>& v) {
 }
 
 template <typename T>
-std::string to_string(const T& beg, const T& end)
-{
+std::string to_string(const T& beg, const T& end) {
   std::ostringstream o;
   for (T it = beg; it != end; ++it) {
     if (it != beg)
@@ -83,7 +83,7 @@ std::string to_string(const std::set<T>& s) {
   o << "{" << to_string(s.begin(), s.end()) << "}";
   return o.str();
 }
-
-}} // apache::thrift
+}
+} // apache::thrift
 
 #endif // _THRIFT_TOSTRING_H_
