@@ -20,9 +20,9 @@
 #include <boost/test/unit_test.hpp>
 #include "gen-cpp/EnumTest_types.h"
 
-BOOST_AUTO_TEST_SUITE( EnumTest )
+BOOST_AUTO_TEST_SUITE(EnumTest)
 
-BOOST_AUTO_TEST_CASE( test_enum ) {
+BOOST_AUTO_TEST_CASE(test_enum) {
   // Check that all the enum values match what we expect
   BOOST_CHECK_EQUAL(MyEnum1::ME1_0, 0);
   BOOST_CHECK_EQUAL(MyEnum1::ME1_1, 1);
@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE( test_enum ) {
   BOOST_CHECK_EQUAL(MyEnum4::ME4_C, 0x7fffffff);
 }
 
-BOOST_AUTO_TEST_CASE( test_enum_constant ) {
+BOOST_AUTO_TEST_CASE(test_enum_constant) {
   MyStruct ms;
   BOOST_CHECK_EQUAL(ms.me2_2, 2);
   BOOST_CHECK_EQUAL(ms.me3_n2, -2);

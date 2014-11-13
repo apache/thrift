@@ -24,8 +24,9 @@
 
 #include <limits>
 
-
-namespace apache { namespace thrift { namespace protocol {
+namespace apache {
+namespace thrift {
+namespace protocol {
 
 template <class Transport_>
 uint32_t TBinaryProtocolT<Transport_>::writeMessageBegin(const std::string& name,
@@ -54,7 +55,7 @@ uint32_t TBinaryProtocolT<Transport_>::writeMessageEnd() {
 
 template <class Transport_>
 uint32_t TBinaryProtocolT<Transport_>::writeStructBegin(const char* name) {
-  (void) name;
+  (void)name;
   return 0;
 }
 
@@ -67,7 +68,7 @@ template <class Transport_>
 uint32_t TBinaryProtocolT<Transport_>::writeFieldBegin(const char* name,
                                                        const TType fieldType,
                                                        const int16_t fieldId) {
-  (void) name;
+  (void)name;
   uint32_t wsize = 0;
   wsize += writeByte((int8_t)fieldType);
   wsize += writeI16(fieldId);
@@ -81,8 +82,7 @@ uint32_t TBinaryProtocolT<Transport_>::writeFieldEnd() {
 
 template <class Transport_>
 uint32_t TBinaryProtocolT<Transport_>::writeFieldStop() {
-  return
-    writeByte((int8_t)T_STOP);
+  return writeByte((int8_t)T_STOP);
 }
 
 template <class Transport_>
@@ -102,10 +102,9 @@ uint32_t TBinaryProtocolT<Transport_>::writeMapEnd() {
 }
 
 template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeListBegin(const TType elemType,
-                                                      const uint32_t size) {
+uint32_t TBinaryProtocolT<Transport_>::writeListBegin(const TType elemType, const uint32_t size) {
   uint32_t wsize = 0;
-  wsize += writeByte((int8_t) elemType);
+  wsize += writeByte((int8_t)elemType);
   wsize += writeI32((int32_t)size);
   return wsize;
 }
@@ -116,8 +115,7 @@ uint32_t TBinaryProtocolT<Transport_>::writeListEnd() {
 }
 
 template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeSetBegin(const TType elemType,
-                                                     const uint32_t size) {
+uint32_t TBinaryProtocolT<Transport_>::writeSetBegin(const TType elemType, const uint32_t size) {
   uint32_t wsize = 0;
   wsize += writeByte((int8_t)elemType);
   wsize += writeI32((int32_t)size);
@@ -131,7 +129,7 @@ uint32_t TBinaryProtocolT<Transport_>::writeSetEnd() {
 
 template <class Transport_>
 uint32_t TBinaryProtocolT<Transport_>::writeBool(const bool value) {
-  uint8_t tmp =  value ? 1 : 0;
+  uint8_t tmp = value ? 1 : 0;
   this->trans_->write(&tmp, 1);
   return 1;
 }
@@ -174,11 +172,10 @@ uint32_t TBinaryProtocolT<Transport_>::writeDouble(const double dub) {
   return 8;
 }
 
-
 template <class Transport_>
-template<typename StrType>
+template <typename StrType>
 uint32_t TBinaryProtocolT<Transport_>::writeString(const StrType& str) {
-  if(str.size() > static_cast<size_t>((std::numeric_limits<int32_t>::max)()))
+  if (str.size() > static_cast<size_t>((std::numeric_limits<int32_t>::max)()))
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   uint32_t size = static_cast<uint32_t>(str.size());
   uint32_t result = writeI32((int32_t)size);
@@ -216,7 +213,8 @@ uint32_t TBinaryProtocolT<Transport_>::readMessageBegin(std::string& name,
     result += readI32(seqid);
   } else {
     if (this->strict_read_) {
-      throw TProtocolException(TProtocolException::BAD_VERSION, "No version identifier... old protocol client in strict mode?");
+      throw TProtocolException(TProtocolException::BAD_VERSION,
+                               "No version identifier... old protocol client in strict mode?");
     } else {
       // Handle pre-versioned input
       int8_t type;
@@ -249,7 +247,7 @@ template <class Transport_>
 uint32_t TBinaryProtocolT<Transport_>::readFieldBegin(std::string& name,
                                                       TType& fieldType,
                                                       int16_t& fieldId) {
-  (void) name;
+  (void)name;
   uint32_t result = 0;
   int8_t type;
   result += readByte(type);
@@ -294,8 +292,7 @@ uint32_t TBinaryProtocolT<Transport_>::readMapEnd() {
 }
 
 template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readListBegin(TType& elemType,
-                                                     uint32_t& size) {
+uint32_t TBinaryProtocolT<Transport_>::readListBegin(TType& elemType, uint32_t& size) {
   int8_t e;
   uint32_t result = 0;
   int32_t sizei;
@@ -317,8 +314,7 @@ uint32_t TBinaryProtocolT<Transport_>::readListEnd() {
 }
 
 template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readSetBegin(TType& elemType,
-                                                    uint32_t& size) {
+uint32_t TBinaryProtocolT<Transport_>::readSetBegin(TType& elemType, uint32_t& size) {
   int8_t e;
   uint32_t result = 0;
   int32_t sizei;
@@ -404,7 +400,7 @@ uint32_t TBinaryProtocolT<Transport_>::readDouble(double& dub) {
 }
 
 template <class Transport_>
-template<typename StrType>
+template <typename StrType>
 uint32_t TBinaryProtocolT<Transport_>::readString(StrType& str) {
   uint32_t result;
   int32_t size;
@@ -418,9 +414,8 @@ uint32_t TBinaryProtocolT<Transport_>::readBinary(std::string& str) {
 }
 
 template <class Transport_>
-template<typename StrType>
-uint32_t TBinaryProtocolT<Transport_>::readStringBody(StrType& str,
-                                                      int32_t size) {
+template <typename StrType>
+uint32_t TBinaryProtocolT<Transport_>::readStringBody(StrType& str, int32_t size) {
   uint32_t result = 0;
 
   // Catch error cases
@@ -447,10 +442,11 @@ uint32_t TBinaryProtocolT<Transport_>::readStringBody(StrType& str,
   }
 
   str.resize(size);
-  this->trans_->readAll(reinterpret_cast<uint8_t *>(&str[0]), size);
+  this->trans_->readAll(reinterpret_cast<uint8_t*>(&str[0]), size);
   return (uint32_t)size;
 }
-
-}}} // apache::thrift::protocol
+}
+}
+} // apache::thrift::protocol
 
 #endif // #ifndef _THRIFT_PROTOCOL_TBINARYPROTOCOL_TCC_

@@ -59,13 +59,15 @@
   until the operation has completed.
 */
 
-namespace apache { namespace thrift { namespace transport {
+namespace apache {
+namespace thrift {
+namespace transport {
 
 DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) struct TOverlappedWorkItem : public SLIST_ENTRY {
   TOverlappedWorkItem();
 
   enum action_t {
-    UNKNOWN  = 3000,
+    UNKNOWN = 3000,
     CONNECT,
     READ,
     CANCELIO,
@@ -75,38 +77,38 @@ DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) struct TOverlappedWorkItem : public 
   TAutoResetEvent doneSubmittingEvent;
   action_t action;
   HANDLE h;
-  uint8_t *buffer;
+  uint8_t* buffer;
   uint32_t buffer_len;
   OVERLAPPED overlap;
 
   DWORD last_error;
   BOOL success;
 
-  void reset(uint8_t *buf, uint32_t len, HANDLE event);
+  void reset(uint8_t* buf, uint32_t len, HANDLE event);
   uint32_t overlappedResults(bool signal_failure = true);
   bool process();
 };
 
-class TOverlappedSubmissionThread : boost::noncopyable
-{
+class TOverlappedSubmissionThread : boost::noncopyable {
 public:
-  void addWorkItem(TOverlappedWorkItem *item);
+  void addWorkItem(TOverlappedWorkItem* item);
 
-//singleton stuff
+  // singleton stuff
 public:
-  static TOverlappedSubmissionThread *acquire_instance();
+  static TOverlappedSubmissionThread* acquire_instance();
   static void release_instance();
+
 private:
   static TCriticalSection instanceGuard_;
-  static TOverlappedSubmissionThread *instance_;
+  static TOverlappedSubmissionThread* instance_;
   static uint32_t instanceRefCount_;
 
-//thread details
+  // thread details
 private:
   TOverlappedSubmissionThread();
   ~TOverlappedSubmissionThread();
   void run();
-  static unsigned __stdcall thread_proc(void *addr);
+  static unsigned __stdcall thread_proc(void* addr);
 
 private:
   DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) SLIST_HEADER workList_;
@@ -117,13 +119,15 @@ private:
 
 class TAutoOverlapThread : boost::noncopyable {
 private:
-  TOverlappedSubmissionThread *p;
+  TOverlappedSubmissionThread* p;
+
 public:
   TAutoOverlapThread() : p(TOverlappedSubmissionThread::acquire_instance()) {}
-  ~TAutoOverlapThread() {TOverlappedSubmissionThread::release_instance();}
-  TOverlappedSubmissionThread *operator->() {return p;}
+  ~TAutoOverlapThread() { TOverlappedSubmissionThread::release_instance(); }
+  TOverlappedSubmissionThread* operator->() { return p; }
 };
-
-}}} //apache::thrift::transport
+}
+}
+} // apache::thrift::transport
 
 #endif

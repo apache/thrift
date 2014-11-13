@@ -24,7 +24,9 @@
 #include <thrift/transport/TTransportException.h>
 #include <boost/shared_ptr.hpp>
 
-namespace apache { namespace thrift { namespace transport {
+namespace apache {
+namespace thrift {
+namespace transport {
 
 /**
  * Server transport framework. A server needs to have some facility for
@@ -32,7 +34,7 @@ namespace apache { namespace thrift { namespace transport {
  *
  */
 class TServerTransport {
- public:
+public:
   virtual ~TServerTransport() {}
 
   /**
@@ -74,7 +76,7 @@ class TServerTransport {
    */
   virtual void close() = 0;
 
- protected:
+protected:
   TServerTransport() {}
 
   /**
@@ -84,9 +86,9 @@ class TServerTransport {
    * @throw TTransportException If an error occurs
    */
   virtual boost::shared_ptr<TTransport> acceptImpl() = 0;
-
 };
-
-}}} // apache::thrift::transport
+}
+}
+} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TSERVERTRANSPORT_H_

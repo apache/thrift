@@ -117,3 +117,6 @@ clean-local:
 	$(RM) thriftl.cc thrifty.cc thrifty.h thrifty.hh version.h windows/version.h
 
 src/main.cc: version.h
+
+style-local:
+	$(CPPSTYLE_CMD)

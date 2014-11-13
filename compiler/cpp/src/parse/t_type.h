@@ -37,38 +37,30 @@ class t_program;
  *
  */
 class t_type : public t_doc {
- public:
+public:
   virtual ~t_type() {}
 
-  virtual void set_name(const std::string& name) {
-    name_ = name;
-  }
+  virtual void set_name(const std::string& name) { name_ = name; }
 
-  virtual const std::string& get_name() const {
-    return name_;
-  }
+  virtual const std::string& get_name() const { return name_; }
 
-  virtual bool is_void()      const { return false; }
+  virtual bool is_void() const { return false; }
   virtual bool is_base_type() const { return false; }
-  virtual bool is_string()    const { return false; }
-  virtual bool is_bool()      const { return false; }
-  virtual bool is_typedef()   const { return false; }
-  virtual bool is_enum()      const { return false; }
-  virtual bool is_struct()    const { return false; }
-  virtual bool is_xception()  const { return false; }
+  virtual bool is_string() const { return false; }
+  virtual bool is_bool() const { return false; }
+  virtual bool is_typedef() const { return false; }
+  virtual bool is_enum() const { return false; }
+  virtual bool is_struct() const { return false; }
+  virtual bool is_xception() const { return false; }
   virtual bool is_container() const { return false; }
-  virtual bool is_list()      const { return false; }
-  virtual bool is_set()       const { return false; }
-  virtual bool is_map()       const { return false; }
-  virtual bool is_service()   const { return false; }
+  virtual bool is_list() const { return false; }
+  virtual bool is_set() const { return false; }
+  virtual bool is_map() const { return false; }
+  virtual bool is_service() const { return false; }
 
-  t_program* get_program() {
-    return program_;
-  }
+  t_program* get_program() { return program_; }
 
-  const t_program* get_program() const {
-    return program_;
-  }
+  const t_program* get_program() const { return program_; }
 
   t_type* get_true_type();
 
@@ -95,8 +87,9 @@ class t_type : public t_doc {
     return false;
   }
 
-  const uint8_t* get_binary_fingerprint()  {
-    if(! has_fingerprint())  // lazy fingerprint generation, right now only used with the c++ generator
+  const uint8_t* get_binary_fingerprint() {
+    if (!has_fingerprint()) // lazy fingerprint generation, right now only used with the c++
+                            // generator
       generate_fingerprint();
     return fingerprint_;
   }
@@ -128,30 +121,16 @@ class t_type : public t_doc {
 
   std::map<std::string, std::string> annotations_;
 
- protected:
-  t_type() :
-    program_(NULL)
-  {
+protected:
+  t_type() : program_(NULL) { memset(fingerprint_, 0, sizeof(fingerprint_)); }
+
+  t_type(t_program* program) : program_(program) { memset(fingerprint_, 0, sizeof(fingerprint_)); }
+
+  t_type(t_program* program, std::string name) : program_(program), name_(name) {
     memset(fingerprint_, 0, sizeof(fingerprint_));
   }
 
-  t_type(t_program* program) :
-    program_(program)
-  {
-    memset(fingerprint_, 0, sizeof(fingerprint_));
-  }
-
-  t_type(t_program* program, std::string name) :
-    program_(program),
-    name_(name)
-  {
-    memset(fingerprint_, 0, sizeof(fingerprint_));
-  }
-
-  t_type(std::string name) :
-    program_(NULL),
-    name_(name)
-  {
+  t_type(std::string name) : program_(NULL), name_(name) {
     memset(fingerprint_, 0, sizeof(fingerprint_));
   }
 
@@ -160,7 +139,6 @@ class t_type : public t_doc {
 
   uint8_t fingerprint_[fingerprint_len];
 };
-
 
 /**
  * Placeholder struct for returning the key and value of an annotation

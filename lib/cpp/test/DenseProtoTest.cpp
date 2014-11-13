@@ -42,7 +42,6 @@ g++ -Wall -g -I../lib/cpp/src -I/usr/local/include/boost-1_33_1 \
 #include <thrift/protocol/TDenseProtocol.h>
 #include <thrift/transport/TBufferTransports.h>
 
-
 // Can't use memcmp here.  GCC is too smart.
 bool my_memeq(const char* str1, const char* str2, int len) {
   for (int i = 0; i < len; i++) {
@@ -53,7 +52,6 @@ bool my_memeq(const char* str1, const char* str2, int len) {
   return true;
 }
 
-
 int main() {
   using std::string;
   using std::cout;
@@ -63,36 +61,33 @@ int main() {
   using namespace apache::thrift::transport;
   using namespace apache::thrift::protocol;
 
-
   OneOfEach ooe;
-  ooe.im_true   = true;
-  ooe.im_false  = false;
-  ooe.a_bite    = 0xd6;
+  ooe.im_true = true;
+  ooe.im_false = false;
+  ooe.a_bite = 0xd6;
   ooe.integer16 = 27000;
-  ooe.integer32 = 1<<24;
+  ooe.integer32 = 1 << 24;
   ooe.integer64 = (uint64_t)6000 * 1000 * 1000;
   ooe.double_precision = M_PI;
-  ooe.some_characters  = "Debug THIS!";
-  ooe.zomg_unicode     = "\xd7\n\a\t";
+  ooe.some_characters = "Debug THIS!";
+  ooe.zomg_unicode = "\xd7\n\a\t";
 
-  //cout << apache::thrift::ThriftDebugString(ooe) << endl << endl;
-
+  // cout << apache::thrift::ThriftDebugString(ooe) << endl << endl;
 
   Nesting n;
   n.my_ooe = ooe;
   n.my_ooe.integer16 = 16;
   n.my_ooe.integer32 = 32;
   n.my_ooe.integer64 = 64;
-  n.my_ooe.double_precision = (std::sqrt(5)+1)/2;
-  n.my_ooe.some_characters  = ":R (me going \"rrrr\")";
+  n.my_ooe.double_precision = (std::sqrt(5) + 1) / 2;
+  n.my_ooe.some_characters = ":R (me going \"rrrr\")";
   n.my_ooe.zomg_unicode     = "\xd3\x80\xe2\x85\xae\xce\x9d\x20"
                               "\xd0\x9d\xce\xbf\xe2\x85\xbf\xd0\xbe\xc9\xa1\xd0\xb3\xd0\xb0\xcf\x81\xe2\x84\x8e"
                               "\x20\xce\x91\x74\x74\xce\xb1\xe2\x85\xbd\xce\xba\xc7\x83\xe2\x80\xbc";
-  n.my_bonk.type    = 31337;
+  n.my_bonk.type = 31337;
   n.my_bonk.message = "I am a bonk... xor!";
 
-  //cout << apache::thrift::ThriftDebugString(n) << endl << endl;
-
+  // cout << apache::thrift::ThriftDebugString(n) << endl << endl;
 
   HolyMoley hm;
 
@@ -115,26 +110,26 @@ int main() {
 
   std::vector<Bonk> stage2;
   hm.bonks["nothing"] = stage2;
-  stage2.resize(stage2.size()+1);
+  stage2.resize(stage2.size() + 1);
   stage2.back().type = 1;
   stage2.back().message = "Wait.";
-  stage2.resize(stage2.size()+1);
+  stage2.resize(stage2.size() + 1);
   stage2.back().type = 2;
   stage2.back().message = "What?";
   hm.bonks["something"] = stage2;
   stage2.clear();
-  stage2.resize(stage2.size()+1);
+  stage2.resize(stage2.size() + 1);
   stage2.back().type = 3;
   stage2.back().message = "quoth";
-  stage2.resize(stage2.size()+1);
+  stage2.resize(stage2.size() + 1);
   stage2.back().type = 4;
   stage2.back().message = "the raven";
-  stage2.resize(stage2.size()+1);
+  stage2.resize(stage2.size() + 1);
   stage2.back().type = 5;
   stage2.back().message = "nevermore";
   hm.bonks["poe"] = stage2;
 
-  //cout << apache::thrift::ThriftDebugString(hm) << endl << endl;
+  // cout << apache::thrift::ThriftDebugString(hm) << endl << endl;
 
   shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
   shared_ptr<TDenseProtocol> proto(new TDenseProtocol(buffer));
@@ -146,16 +141,16 @@ int main() {
 
   assert(hm == hm2);
 
-
   // Let's test out the variable-length ints, shall we?
   uint64_t vlq;
-  #define checkout(i, c) { \
-    buffer->resetBuffer(); \
-    proto->vlqWrite(i); \
-    proto->getTransport()->flush(); \
-    assert(my_memeq(buffer->getBufferAsString().data(), c, sizeof(c)-1)); \
-    proto->vlqRead(vlq); \
-    assert(vlq == i); \
+#define checkout(i, c)                                                                             \
+  {                                                                                                \
+    buffer->resetBuffer();                                                                         \
+    proto->vlqWrite(i);                                                                            \
+    proto->getTransport()->flush();                                                                \
+    assert(my_memeq(buffer->getBufferAsString().data(), c, sizeof(c) - 1));                        \
+    proto->vlqRead(vlq);                                                                           \
+    assert(vlq == i);                                                                              \
   }
 
   checkout(0x00000000, "\x00");
@@ -292,7 +287,6 @@ int main() {
 
   assert(mo1 == mo6);
 
-
   // Test fingerprint checking stuff.
 
   {
@@ -366,7 +360,7 @@ int main() {
     buffer->resetBuffer();
     // Make sure the fingerprint prefix is right.
     buffer->write(Nesting::binary_fingerprint, 4);
-    for (int j = 0; j < 1024*1024; j++) {
+    for (int j = 0; j < 1024 * 1024; j++) {
       uint8_t r = std::rand();
       buffer->write(&r, 1);
     }

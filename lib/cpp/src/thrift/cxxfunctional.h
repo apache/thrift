@@ -20,6 +20,8 @@
 #ifndef _THRIFT_CXXFUNCTIONAL_H_
 #define _THRIFT_CXXFUNCTIONAL_H_ 1
 
+// clang-format off
+
 /**
  * Loads <functional> from the 'right' location, depending
  * on compiler and whether or not it's using C++03 with TR1

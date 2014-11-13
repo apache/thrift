@@ -33,7 +33,9 @@
 
 using namespace std;
 
-namespace apache { namespace thrift { namespace transport {
+namespace apache {
+namespace thrift {
+namespace transport {
 
 void TFDTransport::close() {
   if (!isOpen()) {
@@ -45,9 +47,7 @@ void TFDTransport::close() {
   fd_ = -1;
   // Have to check uncaught_exception because this is called in the destructor.
   if (rv < 0 && !std::uncaught_exception()) {
-    throw TTransportException(TTransportException::UNKNOWN,
-                              "TFDTransport::close()",
-                              errno_copy);
+    throw TTransportException(TTransportException::UNKNOWN, "TFDTransport::close()", errno_copy);
   }
 }
 
@@ -62,13 +62,11 @@ uint32_t TFDTransport::read(uint8_t* buf, uint32_t len) {
         ++retries;
         continue;
       }
-	  int errno_copy = THRIFT_ERRNO;
-      throw TTransportException(TTransportException::UNKNOWN,
-                                "TFDTransport::read()",
-                                errno_copy);
+      int errno_copy = THRIFT_ERRNO;
+      throw TTransportException(TTransportException::UNKNOWN, "TFDTransport::read()", errno_copy);
     }
-    //this should be fine, since we already checked for negative values,
-    //and ::read should only return a 32-bit value since len is 32-bit.
+    // this should be fine, since we already checked for negative values,
+    // and ::read should only return a 32-bit value since len is 32-bit.
     return static_cast<uint32_t>(rv);
   }
 }
@@ -78,20 +76,18 @@ void TFDTransport::write(const uint8_t* buf, uint32_t len) {
     THRIFT_SSIZET rv = ::THRIFT_WRITE(fd_, buf, len);
 
     if (rv < 0) {
-		int errno_copy = THRIFT_ERRNO;
-      throw TTransportException(TTransportException::UNKNOWN,
-                                "TFDTransport::write()",
-                                errno_copy);
+      int errno_copy = THRIFT_ERRNO;
+      throw TTransportException(TTransportException::UNKNOWN, "TFDTransport::write()", errno_copy);
     } else if (rv == 0) {
-      throw TTransportException(TTransportException::END_OF_FILE,
-                                "TFDTransport::write()");
+      throw TTransportException(TTransportException::END_OF_FILE, "TFDTransport::write()");
     }
 
     buf += rv;
-    //this should be fine, as we've already checked for negative values, and
+    // this should be fine, as we've already checked for negative values, and
     //::write shouldn't return more than a uint32_t since len is a uint32_t
     len -= static_cast<uint32_t>(rv);
   }
 }
-
-}}} // apache::thrift::transport
+}
+}
+} // apache::thrift::transport

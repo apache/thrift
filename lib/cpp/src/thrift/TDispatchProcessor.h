@@ -21,7 +21,8 @@
 
 #include <thrift/TProcessor.h>
 
-namespace apache { namespace thrift {
+namespace apache {
+namespace thrift {
 
 /**
  * TDispatchProcessor is a helper class to parse the message header then call
@@ -31,7 +32,7 @@ namespace apache { namespace thrift {
  */
 template <class Protocol_>
 class TDispatchProcessorT : public TProcessor {
- public:
+public:
   virtual bool process(boost::shared_ptr<protocol::TProtocol> in,
                        boost::shared_ptr<protocol::TProtocol> out,
                        void* connectionContext) {
@@ -60,15 +61,14 @@ class TDispatchProcessorT : public TProcessor {
     // (The old generated processor code used to try to skip a T_STRUCT and
     // continue.  However, that seems unsafe.)
     if (mtype != protocol::T_CALL && mtype != protocol::T_ONEWAY) {
-      GlobalOutput.printf("received invalid message type %d from client",
-                          mtype);
+      GlobalOutput.printf("received invalid message type %d from client", mtype);
       return false;
     }
 
     return this->dispatchCall(inRaw, outRaw, fname, seqid, connectionContext);
   }
 
- protected:
+protected:
   bool processFast(Protocol_* in, Protocol_* out, void* connectionContext) {
     std::string fname;
     protocol::TMessageType mtype;
@@ -76,13 +76,11 @@ class TDispatchProcessorT : public TProcessor {
     in->readMessageBegin(fname, mtype, seqid);
 
     if (mtype != protocol::T_CALL && mtype != protocol::T_ONEWAY) {
-      GlobalOutput.printf("received invalid message type %d from client",
-                          mtype);
+      GlobalOutput.printf("received invalid message type %d from client", mtype);
       return false;
     }
 
-    return this->dispatchCallTemplated(in, out, fname,
-                                       seqid, connectionContext);
+    return this->dispatchCallTemplated(in, out, fname, seqid, connectionContext);
   }
 
   /**
@@ -90,11 +88,14 @@ class TDispatchProcessorT : public TProcessor {
    */
   virtual bool dispatchCall(apache::thrift::protocol::TProtocol* in,
                             apache::thrift::protocol::TProtocol* out,
-                            const std::string& fname, int32_t seqid,
+                            const std::string& fname,
+                            int32_t seqid,
                             void* callContext) = 0;
 
-  virtual bool dispatchCallTemplated(Protocol_* in, Protocol_* out,
-                                     const std::string& fname, int32_t seqid,
+  virtual bool dispatchCallTemplated(Protocol_* in,
+                                     Protocol_* out,
+                                     const std::string& fname,
+                                     int32_t seqid,
                                      void* callContext) = 0;
 };
 
@@ -103,7 +104,7 @@ class TDispatchProcessorT : public TProcessor {
  * perform a dynamic_cast.
  */
 class TDispatchProcessor : public TProcessor {
- public:
+public:
   virtual bool process(boost::shared_ptr<protocol::TProtocol> in,
                        boost::shared_ptr<protocol::TProtocol> out,
                        void* connectionContext) {
@@ -113,30 +114,28 @@ class TDispatchProcessor : public TProcessor {
     in->readMessageBegin(fname, mtype, seqid);
 
     if (mtype != protocol::T_CALL && mtype != protocol::T_ONEWAY) {
-      GlobalOutput.printf("received invalid message type %d from client",
-                          mtype);
+      GlobalOutput.printf("received invalid message type %d from client", mtype);
       return false;
     }
 
     return dispatchCall(in.get(), out.get(), fname, seqid, connectionContext);
   }
 
- protected:
+protected:
   virtual bool dispatchCall(apache::thrift::protocol::TProtocol* in,
                             apache::thrift::protocol::TProtocol* out,
-                            const std::string& fname, int32_t seqid,
+                            const std::string& fname,
+                            int32_t seqid,
                             void* callContext) = 0;
 };
 
 // Specialize TDispatchProcessorT for TProtocol and TDummyProtocol just to use
 // the generic TDispatchProcessor.
 template <>
-class TDispatchProcessorT<protocol::TDummyProtocol> :
-  public TDispatchProcessor {};
+class TDispatchProcessorT<protocol::TDummyProtocol> : public TDispatchProcessor {};
 template <>
-class TDispatchProcessorT<protocol::TProtocol> :
-  public TDispatchProcessor {};
-
-}} // apache::thrift
+class TDispatchProcessorT<protocol::TProtocol> : public TDispatchProcessor {};
+}
+} // apache::thrift
 
 #endif // _THRIFT_TDISPATCHPROCESSOR_H_

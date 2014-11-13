@@ -32,17 +32,11 @@
  *
  */
 class t_function : public t_doc {
- public:
-  t_function(t_type* returntype,
-             std::string name,
-             t_struct* arglist,
-             bool oneway=false) :
-    returntype_(returntype),
-    name_(name),
-    arglist_(arglist),
-    oneway_(oneway) {
+public:
+  t_function(t_type* returntype, std::string name, t_struct* arglist, bool oneway = false)
+    : returntype_(returntype), name_(name), arglist_(arglist), oneway_(oneway) {
     xceptions_ = new t_struct(NULL);
-    if (oneway_ && (! returntype_->is_void())) {
+    if (oneway_ && (!returntype_->is_void())) {
       pwarning(1, "Oneway methods should return void.\n");
     }
   }
@@ -51,46 +45,35 @@ class t_function : public t_doc {
              std::string name,
              t_struct* arglist,
              t_struct* xceptions,
-             bool oneway=false) :
-    returntype_(returntype),
-    name_(name),
-    arglist_(arglist),
-    xceptions_(xceptions),
-    oneway_(oneway)
-  {
+             bool oneway = false)
+    : returntype_(returntype),
+      name_(name),
+      arglist_(arglist),
+      xceptions_(xceptions),
+      oneway_(oneway) {
     if (oneway_ && !xceptions_->get_members().empty()) {
       throw std::string("Oneway methods can't throw exceptions.");
     }
-    if (oneway_ && (! returntype_->is_void())) {
+    if (oneway_ && (!returntype_->is_void())) {
       pwarning(1, "Oneway methods should return void.\n");
     }
   }
 
   ~t_function() {}
 
-  t_type* get_returntype() const {
-    return returntype_;
-  }
+  t_type* get_returntype() const { return returntype_; }
 
-  const std::string& get_name() const {
-    return name_;
-  }
+  const std::string& get_name() const { return name_; }
 
-  t_struct* get_arglist() const {
-    return arglist_;
-  }
+  t_struct* get_arglist() const { return arglist_; }
 
-  t_struct* get_xceptions() const {
-    return xceptions_;
-  }
+  t_struct* get_xceptions() const { return xceptions_; }
 
-  bool is_oneway() const {
-    return oneway_;
-  }
+  bool is_oneway() const { return oneway_; }
 
   std::map<std::string, std::string> annotations_;
 
- private:
+private:
   t_type* returntype_;
   std::string name_;
   t_struct* arglist_;
