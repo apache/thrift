@@ -61,7 +61,7 @@ testHttpClientServer()
 
 testWSClientServer()
 {
-  echo "   Testing WebSocket Client/Server with TJSONProtocol transport $1 $2";
+  echo "   Testing WebSocket Client/Server with protocol $1 and transport $2 $3";
   RET=0
   node ${DIR}/http_server.js -p $1 -t $2 $3 &
   SERVERPID=$!
