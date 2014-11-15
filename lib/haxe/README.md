@@ -25,15 +25,33 @@ Using Thrift with Haxe
 
 Thrift requires Haxe 3.1.3.
 
+Thrift Haxe bindings can be set up via the `haxelib` tool from github.
+
+- To set up any **stable version**, choose the appropriate branch (e.g. `0.9.3`):
+
+    `haxelib git thrift https://github.com/apache/thrift.git 0.9.3 lib/haxe`
+
+- To set up the current **development version**, use the `master` branch:
+  
+    `haxelib git thrift https://github.com/apache/thrift.git master lib/haxe`
+
+As usual, the installed library can be updated using `haxelib upgrade` 
+or `haxelib update thrift`.
+
+In order to work with Thrift, you will need to install the Thrift compiler 
+or build from source, depending on your operating system. Appropriate 
+downloads and more information can be found at http://thrift.apache.org
+	
 To get started, visit the /tutorial/haxe and /test/haxe dirs for examples. 
-If you are using HIDE, you'll find the HIDE project files in these folders.
+If you are using HIDE or the FlashDevelop IDE, you'll find appropriate 
+project files in these folders.
 
 
 Current status
 ========================
 - tested with Haxe C++ target
 - transports: Socket, HTTP (client only), Stream
-- protocols: Binary, JSON
+- protocols: Binary, JSON, Multiplex
 - tutorial client and server available
 - cross-test client and server available 
 
