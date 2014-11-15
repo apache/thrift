@@ -2953,6 +2953,6 @@ std::string t_haxe_generator::get_enum_class_name(t_type* type) {
 }
 
 THRIFT_REGISTER_GENERATOR(haxe, "Haxe",
-"    callbacks:         Use onError()/onSuccess() callbacks for service methods (like AS3)\n"
-)
+    "    callbacks:       Use onError()/onSuccess() callbacks for service methods (like AS3)\n"
+    )
 
