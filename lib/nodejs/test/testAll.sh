@@ -117,8 +117,13 @@ testHttpClientServer json buffered --promise || TESTOK=1
 testHttpClientServer binary framed --ssl || TESTOK=1
 
 #WebSocket tests
+testWSClientServer compact buffered || TESTOK=1
+testWSClientServer compact framed || TESTOK=1
 testWSClientServer json buffered || TESTOK=1
+testWSClientServer json framed || TESTOK=1
+testWSClientServer binary buffered || TESTOK=1
+testWSClientServer binary framed || TESTOK=1
 testWSClientServer json buffered --promise || TESTOK=1
-testWSClientServer json buffered --ssl || TESTOK=1
+testWSClientServer binary framed --ssl || TESTOK=1
 
 exit $TESTOK
