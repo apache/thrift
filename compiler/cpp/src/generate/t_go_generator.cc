@@ -3544,6 +3544,6 @@ bool format_go_output(const string &file_path)
 
 
 THRIFT_REGISTER_GENERATOR(go, "Go",
-                          "    package_prefix= Package prefix for generated files.\n" \
-                          "    thrift_import=  Override thrift package import path (default:" + default_thrift_import + ")\n" \
-                          "    package=  Package name (default: inferred from thrift file name)\n")
+                          "    package_prefix=  Package prefix for generated files.\n" \
+                          "    thrift_import=   Override thrift package import path (default:" + default_thrift_import + ")\n" \
+                          "    package=         Package name (default: inferred from thrift file name)\n")
