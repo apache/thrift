@@ -64,6 +64,10 @@ class t_html_generator : public t_generator {
     iter = parsed_options.find("standalone");
     standalone_ = (iter != parsed_options.end());
 
+	iter = parsed_options.find("noescape");
+	unsafe_ = (iter != parsed_options.end());
+
+
     escape_.clear();
     escape_['&']  = "&amp;";
     escape_['<']  = "&lt;";
@@ -112,6 +116,7 @@ class t_html_generator : public t_generator {
   input_type input_type_;
   std::map<std::string, int> allowed_markup;
   bool standalone_;
+  bool unsafe_;
 };
 
 
@@ -399,7 +404,11 @@ std::string t_html_generator::make_file_link( std::string filename) {
  */
 void t_html_generator::print_doc(t_doc* tdoc) {
   if (tdoc->has_doc()) {
-    f_out_ << escape_html(tdoc->get_doc()) << "<br/>";
+	if (unsafe_) {
+      f_out_ << tdoc->get_doc() << "<br/>";
+    } else {
+      f_out_ << escape_html(tdoc->get_doc()) << "<br/>";
+    }
   }
 }
 
@@ -693,7 +702,7 @@ int t_html_generator::print_type(t_type* ttype) {
   } else {
     string prog_name = ttype->get_program()->get_name();
     string type_name = ttype->get_name();
-    f_out_ << "<a href=\"" << prog_name << ".html#";
+    f_out_ << "<a href=\"" << make_file_link(prog_name+".html") << "#";
     if (ttype->is_typedef()) {
       f_out_ << "Typedef_";
     } else if (ttype->is_struct() || ttype->is_xception()) {
@@ -1079,4 +1088,5 @@ void t_html_generator::generate_service(t_service* tservice) {
 THRIFT_REGISTER_GENERATOR(html, "HTML",
 "    standalone:      Self-contained mode, includes all CSS in the HTML files.\n"
 "                     Generates no style.css file, but HTML files will be larger.\n"
+"    noescape:        Do not escape html in doc text.\n"
 )

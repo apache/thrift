@@ -23,7 +23,6 @@
  * implementations.
  */
 
-#include <tr1/functional>
 #include <boost/test/unit_test.hpp>
 
 #include <thrift/concurrency/PosixThreadFactory.h>
