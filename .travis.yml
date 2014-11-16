@@ -26,53 +26,188 @@ cache:
  - npm
  - maven
 
-
-
-## Build matrix:
 env:
- # Small Set
- - CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua --without-d --without-ruby --without-nodejs --without-java"
-
- # C & C++ & Haskell (for some reason qt4 is required)
- - CONFIG="--without-csharp --without-java --without-erlang --without-nodejs --without-lua --without-python --without-perl --without-php --without-php-extension --without-ruby --without-go --without-d" GHCVER=7.8.3
-
- # Build All
- # TODO: fix these languages
- - CONFIG="--without-erlang --without-python --without-go --without-lua" GHCVER=7.8.3
-
+  global:
+    - TEST_NAME=""
+    - CONFIG=""
+    - GHCVER=7.8.3
 
 matrix:
   include:
-    - compiler: gcc
-      env: CONFIG="--disable-libs"
+    - env:
+        - TEST_NAME="compiler (gcc, automake)"
+          CONFIG="--disable-libs"
+      compiler: gcc
       before_install:
        - sh contrib/installCXXDependencies.sh;
       script:
+       - sh bootstrap.sh;
+       - sh configure $CONFIG;
        - make check -j2;
-       - mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make -j2 && cd ..;
-       - mkdir build_mingw32 && cd build_mingw32 && cmake -DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake ../compiler/cpp/ && make -j2 && cd ..;
 
-    - compiler: clang
-      env: CONFIG="--disable-libs"
+    - env:
+        - TEST_NAME="compiler (gcc, CMake + CPack)"
+      compiler: gcc
       before_install:
        - sh contrib/installCXXDependencies.sh;
       script:
+       - mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make -j4 && cpack && cd ..;
+
+    - env:
+        - TEST_NAME="compiler (clang, automake)"
+          CONFIG="--disable-libs"
+      compiler: clang
+      before_install:
+       - sh contrib/installCXXDependencies.sh;
+      script:
+       - sh bootstrap.sh;
+       - sh configure $CONFIG;
+       - make check -j2;
+
+    - env:
+        - TEST_NAME="compiler (clang, CMake + CPack)"
+      compiler: clang
+      before_install:
+       - sh contrib/installCXXDependencies.sh;
+      script:
+       - mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make -j4 && cpack && cd ..;
+
+    - env:
+        - TEST_NAME="compiler (mingw32-gcc, CMake + CPack)"
+      before_install:
+       - sh contrib/installCXXDependencies.sh;
+       - sudo apt-get install nsis
+      script:
+       - mkdir build_mingw32 && cd build_mingw32 && cmake -DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake ../compiler/cpp/ && make -j4 && cpack && cd ..;
+
+    - env:
+        - TEST_NAME="all (gcc, automake)"
+          CONFIG="--without-erlang --without-python --without-go --without-lua"
+      compiler: gcc
+      before_install:
+       - sh contrib/installCXXDependencies.sh;
+       - sh contrib/installDependencies.sh 1> /dev/null;
+       - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH
+       - cabal update
+      script:
+       - sh bootstrap.sh;
+       - sh configure $CONFIG;
        - make check -j2;
 
 
+    - env:
+        - TEST_NAME="C & C++ & Haskell (gcc, automake)"
+          CONFIG="--without-csharp --without-java --without-erlang --without-nodejs --without-lua --without-python --without-perl --without-php --without-php-extension --without-ruby --without-go --without-d"
+      compiler: gcc
+      before_install:
+       - sh contrib/installCXXDependencies.sh;
+       - sh contrib/installDependencies.sh 1> /dev/null;
+       - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH
+       - cabal update
+      script:
+       - sh bootstrap.sh;
+       - sh configure $CONFIG;
+       - make check -j2;
 
-## Default build sequence:
-before_install:
- - sh contrib/installDependencies.sh 1> /dev/null;
- - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH
- - cabal update
 
-install:
- - sh bootstrap.sh;
- - sh configure $CONFIG;
+    - env:
+        - TEST_NAME="Small Set (gcc, automake)"
+          CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua --without-d --without-ruby --without-nodejs --without-java"
+      compiler: gcc
+      before_install:
+       - sh contrib/installCXXDependencies.sh;
+       - sh contrib/installDependencies.sh 1> /dev/null;
+       - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH
+       - cabal update
+      script:
+       - sh bootstrap.sh;
+       - sh configure $CONFIG;
+       - make check -j2;
 
-script:
- - make -j2 && make dist;
- - make cross -j2;
-# TODO: add these steps
-#  - sh bootstrap.sh ; dpkg-buildpackage -tc
+    - env:
+        - TEST_NAME="dist (gcc, automake)"
+          CONFIG=""
+      compiler: gcc
+      before_install:
+       - sh contrib/installCXXDependencies.sh;
+       - sh contrib/installDependencies.sh 1> /dev/null;
+      script:
+       - sh bootstrap.sh;
+       - sh configure $CONFIG;
+       - make dist -j2;
+
+    - env:
+        - TEST_NAME="make cross (gcc, automake)"
+          CONFIG="--without-python"
+      compiler: gcc
+      before_install:
+       - sh contrib/installCXXDependencies.sh;
+       - sh contrib/installDependencies.sh 1> /dev/null;
+       - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH
+       - cabal update
+      script:
+       - sh bootstrap.sh;
+       - sh configure $CONFIG;
+       - make cross -j2;
+
+    - env:
+        - TEST_NAME="Debian Packages"
+      compiler: gcc
+      before_install:
+       - sh contrib/installCXXDependencies.sh;
+       - sh contrib/installDependencies.sh 1> /dev/null;
+       - sudo apt-get install build-essential mono-gmcs mono-devel libmono-system-web2.0-cil erlang-base ruby1.8-dev python-all python-all-dev python-all-dbg php5 php5-dev
+      script:
+       - dpkg-buildpackage -tc -us -uc
+       - ls -al ..
+
+
+
+    # QA jobs for code analytics and metrics
+
+    # static code analysis with cppcheck (we can add --enable=all later)
+    - env:    TEST_NAME="cppcheck (compiler) error"
+      script: cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 compiler/cpp/src
+      before_install: sudo apt-get install cppcheck
+    - env:    TEST_NAME="cppcheck (cpp) error"
+      script: cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
+      before_install: sudo apt-get install cppcheck
+    - env:    TEST_NAME="cppcheck (c_glib) error"
+      script: cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
+      before_install: sudo apt-get install cppcheck
+    # add --error-exitcode=1 as soon as everything is fixed
+    - env:    TEST_NAME="cppcheck (compiler) all"
+      script: cppcheck --force --quiet --inline-suppr --enable=all -j2 compiler/cpp/src
+      before_install: sudo apt-get install cppcheck
+    - env:    TEST_NAME="cppcheck (cpp) all"
+      script: cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
+      before_install: sudo apt-get install cppcheck
+    - env:    TEST_NAME="cppcheck (c_glib) all"
+      script: cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
+      before_install: sudo apt-get install cppcheck
+
+    # TODO use findbugs for Java
+    # TODO use fxcop for C#
+
+    # TODO do style checks
+
+    # search for TODO within source tree
+    - env:    TEST_NAME="TODO"
+      script: grep -r TODO *
+    # search for FIXME within source tree
+    - env:    TEST_NAME="FIXME"
+      script: grep -r FIXME *
+    # search for HACK within source tree
+    - env:    TEST_NAME="HACK"
+      script: grep -r HACK *
+    # some statistics about the code base
+    - env:    TEST_NAME="sloccount"
+      script: sloccount .
+      before_install: sudo apt-get install sloccount
+    # some info about the build machine
+    - env:    TEST_NAME="info"
+      script:
+       - dpkg -l
+       - uname -a
+
+# TODO make it perfect ;-r
