@@ -209,6 +209,12 @@ class TJSONProtocol extends TProtocol
         return dechex($val);
     }
 
+    private function json_encode_utf8($str) {
+      return preg_replace("/\\\\u([a-f0-9]{4})/e",
+        "iconv('UCS-4LE','UTF-8',pack('V', hexdec('U$1')))",
+        json_encode($str));
+    }
+
     private function writeJSONString($b) {
         $this->context_->write();
 
@@ -216,7 +222,7 @@ class TJSONProtocol extends TProtocol
             $this->trans_->write(self::QUOTE);
         }
 
-        $this->trans_->write(json_encode($b));
+        $this->trans_->write(json_encode_utf8($b));
 
         if (is_numeric($b) && $this->context_->escapeNum()) {
             $this->trans_->write(self::QUOTE);
