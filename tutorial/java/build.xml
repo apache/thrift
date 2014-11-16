@@ -50,8 +50,8 @@
   </target>
 
   <target name="compile" depends="init, generate">
-    <javac srcdir="${gen}" destdir="${build}" classpathref="libs.classpath" />
-    <javac srcdir="${src}" destdir="${build}" classpathref="build.classpath" />
+    <javac includeantruntime="false" srcdir="${gen}" destdir="${build}" classpathref="libs.classpath" />
+    <javac includeantruntime="false" srcdir="${src}" destdir="${build}" classpathref="build.classpath" />
   </target>
 
   <target name="test" depends="tutorial" />
