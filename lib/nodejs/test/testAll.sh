@@ -59,6 +59,18 @@ testHttpClientServer()
   return $RET
 }
 
+testWSClientServer()
+{
+  echo "   Testing WebSocket Client/Server with protocol $1 and transport $2 $3";
+  RET=0
+  node ${DIR}/http_server.js -p $1 -t $2 $3 &
+  SERVERPID=$!
+  sleep 1
+  node ${DIR}/ws_client.js -p $1 -t $2 $3 || RET=1
+  kill -9 $SERVERPID || RET=1
+  return $RET
+}
+
 
 TESTOK=0
 
@@ -103,5 +115,15 @@ testHttpClientServer binary buffered || TESTOK=1
 testHttpClientServer binary framed || TESTOK=1
 testHttpClientServer json buffered --promise || TESTOK=1
 testHttpClientServer binary framed --ssl || TESTOK=1
+
+#WebSocket tests
+testWSClientServer compact buffered || TESTOK=1
+testWSClientServer compact framed || TESTOK=1
+testWSClientServer json buffered || TESTOK=1
+testWSClientServer json framed || TESTOK=1
+testWSClientServer binary buffered || TESTOK=1
+testWSClientServer binary framed || TESTOK=1
+testWSClientServer json buffered --promise || TESTOK=1
+testWSClientServer binary framed --ssl || TESTOK=1
 
 exit $TESTOK
