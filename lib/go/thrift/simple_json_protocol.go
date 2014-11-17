@@ -1038,6 +1038,9 @@ func (p *TSimpleJSONProtocol) ParseListEnd() error {
 		}
 	}
 	p.parseContextStack = p.parseContextStack[:len(p.parseContextStack)-1]
+	if _ParseContext(p.parseContextStack[len(p.parseContextStack)-1]) == _CONTEXT_IN_TOPLEVEL {
+    		return nil
+  	}
 	return p.ParsePostValue()
 }
 
