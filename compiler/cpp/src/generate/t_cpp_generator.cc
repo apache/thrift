@@ -78,6 +78,9 @@ public:
 
     gen_templates_only_ = (iter != parsed_options.end() && iter->second == "only");
 
+    iter = parsed_options.find("moveable_types");
+    gen_moveable_ = (iter != parsed_options.end());
+
     out_dir_base_ = "gen-cpp";
   }
 
@@ -121,7 +124,14 @@ public:
                                   t_struct* tstruct,
                                   bool setters = true);
   void generate_copy_constructor(std::ofstream& out, t_struct* tstruct, bool is_exception);
+  void generate_move_constructor(std::ofstream& out, t_struct* tstruct, bool is_exception);
+  void generate_constructor_helper(std::ofstream& out,
+                                   t_struct* tstruct,
+                                   bool is_excpetion,
+                                   bool is_move);
   void generate_assignment_operator(std::ofstream& out, t_struct* tstruct);
+  void generate_move_assignment_operator(std::ofstream& out, t_struct* tstruct);
+  void generate_assignment_helper(std::ofstream& out, t_struct* tstruct, bool is_move);
   void generate_struct_fingerprint(std::ofstream& out, t_struct* tstruct, bool is_definition);
   void generate_struct_reader(std::ofstream& out, t_struct* tstruct, bool pointers = false);
   void generate_struct_writer(std::ofstream& out, t_struct* tstruct, bool pointers = false);
@@ -273,6 +283,11 @@ private:
    * reader/writer methods.
    */
   bool gen_templates_only_;
+
+  /**
+   * True if we should generate move constructors & assignment operators.
+   */
+  bool gen_moveable_;
 
   /**
    * True iff we should use a path prefix in our #include statements for other
@@ -744,17 +759,53 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
   generate_struct_writer(out, tstruct);
   generate_struct_swap(f_types_impl_, tstruct);
   generate_copy_constructor(f_types_impl_, tstruct, is_exception);
+  if (gen_moveable_) {
+    generate_move_constructor(f_types_impl_, tstruct, is_exception);
+  }
   generate_assignment_operator(f_types_impl_, tstruct);
+  if (gen_moveable_) {
+    generate_move_assignment_operator(f_types_impl_, tstruct);
+  }
   generate_struct_ostream_operator(f_types_impl_, tstruct);
 }
 
 void t_cpp_generator::generate_copy_constructor(ofstream& out,
                                                 t_struct* tstruct,
                                                 bool is_exception) {
+  generate_constructor_helper(out, tstruct, is_exception, /*is_move=*/false);
+}
+
+void t_cpp_generator::generate_move_constructor(ofstream& out,
+                                                t_struct* tstruct,
+                                                bool is_exception) {
+  generate_constructor_helper(out, tstruct, is_exception, /*is_move=*/true);
+}
+
+namespace {
+// Helper to convert a variable to rvalue, if move is enabled
+std::string maybeMove(std::string const& other, bool move) {
+  if (move) {
+    return "std::move(" + other + ")";
+  }
+  return other;
+}
+}
+
+void t_cpp_generator::generate_constructor_helper(ofstream& out,
+                                                  t_struct* tstruct,
+                                                  bool is_exception,
+                                                  bool is_move) {
+
   std::string tmp_name = tmp("other");
 
-  indent(out) << tstruct->get_name() << "::" << tstruct->get_name() << "(const "
-              << tstruct->get_name() << "& " << tmp_name << ") ";
+  indent(out) << tstruct->get_name() << "::" << tstruct->get_name();
+
+  if (is_move) {
+    out << "( " << tstruct->get_name() << "&& ";
+  } else {
+    out << "(const " << tstruct->get_name() << "& ";
+  }
+  out << tmp_name << ") ";
   if (is_exception)
     out << ": TException() ";
   out << "{" << endl;
@@ -771,23 +822,38 @@ void t_cpp_generator::generate_copy_constructor(ofstream& out,
   for (f_iter = members.begin(); f_iter != members.end(); ++f_iter) {
     if ((*f_iter)->get_req() != t_field::T_REQUIRED)
       has_nonrequired_fields = true;
-    indent(out) << (*f_iter)->get_name() << " = " << tmp_name << "." << (*f_iter)->get_name() << ";"
-                << endl;
+    indent(out) << (*f_iter)->get_name() << " = "
+                << maybeMove(tmp_name + "." + (*f_iter)->get_name(), is_move) << ";" << endl;
   }
 
-  if (has_nonrequired_fields)
-    indent(out) << "__isset = " << tmp_name << ".__isset;" << endl;
+  if (has_nonrequired_fields) {
+    indent(out) << "__isset = " << maybeMove(tmp_name + ".__isset", is_move) << ";" << endl;
+  }
 
   indent_down();
   indent(out) << "}" << endl;
 }
 
 void t_cpp_generator::generate_assignment_operator(ofstream& out, t_struct* tstruct) {
+  generate_assignment_helper(out, tstruct, /*is_move=*/false);
+}
+
+void t_cpp_generator::generate_move_assignment_operator(ofstream& out, t_struct* tstruct) {
+  generate_assignment_helper(out, tstruct, /*is_move=*/true);
+}
+
+void t_cpp_generator::generate_assignment_helper(ofstream& out, t_struct* tstruct, bool is_move) {
   std::string tmp_name = tmp("other");
 
-  indent(out) << tstruct->get_name() << "& " << tstruct->get_name() << "::"
-                                                                       "operator=(const "
-              << tstruct->get_name() << "& " << tmp_name << ") {" << endl;
+  indent(out) << tstruct->get_name() << "& " << tstruct->get_name() << "::operator=(";
+
+  if (is_move) {
+    out << tstruct->get_name() << "&& ";
+  } else {
+    out << "const " << tstruct->get_name() << "& ";
+  }
+  out << tmp_name << ") {" << endl;
+
   indent_up();
 
   const vector<t_field*>& members = tstruct->get_members();
@@ -801,11 +867,12 @@ void t_cpp_generator::generate_assignment_operator(ofstream& out, t_struct* tstr
   for (f_iter = members.begin(); f_iter != members.end(); ++f_iter) {
     if ((*f_iter)->get_req() != t_field::T_REQUIRED)
       has_nonrequired_fields = true;
-    indent(out) << (*f_iter)->get_name() << " = " << tmp_name << "." << (*f_iter)->get_name() << ";"
-                << endl;
+    indent(out) << (*f_iter)->get_name() << " = "
+                << maybeMove(tmp_name + "." + (*f_iter)->get_name(), is_move) << ";" << endl;
   }
-  if (has_nonrequired_fields)
-    indent(out) << "__isset = " << tmp_name << ".__isset;" << endl;
+  if (has_nonrequired_fields) {
+    indent(out) << "__isset = " << maybeMove(tmp_name + ".__isset", is_move) << ";" << endl;
+  }
 
   indent(out) << "return *this;" << endl;
   indent_down();
@@ -890,9 +957,19 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
     // Copy constructor
     indent(out) << tstruct->get_name() << "(const " << tstruct->get_name() << "&);" << endl;
 
+    // Move constructor
+    if (gen_moveable_) {
+      indent(out) << tstruct->get_name() << "(" << tstruct->get_name() << "&&);" << endl;
+    }
+
     // Assignment Operator
     indent(out) << tstruct->get_name() << "& operator=(const " << tstruct->get_name() << "&);"
                 << endl;
+
+    // Move assignment operator
+    if (gen_moveable_) {
+      indent(out) << tstruct->get_name() << "& operator=(" << tstruct->get_name() << "&&);" << endl;
+    }
 
     // Default constructor
     indent(out) << tstruct->get_name() << "()";
@@ -4288,4 +4365,5 @@ THRIFT_REGISTER_GENERATOR(
     "    templates:       Generate templatized reader/writer methods.\n"
     "    pure_enums:      Generate pure enums instead of wrapper classes.\n"
     "    dense:           Generate type specifications for the dense protocol.\n"
-    "    include_prefix:  Use full include paths in generated files.\n")
+    "    include_prefix:  Use full include paths in generated files.\n"
+    "    moveable_types:  Generate move constructors and assignment operators.\n")
