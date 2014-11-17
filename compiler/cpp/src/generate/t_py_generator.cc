@@ -1522,7 +1522,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
             indent() << "return d.errback(TApplicationException(TApplicationException.MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\"))" << endl;
         } else {
           f_service_ <<
-            indent() << "raise TApplicationException(TApplicationException.MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
+            indent() << "raise TApplicationException(TApplicationException.MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\")" << endl;
         }
       }
 
@@ -2159,34 +2159,34 @@ void t_py_generator::generate_deserialize_field(ofstream &out,
         break;
       case t_base_type::TYPE_STRING:
         if (((t_base_type*)type)->is_binary() || !gen_utf8strings_) {
-          out << "readString();";
+          out << "readString()";
         } else {
           out << "readString().decode('utf-8')";
         }
         break;
       case t_base_type::TYPE_BOOL:
-        out << "readBool();";
+        out << "readBool()";
         break;
       case t_base_type::TYPE_BYTE:
-        out << "readByte();";
+        out << "readByte()";
         break;
       case t_base_type::TYPE_I16:
-        out << "readI16();";
+        out << "readI16()";
         break;
       case t_base_type::TYPE_I32:
-        out << "readI32();";
+        out << "readI32()";
         break;
       case t_base_type::TYPE_I64:
-        out << "readI64();";
+        out << "readI64()";
         break;
       case t_base_type::TYPE_DOUBLE:
-        out << "readDouble();";
+        out << "readDouble()";
         break;
       default:
         throw "compiler error: no Python name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
-      out << "readI32();";
+      out << "readI32()";
     }
     out << endl;
 
