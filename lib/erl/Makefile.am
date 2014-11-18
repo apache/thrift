@@ -45,7 +45,9 @@ all: .generated
 	./rebar compile
 
 check: .generated
-	./rebar skip_deps=true eunit
+	./rebar -C rebar.test.config get-deps
+	./rebar -C rebar.test.config compile
+	./rebar -C rebar.test.config skip_deps=true eunit
 
 install: all
 	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift) ; \
