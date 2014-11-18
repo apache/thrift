@@ -27,16 +27,15 @@
 
 struct z_stream_s;
 
-namespace apache {
-namespace thrift {
-namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 class TZlibTransportException : public TTransportException {
-public:
-  TZlibTransportException(int status, const char* msg)
-    : TTransportException(TTransportException::INTERNAL_ERROR, errorMessage(status, msg)),
-      zlib_status_(status),
-      zlib_msg_(msg == NULL ? "(null)" : msg) {}
+ public:
+  TZlibTransportException(int status, const char* msg) :
+    TTransportException(TTransportException::INTERNAL_ERROR,
+                        errorMessage(status, msg)),
+    zlib_status_(status),
+    zlib_msg_(msg == NULL ? "(null)" : msg) {}
 
   virtual ~TZlibTransportException() throw() {}
 
@@ -68,7 +67,8 @@ public:
  *
  */
 class TZlibTransport : public TVirtualTransport<TZlibTransport> {
-public:
+ public:
+
   /**
    * @param transport    The transport to read compressed data from
    *                     and write compressed data to.
@@ -83,29 +83,31 @@ public:
                  int crbuf_size = DEFAULT_CRBUF_SIZE,
                  int uwbuf_size = DEFAULT_UWBUF_SIZE,
                  int cwbuf_size = DEFAULT_CWBUF_SIZE,
-                 int16_t comp_level = Z_DEFAULT_COMPRESSION)
-    : transport_(transport),
-      urpos_(0),
-      uwpos_(0),
-      input_ended_(false),
-      output_finished_(false),
-      urbuf_size_(urbuf_size),
-      crbuf_size_(crbuf_size),
-      uwbuf_size_(uwbuf_size),
-      cwbuf_size_(cwbuf_size),
-      urbuf_(NULL),
-      crbuf_(NULL),
-      uwbuf_(NULL),
-      cwbuf_(NULL),
-      rstream_(NULL),
-      wstream_(NULL),
-      comp_level_(comp_level) {
+                 int16_t comp_level = Z_DEFAULT_COMPRESSION) :
+    transport_(transport),
+    urpos_(0),
+    uwpos_(0),
+    input_ended_(false),
+    output_finished_(false),
+    urbuf_size_(urbuf_size),
+    crbuf_size_(crbuf_size),
+    uwbuf_size_(uwbuf_size),
+    cwbuf_size_(cwbuf_size),
+    urbuf_(NULL),
+    crbuf_(NULL),
+    uwbuf_(NULL),
+    cwbuf_(NULL),
+    rstream_(NULL),
+    wstream_(NULL),
+    comp_level_(comp_level)
+  {
     if (uwbuf_size_ < MIN_DIRECT_DEFLATE_SIZE) {
       // Have to copy this into a local because of a linking issue.
       int minimum = MIN_DIRECT_DEFLATE_SIZE;
-      throw TTransportException(TTransportException::BAD_ARGS,
-                                "TZLibTransport: uncompressed write buffer must be at least"
-                                + boost::lexical_cast<std::string>(minimum) + ".");
+      throw TTransportException(
+          TTransportException::BAD_ARGS,
+          "TZLibTransport: uncompressed write buffer must be at least"
+          + boost::lexical_cast<std::string>(minimum) + ".");
     }
 
     try {
@@ -141,9 +143,13 @@ public:
   bool isOpen();
   bool peek();
 
-  void open() { transport_->open(); }
+  void open() {
+    transport_->open();
+  }
 
-  void close() { transport_->close(); }
+  void close() {
+    transport_->close();
+  }
 
   uint32_t read(uint8_t* buf, uint32_t len);
 
@@ -172,15 +178,16 @@ public:
    */
   void verifyChecksum();
 
-  /**
-   * TODO(someone_smart): Choose smart defaults.
-   */
+   /**
+    * TODO(someone_smart): Choose smart defaults.
+    */
   static const int DEFAULT_URBUF_SIZE = 128;
   static const int DEFAULT_CRBUF_SIZE = 1024;
   static const int DEFAULT_UWBUF_SIZE = 128;
   static const int DEFAULT_CWBUF_SIZE = 1024;
 
-protected:
+ protected:
+
   inline void checkZlibRv(int status, const char* msg);
   inline void checkZlibRvNothrow(int status, const char* msg);
   inline int readAvail();
@@ -188,7 +195,7 @@ protected:
   void flushToZlib(const uint8_t* buf, int len, int flush);
   bool readFromZlib();
 
-protected:
+ protected:
   // Writes smaller than this are buffered up.
   // Larger (or equal) writes are dumped straight to zlib.
   static const uint32_t MIN_DIRECT_DEFLATE_SIZE = 32;
@@ -219,22 +226,24 @@ protected:
   const int comp_level_;
 };
 
+
 /**
  * Wraps a transport into a zlibbed one.
  *
  */
 class TZlibTransportFactory : public TTransportFactory {
-public:
+ public:
   TZlibTransportFactory() {}
 
   virtual ~TZlibTransportFactory() {}
 
-  virtual boost::shared_ptr<TTransport> getTransport(boost::shared_ptr<TTransport> trans) {
+  virtual boost::shared_ptr<TTransport> getTransport(
+                                         boost::shared_ptr<TTransport> trans) {
     return boost::shared_ptr<TTransport>(new TZlibTransport(trans));
   }
 };
-}
-}
-} // apache::thrift::transport
+
+
+}}} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TZLIBTRANSPORT_H_

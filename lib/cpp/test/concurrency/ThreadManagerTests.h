@@ -29,10 +29,7 @@
 #include <set>
 #include <stdint.h>
 
-namespace apache {
-namespace thrift {
-namespace concurrency {
-namespace test {
+namespace apache { namespace thrift { namespace concurrency { namespace test {
 
 using namespace apache::thrift::concurrency;
 
@@ -41,11 +38,15 @@ class ThreadManagerTests {
   static const double TEST_TOLERANCE;
 
 public:
-  class Task : public Runnable {
+  class Task: public Runnable {
 
   public:
-    Task(Monitor& monitor, size_t& count, int64_t timeout)
-      : _monitor(monitor), _count(count), _timeout(timeout), _done(false) {}
+
+    Task(Monitor& monitor, size_t& count, int64_t timeout) :
+      _monitor(monitor),
+      _count(count),
+      _timeout(timeout),
+      _done(false) {}
 
     void run() {
 
@@ -56,9 +57,9 @@ public:
 
         try {
           _sleep.wait(_timeout);
-        } catch (TimedOutException& e) {
+        } catch(TimedOutException& e) {
           ;
-        } catch (...) {
+        }catch(...) {
           assert(0);
         }
       }
@@ -95,7 +96,7 @@ public:
    * completes. Verify that all tasks completed and that thread manager cleans
    * up properly on delete.
    */
-  bool loadTest(size_t count = 100, int64_t timeout = 100LL, size_t workerCount = 4) {
+  bool loadTest(size_t count=100, int64_t timeout=100LL, size_t workerCount=4) {
 
     Monitor monitor;
 
@@ -103,8 +104,7 @@ public:
 
     shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workerCount);
 
-    shared_ptr<PlatformThreadFactory> threadFactory
-        = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
+    shared_ptr<PlatformThreadFactory> threadFactory = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
 #ifndef USE_BOOST_THREAD
     threadFactory->setPriority(PosixThreadFactory::HIGHEST);
@@ -117,23 +117,20 @@ public:
 
     for (size_t ix = 0; ix < count; ix++) {
 
-      tasks.insert(shared_ptr<ThreadManagerTests::Task>(
-          new ThreadManagerTests::Task(monitor, activeCount, timeout)));
+      tasks.insert(shared_ptr<ThreadManagerTests::Task>(new ThreadManagerTests::Task(monitor, activeCount, timeout)));
     }
 
     int64_t time00 = Util::currentTime();
 
-    for (std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin();
-         ix != tasks.end();
-         ix++) {
+    for (std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
 
-      threadManager->add(*ix);
+        threadManager->add(*ix);
     }
 
     {
       Synchronized s(monitor);
 
-      while (activeCount > 0) {
+      while(activeCount > 0) {
 
         monitor.wait();
       }
@@ -148,9 +145,7 @@ public:
     int64_t minTime = 9223372036854775807LL;
     int64_t maxTime = 0;
 
-    for (std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin();
-         ix != tasks.end();
-         ix++) {
+    for (std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
 
       shared_ptr<ThreadManagerTests::Task> task = *ix;
 
@@ -174,43 +169,43 @@ public:
         maxTime = delta;
       }
 
-      averageTime += delta;
+      averageTime+= delta;
     }
 
     averageTime /= count;
 
-    std::cout << "\t\t\tfirst start: " << firstTime << "ms Last end: " << lastTime
-              << "ms min: " << minTime << "ms max: " << maxTime << "ms average: " << averageTime
-              << "ms" << std::endl;
+    std::cout << "\t\t\tfirst start: " << firstTime << "ms Last end: " << lastTime << "ms min: " << minTime << "ms max: " << maxTime << "ms average: " << averageTime << "ms" << std::endl;
 
     double expectedTime = ((count + (workerCount - 1)) / workerCount) * timeout;
 
     double error = ((time01 - time00) - expectedTime) / expectedTime;
 
     if (error < 0) {
-      error *= -1.0;
+      error*= -1.0;
     }
 
     bool success = error < TEST_TOLERANCE;
 
-    std::cout << "\t\t\t" << (success ? "Success" : "Failure")
-              << "! expected time: " << expectedTime << "ms elapsed time: " << time01 - time00
-              << "ms error%: " << error * 100.0 << std::endl;
+    std::cout << "\t\t\t" << (success ? "Success" : "Failure") << "! expected time: " << expectedTime << "ms elapsed time: "<< time01 - time00 << "ms error%: " << error * 100.0 << std::endl;
 
     return success;
   }
 
-  class BlockTask : public Runnable {
+  class BlockTask: public Runnable {
 
   public:
-    BlockTask(Monitor& monitor, Monitor& bmonitor, size_t& count)
-      : _monitor(monitor), _bmonitor(bmonitor), _count(count) {}
+
+    BlockTask(Monitor& monitor, Monitor& bmonitor, size_t& count) :
+      _monitor(monitor),
+      _bmonitor(bmonitor),
+      _count(count) {}
 
     void run() {
       {
         Synchronized s(_bmonitor);
 
         _bmonitor.wait();
+
       }
 
       {
@@ -234,8 +229,8 @@ public:
    * Block test.  Create pendingTaskCountMax tasks.  Verify that we block adding the
    * pendingTaskCountMax + 1th task.  Verify that we unblock when a task completes */
 
-  bool blockTest(int64_t timeout = 100LL, size_t workerCount = 2) {
-    (void)timeout;
+  bool blockTest(int64_t timeout=100LL, size_t workerCount=2) {
+    (void) timeout;
     bool success = false;
 
     try {
@@ -247,11 +242,9 @@ public:
 
       size_t activeCounts[] = {workerCount, pendingTaskMaxCount, 1};
 
-      shared_ptr<ThreadManager> threadManager
-          = ThreadManager::newSimpleThreadManager(workerCount, pendingTaskMaxCount);
+      shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workerCount, pendingTaskMaxCount);
 
-      shared_ptr<PlatformThreadFactory> threadFactory
-          = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
+      shared_ptr<PlatformThreadFactory> threadFactory = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
 #ifndef USE_BOOST_THREAD
       threadFactory->setPriority(PosixThreadFactory::HIGHEST);
@@ -264,49 +257,43 @@ public:
 
       for (size_t ix = 0; ix < workerCount; ix++) {
 
-        tasks.insert(shared_ptr<ThreadManagerTests::BlockTask>(
-            new ThreadManagerTests::BlockTask(monitor, bmonitor, activeCounts[0])));
+        tasks.insert(shared_ptr<ThreadManagerTests::BlockTask>(new ThreadManagerTests::BlockTask(monitor, bmonitor,activeCounts[0])));
       }
 
       for (size_t ix = 0; ix < pendingTaskMaxCount; ix++) {
 
-        tasks.insert(shared_ptr<ThreadManagerTests::BlockTask>(
-            new ThreadManagerTests::BlockTask(monitor, bmonitor, activeCounts[1])));
+        tasks.insert(shared_ptr<ThreadManagerTests::BlockTask>(new ThreadManagerTests::BlockTask(monitor, bmonitor,activeCounts[1])));
       }
 
-      for (std::set<shared_ptr<ThreadManagerTests::BlockTask> >::iterator ix = tasks.begin();
-           ix != tasks.end();
-           ix++) {
+      for (std::set<shared_ptr<ThreadManagerTests::BlockTask> >::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
         threadManager->add(*ix);
       }
 
-      if (!(success = (threadManager->totalTaskCount() == pendingTaskMaxCount + workerCount))) {
+      if(!(success = (threadManager->totalTaskCount() == pendingTaskMaxCount + workerCount))) {
         throw TException("Unexpected pending task count");
       }
 
-      shared_ptr<ThreadManagerTests::BlockTask> extraTask(
-          new ThreadManagerTests::BlockTask(monitor, bmonitor, activeCounts[2]));
+      shared_ptr<ThreadManagerTests::BlockTask> extraTask(new ThreadManagerTests::BlockTask(monitor, bmonitor, activeCounts[2]));
 
       try {
         threadManager->add(extraTask, 1);
         throw TException("Unexpected success adding task in excess of pending task count");
-      } catch (TooManyPendingTasksException& e) {
+      } catch(TooManyPendingTasksException& e) {
         throw TException("Should have timed out adding task in excess of pending task count");
-      } catch (TimedOutException& e) {
+      } catch(TimedOutException& e) {
         // Expected result
       }
 
       try {
         threadManager->add(extraTask, -1);
         throw TException("Unexpected success adding task in excess of pending task count");
-      } catch (TimedOutException& e) {
+      } catch(TimedOutException& e) {
         throw TException("Unexpected timeout adding task in excess of pending task count");
-      } catch (TooManyPendingTasksException& e) {
+      } catch(TooManyPendingTasksException& e) {
         // Expected result
       }
 
-      std::cout << "\t\t\t"
-                << "Pending tasks " << threadManager->pendingTaskCount() << std::endl;
+      std::cout << "\t\t\t" << "Pending tasks " << threadManager->pendingTaskCount()  << std::endl;
 
       {
         Synchronized s(bmonitor);
@@ -317,24 +304,21 @@ public:
       {
         Synchronized s(monitor);
 
-        while (activeCounts[0] != 0) {
+        while(activeCounts[0] != 0) {
           monitor.wait();
         }
       }
 
-      std::cout << "\t\t\t"
-                << "Pending tasks " << threadManager->pendingTaskCount() << std::endl;
+      std::cout << "\t\t\t" << "Pending tasks " << threadManager->pendingTaskCount() << std::endl;
 
       try {
         threadManager->add(extraTask, 1);
-      } catch (TimedOutException& e) {
-        std::cout << "\t\t\t"
-                  << "add timed out unexpectedly" << std::endl;
+      } catch(TimedOutException& e) {
+        std::cout << "\t\t\t" << "add timed out unexpectedly"  << std::endl;
         throw TException("Unexpected timeout adding task");
 
-      } catch (TooManyPendingTasksException& e) {
-        std::cout << "\t\t\t"
-                  << "add encountered too many pending exepctions" << std::endl;
+      } catch(TooManyPendingTasksException& e) {
+        std::cout << "\t\t\t" << "add encountered too many pending exepctions" << std::endl;
         throw TException("Unexpected timeout adding task");
       }
 
@@ -349,7 +333,7 @@ public:
       {
         Synchronized s(monitor);
 
-        while (activeCounts[1] != 0) {
+        while(activeCounts[1] != 0) {
           monitor.wait();
         }
       }
@@ -365,28 +349,26 @@ public:
       {
         Synchronized s(monitor);
 
-        while (activeCounts[2] != 0) {
+        while(activeCounts[2] != 0) {
           monitor.wait();
         }
       }
 
-      if (!(success = (threadManager->totalTaskCount() == 0))) {
+      if(!(success = (threadManager->totalTaskCount() == 0))) {
         throw TException("Unexpected pending task count");
       }
 
-    } catch (TException& e) {
+    } catch(TException& e) {
       std::cout << "ERROR: " << e.what() << std::endl;
     }
 
     std::cout << "\t\t\t" << (success ? "Success" : "Failure") << std::endl;
     return success;
-  }
+ }
 };
 
 const double ThreadManagerTests::TEST_TOLERANCE = .20;
-}
-}
-}
-} // apache::thrift::concurrency
+
+}}}} // apache::thrift::concurrency
 
 using namespace apache::thrift::concurrency::test;

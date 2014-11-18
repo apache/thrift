@@ -37,16 +37,14 @@
 #include <netdb.h>
 #endif
 
-namespace apache {
-namespace thrift {
-namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 /**
  * TCP Socket implementation of the TTransport interface.
  *
  */
 class TSocket : public TVirtualTransport<TSocket> {
-public:
+ public:
   /**
    * Constructs a new socket. Note that this does NOT actually connect the
    * socket.
@@ -208,7 +206,9 @@ public:
   /**
    * Returns the underlying socket file descriptor.
    */
-  THRIFT_SOCKET getSocketFD() { return socket_; }
+  THRIFT_SOCKET getSocketFD() {
+    return socket_;
+  }
 
   /**
    * (Re-)initialize a TSocket for the supplied descriptor.  This is only
@@ -252,9 +252,9 @@ public:
    */
   void setCachedAddress(const sockaddr* addr, socklen_t len);
 
-protected:
+ protected:
   /** connect, called by open */
-  void openConnection(struct addrinfo* res);
+  void openConnection(struct addrinfo *res);
 
   /** Host to connect to */
   std::string host_;
@@ -310,12 +310,12 @@ protected:
   /** Whether to use low minimum TCP retransmission timeout */
   static bool useLowMinRto_;
 
-private:
+ private:
   void unix_open();
   void local_open();
 };
-}
-}
-} // apache::thrift::transport
+
+}}} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TSOCKET_H_
+

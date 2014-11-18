@@ -17,8 +17,6 @@
  * under the License.
  */
 
-// clang-format off
-
 #ifndef _THRIFT_TRANSPORT_PLATFORM_SOCKET_H_
 #  define _THRIFT_TRANSPORT_PLATFORM_SOCKET_H_
 

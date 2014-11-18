@@ -43,7 +43,7 @@ using std::set;
 using std::string;
 using std::vector;
 
-static const string endl = "\n"; // avoid ostream << std::endl flushes
+static const string endl = "\n";  // avoid ostream << std::endl flushes
 
 /**
  * D code generator.
@@ -54,17 +54,19 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
  * the passed entity.
  */
 class t_d_generator : public t_oop_generator {
-public:
-  t_d_generator(t_program* program,
-                const std::map<string, string>& parsed_options,
-                const string& option_string)
-    : t_oop_generator(program) {
-    (void)parsed_options;
-    (void)option_string;
+ public:
+  t_d_generator(
+      t_program* program,
+      const std::map<string, string>& parsed_options,
+      const string& option_string)
+    : t_oop_generator(program)
+  {
+    (void) parsed_options;
+    (void) option_string;
     out_dir_base_ = "gen-d";
   }
 
-protected:
+ protected:
   virtual void init_generator() {
     // Make output directory
     MKDIR(get_out_dir().c_str());
@@ -75,7 +77,7 @@ protected:
     while ((loc = dir.find(".")) != string::npos) {
       subdir = subdir + "/" + dir.substr(0, loc);
       MKDIR(subdir.c_str());
-      dir = dir.substr(loc + 1);
+      dir = dir.substr(loc+1);
     }
     if (!dir.empty()) {
       subdir = subdir + "/" + dir;
@@ -89,19 +91,21 @@ protected:
     f_types_.open(f_types_name.c_str());
 
     // Print header
-    f_types_ << autogen_comment() << "module " << render_package(*program_) << program_name_
-             << "_types;" << endl << endl;
+    f_types_ <<
+      autogen_comment() <<
+      "module " << render_package(*program_) << program_name_ << "_types;" << endl <<
+      endl;
 
     print_default_imports(f_types_);
 
     // Include type modules from other imported programs.
     const vector<t_program*>& includes = program_->get_includes();
     for (size_t i = 0; i < includes.size(); ++i) {
-      f_types_ << "import " << render_package(*(includes[i])) << includes[i]->get_name()
-               << "_types;" << endl;
+      f_types_ <<
+        "import " << render_package(*(includes[i])) <<
+        includes[i]->get_name() << "_types;" << endl;
     }
-    if (!includes.empty())
-      f_types_ << endl;
+    if (!includes.empty()) f_types_ << endl;
   }
 
   virtual void close_generator() {
@@ -111,26 +115,32 @@ protected:
 
   virtual void generate_consts(std::vector<t_const*> consts) {
     if (!consts.empty()) {
-      string f_consts_name = package_dir_ + program_name_ + "_constants.d";
+      string f_consts_name = package_dir_+program_name_+"_constants.d";
       ofstream f_consts;
       f_consts.open(f_consts_name.c_str());
 
-      f_consts << autogen_comment() << "module " << render_package(*program_) << program_name_
-               << "_constants;" << endl << endl;
+      f_consts <<
+        autogen_comment() <<
+        "module " << render_package(*program_) << program_name_ << "_constants;" << endl
+        << endl;
 
       print_default_imports(f_consts);
 
-      f_consts << "import " << render_package(*get_program()) << program_name_ << "_types;" << endl
-               << endl;
+      f_consts <<
+        "import " << render_package(*get_program()) << program_name_ << "_types;" << endl <<
+        endl;
 
       vector<t_const*>::iterator c_iter;
       for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
         string name = (*c_iter)->get_name();
         t_type* type = (*c_iter)->get_type();
-        indent(f_consts) << "immutable(" << render_type_name(type) << ") " << name << ";" << endl;
+        indent(f_consts) << "immutable(" << render_type_name(type) << ") " <<
+          name << ";" << endl;
       }
 
-      f_consts << endl << "static this() {" << endl;
+      f_consts <<
+        endl <<
+        "static this() {" << endl;
       indent_up();
 
       bool first = true;
@@ -145,23 +155,27 @@ protected:
         if (!is_immutable_type(type)) {
           f_consts << "cast(immutable(" << render_type_name(type) << ")) ";
         }
-        f_consts << render_const_value(type, (*c_iter)->get_value()) << ";" << endl;
+        f_consts <<
+          render_const_value(type, (*c_iter)->get_value()) << ";" << endl;
       }
       indent_down();
-      indent(f_consts) << "}" << endl;
+      indent(f_consts) <<
+        "}" << endl;
     }
   }
 
   virtual void generate_typedef(t_typedef* ttypedef) {
-    f_types_ << indent() << "alias " << render_type_name(ttypedef->get_type()) << " "
-             << ttypedef->get_symbolic() << ";" << endl << endl;
+    f_types_ <<
+      indent() << "alias " << render_type_name(ttypedef->get_type()) << " " <<
+      ttypedef->get_symbolic() << ";" << endl << endl;
   }
 
   virtual void generate_enum(t_enum* tenum) {
     vector<t_enum_value*> constants = tenum->get_constants();
 
     string enum_name = tenum->get_name();
-    f_types_ << indent() << "enum " << enum_name << " {" << endl;
+    f_types_ <<
+      indent() << "enum " << enum_name << " {" << endl;
 
     indent_up();
 
@@ -199,17 +213,21 @@ protected:
     string f_servicename = package_dir_ + svc_name + ".d";
     std::ofstream f_service;
     f_service.open(f_servicename.c_str());
-    f_service << autogen_comment() << "module " << render_package(*program_) << svc_name << ";"
-              << endl << endl;
+    f_service <<
+      autogen_comment() <<
+      "module " << render_package(*program_) << svc_name << ";" << endl <<
+      endl;
 
     print_default_imports(f_service);
 
-    f_service << "import " << render_package(*get_program()) << program_name_ << "_types;" << endl;
+    f_service << "import " << render_package(*get_program()) << program_name_ <<
+      "_types;" << endl;
 
     t_service* extends_service = tservice->get_extends();
     if (extends_service != NULL) {
-      f_service << "import " << render_package(*(extends_service->get_program()))
-                << extends_service->get_name() << ";" << endl;
+      f_service <<
+        "import " << render_package(*(extends_service->get_program())) <<
+        extends_service->get_name() << ";" << endl;
     }
 
     f_service << endl;
@@ -219,7 +237,8 @@ protected:
       extends = " : " + render_type_name(tservice->get_extends());
     }
 
-    f_service << indent() << "interface " << svc_name << extends << " {" << endl;
+    f_service <<
+      indent() << "interface " << svc_name << extends << " {" << endl;
     indent_up();
 
     // Collect all the exception types service methods can throw so we can
@@ -242,14 +261,12 @@ protected:
     }
 
     // Alias the exception types into the current scope.
-    if (!exception_types.empty())
-      f_service << endl;
+    if (!exception_types.empty()) f_service << endl;
     set<t_type*>::const_iterator et_iter;
     for (et_iter = exception_types.begin(); et_iter != exception_types.end(); ++et_iter) {
-      indent(f_service) << "alias " << render_package(*(*et_iter)->get_program())
-                        << (*et_iter)->get_program()->get_name() << "_types"
-                        << "." << (*et_iter)->get_name() << " " << (*et_iter)->get_name() << ";"
-                        << endl;
+      indent(f_service) << "alias " << render_package(*(*et_iter)->get_program()) <<
+        (*et_iter)->get_program()->get_name() << "_types" << "." <<
+        (*et_iter)->get_name() << " " << (*et_iter)->get_name() << ";" << endl;
     }
 
     // Write the method metadata.
@@ -257,8 +274,9 @@ protected:
     indent_up();
     bool first = true;
     for (fn_iter = functions.begin(); fn_iter != functions.end(); ++fn_iter) {
-      if ((*fn_iter)->get_arglist()->get_members().empty()
-          && (*fn_iter)->get_xceptions()->get_members().empty() && !(*fn_iter)->is_oneway()) {
+      if ((*fn_iter)->get_arglist()->get_members().empty() &&
+        (*fn_iter)->get_xceptions()->get_members().empty() &&
+        !(*fn_iter)->is_oneway()) {
         continue;
       }
 
@@ -268,12 +286,13 @@ protected:
         meta << ",";
       }
 
-      meta << endl << indent() << "TMethodMeta(`" << (*fn_iter)->get_name() << "`, " << endl;
+      meta << endl <<
+        indent() << "TMethodMeta(`" << (*fn_iter)->get_name() << "`, " << endl;
       indent_up();
       indent(meta) << "[";
 
       bool first = true;
-      const vector<t_field*>& params = (*fn_iter)->get_arglist()->get_members();
+      const vector<t_field*> &params = (*fn_iter)->get_arglist()->get_members();
       vector<t_field*>::const_iterator p_iter;
       for (p_iter = params.begin(); p_iter != params.end(); ++p_iter) {
         if (first) {
@@ -293,11 +312,14 @@ protected:
 
       meta << "]";
 
-      if (!(*fn_iter)->get_xceptions()->get_members().empty() || (*fn_iter)->is_oneway()) {
-        meta << "," << endl << indent() << "[";
+      if (!(*fn_iter)->get_xceptions()->get_members().empty() ||
+        (*fn_iter)->is_oneway()) {
+        meta << "," << endl <<
+          indent() << "[";
 
         bool first = true;
-        const vector<t_field*>& exceptions = (*fn_iter)->get_xceptions()->get_members();
+        const vector<t_field*>& exceptions =
+          (*fn_iter)->get_xceptions()->get_members();
         vector<t_field*>::const_iterator ex_iter;
         for (ex_iter = exceptions.begin(); ex_iter != exceptions.end(); ++ex_iter) {
           if (first) {
@@ -306,30 +328,35 @@ protected:
             meta << ", ";
           }
 
-          meta << "TExceptionMeta(`" << (*ex_iter)->get_name() << "`, " << (*ex_iter)->get_key()
-               << ", `" << (*ex_iter)->get_type()->get_name() << "`)";
+          meta << "TExceptionMeta(`" << (*ex_iter)->get_name() <<
+            "`, " << (*ex_iter)->get_key() << ", `" <<
+            (*ex_iter)->get_type()->get_name() << "`)";
         }
 
         meta << "]";
       }
 
       if ((*fn_iter)->is_oneway()) {
-        meta << "," << endl << indent() << "TMethodType.ONEWAY";
+        meta << "," << endl <<
+          indent() << "TMethodType.ONEWAY";
       }
 
       indent_down();
-      meta << endl << indent() << ")";
+      meta << endl <<
+        indent() << ")";
     }
     indent_down();
 
     string meta_str(meta.str());
     if (!meta_str.empty()) {
-      f_service << endl << indent() << "enum methodMeta = [" << meta_str << endl << indent() << "];"
-                << endl;
+      f_service << endl <<
+        indent() << "enum methodMeta = [" << meta_str << endl <<
+        indent() << "];" << endl;
     }
 
     indent_down();
     indent(f_service) << "}" << endl;
+
 
     // Server skeleton generation.
     string f_skeletonname = package_dir_ + svc_name + "_server.skeleton.d";
@@ -339,67 +366,88 @@ protected:
     f_skeleton.close();
   }
 
-private:
-  /**
-   * Writes a server skeleton for the passed service to out.
-   */
-  void print_server_skeleton(ostream& out, t_service* tservice) {
-    string svc_name = tservice->get_name();
+ private:
+    /**
+     * Writes a server skeleton for the passed service to out.
+     */
+    void print_server_skeleton(ostream &out, t_service* tservice) {
+      string svc_name = tservice->get_name();
 
-    out << "/*" << endl
-        << " * This auto-generated skeleton file illustrates how to build a server. If you" << endl
-        << " * intend to customize it, you should edit a copy with another file name to " << endl
-        << " * avoid overwriting it when running the generator again." << endl << " */" << endl
-        << "module " << render_package(*tservice->get_program()) << svc_name << "_server;" << endl
-        << endl << "import std.stdio;" << endl << "import thrift.codegen.processor;" << endl
-        << "import thrift.protocol.binary;" << endl << "import thrift.server.simple;" << endl
-        << "import thrift.server.transport.socket;" << endl << "import thrift.transport.buffered;"
-        << endl << "import thrift.util.hashset;" << endl << endl << "import "
-        << render_package(*tservice->get_program()) << svc_name << ";" << endl << "import "
-        << render_package(*get_program()) << program_name_ << "_types;" << endl << endl << endl
-        << "class " << svc_name << "Handler : " << svc_name << " {" << endl;
-
-    indent_up();
-    out << indent() << "this() {" << endl << indent() << "  // Your initialization goes here."
-        << endl << indent() << "}" << endl << endl;
-
-    vector<t_function*> functions = tservice->get_functions();
-    vector<t_function*>::iterator f_iter;
-    for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-      out << indent();
-      print_function_signature(out, *f_iter);
-      out << " {" << endl;
+      out <<
+        "/*" << endl <<
+        " * This auto-generated skeleton file illustrates how to build a server. If you" << endl <<
+        " * intend to customize it, you should edit a copy with another file name to " << endl <<
+        " * avoid overwriting it when running the generator again." << endl <<
+        " */" << endl <<
+        "module " << render_package(*tservice->get_program()) << svc_name << "_server;" << endl <<
+        endl <<
+        "import std.stdio;" << endl <<
+        "import thrift.codegen.processor;" << endl <<
+        "import thrift.protocol.binary;" << endl <<
+        "import thrift.server.simple;" << endl <<
+        "import thrift.server.transport.socket;" << endl <<
+        "import thrift.transport.buffered;" << endl <<
+        "import thrift.util.hashset;" << endl <<
+        endl <<
+        "import " << render_package(*tservice->get_program()) << svc_name << ";" << endl <<
+        "import " << render_package(*get_program()) << program_name_ << "_types;" << endl <<
+        endl <<
+        endl <<
+        "class " << svc_name << "Handler : " << svc_name << " {" << endl;
 
       indent_up();
+      out <<
+        indent() << "this() {" << endl <<
+        indent() << "  // Your initialization goes here." << endl <<
+        indent() << "}" << endl <<
+        endl;
 
-      out << indent() << "// Your implementation goes here." << endl << indent() << "writeln(\""
-          << (*f_iter)->get_name() << " called\");" << endl;
+      vector<t_function*> functions = tservice->get_functions();
+      vector<t_function*>::iterator f_iter;
+      for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+        out << indent();
+        print_function_signature(out, *f_iter);
+        out << " {" << endl;
 
-      t_base_type* rt = (t_base_type*)(*f_iter)->get_returntype();
-      if (rt->get_base() != t_base_type::TYPE_VOID) {
-        indent(out) << "return typeof(return).init;" << endl;
+        indent_up();
+
+        out <<
+          indent() << "// Your implementation goes here." << endl <<
+          indent() << "writeln(\"" << (*f_iter)->get_name() << " called\");" << endl;
+
+        t_base_type* rt = (t_base_type*)(*f_iter)->get_returntype();
+        if (rt->get_base() != t_base_type::TYPE_VOID) {
+          indent(out) << "return typeof(return).init;" << endl;
+        }
+
+        indent_down();
+
+        out <<
+          indent() << "}" << endl <<
+          endl;
       }
 
       indent_down();
+      out <<
+        "}" << endl <<
+        endl;
 
-      out << indent() << "}" << endl << endl;
+      out <<
+        indent() << "void main() {" << endl;
+      indent_up();
+      out <<
+        indent() << "auto protocolFactory = new TBinaryProtocolFactory!();" << endl <<
+        indent() << "auto processor = new TServiceProcessor!" << svc_name << "(new " << svc_name << "Handler);" << endl <<
+        indent() << "auto serverTransport = new TServerSocket(9090);" << endl <<
+        indent() << "auto transportFactory = new TBufferedTransportFactory;" << endl <<
+
+        indent() << "auto server = new TSimpleServer(" << endl <<
+        indent() << "  processor, serverTransport, transportFactory, protocolFactory);" << endl <<
+        indent() << "server.serve();" << endl;
+      indent_down();
+      out <<
+        "}" << endl;
     }
-
-    indent_down();
-    out << "}" << endl << endl;
-
-    out << indent() << "void main() {" << endl;
-    indent_up();
-    out << indent() << "auto protocolFactory = new TBinaryProtocolFactory!();" << endl << indent()
-        << "auto processor = new TServiceProcessor!" << svc_name << "(new " << svc_name
-        << "Handler);" << endl << indent() << "auto serverTransport = new TServerSocket(9090);"
-        << endl << indent() << "auto transportFactory = new TBufferedTransportFactory;" << endl
-        << indent() << "auto server = new TSimpleServer(" << endl << indent()
-        << "  processor, serverTransport, transportFactory, protocolFactory);" << endl << indent()
-        << "server.serve();" << endl;
-    indent_down();
-    out << "}" << endl;
-  }
 
   /**
    * Writes the definition of a struct or an exception type to out.
@@ -417,12 +465,11 @@ private:
     // Declare all fields.
     vector<t_field*>::const_iterator m_iter;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      indent(out) << render_type_name((*m_iter)->get_type()) << " " << (*m_iter)->get_name() << ";"
-                  << endl;
+      indent(out) << render_type_name((*m_iter)->get_type()) << " " <<
+        (*m_iter)->get_name() << ";" << endl;
     }
 
-    if (!members.empty())
-      indent(out) << endl;
+    if (!members.empty()) indent(out) << endl;
     indent(out) << "mixin TStructHelpers!(";
 
     if (!members.empty()) {
@@ -442,7 +489,8 @@ private:
         }
         out << endl;
 
-        indent(out) << "TFieldMeta(`" << (*m_iter)->get_name() << "`, " << (*m_iter)->get_key();
+        indent(out) << "TFieldMeta(`" << (*m_iter)->get_name() << "`, " <<
+          (*m_iter)->get_key();
 
         t_const_value* cv = (*m_iter)->get_value();
         t_field::e_req req = (*m_iter)->get_req();
@@ -460,7 +508,9 @@ private:
     out << ");" << endl;
 
     indent_down();
-    indent(out) << "}" << endl << endl;
+    indent(out) <<
+      "}" << endl <<
+      endl;
   }
 
   /**
@@ -468,7 +518,8 @@ private:
    * method.
    */
   void print_function_signature(ostream& out, t_function* fn) {
-    out << render_type_name(fn->get_returntype()) << " " << fn->get_name() << "(";
+    out << render_type_name(fn->get_returntype()) <<
+      " " << fn->get_name() << "(";
 
     const vector<t_field*>& fields = fn->get_arglist()->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -479,7 +530,8 @@ private:
       } else {
         out << ", ";
       }
-      out << render_type_name((*f_iter)->get_type(), true) << " " << (*f_iter)->get_name();
+      out << render_type_name((*f_iter)->get_type(), true) << " " <<
+          (*f_iter)->get_name();
     }
 
     out << ")";
@@ -522,7 +574,8 @@ private:
         }
         break;
       default:
-        throw "Compiler error: No const of base type " + t_base_type::t_base_name(tbase);
+        throw "Compiler error: No const of base type " +
+          t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       out << "cast(" << render_type_name(type) << ")" << value->get_integer();
@@ -532,8 +585,8 @@ private:
 
       indent(out) << render_type_name(type) << " v;" << endl;
       if (type->is_struct() || type->is_xception()) {
-        indent(out) << "v = " << (type->is_xception() ? "new " : "") << render_type_name(type)
-                    << "();" << endl;
+        indent(out) << "v = " << (type->is_xception() ? "new " : "") <<
+          render_type_name(type) << "();" << endl;
 
         const vector<t_field*>& fields = ((t_struct*)type)->get_members();
         vector<t_field*>::const_iterator f_iter;
@@ -547,11 +600,12 @@ private:
             }
           }
           if (field_type == NULL) {
-            throw "Type error: " + type->get_name() + " has no field "
-                + v_iter->first->get_string();
+            throw "Type error: " + type->get_name() + " has no field " +
+              v_iter->first->get_string();
           }
           string val = render_const_value(field_type, v_iter->second);
-          indent(out) << "v.set!`" << v_iter->first->get_string() << "`(" << val << ");" << endl;
+          indent(out) << "v.set!`" << v_iter->first->get_string() <<
+            "`(" << val << ");" << endl;
         }
       } else if (type->is_map()) {
         t_type* ktype = ((t_map*)type)->get_key_type();
@@ -584,7 +638,8 @@ private:
           indent(out) << "v ~= " << val << ";" << endl;
         }
       } else {
-        throw "Compiler error: Invalid type in render_const_value: " + type->get_name();
+        throw "Compiler error: Invalid type in render_const_value: " +
+          type->get_name();
       }
       indent(out) << "return v;" << endl;
 
@@ -601,8 +656,7 @@ private:
    */
   string render_package(const t_program& program) const {
     string package = program.get_namespace("d");
-    if (package.size() == 0)
-      return "";
+    if (package.size() == 0) return "";
     return package + ".";
   }
 
@@ -633,16 +687,17 @@ private:
       case t_base_type::TYPE_DOUBLE:
         return "double";
       default:
-        throw "Compiler error: No D type name for base type " + t_base_type::t_base_name(tbase);
+        throw "Compiler error: No D type name for base type " +
+          t_base_type::t_base_name(tbase);
       }
     }
 
     if (ttype->is_container()) {
-      t_container* tcontainer = (t_container*)ttype;
+      t_container* tcontainer = (t_container*) ttype;
       if (tcontainer->has_cpp_name()) {
         return tcontainer->get_cpp_name();
       } else if (ttype->is_map()) {
-        t_map* tmap = (t_map*)ttype;
+        t_map* tmap = (t_map*) ttype;
         t_type* ktype = tmap->get_key_type();
 
         string name = render_type_name(tmap->get_val_type()) + "[";
@@ -656,10 +711,10 @@ private:
         name += "]";
         return name;
       } else if (ttype->is_set()) {
-        t_set* tset = (t_set*)ttype;
+        t_set* tset = (t_set*) ttype;
         return "HashSet!(" + render_type_name(tset->get_elem_type()) + ")";
       } else if (ttype->is_list()) {
-        t_list* tlist = (t_list*)ttype;
+        t_list* tlist = (t_list*) ttype;
         return render_type_name(tlist->get_elem_type()) + "[]";
       }
     }
@@ -682,11 +737,13 @@ private:
       return "TReq.OPTIONAL";
     case t_field::T_REQUIRED:
       return "TReq.REQUIRED";
-    default: {
-      std::stringstream ss;
-      ss << "Compiler error: Invalid requirement level " << req;
-      throw ss.str();
-    }
+    default:
+      {
+        std::stringstream ss;
+        ss << "Compiler error: Invalid requirement level " << req;
+        throw ss.str();
+      }
+
     }
   }
 
@@ -695,8 +752,11 @@ private:
    * module) to f.
    */
   void print_default_imports(ostream& out) {
-    indent(out) << "import thrift.base;" << endl << "import thrift.codegen.base;" << endl
-                << "import thrift.util.hashset;" << endl << endl;
+    indent(out) <<
+      "import thrift.base;" << endl <<
+      "import thrift.codegen.base;" << endl <<
+      "import thrift.util.hashset;" << endl <<
+      endl;
   }
 
   /**
@@ -720,3 +780,4 @@ private:
 };
 
 THRIFT_REGISTER_GENERATOR(d, "D", "")
+

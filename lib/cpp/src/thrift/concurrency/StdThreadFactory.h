@@ -24,9 +24,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace apache {
-namespace thrift {
-namespace concurrency {
+namespace apache { namespace thrift { namespace concurrency {
 
 /**
  * A thread factory to create std::threads.
@@ -35,7 +33,8 @@ namespace concurrency {
  */
 class StdThreadFactory : public ThreadFactory {
 
-public:
+ public:
+
   /**
    * Std thread factory.  All threads created by a factory are reference-counted
    * via boost::shared_ptr and boost::weak_ptr.  The factory guarantees that threads and
@@ -45,7 +44,7 @@ public:
    * By default threads are not joinable.
    */
 
-  StdThreadFactory(bool detached = true);
+  StdThreadFactory(bool detached=true);
 
   // From ThreadFactory;
   boost::shared_ptr<Thread> newThread(boost::shared_ptr<Runnable> runnable) const;
@@ -67,8 +66,7 @@ private:
   class Impl;
   boost::shared_ptr<Impl> impl_;
 };
-}
-}
-} // apache::thrift::concurrency
+
+}}} // apache::thrift::concurrency
 
 #endif // #ifndef _THRIFT_CONCURRENCY_STDTHREADFACTORY_H_

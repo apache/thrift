@@ -21,15 +21,13 @@
 
 #include "gen-cpp/DebugProtoTest_types.h"
 
-namespace thrift {
-namespace test {
-namespace debug {
+
+namespace thrift { namespace test { namespace debug {
 
 bool Empty::operator<(Empty const& other) const {
-  (void)other;
+  (void) other;
   // It is empty, so all are equal.
   return false;
 }
-}
-}
-}
+
+}}}

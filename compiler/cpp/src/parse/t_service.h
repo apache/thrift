@@ -30,12 +30,18 @@ class t_program;
  *
  */
 class t_service : public t_type {
-public:
-  t_service(t_program* program) : t_type(program), extends_(NULL) {}
+ public:
+  t_service(t_program* program) :
+    t_type(program),
+    extends_(NULL) {}
 
-  bool is_service() const { return true; }
+  bool is_service() const {
+    return true;
+  }
 
-  void set_extends(t_service* extends) { extends_ = extends; }
+  void set_extends(t_service* extends) {
+    extends_ = extends;
+  }
 
   void add_function(t_function* func) {
     std::vector<t_function*>::const_iterator iter;
@@ -47,16 +53,20 @@ public:
     functions_.push_back(func);
   }
 
-  const std::vector<t_function*>& get_functions() const { return functions_; }
+  const std::vector<t_function*>& get_functions() const {
+    return functions_;
+  }
 
-  t_service* get_extends() { return extends_; }
+  t_service* get_extends() {
+    return extends_;
+  }
 
   virtual std::string get_fingerprint_material() const {
     // Services should never be used in fingerprints.
     throw "BUG: Can't get fingerprint material for service.";
   }
 
-private:
+ private:
   std::vector<t_function*> functions_;
   t_service* extends_;
 };

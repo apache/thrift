@@ -100,9 +100,6 @@ AC_PROG_RANLIB
 AC_LANG([C++])
 AX_CXX_COMPILE_STDCXX_11([noext])
 
-AM_EXTRA_RECURSIVE_TARGETS([style])
-AC_SUBST(CPPSTYLE_CMD, 'find . -type f \( -iname "*.h" -or -iname "*.cpp" -or -iname "*.cc" -or -iname "*.tcc" \) -printf "Reformatting: %h/%f\n" -exec clang-format -i {} \;')
-
 AC_ARG_ENABLE([libs],
   AS_HELP_STRING([--enable-libs], [build the Apache Thrift libraries [default=yes]]),
   [], enable_libs=yes

@@ -24,9 +24,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace apache {
-namespace thrift {
-namespace protocol {
+namespace apache { namespace thrift { namespace protocol {
 
 /*
 
@@ -41,30 +39,44 @@ Complaints are not. :R
 
 */
 
+
 /**
  * Protocol that prints the payload in a nice human-readable format.
  * Reading from this protocol is not supported.
  *
  */
 class TDebugProtocol : public TVirtualProtocol<TDebugProtocol> {
-private:
-  enum write_state_t { UNINIT, STRUCT, LIST, SET, MAP_KEY, MAP_VALUE };
+ private:
+  enum write_state_t
+  { UNINIT
+  , STRUCT
+  , LIST
+  , SET
+  , MAP_KEY
+  , MAP_VALUE
+  };
 
-public:
+ public:
   TDebugProtocol(boost::shared_ptr<TTransport> trans)
-    : TVirtualProtocol<TDebugProtocol>(trans),
-      trans_(trans.get()),
-      string_limit_(DEFAULT_STRING_LIMIT),
-      string_prefix_size_(DEFAULT_STRING_PREFIX_SIZE) {
+    : TVirtualProtocol<TDebugProtocol>(trans)
+    , trans_(trans.get())
+    , string_limit_(DEFAULT_STRING_LIMIT)
+    , string_prefix_size_(DEFAULT_STRING_PREFIX_SIZE)
+  {
     write_state_.push_back(UNINIT);
   }
 
   static const int32_t DEFAULT_STRING_LIMIT = 256;
   static const int32_t DEFAULT_STRING_PREFIX_SIZE = 16;
 
-  void setStringSizeLimit(int32_t string_limit) { string_limit_ = string_limit; }
+  void setStringSizeLimit(int32_t string_limit) {
+    string_limit_ = string_limit;
+  }
 
-  void setStringPrefixSize(int32_t string_prefix_size) { string_prefix_size_ = string_prefix_size; }
+  void setStringPrefixSize(int32_t string_prefix_size) {
+    string_prefix_size_ = string_prefix_size;
+  }
+
 
   uint32_t writeMessageBegin(const std::string& name,
                              const TMessageType messageType,
@@ -72,25 +84,32 @@ public:
 
   uint32_t writeMessageEnd();
 
+
   uint32_t writeStructBegin(const char* name);
 
   uint32_t writeStructEnd();
 
-  uint32_t writeFieldBegin(const char* name, const TType fieldType, const int16_t fieldId);
+  uint32_t writeFieldBegin(const char* name,
+                           const TType fieldType,
+                           const int16_t fieldId);
 
   uint32_t writeFieldEnd();
 
   uint32_t writeFieldStop();
 
-  uint32_t writeMapBegin(const TType keyType, const TType valType, const uint32_t size);
+  uint32_t writeMapBegin(const TType keyType,
+                         const TType valType,
+                         const uint32_t size);
 
   uint32_t writeMapEnd();
 
-  uint32_t writeListBegin(const TType elemType, const uint32_t size);
+  uint32_t writeListBegin(const TType elemType,
+                          const uint32_t size);
 
   uint32_t writeListEnd();
 
-  uint32_t writeSetBegin(const TType elemType, const uint32_t size);
+  uint32_t writeSetBegin(const TType elemType,
+                         const uint32_t size);
 
   uint32_t writeSetEnd();
 
@@ -110,7 +129,8 @@ public:
 
   uint32_t writeBinary(const std::string& str);
 
-private:
+
+ private:
   void indentUp();
   void indentDown();
   uint32_t writePlain(const std::string& str);
@@ -137,25 +157,25 @@ private:
  * Constructs debug protocol handlers
  */
 class TDebugProtocolFactory : public TProtocolFactory {
-public:
+ public:
   TDebugProtocolFactory() {}
   virtual ~TDebugProtocolFactory() {}
 
   boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> trans) {
     return boost::shared_ptr<TProtocol>(new TDebugProtocol(trans));
   }
+
 };
-}
-}
-} // apache::thrift::protocol
+
+}}} // apache::thrift::protocol
+
 
 // TODO(dreiss): Move (part of) ThriftDebugString into a .cpp file and remove this.
 #include <thrift/transport/TBufferTransports.h>
 
-namespace apache {
-namespace thrift {
+namespace apache { namespace thrift {
 
-template <typename ThriftStruct>
+template<typename ThriftStruct>
 std::string ThriftDebugString(const ThriftStruct& ts) {
   using namespace apache::thrift::transport;
   using namespace apache::thrift::protocol;
@@ -198,7 +218,10 @@ std::string DebugString(const std::vector<Object>& vec) {
   return std::string((char*)buf, (unsigned int)size);
 }
 #endif // 0
-}
-} // apache::thrift
+
+}} // apache::thrift
+
 
 #endif // #ifndef _THRIFT_PROTOCOL_TDEBUGPROTOCOL_H_
+
+

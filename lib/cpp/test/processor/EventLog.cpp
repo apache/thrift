@@ -36,11 +36,10 @@ void debug(const char* fmt, ...) {
 
   fprintf(stderr, "\n");
 }
+
 }
 
-namespace apache {
-namespace thrift {
-namespace test {
+namespace apache { namespace thrift { namespace test {
 
 uint32_t EventLog::nextId_ = 0;
 
@@ -75,12 +74,11 @@ EventLog::EventLog() {
   debug("New log: %d", id_);
 }
 
-void EventLog::append(EventType type,
-                      uint32_t connectionId,
-                      uint32_t callId,
+void EventLog::append(EventType type, uint32_t connectionId, uint32_t callId,
                       const string& message) {
   Synchronized s(monitor_);
-  debug("%d <-- %u, %u, %s \"%s\"", id_, connectionId, callId, type, message.c_str());
+  debug("%d <-- %u, %u, %s \"%s\"", id_, connectionId, callId, type,
+        message.c_str());
 
   Event e(type, connectionId, callId, message);
   events_.push_back(e);
@@ -127,6 +125,5 @@ Event EventLog::waitForConnEvent(uint32_t connId, int64_t timeout) {
     }
   }
 }
-}
-}
-} // apache::thrift::test
+
+}}} // apache::thrift::test
