@@ -221,6 +221,27 @@ func TestReadSimpleJSONProtocolI32(t *testing.T) {
 	}
 }
 
+func TestReadSimpleJSONProtocolI32Null(t *testing.T) {
+	thetype := "int32"
+	value := "null"
+
+	trans := NewTMemoryBuffer()
+	p := NewTSimpleJSONProtocol(trans)
+	trans.WriteString(value)
+	trans.Flush()
+	s := trans.String()
+	v, e := p.ReadI32()
+
+	if e != nil {
+		t.Fatalf("Unable to read %s value %v due to error: %s", thetype, value, e.Error())
+	}
+	if v != 0 {
+		t.Fatalf("Bad value for %s value %v, wrote: %v, received: %v", thetype, value, s, v)
+	}
+	trans.Reset()
+	trans.Close()
+}
+
 func TestWriteSimpleJSONProtocolI64(t *testing.T) {
 	thetype := "int64"
 	trans := NewTMemoryBuffer()
@@ -266,6 +287,27 @@ func TestReadSimpleJSONProtocolI64(t *testing.T) {
 		trans.Reset()
 		trans.Close()
 	}
+}
+
+func TestReadSimpleJSONProtocolI64Null(t *testing.T) {
+	thetype := "int32"
+	value := "null"
+
+	trans := NewTMemoryBuffer()
+	p := NewTSimpleJSONProtocol(trans)
+	trans.WriteString(value)
+	trans.Flush()
+	s := trans.String()
+	v, e := p.ReadI64()
+
+	if e != nil {
+		t.Fatalf("Unable to read %s value %v due to error: %s", thetype, value, e.Error())
+	}
+	if v != 0 {
+		t.Fatalf("Bad value for %s value %v, wrote: %v, received: %v", thetype, value, s, v)
+	}
+	trans.Reset()
+	trans.Close()
 }
 
 func TestWriteSimpleJSONProtocolDouble(t *testing.T) {
@@ -391,6 +433,25 @@ func TestReadSimpleJSONProtocolString(t *testing.T) {
 		trans.Close()
 	}
 }
+func TestReadSimpleJSONProtocolStringNull(t *testing.T) {
+	thetype := "string"
+	value := "null"
+
+	trans := NewTMemoryBuffer()
+	p := NewTSimpleJSONProtocol(trans)
+	trans.WriteString(value)
+	trans.Flush()
+	s := trans.String()
+	v, e := p.ReadString()
+	if e != nil {
+		t.Fatalf("Unable to read %s value %v due to error: %s", thetype, value, e.Error())
+	}
+	if v != "" {
+		t.Fatalf("Bad value for %s value %v, wrote: %v, received: %v", thetype, value, s, v)
+	}
+	trans.Reset()
+	trans.Close()
+}
 
 func TestWriteSimpleJSONProtocolBinary(t *testing.T) {
 	thetype := "binary"
@@ -443,6 +504,28 @@ func TestReadSimpleJSONProtocolBinary(t *testing.T) {
 	v1 := new(string)
 	if err := json.Unmarshal([]byte(s), v1); err != nil || *v1 != b64String {
 		t.Fatalf("Bad json-decoded value for %s %v, wrote: '%s', expected: '%v'", thetype, value, s, *v1)
+	}
+	trans.Reset()
+	trans.Close()
+}
+
+func TestReadSimpleJSONProtocolBinaryNull(t *testing.T) {
+	thetype := "binary"
+	value := "null"
+
+	trans := NewTMemoryBuffer()
+	p := NewTSimpleJSONProtocol(trans)
+	trans.WriteString(value)
+	trans.Flush()
+	s := trans.String()
+	b, e := p.ReadBinary()
+	v := string(b)
+
+	if e != nil {
+		t.Fatalf("Unable to read %s value %v due to error: %s", thetype, value, e.Error())
+	}
+	if v != "" {
+		t.Fatalf("Bad value for %s value %v, wrote: %v, received: %v", thetype, value, s, v)
 	}
 	trans.Reset()
 	trans.Close()
