@@ -79,7 +79,14 @@ func (p *TFramedTransport) Read(buf []byte) (l int, err error) {
 		}
 	}
 	if p.frameSize < len(buf) {
-		return 0, NewTTransportExceptionFromError(fmt.Errorf("Not enought frame size %d to read %d bytes", p.frameSize, len(buf)))
+		frameSize := p.frameSize
+		tmp := make([]byte, p.frameSize)
+		l, err = p.Read(tmp)
+		copy(buf, tmp)
+		if err == nil {
+			err = NewTTransportExceptionFromError(fmt.Errorf("Not enough frame size %d to read %d bytes", frameSize, len(buf)))
+			return
+		}
 	}
 	got, err := p.reader.Read(buf)
 	p.frameSize = p.frameSize - got
@@ -98,7 +105,7 @@ func (p *TFramedTransport) ReadByte() (c byte, err error) {
 		}
 	}
 	if p.frameSize < 1 {
-		return 0, NewTTransportExceptionFromError(fmt.Errorf("Not enought frame size %d to read %d bytes", p.frameSize, 1))
+		return 0, NewTTransportExceptionFromError(fmt.Errorf("Not enough frame size %d to read %d bytes", p.frameSize, 1))
 	}
 	c, err = p.reader.ReadByte()
 	if err == nil {
