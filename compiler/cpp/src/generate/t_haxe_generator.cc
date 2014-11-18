@@ -246,6 +246,18 @@ void t_haxe_generator::init_generator() {
   MKDIR(get_out_dir().c_str());
   package_name_ = program_->get_namespace("haxe");
 
+  // Haxe package names are lowercase
+  if (package_name_.length() > 0) {
+    package_name_[0] = tolower(package_name_[0]);
+    size_t index = package_name_.find('.');
+    while (index != std::string::npos) {
+      if (++index < package_name_.length()) {
+        package_name_[index] = tolower(package_name_[index]);
+      }
+      index = package_name_.find('.', index);
+    }
+  }
+
   string dir = package_name_;
   string subdir = get_out_dir();
   string::size_type loc;
@@ -899,7 +911,7 @@ void t_haxe_generator::generate_haxe_struct_reader(ofstream& out,
     out <<
       indent() << "iprot.readStructEnd();" << endl << endl;
     
-    // in non-beans style, check for required fields of primitive type
+    // check for required fields of primitive type
     // (which can be checked here but not in the general validate method)
     out << endl << indent() << "// check for required fields of primitive type, which can't be checked in the validate method" << endl;
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -938,7 +950,7 @@ void t_haxe_generator::generate_haxe_validator(ofstream& out,
         indent(out) << "  throw new TProtocolException(TProtocolException.UNKNOWN, \"Required field '" << (*f_iter)->get_name() << "' was not present! Struct: \" + toString());" << endl;
         indent(out) << "}" << endl;
       } else {
-        indent(out) << "// alas, we cannot check '" << (*f_iter)->get_name() << "' because it's a primitive and you chose the non-beans generator." << endl;
+        indent(out) << "// alas, we cannot check '" << (*f_iter)->get_name() << "' because it's a primitive." << endl;
       }
     }
   }
@@ -950,7 +962,7 @@ void t_haxe_generator::generate_haxe_validator(ofstream& out,
     t_type* type = field->get_type();
     // if field is an enum, check that its value is valid
     if (type->is_enum()){
-      indent(out) << "if (" << generate_isset_check(field) << " && !" << get_enum_class_name(type) << ".VALID_VALUES.contains(" << field->get_name() << ")){" << endl;
+      indent(out) << "if (" << generate_isset_check(field) << " && !" << get_cap_name(get_enum_class_name(type)) << ".VALID_VALUES.contains(" << field->get_name() << ")){" << endl;
       indent_up();
       indent(out) << "throw new TProtocolException(TProtocolException.UNKNOWN, \"The field '" << field->get_name() << "' has been assigned the invalid value \" + " << field->get_name() << ");" << endl;
       indent_down();
@@ -1291,7 +1303,7 @@ void t_haxe_generator::generate_haxe_struct_tostring(ofstream& out,
     if (field->get_type()->is_base_type() && ((t_base_type*)(field->get_type()))->is_binary()) {
       indent(out) << "  ret += \"BINARY\";" << endl;
     } else if(field->get_type()->is_enum()) {
-      indent(out) << "var " << field->get_name() << "_name : String = " << get_enum_class_name(field->get_type()) << ".VALUES_TO_NAMES[this." << (*f_iter)->get_name() << "];"<< endl;
+      indent(out) << "var " << field->get_name() << "_name : String = " << get_cap_name(get_enum_class_name(field->get_type())) << ".VALUES_TO_NAMES[this." << (*f_iter)->get_name() << "];"<< endl;
       indent(out) << "if (" << field->get_name() << "_name != null) {" << endl;
       indent(out) << "  ret += " << field->get_name() << "_name;" << endl;
       indent(out) << "  ret += \" (\";" << endl;
@@ -2856,11 +2868,74 @@ string t_haxe_generator::type_to_enum(t_type* type) {
  * Haxe class names must start with uppercase letter, but Haxe namespaces must not.
  */
 std::string t_haxe_generator::get_cap_name(std::string name){
-  size_t index = name.rfind('.');
+  if (name.length() == 0) {
+    return name;
+  }
+
+  // test.for.Generic< data.Type, or.the.Like> and handle it recursively
+  size_t generic_first = name.find('<');
+  size_t generic_last = name.rfind('>');
+  if ((generic_first != std::string::npos) && (generic_last != std::string::npos)) {
+    string outer_type = name.substr(0, generic_first);
+    string inner_types = name.substr(generic_first + 1, generic_last - generic_first - 1);
+
+    string new_inner = "";
+    size_t comma_start = 0;
+    while (comma_start < inner_types.length()) {
+      size_t comma_pos = comma_start;
+      int nested = 0;
+
+      while (comma_pos < inner_types.length()) {
+        bool found = false;
+        switch (inner_types[comma_pos]) {
+          case '<':  
+            ++nested;
+            break;
+          case '>':  
+            --nested;
+            break;
+          case ',':
+            found = (nested == 0);
+            break;
+        }
+        if (found) {
+          break;
+        }
+        ++comma_pos;
+      }
+    
+      if (new_inner.length() > 0) {
+        new_inner += ",";
+      }
+
+      string inner = inner_types.substr(comma_start, comma_pos - comma_start);
+      new_inner += get_cap_name(inner);
+      comma_start = ++comma_pos;
+    }
+
+    return get_cap_name(outer_type) + "<" + new_inner + ">";
+  }
+
+
+  // package name
+  size_t index = name.find_first_not_of(" \n\r\t");
+  if (index < name.length()) {
+    name[index] = tolower(name[index]);
+    index = name.find('.');
+    while (index != std::string::npos) {
+      if (++index < name.length()) {
+        name[index] = tolower(name[index]);
+      }
+      index = name.find('.', index);
+    }
+  }
+
+  // class name
+  index = name.rfind('.');
   if (index != std::string::npos) {
     ++index;
   } else {
-    index = 0;
+    index = name.find_first_not_of(" \n\r\t");
   }
 
   if (index < name.length()) {
