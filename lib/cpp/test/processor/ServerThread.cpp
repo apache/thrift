@@ -27,9 +27,7 @@
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TServerSocket.h>
 
-namespace apache {
-namespace thrift {
-namespace test {
+namespace apache { namespace thrift { namespace test {
 
 void ServerThread::start() {
   assert(!running_);
@@ -50,8 +48,9 @@ void ServerThread::start() {
   }
 
   if (error_) {
-    throw transport::TTransportException(transport::TTransportException::NOT_OPEN,
-                                         "failed to bind on server socket");
+    throw transport::TTransportException(
+        transport::TTransportException::NOT_OPEN,
+        "failed to bind on server socket");
   }
 }
 
@@ -128,8 +127,8 @@ void ServerThread::preServe() {
   serverState_->bindSuccessful(port_);
 
   // Set the real server event handler (replacing ourself)
-  boost::shared_ptr<server::TServerEventHandler> serverEventHandler
-      = serverState_->getServerEventHandler();
+  boost::shared_ptr<server::TServerEventHandler> serverEventHandler =
+    serverState_->getServerEventHandler();
   server_->setServerEventHandler(serverEventHandler);
 
   // Notify the main thread that we have successfully started serving requests
@@ -143,8 +142,7 @@ void ServerThread::preServe() {
     serverEventHandler->preServe();
   }
 }
-}
-}
-} // apache::thrift::test
+
+}}} // apache::thrift::test
 
 #endif // _THRIFT_TEST_SERVERTHREAD_TCC_

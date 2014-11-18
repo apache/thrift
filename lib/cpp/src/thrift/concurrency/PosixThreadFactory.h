@@ -24,9 +24,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace apache {
-namespace thrift {
-namespace concurrency {
+namespace apache { namespace thrift { namespace concurrency {
 
 /**
  * A thread factory to create posix threads
@@ -35,11 +33,16 @@ namespace concurrency {
  */
 class PosixThreadFactory : public ThreadFactory {
 
-public:
+ public:
+
   /**
    * POSIX Thread scheduler policies
    */
-  enum POLICY { OTHER, FIFO, ROUND_ROBIN };
+  enum POLICY {
+    OTHER,
+    FIFO,
+    ROUND_ROBIN
+  };
 
   /**
    * POSIX Thread scheduler relative priorities,
@@ -75,10 +78,7 @@ public:
    * By default threads are not joinable.
    */
 
-  PosixThreadFactory(POLICY policy = ROUND_ROBIN,
-                     PRIORITY priority = NORMAL,
-                     int stackSize = 1,
-                     bool detached = true);
+  PosixThreadFactory(POLICY policy=ROUND_ROBIN, PRIORITY priority=NORMAL, int stackSize=1, bool detached=true);
 
   // From ThreadFactory;
   boost::shared_ptr<Thread> newThread(boost::shared_ptr<Runnable> runnable) const;
@@ -120,12 +120,11 @@ public:
    */
   virtual bool isDetached() const;
 
-private:
+ private:
   class Impl;
   boost::shared_ptr<Impl> impl_;
 };
-}
-}
-} // apache::thrift::concurrency
+
+}}} // apache::thrift::concurrency
 
 #endif // #ifndef _THRIFT_CONCURRENCY_POSIXTHREADFACTORY_H_

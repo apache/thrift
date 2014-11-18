@@ -22,9 +22,8 @@
 
 #include <thrift/transport/TTransport.h>
 
-namespace apache {
-namespace thrift {
-namespace transport {
+namespace apache { namespace thrift { namespace transport {
+
 
 /**
  * Helper class that provides default implementations of TTransport methods.
@@ -43,20 +42,28 @@ namespace transport {
  * read_virt().)
  */
 class TTransportDefaults : public TTransport {
-public:
+ public:
   /*
    * TTransport *_virt() methods provide reasonable default implementations.
    * Invoke them non-virtually.
    */
-  uint32_t read(uint8_t* buf, uint32_t len) { return this->TTransport::read_virt(buf, len); }
-  uint32_t readAll(uint8_t* buf, uint32_t len) { return this->TTransport::readAll_virt(buf, len); }
-  void write(const uint8_t* buf, uint32_t len) { this->TTransport::write_virt(buf, len); }
+  uint32_t read(uint8_t* buf, uint32_t len) {
+    return this->TTransport::read_virt(buf, len);
+  }
+  uint32_t readAll(uint8_t* buf, uint32_t len) {
+    return this->TTransport::readAll_virt(buf, len);
+  }
+  void write(const uint8_t* buf, uint32_t len) {
+    this->TTransport::write_virt(buf, len);
+  }
   const uint8_t* borrow(uint8_t* buf, uint32_t* len) {
     return this->TTransport::borrow_virt(buf, len);
   }
-  void consume(uint32_t len) { this->TTransport::consume_virt(len); }
+  void consume(uint32_t len) {
+    this->TTransport::consume_virt(len);
+  }
 
-protected:
+ protected:
   TTransportDefaults() {}
 };
 
@@ -77,9 +84,9 @@ protected:
  *
  * @author Chad Walters <chad@powerset.com>
  */
-template <class Transport_, class Super_ = TTransportDefaults>
+template <class Transport_, class Super_=TTransportDefaults>
 class TVirtualTransport : public Super_ {
-public:
+ public:
   /*
    * Implementations of the *_virt() functions, to call the subclass's
    * non-virtual implementation function.
@@ -100,7 +107,9 @@ public:
     return static_cast<Transport_*>(this)->borrow(buf, len);
   }
 
-  virtual void consume_virt(uint32_t len) { static_cast<Transport_*>(this)->consume(len); }
+  virtual void consume_virt(uint32_t len) {
+    static_cast<Transport_*>(this)->consume(len);
+  }
 
   /*
    * Provide a default readAll() implementation that invokes
@@ -117,7 +126,7 @@ public:
     return ::apache::thrift::transport::readAll(*trans, buf, len);
   }
 
-protected:
+ protected:
   TVirtualTransport() {}
 
   /*
@@ -126,15 +135,12 @@ protected:
    * additional versions can be added as needed.
    */
   template <typename Arg_>
-  TVirtualTransport(Arg_ const& arg)
-    : Super_(arg) {}
+  TVirtualTransport(Arg_ const& arg) : Super_(arg) { }
 
   template <typename Arg1_, typename Arg2_>
-  TVirtualTransport(Arg1_ const& a1, Arg2_ const& a2)
-    : Super_(a1, a2) {}
+  TVirtualTransport(Arg1_ const& a1, Arg2_ const& a2) : Super_(a1, a2) { }
 };
-}
-}
-} // apache::thrift::transport
+
+}}} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TVIRTUALTRANSPORT_H_

@@ -56,22 +56,30 @@
  *
  */
 class t_program : public t_doc {
-public:
-  t_program(std::string path, std::string name)
-    : path_(path), name_(name), out_path_("./"), out_path_is_absolute_(false) {
+ public:
+  t_program(std::string path, std::string name) :
+    path_(path),
+    name_(name),
+    out_path_("./"),
+    out_path_is_absolute_(false) {
     scope_ = new t_scope();
   }
 
-  t_program(std::string path) : path_(path), out_path_("./"), out_path_is_absolute_(false) {
+  t_program(std::string path) :
+    path_(path),
+    out_path_("./"),
+    out_path_is_absolute_(false) {
     name_ = program_name(path);
     scope_ = new t_scope();
   }
 
-  ~t_program() {
-    if (scope_) {
-      delete scope_;
-      scope_ = NULL;
-    }
+  ~t_program()
+  {
+   if(scope_)
+   {
+     delete scope_;
+     scope_ = NULL;
+   }
   }
 
   // Path accessor
@@ -93,27 +101,23 @@ public:
   const std::string& get_include_prefix() const { return include_prefix_; }
 
   // Accessors for program elements
-  const std::vector<t_typedef*>& get_typedefs() const { return typedefs_; }
-  const std::vector<t_enum*>& get_enums() const { return enums_; }
-  const std::vector<t_const*>& get_consts() const { return consts_; }
-  const std::vector<t_struct*>& get_structs() const { return structs_; }
-  const std::vector<t_struct*>& get_xceptions() const { return xceptions_; }
-  const std::vector<t_struct*>& get_objects() const { return objects_; }
-  const std::vector<t_service*>& get_services() const { return services_; }
+  const std::vector<t_typedef*>& get_typedefs()  const { return typedefs_;  }
+  const std::vector<t_enum*>&    get_enums()     const { return enums_;     }
+  const std::vector<t_const*>&   get_consts()    const { return consts_;    }
+  const std::vector<t_struct*>&  get_structs()   const { return structs_;   }
+  const std::vector<t_struct*>&  get_xceptions() const { return xceptions_; }
+  const std::vector<t_struct*>&  get_objects()   const { return objects_;   }
+  const std::vector<t_service*>& get_services()  const { return services_;  }
 
   // Program elements
-  void add_typedef(t_typedef* td) { typedefs_.push_back(td); }
-  void add_enum(t_enum* te) { enums_.push_back(te); }
-  void add_const(t_const* tc) { consts_.push_back(tc); }
-  void add_struct(t_struct* ts) {
-    objects_.push_back(ts);
-    structs_.push_back(ts);
-  }
-  void add_xception(t_struct* tx) {
-    objects_.push_back(tx);
-    xceptions_.push_back(tx);
-  }
-  void add_service(t_service* ts) { services_.push_back(ts); }
+  void add_typedef  (t_typedef* td) { typedefs_.push_back(td);  }
+  void add_enum     (t_enum*    te) { enums_.push_back(te);     }
+  void add_const    (t_const*   tc) { consts_.push_back(tc);    }
+  void add_struct   (t_struct*  ts) { objects_.push_back(ts);
+                                      structs_.push_back(ts);   }
+  void add_xception (t_struct*  tx) { objects_.push_back(tx);
+                                      xceptions_.push_back(tx); }
+  void add_service  (t_service* ts) { services_.push_back(ts);  }
 
   // Programs to include
   const std::vector<t_program*>& get_includes() const { return includes_; }
@@ -134,9 +138,10 @@ public:
    * @param t    the type to test for collisions
    * @return     true if a certain collision was found, otherwise false
    */
-  bool is_unique_typename(t_type* t) {
+  bool is_unique_typename(t_type * t) {
     int occurances = program_typename_count(this, t);
-    for (std::vector<t_program*>::iterator it = includes_.begin(); it != includes_.end(); ++it) {
+    for (std::vector<t_program*>::iterator it = includes_.begin();
+         it != includes_.end(); ++it) {
       occurances += program_typename_count(*it, t);
     }
     return 0 == occurances;
@@ -148,7 +153,7 @@ public:
    * @param t    the type to test for collisions
    * @return     the number of certain typename collisions
    */
-  int program_typename_count(t_program* prog, t_type* t) {
+  int program_typename_count(t_program * prog, t_type * t) {
     int occurances = 0;
     occurances += collection_typename_count(prog, prog->typedefs_, t);
     occurances += collection_typename_count(prog, prog->enums_, t);
@@ -165,7 +170,7 @@ public:
    * @return                the number of certain typename collisions
    */
   template <class T>
-  int collection_typename_count(t_program* prog, T type_collection, t_type* t) {
+  int collection_typename_count(t_program * prog, T type_collection, t_type * t) {
     int occurances = 0;
     for (typename T::iterator it = type_collection.begin(); it != type_collection.end(); ++it)
       if (t != *it && 0 == t->get_name().compare((*it)->get_name()) && is_common_namespace(prog, t))
@@ -185,67 +190,54 @@ public:
    * @param t    the type containing the typename match
    * @return     true if a collision within namespaces is found, otherwise false
    */
-  bool is_common_namespace(t_program* prog, t_type* t) {
-    // Case 1: Typenames are in the same program [collision]
+  bool is_common_namespace(t_program * prog, t_type * t) {
+    //Case 1: Typenames are in the same program [collision]
     if (prog == t->get_program()) {
-      pwarning(1,
-               "Duplicate typename %s found in %s",
-               t->get_name().c_str(),
-               t->get_program()->get_name().c_str());
+      pwarning(1, "Duplicate typename %s found in %s",
+               t->get_name().c_str(), t->get_program()->get_name().c_str());
       return true;
     }
 
-    // Case 2: Both programs have identical namespace scope/name declarations [collision]
+    //Case 2: Both programs have identical namespace scope/name declarations [collision]
     bool match = true;
     for (std::map<std::string, std::string>::iterator it = prog->namespaces_.begin();
-         it != prog->namespaces_.end();
-         ++it) {
+         it != prog->namespaces_.end(); ++it) {
       if (0 == it->second.compare(t->get_program()->get_namespace(it->first))) {
-        pwarning(1,
-                 "Duplicate typename %s found in %s,%s,%s and %s,%s,%s [file,scope,ns]",
+        pwarning(1, "Duplicate typename %s found in %s,%s,%s and %s,%s,%s [file,scope,ns]",
                  t->get_name().c_str(),
-                 t->get_program()->get_name().c_str(),
-                 it->first.c_str(),
-                 it->second.c_str(),
-                 prog->get_name().c_str(),
-                 it->first.c_str(),
-                 it->second.c_str());
+                 t->get_program()->get_name().c_str(), it->first.c_str(), it->second.c_str(),
+                 prog->get_name().c_str(), it->first.c_str(), it->second.c_str());
       } else {
         match = false;
       }
     }
     for (std::map<std::string, std::string>::iterator it = t->get_program()->namespaces_.begin();
-         it != t->get_program()->namespaces_.end();
-         ++it) {
+         it != t->get_program()->namespaces_.end(); ++it) {
       if (0 == it->second.compare(prog->get_namespace(it->first))) {
-        pwarning(1,
-                 "Duplicate typename %s found in %s,%s,%s and %s,%s,%s [file,scope,ns]",
+        pwarning(1, "Duplicate typename %s found in %s,%s,%s and %s,%s,%s [file,scope,ns]",
                  t->get_name().c_str(),
-                 t->get_program()->get_name().c_str(),
-                 it->first.c_str(),
-                 it->second.c_str(),
-                 prog->get_name().c_str(),
-                 it->first.c_str(),
-                 it->second.c_str());
+                 t->get_program()->get_name().c_str(), it->first.c_str(), it->second.c_str(),
+                 prog->get_name().c_str(), it->first.c_str(), it->second.c_str());
       } else {
         match = false;
       }
     }
     if (0 == prog->namespaces_.size() && 0 == t->get_program()->namespaces_.size()) {
-      pwarning(1,
-               "Duplicate typename %s found in %s and %s",
-               t->get_name().c_str(),
-               t->get_program()->get_name().c_str(),
-               prog->get_name().c_str());
+      pwarning(1, "Duplicate typename %s found in %s and %s",
+        t->get_name().c_str(), t->get_program()->get_name().c_str(),  prog->get_name().c_str());
     }
     return match;
   }
 
   // Scoping and namespacing
-  void set_namespace(std::string name) { namespace_ = name; }
+  void set_namespace(std::string name) {
+    namespace_ = name;
+  }
 
   // Scope accessor
-  t_scope* scope() const { return scope_; }
+  t_scope* scope() const {
+    return scope_;
+  }
 
   // Includes
 
@@ -264,7 +256,9 @@ public:
     includes_.push_back(program);
   }
 
-  std::vector<t_program*>& get_includes() { return includes_; }
+  std::vector<t_program*>& get_includes() {
+    return includes_;
+  }
 
   void set_include_prefix(std::string include_prefix) {
     include_prefix_ = include_prefix;
@@ -283,7 +277,7 @@ public:
       std::string base_language = language.substr(0, sub_index);
       std::string sub_namespace;
 
-      if (base_language == "smalltalk") {
+      if(base_language == "smalltalk") {
         pwarning(1, "Namespace 'smalltalk' is deprecated. Use 'st' instead");
         base_language = "st";
       }
@@ -291,17 +285,16 @@ public:
       t_generator_registry::gen_map_t my_copy = t_generator_registry::get_generator_map();
 
       t_generator_registry::gen_map_t::iterator it;
-      it = my_copy.find(base_language);
+      it=my_copy.find(base_language);
 
       if (it == my_copy.end()) {
         std::string warning = "No generator named '" + base_language + "' could be found!";
         pwarning(1, warning.c_str());
       } else {
         if (sub_index != std::string::npos) {
-          std::string sub_namespace = language.substr(sub_index + 1);
-          if (!it->second->is_valid_namespace(sub_namespace)) {
-            std::string warning = base_language + " generator does not accept '" + sub_namespace
-                                  + "' as sub-namespace!";
+          std::string sub_namespace = language.substr(sub_index+1);
+          if ( ! it->second->is_valid_namespace(sub_namespace)) {
+            std::string warning = base_language + " generator does not accept '" + sub_namespace + "' as sub-namespace!";
             pwarning(1, warning.c_str());
           }
         }
@@ -313,8 +306,8 @@ public:
 
   std::string get_namespace(std::string language) const {
     std::map<std::string, std::string>::const_iterator iter;
-    if ((iter = namespaces_.find(language)) != namespaces_.end()
-        || (iter = namespaces_.find("*")) != namespaces_.end()) {
+    if ((iter = namespaces_.find(language)) != namespaces_.end() ||
+        (iter = namespaces_.find("*"     )) != namespaces_.end()) {
       return iter->second;
     }
     return std::string();
@@ -322,15 +315,24 @@ public:
 
   // Language specific namespace / packaging
 
-  void add_cpp_include(std::string path) { cpp_includes_.push_back(path); }
+  void add_cpp_include(std::string path) {
+    cpp_includes_.push_back(path);
+  }
 
-  const std::vector<std::string>& get_cpp_includes() { return cpp_includes_; }
+  const std::vector<std::string>& get_cpp_includes() {
+    return cpp_includes_;
+  }
 
-  void add_c_include(std::string path) { c_includes_.push_back(path); }
+  void add_c_include(std::string path) {
+    c_includes_.push_back(path);
+  }
 
-  const std::vector<std::string>& get_c_includes() { return c_includes_; }
+  const std::vector<std::string>& get_c_includes() {
+    return c_includes_;
+  }
 
-private:
+ private:
+
   // File path
   std::string path_;
 
@@ -357,11 +359,11 @@ private:
 
   // Components to generate code for
   std::vector<t_typedef*> typedefs_;
-  std::vector<t_enum*> enums_;
-  std::vector<t_const*> consts_;
-  std::vector<t_struct*> objects_;
-  std::vector<t_struct*> structs_;
-  std::vector<t_struct*> xceptions_;
+  std::vector<t_enum*>    enums_;
+  std::vector<t_const*>   consts_;
+  std::vector<t_struct*>  objects_;
+  std::vector<t_struct*>  structs_;
+  std::vector<t_struct*>  xceptions_;
   std::vector<t_service*> services_;
 
   // Dynamic namespaces
@@ -372,6 +374,7 @@ private:
 
   // C extra includes
   std::vector<std::string> c_includes_;
+
 };
 
 #endif

@@ -48,7 +48,10 @@ class t_type;
  * Parsing mode, two passes up in this gin rummy!
  */
 
-enum PARSE_MODE { INCLUDES = 1, PROGRAM = 2 };
+enum PARSE_MODE {
+  INCLUDES = 1,
+  PROGRAM = 2
+};
 
 /**
  * Strictness level
@@ -116,18 +119,19 @@ extern int g_doctext_lineno;
  */
 enum PROGDOCTEXT_STATUS {
   INVALID = 0,
-  STILL_CANDIDATE = 1,   // the text may or may not be the program doctext
-  ALREADY_PROCESSED = 2, // doctext has been used and is no longer available
-  ABSOLUTELY_SURE = 3,   // this is the program doctext
-  NO_PROGRAM_DOCTEXT = 4 // there is no program doctext
+  STILL_CANDIDATE = 1,      // the text may or may not be the program doctext
+  ALREADY_PROCESSED = 2,    // doctext has been used and is no longer available
+  ABSOLUTELY_SURE = 3,      // this is the program doctext
+  NO_PROGRAM_DOCTEXT = 4    // there is no program doctext
 };
+
 
 /**
  * The program level doctext. Stored seperately to make parsing easier.
  */
 extern char* g_program_doctext_candidate;
-extern int g_program_doctext_lineno;
-extern PROGDOCTEXT_STATUS g_program_doctext_status;
+extern int   g_program_doctext_lineno;
+extern PROGDOCTEXT_STATUS  g_program_doctext_status;
 
 /**
  * Whether or not negative field keys are accepted.

@@ -23,9 +23,7 @@
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TVirtualTransport.h>
 
-namespace apache {
-namespace thrift {
-namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 /**
  * HTTP implementation of the thrift transport. This was irritating
@@ -35,18 +33,26 @@ namespace transport {
  * chunked transfer encoding, keepalive, etc. Tested against Apache.
  */
 class THttpTransport : public TVirtualTransport<THttpTransport> {
-public:
+ public:
   THttpTransport(boost::shared_ptr<TTransport> transport);
 
   virtual ~THttpTransport();
 
-  void open() { transport_->open(); }
+  void open() {
+    transport_->open();
+  }
 
-  bool isOpen() { return transport_->isOpen(); }
+  bool isOpen() {
+    return transport_->isOpen();
+  }
 
-  bool peek() { return transport_->peek(); }
+  bool peek() {
+    return transport_->peek();
+  }
 
-  void close() { transport_->close(); }
+  void close() {
+    transport_->close();
+  }
 
   uint32_t read(uint8_t* buf, uint32_t len);
 
@@ -58,7 +64,8 @@ public:
 
   virtual const std::string getOrigin();
 
-protected:
+ protected:
+
   boost::shared_ptr<TTransport> transport_;
   std::string origin_;
 
@@ -97,8 +104,7 @@ protected:
   static const char* CRLF;
   static const int CRLF_LEN;
 };
-}
-}
-} // apache::thrift::transport
+
+}}} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_THTTPCLIENT_H_
