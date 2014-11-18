@@ -62,7 +62,7 @@ sudo apt-get install -qq php5 php5-dev php5-cli php-pear re2c
 sudo apt-get install -qq libglib2.0-dev
 
 # Erlang dependencies
-sudo apt-get install -qq erlang-base erlang-eunit erlang-dev
+sudo apt-get install -qq erlang-base erlang-eunit erlang-dev erlang-tools
 
 # GO dependencies
 echo "golang-go golang-go/dashboard boolean false" | debconf-set-selections

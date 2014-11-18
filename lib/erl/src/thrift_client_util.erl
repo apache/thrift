@@ -40,6 +40,7 @@ split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn)
 split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn)
   when OptKey =:= framed;
        OptKey =:= connect_timeout;
+       OptKey =:= recv_timeout;
        OptKey =:= sockopts ->
     split_options(Rest, ProtoIn, [Opt | TransIn]).
 
