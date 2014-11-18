@@ -306,7 +306,7 @@ func (p *TSimpleJSONProtocol) ReadMessageBegin() (name string, typeId TMessageTy
 }
 
 func (p *TSimpleJSONProtocol) ReadMessageEnd() error {
-	return p.ParseListEnd()
+	return p._ParseListEnd(false)
 }
 
 func (p *TSimpleJSONProtocol) ReadStructBegin() (name string, err error) {
@@ -1015,8 +1015,10 @@ func (p *TSimpleJSONProtocol) ParseElemListBegin() (elemType TType, size int, e 
 	size = int(nSize)
 	return elemType, size, err2
 }
-
 func (p *TSimpleJSONProtocol) ParseListEnd() error {
+	return p._ParseListEnd(true)
+}
+func (p *TSimpleJSONProtocol) _ParseListEnd(needParsePostValue bool) error {
 	if isNull, err := p.readIfNull(); isNull || err != nil {
 		return err
 	}
@@ -1038,7 +1040,10 @@ func (p *TSimpleJSONProtocol) ParseListEnd() error {
 		}
 	}
 	p.parseContextStack = p.parseContextStack[:len(p.parseContextStack)-1]
-	return p.ParsePostValue()
+	if needParsePostValue {
+		return p.ParsePostValue()
+	}
+	return nil
 }
 
 func (p *TSimpleJSONProtocol) readSingleValue() (interface{}, TType, error) {
