@@ -20,8 +20,7 @@
 #include <thrift/TApplicationException.h>
 #include <thrift/protocol/TProtocol.h>
 
-namespace apache {
-namespace thrift {
+namespace apache { namespace thrift {
 
 uint32_t TApplicationException::read(apache::thrift::protocol::TProtocol* iprot) {
   uint32_t xfer = 0;
@@ -77,5 +76,5 @@ uint32_t TApplicationException::write(apache::thrift::protocol::TProtocol* oprot
   xfer += oprot->writeStructEnd();
   return xfer;
 }
-}
-} // apache::thrift
+
+}} // apache::thrift

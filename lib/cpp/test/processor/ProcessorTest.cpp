@@ -54,7 +54,7 @@ using namespace apache::thrift::test;
  */
 
 class TSimpleServerTraits {
-public:
+ public:
   typedef TSimpleServer ServerType;
 
   boost::shared_ptr<TSimpleServer> createServer(
@@ -63,13 +63,13 @@ public:
       const boost::shared_ptr<TTransportFactory>& transportFactory,
       const boost::shared_ptr<TProtocolFactory>& protocolFactory) {
     boost::shared_ptr<TServerSocket> socket(new TServerSocket(port));
-    return boost::shared_ptr<TSimpleServer>(
-        new TSimpleServer(processor, socket, transportFactory, protocolFactory));
+    return boost::shared_ptr<TSimpleServer>(new TSimpleServer(
+          processor, socket, transportFactory, protocolFactory));
   }
 };
 
 class TThreadedServerTraits {
-public:
+ public:
   typedef TThreadedServer ServerType;
 
   boost::shared_ptr<TThreadedServer> createServer(
@@ -78,13 +78,13 @@ public:
       const boost::shared_ptr<TTransportFactory>& transportFactory,
       const boost::shared_ptr<TProtocolFactory>& protocolFactory) {
     boost::shared_ptr<TServerSocket> socket(new TServerSocket(port));
-    return boost::shared_ptr<TThreadedServer>(
-        new TThreadedServer(processor, socket, transportFactory, protocolFactory));
+    return boost::shared_ptr<TThreadedServer>(new TThreadedServer(
+          processor, socket, transportFactory, protocolFactory));
   }
 };
 
 class TThreadPoolServerTraits {
-public:
+ public:
   typedef TThreadPoolServer ServerType;
 
   boost::shared_ptr<TThreadPoolServer> createServer(
@@ -95,17 +95,19 @@ public:
     boost::shared_ptr<TServerSocket> socket(new TServerSocket(port));
 
     boost::shared_ptr<PosixThreadFactory> threadFactory(new PosixThreadFactory);
-    boost::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(8);
+    boost::shared_ptr<ThreadManager> threadManager =
+      ThreadManager::newSimpleThreadManager(8);
     threadManager->threadFactory(threadFactory);
     threadManager->start();
 
-    return boost::shared_ptr<TThreadPoolServer>(
-        new TThreadPoolServer(processor, socket, transportFactory, protocolFactory, threadManager));
+    return boost::shared_ptr<TThreadPoolServer>(new TThreadPoolServer(
+          processor, socket, transportFactory, protocolFactory,
+          threadManager));
   }
 };
 
 class TNonblockingServerTraits {
-public:
+ public:
   typedef TNonblockingServer ServerType;
 
   boost::shared_ptr<TNonblockingServer> createServer(
@@ -116,24 +118,25 @@ public:
     // TNonblockingServer automatically uses TFramedTransport.
     // Raise an exception if the supplied transport factory is not a
     // TFramedTransportFactory
-    TFramedTransportFactory* framedFactory
-        = dynamic_cast<TFramedTransportFactory*>(transportFactory.get());
+    TFramedTransportFactory* framedFactory =
+      dynamic_cast<TFramedTransportFactory*>(transportFactory.get());
     if (framedFactory == NULL) {
       throw TException("TNonblockingServer must use TFramedTransport");
     }
 
     boost::shared_ptr<PosixThreadFactory> threadFactory(new PosixThreadFactory);
-    boost::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(8);
+    boost::shared_ptr<ThreadManager> threadManager =
+      ThreadManager::newSimpleThreadManager(8);
     threadManager->threadFactory(threadFactory);
     threadManager->start();
 
-    return boost::shared_ptr<TNonblockingServer>(
-        new TNonblockingServer(processor, protocolFactory, port, threadManager));
+    return boost::shared_ptr<TNonblockingServer>(new TNonblockingServer(
+          processor, protocolFactory, port, threadManager));
   }
 };
 
 class TNonblockingServerNoThreadsTraits {
-public:
+ public:
   typedef TNonblockingServer ServerType;
 
   boost::shared_ptr<TNonblockingServer> createServer(
@@ -144,16 +147,16 @@ public:
     // TNonblockingServer automatically uses TFramedTransport.
     // Raise an exception if the supplied transport factory is not a
     // TFramedTransportFactory
-    TFramedTransportFactory* framedFactory
-        = dynamic_cast<TFramedTransportFactory*>(transportFactory.get());
+    TFramedTransportFactory* framedFactory =
+      dynamic_cast<TFramedTransportFactory*>(transportFactory.get());
     if (framedFactory == NULL) {
       throw TException("TNonblockingServer must use TFramedTransport");
     }
 
     // Use a NULL ThreadManager
     boost::shared_ptr<ThreadManager> threadManager;
-    return boost::shared_ptr<TNonblockingServer>(
-        new TNonblockingServer(processor, protocolFactory, port, threadManager));
+    return boost::shared_ptr<TNonblockingServer>(new TNonblockingServer(
+          processor, protocolFactory, port, threadManager));
   }
 };
 
@@ -170,7 +173,7 @@ public:
  */
 
 class UntemplatedTraits {
-public:
+ public:
   typedef TBinaryProtocolFactory ProtocolFactory;
   typedef TBinaryProtocol Protocol;
 
@@ -181,7 +184,7 @@ public:
 };
 
 class TemplatedTraits {
-public:
+ public:
   typedef TBinaryProtocolFactoryT<TBufferBase> ProtocolFactory;
   typedef TBinaryProtocolT<TBufferBase> Protocol;
 
@@ -191,9 +194,10 @@ public:
   typedef ChildServiceClientT<Protocol> ChildClient;
 };
 
-template <typename TemplateTraits_>
+
+template<typename TemplateTraits_>
 class ParentServiceTraits {
-public:
+ public:
   typedef typename TemplateTraits_::ParentProcessor Processor;
   typedef typename TemplateTraits_::ParentClient Client;
   typedef ParentHandler Handler;
@@ -202,9 +206,9 @@ public:
   typedef typename TemplateTraits_::Protocol Protocol;
 };
 
-template <typename TemplateTraits_>
+template<typename TemplateTraits_>
 class ChildServiceTraits {
-public:
+ public:
   typedef typename TemplateTraits_::ChildProcessor Processor;
   typedef typename TemplateTraits_::ChildClient Client;
   typedef ChildHandler Handler;
@@ -220,18 +224,17 @@ public:
 // It would also be niec if they used covariant return types.  Unfortunately,
 // since they return shared_ptr instead of raw pointers, covariant return types
 // won't work.
-template <typename ServerTraits_,
-          typename ServiceTraits_,
-          typename TransportFactory_ = TFramedTransportFactory,
-          typename Transport_ = TFramedTransport>
+template<typename ServerTraits_, typename ServiceTraits_,
+         typename TransportFactory_ = TFramedTransportFactory,
+         typename Transport_ = TFramedTransport>
 class ServiceState : public ServerState {
-public:
+ public:
   typedef typename ServiceTraits_::Processor Processor;
   typedef typename ServiceTraits_::Client Client;
   typedef typename ServiceTraits_::Handler Handler;
 
-  ServiceState()
-    : port_(0),
+  ServiceState() :
+      port_(0),
       log_(new EventLog),
       handler_(new Handler(log_)),
       processor_(new Processor(handler_)),
@@ -244,18 +247,29 @@ public:
 
   boost::shared_ptr<TServer> createServer(uint16_t port) {
     ServerTraits_ serverTraits;
-    return serverTraits.createServer(processor_, port, transportFactory_, protocolFactory_);
+    return serverTraits.createServer(processor_, port, transportFactory_,
+                                     protocolFactory_);
   }
 
-  boost::shared_ptr<TServerEventHandler> getServerEventHandler() { return serverEventHandler_; }
+  boost::shared_ptr<TServerEventHandler> getServerEventHandler() {
+    return serverEventHandler_;
+  }
 
-  void bindSuccessful(uint16_t port) { port_ = port; }
+  void bindSuccessful(uint16_t port) {
+    port_ = port;
+  }
 
-  uint16_t getPort() const { return port_; }
+  uint16_t getPort() const {
+    return port_;
+  }
 
-  const boost::shared_ptr<EventLog>& getLog() const { return log_; }
+  const boost::shared_ptr<EventLog>& getLog() const {
+    return log_;
+  }
 
-  const boost::shared_ptr<Handler>& getHandler() const { return handler_; }
+  const boost::shared_ptr<Handler>& getHandler() const {
+    return handler_;
+  }
 
   boost::shared_ptr<Client> createClient() {
     typedef typename ServiceTraits_::Protocol Protocol;
@@ -269,7 +283,7 @@ public:
     return client;
   }
 
-private:
+ private:
   uint16_t port_;
   boost::shared_ptr<EventLog> log_;
   boost::shared_ptr<Handler> handler_;
@@ -279,6 +293,7 @@ private:
   boost::shared_ptr<TServerEventHandler> serverEventHandler_;
   boost::shared_ptr<TProcessorEventHandler> processorEventHandler_;
 };
+
 
 /**
  * Check that there are no more events in the log
@@ -421,7 +436,7 @@ uint32_t checkCallEvents(const boost::shared_ptr<EventLog>& log,
  * Test functions
  */
 
-template <typename State_>
+template<typename State_>
 void testParentService(const boost::shared_ptr<State_>& state) {
   boost::shared_ptr<typename State_::Client> client = state->createClient();
 
@@ -443,7 +458,7 @@ void testParentService(const boost::shared_ptr<State_>& state) {
   BOOST_REQUIRE_EQUAL("asdf", strings[2]);
 }
 
-template <typename State_>
+template<typename State_>
 void testChildService(const boost::shared_ptr<State_>& state) {
   boost::shared_ptr<typename State_::Client> client = state->createClient();
 
@@ -461,9 +476,10 @@ void testChildService(const boost::shared_ptr<State_>& state) {
   BOOST_CHECK_EQUAL(99, client->getValue());
 }
 
-template <typename ServerTraits, typename TemplateTraits>
+template<typename ServerTraits, typename TemplateTraits>
 void testBasicService() {
-  typedef ServiceState<ServerTraits, ParentServiceTraits<TemplateTraits> > State;
+  typedef ServiceState< ServerTraits, ParentServiceTraits<TemplateTraits> >
+    State;
 
   // Start the server
   boost::shared_ptr<State> state(new State);
@@ -472,9 +488,10 @@ void testBasicService() {
   testParentService(state);
 }
 
-template <typename ServerTraits, typename TemplateTraits>
+template<typename ServerTraits, typename TemplateTraits>
 void testInheritedService() {
-  typedef ServiceState<ServerTraits, ChildServiceTraits<TemplateTraits> > State;
+  typedef ServiceState< ServerTraits, ChildServiceTraits<TemplateTraits> >
+    State;
 
   // Start the server
   boost::shared_ptr<State> state(new State);
@@ -488,16 +505,15 @@ void testInheritedService() {
  * Test to make sure that the TServerEventHandler and TProcessorEventHandler
  * methods are invoked in the correct order with the actual events.
  */
-template <typename ServerTraits, typename TemplateTraits>
+template<typename ServerTraits, typename TemplateTraits>
 void testEventSequencing() {
   // We use TBufferedTransport for this test, instead of TFramedTransport.
   // This way the server will start processing data as soon as it is received,
   // instead of waiting for the full request.  This is necessary so we can
   // separate the preRead() and postRead() events.
-  typedef ServiceState<ServerTraits,
-                       ChildServiceTraits<TemplateTraits>,
-                       TBufferedTransportFactory,
-                       TBufferedTransport> State;
+  typedef ServiceState< ServerTraits, ChildServiceTraits<TemplateTraits>,
+                        TBufferedTransportFactory, TBufferedTransport>
+    State;
 
   // Start the server
   boost::shared_ptr<State> state(new State);
@@ -546,7 +562,7 @@ void testEventSequencing() {
   // Send the rest of the request
   protocol.writeStructBegin("ParentService_getDataNotified_pargs");
   protocol.writeFieldBegin("length", apache::thrift::protocol::T_I32, 1);
-  protocol.writeI32(8 * 1024 * 1024);
+  protocol.writeI32(8*1024*1024);
   protocol.writeFieldEnd();
   protocol.writeFieldStop();
   protocol.writeStructEnd();
@@ -628,9 +644,10 @@ void testEventSequencing() {
   checkNoEvents(log);
 }
 
-template <typename ServerTraits, typename TemplateTraits>
+template<typename ServerTraits, typename TemplateTraits>
 void testSeparateConnections() {
-  typedef ServiceState<ServerTraits, ChildServiceTraits<TemplateTraits> > State;
+  typedef ServiceState< ServerTraits, ChildServiceTraits<TemplateTraits> >
+    State;
 
   // Start the server
   boost::shared_ptr<State> state(new State);
@@ -656,19 +673,20 @@ void testSeparateConnections() {
   // Make a call, and check for the proper events
   int32_t value = 5;
   client1->setValue(value);
-  uint32_t call1
-      = checkCallEvents(log, client1Id, EventLog::ET_CALL_SET_VALUE, "ChildService.setValue");
+  uint32_t call1 = checkCallEvents(log, client1Id, EventLog::ET_CALL_SET_VALUE,
+                                     "ChildService.setValue");
 
   // Make a call with client2
   int32_t v = client2->getValue();
   BOOST_CHECK_EQUAL(value, v);
-  checkCallEvents(log, client2Id, EventLog::ET_CALL_GET_VALUE, "ChildService.getValue");
+  checkCallEvents(log, client2Id, EventLog::ET_CALL_GET_VALUE,
+                  "ChildService.getValue");
 
   // Make another call with client1
   v = client1->getValue();
   BOOST_CHECK_EQUAL(value, v);
-  uint32_t call2
-      = checkCallEvents(log, client1Id, EventLog::ET_CALL_GET_VALUE, "ChildService.getValue");
+  uint32_t call2 = checkCallEvents(log, client1Id, EventLog::ET_CALL_GET_VALUE,
+                                     "ChildService.getValue");
   BOOST_CHECK_NE(call1, call2);
 
   // Close the second client, and check for the appropriate events
@@ -676,9 +694,10 @@ void testSeparateConnections() {
   checkCloseEvents(log, client2Id);
 }
 
-template <typename ServerTraits, typename TemplateTraits>
+template<typename ServerTraits, typename TemplateTraits>
 void testOnewayCall() {
-  typedef ServiceState<ServerTraits, ChildServiceTraits<TemplateTraits> > State;
+  typedef ServiceState< ServerTraits, ChildServiceTraits<TemplateTraits> >
+    State;
 
   // Start the server
   boost::shared_ptr<State> state(new State);
@@ -696,7 +715,9 @@ void testOnewayCall() {
   state->getHandler()->prepareTriggeredCall();
   client->onewayWait();
   string callName = "ParentService.onewayWait";
-  uint32_t callId = checkCallHandlerEvents(log, connId, EventLog::ET_CALL_ONEWAY_WAIT, callName);
+  uint32_t callId = checkCallHandlerEvents(log, connId,
+                                           EventLog::ET_CALL_ONEWAY_WAIT,
+                                           callName);
 
   // There shouldn't be any more events
   checkNoEvents(log);
@@ -728,9 +749,10 @@ void testOnewayCall() {
   checkNoEvents(log);
 }
 
-template <typename ServerTraits, typename TemplateTraits>
+template<typename ServerTraits, typename TemplateTraits>
 void testExpectedError() {
-  typedef ServiceState<ServerTraits, ChildServiceTraits<TemplateTraits> > State;
+  typedef ServiceState< ServerTraits, ChildServiceTraits<TemplateTraits> >
+    State;
 
   // Start the server
   boost::shared_ptr<State> state(new State);
@@ -747,7 +769,9 @@ void testExpectedError() {
   string message = "test 1234 test";
   client->send_exceptionWait(message);
   string callName = "ParentService.exceptionWait";
-  uint32_t callId = checkCallHandlerEvents(log, connId, EventLog::ET_CALL_EXCEPTION_WAIT, callName);
+  uint32_t callId = checkCallHandlerEvents(log, connId,
+                                           EventLog::ET_CALL_EXCEPTION_WAIT,
+                                           callName);
 
   // There shouldn't be any more events
   checkNoEvents(log);
@@ -780,9 +804,10 @@ void testExpectedError() {
   checkNoEvents(log);
 }
 
-template <typename ServerTraits, typename TemplateTraits>
+template<typename ServerTraits, typename TemplateTraits>
 void testUnexpectedError() {
-  typedef ServiceState<ServerTraits, ChildServiceTraits<TemplateTraits> > State;
+  typedef ServiceState< ServerTraits, ChildServiceTraits<TemplateTraits> >
+    State;
 
   // Start the server
   boost::shared_ptr<State> state(new State);
@@ -799,8 +824,8 @@ void testUnexpectedError() {
   string message = "1234 test 5678";
   client->send_unexpectedExceptionWait(message);
   string callName = "ParentService.unexpectedExceptionWait";
-  uint32_t callId
-      = checkCallHandlerEvents(log, connId, EventLog::ET_CALL_UNEXPECTED_EXCEPTION_WAIT, callName);
+  uint32_t callId = checkCallHandlerEvents(
+      log, connId, EventLog::ET_CALL_UNEXPECTED_EXCEPTION_WAIT, callName);
 
   // There shouldn't be any more events
   checkNoEvents(log);
@@ -846,46 +871,47 @@ void testUnexpectedError() {
   checkNoEvents(log);
 }
 
+
 // Macro to define simple tests that can be used with all server types
-#define DEFINE_SIMPLE_TESTS(Server, Template)                                                      \
-  BOOST_AUTO_TEST_CASE(Server##_##Template##_basicService) {                                       \
-    testBasicService<Server##Traits, Template##Traits>();                                          \
-  }                                                                                                \
-  BOOST_AUTO_TEST_CASE(Server##_##Template##_inheritedService) {                                   \
-    testInheritedService<Server##Traits, Template##Traits>();                                      \
-  }                                                                                                \
-  BOOST_AUTO_TEST_CASE(Server##_##Template##_oneway) {                                             \
-    testOnewayCall<Server##Traits, Template##Traits>();                                            \
-  }                                                                                                \
-  BOOST_AUTO_TEST_CASE(Server##_##Template##_exception) {                                          \
-    testExpectedError<Server##Traits, Template##Traits>();                                         \
-  }                                                                                                \
-  BOOST_AUTO_TEST_CASE(Server##_##Template##_unexpectedException) {                                \
-    testUnexpectedError<Server##Traits, Template##Traits>();                                       \
+#define DEFINE_SIMPLE_TESTS(Server, Template) \
+  BOOST_AUTO_TEST_CASE(Server##_##Template##_basicService) { \
+    testBasicService<Server##Traits, Template##Traits>(); \
+  } \
+  BOOST_AUTO_TEST_CASE(Server##_##Template##_inheritedService) { \
+    testInheritedService<Server##Traits, Template##Traits>(); \
+  } \
+  BOOST_AUTO_TEST_CASE(Server##_##Template##_oneway) { \
+    testOnewayCall<Server##Traits, Template##Traits>(); \
+  } \
+  BOOST_AUTO_TEST_CASE(Server##_##Template##_exception) { \
+    testExpectedError<Server##Traits, Template##Traits>(); \
+  } \
+  BOOST_AUTO_TEST_CASE(Server##_##Template##_unexpectedException) { \
+    testUnexpectedError<Server##Traits, Template##Traits>(); \
   }
 
 // Tests that require the server to process multiple connections concurrently
 // (i.e., not TSimpleServer)
-#define DEFINE_CONCURRENT_SERVER_TESTS(Server, Template)                                           \
-  BOOST_AUTO_TEST_CASE(Server##_##Template##_separateConnections) {                                \
-    testSeparateConnections<Server##Traits, Template##Traits>();                                   \
+#define DEFINE_CONCURRENT_SERVER_TESTS(Server, Template) \
+  BOOST_AUTO_TEST_CASE(Server##_##Template##_separateConnections) { \
+    testSeparateConnections<Server##Traits, Template##Traits>(); \
   }
 
 // The testEventSequencing() test manually generates a request for the server,
 // and doesn't work with TFramedTransport.  Therefore we can't test it with
 // TNonblockingServer.
-#define DEFINE_NOFRAME_TESTS(Server, Template)                                                     \
-  BOOST_AUTO_TEST_CASE(Server##_##Template##_eventSequencing) {                                    \
-    testEventSequencing<Server##Traits, Template##Traits>();                                       \
+#define DEFINE_NOFRAME_TESTS(Server, Template) \
+  BOOST_AUTO_TEST_CASE(Server##_##Template##_eventSequencing) { \
+    testEventSequencing<Server##Traits, Template##Traits>(); \
   }
 
-#define DEFINE_TNONBLOCKINGSERVER_TESTS(Server, Template)                                          \
-  DEFINE_SIMPLE_TESTS(Server, Template)                                                            \
+#define DEFINE_TNONBLOCKINGSERVER_TESTS(Server, Template) \
+  DEFINE_SIMPLE_TESTS(Server, Template) \
   DEFINE_CONCURRENT_SERVER_TESTS(Server, Template)
 
-#define DEFINE_ALL_SERVER_TESTS(Server, Template)                                                  \
-  DEFINE_SIMPLE_TESTS(Server, Template)                                                            \
-  DEFINE_CONCURRENT_SERVER_TESTS(Server, Template)                                                 \
+#define DEFINE_ALL_SERVER_TESTS(Server, Template) \
+  DEFINE_SIMPLE_TESTS(Server, Template) \
+  DEFINE_CONCURRENT_SERVER_TESTS(Server, Template) \
   DEFINE_NOFRAME_TESTS(Server, Template)
 
 DEFINE_ALL_SERVER_TESTS(TThreadedServer, Templated)

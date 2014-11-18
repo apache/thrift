@@ -25,10 +25,13 @@
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TFDTransport;
 
-class DummyException : std::exception {};
+class DummyException : std::exception {
+};
 
 int main() {
-  { TFDTransport t(256, TFDTransport::NO_CLOSE_ON_DESTROY); }
+  {
+    TFDTransport t(256, TFDTransport::NO_CLOSE_ON_DESTROY);
+  }
 
   try {
     {
@@ -53,4 +56,5 @@ int main() {
   }
 
   return 0;
+
 }

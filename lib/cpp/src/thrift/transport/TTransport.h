@@ -25,22 +25,21 @@
 #include <thrift/transport/TTransportException.h>
 #include <string>
 
-namespace apache {
-namespace thrift {
-namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 /**
  * Helper template to hoist readAll implementation out of TTransport
  */
 template <class Transport_>
-uint32_t readAll(Transport_& trans, uint8_t* buf, uint32_t len) {
+uint32_t readAll(Transport_ &trans, uint8_t* buf, uint32_t len) {
   uint32_t have = 0;
   uint32_t get = 0;
 
   while (have < len) {
-    get = trans.read(buf + have, len - have);
+    get = trans.read(buf+have, len-have);
     if (get <= 0) {
-      throw TTransportException(TTransportException::END_OF_FILE, "No more data to read.");
+      throw TTransportException(TTransportException::END_OF_FILE,
+                                "No more data to read.");
     }
     have += get;
   }
@@ -48,13 +47,14 @@ uint32_t readAll(Transport_& trans, uint8_t* buf, uint32_t len) {
   return have;
 }
 
+
 /**
  * Generic interface for a method of transporting data. A TTransport may be
  * capable of either reading or writing, but not necessarily both.
  *
  */
 class TTransport {
-public:
+ public:
   /**
    * Virtual deconstructor.
    */
@@ -63,7 +63,9 @@ public:
   /**
    * Whether this transport is open.
    */
-  virtual bool isOpen() { return false; }
+  virtual bool isOpen() {
+    return false;
+  }
 
   /**
    * Tests whether there is more data to read or if the remote side is
@@ -73,7 +75,9 @@ public:
    * This is used by a server to check if it should listen for another
    * request.
    */
-  virtual bool peek() { return isOpen(); }
+  virtual bool peek() {
+    return isOpen();
+  }
 
   /**
    * Opens the transport for communications.
@@ -105,7 +109,8 @@ public:
     return read_virt(buf, len);
   }
   virtual uint32_t read_virt(uint8_t* /* buf */, uint32_t /* len */) {
-    throw TTransportException(TTransportException::NOT_OPEN, "Base TTransport cannot read.");
+    throw TTransportException(TTransportException::NOT_OPEN,
+                              "Base TTransport cannot read.");
   }
 
   /**
@@ -153,7 +158,8 @@ public:
     write_virt(buf, len);
   }
   virtual void write_virt(const uint8_t* /* buf */, uint32_t /* len */) {
-    throw TTransportException(TTransportException::NOT_OPEN, "Base TTransport cannot write.");
+    throw TTransportException(TTransportException::NOT_OPEN,
+                              "Base TTransport cannot write.");
   }
 
   /**
@@ -209,7 +215,9 @@ public:
     T_VIRTUAL_CALL();
     return borrow_virt(buf, len);
   }
-  virtual const uint8_t* borrow_virt(uint8_t* /* buf */, uint32_t* /* len */) { return NULL; }
+  virtual const uint8_t* borrow_virt(uint8_t* /* buf */, uint32_t* /* len */) {
+    return NULL;
+  }
 
   /**
    * Remove len bytes from the transport.  This should always follow a borrow
@@ -225,7 +233,8 @@ public:
     consume_virt(len);
   }
   virtual void consume_virt(uint32_t /* len */) {
-    throw TTransportException(TTransportException::NOT_OPEN, "Base TTransport cannot consume.");
+    throw TTransportException(TTransportException::NOT_OPEN,
+                              "Base TTransport cannot consume.");
   }
 
   /**
@@ -236,9 +245,11 @@ public:
    *
    * The returned value can be used in a log message for example
    */
-  virtual const std::string getOrigin() { return "Unknown"; }
+  virtual const std::string getOrigin() {
+    return "Unknown";
+  }
 
-protected:
+ protected:
   /**
    * Simple constructor.
    */
@@ -252,7 +263,7 @@ protected:
  *
  */
 class TTransportFactory {
-public:
+ public:
   TTransportFactory() {}
 
   virtual ~TTransportFactory() {}
@@ -263,9 +274,9 @@ public:
   virtual boost::shared_ptr<TTransport> getTransport(boost::shared_ptr<TTransport> trans) {
     return trans;
   }
+
 };
-}
-}
-} // apache::thrift::transport
+
+}}} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TTRANSPORT_H_

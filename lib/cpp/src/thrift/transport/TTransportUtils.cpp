@@ -21,40 +21,39 @@
 
 using std::string;
 
-namespace apache {
-namespace thrift {
-namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 uint32_t TPipedTransport::read(uint8_t* buf, uint32_t len) {
   uint32_t need = len;
 
   // We don't have enough data yet
-  if (rLen_ - rPos_ < need) {
+  if (rLen_-rPos_ < need) {
     // Copy out whatever we have
-    if (rLen_ - rPos_ > 0) {
-      memcpy(buf, rBuf_ + rPos_, rLen_ - rPos_);
-      need -= rLen_ - rPos_;
-      buf += rLen_ - rPos_;
+    if (rLen_-rPos_ > 0) {
+      memcpy(buf, rBuf_+rPos_, rLen_-rPos_);
+      need -= rLen_-rPos_;
+      buf += rLen_-rPos_;
       rPos_ = rLen_;
     }
 
     // Double the size of the underlying buffer if it is full
     if (rLen_ == rBufSize_) {
-      rBufSize_ *= 2;
-      rBuf_ = (uint8_t*)std::realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
+      rBufSize_ *=2;
+      rBuf_ = (uint8_t *)std::realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
     }
 
     // try to fill up the buffer
-    rLen_ += srcTrans_->read(rBuf_ + rPos_, rBufSize_ - rPos_);
+    rLen_ += srcTrans_->read(rBuf_+rPos_, rBufSize_ - rPos_);
   }
+
 
   // Hand over whatever we have
   uint32_t give = need;
-  if (rLen_ - rPos_ < give) {
-    give = rLen_ - rPos_;
+  if (rLen_-rPos_ < give) {
+    give = rLen_-rPos_;
   }
   if (give > 0) {
-    memcpy(buf, rBuf_ + rPos_, give);
+    memcpy(buf, rBuf_+rPos_, give);
     rPos_ += give;
     need -= give;
   }
@@ -69,11 +68,11 @@ void TPipedTransport::write(const uint8_t* buf, uint32_t len) {
 
   // Make the buffer as big as it needs to be
   if ((len + wLen_) >= wBufSize_) {
-    uint32_t newBufSize = wBufSize_ * 2;
+    uint32_t newBufSize = wBufSize_*2;
     while ((len + wLen_) >= newBufSize) {
       newBufSize *= 2;
     }
-    wBuf_ = (uint8_t*)std::realloc(wBuf_, sizeof(uint8_t) * newBufSize);
+    wBuf_ = (uint8_t *)std::realloc(wBuf_, sizeof(uint8_t) * newBufSize);
     wBufSize_ = newBufSize;
   }
 
@@ -82,7 +81,7 @@ void TPipedTransport::write(const uint8_t* buf, uint32_t len) {
   wLen_ += len;
 }
 
-void TPipedTransport::flush() {
+void TPipedTransport::flush()  {
   // Write out any data waiting in the write buffer
   if (wLen_ > 0) {
     srcTrans_->write(wBuf_, wLen_);
@@ -93,10 +92,9 @@ void TPipedTransport::flush() {
   srcTrans_->flush();
 }
 
-TPipedFileReaderTransport::TPipedFileReaderTransport(
-    boost::shared_ptr<TFileReaderTransport> srcTrans,
-    boost::shared_ptr<TTransport> dstTrans)
-  : TPipedTransport(srcTrans, dstTrans), srcTrans_(srcTrans) {
+TPipedFileReaderTransport::TPipedFileReaderTransport(boost::shared_ptr<TFileReaderTransport> srcTrans, boost::shared_ptr<TTransport> dstTrans)
+  : TPipedTransport(srcTrans, dstTrans),
+    srcTrans_(srcTrans) {
 }
 
 TPipedFileReaderTransport::~TPipedFileReaderTransport() {
@@ -127,7 +125,7 @@ uint32_t TPipedFileReaderTransport::readAll(uint8_t* buf, uint32_t len) {
   uint32_t get = 0;
 
   while (have < len) {
-    get = read(buf + have, len - have);
+    get = read(buf+have, len-have);
     if (get <= 0) {
       throw TEOFException();
     }
@@ -176,6 +174,5 @@ void TPipedFileReaderTransport::seekToChunk(int32_t chunk) {
 void TPipedFileReaderTransport::seekToEnd() {
   srcTrans_->seekToEnd();
 }
-}
-}
-} // apache::thrift::transport
+
+}}} // apache::thrift::transport

@@ -23,17 +23,15 @@
 #include <vector>
 #include <thrift/transport/TSocket.h>
 
-namespace apache {
-namespace thrift {
-namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
-/**
- * Class to hold server information for TSocketPool
- *
- */
+ /**
+  * Class to hold server information for TSocketPool
+  *
+  */
 class TSocketPoolServer {
 
-public:
+  public:
   /**
    * Default constructor for server info
    */
@@ -42,7 +40,7 @@ public:
   /**
    * Constructor for TSocketPool server
    */
-  TSocketPoolServer(const std::string& host, int port);
+  TSocketPoolServer(const std::string &host, int port);
 
   // Host name
   std::string host_;
@@ -66,130 +64,133 @@ public:
  */
 class TSocketPool : public TSocket {
 
-public:
-  /**
-   * Socket pool constructor
-   */
-  TSocketPool();
+ public:
 
-  /**
-   * Socket pool constructor
-   *
-   * @param hosts list of host names
-   * @param ports list of port names
-   */
-  TSocketPool(const std::vector<std::string>& hosts, const std::vector<int>& ports);
+   /**
+    * Socket pool constructor
+    */
+   TSocketPool();
 
-  /**
-   * Socket pool constructor
-   *
-   * @param servers list of pairs of host name and port
-   */
-  TSocketPool(const std::vector<std::pair<std::string, int> >& servers);
+   /**
+    * Socket pool constructor
+    *
+    * @param hosts list of host names
+    * @param ports list of port names
+    */
+   TSocketPool(const std::vector<std::string> &hosts,
+               const std::vector<int> &ports);
 
-  /**
-   * Socket pool constructor
-   *
-   * @param servers list of TSocketPoolServers
-   */
-  TSocketPool(const std::vector<boost::shared_ptr<TSocketPoolServer> >& servers);
+   /**
+    * Socket pool constructor
+    *
+    * @param servers list of pairs of host name and port
+    */
+   TSocketPool(const std::vector<std::pair<std::string, int> >& servers);
 
-  /**
-   * Socket pool constructor
-   *
-   * @param host single host
-   * @param port single port
-   */
-  TSocketPool(const std::string& host, int port);
+   /**
+    * Socket pool constructor
+    *
+    * @param servers list of TSocketPoolServers
+    */
+  TSocketPool(const std::vector< boost::shared_ptr<TSocketPoolServer> >& servers);
 
-  /**
-   * Destroyes the socket object, closing it if necessary.
-   */
-  virtual ~TSocketPool();
+   /**
+    * Socket pool constructor
+    *
+    * @param host single host
+    * @param port single port
+    */
+   TSocketPool(const std::string& host, int port);
 
-  /**
-   * Add a server to the pool
-   */
-  void addServer(const std::string& host, int port);
+   /**
+    * Destroyes the socket object, closing it if necessary.
+    */
+   virtual ~TSocketPool();
 
-  /**
-   * Add a server to the pool
-   */
-  void addServer(boost::shared_ptr<TSocketPoolServer>& server);
+   /**
+    * Add a server to the pool
+    */
+   void addServer(const std::string& host, int port);
 
-  /**
-   * Set list of servers in this pool
-   */
-  void setServers(const std::vector<boost::shared_ptr<TSocketPoolServer> >& servers);
+   /**
+    * Add a server to the pool
+    */
+  void addServer(boost::shared_ptr<TSocketPoolServer> &server);
 
-  /**
-   * Get list of servers in this pool
-   */
-  void getServers(std::vector<boost::shared_ptr<TSocketPoolServer> >& servers);
+   /**
+    * Set list of servers in this pool
+    */
+  void setServers(const std::vector< boost::shared_ptr<TSocketPoolServer> >& servers);
 
-  /**
-   * Sets how many times to keep retrying a host in the connect function.
-   */
-  void setNumRetries(int numRetries);
+   /**
+    * Get list of servers in this pool
+    */
+  void getServers(std::vector< boost::shared_ptr<TSocketPoolServer> >& servers);
 
-  /**
-   * Sets how long to wait until retrying a host if it was marked down
-   */
-  void setRetryInterval(int retryInterval);
+   /**
+    * Sets how many times to keep retrying a host in the connect function.
+    */
+   void setNumRetries(int numRetries);
 
-  /**
-   * Sets how many times to keep retrying a host before marking it as down.
-   */
-  void setMaxConsecutiveFailures(int maxConsecutiveFailures);
+   /**
+    * Sets how long to wait until retrying a host if it was marked down
+    */
+   void setRetryInterval(int retryInterval);
 
-  /**
-   * Turns randomization in connect order on or off.
-   */
-  void setRandomize(bool randomize);
+   /**
+    * Sets how many times to keep retrying a host before marking it as down.
+    */
+   void setMaxConsecutiveFailures(int maxConsecutiveFailures);
 
-  /**
-   * Whether to always try the last server.
-   */
-  void setAlwaysTryLast(bool alwaysTryLast);
+   /**
+    * Turns randomization in connect order on or off.
+    */
+   void setRandomize(bool randomize);
 
-  /**
-   * Creates and opens the UNIX socket.
-   */
-  void open();
+   /**
+    * Whether to always try the last server.
+    */
+   void setAlwaysTryLast(bool alwaysTryLast);
 
-  /*
-   * Closes the UNIX socket
-   */
-  void close();
+   /**
+    * Creates and opens the UNIX socket.
+    */
+   void open();
 
-protected:
-  void setCurrentServer(const boost::shared_ptr<TSocketPoolServer>& server);
+   /*
+    * Closes the UNIX socket
+    */
+   void close();
 
-  /** List of servers to connect to */
-  std::vector<boost::shared_ptr<TSocketPoolServer> > servers_;
+ protected:
+
+  void setCurrentServer(const boost::shared_ptr<TSocketPoolServer> &server);
+
+   /** List of servers to connect to */
+  std::vector< boost::shared_ptr<TSocketPoolServer> > servers_;
 
   /** Current server */
   boost::shared_ptr<TSocketPoolServer> currentServer_;
 
-  /** How many times to retry each host in connect */
-  int numRetries_;
+   /** How many times to retry each host in connect */
+   int numRetries_;
 
-  /** Retry interval in seconds, how long to not try a host if it has been
-   * marked as down.
-   */
-  time_t retryInterval_;
+   /** Retry interval in seconds, how long to not try a host if it has been
+    * marked as down.
+    */
+   time_t retryInterval_;
 
-  /** Max consecutive failures before marking a host down. */
-  int maxConsecutiveFailures_;
+   /** Max consecutive failures before marking a host down. */
+   int maxConsecutiveFailures_;
 
-  /** Try hosts in order? or Randomized? */
-  bool randomize_;
+   /** Try hosts in order? or Randomized? */
+   bool randomize_;
 
-  /** Always try last host, even if marked down? */
-  bool alwaysTryLast_;
+   /** Always try last host, even if marked down? */
+   bool alwaysTryLast_;
 };
-}
-}
-} // apache::thrift::transport
+
+}}} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TSOCKETPOOL_H_
+

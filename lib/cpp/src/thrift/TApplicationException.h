@@ -22,15 +22,16 @@
 
 #include <thrift/Thrift.h>
 
-namespace apache {
-namespace thrift {
+
+namespace apache { namespace thrift {
 
 namespace protocol {
-class TProtocol;
+  class TProtocol;
 }
 
 class TApplicationException : public TException {
-public:
+ public:
+
   /**
    * Error codes for the various types of exceptions.
    */
@@ -48,14 +49,22 @@ public:
     UNSUPPORTED_CLIENT_TYPE = 10
   };
 
-  TApplicationException() : TException(), type_(UNKNOWN) {}
+  TApplicationException() :
+    TException(),
+    type_(UNKNOWN) {}
 
-  TApplicationException(TApplicationExceptionType type) : TException(), type_(type) {}
+  TApplicationException(TApplicationExceptionType type) :
+    TException(),
+    type_(type) {}
 
-  TApplicationException(const std::string& message) : TException(message), type_(UNKNOWN) {}
+  TApplicationException(const std::string& message) :
+    TException(message),
+    type_(UNKNOWN) {}
 
-  TApplicationException(TApplicationExceptionType type, const std::string& message)
-    : TException(message), type_(type) {}
+  TApplicationException(TApplicationExceptionType type,
+                        const std::string& message) :
+    TException(message),
+    type_(type) {}
 
   virtual ~TApplicationException() throw() {}
 
@@ -65,35 +74,25 @@ public:
    *
    * @return Error code
    */
-  TApplicationExceptionType getType() { return type_; }
+  TApplicationExceptionType getType() {
+    return type_;
+  }
 
   virtual const char* what() const throw() {
     if (message_.empty()) {
       switch (type_) {
-      case UNKNOWN:
-        return "TApplicationException: Unknown application exception";
-      case UNKNOWN_METHOD:
-        return "TApplicationException: Unknown method";
-      case INVALID_MESSAGE_TYPE:
-        return "TApplicationException: Invalid message type";
-      case WRONG_METHOD_NAME:
-        return "TApplicationException: Wrong method name";
-      case BAD_SEQUENCE_ID:
-        return "TApplicationException: Bad sequence identifier";
-      case MISSING_RESULT:
-        return "TApplicationException: Missing result";
-      case INTERNAL_ERROR:
-        return "TApplicationException: Internal error";
-      case PROTOCOL_ERROR:
-        return "TApplicationException: Protocol error";
-      case INVALID_TRANSFORM:
-        return "TApplicationException: Invalid transform";
-      case INVALID_PROTOCOL:
-        return "TApplicationException: Invalid protocol";
-      case UNSUPPORTED_CLIENT_TYPE:
-        return "TApplicationException: Unsupported client type";
-      default:
-        return "TApplicationException: (Invalid exception type)";
+        case UNKNOWN                 : return "TApplicationException: Unknown application exception";
+        case UNKNOWN_METHOD          : return "TApplicationException: Unknown method";
+        case INVALID_MESSAGE_TYPE    : return "TApplicationException: Invalid message type";
+        case WRONG_METHOD_NAME       : return "TApplicationException: Wrong method name";
+        case BAD_SEQUENCE_ID         : return "TApplicationException: Bad sequence identifier";
+        case MISSING_RESULT          : return "TApplicationException: Missing result";
+        case INTERNAL_ERROR          : return "TApplicationException: Internal error";
+        case PROTOCOL_ERROR          : return "TApplicationException: Protocol error";
+        case INVALID_TRANSFORM       : return "TApplicationException: Invalid transform";
+        case INVALID_PROTOCOL        : return "TApplicationException: Invalid protocol";
+        case UNSUPPORTED_CLIENT_TYPE : return "TApplicationException: Unsupported client type";
+        default                      : return "TApplicationException: (Invalid exception type)";
       };
     } else {
       return message_.c_str();
@@ -103,13 +102,14 @@ public:
   uint32_t read(protocol::TProtocol* iprot);
   uint32_t write(protocol::TProtocol* oprot) const;
 
-protected:
+ protected:
   /**
    * Error code
    */
   TApplicationExceptionType type_;
+
 };
-}
-} // apache::thrift
+
+}} // apache::thrift
 
 #endif // #ifndef _THRIFT_TAPPLICATIONEXCEPTION_H_

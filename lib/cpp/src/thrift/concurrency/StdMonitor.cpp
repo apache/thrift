@@ -30,9 +30,7 @@
 #include <thread>
 #include <mutex>
 
-namespace apache {
-namespace thrift {
-namespace concurrency {
+namespace apache { namespace thrift { namespace concurrency {
 
 /**
  * Monitor implementation using the std thread library
@@ -41,12 +39,26 @@ namespace concurrency {
  */
 class Monitor::Impl {
 
-public:
-  Impl() : ownedMutex_(new Mutex()), conditionVariable_(), mutex_(NULL) { init(ownedMutex_.get()); }
+ public:
 
-  Impl(Mutex* mutex) : ownedMutex_(), conditionVariable_(), mutex_(NULL) { init(mutex); }
+  Impl()
+     : ownedMutex_(new Mutex()),
+       conditionVariable_(),
+       mutex_(NULL) {
+    init(ownedMutex_.get());
+  }
 
-  Impl(Monitor* monitor) : ownedMutex_(), conditionVariable_(), mutex_(NULL) {
+  Impl(Mutex* mutex)
+     : ownedMutex_(),
+       conditionVariable_(),
+       mutex_(NULL) {
+    init(mutex);
+  }
+
+  Impl(Monitor* monitor)
+     : ownedMutex_(),
+       conditionVariable_(),
+       mutex_(NULL) {
     init(&(monitor->mutex()));
   }
 
@@ -66,7 +78,8 @@ public:
     if (result == THRIFT_ETIMEDOUT) {
       throw TimedOutException();
     } else if (result != 0) {
-      throw TException("Monitor::wait() failed");
+      throw TException(
+        "Monitor::wait() failed");
     }
   }
 
@@ -82,12 +95,12 @@ public:
     }
 
     assert(mutex_);
-    std::timed_mutex* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
+    std::timed_mutex* mutexImpl =
+      static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
     std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
-    bool timedout = (conditionVariable_.wait_for(lock, std::chrono::milliseconds(timeout_ms))
-                     == std::cv_status::timeout);
+    bool timedout = (conditionVariable_.wait_for(lock, std::chrono::milliseconds(timeout_ms)) == std::cv_status::timeout);
     lock.release();
     return (timedout ? THRIFT_ETIMEDOUT : 0);
   }
@@ -98,7 +111,7 @@ public:
    */
   int waitForTime(const THRIFT_TIMESPEC* abstime) {
     struct timeval temp;
-    temp.tv_sec = static_cast<long>(abstime->tv_sec);
+    temp.tv_sec  = static_cast<long>(abstime->tv_sec);
     temp.tv_usec = static_cast<long>(abstime->tv_nsec) / 1000;
     return waitForTime(&temp);
   }
@@ -109,24 +122,24 @@ public:
    */
   int waitForTime(const struct timeval* abstime) {
     assert(mutex_);
-    std::timed_mutex* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
+    std::timed_mutex* mutexImpl =
+      static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
     struct timeval currenttime;
     Util::toTimeval(currenttime, Util::currentTime());
 
-    long tv_sec = static_cast<long>(abstime->tv_sec - currenttime.tv_sec);
+    long tv_sec  = static_cast<long>(abstime->tv_sec  - currenttime.tv_sec);
     long tv_usec = static_cast<long>(abstime->tv_usec - currenttime.tv_usec);
-    if (tv_sec < 0)
+    if(tv_sec < 0)
       tv_sec = 0;
-    if (tv_usec < 0)
+    if(tv_usec < 0)
       tv_usec = 0;
 
     std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
     bool timedout = (conditionVariable_.wait_for(lock,
-                                                 std::chrono::seconds(tv_sec)
-                                                 + std::chrono::microseconds(tv_usec))
-                     == std::cv_status::timeout);
+      std::chrono::seconds(tv_sec) +
+      std::chrono::microseconds(tv_usec)) == std::cv_status::timeout);
     lock.release();
     return (timedout ? THRIFT_ETIMEDOUT : 0);
   }
@@ -137,7 +150,8 @@ public:
    */
   int waitForever() {
     assert(mutex_);
-    std::timed_mutex* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
+    std::timed_mutex* mutexImpl =
+      static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
     std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
@@ -146,44 +160,39 @@ public:
     return 0;
   }
 
-  void notify() { conditionVariable_.notify_one(); }
 
-  void notifyAll() { conditionVariable_.notify_all(); }
+  void notify() {
+    conditionVariable_.notify_one();
+  }
 
-private:
-  void init(Mutex* mutex) { mutex_ = mutex; }
+  void notifyAll() {
+    conditionVariable_.notify_all();
+  }
+
+ private:
+
+  void init(Mutex* mutex) {
+    mutex_ = mutex;
+  }
 
   const std::unique_ptr<Mutex> ownedMutex_;
   std::condition_variable_any conditionVariable_;
   Mutex* mutex_;
 };
 
-Monitor::Monitor() : impl_(new Monitor::Impl()) {
-}
-Monitor::Monitor(Mutex* mutex) : impl_(new Monitor::Impl(mutex)) {
-}
-Monitor::Monitor(Monitor* monitor) : impl_(new Monitor::Impl(monitor)) {
-}
+Monitor::Monitor() : impl_(new Monitor::Impl()) {}
+Monitor::Monitor(Mutex* mutex) : impl_(new Monitor::Impl(mutex)) {}
+Monitor::Monitor(Monitor* monitor) : impl_(new Monitor::Impl(monitor)) {}
 
-Monitor::~Monitor() {
-  delete impl_;
-}
+Monitor::~Monitor() { delete impl_; }
 
-Mutex& Monitor::mutex() const {
-  return const_cast<Monitor::Impl*>(impl_)->mutex();
-}
+Mutex& Monitor::mutex() const { return const_cast<Monitor::Impl*>(impl_)->mutex(); }
 
-void Monitor::lock() const {
-  const_cast<Monitor::Impl*>(impl_)->lock();
-}
+void Monitor::lock() const { const_cast<Monitor::Impl*>(impl_)->lock(); }
 
-void Monitor::unlock() const {
-  const_cast<Monitor::Impl*>(impl_)->unlock();
-}
+void Monitor::unlock() const { const_cast<Monitor::Impl*>(impl_)->unlock(); }
 
-void Monitor::wait(int64_t timeout) const {
-  const_cast<Monitor::Impl*>(impl_)->wait(timeout);
-}
+void Monitor::wait(int64_t timeout) const { const_cast<Monitor::Impl*>(impl_)->wait(timeout); }
 
 int Monitor::waitForTime(const THRIFT_TIMESPEC* abstime) const {
   return const_cast<Monitor::Impl*>(impl_)->waitForTime(abstime);
@@ -201,13 +210,8 @@ int Monitor::waitForever() const {
   return const_cast<Monitor::Impl*>(impl_)->waitForever();
 }
 
-void Monitor::notify() const {
-  const_cast<Monitor::Impl*>(impl_)->notify();
-}
+void Monitor::notify() const { const_cast<Monitor::Impl*>(impl_)->notify(); }
 
-void Monitor::notifyAll() const {
-  const_cast<Monitor::Impl*>(impl_)->notifyAll();
-}
-}
-}
-} // apache::thrift::concurrency
+void Monitor::notifyAll() const { const_cast<Monitor::Impl*>(impl_)->notifyAll(); }
+
+}}} // apache::thrift::concurrency
