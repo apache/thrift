@@ -59,6 +59,9 @@ class TSSLSocket(TSocket.TSocket):
     @type keyfile: str
     @param certfile: The cert file
     @type certfile: str
+    @param ciphers: The cipher suites to allow. This is passed to
+                    the ssl_wrap function as the 'ciphers' parameter.
+    @type ciphers: str
     
     Raises an IOError exception if validate is True and the ca_certs file is
     None, not present or unreadable.
@@ -170,7 +173,8 @@ class TSSLServerSocket(TSocket.TServerSocket):
                host=None,
                port=9090,
                certfile='cert.pem',
-               unix_socket=None):
+               unix_socket=None,
+               ciphers=None):
     """Initialize a TSSLServerSocket
 
     @param certfile: filename of the server certificate, defaults to cert.pem
@@ -181,9 +185,14 @@ class TSSLServerSocket(TSocket.TServerSocket):
     @type host: str
     @param port: The port to listen on for inbound connections.
     @type port: int
+    @param ciphers: The cipher suites to allow. This is passed to
+                    the ssl_wrap function as the 'ciphers' parameter.
+    @type ciphers: str
+
     """
     self.setCertfile(certfile)
     TSocket.TServerSocket.__init__(self, host, port)
+    self.ciphers = ciphers
 
   def setCertfile(self, certfile):
     """Set or change the server certificate file used to wrap new connections.
@@ -202,7 +211,8 @@ class TSSLServerSocket(TSocket.TServerSocket):
     plain_client, addr = self.handle.accept()
     try:
       client = ssl.wrap_socket(plain_client, certfile=self.certfile,
-                      server_side=True, ssl_version=self.SSL_VERSION)
+                      server_side=True, ssl_version=self.SSL_VERSION,
+                      ciphers=self.ciphers)
     except ssl.SSLError, ssl_exc:
       # failed handshake/ssl wrap, close socket to client
       plain_client.close()
