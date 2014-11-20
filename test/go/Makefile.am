@@ -25,6 +25,7 @@ all: bin/testclient bin/testserver bin/stress
 
 ThriftTest.thrift: $(THRIFTTEST)
 	grep -v list.*map.*list.*map $(THRIFTTEST) > ThriftTest.thrift
+	cat THRIFT-2793.thrift >> ThriftTest.thrift
 
 # Thrift for GO has problems with complex map keys: THRIFT-2063
 gopath: $(THRIFT) ThriftTest.thrift
