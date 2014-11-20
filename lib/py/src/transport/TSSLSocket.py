@@ -45,7 +45,8 @@ class TSSLSocket(TSocket.TSocket):
                ca_certs=None,
                keyfile=None,
                certfile=None,
-               unix_socket=None):
+               unix_socket=None,
+               ciphers=None):
     """Create SSL TSocket
 
     @param validate: Set to False to disable SSL certificate validation
@@ -72,6 +73,7 @@ class TSSLSocket(TSocket.TSocket):
     self.ca_certs = ca_certs
     self.keyfile = keyfile
     self.certfile = certfile
+    self.ciphers = ciphers
     if validate:
       if ca_certs is None or not os.access(ca_certs, os.R_OK):
         raise IOError('Certificate Authority ca_certs file "%s" '
@@ -92,7 +94,8 @@ class TSSLSocket(TSocket.TSocket):
                                       ca_certs=self.ca_certs,
                                       keyfile=self.keyfile,
                                       certfile=self.certfile,
-                                      cert_reqs=self.cert_reqs)
+                                      cert_reqs=self.cert_reqs
+                                      ciphers=self.ciphers)
         self.handle.settimeout(self._timeout)
         try:
           self.handle.connect(ip_port)
