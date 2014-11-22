@@ -49,20 +49,7 @@ type
   end;
 
 
-
-function IfValue(B: Boolean; const TrueValue, FalseValue: WideString): string;
-
 implementation
-
-
-function IfValue(B: Boolean; const TrueValue, FalseValue: WideString): string;
-begin
-  if B then
-    Result := TrueValue
-  else
-    Result := FalseValue;
-end;
-
 
 { TOverlappedHelperImpl }
 
