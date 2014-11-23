@@ -340,9 +340,9 @@ class ClientsThread : Thread {
           if (trace_) writefln(`Calling delayedEcho("%s", 100 ms)...`, id);
           auto a = client.delayedEcho(id, 100);
           enforce(!a.completion.wait(dur!"usecs"(1)),
-            text("wait() succeded early (", a.get(), ", ", id, ")."));
+            text("wait() succeeded early (", a.get(), ", ", id, ")."));
           enforce(!a.completion.wait(dur!"usecs"(1)),
-            text("wait() succeded early (", a.get(), ", ", id, ")."));
+            text("wait() succeeded early (", a.get(), ", ", id, ")."));
           enforce(a.completion.wait(dur!"msecs"(200)),
             text("wait() didn't succeed as expected (", id, ")."));
           enforce(a.get() == id);
@@ -353,9 +353,9 @@ class ClientsThread : Thread {
           if (trace_) writefln(`Calling delayedFail("%s", 100 ms)... `, id);
           auto a = client.delayedFail(id, 100);
           enforce(!a.completion.wait(dur!"usecs"(1)),
-            text("wait() succeded early (", id, ", ", collectException(a.get()), ")."));
+            text("wait() succeeded early (", id, ", ", collectException(a.get()), ")."));
           enforce(!a.completion.wait(dur!"usecs"(1)),
-            text("wait() succeded early (", id, ", ", collectException(a.get()), ")."));
+            text("wait() succeeded early (", id, ", ", collectException(a.get()), ")."));
           enforce(a.completion.wait(dur!"msecs"(200)),
             text("wait() didn't succeed as expected (", id, ")."));
           auto e = cast(AsyncTestException)collectException(a.get());

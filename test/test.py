@@ -42,9 +42,9 @@ parser.add_option('-q', '--quiet', action="store_const",
     dest="verbose", const=0,
     help="minimal output")
 parser.add_option("--server", type="string", dest="servers", default="",
-    help="list of servers to test seperated by commas, eg:- --server=cpp,java")
+    help="list of servers to test separated by commas, eg:- --server=cpp,java")
 parser.add_option("--client", type="string", dest="clients", default="",
-    help="list of clients to test seperated by commas, eg:- --client=cpp,java")
+    help="list of clients to test separated by commas, eg:- --client=cpp,java")
 parser.set_defaults(verbose=1)
 options, args = parser.parse_args()
 

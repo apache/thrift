@@ -58,7 +58,7 @@ class TMultiplexedProcessor implements TProcessor
      * Args:
      * - serviceName    Name of a service, has to be identical to the name
      *                  declared in the Thrift IDL, e.g. "WeatherReport".
-     * - processor      Implementation of a service, ususally referred to as "handlers",
+     * - processor      Implementation of a service, usually referred to as "handlers",
      *                  e.g. WeatherReportHandler implementing WeatherReport.Iface.
      */
     public function RegisterProcessor(serviceName : String, processor : TProcessor, asDefault : Bool = false) : Void {

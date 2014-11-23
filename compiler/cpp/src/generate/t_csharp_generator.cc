@@ -691,7 +691,7 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream& out,
   if ((serialize_ || wcf_) && !is_exception) {
     indent(out) << "[DataContract(Namespace=\"" << wcf_namespace_ << "\")]"
                 << endl; // do not make exception classes directly WCF serializable, we provide a
-                         // seperate "fault" for that
+                         // separate "fault" for that
   }
   bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
 

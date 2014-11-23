@@ -716,7 +716,7 @@ int t_html_generator::print_type(t_type* ttype) {
  */
 void t_html_generator::print_const_value(t_type* type, t_const_value* tvalue) {
 
-  // if tvalue is an indentifier, the constant content is already shown elsewhere
+  // if tvalue is an identifier, the constant content is already shown elsewhere
   if (tvalue->get_type() == t_const_value::CV_IDENTIFIER) {
     string fname = program_->get_name() + ".html";
     string name = escape_html(tvalue->get_identifier());

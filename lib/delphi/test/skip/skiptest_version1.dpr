@@ -95,7 +95,7 @@ begin
     client := nil;  // not Free!
     cliRef := nil;
     stm.Free;
-    if client = nil then {warning supressed};
+    if client = nil then {warning suppressed};
   end;
 
   DeleteFile( fname+REQUEST_EXT);
@@ -122,7 +122,7 @@ begin
     client := nil;  // not Free!
     cliRef := nil;
     stm.Free;
-    if client = nil then {warning supressed};
+    if client = nil then {warning suppressed};
   end;
 end;
 
@@ -149,7 +149,7 @@ begin
     server := nil;  // not Free!
     stmIn.Free;
     stmOut.Free;
-    if server = nil then {warning supressed};
+    if server = nil then {warning suppressed};
   end;
 
   DeleteFile( fname+RESPONSE_EXT);

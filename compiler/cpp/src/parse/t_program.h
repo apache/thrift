@@ -135,11 +135,11 @@ public:
    * @return     true if a certain collision was found, otherwise false
    */
   bool is_unique_typename(t_type* t) {
-    int occurances = program_typename_count(this, t);
+    int occurrences = program_typename_count(this, t);
     for (std::vector<t_program*>::iterator it = includes_.begin(); it != includes_.end(); ++it) {
-      occurances += program_typename_count(*it, t);
+      occurrences += program_typename_count(*it, t);
     }
-    return 0 == occurances;
+    return 0 == occurrences;
   }
 
   /**
@@ -149,12 +149,12 @@ public:
    * @return     the number of certain typename collisions
    */
   int program_typename_count(t_program* prog, t_type* t) {
-    int occurances = 0;
-    occurances += collection_typename_count(prog, prog->typedefs_, t);
-    occurances += collection_typename_count(prog, prog->enums_, t);
-    occurances += collection_typename_count(prog, prog->objects_, t);
-    occurances += collection_typename_count(prog, prog->services_, t);
-    return occurances;
+    int occurrences = 0;
+    occurrences += collection_typename_count(prog, prog->typedefs_, t);
+    occurrences += collection_typename_count(prog, prog->enums_, t);
+    occurrences += collection_typename_count(prog, prog->objects_, t);
+    occurrences += collection_typename_count(prog, prog->services_, t);
+    return occurrences;
   }
 
   /**
@@ -166,11 +166,11 @@ public:
    */
   template <class T>
   int collection_typename_count(t_program* prog, T type_collection, t_type* t) {
-    int occurances = 0;
+    int occurrences = 0;
     for (typename T::iterator it = type_collection.begin(); it != type_collection.end(); ++it)
       if (t != *it && 0 == t->get_name().compare((*it)->get_name()) && is_common_namespace(prog, t))
-        ++occurances;
-    return occurances;
+        ++occurrences;
+    return occurrences;
   }
 
   /**

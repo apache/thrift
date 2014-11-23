@@ -15,7 +15,7 @@ This will download and launch the base box VM under VirtualBox and run the Apach
 
 The provisioning script (inside the Vagrantfile) runs ./bootstrap.sh, ./configure, make and make check, but does not install thrift. To install thrift run "make install".
 
-The Vagrant base box used here is a minimal Centos 6.5 VirtualBox with 2GB RAM and 2 CPUs. For more Vagrant information: https://www.vagrantup.com. A summary of the base box preperation follows:
+The Vagrant base box used here is a minimal Centos 6.5 VirtualBox with 2GB RAM and 2 CPUs. For more Vagrant information: https://www.vagrantup.com. A summary of the base box preparation follows:
 
 root password: vagrant
 

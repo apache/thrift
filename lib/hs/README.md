@@ -89,7 +89,7 @@ an interface, declare a label:
   data MyIface = MyIface
 
 and then declare it an instance of each iface class, starting with the superest
-class and proceding down (all the while defining the methods).  Then pass your
+class and proceeding down (all the while defining the methods).  Then pass your
 label to process as the handler.
 
 Processor
