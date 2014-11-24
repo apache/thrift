@@ -186,7 +186,7 @@ public:
   void setKeepAlive(bool keepAlive);
 
   /**
-   * Get socket information formated as a string <Host: x Port: x>
+   * Get socket information formatted as a string <Host: x Port: x>
    */
   std::string getSocketInfo();
 

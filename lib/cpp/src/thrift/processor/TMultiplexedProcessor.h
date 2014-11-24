@@ -96,7 +96,7 @@ public:
     *
     * \param [in] serviceName Name of a service, has to be identical to the name
     *                         declared in the Thrift IDL, e.g. "WeatherReport".
-    * \param [in] processor   Implementation of a service, ususally referred to
+    * \param [in] processor   Implementation of a service, usually referred to
     *                         as "handlers", e.g. WeatherReportHandler,
     *                         implementing WeatherReportIf interface.
     */

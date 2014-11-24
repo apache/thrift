@@ -228,7 +228,7 @@ public:
     return (nsglobal_.size() ? NSGLOBAL_B : NSGLOBAL) + ns;
   }
 
-  // add a directory to allready existing namespace
+  // add a directory to already existing namespace
   string php_namespace_directory(string directory, bool end = true) {
     (void)directory;
     if (end) {

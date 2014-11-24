@@ -100,7 +100,7 @@ func (p *TSocket) Open() error {
 	return nil
 }
 
-// Retreive the underlying net.Conn
+// Retrieve the underlying net.Conn
 func (p *TSocket) Conn() net.Conn {
 	return p.conn
 }

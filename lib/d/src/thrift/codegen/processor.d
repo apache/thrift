@@ -254,7 +254,7 @@ template TServiceProcessor(Interface, Protocols...) if (
         code ~= "result.set!`success`(" ~ call ~ ");\n";
       }
 
-      // If this is not a oneway method, generate the recieving code.
+      // If this is not a oneway method, generate the receiving code.
       if (!methodMetaFound || methodMeta.type != TMethodType.ONEWAY) {
         if (methodMetaFound) {
           foreach (e; methodMeta.exceptions) {

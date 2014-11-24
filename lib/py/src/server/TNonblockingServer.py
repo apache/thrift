@@ -261,7 +261,7 @@ class TNonblockingServer:
     def wake_up(self):
         """Wake up main thread.
 
-        The server usualy waits in select call in we should terminate one.
+        The server usually waits in select call in we should terminate one.
         The simplest way is using socketpair.
 
         Select always wait to read from the first socket of socketpair.

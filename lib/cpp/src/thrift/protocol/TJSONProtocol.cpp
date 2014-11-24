@@ -656,7 +656,7 @@ uint32_t TJSONProtocol::writeBool(const bool value) {
 }
 
 uint32_t TJSONProtocol::writeByte(const int8_t byte) {
-  // writeByte() must be handled specially becuase boost::lexical cast sees
+  // writeByte() must be handled specially because boost::lexical cast sees
   // int8_t as a text type instead of an integer type
   return writeJSONInteger((int16_t)byte);
 }
@@ -984,7 +984,7 @@ uint32_t TJSONProtocol::readBool(bool& value) {
   return readJSONInteger(value);
 }
 
-// readByte() must be handled properly becuase boost::lexical cast sees int8_t
+// readByte() must be handled properly because boost::lexical cast sees int8_t
 // as a text type instead of an integer type
 uint32_t TJSONProtocol::readByte(int8_t& byte) {
   int16_t tmp = (int16_t)byte;

@@ -155,10 +155,10 @@ private {
       // the front. Because with the Thrift compiler types can only depend on
       // other types that have already been defined, we collect all the
       // dependencies, prepend them to the list, and then prune the duplicates
-      // (keeping the first occurences). If this requirement should ever be
+      // (keeping the first occurrences). If this requirement should ever be
       // dropped from Thrift, this could be easily adapted to handle circular
       // dependencies by passing TypeTuple!(T, List) to ForAllWithList instead
-      // of appending List afterwards, and removing the now unneccesary
+      // of appending List afterwards, and removing the now unnecessary
       // NoDuplicates.
       alias NoDuplicates!(
         ForAllWithList!(

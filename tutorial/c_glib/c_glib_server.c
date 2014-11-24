@@ -108,7 +108,7 @@ G_DEFINE_TYPE (TutorialCalculatorHandler,
    about any error that occurs.
 
    On success, a handler method returns TRUE. A return value of FALSE
-   indicates an error occured and the error parameter has been
+   indicates an error occurred and the error parameter has been
    set. (Methods should not return FALSE without first setting the
    error parameter.) */
 static gboolean

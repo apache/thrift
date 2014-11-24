@@ -62,7 +62,7 @@
 #endif
 
 /**
- * analagous to T_DEBUG but also prints the time
+ * analogous to T_DEBUG but also prints the time
  *
  * @param string  format_string input: printf style format string
  */
@@ -88,7 +88,7 @@
 #endif
 
 /**
- * analagous to T_DEBUG but uses input level to determine whether or not the string
+ * analogous to T_DEBUG but uses input level to determine whether or not the string
  * should be logged.
  *
  * @param int     level: specified debug level
@@ -120,7 +120,7 @@
   }
 
 /**
- * Analagous to T_ERROR, additionally aborting the process.
+ * Analogous to T_ERROR, additionally aborting the process.
  * WARNING: macro calls abort(), ending program execution
  *
  * @param string  format_string input: printf style format string

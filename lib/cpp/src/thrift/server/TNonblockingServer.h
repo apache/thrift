@@ -669,7 +669,7 @@ public:
 
   /**
    * Check buffer sizes every "count" calls.  This allows buffer limits
-   * to be enforced for persistant connections with a controllable degree
+   * to be enforced for persistent connections with a controllable degree
    * of overhead. 0 disables checks except at connection close.
    *
    * @param count the number of calls between checks, or 0 to disable
@@ -812,7 +812,7 @@ private:
    * C-callable event handler for listener events.  Provides a callback
    * that libevent can understand which invokes server->handleEvent().
    *
-   * @param fd the descriptor the event occured on.
+   * @param fd the descriptor the event occurred on.
    * @param which the flags associated with the event.
    * @param v void* callback arg where we placed TNonblockingServer's "this".
    */

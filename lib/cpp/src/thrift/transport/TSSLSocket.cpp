@@ -204,7 +204,7 @@ bool TSSLSocket::isOpen() {
     return false;
   }
   int shutdown = SSL_get_shutdown(ssl_);
-  // "!!" is squelching C4800 "forcing bool -> true or false" perfomance warning
+  // "!!" is squelching C4800 "forcing bool -> true or false" performance warning
   bool shutdownReceived = !!(shutdown & SSL_RECEIVED_SHUTDOWN);
   bool shutdownSent = !!(shutdown & SSL_SENT_SHUTDOWN);
   if (shutdownReceived && shutdownSent) {
