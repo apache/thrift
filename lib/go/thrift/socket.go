@@ -148,10 +148,6 @@ func (p *TSocket) Write(buf []byte) (int, error) {
 	return p.conn.Write(buf)
 }
 
-func (p *TSocket) Peek() bool {
-	return p.IsOpen()
-}
-
 func (p *TSocket) Flush() error {
 	return nil
 }

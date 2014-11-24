@@ -103,10 +103,6 @@ func (p *StreamTransport) Open() error {
 	return nil
 }
 
-// func (p *StreamTransport) Peek() bool {
-// 	return p.IsOpen()
-// }
-
 // Closes both the input and output streams.
 func (p *StreamTransport) Close() error {
 	closedReader := false
