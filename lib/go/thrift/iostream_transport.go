@@ -93,13 +93,10 @@ func NewStreamTransportRW(rw io.ReadWriter) *StreamTransport {
 	return &StreamTransport{Reader: bufrw, Writer: bufrw, isReadWriter: true}
 }
 
-// (The streams must already be open at construction time, so this should
-// always return true.)
 func (p *StreamTransport) IsOpen() bool {
 	return !p.closed
 }
 
-// (The streams must already be open. This method does nothing.)
 func (p *StreamTransport) Open() error {
 	if !p.closed {
 		return NewTTransportException(ALREADY_OPEN, "StreamTransport already open.")
