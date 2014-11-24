@@ -29,6 +29,7 @@ type StreamTransport struct {
 	io.Reader
 	io.Writer
 	isReadWriter bool
+	closed       bool
 }
 
 type StreamTransportFactory struct {
@@ -95,12 +96,16 @@ func NewStreamTransportRW(rw io.ReadWriter) *StreamTransport {
 // (The streams must already be open at construction time, so this should
 // always return true.)
 func (p *StreamTransport) IsOpen() bool {
-	return true
+	return !p.closed
 }
 
 // (The streams must already be open. This method does nothing.)
 func (p *StreamTransport) Open() error {
-	return nil
+	if !p.closed {
+		return NewTTransportException(ALREADY_OPEN, "StreamTransport already open.")
+	} else {
+		return NewTTransportException(NOT_OPEN, "cannot reopen StreamTransport.")
+	}
 }
 
 // func (p *StreamTransport) Peek() bool {
@@ -109,6 +114,10 @@ func (p *StreamTransport) Open() error {
 
 // Closes both the input and output streams.
 func (p *StreamTransport) Close() error {
+	if p.closed {
+		return NewTTransportException(NOT_OPEN, "StreamTransport already closed.")
+	}
+	p.closed = true
 	closedReader := false
 	if p.Reader != nil {
 		c, ok := p.Reader.(io.Closer)
