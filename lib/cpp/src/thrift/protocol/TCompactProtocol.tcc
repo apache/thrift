@@ -261,7 +261,7 @@ uint32_t TCompactProtocolT<Transport_>::writeDouble(const double dub) {
 }
 
 /**
- * Write a string to the wire with a varint size preceeding.
+ * Write a string to the wire with a varint size preceding.
  */
 template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::writeString(const std::string& str) {

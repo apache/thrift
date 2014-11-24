@@ -430,7 +430,7 @@ private:
   Work[][TAsyncTransport] workQueues_;
 
   /// The total number of work items not yet finished (queued and currently
-  /// excecuted) and delays not yet executed.
+  /// executed) and delays not yet executed.
   uint queuedCount_;
 
   /// Protects queuedCount_.

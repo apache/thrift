@@ -46,7 +46,7 @@ public:
    *
    * Absolute priority is determined by scheduler policy and OS. This
    * enumeration specifies relative priorities such that one can specify a
-   * priority withing a giving scheduler policy without knowing the absolute
+   * priority within a giving scheduler policy without knowing the absolute
    * value of the priority.
    */
   enum PRIORITY {

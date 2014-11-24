@@ -155,7 +155,7 @@ typedef i32 SorryNoGo
 typedef i32 TrivialMultiLine
 
 /**
- * This is the cannonical example
+ * This is the canonical example
  * of a multiline docstring.
  */
 typedef i32 StandardMultiLine

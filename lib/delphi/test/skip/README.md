@@ -3,7 +3,7 @@ simulate server and client for different versions
 of the same protocol.
 
 The intention of this test is to ensure fully
-working compatibilty features of the Delphi Thrift
+working compatibility features of the Delphi Thrift
 implementation.
 
 The expected test result is, that no errors occur

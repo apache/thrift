@@ -25,19 +25,19 @@
       <Filter>concurrency</Filter>
     </ClCompile>
     <ClCompile Include="src\thrift\protocol\TDebugProtocol.cpp">
-      <Filter>protocal</Filter>
+      <Filter>protocol</Filter>
     </ClCompile>
     <ClCompile Include="src\thrift\protocol\TDenseProtocol.cpp">
-      <Filter>protocal</Filter>
+      <Filter>protocol</Filter>
     </ClCompile>
     <ClCompile Include="src\thrift\protocol\TBase64Utils.cpp">
-      <Filter>protocal</Filter>
+      <Filter>protocol</Filter>
     </ClCompile>
     <ClCompile Include="src\thrift\protocol\TJSONProtocol.cpp">
-      <Filter>protocal</Filter>
+      <Filter>protocol</Filter>
     </ClCompile>
     <ClCompile Include="src\thrift\protocol\TMultiplexedProtocol.cpp">
-      <Filter>protocal</Filter>
+      <Filter>protocol</Filter>
     </ClCompile>
     <ClCompile Include="src\thrift\transport\TFDTransport.cpp">
       <Filter>transport</Filter>
@@ -120,7 +120,7 @@
       <Filter>transport</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\protocol\TBinaryProtocol.h">
-      <Filter>protocal</Filter>
+      <Filter>protocol</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\Thrift.h" />
     <ClInclude Include="src\thrift\TProcessor.h" />
@@ -153,10 +153,10 @@
       <Filter>windows</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\protocol\TProtocol.h">
-      <Filter>protocal</Filter>
+      <Filter>protocol</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\protocol\TVirtualProtocol.h">
-      <Filter>protocal</Filter>
+      <Filter>protocol</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\server\TServer.h">
       <Filter>server</Filter>
@@ -201,16 +201,16 @@
       <Filter>transport</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\protocol\TJSONProtocol.h">
-      <Filter>protocal</Filter>
+      <Filter>protocol</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\protocol\TMultiplexedProtocol.h">
-      <Filter>protocal</Filter>
+      <Filter>protocol</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\protocol\TDenseProtocol.h">
-      <Filter>protocal</Filter>
+      <Filter>protocol</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\protocol\TDebugProtocol.h">
-      <Filter>protocal</Filter>
+      <Filter>protocol</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\transport\TServerSocket.h">
       <Filter>transport</Filter>
@@ -247,7 +247,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="protocal">
+    <Filter Include="protocol">
       <UniqueIdentifier>{07ced19b-b72a-4105-9ffb-6d2bcf64497e}</UniqueIdentifier>
     </Filter>
     <Filter Include="transport">
@@ -274,7 +274,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="src\thrift\protocol\TBinaryProtocol.tcc">
-      <Filter>protocal</Filter>
+      <Filter>protocol</Filter>
     </None>
     <None Include="src\thrift\windows\tr1\functional">
       <Filter>windows\tr1</Filter>

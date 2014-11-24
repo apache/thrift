@@ -123,7 +123,7 @@ enum PROGDOCTEXT_STATUS {
 };
 
 /**
- * The program level doctext. Stored seperately to make parsing easier.
+ * The program level doctext. Stored separately to make parsing easier.
  */
 extern char* g_program_doctext_candidate;
 extern int g_program_doctext_lineno;

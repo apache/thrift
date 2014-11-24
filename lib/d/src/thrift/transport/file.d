@@ -246,7 +246,7 @@ final class TFileReaderTransport : TBaseTransport {
     enforce(!isOpen, new TTransportException(
       "Cannot set chunk size after TFileReaderTransport has been opened."));
     enforce(value > EventSize.sizeof, new TTransportException("Chunks must " ~
-      "be large enough to accomodate at least a single byte of payload data."));
+      "be large enough to accommodate at least a single byte of payload data."));
     chunkSize_ = value;
   }
 

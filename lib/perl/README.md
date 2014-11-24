@@ -28,7 +28,7 @@ Thrift requires Perl >= 5.6.0
 Exceptions are thrown with die so be sure to wrap eval{} statments
 around any code that contains exceptions.
 
-The 64bit Integers work only upto 2^42 on my machine :-?
+The 64bit Integers work only up to 2^42 on my machine :-?
 Math::BigInt is probably needed.
 
 Please see tutoral and test dirs for examples...

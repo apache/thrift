@@ -86,7 +86,7 @@ public:
   /**
    * Fast-path write.
    *
-   * When we have enough empty space in our buffer to accomodate the write, we
+   * When we have enough empty space in our buffer to accommodate the write, we
    * can satisfy it with a single memcpy, then adjust our internal pointers.
    * If the buffer is full, we call out to our slow path, implemented by a
    * subclass.  This method is meant to eventually be nonvirtual and
@@ -629,7 +629,7 @@ public:
   uint32_t available_write() const { return static_cast<uint32_t>(wBound_ - wBase_); }
 
   // Returns a pointer to where the client can write data to append to
-  // the TMemoryBuffer, and ensures the buffer is big enough to accomodate a
+  // the TMemoryBuffer, and ensures the buffer is big enough to accommodate a
   // write of the provided length.  The returned pointer is very convenient for
   // passing to read(), recv(), or similar. You must call wroteBytes() as soon
   // as data is written or the buffer will not be aware that data has changed.

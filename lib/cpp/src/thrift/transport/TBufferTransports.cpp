@@ -63,7 +63,7 @@ uint32_t TBufferedTransport::readSlow(uint8_t* buf, uint32_t len) {
 void TBufferedTransport::writeSlow(const uint8_t* buf, uint32_t len) {
   uint32_t have_bytes = static_cast<uint32_t>(wBase_ - wBuf_.get());
   uint32_t space = static_cast<uint32_t>(wBound_ - wBase_);
-  // We should only take the slow path if we can't accomodate the write
+  // We should only take the slow path if we can't accommodate the write
   // with the free space already in the buffer.
   assert(wBound_ - wBase_ < static_cast<ptrdiff_t>(len));
 

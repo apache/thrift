@@ -511,7 +511,7 @@ begin
 
   s := client.testString(HUGE_TEST_STRING);
   Expect( length(s) = length(HUGE_TEST_STRING),
-          'testString( lenght(HUGE_TEST_STRING) = '+IntToStr(Length(HUGE_TEST_STRING))+') '
+          'testString( length(HUGE_TEST_STRING) = '+IntToStr(Length(HUGE_TEST_STRING))+') '
          +'=> length(result) = '+IntToStr(Length(s)));
 
   i8 := client.testByte(1);

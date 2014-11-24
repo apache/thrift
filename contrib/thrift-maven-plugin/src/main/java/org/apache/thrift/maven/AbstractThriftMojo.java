@@ -193,7 +193,7 @@ abstract class AbstractThriftMojo extends AbstractMojo {
                     attachFiles();
                 }
             } catch (IOException e) {
-                throw new MojoExecutionException("An IO error occured", e);
+                throw new MojoExecutionException("An IO error occurred", e);
             } catch (IllegalArgumentException e) {
                 throw new MojoFailureException("thrift failed to execute because: " + e.getMessage(), e);
             } catch (CommandLineException e) {
