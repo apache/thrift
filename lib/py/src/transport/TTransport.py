@@ -160,7 +160,12 @@ class TBufferedTransport(TTransportBase, CReadableTransport):
     return self.__rbuf.read(sz)
 
   def write(self, buf):
-    self.__wbuf.write(buf)
+    try:
+      self.__wbuf.write(buf)
+    except Exception as e:
+      # on exception reset wbuf so it doesn't contain a partial function call
+      self.__wbuf = StringIO()
+      raise e
 
   def flush(self):
     out = self.__wbuf.getvalue()
