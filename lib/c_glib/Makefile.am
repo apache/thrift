@@ -24,11 +24,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 lib_LTLIBRARIES = libthrift_c_glib.la
 pkgconfig_DATA = thrift_c_glib.pc
 
-common_cflags = -g -Wall -W -Isrc -I src/thrift/c_glib $(GLIB_CFLAGS)
-common_ldflags = -g -Wall -W $(GLIB_LDFLAGS) @GCOV_LDFLAGS@
-
-# this removes optimizations and adds coverage flags
-CFLAGS = @GCOV_CFLAGS@
+AM_CFLAGS = -Isrc -I src/thrift/c_glib
 
 # Define the source files for the module
 
@@ -54,7 +50,7 @@ libthrift_c_glib_la_SOURCES = src/thrift/c_glib/thrift.c \
                               src/thrift/c_glib/server/thrift_server.c \
                               src/thrift/c_glib/server/thrift_simple_server.c
 
-libthrift_c_glib_la_CFLAGS = $(common_cflags)
+libthrift_c_glib_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 
 include_thriftdir = $(includedir)/thrift/c_glib
 include_thrift_HEADERS = \
