@@ -60,7 +60,7 @@ public class TMultiplexedProcessor implements TProcessor {
      *
      * @param serviceName Name of a service, has to be identical to the name
      * declared in the Thrift IDL, e.g. "WeatherReport".
-     * @param processor Implementation of a service, ususally referred to
+     * @param processor Implementation of a service, usually referred to
      * as "handlers", e.g. WeatherReportHandler implementing WeatherReport.Iface.
      */
     public void registerProcessor(String serviceName, TProcessor processor) {

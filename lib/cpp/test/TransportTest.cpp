@@ -755,7 +755,7 @@ void test_borrow_none_available() {
  * - Combining many tests into a single function makes it more difficult to
  *   tell precisely which tests failed.  It also means you can't get a progress
  *   update after each test, and the tests are already fairly slow.
- * - Similar registration could be acheived with BOOST_TEST_CASE_TEMPLATE,
+ * - Similar registration could be achieved with BOOST_TEST_CASE_TEMPLATE,
  *   but it requires a lot of awkward MPL code, and results in useless test
  *   case names.  (The names are generated from std::type_info::name(), which
  *   is compiler-dependent.  gcc returns mangled names.)

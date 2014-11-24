@@ -77,7 +77,7 @@ int main (void)
      information about any error that occurs.
 
      On success, client methods return TRUE. A return value of FALSE
-     indicates an error occured and the error parameter has been
+     indicates an error occurred and the error parameter has been
      set. */
   if (!error && calculator_if_ping (client, &error)) {
     puts ("ping()");

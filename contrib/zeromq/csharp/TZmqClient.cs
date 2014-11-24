@@ -47,7 +47,7 @@ namespace ZmqClient
 				throw new NotImplementedException ();
 
 			if (_rbuf.Length == 0) {
-				//Fill the Buffer with the complete ZMQ Message which needs to be(?!) the complete Thrift reponse
+				//Fill the Buffer with the complete ZMQ Message which needs to be(?!) the complete Thrift response
 				debug ("Client_Read Filling buffer..");
 				byte[] tmpBuf = _sock.Recv ();
 				debug (string.Format("Client_Read filled with {0}b",tmpBuf.Length));

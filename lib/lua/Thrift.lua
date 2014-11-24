@@ -69,7 +69,7 @@ TMessageType = {
   ONEWAY = 4
 }
 
--- Recursive __index function to achive inheritance
+-- Recursive __index function to achieve inheritance
 function __tobj_index(self, key)
   local v = rawget(self, key)
   if v ~= nil then

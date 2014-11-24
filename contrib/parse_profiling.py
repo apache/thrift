@@ -42,7 +42,7 @@ class AddressInfo(object):
         self.address = address
         self.sourceFile = None
         self.sourceLine = None
-        self.funtion = None
+        self.function = None
 
 
 g_addrs_by_filename = {}

@@ -43,7 +43,7 @@ class TCompoundOperationException : TException {
   }
 
   /// The exceptions thrown by the children of the operation. If applicable,
-  /// the list is ordered in the same way the exceptions occured.
+  /// the list is ordered in the same way the exceptions occurred.
   Exception[] exceptions;
 }
 
@@ -62,7 +62,7 @@ enum VERSION = "0.9.0 dev";
  * Examples:
  * ---
  * logInfo("An informative message.");
- * logError("Some error occured: %s", e);
+ * logError("Some error occurred: %s", e);
  * ---
  */
 alias logFormatted!g_infoLogSink logInfo;

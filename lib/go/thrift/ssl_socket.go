@@ -102,7 +102,7 @@ func (p *TSSLSocket) Open() error {
 	return nil
 }
 
-// Retreive the underlying net.Conn
+// Retrieve the underlying net.Conn
 func (p *TSSLSocket) Conn() net.Conn {
 	return p.conn
 }

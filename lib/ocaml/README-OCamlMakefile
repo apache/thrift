@@ -200,7 +200,7 @@ with C-files:
   of your library using "-noautolink" and add another linkflag that
   links in your C-library explicitly.
 
-What concerns maintainance:
+What concerns maintenance:
 
   "make clean" removes all (all!) automatically generated files - so
   again: make sure your variables are ok!

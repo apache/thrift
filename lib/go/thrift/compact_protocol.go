@@ -298,7 +298,7 @@ func (p *TCompactProtocol) WriteDouble(value float64) error {
 	return NewTProtocolException(err)
 }
 
-// Write a string to the wire with a varint size preceeding.
+// Write a string to the wire with a varint size preceding.
 func (p *TCompactProtocol) WriteString(value string) error {
 	_, e := p.writeVarint32(int32(len(value)))
 	if e != nil {
@@ -678,13 +678,13 @@ func (p *TCompactProtocol) fixedInt64ToBytes(n int64, buf []byte) {
 	binary.LittleEndian.PutUint64(buf, uint64(n))
 }
 
-// Writes a byte without any possiblity of all that field header nonsense.
+// Writes a byte without any possibility of all that field header nonsense.
 // Used internally by other writing methods that know they need to write a byte.
 func (p *TCompactProtocol) writeByteDirect(b byte) error {
 	return p.trans.WriteByte(b)
 }
 
-// Writes a byte without any possiblity of all that field header nonsense.
+// Writes a byte without any possibility of all that field header nonsense.
 func (p *TCompactProtocol) writeIntAsByteDirect(n int) (int, error) {
 	return 1, p.writeByteDirect(byte(n))
 }
