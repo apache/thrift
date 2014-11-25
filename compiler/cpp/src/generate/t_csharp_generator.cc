@@ -515,7 +515,7 @@ void t_csharp_generator::print_const_def_value(std::ofstream& out,
       }
       t_type* field_type = field->get_type();
       string val = render_const_value(out, name, field_type, v_iter->second);
-      indent(out) << name << "." << prop_name(field) << " = " << val << ";" << endl;
+      indent(out) << name << "." << prop_name(field, true) << " = " << val << ";" << endl;
     }
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
