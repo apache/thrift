@@ -64,10 +64,6 @@ func (p *TMemoryBuffer) Open() error {
 	return nil
 }
 
-func (p *TMemoryBuffer) Peek() bool {
-	return p.IsOpen()
-}
-
 func (p *TMemoryBuffer) Close() error {
 	p.Buffer.Reset()
 	return nil
