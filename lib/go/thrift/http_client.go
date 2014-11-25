@@ -129,10 +129,6 @@ func (p *THttpClient) IsOpen() bool {
 	return p.response != nil || p.requestBuffer != nil
 }
 
-func (p *THttpClient) Peek() bool {
-	return p.IsOpen()
-}
-
 func (p *THttpClient) Close() error {
 	if p.response != nil && p.response.Body != nil {
 		err := p.response.Body.Close()
