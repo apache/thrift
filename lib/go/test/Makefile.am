@@ -30,7 +30,8 @@ gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
 				ServicesTest.thrift \
 				GoTagTest.thrift \
 				TypedefFieldTest.thrift \
-				RefAnnotationFieldsTest.thrift
+				RefAnnotationFieldsTest.thrift \
+				THRIFT-2793.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) -r IncludesTest.thrift
