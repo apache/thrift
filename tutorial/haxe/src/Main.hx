@@ -163,12 +163,11 @@ class Main {
 
         // optinal layered transport
         if ( framed) {
-             trace("- framed transport");
+            trace("- framed transport");
             transport = new TFramedTransport(transport);
         } else if ( buffered) {
-             trace("- buffered transport");
-            throw "TBufferedTransport not implemented yet";
-            //transport = new TBufferedTransport(transport);
+            trace("- buffered transport");
+            transport = new TBufferedTransport(transport);
         }
 
 
@@ -278,12 +277,11 @@ class Main {
         // optional: layered transport
         var transfactory : TTransportFactory = null;
         if ( framed) {
-             trace("- framed transport");
+            trace("- framed transport");
             transfactory = new TFramedTransportFactory();
         } else if ( buffered) {
-             trace("- buffered transport");
-            throw "TBufferedTransport not implemented yet";
-            //transfactory = new TBufferedTransportFactory();
+            trace("- buffered transport");
+            transfactory = new TBufferedTransportFactory();
         }
 
         // protocol
