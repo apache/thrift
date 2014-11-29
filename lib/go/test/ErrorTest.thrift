@@ -15,30 +15,20 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Contains some contributions under the Thrift Software License.
+ * Please see doc/old-thrift-license.txt in the Thrift distribution for
+ * details.
  */
-
-package thrift
-
-import (
-	"errors"
-)
-
-// Generic Thrift exception
-type TException interface {
-	error
+struct TestStruct 
+{
+  1: map<string, string> m,
+  2: list<string> l,
+  3: set<string> s,
+  4: i32 i
 }
 
-// Prepends additional information to an error without loosing the Thrift exception interface
-func PrependError(prepend string, err error) error {
-	if t, ok := err.(TTransportException); ok {
-		return NewTTransportException(t.TypeId(), prepend+t.Error())
-	}
-	if t, ok := err.(TProtocolException); ok {
-		return NewTProtocolExceptionWithType(t.TypeId(), errors.New(prepend+err.Error()))
-	}
-	if t, ok := err.(TApplicationException); ok {
-		return NewTApplicationException(t.TypeId(), prepend+t.Error())
-	}
-
-	return errors.New(prepend + err.Error())
+service ErrorTest 
+{
+  TestStruct         testStruct(1: TestStruct thing)
 }
