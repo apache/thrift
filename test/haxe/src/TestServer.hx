@@ -56,8 +56,7 @@ class TestServer
             }
             if ( args.buffered) {
                 trace("- buffered transport");
-                throw "TBufferedTransport not implemented yet";
-                //transfactory = new TBufferedTransportFactory();
+                transfactory = new TBufferedTransportFactory();
             }
 
             // protocol
