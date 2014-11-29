@@ -73,6 +73,8 @@ class TSocket extends TTransport  {
     private var output : Output = null;
     #end
 
+    private static inline var DEFAULT_TIMEOUT = 5.0;
+
     private var obuffer : BytesOutput = new BytesOutput();
     private var ioCallback : TException->Void = null;
     private var readCount : Int = 0;
@@ -117,7 +119,8 @@ class TSocket extends TTransport  {
         }
     }
 
-
+    // Reads up to len bytes into buffer buf, starting att offset off.
+    // May return less bytes than len required
     public override function read( buf : BytesBuffer, off : Int, len : Int) : Int   {
         try
         {
@@ -149,10 +152,12 @@ class TSocket extends TTransport  {
                 input.read(off-readCount);
                 readCount = off;
             }
-            var data = input.read(len);
-            readCount += data.length;
-            buf.add(data);
-            return data.length;
+
+            var data = Bytes.alloc(len);
+            var got = input.readBytes(data, 0, len);
+            buf.addBytes( data, 0, got);
+            readCount += got;
+            return got;
 
             #end
         }
@@ -269,7 +274,7 @@ class TSocket extends TTransport  {
         var socket = new Socket();
         socket.setBlocking(true);
         socket.setFastSend(true);
-        socket.setTimeout(5.0);
+        socket.setTimeout( DEFAULT_TIMEOUT);
         socket.connect(host, port);
 
         #end

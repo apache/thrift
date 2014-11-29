@@ -200,8 +200,7 @@ class TestClient {
         }
         if ( args.buffered) {
             trace("- buffered transport");
-            throw "TBufferedTransport not implemented yet";
-            //transport = new TBufferedTransport(transport);
+            transport = new TBufferedTransport(transport);
         }
 
         // protocol
