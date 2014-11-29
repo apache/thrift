@@ -55,6 +55,12 @@ public:
     iter = parsed_options.find("callbacks");
     callbacks_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("rtti");
+    rtti_ = (iter != parsed_options.end());
+
+    iter = parsed_options.find("buildmacro");
+    buildmacro_ = (iter != parsed_options.end()) ? (iter->second) : "";
+    
     out_dir_base_ = "gen-haxe";
   }
 
@@ -138,37 +144,29 @@ public:
    */
 
   void generate_deserialize_field(std::ofstream& out, t_field* tfield, std::string prefix = "");
-
   void generate_deserialize_struct(std::ofstream& out, t_struct* tstruct, std::string prefix = "");
-
   void generate_deserialize_container(std::ofstream& out, t_type* ttype, std::string prefix = "");
-
   void generate_deserialize_set_element(std::ofstream& out, t_set* tset, std::string prefix = "");
-
   void generate_deserialize_map_element(std::ofstream& out, t_map* tmap, std::string prefix = "");
-
   void generate_deserialize_list_element(std::ofstream& out,
                                          t_list* tlist,
                                          std::string prefix = "");
 
   void generate_serialize_field(std::ofstream& out, t_field* tfield, std::string prefix = "");
-
   void generate_serialize_struct(std::ofstream& out, t_struct* tstruct, std::string prefix = "");
-
   void generate_serialize_container(std::ofstream& out, t_type* ttype, std::string prefix = "");
-
+  void generate_serialize_set_element(std::ofstream& out, t_set* tmap, std::string iter);
+  void generate_serialize_list_element(std::ofstream& out, t_list* tlist, std::string iter);
   void generate_serialize_map_element(std::ofstream& out,
                                       t_map* tmap,
                                       std::string iter,
                                       std::string map);
 
-  void generate_serialize_set_element(std::ofstream& out, t_set* tmap, std::string iter);
-
-  void generate_serialize_list_element(std::ofstream& out, t_list* tlist, std::string iter);
-
   void generate_haxe_doc(std::ofstream& out, t_doc* tdoc);
-
   void generate_haxe_doc(std::ofstream& out, t_function* tdoc);
+
+  void generate_rtti_decoration(std::ofstream& out);
+  void generate_macro_decoration(std::ofstream& out);
 
   /**
    * Helper rendering functions
@@ -216,6 +214,8 @@ public:
 
 private:
   bool callbacks_;
+  bool rtti_;
+  string buildmacro_;
 
   /**
    * File streams
@@ -388,6 +388,8 @@ void t_haxe_generator::generate_enum(t_enum* tenum) {
   // Add haxe imports
   f_enum << string() + "import org.apache.thrift.helper.*;" << endl << endl;
 
+  generate_rtti_decoration(f_enum);
+  generate_macro_decoration(f_enum);
   indent(f_enum) << "class " << get_cap_name(tenum->get_name()) << " ";
   scope_up(f_enum);
 
@@ -449,6 +451,8 @@ void t_haxe_generator::generate_consts(std::vector<t_const*> consts) {
 
   f_consts << haxe_type_imports();
 
+  generate_rtti_decoration(f_consts);
+  generate_macro_decoration(f_consts);
   indent(f_consts) << "class " << get_cap_name(program_name_) << "Constants {" << endl << endl;
   indent_up();
   vector<t_const*>::iterator c_iter;
@@ -700,6 +704,8 @@ void t_haxe_generator::generate_haxe_struct_definition(ofstream& out,
 
   string clsname = get_cap_name(tstruct->get_name());
 
+  generate_rtti_decoration(out);
+  generate_macro_decoration(out); 
   indent(out) << "class " << clsname << " ";
 
   if (is_exception) {
@@ -1576,6 +1582,8 @@ void t_haxe_generator::generate_service_interface(t_service* tservice) {
   }
 
   generate_haxe_doc(f_service_, tservice);
+  //generate_rtti_decoration(f_service_); - not yet, because of https://github.com/HaxeFoundation/haxe/issues/3626
+  generate_macro_decoration(f_service_);
   f_service_ << indent() << "interface " << get_cap_name(service_name_) << extends_iface << " {"
              << endl << endl;
   indent_up();
@@ -1618,6 +1626,8 @@ void t_haxe_generator::generate_service_client(t_service* tservice) {
     extends_client = " extends " + extends + "Impl";
   }
 
+  generate_rtti_decoration(f_service_);
+  // build macro is inherited from interface
   indent(f_service_) << "class " << get_cap_name(service_name_) << "Impl" << extends_client
                      << " implements " << get_cap_name(service_name_) << " {" << endl << endl;
   indent_up();
@@ -1834,6 +1844,8 @@ void t_haxe_generator::generate_service_server(t_service* tservice) {
   }
 
   // Generate the header portion
+  generate_rtti_decoration(f_service_);
+  generate_macro_decoration(f_service_);
   indent(f_service_) << "class " << get_cap_name(service_name_) << "Processor" << extends_processor
                      << " implements TProcessor {" << endl << endl;
   indent_up();
@@ -2835,6 +2847,27 @@ string t_haxe_generator::constant_name(string name) {
 }
 
 /**
+ * Enables RTTI for a class or interface
+ */
+void t_haxe_generator::generate_rtti_decoration(ofstream& out) {
+  if (rtti_) {
+    out << "@:rtti" << endl;
+  }
+}
+
+/**
+ * Adds build macros to a class or interface
+ */
+void t_haxe_generator::generate_macro_decoration(ofstream& out) {
+  if (!buildmacro_.empty()) {
+    out << "#if ! macro" << endl;
+    out << "@:build( " << buildmacro_ << ")" << endl;       // current class/interface
+    out << "@:autoBuild( " << buildmacro_ << ")" << endl;   // inherited classes/interfaces
+    out << "#end" << endl;
+  }
+}
+
+/**
  * Emits a haxeDoc comment if the provided object has a doc in Thrift
  */
 void t_haxe_generator::generate_haxe_doc(ofstream& out, t_doc* tdoc) {
@@ -2889,4 +2922,7 @@ std::string t_haxe_generator::get_enum_class_name(t_type* type) {
 THRIFT_REGISTER_GENERATOR(
     haxe,
     "Haxe",
-    "    callbacks:       Use onError()/onSuccess() callbacks for service methods (like AS3)\n")
+    "    callbacks        Use onError()/onSuccess() callbacks for service methods (like AS3)\n" \
+    "    rtti             Enable @:rtti for generated classes and interfaces\n" \
+    "    buildmacro=my.macros.Class.method(args)\n" \
+    "                     Add @:build macro calls to generated classes and interfaces\n")
