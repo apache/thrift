@@ -173,6 +173,9 @@
     <ClCompile Include="src\parse\t_typedef.cc">
       <Filter>parse</Filter>
     </ClCompile>
+    <ClCompile Include="src\generate\t_json_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\thriftl.ll" />
