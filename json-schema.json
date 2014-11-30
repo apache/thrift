@@ -20,6 +20,7 @@
         "map",
         "union",
         "struct",
+        "exception",
         "binary"
       ]
     },
