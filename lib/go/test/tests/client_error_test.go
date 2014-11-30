@@ -459,7 +459,7 @@ func TestClientSeqIdMismatch(t *testing.T) {
 	transport := thrift.NewTMemoryBuffer()
 	protocol := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		protocol.EXPECT().WriteMessageBegin("testString", thrift.TMessageType(1), int32(1)),
+		protocol.EXPECT().WriteMessageBegin("testString", thrift.CALL, int32(1)),
 		protocol.EXPECT().WriteStructBegin("testString_args"),
 		protocol.EXPECT().WriteFieldBegin("s", thrift.TType(thrift.STRING), int16(1)),
 		protocol.EXPECT().WriteString("test"),
@@ -468,7 +468,7 @@ func TestClientSeqIdMismatch(t *testing.T) {
 		protocol.EXPECT().WriteStructEnd(),
 		protocol.EXPECT().WriteMessageEnd(),
 		protocol.EXPECT().Flush(),
-		protocol.EXPECT().ReadMessageBegin().Return("testString", thrift.TMessageType(1), int32(2), nil),
+		protocol.EXPECT().ReadMessageBegin().Return("testString", thrift.REPLY, int32(2), nil),
 	)
 
 	client := errortest.NewErrorTestClientProtocol(transport, protocol, protocol)
