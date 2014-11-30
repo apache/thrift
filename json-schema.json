@@ -1,0 +1,310 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+
+  "id": "http://thrift.apache.org/program-schema#",
+  "description": "Schema for Apache Thrift protocol descriptors",
+
+  "definitions": {
+    "type-id": {
+      "enum": [
+        "void",
+        "string",
+        "bool",
+        "byte",
+        "i16",
+        "i32",
+        "i64",
+        "double",
+        "list",
+        "set",
+        "map",
+        "union",
+        "struct",
+        "exception",
+        "binary"
+      ]
+    },
+    "base-type": {
+      "title": "Base types",
+      "type": "object",
+      "properties": {
+        "typeId": {
+          "enum": [ "void", "string", "bool", "byte", "i16", "i32", "i64", "double", "binary" ]
+        }
+      },
+      "required": [ "typeId" ]
+    },
+    "list-type": {
+      "title": "List and set types",
+      "type": "object",
+      "properties": {
+        "typeId": { "enum": [ "list", "set" ] },
+        "elemTypeId": { "$ref": "#/definitions/type-id" },
+        "elemType": { "$ref": "#/definitions/type-spec" }
+      },
+      "required": [ "typeId", "elemTypeId", "elemType" ]
+    },
+    "map-type": {
+      "title": "Map type",
+      "type": "object",
+      "properties": {
+        "typeId":      { "enum": [ "map" ] },
+        "keyTypeId":   { "$ref": "#/definitions/type-id" },
+        "keyType":     { "$ref": "#/definitions/type-spec" },
+        "valueTypeId": { "$ref": "#/definitions/type-id" },
+        "valueType":   { "$ref": "#/definitions/type-spec" }
+      },
+      "required": [ "typeId", "keyTypeId", "valueTypeId" ]
+    },
+    "struct-spec": {
+      "title": "Struct and union types",
+      "type": "object",
+      "properties": {
+        "typeId": { "enum": [ "union", "struct" ] },
+        "class": { "type": "string" }
+      },
+      "required": [ "typeId", "class" ]
+    },
+    "type-spec": {
+      "allOf": [
+        { "type": "object" },
+        {
+          "oneOf":
+          [
+            { "$ref": "#/definitions/base-type" },
+            { "$ref": "#/definitions/list-type" },
+            { "$ref": "#/definitions/map-type" },
+            { "$ref": "#/definitions/struct-spec" }
+          ]
+        }
+      ]
+    },
+    "name-and-doc": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "doc": { "type": "string" }
+      },
+      "required": [ "name" ]
+    },
+    "enum": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/definitions/name-and-doc" },
+        {
+          "required": [ "members" ],
+          "properties": {
+            "members": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "value": { "type": "integer" }
+                },
+                "required": [ "name", "value" ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "typedef": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/definitions/name-and-doc" },
+        {
+          "properties": {
+            "typeId": { "$ref": "#/definitions/type-id" },
+            "type": { "$ref": "#/definitions/type-spec" }
+          },
+          "required": [ "typeId" ]
+        }
+      ]
+    },
+    "constant": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/definitions/name-and-doc" },
+        { "$ref": "#/definitions/type-spec" },
+        {
+          "properties": {
+            "value": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "number" },
+                { "type": "array" },
+                { "type": "object" }
+              ]
+            }
+          },
+          "required": [ "value" ]
+        }
+      ]
+    },
+    "field": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/definitions/name-and-doc" },
+        { "$ref": "#/definitions/type-spec" },
+        {
+          "properties": {
+            "key": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "required": {
+              "enum": [ "required", "optional", "req_out" ]
+            },
+            "default": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "number" },
+                { "type": "array" },
+                { "type": "object" }
+              ]
+            }
+          },
+          "required": [ "key", "required" ]
+        }
+      ]
+    },
+    "struct": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/definitions/name-and-doc" },
+        {
+          "properties": {
+            "isException": { "type": "boolean" },
+            "isUnion": { "type": "boolean" },
+            "fields": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/field"
+              }
+            }
+          },
+          "required": [ "isException", "isUnion", "fields" ]
+        }
+      ]
+    },
+    "union": {
+      "$ref": "#/definitions/struct"
+    },
+    "exception": {
+      "$ref": "#/definitions/struct"
+    },
+    "function": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/definitions/name-and-doc" },
+        {
+          "oneOf": [
+            {
+              "properties": { "oneway": { "type": "boolean" } },
+              "required": [ "oneway" ]
+            },
+            {
+              "properties": { "returnType": { "$ref": "#/definitions/type-spec" } },
+              "required": [ "returnType" ]
+            }
+          ]
+        },
+        {
+          "properties": {
+            "arguments": {
+              "type": "array",
+              "items": {
+                "allOf": [
+                  { "$ref": "#/definitions/field" },
+                  {
+                    "properties": { }
+                  }
+                ]
+              }
+            },
+            "exceptions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/exception"
+              }
+            }
+          },
+          "required": [ "oneway", "arguments", "exceptions" ]
+        }
+      ]
+    },
+    "service": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/definitions/name-and-doc" },
+        {
+          "properties": {
+            "functions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/function"
+              }
+            }
+          },
+          "required": [ "functions" ]
+        }
+      ]
+    }
+  },
+
+  "type": "object",
+  "required": [
+    "name",
+    "namespaces",
+    "includes",
+    "enums",
+    "typedefs",
+    "structs",
+    "constants",
+    "services"
+  ],
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "includes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "enums": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/enum"
+      }
+    },
+    "typedefs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/typedef"
+      }
+    },
+    "structs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/struct"
+      }
+    },
+    "constants": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/constant"
+      }
+    },
+    "services": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/service"
+      }
+    }
+  }
+}
