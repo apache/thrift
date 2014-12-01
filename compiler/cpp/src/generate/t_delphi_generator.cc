@@ -2415,8 +2415,8 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
     if (!tfunction->is_oneway()) {
       string factory_name = normalize_clsnm((*x_iter)->get_type()->get_name(), "", true)
                             + "Factory";
-      indent_impl(s_service_impl) << "ret." << prop_name(*x_iter) << " := E." << factory_name
-                                  << ";" << endl;
+      indent_impl(s_service_impl) << "ret." << prop_name(*x_iter) << " := E." << factory_name << ";"
+                                  << endl;
     }
     indent_down_impl();
     indent_impl(s_service_impl) << "end;" << endl;
@@ -2426,11 +2426,15 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
   indent_up_impl();
   indent_impl(s_service_impl) << "if events <> nil then events.UnhandledError(E);" << endl;
   if (!tfunction->is_oneway()) {
-    indent_impl(s_service_impl) << "appx := TApplicationException.Create( TApplicationException.TExceptionType.InternalError, E.Message);" << endl;
+    indent_impl(s_service_impl) << "appx := TApplicationException.Create( "
+                                   "TApplicationException.TExceptionType.InternalError, E.Message);"
+                                << endl;
     indent_impl(s_service_impl) << "try" << endl;
     indent_up_impl();
     indent_impl(s_service_impl) << "if events <> nil then events.PreWrite;" << endl;
-    indent_impl(s_service_impl) << "msg := Thrift.Protocol.TMessageImpl.Create('" << tfunction->get_name() << "', TMessageType.Exception, seqid);" << endl;
+    indent_impl(s_service_impl) << "msg := Thrift.Protocol.TMessageImpl.Create('"
+                                << tfunction->get_name() << "', TMessageType.Exception, seqid);"
+                                << endl;
     indent_impl(s_service_impl) << "oprot.WriteMessageBegin( msg);" << endl;
     indent_impl(s_service_impl) << "appx.Write(oprot);" << endl;
     indent_impl(s_service_impl) << "oprot.WriteMessageEnd();" << endl;
