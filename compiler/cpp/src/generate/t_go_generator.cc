@@ -1777,7 +1777,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
       f_service_ << indent() << "}" << endl;
       f_service_ << indent() << "if p.SeqId != seqId {" << endl;
       f_service_ << indent() << "  err = thrift.NewTApplicationException("
-                                "thrift.BAD_SEQUENCE_ID, \"" << (*f_iter)->get_name()
+                 << "thrift.BAD_SEQUENCE_ID, \"" << (*f_iter)->get_name()
                  << " failed: out of sequence response\")" << endl;
       f_service_ << indent() << "  return" << endl;
       f_service_ << indent() << "}" << endl;
