@@ -1765,8 +1765,20 @@ void t_go_generator::generate_service_client(t_service* tservice) {
       f_service_ << indent() << "  iprot = p.ProtocolFactory.GetProtocol(p.Transport)" << endl;
       f_service_ << indent() << "  p.InputProtocol = iprot" << endl;
       f_service_ << indent() << "}" << endl;
-      f_service_ << indent() << "_, mTypeId, seqId, err := iprot.ReadMessageBegin()" << endl;
+      f_service_ << indent() << "method, mTypeId, seqId, err := iprot.ReadMessageBegin()" << endl;
       f_service_ << indent() << "if err != nil {" << endl;
+      f_service_ << indent() << "  return" << endl;
+      f_service_ << indent() << "}" << endl;
+      f_service_ << indent() << "if method != \"" << (*f_iter)->get_name() << "\" {" << endl;
+      f_service_ << indent() << "  err = thrift.NewTApplicationException("
+                 << "thrift.WRONG_METHOD_NAME, \"" << (*f_iter)->get_name()
+                 << " failed: wrong method name\")" << endl;
+      f_service_ << indent() << "  return" << endl;
+      f_service_ << indent() << "}" << endl;
+      f_service_ << indent() << "if p.SeqId != seqId {" << endl;
+      f_service_ << indent() << "  err = thrift.NewTApplicationException("
+                                "thrift.BAD_SEQUENCE_ID, \"" << (*f_iter)->get_name()
+                 << " failed: out of sequence response\")" << endl;
       f_service_ << indent() << "  return" << endl;
       f_service_ << indent() << "}" << endl;
       f_service_ << indent() << "if mTypeId == thrift.EXCEPTION {" << endl;
@@ -1784,9 +1796,10 @@ void t_go_generator::generate_service_client(t_service* tservice) {
       f_service_ << indent() << "  err = " << error2 << endl;
       f_service_ << indent() << "  return" << endl;
       f_service_ << indent() << "}" << endl;
-      f_service_ << indent() << "if p.SeqId != seqId {" << endl;
-      f_service_ << indent() << "  err = thrift.NewTApplicationException(thrift.BAD_SEQUENCE_ID, \""
-                 << (*f_iter)->get_name() << " failed: out of sequence response\")" << endl;
+      f_service_ << indent() << "if mTypeId != thrift.REPLY {" << endl;
+      f_service_ << indent() << "  err = thrift.NewTApplicationException("
+                 << "thrift.INVALID_MESSAGE_TYPE_EXCEPTION, \"" << (*f_iter)->get_name()
+                 << " failed: invalid message type\")" << endl;
       f_service_ << indent() << "  return" << endl;
       f_service_ << indent() << "}" << endl;
       f_service_ << indent() << "result := " << resultname << "{}" << endl;
