@@ -1234,15 +1234,16 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
       << endl;
   indent_up();
   out << indent() << "if _, err := iprot.ReadStructBegin(); err != nil {" << endl << indent()
-      << "  return thrift.PrependError(fmt.Sprintf(\"%T read error: \", p), err)" << endl << indent() << "}" << endl;
+      << "  return thrift.PrependError(fmt.Sprintf(\"%T read error: \", p), err)" << endl
+      << indent() << "}" << endl;
   // Loop over reading in fields
   indent(out) << "for {" << endl;
   indent_up();
   // Read beginning field marker
   out << indent() << "_, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()" << endl << indent()
       << "if err != nil {" << endl << indent()
-      << "  return thrift.PrependError(fmt.Sprintf(\"%T field %d read error: \", p, fieldId), err)" << endl << indent()
-      << "}" << endl;
+      << "  return thrift.PrependError(fmt.Sprintf(\"%T field %d read error: \", p, fieldId), err)"
+      << endl << indent() << "}" << endl;
   // Check for field STOP marker and break
   out << indent() << "if fieldTypeId == thrift.STOP { break; }" << endl;
 
@@ -1302,7 +1303,8 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
       << "  return err" << endl << indent() << "}" << endl;
   indent_down();
   out << indent() << "}" << endl << indent() << "if err := iprot.ReadStructEnd(); err != nil {"
-      << endl << indent() << "  return thrift.PrependError(fmt.Sprintf(\"%T read struct end error: \", p), err)" << endl
+      << endl << indent()
+      << "  return thrift.PrependError(fmt.Sprintf(\"%T read struct end error: \", p), err)" << endl
       << indent() << "}" << endl << indent() << "return nil" << endl;
   indent_down();
   out << indent() << "}" << endl << endl;
@@ -1338,7 +1340,9 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
   indent(out) << "func (p *" << tstruct_name << ") Write(oprot thrift.TProtocol) error {" << endl;
   indent_up();
   out << indent() << "if err := oprot.WriteStructBegin(\"" << name << "\"); err != nil {" << endl
-      << indent() << "  return thrift.PrependError(fmt.Sprintf(\"%T write struct begin error: \", p), err) }" << endl;
+      << indent()
+      << "  return thrift.PrependError(fmt.Sprintf(\"%T write struct begin error: \", p), err) }"
+      << endl;
 
   string field_name;
   string escape_field_name;
@@ -1395,16 +1399,16 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
 
     out << indent() << "if err := oprot.WriteFieldBegin(\"" << escape_field_name << "\", "
         << type_to_enum((*f_iter)->get_type()) << ", " << field_id << "); err != nil {" << endl
-        << indent() << "  return thrift.PrependError(fmt.Sprintf(\"%T write field begin error " << field_id << ":"
-        << escape_field_name << ": \", p), err) }" << endl;
+        << indent() << "  return thrift.PrependError(fmt.Sprintf(\"%T write field begin error "
+        << field_id << ":" << escape_field_name << ": \", p), err) }" << endl;
 
     // Write field contents
     generate_serialize_field(out, *f_iter, "p.");
 
     // Write field closer
     out << indent() << "if err := oprot.WriteFieldEnd(); err != nil {" << endl << indent()
-        << "  return thrift.PrependError(fmt.Sprintf(\"%T write field end error " << field_id << ":" << escape_field_name
-        << ": \", p), err) }" << endl;
+        << "  return thrift.PrependError(fmt.Sprintf(\"%T write field end error " << field_id << ":"
+        << escape_field_name << ": \", p), err) }" << endl;
 
     if (field_required == t_field::T_OPTIONAL) {
       indent_down();
@@ -2450,8 +2454,9 @@ void t_go_generator::generate_deserialize_field(ofstream& out,
       out << "ReadI32()";
     }
 
-    out << "; err != nil {" << endl << indent() << "return thrift.PrependError(\"error reading field "
-        << tfield->get_key() << ": \", err)" << endl;
+    out << "; err != nil {" << endl << indent()
+        << "return thrift.PrependError(\"error reading field " << tfield->get_key() << ": \", err)"
+        << endl;
 
     out << "} else {" << endl;
     string wrap;
@@ -2490,8 +2495,8 @@ void t_go_generator::generate_deserialize_struct(ofstream& out,
   out << indent() << prefix << eq << (pointer_field ? "&" : "");
   generate_go_struct_initializer(out, tstruct);
   out << indent() << "if err := " << prefix << ".Read(iprot); err != nil {" << endl << indent()
-      << "  return thrift.PrependError(fmt.Sprintf(\"%T error reading struct: \", " << prefix << "), err)" << endl
-      << indent() << "}" << endl;
+      << "  return thrift.PrependError(fmt.Sprintf(\"%T error reading struct: \", " << prefix
+      << "), err)" << endl << indent() << "}" << endl;
 }
 
 /**
@@ -2514,24 +2519,24 @@ void t_go_generator::generate_deserialize_container(ofstream& out,
   if (ttype->is_map()) {
     out << indent() << "_, _, size, err := iprot.ReadMapBegin()" << endl << indent()
         << "if err != nil {" << endl << indent()
-        << "  return thrift.PrependError(\"error reading map begin: \", err)" << endl << indent() << "}"
-        << endl << indent() << "tMap := make(" << type_to_go_type(orig_type) << ", size)" << endl
-        << indent() << prefix << eq << " " << (pointer_field ? "&" : "") << "tMap" << endl;
+        << "  return thrift.PrependError(\"error reading map begin: \", err)" << endl << indent()
+        << "}" << endl << indent() << "tMap := make(" << type_to_go_type(orig_type) << ", size)"
+        << endl << indent() << prefix << eq << " " << (pointer_field ? "&" : "") << "tMap" << endl;
   } else if (ttype->is_set()) {
     t_set* t = (t_set*)ttype;
     out << indent() << "_, size, err := iprot.ReadSetBegin()" << endl << indent()
         << "if err != nil {" << endl << indent()
-        << "  return thrift.PrependError(\"error reading set begin: \", err)" << endl << indent() << "}"
-        << endl << indent() << "tSet := make(map["
+        << "  return thrift.PrependError(\"error reading set begin: \", err)" << endl << indent()
+        << "}" << endl << indent() << "tSet := make(map["
         << type_to_go_key_type(t->get_elem_type()->get_true_type()) << "]bool, size)" << endl
         << indent() << prefix << eq << " " << (pointer_field ? "&" : "") << "tSet" << endl;
   } else if (ttype->is_list()) {
     out << indent() << "_, size, err := iprot.ReadListBegin()" << endl << indent()
         << "if err != nil {" << endl << indent()
-        << "  return thrift.PrependError(\"error reading list begin: \", err)" << endl << indent() << "}"
-        << endl << indent() << "tSlice := make(" << type_to_go_type(orig_type) << ", 0, size)"
-        << endl << indent() << prefix << eq << " " << (pointer_field ? "&" : "") << "tSlice"
-        << endl;
+        << "  return thrift.PrependError(\"error reading list begin: \", err)" << endl << indent()
+        << "}" << endl << indent() << "tSlice := make(" << type_to_go_type(orig_type)
+        << ", 0, size)" << endl << indent() << prefix << eq << " " << (pointer_field ? "&" : "")
+        << "tSlice" << endl;
   } else {
     throw "INVALID TYPE IN generate_deserialize_container '" + ttype->get_name() + "' for prefix '"
         + prefix + "'";
@@ -2558,16 +2563,16 @@ void t_go_generator::generate_deserialize_container(ofstream& out,
   // Read container end
   if (ttype->is_map()) {
     out << indent() << "if err := iprot.ReadMapEnd(); err != nil {" << endl << indent()
-        << "  return thrift.PrependError(\"error reading map end: \", err)" << endl << indent() << "}"
-        << endl;
+        << "  return thrift.PrependError(\"error reading map end: \", err)" << endl << indent()
+        << "}" << endl;
   } else if (ttype->is_set()) {
     out << indent() << "if err := iprot.ReadSetEnd(); err != nil {" << endl << indent()
-        << "  return thrift.PrependError(\"error reading set end: \", err)" << endl << indent() << "}"
-        << endl;
+        << "  return thrift.PrependError(\"error reading set end: \", err)" << endl << indent()
+        << "}" << endl;
   } else if (ttype->is_list()) {
     out << indent() << "if err := iprot.ReadListEnd(); err != nil {" << endl << indent()
-        << "  return thrift.PrependError(\"error reading list end: \", err)" << endl << indent() << "}"
-        << endl;
+        << "  return thrift.PrependError(\"error reading list end: \", err)" << endl << indent()
+        << "}" << endl;
   }
 }
 
@@ -2715,8 +2720,8 @@ void t_go_generator::generate_serialize_field(ofstream& out,
 void t_go_generator::generate_serialize_struct(ofstream& out, t_struct* tstruct, string prefix) {
   (void)tstruct;
   out << indent() << "if err := " << prefix << ".Write(oprot); err != nil {" << endl << indent()
-      << "  return thrift.PrependError(fmt.Sprintf(\"%T error writing struct: \", " << prefix << "), err)" << endl
-      << indent() << "}" << endl;
+      << "  return thrift.PrependError(fmt.Sprintf(\"%T error writing struct: \", " << prefix
+      << "), err)" << endl << indent() << "}" << endl;
 }
 
 void t_go_generator::generate_serialize_container(ofstream& out,
@@ -2731,20 +2736,20 @@ void t_go_generator::generate_serialize_container(ofstream& out,
         << type_to_enum(((t_map*)ttype)->get_key_type()) << ", "
         << type_to_enum(((t_map*)ttype)->get_val_type()) << ", "
         << "len(" << prefix << ")); err != nil {" << endl << indent()
-        << "  return thrift.PrependError(\"error writing map begin: \", err)" << endl << indent() << "}"
-        << endl;
+        << "  return thrift.PrependError(\"error writing map begin: \", err)" << endl << indent()
+        << "}" << endl;
   } else if (ttype->is_set()) {
     out << indent() << "if err := oprot.WriteSetBegin("
         << type_to_enum(((t_set*)ttype)->get_elem_type()) << ", "
         << "len(" << prefix << ")); err != nil {" << endl << indent()
-        << "  return thrift.PrependError(\"error writing set begin: \", err)" << endl << indent() << "}"
-        << endl;
+        << "  return thrift.PrependError(\"error writing set begin: \", err)" << endl << indent()
+        << "}" << endl;
   } else if (ttype->is_list()) {
     out << indent() << "if err := oprot.WriteListBegin("
         << type_to_enum(((t_list*)ttype)->get_elem_type()) << ", "
         << "len(" << prefix << ")); err != nil {" << endl << indent()
-        << "  return thrift.PrependError(\"error writing list begin: \", err)" << endl << indent() << "}"
-        << endl;
+        << "  return thrift.PrependError(\"error writing list begin: \", err)" << endl << indent()
+        << "}" << endl;
   } else {
     throw "compiler error: Invalid type in generate_serialize_container '" + ttype->get_name()
         + "' for prefix '" + prefix + "'";
@@ -2776,16 +2781,16 @@ void t_go_generator::generate_serialize_container(ofstream& out,
 
   if (ttype->is_map()) {
     out << indent() << "if err := oprot.WriteMapEnd(); err != nil {" << endl << indent()
-        << "  return thrift.PrependError(\"error writing map end: \", err)" << endl << indent() << "}"
-        << endl;
+        << "  return thrift.PrependError(\"error writing map end: \", err)" << endl << indent()
+        << "}" << endl;
   } else if (ttype->is_set()) {
     out << indent() << "if err := oprot.WriteSetEnd(); err != nil {" << endl << indent()
-        << "  return thrift.PrependError(\"error writing set end: \", err)" << endl << indent() << "}"
-        << endl;
+        << "  return thrift.PrependError(\"error writing set end: \", err)" << endl << indent()
+        << "}" << endl;
   } else if (ttype->is_list()) {
     out << indent() << "if err := oprot.WriteListEnd(); err != nil {" << endl << indent()
-        << "  return thrift.PrependError(\"error writing list end: \", err)" << endl << indent() << "}"
-        << endl;
+        << "  return thrift.PrependError(\"error writing list end: \", err)" << endl << indent()
+        << "}" << endl;
   }
 }
 

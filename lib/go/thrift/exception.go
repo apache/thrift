@@ -28,7 +28,7 @@ type TException interface {
 	error
 }
 
-// Prepends additional information to an error without loosing the Thrift exception interface
+// Prepends additional information to an error without losing the Thrift exception interface
 func PrependError(prepend string, err error) error {
 	if t, ok := err.(TTransportException); ok {
 		return NewTTransportException(t.TypeId(), prepend+t.Error())

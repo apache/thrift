@@ -58,7 +58,6 @@ public:
     std::map<std::string, std::string>::const_iterator iter;
     iter = parsed_options.find("merge");
     should_merge_includes_ = (iter != parsed_options.end());
-
   }
 
   virtual ~t_json_generator() {}
@@ -73,8 +72,8 @@ public:
   void generate_typedef(t_typedef* ttypedef);
   void generate_enum(t_enum* tenum);
   void generate_program();
-  void generate_function(t_function * tfunc);
-  void generate_field(t_field * field);
+  void generate_function(t_function* tfunc);
+  void generate_field(t_field* field);
 
   void generate_service(t_service* tservice);
   void generate_struct(t_struct* tstruct);
@@ -88,7 +87,7 @@ private:
   string get_type_name(t_type* ttype);
   string get_qualified_name(t_type* ttype);
 
-  void start_object(bool should_indent=true);
+  void start_object(bool should_indent = true);
   void start_array();
   void end_object();
   void end_array();
@@ -107,7 +106,7 @@ private:
   void write_integer(long value);
   void write_double(double value);
   void write_value(t_type* tvalue);
-  void write_const_value(t_const_value* value, bool force_string=false);
+  void write_const_value(t_const_value* value, bool force_string = false);
   void write_key_and(string key);
   void write_key_and_string(string key, string val);
   void write_key_and_integer(string key, int val);
@@ -120,7 +119,7 @@ void t_json_generator::init_generator() {
   string f_json_name = get_out_dir() + program_->get_name() + ".json";
   f_json_.open(f_json_name.c_str());
 
-  //Merge all included programs into this one so we can output one big file.
+  // Merge all included programs into this one so we can output one big file.
   if (should_merge_includes_) {
     merge_includes(program_);
   }
@@ -259,7 +258,6 @@ void t_json_generator::write_type_spec(t_type* ttype) {
     write_key_and_string("elemTypeId", get_type_name(etype));
     write_type_spec_object("elemType", etype);
   }
-
 }
 
 void t_json_generator::close_generator() {
@@ -324,8 +322,8 @@ void t_json_generator::generate_program() {
     // Generate namespaces
     write_key_and("namespaces");
     start_object(NO_INDENT);
-    const map<string,string>& namespaces = program_->get_namespaces();
-    map<string,string>::const_iterator ns_it;
+    const map<string, string>& namespaces = program_->get_namespaces();
+    map<string, string>::const_iterator ns_it;
     for (ns_it = namespaces.begin(); ns_it != namespaces.end(); ++ns_it) {
       write_key_and_string(ns_it->first, ns_it->second);
       indicate_comma_needed();
@@ -426,7 +424,6 @@ void t_json_generator::generate_typedef(t_typedef* ttypedef) {
   end_object();
 }
 
-
 void t_json_generator::write_string(const string& value) {
   f_json_ << quot << escape_json_string(value) << quot;
 }
@@ -443,59 +440,59 @@ void t_json_generator::write_const_value(t_const_value* value, bool should_force
 
   switch (value->get_type()) {
 
-    case t_const_value::CV_IDENTIFIER:
-    case t_const_value::CV_INTEGER:
-      if (should_force_string) {
-        write_string(std::to_string(value->get_integer()));
-      } else {
-        write_integer(value->get_integer());
-      }
-      break;
-
-    case t_const_value::CV_DOUBLE:
-      if (should_force_string) {
-        write_string(std::to_string(value->get_double()));
-      } else {
-        write_double(value->get_double());
-      }
-      break;
-
-    case t_const_value::CV_STRING:
-      write_string(value->get_string());
-      break;
-
-    case t_const_value::CV_LIST: {
-      start_array();
-      std::vector<t_const_value*> list = value->get_list();
-      std::vector<t_const_value*>::iterator lit;
-      for (lit = list.begin(); lit != list.end(); ++lit) {
-        write_comma_if_needed();
-        write_const_value(*lit);
-        indicate_comma_needed();
-      }
-      end_array();
-      break;
+  case t_const_value::CV_IDENTIFIER:
+  case t_const_value::CV_INTEGER:
+    if (should_force_string) {
+      write_string(std::to_string(value->get_integer()));
+    } else {
+      write_integer(value->get_integer());
     }
+    break;
 
-    case t_const_value::CV_MAP: {
-      start_object(NO_INDENT);
-      std::map<t_const_value*, t_const_value*> map = value->get_map();
-      std::map<t_const_value*, t_const_value*>::iterator mit;
-      for (mit = map.begin(); mit != map.end(); ++mit) {
-        write_comma_if_needed();
-        // JSON objects only allow string keys
-        write_const_value(mit->first, FORCE_STRING);
-        f_json_ << ": ";
-        write_const_value(mit->second);
-        indicate_comma_needed();
-      }
-      end_object();
-      break;
+  case t_const_value::CV_DOUBLE:
+    if (should_force_string) {
+      write_string(std::to_string(value->get_double()));
+    } else {
+      write_double(value->get_double());
     }
+    break;
 
-    default:
-      f_json_ << "null";
-      break;
+  case t_const_value::CV_STRING:
+    write_string(value->get_string());
+    break;
+
+  case t_const_value::CV_LIST: {
+    start_array();
+    std::vector<t_const_value*> list = value->get_list();
+    std::vector<t_const_value*>::iterator lit;
+    for (lit = list.begin(); lit != list.end(); ++lit) {
+      write_comma_if_needed();
+      write_const_value(*lit);
+      indicate_comma_needed();
+    }
+    end_array();
+    break;
+  }
+
+  case t_const_value::CV_MAP: {
+    start_object(NO_INDENT);
+    std::map<t_const_value*, t_const_value*> map = value->get_map();
+    std::map<t_const_value*, t_const_value*>::iterator mit;
+    for (mit = map.begin(); mit != map.end(); ++mit) {
+      write_comma_if_needed();
+      // JSON objects only allow string keys
+      write_const_value(mit->first, FORCE_STRING);
+      f_json_ << ": ";
+      write_const_value(mit->second);
+      indicate_comma_needed();
+    }
+    end_object();
+    break;
+  }
+
+  default:
+    f_json_ << "null";
+    break;
   }
 }
 
@@ -643,7 +640,7 @@ void t_json_generator::generate_function(t_function* tfunc) {
   end_object();
 }
 
-void t_json_generator::generate_field(t_field * field) {
+void t_json_generator::generate_field(t_field* field) {
   start_object();
 
   write_key_and_integer("key", field->get_key());
@@ -657,15 +654,15 @@ void t_json_generator::generate_field(t_field * field) {
 
   write_key_and("required");
   switch (field->get_req()) {
-    case t_field::T_REQUIRED:
-      write_string("required");
-      break;
-    case t_field::T_OPT_IN_REQ_OUT:
-      write_string("req_out");
-      break;
-    default:
-      write_string("optional");
-      break;
+  case t_field::T_REQUIRED:
+    write_string("required");
+    break;
+  case t_field::T_OPT_IN_REQ_OUT:
+    write_string("req_out");
+    break;
+  default:
+    write_string("optional");
+    break;
   }
 
   if (field->get_value()) {
@@ -709,7 +706,6 @@ string t_json_generator::get_qualified_name(t_type* ttype) {
   return ttype->get_program()->get_name() + "." + ttype->get_name();
 }
 
-
-THRIFT_REGISTER_GENERATOR(json, "JSON",
-"    merge:           Generate output with included files merged\n"
-)
+THRIFT_REGISTER_GENERATOR(json,
+                          "JSON",
+                          "    merge:           Generate output with included files merged\n")
