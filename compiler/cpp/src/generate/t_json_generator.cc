@@ -84,6 +84,13 @@ private:
   std::ofstream f_json_;
   std::stack<bool> comma_needed_;
 
+  template <typename T>
+  string to_string(T t) {
+    std::ostringstream out;
+    out << t;
+    return out.str();
+  }
+
   string get_type_name(t_type* ttype);
   string get_qualified_name(t_type* ttype);
 
@@ -192,7 +199,7 @@ void t_json_generator::write_key_and(string key) {
 
 void t_json_generator::write_key_and_integer(string key, int val) {
   write_comma_if_needed();
-  indent(f_json_) << json_str(key) << ": " << std::to_string(val);
+  indent(f_json_) << json_str(key) << ": " << to_string(val);
   indicate_comma_needed();
 }
 
@@ -429,11 +436,11 @@ void t_json_generator::write_string(const string& value) {
 }
 
 void t_json_generator::write_integer(long value) {
-  f_json_ << std::to_string(value);
+  f_json_ << to_string(value);
 }
 
 void t_json_generator::write_double(double value) {
-  f_json_ << std::to_string(value);
+  f_json_ << to_string(value);
 }
 
 void t_json_generator::write_const_value(t_const_value* value, bool should_force_string) {
@@ -443,7 +450,7 @@ void t_json_generator::write_const_value(t_const_value* value, bool should_force
   case t_const_value::CV_IDENTIFIER:
   case t_const_value::CV_INTEGER:
     if (should_force_string) {
-      write_string(std::to_string(value->get_integer()));
+      write_string(to_string(value->get_integer()));
     } else {
       write_integer(value->get_integer());
     }
@@ -451,7 +458,7 @@ void t_json_generator::write_const_value(t_const_value* value, bool should_force
 
   case t_const_value::CV_DOUBLE:
     if (should_force_string) {
-      write_string(std::to_string(value->get_double()));
+      write_string(to_string(value->get_double()));
     } else {
       write_double(value->get_double());
     }
