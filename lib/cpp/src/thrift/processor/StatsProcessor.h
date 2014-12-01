@@ -25,7 +25,9 @@
 #include <thrift/protocol/TProtocol.h>
 #include <TProcessor.h>
 
-namespace apache { namespace thrift { namespace processor {
+namespace apache {
+namespace thrift {
+namespace processor {
 
 /*
  * Class for keeping track of function call statistics and printing them if desired
@@ -33,11 +35,8 @@ namespace apache { namespace thrift { namespace processor {
  */
 class StatsProcessor : public apache::thrift::TProcessor {
 public:
-  StatsProcessor(bool print, bool frequency)
-    : print_(print),
-      frequency_(frequency)
-  {}
-  virtual ~StatsProcessor() {};
+  StatsProcessor(bool print, bool frequency) : print_(print), frequency_(frequency) {}
+  virtual ~StatsProcessor(){};
 
   virtual bool process(boost::shared_ptr<apache::thrift::protocol::TProtocol> piprot,
                        boost::shared_ptr<apache::thrift::protocol::TProtocol> poprot,
@@ -50,7 +49,7 @@ public:
     int32_t seqid;
 
     piprot_->readMessageBegin(fname, mtype, seqid);
-    if (mtype != apache::thrift::protocol::T_CALL) {
+    if (mtype != apache::thrift::protocol::T_CALL && mtype != apache::thrift::protocol::T_ONEWAY) {
       if (print_) {
         printf("Unknown message type\n");
       }
@@ -88,169 +87,145 @@ public:
     return true;
   }
 
-  const std::map<std::string, int64_t>& get_frequency_map() {
-    return frequency_map_;
-  }
+  const std::map<std::string, int64_t>& get_frequency_map() { return frequency_map_; }
 
 protected:
   void printAndPassToBuffer(apache::thrift::protocol::TType ftype) {
     switch (ftype) {
-      case apache::thrift::protocol::T_BOOL:
-        {
-          bool boolv;
-          piprot_->readBool(boolv);
-          if (print_) {
-            printf("%d", boolv);
-          }
+    case apache::thrift::protocol::T_BOOL: {
+      bool boolv;
+      piprot_->readBool(boolv);
+      if (print_) {
+        printf("%d", boolv);
+      }
+    } break;
+    case apache::thrift::protocol::T_BYTE: {
+      int8_t bytev;
+      piprot_->readByte(bytev);
+      if (print_) {
+        printf("%d", bytev);
+      }
+    } break;
+    case apache::thrift::protocol::T_I16: {
+      int16_t i16;
+      piprot_->readI16(i16);
+      if (print_) {
+        printf("%d", i16);
+      }
+    } break;
+    case apache::thrift::protocol::T_I32: {
+      int32_t i32;
+      piprot_->readI32(i32);
+      if (print_) {
+        printf("%d", i32);
+      }
+    } break;
+    case apache::thrift::protocol::T_I64: {
+      int64_t i64;
+      piprot_->readI64(i64);
+      if (print_) {
+        printf("%ld", i64);
+      }
+    } break;
+    case apache::thrift::protocol::T_DOUBLE: {
+      double dub;
+      piprot_->readDouble(dub);
+      if (print_) {
+        printf("%f", dub);
+      }
+    } break;
+    case apache::thrift::protocol::T_STRING: {
+      std::string str;
+      piprot_->readString(str);
+      if (print_) {
+        printf("%s", str.c_str());
+      }
+    } break;
+    case apache::thrift::protocol::T_STRUCT: {
+      std::string name;
+      int16_t fid;
+      apache::thrift::protocol::TType ftype;
+      piprot_->readStructBegin(name);
+      if (print_) {
+        printf("<");
+      }
+      while (true) {
+        piprot_->readFieldBegin(name, ftype, fid);
+        if (ftype == apache::thrift::protocol::T_STOP) {
+          break;
         }
-        break;
-      case apache::thrift::protocol::T_BYTE:
-        {
-          int8_t bytev;
-          piprot_->readByte(bytev);
-          if (print_) {
-            printf("%d", bytev);
-          }
+        printAndPassToBuffer(ftype);
+        if (print_) {
+          printf(",");
         }
-        break;
-      case apache::thrift::protocol::T_I16:
-        {
-          int16_t i16;
-          piprot_->readI16(i16);
-          if (print_) {
-            printf("%d", i16);
-          }
+        piprot_->readFieldEnd();
+      }
+      piprot_->readStructEnd();
+      if (print_) {
+        printf("\b>");
+      }
+    } break;
+    case apache::thrift::protocol::T_MAP: {
+      apache::thrift::protocol::TType keyType;
+      apache::thrift::protocol::TType valType;
+      uint32_t i, size;
+      piprot_->readMapBegin(keyType, valType, size);
+      if (print_) {
+        printf("{");
+      }
+      for (i = 0; i < size; i++) {
+        printAndPassToBuffer(keyType);
+        if (print_) {
+          printf("=>");
         }
-        break;
-      case apache::thrift::protocol::T_I32:
-        {
-          int32_t i32;
-          piprot_->readI32(i32);
-          if (print_) {
-            printf("%d", i32);
-          }
+        printAndPassToBuffer(valType);
+        if (print_) {
+          printf(",");
         }
-        break;
-      case apache::thrift::protocol::T_I64:
-        {
-          int64_t i64;
-          piprot_->readI64(i64);
-          if (print_) {
-            printf("%ld", i64);
-          }
+      }
+      piprot_->readMapEnd();
+      if (print_) {
+        printf("\b}");
+      }
+    } break;
+    case apache::thrift::protocol::T_SET: {
+      apache::thrift::protocol::TType elemType;
+      uint32_t i, size;
+      piprot_->readSetBegin(elemType, size);
+      if (print_) {
+        printf("{");
+      }
+      for (i = 0; i < size; i++) {
+        printAndPassToBuffer(elemType);
+        if (print_) {
+          printf(",");
         }
-        break;
-      case apache::thrift::protocol::T_DOUBLE:
-        {
-          double dub;
-          piprot_->readDouble(dub);
-          if (print_) {
-            printf("%f", dub);
-          }
+      }
+      piprot_->readSetEnd();
+      if (print_) {
+        printf("\b}");
+      }
+    } break;
+    case apache::thrift::protocol::T_LIST: {
+      apache::thrift::protocol::TType elemType;
+      uint32_t i, size;
+      piprot_->readListBegin(elemType, size);
+      if (print_) {
+        printf("[");
+      }
+      for (i = 0; i < size; i++) {
+        printAndPassToBuffer(elemType);
+        if (print_) {
+          printf(",");
         }
-        break;
-      case apache::thrift::protocol::T_STRING:
-        {
-          std::string str;
-          piprot_->readString(str);
-          if (print_) {
-            printf("%s", str.c_str());
-          }
-        }
-        break;
-      case apache::thrift::protocol::T_STRUCT:
-        {
-          std::string name;
-          int16_t fid;
-          apache::thrift::protocol::TType ftype;
-          piprot_->readStructBegin(name);
-          if (print_) {
-            printf("<");
-          }
-          while (true) {
-            piprot_->readFieldBegin(name, ftype, fid);
-            if (ftype == apache::thrift::protocol::T_STOP) {
-              break;
-            }
-            printAndPassToBuffer(ftype);
-            if (print_) {
-              printf(",");
-            }
-            piprot_->readFieldEnd();
-          }
-          piprot_->readStructEnd();
-          if (print_) {
-            printf("\b>");
-          }
-        }
-        break;
-      case apache::thrift::protocol::T_MAP:
-        {
-          apache::thrift::protocol::TType keyType;
-          apache::thrift::protocol::TType valType;
-          uint32_t i, size;
-          piprot_->readMapBegin(keyType, valType, size);
-          if (print_) {
-            printf("{");
-          }
-          for (i = 0; i < size; i++) {
-            printAndPassToBuffer(keyType);
-            if (print_) {
-              printf("=>");
-            }
-            printAndPassToBuffer(valType);
-            if (print_) {
-              printf(",");
-            }
-          }
-          piprot_->readMapEnd();
-          if (print_) {
-            printf("\b}");
-          }
-        }
-        break;
-      case apache::thrift::protocol::T_SET:
-        {
-          apache::thrift::protocol::TType elemType;
-          uint32_t i, size;
-          piprot_->readSetBegin(elemType, size);
-          if (print_) {
-            printf("{");
-          }
-          for (i = 0; i < size; i++) {
-            printAndPassToBuffer(elemType);
-            if (print_) {
-              printf(",");
-            }
-          }
-          piprot_->readSetEnd();
-          if (print_) {
-            printf("\b}");
-          }
-        }
-        break;
-      case apache::thrift::protocol::T_LIST:
-        {
-          apache::thrift::protocol::TType elemType;
-          uint32_t i, size;
-          piprot_->readListBegin(elemType, size);
-          if (print_) {
-            printf("[");
-          }
-          for (i = 0; i < size; i++) {
-            printAndPassToBuffer(elemType);
-            if (print_) {
-              printf(",");
-            }
-          }
-          piprot_->readListEnd();
-          if (print_) {
-            printf("\b]");
-          }
-        }
-        break;
-      default:
-        break;
+      }
+      piprot_->readListEnd();
+      if (print_) {
+        printf("\b]");
+      }
+    } break;
+    default:
+      break;
     }
   }
 
@@ -260,7 +235,8 @@ protected:
   bool print_;
   bool frequency_;
 };
-
-}}} // apache::thrift::processor
+}
+}
+} // apache::thrift::processor
 
 #endif

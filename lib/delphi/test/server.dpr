@@ -56,10 +56,14 @@ begin
       args[i-1] := arg;
     end;
     TTestServer.Execute( args );
-    Writeln('Press ENTER to close ... '); Readln;
   except
-    on E: Exception do
+    on E: EAbort do begin
+      ExitCode := $FF;
+    end;
+    on E: Exception do begin
       Writeln(E.ClassName, ': ', E.Message);
+      ExitCode := $FF;
+    end;
   end;
 end.
 

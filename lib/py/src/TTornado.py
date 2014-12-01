@@ -18,9 +18,11 @@
 #
 
 from __future__ import absolute_import
-import logging
 import socket
 import struct
+
+import logging
+logger = logging.getLogger(__name__)
 
 from thrift.transport.TTransport import TTransportException, TTransportBase, TMemoryBuffer
 
@@ -79,7 +81,7 @@ class TTornadoStreamTransport(TTransportBase):
 
     @gen.coroutine
     def open(self, timeout=None):
-        logging.debug('socket connecting')
+        logger.debug('socket connecting')
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         self.stream = iostream.IOStream(sock)
 
@@ -135,9 +137,7 @@ class TTornadoStreamTransport(TTransportBase):
                 if len(frame_header) == 0:
                     raise iostream.StreamClosedError('Read zero bytes from stream')
                 frame_length, = struct.unpack('!i', frame_header)
-                logging.debug('received frame header, frame length = %d', frame_length)
                 frame = yield self.stream.read_bytes(frame_length)
-                logging.debug('received frame payload: %r', frame)
                 raise gen.Return(frame)
 
     def write(self, buf):
@@ -176,7 +176,7 @@ class TTornadoServer(tcpserver.TCPServer):
                 iprot = self._iprot_factory.getProtocol(tr)
                 yield self._processor.process(iprot, oprot)
         except Exception:
-            logging.exception('thrift exception in handle_stream')
+            logger.exception('thrift exception in handle_stream')
             trans.close()
 
-        logging.info('client disconnected %s:%d', host, port)
+        logger.info('client disconnected %s:%d', host, port)

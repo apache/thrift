@@ -26,12 +26,12 @@
 
 #include "gen-c_glib/calculator.h"
 
-int main (void) {
+int main (void)
+{
   ThriftSocket *socket;
   ThriftTransport *transport;
   ThriftProtocol *protocol;
-  CalculatorClient *client;
-  CalculatorIf *iface;
+  CalculatorIf *client;
 
   GError *error = NULL;
   InvalidOperation *invalid_operation = NULL;
@@ -43,16 +43,20 @@ int main (void) {
 
   int exit_status = 0;
 
-  socket = g_object_new (THRIFT_TYPE_SOCKET,
-                         "hostname", "localhost",
-                         "port", 9090,
-                         NULL);
+#if (!GLIB_CHECK_VERSION (2, 36, 0))
+  g_type_init ();
+#endif
+
+  socket    = g_object_new (THRIFT_TYPE_SOCKET,
+                            "hostname",  "localhost",
+                            "port",      9090,
+                            NULL);
   transport = g_object_new (THRIFT_TYPE_BUFFERED_TRANSPORT,
                             "transport", socket,
                             NULL);
-  protocol = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL,
-                           "transport", transport,
-                           NULL);
+  protocol  = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL,
+                            "transport", transport,
+                            NULL);
 
   thrift_transport_open (transport, &error);
 
@@ -63,10 +67,9 @@ int main (void) {
      service through an instance of CalculatorClient, which implements
      CalculatorIf. */
   client = g_object_new (TYPE_CALCULATOR_CLIENT,
-                         "input_protocol", protocol,
+                         "input_protocol",  protocol,
                          "output_protocol", protocol,
                          NULL);
-  iface = CALCULATOR_IF (client);
 
   /* Each of the client methods requires at least two parameters: A
      pointer to the client-interface implementation (the client
@@ -74,15 +77,15 @@ int main (void) {
      information about any error that occurs.
 
      On success, client methods return TRUE. A return value of FALSE
-     indicates an error occured and the error parameter has been
+     indicates an error occurred and the error parameter has been
      set. */
-  if (!error && calculator_client_ping (iface, &error)) {
+  if (!error && calculator_if_ping (client, &error)) {
     puts ("ping()");
   }
 
   /* Service methods that return a value do so by passing the result
      back via an output parameter (here, "sum"). */
-  if (!error && calculator_client_add (iface, &sum, 1, 1, &error)) {
+  if (!error && calculator_if_add (client, &sum, 1, 1, &error)) {
     printf ("1+1=%d\n", sum);
   }
 
@@ -99,12 +102,12 @@ int main (void) {
 
     /* Exceptions are passed back from service methods in a manner
        similar to return values. */
-    if (calculator_client_calculate (iface,
-                                     NULL,
-                                     1,
-                                     work,
-                                     &invalid_operation,
-                                     &error)) {
+    if (calculator_if_calculate (client,
+                                 NULL,
+                                 1,
+                                 work,
+                                 &invalid_operation,
+                                 &error)) {
       puts ("Whoa? We can divide by zero!");
     }
     else {
@@ -123,8 +126,7 @@ int main (void) {
         invalid_operation = NULL;
       }
 
-      g_error_free (error);
-      error = NULL;
+      g_clear_error (&error);
     }
   }
 
@@ -136,12 +138,12 @@ int main (void) {
                   "op",   OPERATION_SUBTRACT,
                   NULL);
 
-    if (calculator_client_calculate (iface,
-                                     &diff,
-                                     1,
-                                     work,
-                                     &invalid_operation,
-                                     &error)) {
+    if (calculator_if_calculate (client,
+                                 &diff,
+                                 1,
+                                 work,
+                                 &invalid_operation,
+                                 &error)) {
       printf ("15-10=%d\n", diff);
     }
   }
@@ -156,10 +158,9 @@ int main (void) {
 
     /* As defined in the Thrift file, the Calculator service extends
        the SharedService service. Correspondingly, in the generated
-       code CalculatorClient inherits from SharedServiceClient, and
-       the parent service's methods are accessible through a simple
-       cast. */
-     if (shared_service_client_get_struct (SHARED_SERVICE_IF (iface),
+       code CalculatorIf inherits from SharedServiceIf, and the parent
+       service's methods are accessible through a simple cast. */
+    if (shared_service_client_get_struct (SHARED_SERVICE_IF (client),
                                           &shared_struct,
                                           1,
                                           &error)) {
@@ -173,8 +174,7 @@ int main (void) {
 
   if (error) {
     printf ("ERROR: %s\n", error->message);
-    g_error_free (error);
-    error = NULL;
+    g_clear_error (&error);
 
     exit_status = 1;
   }

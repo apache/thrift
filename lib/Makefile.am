@@ -85,6 +85,7 @@ EXTRA_DIST = \
 	cocoa \
 	d \
 	delphi \
+	haxe \
 	javame \
 	js \
 	ocaml \

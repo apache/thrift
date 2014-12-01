@@ -36,6 +36,14 @@ enum MyEnum2 {
   ME2_2,
 }
 
+enum MyEnum2_again {
+  // enum value identifiers may appear again in another enum type
+  ME0_1,
+  ME1_1,
+  ME2_1,
+  ME3_1,
+}
+
 enum MyEnum3 {
   ME3_0,
   ME3_1,
@@ -54,12 +62,6 @@ enum MyEnum4 {
   // attempting to define another enum value here fails
   // with an overflow error, as we overflow values that can be
   // represented with an i32.
-}
-
-enum MyEnum5 {
-  // attempting to explicitly use values out of the i32 range will also fail
-  // ME5_A = 0x80000000,
-  // ME5_B = 0x100000000,
 }
 
 struct MyStruct {

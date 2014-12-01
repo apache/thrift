@@ -32,35 +32,21 @@
  *
  */
 class t_const_value {
- public:
-
-  enum t_const_value_type {
-    CV_INTEGER,
-    CV_DOUBLE,
-    CV_STRING,
-    CV_MAP,
-    CV_LIST,
-    CV_IDENTIFIER
-  };
+public:
+  enum t_const_value_type { CV_INTEGER, CV_DOUBLE, CV_STRING, CV_MAP, CV_LIST, CV_IDENTIFIER };
 
   t_const_value() {}
 
-  t_const_value(int64_t val) {
-    set_integer(val);
-  }
+  t_const_value(int64_t val) { set_integer(val); }
 
-  t_const_value(std::string val) {
-    set_string(val);
-  }
+  t_const_value(std::string val) { set_string(val); }
 
   void set_string(std::string val) {
     valType_ = CV_STRING;
     stringVal_ = val;
   }
 
-  std::string get_string() const {
-    return stringVal_;
-  }
+  std::string get_string() const { return stringVal_; }
 
   void set_integer(int64_t val) {
     valType_ = CV_INTEGER;
@@ -75,13 +61,12 @@ class t_const_value {
       std::string identifier = get_identifier();
       std::string::size_type dot = identifier.rfind('.');
       if (dot != std::string::npos) {
-        identifier = identifier.substr(dot+1);
+        identifier = identifier.substr(dot + 1);
       }
       t_enum_value* val = enum_->get_constant_by_name(identifier);
       if (val == NULL) {
-        throw
-          "Unable to find enum value \"" + identifier +
-          "\" in enum \"" + enum_->get_name() + "\"";
+        throw "Unable to find enum value \"" + identifier + "\" in enum \"" + enum_->get_name()
+            + "\"";
       }
       return val->get_value();
     } else {
@@ -94,42 +79,26 @@ class t_const_value {
     doubleVal_ = val;
   }
 
-  double get_double() const {
-    return doubleVal_;
-  }
+  double get_double() const { return doubleVal_; }
 
-  void set_map() {
-    valType_ = CV_MAP;
-  }
+  void set_map() { valType_ = CV_MAP; }
 
-  void add_map(t_const_value* key, t_const_value* val) {
-    mapVal_[key] = val;
-  }
+  void add_map(t_const_value* key, t_const_value* val) { mapVal_[key] = val; }
 
-  const std::map<t_const_value*, t_const_value*>& get_map() const {
-    return mapVal_;
-  }
+  const std::map<t_const_value*, t_const_value*>& get_map() const { return mapVal_; }
 
-  void set_list() {
-    valType_ = CV_LIST;
-  }
+  void set_list() { valType_ = CV_LIST; }
 
-  void add_list(t_const_value* val) {
-    listVal_.push_back(val);
-  }
+  void add_list(t_const_value* val) { listVal_.push_back(val); }
 
-  const std::vector<t_const_value*>& get_list() const {
-    return listVal_;
-  }
+  const std::vector<t_const_value*>& get_list() const { return listVal_; }
 
   void set_identifier(std::string val) {
     valType_ = CV_IDENTIFIER;
     identifierVal_ = val;
   }
 
-  std::string get_identifier() const {
-    return identifierVal_;
-  }
+  std::string get_identifier() const { return identifierVal_; }
 
   std::string get_identifier_name() const {
     std::string ret = get_identifier();
@@ -137,10 +106,10 @@ class t_const_value {
     if (s == std::string::npos) {
       throw "error: identifier " + ret + " is unqualified!";
     }
-    ret = ret.substr(s+1);
+    ret = ret.substr(s + 1);
     s = ret.find('.');
     if (s != std::string::npos) {
-      ret = ret.substr(s+1);
+      ret = ret.substr(s + 1);
     }
     return ret;
   }
@@ -151,22 +120,18 @@ class t_const_value {
     if (s == std::string::npos) {
       throw "error: identifier " + ret + " is unqualified!";
     }
-    size_t s2 = ret.find('.', s+1);
+    size_t s2 = ret.find('.', s + 1);
     if (s2 != std::string::npos) {
-      ret = ret.substr(s+1);
+      ret = ret.substr(s + 1);
     }
     return ret;
   }
 
-  void set_enum(t_enum* tenum) {
-    enum_ = tenum;
-  }
+  void set_enum(t_enum* tenum) { enum_ = tenum; }
 
-  t_const_value_type get_type() const {
-    return valType_;
-  }
+  t_const_value_type get_type() const { return valType_; }
 
- private:
+private:
   std::map<t_const_value*, t_const_value*> mapVal_;
   std::vector<t_const_value*> listVal_;
   std::string stringVal_;
@@ -176,8 +141,6 @@ class t_const_value {
   t_enum* enum_;
 
   t_const_value_type valType_;
-
 };
 
 #endif
-

@@ -89,6 +89,7 @@ public class TCompactProtocol extends TProtocol {
   private static final byte VERSION = 1;
   private static final byte VERSION_MASK = 0x1f; // 0001 1111
   private static final byte TYPE_MASK = (byte)0xE0; // 1110 0000
+  private static final byte TYPE_BITS = 0x07; // 0000 0111
   private static final int  TYPE_SHIFT_AMOUNT = 5;
 
   /**
@@ -506,7 +507,7 @@ public class TCompactProtocol extends TProtocol {
     if (version != VERSION) {
       throw new TProtocolException("Expected version " + VERSION + " but got " + version);
     }
-    byte type = (byte)((versionAndType >> TYPE_SHIFT_AMOUNT) & 0x03);
+    byte type = (byte)((versionAndType >> TYPE_SHIFT_AMOUNT) & TYPE_BITS);
     int seqid = readVarint32();
     String messageName = readString();
     return new TMessage(messageName, type, seqid);

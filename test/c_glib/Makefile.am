@@ -16,7 +16,8 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-.NOTPARALLEL:
+AUTOMAKE_OPTIONS = subdir-objects serial-tests
+
 noinst_LTLIBRARIES = libtestcglib.la
 nodist_libtestcglib_la_SOURCES = \
 	gen-c_glib/t_test_second_service.c \
@@ -29,12 +30,22 @@ nodist_libtestcglib_la_SOURCES = \
 libtestcglib_la_LIBADD = $(top_builddir)/lib/c_glib/libthrift_c_glib.la
 
 check_PROGRAMS = \
-	test_client
+	test_client \
+	test_server
 
 test_client_SOURCES = \
 	src/test_client.c
 
 test_client_LDADD = \
+	libtestcglib.la \
+	$(top_builddir)/lib/c_glib/libthrift_c_glib.la
+
+test_server_SOURCES = \
+	src/thrift_test_handler.c \
+	src/thrift_test_handler.h \
+	src/test_server.c
+
+test_server_LDADD = \
 	libtestcglib.la \
 	$(top_builddir)/lib/c_glib/libthrift_c_glib.la
 
@@ -55,4 +66,7 @@ clean-local:
 	$(RM) -r gen-c_glib
 
 EXTRA_DIST = \
-	src/test_client.c
+	src/test_client.c \
+	src/thrift_test_handler.c \
+	src/thrift_test_handler.h \
+	src/test_server.c

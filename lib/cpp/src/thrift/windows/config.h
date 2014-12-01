@@ -30,53 +30,53 @@
 
 // use std::thread in MSVC11 (2012) or newer
 #if _MSC_VER >= 1700
-#  define USE_STD_THREAD 1
+#define USE_STD_THREAD 1
 // otherwise use boost threads
 #else
-#  define USE_BOOST_THREAD 1
+#define USE_BOOST_THREAD 1
 #endif
 
 #ifndef TARGET_WIN_XP
-#  define TARGET_WIN_XP 1
+#define TARGET_WIN_XP 1
 #endif
 
 #if TARGET_WIN_XP
-#  ifndef WINVER
-#    define WINVER 0x0501
-#  endif
-#  ifndef _WIN32_WINNT
-#    define _WIN32_WINNT 0x0501
-#  endif
+#ifndef WINVER
+#define WINVER 0x0501
+#endif
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0501
+#endif
 #endif
 
 #ifndef _WIN32_WINNT
-#  define _WIN32_WINNT 0x0601
+#define _WIN32_WINNT 0x0601
 #endif
 
 #if defined(_M_IX86) || defined(_M_X64)
-#  define ARITHMETIC_RIGHT_SHIFT 1
-#  define SIGNED_RIGHT_SHIFT_IS 1
+#define ARITHMETIC_RIGHT_SHIFT 1
+#define SIGNED_RIGHT_SHIFT_IS 1
 #endif
 
-#pragma warning(disable: 4996) // Deprecated posix name.
+#pragma warning(disable : 4996) // Deprecated posix name.
 
 #define VERSION "1.0.0-dev"
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_SYS_STAT_H 1
 
 #ifdef HAVE_STDINT_H
-#  include <stdint.h>
+#include <stdint.h>
 #else
-#  include <boost/cstdint.hpp>
+#include <boost/cstdint.hpp>
 
-typedef boost::int64_t    int64_t;
-typedef boost::uint64_t  uint64_t;
-typedef boost::int32_t    int32_t;
-typedef boost::uint32_t  uint32_t;
-typedef boost::int16_t    int16_t;
-typedef boost::uint16_t  uint16_t;
-typedef boost::int8_t      int8_t;
-typedef boost::uint8_t    uint8_t;
+typedef boost::int64_t int64_t;
+typedef boost::uint64_t uint64_t;
+typedef boost::int32_t int32_t;
+typedef boost::uint32_t uint32_t;
+typedef boost::int16_t int16_t;
+typedef boost::uint16_t uint16_t;
+typedef boost::int8_t int8_t;
+typedef boost::uint8_t uint8_t;
 #endif
 
 #include <thrift/transport/PlatformSocket.h>
@@ -93,6 +93,6 @@ typedef boost::uint8_t    uint8_t;
 #pragma comment(lib, "Ws2.lib")
 #else
 #pragma comment(lib, "Ws2_32.lib")
-#pragma comment(lib, "advapi32.lib") //For security APIs in TPipeServer
+#pragma comment(lib, "advapi32.lib") // For security APIs in TPipeServer
 #endif
 #endif // _THRIFT_WINDOWS_CONFIG_H_

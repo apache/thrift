@@ -219,7 +219,7 @@ string(<<237, X, _, Rest/binary>>, Handler, Acc, Stack, Config=#config{strict_ut
 string(<<_/utf8, Rest/binary>>, Handler, Acc, Stack, Config=#config{strict_utf8=false}) ->
     string(Rest, Handler, acc_seq(Acc, 16#fffd), Stack, Config);
 %% u+fffe and u+ffff for R14BXX (subsequent runtimes will happily match the
-%%  preceeding clause
+%%  preceding clause
 string(<<239, 191, X, Rest/binary>>, Handler, Acc, Stack, Config=#config{strict_utf8=false})
         when X == 190; X == 191 ->
     string(Rest, Handler, acc_seq(Acc, 16#fffd), Stack, Config);

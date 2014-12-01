@@ -25,22 +25,24 @@
 
 #include <thrift/transport/TBufferTransports.h>
 
-namespace apache { namespace thrift { namespace async {
+namespace apache {
+namespace thrift {
+namespace async {
 
 class TAsyncBufferProcessor {
- public:
+public:
   // Process data in "in", putting the result in "out".
   // Call _return(true) when done, or _return(false) to
   // forcefully close the connection (if applicable).
   // "in" and "out" should be TMemoryBuffer or similar,
   // not a wrapper around a socket.
-  virtual void process(
-      apache::thrift::stdcxx::function<void(bool healthy)> _return,
-      boost::shared_ptr<apache::thrift::transport::TBufferBase> ibuf,
-      boost::shared_ptr<apache::thrift::transport::TBufferBase> obuf) = 0;
+  virtual void process(apache::thrift::stdcxx::function<void(bool healthy)> _return,
+                       boost::shared_ptr<apache::thrift::transport::TBufferBase> ibuf,
+                       boost::shared_ptr<apache::thrift::transport::TBufferBase> obuf) = 0;
   virtual ~TAsyncBufferProcessor() {}
 };
-
-}}} // apache::thrift::async
+}
+}
+} // apache::thrift::async
 
 #endif // #ifndef _THRIFT_TASYNC_BUFFER_PROCESSOR_H_

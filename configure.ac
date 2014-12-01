@@ -23,7 +23,7 @@ AC_INIT([thrift], [1.0.0-dev])
 
 AC_CONFIG_AUX_DIR([.])
 
-AM_INIT_AUTOMAKE([1.11 tar-ustar])
+AM_INIT_AUTOMAKE([1.13 tar-ustar])
 PKG_PROG_PKG_CONFIG
 
 AC_ARG_VAR([PY_PREFIX], [Prefix for installing Python modules.
@@ -100,6 +100,9 @@ AC_PROG_RANLIB
 AC_LANG([C++])
 AX_CXX_COMPILE_STDCXX_11([noext])
 
+AM_EXTRA_RECURSIVE_TARGETS([style])
+AC_SUBST(CPPSTYLE_CMD, 'find . -type f \( -iname "*.h" -or -iname "*.cpp" -or -iname "*.cc" -or -iname "*.tcc" \) -printf "Reformatting: %h/%f\n" -exec clang-format -i {} \;')
+
 AC_ARG_ENABLE([libs],
   AS_HELP_STRING([--enable-libs], [build the Apache Thrift libraries [default=yes]]),
   [], enable_libs=yes
@@ -114,6 +117,7 @@ if test "$enable_libs" = "no"; then
   with_python="no"
   with_ruby="no"
   with_haskell="no"
+  with_haxe="no"
   with_perl="no"
   with_php="no"
   with_php_extension="no"
@@ -182,7 +186,7 @@ if test "$with_java" = "yes";  then
   AX_CHECK_ANT_VERSION($ANT, 1.7)
   AC_SUBST(CLASSPATH)
   AC_SUBST(ANT_FLAGS)
-  if test "x$JAVAC" != "x" && test "x$JAVAC" != "x" && test "x$ANT" != "x" ; then
+  if test "x$JAVA" != "x" && test "x$JAVAC" != "x" && test "x$ANT" != "x" ; then
     have_java="yes"
   fi
 fi
@@ -316,6 +320,16 @@ if test "$with_go" = "yes";  then
   fi
 fi
 AM_CONDITIONAL(WITH_GO, [test "$have_go" = "yes"])
+
+
+AX_THRIFT_LIB(haxe, [Haxe], yes)
+if test "$with_haxe" = "yes";  then
+  AC_PATH_PROG([HAXE], [haxe])
+  if [[ -x "$HAXE" ]] ; then
+    have_haxe="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_HAXE, [test "$have_haxe" = "yes"])
 
 
 AX_THRIFT_LIB(d, [D], yes)
@@ -641,6 +655,7 @@ AC_CONFIG_FILES([
   lib/erl/Makefile
   lib/go/Makefile
   lib/go/test/Makefile
+  lib/haxe/test/Makefile
   lib/hs/Makefile
   lib/java/Makefile
   lib/js/test/Makefile
@@ -657,6 +672,7 @@ AC_CONFIG_FILES([
   test/cpp/Makefile
   test/erl/Makefile
   test/go/Makefile
+  test/haxe/Makefile
   test/hs/Makefile
   test/php/Makefile
   test/perl/Makefile
@@ -668,6 +684,7 @@ AC_CONFIG_FILES([
   tutorial/c_glib/Makefile
   tutorial/cpp/Makefile
   tutorial/go/Makefile
+  tutorial/haxe/Makefile
   tutorial/hs/Makefile
   tutorial/java/Makefile
   tutorial/js/Makefile
@@ -690,6 +707,7 @@ echo "Building Java Library ........ : $have_java"
 echo "Building C# Library .......... : $have_csharp"
 echo "Building Python Library ...... : $have_python"
 echo "Building Ruby Library ........ : $have_ruby"
+echo "Building Haxe Library ........ : $have_haxe"
 echo "Building Haskell Library ..... : $have_haskell"
 echo "Building Perl Library ........ : $have_perl"
 echo "Building PHP Library ......... : $have_php"
@@ -738,6 +756,11 @@ if test "$have_haskell" = "yes" ; then
   echo "Haskell Library:"
   echo "   Using Haskell ............. : $RUNHASKELL"
   echo "   Using Cabal ............... : $CABAL"
+fi
+if test "$have_haxe" = "yes" ; then
+  echo
+  echo "Haxe Library:"
+  echo "   Using Haxe ................ : $HAXE"
 fi
 if test "$have_perl" = "yes" ; then
   echo

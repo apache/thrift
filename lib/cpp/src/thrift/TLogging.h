@@ -39,13 +39,11 @@
  */
 #define T_GLOBAL_DEBUGGING_LEVEL 0
 
-
 /**
  * T_GLOBAL_LOGGING_LEVEL = 0: all logging turned off, logging macros undefined
  * T_GLOBAL_LOGGING_LEVEL = 1: all logging turned on
  */
-#define T_GLOBAL_LOGGING_LEVEL   1
-
+#define T_GLOBAL_LOGGING_LEVEL 1
 
 /**
  * Standard wrapper around fprintf what will prefix the file name and line
@@ -55,83 +53,93 @@
  * @param format_string
  */
 #if T_GLOBAL_DEBUGGING_LEVEL > 0
-  #define T_DEBUG(format_string,...)                                        \
-    if (T_GLOBAL_DEBUGGING_LEVEL > 0) {                                     \
-      fprintf(stderr,"[%s,%d] " format_string " \n", __FILE__, __LINE__,##__VA_ARGS__); \
+#define T_DEBUG(format_string, ...)                                                                \
+  if (T_GLOBAL_DEBUGGING_LEVEL > 0) {                                                              \
+    fprintf(stderr, "[%s,%d] " format_string " \n", __FILE__, __LINE__, ##__VA_ARGS__);            \
   }
 #else
-  #define T_DEBUG(format_string,...)
+#define T_DEBUG(format_string, ...)
 #endif
 
-
 /**
- * analagous to T_DEBUG but also prints the time
+ * analogous to T_DEBUG but also prints the time
  *
  * @param string  format_string input: printf style format string
  */
 #if T_GLOBAL_DEBUGGING_LEVEL > 0
-  #define T_DEBUG_T(format_string,...)                                    \
-    {                                                                     \
-      if (T_GLOBAL_DEBUGGING_LEVEL > 0) {                                 \
-        time_t now;                                                       \
-        char dbgtime[26] ;                                                \
-        time(&now);                                                       \
-        THRIFT_CTIME_R(&now, dbgtime);                                           \
-        dbgtime[24] = '\0';                                               \
-        fprintf(stderr,"[%s,%d] [%s] " format_string " \n", __FILE__, __LINE__,dbgtime,##__VA_ARGS__); \
-      }                                                                   \
-    }
+#define T_DEBUG_T(format_string, ...)                                                              \
+  {                                                                                                \
+    if (T_GLOBAL_DEBUGGING_LEVEL > 0) {                                                            \
+      time_t now;                                                                                  \
+      char dbgtime[26];                                                                            \
+      time(&now);                                                                                  \
+      THRIFT_CTIME_R(&now, dbgtime);                                                               \
+      dbgtime[24] = '\0';                                                                          \
+      fprintf(stderr,                                                                              \
+              "[%s,%d] [%s] " format_string " \n",                                                 \
+              __FILE__,                                                                            \
+              __LINE__,                                                                            \
+              dbgtime,                                                                             \
+              ##__VA_ARGS__);                                                                      \
+    }                                                                                              \
+  }
 #else
-  #define T_DEBUG_T(format_string,...)
+#define T_DEBUG_T(format_string, ...)
 #endif
 
-
 /**
- * analagous to T_DEBUG but uses input level to determine whether or not the string
+ * analogous to T_DEBUG but uses input level to determine whether or not the string
  * should be logged.
  *
  * @param int     level: specified debug level
  * @param string  format_string input: format string
  */
-#define T_DEBUG_L(level, format_string,...)                               \
-  if ((level) > 0) {                                                      \
-    fprintf(stderr,"[%s,%d] " format_string " \n", __FILE__, __LINE__,##__VA_ARGS__); \
+#define T_DEBUG_L(level, format_string, ...)                                                       \
+  if ((level) > 0) {                                                                               \
+    fprintf(stderr, "[%s,%d] " format_string " \n", __FILE__, __LINE__, ##__VA_ARGS__);            \
   }
-
 
 /**
  * Explicit error logging. Prints time, file name and line number
  *
  * @param string  format_string input: printf style format string
  */
-#define T_ERROR(format_string,...)                                      \
-  {                                                                     \
-    time_t now;                                                         \
-    char dbgtime[26] ;                                                  \
-    time(&now);                                                         \
-    THRIFT_CTIME_R(&now, dbgtime);                                             \
-    dbgtime[24] = '\0';                                                 \
-    fprintf(stderr,"[%s,%d] [%s] ERROR: " format_string " \n", __FILE__, __LINE__,dbgtime,##__VA_ARGS__); \
+#define T_ERROR(format_string, ...)                                                                \
+  {                                                                                                \
+    time_t now;                                                                                    \
+    char dbgtime[26];                                                                              \
+    time(&now);                                                                                    \
+    THRIFT_CTIME_R(&now, dbgtime);                                                                 \
+    dbgtime[24] = '\0';                                                                            \
+    fprintf(stderr,                                                                                \
+            "[%s,%d] [%s] ERROR: " format_string " \n",                                            \
+            __FILE__,                                                                              \
+            __LINE__,                                                                              \
+            dbgtime,                                                                               \
+            ##__VA_ARGS__);                                                                        \
   }
 
-
 /**
- * Analagous to T_ERROR, additionally aborting the process.
+ * Analogous to T_ERROR, additionally aborting the process.
  * WARNING: macro calls abort(), ending program execution
  *
  * @param string  format_string input: printf style format string
  */
-#define T_ERROR_ABORT(format_string,...)                                \
-  {                                                                     \
-    time_t now;                                                         \
-    char dbgtime[26] ;                                                  \
-    time(&now);                                                         \
-    THRIFT_CTIME_R(&now, dbgtime);                                             \
-    dbgtime[24] = '\0';                                                 \
-    fprintf(stderr,"[%s,%d] [%s] ERROR: Going to abort " format_string " \n", __FILE__, __LINE__,dbgtime,##__VA_ARGS__); \
-    exit(1);                                                            \
+#define T_ERROR_ABORT(format_string, ...)                                                          \
+  {                                                                                                \
+    time_t now;                                                                                    \
+    char dbgtime[26];                                                                              \
+    time(&now);                                                                                    \
+    THRIFT_CTIME_R(&now, dbgtime);                                                                 \
+    dbgtime[24] = '\0';                                                                            \
+    fprintf(stderr,                                                                                \
+            "[%s,%d] [%s] ERROR: Going to abort " format_string " \n",                             \
+            __FILE__,                                                                              \
+            __LINE__,                                                                              \
+            dbgtime,                                                                               \
+            ##__VA_ARGS__);                                                                        \
+    exit(1);                                                                                       \
   }
-
 
 /**
  * Log input message
@@ -139,21 +147,20 @@
  * @param string  format_string input: printf style format string
  */
 #if T_GLOBAL_LOGGING_LEVEL > 0
-  #define T_LOG_OPER(format_string,...)                                       \
-    {                                                                         \
-      if (T_GLOBAL_LOGGING_LEVEL > 0) {                                       \
-        time_t now;                                                           \
-        char dbgtime[26] ;                                                    \
-        time(&now);                                                           \
-        THRIFT_CTIME_R(&now, dbgtime);                                               \
-        dbgtime[24] = '\0';                                                   \
-        fprintf(stderr,"[%s] " format_string " \n", dbgtime,##__VA_ARGS__);  \
-      }                                                                       \
-    }
+#define T_LOG_OPER(format_string, ...)                                                             \
+  {                                                                                                \
+    if (T_GLOBAL_LOGGING_LEVEL > 0) {                                                              \
+      time_t now;                                                                                  \
+      char dbgtime[26];                                                                            \
+      time(&now);                                                                                  \
+      THRIFT_CTIME_R(&now, dbgtime);                                                               \
+      dbgtime[24] = '\0';                                                                          \
+      fprintf(stderr, "[%s] " format_string " \n", dbgtime, ##__VA_ARGS__);                        \
+    }                                                                                              \
+  }
 #else
-  #define T_LOG_OPER(format_string,...)
+#define T_LOG_OPER(format_string, ...)
 #endif
-
 
 /**
  * T_GLOBAL_DEBUG_VIRTUAL = 0 or unset: normal operation,
@@ -165,29 +172,24 @@
  *                                      apache::thrift::profile_print_info()
  */
 #if T_GLOBAL_DEBUG_VIRTUAL > 1
-  #define T_VIRTUAL_CALL()                                                \
-    ::apache::thrift::profile_virtual_call(typeid(*this))
-  #define T_GENERIC_PROTOCOL(template_class, generic_prot, specific_prot) \
-    do {                                                                  \
-      if (!(specific_prot)) {                                             \
-        ::apache::thrift::profile_generic_protocol(                     \
-            typeid(*template_class), typeid(*generic_prot));              \
-      }                                                                   \
-    } while (0)
+#define T_VIRTUAL_CALL() ::apache::thrift::profile_virtual_call(typeid(*this))
+#define T_GENERIC_PROTOCOL(template_class, generic_prot, specific_prot)                            \
+  do {                                                                                             \
+    if (!(specific_prot)) {                                                                        \
+      ::apache::thrift::profile_generic_protocol(typeid(*template_class), typeid(*generic_prot));  \
+    }                                                                                              \
+  } while (0)
 #elif T_GLOBAL_DEBUG_VIRTUAL == 1
-  #define T_VIRTUAL_CALL()                                                \
-    fprintf(stderr,"[%s,%d] virtual call\n", __FILE__, __LINE__)
-  #define T_GENERIC_PROTOCOL(template_class, generic_prot, specific_prot) \
-    do {                                                                  \
-      if (!(specific_prot)) {                                             \
-        fprintf(stderr,                                                   \
-                "[%s,%d] failed to cast to specific protocol type\n",     \
-                __FILE__, __LINE__);                                      \
-      }                                                                   \
-    } while (0)
+#define T_VIRTUAL_CALL() fprintf(stderr, "[%s,%d] virtual call\n", __FILE__, __LINE__)
+#define T_GENERIC_PROTOCOL(template_class, generic_prot, specific_prot)                            \
+  do {                                                                                             \
+    if (!(specific_prot)) {                                                                        \
+      fprintf(stderr, "[%s,%d] failed to cast to specific protocol type\n", __FILE__, __LINE__);   \
+    }                                                                                              \
+  } while (0)
 #else
-  #define T_VIRTUAL_CALL()
-  #define T_GENERIC_PROTOCOL(template_class, generic_prot, specific_prot)
+#define T_VIRTUAL_CALL()
+#define T_GENERIC_PROTOCOL(template_class, generic_prot, specific_prot)
 #endif
 
 #endif // #ifndef _THRIFT_TLOGGING_H_

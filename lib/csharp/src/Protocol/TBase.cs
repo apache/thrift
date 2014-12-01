@@ -19,11 +19,11 @@
 
 namespace Thrift.Protocol
 {
-	public interface TBase : TAbstractBase
-	{
-		///
-		/// Reads the TObject from the given input protocol.
-		///
-		void Read(TProtocol tProtocol);
-	}
+    public interface TBase : TAbstractBase
+    {
+        ///
+        /// Reads the TObject from the given input protocol.
+        ///
+        void Read(TProtocol tProtocol);
+    }
 }

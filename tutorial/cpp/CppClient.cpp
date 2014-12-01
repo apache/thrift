@@ -33,7 +33,7 @@ using namespace apache::thrift::transport;
 using namespace tutorial;
 using namespace shared;
 
-int main(int argc, char** argv) {
+int main() {
   boost::shared_ptr<TTransport> socket(new TSocket("localhost", 9090));
   boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
   boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
@@ -76,5 +76,4 @@ int main(int argc, char** argv) {
   } catch (TException& tx) {
     cout << "ERROR: " << tx.what() << endl;
   }
-
 }

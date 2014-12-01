@@ -60,11 +60,14 @@
     <ClCompile Include="src\generate\t_erl_generator.cc" />
     <ClCompile Include="src\generate\t_generator.cc" />
     <ClCompile Include="src\generate\t_go_generator.cc" />
+    <ClCompile Include="src\generate\t_gv_generator.cc" />
+    <ClCompile Include="src\generate\t_haxe_generator.cc" />
     <ClCompile Include="src\generate\t_hs_generator.cc" />
     <ClCompile Include="src\generate\t_html_generator.cc" />
     <ClCompile Include="src\generate\t_javame_generator.cc" />
     <ClCompile Include="src\generate\t_java_generator.cc" />
     <ClCompile Include="src\generate\t_js_generator.cc" />
+    <ClCompile Include="src\generate\t_json_generator.cc" />
     <ClCompile Include="src\generate\t_ocaml_generator.cc" />
     <ClCompile Include="src\generate\t_perl_generator.cc" />
     <ClCompile Include="src\generate\t_php_generator.cc" />

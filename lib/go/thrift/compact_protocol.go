@@ -31,6 +31,7 @@ const (
 	COMPACT_VERSION           = 1
 	COMPACT_VERSION_MASK      = 0x1f
 	COMPACT_TYPE_MASK         = 0x0E0
+	COMPACT_TYPE_BITS         = 0x07
 	COMPACT_TYPE_SHIFT_AMOUNT = 5
 )
 
@@ -297,7 +298,7 @@ func (p *TCompactProtocol) WriteDouble(value float64) error {
 	return NewTProtocolException(err)
 }
 
-// Write a string to the wire with a varint size preceeding.
+// Write a string to the wire with a varint size preceding.
 func (p *TCompactProtocol) WriteString(value string) error {
 	_, e := p.writeVarint32(int32(len(value)))
 	if e != nil {
@@ -335,7 +336,7 @@ func (p *TCompactProtocol) ReadMessageBegin() (name string, typeId TMessageType,
 	}
 	versionAndType, err := p.ReadByte()
 	version := versionAndType & COMPACT_VERSION_MASK
-	typeId = TMessageType((versionAndType >> COMPACT_TYPE_SHIFT_AMOUNT) & 0x03)
+	typeId = TMessageType((versionAndType >> COMPACT_TYPE_SHIFT_AMOUNT) & COMPACT_TYPE_BITS)
 	if err != nil {
 		return
 	}
@@ -677,13 +678,13 @@ func (p *TCompactProtocol) fixedInt64ToBytes(n int64, buf []byte) {
 	binary.LittleEndian.PutUint64(buf, uint64(n))
 }
 
-// Writes a byte without any possiblity of all that field header nonsense.
+// Writes a byte without any possibility of all that field header nonsense.
 // Used internally by other writing methods that know they need to write a byte.
 func (p *TCompactProtocol) writeByteDirect(b byte) error {
 	return p.trans.WriteByte(b)
 }
 
-// Writes a byte without any possiblity of all that field header nonsense.
+// Writes a byte without any possibility of all that field header nonsense.
 func (p *TCompactProtocol) writeIntAsByteDirect(n int) (int, error) {
 	return 1, p.writeByteDirect(byte(n))
 }

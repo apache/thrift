@@ -29,7 +29,7 @@ uses
   Thrift.Stream;
 
 const
-  DEFAULT_THRIFT_PIPE_TIMEOUT = 5 * 1000; // ms
+  DEFAULT_THRIFT_PIPE_TIMEOUT = DEFAULT_THRIFT_TIMEOUT deprecated 'use DEFAULT_THRIFT_TIMEOUT';
 
 
 
@@ -57,7 +57,7 @@ type
     function IsOpen: Boolean; override;
     function ToArray: TBytes; override;
   public
-    constructor Create( aEnableOverlapped : Boolean; const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT);
+    constructor Create( aEnableOverlapped : Boolean; const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT);
     destructor Destroy;  override;
   end;
 
@@ -76,7 +76,7 @@ type
                         const aEnableOverlapped : Boolean;
                         const aShareMode: DWORD = 0;
                         const aSecurityAttributes: PSecurityAttributes = nil;
-                        const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT);  overload;
+                        const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT);  overload;
   end;
 
 
@@ -90,7 +90,7 @@ type
   public
     constructor Create( const aPipeHandle : THandle;
                         const aOwnsHandle, aEnableOverlapped : Boolean;
-                        const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT);  overload;
+                        const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT);  overload;
     destructor Destroy;  override;
   end;
 
@@ -120,7 +120,7 @@ type
     constructor Create( const aPipeName : string;
                         const aShareMode: DWORD = 0;
                         const aSecurityAttributes: PSecurityAttributes = nil;
-                        const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT);  overload;
+                        const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT);  overload;
   end;
 
 
@@ -131,7 +131,7 @@ type
     // ITransport
     procedure Close; override;
     constructor Create( aPipe : THandle; aOwnsHandle : Boolean;
-                        const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT); reintroduce;
+                        const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT); reintroduce;
   end;
 
 
@@ -260,7 +260,7 @@ end;
 
 
 constructor TPipeStreamBase.Create( aEnableOverlapped : Boolean;
-                                    const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT);
+                                    const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT);
 begin
   inherited Create;
   ASSERT( aTimeout > 0);
@@ -781,7 +781,7 @@ begin
     FWriteHandle     := hPipeW;
 
     result := TRUE;
-  
+
   finally
     if sd <> nil then LocalFree( Cardinal(sd));
   end;

@@ -85,6 +85,7 @@ public class TNonblockingSocket extends TNonblockingTransport {
     Socket socket = socketChannel.socket();
     socket.setSoLinger(false, 0);
     socket.setTcpNoDelay(true);
+    socket.setKeepAlive(true);
     setTimeout(timeout);
   }
 

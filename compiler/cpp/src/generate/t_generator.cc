@@ -76,7 +76,7 @@ void t_generator::generate_program() {
   close_generator();
 }
 
-string t_generator::escape_string(const string &in) const {
+string t_generator::escape_string(const string& in) const {
   string result = "";
   for (string::const_iterator it = in.begin(); it < in.end(); it++) {
     std::map<char, std::string>::const_iterator res = escape_.find(*it);
@@ -101,22 +101,23 @@ void t_generator::generate_docstring_comment(ostream& out,
                                              const string& line_prefix,
                                              const string& contents,
                                              const string& comment_end) {
-  if (comment_start != "") indent(out) << comment_start;
+  if (comment_start != "")
+    indent(out) << comment_start;
   stringstream docs(contents, ios_base::in);
-  while ( ! (docs.eof() || docs.fail())) {
+  while (!(docs.eof() || docs.fail())) {
     char line[1024];
     docs.getline(line, 1024);
 
     // Just prnt a newline when the line & prefix are empty.
     if (strlen(line) == 0 && line_prefix == "" && !docs.eof()) {
-        out << std::endl;
-    } else if (strlen(line) > 0 || !docs.eof()) {  // skip the empty last line
+      out << std::endl;
+    } else if (strlen(line) > 0 || !docs.eof()) { // skip the empty last line
       indent(out) << line_prefix << line << std::endl;
     }
   }
-  if (comment_end != "") indent(out) << comment_end;
+  if (comment_end != "")
+    indent(out) << comment_end;
 }
-
 
 void t_generator_registry::register_generator(t_generator_factory* factory) {
   gen_map_t& the_map = get_generator_map();
@@ -126,18 +127,17 @@ void t_generator_registry::register_generator(t_generator_factory* factory) {
   the_map[factory->get_short_name()] = factory;
 }
 
-t_generator* t_generator_registry::get_generator(t_program* program,
-                                                 const string& options) {
+t_generator* t_generator_registry::get_generator(t_program* program, const string& options) {
   string::size_type colon = options.find(':');
   string language = options.substr(0, colon);
 
   map<string, string> parsed_options;
   if (colon != string::npos) {
-    string::size_type pos = colon+1;
+    string::size_type pos = colon + 1;
     while (pos != string::npos && pos < options.size()) {
       string::size_type next_pos = options.find(',', pos);
-      string option = options.substr(pos, next_pos-pos);
-      pos = ((next_pos == string::npos) ? next_pos : next_pos+1);
+      string option = options.substr(pos, next_pos - pos);
+      pos = ((next_pos == string::npos) ? next_pos : next_pos + 1);
 
       string::size_type separator = option.find('=');
       string key, value;
@@ -146,7 +146,7 @@ t_generator* t_generator_registry::get_generator(t_program* program,
         value = "";
       } else {
         key = option.substr(0, separator);
-        value = option.substr(separator+1);
+        value = option.substr(separator + 1);
       }
 
       parsed_options[key] = value;
@@ -169,13 +169,9 @@ t_generator_registry::gen_map_t& t_generator_registry::get_generator_map() {
   return *the_map;
 }
 
-t_generator_factory::t_generator_factory(
-    const std::string& short_name,
-    const std::string& long_name,
-    const std::string& documentation)
-  : short_name_(short_name)
-  , long_name_(long_name)
-  , documentation_(documentation)
-{
+t_generator_factory::t_generator_factory(const std::string& short_name,
+                                         const std::string& long_name,
+                                         const std::string& documentation)
+  : short_name_(short_name), long_name_(long_name), documentation_(documentation) {
   t_generator_registry::register_generator(this);
 }

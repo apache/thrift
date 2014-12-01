@@ -31,29 +31,20 @@
  *
  */
 class t_const : public t_doc {
- public:
-  t_const(t_type* type, std::string name, t_const_value* value) :
-    type_(type),
-    name_(name),
-    value_(value) {}
+public:
+  t_const(t_type* type, std::string name, t_const_value* value)
+    : type_(type), name_(name), value_(value) {}
 
-  t_type* get_type() const {
-    return type_;
-  }
+  t_type* get_type() const { return type_; }
 
-  std::string get_name() const {
-    return name_;
-  }
+  std::string get_name() const { return name_; }
 
-  t_const_value* get_value() const {
-    return value_;
-  }
+  t_const_value* get_value() const { return value_; }
 
- private:
+private:
   t_type* type_;
   std::string name_;
   t_const_value* value_;
 };
 
 #endif
-

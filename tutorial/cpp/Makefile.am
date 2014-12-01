@@ -16,7 +16,8 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-.NOTPARALLEL:
+AUTOMAKE_OPTIONS = subdir-objects serial-tests
+
 noinst_LTLIBRARIES = libtutorialgencpp.la
 nodist_libtutorialgencpp_la_SOURCES = \
 	gen-cpp/Calculator.cpp \
@@ -59,14 +60,11 @@ TutorialClient_LDADD = \
 #
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
-gen-cpp/Calculator.cpp gen-cpp/tutorial_types.cpp gen-cpp/tutorial_constants.cpp: $(top_srcdir)/tutorial/tutorial.thrift
+gen-cpp/Calculator.cpp gen-cpp/SharedService.cpp gen-cpp/shared_constants.cpp gen-cpp/shared_types.cpp gen-cpp/tutorial_constants.cpp gen-cpp/tutorial_types.cpp: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen cpp -r $<
 
-INCLUDES = \
-	-I$(top_srcdir)/lib/cpp/src -Igen-cpp
-
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS)
-AM_CXXFLAGS = -Wall
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -Igen-cpp
+AM_CXXFLAGS = -Wall -Wextra -pedantic
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS)
 
 clean-local:
@@ -77,6 +75,9 @@ tutorialserver: all
 
 tutorialclient: all
 	./TutorialClient
+
+style-local:
+	$(CPPSTYLE_CMD)
 
 EXTRA_DIST = \
 	CppClient.cpp \

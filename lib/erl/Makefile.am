@@ -23,7 +23,7 @@ THRIFT_FILES = $(wildcard test/*.thrift) \
 
 .generated: $(THRIFT_FILES)
 	for f in $(THRIFT_FILES) ; do \
-	  $(THRIFT) --gen erl -out test $$f ; \
+	  $(THRIFT) --gen erl -o test $$f ; \
 	done ; \
 	touch .generated
 
@@ -48,19 +48,7 @@ uninstall:
 
 clean:
 	rm -f .generated
-	rm -f test/thrift1151_types.erl \
-		  test/thrift1151_types.hrl \
-		  test/thrift1151_constants.hrl \
-		  test/thrift1475_types.erl \
-		  test/thrift1475_types.hrl \
-		  test/thrift1475_constants.hrl \
-		  test/thriftTest_types.erl \
-		  test/thriftTest_types.hrl \
-		  test/thriftTest_constants.hrl \
-		  test/thriftTest_thrift.erl \
-		  test/thriftTest_thrift.hrl \
-		  test/secondService_thrift.erl \
-		  test/secondService_thrift.hrl
+	rm -rf test/gen-erl/
 	./rebar clean
 
 maintainer-clean-local:

@@ -40,24 +40,16 @@
  *
  */
 class t_scope {
- public:
+public:
   t_scope() {}
 
-  void add_type(std::string name, t_type* type) {
-    types_[name] = type;
-  }
+  void add_type(std::string name, t_type* type) { types_[name] = type; }
 
-  t_type* get_type(std::string name) {
-    return types_[name];
-  }
+  t_type* get_type(std::string name) { return types_[name]; }
 
-  void add_service(std::string name, t_service* service) {
-    services_[name] = service;
-  }
+  void add_service(std::string name, t_service* service) { services_[name] = service; }
 
-  t_service* get_service(std::string name) {
-    return services_[name];
-  }
+  t_service* get_service(std::string name) { return services_[name]; }
 
   void add_constant(std::string name, t_const* constant) {
     if (constants_.find(name) != constants_.end()) {
@@ -65,19 +57,14 @@ class t_scope {
     } else {
       constants_[name] = constant;
     }
-		   
   }
 
-  t_const* get_constant(std::string name) {
-    return constants_[name];
-  }
+  t_const* get_constant(std::string name) { return constants_[name]; }
 
   void print() {
     std::map<std::string, t_type*>::iterator iter;
     for (iter = types_.begin(); iter != types_.end(); ++iter) {
-      printf("%s => %s\n",
-             iter->first.c_str(),
-             iter->second->get_name().c_str());
+      printf("%s => %s\n", iter->first.c_str(), iter->second->get_name().c_str());
     }
   }
 
@@ -102,7 +89,8 @@ class t_scope {
       for (v_iter = map.begin(); v_iter != map.end(); ++v_iter) {
         t_field* field = tstruct->get_field_by_name(v_iter->first->get_string());
         if (field == NULL) {
-          throw "No field named \"" + v_iter->first->get_string() + "\" was found in struct of type \"" + tstruct->get_name() + "\"";
+          throw "No field named \"" + v_iter->first->get_string()
+              + "\" was found in struct of type \"" + tstruct->get_name() + "\"";
         }
         resolve_const_value(v_iter->second, field->get_type());
       }
@@ -120,21 +108,21 @@ class t_scope {
 
         if (const_type->is_base_type()) {
           switch (((t_base_type*)const_type)->get_base()) {
-            case t_base_type::TYPE_I16:
-            case t_base_type::TYPE_I32:
-            case t_base_type::TYPE_I64:
-            case t_base_type::TYPE_BOOL:
-            case t_base_type::TYPE_BYTE:
-              const_val->set_integer(constant->get_value()->get_integer());
-              break;
-            case t_base_type::TYPE_STRING:
-              const_val->set_string(constant->get_value()->get_string());
-              break;
-            case t_base_type::TYPE_DOUBLE:
-              const_val->set_double(constant->get_value()->get_double());
-              break;
-            case t_base_type::TYPE_VOID:
-              throw "Constants cannot be of type VOID";
+          case t_base_type::TYPE_I16:
+          case t_base_type::TYPE_I32:
+          case t_base_type::TYPE_I64:
+          case t_base_type::TYPE_BOOL:
+          case t_base_type::TYPE_BYTE:
+            const_val->set_integer(constant->get_value()->get_integer());
+            break;
+          case t_base_type::TYPE_STRING:
+            const_val->set_string(constant->get_value()->get_string());
+            break;
+          case t_base_type::TYPE_DOUBLE:
+            const_val->set_double(constant->get_value()->get_double());
+            break;
+          case t_base_type::TYPE_VOID:
+            throw "Constants cannot be of type VOID";
           }
         } else if (const_type->is_map()) {
           const std::map<t_const_value*, t_const_value*>& map = constant->get_value()->get_map();
@@ -162,15 +150,15 @@ class t_scope {
       if (enum_value == NULL) {
         std::ostringstream valstm;
         valstm << const_val->get_integer();
-        throw "Couldn't find a named value in enum " + tenum->get_name() + " for value " + valstm.str();
+        throw "Couldn't find a named value in enum " + tenum->get_name() + " for value "
+            + valstm.str();
       }
       const_val->set_identifier(tenum->get_name() + "." + enum_value->get_name());
       const_val->set_enum(tenum);
     }
   }
 
- private:
-
+private:
   // Map of names to types
   std::map<std::string, t_type*> types_;
 
@@ -179,7 +167,6 @@ class t_scope {
 
   // Map of names to services
   std::map<std::string, t_service*> services_;
-
 };
 
 #endif

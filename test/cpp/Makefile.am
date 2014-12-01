@@ -16,7 +16,8 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-.NOTPARALLEL:
+AUTOMAKE_OPTIONS = subdir-objects serial-tests
+
 noinst_LTLIBRARIES = libtestgencpp.la libstresstestgencpp.la
 nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/ThriftTest_constants.cpp \
@@ -93,18 +94,18 @@ THRIFT = $(top_builddir)/compiler/cpp/thrift
 gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_constants.cpp: $(top_srcdir)/test/ThriftTest.thrift
 	$(THRIFT) --gen cpp:templates,cob_style -r $<
 
-gen-cpp/StressTest_types.cpp gen-cpp/StressTest_constants.cpp: $(top_srcdir)/test/StressTest.thrift
+gen-cpp/StressTest_types.cpp gen-cpp/StressTest_constants.cpp gen-cpp/Service.cpp: $(top_srcdir)/test/StressTest.thrift
 	$(THRIFT) --gen cpp $<
 
-INCLUDES = \
-	-I$(top_srcdir)/lib/cpp/src -Igen-cpp
-
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS)
-AM_CXXFLAGS = -Wall
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -Igen-cpp
+AM_CXXFLAGS = -Wall -Wextra -pedantic
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS)
 
 clean-local:
 	$(RM) -r gen-cpp
+
+style-local:
+	$(CPPSTYLE_CMD)
 
 EXTRA_DIST = \
 	src/TestClient.cpp \

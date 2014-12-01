@@ -21,7 +21,9 @@
 
 #include <thrift/concurrency/Monitor.h>
 
-namespace apache { namespace thrift { namespace test {
+namespace apache {
+namespace thrift {
+namespace test {
 
 // Initially I made EventType an enum, but using char* results
 // in much more readable error messages when there is a mismatch.
@@ -31,21 +33,17 @@ namespace apache { namespace thrift { namespace test {
 typedef const char* EventType;
 
 struct Event {
-  Event(EventType type, uint32_t connectionId, uint32_t callId,
-        const std::string& message) :
-      type(type),
-      connectionId(connectionId),
-      callId(callId),
-      message(message) {}
+  Event(EventType type, uint32_t connectionId, uint32_t callId, const std::string& message)
+    : type(type), connectionId(connectionId), callId(callId), message(message) {}
 
   EventType type;
-  uint32_t  connectionId;
-  uint32_t  callId;
-  std::string    message;
+  uint32_t connectionId;
+  uint32_t callId;
+  std::string message;
 };
 
 class EventLog {
- public:
+public:
   static EventType ET_LOG_END;
   static EventType ET_CONN_CREATED;
   static EventType ET_CONN_DESTROYED;
@@ -73,13 +71,15 @@ class EventLog {
 
   EventLog();
 
-  void append(EventType type, uint32_t connectionId, uint32_t callId,
+  void append(EventType type,
+              uint32_t connectionId,
+              uint32_t callId,
               const std::string& message = "");
 
   Event waitForEvent(int64_t timeout = 500);
   Event waitForConnEvent(uint32_t connId, int64_t timeout = 500);
 
- protected:
+protected:
   typedef std::list<Event> EventList;
 
   concurrency::Monitor monitor_;
@@ -88,7 +88,8 @@ class EventLog {
 
   static uint32_t nextId_;
 };
-
-}}} // apache::thrift::test
+}
+}
+} // apache::thrift::test
 
 #endif // _THRIFT_TEST_EVENTLOG_H_

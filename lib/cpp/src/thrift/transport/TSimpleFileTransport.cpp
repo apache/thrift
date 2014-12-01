@@ -31,11 +31,12 @@
 #include <io.h>
 #endif
 
-namespace apache { namespace thrift { namespace transport {
+namespace apache {
+namespace thrift {
+namespace transport {
 
-TSimpleFileTransport::
-TSimpleFileTransport(const std::string& path, bool read, bool write)
-    : TFDTransport(-1, TFDTransport::CLOSE_ON_DESTROY) {
+TSimpleFileTransport::TSimpleFileTransport(const std::string& path, bool read, bool write)
+  : TFDTransport(-1, TFDTransport::CLOSE_ON_DESTROY) {
   int flags = 0;
   if (read && write) {
     flags = O_RDWR;
@@ -50,18 +51,17 @@ TSimpleFileTransport(const std::string& path, bool read, bool write)
     flags |= O_CREAT | O_APPEND;
   }
 #ifndef _WIN32
-  mode_t mode = S_IRUSR | S_IWUSR| S_IRGRP | S_IROTH;
+  mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 #else
   int mode = _S_IREAD | _S_IWRITE;
 #endif
-  int fd = ::THRIFT_OPEN(path.c_str(),
-                  flags,
-                  mode);
+  int fd = ::THRIFT_OPEN(path.c_str(), flags, mode);
   if (fd < 0) {
     throw TTransportException("failed to open file for writing: " + path);
   }
   setFD(fd);
   open();
 }
-
-}}} // apache::thrift::transport
+}
+}
+} // apache::thrift::transport

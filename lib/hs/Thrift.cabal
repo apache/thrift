@@ -27,7 +27,7 @@ Synopsis:       Haskell bindings for the Apache Thrift RPC system
 Homepage:       http://thrift.apache.org
 Bug-Reports:    https://issues.apache.org/jira/browse/THRIFT
 Maintainer:     dev@thrift.apache.org
-License-File:   ../../LICENSE
+License-File:   LICENSE
 
 Description:
   Haskell bindings for the Apache Thrift RPC system. Requires the use of the thrift code generator.
@@ -54,6 +54,7 @@ Library
     Thrift.Protocol.JSON,
     Thrift.Server,
     Thrift.Transport,
+    Thrift.Transport.Empty,
     Thrift.Transport.Framed,
     Thrift.Transport.Handle,
     Thrift.Transport.HttpClient,
@@ -69,13 +70,3 @@ Library
     RecordWildCards,
     ScopedTypeVariables,
     TypeSynonymInstances
-
-Test-Suite tests
-  Type:
-    exitcode-stdio-1.0
-  Hs-Source-Dirs:
-    tests
-  Build-Depends:
-    base, QuickCheck, binary, bytestring, thrift, split
-  Main-Is:
-    JSONTests.hs

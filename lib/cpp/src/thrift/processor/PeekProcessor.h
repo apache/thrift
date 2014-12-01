@@ -27,7 +27,9 @@
 #include <thrift/transport/TBufferTransports.h>
 #include <boost/shared_ptr.hpp>
 
-namespace apache { namespace thrift { namespace processor {
+namespace apache {
+namespace thrift {
+namespace processor {
 
 /*
  * Class for peeking at the raw data that is being processed by another processor
@@ -36,7 +38,7 @@ namespace apache { namespace thrift { namespace processor {
  */
 class PeekProcessor : public apache::thrift::TProcessor {
 
- public:
+public:
   PeekProcessor();
   virtual ~PeekProcessor();
 
@@ -44,11 +46,13 @@ class PeekProcessor : public apache::thrift::TProcessor {
   //             protocolFactory  - the protocol factory used to wrap the memory buffer
   //             transportFactory - this TPipedTransportFactory is used to wrap the source transport
   //                                via a call to getPipedTransport
-  void initialize(boost::shared_ptr<apache::thrift::TProcessor> actualProcessor,
-                  boost::shared_ptr<apache::thrift::protocol::TProtocolFactory> protocolFactory,
-                  boost::shared_ptr<apache::thrift::transport::TPipedTransportFactory> transportFactory);
+  void initialize(
+      boost::shared_ptr<apache::thrift::TProcessor> actualProcessor,
+      boost::shared_ptr<apache::thrift::protocol::TProtocolFactory> protocolFactory,
+      boost::shared_ptr<apache::thrift::transport::TPipedTransportFactory> transportFactory);
 
-  boost::shared_ptr<apache::thrift::transport::TTransport> getPipedTransport(boost::shared_ptr<apache::thrift::transport::TTransport> in);
+  boost::shared_ptr<apache::thrift::transport::TTransport> getPipedTransport(
+      boost::shared_ptr<apache::thrift::transport::TTransport> in);
 
   void setTargetTransport(boost::shared_ptr<apache::thrift::transport::TTransport> targetTransport);
 
@@ -65,14 +69,15 @@ class PeekProcessor : public apache::thrift::TProcessor {
                     int16_t fid);
   virtual void peekEnd();
 
- private:
+private:
   boost::shared_ptr<apache::thrift::TProcessor> actualProcessor_;
   boost::shared_ptr<apache::thrift::protocol::TProtocol> pipedProtocol_;
   boost::shared_ptr<apache::thrift::transport::TPipedTransportFactory> transportFactory_;
   boost::shared_ptr<apache::thrift::transport::TMemoryBuffer> memoryBuffer_;
   boost::shared_ptr<apache::thrift::transport::TTransport> targetTransport_;
 };
-
-}}} // apache::thrift::processor
+}
+}
+} // apache::thrift::processor
 
 #endif

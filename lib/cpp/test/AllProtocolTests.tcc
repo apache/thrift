@@ -45,7 +45,10 @@ void testNaked(Val val) {
   Val out;
   GenericIO::read(protocol, out);
   if (out != val) {
-    THRIFT_SNPRINTF(errorMessage, ERR_LEN, "Invalid naked test (type: %s)", ClassNames::getName<Val>());
+    THRIFT_SNPRINTF(errorMessage,
+                    ERR_LEN,
+                    "Invalid naked test (type: %s)",
+                    ClassNames::getName<Val>());
     throw TException(errorMessage);
   }
 }
@@ -97,20 +100,18 @@ void testMessage() {
     const char* name;
     TMessageType type;
     int32_t seqid;
-  } messages[4] = {
-    {"short message name", T_CALL, 0},
-    {"1", T_REPLY, 12345},
-    {"loooooooooooooooooooooooooooooooooong", T_EXCEPTION, 1 << 16},
-    {"Janky", T_CALL, 0}
-  };
+  } messages[] = {{"short message name", T_CALL, 0},
+                  {"1", T_REPLY, 12345},
+                  {"loooooooooooooooooooooooooooooooooong", T_EXCEPTION, 1 << 16},
+                  {"one way push", T_ONEWAY, 12},
+                  {"Janky", T_CALL, 0}};
+  const int messages_count = sizeof(messages) / sizeof(TMessage);
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < messages_count; i++) {
     shared_ptr<TTransport> transport(new TMemoryBuffer());
     shared_ptr<TProtocol> protocol(new TProto(transport));
 
-    protocol->writeMessageBegin(messages[i].name,
-                                messages[i].type,
-                                messages[i].seqid);
+    protocol->writeMessageBegin(messages[i].name, messages[i].type, messages[i].seqid);
     protocol->writeMessageEnd();
 
     std::string name;
@@ -118,9 +119,7 @@ void testMessage() {
     int32_t seqid;
 
     protocol->readMessageBegin(name, type, seqid);
-    if (name != messages[i].name ||
-        type != messages[i].type ||
-        seqid != messages[i].seqid) {
+    if (name != messages[i].name || type != messages[i].type || seqid != messages[i].seqid) {
       throw TException("readMessageBegin failed.");
     }
   }
@@ -189,7 +188,6 @@ void testProtocol(const char* protoname) {
     testNaked<TProto, int64_t>((std::numeric_limits<int64_t>::min)());
     testNaked<TProto, int64_t>((std::numeric_limits<int64_t>::max)());
 
-
     testNaked<TProto, int64_t>(0);
     for (int64_t i = 0; i < 62; i++) {
       testNaked<TProto, int64_t>(1L << i);
@@ -208,7 +206,7 @@ void testProtocol(const char* protoname) {
     testNaked<TProto, std::string>("short");
     testNaked<TProto, std::string>("borderlinetiny");
     testNaked<TProto, std::string>("a bit longer than the smallest possible");
-    testNaked<TProto, std::string>("\x1\x2\x3\x4\x5\x6\x7\x8\x9\xA"); //kinda binary test
+    testNaked<TProto, std::string>("\x1\x2\x3\x4\x5\x6\x7\x8\x9\xA"); // kinda binary test
 
     testField<TProto, T_STRING, std::string>("");
     testField<TProto, T_STRING, std::string>("short");

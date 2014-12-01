@@ -261,7 +261,7 @@ uint32_t TCompactProtocolT<Transport_>::writeDouble(const double dub) {
 }
 
 /**
- * Write a string to the wire with a varint size preceeding.
+ * Write a string to the wire with a varint size preceding.
  */
 template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::writeString(const std::string& str) {
@@ -433,7 +433,7 @@ uint32_t TCompactProtocolT<Transport_>::readMessageBegin(
     throw TProtocolException(TProtocolException::BAD_VERSION, "Bad protocol version");
   }
 
-  messageType = (TMessageType)((versionAndType >> TYPE_SHIFT_AMOUNT) & 0x03);
+  messageType = (TMessageType)((versionAndType >> TYPE_SHIFT_AMOUNT) & TYPE_BITS);
   rsize += readVarint32(seqid);
   rsize += readString(name);
 

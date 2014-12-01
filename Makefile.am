@@ -41,6 +41,32 @@ print-version:
 cross: check
 	sh test/test.sh
 
+codespell_skip_files = \
+	*.a \
+	*.la \
+	*.o \
+	*.p12 \
+	*OCamlMakefile \
+	.keystore \
+	.truststore \
+	CHANGES \
+	config.sub \
+	configure \
+	depcomp \
+	libtool.m4 \
+	output.* \
+	rebar \
+	thrift
+
+empty :=
+space := $(empty) $(empty)
+comma := ,
+
+skipped_files = $(subst $(space),$(comma),$(codespell_skip_files))
+
+style-local:
+	codespell --write-changes --skip=$(skipped_files) --disable-colors
+
 EXTRA_DIST = \
 	.travis.yml \
 	bower.json \

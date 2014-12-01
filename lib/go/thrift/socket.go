@@ -100,7 +100,7 @@ func (p *TSocket) Open() error {
 	return nil
 }
 
-// Retreive the underlying net.Conn
+// Retrieve the underlying net.Conn
 func (p *TSocket) Conn() net.Conn {
 	return p.conn
 }
@@ -126,6 +126,11 @@ func (p *TSocket) Close() error {
 	return nil
 }
 
+//Returns the remote address of the socket.
+func (p *TSocket) Addr() net.Addr {
+	return p.addr
+}
+
 func (p *TSocket) Read(buf []byte) (int, error) {
 	if !p.IsOpen() {
 		return 0, NewTTransportException(NOT_OPEN, "Connection not open")
@@ -141,10 +146,6 @@ func (p *TSocket) Write(buf []byte) (int, error) {
 	}
 	p.pushDeadline(false, true)
 	return p.conn.Write(buf)
-}
-
-func (p *TSocket) Peek() bool {
-	return p.IsOpen()
 }
 
 func (p *TSocket) Flush() error {

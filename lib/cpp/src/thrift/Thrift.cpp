@@ -24,11 +24,12 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-namespace apache { namespace thrift {
+namespace apache {
+namespace thrift {
 
 TOutput GlobalOutput;
 
-void TOutput::printf(const char *message, ...) {
+void TOutput::printf(const char* message, ...) {
 #ifndef THRIFT_SQUELCH_CONSOLE_OUTPUT
   // Try to reduce heap usage, even if printf is called rarely.
   static const int STACK_BUF_SIZE = 256;
@@ -58,7 +59,7 @@ void TOutput::printf(const char *message, ...) {
   }
 #endif
 
-  char *heap_buf = (char*)malloc((need+1) * sizeof(char));
+  char* heap_buf = (char*)malloc((need + 1) * sizeof(char));
   if (heap_buf == NULL) {
 #ifdef _MSC_VER
     va_start(ap, message);
@@ -71,7 +72,7 @@ void TOutput::printf(const char *message, ...) {
   }
 
   va_start(ap, message);
-  int rval = vsnprintf(heap_buf, need+1, message, ap);
+  int rval = vsnprintf(heap_buf, need + 1, message, ap);
   va_end(ap);
   // TODO(shigin): inform user
   if (rval != -1) {
@@ -92,7 +93,7 @@ void TOutput::errorTimeWrapper(const char* msg) {
 #endif
 }
 
-void TOutput::perror(const char *message, int errno_copy) {
+void TOutput::perror(const char* message, int errno_copy) {
   std::string out = message + strerror_s(errno_copy);
   f_(out.c_str());
 }
@@ -100,18 +101,18 @@ void TOutput::perror(const char *message, int errno_copy) {
 std::string TOutput::strerror_s(int errno_copy) {
 #ifndef HAVE_STRERROR_R
   return "errno = " + boost::lexical_cast<std::string>(errno_copy);
-#else  // HAVE_STRERROR_R
+#else // HAVE_STRERROR_R
 
-  char b_errbuf[1024] = { '\0' };
+  char b_errbuf[1024] = {'\0'};
 #ifdef STRERROR_R_CHAR_P
-  char *b_error = strerror_r(errno_copy, b_errbuf, sizeof(b_errbuf));
+  char* b_error = strerror_r(errno_copy, b_errbuf, sizeof(b_errbuf));
 #else
-  char *b_error = b_errbuf;
+  char* b_error = b_errbuf;
   int rv = strerror_r(errno_copy, b_errbuf, sizeof(b_errbuf));
   if (rv == -1) {
     // strerror_r failed.  omgwtfbbq.
-    return "XSI-compliant strerror_r() failed with errno = " +
-      boost::lexical_cast<std::string>(errno_copy);
+    return "XSI-compliant strerror_r() failed with errno = "
+           + boost::lexical_cast<std::string>(errno_copy);
   }
 #endif
   // Can anyone prove that explicit cast is probably not necessary
@@ -119,7 +120,7 @@ std::string TOutput::strerror_s(int errno_copy) {
   // b_error becomes invalid?
   return std::string(b_error);
 
-#endif  // HAVE_STRERROR_R
+#endif // HAVE_STRERROR_R
 }
-
-}} // apache::thrift
+}
+} // apache::thrift

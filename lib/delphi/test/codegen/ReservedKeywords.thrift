@@ -17,7 +17,7 @@
  * under the License.
  */
 
-// make sure generated code does not produce name collisions with predefined keywords 
+// make sure generated code does not produce name collisions with predefined keywords
 
 
 

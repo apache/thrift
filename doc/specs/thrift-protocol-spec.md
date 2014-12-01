@@ -43,7 +43,7 @@ of a function, or an exception.
 
    <method-name> ::= STRING
 
-  <message-type> ::= T_CALL | T_REPLY | T_EXCEPTION
+  <message-type> ::= T_CALL | T_REPLY | T_EXCEPTION | T_ONEWAY
 
  <message-seqid> ::= I32
 

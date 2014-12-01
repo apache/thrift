@@ -28,8 +28,8 @@ use Thrift\Exception\TProtocolException;
 /**
  * Protocol base class module.
  */
-abstract class TProtocol {
-
+abstract class TProtocol
+{
   /**
    * Underlying transport
    *
@@ -40,7 +40,8 @@ abstract class TProtocol {
   /**
    * Constructor
    */
-  protected function __construct($trans) {
+  protected function __construct($trans)
+  {
     $this->trans_ = $trans;
   }
 
@@ -49,7 +50,8 @@ abstract class TProtocol {
    *
    * @return TTransport
    */
-  public function getTransport() {
+  public function getTransport()
+  {
     return $this->trans_;
   }
 
@@ -60,12 +62,12 @@ abstract class TProtocol {
    * @param int $type message type TMessageType::CALL or TMessageType::REPLY
    * @param int $seqid The sequence id of this message
    */
-  public abstract function writeMessageBegin($name, $type, $seqid);
+  abstract public function writeMessageBegin($name, $type, $seqid);
 
   /**
    * Close the message
    */
-  public abstract function writeMessageEnd();
+  abstract public function writeMessageEnd();
 
   /**
    * Writes a struct header.
@@ -74,7 +76,7 @@ abstract class TProtocol {
    * @throws TException on write error
    * @return int How many bytes written
    */
-  public abstract function writeStructBegin($name);
+  abstract public function writeStructBegin($name);
 
   /**
    * Close a struct.
@@ -82,7 +84,7 @@ abstract class TProtocol {
    * @throws TException on write error
    * @return int How many bytes written
    */
-  public abstract function writeStructEnd();
+  abstract public function writeStructEnd();
 
   /*
    * Starts a field.
@@ -93,37 +95,37 @@ abstract class TProtocol {
    * @throws TException on write error
    * @return int How many bytes written
    */
-  public abstract function writeFieldBegin($fieldName, $fieldType, $fieldId);
+  abstract public function writeFieldBegin($fieldName, $fieldType, $fieldId);
 
-  public abstract function writeFieldEnd();
+  abstract public function writeFieldEnd();
 
-  public abstract function writeFieldStop();
+  abstract public function writeFieldStop();
 
-  public abstract function writeMapBegin($keyType, $valType, $size);
+  abstract public function writeMapBegin($keyType, $valType, $size);
 
-  public abstract function writeMapEnd();
+  abstract public function writeMapEnd();
 
-  public abstract function writeListBegin($elemType, $size);
+  abstract public function writeListBegin($elemType, $size);
 
-  public abstract function writeListEnd();
+  abstract public function writeListEnd();
 
-  public abstract function writeSetBegin($elemType, $size);
+  abstract public function writeSetBegin($elemType, $size);
 
-  public abstract function writeSetEnd();
+  abstract public function writeSetEnd();
 
-  public abstract function writeBool($bool);
+  abstract public function writeBool($bool);
 
-  public abstract function writeByte($byte);
+  abstract public function writeByte($byte);
 
-  public abstract function writeI16($i16);
+  abstract public function writeI16($i16);
 
-  public abstract function writeI32($i32);
+  abstract public function writeI32($i32);
 
-  public abstract function writeI64($i64);
+  abstract public function writeI64($i64);
 
-  public abstract function writeDouble($dub);
+  abstract public function writeDouble($dub);
 
-  public abstract function writeString($str);
+  abstract public function writeString($str);
 
   /**
    * Reads the message header
@@ -132,46 +134,46 @@ abstract class TProtocol {
    * @param int $type message type TMessageType::CALL or TMessageType::REPLY
    * @parem int $seqid The sequence id of this message
    */
-  public abstract function readMessageBegin(&$name, &$type, &$seqid);
+  abstract public function readMessageBegin(&$name, &$type, &$seqid);
 
   /**
    * Read the close of message
    */
-  public abstract function readMessageEnd();
+  abstract public function readMessageEnd();
 
-  public abstract function readStructBegin(&$name);
+  abstract public function readStructBegin(&$name);
 
-  public abstract function readStructEnd();
+  abstract public function readStructEnd();
 
-  public abstract function readFieldBegin(&$name, &$fieldType, &$fieldId);
+  abstract public function readFieldBegin(&$name, &$fieldType, &$fieldId);
 
-  public abstract function readFieldEnd();
+  abstract public function readFieldEnd();
 
-  public abstract function readMapBegin(&$keyType, &$valType, &$size);
+  abstract public function readMapBegin(&$keyType, &$valType, &$size);
 
-  public abstract function readMapEnd();
+  abstract public function readMapEnd();
 
-  public abstract function readListBegin(&$elemType, &$size);
+  abstract public function readListBegin(&$elemType, &$size);
 
-  public abstract function readListEnd();
+  abstract public function readListEnd();
 
-  public abstract function readSetBegin(&$elemType, &$size);
+  abstract public function readSetBegin(&$elemType, &$size);
 
-  public abstract function readSetEnd();
+  abstract public function readSetEnd();
 
-  public abstract function readBool(&$bool);
+  abstract public function readBool(&$bool);
 
-  public abstract function readByte(&$byte);
+  abstract public function readByte(&$byte);
 
-  public abstract function readI16(&$i16);
+  abstract public function readI16(&$i16);
 
-  public abstract function readI32(&$i32);
+  abstract public function readI32(&$i32);
 
-  public abstract function readI64(&$i64);
+  abstract public function readI64(&$i64);
 
-  public abstract function readDouble(&$dub);
+  abstract public function readDouble(&$dub);
 
-  public abstract function readString(&$str);
+  abstract public function readString(&$str);
 
   /**
    * The skip function is a utility to parse over unrecognized date without
@@ -179,7 +181,8 @@ abstract class TProtocol {
    *
    * @param TType $type What type is it
    */
-  public function skip($type) {
+  public function skip($type)
+  {
     switch ($type) {
     case TType::BOOL:
       return $this->readBool($bool);
@@ -207,6 +210,7 @@ abstract class TProtocol {
           $result += $this->readFieldEnd();
         }
         $result += $this->readStructEnd();
+
         return $result;
       }
     case TType::MAP:
@@ -217,6 +221,7 @@ abstract class TProtocol {
           $result += $this->skip($valType);
         }
         $result += $this->readMapEnd();
+
         return $result;
       }
     case TType::SET:
@@ -226,6 +231,7 @@ abstract class TProtocol {
           $result += $this->skip($elemType);
         }
         $result += $this->readSetEnd();
+
         return $result;
       }
     case TType::LST:
@@ -235,6 +241,7 @@ abstract class TProtocol {
           $result += $this->skip($elemType);
         }
         $result += $this->readListEnd();
+
         return $result;
       }
     default:
@@ -249,7 +256,8 @@ abstract class TProtocol {
    * @param TTransport $itrans TTransport object
    * @param int        $type   Field type
    */
-  public static function skipBinary($itrans, $type) {
+  public static function skipBinary($itrans, $type)
+  {
     switch ($type) {
     case TType::BOOL:
       return $itrans->readAll(1);
@@ -269,6 +277,7 @@ abstract class TProtocol {
       if ($len > 0x7fffffff) {
         $len = 0 - (($len - 1) ^ 0xffffffff);
       }
+
       return 4 + $itrans->readAll($len);
     case TType::STRUCT:
       {
@@ -286,6 +295,7 @@ abstract class TProtocol {
           $result += $itrans->readAll(2);
           $result += self::skipBinary($itrans, $ftype);
         }
+
         return $result;
       }
     case TType::MAP:
@@ -310,6 +320,7 @@ abstract class TProtocol {
           $result += self::skipBinary($itrans, $ktype);
           $result += self::skipBinary($itrans, $vtype);
         }
+
         return $result;
       }
     case TType::SET:
@@ -330,6 +341,7 @@ abstract class TProtocol {
         for ($i = 0; $i < $size; $i++) {
           $result += self::skipBinary($itrans, $vtype);
         }
+
         return $result;
       }
     default:

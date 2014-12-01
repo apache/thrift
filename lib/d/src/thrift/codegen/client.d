@@ -184,13 +184,15 @@ template TClient(Interface, InputProtocol = TProtocol, OutputProtocol = void) if
           "TPargsStruct!(Interface, `" ~ methodName ~ "`)";
         code ~= paramStructType ~ " args = " ~ paramStructType ~ "();\n";
         code ~= paramAssignCode;
-        code ~= "oprot_.writeMessageBegin(TMessage(`" ~ methodName ~
-          "`, TMessageType.CALL, ++seqid_));\n";
+        code ~= "oprot_.writeMessageBegin(TMessage(`" ~ methodName ~ "`, ";
+        code ~= ((methodMetaFound && methodMeta.type == TMethodType.ONEWAY)
+                 ? "TMessageType.ONEWAY" : "TMessageType.CALL");
+        code ~= ", ++seqid_));\n";
         code ~= "args.write(oprot_);\n";
         code ~= "oprot_.writeMessageEnd();\n";
         code ~= "oprot_.transport.flush();\n";
 
-        // If this is not a oneway method, generate the recieving code.
+        // If this is not a oneway method, generate the receiving code.
         if (!methodMetaFound || methodMeta.type != TMethodType.ONEWAY) {
           code ~= "TPresultStruct!(Interface, `" ~ methodName ~ "`) result;\n";
 

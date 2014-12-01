@@ -5,9 +5,10 @@ The following command install all the required tools and libraries to build and 
 
 Then install the Java JDK of your choice. Type **javac** to see a list of available packages, pick the one you prefer and **apt-get install** it.
 
-Debian Lenny Users need some packages from backports
-	
-	sudo apt-get -t lenny-backports install automake libboost-test-dev
+Debian stable users need to manually install a more recent automake version:
+
+    wget http://ftp.debian.org/debian/pool/main/a/automake-1.14/automake_1.14.1-3_all.deb
+    sudo dpkg -i automake_1.14.1-3_all.deb
 
 ## Optional packages
 

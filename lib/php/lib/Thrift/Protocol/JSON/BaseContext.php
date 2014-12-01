@@ -24,16 +24,16 @@ namespace Thrift\Protocol\JSON;
 
 class BaseContext
 {
-    function escapeNum()
+    public function escapeNum()
     {
         return false;
     }
 
-    function write()
+    public function write()
     {
     }
 
-    function read()
+    public function read()
     {
     }
 }

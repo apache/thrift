@@ -35,6 +35,7 @@
 
 using namespace std;
 using namespace apache::thrift;
+using namespace apache::thrift::concurrency;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace apache::thrift::server;
@@ -43,12 +44,10 @@ using namespace tutorial;
 using namespace shared;
 
 class CalculatorHandler : public CalculatorIf {
- public:
+public:
   CalculatorHandler() {}
 
-  void ping() {
-    cout << "ping()" << endl;
-  }
+  void ping() { cout << "ping()" << endl; }
 
   int32_t add(const int32_t n1, const int32_t n2) {
     cout << "add(" << n1 << ", " << n2 << ")" << endl;
@@ -94,36 +93,30 @@ class CalculatorHandler : public CalculatorIf {
     return val;
   }
 
-  void getStruct(SharedStruct &ret, const int32_t logid) {
+  void getStruct(SharedStruct& ret, const int32_t logid) {
     cout << "getStruct(" << logid << ")" << endl;
     ret = log[logid];
   }
 
-  void zip() {
-    cout << "zip()" << endl;
-  }
+  void zip() { cout << "zip()" << endl; }
 
 protected:
   map<int32_t, SharedStruct> log;
-
 };
 
-int main(int argc, char **argv) {
-
+int main() {
   boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
   boost::shared_ptr<CalculatorHandler> handler(new CalculatorHandler());
   boost::shared_ptr<TProcessor> processor(new CalculatorProcessor(handler));
   boost::shared_ptr<TServerTransport> serverTransport(new TServerSocket(9090));
   boost::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
 
-  TSimpleServer server(processor,
-                       serverTransport,
-                       transportFactory,
-                       protocolFactory);
-
+  TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
 
   /**
    * Or you could do one of these
+
+  const int workerCount = 4;
 
   boost::shared_ptr<ThreadManager> threadManager =
     ThreadManager::newSimpleThreadManager(workerCount);

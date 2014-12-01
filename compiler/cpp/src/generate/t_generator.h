@@ -35,7 +35,7 @@
  *
  */
 class t_generator {
- public:
+public:
   t_generator(t_program* program) {
     tmp_ = 0;
     indent_ = 0;
@@ -44,7 +44,7 @@ class t_generator {
     escape_['\n'] = "\\n";
     escape_['\r'] = "\\r";
     escape_['\t'] = "\\t";
-    escape_['"']  = "\\\"";
+    escape_['"'] = "\\\"";
     escape_['\\'] = "\\\\";
   }
 
@@ -74,21 +74,20 @@ class t_generator {
    * will be called for the above example.
    */
   static bool is_valid_namespace(const std::string& sub_namespace) {
-    (void) sub_namespace;
+    (void)sub_namespace;
     return false;
   }
 
   /**
    * Escape string to use one in generated sources.
    */
-  virtual std::string escape_string(const std::string &in) const;
+  virtual std::string escape_string(const std::string& in) const;
 
   std::string get_escaped_string(t_const_value* constval) {
     return escape_string(constval->get_string());
   }
 
- protected:
-
+protected:
   /**
    * Optional methods that may be imlemented by subclasses to take necessary
    * steps at the beginning or end of code generation.
@@ -103,15 +102,13 @@ class t_generator {
    * Pure virtual methods implemented by the generator subclasses.
    */
 
-  virtual void generate_typedef  (t_typedef*  ttypedef)  = 0;
-  virtual void generate_enum     (t_enum*     tenum)     = 0;
-  virtual void generate_const    (t_const*    tconst) {
-    (void) tconst;
-  }
-  virtual void generate_struct   (t_struct*   tstruct)   = 0;
-  virtual void generate_service  (t_service*  tservice)  = 0;
-  virtual void generate_forward_declaration (t_struct*) {}
-  virtual void generate_xception (t_struct*   txception) {
+  virtual void generate_typedef(t_typedef* ttypedef) = 0;
+  virtual void generate_enum(t_enum* tenum) = 0;
+  virtual void generate_const(t_const* tconst) { (void)tconst; }
+  virtual void generate_struct(t_struct* tstruct) = 0;
+  virtual void generate_service(t_service* tservice) = 0;
+  virtual void generate_forward_declaration(t_struct*) {}
+  virtual void generate_xception(t_struct* txception) {
     // By default exceptions are the same as structs
     generate_struct(txception);
   }
@@ -119,16 +116,12 @@ class t_generator {
   /**
    * Method to get the program name, may be overridden
    */
-  virtual std::string get_program_name(t_program* tprogram) {
-    return tprogram->get_name();
-  }
+  virtual std::string get_program_name(t_program* tprogram) { return tprogram->get_name(); }
 
   /**
    * Method to get the service name, may be overridden
    */
-  virtual std::string get_service_name(t_service* tservice) {
-    return tservice->get_name();
-  }
+  virtual std::string get_service_name(t_service* tservice) { return tservice->get_name(); }
 
   /**
    * Get the current output directory
@@ -155,13 +148,9 @@ class t_generator {
    * Indentation level modifiers
    */
 
-  void indent_up(){
-    ++indent_;
-  }
+  void indent_up() { ++indent_; }
 
-  void indent_down() {
-    --indent_;
-  }
+  void indent_down() { --indent_; }
 
   /**
    * Indentation print function
@@ -178,9 +167,7 @@ class t_generator {
   /**
    * Indentation utility wrapper
    */
-  std::ostream& indent(std::ostream &os) {
-    return os << indent();
-  }
+  std::ostream& indent(std::ostream& os) { return os << indent(); }
 
   /**
    * Capitalization helpers
@@ -196,6 +183,12 @@ class t_generator {
   static std::string lowercase(std::string in) {
     for (size_t i = 0; i < in.size(); ++i) {
       in[i] = tolower(in[i]);
+    }
+    return in;
+  }
+  static std::string uppercase(std::string in) {
+    for (size_t i = 0; i < in.size(); ++i) {
+      in[i] = toupper(in[i]);
     }
     return in;
   }
@@ -233,7 +226,7 @@ class t_generator {
         continue;
       }
       if (underscore) {
-        out << (char) toupper(in[i]);
+        out << (char)toupper(in[i]);
         underscore = false;
         continue;
       }
@@ -243,15 +236,13 @@ class t_generator {
     return out.str();
   }
 
- public:
+public:
   /**
    * Get the true type behind a series of typedefs.
    */
-  static t_type* get_true_type(t_type* type) {
-    return type->get_true_type();
-  }
+  static t_type* get_true_type(t_type* type) { return type->get_true_type(); }
 
- protected:
+protected:
   /**
    * The program being generated
    */
@@ -279,7 +270,7 @@ class t_generator {
    */
   std::map<char, std::string> escape_;
 
- private:
+private:
   /**
    * Current code indentation level
    */

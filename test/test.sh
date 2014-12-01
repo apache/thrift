@@ -288,6 +288,23 @@ for proto in $(intersection "${cpp_protocols}" "${java_protocols}"); do
   done
 done
 
+######### c_glib client - c_glib server ##############
+for proto in ${c_glib_protocols}; do
+  for trans in ${c_glib_transports}; do
+    for sock in ${c_glib_sockets}; do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+        "domain" ) extraparam="--domain-socket=/tmp/ThriftTest.thrift";;
+      esac
+      do_test "c_glib-c_glib" "${proto}" "${trans}-${sock}" \
+              "c_glib/test_client --protocol=${proto}  --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "c_glib/test_server --protocol=${proto}  --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "2" "0.1"
+    done
+  done
+done
+
 ######### c_glib client - cpp server ##############
 for proto in $(intersection "${c_glib_protocols}" "${cpp_protocols}"); do
   for trans in $(intersection "${c_glib_transports}" "${cpp_transports}"); do
@@ -305,6 +322,23 @@ for proto in $(intersection "${c_glib_protocols}" "${cpp_protocols}"); do
   done
 done
 
+######### cpp client - c_glib server ##############
+for proto in $(intersection "${cpp_protocols}" "${c_glib_protocols}"); do
+  for trans in $(intersection "${cpp_transports}" "${c_glib_transports}"); do
+    for sock in $(intersection "${cpp_sockets}" "${c_glib_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+        "domain" ) extraparam="--domain-socket=/tmp/ThriftTest.thrift";;
+      esac
+      do_test "cpp-c_glib" "${proto}" "${trans}-${sock}" \
+              "cpp/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}"\
+              "c_glib/test_server --protocol=${proto}  --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "2" "0.1"
+    done
+  done
+done
+
 ######### c_glib client - java server ##############
 for proto in $(intersection "${c_glib_protocols}" "${java_protocols}"); do
   for trans in $(intersection "${c_glib_transports}" "${java_server_transports}"); do
@@ -317,6 +351,22 @@ for proto in $(intersection "${c_glib_protocols}" "${java_protocols}"); do
               "c_glib/test_client --protocol=${proto}  --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "ant -f ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testserver" \
               "2" "2"
+    done
+  done
+done
+
+######### java client - c_glib server ##############
+for proto in $(intersection "${java_protocols}" "${c_glib_protocols}"); do
+  for trans in $(intersection "${java_client_transports}" "${c_glib_transports}"); do
+    for sock in $(intersection "${java_sockets}" "${c_glib_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "java-c_glib" "${proto}" "${trans}-${sock}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testclient" \
+              "c_glib/test_server --protocol=${proto}  --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "5" "0.1"
     done
   done
 done
@@ -400,6 +450,22 @@ for proto in $(intersection "${nodejs_protocols}" "${java_protocols}"); do
               "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testclient" \
               "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "2"
+    done
+  done
+done
+
+######### nodejs client - c_glib server ##############
+for proto in $(intersection "${nodejs_protocols}" "${c_glib_protocols}"); do
+  for trans in $(intersection "${nodejs_transports}" "${c_glib_transports}"); do
+    for sock in $(intersection "${nodejs_sockets}" "${c_glib_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "nodejs-c_glib" "${proto}" "${trans}-${sock}" \
+              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "c_glib/test_server --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "5" "0.1"
     done
   done
 done
@@ -569,6 +635,35 @@ for trans in $(intersection "${py_transports}" "${java_client_transports}"); do
     done
   done
 
+######### py client - c_glib server ##############
+for proto in $(intersection "${py_protocols}" "${c_glib_protocols}"); do
+  for trans in $(intersection "${py_transports}" "${c_glib_transports}"); do
+    for sock in $(intersection "${py_sockets}" "${c_glib_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "py-c_glib" "${proto}" "${trans}-${sock}" \
+              "py/TestClient.py --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+              "c_glib/test_server --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "10" "0.1"
+    done
+  done
+done
+
+for trans in $(intersection "${py_transports}" "${c_glib_transports}"); do
+    for sock in $(intersection "${py_sockets}" "${c_glib_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "py-c_glib" "accel-binary" "${trans}-${sock}" \
+              "py/TestClient.py --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+              "c_glib/test_server --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "10" "0.1"
+    done
+  done
+
 ######### c_glib client - py server ##############
 for proto in $(intersection "${c_glib_protocols}" "${py_protocols}"); do
   for trans in $(intersection "${c_glib_transports}" "${py_transports}"); do
@@ -584,6 +679,19 @@ for proto in $(intersection "${c_glib_protocols}" "${py_protocols}"); do
     done
   done
 done
+
+for trans in $(intersection "${c_glib_transports}" "${py_transports}"); do
+    for sock in $(intersection "${c_glib_sockets}" "${py_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "c_glib-py" "binary-accel" "${trans}-${sock}" \
+              "c_glib/test_client --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "py/TestServer.py --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
+              "10" "2"
+    done
+  done
 
 ######### py client - nodejs server ##############
 for proto in $(intersection "${py_protocols}" "${nodejs_protocols}"); do
@@ -792,6 +900,35 @@ for trans in $(intersection "${ruby_transports}" "${java_client_transports}"); d
     done
   done
 
+######### ruby client - c_glib server ##############
+for proto in $(intersection "${ruby_protocols}" "${c_glib_protocols}"); do
+  for trans in $(intersection "${ruby_transports}" "${c_glib_transports}"); do
+    for sock in $(intersection "${ruby_sockets}" "${c_glib_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "ruby-c_glib" "${proto}" "${trans}-${sock}" \
+              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "c_glib/test_server --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "5" "0.1"
+    done
+  done
+done
+
+for trans in $(intersection "${ruby_transports}" "${c_glib_transports}"); do
+    for sock in $(intersection "${ruby_sockets}" "${c_glib_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "ruby-c_glib" "accel-binary" "${trans}-${sock}" \
+              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "c_glib/test_server --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "5" "0.1"
+    done
+  done
+
 ######### c_glib client - ruby server ##############
 for proto in $(intersection "${c_glib_protocols}" "${ruby_protocols}"); do
   for trans in $(intersection "${c_glib_transports}" "${ruby_transports}"); do
@@ -807,6 +944,19 @@ for proto in $(intersection "${c_glib_protocols}" "${ruby_protocols}"); do
     done
   done
 done
+
+for trans in $(intersection "${c_glib_transports}" "${ruby_transports}"); do
+    for sock in $(intersection "${c_glib_sockets}" "${ruby_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "c_glib-ruby" "binary-accel" "${trans}-${sock}" \
+              "c_glib/test_client --protocol=binary --transport=${trans} --port=${THRIFT_TEST_PORT} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "5" "5"
+    done
+  done
 
 ######### ruby client - nodejs server ##############
 for proto in $(intersection "${ruby_protocols}" "${nodejs_protocols}"); do
@@ -1013,6 +1163,23 @@ for proto in $(intersection "${hs_protocols}" "${java_protocols}"); do
               "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testclient" \
               "hs/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "1"
+    done
+  done
+done
+
+######### hs client - c_glib server ###############
+for proto in $(intersection "${hs_protocols}" "${c_glib_protocols}"); do
+  for trans in  $(intersection "${hs_transports}" "${c_glib_transports}"); do
+    for sock in $(intersection "${hs_sockets}" "${c_glib_sockets}"); do
+      case "$sock" in
+       "ip" )     extraparam="";;
+       "ip-ssl" ) extraparam="--ssl";;
+       "domain" ) extraparam="--domain-socket=/tmp/ThriftTest.thrift";;
+      esac
+      do_test "hs-c_glib"   "${proto}" "${trans}-${sock}" \
+              "hs/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "c_glib/test_server --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "2" "0.1"
     done
   done
 done

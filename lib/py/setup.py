@@ -102,7 +102,7 @@ try:
 except BuildFailed:
     print()
     print('*' * 80)
-    print("An error occured while trying to compile with the C extension enabled")
+    print("An error occurred while trying to compile with the C extension enabled")
     print("Attempting to build without the extension now")
     print('*' * 80)
     print()

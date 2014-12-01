@@ -96,10 +96,10 @@ thrift_server_set_property (GObject *object, guint property_id,
   }
 }
 
-void
-thrift_server_serve (ThriftServer *server)
+gboolean
+thrift_server_serve (ThriftServer *server, GError **error)
 {
-  THRIFT_SERVER_GET_CLASS (server)->serve (server);
+  return THRIFT_SERVER_GET_CLASS (server)->serve (server, error);
 }
 
 void

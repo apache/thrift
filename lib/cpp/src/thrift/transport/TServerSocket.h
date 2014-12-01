@@ -25,7 +25,9 @@
 #include <thrift/cxxfunctional.h>
 #include <boost/shared_ptr.hpp>
 
-namespace apache { namespace thrift { namespace transport {
+namespace apache {
+namespace thrift {
+namespace transport {
 
 class TSocket;
 
@@ -35,7 +37,7 @@ class TSocket;
  *
  */
 class TServerSocket : public TServerTransport {
- public:
+public:
   typedef apache::thrift::stdcxx::function<void(THRIFT_SOCKET fd)> socket_func_t;
 
   const static int DEFAULT_BACKLOG = 1024;
@@ -55,7 +57,7 @@ class TServerSocket : public TServerTransport {
   void setRetryLimit(int retryLimit);
   void setRetryDelay(int retryDelay);
 
-  void setKeepAlive(bool keepAlive) {keepAlive_ = keepAlive;}
+  void setKeepAlive(bool keepAlive) { keepAlive_ = keepAlive; }
 
   void setTcpSendBuffer(int tcpSendBuffer);
   void setTcpRecvBuffer(int tcpRecvBuffer);
@@ -63,13 +65,13 @@ class TServerSocket : public TServerTransport {
   // listenCallback gets called just before listen, and after all Thrift
   // setsockopt calls have been made.  If you have custom setsockopt
   // things that need to happen on the listening socket, this is the place to do it.
-  void setListenCallback(const socket_func_t &listenCallback) { listenCallback_ = listenCallback; }
+  void setListenCallback(const socket_func_t& listenCallback) { listenCallback_ = listenCallback; }
 
   // acceptCallback gets called after each accept call, on the newly created socket.
   // It is called after all Thrift setsockopt calls have been made.  If you have
   // custom setsockopt things that need to happen on the accepted
   // socket, this is the place to do it.
-  void setAcceptCallback(const socket_func_t &acceptCallback) { acceptCallback_ = acceptCallback; }
+  void setAcceptCallback(const socket_func_t& acceptCallback) { acceptCallback_ = acceptCallback; }
 
   void listen();
   void close();
@@ -77,11 +79,11 @@ class TServerSocket : public TServerTransport {
   void interrupt();
   int getPort();
 
- protected:
+protected:
   boost::shared_ptr<TTransport> acceptImpl();
   virtual boost::shared_ptr<TSocket> createSocket(THRIFT_SOCKET client);
 
- private:
+private:
   int port_;
   std::string path_;
   THRIFT_SOCKET serverSocket_;
@@ -101,7 +103,8 @@ class TServerSocket : public TServerTransport {
   socket_func_t listenCallback_;
   socket_func_t acceptCallback_;
 };
-
-}}} // apache::thrift::transport
+}
+}
+} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TSERVERSOCKET_H_

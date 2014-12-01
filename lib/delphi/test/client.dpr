@@ -55,12 +55,14 @@ begin
       arg := ParamStr( i );
       args[i-1] := arg;
     end;
-    TTestClient.Execute( args );
-    Readln;
+    ExitCode := TTestClient.Execute( args);
   except
+    on E: EAbort do begin
+      ExitCode := $FF;
+    end;
     on E: Exception do begin
       Writeln(E.ClassName, ': ', E.Message);
-      ExitCode := $FFFF;
+      ExitCode := $FF;
     end;
   end;
 end.

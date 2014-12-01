@@ -47,6 +47,14 @@ thrift_buffered_transport_is_open (ThriftTransport *transport)
   return THRIFT_TRANSPORT_GET_CLASS (t->transport)->is_open (t->transport);
 }
 
+/* overrides thrift_transport_peek */
+gboolean
+thrift_buffered_transport_peek (ThriftTransport *transport, GError **error)
+{
+  ThriftBufferedTransport *t = THRIFT_BUFFERED_TRANSPORT (transport);
+  return (t->r_buf->len > 0) || thrift_transport_peek (t->transport, error);
+}
+
 /* implements thrift_transport_open */
 gboolean
 thrift_buffered_transport_open (ThriftTransport *transport, GError **error)
@@ -369,6 +377,7 @@ thrift_buffered_transport_class_init (ThriftBufferedTransportClass *cls)
 
   gobject_class->finalize = thrift_buffered_transport_finalize;
   ttc->is_open = thrift_buffered_transport_is_open;
+  ttc->peek = thrift_buffered_transport_peek;
   ttc->open = thrift_buffered_transport_open;
   ttc->close = thrift_buffered_transport_close;
   ttc->read = thrift_buffered_transport_read;

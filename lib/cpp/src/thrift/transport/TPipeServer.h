@@ -23,15 +23,17 @@
 #include <thrift/transport/TServerTransport.h>
 #include <boost/shared_ptr.hpp>
 #ifndef _WIN32
-#  include <thrift/transport/TServerSocket.h>
+#include <thrift/transport/TServerSocket.h>
 #endif
 #ifdef _WIN32
-#  include <thrift/windows/Sync.h>
+#include <thrift/windows/Sync.h>
 #endif
 
 #define TPIPE_SERVER_MAX_CONNS_DEFAULT PIPE_UNLIMITED_INSTANCES
 
-namespace apache { namespace thrift { namespace transport {
+namespace apache {
+namespace thrift {
+namespace transport {
 
 /**
  * Windows Pipes implementation of TServerTransport.
@@ -44,30 +46,30 @@ class TPipeServerImpl;
 class TPipe;
 
 class TPipeServer : public TServerTransport {
- public:
-  //Constructors
+public:
+  // Constructors
   // Named Pipe -
-  TPipeServer(const std::string &pipename, uint32_t bufsize);
-  TPipeServer(const std::string &pipename, uint32_t bufsize, uint32_t maxconnections);
-  TPipeServer(const std::string &pipename);
+  TPipeServer(const std::string& pipename, uint32_t bufsize);
+  TPipeServer(const std::string& pipename, uint32_t bufsize, uint32_t maxconnections);
+  TPipeServer(const std::string& pipename);
   // Anonymous pipe -
   TPipeServer(int bufsize);
   TPipeServer();
 
-  //Destructor
+  // Destructor
   virtual ~TPipeServer();
 
-  //Standard transport callbacks
+  // Standard transport callbacks
   virtual void interrupt();
   virtual void close();
   virtual void listen();
 
-  //Accessors
+  // Accessors
   std::string getPipename();
-  void setPipename(const std::string &pipename);
-  int  getBufferSize();
+  void setPipename(const std::string& pipename);
+  int getBufferSize();
   void setBufferSize(int bufsize);
-  HANDLE getPipeHandle();  //Named Pipe R/W -or- Anonymous pipe Read handle
+  HANDLE getPipeHandle(); // Named Pipe R/W -or- Anonymous pipe Read handle
   HANDLE getWrtPipeHandle();
   HANDLE getClientRdPipeHandle();
   HANDLE getClientWrtPipeHandle();
@@ -75,13 +77,14 @@ class TPipeServer : public TServerTransport {
   void setAnonymous(bool anon);
   void setMaxConnections(uint32_t maxconnections);
 
-  //this function is intended to be used in generic / template situations,
-  //so its name needs to be the same as TPipe's
+  // this function is intended to be used in generic / template situations,
+  // so its name needs to be the same as TPipe's
   HANDLE getNativeWaitHandle();
+
 protected:
   virtual boost::shared_ptr<TTransport> acceptImpl();
 
- private:
+private:
   boost::shared_ptr<TPipeServerImpl> impl_;
 
   std::string pipename_;
@@ -93,7 +96,8 @@ protected:
 //*NIX named pipe implementation uses domain socket
 typedef TServerSocket TPipeServer;
 #endif
-
-}}} // apache::thrift::transport
+}
+}
+} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TSERVERWINPIPES_H_

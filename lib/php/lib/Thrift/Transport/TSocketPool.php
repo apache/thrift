@@ -22,7 +22,6 @@
 
 namespace Thrift\Transport;
 
-use Thrift\Transport\TSocket;
 use Thrift\Exception\TException;
 
 /**
@@ -42,8 +41,8 @@ if (!function_exists('apc_fetch')) {
  *
  * @package thrift.transport
  */
-class TSocketPool extends TSocket {
-
+class TSocketPool extends TSocket
+{
   /**
    * Remote servers. Array of associative arrays with 'host' and 'port' keys
    */
@@ -76,14 +75,14 @@ class TSocketPool extends TSocket {
    *
    * @var bool
    */
-  private $randomize_ = TRUE;
+  private $randomize_ = true;
 
   /**
    * Always try last host, even if marked down?
    *
    * @var bool
    */
-  private $alwaysTryLast_ = TRUE;
+  private $alwaysTryLast_ = true;
 
   /**
    * Socket pool constructor
@@ -95,7 +94,7 @@ class TSocketPool extends TSocket {
    */
   public function __construct($hosts=array('localhost'),
                               $ports=array(9090),
-                              $persist=FALSE,
+                              $persist=false,
                               $debugHandler=null) {
     parent::__construct(null, 0, $persist, $debugHandler);
 
@@ -121,7 +120,8 @@ class TSocketPool extends TSocket {
    * @param string $host hostname or IP
    * @param int $port port
    */
-  public function addServer($host, $port) {
+  public function addServer($host, $port)
+  {
     $this->servers_[] = array('host' => $host, 'port' => $port);
   }
 
@@ -130,7 +130,8 @@ class TSocketPool extends TSocket {
    *
    * @param int $numRetries
    */
-  public function setNumRetries($numRetries) {
+  public function setNumRetries($numRetries)
+  {
     $this->numRetries_ = $numRetries;
   }
 
@@ -139,7 +140,8 @@ class TSocketPool extends TSocket {
    *
    * @param int $numRetries
    */
-  public function setRetryInterval($retryInterval) {
+  public function setRetryInterval($retryInterval)
+  {
     $this->retryInterval_ = $retryInterval;
   }
 
@@ -148,7 +150,8 @@ class TSocketPool extends TSocket {
    *
    * @param int $numRetries
    */
-  public function setMaxConsecutiveFailures($maxConsecutiveFailures) {
+  public function setMaxConsecutiveFailures($maxConsecutiveFailures)
+  {
     $this->maxConsecutiveFailures_ = $maxConsecutiveFailures;
   }
 
@@ -157,7 +160,8 @@ class TSocketPool extends TSocket {
    *
    * @param bool $randomize
    */
-  public function setRandomize($randomize) {
+  public function setRandomize($randomize)
+  {
     $this->randomize_ = $randomize;
   }
 
@@ -166,16 +170,17 @@ class TSocketPool extends TSocket {
    *
    * @param bool $alwaysTryLast
    */
-  public function setAlwaysTryLast($alwaysTryLast) {
+  public function setAlwaysTryLast($alwaysTryLast)
+  {
     $this->alwaysTryLast_ = $alwaysTryLast;
   }
-
 
   /**
    * Connects the socket by iterating through all the servers in the pool
    * and trying to find one that works.
    */
-  public function open() {
+  public function open()
+  {
     // Check if we want order randomization
     if ($this->randomize_) {
       shuffle($this->servers_);
@@ -198,13 +203,13 @@ class TSocketPool extends TSocket {
         $lastFailtime = 0;
       }
 
-      $retryIntervalPassed = FALSE;
+      $retryIntervalPassed = false;
 
       // Cache hit...make sure enough the retry interval has elapsed
       if ($lastFailtime > 0) {
         $elapsed = time() - $lastFailtime;
         if ($elapsed > $this->retryInterval_) {
-          $retryIntervalPassed = TRUE;
+          $retryIntervalPassed = true;
           if ($this->debug_) {
             call_user_func($this->debugHandler_,
                            'TSocketPool: retryInterval '.
@@ -216,7 +221,7 @@ class TSocketPool extends TSocket {
 
       // Only connect if not in the middle of a fail interval, OR if this
       // is the LAST server we are trying, just hammer away on it
-      $isLastServer = FALSE;
+      $isLastServer = false;
       if ($this->alwaysTryLast_) {
         $isLastServer = ($i == ($numServers - 1));
       }

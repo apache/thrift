@@ -45,6 +45,7 @@ reader = make_helper(VALUE_READ, CONTAINER_READ)
 
 
 def makeZigZag(n, bits):
+  checkIntegerLimits(n, bits)
   return (n << 1) ^ (n >> (bits - 1))
 
 
@@ -120,6 +121,7 @@ class TCompactProtocol(TProtocolBase):
   VERSION = 1
   VERSION_MASK = 0x1f
   TYPE_MASK = 0xe0
+  TYPE_BITS = 0x07
   TYPE_SHIFT_AMOUNT = 5
 
   def __init__(self, trans):
@@ -310,7 +312,7 @@ class TCompactProtocol(TProtocolBase):
       raise TProtocolException(TProtocolException.BAD_VERSION,
           'Bad protocol id in the message: %d' % proto_id)
     ver_type = self.__readUByte()
-    type = (ver_type & self.TYPE_MASK) >> self.TYPE_SHIFT_AMOUNT
+    type = (ver_type >> self.TYPE_SHIFT_AMOUNT) & self.TYPE_BITS
     version = ver_type & self.VERSION_MASK
     if version != self.VERSION:
       raise TProtocolException(TProtocolException.BAD_VERSION,

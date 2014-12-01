@@ -24,6 +24,7 @@ module Thrift
     VERSION = 1
     VERSION_MASK = 0x1f
     TYPE_MASK = 0xE0
+    TYPE_BITS = 0x07
     TYPE_SHIFT_AMOUNT = 5
 
     TSTOP = ["", Types::STOP, 0]
@@ -231,7 +232,7 @@ module Thrift
         raise ProtocolException.new("Expected version #{VERSION} but got #{version}");
       end
       
-      type = (version_and_type >> TYPE_SHIFT_AMOUNT) & 0x03
+      type = (version_and_type >> TYPE_SHIFT_AMOUNT) & TYPE_BITS
       seqid = read_varint32()
       messageName = read_string()
       [messageName, type, seqid]

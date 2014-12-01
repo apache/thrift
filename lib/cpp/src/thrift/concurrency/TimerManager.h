@@ -28,7 +28,9 @@
 #include <map>
 #include <time.h>
 
-namespace apache { namespace thrift { namespace concurrency {
+namespace apache {
+namespace thrift {
+namespace concurrency {
 
 /**
  * Timer Manager
@@ -39,8 +41,7 @@ namespace apache { namespace thrift { namespace concurrency {
  */
 class TimerManager {
 
- public:
-
+public:
   TimerManager();
 
   virtual ~TimerManager();
@@ -61,7 +62,7 @@ class TimerManager {
    */
   virtual void stop();
 
-  virtual size_t taskCount() const ;
+  virtual size_t taskCount() const;
 
   /**
    * Adds a task to be executed at some time in the future by a worker thread.
@@ -99,17 +100,11 @@ class TimerManager {
    */
   virtual void remove(boost::shared_ptr<Runnable> task);
 
-  enum STATE {
-    UNINITIALIZED,
-    STARTING,
-    STARTED,
-    STOPPING,
-    STOPPED
-  };
+  enum STATE { UNINITIALIZED, STARTING, STARTED, STOPPING, STOPPED };
 
   virtual STATE state() const;
 
- private:
+private:
   boost::shared_ptr<const ThreadFactory> threadFactory_;
   class Task;
   friend class Task;
@@ -124,7 +119,8 @@ class TimerManager {
   typedef std::multimap<int64_t, boost::shared_ptr<TimerManager::Task> >::iterator task_iterator;
   typedef std::pair<task_iterator, task_iterator> task_range;
 };
-
-}}} // apache::thrift::concurrency
+}
+}
+} // apache::thrift::concurrency
 
 #endif // #ifndef _THRIFT_CONCURRENCY_TIMERMANAGER_H_

@@ -41,7 +41,6 @@ static const char* tmp_dir = "/tmp";
 class FsyncLog;
 FsyncLog* fsync_log;
 
-
 /**************************************************************************
  * Helper code
  **************************************************************************/
@@ -49,11 +48,11 @@ FsyncLog* fsync_log;
 // Provide BOOST_WARN_LT() and BOOST_WARN_GT(), in case we're compiled
 // with an older version of boost
 #ifndef BOOST_WARN_LT
-#define BOOST_WARN_CMP(a, b, op, check_fn) \
-  check_fn((a) op (b), \
-           "check " BOOST_STRINGIZE(a) " " BOOST_STRINGIZE(op) " " \
-           BOOST_STRINGIZE(b) " failed: " BOOST_STRINGIZE(a) "=" << (a) << \
-           " " BOOST_STRINGIZE(b) "=" << (b))
+#define BOOST_WARN_CMP(a, b, op, check_fn)                                                         \
+  check_fn((a)op(b),                                                                               \
+           "check " BOOST_STRINGIZE(a) " " BOOST_STRINGIZE(op) " " BOOST_STRINGIZE(                \
+               b) " failed: " BOOST_STRINGIZE(a) "="                                               \
+           << (a) << " " BOOST_STRINGIZE(b) "=" << (b))
 
 #define BOOST_WARN_LT(a, b) BOOST_WARN_CMP(a, b, <, BOOST_WARN_MESSAGE)
 #define BOOST_WARN_GT(a, b) BOOST_WARN_CMP(a, b, >, BOOST_WARN_MESSAGE)
@@ -64,7 +63,7 @@ FsyncLog* fsync_log;
  * Class to record calls to fsync
  */
 class FsyncLog {
- public:
+public:
   struct FsyncCall {
     struct timeval time;
     int fd;
@@ -74,17 +73,15 @@ class FsyncLog {
   FsyncLog() {}
 
   void fsync(int fd) {
-    (void) fd;
+    (void)fd;
     FsyncCall call;
     gettimeofday(&call.time, NULL);
     calls_.push_back(call);
   }
 
-  const CallList* getCalls() const {
-    return &calls_;
-  }
+  const CallList* getCalls() const { return &calls_; }
 
- private:
+private:
   CallList calls_;
 };
 
@@ -92,7 +89,7 @@ class FsyncLog {
  * Helper class to clean up temporary files
  */
 class TempFile {
- public:
+public:
   TempFile(const char* directory, const char* prefix) {
     size_t path_len = strlen(directory) + strlen(prefix) + 8;
     path_ = new char[path_len];
@@ -109,13 +106,9 @@ class TempFile {
     close();
   }
 
-  const char* getPath() const {
-    return path_;
-  }
+  const char* getPath() const { return path_; }
 
-  int getFD() const {
-    return fd_;
-  }
+  int getFD() const { return fd_; }
 
   void unlink() {
     if (path_) {
@@ -134,7 +127,7 @@ class TempFile {
     fd_ = -1;
   }
 
- private:
+private:
   char* path_;
   int fd_;
 };
@@ -142,8 +135,7 @@ class TempFile {
 // Use our own version of fsync() for testing.
 // This returns immediately, so timing in test_destructor() isn't affected by
 // waiting on the actual filesystem.
-extern "C"
-int fsync(int fd) {
+extern "C" int fsync(int fd) {
   if (fsync_log) {
     fsync_log->fsync(fd);
   }
@@ -153,7 +145,6 @@ int fsync(int fd) {
 int time_diff(const struct timeval* t1, const struct timeval* t2) {
   return (t2->tv_usec - t1->tv_usec) + (t2->tv_sec - t1->tv_sec) * 1000000;
 }
-
 
 /**************************************************************************
  * Test cases
@@ -221,8 +212,7 @@ BOOST_AUTO_TEST_CASE(test_destructor) {
 /**
  * Make sure setFlushMaxUs() is honored.
  */
-void test_flush_max_us_impl(uint32_t flush_us, uint32_t write_us,
-                            uint32_t test_us) {
+void test_flush_max_us_impl(uint32_t flush_us, uint32_t write_us, uint32_t test_us) {
   // TFileTransport only calls fsync() if data has been written,
   // so make sure the write interval is smaller than the flush interval.
   BOOST_WARN(write_us < flush_us);
@@ -277,13 +267,10 @@ void test_flush_max_us_impl(uint32_t flush_us, uint32_t write_us,
   const FsyncLog::CallList* calls = log.getCalls();
   // We added 1 fsync call above.
   // Make sure TFileTransport called fsync at least once
-  BOOST_WARN_GE(calls->size(),
-                 static_cast<FsyncLog::CallList::size_type>(1));
+  BOOST_WARN_GE(calls->size(), static_cast<FsyncLog::CallList::size_type>(1));
 
   const struct timeval* prev_time = NULL;
-  for (FsyncLog::CallList::const_iterator it = calls->begin();
-       it != calls->end();
-       ++it) {
+  for (FsyncLog::CallList::const_iterator it = calls->begin(); it != calls->end(); ++it) {
     if (prev_time) {
       int delta = time_diff(prev_time, &it->time);
       BOOST_WARN_LT(delta, max_allowed_delta);
@@ -352,11 +339,8 @@ void print_usage(FILE* f, const char* argv0) {
 }
 
 void parse_args(int argc, char* argv[]) {
-  struct option long_opts[] = {
-    { "help", false, NULL, 'h' },
-    { "tmp-dir", true, NULL, 't' },
-    { NULL, 0, NULL, 0 }
-  };
+  struct option long_opts[]
+      = {{"help", false, NULL, 'h'}, {"tmp-dir", true, NULL, 't'}, {NULL, 0, NULL, 0}};
 
   while (true) {
     optopt = 1;
@@ -366,26 +350,25 @@ void parse_args(int argc, char* argv[]) {
     }
 
     switch (optchar) {
-      case 't':
-        tmp_dir = optarg;
-        break;
-      case 'h':
-        print_usage(stdout, argv[0]);
-        exit(0);
-      case '?':
-        exit(1);
-      default:
-        // Only happens if someone adds another option to the optarg string,
-        // but doesn't update the switch statement to handle it.
-        fprintf(stderr, "unknown option \"-%c\"\n", optchar);
-        exit(1);
+    case 't':
+      tmp_dir = optarg;
+      break;
+    case 'h':
+      print_usage(stdout, argv[0]);
+      exit(0);
+    case '?':
+      exit(1);
+    default:
+      // Only happens if someone adds another option to the optarg string,
+      // but doesn't update the switch statement to handle it.
+      fprintf(stderr, "unknown option \"-%c\"\n", optchar);
+      exit(1);
     }
   }
 }
 
 boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
-  boost::unit_test::framework::master_test_suite().p_name.value =
-    "TFileTransportTest";
+  boost::unit_test::framework::master_test_suite().p_name.value = "TFileTransportTest";
 
   // Parse arguments
   parse_args(argc, argv);

@@ -193,8 +193,8 @@
         case NSStreamEventErrorOccurred:
         {
             NSError *theError = [aStream streamError];
-            NSLog(@"Error occured opening stream: %@", theError);
-//            @throw [TSSLSocketException exceptionWithReason: @"Error occured opening stream" error: theError];
+            NSLog(@"Error occurred opening stream: %@", theError);
+//            @throw [TSSLSocketException exceptionWithReason: @"Error occurred opening stream" error: theError];
             break;
         }
         case NSStreamEventEndEncountered:

@@ -25,8 +25,7 @@
   {vsn, "1.0.0-dev"},
 
   % All modules used by the application.
-  {modules, [
-  ]},
+  {modules, [legacy_names_test, name_conflict_test, thrift_test_test]},
 
   % All of the registered names the application uses. This can be ignored.
   {registered, []},

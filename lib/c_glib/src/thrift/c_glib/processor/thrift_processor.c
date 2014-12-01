@@ -24,9 +24,10 @@ G_DEFINE_ABSTRACT_TYPE(ThriftProcessor, thrift_processor, G_TYPE_OBJECT)
 
 gboolean
 thrift_processor_process (ThriftProcessor *processor, ThriftProtocol *in,
-                          ThriftProtocol *out)
+                          ThriftProtocol *out, GError **error)
 {
-  return THRIFT_PROCESSOR_GET_CLASS (processor)->process (processor, in, out);
+  return
+    THRIFT_PROCESSOR_GET_CLASS (processor)->process (processor, in, out, error);
 }
 
 /* class initializer for ThriftProcessor */

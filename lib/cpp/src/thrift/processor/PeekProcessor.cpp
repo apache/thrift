@@ -23,13 +23,16 @@ using namespace apache::thrift::transport;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift;
 
-namespace apache { namespace thrift { namespace processor {
+namespace apache {
+namespace thrift {
+namespace processor {
 
 PeekProcessor::PeekProcessor() {
   memoryBuffer_.reset(new TMemoryBuffer());
   targetTransport_ = memoryBuffer_;
 }
-PeekProcessor::~PeekProcessor() {}
+PeekProcessor::~PeekProcessor() {
+}
 
 void PeekProcessor::initialize(boost::shared_ptr<TProcessor> actualProcessor,
                                boost::shared_ptr<TProtocolFactory> protocolFactory,
@@ -49,11 +52,13 @@ void PeekProcessor::setTargetTransport(boost::shared_ptr<TTransport> targetTrans
   if (boost::dynamic_pointer_cast<TMemoryBuffer>(targetTransport_)) {
     memoryBuffer_ = boost::dynamic_pointer_cast<TMemoryBuffer>(targetTransport);
   } else if (boost::dynamic_pointer_cast<TPipedTransport>(targetTransport_)) {
-    memoryBuffer_ = boost::dynamic_pointer_cast<TMemoryBuffer>(boost::dynamic_pointer_cast<TPipedTransport>(targetTransport_)->getTargetTransport());
+    memoryBuffer_ = boost::dynamic_pointer_cast<TMemoryBuffer>(
+        boost::dynamic_pointer_cast<TPipedTransport>(targetTransport_)->getTargetTransport());
   }
 
   if (!memoryBuffer_) {
-    throw TException("Target transport must be a TMemoryBuffer or a TPipedTransport with TMemoryBuffer");
+    throw TException(
+        "Target transport must be a TMemoryBuffer or a TPipedTransport with TMemoryBuffer");
   }
 }
 
@@ -66,7 +71,7 @@ bool PeekProcessor::process(boost::shared_ptr<TProtocol> in,
   int32_t seqid;
   in->readMessageBegin(fname, mtype, seqid);
 
-  if (mtype != T_CALL) {
+  if (mtype != T_CALL && mtype != T_ONEWAY) {
     throw TException("Unexpected message type");
   }
 
@@ -107,21 +112,21 @@ bool PeekProcessor::process(boost::shared_ptr<TProtocol> in,
 }
 
 void PeekProcessor::peekName(const std::string& fname) {
-  (void) fname;
+  (void)fname;
 }
 
 void PeekProcessor::peekBuffer(uint8_t* buffer, uint32_t size) {
-  (void) buffer;
-  (void) size;
+  (void)buffer;
+  (void)size;
 }
 
-void PeekProcessor::peek(boost::shared_ptr<TProtocol> in,
-                         TType ftype,
-                         int16_t fid) {
-  (void) fid;
+void PeekProcessor::peek(boost::shared_ptr<TProtocol> in, TType ftype, int16_t fid) {
+  (void)fid;
   in->skip(ftype);
 }
 
-void PeekProcessor::peekEnd() {}
-
-}}}
+void PeekProcessor::peekEnd() {
+}
+}
+}
+}
