@@ -93,13 +93,14 @@ public:
   const std::string& get_include_prefix() const { return include_prefix_; }
 
   // Accessors for program elements
-  const std::vector<t_typedef*>& get_typedefs() const { return typedefs_; }
-  const std::vector<t_enum*>& get_enums() const { return enums_; }
-  const std::vector<t_const*>& get_consts() const { return consts_; }
-  const std::vector<t_struct*>& get_structs() const { return structs_; }
-  const std::vector<t_struct*>& get_xceptions() const { return xceptions_; }
-  const std::vector<t_struct*>& get_objects() const { return objects_; }
-  const std::vector<t_service*>& get_services() const { return services_; }
+  const std::vector<t_typedef*>&           get_typedefs()   const { return typedefs_;   }
+  const std::vector<t_enum*>&              get_enums()      const { return enums_;      }
+  const std::vector<t_const*>&             get_consts()     const { return consts_;     }
+  const std::vector<t_struct*>&            get_structs()    const { return structs_;    }
+  const std::vector<t_struct*>&            get_xceptions()  const { return xceptions_;  }
+  const std::vector<t_struct*>&            get_objects()    const { return objects_;    }
+  const std::vector<t_service*>&           get_services()   const { return services_;   }
+  const std::map<std::string,std::string>& get_namespaces() const { return namespaces_; }
 
   // Program elements
   void add_typedef(t_typedef* td) { typedefs_.push_back(td); }
