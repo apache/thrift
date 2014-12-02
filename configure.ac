@@ -659,6 +659,8 @@ AC_CONFIG_FILES([
   lib/hs/Makefile
   lib/java/Makefile
   lib/js/test/Makefile
+  lib/json/Makefile
+  lib/json/test/Makefile
   lib/nodejs/Makefile
   lib/perl/Makefile
   lib/perl/test/Makefile
