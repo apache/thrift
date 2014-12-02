@@ -17,7 +17,7 @@
 # under the License.
 #
 
-SUBDIRS =
+SUBDIRS = json
 PRECROSS_TARGET =
 
 if WITH_CPP
