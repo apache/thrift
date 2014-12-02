@@ -100,7 +100,6 @@ EXTRA_DIST = \
 	debian \
 	doc \
 	doap.rdf \
-	json-schema.json \
 	package.json \
 	sonar-project.properties \
 	LICENSE \
