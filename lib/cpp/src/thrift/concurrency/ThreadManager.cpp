@@ -271,13 +271,13 @@ public:
             if (task->state_ == ThreadManager::Task::WAITING) {
               task->state_ = ThreadManager::Task::EXECUTING;
             }
+          }
 
-            /* If we have a pending task max and we just dropped below it, wakeup any
-               thread that might be blocked on add. */
-            if (manager_->pendingTaskCountMax_ != 0
-                && manager_->tasks_.size() <= manager_->pendingTaskCountMax_ - 1) {
+          /* If we have a pending task max and we just dropped below it, wakeup any
+             thread that might be blocked on add. */
+          if (manager_->pendingTaskCountMax_ != 0
+                  && manager_->tasks_.size() <= manager_->pendingTaskCountMax_ - 1) {
               manager_->maxMonitor_.notify();
-            }
           }
         } else {
           idle_ = true;
