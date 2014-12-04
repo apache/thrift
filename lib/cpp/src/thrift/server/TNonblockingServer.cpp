@@ -283,6 +283,7 @@ public:
   void forceClose() {
     appState_ = APP_CLOSE_CONNECTION;
     if (!notifyIOThread()) {
+      close();
       throw TException("TConnection::forceClose: failed write on notify pipe");
     }
   }
@@ -342,6 +343,8 @@ public:
 
     // Signal completion back to the libevent thread via a pipe
     if (!connection_->notifyIOThread()) {
+      GlobalOutput.printf("TNonblockingServer: failed to notifyIOThread, closing.");
+      connection_->close();
       throw TException("TNonblockingServer::Task::run: failed write on notify pipe");
     }
   }
@@ -567,6 +570,9 @@ void TNonblockingServer::TConnection::transition() {
       } catch (IllegalStateException& ise) {
         // The ThreadManager is not ready to handle any more tasks (it's probably shutting down).
         GlobalOutput.printf("IllegalStateException: Server::process() %s", ise.what());
+        close();
+      } catch (TimedOutException& to) {
+        GlobalOutput.printf("[ERROR] TimedOutException: Server::process() %s", to.what());
         close();
       }
 
@@ -969,7 +975,10 @@ void TNonblockingServer::handleEvent(THRIFT_SOCKET fd, short which) {
     if (clientConnection->getIOThreadNumber() == 0) {
       clientConnection->transition();
     } else {
-      clientConnection->notifyIOThread();
+      if (!clientConnection->notifyIOThread()) {
+        GlobalOutput.perror("[ERROR] notifyIOThread failed on fresh connection, closing", errno);
+        returnConnection(clientConnection);
+      }
     }
 
     // addrLen is written by the accept() call, so needs to be set before the next call.

@@ -290,8 +290,10 @@ public:
         if (task->state_ == ThreadManager::Task::EXECUTING) {
           try {
             task->run();
-          } catch (...) {
-            // XXX need to log this
+          } catch(const std::exception& e) {
+            GlobalOutput.printf("[ERROR] task->run() raised an exception: %s", e.what());
+          } catch(...) {
+            GlobalOutput.printf("[ERROR] task->run() raised an unknown exception");
           }
         }
       }
