@@ -91,6 +91,25 @@ int main() {
   }
   cout << endl;
 
+  // assign/copy-construct with non-required fields
+  {
+    Simple s1, s2;
+    s1.__isset.im_default = true;
+    s1.__set_im_optional(10);
+    assert(s1.__isset.im_default);
+    assert(s1.__isset.im_optional);
+
+    s2 = s1;
+
+    assert(s2.__isset.im_default);
+    assert(s2.__isset.im_optional);
+
+    Simple s3(s1);
+
+    assert(s3.__isset.im_default);
+    assert(s3.__isset.im_optional);
+  }
+
   // Write-to-read with optional fields.
   {
     Simple s1, s2, s3;
