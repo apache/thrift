@@ -48,9 +48,7 @@ public:
       string_limit_(0),
       container_limit_(0),
       strict_read_(false),
-      strict_write_(true),
-      string_buf_(NULL),
-      string_buf_size_(0) {}
+      strict_write_(true) {}
 
   TBinaryProtocolT(boost::shared_ptr<Transport_> trans,
                    int32_t string_limit,
@@ -62,16 +60,7 @@ public:
       string_limit_(string_limit),
       container_limit_(container_limit),
       strict_read_(strict_read),
-      strict_write_(strict_write),
-      string_buf_(NULL),
-      string_buf_size_(0) {}
-
-  ~TBinaryProtocolT() {
-    if (string_buf_ != NULL) {
-      std::free(string_buf_);
-      string_buf_size_ = 0;
-    }
-  }
+      strict_write_(strict_write) {}
 
   void setStringSizeLimit(int32_t string_limit) { string_limit_ = string_limit; }
 
@@ -190,11 +179,6 @@ protected:
   // Enforce presence of version identifier
   bool strict_read_;
   bool strict_write_;
-
-  // Buffer for reading strings, save for the lifetime of the protocol to
-  // avoid memory churn allocating memory on every string read
-  uint8_t* string_buf_;
-  int32_t string_buf_size_;
 };
 
 typedef TBinaryProtocolT<TTransport> TBinaryProtocol;
