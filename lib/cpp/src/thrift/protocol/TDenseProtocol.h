@@ -54,7 +54,7 @@ namespace protocol {
  * TODO(dreiss): New class write with old meta.
  *
  * We override all of TBinaryProtocol's methods.
- * We inherit so that we can can explicitly call TBPs's primitive-writing
+ * We inherit so that we can explicitly call TBPs's primitive-writing
  * methods within our versions.
  *
  */
