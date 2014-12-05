@@ -91,6 +91,13 @@ private:
     return out.str();
   }
 
+  template <typename T>
+  void write_number(T n) {
+    std::streamsize oldPrec = f_json_.precision(std::numeric_limits<T>::digits10);
+    f_json_ << n;
+    f_json_.precision(oldPrec);
+  }
+
   string get_type_name(t_type* ttype);
   string get_qualified_name(t_type* ttype);
 
@@ -110,8 +117,6 @@ private:
   void write_type_spec_object(const char* name, t_type* ttype);
   void write_type_spec(t_type* ttype);
   void write_string(const string& value);
-  void write_integer(long value);
-  void write_double(double value);
   void write_value(t_type* tvalue);
   void write_const_value(t_const_value* value, bool force_string = false);
   void write_key_and(string key);
@@ -435,14 +440,6 @@ void t_json_generator::write_string(const string& value) {
   f_json_ << quot << escape_json_string(value) << quot;
 }
 
-void t_json_generator::write_integer(long value) {
-  f_json_ << to_string(value);
-}
-
-void t_json_generator::write_double(double value) {
-  f_json_ << to_string(value);
-}
-
 void t_json_generator::write_const_value(t_const_value* value, bool should_force_string) {
 
   switch (value->get_type()) {
@@ -452,7 +449,7 @@ void t_json_generator::write_const_value(t_const_value* value, bool should_force
     if (should_force_string) {
       write_string(to_string(value->get_integer()));
     } else {
-      write_integer(value->get_integer());
+      write_number(value->get_integer());
     }
     break;
 
@@ -460,7 +457,7 @@ void t_json_generator::write_const_value(t_const_value* value, bool should_force
     if (should_force_string) {
       write_string(to_string(value->get_double()));
     } else {
-      write_double(value->get_double());
+      write_number(value->get_double());
     }
     break;
 
@@ -474,6 +471,7 @@ void t_json_generator::write_const_value(t_const_value* value, bool should_force
     std::vector<t_const_value*>::iterator lit;
     for (lit = list.begin(); lit != list.end(); ++lit) {
       write_comma_if_needed();
+      f_json_ << indent();
       write_const_value(*lit);
       indicate_comma_needed();
     }
@@ -487,6 +485,7 @@ void t_json_generator::write_const_value(t_const_value* value, bool should_force
     std::map<t_const_value*, t_const_value*>::iterator mit;
     for (mit = map.begin(); mit != map.end(); ++mit) {
       write_comma_if_needed();
+      f_json_ << indent();
       // JSON objects only allow string keys
       write_const_value(mit->first, FORCE_STRING);
       f_json_ << ": ";
