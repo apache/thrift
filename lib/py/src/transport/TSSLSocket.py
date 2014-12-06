@@ -97,7 +97,7 @@ class TSSLSocket(TSocket.TSocket):
                                       ca_certs=self.ca_certs,
                                       keyfile=self.keyfile,
                                       certfile=self.certfile,
-                                      cert_reqs=self.cert_reqs
+                                      cert_reqs=self.cert_reqs,
                                       ciphers=self.ciphers)
         self.handle.settimeout(self._timeout)
         try:
