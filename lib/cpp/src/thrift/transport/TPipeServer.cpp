@@ -338,16 +338,16 @@ bool TNamedPipeServer::createNamedPipe() {
   sa.bInheritHandle = FALSE;
 
   // Create an instance of the named pipe
-  TAutoHandle hPipe(CreateNamedPipeA(pipename_.c_str(),   // pipe name
-                                    PIPE_ACCESS_DUPLEX |  // read/write access
-                                    FILE_FLAG_OVERLAPPED, // async mode
-                                    PIPE_TYPE_BYTE |      // byte type pipe
-                                    PIPE_READMODE_BYTE,   // byte read mode
-                                    maxconns_,            // max. instances
-                                    bufsize_,             // output buffer size
-                                    bufsize_,             // input buffer size
-                                    0,                    // client time-out
-                                    &sa));                // security attributes
+  TAutoHandle hPipe(CreateNamedPipeA(pipename_.c_str(),    // pipe name
+                                     PIPE_ACCESS_DUPLEX |  // read/write access
+                                     FILE_FLAG_OVERLAPPED, // async mode
+                                     PIPE_TYPE_BYTE |      // byte type pipe
+                                     PIPE_READMODE_BYTE,   // byte read mode
+                                     maxconns_,            // max. instances
+                                     bufsize_,             // output buffer size
+                                     bufsize_,             // input buffer size
+                                     0,                    // client time-out
+                                     &sa));                // security attributes
 
   if (hPipe.h == INVALID_HANDLE_VALUE) {
     Pipe_.reset();

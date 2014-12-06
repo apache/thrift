@@ -263,12 +263,12 @@ void TPipe::open() {
   do {
     DWORD flags = FILE_FLAG_OVERLAPPED; // async mode, so we can do reads at the same time as writes
     hPipe.reset(CreateFileA(pipename_.c_str(),
-                           GENERIC_READ | GENERIC_WRITE,
-                           0,             // no sharing
-                           NULL,          // default security attributes
-                           OPEN_EXISTING, // opens existing pipe
-                           flags,
-                           NULL)); // no template file
+                            GENERIC_READ | GENERIC_WRITE,
+                            0,             // no sharing
+                            NULL,          // default security attributes
+                            OPEN_EXISTING, // opens existing pipe
+                            flags,
+                            NULL)); // no template file
 
     if (hPipe.h != INVALID_HANDLE_VALUE)
       break; // success!
