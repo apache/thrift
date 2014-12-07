@@ -155,8 +155,11 @@ private:
   /// Server socket file descriptor
   THRIFT_SOCKET serverSocket_;
 
-  /// Port server runs on
+  /// Port server runs on. Zero when letting OS decide actual port
   int port_;
+
+  /// Port server actually runs on
+  int listenPort_;
 
   /// The optional user-provided event-base (for single-thread servers)
   event_base* userEventBase_;
@@ -280,6 +283,7 @@ private:
     nextIOThread_ = 0;
     useHighPriorityIOThreads_ = false;
     port_ = port;
+    listenPort_ = port;
     userEventBase_ = NULL;
     threadPoolProcessing_ = false;
     numTConnections_ = 0;
@@ -394,6 +398,8 @@ public:
   ~TNonblockingServer();
 
   void setThreadManager(boost::shared_ptr<ThreadManager> threadManager);
+
+  int getListenPort() { return listenPort_; }
 
   boost::shared_ptr<ThreadManager> getThreadManager() { return threadManager_; }
 

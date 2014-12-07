@@ -1099,6 +1099,16 @@ void TNonblockingServer::listenSocket(THRIFT_SOCKET s) {
 
   // Cool, this socket is good to go, set it as the serverSocket_
   serverSocket_ = s;
+
+  if (!port_) {
+    sockaddr_in addr;
+    unsigned int size = sizeof(addr);
+    if (!getsockname(serverSocket_, reinterpret_cast<sockaddr*>(&addr), &size)) {
+      listenPort_ = ntohs(addr.sin_port);
+    } else {
+      GlobalOutput.perror("TNonblocking: failed to get listen port: ", THRIFT_GET_SOCKET_ERROR);
+    }
+  }
 }
 
 void TNonblockingServer::setThreadManager(boost::shared_ptr<ThreadManager> threadManager) {
@@ -1157,6 +1167,9 @@ void TNonblockingServer::expireClose(boost::shared_ptr<Runnable> task) {
 }
 
 void TNonblockingServer::stop() {
+  if (!port_) {
+    listenPort_ = 0;
+  }
   // Breaks the event loop in all threads so that they end ASAP.
   for (uint32_t i = 0; i < ioThreads_.size(); ++i) {
     ioThreads_[i]->stop();
@@ -1196,7 +1209,7 @@ void TNonblockingServer::registerEvents(event_base* user_event_base) {
   assert(ioThreads_.size() > 0);
 
   GlobalOutput.printf("TNonblockingServer: Serving on port %d, %d io threads.",
-                      port_,
+                      listenPort_,
                       ioThreads_.size());
 
   // Launch all the secondary IO threads in separate threads
