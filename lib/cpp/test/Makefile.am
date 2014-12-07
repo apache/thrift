@@ -68,6 +68,7 @@ check_PROGRAMS = \
 	RecursiveTest \
 	SpecializationTest \
 	AllProtocolsTest \
+	TNonblockingServerTest \
 	TransportTest \
 	ZlibTest \
 	TFileTransportTest \
@@ -178,6 +179,18 @@ JSONProtoTest_SOURCES = \
 	JSONProtoTest.cpp
 
 JSONProtoTest_LDADD = libtestgencpp.la
+
+#
+# TNonblockingServerTest
+#
+TNonblockingServerTest_SOURCES = TNonblockingServerTest.cpp
+
+TNonblockingServerTest_LDADD = libprocessortest.la \
+                               $(top_builddir)/lib/cpp/libthrift.la \
+                               $(top_builddir)/lib/cpp/libthriftnb.la \
+                               $(BOOST_LDFLAGS) \
+                               -levent \
+                               -l:libboost_unit_test_framework.a
 
 #
 # OptionalRequiredTest
