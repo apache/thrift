@@ -234,6 +234,10 @@ target_link_libraries(TQTcpServerTest testgencpp_cob thriftqt thrift Qt4::QtTest
 add_test(NAME TQTcpServerTest COMMAND TQTcpServerTest)
 endif()
 
+if(WITH_QT5)
+add_subdirectory(qt)
+endif()
+
 #
 # Common thrift code generation rules
 #
