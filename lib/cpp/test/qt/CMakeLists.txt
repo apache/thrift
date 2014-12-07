@@ -1,5 +1,4 @@
-#!/bin/sh
-
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -16,14 +15,17 @@
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
+#
 
 
-# Mainly aiming Travis CI's Ubuntu machines for now
-# see what we need: http://thrift.apache.org/docs/install/ubuntu
+cmake_minimum_required(VERSION 2.8.12)
 
-# General dependencies
-sudo apt-add-repository "deb http://archive.ubuntu.com/ubuntu/ trusty main restricted" -y
-sudo apt-get update -qq
+set(CMAKE_AUTOMOC ON)
+find_package(Qt5 REQUIRED COMPONENTS Test)
+set(TQTcpServerTest_Qt5_SOURCES
+    TQTcpServerTest.cpp
+)
+add_executable(TQTcpServerTest_Qt5 ${TQTcpServerTest_Qt5_SOURCES})
+target_link_libraries(TQTcpServerTest_Qt5 testgencpp_cob thriftqt5 thrift Qt5::Test)
+add_test(NAME TQTcpServerTest_Qt5 COMMAND TQTcpServerTest_Qt5)
 
-sudo apt-get install -qq libpango-1.0-0 libqt4-dev qtbase5-dev qtbase5-dev-tools qt5-default libboost-dev libboost-test-dev libboost-program-options-dev libboost-system-dev libboost-filesystem-dev libboost-thread-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev make cmake git debhelper bc
-dpkg -S /usr/include/boost/version.hpp
