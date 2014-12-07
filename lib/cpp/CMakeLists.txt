@@ -180,6 +180,11 @@ if(WITH_QT4)
     TARGET_LINK_LIBRARIES_THRIFT(thriftqt ${SYSLIBS} Qt4::QtCore Qt4::QtNetwork)
 endif()
 
+if(WITH_QT5)
+    # Qt5 has its own directory to avoid conflict with Qt4 caused by CMAKE_AUTOMOC
+    add_subdirectory(src/thrift/qt)
+endif()
+
 if(MSVC)
     add_definitions("-DUNICODE -D_UNICODE")
 endif()
