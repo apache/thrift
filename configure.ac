@@ -154,11 +154,26 @@ if test "$with_cpp" = "yes";  then
     AC_PATH_PROGS([QT_MOC], [moc-qt4 moc])
     have_qt=$success
   fi
+
+  AX_THRIFT_LIB(qt5, [Qt5], yes)
+  have_qt5=no
+  qt_reduce_reloc=""
+  if test "$with_qt5" = "yes";  then
+    PKG_CHECK_MODULES([QT5], [Qt5Core >= 5.0, Qt5Network >= 5.0],
+                      [have_qt5=yes;qt_reduce_reloc=`$PKG_CONFIG --variable=qt_config Qt5Core | grep "reduce_relocations"`],
+                      [have_qt5=no])
+  fi
+  if test "$have_qt5" = "yes"; then
+    AC_PATH_PROGS([QT5_MOC], [moc-qt5 moc])
+    have_qt5=$success
+  fi
 fi
 AM_CONDITIONAL([WITH_CPP], [test "$have_cpp" = "yes"])
 AM_CONDITIONAL([AMX_HAVE_LIBEVENT], [test "$have_libevent" = "yes"])
 AM_CONDITIONAL([AMX_HAVE_ZLIB], [test "$have_zlib" = "yes"])
 AM_CONDITIONAL([AMX_HAVE_QT], [test "$have_qt" = "yes"])
+AM_CONDITIONAL([AMX_HAVE_QT5], [test "$have_qt5" = "yes"])
+AM_CONDITIONAL([QT5_REDUCE_RELOCATIONS], [test "x$qt_reduce_reloc" != "x"])
 
 AX_THRIFT_LIB(c_glib, [C (GLib)], yes)
 if test "$with_c_glib" = "yes"; then
@@ -647,6 +662,7 @@ AC_CONFIG_FILES([
   lib/cpp/thrift-nb.pc
   lib/cpp/thrift-z.pc
   lib/cpp/thrift-qt.pc
+  lib/cpp/thrift-qt5.pc
   lib/cpp/thrift.pc
   lib/c_glib/Makefile
   lib/c_glib/thrift_c_glib.pc
@@ -724,7 +740,8 @@ if test "$have_cpp" = "yes" ; then
   echo "C++ Library:"
   echo "   Build TZlibTransport ...... : $have_zlib"
   echo "   Build TNonblockingServer .. : $have_libevent"
-  echo "   Build TQTcpServer (Qt) .... : $have_qt"
+  echo "   Build TQTcpServer (Qt4) .... : $have_qt"
+  echo "   Build TQTcpServer (Qt5) .... : $have_qt5"
 fi
 if test "$have_java" = "yes" ; then
   echo
