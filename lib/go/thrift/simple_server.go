@@ -120,15 +120,14 @@ func (p *TSimpleServer) Listen() error {
 
 func (p *TSimpleServer) AcceptLoop() error {
 	for {
-		select {
-		case <-p.quit:
-			return nil
-		default:
-		}
-
 		client, err := p.serverTransport.Accept()
 		if err != nil {
-			log.Println("Accept err: ", err)
+			select {
+			case <-p.quit:
+				return nil
+			default:
+			}
+			return err
 		}
 		if client != nil {
 			go func() {
