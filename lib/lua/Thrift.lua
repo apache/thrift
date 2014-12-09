@@ -40,6 +40,14 @@ function terror(e)
   error(e)
 end
 
+function ttable_size(t)
+  local count = 0
+  for k, v in pairs(t) do
+    count = count + 1
+  end
+  return count
+end
+
 version = 1.0
 
 TType = {
