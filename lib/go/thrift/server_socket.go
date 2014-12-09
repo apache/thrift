@@ -96,6 +96,9 @@ func (p *TServerSocket) Open() error {
 }
 
 func (p *TServerSocket) Addr() net.Addr {
+	if p.listener != nil {
+		return p.listener.Addr()
+	}
 	return p.addr
 }
 
