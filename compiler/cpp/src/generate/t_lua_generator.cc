@@ -963,14 +963,14 @@ void t_lua_generator::generate_serialize_container(ofstream& out, t_type* ttype,
   if (ttype->is_map()) {
     indent(out) << "oprot:writeMapBegin(" << type_to_enum(((t_map*)ttype)->get_key_type()) << ", "
                 << type_to_enum(((t_map*)ttype)->get_val_type()) << ", "
-                << "string.len(" << prefix << "))" << endl;
+                << "ttable_size(" << prefix << "))" << endl;
   } else if (ttype->is_set()) {
     indent(out) << "oprot:writeSetBegin(" << type_to_enum(((t_set*)ttype)->get_elem_type()) << ", "
-                << "string.len(" << prefix << "))" << endl;
+                << "ttable_size(" << prefix << "))" << endl;
   } else if (ttype->is_list()) {
     indent(out) << "oprot:writeListBegin(" << type_to_enum(((t_list*)ttype)->get_elem_type())
                 << ", "
-                << "string.len(" << prefix << "))" << endl;
+                << "#" << prefix << ")" << endl;
   }
 
   // Serialize
