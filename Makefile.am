@@ -42,6 +42,9 @@ cross: check
 	sh test/test.sh
 
 codespell_skip_files = \
+	*.jar \
+	*.class \
+	*.so \
 	*.a \
 	*.la \
 	*.o \
