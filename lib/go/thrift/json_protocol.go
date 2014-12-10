@@ -134,10 +134,16 @@ func (p *TJSONProtocol) WriteMapBegin(keyType TType, valueType TType, size int) 
 	if e := p.WriteString(s); e != nil {
 		return e
 	}
-	return p.WriteI64(int64(size))
+	if e := p.WriteI64(int64(size)); e != nil {
+		return e
+	}
+	return p.OutputObjectBegin()
 }
 
 func (p *TJSONProtocol) WriteMapEnd() error {
+	if e := p.OutputObjectEnd(); e != nil {
+		return e
+	}
 	return p.OutputListEnd()
 }
 
