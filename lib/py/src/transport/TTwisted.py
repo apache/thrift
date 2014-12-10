@@ -82,11 +82,18 @@ class ThriftClientProtocol(basic.Int32StringReceiver):
         self.started.callback(self.client)
 
     def connectionLost(self, reason=connectionDone):
-        for k, v in self.client._reqs.iteritems():
+        # the called errbacks can add items to our client's _reqs,
+        # so we need to use a tmp, and iterate until no more requests
+        # are added during errbacks
+        if self.client:
             tex = TTransport.TTransportException(
                 type=TTransport.TTransportException.END_OF_FILE,
-                message='Connection closed')
-            v.errback(tex)
+                message='Connection closed (%s)' % reason)
+            while self.client._reqs:
+                _, v = self.client._reqs.popitem()
+                v.errback(tex)
+            del self.client._reqs
+            del self.client
 
     def stringReceived(self, frame):
         tr = TTransport.TMemoryBuffer(frame)
