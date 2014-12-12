@@ -24,10 +24,12 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <limits>
 
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sstream>
+
 #include "t_generator.h"
 #include "platform.h"
 
