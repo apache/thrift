@@ -47,11 +47,12 @@ matrix:
 
     - env:
         - TEST_NAME="compiler (gcc, CMake + CPack)"
+          CONFIG="-DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
       compiler: gcc
       before_install:
        - sh contrib/installCXXDependencies.sh;
       script:
-       - mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make -j4 && cpack && cd ..;
+       - mkdir build_native && cd build_native && cmake $CONFIG .. && make -j4 && cpack && cd ..;
 
     - env:
         - TEST_NAME="compiler (clang, automake)"
@@ -66,19 +67,21 @@ matrix:
 
     - env:
         - TEST_NAME="compiler (clang, CMake + CPack)"
+          CONFIG="-DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
       compiler: clang
       before_install:
        - sh contrib/installCXXDependencies.sh;
       script:
-       - mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make -j4 && cpack && cd ..;
+       - mkdir build_native && cd build_native && cmake $CONFIG .. && make -j4 && cpack && cd ..;
 
     - env:
         - TEST_NAME="compiler (mingw32-gcc, CMake + CPack)"
+          CONFIG="-DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
       before_install:
        - sh contrib/installCXXDependencies.sh;
        - sudo apt-get install nsis
       script:
-       - mkdir build_mingw32 && cd build_mingw32 && cmake -DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake ../compiler/cpp/ && make -j4 && cpack && cd ..;
+       - mkdir build_mingw32 && cd build_mingw32 && cmake $CONFIG .. && make -j4 && cpack && cd ..;
 
     - env:
         - TEST_NAME="all (gcc, automake)"
@@ -109,6 +112,15 @@ matrix:
        - sh configure $CONFIG;
        - make check -j2;
 
+    - env:
+        - TEST_NAME="all (gcc, CMake + CPack)"
+          CONFIG=""
+      compiler: gcc
+      before_install:
+       - sh contrib/installCXXDependencies.sh;
+       - sh contrib/installDependencies.sh 1> /dev/null;
+      script:
+       - mkdir build_cmake && cd build_cmake && cmake $CONFIG .. && make -j4 && cpack && cd ..;
 
     - env:
         - TEST_NAME="Small Set (gcc, automake)"
