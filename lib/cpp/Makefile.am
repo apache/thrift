@@ -32,7 +32,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 
 lib_LTLIBRARIES = libthrift.la
 pkgconfig_DATA = thrift.pc
-libthrift_la_LDFLAGS = -release $(VERSION) $(BOOST_LDFLAGS)
+libthrift_la_LDFLAGS = -release $(VERSION) $(BOOST_LDFLAGS) $(OPENSSL_LDFLAGS)
 
 ## We only build the extra libraries if we have the dependencies,
 ## but we install all of the headers unconditionally.
@@ -50,8 +50,8 @@ pkgconfig_DATA += thrift-qt.pc
 endif
 
 AM_CXXFLAGS = -Wall -Wextra -pedantic
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(srcdir)/src
-AM_LDFLAGS = $(BOOST_LDFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) -I$(srcdir)/src
+AM_LDFLAGS = $(BOOST_LDFLAGS) $(OPENSSL_LDFLAGS)
 
 # Define the source files for the module
 
