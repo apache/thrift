@@ -137,6 +137,8 @@ if test "$with_cpp" = "yes";  then
     have_cpp="yes"
   fi
 
+  AX_CHECK_OPENSSL()
+
   AX_LIB_EVENT([1.0])
   have_libevent=$success
 
