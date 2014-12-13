@@ -21,6 +21,8 @@ unit TestConstants;
 
 interface
 
+uses SysUtils;
+
 type
   TKnownProtocol = (
     prot_Binary,  // default binary protocol
@@ -140,8 +142,21 @@ const
                    + 'diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet '
                    + 'clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. ';
 
+
+function BytesToHex( const bytes : TBytes) : string;
+
+
 implementation
 
-// nothing
+
+function BytesToHex( const bytes : TBytes) : string;
+var i : Integer;
+begin
+  result := '';
+  for i := Low(bytes) to High(bytes) do begin
+    result := result + IntToHex(bytes[i],2);
+  end;
+end;
+
 
 end.

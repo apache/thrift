@@ -62,6 +62,7 @@ type
         function testI32(thing: Integer): Integer;
         function testI64(const thing: Int64): Int64;
         function testDouble(const thing: Double): Double;
+        function testBinary(const thing: TBytes): TBytes;
         function testStruct(const thing: IXtruct): IXtruct;
         function testNest(const thing: IXtruct2): IXtruct2;
         function testMap(const thing: IThriftDictionary<Integer, Integer>): IThriftDictionary<Integer, Integer>;
@@ -135,6 +136,12 @@ end;
 function TTestServer.TTestHandlerImpl.testDouble( const thing: Double): Double;
 begin
   Console.WriteLine('testDouble("' + FloatToStr( thing ) + '")');
+  Result := thing;
+end;
+
+function TTestServer.TTestHandlerImpl.testBinary(const thing: TBytes): TBytes;
+begin
+  Console.WriteLine('testBinary("' + BytesToHex( thing ) + '")');
   Result := thing;
 end;
 
