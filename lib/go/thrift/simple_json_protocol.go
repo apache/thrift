@@ -909,6 +909,12 @@ func (p *TSimpleJSONProtocol) ParseBase64EncodedBody() ([]byte, error) {
 	}
 	line2 := line[0 : len(line)-1]
 	l := len(line2)
+	if (l % 4) != 0 {
+		pad := 4 - ( l % 4)
+		fill := [...]byte { '=', '=', '='}
+		line2 = append( line2, fill[:pad]...)
+		l = len(line2)
+	}
 	output := make([]byte, base64.StdEncoding.DecodedLen(l))
 	n, err := base64.StdEncoding.Decode(output, line2)
 	return output[0:n], NewTProtocolException(err)
