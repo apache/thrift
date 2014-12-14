@@ -81,6 +81,10 @@ handle_function(testDouble, {Double}) when is_float(Double) ->
     io:format("testDouble: ~p~n", [Double]),
     {reply, Double};
 
+handle_function(testBinary, {S}) when is_binary(S) ->
+    io:format("testBinary: ~p~n", [S]),
+    {reply, S};
+
 handle_function(testStruct,
                 {Struct = #'Xtruct'{string_thing = String,
                                  byte_thing = Byte,

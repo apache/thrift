@@ -334,6 +334,7 @@ int main(int argc, char** argv) {
     printf(" = %" PRId64 "\n", i64);
     if (i64 != -34359738368LL)
       failCount++;
+
     /**
      * DOUBLE TEST
      */
@@ -342,6 +343,11 @@ int main(int argc, char** argv) {
     printf(" = %f\n", dub);
     if ((dub - (-5.2098523)) > 0.001)
       failCount++;
+
+    /**
+     * BINARY TEST
+     */
+    // TODO: add testBinary() call
 
     /**
      * STRUCT TEST

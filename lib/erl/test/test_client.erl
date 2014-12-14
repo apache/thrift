@@ -83,6 +83,7 @@ start(Args) ->
   {Client06, {ok, 0}}               = thrift_client:call(Client05, testI32, [0]),
   {Client07, {ok, -34359738368}}    = thrift_client:call(Client06, testI64, [-34359738368]),
   {Client08, {ok, -5.2098523}}      = thrift_client:call(Client07, testDouble, [-5.2098523]),
+  %% TODO: add testBinary() call
   {Client09, {ok, DemoXtruct}}      = thrift_client:call(Client08, testStruct, [DemoXtruct]),
   {Client10, {ok, DemoNest}}        = thrift_client:call(Client09, testNest, [DemoNest]),
   {Client11, {ok, DemoDict}}        = thrift_client:call(Client10, testMap, [DemoDict]),

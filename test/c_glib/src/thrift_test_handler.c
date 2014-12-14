@@ -119,6 +119,21 @@ thrift_test_handler_test_double (TTestThriftTestIf  *iface,
   return TRUE;
 }
 
+gboolean 
+thrift_test_handler_test_binary (TTestThriftTestIf *iface,
+                                 GByteArray ** _return,
+                                 const GByteArray * thing,
+                                 GError **error)
+{
+  THRIFT_UNUSED_VAR (iface);
+  THRIFT_UNUSED_VAR (error);
+
+  printf ("testBinary()\n");  // TODO: hex output
+  g_byte_array_append( *_return, thing->data, thing->len);
+
+  return TRUE;
+}
+
 gboolean
 thrift_test_handler_test_struct (TTestThriftTestIf  *iface,
                                  TTestXtruct       **_return,
