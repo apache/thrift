@@ -965,7 +965,7 @@ end;
 
 function TJSONProtocolImpl.ReadJSONBase64 : TBytes;
 var b : TBytes;
-    len, off, size, cnt : Integer;
+    len, off, size : Integer;
 begin
   b := ReadJSONString(false);
 

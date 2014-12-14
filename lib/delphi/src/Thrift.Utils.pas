@@ -141,6 +141,7 @@ begin
 
   else
     ASSERT( FALSE);
+    result := 0;  // because invalid call
   end;
 end;
 
