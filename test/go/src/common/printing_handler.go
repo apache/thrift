@@ -22,6 +22,7 @@ package common
 import (
 	"errors"
 	"fmt"
+	"encoding/hex"
 	. "gen/thrifttest"
 	"time"
 )
@@ -88,6 +89,17 @@ func (p *printingHandler) TestI64(thing int64) (r int64, err error) {
 //  - Thing
 func (p *printingHandler) TestDouble(thing float64) (r float64, err error) {
 	fmt.Printf("testDouble(%f)\n", thing)
+	return thing, nil
+}
+
+// Prints 'testBinary("%s")' where '%s' is a hex-formatted string of thing's data
+// @param []byte thing - the binary to print
+// @return []byte - returns the binary 'thing'
+//
+// Parameters:
+//  - Thing
+func (p *printingHandler) TestBinary(thing []byte) (r []byte, err error) {
+	fmt.Printf("testBinary(%s)\n", hex.EncodeToString(thing))
 	return thing, nil
 }
 

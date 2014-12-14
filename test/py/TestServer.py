@@ -101,6 +101,11 @@ class TestHandler:
       print 'testDouble(%f)' % dub
     return dub
 
+  def testBinary(self, thing):
+    if options.verbose > 1:
+      print 'testBinary()' # TODO: hex output
+    return thring
+	
   def testStruct(self, thing):
     if options.verbose > 1:
       print 'testStruct({%s, %d, %d, %d})' % (thing.string_thing, thing.byte_thing, thing.i32_thing, thing.i64_thing)

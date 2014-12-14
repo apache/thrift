@@ -72,6 +72,9 @@ class TestHandler(object):
     def testDouble(self, dub):
         return dub
 
+    def testBinary(self, thing):
+        return thing
+
     def testStruct(self, thing):
         return thing
 

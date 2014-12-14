@@ -59,6 +59,9 @@ class TestHandler:
     def testDouble(self, dub):
         return dub
 
+    def testBinary(self, thing):
+        return thing
+
     def testStruct(self, thing):
         return thing
 
@@ -144,6 +147,8 @@ class ThriftTestCase(unittest.TestCase):
     def testDouble(self):
         self.assertEquals((yield self.client.testDouble(-5.235098235)), -5.235098235)
 
+    # TODO: def testBinary(self) ...		
+		
     @defer.inlineCallbacks
     def testStruct(self):
         x = Xtruct()

@@ -107,6 +107,8 @@ func callEverything(client *thrifttest.ThriftTestClient) {
 		t.Fatalf("Unexpected TestDouble() result expected 42.42, got %f ", d)
 	}
 
+	// TODO: add TestBinary() call
+	
 	xs := thrifttest.NewXtruct()
 	xs.StringThing = "thing"
 	xs.ByteThing = 42

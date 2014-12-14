@@ -86,6 +86,11 @@ class TestHandler : public ThriftTestIf {
     return thing;
   }
 
+  void testBinary(string& out, const string &thing) {
+    printf("[C -> C++] testBinary(\"%s\")\n", thing.c_str());
+    out = thing;
+  }
+
   void testStruct(Xtruct& out, const Xtruct &thing) {
     printf("[C -> C++] testStruct({\"%s\", %d, %d, %lld})\n", thing.string_thing.c_str(), (int)thing.byte_thing, thing.i32_thing, thing.i64_thing);
     out = thing;

@@ -116,6 +116,8 @@ class SimpleClientTest < Test::Unit::TestCase
     assert_kind_of(Float, @client.testDouble(val))
   end
 
+  # TODO: testBinary
+  
   def test_map
     val = {1 => 1, 2 => 2, 3 => 3}
     assert_equal(@client.testMap(val), val)

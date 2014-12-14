@@ -159,6 +159,8 @@ void main(string[] args) {
     if (trace) writefln(" = %s", dub);
     enforce(dub == -5.2098523);
 
+	// TODO: add testBinary() call
+	
     Xtruct out1;
     out1.string_thing = "Zero";
     out1.byte_thing = 1;

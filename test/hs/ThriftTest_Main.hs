@@ -67,6 +67,10 @@ instance Iface.ThriftTest_Iface TestHandler where
         ThriftTestUtils.serverLog $ show x
         return x
 
+    testBinary _ x = do
+        ThriftTestUtils.serverLog $ show x
+        return x
+
     testStruct _ x = do
         ThriftTestUtils.serverLog $ show x
         return x
@@ -150,6 +154,8 @@ client addr = do
     v9 <- Client.testDouble ps (-3.14)
     ThriftTestUtils.clientLog $ show v9
 
+    -- TODO: Client.testBinary ...
+	
     v10 <- Client.testMap ps (Map.fromList [(1,1),(2,2),(3,3)])
     ThriftTestUtils.clientLog $ show v10
 

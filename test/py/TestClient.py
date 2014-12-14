@@ -118,6 +118,8 @@ class AbstractTest(unittest.TestCase):
     self.assertEqual(self.client.testDouble(0), 0)
     self.assertEqual(self.client.testDouble(-1), -1)
 
+  # TODO: def testBinary(self)	...
+	
   def testStruct(self):
     x = Xtruct()
     x.string_thing = "Zero"
