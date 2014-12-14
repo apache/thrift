@@ -53,6 +53,10 @@ func (p *simpleHandler) TestDouble(thing float64) (r float64, err error) {
 	return thing, nil
 }
 
+func (p *simpleHandler) TestBinary(thing []byte) (r []byte, err error) {
+	return thing, nil
+}
+
 func (p *simpleHandler) TestStruct(thing *Xtruct) (r *Xtruct, err error) {
 	return r, err
 }

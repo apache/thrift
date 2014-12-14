@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import java.nio.ByteBuffer;
+
 import junit.framework.TestCase;
 
 import org.apache.thrift.TException;
@@ -83,7 +85,13 @@ public abstract class ServerTestBase extends TestCase {
       System.out.print("testDouble(" + thing + ")\n");
       return thing;
     }
-  
+
+    public ByteBuffer testBinary(ByteBuffer thing) {
+      String hexstr = "TODO: toHexString(thing)";
+	  System.out.print("testBinary(" + hexstr + ")\n");
+      return thing;
+    }
+
     public Xtruct testStruct(Xtruct thing) {
       System.out.print("testStruct({" +
                        "\"" + thing.string_thing + "\", " +
@@ -594,6 +602,11 @@ public abstract class ServerTestBase extends TestCase {
         @Override
         public void testDouble(double thing, AsyncMethodCallback resultHandler) throws TException {
             resultHandler.onComplete(handler.testDouble(thing));
+        }
+
+        @Override 
+        public void testBinary(ByteBuffer thing, AsyncMethodCallback resultHandler) throws TException {
+            resultHandler.onComplete(handler.testBinary(thing));
         }
 
         @Override

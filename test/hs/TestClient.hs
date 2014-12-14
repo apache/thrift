@@ -105,6 +105,8 @@ runClient p = do
   dub <- Client.testDouble prot (-5.2098523)
   when (abs (dub + 5.2098523) > 0.001) exitFailure
 
+  -- TODO: call Client.testBinary
+  
   -- Struct Test
   let structIn = Xtruct{ xtruct_string_thing = "Zero"
                        , xtruct_byte_thing   = 1

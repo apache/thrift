@@ -99,6 +99,11 @@ my $dub = $testClient->testDouble(-852.234234234);
 print(" = $dub\n");
 
 #
+# BINARY TEST   ---  TODO
+#
+
+
+#
 # STRUCT TEST
 #
 print("testStruct({\"Zero\", 1, -3, -5})");
