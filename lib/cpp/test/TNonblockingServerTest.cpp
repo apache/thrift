@@ -63,7 +63,7 @@ protected:
   int startServer(int port) {
     boost::scoped_ptr<concurrency::ThreadFactory> threadFactory(
         new concurrency::PlatformThreadFactory(
-#if !defined(USE_BOOST_THREAD) && !defined(USE_STD_THREAD)
+#if !USE_BOOST_THREAD && !USE_STD_THREAD
             concurrency::PlatformThreadFactory::OTHER,
             concurrency::PlatformThreadFactory::NORMAL,
             1,

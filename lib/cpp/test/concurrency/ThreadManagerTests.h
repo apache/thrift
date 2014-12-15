@@ -106,7 +106,7 @@ public:
     shared_ptr<PlatformThreadFactory> threadFactory
         = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
-#ifndef USE_BOOST_THREAD
+#if !USE_BOOST_THREAD && !USE_STD_THREAD
     threadFactory->setPriority(PosixThreadFactory::HIGHEST);
 #endif
     threadManager->threadFactory(threadFactory);
@@ -253,7 +253,7 @@ public:
       shared_ptr<PlatformThreadFactory> threadFactory
           = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
-#ifndef USE_BOOST_THREAD
+#if !USE_BOOST_THREAD && !USE_STD_THREAD
       threadFactory->setPriority(PosixThreadFactory::HIGHEST);
 #endif
       threadManager->threadFactory(threadFactory);
