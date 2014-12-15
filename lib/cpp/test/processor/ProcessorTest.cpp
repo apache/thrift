@@ -25,7 +25,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <thrift/concurrency/PosixThreadFactory.h>
+#include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TThreadedServer.h>
@@ -94,7 +94,7 @@ public:
       const boost::shared_ptr<TProtocolFactory>& protocolFactory) {
     boost::shared_ptr<TServerSocket> socket(new TServerSocket(port));
 
-    boost::shared_ptr<PosixThreadFactory> threadFactory(new PosixThreadFactory);
+    boost::shared_ptr<PlatformThreadFactory> threadFactory(new PlatformThreadFactory);
     boost::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(8);
     threadManager->threadFactory(threadFactory);
     threadManager->start();
@@ -122,7 +122,7 @@ public:
       throw TException("TNonblockingServer must use TFramedTransport");
     }
 
-    boost::shared_ptr<PosixThreadFactory> threadFactory(new PosixThreadFactory);
+    boost::shared_ptr<PlatformThreadFactory> threadFactory(new PlatformThreadFactory);
     boost::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(8);
     threadManager->threadFactory(threadFactory);
     threadManager->start();
