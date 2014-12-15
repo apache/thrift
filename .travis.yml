@@ -113,6 +113,26 @@ matrix:
        - make check -j2;
 
     - env:
+        - TEST_NAME="C++/boost-threads (gcc, CMake)"
+          CONFIG="-DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_BOOSTTHREADS=ON"
+      compiler: gcc
+      before_install:
+       - sh contrib/installCXXDependencies.sh;
+       - sh contrib/installDependencies.sh 1> /dev/null;
+      script:
+       - mkdir build_cmake && cd build_cmake && cmake $CONFIG .. && make -j4 && cd ..;
+
+    - env:
+        - TEST_NAME="C++/std-threads (gcc, CMake)"
+          CONFIG="-DCMAKE_CXX_FLAGS=-std=c++11 -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_STDTHREADS=ON"
+      compiler: gcc
+      before_install:
+       - sh contrib/installCXXDependencies.sh;
+       - sh contrib/installDependencies.sh 1> /dev/null;
+      script:
+       - mkdir build_cmake && cd build_cmake && cmake $CONFIG .. && make -j4 && cd ..;
+
+    - env:
         - TEST_NAME="all (gcc, CMake + CPack)"
           CONFIG=""
       compiler: gcc

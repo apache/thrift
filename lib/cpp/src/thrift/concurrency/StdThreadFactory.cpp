@@ -19,7 +19,7 @@
 
 #include <thrift/thrift-config.h>
 
-#ifdef USE_STD_THREAD
+#if USE_STD_THREAD
 
 #include <thrift/concurrency/StdThreadFactory.h>
 #include <thrift/concurrency/Exception.h>

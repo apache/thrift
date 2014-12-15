@@ -1215,7 +1215,7 @@ void TNonblockingServer::registerEvents(event_base* user_event_base) {
   // Launch all the secondary IO threads in separate threads
   if (ioThreads_.size() > 1) {
     ioThreadFactory_.reset(new PlatformThreadFactory(
-#if !defined(USE_BOOST_THREAD) && !defined(USE_STD_THREAD)
+#if !USE_BOOST_THREAD && !USE_STD_THREAD
         PlatformThreadFactory::OTHER,  // scheduler
         PlatformThreadFactory::NORMAL, // priority
         1,                             // stack size (MB)
