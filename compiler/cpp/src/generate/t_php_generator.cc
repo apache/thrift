@@ -1081,8 +1081,10 @@ void t_php_generator::generate_php_struct_json_serialize(ofstream& out,
       t_field* field = (*f_iter);
       t_type* type = field->get_type();
       const string& name = field->get_name();
-      if (type->is_map() && !((t_map*)type)->get_key_type()->is_string()) {
-        // JSON object keys must be strings
+      if (type->is_map() && !((t_map*)type)->get_key_type()->is_base_type()) {
+        // JSON object keys must be strings. PHP's json_encode()
+        // function will convert any scalar key to strings, but
+        // we skip thrift maps with non-scalar keys.
         continue;
       }
       indent(out) << "if ($this->" << name << " !== null) {" << endl;
