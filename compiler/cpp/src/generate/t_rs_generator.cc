@@ -61,6 +61,35 @@ class t_rs_generator : public t_oop_generator {
   string rs_imports();
 
   string render_rs_type(t_type* type);
+
+ private:
+/*
+  void generate_service_interface(t_service* tservice, string style);
+  void generate_service_interface_factory(t_service* tservice, string style);
+  void generate_service_null(t_service* tservice, string style);
+  void generate_service_multiface(t_service* tservice);
+*/
+  void generate_service_helpers(t_service* tservice);
+  void generate_service_client(t_service* tservice);
+/*
+  void generate_service_processor(t_service* tservice, string style);
+  void generate_service_skeleton(t_service* tservice);
+*/
+  void generate_function_helpers(t_service* tservice, t_function* tfunction);
+
+  void generate_struct_declaration(t_struct* tstruct,
+                                   bool is_exception = false,
+                                   bool pointers = false,
+                                   bool read = true,
+                                   bool write = true,
+                                   bool swap = false) { generate_struct(tstruct); }
+/*
+  void generate_struct_definition(t_struct* tstruct,
+                                  bool setters = true);
+*/
+  void generate_struct_reader(t_struct* tstruct, bool pointers = false) {}
+  void generate_struct_writer(t_struct* tstruct, bool pointers = false) {}
+  void generate_struct_result_writer(t_struct* tstruct, bool pointers = false) {}
  private:
   ofstream f_mod_;
 };
@@ -125,23 +154,110 @@ void t_rs_generator::generate_enum(t_enum* tenum) {
 void t_rs_generator::generate_struct(t_struct* tstruct) {
   string struct_name = capitalize(tstruct->get_name());
   indent(f_mod_) << "#[allow(dead_code)]\n";
-  indent(f_mod_) << "pub struct " << struct_name << " {\n";
-  indent_up();
-
-  vector<t_field*>::const_iterator m_iter;
-  const vector<t_field*>& members = tstruct->get_members();
-  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    t_type* t = get_true_type((*m_iter)->get_type());
-    indent(f_mod_) << underscore((*m_iter)->get_name()) << ": " << render_rs_type(t) << ",\n";
+  if (tstruct->get_members().empty()) {
+    indent(f_mod_) << "pub struct " << struct_name << ";\n\n";
   }
+  else {
+    indent(f_mod_) << "pub struct " << struct_name << " {\n";
+    indent_up();
 
-  indent_down();
-  indent(f_mod_) << "}\n\n";
+    vector<t_field*>::const_iterator m_iter;
+    const vector<t_field*>& members = tstruct->get_members();
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      t_type* t = get_true_type((*m_iter)->get_type());
+      indent(f_mod_) << underscore((*m_iter)->get_name()) << ": " << render_rs_type(t) << ",\n";
+    }
+
+    indent_down();
+    indent(f_mod_) << "}\n\n";
+  }
 }
 
 void t_rs_generator::generate_service(t_service* tservice) {
+  // TODO
+//  generate_service_interface(tservice, "");
+//  generate_service_interface_factory(tservice, "");
+//  generate_service_null(tservice, "");
 
+  generate_service_helpers(tservice);
+  generate_service_client(tservice);
+  // TODO
+
+//  generate_service_processor(tservice, "");
+//  generate_service_multiface(tservice);
+//  generate_service_skeleton(tservice);
 }
+
+void t_rs_generator::generate_service_helpers(t_service* tservice) {
+  // TODO
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator f_iter;
+
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    generate_function_helpers(tservice, *f_iter);
+  }
+}
+
+void t_rs_generator::generate_service_client(t_service* tservice) {
+  // TODO
+}
+
+/**
+ * Generates a struct and helpers for a function.
+ *
+ * @param tfunction The function
+ */
+void t_rs_generator::generate_function_helpers(t_service* tservice, t_function* tfunction) {
+
+  t_struct* ts = tfunction->get_arglist();
+  string name_orig = ts->get_name();
+
+  ts->set_name(tservice->get_name() + capitalize(tfunction->get_name()) + "Args");
+  generate_struct(ts);
+  //generate_struct_definition(out, f_service_, ts, false);
+  generate_struct_reader(ts);
+  generate_struct_writer(ts);
+
+  ts->set_name(tservice->get_name() + capitalize(tfunction->get_name()) + "PArgs");
+  generate_struct_declaration(ts, false, true, false, true);
+  //generate_struct_definition(out, f_service_, ts, false);
+  generate_struct_writer(ts, true);
+
+  ts->set_name(name_orig);
+
+  if (tfunction->is_oneway()) {
+    return;
+  }
+
+  t_struct result(program_, tservice->get_name() + capitalize(tfunction->get_name()) + "Result");
+  t_field success(tfunction->get_returntype(), "success", 0);
+  if (!tfunction->get_returntype()->is_void()) {
+    result.append(&success);
+  }
+
+  t_struct* xs = tfunction->get_xceptions();
+  const vector<t_field*>& fields = xs->get_members();
+  vector<t_field*>::const_iterator f_iter;
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    result.append(*f_iter);
+  }
+
+  generate_struct_declaration(&result, false);
+  //generate_struct_definition(f_service_, &result, false);
+  generate_struct_reader(&result);
+  generate_struct_result_writer(&result);
+
+  result.set_name(tservice->get_name() + capitalize(tfunction->get_name()) + "PResult");
+  generate_struct_declaration(&result, false, true, true /*, gen_cob_style_*/);
+  //generate_struct_definition(f_service_, &result, false);
+  generate_struct_reader(&result, true);
+/*
+  if (gen_cob_style_) {
+    generate_struct_writer(&result, true);
+  }
+*/
+}
+
 
 string t_rs_generator::render_rs_type(t_type* type) {
   type = get_true_type(type);
