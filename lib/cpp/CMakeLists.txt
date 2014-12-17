@@ -164,6 +164,10 @@ if(WITH_ZLIB)
     TARGET_LINK_LIBRARIES_THRIFT(thriftz ${SYSLIBS} ${ZLIB_LIBRARIES})
 endif()
 
+if(WITH_QT5)
+    # Qt5 has its own directory to avoid conflict with Qt4 caused by CMAKE_AUTOMOC
+    add_subdirectory(src/thrift/qt)
+endif()
 
 if(WITH_QT4)
     find_package(Qt4 REQUIRED)
