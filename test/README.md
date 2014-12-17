@@ -8,7 +8,7 @@ executed by
 at the moment, this starts the test.sh script which does the real cross test
 with different transports, protocols and languages.
 
-Unit tests for languages ar usually located under lib/<lang>/test/
+Unit tests for languages are usually located under lib/<lang>/test/
 cross language tests according to [ThriftTest.thrift](ThriftTest.thrift) shall be
 provided for every language including executables with the following command
 line interface for servers:
