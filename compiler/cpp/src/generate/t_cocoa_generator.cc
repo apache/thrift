@@ -105,6 +105,7 @@ public:
   void generate_cocoa_struct_encode_with_coder_method(ofstream& out,
                                                       t_struct* tstruct,
                                                       bool is_exception);
+  void generate_cocoa_struct_copy_with_zone_method(ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_field_accessor_declarations(std::ofstream& out,
                                                          t_struct* tstruct,
                                                          bool is_exception);
@@ -424,7 +425,7 @@ void t_cocoa_generator::generate_cocoa_struct_interface(ofstream& out,
   } else {
     out << "NSObject ";
   }
-  out << "<TBase, NSCoding> ";
+  out << "<TBase, NSCoding, NSCopying> ";
 
   scope_up(out);
 
@@ -661,6 +662,40 @@ void t_cocoa_generator::generate_cocoa_struct_encode_with_coder_method(ofstream&
 }
 
 /**
+ * Generate the copyWithZone method for this struct so it's compatible with
+ * the NSCopying protocol
+ */
+void t_cocoa_generator::generate_cocoa_struct_copy_with_zone_method(ofstream& out,
+                                                                    t_struct* tstruct) {
+  indent(out) << "- (id) copyWithZone: (NSZone *) zone" << endl;
+  scope_up(out);
+  out << indent() << cocoa_prefix_ << tstruct->get_name()
+      << " *copy = [[[self class] allocWithZone: zone] init];" << endl;
+
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_type* t = get_true_type((*m_iter)->get_type());
+    out << indent() << "if (__" << (*m_iter)->get_name() << "_isset)" << endl;
+    scope_up(out);
+    if (type_can_be_null(t)) {
+      out << indent() << "copy->__" << (*m_iter)->get_name()
+          << " = [__" << (*m_iter)->get_name() << " copyWithZone:zone];" << endl;
+    } else {
+      out << indent() << "copy->__" << (*m_iter)->get_name()
+          << " = __" << (*m_iter)->get_name() << ";" << endl;
+    }
+    out << indent() << "copy->__" << (*m_iter)->get_name() << "_isset = YES;" << endl;
+    scope_down(out);
+  }
+
+  out << indent() << "return copy;" << endl;
+  scope_down(out);
+  out << endl;
+}
+
+/**
  * Generate struct implementation.
  *
  * @param tstruct      The struct definition
@@ -744,6 +779,8 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream& out,
   generate_cocoa_struct_init_with_coder_method(out, tstruct, is_exception);
   // encodeWithCoder for NSCoding
   generate_cocoa_struct_encode_with_coder_method(out, tstruct, is_exception);
+  // copyWithZone for NSCopying
+  generate_cocoa_struct_copy_with_zone_method(out, tstruct);
 
   // dealloc
   if (!members.empty()) {
