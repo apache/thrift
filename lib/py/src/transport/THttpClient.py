@@ -103,8 +103,10 @@ class THttpClient(TTransportBase):
     def _f(*args, **kwargs):
       orig_timeout = socket.getdefaulttimeout()
       socket.setdefaulttimeout(args[0].__timeout)
-      result = f(*args, **kwargs)
-      socket.setdefaulttimeout(orig_timeout)
+      try:
+        result = f(*args, **kwargs)
+      finally:
+        socket.setdefaulttimeout(orig_timeout)
       return result
     return _f
 
