@@ -910,9 +910,9 @@ func (p *TSimpleJSONProtocol) ParseBase64EncodedBody() ([]byte, error) {
 	line2 := line[0 : len(line)-1]
 	l := len(line2)
 	if (l % 4) != 0 {
-		pad := 4 - ( l % 4)
-		fill := [...]byte { '=', '=', '='}
-		line2 = append( line2, fill[:pad]...)
+		pad := 4 - (l % 4)
+		fill := [...]byte{'=', '=', '='}
+		line2 = append(line2, fill[:pad]...)
 		l = len(line2)
 	}
 	output := make([]byte, base64.StdEncoding.DecodedLen(l))
@@ -989,8 +989,8 @@ func (p *TSimpleJSONProtocol) ParseObjectEnd() error {
 		return err
 	}
 	cxt := _ParseContext(p.parseContextStack[len(p.parseContextStack)-1])
-	if cxt != _CONTEXT_IN_OBJECT_FIRST && cxt != _CONTEXT_IN_OBJECT_NEXT_KEY {
-		e := fmt.Errorf("Expected to be in the Object Context, but not in Object Context")
+	if (cxt != _CONTEXT_IN_OBJECT_FIRST) && (cxt != _CONTEXT_IN_OBJECT_NEXT_KEY) {
+		e := fmt.Errorf("Expected to be in the Object Context, but not in Object Context (%d)", cxt)
 		return NewTProtocolExceptionWithType(INVALID_DATA, e)
 	}
 	line, err := p.reader.ReadString(JSON_RBRACE[0])
@@ -1049,8 +1049,9 @@ func (p *TSimpleJSONProtocol) ParseListEnd() error {
 	if isNull, err := p.readIfNull(); isNull || err != nil {
 		return err
 	}
-	if _ParseContext(p.parseContextStack[len(p.parseContextStack)-1]) != _CONTEXT_IN_LIST {
-		e := fmt.Errorf("Expected to be in the List Context, but not in List Context")
+	cxt := _ParseContext(p.parseContextStack[len(p.parseContextStack)-1])
+	if cxt != _CONTEXT_IN_LIST {
+		e := fmt.Errorf("Expected to be in the List Context, but not in List Context (%d)", cxt)
 		return NewTProtocolExceptionWithType(INVALID_DATA, e)
 	}
 	line, err := p.reader.ReadString(JSON_RBRACKET[0])

@@ -310,12 +310,21 @@ func (p *TJSONProtocol) ReadMapBegin() (keyType TType, valueType TType, size int
 	}
 
 	// read size
-	iSize, err := p.ReadI64()
+	iSize, e := p.ReadI64()
+	if e != nil {
+		return keyType, valueType, size, e
+	}
 	size = int(iSize)
-	return keyType, valueType, size, err
+
+	_, e = p.ParseObjectStart()
+	return keyType, valueType, size, e
 }
 
 func (p *TJSONProtocol) ReadMapEnd() error {
+	e := p.ParseObjectEnd()
+	if e != nil {
+		return e
+	}
 	return p.ParseListEnd()
 }
 
