@@ -47,7 +47,7 @@ set(testgencpp_SOURCES
 add_library(testgencpp STATIC ${testgencpp_SOURCES})
 target_link_libraries(testgencpp thrift)
 
-set(processortest_SOURCES
+set(testgencpp_cob_SOURCES
     gen-cpp/ChildService.cpp
     gen-cpp/ChildService.h
     gen-cpp/ParentService.cpp
@@ -55,6 +55,8 @@ set(processortest_SOURCES
     gen-cpp/proc_types.cpp
     gen-cpp/proc_types.h
 )
+add_library(testgencpp_cob STATIC ${testgencpp_cob_SOURCES})
+target_link_libraries(testgencpp_cob thrift)
 
 
 add_executable(Benchmark Benchmark.cpp)
@@ -182,11 +184,13 @@ add_test(NAME concurrency_test COMMAND concurrency_test)
 
 set(link_test_SOURCES
     link/LinkTest.cpp
+    gen-cpp/ParentService.h
     link/TemplatedService1.cpp
     link/TemplatedService2.cpp
-    gen-cpp/ParentService.h
 )
+
 add_executable(link_test ${link_test_SOURCES})
+target_link_libraries(concurrency_test testgencpp_cob thrift)
 add_test(NAME link_test COMMAND link_test)
 
 if(WITH_LIBEVENT)
@@ -200,6 +204,7 @@ set(processor_test_SOURCES
 )
 add_executable(processor_test ${processor_test_SOURCES})
 target_link_libraries(processor_test
+    testgencpp_cob
     thrift
     thriftnb
     ${Boost_LIBRARIES}
@@ -215,6 +220,18 @@ target_link_libraries(OpenSSLManualInitTest
     ${Boost_LIBRARIES}
 )
 add_test(NAME OpenSSLManualInitTest COMMAND OpenSSLManualInitTest)
+endif()
+
+if(WITH_QT4)
+cmake_minimum_required(VERSION 2.8.12)
+set(CMAKE_AUTOMOC ON)
+find_package(Qt4 REQUIRED COMPONENTS QtTest)
+set(TQTcpServerTest_SOURCES
+    qt/TQTcpServerTest.cpp
+)
+add_executable(TQTcpServerTest ${TQTcpServerTest_SOURCES})
+target_link_libraries(TQTcpServerTest testgencpp_cob thriftqt thrift Qt4::QtTest)
+add_test(NAME TQTcpServerTest COMMAND TQTcpServerTest)
 endif()
 
 #
