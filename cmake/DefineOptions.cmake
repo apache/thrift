@@ -47,7 +47,7 @@ CMAKE_DEPENDENT_OPTION(WITH_ZLIB "Build with ZLIB support" ON
 find_package(Libevent QUIET)
 CMAKE_DEPENDENT_OPTION(WITH_LIBEVENT "Build with libevent support" ON
                        "Libevent_FOUND" OFF)
-find_package(Qt4 QUIET)
+find_package(Qt4 QUIET COMPONENTS QtCore QtNetwork)
 CMAKE_DEPENDENT_OPTION(WITH_QT4 "Build with Qt4 support" ON
                        "QT4_FOUND" OFF)
 find_package(OpenSSL QUIET)
