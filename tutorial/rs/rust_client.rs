@@ -20,18 +20,31 @@
 #![crate_name="thrift-client"]
 #![crate_type="bin"]
 
+
+
+// TODO: move to TProtocol
+#[allow(dead_code)]
+#[allow(non_camel_case_types)]
+enum MessageType {
+    T_CALL = 1,
+    T_REPLY = 2,
+    T_EXCEPTION = 3,
+    T_ONEWAY = 4,
+}
+
+
 #[allow(dead_code)]
 struct ThriftBinaryProtocol {
     x: i32,
 }
-
+ 
 impl ThriftBinaryProtocol {
 
     fn new() -> ThriftBinaryProtocol {
         ThriftBinaryProtocol { x: 0 }
     }
 
-    fn write_message_begin(&self, name: &str, message_type: i32, seq_id: i32) -> i32 {
+    fn write_message_begin(&self, name: &str, message_type: MessageType, seq_id: i32) -> i32 {
         println!("Protocol: message begin");
         
         // TODO: strict write
@@ -57,36 +70,32 @@ impl ThriftBinaryProtocol {
         4
     }
     
-    fn write_message_end(&self) {
+    fn write_message_end(&self) -> i32 {
         println!("Protocol: end");
+        0
     }
 }
 
 #[allow(dead_code)]
-struct CalculatorPingArgs {
-    dummy: i32  // TODO
-}
+struct CalculatorPingArgs;
 
 impl CalculatorPingArgs {
 
-    fn new() -> CalculatorPingArgs {
-        CalculatorPingArgs { dummy: 1 }
-    }
-    
+    #[allow(unused_variables)]
     fn write(&self, oprot: &ThriftBinaryProtocol) {
         println!("CalculatorPingArgs::write");
     }
 }
 
 #[allow(dead_code)]
-struct CalculatorClient {
-    oprotocol: ThriftBinaryProtocol,
-    iprotocol: ThriftBinaryProtocol,
+struct CalculatorClient<'a> {
+    oprotocol: &'a ThriftBinaryProtocol,
+    iprotocol: &'a ThriftBinaryProtocol,
 }
 
-impl CalculatorClient {
+impl<'a> CalculatorClient<'a> {
 
-    fn new(protocol: ThriftBinaryProtocol) -> CalculatorClient {
+    fn new(protocol: &ThriftBinaryProtocol) -> CalculatorClient {
         CalculatorClient { oprotocol: protocol, iprotocol: protocol }
     }
     
@@ -97,11 +106,10 @@ impl CalculatorClient {
     
     fn send_ping(&self) {
         let cseqid: i32 = 0;
-        let T_CALL = 0; // TODO
-        self.oprotocol.write_message_begin("ping", T_CALL, cseqid);
+        self.oprotocol.write_message_begin("ping", MessageType::T_CALL, cseqid);
         
-        let args = CalculatorPingArgs::new();
-        args.write(&self.oprotocol);
+        let args = CalculatorPingArgs;
+        args.write(self.oprotocol);
         
         self.oprotocol.write_message_end();
         // TODO:
@@ -119,7 +127,7 @@ pub fn main() {
     //let transport = ThriftBufferedTransport::new(socket);
 
     let protocol = ThriftBinaryProtocol::new( /*transport*/);
-    let client = CalculatorClient::new(protocol);
+    let client = CalculatorClient::new(&protocol);
     
     //transport.open();
     
