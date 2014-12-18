@@ -676,6 +676,8 @@ void t_cocoa_generator::generate_cocoa_struct_hash_method(ofstream& out,
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_type* t = get_true_type((*m_iter)->get_type());
+    out << indent() << "hash = (hash * 31) ^ __" << (*m_iter)->get_name()
+        << "_isset ? 2654435761 : 0;" << endl;
     out << indent() << "if (__" << (*m_iter)->get_name() << "_isset)" << endl;
     scope_up(out);
     if (type_can_be_null(t)) {
