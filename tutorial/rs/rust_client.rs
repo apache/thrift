@@ -32,16 +32,45 @@ enum MessageType {
     T_ONEWAY = 4,
 }
 
-
+// TODO: move to Transport
 #[allow(dead_code)]
-struct ThriftBinaryProtocol {
+struct ThriftBufferedTransport {
     x: i32,
 }
  
-impl ThriftBinaryProtocol {
+impl ThriftBufferedTransport {
 
-    fn new() -> ThriftBinaryProtocol {
-        ThriftBinaryProtocol { x: 0 }
+    fn new() -> ThriftBufferedTransport {
+        ThriftBufferedTransport { x: 0 }
+    }
+
+    fn open(&self) {
+        // TODO
+    }
+
+    fn write_end(&self) {
+        // TODO
+    }
+
+    fn flush(&self) {
+        // TODO
+    }
+}
+
+// TODO: move to Protocol
+#[allow(dead_code)]
+struct ThriftBinaryProtocol<'a> {
+    transport: &'a ThriftBufferedTransport, // TODO: replace with Transport
+}
+ 
+impl<'a> ThriftBinaryProtocol<'a> {
+
+    fn new(t: &'a ThriftBufferedTransport) -> ThriftBinaryProtocol<'a> {
+        ThriftBinaryProtocol { transport: t }
+    }
+
+    fn get_transport(&self) -> &ThriftBufferedTransport {
+        self.transport
     }
 
     fn write_message_begin(&self, name: &str, message_type: MessageType, seq_id: i32) -> i32 {
@@ -76,6 +105,7 @@ impl ThriftBinaryProtocol {
     }
 }
 
+// TODO: shall be generated
 #[allow(dead_code)]
 struct CalculatorPingArgs;
 
@@ -89,13 +119,13 @@ impl CalculatorPingArgs {
 
 #[allow(dead_code)]
 struct CalculatorClient<'a> {
-    oprotocol: &'a ThriftBinaryProtocol,
-    iprotocol: &'a ThriftBinaryProtocol,
+    oprotocol: &'a ThriftBinaryProtocol<'a>,
+    iprotocol: &'a ThriftBinaryProtocol<'a>,
 }
 
 impl<'a> CalculatorClient<'a> {
 
-    fn new(protocol: &ThriftBinaryProtocol) -> CalculatorClient {
+    fn new(protocol: &'a ThriftBinaryProtocol) -> CalculatorClient<'a> {
         CalculatorClient { oprotocol: protocol, iprotocol: protocol }
     }
     
@@ -112,9 +142,9 @@ impl<'a> CalculatorClient<'a> {
         args.write(self.oprotocol);
         
         self.oprotocol.write_message_end();
-        // TODO:
-//        self.oprotocol.get_transport().write_end();
-//        self.oprotocol.get_transport().flush();
+
+        self.oprotocol.get_transport().write_end();
+        self.oprotocol.get_transport().flush();
     }
 
     fn receive_ping(&self) {
@@ -122,14 +152,14 @@ impl<'a> CalculatorClient<'a> {
     }
 }
 
-pub fn main() {
-    //let socket = ThriftSocket::new("localhost", 9090);
-    //let transport = ThriftBufferedTransport::new(socket);
 
-    let protocol = ThriftBinaryProtocol::new( /*transport*/);
+pub fn main() {
+    //let socket = ThriftSocket::new("localhost", 9090); // TODO
+    let transport = ThriftBufferedTransport::new( /*socket*/ );
+    let protocol = ThriftBinaryProtocol::new(&transport);
     let client = CalculatorClient::new(&protocol);
     
-    //transport.open();
+    transport.open();
     
     client.ping();
 
