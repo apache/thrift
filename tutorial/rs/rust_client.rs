@@ -23,6 +23,7 @@
 
 
 // TODO: move to TProtocol
+// Decided to leave the same naming as in the C++ code; to be discussed
 #[allow(dead_code)]
 #[allow(non_camel_case_types)]
 enum MessageType {
@@ -32,16 +33,32 @@ enum MessageType {
     T_ONEWAY = 4,
 }
 
-// TODO: move to Transport
+
+// TODO: move to Socket
 #[allow(dead_code)]
-struct ThriftBufferedTransport {
-    x: i32,
+struct TSocket<'a> {
+    host: &'a str,
+    port: i32,
 }
  
-impl ThriftBufferedTransport {
+impl<'a> TSocket<'a> {
 
-    fn new() -> ThriftBufferedTransport {
-        ThriftBufferedTransport { x: 0 }
+    fn new(h: &'a str, p: i32) -> TSocket {
+        TSocket { host: h, port: p }
+    }
+}
+
+
+// TODO: move to Transport
+#[allow(dead_code)]
+struct ThriftBufferedTransport<'a> {
+    socket: &'a TSocket<'a>,
+}
+ 
+impl<'a> ThriftBufferedTransport<'a> {
+
+    fn new(s: &'a TSocket) -> ThriftBufferedTransport<'a> {
+        ThriftBufferedTransport { socket: s }
     }
 
     fn open(&self) {
@@ -60,7 +77,7 @@ impl ThriftBufferedTransport {
 // TODO: move to Protocol
 #[allow(dead_code)]
 struct ThriftBinaryProtocol<'a> {
-    transport: &'a ThriftBufferedTransport, // TODO: replace with Transport
+    transport: &'a ThriftBufferedTransport<'a>, // TODO: replace with Transport
 }
  
 impl<'a> ThriftBinaryProtocol<'a> {
@@ -154,8 +171,8 @@ impl<'a> CalculatorClient<'a> {
 
 
 pub fn main() {
-    //let socket = ThriftSocket::new("localhost", 9090); // TODO
-    let transport = ThriftBufferedTransport::new( /*socket*/ );
+    let socket = TSocket::new("localhost", 9090);
+    let transport = ThriftBufferedTransport::new(&socket);
     let protocol = ThriftBinaryProtocol::new(&transport);
     let client = CalculatorClient::new(&protocol);
     
