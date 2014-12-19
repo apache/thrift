@@ -20,7 +20,9 @@
 #![crate_name="thrift-client"]
 #![crate_type="bin"]
 
-
+//use std::io::net::ip::SocketAddr;
+// TODO: does not work
+//use std::from_str::from_str;
 
 // TODO: move to TProtocol
 // Decided to leave the same naming as in the C++ code; to be discussed
@@ -36,23 +38,36 @@ enum MessageType {
 
 // TODO: move to Socket
 #[allow(dead_code)]
-struct TSocket<'a> {
-    host: &'a str,
+struct TSocket {
+    host: String,
     port: i32,
 }
  
-impl<'a> TSocket<'a> {
+impl TSocket {
 
-    fn new(h: &'a str, p: i32) -> TSocket {
+    fn new(h: String, p: i32) -> TSocket {
         TSocket { host: h, port: p }
+    }
+
+    // TODO: return type
+    fn open(&self) -> Option<()> {
+        // TODO
+        Some(())
+    }
+
+    fn flush(&self) {
+        // TODO
+    }
+
+    fn close(&self) {
+        // TODO
     }
 }
 
 
 // TODO: move to Transport
-#[allow(dead_code)]
 struct ThriftBufferedTransport<'a> {
-    socket: &'a TSocket<'a>,
+    socket: &'a TSocket,
 }
  
 impl<'a> ThriftBufferedTransport<'a> {
@@ -61,25 +76,35 @@ impl<'a> ThriftBufferedTransport<'a> {
         ThriftBufferedTransport { socket: s }
     }
 
-    fn open(&self) {
-        // TODO
+    fn open(&self) -> Option<()> {
+        self.socket.open()
     }
 
-    fn write_end(&self) {
-        // TODO
+    fn write_end(&self) -> i32 {
+        // default is do nothing
+        0
     }
 
     fn flush(&self) {
         // TODO
+
+        // Flush the underlying transport.
+        self.socket.flush();
+    }
+
+    fn close(&self) {
+        // TODO
+        self.socket.close();
     }
 }
 
+
 // TODO: move to Protocol
-#[allow(dead_code)]
 struct ThriftBinaryProtocol<'a> {
     transport: &'a ThriftBufferedTransport<'a>, // TODO: replace with Transport
 }
  
+
 impl<'a> ThriftBinaryProtocol<'a> {
 
     fn new(t: &'a ThriftBufferedTransport) -> ThriftBinaryProtocol<'a> {
@@ -171,14 +196,20 @@ impl<'a> CalculatorClient<'a> {
 
 
 pub fn main() {
-    let socket = TSocket::new("localhost", 9090);
+    // TODO: does not work
+    //let addr: SocketAddr =
+    //    from_str("127.0.0.1:9090").expect("malformed address");
+    let socket = TSocket::new(String::from_str("localhost"), 9090);
     let transport = ThriftBufferedTransport::new(&socket);
     let protocol = ThriftBinaryProtocol::new(&transport);
     let client = CalculatorClient::new(&protocol);
     
-    transport.open();
+    transport.open()
+        .expect("failed to connect");
     
     client.ping();
 
     println!("PASS")
+
+    transport.close();
 }
