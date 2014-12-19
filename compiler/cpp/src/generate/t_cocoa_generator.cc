@@ -59,10 +59,15 @@ public:
 
     iter = parsed_options.find("base_class");
     if (iter != parsed_options.end()) {
-      import_base_class_ = true;
       base_class_ = (iter->second);
+      base_import_ = base_class_ + ".h";
     } else {
       base_class_ = "NSObject";
+    }
+
+    iter = parsed_options.find("base_import");
+    if (iter != parsed_options.end()) {
+      base_import_ = (iter->second);
     }
 
     out_dir_base_ = "gen-cocoa";
@@ -218,8 +223,8 @@ private:
 
   bool log_unexpected_;
   bool validate_required_;
-  bool import_base_class_;
   std::string base_class_;
+  std::string base_import_;
 };
 
 /**
@@ -280,8 +285,8 @@ string t_cocoa_generator::cocoa_thrift_imports() {
   }
 
   // Include base class
-  if (import_base_class_) {
-    result += "#import \"" + base_class_ + ".h\"\n" + "\n";
+  if (!base_import_.empty()) {
+    result += "#import \"" + base_import_ + "\"\n" + "\n";
   }
 
   return result;
@@ -2613,4 +2618,7 @@ THRIFT_REGISTER_GENERATOR(
     "    log_unexpected:  Log every time an unexpected field ID or type is encountered.\n"
     "    validate_required:\n"
     "                     Throws exception if any required field is not set.\n"
-    "    base_class=CLS   Derive generated classes from class CLS instead of NSObject.\n")
+    "    base_class=CLS   Derive generated classes from class CLS instead of NSObject.\n"
+    "    base_import='MyBase.h'\n"
+    "                     Add an import line to generated code to find the base class.\n"
+    "                     (default is \"CLS.h\")\n")
