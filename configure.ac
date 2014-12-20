@@ -134,6 +134,8 @@ have_cpp=no
 if test "$with_cpp" = "yes";  then
   AX_BOOST_BASE([1.54.0])
   if test "x$succeeded" = "xyes" ; then
+    AC_SUBST([BOOST_LIB_DIR], [$(echo "$BOOST_LDFLAGS" | sed -e 's/^\-L//')])
+    AC_SUBST([BOOST_TEST_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_unit_test_framework.a")])
     have_cpp="yes"
   fi
 
