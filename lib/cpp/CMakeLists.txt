@@ -21,7 +21,11 @@
 cmake_minimum_required(VERSION 2.8)
 
 # Find required packages
-find_package(Boost 1.53.0 REQUIRED)
+if(WITH_BOOSTTHREADS)
+  find_package(Boost 1.53.0 REQUIRED COMPONENTS system thread)
+else()
+  find_package(Boost 1.53.0 REQUIRED)
+endif()
 include_directories("${Boost_INCLUDE_DIR}")
 
 include_directories(src)
@@ -98,9 +102,9 @@ if(OPENSSL_FOUND AND WITH_OPENSSL)
     list(APPEND SYSLIBS "${OPENSSL_LIBRARIES}")
 endif()
 
-# WITH_*THREADS selects whicht threading library to use
+# WITH_*THREADS selects which threading library to use
 if(WITH_BOOSTTHREADS)
-    set( USE_BOOST_THREAD 1)
+    add_definitions("-DUSE_BOOST_THREAD=1")
     set( thriftcpp_threads_SOURCES
         src/thrift/concurrency/BoostThreadFactory.cpp
         src/thrift/concurrency/BoostMonitor.cpp
@@ -115,7 +119,11 @@ elseif(UNIX AND NOT WITH_STDTHREADS)
         src/thrift/concurrency/Monitor.cpp
     )
 else()
-    set( USE_STD_THREAD 1)
+    add_definitions("-DUSE_STD_THREAD=1")
+    if(UNIX)
+        # need pthread for multi-thread support
+        list(APPEND SYSLIBS pthread)
+    endif()
     set( thriftcpp_threads_SOURCES
         src/thrift/concurrency/StdThreadFactory.cpp
         src/thrift/concurrency/StdMutex.cpp
