@@ -127,7 +127,7 @@ static inline To bitwise_cast(From from) {
 # elif defined(_MSC_VER) /* Microsoft Visual C++ */
 #  define ntohll(n) ( _byteswap_uint64((uint64_t)n) )
 #  define htonll(n) ( _byteswap_uint64((uint64_t)n) )
-# else /* Not GNUC/GLIBC or MSVC */
+# elif !defined(ntohll) /* Not GNUC/GLIBC or MSVC */
 #  define ntohll(n) ( (((uint64_t)ntohl((uint32_t)n)) << 32) + ntohl((uint32_t)(n >> 32)) )
 #  define htonll(n) ( (((uint64_t)htonl((uint32_t)n)) << 32) + htonl((uint32_t)(n >> 32)) )
 # endif /* GNUC/GLIBC or MSVC or something else */
