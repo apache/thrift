@@ -50,6 +50,9 @@ CMAKE_DEPENDENT_OPTION(WITH_LIBEVENT "Build with libevent support" ON
 find_package(Qt4 QUIET)
 CMAKE_DEPENDENT_OPTION(WITH_QT4 "Build with Qt4 support" ON
                        "QT4_FOUND" OFF)
+find_package(Qt5 QUIET COMPONENTS Core Network)
+CMAKE_DEPENDENT_OPTION(WITH_QT5 "Build with Qt5 support" ON
+                       "Qt5Core_FOUND" OFF)
 find_package(OpenSSL QUIET)
 CMAKE_DEPENDENT_OPTION(WITH_OPENSSL "Build with OpenSSL support" ON
                        "OpenSSL_FOUND" OFF)
@@ -95,6 +98,7 @@ message(STATUS "  Build static libraries:             ${WITH_STATIC_LIB}")
 message(STATUS "  Build with ZLIB support:            ${WITH_ZLIB}")
 message(STATUS "  Build with libevent support:        ${WITH_LIBEVENT}")
 message(STATUS "  Build with Qt4 support:             ${WITH_QT4}")
+message(STATUS "  Build with Qt5 support:             ${WITH_QT5}")
 message(STATUS "  Build with OpenSSL support:         ${WITH_OPENSSL}")
 message(STATUS "  Build with Boost thread support:    ${WITH_BOOSTTHREADS}")
 message(STATUS "  Build with C++ std::thread support: ${WITH_STDTHREADS}")

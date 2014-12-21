@@ -81,6 +81,7 @@ test-driver
 /lib/cpp/Release/
 /lib/cpp/Release-mt/
 /lib/cpp/src/thrift/qt/moc_TQTcpServer.cpp
+/lib/cpp/src/thrift/qt/moc__TQTcpServer.cpp
 /lib/cpp/src/thrift/config.h
 /lib/cpp/src/thrift/stamp-h2
 /lib/cpp/test/Benchmark
