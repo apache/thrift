@@ -105,6 +105,8 @@ public:
   void generate_cocoa_struct_encode_with_coder_method(ofstream& out,
                                                       t_struct* tstruct,
                                                       bool is_exception);
+  void generate_cocoa_struct_hash_method(ofstream& out, t_struct* tstruct);
+  void generate_cocoa_struct_is_equal_method(ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_field_accessor_declarations(std::ofstream& out,
                                                          t_struct* tstruct,
                                                          bool is_exception);
@@ -661,6 +663,92 @@ void t_cocoa_generator::generate_cocoa_struct_encode_with_coder_method(ofstream&
 }
 
 /**
+ * Generate the hash method for this struct
+ */
+void t_cocoa_generator::generate_cocoa_struct_hash_method(ofstream& out,
+                                                          t_struct* tstruct) {
+  indent(out) << "- (NSUInteger) hash" << endl;
+  scope_up(out);
+  out << indent() << "NSUInteger hash = 17;" << endl;
+
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_type* t = get_true_type((*m_iter)->get_type());
+    out << indent() << "hash = (hash * 31) ^ __" << (*m_iter)->get_name()
+        << "_isset ? 2654435761 : 0;" << endl;
+    out << indent() << "if (__" << (*m_iter)->get_name() << "_isset)" << endl;
+    scope_up(out);
+    if (type_can_be_null(t)) {
+      out << indent() << "hash = (hash * 31) ^ [__"
+          << (*m_iter)->get_name() << " hash];" << endl;
+    } else {
+      out << indent() << "hash = (hash * 31) ^ [@(__"
+          << (*m_iter)->get_name() << ") hash];" << endl;
+    }
+    scope_down(out);
+  }
+
+  out << indent() << "return hash;" << endl;
+  scope_down(out);
+  out << endl;
+}
+
+/**
+ * Generate the isEqual method for this struct
+ */
+void t_cocoa_generator::generate_cocoa_struct_is_equal_method(ofstream& out,
+                                                              t_struct* tstruct) {
+  indent(out) << "- (BOOL) isEqual: (id) anObject" << endl;
+  scope_up(out);
+
+  indent(out) << "if (self == anObject) {" << endl;
+  indent_up();
+  indent(out) << "return YES;" << endl;
+  indent_down();
+  indent(out) << "}" << endl;
+
+  string class_name = cocoa_prefix_ + tstruct->get_name();
+
+  indent(out) << "if (![anObject isKindOfClass:[" << class_name << " class]]) {" << endl;
+  indent_up();
+  indent(out) << "return NO;" << endl;
+  indent_down();
+  indent(out) << "}" << endl;
+
+  indent(out) << class_name << " *other = (" << class_name << " *)anObject;" << endl;
+
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_type* t = get_true_type((*m_iter)->get_type());
+    string name = (*m_iter)->get_name();
+    if (type_can_be_null(t)) {
+      out << indent() << "if ((__" << name << "_isset != other->__" << name << "_isset) ||"
+          << endl << indent() << "    "
+          << "(__" << name << "_isset && "
+          << "((__" << name << " || other->__" << name << ") && "
+          << "![__" << name << " isEqual:other->__" << name << "]))) {" << endl;
+    } else {
+      out << indent() << "if ((__" << name << "_isset != other->__" << name << "_isset) ||"
+          << endl << indent() << "    "
+          << "(__" << name << "_isset && "
+          << "(__" << name << " != other->__" << name << "))) {" << endl;
+    }
+    indent_up();
+    indent(out) << "return NO;" << endl;
+    indent_down();
+    indent(out) << "}" << endl;
+  }
+
+  out << indent() << "return YES;" << endl;
+  scope_down(out);
+  out << endl;
+}
+
+/**
  * Generate struct implementation.
  *
  * @param tstruct      The struct definition
@@ -744,6 +832,9 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream& out,
   generate_cocoa_struct_init_with_coder_method(out, tstruct, is_exception);
   // encodeWithCoder for NSCoding
   generate_cocoa_struct_encode_with_coder_method(out, tstruct, is_exception);
+  // hash and isEqual for NSObject
+  generate_cocoa_struct_hash_method(out, tstruct);
+  generate_cocoa_struct_is_equal_method(out, tstruct);
 
   // dealloc
   if (!members.empty()) {
