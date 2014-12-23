@@ -153,8 +153,10 @@ if test "$with_cpp" = "yes";  then
     PKG_CHECK_MODULES([QT], [QtCore >= 4.3, QtNetwork >= 4.3], have_qt=yes, have_qt=no)
   fi
   if test "$have_qt" = "yes"; then
-    AC_PATH_PROGS([QT_MOC], [moc-qt4 moc])
-    have_qt=$success
+    AC_PATH_PROGS([QT_MOC], [moc-qt4 moc], "fail")
+    if test "$QT_MOC" = "fail"; then
+      have_qt=no
+    fi
   fi
 
   AX_THRIFT_LIB(qt5, [Qt5], yes)
@@ -166,8 +168,10 @@ if test "$with_cpp" = "yes";  then
                       [have_qt5=no])
   fi
   if test "$have_qt5" = "yes"; then
-    AC_PATH_PROGS([QT5_MOC], [moc-qt5 moc])
-    have_qt5=$success
+    AC_PATH_PROGS([QT5_MOC], [moc-qt5 moc], "fail")
+    if test "$QT5_MOC" = "fail"; then
+      have_qt5=no
+    fi
   fi
 fi
 AM_CONDITIONAL([WITH_CPP], [test "$have_cpp" = "yes"])
