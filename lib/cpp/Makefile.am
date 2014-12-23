@@ -114,16 +114,16 @@ libthriftnb_la_SOURCES = src/thrift/server/TNonblockingServer.cpp \
 libthriftz_la_SOURCES = src/thrift/transport/TZlibTransport.cpp
 
 libthriftqt_la_MOC = src/thrift/qt/moc_TQTcpServer.cpp
-libthriftqt_la_SOURCES = $(libthriftqt_la_MOC) \
-                         src/thrift/qt/TQIODeviceTransport.cpp \
+nodist_libthriftqt_la_SOURCES = $(libthriftqt_la_MOC)
+libthriftqt_la_SOURCES = src/thrift/qt/TQIODeviceTransport.cpp \
                          src/thrift/qt/TQTcpServer.cpp
 CLEANFILES = $(libthriftqt_la_MOC)
 
 libthriftqt5_la_MOC = src/thrift/qt/moc__TQTcpServer.cpp
-libthriftqt5_la_SOURCES = $(libthriftqt5_la_MOC) \
-                         src/thrift/qt/TQIODeviceTransport.cpp \
-                         src/thrift/qt/TQTcpServer.cpp
-CLEANFILES = $(libthriftqt5_la_MOC)
+nodist_libthriftqt5_la_SOURCES = $(libthriftqt5_la_MOC)
+libthriftqt5_la_SOURCES = src/thrift/qt/TQIODeviceTransport.cpp \
+                          src/thrift/qt/TQTcpServer.cpp
+CLEANFILES += $(libthriftqt5_la_MOC)
 
 # Flags for the various libraries
 libthriftnb_la_CPPFLAGS = $(AM_CPPFLAGS) $(LIBEVENT_CPPFLAGS)
