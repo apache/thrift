@@ -51,7 +51,6 @@ DebugProtoTest_extras.o: gen-cpp/DebugProtoTest_types.h
 libtestgencpp_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
 
 noinst_PROGRAMS = Benchmark \
-	processor_test \
 	concurrency_test
 
 Benchmark_SOURCES = \
@@ -68,7 +67,6 @@ check_PROGRAMS = \
 	RecursiveTest \
 	SpecializationTest \
 	AllProtocolsTest \
-	TNonblockingServerTest \
 	TransportTest \
 	ZlibTest \
 	TFileTransportTest \
@@ -76,6 +74,13 @@ check_PROGRAMS = \
 	link_test \
 	OpenSSLManualInitTest \
 	EnumTest
+
+if AMX_HAVE_LIBEVENT
+noinst_PROGRAMS +=
+	processor_test
+check_PROGRAMS += \
+	TNonblockingServerTest
+endif
 
 TESTS_ENVIRONMENT= \
 	BOOST_TEST_LOG_SINK=tests.xml \
@@ -190,7 +195,7 @@ TNonblockingServerTest_LDADD = libprocessortest.la \
                                $(top_builddir)/lib/cpp/libthriftnb.la \
                                $(BOOST_TEST_LDADD) \
                                $(BOOST_LDFLAGS) \
-                               -levent
+                               $(LIBEVENT_LIBS)
 
 #
 # OptionalRequiredTest
@@ -243,7 +248,7 @@ processor_test_LDADD = libprocessortest.la \
                        $(top_builddir)/lib/cpp/libthriftnb.la \
                        $(BOOST_TEST_LDADD) \
                        $(BOOST_LDFLAGS) \
-                       -levent
+                       $(LIBEVENT_LIBS)
 
 OpenSSLManualInitTest_SOURCES = \
 	OpenSSLManualInitTest.cpp
