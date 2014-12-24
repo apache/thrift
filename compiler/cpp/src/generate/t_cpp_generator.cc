@@ -3295,9 +3295,9 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       indent() << "  " << args_obj << " = new " << argstype << ";\n" <<
       indent() << "} else {\n" <<
       indent() << "  " << args_obj << "->clear();\n" << indent() << "}\n\n" <<
-      indent() << args_obj << "->read(iprot);" << endl <<
+      indent() << "uint32_t bytes = " << args_obj << "->read(iprot);" << endl <<
       indent() << "iprot->readMessageEnd();" << endl <<
-      indent() << "uint32_t bytes = iprot->getTransport()->readEnd();" << endl << endl <<
+      indent() << "iprot->getTransport()->readEnd();" << endl << endl <<
       indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
       indent() << "  this->eventHandler_->postRead(ctx, " <<
         service_func_name << ", bytes);" << endl <<
