@@ -68,6 +68,7 @@
     <ClCompile Include="src\generate\t_java_generator.cc" />
     <ClCompile Include="src\generate\t_js_generator.cc" />
     <ClCompile Include="src\generate\t_json_generator.cc" />
+    <ClCompile Include="src\generate\t_lua_generator.cc" />
     <ClCompile Include="src\generate\t_ocaml_generator.cc" />
     <ClCompile Include="src\generate\t_perl_generator.cc" />
     <ClCompile Include="src\generate\t_php_generator.cc" />
