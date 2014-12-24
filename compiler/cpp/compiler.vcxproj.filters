@@ -71,7 +71,7 @@
       <Filter>parse</Filter>
     </ClInclude>
     <ClInclude Include="src\platform.h" />
-    <ClInclude Include="src\thrifty.h" />
+    <ClInclude Include="src\thrifty.hh" />
     <ClInclude Include="src\windows\config.h">
       <Filter>windows</Filter>
     </ClInclude>

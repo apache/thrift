@@ -106,6 +106,7 @@ EXTRA_DIST = \
              $(WINDOWS_DIST)
 
 clean-local:
-	$(RM) thriftl.cc thrifty.cc thrifty.h version.h windows/version.h
+	$(RM) thriftl.cc thrifty.cc thrifty.h thrifty.hh version.h windows/version.h
+	echo '#include "thrifty.h"' > compiler/cpp/thrifty.hh
 
 src/main.cc: version.h

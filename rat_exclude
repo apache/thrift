@@ -18,6 +18,7 @@ ylwrap
 *.m4
 autom4te.cache
 thrifty.h
+thrifty.hh
 version.h
 version.h.in
 md5.c

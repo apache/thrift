@@ -72,7 +72,7 @@ class t_cpp_generator : public t_oop_generator {
     gen_templates_only_ =
       (iter != parsed_options.end() && iter->second == "only");
 
-    out_dir_base_ = "gen-cpp";
+    out_dir_base_ = program->is_out_path_absolute() ? "" : "gen-cpp";
   }
 
   /**
@@ -114,7 +114,7 @@ class t_cpp_generator : public t_oop_generator {
   void generate_struct_writer        (std::ofstream& out, t_struct* tstruct, bool pointers=false);
   void generate_struct_result_writer (std::ofstream& out, t_struct* tstruct, bool pointers=false);
   void generate_struct_swap          (std::ofstream& out, t_struct* tstruct);
-
+  void generate_struct_clear         (std::ofstream& out, t_struct* tstruct);
   /**
    * Service-level generation functions
    */
@@ -776,6 +776,7 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
   generate_struct_reader(out, tstruct);
   generate_struct_writer(out, tstruct);
   generate_struct_swap(f_types_impl_, tstruct);
+  generate_struct_clear(out, tstruct);
 }
 
 /**
@@ -853,6 +854,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   // Open struct def
   out <<
     indent() << "class " << tstruct->get_name() << extends << " {" << endl <<
+    indent() << "   std::string fname_tmp_;\n" <<
     indent() << " public:" << endl <<
     endl;
   indent_up();
@@ -1019,6 +1021,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
         "::apache::thrift::protocol::TProtocol* oprot) const;" << endl;
     }
   }
+  out << indent() << "void clear();\n" ;
   out << endl;
 
   indent_down();
@@ -1231,11 +1234,10 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
   out <<
     endl <<
     indent() << "uint32_t xfer = 0;" << endl <<
-    indent() << "std::string fname;" << endl <<
     indent() << "::apache::thrift::protocol::TType ftype;" << endl <<
     indent() << "int16_t fid;" << endl <<
     endl <<
-    indent() << "xfer += iprot->readStructBegin(fname);" << endl <<
+    indent() << "xfer += iprot->readStructBegin(fname_tmp_);" << endl <<
     endl <<
     indent() << "using ::apache::thrift::protocol::TProtocolException;" << endl <<
     endl;
@@ -1255,7 +1257,7 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
 
     // Read beginning field marker
     indent(out) <<
-      "xfer += iprot->readFieldBegin(fname, ftype, fid);" << endl;
+      "xfer += iprot->readFieldBegin(fname_tmp_, ftype, fid);" << endl;
 
     // Check for field STOP marker
     out <<
@@ -1561,6 +1563,47 @@ void t_cpp_generator::generate_struct_swap(ofstream& out, t_struct* tstruct) {
   out << endl;
 }
 
+void t_cpp_generator::generate_struct_clear(std::ofstream& out, t_struct* tstruct) {
+  string name = tstruct->get_name();
+  out << indent() << "void " << name << "::clear() {" << endl;
+  indent_up();
+  const vector<t_field*>& fields = tstruct->get_members();
+  bool has_optional = false;
+  for (auto f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    t_field *tfield = *f_iter;
+    if (tfield->get_req() != t_field::T_REQUIRED) {
+      has_optional = true;
+    }
+    t_type* tt = tfield->get_type();
+    if (tt->is_struct() || tt->is_container() || tt->is_string()) {
+      out << indent() << tfield->get_name() << ".clear();\n";
+    } else if (tt->is_base_type()) {
+      t_base_type::t_base tbase = ((t_base_type*)tt)->get_base();
+      switch (tbase) {
+        case t_base_type::TYPE_BOOL:
+        case t_base_type::TYPE_BYTE:
+        case t_base_type::TYPE_I16:
+        case t_base_type::TYPE_I32:
+        case t_base_type::TYPE_I64:
+        case t_base_type::TYPE_DOUBLE:
+          out << indent() << tfield->get_name() << " = 0;\n";
+        break;
+
+        case t_base_type::TYPE_VOID:
+        case t_base_type::TYPE_STRING:
+        break;
+      }
+    } else if (tt->is_enum()) {
+      out << indent() << tfield->get_name() << " = (" + type_name(tt) + ")0;\n";
+    }
+  }
+  if (has_optional) {
+    out << indent() << "memset(&__isset, 0, sizeof(__isset));\n";
+  }
+  scope_down(out);
+  out << endl;
+}
+
 /**
  * Generates a thrift service. In C++, this comprises an entirely separate
  * header and source file. The header file defines the methods and includes
@@ -1618,8 +1661,10 @@ void t_cpp_generator::generate_service(t_service* tservice) {
   f_service_.open(f_service_name.c_str());
   f_service_ <<
     autogen_comment();
+  f_service_ <<  "#include <string.h>" << endl;
   f_service_ <<
     "#include \"" << get_include_prefix(*get_program()) << svcname << ".h\"" << endl;
+
   if (gen_cob_style_) {
     f_service_ <<
       "#include \"thrift/async/TAsyncChannel.h\"" << endl;
@@ -1726,6 +1771,7 @@ void t_cpp_generator::generate_service_helpers(t_service* tservice) {
     generate_struct_definition(f_header_, ts, false);
     generate_struct_reader(out, ts);
     generate_struct_writer(out, ts);
+    generate_struct_clear(out, ts);
     ts->set_name(tservice->get_name() + "_" + (*f_iter)->get_name() + "_pargs");
     generate_struct_definition(f_header_, ts, false, true, false, true);
     generate_struct_writer(out, ts, true);
@@ -2854,11 +2900,13 @@ void ProcessorGenerator::generate_class_definition() {
     indent() << "ProcessMap processMap_;" << endl;
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    string fname = (*f_iter)->get_name();
     indent(f_header_) <<
-      "void process_" << (*f_iter)->get_name() << "(" << finish_cob_ << "int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot" << call_context_ << ");" << endl;
+      "void process_" << fname << "(" << finish_cob_ << "int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot" << call_context_ << ");" << endl;
+
     if (generator_->gen_templates_) {
       indent(f_header_) <<
-        "void process_" << (*f_iter)->get_name() << "(" << finish_cob_ <<
+        "void process_" << fname << "(" << finish_cob_ <<
         "int32_t seqid, Protocol_* iprot, Protocol_* oprot" <<
         call_context_ << ");" << endl;
     }
@@ -3157,6 +3205,7 @@ void t_cpp_generator::generate_function_helpers(t_service* tservice,
   generate_struct_definition(f_header_, &result, false);
   generate_struct_reader(out, &result);
   generate_struct_result_writer(out, &result);
+  generate_struct_clear(out, &result);
 
   result.set_name(tservice->get_name() + "_" + tfunction->get_name() + "_presult");
   generate_struct_definition(f_header_, &result, false, true, true, gen_cob_style_);
@@ -3204,19 +3253,24 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     }
     const bool unnamed_oprot_seqid = tfunction->is_oneway() &&
       !(gen_templates_ && !specialized);
+
+    string fname = tfunction->get_name();
+    string argstype = tservice->get_name() + "_" + fname + "_args";
+    string resulttype = tservice->get_name() + "_" + fname + "_result";
+    string args_obj = fname + "_args";
+    string result_obj = fname + "_result";
+
+    out << "static __thread " << argstype << "* " << args_obj << " = nullptr;\n";
+    out << "static __thread " << resulttype << "* " << result_obj << " = nullptr;\n\n";
+
     out <<
       "void " << tservice->get_name() << "Processor" << class_suffix << "::" <<
-      "process_" << tfunction->get_name() << "(" <<
+      "process_" << fname << "(" <<
       "int32_t" << (unnamed_oprot_seqid ? ", " : " seqid, ") <<
       prot_type << "* iprot, " <<
       prot_type << "*" << (unnamed_oprot_seqid ? ", " : " oprot, ") <<
       "void* callContext)" << endl;
     scope_up(out);
-
-    string argsname = tservice->get_name() + "_" + tfunction->get_name() +
-      "_args";
-    string resultname = tservice->get_name() + "_" + tfunction->get_name() +
-      "_result";
 
     if (tfunction->is_oneway() && !unnamed_oprot_seqid) {
       out <<
@@ -3237,11 +3291,13 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       indent() << "  this->eventHandler_->preRead(ctx, " <<
         service_func_name << ");" << endl <<
       indent() << "}" << endl << endl <<
-      indent() << argsname << " args;" << endl <<
-      indent() << "args.read(iprot);" << endl <<
+      indent() << "if (" << args_obj << " == nullptr) {\n" <<
+      indent() << "  " << args_obj << " = new " << argstype << ";\n" <<
+      indent() << "} else {\n" <<
+      indent() << "  " << args_obj << "->clear();\n" << indent() << "}\n\n" <<
+      indent() << "uint32_t bytes = " << args_obj << "->read(iprot);" << endl <<
       indent() << "iprot->readMessageEnd();" << endl <<
-      indent() << "uint32_t bytes = iprot->getTransport()->readEnd();" <<
-        endl << endl <<
+      indent() << "iprot->getTransport()->readEnd();" << endl << endl <<
       indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
       indent() << "  this->eventHandler_->postRead(ctx, " <<
         service_func_name << ", bytes);" << endl <<
@@ -3251,7 +3307,10 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     // Declare result
     if (!tfunction->is_oneway()) {
       out <<
-        indent() << resultname << " result;" << endl;
+        indent() << "if (" << result_obj << " == nullptr) {\n" <<
+        indent() << "  " << result_obj << " = new " << resulttype << ";\n" <<
+        indent() << "} else {\n" << indent() << "  " << result_obj << "->clear();\n" <<
+        indent() << "}\n";
     }
 
     // Try block for functions with exceptions
@@ -3265,13 +3324,13 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
       if (is_complex_type(tfunction->get_returntype())) {
         first = false;
-        out << "iface_->" << tfunction->get_name() << "(result.success";
+        out << "iface_->" << fname << "(" << result_obj << "->success";
       } else {
-        out << "result.success = iface_->" << tfunction->get_name() << "(";
+        out << result_obj << "->success = iface_->" << fname << "(";
       }
     } else {
       out <<
-        "iface_->" << tfunction->get_name() << "(";
+        "iface_->" << fname << "(";
     }
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       if (first) {
@@ -3279,14 +3338,14 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       } else {
         out << ", ";
       }
-      out << "args." << (*f_iter)->get_name();
+      out << args_obj << "->" << (*f_iter)->get_name();
     }
     out << ");" << endl;
 
     // Set isset on success field
     if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
       out <<
-        indent() << "result.__isset.success = true;" << endl;
+        indent() << result_obj << "->__isset.success = true;" << endl;
     }
 
     indent_down();
@@ -3299,9 +3358,9 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
         if (!tfunction->is_oneway()) {
           indent_up();
           out <<
-            indent() << "result." << (*x_iter)->get_name() << " = " <<
+            indent() << result_obj << "->" << (*x_iter)->get_name() << " = " <<
               (*x_iter)->get_name() << ";" << endl <<
-            indent() << "result.__isset." << (*x_iter)->get_name() <<
+            indent() << result_obj << "->__isset." << (*x_iter)->get_name() <<
               " = true;" << endl;
           indent_down();
           out << indent() << "}";
@@ -3325,7 +3384,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
         endl <<
         indent() << "::apache::thrift::TApplicationException x(e.what());" <<
           endl <<
-        indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() <<
+        indent() << "oprot->writeMessageBegin(\"" << fname <<
           "\", ::apache::thrift::protocol::T_EXCEPTION, seqid);" << endl <<
         indent() << "x.write(oprot);" << endl <<
         indent() << "oprot->writeMessageEnd();" << endl <<
@@ -3356,9 +3415,9 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       indent() << "  this->eventHandler_->preWrite(ctx, " <<
         service_func_name << ");" << endl <<
       indent() << "}" << endl << endl <<
-      indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() <<
+      indent() << "oprot->writeMessageBegin(\"" << fname <<
         "\", ::apache::thrift::protocol::T_REPLY, seqid);" << endl <<
-      indent() << "result.write(oprot);" << endl <<
+      indent() << result_obj << "->write(oprot);" << endl <<
       indent() << "oprot->writeMessageEnd();" << endl <<
       indent() << "bytes = oprot->getTransport()->writeEnd();" << endl <<
       indent() << "oprot->getTransport()->flush();" << endl << endl <<
@@ -4601,7 +4660,8 @@ string t_cpp_generator::get_include_prefix(const t_program& program) const {
     // if flag is turned off or this is absolute path, return empty prefix
     return "";
   }
-
+  if (out_dir_base_.empty())
+    return include_prefix;
   string::size_type last_slash = string::npos;
   if ((last_slash = include_prefix.rfind("/")) != string::npos) {
     return include_prefix.substr(0, last_slash) + "/" + out_dir_base_ + "/";

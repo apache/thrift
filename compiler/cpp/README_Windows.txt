@@ -1,8 +1,8 @@
 Building the Thrift IDL compiler in Windows
 -------------------------------------------
 
-The Visual Studio project contains pre-build commands to generate the 
-thriftl.cc, thrifty.cc and thrifty.h files which are necessary to build 
+The Visual Studio project contains pre-build commands to generate the
+thriftl.cc, thrifty.cc and thrifty.hh files which are necessary to build
 the compiler. These depend on bison, flex and their dependencies to
 work properly. If this doesn't work on a system, try these manual
 pre-build steps.
@@ -22,9 +22,9 @@ In the generated thriftl.cc, comment out #include <unistd.h>
 
 Place a copy of bison.simple in thrift/compiler/cpp
 > bison -y -o "src/thrifty.cc" --defines src/thrifty.yy
-> move src\thrifty.cc.h  src\thrifty.h
+> move src\thrifty.cc.hh  src\thrifty.hh
 
-Download inttypes.h from the interwebs and place it in an include path 
+Download inttypes.h from the interwebs and place it in an include path
 location (e.g. thrift/compiler/cpp/src).
 
 Build the compiler in Visual Studio.
