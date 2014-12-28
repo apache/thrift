@@ -1,0 +1,21 @@
+Delphi TestClient 0.14.0
+Setting up for ProtocolPeformanceTest ...
+RunTest(binary): write = 2650 msec
+RunTest(binary): read = 3135 msec
+RunTest(compact): write = 2807 msec
+RunTest(compact): read = 3053 msec
+RunTest(JSON): write = 13251 msec
+RunTest(JSON): read = 18759 msec
+RunTest(binary + buffered): write = 2635 msec
+RunTest(binary + buffered): read = 3109 msec
+RunTest(compact + buffered): write = 2788 msec
+RunTest(compact + buffered): read = 3069 msec
+RunTest(JSON + buffered): write = 13604 msec
+RunTest(JSON + buffered): read = 21537 msec
+RunTest(binary + framed): write = 3019 msec
+RunTest(binary + framed): read = 3573 msec
+RunTest(compact + framed): write = 3201 msec
+RunTest(compact + framed): read = 3504 msec
+RunTest(JSON + framed): write = 15093 msec
+RunTest(JSON + framed): read = 21548 msec
+Hit ENTER ...

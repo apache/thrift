@@ -656,7 +656,7 @@ void error_unsupported_namespace_decl(const char* old_form, const char* new_form
  * Prints the version number
  */
 void version() {
-  printf("Thrift version %s\n", THRIFT_VERSION);
+  printf("Thrift version %s (custom build)\n", THRIFT_VERSION);
 }
 
 /**
