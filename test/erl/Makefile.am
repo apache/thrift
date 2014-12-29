@@ -27,6 +27,8 @@ THRIFT_FILES = $(wildcard ../*.thrift)
 	  $(THRIFT) --gen erl $$f ; \
 	done ; \
 	$(THRIFT) --gen erl:legacynames LegacyNames.thrift
+	# make sure ThriftTest.thrift is generated last to prevent conflicts with other *.thrift files
+	$(THRIFT) --gen erl ../ThriftTest.thrift
 	touch .generated
 
 check: .generated
