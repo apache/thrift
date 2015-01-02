@@ -409,7 +409,11 @@ public:
    * PosixThreadFactory for the IO worker threads, because they must joinable
    * for clean shutdown.
    */
-  void setNumIOThreads(size_t numThreads) { numIOThreads_ = numThreads; }
+  void setNumIOThreads(size_t numThreads) {
+    numIOThreads_ = numThreads;
+    // User-provided event-base doesn't works for multi-threaded servers
+    assert(numIOThreads_ <= 1 || !userEventBase_);
+  }
 
   /** Return whether the IO threads will get high scheduling priority */
   bool useHighPriorityIOThreads() const { return useHighPriorityIOThreads_; }

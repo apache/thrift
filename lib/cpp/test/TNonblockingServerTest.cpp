@@ -26,6 +26,8 @@
 
 #include "gen-cpp/ParentService.h"
 
+#include <event.h>
+
 using namespace apache::thrift;
 
 struct Handler : public test::ParentServiceIf {
@@ -57,8 +59,25 @@ private:
     }
   };
 
+  struct EventDeleter {
+    void operator()(event_base* p) { event_base_free(p); }
+  };
+
 protected:
   Fixture() : processor(new test::ParentServiceProcessor(boost::make_shared<Handler>())) {}
+
+  ~Fixture() {
+    if (server) {
+      server->stop();
+    }
+    if (thread) {
+      thread->join();
+    }
+  }
+
+  void setEventBase(event_base* user_event_base) {
+    userEventBase_.reset(user_event_base, EventDeleter());
+  }
 
   int startServer(int port) {
     boost::scoped_ptr<concurrency::ThreadFactory> threadFactory(
@@ -73,6 +92,14 @@ protected:
     int retry_count = port ? 10 : 0;
     for (int p = port; p <= port + retry_count; p++) {
       server.reset(new server::TNonblockingServer(processor, p));
+      if (userEventBase_) {
+        try {
+          server->registerEvents(userEventBase_.get());
+        } catch (const TException& x) {
+          // retry with next port
+          continue;
+        }
+      }
       boost::shared_ptr<Runner> runner(new Runner);
       runner->server = server;
       thread = threadFactory->newThread(runner);
@@ -99,6 +126,7 @@ protected:
   }
 
 private:
+  boost::shared_ptr<event_base> userEventBase_;
   boost::shared_ptr<test::ParentServiceProcessor> processor;
   boost::shared_ptr<concurrency::Thread> thread;
 
@@ -127,6 +155,19 @@ BOOST_FIXTURE_TEST_CASE(get_assigned_port, Fixture) {
 
   server->stop();
   BOOST_CHECK_EQUAL(server->getListenPort(), 0);
+}
+
+BOOST_FIXTURE_TEST_CASE(provide_event_base, Fixture) {
+  event_base* eb = event_base_new();
+  setEventBase(eb);
+  startServer(0);
+
+  // assert that the server works
+  BOOST_CHECK(canCommunicate(server->getListenPort()));
+#if LIBEVENT_VERSION_NUMBER > 0x02010400
+  // also assert that the event_base is actually used when it's easy
+  BOOST_CHECK_GT(event_base_get_num_events(eb, EVENT_BASE_COUNT_ADDED), 0);
+#endif
 }
 
 BOOST_AUTO_TEST_SUITE_END()
