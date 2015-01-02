@@ -59,7 +59,7 @@ if(${WITH_QT4} AND ${WITH_QT5} AND ${CMAKE_MAJOR_VERSION} LESS 3)
 endif()
 find_package(OpenSSL QUIET)
 CMAKE_DEPENDENT_OPTION(WITH_OPENSSL "Build with OpenSSL support" ON
-                       "OpenSSL_FOUND" OFF)
+                       "OPENSSL_FOUND" OFF)
 option(WITH_BOOSTTHREADS "Build with Boost thread support" OFF)
 option(WITH_STDTHREADS "Build with C++ std::thread support" OFF)
 
