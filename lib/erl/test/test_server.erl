@@ -52,7 +52,7 @@ go(Args) ->
 
 start_link(Port, ServerOpts) ->
     thrift_socket_server:start([{handler, ?MODULE},
-                                {service, thriftTest_thrift},
+                                {service, thrift_test_thrift},
                                 {port, Port}] ++
                                ServerOpts).
 
