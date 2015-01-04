@@ -17,7 +17,7 @@
 %% under the License.
 %%
 
--module(test_server).
+-module(test_thrift_server).
 
 -export([go/0, go/1, start_link/2, handle_function/2]).
 
