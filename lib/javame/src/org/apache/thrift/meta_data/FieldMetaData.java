@@ -63,7 +63,7 @@ public class FieldMetaData  {
     this.valueMetaData = vMetaData;
   }
   
-  public static void addStructMetaDataMap(Class sClass, Hashtable map){
+  public static synchronized void addStructMetaDataMap(Class sClass, Hashtable map){
     structMap.put(sClass, map);
   }
 
@@ -73,7 +73,7 @@ public class FieldMetaData  {
    *
    * @param sClass The TBase class for which the metadata map is requested
    */
-  public static Hashtable getStructMetaDataMap(Class sClass){
+  public static synchronized Hashtable getStructMetaDataMap(Class sClass){
     if (!structMap.containsKey(sClass)){ // Load class if it hasn't been loaded
       try{
         sClass.newInstance();

@@ -45,7 +45,7 @@ public class FieldMetaData implements java.io.Serializable {
     this.valueMetaData = vMetaData;
   }
   
-  public static void addStructMetaDataMap(Class<? extends TBase> sClass, Map<? extends TFieldIdEnum, FieldMetaData> map){
+  public static synchronized void addStructMetaDataMap(Class<? extends TBase> sClass, Map<? extends TFieldIdEnum, FieldMetaData> map){
     structMap.put(sClass, map);
   }
 
@@ -55,7 +55,7 @@ public class FieldMetaData implements java.io.Serializable {
    *
    * @param sClass The TBase class for which the metadata map is requested
    */
-  public static Map<? extends TFieldIdEnum, FieldMetaData> getStructMetaDataMap(Class<? extends TBase> sClass){
+  public static synchronized Map<? extends TFieldIdEnum, FieldMetaData> getStructMetaDataMap(Class<? extends TBase> sClass){
     if (!structMap.containsKey(sClass)){ // Load class if it hasn't been loaded
       try{
         sClass.newInstance();
