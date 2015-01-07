@@ -1250,7 +1250,18 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
   out << indent() << "if _, err := iprot.ReadStructBegin(); err != nil {" << endl;
   out << indent() << "  return thrift.PrependError(fmt.Sprintf(\"%T read error: \", p), err)"
       << endl;
-  out << indent() << "}" << endl;
+  out << indent() << "}" << endl << endl;
+
+  // Required variables does not have IsSet functions, so we need tmp vars to check them.
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
+      const string field_name(
+          publicize(variable_name_to_go_name(escape_string((*f_iter)->get_name()))));
+      indent(out) << "var isset" << field_name << " bool = false;" << endl;
+    }
+  }
+  out << endl;
+
   // Loop over reading in fields
   indent(out) << "for {" << endl;
   indent_up();
@@ -1297,6 +1308,14 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
         << endl;
     out << indent() << "  return err" << endl;
     out << indent() << "}" << endl;
+
+    // Mark required field as read
+    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
+      const string field_name(
+          publicize(variable_name_to_go_name(escape_string((*f_iter)->get_name()))));
+      out << indent() << "isset" << field_name << " = true" << endl;
+    }
+
     indent_down();
   }
 
@@ -1327,6 +1346,19 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
   out << indent() << "  return thrift.PrependError(fmt.Sprintf("
                      "\"%T read struct end error: \", p), err)" << endl;
   out << indent() << "}" << endl;
+
+  // Return error if any required fields are missing.
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
+      const string field_name(
+          publicize(variable_name_to_go_name(escape_string((*f_iter)->get_name()))));
+      out << indent() << "if !isset" << field_name << "{" << endl;
+      out << indent() << "  return thrift.NewTProtocolExceptionWithType(thrift.INVALID_DATA, "
+                         "fmt.Errorf(\"Required field " << field_name << " is not set\"));" << endl;
+      out << indent() << "}" << endl;
+    }
+  }
+
   out << indent() << "return nil" << endl;
   indent_down();
   out << indent() << "}" << endl << endl;

@@ -41,3 +41,10 @@ struct structB {
  1: required structA required_struct_thing
  2: optional structA optional_struct_thing
 }
+
+struct structC {
+ 1: string s,
+ 2: required i32 i,
+ 3: optional bool b,
+ 4: required string s2,
+}
