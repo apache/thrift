@@ -93,7 +93,7 @@ class ThriftClientProtocol(basic.Int32StringReceiver):
                 _, v = self.client._reqs.popitem()
                 v.errback(tex)
             del self.client._reqs
-            del self.client
+            self.client = None
 
     def stringReceived(self, frame):
         tr = TTransport.TMemoryBuffer(frame)
