@@ -60,6 +60,12 @@ if ($argc > 2) {
   $host = $argv[1];
 }
 
+foreach ($argv as $arg) {
+  if (substr($arg, 0, 7) == '--port=') {
+    $port = substr($arg, 7);
+  }
+}
+
 $hosts = array('localhost');
 
 $socket = new TSocket($host, $port);

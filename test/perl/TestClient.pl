@@ -41,6 +41,11 @@ $|++;
 my $host = 'localhost';
 my $port = 9090;
 
+foreach my $arg (@ARGV) {
+  if($arg =~ /^--port=([0-9]+)/) {
+    $port = $1;
+  }
+}
 
 my $socket = new Thrift::Socket($host, $port);
 
