@@ -977,17 +977,17 @@ void t_rb_generator::generate_service_server(t_service* tservice) {
 }
 
 void t_rb_generator::generate_before_call() {
-  f_service_.indent() << "if self.respond_to? :before_call";
+  f_service_.indent() << "if self.respond_to? :before_call" << endl;
   f_service_.indent_up();
-  f_service_.indent() << "self.before_call";
+  f_service_.indent() << "self.before_call" << endl;
   f_service_.indent_down();
-  f_service_.indent() << "end";
+  f_service_.indent() << "end" << endl;
 }
 
 void t_rb_generator::generate_on_exception() {
   f_service_.indent() << "if self.respond_to? :on_exception" << endl;
   f_service_.indent_up();
-  f_service_.indent() << "self.on_exception" << endl;
+  f_service_.indent() << "self.on_exception(e)" << endl;
   f_service_.indent_down();
   f_service_.indent() << "else" << endl;
   f_service_.indent_up();
