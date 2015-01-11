@@ -84,6 +84,7 @@ public:
     out_dir_base_ = "gen-rb";
 
     require_rubygems_ = (parsed_options.find("rubygems") != parsed_options.end());
+    generate_hooks_ = (parsed_options.find("generate_hooks") != parsed_options.end());
     namespaced_ = (parsed_options.find("namespaced") != parsed_options.end());
   }
 
@@ -137,6 +138,12 @@ public:
   void generate_service_client(t_service* tservice);
   void generate_service_server(t_service* tservice);
   void generate_process_function(t_service* tservice, t_function* tfunction);
+
+  /**
+   * Generate Hooks functions
+   */
+   void generate_before_call();
+   void generate_on_exception();
 
   /**
    * Serialization constructs
@@ -229,6 +236,9 @@ private:
 
   /** If true, add a "require 'rubygems'" line to the top of each gen-rb file. */
   bool require_rubygems_;
+
+  /** If true generate before_call and on_exception hooks */
+  bool generate_hooks_;
 
   /** If true, generate files in idiomatic namespaced directories. */
   bool namespaced_;
@@ -977,11 +987,11 @@ void t_rb_generator::generate_before_call() {
 void t_rb_generator::generate_on_exception() {
   f_service_.indent() << "if self.respond_to? :on_exception";
   f_service_.indent_up();
-  f_service_.indent() << "self." << function_name;
+  f_service_.indent() << "self.on_exception";
   f_service_.indent_down();
-  f_service_.indent() << "else"
+  f_service_.indent() << "else";
   f_service_.indent_up();
-  f_service_.indent() << "raise e"
+  f_service_.indent() << "raise e";
   f_service_.indent_down();
   f_service_.indent() << "end";
 }
@@ -1011,9 +1021,11 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
     f_service_.indent() << "result = " << resultname << ".new()" << endl;
   }
 
-  f_service_.indent() << "begin";
-  f_service_.indent_up();
-  generate_before_call();
+  if (generate_hooks_) {
+    f_service_.indent() << "begin";
+    f_service_.indent_up();
+    generate_before_call();
+  }
 
 
   // Try block for a function with exceptions
@@ -1044,12 +1056,14 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
   }
   f_service_ << ")" << endl;
 
-  f_service_.indent_down();
-  f_service_.indent() << "rescue Exception => e";
-  f_service_.indent_up();
-  generate_on_exception();
-  f_service_.indent_down();
-  f_service_.indent() << "end";
+  if (generate_hooks_) {
+    f_service_.indent_down();
+    f_service_.indent() << "rescue Exception => e";
+    f_service_.indent_up();
+    generate_on_exception();
+    f_service_.indent_down();
+    f_service_.indent() << "end";
+  }
 
 
   if (!tfunction->is_oneway() && xceptions.size() > 0) {
