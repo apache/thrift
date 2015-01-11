@@ -37,8 +37,11 @@ dist-hook:
 print-version:
 	@echo $(VERSION)
 
+precross-%: all
+	$(MAKE) -C $* precross
+precross: all precross-test precross-lib
 
-cross: check
+cross: precross
 	sh test/test.sh
 
 codespell_skip_files = \

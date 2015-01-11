@@ -19,6 +19,8 @@
 
 export CLASSPATH
 
+THRIFT = $(top_builddir)/compiler/cpp/thrift
+
 all-local:
 	$(ANT) $(ANT_FLAGS)
 
@@ -30,6 +32,9 @@ install-exec-hook:
 clean-local:
 	ANT=$(ANT) ; if test -z "$$ANT" ; then ANT=: ; fi ; \
 	$$ANT $(ANT_FLAGS) clean
+
+precross: $(THRIFT)
+	$(ANT) $(ANT_FLAGS) compile-test
 
 check-local: all
 	$(ANT) $(ANT_FLAGS) test

@@ -18,17 +18,15 @@
 #
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
+CSC=gmcs
 
-stubs: ../ThriftTest.thrift
-	$(THRIFT) --gen php ../ThriftTest.thrift
-	$(THRIFT) --gen php:inlined ../ThriftTest.thrift
+stubs: $(top_srcdir)/test/ThriftTest.thrift
+	$(THRIFT) --gen csharp -o . $(top_srcdir)/test/ThriftTest.thrift
 
-precross: stubs
+precross: TestClientServer.exe
 
-check: stubs
+ThriftImpl.dll: stubs
+	$(CSC) /t:library /out:./ThriftImpl.dll /recurse:./gen-csharp/* /reference:../../Thrift.dll
 
-clean-local:
-	$(RM) -r gen-php gen-phpi
-
-client: stubs
-	php TestClient.php
+TestClientServer.exe: TestClient.cs TestServer.cs Program.cs ThriftImpl.dll
+	$(CSC)  /out:TestClientServer.exe /reference:../../Thrift.dll /reference:ThriftImpl.dll TestClient.cs TestServer.cs Program.cs
