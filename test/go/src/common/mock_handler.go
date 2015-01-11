@@ -70,6 +70,17 @@ func (_mr *_MockThriftTestRecorder) TestDouble(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestDouble", arg0)
 }
 
+func (_m *MockThriftTest) TestBinary(_param0 []byte) ([]byte, error) {
+	ret := _m.ctrl.Call(_m, "TestBinary", _param0)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+func (_mr *_MockThriftTestRecorder) TestBinary(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestBinary", arg0)
+}
+
 func (_m *MockThriftTest) TestEnum(_param0 thrifttest.Numberz) (thrifttest.Numberz, error) {
 	ret := _m.ctrl.Call(_m, "TestEnum", _param0)
 	ret0, _ := ret[0].(thrifttest.Numberz)

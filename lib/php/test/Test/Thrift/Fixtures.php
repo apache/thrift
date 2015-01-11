@@ -48,6 +48,8 @@ class Fixtures
 
     self::$testArgs['testDouble'] = 3.1415926535898;
 
+	// TODO: add testBinary() call
+	
     self::$testArgs['testByte'] = 0x01;
 
     self::$testArgs['testI32'] = pow( 2, 30 );

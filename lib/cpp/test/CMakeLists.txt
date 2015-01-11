@@ -21,7 +21,7 @@
 # Find required packages
 set(Boost_USE_STATIC_LIBS ON) # Force the use of static boost test framework
 find_package(Boost 1.53.0 REQUIRED COMPONENTS unit_test_framework)
-include_directories("${Boost_INCLUDE_DIR}")
+include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 
 #Make sure gen-cpp files can be included
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
@@ -210,6 +210,18 @@ target_link_libraries(processor_test
     ${Boost_LIBRARIES}
 )
 add_test(NAME processor_test COMMAND processor_test)
+
+set(TNonblockingServerTest_SOURCES TNonblockingServerTest.cpp)
+add_executable(TNonblockingServerTest ${TNonblockingServerTest_SOURCES})
+include_directories(${LIBEVENT_INCLUDE_DIRS})
+target_link_libraries(TNonblockingServerTest
+    testgencpp_cob
+    thrift
+    thriftnb
+    ${LIBEVENT_LIBRARIES}
+    ${Boost_LIBRARIES}
+)
+add_test(NAME TNonblockingServerTest COMMAND TNonblockingServerTest)
 endif()
 
 if(OPENSSL_FOUND AND WITH_OPENSSL)

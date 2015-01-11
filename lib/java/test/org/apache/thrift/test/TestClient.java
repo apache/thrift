@@ -254,6 +254,11 @@ public class TestClient {
         }
 
         /**
+         * BINARY TEST
+         */
+        System.out.print("TODO: testBinary( ... )");
+
+        /**
          * STRUCT TEST
          */
         System.out.print("testStruct({\"Zero\", 1, -3, -5})");

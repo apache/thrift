@@ -21,6 +21,7 @@ package;
 
 import haxe.Int32;
 import haxe.Int64;
+import haxe.io.Bytes;
 import haxe.Timer;
 import haxe.ds.IntMap;
 import haxe.ds.StringMap;
@@ -307,6 +308,43 @@ class TestClient {
     }
 
 
+	public static function BytesToHex(data : Bytes) : String {
+		var hex = "";
+		for ( i in 0 ... data.length) {
+			hex += StringTools.hex( data.get(i), 2);
+		}
+		return hex;
+	}
+
+	public static function PrepareTestData(randomDist : Bool) : Bytes	{
+		var retval = Bytes.alloc(0x100);
+		var initLen : Int = (retval.length > 0x100 ? 0x100 : retval.length);
+
+		// linear distribution, unless random is requested
+		if (!randomDist) {
+			for (i in 0 ... initLen) { 
+				retval.set(i, i % 0x100);
+			}
+			return retval;
+		}
+
+		// random distribution
+		for (i in 0 ... initLen) { 
+			retval.set(i, 0);
+		}
+		for (i in 1 ... initLen) { 
+			while( true) {
+				var nextPos = Std.random(initLen);
+				if (retval.get(nextPos) == 0) {
+					retval.set( nextPos, i % 0x100);
+					break;
+				}
+			}
+		}
+		return retval;
+	}
+
+	
     public static function ClientTest( transport : TTransport, protocol : TProtocol,
                                        args : Arguments, rslt : TestResults) : Void
     {
@@ -416,6 +454,23 @@ class TestClient {
         var dub = client.testDouble(5.325098235);
         trace(' = $dub');
         rslt.Expect(dub == 5.325098235, '$dub == 5.325098235');
+
+        var binOut = PrepareTestData(true);
+        trace('testBinary('+BytesToHex(binOut)+')');
+        try {
+            var binIn = client.testBinary(binOut);
+			trace('testBinary() = '+BytesToHex(binIn));
+			rslt.Expect( binIn.length == binOut.length, '${binIn.length} == ${binOut.length}');
+			var len = ((binIn.length < binOut.length)  ?  binIn.length  : binOut.length);
+            for (ofs in 0 ... len) {
+                if (binIn.get(ofs) != binOut.get(ofs)) {
+					rslt.Expect( false, 'testBinary('+BytesToHex(binOut)+'): content mismatch at offset $ofs');
+				}
+			}
+		}
+		catch (e : TApplicationException) {
+            trace('testBinary('+BytesToHex(binOut)+'): '+e.errorMsg);  // may not be supported by the server
+        }
 
 
         rslt.StartTestGroup( TestResults.EXITCODE_FAILBIT_STRUCTS);

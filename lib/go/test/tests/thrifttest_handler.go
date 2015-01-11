@@ -72,6 +72,10 @@ func (p *ThriftTestHandler) TestDouble(thing float64) (r float64, err error) {
 	return thing, nil
 }
 
+func (p *ThriftTestHandler) TestBinary(thing []byte) (r []byte, err error) {
+	return thing, nil
+}
+
 func (p *ThriftTestHandler) TestStruct(thing *thrifttest.Xtruct) (r *thrifttest.Xtruct, err error) {
 	return thing, nil
 }
