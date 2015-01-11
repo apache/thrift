@@ -1502,10 +1502,6 @@ void t_js_generator::generate_deserialize_field(ofstream& out,
       out << "readI32()";
     }
 
-    if (!gen_node_) {
-      out << ".value";
-    }
-
     out << ";" << endl;
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
