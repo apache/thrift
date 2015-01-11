@@ -985,15 +985,15 @@ void t_rb_generator::generate_before_call() {
 }
 
 void t_rb_generator::generate_on_exception() {
-  f_service_.indent() << "if self.respond_to? :on_exception";
+  f_service_.indent() << "if self.respond_to? :on_exception" << endl;
   f_service_.indent_up();
-  f_service_.indent() << "self.on_exception";
+  f_service_.indent() << "self.on_exception" << endl;
   f_service_.indent_down();
-  f_service_.indent() << "else";
+  f_service_.indent() << "else" << endl;
   f_service_.indent_up();
-  f_service_.indent() << "raise e";
+  f_service_.indent() << "raise e" << endl;
   f_service_.indent_down();
-  f_service_.indent() << "end";
+  f_service_.indent() << "end" << endl;
 }
 
 /**
@@ -1022,7 +1022,7 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
   }
 
   if (generate_hooks_) {
-    f_service_.indent() << "begin";
+    f_service_.indent() << "begin" << endl;
     f_service_.indent_up();
     generate_before_call();
   }
@@ -1033,7 +1033,6 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
     f_service_.indent() << "begin" << endl;
     f_service_.indent_up();
   }
-
 
   // Generate the function call
   t_struct* arg_struct = tfunction->get_arglist();
@@ -1058,11 +1057,11 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
 
   if (generate_hooks_) {
     f_service_.indent_down();
-    f_service_.indent() << "rescue Exception => e";
+    f_service_.indent() << "rescue Exception => e" << endl;
     f_service_.indent_up();
     generate_on_exception();
     f_service_.indent_down();
-    f_service_.indent() << "end";
+    f_service_.indent() << "end" << endl;
   }
 
 
