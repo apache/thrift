@@ -142,7 +142,7 @@ public:
   /**
    * Generate Hooks functions
    */
-   void generate_before_call();
+   void generate_before_call(const std::string& function_name);
    void generate_on_exception();
 
   /**
@@ -976,18 +976,18 @@ void t_rb_generator::generate_service_server(t_service* tservice) {
   f_service_.indent() << "end" << endl << endl;
 }
 
-void t_rb_generator::generate_before_call() {
-  f_service_.indent() << "if self.respond_to? :before_call" << endl;
+void t_rb_generator::generate_before_call(const std::string& function_name) {
+  f_service_.indent() << "if @handler.respond_to? :before_call" << endl;
   f_service_.indent_up();
-  f_service_.indent() << "self.before_call" << endl;
+  f_service_.indent() << "@handler.before_call(:" << function_name << ")" << endl;
   f_service_.indent_down();
   f_service_.indent() << "end" << endl;
 }
 
 void t_rb_generator::generate_on_exception() {
-  f_service_.indent() << "if self.respond_to? :on_exception" << endl;
+  f_service_.indent() << "if @handler.respond_to? :on_exception" << endl;
   f_service_.indent_up();
-  f_service_.indent() << "self.on_exception(e)" << endl;
+  f_service_.indent() << "@handler.on_exception(e)" << endl;
   f_service_.indent_down();
   f_service_.indent() << "else" << endl;
   f_service_.indent_up();
@@ -1024,7 +1024,7 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
   if (generate_hooks_) {
     f_service_.indent() << "begin" << endl;
     f_service_.indent_up();
-    generate_before_call();
+    generate_before_call(tfunction->get_name());
   }
 
 
