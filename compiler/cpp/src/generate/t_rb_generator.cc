@@ -966,6 +966,26 @@ void t_rb_generator::generate_service_server(t_service* tservice) {
   f_service_.indent() << "end" << endl << endl;
 }
 
+void t_rb_generator::generate_before_call() {
+  f_service_.indent() << "if self.respond_to? :before_call";
+  f_service_.indent_up();
+  f_service_.indent() << "self.before_call";
+  f_service_.indent_down();
+  f_service_.indent() << "end";
+}
+
+void t_rb_generator::generate_on_exception() {
+  f_service_.indent() << "if self.respond_to? :on_exception";
+  f_service_.indent_up();
+  f_service_.indent() << "self." << function_name;
+  f_service_.indent_down();
+  f_service_.indent() << "else"
+  f_service_.indent_up();
+  f_service_.indent() << "raise e"
+  f_service_.indent_down();
+  f_service_.indent() << "end";
+}
+
 /**
  * Generates a process function definition.
  *
@@ -991,11 +1011,17 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
     f_service_.indent() << "result = " << resultname << ".new()" << endl;
   }
 
+  f_service_.indent() << "begin";
+  f_service_.indent_up();
+  generate_before_call();
+
+
   // Try block for a function with exceptions
   if (xceptions.size() > 0) {
     f_service_.indent() << "begin" << endl;
     f_service_.indent_up();
   }
+
 
   // Generate the function call
   t_struct* arg_struct = tfunction->get_arglist();
@@ -1017,6 +1043,14 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
     f_service_ << "args." << (*f_iter)->get_name();
   }
   f_service_ << ")" << endl;
+
+  f_service_.indent_down();
+  f_service_.indent() << "rescue Exception => e";
+  f_service_.indent_up();
+  generate_on_exception();
+  f_service_.indent_down();
+  f_service_.indent() << "end";
+
 
   if (!tfunction->is_oneway() && xceptions.size() > 0) {
     f_service_.indent_down();
