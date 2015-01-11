@@ -17,8 +17,10 @@
  * under the License.
  */
 
-#![crate_name="thrift-client"]
+#![crate_name="calculator"]
 #![crate_type="bin"]
+
+extern crate thrift;
 
 
 // TODO: move to TProtocol
@@ -275,8 +277,9 @@ impl <T: Protocol> CalculatorClient<T> {
         self.protocol.flush();
     }
 
-    fn receive_ping(&self) {
-        // TODO
+    fn receive_ping(& mut self) {
+
+
     }
 }
 
