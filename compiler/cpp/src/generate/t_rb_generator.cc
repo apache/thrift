@@ -1012,15 +1012,15 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
   if (generate_hooks_) {
     f_service_.indent() << "begin" << endl;
     f_service_.indent_up();
-    generate_before_call(tfunction->get_name());
   }
-
 
   // Try block for a function with exceptions
   if (xceptions.size() > 0) {
     f_service_.indent() << "begin" << endl;
     f_service_.indent_up();
   }
+
+  generate_before_call(tfunction->get_name());
 
   // Generate the function call
   t_struct* arg_struct = tfunction->get_arglist();
