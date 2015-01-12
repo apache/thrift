@@ -2275,138 +2275,118 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
  * @param tservice The service to generate a server for.
  */
 void t_go_generator::generate_service_server(t_service* tservice) {
-  // Generate the dispatch methods
-  vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter;
-  string extends = "";
-  string extends_processor = "";
-  string extends_processor_new = "";
-  string serviceName(publicize(tservice->get_name()));
+	// Generate the dispatch methods
+	vector<t_function*> functions = tservice->get_functions();
+	vector<t_function*>::iterator f_iter;
+	string extends = "";
+	string extends_processor = "";
+	string extends_processor_new = "";
+	string serviceName(publicize(tservice->get_name()));
 
-  if (tservice->get_extends() != NULL) {
-    extends = type_name(tservice->get_extends());
-    size_t index = extends.rfind(".");
+	if (tservice->get_extends() != NULL) {
+		extends = type_name(tservice->get_extends());
+		size_t index = extends.rfind(".");
 
-    if (index != string::npos) {
-      extends_processor = extends.substr(0, index + 1) + publicize(extends.substr(index + 1))
-                          + "Processor";
-      extends_processor_new = extends.substr(0, index + 1) + "New"
-                              + publicize(extends.substr(index + 1)) + "Processor";
-    } else {
-      extends_processor = publicize(extends) + "Processor";
-      extends_processor_new = "New" + extends_processor;
-    }
-  }
+		if (index != string::npos) {
+			extends_processor = extends.substr(0, index + 1) + publicize(extends.substr(index + 1))
+				+ "Processor";
+			extends_processor_new = extends.substr(0, index + 1) + "New"
+				+ publicize(extends.substr(index + 1)) + "Processor";
+		}
+		else {
+			extends_processor = publicize(extends) + "Processor";
+			extends_processor_new = "New" + extends_processor;
+		}
+	}
 
-  string pServiceName(privatize(serviceName));
-  // Generate the header portion
-  string self(tmp("self"));
+	string pServiceName(privatize(serviceName));
+	// Generate the header portion
+	string self(tmp("self"));
 
-  if (extends_processor.empty()) {
-    f_service_ << indent() << "type " << serviceName << "Processor struct {" << endl;
-    f_service_ << indent() << "  processorMap map[string]thrift.TProcessorFunction" << endl;
-    f_service_ << indent() << "  handler " << serviceName << endl;
-    f_service_ << indent() << "}" << endl << endl;
-    f_service_ << indent() << "func (p *" << serviceName
-               << "Processor) AddToProcessorMap(key string, processor thrift.TProcessorFunction) {"
-               << endl;
-    f_service_ << indent() << "  p.processorMap[key] = processor" << endl;
-    f_service_ << indent() << "}" << endl << endl;
-    f_service_ << indent() << "func (p *" << serviceName
-               << "Processor) GetProcessorFunction(key string) "
-                  "(processor thrift.TProcessorFunction, ok bool) {" << endl;
-    f_service_ << indent() << "  processor, ok = p.processorMap[key]" << endl;
-    f_service_ << indent() << "  return processor, ok" << endl;
-    f_service_ << indent() << "}" << endl << endl;
-    f_service_ << indent() << "func (p *" << serviceName
-               << "Processor) ProcessorMap() map[string]thrift.TProcessorFunction {" << endl;
-    f_service_ << indent() << "  return p.processorMap" << endl;
-    f_service_ << indent() << "}" << endl << endl;
-    f_service_ << indent() << "func New" << serviceName << "Processor(handler " << serviceName
-               << ") *" << serviceName << "Processor {" << endl << endl;
-    f_service_
-        << indent() << "  " << self << " := &" << serviceName
-        << "Processor{handler:handler, processorMap:make(map[string]thrift.TProcessorFunction)}"
-        << endl;
+	bool is_extend = !extends_processor.empty();
+	f_service_ << indent() << "type " << serviceName << "Processor struct {" << endl;
+	if (is_extend){
+		f_service_ << indent() << "  *" << extends_processor << endl;
+	}
+	f_service_ << indent() << "  handler " << serviceName << endl;
+	f_service_ << indent() << "}" << endl << endl;
 
-    for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-      string escapedFuncName(escape_string((*f_iter)->get_name()));
-      f_service_ << indent() << "  " << self << ".processorMap[\"" << escapedFuncName << "\"] = &"
-                 << pServiceName << "Processor" << publicize((*f_iter)->get_name())
-                 << "{handler:handler}" << endl;
-    }
+	f_service_ << indent() << "func (p *" << serviceName
+		<< "Processor) runProcessorFunction(key string, seqId int32, iprot, oprot thrift.TProtocol) (found,ok bool, err thrift.TException){" << endl;
+	f_service_ << indent() << "switch(key){" << endl;
+	for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+		string escapedFuncName(escape_string((*f_iter)->get_name()));
+		f_service_ << indent() << "case \"" << escapedFuncName << "\":" << endl;
+		f_service_ << indent() << "  ok,err = p.Process_" << publicize((*f_iter)->get_name()) << "(seqId,iprot,oprot)" << endl;
+		f_service_ << indent() << "  return true, ok, err" << endl;
+	}
+	f_service_ << indent() << "default:" << endl;
+	if (is_extend){
+		//defer to parent if not in child.
+		f_service_ << indent() << "  return p." << extends_processor << ".runProcessorFunction(key, seqId, iprot, oprot)" << endl;
+	}
+	else{
+		f_service_ << indent() << "  return false, false, nil" << endl;
+	}
+	f_service_ << indent() << "}" << endl;
 
-    string x(tmp("x"));
-    f_service_ << indent() << "return " << self << endl;
-    f_service_ << indent() << "}" << endl << endl;
-    f_service_ << indent() << "func (p *" << serviceName
-               << "Processor) Process(iprot, oprot thrift.TProtocol) (success bool, err "
-                  "thrift.TException) {" << endl;
-    f_service_ << indent() << "  name, _, seqId, err := iprot.ReadMessageBegin()" << endl;
-    f_service_ << indent() << "  if err != nil { return false, err }" << endl;
-    f_service_ << indent() << "  if processor, ok := p.GetProcessorFunction(name); ok {" << endl;
-    f_service_ << indent() << "    return processor.Process(seqId, iprot, oprot)" << endl;
-    f_service_ << indent() << "  }" << endl;
-    f_service_ << indent() << "  iprot.Skip(thrift.STRUCT)" << endl;
-    f_service_ << indent() << "  iprot.ReadMessageEnd()" << endl;
-    f_service_ << indent() << "  " << x
-               << " := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, \"Unknown function "
-                  "\" + name)" << endl;
-    f_service_ << indent() << "  oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)" << endl;
-    f_service_ << indent() << "  " << x << ".Write(oprot)" << endl;
-    f_service_ << indent() << "  oprot.WriteMessageEnd()" << endl;
-    f_service_ << indent() << "  oprot.Flush()" << endl;
-    f_service_ << indent() << "  return false, " << x << endl;
-    f_service_ << indent() << "" << endl;
-    f_service_ << indent() << "}" << endl << endl;
-  } else {
-    f_service_ << indent() << "type " << serviceName << "Processor struct {" << endl;
-    f_service_ << indent() << "  *" << extends_processor << endl;
-    f_service_ << indent() << "}" << endl << endl;
-    f_service_ << indent() << "func New" << serviceName << "Processor(handler " << serviceName
-               << ") *" << serviceName << "Processor {" << endl;
-    f_service_ << indent() << "  " << self << " := &" << serviceName << "Processor{"
-               << extends_processor_new << "(handler)}" << endl;
+	f_service_ << indent() << "}" << endl << endl;
 
-    for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-      string escapedFuncName(escape_string((*f_iter)->get_name()));
-      f_service_ << indent() << "  " << self << ".AddToProcessorMap(\"" << escapedFuncName
-                 << "\", &" << pServiceName << "Processor" << publicize((*f_iter)->get_name())
-                 << "{handler:handler})" << endl;
-    }
+	f_service_ << indent() << "func New" << serviceName << "Processor(handler " << serviceName
+		<< ") *" << serviceName << "Processor {" << endl;
+	f_service_
+		<< indent() << "  return &" << serviceName << "Processor{";
+	if (is_extend){
+		f_service_ << "New" << extends_processor << "(handler), handler}" << endl;
+	}
+	else{
+		f_service_ << "handler:handler}" << endl;
+	}
 
-    f_service_ << indent() << "  return " << self << endl;
-    f_service_ << indent() << "}" << endl << endl;
-  }
+	string x(tmp("x"));
+	f_service_ << indent() << "}" << endl << endl;
+	f_service_ << indent() << "func (p *" << serviceName
+		<< "Processor) Process(iprot, oprot thrift.TProtocol) (success bool, err "
+		"thrift.TException) {" << endl;
+	f_service_ << indent() << "  name, _, seqId, err := iprot.ReadMessageBegin()" << endl;
+	f_service_ << indent() << "  if err != nil { return false, err }" << endl;
+	f_service_ << indent() << "  if found, ok, err := p.runProcessorFunction(name, seqId, iprot, oprot); found {" << endl;
+	f_service_ << indent() << "    return ok, err" << endl;
+	f_service_ << indent() << "  }" << endl;
+	f_service_ << indent() << "  iprot.Skip(thrift.STRUCT)" << endl;
+	f_service_ << indent() << "  iprot.ReadMessageEnd()" << endl;
+	f_service_ << indent() << "  " << x
+		<< " := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, \"Unknown function "
+		"\" + name)" << endl;
+	f_service_ << indent() << "  oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)" << endl;
+	f_service_ << indent() << "  " << x << ".Write(oprot)" << endl;
+	f_service_ << indent() << "  oprot.WriteMessageEnd()" << endl;
+	f_service_ << indent() << "  oprot.Flush()" << endl;
+	f_service_ << indent() << "  return false, " << x << endl;
+	f_service_ << indent() << "}" << endl << endl;
 
-  // Generate the process subfunctions
-  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    generate_process_function(tservice, *f_iter);
-  }
+	// Generate the process subfunctions
+	for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+		generate_process_function(tservice, *f_iter);
+	}
 
-  f_service_ << endl;
+	f_service_ << endl;
 }
 
 /**
- * Generates a process function definition.
- *
- * @param tfunction The function to write a dispatcher for
- */
+* Generates a process function definition.
+*
+* @param tfunction The function to write a dispatcher for
+*/
 void t_go_generator::generate_process_function(t_service* tservice, t_function* tfunction) {
-  // Open function
-  string processorName = privatize(tservice->get_name()) + "Processor"
-                         + publicize(tfunction->get_name());
-  string argsname = publicize(tfunction->get_name() + "_args", true);
-  string resultname = publicize(tfunction->get_name() + "_result", true);
-  // t_struct* xs = tfunction->get_xceptions();
-  // const std::vector<t_field*>& xceptions = xs->get_members();
-  vector<t_field*>::const_iterator x_iter;
-  f_service_ << indent() << "type " << processorName << " struct {" << endl;
-  f_service_ << indent() << "  handler " << publicize(tservice->get_name()) << endl;
-  f_service_ << indent() << "}" << endl << endl;
-  f_service_ << indent() << "func (p *" << processorName
-             << ") Process(seqId int32, iprot, oprot thrift.TProtocol) (success bool, err "
-                "thrift.TException) {" << endl;
+	// Open function
+	string processorName = publicize(tservice->get_name()) + "Processor";
+	string argsname = publicize(tfunction->get_name() + "_args", true);
+	string resultname = publicize(tfunction->get_name() + "_result", true);
+	vector<t_field*>::const_iterator x_iter;
+	f_service_ << indent() << "func (p *" << processorName
+		<< ") Process_" << publicize(tfunction->get_name()) << "(seqId int32, iprot, oprot thrift.TProtocol) (success bool, err "
+		"thrift.TException) {" << endl;
   indent_up();
   f_service_ << indent() << "args := " << argsname << "{}" << endl;
   f_service_ << indent() << "if err = args.Read(iprot); err != nil {" << endl;
