@@ -89,7 +89,7 @@ impl CalculatorAddArgs {
 }
 
 struct CalculatorAddResult {
-    success: i32
+    success: Option<i32>,
 }
 
 impl CalculatorAddResult {
@@ -104,7 +104,7 @@ impl CalculatorAddResult {
             }
             match (fid, ftype) {
                 (0, Type::TI32) => {
-                    self.success = iprot.read_i32(transport);
+                    self.success = Some(iprot.read_i32(transport));
                 }
                 _ => {
                     iprot.skip(transport, ftype);
@@ -173,7 +173,7 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
       }
     }
     
-    fn add(& mut self, num1: i32, num2: i32) -> i32 {
+    fn add(& mut self, num1: i32, num2: i32) -> Option<i32> {
         self.send_add(num1, num2);
         self.receive_add()
     }
@@ -191,7 +191,8 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
         self.transport.flush();
     }
 
-    fn receive_add(& mut self) -> i32 {
+    fn receive_add(& mut self) -> Option<i32> {
+      let mut result = CalculatorAddResult { success: None };
       let (fname, mtype, rseqid) = self.protocol.read_message_begin(& mut self.transport);
       match mtype {
         MessageType::MtException => {
@@ -201,32 +202,26 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
             //self.protocol.read_message_end();
             //transport.read_end();
             //throw x  
-            0 // FIXME   
         }
         MessageType::MtReply => {
             match fname.as_slice() {
                 "add" => {
-                    let mut result = CalculatorAddResult { success: 0 }; // FIXME
                     result.read(&self.protocol, & mut self.transport);
-                    self.protocol.read_message_end(& mut self.transport);
-                    //self.transport.read_end();
-                    result.success
                 }
                 _ => {
                     self.protocol.skip(& mut self.transport, Type::TStruct);
-                    self.protocol.read_message_end(& mut self.transport);
-                    //self.transport.read_end();
-                    0 // FIXME
                 }
             }
+            self.protocol.read_message_end(& mut self.transport);
+            //self.transport.read_end();
         }
         _ => {
             self.protocol.skip(& mut self.transport, Type::TStruct);
             self.protocol.read_message_end(& mut self.transport);
             //self.transport.read_end(); 
-            0 // FIXME        
         }
       }
+      result.success
     }
 }
 
@@ -241,7 +236,7 @@ pub fn main() {
     client.ping();
     println!("ping()");
 
-    println!("1 + 1 = {}", client.add(1, 1));
+    println!("1 + 1 = {}", client.add(1, 1).unwrap());
 
     println!("PASS");
 }
