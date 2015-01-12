@@ -64,6 +64,57 @@ impl CalculatorPingResult {
     }
 }
 
+struct CalculatorAddArgs {
+    num1: i32,
+    num2: i32,
+}
+
+impl CalculatorAddArgs {
+
+    #[allow(unused_variables)]
+    fn write(&self, oprot: &Protocol, transport: & mut Transport) {
+        oprot.write_struct_begin(transport, "Calculator_add_args");
+
+        oprot.write_field_begin(transport, "num1", Type::TI32, 1);
+        oprot.write_i32(transport, self.num1);
+        oprot.write_field_end(transport);
+
+        oprot.write_field_begin(transport, "num2", Type::TI32, 2);
+        oprot.write_i32(transport, self.num2);
+        oprot.write_field_end(transport);
+
+        oprot.write_field_stop(transport);
+        oprot.write_struct_end(transport);
+    }
+}
+
+struct CalculatorAddResult {
+    success: i32
+}
+
+impl CalculatorAddResult {
+
+    fn read(& mut self, iprot: &Protocol, transport: & mut Transport) {
+        let fname = iprot.read_struct_begin(transport);
+
+        loop {
+            let (fname, ftype, fid) = iprot.read_field_begin(transport);
+            if ftype == Type::TStop {
+                break;
+            }
+            match (fid, ftype) {
+                (0, Type::TI32) => {
+                    self.success = iprot.read_i32(transport);
+                }
+                _ => {
+                    iprot.skip(transport, ftype);
+                }
+            }
+            iprot.read_field_end(transport);
+        }
+        iprot.read_struct_end(transport);
+    }
+}
 
 struct CalculatorClient<T: Transport, P: Protocol> {
     transport: T,
@@ -121,6 +172,62 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
         }
       }
     }
+    
+    fn add(& mut self, num1: i32, num2: i32) -> i32 {
+        self.send_add(num1, num2);
+        self.receive_add()
+    }
+    
+    fn send_add(& mut self, num1: i32, num2: i32) {
+        let cseqid: i32 = 0;
+        self.protocol.write_message_begin(& mut self.transport, "add", MessageType::MtCall, cseqid);
+        
+        let args = CalculatorAddArgs { num1: num1, num2: num2 };
+        args.write(&self.protocol, & mut self.transport);
+        
+        self.protocol.write_message_end(& mut self.transport);
+
+        //self.transport.write_end();
+        self.transport.flush();
+    }
+
+    fn receive_add(& mut self) -> i32 {
+      let (fname, mtype, rseqid) = self.protocol.read_message_begin(& mut self.transport);
+      match mtype {
+        MessageType::MtException => {
+            // TODO
+            //let x = ApplicationException;
+            //x.read(& mut self protocol)
+            //self.protocol.read_message_end();
+            //transport.read_end();
+            //throw x  
+            0 // FIXME   
+        }
+        MessageType::MtReply => {
+            match fname.as_slice() {
+                "add" => {
+                    let mut result = CalculatorAddResult { success: 0 }; // FIXME
+                    result.read(&self.protocol, & mut self.transport);
+                    self.protocol.read_message_end(& mut self.transport);
+                    //self.transport.read_end();
+                    result.success
+                }
+                _ => {
+                    self.protocol.skip(& mut self.transport, Type::TStruct);
+                    self.protocol.read_message_end(& mut self.transport);
+                    //self.transport.read_end();
+                    0 // FIXME
+                }
+            }
+        }
+        _ => {
+            self.protocol.skip(& mut self.transport, Type::TStruct);
+            self.protocol.read_message_end(& mut self.transport);
+            //self.transport.read_end(); 
+            0 // FIXME        
+        }
+      }
+    }
 }
 
 pub fn main() {
@@ -132,6 +239,9 @@ pub fn main() {
     let mut client = CalculatorClient{ protocol: BinaryProtocol, transport: tcp };
 
     client.ping();
+    println!("ping()");
+
+    println!("1 + 1 = {}", client.add(1, 1));
 
     println!("PASS");
 }
