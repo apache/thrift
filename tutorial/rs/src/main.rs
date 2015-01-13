@@ -47,20 +47,8 @@ struct CalculatorPingResult;
 
 impl CalculatorPingResult {
 
-    #[allow(unused_variables)]
     fn read(&self, iprot: &Protocol, transport: & mut Transport) {
-        let fname = iprot.read_struct_begin(transport);
-
-        loop {
-            let (fname, ftype, fid) = iprot.read_field_begin(transport);
-            if ftype == Type::TStop {
-              break;
-            }
-            iprot.skip(transport, ftype);
-            iprot.read_field_end(transport);
-        }
-
-        iprot.read_struct_end(transport);
+        iprot.skip(transport, Type::TStruct);
     }
 }
 
@@ -94,8 +82,9 @@ struct CalculatorAddResult {
 
 impl CalculatorAddResult {
 
+    #[allow(unused_variables)]
     fn read(& mut self, iprot: &Protocol, transport: & mut Transport) {
-        let fname = iprot.read_struct_begin(transport);
+        iprot.read_struct_begin(transport);
 
         loop {
             let (fname, ftype, fid) = iprot.read_field_begin(transport);
@@ -128,6 +117,7 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
         self.receive_ping();
     }
     
+    #[allow(unused_variables)]
     fn send_ping(& mut self) {
         let cseqid: i32 = 0;
         self.protocol.write_message_begin(& mut self.transport, "ping", MessageType::MtCall, cseqid);
@@ -138,9 +128,10 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
         self.protocol.write_message_end(& mut self.transport);
 
         //self.transport.write_end();
-        self.transport.flush();
+        self.transport.flush().unwrap();
     }
 
+    #[allow(unused_variables)]
     fn receive_ping(& mut self) {
       let (fname, mtype, rseqid) = self.protocol.read_message_begin(& mut self.transport);
       match mtype {
@@ -188,9 +179,10 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
         self.protocol.write_message_end(& mut self.transport);
 
         //self.transport.write_end();
-        self.transport.flush();
+        self.transport.flush().unwrap();
     }
 
+    #[allow(unused_variables)]
     fn receive_add(& mut self) -> Option<i32> {
       let mut result = CalculatorAddResult { success: None };
       let (fname, mtype, rseqid) = self.protocol.read_message_begin(& mut self.transport);
