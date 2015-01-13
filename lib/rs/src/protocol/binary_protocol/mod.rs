@@ -5,6 +5,7 @@ use std::num::FromPrimitive;
 
 static BINARY_PROTOCOL_VERSION_1: u16 = 0x8001;
 
+#[derive(Copy)]
 pub struct BinaryProtocol;
 
 impl BinaryProtocol {

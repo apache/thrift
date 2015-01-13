@@ -1,3 +1,5 @@
+#![allow(unstable)]
+
 pub use protocol::Protocol;
 pub use transport::Transport;
 
