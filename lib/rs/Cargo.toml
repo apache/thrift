@@ -1,0 +1,5 @@
+[package]
+
+name = "thrift"
+version = "0.0.1"
+authors = ["Simon Génier <s@simon.coffee>"]
