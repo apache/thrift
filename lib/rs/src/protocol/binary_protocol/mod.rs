@@ -1,3 +1,4 @@
+
 use protocol;
 use protocol::{ MessageType, Protocol, Type };
 use transport::Transport;
@@ -29,7 +30,7 @@ impl Protocol for BinaryProtocol {
         message_type: MessageType,
         sequence_id: i32
     ) {
-        let version = BINARY_PROTOCOL_VERSION_1 as i32 | message_type as i32;
+        let version = ((BINARY_PROTOCOL_VERSION_1 as i32) << 16) | message_type as i32;
         self.write_i32(transport, version);
         self.write_string(transport, name);
         self.write_i32(transport, sequence_id);
@@ -223,6 +224,55 @@ impl Protocol for BinaryProtocol {
         let len = self.read_i32(transport) as usize;
         transport.read_exact(len).unwrap()
     }
+
+    #[allow(unused_variables)]
+    fn skip(&self, transport: &mut Transport, _type: Type) {
+        match _type {
+            Type::TBool => { self.read_bool(transport); }
+            Type::TByte => { self.read_byte(transport); }
+            Type::TI16 => { self.read_i16(transport); }
+            Type::TI32 => { self.read_i32(transport); }
+            Type::TI64 => { self.read_i64(transport); }
+            Type::TDouble => { self.read_double(transport); }
+            Type::TString => { self.read_binary(transport); }
+            Type::TStruct => { 
+                self.read_struct_begin(transport);
+                loop {
+                    let (fname, ftype, fid) = self.read_field_begin(transport);
+                    if ftype == Type::TStop {
+                        break;
+                    }
+                    self.skip(transport, ftype);
+                    self.read_field_end(transport);
+                }
+                self.read_struct_end(transport);
+            }
+            Type::TMap => {
+                let (key_type, value_type, size) = self.read_map_begin(transport);
+                for i in range(0, size) {
+                    self.skip(transport, key_type);
+                    self.skip(transport, value_type);
+                }
+                self.read_map_end(transport);
+            }
+            Type::TSet => {
+                let (elem_type, size) = self.read_set_begin(transport);
+                for i in range(0, size) {
+                    self.skip(transport, elem_type);
+                }
+                self.read_set_end(transport);
+            }
+            Type::TList => {
+                let (elem_type, size) = self.read_list_begin(transport);
+                for i in range(0, size) {
+                    self.skip(transport, elem_type);
+                }
+                self.read_list_end(transport);
+            }
+            _ => { }
+        }
+    }
+
 }
 
 #[cfg(test)]

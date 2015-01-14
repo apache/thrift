@@ -99,4 +99,6 @@ pub trait Protocol {
     fn read_double(&self, transport: &mut Transport) -> f64;
     fn read_string(&self, transport: &mut Transport) -> String;
     fn read_binary(&self, transport: &mut Transport) -> Vec<u8>;
+
+    fn skip(&self, transport: &mut Transport, _type: Type);
 }
