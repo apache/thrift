@@ -46,9 +46,10 @@ clean-local:
 	$(RM) -r gen-haxe bin
 
 check: $(BIN_CPP)
-	timeout 120 $(BIN_CPP) server &
+	timeout 10 $(BIN_CPP) server &
 	sleep 1
 	$(BIN_CPP) client
+	sleep 10
 
 EXTRA_DIST = \
              src \

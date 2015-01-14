@@ -21,8 +21,12 @@
 cmake_minimum_required(VERSION 2.8)
 
 # Find required packages
-find_package(Boost 1.53.0 REQUIRED)
-include_directories("${Boost_INCLUDE_DIR}")
+if(WITH_BOOSTTHREADS)
+  find_package(Boost 1.53.0 REQUIRED COMPONENTS system thread)
+else()
+  find_package(Boost 1.53.0 REQUIRED)
+endif()
+include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 
 include_directories(src)
 
@@ -94,13 +98,13 @@ if(OPENSSL_FOUND AND WITH_OPENSSL)
        src/thrift/transport/TSSLSocket.cpp
        src/thrift/transport/TSSLServerSocket.cpp
     )
-    include_directories("${OPENSSL_INCLUDE_DIR}")
+    include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
     list(APPEND SYSLIBS "${OPENSSL_LIBRARIES}")
 endif()
 
-# WITH_*THREADS selects whicht threading library to use
+# WITH_*THREADS selects which threading library to use
 if(WITH_BOOSTTHREADS)
-    set( USE_BOOST_THREAD 1)
+    add_definitions("-DUSE_BOOST_THREAD=1")
     set( thriftcpp_threads_SOURCES
         src/thrift/concurrency/BoostThreadFactory.cpp
         src/thrift/concurrency/BoostMonitor.cpp
@@ -115,7 +119,11 @@ elseif(UNIX AND NOT WITH_STDTHREADS)
         src/thrift/concurrency/Monitor.cpp
     )
 else()
-    set( USE_STD_THREAD 1)
+    add_definitions("-DUSE_STD_THREAD=1")
+    if(UNIX)
+        # need pthread for multi-thread support
+        list(APPEND SYSLIBS pthread)
+    endif()
     set( thriftcpp_threads_SOURCES
         src/thrift/concurrency/StdThreadFactory.cpp
         src/thrift/concurrency/StdMutex.cpp
@@ -150,27 +158,31 @@ TARGET_LINK_LIBRARIES_THRIFT(thrift ${SYSLIBS})
 
 if(WITH_LIBEVENT)
     find_package(Libevent REQUIRED)  # Libevent comes with CMake support form upstream
-    include_directories(${Libevent_INCLUDE_DIR})
+    include_directories(SYSTEM ${LIBEVENT_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftnb ${thriftcppnb_SOURCES})
-    TARGET_LINK_LIBRARIES_THRIFT(thriftnb ${SYSLIBS} ${Libevent_LIBRARIES})
+    TARGET_LINK_LIBRARIES_THRIFT(thriftnb ${SYSLIBS} ${LIBEVENT_LIBRARIES})
 endif()
 
 if(WITH_ZLIB)
     find_package(ZLIB REQUIRED)
-    include_directories(${ZLIB_INCLUDE_DIR})
+    include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftz ${thriftcppz_SOURCES})
     TARGET_LINK_LIBRARIES_THRIFT(thriftz ${SYSLIBS} ${ZLIB_LIBRARIES})
 endif()
 
-
 if(WITH_QT4)
-    find_package(Qt4 REQUIRED)
-    include_directories(${QT_INCLUDES})
-
+    cmake_minimum_required(VERSION 2.8.12)
+    set(CMAKE_AUTOMOC ON)
+    find_package(Qt4 REQUIRED COMPONENTS QtCore QtNetwork)
     ADD_LIBRARY_THRIFT(thriftqt ${thriftcppqt_SOURCES})
-    TARGET_LINK_LIBRARIES_THRIFT(thriftz ${SYSLIBS} ${QT_LIBRARIES})
+    TARGET_LINK_LIBRARIES_THRIFT(thriftqt ${SYSLIBS} Qt4::QtCore Qt4::QtNetwork)
+endif()
+
+if(WITH_QT5)
+    # Qt5 has its own directory to avoid conflict with Qt4 caused by CMAKE_AUTOMOC
+    add_subdirectory(src/thrift/qt)
 endif()
 
 if(MSVC)

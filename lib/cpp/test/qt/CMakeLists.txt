@@ -17,24 +17,15 @@
 # under the License.
 #
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
-REBAR = $(top_srcdir)/lib/erl/rebar
 
-THRIFT_FILES = $(wildcard ../*.thrift)
+cmake_minimum_required(VERSION 2.8.12)
 
-# make sure ThriftTest.thrift is generated last to prevent conflicts with other *.thrift files
-.generated: $(THRIFT_FILES)
-	for f in $(THRIFT_FILES) ; do \
-	  $(THRIFT) --gen erl $$f ; \
-	done ; \
-	$(THRIFT) --gen erl:legacynames LegacyNames.thrift
-	$(THRIFT) --gen erl ../ThriftTest.thrift
-	touch .generated
+set(CMAKE_AUTOMOC ON)
+find_package(Qt5 REQUIRED COMPONENTS Test)
+set(TQTcpServerTest_Qt5_SOURCES
+    TQTcpServerTest.cpp
+)
+add_executable(TQTcpServerTest_Qt5 ${TQTcpServerTest_Qt5_SOURCES})
+target_link_libraries(TQTcpServerTest_Qt5 testgencpp_cob thriftqt5 thrift Qt5::Test)
+add_test(NAME TQTcpServerTest_Qt5 COMMAND TQTcpServerTest_Qt5)
 
-check: .generated
-	$(REBAR) eunit
-
-clean:
-	rm -f .generated
-	rm -rf gen-erl
-	$(REBAR) clean

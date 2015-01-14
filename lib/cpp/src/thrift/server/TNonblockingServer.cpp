@@ -1188,6 +1188,8 @@ void TNonblockingServer::registerEvents(event_base* user_event_base) {
   if (!numIOThreads_) {
     numIOThreads_ = DEFAULT_IO_THREADS;
   }
+  // User-provided event-base doesn't works for multi-threaded servers
+  assert(numIOThreads_ == 1 || !userEventBase_);
 
   for (uint32_t id = 0; id < numIOThreads_; ++id) {
     // the first IO thread also does the listening on server socket
@@ -1215,7 +1217,7 @@ void TNonblockingServer::registerEvents(event_base* user_event_base) {
   // Launch all the secondary IO threads in separate threads
   if (ioThreads_.size() > 1) {
     ioThreadFactory_.reset(new PlatformThreadFactory(
-#if !defined(USE_BOOST_THREAD) && !defined(USE_STD_THREAD)
+#if !USE_BOOST_THREAD && !USE_STD_THREAD
         PlatformThreadFactory::OTHER,  // scheduler
         PlatformThreadFactory::NORMAL, // priority
         1,                             // stack size (MB)
@@ -1243,7 +1245,8 @@ void TNonblockingServer::registerEvents(event_base* user_event_base) {
  */
 void TNonblockingServer::serve() {
 
-  registerEvents(NULL);
+  if(ioThreads_.empty())
+    registerEvents(NULL);
 
   // Run the primary (listener) IO thread loop in our main thread; this will
   // only return when the server is shutting down.

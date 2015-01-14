@@ -17,24 +17,14 @@
 # under the License.
 #
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
-REBAR = $(top_srcdir)/lib/erl/rebar
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
 
-THRIFT_FILES = $(wildcard ../*.thrift)
-
-# make sure ThriftTest.thrift is generated last to prevent conflicts with other *.thrift files
-.generated: $(THRIFT_FILES)
-	for f in $(THRIFT_FILES) ; do \
-	  $(THRIFT) --gen erl $$f ; \
-	done ; \
-	$(THRIFT) --gen erl:legacynames LegacyNames.thrift
-	$(THRIFT) --gen erl ../ThriftTest.thrift
-	touch .generated
-
-check: .generated
-	$(REBAR) eunit
-
-clean:
-	rm -f .generated
-	rm -rf gen-erl
-	$(REBAR) clean
+Name: Thrift
+Description: Thrift Qt5 API
+Version: @VERSION@
+Requires: thrift = @VERSION@
+Libs: -L${libdir} -lthriftqt5
+Cflags: -I${includedir}

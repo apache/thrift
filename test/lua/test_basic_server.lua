@@ -51,6 +51,10 @@ function TestHandler:testDouble(d)
   return d
 end
 
+function TestHandler:testBinary(by)
+  return by
+end
+
 function TestHandler:testStruct(thing)
   return thing
 end

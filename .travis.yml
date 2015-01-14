@@ -26,145 +26,91 @@ cache:
  - npm
  - maven
 
+compiler:
+  - clang
+  - gcc
+
+before_install:
+  - sh contrib/installCXXDependencies.sh
+  - if [ "$ALL_DEPS" != "no" ] ; then sh contrib/installDependencies.sh 1> /dev/null ; fi
+  - if [ "$ALL_DEPS" != "no" ] ; then export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH ; fi
+  - if [ "$ALL_DEPS" != "no" ] ; then cabal update ; fi
+
+script:
+  - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then mkdir build && cd build && cmake -GNinja -DQT_MOC_EXECUTABLE="moq-qt5" $CMAKE_CONFIG $TRAVIS_BUILD_DIR ; fi
+  - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then ninja ; fi
+  - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then cpack ; cd $TRAVIS_BUILD_DIR ; fi
+  - if [ "x$CONFIG" != "xnone" ] ; then sh bootstrap.sh ; fi
+  - if [ "x$CONFIG" != "xnone" ] ; then sh configure $CONFIG ; fi
+  - if [ "x$CONFIG" != "xnone" ] ; then make $MAKE_TARGET -j2 ; fi
+
 env:
   global:
     - TEST_NAME=""
-    - CONFIG=""
+    - CMAKE_CONFIG="none"
+    - CONFIG="none"
+    - MAKE_TARGET="check"
+    - ALL_DEPS="no"
     - GHCVER=7.8.3
 
+  matrix:
+    # Put it here because it's most time consuming
+    - TEST_NAME="make cross (gcc, automake)"
+      CONFIG="--without-python"
+      ALL_DEPS="yes"
+      MAKE_TARGET="cross"
+
+    # CMake builds
+    - TEST_NAME="compiler (CMake + CPack)"
+      CMAKE_CONFIG="-DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
+    - TEST_NAME="all (CMake + CPack)"
+      CMAKE_CONFIG=""
+      ALL_DEPS="yes"
+    - TEST_NAME="C++/boost-threads (CMake + CPack)"
+      CMAKE_CONFIG="-DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_BOOSTTHREADS=ON"
+    - TEST_NAME="C++/std-threads (CMake + CPack)"
+      CMAKE_CONFIG="-DCMAKE_CXX_FLAGS=-std=c++0x -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_STDTHREADS=ON"
+    - TEST_NAME="compiler (mingw32-gcc, CMake + CPack)"
+      CMAKE_CONFIG="-DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
+
+    # Autotool builds
+    # TODO: Remove them as migration is made
+    - TEST_NAME="compiler (automake)"
+      CONFIG="--disable-libs"
+    - TEST_NAME="all (automake)"
+      CONFIG="--without-erlang --without-python --without-go --without-lua"
+      ALL_DEPS="yes"
+    - TEST_NAME="C & C++ & Haskell (automake)"
+      CONFIG="--without-csharp --without-java --without-erlang --without-nodejs --without-lua --without-python --without-perl --without-php --without-php-extension --without-ruby --without-go --without-d"
+      ALL_DEPS="yes"
+    - TEST_NAME="Small Set (automake)"
+      CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua --without-d --without-ruby --without-nodejs --without-java"
+      ALL_DEPS="yes"
+    - TEST_NAME="dist (gcc, automake)"
+      CONFIG=""
+      ALL_DEPS="yes"
+      MAKE_TARGET="dist"
+
 matrix:
+  allow_failures:
+    # gcc fails on travis seemingly due to out of memory
+    - compiler: gcc
+
+  exclude:
+    # This one takes very long
+    - compiler: gcc
+      env: TEST_NAME="make cross (gcc, automake)" CONFIG="--without-python" ALL_DEPS="yes" MAKE_TARGET="cross"
+
+    # Does not use native compiler, no need to do it twice
+    - compiler: gcc
+      env: TEST_NAME="compiler (mingw32-gcc, CMake + CPack)" CMAKE_CONFIG="-DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
+    - compiler: gcc
+      env: TEST_NAME="dist (gcc, automake)" CONFIG="" ALL_DEPS="yes" MAKE_TARGET="dist"
+
   include:
     - env:
-        - TEST_NAME="compiler (gcc, automake)"
-          CONFIG="--disable-libs"
-      compiler: gcc
-      before_install:
-       - sh contrib/installCXXDependencies.sh;
-      script:
-       - sh bootstrap.sh;
-       - sh configure $CONFIG;
-       - make check -j2;
-
-    - env:
-        - TEST_NAME="compiler (gcc, CMake + CPack)"
-          CONFIG="-DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
-      compiler: gcc
-      before_install:
-       - sh contrib/installCXXDependencies.sh;
-      script:
-       - mkdir build_native && cd build_native && cmake $CONFIG .. && make -j4 && cpack && cd ..;
-
-    - env:
-        - TEST_NAME="compiler (clang, automake)"
-          CONFIG="--disable-libs"
-      compiler: clang
-      before_install:
-       - sh contrib/installCXXDependencies.sh;
-      script:
-       - sh bootstrap.sh;
-       - sh configure $CONFIG;
-       - make check -j2;
-
-    - env:
-        - TEST_NAME="compiler (clang, CMake + CPack)"
-          CONFIG="-DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
-      compiler: clang
-      before_install:
-       - sh contrib/installCXXDependencies.sh;
-      script:
-       - mkdir build_native && cd build_native && cmake $CONFIG .. && make -j4 && cpack && cd ..;
-
-    - env:
-        - TEST_NAME="compiler (mingw32-gcc, CMake + CPack)"
-          CONFIG="-DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
-      before_install:
-       - sh contrib/installCXXDependencies.sh;
-       - sudo apt-get install nsis
-      script:
-       - mkdir build_mingw32 && cd build_mingw32 && cmake $CONFIG .. && make -j4 && cpack && cd ..;
-
-    - env:
-        - TEST_NAME="all (gcc, automake)"
-          CONFIG="--without-erlang --without-python --without-go --without-lua"
-      compiler: gcc
-      before_install:
-       - sh contrib/installCXXDependencies.sh;
-       - sh contrib/installDependencies.sh 1> /dev/null;
-       - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH
-       - cabal update
-      script:
-       - sh bootstrap.sh;
-       - sh configure $CONFIG;
-       - make check -j2;
-
-
-    - env:
-        - TEST_NAME="C & C++ & Haskell (gcc, automake)"
-          CONFIG="--without-csharp --without-java --without-erlang --without-nodejs --without-lua --without-python --without-perl --without-php --without-php-extension --without-ruby --without-go --without-d"
-      compiler: gcc
-      before_install:
-       - sh contrib/installCXXDependencies.sh;
-       - sh contrib/installDependencies.sh 1> /dev/null;
-       - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH
-       - cabal update
-      script:
-       - sh bootstrap.sh;
-       - sh configure $CONFIG;
-       - make check -j2;
-
-    - env:
-        - TEST_NAME="all (gcc, CMake + CPack)"
-          CONFIG=""
-      compiler: gcc
-      before_install:
-       - sh contrib/installCXXDependencies.sh;
-       - sh contrib/installDependencies.sh 1> /dev/null;
-      script:
-       - mkdir build_cmake && cd build_cmake && cmake $CONFIG .. && make -j4 && cpack && cd ..;
-
-    - env:
-        - TEST_NAME="Small Set (gcc, automake)"
-          CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua --without-d --without-ruby --without-nodejs --without-java"
-      compiler: gcc
-      before_install:
-       - sh contrib/installCXXDependencies.sh;
-       - sh contrib/installDependencies.sh 1> /dev/null;
-       - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH
-       - cabal update
-      script:
-       - sh bootstrap.sh;
-       - sh configure $CONFIG;
-       - make check -j2;
-
-    - env:
-        - TEST_NAME="dist (gcc, automake)"
-          CONFIG=""
-      compiler: gcc
-      before_install:
-       - sh contrib/installCXXDependencies.sh;
-       - sh contrib/installDependencies.sh 1> /dev/null;
-      script:
-       - sh bootstrap.sh;
-       - sh configure $CONFIG;
-       - make dist -j2;
-
-    - env:
-        - TEST_NAME="make cross (gcc, automake)"
-          CONFIG="--without-python"
-      compiler: gcc
-      before_install:
-       - sh contrib/installCXXDependencies.sh;
-       - sh contrib/installDependencies.sh 1> /dev/null;
-       - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH
-       - cabal update
-      script:
-       - sh bootstrap.sh;
-       - sh configure $CONFIG;
-       - make cross -j2;
-
-    - env:
         - TEST_NAME="Debian Packages"
-      compiler: gcc
+      compiler: clang
       before_install:
        - sh contrib/installCXXDependencies.sh;
        - sh contrib/installDependencies.sh 1> /dev/null;
@@ -172,7 +118,6 @@ matrix:
       script:
        - dpkg-buildpackage -tc -us -uc
        - ls -al ..
-
 
 
     # QA jobs for code analytics and metrics
@@ -205,21 +150,27 @@ matrix:
 
     # search for TODO within source tree
     - env:    TEST_NAME="TODO"
+      before_install:
       script: grep -r TODO *
     # search for FIXME within source tree
     - env:    TEST_NAME="FIXME"
+      before_install:
       script: grep -r FIXME *
     # search for HACK within source tree
     - env:    TEST_NAME="HACK"
+      before_install:
       script: grep -r HACK *
     # some statistics about the code base
     - env:    TEST_NAME="sloccount"
+      before_install:
       script: sloccount .
       before_install: sudo apt-get install sloccount
     # some info about the build machine
     - env:    TEST_NAME="info"
+      before_install:
       script:
        - dpkg -l
        - uname -a
 
 # TODO make it perfect ;-r
+#

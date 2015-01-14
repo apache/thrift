@@ -98,6 +98,13 @@ public:
     return thing;
   }
 
+  void testBinary(std::string& _return, const std::string& thing) {
+    std::ostringstream hexstr;
+    hexstr << std::hex << thing;
+    printf("testBinary(%s)\n", hexstr.str().c_str());
+    _return = thing;
+  }
+
   void testStruct(Xtruct& out, const Xtruct& thing) {
     printf("testStruct({\"%s\", %d, %d, %" PRId64 "})\n",
            thing.string_thing.c_str(),
@@ -408,6 +415,12 @@ public:
 
   virtual void testDouble(tcxx::function<void(double const& _return)> cob, const double thing) {
     double res = _delegate->testDouble(thing);
+    cob(res);
+  }
+
+  virtual void testBinary(tcxx::function<void(std::string const& _return)> cob, const std::string& thing) {
+    std::string res;
+    _delegate->testBinary(res, thing);
     cob(res);
   }
 

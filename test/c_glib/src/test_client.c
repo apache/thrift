@@ -379,6 +379,8 @@ main (int argc, char **argv)
         fail_count++;
       }
 
+      // TODO: add testBinary() 	  
+	  
       /**
        * STRUCT TEST
        */

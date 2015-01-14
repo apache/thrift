@@ -19,6 +19,13 @@
 
 package org.apache.thrift;
 
+// Make sure we use at least 3.1.3
+// Some Linux platforms have waaaay too old packages in their repos
+// Pro Tip: Look at http://openfl.com for a good Linux install script
+#if( haxe_ver < 3.103)
+#error Haxe 3.1.3 or newer required, sorry!
+#end
+
 import org.apache.thrift.protocol.TProtocol;
 
   /**

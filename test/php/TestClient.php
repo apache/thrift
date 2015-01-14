@@ -128,6 +128,10 @@ $dub = $testClient->testDouble(-852.234234234);
 print_r(" = $dub\n");
 
 /**
+ * BINARY TEST  --  TODO
+ */
+
+/**
  * STRUCT TEST
  */
 print_r("testStruct({\"Zero\", 1, -3, -5})");

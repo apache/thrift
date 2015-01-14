@@ -640,7 +640,10 @@ func TestWriteJSONProtocolMap(t *testing.T) {
 				t.Fatalf("Bad json-decoded value for %s %v, wrote: '%s', expected: '%v'", thetype, value, s, v)
 			}
 		}
-		trans.Reset()
+	}
+	err = p.ReadMapEnd()
+	if err != nil {
+		t.Fatalf("Error while reading map end: %s", err.Error())
 	}
 	trans.Close()
 }

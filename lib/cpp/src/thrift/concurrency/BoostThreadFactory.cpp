@@ -19,7 +19,7 @@
 
 #include <thrift/thrift-config.h>
 
-#ifdef USE_BOOST_THREAD
+#if USE_BOOST_THREAD
 
 #include <thrift/concurrency/BoostThreadFactory.h>
 #include <thrift/concurrency/Exception.h>

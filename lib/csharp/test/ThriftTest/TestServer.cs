@@ -97,6 +97,13 @@ namespace Test
                 return thing;
             }
 
+            public byte[] testBinary(byte[] thing)
+            {
+                string hex = BitConverter.ToString(thing).Replace("-", string.Empty);
+                Console.WriteLine("testBinary(" + hex + ")");
+                return thing;
+            }
+
             public Xtruct testStruct(Xtruct thing)
             {
                 Console.WriteLine("testStruct({" +

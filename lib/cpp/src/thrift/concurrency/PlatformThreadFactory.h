@@ -36,7 +36,7 @@ namespace thrift {
 namespace concurrency {
 
 // clang-format off
-#ifdef USE_BOOST_THREAD
+#if USE_BOOST_THREAD
   typedef BoostThreadFactory PlatformThreadFactory;
 #elif USE_STD_THREAD
   typedef StdThreadFactory PlatformThreadFactory;
