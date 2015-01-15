@@ -1,3 +1,0 @@
-[submodule "lib/rs"]
-	path = lib/rs
-	url = https://github.com/maximg/rust-thrift.git
