@@ -116,7 +116,7 @@ if(BUILD_CPP)
     include_directories("${CMAKE_CURRENT_BINARY_DIR}/gen-cpp" "${CMAKE_CURRENT_BINARY_DIR}/gen-c_glib")
 
     add_executable(testthrifttestclient testthrifttestclient.cpp)
-    target_link_libraries(testthrifttestclient testgenc testgenc_cpp)
+    target_link_libraries(testthrifttestclient testgenc testgenc_cpp ${ZLIB_LIBRARIES})
     add_test(NAME testthrifttestclient COMMAND testthrifttestclient)
 
 endif(BUILD_CPP)
