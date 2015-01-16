@@ -309,6 +309,16 @@ public:
   static const int DEFAULT_MAX_FRAME_SIZE = 256 * 1024 * 1024;
 
   /// Use default buffer sizes.
+  TFramedTransport()
+    : transport_(),
+      rBufSize_(0),
+      wBufSize_(DEFAULT_BUFFER_SIZE),
+      rBuf_(),
+      wBuf_(new uint8_t[wBufSize_]),
+      bufReclaimThresh_((std::numeric_limits<uint32_t>::max)()) {
+    initPointers();
+  }
+
   TFramedTransport(boost::shared_ptr<TTransport> transport)
     : transport_(transport),
       rBufSize_(0),

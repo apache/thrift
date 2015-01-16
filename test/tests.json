@@ -228,7 +228,8 @@
     "protocols": [
       "compact",
       "binary",
-      "json"
+      "json",
+      "header"
     ],
     "workdir": "cpp"
   },
