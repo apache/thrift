@@ -159,8 +159,15 @@ void TThreadedServer::serve() {
       // Make IO transports
       inputTransport = inputTransportFactory_->getTransport(client);
       outputTransport = outputTransportFactory_->getTransport(client);
-      inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
-      outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
+
+      if (!outputProtocolFactory_) {
+	inputProtocol = inputProtocolFactory_->getProtocol(inputTransport,
+							    outputTransport);
+	outputProtocol = inputProtocol;
+      } else {
+	inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
+	outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
+      }
 
       shared_ptr<TProcessor> processor = getProcessor(inputProtocol, outputProtocol, client);
 

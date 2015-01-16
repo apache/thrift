@@ -36,12 +36,11 @@ namespace protocol {
  */
 template <class Transport_>
 class TBinaryProtocolT : public TVirtualProtocol<TBinaryProtocolT<Transport_> > {
-protected:
+public:
   static const int32_t VERSION_MASK = ((int32_t)0xffff0000);
   static const int32_t VERSION_1 = ((int32_t)0x80010000);
   // VERSION_2 (0x80020000)  is taken by TDenseProtocol.
 
-public:
   TBinaryProtocolT(boost::shared_ptr<Transport_> trans)
     : TVirtualProtocol<TBinaryProtocolT<Transport_> >(trans),
       trans_(trans.get()),
