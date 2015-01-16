@@ -29,6 +29,10 @@ use thrift::protocol::Protocol;
 use thrift::protocol::binary_protocol::BinaryProtocol;
 
 
+trait Readable {
+    fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> bool;
+}
+
 // TODO: shall be generated
 //#[allow(dead_code)]
 struct CalculatorPingArgs;
@@ -80,10 +84,12 @@ struct CalculatorAddResult {
     success: Option<i32>,
 }
 
-impl CalculatorAddResult {
+impl Readable for CalculatorAddResult {
 
     #[allow(unused_variables)]
-    fn read(& mut self, iprot: &Protocol, transport: & mut Transport) {
+    fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> bool {
+        let mut have_result = false;
+
         iprot.read_struct_begin(transport);
 
         loop {
@@ -94,6 +100,7 @@ impl CalculatorAddResult {
             match (fid, ftype) {
                 (0, Type::TI32) => {
                     self.success = Some(iprot.read_i32(transport));
+                    have_result = true
                 }
                 _ => {
                     iprot.skip(transport, ftype);
@@ -102,6 +109,119 @@ impl CalculatorAddResult {
             iprot.read_field_end(transport);
         }
         iprot.read_struct_end(transport);
+        have_result
+    }
+}
+
+
+#[derive(Copy)]
+#[allow(dead_code)]
+enum Operation {
+    ADD = 1,
+    SUBTRACT = 2,
+    MULTIPLY = 3,
+    DIVIDE = 4,
+}
+
+struct Work {
+    num1: i32,
+    num2: i32,
+    op: Operation,
+    comment: Option<String>,
+}
+
+impl Work {
+
+    #[allow(unused_variables)]
+    fn write(&self, oprot: &Protocol, transport: & mut Transport) {
+        oprot.write_struct_begin(transport, "Work");
+
+        oprot.write_field_begin(transport, "num1", Type::TI32, 1);
+        oprot.write_i32(transport, self.num1);
+        oprot.write_field_end(transport);
+
+        oprot.write_field_begin(transport, "num2", Type::TI32, 2);
+        oprot.write_i32(transport, self.num2);
+        oprot.write_field_end(transport);
+
+        oprot.write_field_begin(transport, "op", Type::TI32, 3);
+        oprot.write_i32(transport, self.op as i32);
+        oprot.write_field_end(transport);
+
+        if self.comment.is_some() {
+            // FIXME
+            //oprot.write_field_begin(transport, "comment", Type::TString, 4);
+            //oprot.write_string(transport, self.comment.unwrap().as_slice());
+            //oprot.write_field_end(transport);
+        }
+
+        oprot.write_field_stop(transport);
+        oprot.write_struct_end(transport);
+    }
+}
+
+struct CalculatorCalculateArgs {
+    logid: i32,
+    w: Work,
+}
+
+impl CalculatorCalculateArgs {
+
+    #[allow(unused_variables)]
+    fn write(&self, oprot: &Protocol, transport: & mut Transport) {
+        oprot.write_struct_begin(transport, "Calculator_calculate_args");
+
+        oprot.write_field_begin(transport, "logid", Type::TI32, 1);
+        oprot.write_i32(transport, self.logid);
+        oprot.write_field_end(transport);
+
+        oprot.write_field_begin(transport, "work", Type::TStruct, 2);
+        self.w.write(oprot, transport);
+        oprot.write_field_end(transport);
+
+        oprot.write_field_stop(transport);
+        oprot.write_struct_end(transport);
+    }
+}
+
+struct Exception;
+
+#[allow(dead_code)]
+struct CalculatorCalculateResult {
+    success: Option<i32>,
+    ouch: Exception
+}
+
+impl Readable for CalculatorCalculateResult {
+
+    #[allow(unused_variables)]
+    fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> bool {
+        let mut have_result = false;
+
+        iprot.read_struct_begin(transport);
+
+        loop {
+            let (fname, ftype, fid) = iprot.read_field_begin(transport);
+            if ftype == Type::TStop {
+                break;
+            }
+            match (fid, ftype) {
+                (0, Type::TI32) => {
+                    self.success = Some(iprot.read_i32(transport));
+                    have_result = true;
+                }
+                (1, Type::TStruct) => {
+                    // FIXME read ouch
+                    iprot.skip(transport, ftype);
+                }
+                _ => {
+                    iprot.skip(transport, ftype);
+                }
+            }
+            iprot.read_field_end(transport);
+        }
+        iprot.read_struct_end(transport);
+        have_result
     }
 }
 
@@ -182,39 +302,69 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
         self.transport.flush().unwrap();
     }
 
-    #[allow(unused_variables)]
     fn receive_add(& mut self) -> Option<i32> {
-      let mut result = CalculatorAddResult { success: None };
-      let (fname, mtype, rseqid) = self.protocol.read_message_begin(& mut self.transport);
-      match mtype {
-        MessageType::MtException => {
-            // TODO
-            //let x = ApplicationException;
-            //x.read(& mut self protocol)
-            //self.protocol.read_message_end();
-            //transport.read_end();
-            //throw x  
-        }
-        MessageType::MtReply => {
-            match fname.as_slice() {
-                "add" => {
-                    result.read(&self.protocol, & mut self.transport);
+        let mut result = CalculatorAddResult { success: None };
+        if self.receive("add", &mut result) { result.success } else { None }
+    }
+
+    #[allow(unused_variables)]
+    fn receive<R: Readable>(& mut self, op: &'static str, result: &mut R) -> bool {
+        let mut have_result = false;
+        let (fname, mtype, rseqid) = self.protocol.read_message_begin(& mut self.transport);
+        match mtype {
+            MessageType::MtException => {
+                // TODO
+                //let x = ApplicationException;
+                //x.read(& mut self protocol)
+                //self.protocol.read_message_end();
+                //transport.read_end();
+                //throw x  
+            }
+            MessageType::MtReply => {
+                if fname.as_slice() == op {
+                    have_result = result.read(&self.protocol, & mut self.transport);
                 }
-                _ => {
+                else {
                     self.protocol.skip(& mut self.transport, Type::TStruct);
                 }
+                self.protocol.read_message_end(& mut self.transport);
+                //self.transport.read_end();
             }
-            self.protocol.read_message_end(& mut self.transport);
-            //self.transport.read_end();
+            _ => {
+                self.protocol.skip(& mut self.transport, Type::TStruct);
+                self.protocol.read_message_end(& mut self.transport);
+                //self.transport.read_end(); 
+            }
         }
-        _ => {
-            self.protocol.skip(& mut self.transport, Type::TStruct);
-            self.protocol.read_message_end(& mut self.transport);
-            //self.transport.read_end(); 
-        }
-      }
-      result.success
+        have_result
     }
+
+
+    fn calculate(& mut self, logid: i32, w: Work) -> Option<i32> {
+        self.send_calculate(logid, w);
+        self.receive_calculate()
+    }
+
+    fn send_calculate(& mut self, logid: i32,  w: Work) {
+        let cseqid: i32 = 0;
+        self.protocol.write_message_begin(& mut self.transport, "calculate", MessageType::MtCall, cseqid);
+        
+        let args = CalculatorCalculateArgs { logid: logid, w: w };
+        args.write(&self.protocol, & mut self.transport);
+        
+        self.protocol.write_message_end(& mut self.transport);
+
+        //self.transport.write_end();
+        self.transport.flush().unwrap();
+    }
+
+    fn receive_calculate(& mut self) -> Option<i32> {
+        let mut result = CalculatorCalculateResult { success: None, ouch: Exception };
+        // FIXME: handle exception
+        if self.receive("calculate", &mut result) { result.success } else { None }
+    }
+
+
 }
 
 pub fn main() {
@@ -229,6 +379,21 @@ pub fn main() {
     println!("ping()");
 
     println!("1 + 1 = {}", client.add(1, 1).unwrap());
+
+    let work = Work { op: Operation::DIVIDE, num1: 1, num2: 0, comment: None };
+
+    match client.calculate(1, work) {
+      Some(_) => {
+        println!("Whoa? We can divide by zero!");
+      }
+      None => {
+        // FIXME: use thrift exceptions
+        println!("Invalid operation")
+      }
+    }
+
+    let work = Work { op: Operation::SUBTRACT, num1: 15, num2: 10, comment: None };
+    println!("15 - 10 = {}", client.calculate(2, work).unwrap());
 
     println!("PASS");
 }
