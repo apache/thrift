@@ -712,6 +712,11 @@ public:
    */
   event_base* getUserEventBase() const { return userEventBase_; }
 
+  /** Some transports, like THeaderTransport, require passing through
+   * the framing size instead of stripping it.
+   */
+  bool getHeaderTransport();
+
 private:
   /**
    * Callback function that the threadmanager calls when a task reaches

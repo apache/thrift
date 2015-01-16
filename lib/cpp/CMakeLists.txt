@@ -46,6 +46,7 @@ set( thriftcpp_SOURCES
    src/thrift/protocol/TJSONProtocol.cpp
    src/thrift/protocol/TMultiplexedProtocol.cpp
    src/thrift/protocol/TProtocol.cpp
+   src/thrift/protocol/THeaderProtocol.cpp
    src/thrift/transport/TTransportException.cpp
    src/thrift/transport/TFDTransport.cpp
    src/thrift/transport/TSimpleFileTransport.cpp
@@ -57,6 +58,7 @@ set( thriftcpp_SOURCES
    src/thrift/transport/TServerSocket.cpp
    src/thrift/transport/TTransportUtils.cpp
    src/thrift/transport/TBufferTransports.cpp
+   src/thrift/transport/THeaderTransport.cpp
    src/thrift/server/TConnectedClient.cpp
    src/thrift/server/TServerFramework.cpp
    src/thrift/server/TSimpleServer.cpp
@@ -146,6 +148,8 @@ set( thriftcppnb_SOURCES
 # Thrift zlib server
 set( thriftcppz_SOURCES
     src/thrift/transport/TZlibTransport.cpp
+    src/thrift/protocol/THeaderProtocol.cpp
+    src/thrift/transport/THeaderTransport.cpp
 )
 
 # Thrift Qt4 server
