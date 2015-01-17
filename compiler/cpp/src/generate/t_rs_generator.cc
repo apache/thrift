@@ -62,6 +62,8 @@ class t_rs_generator : public t_oop_generator {
   string rs_imports();
 
   string render_rs_type(t_type* type);
+  string render_protocol_type(t_type* type);
+  string render_suffix(t_type* type);
 
  private:
 /*
@@ -89,8 +91,21 @@ class t_rs_generator : public t_oop_generator {
                                   bool setters = true);
 */
   void generate_struct_reader(t_struct* tstruct, bool pointers = false) {}
-  void generate_struct_writer(t_struct* tstruct, bool pointers = false) {}
+  void generate_struct_writer(t_struct* tstruct);
   void generate_struct_result_writer(t_struct* tstruct, bool pointers = false) {}
+
+  void generate_field_write(t_field* field);
+
+  /**
+   *Transforms a string with words separated by underscores to a pascal case equivalent
+   * e.g. a_multi_word -> AMultiWord
+   *      some_name    ->  SomeName
+   *      name         ->  Name
+   */
+  std::string pascalcase(const std::string& in) { 
+    return capitalize(camelcase(in)); 
+  }
+
  private:
   ofstream f_mod_;
 };
@@ -135,15 +150,16 @@ string t_rs_generator::rs_imports() {
 }
 
 void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
-  string tname = capitalize(ttypedef->get_symbolic());
+  string tname = pascalcase(ttypedef->get_symbolic());
   string tdef = render_rs_type(ttypedef->get_type());
   indent(f_mod_) << "pub type " << tname << " = " << tdef << ";\n";
   f_mod_ << "\n";
 }
 
 void t_rs_generator::generate_enum(t_enum* tenum) {
-  string ename = capitalize(tenum->get_name());
+  string ename = pascalcase(tenum->get_name());
   indent(f_mod_) << "#[allow(dead_code)]\n";
+  indent(f_mod_) << "#[derive(Copy)]\n";
   indent(f_mod_) << "pub enum " << ename << " {\n";
   indent_up();
 
@@ -160,7 +176,7 @@ void t_rs_generator::generate_enum(t_enum* tenum) {
 }
 
 void t_rs_generator::generate_struct(t_struct* tstruct) {
-  string struct_name = capitalize(tstruct->get_name());
+  string struct_name = pascalcase(tstruct->get_name());
   indent(f_mod_) << "#[allow(dead_code)]\n";
   if (tstruct->get_members().empty()) {
     indent(f_mod_) << "pub struct " << struct_name << ";\n\n";
@@ -173,7 +189,7 @@ void t_rs_generator::generate_struct(t_struct* tstruct) {
     const vector<t_field*>& members = tstruct->get_members();
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* t = get_true_type((*m_iter)->get_type());
-      indent(f_mod_) << underscore((*m_iter)->get_name()) << ": ";
+      indent(f_mod_) << "pub " << underscore((*m_iter)->get_name()) << ": ";
       // FIXME: handle T_OPT_IN_REQ_OUT
       if ((*m_iter)->get_req() == t_field::T_OPTIONAL) {
         f_mod_ << "Option<" << render_rs_type(t) << ">,\n";
@@ -186,6 +202,8 @@ void t_rs_generator::generate_struct(t_struct* tstruct) {
     indent_down();
     indent(f_mod_) << "}\n\n";
   }
+
+  generate_struct_writer(tstruct);
 }
 
 void t_rs_generator::generate_service(t_service* tservice) {
@@ -227,16 +245,16 @@ void t_rs_generator::generate_function_helpers(t_service* tservice, t_function* 
   t_struct* ts = tfunction->get_arglist();
   string name_orig = ts->get_name();
 
-  ts->set_name(tservice->get_name() + capitalize(tfunction->get_name()) + "Args");
+  ts->set_name(tservice->get_name() + "_" + tfunction->get_name() + "_args");
   generate_struct(ts);
   //generate_struct_definition(out, f_service_, ts, false);
   generate_struct_reader(ts);
-  generate_struct_writer(ts);
+  //generate_struct_writer(ts);
 
-  ts->set_name(tservice->get_name() + capitalize(tfunction->get_name()) + "PArgs");
+  ts->set_name(tservice->get_name() + "_" + tfunction->get_name() + "_pargs");
   generate_struct_declaration(ts, false, true, false, true);
   //generate_struct_definition(out, f_service_, ts, false);
-  generate_struct_writer(ts, true);
+  //generate_struct_writer(ts, true);
 
   ts->set_name(name_orig);
 
@@ -244,7 +262,7 @@ void t_rs_generator::generate_function_helpers(t_service* tservice, t_function* 
     return;
   }
 
-  t_struct result(program_, tservice->get_name() + capitalize(tfunction->get_name()) + "Result");
+  t_struct result(program_, tservice->get_name() + "_" + tfunction->get_name() + "_result");
   t_field success(tfunction->get_returntype(), "success", 0);
   if (!tfunction->get_returntype()->is_void()) {
     result.append(&success);
@@ -262,7 +280,7 @@ void t_rs_generator::generate_function_helpers(t_service* tservice, t_function* 
   generate_struct_reader(&result);
   generate_struct_result_writer(&result);
 
-  result.set_name(tservice->get_name() + capitalize(tfunction->get_name()) + "PResult");
+  result.set_name(tservice->get_name() + "_" + tfunction->get_name() + "_pesult");
   generate_struct_declaration(&result, false, true, true /*, gen_cob_style_*/);
   //generate_struct_definition(f_service_, &result, false);
   generate_struct_reader(&result, true);
@@ -273,6 +291,76 @@ void t_rs_generator::generate_function_helpers(t_service* tservice, t_function* 
 */
 }
 
+void t_rs_generator::generate_struct_writer(t_struct* tstruct) {
+  string struct_name = pascalcase(tstruct->get_name());
+  indent(f_mod_) << "impl " << struct_name << " {\n\n";
+  indent_up();
+
+    indent(f_mod_) << "#[allow(unused_variables)]\n";
+    indent(f_mod_) << "#[allow(dead_code)]\n";
+    indent(f_mod_) << "pub fn write(&self, oprot: &Protocol, transport: &mut Transport) {\n";
+    indent_up();
+      indent(f_mod_) << "oprot.write_struct_begin(transport, \"" << tstruct->get_name() << "\");\n\n";
+
+      vector<t_field*>::const_iterator m_iter;
+      const vector<t_field*>& members = tstruct->get_members();
+      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+        generate_field_write(*m_iter);
+      }
+
+      indent(f_mod_) << "oprot.write_field_stop(transport);\n";
+      indent(f_mod_) << "oprot.write_struct_end(transport);\n";
+
+    indent_down();
+    indent(f_mod_) << "}\n\n";
+
+  indent_down();
+  indent(f_mod_) << "}\n\n";
+}
+
+bool is_string(t_type* type) {
+  return type->is_base_type() && (((t_base_type*)type)->get_base() == t_base_type::TYPE_STRING);
+}
+
+void t_rs_generator::generate_field_write(t_field* field) {
+  string qualified_name = "self." + field->get_name();
+  t_type* type = get_true_type(field->get_type());
+  bool is_optional = field->get_req() == t_field::T_OPTIONAL;
+
+  // FIXME: handle T_OPT_IN_REQ_OUT
+  if (is_optional) {
+    indent(f_mod_) << "match " << qualified_name << " {\n";
+    indent_up();
+    indent(f_mod_) << "Some(ref x) => {\n";
+    indent_up();
+    qualified_name = "x";
+  }
+
+  indent(f_mod_) << "oprot.write_field_begin(transport, \"" << field->get_name()
+                 << "\", Type::" << render_protocol_type(type)
+                 << ", " << field->get_key() << ");\n";
+  if (type->is_base_type() || type->is_enum()) {
+    // FIXME: extract method
+    string decorated_name = 
+      type->is_enum() ? qualified_name + " as i32" : 
+      ((is_string(type) && !is_optional) ? "&" + qualified_name : qualified_name);
+    indent(f_mod_) << "oprot.write_" << render_suffix(type) 
+                   << "(transport, " << decorated_name << ");\n";
+  }
+  else {
+    indent(f_mod_) << qualified_name << ".write(oprot, transport);\n";
+  }
+  indent(f_mod_) << "oprot.write_field_end(transport);\n";
+
+  if (is_optional) {
+    indent_down();
+    indent(f_mod_) << "}\n";
+    indent(f_mod_) << "_ => {}\n";
+    indent_down();
+    indent(f_mod_) << "}\n";
+  }
+  indent(f_mod_) << "\n";
+}
 
 string t_rs_generator::render_rs_type(t_type* type) {
   type = get_true_type(type);
@@ -319,6 +407,98 @@ string t_rs_generator::render_rs_type(t_type* type) {
 
   } else {
     throw "INVALID TYPE IN type_to_enum: " + type->get_name();
+  }
+  return ""; // silence the compiler warning
+}
+
+string t_rs_generator::render_protocol_type(t_type* type) {
+  type = get_true_type(type);
+
+  if (type->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+    switch (tbase) {
+    case t_base_type::TYPE_VOID:
+      return "TVoid";
+    case t_base_type::TYPE_STRING:
+      return "TString";
+    case t_base_type::TYPE_BOOL:
+      return "TBool";
+    case t_base_type::TYPE_BYTE:
+      return "TByte";
+    case t_base_type::TYPE_I16:
+      return "TI16";
+    case t_base_type::TYPE_I32:
+      return "TI32";
+    case t_base_type::TYPE_I64:
+      return "TI64";
+    case t_base_type::TYPE_DOUBLE:
+      return "TDouble";
+    }
+
+  } else if (type->is_enum()) {
+    return "TI32";
+
+  } else if (type->is_struct() || type->is_xception()) {
+    return "TStruct";
+
+  } else if (type->is_map()) {
+    return "TMap";
+
+  } else if (type->is_set()) {
+    return "TSet";
+
+  } else if (type->is_list()) {
+    return "TList";
+
+  } else {
+    throw "INVALID TYPE IN render_protocol_type: " + type->get_name();
+  }
+  return ""; // silence the compiler warning
+}
+
+
+string t_rs_generator::render_suffix(t_type* type) {
+  type = get_true_type(type);
+
+  if (type->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+    switch (tbase) {
+    case t_base_type::TYPE_VOID:
+      throw "void fields are not read or written";
+    case t_base_type::TYPE_STRING:
+      return (((t_base_type*)type)->is_binary() ? "binary" : "string");
+    case t_base_type::TYPE_BOOL:
+      return "bool";
+    case t_base_type::TYPE_BYTE:
+      return "i8";
+    case t_base_type::TYPE_I16:
+      return "i16";
+    case t_base_type::TYPE_I32:
+      return "i32";
+    case t_base_type::TYPE_I64:
+      return "i64";
+    case t_base_type::TYPE_DOUBLE:
+      return "double";
+    }
+
+  } else if (type->is_enum()) {
+    return "i32";
+
+  // FIXME: other cases should throw
+  } else if (type->is_struct() || type->is_xception()) {
+    return "struct";
+
+  } else if (type->is_map()) {
+    return "struct";
+
+  } else if (type->is_set()) {
+    return "struct";
+
+  } else if (type->is_list()) {
+    return "struct";
+
+  } else {
+    throw "INVALID TYPE IN render_protocol_type: " + type->get_name();
   }
   return ""; // silence the compiler warning
 }

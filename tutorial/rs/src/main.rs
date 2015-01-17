@@ -28,24 +28,14 @@ use thrift::transport::Transport;
 use thrift::protocol::Protocol;
 use thrift::protocol::binary_protocol::BinaryProtocol;
 
+mod tutorial;
+
 
 trait Readable {
     fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> bool;
 }
 
 // TODO: shall be generated
-//#[allow(dead_code)]
-struct CalculatorPingArgs;
-
-impl CalculatorPingArgs {
-
-    #[allow(unused_variables)]
-    fn write(&self, oprot: &Protocol, transport: & mut Transport) {
-        oprot.write_struct_begin(transport, "Calculator_ping_args");
-        oprot.write_field_stop(transport);
-        oprot.write_struct_end(transport);
-    }
-}
 
 struct CalculatorPingResult;
 
@@ -53,30 +43,6 @@ impl CalculatorPingResult {
 
     fn read(&self, iprot: &Protocol, transport: & mut Transport) {
         iprot.skip(transport, Type::TStruct);
-    }
-}
-
-struct CalculatorAddArgs {
-    num1: i32,
-    num2: i32,
-}
-
-impl CalculatorAddArgs {
-
-    #[allow(unused_variables)]
-    fn write(&self, oprot: &Protocol, transport: & mut Transport) {
-        oprot.write_struct_begin(transport, "Calculator_add_args");
-
-        oprot.write_field_begin(transport, "num1", Type::TI32, 1);
-        oprot.write_i32(transport, self.num1);
-        oprot.write_field_end(transport);
-
-        oprot.write_field_begin(transport, "num2", Type::TI32, 2);
-        oprot.write_i32(transport, self.num2);
-        oprot.write_field_end(transport);
-
-        oprot.write_field_stop(transport);
-        oprot.write_struct_end(transport);
     }
 }
 
@@ -113,78 +79,6 @@ impl Readable for CalculatorAddResult {
     }
 }
 
-
-#[derive(Copy)]
-#[allow(dead_code)]
-enum Operation {
-    ADD = 1,
-    SUBTRACT = 2,
-    MULTIPLY = 3,
-    DIVIDE = 4,
-}
-
-struct Work {
-    num1: i32,
-    num2: i32,
-    op: Operation,
-    comment: Option<String>,
-}
-
-impl Work {
-
-    #[allow(unused_variables)]
-    fn write(&self, oprot: &Protocol, transport: & mut Transport) {
-        oprot.write_struct_begin(transport, "Work");
-
-        oprot.write_field_begin(transport, "num1", Type::TI32, 1);
-        oprot.write_i32(transport, self.num1);
-        oprot.write_field_end(transport);
-
-        oprot.write_field_begin(transport, "num2", Type::TI32, 2);
-        oprot.write_i32(transport, self.num2);
-        oprot.write_field_end(transport);
-
-        oprot.write_field_begin(transport, "op", Type::TI32, 3);
-        oprot.write_i32(transport, self.op as i32);
-        oprot.write_field_end(transport);
-
-        match self.comment {
-            Some(ref s) => {
-                oprot.write_field_begin(transport, "comment", Type::TString, 4);
-                oprot.write_string(transport, s.as_slice());
-                oprot.write_field_end(transport);
-            }
-            _ => {}
-        }
-
-        oprot.write_field_stop(transport);
-        oprot.write_struct_end(transport);
-    }
-}
-
-struct CalculatorCalculateArgs {
-    logid: i32,
-    w: Work,
-}
-
-impl CalculatorCalculateArgs {
-
-    #[allow(unused_variables)]
-    fn write(&self, oprot: &Protocol, transport: & mut Transport) {
-        oprot.write_struct_begin(transport, "Calculator_calculate_args");
-
-        oprot.write_field_begin(transport, "logid", Type::TI32, 1);
-        oprot.write_i32(transport, self.logid);
-        oprot.write_field_end(transport);
-
-        oprot.write_field_begin(transport, "work", Type::TStruct, 2);
-        self.w.write(oprot, transport);
-        oprot.write_field_end(transport);
-
-        oprot.write_field_stop(transport);
-        oprot.write_struct_end(transport);
-    }
-}
 
 struct Exception;
 
@@ -244,7 +138,7 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
         let cseqid: i32 = 0;
         self.protocol.write_message_begin(& mut self.transport, "ping", MessageType::MtCall, cseqid);
         
-        let args = CalculatorPingArgs;
+        let args = tutorial::CalculatorPingArgs;
         args.write(&self.protocol, & mut self.transport);
         
         self.protocol.write_message_end(& mut self.transport);
@@ -295,7 +189,7 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
         let cseqid: i32 = 0;
         self.protocol.write_message_begin(& mut self.transport, "add", MessageType::MtCall, cseqid);
         
-        let args = CalculatorAddArgs { num1: num1, num2: num2 };
+        let args = tutorial::CalculatorAddArgs { num1: num1, num2: num2 };
         args.write(&self.protocol, & mut self.transport);
         
         self.protocol.write_message_end(& mut self.transport);
@@ -342,16 +236,16 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
     }
 
 
-    fn calculate(& mut self, logid: i32, w: Work) -> Option<i32> {
+    fn calculate(& mut self, logid: i32, w: tutorial::Work) -> Option<i32> {
         self.send_calculate(logid, w);
         self.receive_calculate()
     }
 
-    fn send_calculate(& mut self, logid: i32,  w: Work) {
+    fn send_calculate(& mut self, logid: i32,  w: tutorial::Work) {
         let cseqid: i32 = 0;
         self.protocol.write_message_begin(& mut self.transport, "calculate", MessageType::MtCall, cseqid);
         
-        let args = CalculatorCalculateArgs { logid: logid, w: w };
+        let args = tutorial::CalculatorCalculateArgs { logid: logid, w: w };
         args.write(&self.protocol, & mut self.transport);
         
         self.protocol.write_message_end(& mut self.transport);
@@ -382,7 +276,7 @@ pub fn main() {
 
     println!("1 + 1 = {}", client.add(1, 1).unwrap());
 
-    let work = Work { op: Operation::DIVIDE, num1: 1, num2: 0, comment: None };
+    let work = tutorial::Work { op: tutorial::Operation::DIVIDE, num1: 1, num2: 0, comment: None };
 
     match client.calculate(1, work) {
       Some(_) => {
@@ -394,7 +288,7 @@ pub fn main() {
       }
     }
 
-    let work = Work { op: Operation::SUBTRACT, num1: 15, num2: 10, comment: None };
+    let work = tutorial::Work { op: tutorial::Operation::SUBTRACT, num1: 15, num2: 10, comment: None };
     println!("15 - 10 = {}", client.calculate(2, work).unwrap());
 
     println!("PASS");

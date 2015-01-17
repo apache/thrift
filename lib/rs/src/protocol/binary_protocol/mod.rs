@@ -32,7 +32,7 @@ impl Protocol for BinaryProtocol {
     ) {
         let version = ((BINARY_PROTOCOL_VERSION_1 as i32) << 16) | message_type as i32;
         self.write_i32(transport, version);
-        self.write_string(transport, name);
+        self.write_str(transport, name);
         self.write_i32(transport, sequence_id);
     }
 
@@ -119,8 +119,12 @@ impl Protocol for BinaryProtocol {
         }
     }
 
-    fn write_string(&self, transport: &mut Transport, value: &str) {
+    fn write_str(&self, transport: &mut Transport, value: &str) {
         self.write_binary(transport, value.as_bytes());
+    }
+
+    fn write_string(&self, transport: &mut Transport, value: &String) {
+        self.write_binary(transport, value.as_slice().as_bytes());
     }
 
     fn write_binary(&self, transport: &mut Transport, value: &[u8]) {

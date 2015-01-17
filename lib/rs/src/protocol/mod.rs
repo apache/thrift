@@ -70,7 +70,8 @@ pub trait Protocol {
     fn write_i32(&self, transport: &mut Transport, value: i32);
     fn write_i64(&self, transport: &mut Transport, value: i64);
     fn write_double(&self, transport: &mut Transport, value: f64);
-    fn write_string(&self, transport: &mut Transport, value: &str);
+    fn write_str(&self, transport: &mut Transport, value: &str);
+    fn write_string(&self, transport: &mut Transport, value: &String);
     fn write_binary(&self, transport: &mut Transport, value: &[u8]);
 
     fn read_message_begin(&self, transport: &mut Transport) -> (String, MessageType, i32);
