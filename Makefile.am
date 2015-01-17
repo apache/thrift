@@ -37,12 +37,17 @@ dist-hook:
 print-version:
 	@echo $(VERSION)
 
+.PHONY: precross cross cross2
 precross-%: all
 	$(MAKE) -C $* precross
 precross: all precross-test precross-lib
 
 cross: precross
 	sh test/test.sh
+
+# TODO: generate --server and --client switches from "--with(out)-..." build flags
+cross2: precross
+	python test/test.py -s
 
 codespell_skip_files = \
 	*.jar \
