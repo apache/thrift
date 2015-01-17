@@ -148,11 +148,13 @@ impl Work {
         oprot.write_i32(transport, self.op as i32);
         oprot.write_field_end(transport);
 
-        if self.comment.is_some() {
-            // FIXME
-            //oprot.write_field_begin(transport, "comment", Type::TString, 4);
-            //oprot.write_string(transport, self.comment.unwrap().as_slice());
-            //oprot.write_field_end(transport);
+        match self.comment {
+            Some(ref s) => {
+                oprot.write_field_begin(transport, "comment", Type::TString, 4);
+                oprot.write_string(transport, s.as_slice());
+                oprot.write_field_end(transport);
+            }
+            _ => {}
         }
 
         oprot.write_field_stop(transport);
