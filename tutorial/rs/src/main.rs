@@ -110,8 +110,8 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
     }
 
     fn receive_add(& mut self) -> Option<i32> {
-        let mut result = tutorial::CalculatorAddResult { success: None };
-        if self.receive("add", &mut result) { result.success } else { None }
+        let mut result = tutorial::CalculatorAddResult { success: 0 };
+        if self.receive("add", &mut result) { Some(result.success) } else { None }
     }
 
     #[allow(unused_variables)]
@@ -166,9 +166,9 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
     }
 
     fn receive_calculate(& mut self) -> Option<i32> {
-        let mut result = tutorial::CalculatorCalculateResult { success: None, ouch: None };
+        let mut result = tutorial::CalculatorCalculateResult { success: 0, ouch: None };
         // FIXME: handle exception
-        if self.receive("calculate", &mut result) { result.success } else { None }
+        if self.receive("calculate", &mut result) { Some(result.success) } else { None }
     }
 
 

@@ -238,7 +238,6 @@ void t_rs_generator::generate_function_helpers(t_service* tservice, t_function* 
   t_struct result(program_, tservice->get_name() + "_" + tfunction->get_name() + "_result");
   t_field success(tfunction->get_returntype(), "success", 0);
   if (!tfunction->get_returntype()->is_void()) {
-    success.set_req(t_field::T_OPTIONAL);
     result.append(&success);
   }
 
@@ -349,9 +348,10 @@ void t_rs_generator::generate_struct_reader(t_struct* tstruct) {
         indent_up();
           if (!tstruct->get_members().empty()) {
             // FIXME: only to receive result for now
+            // FIXME: handle other result types as well
             indent(f_mod_) << "(0, Type::TI32) => {\n";
             indent_up();
-              indent(f_mod_) << "self.success = Some(iprot.read_i32(transport));\n";
+              indent(f_mod_) << "self.success = iprot.read_i32(transport);\n";
               indent(f_mod_) << "have_result = true\n";
             indent_down();
             indent(f_mod_) << "}\n";

@@ -161,7 +161,7 @@ impl CalculatorAddArgs {
 
 #[allow(dead_code)]
 pub struct CalculatorAddResult {
-  pub success: Option<i32>,
+  pub success: i32,
 }
 
 impl Readable for CalculatorAddResult {
@@ -176,7 +176,7 @@ impl Readable for CalculatorAddResult {
       }
       match (fid, ftype) {
         (0, Type::TI32) => {
-          self.success = Some(iprot.read_i32(transport));
+          self.success = iprot.read_i32(transport);
           have_result = true
         }
         _ => {
@@ -219,7 +219,7 @@ impl CalculatorCalculateArgs {
 
 #[allow(dead_code)]
 pub struct CalculatorCalculateResult {
-  pub success: Option<i32>,
+  pub success: i32,
   pub ouch: Option<InvalidOperation>,
 }
 
@@ -235,7 +235,7 @@ impl Readable for CalculatorCalculateResult {
       }
       match (fid, ftype) {
         (0, Type::TI32) => {
-          self.success = Some(iprot.read_i32(transport));
+          self.success = iprot.read_i32(transport);
           have_result = true
         }
         _ => {
