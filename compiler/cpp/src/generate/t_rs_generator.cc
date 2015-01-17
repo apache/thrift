@@ -43,7 +43,8 @@ class t_rs_generator : public t_oop_generator {
   {
     (void) parsed_options;
     (void) option_string;
-    out_dir_base_ = "gen-rs";
+    // FIXME: change back to gen-rs when we finalize mod structure for generated code
+    out_dir_base_ = "src";
   }
 
   void init_generator();
@@ -96,7 +97,8 @@ class t_rs_generator : public t_oop_generator {
 
 void t_rs_generator::init_generator() {
   // Make output directory
-  MKDIR(get_out_dir().c_str());
+  // FIXME: enable when finalizing the code structure
+  //MKDIR(get_out_dir().c_str());
   string pname = underscore(program_name_);
   string moddirname = get_out_dir() + pname + "/";
   MKDIR(moddirname.c_str());
@@ -124,7 +126,12 @@ string t_rs_generator::rs_autogen_comment() {
 }
 
 string t_rs_generator::rs_imports() {
-  return string("#[allow(unused_imports)]\nuse std::collections::{HashMap, HashSet};\n");
+  return string(
+    "#[allow(unused_imports)]\n"
+    "use std::collections::{HashMap, HashSet};\n"
+    "use thrift::protocol::{MessageType, Type};\n"
+    "use thrift::transport::Transport;\n"
+    "use thrift::protocol::Protocol;\n");
 }
 
 void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
@@ -136,6 +143,7 @@ void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
 
 void t_rs_generator::generate_enum(t_enum* tenum) {
   string ename = capitalize(tenum->get_name());
+  indent(f_mod_) << "#[allow(dead_code)]\n";
   indent(f_mod_) << "pub enum " << ename << " {\n";
   indent_up();
 
@@ -165,7 +173,14 @@ void t_rs_generator::generate_struct(t_struct* tstruct) {
     const vector<t_field*>& members = tstruct->get_members();
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* t = get_true_type((*m_iter)->get_type());
-      indent(f_mod_) << underscore((*m_iter)->get_name()) << ": " << render_rs_type(t) << ",\n";
+      indent(f_mod_) << underscore((*m_iter)->get_name()) << ": ";
+      // FIXME: handle T_OPT_IN_REQ_OUT
+      if ((*m_iter)->get_req() == t_field::T_OPTIONAL) {
+        f_mod_ << "Option<" << render_rs_type(t) << ">,\n";
+      }
+      else {
+        f_mod_ << render_rs_type(t) << ",\n";
+      }
     }
 
     indent_down();
@@ -305,6 +320,7 @@ string t_rs_generator::render_rs_type(t_type* type) {
   } else {
     throw "INVALID TYPE IN type_to_enum: " + type->get_name();
   }
+  return ""; // silence the compiler warning
 }
 
 THRIFT_REGISTER_GENERATOR(rs, "Rust", "")
