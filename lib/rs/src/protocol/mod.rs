@@ -26,6 +26,10 @@ pub enum MessageType {
     MtException = 0x03,
 }
 
+pub trait Readable {
+    fn read(&mut self, iprot: &Protocol, transport: &mut Transport) -> bool;
+}
+
 pub trait Protocol {
     fn write_message_begin(
         &self,

@@ -26,100 +26,11 @@ use std::io::net::ip;
 use thrift::protocol::{MessageType, Type};
 use thrift::transport::Transport;
 use thrift::protocol::Protocol;
+use thrift::protocol::Readable;
 use thrift::protocol::binary_protocol::BinaryProtocol;
 
 mod tutorial;
 
-
-trait Readable {
-    fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> bool;
-}
-
-// TODO: shall be generated
-
-struct CalculatorPingResult;
-
-impl CalculatorPingResult {
-
-    fn read(&self, iprot: &Protocol, transport: & mut Transport) {
-        iprot.skip(transport, Type::TStruct);
-    }
-}
-
-struct CalculatorAddResult {
-    success: Option<i32>,
-}
-
-impl Readable for CalculatorAddResult {
-
-    #[allow(unused_variables)]
-    fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> bool {
-        let mut have_result = false;
-
-        iprot.read_struct_begin(transport);
-
-        loop {
-            let (fname, ftype, fid) = iprot.read_field_begin(transport);
-            if ftype == Type::TStop {
-                break;
-            }
-            match (fid, ftype) {
-                (0, Type::TI32) => {
-                    self.success = Some(iprot.read_i32(transport));
-                    have_result = true
-                }
-                _ => {
-                    iprot.skip(transport, ftype);
-                }
-            }
-            iprot.read_field_end(transport);
-        }
-        iprot.read_struct_end(transport);
-        have_result
-    }
-}
-
-
-struct Exception;
-
-#[allow(dead_code)]
-struct CalculatorCalculateResult {
-    success: Option<i32>,
-    ouch: Exception
-}
-
-impl Readable for CalculatorCalculateResult {
-
-    #[allow(unused_variables)]
-    fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> bool {
-        let mut have_result = false;
-
-        iprot.read_struct_begin(transport);
-
-        loop {
-            let (fname, ftype, fid) = iprot.read_field_begin(transport);
-            if ftype == Type::TStop {
-                break;
-            }
-            match (fid, ftype) {
-                (0, Type::TI32) => {
-                    self.success = Some(iprot.read_i32(transport));
-                    have_result = true;
-                }
-                (1, Type::TStruct) => {
-                    // FIXME read ouch
-                    iprot.skip(transport, ftype);
-                }
-                _ => {
-                    iprot.skip(transport, ftype);
-                }
-            }
-            iprot.read_field_end(transport);
-        }
-        iprot.read_struct_end(transport);
-        have_result
-    }
-}
 
 struct CalculatorClient<T: Transport, P: Protocol> {
     transport: T,
@@ -162,8 +73,8 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
         MessageType::MtReply => {
             match fname.as_slice() {
                 "ping" => {
-                    let result = CalculatorPingResult;
-                    result.read(&self.protocol, & mut self.transport);
+                    let mut result = tutorial::CalculatorPingResult;
+                    result.read(&self.protocol, &mut self.transport);
                 }
                 _ => {
                     self.protocol.skip(& mut self.transport, Type::TStruct);
@@ -199,7 +110,7 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
     }
 
     fn receive_add(& mut self) -> Option<i32> {
-        let mut result = CalculatorAddResult { success: None };
+        let mut result = tutorial::CalculatorAddResult { success: None };
         if self.receive("add", &mut result) { result.success } else { None }
     }
 
@@ -255,7 +166,7 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
     }
 
     fn receive_calculate(& mut self) -> Option<i32> {
-        let mut result = CalculatorCalculateResult { success: None, ouch: Exception };
+        let mut result = tutorial::CalculatorCalculateResult { success: None, ouch: None };
         // FIXME: handle exception
         if self.receive("calculate", &mut result) { result.success } else { None }
     }
