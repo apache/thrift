@@ -5,10 +5,14 @@
 ///////////////////////////////////////////////////////////////
 
 #[allow(unused_imports)]
+use thrift::TResult;
+#[allow(unused_imports)]
 use std::collections::{HashMap, HashSet};
+#[allow(unused_imports)]
 use thrift::protocol::{MessageType, Type};
 use thrift::transport::Transport;
 use thrift::protocol::Protocol;
+#[allow(unused_imports)]
 use thrift::protocol::Readable;
 
 #[allow(dead_code)]
@@ -98,38 +102,15 @@ impl CalculatorPingArgs {
 
   #[allow(unused_variables)]
   #[allow(dead_code)]
-  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) {
+  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
     oprot.write_struct_begin(transport, "Calculator_ping_args");
 
     oprot.write_field_stop(transport);
     oprot.write_struct_end(transport);
+
+    Ok(())
   }
 
-}
-
-#[allow(dead_code)]
-pub struct CalculatorPingResult;
-
-impl Readable for CalculatorPingResult {
-
-  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> bool {
-    let mut have_result = false;
-    iprot.read_struct_begin(transport);
-    loop {
-      let (fname, ftype, fid) = iprot.read_field_begin(transport);
-      if ftype == Type::TStop {
-        break;
-      }
-      match (fid, ftype) {
-        _ => {
-          iprot.skip(transport, ftype);
-        }
-      }
-      iprot.read_field_end(transport);
-    }
-    iprot.read_struct_end(transport);
-    have_result
-  }
 }
 
 #[allow(dead_code)]
@@ -160,37 +141,6 @@ impl CalculatorAddArgs {
 }
 
 #[allow(dead_code)]
-pub struct CalculatorAddResult {
-  pub success: i32,
-}
-
-impl Readable for CalculatorAddResult {
-
-  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> bool {
-    let mut have_result = false;
-    iprot.read_struct_begin(transport);
-    loop {
-      let (fname, ftype, fid) = iprot.read_field_begin(transport);
-      if ftype == Type::TStop {
-        break;
-      }
-      match (fid, ftype) {
-        (0, Type::TI32) => {
-          self.success = iprot.read_i32(transport);
-          have_result = true
-        }
-        _ => {
-          iprot.skip(transport, ftype);
-        }
-      }
-      iprot.read_field_end(transport);
-    }
-    iprot.read_struct_end(transport);
-    have_result
-  }
-}
-
-#[allow(dead_code)]
 pub struct CalculatorCalculateArgs {
   pub logid: i32,
   pub w: Work,
@@ -217,37 +167,6 @@ impl CalculatorCalculateArgs {
 
 }
 
-#[allow(dead_code)]
-pub struct CalculatorCalculateResult {
-  pub success: i32,
-  pub ouch: Option<InvalidOperation>,
-}
-
-impl Readable for CalculatorCalculateResult {
-
-  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> bool {
-    let mut have_result = false;
-    iprot.read_struct_begin(transport);
-    loop {
-      let (fname, ftype, fid) = iprot.read_field_begin(transport);
-      if ftype == Type::TStop {
-        break;
-      }
-      match (fid, ftype) {
-        (0, Type::TI32) => {
-          self.success = iprot.read_i32(transport);
-          have_result = true
-        }
-        _ => {
-          iprot.skip(transport, ftype);
-        }
-      }
-      iprot.read_field_end(transport);
-    }
-    iprot.read_struct_end(transport);
-    have_result
-  }
-}
 
 #[allow(dead_code)]
 pub struct CalculatorZipArgs;

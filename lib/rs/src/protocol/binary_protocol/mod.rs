@@ -20,6 +20,8 @@
 use protocol;
 use protocol::{ MessageType, Protocol, Type };
 use transport::Transport;
+use ThriftErr;
+use TResult;
 use std::num::FromPrimitive;
 
 static BINARY_PROTOCOL_VERSION_1: u16 = 0x8001;
@@ -32,11 +34,11 @@ impl BinaryProtocol {
         self.write_byte(transport, type_ as i8);
     }
 
-    fn read_type(&self, transport: &mut Transport) -> Type {
-        let raw = self.read_byte(transport);
+    fn read_type(&self, transport: &mut Transport) -> TResult<Type> {
+        let raw = try!(self.read_byte(transport));
         match FromPrimitive::from_i8(raw) {
-            Some(type_) => type_,
-            None => panic!("unknown type {}", raw),
+            Some(type_) => Ok(type_),
+            None => Err(ThriftErr::InvalidData),
         }
     }
 }
@@ -153,148 +155,163 @@ impl Protocol for BinaryProtocol {
         }
     }
 
-    fn read_message_begin(&self, transport: &mut Transport) -> (String, MessageType, i32) {
-        let header = self.read_i32(transport);
+    fn read_message_begin(&self, transport: &mut Transport) -> TResult<(String, MessageType, i32)> {
+        let header = try!(self.read_i32(transport));
         let version = (header >> 16) as u16;
         if version != BINARY_PROTOCOL_VERSION_1 {
-            panic!("unknown protocol version: {:x}", version);
+            return Err(ThriftErr::BadVersion);
         };
-        let name = self.read_string(transport);
+        let name = try!(self.read_string(transport));
         let raw_type = header & 0xff;
         let message_type = match FromPrimitive::from_i32(raw_type) {
             Some(t) => t,
-            None => panic!("unknown message type {:x}", raw_type),
+            None => return Err(ThriftErr::InvalidData),
         };
-        let sequence_id = self.read_i32(transport);
-        (name, message_type, sequence_id)
+        let sequence_id = try!(self.read_i32(transport));
+        Ok((name, message_type, sequence_id))
     }
 
-    fn read_message_end(&self, _transport: &mut Transport) { }
+    fn read_message_end(&self, _transport: &mut Transport) -> TResult<()> {
+        Ok(())
+    }
 
-    fn read_struct_begin(&self, _transport: &mut Transport) -> String { String::from_str("") }
+    fn read_struct_begin(&self, _transport: &mut Transport) -> TResult<String> {
+        Ok(String::new())
+    }
 
-    fn read_struct_end(&self, _transport: &mut Transport) { }
+    fn read_struct_end(&self, _transport: &mut Transport) -> TResult<()> {
+        Ok(())
+    }
 
-    fn read_field_begin(&self, transport: &mut Transport) -> (String, Type, i16) {
-        let field_type = self.read_type(transport);
+    fn read_field_begin(&self, transport: &mut Transport) -> TResult<(String, Type, i16)> {
+        let field_type = try!(self.read_type(transport));
         let field_id = match field_type {
             protocol::Type::TStop => 0,
-            _ => self.read_i16(transport),
+            _ => try!(self.read_i16(transport)),
         };
-        (String::from_str(""), field_type, field_id)
+        Ok((String::new(), field_type, field_id))
     }
 
-    fn read_field_end(&self, _transport: &mut Transport) { }
-
-    fn read_map_begin(&self, transport: &mut Transport) -> (Type, Type, i32) {
-        let key_type = self.read_type(transport);
-        let value_type = self.read_type(transport);
-        let size = self.read_i32(transport);
-        (key_type, value_type, size)
+    fn read_field_end(&self, _transport: &mut Transport) -> TResult<()> {
+        Ok(())
     }
 
-    fn read_map_end(&self, _transport: &mut Transport) { }
-
-    fn read_list_begin(&self, transport: &mut Transport) -> (Type, i32) {
-        let elem_type = self.read_type(transport);
-        let size = self.read_i32(transport);
-        (elem_type, size)
+    fn read_map_begin(&self, transport: &mut Transport) -> TResult<(Type, Type, i32)> {
+        let key_type = try!(self.read_type(transport));
+        let value_type = try!(self.read_type(transport));
+        let size = try!(self.read_i32(transport));
+        Ok((key_type, value_type, size))
     }
 
-    fn read_list_end(&self, _transport: &mut Transport) { }
-
-    fn read_set_begin(&self, transport: &mut Transport) -> (Type, i32) {
-        let elem_type = self.read_type(transport);
-        let size = self.read_i32(transport);
-        (elem_type, size)
+    fn read_map_end(&self, _transport: &mut Transport) -> TResult<()> {
+        Ok(())
     }
 
-    fn read_set_end(&self, _transport: &mut Transport) { }
+    fn read_list_begin(&self, transport: &mut Transport) -> TResult<(Type, i32)> {
+        let elem_type = try!(self.read_type(transport));
+        let size = try!(self.read_i32(transport));
+        Ok((elem_type, size))
+    }
 
-    fn read_bool(&self, transport: &mut Transport) -> bool {
-        match self.read_byte(transport) {
-            0 => false,
-            _ => true,
+    fn read_list_end(&self, _transport: &mut Transport) -> TResult<()> {
+        Ok(())
+    }
+
+    fn read_set_begin(&self, transport: &mut Transport) -> TResult<(Type, i32)> {
+        let elem_type = try!(self.read_type(transport));
+        let size = try!(self.read_i32(transport));
+        Ok((elem_type, size))
+    }
+
+    fn read_set_end(&self, _transport: &mut Transport) -> TResult<()> {
+        Ok(())
+    }
+
+    fn read_bool(&self, transport: &mut Transport) -> TResult<bool> {
+        match try!(self.read_byte(transport)) {
+            0 => Ok(false),
+            _ => Ok(true),
         }
     }
 
-    fn read_byte(&self, transport: &mut Transport) -> i8 {
-        transport.read_i8().unwrap()
+    fn read_byte(&self, transport: &mut Transport) -> TResult<i8> {
+        transport.read_i8().map_err(|e| ThriftErr::TransportError(e))
     }
 
-    fn read_i16(&self, transport: &mut Transport) -> i16 {
-        transport.read_be_i16().unwrap()
+    fn read_i16(&self, transport: &mut Transport) -> TResult<i16> {
+        transport.read_be_i16().map_err(|e| ThriftErr::TransportError(e))
     }
 
-    fn read_i32(&self, transport: &mut Transport) -> i32 {
-        transport.read_be_i32().unwrap()
+    fn read_i32(&self, transport: &mut Transport) -> TResult<i32> {
+        transport.read_be_i32().map_err(|e| ThriftErr::TransportError(e))
     }
 
-    fn read_i64(&self, transport: &mut Transport) -> i64 {
-        transport.read_be_i64().unwrap()
+    fn read_i64(&self, transport: &mut Transport) -> TResult<i64> {
+        transport.read_be_i64().map_err(|e| ThriftErr::TransportError(e))
     }
 
-    fn read_double(&self, transport: &mut Transport) -> f64 {
-        transport.read_be_f64().unwrap()
+    fn read_double(&self, transport: &mut Transport) -> TResult<f64> {
+        transport.read_be_f64().map_err(|e| ThriftErr::TransportError(e))
     }
 
-    fn read_string(&self, transport: &mut Transport) -> String {
-        String::from_utf8(self.read_binary(transport)).unwrap()
+    fn read_string(&self, transport: &mut Transport) -> TResult<String> {
+        let bytes = try!(self.read_binary(transport));
+        String::from_utf8(bytes).map_err(|e| ThriftErr::InvalidUtf8(e.utf8_error()))
     }
 
-    fn read_binary(&self, transport: &mut Transport) -> Vec<u8> {
-        let len = self.read_i32(transport) as usize;
-        transport.read_exact(len).unwrap()
+    fn read_binary(&self, transport: &mut Transport) -> TResult<Vec<u8>> {
+        let len = try!(self.read_i32(transport)) as usize;
+        transport.read_exact(len).map_err(|e| ThriftErr::TransportError(e))
     }
 
-    #[allow(unused_variables)]
-    fn skip(&self, transport: &mut Transport, _type: Type) {
-        match _type {
-            Type::TBool => { self.read_bool(transport); }
-            Type::TByte => { self.read_byte(transport); }
-            Type::TI16 => { self.read_i16(transport); }
-            Type::TI32 => { self.read_i32(transport); }
-            Type::TI64 => { self.read_i64(transport); }
-            Type::TDouble => { self.read_double(transport); }
-            Type::TString => { self.read_binary(transport); }
+    fn skip(&self, transport: &mut Transport, type_: Type) -> TResult<()> {
+        match type_ {
+            Type::TBool => { try!(self.read_bool(transport)); }
+            Type::TByte => { try!(self.read_byte(transport)); }
+            Type::TI16 => { try!(self.read_i16(transport)); }
+            Type::TI32 => { try!(self.read_i32(transport)); }
+            Type::TI64 => { try!(self.read_i64(transport)); }
+            Type::TDouble => { try!(self.read_double(transport)); }
+            Type::TString => { try!(self.read_binary(transport)); }
             Type::TStruct => { 
-                self.read_struct_begin(transport);
+                try!(self.read_struct_begin(transport));
                 loop {
-                    let (fname, ftype, fid) = self.read_field_begin(transport);
-                    if ftype == Type::TStop {
+                    let (_, field_type, _) = try!(self.read_field_begin(transport));
+                    if field_type == Type::TStop {
                         break;
                     }
-                    self.skip(transport, ftype);
-                    self.read_field_end(transport);
+                    try!(self.skip(transport, field_type));
+                    try!(self.read_field_end(transport));
                 }
-                self.read_struct_end(transport);
+                try!(self.read_struct_end(transport));
             }
             Type::TMap => {
-                let (key_type, value_type, size) = self.read_map_begin(transport);
-                for i in range(0, size) {
-                    self.skip(transport, key_type);
-                    self.skip(transport, value_type);
+                let (key_type, value_type, size) = try!(self.read_map_begin(transport));
+                for _ in range(0, size) {
+                    try!(self.skip(transport, key_type));
+                    try!(self.skip(transport, value_type));
                 }
-                self.read_map_end(transport);
+                try!(self.read_map_end(transport));
             }
             Type::TSet => {
-                let (elem_type, size) = self.read_set_begin(transport);
-                for i in range(0, size) {
-                    self.skip(transport, elem_type);
+                let (elem_type, size) = try!(self.read_set_begin(transport));
+                for _ in range(0, size) {
+                    try!(self.skip(transport, elem_type));
                 }
-                self.read_set_end(transport);
+                try!(self.read_set_end(transport));
             }
             Type::TList => {
-                let (elem_type, size) = self.read_list_begin(transport);
-                for i in range(0, size) {
-                    self.skip(transport, elem_type);
+                let (elem_type, size) = try!(self.read_list_begin(transport));
+                for _ in range(0, size) {
+                    try!(self.skip(transport, elem_type));
                 }
-                self.read_list_end(transport);
+                try!(self.read_list_end(transport));
             }
-            _ => { }
-        }
+            Type::TVoid => { }
+            Type::TStop => { }
+        };
+        Ok(())
     }
-
 }
 
 #[cfg(test)]
