@@ -23,6 +23,9 @@
 extern crate thrift;
 
 use std::io::net::ip;
+use thrift::TResult;
+use thrift::ThriftErr;
+use thrift::ThriftErr::*;
 use thrift::protocol::{MessageType, Type};
 use thrift::transport::Transport;
 use thrift::protocol::Protocol;
@@ -30,6 +33,94 @@ use thrift::protocol::Readable;
 use thrift::protocol::binary_protocol::BinaryProtocol;
 
 mod tutorial;
+
+#[derive(Copy)]
+struct CalculatorPingResult;
+
+impl Readable for CalculatorPingResult {
+
+  fn read(& mut self, iprot: &Protocol, transport: &mut Transport) -> TResult<()> {
+    try!(iprot.read_struct_begin(transport));
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, ftype, _) => { try!(iprot.skip(transport, ftype)); }
+      }
+      try!(iprot.read_field_end(transport));
+    }
+    try!(iprot.read_struct_end(transport));
+    Ok(())
+  }
+}
+
+#[allow(dead_code)]
+pub struct CalculatorAddResult {
+  pub success: i32,
+}
+
+impl Readable for CalculatorAddResult {
+
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let mut have_result = false;
+    iprot.read_struct_begin(transport);
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, Type::TI32, 0) => { 
+          self.success = try!(iprot.read_i32(transport));
+          have_result = true
+        }
+        (_, ftype, _) => { 
+          try!(iprot.skip(transport, ftype)); 
+        }
+      }
+      iprot.read_field_end(transport);
+    }
+    iprot.read_struct_end(transport);
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
+}
+
+
+#[allow(dead_code)]
+pub struct CalculatorCalculateResult {
+  pub success: i32,
+  pub ouch: Option<tutorial::InvalidOperation>,
+}
+
+impl Readable for CalculatorCalculateResult {
+
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let mut have_result = false;
+    iprot.read_struct_begin(transport);
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, Type::TI32, 0) => { 
+          self.success = try!(iprot.read_i32(transport));
+          have_result = true
+        }
+        (_, ftype, _) => { 
+          try!(iprot.skip(transport, ftype)); 
+        }
+        // FIXME: handle InvalidOperation
+        // I guess it should be an Err(x) but what exactly?
+      }
+      iprot.read_field_end(transport);
+    }
+    iprot.read_struct_end(transport);
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
+}
 
 
 struct CalculatorClient<T: Transport, P: Protocol> {
@@ -39,64 +130,64 @@ struct CalculatorClient<T: Transport, P: Protocol> {
 
 impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
     
-    fn ping(& mut self) {
-        self.send_ping();
-        self.receive_ping();
+    fn ping(& mut self) -> TResult<()> {
+        try!(self.send_ping());
+        self.receive_ping()
     }
     
     #[allow(unused_variables)]
-    fn send_ping(& mut self) {
+    fn send_ping(& mut self) -> TResult<()> {
         let cseqid: i32 = 0;
         self.protocol.write_message_begin(& mut self.transport, "ping", MessageType::MtCall, cseqid);
         
         let args = tutorial::CalculatorPingArgs;
-        args.write(&self.protocol, & mut self.transport);
+        try!(args.write(&self.protocol, & mut self.transport));
         
-        self.protocol.write_message_end(& mut self.transport);
+        self.protocol.write_message_end(&mut self.transport);
 
         //self.transport.write_end();
-        self.transport.flush().unwrap();
+        try!(self.transport.flush());
+
+        Ok(())
     }
 
     #[allow(unused_variables)]
-    fn receive_ping(& mut self) {
-      let (fname, mtype, rseqid) = self.protocol.read_message_begin(& mut self.transport);
-      match mtype {
-        MessageType::MtException => {
+    fn receive_ping(& mut self) -> TResult<()> {
+      match try!(self.protocol.read_message_begin(& mut self.transport)) {
+        (_, MessageType::MtException, _) => {
             // TODO
             //let x = ApplicationException;
             //x.read(& mut self protocol)
             //self.protocol.read_message_end();
             //transport.read_end();
             //throw x     
+            Err(ThriftErr::Exception)
         }
-        MessageType::MtReply => {
+        (fname, MessageType::MtReply, _) => {
             match fname.as_slice() {
                 "ping" => {
-                    let mut result = tutorial::CalculatorPingResult;
-                    result.read(&self.protocol, &mut self.transport);
+                    let mut result = CalculatorPingResult;
+                    try!(result.read(&self.protocol, &mut self.transport));
                 }
                 _ => {
-                    self.protocol.skip(& mut self.transport, Type::TStruct);
+                    try!(self.protocol.skip(&mut self.transport, Type::TStruct));
                 }
             }
-            self.protocol.read_message_end(& mut self.transport);
-            //self.transport.read_end();
+            self.protocol.read_message_end(&mut self.transport)
         }
-        _ => {
-            self.protocol.skip(& mut self.transport, Type::TStruct);
-            self.protocol.read_message_end(& mut self.transport);
-            //self.transport.read_end();         
+        (_, _, _) => {
+            try!(self.protocol.skip(&mut self.transport, Type::TStruct));
+            self.protocol.read_message_end(&mut self.transport)
         }
       }
     }
     
-    fn add(& mut self, num1: i32, num2: i32) -> Option<i32> {
-        self.send_add(num1, num2);
+    fn add(& mut self, num1: i32, num2: i32) -> TResult<i32> {
+        try!(self.send_add(num1, num2));
         self.receive_add()
     }
     
-    fn send_add(& mut self, num1: i32, num2: i32) {
+    fn send_add(& mut self, num1: i32, num2: i32) -> TResult<()> {
         let cseqid: i32 = 0;
         self.protocol.write_message_begin(& mut self.transport, "add", MessageType::MtCall, cseqid);
         
@@ -106,53 +197,57 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
         self.protocol.write_message_end(& mut self.transport);
 
         //self.transport.write_end();
-        self.transport.flush().unwrap();
+        try!(self.transport.flush());
+
+        Ok(())
     }
 
-    fn receive_add(& mut self) -> Option<i32> {
-        let mut result = tutorial::CalculatorAddResult { success: 0 };
-        if self.receive("add", &mut result) { Some(result.success) } else { None }
+    fn receive_add(& mut self) -> TResult<i32> {
+        let mut result = CalculatorAddResult  { success: 0 };
+        try!(self.receive("add", &mut result));
+        Ok(result.success)
     }
 
     #[allow(unused_variables)]
-    fn receive<R: Readable>(& mut self, op: &'static str, result: &mut R) -> bool {
-        let mut have_result = false;
-        let (fname, mtype, rseqid) = self.protocol.read_message_begin(& mut self.transport);
-        match mtype {
-            MessageType::MtException => {
-                // TODO
-                //let x = ApplicationException;
-                //x.read(& mut self protocol)
-                //self.protocol.read_message_end();
-                //transport.read_end();
-                //throw x  
-            }
-            MessageType::MtReply => {
-                if fname.as_slice() == op {
-                    have_result = result.read(&self.protocol, & mut self.transport);
-                }
-                else {
-                    self.protocol.skip(& mut self.transport, Type::TStruct);
-                }
-                self.protocol.read_message_end(& mut self.transport);
-                //self.transport.read_end();
-            }
-            _ => {
-                self.protocol.skip(& mut self.transport, Type::TStruct);
-                self.protocol.read_message_end(& mut self.transport);
-                //self.transport.read_end(); 
-            }
+    fn receive<R: Readable>(& mut self, op: &'static str, result: &mut R) -> TResult<()> {
+
+        match try!(self.protocol.read_message_begin(& mut self.transport)) {
+          (_, MessageType::MtException, _) => {
+              // TODO
+              //let x = ApplicationException;
+              //x.read(& mut self protocol)
+              //self.protocol.read_message_end();
+              //transport.read_end();
+              //throw x     
+              Err(ThriftErr::Exception)
+          }
+          (fname, MessageType::MtReply, _) => {
+              if fname.as_slice() == op {
+                  try!(result.read(&self.protocol, & mut self.transport));
+                  try!(self.protocol.read_message_end(& mut self.transport));
+                  Ok(())
+               }
+              else {
+                // FIXME: shall we err in this case?
+                  try!(self.protocol.skip(& mut self.transport, Type::TStruct));
+                  try!(self.protocol.read_message_end(& mut self.transport));
+                  Err(ThriftErr::ProtocolError)
+              }
+          }
+          (_, _, _) => {
+              try!(self.protocol.skip(& mut self.transport, Type::TStruct));
+              try!(self.protocol.read_message_end(& mut self.transport));
+              Err(ThriftErr::ProtocolError)
+          }
         }
-        have_result
     }
 
-
-    fn calculate(& mut self, logid: i32, w: tutorial::Work) -> Option<i32> {
-        self.send_calculate(logid, w);
+    fn calculate(& mut self, logid: i32, w: tutorial::Work) -> TResult<i32> {
+        try!(self.send_calculate(logid, w));
         self.receive_calculate()
     }
 
-    fn send_calculate(& mut self, logid: i32,  w: tutorial::Work) {
+    fn send_calculate(& mut self, logid: i32,  w: tutorial::Work) -> TResult<()> {
         let cseqid: i32 = 0;
         self.protocol.write_message_begin(& mut self.transport, "calculate", MessageType::MtCall, cseqid);
         
@@ -162,15 +257,15 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
         self.protocol.write_message_end(& mut self.transport);
 
         //self.transport.write_end();
-        self.transport.flush().unwrap();
+        try!(self.transport.flush());
+        Ok(())
     }
 
-    fn receive_calculate(& mut self) -> Option<i32> {
-        let mut result = tutorial::CalculatorCalculateResult { success: 0, ouch: None };
-        // FIXME: handle exception
-        if self.receive("calculate", &mut result) { Some(result.success) } else { None }
+    fn receive_calculate(& mut self) -> TResult<i32> {
+        let mut result = CalculatorCalculateResult { success: 0, ouch: None };
+        try!(self.receive("calculate", &mut result));
+        Ok(result.success)
     }
-
 
 }
 
@@ -182,25 +277,31 @@ pub fn main() {
 
     let mut client = CalculatorClient{ protocol: BinaryProtocol, transport: tcp };
 
-    client.ping();
+    // Ping
+    client.ping().unwrap();
     println!("ping()");
 
+
+    // Add
     println!("1 + 1 = {}", client.add(1, 1).unwrap());
 
+    // Work: divide
     let work = tutorial::Work { op: tutorial::Operation::DIVIDE, num1: 1, num2: 0, comment: None };
 
     match client.calculate(1, work) {
-      Some(_) => {
+      Ok(_) => {
         println!("Whoa? We can divide by zero!");
       }
-      None => {
+      Err(_) => {
         // FIXME: use thrift exceptions
         println!("Invalid operation")
       }
     }
 
+    // Work: subtract
     let work = tutorial::Work { op: tutorial::Operation::SUBTRACT, num1: 15, num2: 10, comment: None };
     println!("15 - 10 = {}", client.calculate(2, work).unwrap());
 
     println!("PASS");
 }
+

@@ -18,6 +18,7 @@
  */
 
 use transport::Transport;
+use TResult;
 
 pub mod binary_protocol;
 
@@ -46,7 +47,7 @@ pub enum MessageType {
 }
 
 pub trait Readable {
-    fn read(&mut self, iprot: &Protocol, transport: &mut Transport) -> bool;
+    fn read(&mut self, iprot: &Protocol, transport: &mut Transport) -> TResult<()>;
 }
 
 pub trait Protocol {
@@ -97,32 +98,32 @@ pub trait Protocol {
     fn write_string(&self, transport: &mut Transport, value: &String);
     fn write_binary(&self, transport: &mut Transport, value: &[u8]);
 
-    fn read_message_begin(&self, transport: &mut Transport) -> (String, MessageType, i32);
-    fn read_message_end(&self, transport: &mut Transport);
+    fn read_message_begin(&self, transport: &mut Transport) -> TResult<(String, MessageType, i32)>;
+    fn read_message_end(&self, transport: &mut Transport) -> TResult<()>;
 
-    fn read_struct_begin(&self, transport: &mut Transport) -> String;
-    fn read_struct_end(&self, transport: &mut Transport);
+    fn read_struct_begin(&self, transport: &mut Transport) -> TResult<String>;
+    fn read_struct_end(&self, transport: &mut Transport) -> TResult<()>;
 
-    fn read_field_begin(&self, transport: &mut Transport) -> (String, Type, i16);
-    fn read_field_end(&self, transport: &mut Transport);
+    fn read_field_begin(&self, transport: &mut Transport) -> TResult<(String, Type, i16)>;
+    fn read_field_end(&self, transport: &mut Transport) -> TResult<()>;
 
-    fn read_map_begin(&self, transport: &mut Transport) -> (Type, Type, i32);
-    fn read_map_end(&self, transport: &mut Transport);
+    fn read_map_begin(&self, transport: &mut Transport) -> TResult<(Type, Type, i32)>;
+    fn read_map_end(&self, transport: &mut Transport) -> TResult<()>;
 
-    fn read_list_begin(&self, transport: &mut Transport) -> (Type, i32);
-    fn read_list_end(&self, transport: &mut Transport);
+    fn read_list_begin(&self, transport: &mut Transport) -> TResult<(Type, i32)>;
+    fn read_list_end(&self, transport: &mut Transport) -> TResult<()>;
 
-    fn read_set_begin(&self, transport: &mut Transport) -> (Type, i32);
-    fn read_set_end(&self, transport: &mut Transport);
+    fn read_set_begin(&self, transport: &mut Transport) -> TResult<(Type, i32)>;
+    fn read_set_end(&self, transport: &mut Transport) -> TResult<()>;
 
-    fn read_bool(&self, transport: &mut Transport) -> bool;
-    fn read_byte(&self, transport: &mut Transport) -> i8;
-    fn read_i16(&self, transport: &mut Transport) -> i16;
-    fn read_i32(&self, transport: &mut Transport) -> i32;
-    fn read_i64(&self, transport: &mut Transport) -> i64;
-    fn read_double(&self, transport: &mut Transport) -> f64;
-    fn read_string(&self, transport: &mut Transport) -> String;
-    fn read_binary(&self, transport: &mut Transport) -> Vec<u8>;
+    fn read_bool(&self, transport: &mut Transport) -> TResult<bool>;
+    fn read_byte(&self, transport: &mut Transport) -> TResult<i8>;
+    fn read_i16(&self, transport: &mut Transport) -> TResult<i16>;
+    fn read_i32(&self, transport: &mut Transport) -> TResult<i32>;
+    fn read_i64(&self, transport: &mut Transport) -> TResult<i64>;
+    fn read_double(&self, transport: &mut Transport) -> TResult<f64>;
+    fn read_string(&self, transport: &mut Transport) -> TResult<String>;
+    fn read_binary(&self, transport: &mut Transport) -> TResult<Vec<u8>>;
 
-    fn skip(&self, transport: &mut Transport, _type: Type);
+    fn skip(&self, transport: &mut Transport, type_: Type) -> TResult<()>;
 }
