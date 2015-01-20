@@ -1717,7 +1717,9 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
                                (*f_iter)->get_xceptions());
       indent(f_service_) << "public " << function_signature(&recv_function) << endl;
       scope_up(f_service_);
-      prepare_member_name_mapping((*f_iter)->get_xceptions());
+
+      t_struct* xs = (*f_iter)->get_xceptions();
+      prepare_member_name_mapping(xs,xs->get_members(),resultname);
 
       f_service_ << indent() << "TMessage msg = iprot_.ReadMessageBegin();" << endl << indent()
                  << "if (msg.Type == TMessageType.Exception) {" << endl;
@@ -1744,8 +1746,6 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
                      << "  return result.Success;" << endl << indent() << "}" << endl;
         }
       }
-
-      t_struct* xs = (*f_iter)->get_xceptions();
 
       const std::vector<t_field*>& xceptions = xs->get_members();
       vector<t_field*>::const_iterator x_iter;
@@ -1945,7 +1945,7 @@ void t_csharp_generator::generate_process_function(t_service* tservice, t_functi
   if (!tfunction->is_oneway() && xceptions.size() > 0) {
     indent_down();
     f_service_ << indent() << "}";
-    prepare_member_name_mapping(xs);
+    prepare_member_name_mapping(xs,xs->get_members(),resultname);
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       f_service_ << " catch (" << type_name((*x_iter)->get_type(), false, false) << " "
                  << (*x_iter)->get_name() << ") {" << endl;
@@ -2512,18 +2512,19 @@ void t_csharp_generator::prepare_member_name_mapping(void* scope,
   // current C# generator policy:
   // - prop names are always rendered with an Uppercase first letter
   // - struct names are used as given
+  
+  
+  // prevent name conflicts with struct (CS0542 error)
+  used_member_names.insert(structname);
+  
+  // prevent name conflicts with known methods (THRIFT-2942)
+  used_member_names.insert("Read");
+  used_member_names.insert("Write");
 
   for (iter = members.begin(); iter != members.end(); ++iter) {
     string oldname = (*iter)->get_name();
     string newname = prop_name(*iter, true);
     while (true) {
-      // name conflicts with struct (CS0542 error)
-      if (structname.compare(newname) == 0) {
-        pverbose("struct %s: member %s conflicts with struct (preventing CS0542)\n",
-                 structname.c_str(),
-                 newname.c_str());
-        newname += '_';
-      }
 
       // new name conflicts with another member
       if (used_member_names.find(newname) != used_member_names.end()) {
