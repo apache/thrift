@@ -33,6 +33,7 @@ use thrift::protocol::{Readable, Writeable};
 use thrift::protocol::binary_protocol::BinaryProtocol;
 
 mod tutorial;
+mod shared;
 
 struct CalculatorClient<T: Transport, P: Protocol> {
     transport: T,
@@ -41,7 +42,7 @@ struct CalculatorClient<T: Transport, P: Protocol> {
 
 impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
     
-    fn ping(& mut self) -> TResult<()> {
+    fn ping(&mut self) -> TResult<()> {
         try!(self.send("ping", MessageType::MtCall, &tutorial::CalculatorPingArgs));
 
         let mut result = tutorial::CalculatorPingResult;
@@ -49,7 +50,7 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
         Ok(())
     }
     
-    fn add(& mut self, num1: i32, num2: i32) -> TResult<i32> {
+    fn add(&mut self, num1: i32, num2: i32) -> TResult<i32> {
         let args = tutorial::CalculatorAddArgs { num1: num1, num2: num2 };
         try!(self.send("add", MessageType::MtCall, &args));
 
@@ -58,12 +59,23 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
         Ok(result.success)
     }
 
-    fn calculate(& mut self, logid: i32, w: tutorial::Work) -> TResult<i32> {
+    fn calculate(&mut self, logid: i32, w: tutorial::Work) -> TResult<i32> {
         let args = tutorial::CalculatorCalculateArgs { logid: logid, w: w };
         try!(self.send("calculate", MessageType::MtCall, &args));
 
         let mut result = tutorial::CalculatorCalculateResult { success: 0, ouch: None };
         try!(self.receive("calculate", &mut result));
+        Ok(result.success)
+    }
+
+    #[allow(non_snake_case)] 
+    fn getStruct(&mut self, key: i32) -> TResult<shared::SharedStruct> {
+        let args = shared::SharedServiceGetStructArgs { key: key };
+        try!(self.send("getStruct", MessageType::MtCall, &args));
+
+        let mut result = shared::SharedServiceGetStructResult { 
+            success: shared::SharedStruct { key: -1, value: String::new() } };
+        try!(self.receive("getStruct", &mut result));
         Ok(result.success)
     }
 
@@ -82,13 +94,14 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
     }
 
     #[allow(unused_variables)]
-    fn receive<R: Readable>(& mut self, op: &'static str, result: &mut R) -> TResult<()> {
+    fn receive<R: Readable>(&mut self, op: &'static str, result: &mut R) -> TResult<()> {
 
-        match try!(self.protocol.read_message_begin(& mut self.transport)) {
+        match try!(self.protocol.read_message_begin(&mut self.transport)) {
           (_, MessageType::MtException, _) => {
+              println!("got exception");
               // TODO
               //let x = ApplicationException;
-              //x.read(& mut self protocol)
+              //x.read(&mut self protocol)
               //self.protocol.read_message_end();
               //transport.read_end();
               //throw x     
@@ -96,20 +109,20 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
           }
           (fname, MessageType::MtReply, _) => {
               if fname.as_slice() == op {
-                  try!(result.read(&self.protocol, & mut self.transport));
-                  try!(self.protocol.read_message_end(& mut self.transport));
+                  try!(result.read(&self.protocol, &mut self.transport));
+                  try!(self.protocol.read_message_end(&mut self.transport));
                   Ok(())
                }
               else {
                 // FIXME: shall we err in this case?
-                  try!(self.protocol.skip(& mut self.transport, Type::TStruct));
-                  try!(self.protocol.read_message_end(& mut self.transport));
+                  try!(self.protocol.skip(&mut self.transport, Type::TStruct));
+                  try!(self.protocol.read_message_end(&mut self.transport));
                   Err(ThriftErr::ProtocolError)
               }
           }
           (_, _, _) => {
-              try!(self.protocol.skip(& mut self.transport, Type::TStruct));
-              try!(self.protocol.read_message_end(& mut self.transport));
+              try!(self.protocol.skip(&mut self.transport, Type::TStruct));
+              try!(self.protocol.read_message_end(&mut self.transport));
               Err(ThriftErr::ProtocolError)
           }
         }
@@ -148,6 +161,9 @@ pub fn main() {
     // Work: subtract
     let work = tutorial::Work { op: tutorial::Operation::SUBTRACT, num1: 15, num2: 10, comment: None };
     println!("15 - 10 = {}", client.calculate(2, work).unwrap());
+
+    let ss = client.getStruct(1).unwrap();
+    println!("Received log: {:?}", ss);
 
     println!("PASS");
 }

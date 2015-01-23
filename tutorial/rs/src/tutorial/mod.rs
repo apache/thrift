@@ -10,9 +10,15 @@ use thrift::protocol::{MessageType, Type};
 use thrift::transport::Transport;
 use thrift::protocol::Protocol;
 use thrift::protocol::{Readable, Writeable};
-use thrift::TResult;use thrift::ThriftErr;use thrift::ThriftErr::*;
+use thrift::TResult;
+use thrift::ThriftErr;
+use thrift::ThriftErr::*;
+use std::num::FromPrimitive;
+use thrift::protocol::ProtocolHelpers;
+
+
 #[allow(dead_code)]
-#[derive(Copy)]
+#[derive(Copy,Show,FromPrimitive)]
 pub enum Operation {
   ADD = 1,
   SUBTRACT = 2,
@@ -23,6 +29,7 @@ pub enum Operation {
 pub type MyInteger = i32;
 
 #[allow(dead_code)]
+#[derive(Show)]
 pub struct Work {
   pub num1: i32,
   pub num2: i32,
@@ -65,7 +72,48 @@ impl Writeable for Work {
 
 }
 
+impl Readable for Work {
+
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let mut have_result = false;
+    iprot.read_struct_begin(transport);
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, Type::TI32, 1) => {
+          self.num1 = try!(iprot.read_i32(transport));
+          have_result = true;
+        }
+        (_, Type::TI32, 2) => {
+          self.num2 = try!(iprot.read_i32(transport));
+          have_result = true;
+        }
+        (_, Type::TI32, 3) => {
+          self.op = try!(ProtocolHelpers::read_enum(iprot, transport));
+          have_result = true;
+        }
+        /*
+        (_, Type::TString, 4) => {
+          self.comment = try!(iprot.read_string(transport));
+          have_result = true;
+        }
+        */
+        (_, ftype, _) => {
+          try!(iprot.skip(transport, ftype));
+        }
+      }
+      try!(iprot.read_field_end(transport));
+    }
+    try!(iprot.read_struct_end(transport));
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
+}
+
 #[allow(dead_code)]
+#[derive(Show)]
 pub struct InvalidOperation {
   pub what: i32,
   pub why: String,
@@ -93,7 +141,38 @@ impl Writeable for InvalidOperation {
 
 }
 
+impl Readable for InvalidOperation {
+
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let mut have_result = false;
+    iprot.read_struct_begin(transport);
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, Type::TI32, 1) => {
+          self.what = try!(iprot.read_i32(transport));
+          have_result = true;
+        }
+        (_, Type::TString, 2) => {
+          self.why = try!(iprot.read_string(transport));
+          have_result = true;
+        }
+        (_, ftype, _) => {
+          try!(iprot.skip(transport, ftype));
+        }
+      }
+      try!(iprot.read_field_end(transport));
+    }
+    try!(iprot.read_struct_end(transport));
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
+}
+
 #[allow(dead_code)]
+#[derive(Show)]
 pub struct CalculatorPingArgs;
 
 impl Writeable for CalculatorPingArgs {
@@ -111,6 +190,7 @@ impl Writeable for CalculatorPingArgs {
 }
 
 #[allow(dead_code)]
+#[derive(Show)]
 pub struct CalculatorPingResult;
 
 impl Readable for CalculatorPingResult {
@@ -136,6 +216,7 @@ impl Readable for CalculatorPingResult {
 }
 
 #[allow(dead_code)]
+#[derive(Show)]
 pub struct CalculatorAddArgs {
   pub num1: i32,
   pub num2: i32,
@@ -164,6 +245,7 @@ impl Writeable for CalculatorAddArgs {
 }
 
 #[allow(dead_code)]
+#[derive(Show)]
 pub struct CalculatorAddResult {
   pub success: i32,
 }
@@ -195,6 +277,7 @@ impl Readable for CalculatorAddResult {
 }
 
 #[allow(dead_code)]
+#[derive(Show)]
 pub struct CalculatorCalculateArgs {
   pub logid: i32,
   pub w: Work,
@@ -223,6 +306,7 @@ impl Writeable for CalculatorCalculateArgs {
 }
 
 #[allow(dead_code)]
+#[derive(Show)]
 pub struct CalculatorCalculateResult {
   pub success: i32,
   pub ouch: Option<InvalidOperation>,
@@ -243,6 +327,12 @@ impl Readable for CalculatorCalculateResult {
           self.success = try!(iprot.read_i32(transport));
           have_result = true;
         }
+        /*
+        (_, Type::TStruct, 1) => {
+          try!(self.ouch.read(iprot, transport));
+          have_result = true;
+        }
+        */
         (_, ftype, _) => {
           try!(iprot.skip(transport, ftype));
         }
@@ -255,6 +345,7 @@ impl Readable for CalculatorCalculateResult {
 }
 
 #[allow(dead_code)]
+#[derive(Show)]
 pub struct CalculatorZipArgs;
 
 impl Writeable for CalculatorZipArgs {

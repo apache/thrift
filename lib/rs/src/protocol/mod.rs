@@ -17,8 +17,10 @@
  * under the License.
  */
 
+use std::num::FromPrimitive;
 use transport::Transport;
 use TResult;
+use ThriftErr;
 
 pub mod binary_protocol;
 
@@ -130,4 +132,17 @@ pub trait Protocol {
     fn read_binary(&self, transport: &mut Transport) -> TResult<Vec<u8>>;
 
     fn skip(&self, transport: &mut Transport, type_: Type) -> TResult<()>;
+}
+
+pub struct ProtocolHelpers;
+
+impl ProtocolHelpers {
+
+    pub fn read_enum<T: FromPrimitive>(iprot: &Protocol, transport: &mut Transport) -> TResult<T> {
+        let i = try!(iprot.read_i32(transport));
+        match FromPrimitive::from_i32(i) {
+            Some(v) => Ok(v),
+            None => Err(ThriftErr::ProtocolError),
+        }
+    }
 }

@@ -73,6 +73,7 @@ class t_rs_generator : public t_oop_generator {
   void generate_struct_writer(t_struct* tstruct);
   void generate_field_write(t_field* field);
   void generate_struct_reader(t_struct* tstruct);
+  void generate_field_read(t_field* field);
 
   /**
    *Transforms a string with words separated by underscores to a pascal case equivalent
@@ -130,9 +131,12 @@ string t_rs_generator::rs_imports() {
     "use thrift::transport::Transport;\n"
     "use thrift::protocol::Protocol;\n"
     "use thrift::protocol::{Readable, Writeable};\n"
-    "use thrift::TResult;"
-    "use thrift::ThriftErr;"
-    "use thrift::ThriftErr::*;");
+    "use thrift::TResult;\n"
+    "use thrift::ThriftErr;\n"
+    "use thrift::ThriftErr::*;\n"
+    "use std::num::FromPrimitive;\n"
+    "use thrift::protocol::ProtocolHelpers;\n"
+    "\n");
 }
 
 void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
@@ -145,7 +149,7 @@ void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
 void t_rs_generator::generate_enum(t_enum* tenum) {
   string ename = pascalcase(tenum->get_name());
   indent(f_mod_) << "#[allow(dead_code)]\n";
-  indent(f_mod_) << "#[derive(Copy)]\n";
+  indent(f_mod_) << "#[derive(Copy,Show,FromPrimitive)]\n";
   indent(f_mod_) << "pub enum " << ename << " {\n";
   indent_up();
 
@@ -164,11 +168,13 @@ void t_rs_generator::generate_enum(t_enum* tenum) {
 void t_rs_generator::generate_struct(t_struct* tstruct) {
   generate_struct_declaration(tstruct);
   generate_struct_writer(tstruct);
+  generate_struct_reader(tstruct);
 }
 
 void t_rs_generator::generate_struct_declaration(t_struct* tstruct) {
   string struct_name = pascalcase(tstruct->get_name());
   indent(f_mod_) << "#[allow(dead_code)]\n";
+  indent(f_mod_) << "#[derive(Show)]\n";
   if (tstruct->get_members().empty()) {
     indent(f_mod_) << "pub struct " << struct_name << ";\n\n";
   }
@@ -349,27 +355,26 @@ void t_rs_generator::generate_struct_reader(t_struct* tstruct) {
       indent_up();
         indent(f_mod_) << "match try!(iprot.read_field_begin(transport)) {\n";
         indent_up();        
+
           indent(f_mod_) << "(_, Type::TStop, _) => {\n";
           indent_up();
             indent(f_mod_) << "try!(iprot.read_field_end(transport));\n";
             indent(f_mod_) << "break;\n";
           indent_down();
           indent(f_mod_) << "}\n";
-          if (!tstruct->get_members().empty()) {
-            // FIXME: only to receive result for now
-            // FIXME: handle other result types as well
-            indent(f_mod_) << "(_, Type::TI32, 0) => {\n";
-            indent_up();
-              indent(f_mod_) << "self.success = try!(iprot.read_i32(transport));\n";
-              indent(f_mod_) << "have_result = true;\n";
-            indent_down();
-            indent(f_mod_) << "}\n";
-          }
+
+          vector<t_field*>::const_iterator m_iter;
+          const vector<t_field*>& members = tstruct->get_members();
+          for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+            generate_field_read(*m_iter);
+          }            
+
           indent(f_mod_) << "(_, ftype, _) => {\n";
           indent_up();
             indent(f_mod_) << "try!(iprot.skip(transport, ftype));\n";
           indent_down();
           indent(f_mod_) << "}\n";
+
         indent_down();
         indent(f_mod_) << "}\n";
         indent(f_mod_) << "try!(iprot.read_field_end(transport));\n";
@@ -381,6 +386,39 @@ void t_rs_generator::generate_struct_reader(t_struct* tstruct) {
     indent(f_mod_) << "}\n";
   indent_down();
   indent(f_mod_) << "}\n\n";
+}
+
+void t_rs_generator::generate_field_read(t_field* field) {
+  string qualified_name = "self." + field->get_name();
+  t_type* type = get_true_type(field->get_type());
+  bool is_optional = field->get_req() == t_field::T_OPTIONAL;
+
+  if (is_optional) {
+  // FIXME
+    indent(f_mod_) << "/*\n";
+  }
+
+  indent(f_mod_) << "(_, Type::" << render_protocol_type(type) 
+                 << ", " << field->get_key() << ") => {\n";
+  indent_up();
+
+  if (type->is_base_type()) {
+    indent(f_mod_) << qualified_name << " = try!(iprot.read_" << render_suffix(type) << "(transport));\n";
+  }
+  else if (type->is_enum()) {
+    indent(f_mod_) << qualified_name << " = try!(ProtocolHelpers::read_enum(iprot, transport));\n";
+  }
+  else {
+    indent(f_mod_) << "try!(" << qualified_name << ".read(iprot, transport));\n";
+  }
+  indent(f_mod_) << "have_result = true;\n";
+  indent_down();
+  indent(f_mod_) << "}\n";
+
+  if (is_optional) {
+    // FIXME
+    indent(f_mod_) << "*/\n";
+  }
 }
 
 string t_rs_generator::render_rs_type(t_type* type) {
