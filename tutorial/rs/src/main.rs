@@ -34,95 +34,6 @@ use thrift::protocol::binary_protocol::BinaryProtocol;
 
 mod tutorial;
 
-#[derive(Copy)]
-struct CalculatorPingResult;
-
-impl Readable for CalculatorPingResult {
-
-  fn read(& mut self, iprot: &Protocol, transport: &mut Transport) -> TResult<()> {
-    try!(iprot.read_struct_begin(transport));
-    loop {
-      match try!(iprot.read_field_begin(transport)) {
-        (_, Type::TStop, _) => {
-          try!(iprot.read_field_end(transport));
-          break;
-        }
-        (_, ftype, _) => { try!(iprot.skip(transport, ftype)); }
-      }
-      try!(iprot.read_field_end(transport));
-    }
-    try!(iprot.read_struct_end(transport));
-    Ok(())
-  }
-}
-
-#[allow(dead_code)]
-pub struct CalculatorAddResult {
-  pub success: i32,
-}
-
-impl Readable for CalculatorAddResult {
-
-  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
-    let mut have_result = false;
-    iprot.read_struct_begin(transport);
-    loop {
-      match try!(iprot.read_field_begin(transport)) {
-        (_, Type::TStop, _) => {
-          try!(iprot.read_field_end(transport));
-          break;
-        }
-        (_, Type::TI32, 0) => { 
-          self.success = try!(iprot.read_i32(transport));
-          have_result = true
-        }
-        (_, ftype, _) => { 
-          try!(iprot.skip(transport, ftype)); 
-        }
-      }
-      iprot.read_field_end(transport);
-    }
-    iprot.read_struct_end(transport);
-    if have_result { Ok(()) } else { Err(ProtocolError) }
-  }
-}
-
-
-#[allow(dead_code)]
-pub struct CalculatorCalculateResult {
-  pub success: i32,
-  pub ouch: Option<tutorial::InvalidOperation>,
-}
-
-impl Readable for CalculatorCalculateResult {
-
-  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
-    let mut have_result = false;
-    iprot.read_struct_begin(transport);
-    loop {
-      match try!(iprot.read_field_begin(transport)) {
-        (_, Type::TStop, _) => {
-          try!(iprot.read_field_end(transport));
-          break;
-        }
-        (_, Type::TI32, 0) => { 
-          self.success = try!(iprot.read_i32(transport));
-          have_result = true
-        }
-        (_, ftype, _) => { 
-          try!(iprot.skip(transport, ftype)); 
-        }
-        // FIXME: handle InvalidOperation
-        // I guess it should be an Err(x) but what exactly?
-      }
-      iprot.read_field_end(transport);
-    }
-    iprot.read_struct_end(transport);
-    if have_result { Ok(()) } else { Err(ProtocolError) }
-  }
-}
-
-
 struct CalculatorClient<T: Transport, P: Protocol> {
     transport: T,
     protocol: P,
@@ -166,7 +77,7 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
         (fname, MessageType::MtReply, _) => {
             match fname.as_slice() {
                 "ping" => {
-                    let mut result = CalculatorPingResult;
+                    let mut result = tutorial::CalculatorPingResult;
                     try!(result.read(&self.protocol, &mut self.transport));
                 }
                 _ => {
@@ -203,7 +114,7 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
     }
 
     fn receive_add(& mut self) -> TResult<i32> {
-        let mut result = CalculatorAddResult  { success: 0 };
+        let mut result = tutorial::CalculatorAddResult  { success: 0 };
         try!(self.receive("add", &mut result));
         Ok(result.success)
     }
@@ -262,7 +173,7 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
     }
 
     fn receive_calculate(& mut self) -> TResult<i32> {
-        let mut result = CalculatorCalculateResult { success: 0, ouch: None };
+        let mut result = tutorial::CalculatorCalculateResult { success: 0, ouch: None };
         try!(self.receive("calculate", &mut result));
         Ok(result.success)
     }

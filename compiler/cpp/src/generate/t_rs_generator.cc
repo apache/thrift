@@ -129,7 +129,10 @@ string t_rs_generator::rs_imports() {
     "use thrift::protocol::{MessageType, Type};\n"
     "use thrift::transport::Transport;\n"
     "use thrift::protocol::Protocol;\n"
-    "use thrift::protocol::Readable;\n");
+    "use thrift::protocol::Readable;\n"
+    "use thrift::TResult;"
+    "use thrift::ThriftErr;"
+    "use thrift::ThriftErr::*;");
 }
 
 void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
@@ -265,7 +268,7 @@ void t_rs_generator::generate_struct_writer(t_struct* tstruct) {
 
     indent(f_mod_) << "#[allow(unused_variables)]\n";
     indent(f_mod_) << "#[allow(dead_code)]\n";
-    indent(f_mod_) << "pub fn write(&self, oprot: &Protocol, transport: &mut Transport) {\n";
+    indent(f_mod_) << "pub fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {\n";
     indent_up();
       indent(f_mod_) << "oprot.write_struct_begin(transport, \"" << tstruct->get_name() << "\");\n\n";
 
@@ -277,6 +280,7 @@ void t_rs_generator::generate_struct_writer(t_struct* tstruct) {
 
       indent(f_mod_) << "oprot.write_field_stop(transport);\n";
       indent(f_mod_) << "oprot.write_struct_end(transport);\n";
+      indent(f_mod_) << "Ok(())\n";
 
     indent_down();
     indent(f_mod_) << "}\n\n";
@@ -326,48 +330,53 @@ void t_rs_generator::generate_field_write(t_field* field) {
   indent(f_mod_) << "\n";
 }
 
+
 void t_rs_generator::generate_struct_reader(t_struct* tstruct) {
   string struct_name = pascalcase(tstruct->get_name());
 
   indent(f_mod_) << "impl Readable for " << struct_name << " {\n\n";
   indent_up();
 
-    indent(f_mod_) << "fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> bool {\n";
+    indent(f_mod_) << "fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {\n";
     indent_up();
-      indent(f_mod_) << "let mut have_result = false;\n";
+      if (tstruct->get_members().empty()) {
+        indent(f_mod_) << "let mut have_result = true;\n";
+      } else {
+        indent(f_mod_) << "let mut have_result = false;\n";
+      }
       indent(f_mod_) << "iprot.read_struct_begin(transport);\n";
       indent(f_mod_) << "loop {\n";
       indent_up();
-        indent(f_mod_) << "let (fname, ftype, fid) = iprot.read_field_begin(transport);\n";
-        indent(f_mod_) << "if ftype == Type::TStop {\n";
-        indent_up();
-          indent(f_mod_) << "break;\n";
-        indent_down();
-        indent(f_mod_) << "}\n";
-        indent(f_mod_) << "match (fid, ftype) {\n";
-        indent_up();
+        indent(f_mod_) << "match try!(iprot.read_field_begin(transport)) {\n";
+        indent_up();        
+          indent(f_mod_) << "(_, Type::TStop, _) => {\n";
+          indent_up();
+            indent(f_mod_) << "try!(iprot.read_field_end(transport));\n";
+            indent(f_mod_) << "break;\n";
+          indent_down();
+          indent(f_mod_) << "}\n";
           if (!tstruct->get_members().empty()) {
             // FIXME: only to receive result for now
             // FIXME: handle other result types as well
-            indent(f_mod_) << "(0, Type::TI32) => {\n";
+            indent(f_mod_) << "(_, Type::TI32, 0) => {\n";
             indent_up();
-              indent(f_mod_) << "self.success = iprot.read_i32(transport);\n";
-              indent(f_mod_) << "have_result = true\n";
+              indent(f_mod_) << "self.success = try!(iprot.read_i32(transport));\n";
+              indent(f_mod_) << "have_result = true;\n";
             indent_down();
             indent(f_mod_) << "}\n";
           }
-          indent(f_mod_) << "_ => {\n";
+          indent(f_mod_) << "(_, ftype, _) => {\n";
           indent_up();
-            indent(f_mod_) << "iprot.skip(transport, ftype);\n";
+            indent(f_mod_) << "try!(iprot.skip(transport, ftype));\n";
           indent_down();
           indent(f_mod_) << "}\n";
         indent_down();
         indent(f_mod_) << "}\n";
-        indent(f_mod_) << "iprot.read_field_end(transport);\n";
+        indent(f_mod_) << "try!(iprot.read_field_end(transport));\n";
       indent_down();
       indent(f_mod_) << "}\n";
-      indent(f_mod_) << "iprot.read_struct_end(transport);\n";
-      indent(f_mod_) << "have_result\n";
+      indent(f_mod_) << "try!(iprot.read_struct_end(transport));\n";
+      indent(f_mod_) << "if have_result { Ok(()) } else { Err(ProtocolError) }\n";
     indent_down();
     indent(f_mod_) << "}\n";
   indent_down();

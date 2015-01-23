@@ -5,16 +5,12 @@
 ///////////////////////////////////////////////////////////////
 
 #[allow(unused_imports)]
-use thrift::TResult;
-#[allow(unused_imports)]
 use std::collections::{HashMap, HashSet};
-#[allow(unused_imports)]
 use thrift::protocol::{MessageType, Type};
 use thrift::transport::Transport;
 use thrift::protocol::Protocol;
-#[allow(unused_imports)]
 use thrift::protocol::Readable;
-
+use thrift::TResult;use thrift::ThriftErr;use thrift::ThriftErr::*;
 #[allow(dead_code)]
 #[derive(Copy)]
 pub enum Operation {
@@ -38,7 +34,7 @@ impl Work {
 
   #[allow(unused_variables)]
   #[allow(dead_code)]
-  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) {
+  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
     oprot.write_struct_begin(transport, "Work");
 
     oprot.write_field_begin(transport, "num1", Type::TI32, 1);
@@ -64,6 +60,7 @@ impl Work {
     
     oprot.write_field_stop(transport);
     oprot.write_struct_end(transport);
+    Ok(())
   }
 
 }
@@ -78,7 +75,7 @@ impl InvalidOperation {
 
   #[allow(unused_variables)]
   #[allow(dead_code)]
-  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) {
+  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
     oprot.write_struct_begin(transport, "InvalidOperation");
 
     oprot.write_field_begin(transport, "what", Type::TI32, 1);
@@ -91,6 +88,7 @@ impl InvalidOperation {
     
     oprot.write_field_stop(transport);
     oprot.write_struct_end(transport);
+    Ok(())
   }
 
 }
@@ -107,10 +105,34 @@ impl CalculatorPingArgs {
 
     oprot.write_field_stop(transport);
     oprot.write_struct_end(transport);
-
     Ok(())
   }
 
+}
+
+#[allow(dead_code)]
+pub struct CalculatorPingResult;
+
+impl Readable for CalculatorPingResult {
+
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let mut have_result = true;
+    iprot.read_struct_begin(transport);
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, ftype, _) => {
+          try!(iprot.skip(transport, ftype));
+        }
+      }
+      try!(iprot.read_field_end(transport));
+    }
+    try!(iprot.read_struct_end(transport));
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
 }
 
 #[allow(dead_code)]
@@ -123,7 +145,7 @@ impl CalculatorAddArgs {
 
   #[allow(unused_variables)]
   #[allow(dead_code)]
-  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) {
+  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
     oprot.write_struct_begin(transport, "Calculator_add_args");
 
     oprot.write_field_begin(transport, "num1", Type::TI32, 1);
@@ -136,8 +158,40 @@ impl CalculatorAddArgs {
     
     oprot.write_field_stop(transport);
     oprot.write_struct_end(transport);
+    Ok(())
   }
 
+}
+
+#[allow(dead_code)]
+pub struct CalculatorAddResult {
+  pub success: i32,
+}
+
+impl Readable for CalculatorAddResult {
+
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let mut have_result = false;
+    iprot.read_struct_begin(transport);
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, Type::TI32, 0) => {
+          self.success = try!(iprot.read_i32(transport));
+          have_result = true;
+        }
+        (_, ftype, _) => {
+          try!(iprot.skip(transport, ftype));
+        }
+      }
+      try!(iprot.read_field_end(transport));
+    }
+    try!(iprot.read_struct_end(transport));
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
 }
 
 #[allow(dead_code)]
@@ -150,7 +204,7 @@ impl CalculatorCalculateArgs {
 
   #[allow(unused_variables)]
   #[allow(dead_code)]
-  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) {
+  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
     oprot.write_struct_begin(transport, "Calculator_calculate_args");
 
     oprot.write_field_begin(transport, "logid", Type::TI32, 1);
@@ -163,10 +217,42 @@ impl CalculatorCalculateArgs {
     
     oprot.write_field_stop(transport);
     oprot.write_struct_end(transport);
+    Ok(())
   }
 
 }
 
+#[allow(dead_code)]
+pub struct CalculatorCalculateResult {
+  pub success: i32,
+  pub ouch: Option<InvalidOperation>,
+}
+
+impl Readable for CalculatorCalculateResult {
+
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let mut have_result = false;
+    iprot.read_struct_begin(transport);
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, Type::TI32, 0) => {
+          self.success = try!(iprot.read_i32(transport));
+          have_result = true;
+        }
+        (_, ftype, _) => {
+          try!(iprot.skip(transport, ftype));
+        }
+      }
+      try!(iprot.read_field_end(transport));
+    }
+    try!(iprot.read_struct_end(transport));
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
+}
 
 #[allow(dead_code)]
 pub struct CalculatorZipArgs;
@@ -175,11 +261,12 @@ impl CalculatorZipArgs {
 
   #[allow(unused_variables)]
   #[allow(dead_code)]
-  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) {
+  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
     oprot.write_struct_begin(transport, "Calculator_zip_args");
 
     oprot.write_field_stop(transport);
     oprot.write_struct_end(transport);
+    Ok(())
   }
 
 }
