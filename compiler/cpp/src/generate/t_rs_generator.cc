@@ -129,7 +129,7 @@ string t_rs_generator::rs_imports() {
     "use thrift::protocol::{MessageType, Type};\n"
     "use thrift::transport::Transport;\n"
     "use thrift::protocol::Protocol;\n"
-    "use thrift::protocol::Readable;\n"
+    "use thrift::protocol::{Readable, Writeable};\n"
     "use thrift::TResult;"
     "use thrift::ThriftErr;"
     "use thrift::ThriftErr::*;");
@@ -263,12 +263,12 @@ void t_rs_generator::generate_function_helpers(t_service* tservice, t_function* 
 
 void t_rs_generator::generate_struct_writer(t_struct* tstruct) {
   string struct_name = pascalcase(tstruct->get_name());
-  indent(f_mod_) << "impl " << struct_name << " {\n\n";
+  indent(f_mod_) << "impl Writeable for " << struct_name << " {\n\n";
   indent_up();
 
     indent(f_mod_) << "#[allow(unused_variables)]\n";
     indent(f_mod_) << "#[allow(dead_code)]\n";
-    indent(f_mod_) << "pub fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {\n";
+    indent(f_mod_) << "fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {\n";
     indent_up();
       indent(f_mod_) << "oprot.write_struct_begin(transport, \"" << tstruct->get_name() << "\");\n\n";
 

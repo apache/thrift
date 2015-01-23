@@ -9,7 +9,7 @@ use std::collections::{HashMap, HashSet};
 use thrift::protocol::{MessageType, Type};
 use thrift::transport::Transport;
 use thrift::protocol::Protocol;
-use thrift::protocol::Readable;
+use thrift::protocol::{Readable, Writeable};
 use thrift::TResult;use thrift::ThriftErr;use thrift::ThriftErr::*;
 #[allow(dead_code)]
 #[derive(Copy)]
@@ -30,11 +30,11 @@ pub struct Work {
   pub comment: Option<String>,
 }
 
-impl Work {
+impl Writeable for Work {
 
   #[allow(unused_variables)]
   #[allow(dead_code)]
-  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
+  fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
     oprot.write_struct_begin(transport, "Work");
 
     oprot.write_field_begin(transport, "num1", Type::TI32, 1);
@@ -71,11 +71,11 @@ pub struct InvalidOperation {
   pub why: String,
 }
 
-impl InvalidOperation {
+impl Writeable for InvalidOperation {
 
   #[allow(unused_variables)]
   #[allow(dead_code)]
-  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
+  fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
     oprot.write_struct_begin(transport, "InvalidOperation");
 
     oprot.write_field_begin(transport, "what", Type::TI32, 1);
@@ -96,11 +96,11 @@ impl InvalidOperation {
 #[allow(dead_code)]
 pub struct CalculatorPingArgs;
 
-impl CalculatorPingArgs {
+impl Writeable for CalculatorPingArgs {
 
   #[allow(unused_variables)]
   #[allow(dead_code)]
-  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
+  fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
     oprot.write_struct_begin(transport, "Calculator_ping_args");
 
     oprot.write_field_stop(transport);
@@ -141,11 +141,11 @@ pub struct CalculatorAddArgs {
   pub num2: i32,
 }
 
-impl CalculatorAddArgs {
+impl Writeable for CalculatorAddArgs {
 
   #[allow(unused_variables)]
   #[allow(dead_code)]
-  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
+  fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
     oprot.write_struct_begin(transport, "Calculator_add_args");
 
     oprot.write_field_begin(transport, "num1", Type::TI32, 1);
@@ -200,11 +200,11 @@ pub struct CalculatorCalculateArgs {
   pub w: Work,
 }
 
-impl CalculatorCalculateArgs {
+impl Writeable for CalculatorCalculateArgs {
 
   #[allow(unused_variables)]
   #[allow(dead_code)]
-  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
+  fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
     oprot.write_struct_begin(transport, "Calculator_calculate_args");
 
     oprot.write_field_begin(transport, "logid", Type::TI32, 1);
@@ -257,11 +257,11 @@ impl Readable for CalculatorCalculateResult {
 #[allow(dead_code)]
 pub struct CalculatorZipArgs;
 
-impl CalculatorZipArgs {
+impl Writeable for CalculatorZipArgs {
 
   #[allow(unused_variables)]
   #[allow(dead_code)]
-  pub fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
+  fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
     oprot.write_struct_begin(transport, "Calculator_zip_args");
 
     oprot.write_field_stop(transport);
