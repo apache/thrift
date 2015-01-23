@@ -43,11 +43,7 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
     
     fn ping(& mut self) -> TResult<()> {
         try!(self.send("ping", MessageType::MtCall, &tutorial::CalculatorPingArgs));
-        self.receive_ping()
-    }
-    
-    #[allow(unused_variables)]
-    fn receive_ping(& mut self) -> TResult<()> {
+
         let mut result = tutorial::CalculatorPingResult;
         try!(self.receive("ping", &mut result));
         Ok(())
@@ -56,10 +52,7 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
     fn add(& mut self, num1: i32, num2: i32) -> TResult<i32> {
         let args = tutorial::CalculatorAddArgs { num1: num1, num2: num2 };
         try!(self.send("add", MessageType::MtCall, &args));
-        self.receive_add()
-    }
 
-    fn receive_add(& mut self) -> TResult<i32> {
         let mut result = tutorial::CalculatorAddResult  { success: 0 };
         try!(self.receive("add", &mut result));
         Ok(result.success)
@@ -68,15 +61,11 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
     fn calculate(& mut self, logid: i32, w: tutorial::Work) -> TResult<i32> {
         let args = tutorial::CalculatorCalculateArgs { logid: logid, w: w };
         try!(self.send("calculate", MessageType::MtCall, &args));
-        self.receive_calculate()
-    }
 
-    fn receive_calculate(& mut self) -> TResult<i32> {
         let mut result = tutorial::CalculatorCalculateResult { success: 0, ouch: None };
         try!(self.receive("calculate", &mut result));
         Ok(result.success)
     }
-
 
     fn send<W: Writeable>(&mut self, name: &str, _type: MessageType, args: &W) -> TResult<()> {
         let cseqid: i32 = 0;
