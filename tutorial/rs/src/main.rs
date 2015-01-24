@@ -37,7 +37,7 @@ use thrift::protocol::binary_protocol::BinaryProtocol;
 mod tutorial;
 mod shared;
 
-
+/*
 struct CalculatorClient<T: Transport, P: Protocol> {
     transport: T,
     protocol: P,
@@ -45,32 +45,6 @@ struct CalculatorClient<T: Transport, P: Protocol> {
 
 impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
     
-    fn ping(&mut self) -> TResult<()> {
-        try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "ping", MessageType::MtCall, &tutorial::CalculatorPingArgs));
-
-        let mut result = tutorial::CalculatorPingResult;
-        try!(ProtocolHelpers::receive(&self.protocol, &mut self.transport, "ping", &mut result));
-        Ok(())
-    }
-    
-    fn add(&mut self, num1: i32, num2: i32) -> TResult<i32> {
-        let args = tutorial::CalculatorAddArgs { num1: num1, num2: num2 };
-        try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "add", MessageType::MtCall, &args));
-
-        let mut result = tutorial::CalculatorAddResult  { success: 0 };
-        try!(ProtocolHelpers::receive(&self.protocol, &mut self.transport, "add", &mut result));
-        Ok(result.success)
-    }
-
-    fn calculate(&mut self, logid: i32, w: tutorial::Work) -> TResult<i32> {
-        let args = tutorial::CalculatorCalculateArgs { logid: logid, w: w };
-        try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "calculate", MessageType::MtCall, &args));
-
-        let mut result = tutorial::CalculatorCalculateResult { success: 0, ouch: None };
-        try!(ProtocolHelpers::receive(&self.protocol, &mut self.transport, "calculate", &mut result));
-        Ok(result.success)
-    }
-
     #[allow(non_snake_case)] 
     fn getStruct(&mut self, key: i32) -> TResult<shared::SharedStruct> {
         let args = shared::SharedServiceGetStructArgs { key: key };
@@ -82,6 +56,7 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
         Ok(result.success)
     }
 }
+*/
 
 pub fn main() {
     let server_address = "127.0.0.1:9090";
@@ -89,7 +64,7 @@ pub fn main() {
         .expect("bad server address");
     let tcp = std::io::TcpStream::connect(addr).unwrap();
 
-    let mut client = CalculatorClient{ protocol: BinaryProtocol, transport: tcp };
+    let mut client = tutorial::CalculatorClient{ protocol: BinaryProtocol, transport: tcp };
 
     // Ping
     client.ping().unwrap();
@@ -115,9 +90,10 @@ pub fn main() {
     let work = tutorial::Work { op: tutorial::Operation::SUBTRACT, num1: 15, num2: 10, comment: None };
     println!("15 - 10 = {}", client.calculate(2, work).unwrap());
 
+/*
     let ss = client.getStruct(1).unwrap();
     println!("Received log: {:?}", ss);
-
+*/
     println!("PASS");
 }
 

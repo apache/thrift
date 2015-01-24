@@ -26,6 +26,12 @@ pub enum Operation {
   DIVIDE = 4,
 }
 
+impl Operation {
+  pub fn new() -> Operation {
+    Operation::ADD
+  }
+}
+
 pub type MyInteger = i32;
 
 #[allow(dead_code)]
@@ -35,6 +41,17 @@ pub struct Work {
   pub num2: i32,
   pub op: Operation,
   pub comment: Option<String>,
+}
+
+impl Work {
+  pub fn new() -> Work {
+    Work {
+      num1: 0,
+      num2: 0,
+      op: Operation::new(),
+      comment: None,
+    }
+  }
 }
 
 impl Writeable for Work {
@@ -119,6 +136,15 @@ pub struct InvalidOperation {
   pub why: String,
 }
 
+impl InvalidOperation {
+  pub fn new() -> InvalidOperation {
+    InvalidOperation {
+      what: 0,
+      why: String::new(),
+    }
+  }
+}
+
 impl Writeable for InvalidOperation {
 
   #[allow(unused_variables)]
@@ -193,6 +219,12 @@ impl Writeable for CalculatorPingArgs {
 #[derive(Show)]
 pub struct CalculatorPingResult;
 
+impl CalculatorPingResult {
+  pub fn new() -> CalculatorPingResult {
+    CalculatorPingResult
+  }
+}
+
 impl Readable for CalculatorPingResult {
 
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
@@ -248,6 +280,14 @@ impl Writeable for CalculatorAddArgs {
 #[derive(Show)]
 pub struct CalculatorAddResult {
   pub success: i32,
+}
+
+impl CalculatorAddResult {
+  pub fn new() -> CalculatorAddResult {
+    CalculatorAddResult {
+      success: 0,
+    }
+  }
 }
 
 impl Readable for CalculatorAddResult {
@@ -312,6 +352,15 @@ pub struct CalculatorCalculateResult {
   pub ouch: Option<InvalidOperation>,
 }
 
+impl CalculatorCalculateResult {
+  pub fn new() -> CalculatorCalculateResult {
+    CalculatorCalculateResult {
+      success: 0,
+      ouch: None,
+    }
+  }
+}
+
 impl Readable for CalculatorCalculateResult {
 
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
@@ -358,6 +407,67 @@ impl Writeable for CalculatorZipArgs {
     oprot.write_field_stop(transport);
     oprot.write_struct_end(transport);
     Ok(())
+  }
+
+}
+
+pub struct CalculatorClient <T: Transport, P: Protocol> {
+  pub transport: T,
+  pub protocol: P,
+}
+
+impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
+
+  #[allow(non_snake_case)]
+  pub fn ping(
+    &mut self,
+    ) -> TResult<()> {
+      let args = CalculatorPingArgs;
+      try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "ping", MessageType::MtCall, &args));
+      let mut result = CalculatorPingResult::new();
+      try!(ProtocolHelpers::receive(&self.protocol, &mut self.transport, "ping", &mut result));
+      Ok(())
+  }
+
+  #[allow(non_snake_case)]
+  pub fn add(
+    &mut self,
+    num1: i32,
+    num2: i32,
+    ) -> TResult<i32> {
+      let args = CalculatorAddArgs {
+      num1: num1,
+      num2: num2,
+      };
+      try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "add", MessageType::MtCall, &args));
+      let mut result = CalculatorAddResult::new();
+      try!(ProtocolHelpers::receive(&self.protocol, &mut self.transport, "add", &mut result));
+      Ok(result.success)
+  }
+
+  #[allow(non_snake_case)]
+  pub fn calculate(
+    &mut self,
+    logid: i32,
+    w: Work,
+    ) -> TResult<i32> {
+      let args = CalculatorCalculateArgs {
+      logid: logid,
+      w: w,
+      };
+      try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "calculate", MessageType::MtCall, &args));
+      let mut result = CalculatorCalculateResult::new();
+      try!(ProtocolHelpers::receive(&self.protocol, &mut self.transport, "calculate", &mut result));
+      Ok(result.success)
+  }
+
+  #[allow(non_snake_case)]
+  pub fn zip(
+    &mut self,
+    ) -> TResult<()> {
+      let args = CalculatorZipArgs;
+      try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "zip", MessageType::MtCall, &args));
+      Ok(())
   }
 
 }

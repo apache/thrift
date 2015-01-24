@@ -24,6 +24,15 @@ pub struct SharedStruct {
   pub value: String,
 }
 
+impl SharedStruct {
+  pub fn new() -> SharedStruct {
+    SharedStruct {
+      key: 0,
+      value: String::new(),
+    }
+  }
+}
+
 impl Writeable for SharedStruct {
 
   #[allow(unused_variables)]
@@ -106,6 +115,14 @@ pub struct SharedServiceGetStructResult {
   pub success: SharedStruct,
 }
 
+impl SharedServiceGetStructResult {
+  pub fn new() -> SharedServiceGetStructResult {
+    SharedServiceGetStructResult {
+      success: SharedStruct::new(),
+    }
+  }
+}
+
 impl Readable for SharedServiceGetStructResult {
 
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
@@ -130,5 +147,28 @@ impl Readable for SharedServiceGetStructResult {
     try!(iprot.read_struct_end(transport));
     if have_result { Ok(()) } else { Err(ProtocolError) }
   }
+}
+
+pub struct SharedServiceClient <T: Transport, P: Protocol> {
+  pub transport: T,
+  pub protocol: P,
+}
+
+impl <T: Transport, P: Protocol> SharedServiceClient<T, P> {
+
+  #[allow(non_snake_case)]
+  pub fn getStruct(
+    &mut self,
+    key: i32,
+    ) -> TResult<SharedStruct> {
+      let args = SharedServiceGetStructArgs {
+      key: key,
+      };
+      try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "getStruct", MessageType::MtCall, &args));
+      let mut result = SharedServiceGetStructResult::new();
+      try!(ProtocolHelpers::receive(&self.protocol, &mut self.transport, "getStruct", &mut result));
+      Ok(result.success)
+  }
+
 }
 

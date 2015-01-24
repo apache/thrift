@@ -64,17 +64,22 @@ class t_rs_generator : public t_oop_generator {
   string render_rs_type(t_type* type);
   string render_protocol_type(t_type* type);
   string render_suffix(t_type* type);
+  string render_type_init(t_type* type);
 
  private:
   void generate_service_helpers(t_service* tservice);
   void generate_service_client(t_service* tservice);
+  void generate_service_function(t_service* tservice, t_function* tfunction);
   void generate_function_helpers(t_service* tservice, t_function* tfunction);
+  void generate_function_args(t_function* tfunction);
   void generate_struct_declaration(t_struct* tstruct);
+  void generate_struct_ctor(t_struct* tstruct);
   void generate_struct_writer(t_struct* tstruct);
-  void generate_field_write(t_field* field);
   void generate_struct_reader(t_struct* tstruct);
+  void generate_field_declaration(t_field* tfield);
   void generate_field_read(t_field* field);
-
+  void generate_field_write(t_field* field);
+  void generate_args_init(t_function* tfunction);
   /**
    *Transforms a string with words separated by underscores to a pascal case equivalent
    * e.g. a_multi_word -> AMultiWord
@@ -163,12 +168,44 @@ void t_rs_generator::generate_enum(t_enum* tenum) {
 
   indent_down();
   indent(f_mod_) << "}\n\n";
+
+  // generate ctor
+  indent(f_mod_) << "impl " << ename << " {\n";
+  indent_up();
+    indent(f_mod_) << "pub fn new() -> " << ename << " {\n";
+    indent_up();
+
+      if (tenum->get_constants().empty()) {
+        indent(f_mod_) << ename << "\n";
+      }
+      else {
+        indent(f_mod_) << ename << "::" 
+                       << capitalize((*tenum->get_constants().begin())->get_name()) << "\n";
+      }
+    indent_down();
+    indent(f_mod_) << "}\n";
+  indent_down();
+  indent(f_mod_) << "}\n\n";
 }
 
 void t_rs_generator::generate_struct(t_struct* tstruct) {
   generate_struct_declaration(tstruct);
+  generate_struct_ctor(tstruct);
   generate_struct_writer(tstruct);
   generate_struct_reader(tstruct);
+}
+
+void t_rs_generator::generate_field_declaration(t_field* tfield) {
+  t_type* t = get_true_type(tfield->get_type());
+
+  f_mod_ << underscore(tfield->get_name()) << ": ";
+  // FIXME: handle T_OPT_IN_REQ_OUT
+  if (tfield->get_req() == t_field::T_OPTIONAL) {
+    f_mod_ << "Option<" << render_rs_type(t) << ">,\n";
+  }
+  else {
+    f_mod_ << render_rs_type(t) << ",\n";
+  }  
 }
 
 void t_rs_generator::generate_struct_declaration(t_struct* tstruct) {
@@ -185,20 +222,49 @@ void t_rs_generator::generate_struct_declaration(t_struct* tstruct) {
     vector<t_field*>::const_iterator m_iter;
     const vector<t_field*>& members = tstruct->get_members();
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      t_type* t = get_true_type((*m_iter)->get_type());
-      indent(f_mod_) << "pub " << underscore((*m_iter)->get_name()) << ": ";
-      // FIXME: handle T_OPT_IN_REQ_OUT
-      if ((*m_iter)->get_req() == t_field::T_OPTIONAL) {
-        f_mod_ << "Option<" << render_rs_type(t) << ">,\n";
-      }
-      else {
-        f_mod_ << render_rs_type(t) << ",\n";
-      }
+      indent(f_mod_) << "pub ";
+      generate_field_declaration(*m_iter);
     }
 
     indent_down();
     indent(f_mod_) << "}\n\n";
   }
+}
+
+void t_rs_generator::generate_struct_ctor(t_struct* tstruct) {
+  string struct_name = pascalcase(tstruct->get_name());
+
+  indent(f_mod_) << "impl " << struct_name << " {\n";
+  indent_up();
+
+    indent(f_mod_) << "pub fn new() -> " << struct_name << " {\n";
+    indent_up();
+
+      if (tstruct->get_members().empty()) {
+        indent(f_mod_) << struct_name << "\n";
+      }
+      else {
+        indent(f_mod_) << struct_name << " {\n";
+        indent_up();
+          vector<t_field*>::const_iterator m_iter;
+          const vector<t_field*>& members = tstruct->get_members();
+          for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+            string init;
+            if ((*m_iter)->get_req() == t_field::T_OPTIONAL) {
+              init = "None";
+            }
+            else {
+              init = render_type_init((*m_iter)->get_type());
+            }
+            indent(f_mod_) << (*m_iter)->get_name() << ": " << init << ",\n";
+          }
+        indent_down();
+        indent(f_mod_) << "}\n";
+      }
+    indent_down();
+    indent(f_mod_) << "}\n";
+  indent_down();
+  indent(f_mod_) << "}\n\n";
 }
 
 void t_rs_generator::generate_service(t_service* tservice) {
@@ -216,8 +282,80 @@ void t_rs_generator::generate_service_helpers(t_service* tservice) {
   }
 }
 
+void t_rs_generator::generate_function_args(t_function* tfunction) {
+  const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
+  vector<t_field*>::const_iterator f_iter;
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    indent(f_mod_);
+    generate_field_declaration(*f_iter);
+  }
+}
+
+void t_rs_generator::generate_args_init(t_function* tfunction) {
+  if (!tfunction->get_arglist()->get_members().empty()) {
+    f_mod_ << " {\n";
+    const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
+    vector<t_field*>::const_iterator f_iter;
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      indent(f_mod_) << (*f_iter)->get_name() << ": " << (*f_iter)->get_name() << ",\n";
+    }
+    indent(f_mod_) << "}";
+  }
+}
+
+void t_rs_generator::generate_service_function(t_service* tservice, t_function* tfunction) {
+  std::string helper_prefix = pascalcase(tservice->get_name() + "_" + tfunction->get_name());
+
+  indent(f_mod_) << "#[allow(non_snake_case)]\n";
+  indent(f_mod_) << "pub fn " << tfunction->get_name() << "(\n";
+  indent_up();
+    indent(f_mod_) << "&mut self,\n";
+    generate_function_args(tfunction);
+    indent(f_mod_) << ") -> TResult<" << render_rs_type(tfunction->get_returntype()) << "> {\n";
+    indent_up();
+      indent(f_mod_) << "let args = " << helper_prefix << "Args";
+      generate_args_init(tfunction);
+      f_mod_ << ";\n";
+      indent(f_mod_) << "try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, \"" 
+                     << tfunction->get_name()<< "\", MessageType::MtCall, &args));\n";
+
+      if (!tfunction->is_oneway()) {
+        indent(f_mod_) << "let mut result = " << helper_prefix << "Result::new();\n";
+        indent(f_mod_) << "try!(ProtocolHelpers::receive(&self.protocol, &mut self.transport, \""
+                       << tfunction->get_name()<< "\", &mut result));\n";
+      }
+      if (tfunction->get_returntype()->is_void()) {
+        indent(f_mod_) << "Ok(())\n";
+      }
+      else {
+        indent(f_mod_) << "Ok(result.success)\n";        
+      }
+
+    indent_down();
+  indent_down();
+  indent(f_mod_) << "}\n\n";
+}
+
 void t_rs_generator::generate_service_client(t_service* tservice) {
-  // TODO
+  indent(f_mod_) << "pub struct " << tservice->get_name() 
+                 << "Client <T: Transport, P: Protocol> {\n";
+  indent_up();
+    indent(f_mod_) << "pub transport: T,\n";
+    indent(f_mod_) << "pub protocol: P,\n";
+  indent_down();
+  indent(f_mod_) << "}\n\n";
+
+  indent(f_mod_) << "impl <T: Transport, P: Protocol> " << tservice->get_name() << "Client<T, P> {\n\n";
+  indent_up();
+
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::const_iterator f_iter;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    generate_service_function(tservice, *f_iter);
+  }
+
+  indent_down();
+  indent(f_mod_) << "}\n\n";
 }
 
 /**
@@ -260,6 +398,7 @@ void t_rs_generator::generate_function_helpers(t_service* tservice, t_function* 
   }
 
   generate_struct_declaration(&result);
+  generate_struct_ctor(&result);
   generate_struct_reader(&result);
 
   // FIXME: when implementing the server
@@ -562,4 +701,39 @@ string t_rs_generator::render_suffix(t_type* type) {
   return ""; // silence the compiler warning
 }
 
+
+string t_rs_generator::render_type_init(t_type* type) {
+  type = get_true_type(type);
+    if (type->is_base_type()) {
+      t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+      switch (tbase) {
+      case t_base_type::TYPE_VOID:
+        return "()";
+      case t_base_type::TYPE_STRING:
+        return (((t_base_type*)type)->is_binary() ? "Vec<u8>::new()" : "String::new()");
+      case t_base_type::TYPE_BOOL:
+        return "false";
+      case t_base_type::TYPE_BYTE:
+        return "0";
+      case t_base_type::TYPE_I16:
+        return "0";
+      case t_base_type::TYPE_I32:
+        return "0";
+      case t_base_type::TYPE_I64:
+        return "0";
+      case t_base_type::TYPE_DOUBLE:
+        return "0";
+      }
+
+  } else if (type->is_struct() || type->is_xception()) {
+    return capitalize(((t_struct*)type)->get_name()) + "::new()";
+
+  } else if (type->is_enum() || type->is_map() || type->is_set() || type->is_list()) {
+    return capitalize(type->get_name()) + "::new()";
+
+  } else {
+    throw "INVALID TYPE IN render_type_init: " + type->get_name();
+  }
+  return ""; // silence the compiler warning    
+}
 THRIFT_REGISTER_GENERATOR(rs, "Rust", "")
