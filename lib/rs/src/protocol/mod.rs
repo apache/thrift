@@ -145,4 +145,59 @@ impl ProtocolHelpers {
             None => Err(ThriftErr::ProtocolError),
         }
     }
+
+    pub fn send<W: Writeable>(protocol: &Protocol, 
+                          transport: &mut Transport,
+                          name: &str, 
+                          _type: MessageType, 
+                          args: &W) -> TResult<()> {
+
+        let cseqid: i32 = 0;
+        protocol.write_message_begin(transport, name, _type, cseqid);    
+        try!(args.write(protocol, transport));
+        protocol.write_message_end(transport);
+        //self.transport.write_end();
+        try!(transport.flush());
+
+        Ok(())
+    }
+
+    #[allow(unused_variables)]
+    pub fn receive<R: Readable>(protocol: &Protocol, 
+                            transport: &mut Transport, 
+                            op: &'static str, 
+                            result: &mut R) -> TResult<()> {
+
+        match try!(protocol.read_message_begin(transport)) {
+            (_, MessageType::MtException, _) => {
+                println!("got exception");
+                // TODO
+                //let x = ApplicationException;
+                //x.read(&mut protocol)
+                //protocol.read_message_end();
+                //transport.read_end();
+                //throw x     
+                Err(ThriftErr::Exception)
+            }
+            (fname, MessageType::MtReply, _) => {
+                if fname.as_slice() == op {
+                    try!(result.read(protocol, transport));
+                    try!(protocol.read_message_end(transport));
+                    Ok(())
+                 }
+                else {
+                  // FIXME: shall we err in this case?
+                    try!(protocol.skip(transport, Type::TStruct));
+                    try!(protocol.read_message_end(transport));
+                    Err(ThriftErr::ProtocolError)
+                }
+            }
+            (_, _, _) => {
+                try!(protocol.skip(transport, Type::TStruct));
+                try!(protocol.read_message_end(transport));
+                Err(ThriftErr::ProtocolError)
+            }
+        }
+    }
+
 }

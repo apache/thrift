@@ -22,6 +22,7 @@
 
 extern crate thrift;
 
+use std::str::FromStr;
 use std::io::net::ip;
 use thrift::TResult;
 use thrift::ThriftErr;
@@ -29,11 +30,13 @@ use thrift::ThriftErr::*;
 use thrift::protocol::{MessageType, Type};
 use thrift::transport::Transport;
 use thrift::protocol::Protocol;
+use thrift::protocol::ProtocolHelpers;
 use thrift::protocol::{Readable, Writeable};
 use thrift::protocol::binary_protocol::BinaryProtocol;
 
 mod tutorial;
 mod shared;
+
 
 struct CalculatorClient<T: Transport, P: Protocol> {
     transport: T,
@@ -43,95 +46,46 @@ struct CalculatorClient<T: Transport, P: Protocol> {
 impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
     
     fn ping(&mut self) -> TResult<()> {
-        try!(self.send("ping", MessageType::MtCall, &tutorial::CalculatorPingArgs));
+        try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "ping", MessageType::MtCall, &tutorial::CalculatorPingArgs));
 
         let mut result = tutorial::CalculatorPingResult;
-        try!(self.receive("ping", &mut result));
+        try!(ProtocolHelpers::receive(&self.protocol, &mut self.transport, "ping", &mut result));
         Ok(())
     }
     
     fn add(&mut self, num1: i32, num2: i32) -> TResult<i32> {
         let args = tutorial::CalculatorAddArgs { num1: num1, num2: num2 };
-        try!(self.send("add", MessageType::MtCall, &args));
+        try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "add", MessageType::MtCall, &args));
 
         let mut result = tutorial::CalculatorAddResult  { success: 0 };
-        try!(self.receive("add", &mut result));
+        try!(ProtocolHelpers::receive(&self.protocol, &mut self.transport, "add", &mut result));
         Ok(result.success)
     }
 
     fn calculate(&mut self, logid: i32, w: tutorial::Work) -> TResult<i32> {
         let args = tutorial::CalculatorCalculateArgs { logid: logid, w: w };
-        try!(self.send("calculate", MessageType::MtCall, &args));
+        try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "calculate", MessageType::MtCall, &args));
 
         let mut result = tutorial::CalculatorCalculateResult { success: 0, ouch: None };
-        try!(self.receive("calculate", &mut result));
+        try!(ProtocolHelpers::receive(&self.protocol, &mut self.transport, "calculate", &mut result));
         Ok(result.success)
     }
 
     #[allow(non_snake_case)] 
     fn getStruct(&mut self, key: i32) -> TResult<shared::SharedStruct> {
         let args = shared::SharedServiceGetStructArgs { key: key };
-        try!(self.send("getStruct", MessageType::MtCall, &args));
+        try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "getStruct", MessageType::MtCall, &args));
 
         let mut result = shared::SharedServiceGetStructResult { 
             success: shared::SharedStruct { key: -1, value: String::new() } };
-        try!(self.receive("getStruct", &mut result));
+        try!(ProtocolHelpers::receive(&self.protocol, &mut self.transport, "getStruct", &mut result));
         Ok(result.success)
-    }
-
-    fn send<W: Writeable>(&mut self, name: &str, _type: MessageType, args: &W) -> TResult<()> {
-        let cseqid: i32 = 0;
-        self.protocol.write_message_begin(&mut self.transport, name, _type, cseqid);
-        
-        try!(args.write(&self.protocol, &mut self.transport));
-        
-        self.protocol.write_message_end(&mut self.transport);
-
-        //self.transport.write_end();
-        try!(self.transport.flush());
-
-        Ok(())
-    }
-
-    #[allow(unused_variables)]
-    fn receive<R: Readable>(&mut self, op: &'static str, result: &mut R) -> TResult<()> {
-
-        match try!(self.protocol.read_message_begin(&mut self.transport)) {
-          (_, MessageType::MtException, _) => {
-              println!("got exception");
-              // TODO
-              //let x = ApplicationException;
-              //x.read(&mut self protocol)
-              //self.protocol.read_message_end();
-              //transport.read_end();
-              //throw x     
-              Err(ThriftErr::Exception)
-          }
-          (fname, MessageType::MtReply, _) => {
-              if fname.as_slice() == op {
-                  try!(result.read(&self.protocol, &mut self.transport));
-                  try!(self.protocol.read_message_end(&mut self.transport));
-                  Ok(())
-               }
-              else {
-                // FIXME: shall we err in this case?
-                  try!(self.protocol.skip(&mut self.transport, Type::TStruct));
-                  try!(self.protocol.read_message_end(&mut self.transport));
-                  Err(ThriftErr::ProtocolError)
-              }
-          }
-          (_, _, _) => {
-              try!(self.protocol.skip(&mut self.transport, Type::TStruct));
-              try!(self.protocol.read_message_end(&mut self.transport));
-              Err(ThriftErr::ProtocolError)
-          }
-        }
     }
 }
 
 pub fn main() {
     let server_address = "127.0.0.1:9090";
-    let addr: ip::SocketAddr = std::str::FromStr::from_str(server_address)
+    let addr: ip::SocketAddr = FromStr::from_str(server_address)
         .expect("bad server address");
     let tcp = std::io::TcpStream::connect(addr).unwrap();
 
@@ -140,7 +94,6 @@ pub fn main() {
     // Ping
     client.ping().unwrap();
     println!("ping()");
-
 
     // Add
     println!("1 + 1 = {}", client.add(1, 1).unwrap());
