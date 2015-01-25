@@ -60,31 +60,42 @@ class t_rs_generator : public t_oop_generator {
   void generate_struct(t_struct*   tstruct);
   void generate_service(t_service*  tservice);
 
+ private:
   string rs_autogen_comment();
   string rs_imports();
 
-  string render_rs_type(t_type* type);
+  string render_rs_type(t_type* type, bool split_generics = false);
   string render_protocol_type(t_type* type);
   string render_suffix(t_type* type);
   string render_type_init(t_type* type);
 
- private:
   void generate_service_uses(t_service* tservice);
+
   void generate_service_helpers(t_service* tservice);
-  void generate_service_trait(t_service* tservice);
-  void generate_service_client(t_service* tservice);
+  void generate_service_client_trait(t_service* tservice);
   void generate_service_trait_function(t_function* tfunction);
+  void generate_service_client_impl(t_service* tservice);
+
   void generate_service_function(t_service* tservice, t_function* tfunction);
   void generate_function_helpers(t_service* tservice, t_function* tfunction);
   void generate_function_args(t_function* tfunction);
   void generate_args_init(t_function* tfunction);
+
   void generate_struct_declaration(t_struct* tstruct);
   void generate_struct_ctor(t_struct* tstruct);
   void generate_struct_writer(t_struct* tstruct);
   void generate_struct_reader(t_struct* tstruct);
+
   void generate_field_declaration(t_field* tfield);
   void generate_field_read(t_field* field);
+  void generate_read_map(t_type* type, const string& name);
+  void generate_read_list(t_type* type, const string& name);
+  void generate_read_set(t_type* type, const string& name);
+
   void generate_field_write(t_field* field);
+  void generate_write_map(t_type* type, const string& name);
+  void generate_write_list(t_type* type, const string& name);
+  void generate_write_set(t_type* type, const string& name);
 
   /**
    *Transforms a string with words separated by underscores to a pascal case equivalent
@@ -202,8 +213,11 @@ string t_rs_generator::rs_imports() {
     "use thrift::protocol::Protocol;\n"
     "use thrift::protocol::{Readable, Writeable};\n"
     "use thrift::TResult;\n"
+    "#[allow(unused_imports)]\n"
     "use thrift::ThriftErr;\n"
+    "#[allow(unused_imports)]\n"
     "use thrift::ThriftErr::*;\n"
+    "#[allow(unused_imports)]\n"
     "use std::num::FromPrimitive;\n"
     "use thrift::protocol::ProtocolHelpers;\n"
   );
@@ -237,6 +251,7 @@ void t_rs_generator::generate_enum(t_enum* tenum) {
   // generate ctor
   indent(f_mod_) << "impl " << ename << " {\n";
   indent_up();
+    indent(f_mod_) << "#[allow(dead_code)]\n";
     indent(f_mod_) << "pub fn new() -> " << ename << " {\n";
     indent_up();
 
@@ -302,6 +317,7 @@ void t_rs_generator::generate_struct_ctor(t_struct* tstruct) {
   indent(f_mod_) << "impl " << struct_name << " {\n";
   indent_up();
 
+    indent(f_mod_) << "#[allow(dead_code)]\n";
     indent(f_mod_) << "pub fn new() -> " << struct_name << " {\n";
     indent_up();
 
@@ -343,8 +359,8 @@ void t_rs_generator::generate_service_uses(t_service* tservice) {
 
 void t_rs_generator::generate_service(t_service* tservice) {
   generate_service_helpers(tservice);
-  generate_service_trait(tservice);
-  generate_service_client(tservice);
+  generate_service_client_trait(tservice);
+  generate_service_client_impl(tservice);
 }
 
 void t_rs_generator::generate_service_helpers(t_service* tservice) {
@@ -422,7 +438,7 @@ void t_rs_generator::generate_service_function(t_service* tservice, t_function* 
   indent(f_mod_) << "}\n\n";
 }
 
-void t_rs_generator::generate_service_trait(t_service* tservice) {
+void t_rs_generator::generate_service_client_trait(t_service* tservice) {
   indent(f_mod_) << "pub trait " << tservice->get_name() << "Client {\n";
   indent_up();
 
@@ -440,9 +456,11 @@ void t_rs_generator::generate_service_trait(t_service* tservice) {
   indent(f_mod_) << "}\n\n";
 }
 
-void t_rs_generator::generate_service_client(t_service* tservice) {
+void t_rs_generator::generate_service_client_impl(t_service* tservice) {
   string trait_name = tservice->get_name() + "Client";
   string impl_name = tservice->get_name() + "ClientImpl";
+
+  indent(f_mod_) << "#[allow(dead_code)]\n";
   indent(f_mod_) << "pub struct " << impl_name << "<P: Protocol, T: Transport> {\n";
   indent_up();
     indent(f_mod_) << "pub protocol: P,\n";
@@ -454,6 +472,7 @@ void t_rs_generator::generate_service_client(t_service* tservice) {
   indent(f_mod_) << "impl <P: Protocol, T: Transport> " 
                  << impl_name << "<P, T> {\n";
   indent_up();
+    indent(f_mod_) << "#[allow(dead_code)]\n";
     indent(f_mod_) << "pub fn new(protocol: P, transport: T) -> " << impl_name << "<P, T> {\n";
       indent_up();
         indent(f_mod_) << impl_name << " {\n";
@@ -586,9 +605,20 @@ void t_rs_generator::generate_field_write(t_field* field) {
       ((is_string(type) && !is_optional) ? "&" + qualified_name : qualified_name);
     indent(f_mod_) << "oprot.write_" << render_suffix(type) 
                    << "(transport, " << decorated_name << ");\n";
-  }
-  else {
+  } else if(type->is_struct() || type->is_xception()) {
     indent(f_mod_) << qualified_name << ".write(oprot, transport);\n";
+
+  } else if(type->is_map()) {
+    generate_write_map(type, qualified_name);
+
+  } else if(type->is_list()) {
+    generate_write_list(type, qualified_name);
+
+  } else if(type->is_set()) {
+    generate_write_set(type, qualified_name);
+
+  } else {
+    throw "INVALID TYPE IN generate_field_write: " + type->get_name();
   }
   indent(f_mod_) << "oprot.write_field_end(transport);\n";
 
@@ -602,6 +632,17 @@ void t_rs_generator::generate_field_write(t_field* field) {
   indent(f_mod_) << "\n";
 }
 
+void t_rs_generator::generate_write_map(t_type* type, const string& name) {
+  // FIXME: write entries key, value
+}
+
+void t_rs_generator::generate_write_list(t_type* type, const string& name) {
+  // FIXME: write entries
+}
+
+void t_rs_generator::generate_write_set(t_type* type, const string& name) {
+  // FIXME: write entries
+}
 
 void t_rs_generator::generate_struct_reader(t_struct* tstruct) {
   string struct_name = pascalcase(tstruct->get_name());
@@ -673,9 +714,21 @@ void t_rs_generator::generate_field_read(t_field* field) {
   }
   else if (type->is_enum()) {
     indent(f_mod_) << qualified_name << " = try!(ProtocolHelpers::read_enum(iprot, transport));\n";
-  }
-  else {
+  
+  } else if(type->is_struct() || type->is_xception()) {
     indent(f_mod_) << "try!(" << qualified_name << ".read(iprot, transport));\n";
+
+  } else if(type->is_map()) {
+    generate_read_map(type, qualified_name);
+
+  } else if(type->is_list()) {
+    generate_read_list(type, qualified_name);
+
+  } else if(type->is_set()) {
+    generate_read_set(type, qualified_name);
+
+  } else {
+    throw "INVALID TYPE IN generate_field_write: " + type->get_name();
   }
   indent(f_mod_) << "have_result = true;\n";
   indent_down();
@@ -687,7 +740,19 @@ void t_rs_generator::generate_field_read(t_field* field) {
   }
 }
 
-string t_rs_generator::render_rs_type(t_type* type) {
+void t_rs_generator::generate_read_map(t_type* type, const string& name) {
+  // FIXME: write entries key, value
+}
+
+void t_rs_generator::generate_read_list(t_type* type, const string& name) {
+  // FIXME: write entries
+}
+
+void t_rs_generator::generate_read_set(t_type* type, const string& name) {
+  // FIXME: write entries
+}
+
+string t_rs_generator::render_rs_type(t_type* type, bool split_generics) {
   type = get_true_type(type);
 
   if (type->is_base_type()) {
@@ -720,15 +785,18 @@ string t_rs_generator::render_rs_type(t_type* type) {
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    return "HashMap<" + render_rs_type(ktype) + ", " + render_rs_type(vtype) + ">";
+    string colcol = split_generics ? "::" : "";
+    return "HashMap" + colcol + "<" + render_rs_type(ktype) + ", " + render_rs_type(vtype) + ">";
 
   } else if (type->is_set()) {
     t_type* etype = ((t_set*)type)->get_elem_type();
-    return "HashSet<" + render_rs_type(etype) + ">";
+    string colcol = split_generics ? "::" : "";
+    return "HashSet" + colcol + "<" + render_rs_type(etype) + ">";
 
   } else if (type->is_list()) {
     t_type* etype = ((t_list*)type)->get_elem_type();
-    return "Vec<" + render_rs_type(etype) + ">";
+    string colcol = split_generics ? "::" : "";
+    return "Vec" + colcol + "<" + render_rs_type(etype) + ">";
 
   } else {
     throw "INVALID TYPE IN type_to_enum: " + type->get_name();
@@ -809,21 +877,8 @@ string t_rs_generator::render_suffix(t_type* type) {
   } else if (type->is_enum()) {
     return "i32";
 
-  // FIXME: other cases should throw
-  } else if (type->is_struct() || type->is_xception()) {
-    return "struct";
-
-  } else if (type->is_map()) {
-    return "struct";
-
-  } else if (type->is_set()) {
-    return "struct";
-
-  } else if (type->is_list()) {
-    return "struct";
-
   } else {
-    throw "INVALID TYPE IN render_protocol_type: " + type->get_name();
+    throw "INVALID TYPE IN render_suffix: " + type->get_name();
   }
   return ""; // silence the compiler warning
 }
@@ -855,8 +910,11 @@ string t_rs_generator::render_type_init(t_type* type) {
   } else if (type->is_struct() || type->is_xception()) {
     return capitalize(((t_struct*)type)->get_name()) + "::new()";
 
-  } else if (type->is_enum() || type->is_map() || type->is_set() || type->is_list()) {
+  } else if (type->is_enum()) {
     return capitalize(type->get_name()) + "::new()";
+
+  } else if (type->is_map() || type->is_set() || type->is_list()) {
+    return render_rs_type(type, true) + "::new()";
 
   } else {
     throw "INVALID TYPE IN render_type_init: " + type->get_name();

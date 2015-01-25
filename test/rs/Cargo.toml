@@ -2,4 +2,7 @@
 
 name = "thrift_for_rust_tests"
 version = "0.0.1"
-authors = ["Simon Génier <s@simon.coffee>"]
+authors = ["Simon Génier <s@simon.coffee>", "Maxim Golov <maxim.golov@gmail.com>"]
+
+[dependencies.thrift]
+path = "../../lib/rs"
