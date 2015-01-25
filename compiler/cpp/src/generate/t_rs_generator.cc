@@ -25,6 +25,7 @@
 #include "t_oop_generator.h"
 #include "platform.h"
 #include "version.h"
+#include "logging.h"
 
 using std::map;
 using std::ofstream;
@@ -53,6 +54,7 @@ class t_rs_generator : public t_oop_generator {
   /**
    * Program-level generation functions
    */
+  void generate_program();
   void generate_typedef(t_typedef*  ttypedef);
   void generate_enum(t_enum*     tenum);
   void generate_struct(t_struct*   tstruct);
@@ -67,13 +69,15 @@ class t_rs_generator : public t_oop_generator {
   string render_type_init(t_type* type);
 
  private:
+  void generate_service_uses(t_service* tservice);
   void generate_service_helpers(t_service* tservice);
   void generate_service_trait(t_service* tservice);
   void generate_service_client(t_service* tservice);
-  void generate_service_trait_function(t_service* tservice, t_function* tfunction);
+  void generate_service_trait_function(t_function* tfunction);
   void generate_service_function(t_service* tservice, t_function* tfunction);
   void generate_function_helpers(t_service* tservice, t_function* tfunction);
   void generate_function_args(t_function* tfunction);
+  void generate_args_init(t_function* tfunction);
   void generate_struct_declaration(t_struct* tstruct);
   void generate_struct_ctor(t_struct* tstruct);
   void generate_struct_writer(t_struct* tstruct);
@@ -81,7 +85,7 @@ class t_rs_generator : public t_oop_generator {
   void generate_field_declaration(t_field* tfield);
   void generate_field_read(t_field* field);
   void generate_field_write(t_field* field);
-  void generate_args_init(t_function* tfunction);
+
   /**
    *Transforms a string with words separated by underscores to a pascal case equivalent
    * e.g. a_multi_word -> AMultiWord
@@ -99,6 +103,65 @@ class t_rs_generator : public t_oop_generator {
  private:
   ofstream f_mod_;
 };
+
+/*
+ * This is necessary because we want to generate use clauses for all services,
+ */
+void t_rs_generator::generate_program() {
+  // Initialize the generator
+  init_generator();
+
+  // Generate service uses
+  vector<t_service*> services = program_->get_services();
+  vector<t_service*>::iterator sv_iter;
+  for (sv_iter = services.begin(); sv_iter != services.end(); ++sv_iter) {
+    service_name_ = get_service_name(*sv_iter);
+    generate_service_uses(*sv_iter);
+  }
+
+  // Generate enums
+  vector<t_enum*> enums = program_->get_enums();
+  vector<t_enum*>::iterator en_iter;
+  for (en_iter = enums.begin(); en_iter != enums.end(); ++en_iter) {
+    generate_enum(*en_iter);
+  }
+
+  // Generate typedefs
+  vector<t_typedef*> typedefs = program_->get_typedefs();
+  vector<t_typedef*>::iterator td_iter;
+  for (td_iter = typedefs.begin(); td_iter != typedefs.end(); ++td_iter) {
+    generate_typedef(*td_iter);
+  }
+
+  // Generate structs, exceptions, and unions in declared order
+  vector<t_struct*> objects = program_->get_objects();
+
+  vector<t_struct*>::iterator o_iter;
+  for (o_iter = objects.begin(); o_iter != objects.end(); ++o_iter) {
+    generate_forward_declaration(*o_iter);
+  }
+  for (o_iter = objects.begin(); o_iter != objects.end(); ++o_iter) {
+    if ((*o_iter)->is_xception()) {
+      generate_xception(*o_iter);
+    } else {
+      generate_struct(*o_iter);
+    }
+  }
+
+  // Generate constants
+  vector<t_const*> consts = program_->get_consts();
+  generate_consts(consts);
+
+  // Generate services
+  services = program_->get_services();
+  for (sv_iter = services.begin(); sv_iter != services.end(); ++sv_iter) {
+    service_name_ = get_service_name(*sv_iter);
+    generate_service(*sv_iter);
+  }
+
+  // Close the generator
+  close_generator();
+}
 
 void t_rs_generator::init_generator() {
   // Make output directory
@@ -143,7 +206,7 @@ string t_rs_generator::rs_imports() {
     "use thrift::ThriftErr::*;\n"
     "use std::num::FromPrimitive;\n"
     "use thrift::protocol::ProtocolHelpers;\n"
-    "\n");
+  );
 }
 
 void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
@@ -269,6 +332,15 @@ void t_rs_generator::generate_struct_ctor(t_struct* tstruct) {
   indent(f_mod_) << "}\n\n";
 }
 
+void t_rs_generator::generate_service_uses(t_service* tservice) {
+  t_service* service = tservice->get_extends();
+  while (service) {
+    indent(f_mod_) << "use " << service->get_program()->get_name() << "::*;\n";
+    service = service->get_extends();
+  }
+  indent(f_mod_) << "\n";
+}
+
 void t_rs_generator::generate_service(t_service* tservice) {
   generate_service_helpers(tservice);
   generate_service_trait(tservice);
@@ -306,8 +378,7 @@ void t_rs_generator::generate_args_init(t_function* tfunction) {
   }
 }
 
-void t_rs_generator::generate_service_trait_function(t_service* tservice, t_function* tfunction) {
-  std::string helper_prefix = pascalcase(tservice->get_name() + "_" + tfunction->get_name());
+void t_rs_generator::generate_service_trait_function(t_function* tfunction) {
 
   indent(f_mod_) << "#[allow(non_snake_case)]\n";
   indent(f_mod_) << "fn " << tfunction->get_name() << "(\n";
@@ -355,10 +426,14 @@ void t_rs_generator::generate_service_trait(t_service* tservice) {
   indent(f_mod_) << "pub trait " << tservice->get_name() << "Client {\n";
   indent_up();
 
-  vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::const_iterator f_iter;
-  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    generate_service_trait_function(tservice, *f_iter);
+  t_service* service = tservice;
+  while(service) {
+    vector<t_function*> functions = service->get_functions();
+    vector<t_function*>::const_iterator f_iter;
+    for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+      generate_service_trait_function(*f_iter);
+    }
+    service = service->get_extends();
   }
 
   indent_down();
@@ -396,10 +471,14 @@ void t_rs_generator::generate_service_client(t_service* tservice) {
                  << trait_name << " for " << impl_name << "<P, T> {\n\n";
   indent_up();
 
-  vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::const_iterator f_iter;
-  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    generate_service_function(tservice, *f_iter);
+  t_service* service = tservice;
+  while (service) {
+    vector<t_function*> functions = service->get_functions();
+    vector<t_function*>::const_iterator f_iter;
+    for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+      generate_service_function(service, *f_iter);
+    }
+    service = service->get_extends();
   }
 
   indent_down();

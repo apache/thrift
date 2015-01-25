@@ -70,11 +70,9 @@ fn runClient(client: &mut tutorial::CalculatorClient) {
         comment: None };
     println!("15 - 10 = {}", client.calculate(2, work).unwrap());
 
-/*
-    // Parent service - FIXME not implemented
     let ss = client.getStruct(1).unwrap();
     println!("Received log: {:?}", ss);
-*/
+
     println!("PASS");
 }
 

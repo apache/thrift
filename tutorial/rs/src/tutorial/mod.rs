@@ -16,6 +16,7 @@ use thrift::ThriftErr::*;
 use std::num::FromPrimitive;
 use thrift::protocol::ProtocolHelpers;
 
+use shared::*;
 
 #[allow(dead_code)]
 #[derive(Copy,Show,FromPrimitive)]
@@ -432,6 +433,11 @@ pub trait CalculatorClient {
   fn zip(
     &mut self,
     ) -> TResult<()>;
+  #[allow(non_snake_case)]
+  fn getStruct(
+    &mut self,
+    key: i32,
+    ) -> TResult<SharedStruct>;
 }
 
 pub struct CalculatorClientImpl<P: Protocol, T: Transport> {
@@ -500,6 +506,20 @@ impl <P: Protocol, T: Transport> CalculatorClient for CalculatorClientImpl<P, T>
       let args = CalculatorZipArgs;
       try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "zip", MessageType::MtCall, &args));
       Ok(())
+  }
+
+  #[allow(non_snake_case)]
+  fn getStruct(
+    &mut self,
+    key: i32,
+    ) -> TResult<SharedStruct> {
+      let args = SharedServiceGetStructArgs {
+      key: key,
+      };
+      try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "getStruct", MessageType::MtCall, &args));
+      let mut result = SharedServiceGetStructResult::new();
+      try!(ProtocolHelpers::receive(&self.protocol, &mut self.transport, "getStruct", &mut result));
+      Ok(result.success)
   }
 
 }
