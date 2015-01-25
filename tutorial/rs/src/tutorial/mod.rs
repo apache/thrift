@@ -411,15 +411,47 @@ impl Writeable for CalculatorZipArgs {
 
 }
 
-pub struct CalculatorClient <T: Transport, P: Protocol> {
-  pub transport: T,
-  pub protocol: P,
+pub trait CalculatorClient {
+  #[allow(non_snake_case)]
+  fn ping(
+    &mut self,
+    ) -> TResult<()>;
+  #[allow(non_snake_case)]
+  fn add(
+    &mut self,
+    num1: i32,
+    num2: i32,
+    ) -> TResult<i32>;
+  #[allow(non_snake_case)]
+  fn calculate(
+    &mut self,
+    logid: i32,
+    w: Work,
+    ) -> TResult<i32>;
+  #[allow(non_snake_case)]
+  fn zip(
+    &mut self,
+    ) -> TResult<()>;
 }
 
-impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
+pub struct CalculatorClientImpl<P: Protocol, T: Transport> {
+  pub protocol: P,
+  pub transport: T,
+}
+
+impl <P: Protocol, T: Transport> CalculatorClientImpl<P, T> {
+  pub fn new(protocol: P, transport: T) -> CalculatorClientImpl<P, T> {
+    CalculatorClientImpl {
+      protocol: protocol,
+      transport: transport,
+    }
+  }
+}
+
+impl <P: Protocol, T: Transport> CalculatorClient for CalculatorClientImpl<P, T> {
 
   #[allow(non_snake_case)]
-  pub fn ping(
+  fn ping(
     &mut self,
     ) -> TResult<()> {
       let args = CalculatorPingArgs;
@@ -430,7 +462,7 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
   }
 
   #[allow(non_snake_case)]
-  pub fn add(
+  fn add(
     &mut self,
     num1: i32,
     num2: i32,
@@ -446,7 +478,7 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
   }
 
   #[allow(non_snake_case)]
-  pub fn calculate(
+  fn calculate(
     &mut self,
     logid: i32,
     w: Work,
@@ -462,7 +494,7 @@ impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
   }
 
   #[allow(non_snake_case)]
-  pub fn zip(
+  fn zip(
     &mut self,
     ) -> TResult<()> {
       let args = CalculatorZipArgs;

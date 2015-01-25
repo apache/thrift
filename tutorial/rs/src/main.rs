@@ -37,35 +37,7 @@ use thrift::protocol::binary_protocol::BinaryProtocol;
 mod tutorial;
 mod shared;
 
-/*
-struct CalculatorClient<T: Transport, P: Protocol> {
-    transport: T,
-    protocol: P,
-}
-
-impl <T: Transport, P: Protocol> CalculatorClient<T, P> {
-    
-    #[allow(non_snake_case)] 
-    fn getStruct(&mut self, key: i32) -> TResult<shared::SharedStruct> {
-        let args = shared::SharedServiceGetStructArgs { key: key };
-        try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "getStruct", MessageType::MtCall, &args));
-
-        let mut result = shared::SharedServiceGetStructResult { 
-            success: shared::SharedStruct { key: -1, value: String::new() } };
-        try!(ProtocolHelpers::receive(&self.protocol, &mut self.transport, "getStruct", &mut result));
-        Ok(result.success)
-    }
-}
-*/
-
-pub fn main() {
-    let server_address = "127.0.0.1:9090";
-    let addr: ip::SocketAddr = FromStr::from_str(server_address)
-        .expect("bad server address");
-    let tcp = std::io::TcpStream::connect(addr).unwrap();
-
-    let mut client = tutorial::CalculatorClient{ protocol: BinaryProtocol, transport: tcp };
-
+fn runClient(client: &mut tutorial::CalculatorClient) {
     // Ping
     client.ping().unwrap();
     println!("ping()");
@@ -74,7 +46,11 @@ pub fn main() {
     println!("1 + 1 = {}", client.add(1, 1).unwrap());
 
     // Work: divide
-    let work = tutorial::Work { op: tutorial::Operation::DIVIDE, num1: 1, num2: 0, comment: None };
+    let work = tutorial::Work { 
+      op: tutorial::Operation::DIVIDE, 
+      num1: 1, 
+      num2: 0, 
+      comment: None };
 
     match client.calculate(1, work) {
       Ok(_) => {
@@ -87,13 +63,27 @@ pub fn main() {
     }
 
     // Work: subtract
-    let work = tutorial::Work { op: tutorial::Operation::SUBTRACT, num1: 15, num2: 10, comment: None };
+    let work = tutorial::Work { 
+        op: tutorial::Operation::SUBTRACT, 
+        num1: 15, 
+        num2: 10, 
+        comment: None };
     println!("15 - 10 = {}", client.calculate(2, work).unwrap());
 
 /*
+    // Parent service - FIXME not implemented
     let ss = client.getStruct(1).unwrap();
     println!("Received log: {:?}", ss);
 */
     println!("PASS");
 }
 
+pub fn main() {
+    let addr: ip::SocketAddr = FromStr::from_str("127.0.0.1:9090")
+        .expect("bad server address");
+    let tcp = std::io::TcpStream::connect(addr).unwrap();
+    // FIXME: do we want tutorial::build_calculator_client(BinaryProtocol, tcp) here?
+    let mut client = tutorial::CalculatorClientImpl::new(BinaryProtocol, tcp);
+
+    runClient(&mut client);
+}

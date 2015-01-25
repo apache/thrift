@@ -149,15 +149,32 @@ impl Readable for SharedServiceGetStructResult {
   }
 }
 
-pub struct SharedServiceClient <T: Transport, P: Protocol> {
-  pub transport: T,
-  pub protocol: P,
+pub trait SharedServiceClient {
+  #[allow(non_snake_case)]
+  fn getStruct(
+    &mut self,
+    key: i32,
+    ) -> TResult<SharedStruct>;
 }
 
-impl <T: Transport, P: Protocol> SharedServiceClient<T, P> {
+pub struct SharedServiceClientImpl<P: Protocol, T: Transport> {
+  pub protocol: P,
+  pub transport: T,
+}
+
+impl <P: Protocol, T: Transport> SharedServiceClientImpl<P, T> {
+  pub fn new(protocol: P, transport: T) -> SharedServiceClientImpl<P, T> {
+    SharedServiceClientImpl {
+      protocol: protocol,
+      transport: transport,
+    }
+  }
+}
+
+impl <P: Protocol, T: Transport> SharedServiceClient for SharedServiceClientImpl<P, T> {
 
   #[allow(non_snake_case)]
-  pub fn getStruct(
+  fn getStruct(
     &mut self,
     key: i32,
     ) -> TResult<SharedStruct> {

@@ -68,7 +68,9 @@ class t_rs_generator : public t_oop_generator {
 
  private:
   void generate_service_helpers(t_service* tservice);
+  void generate_service_trait(t_service* tservice);
   void generate_service_client(t_service* tservice);
+  void generate_service_trait_function(t_service* tservice, t_function* tfunction);
   void generate_service_function(t_service* tservice, t_function* tfunction);
   void generate_function_helpers(t_service* tservice, t_function* tfunction);
   void generate_function_args(t_function* tfunction);
@@ -269,6 +271,7 @@ void t_rs_generator::generate_struct_ctor(t_struct* tstruct) {
 
 void t_rs_generator::generate_service(t_service* tservice) {
   generate_service_helpers(tservice);
+  generate_service_trait(tservice);
   generate_service_client(tservice);
 }
 
@@ -303,11 +306,23 @@ void t_rs_generator::generate_args_init(t_function* tfunction) {
   }
 }
 
+void t_rs_generator::generate_service_trait_function(t_service* tservice, t_function* tfunction) {
+  std::string helper_prefix = pascalcase(tservice->get_name() + "_" + tfunction->get_name());
+
+  indent(f_mod_) << "#[allow(non_snake_case)]\n";
+  indent(f_mod_) << "fn " << tfunction->get_name() << "(\n";
+  indent_up();
+    indent(f_mod_) << "&mut self,\n";
+    generate_function_args(tfunction);
+    indent(f_mod_) << ") -> TResult<" << render_rs_type(tfunction->get_returntype()) << ">;\n";
+  indent_down();
+}
+
 void t_rs_generator::generate_service_function(t_service* tservice, t_function* tfunction) {
   std::string helper_prefix = pascalcase(tservice->get_name() + "_" + tfunction->get_name());
 
   indent(f_mod_) << "#[allow(non_snake_case)]\n";
-  indent(f_mod_) << "pub fn " << tfunction->get_name() << "(\n";
+  indent(f_mod_) << "fn " << tfunction->get_name() << "(\n";
   indent_up();
     indent(f_mod_) << "&mut self,\n";
     generate_function_args(tfunction);
@@ -336,16 +351,49 @@ void t_rs_generator::generate_service_function(t_service* tservice, t_function* 
   indent(f_mod_) << "}\n\n";
 }
 
-void t_rs_generator::generate_service_client(t_service* tservice) {
-  indent(f_mod_) << "pub struct " << tservice->get_name() 
-                 << "Client <T: Transport, P: Protocol> {\n";
+void t_rs_generator::generate_service_trait(t_service* tservice) {
+  indent(f_mod_) << "pub trait " << tservice->get_name() << "Client {\n";
   indent_up();
-    indent(f_mod_) << "pub transport: T,\n";
+
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::const_iterator f_iter;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    generate_service_trait_function(tservice, *f_iter);
+  }
+
+  indent_down();
+  indent(f_mod_) << "}\n\n";
+}
+
+void t_rs_generator::generate_service_client(t_service* tservice) {
+  string trait_name = tservice->get_name() + "Client";
+  string impl_name = tservice->get_name() + "ClientImpl";
+  indent(f_mod_) << "pub struct " << impl_name << "<P: Protocol, T: Transport> {\n";
+  indent_up();
     indent(f_mod_) << "pub protocol: P,\n";
+    indent(f_mod_) << "pub transport: T,\n";
   indent_down();
   indent(f_mod_) << "}\n\n";
 
-  indent(f_mod_) << "impl <T: Transport, P: Protocol> " << tservice->get_name() << "Client<T, P> {\n\n";
+  // generate ctor
+  indent(f_mod_) << "impl <P: Protocol, T: Transport> " 
+                 << impl_name << "<P, T> {\n";
+  indent_up();
+    indent(f_mod_) << "pub fn new(protocol: P, transport: T) -> " << impl_name << "<P, T> {\n";
+      indent_up();
+        indent(f_mod_) << impl_name << " {\n";
+        indent_up();
+            indent(f_mod_) << "protocol: protocol,\n";
+            indent(f_mod_) << "transport: transport,\n";
+      indent_down();
+      indent(f_mod_) << "}\n";
+    indent_down();
+    indent(f_mod_) << "}\n";
+  indent_down();
+  indent(f_mod_) << "}\n\n";
+
+  indent(f_mod_) << "impl <P: Protocol, T: Transport> " 
+                 << trait_name << " for " << impl_name << "<P, T> {\n\n";
   indent_up();
 
   vector<t_function*> functions = tservice->get_functions();
