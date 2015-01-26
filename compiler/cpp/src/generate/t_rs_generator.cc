@@ -561,7 +561,7 @@ void t_rs_generator::generate_struct_writer(t_struct* tstruct) {
     indent(f_mod_) << "#[allow(dead_code)]\n";
     indent(f_mod_) << "fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {\n";
     indent_up();
-      indent(f_mod_) << "oprot.write_struct_begin(transport, \"" << tstruct->get_name() << "\");\n\n";
+      indent(f_mod_) << "try!(oprot.write_struct_begin(transport, \"" << tstruct->get_name() << "\"));\n\n";
 
       vector<t_field*>::const_iterator m_iter;
       const vector<t_field*>& members = tstruct->get_members();
@@ -569,8 +569,8 @@ void t_rs_generator::generate_struct_writer(t_struct* tstruct) {
         generate_field_write(*m_iter);
       }
 
-      indent(f_mod_) << "oprot.write_field_stop(transport);\n";
-      indent(f_mod_) << "oprot.write_struct_end(transport);\n";
+      indent(f_mod_) << "try!(oprot.write_field_stop(transport));\n";
+      indent(f_mod_) << "try!(oprot.write_struct_end(transport));\n";
       indent(f_mod_) << "Ok(())\n";
 
     indent_down();
@@ -595,16 +595,16 @@ void t_rs_generator::generate_field_write(t_field* field) {
     qualified_name = "x";
   }
 
-  indent(f_mod_) << "oprot.write_field_begin(transport, \"" << field->get_name()
+  indent(f_mod_) << "try!(oprot.write_field_begin(transport, \"" << field->get_name()
                  << "\", Type::" << render_protocol_type(type)
-                 << ", " << field->get_key() << ");\n";
+                 << ", " << field->get_key() << "));\n";
   if (type->is_base_type() || type->is_enum()) {
     // FIXME: extract method?
     string decorated_name = 
       type->is_enum() ? qualified_name + " as i32" : 
       ((is_string(type) && !is_optional) ? "&" + qualified_name : qualified_name);
-    indent(f_mod_) << "oprot.write_" << render_suffix(type) 
-                   << "(transport, " << decorated_name << ");\n";
+    indent(f_mod_) << "try!(oprot.write_" << render_suffix(type) 
+                   << "(transport, " << decorated_name << "));\n";
   } else if(type->is_struct() || type->is_xception()) {
     indent(f_mod_) << "try!(" << qualified_name << ".write(oprot, transport));\n";
 
@@ -620,7 +620,7 @@ void t_rs_generator::generate_field_write(t_field* field) {
   } else {
     throw "INVALID TYPE IN generate_field_write: " + type->get_name();
   }
-  indent(f_mod_) << "oprot.write_field_end(transport);\n";
+  indent(f_mod_) << "try!(oprot.write_field_end(transport));\n";
 
   if (is_optional) {
     indent_down();
@@ -650,6 +650,7 @@ void t_rs_generator::generate_struct_reader(t_struct* tstruct) {
   indent(f_mod_) << "impl Readable for " << struct_name << " {\n\n";
   indent_up();
 
+    indent(f_mod_) << "#[allow(unused_mut)]\n";
     indent(f_mod_) << "fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {\n";
     indent_up();
       if (tstruct->get_members().empty()) {

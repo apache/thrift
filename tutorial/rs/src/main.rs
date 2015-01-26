@@ -20,6 +20,8 @@
 #![crate_name="calculator"]
 #![crate_type="bin"]
 
+#![allow(unstable)]
+
 extern crate thrift;
 
 use std::str::FromStr;
@@ -31,11 +33,11 @@ mod shared;
 
 fn run_client(client: &mut tutorial::CalculatorClient) {
     // Ping
-    client.ping().unwrap();
+    client.ping().ok().unwrap();
     println!("ping()");
 
     // Add
-    println!("1 + 1 = {}", client.add(1, 1).unwrap());
+    println!("1 + 1 = {}", client.add(1, 1).ok().unwrap());
 
     // Work: divide
     let work = tutorial::Work { 
@@ -60,9 +62,9 @@ fn run_client(client: &mut tutorial::CalculatorClient) {
         num1: 15, 
         num2: 10, 
         comment: None };
-    println!("15 - 10 = {}", client.calculate(2, work).unwrap());
+    println!("15 - 10 = {}", client.calculate(2, work).ok().unwrap());
 
-    let ss = client.getStruct(1).unwrap();
+    let ss = client.getStruct(1).ok().unwrap();
     println!("Received log: {:?}", ss);
 
     println!("PASS");
@@ -71,7 +73,7 @@ fn run_client(client: &mut tutorial::CalculatorClient) {
 pub fn main() {
     let addr: ip::SocketAddr = FromStr::from_str("127.0.0.1:9090")
         .expect("bad server address");
-    let tcp = std::io::TcpStream::connect(addr).unwrap();
+    let tcp = std::io::TcpStream::connect(addr).ok().unwrap();
     // FIXME: do we want tutorial::build_calculator_client(BinaryProtocol, tcp) here?
     let mut client = tutorial::CalculatorClientImpl::new(BinaryProtocol, tcp);
 

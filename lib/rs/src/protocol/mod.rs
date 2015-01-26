@@ -63,11 +63,11 @@ pub trait Protocol {
         name: &str,
         message_type: MessageType,
         sequence_id: i32
-    );
-    fn write_message_end(&self, transport: &mut Transport);
+    ) -> TResult<()>;
+    fn write_message_end(&self, transport: &mut Transport) -> TResult<()>;
 
-    fn write_struct_begin(&self, transport: &mut Transport, name: &str);
-    fn write_struct_end(&self, transport: &mut Transport);
+    fn write_struct_begin(&self, transport: &mut Transport, name: &str) -> TResult<()>;
+    fn write_struct_end(&self, transport: &mut Transport) -> TResult<()>;
 
     fn write_field_begin(
         &self,
@@ -75,9 +75,9 @@ pub trait Protocol {
         name: &str,
         field_type: Type,
         field_id: i16
-    );
-    fn write_field_end(&self, transport: &mut Transport);
-    fn write_field_stop(&self, transport: &mut Transport);
+    ) -> TResult<()>;
+    fn write_field_end(&self, transport: &mut Transport) -> TResult<()>;
+    fn write_field_stop(&self, transport: &mut Transport) -> TResult<()>;
 
     fn write_map_begin(
         &self,
@@ -85,24 +85,24 @@ pub trait Protocol {
         key_type: Type,
         value_type: Type,
         size: i32
-    );
-    fn write_map_end(&self, transport: &mut Transport);
+    ) -> TResult<()>;
+    fn write_map_end(&self, transport: &mut Transport) -> TResult<()>;
 
-    fn write_list_begin(&self, transport: &mut Transport, elem_type: Type, size: i32);
-    fn write_list_end(&self, transport: &mut Transport);
+    fn write_list_begin(&self, transport: &mut Transport, elem_type: Type, size: i32) -> TResult<()>;
+    fn write_list_end(&self, transport: &mut Transport) -> TResult<()>;
 
-    fn write_set_begin(&self, transport: &mut Transport, elem_type: Type, size: i32);
-    fn write_set_end(&self, transport: &mut Transport);
+    fn write_set_begin(&self, transport: &mut Transport, elem_type: Type, size: i32) -> TResult<()>;
+    fn write_set_end(&self, transport: &mut Transport) -> TResult<()>;
 
-    fn write_bool(&self, transport: &mut Transport, value: bool);
-    fn write_byte(&self, transport: &mut Transport, value: i8);
-    fn write_i16(&self, transport: &mut Transport, value: i16);
-    fn write_i32(&self, transport: &mut Transport, value: i32);
-    fn write_i64(&self, transport: &mut Transport, value: i64);
-    fn write_double(&self, transport: &mut Transport, value: f64);
-    fn write_str(&self, transport: &mut Transport, value: &str);
-    fn write_string(&self, transport: &mut Transport, value: &String);
-    fn write_binary(&self, transport: &mut Transport, value: &[u8]);
+    fn write_bool(&self, transport: &mut Transport, value: bool) -> TResult<()>;
+    fn write_byte(&self, transport: &mut Transport, value: i8) -> TResult<()>;
+    fn write_i16(&self, transport: &mut Transport, value: i16) -> TResult<()>;
+    fn write_i32(&self, transport: &mut Transport, value: i32) -> TResult<()>;
+    fn write_i64(&self, transport: &mut Transport, value: i64) -> TResult<()>;
+    fn write_double(&self, transport: &mut Transport, value: f64) -> TResult<()>;
+    fn write_str(&self, transport: &mut Transport, value: &str) -> TResult<()>;
+    fn write_string(&self, transport: &mut Transport, value: &String) -> TResult<()>;
+    fn write_binary(&self, transport: &mut Transport, value: &[u8]) -> TResult<()>;
 
     fn read_message_begin(&self, transport: &mut Transport) -> TResult<(String, MessageType, i32)>;
     fn read_message_end(&self, transport: &mut Transport) -> TResult<()>;
@@ -153,9 +153,9 @@ impl ProtocolHelpers {
                           args: &W) -> TResult<()> {
 
         let cseqid: i32 = 0;
-        protocol.write_message_begin(transport, name, _type, cseqid);    
+        try!(protocol.write_message_begin(transport, name, _type, cseqid));
         try!(args.write(protocol, transport));
-        protocol.write_message_end(transport);
+        try!(protocol.write_message_end(transport));
         //self.transport.write_end();
         try!(transport.flush());
 
