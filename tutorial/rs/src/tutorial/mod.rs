@@ -426,7 +426,7 @@ impl Writeable for CalculatorZipArgs {
 
 }
 
-pub trait CalculatorClient {
+pub trait CalculatorClient : SharedServiceClient {
   #[allow(non_snake_case)]
   fn ping(
     &mut self,
@@ -447,11 +447,6 @@ pub trait CalculatorClient {
   fn zip(
     &mut self,
     ) -> TResult<()>;
-  #[allow(non_snake_case)]
-  fn getStruct(
-    &mut self,
-    key: i32,
-    ) -> TResult<SharedStruct>;
 }
 
 #[allow(dead_code)]
@@ -523,6 +518,9 @@ impl <P: Protocol, T: Transport> CalculatorClient for CalculatorClientImpl<P, T>
       try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "zip", MessageType::MtCall, &args));
       Ok(())
   }
+}
+
+impl <P: Protocol, T: Transport> SharedServiceClient for CalculatorClientImpl<P, T> {
 
   #[allow(non_snake_case)]
   fn getStruct(
