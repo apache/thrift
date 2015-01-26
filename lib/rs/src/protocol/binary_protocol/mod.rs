@@ -30,8 +30,8 @@ static BINARY_PROTOCOL_VERSION_1: u16 = 0x8001;
 pub struct BinaryProtocol;
 
 impl BinaryProtocol {
-    fn write_type(&self, transport: &mut Transport, type_: Type) {
-        self.write_byte(transport, type_ as i8);
+    fn write_type(&self, transport: &mut Transport, type_: Type) -> TResult<()> {
+        self.write_byte(transport, type_ as i8)
     }
 
     fn read_type(&self, transport: &mut Transport) -> TResult<Type> {
@@ -49,110 +49,113 @@ impl Protocol for BinaryProtocol {
         name: &str,
         message_type: MessageType,
         sequence_id: i32
-    ) {
+    ) -> TResult<()> {
         let version = ((BINARY_PROTOCOL_VERSION_1 as i32) << 16) | message_type as i32;
-        self.write_i32(transport, version);
-        self.write_str(transport, name);
-        self.write_i32(transport, sequence_id);
+        try!(self.write_i32(transport, version));
+        try!(self.write_str(transport, name));
+        self.write_i32(transport, sequence_id)
     }
 
-    fn write_message_end(&self, _transport: &mut Transport) { }
+    fn write_message_end(&self, _transport: &mut Transport) -> TResult<()> {
+        Ok(())
+    }
 
-    fn write_struct_begin(&self, _transport: &mut Transport, _name: &str) { }
+    fn write_struct_begin(&self, _transport: &mut Transport, _name: &str) -> TResult<()> {
+        Ok(())
+    }
 
-    fn write_struct_end(&self, _transport: &mut Transport) { }
+    fn write_struct_end(&self, _transport: &mut Transport) -> TResult<()> {
+        Ok(())
+    }
 
     fn write_field_begin(
-        &self, transport: &mut Transport,
+        &self,
+        transport: &mut Transport,
         _name: &str,
         field_type: Type,
         field_id: i16
-    ) {
-        self.write_type(transport, field_type);
-        self.write_i16(transport, field_id);
+    ) -> TResult<()> {
+        try!(self.write_type(transport, field_type));
+        self.write_i16(transport, field_id)
     }
 
-    fn write_field_end(&self, _transport: &mut Transport) { }
-
-    fn write_field_stop(&self, transport: &mut Transport) {
-        self.write_byte(transport, protocol::Type::TStop as i8);
+    fn write_field_end(&self, _transport: &mut Transport) -> TResult<()> {
+        Ok(())
     }
 
-    fn write_map_begin(&self, transport: &mut Transport, key_type: Type, value_type: Type, size: i32) {
-        self.write_type(transport, key_type);
-        self.write_type(transport, value_type);
-        self.write_i32(transport, size);
+    fn write_field_stop(&self, transport: &mut Transport) -> TResult<()> {
+        self.write_byte(transport, protocol::Type::TStop as i8)
     }
 
-    fn write_map_end(&self, _transport: &mut Transport) { }
-
-    fn write_list_begin(&self, transport: &mut Transport, elem_type: Type, size: i32) {
-        self.write_type(transport, elem_type);
-        self.write_i32(transport, size);
+    fn write_map_begin(
+        &self,
+        transport: &mut Transport,
+        key_type: Type,
+        value_type: Type,
+        size: i32
+    ) -> TResult<()> {
+        try!(self.write_type(transport, key_type));
+        try!(self.write_type(transport, value_type));
+        self.write_i32(transport, size)
     }
 
-    fn write_list_end(&self, _transport: &mut Transport) { }
-
-    fn write_set_begin(&self, transport: &mut Transport, elem_type: Type, size: i32) {
-        self.write_type(transport, elem_type);
-        self.write_i32(transport, size);
+    fn write_map_end(&self, _transport: &mut Transport) -> TResult<()> {
+        Ok(())
     }
 
-    fn write_set_end(&self, _transport: &mut Transport) { }
-
-    fn write_bool(&self, transport: &mut Transport, value: bool) {
-        self.write_byte(transport, value as i8);
+    fn write_list_begin(&self, transport: &mut Transport, elem_type: Type, size: i32) -> TResult<()> {
+        try!(self.write_type(transport, elem_type));
+        self.write_i32(transport, size)
     }
 
-    fn write_byte(&self, transport: &mut Transport, value: i8) {
-        match transport.write_i8(value) {
-            Ok(_) => (),
-            Err(e) => panic!(e),
-        }
+    fn write_list_end(&self, _transport: &mut Transport) -> TResult<()> {
+        Ok(())
     }
 
-    fn write_i16(&self, transport: &mut Transport, value: i16) {
-        match transport.write_be_i16(value) {
-            Ok(_) => (),
-            Err(e) => panic!(e),
-        }
+    fn write_set_begin(&self, transport: &mut Transport, elem_type: Type, size: i32) -> TResult<()> {
+        try!(self.write_type(transport, elem_type));
+        self.write_i32(transport, size)
     }
 
-    fn write_i32(&self, transport: &mut Transport, value: i32) {
-        match transport.write_be_i32(value) {
-            Ok(_) => (),
-            Err(e) => panic!(e),
-        }
+    fn write_set_end(&self, _transport: &mut Transport) -> TResult<()> {
+        Ok(())
     }
 
-    fn write_i64(&self, transport: &mut Transport, value: i64) {
-        match transport.write_be_i64(value) {
-            Ok(_) => (),
-            Err(e) => panic!(e),
-        }
+    fn write_bool(&self, transport: &mut Transport, value: bool) -> TResult<()> {
+        self.write_byte(transport, value as i8)
     }
 
-    fn write_double(&self, transport: &mut Transport, value: f64) {
-        match transport.write_be_f64(value) {
-            Ok(_) => (),
-            Err(e) => panic!(e),
-        }
+    fn write_byte(&self, transport: &mut Transport, value: i8) -> TResult<()> {
+        transport.write_i8(value).map_err(|e| ThriftErr::TransportError(e))
     }
 
-    fn write_str(&self, transport: &mut Transport, value: &str) {
-        self.write_binary(transport, value.as_bytes());
+    fn write_i16(&self, transport: &mut Transport, value: i16) -> TResult<()> {
+        transport.write_be_i16(value).map_err(|e| ThriftErr::TransportError(e))
     }
 
-    fn write_string(&self, transport: &mut Transport, value: &String) {
-        self.write_binary(transport, value.as_slice().as_bytes());
+    fn write_i32(&self, transport: &mut Transport, value: i32) -> TResult<()> {
+        transport.write_be_i32(value).map_err(|e| ThriftErr::TransportError(e))
     }
 
-    fn write_binary(&self, transport: &mut Transport, value: &[u8]) {
-        self.write_i32(transport, value.len() as i32);
-        match transport.write(value) {
-            Ok(_) => (),
-            Err(e) => panic!(e),
-        }
+    fn write_i64(&self, transport: &mut Transport, value: i64) -> TResult<()> {
+        transport.write_be_i64(value).map_err(|e| ThriftErr::TransportError(e))
+    }
+
+    fn write_double(&self, transport: &mut Transport, value: f64) -> TResult<()> {
+        transport.write_be_f64(value).map_err(|e| ThriftErr::TransportError(e))
+    }
+
+    fn write_str(&self, transport: &mut Transport, value: &str) -> TResult<()> {
+        self.write_binary(transport, value.as_bytes())
+    }
+
+    fn write_string(&self, transport: &mut Transport, value: &String) -> TResult<()> {
+        self.write_binary(transport, value.as_slice().as_bytes())
+    }
+
+    fn write_binary(&self, transport: &mut Transport, value: &[u8]) -> TResult<()> {
+        try!(self.write_i32(transport, value.len() as i32));
+        transport.write(value).map_err(|e| ThriftErr::TransportError(e))
     }
 
     fn read_message_begin(&self, transport: &mut Transport) -> TResult<(String, MessageType, i32)> {
