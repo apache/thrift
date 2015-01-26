@@ -11,9 +11,9 @@ use thrift::transport::Transport;
 use thrift::protocol::Protocol;
 use thrift::protocol::{Readable, Writeable};
 use thrift::TResult;
+#[allow(unused_imports)]
 use thrift::ThriftErr;
 use thrift::ThriftErr::*;
-use std::num::FromPrimitive;
 use thrift::protocol::ProtocolHelpers;
 
 
@@ -25,6 +25,7 @@ pub struct SharedStruct {
 }
 
 impl SharedStruct {
+  #[allow(dead_code)]
   pub fn new() -> SharedStruct {
     SharedStruct {
       key: 0,
@@ -38,18 +39,18 @@ impl Writeable for SharedStruct {
   #[allow(unused_variables)]
   #[allow(dead_code)]
   fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
-    oprot.write_struct_begin(transport, "SharedStruct");
+    try!(oprot.write_struct_begin(transport, "SharedStruct"));
 
-    oprot.write_field_begin(transport, "key", Type::TI32, 1);
-    oprot.write_i32(transport, self.key);
-    oprot.write_field_end(transport);
+    try!(oprot.write_field_begin(transport, "key", Type::TI32, 1));
+    try!(oprot.write_i32(transport, self.key));
+    try!(oprot.write_field_end(transport));
     
-    oprot.write_field_begin(transport, "value", Type::TString, 2);
-    oprot.write_string(transport, &self.value);
-    oprot.write_field_end(transport);
+    try!(oprot.write_field_begin(transport, "value", Type::TString, 2));
+    try!(oprot.write_string(transport, &self.value));
+    try!(oprot.write_field_end(transport));
     
-    oprot.write_field_stop(transport);
-    oprot.write_struct_end(transport);
+    try!(oprot.write_field_stop(transport));
+    try!(oprot.write_struct_end(transport));
     Ok(())
   }
 
@@ -59,7 +60,7 @@ impl Readable for SharedStruct {
 
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
     let mut have_result = false;
-    iprot.read_struct_begin(transport);
+    try!(iprot.read_struct_begin(transport));
     loop {
       match try!(iprot.read_field_begin(transport)) {
         (_, Type::TStop, _) => {
@@ -96,14 +97,14 @@ impl Writeable for SharedServiceGetStructArgs {
   #[allow(unused_variables)]
   #[allow(dead_code)]
   fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
-    oprot.write_struct_begin(transport, "SharedService_getStruct_args");
+    try!(oprot.write_struct_begin(transport, "SharedService_getStruct_args"));
 
-    oprot.write_field_begin(transport, "key", Type::TI32, 1);
-    oprot.write_i32(transport, self.key);
-    oprot.write_field_end(transport);
+    try!(oprot.write_field_begin(transport, "key", Type::TI32, 1));
+    try!(oprot.write_i32(transport, self.key));
+    try!(oprot.write_field_end(transport));
     
-    oprot.write_field_stop(transport);
-    oprot.write_struct_end(transport);
+    try!(oprot.write_field_stop(transport));
+    try!(oprot.write_struct_end(transport));
     Ok(())
   }
 
@@ -116,6 +117,7 @@ pub struct SharedServiceGetStructResult {
 }
 
 impl SharedServiceGetStructResult {
+  #[allow(dead_code)]
   pub fn new() -> SharedServiceGetStructResult {
     SharedServiceGetStructResult {
       success: SharedStruct::new(),
@@ -127,7 +129,7 @@ impl Readable for SharedServiceGetStructResult {
 
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
     let mut have_result = false;
-    iprot.read_struct_begin(transport);
+    try!(iprot.read_struct_begin(transport));
     loop {
       match try!(iprot.read_field_begin(transport)) {
         (_, Type::TStop, _) => {
@@ -163,6 +165,7 @@ pub struct SharedServiceClientImpl<P: Protocol, T: Transport> {
 }
 
 impl <P: Protocol, T: Transport> SharedServiceClientImpl<P, T> {
+  #[allow(dead_code)]
   pub fn new(protocol: P, transport: T) -> SharedServiceClientImpl<P, T> {
     SharedServiceClientImpl {
       protocol: protocol,
