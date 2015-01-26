@@ -11,9 +11,9 @@ use thrift::transport::Transport;
 use thrift::protocol::Protocol;
 use thrift::protocol::{Readable, Writeable};
 use thrift::TResult;
+#[allow(unused_imports)]
 use thrift::ThriftErr;
 use thrift::ThriftErr::*;
-use std::num::FromPrimitive;
 use thrift::protocol::ProtocolHelpers;
 
 use shared::*;
@@ -28,6 +28,7 @@ pub enum Operation {
 }
 
 impl Operation {
+  #[allow(dead_code)]
   pub fn new() -> Operation {
     Operation::ADD
   }
@@ -45,6 +46,7 @@ pub struct Work {
 }
 
 impl Work {
+  #[allow(dead_code)]
   pub fn new() -> Work {
     Work {
       num1: 0,
@@ -60,31 +62,31 @@ impl Writeable for Work {
   #[allow(unused_variables)]
   #[allow(dead_code)]
   fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
-    oprot.write_struct_begin(transport, "Work");
+    try!(oprot.write_struct_begin(transport, "Work"));
 
-    oprot.write_field_begin(transport, "num1", Type::TI32, 1);
-    oprot.write_i32(transport, self.num1);
-    oprot.write_field_end(transport);
+    try!(oprot.write_field_begin(transport, "num1", Type::TI32, 1));
+    try!(oprot.write_i32(transport, self.num1));
+    try!(oprot.write_field_end(transport));
     
-    oprot.write_field_begin(transport, "num2", Type::TI32, 2);
-    oprot.write_i32(transport, self.num2);
-    oprot.write_field_end(transport);
+    try!(oprot.write_field_begin(transport, "num2", Type::TI32, 2));
+    try!(oprot.write_i32(transport, self.num2));
+    try!(oprot.write_field_end(transport));
     
-    oprot.write_field_begin(transport, "op", Type::TI32, 3);
-    oprot.write_i32(transport, self.op as i32);
-    oprot.write_field_end(transport);
+    try!(oprot.write_field_begin(transport, "op", Type::TI32, 3));
+    try!(oprot.write_i32(transport, self.op as i32));
+    try!(oprot.write_field_end(transport));
     
     match self.comment {
       Some(ref  x) => {
-        oprot.write_field_begin(transport, "comment", Type::TString, 4);
-        oprot.write_string(transport, x);
-        oprot.write_field_end(transport);
+        try!(oprot.write_field_begin(transport, "comment", Type::TString, 4));
+        try!(oprot.write_string(transport, x));
+        try!(oprot.write_field_end(transport));
       }
       _ => {}
     }
     
-    oprot.write_field_stop(transport);
-    oprot.write_struct_end(transport);
+    try!(oprot.write_field_stop(transport));
+    try!(oprot.write_struct_end(transport));
     Ok(())
   }
 
@@ -92,9 +94,10 @@ impl Writeable for Work {
 
 impl Readable for Work {
 
+  #[allow(unused_mut)]
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
     let mut have_result = false;
-    iprot.read_struct_begin(transport);
+    try!(iprot.read_struct_begin(transport));
     loop {
       match try!(iprot.read_field_begin(transport)) {
         (_, Type::TStop, _) => {
@@ -138,6 +141,7 @@ pub struct InvalidOperation {
 }
 
 impl InvalidOperation {
+  #[allow(dead_code)]
   pub fn new() -> InvalidOperation {
     InvalidOperation {
       what: 0,
@@ -151,18 +155,18 @@ impl Writeable for InvalidOperation {
   #[allow(unused_variables)]
   #[allow(dead_code)]
   fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
-    oprot.write_struct_begin(transport, "InvalidOperation");
+    try!(oprot.write_struct_begin(transport, "InvalidOperation"));
 
-    oprot.write_field_begin(transport, "what", Type::TI32, 1);
-    oprot.write_i32(transport, self.what);
-    oprot.write_field_end(transport);
+    try!(oprot.write_field_begin(transport, "what", Type::TI32, 1));
+    try!(oprot.write_i32(transport, self.what));
+    try!(oprot.write_field_end(transport));
     
-    oprot.write_field_begin(transport, "why", Type::TString, 2);
-    oprot.write_string(transport, &self.why);
-    oprot.write_field_end(transport);
+    try!(oprot.write_field_begin(transport, "why", Type::TString, 2));
+    try!(oprot.write_string(transport, &self.why));
+    try!(oprot.write_field_end(transport));
     
-    oprot.write_field_stop(transport);
-    oprot.write_struct_end(transport);
+    try!(oprot.write_field_stop(transport));
+    try!(oprot.write_struct_end(transport));
     Ok(())
   }
 
@@ -170,9 +174,10 @@ impl Writeable for InvalidOperation {
 
 impl Readable for InvalidOperation {
 
+  #[allow(unused_mut)]
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
     let mut have_result = false;
-    iprot.read_struct_begin(transport);
+    try!(iprot.read_struct_begin(transport));
     loop {
       match try!(iprot.read_field_begin(transport)) {
         (_, Type::TStop, _) => {
@@ -207,10 +212,10 @@ impl Writeable for CalculatorPingArgs {
   #[allow(unused_variables)]
   #[allow(dead_code)]
   fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
-    oprot.write_struct_begin(transport, "Calculator_ping_args");
+    try!(oprot.write_struct_begin(transport, "Calculator_ping_args"));
 
-    oprot.write_field_stop(transport);
-    oprot.write_struct_end(transport);
+    try!(oprot.write_field_stop(transport));
+    try!(oprot.write_struct_end(transport));
     Ok(())
   }
 
@@ -221,6 +226,7 @@ impl Writeable for CalculatorPingArgs {
 pub struct CalculatorPingResult;
 
 impl CalculatorPingResult {
+  #[allow(dead_code)]
   pub fn new() -> CalculatorPingResult {
     CalculatorPingResult
   }
@@ -228,9 +234,10 @@ impl CalculatorPingResult {
 
 impl Readable for CalculatorPingResult {
 
+  #[allow(unused_mut)]
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
     let mut have_result = true;
-    iprot.read_struct_begin(transport);
+    try!(iprot.read_struct_begin(transport));
     loop {
       match try!(iprot.read_field_begin(transport)) {
         (_, Type::TStop, _) => {
@@ -260,18 +267,18 @@ impl Writeable for CalculatorAddArgs {
   #[allow(unused_variables)]
   #[allow(dead_code)]
   fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
-    oprot.write_struct_begin(transport, "Calculator_add_args");
+    try!(oprot.write_struct_begin(transport, "Calculator_add_args"));
 
-    oprot.write_field_begin(transport, "num1", Type::TI32, 1);
-    oprot.write_i32(transport, self.num1);
-    oprot.write_field_end(transport);
+    try!(oprot.write_field_begin(transport, "num1", Type::TI32, 1));
+    try!(oprot.write_i32(transport, self.num1));
+    try!(oprot.write_field_end(transport));
     
-    oprot.write_field_begin(transport, "num2", Type::TI32, 2);
-    oprot.write_i32(transport, self.num2);
-    oprot.write_field_end(transport);
+    try!(oprot.write_field_begin(transport, "num2", Type::TI32, 2));
+    try!(oprot.write_i32(transport, self.num2));
+    try!(oprot.write_field_end(transport));
     
-    oprot.write_field_stop(transport);
-    oprot.write_struct_end(transport);
+    try!(oprot.write_field_stop(transport));
+    try!(oprot.write_struct_end(transport));
     Ok(())
   }
 
@@ -284,6 +291,7 @@ pub struct CalculatorAddResult {
 }
 
 impl CalculatorAddResult {
+  #[allow(dead_code)]
   pub fn new() -> CalculatorAddResult {
     CalculatorAddResult {
       success: 0,
@@ -293,9 +301,10 @@ impl CalculatorAddResult {
 
 impl Readable for CalculatorAddResult {
 
+  #[allow(unused_mut)]
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
     let mut have_result = false;
-    iprot.read_struct_begin(transport);
+    try!(iprot.read_struct_begin(transport));
     loop {
       match try!(iprot.read_field_begin(transport)) {
         (_, Type::TStop, _) => {
@@ -329,18 +338,18 @@ impl Writeable for CalculatorCalculateArgs {
   #[allow(unused_variables)]
   #[allow(dead_code)]
   fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
-    oprot.write_struct_begin(transport, "Calculator_calculate_args");
+    try!(oprot.write_struct_begin(transport, "Calculator_calculate_args"));
 
-    oprot.write_field_begin(transport, "logid", Type::TI32, 1);
-    oprot.write_i32(transport, self.logid);
-    oprot.write_field_end(transport);
+    try!(oprot.write_field_begin(transport, "logid", Type::TI32, 1));
+    try!(oprot.write_i32(transport, self.logid));
+    try!(oprot.write_field_end(transport));
     
-    oprot.write_field_begin(transport, "w", Type::TStruct, 2);
-    self.w.write(oprot, transport);
-    oprot.write_field_end(transport);
+    try!(oprot.write_field_begin(transport, "w", Type::TStruct, 2));
+    try!(self.w.write(oprot, transport));
+    try!(oprot.write_field_end(transport));
     
-    oprot.write_field_stop(transport);
-    oprot.write_struct_end(transport);
+    try!(oprot.write_field_stop(transport));
+    try!(oprot.write_struct_end(transport));
     Ok(())
   }
 
@@ -354,6 +363,7 @@ pub struct CalculatorCalculateResult {
 }
 
 impl CalculatorCalculateResult {
+  #[allow(dead_code)]
   pub fn new() -> CalculatorCalculateResult {
     CalculatorCalculateResult {
       success: 0,
@@ -364,9 +374,10 @@ impl CalculatorCalculateResult {
 
 impl Readable for CalculatorCalculateResult {
 
+  #[allow(unused_mut)]
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
     let mut have_result = false;
-    iprot.read_struct_begin(transport);
+    try!(iprot.read_struct_begin(transport));
     loop {
       match try!(iprot.read_field_begin(transport)) {
         (_, Type::TStop, _) => {
@@ -403,10 +414,10 @@ impl Writeable for CalculatorZipArgs {
   #[allow(unused_variables)]
   #[allow(dead_code)]
   fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
-    oprot.write_struct_begin(transport, "Calculator_zip_args");
+    try!(oprot.write_struct_begin(transport, "Calculator_zip_args"));
 
-    oprot.write_field_stop(transport);
-    oprot.write_struct_end(transport);
+    try!(oprot.write_field_stop(transport));
+    try!(oprot.write_struct_end(transport));
     Ok(())
   }
 
@@ -446,6 +457,7 @@ pub struct CalculatorClientImpl<P: Protocol, T: Transport> {
 }
 
 impl <P: Protocol, T: Transport> CalculatorClientImpl<P, T> {
+  #[allow(dead_code)]
   pub fn new(protocol: P, transport: T) -> CalculatorClientImpl<P, T> {
     CalculatorClientImpl {
       protocol: protocol,
