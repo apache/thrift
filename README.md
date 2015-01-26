@@ -1,6 +1,9 @@
 Apache Thrift
 =============
 
+This is the work in progress to add Rust support to Thrift,
+see the branch dev-rust-thrift.
+
 Last Modified: 2014-03-16
 
 License
