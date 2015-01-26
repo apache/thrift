@@ -538,7 +538,7 @@ void t_rs_generator::generate_function_helpers(t_service* tservice, t_function* 
   const vector<t_field*>& fields = xs->get_members();
   vector<t_field*>::const_iterator f_iter;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    // FIXME: we should restore the optional flag
+    // FIXME: shall we restore the optional flag?
     (*f_iter)->set_req(t_field::T_OPTIONAL);
     result.append(*f_iter);
   }
@@ -599,14 +599,14 @@ void t_rs_generator::generate_field_write(t_field* field) {
                  << "\", Type::" << render_protocol_type(type)
                  << ", " << field->get_key() << ");\n";
   if (type->is_base_type() || type->is_enum()) {
-    // FIXME: extract method
+    // FIXME: extract method?
     string decorated_name = 
       type->is_enum() ? qualified_name + " as i32" : 
       ((is_string(type) && !is_optional) ? "&" + qualified_name : qualified_name);
     indent(f_mod_) << "oprot.write_" << render_suffix(type) 
                    << "(transport, " << decorated_name << ");\n";
   } else if(type->is_struct() || type->is_xception()) {
-    indent(f_mod_) << qualified_name << ".write(oprot, transport);\n";
+    indent(f_mod_) << "try!(" << qualified_name << ".write(oprot, transport));\n";
 
   } else if(type->is_map()) {
     generate_write_map(type, qualified_name);
@@ -653,11 +653,11 @@ void t_rs_generator::generate_struct_reader(t_struct* tstruct) {
     indent(f_mod_) << "fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {\n";
     indent_up();
       if (tstruct->get_members().empty()) {
-        indent(f_mod_) << "let mut have_result = true;\n";
+        indent(f_mod_) << "let have_result = true;\n";
       } else {
         indent(f_mod_) << "let mut have_result = false;\n";
       }
-      indent(f_mod_) << "iprot.read_struct_begin(transport);\n";
+      indent(f_mod_) << "try!(iprot.read_struct_begin(transport));\n";
       indent(f_mod_) << "loop {\n";
       indent_up();
         indent(f_mod_) << "match try!(iprot.read_field_begin(transport)) {\n";
@@ -701,16 +701,20 @@ void t_rs_generator::generate_field_read(t_field* field) {
   bool is_optional = field->get_req() == t_field::T_OPTIONAL;
 
   if (is_optional) {
-  // FIXME
     indent(f_mod_) << "/*\n";
   }
+
+  string prefix = is_optional ? "Some(" : "";
+  string suffix = is_optional ? ")" : "";
 
   indent(f_mod_) << "(_, Type::" << render_protocol_type(type) 
                  << ", " << field->get_key() << ") => {\n";
   indent_up();
 
   if (type->is_base_type()) {
-    indent(f_mod_) << qualified_name << " = try!(iprot.read_" << render_suffix(type) << "(transport));\n";
+    indent(f_mod_) << qualified_name << " = " << prefix 
+                   << "try!(iprot.read_" << render_suffix(type) << "(transport))"
+                   << suffix << ";\n";
   }
   else if (type->is_enum()) {
     indent(f_mod_) << qualified_name << " = try!(ProtocolHelpers::read_enum(iprot, transport));\n";

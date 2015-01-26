@@ -11,8 +11,11 @@ use thrift::transport::Transport;
 use thrift::protocol::Protocol;
 use thrift::protocol::{Readable, Writeable};
 use thrift::TResult;
+#[allow(unused_imports)]
 use thrift::ThriftErr;
+#[allow(unused_imports)]
 use thrift::ThriftErr::*;
+#[allow(unused_imports)]
 use std::num::FromPrimitive;
 use thrift::protocol::ProtocolHelpers;
 
@@ -25,6 +28,7 @@ pub struct SharedStruct {
 }
 
 impl SharedStruct {
+  #[allow(dead_code)]
   pub fn new() -> SharedStruct {
     SharedStruct {
       key: 0,
@@ -59,7 +63,7 @@ impl Readable for SharedStruct {
 
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
     let mut have_result = false;
-    iprot.read_struct_begin(transport);
+    try!(iprot.read_struct_begin(transport));
     loop {
       match try!(iprot.read_field_begin(transport)) {
         (_, Type::TStop, _) => {
@@ -116,6 +120,7 @@ pub struct SharedServiceGetStructResult {
 }
 
 impl SharedServiceGetStructResult {
+  #[allow(dead_code)]
   pub fn new() -> SharedServiceGetStructResult {
     SharedServiceGetStructResult {
       success: SharedStruct::new(),
@@ -127,7 +132,7 @@ impl Readable for SharedServiceGetStructResult {
 
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
     let mut have_result = false;
-    iprot.read_struct_begin(transport);
+    try!(iprot.read_struct_begin(transport));
     loop {
       match try!(iprot.read_field_begin(transport)) {
         (_, Type::TStop, _) => {
@@ -157,12 +162,14 @@ pub trait SharedServiceClient {
     ) -> TResult<SharedStruct>;
 }
 
+#[allow(dead_code)]
 pub struct SharedServiceClientImpl<P: Protocol, T: Transport> {
   pub protocol: P,
   pub transport: T,
 }
 
 impl <P: Protocol, T: Transport> SharedServiceClientImpl<P, T> {
+  #[allow(dead_code)]
   pub fn new(protocol: P, transport: T) -> SharedServiceClientImpl<P, T> {
     SharedServiceClientImpl {
       protocol: protocol,

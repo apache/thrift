@@ -24,20 +24,12 @@ extern crate thrift;
 
 use std::str::FromStr;
 use std::io::net::ip;
-use thrift::TResult;
-use thrift::ThriftErr;
-use thrift::ThriftErr::*;
-use thrift::protocol::{MessageType, Type};
-use thrift::transport::Transport;
-use thrift::protocol::Protocol;
-use thrift::protocol::ProtocolHelpers;
-use thrift::protocol::{Readable, Writeable};
 use thrift::protocol::binary_protocol::BinaryProtocol;
 
 mod tutorial;
 mod shared;
 
-fn runClient(client: &mut tutorial::CalculatorClient) {
+fn run_client(client: &mut tutorial::CalculatorClient) {
     // Ping
     client.ping().unwrap();
     println!("ping()");
@@ -83,5 +75,5 @@ pub fn main() {
     // FIXME: do we want tutorial::build_calculator_client(BinaryProtocol, tcp) here?
     let mut client = tutorial::CalculatorClientImpl::new(BinaryProtocol, tcp);
 
-    runClient(&mut client);
+    run_client(&mut client);
 }

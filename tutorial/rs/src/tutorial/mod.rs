@@ -11,8 +11,11 @@ use thrift::transport::Transport;
 use thrift::protocol::Protocol;
 use thrift::protocol::{Readable, Writeable};
 use thrift::TResult;
+#[allow(unused_imports)]
 use thrift::ThriftErr;
+#[allow(unused_imports)]
 use thrift::ThriftErr::*;
+#[allow(unused_imports)]
 use std::num::FromPrimitive;
 use thrift::protocol::ProtocolHelpers;
 
@@ -28,6 +31,7 @@ pub enum Operation {
 }
 
 impl Operation {
+  #[allow(dead_code)]
   pub fn new() -> Operation {
     Operation::ADD
   }
@@ -45,6 +49,7 @@ pub struct Work {
 }
 
 impl Work {
+  #[allow(dead_code)]
   pub fn new() -> Work {
     Work {
       num1: 0,
@@ -94,7 +99,7 @@ impl Readable for Work {
 
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
     let mut have_result = false;
-    iprot.read_struct_begin(transport);
+    try!(iprot.read_struct_begin(transport));
     loop {
       match try!(iprot.read_field_begin(transport)) {
         (_, Type::TStop, _) => {
@@ -115,7 +120,7 @@ impl Readable for Work {
         }
         /*
         (_, Type::TString, 4) => {
-          self.comment = try!(iprot.read_string(transport));
+          self.comment = Some(try!(iprot.read_string(transport)));
           have_result = true;
         }
         */
@@ -138,6 +143,7 @@ pub struct InvalidOperation {
 }
 
 impl InvalidOperation {
+  #[allow(dead_code)]
   pub fn new() -> InvalidOperation {
     InvalidOperation {
       what: 0,
@@ -172,7 +178,7 @@ impl Readable for InvalidOperation {
 
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
     let mut have_result = false;
-    iprot.read_struct_begin(transport);
+    try!(iprot.read_struct_begin(transport));
     loop {
       match try!(iprot.read_field_begin(transport)) {
         (_, Type::TStop, _) => {
@@ -221,6 +227,7 @@ impl Writeable for CalculatorPingArgs {
 pub struct CalculatorPingResult;
 
 impl CalculatorPingResult {
+  #[allow(dead_code)]
   pub fn new() -> CalculatorPingResult {
     CalculatorPingResult
   }
@@ -229,8 +236,8 @@ impl CalculatorPingResult {
 impl Readable for CalculatorPingResult {
 
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
-    let mut have_result = true;
-    iprot.read_struct_begin(transport);
+    let have_result = true;
+    try!(iprot.read_struct_begin(transport));
     loop {
       match try!(iprot.read_field_begin(transport)) {
         (_, Type::TStop, _) => {
@@ -284,6 +291,7 @@ pub struct CalculatorAddResult {
 }
 
 impl CalculatorAddResult {
+  #[allow(dead_code)]
   pub fn new() -> CalculatorAddResult {
     CalculatorAddResult {
       success: 0,
@@ -295,7 +303,7 @@ impl Readable for CalculatorAddResult {
 
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
     let mut have_result = false;
-    iprot.read_struct_begin(transport);
+    try!(iprot.read_struct_begin(transport));
     loop {
       match try!(iprot.read_field_begin(transport)) {
         (_, Type::TStop, _) => {
@@ -336,7 +344,7 @@ impl Writeable for CalculatorCalculateArgs {
     oprot.write_field_end(transport);
     
     oprot.write_field_begin(transport, "w", Type::TStruct, 2);
-    self.w.write(oprot, transport);
+    try!(self.w.write(oprot, transport));
     oprot.write_field_end(transport);
     
     oprot.write_field_stop(transport);
@@ -354,6 +362,7 @@ pub struct CalculatorCalculateResult {
 }
 
 impl CalculatorCalculateResult {
+  #[allow(dead_code)]
   pub fn new() -> CalculatorCalculateResult {
     CalculatorCalculateResult {
       success: 0,
@@ -366,7 +375,7 @@ impl Readable for CalculatorCalculateResult {
 
   fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
     let mut have_result = false;
-    iprot.read_struct_begin(transport);
+    try!(iprot.read_struct_begin(transport));
     loop {
       match try!(iprot.read_field_begin(transport)) {
         (_, Type::TStop, _) => {
@@ -440,12 +449,14 @@ pub trait CalculatorClient {
     ) -> TResult<SharedStruct>;
 }
 
+#[allow(dead_code)]
 pub struct CalculatorClientImpl<P: Protocol, T: Transport> {
   pub protocol: P,
   pub transport: T,
 }
 
 impl <P: Protocol, T: Transport> CalculatorClientImpl<P, T> {
+  #[allow(dead_code)]
   pub fn new(protocol: P, transport: T) -> CalculatorClientImpl<P, T> {
     CalculatorClientImpl {
       protocol: protocol,
