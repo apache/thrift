@@ -75,6 +75,7 @@ class t_rs_generator : public t_oop_generator {
   void generate_service_client_trait(t_service* tservice);
   void generate_service_trait_function(t_function* tfunction);
   void generate_service_client_impl(t_service* tservice);
+  void generate_service_client_impl_functions(t_service* tservice, const string& impl_name);
 
   void generate_service_function(t_service* tservice, t_function* tfunction);
   void generate_function_helpers(t_service* tservice, t_function* tfunction);
@@ -439,17 +440,23 @@ void t_rs_generator::generate_service_function(t_service* tservice, t_function* 
 }
 
 void t_rs_generator::generate_service_client_trait(t_service* tservice) {
-  indent(f_mod_) << "pub trait " << tservice->get_name() << "Client {\n";
+  indent(f_mod_) << "pub trait " << tservice->get_name() << "Client";
+
+  string sep = " : ";
+  t_service* parent = tservice->get_extends();
+  while(parent) {
+    f_mod_ << sep << parent->get_name() << "Client";
+    sep = ", ";
+    parent = parent->get_extends();
+  }
+
+  f_mod_ << " {\n";
   indent_up();
 
-  t_service* service = tservice;
-  while(service) {
-    vector<t_function*> functions = service->get_functions();
-    vector<t_function*>::const_iterator f_iter;
-    for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-      generate_service_trait_function(*f_iter);
-    }
-    service = service->get_extends();
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::const_iterator f_iter;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    generate_service_trait_function(*f_iter);
   }
 
   indent_down();
@@ -474,11 +481,11 @@ void t_rs_generator::generate_service_client_impl(t_service* tservice) {
   indent_up();
     indent(f_mod_) << "#[allow(dead_code)]\n";
     indent(f_mod_) << "pub fn new(protocol: P, transport: T) -> " << impl_name << "<P, T> {\n";
+    indent_up();
+      indent(f_mod_) << impl_name << " {\n";
       indent_up();
-        indent(f_mod_) << impl_name << " {\n";
-        indent_up();
-            indent(f_mod_) << "protocol: protocol,\n";
-            indent(f_mod_) << "transport: transport,\n";
+        indent(f_mod_) << "protocol: protocol,\n";
+        indent(f_mod_) << "transport: transport,\n";
       indent_down();
       indent(f_mod_) << "}\n";
     indent_down();
@@ -486,18 +493,24 @@ void t_rs_generator::generate_service_client_impl(t_service* tservice) {
   indent_down();
   indent(f_mod_) << "}\n\n";
 
+  t_service* service = tservice;
+  while (service) {
+    generate_service_client_impl_functions(service, impl_name);
+    service = service->get_extends();
+  }
+}
+
+void t_rs_generator::generate_service_client_impl_functions(t_service* tservice, const string& impl_name) {
+  string trait_name = tservice->get_name() + "Client";
+
   indent(f_mod_) << "impl <P: Protocol, T: Transport> " 
                  << trait_name << " for " << impl_name << "<P, T> {\n\n";
   indent_up();
 
-  t_service* service = tservice;
-  while (service) {
-    vector<t_function*> functions = service->get_functions();
-    vector<t_function*>::const_iterator f_iter;
-    for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-      generate_service_function(service, *f_iter);
-    }
-    service = service->get_extends();
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::const_iterator f_iter;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    generate_service_function(tservice, *f_iter);
   }
 
   indent_down();

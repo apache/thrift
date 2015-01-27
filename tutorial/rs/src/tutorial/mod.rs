@@ -518,6 +518,7 @@ impl <P: Protocol, T: Transport> CalculatorClient for CalculatorClientImpl<P, T>
       try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "zip", MessageType::MtCall, &args));
       Ok(())
   }
+
 }
 
 impl <P: Protocol, T: Transport> SharedServiceClient for CalculatorClientImpl<P, T> {
