@@ -120,11 +120,7 @@ namespace Thrift.Server
         }
         catch (TTransportException ttx)
         {
-          if (stop)
-          {
-            logDelegate("TThreadPoolServer was shutting down, caught " + ttx);
-          }
-          else
+          if (!stop || ttx.Type != TTransportException.ExceptionType.Interrupted)
           {
             ++failureCount;
             logDelegate(ttx.ToString());
@@ -202,7 +198,7 @@ namespace Thrift.Server
               connectionContext = serverEventHandler.createContext(inputProtocol, outputProtocol);
 
             //Process client requests until client disconnects
-            while (true)
+            while (!stop)
             {
               if (!inputTransport.Peek())
                 break;
