@@ -17,7 +17,7 @@
  * under the License.
  */
 
-use std::io::{ Writer, Reader };
+use std::old_io::{ Writer, Reader };
 
 pub mod tcp_transport;
 
