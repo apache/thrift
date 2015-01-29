@@ -9,7 +9,7 @@ pub mod transport;
 
 #[derive(Eq, PartialEq, Show)]
 pub enum ThriftErr {
-    TransportError(std::io::IoError),
+    TransportError(std::old_io::IoError),
     UnknownProtocol,
     InvalidData,
     NegativeSize,
@@ -22,8 +22,8 @@ pub enum ThriftErr {
     ProtocolError,
 }
 
-impl std::error::FromError<std::io::IoError> for ThriftErr {
-	fn from_error(err: std::io::IoError) -> ThriftErr {
+impl std::error::FromError<std::old_io::IoError> for ThriftErr {
+	fn from_error(err: std::old_io::IoError) -> ThriftErr {
 		ThriftErr::TransportError(err)
 	}
 }

@@ -25,7 +25,7 @@
 extern crate thrift;
 
 use std::str::FromStr;
-use std::io::net::ip;
+use std::old_io::net::ip;
 use thrift::protocol::binary_protocol::BinaryProtocol;
 
 mod tutorial;
@@ -73,7 +73,7 @@ fn run_client(client: &mut tutorial::CalculatorClient) {
 pub fn main() {
     let addr: ip::SocketAddr = FromStr::from_str("127.0.0.1:9090")
         .expect("bad server address");
-    let tcp = std::io::TcpStream::connect(addr).ok().unwrap();
+    let tcp = std::old_io::TcpStream::connect(addr).ok().unwrap();
     // FIXME: do we want tutorial::build_calculator_client(BinaryProtocol, tcp) here?
     let mut client = tutorial::CalculatorClientImpl::new(BinaryProtocol, tcp);
 

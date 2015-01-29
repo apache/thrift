@@ -1,4 +1,4 @@
-use std::io::{ IoResult, MemReader, MemWriter, Reader, Writer };
+use std::old_io::{ IoResult, MemReader, MemWriter, Reader, Writer };
 use transport::Transport;
 
 pub struct FakeTransport {

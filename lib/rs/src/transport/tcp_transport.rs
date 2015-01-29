@@ -17,6 +17,6 @@
  * under the License.
  */
 
-use std::io::net;
+use std::old_io::net;
 
 impl super::Transport for net::tcp::TcpStream { }
