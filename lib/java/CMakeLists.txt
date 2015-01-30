@@ -20,9 +20,6 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-# Find required packages
-find_package(Ant REQUIRED)
-
 if(IS_ABSOLUTE "${LIB_INSTALL_DIR}")
     set(JAVA_INSTALL_DIR "${LIB_INSTALL_DIR}/java")
 else()
