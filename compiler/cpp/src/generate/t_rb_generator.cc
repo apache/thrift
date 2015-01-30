@@ -295,11 +295,15 @@ string t_rb_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
   for (size_t i = 0; i < includes.size(); ++i) {
-    t_program* included = includes[i];
-    std::string included_require_prefix
-        = rb_namespace_to_path_prefix(included->get_namespace("rb"));
-    std::string included_name = included->get_name();
-    result += "require '" + included_require_prefix + underscore(included_name) + "_types'\n";
+    if (namespaced_) {
+      t_program* included = includes[i];
+      std::string included_require_prefix
+          = rb_namespace_to_path_prefix(included->get_namespace("rb"));
+      std::string included_name = included->get_name();
+      result += "require '" + included_require_prefix + underscore(included_name) + "_types'\n";
+    } else {
+      result += "require '" + underscore(includes[i]->get_name()) + "_types'\n";
+    }
   }
   if (includes.size() > 0) {
     result += "\n";
