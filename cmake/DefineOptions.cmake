@@ -69,8 +69,9 @@ CMAKE_DEPENDENT_OPTION(WITH_C_GLIB "Build C (GLib) library" ON
                        "BUILD_LIBRARIES;GLIB_FOUND" OFF)
 # Java
 find_package(Java QUIET)
+find_package(Ant QUIET)
 CMAKE_DEPENDENT_OPTION(WITH_JAVA "Build Java library" ON
-                       "BUILD_LIBRARIES;JAVA_FOUND" OFF)
+                       "BUILD_LIBRARIES;JAVA_FOUND;Ant_FOUND" OFF)
 
 # Common library options
 option(WITH_SHARED_LIB "Build shared libraries" ON)
