@@ -17,6 +17,9 @@
  * under the License.
  */
 
+use std::old_io::{Reader, Writer, BufferedStream};
 use std::old_io::net;
 
 impl super::Transport for net::tcp::TcpStream { }
+
+impl<T: Reader + Writer> super::Transport for BufferedStream<T> { }

@@ -26,10 +26,12 @@ extern crate thrift;
 
 use std::str::FromStr;
 use std::old_io::net::ip;
+use std::old_io::BufferedStream;
 use thrift::protocol::binary_protocol::BinaryProtocol;
 
 mod tutorial;
 mod shared;
+
 
 fn run_client(client: &mut tutorial::CalculatorClient) {
     // Ping
@@ -74,8 +76,9 @@ pub fn main() {
     let addr: ip::SocketAddr = FromStr::from_str("127.0.0.1:9090")
         .expect("bad server address");
     let tcp = std::old_io::TcpStream::connect(addr).ok().unwrap();
+    let mut stream = BufferedStream::new(tcp);
     // FIXME: do we want tutorial::build_calculator_client(BinaryProtocol, tcp) here?
-    let mut client = tutorial::CalculatorClientImpl::new(BinaryProtocol, tcp);
+    let mut client = tutorial::CalculatorClientImpl::new(BinaryProtocol, stream);
 
     run_client(&mut client);
 }
