@@ -18,6 +18,13 @@
 #
 AUTOMAKE_OPTIONS = subdir-objects serial-tests
 
+BUILT_SOURCES = gen-cpp/ThriftTest.cpp \
+                gen-cpp/ThriftTest_types.cpp \
+                gen-cpp/ThriftTest_constants.cpp \
+                gen-cpp/StressTest_types.cpp \
+                gen-cpp/StressTest_constants.cpp \
+                gen-cpp/Service.cpp
+
 noinst_LTLIBRARIES = libtestgencpp.la libstresstestgencpp.la
 nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/ThriftTest_constants.cpp \
