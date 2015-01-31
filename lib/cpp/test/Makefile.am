@@ -76,7 +76,7 @@ check_PROGRAMS = \
 	EnumTest
 
 if AMX_HAVE_LIBEVENT
-noinst_PROGRAMS +=
+noinst_PROGRAMS += \
 	processor_test
 check_PROGRAMS += \
 	TNonblockingServerTest
