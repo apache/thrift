@@ -23,17 +23,25 @@ under the License.
 Using Thrift with Haxe
 ========================
 
-Thrift requires Haxe 3.1.3.
+Thrift requires Haxe 3.1.3. Installers for Windows and OSX
+platforms are available at `http://haxe.org/download`. 
 
-Thrift Haxe bindings can be set up via the `haxelib` tool from github.
+For Linux platforms it is recommended not to download the 
+binaries manually, instead use the Haxe installation shell 
+script which can be found at `http://www.openfl.org/download`.
+
+Thrift Haxe bindings can be set up via the `haxelib` tool  
+either from the official ASF repo, or via the github mirror.
 
 - To set up any **stable version**, choose the appropriate branch (e.g. `0.9.3`):
 
-    `haxelib git thrift https://github.com/apache/thrift.git 0.9.3 lib/haxe`
+    - `haxelib git thrift https://git-wip-us.apache.org/repos/asf/thrift.git 0.9.3 lib/haxe`
+    - `haxelib git thrift https://github.com/apache/thrift.git 0.9.3 lib/haxe`
 
 - To set up the current **development version**, use the `master` branch:
   
-    `haxelib git thrift https://github.com/apache/thrift.git master lib/haxe`
+    - `haxelib git thrift https://git-wip-us.apache.org/repos/asf/thrift.git master lib/haxe`	
+    - `haxelib git thrift https://github.com/apache/thrift.git master lib/haxe`
 
 As usual, the installed library can be updated using `haxelib upgrade` 
 or `haxelib update thrift`.
