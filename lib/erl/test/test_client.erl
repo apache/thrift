@@ -91,11 +91,11 @@ start(Args) ->
   {Client13, {ok, [-1,2,3]}}        = thrift_client:call(Client12, testList, [[-1,2,3]]),
   {Client14, {ok, 1}}               = thrift_client:call(Client13, testEnum, [?THRIFT_TEST_NUMBERZ_ONE]),
   {Client15, {ok, 309858235082523}} = thrift_client:call(Client14, testTypedef, [309858235082523]),
+  {Client16, {ok, ok}}              = thrift_client:call(Client15, testOneway, [1]),
 
   % No python implementation, but works with C++ and Erlang.
   %{Client16, {ok, InsaneResult}}    = thrift_client:call(Client15, testInsanity, [DemoInsane]),
   %io:format("~p~n", [InsaneResult]),
-  Client16 = Client15,
 
   {Client17, {ok, #'Xtruct'{string_thing = <<"Message">>}}} =
     thrift_client:call(Client16, testMultiException, ["Safe", "Message"]),
