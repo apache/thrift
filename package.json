@@ -23,9 +23,9 @@
     "url": "https://issues.apache.org/jira/browse/THRIFT"
   },
   "directories": {
-    "lib": "./lib/thrift"
+    "lib": "./lib/nodejs/lib/thrift"
   },
-  "main": "./lib/thrift",
+  "main": "./lib/nodejs/lib/thrift",
   "engines": {
     "node": ">= 0.2.4"
   },
@@ -40,6 +40,6 @@
     "commander": "2.1.x"
   },
   "scripts": {
-    "test": "test/testAll.sh"
+    "test": "lib/nodejs/test/testAll.sh"
   }
 }
