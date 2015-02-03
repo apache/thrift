@@ -19,7 +19,18 @@
 # under the License.
 #
 
+if [ -n "${1}" ]; then
+  COVER=${1};
+fi
+
 DIR="$( cd "$( dirname "$0" )" && pwd )"
+
+ISTANBUL="$DIR/../../../node_modules/istanbul/lib/cli.js"
+NODEUNIT="${DIR}/../../../node_modules/nodeunit/bin/nodeunit"
+
+REPORT_PREFIX="${DIR}/../coverage/report"
+
+COUNT=0
 
 export NODE_PATH="${DIR}:${DIR}/../lib:${NODE_PATH}"
 
@@ -27,11 +38,21 @@ testClientServer()
 {
   echo "   Testing Client/Server with protocol $1 and transport $2 $3";
   RET=0
-  node ${DIR}/server.js -p $1 -t $2 $3 &
+  if [ -n "${COVER}" ]; then
+    ${ISTANBUL} cover ${DIR}/server.js --dir ${REPORT_PREFIX}${COUNT} --handle-sigint -- -p $1 -t $2 $3 &
+    COUNT=$((COUNT+1))
+  else
+    node ${DIR}/server.js -p $1 -t $2 $3 &
+  fi
   SERVERPID=$!
   sleep 1
-  node ${DIR}/client.js -p $1 -t $2 $3 || RET=1
-  kill -9 $SERVERPID || RET=1
+  if [ -n "${COVER}" ]; then
+    ${ISTANBUL} cover ${DIR}/client.js --dir ${REPORT_PREFIX}${COUNT} -- -p $1 -t $2 $3 || RET=1
+    COUNT=$((COUNT+1))
+  else
+    node ${DIR}/client.js -p $1 -t $2 $3 || RET=1
+  fi
+  kill -2 $SERVERPID || RET=1
   return $RET
 }
 
@@ -39,11 +60,21 @@ testMultiplexedClientServer()
 {
   echo "   Testing Multiplexed Client/Server with protocol $1 and transport $2 $3";
   RET=0
-  node ${DIR}/multiplex_server.js -p $1 -t $2 $3 &
+  if [ -n "${COVER}" ]; then
+    ${ISTANBUL} cover ${DIR}/multiplex_server.js --dir ${REPORT_PREFIX}${COUNT} --handle-sigint -- -p $1 -t $2 $3 &
+    COUNT=$((COUNT+1))
+  else
+    node ${DIR}/multiplex_server.js -p $1 -t $2 $3 &
+  fi
   SERVERPID=$!
   sleep 1
-  node ${DIR}/multiplex_client.js -p $1 -t $2 $3 || RET=1
-  kill -9 $SERVERPID || RET=1
+  if [ -n "${COVER}" ]; then
+    ${ISTANBUL} cover ${DIR}/multiplex_client.js --dir ${REPORT_PREFIX}${COUNT} -- -p $1 -t $2 $3 || RET=1
+    COUNT=$((COUNT+1))
+  else
+    node ${DIR}/multiplex_client.js -p $1 -t $2 $3 || RET=1
+  fi
+  kill -2 $SERVERPID || RET=1
   return $RET
 }
 
@@ -51,11 +82,23 @@ testHttpClientServer()
 {
   echo "   Testing HTTP Client/Server with protocol $1 and transport $2 $3";
   RET=0
-  node ${DIR}/http_server.js -p $1 -t $2 $3 &
+  if [ -n "${COVER}" ]; then
+    ${ISTANBUL} cover ${DIR}/http_server.js --dir ${REPORT_PREFIX}${COUNT} --handle-sigint -- -p $1 -t $2 $3 &
+    COUNT=$((COUNT+1))
+  else
+    node ${DIR}/http_server.js -p $1 -t $2 $3 &
+  fi
   SERVERPID=$!
   sleep 1
-  node ${DIR}/http_client.js -p $1 -t $2 $3 || RET=1
-  kill -9 $SERVERPID || RET=1
+  if [ -n "${COVER}" ]; then
+    ${ISTANBUL} cover ${DIR}/http_client.js --dir ${REPORT_PREFIX}${COUNT} -- -p $1 -t $2 $3 || RET=1
+    COUNT=$((COUNT+1))
+  else
+    node ${DIR}/http_client.js -p $1 -t $2 $3 || RET=1
+  fi
+
+  kill -2 $SERVERPID || RET=1
+  sleep 1
   return $RET
 }
 
@@ -63,14 +106,24 @@ testWSClientServer()
 {
   echo "   Testing WebSocket Client/Server with protocol $1 and transport $2 $3";
   RET=0
-  node ${DIR}/http_server.js -p $1 -t $2 $3 &
+  if [ -n "${COVER}" ]; then
+    ${ISTANBUL} cover ${DIR}/http_server.js --dir ${REPORT_PREFIX}${COUNT} --handle-sigint -- -p $1 -t $2 $3 &
+    COUNT=$((COUNT+1))
+  else
+    node ${DIR}/http_server.js -p $1 -t $2 $3 &
+  fi
   SERVERPID=$!
   sleep 1
-  node ${DIR}/ws_client.js -p $1 -t $2 $3 || RET=1
-  kill -9 $SERVERPID || RET=1
+  if [ -n "${COVER}" ]; then
+    ${ISTANBUL} cover ${DIR}/ws_client.js --dir ${REPORT_PREFIX}${COUNT} -- -p $1 -t $2 $3 || RET=1
+    COUNT=$((COUNT+1))
+  else
+    node ${DIR}/ws_client.js -p $1 -t $2 $3 || RET=1
+  fi
+
+  kill -2 $SERVERPID || RET=1
   return $RET
 }
-
 
 TESTOK=0
 
@@ -80,7 +133,7 @@ ${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test
 
 #unit tests
 
-${DIR}/../node_modules/nodeunit/bin/nodeunit ${DIR}/binary.test.js || TESTOK=1
+${NODEUNIT} ${DIR}/binary.test.js || TESTOK=1
 
 #integration tests
 
@@ -125,5 +178,12 @@ testWSClientServer binary buffered || TESTOK=1
 testWSClientServer binary framed || TESTOK=1
 testWSClientServer json buffered --promise || TESTOK=1
 testWSClientServer binary framed --ssl || TESTOK=1
+
+if [ -n "${COVER}" ]; then
+  echo "${DIR}/../coverage/report*/coverage.json"
+  ${ISTANBUL} report --dir "${DIR}/../coverage" --include "${DIR}/../coverage/report*/coverage.json" lcov cobertura html
+  rm -r ${DIR}/../coverage/report*/*
+  rmdir ${DIR}/../coverage/report*
+fi
 
 exit $TESTOK
