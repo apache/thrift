@@ -167,7 +167,7 @@ public:
                                   bool inclass = false,
                                   bool coerceData = false,
                                   bool inkey = false,
-                                  bool in_container = false
+                                  bool in_container = false,
                                   bool use_true_type = false);
 
   void generate_deserialize_struct(std::ofstream& out,
