@@ -217,6 +217,7 @@ test-driver
 /libtool
 /ltmain.sh
 /missing
+/node_modules/
 /stamp-h1
 /test/status.html
 /test/c_glib/test_client
