@@ -3598,6 +3598,15 @@ void t_java_generator::generate_deserialize_map_element(ofstream& out,
   generate_deserialize_field(out, &fval, "", has_metadata);
 
   indent(out) << prefix << ".put(" << key << ", " << val << ");" << endl;
+
+  if ( reuse_objects_ && !get_true_type(fkey.get_type())->is_base_type()) {
+    indent(out) << key << " = null;" << endl;
+  }
+
+  if ( reuse_objects_ && !get_true_type(fval.get_type())->is_base_type()) {
+    indent(out) << val << " = null;" << endl;
+  }
+
 }
 
 /**
@@ -3623,6 +3632,11 @@ void t_java_generator::generate_deserialize_set_element(ofstream& out,
   generate_deserialize_field(out, &felem, "", has_metadata);
 
   indent(out) << prefix << ".add(" << elem << ");" << endl;
+
+  if ( reuse_objects_ && !get_true_type(felem.get_type())->is_base_type()) {
+    indent(out) << elem << " = null;" << endl;
+  }
+
 }
 
 /**
@@ -3648,6 +3662,11 @@ void t_java_generator::generate_deserialize_list_element(ofstream& out,
   generate_deserialize_field(out, &felem, "", has_metadata);
 
   indent(out) << prefix << ".add(" << elem << ");" << endl;
+
+  if ( reuse_objects_ && !get_true_type(felem.get_type())->is_base_type()) {
+    indent(out) << elem << " = null;" << endl;
+  }
+
 }
 
 /**
@@ -3975,7 +3994,7 @@ string t_java_generator::declare_field(t_field* tfield, bool init, bool comment)
         break;
       }
     } else if (ttype->is_enum()) {
-      result += " = 0";
+      result += " = null";
     } else if (ttype->is_container()) {
       result += " = new " + type_name(ttype, false, true) + "()";
     } else {
@@ -4618,7 +4637,18 @@ void t_java_generator::generate_java_struct_clear(std::ofstream& out, t_struct* 
     }
 
     if (type_can_be_null(t)) {
-      indent(out) << "this." << field->get_name() << " = null;" << endl;
+
+      if (reuse_objects_ && (t->is_container() || t->is_struct())) {
+        indent(out) << "if (this." << field->get_name() << " != null) {" << endl;
+        indent_up();
+          indent(out) << "this." << field->get_name() << ".clear();" << endl;
+        indent_down();
+        indent(out) << "}" << endl;
+
+      } else {
+
+        indent(out) << "this." << field->get_name() << " = null;" << endl;
+      }
       continue;
     }
 
