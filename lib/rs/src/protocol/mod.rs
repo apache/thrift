@@ -84,14 +84,14 @@ pub trait Protocol {
         transport: &mut Transport,
         key_type: Type,
         value_type: Type,
-        size: i32
+        size: usize
     ) -> TResult<()>;
     fn write_map_end(&self, transport: &mut Transport) -> TResult<()>;
 
-    fn write_list_begin(&self, transport: &mut Transport, elem_type: Type, size: i32) -> TResult<()>;
+    fn write_list_begin(&self, transport: &mut Transport, elem_type: Type, size: usize) -> TResult<()>;
     fn write_list_end(&self, transport: &mut Transport) -> TResult<()>;
 
-    fn write_set_begin(&self, transport: &mut Transport, elem_type: Type, size: i32) -> TResult<()>;
+    fn write_set_begin(&self, transport: &mut Transport, elem_type: Type, size: usize) -> TResult<()>;
     fn write_set_end(&self, transport: &mut Transport) -> TResult<()>;
 
     fn write_bool(&self, transport: &mut Transport, value: bool) -> TResult<()>;

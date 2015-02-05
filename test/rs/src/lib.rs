@@ -1,6 +1,6 @@
 extern crate thrift;
 
-mod small_test;
+mod thrift_test;
 
 
 #[test]

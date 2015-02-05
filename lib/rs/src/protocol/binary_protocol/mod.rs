@@ -92,29 +92,29 @@ impl Protocol for BinaryProtocol {
         transport: &mut Transport,
         key_type: Type,
         value_type: Type,
-        size: i32
+        size: usize
     ) -> TResult<()> {
         try!(self.write_type(transport, key_type));
         try!(self.write_type(transport, value_type));
-        self.write_i32(transport, size)
+        self.write_i32(transport, size as i32)
     }
 
     fn write_map_end(&self, _transport: &mut Transport) -> TResult<()> {
         Ok(())
     }
 
-    fn write_list_begin(&self, transport: &mut Transport, elem_type: Type, size: i32) -> TResult<()> {
+    fn write_list_begin(&self, transport: &mut Transport, elem_type: Type, size: usize) -> TResult<()> {
         try!(self.write_type(transport, elem_type));
-        self.write_i32(transport, size)
+        self.write_i32(transport, size as i32)
     }
 
     fn write_list_end(&self, _transport: &mut Transport) -> TResult<()> {
         Ok(())
     }
 
-    fn write_set_begin(&self, transport: &mut Transport, elem_type: Type, size: i32) -> TResult<()> {
+    fn write_set_begin(&self, transport: &mut Transport, elem_type: Type, size: usize) -> TResult<()> {
         try!(self.write_type(transport, elem_type));
-        self.write_i32(transport, size)
+        self.write_i32(transport, size as i32)
     }
 
     fn write_set_end(&self, _transport: &mut Transport) -> TResult<()> {

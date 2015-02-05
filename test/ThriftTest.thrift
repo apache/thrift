@@ -106,10 +106,54 @@ struct Insanity
   2: list<Xtruct> xtructs
 }
 
+struct ListFest
+{
+  1: list<i32> i32_list,
+  2: list<i64> i64_list,
+  3: list<double> float_list,
+  4: list<string> string_list,
+  5: list<Numberz> numberz_list,
+  6: list<Xtruct> struct_list,
+  7: list< map<i32,string>> map_list,
+// FIXME maps and sets (structs need hashes)
+//  8: list< set<Xtruct>> set_list,
+}
+
+struct SetFest
+{
+  1: set<i32> i32_set,
+  2: set<i64> i64_set,
+// FIXME floats
+//  3: set<double> float_set,
+  4: set<string> string_set,
+  5: set<Numberz> numberz_set,
+// FIXME maps and sets
+//  6: set<Xtruct> struct_set,
+//  7: set< map<i32,string>> map_set,
+//  8: set< set<Xtruct>> set_set,
+//  9: set< list<Xtruct>> list_set,
+}
+
+struct MapFest
+{
+  1: map<i32, string> i32_map,
+  2: map<i64, string> i64_map,
+// FIXME floats
+//  3: map<double, string> float_map,
+  4: map<string, string> string_map,
+  5: map<Numberz, string> numberz_map,
+// FIXME maps and sets
+//  6: map<Xtruct, string> struct_map,
+//  7: map< map<i32,string>, string> map_map,
+//  8: map< set<Xtruct>, string> set_map,
+//  9: map< list<Xtruct>, string> list_map,
+}
+
 struct CrazyNesting {
   1: string string_field,
-  2: optional set<Insanity> set_field,
-  3: required list< map<set<i32>,map<i32,set<list<map<Insanity,string>>>>>> list_field,
+// FIXME maps and sets
+//  2: optional set<Insanity> set_field,
+//  3: required list< map<set<i32>,map<i32,set<list<map<Insanity,string>>>>>> list_field,
   4: binary binary_field
 }
 
