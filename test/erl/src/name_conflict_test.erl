@@ -39,7 +39,7 @@ record_generation_test_() ->
       #get{sbyte=null}
     )},
     {"partial record", ?_assertMatch(
-      {partial, _},
+      {partial, _, _, _},
       #partial{using=null}
     )},
     {"ClassAndProp record", ?_assertMatch(
@@ -119,7 +119,11 @@ struct_info_test_() ->
       name_conflict_test_types:struct_info(get)
     )},
     {"partial definition", ?_assertEqual(
-      {struct, [{1, {struct, {name_conflict_test_types, using}}}]},
+      {struct, [
+        {1, {struct, {name_conflict_test_types, using}}},
+        {2, bool},
+        {3, bool}
+      ]},
       name_conflict_test_types:struct_info(partial)
     )},
     {"ClassAndProp definition", ?_assertEqual(
@@ -177,7 +181,9 @@ struct_info_test_() ->
     )},
     {"partial extended definition", ?_assertEqual(
       {struct, [
-        {1, undefined, {struct, {name_conflict_test_types, using}}, using, #using{}}
+        {1, undefined, {struct, {name_conflict_test_types, using}}, using, #using{}},
+        {2, undefined, bool, read, undefined},
+        {3, undefined, bool, write, undefined}
       ]},
       name_conflict_test_types:struct_info_ext(partial)
     )},
