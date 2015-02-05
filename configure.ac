@@ -246,9 +246,10 @@ AM_CONDITIONAL(HAVE_NPM, [test "x$NPM" != "x"])
 AX_THRIFT_LIB(lua, [Lua], yes)
 have_lua=no
 if test "$with_lua" = "yes"; then
-  AC_PATH_PROGS([LUA], [lua])
-  if test "x$LUA" != "x"; then
-    have_lua="yes"
+  AX_PROG_LUA(5.2,, have_lua="yes", have_lua="no")
+  if test "$have_lua" = "yes"; then
+    AX_LUA_HEADERS(, have_lua="no")
+    AX_LUA_LIBS(, have_lua="no")
   fi
 fi
 AM_CONDITIONAL(WITH_LUA, [test "$have_lua" = "yes"])
