@@ -24,6 +24,50 @@
 int32_t VERSION_1 = 0x80010000;
 int32_t VERSION_MASK = 0xffff0000;
 
+NS_INLINE size_t
+CheckedCastInt32ToSizeT(int32_t size)
+{
+  if (size < 0) {
+    NSString *reason = [NSString stringWithFormat:
+                        @"%s: refusing to read data with negative size: %"PRId32,
+                        __func__, size];
+    @throw [TProtocolException
+            exceptionWithName: @"TProtocolException"
+            reason: reason];
+  }
+  size_t checkedSize = (size_t)size;
+  return checkedSize;
+}
+
+NS_INLINE int32_t
+CheckedCastSizeTToInt32(size_t size)
+{
+  if (size > INT32_MAX) {
+    NSString *reason = [NSString stringWithFormat:
+                        @"%s: data size exceeds values representable by a 32-bit signed integer: %zu",
+                        __func__, size];
+    @throw [TProtocolException
+            exceptionWithName: @"TProtocolException"
+            reason: reason];
+  }
+  int32_t checkedSize = (int32_t)size;
+  return checkedSize;
+}
+
+NS_INLINE uint8_t
+CheckedCastIntToUInt8(int size)
+{
+  if (size > UINT8_MAX) {
+    NSString *reason = [NSString stringWithFormat:
+                        @"%s: data size exceeds values representable by a 8-bit unsigned integer: %d",
+                        __func__, size];
+    @throw [TProtocolException
+            exceptionWithName: @"TProtocolException"
+            reason: reason];
+  }
+  uint8_t checkedSize = (uint8_t)size;
+  return checkedSize;
+}
 
 static TBinaryProtocolFactory * gSharedFactory = nil;
 
