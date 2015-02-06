@@ -230,10 +230,9 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
   return (short)
     (((buff[0] & 0xff) << 8) |
      ((buff[1] & 0xff)));
-  return 0;
 }
 
-- (int64_t) readI64;
+- (int64_t) readI64
 {
   uint8_t i64rd[8];
   [mTransport readAll: i64rd offset: 0 length: 8];
@@ -248,7 +247,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
     ((int64_t)(i64rd[7] & 0xff));
 }
 
-- (double) readDouble;
+- (double) readDouble
 {
   // FIXME - will this get us into trouble on PowerPC?
   int64_t ieee754 = [self readI64];

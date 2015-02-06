@@ -37,7 +37,7 @@ NSString * const kTSockerServer_TransportKey = @"TSockerServer_Transport";
 
 - (id) initWithPort: (int) port
     protocolFactory: (id <TProtocolFactory>) protocolFactory
-   processorFactory: (id <TProcessorFactory>) processorFactory;
+   processorFactory: (id <TProcessorFactory>) processorFactory
 {
   self = [super init];
 
