@@ -102,7 +102,7 @@
 }
 
 
-- (int) readAll: (uint8_t *) buf offset: (int) off length: (int) len
+- (size_t) readAll: (uint8_t *) buf offset: (size_t) off length: (size_t) len
 {
   NSRange r;
   r.location = mResponseDataOffset;
@@ -115,7 +115,7 @@
 }
 
 
-- (void) write: (const uint8_t *) data offset: (unsigned int) offset length: (unsigned int) length
+- (void) write: (const uint8_t *) data offset: (size_t) offset length: (size_t) length
 {
   [mRequestData appendBytes: data+offset length: length];
 }

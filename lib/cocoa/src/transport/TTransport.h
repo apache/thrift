@@ -28,9 +28,9 @@
    * @return The number of bytes actually read, which must be equal to len
    * @throws TTransportException if there was an error reading data
    */
-- (int) readAll: (uint8_t *) buf offset: (int) off length: (int) len;
+- (size_t) readAll: (uint8_t *) buf offset: (size_t) off length: (size_t) len;
 
-- (void) write: (const uint8_t *) data offset: (unsigned int) offset length: (unsigned int) length;
+- (void) write: (const uint8_t *) data offset: (size_t) offset length: (size_t) length;
 
 - (void) flush;
 @end
