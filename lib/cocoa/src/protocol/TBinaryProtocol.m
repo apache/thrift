@@ -140,12 +140,13 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 }
 
 
-- (NSString *) readStringBody: (int) size
+- (NSString *) readStringBody: (int) rawSize
 {
+  size_t size = CheckedCastInt32ToSizeT(rawSize);
   char * buffer = malloc(size+1);
   if (!buffer) {
     @throw [TProtocolException exceptionWithName: @"TProtocolException"
-                                          reason: [NSString stringWithFormat: @"Unable to allocate memory in %s, size: %i",
+                                          reason: [NSString stringWithFormat: @"Unable to allocate memory in %s, size: %zu",
                                                    __PRETTY_FUNCTION__,
                                                    size]];;
   }
@@ -314,15 +315,16 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 - (NSData *) readBinary
 {
   int32_t size = [self readI32];
-  uint8_t * buff = malloc(size);
+  size_t binarySize = CheckedCastInt32ToSizeT(size);
+  uint8_t * buff = malloc(binarySize);
   if (buff == NULL) {
     @throw [TProtocolException
              exceptionWithName: @"TProtocolException"
              reason: [NSString stringWithFormat: @"Out of memory.  Unable to allocate %d bytes trying to read binary data.",
                                size]];
   }
-  [mTransport readAll: buff offset: 0 length: size];
-  return [NSData dataWithBytesNoCopy: buff length: size];
+  [mTransport readAll: buff offset: 0 length: binarySize];
+  return [NSData dataWithBytesNoCopy: buff length: binarySize];
 }
 
 
@@ -398,7 +400,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
     [self writeI32: sequenceID];
   } else {
     [self writeString: name];
-    [self writeByte: messageType];
+    [self writeByte: CheckedCastIntToUInt8(messageType)];
     [self writeI32: sequenceID];
   }
 }
@@ -417,8 +419,8 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
                             type: (int) fieldType
                          fieldID: (int) fieldID
 {
-  [self writeByte: fieldType];
-  [self writeI16: fieldID];
+  [self writeByte: CheckedCastIntToUInt8(fieldType)];
+  [self writeI16: CheckedCastIntToUInt8(fieldID)];
 }
 
 
@@ -468,7 +470,8 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
   if (value != nil) {
     const char * utf8Bytes = [value UTF8String];
     size_t length = strlen(utf8Bytes);
-    [self writeI32: length];
+    int32_t size = CheckedCastSizeTToInt32(length);
+    [self writeI32: size];
     [mTransport write: (uint8_t *) utf8Bytes offset: 0 length: length];
   } else {
     // instead of crashing when we get null, let's write out a zero
@@ -480,7 +483,8 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 
 - (void) writeBinary: (NSData *) data
 {
-  [self writeI32: [data length]];
+  int32_t size = CheckedCastSizeTToInt32([data length]);
+  [self writeI32: size];
   [mTransport write: [data bytes] offset: 0 length: [data length]];
 }
 
@@ -497,8 +501,8 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
                         valueType: (int) valueType
                              size: (int) size
 {
-  [self writeByte: keyType];
-  [self writeByte: valueType];
+  [self writeByte: CheckedCastIntToUInt8(keyType)];
+  [self writeByte: CheckedCastIntToUInt8(valueType)];
   [self writeI32: size];
 }
 
@@ -508,7 +512,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 - (void) writeSetBeginWithElementType: (int) elementType
                                  size: (int) size
 {
-  [self writeByte: elementType];
+  [self writeByte: CheckedCastIntToUInt8(elementType)];
   [self writeI32: size];
 }
 
@@ -518,7 +522,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 - (void) writeListBeginWithElementType: (int) elementType
                                   size: (int) size
 {
-  [self writeByte: elementType];
+  [self writeByte: CheckedCastIntToUInt8(elementType)];
   [self writeI32: size];
 }
 
