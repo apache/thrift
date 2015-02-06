@@ -199,8 +199,6 @@
         }
         case NSStreamEventEndEncountered:
             break;
-        default:
-            break;
     }
 }
 
