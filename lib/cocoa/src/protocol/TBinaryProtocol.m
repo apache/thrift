@@ -21,8 +21,15 @@
 #import "TProtocolException.h"
 #import "TObjective-C.h"
 
-int32_t VERSION_1 = 0x80010000;
-int32_t VERSION_MASK = 0xffff0000;
+static const uint16_t VERSION_1 = 0x8001;
+
+union versioned_size {
+  int32_t i32;
+  struct {
+    uint16_t version;
+    int16_t size;
+  } packed;
+};
 
 NS_INLINE size_t
 CheckedCastInt32ToSizeT(int32_t size)
@@ -156,10 +163,15 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 {
   int32_t size = [self readI32];
   if (size < 0) {
-    int version = size & VERSION_MASK;
+    union versioned_size vsize;
+    vsize.i32 = size;
+    uint16_t version = vsize.packed.version;
     if (version != VERSION_1) {
+      NSString *reason = [NSString stringWithFormat:
+                          @"%s: Expected version %"PRIu16", instead found: %"PRIu16,
+                          __func__, VERSION_1, version];
       @throw [TProtocolException exceptionWithName: @"TProtocolException"
-                                 reason: @"Bad version in readMessageBegin"];
+                                 reason: reason];
     }
     if (type != NULL) {
       *type = size & 0x00FF;
