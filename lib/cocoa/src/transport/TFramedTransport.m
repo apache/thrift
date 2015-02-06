@@ -52,20 +52,21 @@
 
 - (void)flush
 {
-    int len = [writeBuffer length];
-    int data_len = len - HEADER_SIZE;
-    if (data_len < 0)
+    size_t headerAndDataLength = [writeBuffer length];
+    if (headerAndDataLength < HEADER_SIZE) {
         @throw [TTransportException exceptionWithReason:@"Framed transport buffer has no header"];
+    }
 
+    size_t dataLength = headerAndDataLength - HEADER_SIZE;
     uint8_t i32rd[HEADER_SIZE];
-    i32rd[0] = (uint8_t)(0xff & (data_len >> 24));
-    i32rd[1] = (uint8_t)(0xff & (data_len >> 16));
-    i32rd[2] = (uint8_t)(0xff & (data_len >> 8));
-    i32rd[3] = (uint8_t)(0xff & (data_len));
+    i32rd[0] = (uint8_t)(0xff & (dataLength >> 24));
+    i32rd[1] = (uint8_t)(0xff & (dataLength >> 16));
+    i32rd[2] = (uint8_t)(0xff & (dataLength >> 8));
+    i32rd[3] = (uint8_t)(0xff & (dataLength));
 
     // should we make a copy of the writeBuffer instead? Better for threaded operations!
     [writeBuffer replaceBytesInRange:NSMakeRange(0, HEADER_SIZE) withBytes:i32rd length:HEADER_SIZE];
-    [mTransport write:[writeBuffer mutableBytes] offset:0 length:len];
+    [mTransport write:[writeBuffer mutableBytes] offset:0 length:headerAndDataLength];
     [mTransport flush];
 
     // reuse old memory buffer
@@ -85,18 +86,18 @@
     }
     
     if (readBuffer != nil) {
-        int buffer_len = [readBuffer length];
-        if (buffer_len-readOffset >= len) {
-            [readBuffer getBytes:buf range:NSMakeRange(readOffset,len)]; // copy data
-            readOffset += len;
+        size_t bufferLength = [readBuffer length];
+        if (bufferLength - readOffset >= length) {
+            [readBuffer getBytes:buf range:NSMakeRange(readOffset,length)]; // copy data
+            readOffset += length;
         } else {
             // void the previous readBuffer data and request a new frame
             [self readFrame];
-            [readBuffer getBytes:buf range:NSMakeRange(0,len)]; // copy data
-            readOffset = len;
+            [readBuffer getBytes:buf range:NSMakeRange(0,length)]; // copy data
+            readOffset = length;
         }
     }
-    return len;
+    return length;
 }
 
 - (void)readFrame

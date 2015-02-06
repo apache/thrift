@@ -147,8 +147,8 @@
   NSHTTPURLResponse * httpResponse = (NSHTTPURLResponse *) response;
   if ([httpResponse statusCode] != 200) {
     @throw [TTransportException exceptionWithName: @"TTransportException"
-                                           reason: [NSString stringWithFormat: @"Bad response from HTTP server: %d",
-                                                    [httpResponse statusCode]]];
+                                           reason: [NSString stringWithFormat: @"Bad response from HTTP server: %ld",
+                                                    (long)[httpResponse statusCode]]];
   }
 
   // phew!

@@ -49,7 +49,9 @@ NSString * const kTSockerServer_TransportKey = @"TSockerServer_Transport";
   int fd = -1;
   CFSocketRef socket = CFSocketCreate(kCFAllocatorDefault, PF_INET, SOCK_STREAM, IPPROTO_TCP, 0, NULL, NULL);
   if (socket) {
-    CFSocketSetSocketFlags(socket, CFSocketGetSocketFlags(socket) & ~kCFSocketCloseOnInvalidate);
+    CFOptionFlags flagsToClear = kCFSocketCloseOnInvalidate;
+    CFSocketSetSocketFlags(socket,  CFSocketGetSocketFlags(socket) & ~flagsToClear);
+
     fd = CFSocketGetNative(socket);
     int yes = 1;
     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
@@ -137,6 +139,7 @@ NSString * const kTSockerServer_TransportKey = @"TSockerServer_Transport";
             } while (result);
         }
         @catch (TTransportException * te) {
+            (void)te;
             //NSLog(@"Caught transport exception, abandoning client connection: %@", te);
         }
         

@@ -263,7 +263,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 
 - (NSString *) readString
 {
-  int size = [self readI32];
+  int32_t size = [self readI32];
   return [self readStringBody: size];
 }
 
