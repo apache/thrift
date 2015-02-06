@@ -102,16 +102,16 @@
 }
 
 
-- (size_t) readAll: (uint8_t *) buf offset: (size_t) off length: (size_t) len
+- (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
 {
   NSRange r;
   r.location = mResponseDataOffset;
-  r.length = len;
+  r.length = length;
 
-  [mResponseData getBytes: buf+off range: r];
-  mResponseDataOffset += len;
+  [mResponseData getBytes: buf+offset range: r];
+  mResponseDataOffset += length;
 
-  return len;
+  return length;
 }
 
 

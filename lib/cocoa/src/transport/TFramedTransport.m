@@ -78,7 +78,7 @@
     [writeBuffer appendBytes:data+offset length:length];
 }
 
-- (size_t) readAll: (uint8_t *) buf offset: (size_t) off length: (size_t) len
+- (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
 {
     if (readBuffer == nil) {
         [self readFrame];

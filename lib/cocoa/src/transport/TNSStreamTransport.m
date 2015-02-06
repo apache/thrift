@@ -51,12 +51,12 @@
 }
 
 
-- (size_t) readAll: (uint8_t *) buf offset: (size_t) off length: (size_t) len
+- (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
 {
   int got = 0;
   int ret = 0;
-  while (got < len) {
-    ret = [self.mInput read: buf+off+got maxLength: len-got];
+  while (got < length) {
+    ret = [self.mInput read: buf+offset+got maxLength: length-got];
     if (ret <= 0) {
       @throw [TTransportException exceptionWithReason: @"Cannot read. Remote side has closed."];
     }

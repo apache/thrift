@@ -51,11 +51,11 @@
 }
 
 
-- (size_t) readAll: (uint8_t *) buf offset: (size_t) off length: (size_t) len
+- (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
 {
   int got = 0;
-  while (got < len) {
-    NSData * d = [mInputFileHandle readDataOfLength: len-got];
+  while (got < length) {
+    NSData * d = [mInputFileHandle readDataOfLength: length-got];
     if ([d length] == 0) {
       @throw [TTransportException exceptionWithName: @"TTransportException"
                                   reason: @"Cannot read. No more data."];
