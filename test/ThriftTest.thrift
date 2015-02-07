@@ -117,6 +117,7 @@ struct ListFest
   7: list< map<i32,string>> map_list,
 // FIXME maps and sets (structs need hashes)
 //  8: list< set<Xtruct>> set_list,
+  9: list< list<i32>> list_list,
 }
 
 struct SetFest

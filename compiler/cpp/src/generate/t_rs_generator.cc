@@ -19,6 +19,7 @@
 
 #include <map>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -89,8 +90,9 @@ class t_rs_generator : public t_oop_generator {
 
   void generate_field_declaration(t_field* tfield);
   void generate_field_read(t_field* field);
+  void generate_read_value(t_type* type, const string& name, bool is_optional, bool is_decl = false);
   void generate_read_map(t_type* type, const string& name);
-  void generate_read_list(t_type* type, const string& name);
+  void generate_read_list(t_list* tlist, const string& name);
   void generate_read_set(t_type* type, const string& name);
 
   void generate_field_write(t_field* field);
@@ -138,6 +140,29 @@ class t_rs_generator : public t_oop_generator {
  private:
   ofstream f_mod_;
 };
+
+/*
+ * Helper class for allocating temp variable names
+ */
+class t_temp_var {
+public:
+  t_temp_var() {
+    std::stringstream ss;
+    // FIXME: are we safe for name clashes?
+    ss << "tmp" << index_++;
+    name_ = ss.str();
+  }
+  ~t_temp_var() {
+    --index_;
+  }
+  const string& str() const { return name_; }
+private:
+  static int index_;
+  string name_;
+};
+
+int t_temp_var::index_ = 0;
+
 
 /*
  * This is necessary because we want to generate use clauses for all services,
@@ -807,39 +832,15 @@ void t_rs_generator::generate_field_read(t_field* field) {
   bool is_optional = field->get_req() == t_field::T_OPTIONAL;
 
   if (is_optional) {
-    indent(f_mod_) << "/*\n";
+    indent(f_mod_) << "/* FIXME\n";
   }
-
-  string prefix = is_optional ? "Some(" : "";
-  string suffix = is_optional ? ")" : "";
 
   indent(f_mod_) << "(_, Type::" << render_protocol_type(type)
                  << ", " << field->get_key() << ") => {\n";
   indent_up();
 
-  if (type->is_base_type()) {
-    indent(f_mod_) << qualified_name << " = " << prefix
-                   << "try!(iprot.read_" << render_suffix(type) << "(transport))"
-                   << suffix << ";\n";
-  }
-  else if (type->is_enum()) {
-    indent(f_mod_) << qualified_name << " = try!(ProtocolHelpers::read_enum(iprot, transport));\n";
+  generate_read_value(type, qualified_name, is_optional);
 
-  } else if(type->is_struct() || type->is_xception()) {
-    indent(f_mod_) << "try!(" << qualified_name << ".read(iprot, transport));\n";
-
-  } else if(type->is_map()) {
-    generate_read_map(type, qualified_name);
-
-  } else if(type->is_list()) {
-    generate_read_list(type, qualified_name);
-
-  } else if(type->is_set()) {
-    generate_read_set(type, qualified_name);
-
-  } else {
-    throw "INVALID TYPE IN generate_field_write: " + type->get_name();
-  }
   indent(f_mod_) << "have_result = true;\n";
   indent_down();
   indent(f_mod_) << "}\n";
@@ -850,12 +851,73 @@ void t_rs_generator::generate_field_read(t_field* field) {
   }
 }
 
+void t_rs_generator::generate_read_value(t_type* type, const string& name, bool is_optional, bool is_decl) {
+  string decl = is_decl ? "let mut " : "";
+  string prefix = is_optional ? "Some(" : "";
+  string suffix = is_optional ? ")" : "";
+
+  if (type->is_base_type()) {
+    indent(f_mod_) << decl << name << " = " << prefix
+                   << "try!(iprot.read_" << render_suffix(type) << "(transport))"
+                   << suffix << ";\n";
+  }
+  else if (type->is_enum()) {
+    indent(f_mod_) << decl << name << " = try!(ProtocolHelpers::read_enum(iprot, transport));\n";
+
+  } else if(type->is_struct() || type->is_xception()) {
+    // FIXME: code duplication
+    if (is_decl) {
+      indent(f_mod_) << "let mut " << name << " = " << render_type_init(type) << ";\n";
+    }
+    indent(f_mod_) << "try!(" << name << ".read(iprot, transport));\n";
+
+  } else if(type->is_map()) {
+    if (is_decl) {
+      indent(f_mod_) << "let mut " << name << " = " << render_type_init(type) << ";\n";
+    }
+    generate_read_map(type, name);
+
+  } else if(type->is_list()) {
+    if (is_decl) {
+      indent(f_mod_) << "let mut " << name << " = " << render_type_init(type) << ";\n";
+    }
+    generate_read_list((t_list*)type, name);
+
+  } else if(type->is_set()) {
+    if (is_decl) {
+      indent(f_mod_) << "let mut " << name << " = " << render_type_init(type) << ";\n";
+    }
+    generate_read_set(type, name);
+
+  } else {
+    throw "INVALID TYPE IN generate_read_value: " + type->get_name();
+  }
+}
+
 void t_rs_generator::generate_read_map(t_type* type, const string& name) {
   // FIXME: write entries key, value
 }
 
-void t_rs_generator::generate_read_list(t_type* type, const string& name) {
-  // FIXME: write entries
+void t_rs_generator::generate_read_list(t_list* tlist, const string& name) {
+  t_type* type = get_true_type(tlist->get_elem_type());
+
+  indent(f_mod_) << "match try!(iprot.read_list_begin(transport)) {\n";
+  indent_up();
+    indent(f_mod_) << "(Type::" << render_protocol_type(type) << ", len) => {\n";
+    indent_up();
+      indent(f_mod_) << "for _ in 0..len {\n";
+      indent_up();
+        t_temp_var temp_var;
+        generate_read_value(type, temp_var.str(), false, true);
+        indent(f_mod_) << name << ".push(" << temp_var.str() << ");\n";
+      indent_down();
+      indent(f_mod_) << "}\n";
+      indent(f_mod_) << "have_result = true; // FIXME\n";
+    indent_down();
+    indent(f_mod_) << "}\n";
+    indent(f_mod_) << "_ => return Err(ThriftErr::ProtocolError)\n";
+  indent_down();
+  indent(f_mod_) << "}\n";
 }
 
 void t_rs_generator::generate_read_set(t_type* type, const string& name) {

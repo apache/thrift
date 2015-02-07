@@ -1,5 +1,4 @@
 #![feature(core)]
-
 extern crate podio;
 
 pub use protocol::Protocol;

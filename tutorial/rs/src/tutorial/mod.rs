@@ -98,7 +98,7 @@ impl Writeable for Work {
       }
       _ => {}
     }
-    
+
     try!(oprot.write_field_stop(transport));
     try!(oprot.write_struct_end(transport));
     Ok(())
