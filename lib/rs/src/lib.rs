@@ -1,4 +1,5 @@
-#![allow(unstable)]
+#![feature(core)]
+#![feature(io)]
 #![feature(slicing_syntax)]
 
 pub use protocol::Protocol;
@@ -7,7 +8,7 @@ pub use transport::Transport;
 pub mod protocol;
 pub mod transport;
 
-#[derive(Eq, PartialEq, Show)]
+#[derive(Eq, PartialEq, Debug)]
 pub enum ThriftErr {
     TransportError(std::old_io::IoError),
     UnknownProtocol,
