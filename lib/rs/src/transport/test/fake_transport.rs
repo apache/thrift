@@ -16,8 +16,8 @@ impl FakeTransport {
 }
 
 impl Writer for FakeTransport {
-    fn write(&mut self, buf: &[u8]) -> IoResult<()> {
-        self.writer.write(buf)
+    fn write_all(&mut self, buf: &[u8]) -> IoResult<()> {
+        self.writer.write_all(buf)
     }
 
     fn flush(&mut self) -> IoResult<()> {

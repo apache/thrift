@@ -150,12 +150,12 @@ impl Protocol for BinaryProtocol {
     }
 
     fn write_string(&self, transport: &mut Transport, value: &String) -> TResult<()> {
-        self.write_binary(transport, value.as_slice().as_bytes())
+        self.write_binary(transport, (&value[..]).as_bytes())
     }
 
     fn write_binary(&self, transport: &mut Transport, value: &[u8]) -> TResult<()> {
         try!(self.write_i32(transport, value.len() as i32));
-        transport.write(value).map_err(|e| ThriftErr::TransportError(e))
+        transport.write_all(value).map_err(|e| ThriftErr::TransportError(e))
     }
 
     fn read_message_begin(&self, transport: &mut Transport) -> TResult<(String, MessageType, i32)> {
@@ -290,7 +290,7 @@ impl Protocol for BinaryProtocol {
             }
             Type::TMap => {
                 let (key_type, value_type, size) = try!(self.read_map_begin(transport));
-                for _ in range(0, size) {
+                for _ in 0..size {
                     try!(self.skip(transport, key_type));
                     try!(self.skip(transport, value_type));
                 }
@@ -298,14 +298,14 @@ impl Protocol for BinaryProtocol {
             }
             Type::TSet => {
                 let (elem_type, size) = try!(self.read_set_begin(transport));
-                for _ in range(0, size) {
+                for _ in 0..size {
                     try!(self.skip(transport, elem_type));
                 }
                 try!(self.read_set_end(transport));
             }
             Type::TList => {
                 let (elem_type, size) = try!(self.read_list_begin(transport));
-                for _ in range(0, size) {
+                for _ in 0..size {
                     try!(self.skip(transport, elem_type));
                 }
                 try!(self.read_list_end(transport));

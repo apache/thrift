@@ -87,9 +87,9 @@ pub fn read_string() {
         0x00, 0x00, 0x00, 0x0d, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21,
     ));
     let protocol = BinaryProtocol;
-    assert_eq!(protocol.read_string(transport), Ok(String::from_str("")));
-    assert_eq!(protocol.read_string(transport), Ok(String::from_str("Asdf")));
-    assert_eq!(protocol.read_string(transport), Ok(String::from_str("Hello, World!")));
+    assert_eq!(protocol.read_string(transport), Ok("".to_string()));
+    assert_eq!(protocol.read_string(transport), Ok("Asdf".to_string()));
+    assert_eq!(protocol.read_string(transport), Ok("Hello, World!".to_string()));
 }
 
 #[test]
@@ -141,11 +141,11 @@ pub fn read_field_begin() {
     let protocol = BinaryProtocol;
     assert_eq!(
         protocol.read_field_begin(transport),
-        Ok((String::from_str(""), protocol::Type::TStop, 0))
+        Ok(("".to_string(), protocol::Type::TStop, 0))
     );
     assert_eq!(
         protocol.read_field_begin(transport),
-        Ok((String::from_str(""), protocol::Type::TMap, 0x140e))
+        Ok(("".to_string(), protocol::Type::TMap, 0x140e))
   );
 }
 
@@ -159,7 +159,7 @@ pub fn read_message_begin() {
     let protocol = BinaryProtocol;
     assert_eq!(
         protocol.read_message_begin(transport),
-        Ok((String::from_str("foo"), protocol::MessageType::MtCall, 0x0002471e))
+        Ok(("foo".to_string(), protocol::MessageType::MtCall, 0x0002471e))
     );
 }
 

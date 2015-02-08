@@ -24,7 +24,7 @@ use ThriftErr;
 
 pub mod binary_protocol;
 
-#[derive(Copy, Eq, PartialEq, FromPrimitive, Show)]
+#[derive(Copy, Eq, PartialEq, FromPrimitive, Debug)]
 pub enum Type {
     TStop = 0x00,
     TVoid = 0x01,
@@ -41,7 +41,7 @@ pub enum Type {
     TList = 0x0f
 }
 
-#[derive(Copy, Eq, PartialEq, FromPrimitive, Show)]
+#[derive(Copy, Eq, PartialEq, FromPrimitive, Debug)]
 pub enum MessageType {
     MtCall = 0x01,
     MtReply = 0x02,
@@ -162,7 +162,6 @@ impl ProtocolHelpers {
         Ok(())
     }
 
-    #[allow(unused_variables)]
     pub fn receive<R: Readable>(protocol: &Protocol, 
                             transport: &mut Transport, 
                             op: &'static str, 
@@ -180,7 +179,7 @@ impl ProtocolHelpers {
                 Err(ThriftErr::Exception)
             }
             (fname, MessageType::MtReply, _) => {
-                if fname.as_slice() == op {
+                if &fname[..] == op {
                     try!(result.read(protocol, transport));
                     try!(protocol.read_message_end(transport));
                     Ok(())
