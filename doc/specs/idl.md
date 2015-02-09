@@ -1,7 +1,3 @@
----
-title: "Interface Description Language (IDL)"
-kind: doc
----
 ## Thrift interface description language
 The Thrift interface definition language (IDL) allows for the definition of [Thrift Types](/docs/types). A Thrift IDL file is processed by the Thrift code generator to produce code for the various target languages to support the defined structs and services in the IDL file.
 
