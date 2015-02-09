@@ -43,8 +43,20 @@ A namespace declares which namespaces/package/module/etc. the type definitions i
 
     [6]  NamespaceScope  ::=  '*' | 'cpp' | 'java' | 'py' | 'perl' | 'rb' | 'cocoa' | 'csharp'
 
-N.B.: Smalltalk has two distinct types of namespace commands.
-*Can someone who knows Smalltalk explain why Smalltalk needs two different kinds of namespaces?*
+N.B.: Smalltalk has two distinct types of namespace commands:
+
+- smalltalk.prefix: Prepended to generated classnames.
+  - Smalltalk does not have namespaces for classes, so prefixes
+    are used to avoid class-name collisions.
+    Often, the prefix is the author's initials, like "KB" or "JWS",
+    or an abbreviation of the package name, like "MC" for "Monticello".
+- smalltalk.category: Determines the category for generated classes.
+  Any dots in the identifier will be replaced with hyphens when generating
+  the category name.
+  If not provided, defaults to "Generated-" + the program name.
+  Methods will not be categorized beyond "as yet uncategorized".
+  - Smalltalk allows filing both classes and methods within classes into named
+    groups. These named groups of methods are called categories.
 
 N.B.: The `php_namespace` directive will be deprecated at some point in the future in favor of the scoped syntax, but the scoped syntax is not yet supported for PHP.
 
