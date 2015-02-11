@@ -3,7 +3,7 @@
 * A relatively POSIX-compliant *NIX system
     * Cygwin or MinGW can be used on Windows
 * g++ 4.2
-* boost 1.54.0
+* boost 1.53.0
 * Runtime libraries for lex and yacc might be needed for the compiler.
 
 ## Requirements for building from source
