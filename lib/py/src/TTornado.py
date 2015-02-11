@@ -174,7 +174,7 @@ class TTornadoServer(tcpserver.TCPServer):
                 frame = yield trans.readFrame()
                 tr = TMemoryBuffer(frame)
                 iprot = self._iprot_factory.getProtocol(tr)
-                yield self._processor.process(iprot, oprot)
+                self._processor.process(iprot, oprot)
         except Exception:
             logger.exception('thrift exception in handle_stream')
             trans.close()
