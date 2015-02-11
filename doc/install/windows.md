@@ -123,7 +123,7 @@ Make sure you add -lfl in your cxxflags in Makefile, also try adding -Lc:/cygwin
 #### boost is not found
 Try and change the include dir to use the windows path from c like this: Edit compiler/cpp/Makefile, look for the declaration of BOOST_CPPFLAGS, change that line for
 
-	BOOST_CPPFLAGS = -Ic:/cygwin/usr/include/boost-1_33_1
+	BOOST_CPPFLAGS = -Ic:/cygwin/usr/include/boost-1_53_0
 	
 #### realpath is not found
 add -DMINGW -mno-cygwin to the CXXDEFS variable in Makefile
