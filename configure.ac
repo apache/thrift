@@ -350,7 +350,7 @@ AX_THRIFT_LIB(haxe, [Haxe], yes)
 if test "$with_haxe" = "yes";  then
   AC_PATH_PROG([HAXE], [haxe])
   if [[ -x "$HAXE" ]] ; then
-    have_haxe="yes"
+    AX_PROG_HAXE_VERSION( [3.1.3], have_haxe="yes", have_haxe="no")
   fi
 fi
 AM_CONDITIONAL(WITH_HAXE, [test "$have_haxe" = "yes"])
@@ -788,6 +788,7 @@ if test "$have_haxe" = "yes" ; then
   echo
   echo "Haxe Library:"
   echo "   Using Haxe ................ : $HAXE"
+  echo "   Using Haxe version ........ : $HAXE_VERSION"
 fi
 if test "$have_perl" = "yes" ; then
   echo
