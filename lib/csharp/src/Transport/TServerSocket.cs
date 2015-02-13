@@ -90,7 +90,8 @@ namespace Thrift.Transport
             try
             {
                 // Make server socket
-                server = new TcpListener(System.Net.IPAddress.Any, this.port);
+                server = new TcpListener(System.Net.IPAddress.IPv6Any, this.port);
+				server.Server.DualMode = true;
                 server.Server.NoDelay = true;
             }
             catch (Exception)
