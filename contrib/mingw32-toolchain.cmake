@@ -12,7 +12,7 @@ SET(CMAKE_RC_COMPILER i586-mingw32msvc-windres)
 SET(CMAKE_FIND_ROOT_PATH /usr/i586-mingw32msvc)
 
 # adjust the default behaviour of the FIND_XXX() commands:
-# search headers and libraries in the target environment, search 
+# search headers and libraries in the target environment, search
 # programs in the host environment
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
