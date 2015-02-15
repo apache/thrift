@@ -305,6 +305,7 @@ public:
 class TFramedTransport : public TVirtualTransport<TFramedTransport, TBufferBase> {
 public:
   static const int DEFAULT_BUFFER_SIZE = 512;
+  static const int DEFAULT_MAX_FRAME_SIZE = 256 * 1024 * 1024;
 
   /// Use default buffer sizes.
   TFramedTransport(boost::shared_ptr<TTransport> transport)
@@ -365,6 +366,16 @@ public:
    */
   virtual const std::string getOrigin() { return transport_->getOrigin(); }
 
+  /**
+   * Set the maximum size of the frame at read
+   */
+  void setMaxFrameSize(uint32_t maxFrameSize) { maxFrameSize_ = maxFrameSize; }
+
+  /**
+   * Get the maximum size of the frame at read
+   */
+  uint32_t getMaxFrameSize() { return maxFrameSize_; }
+
 protected:
   /**
    * Reads a frame of input from the underlying stream.
@@ -390,6 +401,7 @@ protected:
   boost::scoped_array<uint8_t> rBuf_;
   boost::scoped_array<uint8_t> wBuf_;
   uint32_t bufReclaimThresh_;
+  uint32_t maxFrameSize_ = DEFAULT_MAX_FRAME_SIZE;
 };
 
 /**

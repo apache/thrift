@@ -201,6 +201,11 @@ bool TFramedTransport::readFrame() {
     throw TTransportException("Frame size has negative value");
   }
 
+  // Check for oversized frame
+  if (sz > static_cast<int32_t>(maxFrameSize_))
+    throw TTransportException(TTransportException::CORRUPTED_DATA,
+                              "Received an oversized frame");
+
   // Read the frame payload, and reset markers.
   if (sz > static_cast<int32_t>(rBufSize_)) {
     rBuf_.reset(new uint8_t[sz]);
