@@ -32,14 +32,14 @@
   "dependencies": {
     "node-int64": "~0.3.0",
     "q": "1.0.x",
-    "nodeunit": "~0.8.0",
     "ws": "~0.4.32"
   },
   "devDependencies": {
-    "connect": "2.7.x",
     "commander": "2.1.x",
+    "connect": "2.7.x",
     "istanbul": "^0.3.5",
-    "tape": "^3.4.0"
+    "run-browser": "^2.0.1",
+    "tape": "~3.5.0"
   },
   "scripts": {
     "cover": "lib/nodejs/test/testAll.sh COVER",
