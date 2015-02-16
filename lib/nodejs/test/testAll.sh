@@ -24,7 +24,7 @@ fi
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 
 ISTANBUL="$DIR/../../../node_modules/istanbul/lib/cli.js"
-NODEUNIT="${DIR}/../../../node_modules/nodeunit/bin/nodeunit"
+RUNBROWSER="$DIR/../../../node_modules/run-browser/bin/cli.js"
 
 REPORT_PREFIX="${DIR}/../coverage/report"
 
@@ -54,6 +54,18 @@ testServer()
   return $RET
 }
 
+testBrowser()
+{
+  echo "   Testing browser client with http server with json protocol and buffered transport";
+  RET=0
+  node ${DIR}/server.js --type http -p json -t buffered &
+  SERVERPID=$!
+  sleep 1
+  ${RUNBROWSER} ${DIR}/browser_client.js --phantom || RET=1
+  kill -2 $SERVERPID || RET=1
+  return $RET
+}
+
 TESTOK=0
 
 #generating thrift code
@@ -62,11 +74,11 @@ ${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test
 
 #unit tests
 
-${NODEUNIT} ${DIR}/binary.test.js || TESTOK=1
+node ${DIR}/binary.test.js || TESTOK=1
 
 #integration tests
 
-for type in tcp multiplex http websocket
+for type in tcp multiplex websocket http
 do
 
   for protocol in compact binary json
@@ -80,6 +92,9 @@ do
     done
   done
 done
+
+# XHR only until phantomjs 2 is released.
+testBrowser
 
 if [ -n "${COVER}" ]; then
   ${ISTANBUL} report --dir "${DIR}/../coverage" --include "${DIR}/../coverage/report*/coverage.json" lcov cobertura html
