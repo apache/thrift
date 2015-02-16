@@ -201,6 +201,9 @@ c_glib_protocols="binary"
 c_glib_transports="buffered framed"
 c_glib_sockets="ip"
 
+# only test tcp type for now like the original cross test.
+# other nodejs types can be enabled in a separate patch.
+nodejs_types="tcp" # "tcp multiplex http websocket"
 nodejs_protocols="binary compact json"
 nodejs_transports="buffered framed"
 nodejs_sockets="ip ip-ssl"
@@ -375,113 +378,127 @@ done
 NODE_TEST_DIR=${BASEDIR}/../lib/nodejs/test
 export NODE_PATH=${NODE_TEST_DIR}:${NODE_TEST_DIR}/../lib:${NODE_PATH}
 ######### nodejs client - nodejs server ##############
-for proto in ${nodejs_protocols}; do
-  for trans in ${nodejs_transports}; do
-    for sock in ${nodejs_sockets}; do
-      case "$sock" in
-        "ip" ) extraparam="";;
-        "ip-ssl" ) extraparam="--ssl";;
-      esac
-      do_test "nodejs-nodejs" "${proto}" "${trans}-${sock}" \
-              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "5" "0.2"
+for type in ${nodejs_types}; do
+  for proto in ${nodejs_protocols}; do
+    for trans in ${nodejs_transports}; do
+      for sock in ${nodejs_sockets}; do
+        case "$sock" in
+          "ip" ) extraparam="";;
+          "ip-ssl" ) extraparam="--ssl";;
+        esac
+        do_test "nodejs-nodejs" "${proto}" "${trans}-${sock}" \
+                "node ${NODE_TEST_DIR}/client.js --type ${type} -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "node ${NODE_TEST_DIR}/server.js --type ${type} -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "5" "0.2"
+      done
     done
   done
 done
 
 ######### nodejs client - cpp server ##############
-for proto in $(intersection "${nodejs_protocols}" "${cpp_protocols}"); do
-  for trans in $(intersection "${nodejs_transports}" "${cpp_transports}"); do
-    for sock in $(intersection "${nodejs_sockets}" "${cpp_sockets}"); do
-      case "$sock" in
-        "ip" ) extraparam="";;
-        "ip-ssl" ) extraparam="--ssl";;
-      esac
-      do_test "nodejs-cpp" "${proto}" "${trans}-${sock}" \
-              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "cpp/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "5" "0.2"
+for type in ${nodejs_types}; do
+  for proto in $(intersection "${nodejs_protocols}" "${cpp_protocols}"); do
+    for trans in $(intersection "${nodejs_transports}" "${cpp_transports}"); do
+      for sock in $(intersection "${nodejs_sockets}" "${cpp_sockets}"); do
+        case "$sock" in
+          "ip" ) extraparam="";;
+          "ip-ssl" ) extraparam="--ssl";;
+        esac
+        do_test "nodejs-cpp" "${proto}" "${trans}-${sock}" \
+                "node ${NODE_TEST_DIR}/client.js --type ${type} -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "cpp/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "5" "0.2"
+      done
     done
   done
 done
 
 ######### cpp client - nodejs server ##############
-for proto in $(intersection "${nodejs_protocols}" "${cpp_protocols}"); do
-  for trans in $(intersection "${nodejs_transports}" "${cpp_transports}"); do
-    for sock in $(intersection "${nodejs_sockets}" "${cpp_sockets}"); do
-      case "$sock" in
-        "ip" ) extraparam="";;
-        "ip-ssl" ) extraparam="--ssl";;
-      esac
-      do_test "cpp-nodejs" "${proto}" "${trans}-${sock}" \
-              "cpp/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "5" "2"
+for type in ${nodejs_types}; do
+  for proto in $(intersection "${nodejs_protocols}" "${cpp_protocols}"); do
+    for trans in $(intersection "${nodejs_transports}" "${cpp_transports}"); do
+      for sock in $(intersection "${nodejs_sockets}" "${cpp_sockets}"); do
+        case "$sock" in
+          "ip" ) extraparam="";;
+          "ip-ssl" ) extraparam="--ssl";;
+        esac
+        do_test "cpp-nodejs" "${proto}" "${trans}-${sock}" \
+                "cpp/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "node ${NODE_TEST_DIR}/server.js --type ${type} -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "5" "2"
+      done
     done
   done
 done
 
 ######### nodejs client - java server ##############
-for proto in $(intersection "${nodejs_protocols}" "${java_protocols}"); do
-  for trans in $(intersection "${nodejs_transports}" "${java_server_transports}"); do
-    for sock in $(intersection "${nodejs_sockets}" "${java_sockets}"); do
-      case "$sock" in
-        "ip" ) extraparam="";;
-        "ip-ssl" ) extraparam="--ssl";;
-      esac
-      do_test "nodejs-java" "${proto}" "${trans}-${sock}" \
-              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testserver" \
-              "5" "1"
+for type in ${nodejs_types}; do
+  for proto in $(intersection "${nodejs_protocols}" "${java_protocols}"); do
+    for trans in $(intersection "${nodejs_transports}" "${java_server_transports}"); do
+      for sock in $(intersection "${nodejs_sockets}" "${java_sockets}"); do
+        case "$sock" in
+          "ip" ) extraparam="";;
+          "ip-ssl" ) extraparam="--ssl";;
+        esac
+        do_test "nodejs-java" "${proto}" "${trans}-${sock}" \
+                "node ${NODE_TEST_DIR}/client.js --type ${type} -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testserver" \
+                "5" "1"
+      done
     done
   done
 done
 
 ######### java client - nodejs server ##############
-for proto in $(intersection "${nodejs_protocols}" "${java_protocols}"); do
-  for trans in $(intersection "${nodejs_transports}" "${java_client_transports}"); do
-    for sock in $(intersection "${nodejs_sockets}" "${java_sockets}"); do
-      case "$sock" in
-        "ip" ) extraparam="";;
-        "ip-ssl" ) extraparam="--ssl";;
-      esac
-      do_test "java-nodejs" "${proto}" "${trans}-${sock}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testclient" \
-              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "5" "2"
+for type in ${nodejs_types}; do
+  for proto in $(intersection "${nodejs_protocols}" "${java_protocols}"); do
+    for trans in $(intersection "${nodejs_transports}" "${java_client_transports}"); do
+      for sock in $(intersection "${nodejs_sockets}" "${java_sockets}"); do
+        case "$sock" in
+          "ip" ) extraparam="";;
+          "ip-ssl" ) extraparam="--ssl";;
+        esac
+        do_test "java-nodejs" "${proto}" "${trans}-${sock}" \
+                "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}\" run-testclient" \
+                "node ${NODE_TEST_DIR}/server.js --type ${type} -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "5" "2"
+      done
     done
   done
 done
 
 ######### nodejs client - c_glib server ##############
-for proto in $(intersection "${nodejs_protocols}" "${c_glib_protocols}"); do
-  for trans in $(intersection "${nodejs_transports}" "${c_glib_transports}"); do
-    for sock in $(intersection "${nodejs_sockets}" "${c_glib_sockets}"); do
-      case "$sock" in
-        "ip" ) extraparam="";;
-        "ip-ssl" ) extraparam="--ssl";;
-      esac
-      do_test "nodejs-c_glib" "${proto}" "${trans}-${sock}" \
-              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "c_glib/test_server --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "5" "0.1"
+for type in ${nodejs_types}; do
+  for proto in $(intersection "${nodejs_protocols}" "${c_glib_protocols}"); do
+    for trans in $(intersection "${nodejs_transports}" "${c_glib_transports}"); do
+      for sock in $(intersection "${nodejs_sockets}" "${c_glib_sockets}"); do
+        case "$sock" in
+          "ip" ) extraparam="";;
+          "ip-ssl" ) extraparam="--ssl";;
+        esac
+        do_test "nodejs-c_glib" "${proto}" "${trans}-${sock}" \
+                "node ${NODE_TEST_DIR}/client.js --type ${type} -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "c_glib/test_server --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "5" "0.1"
+      done
     done
   done
 done
 
 ######### c_glib client - nodejs server ##############
-for proto in $(intersection "${c_glib_protocols}" "${nodejs_protocols}"); do
-  for trans in $(intersection "${c_glib_transports}" "${nodejs_transports}"); do
-    for sock in $(intersection "${c_glib_sockets}" "${nodejs_sockets}"); do
-      case "$sock" in
-        "ip" ) extraparam="";;
-        "ip-ssl" ) extraparam="--ssl";;
-      esac
-      do_test "c_glib-nodejs" "${proto}" "${trans}-${sock}" \
-              "c_glib/test_client --protocol=${proto}  --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "2" "2"
+for type in ${nodejs_types}; do
+  for proto in $(intersection "${c_glib_protocols}" "${nodejs_protocols}"); do
+    for trans in $(intersection "${c_glib_transports}" "${nodejs_transports}"); do
+      for sock in $(intersection "${c_glib_sockets}" "${nodejs_sockets}"); do
+        case "$sock" in
+          "ip" ) extraparam="";;
+          "ip-ssl" ) extraparam="--ssl";;
+        esac
+        do_test "c_glib-nodejs" "${proto}" "${trans}-${sock}" \
+                "c_glib/test_client --protocol=${proto}  --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "node ${NODE_TEST_DIR}/server.js --type ${type} -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "2" "2"
+      done
     done
   done
 done
@@ -694,22 +711,25 @@ for trans in $(intersection "${c_glib_transports}" "${py_transports}"); do
   done
 
 ######### py client - nodejs server ##############
-for proto in $(intersection "${py_protocols}" "${nodejs_protocols}"); do
-  for trans in $(intersection "${py_transports}" "${nodejs_transports}"); do
-    for sock in $(intersection "${py_sockets}" "${nodejs_sockets}"); do
-      case "$sock" in
-        "ip" ) extraparam="";;
-        "ip-ssl" ) extraparam="--ssl";;
-      esac
-      do_test "py-nodejs" "${proto}" "${trans}-${sock}" \
-              "py/TestClient.py --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
-              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "15" "2"
+for type in ${nodejs_types}; do
+  for proto in $(intersection "${py_protocols}" "${nodejs_protocols}"); do
+    for trans in $(intersection "${py_transports}" "${nodejs_transports}"); do
+      for sock in $(intersection "${py_sockets}" "${nodejs_sockets}"); do
+        case "$sock" in
+          "ip" ) extraparam="";;
+          "ip-ssl" ) extraparam="--ssl";;
+        esac
+        do_test "py-nodejs" "${proto}" "${trans}-${sock}" \
+                "py/TestClient.py --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
+                "node ${NODE_TEST_DIR}/server.js --type ${type} -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "15" "2"
+      done
     done
   done
 done
 
-for trans in $(intersection "${py_transports}" "${nodejs_transports}"); do
+for type in ${nodejs_types}; do
+  for trans in $(intersection "${py_transports}" "${nodejs_transports}"); do
     for sock in $(intersection "${py_sockets}" "${nodejs_sockets}"); do
       case "$sock" in
         "ip" ) extraparam="";;
@@ -717,39 +737,44 @@ for trans in $(intersection "${py_transports}" "${nodejs_transports}"); do
       esac
       do_test "py-nodejs" "${proto}" "${trans}-${sock}" \
               "py/TestClient.py --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} --host=localhost --genpydir=gen-py ${extraparam}" \
-              "node ${NODE_TEST_DIR}/server.js -p binary -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "node ${NODE_TEST_DIR}/server.js --type ${type} -p binary -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "15" "2"
     done
   done
+done
 
 ######### nodejs client - py server ##############
-for proto in $(intersection "${py_protocols}" "${nodejs_protocols}"); do
+for type in ${nodejs_types}; do
+  for proto in $(intersection "${py_protocols}" "${nodejs_protocols}"); do
+    for trans in $(intersection "${py_transports}" "${nodejs_transports}"); do
+      for sock in $(intersection "${py_sockets}" "${nodejs_sockets}"); do
+        case "$sock" in
+          "ip" ) extraparam="";;
+          "ip-ssl" ) extraparam="--ssl";;
+        esac
+        do_test "nodejs-py" "${proto}" "${trans}-${sock}" \
+                "node ${NODE_TEST_DIR}/client.js --type ${type} -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "py/TestServer.py --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
+                "10" "2"
+      done
+    done
+  done
+done
+
+for type in ${nodejs_types}; do
   for trans in $(intersection "${py_transports}" "${nodejs_transports}"); do
     for sock in $(intersection "${py_sockets}" "${nodejs_sockets}"); do
       case "$sock" in
         "ip" ) extraparam="";;
         "ip-ssl" ) extraparam="--ssl";;
       esac
-      do_test "nodejs-py" "${proto}" "${trans}-${sock}" \
-              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "py/TestServer.py --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
-              "10" "2"
-    done
-  done
-done
-
-for trans in $(intersection "${py_transports}" "${nodejs_transports}"); do
-    for sock in $(intersection "${py_sockets}" "${nodejs_sockets}"); do
-      case "$sock" in
-        "ip" ) extraparam="";;
-        "ip-ssl" ) extraparam="--ssl";;
-      esac
       do_test "nodejs-py" "binary-accel" "${trans}-${sock}" \
-              "node ${NODE_TEST_DIR}/client.js -p binary -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "node ${NODE_TEST_DIR}/client.js --type ${type} -p binary -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "py/TestServer.py --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} --genpydir=gen-py TSimpleServer ${extraparam}" \
               "10" "2"
     done
   done
+done
 
 ######### ruby client - ruby server ##############
 for proto in ${ruby_protocols}; do
@@ -959,22 +984,25 @@ for trans in $(intersection "${c_glib_transports}" "${ruby_transports}"); do
   done
 
 ######### ruby client - nodejs server ##############
-for proto in $(intersection "${ruby_protocols}" "${nodejs_protocols}"); do
-  for trans in $(intersection "${ruby_transports}" "${nodejs_transports}"); do
-    for sock in $(intersection "${ruby_sockets}" "${nodejs_sockets}"); do
-      case "$sock" in
-        "ip" ) extraparam="";;
-        "ip-ssl" ) extraparam="--ssl";;
-      esac
-      do_test "ruby-nodejs" "${proto}" "${trans}-${sock}" \
-              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "5" "2"
+for type in ${nodejs_types}; do
+  for proto in $(intersection "${ruby_protocols}" "${nodejs_protocols}"); do
+    for trans in $(intersection "${ruby_transports}" "${nodejs_transports}"); do
+      for sock in $(intersection "${ruby_sockets}" "${nodejs_sockets}"); do
+        case "$sock" in
+          "ip" ) extraparam="";;
+          "ip-ssl" ) extraparam="--ssl";;
+        esac
+        do_test "ruby-nodejs" "${proto}" "${trans}-${sock}" \
+                "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "node ${NODE_TEST_DIR}/server.js --type ${type} -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "5" "2"
+      done
     done
   done
 done
 
-for trans in $(intersection "${ruby_transports}" "${nodejs_transports}"); do
+for type in ${nodejs_types}; do
+  for trans in $(intersection "${ruby_transports}" "${nodejs_transports}"); do
     for sock in $(intersection "${ruby_sockets}" "${nodejs_sockets}"); do
       case "$sock" in
         "ip" ) extraparam="";;
@@ -982,39 +1010,44 @@ for trans in $(intersection "${ruby_transports}" "${nodejs_transports}"); do
       esac
       do_test "ruby-nodejs" "${proto}" "${trans}-${sock}" \
               "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "node ${NODE_TEST_DIR}/server.js -p binary -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "node ${NODE_TEST_DIR}/server.js --type ${type} -p binary -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "5" "2"
     done
   done
+done
 
 ######### nodejs client - ruby server ##############
-for proto in $(intersection "${ruby_protocols}" "${nodejs_protocols}"); do
+for type in ${nodejs_types}; do
+  for proto in $(intersection "${ruby_protocols}" "${nodejs_protocols}"); do
+    for trans in $(intersection "${ruby_transports}" "${nodejs_transports}"); do
+      for sock in $(intersection "${ruby_sockets}" "${nodejs_sockets}"); do
+        case "$sock" in
+          "ip" ) extraparam="";;
+          "ip-ssl" ) extraparam="--ssl";;
+        esac
+        do_test "nodejs-ruby" "${proto}" "${trans}-${sock}" \
+                "node ${NODE_TEST_DIR}/client.js --type ${type} -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "10" "5"
+      done
+    done
+  done
+done
+
+for type in ${nodejs_types}; do
   for trans in $(intersection "${ruby_transports}" "${nodejs_transports}"); do
     for sock in $(intersection "${ruby_sockets}" "${nodejs_sockets}"); do
       case "$sock" in
         "ip" ) extraparam="";;
         "ip-ssl" ) extraparam="--ssl";;
       esac
-      do_test "nodejs-ruby" "${proto}" "${trans}-${sock}" \
-              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "10" "5"
-    done
-  done
-done
-
-for trans in $(intersection "${ruby_transports}" "${nodejs_transports}"); do
-    for sock in $(intersection "${ruby_sockets}" "${nodejs_sockets}"); do
-      case "$sock" in
-        "ip" ) extraparam="";;
-        "ip-ssl" ) extraparam="--ssl";;
-      esac
       do_test "nodejs-ruby" "binary-accel" "${trans}-${sock}" \
-              "node ${NODE_TEST_DIR}/client.js -p binary -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+              "node ${NODE_TEST_DIR}/client.js --type ${type} -p binary -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
               "10" "2"
     done
   done
+done
 
 ######### py client - ruby server ##############
 for proto in $(intersection "${py_protocols}" "${ruby_protocols}"); do
@@ -1260,33 +1293,37 @@ for trans in $(intersection "${hs_transports}" "${py_transports}"); do
   done
 
 ######### nodejs client - hs server ##############
-for proto in $(intersection "${nodejs_protocols}" "${hs_protocols}"); do
-  for trans in $(intersection "${nodejs_transports}" "${hs_transports}"); do
-    for sock in $(intersection "${nodejs_sockets}" "${hs_sockets}"); do
-      case "$sock" in
-        "ip" ) extraparam="";;
-        "ip-ssl" ) extraparam="--ssl";;
-      esac
-      do_test "nodejs-hs" "${proto}" "${trans}-${sock}" \
-              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "hs/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "5" "0.2"
+for type in ${nodejs_types}; do
+  for proto in $(intersection "${nodejs_protocols}" "${hs_protocols}"); do
+    for trans in $(intersection "${nodejs_transports}" "${hs_transports}"); do
+      for sock in $(intersection "${nodejs_sockets}" "${hs_sockets}"); do
+        case "$sock" in
+          "ip" ) extraparam="";;
+          "ip-ssl" ) extraparam="--ssl";;
+        esac
+        do_test "nodejs-hs" "${proto}" "${trans}-${sock}" \
+                "node ${NODE_TEST_DIR}/client.js --type ${type} -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "hs/TestServer --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "5" "0.2"
+      done
     done
   done
 done
 
 ######### hs client - nodejs server ##############
-for proto in $(intersection "${nodejs_protocols}" "${hs_protocols}"); do
-  for trans in $(intersection "${nodejs_transports}" "${hs_transports}"); do
-    for sock in $(intersection "${nodejs_sockets}" "${hs_sockets}"); do
-      case "$sock" in
-        "ip" ) extraparam="";;
-        "ip-ssl" ) extraparam="--ssl";;
-      esac
-      do_test "hs-nodejs" "${proto}" "${trans}-${sock}" \
-              "hs/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
-              "5" "2"
+for type in ${nodejs_types}; do
+  for proto in $(intersection "${nodejs_protocols}" "${hs_protocols}"); do
+    for trans in $(intersection "${nodejs_transports}" "${hs_transports}"); do
+      for sock in $(intersection "${nodejs_sockets}" "${hs_sockets}"); do
+        case "$sock" in
+          "ip" ) extraparam="";;
+          "ip-ssl" ) extraparam="--ssl";;
+        esac
+        do_test "hs-nodejs" "${proto}" "${trans}-${sock}" \
+                "hs/TestClient --protocol=${proto} --transport=${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "node ${NODE_TEST_DIR}/server.js --type ${type} -p ${proto} -t ${trans} --port=${THRIFT_TEST_PORT} ${extraparam}" \
+                "5" "2"
+      done
     done
   done
 done
