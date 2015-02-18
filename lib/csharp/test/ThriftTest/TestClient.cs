@@ -268,6 +268,19 @@ namespace Test
                 Console.Write("testBinary(" + BytesToHex(binOut) + "): "+e.Message);
             }
 
+            // binary equals? only with hashcode option enabled ...
+            if( typeof(CrazyNesting).GetMethod("Equals").DeclaringType == typeof(CrazyNesting)) 
+            {
+                CrazyNesting one = new CrazyNesting();
+                CrazyNesting two = new CrazyNesting();
+                one.String_field = "crazy";
+                two.String_field = "crazy";
+                one.Binary_field = new byte[10] { 0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF };
+                two.Binary_field = new byte[10] { 0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF };
+                if (!one.Equals(two))
+                    throw new Exception("CrazyNesting.Equals failed");
+            }
+
             Console.Write("testStruct({\"Zero\", 1, -3, -5})");
             Xtruct o = new Xtruct();
             o.String_thing = "Zero";
