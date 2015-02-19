@@ -70,6 +70,6 @@ set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 set(VERSION ${thrift_VERSION})
 
 # generate a config.h file
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/thrift/config.h")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/thrift/config.h")
 # HACK: Some files include thrift/config.h and some config.h so we include both. This should be cleaned up.
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/thrift" "${CMAKE_CURRENT_BINARY_DIR}")
