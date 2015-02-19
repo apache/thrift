@@ -22,7 +22,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(thrift)
 
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake")
 
 # TODO: add `git rev-parse --short HEAD`
 # Read the version information from the Autoconf file

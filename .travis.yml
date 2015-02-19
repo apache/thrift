@@ -31,8 +31,8 @@ compiler:
   - gcc
 
 before_install:
-  - sh contrib/installCXXDependencies.sh
-  - if [ "$ALL_DEPS" != "no" ] ; then sh contrib/installDependencies.sh 1> /dev/null ; fi
+  - sh build/travis/installCXXDependencies.sh
+  - if [ "$ALL_DEPS" != "no" ] ; then sh build/travis/installDependencies.sh 1> /dev/null ; fi
   - if [ "$ALL_DEPS" != "no" ] ; then export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH ; fi
   - if [ "$ALL_DEPS" != "no" ] ; then cabal update ; fi
 
@@ -112,8 +112,8 @@ matrix:
         - TEST_NAME="Debian Packages"
       compiler: clang
       before_install:
-       - sh contrib/installCXXDependencies.sh;
-       - sh contrib/installDependencies.sh 1> /dev/null;
+       - sh build/travis/installCXXDependencies.sh;
+       - sh build/travis/installDependencies.sh 1> /dev/null;
        - sudo apt-get install build-essential mono-gmcs mono-devel libmono-system-web2.0-cil erlang-base ruby1.8-dev python-all python-all-dev python-all-dbg php5 php5-dev
       script:
        - dpkg-buildpackage -tc -us -uc
