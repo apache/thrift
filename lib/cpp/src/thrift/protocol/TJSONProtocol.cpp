@@ -19,8 +19,14 @@
 
 #include <thrift/protocol/TJSONProtocol.h>
 
-#include <math.h>
+#include <limits>
+#include <locale>
+#include <sstream>
+#include <cmath>
+
+#include <boost/math/special_functions/fpclassify.hpp>
 #include <boost/lexical_cast.hpp>
+
 #include <thrift/protocol/TBase64Utils.h>
 #include <thrift/transport/TTransportException.h>
 
@@ -503,30 +509,40 @@ uint32_t TJSONProtocol::writeJSONInteger(NumberType num) {
   return result;
 }
 
+namespace
+{
+std::string doubleToString(double d)
+{
+  std::ostringstream str;
+  str.imbue(std::locale::classic());
+  str.precision(std::numeric_limits<double>::digits10 + 1);
+  str << d;
+  return str.str();
+}
+}
+
 // Convert the given double to a JSON string, which is either the number,
 // "NaN" or "Infinity" or "-Infinity".
 uint32_t TJSONProtocol::writeJSONDouble(double num) {
   uint32_t result = context_->write(*trans_);
-  std::string val(boost::lexical_cast<std::string>(num));
+  std::string val;
 
-  // Normalize output of boost::lexical_cast for NaNs and Infinities
   bool special = false;
-  switch (val[0]) {
-  case 'N':
-  case 'n':
+  switch (boost::math::fpclassify(num)) {
+  case FP_INFINITE:
+    if (boost::math::signbit(num)) {
+      val = kThriftNegativeInfinity;
+    } else {
+      val = kThriftInfinity;
+    }
+    special = true;
+    break;
+  case FP_NAN:
     val = kThriftNan;
     special = true;
     break;
-  case 'I':
-  case 'i':
-    val = kThriftInfinity;
-    special = true;
-    break;
-  case '-':
-    if ((val[1] == 'I') || (val[1] == 'i')) {
-      val = kThriftNegativeInfinity;
-      special = true;
-    }
+  default:
+    val = doubleToString(num);
     break;
   }
 
@@ -801,6 +817,20 @@ uint32_t TJSONProtocol::readJSONInteger(NumberType& num) {
   return result;
 }
 
+namespace
+{
+double stringToDouble(const std::string& s)
+{
+  double d;
+  std::istringstream str(s);
+  str.imbue(std::locale::classic());
+  str >> d;
+  if (str.bad() || !str.eof())
+    throw std::runtime_error(s);
+  return d;
+}
+}
+
 // Reads a JSON number or string and interprets it as a double.
 uint32_t TJSONProtocol::readJSONDouble(double& num) {
   uint32_t result = context_->read(reader_);
@@ -821,8 +851,8 @@ uint32_t TJSONProtocol::readJSONDouble(double& num) {
                                      "Numeric data unexpectedly quoted");
       }
       try {
-        num = boost::lexical_cast<double>(str);
-      } catch (boost::bad_lexical_cast e) {
+        num = stringToDouble(str);
+      } catch (std::runtime_error e) {
         throw new TProtocolException(TProtocolException::INVALID_DATA,
                                      "Expected numeric value; got \"" + str + "\"");
       }
@@ -834,8 +864,8 @@ uint32_t TJSONProtocol::readJSONDouble(double& num) {
     }
     result += readJSONNumericChars(str);
     try {
-      num = boost::lexical_cast<double>(str);
-    } catch (boost::bad_lexical_cast e) {
+      num = stringToDouble(str);
+    } catch (std::runtime_error e) {
       throw new TProtocolException(TProtocolException::INVALID_DATA,
                                    "Expected numeric value; got \"" + str + "\"");
     }
