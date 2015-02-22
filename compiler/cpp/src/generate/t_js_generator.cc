@@ -1022,11 +1022,50 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   indent_down();
   indent(f_service_) << "}, function (err) {" << endl;
   indent_up();
-  f_service_ << indent() << "var result = new " << resultname << "(err);" << endl << indent()
-             << "output.writeMessageBegin(\"" << tfunction->get_name()
-             << "\", Thrift.MessageType.REPLY, seqid);" << endl << indent()
-             << "result.write(output);" << endl << indent() << "output.writeMessageEnd();" << endl
-             << indent() << "output.flush();" << endl;
+
+  bool has_exception = false;
+  t_struct* exceptions = tfunction->get_xceptions();
+  if (exceptions) {
+    const vector<t_field*>& members = exceptions->get_members();
+    for (vector<t_field*>::const_iterator it = members.begin(); it != members.end(); ++it) {
+      t_type* t = get_true_type((*it)->get_type());
+      if (t->is_xception()) {
+        if (!has_exception) {
+          has_exception = true;
+          indent(f_service_) << "if (err instanceof " << js_type_namespace(t->get_program())
+                             << t->get_name();
+        } else {
+          f_service_ << " || err instanceof " << js_type_namespace(t->get_program())
+                     << t->get_name();
+        }
+      }
+    }
+  }
+
+  if (has_exception) {
+    f_service_ << ") {" << endl;
+    indent_up();
+    f_service_ << indent() << "var result = new " << resultname << "(err);" << endl << indent()
+               << "output.writeMessageBegin(\"" << tfunction->get_name()
+               << "\", Thrift.MessageType.REPLY, seqid);" << endl;
+
+    indent_down();
+    indent(f_service_) << "} else {" << endl;
+    indent_up();
+  }
+
+  f_service_ << indent() << "var result = new "
+                            "Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN,"
+                            " err.message);" << endl << indent() << "output.writeMessageBegin(\""
+             << tfunction->get_name() << "\", Thrift.MessageType.EXCEPTION, seqid);" << endl;
+
+  if (has_exception) {
+    indent_down();
+    indent(f_service_) << "}" << endl;
+  }
+
+  f_service_ << indent() << "result.write(output);" << endl << indent()
+             << "output.writeMessageEnd();" << endl << indent() << "output.flush();" << endl;
   indent_down();
   indent(f_service_) << "});" << endl;
   indent_down();
@@ -1039,15 +1078,35 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
     f_service_ << "args." << (*f_iter)->get_name() << ", ";
   }
 
-  f_service_ << " function (err, result) {" << endl;
+  f_service_ << "function (err, result) {" << endl;
   indent_up();
 
+  indent(f_service_) << "if (err == null";
+  if (has_exception) {
+    const vector<t_field*>& members = exceptions->get_members();
+    for (vector<t_field*>::const_iterator it = members.begin(); it != members.end(); ++it) {
+      t_type* t = get_true_type((*it)->get_type());
+      if (t->is_xception()) {
+        f_service_ << " || err instanceof " << js_type_namespace(t->get_program()) << t->get_name();
+      }
+    }
+  }
+  f_service_ << ") {" << endl;
+  indent_up();
   f_service_ << indent() << "var result = new " << resultname
              << "((err != null ? err : {success: result}));" << endl << indent()
              << "output.writeMessageBegin(\"" << tfunction->get_name()
-             << "\", Thrift.MessageType.REPLY, seqid);" << endl << indent()
-             << "result.write(output);" << endl << indent() << "output.writeMessageEnd();" << endl
-             << indent() << "output.flush();" << endl;
+             << "\", Thrift.MessageType.REPLY, seqid);" << endl;
+  indent_down();
+  indent(f_service_) << "} else {" << endl;
+  indent_up();
+  f_service_ << indent() << "var result = new "
+                            "Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN,"
+                            " err.message);" << endl << indent() << "output.writeMessageBegin(\""
+             << tfunction->get_name() << "\", Thrift.MessageType.EXCEPTION, seqid);" << endl;
+  indent_down();
+  f_service_ << indent() << "}" << endl << indent() << "result.write(output);" << endl << indent()
+             << "output.writeMessageEnd();" << endl << indent() << "output.flush();" << endl;
 
   indent_down();
   indent(f_service_) << "});" << endl;
