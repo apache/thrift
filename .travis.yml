@@ -37,7 +37,7 @@ before_install:
   - if [ "$ALL_DEPS" != "no" ] ; then cabal update ; fi
 
 script:
-  - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then mkdir build && cd build && cmake -GNinja -DQT_MOC_EXECUTABLE="moq-qt5" $CMAKE_CONFIG $TRAVIS_BUILD_DIR ; fi
+  - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then mkdir cmake_build && cd cmake_build && cmake -GNinja -DQT_MOC_EXECUTABLE="moq-qt5" $CMAKE_CONFIG $TRAVIS_BUILD_DIR ; fi
   - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then ninja ; fi
   - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then cpack ; cd $TRAVIS_BUILD_DIR ; fi
   - if [ "x$CONFIG" != "xnone" ] ; then sh bootstrap.sh ; fi
