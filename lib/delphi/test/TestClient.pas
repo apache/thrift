@@ -481,17 +481,18 @@ begin
   except
     on e:TTransportException do begin
       Console.WriteLine( e.ClassName+' = '+e.Message); // this is what we get
-      if FTransport.IsOpen then FTransport.Close;
-      FTransport.Open;   // re-open connection, server has already closed
     end;
     on e:TApplicationException do begin
       Console.WriteLine( e.ClassName+' = '+e.Message); // this is what we get
-      if FTransport.IsOpen then FTransport.Close;
-      FTransport.Open;   // re-open connection, server has already closed
     end;
     on e:TException do Expect( FALSE, 'Unexpected exception type "'+e.ClassName+'"');
     on e:Exception do Expect( FALSE, 'Unexpected exception type "'+e.ClassName+'"');
   end;
+
+  {
+  if FTransport.IsOpen then FTransport.Close;
+  FTransport.Open;   // re-open connection, server has already closed
+  }
 
   // case 3: no exception
   try

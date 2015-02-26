@@ -227,7 +227,7 @@ type
   public
     constructor Create( aPipename : string; aBufsize : Cardinal = 4096;
                         aMaxConns : Cardinal = PIPE_UNLIMITED_INSTANCES;
-                        aTimeOut : Cardinal = 0);
+                        aTimeOut : Cardinal = INFINITE);
   end;
 
 
@@ -816,10 +816,11 @@ begin
   overlapped := TOverlappedHelperImpl.Create;
 
   ASSERT( not FConnected);
+  CreateNamedPipe;
   while not FConnected do begin
-    InternalClose;
-    if QueryStopServer then Abort;
-    CreateNamedPipe;
+
+    if QueryStopServer
+    then Abort;
 
     if Assigned(fnAccepting)
     then fnAccepting();

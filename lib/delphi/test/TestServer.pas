@@ -536,11 +536,6 @@ var
   endpoint : TEndpointTransport;
   layered : TLayeredTransports;
   UseSSL : Boolean; // include where appropriate (TLayeredTransport?)
-const
-  // pipe timeouts to be used
-  DEBUG_TIMEOUT   = 30 * 1000;
-  RELEASE_TIMEOUT = DEFAULT_THRIFT_TIMEOUT;  // server-side default
-  TIMEOUT         = RELEASE_TIMEOUT;
 begin
   try
     ServerEvents := FALSE;
@@ -663,7 +658,7 @@ begin
 
       trns_NamedPipes : begin
         Console.WriteLine('- named pipe ('+sPipeName+')');
-        namedpipe   := TNamedPipeServerTransportImpl.Create( sPipeName, 4096, PIPE_UNLIMITED_INSTANCES, TIMEOUT);
+        namedpipe   := TNamedPipeServerTransportImpl.Create( sPipeName, 4096, PIPE_UNLIMITED_INSTANCES);
         servertrans := namedpipe;
       end;
 
