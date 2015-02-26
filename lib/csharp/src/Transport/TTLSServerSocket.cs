@@ -95,9 +95,8 @@ namespace Thrift.Transport
             try
             {
                 // Create server socket
-                server = new TcpListener(System.Net.IPAddress.IPv6Any, this.port);
-				server.Server.DualMode = true;
-                server.Server.NoDelay = true;
+				this.server = SocketVersionizer.CreateTcpListener(port);
+                this.server.Server.NoDelay = true;
             }
             catch (Exception)
             {

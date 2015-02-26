@@ -138,8 +138,7 @@ namespace Thrift.Transport
         /// </summary>
         private void InitSocket()
         {
-			client = new TcpClient(AddressFamily.InterNetworkV6);
-			client.Client.DualMode = true;
+			this.client = SocketVersionizer.CreateTcpClient();
             client.ReceiveTimeout = client.SendTimeout = timeout;
             client.Client.NoDelay = true;
         }
