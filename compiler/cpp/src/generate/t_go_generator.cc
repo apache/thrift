@@ -1121,7 +1121,12 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
 
       t_type* fieldType = (*m_iter)->get_type();
       string goType = type_to_go_type_with_opt(fieldType, is_pointer_field(*m_iter));
-      string gotag("json:\"" + escape_string((*m_iter)->get_name()) + "\"");
+      string gotag;
+      if ((*m_iter)->get_req() == t_field::T_OPTIONAL) {
+        gotag = "json:\"" + escape_string((*m_iter)->get_name()) + ",omitempty\"";
+      } else {
+        gotag = "json:\"" + escape_string((*m_iter)->get_name()) + "\"";
+      }
       std::map<string, string>::iterator it = (*m_iter)->annotations_.find("go.tag");
       if (it != (*m_iter)->annotations_.end()) {
         gotag = it->second;
