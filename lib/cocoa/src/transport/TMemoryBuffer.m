@@ -25,7 +25,7 @@
 
 @implementation TMemoryBuffer
 - (id)init {
-	if (self = [super init]) {
+	if ((self = [super init])) {
 		mBuffer = [[NSMutableData alloc] init];
 		mOffset = 0;
 	}
@@ -33,27 +33,29 @@
 }
 
 - (id)initWithData:(NSData *)data {
-	if (self = [super init]) {
+	if ((self = [super init])) {
 		mBuffer = [data mutableCopy];
 		mOffset = 0;
 	}
 	return self;
 }
 
-- (int)readAll:(uint8_t *)buf offset:(int)off length:(int)len {
-	if ([mBuffer length] - mOffset < len) {
+- (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
+{
+	if ([mBuffer length] - mOffset < length) {
 		@throw [TTransportException exceptionWithReason:@"Not enough bytes remain in buffer"];
 	}
-	[mBuffer getBytes:buf range:NSMakeRange(mOffset, len)];
-	mOffset += len;
+	[mBuffer getBytes:buf range:NSMakeRange(mOffset, length)];
+	mOffset += length;
 	if (mOffset >= GARBAGE_BUFFER_SIZE) {
 		[mBuffer replaceBytesInRange:NSMakeRange(0, mOffset) withBytes:NULL length:0];
 		mOffset = 0;
 	}
-	return len;
+	return length;
 }
 
-- (void)write:(const uint8_t *)data offset:(unsigned int)offset length:(unsigned int)length {
+- (void) write: (const uint8_t *) data offset: (size_t) offset length: (size_t) length
+{
 	[mBuffer appendBytes:data+offset length:length];
 }
 

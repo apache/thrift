@@ -23,14 +23,14 @@
    * Guarantees that all of len bytes are read
    *
    * @param buf Buffer to read into
-   * @param off Index in buffer to start storing bytes at
-   * @param len Maximum number of bytes to read
+   * @param offset Index in buffer to start storing bytes at
+   * @param length Maximum number of bytes to read
    * @return The number of bytes actually read, which must be equal to len
    * @throws TTransportException if there was an error reading data
    */
-- (int) readAll: (uint8_t *) buf offset: (int) off length: (int) len;
+- (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length;
 
-- (void) write: (const uint8_t *) data offset: (unsigned int) offset length: (unsigned int) length;
+- (void) write: (const uint8_t *) data offset: (size_t) offset length: (size_t) length;
 
 - (void) flush;
 @end
