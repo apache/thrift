@@ -52,20 +52,21 @@
 
 - (void)flush
 {
-    int len = [writeBuffer length];
-    int data_len = len - HEADER_SIZE;
-    if (data_len < 0)
+    size_t headerAndDataLength = [writeBuffer length];
+    if (headerAndDataLength < HEADER_SIZE) {
         @throw [TTransportException exceptionWithReason:@"Framed transport buffer has no header"];
+    }
 
+    size_t dataLength = headerAndDataLength - HEADER_SIZE;
     uint8_t i32rd[HEADER_SIZE];
-    i32rd[0] = (uint8_t)(0xff & (data_len >> 24));
-    i32rd[1] = (uint8_t)(0xff & (data_len >> 16));
-    i32rd[2] = (uint8_t)(0xff & (data_len >> 8));
-    i32rd[3] = (uint8_t)(0xff & (data_len));
+    i32rd[0] = (uint8_t)(0xff & (dataLength >> 24));
+    i32rd[1] = (uint8_t)(0xff & (dataLength >> 16));
+    i32rd[2] = (uint8_t)(0xff & (dataLength >> 8));
+    i32rd[3] = (uint8_t)(0xff & (dataLength));
 
     // should we make a copy of the writeBuffer instead? Better for threaded operations!
     [writeBuffer replaceBytesInRange:NSMakeRange(0, HEADER_SIZE) withBytes:i32rd length:HEADER_SIZE];
-    [mTransport write:[writeBuffer mutableBytes] offset:0 length:len];
+    [mTransport write:[writeBuffer mutableBytes] offset:0 length:headerAndDataLength];
     [mTransport flush];
 
     // reuse old memory buffer
@@ -73,54 +74,70 @@
     [writeBuffer appendBytes:dummy_header length:HEADER_SIZE];
 }
 
-- (void)write:(const uint8_t *)data offset:(unsigned int)offset length:(unsigned int)length
+- (void) write: (const uint8_t *) data offset: (size_t) offset length: (size_t) length
 {
     [writeBuffer appendBytes:data+offset length:length];
 }
 
-- (int)readAll:(uint8_t *)buf offset:(int)off length:(int)len {
+- (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
+{
     if (readBuffer == nil) {
         [self readFrame];
     }
     
     if (readBuffer != nil) {
-        int buffer_len = [readBuffer length];
-        if (buffer_len-readOffset >= len) {
-            [readBuffer getBytes:buf range:NSMakeRange(readOffset,len)]; // copy data
-            readOffset += len;
+        size_t bufferLength = [readBuffer length];
+        if (bufferLength - readOffset >= length) {
+            [readBuffer getBytes:buf range:NSMakeRange(readOffset,length)]; // copy data
+            readOffset += length;
         } else {
             // void the previous readBuffer data and request a new frame
             [self readFrame];
-            [readBuffer getBytes:buf range:NSMakeRange(0,len)]; // copy data
-            readOffset = len;
+            [readBuffer getBytes:buf range:NSMakeRange(0,length)]; // copy data
+            readOffset = length;
         }
     }
-    return len;
+    return length;
 }
 
 - (void)readFrame
 {
     uint8_t i32rd[HEADER_SIZE];
     [mTransport readAll: i32rd offset: 0 length: HEADER_SIZE];
-    int size =
+    int32_t headerValue =
         ((i32rd[0] & 0xff) << 24) |
         ((i32rd[1] & 0xff) << 16) |
         ((i32rd[2] & 0xff) <<  8) |
         ((i32rd[3] & 0xff));
+    if (headerValue < 0) {
+        NSString *reason = [NSString stringWithFormat:
+                            @"Frame header reports negative frame size: %"PRId32,
+                            headerValue];
+        @throw [TTransportException exceptionWithReason:reason];
+    }
 
+    /* Cast should be safe:
+     * Have verified headerValue non-negative and of lesser or equal bitwidth to size_t. */
+    size_t frameSize = (size_t)headerValue;
+    [self ensureReadBufferHasLength:frameSize];
+
+    [mTransport readAll:[readBuffer mutableBytes] offset:0 length:frameSize];
+}
+
+- (void)ensureReadBufferHasLength:(size_t)length
+{
     if (readBuffer == nil) {
-        readBuffer = [[NSMutableData alloc] initWithLength:size];
+        readBuffer = [[NSMutableData alloc] initWithLength:length];
     } else {
-        int len = [readBuffer length];
-        if (len >= size) {
-            [readBuffer setLength:size];
+        size_t currentLength = [readBuffer length];
+        BOOL isTooLong = (currentLength >= length);
+        if (isTooLong) {
+            [readBuffer setLength:length];
         } else {
-            // increase length of data buffer
-            [readBuffer increaseLengthBy:size-len];
+            size_t lengthToAdd = length - currentLength;
+            [readBuffer increaseLengthBy:lengthToAdd];
         }
     }
-    // copy into internal memory buffer
-    [mTransport readAll:[readBuffer mutableBytes] offset:0 length:size];
 }
 
 @end

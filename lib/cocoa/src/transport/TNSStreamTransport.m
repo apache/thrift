@@ -51,34 +51,40 @@
 }
 
 
-- (int) readAll: (uint8_t *) buf offset: (int) off length: (int) len
+- (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
 {
-  int got = 0;
-  int ret = 0;
-  while (got < len) {
-    ret = [self.mInput read: buf+off+got maxLength: len-got];
-    if (ret <= 0) {
+  size_t totalBytesRead = 0;
+  ssize_t bytesRead = 0;
+  while (totalBytesRead < length) {
+    bytesRead = [self.mInput read: buf+offset+totalBytesRead maxLength: length-totalBytesRead];
+
+    BOOL encounteredErrorOrEOF = (bytesRead <= 0);
+    if (encounteredErrorOrEOF) {
       @throw [TTransportException exceptionWithReason: @"Cannot read. Remote side has closed."];
+    } else {
+        /* bytesRead is guaranteed to be positive and within the range representable by size_t. */
+        totalBytesRead += (size_t)bytesRead;
     }
-    got += ret;
   }
-  return got;
+  return totalBytesRead;
 }
 
 
-- (void) write: (const uint8_t *) data offset: (unsigned int) offset length: (unsigned int) length
+- (void) write: (const uint8_t *) data offset: (size_t) offset length: (size_t) length
 {
-  int got = 0;
-  int result = 0;
-  while (got < length) {
-    result = [self.mOutput write: data+offset+got maxLength: length-got];
-    if (result == -1) {
+  size_t totalBytesWritten = 0;
+  ssize_t bytesWritten = 0;
+  while (totalBytesWritten < length) {
+    bytesWritten = [self.mOutput write: data+offset+totalBytesWritten maxLength: length-totalBytesWritten];
+    if (bytesWritten < 0) {
       @throw [TTransportException exceptionWithReason: @"Error writing to transport output stream."
                                                 error: [self.mOutput streamError]];
-    } else if (result == 0) {
+    } else if (bytesWritten == 0) {
       @throw [TTransportException exceptionWithReason: @"End of output stream."];
+    } else {
+        /* bytesWritten is guaranteed to be positive and within the range representable by size_t. */
+        totalBytesWritten += (size_t)bytesWritten;
     }
-    got += result;
   }
 }
 
