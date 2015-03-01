@@ -34,6 +34,7 @@ uses
   Thrift.Transport.Pipes,
   Thrift.Protocol,
   Thrift.Protocol.JSON,
+  Thrift.Protocol.Compact,
   Thrift.Collections,
   Thrift.Utils,
   Thrift.Test,
@@ -637,7 +638,7 @@ begin
     case protType of
       prot_Binary  :  ProtocolFactory := TBinaryProtocolImpl.TFactory.Create( BINARY_STRICT_READ, BINARY_STRICT_WRITE);
       prot_JSON    :  ProtocolFactory := TJSONProtocolImpl.TFactory.Create;
-      prot_Compact :  raise Exception.Create('Compact protocol not implemented');
+      prot_Compact :  ProtocolFactory := TCompactProtocolImpl.TFactory.Create;
     else
       raise Exception.Create('Unhandled protocol');
     end;

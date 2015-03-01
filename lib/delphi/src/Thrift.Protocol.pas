@@ -56,6 +56,16 @@ type
     Oneway = 4
   );
 
+const
+  VALID_TTYPES = [
+    TType.Stop, TType.Void,
+    TType.Bool_, TType.Byte_, TType.Double_, TType.I16, TType.I32, TType.I64, TType.String_,
+    TType.Struct, TType.Map, TType.Set_, TType.List
+  ];
+
+  VALID_MESSAGETYPES = [Low(TMessageType)..High(TMessageType)];
+
+type
   IProtocol = interface;
   IStruct = interface;
 

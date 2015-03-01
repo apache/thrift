@@ -30,6 +30,7 @@ uses
   Generics.Collections,
   TestConstants,
   Thrift,
+  Thrift.Protocol.Compact,
   Thrift.Protocol.JSON,
   Thrift.Protocol,
   Thrift.Transport.Pipes,
@@ -352,7 +353,7 @@ begin
       case protType of
         prot_Binary  :  prot := TBinaryProtocolImpl.Create( trans, BINARY_STRICT_READ, BINARY_STRICT_WRITE);
         prot_JSON    :  prot := TJSONProtocolImpl.Create( trans);
-        prot_Compact :  raise Exception.Create('Compact protocol not implemented');
+        prot_Compact :  prot := TCompactProtocolImpl.Create( trans);
       else
         raise Exception.Create('Unhandled protocol');
       end;
