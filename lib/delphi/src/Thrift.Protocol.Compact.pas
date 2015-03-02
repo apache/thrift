@@ -522,7 +522,6 @@ end;
 procedure TCompactProtocolImpl.WriteDouble( const dub: Double);
 var data : TBytes;
 begin
-  SetLength( data, 8);
   fixedLongToBytes( DoubleToInt64Bits(dub), data);
   Transport.Write( data);
 end;
@@ -629,7 +628,7 @@ end;
 // Convert a Int64 into 8 little-endian bytes in buf
 class procedure TCompactProtocolImpl.fixedLongToBytes( const n : Int64; var buf : TBytes);
 begin
-  ASSERT( Length(buf) >= 8);
+  SetLength( buf, 8);
   buf[0] := Byte( n         and $FF);
   buf[1] := Byte((n shr 8)  and $FF);
   buf[2] := Byte((n shr 16) and $FF);
@@ -1064,10 +1063,34 @@ end;
 {$ENDIF}
 
 
+{$IFDEF Debug}
+procedure TestLongBytes;
+
+  procedure Test( const test : Int64);
+  var buf : TBytes;
+  begin
+    TCompactProtocolImpl.fixedLongToBytes( test, buf);
+    ASSERT( TCompactProtocolImpl.bytesToLong( buf) = test, IntToStr(test));
+  end;
+
+var i : Integer;
+begin
+  Test( 0);
+  for i := 0 to 62 do begin
+    Test( +(Int64(1) shl i));
+    Test( -(Int64(1) shl i));
+  end;
+  Test( Int64($7FFFFFFFFFFFFFFF));
+  Test( Int64($8000000000000000));
+end;
+{$ENDIF}
+
+
 initialization
   {$IFDEF Debug}
   TestDoubleToInt64Bits;
   TestZigZag;
+  TestLongBytes;
   {$ENDIF}
 
 end.
