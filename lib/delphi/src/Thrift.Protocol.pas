@@ -114,7 +114,7 @@ type
     function GetCount: Integer;
     procedure SetCount( Value: Integer);
   public
-    constructor Create( AValueType: TType; AKeyType: TType; ACount: Integer); overload;
+    constructor Create( AKeyType, AValueType: TType; ACount: Integer); overload;
     constructor Create; overload;
   end;
 
@@ -733,7 +733,7 @@ end;
 
 { TMapImpl }
 
-constructor TMapImpl.Create(AValueType, AKeyType: TType; ACount: Integer);
+constructor TMapImpl.Create( AKeyType, AValueType: TType; ACount: Integer);
 begin
   inherited Create;
   FValueType := AValueType;
