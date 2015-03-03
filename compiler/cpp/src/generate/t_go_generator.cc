@@ -1974,6 +1974,9 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   while ((loc = service_module.find(".")) != string::npos) {
     service_module.replace(loc, 1, 1, '/');
   }
+  if(!gen_package_prefix_.empty()) {
+    service_module = gen_package_prefix_ + service_module;
+  }
 
   f_remote << go_autogen_comment();
   f_remote << indent() << "package main" << endl << endl;
