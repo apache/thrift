@@ -1071,6 +1071,7 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
   vector<t_field*>::const_iterator m_iter;
 
   std::string tstruct_name(publicize(tstruct->get_name(), is_args || is_result));
+  generate_go_docstring(out, tstruct);
   out << indent() << "type " << tstruct_name << " struct {" << endl;
   /*
      Here we generate the structure specification for the fastbinary codec.
