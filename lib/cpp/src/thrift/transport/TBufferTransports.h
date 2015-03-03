@@ -314,7 +314,8 @@ public:
       wBufSize_(DEFAULT_BUFFER_SIZE),
       rBuf_(),
       wBuf_(new uint8_t[wBufSize_]),
-      bufReclaimThresh_((std::numeric_limits<uint32_t>::max)()) {
+      bufReclaimThresh_((std::numeric_limits<uint32_t>::max)()),
+      maxFrameSize_(DEFAULT_MAX_FRAME_SIZE) {
     initPointers();
   }
 
@@ -326,7 +327,8 @@ public:
       wBufSize_(sz),
       rBuf_(),
       wBuf_(new uint8_t[wBufSize_]),
-      bufReclaimThresh_(bufReclaimThresh) {
+      bufReclaimThresh_(bufReclaimThresh),
+      maxFrameSize_(DEFAULT_MAX_FRAME_SIZE) {
     initPointers();
   }
 
@@ -401,7 +403,7 @@ protected:
   boost::scoped_array<uint8_t> rBuf_;
   boost::scoped_array<uint8_t> wBuf_;
   uint32_t bufReclaimThresh_;
-  uint32_t maxFrameSize_ = DEFAULT_MAX_FRAME_SIZE;
+  uint32_t maxFrameSize_;
 };
 
 /**
