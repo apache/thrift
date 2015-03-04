@@ -50,17 +50,15 @@ enum {
 
 - (id <TTransport>) transport;
 
-- (void) readMessageBeginReturningName: (NSString **) name
-                                  type: (int *) type
-                            sequenceID: (int *) sequenceID;
+- (NSString *) readMessageBeginReturningType: (int *) type
+                                  sequenceID: (int *) sequenceID;
 - (void) readMessageEnd;
 
-- (void) readStructBeginReturningName: (NSString **) name;
+- (NSString *) readStructBegin;
 - (void) readStructEnd;
 
-- (void) readFieldBeginReturningName: (NSString **) name
-                                type: (int *) fieldType
-                             fieldID: (int *) fieldID;
+- (NSString *) readFieldBeginReturningType: (int *) fieldType
+                                   fieldID: (int *) fieldID;
 - (void) readFieldEnd;
 
 - (NSString *) readString;
