@@ -55,12 +55,13 @@
 {
   size_t totalBytesRead = 0;
   while (totalBytesRead < length) {
-    NSData * data = [mInputFileHandle readDataOfLength: length-totalBytesRead];
+    const NSUInteger maxLength = length - totalBytesRead;
+    NSData * data = [mInputFileHandle readDataOfLength: maxLength];
     if ([data length] == 0) {
       @throw [TTransportException exceptionWithName: @"TTransportException"
                                   reason: @"Cannot read. No more data."];
     }
-    [data getBytes: buf+totalBytesRead];
+    [data getBytes: buf+totalBytesRead length: maxLength];
     totalBytesRead += [data length];
   }
   return totalBytesRead;
