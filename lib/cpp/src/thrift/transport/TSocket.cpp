@@ -69,9 +69,6 @@ namespace transport {
 
 using namespace std;
 
-// Global var to track total socket sys calls
-uint32_t g_socket_syscalls = 0;
-
 /**
  * TSocket implementation.
  *
@@ -461,7 +458,6 @@ try_again:
   int got = static_cast<int>(recv(socket_, cast_sockopt(buf), len, 0));
   int errno_copy = THRIFT_GET_SOCKET_ERROR; // THRIFT_GETTIMEOFDAY can change
                                             // THRIFT_GET_SOCKET_ERROR
-  ++g_socket_syscalls;
 
   // Check for error on read
   if (got < 0) {
@@ -575,7 +571,6 @@ uint32_t TSocket::write_partial(const uint8_t* buf, uint32_t len) {
 #endif // ifdef MSG_NOSIGNAL
 
   int b = static_cast<int>(send(socket_, const_cast_sockopt(buf + sent), len - sent, flags));
-  ++g_socket_syscalls;
 
   if (b < 0) {
     if (THRIFT_GET_SOCKET_ERROR == THRIFT_EWOULDBLOCK || THRIFT_GET_SOCKET_ERROR == THRIFT_EAGAIN) {

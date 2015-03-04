@@ -51,7 +51,6 @@ using namespace apache::thrift::async;
 // Length of argv[0] - Length of script dir
 #define EXECUTABLE_FILE_NAME_LENGTH 19
 
-// extern uint32_t g_socket_syscalls;
 
 // Current time, microseconds since the epoch
 uint64_t now() {
@@ -718,7 +717,6 @@ int main(int argc, char** argv) {
     transport->close();
   }
 
-  //  printf("\nSocket syscalls: %u", g_socket_syscalls);
   printf("\nAll tests done.\n");
 
   uint64_t time_avg = time_tot / numTests;
