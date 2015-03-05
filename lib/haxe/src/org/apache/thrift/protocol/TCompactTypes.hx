@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -17,23 +17,25 @@
  * under the License.
  */
 
-package org.apache.thrift.transport;
+package org.apache.thrift.protocol;
 
-import org.apache.thrift.TException;
-
-class TTransportException extends TException {
-
-    // WARNING: These are subject to be extended in the future, so we can't use enums 
-    // with Haxe 3.1.3 because of https://github.com/HaxeFoundation/haxe/issues/3649
-    public static inline var UNKNOWN : Int = 0;
-    public static inline var NOT_OPEN : Int = 1;
-    public static inline var ALREADY_OPEN : Int = 2;
-    public static inline var TIMED_OUT : Int = 3;
-    public static inline var END_OF_FILE : Int = 4;
-
-    public function new(error : Int = UNKNOWN, message : String = "") {
-        super(message, error);
-    }
-
+/**
+ * All of the on-wire type codes.
+ */
+@:enum
+abstract TCompactTypes(Int)  from Int to Int  {
+    public static inline var STOP          = 0x00;
+    public static inline var BOOLEAN_TRUE  = 0x01;
+    public static inline var BOOLEAN_FALSE = 0x02;
+    public static inline var BYTE          = 0x03;
+    public static inline var I16           = 0x04;
+    public static inline var I32           = 0x05;
+    public static inline var I64           = 0x06;
+    public static inline var DOUBLE        = 0x07;
+    public static inline var BINARY        = 0x08;
+    public static inline var LIST          = 0x09;
+    public static inline var SET           = 0x0A;
+    public static inline var MAP           = 0x0B;
+    public static inline var STRUCT        = 0x0C;
 }
- 
+

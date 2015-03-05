@@ -23,9 +23,9 @@ package org.apache.thrift;
    * Requirement type constants.
    *
    */
-class TFieldRequirementType {
-    public static inline var REQUIRED : Int  = 1;
+@:enum
+abstract TFieldRequirementType(Int)  from Int to Int  {
+    public static inline var REQUIRED : Int = 1;
     public static inline var OPTIONAL : Int = 2;
-    public static inline var DEFAULT : Int = 3;
-
+    public static inline var DEFAULT  : Int = 3;
 }
