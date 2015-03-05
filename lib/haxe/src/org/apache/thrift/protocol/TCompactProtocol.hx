@@ -35,26 +35,7 @@ import org.apache.thrift.helper.BitConverter;
 
 
 /**
- * All of the on-wire type codes.
- */
-class TCompactTypes {
-    public static inline var STOP          = 0x00;
-    public static inline var BOOLEAN_TRUE  = 0x01;
-    public static inline var BOOLEAN_FALSE = 0x02;
-    public static inline var BYTE          = 0x03;
-    public static inline var I16           = 0x04;
-    public static inline var I32           = 0x05;
-    public static inline var I64           = 0x06;
-    public static inline var DOUBLE        = 0x07;
-    public static inline var BINARY        = 0x08;
-    public static inline var LIST          = 0x09;
-    public static inline var SET           = 0x0A;
-    public static inline var MAP           = 0x0B;
-    public static inline var STRUCT        = 0x0C;
-}
-
-/**
-* Binary protocol implementation for thrift.
+* Compact protocol implementation for thrift.
 */
 class TCompactProtocol implements TProtocol {
 
