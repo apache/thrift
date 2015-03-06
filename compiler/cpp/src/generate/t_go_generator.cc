@@ -35,6 +35,7 @@
 #include <sys/types.h>
 #include <sstream>
 #include <algorithm>
+#include <boost/algorithm/string.hpp>
 #include "t_generator.h"
 #include "platform.h"
 #include "version.h"
@@ -292,6 +293,7 @@ private:
   std::string package_name_;
   std::string package_dir_;
 
+  static std::string camelcase(const std::string& value);
   static std::string publicize(const std::string& value, bool is_args_or_result = false);
   static std::string new_prefix(const std::string& value);
   static std::string privatize(const std::string& value);
@@ -406,6 +408,34 @@ bool t_go_generator::is_pointer_field(t_field* tfield, bool in_container_value) 
   throw "INVALID TYPE IN type_to_go_type: " + type->get_name();
 }
 
+// This set is taken from https://github.com/golang/lint/blob/master/lint.go#L692
+const std::set<std::string> commonInitialisms = {"API", "ASCII", "CPU", "CSS",
+"DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP", "JSON", "LHS", 
+"QPS", "RAM", "RHS", "RPC", "SLA", "SMTP", "SSH", "TCP", "TLS", "TTL", "UDP", 
+"UI", "UID", "UUID", "URI", "URL", "UTF8", "VM", "XML", "XSRF", "XSS",}; 
+
+std::string t_go_generator::camelcase(const std::string& value) {
+  
+  std::string value2(value);
+  
+  // as long as we are changing things, let's change _ followed by lowercase to capital and fix common initialisms
+  for (std::string::size_type i = 1; i < value2.size() - 1; ++i) {
+    if (value2[i] == '_'){
+      if (islower(value2[i + 1])) {
+        value2.replace(i, 2, 1, toupper(value2[i + 1]));
+      }
+      std::string word = value2.substr(i,value2.find('_', i));
+      std::string upper = boost::to_upper_copy(word);
+      
+      if (commonInitialisms.find(upper) != commonInitialisms.end()) {
+        value2.replace(i, word.length(), upper); 
+      }
+    }
+  }
+  
+  return value2;
+}
+
 std::string t_go_generator::publicize(const std::string& value, bool is_args_or_result) {
   if (value.size() <= 0) {
     return value;
@@ -423,12 +453,7 @@ std::string t_go_generator::publicize(const std::string& value, bool is_args_or_
     value2[0] = toupper(value2[0]);
   }
 
-  // as long as we are changing things, let's change _ followed by lowercase to capital
-  for (string::size_type i = 1; i < value2.size() - 1; ++i) {
-    if (value2[i] == '_' && islower(value2[i + 1])) {
-      value2.replace(i, 2, 1, toupper(value2[i + 1]));
-    }
-  }
+  value2 = camelcase(value2);
 
   // final length before further checks, the string may become longer
   size_t len_before = value2.length();
@@ -477,12 +502,7 @@ std::string t_go_generator::privatize(const std::string& value) {
     value2[0] = tolower(value2[0]);
   }
 
-  // as long as we are changing things, let's change _ followed by lowercase to capital
-  for (string::size_type i = 1; i < value2.size() - 1; ++i) {
-    if (value2[i] == '_' && isalpha(value2[i + 1])) {
-      value2.replace(i, 2, 1, toupper(value2[i + 1]));
-    }
-  }
+  value2 = camelcase(value2);
 
   return value2;
 }

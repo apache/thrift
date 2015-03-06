@@ -32,7 +32,8 @@ gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
 				TypedefFieldTest.thrift \
 				RefAnnotationFieldsTest.thrift \
 				ErrorTest.thrift \
-				NamesTest.thrift
+				NamesTest.thrift \
+				InitialismsTest.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) -r IncludesTest.thrift
@@ -46,6 +47,7 @@ gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
 	$(THRIFT) RefAnnotationFieldsTest.thrift
 	$(THRIFT) ErrorTest.thrift
 	$(THRIFT) NamesTest.thrift
+	$(THRIFT) InitialismsTest.thrift
 	GOPATH=`pwd`/gopath $(GO) get code.google.com/p/gomock/gomock
 	ln -nfs ../../../thrift gopath/src/thrift
 	ln -nfs ../../tests gopath/src/tests
@@ -59,7 +61,8 @@ check: gopath
 				typedeffieldtest \
 				refannotationfieldstest \
 				errortest	\
-				namestest
+				namestest \
+				initialismstest
 	GOPATH=`pwd`/gopath $(GO) test thrift tests
 
 clean-local:
@@ -81,4 +84,5 @@ EXTRA_DIST = \
 	ServicesTest.thrift \
 	TypedefFieldTest.thrift \
 	ErrorTest.thrift \
-	NamesTest.thrift
+	NamesTest.thrift \
+	InitialismsTest.thrift
