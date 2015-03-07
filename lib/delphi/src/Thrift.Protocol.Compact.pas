@@ -1035,12 +1035,20 @@ procedure TestZigZag;
 var i : Integer;
 begin
   // protobuf testcases
-  ASSERT( TCompactProtocolImpl.intToZigZag(0)  = 0, 'pb #1');
-  ASSERT( TCompactProtocolImpl.intToZigZag(-1) = 1, 'pb #2');
-  ASSERT( TCompactProtocolImpl.intToZigZag(1)  = 2, 'pb #3');
-  ASSERT( TCompactProtocolImpl.intToZigZag(-2) = 3, 'pb #4');
-  ASSERT( TCompactProtocolImpl.intToZigZag(+2147483647) = 4294967294, 'pb #5');
-  ASSERT( TCompactProtocolImpl.intToZigZag(-2147483648) = 4294967295, 'pb #6');
+  ASSERT( TCompactProtocolImpl.intToZigZag(0)  = 0, 'pb #1 to ZigZag');
+  ASSERT( TCompactProtocolImpl.intToZigZag(-1) = 1, 'pb #2 to ZigZag');
+  ASSERT( TCompactProtocolImpl.intToZigZag(1)  = 2, 'pb #3 to ZigZag');
+  ASSERT( TCompactProtocolImpl.intToZigZag(-2) = 3, 'pb #4 to ZigZag');
+  ASSERT( TCompactProtocolImpl.intToZigZag(+2147483647) = 4294967294, 'pb #5 to ZigZag');
+  ASSERT( TCompactProtocolImpl.intToZigZag(-2147483648) = 4294967295, 'pb #6 to ZigZag');
+
+  // protobuf testcases
+  ASSERT( TCompactProtocolImpl.zigzagToInt(0)  = 0, 'pb #1 from ZigZag');
+  ASSERT( TCompactProtocolImpl.zigzagToInt(1) = -1, 'pb #2 from ZigZag');
+  ASSERT( TCompactProtocolImpl.zigzagToInt(2)  = 1, 'pb #3 from ZigZag');
+  ASSERT( TCompactProtocolImpl.zigzagToInt(3) = -2, 'pb #4 from ZigZag');
+  ASSERT( TCompactProtocolImpl.zigzagToInt(4294967294) = +2147483647, 'pb #5 from ZigZag');
+  ASSERT( TCompactProtocolImpl.zigzagToInt(4294967295) = -2147483648, 'pb #6 from ZigZag');
 
   // back and forth 32
   Test32( 0);
