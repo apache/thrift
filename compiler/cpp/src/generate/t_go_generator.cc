@@ -35,7 +35,7 @@
 #include <sys/types.h>
 #include <sstream>
 #include <algorithm>
-#include <boost/algorithm/string.hpp>
+#include <clocale>
 #include "t_generator.h"
 #include "platform.h"
 #include "version.h"
@@ -417,6 +417,7 @@ const std::set<std::string> commonInitialisms = {"API", "ASCII", "CPU", "CSS",
 std::string t_go_generator::camelcase(const std::string& value) {
   
   std::string value2(value);
+  std::setlocale(LC_ALL, "C"); // set locale to classic
   
   // as long as we are changing things, let's change _ followed by lowercase to capital and fix common initialisms
   for (std::string::size_type i = 1; i < value2.size() - 1; ++i) {
@@ -425,10 +426,9 @@ std::string t_go_generator::camelcase(const std::string& value) {
         value2.replace(i, 2, 1, toupper(value2[i + 1]));
       }
       std::string word = value2.substr(i,value2.find('_', i));
-      std::string upper = boost::to_upper_copy(word);
-      
-      if (commonInitialisms.find(upper) != commonInitialisms.end()) {
-        value2.replace(i, word.length(), upper); 
+      std::transform(word.begin(), word.end(), word.begin(), ::toupper);
+      if (commonInitialisms.find(word) != commonInitialisms.end()) {
+        value2.replace(i, word.length(), word); 
       }
     }
   }
