@@ -1030,8 +1030,7 @@ void t_go_generator::get_publicized_name_and_def_value(t_field* tfield,
                                                        t_const_value** OUT_def_value) const {
   const string base_field_name = tfield->get_name();
   const string escaped_field_name = escape_string(base_field_name);
-  const string go_safe_name = variable_name_to_go_name(escaped_field_name);
-  *OUT_pub_name = publicize(go_safe_name);
+  *OUT_pub_name = publicize(escaped_field_name);
   *OUT_def_value = tfield->get_value();
 }
 
@@ -1132,7 +1131,7 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
       if (it != (*m_iter)->annotations_.end()) {
         gotag = it->second;
       }
-      indent(out) << publicize(variable_name_to_go_name((*m_iter)->get_name())) << " " << goType
+      indent(out) << publicize((*m_iter)->get_name()) << " " << goType
                   << " `thrift:\"" << escape_string((*m_iter)->get_name()) << ","
                   << sorted_keys_pos;
 
@@ -1230,7 +1229,7 @@ void t_go_generator::generate_isset_helpers(ofstream& out,
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     const string field_name(
-        publicize(variable_name_to_go_name(escape_string((*f_iter)->get_name()))));
+        publicize(escape_string((*f_iter)->get_name())));
     if ((*f_iter)->get_req() == t_field::T_OPTIONAL || is_pointer_field(*f_iter)) {
       out << indent() << "func (p *" << tstruct_name << ") IsSet" << field_name << "() bool {"
           << endl;
@@ -1281,7 +1280,7 @@ void t_go_generator::generate_countsetfields_helper(ofstream& out,
       continue;
 
     const string field_name(
-        publicize(variable_name_to_go_name(escape_string((*f_iter)->get_name()))));
+        publicize(escape_string((*f_iter)->get_name())));
 
     out << indent() << "if (p.IsSet" << field_name << "()) {" << endl;
     indent_up();
@@ -1319,7 +1318,7 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
       const string field_name(
-          publicize(variable_name_to_go_name(escape_string((*f_iter)->get_name()))));
+          publicize(escape_string((*f_iter)->get_name())));
       indent(out) << "var isset" << field_name << " bool = false;" << endl;
     }
   }
@@ -1375,7 +1374,7 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
     // Mark required field as read
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
       const string field_name(
-          publicize(variable_name_to_go_name(escape_string((*f_iter)->get_name()))));
+          publicize(escape_string((*f_iter)->get_name())));
       out << indent() << "isset" << field_name << " = true" << endl;
     }
 
@@ -1414,7 +1413,7 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
       const string field_name(
-          publicize(variable_name_to_go_name(escape_string((*f_iter)->get_name()))));
+          publicize(escape_string((*f_iter)->get_name())));
       out << indent() << "if !isset" << field_name << "{" << endl;
       out << indent() << "  return thrift.NewTProtocolExceptionWithType(thrift.INVALID_DATA, "
                          "fmt.Errorf(\"Required field " << field_name << " is not set\"));" << endl;
@@ -1516,7 +1515,7 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
     indent_up();
 
     if (field_required == t_field::T_OPTIONAL) {
-      out << indent() << "if p.IsSet" << publicize(variable_name_to_go_name(field_name)) << "() {"
+      out << indent() << "if p.IsSet" << publicize(field_name) << "() {"
           << endl;
       indent_up();
     }
@@ -1827,7 +1826,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
     f_service_ << indent() << "args := " << argsname << "{" << endl;
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-      f_service_ << indent() << publicize(variable_name_to_go_name((*fld_iter)->get_name()))
+      f_service_ << indent() << publicize((*fld_iter)->get_name())
                  << " : " << variable_name_to_go_name((*fld_iter)->get_name()) << "," << endl;
     }
     f_service_ << indent() << "}" << endl;
@@ -1917,8 +1916,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
       vector<t_field*>::const_iterator x_iter;
 
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-        const std::string varname = variable_name_to_go_name((*x_iter)->get_name());
-        const std::string pubname = publicize(varname);
+        const std::string pubname = publicize((*x_iter)->get_name());
 
         f_service_ << indent() << "if result." << pubname << " != nil {" << endl;
         f_service_ << indent() << "  err = result." << pubname << endl;
@@ -2561,7 +2559,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
       f_service_ << ", ";
     }
 
-    f_service_ << "args." << publicize(variable_name_to_go_name((*f_iter)->get_name()));
+    f_service_ << "args." << publicize((*f_iter)->get_name());
   }
 
   f_service_ << "); err2 != nil {" << endl;
@@ -2577,7 +2575,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
       f_service_ << indent() << "  case " << type_to_go_type(((*xf_iter)->get_type())) << ":"
                  << endl;
       f_service_ << indent() << "result."
-                 << publicize(variable_name_to_go_name((*xf_iter)->get_name())) << " = v" << endl;
+                 << publicize((*xf_iter)->get_name()) << " = v" << endl;
     }
 
     f_service_ << indent() << "  default:" << endl;
@@ -2659,7 +2657,7 @@ void t_go_generator::generate_deserialize_field(ofstream& out,
   (void)coerceData;
   t_type* orig_type = tfield->get_type();
   t_type* type = get_true_type(orig_type);
-  string name(prefix + publicize(variable_name_to_go_name(tfield->get_name())));
+  string name(prefix + publicize(tfield->get_name()));
 
   if (type->is_void()) {
     throw "CANNOT GENERATE DESERIALIZE CODE FOR void TYPE: " + name;
@@ -2920,7 +2918,7 @@ void t_go_generator::generate_serialize_field(ofstream& out,
                                               string prefix,
                                               bool inkey) {
   t_type* type = get_true_type(tfield->get_type());
-  string name(prefix + publicize(variable_name_to_go_name(tfield->get_name())));
+  string name(prefix + publicize(tfield->get_name()));
 
   // Do nothing for void types
   if (type->is_void()) {
@@ -3156,7 +3154,7 @@ void t_go_generator::generate_go_docstring(ofstream& out,
 
     for (p_iter = fields.begin(); p_iter != fields.end(); ++p_iter) {
       t_field* p = *p_iter;
-      ss << " - " << publicize(variable_name_to_go_name(p->get_name()));
+      ss << " - " << publicize(p->get_name());
 
       if (p->has_doc()) {
         ss << ": " << p->get_doc();
