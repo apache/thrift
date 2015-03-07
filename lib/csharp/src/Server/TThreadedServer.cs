@@ -40,6 +40,10 @@ namespace Thrift.Server
     private object clientLock;
     private Thread workerThread;
 
+    public int ClientThreadsCount  {
+        get { return clientThreads.Count; }
+    }
+
     public TThreadedServer(TProcessor processor, TServerTransport serverTransport)
       : this(processor, serverTransport,
          new TTransportFactory(), new TTransportFactory(),
