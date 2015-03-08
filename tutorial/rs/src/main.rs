@@ -67,15 +67,16 @@ fn run_client(client: &mut tutorial::CalculatorClient) {
     println!("15 - 10 = {}", client.calculate(2, work).ok().unwrap());
 
     let ss = client.getStruct(1).ok().unwrap();
-    println!("Received log: {:?}", ss);
+    println!("Received log: {}", ss.value);
 
     println!("PASS");
 }
 
 pub fn main() {
-    let addr: ip::SocketAddr = FromStr::from_str("127.0.0.1:9090")
+    let addr: ip::SocketAddr = FromStr::from_str("127.0.0.1:9090").ok()
         .expect("bad server address");
-    let tcp = std::old_io::TcpStream::connect(addr).ok().unwrap();
+    let tcp = std::old_io::TcpStream::connect(addr).ok()
+        .expect("failed to connect");
     let mut stream = BufferedStream::new(tcp);
     // FIXME: do we want tutorial::build_calculator_client(BinaryProtocol, tcp) here?
     let mut client = tutorial::CalculatorClientImpl::new(BinaryProtocol, stream);

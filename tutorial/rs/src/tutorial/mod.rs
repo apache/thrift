@@ -22,7 +22,7 @@ use thrift::protocol::ProtocolHelpers;
 use shared::*;
 
 #[allow(dead_code)]
-#[derive(Copy,Show,FromPrimitive)]
+#[derive(PartialEq,Eq,Hash,Copy,Clone,Debug,FromPrimitive)]
 pub enum Operation {
   ADD = 1,
   SUBTRACT = 2,
@@ -40,7 +40,6 @@ impl Operation {
 pub type MyInteger = i32;
 
 #[allow(dead_code)]
-#[derive(Show)]
 pub struct Work {
   pub num1: i32,
   pub num2: i32,
@@ -80,7 +79,7 @@ impl Writeable for Work {
     try!(oprot.write_field_end(transport));
     
     match self.comment {
-      Some(ref  x) => {
+      Some(ref x) => {
         try!(oprot.write_field_begin(transport, "comment", Type::TString, 4));
         try!(oprot.write_string(transport, x));
         try!(oprot.write_field_end(transport));
@@ -137,7 +136,6 @@ impl Readable for Work {
 }
 
 #[allow(dead_code)]
-#[derive(Show)]
 pub struct InvalidOperation {
   pub what: i32,
   pub why: String,
@@ -207,7 +205,6 @@ impl Readable for InvalidOperation {
 }
 
 #[allow(dead_code)]
-#[derive(Show)]
 pub struct CalculatorPingArgs;
 
 impl Writeable for CalculatorPingArgs {
@@ -225,7 +222,6 @@ impl Writeable for CalculatorPingArgs {
 }
 
 #[allow(dead_code)]
-#[derive(Show)]
 pub struct CalculatorPingResult;
 
 impl CalculatorPingResult {
@@ -259,7 +255,6 @@ impl Readable for CalculatorPingResult {
 }
 
 #[allow(dead_code)]
-#[derive(Show)]
 pub struct CalculatorAddArgs {
   pub num1: i32,
   pub num2: i32,
@@ -288,7 +283,6 @@ impl Writeable for CalculatorAddArgs {
 }
 
 #[allow(dead_code)]
-#[derive(Show)]
 pub struct CalculatorAddResult {
   pub success: i32,
 }
@@ -330,7 +324,6 @@ impl Readable for CalculatorAddResult {
 }
 
 #[allow(dead_code)]
-#[derive(Show)]
 pub struct CalculatorCalculateArgs {
   pub logid: i32,
   pub w: Work,
@@ -359,7 +352,6 @@ impl Writeable for CalculatorCalculateArgs {
 }
 
 #[allow(dead_code)]
-#[derive(Show)]
 pub struct CalculatorCalculateResult {
   pub success: i32,
   pub ouch: Option<InvalidOperation>,
@@ -409,7 +401,6 @@ impl Readable for CalculatorCalculateResult {
 }
 
 #[allow(dead_code)]
-#[derive(Show)]
 pub struct CalculatorZipArgs;
 
 impl Writeable for CalculatorZipArgs {
