@@ -195,7 +195,7 @@ class AbstractTest(unittest.TestCase):
     try:
       self.client.testException("throw_undeclared")
       self.fail("should have thrown exception")
-    except Exception: # type is undefined
+    except TApplicationException: # type is undefined
       pass
 
   def testOneway(self):

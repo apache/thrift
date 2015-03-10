@@ -118,6 +118,8 @@ class TestHandler:
       raise Xception(errorCode=1001, message=arg)
     elif arg == 'TException':
       raise TException(message='This is a TException')
+    elif arg == 'throw_undeclared':
+      raise ValueError('foo')
 
   def testMultiException(self, arg0, arg1):
     if options.verbose > 1:

@@ -1798,8 +1798,7 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
     f_service_ << endl;
 
   } else { // py
-    // Try block for a function with exceptions
-    if (xceptions.size() > 0) {
+    if (xceptions.size() > 0 || !tfunction->is_oneway()) {
       f_service_ << indent() << "try:" << endl;
       indent_up();
     }
@@ -1825,34 +1824,53 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
     }
     f_service_ << ")" << endl;
 
-    if (!tfunction->is_oneway() && xceptions.size() > 0) {
-      indent_down();
-      for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-        f_service_ << indent() << "except " << type_name((*x_iter)->get_type()) << ", "
-                   << (*x_iter)->get_name() << ":" << endl;
-        if (!tfunction->is_oneway()) {
-          indent_up();
-          f_service_ << indent() << "result." << (*x_iter)->get_name() << " = "
-                     << (*x_iter)->get_name() << endl;
-          indent_down();
-        } else {
-          f_service_ << indent() << "pass" << endl;
-        }
+    if (xceptions.size() > 0 || !tfunction->is_oneway()) {
+        indent_down();
+    }
+    for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+      f_service_ << indent() << "except " << type_name((*x_iter)->get_type()) << ", "
+                 << (*x_iter)->get_name() << ":" << endl;
+      if (!tfunction->is_oneway()) {
+        indent_up();
+        f_service_ << indent() << "result." << (*x_iter)->get_name() << " = "
+                   << (*x_iter)->get_name() << endl;
+        indent_down();
+      } else {
+        f_service_ << indent() << "pass" << endl;
       }
     }
 
-    // Shortcut out here for oneway functions
-    if (tfunction->is_oneway()) {
+    if (!tfunction->is_oneway()) {
+      f_service_ << indent() << "except Exception:" << endl;
+      indent_up();
+
+      f_service_
+        << indent() << "exc = TApplicationException(TApplicationException.INTERNAL_ERROR)" << endl
+        << indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name()
+        << "\", TMessageType.EXCEPTION, seqid)" << endl << indent() << "exc.write(oprot)" << endl
+        << indent() << "result = None" << endl;
+
+      indent_down();
+
+      f_service_ << indent() << "if result is not None:" << endl;
+      indent_up();
+
+      f_service_ << indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name()
+                 << "\", TMessageType.REPLY, seqid)" << endl << indent() << "result.write(oprot)"
+                 << endl;
+
+      indent_down();
+
+      f_service_ << indent() << "oprot.writeMessageEnd()" << endl
+                 << indent() << "oprot.trans.flush()" << endl;
+    } else {
+      // Shortcut out here for oneway functions
       f_service_ << indent() << "return" << endl;
       indent_down();
       f_service_ << endl;
       return;
     }
 
-    f_service_ << indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name()
-               << "\", TMessageType.REPLY, seqid)" << endl << indent() << "result.write(oprot)"
-               << endl << indent() << "oprot.writeMessageEnd()" << endl << indent()
-               << "oprot.trans.flush()" << endl;
 
     // Close function
     indent_down();
