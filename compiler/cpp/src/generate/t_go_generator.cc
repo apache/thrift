@@ -293,10 +293,12 @@ private:
   std::string package_name_;
   std::string package_dir_;
 
-  static std::string camelcase(const std::string& value);
-  static std::string publicize(const std::string& value, bool is_args_or_result = false);
-  static std::string new_prefix(const std::string& value);
-  static std::string privatize(const std::string& value);
+  std::set<std::string> commonInitialisms;
+
+  std::string camelcase(const std::string& value) const;
+  std::string publicize(const std::string& value, bool is_args_or_result = false) const;
+  std::string privatize(const std::string& value) const;
+  std::string new_prefix(const std::string& value) const;
   static std::string variable_name_to_go_name(const std::string& value);
   static bool is_pointer_field(t_field* tfield, bool in_container = false);
   static bool omit_initialization(t_field* tfield);
@@ -408,14 +410,7 @@ bool t_go_generator::is_pointer_field(t_field* tfield, bool in_container_value) 
   throw "INVALID TYPE IN type_to_go_type: " + type->get_name();
 }
 
-// This set is taken from https://github.com/golang/lint/blob/master/lint.go#L692
-const std::set<std::string> commonInitialisms = {"API", "ASCII", "CPU", "CSS",
-"DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP", "JSON", "LHS", 
-"QPS", "RAM", "RHS", "RPC", "SLA", "SMTP", "SSH", "TCP", "TLS", "TTL", "UDP", 
-"UI", "UID", "UUID", "URI", "URL", "UTF8", "VM", "XML", "XSRF", "XSS",}; 
-
-std::string t_go_generator::camelcase(const std::string& value) {
-  
+std::string t_go_generator::camelcase(const std::string& value) const {
   std::string value2(value);
   std::setlocale(LC_ALL, "C"); // set locale to classic
   
@@ -436,7 +431,7 @@ std::string t_go_generator::camelcase(const std::string& value) {
   return value2;
 }
 
-std::string t_go_generator::publicize(const std::string& value, bool is_args_or_result) {
+std::string t_go_generator::publicize(const std::string& value, bool is_args_or_result) const {
   if (value.size() <= 0) {
     return value;
   }
@@ -479,7 +474,7 @@ std::string t_go_generator::publicize(const std::string& value, bool is_args_or_
   return prefix + value2;
 }
 
-std::string t_go_generator::new_prefix(const std::string& value) {
+std::string t_go_generator::new_prefix(const std::string& value) const {
   if (value.size() <= 0) {
     return value;
   }
@@ -491,7 +486,7 @@ std::string t_go_generator::new_prefix(const std::string& value) {
   return "New" + publicize(value);
 }
 
-std::string t_go_generator::privatize(const std::string& value) {
+std::string t_go_generator::privatize(const std::string& value) const {
   if (value.size() <= 0) {
     return value;
   }
@@ -638,6 +633,43 @@ void t_go_generator::init_generator() {
   string module = get_real_go_module(program_);
   string target = module;
   package_dir_ = get_out_dir();
+
+  // This set is taken from https://github.com/golang/lint/blob/master/lint.go#L692
+  commonInitialisms.insert("API");
+  commonInitialisms.insert("ASCII");
+  commonInitialisms.insert("CPU");
+  commonInitialisms.insert("CSS");
+  commonInitialisms.insert("DNS");
+  commonInitialisms.insert("EOF");
+  commonInitialisms.insert("GUID");
+  commonInitialisms.insert("HTML");
+  commonInitialisms.insert("HTTP");
+  commonInitialisms.insert("HTTPS");
+  commonInitialisms.insert("ID");
+  commonInitialisms.insert("IP");
+  commonInitialisms.insert("JSON");
+  commonInitialisms.insert("LHS");
+  commonInitialisms.insert("QPS");
+  commonInitialisms.insert("RAM");
+  commonInitialisms.insert("RHS");
+  commonInitialisms.insert("RPC");
+  commonInitialisms.insert("SLA");
+  commonInitialisms.insert("SMTP");
+  commonInitialisms.insert("SSH");
+  commonInitialisms.insert("TCP");
+  commonInitialisms.insert("TLS");
+  commonInitialisms.insert("TTL");
+  commonInitialisms.insert("UDP");
+  commonInitialisms.insert("UI");
+  commonInitialisms.insert("UID");
+  commonInitialisms.insert("UUID");
+  commonInitialisms.insert("URI");
+  commonInitialisms.insert("URL");
+  commonInitialisms.insert("UTF8");
+  commonInitialisms.insert("VM");
+  commonInitialisms.insert("XML");
+  commonInitialisms.insert("XSRF");
+  commonInitialisms.insert("XSS");
 
   while (true) {
     // TODO: Do better error checking here.
