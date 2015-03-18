@@ -330,7 +330,6 @@ private:
    * File streams
    */
   std::ofstream f_types_;
-  std::ofstream f_helpers_;
   std::ofstream f_service_;
 
   std::string package_dir_;
