@@ -340,7 +340,24 @@ AX_THRIFT_LIB(go, [Go], yes)
 if test "$with_go" = "yes";  then
   AC_PATH_PROG([GO], [go])
   if [[ -x "$GO" ]] ; then
-    have_go="yes"
+    AS_IF([test -n "$GO"],[
+      ax_go_version="1.4"
+
+      AC_MSG_CHECKING([for Go version])
+      golang_version=`$GO version 2>&1 | $SED -e 's/\(go \)\(version \)\(go\)\(@<:@0-9@:>@.@<:@0-9@:>@.@<:@0-9@:>@\)\(@<:@\*@:>@*\).*/\4/'`
+      AC_MSG_RESULT($golang_version)
+      AC_SUBST([golang_version],[$golang_version])
+      AX_COMPARE_VERSION([$ax_go_version],[le],[$golang_version],[
+      :
+        have_go="yes"
+      ],[
+      :
+        have_go="no"
+      ])
+    ],[
+      AC_MSG_WARN([could not find Go ])
+      have_go="no"
+    ])
   fi
 fi
 AM_CONDITIONAL(WITH_GO, [test "$have_go" = "yes"])
