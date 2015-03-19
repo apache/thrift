@@ -86,13 +86,13 @@ class TSocket(TSocketBase):
         self.handle.settimeout(self._timeout)
         try:
           self.handle.connect(res[4])
-        except socket.error, e:
+        except socket.error as e:
           if res is not res0[-1]:
             continue
           else:
             raise e
         break
-    except socket.error, e:
+    except socket.error as e:
       if self._unix_socket:
         message = 'Could not connect to socket %s' % self._unix_socket
       else:
@@ -103,7 +103,7 @@ class TSocket(TSocketBase):
   def read(self, sz):
     try:
       buff = self.handle.recv(sz)
-    except socket.error, e:
+    except socket.error as e:
       if (e.args[0] == errno.ECONNRESET and
           (sys.platform == 'darwin' or sys.platform.startswith('freebsd'))):
         # freebsd and Mach don't follow POSIX semantic of recv
@@ -161,7 +161,7 @@ class TServerSocket(TSocketBase, TServerTransportBase):
       tmp = socket.socket(res[0], res[1])
       try:
         tmp.connect(res[4])
-      except socket.error, err:
+      except socket.error as err:
         eno, message = err.args
         if eno == errno.ECONNREFUSED:
           os.unlink(res[4])
