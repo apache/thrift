@@ -2846,4 +2846,5 @@ THRIFT_REGISTER_GENERATOR(
     "Cocoa",
     "    log_unexpected:  Log every time an unexpected field ID or type is encountered.\n"
     "    validate_required:\n"
-    "                     Throws exception if any required field is not set.\n")
+    "                     Throws exception if any required field is not set.\n"
+    "    async_clients:   Generate clients which invoke asynchronously via block syntax.\n")
