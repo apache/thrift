@@ -57,6 +57,9 @@ public:
     iter = parsed_options.find("validate_required");
     validate_required_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("async_clients");
+    async_clients_ = (iter != parsed_options.end());
+
     out_dir_base_ = "gen-cocoa";
   }
 
@@ -222,6 +225,7 @@ private:
 
   bool log_unexpected_;
   bool validate_required_;
+  bool async_clients_;
 };
 
 /**
@@ -1216,13 +1220,15 @@ void t_cocoa_generator::generate_cocoa_struct_description(ofstream& out, t_struc
 void t_cocoa_generator::generate_service(t_service* tservice) {
   generate_cocoa_service_protocol(f_header_, tservice);
   generate_cocoa_service_client_interface(f_header_, tservice);
-  generate_cocoa_service_async_protocol(f_header_, tservice);
-  generate_cocoa_service_client_async_interface(f_header_, tservice);
   generate_cocoa_service_server_interface(f_header_, tservice);
   generate_cocoa_service_helpers(tservice);
   generate_cocoa_service_client_implementation(f_impl_, tservice);
-  generate_cocoa_service_client_async_implementation(f_impl_, tservice);
   generate_cocoa_service_server_implementation(f_impl_, tservice);
+  if(async_clients_) {
+    generate_cocoa_service_async_protocol(f_header_, tservice);
+    generate_cocoa_service_client_async_interface(f_header_, tservice);
+    generate_cocoa_service_client_async_implementation(f_impl_, tservice);
+  }
 }
 
 /**
@@ -1423,7 +1429,8 @@ void t_cocoa_generator::generate_cocoa_service_client_send_function_implementati
     out << indent() << "[outProtocol writeFieldEnd];" << endl;
 
     if (type_can_be_null((*fld_iter)->get_type())) {
-      scope_down(out);
+      indent_down();
+      out << indent() << "}" << endl;
     }
   }
 
@@ -1569,7 +1576,7 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
     scope_down(out);
     out << endl;
   }
-
+  indent_down();
   out << "@end" << endl << endl;
 }
 
@@ -1607,20 +1614,23 @@ void t_cocoa_generator::generate_cocoa_service_client_async_implementation(ofstr
     // Open function
     indent(out) << "- " << async_function_signature(*f_iter) << endl;
     scope_up(out);
-    out << indent() << "@try";
-    scope_up(out);
+    indent(out) << "@try {" << endl;
+    indent_up();
     generate_cocoa_service_client_send_function_invocation(out, *f_iter);
-    scope_down(out);
-    out << indent() << "@catch(TException * texception)";
-    scope_up(out);
+    indent_down();
+    out << indent() << "} @catch(TException * texception) {" << endl;
+    indent_up();
     out << indent() << "failureBlock(texception);" << endl
         << indent() << "return;" << endl;
-    scope_down(out);
+    indent_down();
+    indent(out) << "}" << endl;
     
     out << indent() << "[asyncTransport flush:^{" << endl;
     indent_up();
-    out << indent() << "@try";
-    scope_up(out);
+
+    out << indent() << "@try {" << endl;
+    indent_up();
+
     string recv_invocation = "[self recv_" + (*f_iter)->get_name() + "]";
     if (!(*f_iter)->is_oneway() && (*f_iter)->get_returntype()->is_void()) {
       out << indent() << recv_invocation << ";" << endl;
@@ -1630,17 +1640,24 @@ void t_cocoa_generator::generate_cocoa_service_client_async_implementation(ofstr
       out << recv_invocation;
     }
     out << ");" << endl;
-    scope_down(out);
-    out << indent() << "@catch(TException * texception)";
-    scope_up(out);
+
+    indent_down();
+
+    out << indent() << "} @catch(TException * texception) {" << endl;
+    indent_up();
+
     out << indent() << "failureBlock(texception);" << endl;
-    scope_down(out);
+
+    indent_down();
+    out << indent() << "}" << endl;
+
     indent_down();
     out << indent() << "} failure:failureBlock];" << endl;
-    scope_down(out);
-  }
 
-  indent_down();
+    scope_down(out);
+
+    out << endl;
+  }
 
   out << "@end" << endl << endl;
 }
