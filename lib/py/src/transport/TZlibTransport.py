@@ -24,8 +24,7 @@ data compression.
 
 from __future__ import division
 import zlib
-from io import BytesIO
-from cStringIO import StringIO as BytesIO
+from six import BytesIO
 from .TTransport import TTransportBase, CReadableTransport
 
 
