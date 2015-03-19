@@ -1516,8 +1516,6 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
     out << endl;
   }
 
-  indent_down();
-
   out << "@end" << endl << endl;
 }
 
@@ -1530,7 +1528,6 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
 void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& out,
                                                                      t_service* tservice) {
   out << "@implementation " << cocoa_prefix_ << tservice->get_name() << "Processor" << endl;
-  indent_up();
 
   // initializer
   out << endl;
@@ -1680,8 +1677,6 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
   out << indent() << "[super dealloc_stub];" << endl;
   scope_down(out);
   out << endl;
-
-  indent_down();
 
   out << "@end" << endl << endl;
 }
