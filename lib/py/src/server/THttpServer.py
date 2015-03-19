@@ -73,7 +73,7 @@ class THttpServer(TServer.TServer):
         oprot = thttpserver.outputProtocolFactory.getProtocol(otrans)
         try:
           thttpserver.processor.process(iprot, oprot)
-        except ResponseException, exn:
+        except ResponseException as exn:
           exn.handler(self)
         else:
           self.send_response(200)
