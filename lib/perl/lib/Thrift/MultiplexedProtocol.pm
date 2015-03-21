@@ -54,11 +54,11 @@ sub writeMessageBegin
     my ($name, $type, $seqid) = @_;
 
     if ($type == Thrift::MessageType::CALL || $type == Thrift::MessageType::ONEWAY) {
-    	my $nameWithService = $self->{serviceName}.SEPARATOR.$name;
-    	$self->SUPER::writeMessageBegin($nameWithService, $type, $seqid);
+        my $nameWithService = $self->{serviceName}.SEPARATOR.$name;
+        $self->SUPER::writeMessageBegin($nameWithService, $type, $seqid);
     }
     else {
-    	$self->SUPER::writeMessageBegin($name, $type, $seqid);	
+        $self->SUPER::writeMessageBegin($name, $type, $seqid);	
     }
 }
 

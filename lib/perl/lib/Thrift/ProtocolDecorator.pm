@@ -40,10 +40,10 @@ sub new {
 # @param int $seqid The sequence id of this message
 #
 sub writeMessageBegin {
-	my $self = shift;
+    my $self = shift;
     my ($name, $type, $seqid) = @_;
      
-  	return  $self->{concreteProtocol}->writeMessageBegin($name, $type, $seqid);
+      return  $self->{concreteProtocol}->writeMessageBegin($name, $type, $seqid);
 }
 
 #
@@ -63,7 +63,7 @@ sub writeMessageEnd {
 # @return int How many bytes written
 #
 sub writeStructBegin {
-	my $self = shift;
+    my $self = shift;
     my ($name) = @_;
 
     return $self->{concreteProtocol}->writeStructBegin($name);
@@ -91,10 +91,10 @@ sub writeStructEnd {
 # @return int How many bytes written
 #
 sub writeFieldBegin {
-	my $self = shift;
-	my ($fieldName, $fieldType, $fieldId) = @_;
+    my $self = shift;
+    my ($fieldName, $fieldType, $fieldId) = @_;
 
-	return $self->{concreteProtocol}->writeFieldBegin($fieldName, $fieldType, $fieldId);
+    return $self->{concreteProtocol}->writeFieldBegin($fieldName, $fieldType, $fieldId);
 }
 
 sub writeFieldEnd {
@@ -111,91 +111,91 @@ sub writeFieldStop {
 
 sub writeMapBegin {
     my $self = shift;
-	my ($keyType, $valType, $size) = @_;
+    my ($keyType, $valType, $size) = @_;
 
-	return $self->{concreteProtocol}->writeMapBegin($keyType, $valType, $size);
+    return $self->{concreteProtocol}->writeMapBegin($keyType, $valType, $size);
 }
 
 sub writeMapEnd {
-	my $self = shift;
-	
+    my $self = shift;
+    
     return $self->{concreteProtocol}->writeMapEnd();
 }
 
 sub writeListBegin {
-	my $self = shift;
-	my ($elemType, $size) = @_;
+    my $self = shift;
+    my ($elemType, $size) = @_;
 
-	return $self->{concreteProtocol}->writeListBegin($elemType, $size);
+    return $self->{concreteProtocol}->writeListBegin($elemType, $size);
 }
 
 sub writeListEnd {
     my $self = shift;
-	
+    
     return $self->{concreteProtocol}->writeListEnd();
 }
 
 sub writeSetBegin {
-	my $self = shift;
-	my ($elemType, $size) = @_;
+    my $self = shift;
+    my ($elemType, $size) = @_;
 
-	return $self->{concreteProtocol}->writeSetBegin($elemType, $size);
+    return $self->{concreteProtocol}->writeSetBegin($elemType, $size);
 }
 
 sub writeSetEnd {
     my $self = shift;
-	
+    
     return $self->{concreteProtocol}->writeListEnd();
 }
 
 sub writeBool {
-	my $self = shift;
-	my $bool = shift;
+    my $self = shift;
+    my $bool = shift;
 
-	return $self->{concreteProtocol}->writeBool($bool);
+    return $self->{concreteProtocol}->writeBool($bool);
 }
 
 sub writeByte {
-	my $self = shift;
-	my $byte = shift;
+    my $self = shift;
+    my $byte = shift;
 
-	return $self->{concreteProtocol}->writeByte($byte);
+    return $self->{concreteProtocol}->writeByte($byte);
 }
 
 sub writeI16 {
-	my $self = shift;
-	my $i16 = shift;
+    my $self = shift;
+    my $i16 = shift;
 
-	return $self->{concreteProtocol}->writeI16($i16);
+    return $self->{concreteProtocol}->writeI16($i16);
 }
 
 sub writeI32 {
-	my $self = shift;
-	my ($i32) = @_;
+    my $self = shift;
+    my ($i32) = @_;
 
-	return $self->{concreteProtocol}->writeI32($i32);
+    return $self->{concreteProtocol}->writeI32($i32);
  
 }
 
 sub writeI64 {
-	my $self = shift;
-	my $i64 = shift;
+    my $self = shift;
+    my $i64 = shift;
 
-	return $self->{concreteProtocol}->writeI64($i64);
+    return $self->{concreteProtocol}->writeI64($i64);
 }
 
 sub writeDouble {
-	my $self = shift;
-	my $dub = shift;
+    my $self = shift;
+    my $dub = shift;
 
-	return $self->{concreteProtocol}->writeDouble($dub);
+    return $self->{concreteProtocol}->writeDouble($dub);
 }
 
 sub writeString {
-	my $self = shift;
-	my $str = shift;
+    my $self = shift;
+    my $str = shift;
 
-	return $self->{concreteProtocol}->writeString($str);
+    return $self->{concreteProtocol}->writeString($str);
 }
 
 #
@@ -207,10 +207,10 @@ sub writeString {
 #
 sub readMessageBegin
 {
-	my $self = shift;
-	my ($name, $type, $seqid) = @_;
+    my $self = shift;
+    my ($name, $type, $seqid) = @_;
 
-	return $self->{concreteProtocol}->readMessageBegin($name, $type, $seqid);
+    return $self->{concreteProtocol}->readMessageBegin($name, $type, $seqid);
 }
 
 #
@@ -240,10 +240,10 @@ sub readStructEnd
 
 sub readFieldBegin
 {
-	my $self = shift;
-	my ($name, $fieldType, $fieldId) = @_;
+    my $self = shift;
+    my ($name, $fieldType, $fieldId) = @_;
 
-	return $self->{concreteProtocol}->readFieldBegin($name, $fieldType, $fieldId);
+    return $self->{concreteProtocol}->readFieldBegin($name, $fieldType, $fieldId);
 }
 
 sub readFieldEnd
@@ -256,9 +256,9 @@ sub readFieldEnd
 sub readMapBegin
 {
     my $self = shift;
-	my ($keyType, $valType, $size) = @_;
+    my ($keyType, $valType, $size) = @_;
 
-	return $self->{concreteProtocol}->readMapBegin($keyType, $valType, $size);
+    return $self->{concreteProtocol}->readMapBegin($keyType, $valType, $size);
 }
 
 sub readMapEnd
@@ -270,10 +270,10 @@ sub readMapEnd
 
 sub readListBegin
 {
-	my $self = shift;
-	my ($elemType, $size) = @_;
+    my $self = shift;
+    my ($elemType, $size) = @_;
 
-	return $self->{concreteProtocol}->readListBegin($elemType, $size);
+    return $self->{concreteProtocol}->readListBegin($elemType, $size);
 }
 
 sub readListEnd
@@ -285,10 +285,10 @@ sub readListEnd
 
 sub readSetBegin
 {
-	my $self = shift;
-	my ($elemType, $size) = @_;
+    my $self = shift;
+    my ($elemType, $size) = @_;
 
-	return $self->{concreteProtocol}->readSetBegin($elemType, $size);
+    return $self->{concreteProtocol}->readSetBegin($elemType, $size);
 }
 
 sub readSetEnd
@@ -300,58 +300,58 @@ sub readSetEnd
 
 sub readBool
 {
-	my $self = shift;
-	my $bool = shift;
+    my $self = shift;
+    my $bool = shift;
 
-	return $self->{concreteProtocol}->readBool($bool);
+    return $self->{concreteProtocol}->readBool($bool);
 }
 
 sub readByte
 {
-	my $self = shift;
-	my $byte = shift;
+    my $self = shift;
+    my $byte = shift;
 
-	return $self->{concreteProtocol}->readByte($byte);
+    return $self->{concreteProtocol}->readByte($byte);
 }
 
 sub readI16
 {
-	my $self = shift;
-	my $i16 = shift;
+    my $self = shift;
+    my $i16 = shift;
 
-	return $self->{concreteProtocol}->readI16($i16);
+    return $self->{concreteProtocol}->readI16($i16);
 }
 
 sub readI32
 {
-	my $self = shift;
-	my $i32  = shift;
+    my $self = shift;
+    my $i32  = shift;
 
-	return $self->{concreteProtocol}->readI32($i32);
+    return $self->{concreteProtocol}->readI32($i32);
 }
 
 sub readI64
 {
-	my $self = shift;
-	my $i64  = shift;
+    my $self = shift;
+    my $i64  = shift;
 
-	return $self->{concreteProtocol}->readI64($i64);
+    return $self->{concreteProtocol}->readI64($i64);
 }
 
 sub readDouble
 {
-	my $self = shift;
-	my $dub  = shift;
+    my $self = shift;
+    my $dub  = shift;
 
-	return $self->{concreteProtocol}->readDouble($dub);
+    return $self->{concreteProtocol}->readDouble($dub);
 }
 
 sub readString
 {
-	my $self = shift;
-	my $str = shift;
+    my $self = shift;
+    my $str = shift;
 
-	return $self->{concreteProtocol}->readString($str);
+    return $self->{concreteProtocol}->readString($str);
 }
 
 1;

@@ -69,51 +69,50 @@ sub new {
 }
 
 sub registerProcessor {
-  my $self = shift;
-  my $serviceName = shift;
-  my $processor = shift;
+    my $self = shift;
+    my $serviceName = shift;
+    my $processor = shift;
   
-   $self->{serviceProcessorMap}->{$serviceName} = $processor;
+     $self->{serviceProcessorMap}->{$serviceName} = $processor;
 }
 
 sub process{
-  my $self = shift;
-  my $input = shift;
-  my $output = shift;
+    my $self = shift;
+    my $input = shift;
+    my $output = shift;
 
-  #
-  #  Use the actual underlying protocol (e.g. BinaryProtocol) to read the
-  #  message header. This pulls the message "off the wire", which we'll
-  #  deal with at the end of this method.
-  #
+    #
+    #  Use the actual underlying protocol (e.g. BinaryProtocol) to read the
+    #  message header. This pulls the message "off the wire", which we'll
+    #  deal with at the end of this method.
+    #
 
-  my ($fname, $mtype, $rseqid);
-  $input->readMessageBegin(\$fname, \$mtype, \$rseqid);
+    my ($fname, $mtype, $rseqid);
+    $input->readMessageBegin(\$fname, \$mtype, \$rseqid);
    	
 
-  if ($mtype ne Thrift::MessageType::CALL && $mtype ne Thrift::MessageType::ONEWAY) {
-  	die new Thrift::TException("This should not have happened!?");
-  }
+    if ($mtype ne Thrift::MessageType::CALL && $mtype ne Thrift::MessageType::ONEWAY) {
+  	    die new Thrift::TException("This should not have happened!?");
+    }
   
-  # Extract the service name and the new Message name.
-  if (index($fname, Thrift::MultiplexedProtocol::SEPARATOR) == -1) {
-  	die new Thrift::TException("Service name not found in message name: {$fname}. Did you " .
-                "forget to use a MultiplexProtocol in your client?");
-  }
+    # Extract the service name and the new Message name.
+    if (index($fname, Thrift::MultiplexedProtocol::SEPARATOR) == -1) {
+  	    die new Thrift::TException("Service name not found in message name: {$fname}. Did you " .
+            "forget to use a MultiplexProtocol in your client?");
+    }
   
-  (my $serviceName, my $messageName) = split(':', $fname, 2);
+    (my $serviceName, my $messageName) = split(':', $fname, 2);
   
-  if (!exists($self->{serviceProcessorMap}->{$serviceName})) {
-  	  die new Thrift::TException("Service name not found: {$serviceName}.  Did you forget " .
-                "to call registerProcessor()?");
-  }
+    if (!exists($self->{serviceProcessorMap}->{$serviceName})) {
+  	    die new Thrift::TException("Service name not found: {$serviceName}.  Did you forget " .
+            "to call registerProcessor()?");
+    }
   
-   #Dispatch processing to the stored processor
-   my $processor = $self->{serviceProcessorMap}->{$serviceName};
-   return $processor->process(
+     #Dispatch processing to the stored processor
+     my $processor = $self->{serviceProcessorMap}->{$serviceName};
+     return $processor->process(
         new Thrift::StoredMessageProtocol($input, $messageName, $mtype, $rseqid), $output
-   );
-   
+     );
 }
 
 1;

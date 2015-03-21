@@ -34,7 +34,6 @@ use Thrift::MemoryBuffer;
 
 use BenchmarkService;
 use Aggr;
-use Data::Dumper;
 
 use constant NAME_BENCHMARKSERVICE => 'BenchmarkService';
 use constant NAME_AGGR  =>  'Aggr';
@@ -48,15 +47,15 @@ my $benchmark_client = BenchmarkServiceClient->new($benchmark_protocol);
 $buffer->open();
 
 for(my $i = 1; $i <= 5; $i++) {
-	$aggr_client->send_addValue($i);
-	$aggr_client->{seqid}++;
+    $aggr_client->send_addValue($i);
+    $aggr_client->{seqid}++;
 }
 
 $aggr_client->send_getValues();
 
 for(my $i = 1; $i <= 5; $i++) {
-	$benchmark_client->send_fibonacci($i);
-	$benchmark_client->{seqid}++;
+    $benchmark_client->send_fibonacci($i);
+    $benchmark_client->{seqid}++;
 }
 $benchmark_client->{seqid}--;
 
@@ -65,14 +64,13 @@ $buffer->resetBuffer;
 
 
 # Process by server
-use Data::Dumper;
 my $server_output_binary;
 {
-	my $benchmark_handler = My::BenchmarkService->new();
+    my $benchmark_handler = My::BenchmarkService->new();
     my $benchmark_processor = BenchmarkServiceProcessor->new($benchmark_handler);
     my $aggr_handler = My::Aggr->new(); 
     my $aggr_processor = AggrProcessor->new($aggr_handler);
-	
+    
     my $protocol_factory = Thrift::BinaryProtocolFactory->new();
 
     my $input_buffer    = Thrift::MemoryBuffer->new();
@@ -89,7 +87,7 @@ my $server_output_binary;
     $processor->registerProcessor(NAME_AGGR, $aggr_processor);
     my $result;
     for(my $i = 1; $i <= 11; $i++) {
-	    $result = $processor->process($input_protocol, $output_protocol);
+        $result = $processor->process($input_protocol, $output_protocol);
         print "process resulted in $result\n";
     }
 
@@ -101,7 +99,7 @@ $buffer->write($server_output_binary);
 
 
 for(my $i = 1; $i <= 5; $i++) {
-	my ($function_name, $message_type, $sequence_id);
+    my ($function_name, $message_type, $sequence_id);
 
     $aggr_protocol->readMessageBegin(\$function_name, \$message_type, \$sequence_id);
 
@@ -177,7 +175,6 @@ use base qw(BenchmarkServiceIf);
 
 use strict;
 use warnings;
-use Data::Dumper;
 
 sub new {
     my $class = shift;
@@ -185,20 +182,19 @@ sub new {
 }
 
 sub fibonacci {
-	my ($self, $n) = @_;
-	
-	my $prev = 0;
-	my $next;
-	my $result = 1;
-	
-	while ($n > 0) {
-		$next = $result + $prev;
-		$prev = $result;
-		$result = $next;
-		--$n;
-	}
-	use Test::More;
-
-	return $result;
+    my ($self, $n) = @_;
+    
+    my $prev = 0;
+    my $next;
+    my $result = 1;
+    
+    while ($n > 0) {
+        $next = $result + $prev;
+        $prev = $result;
+        $result = $next;
+        --$n;
+    }
+    
+    return $result;
 }
 
