@@ -180,10 +180,6 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     }
   }
 
-  // Flag for stopping the server
-  // Please see THRIFT-1795 for the usage of this flag
-  private volatile boolean stopped_ = false;
-
   // The thread handling all accepts
   private AcceptThread acceptThread;
 
