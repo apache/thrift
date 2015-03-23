@@ -47,10 +47,6 @@ public class TNonblockingServer extends AbstractNonblockingServer {
     }
   }
 
-  // Flag for stopping the server
-  // Please see THRIFT-1795 for the usage of this flag
-  private volatile boolean stopped_ = false;
-
   private SelectAcceptThread selectAcceptThread_;
 
   public TNonblockingServer(AbstractNonblockingServerArgs args) {
