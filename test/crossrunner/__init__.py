@@ -17,18 +17,9 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
-stubs: ../ThriftTest.thrift
-	$(THRIFT) --gen php ../ThriftTest.thrift
-	$(THRIFT) --gen php:inlined ../ThriftTest.thrift
-
-precross: stubs
-
-check: stubs
-
-clean-local:
-	$(RM) -r gen-php gen-phpi
-
-client: stubs
-	php TestClient.php
+from crossrunner.test import test_name
+from crossrunner.collect import collect_tests
+from crossrunner.run import TestDispatcher
+from crossrunner.report import generate_known_failures
+from crossrunner.report import load_known_failures
+from crossrunner.prepare import prepare

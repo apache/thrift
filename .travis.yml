@@ -55,10 +55,16 @@ env:
 
   matrix:
     # Put it here because it's most time consuming
-    - TEST_NAME="make cross (gcc, automake)"
+    - TEST_NAME="make cross (automake)"
       CONFIG="--without-python"
       ALL_DEPS="yes"
       MAKE_TARGET="cross"
+
+    - TEST_NAME="make cross-py (automake)"
+      THRIFT_CROSSTEST_CONCURRENCY=6
+      CONFIG="--enable-tutorial=no --without-erlang --without-lua --without-haxe --without-d"
+      ALL_DEPS="yes"
+      MAKE_TARGET="cross2"
 
     # CMake builds
     - TEST_NAME="compiler (CMake + CPack)"
@@ -86,7 +92,7 @@ env:
     - TEST_NAME="Small Set (automake)"
       CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua --without-d --without-ruby --without-nodejs --without-java"
       ALL_DEPS="yes"
-    - TEST_NAME="dist (gcc, automake)"
+    - TEST_NAME="dist (automake)"
       CONFIG=""
       ALL_DEPS="yes"
       MAKE_TARGET="dist"
@@ -99,13 +105,13 @@ matrix:
   exclude:
     # This one takes very long
     - compiler: gcc
-      env: TEST_NAME="make cross (gcc, automake)" CONFIG="--without-python" ALL_DEPS="yes" MAKE_TARGET="cross"
+      env: TEST_NAME="make cross (automake)" CONFIG="--without-python" ALL_DEPS="yes" MAKE_TARGET="cross"
 
     # Does not use native compiler, no need to do it twice
     - compiler: gcc
       env: TEST_NAME="compiler (mingw32-gcc, CMake + CPack)" CMAKE_CONFIG="-DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
     - compiler: gcc
-      env: TEST_NAME="dist (gcc, automake)" CONFIG="" ALL_DEPS="yes" MAKE_TARGET="dist"
+      env: TEST_NAME="dist (automake)" CONFIG="" ALL_DEPS="yes" MAKE_TARGET="dist"
 
   include:
     - env:

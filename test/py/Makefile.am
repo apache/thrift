@@ -18,7 +18,7 @@
 #
 AUTOMAKE_OPTIONS = serial-tests
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
+THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 py_unit_tests = RunClientServer.py
 
@@ -38,6 +38,8 @@ thrift_gen =                                    \
         gen-py-dynamicslots/ThriftTest/__init__.py           \
         gen-py-dynamicslots/DebugProtoTest/__init__.py
 
+precross: $(THRIFT) $(thrift_gen)
+
 helper_scripts=                                 \
         TestClient.py                           \
         TestServer.py
@@ -52,27 +54,29 @@ TESTS= $(py_unit_tests)
 
 gen-py/%/__init__.py: ../%.thrift
 	$(THRIFT) --gen py  $<
-	test -d gen-py-default || mkdir gen-py-default
+
+gen-py-default/%/__init__.py: ../%.thrift
+	test -d gen-py-default || $(MKDIR_P) gen-py-default
 	$(THRIFT) --gen py -out gen-py-default $<
 
 gen-py-slots/%/__init__.py: ../%.thrift
-	test -d gen-py-slots || mkdir gen-py-slots
+	test -d gen-py-slots || $(MKDIR_P) gen-py-slots
 	$(THRIFT) --gen py:slots -out gen-py-slots $<
 
 gen-py-newstyle/%/__init__.py: ../%.thrift
-	test -d gen-py-newstyle || mkdir gen-py-newstyle
+	test -d gen-py-newstyle || $(MKDIR_P) gen-py-newstyle
 	$(THRIFT) --gen py:new_style -out gen-py-newstyle $<
 
 gen-py-newstyleslots/%/__init__.py: ../%.thrift
-	test -d gen-py-newstyleslots || mkdir gen-py-newstyleslots
+	test -d gen-py-newstyleslots || $(MKDIR_P) gen-py-newstyleslots
 	$(THRIFT) --gen py:new_style,slots -out gen-py-newstyleslots $<
 
 gen-py-dynamic/%/__init__.py: ../%.thrift
-	test -d gen-py-dynamic || mkdir gen-py-dynamic
+	test -d gen-py-dynamic || $(MKDIR_P) gen-py-dynamic
 	$(THRIFT) --gen py:dynamic -out gen-py-dynamic $<
 
 gen-py-dynamicslots/%/__init__.py: ../%.thrift
-	test -d gen-py-dynamicslots || mkdir gen-py-dynamicslots
+	test -d gen-py-dynamicslots || $(MKDIR_P) gen-py-dynamicslots
 	$(THRIFT) --gen py:dynamic,slots -out gen-py-dynamicslots $<
 
 clean-local:

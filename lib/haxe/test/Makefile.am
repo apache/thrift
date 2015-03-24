@@ -17,7 +17,7 @@
 # under the License.
 #
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
+THRIFT = $(top_builddir)/compiler/cpp/thrift
 THRIFTCMD = $(THRIFT) --gen haxe -r
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 AGGR = $(top_srcdir)/contrib/async-test/aggr.thrift
