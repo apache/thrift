@@ -23,7 +23,7 @@ if HAVE_BUNDLER
 
 all-local:
 	$(BUNDLER) install
-	$(BUNDLER) exec rake
+	$(BUNDLER) exec rake build_ext
 
 install-exec-hook:
 	$(BUNDLER) exec rake install
