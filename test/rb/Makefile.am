@@ -17,11 +17,13 @@
 # under the License.
 #
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
+THRIFT = $(top_builddir)/compiler/cpp/thrift
 
-stubs: ../ThriftTest.thrift ../SmallTest.thrift
+stubs: $(THRIFT) ../ThriftTest.thrift ../SmallTest.thrift
 	$(THRIFT) --gen rb ../ThriftTest.thrift
 	$(THRIFT) --gen rb ../SmallTest.thrift
+
+precross: stubs
 
 check: stubs
 if HAVE_BUNDLER

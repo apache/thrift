@@ -17,7 +17,7 @@
 # under the License.
 #
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
+THRIFT = $(top_builddir)/compiler/cpp/thrift
 REBAR = $(top_srcdir)/lib/erl/rebar
 
 THRIFT_FILES = $(wildcard ../*.thrift)

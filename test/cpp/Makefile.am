@@ -49,6 +49,8 @@ nodist_libstresstestgencpp_la_SOURCES = \
 
 libstresstestgencpp_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
 
+precross: TestServer TestClient
+
 check_PROGRAMS = \
 	TestServer \
 	TestClient \

@@ -17,11 +17,11 @@
 # under the License.
 #
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift -out gopath/src/ --gen go:thrift_import=thrift
+THRIFT = $(top_builddir)/compiler/cpp/thrift
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
 # Thrift for GO has problems with complex map keys: THRIFT-2063
-gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
+gopath: $(THRIFT) $(THRIFTTEST) \
 				IncludesTest.thrift \
 				NamespacedTest.thrift \
 				MultiplexedProtocolTest.thrift \

@@ -17,11 +17,11 @@
 # under the License.
 #
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
+THRIFT = $(top_builddir)/compiler/cpp/thrift
 THRIFTCMD = $(THRIFT) -out src/gen --gen go:thrift_import=thrift
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
-all: bin/testclient bin/testserver bin/stress
+precross: bin/testclient bin/testserver
 
 ThriftTest.thrift: $(THRIFTTEST)
 	grep -v list.*map.*list.*map $(THRIFTTEST) > ThriftTest.thrift
@@ -46,6 +46,8 @@ bin/stress: gopath
 
 clean-local:
 	$(RM) -r src/gen src/code.google.com src/thrift bin pkg gopath ThriftTest.thrift
+
+check_PROGRAMS: bin/testclient bin/testserver bin/stress
 
 check: gopath
 	GOPATH=`pwd` $(GO) test -v common/...

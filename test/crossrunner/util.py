@@ -17,18 +17,15 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
+import copy
 
-stubs: ../ThriftTest.thrift
-	$(THRIFT) --gen php ../ThriftTest.thrift
-	$(THRIFT) --gen php:inlined ../ThriftTest.thrift
 
-precross: stubs
-
-check: stubs
-
-clean-local:
-	$(RM) -r gen-php gen-phpi
-
-client: stubs
-	php TestClient.php
+def merge_dict(base, update):
+  """Update dict concatenating list values"""
+  res = copy.deepcopy(base)
+  for k, v in list(update.items()):
+    if k in list(res.keys()) and isinstance(v, list):
+      res[k].extend(v)
+    else:
+      res[k] = v
+  return res
