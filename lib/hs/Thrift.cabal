@@ -40,7 +40,7 @@ Library
   Hs-Source-Dirs:
     src
   Build-Depends:
-    base >= 4, base < 5, containers, ghc-prim, attoparsec, binary, bytestring >= 0.10, hashable, HTTP, text, unordered-containers, vector, QuickCheck, split
+    base >= 4, base < 5, containers, ghc-prim, attoparsec, binary, bytestring >= 0.10, hashable, HTTP, http-types, text, unordered-containers, vector, QuickCheck, split,  websockets >= 0.9.3.1, wai-websockets, wai, warp
   if flag(network-uri)
      build-depends: network-uri >= 2.6, network >= 2.6
   else
@@ -53,12 +53,16 @@ Library
     Thrift.Protocol.Compact,
     Thrift.Protocol.JSON,
     Thrift.Server,
+    Thrift.WebServer,
+    Thrift.WSServer,
     Thrift.Transport,
     Thrift.Transport.Empty,
     Thrift.Transport.Framed,
     Thrift.Transport.Handle,
     Thrift.Transport.HttpClient,
     Thrift.Transport.IOBuffer,
+    Thrift.Transport.HttpTrans,
+    Thrift.Transport.WSTrans,
     Thrift.Types
   Extensions:
     DeriveDataTypeable,
