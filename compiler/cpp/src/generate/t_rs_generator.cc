@@ -666,7 +666,7 @@ void t_rs_generator::generate_serialize_field(t_type* ttype, const string& name,
     indent(f_mod_) << "try!(oprot.write_string(transport, " << ref << nname << "));\n";
 
   } else if (is_binary(type)) {
-    indent(f_mod_) << "try!(oprot.write_binary(transport, " << nname << ".as_slice()));\n";
+    indent(f_mod_) << "try!(oprot.write_binary(transport, &" << nname << "));\n";
 
   } else if (type->is_base_type()) {
     indent(f_mod_) << "try!(oprot.write_" << render_suffix(type)
