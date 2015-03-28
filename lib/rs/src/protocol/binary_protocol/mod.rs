@@ -22,6 +22,7 @@ use protocol::{ MessageType, Protocol, Type };
 use transport::Transport;
 use ThriftErr;
 use TResult;
+use podio::{ReadPodExt, WritePodExt, BigEndian};
 
 static BINARY_PROTOCOL_VERSION_1: u16 = 0x8001;
 
@@ -124,24 +125,24 @@ impl Protocol for BinaryProtocol {
         self.write_byte(transport, value as i8)
     }
 
-    fn write_byte(&self, transport: &mut Transport, value: i8) -> TResult<()> {
+    fn write_byte(&self, mut transport: &mut Transport, value: i8) -> TResult<()> {
         transport.write_i8(value).map_err(|e| ThriftErr::TransportError(e))
     }
 
-    fn write_i16(&self, transport: &mut Transport, value: i16) -> TResult<()> {
-        transport.write_be_i16(value).map_err(|e| ThriftErr::TransportError(e))
+    fn write_i16(&self, mut transport: &mut Transport, value: i16) -> TResult<()> {
+        transport.write_i16::<BigEndian>(value).map_err(|e| ThriftErr::TransportError(e))
     }
 
-    fn write_i32(&self, transport: &mut Transport, value: i32) -> TResult<()> {
-        transport.write_be_i32(value).map_err(|e| ThriftErr::TransportError(e))
+    fn write_i32(&self, mut transport: &mut Transport, value: i32) -> TResult<()> {
+        transport.write_i32::<BigEndian>(value).map_err(|e| ThriftErr::TransportError(e))
     }
 
-    fn write_i64(&self, transport: &mut Transport, value: i64) -> TResult<()> {
-        transport.write_be_i64(value).map_err(|e| ThriftErr::TransportError(e))
+    fn write_i64(&self, mut transport: &mut Transport, value: i64) -> TResult<()> {
+        transport.write_i64::<BigEndian>(value).map_err(|e| ThriftErr::TransportError(e))
     }
 
-    fn write_double(&self, transport: &mut Transport, value: f64) -> TResult<()> {
-        transport.write_be_f64(value).map_err(|e| ThriftErr::TransportError(e))
+    fn write_double(&self, mut transport: &mut Transport, value: f64) -> TResult<()> {
+        transport.write_f64::<BigEndian>(value).map_err(|e| ThriftErr::TransportError(e))
     }
 
     fn write_str(&self, transport: &mut Transport, value: &str) -> TResult<()> {
@@ -236,24 +237,24 @@ impl Protocol for BinaryProtocol {
         }
     }
 
-    fn read_byte(&self, transport: &mut Transport) -> TResult<i8> {
+    fn read_byte(&self, mut transport: &mut Transport) -> TResult<i8> {
         transport.read_i8().map_err(|e| ThriftErr::TransportError(e))
     }
 
-    fn read_i16(&self, transport: &mut Transport) -> TResult<i16> {
-        transport.read_be_i16().map_err(|e| ThriftErr::TransportError(e))
+    fn read_i16(&self, mut transport: &mut Transport) -> TResult<i16> {
+        transport.read_i16::<BigEndian>().map_err(|e| ThriftErr::TransportError(e))
     }
 
-    fn read_i32(&self, transport: &mut Transport) -> TResult<i32> {
-        transport.read_be_i32().map_err(|e| ThriftErr::TransportError(e))
+    fn read_i32(&self, mut transport: &mut Transport) -> TResult<i32> {
+        transport.read_i32::<BigEndian>().map_err(|e| ThriftErr::TransportError(e))
     }
 
-    fn read_i64(&self, transport: &mut Transport) -> TResult<i64> {
-        transport.read_be_i64().map_err(|e| ThriftErr::TransportError(e))
+    fn read_i64(&self, mut transport: &mut Transport) -> TResult<i64> {
+        transport.read_i64::<BigEndian>().map_err(|e| ThriftErr::TransportError(e))
     }
 
-    fn read_double(&self, transport: &mut Transport) -> TResult<f64> {
-        transport.read_be_f64().map_err(|e| ThriftErr::TransportError(e))
+    fn read_double(&self, mut transport: &mut Transport) -> TResult<f64> {
+        transport.read_f64::<BigEndian>().map_err(|e| ThriftErr::TransportError(e))
     }
 
     fn read_string(&self, transport: &mut Transport) -> TResult<String> {
@@ -261,7 +262,7 @@ impl Protocol for BinaryProtocol {
         String::from_utf8(bytes).map_err(|e| ThriftErr::InvalidUtf8(e.utf8_error()))
     }
 
-    fn read_binary(&self, transport: &mut Transport) -> TResult<Vec<u8>> {
+    fn read_binary(&self, mut transport: &mut Transport) -> TResult<Vec<u8>> {
         let len = try!(self.read_i32(transport)) as usize;
         transport.read_exact(len).map_err(|e| ThriftErr::TransportError(e))
     }
