@@ -22,7 +22,6 @@ use protocol::{ MessageType, Protocol, Type };
 use transport::Transport;
 use ThriftErr;
 use TResult;
-use std::num::FromPrimitive;
 
 static BINARY_PROTOCOL_VERSION_1: u16 = 0x8001;
 
@@ -36,7 +35,7 @@ impl BinaryProtocol {
 
     fn read_type(&self, transport: &mut Transport) -> TResult<Type> {
         let raw = try!(self.read_byte(transport));
-        match FromPrimitive::from_i8(raw) {
+        match Type::from_num(raw as u64) {
             Some(type_) => Ok(type_),
             None => Err(ThriftErr::InvalidData),
         }
@@ -166,7 +165,7 @@ impl Protocol for BinaryProtocol {
         };
         let name = try!(self.read_string(transport));
         let raw_type = header & 0xff;
-        let message_type = match FromPrimitive::from_i32(raw_type) {
+        let message_type = match MessageType::from_num(raw_type as u64) {
             Some(t) => t,
             None => return Err(ThriftErr::InvalidData),
         };

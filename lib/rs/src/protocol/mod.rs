@@ -17,14 +17,13 @@
  * under the License.
  */
 
-use std::num::FromPrimitive;
 use transport::Transport;
 use TResult;
 use ThriftErr;
 
 pub mod binary_protocol;
 
-#[derive(Copy, Eq, PartialEq, FromPrimitive, Debug)]
+#[derive(Copy, Eq, PartialEq, Debug)]
 pub enum Type {
     TStop = 0x00,
     TVoid = 0x01,
@@ -41,11 +40,43 @@ pub enum Type {
     TList = 0x0f
 }
 
-#[derive(Copy, Eq, PartialEq, FromPrimitive, Debug)]
+impl Type {
+    pub fn from_num(num: u64) -> Option<Type> {
+        match num {
+            0x00 => Some(Type::TStop),
+            0x01 => Some(Type::TVoid),
+            0x02 => Some(Type::TBool),
+            0x03 => Some(Type::TByte),
+            0x04 => Some(Type::TDouble),
+            0x06 => Some(Type::TI16),
+            0x08 => Some(Type::TI32),
+            0x0a => Some(Type::TI64),
+            0x0b => Some(Type::TString),
+            0x0c => Some(Type::TStruct),
+            0x0d => Some(Type::TMap),
+            0x0e => Some(Type::TSet),
+            0x0f => Some(Type::TList),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Copy, Eq, PartialEq, Debug)]
 pub enum MessageType {
     MtCall = 0x01,
     MtReply = 0x02,
     MtException = 0x03,
+}
+
+impl MessageType {
+    pub fn from_num(num: u64) -> Option<MessageType> {
+        match num {
+            0x01 => Some(MessageType::MtCall),
+            0x02 => Some(MessageType::MtReply),
+            0x03 => Some(MessageType::MtException),
+            _ => None,
+        }
+    }
 }
 
 pub trait Writeable {
@@ -134,13 +165,17 @@ pub trait Protocol {
     fn skip(&self, transport: &mut Transport, type_: Type) -> TResult<()>;
 }
 
+pub trait FromNum {
+    fn from_num(num: i32) -> Option<Self>;
+}
+
 pub struct ProtocolHelpers;
 
 impl ProtocolHelpers {
 
-    pub fn read_enum<T: FromPrimitive>(iprot: &Protocol, transport: &mut Transport) -> TResult<T> {
+    pub fn read_enum<T: FromNum>(iprot: &Protocol, transport: &mut Transport) -> TResult<T> {
         let i = try!(iprot.read_i32(transport));
-        match FromPrimitive::from_i32(i) {
+        match <T as FromNum>::from_num(i) {
             Some(v) => Ok(v),
             None => Err(ThriftErr::ProtocolError),
         }
