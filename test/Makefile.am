@@ -69,7 +69,6 @@ check-local:
 
 EXTRA_DIST = \
 	keys \
-	test.sh \
 	test.py \
 	tests.json \
 	c_glib \
