@@ -2133,7 +2133,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
     t_type* type = get_true_type(field->get_type());
     std::string field_name = field->get_name();
     std::string cap_name = get_cap_name(field_name);
-    bool optional = use_option_type_ && field->get_req() == t_field::e_req::T_OPTIONAL;
+    bool optional = use_option_type_ && field->get_req() == t_field::T_OPTIONAL;
 
     if (type->is_container()) {
       // Method to return the size of the collection
