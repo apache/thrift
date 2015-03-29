@@ -1178,7 +1178,7 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
     extends_processor = " extends " + php_namespace(tservice->get_extends()->get_program())
                         + extends + "Processor";
   } else {
-    extends_processor = " extends \\Thrift\\Processor\\TProcessor";
+    extends_processor = " implements \\Thrift\\Processor\\TProcessor";
   }
 
   // Generate the header portion
