@@ -56,15 +56,10 @@ env:
   matrix:
     # Put it here because it's most time consuming
     - TEST_NAME="make cross (automake)"
-      CONFIG="--without-python"
-      ALL_DEPS="yes"
-      MAKE_TARGET="cross"
-
-    - TEST_NAME="make cross-py (automake)"
       THRIFT_CROSSTEST_CONCURRENCY=6
       CONFIG="--enable-tutorial=no --without-erlang --without-lua --without-haxe --without-d"
       ALL_DEPS="yes"
-      MAKE_TARGET="cross2"
+      MAKE_TARGET="cross"
 
     # CMake builds
     - TEST_NAME="compiler (CMake + CPack)"

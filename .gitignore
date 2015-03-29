@@ -219,7 +219,6 @@ test-driver
 /missing
 /node_modules/
 /stamp-h1
-/test/status.html
 /test/results.json
 /test/c_glib/test_client
 /test/c_glib/test_server

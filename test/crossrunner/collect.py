@@ -31,6 +31,13 @@ from crossrunner.util import merge_dict
 # protocols: list of supported protocols
 # transports: list of supported transports
 # sockets: list of supported sockets
+#
+# protocols and transports entries can be colon separated "spec:impl" pair
+# (e.g. binary:accel) where test is run for any matching "spec" while actual
+# argument passed to test executable is "impl".
+# Otherwise "spec" is equivalent to "spec:spec" pair.
+# (e.g. "binary" is equivalent to "binary:bianry" in tests.json)
+#
 VALID_JSON_KEYS = [
   'name',  # name of the library, typically a language name
   'workdir',  # work directory where command is executed
@@ -78,7 +85,6 @@ def do_collect_tests(servers, clients):
       return v
     return cached_set(o1, key) & cached_set(o2, key)
 
-  # each entry can be spec:impl (e.g. binary:accel)
   def intersect_with_spec(key, o1, o2):
     # store as set of (spec, impl) tuple
     def cached_set(o):
