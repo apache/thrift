@@ -267,3 +267,4 @@ test-driver
 /ylwrap
 
 /cmake_*
+/nbproject/private/

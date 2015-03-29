@@ -412,6 +412,7 @@ string t_php_generator::php_includes() {
                     "use Thrift\\Type\\TMessageType;\n"
                     "use Thrift\\Exception\\TException;\n"
                     "use Thrift\\Exception\\TProtocolException;\n"
+                    "use Thrift\\Processor\\TProcessor;\n"
                     "use Thrift\\Protocol\\TProtocol;\n"
                     "use Thrift\\Protocol\\TBinaryProtocolAccelerated;\n"
                     "use Thrift\\Exception\\TApplicationException;\n";
@@ -1176,6 +1177,8 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
     extends = tservice->get_extends()->get_name();
     extends_processor = " extends " + php_namespace(tservice->get_extends()->get_program())
                         + extends + "Processor";
+  } else {
+    extends_processor = " extends \Thrift\Processor\TProcessor";
   }
 
   // Generate the header portion
@@ -1195,7 +1198,7 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
   f_service_ << indent() << "}" << endl << endl;
 
   // Generate the server implementation
-  indent(f_service_) << "public function process($input, $output) {" << endl;
+  indent(f_service_) << "public function process(TProtocol $input, TProtocol $output) {" << endl;
   indent_up();
 
   f_service_ << indent() << "$rseqid = 0;" << endl << indent() << "$fname = null;" << endl
