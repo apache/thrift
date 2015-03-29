@@ -53,7 +53,7 @@ def generate_known_failures(testdir, overwrite, save, out):
     known = load_known_failures(testdir)
     known.extend(fails)
     fails = known
-  fails_json = json.dumps(sorted(set(fails)), indent=2)
+  fails_json = json.dumps(sorted(set(fails)), indent=2, separators=(',', ': '))
   if save:
     with open(os.path.join(testdir, FAIL_JSON % platform.system()), 'w+') as fp:
       fp.write(fails_json)
@@ -284,6 +284,12 @@ class SummaryReporter(TestReporter):
         self.out.write(self._format_test(self._tests[i]))
       self._print_bar()
 
+  def _http_server_command(self, port):
+    if sys.version_info[0] < 3:
+      return 'python -m SimpleHTTPServer %d' % port
+    else:
+      return 'python -m http.server %d' % port
+
   def _print_footer(self):
     fail_count = len(self._expected_failure) + len(self._unexpected_failure)
     self._print_bar()
@@ -295,6 +301,10 @@ class SummaryReporter(TestReporter):
     self.out.writelines([
       'You can browse results at:\n',
       '\tfile://%s/%s\n' % (self.testdir, RESULT_HTML),
+      '# If you use Chrome, run:\n',
+      '# \tcd %s\n#\t%s\n' % (self.testdir, self._http_server_command(8001)),
+      '# then browse:\n',
+      '# \thttp://localhost:%d/%s\n' % (8001, RESULT_HTML),
       'Full log for each test is here:\n',
       '\ttest/log/client_server_protocol_transport_client.log\n',
       '\ttest/log/client_server_protocol_transport_server.log\n',
