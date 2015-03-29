@@ -55,6 +55,10 @@ public:
 
   ~Task() {}
 
+  void stop() {
+    input_->getTransport()->close();
+  }
+
   void run() {
     boost::shared_ptr<TServerEventHandler> eventHandler = server_.getEventHandler();
     void* connectionContext = NULL;
@@ -236,6 +240,8 @@ void TThreadedServer::serve() {
     }
     try {
       Synchronized s(tasksMonitor_);
+      for ( std::set<Task*>::iterator tIt = tasks_.begin(); tIt != tasks_.end(); ++tIt )
+        (*tIt)->stop();
       while (!tasks_.empty()) {
         tasksMonitor_.wait();
       }
