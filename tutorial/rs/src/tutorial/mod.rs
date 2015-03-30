@@ -15,19 +15,31 @@ use thrift::TResult;
 use thrift::ThriftErr;
 #[allow(unused_imports)]
 use thrift::ThriftErr::*;
-#[allow(unused_imports)]
-use std::num::FromPrimitive;
 use thrift::protocol::ProtocolHelpers;
+#[allow(unused_imports)]
+use thrift::protocol::FromNum;
 
 use shared::*;
 
 #[allow(dead_code)]
-#[derive(PartialEq,Eq,Hash,Copy,Clone,Debug,FromPrimitive)]
+#[derive(PartialEq,Eq,Hash,Copy,Clone,Debug)]
 pub enum Operation {
   ADD = 1,
   SUBTRACT = 2,
   MULTIPLY = 3,
   DIVIDE = 4,
+}
+
+impl FromNum for Operation {
+  fn from_num(num: i32) -> Option<Operation> {
+    match num {
+      1 => Some(Operation::ADD),
+      2 => Some(Operation::SUBTRACT),
+      3 => Some(Operation::MULTIPLY),
+      4 => Some(Operation::DIVIDE),
+      _ => None,
+    }
+  }
 }
 
 impl Operation {

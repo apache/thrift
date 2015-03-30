@@ -17,11 +17,11 @@
  * under the License.
  */
 
-use std::old_io::{ Writer, Reader };
+use std::io::prelude::*;
 
 pub mod tcp_transport;
 
-pub trait Transport : Writer + Reader { }
+pub trait Transport : Write + Read { }
 
 #[cfg(test)]
 pub mod test;

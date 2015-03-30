@@ -3,6 +3,7 @@
 name = "calculator"
 version = "0.0.1"
 authors = ["Simon Génier <s@simon.coffee>", "Maxim Golov <maxim.golov@gmail.com>"]
+build = "build.rs"
 
 [dependencies.thrift]
 path = "../../lib/rs"

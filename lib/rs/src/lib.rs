@@ -1,6 +1,6 @@
 #![feature(core)]
-#![feature(io)]
-#![feature(slicing_syntax)]
+
+extern crate podio;
 
 pub use protocol::Protocol;
 pub use transport::Transport;
@@ -10,7 +10,7 @@ pub mod transport;
 
 #[derive(Eq, PartialEq, Debug)]
 pub enum ThriftErr {
-    TransportError(std::old_io::IoError),
+    TransportError(std::io::Error),
     UnknownProtocol,
     InvalidData,
     NegativeSize,
@@ -23,8 +23,8 @@ pub enum ThriftErr {
     ProtocolError,
 }
 
-impl std::error::FromError<std::old_io::IoError> for ThriftErr {
-	fn from_error(err: std::old_io::IoError) -> ThriftErr {
+impl std::error::FromError<std::io::Error> for ThriftErr {
+	fn from_error(err: std::io::Error) -> ThriftErr {
 		ThriftErr::TransportError(err)
 	}
 }

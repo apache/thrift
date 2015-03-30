@@ -15,9 +15,9 @@ use thrift::TResult;
 use thrift::ThriftErr;
 #[allow(unused_imports)]
 use thrift::ThriftErr::*;
-#[allow(unused_imports)]
-use std::num::FromPrimitive;
 use thrift::protocol::ProtocolHelpers;
+#[allow(unused_imports)]
+use thrift::protocol::FromNum;
 
 
 #[allow(dead_code)]

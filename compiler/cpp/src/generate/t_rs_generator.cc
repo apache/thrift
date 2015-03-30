@@ -241,9 +241,9 @@ string t_rs_generator::rs_imports() {
     "use thrift::ThriftErr;\n"
     "#[allow(unused_imports)]\n"
     "use thrift::ThriftErr::*;\n"
-    "#[allow(unused_imports)]\n"
-    "use std::num::FromPrimitive;\n"
     "use thrift::protocol::ProtocolHelpers;\n"
+    "#[allow(unused_imports)]\n"
+    "use thrift::protocol::FromNum;\n"
   );
 }
 
@@ -257,7 +257,7 @@ void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
 void t_rs_generator::generate_enum(t_enum* tenum) {
   string ename = pascalcase(tenum->get_name());
   indent(f_mod_) << "#[allow(dead_code)]\n";
-  indent(f_mod_) << "#[derive(PartialEq,Eq,Hash,Copy,Clone,Debug,FromPrimitive)]\n";
+  indent(f_mod_) << "#[derive(PartialEq,Eq,Hash,Copy,Clone,Debug)]\n";
   indent(f_mod_) << "pub enum " << ename << " {\n";
   indent_up();
 
@@ -269,6 +269,25 @@ void t_rs_generator::generate_enum(t_enum* tenum) {
     indent(f_mod_) << name << " = " << value << ",\n";
   }
 
+  indent_down();
+  indent(f_mod_) << "}\n\n";
+
+  indent(f_mod_) << "impl FromNum for " << ename << " {\n";
+  indent_up();
+    indent(f_mod_) << "fn from_num(num: i32) -> Option<" << ename << "> {\n";
+    indent_up();
+      indent(f_mod_) << "match num {\n";
+      indent_up();
+      for (i = constants.begin(); i != end; ++i) {
+        string name = capitalize((*i)->get_name());
+        int value = (*i)->get_value();
+        indent(f_mod_) << value << " => Some(" << ename << "::" << name << "),\n";
+      }
+        indent(f_mod_) << "_ => None,\n";
+      indent_down();
+      indent(f_mod_) << "}\n";
+    indent_down();
+    indent(f_mod_) << "}\n";
   indent_down();
   indent(f_mod_) << "}\n\n";
 
@@ -666,7 +685,7 @@ void t_rs_generator::generate_serialize_field(t_type* ttype, const string& name,
     indent(f_mod_) << "try!(oprot.write_string(transport, " << ref << nname << "));\n";
 
   } else if (is_binary(type)) {
-    indent(f_mod_) << "try!(oprot.write_binary(transport, " << nname << ".as_slice()));\n";
+    indent(f_mod_) << "try!(oprot.write_binary(transport, &" << nname << "));\n";
 
   } else if (type->is_base_type()) {
     indent(f_mod_) << "try!(oprot.write_" << render_suffix(type)
