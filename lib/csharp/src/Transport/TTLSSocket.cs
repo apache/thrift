@@ -77,10 +77,12 @@ namespace Thrift.Transport
         /// <param name="client">An already created TCP-client</param>
         /// <param name="certificate">The certificate.</param>
         /// <param name="isServer">if set to <c>true</c> [is server].</param>
-        public TTLSSocket(TcpClient client, X509Certificate certificate, bool isServer = false)
+        /// <param name="certValidator">User defined cert validator.</param>
+        public TTLSSocket(TcpClient client, X509Certificate certificate, bool isServer = false, RemoteCertificateValidationCallback certValidator = null)
         {
             this.client = client;
             this.certificate = certificate;
+            this.certValidator = certValidator;
             this.isServer = isServer;
 
             if (IsOpen)
@@ -251,27 +253,16 @@ namespace Thrift.Transport
         /// </summary>
         public void setupTLS()
         {
+            this.secureStream = new SslStream(this.client.GetStream(), false, this.certValidator ?? CertificateValidator);
             if (isServer)
             {
                 // Server authentication
-                this.secureStream = new SslStream(this.client.GetStream(), false);
-                this.secureStream.AuthenticateAsServer(this.certificate, false, SslProtocols.Tls, true);
+                this.secureStream.AuthenticateAsServer(this.certificate, this.certValidator != null, SslProtocols.Tls, true);
             }
             else
             {
                 // Client authentication
-                X509CertificateCollection validCerts = new X509CertificateCollection();
-                validCerts.Add(certificate);
-
-                if (this.certValidator != null)
-                {
-                    this.secureStream = new SslStream(this.client.GetStream(), false, new RemoteCertificateValidationCallback(this.certValidator));
-                }
-                else
-                {
-                    this.secureStream = new SslStream(this.client.GetStream(), false, new RemoteCertificateValidationCallback(CertificateValidator));
-                }
-                this.secureStream.AuthenticateAsClient(host, validCerts, SslProtocols.Tls, true);
+                this.secureStream.AuthenticateAsClient(host, new X509CertificateCollection { certificate }, SslProtocols.Tls, true);
             }
 
             inputStream = this.secureStream;
