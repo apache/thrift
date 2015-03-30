@@ -20,13 +20,11 @@
 #![crate_name="calculator"]
 #![crate_type="bin"]
 
-#![allow(unstable)]
-
 extern crate thrift;
 
 use std::str::FromStr;
-use std::old_io::net::ip;
-use std::old_io::BufferedStream;
+use std::net;
+use std::io::BufStream;
 use thrift::protocol::binary_protocol::BinaryProtocol;
 
 mod tutorial;
@@ -73,11 +71,11 @@ fn run_client(client: &mut tutorial::CalculatorClient) {
 }
 
 pub fn main() {
-    let addr: ip::SocketAddr = FromStr::from_str("127.0.0.1:9090").ok()
+    let addr: net::SocketAddr = FromStr::from_str("127.0.0.1:9090").ok()
         .expect("bad server address");
-    let tcp = std::old_io::TcpStream::connect(addr).ok()
+    let tcp = net::TcpStream::connect(addr).ok()
         .expect("failed to connect");
-    let mut stream = BufferedStream::new(tcp);
+    let stream = BufStream::new(tcp);
     // FIXME: do we want tutorial::build_calculator_client(BinaryProtocol, tcp) here?
     let mut client = tutorial::CalculatorClientImpl::new(BinaryProtocol, stream);
 
