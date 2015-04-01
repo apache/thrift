@@ -17,10 +17,12 @@
 # under the License.
 #
 
+use strict;
+use warnings;
+
 use Thrift::Protocol;
 use Thrift::ProtocolDecorator;
 use Thrift::MessageType;
-
 
 package Thrift::MultiplexedProtocol;
 use base qw(Thrift::ProtocolDecorator);
@@ -63,4 +65,3 @@ sub writeMessageBegin
 }
 
 1;
-

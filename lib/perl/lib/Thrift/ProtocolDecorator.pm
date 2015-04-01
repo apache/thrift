@@ -17,6 +17,9 @@
 # under the License.
 #
 
+use strict;
+use warnings;
+
 use Thrift::Protocol;
 
 package Thrift::ProtocolDecorator;

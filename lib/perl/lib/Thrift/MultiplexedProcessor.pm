@@ -17,6 +17,9 @@
 # under the License.
 #
 
+use strict;
+use warnings;
+
 use Thrift;
 use Thrift::Protocol;
 use Thrift::MultiplexedProtocol;

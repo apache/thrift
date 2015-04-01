@@ -17,6 +17,9 @@
 # under the License.
 #
 
+use strict;
+use warnings;
+
 package Thrift::MessageType;
 
 use strict;

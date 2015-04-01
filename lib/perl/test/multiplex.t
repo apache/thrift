@@ -144,7 +144,10 @@ foreach my $val((1,2,3,5,8)) {
 
 
 package My::Aggr;
-use base qw(AggrIf); 
+use base qw(AggrIf);
+
+use strict;
+use warnings; 
 
 sub new {
     my $classname = shift;
