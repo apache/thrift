@@ -108,7 +108,24 @@ TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout)
     intSock2_(THRIFT_INVALID_SOCKET) {
 }
 
-TServerSocket::TServerSocket(string path)
+TServerSocket::TServerSocket(const string& address, int port)
+  : port_(port),
+    address_(address),
+    serverSocket_(THRIFT_INVALID_SOCKET),
+    acceptBacklog_(DEFAULT_BACKLOG),
+    sendTimeout_(0),
+    recvTimeout_(0),
+    accTimeout_(-1),
+    retryLimit_(0),
+    retryDelay_(0),
+    tcpSendBuffer_(0),
+    tcpRecvBuffer_(0),
+    keepAlive_(false),
+    intSock1_(THRIFT_INVALID_SOCKET),
+    intSock2_(THRIFT_INVALID_SOCKET) {
+}
+
+TServerSocket::TServerSocket(const string& path)
   : port_(0),
     path_(path),
     serverSocket_(THRIFT_INVALID_SOCKET),
@@ -184,8 +201,8 @@ void TServerSocket::listen() {
   hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
   sprintf(port, "%d", port_);
 
-  // Wildcard address
-  error = getaddrinfo(NULL, port, &hints, &res0);
+  // If address is not specified use wildcard address (NULL)
+  error = getaddrinfo(address_.empty() ? NULL : &address_[0], port, &hints, &res0);
   if (error) {
     GlobalOutput.printf("getaddrinfo %d: %s", error, THRIFT_GAI_STRERROR(error));
     close();
