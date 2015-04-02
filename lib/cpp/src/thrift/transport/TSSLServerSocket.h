@@ -35,14 +35,25 @@ class TSSLSocketFactory;
 class TSSLServerSocket : public TServerSocket {
 public:
   /**
-   * Constructor.
+   * Constructor.  Binds to all interfaces.
    *
    * @param port    Listening port
    * @param factory SSL socket factory implementation
    */
-  TSSLServerSocket(THRIFT_SOCKET port, boost::shared_ptr<TSSLSocketFactory> factory);
+  TSSLServerSocket(int port, boost::shared_ptr<TSSLSocketFactory> factory);
+
   /**
-   * Constructor.
+   * Constructor.  Binds to the specified address.
+   *
+   * @param address Address to bind to
+   * @param port    Listening port
+   * @param factory SSL socket factory implementation
+   */
+  TSSLServerSocket(const std::string& address, int port,
+                   boost::shared_ptr<TSSLSocketFactory> factory);
+
+  /**
+   * Constructor.  Binds to all interfaces.
    *
    * @param port        Listening port
    * @param sendTimeout Socket send timeout
