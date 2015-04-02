@@ -136,10 +136,15 @@ class TBinaryProtocol implements TProtocol {
     public function writeI64(i64 : haxe.Int64) : Void {
         var out = new BytesOutput();
         out.bigEndian = true;
+        #if( haxe_ver < 3.2)
         var hi = Int64.getHigh(i64);
         var lo = Int64.getLow(i64);
         out.writeInt32(hi);
         out.writeInt32(lo);
+        #else
+        out.writeInt32(i64.high);
+        out.writeInt32(i64.low);
+        #end
         trans_.write(out.getBytes(), 0, 8);
     }
 
