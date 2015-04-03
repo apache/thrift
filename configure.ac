@@ -18,6 +18,7 @@
 #
 
 AC_PREREQ(2.65)
+AC_CONFIG_MACRO_DIR([./aclocal])
 
 AC_INIT([thrift], [1.0.0-dev])
 
@@ -595,6 +596,7 @@ AC_CHECK_FUNCS([memset])
 AC_CHECK_FUNCS([mkdir])
 AC_CHECK_FUNCS([realpath])
 AC_CHECK_FUNCS([select])
+AC_CHECK_FUNCS([setlocale])
 AC_CHECK_FUNCS([socket])
 AC_CHECK_FUNCS([strchr])
 AC_CHECK_FUNCS([strdup])
