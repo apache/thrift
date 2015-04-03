@@ -155,7 +155,7 @@ inline void TDenseProtocol::stateTransition() {
   // If this is the end of the top-level write, we should have just popped
   // the TypeSpec passed to the constructor.
   if (ts_stack_.empty()) {
-    assert(old_tts = type_spec_);
+    assert(old_tts == type_spec_);
     return;
   }
 
