@@ -39,6 +39,7 @@ else
 fi
 
 # we require automake 1.13 or later
+# check must happen externally due to use of newer macro
 AUTOMAKE_VERSION=`automake --version | head -n1 | rev | sed -e 's/\s.*$//' | rev`
 if [ "$AUTOMAKE_VERSION" \< "1.13" ]; then
   echo >&2 "automake version $AUTOMAKE_VERSION is too old (need 1.13 or later)"
