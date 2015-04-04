@@ -79,6 +79,7 @@ check_PROGRAMS = \
 	SpecializationTest \
 	AllProtocolsTest \
 	TransportTest \
+        TSocketInterruptTest \
 	ZlibTest \
 	TFileTransportTest \
 	link_test \
@@ -111,12 +112,22 @@ UnitTests_SOURCES = \
 
 if !WITH_BOOSTTHREADS
 UnitTests_SOURCES += \
-        RWMutexStarveTest.cpp
+    RWMutexStarveTest.cpp
 endif
 
 UnitTests_LDADD = \
   libtestgencpp.la \
   $(BOOST_TEST_LDADD)
+
+TSocketInterruptTest_SOURCES = \
+	TSocketInterruptTest.cpp
+
+TSocketInterruptTest_LDADD = \
+  libtestgencpp.la \
+  $(BOOST_TEST_LDADD) \
+  $(BOOST_CHRONO_LDADD) \
+  $(BOOST_SYSTEM_LDADD) \
+  $(BOOST_THREAD_LDADD)
 
 TransportTest_SOURCES = \
 	TransportTest.cpp

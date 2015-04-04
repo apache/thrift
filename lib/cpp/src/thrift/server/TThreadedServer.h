@@ -72,14 +72,10 @@ public:
                   const boost::shared_ptr<ThreadFactory>& threadFactory,
                   THRIFT_OVERLOAD_IF(Processor, TProcessor));
 
-  virtual ~TThreadedServer();
+  virtual ~TThreadedServer() {}
 
   virtual void serve();
-
-  void stop() {
-    stop_ = true;
-    serverTransport_->interrupt();
-  }
+  void stop();
 
 protected:
   void init();

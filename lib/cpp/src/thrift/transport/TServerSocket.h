@@ -100,17 +100,35 @@ public:
   // socket, this is the place to do it.
   void setAcceptCallback(const socket_func_t& acceptCallback) { acceptCallback_ = acceptCallback; }
 
-  void listen();
-  void close();
+  // When enabled (the default), new children TSockets will be constructed so
+  // they can be interrupted by TServerTransport::interruptChildren().
+  // This is more expensive in terms of system calls (poll + recv) however
+  // ensures a connected client cannot interfere with TServer::stop().
+  //
+  // Changing this setting applies to the next accepted socket.
+  // It is recommended if the default behavior is not desired, this should
+  // be set before calling listen() so all child TSockets behave the same way.
+  // See Apache Jira THRIFT-2441 for additional background.
+  //
+  // If disabled, TSocket children do not incur an additional poll() call.
+  // Server-side reads are more efficient, however a client can interfere with
+  // the server's ability to shutdown properly by staying connected.
+  void setInterruptableChildren(bool enable);
 
-  void interrupt();
   int getPort();
+
+  void listen();
+  void interrupt();
+  void interruptChildren();
+  void close();
 
 protected:
   boost::shared_ptr<TTransport> acceptImpl();
   virtual boost::shared_ptr<TSocket> createSocket(THRIFT_SOCKET client);
 
 private:
+  void notify(THRIFT_SOCKET notifySock);
+
   int port_;
   std::string address_;
   std::string path_;
@@ -124,9 +142,12 @@ private:
   int tcpSendBuffer_;
   int tcpRecvBuffer_;
   bool keepAlive_;
+  bool interruptableChildren_;
 
-  THRIFT_SOCKET intSock1_;
-  THRIFT_SOCKET intSock2_;
+  THRIFT_SOCKET interruptSockWriter_;                          // is notified on interrupt()
+  THRIFT_SOCKET interruptSockReader_;                          // is used in select/poll with serverSocket_ for interruptability
+  THRIFT_SOCKET childInterruptSockWriter_;                     // is notified on interruptChildren()
+  boost::shared_ptr<THRIFT_SOCKET> pChildInterruptSockReader_; // if interruptableChildren_ this is shared with child TSockets
 
   socket_func_t listenCallback_;
   socket_func_t acceptCallback_;

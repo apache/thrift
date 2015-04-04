@@ -105,18 +105,15 @@ public:
       timeout_(0),
       taskExpiration_(0) {}
 
-  virtual ~TThreadPoolServer();
+  virtual ~TThreadPoolServer() {}
 
   virtual void serve();
+
+  virtual void stop();
 
   virtual int64_t getTimeout() const;
 
   virtual void setTimeout(int64_t value);
-
-  virtual void stop() {
-    stop_ = true;
-    serverTransport_->interrupt();
-  }
 
   virtual int64_t getTaskExpiration() const;
 

@@ -21,6 +21,7 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TServerSocket.h>
 #include "TestPortFixture.h"
+#include "TestTServerSocket.h"
 
 using apache::thrift::transport::TServerSocket;
 using apache::thrift::transport::TSocket;
@@ -28,13 +29,6 @@ using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 
 BOOST_FIXTURE_TEST_SUITE ( TServerSocketTest, TestPortFixture )
-
-class TestTServerSocket : public TServerSocket
-{
-  public:
-    TestTServerSocket(const std::string& address, int port) : TServerSocket(address, port) { }
-    using TServerSocket::acceptImpl;
-};
 
 BOOST_AUTO_TEST_CASE( test_bind_to_address )
 {
@@ -46,7 +40,8 @@ BOOST_AUTO_TEST_CASE( test_bind_to_address )
     accepted->close();
     sock1.close();
 
-    TServerSocket sock2("this.is.truly.an.unrecognizable.address.", m_serverPort);
+    std::cout << "An error message from getaddrinfo on the console is expected:" << std::endl;
+    TServerSocket sock2("257.258.259.260", m_serverPort);
     BOOST_CHECK_THROW(sock2.listen(), TTransportException);
     sock2.close();
 }

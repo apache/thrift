@@ -20,7 +20,7 @@
 
 # Find required packages
 set(Boost_USE_STATIC_LIBS ON) # Force the use of static boost test framework
-find_package(Boost 1.53.0 REQUIRED COMPONENTS unit_test_framework)
+find_package(Boost 1.53.0 REQUIRED COMPONENTS chrono system thread unit_test_framework)
 include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 
 #Make sure gen-cpp files can be included
@@ -81,6 +81,13 @@ add_executable(UnitTests ${UnitTest_SOURCES})
 target_link_libraries(UnitTests testgencpp thrift ${Boost_LIBRARIES})
 add_test(NAME UnitTests COMMAND UnitTests)
 
+add_executable(TSocketInterruptTest TSocketInterruptTest.cpp)
+target_link_libraries(TSocketInterruptTest
+    testgencpp
+    ${Boost_LIBRARIES}
+    -lrt
+)
+add_test(NAME TSocketInterruptTest COMMAND TSocketInterruptTest)
 
 if(WITH_ZLIB)
 add_executable(TransportTest TransportTest.cpp)

@@ -69,11 +69,12 @@ public:
           break;
         }
       }
-    } catch (const TTransportException&) {
-      // This is reasonably expected, client didn't send a full request so just
-      // ignore him
-      // string errStr = string("TThreadPoolServer client died: ") + ttx.what();
-      // GlobalOutput(errStr.c_str());
+    } catch (const TTransportException& ttx) {
+      if (ttx.getType() != TTransportException::END_OF_FILE &&
+          ttx.getType() != TTransportException::INTERRUPTED) {
+        string errStr = string("TThreadPoolServer::Task client died: ") + ttx.what();
+        GlobalOutput(errStr.c_str());
+      }
     } catch (const std::exception& x) {
       GlobalOutput.printf("TThreadPoolServer exception %s: %s", typeid(x).name(), x.what());
     } catch (...) {
@@ -107,9 +108,6 @@ private:
   shared_ptr<TProtocol> output_;
   shared_ptr<TTransport> transport_;
 };
-
-TThreadPoolServer::~TThreadPoolServer() {
-}
 
 void TThreadPoolServer::serve() {
   shared_ptr<TTransport> client;
@@ -160,11 +158,11 @@ void TThreadPoolServer::serve() {
       if (client) {
         client->close();
       }
-      if (!stop_ || ttx.getType() != TTransportException::INTERRUPTED) {
+      if (ttx.getType() != TTransportException::INTERRUPTED) {
         string errStr = string("TThreadPoolServer: TServerTransport died on accept: ") + ttx.what();
         GlobalOutput(errStr.c_str());
       }
-      continue;
+      if (stop_) break; else continue;
     } catch (TException& tx) {
       if (inputTransport) {
         inputTransport->close();
@@ -178,7 +176,7 @@ void TThreadPoolServer::serve() {
       string errStr = string("TThreadPoolServer: Caught TException: ") + tx.what();
       GlobalOutput(errStr.c_str());
       continue;
-    } catch (string s) {
+    } catch (const string& s) {
       if (inputTransport) {
         inputTransport->close();
       }
@@ -204,6 +202,14 @@ void TThreadPoolServer::serve() {
       GlobalOutput(errStr.c_str());
     }
     stop_ = false;
+  }
+}
+
+void TThreadPoolServer::stop() {
+  if (!stop_) {
+    stop_ = true;
+    serverTransport_->interrupt();
+    serverTransport_->interruptChildren();
   }
 }
 
