@@ -28,7 +28,10 @@
 #include <thrift/transport/PlatformSocket.h>
 
 #include <iostream>
-#include <poll.h>
+
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
 
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -1394,33 +1397,36 @@ bool TNonblockingIOThread::notify(TNonblockingServer::TConnection* conn) {
     return false;
   }
 
+  fd_set wfds, efds;
   int ret = -1;
-  struct pollfd pfd = {fd, POLLOUT, 0};
   int kSize = sizeof(conn);
   const char * pos = (const char *)const_cast_sockopt(&conn);
 
   while (kSize > 0) {
-    pfd.revents = 0;
-    ret = poll(&pfd, 1, -1);
+    FD_ZERO(&wfds);
+    FD_ZERO(&efds);
+    FD_SET(fd, &wfds);
+    FD_SET(fd, &efds);
+    ret = select(fd + 1, NULL, &wfds, &efds, NULL);
     if (ret < 0) {
       return false;
     } else if (ret == 0) {
       continue;
     }
 
-    if (pfd.revents & POLLHUP || pfd.revents & POLLERR) {
-      ::close(fd);
+    if (FD_ISSET(fd, &efds)) {
+      ::THRIFT_CLOSESOCKET(fd);
       return false;
     }
 
-    if (pfd.revents & POLLOUT) {
+    if (FD_ISSET(fd, &wfds)) {
       ret = send(fd, pos, kSize, 0);
       if (ret < 0) {
         if (errno == EAGAIN) {
           continue;
         }
 
-        ::close(fd);
+        ::THRIFT_CLOSESOCKET(fd);
         return false;
       }
 
