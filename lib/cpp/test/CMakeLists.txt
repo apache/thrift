@@ -70,6 +70,7 @@ set(UnitTest_SOURCES
     Base64Test.cpp
     ToStringTest.cpp
     TypedefTest.cpp
+    TServerSocketTest.cpp
 )
 
 if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS)
