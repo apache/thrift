@@ -27,8 +27,14 @@ namespace transport {
 /**
  * SSL server socket implementation.
  */
-TSSLServerSocket::TSSLServerSocket(THRIFT_SOCKET port, boost::shared_ptr<TSSLSocketFactory> factory)
+TSSLServerSocket::TSSLServerSocket(int port, boost::shared_ptr<TSSLSocketFactory> factory)
   : TServerSocket(port), factory_(factory) {
+  factory_->server(true);
+}
+
+TSSLServerSocket::TSSLServerSocket(const std::string& address, int port,
+                                   boost::shared_ptr<TSSLSocketFactory> factory)
+  : TServerSocket(address, port), factory_(factory) {
   factory_->server(true);
 }
 

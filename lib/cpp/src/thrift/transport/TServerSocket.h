@@ -42,11 +42,38 @@ public:
 
   const static int DEFAULT_BACKLOG = 1024;
 
+  /**
+   * Constructor.
+   *
+   * @param port    Port number to bind to
+   */
   TServerSocket(int port);
-  TServerSocket(int port, int sendTimeout, int recvTimeout);
-  TServerSocket(std::string path);
 
-  ~TServerSocket();
+  /**
+   * Constructor.
+   *
+   * @param port        Port number to bind to
+   * @param sendTimeout Socket send timeout
+   * @param recvTimeout Socket receive timeout
+   */
+  TServerSocket(int port, int sendTimeout, int recvTimeout);
+
+  /**
+   * Constructor.
+   *
+   * @param address Address to bind to
+   * @param port    Port number to bind to
+   */
+  TServerSocket(const std::string& address, int port);
+
+  /**
+   * Constructor used for unix sockets.
+   *
+   * @param path Pathname for unix socket.
+   */
+  TServerSocket(const std::string& path);
+
+  virtual ~TServerSocket();
 
   void setSendTimeout(int sendTimeout);
   void setRecvTimeout(int recvTimeout);
@@ -85,6 +112,7 @@ protected:
 
 private:
   int port_;
+  std::string address_;
   std::string path_;
   THRIFT_SOCKET serverSocket_;
   int acceptBacklog_;
