@@ -246,7 +246,7 @@ void TThreadedServer::serve() {
 }
 
 void TThreadedServer::stop() {
-  if (stop_) {
+  if (!stop_) {
 	stop_ = true;
 	serverTransport_->interrupt();
 	serverTransport_->interruptChildren();
