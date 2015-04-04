@@ -310,8 +310,13 @@ void TFileTransport::writerThread() {
       seekToEnd();
       // throw away any partial events
       offset_ += readState_.lastDispatchPtr_;
-      THRIFT_FTRUNCATE(fd_, offset_);
-      readState_.resetAllValues();
+      if (0 == THRIFT_FTRUNCATE(fd_, offset_)) {
+        readState_.resetAllValues();
+      } else {
+        int errno_copy = THRIFT_ERRNO;
+        GlobalOutput.perror("TFileTransport: writerThread() truncate ", errno_copy);
+        hasIOError = true;
+      }
     } catch (...) {
       int errno_copy = THRIFT_ERRNO;
       GlobalOutput.perror("TFileTransport: writerThread() initialization ", errno_copy);
