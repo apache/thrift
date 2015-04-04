@@ -20,8 +20,7 @@
 THRIFT = $(top_srcdir)/compiler/cpp/thrift
 
 stubs: ../ThriftTest.thrift ../SmallTest.thrift
-	$(THRIFT) --gen rs --out src ../ThriftTest.thrift
-	$(THRIFT) --gen rs --out src ../SmallTest.thrift
+	cargo build
 
 check: stubs
 	cargo test
