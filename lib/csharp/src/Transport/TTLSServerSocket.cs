@@ -60,6 +60,11 @@ namespace Thrift.Transport
         private RemoteCertificateValidationCallback clientCertValidator;
 
         /// <summary>
+        /// The function to determine which certificate to use.
+        /// </summary>
+        private LocalCertificateSelectionCallback localCertificateSelectionCallback;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="TTLSServerSocket" /> class.
         /// </summary>
         /// <param name="port">The port where the server runs.</param>
@@ -88,7 +93,14 @@ namespace Thrift.Transport
         /// <param name="useBufferedSockets">If set to <c>true</c> [use buffered sockets].</param>
         /// <param name="certificate">The certificate object.</param>
         /// <param name="clientCertValidator">The certificate validator.</param>
-        public TTLSServerSocket(int port, int clientTimeout, bool useBufferedSockets, X509Certificate2 certificate, RemoteCertificateValidationCallback clientCertValidator = null)
+        /// <param name="localCertificateSelectionCallback">The callback to select which certificate to use.</param>
+        public TTLSServerSocket(
+            int port,
+            int clientTimeout,
+            bool useBufferedSockets,
+            X509Certificate2 certificate,
+            RemoteCertificateValidationCallback clientCertValidator = null,
+            LocalCertificateSelectionCallback localCertificateSelectionCallback = null)
         {
             if (!certificate.HasPrivateKey)
             {
@@ -99,6 +111,7 @@ namespace Thrift.Transport
             this.serverCertificate = certificate;
             this.useBufferedSockets = useBufferedSockets;
             this.clientCertValidator = clientCertValidator;
+            this.localCertificateSelectionCallback = localCertificateSelectionCallback;
             try
             {
                 // Create server socket
@@ -150,7 +163,13 @@ namespace Thrift.Transport
                 client.SendTimeout = client.ReceiveTimeout = this.clientTimeout;
 
                 //wrap the client in an SSL Socket passing in the SSL cert
-                TTLSSocket socket = new TTLSSocket(client, this.serverCertificate, true, this.clientCertValidator);
+                TTLSSocket socket = new TTLSSocket(
+                    client,
+                    this.serverCertificate,
+                    true,
+                    this.clientCertValidator,
+                    this.localCertificateSelectionCallback
+                );
 
                 socket.setupTLS();
 
