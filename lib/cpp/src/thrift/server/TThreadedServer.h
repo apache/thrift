@@ -20,120 +20,86 @@
 #ifndef _THRIFT_SERVER_TTHREADEDSERVER_H_
 #define _THRIFT_SERVER_TTHREADEDSERVER_H_ 1
 
+#include <boost/shared_ptr.hpp>
+#include <set>
+#include <thrift/TProcessor.h>
+#include <thrift/concurrency/Monitor.h>
+#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/Thread.h>
+#include <thrift/protocol/TProtocol.h>
 #include <thrift/server/TServer.h>
 #include <thrift/transport/TServerTransport.h>
-#include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/Thread.h>
-
-#include <boost/shared_ptr.hpp>
+#include <thrift/transport/TTransport.h>
 
 namespace apache {
 namespace thrift {
 namespace server {
 
-using apache::thrift::TProcessor;
-using apache::thrift::transport::TServerTransport;
-using apache::thrift::transport::TTransportFactory;
-using apache::thrift::concurrency::Monitor;
-using apache::thrift::concurrency::ThreadFactory;
+class TConnectedClient;
 
 class TThreadedServer : public TServer {
-
 public:
-  class Task;
+  template <typename ProcessorFactory>
+  TThreadedServer(const boost::shared_ptr<ProcessorFactory>& processorFactory,
+                  const boost::shared_ptr<transport::TServerTransport>& serverTransport,
+                  const boost::shared_ptr<transport::TTransportFactory>& transportFactory,
+                  const boost::shared_ptr<protocol::TProtocolFactory>& protocolFactory,
+                  THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory))
+    : TServer(processorFactory, serverTransport, transportFactory, protocolFactory),
+      threadFactory_(new concurrency::PlatformThreadFactory),
+      stop_(false) {}
 
   template <typename ProcessorFactory>
   TThreadedServer(const boost::shared_ptr<ProcessorFactory>& processorFactory,
-                  const boost::shared_ptr<TServerTransport>& serverTransport,
-                  const boost::shared_ptr<TTransportFactory>& transportFactory,
-                  const boost::shared_ptr<TProtocolFactory>& protocolFactory,
-                  THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory));
-
-  template <typename ProcessorFactory>
-  TThreadedServer(const boost::shared_ptr<ProcessorFactory>& processorFactory,
-                  const boost::shared_ptr<TServerTransport>& serverTransport,
-                  const boost::shared_ptr<TTransportFactory>& transportFactory,
-                  const boost::shared_ptr<TProtocolFactory>& protocolFactory,
-                  const boost::shared_ptr<ThreadFactory>& threadFactory,
-                  THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory));
+                  const boost::shared_ptr<transport::TServerTransport>& serverTransport,
+                  const boost::shared_ptr<transport::TTransportFactory>& transportFactory,
+                  const boost::shared_ptr<protocol::TProtocolFactory>& protocolFactory,
+                  const boost::shared_ptr<concurrency::ThreadFactory>& threadFactory,
+                  THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory))
+    : TServer(processorFactory, serverTransport, transportFactory, protocolFactory),
+      threadFactory_(threadFactory),
+      stop_(false) {}
 
   template <typename Processor>
   TThreadedServer(const boost::shared_ptr<Processor>& processor,
-                  const boost::shared_ptr<TServerTransport>& serverTransport,
-                  const boost::shared_ptr<TTransportFactory>& transportFactory,
-                  const boost::shared_ptr<TProtocolFactory>& protocolFactory,
-                  THRIFT_OVERLOAD_IF(Processor, TProcessor));
+                  const boost::shared_ptr<transport::TServerTransport>& serverTransport,
+                  const boost::shared_ptr<transport::TTransportFactory>& transportFactory,
+                  const boost::shared_ptr<protocol::TProtocolFactory>& protocolFactory,
+                  THRIFT_OVERLOAD_IF(Processor, TProcessor))
+    : TServer(processor, serverTransport, transportFactory, protocolFactory),
+      threadFactory_(new concurrency::PlatformThreadFactory),
+      stop_(false) {}
 
   template <typename Processor>
   TThreadedServer(const boost::shared_ptr<Processor>& processor,
-                  const boost::shared_ptr<TServerTransport>& serverTransport,
-                  const boost::shared_ptr<TTransportFactory>& transportFactory,
-                  const boost::shared_ptr<TProtocolFactory>& protocolFactory,
-                  const boost::shared_ptr<ThreadFactory>& threadFactory,
-                  THRIFT_OVERLOAD_IF(Processor, TProcessor));
+                  const boost::shared_ptr<transport::TServerTransport>& serverTransport,
+                  const boost::shared_ptr<transport::TTransportFactory>& transportFactory,
+                  const boost::shared_ptr<protocol::TProtocolFactory>& protocolFactory,
+                  const boost::shared_ptr<concurrency::ThreadFactory>& threadFactory,
+                  THRIFT_OVERLOAD_IF(Processor, TProcessor))
+    : TServer(processor, serverTransport, transportFactory, protocolFactory),
+      threadFactory_(threadFactory),
+      stop_(false) {}
 
-  virtual ~TThreadedServer();
+  virtual ~TThreadedServer() {};
 
   virtual void serve();
 
-  void stop() {
+  virtual void stop() {
     stop_ = true;
     serverTransport_->interrupt();
   }
 
 protected:
-  void init();
+  virtual void disposeClient(TConnectedClient *pClient);
 
-  boost::shared_ptr<ThreadFactory> threadFactory_;
+  boost::shared_ptr<concurrency::ThreadFactory> threadFactory_;
   volatile bool stop_;
 
-  Monitor tasksMonitor_;
-  std::set<Task*> tasks_;
+  concurrency::Monitor clientsMonitor_;
+  std::set<TConnectedClient*> clients_;
 };
 
-template <typename ProcessorFactory>
-TThreadedServer::TThreadedServer(const boost::shared_ptr<ProcessorFactory>& processorFactory,
-                                 const boost::shared_ptr<TServerTransport>& serverTransport,
-                                 const boost::shared_ptr<TTransportFactory>& transportFactory,
-                                 const boost::shared_ptr<TProtocolFactory>& protocolFactory,
-                                 THRIFT_OVERLOAD_IF_DEFN(ProcessorFactory, TProcessorFactory))
-  : TServer(processorFactory, serverTransport, transportFactory, protocolFactory) {
-  init();
-}
-
-template <typename ProcessorFactory>
-TThreadedServer::TThreadedServer(const boost::shared_ptr<ProcessorFactory>& processorFactory,
-                                 const boost::shared_ptr<TServerTransport>& serverTransport,
-                                 const boost::shared_ptr<TTransportFactory>& transportFactory,
-                                 const boost::shared_ptr<TProtocolFactory>& protocolFactory,
-                                 const boost::shared_ptr<ThreadFactory>& threadFactory,
-                                 THRIFT_OVERLOAD_IF_DEFN(ProcessorFactory, TProcessorFactory))
-  : TServer(processorFactory, serverTransport, transportFactory, protocolFactory),
-    threadFactory_(threadFactory) {
-  init();
-}
-
-template <typename Processor>
-TThreadedServer::TThreadedServer(const boost::shared_ptr<Processor>& processor,
-                                 const boost::shared_ptr<TServerTransport>& serverTransport,
-                                 const boost::shared_ptr<TTransportFactory>& transportFactory,
-                                 const boost::shared_ptr<TProtocolFactory>& protocolFactory,
-                                 THRIFT_OVERLOAD_IF_DEFN(Processor, TProcessor))
-  : TServer(processor, serverTransport, transportFactory, protocolFactory) {
-  init();
-}
-
-template <typename Processor>
-TThreadedServer::TThreadedServer(const boost::shared_ptr<Processor>& processor,
-                                 const boost::shared_ptr<TServerTransport>& serverTransport,
-                                 const boost::shared_ptr<TTransportFactory>& transportFactory,
-                                 const boost::shared_ptr<TProtocolFactory>& protocolFactory,
-                                 const boost::shared_ptr<ThreadFactory>& threadFactory,
-                                 THRIFT_OVERLOAD_IF_DEFN(Processor, TProcessor))
-  : TServer(processor, serverTransport, transportFactory, protocolFactory),
-    threadFactory_(threadFactory) {
-  init();
-}
 }
 }
 } // apache::thrift::server
