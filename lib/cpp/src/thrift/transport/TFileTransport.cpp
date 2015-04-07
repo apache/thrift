@@ -209,12 +209,9 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen) {
     return;
   }
 
-  eventInfo* toEnqueue = new eventInfo();
-  toEnqueue->eventBuff_ = (uint8_t*)std::malloc((sizeof(uint8_t) * eventLen) + 4);
-  if (toEnqueue->eventBuff_ == NULL) {
-    delete toEnqueue;
-    throw std::bad_alloc();
-  }
+  std::auto_ptr<eventInfo> toEnqueue(new eventInfo());
+  toEnqueue->eventBuff_ = new uint8_t[(sizeof(uint8_t) * eventLen) + 4];
+
   // first 4 bytes is the event length
   memcpy(toEnqueue->eventBuff_, (void*)(&eventLen), 4);
   // actual event contents
@@ -227,7 +224,6 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen) {
   // make sure that enqueue buffer is initialized and writer thread is running
   if (!bufferAndThreadInitialized_) {
     if (!initBufferAndWriteThread()) {
-      delete toEnqueue;
       return;
     }
   }
@@ -243,8 +239,9 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen) {
   assert(!forceFlush_);
 
   // add to the buffer
-  if (!enqueueBuffer_->addEvent(toEnqueue)) {
-    delete toEnqueue;
+  eventInfo *pEvent = toEnqueue.release();
+  if (!enqueueBuffer_->addEvent(pEvent)) {
+    delete pEvent;
     return;
   }
 
