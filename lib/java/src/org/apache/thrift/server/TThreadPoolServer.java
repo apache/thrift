@@ -303,6 +303,10 @@ public class TThreadPoolServer extends TServer {
       if (outputTransport != null) {
         outputTransport.close();
       }
+
+      if (client_.isOpen()) {
+        client_.close();
+      }
     }
   }
 }
