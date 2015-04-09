@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * Wrapper around ServerSocketChannel
  */
 public class TNonblockingServerSocket extends TNonblockingServerTransport {
-  private static final Logger LOGGER = LoggerFactory.getLogger(TNonblockingServerTransport.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(TNonblockingServerSocket.class.getName());
 
   /**
    * This channel is where all the nonblocking magic happens.
