@@ -74,11 +74,6 @@ void TThreadPoolServer::serve() {
       shared_ptr<TProcessor> processor = getProcessor(inputProtocol, outputProtocol, client);
 
       // Add to threadmanager pool
-      shared_ptr<TConnectedClient> pClient(
-              new TConnectedClient("TThreadPoolServer",
-                      getProcessor(inputProtocol, outputProtocol, client),
-                      inputProtocol, outputProtocol, eventHandler_, client));
-
       threadManager_->add(
               boost::make_shared<TConnectedClient>(
                       "TThreadPoolServer",
