@@ -108,7 +108,8 @@ UnitTests_SOURCES = \
 	Base64Test.cpp \
 	ToStringTest.cpp \
 	TypedefTest.cpp \
-        TServerSocketTest.cpp
+        TServerSocketTest.cpp \
+        TServerTransportTest.cpp
 
 if !WITH_BOOSTTHREADS
 UnitTests_SOURCES += \

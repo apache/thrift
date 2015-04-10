@@ -127,6 +127,8 @@ void TThreadedServer::init() {
   }
 }
 
+TThreadedServer::~TThreadedServer() {}
+
 void TThreadedServer::serve() {
 
   shared_ptr<TTransport> client;

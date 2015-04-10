@@ -19,42 +19,43 @@
 
 #include <boost/test/auto_unit_test.hpp>
 #include <thrift/transport/TSocket.h>
-#include <thrift/transport/TServerSocket.h>
+#include <thrift/transport/TServerTransport.h>
 #include "TestPortFixture.h"
 
-using apache::thrift::transport::TServerSocket;
-using apache::thrift::transport::TSocket;
+using apache::thrift::transport::TServerTransport;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 
-BOOST_FIXTURE_TEST_SUITE ( TServerSocketTest, TestPortFixture )
+BOOST_AUTO_TEST_SUITE ( TServerTransportTest )
 
-BOOST_AUTO_TEST_CASE( test_bind_to_address )
+class TestTTransport : public TTransport
 {
-    TServerSocket sock1("localhost", m_serverPort);
-    sock1.listen();
-    TSocket clientSock("localhost", m_serverPort);
-    clientSock.open();
-    boost::shared_ptr<TTransport> accepted = sock1.accept();
-    accepted->close();
-    sock1.close();
+};
 
-    std::cout << "An error message from getaddrinfo on the console is expected:" << std::endl;
-    TServerSocket sock2("257.258.259.260", m_serverPort);
-    BOOST_CHECK_THROW(sock2.listen(), TTransportException);
-    sock2.close();
+class TestTServerTransport : public TServerTransport
+{
+public:
+    TestTServerTransport() : valid_(true) {}
+    void close() {}
+    bool valid_;
+protected:
+    boost::shared_ptr<TTransport> acceptImpl()
+    {
+        return valid_ ? boost::shared_ptr<TestTTransport>(new TestTTransport) : boost::shared_ptr<TestTTransport>();
+    }
+};
+
+BOOST_AUTO_TEST_CASE( test_positive_accept )
+{
+    TestTServerTransport uut;
+    BOOST_CHECK(uut.accept());
 }
 
-BOOST_AUTO_TEST_CASE( test_close_before_listen )
+BOOST_AUTO_TEST_CASE( test_negative_accept )
 {
-    TServerSocket sock1("localhost", m_serverPort);
-    sock1.close();
-}
-
-BOOST_AUTO_TEST_CASE( test_get_port )
-{
-    TServerSocket sock1("localHost", 888);
-    BOOST_CHECK_EQUAL(888, sock1.getPort());
+    TestTServerTransport uut;
+    uut.valid_ = false;
+    BOOST_CHECK_THROW(uut.accept(), TTransportException);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -109,6 +109,8 @@ private:
   shared_ptr<TTransport> transport_;
 };
 
+TThreadPoolServer::~TThreadPoolServer() {}
+
 void TThreadPoolServer::serve() {
   shared_ptr<TTransport> client;
   shared_ptr<TTransport> inputTransport;

@@ -83,8 +83,6 @@ public:
               outputProtocolFactory),
       stop_(false) {}
 
-  ~TSimpleServer() {}
-
   /**
    * Process one connection at a time using the caller's thread.
    * Call stop() on another thread to interrupt processing and

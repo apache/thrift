@@ -27,7 +27,6 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TServerSocket.h>
 #include "TestPortFixture.h"
-#include "TestTServerSocket.h"
 
 using apache::thrift::transport::TServerSocket;
 using apache::thrift::transport::TSocket;
@@ -58,11 +57,11 @@ void readerWorkerMustThrow(boost::shared_ptr<TTransport> tt)
 
 BOOST_AUTO_TEST_CASE( test_interruptable_child_read )
 {
-    TestTServerSocket sock1("localhost", m_serverPort);
+    TServerSocket sock1("localhost", m_serverPort);
     sock1.listen();
     TSocket clientSock("localhost", m_serverPort);
     clientSock.open();
-    boost::shared_ptr<TTransport> accepted = sock1.acceptImpl();
+    boost::shared_ptr<TTransport> accepted = sock1.accept();
     boost::thread readThread(boost::bind(readerWorkerMustThrow, accepted));
     boost::this_thread::sleep(boost::posix_time::milliseconds(50));
     // readThread is practically guaranteed to be blocking now
@@ -76,12 +75,12 @@ BOOST_AUTO_TEST_CASE( test_interruptable_child_read )
 
 BOOST_AUTO_TEST_CASE( test_non_interruptable_child_read )
 {
-    TestTServerSocket sock1("localhost", m_serverPort);
+    TServerSocket sock1("localhost", m_serverPort);
     sock1.setInterruptableChildren(false); // returns to pre-THRIFT-2441 behavior
     sock1.listen();
     TSocket clientSock("localhost", m_serverPort);
     clientSock.open();
-    boost::shared_ptr<TTransport> accepted = sock1.acceptImpl();
+    boost::shared_ptr<TTransport> accepted = sock1.accept();
     boost::thread readThread(boost::bind(readerWorker, accepted, 0));
     boost::this_thread::sleep(boost::posix_time::milliseconds(50));
     // readThread is practically guaranteed to be blocking here
@@ -103,11 +102,11 @@ void peekerWorker(boost::shared_ptr<TTransport> tt, bool expectedResult)
 
 BOOST_AUTO_TEST_CASE( test_interruptable_child_peek )
 {
-    TestTServerSocket sock1("localhost", m_serverPort);
+    TServerSocket sock1("localhost", m_serverPort);
     sock1.listen();
     TSocket clientSock("localhost", m_serverPort);
     clientSock.open();
-    boost::shared_ptr<TTransport> accepted = sock1.acceptImpl();
+    boost::shared_ptr<TTransport> accepted = sock1.accept();
     // peek() will return false if child is interrupted
     boost::thread peekThread(boost::bind(peekerWorker, accepted, false));
     boost::this_thread::sleep(boost::posix_time::milliseconds(50));
@@ -122,12 +121,12 @@ BOOST_AUTO_TEST_CASE( test_interruptable_child_peek )
 
 BOOST_AUTO_TEST_CASE( test_non_interruptable_child_peek )
 {
-    TestTServerSocket sock1("localhost", m_serverPort);
+    TServerSocket sock1("localhost", m_serverPort);
     sock1.setInterruptableChildren(false); // returns to pre-THRIFT-2441 behavior
     sock1.listen();
     TSocket clientSock("localhost", m_serverPort);
     clientSock.open();
-    boost::shared_ptr<TTransport> accepted = sock1.acceptImpl();
+    boost::shared_ptr<TTransport> accepted = sock1.accept();
     // peek() will return false when remote side is closed
     boost::thread peekThread(boost::bind(peekerWorker, accepted, false));
     boost::this_thread::sleep(boost::posix_time::milliseconds(50));
