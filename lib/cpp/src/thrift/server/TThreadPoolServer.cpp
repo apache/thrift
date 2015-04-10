@@ -19,12 +19,14 @@
 
 #include <thrift/thrift-config.h>
 
+#include <thrift/server/TConnectedClient.h>
 #include <thrift/server/TThreadPoolServer.h>
 #include <thrift/transport/TTransportException.h>
 #include <thrift/concurrency/Thread.h>
 #include <thrift/concurrency/ThreadManager.h>
 #include <string>
 #include <iostream>
+#include <boost/make_shared.hpp>
 
 namespace apache {
 namespace thrift {
@@ -37,79 +39,7 @@ using namespace apache::thrift::concurrency;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 
-class TThreadPoolServer::Task : public Runnable {
-
-public:
-  Task(TThreadPoolServer& server,
-       shared_ptr<TProcessor> processor,
-       shared_ptr<TProtocol> input,
-       shared_ptr<TProtocol> output,
-       shared_ptr<TTransport> transport)
-    : server_(server),
-      processor_(processor),
-      input_(input),
-      output_(output),
-      transport_(transport) {}
-
-  ~Task() {}
-
-  void run() {
-    boost::shared_ptr<TServerEventHandler> eventHandler = server_.getEventHandler();
-    void* connectionContext = NULL;
-    if (eventHandler) {
-      connectionContext = eventHandler->createContext(input_, output_);
-    }
-    try {
-      for (;;) {
-        if (eventHandler) {
-          eventHandler->processContext(connectionContext, transport_);
-        }
-        if (!processor_->process(input_, output_, connectionContext)
-            || !input_->getTransport()->peek()) {
-          break;
-        }
-      }
-    } catch (const TTransportException&) {
-      // This is reasonably expected, client didn't send a full request so just
-      // ignore him
-      // string errStr = string("TThreadPoolServer client died: ") + ttx.what();
-      // GlobalOutput(errStr.c_str());
-    } catch (const std::exception& x) {
-      GlobalOutput.printf("TThreadPoolServer exception %s: %s", typeid(x).name(), x.what());
-    } catch (...) {
-      GlobalOutput(
-          "TThreadPoolServer, unexpected exception in "
-          "TThreadPoolServer::Task::run()");
-    }
-
-    if (eventHandler) {
-      eventHandler->deleteContext(connectionContext, input_, output_);
-    }
-
-    try {
-      input_->getTransport()->close();
-    } catch (TTransportException& ttx) {
-      string errStr = string("TThreadPoolServer input close failed: ") + ttx.what();
-      GlobalOutput(errStr.c_str());
-    }
-    try {
-      output_->getTransport()->close();
-    } catch (TTransportException& ttx) {
-      string errStr = string("TThreadPoolServer output close failed: ") + ttx.what();
-      GlobalOutput(errStr.c_str());
-    }
-  }
-
-private:
-  TServer& server_;
-  shared_ptr<TProcessor> processor_;
-  shared_ptr<TProtocol> input_;
-  shared_ptr<TProtocol> output_;
-  shared_ptr<TTransport> transport_;
-};
-
-TThreadPoolServer::~TThreadPoolServer() {
-}
+TThreadPoolServer::~TThreadPoolServer() {}
 
 void TThreadPoolServer::serve() {
   shared_ptr<TTransport> client;
@@ -146,9 +76,13 @@ void TThreadPoolServer::serve() {
       shared_ptr<TProcessor> processor = getProcessor(inputProtocol, outputProtocol, client);
 
       // Add to threadmanager pool
-      shared_ptr<TThreadPoolServer::Task> task(
-          new TThreadPoolServer::Task(*this, processor, inputProtocol, outputProtocol, client));
-      threadManager_->add(task, timeout_, taskExpiration_);
+      threadManager_->add(
+              boost::make_shared<TConnectedClient>(
+                      "TThreadPoolServer",
+                      getProcessor(inputProtocol, outputProtocol, client),
+                      inputProtocol, outputProtocol, eventHandler_, client),
+              timeout_,
+              taskExpiration_);
 
     } catch (TTransportException& ttx) {
       if (inputTransport) {
