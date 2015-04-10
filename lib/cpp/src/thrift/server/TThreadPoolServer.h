@@ -103,7 +103,7 @@ public:
       timeout_(0),
       taskExpiration_(0) {}
 
-  virtual ~TThreadPoolServer() {};
+  virtual ~TThreadPoolServer();
 
   virtual void serve();
 
