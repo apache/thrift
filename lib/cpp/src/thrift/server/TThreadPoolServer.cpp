@@ -26,6 +26,7 @@
 #include <thrift/concurrency/ThreadManager.h>
 #include <string>
 #include <iostream>
+#include <boost/make_shared.hpp>
 
 namespace apache {
 namespace thrift {
@@ -78,7 +79,13 @@ void TThreadPoolServer::serve() {
                       getProcessor(inputProtocol, outputProtocol, client),
                       inputProtocol, outputProtocol, eventHandler_, client));
 
-      threadManager_->add(pClient, timeout_, taskExpiration_);
+      threadManager_->add(
+              boost::make_shared<TConnectedClient>(
+                      "TThreadPoolServer",
+                      getProcessor(inputProtocol, outputProtocol, client),
+                      inputProtocol, outputProtocol, eventHandler_, client),
+              timeout_,
+              taskExpiration_);
 
     } catch (TTransportException& ttx) {
       if (inputTransport) {

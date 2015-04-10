@@ -30,11 +30,11 @@ using boost::shared_ptr;
 using std::string;
 
 TConnectedClient::TConnectedClient(const string& serverType,
-                                   shared_ptr<TProcessor> processor,
-                                   shared_ptr<TProtocol> inputProtocol,
-                                   shared_ptr<TProtocol> outputProtocol,
-                                   shared_ptr<TServerEventHandler> eventHandler,
-                                   shared_ptr<TTransport> client)
+                                   const shared_ptr<TProcessor>& processor,
+                                   const shared_ptr<TProtocol>& inputProtocol,
+                                   const shared_ptr<TProtocol>& outputProtocol,
+                                   const shared_ptr<TServerEventHandler>& eventHandler,
+                                   const shared_ptr<TTransport>& client)
                         
   : serverType_(serverType),
     processor_(processor),

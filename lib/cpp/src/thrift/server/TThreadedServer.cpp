@@ -41,6 +41,8 @@ using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace apache::thrift::concurrency;
 
+TThreadedServer::~TThreadedServer() {}
+
 void TThreadedServer::serve() {
 
   shared_ptr<TTransport> client;

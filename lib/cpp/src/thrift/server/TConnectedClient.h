@@ -37,7 +37,8 @@ namespace server {
  * encapsulated here.
  */
 
-class TConnectedClient : public apache::thrift::concurrency::Runnable {
+class TConnectedClient : public apache::thrift::concurrency::Runnable
+{
   public:
     /**
      * Constructor.
@@ -50,12 +51,13 @@ class TConnectedClient : public apache::thrift::concurrency::Runnable {
      * @param[in] eventHandler   the server event handler
      * @param[in] client         the TTransport representing the client
      */
-    TConnectedClient(const std::string& serverType,
-                     boost::shared_ptr<apache::thrift::TProcessor> processor,
-                     boost::shared_ptr<apache::thrift::protocol::TProtocol> inputProtocol,
-                     boost::shared_ptr<apache::thrift::protocol::TProtocol> outputProtocol,
-                     boost::shared_ptr<apache::thrift::server::TServerEventHandler> eventHandler,
-                     boost::shared_ptr<apache::thrift::transport::TTransport> client);
+    TConnectedClient(
+            const std::string& serverType,
+            const boost::shared_ptr<apache::thrift::TProcessor>& processor,
+            const boost::shared_ptr<apache::thrift::protocol::TProtocol>& inputProtocol,
+            const boost::shared_ptr<apache::thrift::protocol::TProtocol>& outputProtocol,
+            const boost::shared_ptr<apache::thrift::server::TServerEventHandler>& eventHandler,
+            const boost::shared_ptr<apache::thrift::transport::TTransport>& client);
 
     /**
      * Destructor.
