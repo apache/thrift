@@ -29,6 +29,10 @@
 
 #include <iostream>
 
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
+
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -1393,9 +1397,42 @@ bool TNonblockingIOThread::notify(TNonblockingServer::TConnection* conn) {
     return false;
   }
 
-  const int kSize = sizeof(conn);
-  if (send(fd, const_cast_sockopt(&conn), kSize, 0) != kSize) {
-    return false;
+  fd_set wfds, efds;
+  int ret = -1;
+  int kSize = sizeof(conn);
+  const char * pos = (const char *)const_cast_sockopt(&conn);
+
+  while (kSize > 0) {
+    FD_ZERO(&wfds);
+    FD_ZERO(&efds);
+    FD_SET(fd, &wfds);
+    FD_SET(fd, &efds);
+    ret = select(fd + 1, NULL, &wfds, &efds, NULL);
+    if (ret < 0) {
+      return false;
+    } else if (ret == 0) {
+      continue;
+    }
+
+    if (FD_ISSET(fd, &efds)) {
+      ::THRIFT_CLOSESOCKET(fd);
+      return false;
+    }
+
+    if (FD_ISSET(fd, &wfds)) {
+      ret = send(fd, pos, kSize, 0);
+      if (ret < 0) {
+        if (errno == EAGAIN) {
+          continue;
+        }
+
+        ::THRIFT_CLOSESOCKET(fd);
+        return false;
+      }
+
+      kSize -= ret;
+      pos += ret;
+    }
   }
 
   return true;
