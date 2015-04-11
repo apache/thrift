@@ -101,6 +101,10 @@ after a full test run, then repeatedly
     test/test.py --skip-known-failures
     test/test.py --update-expected-failures=merge
 
+to update the known failures, run
+
+    make fail
+
 ## Test executable specification
 
 ### Command line parameters

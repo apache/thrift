@@ -44,7 +44,11 @@ precross: all precross-test precross-lib
 
 # TODO: generate --server and --client switches from "--with(out)-..." build flags
 cross: precross
-	python test/test.py -s
+	$(PYTHON) test/test.py -s
+
+fail: precross
+	$(PYTHON) test/test.py
+	$(PYTHON) test/test.py --update-expected-failures=overwrite
 
 codespell_skip_files = \
 	*.jar \
