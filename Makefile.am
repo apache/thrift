@@ -46,9 +46,11 @@ precross: all precross-test precross-lib
 cross: precross
 	$(PYTHON) test/test.py -s
 
+TIMES = 1 2 3
 fail: precross
-	$(PYTHON) test/test.py
+	$(PYTHON) test/test.py || true
 	$(PYTHON) test/test.py --update-expected-failures=overwrite
+	$(foreach var,$(TIMES),test/test.py -s || true;test/test.py --update-expected-failures=merge;)
 
 codespell_skip_files = \
 	*.jar \
