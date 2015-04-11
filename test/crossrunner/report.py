@@ -82,9 +82,9 @@ class TestReporter(object):
     self._lock = multiprocessing.Lock()
 
   @classmethod
-  def test_logfile(cls, dir, test_name, prog_kind):
-    return os.path.realpath(os.path.join(
-      dir, 'log', '%s_%s.log' % (test_name, prog_kind)))
+  def test_logfile(cls, test_name, prog_kind, dir=None):
+    relpath = os.path.join('log', '%s_%s.log' % (test_name, prog_kind))
+    return relpath if not dir else os.path.realpath(os.path.join(dir, relpath))
 
   def _start(self):
     self._start_time = time.time()
@@ -113,7 +113,7 @@ class ExecReporter(TestReporter):
     super(ExecReporter, self).__init__()
     self._test = test
     self._prog = prog
-    self.logpath = self.test_logfile(testdir, test.name, prog.kind)
+    self.logpath = self.test_logfile(test.name, prog.kind, testdir)
     self.out = None
 
   def begin(self):
@@ -324,8 +324,8 @@ class SummaryReporter(TestReporter):
       test.as_expected,
       test.returncode,
       {
-        'server': self.test_logfile(test.testdir, test.name, test.server.kind),
-        'client': self.test_logfile(test.testdir, test.name, test.client.kind),
+        'server': self.test_logfile(test.name, test.server.kind),
+        'client': self.test_logfile(test.name, test.client.kind),
       },
     ]
 
@@ -346,7 +346,7 @@ class SummaryReporter(TestReporter):
       def add_prog_log(fp, test, prog_kind):
         fp.write('*************************** %s message ***************************\n'
                  % prog_kind)
-        path = self.test_logfile(self.testdir, test.name, prog_kind)
+        path = self.test_logfile(test.name, prog_kind, self.testdir)
         kwargs = {} if sys.version_info[0] < 3 else {'errors': 'replace'}
         with open(path, 'r', **kwargs) as prog_fp:
           fp.write(prog_fp.read())
