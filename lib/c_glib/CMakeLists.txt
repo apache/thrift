@@ -17,9 +17,6 @@
 # under the License.
 #
 
-
-cmake_minimum_required(VERSION 2.8)
-
 # Find required packages
 find_package(GLIB REQUIRED COMPONENTS gobject)
 include_directories(${GLIB_INCLUDE_DIRS})

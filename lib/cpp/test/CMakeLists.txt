@@ -17,7 +17,6 @@
 # under the License.
 #
 
-
 # Find required packages
 set(Boost_USE_STATIC_LIBS ON) # Force the use of static boost test framework
 find_package(Boost 1.53.0 REQUIRED COMPONENTS unit_test_framework)
@@ -236,7 +235,6 @@ add_test(NAME OpenSSLManualInitTest COMMAND OpenSSLManualInitTest)
 endif()
 
 if(WITH_QT4)
-cmake_minimum_required(VERSION 2.8.12)
 set(CMAKE_AUTOMOC ON)
 find_package(Qt4 REQUIRED COMPONENTS QtTest)
 set(TQTcpServerTest_SOURCES

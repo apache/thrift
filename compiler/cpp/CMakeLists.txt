@@ -17,9 +17,6 @@
 # under the License.
 #
 
-
-cmake_minimum_required(VERSION 2.8)
-
 # Windows has a different header
 if(MSVC)
     set(FLEX_FLAGS "--wincompat") # Don't use unistd.h on windows
@@ -52,7 +49,7 @@ set(libparse_SOURCES
 add_library(libparse STATIC ${libparse_SOURCES})
 
 # Create the thrift compiler
-set( thrift_SOURCES 
+set( thrift_SOURCES
     src/main.cc
     src/md5.c
     src/generate/t_generator.cc
