@@ -20,6 +20,7 @@
 #include <thrift/thrift-config.h>
 
 #include <cstring>
+#include <stdexcept>
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -95,6 +96,7 @@ TServerSocket::TServerSocket(int port)
     tcpRecvBuffer_(0),
     keepAlive_(false),
     interruptableChildren_(true),
+    listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
     childInterruptSockWriter_(THRIFT_INVALID_SOCKET)
@@ -113,6 +115,7 @@ TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout)
     tcpRecvBuffer_(0),
     keepAlive_(false),
     interruptableChildren_(true),
+    listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
     childInterruptSockWriter_(THRIFT_INVALID_SOCKET)
@@ -132,6 +135,7 @@ TServerSocket::TServerSocket(const string& address, int port)
     tcpRecvBuffer_(0),
     keepAlive_(false),
     interruptableChildren_(true),
+    listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
     childInterruptSockWriter_(THRIFT_INVALID_SOCKET)
@@ -151,6 +155,7 @@ TServerSocket::TServerSocket(const string& path)
     tcpRecvBuffer_(0),
     keepAlive_(false),
     interruptableChildren_(true),
+    listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
     childInterruptSockWriter_(THRIFT_INVALID_SOCKET)
@@ -193,10 +198,14 @@ void TServerSocket::setTcpRecvBuffer(int tcpRecvBuffer) {
 }
 
 void TServerSocket::setInterruptableChildren(bool enable) {
+  if (listening_) {
+    throw std::logic_error("setInterruptableChildren cannot be called after listen()");
+  }
   interruptableChildren_ = enable;
 }
 
 void TServerSocket::listen() {
+  listening_ = true;
 #ifdef _WIN32
   TWinsockSingleton::create();
 #endif // _WIN32
@@ -626,7 +635,9 @@ void TServerSocket::close() {
   interruptSockReader_ = THRIFT_INVALID_SOCKET;
   childInterruptSockWriter_ = THRIFT_INVALID_SOCKET;
   pChildInterruptSockReader_.reset();
+  listening_ = false;
 }
+
 }
 }
 } // apache::thrift::transport

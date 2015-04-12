@@ -50,6 +50,8 @@ target_link_libraries(testgencpp thrift)
 set(testgencpp_cob_SOURCES
     gen-cpp/ChildService.cpp
     gen-cpp/ChildService.h
+    gen-cpp/EmptyService.cpp
+    gen-cpp/EmptyService.h
     gen-cpp/ParentService.cpp
     gen-cpp/ParentService.h
     gen-cpp/proc_types.cpp
@@ -89,6 +91,14 @@ target_link_libraries(TSocketInterruptTest
     -lrt
 )
 add_test(NAME TSocketInterruptTest COMMAND TSocketInterruptTest)
+
+add_executable(TServerIntegrationTest TServerIntegrationTest.cpp)
+target_link_libraries(TServerIntegrationTest
+    testgencpp_cob
+    ${Boost_LIBRARIES}
+    -lrt
+)
+add_test(NAME TServerIntegrationTest COMMAND TServerIntegrationTest)
 
 if(WITH_ZLIB)
 add_executable(TransportTest TransportTest.cpp)

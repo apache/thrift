@@ -102,6 +102,13 @@ public:
 
   /**
    * Reads from the underlying socket.
+   * \returns the number of bytes read or 0 indicates EOF
+   * \throws TTransportException of types:
+   *           INTERRUPTED means the socket was interrupted
+   *                       out of a blocking call
+   *           NOT_OPEN means the socket has been closed
+   *           TIMED_OUT means the receive timeout expired
+   *           UNKNOWN means something unexpected happened
    */
   virtual uint32_t read(uint8_t* buf, uint32_t len);
 
