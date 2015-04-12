@@ -28,11 +28,13 @@
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransport.h>
-#include "gen-cpp/EmptyService.h"
+#include "gen-cpp/ParentService.h"
 #include "TestPortFixture.h"
 #include <vector>
 
+using apache::thrift::concurrency::Guard;
 using apache::thrift::concurrency::Monitor;
+using apache::thrift::concurrency::Mutex;
 using apache::thrift::concurrency::Synchronized;
 using apache::thrift::protocol::TBinaryProtocol;
 using apache::thrift::protocol::TBinaryProtocolFactory;
@@ -45,9 +47,9 @@ using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportFactory;
 using apache::thrift::server::TServerEventHandler;
 using apache::thrift::server::TThreadedServer;
-using thrift::test::debug::EmptyServiceClient;
-using thrift::test::debug::EmptyServiceIf;
-using thrift::test::debug::EmptyServiceProcessor;
+using apache::thrift::test::ParentServiceClient;
+using apache::thrift::test::ParentServiceIf;
+using apache::thrift::test::ParentServiceProcessor;
 
 /**
  * preServe runs after listen() is successful, when we can connect
@@ -79,13 +81,55 @@ private:
   uint64_t accepted_;
 };
 
+class ParentHandler : virtual public ParentServiceIf {
+public:
+  ParentHandler() : generation_(0) {}
+
+  int32_t incrementGeneration() {
+    Guard g(mutex_);
+    return ++generation_;
+  }
+
+  int32_t getGeneration() {
+    Guard g(mutex_);
+    return generation_;
+  }
+
+  void addString(const std::string& s) {
+    Guard g(mutex_);
+    strings_.push_back(s);
+  }
+
+  void getStrings(std::vector<std::string>& _return) {
+    Guard g(mutex_);
+    _return = strings_;
+  }
+
+  void getDataWait(std::string& _return, int32_t length) {
+  }
+
+  void onewayWait() {
+  }
+
+  void exceptionWait(const std::string& message) {
+  }
+
+  void unexpectedExceptionWait(const std::string& message) {
+  }
+
+protected:
+  Mutex mutex_;
+  int32_t generation_;
+  std::vector<std::string> strings_;
+};
+
 class TServerIntegrationTestFixture : public TestPortFixture
 {
 public:
   TServerIntegrationTestFixture() :
       pServer(new TThreadedServer(
-                    boost::shared_ptr<EmptyServiceProcessor>(new EmptyServiceProcessor(
-                            boost::shared_ptr<EmptyServiceIf>(new EmptyServiceIf))),
+                    boost::shared_ptr<ParentServiceProcessor>(new ParentServiceProcessor(
+                            boost::shared_ptr<ParentServiceIf>(new ParentHandler))),
                     boost::shared_ptr<TServerTransport>(new TServerSocket("localhost", m_serverPort)),
                     boost::shared_ptr<TTransportFactory>(new TTransportFactory),
                     boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory))),
@@ -138,11 +182,26 @@ public:
 
 BOOST_FIXTURE_TEST_SUITE ( TServerIntegrationTest, TServerIntegrationTestFixture )
 
+BOOST_AUTO_TEST_CASE(test_execute_one_request_and_close)
+{
+    // this test establishes some basic sanity
+
+    startServer();
+    boost::shared_ptr<TSocket> pClientSock1(new TSocket("localhost", m_serverPort));
+    boost::shared_ptr<TProtocol> pClientProtocol1(new TBinaryProtocol(pClientSock1));
+    ParentServiceClient client1(pClientProtocol1);
+    pClientSock1->open();
+    client1.incrementGeneration();
+    pClientSock1->close();
+    stopServer();
+}
+
 BOOST_AUTO_TEST_CASE(test_stop_with_interruptable_clients_connected)
 {
+    // This tests THRIFT-2441 new behavior: stopping the server disconnects clients
+
     startServer();
 
-    // This tests THRIFT-2441 new behavior: stopping the server disconnects clients
     boost::shared_ptr<TSocket> pClientSock1(new TSocket("localhost", m_serverPort));
     pClientSock1->open();
 
@@ -168,6 +227,7 @@ BOOST_AUTO_TEST_CASE(test_stop_with_uninterruptable_clients_connected)
 {
     // This tests pre-THRIFT-2441 behavior: stopping the server blocks until clients
     // disconnect.
+
     boost::dynamic_pointer_cast<TServerSocket>(pServer->getServerTransport())->
             setInterruptableChildren(false);    // returns to pre-THRIFT-2441 behavior
     startServer();
