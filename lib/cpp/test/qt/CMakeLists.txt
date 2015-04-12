@@ -17,6 +17,9 @@
 # under the License.
 #
 
+
+cmake_minimum_required(VERSION 2.8.12)
+
 set(CMAKE_AUTOMOC ON)
 find_package(Qt5 REQUIRED COMPONENTS Test)
 set(TQTcpServerTest_Qt5_SOURCES
@@ -25,3 +28,4 @@ set(TQTcpServerTest_Qt5_SOURCES
 add_executable(TQTcpServerTest_Qt5 ${TQTcpServerTest_Qt5_SOURCES})
 target_link_libraries(TQTcpServerTest_Qt5 testgencpp_cob thriftqt5 thrift Qt5::Test)
 add_test(NAME TQTcpServerTest_Qt5 COMMAND TQTcpServerTest_Qt5)
+
