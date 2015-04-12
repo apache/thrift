@@ -95,6 +95,14 @@ BOOST_AUTO_TEST_CASE( test_non_interruptable_child_read )
     sock1.close();
 }
 
+BOOST_AUTO_TEST_CASE( test_cannot_change_after_listen )
+{
+    TServerSocket sock1("localhost", m_serverPort);
+    sock1.listen();
+    BOOST_CHECK_THROW(sock1.setInterruptableChildren(false), std::logic_error);
+    sock1.close();
+}
+
 void peekerWorker(boost::shared_ptr<TTransport> tt, bool expectedResult)
 {
     BOOST_CHECK_EQUAL(expectedResult, tt->peek());

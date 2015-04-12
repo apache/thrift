@@ -585,28 +585,8 @@ try_again:
       goto try_again;
     }
 
-#if defined __FreeBSD__ || defined __MACH__
     if (errno_copy == THRIFT_ECONNRESET) {
-      /* shigin: freebsd doesn't follow POSIX semantic of recv and fails with
-       * THRIFT_ECONNRESET if peer performed shutdown
-       * edhall: eliminated close() since we do that in the destructor.
-       */
       return 0;
-    }
-#endif
-
-#ifdef _WIN32
-    if (errno_copy == WSAECONNRESET) {
-      return 0; // EOF
-    }
-#endif
-
-    // Now it's not a try again case, but a real probblez
-    GlobalOutput.perror("TSocket::read() recv() " + getSocketInfo(), errno_copy);
-
-    // If we disconnect with no linger time
-    if (errno_copy == THRIFT_ECONNRESET) {
-      throw TTransportException(TTransportException::NOT_OPEN, "THRIFT_ECONNRESET");
     }
 
     // This ish isn't open
@@ -618,6 +598,9 @@ try_again:
     if (errno_copy == THRIFT_ETIMEDOUT) {
       throw TTransportException(TTransportException::TIMED_OUT, "THRIFT_ETIMEDOUT");
     }
+
+    // Now it's not a try again case, but a real probblez
+    GlobalOutput.perror("TSocket::read() recv() " + getSocketInfo(), errno_copy);
 
     // Some other error, whatevz
     throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);

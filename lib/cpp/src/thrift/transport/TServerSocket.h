@@ -105,14 +105,12 @@ public:
   // This is more expensive in terms of system calls (poll + recv) however
   // ensures a connected client cannot interfere with TServer::stop().
   //
-  // Changing this setting applies to the next accepted socket.
-  // It is recommended if the default behavior is not desired, this should
-  // be set before calling listen() so all child TSockets behave the same way.
-  // See Apache Jira THRIFT-2441 for additional background.
-  //
-  // If disabled, TSocket children do not incur an additional poll() call.
+  // When disabled, TSocket children do not incur an additional poll() call.
   // Server-side reads are more efficient, however a client can interfere with
   // the server's ability to shutdown properly by staying connected.
+  //
+  // Must be called before listen(); mode cannot be switched after that.
+  // \throws std::logic_error if listen() has been called
   void setInterruptableChildren(bool enable);
 
   int getPort();
@@ -143,6 +141,7 @@ private:
   int tcpRecvBuffer_;
   bool keepAlive_;
   bool interruptableChildren_;
+  bool listening_;
 
   THRIFT_SOCKET interruptSockWriter_;                          // is notified on interrupt()
   THRIFT_SOCKET interruptSockReader_;                          // is used in select/poll with serverSocket_ for interruptability

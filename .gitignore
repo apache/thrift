@@ -98,6 +98,7 @@ test-driver
 /lib/cpp/test/TFileTransportTest
 /lib/cpp/test/TNonblockingServerTest
 /lib/cpp/test/TPipedTransportTest
+/lib/cpp/test/TServerIntegrationTest
 /lib/cpp/test/TSocketInterruptTest
 /lib/cpp/test/TransportTest
 /lib/cpp/test/UnitTests
