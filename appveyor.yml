@@ -30,7 +30,7 @@ environment:
   BOOST_ROOT: c:\Libraries\boost
   BOOST_LIBRARYDIR: c:\Libraries\boost\stage\lib
 
-  install:
+install:
 - cinst cmake
 - cinst nsis
 - cinst ant
@@ -49,5 +49,5 @@ build_script:
 - cmake --build . --config Release
 - cpack
 
-TODO enable testing
-TODO make it perfect ;-r
+#TODO enable testing
+#TODO make it perfect ;-r
