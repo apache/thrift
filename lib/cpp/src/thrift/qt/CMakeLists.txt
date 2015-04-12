@@ -17,6 +17,9 @@
 # under the License.
 #
 
+
+cmake_minimum_required(VERSION 2.8.12)
+
 set( thriftcppqt5_SOURCES
     TQIODeviceTransport.cpp
     TQTcpServer.cpp

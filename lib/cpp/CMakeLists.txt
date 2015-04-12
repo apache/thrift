@@ -17,6 +17,9 @@
 # under the License.
 #
 
+
+cmake_minimum_required(VERSION 2.8)
+
 # Find required packages
 if(WITH_BOOSTTHREADS)
   find_package(Boost 1.53.0 REQUIRED COMPONENTS system thread)
@@ -170,6 +173,7 @@ if(WITH_ZLIB)
 endif()
 
 if(WITH_QT4)
+    cmake_minimum_required(VERSION 2.8.12)
     set(CMAKE_AUTOMOC ON)
     find_package(Qt4 REQUIRED COMPONENTS QtCore QtNetwork)
     ADD_LIBRARY_THRIFT(thriftqt ${thriftcppqt_SOURCES})
