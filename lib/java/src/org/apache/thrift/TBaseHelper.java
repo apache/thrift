@@ -28,6 +28,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.Collection;
 
 public final class TBaseHelper {
 
@@ -217,6 +218,25 @@ public final class TBaseHelper {
         return compareTo((byte[])oA, (byte[])oB);
       } else {
         return compareTo((Comparable)oA, (Comparable)oB);
+      }
+    }
+  }
+
+  public static void toString(Collection<ByteBuffer> bbs, StringBuilder sb) {
+    Iterator<ByteBuffer> it = bbs.iterator();
+    if (!it.hasNext()) {
+      sb.append("[]");
+    } else {
+      sb.append("[");
+      while (true) {
+        ByteBuffer bb = it.next();
+        org.apache.thrift.TBaseHelper.toString(bb, sb);
+        if (!it.hasNext()) {
+          sb.append("]");
+          return;
+        } else {
+          sb.append(", ");
+        }
       }
     }
   }
