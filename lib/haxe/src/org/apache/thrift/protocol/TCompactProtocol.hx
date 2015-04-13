@@ -389,12 +389,20 @@ class TCompactProtocol implements TProtocol {
         {
             if( Int64.isZero( Int64.and( n, Int64.neg(Int64.make(0,0x7F)))))
             {
+                #if( haxe_ver < 3.2)
                 varint64out.addByte( Int64.getLow(n));
+                #else
+                varint64out.addByte( n.low);
+                #end
                 break;
             }
             else
             {
+                #if ( haxe_ver < 3.2)
                 varint64out.addByte( (Int64.getLow(n) & 0x7F) | 0x80);
+                #else
+                varint64out.addByte( (n.low & 0x7F) | 0x80);
+                #end
                 n = Int64.shr( n, 7);
                 n = Int64.and( n, Int64.make(0x01FFFFFF,0xFFFFFFFF));  // clean out the shifted 7 bits
             }

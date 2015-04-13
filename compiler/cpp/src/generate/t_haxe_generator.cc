@@ -200,7 +200,7 @@ public:
       t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
       switch (tbase) {
       case t_base_type::TYPE_STRING:
-      case t_base_type::TYPE_I64:
+      //case t_base_type::TYPE_I64:  - Int64 is not really nullable, even though it behaved that way before Haxe 3.2.0
         return true;
       default:
         return false;

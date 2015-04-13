@@ -61,6 +61,10 @@ find_package(Threads)
 include(CTest)
 if(BUILD_TESTING)
   message(STATUS "Building with unittests")
+
+  enable_testing()
+  # Define "make check" as alias for "make test"
+  add_custom_target(check COMMAND ctest)
 else ()
   message(STATUS "Building without tests")
 endif ()
@@ -70,6 +74,9 @@ endif()
 
 if(WITH_CPP)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp)
+    if(BUILD_TESTING)
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/cpp)
+    endif()
 endif()
 
 if(WITH_C_GLIB)
@@ -78,6 +85,10 @@ endif()
 
 if(WITH_JAVA)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/java)
+endif()
+
+if(WITH_PYTHON)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/py)
 endif()
 
 PRINT_CONFIG_SUMMARY()

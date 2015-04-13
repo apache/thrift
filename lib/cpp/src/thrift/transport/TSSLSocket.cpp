@@ -244,9 +244,6 @@ void TSSLSocket::open() {
 void TSSLSocket::close() {
   if (ssl_ != NULL) {
     int rc = SSL_shutdown(ssl_);
-    if (rc == 0) {
-      rc = SSL_shutdown(ssl_);
-    }
     if (rc < 0) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       string errors;

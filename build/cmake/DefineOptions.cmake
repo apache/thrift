@@ -71,7 +71,12 @@ CMAKE_DEPENDENT_OPTION(WITH_C_GLIB "Build C (GLib) library" ON
 find_package(Java QUIET)
 find_package(Ant QUIET)
 CMAKE_DEPENDENT_OPTION(WITH_JAVA "Build Java library" ON
-                       "BUILD_LIBRARIES;JAVA_FOUND;Ant_FOUND" OFF)
+                       "BUILD_LIBRARIES;JAVA_FOUND;ANT_FOUND" OFF)
+
+# Python
+include(FindPythonInterp QUIET)
+CMAKE_DEPENDENT_OPTION(WITH_PYTHON "Build Python library" ON
+                       "BUILD_LIBRARIES;PYTHONINTERP_FOUND" OFF)
 
 # Common library options
 option(WITH_SHARED_LIB "Build shared libraries" ON)
@@ -92,11 +97,12 @@ message(STATUS "Build configuration Summary")
 message(STATUS "  Build Thrift compiler:              ${BUILD_COMPILER}")
 message(STATUS "  Build with unit tests:              ${BUILD_TESTING}")
 message(STATUS "  Build examples:                     ${BUILD_EXAMPLES}")
-message(STATUS "  Build Thrfit libraries:             ${BUILD_LIBRARIES}")
+message(STATUS "  Build Thrift libraries:             ${BUILD_LIBRARIES}")
 message(STATUS " Language libraries:")
 message(STATUS "  Build C++ library:                  ${WITH_CPP}")
 message(STATUS "  Build C (GLib) library:             ${WITH_C_GLIB}")
 message(STATUS "  Build Java library:                 ${WITH_JAVA}")
+message(STATUS "  Build Python library:               ${WITH_PYTHON}")
 message(STATUS " Library features:")
 message(STATUS "  Build shared libraries:             ${WITH_SHARED_LIB}")
 message(STATUS "  Build static libraries:             ${WITH_STATIC_LIB}")

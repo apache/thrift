@@ -1805,7 +1805,7 @@ void t_c_glib_generator::generate_service_handler(t_service* tservice) {
     indent(f_service_) << function_signature(&implementing_function) << endl;
     scope_up(f_service_);
     f_service_ << indent() << "g_return_val_if_fail (" << this->nspace_uc << "IS_" << service_name_uc
-               << "_HANDLER (iface), 0);" << endl << endl << indent() << class_name_uc
+               << "_HANDLER (iface), FALSE);" << endl << endl << indent() << "return " << class_name_uc
                << "_GET_CLASS (iface)"
                << "->" << method_name << " (iface, ";
 
