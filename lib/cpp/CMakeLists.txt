@@ -104,7 +104,6 @@ endif()
 
 # WITH_*THREADS selects which threading library to use
 if(WITH_BOOSTTHREADS)
-    add_definitions("-DUSE_BOOST_THREAD=1")
     set( thriftcpp_threads_SOURCES
         src/thrift/concurrency/BoostThreadFactory.cpp
         src/thrift/concurrency/BoostMonitor.cpp
@@ -119,7 +118,6 @@ elseif(UNIX AND NOT WITH_STDTHREADS)
         src/thrift/concurrency/Monitor.cpp
     )
 else()
-    add_definitions("-DUSE_STD_THREAD=1")
     if(UNIX)
         # need pthread for multi-thread support
         list(APPEND SYSLIBS pthread)

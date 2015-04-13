@@ -56,7 +56,17 @@ if(MSVC)
     else(WITH_MT)
         set(STATIC_POSTFIX "md" CACHE STRING "Set static library postfix" FORCE)
     endif(WITH_MT)
-endif(MSVC)
+
+elseif(UNIX)
+  # For UNIX
+  # WITH_*THREADS selects which threading library to use
+  if(WITH_BOOSTTHREADS)
+    add_definitions("-DUSE_BOOST_THREAD=1")
+  elseif(WITH_STDTHREADS)
+    add_definitions("-DUSE_STD_THREAD=1")
+  endif()
+
+endif()
 
 # GCC Specific
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
