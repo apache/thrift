@@ -17,9 +17,6 @@
 # under the License.
 #
 
-
-cmake_minimum_required(VERSION 2.8.12)
-
 set(CMAKE_AUTOMOC ON)
 find_package(Qt5 REQUIRED COMPONENTS Test)
 set(TQTcpServerTest_Qt5_SOURCES
