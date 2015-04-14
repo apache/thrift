@@ -192,9 +192,14 @@ void TServerSocket::listen() {
     intSock2_ = sv[0];
   }
 
+  // Validate port number
+  if (port_ < 0 || port_ > 0xFFFF) {
+    throw TTransportException(TTransportException::BAD_ARGS, "Specified port is invalid");
+  }
+
   struct addrinfo hints, *res, *res0;
   int error;
-  char port[sizeof("65536") + 1];
+  char port[sizeof("65535")];
   std::memset(&hints, 0, sizeof(hints));
   hints.ai_family = PF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
