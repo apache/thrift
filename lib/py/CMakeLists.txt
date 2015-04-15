@@ -17,6 +17,8 @@
 # under the License.
 #
 
+include_directories(${PYTHON_INCLUDE_DIRS})
+
 add_custom_target(python_build ALL
     COMMAND ${PYTHON_EXECUTABLE} setup.py build
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

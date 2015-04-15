@@ -24,7 +24,7 @@ include(CMakeDependentOption)
 option(BUILD_COMPILER "Build Thrift compiler" ON)
 option(BUILD_TESTING "Build with unit tests" ON)
 option(BUILD_EXAMPLES "Build examples" ON)
-option(BUILD_LIBRARIES "Build Thrfit libraries" ON)
+option(BUILD_LIBRARIES "Build Thrift libraries" ON)
 
 # Libraries to build
 
@@ -74,9 +74,10 @@ CMAKE_DEPENDENT_OPTION(WITH_JAVA "Build Java library" ON
                        "BUILD_LIBRARIES;JAVA_FOUND;ANT_FOUND" OFF)
 
 # Python
-include(FindPythonInterp QUIET)
+include(FindPythonInterp QUIET) # for Python executable
+include(FindPythonLibs QUIET) # for Python.h
 CMAKE_DEPENDENT_OPTION(WITH_PYTHON "Build Python library" ON
-                       "BUILD_LIBRARIES;PYTHONINTERP_FOUND" OFF)
+                       "BUILD_LIBRARIES;PYTHONLIBS_FOUND" OFF)
 
 # Common library options
 option(WITH_SHARED_LIB "Build shared libraries" ON)
