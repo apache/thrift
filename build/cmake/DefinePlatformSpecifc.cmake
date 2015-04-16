@@ -68,8 +68,14 @@ elseif(UNIX)
 
 endif()
 
-# GCC Specific
-if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-  # TODO: -pedantic can not be used at the moment because of: https://issues.apache.org/jira/browse/THRIFT-2784
+# GCC and Clang.
+if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # FIXME -pedantic can not be used at the moment because of: https://issues.apache.org/jira/browse/THRIFT-2784
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -Wall -Wextra -pedantic")
+  # FIXME enabling c++11 breaks some Linux builds on Travis by triggering a g++ bug, see
+  # https://travis-ci.org/apache/thrift/jobs/58017022
+  # on the other hand, both MacOSX and FreeBSD need c++11
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -Wall -Wextra")
+  endif()
 endif()
