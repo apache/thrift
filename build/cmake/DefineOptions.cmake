@@ -39,7 +39,7 @@ CMAKE_DEPENDENT_OPTION(WITH_CPP "Build C++ library" ON
                        "BUILD_LIBRARIES;Boost_FOUND" OFF)
 # NOTE: Currently the following options are C++ specific,
 # but in future other libraries might reuse them.
-# So they are not dependent on WIHT_CPP but setting them without WITH_CPP currently
+# So they are not dependent on WITH_CPP but setting them without WITH_CPP currently
 # has no effect.
 find_package(ZLIB QUIET)
 CMAKE_DEPENDENT_OPTION(WITH_ZLIB "Build with ZLIB support" ON

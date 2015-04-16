@@ -23,6 +23,8 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 set(TEST_PREFIX "c_glib")
 
+include_directories(${Boost_INCLUDE_DIRS})
+
 # Create the thrift C++ test library
 set(testgenc_SOURCES
     gen-c_glib/t_test_debug_proto_test_types.c

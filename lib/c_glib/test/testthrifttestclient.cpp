@@ -591,11 +591,11 @@ main (int argc, char **argv)
 
   if (pid == 0) /* child */
   {
-    shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
-    shared_ptr<TestHandler> testHandler(new TestHandler());
-    shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
-    shared_ptr<TServerSocket> serverSocket(new TServerSocket(TEST_PORT));
-    shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+    boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+    boost::shared_ptr<TestHandler> testHandler(new TestHandler());
+    boost::shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
+    boost::shared_ptr<TServerSocket> serverSocket(new TServerSocket(TEST_PORT));
+    boost::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
     TSimpleServer simpleServer(testProcessor, serverSocket, transportFactory, protocolFactory);
     signal (SIGALRM, bailout);
     alarm (60);
