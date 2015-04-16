@@ -128,11 +128,25 @@ public class TThreadPoolServer extends TServer {
   private static ExecutorService createDefaultExecutorService(Args args) {
     SynchronousQueue<Runnable> executorQueue =
       new SynchronousQueue<Runnable>();
+    RejectedExecutionHandler loggingHandler = new RejectedExecutionHandler() {
+	    @Override
+	    public void rejectedExecution(Runnable r,
+			    ThreadPoolExecutor executor) {
+		    LOGGER.error("Executing Task  Failed ...");
+	    }
+    }
+    //return new ThreadPoolExecutor(args.minWorkerThreads,
+    //                              args.maxWorkerThreads,
+    //                              60,
+    //                              TimeUnit.SECONDS,
+    //                              executorQueue);
     return new ThreadPoolExecutor(args.minWorkerThreads,
-                                  args.maxWorkerThreads,
-                                  60,
-                                  TimeUnit.SECONDS,
-                                  executorQueue);
+		                  args.maxWorkerThreads,
+				  60,
+				  TimeUnit.SECONDS,
+				  executorQueue,
+				  loggingHandler);
+
   }
 
 
