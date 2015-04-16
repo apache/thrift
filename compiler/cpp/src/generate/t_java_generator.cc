@@ -2420,17 +2420,17 @@ void t_java_generator::generate_java_struct_tostring(ofstream& out, t_struct* ts
       indent_up();
     }
 
-    if (field->get_type()->is_base_type() && ((t_base_type*)(field->get_type()))->is_binary()) {
+    if (get_true_type(field->get_type())->is_base_type() && ((t_base_type*)(get_true_type(field->get_type())))->is_binary()) {
       indent(out) << "org.apache.thrift.TBaseHelper.toString(this." << field->get_name() << ", sb);"
                   << endl;
     } else if ((field->get_type()->is_set()) &&
-               (((t_set*) field->get_type())->get_elem_type()->is_base_type()) &&
-               (((t_base_type*) ((t_set*) field->get_type())->get_elem_type())->is_binary())) {
+               (get_true_type(((t_set*) field->get_type())->get_elem_type())->is_base_type()) &&
+               (((t_base_type*) get_true_type(((t_set*) field->get_type())->get_elem_type()))->is_binary())) {
       indent(out) << "org.apache.thrift.TBaseHelper.toString(this." << field->get_name() << ", sb);"
                   << endl;
     } else if ((field->get_type()->is_list()) &&
-               (((t_list*) field->get_type())->get_elem_type()->is_base_type()) &&
-               (((t_base_type*) ((t_list*) field->get_type())->get_elem_type())->is_binary())) {
+               (get_true_type(((t_list*) field->get_type())->get_elem_type())->is_base_type()) &&
+               (((t_base_type*) get_true_type(((t_list*) field->get_type())->get_elem_type()))->is_binary())) {
       indent(out) << "org.apache.thrift.TBaseHelper.toString(this." << field->get_name() << ", sb);"
                   << endl;
     } else {
