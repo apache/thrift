@@ -118,9 +118,11 @@ class TBinaryProtocol(TProtocolBase):
     buff = pack("!d", dub)
     self.trans.write(buff)
 
-  def writeString(self, str):
-    self.writeI32(len(str))
-    self.trans.write(str)
+  def writeString(self, msg):
+    if not isinstance(msg, bytes):
+      msg = msg.encode("utf8")
+    self.writeI32(len(msg))
+    self.trans.write(msg)
 
   def readMessageBegin(self):
     sz = self.readI32()
@@ -220,6 +222,8 @@ class TBinaryProtocol(TProtocolBase):
   def readString(self):
     len = self.readI32()
     str = self.trans.readAll(len)
+    if not isinstance(str, bytes):
+      str = unicode(str, "utf8")
     return str
 
 
