@@ -105,7 +105,7 @@ buildJSONValue (TList ty entries) =
    else mempty) <>
   B.char8 ']'
 buildJSONValue (TSet ty entries) = buildJSONValue (TList ty entries)
-buildJSONValue (TBool b) = if b then B.string8 "true" else B.string8 "false"
+buildJSONValue (TBool b) = buildShowable $ if b then 1 else 0
 buildJSONValue (TByte b) = buildShowable b
 buildJSONValue (TI16 i) = buildShowable i
 buildJSONValue (TI32 i) = buildShowable i
@@ -115,9 +115,9 @@ buildJSONValue (TString s) = B.char8 '\"' <> escape s <> B.char8 '\"'
 
 buildJSONStruct :: Map.HashMap Int16 (LT.Text, ThriftVal) -> Builder
 buildJSONStruct = mconcat . intersperse (B.char8 ',') . Map.foldrWithKey buildField []
-  where 
+  where
     buildField fid (_,val) = (:) $
-      B.char8 '"' <> buildShowable fid <> B.string8 "\":" <> 
+      B.char8 '"' <> buildShowable fid <> B.string8 "\":" <>
       B.char8 '{' <>
       B.char8 '"' <> getTypeName (getTypeOf val) <> B.string8 "\":" <>
       buildJSONValue val <>
@@ -158,7 +158,7 @@ parseJSONValue (T_SET ty) = fmap (TSet ty) $
            lexeme decimal <* lexeme (PC.char8 ',')
     if len > 0 then parseJSONList ty else return []
 parseJSONValue T_BOOL =
-  (TBool True <$ string "true") <|> (TBool False <$ string "false")
+  (TBool True <$ string "1") <|> (TBool False <$ string "0")
 parseJSONValue T_BYTE = TByte <$> signed decimal
 parseJSONValue T_I16 = TI16 <$> signed decimal
 parseJSONValue T_I32 = TI32 <$> signed decimal
@@ -322,4 +322,3 @@ getTypeName ty = B.string8 $ case ty of
   T_DOUBLE   -> "dbl"
   T_STRING   -> "str"
   _ -> error "Unrecognized Type"
-
