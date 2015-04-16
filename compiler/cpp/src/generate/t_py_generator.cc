@@ -735,7 +735,15 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
   indent_up();
   indent(out) << "value = 17" << endl; // PYTHONHASHSEED would be better, but requires Python 3.2.3
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    indent(out) << "value = (value * 31) ^ hash(self." << (*m_iter)->get_name() + ")" << endl;
+    t_type* type = (*m_iter)->get_type();
+
+    if (type->is_map()) {
+      indent(out) << "value = (value * 31) ^ hash(frozenset(self." << (*m_iter)->get_name() + ".iteritems()))" << endl;
+    } else if (type->is_set()) {
+      indent(out) << "value = (value * 31) ^ hash(frozenset(self." << (*m_iter)->get_name() + "))" << endl;
+    } else {
+      indent(out) << "value = (value * 31) ^ hash(self." << (*m_iter)->get_name() + ")" << endl;
+    }
   }
   indent(out) << "return value" << endl;
   indent_down();
