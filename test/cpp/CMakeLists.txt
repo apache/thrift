@@ -31,6 +31,7 @@ set(crosstestgencpp_SOURCES
     gen-cpp/ThriftTest.cpp
     gen-cpp/ThriftTest_types.cpp
     gen-cpp/ThriftTest_constants.cpp
+    src/ThriftTest_extras.cpp
 )
 add_library(crosstestgencpp STATIC ${crosstestgencpp_SOURCES})
 target_link_libraries(crosstestgencpp thrift)
