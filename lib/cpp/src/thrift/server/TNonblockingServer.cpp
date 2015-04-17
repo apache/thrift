@@ -1106,7 +1106,7 @@ void TNonblockingServer::listenSocket(THRIFT_SOCKET s) {
 
   if (!port_) {
     sockaddr_in addr;
-    unsigned int size = sizeof(addr);
+    socklen_t size = sizeof(addr);
     if (!getsockname(serverSocket_, reinterpret_cast<sockaddr*>(&addr), &size)) {
       listenPort_ = ntohs(addr.sin_port);
     } else {
