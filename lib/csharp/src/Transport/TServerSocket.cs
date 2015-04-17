@@ -23,6 +23,7 @@
 
 using System;
 using System.Net.Sockets;
+using System.Reflection;
 
 
 namespace Thrift.Transport
@@ -53,7 +54,7 @@ namespace Thrift.Transport
          * Creates a server socket from underlying socket object
          */
         public TServerSocket(TcpListener listener)
-            :this(listener, 0)
+            : this(listener, 0)
         {
         }
 
@@ -78,7 +79,7 @@ namespace Thrift.Transport
          * Creates just a port listening server socket
          */
         public TServerSocket(int port, int clientTimeout)
-            :this(port, clientTimeout, false)
+            : this(port, clientTimeout, false)
         {
         }
 
@@ -90,8 +91,8 @@ namespace Thrift.Transport
             try
             {
                 // Make server socket
-                server = new TcpListener(System.Net.IPAddress.Any, this.port);
-                server.Server.NoDelay = true;
+                this.server = TSocketVersionizer.CreateTcpListener(port);
+                this.server.Server.NoDelay = true;
             }
             catch (Exception)
             {
