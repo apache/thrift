@@ -156,7 +156,7 @@ if(WITH_LIBEVENT)
     include_directories(SYSTEM ${LIBEVENT_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftnb ${thriftcppnb_SOURCES})
-    TARGET_LINK_LIBRARIES_THRIFT(thriftnb ${SYSLIBS} ${LIBEVENT_LIBRARIES})
+    TARGET_LINK_LIBRARIES_THRIFT(thriftnb thrift ${SYSLIBS} ${LIBEVENT_LIBRARIES})
 endif()
 
 if(WITH_ZLIB)
@@ -164,14 +164,14 @@ if(WITH_ZLIB)
     include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftz ${thriftcppz_SOURCES})
-    TARGET_LINK_LIBRARIES_THRIFT(thriftz ${SYSLIBS} ${ZLIB_LIBRARIES})
+    TARGET_LINK_LIBRARIES_THRIFT(thriftz thrift ${SYSLIBS} ${ZLIB_LIBRARIES})
 endif()
 
 if(WITH_QT4)
     set(CMAKE_AUTOMOC ON)
     find_package(Qt4 REQUIRED COMPONENTS QtCore QtNetwork)
     ADD_LIBRARY_THRIFT(thriftqt ${thriftcppqt_SOURCES})
-    TARGET_LINK_LIBRARIES_THRIFT(thriftqt ${SYSLIBS} Qt4::QtCore Qt4::QtNetwork)
+    TARGET_LINK_LIBRARIES_THRIFT(thriftqt thrift ${SYSLIBS} Qt4::QtCore Qt4::QtNetwork)
 endif()
 
 if(WITH_QT5)
