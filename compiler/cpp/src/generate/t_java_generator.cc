@@ -1874,9 +1874,12 @@ void t_java_generator::generate_java_struct_equality(ofstream& out, t_struct* ts
   scope_down(out);
   out << endl;
 
+  const int MUL = 31; // HashCode multiplier
+  const int B_YES = 1231;
+  const int B_NO = 1237;
   out << indent() << "@Override" << endl << indent() << "public int hashCode() {" << endl;
   indent_up();
-  indent(out) << "List<Object> list = new ArrayList<Object>();" << endl;
+  indent(out) << "int hashCode = 1;" << endl;
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     out << endl;
@@ -1889,21 +1892,60 @@ void t_java_generator::generate_java_struct_equality(ofstream& out, t_struct* ts
     string present = "true";
 
     if (is_optional || can_be_null) {
+      indent(out) << "hashCode = hashCode * " << MUL << " + ((" << generate_isset_check(*m_iter)
+                  << ") ? " << B_YES << " : " << B_NO << ");" << endl;
       present += " && (" + generate_isset_check(*m_iter) + ")";
+    } else {
+      indent(out) << "hashCode = hashCode * " << MUL << " + " << B_YES << ";" << endl;
     }
 
-    indent(out) << "boolean present_" << name << " = " << present << ";" << endl;
-    indent(out) << "list.add(present_" << name << ");" << endl;
-    indent(out) << "if (present_" << name << ")" << endl;
+    if (is_optional || can_be_null) {
+      indent(out) << "boolean present_" << name << " = " << present << ";" << endl;
+      indent(out) << "if (present_" << name << ")" << endl;
+      indent_up();
+    }
+
     if (t->is_enum()) {
-      indent(out) << "  list.add(" << name << ".getValue());" << endl;
+      indent(out) << "hashCode = hashCode * " << MUL << " + " << name << ".getValue();" << endl;
+    } else if (t->is_base_type()) {
+      switch(((t_base_type*)t)->get_base()) {
+        case t_base_type::TYPE_VOID:
+          break;
+        case t_base_type::TYPE_STRING:
+          indent(out) << "hashCode = hashCode * " << MUL << " + " << name << ".hashCode();" << endl;
+          break;
+        case t_base_type::TYPE_BOOL:
+          indent(out) << "hashCode = hashCode * " << MUL << " + ((" << name << ") ? "
+                      << B_YES << " : " << B_NO << ");" << endl;
+          break;
+        case t_base_type::TYPE_BYTE:
+          indent(out) << "hashCode = hashCode * " << MUL << " + org.apache.thrift.TBaseHelper.hashCode(" << name << ");" << endl;
+          break;
+        case t_base_type::TYPE_I16:
+        case t_base_type::TYPE_I32:
+          indent(out) << "hashCode = hashCode * " << MUL << " + " << name << ";" << endl;
+          break;
+        case t_base_type::TYPE_I64:
+          indent(out) << "hashCode = hashCode * " << MUL << " + org.apache.thrift.TBaseHelper.hashCode(" << name << ");" << endl;
+          break;
+        case t_base_type::TYPE_DOUBLE:
+          indent(out) << "hashCode = hashCode * " << MUL << " + org.apache.thrift.TBaseHelper.hashCode(" << name << ");" << endl;
+          break;
+        default:
+          throw "compiler error: the following base type has no hashcode generator: " +
+                 t_base_type::t_base_name(((t_base_type*)t)->get_base());
+      }
     } else {
-      indent(out) << "  list.add(" << name << ");" << endl;
+      indent(out) << "hashCode = hashCode * " << MUL << " + " << name << ".hashCode();" << endl;
+    }
+
+    if (is_optional || can_be_null) {
+      indent_down();
     }
   }
 
   out << endl;
-  indent(out) << "return list.hashCode();" << endl;
+  indent(out) << "return hashCode;" << endl;
   indent_down();
   indent(out) << "}" << endl << endl;
 }
