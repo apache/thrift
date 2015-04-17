@@ -85,7 +85,7 @@ enum
     
     if (self != nil)
     {
-        lastField = [NSMutableArray array];
+        lastField = [[NSMutableArray alloc] init];
     }
     
     return self;
@@ -118,7 +118,12 @@ enum
 
 -(void)dealloc
 {
+    [lastField release_stub];
     [mTransport release_stub];
+    [boolFieldName release_stub];
+    [boolFieldType release_stub];
+    [boolFieldId release_stub];
+    [booleanValue release_stub];
     [super dealloc_stub];
 }
 
