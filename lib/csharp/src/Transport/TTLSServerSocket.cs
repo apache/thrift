@@ -115,8 +115,8 @@ namespace Thrift.Transport
             try
             {
                 // Create server socket
-                server = new TcpListener(System.Net.IPAddress.Any, this.port);
-                server.Server.NoDelay = true;
+				this.server = SocketVersionizer.CreateTcpListener(port);
+                this.server.Server.NoDelay = true;
             }
             catch (Exception)
             {
