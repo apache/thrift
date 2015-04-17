@@ -55,7 +55,7 @@ namespace Thrift.Transport
             }
             catch( IOException)
             {
-                return false;  
+                return false;
             }
 
             _hasPeekByte = true;
