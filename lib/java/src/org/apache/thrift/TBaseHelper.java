@@ -324,4 +324,14 @@ public final class TBaseHelper {
     System.arraycopy(orig, 0, copy, 0, orig.length);
     return copy;
   }
+
+  public static int hashCode(long value) {
+    int low = (int) value;
+    int high = (int) (value >>> 32);
+    return high * 127 + low;
+  }
+
+  public static int hashCode(double value) {
+    return hashCode(Double.doubleToRawLongBits(value));
+  }
 }
