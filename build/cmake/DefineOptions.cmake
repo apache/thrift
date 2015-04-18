@@ -34,6 +34,7 @@ option(BUILD_LIBRARIES "Build Thrift libraries" ON)
 # much as possible but leaving out libraries if their dependencies are not met.
 
 # C++
+option(WITH_CPP "Build C++ Thrift library" ON)
 find_package(Boost 1.53 QUIET)
 CMAKE_DEPENDENT_OPTION(BUILD_CPP "Build C++ library" ON
                        "BUILD_LIBRARIES;WITH_CPP;Boost_FOUND" OFF)
@@ -64,16 +65,19 @@ option(WITH_BOOSTTHREADS "Build with Boost thread support" OFF)
 option(WITH_STDTHREADS "Build with C++ std::thread support" OFF)
 
 # C GLib
+option(WITH_C_GLIB "Build C (GLib) Thrift library" ON)
 find_package(GLIB QUIET COMPONENTS gobject)
 CMAKE_DEPENDENT_OPTION(BUILD_C_GLIB "Build C (GLib) library" ON
                        "BUILD_LIBRARIES;WITH_C_GLIB;GLIB_FOUND" OFF)
 # Java
+option(WITH_JAVA "Build Java Thrift library" ON)
 find_package(Java QUIET)
 find_package(Ant QUIET)
 CMAKE_DEPENDENT_OPTION(BUILD_JAVA "Build Java library" ON
                        "BUILD_LIBRARIES;WITH_JAVA;JAVA_FOUND;ANT_FOUND" OFF)
 
 # Python
+option(WITH_PYTHON "Build Python Thrift library" ON)
 find_package(PythonInterp QUIET) # for Python executable
 find_package(PythonLibs QUIET) # for Python.h
 CMAKE_DEPENDENT_OPTION(BUILD_PYTHON "Build Python library" ON
