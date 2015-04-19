@@ -195,7 +195,7 @@ enum {
                                  fieldID: (int) fieldID
                             typeOverride: (uint8_t) typeOverride
 {
-  uint8_t typeToWrite = typeOverride == 0xFF ? [self getCompactTypeForTType: fieldType] : typeOverride;
+  uint8_t typeToWrite = typeOverride == 0xFF ? [self compactTypeForTType: fieldType] : typeOverride;
   
   // check if we can use delta encoding for the field id
   if (fieldID > lastFieldId && fieldID - lastFieldId <= 15) {
@@ -223,7 +223,7 @@ enum {
     [self writeByteDirect: 0];
   } else {
     [self writeVarint32: (uint32_t)size];
-    [self writeByteDirect: [self getCompactTypeForTType: keyType] << 4 | [self getCompactTypeForTType: valueType]];
+    [self writeByteDirect: [self compactTypeForTType: keyType] << 4 | [self compactTypeForTType: valueType]];
   }
 }
 
@@ -314,9 +314,9 @@ enum {
                                         size: (int) size
 {
   if (size <= 14) {
-    [self writeByteDirect: size << 4 | [self getCompactTypeForTType: elementType]];
+    [self writeByteDirect: size << 4 | [self compactTypeForTType: elementType]];
   } else {
-    [self writeByteDirect: 0xf0 | [self getCompactTypeForTType: elementType]];
+    [self writeByteDirect: 0xf0 | [self compactTypeForTType: elementType]];
     [self writeVarint32: (uint32_t)size];
   }
 }
@@ -430,7 +430,7 @@ enum {
     fieldId = lastFieldId + modifier;
   }
   
-  int fieldType = [self getTTypeForCompactType: type];
+  int fieldType = [self ttypeForCompactType: type];
   
   if (pname != NULL) {
     *pname = @"";
@@ -463,8 +463,8 @@ enum {
     keyAndValueType = [self readByte];
   }
   
-  int keyType = [self getTTypeForCompactType: keyAndValueType >> 4];
-  int valueType = [self getTTypeForCompactType: keyAndValueType & 0xf];
+  int keyType = [self ttypeForCompactType: keyAndValueType >> 4];
+  int valueType = [self ttypeForCompactType: keyAndValueType & 0xf];
   
   if (pkeyType != NULL) {
     *pkeyType = keyType;
@@ -486,7 +486,7 @@ enum {
     size = (int)[self readVarint32];
   }
   
-  int elementType = [self getTTypeForCompactType: size_and_type & 0x0f];
+  int elementType = [self ttypeForCompactType: size_and_type & 0x0f];
   
   if (pelementType != NULL) {
     *pelementType = elementType;
@@ -626,7 +626,7 @@ enum {
   return (int64_t)(n >> 1) ^ (-(int64_t)(n & 1));
 }
 
-- (int) getTTypeForCompactType: (uint8_t) type
+- (int) ttypeForCompactType: (uint8_t) type
 {
   switch (type & 0x0f) {
     case TCType_STOP:
@@ -672,7 +672,7 @@ enum {
     }
 }
 
-- (uint8_t) getCompactTypeForTType: (uint8_t) ttype
+- (uint8_t) compactTypeForTType: (uint8_t) ttype
 {
   return ttypeToCompactType[ttype];
 }
