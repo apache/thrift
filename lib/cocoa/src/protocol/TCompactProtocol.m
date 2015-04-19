@@ -284,10 +284,9 @@ enum {
 - (void) writeDouble: (double) value
 {
   //Safe bit-casting double->uint64
-  uint8_t data[8];
+  
   uint64_t bits = 0;
-  memcpy(data, &value, 8);
-  memcpy(&bits, data, 8);
+  memcpy(&bits, &value, 8);
   
   bits = OSSwapHostToLittleInt64(bits);
   
@@ -543,10 +542,8 @@ enum {
   [mTransport readAll: (uint8_t *)&bits offset: 0 length: 8];
   bits = OSSwapLittleToHostInt64(bits);
   
-  uint8_t data[8];
   double result = 0;
-  memcpy(data, &bits, 8);
-  memcpy(&result, data, 8);
+  memcpy(&result, &bits, 8);
   
   return result;
 }
