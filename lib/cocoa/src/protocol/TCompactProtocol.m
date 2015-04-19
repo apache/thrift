@@ -322,7 +322,7 @@ enum {
   }
 }
 
-- (void) writeVarint64: (UInt64) n
+- (void) writeVarint64: (uint64_t) n
 {
   uint8_t varint64out[10] = {0};
   int idx = 0;
