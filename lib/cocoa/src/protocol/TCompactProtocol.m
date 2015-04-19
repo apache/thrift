@@ -447,7 +447,7 @@ enum {
   if (type == TCType_BOOLEAN_TRUE ||
       type == TCType_BOOLEAN_FALSE) {
     // save the boolean value in a special instance variable.
-    booleanValue = [[NSNumber numberWithBool: type == TCType_BOOLEAN_TRUE ? YES : NO] retain_stub];
+    booleanValue = [[NSNumber numberWithBool: type == TCType_BOOLEAN_TRUE] retain_stub];
   }
   
   // push the new field onto the field stack so we can keep the deltas going.
