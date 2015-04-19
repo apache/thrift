@@ -326,6 +326,13 @@ enum {
 
 - (uint32_t) i32ToZigZag: (int32_t) n
 {
+  /*
+   ZigZag encoding maps signed integers to unsigned integers so that
+   numbers with a small absolute value (for instance, -1) have
+   a small varint encoded value too. It does this in a way that
+   "zig-zags" back and forth through the positive and negative integers,
+   so that -1 is encoded as 1, 1 is encoded as 2, -2 is encoded as 3, and so on
+   */
   return (uint32_t)(n << 1) ^ (uint32_t)(n >> 31);
 }
 
