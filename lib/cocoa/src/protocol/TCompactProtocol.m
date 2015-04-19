@@ -28,8 +28,6 @@ static const uint8_t COMPACT_TYPE_MASK = 0xE0; // 1110 0000
 static const uint8_t COMPACT_TYPE_BITS = 0x07; // 0000 0111
 static const int COMPACT_TYPE_SHIFT_AMOUNT = 5;
 
-static uint8_t ttypeToCompactType[16] = {0};
-
 enum {
   TCType_STOP = 0x00,
   TCType_BOOLEAN_TRUE = 0x01,
@@ -93,19 +91,6 @@ enum {
   
   if (self != nil) {
     mTransport = [transport retain_stub];
-    
-    ttypeToCompactType[TType_STOP] = TCType_STOP;
-    ttypeToCompactType[TType_BOOL] = TCType_BOOLEAN_FALSE;
-    ttypeToCompactType[TType_BYTE] = TCType_BYTE;
-    ttypeToCompactType[TType_DOUBLE] = TCType_DOUBLE;
-    ttypeToCompactType[TType_I16] = TCType_I16;
-    ttypeToCompactType[TType_I32] = TCType_I32;
-    ttypeToCompactType[TType_I64] = TCType_I64;
-    ttypeToCompactType[TType_STRING] = TCType_BINARY;
-    ttypeToCompactType[TType_STRUCT] = TCType_STRUCT;
-    ttypeToCompactType[TType_MAP] = TCType_MAP;
-    ttypeToCompactType[TType_SET] = TCType_SET;
-    ttypeToCompactType[TType_LIST] = TCType_LIST;
   }
   
   return self;
@@ -674,6 +659,21 @@ enum {
 
 - (uint8_t) compactTypeForTType: (uint8_t) ttype
 {
+  static uint8_t ttypeToCompactType[] = {
+    [TType_STOP] = TCType_STOP,
+    [TType_BOOL] = TCType_BOOLEAN_FALSE,
+    [TType_BYTE] = TCType_BYTE,
+    [TType_DOUBLE] = TCType_DOUBLE,
+    [TType_I16] = TCType_I16,
+    [TType_I32] = TCType_I32,
+    [TType_I64] = TCType_I64,
+    [TType_STRING] = TCType_BINARY,
+    [TType_STRUCT] = TCType_STRUCT,
+    [TType_MAP] = TCType_MAP,
+    [TType_SET] = TCType_SET,
+    [TType_LIST] = TCType_LIST
+  };
+  
   return ttypeToCompactType[ttype];
 }
 
