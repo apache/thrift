@@ -142,7 +142,7 @@ enum {
 {
   [self writeByteDirect: COMPACT_PROTOCOL_ID];
   [self writeByteDirect: (uint8_t)((COMPACT_VERSION & COMPACT_VERSION_MASK) |
-                         ((((uint32_t)messageType) << COMPACT_TYPE_SHIFT_AMOUNT) & COMPACT_TYPE_MASK))];
+                                   ((((uint32_t)messageType) << COMPACT_TYPE_SHIFT_AMOUNT) & COMPACT_TYPE_MASK))];
   [self writeVarint32: (uint32_t)sequenceID];
   [self writeString: name];
 }
@@ -167,12 +167,12 @@ enum {
     boolFieldName = [name copy];
     boolFieldType = [[NSNumber numberWithInt: fieldType] retain_stub];
     boolFieldId = [[NSNumber numberWithInt: fieldID] retain_stub];
-    } else {
-      [self writeFieldBeginInternalWithName: name
-                                       type: fieldType
-                                    fieldID: fieldID
-                               typeOverride: 0xFF];
-    }
+  } else {
+    [self writeFieldBeginInternalWithName: name
+                                     type: fieldType
+                                  fieldID: fieldID
+                             typeOverride: 0xFF];
+  }
 }
 
 - (void) writeFieldBeginInternalWithName: (NSString *) name
@@ -232,7 +232,7 @@ enum {
                                      type: [boolFieldType intValue]
                                   fieldID: [boolFieldId intValue]
                              typeOverride: b ? TCType_BOOLEAN_TRUE : TCType_BOOLEAN_FALSE];
-        
+    
     [boolFieldId release_stub];
     [boolFieldName release_stub];
     [boolFieldType release_stub];
@@ -604,7 +604,7 @@ enum {
     
     shift += 7;
   }
-    
+  
   return result;
 }
 
@@ -623,45 +623,45 @@ enum {
   switch (type & 0x0f) {
     case TCType_STOP:
       return TType_STOP;
-            
+      
     case TCType_BOOLEAN_FALSE:
     case TCType_BOOLEAN_TRUE:
       return TType_BOOL;
-            
+      
     case TCType_BYTE:
       return TType_BYTE;
-            
+      
     case TCType_I16:
       return TType_I16;
-            
+      
     case TCType_I32:
       return TType_I32;
-            
+      
     case TCType_I64:
       return TType_I64;
-            
+      
     case TCType_DOUBLE:
       return TType_DOUBLE;
-            
+      
     case TCType_BINARY:
       return TType_STRING;
-            
+      
     case TCType_LIST:
       return TType_LIST;
-            
+      
     case TCType_SET:
       return TType_SET;
-            
+      
     case TCType_MAP:
       return TType_MAP;
-            
+      
     case TCType_STRUCT:
       return TType_STRUCT;
-            
+      
     default:
       @throw [TProtocolException exceptionWithName: @"TProtocolException"
                                             reason: [NSString stringWithFormat: @"Don't know what type: %d", (uint8_t)(type & 0x0F)]];
-    }
+  }
 }
 
 - (uint8_t) compactTypeForTType: (uint8_t) ttype
