@@ -251,7 +251,7 @@ enum {
   [self writeByteDirect: value];
 }
 
-- (void) writeI16: (short) value
+- (void) writeI16: (int16_t) value
 {
   [self writeVarint32: [self i32ToZigZag: value]];
 }
@@ -506,12 +506,12 @@ enum {
   return buf;
 }
 
-- (short) readI16
+- (int16_t) readI16
 {
-  return (short)[self zigZagToi32: [self readVarint32]];
+  return (int16_t)[self zigZagToi32: [self readVarint32]];
 }
 
-- (int) readI32
+- (int32_t) readI32
 {
   return [self zigZagToi32: [self readVarint32]];
 }
@@ -601,9 +601,9 @@ enum {
   return result;
 }
 
-- (int) zigZagToi32: (uint32_t) n
+- (int32_t) zigZagToi32: (uint32_t) n
 {
-  return (int)(n >> 1) ^ (-(int)(n & 1));
+  return (int32_t)(n >> 1) ^ (-(int32_t)(n & 1));
 }
 
 - (int64_t) zigZagToi64: (uint64_t) n
@@ -611,7 +611,7 @@ enum {
   return (int64_t)(n >> 1) ^ (-(int64_t)(n & 1));
 }
 
-- (int) ttypeForCompactType: (uint8_t) type
+- (uint8_t) ttypeForCompactType: (uint8_t) type
 {
   switch (type & 0x0f) {
     case TCType_STOP:
