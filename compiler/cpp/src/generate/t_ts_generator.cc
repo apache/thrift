@@ -60,15 +60,8 @@ public:
     iter = parsed_options.find("jquery");
     gen_jquery_ = (iter != parsed_options.end());
 
-    if (!gen_node_) {
-      iter = parsed_options.find("ts");
-      gen_ts_ = (iter != parsed_options.end());
-    } else {
-      gen_ts_ = false;
-    }
-
     if (gen_node_ && gen_jquery_) {
-      throw "Invalid switch: [-gen ts:node,jquery] options not compatible, try: [-gen ts:node -gen "
+      throw "Invalid switch: [-gen node,jquery] options not compatible, try: [-gen ts:node -gen "
             "ts:jquery]";
     }
 
@@ -235,17 +228,11 @@ public:
   string ts_get_type(t_type* type);
 
   /**
-   * Special indentation for TypeScript Definitions because of the module.
-   * Returns the normal indentation + "  " if a module was defined.
+   * Special indentation for TypeScript Definitions because of the internal module.
+   * Returns the normal indentation + "  " if a internal module was defined.
    * @return string
    */
   string ts_indent() { return indent() + (!ts_module_.empty() ? "  " : ""); }
-
-  /**
-   * Returns "declare " if no module was defined.
-   * @return string
-   */
-  string ts_declare() { return (ts_module_.empty() ? "declare " : ""); }
 
   /**
    * Returns "?" if the given field is optional.
@@ -287,11 +274,6 @@ private:
   bool gen_jquery_;
 
   /**
-   * True if we should generate a TypeScript Definition File for each service.
-   */
-  bool gen_ts_;
-
-  /**
    * The name of the defined module(s), for TypeScript Definition Files.
    */
   string ts_module_;
@@ -301,8 +283,6 @@ private:
    */
   std::ofstream f_types_;
   std::ofstream f_service_;
-  std::ofstream f_types_ts_;
-  std::ofstream f_service_ts_;
 };
 
 /**
@@ -321,21 +301,8 @@ void t_ts_generator::init_generator() {
   string f_types_name = outdir + program_->get_name() + "_types.ts";
   f_types_.open(f_types_name.c_str());
 
-  if (gen_ts_) {
-    string f_types_ts_name = outdir + program_->get_name() + "_types.d.ts";
-    f_types_ts_.open(f_types_ts_name.c_str());
-  }
-
   // Print header
   f_types_ << autogen_comment() << ts_includes() << endl << render_includes() << endl;
-
-  if (gen_ts_) {
-    f_types_ts_ << autogen_comment() << endl;
-  }
-
-  if (gen_node_) {
-    f_types_ << "var ttypes = module.exports = {};" << endl;
-  }
 
   string pns;
 
@@ -345,14 +312,8 @@ void t_ts_generator::init_generator() {
   if (ns_pieces.size() > 0) {
     for (size_t i = 0; i < ns_pieces.size(); ++i) {
       pns += ((i == 0) ? "" : ".") + ns_pieces[i];
-      f_types_ << "if (typeof " << pns << " === 'undefined') {" << endl;
-      f_types_ << "  " << pns << " = {};" << endl;
-      f_types_ << "}" << endl;
     }
-    if (gen_ts_) {
-      ts_module_ = pns;
-      f_types_ts_ << "declare module " << ts_module_ << " {";
-    }
+    f_types_ << "module " << pns << " {" << endl;
   }
 }
 
@@ -362,7 +323,7 @@ void t_ts_generator::init_generator() {
 string t_ts_generator::ts_includes() {
   if (gen_node_) {
     return string(
-        "var thrift = require('thrift');\n"
+        "import thrift = require('thrift');\n"
         "var Thrift = thrift.Thrift;\n"
         "var Q = thrift.Q;\n");
   }
@@ -379,7 +340,7 @@ string t_ts_generator::render_includes() {
   if (gen_node_) {
     const vector<t_program*>& includes = program_->get_includes();
     for (size_t i = 0; i < includes.size(); ++i) {
-      result += "var " + includes[i]->get_name() + "_ttypes = require('./" + includes[i]->get_name()
+      result += "import " + includes[i]->get_name() + "_ttypes = require('./" + includes[i]->get_name()
                 + "_types')\n";
     }
     if (includes.size() > 0) {
@@ -394,16 +355,16 @@ string t_ts_generator::render_includes() {
  * Close up (or down) some filez.
  */
 void t_ts_generator::close_generator() {
+  // Close namespace bracket
+  vector<string> ns_pieces = ts_namespace_pieces(program_);
+  if (ns_pieces.size() > 0) {
+    f_types_ << "}" << endl;
+  }
+
   // Close types file(s)
 
   f_types_.close();
 
-  if (gen_ts_) {
-    if (!ts_module_.empty()) {
-      f_types_ts_ << "}";
-    }
-    f_types_ts_.close();
-  }
 }
 
 /**
@@ -422,12 +383,8 @@ void t_ts_generator::generate_typedef(t_typedef* ttypedef) {
  * @param tenum The enumeration
  */
 void t_ts_generator::generate_enum(t_enum* tenum) {
-  f_types_ << ts_type_namespace(tenum->get_program()) << tenum->get_name() << " = {" << endl;
-
-  if (gen_ts_) {
-    f_types_ts_ << ts_print_doc(tenum) << ts_indent() << ts_declare() << "enum "
-                << tenum->get_name() << " {" << endl;
-  }
+  f_types_ << ts_print_doc(tenum) << ts_indent() << "export enum "
+           << tenum->get_name() << " {" << endl;
 
   indent_up();
 
@@ -435,12 +392,7 @@ void t_ts_generator::generate_enum(t_enum* tenum) {
   vector<t_enum_value*>::iterator c_iter;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
-    if (gen_ts_) {
-      f_types_ts_ << ts_indent() << "'" << (*c_iter)->get_name() << "' = " << value << "," << endl;
-      // add 'value: key' in addition to 'key: value' for TypeScript enums
-      f_types_ << indent() << "'" << value << "' : '" << (*c_iter)->get_name() << "'," << endl;
-    }
-    f_types_ << indent() << "'" << (*c_iter)->get_name() << "' : " << value;
+    f_types_ << ts_indent() << "'" << (*c_iter)->get_name() << "' = " << value << "," << endl;
     if (c_iter != constants.end() - 1) {
       f_types_ << ",";
     }
@@ -449,11 +401,8 @@ void t_ts_generator::generate_enum(t_enum* tenum) {
 
   indent_down();
 
-  f_types_ << "};" << endl;
+  f_types_ << ts_indent() << "};" << endl;
 
-  if (gen_ts_) {
-    f_types_ts_ << ts_indent() << "}" << endl;
-  }
 }
 
 /**
@@ -464,13 +413,9 @@ void t_ts_generator::generate_const(t_const* tconst) {
   string name = tconst->get_name();
   t_const_value* value = tconst->get_value();
 
-  f_types_ << ts_type_namespace(program_) << name << " = ";
+  f_types_ << ts_print_doc(tconst) << ts_indent() << "export var " << name << ": "
+           << ts_get_type(type) << " = ";
   f_types_ << render_const_value(type, value) << ";" << endl;
-
-  if (gen_ts_) {
-    f_types_ts_ << ts_print_doc(tconst) << ts_indent() << ts_declare() << "var " << name << ": "
-                << ts_get_type(type) << ";" << endl;
-  }
 }
 
 /**
