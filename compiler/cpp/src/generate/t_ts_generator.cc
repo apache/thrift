@@ -559,28 +559,40 @@ void t_ts_generator::generate_ts_struct_definition(ofstream& out,
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
 
-  if (gen_node_) {
-    if (is_exported) {
-      out << ts_namespace(tstruct->get_program()) << tstruct->get_name() << " = "
-          << "module.exports." << tstruct->get_name() << " = function(args) {" << endl;
-    } else {
-      out << ts_namespace(tstruct->get_program()) << tstruct->get_name() << " = function(args) {"
-          << endl;
-    }
+  if (is_exported) {
+    out << ts_print_doc(tstruct)  << "export class "
+        << tstruct->get_name() << (is_exception ? " extends Thrift.TException" : "")
+        << " {" << endl;
+
   } else {
-    out << ts_namespace(tstruct->get_program()) << tstruct->get_name() << " = function(args) {"
-        << endl;
-    if (gen_ts_) {
-      f_types_ts_ << ts_print_doc(tstruct) << ts_indent() << ts_declare() << "class "
-                  << tstruct->get_name() << (is_exception ? " extends Thrift.TException" : "")
-                  << " {" << endl;
-    }
+    out << ts_print_doc(tstruct)  << "class "
+        << tstruct->get_name() << (is_exception ? " extends Thrift.TException" : "")
+        << " {" << endl;
   }
 
   indent_up();
 
-  if (gen_node_ && is_exception) {
-    out << indent() << "Thrift.TException.call(this, \"" << ts_namespace(tstruct->get_program())
+  // member fields section
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    out << ts_indent() << (*m_iter)->get_name() << ": "
+                << ts_get_type((*m_iter)->get_type()) << ";" << endl;
+  }
+
+  // constructor section
+  // write constructor entry
+  if (members.size() > 0) {
+    out << ts_indent() << "constructor(args?: { ";
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      out << (*m_iter)->get_name() << ts_get_req(*m_iter) << ": "
+                  << ts_get_type((*m_iter)->get_type()) << "; ";
+    }
+    out << "}) {" << endl;
+  } else {
+    out << ts_intent() << "constructor() {" << endl;
+  }
+
+  if (is_exception) {
+    out << indent() << "super(\"" << ts_namespace(tstruct->get_program())
         << tstruct->get_name() << "\")" << endl;
     out << indent() << "this.name = \"" << ts_namespace(tstruct->get_program())
         << tstruct->get_name() << "\"" << endl;
@@ -595,10 +607,6 @@ void t_ts_generator::generate_ts_struct_definition(ofstream& out,
       out << indent() << "this." << (*m_iter)->get_name() << " = " << dval << ";" << endl;
     } else {
       out << indent() << dval << ";" << endl;
-    }
-    if (gen_ts_) {
-      f_types_ts_ << ts_indent() << (*m_iter)->get_name() << ": "
-                  << ts_get_type((*m_iter)->get_type()) << ";" << endl;
     }
   }
 
@@ -625,9 +633,6 @@ void t_ts_generator::generate_ts_struct_definition(ofstream& out,
     }
 
     out << indent() << "if (args) {" << endl;
-    if (gen_ts_) {
-      f_types_ts_ << endl << ts_indent() << "constructor(args?: { ";
-    }
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       out << indent() << indent() << "if (args." << (*m_iter)->get_name() << " !== undefined) {"
@@ -639,37 +644,23 @@ void t_ts_generator::generate_ts_struct_definition(ofstream& out,
                "'Required field " << (*m_iter)->get_name() << " is unset!');" << endl;
       }
       out << indent() << indent() << "}" << endl;
-      if (gen_ts_) {
-        f_types_ts_ << (*m_iter)->get_name() << ts_get_req(*m_iter) << ": "
-                    << ts_get_type((*m_iter)->get_type()) << "; ";
-      }
     }
 
     out << indent() << "}" << endl;
-    if (gen_ts_) {
-      f_types_ts_ << "});" << endl;
-    }
   }
 
-  indent_down();
-  out << "};" << endl;
-  if (gen_ts_) {
-    f_types_ts_ << ts_indent() << "}" << endl;
-  }
+  out << indent() << "}" << endl;
 
-  if (is_exception) {
-    out << "Thrift.inherits(" << ts_namespace(tstruct->get_program()) << tstruct->get_name()
-        << ", Thrift.TException);" << endl;
-    out << ts_namespace(tstruct->get_program()) << tstruct->get_name() << ".prototype.name = '"
-        << tstruct->get_name() << "';" << endl;
-  } else {
-    // init prototype
-    out << ts_namespace(tstruct->get_program()) << tstruct->get_name() << ".prototype = {};"
-        << endl;
-  }
+  // end constructor section
 
+  // read write section
   generate_ts_struct_reader(out, tstruct);
   generate_ts_struct_writer(out, tstruct);
+
+  //end of struct
+  indent_down();
+  out << ts_indent() << "}" << endl;
+
 }
 
 /**
@@ -679,8 +670,7 @@ void t_ts_generator::generate_ts_struct_reader(ofstream& out, t_struct* tstruct)
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  out << ts_namespace(tstruct->get_program()) << tstruct->get_name()
-      << ".prototype.read = function(input) {" << endl;
+  out << ts_indent() << "read(input: thrift.TProtocol): void {" << endl;
 
   indent_up();
 
@@ -759,8 +749,7 @@ void t_ts_generator::generate_ts_struct_writer(ofstream& out, t_struct* tstruct)
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  out << ts_namespace(tstruct->get_program()) << tstruct->get_name()
-      << ".prototype.write = function(output) {" << endl;
+  out << ts_indent() << "write(output: thrift.TProtocol): void {" << endl;
 
   indent_up();
 
