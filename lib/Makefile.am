@@ -87,6 +87,7 @@ endif
 if WITH_NODEJS
 SUBDIRS += nodejs
 PRECROSS_TARGET += precross-nodejs
+SUBDIRS += nodets
 endif
 
 if WITH_LUA
