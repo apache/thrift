@@ -25,7 +25,7 @@ set(TEST_PREFIX "c_glib")
 
 include_directories(${Boost_INCLUDE_DIRS})
 
-# Create the thrift C++ test library
+# Create the thrift C test library
 set(testgenc_SOURCES
     gen-c_glib/t_test_debug_proto_test_types.c
     gen-c_glib/t_test_empty_service.c
@@ -94,7 +94,7 @@ target_link_libraries(testthrifttest testgenc)
 add_test(NAME testthrifttest COMMAND testthrifttest)
 
 
-if(WITH_CPP)
+if(BUILD_CPP)
 
     include_directories("${PROJECT_SOURCE_DIR}/lib/cpp/src")
 
@@ -119,7 +119,7 @@ if(WITH_CPP)
     target_link_libraries(testthrifttestclient testgenc testgenc_cpp)
     add_test(NAME testthrifttestclient COMMAND testthrifttestclient)
 
-endif(WITH_CPP)
+endif(BUILD_CPP)
 
 #
 # Common thrift code generation rules

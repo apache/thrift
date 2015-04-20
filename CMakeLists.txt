@@ -72,7 +72,7 @@ if(BUILD_COMPILER)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/compiler/cpp)
 endif()
 
-if(WITH_CPP)
+if(BUILD_CPP)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp)
     if(BUILD_TESTING)
         if(WITH_LIBEVENT AND WITH_ZLIB AND WITH_OPENSSL)
@@ -83,15 +83,15 @@ if(WITH_CPP)
     endif()
 endif()
 
-if(WITH_C_GLIB)
+if(BUILD_C_GLIB)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/c_glib)
 endif()
 
-if(WITH_JAVA)
+if(BUILD_JAVA)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/java)
 endif()
 
-if(WITH_PYTHON)
+if(BUILD_PYTHON)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/py)
 endif()
 
