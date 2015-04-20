@@ -718,5 +718,32 @@
       "multic"
     ],
     "workdir": "rs/bin"
+  },
+  {
+    "name": "nodets",
+    "env": {
+      "NODE_PATH": "../lib"
+    },
+    "server": {
+      "command": [
+        "runServer.sh"
+      ]
+    },
+    "client": {
+      "timeout": 5,
+      "command": [
+        "runClient.sh"
+      ]
+    },
+    "protocols": [
+      "binary"
+    ],
+    "sockets": [
+      "ip"
+    ],
+    "transports": [
+      "buffered"
+    ],
+    "workdir": "../lib/nodets/test"
   }
 ]

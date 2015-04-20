@@ -196,7 +196,7 @@ service ThriftTest
    * @return binary  - returns the binary 'thing'
    */
   binary       testBinary(1: binary thing),
-  
+
   /**
    * Prints 'testStruct("{%s}")' where thing has been formatted into a string of comma separated values
    * @param Xtruct thing - the Xtruct to print

@@ -109,6 +109,8 @@ fi
 
 AM_EXTRA_RECURSIVE_TARGETS([style])
 AC_SUBST(CPPSTYLE_CMD, 'find . -type f \( -iname "*.h" -or -iname "*.cpp" -or -iname "*.cc" -or -iname "*.tcc" \) -printf "Reformatting: %h/%f\n" -exec clang-format -i {} \;')
+# '
+# The above comment is to fix editor syntax highlighting
 
 AC_ARG_ENABLE([libs],
   AS_HELP_STRING([--enable-libs], [build the Apache Thrift libraries [default=yes]]),
@@ -136,6 +138,7 @@ if test "$enable_libs" = "no"; then
   with_go="no"
   with_d="no"
   with_nodejs="no"
+  with_nodets="no"
   with_lua="no"
   with_rs="no"
 fi
@@ -277,6 +280,18 @@ if test "$with_nodejs" = "yes"; then
   fi
 fi
 AM_CONDITIONAL(WITH_NODEJS, [test "$have_nodejs" = "yes"])
+AM_CONDITIONAL(HAVE_NPM, [test "x$NPM" != "x"])
+
+AX_THRIFT_LIB(nodets, [Nodets], yes)
+have_nodets=no
+if test "$with_nodets" = "yes"; then
+  AC_PATH_PROGS([NODETS], [nodets node])
+  AC_PATH_PROG([NPM], [npm])
+  if test "x$NODETS" != "x" -a "x$NPM" != "x"; then
+    have_nodets="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_NODETS, [test "$have_nodets" = "yes"])
 AM_CONDITIONAL(HAVE_NPM, [test "x$NPM" != "x"])
 
 AX_THRIFT_LIB(lua, [Lua], yes)
@@ -825,6 +840,7 @@ AC_CONFIG_FILES([
   lib/json/test/Makefile
   lib/netcore/Makefile
   lib/nodejs/Makefile
+  lib/nodets/Makefile
   lib/perl/Makefile
   lib/perl/test/Makefile
   lib/php/Makefile
@@ -905,6 +921,8 @@ if test "$have_go" = "yes" ; then MAYBE_GO="go" ; else MAYBE_GO="" ; fi
 AC_SUBST([MAYBE_GO])
 if test "$have_nodejs" = "yes" ; then MAYBE_NODEJS="nodejs" ; else MAYBE_NODEJS="" ; fi
 AC_SUBST([MAYBE_NODEJS])
+if test "$have_nodets" = "yes" ; then MAYBE_NODETS="nodets" ; else MAYBE_NODETS="" ; fi
+AC_SUBST([MAYBE_NODETS])
 if test "$have_erlang" = "yes" ; then MAYBE_ERLANG="erl" ; else MAYBE_ERLANG="" ; fi
 AC_SUBST([MAYBE_ERLANG])
 if test "$have_lua" = "yes" ; then MAYBE_LUA="lua" ; else MAYBE_LUA="" ; fi
