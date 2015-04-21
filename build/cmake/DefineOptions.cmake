@@ -84,7 +84,6 @@ option(WITH_SHARED_LIB "Build shared libraries" ON)
 option(WITH_STATIC_LIB "Build static libraries" ON)
 
 #NOTE: C++ compiler options are defined in the lib/cpp/CMakeLists.txt
-message (STATUS "CMAKE_CONFIGURATION_TYPES: ${CMAKE_CONFIGURATION_TYPES}")
 
 # Visual Studio only options
 if(MSVC)
