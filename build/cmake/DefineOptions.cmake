@@ -86,6 +86,9 @@ CMAKE_DEPENDENT_OPTION(BUILD_PYTHON "Build Python library" ON
 # Common library options
 option(WITH_SHARED_LIB "Build shared libraries" ON)
 option(WITH_STATIC_LIB "Build static libraries" ON)
+if (NOT WITH_SHARED_LIB AND NOT WITH_STATIC_LIB)
+    message(FATAL_ERROR "Cannot build with both shared and static outputs disabled!")
+endif()
 
 #NOTE: C++ compiler options are defined in the lib/cpp/CMakeLists.txt
 

@@ -141,10 +141,13 @@ target_link_libraries(AllProtocolsTest testgencpp)
 LINK_AGAINST_THRIFT_LIBRARY(AllProtocolsTest thrift)
 add_test(NAME AllProtocolsTest COMMAND AllProtocolsTest)
 
+# The debug run-time in Windows asserts on isprint() with negative inputs
+if (NOT MSVC OR (MSVC AND CMAKE_BUILD_TYPE EQUAL "DEBUG"))
 add_executable(DebugProtoTest DebugProtoTest.cpp)
 target_link_libraries(DebugProtoTest testgencpp)
 LINK_AGAINST_THRIFT_LIBRARY(DebugProtoTest thrift)
 add_test(NAME DebugProtoTest COMMAND DebugProtoTest)
+endif()
 
 add_executable(JSONProtoTest JSONProtoTest.cpp)
 target_link_libraries(JSONProtoTest testgencpp)

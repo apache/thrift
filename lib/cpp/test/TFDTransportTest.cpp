@@ -30,6 +30,8 @@ class DummyException : std::exception {};
 int main() {
   { TFDTransport t(256, TFDTransport::NO_CLOSE_ON_DESTROY); }
 
+  // MSVCRT100D asserts on close of a bad handle, so only run this test in release build on windows
+#if !defined(WIN32) || (defined(WIN32) && defined(NDEBUG))
   try {
     {
       TFDTransport t(256, TFDTransport::CLOSE_ON_DESTROY);
@@ -51,6 +53,7 @@ int main() {
     std::abort();
   } catch (DummyException&) {
   }
+#endif
 
   return 0;
 }

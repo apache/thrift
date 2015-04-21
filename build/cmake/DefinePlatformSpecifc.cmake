@@ -59,6 +59,12 @@ if(MSVC)
     # Disable boost auto linking pragmas - cmake includes the right files
     add_definitions("-DBOOST_ALL_NO_LIB")
 
+    # Windows build does not know how to make a shared library yet
+    # as there are no __declspec(dllexport) or exports files in the project.
+    if (WITH_SHARED_LIB)
+        message (FATAL_ERROR "Windows build does not support shared library output yet!")
+    endif()
+
 elseif(UNIX)
   # For UNIX
   # WITH_*THREADS selects which threading library to use
