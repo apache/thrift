@@ -21,7 +21,8 @@
 #include <config.h>
 #endif
 #include <iostream>
-#include <cmath>
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include "thrift/transport/TBufferTransports.h"
 #include "thrift/protocol/TBinaryProtocol.h"
 #include "gen-cpp/DebugProtoTest_types.h"

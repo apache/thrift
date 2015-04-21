@@ -23,8 +23,8 @@ if(WITH_BOOSTTHREADS)
 else()
   find_package(Boost 1.53.0 REQUIRED)
 endif()
-include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 
+include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 include_directories(src)
 
 # SYSLIBS contains libraries that need to be linked to all lib targets
@@ -177,10 +177,6 @@ endif()
 if(WITH_QT5)
     # Qt5 has its own directory to avoid conflict with Qt4 caused by CMAKE_AUTOMOC
     add_subdirectory(src/thrift/qt)
-endif()
-
-if(MSVC)
-    add_definitions("-DUNICODE -D_UNICODE")
 endif()
 
 # Install the headers

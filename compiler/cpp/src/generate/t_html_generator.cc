@@ -665,7 +665,7 @@ std::string t_html_generator::escape_html(std::string const& str) {
  * Prints out the provided type in HTML
  */
 int t_html_generator::print_type(t_type* ttype) {
-  int len = 0;
+  std::string::size_type len = 0;
   f_out_ << "<code>";
   if (ttype->is_container()) {
     if (ttype->is_list()) {
@@ -708,7 +708,7 @@ int t_html_generator::print_type(t_type* ttype) {
     f_out_ << type_name << "</a>";
   }
   f_out_ << "</code>";
-  return len;
+  return (int)len;
 }
 
 /**
@@ -1030,7 +1030,7 @@ void t_html_generator::generate_service(t_service* tservice) {
     f_out_ << "<h4 id=\"Fn_" << service_name_ << "_" << fn_name << "\">Function: " << service_name_
            << "." << fn_name << "</h4>" << endl;
     f_out_ << "<pre>";
-    int offset = print_type((*fn_iter)->get_returntype());
+    std::string::size_type offset = print_type((*fn_iter)->get_returntype());
     bool first = true;
     f_out_ << " " << fn_name << "(";
     offset += fn_name.size() + 2;
