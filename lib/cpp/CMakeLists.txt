@@ -179,6 +179,10 @@ if(WITH_QT5)
     add_subdirectory(src/thrift/qt)
 endif()
 
+if(MSVC)
+    add_definitions("-DUNICODE -D_UNICODE")
+endif()
+
 # Install the headers
 install(DIRECTORY "src/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
     FILES_MATCHING PATTERN "*.h" PATTERN "*.tcc")

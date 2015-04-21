@@ -59,9 +59,6 @@ if(MSVC)
     # Disable boost auto linking pragmas - cmake includes the right files
     add_definitions("-DBOOST_ALL_NO_LIB")
 
-    # Some common things we want defined on all Windows builds
-    add_definitions("-DUNICODE -D_UNICODE")
-
 elseif(UNIX)
   # For UNIX
   # WITH_*THREADS selects which threading library to use
