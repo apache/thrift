@@ -21,6 +21,7 @@ just do this:
 if you use a specific toolchain pass it to cmake, the same for options:
 
     cmake -DCMAKE_TOOLCHAIN_FILE=${THRIFT_SRC}/contrib/mingw32-toolchain.cmake ${THRIFT_SRC}
+    cmake -DCMAKE_C_COMPILER=clang-3.5 -DCMAKE_CXX_COMPILER=clang++-3.5 ${THRIFT_SRC}
     cmake -DTHRIFT_COMPILER_HS=OFF ${THRIFT_SRC}
     cmake -DWITH_ZLIB=ON ${THRIFT_SRC}
 
@@ -41,7 +42,6 @@ to generate an installer and distribution package do this:
 * build test
 * with/without language lib/<lang>/
 * enable/disable
-* make check (QUESTION: Is test the default CMake target?)
 * make cross
 * make dist (create an alias to make package_source)
 * make doc

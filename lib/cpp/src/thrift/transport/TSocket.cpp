@@ -415,7 +415,7 @@ void TSocket::local_open() {
 
   // Validate port number
   if (port_ < 0 || port_ > 0xFFFF) {
-    throw TTransportException(TTransportException::NOT_OPEN, "Specified port is invalid");
+    throw TTransportException(TTransportException::BAD_ARGS, "Specified port is invalid");
   }
 
   struct addrinfo hints, *res, *res0;

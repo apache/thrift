@@ -17,9 +17,6 @@
 # under the License.
 #
 
-
-cmake_minimum_required(VERSION 2.8)
-
 if(IS_ABSOLUTE "${LIB_INSTALL_DIR}")
     set(JAVA_INSTALL_DIR "${LIB_INSTALL_DIR}/java")
 else()

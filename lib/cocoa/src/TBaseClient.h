@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -15,32 +15,16 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
- * Contains some contributions under the Thrift Software License.
- * Please see doc/old-thrift-license.txt in the Thrift distribution for
- * details.
  */
 
-using System;
-using System.Net.Sockets;
-using System.Reflection;
+#import "TProtocol.h"
+#import "TApplicationException.h"
 
-namespace Thrift.Transport
-{
-    public abstract class TServerTransport
-    {
-        public abstract void Listen();
-        public abstract void Close();
-        protected abstract TTransport AcceptImpl();
-
-        public TTransport Accept()
-        {
-            TTransport transport = AcceptImpl();
-            if (transport == null)
-            {
-                throw new TTransportException("accept() may not return NULL");
-            }
-            return transport;
-        }
-    }
+@interface TBaseClient : NSObject {
+    id <TProtocol> inProtocol;
+    id <TProtocol> outProtocol;
 }
+
+- (TApplicationException *)checkIncomingMessageException;
+
+@end

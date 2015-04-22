@@ -17,12 +17,10 @@
 # under the License.
 #
 
-set(CMAKE_AUTOMOC ON)
-find_package(Qt5 REQUIRED COMPONENTS Test)
-set(TQTcpServerTest_Qt5_SOURCES
-    TQTcpServerTest.cpp
-)
-add_executable(TQTcpServerTest_Qt5 ${TQTcpServerTest_Qt5_SOURCES})
-target_link_libraries(TQTcpServerTest_Qt5 testgencpp_cob thriftqt5 thrift Qt5::Test)
-add_test(NAME TQTcpServerTest_Qt5 COMMAND TQTcpServerTest_Qt5)
+include_directories(${PYTHON_INCLUDE_DIRS})
 
+add_custom_target(python_build ALL
+    COMMAND ${PYTHON_EXECUTABLE} setup.py build
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Building Python library"
+)

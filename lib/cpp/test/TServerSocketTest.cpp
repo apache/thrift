@@ -21,6 +21,7 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TServerSocket.h>
 #include "TestPortFixture.h"
+#include "TTransportCheckThrow.h"
 #include <iostream>
 
 using apache::thrift::transport::TServerSocket;
@@ -44,6 +45,15 @@ BOOST_AUTO_TEST_CASE( test_bind_to_address )
     TServerSocket sock2("257.258.259.260", m_serverPort);
     BOOST_CHECK_THROW(sock2.listen(), TTransportException);
     sock2.close();
+}
+
+BOOST_AUTO_TEST_CASE( test_listen_valid_port )
+{
+    TServerSocket sock1(-1);
+    TTRANSPORT_CHECK_THROW(sock1.listen(), TTransportException::BAD_ARGS);
+
+    TServerSocket sock2(65536);
+    TTRANSPORT_CHECK_THROW(sock2.listen(), TTransportException::BAD_ARGS);
 }
 
 BOOST_AUTO_TEST_CASE( test_close_before_listen )

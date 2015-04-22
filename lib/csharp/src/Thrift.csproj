@@ -27,7 +27,7 @@
     <OutputType>Library</OutputType>
     <NoStandardLibraries>false</NoStandardLibraries>
     <AssemblyName>Thrift</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <RootNamespace>Thrift</RootNamespace>
     <FileUpgradeFlags>
@@ -109,6 +109,7 @@
     <Compile Include="TException.cs" />
     <Compile Include="TApplicationException.cs" />
     <Compile Include="TProcessor.cs" />
+    <Compile Include="Transport\TSocketVersionizer.cs" />
     <Compile Include="Transport\TBufferedTransport.cs" />
     <Compile Include="Transport\TFramedTransport.cs" />
     <Compile Include="Transport\THttpClient.cs" />

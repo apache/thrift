@@ -77,7 +77,7 @@ class TestHandler : public ThriftTestIf {
   }
 
   int64_t testI64(const int64_t thing) {
-    printf("[C -> C++] testI64(%lld)\n", thing);
+    printf("[C -> C++] testI64(%ld)\n", thing);
     return thing;
   }
 
@@ -92,13 +92,13 @@ class TestHandler : public ThriftTestIf {
   }
 
   void testStruct(Xtruct& out, const Xtruct &thing) {
-    printf("[C -> C++] testStruct({\"%s\", %d, %d, %lld})\n", thing.string_thing.c_str(), (int)thing.byte_thing, thing.i32_thing, thing.i64_thing);
+    printf("[C -> C++] testStruct({\"%s\", %d, %d, %ld})\n", thing.string_thing.c_str(), (int)thing.byte_thing, thing.i32_thing, thing.i64_thing);
     out = thing;
   }
 
   void testNest(Xtruct2& out, const Xtruct2& nest) {
     const Xtruct &thing = nest.struct_thing;
-    printf("[C -> C++] testNest({%d, {\"%s\", %d, %d, %lld}, %d})\n", (int)nest.byte_thing, thing.string_thing.c_str(), (int)thing.byte_thing, thing.i32_thing, thing.i64_thing, nest.i32_thing);
+    printf("[C -> C++] testNest({%d, {\"%s\", %d, %d, %ld}, %d})\n", (int)nest.byte_thing, thing.string_thing.c_str(), (int)thing.byte_thing, thing.i32_thing, thing.i64_thing, nest.i32_thing);
     out = nest;
   }
 
@@ -172,7 +172,7 @@ class TestHandler : public ThriftTestIf {
   }
 
   UserId testTypedef(const UserId thing) {
-    printf("[C -> C++] testTypedef(%lld)\n", thing);
+    printf("[C -> C++] testTypedef(%ld)\n", thing);
     return thing;  }
 
   void testMapMap(map<int32_t, map<int32_t,int32_t> > &mapmap, const int32_t hello) {
@@ -228,7 +228,7 @@ class TestHandler : public ThriftTestIf {
     printf(" = {");
     map<UserId, map<Numberz::type,Insanity> >::const_iterator i_iter;
     for (i_iter = insane.begin(); i_iter != insane.end(); ++i_iter) {
-      printf("%lld => {", i_iter->first);
+      printf("%ld => {", i_iter->first);
       map<Numberz::type,Insanity>::const_iterator i2_iter;
       for (i2_iter = i_iter->second.begin();
            i2_iter != i_iter->second.end();
@@ -238,7 +238,7 @@ class TestHandler : public ThriftTestIf {
         map<Numberz::type, UserId>::const_iterator um;
         printf("{");
         for (um = userMap.begin(); um != userMap.end(); ++um) {
-          printf("%d => %lld, ", um->first, um->second);
+          printf("%d => %ld, ", um->first, um->second);
         }
         printf("}, ");
 
@@ -246,7 +246,7 @@ class TestHandler : public ThriftTestIf {
         vector<Xtruct>::const_iterator x;
         printf("{");
         for (x = xtructs.begin(); x != xtructs.end(); ++x) {
-          printf("{\"%s\", %d, %d, %lld}, ", x->string_thing.c_str(), (int)x->byte_thing, x->i32_thing, x->i64_thing);
+          printf("{\"%s\", %d, %d, %ld}, ", x->string_thing.c_str(), (int)x->byte_thing, x->i32_thing, x->i64_thing);
         }
         printf("}");
 
@@ -591,11 +591,11 @@ main (int argc, char **argv)
 
   if (pid == 0) /* child */
   {
-    shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
-    shared_ptr<TestHandler> testHandler(new TestHandler());
-    shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
-    shared_ptr<TServerSocket> serverSocket(new TServerSocket(TEST_PORT));
-    shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+    boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+    boost::shared_ptr<TestHandler> testHandler(new TestHandler());
+    boost::shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
+    boost::shared_ptr<TServerSocket> serverSocket(new TServerSocket(TEST_PORT));
+    boost::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
     TSimpleServer simpleServer(testProcessor, serverSocket, transportFactory, protocolFactory);
     signal (SIGALRM, bailout);
     alarm (60);

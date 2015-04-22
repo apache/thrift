@@ -21,15 +21,9 @@
 #import "TProtocolException.h"
 #import "TObjective-C.h"
 
+/* In the modern protocol, version is stored in the high half of an int32.
+ * The low half contains type info. */
 static const uint16_t VERSION_1 = 0x8001;
-
-union versioned_size {
-  int32_t i32;
-  struct {
-    uint16_t version;
-    int16_t size;
-  } packed;
-};
 
 NS_INLINE size_t
 CheckedCastInt32ToSizeT(int32_t size)
@@ -164,9 +158,8 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 {
   int32_t size = [self readI32];
   if (size < 0) {
-    union versioned_size vsize;
-    vsize.i32 = size;
-    uint16_t version = vsize.packed.version;
+    /* Version (unsigned) is stored in the high halfword. */
+    uint16_t version = (size >> 16) & 0xFFFF;
     if (version != VERSION_1) {
       NSString *reason = [NSString stringWithFormat:
                           @"%s: Expected version %"PRIu16", instead found: %"PRIu16,
@@ -394,7 +387,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
                         sequenceID: (int) sequenceID
 {
   if (mStrictWrite) {
-    int version = VERSION_1 | messageType;
+    int version = (VERSION_1 << 16) | messageType;
     [self writeI32: version];
     [self writeString: name];
     [self writeI32: sequenceID];
