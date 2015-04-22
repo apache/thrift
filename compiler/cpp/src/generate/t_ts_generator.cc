@@ -850,7 +850,6 @@ void t_ts_generator::generate_service(t_service* tservice) {
       pns += ((i == 0) ? "" : ".") + ns_pieces[i];
     }
     f_service_ << "export module " << pns << " {" << endl;
-    indent_up();
   }
 
   generate_service_helpers(tservice);
@@ -863,7 +862,6 @@ void t_ts_generator::generate_service(t_service* tservice) {
   }
 
   if (ns_pieces.size() > 0) {
-    indent_down();
     f_service_ << "}" << endl;
   }
 
@@ -902,7 +900,7 @@ void t_ts_generator::generate_service_processor(t_service* tservice) {
     indent(f_service_) << "export class Processor extends "
                        << tservice->get_extends()->get_name() << "Processor ";
   } else {
-    indent(f_service_) << "export class " << service_name_ << "Processor ";
+    indent(f_service_) << "export class Processor ";
   }
 
   scope_up(f_service_);
@@ -1181,8 +1179,8 @@ void t_ts_generator::generate_service_client(t_service* tservice) {
   indent_up();
 
   if (gen_node_) {
-    f_service_ << ts_indent()<< "private output: thrift.TProtocol;" << endl;
-    f_service_ << ts_indent()<< "private pClass: any;" << endl;
+    f_service_ << ts_indent()<< "private output: thrift.TTransport;" << endl;
+    f_service_ << ts_indent()<< "private pClass: {new (trans: thrift.TTransport): thrift.TProtocol; };" << endl;
     f_service_ << ts_indent()<< "private _seqid: number = 0;" << endl;
     f_service_ << ts_indent()<< "private _reqs: {[key: string]: any; } = {}" << endl;
   } else {
@@ -1193,9 +1191,9 @@ void t_ts_generator::generate_service_client(t_service* tservice) {
 
 
   if (gen_node_) {
-    f_service_ << ts_indent()<< "constructor(output: thrift.TProtocol, pClass: any) {";
+    f_service_ << ts_indent()<< "constructor(output: thrift.TTransport, pClass: {new (trans: thrift.TTransport): thrift.TProtocol; }) {" << endl;
   } else {
-    f_service_ << ts_indent()<< "constructor(input: thrift.TProtocol, output?: thrift.TProtocol) {";
+    f_service_ << ts_indent()<< "constructor(input: thrift.TProtocol, output?: thrift.TProtocol) {" << endl;
   }
 
   indent_up();
@@ -1303,7 +1301,7 @@ void t_ts_generator::generate_service_client(t_service* tservice) {
 
     indent_down();
 
-    f_service_ << "}" << endl << endl;
+    f_service_ << ts_indent() << "}" << endl << endl;
 
     // Send function
     f_service_ << ts_indent()<< "send_"
@@ -1370,7 +1368,7 @@ void t_ts_generator::generate_service_client(t_service* tservice) {
 
     indent_down();
 
-    f_service_ << "}" << endl;
+    f_service_ << ts_indent() << "}" << endl;
 
     if (!(*f_iter)->is_oneway()) {
       std::string resultname = service_name_ + "_"
@@ -1435,7 +1433,7 @@ void t_ts_generator::generate_service_client(t_service* tservice) {
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_ << ts_indent()<< "if (null !== result.success) {" << endl << ts_indent()<< "  "
                    << render_recv_return("result.success") << endl << ts_indent()<< "}" << endl;
-        f_service_ << indent()
+        f_service_ << ts_indent()
                    << render_recv_throw("'" + (*f_iter)->get_name() + " failed: unknown result'")
                    << endl;
       } else {
@@ -1448,7 +1446,7 @@ void t_ts_generator::generate_service_client(t_service* tservice) {
 
       // Close function
       indent_down();
-      f_service_ << "}" << endl;
+      f_service_ << ts_indent() << "}" << endl;
     }
   }
 
