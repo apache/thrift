@@ -165,8 +165,9 @@ public:
   std::string declare_field(t_field* tfield, bool init = false, bool obj = false);
   std::string function_signature(t_function* tfunction,
                                  std::string prefix = "",
-                                 bool include_callback = false);
-  std::string argument_list(t_struct* tstruct, bool include_callback = false);
+                                 bool include_callback = false,
+                                 bool ignore_returntype = false);
+  std::string argument_list(t_struct* tstruct, bool include_type = true);
   std::string type_to_enum(t_type* ttype);
 
   std::string autogen_comment() {
@@ -225,7 +226,6 @@ public:
    * TypeScript Definition File helper functions
    */
 
-  string ts_function_signature(t_function* tfunction, bool include_callback);
   string ts_get_type(t_type* type);
 
   /**
@@ -314,7 +314,8 @@ void t_ts_generator::init_generator() {
     for (size_t i = 0; i < ns_pieces.size(); ++i) {
       pns += ((i == 0) ? "" : ".") + ns_pieces[i];
     }
-    f_types_ << "module " << pns << " {" << endl;
+    f_types_ << "export module " << pns << " {" << endl;
+    indent_up();
   }
 }
 
@@ -325,8 +326,8 @@ string t_ts_generator::ts_includes() {
   if (gen_node_) {
     return string(
         "import thrift = require('thrift');\n"
-        "var Thrift = thrift.Thrift;\n"
-        "var Q = thrift.Q;\n");
+        "import Thrift = thrift.Thrift;\n"
+        "import Q = thrift.Q;\n");
   }
 
   return "";
@@ -359,6 +360,7 @@ void t_ts_generator::close_generator() {
   // Close namespace bracket
   vector<string> ns_pieces = ts_namespace_pieces(program_);
   if (ns_pieces.size() > 0) {
+    indent_down();
     f_types_ << "}" << endl;
   }
 
@@ -393,7 +395,7 @@ void t_ts_generator::generate_enum(t_enum* tenum) {
   vector<t_enum_value*>::iterator c_iter;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
-    f_types_ << ts_indent() << "'" << (*c_iter)->get_name() << "' = " << value << "," << endl;
+    f_types_ << ts_indent() << "'" << (*c_iter)->get_name() << "' = " << value;
     if (c_iter != constants.end() - 1) {
       f_types_ << ",";
     }
@@ -561,12 +563,12 @@ void t_ts_generator::generate_ts_struct_definition(ofstream& out,
   vector<t_field*>::const_iterator m_iter;
 
   if (is_exported) {
-    out << ts_print_doc(tstruct)  << "export class "
+    out << ts_print_doc(tstruct) << ts_indent() << "export class "
         << tstruct->get_name() << (is_exception ? " extends Thrift.TException" : "")
         << " {" << endl;
 
   } else {
-    out << ts_print_doc(tstruct)  << "class "
+    out << ts_print_doc(tstruct) << ts_indent() << "class "
         << tstruct->get_name() << (is_exception ? " extends Thrift.TException" : "")
         << " {" << endl;
   }
@@ -591,6 +593,8 @@ void t_ts_generator::generate_ts_struct_definition(ofstream& out,
   } else {
     out << ts_indent() << "constructor() {" << endl;
   }
+
+  indent_up();
 
   if (is_exception) {
     out << ts_indent()<< "super(\"" << ts_namespace(tstruct->get_program())
@@ -650,6 +654,7 @@ void t_ts_generator::generate_ts_struct_definition(ofstream& out,
     out << ts_indent()<< "}" << endl;
   }
 
+  indent_down();
   out << ts_indent()<< "}" << endl;
 
   // end constructor section
@@ -780,7 +785,7 @@ void t_ts_generator::generate_ts_struct_writer(ofstream& out, t_struct* tstruct)
   out << ts_indent()<< "return;" << endl;
 
   indent_down();
-  out << ts_indent()<< "};" << endl << endl;
+  out << ts_indent()<< "}" << endl << endl;
 }
 
 /**
@@ -805,6 +810,47 @@ void t_ts_generator::generate_service(t_service* tservice) {
     }
 
     f_service_ << "import ttypes = require('./" + program_->get_name() + "_types');" << endl;
+    // Generate type aliases
+    // enum
+    std::vector<t_enum*> enums = program_->get_enums();
+    std::vector<t_enum*>::iterator e_iter;
+    for (e_iter = enums.begin(); e_iter != enums.end(); ++e_iter) {
+      f_service_ << "import " << (*e_iter)->get_name() << " = ttypes."
+                << ts_namespace(program_) << (*e_iter)->get_name() << endl;
+    }
+    // const
+    std::vector<t_const*> consts = program_->get_consts();
+    std::vector<t_const*>::iterator c_iter;
+    for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+      f_service_ << "import " << (*c_iter)->get_name() << " = ttypes."
+                << ts_namespace(program_) << (*c_iter)->get_name() << endl;
+    }
+    // exception
+    std::vector<t_struct*> exceptions = program_->get_xceptions();
+    std::vector<t_struct*>::iterator x_iter;
+    for (x_iter = exceptions.begin(); x_iter != exceptions.end(); ++x_iter) {
+      f_service_ << "import " << (*x_iter)->get_name() << " = ttypes."
+                << ts_namespace(program_) << (*x_iter)->get_name() << endl;
+    }
+    // structs
+    std::vector<t_struct*> structs = program_->get_structs();
+    std::vector<t_struct*>::iterator s_iter;
+    for (s_iter = structs.begin(); s_iter != structs.end(); ++s_iter) {
+      f_service_ << "import " << (*s_iter)->get_name() << " = ttypes."
+                << ts_namespace(program_) << (*s_iter)->get_name() << endl;
+    }
+  }
+
+  // setup the namespace
+  // TODO should the namespace just be in the directory structure for node?
+  vector<string> ns_pieces = ts_namespace_pieces(program_);
+  if (ns_pieces.size() > 0) {
+    string pns;
+    for (size_t i = 0; i < ns_pieces.size(); ++i) {
+      pns += ((i == 0) ? "" : ".") + ns_pieces[i];
+    }
+    f_service_ << "export module " << pns << " {" << endl;
+    indent_up();
   }
 
   generate_service_helpers(tservice);
@@ -814,6 +860,11 @@ void t_ts_generator::generate_service(t_service* tservice) {
   if (gen_node_) {
     generate_service_processor(tservice);
     generate_service_handler_interface(tservice);
+  }
+
+  if (ns_pieces.size() > 0) {
+    indent_down();
+    f_service_ << "}" << endl;
   }
 
   f_service_.close();
@@ -856,9 +907,9 @@ void t_ts_generator::generate_service_processor(t_service* tservice) {
 
   scope_up(f_service_);
 
-  indent(f_service_) << "private _handler: HandlerLike;" << endl;
+  indent(f_service_) << "private _handler: " << service_name_ << "Like;" << endl;
 
-  indent(f_service_) << "constructor(handler: HandlerLike) ";
+  indent(f_service_) << "constructor(handler: " << service_name_ << "Like) ";
 
   scope_up(f_service_);
 
@@ -903,12 +954,12 @@ void t_ts_generator::generate_service_processor(t_service* tservice) {
 void t_ts_generator::generate_process_function(t_service* tservice, t_function* tfunction) {
   (void)tservice;
   indent(f_service_) << "process_" + tfunction->get_name()
-                        + "(seqid: number, input: thrift.Protocol, output: thrift.Protocol) ";
+                        + "(seqid: number, input: thrift.TProtocol, output: thrift.TProtocol) ";
 
   scope_up(f_service_);
 
-  string argsname = ts_namespace(program_) + service_name_ + "_" + tfunction->get_name() + "_args";
-  string resultname = ts_namespace(program_) + service_name_ + "_" + tfunction->get_name()
+  string argsname = service_name_ + "_" + tfunction->get_name() + "_args";
+  string resultname = service_name_ + "_" + tfunction->get_name()
                       + "_result";
 
   f_service_ << ts_indent()<< "var args = new " << argsname << "();" << endl << indent()
@@ -950,9 +1001,9 @@ void t_ts_generator::generate_process_function(t_service* tservice, t_function* 
 
   f_service_ << ")" << endl;
   indent_up();
-  indent(f_service_) << ".then(function(result) {" << endl;
+  indent(f_service_) << ".then(function(success) {" << endl;
   indent_up();
-  f_service_ << ts_indent()<< "var result = new " << resultname << "({success: result});" << endl
+  f_service_ << ts_indent()<< "var result = new " << resultname << "({success: success});" << endl
              << ts_indent()<< "output.writeMessageBegin(\"" << tfunction->get_name()
              << "\", Thrift.MessageType.REPLY, seqid);" << endl << indent()
              << "result.write(output);" << endl << ts_indent()<< "output.writeMessageEnd();" << endl
@@ -1016,9 +1067,10 @@ void t_ts_generator::generate_process_function(t_service* tservice, t_function* 
     f_service_ << "args." << (*f_iter)->get_name() << ", ";
   }
 
-  f_service_ << "function (err, result) {" << endl;
+  f_service_ << "function (err, result_) {" << endl;
   indent_up();
 
+  indent(f_service_) << "var result: {write: (output: thrift.TProtocol) => void; };" << endl;
   indent(f_service_) << "if (err == null";
   if (has_exception) {
     const vector<t_field*>& members = exceptions->get_members();
@@ -1031,14 +1083,14 @@ void t_ts_generator::generate_process_function(t_service* tservice, t_function* 
   }
   f_service_ << ") {" << endl;
   indent_up();
-  f_service_ << ts_indent()<< "var result = new " << resultname
-             << "((err != null ? err : {success: result}));" << endl << indent()
+  f_service_ << ts_indent()<< "result = new " << resultname
+             << "((err != null ? err : {success: result_}));" << endl << indent()
              << "output.writeMessageBegin(\"" << tfunction->get_name()
              << "\", Thrift.MessageType.REPLY, seqid);" << endl;
   indent_down();
   indent(f_service_) << "} else {" << endl;
   indent_up();
-  f_service_ << ts_indent()<< "var result = new "
+  f_service_ << ts_indent()<< "result = new "
                             "Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN,"
                             " err.message);" << endl << ts_indent()<< "output.writeMessageBegin(\""
              << tfunction->get_name() << "\", Thrift.MessageType.EXCEPTION, seqid);" << endl;
@@ -1162,8 +1214,8 @@ void t_ts_generator::generate_service_client(t_service* tservice) {
 
   // utils for multiplexed services
   if (gen_node_) {
-    indent(f_service_) << ts_indent()<< "seqid() { return this._seqid; }" << endl;
-    indent(f_service_) << ts_indent()<< "new_seqid() { return this._seqid += 1; }" << endl;
+    indent(f_service_) << "seqid() { return this._seqid; }" << endl;
+    indent(f_service_) << "new_seqid() { return this._seqid += 1; }" << endl;
   }
 
   // Generate client method implementations
@@ -1174,7 +1226,11 @@ void t_ts_generator::generate_service_client(t_service* tservice) {
     const vector<t_field*>& fields = arg_struct->get_members();
     vector<t_field*>::const_iterator fld_iter;
     string funname = (*f_iter)->get_name();
-    string arglist = argument_list(arg_struct);
+    string arglist = argument_list(arg_struct, false);
+    bool isVoid = (*f_iter)->get_returntype()->is_base_type() &&
+      ((t_base_type*)(*f_iter)->get_returntype())->get_base() == t_base_type::TYPE_VOID;
+    string returnType = isVoid ? "any" : ts_get_type((*f_iter)->get_returntype());
+
 
     // Open function
     f_service_ << ts_indent() << function_signature(*f_iter, "", true) << " {" << endl;
@@ -1185,8 +1241,8 @@ void t_ts_generator::generate_service_client(t_service* tservice) {
       f_service_ << ts_indent()<< "this._seqid = this.new_seqid();" << endl << indent()
                  << "if (callback === undefined) {" << endl;
       indent_up();
-      f_service_ << ts_indent()<< "var _defer = Q.defer();" << endl << indent()
-                 << "this._reqs[this.seqid()] = function(error, result) {" << endl;
+      f_service_ << ts_indent()<< "var _defer = Q.defer<" + returnType + ">();" << endl << indent()
+                 << "this._reqs[this.seqid()] = function(error: any, result: " + returnType + ") {" << endl;
       indent_up();
       indent(f_service_) << "if (error) {" << endl;
       indent_up();
@@ -1251,7 +1307,7 @@ void t_ts_generator::generate_service_client(t_service* tservice) {
 
     // Send function
     f_service_ << ts_indent()<< "send_"
-               << function_signature(*f_iter, "", !gen_node_) << " {" << endl;
+               << function_signature(*f_iter, "", !gen_node_, gen_node_) << " {" << endl;
 
     indent_up();
 
@@ -1263,7 +1319,7 @@ void t_ts_generator::generate_service_client(t_service* tservice) {
       outputVar = "this.output";
     }
 
-    std::string argsname = ts_namespace(program_) + service_name_ + "_" + (*f_iter)->get_name()
+    std::string argsname = service_name_ + "_" + (*f_iter)->get_name()
                            + "_args";
 
     std::string messageType = (*f_iter)->is_oneway() ? "Thrift.MessageType.ONEWAY"
@@ -1317,7 +1373,7 @@ void t_ts_generator::generate_service_client(t_service* tservice) {
     f_service_ << "}" << endl;
 
     if (!(*f_iter)->is_oneway()) {
-      std::string resultname = ts_namespace(tservice->get_program()) + service_name_ + "_"
+      std::string resultname = service_name_ + "_"
                                + (*f_iter)->get_name() + "_result";
 
       if (gen_node_) {
@@ -1492,7 +1548,7 @@ void t_ts_generator::generate_deserialize_field(ofstream& out,
  * is a reference to a TProtocol serialization object.
  */
 void t_ts_generator::generate_deserialize_struct(ofstream& out, t_struct* tstruct, string prefix) {
-  out << ts_indent()<< prefix << " = new " << ts_type_namespace(tstruct->get_program())
+  out << ts_indent()<< prefix << " = new "
       << tstruct->get_name() << "();" << endl << ts_indent()<< prefix << ".read(input);" << endl;
 }
 
@@ -1509,7 +1565,7 @@ void t_ts_generator::generate_deserialize_container(ofstream& out, t_type* ttype
   t_field fetype(g_type_byte, etype);
 
   out << ts_indent()<< "var " << size << " = 0;" << endl;
-  out << ts_indent()<< "var " << rtmp3 << ";" << endl;
+  out << ts_indent()<< "var " << rtmp3 << ": any;" << endl;
 
   // Declare variables, read header
   if (ttype->is_map()) {
@@ -1589,7 +1645,7 @@ void t_ts_generator::generate_deserialize_set_element(ofstream& out, t_set* tset
   string elem = tmp("elem");
   t_field felem(tset->get_elem_type(), elem);
 
-  indent(out) << "var " << elem << " = null;" << endl;
+  indent(out) << "var " << elem << ": any = null;" << endl;
 
   generate_deserialize_field(out, &felem);
 
@@ -1602,7 +1658,7 @@ void t_ts_generator::generate_deserialize_list_element(ofstream& out,
   string elem = tmp("elem");
   t_field felem(tlist->get_elem_type(), elem);
 
-  indent(out) << "var " << elem << " = null;" << endl;
+  indent(out) << "var " << elem << ": any = null;" << endl;
 
   generate_deserialize_field(out, &felem);
 
@@ -1842,22 +1898,45 @@ string t_ts_generator::declare_field(t_field* tfield, bool init, bool obj) {
  */
 string t_ts_generator::function_signature(t_function* tfunction,
                                           string prefix,
-                                          bool include_callback) {
+                                          bool include_callback,
+                                          bool ignore_returntype) {
 
   string str;
 
   str = prefix + tfunction->get_name() + "(";
 
-  str += argument_list(tfunction->get_arglist(), include_callback);
+  str += argument_list(tfunction->get_arglist());
 
-  str += ")";
+  if (include_callback) {
+    bool isVoid = ignore_returntype || (tfunction->get_returntype()->is_base_type() &&
+      ((t_base_type*)tfunction->get_returntype())->get_base() == t_base_type::TYPE_VOID);
+
+    if (isVoid) {
+      str += ", callback?: (err: any) => void): ";
+    } else {
+      str += ", callback?: (err: any, result: " + ts_get_type(tfunction->get_returntype()) + ") => void): ";
+    }
+
+    if (ignore_returntype) {
+      str += "void";
+    } if (gen_node_) {
+      str += "Q.IPromise<" + ts_get_type(tfunction->get_returntype()) +">";
+    }else if (gen_jquery_) {
+      str += "JQueryXHR";
+    } else {
+      str += "void";
+    }
+  } else {
+    str += "): " + (ignore_returntype ? "void" : ts_get_type(tfunction->get_returntype()));
+  }
+
   return str;
 }
 
 /**
  * Renders a field list
  */
-string t_ts_generator::argument_list(t_struct* tstruct, bool include_callback) {
+string t_ts_generator::argument_list(t_struct* tstruct, bool include_type) {
   string result = "";
 
   const vector<t_field*>& fields = tstruct->get_members();
@@ -1869,14 +1948,10 @@ string t_ts_generator::argument_list(t_struct* tstruct, bool include_callback) {
     } else {
       result += ", ";
     }
-    result += (*f_iter)->get_name()+ ": " + ts_get_type((*f_iter)->get_type());
-  }
-
-  if (include_callback) {
-    if (!fields.empty()) {
-      result += ", ";
+    result += (*f_iter)->get_name();
+    if (include_type) {
+      result += ": " + ts_get_type((*f_iter)->get_type());
     }
-    result += "callback";
   }
 
   return result;
@@ -1980,42 +2055,6 @@ string t_ts_generator::ts_get_type(t_type* type) {
   return ts_type;
 }
 
-/**
- * Renders a TypeScript function signature of the form 'name(args: types): type;'
- *
- * @param t_function Function definition
- * @param bool in-/exclude the callback argument
- * @return String of rendered function definition
- */
-std::string t_ts_generator::ts_function_signature(t_function* tfunction, bool include_callback) {
-  string str;
-  const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
-  vector<t_field*>::const_iterator f_iter;
-
-  str = tfunction->get_name() + "(";
-
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    str += (*f_iter)->get_name() + ts_get_req(*f_iter) + ": " + ts_get_type((*f_iter)->get_type());
-
-    if (f_iter + 1 != fields.end() || include_callback) {
-      str += ", ";
-    }
-  }
-
-  if (include_callback) {
-    str += "callback: Function): ";
-
-    if (gen_jquery_) {
-      str += "JQueryXHR;";
-    } else {
-      str += "void;";
-    }
-  } else {
-    str += "): " + ts_get_type(tfunction->get_returntype()) + ";";
-  }
-
-  return str;
-}
 
 THRIFT_REGISTER_GENERATOR(ts,
                           "Typescript",
