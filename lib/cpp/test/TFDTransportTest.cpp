@@ -30,8 +30,9 @@ class DummyException : std::exception {};
 int main() {
   { TFDTransport t(256, TFDTransport::NO_CLOSE_ON_DESTROY); }
 
-  // MSVCRT100D asserts on close of a bad handle, so only run this test in release build on windows
-#if !defined(WIN32) || (defined(WIN32) && defined(NDEBUG))
+  // Disabled on MSVC because the RTL asserts on an invalid file descriptor
+  // in both debug and release mode; at least in MSVCR100 (Visual Studio 2010)
+#if !defined(WIN32)
   try {
     {
       TFDTransport t(256, TFDTransport::CLOSE_ON_DESTROY);
