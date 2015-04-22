@@ -88,16 +88,21 @@ add_executable(TSocketInterruptTest TSocketInterruptTest.cpp)
 target_link_libraries(TSocketInterruptTest
     testgencpp
     ${Boost_LIBRARIES}
-    -lrt
+    #-lrt
 )
+if (NOT MSVC)
+target_link_libraries(TSocketInterruptTest -lrt)
+endif ()
 add_test(NAME TSocketInterruptTest COMMAND TSocketInterruptTest)
 
 add_executable(TServerIntegrationTest TServerIntegrationTest.cpp)
 target_link_libraries(TServerIntegrationTest
     testgencpp_cob
     ${Boost_LIBRARIES}
-    -lrt
 )
+if (NOT MSVC)
+target_link_libraries(TServerIntegrationTest -lrt)
+endif ()
 add_test(NAME TServerIntegrationTest COMMAND TServerIntegrationTest)
 
 if(WITH_ZLIB)
