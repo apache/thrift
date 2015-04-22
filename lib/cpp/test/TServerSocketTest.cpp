@@ -21,6 +21,7 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TServerSocket.h>
 #include "TestPortFixture.h"
+#include <iostream>
 
 using apache::thrift::transport::TServerSocket;
 using apache::thrift::transport::TSocket;
