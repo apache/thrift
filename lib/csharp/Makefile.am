@@ -70,15 +70,9 @@ THRIFTCODE= \
             src/TException.cs \
             src/TApplicationException.cs
 
-CSC=gmcs
+CSC=mcs
 
-if NET_2_0
-MONO_DEFINES=/d:NET_2_0
-endif
-
-if NET_4_5
 MONO_DEFINES=/d:NET_4_5 -sdk:4.5
-endif
 
 all-local: Thrift.dll
 
