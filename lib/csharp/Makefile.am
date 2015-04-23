@@ -52,7 +52,6 @@ THRIFTCODE= \
             src/Transport/TBufferedTransport.cs \
             src/Transport/TTransport.cs \
             src/Transport/TSocket.cs \
-            src/Transport/TSocketVersionizer.cs \
             src/Transport/TTransportException.cs \
             src/Transport/TStreamTransport.cs \
             src/Transport/TFramedTransport.cs \
@@ -74,10 +73,6 @@ CSC=gmcs
 
 if NET_2_0
 MONO_DEFINES=/d:NET_2_0
-endif
-
-if NET_4_5
-MONO_DEFINES=/d:NET_4_5 -sdk:4.5
 endif
 
 all-local: Thrift.dll

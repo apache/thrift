@@ -185,14 +185,14 @@ namespace Test
 
             // linear distribution, unless random is requested
             if (!randomDist) {
-                for (var i = 0; i < initLen; ++i) {
+                for (var i = 0; i < initLen; ++i) { 
                     retval[i] = (byte)i;
                 }
                 return retval;
             }
 
             // random distribution
-            for (var i = 0; i < initLen; ++i) {
+            for (var i = 0; i < initLen; ++i) { 
                 retval[i] = (byte)0;
             }
             var rnd = new Random();
@@ -270,13 +270,13 @@ namespace Test
                     if (binIn[ofs] != binOut[ofs])
                         throw new Exception("testBinary: content mismatch at offset " + ofs.ToString());
             }
-            catch (Thrift.TApplicationException e)
+            catch (Thrift.TApplicationException e) 
             {
                 Console.Write("testBinary(" + BytesToHex(binOut) + "): "+e.Message);
             }
 
             // binary equals? only with hashcode option enabled ...
-            if( typeof(CrazyNesting).GetMethod("Equals").DeclaringType == typeof(CrazyNesting))
+            if( typeof(CrazyNesting).GetMethod("Equals").DeclaringType == typeof(CrazyNesting)) 
             {
                 CrazyNesting one = new CrazyNesting();
                 CrazyNesting two = new CrazyNesting();
