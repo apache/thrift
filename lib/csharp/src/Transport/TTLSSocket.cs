@@ -172,7 +172,7 @@ namespace Thrift.Transport
         /// </summary>
         private void InitSocket()
         {
-            this.client = TSocketVersionizer.CreateTcpClient();
+            this.client = new TcpClient();
             client.ReceiveTimeout = client.SendTimeout = timeout;
             client.Client.NoDelay = true;
         }
@@ -286,7 +286,7 @@ namespace Thrift.Transport
         public void setupTLS()
         {
             RemoteCertificateValidationCallback validator = this.certValidator ?? DefaultCertificateValidator;
-
+            
             if( this.localCertificateSelectionCallback != null)
             {
                 this.secureStream = new SslStream(
@@ -304,7 +304,7 @@ namespace Thrift.Transport
                     validator
                 );
             }
-
+            
             try
             {
                 if (isServer)
