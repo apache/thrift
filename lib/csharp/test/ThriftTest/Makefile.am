@@ -18,7 +18,8 @@
 #
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
-CSC=gmcs
+MONO_DEFINES=/d:NET_4_5 -sdk:4.5
+CSC=mcs
 
 stubs: $(top_srcdir)/test/ThriftTest.thrift
 	$(THRIFT) --gen csharp -o . $(top_srcdir)/test/ThriftTest.thrift
@@ -26,7 +27,7 @@ stubs: $(top_srcdir)/test/ThriftTest.thrift
 precross: TestClientServer.exe
 
 ThriftImpl.dll: stubs
-	$(CSC) /t:library /out:./ThriftImpl.dll /recurse:./gen-csharp/* /reference:../../Thrift.dll
+	$(CSC) /t:library /out:./ThriftImpl.dll /recurse:./gen-csharp/* /reference:../../Thrift.dll $(MONO_DEFINES)
 
 TestClientServer.exe: TestClient.cs TestServer.cs Program.cs ThriftImpl.dll
 	$(CSC)  /out:TestClientServer.exe /reference:../../Thrift.dll /reference:ThriftImpl.dll TestClient.cs TestServer.cs Program.cs
