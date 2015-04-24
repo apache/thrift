@@ -61,7 +61,7 @@ public:
    * @param host An IP address or hostname to connect to
    * @param port The port to connect on
    */
-  TSocket(std::string host, int port);
+  TSocket(const std::string& host, int port);
 
   /**
    * Constructs a new Unix domain socket.
@@ -69,7 +69,7 @@ public:
    *
    * @param path The Unix domain socket e.g. "/tmp/ThriftTest.binary.thrift"
    */
-  TSocket(std::string path);
+  TSocket(const std::string& path);
 
   /**
    * Destroyes the socket object, closing it if necessary.
@@ -102,6 +102,13 @@ public:
 
   /**
    * Reads from the underlying socket.
+   * \returns the number of bytes read or 0 indicates EOF
+   * \throws TTransportException of types:
+   *           INTERRUPTED means the socket was interrupted
+   *                       out of a blocking call
+   *           NOT_OPEN means the socket has been closed
+   *           TIMED_OUT means the receive timeout expired
+   *           UNKNOWN means something unexpected happened
    */
   virtual uint32_t read(uint8_t* buf, uint32_t len);
 
@@ -242,9 +249,16 @@ public:
   virtual const std::string getOrigin();
 
   /**
-   * Constructor to create socket from raw UNIX handle.
+   * Constructor to create socket from file descriptor.
    */
   TSocket(THRIFT_SOCKET socket);
+
+  /**
+   * Constructor to create socket from file descriptor that
+   * can be interrupted safely.
+   */
+  TSocket(THRIFT_SOCKET socket,
+          boost::shared_ptr<THRIFT_SOCKET> interruptListener);
 
   /**
    * Set a cache of the peer address (used when trivially available: e.g.
@@ -274,8 +288,14 @@ protected:
   /** UNIX domain socket path */
   std::string path_;
 
-  /** Underlying UNIX socket handle */
+  /** Underlying socket handle */
   THRIFT_SOCKET socket_;
+
+  /**
+   * A shared socket pointer that will interrupt a blocking read if data
+   * becomes available on it
+   */
+  boost::shared_ptr<THRIFT_SOCKET> interruptListener_;
 
   /** Connect timeout in ms */
   int connTimeout_;

@@ -20,6 +20,7 @@
 #include <thrift/thrift-config.h>
 
 #include <cstring>
+#include <stdexcept>
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -69,6 +70,12 @@ inline SOCKOPT_CAST_T* cast_sockopt(T* v) {
   return reinterpret_cast<SOCKOPT_CAST_T*>(v);
 }
 
+void destroyer_of_fine_sockets(THRIFT_SOCKET *ssock)
+{
+    ::THRIFT_CLOSESOCKET(*ssock);
+    delete ssock;
+}
+
 namespace apache {
 namespace thrift {
 namespace transport {
@@ -88,9 +95,12 @@ TServerSocket::TServerSocket(int port)
     tcpSendBuffer_(0),
     tcpRecvBuffer_(0),
     keepAlive_(false),
-    intSock1_(THRIFT_INVALID_SOCKET),
-    intSock2_(THRIFT_INVALID_SOCKET) {
-}
+    interruptableChildren_(true),
+    listening_(false),
+    interruptSockWriter_(THRIFT_INVALID_SOCKET),
+    interruptSockReader_(THRIFT_INVALID_SOCKET),
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET)
+{}
 
 TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout)
   : port_(port),
@@ -104,9 +114,12 @@ TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout)
     tcpSendBuffer_(0),
     tcpRecvBuffer_(0),
     keepAlive_(false),
-    intSock1_(THRIFT_INVALID_SOCKET),
-    intSock2_(THRIFT_INVALID_SOCKET) {
-}
+    interruptableChildren_(true),
+    listening_(false),
+    interruptSockWriter_(THRIFT_INVALID_SOCKET),
+    interruptSockReader_(THRIFT_INVALID_SOCKET),
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET)
+{}
 
 TServerSocket::TServerSocket(const string& address, int port)
   : port_(port),
@@ -121,9 +134,12 @@ TServerSocket::TServerSocket(const string& address, int port)
     tcpSendBuffer_(0),
     tcpRecvBuffer_(0),
     keepAlive_(false),
-    intSock1_(THRIFT_INVALID_SOCKET),
-    intSock2_(THRIFT_INVALID_SOCKET) {
-}
+    interruptableChildren_(true),
+    listening_(false),
+    interruptSockWriter_(THRIFT_INVALID_SOCKET),
+    interruptSockReader_(THRIFT_INVALID_SOCKET),
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET)
+{}
 
 TServerSocket::TServerSocket(const string& path)
   : port_(0),
@@ -138,9 +154,12 @@ TServerSocket::TServerSocket(const string& path)
     tcpSendBuffer_(0),
     tcpRecvBuffer_(0),
     keepAlive_(false),
-    intSock1_(THRIFT_INVALID_SOCKET),
-    intSock2_(THRIFT_INVALID_SOCKET) {
-}
+    interruptableChildren_(true),
+    listening_(false),
+    interruptSockWriter_(THRIFT_INVALID_SOCKET),
+    interruptSockReader_(THRIFT_INVALID_SOCKET),
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET)
+{}
 
 TServerSocket::~TServerSocket() {
   close();
@@ -178,18 +197,41 @@ void TServerSocket::setTcpRecvBuffer(int tcpRecvBuffer) {
   tcpRecvBuffer_ = tcpRecvBuffer;
 }
 
+void TServerSocket::setInterruptableChildren(bool enable) {
+  if (listening_) {
+    throw std::logic_error("setInterruptableChildren cannot be called after listen()");
+  }
+  interruptableChildren_ = enable;
+}
+
 void TServerSocket::listen() {
+  listening_ = true;
 #ifdef _WIN32
   TWinsockSingleton::create();
 #endif // _WIN32
   THRIFT_SOCKET sv[2];
+  // Create the socket pair used to interrupt
   if (-1 == THRIFT_SOCKETPAIR(AF_LOCAL, SOCK_STREAM, 0, sv)) {
-    GlobalOutput.perror("TServerSocket::listen() socketpair() ", THRIFT_GET_SOCKET_ERROR);
-    intSock1_ = THRIFT_INVALID_SOCKET;
-    intSock2_ = THRIFT_INVALID_SOCKET;
+    GlobalOutput.perror("TServerSocket::listen() socketpair() interrupt",
+    		THRIFT_GET_SOCKET_ERROR);
+    interruptSockWriter_ = THRIFT_INVALID_SOCKET;
+    interruptSockReader_ = THRIFT_INVALID_SOCKET;
   } else {
-    intSock1_ = sv[1];
-    intSock2_ = sv[0];
+    interruptSockWriter_ = sv[1];
+    interruptSockReader_ = sv[0];
+  }
+
+  // Create the socket pair used to interrupt all clients
+  if (-1 == THRIFT_SOCKETPAIR(AF_LOCAL, SOCK_STREAM, 0, sv)) {
+    GlobalOutput.perror("TServerSocket::listen() socketpair() childInterrupt",
+    		THRIFT_GET_SOCKET_ERROR);
+    childInterruptSockWriter_ = THRIFT_INVALID_SOCKET;
+    pChildInterruptSockReader_.reset();
+  } else {
+    childInterruptSockWriter_ = sv[1];
+    pChildInterruptSockReader_ =
+    		boost::shared_ptr<THRIFT_SOCKET>(new THRIFT_SOCKET(sv[0]),
+    				destroyer_of_fine_sockets);
   }
 
   // Validate port number
@@ -469,8 +511,8 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     std::memset(fds, 0, sizeof(fds));
     fds[0].fd = serverSocket_;
     fds[0].events = THRIFT_POLLIN;
-    if (intSock2_ != THRIFT_INVALID_SOCKET) {
-      fds[1].fd = intSock2_;
+    if (interruptSockReader_ != THRIFT_INVALID_SOCKET) {
+      fds[1].fd = interruptSockReader_;
       fds[1].events = THRIFT_POLLIN;
     }
     /*
@@ -491,9 +533,9 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
       throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
     } else if (ret > 0) {
       // Check for an interrupt signal
-      if (intSock2_ != THRIFT_INVALID_SOCKET && (fds[1].revents & THRIFT_POLLIN)) {
+      if (interruptSockReader_ != THRIFT_INVALID_SOCKET && (fds[1].revents & THRIFT_POLLIN)) {
         int8_t buf;
-        if (-1 == recv(intSock2_, cast_sockopt(&buf), sizeof(int8_t), 0)) {
+        if (-1 == recv(interruptSockReader_, cast_sockopt(&buf), sizeof(int8_t), 0)) {
           GlobalOutput.perror("TServerSocket::acceptImpl() recv() interrupt ",
                               THRIFT_GET_SOCKET_ERROR);
         }
@@ -562,16 +604,28 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
 }
 
 shared_ptr<TSocket> TServerSocket::createSocket(THRIFT_SOCKET clientSocket) {
-  return shared_ptr<TSocket>(new TSocket(clientSocket));
+  if (interruptableChildren_) {
+    return shared_ptr<TSocket>(new TSocket(clientSocket, pChildInterruptSockReader_));
+  } else {
+    return shared_ptr<TSocket>(new TSocket(clientSocket));
+  }
+}
+
+void TServerSocket::notify(THRIFT_SOCKET notifySocket) {
+  if (notifySocket != THRIFT_INVALID_SOCKET) {
+    int8_t byte = 0;
+    if (-1 == send(notifySocket, cast_sockopt(&byte), sizeof(int8_t), 0)) {
+      GlobalOutput.perror("TServerSocket::notify() send() ", THRIFT_GET_SOCKET_ERROR);
+    }
+  }
 }
 
 void TServerSocket::interrupt() {
-  if (intSock1_ != THRIFT_INVALID_SOCKET) {
-    int8_t byte = 0;
-    if (-1 == send(intSock1_, cast_sockopt(&byte), sizeof(int8_t), 0)) {
-      GlobalOutput.perror("TServerSocket::interrupt() send() ", THRIFT_GET_SOCKET_ERROR);
-    }
-  }
+  notify(interruptSockWriter_);
+}
+
+void TServerSocket::interruptChildren() {
+  notify(childInterruptSockWriter_);
 }
 
 void TServerSocket::close() {
@@ -579,16 +633,23 @@ void TServerSocket::close() {
     shutdown(serverSocket_, THRIFT_SHUT_RDWR);
     ::THRIFT_CLOSESOCKET(serverSocket_);
   }
-  if (intSock1_ != THRIFT_INVALID_SOCKET) {
-    ::THRIFT_CLOSESOCKET(intSock1_);
+  if (interruptSockWriter_ != THRIFT_INVALID_SOCKET) {
+    ::THRIFT_CLOSESOCKET(interruptSockWriter_);
   }
-  if (intSock2_ != THRIFT_INVALID_SOCKET) {
-    ::THRIFT_CLOSESOCKET(intSock2_);
+  if (interruptSockReader_ != THRIFT_INVALID_SOCKET) {
+    ::THRIFT_CLOSESOCKET(interruptSockReader_);
+  }
+  if (childInterruptSockWriter_ != THRIFT_INVALID_SOCKET) {
+    ::THRIFT_CLOSESOCKET(childInterruptSockWriter_);
   }
   serverSocket_ = THRIFT_INVALID_SOCKET;
-  intSock1_ = THRIFT_INVALID_SOCKET;
-  intSock2_ = THRIFT_INVALID_SOCKET;
+  interruptSockWriter_ = THRIFT_INVALID_SOCKET;
+  interruptSockReader_ = THRIFT_INVALID_SOCKET;
+  childInterruptSockWriter_ = THRIFT_INVALID_SOCKET;
+  pChildInterruptSockReader_.reset();
+  listening_ = false;
 }
+
 }
 }
 } // apache::thrift::transport

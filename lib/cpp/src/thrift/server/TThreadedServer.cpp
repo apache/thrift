@@ -55,10 +55,6 @@ public:
 
   ~Task() {}
 
-  void stop() {
-    input_->getTransport()->close();
-  }
-
   void run() {
     boost::shared_ptr<TServerEventHandler> eventHandler = server_.getEventHandler();
     void* connectionContext = NULL;
@@ -76,7 +72,8 @@ public:
         }
       }
     } catch (const TTransportException& ttx) {
-      if (ttx.getType() != TTransportException::END_OF_FILE) {
+      if (ttx.getType() != TTransportException::END_OF_FILE &&
+          ttx.getType() != TTransportException::INTERRUPTED) {
         string errStr = string("TThreadedServer client died: ") + ttx.what();
         GlobalOutput(errStr.c_str());
       }
@@ -130,8 +127,7 @@ void TThreadedServer::init() {
   }
 }
 
-TThreadedServer::~TThreadedServer() {
-}
+TThreadedServer::~TThreadedServer() {}
 
 void TThreadedServer::serve() {
 
@@ -196,11 +192,11 @@ void TThreadedServer::serve() {
       if (client) {
         client->close();
       }
-      if (!stop_ || ttx.getType() != TTransportException::INTERRUPTED) {
+      if (ttx.getType() != TTransportException::INTERRUPTED) {
         string errStr = string("TThreadedServer: TServerTransport died on accept: ") + ttx.what();
         GlobalOutput(errStr.c_str());
       }
-      continue;
+      if (stop_) break; else continue;
     } catch (TException& tx) {
       if (inputTransport) {
         inputTransport->close();
@@ -214,7 +210,7 @@ void TThreadedServer::serve() {
       string errStr = string("TThreadedServer: Caught TException: ") + tx.what();
       GlobalOutput(errStr.c_str());
       continue;
-    } catch (string s) {
+    } catch (const string& s) {
       if (inputTransport) {
         inputTransport->close();
       }
@@ -240,8 +236,6 @@ void TThreadedServer::serve() {
     }
     try {
       Synchronized s(tasksMonitor_);
-      for ( std::set<Task*>::iterator tIt = tasks_.begin(); tIt != tasks_.end(); ++tIt )
-        (*tIt)->stop();
       while (!tasks_.empty()) {
         tasksMonitor_.wait();
       }
@@ -250,6 +244,14 @@ void TThreadedServer::serve() {
       GlobalOutput(errStr.c_str());
     }
     stop_ = false;
+  }
+}
+
+void TThreadedServer::stop() {
+  if (!stop_) {
+	stop_ = true;
+	serverTransport_->interrupt();
+	serverTransport_->interruptChildren();
   }
 }
 }

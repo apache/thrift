@@ -20,7 +20,7 @@
 
 # Find required packages
 set(Boost_USE_STATIC_LIBS ON) # Force the use of static boost test framework
-find_package(Boost 1.53.0 REQUIRED COMPONENTS unit_test_framework)
+find_package(Boost 1.53.0 REQUIRED COMPONENTS chrono system thread unit_test_framework)
 include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 
 #Make sure gen-cpp files can be included
@@ -50,6 +50,8 @@ target_link_libraries(testgencpp thrift)
 set(testgencpp_cob_SOURCES
     gen-cpp/ChildService.cpp
     gen-cpp/ChildService.h
+    gen-cpp/EmptyService.cpp
+    gen-cpp/EmptyService.h
     gen-cpp/ParentService.cpp
     gen-cpp/ParentService.h
     gen-cpp/proc_types.cpp
@@ -71,6 +73,7 @@ set(UnitTest_SOURCES
     ToStringTest.cpp
     TypedefTest.cpp
     TServerSocketTest.cpp
+    TServerTransportTest.cpp
 )
 
 if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS)
@@ -81,6 +84,26 @@ add_executable(UnitTests ${UnitTest_SOURCES})
 target_link_libraries(UnitTests testgencpp thrift ${Boost_LIBRARIES})
 add_test(NAME UnitTests COMMAND UnitTests)
 
+add_executable(TSocketInterruptTest TSocketInterruptTest.cpp)
+target_link_libraries(TSocketInterruptTest
+    testgencpp
+    ${Boost_LIBRARIES}
+    #-lrt
+)
+if (NOT MSVC)
+target_link_libraries(TSocketInterruptTest -lrt)
+endif ()
+add_test(NAME TSocketInterruptTest COMMAND TSocketInterruptTest)
+
+add_executable(TServerIntegrationTest TServerIntegrationTest.cpp)
+target_link_libraries(TServerIntegrationTest
+    testgencpp_cob
+    ${Boost_LIBRARIES}
+)
+if (NOT MSVC)
+target_link_libraries(TServerIntegrationTest -lrt)
+endif ()
+add_test(NAME TServerIntegrationTest COMMAND TServerIntegrationTest)
 
 if(WITH_ZLIB)
 add_executable(TransportTest TransportTest.cpp)
@@ -255,7 +278,7 @@ endif()
 #
 
 
-add_custom_command(OUTPUT gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h
+add_custom_command(OUTPUT gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp  gen-cpp/EmptyService.h
     COMMAND thrift-compiler --gen cpp:dense ${PROJECT_SOURCE_DIR}/test/DebugProtoTest.thrift
 )
 

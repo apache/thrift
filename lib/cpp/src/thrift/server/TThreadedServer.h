@@ -75,11 +75,7 @@ public:
   virtual ~TThreadedServer();
 
   virtual void serve();
-
-  void stop() {
-    stop_ = true;
-    serverTransport_->interrupt();
-  }
+  void stop();
 
 protected:
   void init();
