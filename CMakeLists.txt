@@ -18,7 +18,7 @@
 #
 
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.12)
 
 project(thrift)
 
@@ -61,6 +61,10 @@ find_package(Threads)
 include(CTest)
 if(BUILD_TESTING)
   message(STATUS "Building with unittests")
+
+  enable_testing()
+  # Define "make check" as alias for "make test"
+  add_custom_target(check COMMAND ctest)
 else ()
   message(STATUS "Building without tests")
 endif ()
@@ -68,16 +72,27 @@ if(BUILD_COMPILER)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/compiler/cpp)
 endif()
 
-if(WITH_CPP)
+if(BUILD_CPP)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp)
+    if(BUILD_TESTING)
+        if(WITH_LIBEVENT AND WITH_ZLIB AND WITH_OPENSSL)
+            add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/cpp)
+        else()
+            message(WARNING "libevent and/or ZLIB and/or OpenSSL not found or disabled; will not build some tests")
+        endif()
+    endif()
 endif()
 
-if(WITH_C_GLIB)
+if(BUILD_C_GLIB)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/c_glib)
 endif()
 
-if(WITH_JAVA)
+if(BUILD_JAVA)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/java)
+endif()
+
+if(BUILD_PYTHON)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/py)
 endif()
 
 PRINT_CONFIG_SUMMARY()

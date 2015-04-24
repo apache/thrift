@@ -234,9 +234,14 @@ void TServerSocket::listen() {
     				destroyer_of_fine_sockets);
   }
 
+  // Validate port number
+  if (port_ < 0 || port_ > 0xFFFF) {
+    throw TTransportException(TTransportException::BAD_ARGS, "Specified port is invalid");
+  }
+
   struct addrinfo hints, *res, *res0;
   int error;
-  char port[sizeof("65536") + 1];
+  char port[sizeof("65535")];
   std::memset(&hints, 0, sizeof(hints));
   hints.ai_family = PF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
@@ -381,13 +386,17 @@ void TServerSocket::listen() {
   if (flags == -1) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
     GlobalOutput.perror("TServerSocket::listen() THRIFT_FCNTL() THRIFT_F_GETFL ", errno_copy);
-    throw TTransportException(TTransportException::NOT_OPEN, "THRIFT_FCNTL() failed", errno_copy);
+    close();
+    throw TTransportException(TTransportException::NOT_OPEN,
+                        "THRIFT_FCNTL() THRIFT_F_GETFL failed", errno_copy);
   }
 
   if (-1 == THRIFT_FCNTL(serverSocket_, THRIFT_F_SETFL, flags | THRIFT_O_NONBLOCK)) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
     GlobalOutput.perror("TServerSocket::listen() THRIFT_FCNTL() THRIFT_O_NONBLOCK ", errno_copy);
-    throw TTransportException(TTransportException::NOT_OPEN, "THRIFT_FCNTL() failed", errno_copy);
+    close();
+    throw TTransportException(TTransportException::NOT_OPEN,
+                        "THRIFT_FCNTL() THRIFT_F_SETFL THRIFT_O_NONBLOCK failed", errno_copy);
   }
 
   // prepare the port information
@@ -404,7 +413,8 @@ void TServerSocket::listen() {
     if (len > sizeof(((sockaddr_un*)NULL)->sun_path)) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       GlobalOutput.perror("TSocket::listen() Unix Domain socket path too long", errno_copy);
-      throw TTransportException(TTransportException::NOT_OPEN, " Unix Domain socket path too long");
+      throw TTransportException(TTransportException::NOT_OPEN, "Unix Domain socket path too long",
+                                errno_copy);
     }
 
     struct sockaddr_un address;
@@ -557,6 +567,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   int flags = THRIFT_FCNTL(clientSocket, THRIFT_F_GETFL, 0);
   if (flags == -1) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    ::THRIFT_CLOSESOCKET(clientSocket);
     GlobalOutput.perror("TServerSocket::acceptImpl() THRIFT_FCNTL() THRIFT_F_GETFL ", errno_copy);
     throw TTransportException(TTransportException::UNKNOWN,
                               "THRIFT_FCNTL(THRIFT_F_GETFL)",
@@ -565,6 +576,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
 
   if (-1 == THRIFT_FCNTL(clientSocket, THRIFT_F_SETFL, flags & ~THRIFT_O_NONBLOCK)) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    ::THRIFT_CLOSESOCKET(clientSocket);
     GlobalOutput
         .perror("TServerSocket::acceptImpl() THRIFT_FCNTL() THRIFT_F_SETFL ~THRIFT_O_NONBLOCK ",
                 errno_copy);

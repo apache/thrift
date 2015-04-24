@@ -46,6 +46,7 @@ class BitConverter {
      */
     public static function fixedLongToBytes( n : Int64)  : Bytes {
         var buf = Bytes.alloc(8);
+        #if( haxe_ver < 3.2)
         buf.set( 0, Int64.getLow( Int64.and( n, Int64.make(0, 0xff))));
         buf.set( 1, Int64.getLow( Int64.and( Int64.shr( n, 8),  Int64.make(0, 0xff))));
         buf.set( 2, Int64.getLow( Int64.and( Int64.shr( n, 16), Int64.make(0, 0xff))));
@@ -54,6 +55,16 @@ class BitConverter {
         buf.set( 5, Int64.getLow( Int64.and( Int64.shr( n, 40), Int64.make(0, 0xff))));
         buf.set( 6, Int64.getLow( Int64.and( Int64.shr( n, 48), Int64.make(0, 0xff))));
         buf.set( 7, Int64.getLow( Int64.and( Int64.shr( n, 56), Int64.make(0, 0xff))));
+        #else
+        buf.set( 0, Int64.and( n, Int64.make(0, 0xff)).low);
+        buf.set( 1, Int64.and( Int64.shr( n, 8),  Int64.make(0, 0xff)).low);
+        buf.set( 2, Int64.and( Int64.shr( n, 16), Int64.make(0, 0xff)).low);
+        buf.set( 3, Int64.and( Int64.shr( n, 24), Int64.make(0, 0xff)).low);
+        buf.set( 4, Int64.and( Int64.shr( n, 32), Int64.make(0, 0xff)).low);
+        buf.set( 5, Int64.and( Int64.shr( n, 40), Int64.make(0, 0xff)).low);
+        buf.set( 6, Int64.and( Int64.shr( n, 48), Int64.make(0, 0xff)).low);
+        buf.set( 7, Int64.and( Int64.shr( n, 56), Int64.make(0, 0xff)).low);
+        #end
         return buf;
     }
 

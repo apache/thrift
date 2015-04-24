@@ -24,7 +24,7 @@ include(CMakeDependentOption)
 option(BUILD_COMPILER "Build Thrift compiler" ON)
 option(BUILD_TESTING "Build with unit tests" ON)
 option(BUILD_EXAMPLES "Build examples" ON)
-option(BUILD_LIBRARIES "Build Thrfit libraries" ON)
+option(BUILD_LIBRARIES "Build Thrift libraries" ON)
 
 # Libraries to build
 
@@ -34,12 +34,13 @@ option(BUILD_LIBRARIES "Build Thrfit libraries" ON)
 # much as possible but leaving out libraries if their dependencies are not met.
 
 # C++
+option(WITH_CPP "Build C++ Thrift library" ON)
 find_package(Boost 1.53 QUIET)
-CMAKE_DEPENDENT_OPTION(WITH_CPP "Build C++ library" ON
-                       "BUILD_LIBRARIES;Boost_FOUND" OFF)
+CMAKE_DEPENDENT_OPTION(BUILD_CPP "Build C++ library" ON
+                       "BUILD_LIBRARIES;WITH_CPP;Boost_FOUND" OFF)
 # NOTE: Currently the following options are C++ specific,
 # but in future other libraries might reuse them.
-# So they are not dependent on WIHT_CPP but setting them without WITH_CPP currently
+# So they are not dependent on WITH_CPP but setting them without WITH_CPP currently
 # has no effect.
 find_package(ZLIB QUIET)
 CMAKE_DEPENDENT_OPTION(WITH_ZLIB "Build with ZLIB support" ON
@@ -64,14 +65,23 @@ option(WITH_BOOSTTHREADS "Build with Boost thread support" OFF)
 option(WITH_STDTHREADS "Build with C++ std::thread support" OFF)
 
 # C GLib
+option(WITH_C_GLIB "Build C (GLib) Thrift library" ON)
 find_package(GLIB QUIET COMPONENTS gobject)
-CMAKE_DEPENDENT_OPTION(WITH_C_GLIB "Build C (GLib) library" ON
-                       "BUILD_LIBRARIES;GLIB_FOUND" OFF)
+CMAKE_DEPENDENT_OPTION(BUILD_C_GLIB "Build C (GLib) library" ON
+                       "BUILD_LIBRARIES;WITH_C_GLIB;GLIB_FOUND" OFF)
 # Java
+option(WITH_JAVA "Build Java Thrift library" ON)
 find_package(Java QUIET)
 find_package(Ant QUIET)
-CMAKE_DEPENDENT_OPTION(WITH_JAVA "Build Java library" ON
-                       "BUILD_LIBRARIES;JAVA_FOUND;Ant_FOUND" OFF)
+CMAKE_DEPENDENT_OPTION(BUILD_JAVA "Build Java library" ON
+                       "BUILD_LIBRARIES;WITH_JAVA;JAVA_FOUND;ANT_FOUND" OFF)
+
+# Python
+option(WITH_PYTHON "Build Python Thrift library" ON)
+find_package(PythonInterp QUIET) # for Python executable
+find_package(PythonLibs QUIET) # for Python.h
+CMAKE_DEPENDENT_OPTION(BUILD_PYTHON "Build Python library" ON
+                       "BUILD_LIBRARIES;WITH_PYTHON;PYTHONLIBS_FOUND" OFF)
 
 # Common library options
 option(WITH_SHARED_LIB "Build shared libraries" ON)
@@ -84,6 +94,12 @@ if(MSVC)
 option(WITH_MT "Build unsing MT instead of MT (MSVC only)" OFF)
 endif(MSVC)
 
+macro(MESSAGE_DEP flag summary)
+if(NOT ${flag})
+  message(STATUS "   - ${summary}")
+endif()
+endmacro(MESSAGE_DEP flag summary)
+
 macro(PRINT_CONFIG_SUMMARY)
 message(STATUS "----------------------------------------------------------")
 message(STATUS "Thrift version:                       ${thrift_VERSION} (${thrift_VERSION_MAJOR}.${thrift_VERSION_MINOR}.${thrift_VERSION_PATCH})")
@@ -92,11 +108,21 @@ message(STATUS "Build configuration Summary")
 message(STATUS "  Build Thrift compiler:              ${BUILD_COMPILER}")
 message(STATUS "  Build with unit tests:              ${BUILD_TESTING}")
 message(STATUS "  Build examples:                     ${BUILD_EXAMPLES}")
-message(STATUS "  Build Thrfit libraries:             ${BUILD_LIBRARIES}")
+message(STATUS "  Build Thrift libraries:             ${BUILD_LIBRARIES}")
 message(STATUS " Language libraries:")
-message(STATUS "  Build C++ library:                  ${WITH_CPP}")
-message(STATUS "  Build C (GLib) library:             ${WITH_C_GLIB}")
-message(STATUS "  Build Java library:                 ${WITH_JAVA}")
+message(STATUS "  Build C++ library:                  ${BUILD_CPP}")
+MESSAGE_DEP(WITH_CPP "Disabled by via WITH_CCP=OFF")
+MESSAGE_DEP(Boost_FOUND "Boost headers missing")
+message(STATUS "  Build C (GLib) library:             ${BUILD_C_GLIB}")
+MESSAGE_DEP(WITH_C_GLIB "Disabled by via WITH_C_GLIB=OFF")
+MESSAGE_DEP(GLIB_FOUND "GLib missing")
+message(STATUS "  Build Java library:                 ${BUILD_JAVA}")
+MESSAGE_DEP(WITH_JAVA "Disabled by via WITH_JAVA=OFF")
+MESSAGE_DEP(JAVA_FOUND "Java Runtime missing")
+MESSAGE_DEP(ANT_FOUND "Ant missing")
+message(STATUS "  Build Python library:               ${BUILD_PYTHON}")
+MESSAGE_DEP(WITH_PYTHON "Disabled by via WITH_PYTHON=OFF")
+MESSAGE_DEP(PYTHONLIBS_FOUND "Python libraries missing")
 message(STATUS " Library features:")
 message(STATUS "  Build shared libraries:             ${WITH_SHARED_LIB}")
 message(STATUS "  Build static libraries:             ${WITH_STATIC_LIB}")

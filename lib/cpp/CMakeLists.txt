@@ -17,9 +17,6 @@
 # under the License.
 #
 
-
-cmake_minimum_required(VERSION 2.8)
-
 # Find required packages
 if(WITH_BOOSTTHREADS)
   find_package(Boost 1.53.0 REQUIRED COMPONENTS system thread)
@@ -105,7 +102,6 @@ endif()
 
 # WITH_*THREADS selects which threading library to use
 if(WITH_BOOSTTHREADS)
-    add_definitions("-DUSE_BOOST_THREAD=1")
     set( thriftcpp_threads_SOURCES
         src/thrift/concurrency/BoostThreadFactory.cpp
         src/thrift/concurrency/BoostMonitor.cpp
@@ -120,7 +116,6 @@ elseif(UNIX AND NOT WITH_STDTHREADS)
         src/thrift/concurrency/Monitor.cpp
     )
 else()
-    add_definitions("-DUSE_STD_THREAD=1")
     if(UNIX)
         # need pthread for multi-thread support
         list(APPEND SYSLIBS pthread)
@@ -162,7 +157,7 @@ if(WITH_LIBEVENT)
     include_directories(SYSTEM ${LIBEVENT_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftnb ${thriftcppnb_SOURCES})
-    TARGET_LINK_LIBRARIES_THRIFT(thriftnb ${SYSLIBS} ${LIBEVENT_LIBRARIES})
+    TARGET_LINK_LIBRARIES_THRIFT(thriftnb thrift ${SYSLIBS} ${LIBEVENT_LIBRARIES})
 endif()
 
 if(WITH_ZLIB)
@@ -170,15 +165,14 @@ if(WITH_ZLIB)
     include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftz ${thriftcppz_SOURCES})
-    TARGET_LINK_LIBRARIES_THRIFT(thriftz ${SYSLIBS} ${ZLIB_LIBRARIES})
+    TARGET_LINK_LIBRARIES_THRIFT(thriftz thrift ${SYSLIBS} ${ZLIB_LIBRARIES})
 endif()
 
 if(WITH_QT4)
-    cmake_minimum_required(VERSION 2.8.12)
     set(CMAKE_AUTOMOC ON)
     find_package(Qt4 REQUIRED COMPONENTS QtCore QtNetwork)
     ADD_LIBRARY_THRIFT(thriftqt ${thriftcppqt_SOURCES})
-    TARGET_LINK_LIBRARIES_THRIFT(thriftqt ${SYSLIBS} Qt4::QtCore Qt4::QtNetwork)
+    TARGET_LINK_LIBRARIES_THRIFT(thriftqt thrift ${SYSLIBS} Qt4::QtCore Qt4::QtNetwork)
 endif()
 
 if(WITH_QT5)

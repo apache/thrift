@@ -57,6 +57,9 @@ public:
     iter = parsed_options.find("validate_required");
     validate_required_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("async_clients");
+    async_clients_ = (iter != parsed_options.end());
+
     out_dir_base_ = "gen-cocoa";
   }
 
@@ -128,8 +131,17 @@ public:
    */
 
   void generate_cocoa_service_protocol(std::ofstream& out, t_service* tservice);
+  void generate_cocoa_service_async_protocol(std::ofstream& out, t_service* tservice);
+
   void generate_cocoa_service_client_interface(std::ofstream& out, t_service* tservice);
+  void generate_cocoa_service_client_async_interface(std::ofstream& out, t_service* tservice);
+
+  void generate_cocoa_service_client_send_function_implementation(ofstream& out, t_function* tfunction);
+  void generate_cocoa_service_client_send_function_invocation(ofstream& out, t_function* tfunction);
+  void generate_cocoa_service_client_recv_function_implementation(ofstream& out, t_function* tfunction);
   void generate_cocoa_service_client_implementation(std::ofstream& out, t_service* tservice);
+  void generate_cocoa_service_client_async_implementation(std::ofstream& out, t_service* tservice);
+
   void generate_cocoa_service_server_interface(std::ofstream& out, t_service* tservice);
   void generate_cocoa_service_server_implementation(std::ofstream& out, t_service* tservice);
   void generate_cocoa_service_helpers(t_service* tservice);
@@ -185,6 +197,7 @@ public:
   std::string declare_field(t_field* tfield);
   std::string declare_property(t_field* tfield);
   std::string function_signature(t_function* tfunction);
+  std::string async_function_signature(t_function* tfunction);
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
   std::string format_string_for_type(t_type* type);
@@ -212,6 +225,7 @@ private:
 
   bool log_unexpected_;
   bool validate_required_;
+  bool async_clients_;
 };
 
 /**
@@ -258,9 +272,15 @@ string t_cocoa_generator::cocoa_imports() {
  */
 string t_cocoa_generator::cocoa_thrift_imports() {
   string result = string() + "#import \"TProtocol.h\"\n" + "#import \"TApplicationException.h\"\n"
-                  + "#import \"TProtocolException.h\"\n" + "#import \"TProtocolUtil.h\"\n"
-                  + "#import \"TProcessor.h\"\n" + "#import \"TObjective-C.h\"\n"
-                  + "#import \"TBase.h\"\n" + "\n";
+                  + "#import \"TProtocolException.h\"\n" 
+                  + "#import \"TProtocolUtil.h\"\n"
+                  + "#import \"TProcessor.h\"\n" 
+                  + "#import \"TObjective-C.h\"\n"
+                  + "#import \"TBase.h\"\n"
+                  + "#import \"TAsyncTransport.h\"\n"
+                  + "#import \"TProtocolFactory.h\"\n"
+                  + "#import \"TBaseClient.h\"\n" 
+                  + "\n";
 
   // Include other Thrift includes
   const vector<t_program*>& includes = program_->get_includes();
@@ -1209,6 +1229,11 @@ void t_cocoa_generator::generate_service(t_service* tservice) {
   generate_cocoa_service_helpers(tservice);
   generate_cocoa_service_client_implementation(f_impl_, tservice);
   generate_cocoa_service_server_implementation(f_impl_, tservice);
+  if(async_clients_) {
+    generate_cocoa_service_async_protocol(f_header_, tservice);
+    generate_cocoa_service_client_async_interface(f_header_, tservice);
+    generate_cocoa_service_client_async_implementation(f_impl_, tservice);
+  }
 }
 
 /**
@@ -1294,23 +1319,53 @@ void t_cocoa_generator::generate_cocoa_service_protocol(ofstream& out, t_service
 }
 
 /**
+ * Generates an asynchronous service protocol definition.
+ *
+ * @param tservice The service to generate a protocol definition for
+ */
+void t_cocoa_generator::generate_cocoa_service_async_protocol(ofstream& out, t_service* tservice) {
+  out << "@protocol " << cocoa_prefix_ << tservice->get_name() << "Async" << " <NSObject>" << endl;
+
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator f_iter;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    out << "- " << async_function_signature(*f_iter) << ";" << endl;
+  }
+  out << "@end" << endl << endl;
+}
+
+/**
  * Generates a service client interface definition.
  *
  * @param tservice The service to generate a client interface definition for
  */
 void t_cocoa_generator::generate_cocoa_service_client_interface(ofstream& out,
                                                                 t_service* tservice) {
-  out << "@interface " << cocoa_prefix_ << tservice->get_name() << "Client : NSObject <"
+  out << "@interface " << cocoa_prefix_ << tservice->get_name() << "Client : TBaseClient <"
       << cocoa_prefix_ << tservice->get_name() << "> ";
-
-  scope_up(out);
-  out << indent() << "id <TProtocol> inProtocol;" << endl;
-  out << indent() << "id <TProtocol> outProtocol;" << endl;
-  scope_down(out);
 
   out << "- (id) initWithProtocol: (id <TProtocol>) protocol;" << endl;
   out << "- (id) initWithInProtocol: (id <TProtocol>) inProtocol outProtocol: (id <TProtocol>) "
          "outProtocol;" << endl;
+  out << "@end" << endl << endl;
+}
+
+/**
+ * Generates a service client interface definition.
+ *
+ * @param tservice The service to generate a client interface definition for
+ */
+void t_cocoa_generator::generate_cocoa_service_client_async_interface(ofstream& out,
+                                                                      t_service* tservice) {
+  out << "@interface " << cocoa_prefix_ << tservice->get_name() << "ClientAsync : TBaseClient <"
+      << cocoa_prefix_ << tservice->get_name() << "Async> ";
+
+  scope_up(out);
+  out << indent() << "id <TAsyncTransport> asyncTransport;" << endl;
+  scope_down(out);
+
+  out << "- (id) initWithProtocolFactory: (id <TProtocolFactory>) factory "
+         "transport: (id <TAsyncTransport>) transport;" << endl;
   out << "@end" << endl << endl;
 }
 
@@ -1336,6 +1391,141 @@ void t_cocoa_generator::generate_cocoa_service_server_interface(ofstream& out,
   out << "- (id<" << cocoa_prefix_ << tservice->get_name() << ">) service;" << endl;
 
   out << "@end" << endl << endl;
+}
+
+void t_cocoa_generator::generate_cocoa_service_client_send_function_implementation(ofstream& out,
+                                                                                   t_function* tfunction) {
+  string funname = tfunction->get_name();
+
+  t_function send_function(g_type_void,
+                           string("send_") + tfunction->get_name(),
+                           tfunction->get_arglist());
+
+  string argsname = tfunction->get_name() + "_args";
+
+  // Open function
+  indent(out) << "- " << function_signature(&send_function) << endl;
+  scope_up(out);
+
+  // Serialize the request
+  out << indent() << "[outProtocol writeMessageBeginWithName: @\"" << funname << "\""
+      << (tfunction->is_oneway() ? " type: TMessageType_ONEWAY" : " type: TMessageType_CALL")
+      << " sequenceID: 0];" << endl;
+
+  out << indent() << "[outProtocol writeStructBeginWithName: @\"" << argsname << "\"];" << endl;
+
+  // write out function parameters
+  t_struct* arg_struct = tfunction->get_arglist();
+  const vector<t_field*>& fields = arg_struct->get_members();
+  vector<t_field*>::const_iterator fld_iter;
+  for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+    string fieldName = (*fld_iter)->get_name();
+    if (type_can_be_null((*fld_iter)->get_type())) {
+      out << indent() << "if (" << fieldName << " != nil)";
+      scope_up(out);
+    }
+    out << indent() << "[outProtocol writeFieldBeginWithName: @\"" << fieldName
+        << "\""
+           " type: " << type_to_enum((*fld_iter)->get_type())
+        << " fieldID: " << (*fld_iter)->get_key() << "];" << endl;
+
+    generate_serialize_field(out, *fld_iter, fieldName);
+
+    out << indent() << "[outProtocol writeFieldEnd];" << endl;
+
+    if (type_can_be_null((*fld_iter)->get_type())) {
+      indent_down();
+      out << indent() << "}" << endl;
+    }
+  }
+
+  out << indent() << "[outProtocol writeFieldStop];" << endl;
+  out << indent() << "[outProtocol writeStructEnd];" << endl;
+  out << indent() << "[outProtocol writeMessageEnd];" << endl;
+  scope_down(out);
+  out << endl;
+}
+
+void t_cocoa_generator::generate_cocoa_service_client_recv_function_implementation(ofstream& out,
+                                                                                   t_function* tfunction) {
+  t_struct noargs(program_);
+  t_function recv_function(tfunction->get_returntype(),
+                           string("recv_") + tfunction->get_name(),
+                           &noargs,
+                           tfunction->get_xceptions());
+  // Open function
+  indent(out) << "- " << function_signature(&recv_function) << endl;
+  scope_up(out);
+
+  // TODO(mcslee): Message validation here, was the seqid etc ok?
+
+  // check for an exception
+  out << indent() << "TApplicationException * x = [self checkIncomingMessageException];" << endl
+      << indent() << "if (x != nil)";
+  scope_up(out);
+  out << indent() << "@throw x;" << endl;
+  scope_down(out);
+
+  // FIXME - could optimize here to reduce creation of temporary objects.
+  string resultname = function_result_helper_struct_type(tfunction);
+  out << indent() << cocoa_prefix_ << resultname << " * result = [[[" << cocoa_prefix_
+      << resultname << " alloc] init] autorelease_stub];" << endl;
+  indent(out) << "[result read: inProtocol];" << endl;
+  indent(out) << "[inProtocol readMessageEnd];" << endl;
+
+  // Careful, only return _result if not a void function
+  if (!tfunction->get_returntype()->is_void()) {
+    out << indent() << "if ([result successIsSet]) {" << endl << indent()
+        << "  return [result success];" << endl << indent() << "}" << endl;
+  }
+
+  t_struct* xs = tfunction->get_xceptions();
+  const std::vector<t_field*>& xceptions = xs->get_members();
+  vector<t_field*>::const_iterator x_iter;
+  for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+    out << indent() << "if ([result " << (*x_iter)->get_name() << "IsSet]) {" << endl
+        << indent() << "  @throw [result " << (*x_iter)->get_name() << "];" << endl << indent()
+        << "}" << endl;
+  }
+
+  // If you get here it's an exception, unless a void function
+  if (tfunction->get_returntype()->is_void()) {
+    indent(out) << "return;" << endl;
+  } else {
+    out << indent() << "@throw [TApplicationException exceptionWithType: "
+                       "TApplicationException_MISSING_RESULT" << endl << indent()
+        << "                                         reason: @\"" << tfunction->get_name()
+        << " failed: unknown result\"];" << endl;
+  }
+
+  // Close function
+  scope_down(out);
+  out << endl;
+}
+
+/**
+ * Generates an invocation of a given 'send_' function.
+ *
+ * @param tfunction The service to generate an implementation for
+ */
+void t_cocoa_generator::generate_cocoa_service_client_send_function_invocation(ofstream& out,
+                                                                               t_function* tfunction) {
+  t_struct* arg_struct = tfunction->get_arglist();
+  const vector<t_field*>& fields = arg_struct->get_members();
+  vector<t_field*>::const_iterator fld_iter;
+  indent(out) << "[self send_" << tfunction->get_name();
+  bool first = true;
+  for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+    string fieldName = (*fld_iter)->get_name();
+    out << " ";
+    if (first) {
+      first = false;
+      out << ": " << fieldName;
+    } else {
+      out << fieldName << ": " << fieldName;
+    }
+  }
+  out << "];" << endl;
 }
 
 /**
@@ -1364,12 +1554,54 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
   scope_down(out);
   out << endl;
 
-  // dealloc
-  out << "- (void) dealloc" << endl;
+  // generate client method implementations
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::const_iterator f_iter;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    
+    generate_cocoa_service_client_send_function_implementation(out, *f_iter);
+
+    if (!(*f_iter)->is_oneway()) {
+      generate_cocoa_service_client_recv_function_implementation(out, *f_iter);
+    }
+
+    // Open function
+    indent(out) << "- " << function_signature(*f_iter) << endl;
+    scope_up(out);
+    generate_cocoa_service_client_send_function_invocation(out, *f_iter);
+    
+    out << indent() << "[[outProtocol transport] flush];" << endl;
+    if (!(*f_iter)->is_oneway()) {
+      out << indent();
+      if (!(*f_iter)->get_returntype()->is_void()) {
+        out << "return ";
+      }
+      out << "[self recv_" << (*f_iter)->get_name() << "];" << endl;
+    }
+    scope_down(out);
+    out << endl;
+  }
+  indent_down();
+  out << "@end" << endl << endl;
+}
+
+/**
+ * Generates a service client implementation for its asynchronous interface.
+ *
+ * @param tservice The service to generate an implementation for
+ */
+void t_cocoa_generator::generate_cocoa_service_client_async_implementation(ofstream& out,
+                                                                           t_service* tservice) {
+  out << "@implementation " << cocoa_prefix_ << tservice->get_name() << "ClientAsync" << endl << endl
+      << "- (id) initWithProtocolFactory: (id <TProtocolFactory>) factory "
+         "transport: (id <TAsyncTransport>) transport;" << endl;
+
   scope_up(out);
-  out << indent() << "[inProtocol release_stub];" << endl;
-  out << indent() << "[outProtocol release_stub];" << endl;
-  out << indent() << "[super dealloc_stub];" << endl;
+  out << indent() << "self = [super init];" << endl;
+  out << indent() << "inProtocol = [[factory newProtocolOnTransport:transport] retain_stub];" << endl;
+  out << indent() << "outProtocol = inProtocol;" << endl;
+  out << indent() << "asyncTransport = transport;" << endl;
+  out << indent() << "return self;" << endl;
   scope_down(out);
   out << endl;
 
@@ -1377,146 +1609,60 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::const_iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    string funname = (*f_iter)->get_name();
-
-    t_function send_function(g_type_void,
-                             string("send_") + (*f_iter)->get_name(),
-                             (*f_iter)->get_arglist());
-
-    string argsname = (*f_iter)->get_name() + "_args";
-
-    // Open function
-    indent(out) << "- " << function_signature(&send_function) << endl;
-    scope_up(out);
-
-    // Serialize the request
-    out << indent() << "[outProtocol writeMessageBeginWithName: @\"" << funname << "\""
-        << ((*f_iter)->is_oneway() ? " type: TMessageType_ONEWAY" : " type: TMessageType_CALL")
-        << " sequenceID: 0];" << endl;
-
-    out << indent() << "[outProtocol writeStructBeginWithName: @\"" << argsname << "\"];" << endl;
-
-    // write out function parameters
-    t_struct* arg_struct = (*f_iter)->get_arglist();
-    const vector<t_field*>& fields = arg_struct->get_members();
-    vector<t_field*>::const_iterator fld_iter;
-    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-      string fieldName = (*fld_iter)->get_name();
-      if (type_can_be_null((*fld_iter)->get_type())) {
-        out << indent() << "if (" << fieldName << " != nil)";
-        scope_up(out);
-      }
-      out << indent() << "[outProtocol writeFieldBeginWithName: @\"" << fieldName
-          << "\""
-             " type: " << type_to_enum((*fld_iter)->get_type())
-          << " fieldID: " << (*fld_iter)->get_key() << "];" << endl;
-
-      generate_serialize_field(out, *fld_iter, fieldName);
-
-      out << indent() << "[outProtocol writeFieldEnd];" << endl;
-
-      if (type_can_be_null((*fld_iter)->get_type())) {
-        scope_down(out);
-      }
-    }
-
-    out << indent() << "[outProtocol writeFieldStop];" << endl;
-    out << indent() << "[outProtocol writeStructEnd];" << endl;
-
-    out << indent() << "[outProtocol writeMessageEnd];" << endl << indent()
-        << "[[outProtocol transport] flush];" << endl;
-
-    scope_down(out);
-    out << endl;
+    
+    generate_cocoa_service_client_send_function_implementation(out, *f_iter);
 
     if (!(*f_iter)->is_oneway()) {
-      t_struct noargs(program_);
-      t_function recv_function((*f_iter)->get_returntype(),
-                               string("recv_") + (*f_iter)->get_name(),
-                               &noargs,
-                               (*f_iter)->get_xceptions());
-      // Open function
-      indent(out) << "- " << function_signature(&recv_function) << endl;
-      scope_up(out);
-
-      // TODO(mcslee): Message validation here, was the seqid etc ok?
-
-      // check for an exception
-      out << indent() << "int msgType = 0;" << endl << indent()
-          << "[inProtocol readMessageBeginReturningName: nil type: &msgType sequenceID: NULL];"
-          << endl << indent() << "if (msgType == TMessageType_EXCEPTION) {" << endl << indent()
-          << "  TApplicationException * x = [TApplicationException read: inProtocol];" << endl
-          << indent() << "  [inProtocol readMessageEnd];" << endl << indent() << "  @throw x;"
-          << endl << indent() << "}" << endl;
-
-      // FIXME - could optimize here to reduce creation of temporary objects.
-      string resultname = function_result_helper_struct_type(*f_iter);
-      out << indent() << cocoa_prefix_ << resultname << " * result = [[[" << cocoa_prefix_
-          << resultname << " alloc] init] autorelease_stub];" << endl;
-      indent(out) << "[result read: inProtocol];" << endl;
-      indent(out) << "[inProtocol readMessageEnd];" << endl;
-
-      // Careful, only return _result if not a void function
-      if (!(*f_iter)->get_returntype()->is_void()) {
-        out << indent() << "if ([result successIsSet]) {" << endl << indent()
-            << "  return [result success];" << endl << indent() << "}" << endl;
-      }
-
-      t_struct* xs = (*f_iter)->get_xceptions();
-      const std::vector<t_field*>& xceptions = xs->get_members();
-      vector<t_field*>::const_iterator x_iter;
-      for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-        out << indent() << "if ([result " << (*x_iter)->get_name() << "IsSet]) {" << endl
-            << indent() << "  @throw [result " << (*x_iter)->get_name() << "];" << endl << indent()
-            << "}" << endl;
-      }
-
-      // If you get here it's an exception, unless a void function
-      if ((*f_iter)->get_returntype()->is_void()) {
-        indent(out) << "return;" << endl;
-      } else {
-        out << indent() << "@throw [TApplicationException exceptionWithType: "
-                           "TApplicationException_MISSING_RESULT" << endl << indent()
-            << "                                         reason: @\"" << (*f_iter)->get_name()
-            << " failed: unknown result\"];" << endl;
-      }
-
-      // Close function
-      scope_down(out);
-      out << endl;
+      generate_cocoa_service_client_recv_function_implementation(out, *f_iter);
     }
 
     // Open function
-    indent(out) << "- " << function_signature(*f_iter) << endl;
+    indent(out) << "- " << async_function_signature(*f_iter) << endl;
     scope_up(out);
-    indent(out) << "[self send_" << funname;
+    indent(out) << "@try {" << endl;
+    indent_up();
+    generate_cocoa_service_client_send_function_invocation(out, *f_iter);
+    indent_down();
+    out << indent() << "} @catch(TException * texception) {" << endl;
+    indent_up();
+    out << indent() << "failureBlock(texception);" << endl
+        << indent() << "return;" << endl;
+    indent_down();
+    indent(out) << "}" << endl;
+    
+    out << indent() << "[asyncTransport flush:^{" << endl;
+    indent_up();
 
-    // Declare the function arguments
-    bool first = true;
-    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-      string fieldName = (*fld_iter)->get_name();
-      out << " ";
-      if (first) {
-        first = false;
-        out << ": " << fieldName;
-      } else {
-        out << fieldName << ": " << fieldName;
-      }
-    }
-    out << "];" << endl;
+    out << indent() << "@try {" << endl;
+    indent_up();
 
-    if (!(*f_iter)->is_oneway()) {
-      out << indent();
-      if (!(*f_iter)->get_returntype()->is_void()) {
-        out << "return ";
-      }
-      out << "[self recv_" << funname << "];" << endl;
+    string recv_invocation = "[self recv_" + (*f_iter)->get_name() + "]";
+    if (!(*f_iter)->is_oneway() && (*f_iter)->get_returntype()->is_void()) {
+      out << indent() << recv_invocation << ";" << endl;
     }
+    out << indent() << "responseBlock(";
+    if (!(*f_iter)->is_oneway() && !(*f_iter)->get_returntype()->is_void()) {
+      out << recv_invocation;
+    }
+    out << ");" << endl;
+
+    indent_down();
+
+    out << indent() << "} @catch(TException * texception) {" << endl;
+    indent_up();
+
+    out << indent() << "failureBlock(texception);" << endl;
+
+    indent_down();
+    out << indent() << "}" << endl;
+
+    indent_down();
+    out << indent() << "} failure:failureBlock];" << endl;
+
     scope_down(out);
+
     out << endl;
   }
-
-  indent_down();
 
   out << "@end" << endl << endl;
 }
@@ -1530,7 +1676,6 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
 void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& out,
                                                                      t_service* tservice) {
   out << "@implementation " << cocoa_prefix_ << tservice->get_name() << "Processor" << endl;
-  indent_up();
 
   // initializer
   out << endl;
@@ -1680,8 +1825,6 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
   out << indent() << "[super dealloc_stub];" << endl;
   scope_down(out);
   out << endl;
-
-  indent_down();
 
   out << "@end" << endl << endl;
 }
@@ -2563,6 +2706,28 @@ string t_cocoa_generator::function_signature(t_function* tfunction) {
 }
 
 /**
+ * Renders a function signature that returns asynchronously instead of
+ * literally returning.
+ *
+ * @param tfunction Function definition
+ * @return String of rendered function definition
+ */
+string t_cocoa_generator::async_function_signature(t_function* tfunction) {
+  t_type* ttype = tfunction->get_returntype();
+  t_struct* targlist = tfunction->get_arglist();
+  std::string response_param = "dispatch_block_t";
+  if (!ttype->is_void()) {
+    response_param = "void (^)(" + type_name(ttype) + ")";
+  }
+  std::string result = "(void) " + tfunction->get_name()
+                       + argument_list(tfunction->get_arglist())
+                       + (targlist->get_members().size() ? " response" : "")
+                       + ": (" + response_param + ") responseBlock "
+                       + "failure : (TAsyncFailureBlock) failureBlock";
+  return result;
+}
+
+/**
  * Renders a colon separated list of types and names, suitable for an
  * objective-c parameter list
  */
@@ -2683,4 +2848,5 @@ THRIFT_REGISTER_GENERATOR(
     "Cocoa",
     "    log_unexpected:  Log every time an unexpected field ID or type is encountered.\n"
     "    validate_required:\n"
-    "                     Throws exception if any required field is not set.\n")
+    "                     Throws exception if any required field is not set.\n"
+    "    async_clients:   Generate clients which invoke asynchronously via block syntax.\n")
