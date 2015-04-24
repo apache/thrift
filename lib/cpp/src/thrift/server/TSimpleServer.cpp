@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <thrift/server/TConnectedClient.h>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/transport/TTransportException.h>
 #include <string>
@@ -103,58 +104,9 @@ void TSimpleServer::serve() {
       break;
     }
 
-    // Get the processor
-    shared_ptr<TProcessor> processor = getProcessor(inputProtocol, outputProtocol, client);
-
-    void* connectionContext = NULL;
-    if (eventHandler_) {
-      connectionContext = eventHandler_->createContext(inputProtocol, outputProtocol);
-    }
-    try {
-      for (;;) {
-        if (eventHandler_) {
-          eventHandler_->processContext(connectionContext, client);
-        }
-        if (!processor->process(inputProtocol, outputProtocol, connectionContext) ||
-            // Peek ahead, is the remote side closed?
-            !inputProtocol->getTransport()->peek()) {
-          break;
-        }
-      }
-    } catch (const TTransportException& ttx) {
-      if (ttx.getType() != TTransportException::END_OF_FILE &&
-          ttx.getType() != TTransportException::INTERRUPTED)
-      {
-        string errStr = string("TSimpleServer client died: ") + ttx.what();
-        GlobalOutput(errStr.c_str());
-      }
-    } catch (const std::exception& x) {
-      GlobalOutput.printf("TSimpleServer exception: %s: %s", typeid(x).name(), x.what());
-    } catch (...) {
-      GlobalOutput("TSimpleServer uncaught exception.");
-    }
-    if (eventHandler_) {
-      eventHandler_->deleteContext(connectionContext, inputProtocol, outputProtocol);
-    }
-
-    try {
-      inputTransport->close();
-    } catch (const TTransportException& ttx) {
-      string errStr = string("TSimpleServer input close failed: ") + ttx.what();
-      GlobalOutput(errStr.c_str());
-    }
-    try {
-      outputTransport->close();
-    } catch (const TTransportException& ttx) {
-      string errStr = string("TSimpleServer output close failed: ") + ttx.what();
-      GlobalOutput(errStr.c_str());
-    }
-    try {
-      client->close();
-    } catch (const TTransportException& ttx) {
-      string errStr = string("TSimpleServer client close failed: ") + ttx.what();
-      GlobalOutput(errStr.c_str());
-    }
+    TConnectedClient("TSimpleServer",
+            getProcessor(inputProtocol, outputProtocol, client),
+            inputProtocol, outputProtocol, eventHandler_, client).run();
   }
 
   if (stop_) {
