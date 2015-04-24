@@ -25,6 +25,7 @@ BUILT_SOURCES = gen-cpp/DebugProtoTest_types.h \
                 gen-cpp/ThriftTest_types.h \
                 gen-cpp/TypedefTest_types.h \
                 gen-cpp/ChildService.h \
+                gen-cpp/EmptyService.h \
                 gen-cpp/ParentService.h \
                 gen-cpp/proc_types.h
 
@@ -50,6 +51,8 @@ nodist_libtestgencpp_la_SOURCES = \
 nodist_libprocessortest_la_SOURCES = \
 	gen-cpp/ChildService.cpp \
 	gen-cpp/ChildService.h \
+	gen-cpp/EmptyService.cpp \
+	gen-cpp/EmptyService.h \
 	gen-cpp/ParentService.cpp \
 	gen-cpp/ParentService.h \
 	gen-cpp/proc_types.cpp \
@@ -79,6 +82,8 @@ check_PROGRAMS = \
 	SpecializationTest \
 	AllProtocolsTest \
 	TransportTest \
+	TSocketInterruptTest \
+	TServerIntegrationTest \
 	ZlibTest \
 	TFileTransportTest \
 	link_test \
@@ -107,16 +112,37 @@ UnitTests_SOURCES = \
 	Base64Test.cpp \
 	ToStringTest.cpp \
 	TypedefTest.cpp \
-        TServerSocketTest.cpp
+	TServerSocketTest.cpp \
+	TServerTransportTest.cpp
 
 if !WITH_BOOSTTHREADS
 UnitTests_SOURCES += \
-        RWMutexStarveTest.cpp
+    RWMutexStarveTest.cpp
 endif
 
 UnitTests_LDADD = \
   libtestgencpp.la \
   $(BOOST_TEST_LDADD)
+
+TSocketInterruptTest_SOURCES = \
+	TSocketInterruptTest.cpp
+
+TSocketInterruptTest_LDADD = \
+  libtestgencpp.la \
+  $(BOOST_TEST_LDADD) \
+  $(BOOST_CHRONO_LDADD) \
+  $(BOOST_SYSTEM_LDADD) \
+  $(BOOST_THREAD_LDADD)
+
+TServerIntegrationTest_SOURCES = \
+	TServerIntegrationTest.cpp
+
+TServerIntegrationTest_LDADD = \
+  libtestgencpp.la \
+  libprocessortest.la \
+  $(BOOST_TEST_LDADD) \
+  $(BOOST_SYSTEM_LDADD) \
+  $(BOOST_THREAD_LDADD)
 
 TransportTest_SOURCES = \
 	TransportTest.cpp
@@ -273,7 +299,7 @@ OpenSSLManualInitTest_LDADD = \
 #
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
-gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h: $(top_srcdir)/test/DebugProtoTest.thrift
+gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp gen-cpp/EmptyService.h: $(top_srcdir)/test/DebugProtoTest.thrift
 	$(THRIFT) --gen cpp:dense $<
 
 gen-cpp/EnumTest_types.cpp gen-cpp/EnumTest_types.h: $(top_srcdir)/test/EnumTest.thrift

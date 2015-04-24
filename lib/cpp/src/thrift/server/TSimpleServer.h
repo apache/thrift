@@ -32,7 +32,6 @@ namespace server {
  * continuous loop of accepting a single connection, processing requests on
  * that connection until it closes, and then repeating. It is a good example
  * of how to extend the TServer interface.
- *
  */
 class TSimpleServer : public TServer {
 public:
@@ -84,14 +83,20 @@ public:
               outputProtocolFactory),
       stop_(false) {}
 
-  ~TSimpleServer() {}
-
+  /**
+   * Process one connection at a time using the caller's thread.
+   * Call stop() on another thread to interrupt processing and
+   * return control to the caller.
+   * Post-conditions (return guarantees):
+   *   The serverTransport will be closed.
+   *   There will be no connected client.
+   */
   void serve();
 
-  void stop() {
-    stop_ = true;
-    serverTransport_->interrupt();
-  }
+  /**
+   * Interrupt serve() so that it meets post-conditions.
+   */
+  void stop();
 
 protected:
   bool stop_;

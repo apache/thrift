@@ -70,11 +70,11 @@ void TSimpleServer::serve() {
       if (client) {
         client->close();
       }
-      if (!stop_ || ttx.getType() != TTransportException::INTERRUPTED) {
+      if (ttx.getType() != TTransportException::INTERRUPTED) {
         string errStr = string("TServerTransport died on accept: ") + ttx.what();
         GlobalOutput(errStr.c_str());
       }
-      continue;
+      if (stop_) break; else continue;
     } catch (TException& tx) {
       if (inputTransport) {
         inputTransport->close();
@@ -88,7 +88,7 @@ void TSimpleServer::serve() {
       string errStr = string("Some kind of accept exception: ") + tx.what();
       GlobalOutput(errStr.c_str());
       continue;
-    } catch (string s) {
+    } catch (const string& s) {
       if (inputTransport) {
         inputTransport->close();
       }
@@ -122,8 +122,12 @@ void TSimpleServer::serve() {
         }
       }
     } catch (const TTransportException& ttx) {
-      string errStr = string("TSimpleServer client died: ") + ttx.what();
-      GlobalOutput(errStr.c_str());
+      if (ttx.getType() != TTransportException::END_OF_FILE &&
+          ttx.getType() != TTransportException::INTERRUPTED)
+      {
+        string errStr = string("TSimpleServer client died: ") + ttx.what();
+        GlobalOutput(errStr.c_str());
+      }
     } catch (const std::exception& x) {
       GlobalOutput.printf("TSimpleServer exception: %s: %s", typeid(x).name(), x.what());
     } catch (...) {
@@ -163,6 +167,15 @@ void TSimpleServer::serve() {
     stop_ = false;
   }
 }
+
+void TSimpleServer::stop() {
+  if (!stop_) {
+    stop_ = true;
+    serverTransport_->interrupt();
+    serverTransport_->interruptChildren();
+  }
+}
+
 }
 }
 } // apache::thrift::server
