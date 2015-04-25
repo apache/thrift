@@ -75,7 +75,7 @@ AC_DEFUN([AX_LIB_EVENT_DO_CHECK],
           AC_LANG_PUSH([C])
           dnl This can be changed to AC_LINK_IFELSE if you are cross-compiling,
           dnl but then the version cannot be checked.
-          AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+          AC_LINK_IFELSE([AC_LANG_PROGRAM([[
           #include <sys/types.h>
           #include <event.h>
           ]], [[
