@@ -40,6 +40,7 @@ const myIntType myInt = 3
 //const map<enumconstants,string> GEN_ENUM_NAMES = {ONE : "HOWDY", TWO: "PARTNER"}
 
 const i32 hex_const = 0x0001F
+const i32 negative_hex_constant = -0x0001F
 
 const i32 GEN_ME = -3523553
 const double GEn_DUB = 325.532
