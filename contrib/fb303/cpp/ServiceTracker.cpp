@@ -251,7 +251,7 @@ ServiceTracker::reportCheckpoint()
   uint64_t count;
   for (iter = checkpointServiceDuration_.begin();
        iter != checkpointServiceDuration_.end();
-       iter++) {
+       ++iter) {
     count = iter->second.first;
     handler_->setCounter(string("checkpoint_count_") + iter->first, count);
     if (count == 0) {
