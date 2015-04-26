@@ -44,6 +44,9 @@ script:
   - if [ "x$CONFIG" != "xnone" ] ; then sh configure $CONFIG ; fi
   - if [ "x$CONFIG" != "xnone" ] ; then make $MAKE_TARGET -j2 ; fi
 
+after_failure:
+  - if [ "x$ERROR_LOG" != "xnone" ] ; then cat $ERROR_LOG ; fi
+
 env:
   global:
     - TEST_NAME=""
@@ -60,6 +63,7 @@ env:
       CONFIG="--enable-tutorial=no --without-erlang --without-lua --without-haxe --without-d"
       ALL_DEPS="yes"
       MAKE_TARGET="cross"
+      ERROR_LOG="test/log/unexpected_failures.log"
 
     # CMake builds
     - TEST_NAME="compiler (CMake + CPack)"
