@@ -623,7 +623,13 @@ void t_delphi_generator::create_keywords() {
   delphi_keywords["automated"] = 1;
   delphi_keywords["at"] = 1;
   delphi_keywords["on"] = 1;
+
+  // reserved/predefined variables and types (lowercase!)
   delphi_keywords["result"] = 1;
+  delphi_keywords["tbytes"] = 1;
+  delphi_keywords["tobject"] = 1;
+  delphi_keywords["tclass"] = 1;
+  delphi_keywords["tinterfacedobject"] = 1;
 
   delphi_reserved_method["create"] = 1;
   delphi_reserved_method["free"] = 1;
