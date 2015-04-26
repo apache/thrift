@@ -17,116 +17,74 @@
  * under the License.
  */
 
-#include <thrift/server/TConnectedClient.h>
 #include <thrift/server/TSimpleServer.h>
-#include <thrift/transport/TTransportException.h>
-#include <string>
-#include <iostream>
 
 namespace apache {
 namespace thrift {
 namespace server {
 
-using namespace std;
-using namespace apache::thrift;
-using namespace apache::thrift::protocol;
-using namespace apache::thrift::transport;
+using apache::thrift::protocol::TProtocol;
+using apache::thrift::protocol::TProtocolFactory;
+using apache::thrift::transport::TServerTransport;
+using apache::thrift::transport::TTransport;
+using apache::thrift::transport::TTransportException;
+using apache::thrift::transport::TTransportFactory;
 using boost::shared_ptr;
+using std::string;
+
+TSimpleServer::TSimpleServer(
+        const shared_ptr<TProcessorFactory>& processorFactory,
+        const shared_ptr<TServerTransport>& serverTransport,
+        const shared_ptr<TTransportFactory>& transportFactory,
+        const shared_ptr<TProtocolFactory>& protocolFactory)
+  : TServerFramework(processorFactory, serverTransport,
+                     transportFactory, protocolFactory) {}
+
+TSimpleServer::TSimpleServer(
+        const shared_ptr<TProcessor>& processor,
+        const shared_ptr<TServerTransport>& serverTransport,
+        const shared_ptr<TTransportFactory>& transportFactory,
+        const shared_ptr<TProtocolFactory>& protocolFactory)
+  : TServerFramework(processor, serverTransport,
+                     transportFactory, protocolFactory) {}
+
+TSimpleServer::TSimpleServer(
+        const shared_ptr<TProcessorFactory>& processorFactory,
+        const shared_ptr<TServerTransport>& serverTransport,
+        const shared_ptr<TTransportFactory>& inputTransportFactory,
+        const shared_ptr<TTransportFactory>& outputTransportFactory,
+        const shared_ptr<TProtocolFactory>& inputProtocolFactory,
+        const shared_ptr<TProtocolFactory>& outputProtocolFactory)
+  : TServerFramework(processorFactory, serverTransport,
+          inputTransportFactory, outputTransportFactory,
+          inputProtocolFactory, outputProtocolFactory) {}
+
+TSimpleServer::TSimpleServer(
+        const shared_ptr<TProcessor>& processor,
+        const shared_ptr<TServerTransport>& serverTransport,
+        const shared_ptr<TTransportFactory>& inputTransportFactory,
+        const shared_ptr<TTransportFactory>& outputTransportFactory,
+        const shared_ptr<TProtocolFactory>& inputProtocolFactory,
+        const shared_ptr<TProtocolFactory>& outputProtocolFactory)
+  : TServerFramework(processor, serverTransport,
+          inputTransportFactory, outputTransportFactory,
+          inputProtocolFactory, outputProtocolFactory) {}
+
+TSimpleServer::~TSimpleServer() {}
 
 /**
- * A simple single-threaded application server. Perfect for unit tests!
- *
+ * The main body of customized implementation for TSimpleServer is quite simple:
+ * When a client connects, use the serve() thread to drive it to completion thus
+ * blocking new connections.
  */
-void TSimpleServer::serve() {
-
-  shared_ptr<TTransport> client;
-  shared_ptr<TTransport> inputTransport;
-  shared_ptr<TTransport> outputTransport;
-  shared_ptr<TProtocol> inputProtocol;
-  shared_ptr<TProtocol> outputProtocol;
-
-  // Start the server listening
-  serverTransport_->listen();
-
-  // Run the preServe event
-  if (eventHandler_) {
-    eventHandler_->preServe();
-  }
-
-  // Fetch client from server
-  while (!stop_) {
-    try {
-      client = serverTransport_->accept();
-      inputTransport = inputTransportFactory_->getTransport(client);
-      outputTransport = outputTransportFactory_->getTransport(client);
-      inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
-      outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
-    } catch (TTransportException& ttx) {
-      if (inputTransport) {
-        inputTransport->close();
-      }
-      if (outputTransport) {
-        outputTransport->close();
-      }
-      if (client) {
-        client->close();
-      }
-      if (ttx.getType() != TTransportException::INTERRUPTED) {
-        string errStr = string("TServerTransport died on accept: ") + ttx.what();
-        GlobalOutput(errStr.c_str());
-      }
-      if (stop_) break; else continue;
-    } catch (TException& tx) {
-      if (inputTransport) {
-        inputTransport->close();
-      }
-      if (outputTransport) {
-        outputTransport->close();
-      }
-      if (client) {
-        client->close();
-      }
-      string errStr = string("Some kind of accept exception: ") + tx.what();
-      GlobalOutput(errStr.c_str());
-      continue;
-    } catch (const string& s) {
-      if (inputTransport) {
-        inputTransport->close();
-      }
-      if (outputTransport) {
-        outputTransport->close();
-      }
-      if (client) {
-        client->close();
-      }
-      string errStr = string("Some kind of accept exception: ") + s;
-      GlobalOutput(errStr.c_str());
-      break;
-    }
-
-    TConnectedClient("TSimpleServer",
-            getProcessor(inputProtocol, outputProtocol, client),
-            inputProtocol, outputProtocol, eventHandler_, client).run();
-  }
-
-  if (stop_) {
-    try {
-      serverTransport_->close();
-    } catch (TTransportException& ttx) {
-      string errStr = string("TServerTransport failed on close: ") + ttx.what();
-      GlobalOutput(errStr.c_str());
-    }
-    stop_ = false;
-  }
+void TSimpleServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient) {
+  pClient->run();
 }
 
-void TSimpleServer::stop() {
-  if (!stop_) {
-    stop_ = true;
-    serverTransport_->interrupt();
-    serverTransport_->interruptChildren();
-  }
-}
+/**
+ * TSimpleServer does not track clients so there is nothing to do here.
+ */
+void TSimpleServer::onClientDisconnected(TConnectedClient *pClient) {}
 
 }
 }
