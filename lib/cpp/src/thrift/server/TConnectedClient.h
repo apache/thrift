@@ -43,8 +43,6 @@ class TConnectedClient : public apache::thrift::concurrency::Runnable
     /**
      * Constructor.
      *
-     * @param[in] serverType     the server type as a string, used
-     *                           for logging output.
      * @param[in] processor      the TProcessor
      * @param[in] inputProtocol  the input TProtocol
      * @param[in] outputProtocol the output TProtocol
@@ -52,7 +50,6 @@ class TConnectedClient : public apache::thrift::concurrency::Runnable
      * @param[in] client         the TTransport representing the client
      */
     TConnectedClient(
-            const std::string& serverType,
             const boost::shared_ptr<apache::thrift::TProcessor>& processor,
             const boost::shared_ptr<apache::thrift::protocol::TProtocol>& inputProtocol,
             const boost::shared_ptr<apache::thrift::protocol::TProtocol>& outputProtocol,
@@ -96,7 +93,6 @@ class TConnectedClient : public apache::thrift::concurrency::Runnable
     virtual void cleanup();
 
   private:
-    std::string serverType_;
     boost::shared_ptr<apache::thrift::TProcessor> processor_;
     boost::shared_ptr<apache::thrift::protocol::TProtocol> inputProtocol_;
     boost::shared_ptr<apache::thrift::protocol::TProtocol> outputProtocol_;
