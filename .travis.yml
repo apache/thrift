@@ -31,6 +31,7 @@ compiler:
   - gcc
 
 before_install:
+    add sudo
   - sh build/travis/installCXXDependencies.sh
   - if [ "$ALL_DEPS" != "no" ] ; then sh build/travis/installDependencies.sh 1> /dev/null ; fi
   - if [ "$ALL_DEPS" != "no" ] ; then export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH ; fi

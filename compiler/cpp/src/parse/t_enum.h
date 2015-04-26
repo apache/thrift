@@ -31,13 +31,13 @@ class t_enum : public t_type {
 public:
   t_enum(t_program* program) : t_type(program) {}
 
-  void set_name(const std::string& name) { name_ = name; }
+  void set_name(const std::string &name) { name_ = name; }
 
   void append(t_enum_value* constant) { constants_.push_back(constant); }
 
   const std::vector<t_enum_value*>& get_constants() { return constants_; }
 
-  t_enum_value* get_constant_by_name(const std::string name) {
+  t_enum_value* get_constant_by_name(const std::string& name) {
     const std::vector<t_enum_value*>& enum_values = get_constants();
     std::vector<t_enum_value*>::const_iterator c_iter;
     for (c_iter = enum_values.begin(); c_iter != enum_values.end(); ++c_iter) {
