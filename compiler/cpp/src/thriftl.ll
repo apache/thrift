@@ -104,7 +104,7 @@ void unexpected_token(char* text) {
  */
 
 intconstant   ([+-]?[0-9]+)
-hexconstant   ("0x"[0-9A-Fa-f]+)
+hexconstant   ([+-]?"0x"[0-9A-Fa-f]+)
 dubconstant   ([+-]?[0-9]*(\.[0-9]+)?([eE][+-]?[0-9]+)?)
 identifier    ([a-zA-Z_](\.[a-zA-Z_0-9]|[a-zA-Z_0-9])*)
 whitespace    ([ \t\r\n]*)
@@ -305,7 +305,12 @@ literal_begin (['\"])
 
 {hexconstant} {
   errno = 0;
-  yylval.iconst = strtoll(yytext+2, NULL, 16);
+  char sign = yytext[0];
+  int shift = sign == '0' ? 2 : 3;
+  yylval.iconst = strtoll(yytext+shift, NULL, 16);
+  if (sign == '-') {
+    yylval.iconst = -yylval.iconst;
+  }
   if (errno == ERANGE) {
     integer_overflow(yytext);
   }
