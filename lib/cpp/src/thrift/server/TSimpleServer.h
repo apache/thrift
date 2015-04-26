@@ -94,7 +94,7 @@ public:
   void serve();
 
   /**
-   * Interrupt serve() so that it meets post-conditions.
+   * Interrupt serve() so that it meets post-conditions and returns.
    */
   void stop();
 
