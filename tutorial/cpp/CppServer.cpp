@@ -14,7 +14,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
- * under the License.
+w * under the License.
  */
 
 #include <thrift/concurrency/ThreadManager.h>
@@ -71,7 +71,7 @@ public:
     case Operation::DIVIDE:
       if (work.num2 == 0) {
         InvalidOperation io;
-        io.what = work.op;
+        io.what_op = work.op;
         io.why = "Cannot divide by 0";
         throw io;
       }
@@ -79,7 +79,7 @@ public:
       break;
     default:
       InvalidOperation io;
-      io.what = work.op;
+      io.what_op = work.op;
       io.why = "Invalid Operation";
       throw io;
     }
