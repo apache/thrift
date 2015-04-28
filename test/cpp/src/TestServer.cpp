@@ -24,6 +24,7 @@
 #include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TCompactProtocol.h>
+#include <thrift/protocol/THeaderProtocol.h>
 #include <thrift/protocol/TJSONProtocol.h>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/server/TThreadedServer.h>
@@ -573,7 +574,7 @@ int main(int argc, char** argv) {
       "transport: buffered, framed, http")(
       "protocol",
       boost::program_options::value<string>(&protocol_type)->default_value(protocol_type),
-      "protocol: binary, compact, json")("ssl", "Encrypted Transport using SSL")(
+      "protocol: binary, compact, header, json")("ssl", "Encrypted Transport using SSL")(
       "processor-events",
       "processor-events")("workers,n",
                           boost::program_options::value<size_t>(&workers)->default_value(workers),
@@ -603,6 +604,7 @@ int main(int argc, char** argv) {
       if (protocol_type == "binary") {
       } else if (protocol_type == "compact") {
       } else if (protocol_type == "json") {
+      } else if (protocol_type == "header") {
       } else {
         throw invalid_argument("Unknown protocol type " + protocol_type);
       }
@@ -635,6 +637,9 @@ int main(int argc, char** argv) {
   } else if (protocol_type == "compact") {
     boost::shared_ptr<TProtocolFactory> compactProtocolFactory(new TCompactProtocolFactory());
     protocolFactory = compactProtocolFactory;
+  } else if (protocol_type == "header") {
+    boost::shared_ptr<TProtocolFactory> headerProtocolFactory(new THeaderProtocolFactory());
+    protocolFactory = headerProtocolFactory;
   } else {
     boost::shared_ptr<TProtocolFactory> binaryProtocolFactory(
         new TBinaryProtocolFactoryT<TBufferBase>());
@@ -731,11 +736,16 @@ int main(int argc, char** argv) {
       TEvhttpServer nonblockingServer(testBufferProcessor, port);
       nonblockingServer.serve();
     } else {
-      server.reset(new TNonblockingServer(testProcessor, port));
+      server.reset(new TNonblockingServer(testProcessor, protocolFactory, port));
     }
   }
 
   if (server.get() != NULL) {
+    if (protocol_type == "header") {
+      // Tell the server to use the same protocol for input / output 
+      // if using header
+      server->setOutputProtocolFactory(boost::shared_ptr<TProtocolFactory>());
+    }
     apache::thrift::concurrency::PlatformThreadFactory factory;
     factory.setDetached(false);
     boost::shared_ptr<apache::thrift::concurrency::Runnable> serverThreadRunner(server);

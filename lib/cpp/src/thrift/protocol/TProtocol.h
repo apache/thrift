@@ -659,6 +659,11 @@ public:
   virtual ~TProtocolFactory() {}
 
   virtual boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> trans) = 0;
+  virtual boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> inTrans,
+						   boost::shared_ptr<TTransport> outTrans) {
+    (void)outTrans;
+    return getProtocol(inTrans);
+  }
 };
 
 /**
