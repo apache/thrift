@@ -138,6 +138,7 @@ public:
   void generate_struct_result_writer(std::ofstream& out, t_struct* tstruct, bool pointers = false);
   void generate_struct_swap(std::ofstream& out, t_struct* tstruct);
   void generate_struct_ostream_operator(std::ofstream& out, t_struct* tstruct);
+  void generate_exception_what_method(std::ofstream& out, t_struct* tstruct);
 
   /**
    * Service-level generation functions
@@ -239,6 +240,9 @@ public:
                                    bool include_values);
 
   void generate_struct_ostream_operator_decl(std::ofstream& f, t_struct* tstruct);
+  void generate_exception_what_method_decl(std::ofstream& f,
+                                           t_struct* tstruct,
+                                           bool external = false);
 
   // These handles checking gen_dense_ and checking for duplicates.
   void generate_local_reflection(std::ofstream& out, t_type* ttype, bool is_definition);
@@ -767,6 +771,9 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
     generate_move_assignment_operator(f_types_impl_, tstruct);
   }
   generate_struct_ostream_operator(f_types_impl_, tstruct);
+  if (is_exception) {
+    generate_exception_what_method(f_types_impl_, tstruct);
+  }
 }
 
 void t_cpp_generator::generate_copy_constructor(ofstream& out,
@@ -1113,7 +1120,14 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
   // ostream operator<<
   out << indent() << "friend ";
   generate_struct_ostream_operator_decl(out, tstruct);
-  out << ";" << endl;
+  out << ";" << endl << endl;
+  
+  // std::exception::what()
+  if (is_exception) {
+    out << indent();
+    generate_exception_what_method_decl(out, tstruct, false);
+    out << ";" << endl;
+  }
 
   indent_down();
   indent(out) << "};" << endl << endl;
@@ -1626,6 +1640,16 @@ void t_cpp_generator::generate_struct_ostream_operator_decl(std::ofstream& out, 
   out << "std::ostream& operator<<(std::ostream& out, const " << tstruct->get_name() << "& obj)";
 }
 
+void t_cpp_generator::generate_exception_what_method_decl(std::ofstream& out,
+                                                          t_struct* tstruct,
+                                                          bool external) {
+  std::string prefix = "";
+  if (external) {
+    prefix = string(tstruct->get_name() + "::");
+  }
+  out << "const char* " << prefix << "what() const throw()";
+}
+
 namespace struct_ostream_operator_generator {
 void generate_required_field_value(std::ofstream& out, const t_field* field) {
   out << " << to_string(obj." << field->get_name() << ")";
@@ -1697,6 +1721,24 @@ void t_cpp_generator::generate_struct_ostream_operator(std::ofstream& out, t_str
 
   indent_down();
   out << "}" << endl << endl;
+}
+
+/**                                                                                                                                           
+ * Generates what() method for exceptions                                                                                                     
+ */                                                                                                                                           
+void t_cpp_generator::generate_exception_what_method(std::ofstream& out, t_struct* tstruct) {
+  out << indent();
+  generate_exception_what_method_decl(out, tstruct, true);
+  out << " {" << endl;
+
+  indent_up();
+
+  out << indent() << "std::stringstream ss;" << endl;
+  out << indent() << "ss << \"TException - service has thrown: \" << *this;" << endl;
+  out << indent() << "return ss.str().c_str();" << endl;
+
+  indent_down();
+  out <<"}" << endl << endl;
 }
 
 /**
