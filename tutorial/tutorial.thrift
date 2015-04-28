@@ -113,7 +113,7 @@ struct Work {
  * Structs can also be exceptions, if they are nasty.
  */
 exception InvalidOperation {
-  1: i32 what,
+  1: i32 what_op,
   2: string why
 }
 
