@@ -333,6 +333,27 @@ void t_js_generator::init_generator() {
     f_types_ts_ << autogen_comment() << endl;
   }
 
+  string jsCopyFunctions =
+    "var _copyList = function(lst, type){"
+    "  var len = lst.length, result = [], i;"
+    "  for (i=0; i<len; i++) {"
+    "    result.push(new type(lst[i]));"
+    "  }"
+    "  return result;"
+    "};"
+
+    "var _copyMap = function(obj, type){"
+    "  var result = {};"
+    "  for(var prop in obj) {"
+    "    if(obj.hasOwnProperty(prop))"
+    "      result[prop] = new type(obj[prop]);"
+    "  }"
+    "  return result;"
+    "};"
+    ;
+
+  f_types_ << jsCopyFunctions << endl << endl;
+
   if (gen_node_) {
     f_types_ << "var ttypes = module.exports = {};" << endl;
   }
@@ -691,23 +712,21 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
 
       if (t->is_struct()) {
         out << " = new " + js_type_namespace(t->get_program()) + t->get_name() + "(args."+(*m_iter)->get_name() +");" << endl;
-      } else if (t->is_list() || t->is_set()) {
+      } else if (t->is_container()) {
         t_type* etype;
+        string copyFunc;
         if (t->is_list()) {
           etype = ((t_list*)t)->get_elem_type();
-        } else {
+          copyFunc = "_copyList";
+        } else if (t->is_set()) {
           etype = ((t_set*)t)->get_elem_type();
+          copyFunc = "_copyList";
+        } else {
+          etype = ((t_map*)t)->get_val_type();
+          copyFunc = "_copyMap";
         }
         if (etype->is_struct()) {
-          out << " = function(){" << endl;
-          out << "var len = args." + (*m_iter)->get_name() + ".length, result = [], i;" << endl;
-          out << "for (i=0; i<len; i++) {" << endl;
-          out << "result.push(new " +
-            js_type_namespace(etype->get_program()) +
-            etype->get_name() + "(args." + (*m_iter)->get_name() + "[i]));" << endl;
-          out << "}" << endl;
-          out << "return result;" << endl;
-          out << "}();" << endl;
+          out << " = " + copyFunc + "(args." + (*m_iter)->get_name() + ", " + js_type_namespace(etype->get_program()) + etype->get_name() + ");" << endl;
         }
         else {
           out << " = args." << (*m_iter)->get_name() << ";" << endl;
