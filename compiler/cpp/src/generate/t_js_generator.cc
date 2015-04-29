@@ -691,6 +691,27 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
 
       if (t->is_struct()) {
         out << " = new " + js_type_namespace(t->get_program()) + t->get_name() + "(args."+(*m_iter)->get_name() +");" << endl;
+      } else if (t->is_list() || t->is_set()) {
+        t_type* etype;
+        if (t->is_list()) {
+          etype = ((t_list*)t)->get_elem_type();
+        } else {
+          etype = ((t_set*)t)->get_elem_type();
+        }
+        if (etype->is_struct()) {
+          out << " = function(){" << endl;
+          out << "var len = args." + (*m_iter)->get_name() + ".length, result = [], i;" << endl;
+          out << "for (i=0; i<len; i++) {" << endl;
+          out << "result.push(new " +
+            js_type_namespace(etype->get_program()) +
+            etype->get_name() + "(args." + (*m_iter)->get_name() + "[i]));" << endl;
+          out << "}" << endl;
+          out << "return result;" << endl;
+          out << "}();" << endl;
+        }
+        else {
+          out << " = args." << (*m_iter)->get_name() << ";" << endl;
+        }
       }
       else {
         out << " = args." << (*m_iter)->get_name() << ";" << endl;
