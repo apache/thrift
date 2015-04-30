@@ -43,8 +43,7 @@ public:
    * to both is given up.
    *
    * Threads are created with the specified boost policy, priority, stack-size. A detachable thread
-   *is not
-   * joinable.
+   * is not joinable.
    *
    * By default threads are not joinable.
    */
