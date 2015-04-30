@@ -57,7 +57,7 @@ pkgconfig_DATA += thrift-qt5.pc
 endif
 
 AM_CXXFLAGS = -Wall -Wextra -pedantic
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) -I$(srcdir)/src
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) -I$(srcdir)/src -D__STDC_LIMIT_MACROS
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(OPENSSL_LDFLAGS)
 
 # Define the source files for the module
@@ -65,9 +65,11 @@ AM_LDFLAGS = $(BOOST_LDFLAGS) $(OPENSSL_LDFLAGS)
 libthrift_la_SOURCES = src/thrift/Thrift.cpp \
                        src/thrift/TApplicationException.cpp \
                        src/thrift/VirtualProfiling.cpp \
+                       src/thrift/async/TAsyncChannel.cpp \
                        src/thrift/concurrency/ThreadManager.cpp \
                        src/thrift/concurrency/TimerManager.cpp \
                        src/thrift/concurrency/Util.cpp \
+                       src/thrift/processor/PeekProcessor.cpp \
                        src/thrift/protocol/TDebugProtocol.cpp \
                        src/thrift/protocol/TDenseProtocol.cpp \
                        src/thrift/protocol/TJSONProtocol.cpp \
@@ -94,9 +96,7 @@ libthrift_la_SOURCES = src/thrift/Thrift.cpp \
                        src/thrift/server/TServerFramework.cpp \
                        src/thrift/server/TSimpleServer.cpp \
                        src/thrift/server/TThreadPoolServer.cpp \
-                       src/thrift/server/TThreadedServer.cpp \
-                       src/thrift/async/TAsyncChannel.cpp \
-                       src/thrift/processor/PeekProcessor.cpp
+                       src/thrift/server/TThreadedServer.cpp
 
 if WITH_BOOSTTHREADS
 libthrift_la_SOURCES += src/thrift/concurrency/BoostThreadFactory.cpp \

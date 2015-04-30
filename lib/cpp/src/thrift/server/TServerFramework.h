@@ -21,7 +21,9 @@
 #define _THRIFT_SERVER_TSERVERFRAMEWORK_H_ 1
 
 #include <boost/shared_ptr.hpp>
+#include <stdint.h>
 #include <thrift/TProcessor.h>
+#include <thrift/concurrency/Monitor.h>
 #include <thrift/server/TConnectedClient.h>
 #include <thrift/server/TServer.h>
 #include <thrift/transport/TServerTransport.h>
@@ -89,6 +91,36 @@ public:
    */
   virtual void stop();
 
+  /**
+   * Get the concurrent client limit.
+   * \returns the concurrent client limit
+   */
+  virtual int64_t getConcurrentClientLimit() const;
+
+  /**
+   * Get the number of currently connected clients.
+   * \returns the number of currently connected clients
+   */
+  virtual int64_t getConcurrentClientCount() const;
+
+  /**
+   * Get the highest number of concurrent clients.
+   * \returns the highest number of concurrent clients
+   */
+  virtual int64_t getConcurrentClientCountHWM() const;
+
+  /**
+   * Set the concurrent client limit.  This can be changed while
+   * the server is serving however it will not necessarily be
+   * enforced until the next client is accepted and added.  If the
+   * limit is lowered below the number of connected clients, no
+   * action is taken to disconnect the clients.
+   * The default value used if this is not called is INT64_MAX.
+   * \param[in]  newLimit  the new limit of concurrent clients
+   * \throws std::invalid_argument if newLimit is less than 1
+   */
+  virtual void setConcurrentClientLimit(int64_t newLimit);
+
 protected:
   /**
    * A client has connected.  The implementation is responsible for storing
@@ -102,6 +134,7 @@ protected:
 
   /**
    * A client has disconnected.
+   * The server no longer tracks the client.
    * The client TTransport has already been closed.
    * The implementation must not delete the pointer.
    *
@@ -111,10 +144,37 @@ protected:
 
 private:
   /**
+   * Common handling for new connected clients.  Implements concurrent
+   * client rate limiting after onClientConnected returns by blocking the
+   * serve() thread if the limit has been reached.
+   */
+  void newlyConnectedClient(const boost::shared_ptr<TConnectedClient>& pClient);
+
+  /**
    * Smart pointer client deletion.
    * Calls onClientDisconnected and then deletes pClient.
    */
   void disposeConnectedClient(TConnectedClient *pClient);
+
+  /**
+   * Monitor for limiting the number of concurrent clients.
+   */
+  apache::thrift::concurrency::Monitor mon_;
+
+  /**
+   * The number of concurrent clients.
+   */
+  int64_t clients_;
+
+  /**
+   * The high water mark of concurrent clients.
+   */
+  int64_t hwm_;
+
+  /**
+   * The limit on the number of concurrent clients.
+   */
+  int64_t limit_;
 };
 
 }

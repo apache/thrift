@@ -18,12 +18,15 @@
  */
 
 #include <boost/bind.hpp>
+#include <stdexcept>
+#include <stdint.h>
 #include <thrift/server/TServerFramework.h>
 
 namespace apache {
 namespace thrift {
 namespace server {
 
+using apache::thrift::concurrency::Synchronized;
 using apache::thrift::transport::TServerTransport;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
@@ -39,14 +42,20 @@ TServerFramework::TServerFramework(
         const shared_ptr<TServerTransport>& serverTransport,
         const shared_ptr<TTransportFactory>& transportFactory,
         const shared_ptr<TProtocolFactory>& protocolFactory)
-  : TServer(processorFactory, serverTransport, transportFactory, protocolFactory) {}
+  : TServer(processorFactory, serverTransport, transportFactory, protocolFactory),
+    clients_(0),
+    hwm_(0),
+    limit_(INT64_MAX) {}
 
 TServerFramework::TServerFramework(
         const shared_ptr<TProcessor>& processor,
         const shared_ptr<TServerTransport>& serverTransport,
         const shared_ptr<TTransportFactory>& transportFactory,
         const shared_ptr<TProtocolFactory>& protocolFactory)
-  : TServer(processor, serverTransport, transportFactory, protocolFactory) {}
+  : TServer(processor, serverTransport, transportFactory, protocolFactory),
+    clients_(0),
+    hwm_(0),
+    limit_(INT64_MAX) {}
 
 TServerFramework::TServerFramework(
         const shared_ptr<TProcessorFactory>& processorFactory,
@@ -57,7 +66,10 @@ TServerFramework::TServerFramework(
         const shared_ptr<TProtocolFactory>& outputProtocolFactory)
   : TServer(processorFactory, serverTransport,
             inputTransportFactory, outputTransportFactory,
-            inputProtocolFactory, outputProtocolFactory) {}
+            inputProtocolFactory, outputProtocolFactory),
+    clients_(0),
+    hwm_(0),
+    limit_(INT64_MAX) {}
 
 TServerFramework::TServerFramework(
         const shared_ptr<TProcessor>& processor,
@@ -68,7 +80,10 @@ TServerFramework::TServerFramework(
         const shared_ptr<TProtocolFactory>& outputProtocolFactory)
   : TServer(processor, serverTransport,
             inputTransportFactory, outputTransportFactory,
-            inputProtocolFactory, outputProtocolFactory) {}
+            inputProtocolFactory, outputProtocolFactory),
+    clients_(0),
+    hwm_(0),
+    limit_(INT64_MAX) {}
 
 TServerFramework::~TServerFramework() {}
 
@@ -111,6 +126,16 @@ void TServerFramework::serve() {
       inputTransport.reset();
       client.reset();
 
+      // If we have reached the limit on the number of concurrent
+      // clients allowed, wait for one or more clients to drain before
+      // accepting another.
+      {
+          Synchronized sync(mon_);
+          while (clients_ >= limit_) {
+              mon_.wait();
+          }
+      }
+
       client = serverTransport_->accept();
 
       inputTransport = inputTransportFactory_->getTransport(client);
@@ -118,11 +143,12 @@ void TServerFramework::serve() {
       inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
       outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
 
-      onClientConnected(
+      newlyConnectedClient(
               shared_ptr<TConnectedClient>(
                       new TConnectedClient(getProcessor(inputProtocol, outputProtocol, client),
                                            inputProtocol, outputProtocol, eventHandler_, client),
                       bind(&TServerFramework::disposeConnectedClient, this, _1)));
+
     } catch (TTransportException& ttx) {
       releaseOneDescriptor("inputTransport", inputTransport);
       releaseOneDescriptor("outputTransport", outputTransport);
@@ -147,12 +173,54 @@ void TServerFramework::serve() {
   releaseOneDescriptor("serverTransport", serverTransport_);
 }
 
+int64_t TServerFramework::getConcurrentClientLimit() const {
+  Synchronized sync(mon_);
+  return limit_;
+}
+
+int64_t TServerFramework::getConcurrentClientCount() const {
+  Synchronized sync(mon_);
+  return clients_;
+}
+
+int64_t TServerFramework::getConcurrentClientCountHWM() const {
+  Synchronized sync(mon_);
+  return hwm_;
+}
+
+void TServerFramework::setConcurrentClientLimit(int64_t newLimit) {
+  if (newLimit < 1) {
+    throw std::invalid_argument("newLimit must be greater than zero");
+  }
+  Synchronized sync(mon_);
+  limit_ = newLimit;
+  if (limit_ - clients_ > 0) {
+    mon_.notify();
+  }
+}
+
 void TServerFramework::stop() {
   serverTransport_->interrupt();
   serverTransport_->interruptChildren();
 }
 
+void TServerFramework::newlyConnectedClient(const boost::shared_ptr<TConnectedClient>& pClient) {
+  onClientConnected(pClient);
+
+  // Count a concurrent client added.
+  Synchronized sync(mon_);
+  ++clients_;
+  hwm_ = std::max(hwm_, clients_);
+}
+
 void TServerFramework::disposeConnectedClient(TConnectedClient *pClient) {
+  {
+    // Count a concurrent client removed.
+    Synchronized sync(mon_);
+    if (limit_ - --clients_ > 0) {
+      mon_.notify();
+    }
+  }
   onClientDisconnected(pClient);
   delete pClient;
 }

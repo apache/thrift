@@ -38,7 +38,9 @@ TSimpleServer::TSimpleServer(
         const shared_ptr<TTransportFactory>& transportFactory,
         const shared_ptr<TProtocolFactory>& protocolFactory)
   : TServerFramework(processorFactory, serverTransport,
-                     transportFactory, protocolFactory) {}
+                     transportFactory, protocolFactory) {
+  TServerFramework::setConcurrentClientLimit(1);
+}
 
 TSimpleServer::TSimpleServer(
         const shared_ptr<TProcessor>& processor,
@@ -46,7 +48,9 @@ TSimpleServer::TSimpleServer(
         const shared_ptr<TTransportFactory>& transportFactory,
         const shared_ptr<TProtocolFactory>& protocolFactory)
   : TServerFramework(processor, serverTransport,
-                     transportFactory, protocolFactory) {}
+                     transportFactory, protocolFactory) {
+  TServerFramework::setConcurrentClientLimit(1);
+}
 
 TSimpleServer::TSimpleServer(
         const shared_ptr<TProcessorFactory>& processorFactory,
@@ -57,7 +61,9 @@ TSimpleServer::TSimpleServer(
         const shared_ptr<TProtocolFactory>& outputProtocolFactory)
   : TServerFramework(processorFactory, serverTransport,
           inputTransportFactory, outputTransportFactory,
-          inputProtocolFactory, outputProtocolFactory) {}
+          inputProtocolFactory, outputProtocolFactory) {
+  TServerFramework::setConcurrentClientLimit(1);
+}
 
 TSimpleServer::TSimpleServer(
         const shared_ptr<TProcessor>& processor,
@@ -68,7 +74,9 @@ TSimpleServer::TSimpleServer(
         const shared_ptr<TProtocolFactory>& outputProtocolFactory)
   : TServerFramework(processor, serverTransport,
           inputTransportFactory, outputTransportFactory,
-          inputProtocolFactory, outputProtocolFactory) {}
+          inputProtocolFactory, outputProtocolFactory) {
+  TServerFramework::setConcurrentClientLimit(1);
+}
 
 TSimpleServer::~TSimpleServer() {}
 
@@ -85,6 +93,13 @@ void TSimpleServer::onClientConnected(const shared_ptr<TConnectedClient>& pClien
  * TSimpleServer does not track clients so there is nothing to do here.
  */
 void TSimpleServer::onClientDisconnected(TConnectedClient *pClient) {}
+
+/**
+ * This makes little sense to the simple server because it is not capable
+ * of having more than one client at a time, so we hide it.
+ */
+void TSimpleServer::setConcurrentClientLimit(int64_t newLimit) {}
+
 
 }
 }

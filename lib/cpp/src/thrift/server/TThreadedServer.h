@@ -29,8 +29,6 @@ namespace apache {
 namespace thrift {
 namespace server {
 
-#define THRIFT_DEFAULT_THREAD_FACTORY
-
 /**
  * Manage clients using a thread pool.
  */
@@ -86,7 +84,6 @@ protected:
 
   boost::shared_ptr<apache::thrift::concurrency::ThreadFactory> threadFactory_;
   apache::thrift::concurrency::Monitor clientsMonitor_;
-  std::set<TConnectedClient*> clients_;
 };
 
 }
