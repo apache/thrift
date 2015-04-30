@@ -20,11 +20,12 @@
 // MANUAL_OPENSSL_INIT to 0 to cause automatic OpenSSL init/cleanup,
 // which will cause the test to fail
 #define MANUAL_OPENSSL_INIT 1
+#ifdef _WIN32
+#include <WinSock2.h>
+#endif
 
 #include <boost/test/unit_test.hpp>
-
 #include <openssl/evp.h>
-
 #include <thrift/transport/TSSLSocket.h>
 
 using namespace std;

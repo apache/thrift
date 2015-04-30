@@ -31,6 +31,7 @@ endif(NOT HAVE_AI_ADDRCONFIG)
 
 check_include_file(arpa/inet.h HAVE_ARPA_INET_H)
 check_include_file(fcntl.h HAVE_FCNTL_H)
+check_include_file(getopt.h HAVE_GETOPT_H)
 check_include_file(inttypes.h HAVE_INTTYPES_H)
 check_include_file(netdb.h HAVE_NETDB_H)
 check_include_file(netinet/in.h HAVE_NETINET_IN_H)

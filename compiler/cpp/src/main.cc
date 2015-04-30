@@ -1111,7 +1111,7 @@ int main(int argc, char** argv) {
 
 #ifdef _WIN32
         // strip out trailing \ on Windows
-        int last = out_path.length() - 1;
+        std::string::size_type last = out_path.length() - 1;
         if (out_path[last] == '\\') {
           out_path.erase(last);
         }

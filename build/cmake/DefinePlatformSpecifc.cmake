@@ -22,7 +22,7 @@
 if(MSVC)
     #For visual studio the library naming is as following:
     # Dynamic libraries:
-    #  - thfirt.dll  for release library
+    #  - thrift.dll  for release library
     #  - thriftd.dll for debug library
     #
     # Static libraries:
@@ -37,7 +37,6 @@ if(MSVC)
     # For Debug build types, append a "d" to the library names.
     set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix" FORCE)
     set(CMAKE_RELEASE_POSTFIX "" CACHE STRING "Set release library postfix" FORCE)
-
 
     # Build using /MT option instead of /MD if the WITH_MT options is set
     if(WITH_MT)
@@ -56,6 +55,18 @@ if(MSVC)
     else(WITH_MT)
         set(STATIC_POSTFIX "md" CACHE STRING "Set static library postfix" FORCE)
     endif(WITH_MT)
+
+    # Disable Windows.h definition of macros for min and max
+    add_definitions("-DNOMINMAX")
+
+    # Disable boost auto linking pragmas - cmake includes the right files
+    add_definitions("-DBOOST_ALL_NO_LIB")
+
+    # Windows build does not know how to make a shared library yet
+    # as there are no __declspec(dllexport) or exports files in the project.
+    if (WITH_SHARED_LIB)
+        message (FATAL_ERROR "Windows build does not support shared library output yet!")
+    endif()
 
 elseif(UNIX)
   # For UNIX

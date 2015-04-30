@@ -86,12 +86,15 @@ CMAKE_DEPENDENT_OPTION(BUILD_PYTHON "Build Python library" ON
 # Common library options
 option(WITH_SHARED_LIB "Build shared libraries" ON)
 option(WITH_STATIC_LIB "Build static libraries" ON)
+if (NOT WITH_SHARED_LIB AND NOT WITH_STATIC_LIB)
+    message(FATAL_ERROR "Cannot build with both shared and static outputs disabled!")
+endif()
 
 #NOTE: C++ compiler options are defined in the lib/cpp/CMakeLists.txt
 
 # Visual Studio only options
 if(MSVC)
-option(WITH_MT "Build unsing MT instead of MT (MSVC only)" OFF)
+option(WITH_MT "Build using MT instead of MD (MSVC only)" OFF)
 endif(MSVC)
 
 macro(MESSAGE_DEP flag summary)
