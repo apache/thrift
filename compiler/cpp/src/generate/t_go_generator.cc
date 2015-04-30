@@ -2057,7 +2057,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const std::vector<t_field*>& args = arg_struct->get_members();
     vector<t_field*>::const_iterator a_iter;
-    int num_args = args.size();
+    std::vector<t_field*>::size_type num_args = args.size();
     bool first = true;
 
     for (int i = 0; i < num_args; ++i) {
@@ -2183,7 +2183,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const std::vector<t_field*>& args = arg_struct->get_members();
     vector<t_field*>::const_iterator a_iter;
-    int num_args = args.size();
+    std::vector<t_field*>::size_type num_args = args.size();
     string funcName((*f_iter)->get_name());
     string pubName(publicize(funcName));
     string argumentsName(publicize(funcName + "_args", true));
