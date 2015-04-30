@@ -334,7 +334,7 @@ void t_js_generator::init_generator() {
   }
 
   string jsCopyFunctions =
-    "var _copyList = function(lst, type){"
+    "var __thriftCopyList = function(lst, type){"
     "  var len = lst.length, result = [], i;"
     "  for (i=0; i<len; i++) {"
     "    result.push(new type(lst[i]));"
@@ -342,7 +342,7 @@ void t_js_generator::init_generator() {
     "  return result;"
     "};"
 
-    "var _copyMap = function(obj, type){"
+    "var __thriftCopyMap = function(obj, type){"
     "  var result = {};"
     "  for(var prop in obj) {"
     "    if(obj.hasOwnProperty(prop))"
@@ -717,13 +717,13 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
         string copyFunc;
         if (t->is_list()) {
           etype = ((t_list*)t)->get_elem_type();
-          copyFunc = "_copyList";
+          copyFunc = "__thriftCopyList";
         } else if (t->is_set()) {
           etype = ((t_set*)t)->get_elem_type();
-          copyFunc = "_copyList";
+          copyFunc = "__thriftCopyList";
         } else {
           etype = ((t_map*)t)->get_val_type();
-          copyFunc = "_copyMap";
+          copyFunc = "__thriftCopyMap";
         }
         if (etype->is_struct()) {
           out << " = " + copyFunc + "(args." + (*m_iter)->get_name() + ", " + js_type_namespace(etype->get_program()) + etype->get_name() + ");" << endl;
