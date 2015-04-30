@@ -62,6 +62,9 @@ public:
 protected:
   virtual void onClientConnected(const boost::shared_ptr<TConnectedClient>& pClient) /* override */;
   virtual void onClientDisconnected(TConnectedClient *pClient) /* override */;
+
+private:
+  void setConcurrentClientLimit(int64_t newLimit);  // hide
 };
 
 }
