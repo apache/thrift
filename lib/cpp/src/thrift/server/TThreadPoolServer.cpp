@@ -112,6 +112,10 @@ void TThreadPoolServer::setTaskExpiration(int64_t value) {
   taskExpiration_ = value;
 }
 
+boost::shared_ptr<apache::thrift::concurrency::ThreadManager> TThreadPoolServer::getThreadManager() const {
+  return threadManager_;
+}
+
 void TThreadPoolServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient) {
   threadManager_->add(pClient, timeout_, taskExpiration_);
 }

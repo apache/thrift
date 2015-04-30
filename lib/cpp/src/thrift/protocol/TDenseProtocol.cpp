@@ -87,7 +87,6 @@ Optional fields are a little tricky also.  We write a zero byte if they are
 absent and prefix them with an 0x01 byte if they are present
 */
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include <thrift/protocol/TDenseProtocol.h>
 #include <thrift/TReflectionLocal.h>

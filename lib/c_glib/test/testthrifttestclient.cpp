@@ -317,6 +317,8 @@ class TestHandler : public ThriftTestIf {
 // C CLIENT
 extern "C" {
 
+#undef THRIFT_SOCKET /* from lib/cpp */
+
 #include "t_test_thrift_test.h"
 #include "t_test_thrift_test_types.h"
 #include <thrift/c_glib/transport/thrift_socket.h>

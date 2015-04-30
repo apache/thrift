@@ -35,9 +35,11 @@ set( thriftcpp_SOURCES
    src/thrift/Thrift.cpp
    src/thrift/TApplicationException.cpp
    src/thrift/VirtualProfiling.cpp
+   src/thrift/async/TAsyncChannel.cpp
    src/thrift/concurrency/ThreadManager.cpp
    src/thrift/concurrency/TimerManager.cpp
    src/thrift/concurrency/Util.cpp
+   src/thrift/processor/PeekProcessor.cpp
    src/thrift/protocol/TDebugProtocol.cpp
    src/thrift/protocol/TDenseProtocol.cpp
    src/thrift/protocol/TJSONProtocol.cpp
@@ -60,8 +62,6 @@ set( thriftcpp_SOURCES
    src/thrift/server/TSimpleServer.cpp
    src/thrift/server/TThreadPoolServer.cpp
    src/thrift/server/TThreadedServer.cpp
-   src/thrift/async/TAsyncChannel.cpp
-   src/thrift/processor/PeekProcessor.cpp
 )
 
 # This files don't work on Windows CE as there is no pipe support
@@ -184,6 +184,8 @@ endif()
 if(MSVC)
     add_definitions("-DUNICODE -D_UNICODE")
 endif()
+
+add_definitions("-D__STDC_LIMIT_MACROS")
 
 # Install the headers
 install(DIRECTORY "src/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"

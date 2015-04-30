@@ -89,7 +89,7 @@ void TThreadedServer::serve() {
   // Drain all clients - no more will arrive
   try {
     Synchronized s(clientsMonitor_);
-    while (!clients_.empty()) {
+    while (getConcurrentClientCount() > 0) {
         clientsMonitor_.wait();
     }
   } catch (TException& tx) {
@@ -98,27 +98,14 @@ void TThreadedServer::serve() {
   }
 }
 
-void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient)
-{
-  // Create a thread for this client
-  shared_ptr<Thread> thread = shared_ptr<Thread>(threadFactory_->newThread(pClient));
-
-  // Insert thread into the set of threads
-  {
-    Synchronized s(clientsMonitor_);
-    clients_.insert(pClient.get());
-  }
-
-  // Start the thread!
-  thread->start();
+void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient) {
+  threadFactory_->newThread(pClient)->start();
 }
 
 void TThreadedServer::onClientDisconnected(TConnectedClient *pClient) {
-  // Remove this task from parent bookkeeping
   Synchronized s(clientsMonitor_);
-  clients_.erase(pClient);
-  if (clients_.empty()) {
-      clientsMonitor_.notify();
+  if (getConcurrentClientCount() == 0) {
+    clientsMonitor_.notify();
   }
 }
 

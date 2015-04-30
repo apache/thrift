@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#define __STDC_LIMIT_MACROS
 #define __STDC_FORMAT_MACROS
 
 #ifndef _GNU_SOURCE
