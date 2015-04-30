@@ -17,7 +17,6 @@
 # under the License.
 #
 
-
 # Find required packages
 set(Boost_USE_STATIC_LIBS ON) # Force the use of static boost test framework
 find_package(Boost 1.53.0 REQUIRED COMPONENTS chrono system thread unit_test_framework)
@@ -45,7 +44,6 @@ set(testgencpp_SOURCES
 )
 
 add_library(testgencpp STATIC ${testgencpp_SOURCES})
-target_link_libraries(testgencpp thrift)
 
 set(testgencpp_cob_SOURCES
     gen-cpp/ChildService.cpp
@@ -58,11 +56,11 @@ set(testgencpp_cob_SOURCES
     gen-cpp/proc_types.h
 )
 add_library(testgencpp_cob STATIC ${testgencpp_cob_SOURCES})
-target_link_libraries(testgencpp_cob thrift)
 
 
 add_executable(Benchmark Benchmark.cpp)
 target_link_libraries(Benchmark testgencpp)
+LINK_AGAINST_THRIFT_LIBRARY(Benchmark thrift)
 add_test(NAME Benchmark COMMAND Benchmark)
 
 set(UnitTest_SOURCES
@@ -81,15 +79,16 @@ if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS)
 endif()
 
 add_executable(UnitTests ${UnitTest_SOURCES})
-target_link_libraries(UnitTests testgencpp thrift ${Boost_LIBRARIES})
+target_link_libraries(UnitTests testgencpp ${Boost_LIBRARIES})
+LINK_AGAINST_THRIFT_LIBRARY(UnitTests thrift)
 add_test(NAME UnitTests COMMAND UnitTests)
 
 add_executable(TSocketInterruptTest TSocketInterruptTest.cpp)
 target_link_libraries(TSocketInterruptTest
     testgencpp
     ${Boost_LIBRARIES}
-    #-lrt
 )
+LINK_AGAINST_THRIFT_LIBRARY(TSocketInterruptTest thrift)
 if (NOT MSVC)
 target_link_libraries(TSocketInterruptTest -lrt)
 endif ()
@@ -100,6 +99,7 @@ target_link_libraries(TServerIntegrationTest
     testgencpp_cob
     ${Boost_LIBRARIES}
 )
+LINK_AGAINST_THRIFT_LIBRARY(TServerIntegrationTest thrift)
 if (NOT MSVC)
 target_link_libraries(TServerIntegrationTest -lrt)
 endif ()
@@ -109,19 +109,21 @@ if(WITH_ZLIB)
 add_executable(TransportTest TransportTest.cpp)
 target_link_libraries(TransportTest
     testgencpp
-    thriftz
     ${Boost_LIBRARIES}
     ${ZLIB_LIBRARIES}
 )
+LINK_AGAINST_THRIFT_LIBRARY(TransportTest thrift)
+LINK_AGAINST_THRIFT_LIBRARY(TransportTest thriftz)
 add_test(NAME TransportTest COMMAND TransportTest)
 
 add_executable(ZlibTest ZlibTest.cpp)
 target_link_libraries(ZlibTest
     testgencpp
-    thriftz
     ${Boost_LIBRARIES}
     ${ZLIB_LIBRARIES}
 )
+LINK_AGAINST_THRIFT_LIBRARY(ZlibTest thrift)
+LINK_AGAINST_THRIFT_LIBRARY(ZlibTest thriftz)
 add_test(NAME ZlibTest COMMAND ZlibTest)
 endif(WITH_ZLIB)
 
@@ -131,25 +133,25 @@ target_link_libraries(EnumTest
     testgencpp
     ${Boost_LIBRARIES}
 )
+LINK_AGAINST_THRIFT_LIBRARY(EnumTest thrift)
 add_test(NAME EnumTest COMMAND EnumTest)
 
+if(HAVE_GETOPT_H)
 add_executable(TFileTransportTest TFileTransportTest.cpp)
 target_link_libraries(TFileTransportTest
     testgencpp
     ${Boost_LIBRARIES}
 )
+LINK_AGAINST_THRIFT_LIBRARY(TFileTransportTest thrift)
 add_test(NAME TFileTransportTest COMMAND TFileTransportTest)
+endif()
 
 add_executable(TFDTransportTest TFDTransportTest.cpp)
-target_link_libraries(TFDTransportTest
-    thrift
-)
+LINK_AGAINST_THRIFT_LIBRARY(TFDTransportTest thrift)
 add_test(NAME TFDTransportTest COMMAND TFDTransportTest)
 
 add_executable(TPipedTransportTest TPipedTransportTest.cpp)
-target_link_libraries(TPipedTransportTest
-    thrift
-)
+LINK_AGAINST_THRIFT_LIBRARY(TPipedTransportTest thrift)
 add_test(NAME TPipedTransportTest COMMAND TPipedTransportTest)
 
 set(AllProtocolsTest_SOURCES
@@ -159,39 +161,36 @@ set(AllProtocolsTest_SOURCES
     )
 
 add_executable(AllProtocolsTest ${AllProtocolsTest_SOURCES})
-target_link_libraries(AllProtocolsTest
-    testgencpp
-)
+target_link_libraries(AllProtocolsTest testgencpp)
+LINK_AGAINST_THRIFT_LIBRARY(AllProtocolsTest thrift)
 add_test(NAME AllProtocolsTest COMMAND AllProtocolsTest)
 
+# The debug run-time in Windows asserts on isprint() with negative inputs
+if (NOT MSVC OR (MSVC AND CMAKE_BUILD_TYPE EQUAL "DEBUG"))
 add_executable(DebugProtoTest DebugProtoTest.cpp)
-target_link_libraries(DebugProtoTest
-    testgencpp
-)
+target_link_libraries(DebugProtoTest testgencpp)
+LINK_AGAINST_THRIFT_LIBRARY(DebugProtoTest thrift)
 add_test(NAME DebugProtoTest COMMAND DebugProtoTest)
+endif()
 
 add_executable(JSONProtoTest JSONProtoTest.cpp)
-target_link_libraries(JSONProtoTest
-    testgencpp
-)
+target_link_libraries(JSONProtoTest testgencpp)
+LINK_AGAINST_THRIFT_LIBRARY(JSONProtoTest thrift)
 add_test(NAME JSONProtoTest COMMAND JSONProtoTest)
 
 add_executable(OptionalRequiredTest OptionalRequiredTest.cpp)
-target_link_libraries(OptionalRequiredTest
-    testgencpp
-)
+target_link_libraries(OptionalRequiredTest testgencpp)
+LINK_AGAINST_THRIFT_LIBRARY(OptionalRequiredTest thrift)
 add_test(NAME OptionalRequiredTest COMMAND OptionalRequiredTest)
 
 add_executable(RecursiveTest RecursiveTest.cpp)
-target_link_libraries(RecursiveTest
-    testgencpp
-)
+target_link_libraries(RecursiveTest testgencpp)
+LINK_AGAINST_THRIFT_LIBRARY(RecursiveTest thrift)
 add_test(NAME RecursiveTest COMMAND RecursiveTest)
 
 add_executable(SpecializationTest SpecializationTest.cpp)
-target_link_libraries(SpecializationTest
-    testgencpp
-)
+target_link_libraries(SpecializationTest testgencpp)
+LINK_AGAINST_THRIFT_LIBRARY(SpecializationTest thrift)
 add_test(NAME SpecializationTest COMMAND SpecializationTest)
 
 set(concurrency_test_SOURCES
@@ -201,9 +200,7 @@ set(concurrency_test_SOURCES
     concurrency/TimerManagerTests.h
 )
 add_executable(concurrency_test ${concurrency_test_SOURCES})
-target_link_libraries(concurrency_test
-    thrift
-)
+LINK_AGAINST_THRIFT_LIBRARY(concurrency_test thrift)
 add_test(NAME concurrency_test COMMAND concurrency_test)
 
 set(link_test_SOURCES
@@ -214,7 +211,8 @@ set(link_test_SOURCES
 )
 
 add_executable(link_test ${link_test_SOURCES})
-target_link_libraries(concurrency_test testgencpp_cob thrift)
+target_link_libraries(link_test testgencpp_cob)
+LINK_AGAINST_THRIFT_LIBRARY(link_test thrift)
 add_test(NAME link_test COMMAND link_test)
 
 if(WITH_LIBEVENT)
@@ -229,10 +227,10 @@ set(processor_test_SOURCES
 add_executable(processor_test ${processor_test_SOURCES})
 target_link_libraries(processor_test
     testgencpp_cob
-    thrift
-    thriftnb
     ${Boost_LIBRARIES}
 )
+LINK_AGAINST_THRIFT_LIBRARY(processor_test thrift)
+LINK_AGAINST_THRIFT_LIBRARY(processor_test thriftnb)
 add_test(NAME processor_test COMMAND processor_test)
 
 set(TNonblockingServerTest_SOURCES TNonblockingServerTest.cpp)
@@ -240,21 +238,21 @@ add_executable(TNonblockingServerTest ${TNonblockingServerTest_SOURCES})
 include_directories(${LIBEVENT_INCLUDE_DIRS})
 target_link_libraries(TNonblockingServerTest
     testgencpp_cob
-    thrift
-    thriftnb
     ${LIBEVENT_LIBRARIES}
     ${Boost_LIBRARIES}
 )
+LINK_AGAINST_THRIFT_LIBRARY(TNonblockingServerTest thrift)
+LINK_AGAINST_THRIFT_LIBRARY(TNonblockingServerTest thriftnb)
 add_test(NAME TNonblockingServerTest COMMAND TNonblockingServerTest)
 endif()
 
 if(OPENSSL_FOUND AND WITH_OPENSSL)
 add_executable(OpenSSLManualInitTest OpenSSLManualInitTest.cpp)
 target_link_libraries(OpenSSLManualInitTest
-    thrift
     ${OPENSSL_LIBRARIES}
     ${Boost_LIBRARIES}
 )
+LINK_AGAINST_THRIFT_LIBRARY(OpenSSLManualInitTest thrift)
 add_test(NAME OpenSSLManualInitTest COMMAND OpenSSLManualInitTest)
 endif()
 
@@ -265,7 +263,8 @@ set(TQTcpServerTest_SOURCES
     qt/TQTcpServerTest.cpp
 )
 add_executable(TQTcpServerTest ${TQTcpServerTest_SOURCES})
-target_link_libraries(TQTcpServerTest testgencpp_cob thriftqt thrift Qt4::QtTest)
+target_link_libraries(TQTcpServerTest testgencpp_cob thriftqt Qt4::QtTest)
+LINK_AGAINST_THRIFT_LIBRARY(TQTcpServerTest thrift)
 add_test(NAME TQTcpServerTest COMMAND TQTcpServerTest)
 endif()
 
