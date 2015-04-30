@@ -86,6 +86,7 @@ EXTRA_DIST = \
 	bower.json \
 	composer.json \
 	contrib \
+	CONTRIBUTING.md \
 	debian \
 	doc \
 	doap.rdf \
