@@ -39,8 +39,7 @@
 // The most obvious implementation is to just cast a pointer,
 // but that doesn't work.
 // For a pretty in-depth explanation of the problem, see
-// http://www.cellperformance.com/mike_acton/2006/06/ (...)
-// understanding_strict_aliasing.html
+// http://cellperformance.beyond3d.com/articles/2006/06/understanding-strict-aliasing.html
 template <typename To, typename From>
 static inline To bitwise_cast(From from) {
   BOOST_STATIC_ASSERT(sizeof(From) == sizeof(To));
