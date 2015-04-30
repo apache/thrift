@@ -319,7 +319,7 @@ void TSSLSocket::checkHandshake() {
     return;
   }
   ssl_ = ctx_->createSSL();
-  SSL_set_fd(ssl_, socket_);
+  SSL_set_fd(ssl_, (int)socket_);
   int rc;
   if (server()) {
     rc = SSL_accept(ssl_);
@@ -576,12 +576,12 @@ int TSSLSocketFactory::passwordCallback(char* password, int size, int, void* dat
   TSSLSocketFactory* factory = (TSSLSocketFactory*)data;
   string userPassword;
   factory->getPassword(userPassword, size);
-  int length = userPassword.size();
+  std::string::size_type length = userPassword.size();
   if (length > size) {
     length = size;
   }
   strncpy(password, userPassword.c_str(), length);
-  return length;
+  return (int)length;
 }
 
 // extract error messages from error queue

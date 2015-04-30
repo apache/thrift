@@ -271,7 +271,7 @@ public:
     include_prefix_ = include_prefix;
 
     // this is intended to be a directory; add a trailing slash if necessary
-    int len = include_prefix_.size();
+    std::string::size_type len = include_prefix_.size();
     if (len > 0 && include_prefix_[len - 1] != '/') {
       include_prefix_ += '/';
     }

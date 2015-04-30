@@ -23,8 +23,8 @@ if(WITH_BOOSTTHREADS)
 else()
   find_package(Boost 1.53.0 REQUIRED)
 endif()
-include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 
+include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 include_directories(src)
 
 # SYSLIBS contains libraries that need to be linked to all lib targets
@@ -65,7 +65,7 @@ set( thriftcpp_SOURCES
 )
 
 # This files don't work on Windows CE as there is no pipe support
-# TODO: This files won't work with UNICODE support on windows. If fixed this can be re-added.
+# TODO: These files won't work with UNICODE support on windows. If fixed this can be re-added.
 if (NOT WINCE)
     list(APPEND thriftcpp_SOURCES
        src/thrift/transport/TPipe.cpp
@@ -158,7 +158,8 @@ if(WITH_LIBEVENT)
     include_directories(SYSTEM ${LIBEVENT_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftnb ${thriftcppnb_SOURCES})
-    TARGET_LINK_LIBRARIES_THRIFT(thriftnb thrift ${SYSLIBS} ${LIBEVENT_LIBRARIES})
+    TARGET_LINK_LIBRARIES_THRIFT(thriftnb ${SYSLIBS} ${LIBEVENT_LIBRARIES})
+    TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftnb thrift)
 endif()
 
 if(WITH_ZLIB)
@@ -166,14 +167,16 @@ if(WITH_ZLIB)
     include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftz ${thriftcppz_SOURCES})
-    TARGET_LINK_LIBRARIES_THRIFT(thriftz thrift ${SYSLIBS} ${ZLIB_LIBRARIES})
+    TARGET_LINK_LIBRARIES_THRIFT(thriftz ${SYSLIBS} ${ZLIB_LIBRARIES})
+    TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftz thrift)
 endif()
 
 if(WITH_QT4)
     set(CMAKE_AUTOMOC ON)
     find_package(Qt4 REQUIRED COMPONENTS QtCore QtNetwork)
     ADD_LIBRARY_THRIFT(thriftqt ${thriftcppqt_SOURCES})
-    TARGET_LINK_LIBRARIES_THRIFT(thriftqt thrift ${SYSLIBS} Qt4::QtCore Qt4::QtNetwork)
+    TARGET_LINK_LIBRARIES_THRIFT(thriftqt ${SYSLIBS} Qt4::QtCore Qt4::QtNetwork)
+    TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftqt thrift)
 endif()
 
 if(WITH_QT5)
