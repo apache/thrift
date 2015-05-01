@@ -177,7 +177,7 @@ service ThriftTest
    * @return binary  - returns the binary 'thing'
    */
   binary       testBinary(1: binary thing),
-  
+
   /**
    * Prints 'testStruct("{%s}")' where thing has been formatted into a string of comma separated values
    * @param Xtruct thing - the Xtruct to print
@@ -371,12 +371,27 @@ struct NestedMixedx2 {
   2: map<i32,set<string>> map_int_strset
   3: list<map<i32,set<string>>> map_int_strset_list
 }
+
 struct ListBonks {
   1: list<Bonk> bonk
 }
+
+struct BonkSet {
+  1: set<Bonk> bonk
+}
+
+struct BonkMap {
+  1: map<string,Bonk> bonk
+}
+
 struct NestedListsBonk {
   1: list<list<list<Bonk>>> bonk
 }
+
+struct Bonkers {
+  1: list<set<map<string,list<Bonk>>>> bonk
+}
+
 
 struct BoolTest {
   1: optional bool b = true;
