@@ -1643,11 +1643,11 @@ void t_cpp_generator::generate_struct_ostream_operator_decl(std::ofstream& out, 
 void t_cpp_generator::generate_exception_what_method_decl(std::ofstream& out,
                                                           t_struct* tstruct,
                                                           bool external) {
-  std::string prefix = "";
+  out << "const char* ";
   if (external) {
-    prefix = string(tstruct->get_name() + "::");
+    out << tstruct->get_name() << "::";
   }
-  out << "const char* " << prefix << "what() const throw()";
+  out << "what() const throw()";
 }
 
 namespace struct_ostream_operator_generator {

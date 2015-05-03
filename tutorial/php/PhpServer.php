@@ -79,7 +79,7 @@ class CalculatorHandler implements \tutorial\CalculatorIf {
       case \tutorial\Operation::DIVIDE:
         if ($w->num2 == 0) {
           $io = new \tutorial\InvalidOperation();
-          $io->what = $w->op;
+          $io->whatOp = $w->op;
           $io->why = "Cannot divide by 0";
           throw $io;
         }
@@ -87,7 +87,7 @@ class CalculatorHandler implements \tutorial\CalculatorIf {
         break;
       default:
         $io = new \tutorial\InvalidOperation();
-        $io->what = $w->op;
+        $io->whatOp = $w->op;
         $io->why = "Invalid Operation";
         throw $io;
     }

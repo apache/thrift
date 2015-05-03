@@ -44,12 +44,12 @@ calculate(Logid, Work) ->
         ?tutorial_Operation_MULTIPLY -> Num1 * Num2;
 
         ?tutorial_Operation_DIVIDE when Num2 == 0 ->
-          throw(#invalidOperation{what=Op, why="Cannot divide by 0"});
+          throw(#invalidOperation{whatOp=Op, why="Cannot divide by 0"});
         ?tutorial_Operation_DIVIDE ->
           Num1 div Num2;
 
         _Else ->
-          throw(#invalidOperation{what=Op, why="Invalid operation"})
+          throw(#invalidOperation{whatOp=Op, why="Invalid operation"})
     end.
 
 getStruct(Key) ->
