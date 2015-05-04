@@ -2060,7 +2060,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     std::vector<t_field*>::size_type num_args = args.size();
     bool first = true;
 
-    for (int i = 0; i < num_args; ++i) {
+    for (std::vector<t_field*>::size_type i = 0; i < num_args; ++i) {
       if (first) {
         first = false;
       } else {
@@ -2195,7 +2195,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     f_remote << indent() << "  flag.Usage()" << endl;
     f_remote << indent() << "}" << endl;
 
-    for (int i = 0; i < num_args; ++i) {
+    for (std::vector<t_field*>::size_type i = 0; i < num_args; ++i) {
       int flagArg = i + 1;
       t_type* the_type(args[i]->get_type());
       t_type* the_type2(get_true_type(the_type));
@@ -2359,7 +2359,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     f_remote << indent() << "fmt.Print(client." << pubName << "(";
     bool argFirst = true;
 
-    for (int i = 0; i < num_args; ++i) {
+    for (std::vector<t_field*>::size_type i = 0; i < num_args; ++i) {
       if (argFirst) {
         argFirst = false;
       } else {

@@ -1415,7 +1415,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     vector<t_field*>::const_iterator a_iter;
     std::vector<t_field*>::size_type num_args = args.size();
     bool first = true;
-    for (int i = 0; i < num_args; ++i) {
+    for (std::vector<t_field*>::size_type i = 0; i < num_args; ++i) {
       if (first) {
         first = false;
       } else {
@@ -1472,7 +1472,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
              << "  if len(args) != " << num_args << ":" << endl << "    print('"
              << (*f_iter)->get_name() << " requires " << num_args << " args')" << endl
              << "    sys.exit(1)" << endl << "  pp.pprint(client." << (*f_iter)->get_name() << "(";
-    for (int i = 0; i < num_args; ++i) {
+    for (std::vector<t_field*>::size_type i = 0; i < num_args; ++i) {
       if (args[i]->get_type()->is_string()) {
         f_remote << "args[" << i << "],";
       } else {
