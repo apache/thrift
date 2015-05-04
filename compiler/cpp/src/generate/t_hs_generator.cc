@@ -1201,7 +1201,7 @@ bool hasNoArguments(t_function* func) {
 
 string t_hs_generator::render_hs_type_for_function_name(t_type* type) {
   string type_str = render_hs_type(type, false);
-  int found = -1;
+  std::string::size_type found = -1;
 
   while (true) {
     found = type_str.find_first_of("[]. ", found + 1);

@@ -55,7 +55,7 @@ public:
 
   /**
    * Gets the thread object that is hosting this runnable object  - can return
-   * an empty boost::shared pointer if no references remain on thet thread  object
+   * an empty boost::shared pointer if no references remain on that thread object
    */
   virtual boost::shared_ptr<Thread> thread() { return thread_.lock(); }
 

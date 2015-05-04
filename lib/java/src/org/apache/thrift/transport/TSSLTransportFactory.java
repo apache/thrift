@@ -20,8 +20,12 @@
 package org.apache.thrift.transport;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URL;
+import java.net.MalformedURLException;
 import java.security.KeyStore;
 import java.util.Arrays;
 
@@ -171,8 +175,8 @@ public class TSSLTransportFactory {
 
   private static SSLContext createSSLContext(TSSLTransportParameters params) throws TTransportException {
     SSLContext ctx;
-    FileInputStream fin = null;
-    FileInputStream fis = null;
+    InputStream in = null;
+    InputStream is = null;
 
     try {
       ctx = SSLContext.getInstance(params.protocol);
@@ -182,17 +186,17 @@ public class TSSLTransportFactory {
       if (params.isTrustStoreSet) {
         tmf = TrustManagerFactory.getInstance(params.trustManagerType);
         KeyStore ts = KeyStore.getInstance(params.trustStoreType);
-        fin = new FileInputStream(params.trustStore);
-        ts.load(fin,
-          (params.trustPass != null ? params.trustPass.toCharArray() : null));
+        in = getStoreAsStream(params.trustStore);
+        ts.load(in,
+                (params.trustPass != null ? params.trustPass.toCharArray() : null));
         tmf.init(ts);
       }
 
       if (params.isKeyStoreSet) {
         kmf = KeyManagerFactory.getInstance(params.keyManagerType);
         KeyStore ks = KeyStore.getInstance(params.keyStoreType);
-        fis = new FileInputStream(params.keyStore);
-        ks.load(fis, params.keyPass.toCharArray());
+        is = getStoreAsStream(params.keyStore);
+        ks.load(is, params.keyPass.toCharArray());
         kmf.init(ks, params.keyPass.toCharArray());
       }
 
@@ -209,16 +213,16 @@ public class TSSLTransportFactory {
     } catch (Exception e) {
       throw new TTransportException("Error creating the transport", e);
     } finally {
-      if (fin != null) {
+      if (in != null) {
         try {
-          fin.close();
+          in.close();
         } catch (IOException e) {
           e.printStackTrace();
         }
       }
-      if (fis != null) {
+      if (is != null) {
         try {
-          fis.close();
+          is.close();
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -226,6 +230,30 @@ public class TSSLTransportFactory {
     }
 
     return ctx;
+  }
+
+  private static InputStream getStoreAsStream(String store) throws IOException {
+    try {
+      return new FileInputStream(store);
+    } catch(FileNotFoundException e) {
+    }
+
+    InputStream storeStream = null;
+    try {
+      storeStream = new URL(store).openStream();
+      if (storeStream != null) {
+        return storeStream;
+      }
+    } catch(MalformedURLException e) {
+    }
+
+    storeStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(store);
+
+    if (storeStream != null) {
+      return storeStream;
+    } else {
+      throw new IOException("Could not load file: " + store);
+    }
   }
 
   private static TSocket createClient(SSLSocketFactory factory, String host, int port, int timeout) throws TTransportException {

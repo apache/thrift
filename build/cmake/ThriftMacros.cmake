@@ -52,7 +52,8 @@ if(WITH_STATIC_LIB)
         PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
 endif()
 
-endmacro()
+endmacro(ADD_LIBRARY_THRIFT)
+
 
 macro(TARGET_LINK_LIBRARIES_THRIFT name)
 
@@ -64,4 +65,30 @@ if(WITH_STATIC_LIB)
     target_link_libraries(${name}_static ${ARGN})
 endif()
 
-endmacro()
+endmacro(TARGET_LINK_LIBRARIES_THRIFT)
+
+
+macro(LINK_AGAINST_THRIFT_LIBRARY target libname)
+
+if (WITH_SHARED_LIB)
+    target_link_libraries(${target} ${libname})
+elseif (WITH_STATIC_LIB)
+    target_link_libraries(${target} ${libname}_static)
+else()
+    message(FATAL "Not linking with shared or static libraries?")
+endif()
+
+endmacro(LINK_AGAINST_THRIFT_LIBRARY)
+
+
+macro(TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY target libname)
+
+if(WITH_SHARED_LIB)
+    target_link_libraries(${target} ${libname})
+endif()
+
+if(WITH_STATIC_LIB)
+    target_link_libraries(${target}_static ${libname}_static)
+endif()
+
+endmacro(TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY)

@@ -41,14 +41,14 @@ class ThreadManager;
  *
  * This class manages a pool of threads. It uses a ThreadFactory to create
  * threads. It never actually creates or destroys worker threads, rather
- * It maintains statistics on number of idle threads, number of active threads,
+ * it maintains statistics on number of idle threads, number of active threads,
  * task backlog, and average wait and service times and informs the PoolPolicy
  * object bound to instances of this manager of interesting transitions. It is
  * then up the PoolPolicy object to decide if the thread pool size needs to be
  * adjusted and call this object addWorker and removeWorker methods to make
  * changes.
  *
- * This design allows different policy implementations to used this code to
+ * This design allows different policy implementations to use this code to
  * handle basic worker thread management and worker task execution and focus on
  * policy issues. The simplest policy, StaticPolicy, does nothing other than
  * create a fixed number of threads.

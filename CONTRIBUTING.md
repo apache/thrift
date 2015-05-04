@@ -33,6 +33,7 @@
   * Remember to provide *tests* for all submited changes
   * When bugfixing: add test that will isolate bug *before* applying change that fixes it
   * Verify that you follow [Thrift Coding Standards](/coding_standards) (you can run 'make style', which ensures proper format for some languages)
+  * Verify that your change works on other platforms by adding a GitHub service hook to [Travis CI](http://docs.travis-ci.com/user/getting-started/#Step-one%3A-Sign-in) and [AppVeyor](http://www.appveyor.com/docs)
 
 1. Commit and push changes to your branch (please use issue name and description as commit title, e.g. THRIFT-9999 make it perfect)
 1. Issue a pull request with the jira ticket number you are working on in it's name

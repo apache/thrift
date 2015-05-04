@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#define __STDC_LIMIT_MACROS
 #define __STDC_FORMAT_MACROS
 
 #ifndef _GNU_SOURCE
@@ -25,7 +24,9 @@
 #endif
 
 #include <stdint.h>
+#ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
+#endif
 #include <cstddef>
 #include <fstream>
 #include <iostream>
@@ -401,7 +402,9 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   THRIFT_UNUSED_VARIABLE(argc);
   THRIFT_UNUSED_VARIABLE(argv);
   uint32_t seed = static_cast<uint32_t>(time(NULL));
+#ifdef HAVE_INTTYPES_H
   printf("seed: %" PRIu32 "\n", seed);
+#endif
   rng.seed(seed);
 
   boost::unit_test::test_suite* suite = &boost::unit_test::framework::master_test_suite();
