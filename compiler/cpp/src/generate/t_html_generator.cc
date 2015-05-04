@@ -1039,7 +1039,7 @@ void t_html_generator::generate_service(t_service* tservice) {
     for (; arg_iter != args.end(); arg_iter++) {
       if (!first) {
         f_out_ << "," << endl;
-        for (int i = 0; i < offset; ++i) {
+        for (std::string::size_type i = 0; i < offset; ++i) {
           f_out_ << " ";
         }
       }
