@@ -21,6 +21,7 @@
 #define T_MAIN_H
 
 #include <string>
+#include <stdio.h>
 #include "logging.h"
 #include "parse/t_const.h"
 #include "parse/t_field.h"
