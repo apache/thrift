@@ -17,7 +17,7 @@
 # under the License.
 #
 
-SUBDIRS =
+SUBDIRS = json
 
 if WITH_CPP
 SUBDIRS += cpp
