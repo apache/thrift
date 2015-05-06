@@ -44,6 +44,7 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
 
 static const string js_container_copy_functions = (
 "var __thriftCopyList = function(lst, types) {\n"
+"  if (!lst) return lst;\n"
 "\n"
 "  var type;\n"
 "\n"
@@ -71,6 +72,7 @@ static const string js_container_copy_functions = (
 "};\n"
 "\n"
 "var __thriftCopyMap = function(obj, types){\n"
+"  if (!obj) return obj;\n"
 "\n"
 "  var type;\n"
 "\n"
