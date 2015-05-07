@@ -92,13 +92,13 @@ void TSimpleServer::onClientConnected(const shared_ptr<TConnectedClient>& pClien
 /**
  * TSimpleServer does not track clients so there is nothing to do here.
  */
-void TSimpleServer::onClientDisconnected(TConnectedClient *pClient) {}
+void TSimpleServer::onClientDisconnected(TConnectedClient*) {}
 
 /**
  * This makes little sense to the simple server because it is not capable
  * of having more than one client at a time, so we hide it.
  */
-void TSimpleServer::setConcurrentClientLimit(int64_t newLimit) {}
+void TSimpleServer::setConcurrentClientLimit(int64_t) {}
 
 
 }

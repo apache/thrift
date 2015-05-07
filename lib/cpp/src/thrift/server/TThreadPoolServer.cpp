@@ -120,7 +120,7 @@ void TThreadPoolServer::onClientConnected(const shared_ptr<TConnectedClient>& pC
   threadManager_->add(pClient, timeout_, taskExpiration_);
 }
 
-void TThreadPoolServer::onClientDisconnected(TConnectedClient *pClient) {}
+void TThreadPoolServer::onClientDisconnected(TConnectedClient*) {}
 
 }
 }

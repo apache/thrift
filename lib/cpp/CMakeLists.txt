@@ -32,8 +32,8 @@ set(SYSLIBS "")
 
 # Create the thrift C++ library
 set( thriftcpp_SOURCES
-   src/thrift/Thrift.cpp
    src/thrift/TApplicationException.cpp
+   src/thrift/TOutput.cpp
    src/thrift/VirtualProfiling.cpp
    src/thrift/async/TAsyncChannel.cpp
    src/thrift/concurrency/ThreadManager.cpp
