@@ -102,7 +102,8 @@ void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pCli
   threadFactory_->newThread(pClient)->start();
 }
 
-void TThreadedServer::onClientDisconnected(TConnectedClient *pClient) {
+void TThreadedServer::onClientDisconnected(TConnectedClient* pClient) {
+  THRIFT_UNUSED_VARIABLE(pClient);
   Synchronized s(clientsMonitor_);
   if (getConcurrentClientCount() == 0) {
     clientsMonitor_.notify();
