@@ -582,14 +582,28 @@ void t_ts_generator::generate_ts_struct_definition(ofstream& out,
   }
 
   // constructor section
+  string argtype = "";
+  bool is_arg_union = false;
   // write constructor entry
   if (members.size() > 0) {
-    out << ts_indent() << "constructor(args?: { ";
+    out << ts_indent() << "constructor(args?: ";
+    argtype = "{ ";
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      out << (*m_iter)->get_name() << ts_get_req(*m_iter) << ": "
-                  << ts_get_type((*m_iter)->get_type()) << "; ";
+      argtype += (*m_iter)->get_name();
+      argtype += "?: ";
+      argtype += ts_get_type((*m_iter)->get_type());
+      argtype += "; ";
     }
-    out << "}) {" << endl;
+    argtype += "}";
+    out << argtype;
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      t_type* t = get_true_type((*m_iter)->get_type());
+      if (t->is_xception()) {
+        out << " | " << ts_get_type(t);
+        is_arg_union = true;
+      }
+    }
+    out << ") {" << endl;
   } else {
     out << ts_indent() << "constructor() {" << endl;
   }
@@ -639,10 +653,15 @@ void t_ts_generator::generate_ts_struct_definition(ofstream& out,
 
     out << ts_indent()<< "if (args) {" << endl;
 
+    out << ts_indent() << ts_indent() << "var args_ = ";
+    if (is_arg_union) {
+      out << "<" << argtype << ">";
+    }
+    out << "args;" << endl;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      out << ts_indent()<< ts_indent()<< "if (args." << (*m_iter)->get_name() << " !== undefined) {"
+      out << ts_indent()<< ts_indent()<< "if (args_." << (*m_iter)->get_name() << " !== undefined) {"
           << endl << ts_indent()<< ts_indent()<< ts_indent()<< "this." << (*m_iter)->get_name()
-          << " = args." << (*m_iter)->get_name() << ";" << endl;
+          << " = args_." << (*m_iter)->get_name() << ";" << endl;
       if (!(*m_iter)->get_req()) {
         out << ts_indent()<< ts_indent()<< "} else {" << endl << ts_indent()<< ts_indent()<< indent()
             << "throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, "
@@ -1013,6 +1032,7 @@ void t_ts_generator::generate_process_function(t_service* tservice, t_function* 
   indent(f_service_) << "}, function (err) {" << endl;
   indent_up();
 
+  indent(f_service_) << "var result: { write(output: thrift.TProtocol): any; };" << endl;
   bool has_exception = false;
   t_struct* exceptions = tfunction->get_xceptions();
   if (exceptions) {
@@ -1035,7 +1055,7 @@ void t_ts_generator::generate_process_function(t_service* tservice, t_function* 
   if (has_exception) {
     f_service_ << ") {" << endl;
     indent_up();
-    f_service_ << ts_indent()<< "var result = new " << resultname << "(err);" << endl << indent()
+    f_service_ << ts_indent()<< "result = new " << resultname << "(err);" << endl << indent()
                << "output.writeMessageBegin(\"" << tfunction->get_name()
                << "\", Thrift.MessageType.REPLY, seqid);" << endl;
 
@@ -1044,7 +1064,7 @@ void t_ts_generator::generate_process_function(t_service* tservice, t_function* 
     indent_up();
   }
 
-  f_service_ << ts_indent()<< "var result = new "
+  f_service_ << ts_indent()<< "result = new "
                             "Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN,"
                             " err.message);" << endl << ts_indent()<< "output.writeMessageBegin(\""
              << tfunction->get_name() << "\", Thrift.MessageType.EXCEPTION, seqid);" << endl;
