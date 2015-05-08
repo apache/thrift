@@ -630,7 +630,7 @@ void t_ts_generator::generate_ts_struct_definition(ofstream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* t = get_true_type((*m_iter)->get_type());
       if (t->is_xception()) {
-        out << ts_indent()<< "if (args instanceof " << ts_type_namespace(t->get_program())
+        out << ts_indent()<< "if (args instanceof "
             << t->get_name() << ") {" << endl << ts_indent()<< ts_indent()<< "this."
             << (*m_iter)->get_name() << " = args;" << endl << ts_indent()<< ts_indent()<< "return;"
             << endl << ts_indent()<< "}" << endl;
@@ -999,9 +999,12 @@ void t_ts_generator::generate_process_function(t_service* tservice, t_function* 
 
   f_service_ << ")" << endl;
   indent_up();
-  indent(f_service_) << ".then(function(success) {" << endl;
+
+  bool is_return_void = tfunction->get_returntype()->is_void();
+
+  indent(f_service_) << ".then(function(" << (is_return_void ? "" : "success") << ") {" << endl;
   indent_up();
-  f_service_ << ts_indent()<< "var result = new " << resultname << "({success: success});" << endl
+  f_service_ << ts_indent()<< "var result = new " << resultname << "(" << (is_return_void ? "" : "{success: success}") << ");" << endl
              << ts_indent()<< "output.writeMessageBegin(\"" << tfunction->get_name()
              << "\", Thrift.MessageType.REPLY, seqid);" << endl << indent()
              << "result.write(output);" << endl << ts_indent()<< "output.writeMessageEnd();" << endl
@@ -1019,10 +1022,10 @@ void t_ts_generator::generate_process_function(t_service* tservice, t_function* 
       if (t->is_xception()) {
         if (!has_exception) {
           has_exception = true;
-          indent(f_service_) << "if (err instanceof " << ts_type_namespace(t->get_program())
+          indent(f_service_) << "if (err instanceof "
                              << t->get_name();
         } else {
-          f_service_ << " || err instanceof " << ts_type_namespace(t->get_program())
+          f_service_ << " || err instanceof "
                      << t->get_name();
         }
       }
@@ -1065,7 +1068,11 @@ void t_ts_generator::generate_process_function(t_service* tservice, t_function* 
     f_service_ << "args." << (*f_iter)->get_name() << ", ";
   }
 
-  f_service_ << "function (err, result_) {" << endl;
+  if (is_return_void) {
+    f_service_ << "function (err) {" << endl;
+  } else {
+    f_service_ << "function (err, result_) {" << endl;
+  }
   indent_up();
 
   indent(f_service_) << "var result: {write: (output: thrift.TProtocol) => void; };" << endl;
@@ -1075,15 +1082,19 @@ void t_ts_generator::generate_process_function(t_service* tservice, t_function* 
     for (vector<t_field*>::const_iterator it = members.begin(); it != members.end(); ++it) {
       t_type* t = get_true_type((*it)->get_type());
       if (t->is_xception()) {
-        f_service_ << " || err instanceof " << ts_type_namespace(t->get_program()) << t->get_name();
+        f_service_ << " || err instanceof " << t->get_name();
       }
     }
   }
   f_service_ << ") {" << endl;
   indent_up();
-  f_service_ << ts_indent()<< "result = new " << resultname
-             << "((err != null ? err : {success: result_}));" << endl << indent()
-             << "output.writeMessageBegin(\"" << tfunction->get_name()
+  f_service_ << ts_indent()<< "result = new " << resultname;
+  if (is_return_void) {
+    f_service_ << "();" << endl << indent();
+  } else {
+    f_service_ << "((err != null ? err : {success: result_}));" << endl << indent();
+  }
+  f_service_ << "output.writeMessageBegin(\"" << tfunction->get_name()
              << "\", Thrift.MessageType.REPLY, seqid);" << endl;
   indent_down();
   indent(f_service_) << "} else {" << endl;
@@ -1906,13 +1917,16 @@ string t_ts_generator::function_signature(t_function* tfunction,
   str += argument_list(tfunction->get_arglist());
 
   if (include_callback) {
-    bool isVoid = ignore_returntype || (tfunction->get_returntype()->is_base_type() &&
+    bool is_void = ignore_returntype || (tfunction->get_returntype()->is_base_type() &&
       ((t_base_type*)tfunction->get_returntype())->get_base() == t_base_type::TYPE_VOID);
 
-    if (isVoid) {
-      str += ", callback?: (err: any) => void): ";
+    if (tfunction->get_arglist()->get_members().size() > 0) {
+      str += ", ";
+    }
+    if (is_void) {
+      str += "callback?: (err: any) => void): ";
     } else {
-      str += ", callback?: (err: any, result: " + ts_get_type(tfunction->get_returntype()) + ") => void): ";
+      str += "callback?: (err: any, result: " + ts_get_type(tfunction->get_returntype()) + ") => void): ";
     }
 
     if (ignore_returntype) {
@@ -2010,7 +2024,7 @@ string t_ts_generator::ts_get_type(t_type* type) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
-      ts_type = "string";
+      ts_type = ((gen_node_ && ((t_base_type*)type)->is_binary()) ? "Buffer" : "string");
       break;
     case t_base_type::TYPE_BOOL:
       ts_type = "boolean";
