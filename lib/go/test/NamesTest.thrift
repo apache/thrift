@@ -18,5 +18,15 @@
 #
 
 struct NamesTest {
-		1: required string type
+    1: required string type
+}
+
+service NameCollisionOne
+{
+    void blahBlah()
+}
+
+service NameCollisionTwo
+{
+    void blahBlah()
 }
