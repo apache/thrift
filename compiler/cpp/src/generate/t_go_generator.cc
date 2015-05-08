@@ -471,6 +471,11 @@ std::string t_go_generator::publicize(const std::string& value, bool is_args_or_
     }
   }
 
+  // Avoid naming collisions with other services
+  if (is_args_or_result) {
+    prefix += publicize(service_name_);
+  }
+
   return prefix + value2;
 }
 
