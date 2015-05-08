@@ -17,39 +17,27 @@
  * under the License.
  */
 
-#ifndef T_DOC_H
-#define T_DOC_H
+#include "plugin/plugin.h"
+#include "generate/t_generator.h"
 
-#include "globals.h"
-#include "logging.h"
+namespace apache {
+namespace thrift {
+namespace plugin {
 
-/**
- * Documentation stubs
- *
- */
-class t_doc {
-
-public:
-  t_doc() : has_doc_(false) {}
-  virtual ~t_doc() {}
-
-  void set_doc(const std::string& doc) {
-    doc_ = doc;
-    has_doc_ = true;
-    if ((g_program_doctext_lineno == g_doctext_lineno)
-        && (g_program_doctext_status == STILL_CANDIDATE)) {
-      g_program_doctext_status = ALREADY_PROCESSED;
-      pdebug("%s", "program doctext set to ALREADY_PROCESSED");
-    }
+class MyCppGenerator : public GeneratorPlugin {
+  virtual int generate(::t_program* program,
+                       const std::map<std::string, std::string>& parsed_options) override {
+    t_generator* gen = t_generator_registry::get_generator(program, "cpp", parsed_options, "");
+    gen->generate_program();
+    delete gen;
+    return 0;
   }
-
-  const std::string& get_doc() const { return doc_; }
-
-  bool has_doc() { return has_doc_; }
-
-private:
-  std::string doc_;
-  bool has_doc_;
 };
+}
+}
+}
 
-#endif
+int main(int argc, char* argv[]) {
+  apache::thrift::plugin::MyCppGenerator p;
+  return p.exec(argc, argv);
+}

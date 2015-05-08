@@ -127,7 +127,7 @@ public:
     return true;
   }
 
-  const members_type& get_members() { return members_; }
+  const members_type& get_members() const { return members_; }
 
   const members_type& get_sorted_members() { return members_in_id_order_; }
 

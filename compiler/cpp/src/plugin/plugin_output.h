@@ -17,39 +17,16 @@
  * under the License.
  */
 
-#ifndef T_DOC_H
-#define T_DOC_H
+#ifndef T_PLUGIN_PLUGIN_OUTPUT_H
+#define T_PLUGIN_PLUGIN_OUTPUT_H
 
-#include "globals.h"
-#include "logging.h"
+#include <string>
 
-/**
- * Documentation stubs
- *
- */
-class t_doc {
+class t_program;
 
-public:
-  t_doc() : has_doc_(false) {}
-  virtual ~t_doc() {}
+namespace plugin_output {
 
-  void set_doc(const std::string& doc) {
-    doc_ = doc;
-    has_doc_ = true;
-    if ((g_program_doctext_lineno == g_doctext_lineno)
-        && (g_program_doctext_status == STILL_CANDIDATE)) {
-      g_program_doctext_status = ALREADY_PROCESSED;
-      pdebug("%s", "program doctext set to ALREADY_PROCESSED");
-    }
-  }
-
-  const std::string& get_doc() const { return doc_; }
-
-  bool has_doc() { return has_doc_; }
-
-private:
-  std::string doc_;
-  bool has_doc_;
-};
+bool delegateToPlugin(t_program* program, const std::string& options);
+}
 
 #endif

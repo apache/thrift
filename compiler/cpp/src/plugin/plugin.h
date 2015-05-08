@@ -17,39 +17,28 @@
  * under the License.
  */
 
-#ifndef T_DOC_H
-#define T_DOC_H
+#ifndef T_PLUGIN_PLUGIN_H
+#define T_PLUGIN_PLUGIN_H
 
-#include "globals.h"
-#include "logging.h"
+#include "thrift/Thrift.h"
 
-/**
- * Documentation stubs
- *
- */
-class t_doc {
+class t_program;
 
-public:
-  t_doc() : has_doc_(false) {}
-  virtual ~t_doc() {}
+namespace apache {
+namespace thrift {
+namespace plugin {
 
-  void set_doc(const std::string& doc) {
-    doc_ = doc;
-    has_doc_ = true;
-    if ((g_program_doctext_lineno == g_doctext_lineno)
-        && (g_program_doctext_status == STILL_CANDIDATE)) {
-      g_program_doctext_status = ALREADY_PROCESSED;
-      pdebug("%s", "program doctext set to ALREADY_PROCESSED");
-    }
-  }
-
-  const std::string& get_doc() const { return doc_; }
-
-  bool has_doc() { return has_doc_; }
-
-private:
-  std::string doc_;
-  bool has_doc_;
+struct ThriftPluginError : public apache::thrift::TException {
+  ThriftPluginError(const std::string& msg) : apache::thrift::TException(msg) {}
 };
+
+class GeneratorPlugin {
+public:
+  int exec(int argc, char* argv[]);
+  virtual int generate(::t_program*, const std::map<std::string, std::string>&) = 0;
+};
+}
+}
+}
 
 #endif

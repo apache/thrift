@@ -62,21 +62,6 @@ extern int g_strict;
 extern t_program* g_program;
 
 /**
- * Global types for the parser to be able to reference
- */
-
-extern t_type* g_type_void;
-extern t_type* g_type_string;
-extern t_type* g_type_binary;
-extern t_type* g_type_slist;
-extern t_type* g_type_bool;
-extern t_type* g_type_i8;
-extern t_type* g_type_i16;
-extern t_type* g_type_i32;
-extern t_type* g_type_i64;
-extern t_type* g_type_double;
-
-/**
  * The scope that we are currently parsing into
  */
 extern t_scope* g_scope;

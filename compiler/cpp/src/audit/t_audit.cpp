@@ -24,15 +24,15 @@
 #include "t_audit.h"
 
 extern int g_warn;
-extern std::string g_curpath;
-extern bool g_return_failure;
+//extern std::string g_curpath;
+//extern bool g_return_failure;
 
 void thrift_audit_warning(int level, const char* fmt, ...) {
    if (g_warn < level) {
       return;
    }
    va_list args;
-   printf("[Thrift Audit Warning:%s] ", g_curpath.c_str());
+   //printf("[Thrift Audit Warning:%s] ", g_curpath.c_str());
    va_start(args, fmt);
    vprintf(fmt, args);
    va_end(args);
@@ -41,12 +41,12 @@ void thrift_audit_warning(int level, const char* fmt, ...) {
 
 void thrift_audit_failure(const char* fmt, ...) {
   va_list args;
-  fprintf(stderr, "[Thrift Audit Failure:%s] ", g_curpath.c_str());
+  //fprintf(stderr, "[Thrift Audit Failure:%s] ", g_curpath.c_str());
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
   va_end(args);
   fprintf(stderr, "\n");
-  g_return_failure = true;
+  //g_return_failure = true;
 }
 
 void compare_namespace(t_program* newProgram, t_program* oldProgram)

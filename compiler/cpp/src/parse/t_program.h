@@ -58,9 +58,7 @@
 class t_program : public t_doc {
 public:
   t_program(std::string path, std::string name)
-    : path_(path), name_(name), out_path_("./"), out_path_is_absolute_(false) {
-    scope_ = new t_scope();
-  }
+    : path_(path), name_(name), out_path_("./"), out_path_is_absolute_(false), scope_(new t_scope) {}
 
   t_program(std::string path) : path_(path), out_path_("./"), out_path_is_absolute_(false) {
     name_ = program_name(path);

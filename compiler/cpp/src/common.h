@@ -17,39 +17,27 @@
  * under the License.
  */
 
-#ifndef T_DOC_H
-#define T_DOC_H
+#ifndef T_COMMON_H
+#define T_COMMON_H
 
-#include "globals.h"
-#include "logging.h"
+#include "parse/t_type.h"
 
 /**
- * Documentation stubs
- *
+ * Global types for the parser to be able to reference
  */
-class t_doc {
 
-public:
-  t_doc() : has_doc_(false) {}
-  virtual ~t_doc() {}
+extern t_type* g_type_void;
+extern t_type* g_type_string;
+extern t_type* g_type_binary;
+extern t_type* g_type_slist;
+extern t_type* g_type_bool;
+extern t_type* g_type_i8;
+extern t_type* g_type_i16;
+extern t_type* g_type_i32;
+extern t_type* g_type_i64;
+extern t_type* g_type_double;
 
-  void set_doc(const std::string& doc) {
-    doc_ = doc;
-    has_doc_ = true;
-    if ((g_program_doctext_lineno == g_doctext_lineno)
-        && (g_program_doctext_status == STILL_CANDIDATE)) {
-      g_program_doctext_status = ALREADY_PROCESSED;
-      pdebug("%s", "program doctext set to ALREADY_PROCESSED");
-    }
-  }
-
-  const std::string& get_doc() const { return doc_; }
-
-  bool has_doc() { return has_doc_; }
-
-private:
-  std::string doc_;
-  bool has_doc_;
-};
+void initGlobals();
+void clearGlobals();
 
 #endif
