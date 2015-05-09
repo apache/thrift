@@ -18,31 +18,38 @@
 #
 
 SUBDIRS =
+PRECROSS_TARGET =
 
 if WITH_C_GLIB
 SUBDIRS += c_glib
+PRECROSS_TARGET += precross-c_glib
 endif
 
 if WITH_CPP
 SUBDIRS += cpp
+PRECROSS_TARGET += precross-cpp
 endif
 
 if WITH_PERL
 SUBDIRS += perl
+PRECROSS_TARGET += precross-perl
 endif
 
 if WITH_PHP
 SUBDIRS += php
+PRECROSS_TARGET += precross-php
 endif
 
 if WITH_PYTHON
 SUBDIRS += py
+PRECROSS_TARGET += precross-py
 SUBDIRS += py.twisted
 SUBDIRS += py.tornado
 endif
 
 if WITH_RUBY
 SUBDIRS += rb
+PRECROSS_TARGET += precross-rb
 endif
 
 if WITH_HASKELL
@@ -55,6 +62,7 @@ endif
 
 if WITH_GO
 SUBDIRS += go
+PRECROSS_TARGET += precross-go
 endif
 
 if WITH_ERLANG
@@ -106,4 +114,4 @@ EXTRA_DIST = \
 
 precross-%:
 	$(MAKE) -C $* precross
-precross: precross-py precross-rb precross-c_glib precross-cpp precross-perl precross-php precross-go
+precross: $(PRECROSS_TARGET)
