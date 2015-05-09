@@ -23,6 +23,7 @@
 #include <sstream>
 #include <string>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <vector>
 #include <cctype>
@@ -36,6 +37,8 @@
 using std::map;
 using std::ofstream;
 using std::ostringstream;
+using std::setfill;
+using std::setw;
 using std::string;
 using std::stringstream;
 using std::vector;
@@ -5090,7 +5093,9 @@ void t_java_generator::generate_javax_generated_annotation(ofstream& out) {
   time_t seconds = time(NULL);
   struct tm* now = localtime(&seconds);
   indent(out) << "@Generated(value = \"" << autogen_summary() << "\", date = \""
-              << (now->tm_year + 1900) << "-" << (now->tm_mon + 1) << "-" << now->tm_mday << "\")"
+              << (now->tm_year + 1900)
+              << "-" << setfill('0') << setw(2) << (now->tm_mon + 1)
+              << "-" << setfill('0') << setw(2) << now->tm_mday << "\")"
               << endl;
 }
 
