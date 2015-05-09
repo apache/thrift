@@ -77,6 +77,9 @@ elseif(UNIX)
     add_definitions("-DUSE_STD_THREAD=1")
   endif()
 
+  find_program( MEMORYCHECK_COMMAND valgrind )
+  set( MEMORYCHECK_COMMAND_OPTIONS "--gen-suppressions=all --leak-check=full" )
+  set( MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/test/valgrind.suppress" )
 endif()
 
 # GCC and Clang.
