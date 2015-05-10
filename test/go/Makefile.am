@@ -17,6 +17,8 @@
 # under the License.
 #
 
+BUILT_SOURCES = gopath
+
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 THRIFTCMD = $(THRIFT) -out src/gen --gen go:thrift_import=thrift
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift

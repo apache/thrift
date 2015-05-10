@@ -39,6 +39,7 @@ thrift_gen =                                    \
         gen-py-dynamicslots/DebugProtoTest/__init__.py
 
 precross: $(THRIFT) $(thrift_gen)
+BUILT_SOURCES = $(thrift_gen)
 
 helper_scripts=                                 \
         TestClient.py                           \
