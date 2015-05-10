@@ -55,6 +55,7 @@ env:
     - MAKE_TARGET="check"
     - ALL_DEPS="no"
     - GHCVER=7.8.3
+    - ERROR_LOG="none"
 
   matrix:
     # Put it here because it's most time consuming
