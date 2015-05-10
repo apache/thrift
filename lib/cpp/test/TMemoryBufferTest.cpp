@@ -21,17 +21,48 @@
 #include <iostream>
 #include <climits>
 #include <cassert>
+#include <vector>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include "gen-cpp/ThriftTest_types.h"
 
 BOOST_AUTO_TEST_SUITE(TMemoryBufferTest)
 
-BOOST_AUTO_TEST_CASE(test_roundtrip) {
-  using apache::thrift::transport::TMemoryBuffer;
-  using apache::thrift::protocol::TBinaryProtocol;
-  using boost::shared_ptr;
+using apache::thrift::protocol::TBinaryProtocol;
+using apache::thrift::transport::TMemoryBuffer;
+using apache::thrift::transport::TTransportException;
+using boost::shared_ptr;
+using std::cout;
+using std::endl;
+using std::string;
 
+BOOST_AUTO_TEST_CASE(test_read_write_grow)
+{
+    // Added to test the fix for THRIFT-1248
+    TMemoryBuffer uut;
+    const int maxSiz = 65536;
+    std::vector<uint8_t> buf;
+    buf.resize(maxSiz);
+    for (uint32_t i = 0; i < maxSiz; ++i)
+    {
+        buf[i] = static_cast<uint8_t>(i);
+    }
+
+    for (uint32_t i = 1; i < maxSiz; i *= 2)
+    {
+        uut.write(&buf[0], i);
+    }
+
+    for (uint32_t i = 1; i < maxSiz; i *= 2)
+    {
+        uint8_t verify[i];
+        uut.read(verify, i);
+        BOOST_CHECK_EQUAL(0, ::memcmp(verify, &buf[0], i));
+    }
+}
+
+BOOST_AUTO_TEST_CASE(test_roundtrip)
+{
   shared_ptr<TMemoryBuffer> strBuffer(new TMemoryBuffer());
   shared_ptr<TBinaryProtocol> binaryProtcol(new TBinaryProtocol(strBuffer));
 
@@ -53,12 +84,8 @@ BOOST_AUTO_TEST_CASE(test_roundtrip) {
   assert(a == a2);
 }
 
-BOOST_AUTO_TEST_CASE(test_copy) {
-  using apache::thrift::transport::TMemoryBuffer;
-  using std::string;
-  using std::cout;
-  using std::endl;
-
+BOOST_AUTO_TEST_CASE(test_copy)
+{
   string* str1 = new string("abcd1234");
   const char* data1 = str1->data();
   TMemoryBuffer buf((uint8_t*)str1->data(),
@@ -80,11 +107,8 @@ BOOST_AUTO_TEST_CASE(test_copy) {
   assert(str4 == "67891234");
 }
 
-BOOST_AUTO_TEST_CASE(test_exceptions) {
-  using apache::thrift::transport::TTransportException;
-  using apache::thrift::transport::TMemoryBuffer;
-  using std::string;
-
+BOOST_AUTO_TEST_CASE(test_exceptions)
+{
   char data[] = "foo\0bar";
 
   TMemoryBuffer buf1((uint8_t*)data, 7, TMemoryBuffer::OBSERVE);
