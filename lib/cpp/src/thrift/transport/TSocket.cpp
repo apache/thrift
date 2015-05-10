@@ -564,7 +564,7 @@ try_again:
       THRIFT_GETTIMEOFDAY(&end, NULL);
       uint32_t readElapsedMicros
           = static_cast<uint32_t>(((end.tv_sec - begin.tv_sec) * 1000 * 1000)
-                                  + (((uint64_t)(end.tv_usec - begin.tv_usec))));
+                                + (end.tv_usec - begin.tv_usec));
 
       if (!eagainThresholdMicros || (readElapsedMicros < eagainThresholdMicros)) {
         if (retries++ < maxRecvRetries_) {
