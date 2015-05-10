@@ -184,6 +184,9 @@
             <arg value="--reset" />
             <arg value="--verbose" />
 
+            <arg value="--runnerMode" />
+            <arg value="DEBUG" />
+
             <arg value="--tests" />
             <arg value="all" />
 
