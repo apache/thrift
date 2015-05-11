@@ -1124,6 +1124,7 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
   
   // std::exception::what()
   if (is_exception) {
+    out << indent() << "mutable std::string _TExceptionMessageHolder;" << endl;
     out << indent();
     generate_exception_what_method_decl(out, tstruct, false);
     out << ";" << endl;
@@ -1732,13 +1733,34 @@ void t_cpp_generator::generate_exception_what_method(std::ofstream& out, t_struc
   out << " {" << endl;
 
   indent_up();
-
+  out << indent() << "bool dump_successful = true;" << endl;
   out << indent() << "std::stringstream ss;" << endl;
+
+  out << indent() << "try {" << endl;
+
+  indent_up();
   out << indent() << "ss << \"TException - service has thrown: \" << *this;" << endl;
-  out << indent() << "return ss.str().c_str();" << endl;
+  indent_down();
+
+  out << indent() << "} catch (const std::exception& e) {" << endl;
+
+  indent_up();
+  out << indent() << "dump_successful = false;" << endl;
+  indent_down();
+
+  out << indent() << "}" << endl;
+  out << indent() << "if (!dump_successful || !ss.good()) {" << endl;
+
+  indent_up();
+  out << indent() << "return \"TException - service has thrown: " << tstruct->get_name() << "\";" << endl;
+  indent_down();
+
+  out << indent() << "}" << endl;
+  out << indent() << "this->_TExceptionMessageHolder = ss.str();" << endl;
+  out << indent() << "return this->_TExceptionMessageHolder.c_str();" << endl;
 
   indent_down();
-  out <<"}" << endl << endl;
+  out << "}" << endl << endl;
 }
 
 /**
