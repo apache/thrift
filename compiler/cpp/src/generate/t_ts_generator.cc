@@ -167,6 +167,7 @@ public:
                                  std::string prefix = "",
                                  bool include_callback = false,
                                  bool ignore_returntype = false);
+  std::string handler_function_signature(t_function* tfunction);
   std::string argument_list(t_struct* tstruct, bool include_type = true);
   std::string type_to_enum(t_type* ttype);
 
@@ -900,7 +901,7 @@ void t_ts_generator::generate_service_handler_interface(t_service* tservice) {
   scope_up(f_service_);
   // Generate the process subfunctions
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    indent(f_service_) << function_signature(*f_iter, "", true) << ";" << endl;
+    indent(f_service_) << handler_function_signature(*f_iter) << ";" << endl;
   }
   scope_down(f_service_);
 
@@ -1598,6 +1599,7 @@ void t_ts_generator::generate_deserialize_container(ofstream& out, t_type* ttype
 
   // Declare variables, read header
   if (ttype->is_map()) {
+    // TODO: thrift map is not equal to JS Object, because JS Object have only string key. use ES6 Map
     out << ts_indent()<< prefix << " = {};" << endl << ts_indent()<< "var " << ktype << " = 0;" << endl
         << ts_indent()<< "var " << vtype << " = 0;" << endl;
 
@@ -1667,7 +1669,9 @@ void t_ts_generator::generate_deserialize_map_element(ofstream& out, t_map* tmap
   generate_deserialize_field(out, &fkey);
   generate_deserialize_field(out, &fval);
 
-  indent(out) << prefix << "[" << key << "] = " << val << ";" << endl;
+  string key_type = ts_get_type(tmap->get_key_type());
+
+  indent(out) << prefix << "[" << key << ((key_type == "number" || key_type == "string") ? "" : ".toString()") << "] = " << val << ";" << endl;
 }
 
 void t_ts_generator::generate_deserialize_set_element(ofstream& out, t_set* tset, string prefix) {
@@ -1878,7 +1882,7 @@ string t_ts_generator::declare_field(t_field* tfield, bool init, bool obj) {
   string result = "this." + tfield->get_name();
 
   if (!obj) {
-    result = "var " + tfield->get_name();
+    result = "var " + tfield->get_name() + ": " + ts_get_type(tfield->get_type());
   }
 
   if (init) {
@@ -1951,15 +1955,56 @@ string t_ts_generator::function_signature(t_function* tfunction,
 
     if (ignore_returntype) {
       str += "void";
-    } if (gen_node_) {
+    } else if (gen_node_) {
       str += "Q.IPromise<" + ts_get_type(tfunction->get_returntype()) +">";
-    }else if (gen_jquery_) {
+    } else if (gen_jquery_) {
       str += "JQueryXHR";
     } else {
       str += "void";
     }
   } else {
     str += "): " + (ignore_returntype ? "void" : ts_get_type(tfunction->get_returntype()));
+  }
+
+  return str;
+}
+
+/**
+ * Renders a handler function signature
+ *
+ * @param tfunction Function definition
+ * @return String of rendered function definition
+ */
+string t_ts_generator::handler_function_signature(t_function* tfunction) {
+
+  string str;
+
+  str = tfunction->get_name() + "(";
+
+  str += argument_list(tfunction->get_arglist());
+
+  bool is_void = (tfunction->get_returntype()->is_base_type() &&
+    ((t_base_type*)tfunction->get_returntype())->get_base() == t_base_type::TYPE_VOID);
+
+  if (tfunction->get_arglist()->get_members().size() > 0) {
+    str += ", ";
+  }
+  if (is_void) {
+    str += "callback?: (err: any) => void): ";
+  } else {
+    str += "callback?: (err: any, result: " + ts_get_type(tfunction->get_returntype()) + ") => void): ";
+  }
+
+  if (gen_node_) {
+    if (tfunction->is_oneway()) {
+      str += "void";
+    } else {
+      str += "Q.IPromise<" + ts_get_type(tfunction->get_returntype()) +">";
+    }
+  }else if (gen_jquery_) {
+    str += "JQueryXHR";
+  } else {
+    str += "void";
   }
 
   return str;
@@ -2050,7 +2095,7 @@ string t_ts_generator::ts_get_type(t_type* type) {
       ts_type = "boolean";
       break;
     case t_base_type::TYPE_BYTE:
-      ts_type = "any";
+      ts_type = "number";
       break;
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
