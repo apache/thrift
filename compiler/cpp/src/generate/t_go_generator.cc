@@ -878,16 +878,16 @@ void t_go_generator::generate_enum(t_enum* tenum) {
     f_types_ << indent() << "  " << tenum_name << "_" << iter_name << ' ' << tenum_name << " = "
              << value << endl;
     // Dictionaries to/from string names of enums
-    to_string_mapping << indent() << "  case " << tenum_name << "_" << iter_name << ": return \""
-                      << tenum_name << "_" << iter_std_name << "\"" << endl;
+    to_string_mapping << indent() << "  case " << tenum_name << "_" << iter_name
+                      << ": return \"" << iter_std_name << "\"" << endl;
 
     if (iter_std_name != escape_string(iter_name)) {
-      from_string_mapping << indent() << "  case \"" << tenum_name << "_" << iter_std_name
-                          << "\", \"" << escape_string(iter_name) << "\": return " << tenum_name
+      from_string_mapping << indent() << "  case \"" << iter_std_name << "\", \""
+                          << escape_string(iter_name) << "\": return " << tenum_name
                           << "_" << iter_name << ", nil " << endl;
     } else {
-      from_string_mapping << indent() << "  case \"" << tenum_name << "_" << iter_std_name
-                          << "\": return " << tenum_name << "_" << iter_name << ", nil " << endl;
+      from_string_mapping << indent() << "  case \"" << iter_std_name << "\": return "
+                          << tenum_name << "_" << iter_name << ", nil " << endl;
     }
   }
 
