@@ -69,26 +69,26 @@ const (
 func (p TestEnum) String() string {
 	switch p {
 	case TestEnum_FIRST:
-		return "TestEnum_FIRST"
+		return "FIRST"
 	case TestEnum_SECOND:
-		return "TestEnum_SECOND"
+		return "SECOND"
 	case TestEnum_THIRD:
-		return "TestEnum_THIRD"
+		return "THIRD"
 	case TestEnum_FOURTH:
-		return "TestEnum_FOURTH"
+		return "FOURTH"
 	}
 	return "<UNSET>"
 }
 
 func TestEnumFromString(s string) (TestEnum, error) {
 	switch s {
-	case "TestEnum_FIRST":
+	case "FIRST":
 		return TestEnum_FIRST, nil
-	case "TestEnum_SECOND":
+	case "SECOND":
 		return TestEnum_SECOND, nil
-	case "TestEnum_THIRD":
+	case "THIRD":
 		return TestEnum_THIRD, nil
-	case "TestEnum_FOURTH":
+	case "FOURTH":
 		return TestEnum_FOURTH, nil
 	}
 	return TestEnum(0), fmt.Errorf("not a valid TestEnum string")
