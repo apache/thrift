@@ -149,14 +149,16 @@ parseJSONValue (T_MAP kt vt) = fmap (TMap kt vt) $
     between '{' '}' (parseJSONMap kt vt)
 parseJSONValue (T_LIST ty) = fmap (TList ty) $
   between '[' ']' $ do
-    len <- lexeme escapedString *> lexeme (PC.char8 ',') *>
-           lexeme decimal <* lexeme (PC.char8 ',')
-    if len > 0 then parseJSONList ty else return []
+    len <- lexeme escapedString *> lexeme (PC.char8 ',') *> lexeme decimal
+    if len > 0
+      then lexeme (PC.char8 ',') *> parseJSONList ty
+      else return []
 parseJSONValue (T_SET ty) = fmap (TSet ty) $
   between '[' ']' $ do
-    len <- lexeme escapedString *> lexeme (PC.char8 ',') *>
-           lexeme decimal <* lexeme (PC.char8 ',')
-    if len > 0 then parseJSONList ty else return []
+    len <- lexeme escapedString *> lexeme (PC.char8 ',') *> lexeme decimal
+    if len > 0
+      then  lexeme (PC.char8 ',') *> parseJSONList ty
+      else return []
 parseJSONValue T_BOOL =
   (TBool True <$ string "true") <|> (TBool False <$ string "false")
 parseJSONValue T_BYTE = TByte <$> signed decimal
