@@ -697,8 +697,11 @@ string t_java_generator::render_const_value(ofstream& out, t_type* type, t_const
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
-    render << type->get_program()->get_namespace("java") << "."
-           << value->get_identifier_with_parent();
+    std::string namespace_prefix = type->get_program()->get_namespace("java");
+    if (namespace_prefix.length() > 0) {
+        namespace_prefix += ".";
+    }
+    render << namespace_prefix << value->get_identifier_with_parent();
   } else {
     string t = tmp("tmp");
     print_const_value(out, t, type, value, true);
