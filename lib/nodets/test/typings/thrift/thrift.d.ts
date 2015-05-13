@@ -115,8 +115,8 @@ declare module "thrift" {
         timeout?: number;
     }
 
-    export function createConnection(host: string, port: number, options: ClientOptions): Connection;
-    export function createSSLConnection(host: string, port: number, options: ClientOptions): Connection;
+    export function createConnection(host: string, port: number, options?: ClientOptions): Connection;
+    export function createSSLConnection(host: string, port: number, options?: ClientOptions): Connection;
 
     export function createClient<TClient>(cls: {
         Client: { new (output: TTransport, pClass: {new (trans: TTransport): TProtocol; }): TClient; }
