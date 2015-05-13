@@ -1,1 +1,1 @@
-Please follow [General Coding Standards](/coding_standards)
+Please follow [General Coding Standards](/doc/coding_standards.md)
