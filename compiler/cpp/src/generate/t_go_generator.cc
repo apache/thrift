@@ -1408,7 +1408,7 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
     field_id = (*f_iter)->get_key();
 
     // if negative id, ensure we generate a valid method name
-    string field_method_prefix("ReadField");
+    string field_method_prefix("readField");
 
     if (field_id < 0) {
       field_method_prefix += "_";
@@ -1485,7 +1485,7 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     string field_type_name(publicize((*f_iter)->get_type()->get_name()));
     string field_name(publicize((*f_iter)->get_name()));
-    string field_method_prefix("ReadField");
+    string field_method_prefix("readField");
     int32_t field_id = (*f_iter)->get_key();
 
     if (field_id < 0) {
