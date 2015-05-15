@@ -43,6 +43,8 @@
 #pragma warning(disable:4102)
 //avoid isatty redefinition
 #define YY_NEVER_INTERACTIVE 1
+
+#define YY_NO_UNISTD_H 1
 #endif
 
 #include <cassert>

@@ -25,24 +25,27 @@ Now open the folder build_ec using eclipse.
 
 ## Build on windows
 
-In order to build on windows a few additional steps are necessary:
+### using Git Bash
+Git Bash provides flex and bison, so you just need to do this:
+
+    mkdir build_vs && cd build_vs
+    cmake -DWITH_SHARED_LIB=off ..
+
+### using Win flex-bison
+
+In order to build on windows with winflexbison a few additional steps are necessary:
 
 1. Download winflexbison from http://sourceforge.net/projects/winflexbison/
 2. Extract the winflex bison files to for e.g. C:\winflexbison
 3. Make the CMake variables point to the correct binaries.
   * FLEX_EXECUTABLE = C:/winbuild/win_flex.exe
   * BISON_EXECUTABLE = C:/winbuild/win_bison.exe
-
-
-### Create a Visual Studio project
-
-    mkdir build_vs && cd build_vs
-    cmake -G "Visual Studio 12" ..
-
-Now open the folder build_vs using Visual Studio 2013.
-
-
-
+4. Generate a Visual Studio project:
+```
+mkdir build_vs && cd build_vs
+cmake -G "Visual Studio 12" -DWITH_SHARED_LIB=off ..
+```
+5. Now open the folder build_vs using Visual Studio 2013.
 
 # Building the Thrift IDL compiler in Windows
 
