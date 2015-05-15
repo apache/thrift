@@ -20,7 +20,7 @@ Now open the folder build_ec using eclipse.
 ### Cross compile using mingw32 and generate a Windows Installer with CPack
 
     mkdir build_mingw32 && cd build_mingw32
-    cmake -DCMAKE_TOOLCHAIN_FILE=../../../contrib/mingw32-toolchain.cmake ..
+    cmake -DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake ..
     cpack
 
 ## Build on windows
