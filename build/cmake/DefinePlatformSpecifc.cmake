@@ -65,7 +65,7 @@ if(MSVC)
     # Windows build does not know how to make a shared library yet
     # as there are no __declspec(dllexport) or exports files in the project.
     if (WITH_SHARED_LIB)
-        message (FATAL_ERROR "Windows build does not support shared library output yet!")
+      message (FATAL_ERROR "Windows build does not support shared library output yet, please set -DWITH_SHARED_LIB=off")
     endif()
 
 elseif(UNIX)
