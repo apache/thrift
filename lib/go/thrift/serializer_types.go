@@ -176,51 +176,51 @@ func (p *TestStruct) Read(iprot TProtocol) error {
 		}
 		switch fieldId {
 		case 1:
-			if err := p.ReadField1(iprot); err != nil {
+			if err := p.readField1(iprot); err != nil {
 				return err
 			}
 		case 2:
-			if err := p.ReadField2(iprot); err != nil {
+			if err := p.readField2(iprot); err != nil {
 				return err
 			}
 		case 3:
-			if err := p.ReadField3(iprot); err != nil {
+			if err := p.readField3(iprot); err != nil {
 				return err
 			}
 		case 4:
-			if err := p.ReadField4(iprot); err != nil {
+			if err := p.readField4(iprot); err != nil {
 				return err
 			}
 		case 5:
-			if err := p.ReadField5(iprot); err != nil {
+			if err := p.readField5(iprot); err != nil {
 				return err
 			}
 		case 6:
-			if err := p.ReadField6(iprot); err != nil {
+			if err := p.readField6(iprot); err != nil {
 				return err
 			}
 		case 7:
-			if err := p.ReadField7(iprot); err != nil {
+			if err := p.readField7(iprot); err != nil {
 				return err
 			}
 		case 8:
-			if err := p.ReadField8(iprot); err != nil {
+			if err := p.readField8(iprot); err != nil {
 				return err
 			}
 		case 9:
-			if err := p.ReadField9(iprot); err != nil {
+			if err := p.readField9(iprot); err != nil {
 				return err
 			}
 		case 10:
-			if err := p.ReadField10(iprot); err != nil {
+			if err := p.readField10(iprot); err != nil {
 				return err
 			}
 		case 11:
-			if err := p.ReadField11(iprot); err != nil {
+			if err := p.readField11(iprot); err != nil {
 				return err
 			}
 		case 12:
-			if err := p.ReadField12(iprot); err != nil {
+			if err := p.readField12(iprot); err != nil {
 				return err
 			}
 		default:
@@ -238,7 +238,7 @@ func (p *TestStruct) Read(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) ReadField1(iprot TProtocol) error {
+func (p *TestStruct) readField1(iprot TProtocol) error {
 	if v, err := iprot.ReadBool(); err != nil {
 		return PrependError("error reading field 1: ", err)
 	} else {
@@ -247,7 +247,7 @@ func (p *TestStruct) ReadField1(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) ReadField2(iprot TProtocol) error {
+func (p *TestStruct) readField2(iprot TProtocol) error {
 	if v, err := iprot.ReadByte(); err != nil {
 		return PrependError("error reading field 2: ", err)
 	} else {
@@ -257,7 +257,7 @@ func (p *TestStruct) ReadField2(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) ReadField3(iprot TProtocol) error {
+func (p *TestStruct) readField3(iprot TProtocol) error {
 	if v, err := iprot.ReadI16(); err != nil {
 		return PrependError("error reading field 3: ", err)
 	} else {
@@ -266,7 +266,7 @@ func (p *TestStruct) ReadField3(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) ReadField4(iprot TProtocol) error {
+func (p *TestStruct) readField4(iprot TProtocol) error {
 	if v, err := iprot.ReadI32(); err != nil {
 		return PrependError("error reading field 4: ", err)
 	} else {
@@ -275,7 +275,7 @@ func (p *TestStruct) ReadField4(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) ReadField5(iprot TProtocol) error {
+func (p *TestStruct) readField5(iprot TProtocol) error {
 	if v, err := iprot.ReadI64(); err != nil {
 		return PrependError("error reading field 5: ", err)
 	} else {
@@ -284,7 +284,7 @@ func (p *TestStruct) ReadField5(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) ReadField6(iprot TProtocol) error {
+func (p *TestStruct) readField6(iprot TProtocol) error {
 	if v, err := iprot.ReadDouble(); err != nil {
 		return PrependError("error reading field 6: ", err)
 	} else {
@@ -293,7 +293,7 @@ func (p *TestStruct) ReadField6(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) ReadField7(iprot TProtocol) error {
+func (p *TestStruct) readField7(iprot TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return PrependError("error reading field 7: ", err)
 	} else {
@@ -302,7 +302,7 @@ func (p *TestStruct) ReadField7(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) ReadField8(iprot TProtocol) error {
+func (p *TestStruct) readField8(iprot TProtocol) error {
 	if v, err := iprot.ReadBinary(); err != nil {
 		return PrependError("error reading field 8: ", err)
 	} else {
@@ -311,7 +311,7 @@ func (p *TestStruct) ReadField8(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) ReadField9(iprot TProtocol) error {
+func (p *TestStruct) readField9(iprot TProtocol) error {
 	_, _, size, err := iprot.ReadMapBegin()
 	if err != nil {
 		return PrependError("error reading map begin: ", err)
@@ -339,7 +339,7 @@ func (p *TestStruct) ReadField9(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) ReadField10(iprot TProtocol) error {
+func (p *TestStruct) readField10(iprot TProtocol) error {
 	_, size, err := iprot.ReadListBegin()
 	if err != nil {
 		return PrependError("error reading list begin: ", err)
@@ -361,7 +361,7 @@ func (p *TestStruct) ReadField10(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) ReadField11(iprot TProtocol) error {
+func (p *TestStruct) readField11(iprot TProtocol) error {
 	_, size, err := iprot.ReadSetBegin()
 	if err != nil {
 		return PrependError("error reading set begin: ", err)
@@ -383,7 +383,7 @@ func (p *TestStruct) ReadField11(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) ReadField12(iprot TProtocol) error {
+func (p *TestStruct) readField12(iprot TProtocol) error {
 	if v, err := iprot.ReadI32(); err != nil {
 		return PrependError("error reading field 12: ", err)
 	} else {
