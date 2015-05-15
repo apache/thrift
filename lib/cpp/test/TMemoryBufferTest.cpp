@@ -38,27 +38,28 @@ using std::string;
 
 BOOST_AUTO_TEST_CASE(test_read_write_grow)
 {
-    // Added to test the fix for THRIFT-1248
-    TMemoryBuffer uut;
-    const int maxSiz = 65536;
-    std::vector<uint8_t> buf;
-    buf.resize(maxSiz);
-    for (uint32_t i = 0; i < maxSiz; ++i)
-    {
-        buf[i] = static_cast<uint8_t>(i);
-    }
+  // Added to test the fix for THRIFT-1248
+  TMemoryBuffer uut;
+  const int maxSize = 65536;
+  uint8_t verify[maxSize];
+  std::vector<uint8_t> buf;
+  buf.resize(maxSize);
 
-    for (uint32_t i = 1; i < maxSiz; i *= 2)
-    {
-        uut.write(&buf[0], i);
-    }
+  for (uint32_t i = 0; i < maxSize; ++i)
+  {
+    buf[i] = static_cast<uint8_t>(i);
+  }
 
-    for (uint32_t i = 1; i < maxSiz; i *= 2)
-    {
-        uint8_t verify[i];
-        uut.read(verify, i);
-        BOOST_CHECK_EQUAL(0, ::memcmp(verify, &buf[0], i));
-    }
+  for (uint32_t i = 1; i < maxSize; i *= 2)
+  {
+    uut.write(&buf[0], i);
+  }
+
+  for (uint32_t i = 1; i < maxSize; i *= 2)
+  {
+    uut.read(verify, i);
+    BOOST_CHECK_EQUAL(0, ::memcmp(verify, &buf[0], i));
+  }
 }
 
 BOOST_AUTO_TEST_CASE(test_roundtrip)
