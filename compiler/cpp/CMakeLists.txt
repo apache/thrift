@@ -19,10 +19,8 @@
 
 # Windows has a different header
 if(MSVC)
-    set(FLEX_FLAGS "--wincompat") # Don't use unistd.h on windows
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/windows/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/version.h)
 else()
-    set(FLEX_FLAGS " ")
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/version.h)
 endif()
 
@@ -31,7 +29,7 @@ find_package(BISON REQUIRED)
 
 # Create flex and bison files and build the lib parse static library
 BISON_TARGET(thrifty ${CMAKE_CURRENT_SOURCE_DIR}/src/thrifty.yy ${CMAKE_CURRENT_BINARY_DIR}/thrifty.cc)
-FLEX_TARGET(thriftl ${CMAKE_CURRENT_SOURCE_DIR}/src/thriftl.ll ${CMAKE_CURRENT_BINARY_DIR}/thriftl.cc COMPILE_FLAGS ${FLEX_FLAGS})
+FLEX_TARGET(thriftl ${CMAKE_CURRENT_SOURCE_DIR}/src/thriftl.ll ${CMAKE_CURRENT_BINARY_DIR}/thriftl.cc)
 ADD_FLEX_BISON_DEPENDENCY(thriftl thrifty)
 
 # HACK: Work around the fact that bison crates a .hh file but we need a .h file
