@@ -20,6 +20,7 @@
 #ifndef _THRIFT_TRANSPORT_TBUFFERTRANSPORTS_H_
 #define _THRIFT_TRANSPORT_TBUFFERTRANSPORTS_H_ 1
 
+#include <cstdlib>
 #include <cstring>
 #include <limits>
 #include <boost/scoped_array.hpp>
