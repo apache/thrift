@@ -4144,7 +4144,8 @@ string t_java_generator::async_function_call_arglist(t_function* tfunc,
   }
 
   if (include_types) {
-    arglist += "org.apache.thrift.async.AsyncMethodCallback ";
+    arglist += "org.apache.thrift.async.AsyncMethodCallback<";
+    arglist += type_name(tfunc->get_returntype(), true) + "> ";
   }
   arglist += "resultHandler";
 
@@ -4199,7 +4200,8 @@ string t_java_generator::async_argument_list(t_function* tfunct,
     result += ", ";
   }
   if (include_types) {
-    result += "org.apache.thrift.async.AsyncMethodCallback ";
+    result += "org.apache.thrift.async.AsyncMethodCallback<";
+    result += type_name(tfunct->get_returntype(), true) + "> ";
   }
   result += "resultHandler";
   return result;
