@@ -71,7 +71,7 @@ public interface TBase<T extends TBase<T,F>, F extends TFieldIdEnum> extends Com
    */
   public void setFieldValue(F field, Object value);
 
-  public TBase<T, F> deepCopy();
+  public T deepCopy();
 
   /**
    * Return to the state of having just been initialized, as though you had just
