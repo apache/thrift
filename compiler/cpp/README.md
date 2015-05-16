@@ -2,25 +2,25 @@
 
 Use the following steps to build using cmake:
 
-    mkdir build
-    cd build
+    mkdir cmake-build
+    cd cmake-build
     cmake ..
     make
 
 
 ### Create an eclipse project
 
-    mkdir build_ec && cd build_ec
+    mkdir cmake-ec && cd cmake-ec
     cmake -G "Eclipse CDT4 - Unix Makefiles" ..
     make
 
-Now open the folder build_ec using eclipse.
+Now open the folder cmake-ec using eclipse.
 
 
 ### Cross compile using mingw32 and generate a Windows Installer with CPack
 
-    mkdir build_mingw32 && cd build_mingw32
-    cmake -DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake ..
+    mkdir cmake-mingw32 && cd cmake-mingw32
+    cmake -DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF ..
     cpack
 
 ## Build on windows
@@ -28,7 +28,7 @@ Now open the folder build_ec using eclipse.
 ### using Git Bash
 Git Bash provides flex and bison, so you just need to do this:
 
-    mkdir build_vs && cd build_vs
+    mkdir cmake-vs && cd cmake-vs
     cmake -DWITH_SHARED_LIB=off ..
 
 ### using Win flex-bison
@@ -42,7 +42,7 @@ In order to build on windows with winflexbison a few additional steps are necess
   * BISON_EXECUTABLE = C:/winbuild/win_bison.exe
 4. Generate a Visual Studio project:
 ```
-mkdir build_vs && cd build_vs
+mkdir cmake-vs && cd cmake-vs
 cmake -G "Visual Studio 12" -DWITH_SHARED_LIB=off ..
 ```
 5. Now open the folder build_vs using Visual Studio 2013.
