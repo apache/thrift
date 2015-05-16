@@ -27,7 +27,7 @@ import org.apache.thrift.protocol.TProtocol;
  * Generic base interface for generated Thrift objects.
  *
  */
-public interface TBase<T extends TBase<?,?>, F extends TFieldIdEnum> extends Comparable<T>,  Serializable {
+public interface TBase<T extends TBase<T,F>, F extends TFieldIdEnum> extends Comparable<T>,  Serializable {
 
   /**
    * Reads the TObject from the given input protocol.
