@@ -42,70 +42,6 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
 #include "t_oop_generator.h"
 
 
-static const string js_container_copy_functions = (
-"var __thriftCopyList, __thriftCopyMap;\n"
-"__thriftCopyList = function(lst, types) {\n"
-"  if (!lst) {return lst;}\n"
-"\n"
-"  var type;\n"
-"\n"
-"  if (types.shift === undefined) {\n"
-"    type = types;\n"
-"  }\n"
-"  else {\n"
-"    type = types[0];\n"
-"  }\n"
-"  var Type = type;\n"
-"\n"
-"  var len = lst.length, result = [], i, val;\n"
-"  for (i=0; i<len; i++) {\n"
-"    val = lst[i];\n"
-"    if (type === null) {\n"
-"      result.push(val);\n"
-"    }\n"
-"    else if (type == __thriftCopyList || type == __thriftCopyMap) {\n"
-"      result.push(type(val, types.slice(1)));\n"
-"    }\n"
-"    else {\n"
-"      result.push(new Type(val));\n"
-"    }\n"
-"  }\n"
-"  return result;\n"
-"};\n"
-"\n"
-"__thriftCopyMap = function(obj, types){\n"
-"  if (!obj) {return obj;}\n"
-"\n"
-"  var type;\n"
-"\n"
-"  if (types.shift === undefined) {\n"
-"    type = types;\n"
-"  }\n"
-"  else {\n"
-"    type = types[0];\n"
-"  }\n"
-"  var Type = type;\n"
-"\n"
-"  var result = {}, val;\n"
-"  for(var prop in obj) {\n"
-"    if(obj.hasOwnProperty(prop)) {\n"
-"      val = obj[prop];\n"
-"      if (type === null) {\n"
-"        result[prop] = val;\n"
-"      }\n"
-"      else if (type == __thriftCopyList || type == __thriftCopyMap) {\n"
-"        result[prop] = type(val, types.slice(1));\n"
-"      }\n"
-"      else {\n"
-"        result[prop] = new Type(val);\n"
-"      }\n"
-"    }\n"
-"  }\n"
-"  return result;\n"
-"};\n\n"
-);
-
-
 /**
  * JS code generator.
  */
@@ -454,8 +390,6 @@ string t_js_generator::render_includes() {
     }
   }
 
-  result += js_container_copy_functions;
-
   return result;
 }
 
@@ -780,14 +714,14 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
         out << endl;
       } else if (t->is_container()) {
         t_type* etype = get_contained_type(t);
-        string copyFunc = t->is_map() ? "__thriftCopyMap" : "__thriftCopyList";
+        string copyFunc = t->is_map() ? "Thrift.copyMap" : "Thrift.copyList";
         string type_list = "";
 
         while (etype->is_container()) {
           if (type_list.length() > 0) {
             type_list += ", ";
           }
-          type_list += etype->is_map() ? "__thriftCopyMap" : "__thriftCopyList";
+          type_list += etype->is_map() ? "Thrift.copyMap" : "Thrift.copyList";
           etype = get_contained_type(etype);
         }
 
