@@ -765,6 +765,9 @@ void testExpectedError() {
     BOOST_FAIL("expected MyError to be thrown");
   } catch (const MyError& e) {
     BOOST_CHECK_EQUAL(message, e.message);
+    // Check if std::exception::what() is handled properly
+    size_t message_pos = std::string(e.what()).find("TException - service has thrown: MyError");
+    BOOST_CHECK_NE(message_pos, std::string::npos);
   }
 
   // Now we should see the events for a normal call finish
