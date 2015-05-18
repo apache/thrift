@@ -58,7 +58,7 @@ public class CalculatorHandler implements Calculator.Iface {
     case DIVIDE:
       if (work.num2 == 0) {
         InvalidOperation io = new InvalidOperation();
-        io.what = work.op.getValue();
+        io.whatOp = work.op.getValue();
         io.why = "Cannot divide by 0";
         throw io;
       }
@@ -66,7 +66,7 @@ public class CalculatorHandler implements Calculator.Iface {
       break;
     default:
       InvalidOperation io = new InvalidOperation();
-      io.what = work.op.getValue();
+      io.whatOp = work.op.getValue();
       io.why = "Unknown operation";
       throw io;
     }
