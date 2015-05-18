@@ -239,7 +239,7 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen) {
   assert(!forceFlush_);
 
   // add to the buffer
-  eventInfo *pEvent = toEnqueue.release();
+  eventInfo* pEvent = toEnqueue.release();
   if (!enqueueBuffer_->addEvent(pEvent)) {
     delete pEvent;
     return;

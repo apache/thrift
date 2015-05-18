@@ -305,14 +305,12 @@ private:
   }
 
 public:
-  TNonblockingServer(const boost::shared_ptr<TProcessorFactory>& processorFactory,
-                     int port)
+  TNonblockingServer(const boost::shared_ptr<TProcessorFactory>& processorFactory, int port)
     : TServer(processorFactory) {
     init(port);
   }
 
-  TNonblockingServer(const boost::shared_ptr<TProcessor>& processor,
-                     int port)
+  TNonblockingServer(const boost::shared_ptr<TProcessor>& processor, int port)
     : TServer(processor) {
     init(port);
   }

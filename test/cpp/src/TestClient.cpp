@@ -51,7 +51,6 @@ using namespace apache::thrift::async;
 // Length of argv[0] - Length of script dir
 #define EXECUTABLE_FILE_NAME_LENGTH 19
 
-
 // Current time, microseconds since the epoch
 uint64_t now() {
   int64_t ret;

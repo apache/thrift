@@ -36,7 +36,7 @@ from crossrunner.util import merge_dict
 # (e.g. binary:accel) where test is run for any matching "spec" while actual
 # argument passed to test executable is "impl".
 # Otherwise "spec" is equivalent to "spec:spec" pair.
-# (e.g. "binary" is equivalent to "binary:bianry" in tests.json)
+# (e.g. "binary" is equivalent to "binary:binary" in tests.json)
 #
 VALID_JSON_KEYS = [
   'name',  # name of the library, typically a language name

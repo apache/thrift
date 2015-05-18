@@ -30,8 +30,8 @@ class DummyException : std::exception {};
 int main() {
   { TFDTransport t(256, TFDTransport::NO_CLOSE_ON_DESTROY); }
 
-  // Disabled on MSVC because the RTL asserts on an invalid file descriptor
-  // in both debug and release mode; at least in MSVCR100 (Visual Studio 2010)
+// Disabled on MSVC because the RTL asserts on an invalid file descriptor
+// in both debug and release mode; at least in MSVCR100 (Visual Studio 2010)
 #if !defined(WIN32)
   try {
     {

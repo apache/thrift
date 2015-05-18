@@ -21,16 +21,13 @@
 
 #include <cstdlib>
 
-class TestPortFixture
-{
-  public:
-    TestPortFixture()
-    {
-        const char *spEnv = std::getenv("THRIFT_TEST_PORT");
-        m_serverPort = (spEnv) ? atoi(spEnv) : 9090;
-    }
+class TestPortFixture {
+public:
+  TestPortFixture() {
+    const char* spEnv = std::getenv("THRIFT_TEST_PORT");
+    m_serverPort = (spEnv) ? atoi(spEnv) : 9090;
+  }
 
-  protected:
-    int m_serverPort;
+protected:
+  int m_serverPort;
 };
-

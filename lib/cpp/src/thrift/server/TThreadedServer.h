@@ -34,41 +34,45 @@ namespace server {
  */
 class TThreadedServer : public TServerFramework {
 public:
-  TThreadedServer(const boost::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
-                  const boost::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
-                  const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& transportFactory,
-                  const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory,
-                  const boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>& threadFactory =
-                        boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-                                new apache::thrift::concurrency::PlatformThreadFactory));
+  TThreadedServer(
+      const boost::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
+      const boost::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
+      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& transportFactory,
+      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory,
+      const boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>& threadFactory
+      = boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
+          new apache::thrift::concurrency::PlatformThreadFactory));
 
-  TThreadedServer(const boost::shared_ptr<apache::thrift::TProcessor>& processor,
-                  const boost::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
-                  const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& transportFactory,
-                  const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory,
-                  const boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>& threadFactory =
-                        boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-                                new apache::thrift::concurrency::PlatformThreadFactory));
+  TThreadedServer(
+      const boost::shared_ptr<apache::thrift::TProcessor>& processor,
+      const boost::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
+      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& transportFactory,
+      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory,
+      const boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>& threadFactory
+      = boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
+          new apache::thrift::concurrency::PlatformThreadFactory));
 
-  TThreadedServer(const boost::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
-                  const boost::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
-                  const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& inputTransportFactory,
-                  const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& outputTransportFactory,
-                  const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
-                  const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory,
-                  const boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>& threadFactory =
-                        boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-                                new apache::thrift::concurrency::PlatformThreadFactory));
+  TThreadedServer(
+      const boost::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
+      const boost::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
+      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& inputTransportFactory,
+      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& outputTransportFactory,
+      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
+      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory,
+      const boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>& threadFactory
+      = boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
+          new apache::thrift::concurrency::PlatformThreadFactory));
 
-  TThreadedServer(const boost::shared_ptr<apache::thrift::TProcessor>& processor,
-                  const boost::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
-                  const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& inputTransportFactory,
-                  const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& outputTransportFactory,
-                  const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
-                  const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory,
-                  const boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>& threadFactory =
-                        boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-                                new apache::thrift::concurrency::PlatformThreadFactory));
+  TThreadedServer(
+      const boost::shared_ptr<apache::thrift::TProcessor>& processor,
+      const boost::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
+      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& inputTransportFactory,
+      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& outputTransportFactory,
+      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
+      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory,
+      const boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>& threadFactory
+      = boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
+          new apache::thrift::concurrency::PlatformThreadFactory));
 
   virtual ~TThreadedServer();
 
@@ -80,12 +84,11 @@ public:
 
 protected:
   virtual void onClientConnected(const boost::shared_ptr<TConnectedClient>& pClient) /* override */;
-  virtual void onClientDisconnected(TConnectedClient *pClient) /* override */;
+  virtual void onClientDisconnected(TConnectedClient* pClient) /* override */;
 
   boost::shared_ptr<apache::thrift::concurrency::ThreadFactory> threadFactory_;
   apache::thrift::concurrency::Monitor clientsMonitor_;
 };
-
 }
 }
 } // apache::thrift::server

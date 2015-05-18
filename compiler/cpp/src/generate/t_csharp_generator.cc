@@ -1719,7 +1719,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
       scope_up(f_service_);
 
       t_struct* xs = (*f_iter)->get_xceptions();
-      prepare_member_name_mapping(xs,xs->get_members(),resultname);
+      prepare_member_name_mapping(xs, xs->get_members(), resultname);
 
       f_service_ << indent() << "TMessage msg = iprot_.ReadMessageBegin();" << endl << indent()
                  << "if (msg.Type == TMessageType.Exception) {" << endl;
@@ -1945,7 +1945,7 @@ void t_csharp_generator::generate_process_function(t_service* tservice, t_functi
   if (!tfunction->is_oneway() && xceptions.size() > 0) {
     indent_down();
     f_service_ << indent() << "}";
-    prepare_member_name_mapping(xs,xs->get_members(),resultname);
+    prepare_member_name_mapping(xs, xs->get_members(), resultname);
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       f_service_ << " catch (" << type_name((*x_iter)->get_type(), false, false) << " "
                  << (*x_iter)->get_name() << ") {" << endl;
@@ -2512,11 +2512,10 @@ void t_csharp_generator::prepare_member_name_mapping(void* scope,
   // current C# generator policy:
   // - prop names are always rendered with an Uppercase first letter
   // - struct names are used as given
-  
-  
+
   // prevent name conflicts with struct (CS0542 error)
   used_member_names.insert(structname);
-  
+
   // prevent name conflicts with known methods (THRIFT-2942)
   used_member_names.insert("Read");
   used_member_names.insert("Write");
