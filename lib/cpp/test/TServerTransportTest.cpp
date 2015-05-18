@@ -26,37 +26,32 @@ using apache::thrift::transport::TServerTransport;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 
-BOOST_AUTO_TEST_SUITE ( TServerTransportTest )
+BOOST_AUTO_TEST_SUITE(TServerTransportTest)
 
-class TestTTransport : public TTransport
-{
-};
+class TestTTransport : public TTransport {};
 
-class TestTServerTransport : public TServerTransport
-{
+class TestTServerTransport : public TServerTransport {
 public:
-    TestTServerTransport() : valid_(true) {}
-    void close() {}
-    bool valid_;
+  TestTServerTransport() : valid_(true) {}
+  void close() {}
+  bool valid_;
+
 protected:
-    boost::shared_ptr<TTransport> acceptImpl()
-    {
-        return valid_ ? boost::shared_ptr<TestTTransport>(new TestTTransport) : boost::shared_ptr<TestTTransport>();
-    }
+  boost::shared_ptr<TTransport> acceptImpl() {
+    return valid_ ? boost::shared_ptr<TestTTransport>(new TestTTransport)
+                  : boost::shared_ptr<TestTTransport>();
+  }
 };
 
-BOOST_AUTO_TEST_CASE( test_positive_accept )
-{
-    TestTServerTransport uut;
-    BOOST_CHECK(uut.accept());
+BOOST_AUTO_TEST_CASE(test_positive_accept) {
+  TestTServerTransport uut;
+  BOOST_CHECK(uut.accept());
 }
 
-BOOST_AUTO_TEST_CASE( test_negative_accept )
-{
-    TestTServerTransport uut;
-    uut.valid_ = false;
-    BOOST_CHECK_THROW(uut.accept(), TTransportException);
+BOOST_AUTO_TEST_CASE(test_negative_accept) {
+  TestTServerTransport uut;
+  uut.valid_ = false;
+  BOOST_CHECK_THROW(uut.accept(), TTransportException);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-

@@ -52,7 +52,6 @@ private:
 };
 
 extern TOutput GlobalOutput;
-
 }
 } // namespace apache::thrift
 

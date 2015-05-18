@@ -509,10 +509,8 @@ uint32_t TJSONProtocol::writeJSONInteger(NumberType num) {
   return result;
 }
 
-namespace
-{
-std::string doubleToString(double d)
-{
+namespace {
+std::string doubleToString(double d) {
   std::ostringstream str;
   str.imbue(std::locale::classic());
   str.precision(std::numeric_limits<double>::digits10 + 1);
@@ -817,10 +815,8 @@ uint32_t TJSONProtocol::readJSONInteger(NumberType& num) {
   return result;
 }
 
-namespace
-{
-double stringToDouble(const std::string& s)
-{
+namespace {
+double stringToDouble(const std::string& s) {
   double d;
   std::istringstream str(s);
   str.imbue(std::locale::classic());
