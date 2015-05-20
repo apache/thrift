@@ -24,14 +24,14 @@ package thrift
 
 /* THE FOLLOWING THRIFT FILE WAS USED TO CREATE THIS
 
-enum TestEnum {
+enum MyTestEnum {
 	FIRST = 1,
 	SECOND = 2,
 	THIRD = 3,
 	FOURTH = 4,
 }
 
-struct TestStruct {
+struct MyTestStruct {
 	1: bool on,
 	2: byte b,
 	3: i16 int16,
@@ -43,7 +43,7 @@ struct TestStruct {
 	9: map<string, string> stringMap,
 	10: list<string> stringList,
 	11: set<string> stringSet,
-	12: TestEnum e,
+	12: MyTestEnum e,
 }
 */
 
@@ -57,46 +57,46 @@ var _ = fmt.Printf
 
 var GoUnusedProtection__ int
 
-type TestEnum int64
+type MyTestEnum int64
 
 const (
-	TestEnum_FIRST  TestEnum = 1
-	TestEnum_SECOND TestEnum = 2
-	TestEnum_THIRD  TestEnum = 3
-	TestEnum_FOURTH TestEnum = 4
+	MyTestEnum_FIRST  MyTestEnum = 1
+	MyTestEnum_SECOND MyTestEnum = 2
+	MyTestEnum_THIRD  MyTestEnum = 3
+	MyTestEnum_FOURTH MyTestEnum = 4
 )
 
-func (p TestEnum) String() string {
+func (p MyTestEnum) String() string {
 	switch p {
-	case TestEnum_FIRST:
+	case MyTestEnum_FIRST:
 		return "FIRST"
-	case TestEnum_SECOND:
+	case MyTestEnum_SECOND:
 		return "SECOND"
-	case TestEnum_THIRD:
+	case MyTestEnum_THIRD:
 		return "THIRD"
-	case TestEnum_FOURTH:
+	case MyTestEnum_FOURTH:
 		return "FOURTH"
 	}
 	return "<UNSET>"
 }
 
-func TestEnumFromString(s string) (TestEnum, error) {
+func MyTestEnumFromString(s string) (MyTestEnum, error) {
 	switch s {
 	case "FIRST":
-		return TestEnum_FIRST, nil
+		return MyTestEnum_FIRST, nil
 	case "SECOND":
-		return TestEnum_SECOND, nil
+		return MyTestEnum_SECOND, nil
 	case "THIRD":
-		return TestEnum_THIRD, nil
+		return MyTestEnum_THIRD, nil
 	case "FOURTH":
-		return TestEnum_FOURTH, nil
+		return MyTestEnum_FOURTH, nil
 	}
-	return TestEnum(0), fmt.Errorf("not a valid TestEnum string")
+	return MyTestEnum(0), fmt.Errorf("not a valid MyTestEnum string")
 }
 
-func TestEnumPtr(v TestEnum) *TestEnum { return &v }
+func MyTestEnumPtr(v MyTestEnum) *MyTestEnum { return &v }
 
-type TestStruct struct {
+type MyTestStruct struct {
 	On         bool              `thrift:"on,1" json:"on"`
 	B          int8              `thrift:"b,2" json:"b"`
 	Int16      int16             `thrift:"int16,3" json:"int16"`
@@ -108,61 +108,61 @@ type TestStruct struct {
 	StringMap  map[string]string `thrift:"stringMap,9" json:"stringMap"`
 	StringList []string          `thrift:"stringList,10" json:"stringList"`
 	StringSet  map[string]bool   `thrift:"stringSet,11" json:"stringSet"`
-	E          TestEnum          `thrift:"e,12" json:"e"`
+	E          MyTestEnum        `thrift:"e,12" json:"e"`
 }
 
-func NewTestStruct() *TestStruct {
-	return &TestStruct{}
+func NewMyTestStruct() *MyTestStruct {
+	return &MyTestStruct{}
 }
 
-func (p *TestStruct) GetOn() bool {
+func (p *MyTestStruct) GetOn() bool {
 	return p.On
 }
 
-func (p *TestStruct) GetB() int8 {
+func (p *MyTestStruct) GetB() int8 {
 	return p.B
 }
 
-func (p *TestStruct) GetInt16() int16 {
+func (p *MyTestStruct) GetInt16() int16 {
 	return p.Int16
 }
 
-func (p *TestStruct) GetInt32() int32 {
+func (p *MyTestStruct) GetInt32() int32 {
 	return p.Int32
 }
 
-func (p *TestStruct) GetInt64() int64 {
+func (p *MyTestStruct) GetInt64() int64 {
 	return p.Int64
 }
 
-func (p *TestStruct) GetD() float64 {
+func (p *MyTestStruct) GetD() float64 {
 	return p.D
 }
 
-func (p *TestStruct) GetSt() string {
+func (p *MyTestStruct) GetSt() string {
 	return p.St
 }
 
-func (p *TestStruct) GetBin() []byte {
+func (p *MyTestStruct) GetBin() []byte {
 	return p.Bin
 }
 
-func (p *TestStruct) GetStringMap() map[string]string {
+func (p *MyTestStruct) GetStringMap() map[string]string {
 	return p.StringMap
 }
 
-func (p *TestStruct) GetStringList() []string {
+func (p *MyTestStruct) GetStringList() []string {
 	return p.StringList
 }
 
-func (p *TestStruct) GetStringSet() map[string]bool {
+func (p *MyTestStruct) GetStringSet() map[string]bool {
 	return p.StringSet
 }
 
-func (p *TestStruct) GetE() TestEnum {
+func (p *MyTestStruct) GetE() MyTestEnum {
 	return p.E
 }
-func (p *TestStruct) Read(iprot TProtocol) error {
+func (p *MyTestStruct) Read(iprot TProtocol) error {
 	if _, err := iprot.ReadStructBegin(); err != nil {
 		return PrependError(fmt.Sprintf("%T read error: ", p), err)
 	}
@@ -238,7 +238,7 @@ func (p *TestStruct) Read(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) readField1(iprot TProtocol) error {
+func (p *MyTestStruct) readField1(iprot TProtocol) error {
 	if v, err := iprot.ReadBool(); err != nil {
 		return PrependError("error reading field 1: ", err)
 	} else {
@@ -247,7 +247,7 @@ func (p *TestStruct) readField1(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) readField2(iprot TProtocol) error {
+func (p *MyTestStruct) readField2(iprot TProtocol) error {
 	if v, err := iprot.ReadByte(); err != nil {
 		return PrependError("error reading field 2: ", err)
 	} else {
@@ -257,7 +257,7 @@ func (p *TestStruct) readField2(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) readField3(iprot TProtocol) error {
+func (p *MyTestStruct) readField3(iprot TProtocol) error {
 	if v, err := iprot.ReadI16(); err != nil {
 		return PrependError("error reading field 3: ", err)
 	} else {
@@ -266,7 +266,7 @@ func (p *TestStruct) readField3(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) readField4(iprot TProtocol) error {
+func (p *MyTestStruct) readField4(iprot TProtocol) error {
 	if v, err := iprot.ReadI32(); err != nil {
 		return PrependError("error reading field 4: ", err)
 	} else {
@@ -275,7 +275,7 @@ func (p *TestStruct) readField4(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) readField5(iprot TProtocol) error {
+func (p *MyTestStruct) readField5(iprot TProtocol) error {
 	if v, err := iprot.ReadI64(); err != nil {
 		return PrependError("error reading field 5: ", err)
 	} else {
@@ -284,7 +284,7 @@ func (p *TestStruct) readField5(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) readField6(iprot TProtocol) error {
+func (p *MyTestStruct) readField6(iprot TProtocol) error {
 	if v, err := iprot.ReadDouble(); err != nil {
 		return PrependError("error reading field 6: ", err)
 	} else {
@@ -293,7 +293,7 @@ func (p *TestStruct) readField6(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) readField7(iprot TProtocol) error {
+func (p *MyTestStruct) readField7(iprot TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return PrependError("error reading field 7: ", err)
 	} else {
@@ -302,7 +302,7 @@ func (p *TestStruct) readField7(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) readField8(iprot TProtocol) error {
+func (p *MyTestStruct) readField8(iprot TProtocol) error {
 	if v, err := iprot.ReadBinary(); err != nil {
 		return PrependError("error reading field 8: ", err)
 	} else {
@@ -311,7 +311,7 @@ func (p *TestStruct) readField8(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) readField9(iprot TProtocol) error {
+func (p *MyTestStruct) readField9(iprot TProtocol) error {
 	_, _, size, err := iprot.ReadMapBegin()
 	if err != nil {
 		return PrependError("error reading map begin: ", err)
@@ -339,7 +339,7 @@ func (p *TestStruct) readField9(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) readField10(iprot TProtocol) error {
+func (p *MyTestStruct) readField10(iprot TProtocol) error {
 	_, size, err := iprot.ReadListBegin()
 	if err != nil {
 		return PrependError("error reading list begin: ", err)
@@ -361,7 +361,7 @@ func (p *TestStruct) readField10(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) readField11(iprot TProtocol) error {
+func (p *MyTestStruct) readField11(iprot TProtocol) error {
 	_, size, err := iprot.ReadSetBegin()
 	if err != nil {
 		return PrependError("error reading set begin: ", err)
@@ -383,18 +383,18 @@ func (p *TestStruct) readField11(iprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) readField12(iprot TProtocol) error {
+func (p *MyTestStruct) readField12(iprot TProtocol) error {
 	if v, err := iprot.ReadI32(); err != nil {
 		return PrependError("error reading field 12: ", err)
 	} else {
-		temp := TestEnum(v)
+		temp := MyTestEnum(v)
 		p.E = temp
 	}
 	return nil
 }
 
-func (p *TestStruct) Write(oprot TProtocol) error {
-	if err := oprot.WriteStructBegin("TestStruct"); err != nil {
+func (p *MyTestStruct) Write(oprot TProtocol) error {
+	if err := oprot.WriteStructBegin("MyTestStruct"); err != nil {
 		return PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
 	}
 	if err := p.writeField1(oprot); err != nil {
@@ -442,7 +442,7 @@ func (p *TestStruct) Write(oprot TProtocol) error {
 	return nil
 }
 
-func (p *TestStruct) writeField1(oprot TProtocol) (err error) {
+func (p *MyTestStruct) writeField1(oprot TProtocol) (err error) {
 	if err := oprot.WriteFieldBegin("on", BOOL, 1); err != nil {
 		return PrependError(fmt.Sprintf("%T write field begin error 1:on: ", p), err)
 	}
@@ -455,7 +455,7 @@ func (p *TestStruct) writeField1(oprot TProtocol) (err error) {
 	return err
 }
 
-func (p *TestStruct) writeField2(oprot TProtocol) (err error) {
+func (p *MyTestStruct) writeField2(oprot TProtocol) (err error) {
 	if err := oprot.WriteFieldBegin("b", BYTE, 2); err != nil {
 		return PrependError(fmt.Sprintf("%T write field begin error 2:b: ", p), err)
 	}
@@ -468,7 +468,7 @@ func (p *TestStruct) writeField2(oprot TProtocol) (err error) {
 	return err
 }
 
-func (p *TestStruct) writeField3(oprot TProtocol) (err error) {
+func (p *MyTestStruct) writeField3(oprot TProtocol) (err error) {
 	if err := oprot.WriteFieldBegin("int16", I16, 3); err != nil {
 		return PrependError(fmt.Sprintf("%T write field begin error 3:int16: ", p), err)
 	}
@@ -481,7 +481,7 @@ func (p *TestStruct) writeField3(oprot TProtocol) (err error) {
 	return err
 }
 
-func (p *TestStruct) writeField4(oprot TProtocol) (err error) {
+func (p *MyTestStruct) writeField4(oprot TProtocol) (err error) {
 	if err := oprot.WriteFieldBegin("int32", I32, 4); err != nil {
 		return PrependError(fmt.Sprintf("%T write field begin error 4:int32: ", p), err)
 	}
@@ -494,7 +494,7 @@ func (p *TestStruct) writeField4(oprot TProtocol) (err error) {
 	return err
 }
 
-func (p *TestStruct) writeField5(oprot TProtocol) (err error) {
+func (p *MyTestStruct) writeField5(oprot TProtocol) (err error) {
 	if err := oprot.WriteFieldBegin("int64", I64, 5); err != nil {
 		return PrependError(fmt.Sprintf("%T write field begin error 5:int64: ", p), err)
 	}
@@ -507,7 +507,7 @@ func (p *TestStruct) writeField5(oprot TProtocol) (err error) {
 	return err
 }
 
-func (p *TestStruct) writeField6(oprot TProtocol) (err error) {
+func (p *MyTestStruct) writeField6(oprot TProtocol) (err error) {
 	if err := oprot.WriteFieldBegin("d", DOUBLE, 6); err != nil {
 		return PrependError(fmt.Sprintf("%T write field begin error 6:d: ", p), err)
 	}
@@ -520,7 +520,7 @@ func (p *TestStruct) writeField6(oprot TProtocol) (err error) {
 	return err
 }
 
-func (p *TestStruct) writeField7(oprot TProtocol) (err error) {
+func (p *MyTestStruct) writeField7(oprot TProtocol) (err error) {
 	if err := oprot.WriteFieldBegin("st", STRING, 7); err != nil {
 		return PrependError(fmt.Sprintf("%T write field begin error 7:st: ", p), err)
 	}
@@ -533,7 +533,7 @@ func (p *TestStruct) writeField7(oprot TProtocol) (err error) {
 	return err
 }
 
-func (p *TestStruct) writeField8(oprot TProtocol) (err error) {
+func (p *MyTestStruct) writeField8(oprot TProtocol) (err error) {
 	if err := oprot.WriteFieldBegin("bin", STRING, 8); err != nil {
 		return PrependError(fmt.Sprintf("%T write field begin error 8:bin: ", p), err)
 	}
@@ -546,7 +546,7 @@ func (p *TestStruct) writeField8(oprot TProtocol) (err error) {
 	return err
 }
 
-func (p *TestStruct) writeField9(oprot TProtocol) (err error) {
+func (p *MyTestStruct) writeField9(oprot TProtocol) (err error) {
 	if err := oprot.WriteFieldBegin("stringMap", MAP, 9); err != nil {
 		return PrependError(fmt.Sprintf("%T write field begin error 9:stringMap: ", p), err)
 	}
@@ -570,7 +570,7 @@ func (p *TestStruct) writeField9(oprot TProtocol) (err error) {
 	return err
 }
 
-func (p *TestStruct) writeField10(oprot TProtocol) (err error) {
+func (p *MyTestStruct) writeField10(oprot TProtocol) (err error) {
 	if err := oprot.WriteFieldBegin("stringList", LIST, 10); err != nil {
 		return PrependError(fmt.Sprintf("%T write field begin error 10:stringList: ", p), err)
 	}
@@ -591,7 +591,7 @@ func (p *TestStruct) writeField10(oprot TProtocol) (err error) {
 	return err
 }
 
-func (p *TestStruct) writeField11(oprot TProtocol) (err error) {
+func (p *MyTestStruct) writeField11(oprot TProtocol) (err error) {
 	if err := oprot.WriteFieldBegin("stringSet", SET, 11); err != nil {
 		return PrependError(fmt.Sprintf("%T write field begin error 11:stringSet: ", p), err)
 	}
@@ -612,7 +612,7 @@ func (p *TestStruct) writeField11(oprot TProtocol) (err error) {
 	return err
 }
 
-func (p *TestStruct) writeField12(oprot TProtocol) (err error) {
+func (p *MyTestStruct) writeField12(oprot TProtocol) (err error) {
 	if err := oprot.WriteFieldBegin("e", I32, 12); err != nil {
 		return PrependError(fmt.Sprintf("%T write field begin error 12:e: ", p), err)
 	}
@@ -625,9 +625,9 @@ func (p *TestStruct) writeField12(oprot TProtocol) (err error) {
 	return err
 }
 
-func (p *TestStruct) String() string {
+func (p *MyTestStruct) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("TestStruct(%+v)", *p)
+	return fmt.Sprintf("MyTestStruct(%+v)", *p)
 }
