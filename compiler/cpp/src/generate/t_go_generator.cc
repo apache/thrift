@@ -94,6 +94,9 @@ public:
     if (iter != parsed_options.end()) {
       package_flag = (iter->second);
     }
+
+    iter = parsed_options.find("read_write_private");
+    read_write_private_ = (iter != parsed_options.end());
   }
 
   /**
@@ -278,6 +281,7 @@ public:
 private:
   std::string gen_package_prefix_;
   std::string gen_thrift_import_;
+  bool read_write_private_;
 
   /**
    * File streams
@@ -292,6 +296,8 @@ private:
 
   std::string package_name_;
   std::string package_dir_;
+  std::string read_method_name_;
+  std::string write_method_name_;
 
   std::set<std::string> commonInitialisms;
 
@@ -676,6 +682,15 @@ void t_go_generator::init_generator() {
   commonInitialisms.insert("XML");
   commonInitialisms.insert("XSRF");
   commonInitialisms.insert("XSS");
+
+  // names of read and write methods
+  if (read_write_private_) {
+    read_method_name_ = "read";
+    write_method_name_ = "write";
+  } else {
+    read_method_name_ = "Read";
+    write_method_name_ = "Write";
+  }
 
   while (true) {
     // TODO: Do better error checking here.
@@ -1358,7 +1373,7 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
   string escaped_tstruct_name(escape_string(tstruct->get_name()));
-  out << indent() << "func (p *" << tstruct_name << ") Read(iprot thrift.TProtocol) error {"
+  out << indent() << "func (p *" << tstruct_name << ") " << read_method_name_ << "(iprot thrift.TProtocol) error {"
       << endl;
   indent_up();
   out << indent() << "if _, err := iprot.ReadStructBegin(); err != nil {" << endl;
@@ -1504,7 +1519,7 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
   string name(tstruct->get_name());
   const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
-  indent(out) << "func (p *" << tstruct_name << ") Write(oprot thrift.TProtocol) error {" << endl;
+  indent(out) << "func (p *" << tstruct_name << ") " << write_method_name_ << "(oprot thrift.TProtocol) error {" << endl;
   indent_up();
   if (tstruct->is_union() && uses_countsetfields) {
     std::string tstruct_name(publicize(tstruct->get_name()));
@@ -1881,7 +1896,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
     f_service_ << indent() << "}" << endl;
 
     // Write to the stream
-    f_service_ << indent() << "if err = args.Write(oprot); err != nil {" << endl;
+    f_service_ << indent() << "if err = args." << write_method_name_ << "(oprot); err != nil {" << endl;
     indent_up();
     f_service_ << indent() << "  return" << endl;
     indent_down();
@@ -1936,7 +1951,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
                  << " := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "
                     "\"Unknown Exception\")" << endl;
       f_service_ << indent() << "  var " << error2 << " error" << endl;
-      f_service_ << indent() << "  " << error2 << ", err = " << error << ".Read(iprot)" << endl;
+      f_service_ << indent() << "  " << error2 << ", err = " << error << "." << read_method_name_ << "(iprot)" << endl;
       f_service_ << indent() << "  if err != nil {" << endl;
       f_service_ << indent() << "    return" << endl;
       f_service_ << indent() << "  }" << endl;
@@ -1953,7 +1968,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
       f_service_ << indent() << "  return" << endl;
       f_service_ << indent() << "}" << endl;
       f_service_ << indent() << "result := " << resultname << "{}" << endl;
-      f_service_ << indent() << "if err = result.Read(iprot); err != nil {" << endl;
+      f_service_ << indent() << "if err = result." << read_method_name_ << "(iprot); err != nil {" << endl;
       f_service_ << indent() << "  return" << endl;
       f_service_ << indent() << "}" << endl;
       f_service_ << indent() << "if err = iprot.ReadMessageEnd(); err != nil {" << endl;
@@ -2305,7 +2320,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
                  << endl;
         f_remote << indent() << "argvalue" << i << " := " << package_name_ << ".New" << tstruct_name
                  << "()" << endl;
-        f_remote << indent() << err2 << " := argvalue" << i << ".Read(" << jsProt << ")" << endl;
+        f_remote << indent() << err2 << " := argvalue" << i << "." << read_method_name_ <<  "(" << jsProt << ")" << endl;
         f_remote << indent() << "if " << err2 << " != nil {" << endl;
         f_remote << indent() << "  Usage()" << endl;
         f_remote << indent() << "  return" << endl;
@@ -2505,7 +2520,7 @@ void t_go_generator::generate_service_server(t_service* tservice) {
                << " := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, \"Unknown function "
                   "\" + name)" << endl;
     f_service_ << indent() << "  oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)" << endl;
-    f_service_ << indent() << "  " << x << ".Write(oprot)" << endl;
+    f_service_ << indent() << "  " << x << "." << write_method_name_ << "(oprot)" << endl;
     f_service_ << indent() << "  oprot.WriteMessageEnd()" << endl;
     f_service_ << indent() << "  oprot.Flush()" << endl;
     f_service_ << indent() << "  return false, " << x << endl;
@@ -2561,7 +2576,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
                 "thrift.TException) {" << endl;
   indent_up();
   f_service_ << indent() << "args := " << argsname << "{}" << endl;
-  f_service_ << indent() << "if err = args.Read(iprot); err != nil {" << endl;
+  f_service_ << indent() << "if err = args." << read_method_name_ <<  "(iprot); err != nil {" << endl;
   f_service_ << indent() << "  iprot.ReadMessageEnd()" << endl;
   if (!tfunction->is_oneway()) {
     f_service_ << indent()
@@ -2569,7 +2584,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
                << endl;
     f_service_ << indent() << "  oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name())
                << "\", thrift.EXCEPTION, seqId)" << endl;
-    f_service_ << indent() << "  x.Write(oprot)" << endl;
+    f_service_ << indent() << "  x." << write_method_name_ << "(oprot)" << endl;
     f_service_ << indent() << "  oprot.WriteMessageEnd()" << endl;
     f_service_ << indent() << "  oprot.Flush()" << endl;
   }
@@ -2635,7 +2650,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
                << ": \" + err2.Error())" << endl;
     f_service_ << indent() << "  oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name())
                << "\", thrift.EXCEPTION, seqId)" << endl;
-    f_service_ << indent() << "  x.Write(oprot)" << endl;
+    f_service_ << indent() << "  x." << write_method_name_ << "(oprot)" << endl;
     f_service_ << indent() << "  oprot.WriteMessageEnd()" << endl;
     f_service_ << indent() << "  oprot.Flush()" << endl;
   }
@@ -2667,7 +2682,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
                << endl;
     f_service_ << indent() << "  err = err2" << endl;
     f_service_ << indent() << "}" << endl;
-    f_service_ << indent() << "if err2 = result.Write(oprot); err == nil && err2 != nil {" << endl;
+    f_service_ << indent() << "if err2 = result." << write_method_name_ << "(oprot); err == nil && err2 != nil {" << endl;
     f_service_ << indent() << "  err = err2" << endl;
     f_service_ << indent() << "}" << endl;
     f_service_ << indent() << "if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {"
@@ -2820,7 +2835,7 @@ void t_go_generator::generate_deserialize_struct(ofstream& out,
 
   out << indent() << prefix << eq << (pointer_field ? "&" : "");
   generate_go_struct_initializer(out, tstruct);
-  out << indent() << "if err := " << prefix << ".Read(iprot); err != nil {" << endl;
+  out << indent() << "if err := " << prefix << "." << read_method_name_ <<  "(iprot); err != nil {" << endl;
   out << indent() << "  return thrift.PrependError(fmt.Sprintf(\"%T error reading struct: \", "
       << prefix << "), err)" << endl;
   out << indent() << "}" << endl;
@@ -3049,7 +3064,7 @@ void t_go_generator::generate_serialize_field(ofstream& out,
  */
 void t_go_generator::generate_serialize_struct(ofstream& out, t_struct* tstruct, string prefix) {
   (void)tstruct;
-  out << indent() << "if err := " << prefix << ".Write(oprot); err != nil {" << endl;
+  out << indent() << "if err := " << prefix << "." << write_method_name_ << "(oprot); err != nil {" << endl;
   out << indent() << "  return thrift.PrependError(fmt.Sprintf(\"%T error writing struct: \", "
       << prefix << "), err)" << endl;
   out << indent() << "}" << endl;
@@ -3535,4 +3550,6 @@ bool format_go_output(const string& file_path) {
 THRIFT_REGISTER_GENERATOR(go, "Go",
                           "    package_prefix=  Package prefix for generated files.\n" \
                           "    thrift_import=   Override thrift package import path (default:" + default_thrift_import + ")\n" \
-                          "    package=         Package name (default: inferred from thrift file name)\n")
+                          "    package=         Package name (default: inferred from thrift file name)\n" \
+                          "    private_read_write:\n"
+                          "                     Make read/write methods private, default is public Read/Write\n")

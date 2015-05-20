@@ -34,7 +34,9 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				RefAnnotationFieldsTest.thrift \
 				ErrorTest.thrift \
 				NamesTest.thrift \
-				InitialismsTest.thrift
+				InitialismsTest.thrift \
+				DontExportRWTest.thrift \
+				dontexportrwtest/compile_test.go
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift
@@ -49,9 +51,11 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) ErrorTest.thrift
 	$(THRIFT) $(THRIFTARGS) NamesTest.thrift
 	$(THRIFT) $(THRIFTARGS) InitialismsTest.thrift
+	$(THRIFT) $(THRIFTARGS),read_write_private DontExportRWTest.thrift
 	GOPATH=`pwd`/gopath $(GO) get code.google.com/p/gomock/gomock
 	ln -nfs ../../../thrift gopath/src/thrift
 	ln -nfs ../../tests gopath/src/tests
+	cp -r ./dontexportrwtest gopath/src
 	touch gopath
 
 check: gopath
@@ -63,8 +67,9 @@ check: gopath
 				refannotationfieldstest \
 				errortest	\
 				namestest \
-				initialismstest
-	GOPATH=`pwd`/gopath $(GO) test thrift tests
+				initialismstest \
+				dontexportrwtest
+	GOPATH=`pwd`/gopath $(GO) test thrift tests dontexportrwtest
 
 clean-local:
 	$(RM) -r gopath ThriftTest.thrift gen-go
@@ -86,4 +91,5 @@ EXTRA_DIST = \
 	TypedefFieldTest.thrift \
 	ErrorTest.thrift \
 	NamesTest.thrift \
-	InitialismsTest.thrift
+	InitialismsTest.thrift \
+	DontExportRWTest.thrift
