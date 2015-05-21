@@ -923,6 +923,19 @@ void t_go_generator::generate_enum(t_enum* tenum) {
   // type.
   f_types_ << "func " << tenum_name << "Ptr(v " << tenum_name << ") *" << tenum_name
            << " { return &v }" << endl << endl;
+
+  // Generate MarshalText
+  f_types_ << "func (p " << tenum_name << ") MarshalText() ([]byte, error) {" << endl;
+  f_types_ << "return []byte(p.String()), nil" << endl;
+  f_types_ << "}" << endl << endl;
+
+  // Generate UnmarshalText
+  f_types_ << "func (p *" << tenum_name << ") UnmarshalText(text []byte) error {" << endl;
+  f_types_ << "q, err := " << tenum_name << "FromString(string(text))" << endl;
+  f_types_ << "if (err != nil) {" << endl << "return err" << endl << "}" << endl;
+  f_types_ << "*p = q" << endl;
+  f_types_ << "return nil" << endl;
+  f_types_ << "}" << endl;
 }
 
 /**
