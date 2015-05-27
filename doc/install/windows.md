@@ -1,17 +1,51 @@
 ## Windows Setup
-The windows compiler is available as a prebuilt exe available [here](/download)
 
-## Windows setup from source
+The Thrift environment consists of two main parts: The Thrift compiler EXE and the language-dependent libraries. Most of these libraries will require some kind of build and/or installation. But regarding the Thrift compiler utility there are a number of different alternatives. 
 
-### Basic requirements for win32
-Thrift's compiler is written in C++ and designed to be portable, but there are some system requirements:
+The first one of these alternatives is to download the **pre-built Thrift Compiler EXE** and only build the libraries needed from source, following one of the "Setup from source" methods outlined below.
 
- * Cygwin or MinGW
+The other two options are to build the Thrift compiler from source. The most recommended way to achieve this is by means of the **Visual Studio C++ build project**. Alternatively, the Thrift compiler can also be built via **Cygwin** or **MinGW** build environments, however this method is not only less comfortable, but more time-consuming and requires much more manual effort. 
+
+
+## Prebuilt Thrift compiler
+
+The windows Thrift compiler is available as a prebuilt exe available [here](/download). Note that there is no installation tool, rather this EXE file *is* already the Thrift compiler utility. Download the file and put it into some suitable location of your choice.
+
+Now pick one of the "Build and install target libraries" below to continue.
+
+ 
+## Setup from source via Visual Studio C++ (recommended)
+
+### Requirements
+
+Thrift's compiler is written in C++ and designed to be portable, but there are some system requirements. Thrift's runtime libraries are written in various languages, which are also required for the particular language interface.
+
+ * Visual Studio C++, any recent version should do
+ * Flex and Bison, e.g. the WinFlexBison package
  * [Apache Thrift Requirements](/docs/install)
 
-Thrift's runtime libraries are written in various languages, which are also required for the particular language interface.
+### Build and install the compiler
+ 
+After all requirements are in place, use the `compiler/cpp/compiler.vcxproj` build project to build the Thrift compiler. Copy the resulting EXE file to a location of your choice. 
+
+### Build and install target libraries
+
+A few of the target language libraries also do provide Visual Studio project files, such as C++ and C#. These are located in the `lib/<language>/` folders. 
+
+Most of the language packages must be built and installed manually using build tools better suited to those languages. Typical examples are Java, Ruby, Delphi, or PHP. Look for the `README.md` file in the `lib/<language>/` folder for more details on how to build and install each language's library package.
+ 
+
+## Setup from source via Cygwin
+
+### Requirements
+
+Thrift's compiler is written in C++ and designed to be portable, but there are some system requirements. Thrift's runtime libraries are written in various languages, which are also required for the particular language interface.
+
+ * Cygwin or MinGW 
+ * [Apache Thrift Requirements](/docs/install)
 
 ### Installing from source
+
 If you are building from the first time out of the source repository, you will need to generate the configure scripts.  (This is not necessary if you downloaded a tarball.)  From the top directory, do:
 
 	./bootstrap.sh
@@ -32,14 +66,16 @@ Now make the thrift compiler (& runtime libraries if make is run from the thrift
 	make
 	make install
 
-Some language packages must be installed manually using build tools better suited to those languages (at the time of this writing, this applies to Java, Ruby, PHP).
+### Build and install target libraries
 
-Look for the README file in the `lib/<language>/` folder for more details on the installation of each language library package.
+Some language packages must be installed manually using build tools better suited to those languages. Typical examples are Java, Ruby, or PHP. Look for the README file in the `lib/<language>/` folder for more details on the installation of each language library package.
 
 ### Possible issues with Cygwin install
+
 See also Possible issues with MinGW install.
 
 #### Syntax error in ./configure
+
 The following error occurs for some users when running ./configure:
 
 	./configure: line 21183: syntax error near unexpected token `MONO,'
@@ -52,6 +88,7 @@ To resolve this, you'll need to find your pkg.m4 (installed by the pkg-config pa
 Finally, re-run ./bootstrap.sh and ./configure.  (Note that pkg.m4 is created by the pkg-config tool.  If your /usr/share/aclocal directory doesn't contain the pkg.m4 file, you may not have pkg-config installed.)
 
 #### Installing perl runtime libraries
+
 Sometimes, there will be an error during the install of the perl libraries with chmod.
 
 A workaround is to avoid installing the perl libraries if they are not needed.
@@ -63,6 +100,7 @@ If you need perl, and are happy to manually install it, replace the contents of 
 	TODO
 
 #### Linking to installed C++ runtime libraries
+
 Sometimes, the installed libthrift.a will not link using g++, with linker errors about missing vtables and exceptions for Thrift classes.
 
 A workaround is to link the compiled object files directly from your Thrift build, corresponding to the missing classes.
@@ -84,8 +122,16 @@ The issue and patch are described on the Cygwin mailing list at http://cygwin.co
 
 This issue should be fixed in Cygwin versions after 1.7.5-1, or g++ 4.5.0.
 
-## Installation from Source (No Cygwin dependency)
-To compile the Thrift generator & runtime libraries (untested) without the cygwin.dll dependency you need to install  MinGW (www.mingw.org). In addition you need to add the following entry to your windows PATH variable.
+## Setup from source via MinGW
+
+### Requirements
+
+To compile the Thrift generator & runtime libraries (untested) without the cygwin.dll dependency you need to install MinGW (www.mingw.org). 
+
+ * MinGW 
+ * [Apache Thrift Requirements](/docs/install)
+
+In addition you need to add the following entry to your windows PATH variable.
 
 	C:\MINGW\BIN
 	
@@ -115,17 +161,21 @@ Run make:
 	mingw32-make.exe
 
 ### Possible issues with MinGW install
+
 See also Possible issues with Cygwin install, including the discussion about PTHREAD_MUTEX_RECURSIVE_NP.
 
 #### yywrap is not found
+
 Make sure you add -lfl in your cxxflags in Makefile, also try adding -Lc:/cygwin/libs
 
 #### boost is not found
+
 Try and change the include dir to use the windows path from c like this: Edit compiler/cpp/Makefile, look for the declaration of BOOST_CPPFLAGS, change that line for
 
-	BOOST_CPPFLAGS = -Ic:/cygwin/usr/include/boost-1_33_1
+	BOOST_CPPFLAGS = -Ic:/cygwin/usr/include/boost-1_53_0
 	
 #### realpath is not found
+
 add -DMINGW -mno-cygwin to the CXXDEFS variable in Makefile
 
 ## Additional reading

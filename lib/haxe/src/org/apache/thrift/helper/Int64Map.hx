@@ -49,18 +49,47 @@ class Int64Map<T> implements IMap< Int64, T> {
         return lomap;
     }
 
+
+    private function GetLowMap( key : haxe.Int64, canCreate : Bool) : IntMap< T> {
+        #if( haxe_ver < 3.2)
+        return GetSubMap( Int64.getHigh(key), false);
+        #else
+        return GetSubMap( key.high, false);
+        #end
+    }
+
+
+    private function GetLowIndex( key : haxe.Int64) : haxe.Int32 {
+        #if( haxe_ver < 3.2)
+        return Int64.getLow(key);
+        #else
+        return key.low;
+        #end
+    }
+
+
+    private function NullCheck( key : haxe.Int64) : Bool {
+        #if( haxe_ver < 3.2)
+		return (key != null);  
+        #else
+		return false;  // In64 is not nullable anymore (it never really was)
+		#end
+    };
+
+
+
     /**
         Maps `key` to `value`.
         If `key` already has a mapping, the previous value disappears.
         If `key` is null, the result is unspecified.
     **/
     public function set( key : Int64, value : T ) : Void {
-        if( key ==  null) {
+        if( ! NullCheck(key)) {
             return;
         }
 
-        var lomap = GetSubMap( Int64.getHigh(key), true);
-        lomap.set( Int64.getLow(key), value);
+        var lomap = GetLowMap( key, true);
+        lomap.set( GetLowIndex(key), value);
     }
 
 
@@ -79,16 +108,16 @@ class Int64Map<T> implements IMap< Int64, T> {
 
     **/
     public function get( key : Int64) : Null<T> {
-        if( key ==  null) {
+        if( ! NullCheck(key)) {
             return null;
         }
 
-        var lomap = GetSubMap( Int64.getHigh(key), false);
+        var lomap = GetLowMap( key, true);
         if( lomap == null) {
             return null;
         }
 
-        return lomap.get( Int64.getLow(key));
+        return lomap.get( GetLowIndex(key));
     }
 
     /**
@@ -96,16 +125,16 @@ class Int64Map<T> implements IMap< Int64, T> {
         If `key` is null, the result is unspecified.
     **/
     public function exists( key : Int64) : Bool {
-        if( key ==  null) {
+        if( ! NullCheck(key)) {
             return false;
         }
 
-        var lomap = GetSubMap( Int64.getHigh(key), false);
+        var lomap = GetLowMap( key, true);
         if( lomap == null) {
             return false;
         }
 
-        return lomap.exists( Int64.getLow(key));
+        return lomap.exists( GetLowIndex(key));
     }
 
     /**
@@ -113,16 +142,16 @@ class Int64Map<T> implements IMap< Int64, T> {
         false otherwise. If `key` is null, the result is unspecified.
     **/
     public function remove( key : Int64) : Bool {
-        if( key ==  null) {
+        if( ! NullCheck(key)) {
             return false;
         }
 
-        var lomap = GetSubMap( Int64.getHigh(key), false);
+        var lomap = GetLowMap( key, true);
         if( lomap == null) {
             return false;
         }
 
-        return lomap.remove( Int64.getLow(key));
+        return lomap.remove( GetLowIndex(key));
     }
 
 

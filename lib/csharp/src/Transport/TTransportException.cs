@@ -62,7 +62,8 @@ namespace Thrift.Transport
             NotOpen,
             AlreadyOpen,
             TimedOut,
-            EndOfFile
+            EndOfFile,
+            Interrupted
         }
     }
 }

@@ -510,13 +510,13 @@ void t_delphi_generator::generate_delphi_doc(ostream& out, t_function* tfunction
 }
 
 bool t_delphi_generator::find_keyword(std::map<std::string, int>& keyword_map, std::string name) {
-  int len = name.length();
+  std::string::size_type len = name.length();
 
   if (len <= 0) {
     return false;
   }
 
-  int nlast = name.find_last_of('_');
+  std::string::size_type nlast = name.find_last_of('_');
 
   if (nlast >= 1) {
     if (nlast == (len - 1)) {
@@ -623,7 +623,13 @@ void t_delphi_generator::create_keywords() {
   delphi_keywords["automated"] = 1;
   delphi_keywords["at"] = 1;
   delphi_keywords["on"] = 1;
+
+  // reserved/predefined variables and types (lowercase!)
   delphi_keywords["result"] = 1;
+  delphi_keywords["tbytes"] = 1;
+  delphi_keywords["tobject"] = 1;
+  delphi_keywords["tclass"] = 1;
+  delphi_keywords["tinterfacedobject"] = 1;
 
   delphi_reserved_method["create"] = 1;
   delphi_reserved_method["free"] = 1;

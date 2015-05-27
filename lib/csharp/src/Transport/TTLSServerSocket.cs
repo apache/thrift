@@ -18,6 +18,7 @@
  */
 
 using System;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 
@@ -53,6 +54,15 @@ namespace Thrift.Transport
         /// </summary>
         private X509Certificate serverCertificate;
 
+        /// <summary>
+        /// The function to validate the client certificate.
+        /// </summary>
+        private RemoteCertificateValidationCallback clientCertValidator;
+
+        /// <summary>
+        /// The function to determine which certificate to use.
+        /// </summary>
+        private LocalCertificateSelectionCallback localCertificateSelectionCallback;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TTLSServerSocket" /> class.
@@ -82,7 +92,15 @@ namespace Thrift.Transport
         /// <param name="clientTimeout">Send/receive timeout.</param>
         /// <param name="useBufferedSockets">If set to <c>true</c> [use buffered sockets].</param>
         /// <param name="certificate">The certificate object.</param>
-        public TTLSServerSocket(int port, int clientTimeout, bool useBufferedSockets, X509Certificate2 certificate)
+        /// <param name="clientCertValidator">The certificate validator.</param>
+        /// <param name="localCertificateSelectionCallback">The callback to select which certificate to use.</param>
+        public TTLSServerSocket(
+            int port,
+            int clientTimeout,
+            bool useBufferedSockets,
+            X509Certificate2 certificate,
+            RemoteCertificateValidationCallback clientCertValidator = null,
+            LocalCertificateSelectionCallback localCertificateSelectionCallback = null)
         {
             if (!certificate.HasPrivateKey)
             {
@@ -92,6 +110,8 @@ namespace Thrift.Transport
             this.port = port;
             this.serverCertificate = certificate;
             this.useBufferedSockets = useBufferedSockets;
+            this.clientCertValidator = clientCertValidator;
+            this.localCertificateSelectionCallback = localCertificateSelectionCallback;
             try
             {
                 // Create server socket
@@ -143,7 +163,13 @@ namespace Thrift.Transport
                 client.SendTimeout = client.ReceiveTimeout = this.clientTimeout;
 
                 //wrap the client in an SSL Socket passing in the SSL cert
-                TTLSSocket socket = new TTLSSocket(client, this.serverCertificate, true);
+                TTLSSocket socket = new TTLSSocket(
+                    client,
+                    this.serverCertificate,
+                    true,
+                    this.clientCertValidator,
+                    this.localCertificateSelectionCallback
+                );
 
                 socket.setupTLS();
 

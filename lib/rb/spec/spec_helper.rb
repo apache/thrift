@@ -59,3 +59,6 @@ module Fixtures
   COMPACT_PROTOCOL_TEST_STRUCT.set_byte_map = nil
   COMPACT_PROTOCOL_TEST_STRUCT.map_byte_map = nil
 end
+
+$:.unshift File.join(File.dirname(__FILE__), *%w[gen-rb/flat])
+

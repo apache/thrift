@@ -32,6 +32,7 @@ using StringTools;
 enum ProtocolType {
     binary;
     json;
+    compact;
 }
 
 enum EndpointTransport {
@@ -190,7 +191,7 @@ class Arguments
                 if( arg == "binary") {
                     protocol = binary;
                 } else if( arg == "compact") {
-                    throw "Compact protocol not supported yet";
+                    protocol = compact;
                 } else if( arg == "json") {
                     protocol = json;
                 } else {

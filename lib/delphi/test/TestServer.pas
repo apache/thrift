@@ -34,6 +34,7 @@ uses
   Thrift.Transport.Pipes,
   Thrift.Protocol,
   Thrift.Protocol.JSON,
+  Thrift.Protocol.Compact,
   Thrift.Collections,
   Thrift.Utils,
   Thrift.Test,
@@ -536,11 +537,6 @@ var
   endpoint : TEndpointTransport;
   layered : TLayeredTransports;
   UseSSL : Boolean; // include where appropriate (TLayeredTransport?)
-const
-  // pipe timeouts to be used
-  DEBUG_TIMEOUT   = 30 * 1000;
-  RELEASE_TIMEOUT = DEFAULT_THRIFT_TIMEOUT;  // server-side default
-  TIMEOUT         = RELEASE_TIMEOUT;
 begin
   try
     ServerEvents := FALSE;
@@ -642,7 +638,7 @@ begin
     case protType of
       prot_Binary  :  ProtocolFactory := TBinaryProtocolImpl.TFactory.Create( BINARY_STRICT_READ, BINARY_STRICT_WRITE);
       prot_JSON    :  ProtocolFactory := TJSONProtocolImpl.TFactory.Create;
-      prot_Compact :  raise Exception.Create('Compact protocol not implemented');
+      prot_Compact :  ProtocolFactory := TCompactProtocolImpl.TFactory.Create;
     else
       raise Exception.Create('Unhandled protocol');
     end;
@@ -663,7 +659,7 @@ begin
 
       trns_NamedPipes : begin
         Console.WriteLine('- named pipe ('+sPipeName+')');
-        namedpipe   := TNamedPipeServerTransportImpl.Create( sPipeName, 4096, PIPE_UNLIMITED_INSTANCES, TIMEOUT);
+        namedpipe   := TNamedPipeServerTransportImpl.Create( sPipeName, 4096, PIPE_UNLIMITED_INSTANCES);
         servertrans := namedpipe;
       end;
 

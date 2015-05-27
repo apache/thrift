@@ -54,7 +54,6 @@ read(This = #data{socket=Socket, recv_timeout=Timeout}, Len)
   when is_integer(Len), Len >= 0 ->
     case gen_tcp:recv(Socket, Len, Timeout) of
         Err = {error, timeout} ->
-            error_logger:info_msg("read timeout: peer conn ~p", [inet:peername(Socket)]),
             gen_tcp:close(Socket),
             {This, Err};
         Data ->
@@ -87,7 +86,9 @@ parse_factory_options([{framed, Bool} | Rest], Opts) when is_boolean(Bool) ->
 parse_factory_options([{sockopts, OptList} | Rest], Opts) when is_list(OptList) ->
     parse_factory_options(Rest, Opts#factory_opts{sockopts=OptList});
 parse_factory_options([{connect_timeout, TO} | Rest], Opts) when TO =:= infinity; is_integer(TO) ->
-    parse_factory_options(Rest, Opts#factory_opts{connect_timeout=TO}).
+    parse_factory_options(Rest, Opts#factory_opts{connect_timeout=TO});
+parse_factory_options([{recv_timeout, TO} | Rest], Opts) when TO =:= infinity; is_integer(TO) ->
+    parse_factory_options(Rest, Opts).
 
 
 %%
@@ -108,7 +109,8 @@ new_transport_factory(Host, Port, Options) ->
                 case catch gen_tcp:connect(Host, Port, SockOpts,
                                            ParsedOpts#factory_opts.connect_timeout) of
                     {ok, Sock} ->
-                        {ok, Transport} = thrift_socket_transport:new(Sock),
+                        {ok, Transport} =
+                          thrift_socket_transport:new(Sock, Options),
                         {ok, BufTransport} =
                             case ParsedOpts#factory_opts.framed of
                                 true  -> thrift_framed_transport:new(Transport);

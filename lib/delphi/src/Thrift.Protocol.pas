@@ -56,6 +56,16 @@ type
     Oneway = 4
   );
 
+const
+  VALID_TTYPES = [
+    TType.Stop, TType.Void,
+    TType.Bool_, TType.Byte_, TType.Double_, TType.I16, TType.I32, TType.I64, TType.String_,
+    TType.Struct, TType.Map, TType.Set_, TType.List
+  ];
+
+  VALID_MESSAGETYPES = [Low(TMessageType)..High(TMessageType)];
+
+type
   IProtocol = interface;
   IStruct = interface;
 
@@ -114,7 +124,7 @@ type
     function GetCount: Integer;
     procedure SetCount( Value: Integer);
   public
-    constructor Create( AValueType: TType; AKeyType: TType; ACount: Integer); overload;
+    constructor Create( AKeyType, AValueType: TType; ACount: Integer); overload;
     constructor Create; overload;
   end;
 
@@ -733,7 +743,7 @@ end;
 
 { TMapImpl }
 
-constructor TMapImpl.Create(AValueType, AKeyType: TType; ACount: Integer);
+constructor TMapImpl.Create( AKeyType, AValueType: TType; ACount: Integer);
 begin
   inherited Create;
   FValueType := AValueType;

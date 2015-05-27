@@ -23,6 +23,8 @@ import org.apache.thrift.TException;
 
 class TProtocolException extends TException {
 
+    // WARNING: These are subject to be extended in the future, so we can't use enums
+    // with Haxe 3.1.3 because of https://github.com/HaxeFoundation/haxe/issues/3649
     public static inline var UNKNOWN : Int = 0;
     public static inline var INVALID_DATA : Int = 1;
     public static inline var NEGATIVE_SIZE : Int = 2;

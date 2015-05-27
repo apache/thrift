@@ -71,7 +71,7 @@ public:
     case Operation::DIVIDE:
       if (work.num2 == 0) {
         InvalidOperation io;
-        io.what = work.op;
+        io.whatOp = work.op;
         io.why = "Cannot divide by 0";
         throw io;
       }
@@ -79,7 +79,7 @@ public:
       break;
     default:
       InvalidOperation io;
-      io.what = work.op;
+      io.whatOp = work.op;
       io.why = "Invalid Operation";
       throw io;
     }

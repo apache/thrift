@@ -69,15 +69,12 @@ namespace transport {
 
 using namespace std;
 
-// Global var to track total socket sys calls
-uint32_t g_socket_syscalls = 0;
-
 /**
  * TSocket implementation.
  *
  */
 
-TSocket::TSocket(string host, int port)
+TSocket::TSocket(const string& host, int port)
   : host_(host),
     port_(port),
     path_(""),
@@ -92,7 +89,7 @@ TSocket::TSocket(string host, int port)
     maxRecvRetries_(5) {
 }
 
-TSocket::TSocket(string path)
+TSocket::TSocket(const string& path)
   : host_(""),
     port_(0),
     path_(path),
@@ -146,6 +143,29 @@ TSocket::TSocket(THRIFT_SOCKET socket)
 #endif
 }
 
+TSocket::TSocket(THRIFT_SOCKET socket, boost::shared_ptr<THRIFT_SOCKET> interruptListener)
+  : host_(""),
+    port_(0),
+    path_(""),
+    socket_(socket),
+    interruptListener_(interruptListener),
+    connTimeout_(0),
+    sendTimeout_(0),
+    recvTimeout_(0),
+    keepAlive_(false),
+    lingerOn_(1),
+    lingerVal_(0),
+    noDelay_(1),
+    maxRecvRetries_(5) {
+  cachedPeerAddr_.ipv4.sin_family = AF_UNSPEC;
+#ifdef SO_NOSIGPIPE
+  {
+    int one = 1;
+    setsockopt(socket_, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one));
+  }
+#endif
+}
+
 TSocket::~TSocket() {
   close();
 }
@@ -158,6 +178,38 @@ bool TSocket::peek() {
   if (!isOpen()) {
     return false;
   }
+  if (interruptListener_) {
+    for (int retries = 0;;) {
+      struct THRIFT_POLLFD fds[2];
+      std::memset(fds, 0, sizeof(fds));
+      fds[0].fd = socket_;
+      fds[0].events = THRIFT_POLLIN;
+      fds[1].fd = *(interruptListener_.get());
+      fds[1].events = THRIFT_POLLIN;
+      int ret = THRIFT_POLL(fds, 2, (recvTimeout_ == 0) ? -1 : recvTimeout_);
+      int errno_copy = THRIFT_GET_SOCKET_ERROR;
+      if (ret < 0) {
+        // error cases
+        if (errno_copy == THRIFT_EINTR && (retries++ < maxRecvRetries_)) {
+          continue;
+        }
+        GlobalOutput.perror("TSocket::peek() THRIFT_POLL() ", errno_copy);
+        throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
+      } else if (ret > 0) {
+        // Check the interruptListener
+        if (fds[1].revents & THRIFT_POLLIN) {
+          return false;
+        }
+        // There must be data or a disconnection, fall through to the PEEK
+        break;
+      } else {
+        // timeout
+        return false;
+      }
+    }
+  }
+
+  // Check to see if data is available or if the remote side closed
   uint8_t buf;
   int r = static_cast<int>(recv(socket_, cast_sockopt(&buf), 1, MSG_PEEK));
   if (r == -1) {
@@ -361,7 +413,7 @@ void TSocket::local_open() {
 
   // Validate port number
   if (port_ < 0 || port_ > 0xFFFF) {
-    throw TTransportException(TTransportException::NOT_OPEN, "Specified port is invalid");
+    throw TTransportException(TTransportException::BAD_ARGS, "Specified port is invalid");
   }
 
   struct addrinfo hints, *res, *res0;
@@ -458,10 +510,41 @@ try_again:
     // an THRIFT_EAGAIN is due to a timeout or an out-of-resource condition.
     begin.tv_sec = begin.tv_usec = 0;
   }
-  int got = static_cast<int>(recv(socket_, cast_sockopt(buf), len, 0));
-  int errno_copy = THRIFT_GET_SOCKET_ERROR; // THRIFT_GETTIMEOFDAY can change
-                                            // THRIFT_GET_SOCKET_ERROR
-  ++g_socket_syscalls;
+
+  int got = 0;
+
+  if (interruptListener_) {
+    struct THRIFT_POLLFD fds[2];
+    std::memset(fds, 0, sizeof(fds));
+    fds[0].fd = socket_;
+    fds[0].events = THRIFT_POLLIN;
+    fds[1].fd = *(interruptListener_.get());
+    fds[1].events = THRIFT_POLLIN;
+
+    int ret = THRIFT_POLL(fds, 2, (recvTimeout_ == 0) ? -1 : recvTimeout_);
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    if (ret < 0) {
+      // error cases
+      if (errno_copy == THRIFT_EINTR && (retries++ < maxRecvRetries_)) {
+        goto try_again;
+      }
+      GlobalOutput.perror("TSocket::read() THRIFT_POLL() ", errno_copy);
+      throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
+    } else if (ret > 0) {
+      // Check the interruptListener
+      if (fds[1].revents & THRIFT_POLLIN) {
+        throw TTransportException(TTransportException::INTERRUPTED, "Interrupted");
+      }
+    } else /* ret == 0 */ {
+      throw TTransportException(TTransportException::TIMED_OUT, "THRIFT_EAGAIN (timed out)");
+    }
+
+    // falling through means there is something to recv and it cannot block
+  }
+
+  got = static_cast<int>(recv(socket_, cast_sockopt(buf), len, 0));
+  // THRIFT_GETTIMEOFDAY can change THRIFT_GET_SOCKET_ERROR
+  int errno_copy = THRIFT_GET_SOCKET_ERROR;
 
   // Check for error on read
   if (got < 0) {
@@ -474,9 +557,8 @@ try_again:
       // check if this is the lack of resources or timeout case
       struct timeval end;
       THRIFT_GETTIMEOFDAY(&end, NULL);
-      uint32_t readElapsedMicros
-          = static_cast<uint32_t>(((end.tv_sec - begin.tv_sec) * 1000 * 1000)
-                                  + (((uint64_t)(end.tv_usec - begin.tv_usec))));
+      uint32_t readElapsedMicros = static_cast<uint32_t>(((end.tv_sec - begin.tv_sec) * 1000 * 1000)
+                                                         + (end.tv_usec - begin.tv_usec));
 
       if (!eagainThresholdMicros || (readElapsedMicros < eagainThresholdMicros)) {
         if (retries++ < maxRecvRetries_) {
@@ -497,28 +579,8 @@ try_again:
       goto try_again;
     }
 
-#if defined __FreeBSD__ || defined __MACH__
     if (errno_copy == THRIFT_ECONNRESET) {
-      /* shigin: freebsd doesn't follow POSIX semantic of recv and fails with
-       * THRIFT_ECONNRESET if peer performed shutdown
-       * edhall: eliminated close() since we do that in the destructor.
-       */
       return 0;
-    }
-#endif
-
-#ifdef _WIN32
-    if (errno_copy == WSAECONNRESET) {
-      return 0; // EOF
-    }
-#endif
-
-    // Now it's not a try again case, but a real probblez
-    GlobalOutput.perror("TSocket::read() recv() " + getSocketInfo(), errno_copy);
-
-    // If we disconnect with no linger time
-    if (errno_copy == THRIFT_ECONNRESET) {
-      throw TTransportException(TTransportException::NOT_OPEN, "THRIFT_ECONNRESET");
     }
 
     // This ish isn't open
@@ -531,18 +593,13 @@ try_again:
       throw TTransportException(TTransportException::TIMED_OUT, "THRIFT_ETIMEDOUT");
     }
 
+    // Now it's not a try again case, but a real probblez
+    GlobalOutput.perror("TSocket::read() recv() " + getSocketInfo(), errno_copy);
+
     // Some other error, whatevz
     throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
   }
 
-  // The remote host has closed the socket
-  if (got == 0) {
-    // edhall: we used to call close() here, but our caller may want to deal
-    // with the socket fd and we'll close() in our destructor in any case.
-    return 0;
-  }
-
-  // Pack data into string
   return got;
 }
 
@@ -575,7 +632,6 @@ uint32_t TSocket::write_partial(const uint8_t* buf, uint32_t len) {
 #endif // ifdef MSG_NOSIGNAL
 
   int b = static_cast<int>(send(socket_, const_cast_sockopt(buf + sent), len - sent, flags));
-  ++g_socket_syscalls;
 
   if (b < 0) {
     if (THRIFT_GET_SOCKET_ERROR == THRIFT_EWOULDBLOCK || THRIFT_GET_SOCKET_ERROR == THRIFT_EAGAIN) {

@@ -41,6 +41,7 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
 
 #include "t_oop_generator.h"
 
+
 /**
  * JS code generator.
  */
@@ -180,6 +181,8 @@ public:
            + "//\n" + "// DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING\n"
            + "//\n";
   }
+
+  t_type* get_contained_type(t_type* t);
 
   std::vector<std::string> js_namespace_pieces(t_program* p) {
     std::string ns = p->get_namespace("js");
@@ -601,6 +604,22 @@ void t_js_generator::generate_js_struct(t_struct* tstruct, bool is_exception) {
 }
 
 /**
+ * Return type of contained elements for a container type. For maps
+ * this is type of value (keys are always strings in js)
+ */
+t_type* t_js_generator::get_contained_type(t_type* t) {
+  t_type* etype;
+  if (t->is_list()) {
+    etype = ((t_list*)t)->get_elem_type();
+  } else if (t->is_set()) {
+    etype = ((t_set*)t)->get_elem_type();
+  } else {
+    etype = ((t_map*)t)->get_val_type();
+  }
+  return etype;
+}
+
+/**
  * Generates a struct definition for a thrift data type. This is nothing in JS
  * where the objects are all just associative arrays (unless of course we
  * decide to start using objects for them...)
@@ -685,9 +704,47 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
     }
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      t_type* t = get_true_type((*m_iter)->get_type());
       out << indent() << indent() << "if (args." << (*m_iter)->get_name() << " !== undefined) {"
-          << endl << indent() << indent() << indent() << "this." << (*m_iter)->get_name()
-          << " = args." << (*m_iter)->get_name() << ";" << endl;
+          << endl << indent() << indent() << indent() << "this." << (*m_iter)->get_name();
+
+      if (t->is_struct()) {
+        out << (" = new " + js_type_namespace(t->get_program()) + t->get_name() +
+                "(args."+(*m_iter)->get_name() +");");
+        out << endl;
+      } else if (t->is_container()) {
+        t_type* etype = get_contained_type(t);
+        string copyFunc = t->is_map() ? "Thrift.copyMap" : "Thrift.copyList";
+        string type_list = "";
+
+        while (etype->is_container()) {
+          if (type_list.length() > 0) {
+            type_list += ", ";
+          }
+          type_list += etype->is_map() ? "Thrift.copyMap" : "Thrift.copyList";
+          etype = get_contained_type(etype);
+        }
+
+        if (etype->is_struct()) {
+          if (type_list.length() > 0) {
+            type_list += ", ";
+          }
+          type_list += js_type_namespace(etype->get_program()) + etype->get_name();
+        }
+        else {
+          if (type_list.length() > 0) {
+            type_list += ", ";
+          }
+          type_list += "null";
+        }
+
+        out << (" = " + copyFunc + "(args." + (*m_iter)->get_name() +
+                ", [" + type_list + "]);");
+        out << endl;
+      } else {
+        out << " = args." << (*m_iter)->get_name() << ";" << endl;
+      }
+
       if (!(*m_iter)->get_req()) {
         out << indent() << indent() << "} else {" << endl << indent() << indent() << indent()
             << "throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, "
@@ -1022,11 +1079,50 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   indent_down();
   indent(f_service_) << "}, function (err) {" << endl;
   indent_up();
-  f_service_ << indent() << "var result = new " << resultname << "(err);" << endl << indent()
-             << "output.writeMessageBegin(\"" << tfunction->get_name()
-             << "\", Thrift.MessageType.REPLY, seqid);" << endl << indent()
-             << "result.write(output);" << endl << indent() << "output.writeMessageEnd();" << endl
-             << indent() << "output.flush();" << endl;
+
+  bool has_exception = false;
+  t_struct* exceptions = tfunction->get_xceptions();
+  if (exceptions) {
+    const vector<t_field*>& members = exceptions->get_members();
+    for (vector<t_field*>::const_iterator it = members.begin(); it != members.end(); ++it) {
+      t_type* t = get_true_type((*it)->get_type());
+      if (t->is_xception()) {
+        if (!has_exception) {
+          has_exception = true;
+          indent(f_service_) << "if (err instanceof " << js_type_namespace(t->get_program())
+                             << t->get_name();
+        } else {
+          f_service_ << " || err instanceof " << js_type_namespace(t->get_program())
+                     << t->get_name();
+        }
+      }
+    }
+  }
+
+  if (has_exception) {
+    f_service_ << ") {" << endl;
+    indent_up();
+    f_service_ << indent() << "var result = new " << resultname << "(err);" << endl << indent()
+               << "output.writeMessageBegin(\"" << tfunction->get_name()
+               << "\", Thrift.MessageType.REPLY, seqid);" << endl;
+
+    indent_down();
+    indent(f_service_) << "} else {" << endl;
+    indent_up();
+  }
+
+  f_service_ << indent() << "var result = new "
+                            "Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN,"
+                            " err.message);" << endl << indent() << "output.writeMessageBegin(\""
+             << tfunction->get_name() << "\", Thrift.MessageType.EXCEPTION, seqid);" << endl;
+
+  if (has_exception) {
+    indent_down();
+    indent(f_service_) << "}" << endl;
+  }
+
+  f_service_ << indent() << "result.write(output);" << endl << indent()
+             << "output.writeMessageEnd();" << endl << indent() << "output.flush();" << endl;
   indent_down();
   indent(f_service_) << "});" << endl;
   indent_down();
@@ -1039,15 +1135,35 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
     f_service_ << "args." << (*f_iter)->get_name() << ", ";
   }
 
-  f_service_ << " function (err, result) {" << endl;
+  f_service_ << "function (err, result) {" << endl;
   indent_up();
 
+  indent(f_service_) << "if (err == null";
+  if (has_exception) {
+    const vector<t_field*>& members = exceptions->get_members();
+    for (vector<t_field*>::const_iterator it = members.begin(); it != members.end(); ++it) {
+      t_type* t = get_true_type((*it)->get_type());
+      if (t->is_xception()) {
+        f_service_ << " || err instanceof " << js_type_namespace(t->get_program()) << t->get_name();
+      }
+    }
+  }
+  f_service_ << ") {" << endl;
+  indent_up();
   f_service_ << indent() << "var result = new " << resultname
              << "((err != null ? err : {success: result}));" << endl << indent()
              << "output.writeMessageBegin(\"" << tfunction->get_name()
-             << "\", Thrift.MessageType.REPLY, seqid);" << endl << indent()
-             << "result.write(output);" << endl << indent() << "output.writeMessageEnd();" << endl
-             << indent() << "output.flush();" << endl;
+             << "\", Thrift.MessageType.REPLY, seqid);" << endl;
+  indent_down();
+  indent(f_service_) << "} else {" << endl;
+  indent_up();
+  f_service_ << indent() << "var result = new "
+                            "Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN,"
+                            " err.message);" << endl << indent() << "output.writeMessageBegin(\""
+             << tfunction->get_name() << "\", Thrift.MessageType.EXCEPTION, seqid);" << endl;
+  indent_down();
+  f_service_ << indent() << "}" << endl << indent() << "result.write(output);" << endl << indent()
+             << "output.writeMessageEnd();" << endl << indent() << "output.flush();" << endl;
 
   indent_down();
   indent(f_service_) << "});" << endl;

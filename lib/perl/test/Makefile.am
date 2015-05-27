@@ -19,13 +19,24 @@
 
 THRIFT = @top_builddir@/compiler/cpp/thrift
 THRIFT_IF = @top_srcdir@/test/ThriftTest.thrift
+NAME_BENCHMARKSERVICE =  @top_srcdir@/lib/rb/benchmark/Benchmark.thrift
+NAME_AGGR = @top_srcdir@/contrib/async-test/aggr.thrift
 
-check-local: gen-perl/ThriftTest/Types.pm
+check-local: \
+	gen-perl/ThriftTest/Types.pm \
+	gen-perl/BenchmarkTest/BenchmarkService.pm \
+	gen-perl/Aggr/Aggr.pm
 
 gen-perl/ThriftTest/Types.pm: $(THRIFT_IF)
 	$(THRIFT) --gen perl $(THRIFT_IF)
 
 clean-local:
 	rm -rf gen-perl
+	
+gen-perl/BenchmarkTest/BenchmarkService.pm: $(NAME_BENCHMARKSERVICE)
+	$(THRIFT) --gen perl $(NAME_BENCHMARKSERVICE)
+	
+gen-perl/Aggr/Aggr.pm: $(NAME_AGGR)
+	$(THRIFT) --gen perl $(NAME_AGGR)
 
-EXTRA_DIST = memory_buffer.t processor.t
+EXTRA_DIST = memory_buffer.t processor.t multiplex.t

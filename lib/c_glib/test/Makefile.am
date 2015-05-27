@@ -20,6 +20,18 @@ AUTOMAKE_OPTIONS = serial-tests
 
 SUBDIRS =
 
+BUILT_SOURCES = \
+        gen-c_glib/t_test_debug_proto_test_types.h \
+        gen-c_glib/t_test_empty_service.h \
+        gen-c_glib/t_test_inherited.h \
+        gen-c_glib/t_test_optional_required_test_types.h \
+        gen-c_glib/t_test_reverse_order_service.h \
+        gen-c_glib/t_test_second_service.h \
+        gen-c_glib/t_test_service_for_exception_with_a_map.h \
+        gen-c_glib/t_test_srv.h \
+        gen-c_glib/t_test_thrift_test.h \
+        gen-c_glib/t_test_thrift_test_types.h
+
 AM_CPPFLAGS = -g -Wall -I../src $(GLIB_CFLAGS)
 AM_LDFLAGS = $(GLIB_LIBS) $(GOBJECT_LIBS) @GCOV_LDFLAGS@
 
@@ -40,6 +52,7 @@ check_PROGRAMS = \
   testthrifttest
 
 if WITH_CPP
+  BUILT_SOURCES += gen-cpp/ThriftTest_types.cpp
   check_PROGRAMS += testthrifttestclient
 endif
 
@@ -165,7 +178,7 @@ gen-c_glib/t_test_debug_proto_test_types.c gen-c_glib/t_test_debug_proto_test_ty
 gen-c_glib/t_test_optional_required_test_types.c gen-c_glib/t_test_optional_required_test_types.h: ../../../test/OptionalRequiredTest.thrift
 	$(THRIFT) --gen c_glib $<
 
-gen-c_glib/t_test_second_service.c gen-c_glib/t_test_thrift_test.c gen-c_glib/t_test_thrift_test_types.c gen-c_glib/t_test_second_service.h gen-c_glib/t_test_thrift_test-.h gen-c_glib/t_test_thrift_test_types.h: ../../../test/ThriftTest.thrift
+gen-c_glib/t_test_second_service.c gen-c_glib/t_test_thrift_test.c gen-c_glib/t_test_thrift_test_types.c gen-c_glib/t_test_second_service.h gen-c_glib/t_test_thrift_test.h gen-c_glib/t_test_thrift_test_types.h: ../../../test/ThriftTest.thrift
 	$(THRIFT) --gen c_glib $<
 
 gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest_types.cpp: ../../../test/ThriftTest.thrift

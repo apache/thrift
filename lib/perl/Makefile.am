@@ -28,6 +28,8 @@ all-local: Makefile-perl.mk
 
 check-local:
 	$(PERL) -Iblib/lib -I@abs_srcdir@ -I@builddir@/test/gen-perl \
+		-I@builddir@/test/gen-perl/BenchmarkTest \
+		-I@builddir@/test/gen-perl/Aggr \
 		@abs_srcdir@/test.pl @abs_srcdir@/test/*.t
 
 install-exec-local: Makefile-perl.mk
@@ -49,7 +51,11 @@ EXTRA_DIST = \
 	lib/Thrift/FramedTransport.pm \
 	lib/Thrift/HttpClient.pm \
 	lib/Thrift/MemoryBuffer.pm \
+	lib/Thrift/MessageType.pm \
+	lib/Thrift/MultiplexedProcessor.pm \
+	lib/Thrift/MultiplexedProtocol.pm \
 	lib/Thrift/Protocol.pm \
+	lib/Thrift/ProtocolDecorator.pm \
 	lib/Thrift/Server.pm \
 	lib/Thrift/Socket.pm \
 	lib/Thrift/Transport.pm \

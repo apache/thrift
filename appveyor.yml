@@ -1,0 +1,53 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements. See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# build Apache Thrift on AppVeyor - https://ci.appveyor.com
+
+version: '{build}'
+os:
+- Windows Server 2012 R2
+- Visual Studio 2014 CTP4
+- Visual Studio 2015 CTP
+- Visual Studio 2015 CTP 6
+- Visual Studio 2015 Preview
+
+environment:
+  BOOST_ROOT: c:\Libraries\boost
+  BOOST_LIBRARYDIR: c:\Libraries\boost\stage\lib
+
+install:
+- cinst cmake
+- cinst nsis
+- cinst ant
+- cinst winflexbison
+
+build_script:
+- set PATH=C:\ProgramData\chocolatey\bin;C:\tools\apache-ant-1.9.4\bin;%PATH%
+- mv C:\ProgramData\chocolatey\bin\win_bison.exe C:\ProgramData\chocolatey\bin\bison.exe
+- mv C:\ProgramData\chocolatey\bin\win_flex.exe C:\ProgramData\chocolatey\bin\flex.exe
+- set JAVA_HOME=C:\Program Files\Java\jdk1.7.0
+- set PATH=%JAVA_HOME%\bin;%PATH%
+- mkdir cmake-build
+- cd cmake-build
+- cmake -DBUILD_TESTING=OFF ..
+- cmake --build .
+- cmake --build . --config Release
+- cpack
+
+#TODO enable testing
+#TODO make it perfect ;-r

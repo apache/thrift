@@ -58,6 +58,7 @@ int main() {
     } catch (InvalidOperation& io) {
       cout << "InvalidOperation: " << io.why << endl;
       // or using generated operator<<: cout << io << endl;
+      // or by using std::exception native method what(): cout << io.what() << endl;
     }
 
     work.op = Operation::SUBTRACT;

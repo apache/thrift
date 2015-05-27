@@ -16,8 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+#include "config.h"
+
 #include <stdlib.h>
 #include <time.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
 #include <sstream>
 #include <fstream>
 #include <thrift/cxxfunctional.h>

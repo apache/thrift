@@ -231,7 +231,7 @@ tutorial_calculator_handler_calculate (CalculatorIf      *iface,
          setting the corresponding output parameter to a new instance
          of its type and returning FALSE. */
       *ouch = g_object_new (TYPE_INVALID_OPERATION,
-                            "what", op,
+                            "whatOp", op,
                             "why",  g_strdup ("Cannot divide by 0"),
                             NULL);
       result = FALSE;
@@ -249,7 +249,7 @@ tutorial_calculator_handler_calculate (CalculatorIf      *iface,
 
   default:
     *ouch = g_object_new (TYPE_INVALID_OPERATION,
-                          "what", op,
+                          "whatOp", op,
                           "why",  g_strdup ("Invalid Operation"),
                           NULL);
     result = FALSE;

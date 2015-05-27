@@ -59,4 +59,9 @@ describe 'namespaced generation' do
   it "required an included file" do
     defined?(OtherNamespace::SomeEnum).should be_true
   end
+
+  it "extended a service" do
+    require "extended/extended_service"
+  end
+
 end

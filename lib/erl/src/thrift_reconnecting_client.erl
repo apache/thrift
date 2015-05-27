@@ -156,6 +156,9 @@ handle_cast( _Msg, State ) ->
 %%                                       {stop, Reason, State}
 %% Description: Handling all non call/cast messages
 %%--------------------------------------------------------------------
+handle_info( try_connect, State ) ->
+  { noreply, try_connect( State ) };
+
 handle_info( _Info, State ) ->
   { noreply, State }.
 

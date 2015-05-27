@@ -100,10 +100,6 @@ public class TThreadPoolServer extends TServer {
   // Executor service for handling client connections
   private ExecutorService executorService_;
 
-  // Flag for stopping the server
-  // Please see THRIFT-1795 for the usage of this flag
-  private volatile boolean stopped_ = false;
-
   private final TimeUnit stopTimeoutUnit;
 
   private final long stopTimeoutVal;
@@ -306,6 +302,10 @@ public class TThreadPoolServer extends TServer {
 
       if (outputTransport != null) {
         outputTransport.close();
+      }
+
+      if (client_.isOpen()) {
+        client_.close();
       }
     }
   }

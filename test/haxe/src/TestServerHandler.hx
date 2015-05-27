@@ -120,19 +120,19 @@ class TestServerHandler implements ThriftTest {
      * Prints 'testBinary("%s")' where '%s' is a hex-formatted string of thing's data
      * @param binary  thing - the binary data to print
      * @return binary  - returns the binary 'thing'
-     * 
+     *
      * @param thing
      */
     public function testBinary(thing : haxe.io.Bytes) : haxe.io.Bytes
     {
-		var hex = "";
-		for ( i in 0 ... thing.length) {
-			hex += StringTools.hex( thing.get(i), 2);
-		}
+        var hex = "";
+        for ( i in 0 ... thing.length) {
+            hex += StringTools.hex( thing.get(i), 2);
+        }
         trace('testBinary($hex)');
         return thing;
     }
-  
+
     /**
     * Prints 'testStruct("{%s}")' where thing has been formatted
     *  into a string of comma separated values

@@ -180,10 +180,6 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     }
   }
 
-  // Flag for stopping the server
-  // Please see THRIFT-1795 for the usage of this flag
-  private volatile boolean stopped_ = false;
-
   // The thread handling all accepts
   private AcceptThread acceptThread;
 
@@ -379,7 +375,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
           select();
         }
       } catch (Throwable t) {
-        LOGGER.error("run() exiting due to uncaught error", t);
+        LOGGER.error("run() on AcceptThread exiting due to uncaught error", t);
       } finally {
         try {
           acceptSelector.close();
@@ -550,7 +546,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
           cleanupSelectionKey(selectionKey);
         }
       } catch (Throwable t) {
-        LOGGER.error("run() exiting due to uncaught error", t);
+        LOGGER.error("run() on SelectorThread exiting due to uncaught error", t);
       } finally {
         try {
           selector.close();

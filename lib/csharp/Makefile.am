@@ -17,6 +17,8 @@
 # under the License.
 #
 
+SUBDIRS = . test/ThriftTest
+
 THRIFTCODE= \
             src/Collections/THashSet.cs \
             src/Collections/TCollections.cs \
@@ -80,6 +82,9 @@ Thrift.dll: $(THRIFTCODE)
 
 clean-local:
 	$(RM) Thrift.dll
+
+precross:
+	$(MAKE) -C test/ThriftTest precross
 
 # run csharp tests?
 # check:

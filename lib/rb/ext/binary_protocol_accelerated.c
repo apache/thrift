@@ -283,27 +283,27 @@ VALUE rb_thrift_binary_proto_read_message_end(VALUE self) {
   return Qnil;
 }
 
-VALUE rb_thift_binary_proto_read_struct_begin(VALUE self) {
+VALUE rb_thrift_binary_proto_read_struct_begin(VALUE self) {
   return Qnil;
 }
 
-VALUE rb_thift_binary_proto_read_struct_end(VALUE self) {
+VALUE rb_thrift_binary_proto_read_struct_end(VALUE self) {
   return Qnil;
 }
 
-VALUE rb_thift_binary_proto_read_field_end(VALUE self) {
+VALUE rb_thrift_binary_proto_read_field_end(VALUE self) {
   return Qnil;
 }
 
-VALUE rb_thift_binary_proto_read_map_end(VALUE self) {
+VALUE rb_thrift_binary_proto_read_map_end(VALUE self) {
   return Qnil;
 }
 
-VALUE rb_thift_binary_proto_read_list_end(VALUE self) {
+VALUE rb_thrift_binary_proto_read_list_end(VALUE self) {
   return Qnil;
 }
 
-VALUE rb_thift_binary_proto_read_set_end(VALUE self) {
+VALUE rb_thrift_binary_proto_read_set_end(VALUE self) {
   return Qnil;
 }
 
@@ -449,12 +449,12 @@ void Init_binary_protocol_accelerated() {
   rb_define_method(bpa_class, "read_binary",         rb_thrift_binary_proto_read_binary, 0);
   // unused methods
   rb_define_method(bpa_class, "read_message_end", rb_thrift_binary_proto_read_message_end, 0);
-  rb_define_method(bpa_class, "read_struct_begin", rb_thift_binary_proto_read_struct_begin, 0);
-  rb_define_method(bpa_class, "read_struct_end", rb_thift_binary_proto_read_struct_end, 0);
-  rb_define_method(bpa_class, "read_field_end", rb_thift_binary_proto_read_field_end, 0);
-  rb_define_method(bpa_class, "read_map_end", rb_thift_binary_proto_read_map_end, 0);
-  rb_define_method(bpa_class, "read_list_end", rb_thift_binary_proto_read_list_end, 0);
-  rb_define_method(bpa_class, "read_set_end", rb_thift_binary_proto_read_set_end, 0);
+  rb_define_method(bpa_class, "read_struct_begin", rb_thrift_binary_proto_read_struct_begin, 0);
+  rb_define_method(bpa_class, "read_struct_end", rb_thrift_binary_proto_read_struct_end, 0);
+  rb_define_method(bpa_class, "read_field_end", rb_thrift_binary_proto_read_field_end, 0);
+  rb_define_method(bpa_class, "read_map_end", rb_thrift_binary_proto_read_map_end, 0);
+  rb_define_method(bpa_class, "read_list_end", rb_thrift_binary_proto_read_list_end, 0);
+  rb_define_method(bpa_class, "read_set_end", rb_thrift_binary_proto_read_set_end, 0);
 
   rbuf_ivar_id = rb_intern("@rbuf");
 }

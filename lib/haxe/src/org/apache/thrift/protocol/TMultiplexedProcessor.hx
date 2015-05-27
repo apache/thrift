@@ -51,6 +51,9 @@ class TMultiplexedProcessor implements TProcessor
     private var serviceProcessorMap : StringMap<TProcessor> = new StringMap<TProcessor>();
     private var defaultProcessor : TProcessor = null;
 
+    public function new() {
+    }
+
     /**
      * 'Register' a service with this TMultiplexedProcessor. This allows us to broker
      * requests to individual services by using the service name to select them at request time.

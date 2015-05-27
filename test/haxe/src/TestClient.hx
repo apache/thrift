@@ -214,13 +214,15 @@ class TestClient {
         case json:
             trace("- json protocol");
             protocol = new TJSONProtocol(transport);
-        default:
-            throw "Unhandled protocol";
+        case compact:
+            trace("- compact protocol");
+            protocol = new TCompactProtocol(transport);
         }
 
 
         // run the test code
         HaxeBasicsTest( args, rslt);
+        ModuleUnitTests( args, rslt);
         for( i in 0 ... args.numIterations) {
             ClientTest( transport, protocol, args, rslt);
         }
@@ -244,107 +246,132 @@ class TestClient {
         map32.set( 42, 815);
         map64.set( Int64.make(0,42), 815);
         map32.set( -517, 23);
-        map64.set( Int64.make(-5,17), 23);
+        map64.set( Int64.neg(Int64.make(0,517)), 23);
         map32.set( 0, -123);
         map64.set( Int64.make(0,0), -123);
 
         rslt.Expect( map32.keys().hasNext() == map64.keys().hasNext(), "Int64Map<Int32> Test #10");
         rslt.Expect( map32.exists( 4711) == map64.exists( Int64.make(47,11)), "Int64Map<Int32> Test #11");
-        rslt.Expect( map32.exists( -517) == map64.exists( Int64.make(-5,17)), "Int64Map<Int32> Test #12");
+        rslt.Expect( map32.exists( -517) == map64.exists( Int64.neg(Int64.make(0,517))), "Int64Map<Int32> Test #12");
         rslt.Expect( map32.exists( 42) == map64.exists( Int64.make(0,42)), "Int64Map<Int32> Test #13");
         rslt.Expect( map32.exists( 0) == map64.exists( Int64.make(0,0)), "Int64Map<Int32> Test #14");
         rslt.Expect( map32.get( 4711) == map64.get( Int64.make(47,11)), "Int64Map<Int32> Test #15");
-        rslt.Expect( map32.get( -517) == map64.get( Int64.make(-5,17)), "Int64Map<Int32> Test #16");
+        rslt.Expect( map32.get( -517) == map64.get( Int64.neg(Int64.make(0,517))), "Int64Map<Int32> Test #16");
         rslt.Expect( map32.get( 42) == map64.get( Int64.make(0,42)), "Int64Map<Int32> Test #Int64.make(-5,17)");
         rslt.Expect( map32.get( 0) == map64.get( Int64.make(0,0)), "Int64Map<Int32> Test #18");
         rslt.Expect( map32.remove( 4711) == map64.remove( Int64.make(47,11)), "Int64Map<Int32> Test #19");
-        rslt.Expect( map32.remove( -517) == map64.remove( Int64.make(-5,17)), "Int64Map<Int32> Test #20");
+        rslt.Expect( map32.remove( -517) == map64.remove( Int64.neg(Int64.make(0,517))), "Int64Map<Int32> Test #20");
         rslt.Expect( map32.exists( 4711) == map64.exists( Int64.make(47,11)), "Int64Map<Int32> Test #21");
-        rslt.Expect( map32.exists( -517) == map64.exists( Int64.make(-5,17)), "Int64Map<Int32> Test #22");
+        rslt.Expect( map32.exists( -517) == map64.exists( Int64.neg(Int64.make(0,517))), "Int64Map<Int32> Test #22");
         rslt.Expect( map32.exists( 42) == map64.exists( Int64.make(0,42)), "Int64Map<Int32> Test #23");
         rslt.Expect( map32.exists( 0) == map64.exists( Int64.make(0,0)), "Int64Map<Int32> Test #24");
         rslt.Expect( map32.get( 4711) == map64.get( Int64.make(47,11)), "Int64Map<Int32> Test #25");
-        rslt.Expect( map32.get( -517) == map64.get( Int64.make(-5,17)), "Int64Map<Int32> Test #26");
+        rslt.Expect( map32.get( -517) == map64.get( Int64.neg(Int64.make(0,517))), "Int64Map<Int32> Test #26");
         rslt.Expect( map32.get( 42) == map64.get( Int64.make(0,42)), "Int64Map<Int32> Test #27");
         rslt.Expect( map32.get( 0) == map64.get( Int64.make(0,0)), "Int64Map<Int32> Test #28");
 
         map32.set( 42, 1);
         map64.set( Int64.make(0,42), 1);
         map32.set( -517, -2);
-        map64.set( Int64.make(-5,17), -2);
+        map64.set( Int64.neg(Int64.make(0,517)), -2);
         map32.set( 0, 3);
         map64.set( Int64.make(0,0), 3);
 
         var c32 = 0;
+        var ksum32 = 0;
         for (key in map32.keys()) {
             ++c32;
+            ksum32 += key;
         }
         var c64 = 0;
+        var ksum64 = Int64.make(0,0);
         for (key in map64.keys()) {
             ++c64;
+            ksum64 = Int64.add( ksum64, key);
         }
         rslt.Expect( c32 == c64, "Int64Map<Int32> Test #30");
+        rslt.Expect( '$ksum64' == '$ksum32', '$ksum64 == $ksum32   Test #31');
 
         var s32 = map32.toString();
         var s64 = map64.toString();
-        trace("Int64Map<Int32>.toString(): " + ' ("$s32" == "$s64")');
+        rslt.Expect( s32 == s64, "Int64Map<Int32>.toString(): " + ' ("$s32" == "$s64") Test #32');
 
         map32.remove( 42);
         map64.remove( Int64.make(0,42));
         map32.remove( -517);
-        map64.remove( Int64.make(-5,17));
+        map64.remove( Int64.neg(Int64.make(0,517)));
         map32.remove( 0);
         map64.remove( Int64.make(0,0));
 
         rslt.Expect( map32.keys().hasNext() == map64.keys().hasNext(), "Int64Map<Int32> Test #90");
         rslt.Expect( map32.exists( 4711) == map64.exists( Int64.make(47,11)), "Int64Map<Int32> Test #91");
-        rslt.Expect( map32.exists( -517) == map64.exists( Int64.make(-5,17)), "Int64Map<Int32> Test #92");
+        rslt.Expect( map32.exists( -517) == map64.exists( Int64.neg(Int64.make(0,517))), "Int64Map<Int32> Test #92");
         rslt.Expect( map32.exists( 42) == map64.exists( Int64.make(0,42)), "Int64Map<Int32> Test #93");
         rslt.Expect( map32.exists( 0) == map64.exists( Int64.make(0,0)), "Int64Map<Int32> Test #94");
         rslt.Expect( map32.get( 4711) == map64.get( Int64.make(47,11)), "Int64Map<Int32> Test #95");
         rslt.Expect( map32.get( -517) == map64.get( Int64.make(-5,17)), "Int64Map<Int32> Test #96");
         rslt.Expect( map32.get( 42) == map64.get( Int64.make(0,42)), "Int64Map<Int32> Test #97");
-        rslt.Expect( map32.get( 0) == map64.get( Int64.make(0,0)), "Int64Map<Int32> Test #98");
+        rslt.Expect( map32.get( 0) == map64.get( Int64.make(0, 0)), "Int64Map<Int32> Test #98");
     }
 
 
-	public static function BytesToHex(data : Bytes) : String {
-		var hex = "";
-		for ( i in 0 ... data.length) {
-			hex += StringTools.hex( data.get(i), 2);
-		}
-		return hex;
-	}
+    // core module unit tests
+    public static function ModuleUnitTests( args : Arguments, rslt : TestResults) : Void {
+        try {
+            BitConverter.UnitTest();
+            rslt.Expect( true, 'BitConverter.UnitTest  Test #100');
+        }
+        catch( e : Dynamic) {
+            rslt.Expect( false, 'BitConverter.UnitTest: $e  Test #100');
+        }
 
-	public static function PrepareTestData(randomDist : Bool) : Bytes	{
-		var retval = Bytes.alloc(0x100);
-		var initLen : Int = (retval.length > 0x100 ? 0x100 : retval.length);
+        try {
+            ZigZag.UnitTest();
+            rslt.Expect( true, 'ZigZag.UnitTest  Test #101');
+        }
+        catch( e : Dynamic) {
+            rslt.Expect( false, 'ZigZag.UnitTest: $e  Test #101');
+        }
+    }
 
-		// linear distribution, unless random is requested
-		if (!randomDist) {
-			for (i in 0 ... initLen) { 
-				retval.set(i, i % 0x100);
-			}
-			return retval;
-		}
 
-		// random distribution
-		for (i in 0 ... initLen) { 
-			retval.set(i, 0);
-		}
-		for (i in 1 ... initLen) { 
-			while( true) {
-				var nextPos = Std.random(initLen);
-				if (retval.get(nextPos) == 0) {
-					retval.set( nextPos, i % 0x100);
-					break;
-				}
-			}
-		}
-		return retval;
-	}
+    public static function BytesToHex(data : Bytes) : String {
+        var hex = "";
+        for ( i in 0 ... data.length) {
+            hex += StringTools.hex( data.get(i), 2);
+        }
+        return hex;
+    }
 
-	
+    public static function PrepareTestData(randomDist : Bool) : Bytes    {
+        var retval = Bytes.alloc(0x100);
+        var initLen : Int = (retval.length > 0x100 ? 0x100 : retval.length);
+
+        // linear distribution, unless random is requested
+        if (!randomDist) {
+            for (i in 0 ... initLen) {
+                retval.set(i, i % 0x100);
+            }
+            return retval;
+        }
+
+        // random distribution
+        for (i in 0 ... initLen) {
+            retval.set(i, 0);
+        }
+        for (i in 1 ... initLen) {
+            while( true) {
+                var nextPos = Std.random(initLen);
+                if (retval.get(nextPos) == 0) {
+                    retval.set( nextPos, i % 0x100);
+                    break;
+                }
+            }
+        }
+        return retval;
+    }
+
+
     public static function ClientTest( transport : TTransport, protocol : TProtocol,
                                        args : Arguments, rslt : TestResults) : Void
     {
@@ -402,6 +429,11 @@ class TestClient {
             rslt.Expect( false, 'testException("TException")  -  $e');
         }
 
+        // reopen the transport, just in case the server closed his end
+        if (transport.isOpen())
+            transport.close();
+        transport.open();
+
         // else do not throw anything
         trace('testException("bla")');
         try {
@@ -412,8 +444,6 @@ class TestClient {
         {
             rslt.Expect( false, 'testException("bla")  -  $e');
         }
-
-
 
         rslt.StartTestGroup( TestResults.EXITCODE_FAILBIT_BASETYPES);
 
@@ -459,16 +489,16 @@ class TestClient {
         trace('testBinary('+BytesToHex(binOut)+')');
         try {
             var binIn = client.testBinary(binOut);
-			trace('testBinary() = '+BytesToHex(binIn));
-			rslt.Expect( binIn.length == binOut.length, '${binIn.length} == ${binOut.length}');
-			var len = ((binIn.length < binOut.length)  ?  binIn.length  : binOut.length);
+            trace('testBinary() = '+BytesToHex(binIn));
+            rslt.Expect( binIn.length == binOut.length, '${binIn.length} == ${binOut.length}');
+            var len = ((binIn.length < binOut.length)  ?  binIn.length  : binOut.length);
             for (ofs in 0 ... len) {
                 if (binIn.get(ofs) != binOut.get(ofs)) {
-					rslt.Expect( false, 'testBinary('+BytesToHex(binOut)+'): content mismatch at offset $ofs');
-				}
-			}
-		}
-		catch (e : TApplicationException) {
+                    rslt.Expect( false, 'testBinary('+BytesToHex(binOut)+'): content mismatch at offset $ofs');
+                }
+            }
+        }
+        catch (e : TApplicationException) {
             trace('testBinary('+BytesToHex(binOut)+'): '+e.errorMsg);  // may not be supported by the server
         }
 

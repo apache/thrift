@@ -60,10 +60,6 @@ Here is a Cassandra example:
 
 Since JavaScript represents all numbers as doubles, int64 values cannot be accurately represented naturally. To solve this, int64 values in responses will be wrapped with Thirft.Int64 objects. The Int64 implementation used is [broofa/node-int64](https://github.com/broofa/node-int64).
 
-## Libraries using node-thrift
+## Client and server examples
 
-* [yukim/node_cassandra](https://github.com/yukim/node_cassandra)
-
-## Custom client and server example
-
-An example based on the one shown on the Thrift front page is included in the examples/ folder.
+Several example clients and servers are included in the thrift/lib/nodejs/examples folder and the cross language tutorial thrift/tutorial/nodejs folder.

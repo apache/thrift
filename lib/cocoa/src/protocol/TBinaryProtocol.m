@@ -21,9 +21,54 @@
 #import "TProtocolException.h"
 #import "TObjective-C.h"
 
-int32_t VERSION_1 = 0x80010000;
-int32_t VERSION_MASK = 0xffff0000;
+/* In the modern protocol, version is stored in the high half of an int32.
+ * The low half contains type info. */
+static const uint16_t VERSION_1 = 0x8001;
 
+NS_INLINE size_t
+CheckedCastInt32ToSizeT(int32_t size)
+{
+  if (size < 0) {
+    NSString *reason = [NSString stringWithFormat:
+                        @"%s: refusing to read data with negative size: %"PRId32,
+                        __func__, size];
+    @throw [TProtocolException
+            exceptionWithName: @"TProtocolException"
+            reason: reason];
+  }
+  size_t checkedSize = (size_t)size;
+  return checkedSize;
+}
+
+NS_INLINE int32_t
+CheckedCastSizeTToInt32(size_t size)
+{
+  if (size > INT32_MAX) {
+    NSString *reason = [NSString stringWithFormat:
+                        @"%s: data size exceeds values representable by a 32-bit signed integer: %zu",
+                        __func__, size];
+    @throw [TProtocolException
+            exceptionWithName: @"TProtocolException"
+            reason: reason];
+  }
+  int32_t checkedSize = (int32_t)size;
+  return checkedSize;
+}
+
+NS_INLINE uint8_t
+CheckedCastIntToUInt8(int size)
+{
+  if (size > UINT8_MAX) {
+    NSString *reason = [NSString stringWithFormat:
+                        @"%s: data size exceeds values representable by a 8-bit unsigned integer: %d",
+                        __func__, size];
+    @throw [TProtocolException
+            exceptionWithName: @"TProtocolException"
+            reason: reason];
+  }
+  uint8_t checkedSize = (uint8_t)size;
+  return checkedSize;
+}
 
 static TBinaryProtocolFactory * gSharedFactory = nil;
 
@@ -89,12 +134,13 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 }
 
 
-- (NSString *) readStringBody: (int) size
+- (NSString *) readStringBody: (int) rawSize
 {
+  size_t size = CheckedCastInt32ToSizeT(rawSize);
   char * buffer = malloc(size+1);
   if (!buffer) {
     @throw [TProtocolException exceptionWithName: @"TProtocolException"
-                                          reason: [NSString stringWithFormat: @"Unable to allocate memory in %s, size: %i",
+                                          reason: [NSString stringWithFormat: @"Unable to allocate memory in %s, size: %zu",
                                                    __PRETTY_FUNCTION__,
                                                    size]];;
   }
@@ -112,10 +158,14 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 {
   int32_t size = [self readI32];
   if (size < 0) {
-    int version = size & VERSION_MASK;
+    /* Version (unsigned) is stored in the high halfword. */
+    uint16_t version = (size >> 16) & 0xFFFF;
     if (version != VERSION_1) {
+      NSString *reason = [NSString stringWithFormat:
+                          @"%s: Expected version %"PRIu16", instead found: %"PRIu16,
+                          __func__, VERSION_1, version];
       @throw [TProtocolException exceptionWithName: @"TProtocolException"
-                                 reason: @"Bad version in readMessageBegin"];
+                                 reason: reason];
     }
     if (type != NULL) {
       *type = size & 0x00FF;
@@ -206,7 +256,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 
 - (NSString *) readString
 {
-  int size = [self readI32];
+  int32_t size = [self readI32];
   return [self readStringBody: size];
 }
 
@@ -230,10 +280,9 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
   return (short)
     (((buff[0] & 0xff) << 8) |
      ((buff[1] & 0xff)));
-  return 0;
 }
 
-- (int64_t) readI64;
+- (int64_t) readI64
 {
   uint8_t i64rd[8];
   [mTransport readAll: i64rd offset: 0 length: 8];
@@ -248,7 +297,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
     ((int64_t)(i64rd[7] & 0xff));
 }
 
-- (double) readDouble;
+- (double) readDouble
 {
   // FIXME - will this get us into trouble on PowerPC?
   int64_t ieee754 = [self readI64];
@@ -259,15 +308,16 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 - (NSData *) readBinary
 {
   int32_t size = [self readI32];
-  uint8_t * buff = malloc(size);
+  size_t binarySize = CheckedCastInt32ToSizeT(size);
+  uint8_t * buff = malloc(binarySize);
   if (buff == NULL) {
     @throw [TProtocolException
              exceptionWithName: @"TProtocolException"
              reason: [NSString stringWithFormat: @"Out of memory.  Unable to allocate %d bytes trying to read binary data.",
                                size]];
   }
-  [mTransport readAll: buff offset: 0 length: size];
-  return [NSData dataWithBytesNoCopy: buff length: size];
+  [mTransport readAll: buff offset: 0 length: binarySize];
+  return [NSData dataWithBytesNoCopy: buff length: binarySize];
 }
 
 
@@ -337,13 +387,13 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
                         sequenceID: (int) sequenceID
 {
   if (mStrictWrite) {
-    int version = VERSION_1 | messageType;
+    int version = (VERSION_1 << 16) | messageType;
     [self writeI32: version];
     [self writeString: name];
     [self writeI32: sequenceID];
   } else {
     [self writeString: name];
-    [self writeByte: messageType];
+    [self writeByte: CheckedCastIntToUInt8(messageType)];
     [self writeI32: sequenceID];
   }
 }
@@ -362,8 +412,8 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
                             type: (int) fieldType
                          fieldID: (int) fieldID
 {
-  [self writeByte: fieldType];
-  [self writeI16: fieldID];
+  [self writeByte: CheckedCastIntToUInt8(fieldType)];
+  [self writeI16: CheckedCastIntToUInt8(fieldID)];
 }
 
 
@@ -413,7 +463,8 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
   if (value != nil) {
     const char * utf8Bytes = [value UTF8String];
     size_t length = strlen(utf8Bytes);
-    [self writeI32: length];
+    int32_t size = CheckedCastSizeTToInt32(length);
+    [self writeI32: size];
     [mTransport write: (uint8_t *) utf8Bytes offset: 0 length: length];
   } else {
     // instead of crashing when we get null, let's write out a zero
@@ -425,7 +476,8 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 
 - (void) writeBinary: (NSData *) data
 {
-  [self writeI32: [data length]];
+  int32_t size = CheckedCastSizeTToInt32([data length]);
+  [self writeI32: size];
   [mTransport write: [data bytes] offset: 0 length: [data length]];
 }
 
@@ -442,8 +494,8 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
                         valueType: (int) valueType
                              size: (int) size
 {
-  [self writeByte: keyType];
-  [self writeByte: valueType];
+  [self writeByte: CheckedCastIntToUInt8(keyType)];
+  [self writeByte: CheckedCastIntToUInt8(valueType)];
   [self writeI32: size];
 }
 
@@ -453,7 +505,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 - (void) writeSetBeginWithElementType: (int) elementType
                                  size: (int) size
 {
-  [self writeByte: elementType];
+  [self writeByte: CheckedCastIntToUInt8(elementType)];
   [self writeI32: size];
 }
 
@@ -463,7 +515,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 - (void) writeListBeginWithElementType: (int) elementType
                                   size: (int) size
 {
-  [self writeByte: elementType];
+  [self writeByte: CheckedCastIntToUInt8(elementType)];
   [self writeI32: size];
 }
 

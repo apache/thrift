@@ -69,8 +69,9 @@ class TestServer
             case json:
                 trace("- json protocol");
                 protfactory = new TJSONProtocolFactory();
-            default:
-                throw "Unhandled protocol";
+            case compact:
+                trace("- compact protocol");
+                protfactory = new TCompactProtocolFactory();
             }
 
 

@@ -298,10 +298,10 @@ void t_gv_generator::generate_service(t_service* tservice) {
   for (; fn_iter != functions.end(); fn_iter++) {
     string fn_name = (*fn_iter)->get_name();
 
-    f_out_ << "function_" << fn_name;
+    f_out_ << "function_" << service_name << fn_name;
     f_out_ << "[label=\"<return_type>function " << escape_string(fn_name);
     f_out_ << " :: ";
-    print_type((*fn_iter)->get_returntype(), "function_" + fn_name + ":return_type");
+    print_type((*fn_iter)->get_returntype(), "function_" + service_name + fn_name + ":return_type");
 
     vector<t_field*> args = (*fn_iter)->get_arglist()->get_members();
     vector<t_field*>::iterator arg_iter = args.begin();
@@ -314,7 +314,7 @@ void t_gv_generator::generate_service(t_service* tservice) {
       }
       f_out_ << " :: ";
       print_type((*arg_iter)->get_type(),
-                 "function_" + fn_name + ":param_" + (*arg_iter)->get_name());
+                 "function_" + service_name + fn_name + ":param_" + (*arg_iter)->get_name());
     }
     // end of node
     f_out_ << "\"];" << endl;
@@ -324,8 +324,8 @@ void t_gv_generator::generate_service(t_service* tservice) {
       vector<t_field*> excepts = (*fn_iter)->get_xceptions()->get_members();
       vector<t_field*>::iterator ex_iter = excepts.begin();
       for (; ex_iter != excepts.end(); ex_iter++) {
-        edges.push_back("function_" + fn_name + " -> " + (*ex_iter)->get_type()->get_name()
-                        + " [color=red]");
+        edges.push_back("function_" + service_name + fn_name + " -> "
+                        + (*ex_iter)->get_type()->get_name() + " [color=red]");
       }
     }
   }

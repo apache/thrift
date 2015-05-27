@@ -40,6 +40,10 @@ namespace Thrift.Server
     private object clientLock;
     private Thread workerThread;
 
+    public int ClientThreadsCount  {
+        get { return clientThreads.Count; }
+    }
+
     public TThreadedServer(TProcessor processor, TServerTransport serverTransport)
       : this(processor, serverTransport,
          new TTransportFactory(), new TTransportFactory(),
@@ -120,11 +124,7 @@ namespace Thrift.Server
         }
         catch (TTransportException ttx)
         {
-          if (stop)
-          {
-            logDelegate("TThreadPoolServer was shutting down, caught " + ttx);
-          }
-          else
+          if (!stop || ttx.Type != TTransportException.ExceptionType.Interrupted)
           {
             ++failureCount;
             logDelegate(ttx.ToString());
@@ -202,7 +202,7 @@ namespace Thrift.Server
               connectionContext = serverEventHandler.createContext(inputProtocol, outputProtocol);
 
             //Process client requests until client disconnects
-            while (true)
+            while (!stop)
             {
               if (!inputTransport.Peek())
                 break;

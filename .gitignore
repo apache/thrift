@@ -31,6 +31,7 @@ Makefile.in
 aclocal.m4
 acinclude.m4
 autom4te.cache
+cmake-*
 node_modules
 compile
 test-driver
@@ -55,6 +56,7 @@ test-driver
 /compiler/cpp/thrift
 /compiler/cpp/thriftl.cc
 /compiler/cpp/thrifty.cc
+/compiler/cpp/lex.yythriftl.cc
 /compiler/cpp/thrifty.h
 /compiler/cpp/thrifty.hh
 /compiler/cpp/version.h
@@ -97,6 +99,8 @@ test-driver
 /lib/cpp/test/TFileTransportTest
 /lib/cpp/test/TNonblockingServerTest
 /lib/cpp/test/TPipedTransportTest
+/lib/cpp/test/TServerIntegrationTest
+/lib/cpp/test/TSocketInterruptTest
 /lib/cpp/test/TransportTest
 /lib/cpp/test/UnitTests
 /lib/cpp/test/ZlibTest
@@ -217,8 +221,9 @@ test-driver
 /libtool
 /ltmain.sh
 /missing
+/node_modules/
 /stamp-h1
-/test/status.html
+/test/results.json
 /test/c_glib/test_client
 /test/c_glib/test_server
 /test/cpp/StressTest

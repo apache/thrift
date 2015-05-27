@@ -17,17 +17,14 @@
 # under the License.
 #
 
-
-cmake_minimum_required(VERSION 2.8)
-
 # Find required packages
 if(WITH_BOOSTTHREADS)
   find_package(Boost 1.53.0 REQUIRED COMPONENTS system thread)
 else()
   find_package(Boost 1.53.0 REQUIRED)
 endif()
-include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 
+include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 include_directories(src)
 
 # SYSLIBS contains libraries that need to be linked to all lib targets
@@ -35,12 +32,14 @@ set(SYSLIBS "")
 
 # Create the thrift C++ library
 set( thriftcpp_SOURCES
-   src/thrift/Thrift.cpp
    src/thrift/TApplicationException.cpp
+   src/thrift/TOutput.cpp
    src/thrift/VirtualProfiling.cpp
+   src/thrift/async/TAsyncChannel.cpp
    src/thrift/concurrency/ThreadManager.cpp
    src/thrift/concurrency/TimerManager.cpp
    src/thrift/concurrency/Util.cpp
+   src/thrift/processor/PeekProcessor.cpp
    src/thrift/protocol/TDebugProtocol.cpp
    src/thrift/protocol/TDenseProtocol.cpp
    src/thrift/protocol/TJSONProtocol.cpp
@@ -57,16 +56,16 @@ set( thriftcpp_SOURCES
    src/thrift/transport/TServerSocket.cpp
    src/thrift/transport/TTransportUtils.cpp
    src/thrift/transport/TBufferTransports.cpp
+   src/thrift/server/TConnectedClient.cpp
    src/thrift/server/TServer.cpp
+   src/thrift/server/TServerFramework.cpp
    src/thrift/server/TSimpleServer.cpp
    src/thrift/server/TThreadPoolServer.cpp
    src/thrift/server/TThreadedServer.cpp
-   src/thrift/async/TAsyncChannel.cpp
-   src/thrift/processor/PeekProcessor.cpp
 )
 
 # This files don't work on Windows CE as there is no pipe support
-# TODO: This files won't work with UNICODE support on windows. If fixed this can be re-added.
+# TODO: These files won't work with UNICODE support on windows. If fixed this can be re-added.
 if (NOT WINCE)
     list(APPEND thriftcpp_SOURCES
        src/thrift/transport/TPipe.cpp
@@ -104,7 +103,6 @@ endif()
 
 # WITH_*THREADS selects which threading library to use
 if(WITH_BOOSTTHREADS)
-    add_definitions("-DUSE_BOOST_THREAD=1")
     set( thriftcpp_threads_SOURCES
         src/thrift/concurrency/BoostThreadFactory.cpp
         src/thrift/concurrency/BoostMonitor.cpp
@@ -119,7 +117,6 @@ elseif(UNIX AND NOT WITH_STDTHREADS)
         src/thrift/concurrency/Monitor.cpp
     )
 else()
-    add_definitions("-DUSE_STD_THREAD=1")
     if(UNIX)
         # need pthread for multi-thread support
         list(APPEND SYSLIBS pthread)
@@ -162,6 +159,7 @@ if(WITH_LIBEVENT)
 
     ADD_LIBRARY_THRIFT(thriftnb ${thriftcppnb_SOURCES})
     TARGET_LINK_LIBRARIES_THRIFT(thriftnb ${SYSLIBS} ${LIBEVENT_LIBRARIES})
+    TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftnb thrift)
 endif()
 
 if(WITH_ZLIB)
@@ -170,14 +168,15 @@ if(WITH_ZLIB)
 
     ADD_LIBRARY_THRIFT(thriftz ${thriftcppz_SOURCES})
     TARGET_LINK_LIBRARIES_THRIFT(thriftz ${SYSLIBS} ${ZLIB_LIBRARIES})
+    TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftz thrift)
 endif()
 
 if(WITH_QT4)
-    cmake_minimum_required(VERSION 2.8.12)
     set(CMAKE_AUTOMOC ON)
     find_package(Qt4 REQUIRED COMPONENTS QtCore QtNetwork)
     ADD_LIBRARY_THRIFT(thriftqt ${thriftcppqt_SOURCES})
     TARGET_LINK_LIBRARIES_THRIFT(thriftqt ${SYSLIBS} Qt4::QtCore Qt4::QtNetwork)
+    TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftqt thrift)
 endif()
 
 if(WITH_QT5)
@@ -188,6 +187,8 @@ endif()
 if(MSVC)
     add_definitions("-DUNICODE -D_UNICODE")
 endif()
+
+add_definitions("-D__STDC_LIMIT_MACROS")
 
 # Install the headers
 install(DIRECTORY "src/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
