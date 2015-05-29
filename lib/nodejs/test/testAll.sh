@@ -71,6 +71,7 @@ TESTOK=0
 #generating thrift code
 
 ${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test/ThriftTest.thrift
+${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test/JsDeepConstructorTest.thrift
 
 #unit tests
 
