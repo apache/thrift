@@ -17,8 +17,7 @@
  * under the License.
  */
 
-#![crate_name="calculator"]
-#![crate_type="bin"]
+#![feature(buf_stream)]
 
 extern crate thrift;
 
@@ -40,10 +39,10 @@ fn run_client(client: &mut tutorial::CalculatorClient) {
     println!("1 + 1 = {}", client.add(1, 1).ok().unwrap());
 
     // Work: divide
-    let work = tutorial::Work { 
-      op: tutorial::Operation::DIVIDE, 
-      num1: 1, 
-      num2: 0, 
+    let work = tutorial::Work {
+      op: tutorial::Operation::DIVIDE,
+      num1: 1,
+      num2: 0,
       comment: None };
 
     match client.calculate(1, work) {
@@ -57,10 +56,10 @@ fn run_client(client: &mut tutorial::CalculatorClient) {
     }
 
     // Work: subtract
-    let work = tutorial::Work { 
-        op: tutorial::Operation::SUBTRACT, 
-        num1: 15, 
-        num2: 10, 
+    let work = tutorial::Work {
+        op: tutorial::Operation::SUBTRACT,
+        num1: 15,
+        num2: 10,
         comment: None };
     println!("15 - 10 = {}", client.calculate(1, work).ok().unwrap());
 

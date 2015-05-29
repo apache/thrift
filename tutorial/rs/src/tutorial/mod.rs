@@ -98,7 +98,7 @@ impl Writeable for Work {
       }
       _ => {}
     }
-
+    
     try!(oprot.write_field_stop(transport));
     try!(oprot.write_struct_end(transport));
     Ok(())
@@ -130,7 +130,7 @@ impl Readable for Work {
           self.op = try!(ProtocolHelpers::read_enum(iprot, transport));
           have_result = true;
         }
-        /*
+        /* FIXME
         (_, Type::TString, 4) => {
           self.comment = Some(try!(iprot.read_string(transport)));
           have_result = true;
@@ -395,7 +395,7 @@ impl Readable for CalculatorCalculateResult {
           self.success = try!(iprot.read_i32(transport));
           have_result = true;
         }
-        /*
+        /* FIXME
         (_, Type::TStruct, 1) => {
           try!(self.ouch.read(iprot, transport));
           have_result = true;
