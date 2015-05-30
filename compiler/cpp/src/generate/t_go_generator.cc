@@ -97,6 +97,8 @@ public:
 
     iter = parsed_options.find("read_write_private");
     read_write_private_ = (iter != parsed_options.end());
+    iter = parsed_options.find("ignore_initialisms");
+    ignore_initialisms_ = (iter != parsed_options.end());    
   }
 
   /**
@@ -282,6 +284,7 @@ private:
   std::string gen_package_prefix_;
   std::string gen_thrift_import_;
   bool read_write_private_;
+  bool ignore_initialisms_;
 
   /**
    * File streams
@@ -429,7 +432,7 @@ std::string t_go_generator::camelcase(const std::string& value) const {
       }
       std::string word = value2.substr(i, value2.find('_', i));
       std::transform(word.begin(), word.end(), word.begin(), ::toupper);
-      if (commonInitialisms.find(word) != commonInitialisms.end()) {
+      if (!ignore_initialisms_ && commonInitialisms.find(word) != commonInitialisms.end()) {
         value2.replace(i, word.length(), word);
       }
     }
