@@ -20,4 +20,5 @@
 struct InitialismsTest {
     1: string user_id,
     2: string server_url,
+    3: string id, 
 }
