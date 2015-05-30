@@ -28,7 +28,10 @@ gen-haxe/thrift/test/ThriftTest.hx: $(THRIFTTEST)
 
 all-local: $(BIN_CPP)
 
-$(BIN_CPP):    gen-haxe/thrift/test/ThriftTest.hx
+$(BIN_CPP): \
+		src/*.hx \
+		../../lib/haxe/src/org/apache/thrift/**/*.hx \
+		gen-haxe/thrift/test/ThriftTest.hx
 	$(HAXE) --cwd .  cpp.hxml
 
 
@@ -39,7 +42,7 @@ $(BIN_CPP):    gen-haxe/thrift/test/ThriftTest.hx
 #    $(HAXE)  --cwd .  javascript
 #    $(HAXE)  --cwd .  neko
 #    $(HAXE)  --cwd .  php
-#    $(HAXE)  --cwd .  python  # needs Haxe 3.1.4
+#    $(HAXE)  --cwd .  python  # needs Haxe 3.2.0
 
 
 clean-local:
