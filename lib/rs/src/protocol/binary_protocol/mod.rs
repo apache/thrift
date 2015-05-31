@@ -26,7 +26,7 @@ use podio::{ReadPodExt, WritePodExt, BigEndian};
 
 static BINARY_PROTOCOL_VERSION_1: u16 = 0x8001;
 
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct BinaryProtocol;
 
 impl BinaryProtocol {
@@ -276,7 +276,7 @@ impl Protocol for BinaryProtocol {
             Type::TI64 => { try!(self.read_i64(transport)); }
             Type::TDouble => { try!(self.read_double(transport)); }
             Type::TString => { try!(self.read_binary(transport)); }
-            Type::TStruct => { 
+            Type::TStruct => {
                 try!(self.read_struct_begin(transport));
                 loop {
                     let (_, field_type, _) = try!(self.read_field_begin(transport));

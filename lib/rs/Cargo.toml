@@ -5,4 +5,4 @@ version = "0.0.1"
 authors = ["Simon Génier <s@simon.coffee>", "Maxim Golov <maxim.golov@gmail.com>"]
 
 [dependencies]
-podio = "0.0"
+podio = "0.1"

@@ -23,7 +23,7 @@ use ThriftErr;
 
 pub mod binary_protocol;
 
-#[derive(Copy, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Type {
     TStop = 0x00,
     TVoid = 0x01,
@@ -61,7 +61,7 @@ impl Type {
     }
 }
 
-#[derive(Copy, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum MessageType {
     MtCall = 0x01,
     MtReply = 0x02,
@@ -181,10 +181,10 @@ impl ProtocolHelpers {
         }
     }
 
-    pub fn send<W: Writeable>(protocol: &Protocol, 
+    pub fn send<W: Writeable>(protocol: &Protocol,
                           transport: &mut Transport,
-                          name: &str, 
-                          _type: MessageType, 
+                          name: &str,
+                          _type: MessageType,
                           args: &W) -> TResult<()> {
 
         let cseqid: i32 = 0;
@@ -197,9 +197,9 @@ impl ProtocolHelpers {
         Ok(())
     }
 
-    pub fn receive<R: Readable>(protocol: &Protocol, 
-                            transport: &mut Transport, 
-                            op: &'static str, 
+    pub fn receive<R: Readable>(protocol: &Protocol,
+                            transport: &mut Transport,
+                            op: &'static str,
                             result: &mut R) -> TResult<()> {
 
         match try!(protocol.read_message_begin(transport)) {
@@ -210,7 +210,7 @@ impl ProtocolHelpers {
                 //x.read(&mut protocol)
                 //protocol.read_message_end();
                 //transport.read_end();
-                //throw x     
+                //throw x
                 Err(ThriftErr::Exception)
             }
             (fname, MessageType::MtReply, _) => {

@@ -1,4 +1,5 @@
-#![feature(core)]
+#![feature(buf_stream)]
+
 extern crate podio;
 
 pub use protocol::Protocol;
@@ -7,7 +8,7 @@ pub use transport::Transport;
 pub mod protocol;
 pub mod transport;
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Debug)]
 pub enum ThriftErr {
     TransportError(std::io::Error),
     UnknownProtocol,
@@ -22,10 +23,10 @@ pub enum ThriftErr {
     ProtocolError,
 }
 
-impl std::error::FromError<std::io::Error> for ThriftErr {
-	fn from_error(err: std::io::Error) -> ThriftErr {
-		ThriftErr::TransportError(err)
-	}
+impl std::convert::From<std::io::Error> for ThriftErr {
+    fn from(err: std::io::Error) -> ThriftErr {
+        ThriftErr::TransportError(err)
+    }
 }
 
 pub type TResult<T> = Result<T, ThriftErr>;
