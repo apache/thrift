@@ -700,7 +700,6 @@ class TCompactProtocol implements TProtocol {
         try
         {
             return tcompactTypeToType[type];
-            throw "fuck";
         }
         catch ( e : Dynamic)
         {

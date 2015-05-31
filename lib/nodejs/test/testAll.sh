@@ -75,6 +75,7 @@ ${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test
 #unit tests
 
 node ${DIR}/binary.test.js || TESTOK=1
+node ${DIR}/deep-constructor.test.js || TESTOK=1
 
 #integration tests
 
