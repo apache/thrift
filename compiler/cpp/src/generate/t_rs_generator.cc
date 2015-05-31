@@ -537,6 +537,7 @@ void t_rs_generator::generate_service_client_impl(t_service* tservice) {
   string impl_name = tservice->get_name() + "ClientImpl";
 
   indent(f_mod_) << "#[allow(dead_code)]\n";
+  indent(f_mod_) << "#[derive(Debug)]\n";
   indent(f_mod_) << "pub struct " << impl_name << "<P: Protocol, T: Transport> {\n";
   indent_up();
     indent(f_mod_) << "pub protocol: P,\n";

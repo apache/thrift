@@ -126,6 +126,7 @@ if test "$enable_libs" = "no"; then
   with_d="no"
   with_nodejs="no"
   with_lua="no"
+  with_rust="no"
 fi
 
 
@@ -342,6 +343,18 @@ if test "$with_d" = "yes";  then
     have_d="yes"
   fi
 fi
+
+AX_THRIFT_LIB(rust, [Rust], yes)
+have_rust=no
+if test "$with_rust" = "yes"; then
+  AC_PATH_PROG([RUSTC], [rustc])
+  AC_PATH_PROG([CARGO], [cargo])
+  if test "x$RUSTC" != "x" -a "x$CARGO" != "x"; then
+    have_rust="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_RUST, [test "$have_rust" = "yes"])
+AM_CONDITIONAL(HAVE_CARGO, [test "x$CARGO" != "x"])
 
 # Determine actual name of the generated D library for use in the command line
 # when compiling tests. This is needed because the -l<lib> syntax doesn't work
@@ -719,6 +732,7 @@ echo "Building Go Library .......... : $have_go"
 echo "Building D Library ........... : $have_d"
 echo "Building NodeJS Library ...... : $have_nodejs"
 echo "Building Lua Library ......... : $have_lua"
+echo "Building Rust Library ........ : $have_rust"
 
 if test "$have_cpp" = "yes" ; then
   echo
@@ -798,6 +812,12 @@ if test "$have_lua" = "yes" ; then
   echo
   echo "Lua Library:"
   echo "   Using Lua .............. : $LUA"
+fi
+if test "$have_rust" = "yes" ; then
+  echo
+  echo "Rust Library:"
+  echo "   Using Rust ................ : $RUSTC"
+  echo "   Using Cargo ............... : $CARGO"
 fi
 echo
 echo "If something is missing that you think should be present,"
