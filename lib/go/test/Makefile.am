@@ -70,7 +70,8 @@ check: gopath
 				errortest	\
 				namestest \
 				initialismstest \
-				dontexportrwtest
+				dontexportrwtest \
+				ignoreinitialismstest
 	GOPATH=`pwd`/gopath $(GO) test thrift tests dontexportrwtest
 
 clean-local:

@@ -26,7 +26,10 @@ all-local: bin/Main-debug
 
 check: gen-haxe/tutorial/calculator.hx
 
-bin/Main-debug:    gen-haxe/tutorial/calculator.hx
+bin/Main-debug: \
+		src/*.hx \
+		../../lib/haxe/src/org/apache/thrift/**/*.hx \
+		gen-haxe/tutorial/calculator.hx
 	$(HAXE) --cwd .  cpp.hxml
 
 tutorialserver: all

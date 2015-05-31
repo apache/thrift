@@ -92,8 +92,8 @@ class TestResults {
 
     public function PrintSummary() : Void {
         var total = successCnt + errorCnt;
-        var sp = (100 * successCnt) / total;
-        var ep = (100 * errorCnt) / total;
+        var sp = Math.round((1000 * successCnt) / total) / 10;
+        var ep = Math.round((1000 * errorCnt) / total) / 10;
 
         trace('===========================');
         trace('Tests executed    $total');
@@ -134,17 +134,17 @@ class TestClient {
                 exitCode = rslt.CalculateExitCode();
             }
 
-            difft = Timer.stamp() - difft;
+            difft = Math.round( 1000 * (Timer.stamp() - difft)) / 1000;
             trace('total test time: $difft seconds');
         }
         catch (e : TException)
         {
-            trace('$e');
+            trace('TException: $e');
             exitCode = 0xFF;
         }
         catch (e : Dynamic)
         {
-            trace('$e');
+            trace('Exception: $e');
             exitCode = 0xFF;
         }
 
@@ -219,10 +219,12 @@ class TestClient {
             protocol = new TCompactProtocol(transport);
         }
 
-
-        // run the test code
+        // some quick and basic unit tests
         HaxeBasicsTest( args, rslt);
         ModuleUnitTests( args, rslt);
+
+        // now run the test code
+        trace('- ${args.numIterations} iterations');
         for( i in 0 ... args.numIterations) {
             ClientTest( transport, protocol, args, rslt);
         }
@@ -249,6 +251,9 @@ class TestClient {
         map64.set( Int64.neg(Int64.make(0,517)), 23);
         map32.set( 0, -123);
         map64.set( Int64.make(0,0), -123);
+
+        //trace('map32 = $map32');
+        //trace('map64 = $map64');
 
         rslt.Expect( map32.keys().hasNext() == map64.keys().hasNext(), "Int64Map<Int32> Test #10");
         rslt.Expect( map32.exists( 4711) == map64.exists( Int64.make(47,11)), "Int64Map<Int32> Test #11");
@@ -385,12 +390,12 @@ class TestClient {
         }
         catch (e : TException)
         {
-            trace('$e');
+            rslt.Expect( false, 'unable to open transport: $e');
             return;
         }
         catch (e : Dynamic)
         {
-            trace('$e');
+            rslt.Expect( false, 'unable to open transport: $e');
             return;
         }
 
@@ -726,10 +731,14 @@ class TestClient {
         var pos = mm.get(4);
         var neg = mm.get(-4);
         rslt.Expect( (pos != null) && (neg != null), "(pos != null) && (neg != null)");
-        for (i in 0 ... 5) {
+        for (i in 1 ... 5) {
             rslt.Expect( pos.get(i) == i, 'pos.get($i) == $i');
             rslt.Expect( neg.get(-i) == -i, 'neg.get(-$i) == -$i');
-         }
+        }
+        rslt.Expect( ! pos.exists(0), '!pos.exists(0)');
+        rslt.Expect( ! neg.exists(-0), '!neg.exists(-0)');
+        rslt.Expect( ! pos.exists(42), '!pos.exists(42)');
+        rslt.Expect( ! neg.exists(-42), '!neg.exists(-42)');
 
 
         rslt.StartTestGroup( TestResults.EXITCODE_FAILBIT_STRUCTS);
@@ -877,7 +886,7 @@ class TestClient {
             for ( k in 0 ... 1000) {
                 client.testVoid();
             }
-            difft = Timer.stamp() - difft;
+            difft = Math.round( 1000 * (Timer.stamp() - difft)) / 1000;
             trace('$difft ms per testVoid() call');
         }
     }
