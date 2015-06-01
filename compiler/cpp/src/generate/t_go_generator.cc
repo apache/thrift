@@ -97,6 +97,9 @@ public:
 
     iter = parsed_options.find("read_write_private");
     read_write_private_ = (iter != parsed_options.end());
+
+    iter = parsed_options.find("ignore_initialisms");
+    ignore_initialisms_ = (iter != parsed_options.end());
   }
 
   /**
@@ -282,6 +285,7 @@ private:
   std::string gen_package_prefix_;
   std::string gen_thrift_import_;
   bool read_write_private_;
+  bool ignore_initialisms_;
 
   /**
    * File streams
@@ -441,10 +445,12 @@ std::string t_go_generator::camelcase(const std::string& value) const {
 // Checks to see if the word starting at i in value contains a common initialism
 // and if so replaces it with the upper case version of the word.
 void t_go_generator::fix_common_initialism(std::string& value, int i) const {
-  std::string word = value.substr(i, value.find('_', i));
-  std::transform(word.begin(), word.end(), word.begin(), ::toupper);
-  if (commonInitialisms.find(word) != commonInitialisms.end()) {
-    value.replace(i, word.length(), word);
+  if (!ignore_initialisms_) {
+    std::string word = value.substr(i, value.find('_', i));
+    std::transform(word.begin(), word.end(), word.begin(), ::toupper);
+    if (commonInitialisms.find(word) != commonInitialisms.end()) {
+      value.replace(i, word.length(), word);
+    }
   }
 }
 
@@ -3574,5 +3580,7 @@ THRIFT_REGISTER_GENERATOR(go, "Go",
                           "    package_prefix=  Package prefix for generated files.\n" \
                           "    thrift_import=   Override thrift package import path (default:" + default_thrift_import + ")\n" \
                           "    package=         Package name (default: inferred from thrift file name)\n" \
+                          "    ignore_initialisms\n"
+                          "                     Disable automatic spelling correction of initialisms (e.g. \"URL\")\n" \
                           "    read_write_private\n"
                           "                     Make read/write methods private, default is public Read/Write\n")
