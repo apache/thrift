@@ -5,5 +5,13 @@ version = "0.0.1"
 authors = ["Simon Génier <s@simon.coffee>", "Maxim Golov <maxim.golov@gmail.com>"]
 build = "build.rs"
 
+[[bin]]
+name = "client"
+path = "src/client.rs"
+
+[[bin]]
+name = "server"
+path = "src/server.rs"
+
 [dependencies.thrift]
 path = "../../lib/rs"

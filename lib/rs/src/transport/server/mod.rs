@@ -17,22 +17,9 @@
  * under the License.
  */
 
-use std::io::prelude::*;
+use std::net::TcpListener;
 
-pub mod tcp_transport;
-pub mod server;
-
-pub trait TransportFactory<T: Transport> {
-    fn new_protocol(&self) -> T;
+pub trait ServerTransport {
 }
 
-impl<F, T: Transport> TransportFactory<T> for F where F: Fn() -> T {
-    fn new_protocol(&self) -> T {
-        (*self)()
-    }
-}
-
-pub trait Transport : Write + Read { }
-
-#[cfg(test)]
-pub mod test;
+impl ServerTransport for TcpListener {}

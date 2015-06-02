@@ -23,6 +23,16 @@ use ThriftErr;
 
 pub mod binary_protocol;
 
+pub trait ProtocolFactory<P: Protocol> {
+    fn new_protocol(&self) -> P;
+}
+
+impl<F, P: Protocol> ProtocolFactory<P> for F where F: Fn() -> P {
+    fn new_protocol(&self) -> P {
+        (*self)()
+    }
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Type {
     TStop = 0x00,

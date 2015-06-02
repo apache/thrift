@@ -52,6 +52,7 @@ impl Operation {
 pub type MyInteger = i32;
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct Work {
   pub num1: i32,
   pub num2: i32,
@@ -148,6 +149,7 @@ impl Readable for Work {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct InvalidOperation {
   pub what: i32,
   pub why: String,
@@ -217,6 +219,7 @@ impl Readable for InvalidOperation {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct CalculatorPingArgs;
 
 impl Writeable for CalculatorPingArgs {
@@ -234,6 +237,7 @@ impl Writeable for CalculatorPingArgs {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct CalculatorPingResult;
 
 impl CalculatorPingResult {
@@ -267,6 +271,7 @@ impl Readable for CalculatorPingResult {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct CalculatorAddArgs {
   pub num1: i32,
   pub num2: i32,
@@ -295,6 +300,7 @@ impl Writeable for CalculatorAddArgs {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct CalculatorAddResult {
   pub success: i32,
 }
@@ -336,6 +342,7 @@ impl Readable for CalculatorAddResult {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct CalculatorCalculateArgs {
   pub logid: i32,
   pub w: Work,
@@ -364,6 +371,7 @@ impl Writeable for CalculatorCalculateArgs {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct CalculatorCalculateResult {
   pub success: i32,
   pub ouch: Option<InvalidOperation>,
@@ -413,6 +421,7 @@ impl Readable for CalculatorCalculateResult {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct CalculatorZipArgs;
 
 impl Writeable for CalculatorZipArgs {
@@ -453,6 +462,7 @@ pub trait CalculatorClient : SharedServiceClient {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct CalculatorClientImpl<P: Protocol, T: Transport> {
   pub protocol: P,
   pub transport: T,

@@ -359,6 +359,7 @@ void t_rs_generator::generate_field_declaration(t_field* tfield) {
 void t_rs_generator::generate_struct_declaration(t_struct* tstruct) {
   string struct_name = pascalcase(tstruct->get_name());
   indent(f_mod_) << "#[allow(dead_code)]\n";
+  indent(f_mod_) << "#[derive(Debug)]\n";
   // FIXME: no Hash for structs due to floats, maps and sets
   //indent(f_mod_) << "#[derive(PartialEq,Eq,Hash)]\n";
   if (tstruct->get_members().empty()) {

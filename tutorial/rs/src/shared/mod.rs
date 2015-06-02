@@ -21,6 +21,7 @@ use thrift::protocol::FromNum;
 
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct SharedStruct {
   pub key: i32,
   pub value: String,
@@ -90,6 +91,7 @@ impl Readable for SharedStruct {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct SharedServiceGetStructArgs {
   pub key: i32,
 }
@@ -113,6 +115,7 @@ impl Writeable for SharedServiceGetStructArgs {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct SharedServiceGetStructResult {
   pub success: SharedStruct,
 }
@@ -162,6 +165,7 @@ pub trait SharedServiceClient {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct SharedServiceClientImpl<P: Protocol, T: Transport> {
   pub protocol: P,
   pub transport: T,

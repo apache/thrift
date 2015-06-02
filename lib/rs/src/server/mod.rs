@@ -17,22 +17,6 @@
  * under the License.
  */
 
-use std::io::prelude::*;
+pub mod simple_server;
 
-pub mod tcp_transport;
-pub mod server;
-
-pub trait TransportFactory<T: Transport> {
-    fn new_protocol(&self) -> T;
-}
-
-impl<F, T: Transport> TransportFactory<T> for F where F: Fn() -> T {
-    fn new_protocol(&self) -> T {
-        (*self)()
-    }
-}
-
-pub trait Transport : Write + Read { }
-
-#[cfg(test)]
-pub mod test;
+pub use self::simple_server::SimpleServer;
