@@ -17,8 +17,6 @@
  * under the License.
  */
 
-#![feature(buf_stream)]
-
 extern crate thrift;
 
 mod tutorial;
@@ -26,7 +24,6 @@ mod shared;
 
 use std::net;
 use std::str::FromStr;
-use std::io::BufStream;
 use std::collections::HashMap;
 
 use thrift::protocol::binary_protocol::BinaryProtocol;
@@ -76,11 +73,6 @@ impl CalculatorIf for CalculatorHandler {
     }
 }
 
-
-fn construct_transport() -> std::io::BufStream<net::TcpStream> {
-    unimplemented!()
-}
-
 fn construct_protocol() -> BinaryProtocol {
     BinaryProtocol
 }
@@ -92,8 +84,7 @@ pub fn main() {
     let addr: net::SocketAddr = FromStr::from_str("127.0.0.1:9090").ok()
         .expect("bad server address");
     let server_transport = net::TcpListener::bind(addr).unwrap();
-    let mut server = SimpleServer::new(processor, server_transport,
-                                   construct_transport, construct_protocol);
+    let mut server = SimpleServer::new(processor, server_transport, construct_protocol);
 
     println!("Starting the server...");
     server.serve();
@@ -103,8 +94,8 @@ pub fn main() {
 // TO BE GENERATED
 
 use thrift::TResult;
-use thrift::protocol::{Protocol, ProtocolHelpers};
-use thrift::protocol::{MessageType};
+use thrift::transport::Transport;
+use thrift::protocol::{Protocol, ProtocolHelpers, MessageType};
 use tutorial::{CalculatorPingArgs, CalculatorPingResult};
 use tutorial::{CalculatorAddArgs, CalculatorAddResult};
 
@@ -114,19 +105,12 @@ trait CalculatorIf {
     fn calculate(&mut self, log_id: i32, work: &Work) -> i32;
 }
 
-struct CalculatorProcessor<T> {
+struct CalculatorProcessor<T: CalculatorIf> {
     iface: T
 }
 
-impl<T: CalculatorIf> CalculatorProcessor<T> {
-    fn new(iface: T) -> Self {
-        CalculatorProcessor { iface: iface }
-    }
-}
-
-impl<T: CalculatorIf> Processor<BinaryProtocol, BinaryProtocol> for CalculatorProcessor<T> {
-    fn process(&mut self, in_prot: &mut BinaryProtocol, _: &mut BinaryProtocol,
-               transport: &mut net::TcpStream) -> TResult<()> {
+impl<I: CalculatorIf, P1: Protocol, P2: Protocol, T: Transport> Processor<P1, P2, T> for CalculatorProcessor<I> {
+    fn process(&mut self, in_prot: &mut P1, _: &mut P2, transport: &mut T) -> TResult<()> {
         let (name, ty, id) = try!(in_prot.read_message_begin(transport));
         match &*name {
             "ping" => self.ping(in_prot, transport, ty, id),
@@ -136,10 +120,14 @@ impl<T: CalculatorIf> Processor<BinaryProtocol, BinaryProtocol> for CalculatorPr
     }
 }
 
-impl<T: CalculatorIf> CalculatorProcessor<T> {
+impl<I: CalculatorIf> CalculatorProcessor<I> {
+    fn new(iface: I) -> Self {
+        CalculatorProcessor { iface: iface }
+    }
+
     #[allow(non_snake_case)]
-    fn ping(&mut self, in_prot: &mut BinaryProtocol, transport: &mut net::TcpStream,
-            ty: MessageType, id: i32) -> TResult<()> {
+    fn ping<P1: Protocol, T: Transport>(&mut self, in_prot: &mut P1, transport: &mut T,
+                                        ty: MessageType, id: i32) -> TResult<()> {
         let mut args = CalculatorPingArgs;
         try!(ProtocolHelpers::receive_body(in_prot, transport, "ping", &mut args, "ping", ty, id));
 
@@ -150,8 +138,8 @@ impl<T: CalculatorIf> CalculatorProcessor<T> {
     }
 
     #[allow(non_snake_case)]
-    fn add(&mut self, in_prot: &mut BinaryProtocol, transport: &mut net::TcpStream,
-            ty: MessageType, id: i32) -> TResult<()> {
+    fn add<P1: Protocol, T: Transport>(&mut self, in_prot: &mut P1, transport: &mut T,
+                                       ty: MessageType, id: i32) -> TResult<()> {
         let mut args = CalculatorAddArgs::new();
         try!(ProtocolHelpers::receive_body(in_prot, transport, "add", &mut args, "add", ty, id));
 

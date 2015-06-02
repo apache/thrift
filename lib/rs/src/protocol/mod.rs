@@ -23,11 +23,15 @@ use ThriftErr;
 
 pub mod binary_protocol;
 
-pub trait ProtocolFactory<P: Protocol> {
-    fn new_protocol(&self) -> P;
+pub trait ProtocolFactory {
+    type Output: Protocol;
+
+    fn new_protocol(&self) -> Self::Output;
 }
 
-impl<F, P: Protocol> ProtocolFactory<P> for F where F: Fn() -> P {
+impl<F, P: Protocol> ProtocolFactory for F where F: Fn() -> P {
+    type Output = P;
+
     fn new_protocol(&self) -> P {
         (*self)()
     }

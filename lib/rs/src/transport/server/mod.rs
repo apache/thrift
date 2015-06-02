@@ -22,10 +22,14 @@ use std::net::{TcpListener, TcpStream, SocketAddr};
 use super::Transport;
 
 pub trait ServerTransport {
-    fn accept(&self) -> io::Result<TcpStream>;
+    type Output: Transport;
+
+    fn accept(&self) -> io::Result<Self::Output>;
 }
 
 impl ServerTransport for TcpListener {
+    type Output = TcpStream;
+
     fn accept(&self) -> io::Result<TcpStream> {
         self.accept().map(|res| res.0)
     }

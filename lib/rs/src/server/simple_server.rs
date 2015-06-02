@@ -22,19 +22,18 @@ use transport::server::ServerTransport;
 use protocol::{Protocol, ProtocolFactory};
 use processor::Processor;
 
-pub struct SimpleServer<Proc, TF, PF, T, ST, P> {
+pub struct SimpleServer<Proc, PF, ST> {
     processor: Proc,
     protocol_factory: PF,
-    transport_factory: TF,
     server_transport: ST,
-    protocol: Option<P>,
-    transport: Option<T>
 }
 
-impl<Proc: Processor<P, P>, TF: TransportFactory<T>, PF: ProtocolFactory<P>, T: Transport, ST: ServerTransport, P: Protocol> SimpleServer<Proc, TF, PF, T, ST, P> {
-    pub fn new(processor: Proc, server_transport: ST, tf: TF, pf: PF) -> Self {
-        SimpleServer { processor: processor, protocol_factory: pf, transport_factory: tf,
-                       protocol: None, transport: None, server_transport: server_transport }
+impl<Proc, PF: ProtocolFactory, ST: ServerTransport> SimpleServer<Proc, PF, ST>
+    where Proc: Processor<PF::Output, PF::Output, ST::Output> {
+
+    pub fn new(processor: Proc, server_transport: ST, pf: PF) -> Self {
+        SimpleServer { processor: processor, protocol_factory: pf,
+                       server_transport: server_transport }
     }
 
     pub fn serve(&mut self) {
