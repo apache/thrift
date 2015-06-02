@@ -253,3 +253,12 @@ impl <P: Protocol, T: Transport> SharedServiceClient for SharedServiceClientImpl
 
 }
 
+pub trait SharedServiceIf {
+    #[allow(non_snake_case)]
+    fn getStruct(
+      &mut self,
+      key: i32,
+      ) -> SharedStruct;
+
+  }
+

@@ -753,3 +753,31 @@ impl <P: Protocol, T: Transport> SharedServiceClient for CalculatorClientImpl<P,
 
 }
 
+pub trait CalculatorIf : SharedServiceIf
+ {
+    #[allow(non_snake_case)]
+    fn ping(
+      &mut self,
+      ) -> ();
+
+    #[allow(non_snake_case)]
+    fn add(
+      &mut self,
+      num1: i32,
+      num2: i32,
+      ) -> i32;
+
+    #[allow(non_snake_case)]
+    fn calculate(
+      &mut self,
+      logid: i32,
+      w: Work,
+      ) -> i32;
+
+    #[allow(non_snake_case)]
+    fn zip(
+      &mut self,
+      ) -> ();
+
+  }
+

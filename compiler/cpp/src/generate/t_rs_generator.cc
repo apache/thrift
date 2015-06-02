@@ -78,6 +78,10 @@ class t_rs_generator : public t_oop_generator {
   void generate_service_client_impl(t_service* tservice);
   void generate_service_client_impl_functions(t_service* tservice, const string& impl_name);
 
+  void generate_service_interface_trait(t_service* tservice);
+  void generate_service_interface_trait_function(t_function* tfunction);
+  void generate_service_processor_impl(t_service* tservice);
+
   void generate_service_function(t_service* tservice, t_function* tfunction);
   void generate_function_helpers(t_service* tservice, t_function* tfunction);
   void generate_function_args(t_function* tfunction);
@@ -431,6 +435,9 @@ void t_rs_generator::generate_service(t_service* tservice) {
   generate_service_helpers(tservice);
   generate_service_client_trait(tservice);
   generate_service_client_impl(tservice);
+
+  generate_service_interface_trait(tservice);
+  generate_service_processor_impl(tservice);
 }
 
 void t_rs_generator::generate_service_helpers(t_service* tservice) {
@@ -637,6 +644,46 @@ void t_rs_generator::generate_function_helpers(t_service* tservice, t_function* 
   // FIXME: when implementing the server
   //result.set_name(tservice->get_name() + "_" + tfunction->get_name() + "_pesult");
   //generate_struct(&result);
+}
+
+void t_rs_generator::generate_service_interface_trait(t_service* tservice) {
+  string trait_name = tservice->get_name() + "If";
+  indent(f_mod_) << "pub trait " << trait_name;
+  indent_up();
+
+  string sep = " : ";
+  t_service* parent = tservice->get_extends();
+  while(parent) {
+    f_mod_ << sep << parent->get_name() << "If\n";
+    sep = ", ";
+    parent = parent->get_extends();
+  }
+
+  f_mod_ << " {\n";
+  indent_up();
+
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::const_iterator f_iter;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    generate_service_interface_trait_function(*f_iter);
+  }
+
+  indent_down();
+  indent(f_mod_) << "}\n\n";
+}
+
+void t_rs_generator::generate_service_interface_trait_function(t_function* tfunction) {
+  indent(f_mod_) << "#[allow(non_snake_case)]\n";
+  indent(f_mod_) << "fn " << tfunction->get_name() << "(\n";
+  indent_up();
+  indent(f_mod_) << "&mut self,\n";
+  generate_function_args(tfunction);
+  indent(f_mod_) << ") -> " << render_rs_type(tfunction->get_returntype()) << ";\n\n";
+  indent_down();
+}
+
+void t_rs_generator::generate_service_processor_impl(t_service* tservice) {
+  string impl_name = tservice->get_name() + "Processor";
 }
 
 void t_rs_generator::generate_struct_writer(t_struct* tstruct) {
