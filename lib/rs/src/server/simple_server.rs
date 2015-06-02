@@ -31,14 +31,22 @@ pub struct SimpleServer<Proc, TF, PF, T, ST, P> {
     transport: Option<T>
 }
 
-impl<Proc: Processor<P, P>, TF: TransportFactory<T>, PF: ProtocolFactory<P>, T: Transport, ST: ServerTransport, P: Protocol>
-    SimpleServer<Proc, TF, PF, T, ST, P> {
-
+impl<Proc: Processor<P, P>, TF: TransportFactory<T>, PF: ProtocolFactory<P>, T: Transport, ST: ServerTransport, P: Protocol> SimpleServer<Proc, TF, PF, T, ST, P> {
     pub fn new(processor: Proc, server_transport: ST, tf: TF, pf: PF) -> Self {
         SimpleServer { processor: processor, protocol_factory: pf, transport_factory: tf,
                        protocol: None, transport: None, server_transport: server_transport }
     }
 
-    pub fn serve(&self) {
+    pub fn serve(&mut self) {
+        loop {
+            let mut transport = self.server_transport.accept().unwrap();
+            let mut prot1 = self.protocol_factory.new_protocol();
+            let mut prot2 = self.protocol_factory.new_protocol();
+            loop {
+                if self.processor.process(&mut prot1, &mut prot2, &mut transport).is_err() {
+                    break;
+                }
+            }
+        }
     }
 }

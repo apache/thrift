@@ -37,6 +37,7 @@ fn run_client(client: &mut tutorial::CalculatorClient) {
 
     // Add
     println!("1 + 1 = {}", client.add(1, 1).ok().unwrap());
+    return;
 
     // Work: divide
     let work = tutorial::Work {

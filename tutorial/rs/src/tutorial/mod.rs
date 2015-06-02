@@ -222,6 +222,36 @@ impl Readable for InvalidOperation {
 #[derive(Debug)]
 pub struct CalculatorPingArgs;
 
+impl CalculatorPingArgs {
+  #[allow(dead_code)]
+  pub fn new() -> CalculatorPingArgs {
+    CalculatorPingArgs
+  }
+}
+
+impl Readable for CalculatorPingArgs {
+
+  #[allow(unused_mut)]
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let have_result = true;
+    try!(iprot.read_struct_begin(transport));
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, ftype, _) => {
+          try!(iprot.skip(transport, ftype));
+        }
+      }
+      try!(iprot.read_field_end(transport));
+    }
+    try!(iprot.read_struct_end(transport));
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
+}
+
 impl Writeable for CalculatorPingArgs {
 
   #[allow(unused_variables)]
@@ -270,11 +300,66 @@ impl Readable for CalculatorPingResult {
   }
 }
 
+impl Writeable for CalculatorPingResult {
+
+  #[allow(unused_variables)]
+  #[allow(dead_code)]
+  fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
+    try!(oprot.write_struct_begin(transport, "Calculator_ping_result"));
+
+    try!(oprot.write_field_stop(transport));
+    try!(oprot.write_struct_end(transport));
+    Ok(())
+  }
+
+}
+
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct CalculatorAddArgs {
   pub num1: i32,
   pub num2: i32,
+}
+
+impl CalculatorAddArgs {
+  #[allow(dead_code)]
+  pub fn new() -> CalculatorAddArgs {
+    CalculatorAddArgs {
+      num1: 0,
+      num2: 0,
+    }
+  }
+}
+
+impl Readable for CalculatorAddArgs {
+
+  #[allow(unused_mut)]
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let mut have_result = false;
+    try!(iprot.read_struct_begin(transport));
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, Type::TI32, 1) => {
+          self.num1 = try!(iprot.read_i32(transport));
+          have_result = true;
+        }
+        (_, Type::TI32, 2) => {
+          self.num2 = try!(iprot.read_i32(transport));
+          have_result = true;
+        }
+        (_, ftype, _) => {
+          try!(iprot.skip(transport, ftype));
+        }
+      }
+      try!(iprot.read_field_end(transport));
+    }
+    try!(iprot.read_struct_end(transport));
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
 }
 
 impl Writeable for CalculatorAddArgs {
@@ -341,11 +426,70 @@ impl Readable for CalculatorAddResult {
   }
 }
 
+impl Writeable for CalculatorAddResult {
+
+  #[allow(unused_variables)]
+  #[allow(dead_code)]
+  fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
+    try!(oprot.write_struct_begin(transport, "Calculator_add_result"));
+
+    try!(oprot.write_field_begin(transport, "success", Type::TI32, 0));
+    try!(oprot.write_i32(transport, self.success));
+    try!(oprot.write_field_end(transport));
+    
+    try!(oprot.write_field_stop(transport));
+    try!(oprot.write_struct_end(transport));
+    Ok(())
+  }
+
+}
+
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct CalculatorCalculateArgs {
   pub logid: i32,
   pub w: Work,
+}
+
+impl CalculatorCalculateArgs {
+  #[allow(dead_code)]
+  pub fn new() -> CalculatorCalculateArgs {
+    CalculatorCalculateArgs {
+      logid: 0,
+      w: Work::new(),
+    }
+  }
+}
+
+impl Readable for CalculatorCalculateArgs {
+
+  #[allow(unused_mut)]
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let mut have_result = false;
+    try!(iprot.read_struct_begin(transport));
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, Type::TI32, 1) => {
+          self.logid = try!(iprot.read_i32(transport));
+          have_result = true;
+        }
+        (_, Type::TStruct, 2) => {
+          try!(self.w.read(iprot, transport));
+          have_result = true;
+        }
+        (_, ftype, _) => {
+          try!(iprot.skip(transport, ftype));
+        }
+      }
+      try!(iprot.read_field_end(transport));
+    }
+    try!(iprot.read_struct_end(transport));
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
 }
 
 impl Writeable for CalculatorCalculateArgs {
@@ -420,9 +564,66 @@ impl Readable for CalculatorCalculateResult {
   }
 }
 
+impl Writeable for CalculatorCalculateResult {
+
+  #[allow(unused_variables)]
+  #[allow(dead_code)]
+  fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
+    try!(oprot.write_struct_begin(transport, "Calculator_calculate_result"));
+
+    try!(oprot.write_field_begin(transport, "success", Type::TI32, 0));
+    try!(oprot.write_i32(transport, self.success));
+    try!(oprot.write_field_end(transport));
+    
+    match self.ouch {
+      Some(ref x) => {
+        try!(oprot.write_field_begin(transport, "ouch", Type::TStruct, 1));
+        try!(x.write(oprot, transport));
+        try!(oprot.write_field_end(transport));
+      }
+      _ => {}
+    }
+    
+    try!(oprot.write_field_stop(transport));
+    try!(oprot.write_struct_end(transport));
+    Ok(())
+  }
+
+}
+
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct CalculatorZipArgs;
+
+impl CalculatorZipArgs {
+  #[allow(dead_code)]
+  pub fn new() -> CalculatorZipArgs {
+    CalculatorZipArgs
+  }
+}
+
+impl Readable for CalculatorZipArgs {
+
+  #[allow(unused_mut)]
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let have_result = true;
+    try!(iprot.read_struct_begin(transport));
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, ftype, _) => {
+          try!(iprot.skip(transport, ftype));
+        }
+      }
+      try!(iprot.read_field_end(transport));
+    }
+    try!(iprot.read_struct_end(transport));
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
+}
 
 impl Writeable for CalculatorZipArgs {
 

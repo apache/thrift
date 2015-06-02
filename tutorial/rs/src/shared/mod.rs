@@ -96,6 +96,42 @@ pub struct SharedServiceGetStructArgs {
   pub key: i32,
 }
 
+impl SharedServiceGetStructArgs {
+  #[allow(dead_code)]
+  pub fn new() -> SharedServiceGetStructArgs {
+    SharedServiceGetStructArgs {
+      key: 0,
+    }
+  }
+}
+
+impl Readable for SharedServiceGetStructArgs {
+
+  #[allow(unused_mut)]
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let mut have_result = false;
+    try!(iprot.read_struct_begin(transport));
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, Type::TI32, 1) => {
+          self.key = try!(iprot.read_i32(transport));
+          have_result = true;
+        }
+        (_, ftype, _) => {
+          try!(iprot.skip(transport, ftype));
+        }
+      }
+      try!(iprot.read_field_end(transport));
+    }
+    try!(iprot.read_struct_end(transport));
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
+}
+
 impl Writeable for SharedServiceGetStructArgs {
 
   #[allow(unused_variables)]
@@ -154,6 +190,24 @@ impl Readable for SharedServiceGetStructResult {
     try!(iprot.read_struct_end(transport));
     if have_result { Ok(()) } else { Err(ProtocolError) }
   }
+}
+
+impl Writeable for SharedServiceGetStructResult {
+
+  #[allow(unused_variables)]
+  #[allow(dead_code)]
+  fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
+    try!(oprot.write_struct_begin(transport, "SharedService_getStruct_result"));
+
+    try!(oprot.write_field_begin(transport, "success", Type::TStruct, 0));
+    try!(self.success.write(oprot, transport));
+    try!(oprot.write_field_end(transport));
+    
+    try!(oprot.write_field_stop(transport));
+    try!(oprot.write_struct_end(transport));
+    Ok(())
+  }
+
 }
 
 pub trait SharedServiceClient {

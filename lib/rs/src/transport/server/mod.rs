@@ -17,9 +17,16 @@
  * under the License.
  */
 
-use std::net::TcpListener;
+use std::io;
+use std::net::{TcpListener, TcpStream, SocketAddr};
+use super::Transport;
 
 pub trait ServerTransport {
+    fn accept(&self) -> io::Result<TcpStream>;
 }
 
-impl ServerTransport for TcpListener {}
+impl ServerTransport for TcpListener {
+    fn accept(&self) -> io::Result<TcpStream> {
+        self.accept().map(|res| res.0)
+    }
+}

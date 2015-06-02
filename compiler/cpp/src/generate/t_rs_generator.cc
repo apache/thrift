@@ -600,6 +600,8 @@ void t_rs_generator::generate_function_helpers(t_service* tservice, t_function* 
 
   ts->set_name(tservice->get_name() + "_" + tfunction->get_name() + "_args");
   generate_struct_declaration(ts);
+  generate_struct_ctor(ts);
+  generate_struct_reader(ts);
   generate_struct_writer(ts);
 
   // FIXME: when implementing the server
@@ -630,6 +632,7 @@ void t_rs_generator::generate_function_helpers(t_service* tservice, t_function* 
   generate_struct_declaration(&result);
   generate_struct_ctor(&result);
   generate_struct_reader(&result);
+  generate_struct_writer(&result);
 
   // FIXME: when implementing the server
   //result.set_name(tservice->get_name() + "_" + tfunction->get_name() + "_pesult");

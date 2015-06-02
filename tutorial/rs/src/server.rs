@@ -42,7 +42,7 @@ struct CalculatorHandler {
 }
 
 #[allow(dead_code)]
-impl CalculatorHandler {
+impl CalculatorIf for CalculatorHandler {
     fn ping(&self) {
         println!("ping()");
     }
@@ -91,8 +91,8 @@ pub fn main() {
 
     let addr: net::SocketAddr = FromStr::from_str("127.0.0.1:9090").ok()
         .expect("bad server address");
-    let server_transport = net::TcpListener::bind(addr).ok().expect("failed to connect");
-    let server = SimpleServer::new(processor, server_transport,
+    let server_transport = net::TcpListener::bind(addr).unwrap();
+    let mut server = SimpleServer::new(processor, server_transport,
                                    construct_transport, construct_protocol);
 
     println!("Starting the server...");
@@ -100,15 +100,64 @@ pub fn main() {
     println!("Done.");
 }
 
-struct CalculatorProcessor;
+// TO BE GENERATED
 
-impl CalculatorProcessor {
-    fn new(_: CalculatorHandler) -> Self {
-        CalculatorProcessor
+use thrift::TResult;
+use thrift::protocol::{Protocol, ProtocolHelpers};
+use thrift::protocol::{MessageType};
+use tutorial::{CalculatorPingArgs, CalculatorPingResult};
+use tutorial::{CalculatorAddArgs, CalculatorAddResult};
+
+trait CalculatorIf {
+    fn ping(&self);
+    fn add(&self, n1: i32, n2: i32) -> i32;
+    fn calculate(&mut self, log_id: i32, work: &Work) -> i32;
+}
+
+struct CalculatorProcessor<T> {
+    iface: T
+}
+
+impl<T: CalculatorIf> CalculatorProcessor<T> {
+    fn new(iface: T) -> Self {
+        CalculatorProcessor { iface: iface }
     }
 }
 
-impl Processor<BinaryProtocol, BinaryProtocol> for CalculatorProcessor {
-    fn process(_: BinaryProtocol, _: BinaryProtocol) {
+impl<T: CalculatorIf> Processor<BinaryProtocol, BinaryProtocol> for CalculatorProcessor<T> {
+    fn process(&mut self, in_prot: &mut BinaryProtocol, _: &mut BinaryProtocol,
+               transport: &mut net::TcpStream) -> TResult<()> {
+        let (name, ty, id) = try!(in_prot.read_message_begin(transport));
+        match &*name {
+            "ping" => self.ping(in_prot, transport, ty, id),
+            "add" => self.add(in_prot, transport, ty, id),
+            _ => unimplemented!()
+        }
+    }
+}
+
+impl<T: CalculatorIf> CalculatorProcessor<T> {
+    #[allow(non_snake_case)]
+    fn ping(&mut self, in_prot: &mut BinaryProtocol, transport: &mut net::TcpStream,
+            ty: MessageType, id: i32) -> TResult<()> {
+        let mut args = CalculatorPingArgs;
+        try!(ProtocolHelpers::receive_body(in_prot, transport, "ping", &mut args, "ping", ty, id));
+
+        let result = CalculatorPingResult::new();
+        self.iface.ping();
+        try!(ProtocolHelpers::send(in_prot, transport, "ping", MessageType::MtReply, &result));
+        Ok(())
+    }
+
+    #[allow(non_snake_case)]
+    fn add(&mut self, in_prot: &mut BinaryProtocol, transport: &mut net::TcpStream,
+            ty: MessageType, id: i32) -> TResult<()> {
+        let mut args = CalculatorAddArgs::new();
+        try!(ProtocolHelpers::receive_body(in_prot, transport, "add", &mut args, "add", ty, id));
+
+        let mut result = CalculatorAddResult::new();
+        result.success = self.iface.add(args.num1, args.num2);
+        try!(ProtocolHelpers::send(in_prot, transport, "add", MessageType::MtReply, &result));
+        Ok(())
     }
 }
