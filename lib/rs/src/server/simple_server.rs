@@ -29,7 +29,7 @@ pub struct SimpleServer<Proc, PF, ST> {
 }
 
 impl<Proc, PF: ProtocolFactory, ST: ServerTransport> SimpleServer<Proc, PF, ST>
-    where Proc: Processor<PF::Output, PF::Output, ST::Output> {
+    where Proc: Processor<PF::Output, ST::Output> {
 
     pub fn new(processor: Proc, server_transport: ST, pf: PF) -> Self {
         SimpleServer { processor: processor, protocol_factory: pf,
@@ -39,10 +39,9 @@ impl<Proc, PF: ProtocolFactory, ST: ServerTransport> SimpleServer<Proc, PF, ST>
     pub fn serve(&mut self) {
         loop {
             let mut transport = self.server_transport.accept().unwrap();
-            let mut prot1 = self.protocol_factory.new_protocol();
-            let mut prot2 = self.protocol_factory.new_protocol();
+            let mut prot = self.protocol_factory.new_protocol();
             loop {
-                if self.processor.process(&mut prot1, &mut prot2, &mut transport).is_err() {
+                if self.processor.process(&mut prot, &mut transport).is_err() {
                     break;
                 }
             }

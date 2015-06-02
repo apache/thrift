@@ -6,9 +6,9 @@
 
 #[allow(unused_imports)]
 use std::collections::{HashMap, HashSet};
-use thrift::protocol::{MessageType, Type};
+use thrift::processor::Processor;
+use thrift::protocol::{Protocol, MessageType, Type};
 use thrift::transport::Transport;
-use thrift::protocol::Protocol;
 use thrift::protocol::{Readable, Writeable};
 use thrift::TResult;
 #[allow(unused_imports)]
@@ -52,7 +52,7 @@ impl Operation {
 pub type MyInteger = i32;
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Work {
   pub num1: i32,
   pub num2: i32,
@@ -149,7 +149,7 @@ impl Readable for Work {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct InvalidOperation {
   pub what: i32,
   pub why: String,
@@ -219,7 +219,7 @@ impl Readable for InvalidOperation {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CalculatorPingArgs;
 
 impl CalculatorPingArgs {
@@ -267,7 +267,7 @@ impl Writeable for CalculatorPingArgs {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CalculatorPingResult;
 
 impl CalculatorPingResult {
@@ -315,7 +315,7 @@ impl Writeable for CalculatorPingResult {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CalculatorAddArgs {
   pub num1: i32,
   pub num2: i32,
@@ -385,7 +385,7 @@ impl Writeable for CalculatorAddArgs {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CalculatorAddResult {
   pub success: i32,
 }
@@ -445,7 +445,7 @@ impl Writeable for CalculatorAddResult {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CalculatorCalculateArgs {
   pub logid: i32,
   pub w: Work,
@@ -515,7 +515,7 @@ impl Writeable for CalculatorCalculateArgs {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CalculatorCalculateResult {
   pub success: i32,
   pub ouch: Option<InvalidOperation>,
@@ -592,7 +592,7 @@ impl Writeable for CalculatorCalculateResult {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CalculatorZipArgs;
 
 impl CalculatorZipArgs {
@@ -753,31 +753,83 @@ impl <P: Protocol, T: Transport> SharedServiceClient for CalculatorClientImpl<P,
 
 }
 
-pub trait CalculatorIf : SharedServiceIf
- {
-    #[allow(non_snake_case)]
-    fn ping(
-      &mut self,
-      ) -> ();
+pub trait CalculatorIf {
+  #[allow(non_snake_case)]
+  fn ping(
+    &mut self,
+    ) -> ();
 
-    #[allow(non_snake_case)]
-    fn add(
-      &mut self,
-      num1: i32,
-      num2: i32,
-      ) -> i32;
+  #[allow(non_snake_case)]
+  fn add(
+    &mut self,
+    num1: i32,
+    num2: i32,
+    ) -> i32;
 
-    #[allow(non_snake_case)]
-    fn calculate(
-      &mut self,
-      logid: i32,
-      w: Work,
-      ) -> i32;
+  #[allow(non_snake_case)]
+  fn calculate(
+    &mut self,
+    logid: i32,
+    w: Work,
+    ) -> i32;
 
-    #[allow(non_snake_case)]
-    fn zip(
-      &mut self,
-      ) -> ();
+  #[allow(non_snake_case)]
+  fn zip(
+    &mut self,
+    ) -> ();
 
+}
+
+pub struct CalculatorProcessor<I: CalculatorIf> {
+  iface: I
+}
+impl<I: CalculatorIf, P: Protocol, T: Transport> Processor<P, T> for CalculatorProcessor<I> {
+  fn process(&mut self, prot: &mut P, transport: &mut T) -> TResult<()> {
+    let (name, ty, id) = try!(prot.read_message_begin(transport));    match &*name {
+      "ping"=> self.ping(prot, transport, ty, id),
+      "add"=> self.add(prot, transport, ty, id),
+      "calculate"=> self.calculate(prot, transport, ty, id),
+      "zip"=> self.zip(prot, transport, ty, id),
+      _ => panic!("Invalid name {}", name)
+    }
+  }
+}
+impl<I: CalculatorIf> CalculatorProcessor<I> {
+  pub fn new(iface: I) -> Self {
+    CalculatorProcessor{ iface: iface }
+  }
+  #[allow(non_snake_case)]
+  fn ping<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32) -> TResult<()> {
+    let mut args = CalculatorPingArgs::new();
+    try!(ProtocolHelpers::receive_body(prot, transport, "ping" , &mut args, "ping", ty, id));
+    let result = CalculatorPingResult::new();
+    try!(ProtocolHelpers::send(prot, transport, "ping", MessageType::MtReply, &result));
+    Ok(())
   }
 
+  #[allow(non_snake_case)]
+  fn add<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32) -> TResult<()> {
+    let mut args = CalculatorAddArgs::new();
+    try!(ProtocolHelpers::receive_body(prot, transport, "add" , &mut args, "add", ty, id));
+    let result = CalculatorAddResult::new();
+    try!(ProtocolHelpers::send(prot, transport, "add", MessageType::MtReply, &result));
+    Ok(())
+  }
+
+  #[allow(non_snake_case)]
+  fn calculate<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32) -> TResult<()> {
+    let mut args = CalculatorCalculateArgs::new();
+    try!(ProtocolHelpers::receive_body(prot, transport, "calculate" , &mut args, "calculate", ty, id));
+    let result = CalculatorCalculateResult::new();
+    try!(ProtocolHelpers::send(prot, transport, "calculate", MessageType::MtReply, &result));
+    Ok(())
+  }
+
+  #[allow(non_snake_case)]
+  fn zip<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32) -> TResult<()> {
+    let mut args = CalculatorZipArgs::new();
+    try!(ProtocolHelpers::receive_body(prot, transport, "zip" , &mut args, "zip", ty, id));
+    Ok(())
+  }
+
+}

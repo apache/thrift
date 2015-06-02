@@ -28,9 +28,8 @@ use std::collections::HashMap;
 
 use thrift::protocol::binary_protocol::BinaryProtocol;
 use thrift::server::SimpleServer;
-use thrift::processor::Processor;
 
-use tutorial::{Operation, Work};
+use tutorial::{Operation, Work, CalculatorProcessor, CalculatorIf};
 use shared::SharedStruct;
 
 #[allow(dead_code)]
@@ -40,16 +39,16 @@ struct CalculatorHandler {
 
 #[allow(dead_code)]
 impl CalculatorIf for CalculatorHandler {
-    fn ping(&self) {
+    fn ping(&mut self) {
         println!("ping()");
     }
 
-    fn add(&self, n1: i32, n2: i32) -> i32 {
+    fn add(&mut self, n1: i32, n2: i32) -> i32 {
         println!("add({}, {})", n1, n2);
         n1 + n2
     }
 
-    fn calculate(&mut self, log_id: i32, work: &Work) -> i32 {
+    fn calculate(&mut self, log_id: i32, work: Work) -> i32 {
         println!("calculate({}, {:?})", log_id, work);
 
         let val = match work.op {
@@ -71,6 +70,15 @@ impl CalculatorIf for CalculatorHandler {
 
         val
     }
+
+    // fn getStruct(&mut self, log_id: i32) -> SharedStruct {
+    //     println!("getStruct({})", log_id);
+    //     self.log[log_id].clone()
+    // }
+
+    fn zip(&mut self) {
+        println!("zip");
+    }
 }
 
 fn construct_protocol() -> BinaryProtocol {
@@ -89,63 +97,4 @@ pub fn main() {
     println!("Starting the server...");
     server.serve();
     println!("Done.");
-}
-
-// TO BE GENERATED
-
-use thrift::TResult;
-use thrift::transport::Transport;
-use thrift::protocol::{Protocol, ProtocolHelpers, MessageType};
-use tutorial::{CalculatorPingArgs, CalculatorPingResult};
-use tutorial::{CalculatorAddArgs, CalculatorAddResult};
-
-trait CalculatorIf {
-    fn ping(&self);
-    fn add(&self, n1: i32, n2: i32) -> i32;
-    fn calculate(&mut self, log_id: i32, work: &Work) -> i32;
-}
-
-struct CalculatorProcessor<T: CalculatorIf> {
-    iface: T
-}
-
-impl<I: CalculatorIf, P1: Protocol, P2: Protocol, T: Transport> Processor<P1, P2, T> for CalculatorProcessor<I> {
-    fn process(&mut self, in_prot: &mut P1, _: &mut P2, transport: &mut T) -> TResult<()> {
-        let (name, ty, id) = try!(in_prot.read_message_begin(transport));
-        match &*name {
-            "ping" => self.ping(in_prot, transport, ty, id),
-            "add" => self.add(in_prot, transport, ty, id),
-            _ => unimplemented!()
-        }
-    }
-}
-
-impl<I: CalculatorIf> CalculatorProcessor<I> {
-    fn new(iface: I) -> Self {
-        CalculatorProcessor { iface: iface }
-    }
-
-    #[allow(non_snake_case)]
-    fn ping<P1: Protocol, T: Transport>(&mut self, in_prot: &mut P1, transport: &mut T,
-                                        ty: MessageType, id: i32) -> TResult<()> {
-        let mut args = CalculatorPingArgs;
-        try!(ProtocolHelpers::receive_body(in_prot, transport, "ping", &mut args, "ping", ty, id));
-
-        let result = CalculatorPingResult::new();
-        self.iface.ping();
-        try!(ProtocolHelpers::send(in_prot, transport, "ping", MessageType::MtReply, &result));
-        Ok(())
-    }
-
-    #[allow(non_snake_case)]
-    fn add<P1: Protocol, T: Transport>(&mut self, in_prot: &mut P1, transport: &mut T,
-                                       ty: MessageType, id: i32) -> TResult<()> {
-        let mut args = CalculatorAddArgs::new();
-        try!(ProtocolHelpers::receive_body(in_prot, transport, "add", &mut args, "add", ty, id));
-
-        let mut result = CalculatorAddResult::new();
-        result.success = self.iface.add(args.num1, args.num2);
-        try!(ProtocolHelpers::send(in_prot, transport, "add", MessageType::MtReply, &result));
-        Ok(())
-    }
 }

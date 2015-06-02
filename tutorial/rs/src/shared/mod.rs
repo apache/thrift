@@ -6,9 +6,9 @@
 
 #[allow(unused_imports)]
 use std::collections::{HashMap, HashSet};
-use thrift::protocol::{MessageType, Type};
+use thrift::processor::Processor;
+use thrift::protocol::{Protocol, MessageType, Type};
 use thrift::transport::Transport;
-use thrift::protocol::Protocol;
 use thrift::protocol::{Readable, Writeable};
 use thrift::TResult;
 #[allow(unused_imports)]
@@ -21,7 +21,7 @@ use thrift::protocol::FromNum;
 
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SharedStruct {
   pub key: i32,
   pub value: String,
@@ -91,7 +91,7 @@ impl Readable for SharedStruct {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SharedServiceGetStructArgs {
   pub key: i32,
 }
@@ -151,7 +151,7 @@ impl Writeable for SharedServiceGetStructArgs {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SharedServiceGetStructResult {
   pub success: SharedStruct,
 }
@@ -254,11 +254,36 @@ impl <P: Protocol, T: Transport> SharedServiceClient for SharedServiceClientImpl
 }
 
 pub trait SharedServiceIf {
-    #[allow(non_snake_case)]
-    fn getStruct(
-      &mut self,
-      key: i32,
-      ) -> SharedStruct;
+  #[allow(non_snake_case)]
+  fn getStruct(
+    &mut self,
+    key: i32,
+    ) -> SharedStruct;
 
+}
+
+pub struct SharedServiceProcessor<I: SharedServiceIf> {
+  iface: I
+}
+impl<I: SharedServiceIf, P: Protocol, T: Transport> Processor<P, T> for SharedServiceProcessor<I> {
+  fn process(&mut self, prot: &mut P, transport: &mut T) -> TResult<()> {
+    let (name, ty, id) = try!(prot.read_message_begin(transport));    match &*name {
+      "getStruct"=> self.getStruct(prot, transport, ty, id),
+      _ => panic!("Invalid name {}", name)
+    }
+  }
+}
+impl<I: SharedServiceIf> SharedServiceProcessor<I> {
+  pub fn new(iface: I) -> Self {
+    SharedServiceProcessor{ iface: iface }
+  }
+  #[allow(non_snake_case)]
+  fn getStruct<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32) -> TResult<()> {
+    let mut args = SharedServiceGetStructArgs::new();
+    try!(ProtocolHelpers::receive_body(prot, transport, "getStruct" , &mut args, "getStruct", ty, id));
+    let result = SharedServiceGetStructResult::new();
+    try!(ProtocolHelpers::send(prot, transport, "getStruct", MessageType::MtReply, &result));
+    Ok(())
   }
 
+}
