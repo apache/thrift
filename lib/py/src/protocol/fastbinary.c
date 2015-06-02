@@ -32,7 +32,7 @@
 # if defined(_MSC_VER) && _MSC_VER < 1600
    typedef int _Bool;
 #  define bool _Bool
-#  define false 0 
+#  define false 0
 #  define true 1
 # endif
 # define inline __inline
@@ -197,6 +197,21 @@ check_ssize_t_32(Py_ssize_t len) {
   return true;
 }
 
+#define MAX_LIST_SIZE (10000)
+
+static inline bool
+check_list_length(Py_ssize_t len) {
+  // error from getting the int
+  if (INT_CONV_ERROR_OCCURRED(len)) {
+    return false;
+  }
+  if (!CHECK_RANGE(len, 0, MAX_LIST_SIZE)) {
+    PyErr_SetString(PyExc_OverflowError, "list size out of the sanity limit (10000 items max)");
+    return false;
+  }
+  return true;
+}
+
 static inline bool
 parse_pyint(PyObject* o, int32_t* ret, int32_t min, int32_t max) {
   long val = PyInt_AsLong(o);
@@ -332,7 +347,7 @@ static void writeDouble(PyObject* outbuf, double dub) {
 }
 
 
-/* --- MAIN RECURSIVE OUTPUT FUNCTION -- */
+/* --- MAIN RECURSIVE OUTPUT FUCNTION -- */
 
 static int
 output_val(PyObject* output, PyObject* value, TType type, PyObject* typeargs) {
@@ -936,7 +951,7 @@ decode_struct(DecodeBuffer* input, PyObject* output, PyObject* spec_seq) {
 }
 
 
-/* --- MAIN RECURSIVE INPUT FUNCTION --- */
+/* --- MAIN RECURSIVE INPUT FUCNTION --- */
 
 // Returns a new reference.
 static PyObject*
@@ -1028,7 +1043,7 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
     }
 
     len = readI32(input);
-    if (!check_ssize_t_32(len)) {
+    if (!check_list_length(len)) {
       return NULL;
     }
 
@@ -1164,7 +1179,7 @@ decode_binary(PyObject *self, PyObject *args) {
   PyObject* typeargs = NULL;
   StructTypeArgs parsedargs;
   DecodeBuffer input = {0, 0};
-  
+
   if (!PyArg_ParseTuple(args, "OOO", &output_obj, &transport, &typeargs)) {
     return NULL;
   }
