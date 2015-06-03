@@ -347,7 +347,7 @@ static void writeDouble(PyObject* outbuf, double dub) {
 }
 
 
-/* --- MAIN RECURSIVE OUTPUT FUCNTION -- */
+/* --- MAIN RECURSIVE OUTPUT FUNCTION -- */
 
 static int
 output_val(PyObject* output, PyObject* value, TType type, PyObject* typeargs) {
