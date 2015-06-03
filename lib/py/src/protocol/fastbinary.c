@@ -951,7 +951,7 @@ decode_struct(DecodeBuffer* input, PyObject* output, PyObject* spec_seq) {
 }
 
 
-/* --- MAIN RECURSIVE INPUT FUNCTION --- */
+/* --- MAIN RECURSIVE INPUT FUCNTION --- */
 
 // Returns a new reference.
 static PyObject*
