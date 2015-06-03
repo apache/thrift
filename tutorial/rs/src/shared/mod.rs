@@ -243,7 +243,7 @@ impl <P: Protocol, T: Transport> SharedServiceClient for SharedServiceClientImpl
     key: i32,
     ) -> TResult<SharedStruct> {
       let args = SharedServiceGetStructArgs {
-      key: key,
+        key: key,
       };
       try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "getStruct", MessageType::MtCall, &args));
       let mut result = SharedServiceGetStructResult::new();
@@ -274,14 +274,19 @@ impl<I: SharedServiceIf, P: Protocol, T: Transport> Processor<P, T> for SharedSe
   }
 }
 impl<I: SharedServiceIf> SharedServiceProcessor<I> {
+  #[allow(dead_code)]
   pub fn new(iface: I) -> Self {
-    SharedServiceProcessor{ iface: iface }
+    SharedServiceProcessor { iface: iface }
   }
+  #[allow(unused_mut)]
   #[allow(non_snake_case)]
   fn getStruct<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32) -> TResult<()> {
     let mut args = SharedServiceGetStructArgs::new();
     try!(ProtocolHelpers::receive_body(prot, transport, "getStruct" , &mut args, "getStruct", ty, id));
-    let result = SharedServiceGetStructResult::new();
+    let mut result = SharedServiceGetStructResult::new();
+    result.success =     self.iface.getStruct(
+      args.key,
+    );
     try!(ProtocolHelpers::send(prot, transport, "getStruct", MessageType::MtReply, &result));
     Ok(())
   }

@@ -699,8 +699,8 @@ impl <P: Protocol, T: Transport> CalculatorClient for CalculatorClientImpl<P, T>
     num2: i32,
     ) -> TResult<i32> {
       let args = CalculatorAddArgs {
-      num1: num1,
-      num2: num2,
+        num1: num1,
+        num2: num2,
       };
       try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "add", MessageType::MtCall, &args));
       let mut result = CalculatorAddResult::new();
@@ -715,8 +715,8 @@ impl <P: Protocol, T: Transport> CalculatorClient for CalculatorClientImpl<P, T>
     w: Work,
     ) -> TResult<i32> {
       let args = CalculatorCalculateArgs {
-      logid: logid,
-      w: w,
+        logid: logid,
+        w: w,
       };
       try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "calculate", MessageType::MtCall, &args));
       let mut result = CalculatorCalculateResult::new();
@@ -743,7 +743,7 @@ impl <P: Protocol, T: Transport> SharedServiceClient for CalculatorClientImpl<P,
     key: i32,
     ) -> TResult<SharedStruct> {
       let args = SharedServiceGetStructArgs {
-      key: key,
+        key: key,
       };
       try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "getStruct", MessageType::MtCall, &args));
       let mut result = SharedServiceGetStructResult::new();
@@ -795,36 +795,51 @@ impl<I: CalculatorIf, P: Protocol, T: Transport> Processor<P, T> for CalculatorP
   }
 }
 impl<I: CalculatorIf> CalculatorProcessor<I> {
+  #[allow(dead_code)]
   pub fn new(iface: I) -> Self {
-    CalculatorProcessor{ iface: iface }
+    CalculatorProcessor { iface: iface }
   }
+  #[allow(unused_mut)]
   #[allow(non_snake_case)]
   fn ping<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32) -> TResult<()> {
     let mut args = CalculatorPingArgs::new();
     try!(ProtocolHelpers::receive_body(prot, transport, "ping" , &mut args, "ping", ty, id));
-    let result = CalculatorPingResult::new();
+    let mut result = CalculatorPingResult::new();
+    self.iface.ping(
+    );
     try!(ProtocolHelpers::send(prot, transport, "ping", MessageType::MtReply, &result));
     Ok(())
   }
 
+  #[allow(unused_mut)]
   #[allow(non_snake_case)]
   fn add<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32) -> TResult<()> {
     let mut args = CalculatorAddArgs::new();
     try!(ProtocolHelpers::receive_body(prot, transport, "add" , &mut args, "add", ty, id));
-    let result = CalculatorAddResult::new();
+    let mut result = CalculatorAddResult::new();
+    result.success =     self.iface.add(
+      args.num1,
+      args.num2,
+    );
     try!(ProtocolHelpers::send(prot, transport, "add", MessageType::MtReply, &result));
     Ok(())
   }
 
+  #[allow(unused_mut)]
   #[allow(non_snake_case)]
   fn calculate<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32) -> TResult<()> {
     let mut args = CalculatorCalculateArgs::new();
     try!(ProtocolHelpers::receive_body(prot, transport, "calculate" , &mut args, "calculate", ty, id));
-    let result = CalculatorCalculateResult::new();
+    let mut result = CalculatorCalculateResult::new();
+    result.success =     self.iface.calculate(
+      args.logid,
+      args.w,
+    );
     try!(ProtocolHelpers::send(prot, transport, "calculate", MessageType::MtReply, &result));
     Ok(())
   }
 
+  #[allow(unused_mut)]
   #[allow(non_snake_case)]
   fn zip<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32) -> TResult<()> {
     let mut args = CalculatorZipArgs::new();

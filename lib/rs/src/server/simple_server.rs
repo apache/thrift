@@ -17,9 +17,9 @@
  * under the License.
  */
 
-use transport::{Transport, TransportFactory};
+use transport::TransportFactory;
 use transport::server::ServerTransport;
-use protocol::{Protocol, ProtocolFactory};
+use protocol::ProtocolFactory;
 use processor::Processor;
 
 pub struct SimpleServer<Proc, PF, ST> {

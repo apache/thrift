@@ -18,7 +18,7 @@
  */
 
 use std::io;
-use std::net::{TcpListener, TcpStream, SocketAddr};
+use std::net::{TcpListener, TcpStream};
 use super::Transport;
 
 pub trait ServerTransport {

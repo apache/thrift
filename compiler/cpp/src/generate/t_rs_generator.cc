@@ -466,12 +466,14 @@ void t_rs_generator::generate_function_args(t_function* tfunction) {
 void t_rs_generator::generate_args_init(t_function* tfunction) {
   if (!tfunction->get_arglist()->get_members().empty()) {
     f_mod_ << " {\n";
+    indent_up();
     const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
     vector<t_field*>::const_iterator f_iter;
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       string aname = to_field_name((*f_iter)->get_name());
       indent(f_mod_) << aname << ": " << aname << ",\n";
     }
+    indent_down();
     indent(f_mod_) << "}";
   }
 }
@@ -738,16 +740,19 @@ void t_rs_generator::generate_service_processor_impl(t_service* tservice) {
   indent(f_mod_) << "impl<I: " << trait_name << "> " << impl_name << "<I> {\n";
 
   indent_up();
+  indent(f_mod_) << "#[allow(dead_code)]\n";
   indent(f_mod_) << "pub fn new(iface: I) -> Self {\n";
   indent_up();
-  indent(f_mod_) << impl_name << "{ iface: iface }\n";
+  indent(f_mod_) << impl_name << " { iface: iface }\n";
   indent_down();
   indent(f_mod_) << "}\n";
 
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::const_iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    string name = (*f_iter)->get_name();
+    t_function* tfunction = *f_iter;
+    string name = tfunction->get_name();
+    indent(f_mod_) << "#[allow(unused_mut)]\n";
     indent(f_mod_) << "#[allow(non_snake_case)]\n";
     indent(f_mod_) << "fn "<< name << "<P: Protocol, T: Transport>"
                    <<"(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32)"
@@ -759,9 +764,24 @@ void t_rs_generator::generate_service_processor_impl(t_service* tservice) {
     indent(f_mod_) << "try!(ProtocolHelpers::receive_body(prot, transport, \""
                    << name << "\" , &mut args, \""<< name << "\", ty, id));\n";
 
-    if (!(*f_iter)->is_oneway()) {
-      indent(f_mod_) << "let result = "<< prefix << "Result::new();\n";
-      //TODO: indent(f_mod_) << "self.iface." << name << "();\n";
+    if (!tfunction->is_oneway()) {
+      indent(f_mod_) << "let mut result = "<< prefix << "Result::new();\n";
+
+      if (!tfunction->get_returntype()->is_void()) {
+        indent(f_mod_) << "result.success = ";
+      }
+      indent(f_mod_) << "self.iface." << name << "(\n";
+
+      indent_up();
+      const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
+      vector<t_field*>::const_iterator f_iter;
+      for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+        string aname = to_field_name((*f_iter)->get_name());
+        indent(f_mod_) << "args."<< aname << ",\n";
+      }
+      indent_down();
+      indent(f_mod_) << ");\n";
+
       indent(f_mod_) << "try!(ProtocolHelpers::send(prot, transport, \""
                      << name << "\", MessageType::MtReply, &result));\n";
     }

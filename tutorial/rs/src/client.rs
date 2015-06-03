@@ -39,21 +39,21 @@ fn run_client(client: &mut tutorial::CalculatorClient) {
     println!("1 + 1 = {}", client.add(1, 1).ok().unwrap());
 
     // Work: divide
-    let work = tutorial::Work {
-      op: tutorial::Operation::DIVIDE,
-      num1: 1,
-      num2: 0,
-      comment: None };
+    // let work = tutorial::Work {
+    //   op: tutorial::Operation::DIVIDE,
+    //   num1: 1,
+    //   num2: 0,
+    //   comment: None };
 
-    match client.calculate(1, work) {
-      Ok(_) => {
-        println!("Whoa? We can divide by zero!");
-      }
-      Err(_) => {
-        // FIXME: use thrift exceptions
-        println!("Invalid operation")
-      }
-    }
+    // match client.calculate(1, work) {
+    //   Ok(_) => {
+    //     println!("Whoa? We can divide by zero!");
+    //   }
+    //   Err(_) => {
+    //     // FIXME: use thrift exceptions
+    //     println!("Invalid operation")
+    //   }
+    // }
 
     // Work: subtract
     let work = tutorial::Work {
