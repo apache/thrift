@@ -83,6 +83,7 @@ class t_rs_generator : public t_oop_generator {
   void generate_service_processor_struct(t_service* tservice);
   void generate_service_processor_trait_impl(t_service* tservice);
   void generate_service_processor_impl(t_service* tservice);
+  void generate_service_processor_impl_functions(t_service* tservice);
 
   void generate_service_function(t_service* tservice, t_function* tfunction);
   void generate_function_helpers(t_service* tservice, t_function* tfunction);
@@ -96,7 +97,8 @@ class t_rs_generator : public t_oop_generator {
 
   void generate_field_declaration(t_field* tfield);
   void generate_field_read(t_field* field);
-  void generate_read_value(t_type* type, const string& name, bool is_optional, bool is_decl = false);
+  void generate_read_value(t_type* type, const string& name, bool is_optional,
+                           bool is_decl = false);
   void generate_read_map(t_type* type, const string& name);
   void generate_read_list(t_list* tlist, const string& name);
   void generate_read_set(t_type* type, const string& name);
@@ -481,7 +483,6 @@ void t_rs_generator::generate_args_init(t_function* tfunction) {
 }
 
 void t_rs_generator::generate_service_trait_function(t_function* tfunction) {
-
   indent(f_mod_) << "#[allow(non_snake_case)]\n";
   indent(f_mod_) << "fn " << tfunction->get_name() << "(\n";
   indent_up();
@@ -586,7 +587,8 @@ void t_rs_generator::generate_service_client_impl(t_service* tservice) {
   }
 }
 
-void t_rs_generator::generate_service_client_impl_functions(t_service* tservice, const string& impl_name) {
+void t_rs_generator::generate_service_client_impl_functions(t_service* tservice,
+                                                            const string& impl_name) {
   string trait_name = tservice->get_name() + "Client";
 
   indent(f_mod_) << "impl <P: Protocol, T: Transport> "
@@ -669,23 +671,25 @@ void t_rs_generator::generate_service_interface_trait(t_service* tservice) {
   f_mod_ << " {\n";
   indent_up();
 
-  vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::const_iterator f_iter;
-  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    generate_service_interface_trait_function(*f_iter);
-  }
+    vector<t_function*> functions = tservice->get_functions();
+    vector<t_function*>::const_iterator f_iter;
+    for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+      generate_service_interface_trait_function(*f_iter);
+    }
 
   indent_down();
   indent(f_mod_) << "}\n\n";
 }
 
 void t_rs_generator::generate_service_interface_trait_function(t_function* tfunction) {
+  // Note that this doesn't do the same thing as `generate_service_trait_function`. This function
+  // returns a T, not a TResult<T>.
   indent(f_mod_) << "#[allow(non_snake_case)]\n";
   indent(f_mod_) << "fn " << tfunction->get_name() << "(\n";
   indent_up();
-  indent(f_mod_) << "&mut self,\n";
-  generate_function_args(tfunction);
-  indent(f_mod_) << ") -> " << render_rs_type(tfunction->get_returntype()) << ";\n\n";
+    indent(f_mod_) << "&mut self,\n";
+    generate_function_args(tfunction);
+    indent(f_mod_) << ") -> " << render_rs_type(tfunction->get_returntype()) << ";\n\n";
   indent_down();
 }
 
@@ -696,12 +700,13 @@ void t_rs_generator::generate_service_processor_struct(t_service* tservice) {
   indent(f_mod_) << "pub struct " << struct_name << "<I: " << trait_name << "> {\n";
   indent_up();
 
-  t_service* service = tservice->get_extends();
-  if (service) {
-    string name = service->get_name() + "Processor";
-    indent(f_mod_) << "parent: " << name << "<I>,\n";
-  }
-  indent(f_mod_) << "iface: Rc<RefCell<I>>\n";
+    t_service* service = tservice->get_extends();
+    if (service) {
+      string name = service->get_name() + "Processor";
+      indent(f_mod_) << "parent: " << name << "<I>,\n";
+    }
+    indent(f_mod_) << "iface: Rc<RefCell<I>>\n";
+
   indent_down();
   indent(f_mod_) << "}\n";
 }
@@ -712,16 +717,13 @@ void t_rs_generator::generate_service_processor_trait_impl(t_service* tservice) 
 
   indent(f_mod_) << "impl<I: " << trait_name << ", P: Protocol, T: Transport> Processor<P, T> for "
                  << impl_name << "<I> {\n";
-
   indent_up();
-  indent(f_mod_) << "fn process(&mut self, prot: &mut P, transport: &mut T) -> TResult<()> {\n";
-  indent_up();
-  indent(f_mod_) << "let (name, ty, id) = try!(prot.read_message_begin(transport));\n";
-  indent(f_mod_) << "self.dispatch(prot, transport, name, ty, id)\n";
-
-  indent_down();
-  indent(f_mod_) << "}\n";
-
+    indent(f_mod_) << "fn process(&mut self, prot: &mut P, transport: &mut T) -> TResult<()> {\n";
+    indent_up();
+      indent(f_mod_) << "let (name, ty, id) = try!(prot.read_message_begin(transport));\n";
+      indent(f_mod_) << "self.dispatch(prot, transport, name, ty, id)\n";
+    indent_down();
+    indent(f_mod_) << "}\n";
   indent_down();
   indent(f_mod_) << "}\n";
 }
@@ -730,56 +732,60 @@ void t_rs_generator::generate_service_processor_impl(t_service* tservice) {
   string impl_name = tservice->get_name() + "Processor";
   string trait_name = tservice->get_name() + "If";
 
+  // Implement Processor::new()
   indent(f_mod_) << "impl<I: " << trait_name << "> " << impl_name << "<I> {\n";
-
   indent_up();
-  indent(f_mod_) << "#[allow(dead_code)]\n";
-  indent(f_mod_) << "pub fn new(iface: Rc<RefCell<I>>) -> Self {\n";
-  indent_up();
-  indent(f_mod_) << impl_name << " {\n";
-  indent_up();
+    indent(f_mod_) << "#[allow(dead_code)]\n";
+    indent(f_mod_) << "pub fn new(iface: Rc<RefCell<I>>) -> Self {\n";
+    indent_up();
+      indent(f_mod_) << impl_name << " {\n";
+      indent_up();
 
-  t_service* service = tservice->get_extends();
-  if (service) {
-    string name = service->get_name() + "Processor";
-    indent(f_mod_) << "parent: " << name << "::new(iface.clone()),\n";
-  }
+        t_service* service = tservice->get_extends();
+        if (service) {
+          string name = service->get_name() + "Processor";
+          indent(f_mod_) << "parent: " << name << "::new(iface.clone()),\n";
+        }
+        indent(f_mod_) << "iface: iface,\n";
 
-  indent(f_mod_) << "iface: iface,\n";
+      indent_down();
+      indent(f_mod_) << "}\n";
+    indent_down();
+    indent(f_mod_) << "}\n";
 
+    // Implement dispatch()
+    indent(f_mod_) << "pub fn dispatch<P: Protocol, T: Transport>"
+                   << "(&mut self, prot: &mut P, transport: &mut T, name: String, "
+                   << "ty: MessageType, id: i32) -> TResult<()> {\n";
+    indent_up();
+      indent(f_mod_) << "match &*name {\n";
+      indent_up();
+        vector<t_function*> functions = tservice->get_functions();
+        vector<t_function*>::const_iterator f_iter;
+        for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+          string name = (*f_iter)->get_name();
+          indent(f_mod_) << '"' << name << "\" => self." << name << "(prot, transport, ty, id),\n";
+        }
+
+        service = tservice->get_extends();
+        if (service) {
+          indent(f_mod_) << "_ => self.parent.dispatch(prot, transport, name, ty, id)\n";
+        } else {
+          indent(f_mod_) << "_ => panic!(\"Invalid name {}\", name)\n";
+        }
+      indent_down();
+      indent(f_mod_) << "}\n";
+    indent_down();
+    indent(f_mod_) << "}\n";
+
+    generate_service_processor_impl_functions(tservice);
   indent_down();
   indent(f_mod_) << "}\n";
-  indent_down();
-  indent(f_mod_) << "}\n";
+}
 
-  indent(f_mod_) << "pub fn dispatch<P: Protocol, T: Transport>"
-                 <<"(&mut self, prot: &mut P, transport: &mut T, name: String, ty: MessageType, id: i32)"
-                 <<" -> TResult<()> {\n";
-  indent_up();
-  indent(f_mod_) << "match &*name {\n";
-
-  indent_up();
+void t_rs_generator::generate_service_processor_impl_functions(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::const_iterator f_iter;
-  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    string name = (*f_iter)->get_name();
-    indent(f_mod_) << '"' << name << "\" => self." << name << "(prot, transport, ty, id),\n";
-  }
-
-  service = tservice->get_extends();
-  if (service) {
-    indent(f_mod_) << "_ => self.parent.dispatch(prot, transport, name, ty, id)\n";
-  } else {
-    indent(f_mod_) << "_ => panic!(\"Invalid name {}\", name)\n";
-  }
-
-  indent_down();
-  indent(f_mod_) << "}\n";
-
-  indent_down();
-  indent(f_mod_) << "}\n";
-
-  functions = tservice->get_functions();
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_function* tfunction = *f_iter;
     string name = tfunction->get_name();
@@ -789,40 +795,35 @@ void t_rs_generator::generate_service_processor_impl(t_service* tservice) {
                    <<"(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32)"
                    <<" -> TResult<()> {\n";
     indent_up();
+      string prefix = pascalcase(tservice->get_name() + "_" + name);
+      indent(f_mod_) << "let mut args = " << prefix << "Args::new();\n";
+      indent(f_mod_) << "try!(ProtocolHelpers::receive_body(prot, transport, \""
+                     << name << "\" , &mut args, \""<< name << "\", ty, id));\n";
 
-    string prefix = pascalcase(tservice->get_name() + "_" + name);
-    indent(f_mod_) << "let mut args = " << prefix << "Args::new();\n";
-    indent(f_mod_) << "try!(ProtocolHelpers::receive_body(prot, transport, \""
-                   << name << "\" , &mut args, \""<< name << "\", ty, id));\n";
+      if (!tfunction->is_oneway()) {
+        indent(f_mod_) << "let mut result = "<< prefix << "Result::new();\n";
 
-    if (!tfunction->is_oneway()) {
-      indent(f_mod_) << "let mut result = "<< prefix << "Result::new();\n";
+        if (!tfunction->get_returntype()->is_void()) {
+          indent(f_mod_) << "result.success = ";
+        }
+        indent(f_mod_) << "self.iface.borrow_mut()." << name << "(\n";
 
-      if (!tfunction->get_returntype()->is_void()) {
-        indent(f_mod_) << "result.success = ";
-      }
-      indent(f_mod_) << "self.iface.borrow_mut()." << name << "(\n";
-
-      indent_up();
-      const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
-      vector<t_field*>::const_iterator f_iter;
-      for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-        string aname = to_field_name((*f_iter)->get_name());
-        indent(f_mod_) << "args."<< aname << ",\n";
-      }
-      indent_down();
-      indent(f_mod_) << ");\n";
-
-      indent(f_mod_) << "try!(ProtocolHelpers::send(prot, transport, \""
+        indent_up();
+          const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
+          vector<t_field*>::const_iterator f_iter;
+          for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+            string aname = to_field_name((*f_iter)->get_name());
+            indent(f_mod_) << "args."<< aname << ",\n";
+          }
+        indent_down();
+        indent(f_mod_) << ");\n";
+        indent(f_mod_) << "try!(ProtocolHelpers::send(prot, transport, \""
                      << name << "\", MessageType::MtReply, &result));\n";
-    }
-    indent(f_mod_) << "Ok(())\n";
-
+      }
+      indent(f_mod_) << "Ok(())\n";
     indent_down();
     indent(f_mod_) << "}\n\n";
   }
-  indent_down();
-  indent(f_mod_) << "}\n";
 }
 
 void t_rs_generator::generate_struct_writer(t_struct* tstruct) {
@@ -832,9 +833,11 @@ void t_rs_generator::generate_struct_writer(t_struct* tstruct) {
 
     indent(f_mod_) << "#[allow(unused_variables)]\n";
     indent(f_mod_) << "#[allow(dead_code)]\n";
-    indent(f_mod_) << "fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {\n";
+    indent(f_mod_) << "fn write(&self, oprot: &Protocol, transport: &mut Transport) "
+                   << "-> TResult<()> {\n";
     indent_up();
-      indent(f_mod_) << "try!(oprot.write_struct_begin(transport, \"" << tstruct->get_name() << "\"));\n\n";
+      indent(f_mod_) << "try!(oprot.write_struct_begin(transport, \""
+                     << tstruct->get_name() << "\"));\n\n";
 
       vector<t_field*>::const_iterator m_iter;
       const vector<t_field*>& members = tstruct->get_members();
@@ -861,7 +864,8 @@ void t_rs_generator::generate_field_write(t_field* field) {
 
   // FIXME: handle T_OPT_IN_REQ_OUT
   if (is_optional) {
-    bool need_ref = is_string(type)  || type->is_container() || type->is_struct() || type->is_xception();
+    bool need_ref = is_string(type)  || type->is_container() || type->is_struct()
+      || type->is_xception();
     string ref = need_ref ? "ref " : "";
 
     indent(f_mod_) << "match " << qualified_name << " {\n";
@@ -972,7 +976,8 @@ void t_rs_generator::generate_struct_reader(t_struct* tstruct) {
   indent_up();
 
     indent(f_mod_) << "#[allow(unused_mut)]\n";
-    indent(f_mod_) << "fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {\n";
+    indent(f_mod_) << "fn read(& mut self, iprot: &Protocol, transport: & mut Transport) "
+                   << "-> TResult<()> {\n";
     indent_up();
       if (tstruct->get_members().empty()) {
         indent(f_mod_) << "let have_result = true;\n";
@@ -1042,7 +1047,8 @@ void t_rs_generator::generate_field_read(t_field* field) {
   }
 }
 
-void t_rs_generator::generate_read_value(t_type* type, const string& name, bool is_optional, bool is_decl) {
+void t_rs_generator::generate_read_value(t_type* type, const string& name, bool is_optional,
+                                         bool is_decl) {
   string decl = is_decl ? "let mut " : "";
   string prefix = is_optional ? "Some(" : "";
   string suffix = is_optional ? ")" : "";
