@@ -23,6 +23,8 @@ mod tutorial;
 mod shared;
 
 use std::net;
+use std::rc::Rc;
+use std::cell::RefCell;
 use std::str::FromStr;
 use std::collections::HashMap;
 
@@ -30,7 +32,7 @@ use thrift::protocol::binary_protocol::BinaryProtocol;
 use thrift::server::SimpleServer;
 
 use tutorial::{Operation, Work, CalculatorProcessor, CalculatorIf};
-use shared::SharedStruct;
+use shared::{SharedStruct, SharedServiceIf};
 
 #[allow(dead_code)]
 struct CalculatorHandler {
@@ -71,13 +73,15 @@ impl CalculatorIf for CalculatorHandler {
         val
     }
 
-    // fn getStruct(&mut self, log_id: i32) -> SharedStruct {
-    //     println!("getStruct({})", log_id);
-    //     self.log[log_id].clone()
-    // }
-
     fn zip(&mut self) {
         println!("zip");
+    }
+}
+
+impl SharedServiceIf for CalculatorHandler {
+    fn getStruct(&mut self, log_id: i32) -> SharedStruct {
+        println!("getStruct({})", log_id);
+        self.log[&log_id].clone()
     }
 }
 
@@ -87,7 +91,7 @@ fn construct_protocol() -> BinaryProtocol {
 
 pub fn main() {
     let handler = CalculatorHandler { log: HashMap::new() };
-    let processor = CalculatorProcessor::new(handler);
+    let processor = CalculatorProcessor::new(Rc::new(RefCell::new(handler)));
 
     let addr: net::SocketAddr = FromStr::from_str("127.0.0.1:9090").ok()
         .expect("bad server address");

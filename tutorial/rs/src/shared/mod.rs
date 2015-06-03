@@ -6,6 +6,8 @@
 
 #[allow(unused_imports)]
 use std::collections::{HashMap, HashSet};
+use std::rc::Rc;
+use std::cell::RefCell;
 use thrift::processor::Processor;
 use thrift::protocol::{Protocol, MessageType, Type};
 use thrift::transport::Transport;
@@ -263,20 +265,26 @@ pub trait SharedServiceIf {
 }
 
 pub struct SharedServiceProcessor<I: SharedServiceIf> {
-  iface: I
+  iface: Rc<RefCell<I>>
 }
 impl<I: SharedServiceIf, P: Protocol, T: Transport> Processor<P, T> for SharedServiceProcessor<I> {
   fn process(&mut self, prot: &mut P, transport: &mut T) -> TResult<()> {
-    let (name, ty, id) = try!(prot.read_message_begin(transport));    match &*name {
-      "getStruct"=> self.getStruct(prot, transport, ty, id),
-      _ => panic!("Invalid name {}", name)
-    }
+    let (name, ty, id) = try!(prot.read_message_begin(transport));
+    self.dispatch(prot, transport, name, ty, id)
   }
 }
 impl<I: SharedServiceIf> SharedServiceProcessor<I> {
   #[allow(dead_code)]
-  pub fn new(iface: I) -> Self {
-    SharedServiceProcessor { iface: iface }
+  pub fn new(iface: Rc<RefCell<I>>) -> Self {
+    SharedServiceProcessor {
+      iface: iface,
+    }
+  }
+  pub fn dispatch<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, name: String, ty: MessageType, id: i32) -> TResult<()> {
+    match &*name {
+      "getStruct" => self.getStruct(prot, transport, ty, id),
+      _ => panic!("Invalid name {}", name)
+    }
   }
   #[allow(unused_mut)]
   #[allow(non_snake_case)]
@@ -284,7 +292,7 @@ impl<I: SharedServiceIf> SharedServiceProcessor<I> {
     let mut args = SharedServiceGetStructArgs::new();
     try!(ProtocolHelpers::receive_body(prot, transport, "getStruct" , &mut args, "getStruct", ty, id));
     let mut result = SharedServiceGetStructResult::new();
-    result.success =     self.iface.getStruct(
+    result.success =     self.iface.borrow_mut().getStruct(
       args.key,
     );
     try!(ProtocolHelpers::send(prot, transport, "getStruct", MessageType::MtReply, &result));

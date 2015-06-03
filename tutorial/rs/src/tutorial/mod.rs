@@ -6,6 +6,8 @@
 
 #[allow(unused_imports)]
 use std::collections::{HashMap, HashSet};
+use std::rc::Rc;
+use std::cell::RefCell;
 use thrift::processor::Processor;
 use thrift::protocol::{Protocol, MessageType, Type};
 use thrift::transport::Transport;
@@ -753,7 +755,8 @@ impl <P: Protocol, T: Transport> SharedServiceClient for CalculatorClientImpl<P,
 
 }
 
-pub trait CalculatorIf {
+pub trait CalculatorIf : SharedServiceIf
+ {
   #[allow(non_snake_case)]
   fn ping(
     &mut self,
@@ -781,23 +784,31 @@ pub trait CalculatorIf {
 }
 
 pub struct CalculatorProcessor<I: CalculatorIf> {
-  iface: I
+  parent: SharedServiceProcessor<I>,
+  iface: Rc<RefCell<I>>
 }
 impl<I: CalculatorIf, P: Protocol, T: Transport> Processor<P, T> for CalculatorProcessor<I> {
   fn process(&mut self, prot: &mut P, transport: &mut T) -> TResult<()> {
-    let (name, ty, id) = try!(prot.read_message_begin(transport));    match &*name {
-      "ping"=> self.ping(prot, transport, ty, id),
-      "add"=> self.add(prot, transport, ty, id),
-      "calculate"=> self.calculate(prot, transport, ty, id),
-      "zip"=> self.zip(prot, transport, ty, id),
-      _ => panic!("Invalid name {}", name)
-    }
+    let (name, ty, id) = try!(prot.read_message_begin(transport));
+    self.dispatch(prot, transport, name, ty, id)
   }
 }
 impl<I: CalculatorIf> CalculatorProcessor<I> {
   #[allow(dead_code)]
-  pub fn new(iface: I) -> Self {
-    CalculatorProcessor { iface: iface }
+  pub fn new(iface: Rc<RefCell<I>>) -> Self {
+    CalculatorProcessor {
+      parent: SharedServiceProcessor::new(iface.clone()),
+      iface: iface,
+    }
+  }
+  pub fn dispatch<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, name: String, ty: MessageType, id: i32) -> TResult<()> {
+    match &*name {
+      "ping" => self.ping(prot, transport, ty, id),
+      "add" => self.add(prot, transport, ty, id),
+      "calculate" => self.calculate(prot, transport, ty, id),
+      "zip" => self.zip(prot, transport, ty, id),
+      _ => self.parent.dispatch(prot, transport, name, ty, id)
+    }
   }
   #[allow(unused_mut)]
   #[allow(non_snake_case)]
@@ -805,7 +816,7 @@ impl<I: CalculatorIf> CalculatorProcessor<I> {
     let mut args = CalculatorPingArgs::new();
     try!(ProtocolHelpers::receive_body(prot, transport, "ping" , &mut args, "ping", ty, id));
     let mut result = CalculatorPingResult::new();
-    self.iface.ping(
+    self.iface.borrow_mut().ping(
     );
     try!(ProtocolHelpers::send(prot, transport, "ping", MessageType::MtReply, &result));
     Ok(())
@@ -817,7 +828,7 @@ impl<I: CalculatorIf> CalculatorProcessor<I> {
     let mut args = CalculatorAddArgs::new();
     try!(ProtocolHelpers::receive_body(prot, transport, "add" , &mut args, "add", ty, id));
     let mut result = CalculatorAddResult::new();
-    result.success =     self.iface.add(
+    result.success =     self.iface.borrow_mut().add(
       args.num1,
       args.num2,
     );
@@ -831,7 +842,7 @@ impl<I: CalculatorIf> CalculatorProcessor<I> {
     let mut args = CalculatorCalculateArgs::new();
     try!(ProtocolHelpers::receive_body(prot, transport, "calculate" , &mut args, "calculate", ty, id));
     let mut result = CalculatorCalculateResult::new();
-    result.success =     self.iface.calculate(
+    result.success =     self.iface.borrow_mut().calculate(
       args.logid,
       args.w,
     );

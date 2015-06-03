@@ -63,8 +63,8 @@ fn run_client(client: &mut tutorial::CalculatorClient) {
         comment: None };
     println!("15 - 10 = {}", client.calculate(1, work).ok().unwrap());
 
-    //let ss = client.getStruct(1).ok().unwrap();
-    //println!("Received log: {}", ss.value);
+    let ss = client.getStruct(1).ok().unwrap();
+    println!("Received log: {}", ss.value);
 
     println!("PASS");
 }
