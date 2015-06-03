@@ -32,7 +32,7 @@
 # if defined(_MSC_VER) && _MSC_VER < 1600
    typedef int _Bool;
 #  define bool _Bool
-#  define false 0 
+#  define false 0
 #  define true 1
 # endif
 # define inline __inline
@@ -192,6 +192,21 @@ check_ssize_t_32(Py_ssize_t len) {
   }
   if (!CHECK_RANGE(len, 0, INT32_MAX)) {
     PyErr_SetString(PyExc_OverflowError, "string size out of range");
+    return false;
+  }
+  return true;
+}
+
+#define MAX_LIST_SIZE (10000)
+
+static inline bool
+check_list_length(Py_ssize_t len) {
+  // error from getting the int
+  if (INT_CONV_ERROR_OCCURRED(len)) {
+    return false;
+  }
+  if (!CHECK_RANGE(len, 0, MAX_LIST_SIZE)) {
+    PyErr_SetString(PyExc_OverflowError, "list size out of the sanity limit (10000 items max)");
     return false;
   }
   return true;
@@ -1028,7 +1043,7 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
     }
 
     len = readI32(input);
-    if (!check_ssize_t_32(len)) {
+    if (!check_list_length(len)) {
       return NULL;
     }
 
@@ -1164,7 +1179,7 @@ decode_binary(PyObject *self, PyObject *args) {
   PyObject* typeargs = NULL;
   StructTypeArgs parsedargs;
   DecodeBuffer input = {0, 0};
-  
+
   if (!PyArg_ParseTuple(args, "OOO", &output_obj, &transport, &typeargs)) {
     return NULL;
   }
