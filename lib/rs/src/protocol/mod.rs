@@ -236,6 +236,8 @@ impl ProtocolHelpers {
                 //throw x
                 Err(ThriftErr::Exception)
             }
+            // TODO: Make sure the client doesn't receive MtCall messages and that the server
+            // doesn't receive MtReply messages
             (fname, _, _) => {
                 if &fname[..] == op {
                     try!(result.read(protocol, transport));

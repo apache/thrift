@@ -59,8 +59,8 @@ impl CalculatorIf for CalculatorHandler {
             Operation::MULTIPLY => work.num1 * work.num2,
             Operation::DIVIDE => {
                 if work.num2 == 0 {
+                    // TODO: Add this back in when exceptions are implemented
                     //InvalidOperation { what: work.op, why: "Cannot divide by 0".to_owned() };
-                    // TODO: Throw?
                     unimplemented!()
                 }
                 work.num1 / work.num2

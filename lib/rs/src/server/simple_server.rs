@@ -17,7 +17,6 @@
  * under the License.
  */
 
-use transport::TransportFactory;
 use transport::server::ServerTransport;
 use protocol::ProtocolFactory;
 use processor::Processor;
