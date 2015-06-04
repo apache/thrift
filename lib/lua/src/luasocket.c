@@ -347,11 +347,6 @@ static int l_socket_create_and_connect(lua_State *L) {
     // Create the socket
     err = tcp_create(&sock);
     if (!err) {
-      // Bind to any port on localhost
-      err = tcp_bind(&sock, DEFAULT_HOST, 0);
-      if (err) {
-        tcp_destroy(&sock);
-      } else {
         // Connect
         err = tcp_connect(&sock, host, port, timeout);
         if (err) {
@@ -365,7 +360,6 @@ static int l_socket_create_and_connect(lua_State *L) {
           tcp->timeout = timeout;
           return 1; // Return userdata
         }
-      }
     }
   } while (err && __gettime() < end);
 
