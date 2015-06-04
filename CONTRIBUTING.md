@@ -3,7 +3,8 @@
  1. We rely on unstable features, so use nightly. We update on as-needed basis, so if you find breakages submit fixes as a separate PR
  1. Our first priority is to complete the client side and submit it to the Thrift main line
  1. If you want to add a feature not yet covered in the issue list, open an issue in [Rust Thrift project](https://github.com/maximg/thrift/) describing the feature and the suggested solution
- 1. Generated files in the tutorial section help us to track the progress and changes in the generated code, please do not remove them - we will delete them before merging to Thrift main line
+ 1. Try to make a comprehensive solution but at the same time limit the scope. If something is left for later mark it as FIXME or TODO with a comment. For large pieces of work feel free to submit new issues
+ 1. Generated files in the tutorial section help us to track changes in generator output (very useful in PR reviews), please do not remove them - we will delete them before merging to Thrift main line
  1. For the rest follow the guidelines for the Thrift project, see below
 
 ## How to contribute (Thrift project)
