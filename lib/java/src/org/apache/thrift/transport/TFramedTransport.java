@@ -130,11 +130,14 @@ public class TFramedTransport extends TTransport {
     int size = decodeFrameSize(i32buf);
 
     if (size < 0) {
-      throw new TTransportException("Read a negative frame size (" + size + ")!");
+      close();
+      throw new TTransportException(TTransportException.CORRUPTED_DATA, "Read a negative frame size (" + size + ")!");
     }
 
     if (size > maxLength_) {
-      throw new TTransportException("Frame size (" + size + ") larger than max length (" + maxLength_ + ")!");
+      close();
+      throw new TTransportException(TTransportException.CORRUPTED_DATA,
+          "Frame size (" + size + ") larger than max length (" + maxLength_ + ")!");
     }
 
     byte[] buff = new byte[size];
@@ -166,7 +169,7 @@ public class TFramedTransport extends TTransport {
   }
 
   public static final int decodeFrameSize(final byte[] buf) {
-    return 
+    return
       ((buf[0] & 0xff) << 24) |
       ((buf[1] & 0xff) << 16) |
       ((buf[2] & 0xff) <<  8) |
