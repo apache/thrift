@@ -25,7 +25,7 @@
 # http://www.cmake.org/Wiki/CMake:CPackConfiguration
 
 ### general settings
-set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
+set(CPACK_PACKAGE_NAME "thrift")
 set(CPACK_PACKAGE_VERSION "${PACKAGE_VERSION}")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Apache Thrift")
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/README.md")
