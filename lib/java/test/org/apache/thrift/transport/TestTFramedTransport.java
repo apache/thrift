@@ -34,6 +34,10 @@ public class TestTFramedTransport extends TestCase {
     return new TFramedTransport(underlying);
   }
 
+  protected TTransport getTransport(TTransport underlying, int maxLength) {
+    return new TFramedTransport(underlying, maxLength);
+  }
+
   public static byte[] byteSequence(int start, int end) {
     byte[] result = new byte[end-start+1];
     for (int i = 0; i <= (end-start); i++) {
@@ -73,6 +77,40 @@ public class TestTFramedTransport extends TestCase {
     assertEquals(220, trans.read(readBuf, 0, 220));
     assertTrue(Arrays.equals(readBuf, byteSequence(0, 219)));
     assertEquals(4, countTrans.readCount);
+  }
+
+  public void testInvalidFrameSize() throws IOException, TTransportException {
+    int maxLength = 128;
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    DataOutputStream dos = new DataOutputStream(baos);
+    dos.writeInt(130);
+    dos.write(byteSequence(0, 129));
+
+    TMemoryBuffer membuf = new TMemoryBuffer(0);
+    membuf.write(baos.toByteArray());
+
+    ReadCountingTransport countTrans = new ReadCountingTransport(membuf);
+    TTransport trans = getTransport(countTrans, maxLength);
+
+    byte[] readBuf = new byte[10];
+    try {
+      trans.read(readBuf, 0, 4);
+      fail("Expected a TTransportException");
+    } catch (TTransportException e) {
+      // We expect this exception because the frame we're trying to read is larger than our max frame length
+      assertEquals(TTransportException.CORRUPTED_DATA, e.getType());
+    }
+
+    assertFalse(trans.isOpen());
+
+    try {
+      trans.read(readBuf, 0, 4);
+      fail("Expected a TTransportException");
+    } catch (TTransportException e) {
+      // This time we get an exception indicating the connection was closed
+      assertEquals(TTransportException.NOT_OPEN, e.getType());
+    }
   }
 
   public void testWrite() throws TTransportException, IOException {
