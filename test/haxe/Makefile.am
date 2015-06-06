@@ -17,7 +17,7 @@
 # under the License.
 #
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
+THRIFT = $(top_builddir)/compiler/cpp/thrift
 THRIFTCMD = $(THRIFT) --gen haxe -r
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
@@ -28,7 +28,10 @@ gen-haxe/thrift/test/ThriftTest.hx: $(THRIFTTEST)
 
 all-local: $(BIN_CPP)
 
-$(BIN_CPP):    gen-haxe/thrift/test/ThriftTest.hx
+$(BIN_CPP): \
+		src/*.hx \
+		../../lib/haxe/src/org/apache/thrift/**/*.hx \
+		gen-haxe/thrift/test/ThriftTest.hx
 	$(HAXE) --cwd .  cpp.hxml
 
 
@@ -39,16 +42,17 @@ $(BIN_CPP):    gen-haxe/thrift/test/ThriftTest.hx
 #    $(HAXE)  --cwd .  javascript
 #    $(HAXE)  --cwd .  neko
 #    $(HAXE)  --cwd .  php
-#    $(HAXE)  --cwd .  python  # needs Haxe 3.1.4
+#    $(HAXE)  --cwd .  python  # needs Haxe 3.2.0
 
 
 clean-local:
 	$(RM) -r gen-haxe bin
 
 check: $(BIN_CPP)
-	timeout 120 $(BIN_CPP) server &
+	timeout 10 $(BIN_CPP) server &
 	sleep 1
 	$(BIN_CPP) client
+	sleep 10
 
 EXTRA_DIST = \
              src \

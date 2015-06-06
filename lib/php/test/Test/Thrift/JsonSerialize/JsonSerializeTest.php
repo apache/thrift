@@ -92,4 +92,12 @@ class JsonSerializeTest extends \PHPUnit_Framework_TestCase
     $this->assertEquals($expected, json_decode(json_encode($nested)));
   }
 
+  public function testMaps()
+  {
+    $intmap = new \ThriftTest\ThriftTest_testMap_args(['thing' => [0 => 'zero']]);
+    $emptymap = new \ThriftTest\ThriftTest_testMap_args([]);
+    $this->assertEquals('{"thing":{"0":"zero"}}', json_encode($intmap));
+    $this->assertEquals('{}', json_encode($emptymap));
+  }
+
 }

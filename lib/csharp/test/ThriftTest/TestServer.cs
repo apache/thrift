@@ -97,6 +97,13 @@ namespace Test
                 return thing;
             }
 
+            public byte[] testBinary(byte[] thing)
+            {
+                string hex = BitConverter.ToString(thing).Replace("-", string.Empty);
+                Console.WriteLine("testBinary(" + hex + ")");
+                return thing;
+            }
+
             public Xtruct testStruct(Xtruct thing)
             {
                 Console.WriteLine("testStruct({" +
@@ -286,6 +293,13 @@ namespace Test
                 return hello;
             }
 
+            /**
+             * Print 'testException(%s)' with arg as '%s'
+             * @param string arg - a string indication what type of exception to throw
+             * if arg == "Xception" throw Xception with errorCode = 1001 and message = arg
+             * elsen if arg == "TException" throw TException
+             * else do not throw anything
+             */
             public void testException(string arg)
             {
                 Console.WriteLine("testException(" + arg + ")");
@@ -293,8 +307,12 @@ namespace Test
                 {
                     Xception x = new Xception();
                     x.ErrorCode = 1001;
-                    x.Message = "This is an Xception";
+                    x.Message = arg;
                     throw x;
+                }
+                if (arg == "TException")
+                {
+                    throw new Thrift.TException();
                 }
                 return;
             }
@@ -340,13 +358,14 @@ namespace Test
 
         } // class TestHandler
 
-        public static void Execute(string[] args)
+        public static bool Execute(string[] args)
         {
             try
             {
                 bool useBufferedSockets = false, useFramed = false, useEncryption = false, compact = false, json = false;
                 int port = 9090;
                 string pipe = null;
+                string certPath = "../../../../../keys/server.pem";
                 for (int i = 0; i < args.Length; i++)
                 {
                     if (args[i] == "-pipe")  // -pipe name
@@ -377,6 +396,10 @@ namespace Test
                     {
                         useEncryption = true;
                     }
+                    else if (args[i].StartsWith("--cert="))
+                    {
+                        certPath = args[i].Substring("--cert=".Length);
+                    }
                 }
 
                 // Processor
@@ -393,7 +416,7 @@ namespace Test
                 {
                     if (useEncryption)
                     {
-                        trans = new TTLSServerSocket(port, 0, useBufferedSockets, new X509Certificate2("../../../../../keys/server.pem"));
+                        trans = new TTLSServerSocket(port, 0, useBufferedSockets, new X509Certificate2(certPath));
                     }
                     else
                     {
@@ -443,8 +466,10 @@ namespace Test
             catch (Exception x)
             {
                 Console.Error.Write(x);
+                return false;
             }
             Console.WriteLine("done.");
+            return true;
         }
     }
 }

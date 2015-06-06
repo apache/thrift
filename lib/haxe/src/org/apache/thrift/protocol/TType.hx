@@ -19,8 +19,8 @@
 
 package org.apache.thrift.protocol;
 
-class TType {
-
+@:enum
+abstract TType(Int)  from Int to Int  {
     public static inline var STOP : Int   = 0;
     public static inline var VOID : Int   = 1;
     public static inline var BOOL : Int   = 2;
@@ -34,5 +34,4 @@ class TType {
     public static inline var MAP : Int    = 13;
     public static inline var SET : Int    = 14;
     public static inline var LIST : Int   = 15;
-
 }

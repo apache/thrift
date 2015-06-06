@@ -127,6 +127,8 @@ func (p *ThriftTestDriver) Start() {
 		t.Fatal("TestDouble(-7.012052175215044) failed")
 	}
 
+	// TODO: add testBinary() call
+
 	out := thrifttest.NewXtruct()
 	out.StringThing = "Zero"
 	out.ByteThing = 1

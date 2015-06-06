@@ -25,11 +25,12 @@ unit TestClient;
 interface
 
 uses
-  Windows, SysUtils, Classes,
+  Windows, SysUtils, Classes, Math,
   DateUtils,
   Generics.Collections,
   TestConstants,
   Thrift,
+  Thrift.Protocol.Compact,
   Thrift.Protocol.JSON,
   Thrift.Protocol,
   Thrift.Transport.Pipes,
@@ -77,10 +78,11 @@ type
     procedure StartTestGroup( const aGroup : string; const aTest : TTestGroup);
     procedure Expect( aTestResult : Boolean; const aTestInfo : string);
     procedure ReportResults;
-    function CalculateExitCode : Byte;
+    function  CalculateExitCode : Byte;
 
     procedure ClientTest;
     procedure JSONProtocolReadWriteTest;
+    function  PrepareBinaryData( aRandomDist : Boolean = FALSE) : TBytes;
     {$IFDEF StressTest}
     procedure StressTest(const client : TThriftTest.Iface);
     {$ENDIF}
@@ -351,7 +353,7 @@ begin
       case protType of
         prot_Binary  :  prot := TBinaryProtocolImpl.Create( trans, BINARY_STRICT_READ, BINARY_STRICT_WRITE);
         prot_JSON    :  prot := TJSONProtocolImpl.Create( trans);
-        prot_Compact :  raise Exception.Create('Compact protocol not implemented');
+        prot_Compact :  prot := TCompactProtocolImpl.Create( trans);
       else
         raise Exception.Create('Unhandled protocol');
       end;
@@ -394,6 +396,7 @@ var
   i8 : ShortInt;
   i32 : Integer;
   i64 : Int64;
+  binOut,binIn : TBytes;
   dub : Double;
   o : IXtruct;
   o2 : IXtruct2;
@@ -479,17 +482,18 @@ begin
   except
     on e:TTransportException do begin
       Console.WriteLine( e.ClassName+' = '+e.Message); // this is what we get
-      if FTransport.IsOpen then FTransport.Close;
-      FTransport.Open;   // re-open connection, server has already closed
     end;
     on e:TApplicationException do begin
       Console.WriteLine( e.ClassName+' = '+e.Message); // this is what we get
-      if FTransport.IsOpen then FTransport.Close;
-      FTransport.Open;   // re-open connection, server has already closed
     end;
     on e:TException do Expect( FALSE, 'Unexpected exception type "'+e.ClassName+'"');
     on e:Exception do Expect( FALSE, 'Unexpected exception type "'+e.ClassName+'"');
   end;
+
+  {
+  if FTransport.IsOpen then FTransport.Close;
+  FTransport.Open;   // re-open connection, server has already closed
+  }
 
   // case 3: no exception
   try
@@ -523,6 +527,18 @@ begin
   Console.WriteLine('testI64(-34359738368)');
   i64 := client.testI64(-34359738368);
   Expect( i64 = -34359738368, 'testI64(-34359738368) = ' + IntToStr( i64));
+
+  binOut := PrepareBinaryData( TRUE);
+  Console.WriteLine('testBinary('+BytesToHex(binOut)+')');
+  try
+    binIn := client.testBinary(binOut);
+    Expect( Length(binOut) = Length(binIn), 'testBinary(): length '+IntToStr(Length(binOut))+' = '+IntToStr(Length(binIn)));
+    i32 := Min( Length(binOut), Length(binIn));
+    Expect( CompareMem( binOut, binIn, i32), 'testBinary('+BytesToHex(binOut)+') = '+BytesToHex(binIn));
+  except
+    on e:TApplicationException do Console.WriteLine('testBinary(): '+e.Message);
+    on e:Exception do Expect( FALSE, 'testBinary(): Unexpected exception "'+e.ClassName+'": '+e.Message);
+  end;
 
   Console.WriteLine('testDouble(5.325098235)');
   dub := client.testDouble(5.325098235);
@@ -961,6 +977,34 @@ begin
 end;
 {$ENDIF}
 
+
+function TClientThread.PrepareBinaryData( aRandomDist : Boolean = FALSE) : TBytes;
+var i, nextPos : Integer;
+begin
+  SetLength( result, $100);
+  ASSERT( Low(result) = 0);
+
+  // linear distribution, unless random is requested
+  if not aRandomDist then begin
+    for i := Low(result) to High(result) do begin
+      result[i] := i;
+    end;
+    Exit;
+  end;
+
+  // random distribution of all 256 values
+  FillChar( result[0], Length(result) * SizeOf(result[0]), $0);
+  i := 1;
+  while i < Length(result) do begin
+    nextPos := Byte( Random($100));
+    if result[nextPos] = 0 then begin  // unused?
+      result[nextPos] := i;
+      Inc(i);
+    end;
+  end;
+end;
+
+
 procedure TClientThread.JSONProtocolReadWriteTest;
 // Tests only then read/write procedures of the JSON protocol
 // All tests succeed, if we can read what we wrote before
@@ -991,8 +1035,7 @@ begin
     StartTestGroup( 'JsonProtocolTest', test_Unknown);
 
     // prepare binary data
-    SetLength( binary, $100);
-    for i := Low(binary) to High(binary) do binary[i] := i;
+    binary := PrepareBinaryData( FALSE);
 
     // output setup
     prot := TJSONProtocolImpl.Create(

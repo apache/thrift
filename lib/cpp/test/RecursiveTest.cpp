@@ -71,4 +71,5 @@ int main() {
     assert(false);
   } catch (const apache::thrift::protocol::TProtocolException& e) {
   }
+  depthLimit->nextitem.reset();
 }

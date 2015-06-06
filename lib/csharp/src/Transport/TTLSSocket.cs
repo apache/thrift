@@ -72,15 +72,29 @@ namespace Thrift.Transport
         private RemoteCertificateValidationCallback certValidator = null;
 
         /// <summary>
+        /// The function to determine which certificate to use.
+        /// </summary>
+        private LocalCertificateSelectionCallback localCertificateSelectionCallback;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="TTLSSocket"/> class.
         /// </summary>
         /// <param name="client">An already created TCP-client</param>
         /// <param name="certificate">The certificate.</param>
         /// <param name="isServer">if set to <c>true</c> [is server].</param>
-        public TTLSSocket(TcpClient client, X509Certificate certificate, bool isServer = false)
+        /// <param name="certValidator">User defined cert validator.</param>
+        /// <param name="localCertificateSelectionCallback">The callback to select which certificate to use.</param>
+        public TTLSSocket(
+            TcpClient client,
+            X509Certificate certificate,
+            bool isServer = false,
+            RemoteCertificateValidationCallback certValidator = null,
+            LocalCertificateSelectionCallback localCertificateSelectionCallback = null)
         {
             this.client = client;
             this.certificate = certificate;
+            this.certValidator = certValidator;
+            this.localCertificateSelectionCallback = localCertificateSelectionCallback;
             this.isServer = isServer;
 
             if (IsOpen)
@@ -97,8 +111,14 @@ namespace Thrift.Transport
         /// <param name="port">The port.</param>
         /// <param name="certificatePath">The certificate path.</param>
         /// <param name="certValidator">User defined cert validator.</param>
-        public TTLSSocket(string host, int port, string certificatePath, RemoteCertificateValidationCallback certValidator = null)
-            : this(host, port, 0, X509Certificate.CreateFromCertFile(certificatePath), certValidator)
+        /// <param name="localCertificateSelectionCallback">The callback to select which certificate to use.</param>
+        public TTLSSocket(
+            string host,
+            int port,
+            string certificatePath,
+            RemoteCertificateValidationCallback certValidator = null,
+            LocalCertificateSelectionCallback localCertificateSelectionCallback = null)
+            : this(host, port, 0, X509Certificate.CreateFromCertFile(certificatePath), certValidator, localCertificateSelectionCallback)
         {
         }
 
@@ -109,8 +129,14 @@ namespace Thrift.Transport
         /// <param name="port">The port.</param>
         /// <param name="certificate">The certificate.</param>
         /// <param name="certValidator">User defined cert validator.</param>
-        public TTLSSocket(string host, int port, X509Certificate certificate, RemoteCertificateValidationCallback certValidator = null)
-            : this(host, port, 0, certificate, certValidator)
+        /// <param name="localCertificateSelectionCallback">The callback to select which certificate to use.</param>
+        public TTLSSocket(
+            string host,
+            int port,
+            X509Certificate certificate,
+            RemoteCertificateValidationCallback certValidator = null,
+            LocalCertificateSelectionCallback localCertificateSelectionCallback = null)
+            : this(host, port, 0, certificate, certValidator, localCertificateSelectionCallback)
         {
         }
 
@@ -122,13 +148,21 @@ namespace Thrift.Transport
         /// <param name="timeout">The timeout.</param>
         /// <param name="certificate">The certificate.</param>
         /// <param name="certValidator">User defined cert validator.</param>
-        public TTLSSocket(string host, int port, int timeout, X509Certificate certificate, RemoteCertificateValidationCallback certValidator = null)
+        /// <param name="localCertificateSelectionCallback">The callback to select which certificate to use.</param>
+        public TTLSSocket(
+            string host,
+            int port,
+            int timeout,
+            X509Certificate certificate,
+            RemoteCertificateValidationCallback certValidator = null,
+            LocalCertificateSelectionCallback localCertificateSelectionCallback = null)
         {
             this.host = host;
             this.port = port;
             this.timeout = timeout;
             this.certificate = certificate;
             this.certValidator = certValidator;
+            this.localCertificateSelectionCallback = localCertificateSelectionCallback;
 
             InitSocket();
         }
@@ -211,7 +245,7 @@ namespace Thrift.Transport
         /// <param name="chain">The certificate chain.</param>
         /// <param name="sslPolicyErrors">An enum, which lists all the errors from the .NET certificate check.</param>
         /// <returns></returns>
-        private bool CertificateValidator(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslValidationErrors)
+        private bool DefaultCertificateValidator(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslValidationErrors)
         {
             return (sslValidationErrors == SslPolicyErrors.None);
         }
@@ -251,27 +285,43 @@ namespace Thrift.Transport
         /// </summary>
         public void setupTLS()
         {
-            if (isServer)
+            RemoteCertificateValidationCallback validator = this.certValidator ?? DefaultCertificateValidator;
+            
+            if( this.localCertificateSelectionCallback != null)
             {
-                // Server authentication
-                this.secureStream = new SslStream(this.client.GetStream(), false);
-                this.secureStream.AuthenticateAsServer(this.certificate, false, SslProtocols.Tls, true);
+                this.secureStream = new SslStream(
+                    this.client.GetStream(),
+                    false,
+                    validator,
+                    this.localCertificateSelectionCallback
+                );
             }
             else
             {
-                // Client authentication
-                X509CertificateCollection validCerts = new X509CertificateCollection();
-                validCerts.Add(certificate);
-
-                if (this.certValidator != null)
+                this.secureStream = new SslStream(
+                    this.client.GetStream(),
+                    false,
+                    validator
+                );
+            }
+            
+            try
+            {
+                if (isServer)
                 {
-                    this.secureStream = new SslStream(this.client.GetStream(), false, new RemoteCertificateValidationCallback(this.certValidator));
+                    // Server authentication
+                    this.secureStream.AuthenticateAsServer(this.certificate, this.certValidator != null, SslProtocols.Tls, true);
                 }
                 else
                 {
-                    this.secureStream = new SslStream(this.client.GetStream(), false, new RemoteCertificateValidationCallback(CertificateValidator));
+                    // Client authentication
+                    this.secureStream.AuthenticateAsClient(host, new X509CertificateCollection { certificate }, SslProtocols.Tls, true);
                 }
-                this.secureStream.AuthenticateAsClient(host, validCerts, SslProtocols.Tls, true);
+            }
+            catch (Exception)
+            {
+                this.Close();
+                throw;
             }
 
             inputStream = this.secureStream;

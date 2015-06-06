@@ -127,6 +127,10 @@ instance ThriftTest_Iface TestHandler where
     System.IO.putStrLn $ "testDouble(" ++ show x ++ ")"
     return x
 
+  testBinary _ x = do
+    System.IO.putStrLn $ "testBinary(" ++ show x ++ ")"
+    return x
+
   testStruct _ struct@Xtruct{..} = do
     System.IO.putStrLn $ "testStruct({" ++ show xtruct_string_thing
                       ++ ", " ++ show xtruct_byte_thing

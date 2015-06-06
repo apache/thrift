@@ -18,6 +18,13 @@
 #
 AUTOMAKE_OPTIONS = subdir-objects serial-tests
 
+BUILT_SOURCES = gen-cpp/ThriftTest.cpp \
+                gen-cpp/ThriftTest_types.cpp \
+                gen-cpp/ThriftTest_constants.cpp \
+                gen-cpp/StressTest_types.cpp \
+                gen-cpp/StressTest_constants.cpp \
+                gen-cpp/Service.cpp
+
 noinst_LTLIBRARIES = libtestgencpp.la libstresstestgencpp.la
 nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/ThriftTest_constants.cpp \
@@ -41,6 +48,8 @@ nodist_libstresstestgencpp_la_SOURCES = \
 	gen-cpp/Service.h
 
 libstresstestgencpp_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
+
+precross: TestServer TestClient
 
 check_PROGRAMS = \
 	TestServer \
@@ -99,7 +108,7 @@ gen-cpp/StressTest_types.cpp gen-cpp/StressTest_constants.cpp gen-cpp/Service.cp
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -Igen-cpp
 AM_CXXFLAGS = -Wall -Wextra -pedantic
-AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS) $(ZLIB_LIBS)
 
 clean-local:
 	$(RM) -r gen-cpp

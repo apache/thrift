@@ -332,7 +332,7 @@ void ThreadManager::Impl::addWorker(size_t value) {
   }
 
   for (std::set<shared_ptr<Thread> >::iterator ix = newThreads.begin(); ix != newThreads.end();
-       ix++) {
+       ++ix) {
     shared_ptr<ThreadManager::Worker> worker
         = dynamic_pointer_cast<ThreadManager::Worker, Runnable>((*ix)->runnable());
     worker->state_ = ThreadManager::Worker::STARTING;
@@ -427,7 +427,7 @@ void ThreadManager::Impl::removeWorker(size_t value) {
 
     for (std::set<shared_ptr<Thread> >::iterator ix = deadWorkers_.begin();
          ix != deadWorkers_.end();
-         ix++) {
+         ++ix) {
       idMap_.erase((*ix)->getId());
       workers_.erase(*ix);
     }

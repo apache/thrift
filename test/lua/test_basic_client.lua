@@ -112,6 +112,8 @@ function testBasicClient()
   assertEqual(
       client:testDouble(0.123456789), 0.123456789, 'Failed testDouble 3')
 
+  -- TODO testBinary() ...
+	  
   -- Accuracy of 16 decimal digits (rounds)
   local a, b = 1.12345678906666663, 1.12345678906666661
   assertEqual(a, b)

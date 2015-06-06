@@ -33,7 +33,8 @@ install:
 check-local:
 	$(GO) test ./thrift
 
-all-local: check-local
+all-local:
+	$(GO) build ./thrift
 
 EXTRA_DIST = \
 	thrift \

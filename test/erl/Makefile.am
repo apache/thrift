@@ -17,16 +17,18 @@
 # under the License.
 #
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
+THRIFT = $(top_builddir)/compiler/cpp/thrift
 REBAR = $(top_srcdir)/lib/erl/rebar
 
 THRIFT_FILES = $(wildcard ../*.thrift)
 
+# make sure ThriftTest.thrift is generated last to prevent conflicts with other *.thrift files
 .generated: $(THRIFT_FILES)
 	for f in $(THRIFT_FILES) ; do \
 	  $(THRIFT) --gen erl $$f ; \
 	done ; \
 	$(THRIFT) --gen erl:legacynames LegacyNames.thrift
+	$(THRIFT) --gen erl ../ThriftTest.thrift
 	touch .generated
 
 check: .generated

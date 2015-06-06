@@ -56,7 +56,7 @@ func doUnit(t *testing.T, unit *test_unit) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	handler := NewMockThriftTest(ctrl)
-	server, err := StartServer(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl, handler)
+	server, err := StartServer(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl, "../../../keys", handler)
 	if err != nil {
 		t.Errorf("Unable to start server", err)
 		t.FailNow()
@@ -92,6 +92,7 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 		handler.EXPECT().TestByte(int8(42)).Return(int8(42), nil),
 		handler.EXPECT().TestI32(int32(4242)).Return(int32(4242), nil),
 		handler.EXPECT().TestI64(int64(424242)).Return(int64(424242), nil),
+		// TODO: add TestBinary()
 		handler.EXPECT().TestDouble(float64(42.42)).Return(float64(42.42), nil),
 		handler.EXPECT().TestStruct(&thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}).Return(&thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}, nil),
 		handler.EXPECT().TestNest(&thrifttest.Xtruct2{StructThing: &thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}}).Return(&thrifttest.Xtruct2{StructThing: &thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}}, nil),
@@ -156,6 +157,8 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 		t.Errorf("Unexpected TestDouble() result expected 42.42, got %f ", d)
 	}
 
+	// TODO: add TestBinary() call
+	
 	xs := thrifttest.NewXtruct()
 	xs.StringThing = "thing"
 	xs.ByteThing = 42

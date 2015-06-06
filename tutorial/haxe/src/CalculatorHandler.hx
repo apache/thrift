@@ -67,7 +67,7 @@ class CalculatorHandler implements Calculator {
                 if (work.num2 == 0)
                 {
                     var io = new InvalidOperation();
-                    io.what = work.op;
+                    io.whatOp = work.op;
                     io.why = "Cannot divide by 0";
                     throw io;
                 }
@@ -75,7 +75,7 @@ class CalculatorHandler implements Calculator {
 
             default:
                 var io = new InvalidOperation();
-                io.what = work.op;
+                io.whatOp = work.op;
                 io.why = "Unknown operation";
                 throw io;
         }

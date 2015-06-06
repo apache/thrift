@@ -19,6 +19,8 @@ struct get {
 
 struct partial {
     1: using using
+    2: bool read
+    3: bool write
 }
 
 enum Maybe {

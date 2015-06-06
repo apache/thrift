@@ -22,6 +22,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
+#include <stdint.h>
 
 namespace apache {
 namespace thrift {

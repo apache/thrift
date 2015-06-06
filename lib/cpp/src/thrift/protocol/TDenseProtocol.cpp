@@ -87,7 +87,6 @@ Optional fields are a little tricky also.  We write a zero byte if they are
 absent and prefix them with an 0x01 byte if they are present
 */
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include <thrift/protocol/TDenseProtocol.h>
 #include <thrift/TReflectionLocal.h>
@@ -155,7 +154,7 @@ inline void TDenseProtocol::stateTransition() {
   // If this is the end of the top-level write, we should have just popped
   // the TypeSpec passed to the constructor.
   if (ts_stack_.empty()) {
-    assert(old_tts = type_spec_);
+    assert(old_tts == type_spec_);
     return;
   }
 

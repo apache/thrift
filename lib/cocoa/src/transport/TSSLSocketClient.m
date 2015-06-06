@@ -59,10 +59,10 @@
             break;
         }
     }
-    
+
     memset (&pin, 0, sizeof(pin));
     pin.sin_family = AF_INET;
-    pin.sin_addr.s_addr = ((struct in_addr *) (hp->h_addr))->s_addr;
+    memcpy(&pin.sin_addr, hp->h_addr, sizeof(struct in_addr));
     pin.sin_port = htons (port);
     
     /* create the socket */
@@ -198,8 +198,6 @@
             break;
         }
         case NSStreamEventEndEncountered:
-            break;
-        default:
             break;
     }
 }

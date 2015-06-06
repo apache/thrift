@@ -26,7 +26,7 @@ require 'thrift'
 require 'thrift_test'
 
 class SimpleHandler
-  [:testVoid, :testString, :testByte, :testI32, :testI64, :testDouble,
+  [:testVoid, :testString, :testByte, :testI32, :testI64, :testDouble, :testBinary,
    :testStruct, :testMap, :testSet, :testList, :testNest,
    :testEnum, :testTypedef, :testMultiException].each do |meth|
 

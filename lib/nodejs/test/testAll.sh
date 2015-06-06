@@ -1,6 +1,5 @@
 #! /bin/sh
 
-
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -17,60 +16,55 @@
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
-#
+
+if [ -n "${1}" ]; then
+  COVER=${1};
+fi
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 
+ISTANBUL="$DIR/../../../node_modules/istanbul/lib/cli.js"
+RUNBROWSER="$DIR/../../../node_modules/run-browser/bin/cli.js"
+
+REPORT_PREFIX="${DIR}/../coverage/report"
+
+COUNT=0
+
 export NODE_PATH="${DIR}:${DIR}/../lib:${NODE_PATH}"
 
-testClientServer()
+testServer()
 {
-  echo "   Testing Client/Server with protocol $1 and transport $2 $3";
+  echo "   Testing $1 Client/Server with protocol $2 and transport $3 $4";
   RET=0
-  node ${DIR}/server.js -p $1 -t $2 $3 &
+  if [ -n "${COVER}" ]; then
+    ${ISTANBUL} cover ${DIR}/server.js --dir ${REPORT_PREFIX}${COUNT} --handle-sigint -- --type $1 -p $2 -t $3 $4 &
+    COUNT=$((COUNT+1))
+  else
+    node ${DIR}/server.js --type $1 -p $2 -t $3 $4 &
+  fi
   SERVERPID=$!
   sleep 1
-  node ${DIR}/client.js -p $1 -t $2 $3 || RET=1
-  kill -9 $SERVERPID || RET=1
+  if [ -n "${COVER}" ]; then
+    ${ISTANBUL} cover ${DIR}/client.js --dir ${REPORT_PREFIX}${COUNT} -- --type $1 -p $2 -t $3 $4 || RET=1
+    COUNT=$((COUNT+1))
+  else
+    node ${DIR}/client.js --type $1 -p $2 -t $3 $4 || RET=1
+  fi
+  kill -2 $SERVERPID || RET=1
   return $RET
 }
 
-testMultiplexedClientServer()
+testBrowser()
 {
-  echo "   Testing Multiplexed Client/Server with protocol $1 and transport $2 $3";
+  echo "   Testing browser client with http server with json protocol and buffered transport";
   RET=0
-  node ${DIR}/multiplex_server.js -p $1 -t $2 $3 &
+  node ${DIR}/server.js --type http -p json -t buffered &
   SERVERPID=$!
   sleep 1
-  node ${DIR}/multiplex_client.js -p $1 -t $2 $3 || RET=1
-  kill -9 $SERVERPID || RET=1
+  ${RUNBROWSER} ${DIR}/browser_client.js --phantom || RET=1
+  kill -2 $SERVERPID || RET=1
   return $RET
 }
-
-testHttpClientServer()
-{
-  echo "   Testing HTTP Client/Server with protocol $1 and transport $2 $3";
-  RET=0
-  node ${DIR}/http_server.js -p $1 -t $2 $3 &
-  SERVERPID=$!
-  sleep 1
-  node ${DIR}/http_client.js -p $1 -t $2 $3 || RET=1
-  kill -9 $SERVERPID || RET=1
-  return $RET
-}
-
-testWSClientServer()
-{
-  echo "   Testing WebSocket Client/Server with protocol $1 and transport $2 $3";
-  RET=0
-  node ${DIR}/http_server.js -p $1 -t $2 $3 &
-  SERVERPID=$!
-  sleep 1
-  node ${DIR}/ws_client.js -p $1 -t $2 $3 || RET=1
-  kill -9 $SERVERPID || RET=1
-  return $RET
-}
-
 
 TESTOK=0
 
@@ -84,46 +78,28 @@ node ${DIR}/binary.test.js || TESTOK=1
 
 #integration tests
 
-#TCP connection tests
-testClientServer compact buffered || TESTOK=1
-testClientServer compact framed || TESTOK=1
-testClientServer binary buffered || TESTOK=1
-testClientServer json buffered || TESTOK=1
-testClientServer binary framed || TESTOK=1
-testClientServer json framed || TESTOK=1
+for type in tcp multiplex websocket http
+do
 
-#tests for multiplexed services
-testMultiplexedClientServer binary buffered || TESTOK=1
-testMultiplexedClientServer json buffered || TESTOK=1
-testMultiplexedClientServer binary framed || TESTOK=1
-testMultiplexedClientServer compact framed || TESTOK=1
+  for protocol in compact binary json
+  do
 
-#test ssl connection
-testClientServer binary framed --ssl || TESTOK=1
-testMultiplexedClientServer binary framed --ssl || TESTOK=1
+    for transport in buffered framed
+    do
+      testServer $type $protocol $transport || TESTOK=1
+      testServer $type $protocol $transport --ssl || TESTOK=1
+      testServer $type $protocol $transport --promise || TESTOK=1
+    done
+  done
+done
 
-#test promise style
-testClientServer binary framed --promise || TESTOK=1
-testClientServer compact buffered --promise || TESTOK=1
+# XHR only until phantomjs 2 is released.
+testBrowser
 
-#HTTP tests
-testHttpClientServer compact buffered || TESTOK=1
-testHttpClientServer compact framed || TESTOK=1
-testHttpClientServer json buffered || TESTOK=1
-testHttpClientServer json framed || TESTOK=1
-testHttpClientServer binary buffered || TESTOK=1
-testHttpClientServer binary framed || TESTOK=1
-testHttpClientServer json buffered --promise || TESTOK=1
-testHttpClientServer binary framed --ssl || TESTOK=1
-
-#WebSocket tests
-testWSClientServer compact buffered || TESTOK=1
-testWSClientServer compact framed || TESTOK=1
-testWSClientServer json buffered || TESTOK=1
-testWSClientServer json framed || TESTOK=1
-testWSClientServer binary buffered || TESTOK=1
-testWSClientServer binary framed || TESTOK=1
-testWSClientServer json buffered --promise || TESTOK=1
-testWSClientServer binary framed --ssl || TESTOK=1
+if [ -n "${COVER}" ]; then
+  ${ISTANBUL} report --dir "${DIR}/../coverage" --include "${DIR}/../coverage/report*/coverage.json" lcov cobertura html
+  rm -r ${DIR}/../coverage/report*/*
+  rmdir ${DIR}/../coverage/report*
+fi
 
 exit $TESTOK

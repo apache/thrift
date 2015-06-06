@@ -117,7 +117,7 @@ public:
 
       for (std::set<shared_ptr<Task> >::iterator ix = expiredTasks.begin();
            ix != expiredTasks.end();
-           ix++) {
+           ++ix) {
         (*ix)->run();
       }
 

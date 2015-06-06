@@ -21,7 +21,10 @@
 #define T_MAIN_H
 
 #include <string>
+#include <cstdio>
+
 #include "logging.h"
+
 #include "parse/t_const.h"
 #include "parse/t_field.h"
 
@@ -99,6 +102,6 @@ void check_for_list_of_bytes(t_type* list_elem_type);
 
 extern int yylineno;
 extern char yytext[];
-extern FILE* yyin;
+extern std::FILE* yyin;
 
 #endif

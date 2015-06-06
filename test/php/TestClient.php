@@ -60,6 +60,14 @@ if ($argc > 2) {
   $host = $argv[1];
 }
 
+foreach ($argv as $arg) {
+  if (substr($arg, 0, 7) == '--port=') {
+    $port = substr($arg, 7);
+  } else if (substr($arg, 0, 11) == '--transport=') {
+    $MODE = substr($arg, 11);
+  }
+}
+
 $hosts = array('localhost');
 
 $socket = new TSocket($host, $port);
@@ -126,6 +134,10 @@ print_r(" = $i64\n");
 print_r("testDouble(-852.234234234)");
 $dub = $testClient->testDouble(-852.234234234);
 print_r(" = $dub\n");
+
+/**
+ * BINARY TEST  --  TODO
+ */
 
 /**
  * STRUCT TEST

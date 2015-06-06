@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#define __STDC_LIMIT_MACROS
 #define __STDC_FORMAT_MACROS
 
 #ifndef _GNU_SOURCE
@@ -25,7 +24,9 @@
 #endif
 
 #include <stdint.h>
+#ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
+#endif
 #include <cstddef>
 #include <fstream>
 #include <iostream>
@@ -81,13 +82,13 @@ private:
   boost::variate_generator<boost::mt19937, boost::lognormal_distribution<double> > gen_;
 };
 
-uint8_t* gen_uniform_buffer(uint32_t buf_len, uint8_t c) {
+boost::shared_array<uint8_t> gen_uniform_buffer(uint32_t buf_len, uint8_t c) {
   uint8_t* buf = new uint8_t[buf_len];
   memset(buf, c, buf_len);
-  return buf;
+  return boost::shared_array<uint8_t>(buf);
 }
 
-uint8_t* gen_compressible_buffer(uint32_t buf_len) {
+boost::shared_array<uint8_t> gen_compressible_buffer(uint32_t buf_len) {
   uint8_t* buf = new uint8_t[buf_len];
 
   // Generate small runs of alternately increasing and decreasing bytes
@@ -116,10 +117,10 @@ uint8_t* gen_compressible_buffer(uint32_t buf_len) {
     step *= -1;
   }
 
-  return buf;
+  return boost::shared_array<uint8_t>(buf);
 }
 
-uint8_t* gen_random_buffer(uint32_t buf_len) {
+boost::shared_array<uint8_t> gen_random_buffer(uint32_t buf_len) {
   uint8_t* buf = new uint8_t[buf_len];
 
   boost::uniform_smallint<uint8_t> distribution(0, UINT8_MAX);
@@ -130,27 +131,27 @@ uint8_t* gen_random_buffer(uint32_t buf_len) {
     buf[n] = generator();
   }
 
-  return buf;
+  return boost::shared_array<uint8_t>(buf);
 }
 
 /*
  * Test functions
  */
 
-void test_write_then_read(const uint8_t* buf, uint32_t buf_len) {
+void test_write_then_read(const boost::shared_array<uint8_t> buf, uint32_t buf_len) {
   boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
   boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
-  zlib_trans->write(buf, buf_len);
+  zlib_trans->write(buf.get(), buf_len);
   zlib_trans->finish();
 
   boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
   uint32_t got = zlib_trans->readAll(mirror.get(), buf_len);
   BOOST_REQUIRE_EQUAL(got, buf_len);
-  BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf, buf_len), 0);
+  BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf.get(), buf_len), 0);
   zlib_trans->verifyChecksum();
 }
 
-void test_separate_checksum(const uint8_t* buf, uint32_t buf_len) {
+void test_separate_checksum(const boost::shared_array<uint8_t> buf, uint32_t buf_len) {
   // This one is tricky.  I separate the last byte of the stream out
   // into a separate crbuf_.  The last byte is part of the checksum,
   // so the entire read goes fine, but when I go to verify the checksum
@@ -159,7 +160,7 @@ void test_separate_checksum(const uint8_t* buf, uint32_t buf_len) {
   // It worked.  Awesome.
   boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
   boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
-  zlib_trans->write(buf, buf_len);
+  zlib_trans->write(buf.get(), buf_len);
   zlib_trans->finish();
   string tmp_buf;
   membuf->appendBufferToString(tmp_buf);
@@ -170,16 +171,16 @@ void test_separate_checksum(const uint8_t* buf, uint32_t buf_len) {
   boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
   uint32_t got = zlib_trans->readAll(mirror.get(), buf_len);
   BOOST_REQUIRE_EQUAL(got, buf_len);
-  BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf, buf_len), 0);
+  BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf.get(), buf_len), 0);
   zlib_trans->verifyChecksum();
 }
 
-void test_incomplete_checksum(const uint8_t* buf, uint32_t buf_len) {
+void test_incomplete_checksum(const boost::shared_array<uint8_t> buf, uint32_t buf_len) {
   // Make sure we still get that "not complete" error if
   // it really isn't complete.
   boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
   boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
-  zlib_trans->write(buf, buf_len);
+  zlib_trans->write(buf.get(), buf_len);
   zlib_trans->finish();
   string tmp_buf;
   membuf->appendBufferToString(tmp_buf);
@@ -190,7 +191,7 @@ void test_incomplete_checksum(const uint8_t* buf, uint32_t buf_len) {
   boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
   uint32_t got = zlib_trans->readAll(mirror.get(), buf_len);
   BOOST_REQUIRE_EQUAL(got, buf_len);
-  BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf, buf_len), 0);
+  BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf.get(), buf_len), 0);
   try {
     zlib_trans->verifyChecksum();
     BOOST_ERROR("verifyChecksum() did not report an error");
@@ -199,7 +200,7 @@ void test_incomplete_checksum(const uint8_t* buf, uint32_t buf_len) {
   }
 }
 
-void test_read_write_mix(const uint8_t* buf,
+void test_read_write_mix(const boost::shared_array<uint8_t> buf,
                          uint32_t buf_len,
                          const boost::shared_ptr<SizeGenerator>& write_gen,
                          const boost::shared_ptr<SizeGenerator>& read_gen) {
@@ -214,7 +215,7 @@ void test_read_write_mix(const uint8_t* buf,
     if (tot + write_len > buf_len) {
       write_len = buf_len - tot;
     }
-    zlib_trans->write(buf + tot, write_len);
+    zlib_trans->write(buf.get() + tot, write_len);
     tot += write_len;
   }
 
@@ -234,15 +235,15 @@ void test_read_write_mix(const uint8_t* buf,
     tot += got;
   }
 
-  BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf, buf_len), 0);
+  BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf.get(), buf_len), 0);
   zlib_trans->verifyChecksum();
 }
 
-void test_invalid_checksum(const uint8_t* buf, uint32_t buf_len) {
+void test_invalid_checksum(const boost::shared_array<uint8_t> buf, uint32_t buf_len) {
   // Verify checksum checking.
   boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
   boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
-  zlib_trans->write(buf, buf_len);
+  zlib_trans->write(buf.get(), buf_len);
   zlib_trans->finish();
   string tmp_buf;
   membuf->appendBufferToString(tmp_buf);
@@ -275,11 +276,11 @@ void test_invalid_checksum(const uint8_t* buf, uint32_t buf_len) {
   }
 }
 
-void test_write_after_flush(const uint8_t* buf, uint32_t buf_len) {
+void test_write_after_flush(const boost::shared_array<uint8_t> buf, uint32_t buf_len) {
   // write some data
   boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
   boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
-  zlib_trans->write(buf, buf_len);
+  zlib_trans->write(buf.get(), buf_len);
 
   // call finish()
   zlib_trans->finish();
@@ -339,7 +340,7 @@ void test_no_write() {
   } while (0)
 
 void add_tests(boost::unit_test::test_suite* suite,
-               const uint8_t* buf,
+               const boost::shared_array<uint8_t>& buf,
                uint32_t buf_len,
                const char* name) {
   ADD_TEST_CASE(suite, name, test_write_then_read, buf, buf_len);
@@ -401,7 +402,9 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   THRIFT_UNUSED_VARIABLE(argc);
   THRIFT_UNUSED_VARIABLE(argv);
   uint32_t seed = static_cast<uint32_t>(time(NULL));
+#ifdef HAVE_INTTYPES_H
   printf("seed: %" PRIu32 "\n", seed);
+#endif
   rng.seed(seed);
 
   boost::unit_test::test_suite* suite = &boost::unit_test::framework::master_test_suite();

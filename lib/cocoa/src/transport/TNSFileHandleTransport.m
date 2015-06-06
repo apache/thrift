@@ -51,26 +51,26 @@
 }
 
 
-- (int) readAll: (uint8_t *) buf offset: (int) off length: (int) len
+- (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
 {
-  int got = 0;
-  while (got < len) {
-    NSData * d = [mInputFileHandle readDataOfLength: len-got];
-    if ([d length] == 0) {
+  size_t totalBytesRead = 0;
+  while (totalBytesRead < length) {
+    NSData * data = [mInputFileHandle readDataOfLength: length-totalBytesRead];
+    if ([data length] == 0) {
       @throw [TTransportException exceptionWithName: @"TTransportException"
                                   reason: @"Cannot read. No more data."];
     }
-    [d getBytes: buf+got];
-    got += [d length];
+    [data getBytes: buf+totalBytesRead];
+    totalBytesRead += [data length];
   }
-  return got;
+  return totalBytesRead;
 }
 
 
-- (void) write: (const uint8_t *) data offset: (unsigned int) offset length: (unsigned int) length
+- (void) write: (const uint8_t *) data offset: (size_t) offset length: (size_t) length
 {
-  void *pos = (void *) data + offset;
-  NSData * dataObject = [[NSData alloc] initWithBytesNoCopy: pos // data+offset
+  const void *pos = data + offset;
+  NSData * dataObject = [[NSData alloc] initWithBytesNoCopy: (void *)pos
                                                      length: length
                                                freeWhenDone: NO];
 

@@ -41,6 +41,11 @@ $|++;
 my $host = 'localhost';
 my $port = 9090;
 
+foreach my $arg (@ARGV) {
+  if($arg =~ /^--port=([0-9]+)/) {
+    $port = $1;
+  }
+}
 
 my $socket = new Thrift::Socket($host, $port);
 
@@ -97,6 +102,11 @@ print(" = $i64\n");
 print("testDouble(-852.234234234)");
 my $dub = $testClient->testDouble(-852.234234234);
 print(" = $dub\n");
+
+#
+# BINARY TEST   ---  TODO
+#
+
 
 #
 # STRUCT TEST
