@@ -7,6 +7,11 @@
  1. Generated files in the tutorial section help us to track changes in generator output (very useful in PR reviews), please do not remove them - we will delete them before merging to Thrift main line
  1. For the rest follow the guidelines for the Thrift project, see below
 
+### Resources
+
+ 1. [Thrift missing guide](http://diwakergupta.github.io/thrift-missing-guide/)
+ 
+
 ## How to contribute (Thrift project)
 
  1. Make sure your issue is not all ready in the [Jira issue tracker](http://issues.apache.org/jira/browse/THRIFT)
