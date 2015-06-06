@@ -43,6 +43,7 @@ func StartServer(
 	transport string,
 	protocol string,
 	ssl bool,
+	certPath string,
 	handler thrifttest.ThriftTest) (srv *thrift.TSimpleServer, err error) {
 
 	hostPort := fmt.Sprintf("%s:%d", host, port)

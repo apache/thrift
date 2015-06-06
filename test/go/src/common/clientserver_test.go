@@ -56,7 +56,7 @@ func doUnit(t *testing.T, unit *test_unit) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	handler := NewMockThriftTest(ctrl)
-	server, err := StartServer(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl, handler)
+	server, err := StartServer(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl, "../../../keys", handler)
 	if err != nil {
 		t.Errorf("Unable to start server", err)
 		t.FailNow()

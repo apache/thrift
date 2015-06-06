@@ -192,7 +192,13 @@ import flash.events.EventDispatcher;
         {
             this.output = this.socket;
             this.input = this.socket;
-            this.output.writeUTF("CONNECT " + resource + " HTTP/1.1\n" + "Host :  " + host + ":" + port + "\r\n" + "User-Agent :  BattleNet\r\n" + "Transfer-Encoding :  chunked\r\n" + "content-type :  application/x-thrift\r\n" + "Accept :  */*\r\n\r\n");
+            this.output.writeUTF( "CONNECT " + resource + " HTTP/1.1\n"
+                                + "Host :  " + host + ":" + port + "\r\n"
+                                + "User-Agent :  Thrift/Haxe\r\n"
+                                + "Transfer-Encoding :  chunked\r\n"
+                                + "content-type :  application/x-thrift\r\n"
+                                + "Accept :  */*\r\n"
+                                + "\r\n");
             this.eventDispatcher.dispatchEvent(event);
         }
 

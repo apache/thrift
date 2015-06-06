@@ -116,7 +116,7 @@ namespace Thrift.Server
                     connectionContext = serverEventHandler.createContext(inputProtocol, outputProtocol);
 
                   //Process client requests until client disconnects
-                  while (true)
+                  while (!stop)
                   {
                     if (!inputTransport.Peek())
                       break;
@@ -136,9 +136,12 @@ namespace Thrift.Server
             }
           }
         }
-        catch (TTransportException)
+        catch (TTransportException ttx)
         {
-          //Usually a client disconnect, expected
+          if (!stop || ttx.Type != TTransportException.ExceptionType.Interrupted)
+          {
+            logDelegate(ttx.ToString());
+          }
         }
         catch (Exception x)
         {

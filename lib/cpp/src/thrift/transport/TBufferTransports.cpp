@@ -201,6 +201,10 @@ bool TFramedTransport::readFrame() {
     throw TTransportException("Frame size has negative value");
   }
 
+  // Check for oversized frame
+  if (sz > static_cast<int32_t>(maxFrameSize_))
+    throw TTransportException(TTransportException::CORRUPTED_DATA, "Received an oversized frame");
+
   // Read the frame payload, and reset markers.
   if (sz > static_cast<int32_t>(rBufSize_)) {
     rBuf_.reset(new uint8_t[sz]);
@@ -364,18 +368,17 @@ void TMemoryBuffer::ensureCanWrite(uint32_t len) {
   }
 
   // Allocate into a new pointer so we don't bork ours if it fails.
-  void* new_buffer = std::realloc(buffer_, new_size);
+  uint8_t* new_buffer = static_cast<uint8_t*>(std::realloc(buffer_, new_size));
   if (new_buffer == NULL) {
     throw std::bad_alloc();
   }
-  bufferSize_ = new_size;
 
-  ptrdiff_t offset = (uint8_t*)new_buffer - buffer_;
-  buffer_ += offset;
-  rBase_ += offset;
-  rBound_ += offset;
-  wBase_ += offset;
-  wBound_ = buffer_ + bufferSize_;
+  rBase_ = new_buffer + (rBase_ - buffer_);
+  rBound_ = new_buffer + (rBound_ - buffer_);
+  wBase_ = new_buffer + (wBase_ - buffer_);
+  wBound_ = new_buffer + new_size;
+  buffer_ = new_buffer;
+  bufferSize_ = new_size;
 }
 
 void TMemoryBuffer::writeSlow(const uint8_t* buf, uint32_t len) {

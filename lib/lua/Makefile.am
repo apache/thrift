@@ -34,25 +34,25 @@ libluasocket_la_SOURCES = \
 nobase_include_HEADERS = src/socket.h
 
 libluasocket_la_CPPFLAGS = $(AM_CPPFLAGS) -I/usr/include/lua5.2 -DLUA_COMPAT_MODULE
-libluasocket_la_LDFLAGS = $(AM_LDFLAGS) -llua5.2 -lm
+libluasocket_la_LDFLAGS = $(AM_LDFLAGS) $(LUA_LIB) -lm
 
 libluabpack_la_SOURCES = src/luabpack.c
 
 libluabpack_la_CPPFLAGS = $(AM_CPPFLAGS) -I/usr/include/lua5.2 -DLUA_COMPAT_MODULE
-libluabpack_la_LDFLAGS = $(AM_LDFLAGS) -llua5.2 -lm
+libluabpack_la_LDFLAGS = $(AM_LDFLAGS) $(LUA_LIB) -lm
 libluabpack_la_LIBADD = liblualongnumber.la
 
 libluabitwise_la_SOURCES = src/luabitwise.c
 
 libluabitwise_la_CPPFLAGS = $(AM_CPPFLAGS) -I/usr/include/lua5.2 -DLUA_COMPAT_MODULE
-libluabitwise_la_LDFLAGS = $(AM_LDFLAGS) -llua5.2 -lm
+libluabitwise_la_LDFLAGS = $(AM_LDFLAGS) $(LUA_LIB) -lm
 
 liblualongnumber_la_SOURCES = \
 		src/lualongnumber.c \
 		src/longnumberutils.c
 
 liblualongnumber_la_CPPFLAGS = $(AM_CPPFLAGS) -I/usr/include/lua5.2 -DLUA_COMPAT_MODULE
-liblualongnumber_la_LDFLAGS = $(AM_LDFLAGS) -llua5.2 -lm
+liblualongnumber_la_LDFLAGS = $(AM_LDFLAGS) $(LUA_LIB) -lm
 
 EXTRA_DIST = TBinaryProtocol.lua \
 		TBufferedTransport.lua \

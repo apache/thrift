@@ -295,11 +295,15 @@ string t_rb_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
   for (size_t i = 0; i < includes.size(); ++i) {
-    t_program* included = includes[i];
-    std::string included_require_prefix
-        = rb_namespace_to_path_prefix(included->get_namespace("rb"));
-    std::string included_name = included->get_name();
-    result += "require '" + included_require_prefix + underscore(included_name) + "_types'\n";
+    if (namespaced_) {
+      t_program* included = includes[i];
+      std::string included_require_prefix
+          = rb_namespace_to_path_prefix(included->get_namespace("rb"));
+      std::string included_name = included->get_name();
+      result += "require '" + included_require_prefix + underscore(included_name) + "_types'\n";
+    } else {
+      result += "require '" + underscore(includes[i]->get_name()) + "_types'\n";
+    }
   }
   if (includes.size() > 0) {
     result += "\n";
@@ -749,8 +753,14 @@ void t_rb_generator::generate_service(t_service* tservice) {
   f_service_ << rb_autogen_comment() << endl << render_require_thrift();
 
   if (tservice->get_extends() != NULL) {
-    f_service_ << "require '" << require_prefix_ << underscore(tservice->get_extends()->get_name())
-               << "'" << endl;
+    if (namespaced_) {
+      f_service_ << "require '" << rb_namespace_to_path_prefix(
+                                       tservice->get_extends()->get_program()->get_namespace("rb"))
+                 << underscore(tservice->get_extends()->get_name()) << "'" << endl;
+    } else {
+      f_service_ << "require '" << require_prefix_
+                 << underscore(tservice->get_extends()->get_name()) << "'" << endl;
+    }
   }
 
   f_service_ << "require '" << require_prefix_ << underscore(program_name_) << "_types'" << endl

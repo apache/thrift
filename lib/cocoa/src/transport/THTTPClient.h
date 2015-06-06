@@ -25,7 +25,7 @@
   NSMutableURLRequest * mRequest;
   NSMutableData * mRequestData;
   NSData * mResponseData;
-  int mResponseDataOffset;
+  size_t mResponseDataOffset;
   NSString * mUserAgent;
   int mTimeout;
 }

@@ -244,9 +244,6 @@ void TSSLSocket::open() {
 void TSSLSocket::close() {
   if (ssl_ != NULL) {
     int rc = SSL_shutdown(ssl_);
-    if (rc == 0) {
-      rc = SSL_shutdown(ssl_);
-    }
     if (rc < 0) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       string errors;
@@ -322,7 +319,7 @@ void TSSLSocket::checkHandshake() {
     return;
   }
   ssl_ = ctx_->createSSL();
-  SSL_set_fd(ssl_, socket_);
+  SSL_set_fd(ssl_, static_cast<int>(socket_));
   int rc;
   if (server()) {
     rc = SSL_accept(ssl_);
@@ -579,7 +576,7 @@ int TSSLSocketFactory::passwordCallback(char* password, int size, int, void* dat
   TSSLSocketFactory* factory = (TSSLSocketFactory*)data;
   string userPassword;
   factory->getPassword(userPassword, size);
-  int length = userPassword.size();
+  int length = static_cast<int>(userPassword.size());
   if (length > size) {
     length = size;
   }

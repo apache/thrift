@@ -24,10 +24,10 @@ import haxe.macro.Expr;
 
 /****
  * If you call the Thrift compiler this way (e.g. by changing the prebuild command)
- * 
+ *
  *     thrift -r -gen haxe:buildmacro=TestMacro.handle()   ../ThriftTest.thrift
- * 
- * the TestMacro.handle() function implemented below is called for each generated class 
+ *
+ * the TestMacro.handle() function implemented below is called for each generated class
  * and interface. Use "thrift --help" to get more info about other available options.
  */
 class TestMacro
@@ -36,5 +36,5 @@ class TestMacro
     trace('TestMacro called for ' + Context.getLocalType());
     return Context.getBuildFields();
   }
-  
+
 }

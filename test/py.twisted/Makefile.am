@@ -17,7 +17,7 @@
 # under the License.
 #
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
+THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 stubs: ../ThriftTest.thrift ../SmallTest.thrift
 	$(THRIFT) --gen py:twisted ../ThriftTest.thrift

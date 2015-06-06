@@ -205,6 +205,7 @@ void t_hs_generator::init_generator() {
 string t_hs_generator::hs_language_pragma() {
   return string(
       "{-# LANGUAGE DeriveDataTypeable #-}\n"
+      "{-# LANGUAGE DeriveGeneric #-}\n"
       "{-# LANGUAGE OverloadedStrings #-}\n"
       "{-# OPTIONS_GHC -fno-warn-missing-fields #-}\n"
       "{-# OPTIONS_GHC -fno-warn-missing-signatures #-}\n"
@@ -241,6 +242,7 @@ string t_hs_generator::hs_imports() {
       "import qualified Data.Maybe as M (catMaybes)\n"
       "import qualified Data.Text.Lazy.Encoding as E ( decodeUtf8, encodeUtf8 )\n"
       "import qualified Data.Text.Lazy as LT\n"
+      "import qualified GHC.Generics as G (Generic)\n"
       "import qualified Data.Typeable as TY ( Typeable )\n"
       "import qualified Data.HashMap.Strict as Map\n"
       "import qualified Data.HashSet as Set\n"
@@ -302,7 +304,7 @@ void t_hs_generator::generate_enum(t_enum* tenum) {
     f_types_ << name;
     first = false;
   }
-  indent(f_types_) << "deriving (P.Show,P.Eq, TY.Typeable, P.Ord, P.Bounded)" << endl;
+  indent(f_types_) << "deriving (P.Show, P.Eq, G.Generic, TY.Typeable, P.Ord, P.Bounded)" << endl;
   indent_down();
 
   string ename = capitalize(tenum->get_name());
@@ -555,7 +557,7 @@ void t_hs_generator::generate_hs_struct_definition(ofstream& out,
     indent_down();
   }
 
-  out << " deriving (P.Show,P.Eq,TY.Typeable)" << endl;
+  out << " deriving (P.Show,P.Eq,G.Generic,TY.Typeable)" << endl;
 
   if (is_exception)
     out << "instance X.Exception " << tname << endl;
@@ -1199,7 +1201,7 @@ bool hasNoArguments(t_function* func) {
 
 string t_hs_generator::render_hs_type_for_function_name(t_type* type) {
   string type_str = render_hs_type(type, false);
-  int found = -1;
+  std::string::size_type found = -1;
 
   while (true) {
     found = type_str.find_first_of("[]. ", found + 1);

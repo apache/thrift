@@ -18,150 +18,89 @@
  */
 
 #include <thrift/server/TSimpleServer.h>
-#include <thrift/transport/TTransportException.h>
-#include <string>
-#include <iostream>
 
 namespace apache {
 namespace thrift {
 namespace server {
 
-using namespace std;
-using namespace apache::thrift;
-using namespace apache::thrift::protocol;
-using namespace apache::thrift::transport;
+using apache::thrift::protocol::TProtocol;
+using apache::thrift::protocol::TProtocolFactory;
+using apache::thrift::transport::TServerTransport;
+using apache::thrift::transport::TTransport;
+using apache::thrift::transport::TTransportException;
+using apache::thrift::transport::TTransportFactory;
 using boost::shared_ptr;
+using std::string;
+
+TSimpleServer::TSimpleServer(const shared_ptr<TProcessorFactory>& processorFactory,
+                             const shared_ptr<TServerTransport>& serverTransport,
+                             const shared_ptr<TTransportFactory>& transportFactory,
+                             const shared_ptr<TProtocolFactory>& protocolFactory)
+  : TServerFramework(processorFactory, serverTransport, transportFactory, protocolFactory) {
+  TServerFramework::setConcurrentClientLimit(1);
+}
+
+TSimpleServer::TSimpleServer(const shared_ptr<TProcessor>& processor,
+                             const shared_ptr<TServerTransport>& serverTransport,
+                             const shared_ptr<TTransportFactory>& transportFactory,
+                             const shared_ptr<TProtocolFactory>& protocolFactory)
+  : TServerFramework(processor, serverTransport, transportFactory, protocolFactory) {
+  TServerFramework::setConcurrentClientLimit(1);
+}
+
+TSimpleServer::TSimpleServer(const shared_ptr<TProcessorFactory>& processorFactory,
+                             const shared_ptr<TServerTransport>& serverTransport,
+                             const shared_ptr<TTransportFactory>& inputTransportFactory,
+                             const shared_ptr<TTransportFactory>& outputTransportFactory,
+                             const shared_ptr<TProtocolFactory>& inputProtocolFactory,
+                             const shared_ptr<TProtocolFactory>& outputProtocolFactory)
+  : TServerFramework(processorFactory,
+                     serverTransport,
+                     inputTransportFactory,
+                     outputTransportFactory,
+                     inputProtocolFactory,
+                     outputProtocolFactory) {
+  TServerFramework::setConcurrentClientLimit(1);
+}
+
+TSimpleServer::TSimpleServer(const shared_ptr<TProcessor>& processor,
+                             const shared_ptr<TServerTransport>& serverTransport,
+                             const shared_ptr<TTransportFactory>& inputTransportFactory,
+                             const shared_ptr<TTransportFactory>& outputTransportFactory,
+                             const shared_ptr<TProtocolFactory>& inputProtocolFactory,
+                             const shared_ptr<TProtocolFactory>& outputProtocolFactory)
+  : TServerFramework(processor,
+                     serverTransport,
+                     inputTransportFactory,
+                     outputTransportFactory,
+                     inputProtocolFactory,
+                     outputProtocolFactory) {
+  TServerFramework::setConcurrentClientLimit(1);
+}
+
+TSimpleServer::~TSimpleServer() {
+}
 
 /**
- * A simple single-threaded application server. Perfect for unit tests!
- *
+ * The main body of customized implementation for TSimpleServer is quite simple:
+ * When a client connects, use the serve() thread to drive it to completion thus
+ * blocking new connections.
  */
-void TSimpleServer::serve() {
+void TSimpleServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient) {
+  pClient->run();
+}
 
-  shared_ptr<TTransport> client;
-  shared_ptr<TTransport> inputTransport;
-  shared_ptr<TTransport> outputTransport;
-  shared_ptr<TProtocol> inputProtocol;
-  shared_ptr<TProtocol> outputProtocol;
+/**
+ * TSimpleServer does not track clients so there is nothing to do here.
+ */
+void TSimpleServer::onClientDisconnected(TConnectedClient*) {
+}
 
-  // Start the server listening
-  serverTransport_->listen();
-
-  // Run the preServe event
-  if (eventHandler_) {
-    eventHandler_->preServe();
-  }
-
-  // Fetch client from server
-  while (!stop_) {
-    try {
-      client = serverTransport_->accept();
-      inputTransport = inputTransportFactory_->getTransport(client);
-      outputTransport = outputTransportFactory_->getTransport(client);
-      inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
-      outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
-    } catch (TTransportException& ttx) {
-      if (inputTransport) {
-        inputTransport->close();
-      }
-      if (outputTransport) {
-        outputTransport->close();
-      }
-      if (client) {
-        client->close();
-      }
-      if (!stop_ || ttx.getType() != TTransportException::INTERRUPTED) {
-        string errStr = string("TServerTransport died on accept: ") + ttx.what();
-        GlobalOutput(errStr.c_str());
-      }
-      continue;
-    } catch (TException& tx) {
-      if (inputTransport) {
-        inputTransport->close();
-      }
-      if (outputTransport) {
-        outputTransport->close();
-      }
-      if (client) {
-        client->close();
-      }
-      string errStr = string("Some kind of accept exception: ") + tx.what();
-      GlobalOutput(errStr.c_str());
-      continue;
-    } catch (string s) {
-      if (inputTransport) {
-        inputTransport->close();
-      }
-      if (outputTransport) {
-        outputTransport->close();
-      }
-      if (client) {
-        client->close();
-      }
-      string errStr = string("Some kind of accept exception: ") + s;
-      GlobalOutput(errStr.c_str());
-      break;
-    }
-
-    // Get the processor
-    shared_ptr<TProcessor> processor = getProcessor(inputProtocol, outputProtocol, client);
-
-    void* connectionContext = NULL;
-    if (eventHandler_) {
-      connectionContext = eventHandler_->createContext(inputProtocol, outputProtocol);
-    }
-    try {
-      for (;;) {
-        if (eventHandler_) {
-          eventHandler_->processContext(connectionContext, client);
-        }
-        if (!processor->process(inputProtocol, outputProtocol, connectionContext) ||
-            // Peek ahead, is the remote side closed?
-            !inputProtocol->getTransport()->peek()) {
-          break;
-        }
-      }
-    } catch (const TTransportException& ttx) {
-      string errStr = string("TSimpleServer client died: ") + ttx.what();
-      GlobalOutput(errStr.c_str());
-    } catch (const std::exception& x) {
-      GlobalOutput.printf("TSimpleServer exception: %s: %s", typeid(x).name(), x.what());
-    } catch (...) {
-      GlobalOutput("TSimpleServer uncaught exception.");
-    }
-    if (eventHandler_) {
-      eventHandler_->deleteContext(connectionContext, inputProtocol, outputProtocol);
-    }
-
-    try {
-      inputTransport->close();
-    } catch (const TTransportException& ttx) {
-      string errStr = string("TSimpleServer input close failed: ") + ttx.what();
-      GlobalOutput(errStr.c_str());
-    }
-    try {
-      outputTransport->close();
-    } catch (const TTransportException& ttx) {
-      string errStr = string("TSimpleServer output close failed: ") + ttx.what();
-      GlobalOutput(errStr.c_str());
-    }
-    try {
-      client->close();
-    } catch (const TTransportException& ttx) {
-      string errStr = string("TSimpleServer client close failed: ") + ttx.what();
-      GlobalOutput(errStr.c_str());
-    }
-  }
-
-  if (stop_) {
-    try {
-      serverTransport_->close();
-    } catch (TTransportException& ttx) {
-      string errStr = string("TServerTransport failed on close: ") + ttx.what();
-      GlobalOutput(errStr.c_str());
-    }
-    stop_ = false;
-  }
+/**
+ * This makes little sense to the simple server because it is not capable
+ * of having more than one client at a time, so we hide it.
+ */
+void TSimpleServer::setConcurrentClientLimit(int64_t) {
 }
 }
 }

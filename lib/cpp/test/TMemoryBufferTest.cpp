@@ -21,17 +21,44 @@
 #include <iostream>
 #include <climits>
 #include <cassert>
+#include <vector>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include "gen-cpp/ThriftTest_types.h"
 
 BOOST_AUTO_TEST_SUITE(TMemoryBufferTest)
 
-BOOST_AUTO_TEST_CASE(test_roundtrip) {
-  using apache::thrift::transport::TMemoryBuffer;
-  using apache::thrift::protocol::TBinaryProtocol;
-  using boost::shared_ptr;
+using apache::thrift::protocol::TBinaryProtocol;
+using apache::thrift::transport::TMemoryBuffer;
+using apache::thrift::transport::TTransportException;
+using boost::shared_ptr;
+using std::cout;
+using std::endl;
+using std::string;
 
+BOOST_AUTO_TEST_CASE(test_read_write_grow) {
+  // Added to test the fix for THRIFT-1248
+  TMemoryBuffer uut;
+  const int maxSize = 65536;
+  uint8_t verify[maxSize];
+  std::vector<uint8_t> buf;
+  buf.resize(maxSize);
+
+  for (uint32_t i = 0; i < maxSize; ++i) {
+    buf[i] = static_cast<uint8_t>(i);
+  }
+
+  for (uint32_t i = 1; i < maxSize; i *= 2) {
+    uut.write(&buf[0], i);
+  }
+
+  for (uint32_t i = 1; i < maxSize; i *= 2) {
+    uut.read(verify, i);
+    BOOST_CHECK_EQUAL(0, ::memcmp(verify, &buf[0], i));
+  }
+}
+
+BOOST_AUTO_TEST_CASE(test_roundtrip) {
   shared_ptr<TMemoryBuffer> strBuffer(new TMemoryBuffer());
   shared_ptr<TBinaryProtocol> binaryProtcol(new TBinaryProtocol(strBuffer));
 
@@ -54,11 +81,6 @@ BOOST_AUTO_TEST_CASE(test_roundtrip) {
 }
 
 BOOST_AUTO_TEST_CASE(test_copy) {
-  using apache::thrift::transport::TMemoryBuffer;
-  using std::string;
-  using std::cout;
-  using std::endl;
-
   string* str1 = new string("abcd1234");
   const char* data1 = str1->data();
   TMemoryBuffer buf((uint8_t*)str1->data(),
@@ -81,10 +103,6 @@ BOOST_AUTO_TEST_CASE(test_copy) {
 }
 
 BOOST_AUTO_TEST_CASE(test_exceptions) {
-  using apache::thrift::transport::TTransportException;
-  using apache::thrift::transport::TMemoryBuffer;
-  using std::string;
-
   char data[] = "foo\0bar";
 
   TMemoryBuffer buf1((uint8_t*)data, 7, TMemoryBuffer::OBSERVE);

@@ -87,12 +87,9 @@ module Thrift
     end
 
     def ==(other)
-      other != nil && @setfield == other.get_set_field && @value == other.get_value
+      other.equal?(self) || other.instance_of?(self.class) && @setfield == other.get_set_field && @value == other.get_value
     end
-
-    def eql?(other)
-      self.class == other.class && self == other
-    end
+    alias_method :eql?, :==
 
     def hash
       [self.class.name, @setfield, @value].hash

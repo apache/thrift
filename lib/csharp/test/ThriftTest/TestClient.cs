@@ -32,7 +32,7 @@ namespace Test
         private static int numIterations = 1;
         private static string protocol = "";
 
-        public static void Execute(string[] args)
+        public static bool Execute(string[] args)
         {
             try
             {
@@ -41,6 +41,7 @@ namespace Test
                 string url = null, pipe = null;
                 int numThreads = 1;
                 bool buffered = false, framed = false, encrypted = false;
+                string certPath = "../../../../../keys/server.pem";
 
                 try
                 {
@@ -96,6 +97,10 @@ namespace Test
                             encrypted = true;
                             Console.WriteLine("Using encrypted transport");
                         }
+                        else if (args[i].StartsWith("--cert="))
+                        {
+                            certPath = args[i].Substring("--cert=".Length);
+                        }
                     }
                 }
                 catch (Exception e)
@@ -119,7 +124,7 @@ namespace Test
                         else
                         {
                             if (encrypted)
-                                trans = new TTLSSocket(host, port, "../../../../../keys/client.pem");
+                                trans = new TTLSSocket(host, port, certPath);
                             else
                                 trans = new TSocket(host, port);
                         }
@@ -151,10 +156,12 @@ namespace Test
             catch (Exception outerEx)
             {
                 Console.WriteLine(outerEx.Message + " ST: " + outerEx.StackTrace);
+                return false;
             }
 
             Console.WriteLine();
             Console.WriteLine();
+            return true;
         }
 
         public static void ClientThread(object obj)
@@ -266,6 +273,19 @@ namespace Test
             catch (Thrift.TApplicationException e) 
             {
                 Console.Write("testBinary(" + BytesToHex(binOut) + "): "+e.Message);
+            }
+
+            // binary equals? only with hashcode option enabled ...
+            if( typeof(CrazyNesting).GetMethod("Equals").DeclaringType == typeof(CrazyNesting)) 
+            {
+                CrazyNesting one = new CrazyNesting();
+                CrazyNesting two = new CrazyNesting();
+                one.String_field = "crazy";
+                two.String_field = "crazy";
+                one.Binary_field = new byte[10] { 0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF };
+                two.Binary_field = new byte[10] { 0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF };
+                if (!one.Equals(two))
+                    throw new Exception("CrazyNesting.Equals failed");
             }
 
             Console.Write("testStruct({\"Zero\", 1, -3, -5})");

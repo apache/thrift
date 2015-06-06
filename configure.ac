@@ -18,6 +18,7 @@
 #
 
 AC_PREREQ(2.65)
+AC_CONFIG_MACRO_DIR([./aclocal])
 
 AC_INIT([thrift], [1.0.0-dev])
 
@@ -98,7 +99,7 @@ AC_PROG_AWK
 AC_PROG_RANLIB
 
 AC_LANG([C++])
-AX_CXX_COMPILE_STDCXX_11([noext])
+AX_CXX_COMPILE_STDCXX_11([noext], [optional])
 
 AM_EXTRA_RECURSIVE_TARGETS([style])
 AC_SUBST(CPPSTYLE_CMD, 'find . -type f \( -iname "*.h" -or -iname "*.cpp" -or -iname "*.cc" -or -iname "*.tcc" \) -printf "Reformatting: %h/%f\n" -exec clang-format -i {} \;')
@@ -132,10 +133,13 @@ fi
 AX_THRIFT_LIB(cpp, [C++], yes)
 have_cpp=no
 if test "$with_cpp" = "yes";  then
-  AX_BOOST_BASE([1.54.0])
+  AX_BOOST_BASE([1.53.0])
   if test "x$succeeded" = "xyes" ; then
     AC_SUBST([BOOST_LIB_DIR], [$(echo "$BOOST_LDFLAGS" | sed -e 's/^\-L//')])
+    AC_SUBST([BOOST_CHRONO_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_chrono.a")])
+    AC_SUBST([BOOST_SYSTEM_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_system.a")])
     AC_SUBST([BOOST_TEST_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_unit_test_framework.a")])
+    AC_SUBST([BOOST_THREAD_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_thread.a")])
     have_cpp="yes"
   fi
 
@@ -246,9 +250,10 @@ AM_CONDITIONAL(HAVE_NPM, [test "x$NPM" != "x"])
 AX_THRIFT_LIB(lua, [Lua], yes)
 have_lua=no
 if test "$with_lua" = "yes"; then
-  AC_PATH_PROGS([LUA], [lua])
-  if test "x$LUA" != "x"; then
-    have_lua="yes"
+  AX_PROG_LUA(5.2,, have_lua="yes", have_lua="no")
+  if test "$have_lua" = "yes"; then
+    AX_LUA_HEADERS(, have_lua="no")
+    AX_LUA_LIBS(, have_lua="no")
   fi
 fi
 AM_CONDITIONAL(WITH_LUA, [test "$have_lua" = "yes"])
@@ -339,7 +344,24 @@ AX_THRIFT_LIB(go, [Go], yes)
 if test "$with_go" = "yes";  then
   AC_PATH_PROG([GO], [go])
   if [[ -x "$GO" ]] ; then
-    have_go="yes"
+    AS_IF([test -n "$GO"],[
+      ax_go_version="1.4"
+
+      AC_MSG_CHECKING([for Go version])
+      golang_version=`$GO version 2>&1 | $SED -e 's/\(go \)\(version \)\(go\)\(@<:@0-9@:>@.@<:@0-9@:>@.@<:@0-9@:>@\)\(@<:@\*@:>@*\).*/\4/'`
+      AC_MSG_RESULT($golang_version)
+      AC_SUBST([golang_version],[$golang_version])
+      AX_COMPARE_VERSION([$ax_go_version],[le],[$golang_version],[
+      :
+        have_go="yes"
+      ],[
+      :
+        have_go="no"
+      ])
+    ],[
+      AC_MSG_WARN([could not find Go ])
+      have_go="no"
+    ])
   fi
 fi
 AM_CONDITIONAL(WITH_GO, [test "$have_go" = "yes"])
@@ -349,7 +371,7 @@ AX_THRIFT_LIB(haxe, [Haxe], yes)
 if test "$with_haxe" = "yes";  then
   AC_PATH_PROG([HAXE], [haxe])
   if [[ -x "$HAXE" ]] ; then
-    have_haxe="yes"
+    AX_PROG_HAXE_VERSION( [3.1.3], have_haxe="yes", have_haxe="no")
   fi
 fi
 AM_CONDITIONAL(WITH_HAXE, [test "$have_haxe" = "yes"])
@@ -577,6 +599,7 @@ AC_CHECK_FUNCS([memset])
 AC_CHECK_FUNCS([mkdir])
 AC_CHECK_FUNCS([realpath])
 AC_CHECK_FUNCS([select])
+AC_CHECK_FUNCS([setlocale])
 AC_CHECK_FUNCS([socket])
 AC_CHECK_FUNCS([strchr])
 AC_CHECK_FUNCS([strdup])
@@ -674,6 +697,7 @@ AC_CONFIG_FILES([
   lib/c_glib/thrift_c_glib.pc
   lib/c_glib/test/Makefile
   lib/csharp/Makefile
+  lib/csharp/test/ThriftTest/Makefile
   lib/d/Makefile
   lib/d/test/Makefile
   lib/erl/Makefile
@@ -719,6 +743,29 @@ AC_CONFIG_FILES([
   tutorial/py.tornado/Makefile
   tutorial/rb/Makefile
 ])
+
+if test "$have_cpp" = "yes" ; then MAYBE_CPP="cpp" ; else MAYBE_CPP="" ; fi
+AC_SUBST([MAYBE_CPP])
+if test "$have_c_glib" = "yes" ; then MAYBE_C_GLIB="c_glib" ; else MAYBE_C_GLIB="" ; fi
+AC_SUBST([MAYBE_C_GLIB])
+if test "$have_java" = "yes" ; then MAYBE_JAVA="java" ; else MAYBE_JAVA="" ; fi
+AC_SUBST([MAYBE_JAVA])
+if test "$have_csharp" = "yes" ; then MAYBE_CSHARP="csharp" ; else MAYBE_CSHARP="" ; fi
+AC_SUBST([MAYBE_CSHARP])
+if test "$have_python" = "yes" ; then MAYBE_PYTHON="python" ; else MAYBE_PYTHON="" ; fi
+AC_SUBST([MAYBE_PYTHON])
+if test "$have_ruby" = "yes" ; then MAYBE_RUBY="rb" ; else MAYBE_RUBY="" ; fi
+AC_SUBST([MAYBE_RUBY])
+if test "$have_haskell" = "yes" ; then MAYBE_HASKELL="haskell" ; else MAYBE_HASKELL="" ; fi
+AC_SUBST([MAYBE_HASKELL])
+if test "$have_perl" = "yes" ; then MAYBE_PERL="perl" ; else MAYBE_PERL="" ; fi
+AC_SUBST([MAYBE_PERL])
+if test "$have_php" = "yes" ; then MAYBE_PHP="php" ; else MAYBE_PHP="" ; fi
+AC_SUBST([MAYBE_PHP])
+if test "$have_go" = "yes" ; then MAYBE_GO="go" ; else MAYBE_GO="" ; fi
+AC_SUBST([MAYBE_GO])
+if test "$have_nodejs" = "yes" ; then MAYBE_NODEJS="nodejs" ; else MAYBE_NODEJS="" ; fi
+AC_SUBST([MAYBE_NODEJS])
 
 AC_OUTPUT
 
@@ -788,6 +835,7 @@ if test "$have_haxe" = "yes" ; then
   echo
   echo "Haxe Library:"
   echo "   Using Haxe ................ : $HAXE"
+  echo "   Using Haxe version ........ : $HAXE_VERSION"
 fi
 if test "$have_perl" = "yes" ; then
   echo

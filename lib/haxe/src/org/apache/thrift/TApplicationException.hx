@@ -34,6 +34,8 @@ class TApplicationException extends TException {
     private static var MESSAGE_FIELD = { new TField("message", TType.STRING, 1); };
     private static var TYPE_FIELD = { new TField("type", TType.I32, 2); };
 
+    // WARNING: These are subject to be extended in the future, so we can't use enums
+    // with Haxe 3.1.3 because of https://github.com/HaxeFoundation/haxe/issues/3649
     public static inline var UNKNOWN : Int = 0;
     public static inline var UNKNOWN_METHOD : Int = 1;
     public static inline var INVALID_MESSAGE_TYPE : Int = 2;

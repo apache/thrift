@@ -37,9 +37,29 @@ dist-hook:
 print-version:
 	@echo $(VERSION)
 
+.PHONY: precross cross
+precross-%: all
+	$(MAKE) -C $* precross
+precross: all precross-test precross-lib
 
-cross: check
-	sh test/test.sh
+# TODO: generate --server and --client switches from "--with(out)-..." build flags
+
+
+empty :=
+space := $(empty) $(empty)
+comma := ,
+
+CROSS_LANGS = @MAYBE_CPP@ @MAYBE_C_GLIB@ @MAYBE_JAVA@ @MAYBE_CSHARP@ @MAYBE_PYTHON@ @MAYBE_RUBY@ @MAYBE_HASKELL@ @MAYBE_PERL@ @MAYBE_PHP@ @MAYBE_GO@ @MAYBE_NODEJS@
+CROSS_LANGS_COMMA_SEPARATED = $(subst $(space),$(comma),$(CROSS_LANGS))
+
+cross: precross
+	$(PYTHON) test/test.py -s --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED)
+
+TIMES = 1 2 3
+fail: precross
+	$(PYTHON) test/test.py || true
+	$(PYTHON) test/test.py --update-expected-failures=overwrite
+	$(foreach var,$(TIMES),test/test.py -s || true;test/test.py --update-expected-failures=merge;)
 
 codespell_skip_files = \
 	*.jar \
@@ -61,10 +81,6 @@ codespell_skip_files = \
 	rebar \
 	thrift
 
-empty :=
-space := $(empty) $(empty)
-comma := ,
-
 skipped_files = $(subst $(space),$(comma),$(codespell_skip_files))
 
 style-local:
@@ -75,9 +91,11 @@ EXTRA_DIST = \
 	bower.json \
 	composer.json \
 	contrib \
+	CONTRIBUTING.md \
 	debian \
 	doc \
 	doap.rdf \
+	package.json \
 	sonar-project.properties \
 	LICENSE \
 	CHANGES \

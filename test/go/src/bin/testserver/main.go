@@ -31,10 +31,11 @@ var domain_socket = flag.String("domain-socket", "", "Domain Socket (e.g. /tmp/T
 var transport = flag.String("transport", "buffered", "Transport: buffered, framed, http")
 var protocol = flag.String("protocol", "binary", "Protocol: binary, compact, json")
 var ssl = flag.Bool("ssl", false, "Encrypted Transport using SSL")
+var certPath = flag.String("certPath", "keys", "Directory that contains SSL certificates")
 
 func main() {
 	flag.Parse()
-	server, err := common.StartServer(*host, *port, *domain_socket, *transport, *protocol, *ssl, common.PrintingHandler)
+	server, err := common.StartServer(*host, *port, *domain_socket, *transport, *protocol, *ssl, *certPath, common.PrintingHandler)
 	if err != nil {
 		log.Fatalf("Unable to start server: ", err)
 	}
