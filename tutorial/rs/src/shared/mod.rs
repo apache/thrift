@@ -6,9 +6,11 @@
 
 #[allow(unused_imports)]
 use std::collections::{HashMap, HashSet};
-use thrift::protocol::{MessageType, Type};
+use std::rc::Rc;
+use std::cell::RefCell;
+use thrift::processor::Processor;
+use thrift::protocol::{Protocol, MessageType, Type};
 use thrift::transport::Transport;
-use thrift::protocol::Protocol;
 use thrift::protocol::{Readable, Writeable};
 use thrift::TResult;
 #[allow(unused_imports)]
@@ -21,6 +23,7 @@ use thrift::protocol::FromNum;
 
 
 #[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct SharedStruct {
   pub key: i32,
   pub value: String,
@@ -90,8 +93,45 @@ impl Readable for SharedStruct {
 }
 
 #[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct SharedServiceGetStructArgs {
   pub key: i32,
+}
+
+impl SharedServiceGetStructArgs {
+  #[allow(dead_code)]
+  pub fn new() -> SharedServiceGetStructArgs {
+    SharedServiceGetStructArgs {
+      key: 0,
+    }
+  }
+}
+
+impl Readable for SharedServiceGetStructArgs {
+
+  #[allow(unused_mut)]
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let mut have_result = false;
+    try!(iprot.read_struct_begin(transport));
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, Type::TI32, 1) => {
+          self.key = try!(iprot.read_i32(transport));
+          have_result = true;
+        }
+        (_, ftype, _) => {
+          try!(iprot.skip(transport, ftype));
+        }
+      }
+      try!(iprot.read_field_end(transport));
+    }
+    try!(iprot.read_struct_end(transport));
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
 }
 
 impl Writeable for SharedServiceGetStructArgs {
@@ -113,6 +153,7 @@ impl Writeable for SharedServiceGetStructArgs {
 }
 
 #[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct SharedServiceGetStructResult {
   pub success: SharedStruct,
 }
@@ -153,6 +194,24 @@ impl Readable for SharedServiceGetStructResult {
   }
 }
 
+impl Writeable for SharedServiceGetStructResult {
+
+  #[allow(unused_variables)]
+  #[allow(dead_code)]
+  fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
+    try!(oprot.write_struct_begin(transport, "SharedService_getStruct_result"));
+
+    try!(oprot.write_field_begin(transport, "success", Type::TStruct, 0));
+    try!(self.success.write(oprot, transport));
+    try!(oprot.write_field_end(transport));
+    
+    try!(oprot.write_field_stop(transport));
+    try!(oprot.write_struct_end(transport));
+    Ok(())
+  }
+
+}
+
 pub trait SharedServiceClient {
   #[allow(non_snake_case)]
   fn getStruct(
@@ -162,6 +221,7 @@ pub trait SharedServiceClient {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct SharedServiceClientImpl<P: Protocol, T: Transport> {
   pub protocol: P,
   pub transport: T,
@@ -185,7 +245,7 @@ impl <P: Protocol, T: Transport> SharedServiceClient for SharedServiceClientImpl
     key: i32,
     ) -> TResult<SharedStruct> {
       let args = SharedServiceGetStructArgs {
-      key: key,
+        key: key,
       };
       try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "getStruct", MessageType::MtCall, &args));
       let mut result = SharedServiceGetStructResult::new();
@@ -195,3 +255,48 @@ impl <P: Protocol, T: Transport> SharedServiceClient for SharedServiceClientImpl
 
 }
 
+pub trait SharedServiceIf {
+  #[allow(non_snake_case)]
+  fn getStruct(
+    &mut self,
+    key: i32,
+    ) -> SharedStruct;
+
+}
+
+pub struct SharedServiceProcessor<I: SharedServiceIf> {
+  iface: Rc<RefCell<I>>
+}
+impl<I: SharedServiceIf, P: Protocol, T: Transport> Processor<P, T> for SharedServiceProcessor<I> {
+  fn process(&mut self, prot: &mut P, transport: &mut T) -> TResult<()> {
+    let (name, ty, id) = try!(prot.read_message_begin(transport));
+    self.dispatch(prot, transport, name, ty, id)
+  }
+}
+impl<I: SharedServiceIf> SharedServiceProcessor<I> {
+  #[allow(dead_code)]
+  pub fn new(iface: Rc<RefCell<I>>) -> Self {
+    SharedServiceProcessor {
+      iface: iface,
+    }
+  }
+  pub fn dispatch<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, name: String, ty: MessageType, id: i32) -> TResult<()> {
+    match &*name {
+      "getStruct" => self.getStruct(prot, transport, ty, id),
+      _ => panic!("Invalid name {}", name)
+    }
+  }
+  #[allow(unused_mut)]
+  #[allow(non_snake_case)]
+  fn getStruct<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32) -> TResult<()> {
+    let mut args = SharedServiceGetStructArgs::new();
+    try!(ProtocolHelpers::receive_body(prot, transport, "getStruct" , &mut args, "getStruct", ty, id));
+    let mut result = SharedServiceGetStructResult::new();
+    result.success =     self.iface.borrow_mut().getStruct(
+      args.key,
+    );
+    try!(ProtocolHelpers::send(prot, transport, "getStruct", MessageType::MtReply, &result));
+    Ok(())
+  }
+
+}

@@ -7,6 +7,8 @@ pub use transport::Transport;
 
 pub mod protocol;
 pub mod transport;
+pub mod server;
+pub mod processor;
 
 #[derive(Debug)]
 pub enum ThriftErr {

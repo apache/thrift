@@ -23,6 +23,20 @@ use ThriftErr;
 
 pub mod binary_protocol;
 
+pub trait ProtocolFactory {
+    type Output: Protocol;
+
+    fn new_protocol(&self) -> Self::Output;
+}
+
+impl<F, P: Protocol> ProtocolFactory for F where F: Fn() -> P {
+    type Output = P;
+
+    fn new_protocol(&self) -> P {
+        (*self)()
+    }
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Type {
     TStop = 0x00,
@@ -193,16 +207,25 @@ impl ProtocolHelpers {
         try!(protocol.write_message_end(transport));
         //self.transport.write_end();
         try!(transport.flush());
-
         Ok(())
     }
 
     pub fn receive<R: Readable>(protocol: &Protocol,
-                            transport: &mut Transport,
-                            op: &'static str,
-                            result: &mut R) -> TResult<()> {
+                                transport: &mut Transport,
+                                op: &'static str,
+                                result: &mut R) -> TResult<()> {
+        let (name, ty, id) = try!(protocol.read_message_begin(transport));
+        ProtocolHelpers::receive_body(protocol, transport, op, result, &name, ty, id)
+    }
 
-        match try!(protocol.read_message_begin(transport)) {
+    pub fn receive_body<R: Readable>(protocol: &Protocol,
+                                     transport: &mut Transport,
+                                     op: &'static str,
+                                     result: &mut R,
+                                     name: &str,
+                                     ty: MessageType,
+                                     id: i32) -> TResult<()> {
+        match (name, ty, id) {
             (_, MessageType::MtException, _) => {
                 println!("got exception");
                 // TODO
@@ -213,25 +236,21 @@ impl ProtocolHelpers {
                 //throw x
                 Err(ThriftErr::Exception)
             }
-            (fname, MessageType::MtReply, _) => {
+            // TODO: Make sure the client doesn't receive MtCall messages and that the server
+            // doesn't receive MtReply messages
+            (fname, _, _) => {
                 if &fname[..] == op {
                     try!(result.read(protocol, transport));
                     try!(protocol.read_message_end(transport));
                     Ok(())
                  }
                 else {
-                  // FIXME: shall we err in this case?
+                    // FIXME: shall we err in this case?
                     try!(protocol.skip(transport, Type::TStruct));
                     try!(protocol.read_message_end(transport));
                     Err(ThriftErr::ProtocolError)
                 }
             }
-            (_, _, _) => {
-                try!(protocol.skip(transport, Type::TStruct));
-                try!(protocol.read_message_end(transport));
-                Err(ThriftErr::ProtocolError)
-            }
         }
     }
-
 }

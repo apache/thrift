@@ -17,12 +17,6 @@
  * under the License.
  */
 
-use std::io::prelude::*;
+pub mod simple_server;
 
-pub mod tcp_transport;
-pub mod server;
-
-pub trait Transport : Write + Read { }
-
-#[cfg(test)]
-pub mod test;
+pub use self::simple_server::SimpleServer;

@@ -6,9 +6,11 @@
 
 #[allow(unused_imports)]
 use std::collections::{HashMap, HashSet};
-use thrift::protocol::{MessageType, Type};
+use std::rc::Rc;
+use std::cell::RefCell;
+use thrift::processor::Processor;
+use thrift::protocol::{Protocol, MessageType, Type};
 use thrift::transport::Transport;
-use thrift::protocol::Protocol;
 use thrift::protocol::{Readable, Writeable};
 use thrift::TResult;
 #[allow(unused_imports)]
@@ -52,6 +54,7 @@ impl Operation {
 pub type MyInteger = i32;
 
 #[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct Work {
   pub num1: i32,
   pub num2: i32,
@@ -148,6 +151,7 @@ impl Readable for Work {
 }
 
 #[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct InvalidOperation {
   pub what: i32,
   pub why: String,
@@ -217,7 +221,38 @@ impl Readable for InvalidOperation {
 }
 
 #[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct CalculatorPingArgs;
+
+impl CalculatorPingArgs {
+  #[allow(dead_code)]
+  pub fn new() -> CalculatorPingArgs {
+    CalculatorPingArgs
+  }
+}
+
+impl Readable for CalculatorPingArgs {
+
+  #[allow(unused_mut)]
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let have_result = true;
+    try!(iprot.read_struct_begin(transport));
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, ftype, _) => {
+          try!(iprot.skip(transport, ftype));
+        }
+      }
+      try!(iprot.read_field_end(transport));
+    }
+    try!(iprot.read_struct_end(transport));
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
+}
 
 impl Writeable for CalculatorPingArgs {
 
@@ -234,6 +269,7 @@ impl Writeable for CalculatorPingArgs {
 }
 
 #[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct CalculatorPingResult;
 
 impl CalculatorPingResult {
@@ -266,10 +302,66 @@ impl Readable for CalculatorPingResult {
   }
 }
 
+impl Writeable for CalculatorPingResult {
+
+  #[allow(unused_variables)]
+  #[allow(dead_code)]
+  fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
+    try!(oprot.write_struct_begin(transport, "Calculator_ping_result"));
+
+    try!(oprot.write_field_stop(transport));
+    try!(oprot.write_struct_end(transport));
+    Ok(())
+  }
+
+}
+
 #[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct CalculatorAddArgs {
   pub num1: i32,
   pub num2: i32,
+}
+
+impl CalculatorAddArgs {
+  #[allow(dead_code)]
+  pub fn new() -> CalculatorAddArgs {
+    CalculatorAddArgs {
+      num1: 0,
+      num2: 0,
+    }
+  }
+}
+
+impl Readable for CalculatorAddArgs {
+
+  #[allow(unused_mut)]
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let mut have_result = false;
+    try!(iprot.read_struct_begin(transport));
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, Type::TI32, 1) => {
+          self.num1 = try!(iprot.read_i32(transport));
+          have_result = true;
+        }
+        (_, Type::TI32, 2) => {
+          self.num2 = try!(iprot.read_i32(transport));
+          have_result = true;
+        }
+        (_, ftype, _) => {
+          try!(iprot.skip(transport, ftype));
+        }
+      }
+      try!(iprot.read_field_end(transport));
+    }
+    try!(iprot.read_struct_end(transport));
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
 }
 
 impl Writeable for CalculatorAddArgs {
@@ -295,6 +387,7 @@ impl Writeable for CalculatorAddArgs {
 }
 
 #[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct CalculatorAddResult {
   pub success: i32,
 }
@@ -335,10 +428,70 @@ impl Readable for CalculatorAddResult {
   }
 }
 
+impl Writeable for CalculatorAddResult {
+
+  #[allow(unused_variables)]
+  #[allow(dead_code)]
+  fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
+    try!(oprot.write_struct_begin(transport, "Calculator_add_result"));
+
+    try!(oprot.write_field_begin(transport, "success", Type::TI32, 0));
+    try!(oprot.write_i32(transport, self.success));
+    try!(oprot.write_field_end(transport));
+    
+    try!(oprot.write_field_stop(transport));
+    try!(oprot.write_struct_end(transport));
+    Ok(())
+  }
+
+}
+
 #[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct CalculatorCalculateArgs {
   pub logid: i32,
   pub w: Work,
+}
+
+impl CalculatorCalculateArgs {
+  #[allow(dead_code)]
+  pub fn new() -> CalculatorCalculateArgs {
+    CalculatorCalculateArgs {
+      logid: 0,
+      w: Work::new(),
+    }
+  }
+}
+
+impl Readable for CalculatorCalculateArgs {
+
+  #[allow(unused_mut)]
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let mut have_result = false;
+    try!(iprot.read_struct_begin(transport));
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, Type::TI32, 1) => {
+          self.logid = try!(iprot.read_i32(transport));
+          have_result = true;
+        }
+        (_, Type::TStruct, 2) => {
+          try!(self.w.read(iprot, transport));
+          have_result = true;
+        }
+        (_, ftype, _) => {
+          try!(iprot.skip(transport, ftype));
+        }
+      }
+      try!(iprot.read_field_end(transport));
+    }
+    try!(iprot.read_struct_end(transport));
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
 }
 
 impl Writeable for CalculatorCalculateArgs {
@@ -364,6 +517,7 @@ impl Writeable for CalculatorCalculateArgs {
 }
 
 #[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct CalculatorCalculateResult {
   pub success: i32,
   pub ouch: Option<InvalidOperation>,
@@ -412,8 +566,66 @@ impl Readable for CalculatorCalculateResult {
   }
 }
 
+impl Writeable for CalculatorCalculateResult {
+
+  #[allow(unused_variables)]
+  #[allow(dead_code)]
+  fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
+    try!(oprot.write_struct_begin(transport, "Calculator_calculate_result"));
+
+    try!(oprot.write_field_begin(transport, "success", Type::TI32, 0));
+    try!(oprot.write_i32(transport, self.success));
+    try!(oprot.write_field_end(transport));
+    
+    match self.ouch {
+      Some(ref x) => {
+        try!(oprot.write_field_begin(transport, "ouch", Type::TStruct, 1));
+        try!(x.write(oprot, transport));
+        try!(oprot.write_field_end(transport));
+      }
+      _ => {}
+    }
+    
+    try!(oprot.write_field_stop(transport));
+    try!(oprot.write_struct_end(transport));
+    Ok(())
+  }
+
+}
+
 #[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct CalculatorZipArgs;
+
+impl CalculatorZipArgs {
+  #[allow(dead_code)]
+  pub fn new() -> CalculatorZipArgs {
+    CalculatorZipArgs
+  }
+}
+
+impl Readable for CalculatorZipArgs {
+
+  #[allow(unused_mut)]
+  fn read(& mut self, iprot: &Protocol, transport: & mut Transport) -> TResult<()> {
+    let have_result = true;
+    try!(iprot.read_struct_begin(transport));
+    loop {
+      match try!(iprot.read_field_begin(transport)) {
+        (_, Type::TStop, _) => {
+          try!(iprot.read_field_end(transport));
+          break;
+        }
+        (_, ftype, _) => {
+          try!(iprot.skip(transport, ftype));
+        }
+      }
+      try!(iprot.read_field_end(transport));
+    }
+    try!(iprot.read_struct_end(transport));
+    if have_result { Ok(()) } else { Err(ProtocolError) }
+  }
+}
 
 impl Writeable for CalculatorZipArgs {
 
@@ -453,6 +665,7 @@ pub trait CalculatorClient : SharedServiceClient {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct CalculatorClientImpl<P: Protocol, T: Transport> {
   pub protocol: P,
   pub transport: T,
@@ -488,8 +701,8 @@ impl <P: Protocol, T: Transport> CalculatorClient for CalculatorClientImpl<P, T>
     num2: i32,
     ) -> TResult<i32> {
       let args = CalculatorAddArgs {
-      num1: num1,
-      num2: num2,
+        num1: num1,
+        num2: num2,
       };
       try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "add", MessageType::MtCall, &args));
       let mut result = CalculatorAddResult::new();
@@ -504,8 +717,8 @@ impl <P: Protocol, T: Transport> CalculatorClient for CalculatorClientImpl<P, T>
     w: Work,
     ) -> TResult<i32> {
       let args = CalculatorCalculateArgs {
-      logid: logid,
-      w: w,
+        logid: logid,
+        w: w,
       };
       try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "calculate", MessageType::MtCall, &args));
       let mut result = CalculatorCalculateResult::new();
@@ -532,7 +745,7 @@ impl <P: Protocol, T: Transport> SharedServiceClient for CalculatorClientImpl<P,
     key: i32,
     ) -> TResult<SharedStruct> {
       let args = SharedServiceGetStructArgs {
-      key: key,
+        key: key,
       };
       try!(ProtocolHelpers::send(&self.protocol, &mut self.transport, "getStruct", MessageType::MtCall, &args));
       let mut result = SharedServiceGetStructResult::new();
@@ -542,3 +755,107 @@ impl <P: Protocol, T: Transport> SharedServiceClient for CalculatorClientImpl<P,
 
 }
 
+pub trait CalculatorIf : SharedServiceIf
+ {
+  #[allow(non_snake_case)]
+  fn ping(
+    &mut self,
+    ) -> ();
+
+  #[allow(non_snake_case)]
+  fn add(
+    &mut self,
+    num1: i32,
+    num2: i32,
+    ) -> i32;
+
+  #[allow(non_snake_case)]
+  fn calculate(
+    &mut self,
+    logid: i32,
+    w: Work,
+    ) -> i32;
+
+  #[allow(non_snake_case)]
+  fn zip(
+    &mut self,
+    ) -> ();
+
+}
+
+pub struct CalculatorProcessor<I: CalculatorIf> {
+  parent: SharedServiceProcessor<I>,
+  iface: Rc<RefCell<I>>
+}
+impl<I: CalculatorIf, P: Protocol, T: Transport> Processor<P, T> for CalculatorProcessor<I> {
+  fn process(&mut self, prot: &mut P, transport: &mut T) -> TResult<()> {
+    let (name, ty, id) = try!(prot.read_message_begin(transport));
+    self.dispatch(prot, transport, name, ty, id)
+  }
+}
+impl<I: CalculatorIf> CalculatorProcessor<I> {
+  #[allow(dead_code)]
+  pub fn new(iface: Rc<RefCell<I>>) -> Self {
+    CalculatorProcessor {
+      parent: SharedServiceProcessor::new(iface.clone()),
+      iface: iface,
+    }
+  }
+  pub fn dispatch<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, name: String, ty: MessageType, id: i32) -> TResult<()> {
+    match &*name {
+      "ping" => self.ping(prot, transport, ty, id),
+      "add" => self.add(prot, transport, ty, id),
+      "calculate" => self.calculate(prot, transport, ty, id),
+      "zip" => self.zip(prot, transport, ty, id),
+      _ => self.parent.dispatch(prot, transport, name, ty, id)
+    }
+  }
+  #[allow(unused_mut)]
+  #[allow(non_snake_case)]
+  fn ping<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32) -> TResult<()> {
+    let mut args = CalculatorPingArgs::new();
+    try!(ProtocolHelpers::receive_body(prot, transport, "ping" , &mut args, "ping", ty, id));
+    let mut result = CalculatorPingResult::new();
+    self.iface.borrow_mut().ping(
+    );
+    try!(ProtocolHelpers::send(prot, transport, "ping", MessageType::MtReply, &result));
+    Ok(())
+  }
+
+  #[allow(unused_mut)]
+  #[allow(non_snake_case)]
+  fn add<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32) -> TResult<()> {
+    let mut args = CalculatorAddArgs::new();
+    try!(ProtocolHelpers::receive_body(prot, transport, "add" , &mut args, "add", ty, id));
+    let mut result = CalculatorAddResult::new();
+    result.success =     self.iface.borrow_mut().add(
+      args.num1,
+      args.num2,
+    );
+    try!(ProtocolHelpers::send(prot, transport, "add", MessageType::MtReply, &result));
+    Ok(())
+  }
+
+  #[allow(unused_mut)]
+  #[allow(non_snake_case)]
+  fn calculate<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32) -> TResult<()> {
+    let mut args = CalculatorCalculateArgs::new();
+    try!(ProtocolHelpers::receive_body(prot, transport, "calculate" , &mut args, "calculate", ty, id));
+    let mut result = CalculatorCalculateResult::new();
+    result.success =     self.iface.borrow_mut().calculate(
+      args.logid,
+      args.w,
+    );
+    try!(ProtocolHelpers::send(prot, transport, "calculate", MessageType::MtReply, &result));
+    Ok(())
+  }
+
+  #[allow(unused_mut)]
+  #[allow(non_snake_case)]
+  fn zip<P: Protocol, T: Transport>(&mut self, prot: &mut P, transport: &mut T, ty: MessageType, id: i32) -> TResult<()> {
+    let mut args = CalculatorZipArgs::new();
+    try!(ProtocolHelpers::receive_body(prot, transport, "zip" , &mut args, "zip", ty, id));
+    Ok(())
+  }
+
+}

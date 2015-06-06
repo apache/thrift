@@ -17,12 +17,20 @@
  * under the License.
  */
 
-use std::io::prelude::*;
+use std::io;
+use std::net::{TcpListener, TcpStream};
+use super::Transport;
 
-pub mod tcp_transport;
-pub mod server;
+pub trait ServerTransport {
+    type Output: Transport;
 
-pub trait Transport : Write + Read { }
+    fn accept(&self) -> io::Result<Self::Output>;
+}
 
-#[cfg(test)]
-pub mod test;
+impl ServerTransport for TcpListener {
+    type Output = TcpStream;
+
+    fn accept(&self) -> io::Result<TcpStream> {
+        self.accept().map(|res| res.0)
+    }
+}
