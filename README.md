@@ -4,6 +4,20 @@ Apache Thrift
 This is the work in progress to add Rust support to Thrift,
 see the branch dev-rust-thrift.
 
+Current status:
+
+Implemented:
+ * binary protocol
+ * buffered tcp transport
+ * client side
+ * simple server
+
+Major limitations:
+ * no support for exceptions (issue #14)
+ * no support for constants (issue #12)
+ * limited support for container serialization (issue #13)
+ * no support for detecting unset fields (issue #29)
+
 Last Modified: 2014-03-16
 
 License
