@@ -14,7 +14,7 @@ pub mod processor;
 #[derive(Debug)]
 pub enum ThriftErr {
     TransportError(std::io::Error),
-    ProtocolError1(protocol::Error),
+    ProtocolError(protocol::Error),
     // Received a user-defined exception from the far end
     Exception,
 }
@@ -27,7 +27,7 @@ impl std::convert::From<std::io::Error> for ThriftErr {
 
 impl std::convert::From<protocol::Error> for ThriftErr {
     fn from(err: protocol::Error) -> ThriftErr {
-        ThriftErr::ProtocolError1(err)
+        ThriftErr::ProtocolError(err)
     }
 }
 
