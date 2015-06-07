@@ -16,12 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+use std;
 
 use transport::Transport;
 use TResult;
 use ThriftErr;
 
 pub mod binary_protocol;
+
+#[derive(Debug)]
+pub enum Error {
+    // Protocol version mismatch
+    BadVersion,
+    // Sender violated the protocol, for instance, sent an unknown enum value
+    ProtocolViolation,
+    // Received string cannot be converted to a UTF8 string
+    InvalidUtf8(std::str::Utf8Error),
+}
 
 pub trait ProtocolFactory {
     type Output: Protocol;
@@ -191,7 +202,7 @@ impl ProtocolHelpers {
         let i = try!(iprot.read_i32(transport));
         match <T as FromNum>::from_num(i) {
             Some(v) => Ok(v),
-            None => Err(ThriftErr::ProtocolError),
+            None => Err(ThriftErr::from(Error::ProtocolViolation)),
         }
     }
 
@@ -248,7 +259,7 @@ impl ProtocolHelpers {
                     // FIXME: shall we err in this case?
                     try!(protocol.skip(transport, Type::TStruct));
                     try!(protocol.read_message_end(transport));
-                    Err(ThriftErr::ProtocolError)
+                    Err(ThriftErr::from(Error::ProtocolViolation))
                 }
             }
         }

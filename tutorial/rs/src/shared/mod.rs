@@ -11,13 +11,16 @@ use std::cell::RefCell;
 use thrift::processor::Processor;
 use thrift::protocol::{Protocol, MessageType, Type};
 use thrift::transport::Transport;
-use thrift::protocol::{Readable, Writeable};
+use thrift::protocol::{Readable, Writeable, ProtocolHelpers};
 use thrift::TResult;
 #[allow(unused_imports)]
 use thrift::ThriftErr;
 #[allow(unused_imports)]
 use thrift::ThriftErr::*;
-use thrift::protocol::ProtocolHelpers;
+#[allow(unused_imports)]
+use thrift::protocol::Error;
+#[allow(unused_imports)]
+use thrift::protocol::Error::*;
 #[allow(unused_imports)]
 use thrift::protocol::FromNum;
 
@@ -88,7 +91,7 @@ impl Readable for SharedStruct {
       try!(iprot.read_field_end(transport));
     }
     try!(iprot.read_struct_end(transport));
-    if have_result { Ok(()) } else { Err(ProtocolError) }
+    if have_result { Ok(()) } else { Err(ThriftErr::from(Error::ProtocolViolation)) }
   }
 }
 
@@ -130,7 +133,7 @@ impl Readable for SharedServiceGetStructArgs {
       try!(iprot.read_field_end(transport));
     }
     try!(iprot.read_struct_end(transport));
-    if have_result { Ok(()) } else { Err(ProtocolError) }
+    if have_result { Ok(()) } else { Err(ThriftErr::from(Error::ProtocolViolation)) }
   }
 }
 
@@ -190,7 +193,7 @@ impl Readable for SharedServiceGetStructResult {
       try!(iprot.read_field_end(transport));
     }
     try!(iprot.read_struct_end(transport));
-    if have_result { Ok(()) } else { Err(ProtocolError) }
+    if have_result { Ok(()) } else { Err(ThriftErr::from(Error::ProtocolViolation)) }
   }
 }
 

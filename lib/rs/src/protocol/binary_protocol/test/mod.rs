@@ -173,7 +173,7 @@ pub fn read_message_begin_bad_version() {
     let protocol = BinaryProtocol;
     assert_eq!(
         protocol.read_message_begin(transport),
-        Err(ThriftErr::BadVersion)
+        Err(ThriftErr::from(protocol::Error::BadVersion))
     );
 }
 
@@ -187,6 +187,6 @@ pub fn read_message_begin_invalid_message_type() {
     let protocol = BinaryProtocol;
     assert_eq!(
         protocol.read_message_begin(transport),
-        Err(ThriftErr::InvalidData)
+        Err(ThriftErr::from(protocol::Error::ProtocolViolation))
     );
 }

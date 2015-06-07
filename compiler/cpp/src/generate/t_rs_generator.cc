@@ -270,13 +270,16 @@ string t_rs_generator::rs_imports() {
     "use thrift::processor::Processor;\n"
     "use thrift::protocol::{Protocol, MessageType, Type};\n"
     "use thrift::transport::Transport;\n"
-    "use thrift::protocol::{Readable, Writeable};\n"
+    "use thrift::protocol::{Readable, Writeable, ProtocolHelpers};\n"
     "use thrift::TResult;\n"
     "#[allow(unused_imports)]\n"
     "use thrift::ThriftErr;\n"
     "#[allow(unused_imports)]\n"
     "use thrift::ThriftErr::*;\n"
-    "use thrift::protocol::ProtocolHelpers;\n"
+    "#[allow(unused_imports)]\n"
+    "use thrift::protocol::Error;\n"
+    "#[allow(unused_imports)]\n"
+    "use thrift::protocol::Error::*;\n"
     "#[allow(unused_imports)]\n"
     "use thrift::protocol::FromNum;\n"
   );
@@ -1015,7 +1018,7 @@ void t_rs_generator::generate_struct_reader(t_struct* tstruct) {
       indent_down();
       indent(f_mod_) << "}\n";
       indent(f_mod_) << "try!(iprot.read_struct_end(transport));\n";
-      indent(f_mod_) << "if have_result { Ok(()) } else { Err(ProtocolError) }\n";
+      indent(f_mod_) << "if have_result { Ok(()) } else { Err(ThriftErr::from(Error::ProtocolViolation)) }\n";
     indent_down();
     indent(f_mod_) << "}\n";
   indent_down();

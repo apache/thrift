@@ -3,6 +3,7 @@
 extern crate podio;
 
 pub use protocol::Protocol;
+pub use protocol::Error;
 pub use transport::Transport;
 
 pub mod protocol;
@@ -13,21 +14,20 @@ pub mod processor;
 #[derive(Debug)]
 pub enum ThriftErr {
     TransportError(std::io::Error),
-    UnknownProtocol,
-    InvalidData,
-    NegativeSize,
-    SizeLimit,
-    BadVersion,
-    NotImplemented,
-    DepthLimit,
-    InvalidUtf8(std::str::Utf8Error),
+    ProtocolError1(protocol::Error),
+    // Received a user-defined exception from the far end
     Exception,
-    ProtocolError,
 }
 
 impl std::convert::From<std::io::Error> for ThriftErr {
     fn from(err: std::io::Error) -> ThriftErr {
         ThriftErr::TransportError(err)
+    }
+}
+
+impl std::convert::From<protocol::Error> for ThriftErr {
+    fn from(err: protocol::Error) -> ThriftErr {
+        ThriftErr::ProtocolError1(err)
     }
 }
 

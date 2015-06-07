@@ -11,13 +11,16 @@ use std::cell::RefCell;
 use thrift::processor::Processor;
 use thrift::protocol::{Protocol, MessageType, Type};
 use thrift::transport::Transport;
-use thrift::protocol::{Readable, Writeable};
+use thrift::protocol::{Readable, Writeable, ProtocolHelpers};
 use thrift::TResult;
 #[allow(unused_imports)]
 use thrift::ThriftErr;
 #[allow(unused_imports)]
 use thrift::ThriftErr::*;
-use thrift::protocol::ProtocolHelpers;
+#[allow(unused_imports)]
+use thrift::protocol::Error;
+#[allow(unused_imports)]
+use thrift::protocol::Error::*;
 #[allow(unused_imports)]
 use thrift::protocol::FromNum;
 
@@ -146,14 +149,14 @@ impl Readable for Work {
       try!(iprot.read_field_end(transport));
     }
     try!(iprot.read_struct_end(transport));
-    if have_result { Ok(()) } else { Err(ProtocolError) }
+    if have_result { Ok(()) } else { Err(ThriftErr::from(Error::ProtocolViolation)) }
   }
 }
 
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct InvalidOperation {
-  pub what: i32,
+  pub what_op: i32,
   pub why: String,
 }
 
@@ -161,7 +164,7 @@ impl InvalidOperation {
   #[allow(dead_code)]
   pub fn new() -> InvalidOperation {
     InvalidOperation {
-      what: 0,
+      what_op: 0,
       why: String::new(),
     }
   }
@@ -174,8 +177,8 @@ impl Writeable for InvalidOperation {
   fn write(&self, oprot: &Protocol, transport: &mut Transport) -> TResult<()> {
     try!(oprot.write_struct_begin(transport, "InvalidOperation"));
 
-    try!(oprot.write_field_begin(transport, "what", Type::TI32, 1));
-    try!(oprot.write_i32(transport, self.what));
+    try!(oprot.write_field_begin(transport, "whatOp", Type::TI32, 1));
+    try!(oprot.write_i32(transport, self.what_op));
     try!(oprot.write_field_end(transport));
     
     try!(oprot.write_field_begin(transport, "why", Type::TString, 2));
@@ -202,7 +205,7 @@ impl Readable for InvalidOperation {
           break;
         }
         (_, Type::TI32, 1) => {
-          self.what = try!(iprot.read_i32(transport));
+          self.what_op = try!(iprot.read_i32(transport));
           have_result = true;
         }
         (_, Type::TString, 2) => {
@@ -216,7 +219,7 @@ impl Readable for InvalidOperation {
       try!(iprot.read_field_end(transport));
     }
     try!(iprot.read_struct_end(transport));
-    if have_result { Ok(()) } else { Err(ProtocolError) }
+    if have_result { Ok(()) } else { Err(ThriftErr::from(Error::ProtocolViolation)) }
   }
 }
 
@@ -250,7 +253,7 @@ impl Readable for CalculatorPingArgs {
       try!(iprot.read_field_end(transport));
     }
     try!(iprot.read_struct_end(transport));
-    if have_result { Ok(()) } else { Err(ProtocolError) }
+    if have_result { Ok(()) } else { Err(ThriftErr::from(Error::ProtocolViolation)) }
   }
 }
 
@@ -298,7 +301,7 @@ impl Readable for CalculatorPingResult {
       try!(iprot.read_field_end(transport));
     }
     try!(iprot.read_struct_end(transport));
-    if have_result { Ok(()) } else { Err(ProtocolError) }
+    if have_result { Ok(()) } else { Err(ThriftErr::from(Error::ProtocolViolation)) }
   }
 }
 
@@ -360,7 +363,7 @@ impl Readable for CalculatorAddArgs {
       try!(iprot.read_field_end(transport));
     }
     try!(iprot.read_struct_end(transport));
-    if have_result { Ok(()) } else { Err(ProtocolError) }
+    if have_result { Ok(()) } else { Err(ThriftErr::from(Error::ProtocolViolation)) }
   }
 }
 
@@ -424,7 +427,7 @@ impl Readable for CalculatorAddResult {
       try!(iprot.read_field_end(transport));
     }
     try!(iprot.read_struct_end(transport));
-    if have_result { Ok(()) } else { Err(ProtocolError) }
+    if have_result { Ok(()) } else { Err(ThriftErr::from(Error::ProtocolViolation)) }
   }
 }
 
@@ -490,7 +493,7 @@ impl Readable for CalculatorCalculateArgs {
       try!(iprot.read_field_end(transport));
     }
     try!(iprot.read_struct_end(transport));
-    if have_result { Ok(()) } else { Err(ProtocolError) }
+    if have_result { Ok(()) } else { Err(ThriftErr::from(Error::ProtocolViolation)) }
   }
 }
 
@@ -562,7 +565,7 @@ impl Readable for CalculatorCalculateResult {
       try!(iprot.read_field_end(transport));
     }
     try!(iprot.read_struct_end(transport));
-    if have_result { Ok(()) } else { Err(ProtocolError) }
+    if have_result { Ok(()) } else { Err(ThriftErr::from(Error::ProtocolViolation)) }
   }
 }
 
@@ -623,7 +626,7 @@ impl Readable for CalculatorZipArgs {
       try!(iprot.read_field_end(transport));
     }
     try!(iprot.read_struct_end(transport));
-    if have_result { Ok(()) } else { Err(ProtocolError) }
+    if have_result { Ok(()) } else { Err(ThriftErr::from(Error::ProtocolViolation)) }
   }
 }
 
