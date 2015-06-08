@@ -17,13 +17,12 @@
  * under the License.
  */
 
-#![feature(buf_stream)]
-
 extern crate thrift;
+extern crate bufstream;
 
 use std::str::FromStr;
 use std::net;
-use std::io::BufStream;
+use bufstream::BufStream;
 use thrift::protocol::binary_protocol::BinaryProtocol;
 
 mod tutorial;

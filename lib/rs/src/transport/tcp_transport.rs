@@ -17,10 +17,10 @@
  * under the License.
  */
 
-use std::io;
 use std::io::prelude::*;
 use std::net;
+use bufstream;
 
 impl super::Transport for net::TcpStream { }
 
-impl<T: Read + Write> super::Transport for io::BufStream<T> { }
+impl<T: Read + Write> super::Transport for bufstream::BufStream<T> { }

@@ -1,6 +1,6 @@
-#![feature(buf_stream)]
 
 extern crate podio;
+extern crate bufstream;
 
 pub use protocol::Protocol;
 pub use protocol::Error;

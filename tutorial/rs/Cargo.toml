@@ -13,5 +13,8 @@ path = "src/client.rs"
 name = "server"
 path = "src/server.rs"
 
+[dependencies]
+bufstream = "0.1.1"
+
 [dependencies.thrift]
 path = "../../lib/rs"
