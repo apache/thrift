@@ -2,6 +2,9 @@
 
 extern crate podio;
 
+use std::io;
+use std::convert::From;
+
 pub use protocol::Protocol;
 pub use protocol::Error;
 pub use transport::Transport;
@@ -13,19 +16,24 @@ pub mod processor;
 
 #[derive(Debug)]
 pub enum ThriftErr {
-    TransportError(std::io::Error),
+    /// An error occurred when reading from/writing to the underlying transport
+    TransportError(io::Error),
+
+    /// An error occurred when encoding/decoding the data (this usually indicates a bug in the
+    /// library)
     ProtocolError(protocol::Error),
-    // Received a user-defined exception from the far end
-    Exception,
+
+    /// The server code threw a user-defined exception
+    UserException,
 }
 
-impl std::convert::From<std::io::Error> for ThriftErr {
-    fn from(err: std::io::Error) -> ThriftErr {
+impl From<io::Error> for ThriftErr {
+    fn from(err: io::Error) -> ThriftErr {
         ThriftErr::TransportError(err)
     }
 }
 
-impl std::convert::From<protocol::Error> for ThriftErr {
+impl From<protocol::Error> for ThriftErr {
     fn from(err: protocol::Error) -> ThriftErr {
         ThriftErr::ProtocolError(err)
     }

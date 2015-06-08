@@ -245,7 +245,7 @@ impl ProtocolHelpers {
                 //protocol.read_message_end();
                 //transport.read_end();
                 //throw x
-                Err(ThriftErr::Exception)
+                Err(ThriftErr::UserException)
             }
             // TODO: Make sure the client doesn't receive MtCall messages and that the server
             // doesn't receive MtReply messages
