@@ -42,7 +42,8 @@ libtutorialgencpp_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
 
 noinst_PROGRAMS = \
 	TutorialServer \
-	TutorialClient
+	TutorialClient \
+	CppBenchmark
 
 TutorialServer_SOURCES = \
 	CppServer.cpp
@@ -55,6 +56,13 @@ TutorialClient_SOURCES = \
 	CppClient.cpp
 
 TutorialClient_LDADD = \
+	libtutorialgencpp.la \
+	$(top_builddir)/lib/cpp/libthrift.la
+
+CppBenchmark_SOURCES = \
+	CppBenchmark.cpp
+
+CppBenchmark_LDADD = \
 	libtutorialgencpp.la \
 	$(top_builddir)/lib/cpp/libthrift.la
 
@@ -79,9 +87,13 @@ tutorialserver: all
 tutorialclient: all
 	./TutorialClient
 
+benchmark: all
+	./CppBenchmark
+
 style-local:
 	$(CPPSTYLE_CMD)
 
 EXTRA_DIST = \
 	CppClient.cpp \
-	CppServer.cpp
+	CppServer.cpp \
+	CppBenchmark.cpp

@@ -253,6 +253,7 @@ test-driver
 /test/rs/target/
 /tutorial/cpp/TutorialClient
 /tutorial/cpp/TutorialServer
+/tutorial/cpp/CppBenchmark
 /tutorial/c_glib/tutorial_client
 /tutorial/c_glib/tutorial_server
 /tutorial/delphi/*.dsk
