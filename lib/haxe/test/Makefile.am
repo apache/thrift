@@ -36,9 +36,12 @@ gen-haxe/thrift/test/BenchmarkService.hx: $(BENCHMARK)
 
 all-local: $(BIN_CPP)
 
-$(BIN_CPP): gen-haxe/thrift/test/ThriftTest.hx \
-			gen-haxe/thrift/test/Aggr.hx \
-			gen-haxe/thrift/test/BenchmarkService.hx
+$(BIN_CPP): \
+		src/*.hx \
+		../src/org/apache/thrift/**/*.hx \
+		gen-haxe/thrift/test/ThriftTest.hx \
+		gen-haxe/thrift/test/Aggr.hx \
+		gen-haxe/thrift/test/BenchmarkService.hx
 	$(HAXE) --cwd .  cpp.hxml
 
 
@@ -49,7 +52,7 @@ $(BIN_CPP): gen-haxe/thrift/test/ThriftTest.hx \
 #    $(HAXE)  --cwd .  javascript
 #    $(HAXE)  --cwd .  neko
 #    $(HAXE)  --cwd .  php
-#    $(HAXE)  --cwd .  python  # needs Haxe 3.1.4
+#    $(HAXE)  --cwd .  python  # needs Haxe 3.2.0
 
 
 clean-local:

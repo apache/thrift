@@ -1249,7 +1249,7 @@ void TNonblockingServer::registerEvents(event_base* user_event_base) {
  */
 void TNonblockingServer::serve() {
 
-  if(ioThreads_.empty())
+  if (ioThreads_.empty())
     registerEvents(NULL);
 
   // Run the primary (listener) IO thread loop in our main thread; this will
@@ -1400,7 +1400,7 @@ bool TNonblockingIOThread::notify(TNonblockingServer::TConnection* conn) {
   fd_set wfds, efds;
   int ret = -1;
   int kSize = sizeof(conn);
-  const char * pos = (const char *)const_cast_sockopt(&conn);
+  const char* pos = (const char*)const_cast_sockopt(&conn);
 
   while (kSize > 0) {
     FD_ZERO(&wfds);

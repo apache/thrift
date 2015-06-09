@@ -13,9 +13,9 @@ The test can be executed by:
 This starts the [test.py](test.py) script which does the real cross test with
 different transports, protocols and languages.
 
-Note that this requires basically everything to be built, otherwise test cases
-for missing languages will fail. If you skip building some languages, or simply
-need more control, read following section.
+Note that this skips any language that is not built locally. It also skips
+tests that are known to be failing. If you need more control over which tests
+to run, read following section.
 
 ### B. Using test script directly
 

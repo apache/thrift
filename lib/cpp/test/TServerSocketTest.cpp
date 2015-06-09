@@ -29,44 +29,39 @@ using apache::thrift::transport::TSocket;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 
-BOOST_FIXTURE_TEST_SUITE ( TServerSocketTest, TestPortFixture )
+BOOST_FIXTURE_TEST_SUITE(TServerSocketTest, TestPortFixture)
 
-BOOST_AUTO_TEST_CASE( test_bind_to_address )
-{
-    TServerSocket sock1("localhost", m_serverPort);
-    sock1.listen();
-    TSocket clientSock("localhost", m_serverPort);
-    clientSock.open();
-    boost::shared_ptr<TTransport> accepted = sock1.accept();
-    accepted->close();
-    sock1.close();
+BOOST_AUTO_TEST_CASE(test_bind_to_address) {
+  TServerSocket sock1("localhost", m_serverPort);
+  sock1.listen();
+  TSocket clientSock("localhost", m_serverPort);
+  clientSock.open();
+  boost::shared_ptr<TTransport> accepted = sock1.accept();
+  accepted->close();
+  sock1.close();
 
-    std::cout << "An error message from getaddrinfo on the console is expected:" << std::endl;
-    TServerSocket sock2("257.258.259.260", m_serverPort);
-    BOOST_CHECK_THROW(sock2.listen(), TTransportException);
-    sock2.close();
+  std::cout << "An error message from getaddrinfo on the console is expected:" << std::endl;
+  TServerSocket sock2("257.258.259.260", m_serverPort);
+  BOOST_CHECK_THROW(sock2.listen(), TTransportException);
+  sock2.close();
 }
 
-BOOST_AUTO_TEST_CASE( test_listen_valid_port )
-{
-    TServerSocket sock1(-1);
-    TTRANSPORT_CHECK_THROW(sock1.listen(), TTransportException::BAD_ARGS);
+BOOST_AUTO_TEST_CASE(test_listen_valid_port) {
+  TServerSocket sock1(-1);
+  TTRANSPORT_CHECK_THROW(sock1.listen(), TTransportException::BAD_ARGS);
 
-    TServerSocket sock2(65536);
-    TTRANSPORT_CHECK_THROW(sock2.listen(), TTransportException::BAD_ARGS);
+  TServerSocket sock2(65536);
+  TTRANSPORT_CHECK_THROW(sock2.listen(), TTransportException::BAD_ARGS);
 }
 
-BOOST_AUTO_TEST_CASE( test_close_before_listen )
-{
-    TServerSocket sock1("localhost", m_serverPort);
-    sock1.close();
+BOOST_AUTO_TEST_CASE(test_close_before_listen) {
+  TServerSocket sock1("localhost", m_serverPort);
+  sock1.close();
 }
 
-BOOST_AUTO_TEST_CASE( test_get_port )
-{
-    TServerSocket sock1("localHost", 888);
-    BOOST_CHECK_EQUAL(888, sock1.getPort());
+BOOST_AUTO_TEST_CASE(test_get_port) {
+  TServerSocket sock1("localHost", 888);
+  BOOST_CHECK_EQUAL(888, sock1.getPort());
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-

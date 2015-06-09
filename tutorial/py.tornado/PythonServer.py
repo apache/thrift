@@ -62,13 +62,13 @@ class CalculatorHandler(object):
         elif work.op == Operation.DIVIDE:
             if work.num2 == 0:
                 x = InvalidOperation()
-                x.what = work.op
+                x.whatOp = work.op
                 x.why = "Cannot divide by 0"
                 raise x
             val = work.num1 / work.num2
         else:
             x = InvalidOperation()
-            x.what = work.op
+            x.whatOp = work.op
             x.why = "Invalid operation"
             raise x
 

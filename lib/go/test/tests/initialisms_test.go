@@ -36,4 +36,8 @@ func TestThatCommonInitialismsAreFixed(t *testing.T) {
 	if !ok {
 		t.Error("ServerURL attribute is missing!")
 	}
+	_, ok = st.FieldByName("ID")
+	if !ok {
+		t.Error("ID attribute is missing!")
+	}
 }

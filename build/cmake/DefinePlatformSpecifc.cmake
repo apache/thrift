@@ -65,18 +65,20 @@ if(MSVC)
     # Windows build does not know how to make a shared library yet
     # as there are no __declspec(dllexport) or exports files in the project.
     if (WITH_SHARED_LIB)
-        message (FATAL_ERROR "Windows build does not support shared library output yet!")
+      message (FATAL_ERROR "Windows build does not support shared library output yet, please set -DWITH_SHARED_LIB=off")
     endif()
 
 elseif(UNIX)
-  # For UNIX
-  # WITH_*THREADS selects which threading library to use
-  if(WITH_BOOSTTHREADS)
-    add_definitions("-DUSE_BOOST_THREAD=1")
-  elseif(WITH_STDTHREADS)
-    add_definitions("-DUSE_STD_THREAD=1")
-  endif()
+  find_program( MEMORYCHECK_COMMAND valgrind )
+  set( MEMORYCHECK_COMMAND_OPTIONS "--gen-suppressions=all --leak-check=full" )
+  set( MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/test/valgrind.suppress" )
+endif()
 
+# WITH_*THREADS selects which threading library to use
+if(WITH_BOOSTTHREADS)
+  add_definitions("-DUSE_BOOST_THREAD=1")
+elseif(WITH_STDTHREADS)
+  add_definitions("-DUSE_STD_THREAD=1")
 endif()
 
 # GCC and Clang.

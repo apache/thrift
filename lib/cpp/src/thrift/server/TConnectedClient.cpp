@@ -36,22 +36,24 @@ TConnectedClient::TConnectedClient(const shared_ptr<TProcessor>& processor,
                                    const shared_ptr<TProtocol>& outputProtocol,
                                    const shared_ptr<TServerEventHandler>& eventHandler,
                                    const shared_ptr<TTransport>& client)
-                        
+
   : processor_(processor),
     inputProtocol_(inputProtocol),
     outputProtocol_(outputProtocol),
     eventHandler_(eventHandler),
     client_(client),
-    opaqueContext_(0) {}
+    opaqueContext_(0) {
+}
 
-TConnectedClient::~TConnectedClient() {}
+TConnectedClient::~TConnectedClient() {
+}
 
 void TConnectedClient::run() {
   if (eventHandler_) {
     opaqueContext_ = eventHandler_->createContext(inputProtocol_, outputProtocol_);
   }
 
-  for (bool done = false; !done; ) {
+  for (bool done = false; !done;) {
     if (eventHandler_) {
       eventHandler_->processContext(opaqueContext_, client_);
     }
@@ -61,27 +63,25 @@ void TConnectedClient::run() {
         break;
       }
     } catch (const TTransportException& ttx) {
-      switch (ttx.getType())
-      {
-        case TTransportException::TIMED_OUT:
-          // Receive timeout - continue processing.
-          continue;
+      switch (ttx.getType()) {
+      case TTransportException::TIMED_OUT:
+        // Receive timeout - continue processing.
+        continue;
 
-        case TTransportException::END_OF_FILE:
-        case TTransportException::INTERRUPTED:
-          // Client disconnected or was interrupted.  No logging needed.  Done.
-          done = true;
-          break;
+      case TTransportException::END_OF_FILE:
+      case TTransportException::INTERRUPTED:
+        // Client disconnected or was interrupted.  No logging needed.  Done.
+        done = true;
+        break;
 
-        default:
-        {
-          // All other transport exceptions are logged.
-          // State of connection is unknown.  Done.
-          string errStr = string("TConnectedClient died: ") + ttx.what();
-          GlobalOutput(errStr.c_str());
-          done = true;
-          break;
-        }
+      default: {
+        // All other transport exceptions are logged.
+        // State of connection is unknown.  Done.
+        string errStr = string("TConnectedClient died: ") + ttx.what();
+        GlobalOutput(errStr.c_str());
+        done = true;
+        break;
+      }
       }
     } catch (const TException& tex) {
       string errStr = string("TConnectedClient processing exception: ") + tex.what();
@@ -93,8 +93,7 @@ void TConnectedClient::run() {
   cleanup();
 }
 
-void TConnectedClient::cleanup()
-{
+void TConnectedClient::cleanup() {
   if (eventHandler_) {
     eventHandler_->deleteContext(opaqueContext_, inputProtocol_, outputProtocol_);
   }
@@ -120,7 +119,6 @@ void TConnectedClient::cleanup()
     GlobalOutput(errStr.c_str());
   }
 }
-
 }
 }
 } // apache::thrift::server

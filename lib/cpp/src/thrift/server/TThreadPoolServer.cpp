@@ -33,63 +33,68 @@ using apache::thrift::transport::TTransportFactory;
 using boost::shared_ptr;
 using std::string;
 
-TThreadPoolServer::TThreadPoolServer(
-        const shared_ptr<TProcessorFactory>& processorFactory,
-        const shared_ptr<TServerTransport>& serverTransport,
-        const shared_ptr<TTransportFactory>& transportFactory,
-        const shared_ptr<TProtocolFactory>& protocolFactory,
-        const shared_ptr<ThreadManager>& threadManager)
-  : TServerFramework(processorFactory, serverTransport,
-                     transportFactory, protocolFactory),
+TThreadPoolServer::TThreadPoolServer(const shared_ptr<TProcessorFactory>& processorFactory,
+                                     const shared_ptr<TServerTransport>& serverTransport,
+                                     const shared_ptr<TTransportFactory>& transportFactory,
+                                     const shared_ptr<TProtocolFactory>& protocolFactory,
+                                     const shared_ptr<ThreadManager>& threadManager)
+  : TServerFramework(processorFactory, serverTransport, transportFactory, protocolFactory),
     threadManager_(threadManager),
     timeout_(0),
-    taskExpiration_(0) {}
+    taskExpiration_(0) {
+}
 
-TThreadPoolServer::TThreadPoolServer(
-        const shared_ptr<TProcessor>& processor,
-        const shared_ptr<TServerTransport>& serverTransport,
-        const shared_ptr<TTransportFactory>& transportFactory,
-        const shared_ptr<TProtocolFactory>& protocolFactory,
-        const shared_ptr<ThreadManager>& threadManager)
-  : TServerFramework(processor, serverTransport,
-                     transportFactory, protocolFactory),
+TThreadPoolServer::TThreadPoolServer(const shared_ptr<TProcessor>& processor,
+                                     const shared_ptr<TServerTransport>& serverTransport,
+                                     const shared_ptr<TTransportFactory>& transportFactory,
+                                     const shared_ptr<TProtocolFactory>& protocolFactory,
+                                     const shared_ptr<ThreadManager>& threadManager)
+  : TServerFramework(processor, serverTransport, transportFactory, protocolFactory),
     threadManager_(threadManager),
     timeout_(0),
-    taskExpiration_(0) {}
+    taskExpiration_(0) {
+}
 
-TThreadPoolServer::TThreadPoolServer(
-        const shared_ptr<TProcessorFactory>& processorFactory,
-        const shared_ptr<TServerTransport>& serverTransport,
-        const shared_ptr<TTransportFactory>& inputTransportFactory,
-        const shared_ptr<TTransportFactory>& outputTransportFactory,
-        const shared_ptr<TProtocolFactory>& inputProtocolFactory,
-        const shared_ptr<TProtocolFactory>& outputProtocolFactory,
-        const shared_ptr<ThreadManager>& threadManager)
-  : TServerFramework(processorFactory, serverTransport,
-                     inputTransportFactory, outputTransportFactory,
-                     inputProtocolFactory, outputProtocolFactory),
-    threadManager_(threadManager),
-    stop_(false),
-    timeout_(0),
-    taskExpiration_(0) {}
-
-TThreadPoolServer::TThreadPoolServer(
-        const shared_ptr<TProcessor>& processor,
-        const shared_ptr<TServerTransport>& serverTransport,
-        const shared_ptr<TTransportFactory>& inputTransportFactory,
-        const shared_ptr<TTransportFactory>& outputTransportFactory,
-        const shared_ptr<TProtocolFactory>& inputProtocolFactory,
-        const shared_ptr<TProtocolFactory>& outputProtocolFactory,
-        const shared_ptr<ThreadManager>& threadManager)
-  : TServerFramework(processor, serverTransport,
-                     inputTransportFactory, outputTransportFactory,
-                     inputProtocolFactory, outputProtocolFactory),
+TThreadPoolServer::TThreadPoolServer(const shared_ptr<TProcessorFactory>& processorFactory,
+                                     const shared_ptr<TServerTransport>& serverTransport,
+                                     const shared_ptr<TTransportFactory>& inputTransportFactory,
+                                     const shared_ptr<TTransportFactory>& outputTransportFactory,
+                                     const shared_ptr<TProtocolFactory>& inputProtocolFactory,
+                                     const shared_ptr<TProtocolFactory>& outputProtocolFactory,
+                                     const shared_ptr<ThreadManager>& threadManager)
+  : TServerFramework(processorFactory,
+                     serverTransport,
+                     inputTransportFactory,
+                     outputTransportFactory,
+                     inputProtocolFactory,
+                     outputProtocolFactory),
     threadManager_(threadManager),
     stop_(false),
     timeout_(0),
-    taskExpiration_(0) {}
+    taskExpiration_(0) {
+}
 
-TThreadPoolServer::~TThreadPoolServer() {}
+TThreadPoolServer::TThreadPoolServer(const shared_ptr<TProcessor>& processor,
+                                     const shared_ptr<TServerTransport>& serverTransport,
+                                     const shared_ptr<TTransportFactory>& inputTransportFactory,
+                                     const shared_ptr<TTransportFactory>& outputTransportFactory,
+                                     const shared_ptr<TProtocolFactory>& inputProtocolFactory,
+                                     const shared_ptr<TProtocolFactory>& outputProtocolFactory,
+                                     const shared_ptr<ThreadManager>& threadManager)
+  : TServerFramework(processor,
+                     serverTransport,
+                     inputTransportFactory,
+                     outputTransportFactory,
+                     inputProtocolFactory,
+                     outputProtocolFactory),
+    threadManager_(threadManager),
+    stop_(false),
+    timeout_(0),
+    taskExpiration_(0) {
+}
+
+TThreadPoolServer::~TThreadPoolServer() {
+}
 
 void TThreadPoolServer::serve() {
   TServerFramework::serve();
@@ -112,7 +117,8 @@ void TThreadPoolServer::setTaskExpiration(int64_t value) {
   taskExpiration_ = value;
 }
 
-boost::shared_ptr<apache::thrift::concurrency::ThreadManager> TThreadPoolServer::getThreadManager() const {
+boost::shared_ptr<apache::thrift::concurrency::ThreadManager> TThreadPoolServer::getThreadManager()
+    const {
   return threadManager_;
 }
 
@@ -120,8 +126,8 @@ void TThreadPoolServer::onClientConnected(const shared_ptr<TConnectedClient>& pC
   threadManager_->add(pClient, timeout_, taskExpiration_);
 }
 
-void TThreadPoolServer::onClientDisconnected(TConnectedClient *pClient) {}
-
+void TThreadPoolServer::onClientDisconnected(TConnectedClient*) {
+}
 }
 }
 } // apache::thrift::server

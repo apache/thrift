@@ -418,7 +418,8 @@ public:
     cob(res);
   }
 
-  virtual void testBinary(tcxx::function<void(std::string const& _return)> cob, const std::string& thing) {
+  virtual void testBinary(tcxx::function<void(std::string const& _return)> cob,
+                          const std::string& thing) {
     std::string res;
     _delegate->testBinary(res, thing);
     cob(res);

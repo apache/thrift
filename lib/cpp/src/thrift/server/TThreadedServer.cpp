@@ -36,52 +36,58 @@ using apache::thrift::transport::TTransportFactory;
 using boost::shared_ptr;
 using std::string;
 
-TThreadedServer::TThreadedServer(
-        const shared_ptr<TProcessorFactory>& processorFactory,
-        const shared_ptr<TServerTransport>& serverTransport,
-        const shared_ptr<TTransportFactory>& transportFactory,
-        const shared_ptr<TProtocolFactory>& protocolFactory,
-        const shared_ptr<ThreadFactory>& threadFactory)
+TThreadedServer::TThreadedServer(const shared_ptr<TProcessorFactory>& processorFactory,
+                                 const shared_ptr<TServerTransport>& serverTransport,
+                                 const shared_ptr<TTransportFactory>& transportFactory,
+                                 const shared_ptr<TProtocolFactory>& protocolFactory,
+                                 const shared_ptr<ThreadFactory>& threadFactory)
   : TServerFramework(processorFactory, serverTransport, transportFactory, protocolFactory),
-    threadFactory_(threadFactory) {}
+    threadFactory_(threadFactory) {
+}
 
-
-TThreadedServer::TThreadedServer(
-        const shared_ptr<TProcessor>& processor,
-        const shared_ptr<TServerTransport>& serverTransport,
-        const shared_ptr<TTransportFactory>& transportFactory,
-        const shared_ptr<TProtocolFactory>& protocolFactory,
-        const shared_ptr<ThreadFactory>& threadFactory)
+TThreadedServer::TThreadedServer(const shared_ptr<TProcessor>& processor,
+                                 const shared_ptr<TServerTransport>& serverTransport,
+                                 const shared_ptr<TTransportFactory>& transportFactory,
+                                 const shared_ptr<TProtocolFactory>& protocolFactory,
+                                 const shared_ptr<ThreadFactory>& threadFactory)
   : TServerFramework(processor, serverTransport, transportFactory, protocolFactory),
-    threadFactory_(threadFactory) {}
+    threadFactory_(threadFactory) {
+}
 
-TThreadedServer::TThreadedServer(
-        const shared_ptr<TProcessorFactory>& processorFactory,
-        const shared_ptr<TServerTransport>& serverTransport,
-        const shared_ptr<TTransportFactory>& inputTransportFactory,
-        const shared_ptr<TTransportFactory>& outputTransportFactory,
-        const shared_ptr<TProtocolFactory>& inputProtocolFactory,
-        const shared_ptr<TProtocolFactory>& outputProtocolFactory,
-        const shared_ptr<ThreadFactory>& threadFactory)
-  : TServerFramework(processorFactory, serverTransport,
-          inputTransportFactory, outputTransportFactory,
-          inputProtocolFactory, outputProtocolFactory),
-    threadFactory_(threadFactory) {}
+TThreadedServer::TThreadedServer(const shared_ptr<TProcessorFactory>& processorFactory,
+                                 const shared_ptr<TServerTransport>& serverTransport,
+                                 const shared_ptr<TTransportFactory>& inputTransportFactory,
+                                 const shared_ptr<TTransportFactory>& outputTransportFactory,
+                                 const shared_ptr<TProtocolFactory>& inputProtocolFactory,
+                                 const shared_ptr<TProtocolFactory>& outputProtocolFactory,
+                                 const shared_ptr<ThreadFactory>& threadFactory)
+  : TServerFramework(processorFactory,
+                     serverTransport,
+                     inputTransportFactory,
+                     outputTransportFactory,
+                     inputProtocolFactory,
+                     outputProtocolFactory),
+    threadFactory_(threadFactory) {
+}
 
-TThreadedServer::TThreadedServer(
-        const shared_ptr<TProcessor>& processor,
-        const shared_ptr<TServerTransport>& serverTransport,
-        const shared_ptr<TTransportFactory>& inputTransportFactory,
-        const shared_ptr<TTransportFactory>& outputTransportFactory,
-        const shared_ptr<TProtocolFactory>& inputProtocolFactory,
-        const shared_ptr<TProtocolFactory>& outputProtocolFactory,
-        const shared_ptr<ThreadFactory>& threadFactory)
-  : TServerFramework(processor, serverTransport,
-          inputTransportFactory, outputTransportFactory,
-          inputProtocolFactory, outputProtocolFactory),
-    threadFactory_(threadFactory) {}
+TThreadedServer::TThreadedServer(const shared_ptr<TProcessor>& processor,
+                                 const shared_ptr<TServerTransport>& serverTransport,
+                                 const shared_ptr<TTransportFactory>& inputTransportFactory,
+                                 const shared_ptr<TTransportFactory>& outputTransportFactory,
+                                 const shared_ptr<TProtocolFactory>& inputProtocolFactory,
+                                 const shared_ptr<TProtocolFactory>& outputProtocolFactory,
+                                 const shared_ptr<ThreadFactory>& threadFactory)
+  : TServerFramework(processor,
+                     serverTransport,
+                     inputTransportFactory,
+                     outputTransportFactory,
+                     inputProtocolFactory,
+                     outputProtocolFactory),
+    threadFactory_(threadFactory) {
+}
 
-TThreadedServer::~TThreadedServer() {}
+TThreadedServer::~TThreadedServer() {
+}
 
 void TThreadedServer::serve() {
   TServerFramework::serve();
@@ -90,7 +96,7 @@ void TThreadedServer::serve() {
   try {
     Synchronized s(clientsMonitor_);
     while (getConcurrentClientCount() > 0) {
-        clientsMonitor_.wait();
+      clientsMonitor_.wait();
     }
   } catch (TException& tx) {
     string errStr = string("TThreadedServer: Exception joining workers: ") + tx.what();
@@ -102,13 +108,13 @@ void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pCli
   threadFactory_->newThread(pClient)->start();
 }
 
-void TThreadedServer::onClientDisconnected(TConnectedClient *pClient) {
+void TThreadedServer::onClientDisconnected(TConnectedClient* pClient) {
+  THRIFT_UNUSED_VARIABLE(pClient);
   Synchronized s(clientsMonitor_);
   if (getConcurrentClientCount() == 0) {
     clientsMonitor_.notify();
   }
 }
-
 }
 }
 } // apache::thrift::server

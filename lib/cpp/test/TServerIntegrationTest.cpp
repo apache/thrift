@@ -22,6 +22,7 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 #include <thrift/server/TSimpleServer.h>
@@ -56,14 +57,18 @@ using apache::thrift::server::TThreadPoolServer;
 using apache::thrift::server::TThreadedServer;
 using apache::thrift::test::ParentServiceClient;
 using apache::thrift::test::ParentServiceIf;
+using apache::thrift::test::ParentServiceIfFactory;
+using apache::thrift::test::ParentServiceIfSingletonFactory;
 using apache::thrift::test::ParentServiceProcessor;
+using apache::thrift::test::ParentServiceProcessorFactory;
+using apache::thrift::TProcessor;
+using apache::thrift::TProcessorFactory;
 using boost::posix_time::milliseconds;
 
 /**
  * preServe runs after listen() is successful, when we can connect
  */
-class TServerReadyEventHandler : public TServerEventHandler, public Monitor
-{
+class TServerReadyEventHandler : public TServerEventHandler, public Monitor {
 public:
   TServerReadyEventHandler() : isListening_(false), accepted_(0) {}
   virtual ~TServerReadyEventHandler() {}
@@ -84,6 +89,7 @@ public:
   }
   bool isListening() const { return isListening_; }
   uint64_t acceptedCount() const { return accepted_; }
+
 private:
   bool isListening_;
   uint64_t accepted_;
@@ -117,16 +123,15 @@ public:
   }
 
   void getDataWait(std::string& _return, int32_t length) {
+    THRIFT_UNUSED_VARIABLE(_return);
+    THRIFT_UNUSED_VARIABLE(length);
   }
 
-  void onewayWait() {
-  }
+  void onewayWait() {}
 
-  void exceptionWait(const std::string& message) {
-  }
+  void exceptionWait(const std::string& message) { THRIFT_UNUSED_VARIABLE(message); }
 
-  void unexpectedExceptionWait(const std::string& message) {
-  }
+  void unexpectedExceptionWait(const std::string& message) { THRIFT_UNUSED_VARIABLE(message); }
 
 protected:
   Mutex mutex_;
@@ -134,24 +139,31 @@ protected:
   std::vector<std::string> strings_;
 };
 
-void autoSocketCloser(TSocket *pSock) {
+void autoSocketCloser(TSocket* pSock) {
   pSock->close();
   delete pSock;
 }
 
-template<class TServerType>
-class TServerIntegrationTestFixture : public TestPortFixture
-{
+template <class TServerType>
+class TServerIntegrationTestFixture : public TestPortFixture {
 public:
-  TServerIntegrationTestFixture() :
-      pServer(new TServerType(
-                    boost::shared_ptr<ParentServiceProcessor>(new ParentServiceProcessor(
-                            boost::shared_ptr<ParentServiceIf>(new ParentHandler))),
-                    boost::shared_ptr<TServerTransport>(new TServerSocket("localhost", m_serverPort)),
-                    boost::shared_ptr<TTransportFactory>(new TTransportFactory),
-                    boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory))),
-      pEventHandler(boost::shared_ptr<TServerReadyEventHandler>(new TServerReadyEventHandler))
-  {
+  TServerIntegrationTestFixture(const boost::shared_ptr<TProcessorFactory>& _processorFactory)
+    : pServer(new TServerType(_processorFactory,
+                              boost::shared_ptr<TServerTransport>(
+                                  new TServerSocket("localhost", m_serverPort)),
+                              boost::shared_ptr<TTransportFactory>(new TTransportFactory),
+                              boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory))),
+      pEventHandler(boost::shared_ptr<TServerReadyEventHandler>(new TServerReadyEventHandler)) {
+    pServer->setServerEventHandler(pEventHandler);
+  }
+
+  TServerIntegrationTestFixture(const boost::shared_ptr<TProcessor>& _processor)
+    : pServer(
+          new TServerType(_processor,
+                          boost::shared_ptr<TServerTransport>(new TServerSocket("localhost", 0)),
+                          boost::shared_ptr<TTransportFactory>(new TTransportFactory),
+                          boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory))),
+      pEventHandler(boost::shared_ptr<TServerReadyEventHandler>(new TServerReadyEventHandler)) {
     pServer->setServerEventHandler(pEventHandler);
   }
 
@@ -161,7 +173,7 @@ public:
     // block until listen() completes so clients will be able to connect
     Synchronized sync(*(pEventHandler.get()));
     while (!pEventHandler->isListening()) {
-        pEventHandler->wait();
+      pEventHandler->wait();
     }
 
     BOOST_MESSAGE("server is listening");
@@ -170,7 +182,7 @@ public:
   void blockUntilAccepted(uint64_t numAccepted) {
     Synchronized sync(*(pEventHandler.get()));
     while (pEventHandler->acceptedCount() < numAccepted) {
-        pEventHandler->wait();
+      pEventHandler->wait();
     }
 
     BOOST_MESSAGE(boost::format("server has accepted %1%") % numAccepted);
@@ -187,8 +199,11 @@ public:
     }
   }
 
-  ~TServerIntegrationTestFixture() {
-    stopServer();
+  ~TServerIntegrationTestFixture() { stopServer(); }
+
+  int getServerPort() {
+    TServerSocket* pSock = dynamic_cast<TServerSocket*>(pServer->getServerTransport().get());
+    return pSock->getPort();
   }
 
   void delayClose(boost::shared_ptr<TTransport> toClose, boost::posix_time::time_duration after) {
@@ -202,24 +217,23 @@ public:
     std::vector<boost::shared_ptr<boost::thread> > holdThreads;
 
     for (int64_t i = 0; i < numToMake; ++i) {
-        boost::shared_ptr<TSocket> pClientSock(new TSocket("localhost", m_serverPort), autoSocketCloser);
-        holdSockets.push_back(pClientSock);
-        boost::shared_ptr<TProtocol> pClientProtocol(new TBinaryProtocol(pClientSock));
-        ParentServiceClient client(pClientProtocol);
-        pClientSock->open();
-        client.incrementGeneration();
-        holdThreads.push_back(
-                boost::shared_ptr<boost::thread>(
-                        new boost::thread(
-                                boost::bind(&TServerIntegrationTestFixture::delayClose, this,
-                                            pClientSock, milliseconds(100 * numToMake)))));
+      boost::shared_ptr<TSocket> pClientSock(new TSocket("localhost", getServerPort()),
+                                             autoSocketCloser);
+      holdSockets.push_back(pClientSock);
+      boost::shared_ptr<TProtocol> pClientProtocol(new TBinaryProtocol(pClientSock));
+      ParentServiceClient client(pClientProtocol);
+      pClientSock->open();
+      client.incrementGeneration();
+      holdThreads.push_back(boost::shared_ptr<boost::thread>(
+          new boost::thread(boost::bind(&TServerIntegrationTestFixture::delayClose,
+                                        this,
+                                        pClientSock,
+                                        milliseconds(100 * numToMake)))));
     }
 
     BOOST_CHECK_EQUAL(expectedHWM, pServer->getConcurrentClientCountHWM());
     stopServer();
-    BOOST_FOREACH(boost::shared_ptr<boost::thread> pThread, holdThreads) {
-        pThread->join();
-    }
+    BOOST_FOREACH (boost::shared_ptr<boost::thread> pThread, holdThreads) { pThread->join(); }
     holdThreads.clear();
     holdSockets.clear();
   }
@@ -229,137 +243,191 @@ public:
   boost::shared_ptr<boost::thread> pServerThread;
 };
 
-BOOST_FIXTURE_TEST_SUITE( Baseline, TestPortFixture )
+template <class TServerType>
+class TServerIntegrationProcessorFactoryTestFixture
+    : public TServerIntegrationTestFixture<TServerType> {
+public:
+  TServerIntegrationProcessorFactoryTestFixture()
+    : TServerIntegrationTestFixture<TServerType>(boost::make_shared<ParentServiceProcessorFactory>(
+          boost::make_shared<ParentServiceIfSingletonFactory>(
+              boost::make_shared<ParentHandler>()))) {}
+};
 
-BOOST_FIXTURE_TEST_CASE(test_simple, TServerIntegrationTestFixture<TSimpleServer>)
-{
-    baseline(3, 1);
+template <class TServerType>
+class TServerIntegrationProcessorTestFixture : public TServerIntegrationTestFixture<TServerType> {
+public:
+  TServerIntegrationProcessorTestFixture()
+    : TServerIntegrationTestFixture<TServerType>(
+          boost::make_shared<ParentServiceProcessor>(boost::make_shared<ParentHandler>())) {}
+};
+
+BOOST_AUTO_TEST_SUITE(constructors)
+
+BOOST_FIXTURE_TEST_CASE(test_simple_factory,
+                        TServerIntegrationProcessorFactoryTestFixture<TSimpleServer>) {
+  baseline(3, 1);
 }
 
-BOOST_FIXTURE_TEST_CASE(test_threaded, TServerIntegrationTestFixture<TThreadedServer>)
-{
-    baseline(10, 10);
+BOOST_FIXTURE_TEST_CASE(test_simple, TServerIntegrationProcessorTestFixture<TSimpleServer>) {
+  baseline(3, 1);
 }
 
-BOOST_FIXTURE_TEST_CASE(test_threaded_bound, TServerIntegrationTestFixture<TThreadedServer>)
-{
-    pServer->setConcurrentClientLimit(4);
-    baseline(10, 4);
+BOOST_FIXTURE_TEST_CASE(test_threaded_factory,
+                        TServerIntegrationProcessorFactoryTestFixture<TThreadedServer>) {
+  baseline(10, 10);
 }
 
-BOOST_FIXTURE_TEST_CASE(test_threadpool, TServerIntegrationTestFixture<TThreadPoolServer>)
-{
-    pServer->getThreadManager()->threadFactory(
-            boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-                    new apache::thrift::concurrency::PlatformThreadFactory));
-    pServer->getThreadManager()->start();
-
-    // thread factory has 4 threads as a default
-    // thread factory however is a bad way to limit concurrent clients
-    // as accept() will be called to grab a 5th client socket, in this case
-    // and then the thread factory will block adding the thread to manage
-    // that client.
-    baseline(10, 5);
+BOOST_FIXTURE_TEST_CASE(test_threaded, TServerIntegrationProcessorTestFixture<TThreadedServer>) {
+  baseline(10, 10);
 }
 
-BOOST_FIXTURE_TEST_CASE(test_threadpool_bound, TServerIntegrationTestFixture<TThreadPoolServer>)
-{
-    pServer->getThreadManager()->threadFactory(
-            boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-                    new apache::thrift::concurrency::PlatformThreadFactory));
-    pServer->getThreadManager()->start();
-    pServer->setConcurrentClientLimit(4);
+BOOST_FIXTURE_TEST_CASE(test_threaded_bound,
+                        TServerIntegrationProcessorTestFixture<TThreadedServer>) {
+  pServer->setConcurrentClientLimit(4);
+  baseline(10, 4);
+}
 
-    baseline(10, 4);
+BOOST_FIXTURE_TEST_CASE(test_threadpool_factory,
+                        TServerIntegrationProcessorFactoryTestFixture<TThreadPoolServer>) {
+  pServer->getThreadManager()->threadFactory(
+      boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
+          new apache::thrift::concurrency::PlatformThreadFactory));
+  pServer->getThreadManager()->start();
+
+  // thread factory has 4 threads as a default
+  // thread factory however is a bad way to limit concurrent clients
+  // as accept() will be called to grab a 5th client socket, in this case
+  // and then the thread factory will block adding the thread to manage
+  // that client.
+  baseline(10, 5);
+}
+
+BOOST_FIXTURE_TEST_CASE(test_threadpool,
+                        TServerIntegrationProcessorTestFixture<TThreadPoolServer>) {
+  pServer->getThreadManager()->threadFactory(
+      boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
+          new apache::thrift::concurrency::PlatformThreadFactory));
+  pServer->getThreadManager()->start();
+
+  // thread factory has 4 threads as a default
+  // thread factory however is a bad way to limit concurrent clients
+  // as accept() will be called to grab a 5th client socket, in this case
+  // and then the thread factory will block adding the thread to manage
+  // that client.
+  baseline(10, 5);
+}
+
+BOOST_FIXTURE_TEST_CASE(test_threadpool_bound,
+                        TServerIntegrationProcessorTestFixture<TThreadPoolServer>) {
+  pServer->getThreadManager()->threadFactory(
+      boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
+          new apache::thrift::concurrency::PlatformThreadFactory));
+  pServer->getThreadManager()->start();
+  pServer->setConcurrentClientLimit(4);
+
+  baseline(10, 4);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
 
+BOOST_FIXTURE_TEST_SUITE(TServerIntegrationTest,
+                         TServerIntegrationProcessorTestFixture<TThreadedServer>)
 
-BOOST_FIXTURE_TEST_SUITE ( TServerIntegrationTest, TServerIntegrationTestFixture<TThreadedServer> )
+BOOST_AUTO_TEST_CASE(test_stop_with_interruptable_clients_connected) {
+  // This tests THRIFT-2441 new behavior: stopping the server disconnects clients
 
-BOOST_AUTO_TEST_CASE(test_stop_with_interruptable_clients_connected)
-{
-    // This tests THRIFT-2441 new behavior: stopping the server disconnects clients
+  startServer();
 
-    startServer();
+  boost::shared_ptr<TSocket> pClientSock1(new TSocket("localhost", getServerPort()),
+                                          autoSocketCloser);
+  pClientSock1->open();
 
-    boost::shared_ptr<TSocket> pClientSock1(new TSocket("localhost", m_serverPort), autoSocketCloser);
-    pClientSock1->open();
+  boost::shared_ptr<TSocket> pClientSock2(new TSocket("localhost", getServerPort()),
+                                          autoSocketCloser);
+  pClientSock2->open();
 
-    boost::shared_ptr<TSocket> pClientSock2(new TSocket("localhost", m_serverPort), autoSocketCloser);
-    pClientSock2->open();
+  // Ensure they have been accepted
+  blockUntilAccepted(2);
 
-    // Ensure they have been accepted
-    blockUntilAccepted(2);
+  // The test fixture destructor will force the sockets to disconnect
+  // Prior to THRIFT-2441, pServer->stop() would hang until clients disconnected
+  stopServer();
 
-    // The test fixture destructor will force the sockets to disconnect
-    // Prior to THRIFT-2441, pServer->stop() would hang until clients disconnected
-    stopServer();
-
-    // extra proof the server end disconnected the clients
-    uint8_t buf[1];
-    BOOST_CHECK_EQUAL(0, pClientSock1->read(&buf[0], 1));   // 0 = disconnected
-    BOOST_CHECK_EQUAL(0, pClientSock2->read(&buf[0], 1));   // 0 = disconnected
+  // extra proof the server end disconnected the clients
+  uint8_t buf[1];
+  BOOST_CHECK_EQUAL(0, pClientSock1->read(&buf[0], 1)); // 0 = disconnected
+  BOOST_CHECK_EQUAL(0, pClientSock2->read(&buf[0], 1)); // 0 = disconnected
 }
 
-BOOST_AUTO_TEST_CASE(test_stop_with_uninterruptable_clients_connected)
-{
-    // This tests pre-THRIFT-2441 behavior: stopping the server blocks until clients
-    // disconnect.
+BOOST_AUTO_TEST_CASE(test_stop_with_uninterruptable_clients_connected) {
+  // This tests pre-THRIFT-2441 behavior: stopping the server blocks until clients
+  // disconnect.
 
-    boost::dynamic_pointer_cast<TServerSocket>(pServer->getServerTransport())->
-            setInterruptableChildren(false);    // returns to pre-THRIFT-2441 behavior
+  boost::dynamic_pointer_cast<TServerSocket>(pServer->getServerTransport())
+      ->setInterruptableChildren(false); // returns to pre-THRIFT-2441 behavior
 
-    startServer();
+  startServer();
 
-    boost::shared_ptr<TSocket> pClientSock1(new TSocket("localhost", m_serverPort), autoSocketCloser);
-    pClientSock1->open();
+  boost::shared_ptr<TSocket> pClientSock1(new TSocket("localhost", getServerPort()),
+                                          autoSocketCloser);
+  pClientSock1->open();
 
-    boost::shared_ptr<TSocket> pClientSock2(new TSocket("localhost", m_serverPort), autoSocketCloser);
-    pClientSock2->open();
+  boost::shared_ptr<TSocket> pClientSock2(new TSocket("localhost", getServerPort()),
+                                          autoSocketCloser);
+  pClientSock2->open();
 
-    // Ensure they have been accepted
-    blockUntilAccepted(2);
+  // Ensure they have been accepted
+  blockUntilAccepted(2);
 
-    boost::thread t1(boost::bind(&TServerIntegrationTestFixture::delayClose, this, pClientSock1, milliseconds(250)));
-    boost::thread t2(boost::bind(&TServerIntegrationTestFixture::delayClose, this, pClientSock2, milliseconds(250)));
+  boost::thread t1(boost::bind(&TServerIntegrationTestFixture::delayClose,
+                               this,
+                               pClientSock1,
+                               milliseconds(250)));
+  boost::thread t2(boost::bind(&TServerIntegrationTestFixture::delayClose,
+                               this,
+                               pClientSock2,
+                               milliseconds(250)));
 
-    // Once the clients disconnect the server will stop
-    stopServer();
-    t1.join();
-    t2.join();
+  // Once the clients disconnect the server will stop
+  stopServer();
+  t1.join();
+  t2.join();
 }
 
-BOOST_AUTO_TEST_CASE(test_concurrent_client_limit)
-{
-    startServer();
+BOOST_AUTO_TEST_CASE(test_concurrent_client_limit) {
+  startServer();
 
-    BOOST_CHECK_EQUAL(INT64_MAX, pServer->getConcurrentClientLimit());
-    pServer->setConcurrentClientLimit(2);
-    BOOST_CHECK_EQUAL(0, pServer->getConcurrentClientCount());
-    BOOST_CHECK_EQUAL(2, pServer->getConcurrentClientLimit());
+  BOOST_CHECK_EQUAL(INT64_MAX, pServer->getConcurrentClientLimit());
+  pServer->setConcurrentClientLimit(2);
+  BOOST_CHECK_EQUAL(0, pServer->getConcurrentClientCount());
+  BOOST_CHECK_EQUAL(2, pServer->getConcurrentClientLimit());
 
-    boost::shared_ptr<TSocket> pClientSock1(new TSocket("localhost", m_serverPort), autoSocketCloser);
-    pClientSock1->open();
-    blockUntilAccepted(1);
-    BOOST_CHECK_EQUAL(1, pServer->getConcurrentClientCount());
+  boost::shared_ptr<TSocket> pClientSock1(new TSocket("localhost", getServerPort()),
+                                          autoSocketCloser);
+  pClientSock1->open();
+  blockUntilAccepted(1);
+  BOOST_CHECK_EQUAL(1, pServer->getConcurrentClientCount());
 
-    boost::shared_ptr<TSocket> pClientSock2(new TSocket("localhost", m_serverPort), autoSocketCloser);
-    pClientSock2->open();
-    blockUntilAccepted(2);
-    BOOST_CHECK_EQUAL(2, pServer->getConcurrentClientCount());
+  boost::shared_ptr<TSocket> pClientSock2(new TSocket("localhost", getServerPort()),
+                                          autoSocketCloser);
+  pClientSock2->open();
+  blockUntilAccepted(2);
+  BOOST_CHECK_EQUAL(2, pServer->getConcurrentClientCount());
 
-    // a third client cannot connect until one of the other two closes
-    boost::thread t2(boost::bind(&TServerIntegrationTestFixture::delayClose, this, pClientSock2, milliseconds(250)));
-    boost::shared_ptr<TSocket> pClientSock3(new TSocket("localhost", m_serverPort), autoSocketCloser);
-    pClientSock2->open();
-    blockUntilAccepted(2);
-    BOOST_CHECK_EQUAL(2, pServer->getConcurrentClientCount());
-    BOOST_CHECK_EQUAL(2, pServer->getConcurrentClientCountHWM());
+  // a third client cannot connect until one of the other two closes
+  boost::thread t2(boost::bind(&TServerIntegrationTestFixture::delayClose,
+                               this,
+                               pClientSock2,
+                               milliseconds(250)));
+  boost::shared_ptr<TSocket> pClientSock3(new TSocket("localhost", getServerPort()),
+                                          autoSocketCloser);
+  pClientSock2->open();
+  blockUntilAccepted(2);
+  BOOST_CHECK_EQUAL(2, pServer->getConcurrentClientCount());
+  BOOST_CHECK_EQUAL(2, pServer->getConcurrentClientCountHWM());
 
-    stopServer();
-    t2.join();
+  stopServer();
+  t2.join();
 }
 
 BOOST_AUTO_TEST_SUITE_END()

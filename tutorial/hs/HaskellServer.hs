@@ -74,7 +74,7 @@ instance Calculator_Iface CalculatorHandler where
                     if num2 work == 0 then
                         throw $
                               InvalidOperation {
-                                 invalidOperation_what = fromIntegral $ fromEnum $ op work,
+                                 invalidOperation_whatOp = fromIntegral $ fromEnum $ op work,
                                  invalidOperation_why = "Cannot divide by 0"
                                             }
                     else

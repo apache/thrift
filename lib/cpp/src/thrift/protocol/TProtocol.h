@@ -97,8 +97,10 @@ static inline To bitwise_cast(From from) {
 #endif
 
 #if __THRIFT_BYTE_ORDER == __THRIFT_BIG_ENDIAN
+# if !defined(ntohll)
 #  define ntohll(n) (n)
 #  define htonll(n) (n)
+# endif
 # if defined(__GNUC__) && defined(__GLIBC__)
 #  include <byteswap.h>
 #  define htolell(n) bswap_64(n)

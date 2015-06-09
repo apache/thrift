@@ -93,11 +93,20 @@ private:
   /**
    * Deserialization (Read)
    */
-  void generate_deserialize_field(std::ofstream& out, t_field* tfield, bool local, std::string prefix = "");
+  void generate_deserialize_field(std::ofstream& out,
+                                  t_field* tfield,
+                                  bool local,
+                                  std::string prefix = "");
 
-  void generate_deserialize_struct(std::ofstream& out, t_struct* tstruct, bool local, std::string prefix = "");
+  void generate_deserialize_struct(std::ofstream& out,
+                                   t_struct* tstruct,
+                                   bool local,
+                                   std::string prefix = "");
 
-  void generate_deserialize_container(std::ofstream& out, t_type* ttype, bool local, std::string prefix = "");
+  void generate_deserialize_container(std::ofstream& out,
+                                      t_type* ttype,
+                                      bool local,
+                                      std::string prefix = "");
 
   void generate_deserialize_set_element(std::ofstream& out, t_set* tset, std::string prefix = "");
 
@@ -747,7 +756,10 @@ void t_lua_generator::generate_function_helpers(ofstream& out, t_function* tfunc
 /**
  * Deserialize (Read)
  */
-void t_lua_generator::generate_deserialize_field(ofstream& out, t_field* tfield, bool local, string prefix) {
+void t_lua_generator::generate_deserialize_field(ofstream& out,
+                                                 t_field* tfield,
+                                                 bool local,
+                                                 string prefix) {
   t_type* type = get_true_type(tfield->get_type());
 
   if (type->is_void()) {
@@ -805,12 +817,18 @@ void t_lua_generator::generate_deserialize_field(ofstream& out, t_field* tfield,
   }
 }
 
-void t_lua_generator::generate_deserialize_struct(ofstream& out, t_struct* tstruct, bool local, string prefix) {
-  indent(out) << (local ? "local " : "") << prefix << " = " << tstruct->get_name() << ":new{}" << endl << indent() << prefix
-              << ":read(iprot)" << endl;
+void t_lua_generator::generate_deserialize_struct(ofstream& out,
+                                                  t_struct* tstruct,
+                                                  bool local,
+                                                  string prefix) {
+  indent(out) << (local ? "local " : "") << prefix << " = " << tstruct->get_name() << ":new{}"
+              << endl << indent() << prefix << ":read(iprot)" << endl;
 }
 
-void t_lua_generator::generate_deserialize_container(ofstream& out, t_type* ttype, bool local, string prefix) {
+void t_lua_generator::generate_deserialize_container(ofstream& out,
+                                                     t_type* ttype,
+                                                     bool local,
+                                                     string prefix) {
   string size = tmp("_size");
   string ktype = tmp("_ktype");
   string vtype = tmp("_vtype");

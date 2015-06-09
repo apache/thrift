@@ -74,7 +74,7 @@ set(UnitTest_SOURCES
     TServerTransportTest.cpp
 )
 
-if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS)
+if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS AND NOT MSVC)
     list(APPEND UnitTest_SOURCES RWMutexStarveTest.cpp)
 endif()
 
@@ -89,7 +89,7 @@ target_link_libraries(TSocketInterruptTest
     ${Boost_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(TSocketInterruptTest thrift)
-if (NOT MSVC)
+if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 target_link_libraries(TSocketInterruptTest -lrt)
 endif ()
 add_test(NAME TSocketInterruptTest COMMAND TSocketInterruptTest)
@@ -100,7 +100,7 @@ target_link_libraries(TServerIntegrationTest
     ${Boost_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(TServerIntegrationTest thrift)
-if (NOT MSVC)
+if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 target_link_libraries(TServerIntegrationTest -lrt)
 endif ()
 add_test(NAME TServerIntegrationTest COMMAND TServerIntegrationTest)

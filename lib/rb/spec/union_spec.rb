@@ -53,6 +53,11 @@ describe 'Union' do
       union.should_not == nil
     end
 
+    it "should not be equal with an empty String" do
+      union = SpecNamespace::My_union.new
+      union.should_not == ''
+    end
+
     it "should not equate two different unions, i32 vs. string" do
       union = SpecNamespace::My_union.new(:integer32, 25)
       other_union = SpecNamespace::My_union.new(:some_characters, "blah!")

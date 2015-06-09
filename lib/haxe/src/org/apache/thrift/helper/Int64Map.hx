@@ -52,9 +52,9 @@ class Int64Map<T> implements IMap< Int64, T> {
 
     private function GetLowMap( key : haxe.Int64, canCreate : Bool) : IntMap< T> {
         #if( haxe_ver < 3.2)
-        return GetSubMap( Int64.getHigh(key), false);
+        return GetSubMap( Int64.getHigh(key), canCreate);
         #else
-        return GetSubMap( key.high, false);
+        return GetSubMap( key.high, canCreate);
         #end
     }
 
@@ -70,10 +70,10 @@ class Int64Map<T> implements IMap< Int64, T> {
 
     private function NullCheck( key : haxe.Int64) : Bool {
         #if( haxe_ver < 3.2)
-		return (key != null);  
+        return (key != null);
         #else
-		return false;  // In64 is not nullable anymore (it never really was)
-		#end
+        return true;  // Int64 is not nullable anymore (it never really was)
+        #end
     };
 
 
@@ -183,9 +183,10 @@ class Int64Map<T> implements IMap< Int64, T> {
             if( first) {
                 first = false;
             } else {
-                result += ", ";
+                result += ",";
             }
 
+            result += " ";
             var value = this.get(key);
             result += Int64.toStr(key) + ' => $value';
         }

@@ -257,8 +257,7 @@ public:
    * Constructor to create socket from file descriptor that
    * can be interrupted safely.
    */
-  TSocket(THRIFT_SOCKET socket,
-          boost::shared_ptr<THRIFT_SOCKET> interruptListener);
+  TSocket(THRIFT_SOCKET socket, boost::shared_ptr<THRIFT_SOCKET> interruptListener);
 
   /**
    * Set a cache of the peer address (used when trivially available: e.g.

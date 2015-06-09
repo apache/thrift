@@ -37,57 +37,64 @@ using boost::bind;
 using boost::shared_ptr;
 using std::string;
 
-TServerFramework::TServerFramework(
-        const shared_ptr<TProcessorFactory>& processorFactory,
-        const shared_ptr<TServerTransport>& serverTransport,
-        const shared_ptr<TTransportFactory>& transportFactory,
-        const shared_ptr<TProtocolFactory>& protocolFactory)
+TServerFramework::TServerFramework(const shared_ptr<TProcessorFactory>& processorFactory,
+                                   const shared_ptr<TServerTransport>& serverTransport,
+                                   const shared_ptr<TTransportFactory>& transportFactory,
+                                   const shared_ptr<TProtocolFactory>& protocolFactory)
   : TServer(processorFactory, serverTransport, transportFactory, protocolFactory),
     clients_(0),
     hwm_(0),
-    limit_(INT64_MAX) {}
+    limit_(INT64_MAX) {
+}
 
-TServerFramework::TServerFramework(
-        const shared_ptr<TProcessor>& processor,
-        const shared_ptr<TServerTransport>& serverTransport,
-        const shared_ptr<TTransportFactory>& transportFactory,
-        const shared_ptr<TProtocolFactory>& protocolFactory)
+TServerFramework::TServerFramework(const shared_ptr<TProcessor>& processor,
+                                   const shared_ptr<TServerTransport>& serverTransport,
+                                   const shared_ptr<TTransportFactory>& transportFactory,
+                                   const shared_ptr<TProtocolFactory>& protocolFactory)
   : TServer(processor, serverTransport, transportFactory, protocolFactory),
     clients_(0),
     hwm_(0),
-    limit_(INT64_MAX) {}
+    limit_(INT64_MAX) {
+}
 
-TServerFramework::TServerFramework(
-        const shared_ptr<TProcessorFactory>& processorFactory,
-        const shared_ptr<TServerTransport>& serverTransport,
-        const shared_ptr<TTransportFactory>& inputTransportFactory,
-        const shared_ptr<TTransportFactory>& outputTransportFactory,
-        const shared_ptr<TProtocolFactory>& inputProtocolFactory,
-        const shared_ptr<TProtocolFactory>& outputProtocolFactory)
-  : TServer(processorFactory, serverTransport,
-            inputTransportFactory, outputTransportFactory,
-            inputProtocolFactory, outputProtocolFactory),
+TServerFramework::TServerFramework(const shared_ptr<TProcessorFactory>& processorFactory,
+                                   const shared_ptr<TServerTransport>& serverTransport,
+                                   const shared_ptr<TTransportFactory>& inputTransportFactory,
+                                   const shared_ptr<TTransportFactory>& outputTransportFactory,
+                                   const shared_ptr<TProtocolFactory>& inputProtocolFactory,
+                                   const shared_ptr<TProtocolFactory>& outputProtocolFactory)
+  : TServer(processorFactory,
+            serverTransport,
+            inputTransportFactory,
+            outputTransportFactory,
+            inputProtocolFactory,
+            outputProtocolFactory),
     clients_(0),
     hwm_(0),
-    limit_(INT64_MAX) {}
+    limit_(INT64_MAX) {
+}
 
-TServerFramework::TServerFramework(
-        const shared_ptr<TProcessor>& processor,
-        const shared_ptr<TServerTransport>& serverTransport,
-        const shared_ptr<TTransportFactory>& inputTransportFactory,
-        const shared_ptr<TTransportFactory>& outputTransportFactory,
-        const shared_ptr<TProtocolFactory>& inputProtocolFactory,
-        const shared_ptr<TProtocolFactory>& outputProtocolFactory)
-  : TServer(processor, serverTransport,
-            inputTransportFactory, outputTransportFactory,
-            inputProtocolFactory, outputProtocolFactory),
+TServerFramework::TServerFramework(const shared_ptr<TProcessor>& processor,
+                                   const shared_ptr<TServerTransport>& serverTransport,
+                                   const shared_ptr<TTransportFactory>& inputTransportFactory,
+                                   const shared_ptr<TTransportFactory>& outputTransportFactory,
+                                   const shared_ptr<TProtocolFactory>& inputProtocolFactory,
+                                   const shared_ptr<TProtocolFactory>& outputProtocolFactory)
+  : TServer(processor,
+            serverTransport,
+            inputTransportFactory,
+            outputTransportFactory,
+            inputProtocolFactory,
+            outputProtocolFactory),
     clients_(0),
     hwm_(0),
-    limit_(INT64_MAX) {}
+    limit_(INT64_MAX) {
+}
 
-TServerFramework::~TServerFramework() {}
+TServerFramework::~TServerFramework() {
+}
 
-template<typename T>
+template <typename T>
 static void releaseOneDescriptor(const string& name, T& pTransport) {
   if (pTransport) {
     try {
@@ -130,10 +137,10 @@ void TServerFramework::serve() {
       // clients allowed, wait for one or more clients to drain before
       // accepting another.
       {
-          Synchronized sync(mon_);
-          while (clients_ >= limit_) {
-              mon_.wait();
-          }
+        Synchronized sync(mon_);
+        while (clients_ >= limit_) {
+          mon_.wait();
+        }
       }
 
       client = serverTransport_->accept();
@@ -143,11 +150,13 @@ void TServerFramework::serve() {
       inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
       outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
 
-      newlyConnectedClient(
-              shared_ptr<TConnectedClient>(
-                      new TConnectedClient(getProcessor(inputProtocol, outputProtocol, client),
-                                           inputProtocol, outputProtocol, eventHandler_, client),
-                      bind(&TServerFramework::disposeConnectedClient, this, _1)));
+      newlyConnectedClient(shared_ptr<TConnectedClient>(
+          new TConnectedClient(getProcessor(inputProtocol, outputProtocol, client),
+                               inputProtocol,
+                               outputProtocol,
+                               eventHandler_,
+                               client),
+          bind(&TServerFramework::disposeConnectedClient, this, _1)));
 
     } catch (TTransportException& ttx) {
       releaseOneDescriptor("inputTransport", inputTransport);
@@ -156,8 +165,8 @@ void TServerFramework::serve() {
       if (ttx.getType() == TTransportException::TIMED_OUT) {
         // Accept timeout - continue processing.
         continue;
-      } else if (ttx.getType() == TTransportException::END_OF_FILE ||
-                 ttx.getType() == TTransportException::INTERRUPTED) {
+      } else if (ttx.getType() == TTransportException::END_OF_FILE
+                 || ttx.getType() == TTransportException::INTERRUPTED) {
         // Server was interrupted.  This only happens when stopping.
         break;
       } else {
@@ -213,7 +222,7 @@ void TServerFramework::newlyConnectedClient(const boost::shared_ptr<TConnectedCl
   hwm_ = std::max(hwm_, clients_);
 }
 
-void TServerFramework::disposeConnectedClient(TConnectedClient *pClient) {
+void TServerFramework::disposeConnectedClient(TConnectedClient* pClient) {
   {
     // Count a concurrent client removed.
     Synchronized sync(mon_);
@@ -224,8 +233,6 @@ void TServerFramework::disposeConnectedClient(TConnectedClient *pClient) {
   onClientDisconnected(pClient);
   delete pClient;
 }
-
 }
 }
 } // apache::thrift::server
-
