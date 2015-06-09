@@ -28,8 +28,7 @@ THRIFT_FILES = $(wildcard test/*.thrift) \
 	touch .generated
 
 all: .generated
-	./rebar get-deps
-	./rebar compile
+	./rebar get-deps compile
 
 check: .generated
 	./rebar skip_deps=true eunit

@@ -24,10 +24,13 @@
 -include("gen-erl/thrift_test_types.hrl").
 
 -record(options, {port = 9090,
+                  address,
                   client_opts = []}).
 
 parse_args(Args) -> parse_args(Args, #options{}).
 parse_args([], Opts) -> Opts;
+parse_args([{address, A}| Rest], Opts) when is_list(A) ->
+    parse_args(Rest, Opts#options{address=A});
 parse_args([Head | Rest], Opts) ->
     NewOpts =
         case catch list_to_integer(Head) of
@@ -48,9 +51,14 @@ parse_args([Head | Rest], Opts) ->
 
 start() -> start([]).
 start(Args) ->
-  #options{port = Port, client_opts = ClientOpts} = parse_args(Args),
-  {ok, Client0} = thrift_client_util:new(
-    "127.0.0.1", Port, thrift_test_thrift, ClientOpts),
+  {ok, Client0} =
+    case parse_args(Args) of
+      #options{address=A, client_opts=Opts} when is_list(A) ->
+        thrift_client_util:new(A, thrift_test_thrift, Opts);
+      #options{port=P, client_opts=Opts} ->
+        thrift_client_util:new(
+            "127.0.0.1", P, thrift_test_thrift, Opts)
+    end,
 
   DemoXtruct = #'Xtruct'{
     string_thing = <<"Zero">>,

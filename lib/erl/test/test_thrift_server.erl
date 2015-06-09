@@ -50,10 +50,18 @@ go(Args) ->
     #options{port = Port, server_opts = ServerOpts} = parse_args(Args),
     spawn(fun() -> start_link(Port, ServerOpts), receive after infinity -> ok end end).
 
-start_link(Port, ServerOpts) ->
+start_link(Port, ServerOpts) when is_integer(Port) ->
     thrift_socket_server:start([{handler, ?MODULE},
                                 {service, thrift_test_thrift},
                                 {port, Port}] ++
+                               ServerOpts);
+
+start_link(Filename, ServerOpts) when is_list(Filename) ->
+    thrift_socket_server:start([{handler, ?MODULE},
+                                {service, thrift_test_thrift},
+                                {module,  gen_uds},
+                                {socket_opts,[stream]},
+                                {address, Filename}] ++
                                ServerOpts).
 
 
