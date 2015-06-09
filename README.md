@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/maximg/thrift.svg?branch=dev-rust-thrift)](https://travis-ci.org/maximg/thrift)
+
 Apache Thrift
 =============
 
