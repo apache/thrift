@@ -754,11 +754,12 @@ void t_rb_generator::generate_service(t_service* tservice) {
 
   if (tservice->get_extends() != NULL) {
     if (namespaced_) {
-      f_service_ << "require '" << rb_namespace_to_path_prefix(tservice->get_extends()->get_program()->get_namespace("rb")) << underscore(tservice->get_extends()->get_name())
-	         << "'" << endl;
+      f_service_ << "require '" << rb_namespace_to_path_prefix(
+                                       tservice->get_extends()->get_program()->get_namespace("rb"))
+                 << underscore(tservice->get_extends()->get_name()) << "'" << endl;
     } else {
-      f_service_ << "require '" << require_prefix_ << underscore(tservice->get_extends()->get_name())
-	         << "'" << endl;
+      f_service_ << "require '" << require_prefix_
+                 << underscore(tservice->get_extends()->get_name()) << "'" << endl;
     }
   }
 

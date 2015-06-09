@@ -18,6 +18,7 @@
 #
 
 SUBDIRS =
+PRECROSS_TARGET =
 
 if WITH_CPP
 SUBDIRS += cpp
@@ -29,10 +30,12 @@ endif
 
 if WITH_MONO
 SUBDIRS += csharp
+PRECROSS_TARGET += precross-csharp
 endif
 
 if WITH_JAVA
 SUBDIRS += java
+PRECROSS_TARGET += precross-java
 # JavaScript unit test depends on java
 # so test only if java, ant & co is available
 SUBDIRS += js/test
@@ -72,6 +75,7 @@ endif
 
 if WITH_NODEJS
 SUBDIRS += nodejs
+PRECROSS_TARGET += precross-nodejs
 endif
 
 if WITH_LUA
@@ -94,4 +98,4 @@ EXTRA_DIST = \
 
 precross-%:
 	$(MAKE) -C $* precross
-precross: precross-nodejs precross-csharp precross-java
+precross: $(PRECROSS_TARGET)

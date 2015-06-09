@@ -32,53 +32,54 @@ using apache::thrift::transport::TTransportFactory;
 using boost::shared_ptr;
 using std::string;
 
-TSimpleServer::TSimpleServer(
-        const shared_ptr<TProcessorFactory>& processorFactory,
-        const shared_ptr<TServerTransport>& serverTransport,
-        const shared_ptr<TTransportFactory>& transportFactory,
-        const shared_ptr<TProtocolFactory>& protocolFactory)
-  : TServerFramework(processorFactory, serverTransport,
-                     transportFactory, protocolFactory) {
+TSimpleServer::TSimpleServer(const shared_ptr<TProcessorFactory>& processorFactory,
+                             const shared_ptr<TServerTransport>& serverTransport,
+                             const shared_ptr<TTransportFactory>& transportFactory,
+                             const shared_ptr<TProtocolFactory>& protocolFactory)
+  : TServerFramework(processorFactory, serverTransport, transportFactory, protocolFactory) {
   TServerFramework::setConcurrentClientLimit(1);
 }
 
-TSimpleServer::TSimpleServer(
-        const shared_ptr<TProcessor>& processor,
-        const shared_ptr<TServerTransport>& serverTransport,
-        const shared_ptr<TTransportFactory>& transportFactory,
-        const shared_ptr<TProtocolFactory>& protocolFactory)
-  : TServerFramework(processor, serverTransport,
-                     transportFactory, protocolFactory) {
+TSimpleServer::TSimpleServer(const shared_ptr<TProcessor>& processor,
+                             const shared_ptr<TServerTransport>& serverTransport,
+                             const shared_ptr<TTransportFactory>& transportFactory,
+                             const shared_ptr<TProtocolFactory>& protocolFactory)
+  : TServerFramework(processor, serverTransport, transportFactory, protocolFactory) {
   TServerFramework::setConcurrentClientLimit(1);
 }
 
-TSimpleServer::TSimpleServer(
-        const shared_ptr<TProcessorFactory>& processorFactory,
-        const shared_ptr<TServerTransport>& serverTransport,
-        const shared_ptr<TTransportFactory>& inputTransportFactory,
-        const shared_ptr<TTransportFactory>& outputTransportFactory,
-        const shared_ptr<TProtocolFactory>& inputProtocolFactory,
-        const shared_ptr<TProtocolFactory>& outputProtocolFactory)
-  : TServerFramework(processorFactory, serverTransport,
-          inputTransportFactory, outputTransportFactory,
-          inputProtocolFactory, outputProtocolFactory) {
+TSimpleServer::TSimpleServer(const shared_ptr<TProcessorFactory>& processorFactory,
+                             const shared_ptr<TServerTransport>& serverTransport,
+                             const shared_ptr<TTransportFactory>& inputTransportFactory,
+                             const shared_ptr<TTransportFactory>& outputTransportFactory,
+                             const shared_ptr<TProtocolFactory>& inputProtocolFactory,
+                             const shared_ptr<TProtocolFactory>& outputProtocolFactory)
+  : TServerFramework(processorFactory,
+                     serverTransport,
+                     inputTransportFactory,
+                     outputTransportFactory,
+                     inputProtocolFactory,
+                     outputProtocolFactory) {
   TServerFramework::setConcurrentClientLimit(1);
 }
 
-TSimpleServer::TSimpleServer(
-        const shared_ptr<TProcessor>& processor,
-        const shared_ptr<TServerTransport>& serverTransport,
-        const shared_ptr<TTransportFactory>& inputTransportFactory,
-        const shared_ptr<TTransportFactory>& outputTransportFactory,
-        const shared_ptr<TProtocolFactory>& inputProtocolFactory,
-        const shared_ptr<TProtocolFactory>& outputProtocolFactory)
-  : TServerFramework(processor, serverTransport,
-          inputTransportFactory, outputTransportFactory,
-          inputProtocolFactory, outputProtocolFactory) {
+TSimpleServer::TSimpleServer(const shared_ptr<TProcessor>& processor,
+                             const shared_ptr<TServerTransport>& serverTransport,
+                             const shared_ptr<TTransportFactory>& inputTransportFactory,
+                             const shared_ptr<TTransportFactory>& outputTransportFactory,
+                             const shared_ptr<TProtocolFactory>& inputProtocolFactory,
+                             const shared_ptr<TProtocolFactory>& outputProtocolFactory)
+  : TServerFramework(processor,
+                     serverTransport,
+                     inputTransportFactory,
+                     outputTransportFactory,
+                     inputProtocolFactory,
+                     outputProtocolFactory) {
   TServerFramework::setConcurrentClientLimit(1);
 }
 
-TSimpleServer::~TSimpleServer() {}
+TSimpleServer::~TSimpleServer() {
+}
 
 /**
  * The main body of customized implementation for TSimpleServer is quite simple:
@@ -92,15 +93,15 @@ void TSimpleServer::onClientConnected(const shared_ptr<TConnectedClient>& pClien
 /**
  * TSimpleServer does not track clients so there is nothing to do here.
  */
-void TSimpleServer::onClientDisconnected(TConnectedClient *pClient) {}
+void TSimpleServer::onClientDisconnected(TConnectedClient*) {
+}
 
 /**
  * This makes little sense to the simple server because it is not capable
  * of having more than one client at a time, so we hide it.
  */
-void TSimpleServer::setConcurrentClientLimit(int64_t newLimit) {}
-
-
+void TSimpleServer::setConcurrentClientLimit(int64_t) {
+}
 }
 }
 } // apache::thrift::server

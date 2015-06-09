@@ -70,10 +70,9 @@ inline SOCKOPT_CAST_T* cast_sockopt(T* v) {
   return reinterpret_cast<SOCKOPT_CAST_T*>(v);
 }
 
-void destroyer_of_fine_sockets(THRIFT_SOCKET *ssock)
-{
-    ::THRIFT_CLOSESOCKET(*ssock);
-    delete ssock;
+void destroyer_of_fine_sockets(THRIFT_SOCKET* ssock) {
+  ::THRIFT_CLOSESOCKET(*ssock);
+  delete ssock;
 }
 
 namespace apache {
@@ -99,8 +98,8 @@ TServerSocket::TServerSocket(int port)
     listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
-    childInterruptSockWriter_(THRIFT_INVALID_SOCKET)
-{}
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET) {
+}
 
 TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout)
   : port_(port),
@@ -118,8 +117,8 @@ TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout)
     listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
-    childInterruptSockWriter_(THRIFT_INVALID_SOCKET)
-{}
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET) {
+}
 
 TServerSocket::TServerSocket(const string& address, int port)
   : port_(port),
@@ -138,8 +137,8 @@ TServerSocket::TServerSocket(const string& address, int port)
     listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
-    childInterruptSockWriter_(THRIFT_INVALID_SOCKET)
-{}
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET) {
+}
 
 TServerSocket::TServerSocket(const string& path)
   : port_(0),
@@ -158,8 +157,8 @@ TServerSocket::TServerSocket(const string& path)
     listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
-    childInterruptSockWriter_(THRIFT_INVALID_SOCKET)
-{}
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET) {
+}
 
 TServerSocket::~TServerSocket() {
   close();
@@ -212,8 +211,7 @@ void TServerSocket::listen() {
   THRIFT_SOCKET sv[2];
   // Create the socket pair used to interrupt
   if (-1 == THRIFT_SOCKETPAIR(AF_LOCAL, SOCK_STREAM, 0, sv)) {
-    GlobalOutput.perror("TServerSocket::listen() socketpair() interrupt",
-    		THRIFT_GET_SOCKET_ERROR);
+    GlobalOutput.perror("TServerSocket::listen() socketpair() interrupt", THRIFT_GET_SOCKET_ERROR);
     interruptSockWriter_ = THRIFT_INVALID_SOCKET;
     interruptSockReader_ = THRIFT_INVALID_SOCKET;
   } else {
@@ -224,14 +222,13 @@ void TServerSocket::listen() {
   // Create the socket pair used to interrupt all clients
   if (-1 == THRIFT_SOCKETPAIR(AF_LOCAL, SOCK_STREAM, 0, sv)) {
     GlobalOutput.perror("TServerSocket::listen() socketpair() childInterrupt",
-    		THRIFT_GET_SOCKET_ERROR);
+                        THRIFT_GET_SOCKET_ERROR);
     childInterruptSockWriter_ = THRIFT_INVALID_SOCKET;
     pChildInterruptSockReader_.reset();
   } else {
     childInterruptSockWriter_ = sv[1];
-    pChildInterruptSockReader_ =
-    		boost::shared_ptr<THRIFT_SOCKET>(new THRIFT_SOCKET(sv[0]),
-    				destroyer_of_fine_sockets);
+    pChildInterruptSockReader_
+        = boost::shared_ptr<THRIFT_SOCKET>(new THRIFT_SOCKET(sv[0]), destroyer_of_fine_sockets);
   }
 
   // Validate port number
@@ -388,7 +385,8 @@ void TServerSocket::listen() {
     GlobalOutput.perror("TServerSocket::listen() THRIFT_FCNTL() THRIFT_F_GETFL ", errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN,
-                        "THRIFT_FCNTL() THRIFT_F_GETFL failed", errno_copy);
+                              "THRIFT_FCNTL() THRIFT_F_GETFL failed",
+                              errno_copy);
   }
 
   if (-1 == THRIFT_FCNTL(serverSocket_, THRIFT_F_SETFL, flags | THRIFT_O_NONBLOCK)) {
@@ -396,7 +394,8 @@ void TServerSocket::listen() {
     GlobalOutput.perror("TServerSocket::listen() THRIFT_FCNTL() THRIFT_O_NONBLOCK ", errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN,
-                        "THRIFT_FCNTL() THRIFT_F_SETFL THRIFT_O_NONBLOCK failed", errno_copy);
+                              "THRIFT_FCNTL() THRIFT_F_SETFL THRIFT_O_NONBLOCK failed",
+                              errno_copy);
   }
 
   // prepare the port information
@@ -413,7 +412,8 @@ void TServerSocket::listen() {
     if (len > sizeof(((sockaddr_un*)NULL)->sun_path)) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       GlobalOutput.perror("TSocket::listen() Unix Domain socket path too long", errno_copy);
-      throw TTransportException(TTransportException::NOT_OPEN, "Unix Domain socket path too long",
+      throw TTransportException(TTransportException::NOT_OPEN,
+                                "Unix Domain socket path too long",
                                 errno_copy);
     }
 
@@ -649,7 +649,6 @@ void TServerSocket::close() {
   pChildInterruptSockReader_.reset();
   listening_ = false;
 }
-
 }
 }
 } // apache::thrift::transport

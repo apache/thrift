@@ -74,7 +74,7 @@ set(UnitTest_SOURCES
     TServerTransportTest.cpp
 )
 
-if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS)
+if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS AND NOT MSVC)
     list(APPEND UnitTest_SOURCES RWMutexStarveTest.cpp)
 endif()
 

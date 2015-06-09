@@ -19,7 +19,7 @@
 
 cmake_minimum_required(VERSION 2.8.12)
 
-project(thrift)
+project("Apache Thrift")
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake")
 
@@ -92,6 +92,9 @@ endif()
 
 if(BUILD_PYTHON)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/py)
+    if(BUILD_TESTING)
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/py)
+    endif()
 endif()
 
 PRINT_CONFIG_SUMMARY()

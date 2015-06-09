@@ -143,21 +143,20 @@ TSocket::TSocket(THRIFT_SOCKET socket)
 #endif
 }
 
-TSocket::TSocket(THRIFT_SOCKET socket,
-                 boost::shared_ptr<THRIFT_SOCKET> interruptListener) :
-  host_(""),
-  port_(0),
-  path_(""),
-  socket_(socket),
-  interruptListener_(interruptListener),
-  connTimeout_(0),
-  sendTimeout_(0),
-  recvTimeout_(0),
-  keepAlive_(false),
-  lingerOn_(1),
-  lingerVal_(0),
-  noDelay_(1),
-  maxRecvRetries_(5) {
+TSocket::TSocket(THRIFT_SOCKET socket, boost::shared_ptr<THRIFT_SOCKET> interruptListener)
+  : host_(""),
+    port_(0),
+    path_(""),
+    socket_(socket),
+    interruptListener_(interruptListener),
+    connTimeout_(0),
+    sendTimeout_(0),
+    recvTimeout_(0),
+    keepAlive_(false),
+    lingerOn_(1),
+    lingerVal_(0),
+    noDelay_(1),
+    maxRecvRetries_(5) {
   cachedPeerAddr_.ipv4.sin_family = AF_UNSPEC;
 #ifdef SO_NOSIGPIPE
   {
@@ -177,11 +176,10 @@ bool TSocket::isOpen() {
 
 bool TSocket::peek() {
   if (!isOpen()) {
-     return false;
+    return false;
   }
-  if (interruptListener_)
-  {
-    for (int retries = 0; ; ) {
+  if (interruptListener_) {
+    for (int retries = 0;;) {
       struct THRIFT_POLLFD fds[2];
       std::memset(fds, 0, sizeof(fds));
       fds[0].fd = socket_;
@@ -515,8 +513,7 @@ try_again:
 
   int got = 0;
 
-  if (interruptListener_)
-  {
+  if (interruptListener_) {
     struct THRIFT_POLLFD fds[2];
     std::memset(fds, 0, sizeof(fds));
     fds[0].fd = socket_;
@@ -536,12 +533,10 @@ try_again:
     } else if (ret > 0) {
       // Check the interruptListener
       if (fds[1].revents & THRIFT_POLLIN) {
-        throw TTransportException(TTransportException::INTERRUPTED,
-                                  "Interrupted");
+        throw TTransportException(TTransportException::INTERRUPTED, "Interrupted");
       }
     } else /* ret == 0 */ {
-      throw TTransportException(TTransportException::TIMED_OUT,
-                                  "THRIFT_EAGAIN (timed out)");
+      throw TTransportException(TTransportException::TIMED_OUT, "THRIFT_EAGAIN (timed out)");
     }
 
     // falling through means there is something to recv and it cannot block
@@ -562,9 +557,8 @@ try_again:
       // check if this is the lack of resources or timeout case
       struct timeval end;
       THRIFT_GETTIMEOFDAY(&end, NULL);
-      uint32_t readElapsedMicros
-          = static_cast<uint32_t>(((end.tv_sec - begin.tv_sec) * 1000 * 1000)
-                                  + (((uint64_t)(end.tv_usec - begin.tv_usec))));
+      uint32_t readElapsedMicros = static_cast<uint32_t>(((end.tv_sec - begin.tv_sec) * 1000 * 1000)
+                                                         + (end.tv_usec - begin.tv_usec));
 
       if (!eagainThresholdMicros || (readElapsedMicros < eagainThresholdMicros)) {
         if (retries++ < maxRecvRetries_) {

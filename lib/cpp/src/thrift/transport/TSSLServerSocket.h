@@ -49,7 +49,8 @@ public:
    * @param port    Listening port
    * @param factory SSL socket factory implementation
    */
-  TSSLServerSocket(const std::string& address, int port,
+  TSSLServerSocket(const std::string& address,
+                   int port,
                    boost::shared_ptr<TSSLSocketFactory> factory);
 
   /**

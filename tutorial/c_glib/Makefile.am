@@ -18,6 +18,12 @@
 #
 AUTOMAKE_OPTIONS = subdir-objects serial-tests
 
+BUILT_SOURCES = \
+	gen-c_glib/calculator.h \
+	gen-c_glib/shared_service.h \
+	gen-c_glib/shared_types.h \
+	gen-c_glib/tutorial_types.h
+
 AM_CFLAGS = -g -Wall -Wextra -pedantic $(GLIB_CFLAGS) $(GOBJECT_CFLAGS) @GCOV_CFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir)/lib/c_glib/src -Igen-c_glib
 AM_LDFLAGS = $(GLIB_LIBS) $(GOBJECT_LIBS) @GCOV_LDFLAGS@

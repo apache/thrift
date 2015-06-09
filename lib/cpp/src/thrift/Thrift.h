@@ -46,26 +46,7 @@
 #include <boost/type_traits/is_convertible.hpp>
 
 #include <thrift/TLogging.h>
-
-/**
- * Helper macros to allow function overloading even when using
- * boost::shared_ptr.
- *
- * shared_ptr makes overloading really annoying, since shared_ptr defines
- * constructor methods to allow one shared_ptr type to be constructed from any
- * other shared_ptr type.  (Even if it would be a compile error to actually try
- * to instantiate the constructor.)  These macros add an extra argument to the
- * function to cause it to only be instantiated if a pointer of type T is
- * convertible to a pointer of type U.
- *
- * THRIFT_OVERLOAD_IF should be used in function declarations.
- * THRIFT_OVERLOAD_IF_DEFN should be used in the function definition, if it is
- * defined separately from where it is declared.
- */
-#define THRIFT_OVERLOAD_IF_DEFN(T, Y)                                                              \
-  typename ::boost::enable_if<typename ::boost::is_convertible<T*, Y*>::type, void*>::type
-
-#define THRIFT_OVERLOAD_IF(T, Y) THRIFT_OVERLOAD_IF_DEFN(T, Y) = NULL
+#include <thrift/TOutput.h>
 
 #define THRIFT_UNUSED_VARIABLE(x) ((void)(x))
 
@@ -81,7 +62,7 @@ public:
   int operator++() { return ++ii_; }
 
   bool operator!=(const TEnumIterator& end) {
-    (void)end; // avoid "unused" warning with NDEBUG
+    THRIFT_UNUSED_VARIABLE(end);
     assert(end.n_ == -1);
     return (ii_ != n_);
   }
@@ -94,36 +75,6 @@ private:
   int* enums_;
   const char** names_;
 };
-
-class TOutput {
-public:
-  TOutput() : f_(&errorTimeWrapper) {}
-
-  inline void setOutputFunction(void (*function)(const char*)) { f_ = function; }
-
-  inline void operator()(const char* message) { f_(message); }
-
-  // It is important to have a const char* overload here instead of
-  // just the string version, otherwise errno could be corrupted
-  // if there is some problem allocating memory when constructing
-  // the string.
-  void perror(const char* message, int errno_copy);
-  inline void perror(const std::string& message, int errno_copy) {
-    perror(message.c_str(), errno_copy);
-  }
-
-  void printf(const char* message, ...);
-
-  static void errorTimeWrapper(const char* msg);
-
-  /** Just like strerror_r but returns a C++ string object. */
-  static std::string strerror_s(int errno_copy);
-
-private:
-  void (*f_)(const char*);
-};
-
-extern TOutput GlobalOutput;
 
 class TException : public std::exception {
 public:

@@ -15,15 +15,22 @@ specific soultion files. => No solution files within source tree.
 ## Usage
 just do this:
 
-    mkdir build
-    cmake ${THRIFT_SRC}
+    mkdir cmake-build && cd cmake-build
+    cmake ..
 
 if you use a specific toolchain pass it to cmake, the same for options:
 
-    cmake -DCMAKE_TOOLCHAIN_FILE=${THRIFT_SRC}/contrib/mingw32-toolchain.cmake ${THRIFT_SRC}
-    cmake -DCMAKE_C_COMPILER=clang-3.5 -DCMAKE_CXX_COMPILER=clang++-3.5 ${THRIFT_SRC}
-    cmake -DTHRIFT_COMPILER_HS=OFF ${THRIFT_SRC}
-    cmake -DWITH_ZLIB=ON ${THRIFT_SRC}
+    cmake -DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake ..
+    cmake -DCMAKE_C_COMPILER=clang-3.5 -DCMAKE_CXX_COMPILER=clang++-3.5 ..
+    cmake -DTHRIFT_COMPILER_HS=OFF ..
+    cmake -DWITH_ZLIB=ON ..
+
+or on Windows
+
+    cmake -G "Visual Studio 12 2013 Win64" \
+    -DBOOST_ROOT=C:/3rdparty/boost_1_58_0 \
+    -DZLIB_ROOT=C:/3rdparty/zlib128-dll \
+    -DWITH_SHARED_LIB=off -DWITH_BOOSTTHREADS=ON ..
 
 and open the development environment you like with the solution or do this:
 
@@ -51,4 +58,3 @@ to generate an installer and distribution package do this:
   * tutorial
   * test
 * merge into /README.md
-

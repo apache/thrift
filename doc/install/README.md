@@ -1,7 +1,7 @@
 
 ## Basic requirements
 * A relatively POSIX-compliant *NIX system
-    * Cygwin or MinGW can be used on Windows
+    * Cygwin or MinGW can be used on Windows (but there are better options, see below)
 * g++ 4.2
 * boost 1.53.0
 * Runtime libraries for lex and yacc might be needed for the compiler.
@@ -14,6 +14,10 @@
 * pkg-config autoconf macros (pkg.m4)
 * lex and yacc (developed primarily with flex and bison)
 * libssl-dev
+
+## Requirements for building the compiler from source on Windows
+* Visual Studio C++
+* Flex and Bison (e.g. the WinFlexBison package)
 
 ## Language requirements
 These are only required if you choose to build the libraries for the given language
@@ -34,3 +38,6 @@ These are only required if you choose to build the libraries for the given langu
 * Perl 5
     * Bit::Vector
     * Class::Accessor
+* Haxe 3.1.3
+* Go 1.4
+* Delphi 2010

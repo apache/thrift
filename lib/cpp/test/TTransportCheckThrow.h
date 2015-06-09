@@ -19,15 +19,26 @@
 
 #pragma once
 
-#define TTRANSPORT_CHECK_THROW(_CALL, _TYPE) \
-  { bool caught = false; \
-    try { (_CALL); } \
-    catch (TTransportException& ex) { BOOST_CHECK_EQUAL(ex.getType(), _TYPE); caught = true; } \
-    BOOST_CHECK_MESSAGE(caught, "expected TTransportException but nothing was thrown"); }
+#define TTRANSPORT_CHECK_THROW(_CALL, _TYPE)                                                       \
+  {                                                                                                \
+    bool caught = false;                                                                           \
+    try {                                                                                          \
+      (_CALL);                                                                                     \
+    } catch (TTransportException & ex) {                                                           \
+      BOOST_CHECK_EQUAL(ex.getType(), _TYPE);                                                      \
+      caught = true;                                                                               \
+    }                                                                                              \
+    BOOST_CHECK_MESSAGE(caught, "expected TTransportException but nothing was thrown");            \
+  }
 
-#define TTRANSPORT_REQUIRE_THROW(_CALL, _TYPE) \
-  { bool caught = false; \
-    try { (_CALL); } \
-    catch (TTransportException& ex) { BOOST_REQUIRE_EQUAL(ex.getType(), _TYPE); caught = true; } \
-    BOOST_REQUIRE_MESSAGE(caught, "expected TTransportException but nothing was thrown"); }
-
+#define TTRANSPORT_REQUIRE_THROW(_CALL, _TYPE)                                                     \
+  {                                                                                                \
+    bool caught = false;                                                                           \
+    try {                                                                                          \
+      (_CALL);                                                                                     \
+    } catch (TTransportException & ex) {                                                           \
+      BOOST_REQUIRE_EQUAL(ex.getType(), _TYPE);                                                    \
+      caught = true;                                                                               \
+    }                                                                                              \
+    BOOST_REQUIRE_MESSAGE(caught, "expected TTransportException but nothing was thrown");          \
+  }

@@ -37,74 +37,72 @@ namespace server {
  * encapsulated here.
  */
 
-class TConnectedClient : public apache::thrift::concurrency::Runnable
-{
-  public:
-    /**
-     * Constructor.
-     *
-     * @param[in] processor      the TProcessor
-     * @param[in] inputProtocol  the input TProtocol
-     * @param[in] outputProtocol the output TProtocol
-     * @param[in] eventHandler   the server event handler
-     * @param[in] client         the TTransport representing the client
-     */
-    TConnectedClient(
-            const boost::shared_ptr<apache::thrift::TProcessor>& processor,
-            const boost::shared_ptr<apache::thrift::protocol::TProtocol>& inputProtocol,
-            const boost::shared_ptr<apache::thrift::protocol::TProtocol>& outputProtocol,
-            const boost::shared_ptr<apache::thrift::server::TServerEventHandler>& eventHandler,
-            const boost::shared_ptr<apache::thrift::transport::TTransport>& client);
+class TConnectedClient : public apache::thrift::concurrency::Runnable {
+public:
+  /**
+   * Constructor.
+   *
+   * @param[in] processor      the TProcessor
+   * @param[in] inputProtocol  the input TProtocol
+   * @param[in] outputProtocol the output TProtocol
+   * @param[in] eventHandler   the server event handler
+   * @param[in] client         the TTransport representing the client
+   */
+  TConnectedClient(
+      const boost::shared_ptr<apache::thrift::TProcessor>& processor,
+      const boost::shared_ptr<apache::thrift::protocol::TProtocol>& inputProtocol,
+      const boost::shared_ptr<apache::thrift::protocol::TProtocol>& outputProtocol,
+      const boost::shared_ptr<apache::thrift::server::TServerEventHandler>& eventHandler,
+      const boost::shared_ptr<apache::thrift::transport::TTransport>& client);
 
-    /**
-     * Destructor.
-     */
-    virtual ~TConnectedClient();
+  /**
+   * Destructor.
+   */
+  virtual ~TConnectedClient();
 
-    /**
-     * Drive the client until it is done.
-     * The client processing loop is:
-     *
-     * [optional] call eventHandler->createContext once
-     * [optional] call eventHandler->processContext per request
-     *            call processor->process per request
-     *              handle expected transport exceptions:
-     *                END_OF_FILE means the client is gone
-     *                INTERRUPTED means the client was interrupted
-     *                            by TServerTransport::interruptChildren()
-     *              handle unexpected transport exceptions by logging
-     *              handle standard exceptions by logging
-     *              handle unexpected exceptions by logging
-     *            cleanup()
-     */
-    virtual void run() /* override */;
+  /**
+   * Drive the client until it is done.
+   * The client processing loop is:
+   *
+   * [optional] call eventHandler->createContext once
+   * [optional] call eventHandler->processContext per request
+   *            call processor->process per request
+   *              handle expected transport exceptions:
+   *                END_OF_FILE means the client is gone
+   *                INTERRUPTED means the client was interrupted
+   *                            by TServerTransport::interruptChildren()
+   *              handle unexpected transport exceptions by logging
+   *              handle standard exceptions by logging
+   *              handle unexpected exceptions by logging
+   *            cleanup()
+   */
+  virtual void run() /* override */;
 
-  protected:
-    /**
-     * Cleanup after a client.  This happens if the client disconnects,
-     * or if the server is stopped, or if an exception occurs.
-     *
-     * The cleanup processing is:
-     * [optional] call eventHandler->deleteContext once
-     *            close the inputProtocol's TTransport
-     *            close the outputProtocol's TTransport
-     *            close the client
-     */
-    virtual void cleanup();
+protected:
+  /**
+   * Cleanup after a client.  This happens if the client disconnects,
+   * or if the server is stopped, or if an exception occurs.
+   *
+   * The cleanup processing is:
+   * [optional] call eventHandler->deleteContext once
+   *            close the inputProtocol's TTransport
+   *            close the outputProtocol's TTransport
+   *            close the client
+   */
+  virtual void cleanup();
 
-  private:
-    boost::shared_ptr<apache::thrift::TProcessor> processor_;
-    boost::shared_ptr<apache::thrift::protocol::TProtocol> inputProtocol_;
-    boost::shared_ptr<apache::thrift::protocol::TProtocol> outputProtocol_;
-    boost::shared_ptr<apache::thrift::server::TServerEventHandler> eventHandler_;
-    boost::shared_ptr<apache::thrift::transport::TTransport> client_;
+private:
+  boost::shared_ptr<apache::thrift::TProcessor> processor_;
+  boost::shared_ptr<apache::thrift::protocol::TProtocol> inputProtocol_;
+  boost::shared_ptr<apache::thrift::protocol::TProtocol> outputProtocol_;
+  boost::shared_ptr<apache::thrift::server::TServerEventHandler> eventHandler_;
+  boost::shared_ptr<apache::thrift::transport::TTransport> client_;
 
-    /**
-     * Context acquired from the eventHandler_ if one exists.
-     */
-    void *opaqueContext_;
+  /**
+   * Context acquired from the eventHandler_ if one exists.
+   */
+  void* opaqueContext_;
 };
-
 }
 }
 }

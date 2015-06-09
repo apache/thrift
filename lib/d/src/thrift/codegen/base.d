@@ -419,6 +419,10 @@ mixin template TStructHelpers(alias fieldMetaData = cast(TFieldMeta[])null) if (
 
       return (cast()super).opEquals(other);
     }
+
+    size_t toHash() const {
+      return thriftToHashImpl();
+    }
   } else {
     string toString() const {
       return thriftToStringImpl();
@@ -426,6 +430,10 @@ mixin template TStructHelpers(alias fieldMetaData = cast(TFieldMeta[])null) if (
 
     bool opEquals(ref const This other) const {
       return thriftOpEqualsImpl(other);
+    }
+
+    size_t toHash() const @safe nothrow {
+      return thriftToHashImpl();
     }
   }
 
@@ -457,6 +465,15 @@ mixin template TStructHelpers(alias fieldMetaData = cast(TFieldMeta[])null) if (
       if (mixin("this." ~ name) != mixin("rhs." ~ name)) return false;
     }
     return true;
+  }
+
+  private size_t thriftToHashImpl() const @trusted nothrow {
+    size_t hash = 0;
+    foreach (name; FieldNames!This) {
+      auto val = mixin("this." ~ name);
+      hash += typeid(val).getHash(&val);
+    }
+    return hash;
   }
 
   static if (any!`!a.defaultValue.empty`(mergeFieldMeta!(This, fieldMetaData))) {
@@ -939,6 +956,29 @@ unittest {
 
   static assert(__traits(compiles, { Test t; t.read(cast(TProtocol)null); }));
   static assert(__traits(compiles, { Test t; t.write(cast(TProtocol)null); }));
+}
+
+// Ensure opEquals and toHash consistency.
+unittest {
+  struct TestEquals {
+    int a1;
+
+    mixin TStructHelpers!([
+      TFieldMeta("a1", 1, TReq.OPT_IN_REQ_OUT),
+    ]);
+  }
+
+  TestEquals a, b;
+  assert(a == b);
+  assert(a.toHash() == b.toHash());
+
+  a.a1 = 42;
+  assert(a != b);
+  assert(a.toHash() != b.toHash());
+
+  b.a1 = 42;
+  assert(a == b);
+  assert(a.toHash() == b.toHash());
 }
 
 private {

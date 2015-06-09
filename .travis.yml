@@ -55,6 +55,7 @@ env:
     - MAKE_TARGET="check"
     - ALL_DEPS="no"
     - GHCVER=7.8.3
+    - ERROR_LOG="none"
 
   matrix:
     # Put it here because it's most time consuming
@@ -76,7 +77,7 @@ env:
     - TEST_NAME="C++/std-threads (CMake + CPack)"
       CMAKE_CONFIG="-DCMAKE_CXX_FLAGS=-std=c++0x -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_STDTHREADS=ON"
     - TEST_NAME="compiler (mingw32-gcc, CMake + CPack)"
-      CMAKE_CONFIG="-DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
+      CMAKE_CONFIG="-DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
 
     # Autotool builds
     # TODO: Remove them as migration is made
@@ -108,7 +109,7 @@ matrix:
 
     # Does not use native compiler, no need to do it twice
     - compiler: gcc
-      env: TEST_NAME="compiler (mingw32-gcc, CMake + CPack)" CMAKE_CONFIG="-DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
+      env: TEST_NAME="compiler (mingw32-gcc, CMake + CPack)" CMAKE_CONFIG="-DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
     - compiler: gcc
       env: TEST_NAME="dist (automake)" CONFIG="" ALL_DEPS="yes" MAKE_TARGET="dist"
 

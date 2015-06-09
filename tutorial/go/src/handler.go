@@ -59,7 +59,7 @@ func (p *CalculatorHandler) Calculate(logid int32, w *tutorial.Work) (val int32,
 	case tutorial.Operation_DIVIDE:
 		if w.Num2 == 0 {
 			ouch := tutorial.NewInvalidOperation()
-			ouch.What = int32(w.Op)
+			ouch.WhatOp = int32(w.Op)
 			ouch.Why = "Cannot divide by 0"
 			err = ouch
 			return
@@ -68,7 +68,7 @@ func (p *CalculatorHandler) Calculate(logid int32, w *tutorial.Work) (val int32,
 		break
 	default:
 		ouch := tutorial.NewInvalidOperation()
-		ouch.What = int32(w.Op)
+		ouch.WhatOp = int32(w.Op)
 		ouch.Why = "Unknown operation"
 		err = ouch
 		return
