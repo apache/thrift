@@ -1,6 +1,6 @@
-#![feature(buf_stream)]
 
 extern crate podio;
+extern crate bufstream;
 
 use std::io;
 use std::convert::From;
