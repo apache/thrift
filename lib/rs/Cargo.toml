@@ -6,4 +6,4 @@ authors = ["Simon Génier <s@simon.coffee>", "Maxim Golov <maxim.golov@gmail.com
 
 [dependencies]
 podio = "0.1"
-bufstream = "0.1.1"
+bufstream = "0.1"
