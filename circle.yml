@@ -1,0 +1,14 @@
+machine:
+  java:
+    version: oraclejdk8
+
+dependencies:
+  pre:
+    - sudo apt-get update; sudo apt-get install build-essential mono-gmcs python-dev ant mono-devel libmono-system-web2.0-cil erlang-base autoconf automake pkg-config libtool bison flex libboost-dev  python-all python-all-dev python-all-dbg libboost-test-dev libevent-dev php5 php5-dev libglib2.0-dev libqt4-dev ruby ruby-dev
+
+deployment:
+  production:
+    branch: dwnld
+    commands:
+      - dpkg-buildpackage -us -uc -d
+      - cd ~/ && curl -F package=@$(ls thrift-compiler*.deb) https://$GEMFURY_DEPLOY_KEY@push.fury.io/dwnld/

@@ -1,8 +1,7 @@
-thrift (1.0.0-THRIFT-2885) stable; urgency=low
-  * update version
-  * fix libthrift0.install
+thrift (1.0.0-dwnld-0) stable; urgency=low
+  * dwnld features
 
- -- Roger Meier <roger@apache.org>  Tue, 08 Jan 2013 22:40:12 +0100
+ -- Anatoly Fayngelerin <anatoly@dwnld.me>  Tue, 09 Jun 2015 22:40:12 +0100
 
 thrift (1.0.0-dev) stable; urgency=low
   * update version
