@@ -20,8 +20,6 @@ use thrift::ThriftErr::*;
 #[allow(unused_imports)]
 use thrift::protocol::Error;
 #[allow(unused_imports)]
-use thrift::protocol::Error::*;
-#[allow(unused_imports)]
 use thrift::protocol::FromNum;
 
 

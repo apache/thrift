@@ -279,8 +279,6 @@ string t_rs_generator::rs_imports() {
     "#[allow(unused_imports)]\n"
     "use thrift::protocol::Error;\n"
     "#[allow(unused_imports)]\n"
-    "use thrift::protocol::Error::*;\n"
-    "#[allow(unused_imports)]\n"
     "use thrift::protocol::FromNum;\n"
   );
 }

@@ -18,10 +18,9 @@
  */
 
 use protocol;
-use protocol::{ MessageType, Protocol, Type };
+use protocol::{MessageType, Protocol, Type, Error};
 use transport::Transport;
 use ThriftErr;
-use protocol::Error::*;
 use TResult;
 use podio::{ReadPodExt, WritePodExt, BigEndian};
 
@@ -39,7 +38,7 @@ impl BinaryProtocol {
         let raw = try!(self.read_byte(transport));
         match Type::from_num(raw as u64) {
             Some(type_) => Ok(type_),
-            None => Err(ThriftErr::from(protocol::Error::ProtocolViolation)),
+            None => Err(ThriftErr::from(Error::ProtocolViolation)),
         }
     }
 }
@@ -163,13 +162,13 @@ impl Protocol for BinaryProtocol {
         let header = try!(self.read_i32(transport));
         let version = (header >> 16) as u16;
         if version != BINARY_PROTOCOL_VERSION_1 {
-            return Err(ThriftErr::from(protocol::Error::BadVersion));
+            return Err(ThriftErr::from(Error::BadVersion));
         };
         let name = try!(self.read_string(transport));
         let raw_type = header & 0xff;
         let message_type = match MessageType::from_num(raw_type as u64) {
             Some(t) => t,
-            None => return Err(ThriftErr::from(protocol::Error::ProtocolViolation)),
+            None => return Err(ThriftErr::from(Error::ProtocolViolation)),
         };
         let sequence_id = try!(self.read_i32(transport));
         Ok((name, message_type, sequence_id))
@@ -260,7 +259,7 @@ impl Protocol for BinaryProtocol {
 
     fn read_string(&self, transport: &mut Transport) -> TResult<String> {
         let bytes = try!(self.read_binary(transport));
-        String::from_utf8(bytes).map_err(|e| ThriftErr::from(protocol::Error::InvalidUtf8(e.utf8_error())))
+        String::from_utf8(bytes).map_err(|e| ThriftErr::from(Error::InvalidUtf8(e.utf8_error())))
     }
 
     fn read_binary(&self, mut transport: &mut Transport) -> TResult<Vec<u8>> {

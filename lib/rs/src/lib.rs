@@ -19,8 +19,8 @@ pub enum ThriftErr {
     /// An error occurred when reading from/writing to the underlying transport
     TransportError(io::Error),
 
-    /// An error occurred when encoding/decoding the data (this usually indicates a bug in the
-    /// library)
+    /// An error occurred when encoding/decoding the data
+    /// (this usually indicates a bug in the library)
     ProtocolError(protocol::Error),
 
     /// The server code threw a user-defined exception
