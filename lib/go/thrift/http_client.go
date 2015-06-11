@@ -178,14 +178,13 @@ func (p *THttpClient) Flush() error {
 	}
 	p.header.Add("Content-Type", "application/x-thrift")
 	req.Header = p.header
-	response, err := client.Do(req)
+	p.response, err = client.Do(req)
 	if err != nil {
 		return NewTTransportExceptionFromError(err)
 	}
-	if response.StatusCode != http.StatusOK {
+	if p.response.StatusCode != http.StatusOK {
 		// TODO(pomack) log bad response
-		return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, "HTTP Response code: "+strconv.Itoa(response.StatusCode))
+		return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, "HTTP Response code: "+strconv.Itoa(p.response.StatusCode))
 	}
-	p.response = response
 	return nil
 }
