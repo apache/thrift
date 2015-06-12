@@ -183,6 +183,8 @@ func (p *THttpClient) Flush() error {
 		return NewTTransportExceptionFromError(err)
 	}
 	if response.StatusCode != http.StatusOK {
+		// Close the response to avoid leaking file descriptors.
+		response.Body.Close()
 		// TODO(pomack) log bad response
 		return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, "HTTP Response code: "+strconv.Itoa(response.StatusCode))
 	}
