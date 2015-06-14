@@ -267,8 +267,7 @@
       <fileset refid="js.test.dependency.jars"/>
       <mapper type="flatten"/>
     </copy>
-    
+
     <property name="mvn.finished" value="true"/>
   </target>
 </project>
-
