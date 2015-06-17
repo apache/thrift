@@ -20,7 +20,7 @@
 package tests
 
 import (
-	"code.google.com/p/gomock/gomock"
+	"github.com/golang/mock/gomock"
 	"optionalfieldstest"
 	"testing"
 	"thrift"

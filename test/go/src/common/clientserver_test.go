@@ -20,7 +20,7 @@
 package common
 
 import (
-	"code.google.com/p/gomock/gomock"
+	"github.com/golang/mock/gomock"
 	"errors"
 	"gen/thrifttest"
 	"reflect"
