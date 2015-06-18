@@ -36,7 +36,7 @@ namespace Thrift.Transport
     {
         public virtual TTransport GetTransport(TTransport trans)
         {
-            return trans;
+            return trans; //EMMA: returns a new TTransport with the argument as the transport (from TFramedTransport.cs)
         }
     }
 }

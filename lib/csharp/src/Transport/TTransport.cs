@@ -51,7 +51,9 @@ namespace Thrift.Transport
             {
                 int bytes = Read(_peekBuffer, 0, 1);
                 if (bytes == 0)
+                {
                     return false;
+                }
             }
             catch( IOException)
             {
@@ -82,6 +84,7 @@ namespace Thrift.Transport
             while (got < len)
             {
                 int ret = Read(buf, off + got, len - got);
+
                 if (ret <= 0)
                 {
                     throw new TTransportException(

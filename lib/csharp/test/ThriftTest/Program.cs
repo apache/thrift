@@ -26,6 +26,8 @@ using System;
 using Thrift.Transport;
 using Thrift.Protocol;
 using Thrift.Test; //generated code
+using Thrift.Server;
+using Test;
 
 namespace Test
 {
@@ -33,6 +35,7 @@ namespace Test
     {
         static int Main(string[] args)
         {
+            
             if (args.Length == 0)
             {
                 Console.WriteLine("must provide 'server' or 'client' arg");
@@ -57,6 +60,7 @@ namespace Test
                 Console.WriteLine("first argument must be 'server' or 'client'");
             }
             return 0;
+             
         }
     }
 }
