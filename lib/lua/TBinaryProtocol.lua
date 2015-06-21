@@ -31,7 +31,7 @@ TBinaryProtocol = __TObject.new(TProtocolBase, {
 })
 
 function TBinaryProtocol:writeMessageBegin(name, ttype, seqid)
-  if self.stirctWrite then
+  if self.strictWrite then
     self:writeI32(libluabitwise.bor(TBinaryProtocol.VERSION_1, ttype))
     self:writeString(name)
     self:writeI32(seqid)
