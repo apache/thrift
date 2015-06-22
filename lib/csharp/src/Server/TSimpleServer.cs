@@ -104,11 +104,11 @@ namespace Thrift.Server
           {
             if (client != null)
             {
-              using (inputTransport = inputTransportFactory.GetTransport(client))//EMMA: this is just inputTransport = client.
+              using (inputTransport = inputTransportFactory.GetTransport(client))
               {
-                using (outputTransport = outputTransportFactory.GetTransport(client))// EMMA: and outputTransport = client.
+                using (outputTransport = outputTransportFactory.GetTransport(client))
                 {
-                  inputProtocol = inputProtocolFactory.GetProtocol(inputTransport);//EMMA: these each return a TProtocol. Which gets created using the transport.
+                  inputProtocol = inputProtocolFactory.GetProtocol(inputTransport);
                   outputProtocol = outputProtocolFactory.GetProtocol(outputTransport);
 
                   //Recover event handler (if any) and fire createContext server event when a client connects

@@ -77,7 +77,7 @@ namespace Thrift.Transport
 
                 try
                 {
-                    stream = new NamedPipeServerStream(pipeAddress, direction, maxconn, mode, options, inbuf, outbuf);//EMMA: this constructor could specify security and access rights.
+                    stream = new NamedPipeServerStream(pipeAddress, direction, maxconn, mode, options, inbuf, outbuf);
                 }
                 catch (NotImplementedException)  // Mono still does not support async, fallback to sync
                 {
