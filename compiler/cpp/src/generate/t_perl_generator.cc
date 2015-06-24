@@ -805,14 +805,27 @@ void t_perl_generator::generate_process_function(t_service* tservice, t_function
                  << perl_namespace((*x_iter)->get_type()->get_program())
                  << (*x_iter)->get_type()->get_name() << "') ){ " << endl;
 
-      if (!tfunction->is_oneway()) {
-        indent_up();
-        f_service_ << indent() << "$result->{" << (*x_iter)->get_name() << "} = $@;" << endl;
-        indent_down();
-        f_service_ << indent();
-      }
+      indent_up();
+      f_service_ << indent() << "$result->{" << (*x_iter)->get_name() << "} = $@;" << endl;
+      f_service_ << indent() << "$@ = undef;" << endl;
+      indent_down();
+      f_service_ << indent();
     }
     f_service_ << "}" << endl;
+
+    // catch-all for unexpected exceptions (THRIFT-3191)
+    f_service_ << indent() << "if ($@) {" << endl;
+    indent_up();
+    f_service_ << indent() << "$@ =~ s/^\\s+|\\s+$//g;" << endl
+               << indent() << "my $err = new TApplicationException(\"Unexpected Exception: \" . $@, TApplicationException::INTERNAL_ERROR);" << endl
+               << indent() << "$output->writeMessageBegin('" << tfunction->get_name() << "', TMessageType::EXCEPTION, $seqid);" << endl
+               << indent() << "$err->write($output);" << endl
+               << indent() << "$output->writeMessageEnd();" << endl
+               << indent() << "$output->getTransport()->flush();" << endl
+               << indent() << "$@ = undef;" << endl
+               << indent() << "return;" << endl;
+    indent_down();
+    f_service_ << indent() << "}" << endl;
   }
 
   // Shortcut out here for oneway functions
@@ -822,11 +835,12 @@ void t_perl_generator::generate_process_function(t_service* tservice, t_function
     f_service_ << "}" << endl;
     return;
   }
-  // Serialize the request header
-  f_service_ << indent() << "$output->writeMessageBegin('" << tfunction->get_name()
-             << "', TMessageType::REPLY, $seqid);" << endl << indent() << "$result->write($output);"
-             << endl << indent() << "$output->writeMessageEnd();" << endl << indent()
-             << "$output->getTransport()->flush();" << endl;
+
+  // Serialize the reply
+  f_service_ << indent() << "$output->writeMessageBegin('" << tfunction->get_name() << "', TMessageType::REPLY, $seqid);" << endl
+             << indent() << "$result->write($output);" << endl
+             << indent() << "$output->writeMessageEnd();" << endl
+             << indent() << "$output->getTransport()->flush();" << endl;
 
   // Close function
   indent_down();
