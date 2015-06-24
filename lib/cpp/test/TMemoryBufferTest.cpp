@@ -20,7 +20,6 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <iostream>
 #include <climits>
-#include <cassert>
 #include <vector>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/protocol/TBinaryProtocol.h>
@@ -77,7 +76,7 @@ BOOST_AUTO_TEST_CASE(test_roundtrip) {
   thrift::test::Xtruct a2;
   a2.read(binaryProtcol2.get());
 
-  assert(a == a2);
+  BOOST_CHECK(a == a2);
 }
 
 BOOST_AUTO_TEST_CASE(test_copy) {
@@ -90,16 +89,16 @@ BOOST_AUTO_TEST_CASE(test_copy) {
   string* str2 = new string("plsreuse");
   bool obj_reuse = (str1 == str2);
   bool dat_reuse = (data1 == str2->data());
-  cout << "Object reuse: " << obj_reuse << "   Data reuse: " << dat_reuse
-       << ((obj_reuse && dat_reuse) ? "   YAY!" : "") << endl;
+  BOOST_MESSAGE("Object reuse: " << obj_reuse << "   Data reuse: " << dat_reuse
+                << ((obj_reuse && dat_reuse) ? "   YAY!" : ""));
   delete str2;
 
   string str3 = "wxyz", str4 = "6789";
   buf.readAppendToString(str3, 4);
   buf.readAppendToString(str4, INT_MAX);
 
-  assert(str3 == "wxyzabcd");
-  assert(str4 == "67891234");
+  BOOST_CHECK(str3 == "wxyzabcd");
+  BOOST_CHECK(str4 == "67891234");
 }
 
 BOOST_AUTO_TEST_CASE(test_exceptions) {
@@ -107,20 +106,14 @@ BOOST_AUTO_TEST_CASE(test_exceptions) {
 
   TMemoryBuffer buf1((uint8_t*)data, 7, TMemoryBuffer::OBSERVE);
   string str = buf1.getBufferAsString();
-  assert(str.length() == 7);
+  BOOST_CHECK(str.length() == 7);
+
   buf1.resetBuffer();
-  try {
-    buf1.write((const uint8_t*)"foo", 3);
-    assert(false);
-  } catch (TTransportException&) {
-  }
+
+  BOOST_CHECK_THROW(buf1.write((const uint8_t*)"foo", 3), TTransportException);
 
   TMemoryBuffer buf2((uint8_t*)data, 7, TMemoryBuffer::COPY);
-  try {
-    buf2.write((const uint8_t*)"bar", 3);
-  } catch (TTransportException&) {
-    assert(false);
-  }
+  BOOST_CHECK_NO_THROW(buf2.write((const uint8_t*)"bar", 3));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
