@@ -15,9 +15,10 @@
 # Known missing client libraries:
 #  - D
 #  - Haxe
+#  - Lua
 #
 
-FROM centos:6.6
+FROM centos:7
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
 
 ENV HOME /root
@@ -25,21 +26,12 @@ ENV HOME /root
 RUN yum -y update
 
 # General dependencies
-RUN yum -y install -y tar m4 perl gcc git libtool libevent-devel zlib-devel openssl-devel
+RUN yum -y install -y tar m4 perl gcc git libtool zlib-devel openssl-devel autoconf make bison bison-devel flex
 
 RUN mkdir -p /tmp/epel && \
-    curl -SL "http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm" -o /tmp/epel/epel-release-6-8.noarch.rpm && \
+    curl -sSL "http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm" -o /tmp/epel/epel-release-7-5.noarch.rpm && \
     cd /tmp/epel && \
-    rpm -ivh epel-release-6-8.noarch.rpm && \
-    cd $HOME
-
-# Autoconf
-RUN mkdir -p /tmp/autoconf && \
-    curl -SL "http://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz" | tar -xzC /tmp/autoconf && \
-    cd /tmp/autoconf/autoconf-2.69 && \
-    ./configure --prefix=/usr && \
-    make && \
-    make install && \
+    rpm -ivh epel-release*.rpm && \
     cd $HOME
 
 # Automake
@@ -51,22 +43,8 @@ RUN mkdir -p /tmp/automake && \
     make install && \
     cd $HOME
 
-# Bison
-RUN mkdir -p /tmp/bison && \
-    curl -SL "http://ftp.gnu.org/gnu/bison/bison-2.5.1.tar.gz" | tar -xzC /tmp/bison && \
-    cd /tmp/bison/bison-2.5.1 && \
-    ./configure --prefix=/usr && \
-    make && \
-    make install && \
-    cd $HOME
-
-# Install an updated Boost library
-RUN mkdir -p /tmp/boost && \
-    curl -SL "http://sourceforge.net/projects/boost/files/boost/1.55.0/boost_1_55_0.tar.gz" | tar -xzC /tmp/boost && \
-    cd /tmp/boost/boost_1_55_0 && \
-    ./bootstrap.sh  && \
-    ./b2 install && \
-    cd $HOME
+# C++ dependencies
+RUN yum install -y libboost-dev libevent-devel
 
 # Java Dependencies
 RUN yum install -y ant junit ant-nodeps ant-junit java-1.7.0-openjdk-devel
@@ -93,26 +71,25 @@ RUN yum install -y glib2-devel
 # Erlang Dependencies
 RUN yum install -y erlang-kernel erlang-erts erlang-stdlib erlang-eunit erlang-rebar
 
-# Lua Dependencies
-RUN yum install -y lua-devel
-
 # Go Dependencies
-RUN yum install -y golang golang-pkg-linux-amd64
+RUN curl -sSL https://storage.googleapis.com/golang/go1.4.2.linux-amd64.tar.gz | tar -C /usr/lib/ -xz && \
+    mkdir -p /usr/share/go
+
+ENV GOROOT /usr/lib/go
+ENV GOPATH /usr/share/go
+ENV PATH ${GOROOT}/bin:${GOPATH}/bin:$PATH
 
 # C# Dependencies
 RUN yum install -y mono-core mono-devel mono-web-devel mono-extras mingw32-binutils mingw32-runtime mingw32-nsis
 
 # Haskell Dependencies
-RUN mkdir -p /tmp/haskell &&\
-    curl -SL "http://sherkin.justhub.org/el6/RPMS/x86_64/justhub-release-2.0-4.0.el6.x86_64.rpm" -o /tmp/haskell/justhub-release-2.0-4.0.el6.x86_64.rpm && \
-    cd /tmp/haskell && \
-    rpm -ivh justhub-release-2.0-4.0.el6.x86_64.rpm && \
-    yum -y install haskell && \
+RUN yum -y install cabal-dev && \
     cabal update && \
     cabal install cabal-install && \
     cd $HOME
 
 # Clean up
-RUN rm -rf /tmp/*
+RUN rm -rf /tmp/* && \
+    yum clean all
 
 WORKDIR $HOME
