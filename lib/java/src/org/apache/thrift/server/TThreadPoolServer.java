@@ -70,6 +70,11 @@ public class TThreadPoolServer extends TServer {
       return this;
     }
 
+    public Args stopTimeoutVal(int n) {
+      stopTimeoutVal = n;
+      return this;
+    }
+
     public Args requestTimeout(int n) {
       requestTimeout = n;
       return this;
@@ -130,7 +135,7 @@ public class TThreadPoolServer extends TServer {
       new SynchronousQueue<Runnable>();
     return new ThreadPoolExecutor(args.minWorkerThreads,
                                   args.maxWorkerThreads,
-                                  60,
+                                  args.stopTimeoutVal,
                                   TimeUnit.SECONDS,
                                   executorQueue);
   }
