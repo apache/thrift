@@ -163,4 +163,31 @@ sub flush
 
 }
 
+#
+# FramedTransport factory creates framed transport objects from transports
+#
+package Thrift::FramedTransportFactory;
+
+sub new {
+    my $classname = shift;
+    my $self      = {};
+
+    return bless($self, $classname);
+}
+
+#
+# Build a framed transport from the base transport
+#
+# @return Thrift::FramedTransport transport
+#
+sub getTransport
+{
+    my $self  = shift;
+    my $trans = shift;
+
+    my $buffered = Thrift::FramedTransport->new($trans);
+    return $buffered;
+}
+
+
 1;

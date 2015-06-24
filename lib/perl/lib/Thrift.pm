@@ -84,7 +84,7 @@ use constant UNSUPPORTED_CLIENT_TYPE => 10;
 sub new {
     my $classname = shift;
 
-    my $self = $classname->SUPER::new();
+    my $self = $classname->SUPER::new(@_);
 
     return bless($self,$classname);
 }
