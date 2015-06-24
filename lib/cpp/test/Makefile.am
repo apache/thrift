@@ -88,7 +88,8 @@ check_PROGRAMS = \
 	TFileTransportTest \
 	link_test \
 	OpenSSLManualInitTest \
-	EnumTest
+	EnumTest \
+	DenseProtoTest
 
 if AMX_HAVE_LIBEVENT
 noinst_PROGRAMS += \
@@ -253,6 +254,17 @@ RecursiveTest_SOURCES = \
 RecursiveTest_LDADD = libtestgencpp.la
 
 #
+# DenseProtoTest
+#
+DenseProtoTest_SOURCES = \
+	DenseProtoTest.cpp
+
+DenseProtoTest_LDADD = \
+	libtestgencpp.la \
+	$(BOOST_TEST_LDADD) \
+	-lthrift
+
+#
 # SpecializationTest
 #
 SpecializationTest_SOURCES = \
@@ -333,7 +345,6 @@ clean-local:
 	$(RM) -r gen-cpp
 
 EXTRA_DIST = \
-	DenseProtoTest.cpp \
 	ThriftTest_extras.cpp \
 	DebugProtoTest_extras.cpp \
 	concurrency \
