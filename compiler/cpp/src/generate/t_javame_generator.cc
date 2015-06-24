@@ -1816,7 +1816,7 @@ void t_javame_generator::generate_field_value_meta_data(std::ofstream& out, t_ty
   out << endl;
   indent_up();
   indent_up();
-  if (type->is_struct()) {
+  if (type->is_struct() || type->is_xception()) {
     indent(out) << "new StructMetaData(TType.STRUCT, " << type_name(type) << ".class";
   } else if (type->is_container()) {
     if (type->is_list()) {
