@@ -34,13 +34,22 @@ g++ -Wall -g -I../lib/cpp/src -I/usr/local/include/boost-1_33_1 \
 #undef NDEBUG
 #include <cstdlib>
 #include <cassert>
-#include <iostream>
 #include <cmath>
 #include <string>
 #include "gen-cpp/DebugProtoTest_types.h"
 #include "gen-cpp/OptionalRequiredTest_types.h"
 #include <thrift/protocol/TDenseProtocol.h>
 #include <thrift/transport/TBufferTransports.h>
+
+#define BOOST_TEST_MODULE DenseProtoTest
+#include <boost/test/unit_test.hpp>
+
+using std::string;
+using boost::shared_ptr;
+using namespace thrift::test;
+using namespace thrift::test::debug;
+using namespace apache::thrift::transport;
+using namespace apache::thrift::protocol;
 
 // Can't use memcmp here.  GCC is too smart.
 bool my_memeq(const char* str1, const char* str2, int len) {
@@ -52,15 +61,7 @@ bool my_memeq(const char* str1, const char* str2, int len) {
   return true;
 }
 
-int main() {
-  using std::string;
-  using std::cout;
-  using std::endl;
-  using boost::shared_ptr;
-  using namespace thrift::test::debug;
-  using namespace apache::thrift::transport;
-  using namespace apache::thrift::protocol;
-
+BOOST_AUTO_TEST_CASE(test_dense_proto_1) {
   OneOfEach ooe;
   ooe.im_true = true;
   ooe.im_false = false;
@@ -139,19 +140,31 @@ int main() {
   HolyMoley hm2;
   hm2.read(proto.get());
 
-  assert(hm == hm2);
+  BOOST_CHECK(hm == hm2);
+}
 
-  // Let's test out the variable-length ints, shall we?
-  uint64_t vlq;
-#define checkout(i, c)                                                                             \
-  {                                                                                                \
-    buffer->resetBuffer();                                                                         \
-    proto->vlqWrite(i);                                                                            \
-    proto->getTransport()->flush();                                                                \
-    assert(my_memeq(buffer->getBufferAsString().data(), c, sizeof(c) - 1));                        \
-    proto->vlqRead(vlq);                                                                           \
-    assert(vlq == i);                                                                              \
+/*
+ * Following Testcases are currently disabled, because vlqWrite and vlqRead are
+ * private members.
+ */
+#if 0
+#define checkout(i, c)                                                          \
+  {                                                                             \
+    uint64_t vlq;                                                               \
+    buffer->resetBuffer();                                                      \
+    proto->vlqWrite(i);                                                         \
+    proto->getTransport()->flush();                                             \
+    BOOST_CHECK(my_memeq(buffer->getBufferAsString().data(), c, sizeof(c) - 1));\
+    proto->vlqRead(vlq);                                                        \
+    assert(vlq == i);                                                           \
   }
+
+BOOST_AUTO_TEST_CASE(test_dense_proto_2) {
+  // Let's test out the variable-length ints, shall we?
+  shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  shared_ptr<TDenseProtocol> proto(new TDenseProtocol(buffer));
+
+  proto->setTypeSpec(HolyMoley::local_reflection);
 
   checkout(0x00000000, "\x00");
   checkout(0x00000040, "\x40");
@@ -180,10 +193,17 @@ int main() {
   checkout(0x1FFFFFFFFFFFFFFFull, "\x9F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F");
   checkout(0x7FFFFFFFFFFFFFFFull, "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F");
   checkout(0xFFFFFFFFFFFFFFFFull, "\x81\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F");
+}
 
+BOOST_AUTO_TEST_CASE(test_dense_proto_3) {
   // Test out the slow path with a TBufferedTransport.
+  shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  shared_ptr<TDenseProtocol> proto(new TDenseProtocol(buffer));
   shared_ptr<TBufferedTransport> buff_trans(new TBufferedTransport(buffer, 3));
+
+  proto->setTypeSpec(HolyMoley::local_reflection);
   proto.reset(new TDenseProtocol(buff_trans));
+
   checkout(0x0000000100000000ull, "\x90\x80\x80\x80\x00");
   checkout(0x0000000200000000ull, "\xA0\x80\x80\x80\x00");
   checkout(0x0000000300000000ull, "\xB0\x80\x80\x80\x00");
@@ -194,11 +214,17 @@ int main() {
   checkout(0x1FFFFFFFFFFFFFFFull, "\x9F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F");
   checkout(0x7FFFFFFFFFFFFFFFull, "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F");
   checkout(0xFFFFFFFFFFFFFFFFull, "\x81\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F");
+}
+#endif
 
-  // Test optional stuff.
+// Test optional stuff.
+BOOST_AUTO_TEST_CASE(test_dense_proto_4_1) {
+  shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  shared_ptr<TDenseProtocol> proto(new TDenseProtocol(buffer));
   proto.reset(new TDenseProtocol(buffer));
   proto->setTypeSpec(ManyOpt::local_reflection);
-  ManyOpt mo1, mo2, mo3, mo4, mo5, mo6;
+
+  ManyOpt mo1, mo2;
   mo1.opt1 = 923759347;
   mo1.opt2 = 392749274;
   mo1.opt3 = 395739402;
@@ -215,147 +241,231 @@ int main() {
   mo1.write(proto.get());
   mo2.read(proto.get());
 
-  assert(mo2.__isset.opt1 == true);
-  assert(mo2.__isset.opt2 == true);
-  assert(mo2.__isset.opt3 == true);
-  assert(mo2.__isset.def4 == true);
-  assert(mo2.__isset.opt5 == true);
-  assert(mo2.__isset.opt6 == true);
+  BOOST_CHECK(mo2.__isset.opt1 == true);
+  BOOST_CHECK(mo2.__isset.opt2 == true);
+  BOOST_CHECK(mo2.__isset.opt3 == true);
+  BOOST_CHECK(mo2.__isset.def4 == true);
+  BOOST_CHECK(mo2.__isset.opt5 == true);
+  BOOST_CHECK(mo2.__isset.opt6 == true);
 
-  assert(mo1 == mo2);
+  BOOST_CHECK(mo1 == mo2);
+}
 
+BOOST_AUTO_TEST_CASE(test_dense_proto_4_2) {
+  shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  shared_ptr<TDenseProtocol> proto(new TDenseProtocol(buffer));
+  proto.reset(new TDenseProtocol(buffer));
+  proto->setTypeSpec(ManyOpt::local_reflection);
+
+  ManyOpt mo1, mo2;
+  mo1.opt1 = 923759347;
+  mo1.opt2 = 392749274;
+  mo1.opt3 = 395739402;
+  mo1.def4 = 294730928;
+  mo1.opt5 = 394309218;
+  mo1.opt6 = 832194723;
   mo1.__isset.opt1 = false;
+  mo1.__isset.opt2 = true;
   mo1.__isset.opt3 = false;
+  mo1.__isset.def4 = true;
   mo1.__isset.opt5 = false;
+  mo1.__isset.opt6 = true;
 
   mo1.write(proto.get());
-  mo3.read(proto.get());
+  mo2.read(proto.get());
 
-  assert(mo3.__isset.opt1 == false);
-  assert(mo3.__isset.opt2 == true);
-  assert(mo3.__isset.opt3 == false);
-  assert(mo3.__isset.def4 == true);
-  assert(mo3.__isset.opt5 == false);
-  assert(mo3.__isset.opt6 == true);
+  BOOST_CHECK(mo2.__isset.opt1 == false);
+  BOOST_CHECK(mo2.__isset.opt2 == true);
+  BOOST_CHECK(mo2.__isset.opt3 == false);
+  BOOST_CHECK(mo2.__isset.def4 == true);
+  BOOST_CHECK(mo2.__isset.opt5 == false);
+  BOOST_CHECK(mo2.__isset.opt6 == true);
 
-  assert(mo1 == mo3);
+  BOOST_CHECK(mo1 == mo2);
+}
 
+BOOST_AUTO_TEST_CASE(test_dense_proto_4_3) {
+  shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  shared_ptr<TDenseProtocol> proto(new TDenseProtocol(buffer));
+  proto.reset(new TDenseProtocol(buffer));
+  proto->setTypeSpec(ManyOpt::local_reflection);
+
+  ManyOpt mo1, mo2;
+  mo1.opt1 = 923759347;
+  mo1.opt2 = 392749274;
+  mo1.opt3 = 395739402;
+  mo1.def4 = 294730928;
+  mo1.opt5 = 394309218;
+  mo1.opt6 = 832194723;
   mo1.__isset.opt1 = true;
-  mo1.__isset.opt3 = true;
-  mo1.__isset.opt5 = true;
   mo1.__isset.opt2 = false;
+  mo1.__isset.opt3 = true;
+  mo1.__isset.def4 = true;
+  mo1.__isset.opt5 = true;
   mo1.__isset.opt6 = false;
 
   mo1.write(proto.get());
-  mo4.read(proto.get());
+  mo2.read(proto.get());
 
-  assert(mo4.__isset.opt1 == true);
-  assert(mo4.__isset.opt2 == false);
-  assert(mo4.__isset.opt3 == true);
-  assert(mo4.__isset.def4 == true);
-  assert(mo4.__isset.opt5 == true);
-  assert(mo4.__isset.opt6 == false);
+  BOOST_CHECK(mo2.__isset.opt1 == true);
+  BOOST_CHECK(mo2.__isset.opt2 == false);
+  BOOST_CHECK(mo2.__isset.opt3 == true);
+  BOOST_CHECK(mo2.__isset.def4 == true);
+  BOOST_CHECK(mo2.__isset.opt5 == true);
+  BOOST_CHECK(mo2.__isset.opt6 == false);
 
-  assert(mo1 == mo4);
+  BOOST_CHECK(mo1 == mo2);
+}
 
+BOOST_AUTO_TEST_CASE(test_dense_proto_4_4) {
+  shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  shared_ptr<TDenseProtocol> proto(new TDenseProtocol(buffer));
+  proto.reset(new TDenseProtocol(buffer));
+  proto->setTypeSpec(ManyOpt::local_reflection);
+
+  ManyOpt mo1, mo2;
+  mo1.opt1 = 923759347;
+  mo1.opt2 = 392749274;
+  mo1.opt3 = 395739402;
+  mo1.def4 = 294730928;
+  mo1.opt5 = 394309218;
+  mo1.opt6 = 832194723;
   mo1.__isset.opt1 = false;
+  mo1.__isset.opt2 = false;
+  mo1.__isset.opt3 = true;
+  mo1.__isset.def4 = true;
   mo1.__isset.opt5 = false;
+  mo1.__isset.opt6 = false;
 
   mo1.write(proto.get());
-  mo5.read(proto.get());
+  mo2.read(proto.get());
 
-  assert(mo5.__isset.opt1 == false);
-  assert(mo5.__isset.opt2 == false);
-  assert(mo5.__isset.opt3 == true);
-  assert(mo5.__isset.def4 == true);
-  assert(mo5.__isset.opt5 == false);
-  assert(mo5.__isset.opt6 == false);
+  BOOST_CHECK(mo2.__isset.opt1 == false);
+  BOOST_CHECK(mo2.__isset.opt2 == false);
+  BOOST_CHECK(mo2.__isset.opt3 == true);
+  BOOST_CHECK(mo2.__isset.def4 == true);
+  BOOST_CHECK(mo2.__isset.opt5 == false);
+  BOOST_CHECK(mo2.__isset.opt6 == false);
 
-  assert(mo1 == mo5);
+  BOOST_CHECK(mo1 == mo2);
+}
 
+BOOST_AUTO_TEST_CASE(test_dense_proto_4_5) {
+  shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  shared_ptr<TDenseProtocol> proto(new TDenseProtocol(buffer));
+  proto.reset(new TDenseProtocol(buffer));
+  proto->setTypeSpec(ManyOpt::local_reflection);
+
+  ManyOpt mo1, mo2;
+  mo1.opt1 = 923759347;
+  mo1.opt2 = 392749274;
+  mo1.opt3 = 395739402;
+  mo1.def4 = 294730928;
+  mo1.opt5 = 394309218;
+  mo1.opt6 = 832194723;
+  mo1.__isset.opt1 = false;
+  mo1.__isset.opt2 = false;
   mo1.__isset.opt3 = false;
+  mo1.__isset.def4 = true;
+  mo1.__isset.opt5 = false;
+  mo1.__isset.opt6 = false;
 
   mo1.write(proto.get());
-  mo6.read(proto.get());
+  mo2.read(proto.get());
 
-  assert(mo6.__isset.opt1 == false);
-  assert(mo6.__isset.opt2 == false);
-  assert(mo6.__isset.opt3 == false);
-  assert(mo6.__isset.def4 == true);
-  assert(mo6.__isset.opt5 == false);
-  assert(mo6.__isset.opt6 == false);
+  BOOST_CHECK(mo2.__isset.opt1 == false);
+  BOOST_CHECK(mo2.__isset.opt2 == false);
+  BOOST_CHECK(mo2.__isset.opt3 == false);
+  BOOST_CHECK(mo2.__isset.def4 == true);
+  BOOST_CHECK(mo2.__isset.opt5 == false);
+  BOOST_CHECK(mo2.__isset.opt6 == false);
 
-  assert(mo1 == mo6);
+  BOOST_CHECK(mo1 == mo2);
+}
 
-  // Test fingerprint checking stuff.
+// Test fingerprint checking stuff.
+BOOST_AUTO_TEST_CASE(test_dense_proto_5_1) {
+  shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  shared_ptr<TDenseProtocol> proto(new TDenseProtocol(buffer));
 
-  {
-    // Default and required have the same fingerprint.
-    Tricky1 t1;
-    Tricky3 t3;
-    assert(string(Tricky1::ascii_fingerprint) == Tricky3::ascii_fingerprint);
-    proto->setTypeSpec(Tricky1::local_reflection);
-    t1.im_default = 227;
-    t1.write(proto.get());
-    proto->setTypeSpec(Tricky3::local_reflection);
-    t3.read(proto.get());
-    assert(t3.im_required == 227);
-  }
+  // Default and required have the same fingerprint.
+  Tricky1 t1;
+  Tricky3 t3;
+  BOOST_CHECK(string(Tricky1::ascii_fingerprint) == Tricky3::ascii_fingerprint);
+  proto->setTypeSpec(Tricky1::local_reflection);
+  t1.im_default = 227;
+  t1.write(proto.get());
+  proto->setTypeSpec(Tricky3::local_reflection);
+  t3.read(proto.get());
+  BOOST_CHECK(t3.im_required == 227);
+}
 
-  {
-    // Optional changes things.
-    Tricky1 t1;
-    Tricky2 t2;
-    assert(string(Tricky1::ascii_fingerprint) != Tricky2::ascii_fingerprint);
-    proto->setTypeSpec(Tricky1::local_reflection);
-    t1.im_default = 227;
-    t1.write(proto.get());
-    try {
-      proto->setTypeSpec(Tricky2::local_reflection);
-      t2.read(proto.get());
-      assert(false);
-    } catch (TProtocolException& ex) {
-      buffer->resetBuffer();
-    }
-  }
+BOOST_AUTO_TEST_CASE(test_dense_proto_5_2) {
+  shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  shared_ptr<TDenseProtocol> proto(new TDenseProtocol(buffer));
 
-  {
-    // Holy cow.  We can use the Tricky1 typespec with the Tricky2 structure.
-    Tricky1 t1;
-    Tricky2 t2;
-    proto->setTypeSpec(Tricky1::local_reflection);
-    t1.im_default = 227;
-    t1.write(proto.get());
+  // Optional changes things.
+  Tricky1 t1;
+  Tricky2 t2;
+  BOOST_CHECK(string(Tricky1::ascii_fingerprint) != Tricky2::ascii_fingerprint);
+  proto->setTypeSpec(Tricky1::local_reflection);
+  t1.im_default = 227;
+  t1.write(proto.get());
+  try {
+    proto->setTypeSpec(Tricky2::local_reflection);
     t2.read(proto.get());
-    assert(t2.__isset.im_optional == true);
-    assert(t2.im_optional == 227);
+    BOOST_CHECK(false);
+  } catch (TProtocolException& ex) {
+    buffer->resetBuffer();
   }
+}
 
-  {
-    // And totally off the wall.
-    Tricky1 t1;
-    OneOfEach ooe2;
-    assert(string(Tricky1::ascii_fingerprint) != OneOfEach::ascii_fingerprint);
-    proto->setTypeSpec(Tricky1::local_reflection);
-    t1.im_default = 227;
-    t1.write(proto.get());
-    try {
-      proto->setTypeSpec(OneOfEach::local_reflection);
-      ooe2.read(proto.get());
-      assert(false);
-    } catch (TProtocolException& ex) {
-      buffer->resetBuffer();
-    }
+BOOST_AUTO_TEST_CASE(test_dense_proto_5_3) {
+  shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  shared_ptr<TDenseProtocol> proto(new TDenseProtocol(buffer));
+
+  // Holy cow.  We can use the Tricky1 typespec with the Tricky2 structure.
+  Tricky1 t1;
+  Tricky2 t2;
+  proto->setTypeSpec(Tricky1::local_reflection);
+  t1.im_default = 227;
+  t1.write(proto.get());
+  t2.read(proto.get());
+  BOOST_CHECK(t2.__isset.im_optional == true);
+  BOOST_CHECK(t2.im_optional == 227);
+}
+
+BOOST_AUTO_TEST_CASE(test_dense_proto_5_4) {
+  shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  shared_ptr<TDenseProtocol> proto(new TDenseProtocol(buffer));
+
+  // And totally off the wall.
+  Tricky1 t1;
+  OneOfEach ooe2;
+  BOOST_CHECK(string(Tricky1::ascii_fingerprint) != OneOfEach::ascii_fingerprint);
+  proto->setTypeSpec(Tricky1::local_reflection);
+  t1.im_default = 227;
+  t1.write(proto.get());
+  try {
+    proto->setTypeSpec(OneOfEach::local_reflection);
+    ooe2.read(proto.get());
+    BOOST_CHECK(false);
+  } catch (TProtocolException& ex) {
+    buffer->resetBuffer();
   }
+}
 
+BOOST_AUTO_TEST_CASE(test_dense_proto_6) {
   // Okay, this is really off the wall.
   // Just don't crash.
-  cout << "Starting fuzz test.  This takes a while.  (20 dots.)" << endl;
+  shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  shared_ptr<TDenseProtocol> proto(new TDenseProtocol(buffer));
+
+  BOOST_TEST_MESSAGE("Starting fuzz test.  This takes a while.");
   std::srand(12345);
   for (int i = 0; i < 2000; i++) {
     if (i % 100 == 0) {
-      cout << ".";
-      cout.flush();
+      BOOST_TEST_MESSAGE("Do " << i / 100 << "/" << 2000 / 100);
     }
     buffer->resetBuffer();
     // Make sure the fingerprint prefix is right.
@@ -372,7 +482,4 @@ int main() {
     } catch (TTransportException& ex) {
     }
   }
-  cout << endl;
-
-  return 0;
 }
