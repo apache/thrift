@@ -24,7 +24,7 @@ stubs: ../ThriftTest.thrift ../SmallTest.thrift
 	$(THRIFT) --gen py:twisted ../SmallTest.thrift
 
 check: stubs
-	$(TRIAL) test_suite.py
+	$(TRIAL) ./test_suite.py
 
 clean-local:
 	$(RM) -r gen-py.twisted

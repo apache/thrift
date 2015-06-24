@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -17,9 +19,10 @@
 # under the License.
 #
 
-import sys, glob, time
-sys.path.insert(0, './gen-py.twisted')
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
+import sys, os, glob, time
+basepath = os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(basepath, 'gen-py.twisted'))
+sys.path.insert(0, glob.glob(os.path.join(basepath, '../../lib/py/build/lib.*'))[0])
 
 from ThriftTest import ThriftTest
 from ThriftTest.ttypes import Xception, Xtruct
@@ -147,8 +150,8 @@ class ThriftTestCase(unittest.TestCase):
     def testDouble(self):
         self.assertEquals((yield self.client.testDouble(-5.235098235)), -5.235098235)
 
-    # TODO: def testBinary(self) ...		
-		
+    # TODO: def testBinary(self) ...
+
     @defer.inlineCallbacks
     def testStruct(self):
         x = Xtruct()

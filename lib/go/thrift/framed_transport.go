@@ -47,6 +47,10 @@ func NewTFramedTransportFactory(factory TTransportFactory) TTransportFactory {
 	return &tFramedTransportFactory{factory: factory, maxLength: DEFAULT_MAX_LENGTH}
 }
 
+func NewTFramedTransportFactoryMaxLength(factory TTransportFactory, maxLength int) TTransportFactory {
+        return &tFramedTransportFactory{factory: factory, maxLength: maxLength}
+}
+
 func (p *tFramedTransportFactory) GetTransport(base TTransport) TTransport {
 	return NewTFramedTransportMaxLength(p.factory.GetTransport(base), p.maxLength)
 }
