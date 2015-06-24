@@ -203,7 +203,9 @@ AllProtocolsTest_SOURCES = \
 	AllProtocolTests.tcc \
 	GenericHelpers.h
 
-AllProtocolsTest_LDADD = libtestgencpp.la
+AllProtocolsTest_LDADD = \
+  libtestgencpp.la \
+  $(BOOST_TEST_LDADD)
 
 #
 # DebugProtoTest
