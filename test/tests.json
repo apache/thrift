@@ -301,21 +301,34 @@
   },
   {
     "name": "perl",
+    "transports": [
+      "buffered",
+      "framed"
+    ],
+    "sockets": [
+      "ip",
+      "ip-ssl"
+    ],
+    "protocols": [
+      "binary"
+    ],
     "client": {
-      "transports": [
-        "buffered"
-      ],
-      "sockets": [
-        "ip"
-      ],
-      "protocols": [
-        "binary"
-      ],
       "command": [
         "perl",
         "-Igen-perl/",
         "-I../../lib/perl/lib/",
-        "TestClient.pl"
+        "TestClient.pl",
+        "--cert=../../test/keys/client.pem"
+      ]
+    },
+    "server": {
+      "command": [
+        "perl",
+        "-Igen-perl/",
+        "-I../../lib/perl/lib/",
+        "TestServer.pl",
+        "--cert=../../test/keys/server.pem",
+        "--key=../../test/keys/server.key"
       ]
     },
     "workdir": "perl"
