@@ -212,9 +212,11 @@ AllProtocolsTest_LDADD = \
 # DebugProtoTest
 #
 DebugProtoTest_SOURCES = \
-	DebugProtoTest.cpp
+	DebugProtoTest.cpp 
 
-DebugProtoTest_LDADD = libtestgencpp.la
+DebugProtoTest_LDADD = \
+	libtestgencpp.la \
+	$(BOOST_TEST_LDADD)
 
 
 #
