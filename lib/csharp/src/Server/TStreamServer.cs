@@ -16,6 +16,12 @@ namespace Thrift.Server
         private TTransportFactory inputTransportFactory;
         private TTransportFactory outputTransportFactory;
 
+        public TStreamServer(TProcessor processor, TStreamTransport transport)
+            : this(processor, transport, new TTransportFactory(), new TJSONProtocol.Factory())
+        {
+            
+        }
+
         public TStreamServer(TProcessor processor, TStreamTransport transport, TTransportFactory transportFactory, TProtocolFactory protocolFactory)
         {
             this.processor = processor;
