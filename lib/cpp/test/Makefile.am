@@ -195,6 +195,7 @@ TPipedTransportTest_SOURCES = \
 	TPipedTransportTest.cpp
 
 TPipedTransportTest_LDADD = \
+	$(BOOST_TEST_LDADD) \
 	$(top_builddir)/lib/cpp/libthrift.la
 
 #
