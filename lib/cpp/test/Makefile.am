@@ -269,8 +269,7 @@ DenseProtoTest_SOURCES = \
 
 DenseProtoTest_LDADD = \
 	libtestgencpp.la \
-	$(BOOST_TEST_LDADD) \
-	-lthrift
+	$(BOOST_TEST_LDADD)
 
 #
 # SpecializationTest
@@ -278,7 +277,9 @@ DenseProtoTest_LDADD = \
 SpecializationTest_SOURCES = \
 	SpecializationTest.cpp
 
-SpecializationTest_LDADD = libtestgencpp.la
+SpecializationTest_LDADD = \
+	libtestgencpp.la \
+	$(BOOST_TEST_LDADD)
 
 concurrency_test_SOURCES = \
 	concurrency/Tests.cpp \
