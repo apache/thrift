@@ -247,7 +247,9 @@ TNonblockingServerTest_LDADD = libprocessortest.la \
 OptionalRequiredTest_SOURCES = \
 	OptionalRequiredTest.cpp
 
-OptionalRequiredTest_LDADD = libtestgencpp.la
+OptionalRequiredTest_LDADD = \
+	libtestgencpp.la \
+	$(BOOST_TEST_LDADD)
 
 #
 # OptionalRequiredTest
