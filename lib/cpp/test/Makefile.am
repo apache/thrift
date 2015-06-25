@@ -225,7 +225,9 @@ DebugProtoTest_LDADD = \
 JSONProtoTest_SOURCES = \
 	JSONProtoTest.cpp
 
-JSONProtoTest_LDADD = libtestgencpp.la
+JSONProtoTest_LDADD = \
+	libtestgencpp.la \
+	$(BOOST_TEST_LDADD)
 
 #
 # TNonblockingServerTest
