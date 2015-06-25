@@ -257,7 +257,9 @@ OptionalRequiredTest_LDADD = \
 RecursiveTest_SOURCES = \
 	RecursiveTest.cpp
 
-RecursiveTest_LDADD = libtestgencpp.la
+RecursiveTest_LDADD = \
+	libtestgencpp.la \
+	$(BOOST_TEST_LDADD)
 
 #
 # DenseProtoTest
