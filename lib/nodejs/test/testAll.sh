@@ -71,10 +71,12 @@ TESTOK=0
 #generating thrift code
 
 ${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test/ThriftTest.thrift
+${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test/JsDeepConstructorTest.thrift
 
 #unit tests
 
 node ${DIR}/binary.test.js || TESTOK=1
+node ${DIR}/deep-constructor.test.js || TESTOK=1
 
 #integration tests
 
