@@ -183,7 +183,8 @@ TFileTransportTest_LDADD = \
 TFDTransportTest_SOURCES = \
 	TFDTransportTest.cpp
 
-TFDTransportTest_LDADD = \
+TFDTransportTest_LDADD =  \
+	$(BOOST_TEST_LDADD) \
 	$(top_builddir)/lib/cpp/libthrift.la
 
 
