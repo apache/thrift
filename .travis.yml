@@ -21,6 +21,8 @@
 
 language: cpp
 
+sudo: required
+
 cache:
  - apt
  - npm
