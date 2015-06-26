@@ -329,17 +329,24 @@ func (p *TCompactProtocol) WriteBinary(bin []byte) error {
 
 // Read a message header.
 func (p *TCompactProtocol) ReadMessageBegin() (name string, typeId TMessageType, seqId int32, err error) {
+
 	protocolId, err := p.ReadByte()
+	if err != nil {
+		return
+	}
+
 	if protocolId != COMPACT_PROTOCOL_ID {
 		e := fmt.Errorf("Expected protocol id %02x but got %02x", COMPACT_PROTOCOL_ID, protocolId)
 		return "", typeId, seqId, NewTProtocolExceptionWithType(BAD_VERSION, e)
 	}
+
 	versionAndType, err := p.ReadByte()
-	version := versionAndType & COMPACT_VERSION_MASK
-	typeId = TMessageType((versionAndType >> COMPACT_TYPE_SHIFT_AMOUNT) & COMPACT_TYPE_BITS)
 	if err != nil {
 		return
 	}
+
+	version := versionAndType & COMPACT_VERSION_MASK
+	typeId = TMessageType((versionAndType >> COMPACT_TYPE_SHIFT_AMOUNT) & COMPACT_TYPE_BITS)
 	if version != COMPACT_VERSION {
 		e := fmt.Errorf("Expected version %02x but got %02x", COMPACT_VERSION, version)
 		err = NewTProtocolExceptionWithType(BAD_VERSION, e)
