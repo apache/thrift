@@ -147,10 +147,16 @@ add_test(NAME TFileTransportTest COMMAND TFileTransportTest)
 endif()
 
 add_executable(TFDTransportTest TFDTransportTest.cpp)
+target_link_libraries(TFDTransportTest
+    ${Boost_LIBRARIES}
+)
 LINK_AGAINST_THRIFT_LIBRARY(TFDTransportTest thrift)
 add_test(NAME TFDTransportTest COMMAND TFDTransportTest)
 
 add_executable(TPipedTransportTest TPipedTransportTest.cpp)
+target_link_libraries(TPipedTransportTest
+    ${Boost_LIBRARIES}
+)
 LINK_AGAINST_THRIFT_LIBRARY(TPipedTransportTest thrift)
 add_test(NAME TPipedTransportTest COMMAND TPipedTransportTest)
 
@@ -161,35 +167,53 @@ set(AllProtocolsTest_SOURCES
     )
 
 add_executable(AllProtocolsTest ${AllProtocolsTest_SOURCES})
-target_link_libraries(AllProtocolsTest testgencpp)
+target_link_libraries(AllProtocolsTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
 LINK_AGAINST_THRIFT_LIBRARY(AllProtocolsTest thrift)
 add_test(NAME AllProtocolsTest COMMAND AllProtocolsTest)
 
 # The debug run-time in Windows asserts on isprint() with negative inputs
 if (NOT MSVC OR (MSVC AND CMAKE_BUILD_TYPE EQUAL "DEBUG"))
 add_executable(DebugProtoTest DebugProtoTest.cpp)
-target_link_libraries(DebugProtoTest testgencpp)
+target_link_libraries(DebugProtoTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
 LINK_AGAINST_THRIFT_LIBRARY(DebugProtoTest thrift)
 add_test(NAME DebugProtoTest COMMAND DebugProtoTest)
 endif()
 
 add_executable(JSONProtoTest JSONProtoTest.cpp)
-target_link_libraries(JSONProtoTest testgencpp)
+target_link_libraries(JSONProtoTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
 LINK_AGAINST_THRIFT_LIBRARY(JSONProtoTest thrift)
 add_test(NAME JSONProtoTest COMMAND JSONProtoTest)
 
 add_executable(OptionalRequiredTest OptionalRequiredTest.cpp)
-target_link_libraries(OptionalRequiredTest testgencpp)
+target_link_libraries(OptionalRequiredTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
 LINK_AGAINST_THRIFT_LIBRARY(OptionalRequiredTest thrift)
 add_test(NAME OptionalRequiredTest COMMAND OptionalRequiredTest)
 
 add_executable(RecursiveTest RecursiveTest.cpp)
-target_link_libraries(RecursiveTest testgencpp)
+target_link_libraries(RecursiveTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
 LINK_AGAINST_THRIFT_LIBRARY(RecursiveTest thrift)
 add_test(NAME RecursiveTest COMMAND RecursiveTest)
 
 add_executable(SpecializationTest SpecializationTest.cpp)
-target_link_libraries(SpecializationTest testgencpp)
+target_link_libraries(SpecializationTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
 LINK_AGAINST_THRIFT_LIBRARY(SpecializationTest thrift)
 add_test(NAME SpecializationTest COMMAND SpecializationTest)
 

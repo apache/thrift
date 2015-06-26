@@ -184,8 +184,8 @@ TFDTransportTest_SOURCES = \
 	TFDTransportTest.cpp
 
 TFDTransportTest_LDADD =  \
-	$(BOOST_TEST_LDADD) \
-	$(top_builddir)/lib/cpp/libthrift.la
+	$(top_builddir)/lib/cpp/libthrift.la \
+	$(BOOST_TEST_LDADD)
 
 
 #
@@ -195,8 +195,8 @@ TPipedTransportTest_SOURCES = \
 	TPipedTransportTest.cpp
 
 TPipedTransportTest_LDADD = \
-	$(BOOST_TEST_LDADD) \
-	$(top_builddir)/lib/cpp/libthrift.la
+	$(top_builddir)/lib/cpp/libthrift.la \
+	$(BOOST_TEST_LDADD)
 
 #
 # AllProtocolsTest
