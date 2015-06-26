@@ -176,7 +176,6 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 		if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE {
 			return nil
 		}
-
 		if err != nil {
 			return err
 		}
