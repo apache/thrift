@@ -251,11 +251,3 @@ For the compiler/cpp/src/thrift/md5.[ch] components:
   ghost@aladdin.com
 
  */
-
----------------------------------------------------
-For the lib/rb/setup.rb: Copyright (c) 2000-2005 Minero Aoki,
-lib/ocaml/OCamlMakefile and lib/ocaml/README-OCamlMakefile components:
-     Copyright (C) 1999 - 2007  Markus Mottl
-
-Licensed under the terms of the GNU Lesser General Public License 2.1
-(see doc/lgpl-2.1.txt for the full terms of this license)
