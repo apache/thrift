@@ -26,9 +26,8 @@ include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 
 find_package(OpenSSL REQUIRED)
 include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
-#list(APPEND SYSLIBS "${OPENSSL_LIBRARIES}")
 
-find_package(Libevent REQUIRED)  # Libevent comes with CMake support form upstream
+find_package(Libevent REQUIRED)  # Libevent comes with CMake support from upstream
 include_directories(SYSTEM ${LIBEVENT_INCLUDE_DIRS})
 
 #Make sure gen-cpp files can be included
