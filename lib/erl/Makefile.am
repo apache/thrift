@@ -25,6 +25,7 @@ THRIFT_FILES = $(wildcard test/*.thrift) \
 	for f in $(THRIFT_FILES) ; do \
 	  $(THRIFT) --gen erl -o test $$f ; \
 	done ; \
+	$(THRIFT) --gen erl:maps -o test test/Thrift3214.thrift ; \
 	touch .generated
 
 all: .generated
