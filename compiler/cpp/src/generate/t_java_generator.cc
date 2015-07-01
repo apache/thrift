@@ -91,6 +91,9 @@ public:
     iter = parsed_options.find("option_type");
     use_option_type_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("undated_generated_annotations");
+    undated_generated_annotations_ = (iter != parsed_options.end());
+
     out_dir_base_ = (bean_style_ ? "gen-javabean" : "gen-java");
   }
 
@@ -343,6 +346,7 @@ private:
   bool sorted_containers_;
   bool reuse_objects_;
   bool use_option_type_;
+  bool undated_generated_annotations_;
 };
 
 /**
@@ -5092,9 +5096,14 @@ void t_java_generator::generate_java_struct_tuple_scheme(ofstream& out, t_struct
 void t_java_generator::generate_javax_generated_annotation(ofstream& out) {
   time_t seconds = time(NULL);
   struct tm* now = localtime(&seconds);
-  indent(out) << "@Generated(value = \"" << autogen_summary() << "\", date = \""
-              << (now->tm_year + 1900) << "-" << setfill('0') << setw(2) << (now->tm_mon + 1) << "-"
-              << setfill('0') << setw(2) << now->tm_mday << "\")" << endl;
+  indent(out) << "@Generated(value = \"" << autogen_summary() << "\"";
+  if (undated_generated_annotations_) {
+    out << ")" << endl;
+  } else {
+    indent(out) << ", date = \"" << (now->tm_year + 1900) << "-" << setfill('0') << setw(2)
+                << (now->tm_mon + 1) << "-" << setfill('0') << setw(2) << now->tm_mday
+                << "\")" << endl;
+  }
 }
 
 THRIFT_REGISTER_GENERATOR(
@@ -5114,4 +5123,6 @@ THRIFT_REGISTER_GENERATOR(
     "(read and write).\n"
     "    sorted_containers:\n"
     "                     Use TreeSet/TreeMap instead of HashSet/HashMap as a implementation of "
-    "set/map.\n")
+    "set/map.\n"
+    "    undated_generated_annotations:\n"
+    "                     Do not generate the date for the @Generated annotation")
