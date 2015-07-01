@@ -95,6 +95,33 @@ class TSimpleServer(TServer):
       otrans.close()
 
 
+class TStreamServer(TServer):
+  """Server for TIOStreamTransport"""
+
+  def __init__(self, *args):
+    TServer.__init__(self, *args)
+
+  def serve(self):
+    while True:
+      client = self.serverTransport
+      if not client:
+        continue
+      itrans = self.inputTransportFactory.getTransport(client)
+      otrans = self.outputTransportFactory.getTransport(client)
+      iprot = self.inputProtocolFactory.getProtocol(itrans)
+      oprot = self.outputProtocolFactory.getProtocol(otrans)
+      try:
+        while True:
+          self.processor.process(iprot, oprot)
+      except TTransport.TTransportException as tx:
+        pass
+      except Exception as x:
+        logger.exception(x)
+
+      itrans.close()
+      otrans.close()
+
+
 class TThreadedServer(TServer):
   """Threaded server that spawns a new thread per each connection."""
 
