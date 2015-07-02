@@ -66,19 +66,21 @@ int main() {
   ooe.zomg_unicode = "\xd7\n\a\t";
   ooe.base64 = "\1\2\3\255";
 
-  boost::shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer());
-
   int num = 1000000;
+  boost::shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer(num*1000));
+
 
   {
+    buf->resetBuffer();
+    TBinaryProtocolT<TBufferBase> prot(buf);
+    double elapsed = 0.0;
     Timer timer;
 
     for (int i = 0; i < num; i++) {
-      buf->resetBuffer();
-      TBinaryProtocolT<TBufferBase> prot(buf);
       ooe.write(&prot);
     }
-    cout << "Write: " << num / (1000 * timer.frame()) << " kHz" << endl;
+    elapsed = timer.frame();
+    cout << "Write big endian: " << num / (1000 * elapsed) << " kHz" << endl;
   }
 
   uint8_t* data;
@@ -87,19 +89,44 @@ int main() {
   buf->getBuffer(&data, &datasize);
 
   {
-
+    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    TBinaryProtocolT<TBufferBase> prot(buf2);
+    OneOfEach ooe2;
+    double elapsed = 0.0;
     Timer timer;
 
     for (int i = 0; i < num; i++) {
-      OneOfEach ooe2;
-      boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
-      // buf2->resetBuffer(data, datasize);
-      TBinaryProtocolT<TBufferBase> prot(buf2);
       ooe2.read(&prot);
-
-      // cout << apache::thrift::ThriftDebugString(ooe2) << endl << endl;
     }
-    cout << " Read: " << num / (1000 * timer.frame()) << " kHz" << endl;
+    elapsed = timer.frame();
+    cout << " Read big endian: " << num / (1000 * elapsed) << " kHz" << endl;
+  }
+
+  {
+    buf->resetBuffer();
+    TBinaryProtocolT<TBufferBase, TNetworkLittleEndian> prot(buf);
+    double elapsed = 0.0;
+    Timer timer;
+
+    for (int i = 0; i < num; i++) {
+      ooe.write(&prot);
+    }
+    elapsed = timer.frame();
+    cout << "Write little endian: " << num / (1000 * elapsed) << " kHz" << endl;
+  }
+
+  {
+    OneOfEach ooe2;
+    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    TBinaryProtocolT<TBufferBase, TNetworkLittleEndian> prot(buf2);
+    double elapsed = 0.0;
+    Timer timer;
+
+    for (int i = 0; i < num; i++) {
+      ooe2.read(&prot);
+    }
+    elapsed = timer.frame();
+    cout << " Read little endian: " << num / (1000 * elapsed) << " kHz" << endl;
   }
 
   return 0;
