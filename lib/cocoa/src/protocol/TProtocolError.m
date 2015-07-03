@@ -26,3 +26,7 @@ NSString *TProtocolErrorFieldNameKey = @"field";
 NSString *TProtocolErrorExpectedIdKey = @"expectedId";
 NSString *TProtocolErrorExpectedVersionKey = @"expectedVersion";
 NSString *TProtocolErrorTypeKey = @"type";
+NSString *TProtocolErrorSourceLineKey = @"sourceLine";
+NSString *TProtocolErrorSourceFileKey = @"sourceFile";
+NSString *TProtocolErrorSourceMethodKey = @"sourceMethod";
+NSString *TProtocolErrorMessageNameKey = @"messageName";

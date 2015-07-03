@@ -64,14 +64,18 @@ enum {
 
 
 @interface TCompactProtocol () {
+
+  id <TTransport> transport;
+
   NSMutableArray *lastField;
   short lastFieldId;
-  id <TTransport> transport;
 
   NSString *boolFieldName;
   NSNumber *boolFieldType;
   NSNumber *boolFieldId;
   NSNumber *booleanValue;
+
+  NSString *currentMessageName;
 }
 
 @end
@@ -108,7 +112,10 @@ enum {
 
 -(BOOL) writeByteDirect:(UInt8)n error:(NSError *__autoreleasing *)error
 {
-  return [transport write:(UInt8 *)&n offset:0 length:1 error:error];
+  if (![transport write:(UInt8 *)&n offset:0 length:1 error:error]) {
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport write failed");
+  }
+  return YES;
 }
 
 -(BOOL) writeVarint32:(UInt32)n error:(NSError *__autoreleasing *)error
@@ -127,7 +134,11 @@ enum {
     }
   }
 
-  return [transport write:i32buf offset:0 length:idx error:error];
+  if (![transport write:i32buf offset:0 length:idx error:error]) {
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport write failed");
+  }
+
+  return YES;
 }
 
 -(BOOL) writeMessageBeginWithName:(NSString *)name
@@ -149,6 +160,9 @@ enum {
   if (![self writeString:name error:error]) {
     return NO;
   }
+
+  currentMessageName = name;
+
   return YES;
 }
 
@@ -306,7 +320,11 @@ enum {
 
   bits = OSSwapHostToLittleInt64(bits);
 
-  return [transport write:(UInt8 *)&bits offset:0 length:8 error:error];
+  if (![transport write:(UInt8 *)&bits offset:0 length:8 error:error]) {
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport write failed");
+  }
+
+  return YES;
 }
 
 -(BOOL) writeString:(NSString *)value error:(NSError *__autoreleasing *)error
@@ -320,27 +338,32 @@ enum {
     return NO;
   }
   if (![transport write:data.bytes offset:0 length:(UInt32)data.length error:error]) {
-    return NO;
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport write failed");
   }
   return YES;
 }
 
 -(BOOL) writeMessageEnd:(NSError *__autoreleasing *)error
 {
+  currentMessageName = nil;
   return YES;
 }
+
 -(BOOL) writeMapEnd:(NSError *__autoreleasing *)error
 {
   return YES;
 }
+
 -(BOOL) writeListEnd:(NSError *__autoreleasing *)error
 {
   return YES;
 }
+
 -(BOOL) writeSetEnd:(NSError *__autoreleasing *)error
 {
   return YES;
 }
+
 -(BOOL) writeFieldEnd:(NSError *__autoreleasing *)error
 {
   return YES;
@@ -384,7 +407,11 @@ enum {
     }
   }
 
-  return [transport write:varint64out offset:0 length:idx error:error];
+  if (![transport write:varint64out offset:0 length:idx error:error]) {
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport write failed");
+  }
+
+  return YES;
 }
 
 -(UInt32) i32ToZigZag:(SInt32)n
@@ -645,7 +672,10 @@ enum {
 
 -(BOOL) readByte:(UInt8 *)value error:(NSError *__autoreleasing *)error
 {
-  return [transport readAll:value offset:0 length:1 error:error];
+  if (![transport readAll:value offset:0 length:1 error:error]) {
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport read failed");
+  }
+  return NO;
 }
 
 -(BOOL) readI16:(SInt16 *)value error:(NSError *__autoreleasing *)error
@@ -679,7 +709,7 @@ enum {
 {
   UInt64 bits = 0;
   if (![transport readAll:(UInt8 *)&bits offset:0 length:8 error:error]) {
-    return NO;
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport read failed");
   }
 
   bits = OSSwapLittleToHostInt64(bits);
@@ -727,7 +757,7 @@ enum {
 
   NSMutableData *buf = [NSMutableData dataWithLength:length];
   if (![transport readAll:buf.mutableBytes offset:0 length:length error:error]) {
-    return NO;
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport read failed");
   }
 
   return YES;

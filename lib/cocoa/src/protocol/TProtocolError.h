@@ -30,7 +30,8 @@ typedef NS_OPTIONS (int, TProtocolErrors) {
   TProtocolErrorMissingRequiredField      = -10004,
   TProtocolErrorProtocolIdMismatch        = -10005,
   TProtocolErrorProtocolVersionMismatch   = -10006,
-  TProtocolErrorUnknownType               = -10007
+  TProtocolErrorUnknownType               = -10007,
+  TProtocolErrorTransportFailed           = -10008
 };
 
 
@@ -38,3 +39,33 @@ extern NSString *TProtocolErrorFieldNameKey;
 extern NSString *TProtocolErrorExpectedIdKey;
 extern NSString *TProtocolErrorExpectedVersionKey;
 extern NSString *TProtocolErrorTypeKey;
+extern NSString *TProtocolErrorSourceLineKey;
+extern NSString *TProtocolErrorSourceFileKey;
+extern NSString *TProtocolErrorSourceMethodKey;
+extern NSString *TProtocolErrorMessageNameKey;
+
+
+#define PROTOCOL_ERROR(ret, err, ...) \
+  if (error) {  \
+    *error = [NSError errorWithDomain:TProtocolErrorDomain \
+                                 code:TProtocolError ## err \
+                             userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithFormat:__VA_ARGS__], \
+                                        @"SourceFile": [NSString stringWithUTF8String:__FILE__], \
+                                        @"SourceLine": @(__LINE__), \
+                                        @"SourceFunction": [NSString stringWithUTF8String:__PRETTY_FUNCTION__], \
+                                        @"Message": currentMessageName}]; \
+  } \
+  return ret
+
+#define PROTOCOL_TRANSPORT_ERROR(ret, errorPtr, ...) \
+  if (errorPtr) { \
+    *error = [NSError errorWithDomain:TProtocolErrorDomain \
+                                 code:TProtocolErrorTransportFailed \
+                             userInfo:@{NSLocalizedDescriptionKey: [[NSString stringWithFormat:__VA_ARGS__] stringByAppendingFormat:@": %@", [(*errorPtr) localizedDescription]], \
+                                        TProtocolErrorSourceFileKey: [NSString stringWithUTF8String:__FILE__], \
+                                        TProtocolErrorSourceLineKey: @(__LINE__), \
+                                        TProtocolErrorSourceMethodKey: [NSString stringWithUTF8String:__PRETTY_FUNCTION__], \
+                                        TProtocolErrorMessageNameKey: currentMessageName, \
+                                        NSUnderlyingErrorKey: *errorPtr}]; \
+  } \
+  return ret

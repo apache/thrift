@@ -51,6 +51,8 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
   BOOL strictRead;
   BOOL strictWrite;
   UInt32 messageSizeLimit;
+  NSString *currentMessageName;
+  NSString *currentFieldName;
 }
 
 @end
@@ -82,17 +84,6 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
   return transport;
 }
 
-#define PROTOCOL_ERROR(ret, err, ...) \
-  if (error) {  \
-    *error = [NSError errorWithDomain:TProtocolErrorDomain \
-                                 code:TProtocolError ## err \
-                             userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithFormat:__VA_ARGS__], \
-                                        @"SourceFile": [NSString stringWithUTF8String:__FILE__], \
-                                        @"SourceLine": @(__LINE__), \
-                                        @"SourceFunction": [NSString stringWithUTF8String:__PRETTY_FUNCTION__]}]; \
-  } \
-  return ret
-
 -(NSString *) readStringBody:(int)size error:(NSError **)error
 {
   NSMutableData *data = [NSMutableData dataWithLength:size];
@@ -101,7 +92,7 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
   }
 
   if (![transport readAll:data.mutableBytes offset:0 length:size error:error]) {
-    return nil;
+    PROTOCOL_TRANSPORT_ERROR(nil, error, @"Transport read failed");
   }
 
   return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
@@ -264,7 +255,7 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
 {
   UInt8 buff[1];
   if (![transport readAll:buff offset:0 length:1 error:error]) {
-    return NO;
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport read failed");
   }
 
   *value = buff[0];
@@ -277,7 +268,7 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
 {
   UInt8 buff[2];
   if (![transport readAll:buff offset:0 length:2 error:error]) {
-    return NO;
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport read failed");
   }
 
   *value =
@@ -292,7 +283,7 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
 {
   UInt8 i32rd[4];
   if (![transport readAll:i32rd offset:0 length:4 error:error]) {
-    return NO;
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport read failed");
   }
 
   *value =
@@ -309,7 +300,7 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
 {
   UInt8 buff[8];
   if (![transport readAll:buff offset:0 length:8 error:error]) {
-    return NO;
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport read failed");
   }
 
   *value =
@@ -346,7 +337,7 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
   }
 
   if (![transport readAll:data.mutableBytes offset:0 length:size error:error]) {
-    return NO;
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport read failed");
   }
 
   *value = data;
@@ -497,12 +488,16 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
       return NO;
     }
   }
+
+  currentMessageName = name;
+
   return YES;
 }
 
 
 -(BOOL) writeMessageEnd:(NSError *__autoreleasing *)error
 {
+  currentMessageName = nil;
   return YES;
 }
 
@@ -545,7 +540,10 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
 
 -(BOOL) writeByte:(UInt8)value error:(NSError *__autoreleasing *)error
 {
-  return [transport write:&value offset:0 length:1 error:error];
+  if (![transport write:&value offset:0 length:1 error:error]) {
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport write failed");
+  }
+  return YES;
 }
 
 
@@ -556,7 +554,7 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
   buff[1] = 0xff & value;
 
   if (![transport write:buff offset:0 length:2 error:error]) {
-    return NO;
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport write failed");
   }
 
   return YES;
@@ -572,7 +570,7 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
   buff[3] = 0xFF & value;
 
   if (![transport write:buff offset:0 length:4 error:error]) {
-    return NO;
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport write failed");
   }
 
   return YES;
@@ -592,7 +590,7 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
   buff[7] = 0xFF & value;
 
   if (![transport write:buff offset:0 length:8 error:error]) {
-    return NO;
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport write failed");
   }
 
   return YES;
@@ -622,7 +620,7 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
     }
 
     if (![transport write:(UInt8 *)utf8Bytes offset:0 length:(int)length error:error]) {
-      return NO;
+      PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport write failed");
     }
 
   }
@@ -647,7 +645,7 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
   }
 
   if (![transport write:data.bytes offset:0 length:(UInt32)data.length error:error]) {
-    return NO;
+    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport write failed");
   }
 
   return YES;
