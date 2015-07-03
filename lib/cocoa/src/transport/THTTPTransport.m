@@ -17,11 +17,11 @@
  * under the License.
  */
 
-#import "THTTPClient.h"
+#import "THTTPTransport.h"
 #import "TTransportError.h"
 
 
-@interface THTTPClient () {
+@interface THTTPTransport () {
   NSURL *url;
   NSMutableURLRequest *request;
   NSMutableData *requestData;
@@ -34,7 +34,7 @@
 @end
 
 
-@implementation THTTPClient
+@implementation THTTPTransport
 
 -(void) setupRequest
 {
@@ -46,7 +46,7 @@
 
   NSString *validUserAgent = userAgent;
   if (!validUserAgent) {
-    validUserAgent = @"Cocoa/THTTPClient";
+    validUserAgent = @"Cocoa/THTTPTransport";
   }
   [request setValue:validUserAgent forHTTPHeaderField:@"User-Agent"];
 

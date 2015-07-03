@@ -18,14 +18,18 @@
  */
 
 #import <Foundation/Foundation.h>
-#import "TNSStreamTransport.h"
+#import "TTransport.h"
 
-@interface TSSLSocketClient : TNSStreamTransport <NSStreamDelegate>
 
--(id) initWithHostname:(NSString *)hostname
-                  port:(int)port
-                 error:(NSError **)error;
+@interface THTTPTransport : NSObject <TTransport>
 
--(BOOL) isOpen;
+-(id) initWithURL:(NSURL *)aURL;
+
+-(id) initWithURL:(NSURL *)aURL
+        userAgent:(NSString *)userAgent
+          timeout:(int)timeout;
+
+-(void) setURL:(NSURL *)aURL;
 
 @end
+

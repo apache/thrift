@@ -17,11 +17,11 @@
  * under the License.
  */
 
-#import "THTTPSessionClient.h"
+#import "THTTPSessionTransport.h"
 #import "TTransportError.h"
 
 
-@interface THTTPSessionClientFactory () <NSURLSessionDelegate>
+@interface THTTPSessionTransportFactory () <NSURLSessionDelegate>
 
 @property (strong, nonatomic) NSURLSession *session;
 @property (strong, nonatomic) NSURLRequest *request;
@@ -29,19 +29,19 @@
 @end
 
 
-@interface THTTPSessionClient ()
+@interface THTTPSessionTransport ()
 
-@property (strong, nonatomic) THTTPSessionClientFactory *factory;
+@property (strong, nonatomic) THTTPSessionTransportFactory *factory;
 @property (strong, nonatomic) NSMutableData *requestData;
 @property (strong, nonatomic) NSData *responseData;
 @property (assign, nonatomic) NSUInteger responseDataOffset;
 
--(instancetype) initWithFactory:(THTTPSessionClientFactory *)factory;
+-(instancetype) initWithFactory:(THTTPSessionTransportFactory *)factory;
 
 @end
 
 
-@implementation THTTPSessionClientFactory
+@implementation THTTPSessionTransportFactory
 
 +(NSURLRequest *) newRequestWithURL:(NSURL *)url userAgent:(NSString *)userAgent timeout:(NSTimeInterval)timeout
 {
@@ -53,7 +53,7 @@
 
   NSString *validUserAgent = userAgent;
   if (!validUserAgent) {
-    validUserAgent = @"Cocoa/THTTPSessionClient";
+    validUserAgent = @"Cocoa/THTTPSessionTransport";
   }
   [request setValue:validUserAgent forHTTPHeaderField:@"User-Agent"];
 
@@ -84,7 +84,7 @@
   self = [super init];
   if (self) {
     _session = session;
-    _request = [THTTPSessionClientFactory newRequestWithURL:url userAgent:userAgent timeout:timeout];
+    _request = [THTTPSessionTransportFactory newRequestWithURL:url userAgent:userAgent timeout:timeout];
   }
 
   return self;
@@ -92,7 +92,7 @@
 
 -(id<TAsyncTransport>) newTransport
 {
-  return [[THTTPSessionClient alloc] initWithFactory:self];
+  return [[THTTPSessionTransport alloc] initWithFactory:self];
 }
 
 -(NSURLRequest *) requestWithData:(NSData *)data error:(NSError *__autoreleasing *)error
@@ -146,9 +146,9 @@
 
 
 
-@implementation THTTPSessionClient
+@implementation THTTPSessionTransport
 
--(instancetype) initWithFactory:(THTTPSessionClientFactory *)factory
+-(instancetype) initWithFactory:(THTTPSessionTransportFactory *)factory
 {
   self = [super init];
   if (self) {

@@ -17,7 +17,16 @@
  * under the License.
  */
 
-#import "TSSLSocketClientError.h"
+#import <Foundation/Foundation.h>
+#import "TNSStreamTransport.h"
 
 
-NSString *TSSLSocketClientErrorDomain = @"TSSLSocketClientErrorDomain";
+@interface TSSLSocketTransport : TNSStreamTransport <NSStreamDelegate>
+
+-(id) initWithHostname:(NSString *)hostname
+                  port:(int)port
+                 error:(NSError **)error;
+
+-(BOOL) isOpen;
+
+@end

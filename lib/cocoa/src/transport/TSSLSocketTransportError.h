@@ -17,18 +17,13 @@
  * under the License.
  */
 
-#import <Foundation/Foundation.h>
-#import "TTransport.h"
+#import "TTransportError.h"
 
-@interface THTTPClient : NSObject <TTransport>
 
--(id) initWithURL:(NSURL *)aURL;
+extern NSString *TSSLSocketTransportErrorDomain;
 
--(id) initWithURL:(NSURL *)aURL
-        userAgent:(NSString *)userAgent
-          timeout:(int)timeout;
-
--(void) setURL:(NSURL *)aURL;
-
-@end
-
+enum {
+  TSSLSocketTransportErrorHostanameResolution  = -10000,
+  TSSLSocketTransportErrorSocketCreate         = -10001,
+  TSSLSocketTransportErrorConnect              = -10002,
+};

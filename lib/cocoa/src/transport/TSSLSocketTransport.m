@@ -18,8 +18,8 @@
  */
 #import <Foundation/Foundation.h>
 #import <CoreFoundation/CoreFoundation.h>
-#import "TSSLSocketClient.h"
-#import "TSSLSocketClientError.h"
+#import "TSSLSocketTransport.h"
+#import "TSSLSocketTransportError.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -30,7 +30,7 @@
 #import <CFNetwork/CFNetwork.h>
 #endif
 
-@interface TSSLSocketClient () {
+@interface TSSLSocketTransport () {
   NSInputStream *inputStream;
   NSOutputStream *outputStream;
   NSString *sslHostname;
@@ -40,7 +40,7 @@
 @end
 
 
-@implementation TSSLSocketClient
+@implementation TSSLSocketTransport
 
 -(id) initWithHostname:(NSString *)hostname
                   port:(int)port
@@ -63,8 +63,8 @@
       herror("resolv");
       if (i == 9) {
         if (error) {
-          *error = [NSError errorWithDomain:TSSLSocketClientErrorDomain
-                                       code:TSSLSocketClientErrorHostanameResolution
+          *error = [NSError errorWithDomain:TSSLSocketTransportErrorDomain
+                                       code:TSSLSocketTransportErrorHostanameResolution
                                    userInfo:nil];
         }
         return nil;
@@ -85,8 +85,8 @@
   if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
     NSLog(@"failed to create socket for host %@:%d", hostname, port);
     if (error) {
-      *error = [NSError errorWithDomain:TSSLSocketClientErrorDomain
-                                   code:TSSLSocketClientErrorSocketCreate
+      *error = [NSError errorWithDomain:TSSLSocketTransportErrorDomain
+                                   code:TSSLSocketTransportErrorSocketCreate
                                userInfo:nil];
     }
     return nil;
@@ -96,8 +96,8 @@
   if (connect(sd, (struct sockaddr *)&pin, sizeof(pin)) == -1) {
     NSLog(@"failed to create conenct to host %@:%d", hostname, port);
     if (error) {
-      *error = [NSError errorWithDomain:TSSLSocketClientErrorDomain
-                                   code:TSSLSocketClientErrorConnect
+      *error = [NSError errorWithDomain:TSSLSocketTransportErrorDomain
+                                   code:TSSLSocketTransportErrorConnect
                                userInfo:nil];
     }
     return nil;

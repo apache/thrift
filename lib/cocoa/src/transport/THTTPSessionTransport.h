@@ -22,16 +22,16 @@
 
 
 
-typedef BOOL (^THTTPSessionClientRequestConfigBlock) (NSURLRequest *request, NSError *__autoreleasing *);
-typedef BOOL (^THTTPSessionClientTaskConfigBlock) (NSURLSessionDataTask *task, NSError *__autoreleasing *);
-typedef NSError *(^THTTPSessionClientResponseValidateBlock) (NSHTTPURLResponse *response, NSData *responseData);
+typedef BOOL (^THTTPSessionTransportRequestConfigBlock) (NSURLRequest *request, NSError *__autoreleasing *);
+typedef BOOL (^THTTPSessionTransportTaskConfigBlock) (NSURLSessionDataTask *task, NSError *__autoreleasing *);
+typedef NSError *(^THTTPSessionTransportResponseValidateBlock) (NSHTTPURLResponse *response, NSData *responseData);
 
 
-@interface THTTPSessionClientFactory : NSObject<TAsyncTransportFactory>
+@interface THTTPSessionTransportFactory : NSObject<TAsyncTransportFactory>
 
-@property (strong, nonatomic) THTTPSessionClientRequestConfigBlock requestConfig;
-@property (strong, nonatomic) THTTPSessionClientTaskConfigBlock taskConfig;
-@property (strong, nonatomic) THTTPSessionClientResponseValidateBlock responseValidate;
+@property (strong, nonatomic) THTTPSessionTransportRequestConfigBlock requestConfig;
+@property (strong, nonatomic) THTTPSessionTransportTaskConfigBlock taskConfig;
+@property (strong, nonatomic) THTTPSessionTransportResponseValidateBlock responseValidate;
 
 -(id) initWithSession:(NSURLSession *)session
                   URL:(NSURL *)aURL;
@@ -44,6 +44,6 @@ typedef NSError *(^THTTPSessionClientResponseValidateBlock) (NSHTTPURLResponse *
 @end
 
 
-@interface THTTPSessionClient : NSObject <TAsyncTransport>
+@interface THTTPSessionTransport : NSObject <TAsyncTransport>
 
 @end

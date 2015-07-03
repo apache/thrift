@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#import "TSocketClient.h"
+#import "TSocketTransport.h"
 
 #if !TARGET_OS_IPHONE
 #import <CoreServices/CoreServices.h>
@@ -24,14 +24,14 @@
 #import <CFNetwork/CFNetwork.h>
 #endif
 
-@interface TSocketClient () <NSStreamDelegate> {
+@interface TSocketTransport () <NSStreamDelegate> {
   NSInputStream *inputStream;
   NSOutputStream *outputStream;
 }
 
 @end
 
-@implementation TSocketClient
+@implementation TSocketTransport
 
 -(id) initWithHostname:(NSString *)hostname
                   port:(int)port
