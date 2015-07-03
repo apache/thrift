@@ -163,11 +163,8 @@
   case NSStreamEventHasSpaceAvailable: {
     SecPolicyRef policy = SecPolicyCreateSSL(NO, (__bridge CFStringRef)(sslHostname));
     SecTrustRef trust = NULL;
-    CFArrayRef streamCertificatesRef =
-      CFBridgingRetain((__bridge id)((__bridge CFArrayRef)([aStream propertyForKey:(NSString *)kCFStreamPropertySSLPeerCertificates])));
-    SecTrustCreateWithCertificates(CFBridgingRetain((__bridge id)(streamCertificatesRef)),
-                                   policy,
-                                   &trust);
+    CFArrayRef streamCertificatesRef = (__bridge CFArrayRef)[aStream propertyForKey:(NSString *)kCFStreamPropertySSLPeerCertificates];
+    SecTrustCreateWithCertificates(streamCertificatesRef, policy, &trust);
 
     SecTrustResultType trustResultType = kSecTrustResultInvalid;
     SecTrustEvaluate(trust, &trustResultType);
@@ -234,30 +231,41 @@
   }
 }
 
-bool recoverFromTrustFailure(SecTrustRef myTrust)
+BOOL recoverFromTrustFailure(SecTrustRef myTrust)
 {
 
   SecTrustResultType trustResult;
   OSStatus status = SecTrustEvaluate(myTrust, &trustResult);
+  if (status != errSecSuccess) {
+    return NO;
+  }
 
   CFAbsoluteTime trustTime, currentTime, timeIncrement, newTime;
-  CFDateRef newDate;
   if (trustResult == kSecTrustResultRecoverableTrustFailure) {
+
     trustTime = SecTrustGetVerifyTime(myTrust);
     timeIncrement = 31536000;
     currentTime = CFAbsoluteTimeGetCurrent();
     newTime = currentTime - timeIncrement;
+
     if (trustTime - newTime) {
-      newDate = CFDateCreate(NULL, newTime);
+
+      CFDateRef newDate = CFDateCreate(NULL, newTime);
       SecTrustSetVerifyDate(myTrust, newDate);
+      CFRelease(newDate);
+
       status = SecTrustEvaluate(myTrust, &trustResult);
+      if (status != errSecSuccess) {
+        return NO;
+      }
+
     }
   }
-  if (trustResult != kSecTrustResultProceed) {
+  if (trustResult != kSecTrustResultProceed || trustResult != kSecTrustResultUnspecified) {
     NSLog(@"Certificate trust failure");
-    return false;
+    return NO;
   }
-  return true;
+  return YES;
 }
 
 -(BOOL) isOpen
