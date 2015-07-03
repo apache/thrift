@@ -50,13 +50,14 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
   id <TTransport> transport;
   BOOL strictRead;
   BOOL strictWrite;
+  UInt32 messageSizeLimit;
 }
 
 @end
 
 @implementation TBinaryProtocol
 
-@synthesize messageSizeLimit=mMessageSizeLimit;
+@synthesize messageSizeLimit=messageSizeLimit;
 
 -(id) initWithTransport:(id <TTransport>)aTransport
 {

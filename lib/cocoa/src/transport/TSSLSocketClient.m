@@ -19,7 +19,7 @@
 #import <Foundation/Foundation.h>
 #import <CoreFoundation/CoreFoundation.h>
 #import "TSSLSocketClient.h"
-#import "TSSLSocketError.h"
+#import "TSSLSocketClientError.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>

@@ -24,7 +24,7 @@
 
 @interface TBinaryProtocol : NSObject <TProtocol>
 
-@property (assign, nonatomic) NSUInteger messageSizeLimit;
+@property (assign, nonatomic) UInt32 messageSizeLimit;
 
 -(id) initWithTransport:(id <TTransport>)transport;
 

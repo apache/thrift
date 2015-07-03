@@ -25,7 +25,7 @@
 
 
 @interface TFramedTransport () {
-  id<TTransport> mTransport;
+  id<TTransport> transport;
   NSMutableData *writeBuffer;
   NSMutableData *readBuffer;
   NSUInteger readOffset;
@@ -36,10 +36,10 @@
 
 @implementation TFramedTransport
 
--(id) initWithTransport:(id <TTransport>)transport
+-(id) initWithTransport:(id <TTransport>)aTransport
 {
   if ((self = [self init])) {
-    mTransport = transport;
+    transport = aTransport;
     readBuffer = nil;
     readOffset = 0;
     writeBuffer = [NSMutableData dataWithLength:HEADER_SIZE];
@@ -71,11 +71,11 @@
   [writeBuffer replaceBytesInRange:NSMakeRange(0, HEADER_SIZE)
                          withBytes:i32rd length:HEADER_SIZE];
 
-  if (![mTransport write:writeBuffer.mutableBytes offset:0 length:len error:error]) {
+  if (![transport write:writeBuffer.mutableBytes offset:0 length:len error:error]) {
     return NO;
   }
 
-  if (![mTransport flush:error]) {
+  if (![transport flush:error]) {
     return NO;
   }
 
@@ -130,7 +130,7 @@
 -(BOOL) readFrame:(NSError **)error
 {
   UInt8 i32rd[HEADER_SIZE];
-  if (![mTransport readAll:i32rd offset:0 length:HEADER_SIZE error:error]) {
+  if (![transport readAll:i32rd offset:0 length:HEADER_SIZE error:error]) {
     return NO;
   }
 
@@ -163,7 +163,7 @@
   }
 
   // copy into internal memory buffer
-  if (![mTransport readAll:readBuffer.mutableBytes offset:0 length:size error:error]) {
+  if (![transport readAll:readBuffer.mutableBytes offset:0 length:size error:error]) {
     return NO;
   }
 

@@ -25,8 +25,8 @@
 
 
 @interface TMemoryBuffer () {
-  NSMutableData *mBuffer;
-  UInt32 mOffset;
+  NSMutableData *buffer;
+  UInt32 bufferOffset;
 }
 
 @end
@@ -37,8 +37,8 @@
 -(id) init
 {
   if ((self = [super init])) {
-    mBuffer = [NSMutableData new];
-    mOffset = 0;
+    buffer = [NSMutableData new];
+    bufferOffset = 0;
   }
   return self;
 }
@@ -46,15 +46,15 @@
 -(id) initWithData:(NSData *)data
 {
   if (self = [super init]) {
-    mBuffer = [data mutableCopy];
-    mOffset = 0;
+    buffer = [data mutableCopy];
+    bufferOffset = 0;
   }
   return self;
 }
 
--(BOOL) readAll:(UInt8 *)buf offset:(UInt32)off length:(UInt32)len error:(NSError *__autoreleasing *)error
+-(BOOL) readAll:(UInt8 *)outBuffer offset:(UInt32)outBufferOffset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
-  if ((mBuffer.length - mOffset) < len) {
+  if ((buffer.length - bufferOffset) < length) {
     if (error) {
       *error = [NSError errorWithDomain:TTransportErrorDomain
                                    code:TTransportErrorNoFrameHeader
@@ -63,32 +63,32 @@
     return NO;
   }
 
-  [mBuffer getBytes:buf range:NSMakeRange(mOffset, len)];
-  mOffset += len;
+  [buffer getBytes:outBuffer + outBufferOffset range:NSMakeRange(bufferOffset, length)];
+  bufferOffset += length;
 
-  if (mOffset >= GARBAGE_BUFFER_SIZE) {
-    [mBuffer replaceBytesInRange:NSMakeRange(0, mOffset) withBytes:NULL length:0];
-    mOffset = 0;
+  if (bufferOffset >= GARBAGE_BUFFER_SIZE) {
+    [buffer replaceBytesInRange:NSMakeRange(0, bufferOffset) withBytes:NULL length:0];
+    bufferOffset = 0;
   }
 
   return YES;
 }
 
--(BOOL) write:(const UInt8 *)data offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error
+-(BOOL) write:(const UInt8 *)inBuffer offset:(UInt32)inBufferOffset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
-  [mBuffer appendBytes:data+offset length:length];
+  [buffer appendBytes:inBuffer + inBufferOffset length:length];
 
   return YES;
 }
 
--(BOOL)flush:(NSError *__autoreleasing *)error
+-(BOOL) flush:(NSError *__autoreleasing *)error
 {
   return YES;
 }
 
 -(NSData *) buffer
 {
-  return [mBuffer copy];
+  return [buffer copy];
 }
 
 @end

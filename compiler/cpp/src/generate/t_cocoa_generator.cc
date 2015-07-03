@@ -59,6 +59,9 @@ public:
 
     iter = parsed_options.find("async_clients");
     async_clients_ = (iter != parsed_options.end());
+      
+    iter = parsed_options.find("promise_kit");
+    promise_kit_ = (iter != parsed_options.end());
 
     out_dir_base_ = "gen-cocoa";
   }
@@ -136,7 +139,10 @@ public:
   void generate_cocoa_service_client_send_function_implementation(ofstream& out,
                                                                   t_function* tfunction);
   void generate_cocoa_service_client_send_function_invocation(ofstream& out, t_function* tfunction);
-  void generate_cocoa_service_client_send_async_function_invocation(ofstream& out, t_function* tfunction);
+  void generate_cocoa_service_client_send_async_function_invocation(ofstream& out,
+                                                                    t_function* tfunction);
+  void generate_cocoa_service_client_send_promise_function_invocation(ofstream& out,
+                                                                    t_function* tfunction);
   void generate_cocoa_service_client_recv_function_implementation(ofstream& out,
                                                                   t_function* tfunction);
   void generate_cocoa_service_client_implementation(std::ofstream& out, t_service* tservice);
@@ -199,6 +205,7 @@ public:
   std::string invalid_return_statement(t_function* tfunction);
   std::string function_signature(t_function* tfunction, bool include_error);
   std::string async_function_signature(t_function* tfunction, bool include_error);
+  std::string promise_function_signature(t_function* tfunction);
   std::string argument_list(t_struct* tstruct, bool include_error);
   std::string type_to_enum(t_type* ttype);
   std::string format_string_for_type(t_type* type);
@@ -231,6 +238,7 @@ private:
   bool log_unexpected_;
   bool validate_required_;
   bool async_clients_;
+  bool promise_kit_;
 };
 
 /**
@@ -288,6 +296,11 @@ string t_cocoa_generator::cocoa_thrift_imports() {
                     + "#import \"TProtocolFactory.h\"\n"
                     + "#import \"TBaseClient.h\"\n"
                     + "\n";
+  
+  if (promise_kit_) {
+    result = result + "#import <PromiseKit/PromiseKit.h>\n"
+                    + "\n";
+  }
 
   // Include other Thrift includes
   const vector<t_program*>& includes = program_->get_includes();
@@ -1278,6 +1291,9 @@ void t_cocoa_generator::generate_cocoa_service_async_protocol(ofstream& out, t_s
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     out << "- " << async_function_signature(*f_iter, false) << ";" << endl;
+    if (promise_kit_) {
+      out << "- " << promise_function_signature(*f_iter) << ";" << endl;
+    }
   }
   out << "@end" << endl << endl;
 }
@@ -1446,13 +1462,13 @@ void t_cocoa_generator::generate_cocoa_service_client_recv_function_implementati
 
   // If you get here it's an exception, unless a void function
   if (tfunction->get_returntype()->is_void()) {
-    indent(out) << invalid_return_statement(tfunction) << endl;
+    indent(out) << "return YES;" << endl;
   } else {
     out << indent() << "if (__thriftError)";
     scope_up(out);
-    out << indent() << "*__thriftError = [TApplicationError errorWithDomain: TApplicationErrorDomain" << endl
-        << indent() << "                                               code: TApplicationErrorTypeMissingResult" << endl
-        << indent() << "                                           userInfo: @{TApplicationErrorMethodKey: @\""
+    out << indent() << "*__thriftError = [NSError errorWithDomain: TApplicationErrorDomain" << endl
+        << indent() << "                                     code: TApplicationErrorMissingResult" << endl
+        << indent() << "                                 userInfo: @{TApplicationErrorMethodKey: @\""
         << tfunction->get_name() << "\"}];" << endl;
     scope_down(out);
     out << indent() << "return NO;" << endl;
@@ -1523,6 +1539,40 @@ void t_cocoa_generator::generate_cocoa_service_client_send_async_function_invoca
   out << ": &thriftError]) ";
   scope_up(out);
   out << indent() << "failureBlock(thriftError);" << endl;
+  scope_down(out);
+}
+
+/**
+ * Generates an invocation of a given 'send_' function.
+ *
+ * @param tfunction The service to generate an implementation for
+ */
+void t_cocoa_generator::generate_cocoa_service_client_send_promise_function_invocation(
+                                                                                       ofstream& out,
+                                                                                       t_function* tfunction) {
+  
+  t_struct* arg_struct = tfunction->get_arglist();
+  const vector<t_field*>& fields = arg_struct->get_members();
+  vector<t_field*>::const_iterator fld_iter;
+  out << indent() << "if (![self send_" << tfunction->get_name();
+  bool first = true;
+  for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+    string fieldName = (*fld_iter)->get_name();
+    out << " ";
+    if (first) {
+      first = false;
+      out << ": " << fieldName;
+    } else {
+      out << fieldName << ": " << fieldName;
+    }
+  }
+  if (!fields.empty()) {
+    out << " error";
+  }
+  out << ": &thriftError]) ";
+  scope_up(out);
+  out << indent() << "resolver(thriftError);" << endl
+      << indent() << "return;" << endl;
   scope_down(out);
 }
 
@@ -1697,6 +1747,67 @@ void t_cocoa_generator::generate_cocoa_service_client_async_implementation(ofstr
     scope_down(out);
 
     out << endl;
+    
+    // Promise function
+    if (promise_kit_) {
+      
+      indent(out) << "- " << promise_function_signature(*f_iter) << endl;
+      scope_up(out);
+      
+      out << indent() << "return [PMKPromise promiseWithResolverBlock:^(PMKResolver resolver) {" << endl;
+      indent_up();
+      
+      out << indent() << "NSError *thriftError;" << endl;
+      
+      generate_cocoa_service_client_send_promise_function_invocation(out, *f_iter);
+      
+      out << indent() << "[asyncTransport flush:^{" << endl;
+      indent_up();
+      
+      if (!(*f_iter)->is_oneway()) {
+        out << indent() << "NSError *thriftError;" << endl;
+        
+        if (!(*f_iter)->get_returntype()->is_void()) {
+          out << indent() << type_name((*f_iter)->get_returntype()) << " result;" << endl;
+        }
+        out << indent() << "if (![self recv_" << (*f_iter)->get_name();
+        if (!(*f_iter)->get_returntype()->is_void()) {
+          out << ": &result error";
+        }
+        out << ": &thriftError]) ";
+        scope_up(out);
+        out << indent() << "resolver(thriftError);" << endl
+            << indent() << "return;" << endl;
+        scope_down(out);
+      }
+      
+      out << indent() << "resolver(";
+      if ((*f_iter)->is_oneway() || (*f_iter)->get_returntype()->is_void()) {
+        out << "@YES";
+      } else if (type_can_be_null((*f_iter)->get_returntype())) {
+        out << "result";
+      } else {
+        out << "@(result)";
+      }
+      out << ");" << endl;
+      
+      indent_down();
+      
+      out << indent() << "} failure:^(NSError *error) {" << endl;
+      indent_up();
+      out << indent() << "resolver(error);" << endl;
+      indent_down();
+      out << indent() << "}];" << endl;
+      
+      indent_down();
+      out << indent() << "}];" << endl;
+      
+      scope_down(out);
+      
+      out << endl;
+      
+    }
+    
   }
 
   out << "@end" << endl << endl;
@@ -1777,9 +1888,9 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
   out << indent() << "  if (invocation == nil) {" << endl;
   out << indent() << "    if (![TProtocolUtil skipType: TTypeSTRUCT onProtocol: inProtocol error: __thriftError]) return NO;" << endl;
   out << indent() << "    if (![inProtocol readMessageEnd: __thriftError]) return NO;" << endl;
-  out << indent() << "    TApplicationError * x = [TApplicationError errorWithDomain: TApplicationErrorDomain" << endl;
-  out << indent() << "                                                          code: TApplicationErrorTypeUnknownMethod" << endl;
-  out << indent() << "                                                      userInfo: @{TApplicationErrorMethodKey: messageName}];" << endl;
+  out << indent() << "    NSError * x = [NSError errorWithDomain: TApplicationErrorDomain" << endl;
+  out << indent() << "                                      code: TApplicationErrorUnknownMethod" << endl;
+  out << indent() << "                                  userInfo: @{TApplicationErrorMethodKey: messageName}];" << endl;
   out << indent() << "    if (![outProtocol writeMessageBeginWithName: messageName" << endl;
   out << indent() << "                                           type: TMessageTypeEXCEPTION" << endl;
   out << indent() << "                                     sequenceID: seqID" << endl;
@@ -1808,7 +1919,7 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
     out << endl;
     string funname = (*f_iter)->get_name();
     out << indent() << "- (BOOL) process_" << funname
-        << "_withSequenceID: (int32_t) seqID inProtocol: (id<TProtocol>) inProtocol outProtocol: "
+        << "_withSequenceID: (SInt32) seqID inProtocol: (id<TProtocol>) inProtocol outProtocol: "
            "(id<TProtocol>) outProtocol error:(NSError *__autoreleasing *)__thriftError" << endl;
     scope_up(out);
     string argstype = cocoa_prefix_ + function_args_helper_struct_type(*f_iter);
@@ -2377,13 +2488,13 @@ string t_cocoa_generator::base_type_name(t_base_type* type) {
   case t_base_type::TYPE_BOOL:
     return "BOOL";
   case t_base_type::TYPE_BYTE:
-    return "uint8_t";
+    return "UInt8";
   case t_base_type::TYPE_I16:
-    return "int16_t";
+    return "SInt16";
   case t_base_type::TYPE_I32:
-    return "int32_t";
+    return "SInt32";
   case t_base_type::TYPE_I64:
-    return "int64_t";
+    return "SInt64";
   case t_base_type::TYPE_DOUBLE:
     return "double";
   default:
@@ -2768,10 +2879,21 @@ string t_cocoa_generator::async_function_signature(t_function* tfunction, bool i
     response_param = "void (^)(" + type_name(ttype) + ")";
   }
   std::string result = "(void) " + tfunction->get_name() + argument_list(tfunction->get_arglist(), include_error)
-                       + (targlist->get_members().size() ? " response" : "") + ": ("
-                       + response_param + ") responseBlock "
-                       + "failure : (TAsyncFailureBlock) failureBlock";
+  + (targlist->get_members().size() ? " response" : "") + ": ("
+  + response_param + ") responseBlock "
+  + "failure : (TAsyncFailureBlock) failureBlock";
   return result;
+}
+
+/**
+ * Renders a function signature that returns a promise instead of
+ * literally returning.
+ *
+ * @param tfunction Function definition
+ * @return String of rendered function definition
+ */
+string t_cocoa_generator::promise_function_signature(t_function* tfunction) {
+  return "(AnyPromise *) " + tfunction->get_name() + argument_list(tfunction->get_arglist(), false);
 }
 
 /**
@@ -2893,7 +3015,7 @@ string t_cocoa_generator::format_string_for_type(t_type* type) {
  */
 
 string t_cocoa_generator::call_field_setter(t_field* tfield, string fieldName) {
-  return "self. " + tfield->get_name() + " = " + fieldName + ";";
+  return "self." + tfield->get_name() + " = " + fieldName + ";";
 }
 
 THRIFT_REGISTER_GENERATOR(

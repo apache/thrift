@@ -22,13 +22,13 @@
 
 
 @interface THTTPClient () {
-  NSURL *mURL;
-  NSMutableURLRequest *mRequest;
-  NSMutableData *mRequestData;
-  NSData *mResponseData;
-  size_t mResponseDataOffset;
-  NSString *mUserAgent;
-  int mTimeout;
+  NSURL *url;
+  NSMutableURLRequest *request;
+  NSMutableData *requestData;
+  NSData *responseData;
+  NSUInteger responseDataOffset;
+  NSString *userAgent;
+  int timeout;
 }
 
 @end
@@ -39,20 +39,20 @@
 -(void) setupRequest
 {
   // set up our request object that we'll use for each request
-  mRequest = [[NSMutableURLRequest alloc] initWithURL:mURL];
-  [mRequest setHTTPMethod:@"POST"];
-  [mRequest setValue:@"application/x-thrift" forHTTPHeaderField:@"Content-Type"];
-  [mRequest setValue:@"application/x-thrift" forHTTPHeaderField:@"Accept"];
+  request = [[NSMutableURLRequest alloc] initWithURL:url];
+  [request setHTTPMethod:@"POST"];
+  [request setValue:@"application/x-thrift" forHTTPHeaderField:@"Content-Type"];
+  [request setValue:@"application/x-thrift" forHTTPHeaderField:@"Accept"];
 
-  NSString *userAgent = mUserAgent;
-  if (!userAgent) {
-    userAgent = @"Cocoa/THTTPClient";
+  NSString *validUserAgent = userAgent;
+  if (!validUserAgent) {
+    validUserAgent = @"Cocoa/THTTPClient";
   }
-  [mRequest setValue:userAgent forHTTPHeaderField:@"User-Agent"];
+  [request setValue:validUserAgent forHTTPHeaderField:@"User-Agent"];
 
-  [mRequest setCachePolicy:NSURLRequestReloadIgnoringCacheData];
-  if (mTimeout) {
-    [mRequest setTimeoutInterval:mTimeout];
+  [request setCachePolicy:NSURLRequestReloadIgnoringCacheData];
+  if (timeout) {
+    [request setTimeoutInterval:timeout];
   }
 }
 
@@ -66,29 +66,29 @@
 
 
 -(id) initWithURL:(NSURL *)aURL
-        userAgent:(NSString *)userAgent
-          timeout:(int)timeout
+        userAgent:(NSString *)aUserAgent
+          timeout:(int)aTimeout
 {
   self = [super init];
   if (!self) {
     return nil;
   }
 
-  mTimeout = timeout;
-  mUserAgent = userAgent;
-  mURL = aURL;
+  timeout = aTimeout;
+  userAgent = aUserAgent;
+  url = aURL;
 
   [self setupRequest];
 
   // create our request data buffer
-  mRequestData = [[NSMutableData alloc] initWithCapacity:1024];
+  requestData = [[NSMutableData alloc] initWithCapacity:1024];
 
   return self;
 }
 
 -(void) setURL:(NSURL *)aURL
 {
-  mURL = aURL;
+  url = aURL;
 
   [self setupRequest];
 }
@@ -96,35 +96,36 @@
 -(BOOL) readAll:(UInt8 *)buf offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
   NSRange r;
-  r.location = mResponseDataOffset;
+  r.location = responseDataOffset;
   r.length = length;
 
-  [mResponseData getBytes:buf+offset range:r];
-  mResponseDataOffset += length;
+  [responseData getBytes:buf+offset range:r];
+  responseDataOffset += length;
 
   return length;
 }
 
 -(BOOL) write:(const UInt8 *)data offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
-  [mRequestData appendBytes:data+offset length:length];
+  [requestData appendBytes:data+offset length:length];
 
   return YES;
 }
 
 -(BOOL) flush:(NSError *__autoreleasing *)error
 {
-  [mRequest setHTTPBody:mRequestData];  // not sure if it copies the data
+  [request setHTTPBody:requestData];  // not sure if it copies the data
+
+  responseDataOffset = 0;
 
   // make the HTTP request
   NSURLResponse *response;
-  NSData *responseData =
-    [NSURLConnection sendSynchronousRequest:mRequest returningResponse:&response error:error];
+  responseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:error];
   if (!responseData) {
     return NO;
   }
 
-  [mRequestData setLength:0];
+  [requestData setLength:0];
 
   if (![response isKindOfClass:NSHTTPURLResponse.class]) {
     if (error) {
@@ -144,10 +145,6 @@
     }
     return NO;
   }
-
-  // phew!
-  mResponseData = responseData;
-  mResponseDataOffset = 0;
 
   return YES;
 }

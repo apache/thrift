@@ -23,8 +23,8 @@
 
 
 @interface TNSFileHandleTransport () {
-  NSFileHandle *mInputFileHandle;
-  NSFileHandle *mOutputFileHandle;
+  NSFileHandle *inputFileHandle;
+  NSFileHandle *outputFileHandle;
 }
 
 @end
@@ -39,13 +39,13 @@
 }
 
 
--(id) initWithInputFileHandle:(NSFileHandle *)inputFileHandle
-             outputFileHandle:(NSFileHandle *)outputFileHandle
+-(id) initWithInputFileHandle:(NSFileHandle *)aInputFileHandle
+             outputFileHandle:(NSFileHandle *)aOutputFileHandle
 {
   self = [super init];
   if (self) {
-    mInputFileHandle = inputFileHandle;
-    mOutputFileHandle = outputFileHandle;
+    inputFileHandle = aInputFileHandle;
+    outputFileHandle = aOutputFileHandle;
   }
   return self;
 }
@@ -56,7 +56,7 @@
   int got = 0;
   while (got < len) {
 
-    NSData *d = [mInputFileHandle readDataOfLength:len-got];
+    NSData *d = [inputFileHandle readDataOfLength:len-got];
     if (d.length == 0) {
       if (error) {
         *error = [NSError errorWithDomain:TTransportErrorDomain
@@ -78,7 +78,7 @@
   void *pos = (void *)data + offset;
 
   @try {
-    [mOutputFileHandle writeData:[NSData dataWithBytesNoCopy:pos length:length freeWhenDone:NO]];
+    [outputFileHandle writeData:[NSData dataWithBytesNoCopy:pos length:length freeWhenDone:NO]];
   }
   @catch (NSException *e) {
     if (error) {

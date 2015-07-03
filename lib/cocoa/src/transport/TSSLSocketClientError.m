@@ -17,13 +17,7 @@
  * under the License.
  */
 
-#import "TTransportError.h"
+#import "TSSLSocketClientError.h"
 
 
-extern NSString *TSSLSocketClientErrorDomain;
-
-enum {
-  TSSLSocketClientErrorHostanameResolution  = -10000,
-  TSSLSocketClientErrorSocketCreate         = -10001,
-  TSSLSocketClientErrorConnect              = -10002,
-};
+NSString *TSSLSocketClientErrorDomain = @"TSSLSocketClientErrorDomain";
