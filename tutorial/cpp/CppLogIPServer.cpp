@@ -110,7 +110,7 @@ class CalculatorCloneFactory : virtual public CalculatorIfFactory {
   virtual ~CalculatorCloneFactory() {}
   virtual CalculatorIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo)
   {
-    boost::shared_ptr<TSocket> sock = dynamic_pointer_cast<TSocket>(connInfo.transport);
+    boost::shared_ptr<TSocket> sock = boost::dynamic_pointer_cast<TSocket>(connInfo.transport);
     cout << "Incoming connection\n";
     cout << "\tSocketInfo: "  << sock->getSocketInfo() << "\n";
     cout << "\tPeerHost: "    << sock->getPeerHost() << "\n";
