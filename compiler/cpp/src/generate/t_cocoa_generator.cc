@@ -1326,8 +1326,8 @@ void t_cocoa_generator::generate_cocoa_service_client_async_interface(ofstream& 
       << cocoa_prefix_ << tservice->get_name() << "Async> " << endl
       << endl;
 
-  out << "- (id) initWithProtocolFactory: (id <TProtocolFactory>) factory "
-         "transport: (id <TAsyncTransport>) transport;" << endl;
+  out << "- (id) initWithProtocolFactory: (id <TProtocolFactory>) protocolFactory "
+      << "transportFactory: (id <TAsyncTransportFactory>) transportFactory;" << endl;
   out << "@end" << endl << endl;
 }
 
@@ -1661,7 +1661,7 @@ void t_cocoa_generator::generate_cocoa_service_client_async_implementation(ofstr
   
   out << "@implementation " << name << endl
       << endl << "- (id) initWithProtocolFactory: (id <TProtocolFactory>) aProtocolFactory "
-                 "transport: (id <TAsyncTransportFactory>) aTransportFactory;" << endl;
+                 "transportFactory: (id <TAsyncTransportFactory>) aTransportFactory;" << endl;
 
   scope_up(out);
   out << indent() << "self = [super init];" << endl;
