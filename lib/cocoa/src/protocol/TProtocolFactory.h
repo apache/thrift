@@ -24,6 +24,6 @@
 
 @protocol TProtocolFactory <NSObject>
 
-- (id <TProtocol>) newProtocolOnTransport: (id <TTransport>) transport;
+-(id<TProtocol>) newProtocolOnTransport:(id<TTransport>)transport;
 
 @end

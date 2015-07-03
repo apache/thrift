@@ -20,17 +20,9 @@
 #import <Foundation/Foundation.h>
 #import "TNSStreamTransport.h"
 
-@interface TSocketClient : TNSStreamTransport 
-#if TARGET_OS_IPHONE || (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6)
-<NSStreamDelegate>
-#endif
-{
-}
+@interface TSocketClient : TNSStreamTransport
 
-- (id) initWithHostname: (NSString *) hostname
-                   port: (UInt32) port;
+-(id) initWithHostname:(NSString *)hostname
+                  port:(int)port;
 
 @end
-
-
-

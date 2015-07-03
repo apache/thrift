@@ -17,26 +17,7 @@
  * under the License.
  */
 
-#import "TSSLSocketException.h"
+#import <Foundation/Foundation.h>
 
-@implementation TSSLSocketException
 
-+ (id) exceptionWithReason: (NSString *) reason
-                     error: (NSError *) error
-{
-    NSDictionary * userInfo = nil;
-    if (error != nil) {
-        userInfo = [NSDictionary dictionaryWithObject: error forKey: @"error"];
-    }
-    
-    return [super exceptionWithName: @"TSSLSocketException"
-                             reason: reason
-                           userInfo: userInfo];
-}
-
-+ (id) exceptionWithReason: (NSString *) reason
-{
-    return [self exceptionWithReason: reason error: nil];
-}
-
-@end
+extern NSString *TErrorDomain;

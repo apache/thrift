@@ -18,12 +18,12 @@
  */
 
 #import "TTransport.h"
-#import "TException.h"
 
-typedef void(^TAsyncFailureBlock)(TException *);
+
+typedef void (^TAsyncFailureBlock)(NSError *);
 
 @protocol TAsyncTransport <TTransport>
 
-- (void) flush:(dispatch_block_t)flushed failure:(TAsyncFailureBlock)failure;
+-(void) flush:(dispatch_block_t)flushed failure:(TAsyncFailureBlock)failure;
 
 @end

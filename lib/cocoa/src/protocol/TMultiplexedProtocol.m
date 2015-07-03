@@ -20,9 +20,14 @@
 #import "TMultiplexedProtocol.h"
 
 #import "TProtocol.h"
-#import "TObjective-C.h"
 
 NSString *const MULTIPLEXED_SERVICE_SEPERATOR = @":";
+
+@interface TMultiplexedProtocol () {
+  NSString *serviceName;
+}
+
+@end
 
 @implementation TMultiplexedProtocol
 
@@ -32,36 +37,29 @@ NSString *const MULTIPLEXED_SERVICE_SEPERATOR = @":";
     self = [super initWithProtocol:protocol];
 
     if (self) {
-        mServiceName = [name retain_stub];
+        serviceName = name;
     }
     return self;
 }
 
-- (void) writeMessageBeginWithName: (NSString *) name
+- (BOOL) writeMessageBeginWithName: (NSString *) name
                               type: (int) messageType
                         sequenceID: (int) sequenceID
+                             error: (NSError *__autoreleasing *)error
 {
     switch (messageType) {
-        case TMessageType_CALL:
-        case TMessageType_ONEWAY:
+        case TMessageTypeCALL:
+        case TMessageTypeONEWAY:
             {
-                NSMutableString * serviceFunction = [[NSMutableString alloc] initWithString:mServiceName];
+                NSMutableString * serviceFunction = [[NSMutableString alloc] initWithString:serviceName];
                 [serviceFunction appendString:MULTIPLEXED_SERVICE_SEPERATOR];
                 [serviceFunction appendString:name];
-                [super writeMessageBeginWithName:serviceFunction type:messageType sequenceID:sequenceID];
-                [serviceFunction release_stub];
+                return [super writeMessageBeginWithName:serviceFunction type:messageType sequenceID:sequenceID error:error];
             }
             break;
         default:
-            [super writeMessageBeginWithName:name type:messageType sequenceID:sequenceID];
-            break;
+            return [super writeMessageBeginWithName:name type:messageType sequenceID:sequenceID error:error];
     }
-}
-
-- (void) dealloc
-{
-    [mServiceName release_stub];
-    [super dealloc_stub];
 }
 
 @end

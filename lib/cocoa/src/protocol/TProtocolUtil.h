@@ -24,6 +24,6 @@
 
 }
 
-+ (void) skipType: (int) type onProtocol: (id <TProtocol>) protocol;
++(BOOL) skipType:(int)type onProtocol:(id <TProtocol>)protocol error:(NSError **)error;
 
-@end
+@end;

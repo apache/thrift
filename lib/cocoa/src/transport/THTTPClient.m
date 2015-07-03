@@ -18,48 +18,56 @@
  */
 
 #import "THTTPClient.h"
-#import "TTransportException.h"
-#import "TObjective-C.h"
+#import "TTransportError.h"
+
+
+@interface THTTPClient () {
+  NSURL *mURL;
+  NSMutableURLRequest *mRequest;
+  NSMutableData *mRequestData;
+  NSData *mResponseData;
+  size_t mResponseDataOffset;
+  NSString *mUserAgent;
+  int mTimeout;
+}
+
+@end
+
 
 @implementation THTTPClient
 
-
-- (void) setupRequest
+-(void) setupRequest
 {
-  if (mRequest != nil) {
-    [mRequest release_stub];
-  }
-
   // set up our request object that we'll use for each request
-  mRequest = [[NSMutableURLRequest alloc] initWithURL: mURL];
-  [mRequest setHTTPMethod: @"POST"];
-  [mRequest setValue: @"application/x-thrift" forHTTPHeaderField: @"Content-Type"];
-  [mRequest setValue: @"application/x-thrift" forHTTPHeaderField: @"Accept"];
+  mRequest = [[NSMutableURLRequest alloc] initWithURL:mURL];
+  [mRequest setHTTPMethod:@"POST"];
+  [mRequest setValue:@"application/x-thrift" forHTTPHeaderField:@"Content-Type"];
+  [mRequest setValue:@"application/x-thrift" forHTTPHeaderField:@"Accept"];
 
-  NSString * userAgent = mUserAgent;
+  NSString *userAgent = mUserAgent;
   if (!userAgent) {
     userAgent = @"Cocoa/THTTPClient";
   }
-  [mRequest setValue: userAgent forHTTPHeaderField: @"User-Agent"];
+  [mRequest setValue:userAgent forHTTPHeaderField:@"User-Agent"];
 
-  [mRequest setCachePolicy: NSURLRequestReloadIgnoringCacheData];
+  [mRequest setCachePolicy:NSURLRequestReloadIgnoringCacheData];
   if (mTimeout) {
-    [mRequest setTimeoutInterval: mTimeout];
+    [mRequest setTimeoutInterval:mTimeout];
   }
 }
 
 
-- (id) initWithURL: (NSURL *) aURL
+-(id) initWithURL:(NSURL *)aURL
 {
-  return [self initWithURL: aURL
-                 userAgent: nil
-                   timeout: 0];
+  return [self initWithURL:aURL
+                 userAgent:nil
+                   timeout:0];
 }
 
 
-- (id) initWithURL: (NSURL *) aURL
-         userAgent: (NSString *) userAgent
-           timeout: (int) timeout
+-(id) initWithURL:(NSURL *)aURL
+        userAgent:(NSString *)userAgent
+          timeout:(int)timeout
 {
   self = [super init];
   if (!self) {
@@ -67,95 +75,81 @@
   }
 
   mTimeout = timeout;
-  if (userAgent) {
-    mUserAgent = [userAgent retain_stub];
-  }
-  mURL = [aURL retain_stub];
+  mUserAgent = userAgent;
+  mURL = aURL;
 
   [self setupRequest];
 
   // create our request data buffer
-  mRequestData = [[NSMutableData alloc] initWithCapacity: 1024];
+  mRequestData = [[NSMutableData alloc] initWithCapacity:1024];
 
   return self;
 }
 
-
-- (void) setURL: (NSURL *) aURL
+-(void) setURL:(NSURL *)aURL
 {
-  [aURL retain_stub];
-  [mURL release_stub];
   mURL = aURL;
 
   [self setupRequest];
 }
 
-
-- (void) dealloc
-{
-  [mURL release_stub];
-  [mUserAgent release_stub];
-  [mRequest release_stub];
-  [mRequestData release_stub];
-  [mResponseData release_stub];
-  [super dealloc_stub];
-}
-
-
-- (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
+-(BOOL) readAll:(UInt8 *)buf offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
   NSRange r;
   r.location = mResponseDataOffset;
   r.length = length;
 
-  [mResponseData getBytes: buf+offset range: r];
+  [mResponseData getBytes:buf+offset range:r];
   mResponseDataOffset += length;
 
   return length;
 }
 
-
-- (void) write: (const uint8_t *) data offset: (size_t) offset length: (size_t) length
+-(BOOL) write:(const UInt8 *)data offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
-  [mRequestData appendBytes: data+offset length: length];
+  [mRequestData appendBytes:data+offset length:length];
+
+  return YES;
 }
 
-
-- (void) flush
+-(BOOL) flush:(NSError *__autoreleasing *)error
 {
-  [mRequest setHTTPBody: mRequestData]; // not sure if it copies the data
+  [mRequest setHTTPBody:mRequestData];  // not sure if it copies the data
 
   // make the HTTP request
-  NSURLResponse * response;
-  NSError * error;
-  NSData * responseData =
-    [NSURLConnection sendSynchronousRequest: mRequest returningResponse: &response error: &error];
-
-  [mRequestData setLength: 0];
-
-  if (responseData == nil) {
-    @throw [TTransportException exceptionWithName: @"TTransportException"
-                                reason: @"Could not make HTTP request"
-                                error: error];
-  }
-  if (![response isKindOfClass: [NSHTTPURLResponse class]]) {
-    @throw [TTransportException exceptionWithName: @"TTransportException"
-                                           reason: [NSString stringWithFormat: @"Unexpected NSURLResponse type: %@",
-                                                    NSStringFromClass([response class])]];
+  NSURLResponse *response;
+  NSData *responseData =
+    [NSURLConnection sendSynchronousRequest:mRequest returningResponse:&response error:error];
+  if (!responseData) {
+    return NO;
   }
 
-  NSHTTPURLResponse * httpResponse = (NSHTTPURLResponse *) response;
+  [mRequestData setLength:0];
+
+  if (![response isKindOfClass:NSHTTPURLResponse.class]) {
+    if (error) {
+      *error = [NSError errorWithDomain:TTransportErrorDomain
+                                   code:TTransportErrorInvalidHttpResponse
+                               userInfo:@{}];
+    }
+    return NO;
+  }
+
+  NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
   if ([httpResponse statusCode] != 200) {
-    @throw [TTransportException exceptionWithName: @"TTransportException"
-                                           reason: [NSString stringWithFormat: @"Bad response from HTTP server: %ld",
-                                                    (long)[httpResponse statusCode]]];
+    if (error) {
+      *error = [NSError errorWithDomain:TTransportErrorDomain
+                                   code:TTransportErrorInvalidHttpStatus
+                               userInfo:@{@"statusCode":@(httpResponse.statusCode)}];
+    }
+    return NO;
   }
 
   // phew!
-  [mResponseData release_stub];
-  mResponseData = [responseData retain_stub];
+  mResponseData = responseData;
   mResponseDataOffset = 0;
-}
 
+  return YES;
+}
 
 @end

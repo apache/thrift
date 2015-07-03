@@ -21,9 +21,8 @@
 
 #import "TProtocol.h"
 
-@interface TProtocolDecorator : NSObject <TProtocol> {
-    id<TProtocol> mConcreteProtocol;
-}
+
+@interface TProtocolDecorator : NSObject <TProtocol>
 
 - (id) initWithProtocol: (id <TProtocol>) protocol;
 

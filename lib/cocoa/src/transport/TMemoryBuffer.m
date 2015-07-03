@@ -18,57 +18,77 @@
  */
 
 #import "TMemoryBuffer.h"
-#import "TTransportException.h"
-#import "TObjective-C.h"
+#import "TTransportError.h"
+
 
 #define GARBAGE_BUFFER_SIZE 4096 // 4KiB
 
+
+@interface TMemoryBuffer () {
+  NSMutableData *mBuffer;
+  UInt32 mOffset;
+}
+
+@end
+
+
 @implementation TMemoryBuffer
-- (id)init {
-	if ((self = [super init])) {
-		mBuffer = [[NSMutableData alloc] init];
-		mOffset = 0;
-	}
-	return self;
-}
 
-- (id)initWithData:(NSData *)data {
-	if ((self = [super init])) {
-		mBuffer = [data mutableCopy];
-		mOffset = 0;
-	}
-	return self;
-}
-
-- (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
+-(id) init
 {
-	if ([mBuffer length] - mOffset < length) {
-		@throw [TTransportException exceptionWithReason:@"Not enough bytes remain in buffer"];
-	}
-	[mBuffer getBytes:buf range:NSMakeRange(mOffset, length)];
-	mOffset += length;
-	if (mOffset >= GARBAGE_BUFFER_SIZE) {
-		[mBuffer replaceBytesInRange:NSMakeRange(0, mOffset) withBytes:NULL length:0];
-		mOffset = 0;
-	}
-	return length;
+  if ((self = [super init])) {
+    mBuffer = [NSMutableData new];
+    mOffset = 0;
+  }
+  return self;
 }
 
-- (void) write: (const uint8_t *) data offset: (size_t) offset length: (size_t) length
+-(id) initWithData:(NSData *)data
 {
-	[mBuffer appendBytes:data+offset length:length];
+  if (self = [super init]) {
+    mBuffer = [data mutableCopy];
+    mOffset = 0;
+  }
+  return self;
 }
 
-- (void)flush {
-	// noop
+-(BOOL) readAll:(UInt8 *)buf offset:(UInt32)off length:(UInt32)len error:(NSError *__autoreleasing *)error
+{
+  if ((mBuffer.length - mOffset) < len) {
+    if (error) {
+      *error = [NSError errorWithDomain:TTransportErrorDomain
+                                   code:TTransportErrorNoFrameHeader
+                               userInfo:@{}];
+    }
+    return NO;
+  }
+
+  [mBuffer getBytes:buf range:NSMakeRange(mOffset, len)];
+  mOffset += len;
+
+  if (mOffset >= GARBAGE_BUFFER_SIZE) {
+    [mBuffer replaceBytesInRange:NSMakeRange(0, mOffset) withBytes:NULL length:0];
+    mOffset = 0;
+  }
+
+  return YES;
 }
 
-- (NSData *)getBuffer {
-	return [[mBuffer copy] autorelease_stub];
+-(BOOL) write:(const UInt8 *)data offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error
+{
+  [mBuffer appendBytes:data+offset length:length];
+
+  return YES;
 }
 
-- (void)dealloc {
-	[mBuffer release_stub];
-	[super dealloc_stub];
+-(BOOL)flush:(NSError *__autoreleasing *)error
+{
+  return YES;
 }
+
+-(NSData *) buffer
+{
+  return [mBuffer copy];
+}
+
 @end

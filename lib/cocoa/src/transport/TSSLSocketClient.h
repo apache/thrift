@@ -20,21 +20,12 @@
 #import <Foundation/Foundation.h>
 #import "TNSStreamTransport.h"
 
-@interface TSSLSocketClient : TNSStreamTransport
-#if TARGET_OS_IPHONE || (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6)
-<NSStreamDelegate>
-#endif
-{
-    NSInputStream *inputStream;
-    NSOutputStream *outputStream;
-@private
-    NSString *sslHostname;
-    int sd;
-}
+@interface TSSLSocketClient : TNSStreamTransport <NSStreamDelegate>
 
-- (id) initWithHostname: (NSString *) hostname
-                   port: (int) port;
+-(id) initWithHostname:(NSString *)hostname
+                  port:(int)port
+                 error:(NSError **)error;
 
-- (BOOL) isOpen;
+-(BOOL) isOpen;
 
 @end

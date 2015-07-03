@@ -17,13 +17,7 @@
  * under the License.
  */
 
-#import <Foundation/Foundation.h>
-#import "TTransport.h"
+#import "TSSLSocketError.h"
 
-@interface TMemoryBuffer : NSObject <TTransport>
 
-@property (readonly, nonatomic) NSData *buffer;
-
--(id) initWithData:(NSData *)data;
-
-@end
+NSString *TSSLSocketClientErrorDomain;

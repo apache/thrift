@@ -17,28 +17,7 @@
  * under the License.
  */
 
-#import "TTransportException.h"
-#import "TObjective-C.h"
-
-@implementation TTransportException
-
-+ (id) exceptionWithReason: (NSString *) reason
-                     error: (NSError *) error
-{
-  NSDictionary * userInfo = nil;
-  if (error != nil) {
-    userInfo = [NSDictionary dictionaryWithObject: error forKey: @"error"];
-  }
-
-  return [super exceptionWithName: @"TTransportException"
-                           reason: reason
-                         userInfo: userInfo];
-}
+#import "TTransportError.h"
 
 
-+ (id) exceptionWithReason: (NSString *) reason
-{
-  return [self exceptionWithReason: reason error: nil];
-}
-
-@end
+NSString *TTransportErrorDomain = @"TTransportErrorDomain";

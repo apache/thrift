@@ -22,30 +22,23 @@
 #import "TProtocolFactory.h"
 
 
-@interface TBinaryProtocol : NSObject <TProtocol> {
-  id <TTransport> mTransport;
-  BOOL mStrictRead;
-  BOOL mStrictWrite;
-  int32_t mMessageSizeLimit;
-}
+@interface TBinaryProtocol : NSObject <TProtocol>
 
-- (id) initWithTransport: (id <TTransport>) transport;
+@property (assign, nonatomic) NSUInteger messageSizeLimit;
 
-- (id) initWithTransport: (id <TTransport>) transport
-              strictRead: (BOOL) strictRead
-             strictWrite: (BOOL) strictWrite;
+-(id) initWithTransport:(id <TTransport>)transport;
 
-- (int32_t) messageSizeLimit;
-- (void) setMessageSizeLimit: (int32_t) sizeLimit;
+-(id) initWithTransport:(id <TTransport>)transport
+             strictRead:(BOOL)strictRead
+            strictWrite:(BOOL)strictWrite;
 
-@end
+@end;
 
 
-@interface TBinaryProtocolFactory : NSObject <TProtocolFactory> {
-}
+@interface TBinaryProtocolFactory : NSObject <TProtocolFactory>
 
-+ (TBinaryProtocolFactory *) sharedFactory;
++(TBinaryProtocolFactory *) sharedFactory;
 
-- (TBinaryProtocol *) newProtocolOnTransport: (id <TTransport>) transport;
+-(TBinaryProtocol *) newProtocolOnTransport:(id <TTransport>)transport;
 
 @end

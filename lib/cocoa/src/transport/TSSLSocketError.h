@@ -17,9 +17,13 @@
  * under the License.
  */
 
-#import "TException.h"
+#import "TTransportError.h"
 
-@interface TProtocolException : TException {
-}
 
-@end
+extern NSString *TSSLSocketClientErrorDomain;
+
+enum {
+  TSSLSocketClientErrorHostanameResolution  = -10000,
+  TSSLSocketClientErrorSocketCreate         = -10001,
+  TSSLSocketClientErrorConnect              = -10002,
+};

@@ -17,14 +17,24 @@
  * under the License.
  */
 
-#import "TException.h"
+#import "TError.h"
 
-@interface TTransportException : TException {
-}
 
-+ (id) exceptionWithReason: (NSString *) reason
-                     error: (NSError *) error;
+extern NSString *TProtocolErrorDomain;
 
-+ (id) exceptionWithReason: (NSString *) reason;
+typedef NS_OPTIONS (int, TProtocolErrors) {
+  TProtocolErrorNoMemory                  = -10000,
+  TProtocolErrorBadMessageVersion         = -10001,
+  TProtocolErrorMissingMessageVersion     = -10002,
+  TProtocolErrorMessageTooBig             = -10003,
+  TProtocolErrorMissingRequiredField      = -10004,
+  TProtocolErrorProtocolIdMismatch        = -10005,
+  TProtocolErrorProtocolVersionMismatch   = -10006,
+  TProtocolErrorUnknownType               = -10007
+};
 
-@end
+
+extern NSString *TProtocolErrorFieldNameKey;
+extern NSString *TProtocolErrorExpectedIdKey;
+extern NSString *TProtocolErrorExpectedVersionKey;
+extern NSString *TProtocolErrorTypeKey;

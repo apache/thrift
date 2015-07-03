@@ -17,7 +17,17 @@
  * under the License.
  */
 
-#import "TProtocolException.h"
+#import "TError.h"
 
-@implementation TProtocolException
-@end
+extern NSString *TTransportErrorDomain;
+
+enum {
+  TTransportErrorNoFrameHeader  = -30001,
+  TTransportErrorUnderflow      = -30002,
+  TTransportErrorFailedWrite    = -30003,
+  TTransportErrorStreamClosed   = -30004,
+  TTransportErrorEOF            = -30005,
+
+  TTransportErrorInvalidHttpResponse  = -40001,
+  TTransportErrorInvalidHttpStatus    = -40002
+};

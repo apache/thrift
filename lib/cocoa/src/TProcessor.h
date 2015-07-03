@@ -23,7 +23,8 @@
 
 @protocol TProcessor <NSObject>
 
-- (BOOL) processOnInputProtocol: (id <TProtocol>) inProtocol
-                 outputProtocol: (id <TProtocol>) outProtocol;
+-(BOOL) processOnInputProtocol:(id <TProtocol>)inProtocol
+                outputProtocol:(id <TProtocol>)outProtocol
+                         error:(NSError **)error;
 
 @end

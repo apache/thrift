@@ -20,9 +20,7 @@
 #import <Foundation/Foundation.h>
 #import "TTransport.h"
 
-@interface TFramedTransport : NSObject <TTransport> {
-    id <TTransport> mTransport;
-}
+@interface TFramedTransport : NSObject <TTransport>
 
 - (id) initWithTransport: (id <TTransport>) transport;
 

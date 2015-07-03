@@ -18,13 +18,10 @@
  */
 
 #import "TProtocol.h"
-#import "TApplicationException.h"
+#import "TApplicationError.h"
 
-@interface TBaseClient : NSObject {
-    id <TProtocol> inProtocol;
-    id <TProtocol> outProtocol;
-}
+@interface TBaseClient : NSObject
 
-- (TApplicationException *)checkIncomingMessageException;
+-(NSError *) checkIncomingMessageException:(id<TProtocol>)protocol;
 
 @end

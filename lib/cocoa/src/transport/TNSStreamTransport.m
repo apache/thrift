@@ -18,79 +18,119 @@
  */
 
 #import "TNSStreamTransport.h"
-#import "TTransportException.h"
-#import "TObjective-C.h"
+#import "TTransportError.h"
+
+
+@interface TNSStreamTransport () {
+  NSInputStream *input;
+  NSOutputStream *output;
+}
+
+@end
 
 
 @implementation TNSStreamTransport
 
-- (id) initWithInputStream: (NSInputStream *) input
-              outputStream: (NSOutputStream *) output
+-(id) initWithInputStream:(NSInputStream *)aInput
+             outputStream:(NSOutputStream *)aOutput
 {
   self = [super init];
-  self.mInput = [input retain_stub];
-  self.mOutput = [output retain_stub];
+  if (self) {
+    input = aInput;
+    output = aOutput;
+  }
   return self;
 }
 
-- (id) initWithInputStream: (NSInputStream *) input
+-(id) initWithInputStream:(NSInputStream *)aInput
 {
-  return [self initWithInputStream: input outputStream: nil];
+  return [self initWithInputStream:aInput outputStream:nil];
 }
 
-- (id) initWithOutputStream: (NSOutputStream *) output
+-(id) initWithOutputStream:(NSOutputStream *)aOutput
 {
-  return [self initWithInputStream: nil outputStream: output];
+  return [self initWithInputStream:nil outputStream:aOutput];
 }
 
-- (void) dealloc
+-(BOOL) readAll:(UInt8 *)buf offset:(UInt32)off length:(UInt32)len error:(NSError *__autoreleasing *)error
 {
-  [self.mInput release_stub];
-  [self.mOutput release_stub];
-  [super dealloc_stub];
-}
+  int got = 0;
+  NSInteger total = 0;
+  while (got < len) {
 
+    total = [input read:buf+off+got maxLength:len-got];
+    if (total <= 0) {
 
-- (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
-{
-  size_t totalBytesRead = 0;
-  ssize_t bytesRead = 0;
-  while (totalBytesRead < length) {
-    bytesRead = [self.mInput read: buf+offset+totalBytesRead maxLength: length-totalBytesRead];
+      if (error) {
+        *error = [NSError errorWithDomain:TTransportErrorDomain
+                                     code:TTransportErrorStreamClosed
+                                 userInfo:@{}];
+      }
+      return NO;
 
-    BOOL encounteredErrorOrEOF = (bytesRead <= 0);
-    if (encounteredErrorOrEOF) {
-      @throw [TTransportException exceptionWithReason: @"Cannot read. Remote side has closed."];
-    } else {
-        /* bytesRead is guaranteed to be positive and within the range representable by size_t. */
-        totalBytesRead += (size_t)bytesRead;
     }
+
+    got += total;
   }
-  return totalBytesRead;
+
+  return YES;
 }
 
 
-- (void) write: (const uint8_t *) data offset: (size_t) offset length: (size_t) length
+-(BOOL) write:(const UInt8 *)data offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
-  size_t totalBytesWritten = 0;
-  ssize_t bytesWritten = 0;
-  while (totalBytesWritten < length) {
-    bytesWritten = [self.mOutput write: data+offset+totalBytesWritten maxLength: length-totalBytesWritten];
-    if (bytesWritten < 0) {
-      @throw [TTransportException exceptionWithReason: @"Error writing to transport output stream."
-                                                error: [self.mOutput streamError]];
-    } else if (bytesWritten == 0) {
-      @throw [TTransportException exceptionWithReason: @"End of output stream."];
-    } else {
-        /* bytesWritten is guaranteed to be positive and within the range representable by size_t. */
-        totalBytesWritten += (size_t)bytesWritten;
+  int got = 0;
+  NSInteger total = 0;
+  while (got < length) {
+
+    total = [output write:data+offset+got maxLength:length-got];
+    if (total == -1) {
+      if (error) {
+        *error = [NSError errorWithDomain:TTransportErrorDomain
+                                     code:TTransportErrorFailedWrite
+                                 userInfo:@{}];
+      }
+      return NO;
     }
+    else if (total == 0) {
+      if (error) {
+        *error = [NSError errorWithDomain:TTransportErrorDomain
+                                     code:TTransportErrorEOF
+                                 userInfo:@{}];
+      }
+      return NO;
+    }
+
+    got += total;
+  }
+
+  return YES;
+}
+
+-(void) close
+{
+  if (input) {
+    // Close and reset inputstream
+    CFReadStreamSetProperty((__bridge CFReadStreamRef)(input), kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
+    [input setDelegate:nil];
+    [input close];
+    [input removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    input = nil;
+  }
+
+  if (output) {
+    // Close and reset outputstream
+    CFWriteStreamSetProperty((__bridge CFWriteStreamRef)(output), kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
+    [output setDelegate:nil];
+    [output close];
+    [output removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    output = nil;
   }
 }
 
-- (void) flush
+-(BOOL) flush:(NSError *__autoreleasing *)error
 {
-  // no flush for you!
+  return YES;
 }
 
 @end
