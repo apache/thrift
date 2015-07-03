@@ -22,6 +22,7 @@
 extern NSString *TTransportErrorDomain;
 
 enum {
+  TTransportErrorUnknown        = -30000,
   TTransportErrorNoFrameHeader  = -30001,
   TTransportErrorUnderflow      = -30002,
   TTransportErrorFailedWrite    = -30003,

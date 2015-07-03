@@ -137,14 +137,15 @@ public:
   void generate_cocoa_service_client_async_interface(std::ofstream& out, t_service* tservice);
 
   void generate_cocoa_service_client_send_function_implementation(ofstream& out,
-                                                                  t_function* tfunction);
+                                                                  t_function* tfunction,
+                                                                  bool needs_protocol);
   void generate_cocoa_service_client_send_function_invocation(ofstream& out, t_function* tfunction);
   void generate_cocoa_service_client_send_async_function_invocation(ofstream& out,
-                                                                    t_function* tfunction);
-  void generate_cocoa_service_client_send_promise_function_invocation(ofstream& out,
-                                                                    t_function* tfunction);
+                                                                    t_function* tfunction,
+                                                                    string failureBlockName);
   void generate_cocoa_service_client_recv_function_implementation(ofstream& out,
-                                                                  t_function* tfunction);
+                                                                  t_function* tfunction,
+                                                                  bool needs_protocol);
   void generate_cocoa_service_client_implementation(std::ofstream& out, t_service* tservice);
   void generate_cocoa_service_client_async_implementation(std::ofstream& out, t_service* tservice);
 
@@ -206,7 +207,7 @@ public:
   std::string function_signature(t_function* tfunction, bool include_error);
   std::string async_function_signature(t_function* tfunction, bool include_error);
   std::string promise_function_signature(t_function* tfunction);
-  std::string argument_list(t_struct* tstruct, bool include_error);
+  std::string argument_list(t_struct* tstruct, string protocol_name, bool include_error);
   std::string type_to_enum(t_type* ttype);
   std::string format_string_for_type(t_type* type);
   std::string call_field_setter(t_field* tfield, std::string fieldName);
@@ -1351,7 +1352,8 @@ void t_cocoa_generator::generate_cocoa_service_server_interface(ofstream& out,
 
 void t_cocoa_generator::generate_cocoa_service_client_send_function_implementation(
     ofstream& out,
-    t_function* tfunction) {
+    t_function* tfunction,
+    bool needs_protocol) {
   string funname = tfunction->get_name();
 
   t_function send_function(g_type_bool,
@@ -1361,7 +1363,7 @@ void t_cocoa_generator::generate_cocoa_service_client_send_function_implementati
   string argsname = tfunction->get_name() + "_args";
 
   // Open function
-  indent(out) << "- (BOOL) send_" << tfunction->get_name() << argument_list(tfunction->get_arglist(), true) << endl;
+  indent(out) << "- (BOOL) send_" << tfunction->get_name() << argument_list(tfunction->get_arglist(), needs_protocol ? "outProtocol" : "", true) << endl;
   scope_up(out);
   
   // Serialize the request
@@ -1407,13 +1409,22 @@ void t_cocoa_generator::generate_cocoa_service_client_send_function_implementati
 
 void t_cocoa_generator::generate_cocoa_service_client_recv_function_implementation(
     ofstream& out,
-    t_function* tfunction) {
+    t_function* tfunction,
+    bool needs_protocol) {
 
   
   // Open function
   indent(out) << "- (BOOL) recv_" << tfunction->get_name();
   if (!tfunction->get_returntype()->is_void()) {
-    out << ": (" << type_name(tfunction->get_returntype()) << " *) result error";
+    out << ": (" << type_name(tfunction->get_returntype()) << " *) result ";
+    if (needs_protocol) {
+      out << "protocol";
+    } else {
+      out << "error";
+    }
+  }
+  if (needs_protocol) {
+    out << ": (id<TProtocol>) inProtocol error";
   }
   out << ": (NSError * __autoreleasing *)__thriftError" << endl;
   scope_up(out);
@@ -1516,7 +1527,8 @@ void t_cocoa_generator::generate_cocoa_service_client_send_function_invocation(
  */
 void t_cocoa_generator::generate_cocoa_service_client_send_async_function_invocation(
                                                                                      ofstream& out,
-                                                                                     t_function* tfunction) {
+                                                                                     t_function* tfunction,
+                                                                                     string failureBlockName) {
   
   t_struct* arg_struct = tfunction->get_arglist();
   const vector<t_field*>& fields = arg_struct->get_members();
@@ -1534,44 +1546,11 @@ void t_cocoa_generator::generate_cocoa_service_client_send_async_function_invoca
     }
   }
   if (!fields.empty()) {
-    out << " error";
+    out << " protocol";
   }
-  out << ": &thriftError]) ";
+  out << ": protocol error: &thriftError]) ";
   scope_up(out);
-  out << indent() << "failureBlock(thriftError);" << endl;
-  scope_down(out);
-}
-
-/**
- * Generates an invocation of a given 'send_' function.
- *
- * @param tfunction The service to generate an implementation for
- */
-void t_cocoa_generator::generate_cocoa_service_client_send_promise_function_invocation(
-                                                                                       ofstream& out,
-                                                                                       t_function* tfunction) {
-  
-  t_struct* arg_struct = tfunction->get_arglist();
-  const vector<t_field*>& fields = arg_struct->get_members();
-  vector<t_field*>::const_iterator fld_iter;
-  out << indent() << "if (![self send_" << tfunction->get_name();
-  bool first = true;
-  for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-    string fieldName = (*fld_iter)->get_name();
-    out << " ";
-    if (first) {
-      first = false;
-      out << ": " << fieldName;
-    } else {
-      out << fieldName << ": " << fieldName;
-    }
-  }
-  if (!fields.empty()) {
-    out << " error";
-  }
-  out << ": &thriftError]) ";
-  scope_up(out);
-  out << indent() << "resolver(thriftError);" << endl
+  out << indent() << failureBlockName << "(thriftError);" << endl
       << indent() << "return;" << endl;
   scope_down(out);
 }
@@ -1623,10 +1602,10 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
   vector<t_function*>::const_iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
 
-    generate_cocoa_service_client_send_function_implementation(out, *f_iter);
+    generate_cocoa_service_client_send_function_implementation(out, *f_iter, false);
 
     if (!(*f_iter)->is_oneway()) {
-      generate_cocoa_service_client_recv_function_implementation(out, *f_iter);
+      generate_cocoa_service_client_recv_function_implementation(out, *f_iter, false);
     }
 
     // Open function
@@ -1672,9 +1651,8 @@ void t_cocoa_generator::generate_cocoa_service_client_async_implementation(ofstr
   out << "@interface " << name << " () ";
   scope_up(out);
   out << endl;
-  out << indent() << "id<TProtocol> inProtocol;" << endl;
-  out << indent() << "id<TProtocol> outProtocol;" << endl;
-  out << indent() << "id<TAsyncTransport> asyncTransport;" << endl;
+  out << indent() << "id<TProtocolFactory> protocolFactory;" << endl;
+  out << indent() << "id<TAsyncTransportFactory> transportFactory;" << endl;
   out << endl;
   scope_down(out);
   out << endl;
@@ -1682,15 +1660,14 @@ void t_cocoa_generator::generate_cocoa_service_client_async_implementation(ofstr
   
   
   out << "@implementation " << name << endl
-      << endl << "- (id) initWithProtocolFactory: (id <TProtocolFactory>) factory "
-                 "transport: (id <TAsyncTransport>) transport;" << endl;
+      << endl << "- (id) initWithProtocolFactory: (id <TProtocolFactory>) aProtocolFactory "
+                 "transport: (id <TAsyncTransportFactory>) aTransportFactory;" << endl;
 
   scope_up(out);
   out << indent() << "self = [super init];" << endl;
   out << indent() << "if (self) {" << endl;
-  out << indent() << "  inProtocol = [factory newProtocolOnTransport:transport];" << endl;
-  out << indent() << "  outProtocol = inProtocol;" << endl;
-  out << indent() << "  asyncTransport = transport;" << endl;
+  out << indent() << "  protocolFactory = aProtocolFactory;" << endl;
+  out << indent() << "  transportFactory = aTransportFactory;" << endl;
   out << indent() << "}" << endl;
   out << indent() << "return self;" << endl;
   scope_down(out);
@@ -1701,21 +1678,24 @@ void t_cocoa_generator::generate_cocoa_service_client_async_implementation(ofstr
   vector<t_function*>::const_iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
 
-    generate_cocoa_service_client_send_function_implementation(out, *f_iter);
+    generate_cocoa_service_client_send_function_implementation(out, *f_iter, true);
 
     if (!(*f_iter)->is_oneway()) {
-      generate_cocoa_service_client_recv_function_implementation(out, *f_iter);
+      generate_cocoa_service_client_recv_function_implementation(out, *f_iter, true);
     }
 
     // Open function
     indent(out) << "- " << async_function_signature(*f_iter, false) << endl;
     scope_up(out);
     
-    out << indent() << "NSError *thriftError;" << endl;
+    out << indent() << "NSError *thriftError;" << endl
+        << indent() << "id<TAsyncTransport> transport = [transportFactory newTransport];" << endl
+        << indent() << "id<TProtocol> protocol = [protocolFactory newProtocolOnTransport:transport];" << endl
+        << endl;
     
-    generate_cocoa_service_client_send_async_function_invocation(out, *f_iter);
+    generate_cocoa_service_client_send_async_function_invocation(out, *f_iter, "failureBlock");
 
-    out << indent() << "[asyncTransport flush:^{" << endl;
+    out << indent() << "[transport flushWithCompletion:^{" << endl;
     indent_up();
 
     if (!(*f_iter)->is_oneway()) {
@@ -1726,11 +1706,12 @@ void t_cocoa_generator::generate_cocoa_service_client_async_implementation(ofstr
       }
       out << indent() << "if (![self recv_" << (*f_iter)->get_name();
       if (!(*f_iter)->get_returntype()->is_void()) {
-        out << ": &result error";
+        out << ": &result protocol";
       }
-      out << ": &thriftError]) ";
+      out << ": protocol error: &thriftError]) ";
       scope_up(out);
-      out << indent() << "failureBlock(thriftError);" << endl;
+      out << indent() << "failureBlock(thriftError);" << endl
+          << indent() << "return;" << endl;
       scope_down(out);
     }
     
@@ -1757,11 +1738,14 @@ void t_cocoa_generator::generate_cocoa_service_client_async_implementation(ofstr
       out << indent() << "return [PMKPromise promiseWithResolverBlock:^(PMKResolver resolver) {" << endl;
       indent_up();
       
-      out << indent() << "NSError *thriftError;" << endl;
+      out << indent() << "NSError *thriftError;" << endl
+          << indent() << "id<TAsyncTransport> transport = [transportFactory newTransport];" << endl
+          << indent() << "id<TProtocol> protocol = [protocolFactory newProtocolOnTransport:transport];" << endl
+          << endl;
       
-      generate_cocoa_service_client_send_promise_function_invocation(out, *f_iter);
+      generate_cocoa_service_client_send_async_function_invocation(out, *f_iter, "resolver");
       
-      out << indent() << "[asyncTransport flush:^{" << endl;
+      out << indent() << "[transport flushWithCompletion:^{" << endl;
       indent_up();
       
       if (!(*f_iter)->is_oneway()) {
@@ -1772,9 +1756,9 @@ void t_cocoa_generator::generate_cocoa_service_client_async_implementation(ofstr
         }
         out << indent() << "if (![self recv_" << (*f_iter)->get_name();
         if (!(*f_iter)->get_returntype()->is_void()) {
-          out << ": &result error";
+          out << ": &result protocol";
         }
-        out << ": &thriftError]) ";
+        out << ": protocol error: &thriftError]) ";
         scope_up(out);
         out << indent() << "resolver(thriftError);" << endl
             << indent() << "return;" << endl;
@@ -2860,7 +2844,7 @@ string t_cocoa_generator::function_signature(t_function* tfunction, bool include
   else {
     result = "(NSNumber *)";
   }
-  result += " " + tfunction->get_name() + argument_list(tfunction->get_arglist(), include_error);
+  result += " " + tfunction->get_name() + argument_list(tfunction->get_arglist(), "", include_error);
   return result;
 }
 
@@ -2874,11 +2858,8 @@ string t_cocoa_generator::function_signature(t_function* tfunction, bool include
 string t_cocoa_generator::async_function_signature(t_function* tfunction, bool include_error) {
   t_type* ttype = tfunction->get_returntype();
   t_struct* targlist = tfunction->get_arglist();
-  std::string response_param = "dispatch_block_t";
-  if (!ttype->is_void()) {
-    response_param = "void (^)(" + type_name(ttype) + ")";
-  }
-  std::string result = "(void) " + tfunction->get_name() + argument_list(tfunction->get_arglist(), include_error)
+  string response_param = "void (^)(" + ((ttype->is_void()) ? "" : type_name(ttype)) + ")";
+  std::string result = "(void) " + tfunction->get_name() + argument_list(tfunction->get_arglist(), "", include_error)
   + (targlist->get_members().size() ? " response" : "") + ": ("
   + response_param + ") responseBlock "
   + "failure : (TAsyncFailureBlock) failureBlock";
@@ -2893,15 +2874,16 @@ string t_cocoa_generator::async_function_signature(t_function* tfunction, bool i
  * @return String of rendered function definition
  */
 string t_cocoa_generator::promise_function_signature(t_function* tfunction) {
-  return "(AnyPromise *) " + tfunction->get_name() + argument_list(tfunction->get_arglist(), false);
+  return "(AnyPromise *) " + tfunction->get_name() + argument_list(tfunction->get_arglist(), "", false);
 }
 
 /**
  * Renders a colon separated list of types and names, suitable for an
  * objective-c parameter list
  */
-string t_cocoa_generator::argument_list(t_struct* tstruct, bool include_error) {
+string t_cocoa_generator::argument_list(t_struct* tstruct, string protocol_name, bool include_error) {
   string result = "";
+  bool include_protocol = !protocol_name.empty();
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -2916,11 +2898,19 @@ string t_cocoa_generator::argument_list(t_struct* tstruct, bool include_error) {
     }
     result += argPrefix + ": (" + type_name((*f_iter)->get_type()) + ") " + (*f_iter)->get_name();
   }
+  if (include_protocol) {
+    if (!first) {
+      result += " protocol";
+    }
+    result += ": (id<TProtocol>) " + protocol_name;
+    first = false;
+  }
   if (include_error) {
     if (!first) {
       result += " error";
     }
     result += ": (NSError * __autoreleasing*)__thriftError";
+    first = false;
   }
   return result;
 }
