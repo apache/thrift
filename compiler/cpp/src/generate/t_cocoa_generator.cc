@@ -1187,7 +1187,9 @@ void t_cocoa_generator::generate_cocoa_struct_field_accessor_implementations(ofs
  * @param tstruct The struct definition
  */
 void t_cocoa_generator::generate_cocoa_struct_description(ofstream& out, t_struct* tstruct) {
-  out << indent() << "- (NSString *) description {" << endl;
+  
+  // Use debugDescription so the app can add description via a cateogory/extension
+  out << indent() << "- (NSString *) debugDescription {" << endl;
   indent_up();
 
   out << indent() << "NSMutableString * ms = [NSMutableString stringWithString: @\""
