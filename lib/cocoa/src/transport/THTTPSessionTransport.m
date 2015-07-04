@@ -205,6 +205,8 @@
     return;
   }
 
+  _requestData = nil;
+
   NSURLSessionDataTask *task = [_factory taskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
 
     if (!error) {
@@ -222,17 +224,22 @@
                                 userInfo:@{@"statusCode":@(httpResponse.statusCode)}];
       }
       // Allow factory to check
-      if (_factory.responseValidate) {
-        error = [_factory validateResponse:httpResponse data:data];
-      }
+      error = [_factory validateResponse:httpResponse data:data];
     }
 
+    _responseDataOffset = 0;
+
     if (error) {
+
+      _responseData = nil;
 
       failure(error);
 
     }
     else {
+
+      _responseData = data;
+
       completed(self);
     }
 
