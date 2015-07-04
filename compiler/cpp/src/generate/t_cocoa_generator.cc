@@ -2823,11 +2823,15 @@ string t_cocoa_generator::declare_property(t_field* tfield) {
   << capitalize(tfield->get_name()) + ":) " << type_name(tfield->get_type()) << " "
   << tfield->get_name() << ";";
   
+  // Check if the property name is an Objective-C return +1 count signal
   if ((tfield->get_name().length() >= 3 && tfield->get_name().substr(0,3) == "new") ||
       (tfield->get_name().length() >= 5 && tfield->get_name().substr(0,5) == "create") ||
       (tfield->get_name().length() >= 5 && tfield->get_name().substr(0,5) == "alloc")) {
-    render << endl;
-    render << "-(" + type_name(tfield->get_type()) + ") " + decapitalize(tfield->get_name()) + " __attribute__((objc_method_family(none)));";
+    // Let Objective-C know not to return +1 for object pointers
+    if (type_can_be_null(tfield->get_type())) {
+      render << endl;
+      render << "-(" + type_name(tfield->get_type()) + ") " + decapitalize(tfield->get_name()) + " __attribute__((objc_method_family(none)));";
+    }
   }
   
   return render.str();
