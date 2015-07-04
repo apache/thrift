@@ -108,18 +108,17 @@
   CFWriteStreamSetProperty(writeStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
 
   if (readStream && writeStream) {
+
     CFReadStreamSetProperty(readStream,
                             kCFStreamPropertySocketSecurityLevel,
                             kCFStreamSocketSecurityLevelTLSv1);
 
-    NSDictionary *settings =
-      [NSDictionary dictionaryWithObjectsAndKeys:
-       (id)kCFBooleanTrue, (id)kCFStreamSSLValidatesCertificateChain,
-       nil];
+    NSDictionary *settings = @{(__bridge NSString *)kCFStreamSSLValidatesCertificateChain: @YES};
 
     CFReadStreamSetProperty((CFReadStreamRef)readStream,
                             kCFStreamPropertySSLSettings,
                             (CFTypeRef)settings);
+
     CFWriteStreamSetProperty((CFWriteStreamRef)writeStream,
                              kCFStreamPropertySSLSettings,
                              (CFTypeRef)settings);
@@ -133,7 +132,6 @@
     [outputStream setDelegate:self];
     [outputStream scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
     [outputStream open];
-
 
     CFRelease(readStream);
     CFRelease(writeStream);
@@ -161,68 +159,95 @@
     break;
 
   case NSStreamEventHasSpaceAvailable: {
-    SecPolicyRef policy = SecPolicyCreateSSL(NO, (__bridge CFStringRef)(sslHostname));
-    SecTrustRef trust = NULL;
-    CFArrayRef streamCertificatesRef = (__bridge CFArrayRef)[aStream propertyForKey:(NSString *)kCFStreamPropertySSLPeerCertificates];
-    SecTrustCreateWithCertificates(streamCertificatesRef, policy, &trust);
-
-    SecTrustResultType trustResultType = kSecTrustResultInvalid;
-    SecTrustEvaluate(trust, &trustResultType);
 
     BOOL proceed = NO;
-    switch (trustResultType) {
-    case kSecTrustResultProceed:
-      proceed = YES;
-      break;
+    SecTrustResultType trustResult = kSecTrustResultInvalid;
+    CFMutableArrayRef newPolicies = NULL;
 
-    case kSecTrustResultUnspecified:
-      NSLog(@"Trusted by OS");
-      proceed = YES;
-      break;
+    do {
 
-    case kSecTrustResultRecoverableTrustFailure:
-      proceed = recoverFromTrustFailure(trust);
-      break;
+      SecTrustRef trust = (__bridge SecTrustRef)[aStream propertyForKey:(NSString *)kCFStreamPropertySSLPeerTrust];
 
-    case kSecTrustResultDeny:
-      NSLog(@"Deny");
-      break;
+      // Add new policy to current list of policies
+      SecPolicyRef policy = SecPolicyCreateSSL(NO, (__bridge CFStringRef)(sslHostname));
+      if (!policy) {
+        break;
+      }
 
-    case kSecTrustResultFatalTrustFailure:
-      NSLog(@"FatalTrustFailure");
-      break;
+      CFArrayRef policies;
+      if (SecTrustCopyPolicies(trust, &policies) != errSecSuccess) {
+        break;
+      }
 
-    case kSecTrustResultOtherError:
-      NSLog(@"OtherError");
-      break;
+      newPolicies = CFArrayCreateMutableCopy(NULL, 0, policies);
+      CFArrayAppendValue(newPolicies, policy);
 
-    case kSecTrustResultInvalid:
-      NSLog(@"Invalid");
-      break;
-
-    default:
-      NSLog(@"Default");
-      break;
-    }
-
-    if (trust) {
-      CFRelease(trust);
-    }
-    if (policy) {
+      CFRelease(policies);
       CFRelease(policy);
+
+      // Update trust policies
+      if (SecTrustSetPolicies(trust, newPolicies) != errSecSuccess) {
+        break;
+      }
+
+      // Evaluate the trust chain
+      if (SecTrustEvaluate(trust, &trustResult) != errSecSuccess) {
+        break;
+      }
+
+      switch (trustResult) {
+      case kSecTrustResultProceed:
+        // NSLog(@"Trusted by USER");
+        proceed = YES;
+        break;
+
+      case kSecTrustResultUnspecified:
+        // NSLog(@"Trusted by OS");
+        proceed = YES;
+        break;
+
+      case kSecTrustResultRecoverableTrustFailure:
+        proceed = recoverFromTrustFailure(trust, trustResult);
+        break;
+
+      case kSecTrustResultDeny:
+        // NSLog(@"Deny");
+        break;
+
+      case kSecTrustResultFatalTrustFailure:
+        // NSLog(@"FatalTrustFailure");
+        break;
+
+      case kSecTrustResultOtherError:
+        // NSLog(@"OtherError");
+        break;
+
+      case kSecTrustResultInvalid:
+        // NSLog(@"Invalid");
+        break;
+
+      default:
+        // NSLog(@"Default");
+        break;
+      }
+
     }
+    while (NO);
+
     if (!proceed) {
-      NSLog(@"Cannot trust certificate. TrustResultType: %u", trustResultType);
+      NSLog(@"TSSLSocketTransport: Cannot trust certificate. Result: %u", trustResult);
       [aStream close];
     }
+
+    if (newPolicies) {
+      CFRelease(newPolicies);
+    }
+
   }
   break;
 
   case NSStreamEventErrorOccurred: {
-    NSError *theError = [aStream streamError];
-    NSLog(@"Error occurred opening stream: %@", theError);
-//            @throw [TSSLSocketException exceptionWithReason: @"Error occurred
-//  opening stream" error: theError];
+    NSLog(@"TSSLSocketTransport: Error occurred opening stream: %@", [aStream streamError]);
     break;
   }
 
@@ -231,40 +256,31 @@
   }
 }
 
-BOOL recoverFromTrustFailure(SecTrustRef myTrust)
+BOOL recoverFromTrustFailure(SecTrustRef myTrust, SecTrustResultType lastTrustResult)
 {
+  CFAbsoluteTime trustTime = SecTrustGetVerifyTime(myTrust);
+  CFAbsoluteTime currentTime = CFAbsoluteTimeGetCurrent();
 
-  SecTrustResultType trustResult;
-  OSStatus status = SecTrustEvaluate(myTrust, &trustResult);
-  if (status != errSecSuccess) {
-    return NO;
-  }
+  CFAbsoluteTime timeIncrement = 31536000;
+  CFAbsoluteTime newTime = currentTime - timeIncrement;
 
-  CFAbsoluteTime trustTime, currentTime, timeIncrement, newTime;
-  if (trustResult == kSecTrustResultRecoverableTrustFailure) {
+  if (trustTime - newTime) {
 
-    trustTime = SecTrustGetVerifyTime(myTrust);
-    timeIncrement = 31536000;
-    currentTime = CFAbsoluteTimeGetCurrent();
-    newTime = currentTime - timeIncrement;
+    CFDateRef newDate = CFDateCreate(NULL, newTime);
+    SecTrustSetVerifyDate(myTrust, newDate);
+    CFRelease(newDate);
 
-    if (trustTime - newTime) {
-
-      CFDateRef newDate = CFDateCreate(NULL, newTime);
-      SecTrustSetVerifyDate(myTrust, newDate);
-      CFRelease(newDate);
-
-      status = SecTrustEvaluate(myTrust, &trustResult);
-      if (status != errSecSuccess) {
-        return NO;
-      }
-
+    if (SecTrustEvaluate(myTrust, &lastTrustResult) != errSecSuccess) {
+      return NO;
     }
+
   }
-  if (trustResult != kSecTrustResultProceed || trustResult != kSecTrustResultUnspecified) {
-    NSLog(@"Certificate trust failure");
-    return NO;
+
+  if (lastTrustResult == kSecTrustResultProceed || lastTrustResult == kSecTrustResultUnspecified) {
+    return YES;
   }
+
+  NSLog(@"TSSLSocketTransport: Unable to recover certificate trust failure");
   return YES;
 }
 
