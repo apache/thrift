@@ -42,10 +42,6 @@ add_custom_command(OUTPUT gen-cpp/Calculator.cpp gen-cpp/SharedService.cpp gen-c
     COMMAND thrift-compiler --gen cpp -r ${PROJECT_SOURCE_DIR}/tutorial/tutorial.thrift
 )
 
-add_executable(TutorialLogIPServer CppLogIPServer.cpp)
-target_link_libraries(TutorialLogIPServer tutorialgencpp)
-LINK_AGAINST_THRIFT_LIBRARY(TutorialLogIPServer thrift)
-
 add_executable(TutorialServer CppServer.cpp)
 target_link_libraries(TutorialServer tutorialgencpp)
 LINK_AGAINST_THRIFT_LIBRARY(TutorialServer thrift)
