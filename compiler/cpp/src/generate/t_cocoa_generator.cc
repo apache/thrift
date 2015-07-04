@@ -2322,16 +2322,16 @@ void t_cocoa_generator::generate_serialize_container(ofstream& out,
   if (ttype->is_map()) {
     indent(out) << "if (![outProtocol writeMapBeginWithKeyType: "
                 << type_to_enum(((t_map*)ttype)->get_key_type())
-                << " valueType: " << type_to_enum(((t_map*)ttype)->get_val_type()) << " size: (SInt32)"
-                << fieldName << ".count error: __thriftError]) return NO;" << endl;
+                << " valueType: " << type_to_enum(((t_map*)ttype)->get_val_type()) << " size: (SInt32)["
+                << fieldName << " count] error: __thriftError]) return NO;" << endl;
   } else if (ttype->is_set()) {
     indent(out) << "if (![outProtocol writeSetBeginWithElementType: "
-                << type_to_enum(((t_set*)ttype)->get_elem_type()) << " size: (SInt32)" << fieldName
-                << ".count error: __thriftError]) return NO;" << endl;
+                << type_to_enum(((t_set*)ttype)->get_elem_type()) << " size: (SInt32)[" << fieldName
+                << " count] error: __thriftError]) return NO;" << endl;
   } else if (ttype->is_list()) {
     indent(out) << "if (![outProtocol writeListBeginWithElementType: "
-                << type_to_enum(((t_list*)ttype)->get_elem_type()) << " size: (SInt32)" << fieldName
-                << ".count error: __thriftError]) return NO;" << endl;
+                << type_to_enum(((t_list*)ttype)->get_elem_type()) << " size: (SInt32)[" << fieldName
+                << " count] error: __thriftError]) return NO;" << endl;
   }
 
   string iter = tmp("_iter");
@@ -2388,24 +2388,24 @@ string t_cocoa_generator::decontainerize(t_field* tfield, string fieldName) {
 string t_cocoa_generator::decontainerize(t_type* ttype, string fieldName) {
   ttype = get_true_type(ttype);
   if (ttype->is_enum()) {
-    return "(" + fieldName + ".intValue)";
+    return "[" + fieldName + " intValue]";
   } else if (ttype->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
     switch (tbase) {
       case t_base_type::TYPE_VOID:
         throw "can't decontainerize void";
       case t_base_type::TYPE_BOOL:
-        return fieldName + ".boolValue";
+        return "[" + fieldName + " boolValue]";
       case t_base_type::TYPE_BYTE:
-        return "((UInt8)" + fieldName + ".unsignedCharValue)";
+        return "((UInt8)[" + fieldName + " unsignedCharValue])";
       case t_base_type::TYPE_I16:
-        return "((SInt16)" + fieldName + ".shortValue)";
+        return "((SInt16)[" + fieldName + " shortValue])";
       case t_base_type::TYPE_I32:
-        return "((SInt32)" + fieldName + ".longValue)";
+        return "((SInt32)[" + fieldName + " longValue])";
       case t_base_type::TYPE_I64:
-        return "((SInt64)" + fieldName + ".longLongValue)";
+        return "((SInt64)[" + fieldName + " longLongValue])";
       case t_base_type::TYPE_DOUBLE:
-        return fieldName + ".doubleValue";
+        return "[" + fieldName + " doubleValue]";
       default:
         break;
     }
