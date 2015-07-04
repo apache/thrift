@@ -2782,7 +2782,7 @@ string t_cocoa_generator::declare_property(t_field* tfield) {
   if (type_can_be_null(tfield->get_type()))
     render << "strong, ";
   
-  render << "nonatomic, getter=" << decapitalize(tfield->get_name()) << ", setter="
+  render << "nonatomic, getter=" << decapitalize(tfield->get_name()) << ", setter=set"
   << capitalize(tfield->get_name()) + ":) " << type_name(tfield->get_type()) << " "
   << tfield->get_name() << ";";
   
@@ -2807,7 +2807,7 @@ string t_cocoa_generator::declare_property_isset(t_field* tfield) {
   
   string isset_name = tfield->get_name() + "IsSet";
   
-  render << "getter=" << decapitalize(isset_name) << ", setter="
+  render << "getter=" << decapitalize(isset_name) << ", setter=set"
   << capitalize(isset_name) + ":) BOOL " << isset_name << ";";
   
   return render.str();
