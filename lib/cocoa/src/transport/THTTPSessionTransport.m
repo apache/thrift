@@ -209,21 +209,23 @@
 
   NSURLSessionDataTask *task = [_factory taskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
 
+    // Check response type
+    if (!error && ![response isKindOfClass:NSHTTPURLResponse.class]) {
+      error = [NSError errorWithDomain:TTransportErrorDomain
+                                  code:TTransportErrorInvalidHttpResponse
+                              userInfo:@{}];
+    }
+
+    // Check status code
+    NSHTTPURLResponse *httpResponse = (id)response;
+    if (!error && httpResponse.statusCode != 200) {
+      error = [NSError errorWithDomain:TTransportErrorDomain
+                                  code:TTransportErrorInvalidHttpStatus
+                              userInfo:@{@"statusCode":@(httpResponse.statusCode)}];
+    }
+
+    // Allow factory to check
     if (!error) {
-      // Check response type
-      if (![response isKindOfClass:NSHTTPURLResponse.class]) {
-        error = [NSError errorWithDomain:TTransportErrorDomain
-                                    code:TTransportErrorInvalidHttpResponse
-                                userInfo:@{}];
-      }
-      // Check status code
-      NSHTTPURLResponse *httpResponse = (id)response;
-      if (httpResponse.statusCode != 200) {
-        error = [NSError errorWithDomain:TTransportErrorDomain
-                                    code:TTransportErrorInvalidHttpStatus
-                                userInfo:@{@"statusCode":@(httpResponse.statusCode)}];
-      }
-      // Allow factory to check
       error = [_factory validateResponse:httpResponse data:data];
     }
 
