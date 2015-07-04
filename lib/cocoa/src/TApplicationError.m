@@ -105,15 +105,16 @@ NSString *TApplicationErrorMethodKey = @"method";
 }
 
 
-+(instancetype) read:(id<TProtocol>)protocol error:(NSError *__autoreleasing *)error
++(instancetype) read:(id<TProtocol>)protocol
 {
   NSString *reason = nil;
   int type = TApplicationErrorUnknown;
   int fieldType;
   int fieldID;
 
-  if (![protocol readStructBeginReturningName:NULL error:error]) {
-    return nil;
+  NSError *error;
+  if (![protocol readStructBeginReturningName:NULL error:&error]) {
+    return error;
   }
 
   while (true) {
@@ -121,9 +122,9 @@ NSString *TApplicationErrorMethodKey = @"method";
     if (![protocol readFieldBeginReturningName:NULL
                                           type:&fieldType
                                        fieldID:&fieldID
-                                         error:error])
+                                         error:&error])
     {
-      return nil;
+      return error;
     }
 
     if (fieldType == TTypeSTOP) {
@@ -133,44 +134,44 @@ NSString *TApplicationErrorMethodKey = @"method";
     switch (fieldID) {
     case 1:
       if (fieldType == TTypeSTRING) {
-        if (![protocol readString:&reason error:error]) {
-          return nil;
+        if (![protocol readString:&reason error:&error]) {
+          return error;
         }
       }
       else {
-        if (![TProtocolUtil skipType:fieldType onProtocol:protocol error:error]) {
-          return nil;
+        if (![TProtocolUtil skipType:fieldType onProtocol:protocol error:&error]) {
+          return error;
         }
       }
       break;
 
     case 2:
       if (fieldType == TTypeI32) {
-        if (![protocol readI32:&type error:error]) {
-          return nil;
+        if (![protocol readI32:&type error:&error]) {
+          return error;
         }
       }
       else {
-        if (![TProtocolUtil skipType:fieldType onProtocol:protocol error:error]) {
-          return nil;
+        if (![TProtocolUtil skipType:fieldType onProtocol:protocol error:&error]) {
+          return error;
         }
       }
       break;
 
     default:
-      if (![TProtocolUtil skipType:fieldType onProtocol:protocol error:error]) {
-        return nil;
+      if (![TProtocolUtil skipType:fieldType onProtocol:protocol error:&error]) {
+        return error;
       }
       break;
     }
-    if (![protocol readFieldEnd:error]) {
-      return nil;
+    if (![protocol readFieldEnd:&error]) {
+      return error;
     }
 
   }
 
-  if (![protocol readStructEnd:error]) {
-    return nil;
+  if (![protocol readStructEnd:&error]) {
+    return error;
   }
 
   return [NSError errorWithType:type reason:reason];

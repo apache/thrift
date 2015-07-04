@@ -38,9 +38,9 @@
 
   if (msgType == TMessageTypeEXCEPTION) {
 
-    thriftError = [NSError read:inProtocol error:&thriftError];
+    thriftError = [NSError read:inProtocol];
 
-    [inProtocol readMessageEnd:&thriftError];
+    [inProtocol readMessageEnd:NULL];
 
     return thriftError;
   }
