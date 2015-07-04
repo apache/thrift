@@ -21,6 +21,13 @@
 #import "TSharedProcessorFactory.h"
 
 
+@interface TSharedProcessorFactory ()
+
+@property(strong, nonatomic) id<TProcessor> sharedProcessor;
+
+@end
+
+
 @implementation TSharedProcessorFactory
 
 
@@ -28,7 +35,7 @@
 {
   self = [super init];
   if (self) {
-    mSharedProcessor = sharedProcessor;
+    _sharedProcessor = sharedProcessor;
   }
 
   return self;
@@ -36,7 +43,7 @@
 
 -(id<TProcessor>) processorForTransport:(id<TTransport>)transport
 {
-  return mSharedProcessor;
+  return _sharedProcessor;
 }
 
 @end

@@ -22,7 +22,7 @@
 
 @interface TMemoryBuffer : NSObject <TTransport>
 
-@property (readonly, nonatomic) NSData *buffer;
+-(NSData *) buffer;
 
 -(id) initWithData:(NSData *)data;
 

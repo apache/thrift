@@ -63,20 +63,19 @@ enum {
 @end
 
 
-@interface TCompactProtocol () {
+@interface TCompactProtocol ()
 
-  id <TTransport> transport;
+@property(strong, nonatomic) id <TTransport> transport;
 
-  NSMutableArray *lastField;
-  short lastFieldId;
+@property(strong, nonatomic) NSMutableArray *lastField;
+@property(assign, nonatomic) short lastFieldId;
 
-  NSString *boolFieldName;
-  NSNumber *boolFieldType;
-  NSNumber *boolFieldId;
-  NSNumber *booleanValue;
+@property(strong, nonatomic) NSString *boolFieldName;
+@property(strong, nonatomic) NSNumber *boolFieldType;
+@property(strong, nonatomic) NSNumber *boolFieldId;
+@property(strong, nonatomic) NSNumber *booleanValue;
 
-  NSString *currentMessageName;
-}
+@property(strong, nonatomic) NSString *currentMessageName;
 
 @end
 
@@ -88,7 +87,7 @@ enum {
   self = [super init];
 
   if (self != nil) {
-    lastField = [[NSMutableArray alloc] init];
+    _lastField = [[NSMutableArray alloc] init];
   }
 
   return self;
@@ -99,7 +98,7 @@ enum {
   self = [self init];
 
   if (self != nil) {
-    transport = aTransport;
+    _transport = aTransport;
   }
 
   return self;
@@ -107,12 +106,12 @@ enum {
 
 -(id <TTransport>) transport
 {
-  return transport;
+  return _transport;
 }
 
 -(BOOL) writeByteDirect:(UInt8)n error:(NSError *__autoreleasing *)error
 {
-  if (![transport write:(UInt8 *)&n offset:0 length:1 error:error]) {
+  if (![_transport write:(UInt8 *)&n offset:0 length:1 error:error]) {
     PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport write failed");
   }
   return YES;
@@ -134,7 +133,7 @@ enum {
     }
   }
 
-  if (![transport write:i32buf offset:0 length:idx error:error]) {
+  if (![_transport write:i32buf offset:0 length:idx error:error]) {
     PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport write failed");
   }
 
@@ -161,22 +160,22 @@ enum {
     return NO;
   }
 
-  currentMessageName = name;
+  _currentMessageName = name;
 
   return YES;
 }
 
 -(BOOL) writeStructBeginWithName:(NSString *)name error:(NSError *__autoreleasing *)error
 {
-  [lastField addObject:[NSNumber numberWithShort:lastFieldId]];
-  lastFieldId = 0;
+  [_lastField addObject:@(_lastFieldId)];
+  _lastFieldId = 0;
   return YES;
 }
 
 -(BOOL) writeStructEnd:(NSError *__autoreleasing *)error
 {
-  lastFieldId = [[lastField lastObject] shortValue];
-  [lastField removeLastObject];
+  _lastFieldId = [_lastField.lastObject shortValue];
+  [_lastField removeLastObject];
   return YES;
 }
 
@@ -186,9 +185,9 @@ enum {
                           error:(NSError *__autoreleasing *)error
 {
   if (fieldType == TTypeBOOL) {
-    boolFieldName = [name copy];
-    boolFieldType = @(fieldType);
-    boolFieldId = @(fieldID);
+    _boolFieldName = [name copy];
+    _boolFieldType = @(fieldType);
+    _boolFieldId = @(fieldID);
     return YES;
   }
   else {
@@ -209,9 +208,9 @@ enum {
   UInt8 typeToWrite = typeOverride == 0xFF ? [self compactTypeForTType:fieldType] : typeOverride;
 
   // check if we can use delta encoding for the field id
-  if (fieldID > lastFieldId && fieldID - lastFieldId <= 15) {
+  if (fieldID > _lastFieldId && fieldID - _lastFieldId <= 15) {
     // Write them together
-    if (![self writeByteDirect:(fieldID - lastFieldId) << 4 | typeToWrite error:error]) {
+    if (![self writeByteDirect:(fieldID - _lastFieldId) << 4 | typeToWrite error:error]) {
       return NO;
     }
   }
@@ -225,7 +224,7 @@ enum {
     }
   }
 
-  lastFieldId = fieldID;
+  _lastFieldId = fieldID;
 
   return YES;
 }
@@ -273,16 +272,16 @@ enum {
 -(BOOL) writeBool:(BOOL)b error:(NSError *__autoreleasing *)error
 {
   BOOL result;
-  if (boolFieldId != nil && boolFieldName != nil && boolFieldType != nil) {
+  if (_boolFieldId != nil && _boolFieldName != nil && _boolFieldType != nil) {
     // we haven't written the field header yet
-    result = [self writeFieldBeginInternalWithName:boolFieldName
-                                              type:[boolFieldType intValue]
-                                           fieldID:[boolFieldId intValue]
+    result = [self writeFieldBeginInternalWithName:_boolFieldName
+                                              type:_boolFieldType.intValue
+                                           fieldID:_boolFieldId.intValue
                                       typeOverride:b ? TCType_BOOLEAN_TRUE : TCType_BOOLEAN_FALSE
                                              error:error];
-    boolFieldId = nil;
-    boolFieldName = nil;
-    boolFieldType = nil;
+    _boolFieldId = nil;
+    _boolFieldName = nil;
+    _boolFieldType = nil;
   }
   else {
     // we're not part of a field, so just Write the value.
@@ -320,7 +319,7 @@ enum {
 
   bits = OSSwapHostToLittleInt64(bits);
 
-  if (![transport write:(UInt8 *)&bits offset:0 length:8 error:error]) {
+  if (![_transport write:(UInt8 *)&bits offset:0 length:8 error:error]) {
     PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport write failed");
   }
 
@@ -337,7 +336,7 @@ enum {
   if (![self writeVarint32:(UInt32)data.length error:error]) {
     return NO;
   }
-  if (![transport write:data.bytes offset:0 length:(UInt32)data.length error:error]) {
+  if (![_transport write:data.bytes offset:0 length:(UInt32)data.length error:error]) {
     PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport write failed");
   }
   return YES;
@@ -345,7 +344,7 @@ enum {
 
 -(BOOL) writeMessageEnd:(NSError *__autoreleasing *)error
 {
-  currentMessageName = nil;
+  _currentMessageName = nil;
   return YES;
 }
 
@@ -407,7 +406,7 @@ enum {
     }
   }
 
-  if (![transport write:varint64out offset:0 length:idx error:error]) {
+  if (![_transport write:varint64out offset:0 length:idx error:error]) {
     PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport write failed");
   }
 
@@ -490,19 +489,20 @@ enum {
 
 -(BOOL) readStructBeginReturningName:(NSString **)pname error:(NSError *__autoreleasing *)error
 {
-  [lastField addObject:[NSNumber numberWithShort:lastFieldId]];
-  lastFieldId = 0;
+  [_lastField addObject:@(_lastFieldId)];
+  _lastFieldId = 0;
 
   if (pname != NULL) {
     *pname = @"";
   }
+
   return YES;
 }
 
 -(BOOL) readStructEnd:(NSError *__autoreleasing *)error
 {
-  lastFieldId = [[lastField lastObject] shortValue];
-  [lastField removeLastObject];
+  _lastFieldId = [_lastField.lastObject shortValue];
+  [_lastField removeLastObject];
   return YES;
 }
 
@@ -544,7 +544,7 @@ enum {
   }
   else {
     // has a delta. add the delta to the last Read field id.
-    fieldId = lastFieldId + modifier;
+    fieldId = _lastFieldId + modifier;
   }
 
   UInt8 fieldType;
@@ -567,11 +567,11 @@ enum {
       type == TCType_BOOLEAN_FALSE)
   {
     // save the boolean value in a special instance variable.
-    booleanValue = [NSNumber numberWithBool:type == TCType_BOOLEAN_TRUE];
+    _booleanValue = [NSNumber numberWithBool:type == TCType_BOOLEAN_TRUE];
   }
 
   // push the new field onto the field stack so we can keep the deltas going.
-  lastFieldId = fieldId;
+  _lastFieldId = fieldId;
 
   return YES;
 }
@@ -655,24 +655,29 @@ enum {
 
 -(BOOL) readBool:(BOOL *)value error:(NSError *__autoreleasing *)error
 {
-  if (booleanValue != nil) {
-    BOOL result = [booleanValue boolValue];
-    booleanValue = nil;
+  if (_booleanValue != nil) {
+
+    BOOL result = _booleanValue.boolValue;
+    _booleanValue = nil;
+
     *value = result;
   }
   else {
+
     UInt8 result;
     if (![self readByte:&result error:error]) {
       return NO;
     }
+
     *value = result == TCType_BOOLEAN_TRUE;
   }
+
   return YES;
 }
 
 -(BOOL) readByte:(UInt8 *)value error:(NSError *__autoreleasing *)error
 {
-  if (![transport readAll:value offset:0 length:1 error:error]) {
+  if (![_transport readAll:value offset:0 length:1 error:error]) {
     PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport read failed");
   }
   return NO;
@@ -708,7 +713,7 @@ enum {
 -(BOOL) readDouble:(double *)value error:(NSError *__autoreleasing *)error
 {
   UInt64 bits = 0;
-  if (![transport readAll:(UInt8 *)&bits offset:0 length:8 error:error]) {
+  if (![_transport readAll:(UInt8 *)&bits offset:0 length:8 error:error]) {
     PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport read failed");
   }
 
@@ -756,7 +761,7 @@ enum {
   }
 
   NSMutableData *buf = [NSMutableData dataWithLength:length];
-  if (![transport readAll:buf.mutableBytes offset:0 length:length error:error]) {
+  if (![_transport readAll:buf.mutableBytes offset:0 length:length error:error]) {
     PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport read failed");
   }
 
@@ -891,7 +896,7 @@ enum {
   default:
     if (error) {
       *error = [NSError errorWithDomain:TProtocolErrorDomain
-                                   code:TProtocolErrorUnknownType
+                                   code:TProtocolErrorUnknown
                                userInfo:@{TProtocolErrorTypeKey: @((UInt8)(ctype & 0x0F))}];
     }
     return NO;

@@ -28,22 +28,38 @@
 
 
 
-NSString *const kTSocketServer_ClientConnectionFinishedForProcessorNotification = @"TSocketServer_ClientConnectionFinishedForProcessorNotification";
-NSString *const kTSocketServer_ProcessorKey = @"TSocketServer_Processor";
-NSString *const kTSockerServer_TransportKey = @"TSockerServer_Transport";
+NSString *const TSocketServerClientConnectionFinished = @"TSocketServerClientConnectionFinished";
+NSString *const TSocketServerProcessorKey = @"TSocketServerProcessor";
+NSString *const TSockerServerTransportKey = @"TSockerServerTransport";
+
+
+@interface TSocketServer ()
+
+@property(strong, nonatomic) id<TProtocolFactory> inputProtocolFactory;
+@property(strong, nonatomic) id<TProtocolFactory> outputProtocolFactory;
+@property(strong, nonatomic) id<TProcessorFactory> processorFactory;
+@property(strong, nonatomic) NSFileHandle *socketFileHandle;
+@property(strong, nonatomic) dispatch_queue_t processingQueue;
+
+@end
 
 
 @implementation TSocketServer
 
--(id) initWithPort:(int)port
-   protocolFactory:(id <TProtocolFactory>)protocolFactory
-  processorFactory:(id <TProcessorFactory>)processorFactory;
+-(instancetype) initWithPort:(int)port
+             protocolFactory:(id <TProtocolFactory>)protocolFactory
+            processorFactory:(id <TProcessorFactory>)processorFactory;
 {
   self = [super init];
 
-  mInputProtocolFactory = protocolFactory;
-  mOutputProtocolFactory = protocolFactory;
-  mProcessorFactory = processorFactory;
+  _inputProtocolFactory = protocolFactory;
+  _outputProtocolFactory = protocolFactory;
+  _processorFactory = processorFactory;
+
+  dispatch_queue_attr_t processingQueueAttr =
+    dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_CONCURRENT, QOS_CLASS_BACKGROUND, 0);
+
+  _processingQueue = dispatch_queue_create("TSocketServer.processing", processingQueueAttr);
 
   // create a socket.
   int fd = -1;
@@ -64,17 +80,17 @@ NSString *const kTSockerServer_TransportKey = @"TSockerServer_Transport";
     if (CFSocketSetAddress(socket, (__bridge CFDataRef)address) != kCFSocketSuccess) {
       CFSocketInvalidate(socket);
       CFRelease(socket);
-      NSLog(@"*** Could not bind to address");
+      NSLog(@"TSocketServer: Could not bind to address");
       return nil;
     }
   }
   else {
-    NSLog(@"*** No server socket");
+    NSLog(@"TSocketServer: No server socket");
     return nil;
   }
 
   // wrap it in a file handle so we can get messages from it
-  mSocketFileHandle = [[NSFileHandle alloc] initWithFileDescriptor:fd
+  _socketFileHandle = [[NSFileHandle alloc] initWithFileDescriptor:fd
                                                     closeOnDealloc:YES];
 
   // throw away our socket
@@ -85,12 +101,12 @@ NSString *const kTSockerServer_TransportKey = @"TSockerServer_Transport";
   [[NSNotificationCenter defaultCenter] addObserver:self
                                            selector:@selector(connectionAccepted:)
                                                name:NSFileHandleConnectionAcceptedNotification
-                                             object:mSocketFileHandle];
+                                             object:_socketFileHandle];
 
   // tell socket to listen
-  [mSocketFileHandle acceptConnectionInBackgroundAndNotify];
+  [_socketFileHandle acceptConnectionInBackgroundAndNotify];
 
-  NSLog(@"Listening on TCP port %d", port);
+  NSLog(@"TSocketServer: Listening on TCP port %d", port);
 
   return self;
 }
@@ -102,16 +118,19 @@ NSString *const kTSockerServer_TransportKey = @"TSockerServer_Transport";
 }
 
 
--(void) connectionAccepted:(NSNotification *)aNotification
+-(void) connectionAccepted:(NSNotification *)notification
 {
-  NSFileHandle *socket = [[aNotification userInfo] objectForKey:NSFileHandleNotificationFileHandleItem];
+  NSFileHandle *socket = [notification.userInfo objectForKey:NSFileHandleNotificationFileHandleItem];
 
-  // now that we have a client connected, spin off a thread to handle activity
-  [NSThread detachNewThreadSelector:@selector(handleClientConnection:)
-                           toTarget:self
-                         withObject:socket];
+  // Now that we have a client connected, handle request on queue
+  dispatch_async(_processingQueue, ^{
 
-  [[aNotification object] acceptConnectionInBackgroundAndNotify];
+    [self handleClientConnection:socket];
+
+  });
+
+  // Continue accepting connections
+  [_socketFileHandle acceptConnectionInBackgroundAndNotify];
 }
 
 
@@ -120,25 +139,24 @@ NSString *const kTSockerServer_TransportKey = @"TSockerServer_Transport";
   @autoreleasepool {
 
     TNSFileHandleTransport *transport = [[TNSFileHandleTransport alloc] initWithFileHandle:clientSocket];
-    id<TProcessor> processor = [mProcessorFactory processorForTransport:transport];
+    id<TProcessor> processor = [_processorFactory processorForTransport:transport];
 
-    id <TProtocol> inProtocol = [mInputProtocolFactory newProtocolOnTransport:transport];
-    id <TProtocol> outProtocol = [mOutputProtocolFactory newProtocolOnTransport:transport];
+    id <TProtocol> inProtocol = [_inputProtocolFactory newProtocolOnTransport:transport];
+    id <TProtocol> outProtocol = [_outputProtocolFactory newProtocolOnTransport:transport];
 
     NSError *error;
     if (![processor processOnInputProtocol:inProtocol outputProtocol:outProtocol error:&error]) {
       // Handle error
+      NSLog(@"Error processing request: %@", error);
     }
 
-    NSNotification *n = [NSNotification notificationWithName:kTSocketServer_ClientConnectionFinishedForProcessorNotification
-                                                      object:self
-                                                    userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-                                                              processor,
-                                                              kTSocketServer_ProcessorKey,
-                                                              transport,
-                                                              kTSockerServer_TransportKey,
-                                                              nil]];
-    [[NSNotificationCenter defaultCenter] performSelectorOnMainThread:@selector(postNotification:) withObject:n waitUntilDone:YES];
+    dispatch_async(dispatch_get_main_queue(), ^{
+
+      [NSNotificationCenter.defaultCenter postNotificationName:TSocketServerClientConnectionFinished
+                                                        object:self
+                                                      userInfo:@{TSocketServerProcessorKey: processor,
+                                                                 TSockerServerTransportKey: transport}];
+    });
 
   }
 }

@@ -23,43 +23,44 @@
 
 NSString *const MULTIPLEXED_SERVICE_SEPERATOR = @":";
 
-@interface TMultiplexedProtocol () {
-  NSString *serviceName;
-}
+
+@interface TMultiplexedProtocol ()
+
+@property(strong, nonatomic) NSString *serviceName;
 
 @end
 
+
 @implementation TMultiplexedProtocol
 
-- (id) initWithProtocol: (id <TProtocol>) protocol
-            serviceName: (NSString *) name
+-(id) initWithProtocol:(id <TProtocol>)protocol
+           serviceName:(NSString *)name
 {
-    self = [super initWithProtocol:protocol];
-
-    if (self) {
-        serviceName = name;
-    }
-    return self;
+  self = [super initWithProtocol:protocol];
+  if (self) {
+    _serviceName = name;
+  }
+  return self;
 }
 
-- (BOOL) writeMessageBeginWithName: (NSString *) name
-                              type: (int) messageType
-                        sequenceID: (int) sequenceID
-                             error: (NSError *__autoreleasing *)error
+-(BOOL) writeMessageBeginWithName:(NSString *)name
+                             type:(int)messageType
+                       sequenceID:(int)sequenceID
+                            error:(NSError *__autoreleasing *)error
 {
-    switch (messageType) {
-        case TMessageTypeCALL:
-        case TMessageTypeONEWAY:
-            {
-                NSMutableString * serviceFunction = [[NSMutableString alloc] initWithString:serviceName];
-                [serviceFunction appendString:MULTIPLEXED_SERVICE_SEPERATOR];
-                [serviceFunction appendString:name];
-                return [super writeMessageBeginWithName:serviceFunction type:messageType sequenceID:sequenceID error:error];
-            }
-            break;
-        default:
-            return [super writeMessageBeginWithName:name type:messageType sequenceID:sequenceID error:error];
-    }
+  switch (messageType) {
+  case TMessageTypeCALL:
+  case TMessageTypeONEWAY: {
+    NSMutableString *serviceFunction = [[NSMutableString alloc] initWithString:_serviceName];
+    [serviceFunction appendString:MULTIPLEXED_SERVICE_SEPERATOR];
+    [serviceFunction appendString:name];
+    return [super writeMessageBeginWithName:serviceFunction type:messageType sequenceID:sequenceID error:error];
+  }
+  break;
+
+  default:
+    return [super writeMessageBeginWithName:name type:messageType sequenceID:sequenceID error:error];
+  }
 }
 
 @end

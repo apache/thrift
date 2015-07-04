@@ -24,10 +24,10 @@
 #define GARBAGE_BUFFER_SIZE 4096 // 4KiB
 
 
-@interface TMemoryBuffer () {
-  NSMutableData *buffer;
-  UInt32 bufferOffset;
-}
+@interface TMemoryBuffer ()
+
+@property(strong, nonatomic) NSMutableData *buffer;
+@property(assign, nonatomic) UInt32 bufferOffset;
 
 @end
 
@@ -37,8 +37,8 @@
 -(id) init
 {
   if ((self = [super init])) {
-    buffer = [NSMutableData new];
-    bufferOffset = 0;
+    _buffer = [NSMutableData new];
+    _bufferOffset = 0;
   }
   return self;
 }
@@ -46,49 +46,67 @@
 -(id) initWithData:(NSData *)data
 {
   if (self = [super init]) {
-    buffer = [data mutableCopy];
-    bufferOffset = 0;
+    _buffer = [data mutableCopy];
+    _bufferOffset = 0;
   }
   return self;
 }
 
 -(BOOL) readAll:(UInt8 *)outBuffer offset:(UInt32)outBufferOffset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
-  if ((buffer.length - bufferOffset) < length) {
-    if (error) {
+  UInt32 got = [self readAvail:outBuffer offset:outBufferOffset maxLength:length error:error];
+  if (got != length) {
+
+    // Report underflow only if readAvail didn't report error already
+    if (error && !*error) {
       *error = [NSError errorWithDomain:TTransportErrorDomain
-                                   code:TTransportErrorNoFrameHeader
-                               userInfo:@{}];
+                                   code:TTransportErrorUnderflow
+                               userInfo:nil];
     }
+
     return NO;
   }
 
-  [buffer getBytes:outBuffer + outBufferOffset range:NSMakeRange(bufferOffset, length)];
-  bufferOffset += length;
+  return YES;
+}
 
-  if (bufferOffset >= GARBAGE_BUFFER_SIZE) {
-    [buffer replaceBytesInRange:NSMakeRange(0, bufferOffset) withBytes:NULL length:0];
-    bufferOffset = 0;
+-(UInt32) readAvail:(UInt8 *)outBuffer offset:(UInt32)outBufferOffset maxLength:(UInt32)maxLength error:(NSError *__autoreleasing *)error
+{
+  UInt32 avail = (UInt32)_buffer.length - _bufferOffset;
+  if (avail == 0) {
+    return 0;
   }
 
-  return YES;
+  NSRange range;
+  range.location = _bufferOffset;
+  range.length = MIN(maxLength, avail);
+
+  [_buffer getBytes:outBuffer + outBufferOffset range:range];
+  _bufferOffset += range.length;
+
+  if (_bufferOffset >= GARBAGE_BUFFER_SIZE) {
+    [_buffer replaceBytesInRange:NSMakeRange(0, _bufferOffset) withBytes:NULL length:0];
+    _bufferOffset = 0;
+  }
+
+  return (UInt32)range.length;
 }
 
 -(BOOL) write:(const UInt8 *)inBuffer offset:(UInt32)inBufferOffset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
-  [buffer appendBytes:inBuffer + inBufferOffset length:length];
+  [_buffer appendBytes:inBuffer + inBufferOffset length:length];
 
-  return YES;
-}
-
--(BOOL) flush:(NSError *__autoreleasing *)error
-{
   return YES;
 }
 
 -(NSData *) buffer
 {
-  return [buffer copy];
+  return [_buffer copy];
+}
+
+-(BOOL) flush:(NSError *__autoreleasing *)error
+{
+  return YES;
 }
 
 @end

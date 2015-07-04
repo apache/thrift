@@ -50,26 +50,40 @@
 
 -(BOOL) readAll:(UInt8 *)buf offset:(UInt32)off length:(UInt32)len error:(NSError *__autoreleasing *)error
 {
-  int got = 0;
-  NSInteger total = 0;
+  UInt32 got = 0;
   while (got < len) {
 
-    total = [_input read:buf+off+got maxLength:len-got];
-    if (total <= 0) {
-
+    UInt32 read = (UInt32)[_input read:buf+off+got maxLength:len-got];
+    if (read <= 0) {
       if (error) {
         *error = [NSError errorWithDomain:TTransportErrorDomain
                                      code:TTransportErrorStreamClosed
                                  userInfo:@{}];
       }
       return NO;
-
     }
 
-    got += total;
+    got += read;
   }
 
   return YES;
+}
+
+
+-(UInt32) readAvail:(UInt8 *)buf offset:(UInt32)off maxLength:(UInt32)len error:(NSError *__autoreleasing *)error
+{
+  UInt32 got = 0;
+  while (got < len) {
+
+    UInt32 read = (UInt32)[_input read:buf+off+got maxLength:len-got];
+    if (read <= 0) {
+      break;
+    }
+
+    got += read;
+  }
+
+  return got;
 }
 
 

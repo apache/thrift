@@ -30,6 +30,8 @@
  */
 -(BOOL) readAll:(UInt8 *)buf offset:(UInt32)off length:(UInt32)len error:(NSError **)error;
 
+-(UInt32) readAvail:(UInt8 *)buf offset:(UInt32)off maxLength:(UInt32)maxLen error:(NSError **)error;
+
 -(BOOL) write:(const UInt8 *)data offset:(UInt32)offset length:(UInt32)length error:(NSError **)error;
 
 -(BOOL) flush:(NSError **)error;

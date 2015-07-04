@@ -22,6 +22,6 @@
 
 @interface TFramedTransport : NSObject <TTransport>
 
-- (id) initWithTransport: (id <TTransport>) transport;
+-(id) initWithTransport:(id <TTransport>)transport;
 
 @end

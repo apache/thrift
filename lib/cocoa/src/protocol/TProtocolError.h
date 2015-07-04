@@ -30,7 +30,7 @@ typedef NS_OPTIONS (int, TProtocolErrors) {
   TProtocolErrorMissingRequiredField      = -10004,
   TProtocolErrorProtocolIdMismatch        = -10005,
   TProtocolErrorProtocolVersionMismatch   = -10006,
-  TProtocolErrorUnknownType               = -10007,
+  TProtocolErrorUnknown                   = -10007,
   TProtocolErrorTransportFailed           = -10008
 };
 
@@ -53,7 +53,7 @@ extern NSString *TProtocolErrorMessageNameKey;
                                         @"SourceFile": [NSString stringWithUTF8String:__FILE__], \
                                         @"SourceLine": @(__LINE__), \
                                         @"SourceFunction": [NSString stringWithUTF8String:__PRETTY_FUNCTION__], \
-                                        @"Message": currentMessageName}]; \
+                                        @"Message": self.currentMessageName}]; \
   } \
   return ret
 
@@ -65,7 +65,7 @@ extern NSString *TProtocolErrorMessageNameKey;
                                         TProtocolErrorSourceFileKey: [NSString stringWithUTF8String:__FILE__], \
                                         TProtocolErrorSourceLineKey: @(__LINE__), \
                                         TProtocolErrorSourceMethodKey: [NSString stringWithUTF8String:__PRETTY_FUNCTION__], \
-                                        TProtocolErrorMessageNameKey: currentMessageName, \
+                                        TProtocolErrorMessageNameKey: self.currentMessageName, \
                                         NSUnderlyingErrorKey: *errorPtr}]; \
   } \
   return ret

@@ -33,6 +33,7 @@
 typedef void (^TAsyncCompletionBlock)();
 typedef void (^TAsyncFailureBlock)(NSError *);
 
+
 @protocol TAsyncTransport <TTransport>
 
 -(void) flushWithCompletion:(TAsyncCompletionBlock)completed failure:(TAsyncFailureBlock)failure;

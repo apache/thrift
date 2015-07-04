@@ -24,6 +24,6 @@
 
 @interface TProtocolDecorator : NSObject <TProtocol>
 
-- (id) initWithProtocol: (id <TProtocol>) protocol;
+-(id) initWithProtocol:(id <TProtocol>)protocol;
 
 @end

@@ -24,12 +24,12 @@
 #define INIT_FRAME_SIZE 1024
 
 
-@interface TFramedTransport () {
-  id<TTransport> transport;
-  NSMutableData *writeBuffer;
-  NSMutableData *readBuffer;
-  NSUInteger readOffset;
-}
+@interface TFramedTransport ()
+
+@property(strong, nonatomic) id<TTransport> transport;
+@property(strong, nonatomic) NSMutableData *writeBuffer;
+@property(strong, nonatomic) NSMutableData *readBuffer;
+@property(assign, nonatomic) NSUInteger readOffset;
 
 @end
 
@@ -39,17 +39,17 @@
 -(id) initWithTransport:(id <TTransport>)aTransport
 {
   if ((self = [self init])) {
-    transport = aTransport;
-    readBuffer = nil;
-    readOffset = 0;
-    writeBuffer = [NSMutableData dataWithLength:HEADER_SIZE];
+    _transport = aTransport;
+    _readBuffer = nil;
+    _readOffset = 0;
+    _writeBuffer = [NSMutableData dataWithLength:HEADER_SIZE];
   }
   return self;
 }
 
 -(BOOL) flush:(NSError **)error
 {
-  int len = (int)[writeBuffer length];
+  int len = (int)[_writeBuffer length];
   int data_len = len - HEADER_SIZE;
   if (data_len < 0) {
     if (error) {
@@ -68,69 +68,76 @@
 
   // should we make a copy of the writeBuffer instead? Better for threaded
   //  operations!
-  [writeBuffer replaceBytesInRange:NSMakeRange(0, HEADER_SIZE)
-                         withBytes:i32rd length:HEADER_SIZE];
+  [_writeBuffer replaceBytesInRange:NSMakeRange(0, HEADER_SIZE)
+                          withBytes:i32rd length:HEADER_SIZE];
 
-  if (![transport write:writeBuffer.mutableBytes offset:0 length:len error:error]) {
+  if (![_transport write:_writeBuffer.mutableBytes offset:0 length:len error:error]) {
     return NO;
   }
 
-  if (![transport flush:error]) {
+  if (![_transport flush:error]) {
     return NO;
   }
 
-  writeBuffer.length = HEADER_SIZE;
+  _writeBuffer.length = HEADER_SIZE;
 
   return YES;
 }
 
 -(BOOL) write:(const UInt8 *)data offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
-  [writeBuffer appendBytes:data+offset length:length];
+  [_writeBuffer appendBytes:data+offset length:length];
 
   return YES;
 }
 
--(BOOL) readAll:(UInt8 *)buf offset:(UInt32)off length:(UInt32)len error:(NSError *__autoreleasing *)error
+-(BOOL) readAll:(UInt8 *)outBuffer offset:(UInt32)outBufferOffset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
-  if (readBuffer == nil) {
+  UInt32 got = [self readAvail:outBuffer offset:outBufferOffset maxLength:length error:error];
+  if (got != length) {
 
-    if (![self readFrame:error]) {
-      return NO;
+    // Report underflow only if readAvail didn't report error already
+    if (error && !*error) {
+      *error = [NSError errorWithDomain:TTransportErrorDomain
+                                   code:TTransportErrorUnderflow
+                               userInfo:nil];
     }
 
-  }
-
-  if (readBuffer != nil) {
-
-    int buffer_len = (int)[readBuffer length];
-    if (buffer_len-readOffset >= len) {
-
-      [readBuffer getBytes:buf range:NSMakeRange(readOffset, len)];      // copy
-                                                                         //  data
-      readOffset += len;
-    }
-    else {
-
-      // void the previous readBuffer data and request a new frame
-      if (![self readFrame:error]) {
-        return NO;
-      }
-
-      [readBuffer getBytes:buf range:NSMakeRange(0, len)];      // copy data
-
-      readOffset = len;
-    }
-
+    return NO;
   }
 
   return YES;
+}
+
+-(UInt32) readAvail:(UInt8 *)outBuffer offset:(UInt32)outBufferOffset maxLength:(UInt32)length error:(NSError *__autoreleasing *)error
+{
+  UInt32 got = 0;
+  while (got < length) {
+
+    NSUInteger avail = _readBuffer.length - _readOffset;
+    if (avail == 0) {
+      if (![self readFrame:error]) {
+        return 0;
+      }
+      avail = _readBuffer.length;
+    }
+
+    NSRange range;
+    range.location = _readOffset;
+    range.length = MIN(length - got, avail);
+
+    [_readBuffer getBytes:outBuffer+outBufferOffset+got range:range];
+    _readOffset += range.length;
+    got += range.length;
+  }
+
+  return got;
 }
 
 -(BOOL) readFrame:(NSError **)error
 {
   UInt8 i32rd[HEADER_SIZE];
-  if (![transport readAll:i32rd offset:0 length:HEADER_SIZE error:error]) {
+  if (![_transport readAll:i32rd offset:0 length:HEADER_SIZE error:error]) {
     return NO;
   }
 
@@ -140,30 +147,30 @@
     ((i32rd[2] & 0xff) <<  8) |
     ((i32rd[3] & 0xff));
 
-  if (readBuffer == nil) {
+  if (_readBuffer == nil) {
 
-    readBuffer = [NSMutableData dataWithLength:size];
+    _readBuffer = [NSMutableData dataWithLength:size];
 
   }
   else {
 
-    SInt32 len = (SInt32)readBuffer.length;
+    SInt32 len = (SInt32)_readBuffer.length;
     if (len >= size) {
 
-      readBuffer.length = size;
+      _readBuffer.length = size;
 
     }
     else {
 
       // increase length of data buffer
-      [readBuffer increaseLengthBy:size-len];
+      [_readBuffer increaseLengthBy:size-len];
 
     }
 
   }
 
   // copy into internal memory buffer
-  if (![transport readAll:readBuffer.mutableBytes offset:0 length:size error:error]) {
+  if (![_transport readAll:_readBuffer.mutableBytes offset:0 length:size error:error]) {
     return NO;
   }
 

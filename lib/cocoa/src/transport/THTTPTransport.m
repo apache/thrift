@@ -21,15 +21,15 @@
 #import "TTransportError.h"
 
 
-@interface THTTPTransport () {
-  NSURL *url;
-  NSMutableURLRequest *request;
-  NSMutableData *requestData;
-  NSData *responseData;
-  NSUInteger responseDataOffset;
-  NSString *userAgent;
-  int timeout;
-}
+@interface THTTPTransport ()
+
+@property (strong, nonatomic) NSURL *url;
+@property (strong, nonatomic) NSMutableURLRequest *request;
+@property (strong, nonatomic) NSMutableData *requestData;
+@property (strong, nonatomic) NSData *responseData;
+@property (assign, nonatomic) NSUInteger responseDataOffset;
+@property (strong, nonatomic) NSString *userAgent;
+@property (assign, nonatomic) NSTimeInterval timeout;
 
 @end
 
@@ -39,20 +39,20 @@
 -(void) setupRequest
 {
   // set up our request object that we'll use for each request
-  request = [[NSMutableURLRequest alloc] initWithURL:url];
-  [request setHTTPMethod:@"POST"];
-  [request setValue:@"application/x-thrift" forHTTPHeaderField:@"Content-Type"];
-  [request setValue:@"application/x-thrift" forHTTPHeaderField:@"Accept"];
+  _request = [[NSMutableURLRequest alloc] initWithURL:_url];
+  [_request setHTTPMethod:@"POST"];
+  [_request setValue:@"application/x-thrift" forHTTPHeaderField:@"Content-Type"];
+  [_request setValue:@"application/x-thrift" forHTTPHeaderField:@"Accept"];
 
-  NSString *validUserAgent = userAgent;
-  if (!validUserAgent) {
-    validUserAgent = @"Cocoa/THTTPTransport";
+  NSString *userAgent = _userAgent;
+  if (!userAgent) {
+    userAgent = @"Cocoa/THTTPTransport";
   }
-  [request setValue:validUserAgent forHTTPHeaderField:@"User-Agent"];
+  [_request setValue:userAgent forHTTPHeaderField:@"User-Agent"];
 
-  [request setCachePolicy:NSURLRequestReloadIgnoringCacheData];
-  if (timeout) {
-    [request setTimeoutInterval:timeout];
+  [_request setCachePolicy:NSURLRequestReloadIgnoringCacheData];
+  if (_timeout) {
+    [_request setTimeoutInterval:_timeout];
   }
 }
 
@@ -74,58 +74,78 @@
     return nil;
   }
 
-  timeout = aTimeout;
-  userAgent = aUserAgent;
-  url = aURL;
+  _timeout = aTimeout;
+  _userAgent = aUserAgent;
+  _url = aURL;
 
   [self setupRequest];
 
   // create our request data buffer
-  requestData = [[NSMutableData alloc] initWithCapacity:1024];
+  _requestData = [[NSMutableData alloc] initWithCapacity:1024];
 
   return self;
 }
 
 -(void) setURL:(NSURL *)aURL
 {
-  url = aURL;
+  _url = aURL;
 
   [self setupRequest];
 }
 
--(BOOL) readAll:(UInt8 *)buf offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error
+-(BOOL) readAll:(UInt8 *)outBuffer offset:(UInt32)outBufferOffset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
-  NSRange r;
-  r.location = responseDataOffset;
-  r.length = length;
+  UInt32 got = [self readAvail:outBuffer offset:outBufferOffset maxLength:length error:error];
+  if (got != length) {
 
-  [responseData getBytes:buf+offset range:r];
-  responseDataOffset += length;
+    // Report underflow only if readAvail didn't report error already
+    if (error && !*error) {
+      *error = [NSError errorWithDomain:TTransportErrorDomain
+                                   code:TTransportErrorUnderflow
+                               userInfo:nil];
+    }
 
-  return length;
+    return NO;
+  }
+
+  return YES;
+}
+
+-(UInt32) readAvail:(UInt8 *)outBuffer offset:(UInt32)outBufferOffset maxLength:(UInt32)maxLength error:(NSError *__autoreleasing *)error
+{
+  NSUInteger avail = _responseData.length - _responseDataOffset;
+
+  NSRange range;
+  range.location = _responseDataOffset;
+  range.length = MIN(maxLength, avail);
+
+  [_responseData getBytes:outBuffer+outBufferOffset range:range];
+  _responseDataOffset += range.length;
+
+  return (UInt32)range.length;
 }
 
 -(BOOL) write:(const UInt8 *)data offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
-  [requestData appendBytes:data+offset length:length];
+  [_requestData appendBytes:data+offset length:length];
 
   return YES;
 }
 
 -(BOOL) flush:(NSError *__autoreleasing *)error
 {
-  [request setHTTPBody:requestData];  // not sure if it copies the data
+  [_request setHTTPBody:_requestData];
 
-  responseDataOffset = 0;
+  _responseDataOffset = 0;
 
   // make the HTTP request
   NSURLResponse *response;
-  responseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:error];
-  if (!responseData) {
+  _responseData = [NSURLConnection sendSynchronousRequest:_request returningResponse:&response error:error];
+  if (!_responseData) {
     return NO;
   }
 
-  [requestData setLength:0];
+  [_requestData setLength:0];
 
   if (![response isKindOfClass:NSHTTPURLResponse.class]) {
     if (error) {

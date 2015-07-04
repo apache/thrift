@@ -25,7 +25,7 @@ FOUNDATION_EXPORT NSString *const MULTIPLEXED_SERVICE_SEPERATOR;
 
 @interface TMultiplexedProtocol : TProtocolDecorator
 
-- (id) initWithProtocol: (id <TProtocol>) protocol
-            serviceName: (NSString *) name;
+-(id) initWithProtocol:(id <TProtocol>)protocol
+           serviceName:(NSString *)name;
 
 @end

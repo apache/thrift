@@ -22,10 +22,10 @@
 #import "TTransportError.h"
 
 
-@interface TNSFileHandleTransport () {
-  NSFileHandle *inputFileHandle;
-  NSFileHandle *outputFileHandle;
-}
+@interface TNSFileHandleTransport ()
+
+@property(strong, nonatomic) NSFileHandle *inputFileHandle;
+@property(strong, nonatomic) NSFileHandle *outputFileHandle;
 
 @end
 
@@ -44,8 +44,8 @@
 {
   self = [super init];
   if (self) {
-    inputFileHandle = aInputFileHandle;
-    outputFileHandle = aOutputFileHandle;
+    _inputFileHandle = aInputFileHandle;
+    _outputFileHandle = aOutputFileHandle;
   }
   return self;
 }
@@ -53,17 +53,34 @@
 
 -(BOOL) readAll:(UInt8 *)buf offset:(UInt32)off length:(UInt32)len error:(NSError *__autoreleasing *)error
 {
-  int got = 0;
+  UInt32 got = 0;
   while (got < len) {
 
-    NSData *d = [inputFileHandle readDataOfLength:len-got];
+    NSData *d = [_inputFileHandle readDataOfLength:len-got];
     if (d.length == 0) {
       if (error) {
         *error = [NSError errorWithDomain:TTransportErrorDomain
                                      code:TTransportErrorUnderflow
-                                 userInfo:@{}];
+                                 userInfo:nil];
       }
       return NO;
+    }
+
+    [d getBytes:buf+got length:d.length];
+    got += d.length;
+  }
+  return YES;
+}
+
+
+-(UInt32) readAvail:(UInt8 *)buf offset:(UInt32)off maxLength:(UInt32)len error:(NSError *__autoreleasing *)error
+{
+  UInt32 got = 0;
+  while (got < len) {
+
+    NSData *d = [_inputFileHandle readDataOfLength:len-got];
+    if (d.length == 0) {
+      break;
     }
 
     [d getBytes:buf+got length:d.length];
@@ -78,7 +95,7 @@
   void *pos = (void *)data + offset;
 
   @try {
-    [outputFileHandle writeData:[NSData dataWithBytesNoCopy:pos length:length freeWhenDone:NO]];
+    [_outputFileHandle writeData:[NSData dataWithBytesNoCopy:pos length:length freeWhenDone:NO]];
   }
   @catch (NSException *e) {
     if (error) {

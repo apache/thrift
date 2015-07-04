@@ -907,7 +907,7 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream& out,
  * @param tstruct The struct definition
  */
 void t_cocoa_generator::generate_cocoa_struct_reader(ofstream& out, t_struct* tstruct) {
-  out << "- (BOOL) read: (id <TProtocol>) inProtocol error: (NSError * __autoreleasing*)__thriftError" << endl;
+  out << "- (BOOL) read: (id <TProtocol>) inProtocol error: (NSError *__autoreleasing *)__thriftError" << endl;
   scope_up(out);
 
   const vector<t_field*>& fields = tstruct->get_members();
@@ -1001,7 +1001,7 @@ void t_cocoa_generator::generate_cocoa_struct_reader(ofstream& out, t_struct* ts
  * @param tstruct The struct definition
  */
 void t_cocoa_generator::generate_cocoa_struct_writer(ofstream& out, t_struct* tstruct) {
-  out << indent() << "- (BOOL) write: (id <TProtocol>) outProtocol error: (NSError * __autoreleasing*)__thriftError {" << endl;
+  out << indent() << "- (BOOL) write: (id <TProtocol>) outProtocol error: (NSError *__autoreleasing *)__thriftError {" << endl;
   indent_up();
 
   string name = tstruct->get_name();
@@ -1052,7 +1052,7 @@ void t_cocoa_generator::generate_cocoa_struct_writer(ofstream& out, t_struct* ts
  * @param tstruct The struct definition
  */
 void t_cocoa_generator::generate_cocoa_struct_result_writer(ofstream& out, t_struct* tstruct) {
-  out << indent() << "- (BOOL) write: (id <TProtocol>) outProtocol error: (NSError * __autoreleasing*)__thriftError {" << endl;
+  out << indent() << "- (BOOL) write: (id <TProtocol>) outProtocol error: (NSError *__autoreleasing *)__thriftError {" << endl;
   indent_up();
 
   string name = tstruct->get_name();
@@ -1115,7 +1115,7 @@ void t_cocoa_generator::generate_cocoa_struct_result_writer(ofstream& out, t_str
  * @param tstruct The struct definition
  */
 void t_cocoa_generator::generate_cocoa_struct_validator(ofstream& out, t_struct* tstruct) {
-  out << indent() << "- (BOOL) validate: (NSError * __autoreleasing*)__thriftError {" << endl;
+  out << indent() << "- (BOOL) validate: (NSError *__autoreleasing *)__thriftError {" << endl;
   indent_up();
 
   const vector<t_field*>& fields = tstruct->get_members();
@@ -1465,7 +1465,7 @@ void t_cocoa_generator::generate_cocoa_service_client_recv_function_implementati
   if (needs_protocol) {
     out << ": (id<TProtocol>) inProtocol error";
   }
-  out << ": (NSError * __autoreleasing *)__thriftError" << endl;
+  out << ": (NSError *__autoreleasing *)__thriftError" << endl;
   scope_up(out);
 
   // TODO(mcslee): Message validation here, was the seqid etc ok?
@@ -1898,7 +1898,7 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
   out << endl;
   out << indent() << "- (BOOL) processOnInputProtocol: (id <TProtocol>) inProtocol" << endl;
   out << indent() << "                 outputProtocol: (id <TProtocol>) outProtocol" << endl;
-  out << indent() << "                          error: (NSError *__autoreleasing*)__thriftError" << endl;
+  out << indent() << "                          error: (NSError *__autoreleasing *)__thriftError" << endl;
   out << indent() << "{" << endl;
   out << indent() << "  NSString * messageName;" << endl;
   out << indent() << "  int messageType;" << endl;
@@ -2952,7 +2952,7 @@ string t_cocoa_generator::argument_list(t_struct* tstruct, string protocol_name,
     if (!first) {
       result += " error";
     }
-    result += ": (NSError * __autoreleasing*)__thriftError";
+    result += ": (NSError *__autoreleasing *)__thriftError";
     first = false;
   }
   return result;

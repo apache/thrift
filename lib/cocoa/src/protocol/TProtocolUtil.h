@@ -20,9 +20,7 @@
 #import "TProtocol.h"
 #import "TTransport.h"
 
-@interface TProtocolUtil : NSObject {
-
-}
+@interface TProtocolUtil : NSObject
 
 +(BOOL) skipType:(int)type onProtocol:(id <TProtocol>)protocol error:(NSError **)error;
 

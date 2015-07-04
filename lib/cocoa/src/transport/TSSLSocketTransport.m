@@ -30,12 +30,12 @@
 #import <CFNetwork/CFNetwork.h>
 #endif
 
-@interface TSSLSocketTransport () {
-  NSInputStream *inputStream;
-  NSOutputStream *outputStream;
-  NSString *sslHostname;
-  int sd;
-}
+@interface TSSLSocketTransport ()
+
+@property(strong, nonatomic) NSInputStream *inputStream;
+@property(strong, nonatomic) NSOutputStream *outputStream;
+@property(strong, nonatomic) NSString *sslHostname;
+@property(assign, nonatomic) int sd;
 
 @end
 
@@ -46,7 +46,7 @@
                   port:(int)port
                  error:(NSError **)error
 {
-  sslHostname = hostname;
+  _sslHostname = hostname;
   CFReadStreamRef readStream = NULL;
   CFWriteStreamRef writeStream = NULL;
 
@@ -82,7 +82,7 @@
   pin.sin_port = htons(port);
 
   /* create the socket */
-  if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
+  if ((_sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
     NSLog(@"failed to create socket for host %@:%d", hostname, port);
     if (error) {
       *error = [NSError errorWithDomain:TSSLSocketTransportErrorDomain
@@ -93,7 +93,7 @@
   }
 
   /* open a connection */
-  if (connect(sd, (struct sockaddr *)&pin, sizeof(pin)) == -1) {
+  if (connect(_sd, (struct sockaddr *)&pin, sizeof(pin)) == -1) {
     NSLog(@"failed to create conenct to host %@:%d", hostname, port);
     if (error) {
       *error = [NSError errorWithDomain:TSSLSocketTransportErrorDomain
@@ -102,7 +102,7 @@
     }
     return nil;
   }
-  CFStreamCreatePairWithSocket(kCFAllocatorDefault, sd, &readStream, &writeStream);
+  CFStreamCreatePairWithSocket(kCFAllocatorDefault, _sd, &readStream, &writeStream);
 
   CFReadStreamSetProperty(readStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
   CFWriteStreamSetProperty(writeStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
@@ -123,21 +123,21 @@
                              kCFStreamPropertySSLSettings,
                              (CFTypeRef)settings);
 
-    inputStream = (__bridge NSInputStream *)readStream;
-    [inputStream setDelegate:self];
-    [inputStream scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
-    [inputStream open];
+    _inputStream = (__bridge NSInputStream *)readStream;
+    [_inputStream setDelegate:self];
+    [_inputStream scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
+    [_inputStream open];
 
-    outputStream = (__bridge NSOutputStream *)writeStream;
-    [outputStream setDelegate:self];
-    [outputStream scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
-    [outputStream open];
+    _outputStream = (__bridge NSOutputStream *)writeStream;
+    [_outputStream setDelegate:self];
+    [_outputStream scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
+    [_outputStream open];
 
     CFRelease(readStream);
     CFRelease(writeStream);
   }
 
-  self = [super initWithInputStream:inputStream outputStream:outputStream];
+  self = [super initWithInputStream:_inputStream outputStream:_outputStream];
 
   return self;
 }
@@ -169,7 +169,7 @@
       SecTrustRef trust = (__bridge SecTrustRef)[aStream propertyForKey:(NSString *)kCFStreamPropertySSLPeerTrust];
 
       // Add new policy to current list of policies
-      SecPolicyRef policy = SecPolicyCreateSSL(NO, (__bridge CFStringRef)(sslHostname));
+      SecPolicyRef policy = SecPolicyCreateSSL(NO, (__bridge CFStringRef)(_sslHostname));
       if (!policy) {
         break;
       }
@@ -286,7 +286,7 @@ BOOL recoverFromTrustFailure(SecTrustRef myTrust, SecTrustResultType lastTrustRe
 
 -(BOOL) isOpen
 {
-  if (sd > 0) {
+  if (_sd > 0) {
     return TRUE;
   }
   else {

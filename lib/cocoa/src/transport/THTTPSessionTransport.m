@@ -158,25 +158,36 @@
   return self;
 }
 
--(BOOL) readAll:(UInt8 *)buf offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error
+-(BOOL) readAll:(UInt8 *)outBuffer offset:(UInt32)outBufferOffset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
-  if (_responseData.length - _responseDataOffset < length) {
-    if (error) {
+  UInt32 got = [self readAvail:outBuffer offset:outBufferOffset maxLength:length error:error];
+  if (got != length) {
+
+    // Report underflow only if readAvail didn't report error already
+    if (error && !*error) {
       *error = [NSError errorWithDomain:TTransportErrorDomain
                                    code:TTransportErrorUnderflow
                                userInfo:nil];
     }
+
     return NO;
   }
 
-  NSRange r;
-  r.location = _responseDataOffset;
-  r.length = length;
+  return YES;
+}
 
-  [_responseData getBytes:buf+offset range:r];
-  _responseDataOffset += length;
+-(UInt32) readAvail:(UInt8 *)outBuffer offset:(UInt32)outBufferOffset maxLength:(UInt32)maxLength error:(NSError *__autoreleasing *)error
+{
+  NSUInteger avail = _responseData.length - _responseDataOffset;
 
-  return length;
+  NSRange range;
+  range.location = _responseDataOffset;
+  range.length = MIN(maxLength, avail);
+
+  [_responseData getBytes:outBuffer+outBufferOffset range:range];
+  _responseDataOffset += range.length;
+
+  return (UInt32)range.length;
 }
 
 -(BOOL) write:(const UInt8 *)data offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error

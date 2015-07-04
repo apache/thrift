@@ -22,6 +22,6 @@
 
 @protocol TProcessorFactory <NSObject>
 
-- (id<TProcessor>) processorForTransport: (id<TTransport>) transport;
+-(id<TProcessor>) processorForTransport:(id<TTransport>)transport;
 
 @end
