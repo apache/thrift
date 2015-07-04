@@ -111,6 +111,9 @@ public:
   void generate_cocoa_struct_encode_with_coder_method(ofstream& out,
                                                       t_struct* tstruct,
                                                       bool is_exception);
+  void generate_cocoa_struct_copy_method(ofstream& out,
+                                         t_struct* tstruct,
+                                         bool is_exception);
   void generate_cocoa_struct_hash_method(ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_is_equal_method(ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_field_accessor_implementations(std::ofstream& out,
@@ -479,7 +482,7 @@ void t_cocoa_generator::generate_cocoa_struct_interface(ofstream& out,
   } else {
     out << "NSObject ";
   }
-  out << "<TBase, NSCoding> " << endl;
+  out << "<TBase, NSCoding, NSCopying> " << endl;
   
   out << endl;
 
@@ -679,6 +682,38 @@ void t_cocoa_generator::generate_cocoa_struct_encode_with_coder_method(ofstream&
 }
 
 /**
+ * Generate the copy method for this struct
+ */
+void t_cocoa_generator::generate_cocoa_struct_copy_method(ofstream& out, t_struct* tstruct, bool is_exception) {
+  out << indent() << "- (instancetype) copyWithZone:(NSZone *)zone" << endl;
+  scope_up(out);
+  
+  if (is_exception) {
+    out << indent() << type_name(tstruct) << " val = [" << cocoa_prefix_ << tstruct->get_name() << " errorWithDomain: self.domain code: self.code userInfo: self.userInfo];" << endl;
+  } else {
+    out << indent() << type_name(tstruct) << " val = [" << cocoa_prefix_ << tstruct->get_name() << " new];" << endl;
+  }
+  
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+  
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_type* t = get_true_type((*m_iter)->get_type());
+    if (type_can_be_null(t)) {
+      out << indent() << "val." << (*m_iter)->get_name() << " = [self." << (*m_iter)->get_name() << " copy];";
+    } else {
+      out << indent() << "val." << (*m_iter)->get_name() << " = self." << (*m_iter)->get_name() << ";";
+    }
+    out << endl;
+  }
+  
+  out << indent() << "return val;" << endl;
+  
+  scope_down(out);
+  out << endl;
+}
+
+/**
  * Generate the hash method for this struct
  */
 void t_cocoa_generator::generate_cocoa_struct_hash_method(ofstream& out, t_struct* tstruct) {
@@ -849,6 +884,8 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream& out,
   // hash and isEqual for NSObject
   generate_cocoa_struct_hash_method(out, tstruct);
   generate_cocoa_struct_is_equal_method(out, tstruct);
+  // copy for NSObject
+  generate_cocoa_struct_copy_method(out, tstruct, is_exception);
 
   // the rest of the methods
   generate_cocoa_struct_field_accessor_implementations(out, tstruct, is_exception);
