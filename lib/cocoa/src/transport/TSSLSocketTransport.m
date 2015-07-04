@@ -278,5 +278,28 @@ BOOL recoverFromTrustFailure(SecTrustRef myTrust)
   }
 }
 
+-(void) close
+{
+  NSInputStream *input = self.input;
+  if (input) {
+    // Close and reset inputstream
+    CFReadStreamSetProperty((__bridge CFReadStreamRef)(input), kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
+    [input setDelegate:nil];
+    [input close];
+    [input removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    input = nil;
+  }
+
+  NSOutputStream *output = self.output;
+  if (output) {
+    // Close and reset outputstream
+    CFWriteStreamSetProperty((__bridge CFWriteStreamRef)(output), kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
+    [output setDelegate:nil];
+    [output close];
+    [output removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    output = nil;
+  }
+}
+
 @end
 

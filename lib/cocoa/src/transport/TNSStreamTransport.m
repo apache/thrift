@@ -21,35 +21,31 @@
 #import "TTransportError.h"
 
 
-@interface TNSStreamTransport () {
-  NSInputStream *input;
-  NSOutputStream *output;
-}
-
+@interface TNSStreamTransport ()
 @end
 
 
 @implementation TNSStreamTransport
 
--(id) initWithInputStream:(NSInputStream *)aInput
-             outputStream:(NSOutputStream *)aOutput
+-(id) initWithInputStream:(NSInputStream *)input
+             outputStream:(NSOutputStream *)output
 {
   self = [super init];
   if (self) {
-    input = aInput;
-    output = aOutput;
+    _input = input;
+    _output = output;
   }
   return self;
 }
 
--(id) initWithInputStream:(NSInputStream *)aInput
+-(id) initWithInputStream:(NSInputStream *)input
 {
-  return [self initWithInputStream:aInput outputStream:nil];
+  return [self initWithInputStream:input outputStream:nil];
 }
 
--(id) initWithOutputStream:(NSOutputStream *)aOutput
+-(id) initWithOutputStream:(NSOutputStream *)output
 {
-  return [self initWithInputStream:nil outputStream:aOutput];
+  return [self initWithInputStream:nil outputStream:output];
 }
 
 -(BOOL) readAll:(UInt8 *)buf offset:(UInt32)off length:(UInt32)len error:(NSError *__autoreleasing *)error
@@ -58,7 +54,7 @@
   NSInteger total = 0;
   while (got < len) {
 
-    total = [input read:buf+off+got maxLength:len-got];
+    total = [_input read:buf+off+got maxLength:len-got];
     if (total <= 0) {
 
       if (error) {
@@ -83,7 +79,7 @@
   NSInteger total = 0;
   while (got < length) {
 
-    total = [output write:data+offset+got maxLength:length-got];
+    total = [_output write:data+offset+got maxLength:length-got];
     if (total == -1) {
       if (error) {
         *error = [NSError errorWithDomain:TTransportErrorDomain
@@ -105,27 +101,6 @@
   }
 
   return YES;
-}
-
--(void) close
-{
-  if (input) {
-    // Close and reset inputstream
-    CFReadStreamSetProperty((__bridge CFReadStreamRef)(input), kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
-    [input setDelegate:nil];
-    [input close];
-    [input removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    input = nil;
-  }
-
-  if (output) {
-    // Close and reset outputstream
-    CFWriteStreamSetProperty((__bridge CFWriteStreamRef)(output), kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
-    [output setDelegate:nil];
-    [output close];
-    [output removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    output = nil;
-  }
 }
 
 -(BOOL) flush:(NSError *__autoreleasing *)error

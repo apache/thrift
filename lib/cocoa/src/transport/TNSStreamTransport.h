@@ -23,13 +23,14 @@
 
 @interface TNSStreamTransport : NSObject <TTransport>
 
+@property (strong, nonatomic) NSInputStream *input;
+@property (strong, nonatomic) NSOutputStream *output;
+
 -(id) initWithInputStream:(NSInputStream *)input
              outputStream:(NSOutputStream *)output;
 
 -(id) initWithInputStream:(NSInputStream *)input;
 
 -(id) initWithOutputStream:(NSOutputStream *)output;
-
--(void) close;
 
 @end
