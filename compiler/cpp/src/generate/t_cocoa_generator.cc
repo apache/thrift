@@ -2867,7 +2867,7 @@ string t_cocoa_generator::declare_property(t_field* tfield) {
   
   // Check if the property name is an Objective-C return +1 count signal
   if ((tfield->get_name().length() >= 3 && tfield->get_name().substr(0,3) == "new") ||
-      (tfield->get_name().length() >= 5 && tfield->get_name().substr(0,5) == "create") ||
+      (tfield->get_name().length() >= 6 && tfield->get_name().substr(0,6) == "create") ||
       (tfield->get_name().length() >= 5 && tfield->get_name().substr(0,5) == "alloc")) {
     // Let Objective-C know not to return +1 for object pointers
     if (type_can_be_null(tfield->get_type())) {
