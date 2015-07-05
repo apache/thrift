@@ -33,4 +33,6 @@
 
 -(id) initWithOutputStream:(NSOutputStream *)output;
 
+-(void) close;
+
 @end

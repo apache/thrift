@@ -32,8 +32,6 @@
 
 @interface TSSLSocketTransport ()
 
-@property(strong, nonatomic) NSInputStream *inputStream;
-@property(strong, nonatomic) NSOutputStream *outputStream;
 @property(strong, nonatomic) NSString *sslHostname;
 @property(assign, nonatomic) int sd;
 
@@ -107,6 +105,9 @@
   CFReadStreamSetProperty(readStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
   CFWriteStreamSetProperty(writeStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
 
+  NSInputStream *inputStream;
+  NSOutputStream *outputStream;
+
   if (readStream && writeStream) {
 
     CFReadStreamSetProperty(readStream,
@@ -123,23 +124,28 @@
                              kCFStreamPropertySSLSettings,
                              (CFTypeRef)settings);
 
-    _inputStream = (__bridge NSInputStream *)readStream;
-    [_inputStream setDelegate:self];
-    [_inputStream scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
-    [_inputStream open];
+    inputStream = (__bridge NSInputStream *)readStream;
+    [inputStream setDelegate:self];
+    [inputStream scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
+    [inputStream open];
 
-    _outputStream = (__bridge NSOutputStream *)writeStream;
-    [_outputStream setDelegate:self];
-    [_outputStream scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
-    [_outputStream open];
+    outputStream = (__bridge NSOutputStream *)writeStream;
+    [outputStream setDelegate:self];
+    [outputStream scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
+    [outputStream open];
 
     CFRelease(readStream);
     CFRelease(writeStream);
   }
 
-  self = [super initWithInputStream:_inputStream outputStream:_outputStream];
+  self = [super initWithInputStream:inputStream outputStream:outputStream];
 
   return self;
+}
+
+-(void) dealloc
+{
+  [self close];
 }
 
 #pragma mark -
@@ -294,28 +300,4 @@ BOOL recoverFromTrustFailure(SecTrustRef myTrust, SecTrustResultType lastTrustRe
   }
 }
 
--(void) close
-{
-  NSInputStream *input = self.input;
-  if (input) {
-    // Close and reset inputstream
-    CFReadStreamSetProperty((__bridge CFReadStreamRef)(input), kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
-    [input setDelegate:nil];
-    [input close];
-    [input removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    input = nil;
-  }
-
-  NSOutputStream *output = self.output;
-  if (output) {
-    // Close and reset outputstream
-    CFWriteStreamSetProperty((__bridge CFWriteStreamRef)(output), kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
-    [output setDelegate:nil];
-    [output close];
-    [output removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    output = nil;
-  }
-}
-
 @end
-

@@ -28,6 +28,5 @@
                  error:(NSError **)error;
 
 -(BOOL) isOpen;
--(void) close;
 
 @end

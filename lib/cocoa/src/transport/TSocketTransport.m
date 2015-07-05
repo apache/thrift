@@ -25,10 +25,6 @@
 #endif
 
 @interface TSocketTransport () <NSStreamDelegate>
-
-@property(strong, nonatomic) NSInputStream *inputStream;
-@property(strong, nonatomic) NSOutputStream *outputStream;
-
 @end
 
 
@@ -37,8 +33,9 @@
 -(id) initWithHostname:(NSString *)hostname
                   port:(int)port
 {
-  _inputStream = NULL;
-  _outputStream = NULL;
+  NSInputStream *inputStream = nil;
+  NSOutputStream *outputStream = nil;
+
   CFReadStreamRef readStream = NULL;
   CFWriteStreamRef writeStream = NULL;
   CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, (__bridge CFStringRef)hostname, port, &readStream, &writeStream);
@@ -47,15 +44,15 @@
     CFReadStreamSetProperty(readStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
     CFWriteStreamSetProperty(writeStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
 
-    _inputStream = (__bridge NSInputStream *)readStream;
-    [_inputStream setDelegate:self];
-    [_inputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    [_inputStream open];
+    inputStream = (__bridge NSInputStream *)readStream;
+    [inputStream setDelegate:self];
+    [inputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    [inputStream open];
 
-    _outputStream = (__bridge NSOutputStream *)writeStream;
-    [_outputStream setDelegate:self];
-    [_outputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    [_outputStream open];
+    outputStream = (__bridge NSOutputStream *)writeStream;
+    [outputStream setDelegate:self];
+    [outputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    [outputStream open];
   }
   else {
 
@@ -70,18 +67,7 @@
     return nil;
   }
 
-  return [super initWithInputStream:_inputStream outputStream:_outputStream];
-}
-
--(void) dealloc
-{
-  [_inputStream close];
-  [_inputStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-  [_inputStream setDelegate:nil];
-
-  [_outputStream close];
-  [_outputStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-  [_outputStream setDelegate:nil];
+  return [super initWithInputStream:inputStream outputStream:outputStream];
 }
 
 @end

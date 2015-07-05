@@ -48,6 +48,11 @@
   return [self initWithInputStream:nil outputStream:output];
 }
 
+-(void) dealloc
+{
+  [self close];
+}
+
 -(BOOL) readAll:(UInt8 *)buf offset:(UInt32)off length:(UInt32)len error:(NSError *__autoreleasing *)error
 {
   UInt32 got = 0;
@@ -120,6 +125,29 @@
 -(BOOL) flush:(NSError *__autoreleasing *)error
 {
   return YES;
+}
+
+-(void) close
+{
+  NSInputStream *input = self.input;
+  if (input) {
+    // Close and reset inputstream
+    CFReadStreamSetProperty((__bridge CFReadStreamRef)(input), kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
+    [input setDelegate:nil];
+    [input close];
+    [input removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    input = nil;
+  }
+
+  NSOutputStream *output = self.output;
+  if (output) {
+    // Close and reset outputstream
+    CFWriteStreamSetProperty((__bridge CFWriteStreamRef)(output), kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
+    [output setDelegate:nil];
+    [output close];
+    [output removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    output = nil;
+  }
 }
 
 @end
