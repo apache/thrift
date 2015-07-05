@@ -680,7 +680,7 @@ enum {
   if (![_transport readAll:value offset:0 length:1 error:error]) {
     PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport read failed");
   }
-  return NO;
+  return YES;
 }
 
 -(BOOL) readI16:(SInt16 *)value error:(NSError *__autoreleasing *)error
@@ -689,7 +689,12 @@ enum {
   if (![self readVarint32:&v error:error]) {
     return NO;
   }
-  return (SInt16)[self zigZagToi32:v];
+
+  if (value) {
+    *value = (SInt16)[self zigZagToi32:v];
+  }
+
+  return YES;
 }
 
 -(BOOL) readI32:(SInt32 *)value error:(NSError *__autoreleasing *)error
@@ -698,7 +703,12 @@ enum {
   if (![self readVarint32:&v error:error]) {
     return NO;
   }
-  return [self zigZagToi32:v];
+
+  if (value) {
+    *value = [self zigZagToi32:v];
+  }
+
+  return YES;
 }
 
 -(BOOL) readI64:(SInt64 *)value error:(NSError *__autoreleasing *)error
@@ -707,22 +717,28 @@ enum {
   if (![self readVarint64:&v error:error]) {
     return NO;
   }
-  return [self zigZagToi64:v];
+
+  if (value) {
+    *value = [self zigZagToi64:v];
+  }
+
+  return YES;
 }
 
 -(BOOL) readDouble:(double *)value error:(NSError *__autoreleasing *)error
 {
-  UInt64 bits = 0;
+  UInt64 bits;
   if (![_transport readAll:(UInt8 *)&bits offset:0 length:8 error:error]) {
     PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport read failed");
   }
 
   bits = OSSwapLittleToHostInt64(bits);
 
-  double result = 0;
-  memcpy(&result, &bits, 8);
+  if (value) {
+    memcpy(value, &bits, sizeof(bits));
+  }
 
-  return result;
+  return YES;
 }
 
 -(BOOL) readString:(NSString *__autoreleasing *)value error:(NSError *__autoreleasing *)error
@@ -731,17 +747,28 @@ enum {
   if (![self readVarint32:&length error:error]) {
     return NO;
   }
-  if (length == 0) {
-    return @"";
+
+  NSString *result;
+
+  if (length != 0) {
+
+    NSData *data;
+    if (![self readBinaryOfLength:length data:&data error:error]) {
+      return NO;
+    }
+
+    result = [[NSString alloc] initWithData:data
+                                   encoding:NSUTF8StringEncoding];
+  }
+  else {
+    result = @"";
   }
 
-  NSData *data;
-  if (![self readBinaryOfLength:length data:&data error:error]) {
-    return NO;
+  if (value) {
+    *value = result;
   }
 
-  return [[NSString alloc] initWithData:data
-                               encoding:NSUTF8StringEncoding];
+  return YES;
 }
 
 -(BOOL) readBinary:(NSData *__autoreleasing *)value error:(NSError *__autoreleasing *)error
@@ -754,15 +781,27 @@ enum {
   return [self readBinaryOfLength:length data:value error:error];
 }
 
--(BOOL) readBinaryOfLength:(UInt32)length data:(NSData *__autoreleasing *)data error:(NSError *__autoreleasing *)error
+-(BOOL) readBinaryOfLength:(UInt32)length data:(NSData *__autoreleasing *)value error:(NSError *__autoreleasing *)error
 {
-  if (length == 0) {
-    return [NSData data];
+  NSData *result;
+
+  if (length != 0) {
+
+    NSMutableData *buf = [NSMutableData dataWithLength:length];
+    if (![_transport readAll:buf.mutableBytes offset:0 length:length error:error]) {
+      PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport read failed");
+    }
+
+    result = buf;
+  }
+  else {
+
+    result = [NSData data];
+
   }
 
-  NSMutableData *buf = [NSMutableData dataWithLength:length];
-  if (![_transport readAll:buf.mutableBytes offset:0 length:length error:error]) {
-    PROTOCOL_TRANSPORT_ERROR(NO, error, @"Transport read failed");
+  if (value) {
+    *value = result;
   }
 
   return YES;
@@ -795,10 +834,12 @@ enum {
   int shift = 0;
 
   while (true) {
+
     UInt8 byte;
     if (![self readByte:&byte error:error]) {
       return NO;
     }
+
     result |= (UInt32)(byte & 0x7f) << shift;
     if (!(byte & 0x80)) {
       break;
@@ -806,7 +847,11 @@ enum {
 
     shift += 7;
   }
-  *value = result;
+
+  if (value) {
+    *value = result;
+  }
+
   return YES;
 }
 
@@ -816,10 +861,12 @@ enum {
   UInt64 result = 0;
 
   while (true) {
+
     UInt8 byte;
     if (![self readByte:&byte error:error]) {
       return NO;
     }
+
     result |= (UInt64)(byte & 0x7f) << shift;
     if (!(byte & 0x80)) {
       break;
@@ -827,7 +874,11 @@ enum {
 
     shift += 7;
   }
-  *value = result;
+
+  if (value) {
+    *value = result;
+  }
+
   return YES;
 }
 
