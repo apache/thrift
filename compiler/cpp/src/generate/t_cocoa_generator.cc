@@ -204,7 +204,7 @@ public:
   std::string cocoa_prefix();
   std::string cocoa_imports();
   std::string cocoa_thrift_imports();
-  std::string type_name(t_type* ttype, bool class_ref = false);
+  std::string type_name(t_type* ttype, bool class_ref = false, bool needs_mutable = false);
   std::string base_type_name(t_base_type* tbase);
   std::string declare_property(t_field* tfield);
   std::string declare_property_isset(t_field* tfield);
@@ -878,7 +878,11 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream& out,
     scope_up(out);
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       out << indent() << "_" << (*m_iter)->get_name() << " = ";
-      out << (*m_iter)->get_name() << ";" << endl;
+      if (get_true_type((*m_iter)->get_type())->is_container()) {
+        out << "[" << (*m_iter)->get_name() << " mutableCopy];" << endl;
+      } else {
+        out << (*m_iter)->get_name() << ";" << endl;
+      }
       out << indent() << "_" << (*m_iter)->get_name() << "IsSet = YES;" << endl;
     }
     scope_down(out);
@@ -1172,7 +1176,7 @@ void t_cocoa_generator::generate_cocoa_struct_field_accessor_implementations(ofs
     cap_name[0] = toupper(cap_name[0]);
 
     // Simple setter
-    indent(out) << "- (void) set" << cap_name << ": (" << type_name(type) << ") " << field_name
+    indent(out) << "- (void) set" << cap_name << ": (" << type_name(type, false, true) << ") " << field_name
                 << " {" << endl;
     indent_up();
     indent(out) << "_" << field_name << " = " << field_name << ";" << endl;
@@ -1200,7 +1204,7 @@ void t_cocoa_generator::generate_cocoa_struct_field_accessor_implementations(ofs
 void t_cocoa_generator::generate_cocoa_struct_description(ofstream& out, t_struct* tstruct) {
   
   // Use debugDescription so the app can add description via a cateogory/extension
-  out << indent() << "- (NSString *) debugDescription {" << endl;
+  out << indent() << "- (NSString *) description {" << endl;
   indent_up();
 
   out << indent() << "NSMutableString * ms = [NSMutableString stringWithString: @\""
@@ -1466,7 +1470,7 @@ void t_cocoa_generator::generate_cocoa_service_client_recv_function_implementati
   // Open function
   indent(out) << "- (BOOL) recv_" << tfunction->get_name();
   if (!tfunction->get_returntype()->is_void()) {
-    out << ": (" << type_name(tfunction->get_returntype()) << " *) result ";
+    out << ": (" << type_name(tfunction->get_returntype(), false, true) << " *) result ";
     if (needs_protocol) {
       out << "protocol";
     } else {
@@ -1666,9 +1670,10 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
     out << indent() << "if (![[outProtocol transport] flush: __thriftError]) " << invalid_return_statement(*f_iter) << endl;
     if (!(*f_iter)->is_oneway()) {
       if ((*f_iter)->get_returntype()->is_void()) {
+        out << indent() << "if (![self recv_" << (*f_iter)->get_name() << ": __thriftError]) return NO;" << endl;
         out << indent() << "return YES;" << endl;
       } else {
-        out << indent() << type_name((*f_iter)->get_returntype()) << " __result;" << endl
+        out << indent() << type_name((*f_iter)->get_returntype(), false, true) << " __result;" << endl
             << indent() << "if (![self recv_" << (*f_iter)->get_name() << ": &__result error: __thriftError]) "
             << invalid_return_statement(*f_iter) << endl;
         if (type_can_be_null((*f_iter)->get_returntype())) {
@@ -1972,11 +1977,15 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
     if ((*f_iter)->get_returntype()->is_void()) {
       out << "BOOL";
     } else if (type_can_be_null((*f_iter)->get_returntype())) {
-      out << type_name((*f_iter)->get_returntype());
+      out << type_name((*f_iter)->get_returntype(), false, true);
     } else {
       out << "NSNumber *";
     }
-    out << " serviceResult = [service " << funname;
+    out << " serviceResult = ";
+    if ((*f_iter)->get_returntype()->is_container()) {
+      out << "(" << type_name((*f_iter)->get_returntype(), false, true) << ")";
+    }
+    out << "[service " << funname;
     // supplying arguments
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const vector<t_field*>& fields = arg_struct->get_members();
@@ -2469,7 +2478,7 @@ void t_cocoa_generator::generate_serialize_list_element(ofstream& out,
  * @param class_ref Do we want a Class reference istead of a type reference?
  * @return Java type name, i.e. HashMap<Key,Value>
  */
-string t_cocoa_generator::type_name(t_type* ttype, bool class_ref) {
+string t_cocoa_generator::type_name(t_type* ttype, bool class_ref, bool needs_mutable) {
   if (ttype->is_typedef()) {
     t_program* program = ttype->get_program();
     return program ? (program->get_namespace("cocoa") + ttype->get_name()) : ttype->get_name();
@@ -2479,13 +2488,13 @@ string t_cocoa_generator::type_name(t_type* ttype, bool class_ref) {
   if (ttype->is_base_type()) {
     return base_type_name((t_base_type*)ttype);
   } else if (ttype->is_enum()) {
-    return "int";
+    return cocoa_prefix_ + ttype->get_name();
   } else if (ttype->is_map()) {
-    result = "NSMutableDictionary";
+    result = needs_mutable ? "NSMutableDictionary" : "NSDictionary";
   } else if (ttype->is_set()) {
-    result = "NSMutableSet";
+    result = needs_mutable ? "NSMutableSet" : "NSSet";
   } else if (ttype->is_list()) {
-    result = "NSMutableArray";
+    result = needs_mutable ? "NSMutableArray" : "NSArray";
   } else {
     // Check for prefix
     t_program* program = ttype->get_program();
@@ -2833,7 +2842,7 @@ string t_cocoa_generator::declare_property(t_field* tfield) {
     render << "strong, ";
   
   render << "nonatomic, getter=" << decapitalize(tfield->get_name()) << ", setter=set"
-  << capitalize(tfield->get_name()) + ":) " << type_name(tfield->get_type()) << " "
+  << capitalize(tfield->get_name()) + ":) " << type_name(tfield->get_type(), false, true) << " "
   << tfield->get_name() << ";";
   
   // Check if the property name is an Objective-C return +1 count signal
