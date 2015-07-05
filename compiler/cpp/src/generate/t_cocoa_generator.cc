@@ -115,7 +115,9 @@ public:
                                          t_struct* tstruct,
                                          bool is_exception);
   void generate_cocoa_struct_hash_method(ofstream& out, t_struct* tstruct);
-  void generate_cocoa_struct_is_equal_method(ofstream& out, t_struct* tstruct);
+  void generate_cocoa_struct_is_equal_method(ofstream& out,
+                                             t_struct* tstruct,
+                                             bool is_exception);
   void generate_cocoa_struct_field_accessor_implementations(std::ofstream& out,
                                                             t_struct* tstruct,
                                                             bool is_exception);
@@ -747,7 +749,7 @@ void t_cocoa_generator::generate_cocoa_struct_hash_method(ofstream& out, t_struc
 /**
  * Generate the isEqual method for this struct
  */
-void t_cocoa_generator::generate_cocoa_struct_is_equal_method(ofstream& out, t_struct* tstruct) {
+void t_cocoa_generator::generate_cocoa_struct_is_equal_method(ofstream& out, t_struct* tstruct, bool is_exception) {
   indent(out) << "- (BOOL) isEqual: (id) anObject" << endl;
   scope_up(out);
 
@@ -759,11 +761,20 @@ void t_cocoa_generator::generate_cocoa_struct_is_equal_method(ofstream& out, t_s
 
   string class_name = cocoa_prefix_ + tstruct->get_name();
 
-  indent(out) << "if (![anObject isKindOfClass:[" << class_name << " class]]) {" << endl;
-  indent_up();
-  indent(out) << "return NO;" << endl;
-  indent_down();
-  indent(out) << "}" << endl;
+  if (is_exception) {
+    indent(out) << "if (![super isEqual:anObject]) {" << endl;
+    indent_up();
+    indent(out) << "return NO;" << endl;
+    indent_down();
+    indent(out) << "}" << endl << endl;
+  }
+  else {
+    indent(out) << "if (![anObject isKindOfClass:[" << class_name << " class]]) {" << endl;
+    indent_up();
+    indent(out) << "return NO;" << endl;
+    indent_down();
+    indent(out) << "}" << endl;
+  }
 
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
@@ -883,7 +894,7 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream& out,
   generate_cocoa_struct_encode_with_coder_method(out, tstruct, is_exception);
   // hash and isEqual for NSObject
   generate_cocoa_struct_hash_method(out, tstruct);
-  generate_cocoa_struct_is_equal_method(out, tstruct);
+  generate_cocoa_struct_is_equal_method(out, tstruct, is_exception);
   // copy for NSObject
   generate_cocoa_struct_copy_method(out, tstruct, is_exception);
 
