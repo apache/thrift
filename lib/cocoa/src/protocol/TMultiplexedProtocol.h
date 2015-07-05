@@ -21,7 +21,9 @@
 
 #import "TProtocolDecorator.h"
 
-FOUNDATION_EXPORT NSString *const MULTIPLEXED_SERVICE_SEPERATOR;
+
+extern NSString *TMultiplexedProtocolSeperator;
+
 
 @interface TMultiplexedProtocol : TProtocolDecorator
 

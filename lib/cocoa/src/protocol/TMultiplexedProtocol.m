@@ -21,7 +21,7 @@
 
 #import "TProtocol.h"
 
-NSString *const MULTIPLEXED_SERVICE_SEPERATOR = @":";
+NSString *TMultiplexedProtocolSeperator = @":";
 
 
 @interface TMultiplexedProtocol ()
@@ -52,7 +52,7 @@ NSString *const MULTIPLEXED_SERVICE_SEPERATOR = @":";
   case TMessageTypeCALL:
   case TMessageTypeONEWAY: {
     NSMutableString *serviceFunction = [[NSMutableString alloc] initWithString:_serviceName];
-    [serviceFunction appendString:MULTIPLEXED_SERVICE_SEPERATOR];
+    [serviceFunction appendString:TMultiplexedProtocolSeperator];
     [serviceFunction appendString:name];
     return [super writeMessageBeginWithName:serviceFunction type:messageType sequenceID:sequenceID error:error];
   }
