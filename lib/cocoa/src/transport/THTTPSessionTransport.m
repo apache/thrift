@@ -21,10 +21,10 @@
 #import "TTransportError.h"
 
 
-@interface THTTPSessionTransportFactory () <NSURLSessionDelegate>
+@interface THTTPSessionTransportFactory ()
 
 @property (strong, nonatomic) NSURLSession *session;
-@property (strong, nonatomic) NSURLRequest *request;
+@property (strong, nonatomic) NSURL *url;
 
 @end
 
@@ -43,48 +43,28 @@
 
 @implementation THTTPSessionTransportFactory
 
-+(NSURLRequest *) newRequestWithURL:(NSURL *)url userAgent:(NSString *)userAgent timeout:(NSTimeInterval)timeout
++(void) setupDefaultsForSessionConfiguration:(NSURLSessionConfiguration *)config withProtocolName:(NSString *)protocolName
 {
-  // set up our request object that we'll use for each request
-  NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:url];
-  [request setHTTPMethod:@"POST"];
-  [request setValue:@"application/x-thrift" forHTTPHeaderField:@"Content-Type"];
-  [request setValue:@"application/x-thrift" forHTTPHeaderField:@"Accept"];
-
-  NSString *validUserAgent = userAgent;
-  if (!validUserAgent) {
-    validUserAgent = @"Cocoa/THTTPSessionTransport";
-  }
-  [request setValue:validUserAgent forHTTPHeaderField:@"User-Agent"];
-
-  [request setCachePolicy:NSURLRequestReloadIgnoringCacheData];
-
-  if (timeout) {
-    [request setTimeoutInterval:timeout];
+  NSString *thriftContentType = @"application/x-thrift";
+  if (protocolName.length) {
+    thriftContentType = [thriftContentType stringByAppendingFormat:@";%@", protocolName];
   }
 
-  return [request copy];
+  config.requestCachePolicy = NSURLRequestReloadIgnoringCacheData;
+  config.HTTPShouldUsePipelining = YES;
+  config.HTTPAdditionalHeaders = @{@"Content-Type":thriftContentType,
+                                   @"Accept":thriftContentType,
+                                   @"User-Agent":@"Thrift/Cocoa"};
+  config.HTTPShouldSetCookies = NO;
 }
 
 
 -(id) initWithSession:(NSURLSession *)session URL:(NSURL *)url
 {
-  return [self initWithSession:session
-                           URL:url
-                     userAgent:nil
-                       timeout:0];
-}
-
-
--(id) initWithSession:(NSURLSession *)session
-                  URL:(NSURL *)url
-            userAgent:(NSString *)userAgent
-              timeout:(int)timeout
-{
   self = [super init];
   if (self) {
     _session = session;
-    _request = [THTTPSessionTransportFactory newRequestWithURL:url userAgent:userAgent timeout:timeout];
+    _url = url;
   }
 
   return self;
@@ -93,22 +73,6 @@
 -(id<TAsyncTransport>) newTransport
 {
   return [[THTTPSessionTransport alloc] initWithFactory:self];
-}
-
--(NSURLRequest *) requestWithData:(NSData *)data error:(NSError *__autoreleasing *)error
-{
-  NSMutableURLRequest *newRequest = [_request mutableCopy];
-
-  // Use stream to avoid unnecessary copy of data
-  newRequest.HTTPBodyStream = [NSInputStream inputStreamWithData:data];
-
-  if (_requestConfig) {
-    if (!_requestConfig(newRequest, error)) {
-      return nil;
-    }
-  }
-
-  return newRequest;
 }
 
 -(NSURLSessionDataTask *) taskWithRequest:(NSURLRequest *)request
@@ -123,12 +87,6 @@
                                userInfo:@{NSLocalizedDescriptionKey:@"Failed to create session data task"}];
     }
     return nil;
-  }
-
-  if (_taskConfig) {
-    if (!_taskConfig(newTask, error)) {
-      return nil;
-    }
   }
 
   return newTask;
@@ -210,11 +168,9 @@
 {
   NSError *error;
 
-  NSURLRequest *request = [_factory requestWithData:_requestData error:&error];
-  if (!request) {
-    failure(error);
-    return;
-  }
+  NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:_factory.url];
+  request.HTTPMethod = @"POST";
+  request.HTTPBody = _requestData;
 
   _requestData = nil;
 

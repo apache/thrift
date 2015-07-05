@@ -22,24 +22,18 @@
 
 
 
-typedef BOOL (^THTTPSessionTransportRequestConfigBlock) (NSURLRequest *request, NSError *__autoreleasing *);
-typedef BOOL (^THTTPSessionTransportTaskConfigBlock) (NSURLSessionDataTask *task, NSError *__autoreleasing *);
 typedef NSError *(^THTTPSessionTransportResponseValidateBlock) (NSHTTPURLResponse *response, NSData *responseData);
 
 
 @interface THTTPSessionTransportFactory : NSObject<TAsyncTransportFactory>
 
-@property (strong, nonatomic) THTTPSessionTransportRequestConfigBlock requestConfig;
-@property (strong, nonatomic) THTTPSessionTransportTaskConfigBlock taskConfig;
 @property (strong, nonatomic) THTTPSessionTransportResponseValidateBlock responseValidate;
+
++(void) setupDefaultsForSessionConfiguration:(NSURLSessionConfiguration *)config
+                            withProtocolName:(NSString *)protocolName;
 
 -(id) initWithSession:(NSURLSession *)session
                   URL:(NSURL *)aURL;
-
--(id) initWithSession:(NSURLSession *)session
-                  URL:(NSURL *)aURL
-            userAgent:(NSString *)userAgent
-              timeout:(int)timeout;
 
 @end
 
