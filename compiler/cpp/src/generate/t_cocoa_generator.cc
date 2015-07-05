@@ -234,7 +234,7 @@ public:
 private:
   std::string cocoa_prefix_;
   std::string constants_declarations_;
-  int error_constant_ = 60000;
+  int error_constant_;
 
   /**
    * File streams
@@ -276,6 +276,8 @@ void t_cocoa_generator::init_generator() {
 
   f_impl_ << cocoa_imports() << cocoa_thrift_imports() << "#import \"" << f_header_name << "\""
           << endl << endl;
+  
+  error_constant_ = 60000;
 }
 
 /**
@@ -491,10 +493,11 @@ void t_cocoa_generator::generate_cocoa_struct_interface(ofstream& out,
   
   out << endl;
 
-  auto members = tstruct->get_members();
   // properties
+  const vector<t_field*>& members = tstruct->get_members();
   if (members.size() > 0) {
-    for (auto m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    vector<t_field*>::const_iterator m_iter;
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       out << indent() << declare_property(*m_iter) << endl;
       out << indent() << declare_property_isset(*m_iter) << endl;
     }
@@ -1269,8 +1272,11 @@ void t_cocoa_generator::generate_cocoa_service_helpers(t_service* tservice) {
     string qname = function_args_helper_struct_type(tservice, *f_iter);
     
     t_struct qname_ts = t_struct(ts->get_program(), qname);
-    for (auto member : ts->get_members()) {
-      qname_ts.append(member);
+
+    const vector<t_field*>& members = ts->get_members();
+    vector<t_field*>::const_iterator m_iter;
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      qname_ts.append(*m_iter);
     }
     
     generate_cocoa_struct_interface(f_impl_, &qname_ts, false);
