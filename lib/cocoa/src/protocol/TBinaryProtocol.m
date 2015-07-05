@@ -156,7 +156,7 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
     }
   }
 
-  int seqID;
+  SInt32 seqID;
   if (![self readI32:&seqID error:error]) {
     return NO;
   }

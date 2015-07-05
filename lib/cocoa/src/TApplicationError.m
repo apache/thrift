@@ -108,9 +108,9 @@ NSString *TApplicationErrorMethodKey = @"method";
 +(instancetype) read:(id<TProtocol>)protocol
 {
   NSString *reason = nil;
-  int type = TApplicationErrorUnknown;
-  int fieldType;
-  int fieldID;
+  SInt32 type = TApplicationErrorUnknown;
+  SInt32 fieldType;
+  SInt32 fieldID;
 
   NSError *error;
   if (![protocol readStructBeginReturningName:NULL error:&error]) {

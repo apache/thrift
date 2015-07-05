@@ -85,7 +85,7 @@
       return NO;
     }
     while (true) {
-      int32_t fieldType;
+      SInt32 fieldType;
       if (![protocol readFieldBeginReturningName:nil type:&fieldType fieldID:nil error:error]) {
         return NO;
       }
@@ -106,9 +106,9 @@
   break;
 
   case TTypeMAP: {
-    int keyType;
-    int valueType;
-    int size;
+    SInt32 keyType;
+    SInt32 valueType;
+    SInt32 size;
     if (![protocol readMapBeginReturningKeyType:&keyType valueType:&valueType size:&size error:error]) {
       return NO;
     }
@@ -128,8 +128,8 @@
   break;
 
   case TTypeSET: {
-    int elemType;
-    int size;
+    SInt32 elemType;
+    SInt32 size;
     if (![protocol readSetBeginReturningElementType:&elemType size:&size error:error]) {
       return NO;
     }
@@ -146,8 +146,8 @@
   break;
 
   case TTypeLIST: {
-    int elemType;
-    int size;
+    SInt32 elemType;
+    SInt32 size;
     if (![protocol readListBeginReturningElementType:&elemType size:&size error:error]) {
       return NO;
     }

@@ -31,7 +31,7 @@
 {
   NSError *thriftError;
 
-  int msgType = 0;
+  SInt32 msgType = 0;
   if (![inProtocol readMessageBeginReturningName:nil type:&msgType sequenceID:NULL error:&thriftError]) {
     return thriftError;
   }

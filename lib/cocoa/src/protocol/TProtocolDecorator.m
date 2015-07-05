@@ -44,8 +44,8 @@
 }
 
 -(BOOL) readMessageBeginReturningName:(NSString **)name
-                                 type:(int *)type
-                           sequenceID:(int *)sequenceID
+                                 type:(SInt32 *)type
+                           sequenceID:(SInt32 *)sequenceID
                                 error:(NSError *__autoreleasing *)error
 {
   return [_concreteProtocol readMessageBeginReturningName:name
@@ -71,8 +71,8 @@
 }
 
 -(BOOL) readFieldBeginReturningName:(NSString **)name
-                               type:(int *)fieldType
-                            fieldID:(int *)fieldID
+                               type:(SInt32 *)fieldType
+                            fieldID:(SInt32 *)fieldID
                               error:(NSError *__autoreleasing *)error
 {
   return [_concreteProtocol readFieldBeginReturningName:name
@@ -125,9 +125,9 @@
   return [_concreteProtocol readBinary:value error:error];
 }
 
--(BOOL) readMapBeginReturningKeyType:(int *)keyType
-                           valueType:(int *)valueType
-                                size:(int *)size
+-(BOOL) readMapBeginReturningKeyType:(SInt32 *)keyType
+                           valueType:(SInt32 *)valueType
+                                size:(SInt32 *)size
                                error:(NSError *__autoreleasing *)error
 {
   return [_concreteProtocol readMapBeginReturningKeyType:keyType
@@ -141,8 +141,8 @@
 }
 
 
--(BOOL) readSetBeginReturningElementType:(int *)elementType
-                                    size:(int *)size
+-(BOOL) readSetBeginReturningElementType:(SInt32 *)elementType
+                                    size:(SInt32 *)size
                                    error:(NSError *__autoreleasing *)error
 {
   return [_concreteProtocol readSetBeginReturningElementType:elementType
@@ -154,8 +154,8 @@
   return [_concreteProtocol readSetEnd:error];
 }
 
--(BOOL) readListBeginReturningElementType:(int *)elementType
-                                     size:(int *)size
+-(BOOL) readListBeginReturningElementType:(SInt32 *)elementType
+                                     size:(SInt32 *)size
                                     error:(NSError *__autoreleasing *)error
 {
   return [_concreteProtocol readListBeginReturningElementType:elementType
@@ -168,8 +168,8 @@
 }
 
 -(BOOL) writeMessageBeginWithName:(NSString *)name
-                             type:(int)messageType
-                       sequenceID:(int)sequenceID
+                             type:(SInt32)messageType
+                       sequenceID:(SInt32)sequenceID
                             error:(NSError *__autoreleasing *)error
 {
   return [_concreteProtocol writeMessageBeginWithName:name
@@ -192,8 +192,8 @@
 }
 
 -(BOOL) writeFieldBeginWithName:(NSString *)name
-                           type:(int)fieldType
-                        fieldID:(int)fieldID
+                           type:(SInt32)fieldType
+                        fieldID:(SInt32)fieldID
                           error:(NSError *__autoreleasing *)error
 {
   return [_concreteProtocol writeFieldBeginWithName:name
@@ -202,22 +202,22 @@
                                               error:error];
 }
 
--(BOOL) writeI32:(int32_t)value error:(NSError *__autoreleasing *)error
+-(BOOL) writeI32:(SInt32)value error:(NSError *__autoreleasing *)error
 {
   return [_concreteProtocol writeI32:value error:error];
 }
 
--(BOOL) writeI64:(int64_t)value error:(NSError *__autoreleasing *)error
+-(BOOL) writeI64:(SInt64)value error:(NSError *__autoreleasing *)error
 {
   return [_concreteProtocol writeI64:value error:error];
 }
 
--(BOOL) writeI16:(short)value error:(NSError *__autoreleasing *)error
+-(BOOL) writeI16:(SInt16)value error:(NSError *__autoreleasing *)error
 {
   return [_concreteProtocol writeI16:value error:error];
 }
 
--(BOOL) writeByte:(uint8_t)value error:(NSError *__autoreleasing *)error
+-(BOOL) writeByte:(UInt8)value error:(NSError *__autoreleasing *)error
 {
   return [_concreteProtocol writeByte:value error:error];
 }
@@ -252,9 +252,9 @@
   return [_concreteProtocol writeFieldEnd:error];
 }
 
--(BOOL) writeMapBeginWithKeyType:(int)keyType
-                       valueType:(int)valueType
-                            size:(int)size
+-(BOOL) writeMapBeginWithKeyType:(SInt32)keyType
+                       valueType:(SInt32)valueType
+                            size:(SInt32)size
                            error:(NSError *__autoreleasing *)error
 {
   return [_concreteProtocol writeMapBeginWithKeyType:keyType
@@ -268,8 +268,8 @@
   return [_concreteProtocol writeMapEnd:error];
 }
 
--(BOOL) writeSetBeginWithElementType:(int)elementType
-                                size:(int)size
+-(BOOL) writeSetBeginWithElementType:(SInt32)elementType
+                                size:(SInt32)size
                                error:(NSError *__autoreleasing *)error
 {
   return [_concreteProtocol writeSetBeginWithElementType:elementType size:size error:error];
@@ -280,8 +280,8 @@
   return [_concreteProtocol writeSetEnd:error];
 }
 
--(BOOL) writeListBeginWithElementType:(int)elementType
-                                 size:(int)size
+-(BOOL) writeListBeginWithElementType:(SInt32)elementType
+                                 size:(SInt32)size
                                 error:(NSError *__autoreleasing *)error
 {
   return [_concreteProtocol writeListBeginWithElementType:elementType size:size error:error];

@@ -44,8 +44,8 @@ NSString *TMultiplexedProtocolSeperator = @":";
 }
 
 -(BOOL) writeMessageBeginWithName:(NSString *)name
-                             type:(int)messageType
-                       sequenceID:(int)sequenceID
+                             type:(SInt32)messageType
+                       sequenceID:(SInt32)sequenceID
                             error:(NSError *__autoreleasing *)error
 {
   switch (messageType) {
