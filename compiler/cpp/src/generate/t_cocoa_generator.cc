@@ -127,9 +127,9 @@ public:
   void generate_cocoa_struct_validator(std::ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_description(std::ofstream& out, t_struct* tstruct);
 
-  std::string function_result_helper_struct_type(t_function* tfunction);
-  std::string function_args_helper_struct_type(t_function* tfunction);
-  void generate_function_helpers(t_function* tfunction);
+  std::string function_result_helper_struct_type(t_service *tservice, t_function* tfunction);
+  std::string function_args_helper_struct_type(t_service* tservice, t_function* tfunction);
+  void generate_function_helpers(t_service *tservice, t_function* tfunction);
 
   /**
    * Service-level generation functions
@@ -142,6 +142,7 @@ public:
   void generate_cocoa_service_client_async_interface(std::ofstream& out, t_service* tservice);
 
   void generate_cocoa_service_client_send_function_implementation(ofstream& out,
+                                                                  t_service* tservice,
                                                                   t_function* tfunction,
                                                                   bool needs_protocol);
   void generate_cocoa_service_client_send_function_invocation(ofstream& out, t_function* tfunction);
@@ -149,6 +150,7 @@ public:
                                                                     t_function* tfunction,
                                                                     string failureBlockName);
   void generate_cocoa_service_client_recv_function_implementation(ofstream& out,
+                                                                  t_service* tservice,
                                                                   t_function* tfunction,
                                                                   bool needs_protocol);
   void generate_cocoa_service_client_implementation(std::ofstream& out, t_service* tservice);
@@ -1260,23 +1262,32 @@ void t_cocoa_generator::generate_cocoa_service_helpers(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    
     t_struct* ts = (*f_iter)->get_arglist();
-    generate_cocoa_struct_interface(f_impl_, ts, false);
-    generate_cocoa_struct_implementation(f_impl_, ts, false, false);
-    generate_function_helpers(*f_iter);
+    
+    string qname = function_args_helper_struct_type(tservice, *f_iter);
+    
+    t_struct qname_ts = t_struct(ts->get_program(), qname);
+    for (auto member : ts->get_members()) {
+      qname_ts.append(member);
+    }
+    
+    generate_cocoa_struct_interface(f_impl_, &qname_ts, false);
+    generate_cocoa_struct_implementation(f_impl_, &qname_ts, false, false);
+    generate_function_helpers(tservice, *f_iter);
   }
 }
 
-string t_cocoa_generator::function_result_helper_struct_type(t_function* tfunction) {
+string t_cocoa_generator::function_result_helper_struct_type(t_service *tservice, t_function* tfunction) {
   if (tfunction->is_oneway()) {
-    return capitalize(tfunction->get_name());
+    return tservice->get_name() + "_" + tfunction->get_name();
   } else {
-    return capitalize(tfunction->get_name()) + "_result";
+    return tservice->get_name() + "_" + tfunction->get_name() + "_result";
   }
 }
 
-string t_cocoa_generator::function_args_helper_struct_type(t_function* tfunction) {
-  return tfunction->get_name() + "_args";
+string t_cocoa_generator::function_args_helper_struct_type(t_service *tservice, t_function* tfunction) {
+  return tservice->get_name() + "_" + tfunction->get_name() + "_args";
 }
 
 /**
@@ -1284,14 +1295,14 @@ string t_cocoa_generator::function_args_helper_struct_type(t_function* tfunction
  *
  * @param tfunction The function
  */
-void t_cocoa_generator::generate_function_helpers(t_function* tfunction) {
+void t_cocoa_generator::generate_function_helpers(t_service *tservice, t_function* tfunction) {
   if (tfunction->is_oneway()) {
     return;
   }
 
   // create a result struct with a success field of the return type,
   // and a field for each type of exception thrown
-  t_struct result(program_, function_result_helper_struct_type(tfunction));
+  t_struct result(program_, function_result_helper_struct_type(tservice, tfunction));
   t_field success(tfunction->get_returntype(), "success", 0);
   if (!tfunction->get_returntype()->is_void()) {
     result.append(&success);
@@ -1406,6 +1417,7 @@ void t_cocoa_generator::generate_cocoa_service_server_interface(ofstream& out,
 
 void t_cocoa_generator::generate_cocoa_service_client_send_function_implementation(
     ofstream& out,
+    t_service *tservice,
     t_function* tfunction,
     bool needs_protocol) {
   string funname = tfunction->get_name();
@@ -1414,7 +1426,7 @@ void t_cocoa_generator::generate_cocoa_service_client_send_function_implementati
                            string("send_") + tfunction->get_name(),
                            tfunction->get_arglist());
 
-  string argsname = tfunction->get_name() + "_args";
+  string argsname = function_args_helper_struct_type(tservice, tfunction);
 
   // Open function
   indent(out) << "- (BOOL) send_" << tfunction->get_name() << argument_list(tfunction->get_arglist(), needs_protocol ? "outProtocol" : "", true) << endl;
@@ -1463,6 +1475,7 @@ void t_cocoa_generator::generate_cocoa_service_client_send_function_implementati
 
 void t_cocoa_generator::generate_cocoa_service_client_recv_function_implementation(
     ofstream& out,
+    t_service* tservice,
     t_function* tfunction,
     bool needs_protocol) {
 
@@ -1497,7 +1510,7 @@ void t_cocoa_generator::generate_cocoa_service_client_recv_function_implementati
   scope_down(out);
 
   // FIXME - could optimize here to reduce creation of temporary objects.
-  string resultname = function_result_helper_struct_type(tfunction);
+  string resultname = function_result_helper_struct_type(tservice, tfunction);
   out << indent() << cocoa_prefix_ << resultname << " * resulter = [" << cocoa_prefix_ << resultname << " new];" << endl;
   indent(out) << "if (![resulter read: inProtocol error: __thriftError]) return NO;" << endl;
   indent(out) << "if (![inProtocol readMessageEnd: __thriftError]) return NO;" << endl;
@@ -1656,10 +1669,10 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
   vector<t_function*>::const_iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
 
-    generate_cocoa_service_client_send_function_implementation(out, *f_iter, false);
+    generate_cocoa_service_client_send_function_implementation(out, tservice, *f_iter, false);
 
     if (!(*f_iter)->is_oneway()) {
-      generate_cocoa_service_client_recv_function_implementation(out, *f_iter, false);
+      generate_cocoa_service_client_recv_function_implementation(out, tservice, *f_iter, false);
     }
 
     // Open function
@@ -1733,10 +1746,10 @@ void t_cocoa_generator::generate_cocoa_service_client_async_implementation(ofstr
   vector<t_function*>::const_iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
 
-    generate_cocoa_service_client_send_function_implementation(out, *f_iter, true);
+    generate_cocoa_service_client_send_function_implementation(out, tservice, *f_iter, true);
 
     if (!(*f_iter)->is_oneway()) {
-      generate_cocoa_service_client_recv_function_implementation(out, *f_iter, true);
+      generate_cocoa_service_client_recv_function_implementation(out, tservice, *f_iter, true);
     }
 
     // Open function
@@ -1961,14 +1974,14 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
         << "_withSequenceID: (SInt32) seqID inProtocol: (id<TProtocol>) inProtocol outProtocol: "
            "(id<TProtocol>) outProtocol error:(NSError *__autoreleasing *)__thriftError" << endl;
     scope_up(out);
-    string argstype = cocoa_prefix_ + function_args_helper_struct_type(*f_iter);
+    string argstype = cocoa_prefix_ + function_args_helper_struct_type(tservice, *f_iter);
     out << indent() << argstype << " * args = [" << argstype << " new];" << endl;
     out << indent() << "if (![args read: inProtocol error: __thriftError]) return NO;" << endl;
     out << indent() << "if (![inProtocol readMessageEnd: __thriftError]) return NO;" << endl;
 
     // prepare the result if not oneway
     if (!(*f_iter)->is_oneway()) {
-      string resulttype = cocoa_prefix_ + function_result_helper_struct_type(*f_iter);
+      string resulttype = cocoa_prefix_ + function_result_helper_struct_type(tservice, *f_iter);
       out << indent() << resulttype << " * result = [" << resulttype << " new];" << endl;
     }
 
