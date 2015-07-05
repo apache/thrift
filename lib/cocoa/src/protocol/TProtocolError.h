@@ -53,7 +53,7 @@ extern NSString *TProtocolErrorMessageNameKey;
                                         @"SourceFile": [NSString stringWithUTF8String:__FILE__], \
                                         @"SourceLine": @(__LINE__), \
                                         @"SourceFunction": [NSString stringWithUTF8String:__PRETTY_FUNCTION__], \
-                                        @"Message": self.currentMessageName}]; \
+                                        @"Message": self.currentMessageName ? self.currentMessageName : @""}]; \
   } \
   return ret
 
@@ -65,7 +65,7 @@ extern NSString *TProtocolErrorMessageNameKey;
                                         TProtocolErrorSourceFileKey: [NSString stringWithUTF8String:__FILE__], \
                                         TProtocolErrorSourceLineKey: @(__LINE__), \
                                         TProtocolErrorSourceMethodKey: [NSString stringWithUTF8String:__PRETTY_FUNCTION__], \
-                                        TProtocolErrorMessageNameKey: self.currentMessageName, \
+                                        TProtocolErrorMessageNameKey: self.currentMessageName ? self.currentMessageName : @"", \
                                         NSUnderlyingErrorKey: *errorPtr}]; \
   } \
   return ret
