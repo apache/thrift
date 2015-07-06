@@ -65,6 +65,10 @@ public:
       
     iter = parsed_options.find("debug_descriptions");
     debug_descriptions_ = (iter != parsed_options.end());
+    
+    iter = parsed_options.find("pods");
+    pods_ = (iter != parsed_options.end());
+      
     out_dir_base_ = "gen-cocoa";
   }
 
@@ -250,6 +254,7 @@ private:
   bool async_clients_;
   bool promise_kit_;
   bool debug_descriptions_;
+  bool pods_;
 };
 
 /**
@@ -299,31 +304,51 @@ string t_cocoa_generator::cocoa_imports() {
  */
 string t_cocoa_generator::cocoa_thrift_imports() {
 
-  string result;
-  result = string() + "#import \"TProtocol.h\"\n"
-                    + "#import \"TApplicationError.h\"\n"
-                    + "#import \"TProtocolError.h\"\n"
-                    + "#import \"TProtocolUtil.h\"\n"
-                    + "#import \"TProcessor.h\"\n"
-                    + "#import \"TBase.h\"\n"
-                    + "#import \"TAsyncTransport.h\"\n"
-                    + "#import \"TProtocolFactory.h\"\n"
-                    + "#import \"TBaseClient.h\"\n"
-                    + "\n";
+  vector<string> includes_list;
+  includes_list.push_back("TProtocol.h");
+  includes_list.push_back("TProtocolFactory.h");
+  includes_list.push_back("TApplicationError.h");
+  includes_list.push_back("TProtocolError.h");
+  includes_list.push_back("TProtocolUtil.h");
+  includes_list.push_back("TProcessor.h");
+  includes_list.push_back("TBase.h");
+  includes_list.push_back("TAsyncTransport.h");
+  includes_list.push_back("TBaseClient.h");
+
+  std::ostringstream includes;
+
+  vector<string>::const_iterator i_iter;
+  for (i_iter=includes_list.begin(); i_iter!=includes_list.end(); ++i_iter) {
+    includes << "#import ";
+    if (pods_) {
+      includes << "<Thrift/" << *i_iter << ">";
+    } else {
+      includes << "\"" << *i_iter << "\"";
+    }
+    includes << endl;
+  }
+  
+  includes << endl;
   
   if (promise_kit_) {
-    result = result + "#import <PromiseKit/PromiseKit.h>\n"
-                    + "\n";
+    includes << "#import ";
+    if (pods_) {
+      includes << "<PromiseKit/PromiseKit.h>";
+    } else {
+      includes << "\"PromiseKit.h\"";
+    }
+    includes << endl;
   }
 
   // Include other Thrift includes
-  const vector<t_program*>& includes = program_->get_includes();
-  for (size_t i = 0; i < includes.size(); ++i) {
-    result += "#import \"" + includes[i]->get_name() + ".h\"" + "\n";
+  const vector<t_program*>& other_includes = program_->get_includes();
+  for (size_t i = 0; i < other_includes.size(); ++i) {
+    includes << "#import \"" << other_includes[i]->get_name() << ".h\"" << endl;
   }
-  result += "\n";
+  
+  includes << endl;
 
-  return result;
+  return includes.str();
 }
 
 /**
