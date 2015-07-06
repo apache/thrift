@@ -9,13 +9,14 @@ namespace Thrift.Server
 {
     public class TStreamServer
     {
-        private TProcessor processor;
-        private TStreamTransport transport;
-        private TProtocolFactory inputProtocolFactory;
-        private TProtocolFactory outputProtocolFactory;
-        private TTransportFactory inputTransportFactory;
-        private TTransportFactory outputTransportFactory;
+        protected TProcessor processor;
+        private TStreamTransport transport;        
+        protected TTransportFactory inputTransportFactory;
+        protected TTransportFactory outputTransportFactory;
+        protected TProtocolFactory inputProtocolFactory;
+        protected TProtocolFactory outputProtocolFactory;
 
+        //TODO: just change this to be binaryProtocol as the default so it is consistent with everything else!
         public TStreamServer(TProcessor processor, TStreamTransport transport)
             : this(processor, transport, new TTransportFactory(), new TJSONProtocol.Factory())
         {
