@@ -344,9 +344,10 @@ void t_cocoa_generator::generate_typedef(t_typedef* ttypedef) {
 
 /**
  * Generates code for an enumerated type. In Objective-C, this is
- * essentially the same as the thrift definition itself, using the
- * enum keyword in Objective-C.  For namespace purposes, the name of
- * the enum plus an underscore is prefixed onto each element.
+ * essentially the same as the thrift definition itself, instead using
+ * NS_ENUM keyword in Objective-C.  For namespace purposes, the name of
+ * the enum is prefixed to each element in keeping with Cocoa & Swift
+ * standards.
  *
  * @param tenum The enumeration
  */
