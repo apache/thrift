@@ -381,21 +381,43 @@ void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
   const_interface << "FOUNDATION_EXPORT NSString *" << cocoa_prefix_ << capitalize(program_name_) << "ErrorDomain;" << endl
                   << endl;
   
-  string constants_class_name = cocoa_prefix_ + program_name_ + "Constants";
 
-  const_interface << "@interface " << constants_class_name << " : NSObject ";
-  scope_up(const_interface);
-  scope_down(const_interface);
+  bool needs_class = false;
 
-  // getter method for each constant defined.
+  // Public constants for base types & strings
   vector<t_const*>::iterator c_iter;
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
-    string name = (*c_iter)->get_name();
     t_type* type = (*c_iter)->get_type();
-    const_interface << "+ (" << type_name(type) << ") " << name << ";" << endl;
+    if (!type->is_container() && !type->is_struct()) {
+      const_interface << "FOUNDATION_EXPORT " << type_name(type) << " "
+                      << cocoa_prefix_ << capitalize((*c_iter)->get_name()) << ";" << endl;
+    }
+    else {
+      needs_class = true;
+    }
   }
+  
+  
+  string constants_class_name = cocoa_prefix_ + capitalize(program_name_) + "Constants";
 
-  const_interface << "@end";
+  if (needs_class) {
+
+    const_interface << "@interface " << constants_class_name << " : NSObject ";
+    scope_up(const_interface);
+    scope_down(const_interface);
+
+    // getter method for each constant defined.
+    for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+      string name = (*c_iter)->get_name();
+      t_type* type = (*c_iter)->get_type();
+      if (type->is_container() || type->is_struct()) {
+        t_type* type = (*c_iter)->get_type();
+        const_interface << "+ (" << type_name(type) << ") " << name << ";" << endl;
+      }
+    }
+
+    const_interface << "@end";
+  }
 
   // this gets spit into the header file in ::close_generator
   constants_declarations_ = const_interface.str();
@@ -403,11 +425,11 @@ void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
   f_impl_ << "NSString *" << cocoa_prefix_ << capitalize(program_name_) << "ErrorDomain = "
           << "@\"" << cocoa_prefix_ << capitalize(program_name_) << "ErrorDomain\";" << endl << endl;
 
-  // static variables in the .m hold all constant values
+  // variables in the .m hold all simple constant values
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
     string name = (*c_iter)->get_name();
     t_type* type = (*c_iter)->get_type();
-    f_impl_ << "static " << type_name(type) << " " << cocoa_prefix_ << name;
+    f_impl_ << type_name(type) << " " << cocoa_prefix_ << name;
     if (!type->is_container() && !type->is_struct()) {
       f_impl_ << " = " << render_const_value(f_impl_, type, (*c_iter)->get_value());
     }
@@ -415,36 +437,40 @@ void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
   }
   f_impl_ << endl;
 
-  f_impl_ << "@implementation " << constants_class_name << endl;
+  if (needs_class) {
+    f_impl_ << "@implementation " << constants_class_name << endl;
 
-  // initialize complex constants when the class is loaded
-  f_impl_ << "+ (void) initialize ";
-  scope_up(f_impl_);
-
-  for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
-    if ((*c_iter)->get_type()->is_container() || (*c_iter)->get_type()->is_struct()) {
-      print_const_value(f_impl_,
-                        cocoa_prefix_ + (*c_iter)->get_name(),
-                        (*c_iter)->get_type(),
-                        (*c_iter)->get_value(),
-                        false,
-                        false);
-      f_impl_ << ";" << endl;
-    }
-  }
-  scope_down(f_impl_);
-
-  // getter method for each constant
-  for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
-    string name = (*c_iter)->get_name();
-    t_type* type = (*c_iter)->get_type();
-    f_impl_ << "+ (" << type_name(type) << ") " << name;
+    // initialize complex constants when the class is loaded
+    f_impl_ << "+ (void) initialize ";
     scope_up(f_impl_);
-    indent(f_impl_) << "return " << cocoa_prefix_ << name << ";" << endl;
-    scope_down(f_impl_);
-  }
 
-  f_impl_ << "@end" << endl << endl;
+    for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+      if ((*c_iter)->get_type()->is_container() || (*c_iter)->get_type()->is_struct()) {
+        print_const_value(f_impl_,
+                          cocoa_prefix_ + (*c_iter)->get_name(),
+                          (*c_iter)->get_type(),
+                          (*c_iter)->get_value(),
+                          false,
+                          false);
+        f_impl_ << ";" << endl;
+      }
+    }
+    scope_down(f_impl_);
+
+    // getter method for each constant
+    for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+      string name = (*c_iter)->get_name();
+      t_type* type = (*c_iter)->get_type();
+      if (type->is_container() || type->is_struct()) {
+        f_impl_ << "+ (" << type_name(type) << ") " << name;
+        scope_up(f_impl_);
+        indent(f_impl_) << "return " << cocoa_prefix_ << name << ";" << endl;
+        scope_down(f_impl_);
+      }
+    }
+
+    f_impl_ << "@end" << endl << endl;
+  }
 }
 
 /**
