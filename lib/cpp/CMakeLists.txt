@@ -34,7 +34,6 @@ set(SYSLIBS "")
 set( thriftcpp_SOURCES
    src/thrift/TApplicationException.cpp
    src/thrift/TOutput.cpp
-   src/thrift/VirtualProfiling.cpp
    src/thrift/async/TAsyncChannel.cpp
    src/thrift/concurrency/ThreadManager.cpp
    src/thrift/concurrency/TimerManager.cpp
@@ -57,7 +56,6 @@ set( thriftcpp_SOURCES
    src/thrift/transport/TTransportUtils.cpp
    src/thrift/transport/TBufferTransports.cpp
    src/thrift/server/TConnectedClient.cpp
-   src/thrift/server/TServer.cpp
    src/thrift/server/TServerFramework.cpp
    src/thrift/server/TSimpleServer.cpp
    src/thrift/server/TThreadPoolServer.cpp
@@ -88,6 +86,13 @@ if (WIN32)
             src/thrift/windows/OverlappedSubmissionThread.cpp
         )
     endif()
+else()
+    # These files evaluate to nothing on Windows, so omit them from the
+    # Windows build
+    list(APPEND thriftcpp_SOURCES
+        src/thrift/VirtualProfiling.cpp
+        src/thrift/server/TServer.cpp
+    )
 endif()
 
 # If OpenSSL is not found just ignore the OpenSSL stuff

@@ -46,7 +46,7 @@ struct Handler : public test::ParentServiceIf {
 
 class Fixture {
 private:
-  struct Runner : public concurrency::Runnable {
+  struct Runner : public apache::thrift::concurrency::Runnable {
     boost::shared_ptr<server::TNonblockingServer> server;
     bool error;
     virtual void run() {
@@ -80,8 +80,8 @@ protected:
   }
 
   int startServer(int port) {
-    boost::scoped_ptr<concurrency::ThreadFactory> threadFactory(
-        new concurrency::PlatformThreadFactory(
+    boost::scoped_ptr<apache::thrift::concurrency::ThreadFactory> threadFactory(
+      new apache::thrift::concurrency::PlatformThreadFactory(
 #if !USE_BOOST_THREAD && !USE_STD_THREAD
             concurrency::PlatformThreadFactory::OTHER,
             concurrency::PlatformThreadFactory::NORMAL,
@@ -128,7 +128,7 @@ protected:
 private:
   boost::shared_ptr<event_base> userEventBase_;
   boost::shared_ptr<test::ParentServiceProcessor> processor;
-  boost::shared_ptr<concurrency::Thread> thread;
+  boost::shared_ptr<apache::thrift::concurrency::Thread> thread;
 
 protected:
   boost::shared_ptr<server::TNonblockingServer> server;
