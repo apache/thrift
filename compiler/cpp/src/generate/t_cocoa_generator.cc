@@ -378,7 +378,7 @@ void t_cocoa_generator::generate_enum(t_enum* tenum) {
 void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
   std::ostringstream const_interface;
 
-  const_interface << "extern NSString *" << cocoa_prefix_ << "ErrorDomain;" << endl
+  const_interface << "FOUNDATION_EXPORT NSString *" << cocoa_prefix_ << capitalize(program_name_) << "ErrorDomain;" << endl
                   << endl;
   
   string constants_class_name = cocoa_prefix_ + program_name_ + "Constants";
@@ -400,7 +400,8 @@ void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
   // this gets spit into the header file in ::close_generator
   constants_declarations_ = const_interface.str();
   
-  f_impl_ << "NSString *" << cocoa_prefix_ << "ErrorDomain = @\"" << cocoa_prefix_ << "ErrorDomain\";" << endl << endl;
+  f_impl_ << "NSString *" << cocoa_prefix_ << capitalize(program_name_) << "ErrorDomain = "
+          << "@\"" << cocoa_prefix_ << capitalize(program_name_) << "ErrorDomain\";" << endl << endl;
 
   // static variables in the .m hold all constant values
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
@@ -478,7 +479,7 @@ void t_cocoa_generator::generate_cocoa_struct_interface(ofstream& out,
   
   if (is_exception) {
     out << "enum {" << endl
-        << "  " << cocoa_prefix_ << "Error" << tstruct->get_name() <<  " = -" << error_constant_++ << endl
+        << "  " << cocoa_prefix_ << capitalize(program_name_) << "Error" << tstruct->get_name() <<  " = -" << error_constant_++ << endl
         << "};" << endl
         << endl;
   }
@@ -836,8 +837,8 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream& out,
   if (is_exception) {
     out << indent() << "- (instancetype) init" << endl;
     scope_up(out);
-    out << indent() << "return [super initWithDomain: " << cocoa_prefix_ << "ErrorDomain" << endl
-        << indent() << "                        code: " << cocoa_prefix_ << "Error" << tstruct->get_name() << endl
+    out << indent() << "return [super initWithDomain: " << cocoa_prefix_ << capitalize(program_name_) << "ErrorDomain" << endl
+        << indent() << "                        code: " << cocoa_prefix_ << capitalize(program_name_) << "Error" << tstruct->get_name() << endl
         << indent() << "                    userInfo: nil];" << endl;
     scope_down(out);
     out << endl;
