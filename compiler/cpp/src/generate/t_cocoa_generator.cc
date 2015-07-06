@@ -343,6 +343,10 @@ void t_cocoa_generator::close_generator() {
 void t_cocoa_generator::generate_typedef(t_typedef* ttypedef) {
   f_header_ << indent() << "typedef " << type_name(ttypedef->get_type()) << " " << cocoa_prefix_
             << ttypedef->get_symbolic() << ";" << endl << endl;
+  if (ttypedef->get_type()->is_container()) {
+    f_header_ << indent() << "typedef " << type_name(ttypedef->get_type(), false, true) << " " << cocoa_prefix_
+              << "Mutable" << ttypedef->get_symbolic() << ";" << endl << endl;
+  }
 }
 
 /**
@@ -2038,7 +2042,7 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
       out << "NSNumber *";
     }
     out << " serviceResult = ";
-    if ((*f_iter)->get_returntype()->is_container()) {
+    if ((*f_iter)->get_returntype()->get_true_type()->is_container()) {
       out << "(" << type_name((*f_iter)->get_returntype(), false, true) << ")";
     }
     out << "[service " << funname;
@@ -2536,8 +2540,9 @@ void t_cocoa_generator::generate_serialize_list_element(ofstream& out,
  */
 string t_cocoa_generator::type_name(t_type* ttype, bool class_ref, bool needs_mutable) {
   if (ttype->is_typedef()) {
+    string name = (needs_mutable && ttype->get_true_type()->is_container()) ? "Mutable" + ttype->get_name() : ttype->get_name();
     t_program* program = ttype->get_program();
-    return program ? (program->get_namespace("cocoa") + ttype->get_name()) : ttype->get_name();
+    return program ? (program->get_namespace("cocoa") + name) : name;
   }
 
   string result;
