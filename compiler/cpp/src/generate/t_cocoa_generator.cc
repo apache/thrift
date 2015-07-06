@@ -62,7 +62,9 @@ public:
       
     iter = parsed_options.find("promise_kit");
     promise_kit_ = (iter != parsed_options.end());
-
+      
+    iter = parsed_options.find("debug_descriptions");
+    debug_descriptions_ = (iter != parsed_options.end());
     out_dir_base_ = "gen-cocoa";
   }
 
@@ -247,6 +249,7 @@ private:
   bool validate_required_;
   bool async_clients_;
   bool promise_kit_;
+  bool debug_descriptions_;
 };
 
 /**
@@ -1237,8 +1240,13 @@ void t_cocoa_generator::generate_cocoa_struct_field_accessor_implementations(ofs
  */
 void t_cocoa_generator::generate_cocoa_struct_description(ofstream& out, t_struct* tstruct) {
   
-  // Use debugDescription so the app can add description via a cateogory/extension
-  out << indent() << "- (NSString *) description {" << endl;
+  // Allow use of debugDescription so the app can add description via a cateogory/extension
+  if (debug_descriptions_) {
+    out << indent() << "- (NSString *) debugDescription {" << endl;
+  }
+  else {
+    out << indent() << "- (NSString *) description {" << endl;
+  }
   indent_up();
 
   out << indent() << "NSMutableString * ms = [NSMutableString stringWithString: @\""
