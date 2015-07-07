@@ -119,7 +119,10 @@ public:
     }
   }
 
-  virtual void close() { Pipe_.reset(); }
+  virtual void close() { 
+    TAutoCrit lock(pipe_protect_);
+    Pipe_.reset(); 
+  }
 
   virtual boost::shared_ptr<TTransport> acceptImpl();
 
