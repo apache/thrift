@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -177,6 +178,7 @@ func (p *THttpClient) Flush() error {
 		return NewTTransportExceptionFromError(err)
 	}
 	p.header.Add("Content-Type", "application/x-thrift")
+	p.header.Add("Content-Length", fmt.Sprintf("%d", p.requestBuffer.Len()))
 	req.Header = p.header
 	response, err := client.Do(req)
 	if err != nil {
