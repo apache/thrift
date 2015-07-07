@@ -66,6 +66,7 @@
     <Compile Include="generated files\SecondService.cs" />
     <Compile Include="generated files\StructA.cs" />
     <Compile Include="generated files\StructB.cs" />
+    <Compile Include="TestHandler.cs" />
     <Compile Include="generated files\ThriftTest.cs" />
     <Compile Include="generated files\THRIFT~1.Constants.cs" />
     <Compile Include="generated files\VersioningTestV1.cs" />
@@ -75,7 +76,6 @@
     <Compile Include="generated files\Xtruct.cs" />
     <Compile Include="generated files\Xtruct2.cs" />
     <Compile Include="generated files\Xtruct3.cs" />
-    <Compile Include="TestHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

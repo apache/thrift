@@ -20,7 +20,7 @@ namespace Thrift.Test
 
                 TStreamTransport transport = new TStreamTransport(Console.OpenStandardInput(), Console.OpenStandardOutput());
 
-                TStreamServer server = new TStreamServer(processor, transport, new TTransportFactory(), new TJSONProtocol.Factory());//have to specify the JSONProtocol factory...
+                TStreamServer server = new TStreamServer(processor, transport, new TTransportFactory(), new TJSONProtocol.Factory());
                 server.Serve();
             }
             catch (Exception x)

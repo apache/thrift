@@ -49,7 +49,6 @@ namespace Thrift.Test
             Xtruct XtructThing;
             Xtruct2 Xtruct2Thing;
             Dictionary<int, int> intMapThing, mapout;
-            Dictionary<string, string> stringMapThing;
             THashSet<int> setThing, setout;
             List<int> listThing, listout;
             Numberz enumThing1, enumThing2, enumThing3, enumThing5, enumThing8;

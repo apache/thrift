@@ -16,9 +16,8 @@ namespace Thrift.Server
         protected TProtocolFactory inputProtocolFactory;
         protected TProtocolFactory outputProtocolFactory;
 
-        //TODO: just change this to be binaryProtocol as the default so it is consistent with everything else!
         public TStreamServer(TProcessor processor, TStreamTransport transport)
-            : this(processor, transport, new TTransportFactory(), new TJSONProtocol.Factory())
+            : this(processor, transport, new TTransportFactory(), new TBinaryProtocol.Factory())
         {
             
         }
