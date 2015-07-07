@@ -21,14 +21,15 @@
 
 extern NSString *TTransportErrorDomain;
 
-enum {
-  TTransportErrorUnknown        = -30000,
-  TTransportErrorNoFrameHeader  = -30001,
-  TTransportErrorUnderflow      = -30002,
-  TTransportErrorFailedWrite    = -30003,
-  TTransportErrorStreamClosed   = -30004,
-  TTransportErrorEOF            = -30005,
+typedef NS_ENUM (int, TTransportError) {
+  TTransportErrorUnknown        = 30000,
+  TTransportErrorNoFrameHeader  = 30001,
+  TTransportErrorUnderflow      = 30002,
+  TTransportErrorFailedWrite    = 30003,
+  TTransportErrorStreamClosed   = 30004,
+  TTransportErrorEOF            = 30005,
 
-  TTransportErrorInvalidHttpResponse  = -40001,
-  TTransportErrorInvalidHttpStatus    = -40002
+  TTransportErrorHttpInvalidResponse  = 40001,
+  TTransportErrorHttpInvalidStatus    = 40002,
+  TTransportErrorHttpAuthentication   = 40003,
 };

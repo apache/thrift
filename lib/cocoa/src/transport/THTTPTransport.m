@@ -150,7 +150,7 @@
   if (![response isKindOfClass:NSHTTPURLResponse.class]) {
     if (error) {
       *error = [NSError errorWithDomain:TTransportErrorDomain
-                                   code:TTransportErrorInvalidHttpResponse
+                                   code:TTransportErrorHttpInvalidResponse
                                userInfo:@{}];
     }
     return NO;
@@ -159,8 +159,17 @@
   NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
   if ([httpResponse statusCode] != 200) {
     if (error) {
+
+      TTransportError code;
+      if (httpResponse.statusCode == 401) {
+        code = TTransportErrorHttpAuthentication;
+      }
+      else {
+        code = TTransportErrorHttpInvalidStatus;
+      }
+
       *error = [NSError errorWithDomain:TTransportErrorDomain
-                                   code:TTransportErrorInvalidHttpStatus
+                                   code:code
                                userInfo:@{@"statusCode":@(httpResponse.statusCode)}];
     }
     return NO;

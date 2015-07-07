@@ -22,16 +22,16 @@
 
 extern NSString *TProtocolErrorDomain;
 
-typedef NS_OPTIONS (int, TProtocolErrors) {
-  TProtocolErrorNoMemory                  = -10000,
-  TProtocolErrorBadMessageVersion         = -10001,
-  TProtocolErrorMissingMessageVersion     = -10002,
-  TProtocolErrorMessageTooBig             = -10003,
-  TProtocolErrorMissingRequiredField      = -10004,
-  TProtocolErrorProtocolIdMismatch        = -10005,
-  TProtocolErrorProtocolVersionMismatch   = -10006,
-  TProtocolErrorUnknown                   = -10007,
-  TProtocolErrorTransportFailed           = -10008
+typedef NS_OPTIONS (int, TProtocolError) {
+  TProtocolErrorNoMemory                  = 10000,
+  TProtocolErrorBadMessageVersion         = 10001,
+  TProtocolErrorMissingMessageVersion     = 10002,
+  TProtocolErrorMessageTooBig             = 10003,
+  TProtocolErrorMissingRequiredField      = 10004,
+  TProtocolErrorProtocolIdMismatch        = 10005,
+  TProtocolErrorProtocolVersionMismatch   = 10006,
+  TProtocolErrorUnknown                   = 10007,
+  TProtocolErrorTransportFailed           = 10008,
 };
 
 

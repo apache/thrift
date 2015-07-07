@@ -22,17 +22,17 @@
 extern NSString *TApplicationErrorDomain;
 
 typedef NS_ENUM (int, TApplicationError) {
-  TApplicationErrorUnknown                = -20000,
-  TApplicationErrorUnknownMethod          = -20001,
-  TApplicationErrorInvalidMessageType     = -20002,
-  TApplicationErrorWrongMethodName        = -20003,
-  TApplicationErrorBadSequenceId          = -20004,
-  TApplicationErrorMissingResult          = -20005,
-  TApplicationErrorInternalError          = -20006,
-  TApplicationErrorProtocolError          = -20007,
-  TApplicationErrorInvalidTransform       = -20008,
-  TApplicationErrorInvalidProtocol        = -20009,
-  TApplicationErrorUnsupportedClientType  = -20010
+  TApplicationErrorUnknown                = 20000,
+  TApplicationErrorUnknownMethod          = 20001,
+  TApplicationErrorInvalidMessageType     = 20002,
+  TApplicationErrorWrongMethodName        = 20003,
+  TApplicationErrorBadSequenceId          = 20004,
+  TApplicationErrorMissingResult          = 20005,
+  TApplicationErrorInternalError          = 20006,
+  TApplicationErrorProtocolError          = 20007,
+  TApplicationErrorInvalidTransform       = 20008,
+  TApplicationErrorInvalidProtocol        = 20009,
+  TApplicationErrorUnsupportedClientType  = 20010,
 };
 
 
