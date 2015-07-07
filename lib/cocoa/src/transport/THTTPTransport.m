@@ -46,7 +46,7 @@
 
   NSString *userAgent = _userAgent;
   if (!userAgent) {
-    userAgent = @"Cocoa/THTTPTransport";
+    userAgent = @"Thrift/Cocoa";
   }
   [_request setValue:userAgent forHTTPHeaderField:@"User-Agent"];
 

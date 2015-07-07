@@ -47,15 +47,16 @@
 {
   NSString *thriftContentType = @"application/x-thrift";
   if (protocolName.length) {
-    thriftContentType = [thriftContentType stringByAppendingFormat:@";%@", protocolName];
+    thriftContentType = [thriftContentType stringByAppendingFormat:@"; p=%@", protocolName];
   }
 
   config.requestCachePolicy = NSURLRequestReloadIgnoringCacheData;
   config.HTTPShouldUsePipelining = YES;
+  config.HTTPShouldSetCookies = NO;
+  config.URLCache = nil;
   config.HTTPAdditionalHeaders = @{@"Content-Type":thriftContentType,
                                    @"Accept":thriftContentType,
-                                   @"User-Agent":@"Thrift/Cocoa"};
-  config.HTTPShouldSetCookies = NO;
+                                   @"User-Agent":@"Thrift/Cocoa (Session)"};
 }
 
 
@@ -111,7 +112,6 @@
   self = [super init];
   if (self) {
     _factory = factory;
-    _requestData = [NSMutableData dataWithCapacity:1024];
   }
   return self;
 }
@@ -151,12 +151,7 @@
 -(BOOL) write:(const UInt8 *)data offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
   if (!_requestData) {
-    if (error) {
-      *error = [NSError errorWithDomain:TTransportErrorDomain
-                                   code:TTransportErrorFailedWrite
-                               userInfo:@{NSLocalizedDescriptionKey:@"Write called out of order"}];
-    }
-    return NO;
+    _requestData = [NSMutableData dataWithCapacity:256];
   }
 
   [_requestData appendBytes:data+offset length:length];
@@ -218,6 +213,10 @@
     }
     else {
 
+      if (data == nil) {
+        data = [NSData data];
+      }
+
       _responseData = data;
 
       completed(self);
@@ -238,6 +237,7 @@
   dispatch_semaphore_t completed = dispatch_semaphore_create(0);
 
   __block BOOL result;
+  __block NSError *internalError;
 
   [self flushWithCompletion:^(id < TAsyncTransport > transport) {
 
@@ -245,11 +245,9 @@
 
     dispatch_semaphore_signal(completed);
 
-  } failure:^(NSError *asyncError) {
+  } failure:^(NSError *error) {
 
-    if (error) {
-      *error = asyncError;
-    }
+    internalError = error;
 
     result = NO;
 
@@ -258,6 +256,10 @@
   }];
 
   dispatch_semaphore_wait(completed, DISPATCH_TIME_FOREVER);
+
+  if (error) {
+    *error = internalError;
+  }
 
   return result;
 }
