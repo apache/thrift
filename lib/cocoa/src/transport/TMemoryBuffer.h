@@ -26,4 +26,6 @@
 
 -(id) initWithData:(NSData *)data;
 
+-(id) initWithDataNoCopy:(NSMutableData *)data;
+
 @end

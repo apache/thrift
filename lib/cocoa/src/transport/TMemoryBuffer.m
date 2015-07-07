@@ -52,6 +52,15 @@
   return self;
 }
 
+-(id) initWithDataNoCopy:(NSMutableData *)data
+{
+  if (self = [super init]) {
+    _buffer = data;
+    _bufferOffset = 0;
+  }
+  return self;
+}
+
 -(BOOL) readAll:(UInt8 *)outBuffer offset:(UInt32)outBufferOffset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
   UInt32 got = [self readAvail:outBuffer offset:outBufferOffset maxLength:length error:error];
@@ -101,7 +110,7 @@
 
 -(NSData *) buffer
 {
-  return [_buffer copy];
+  return _buffer;
 }
 
 -(BOOL) flush:(NSError *__autoreleasing *)error
