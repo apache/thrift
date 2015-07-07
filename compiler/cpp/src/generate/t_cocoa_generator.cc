@@ -2031,6 +2031,7 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
   out << indent() << "  [i setArgument: &seqID atIndex: 2];" << endl;
   out << indent() << "  [i setArgument: &inProtocol atIndex: 3];" << endl;
   out << indent() << "  [i setArgument: &outProtocol atIndex: 4];" << endl;
+  out << indent() << "  [i setArgument: &__thriftError atIndex: 5];" << endl;
   out << indent() << "  [i setTarget: self];" << endl;
   out << indent() << "  [i invoke];" << endl;
   out << indent() << "  return YES;" << endl;
