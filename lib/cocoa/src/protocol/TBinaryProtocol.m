@@ -39,6 +39,11 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
   return gSharedFactory;
 }
 
+-(NSString *) protocolName
+{
+  return @"binary";
+}
+
 -(TBinaryProtocol *) newProtocolOnTransport:(id <TTransport>)transport
 {
   return [[TBinaryProtocol alloc] initWithTransport:transport];

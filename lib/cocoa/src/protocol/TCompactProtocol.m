@@ -55,6 +55,11 @@ enum {
   return gSharedFactory;
 }
 
+-(NSString *) protocolName
+{
+  return @"compact";
+}
+
 -(TCompactProtocol *) newProtocolOnTransport:(id <TTransport>)transport
 {
   return [[TCompactProtocol alloc] initWithTransport:transport];

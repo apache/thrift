@@ -24,6 +24,8 @@
 
 @protocol TProtocolFactory <NSObject>
 
+@property (readonly, nonatomic) NSString *protocolName;
+
 -(id<TProtocol>) newProtocolOnTransport:(id<TTransport>)transport;
 
 @end
