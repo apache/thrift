@@ -581,6 +581,7 @@ int TSSLSocketFactory::passwordCallback(char* password, int size, int, void* dat
     length = size;
   }
   strncpy(password, userPassword.c_str(), length);
+  userPassword.assign(userPassword.size(), '*');
   return length;
 }
 
