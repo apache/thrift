@@ -260,14 +260,13 @@ AM_CONDITIONAL(WITH_LUA, [test "$have_lua" = "yes"])
 
 AX_THRIFT_LIB(python, [Python], yes)
 if test "$with_python" = "yes";  then
+  AC_PATH_PROG([TRIAL], [trial])
   AM_PATH_PYTHON(2.4,, :)
-  if test "x$PYTHON" != "x" && test "x$PYTHON" != "x:" ; then
+  if test -n "$TRIAL" && test "x$PYTHON" != "x" && test "x$PYTHON" != "x:" ; then
     have_python="yes"
   fi
 fi
 AM_CONDITIONAL(WITH_PYTHON, [test "$have_python" = "yes"])
-
-AC_PATH_PROG([TRIAL], [trial])
 
 AX_THRIFT_LIB(perl, [Perl], yes)
 if test "$with_perl" = "yes"; then

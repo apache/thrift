@@ -91,6 +91,15 @@ public:
     iter = parsed_options.find("option_type");
     use_option_type_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("generated_annotations");
+    if (iter != parsed_options.end()) {
+      undated_generated_annotations_  = (iter->second.compare("undated") == 0);
+      suppress_generated_annotations_ = (iter->second.compare("suppress") == 0);
+    } else {
+      undated_generated_annotations_  = false;
+      suppress_generated_annotations_ = false;
+    }
+
     out_dir_base_ = (bean_style_ ? "gen-javabean" : "gen-java");
   }
 
@@ -343,6 +352,9 @@ private:
   bool sorted_containers_;
   bool reuse_objects_;
   bool use_option_type_;
+  bool undated_generated_annotations_;
+  bool suppress_generated_annotations_;
+  
 };
 
 /**
@@ -392,6 +404,8 @@ string t_java_generator::java_package() {
 string t_java_generator::java_type_imports() {
   string hash_builder;
   string tree_set_and_map;
+  string annotation_generated;
+
   string option;
   if (sorted_containers_) {
     tree_set_and_map = string() + "import java.util.TreeSet;\n" + "import java.util.TreeMap;\n";
@@ -399,6 +413,11 @@ string t_java_generator::java_type_imports() {
 
   if (use_option_type_) {
     option = string() + "import org.apache.thrift.Option;\n";
+  }
+
+  // android does not support @Generated Annotation
+  if (!suppress_generated_annotations_) {
+    annotation_generated = string() + "import javax.annotation.Generated;\n";
   }
 
   return string() + hash_builder + "import org.apache.thrift.scheme.IScheme;\n"
@@ -417,7 +436,7 @@ string t_java_generator::java_type_imports() {
          + "import java.util.HashSet;\n" + "import java.util.EnumSet;\n" + tree_set_and_map
          + "import java.util.Collections;\n" + "import java.util.BitSet;\n"
          + "import java.nio.ByteBuffer;\n"
-           "import java.util.Arrays;\n" + "import javax.annotation.Generated;\n"
+         + "import java.util.Arrays;\n" + annotation_generated
          + "import org.slf4j.Logger;\n" + "import org.slf4j.LoggerFactory;\n\n";
 }
 
@@ -1329,7 +1348,7 @@ void t_java_generator::generate_java_struct_definition(ofstream& out,
 
   bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
 
-  if (!in_class) {
+  if (!in_class && !suppress_generated_annotations_) {
     generate_javax_generated_annotation(out);
   }
 
@@ -2631,7 +2650,9 @@ void t_java_generator::generate_service(t_service* tservice) {
 
   f_service_ << autogen_comment() << java_package() << java_type_imports() << java_suppressions();
 
-  generate_javax_generated_annotation(f_service_);
+  if (!suppress_generated_annotations_) {
+    generate_javax_generated_annotation(f_service_);
+  }
   f_service_ << "public class " << service_name_ << " {" << endl << endl;
   indent_up();
 
@@ -5092,9 +5113,14 @@ void t_java_generator::generate_java_struct_tuple_scheme(ofstream& out, t_struct
 void t_java_generator::generate_javax_generated_annotation(ofstream& out) {
   time_t seconds = time(NULL);
   struct tm* now = localtime(&seconds);
-  indent(out) << "@Generated(value = \"" << autogen_summary() << "\", date = \""
-              << (now->tm_year + 1900) << "-" << setfill('0') << setw(2) << (now->tm_mon + 1) << "-"
-              << setfill('0') << setw(2) << now->tm_mday << "\")" << endl;
+  indent(out) << "@Generated(value = \"" << autogen_summary() << "\"";
+  if (undated_generated_annotations_) {
+    out << ")" << endl;
+  } else {
+    indent(out) << ", date = \"" << (now->tm_year + 1900) << "-" << setfill('0') << setw(2)
+                << (now->tm_mon + 1) << "-" << setfill('0') << setw(2) << now->tm_mday
+                << "\")" << endl;
+  }
 }
 
 THRIFT_REGISTER_GENERATOR(
@@ -5114,4 +5140,7 @@ THRIFT_REGISTER_GENERATOR(
     "(read and write).\n"
     "    sorted_containers:\n"
     "                     Use TreeSet/TreeMap instead of HashSet/HashMap as a implementation of "
-    "set/map.\n")
+    "set/map.\n"
+    "    generated_annotations=[undated|suppress]:\n"
+    "                     undated: suppress the date at @Generated annotations\n"
+    "                     suppress: suppress @Generated annotations entirely\n")

@@ -24,7 +24,7 @@ package tests
 
 import (
 	thrift "thrift"
-	gomock "code.google.com/p/gomock/gomock"
+	gomock "github.com/golang/mock/gomock"
 )
 
 // Mock of TProtocol interface

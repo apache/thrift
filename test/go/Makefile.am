@@ -34,7 +34,7 @@ gopath: $(THRIFT) ThriftTest.thrift
 	$(THRIFTCMD) ThriftTest.thrift
 	$(THRIFTCMD) ../StressTest.thrift
 	ln -nfs ../../../lib/go/thrift src/thrift
-	GOPATH=`pwd` $(GO) get code.google.com/p/gomock/gomock
+	GOPATH=`pwd` $(GO) get github.com/golang/mock/gomock
 	touch gopath
 
 bin/testclient: gopath
@@ -47,7 +47,7 @@ bin/stress: gopath
 	GOPATH=`pwd` $(GO) install bin/stress
 
 clean-local:
-	$(RM) -r src/gen src/code.google.com src/thrift bin pkg gopath ThriftTest.thrift
+	$(RM) -r src/gen src/github.com/golang src/thrift bin pkg gopath ThriftTest.thrift
 
 check_PROGRAMS: bin/testclient bin/testserver bin/stress
 
@@ -55,7 +55,7 @@ check: gopath
 	GOPATH=`pwd` $(GO) test -v common/...
 
 genmock: gopath
-	GOPATH=`pwd` $(GO) install code.google.com/p/gomock/mockgen
+	GOPATH=`pwd` $(GO) install github.com/golang/mock/mockgen
 	GOPATH=`pwd` bin/mockgen -destination=src/common/mock_handler.go -package=common gen/thrifttest ThriftTest
 
 EXTRA_DIST = \

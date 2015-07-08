@@ -25,14 +25,17 @@
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 
+#define BOOST_TEST_MODULE RecursiveTest
+#include <boost/test/unit_test.hpp>
+
 using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::protocol::TBinaryProtocol;
 using boost::shared_ptr;
 
-int main() {
+BOOST_AUTO_TEST_CASE(test_recursive_1) {
   shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer());
   shared_ptr<TBinaryProtocol> prot(new TBinaryProtocol(buf));
-
+  
   RecTree tree;
   RecTree child;
   tree.children.push_back(child);
@@ -41,8 +44,13 @@ int main() {
 
   RecTree result;
   result.read(prot.get());
-  assert(tree == result);
+  BOOST_CHECK(tree == result);
+}
 
+BOOST_AUTO_TEST_CASE(test_recursive_2) {
+  shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer());
+  shared_ptr<TBinaryProtocol> prot(new TBinaryProtocol(buf));
+  
   RecList l;
   boost::shared_ptr<RecList> l2(new RecList);
   l.nextitem = l2;
@@ -51,8 +59,13 @@ int main() {
 
   RecList resultlist;
   resultlist.read(prot.get());
-  assert(resultlist.nextitem != NULL);
-  assert(resultlist.nextitem->nextitem == NULL);
+  BOOST_CHECK(resultlist.nextitem != NULL);
+  BOOST_CHECK(resultlist.nextitem->nextitem == NULL);
+}
+
+BOOST_AUTO_TEST_CASE(test_recursive_3) {
+  shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer());
+  shared_ptr<TBinaryProtocol> prot(new TBinaryProtocol(buf));
 
   CoRec c;
   boost::shared_ptr<CoRec2> r(new CoRec2);
@@ -61,15 +74,18 @@ int main() {
   c.write(prot.get());
 
   c.read(prot.get());
-  assert(c.other != NULL);
-  assert(c.other->other.other == NULL);
+  BOOST_CHECK(c.other != NULL);
+  BOOST_CHECK(c.other->other.other == NULL);
+}
+
+BOOST_AUTO_TEST_CASE(test_recursive_4) {
+  shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer());
+  shared_ptr<TBinaryProtocol> prot(new TBinaryProtocol(buf));
 
   boost::shared_ptr<RecList> depthLimit(new RecList);
   depthLimit->nextitem = depthLimit;
-  try {
-    depthLimit->write(prot.get());
-    assert(false);
-  } catch (const apache::thrift::protocol::TProtocolException& e) {
-  }
+  BOOST_CHECK_THROW(depthLimit->write(prot.get()),
+    apache::thrift::protocol::TProtocolException);
+
   depthLimit->nextitem.reset();
 }

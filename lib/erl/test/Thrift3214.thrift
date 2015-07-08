@@ -17,27 +17,7 @@
  * under the License.
  */
 
-#include <stdio.h>
-
-#include <thrift/protocol/TBinaryProtocol.h>
-#include <thrift/protocol/TCompactProtocol.h>
-#include <thrift/transport/TBufferTransports.h>
-
-#define BOOST_TEST_MODULE AllProtocolTests
-#include <boost/test/unit_test.hpp>
-
-#include "AllProtocolTests.tcc"
-
-using namespace apache::thrift;
-using namespace apache::thrift::protocol;
-using namespace apache::thrift::transport;
-
-char errorMessage[ERR_LEN];
-
-BOOST_AUTO_TEST_CASE(test_binary_protocol) {
-  testProtocol<TBinaryProtocol>("TBinaryProtocol");
-}
-
-BOOST_AUTO_TEST_CASE(test_compact_protocol) {
-  testProtocol<TCompactProtocol>("TCompactProtocol");
+struct StringMap
+{
+  1: map<i32, string> data = {1: "a", 2: "b"};
 }

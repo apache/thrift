@@ -17,17 +17,18 @@
  * under the License.
  */
 
-#include <cstdlib>
-#include <stdexcept>
 #include <thrift/Thrift.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TBufferTransports.h>
-using namespace std;
+
+#define BOOST_TEST_MODULE TPipedTransportTest
+#include <boost/test/unit_test.hpp>
+
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TPipedTransport;
 using apache::thrift::transport::TMemoryBuffer;
 
-int main() {
+BOOST_AUTO_TEST_CASE(test_tpipedtransport_1) {
   boost::shared_ptr<TMemoryBuffer> underlying(new TMemoryBuffer);
   boost::shared_ptr<TMemoryBuffer> pipe(new TMemoryBuffer);
   boost::shared_ptr<TPipedTransport> trans(new TPipedTransport(underlying, pipe));
@@ -36,17 +37,15 @@ int main() {
 
   underlying->write((uint8_t*)"abcd", 4);
   trans->readAll(buffer, 2);
-  assert(string((char*)buffer, 2) == "ab");
+  BOOST_CHECK(std::string((char*)buffer, 2) == "ab");
   trans->readEnd();
-  assert(pipe->getBufferAsString() == "ab");
+  BOOST_CHECK(pipe->getBufferAsString() == "ab");
   pipe->resetBuffer();
   underlying->write((uint8_t*)"ef", 2);
   trans->readAll(buffer, 2);
-  assert(string((char*)buffer, 2) == "cd");
+  BOOST_CHECK(std::string((char*)buffer, 2) == "cd");
   trans->readAll(buffer, 2);
-  assert(string((char*)buffer, 2) == "ef");
+  BOOST_CHECK(std::string((char*)buffer, 2) == "ef");
   trans->readEnd();
-  assert(pipe->getBufferAsString() == "cdef");
-
-  return 0;
+  BOOST_CHECK(pipe->getBufferAsString() == "cdef");
 }

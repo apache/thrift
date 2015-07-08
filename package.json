@@ -35,6 +35,7 @@
     "ws": "~0.4.32"
   },
   "devDependencies": {
+    "buffer-equals": "^1.0.3",
     "commander": "2.1.x",
     "connect": "2.7.x",
     "istanbul": "^0.3.5",

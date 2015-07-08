@@ -2430,14 +2430,18 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
 
   indent_impl(s_service_impl) << "on E: Exception do begin" << endl;
   indent_up_impl();
-  indent_impl(s_service_impl) << "if events <> nil then events.UnhandledError(E);" << endl;
+  if(events_) {
+    indent_impl(s_service_impl) << "if events <> nil then events.UnhandledError(E);" << endl;
+  }
   if (!tfunction->is_oneway()) {
     indent_impl(s_service_impl) << "appx := TApplicationException.Create( "
                                    "TApplicationException.TExceptionType.InternalError, E.Message);"
                                 << endl;
     indent_impl(s_service_impl) << "try" << endl;
     indent_up_impl();
-    indent_impl(s_service_impl) << "if events <> nil then events.PreWrite;" << endl;
+    if(events_) {
+      indent_impl(s_service_impl) << "if events <> nil then events.PreWrite;" << endl;
+    }
     indent_impl(s_service_impl) << "msg := Thrift.Protocol.TMessageImpl.Create('"
                                 << tfunction->get_name() << "', TMessageType.Exception, seqid);"
                                 << endl;
@@ -2445,8 +2449,10 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
     indent_impl(s_service_impl) << "appx.Write(oprot);" << endl;
     indent_impl(s_service_impl) << "oprot.WriteMessageEnd();" << endl;
     indent_impl(s_service_impl) << "oprot.Transport.Flush();" << endl;
-    indent_impl(s_service_impl) << "if events <> nil then events.PostWrite;" << endl;
-    indent_impl(s_service_impl) << "Exit;" << endl;
+    if(events_) {
+      indent_impl(s_service_impl) << "if events <> nil then events.PostWrite;" << endl;
+    }
+	indent_impl(s_service_impl) << "Exit;" << endl;
     indent_down_impl();
     indent_impl(s_service_impl) << "finally" << endl;
     indent_up_impl();

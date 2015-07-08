@@ -73,6 +73,7 @@ endif()
 
 if(BUILD_CPP)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tutorial/cpp)
     if(BUILD_TESTING)
         if(WITH_LIBEVENT AND WITH_ZLIB AND WITH_OPENSSL)
             add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/cpp)

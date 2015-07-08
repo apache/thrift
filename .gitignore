@@ -89,6 +89,7 @@ test-driver
 /lib/cpp/test/Benchmark
 /lib/cpp/test/AllProtocolsTest
 /lib/cpp/test/DebugProtoTest
+/lib/cpp/test/DenseProtoTest
 /lib/cpp/test/EnumTest
 /lib/cpp/test/JSONProtoTest
 /lib/cpp/test/OptionalRequiredTest
@@ -238,7 +239,7 @@ test-driver
 /test/go/ThriftTest.thrift
 /test/go/gopath
 /test/go/pkg/
-/test/go/src/code.google.com/
+/test/go/src/github.com/golang/
 /test/go/src/gen/
 /test/go/src/thrift
 /test/haxe/bin
