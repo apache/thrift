@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net/http"
 	"strconv"
 	"time"
 )
@@ -39,11 +40,31 @@ var (
 	THttpTransportHeaderColon    = []byte{':'}
 	THttpTransportChunkSemicolon = []byte{';'}
 	THttpTransportCRLF           = []byte{'\r', '\n'}
+	THttpTransportVersions       = [][]byte{[]byte("HTTP/1.0"), []byte("HTTP/1.1")}
+	THttpTransportStatusCodes    = []int{http.StatusOK}
 )
 
 var (
 	THttpTransportBufferSize = 1024
 )
+
+func isValidVersion(ver []byte, versions [][]byte) bool {
+	for _, v := range versions {
+		if bytes.Equal(ver, v) {
+			return true
+		}
+	}
+	return false
+}
+
+func isValidStatusCode(code int, codes []int) bool {
+	for _, c := range codes {
+		if code == c {
+			return true
+		}
+	}
+	return false
+}
 
 type THttpTransport struct {
 	transport TTransport
@@ -67,8 +88,6 @@ func (p *THttpTransport) init() {
 	p.readBuffer.Reset()
 	p.writeBuffer.Reset()
 	p.readHeadersDone = false
-	p.contentLength = 0
-	p.chunked = false
 }
 
 func (p *THttpTransport) Open() error {
@@ -100,7 +119,9 @@ func (p *THttpTransport) Read(buf []byte) (l int, err error) {
 
 func (p *THttpTransport) readMoteData() (int, error) {
 	if !p.readHeadersDone {
-		p.readHeaders()
+		if err := p.readHeaders(); err != nil {
+			return 0, err
+		}
 	}
 	var size int
 	var err error
@@ -108,6 +129,8 @@ func (p *THttpTransport) readMoteData() (int, error) {
 		size, err = p.readChunked()
 	} else {
 		size, err = p.readContent(p.contentLength)
+		// reset the state for reentry
+		p.readHeadersDone = false
 	}
 	return size, err
 }
@@ -149,7 +172,7 @@ func (p *THttpTransport) refill() error {
 	buf := make([]byte, THttpTransportBufferSize)
 	n, err := p.transport.Read(buf)
 	if n == 0 {
-		return NewTTransportException(NO_MORE_DATA, "Could not read more data")
+		return err
 	}
 	read := buf[:n]
 	p.readBuffer.Write(read)
@@ -182,40 +205,51 @@ func (p *THttpTransport) parseStatusLine(line []byte) error {
 	if len(s) != 3 {
 		return NewTTransportException(BAD_STATUS, "Bad Status: "+string(line))
 	}
-	method := string(s[0])
-	path := s[1]
-	http := s[2]
-	if len(path) == 0 || len(http) == 0 {
-		return NewTTransportException(BAD_STATUS, "Bad Status: "+string(line))
-	}
-	switch method {
-	case "POST":
-		// POST method ok, looking for content.
-		return nil
-	case "OPTIONS":
-		// preflight OPTIONS method, we don't need further content.
-		header := fmt.Sprintf(
-			"HTTP/1.1 200 OK%s"+
-				"Date: %s%s"+
-				"Access-Control-Allow-Origin: *%s"+
-				"Access-Control-Allow-Methods: POST, OPTIONS%s"+
-				"Access-Control-Allow-Headers: Content-Type%s"+
-				"%s",
-			THttpTransportCRLF,
-			getTimeRFC1123(), THttpTransportCRLF,
-			THttpTransportCRLF,
-			THttpTransportCRLF,
-			THttpTransportCRLF,
-			THttpTransportCRLF)
-		// Flush the write buffer and reset header variables
-		if err := p.flushWriteBuffer(&header); err != nil {
+	if isValidVersion(s[0], THttpTransportVersions) {
+		// http response
+		statusCode, err := strconv.Atoi(string(s[1]))
+		if err != nil {
 			return err
 		}
-		p.readHeadersDone = false
+		if !isValidStatusCode(statusCode, THttpTransportStatusCodes) {
+			return NewTTransportException(BAD_STATUS, "Bad Status: "+string(line))
+		}
 		return nil
-	default:
-		return NewTTransportException(BAD_STATUS, "Bad Status (unsupported method): "+string(line))
+	} else if isValidVersion(s[2], THttpTransportVersions) {
+		// http request
+		if len(s[1]) == 0 {
+			return NewTTransportException(BAD_STATUS, "Bad Status: "+string(line))
+		}
+		switch string(s[0]) {
+		case "POST":
+			// POST method ok, looking for content.
+			return nil
+		case "OPTIONS":
+			// preflight OPTIONS method, we don't need further content.
+			header := fmt.Sprintf(
+				"HTTP/1.1 200 OK%s"+
+					"Date: %s%s"+
+					"Access-Control-Allow-Origin: *%s"+
+					"Access-Control-Allow-Methods: POST, OPTIONS%s"+
+					"Access-Control-Allow-Headers: Content-Type%s"+
+					"%s",
+				THttpTransportCRLF,
+				getTimeRFC1123(), THttpTransportCRLF,
+				THttpTransportCRLF,
+				THttpTransportCRLF,
+				THttpTransportCRLF,
+				THttpTransportCRLF)
+			// Flush the write buffer and reset header variables
+			if err := p.flushWriteBuffer(&header); err != nil {
+				return err
+			}
+			p.readHeadersDone = false
+			return nil
+		default:
+			return NewTTransportException(BAD_STATUS, "Bad Status (unsupported method): "+string(line))
+		}
 	}
+	return NewTTransportException(BAD_STATUS, "Bad Status: "+string(line))
 }
 
 func (p *THttpTransport) parseHeader(line []byte) error {
@@ -223,7 +257,7 @@ func (p *THttpTransport) parseHeader(line []byte) error {
 	if len(s) != 2 {
 		return nil
 	}
-	key, value := string(s[0]), string(s[1])
+	key, value := string(bytes.TrimSpace(s[0])), string(bytes.TrimSpace(s[1]))
 	switch key {
 	case "Content-Length":
 		l, err := strconv.Atoi(value)
@@ -259,6 +293,8 @@ func (p *THttpTransport) readChunked() (int, error) {
 		if err = p.readChunkedFooters(); err != nil {
 			return 0, err
 		}
+		// reset the state for reentry
+		p.readHeadersDone = false
 	} else {
 		// read chunk data
 		length, err = p.readContent(chunkSize)
@@ -295,7 +331,7 @@ func (p *THttpTransport) readChunkedFooters() error {
 
 func (p *THttpTransport) readContent(size int) (int, error) {
 	for {
-		if size < len(p.readBuffer.Bytes()) {
+		if size <= len(p.readBuffer.Bytes()) {
 			// have enough data in read buffer
 			break
 		}
@@ -304,7 +340,7 @@ func (p *THttpTransport) readContent(size int) (int, error) {
 			p.readBuffer.Reset()
 		}
 		if err := p.refill(); err != nil {
-			return 0, nil
+			return 0, err
 		}
 	}
 	return size, nil
