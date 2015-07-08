@@ -99,13 +99,14 @@ private:
 class TWaitableNamedPipeImpl : public TPipeImpl {
 public:
   explicit TWaitableNamedPipeImpl(HANDLE pipehandle)
-    : Pipe_(pipehandle), begin_unread_idx_(0), end_unread_idx_(0) {
+    : begin_unread_idx_(0), end_unread_idx_(0) {
     readOverlap_.action = TOverlappedWorkItem::READ;
-    readOverlap_.h = Pipe_.h;
+    readOverlap_.h = pipehandle;
     cancelOverlap_.action = TOverlappedWorkItem::CANCELIO;
-    cancelOverlap_.h = Pipe_.h;
+    cancelOverlap_.h = pipehandle;
     buffer_.resize(1024 /*arbitrary buffer size*/, '\0');
     beginAsyncRead(&buffer_[0], static_cast<uint32_t>(buffer_.size()));
+    Pipe_.reset(pipehandle);
   }
   virtual ~TWaitableNamedPipeImpl() {
     // see if there is an outstanding read request
