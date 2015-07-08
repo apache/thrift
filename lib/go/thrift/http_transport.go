@@ -331,11 +331,11 @@ func (p *THttpTransport) readChunkedFooters() error {
 
 func (p *THttpTransport) readContent(size int) (int, error) {
 	for {
-		if size <= len(p.readBuffer.Bytes()) {
+		if size <= p.readBuffer.Len() {
 			// have enough data in read buffer
 			break
 		}
-		if len(p.readBuffer.Bytes()) == 0 {
+		if p.readBuffer.Len() == 0 {
 			// We have given all the data, reset buffer
 			p.readBuffer.Reset()
 		}
