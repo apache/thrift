@@ -3,7 +3,7 @@ package org.apache.thrift.server;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.protocol.TJSONProtocol;
+import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
@@ -25,7 +25,7 @@ public class TStreamServer {
 	
 	public TStreamServer(TProcessor processor, TIOStreamTransport transport)
 	{
-		this(processor, transport, new TTransportFactory(), new TJSONProtocol.Factory());
+		this(processor, transport, new TTransportFactory(), new TBinaryProtocol.Factory());
 	}
 	
 	public TStreamServer(TProcessor processor, TIOStreamTransport transport, TTransportFactory transportFactory, TProtocolFactory protocolFactory)
