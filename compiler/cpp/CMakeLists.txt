@@ -56,6 +56,7 @@ set( thrift_SOURCES
     src/main.h
     src/platform.h
     src/md5.h
+    src/audit/t_audit.cpp
     src/parse/t_doc.h
     src/parse/t_type.h
     src/parse/t_base_type.h
