@@ -38,7 +38,7 @@ namespace Test
             
             if (args.Length == 0)
             {
-                Console.WriteLine("must provide 'server', 'client', or 'ioStreamClient' arg");
+                Console.WriteLine("must provide 'server' or 'client' arg");
                 return -1;
             }
 
@@ -51,18 +51,18 @@ namespace Test
             {
                 return TestClient.Execute(subArgs) ? 0 : 1;
             }
-            //the client must spawn the server in this case so that it knows the server's input and output streams
-            if (args[0] == "ioStreamClient")
-            {
-                return TestIOStreamClient.Execute(subArgs) ? 0 : 1;
-            }
+            ////the client must spawn the server in this case so that it knows the server's input and output streams
+            //if (args[0] == "ioStreamClient")
+            //{
+            //    return TestIOStreamClient.Execute(subArgs) ? 0 : 1;
+            //}
             else if (args[0] == "server")
             {
                 return TestServer.Execute(subArgs) ? 0 : 1;
             }
             else
             {
-                Console.WriteLine("first argument must be 'server', 'client', or 'ioStreamClient'");
+                Console.WriteLine("first argument must be 'server' or 'client'");
             }
             return 0;
              
