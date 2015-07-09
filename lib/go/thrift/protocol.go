@@ -19,6 +19,10 @@
 
 package thrift
 
+import (
+	"errors"
+)
+
 const (
 	VERSION_MASK = 0xffff0000
 	VERSION_1    = 0x80010000
@@ -75,15 +79,20 @@ type TProtocol interface {
 }
 
 // The maximum recursive depth the skip() function will traverse
-var MaxSkipDepth = 1<<31 - 1
+const DEFAULT_RECURSION_DEPTH = 64
 
 // Skips over the next data element from the provided input TProtocol object.
 func SkipDefaultDepth(prot TProtocol, typeId TType) (err error) {
-	return Skip(prot, typeId, MaxSkipDepth)
+	return Skip(prot, typeId, DEFAULT_RECURSION_DEPTH)
 }
 
 // Skips over the next data element from the provided input TProtocol object.
 func Skip(self TProtocol, fieldType TType, maxDepth int) (err error) {
+	
+    if maxDepth <= 0 {
+		return NewTProtocolExceptionWithType( DEPTH_LIMIT, errors.New("Depth limit exceeded"))
+	}
+
 	switch fieldType {
 	case STOP:
 		return
@@ -117,7 +126,10 @@ func Skip(self TProtocol, fieldType TType, maxDepth int) (err error) {
 			if typeId == STOP {
 				break
 			}
-			Skip(self, typeId, maxDepth-1)
+			err := Skip(self, typeId, maxDepth-1)
+			if err != nil {
+				return err
+			}
 			self.ReadFieldEnd()
 		}
 		return self.ReadStructEnd()
@@ -127,7 +139,10 @@ func Skip(self TProtocol, fieldType TType, maxDepth int) (err error) {
 			return err
 		}
 		for i := 0; i < size; i++ {
-			Skip(self, keyType, maxDepth-1)
+			err := Skip(self, keyType, maxDepth-1)
+			if err != nil {
+				return err
+			}
 			self.Skip(valueType)
 		}
 		return self.ReadMapEnd()
@@ -137,7 +152,10 @@ func Skip(self TProtocol, fieldType TType, maxDepth int) (err error) {
 			return err
 		}
 		for i := 0; i < size; i++ {
-			Skip(self, elemType, maxDepth-1)
+			err := Skip(self, elemType, maxDepth-1)
+			if err != nil {
+				return err
+			}
 		}
 		return self.ReadSetEnd()
 	case LIST:
@@ -146,7 +164,10 @@ func Skip(self TProtocol, fieldType TType, maxDepth int) (err error) {
 			return err
 		}
 		for i := 0; i < size; i++ {
-			Skip(self, elemType, maxDepth-1)
+			err := Skip(self, elemType, maxDepth-1)
+			if err != nil {
+				return err
+			}
 		}
 		return self.ReadListEnd()
 	}
