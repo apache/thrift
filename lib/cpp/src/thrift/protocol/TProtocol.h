@@ -105,6 +105,10 @@ static inline To bitwise_cast(From from) {
 #  include <byteswap.h>
 #  define htolell(n) bswap_64(n)
 #  define letohll(n) bswap_64(n)
+#  define THRIFT_htolel(n) bswap_32(n)
+#  define THRIFT_letohl(n) bswap_32(n)
+#  define THRIFT_htoles(n) bswap_16(n)
+#  define THRIFT_letohs(n) bswap_16(n)
 # else /* GNUC & GLIBC */
 #  define bswap_64(n) \
       ( (((n) & 0xff00000000000000ull) >> 56) \
@@ -115,12 +119,28 @@ static inline To bitwise_cast(From from) {
       | (((n) & 0x0000000000ff0000ull) << 24) \
       | (((n) & 0x000000000000ff00ull) << 40) \
       | (((n) & 0x00000000000000ffull) << 56) )
+#  define bswap_32(n) \
+      ( (((n) & 0xff000000ul) >> 24) \
+      | (((n) & 0x00ff0000ul) >> 8)  \
+      | (((n) & 0x0000ff00ul) << 8)  \
+      | (((n) & 0x000000fful) << 24) )
+#  define bswap_16(n) \
+      ( (((n) & ((unsigned short)0xff00ul)) >> 8)  \
+      | (((n) & ((unsigned short)0x00fful)) << 8)  )
 #  define htolell(n) bswap_64(n)
 #  define letohll(n) bswap_64(n)
+#  define THRIFT_htolel(n) bswap_32(n)
+#  define THRIFT_letohl(n) bswap_32(n)
+#  define THRIFT_htoles(n) bswap_16(n)
+#  define THRIFT_letohs(n) bswap_16(n)
 # endif /* GNUC & GLIBC */
 #elif __THRIFT_BYTE_ORDER == __THRIFT_LITTLE_ENDIAN
 #  define htolell(n) (n)
 #  define letohll(n) (n)
+#  define THRIFT_htolel(n) (n)
+#  define THRIFT_letohl(n) (n)
+#  define THRIFT_htoles(n) (n)
+#  define THRIFT_letohs(n) (n)
 # if defined(__GNUC__) && defined(__GLIBC__)
 #  include <byteswap.h>
 #  define ntohll(n) bswap_64(n)
@@ -669,6 +689,29 @@ public:
  * It is used only by the generator code.
  */
 class TDummyProtocol : public TProtocol {};
+
+// This is the default / legacy choice
+struct TNetworkBigEndian
+{
+  static uint16_t toWire16(uint16_t x)   {return htons(x);}
+  static uint32_t toWire32(uint32_t x)   {return htonl(x);}
+  static uint64_t toWire64(uint64_t x)   {return htonll(x);}
+  static uint16_t fromWire16(uint16_t x) {return ntohs(x);}
+  static uint32_t fromWire32(uint32_t x) {return ntohl(x);}
+  static uint64_t fromWire64(uint64_t x) {return ntohll(x);}
+};
+
+// On most systems, this will be a bit faster than TNetworkBigEndian
+struct TNetworkLittleEndian
+{
+  static uint16_t toWire16(uint16_t x)   {return THRIFT_htoles(x);}
+  static uint32_t toWire32(uint32_t x)   {return THRIFT_htolel(x);}
+  static uint64_t toWire64(uint64_t x)   {return htolell(x);}
+  static uint16_t fromWire16(uint16_t x) {return THRIFT_letohs(x);}
+  static uint32_t fromWire32(uint32_t x) {return THRIFT_letohl(x);}
+  static uint64_t fromWire64(uint64_t x) {return letohll(x);}
+};
+
 }
 }
 } // apache::thrift::protocol
