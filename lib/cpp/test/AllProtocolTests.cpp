@@ -38,6 +38,10 @@ BOOST_AUTO_TEST_CASE(test_binary_protocol) {
   testProtocol<TBinaryProtocol>("TBinaryProtocol");
 }
 
+BOOST_AUTO_TEST_CASE(test_little_binary_protocol) {
+  testProtocol<TLEBinaryProtocol>("TLEBinaryProtocol");
+}
+
 BOOST_AUTO_TEST_CASE(test_compact_protocol) {
   testProtocol<TCompactProtocol>("TCompactProtocol");
 }

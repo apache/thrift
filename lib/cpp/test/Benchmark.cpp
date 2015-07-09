@@ -66,41 +66,178 @@ int main() {
   ooe.zomg_unicode = "\xd7\n\a\t";
   ooe.base64 = "\1\2\3\255";
 
-  boost::shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer());
+  int num = 100000;
+  boost::shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer(num*1000));
 
-  int num = 1000000;
+  uint8_t* data = NULL;
+  uint32_t datasize = 0;
 
   {
+    buf->resetBuffer();
+    TBinaryProtocolT<TMemoryBuffer> prot(buf);
+    double elapsed = 0.0;
     Timer timer;
 
     for (int i = 0; i < num; i++) {
-      buf->resetBuffer();
-      TBinaryProtocolT<TBufferBase> prot(buf);
       ooe.write(&prot);
     }
-    cout << "Write: " << num / (1000 * timer.frame()) << " kHz" << endl;
+    elapsed = timer.frame();
+    cout << "Write big endian: " << num / (1000 * elapsed) << " kHz" << endl;
   }
-
-  uint8_t* data;
-  uint32_t datasize;
 
   buf->getBuffer(&data, &datasize);
 
   {
-
+    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    TBinaryProtocolT<TMemoryBuffer> prot(buf2);
+    OneOfEach ooe2;
+    double elapsed = 0.0;
     Timer timer;
 
     for (int i = 0; i < num; i++) {
-      OneOfEach ooe2;
-      boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
-      // buf2->resetBuffer(data, datasize);
-      TBinaryProtocolT<TBufferBase> prot(buf2);
       ooe2.read(&prot);
-
-      // cout << apache::thrift::ThriftDebugString(ooe2) << endl << endl;
     }
-    cout << " Read: " << num / (1000 * timer.frame()) << " kHz" << endl;
+    elapsed = timer.frame();
+    cout << " Read big endian: " << num / (1000 * elapsed) << " kHz" << endl;
   }
+
+  {
+    buf->resetBuffer();
+    TBinaryProtocolT<TMemoryBuffer, TNetworkLittleEndian> prot(buf);
+    double elapsed = 0.0;
+    Timer timer;
+
+    for (int i = 0; i < num; i++) {
+      ooe.write(&prot);
+    }
+    elapsed = timer.frame();
+    cout << "Write little endian: " << num / (1000 * elapsed) << " kHz" << endl;
+  }
+
+  {
+    OneOfEach ooe2;
+    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    TBinaryProtocolT<TMemoryBuffer, TNetworkLittleEndian> prot(buf2);
+    double elapsed = 0.0;
+    Timer timer;
+
+    for (int i = 0; i < num; i++) {
+      ooe2.read(&prot);
+    }
+    elapsed = timer.frame();
+    cout << " Read little endian: " << num / (1000 * elapsed) << " kHz" << endl;
+  }
+
+  {
+    buf->resetBuffer();
+    TBinaryProtocolT<TMemoryBuffer> prot(buf);
+    double elapsed = 0.0;
+    Timer timer;
+
+    for (int i = 0; i < num; i++) {
+      ooe.write(&prot);
+    }
+    elapsed = timer.frame();
+    cout << "Write big endian: " << num / (1000 * elapsed) << " kHz" << endl;
+  }
+
+  {
+    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    TBinaryProtocolT<TMemoryBuffer> prot(buf2);
+    OneOfEach ooe2;
+    double elapsed = 0.0;
+    Timer timer;
+
+    for (int i = 0; i < num; i++) {
+      ooe2.read(&prot);
+    }
+    elapsed = timer.frame();
+    cout << " Read big endian: " << num / (1000 * elapsed) << " kHz" << endl;
+  }
+
+
+  data = NULL;
+  datasize = 0;
+  num = 10000000;
+
+  ListDoublePerf listDoublePerf;
+  listDoublePerf.field.reserve(num);
+  for (int x = 0; x < num; ++x)
+    listDoublePerf.field.push_back(double(x));
+
+  buf.reset(new TMemoryBuffer(num * 100));
+
+  {
+    buf->resetBuffer();
+    TBinaryProtocolT<TMemoryBuffer> prot(buf);
+    double elapsed = 0.0;
+    Timer timer;
+
+    listDoublePerf.write(&prot);
+    elapsed = timer.frame();
+    cout << "Double write big endian: " << num / (1000 * elapsed) << " kHz" << endl;
+  }
+
+  buf->getBuffer(&data, &datasize);
+
+  {
+    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    TBinaryProtocolT<TMemoryBuffer> prot(buf2);
+    ListDoublePerf listDoublePerf2;
+    double elapsed = 0.0;
+    Timer timer;
+
+    listDoublePerf2.read(&prot);
+    elapsed = timer.frame();
+    cout << " Double read big endian: " << num / (1000 * elapsed) << " kHz" << endl;
+  }
+
+  {
+    buf->resetBuffer();
+    TBinaryProtocolT<TMemoryBuffer, TNetworkLittleEndian> prot(buf);
+    double elapsed = 0.0;
+    Timer timer;
+
+    listDoublePerf.write(&prot);
+    elapsed = timer.frame();
+    cout << "Double write little endian: " << num / (1000 * elapsed) << " kHz" << endl;
+  }
+
+  {
+    ListDoublePerf listDoublePerf2;
+    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    TBinaryProtocolT<TMemoryBuffer, TNetworkLittleEndian> prot(buf2);
+    double elapsed = 0.0;
+    Timer timer;
+
+    listDoublePerf2.read(&prot);
+    elapsed = timer.frame();
+    cout << " Double read little endian: " << num / (1000 * elapsed) << " kHz" << endl;
+  }
+
+  {
+    buf->resetBuffer();
+    TBinaryProtocolT<TMemoryBuffer> prot(buf);
+    double elapsed = 0.0;
+    Timer timer;
+
+    listDoublePerf.write(&prot);
+    elapsed = timer.frame();
+    cout << "Double write big endian: " << num / (1000 * elapsed) << " kHz" << endl;
+  }
+
+  {
+    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    TBinaryProtocolT<TMemoryBuffer> prot(buf2);
+    ListDoublePerf listDoublePerf2;
+    double elapsed = 0.0;
+    Timer timer;
+
+    listDoublePerf2.read(&prot);
+    elapsed = timer.frame();
+    cout << " Double read big endian: " << num / (1000 * elapsed) << " kHz" << endl;
+  }
+
 
   return 0;
 }
