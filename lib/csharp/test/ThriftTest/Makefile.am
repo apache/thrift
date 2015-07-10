@@ -30,3 +30,6 @@ ThriftImpl.dll: stubs
 
 TestClientServer.exe: TestClient.cs TestServer.cs ../TestStreamServer/TestHandler.cs TestIOStreamClient.cs Program.cs ThriftImpl.dll
 	$(CSC)  /out:TestClientServer.exe /reference:../../Thrift.dll /reference:ThriftImpl.dll TestClient.cs TestServer.cs ../TestStreamServer/TestHandler.cs TestIOStreamClient.cs Program.cs
+
+check:
+	./TestClientServer ioStreamClient
