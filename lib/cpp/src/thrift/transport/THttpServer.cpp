@@ -44,11 +44,11 @@ void THttpServer::parseHeader(char* header) {
   size_t sz = colon - header;
   char* value = colon + 1;
 
-  if (strncmp(header, "Transfer-Encoding", sz) == 0) {
-    if (strstr(value, "chunked") != NULL) {
+  if (strncasecmp(header, "Transfer-Encoding", sz) == 0) {
+    if (strcasestr(value, "chunked") != NULL) {
       chunked_ = true;
     }
-  } else if (strncmp(header, "Content-Length", sz) == 0) {
+  } else if (strncasecmp(header, "Content-length", sz) == 0) {
     chunked_ = false;
     contentLength_ = atoi(value);
   } else if (strncmp(header, "X-Forwarded-For", sz) == 0) {
