@@ -87,9 +87,9 @@ precross:
 	$(MAKE) -C test/ThriftTest precross
 
 # run csharp tests?
-check:
- 	cd test/ThriftTest && ./maketest.sh
-	cd test/Multiplex && ./maketest.sh
+# check:
+#  	cd test/ThriftTest && ./maketest.sh
+#	cd test/Multiplex && ./maketest.sh
 
 EXTRA_DIST = \
              $(THRIFTCODE) \
