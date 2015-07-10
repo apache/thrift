@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClInclude Include="src\audit\t_audit.h" />
     <ClInclude Include="src\generate\t_generator.h">
       <Filter>generate</Filter>
     </ClInclude>
@@ -91,6 +92,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\audit\t_audit.cpp"/>
     <ClCompile Include="src\generate\t_as3_generator.cc">
       <Filter>generate</Filter>
     </ClCompile>
