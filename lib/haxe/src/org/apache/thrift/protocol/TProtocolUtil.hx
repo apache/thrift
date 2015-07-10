@@ -29,107 +29,82 @@ import org.apache.thrift.*;
 class TProtocolUtil {
 
     /**
-     * The maximum recursive depth the skip() function will traverse before
-     * throwing a TException.
-     */
-    private static var maxSkipDepth : Int = Limits.I32_MAX;
-
-    /**
-     * Specifies the maximum recursive depth that the skip function will
-     * traverse before throwing a TException.  This is a global setting, so
-     * any call to skip in this JVM will enforce this value.
-     *
-     * @param depth  the maximum recursive depth.  A value of 2 would allow
-     *    the skip function to skip a structure or collection with basic children,
-     *    but it would not permit skipping a struct that had a field containing
-     *    a child struct.  A value of 1 would only allow skipping of simple
-     *    types and empty structs/collections.
-     */
-    public function setMaxSkipDepth(depth : Int) : Void {
-      maxSkipDepth = depth;
-    }
-
-    /**
      * Skips over the next data element from the provided input TProtocol object.
      *
      * @param prot  the protocol object to read from
      * @param type  the next value will be intepreted as this TType value.
      */
     public static function skip(prot:TProtocol, type : Int) : Void {
-      skipMaxDepth(prot, type, maxSkipDepth);
-    }
+		prot.IncrementRecursionDepth();
+		try
+		{
+			switch (type) {
+				case TType.BOOL: 
+					prot.readBool();
 
-     /**
-     * Skips over the next data element from the provided input TProtocol object.
-     *
-     * @param prot  the protocol object to read from
-     * @param type  the next value will be intepreted as this TType value.
-     * @param maxDepth  this function will only skip complex objects to this
-     *   recursive depth, to prevent Java stack overflow.
-     */
-    public static function skipMaxDepth(prot:TProtocol, type : Int, maxDepth : Int) : Void {
-      if (maxDepth <= 0) {
-        throw new TException("Maximum skip depth exceeded");
-      }
-      switch (type) {
-        case TType.BOOL: {
-          prot.readBool();
-        }
-        case TType.BYTE: {
-          prot.readByte();
-        }
-        case TType.I16: {
-          prot.readI16();
-        }
-        case TType.I32: {
-          prot.readI32();
-        }
-        case TType.I64: {
-          prot.readI64();
-        }
-        case TType.DOUBLE: {
-          prot.readDouble();
-        }
-        case TType.STRING: {
-          prot.readBinary();
-        }
-        case TType.STRUCT: {
-          prot.readStructBegin();
-          while (true) {
-            var field:TField = prot.readFieldBegin();
-            if (field.type == TType.STOP) {
-              break;
-            }
-            skipMaxDepth(prot, field.type, maxDepth - 1);
-            prot.readFieldEnd();
-          }
-          prot.readStructEnd();
-        }
-        case TType.MAP: {
-          var map:TMap = prot.readMapBegin();
-          for (i in 0 ... map.size) {
-            skipMaxDepth(prot, map.keyType, maxDepth - 1);
-            skipMaxDepth(prot, map.valueType, maxDepth - 1);
-          }
-          prot.readMapEnd();
-        }
-        case TType.SET: {
-          var set:TSet = prot.readSetBegin();
-          for (j in 0 ... set.size) {
-            skipMaxDepth(prot, set.elemType, maxDepth - 1);
-          }
-          prot.readSetEnd();
-        }
-        case TType.LIST: {
-          var list:TList = prot.readListBegin();
-          for (k in 0 ... list.size) {
-            skipMaxDepth(prot, list.elemType, maxDepth - 1);
-          }
-          prot.readListEnd();
-        }
-        default:
-          trace("Unknown field type ",type," in skipMaxDepth()");
-      }
+				case TType.BYTE: 
+					prot.readByte();
+
+				case TType.I16: 
+					prot.readI16();
+
+				case TType.I32: 
+					prot.readI32();
+
+				case TType.I64: 
+					prot.readI64();
+
+				case TType.DOUBLE: 
+					prot.readDouble();
+
+				case TType.STRING: 
+					prot.readBinary();
+
+				case TType.STRUCT: 
+					prot.readStructBegin();
+					while (true) {
+						var field:TField = prot.readFieldBegin();
+						if (field.type == TType.STOP) {
+						  break;
+						}
+						skip(prot, field.type);
+						prot.readFieldEnd();
+					}
+					prot.readStructEnd();
+
+				case TType.MAP: 
+					var map:TMap = prot.readMapBegin();
+					for (i in 0 ... map.size) {
+						skip(prot, map.keyType);
+						skip(prot, map.valueType);
+					}
+					prot.readMapEnd();
+
+				case TType.SET: 
+					var set:TSet = prot.readSetBegin();
+					for (j in 0 ... set.size) {
+						skip(prot, set.elemType);
+					}
+					prot.readSetEnd();
+
+				case TType.LIST: 
+					var list:TList = prot.readListBegin();
+					for (k in 0 ... list.size) {
+						skip(prot, list.elemType);
+					}
+					prot.readListEnd();
+
+				default:
+					trace("Unknown field type ",type," in skipMaxDepth()");
+			}
+			
+			prot.DecrementRecursionDepth();
+		}
+		catch(e:Dynamic)
+		{
+			prot.DecrementRecursionDepth();
+			throw e;
+		}
     }
 
 }
