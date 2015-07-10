@@ -26,6 +26,9 @@
 #include <thrift/transport/TSocket.h>
 #endif
 #include <boost/noncopyable.hpp>
+#ifdef _WIN32
+#include <thrift/windows/Sync.h>
+#endif
 
 namespace apache {
 namespace thrift {
@@ -45,6 +48,7 @@ public:
   // Constructs a new pipe object.
   TPipe();
   // Named pipe constructors -
+  explicit TPipe(TAutoHandle &Pipe); // The Pipe will be pseudo-moved from in here
   explicit TPipe(HANDLE Pipe); // HANDLE is a void*
   // need a const char * overload so string literals don't go to the HANDLE overload
   explicit TPipe(const char* pipename);

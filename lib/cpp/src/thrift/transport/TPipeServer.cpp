@@ -236,8 +236,7 @@ void TNamedPipeServer::initiateNamedConnect() {
   // zero, GetLastError should return ERROR_PIPE_CONNECTED.
   if (connectOverlap_.success) {
     GlobalOutput.printf("Client connected.");
-    cached_client_.reset(new TPipe(Pipe_.h));
-    Pipe_.release();
+    cached_client_.reset(new TPipe(Pipe_));
     // make sure people know that a connection is ready
     SetEvent(listen_event_.h);
     return;
@@ -247,8 +246,7 @@ void TNamedPipeServer::initiateNamedConnect() {
   switch (dwErr) {
   case ERROR_PIPE_CONNECTED:
     GlobalOutput.printf("Client connected.");
-    cached_client_.reset(new TPipe(Pipe_.h));
-    Pipe_.release();
+    cached_client_.reset(new TPipe(Pipe_));
     // make sure people know that a connection is ready
     SetEvent(listen_event_.h);
     return;
@@ -284,8 +282,7 @@ shared_ptr<TTransport> TNamedPipeServer::acceptImpl() {
   if (GetOverlappedResult(Pipe_.h, &connectOverlap_.overlap, &dwDummy, TRUE)) {
     TAutoCrit lock(pipe_protect_);
     GlobalOutput.printf("Client connected.");
-    shared_ptr<TPipe> client(new TPipe(Pipe_.h));
-    Pipe_.release();
+    shared_ptr<TPipe> client(new TPipe(Pipe_));
     // kick off the next connection before returning
     initiateNamedConnect();
     return client; // success!
