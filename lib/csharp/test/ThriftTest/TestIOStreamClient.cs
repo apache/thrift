@@ -13,6 +13,9 @@ namespace Thrift.Test
     public class TestIOStreamClient
     {
         private static string protocolName = "";
+        //private static string serverFileName = "..\\..\\..\\TestStreamServer\\bin\\Debug\\TestStreamServer.exe";
+        private static string serverFileName = "..\\..\\TestStreamServer\\TestStreamServer.exe";
+
 
         public static bool Execute(string[] args)
         {
@@ -67,7 +70,7 @@ namespace Thrift.Test
             //spawn the server as a new process
             var tmp = Console.Out;//save output stream for writing the output back out to standard out at the end
             var server = new ProcessStartInfo();
-            server.FileName = "..\\..\\..\\TestStreamServer\\bin\\Debug\\TestStreamServer.exe";
+            server.FileName = serverFileName;
             server.UseShellExecute = false;
             server.RedirectStandardInput = true;
             server.RedirectStandardOutput = true;

@@ -17,7 +17,7 @@
 # under the License.
 #
 
-SUBDIRS = . test/ThriftTest
+SUBDIRS = . test/ThriftTest test/TestStreamServer
 
 THRIFTCODE= \
             src/Collections/THashSet.cs \
@@ -47,6 +47,7 @@ THRIFTCODE= \
             src/Server/TThreadedServer.cs \
             src/Server/TThreadPoolServer.cs \
             src/Server/TSimpleServer.cs \
+			src/Server/TStreamServer.cs \
             src/Server/TServer.cs \
             src/Server/TServerEventHandler.cs \
             src/Transport/TBufferedTransport.cs \
