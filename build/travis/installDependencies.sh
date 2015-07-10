@@ -25,6 +25,9 @@ SCRIPTPATH=$( cd $(dirname $0) ; pwd -P )
 # General dependencies
 sh ${SCRIPTPATH}/installCXXDependencies.sh
 
+#I don't understand this, but it solves an error.
+sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 3B4FE6ACC0B21F32
+
 # Java dependencies
 sudo apt-get install -qq ant openjdk-7-jdk
 sudo update-java-alternatives -s java-1.7.0-openjdk-amd64
