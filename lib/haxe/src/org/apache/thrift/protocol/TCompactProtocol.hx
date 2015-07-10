@@ -37,7 +37,7 @@ import org.apache.thrift.helper.BitConverter;
 /**
 * Compact protocol implementation for thrift.
 */
-class TCompactProtocol implements TProtocol {
+class TCompactProtocol extends TRecursionTracker implements TProtocol {
 
     private static var ANONYMOUS_STRUCT : TStruct = new TStruct("");
     private static var TSTOP : TField = new TField("", TType.STOP, 0);
