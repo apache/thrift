@@ -1367,10 +1367,16 @@ void t_cpp_generator::generate_struct_reader(ofstream& out, t_struct* tstruct, b
   vector<t_field*>::const_iterator f_iter;
 
   // Declare stack tmp variables
-  out << endl << indent() << "uint32_t xfer = 0;" << endl << indent() << "std::string fname;"
-      << endl << indent() << "::apache::thrift::protocol::TType ftype;" << endl << indent()
-      << "int16_t fid;" << endl << endl << indent() << "xfer += iprot->readStructBegin(fname);"
-      << endl << endl << indent() << "using ::apache::thrift::protocol::TProtocolException;" << endl
+  out << endl
+      << indent() << "apache::thrift::protocol::TRecursionTracker tracker(*iprot);" << endl
+      << indent() << "uint32_t xfer = 0;" << endl
+      << indent() << "std::string fname;" << endl
+      << indent() << "::apache::thrift::protocol::TType ftype;" << endl
+      << indent() << "int16_t fid;" << endl
+      << endl
+      << indent() << "xfer += iprot->readStructBegin(fname);" << endl
+      << endl
+      << indent() << "using ::apache::thrift::protocol::TProtocolException;" << endl
       << endl;
 
   // Required variables aren't in __isset, so we need tmp vars to check them.
@@ -1486,7 +1492,7 @@ void t_cpp_generator::generate_struct_writer(ofstream& out, t_struct* tstruct, b
 
   out << indent() << "uint32_t xfer = 0;" << endl;
 
-  indent(out) << "oprot->incrementRecursionDepth();" << endl;
+  indent(out) << "apache::thrift::protocol::TRecursionTracker tracker(*oprot);" << endl;
   indent(out) << "xfer += oprot->writeStructBegin(\"" << name << "\");" << endl;
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -1522,7 +1528,7 @@ void t_cpp_generator::generate_struct_writer(ofstream& out, t_struct* tstruct, b
   // Write the struct map
   out << indent() << "xfer += oprot->writeFieldStop();" << endl << indent()
       << "xfer += oprot->writeStructEnd();" << endl << indent()
-      << "oprot->decrementRecursionDepth();" << endl << indent() << "return xfer;" << endl;
+      << "return xfer;" << endl;
 
   indent_down();
   indent(out) << "}" << endl << endl;

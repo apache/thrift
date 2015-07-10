@@ -28,8 +28,8 @@ namespace apache {
 namespace thrift {
 namespace protocol {
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeMessageBegin(const std::string& name,
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeMessageBegin(const std::string& name,
                                                          const TMessageType messageType,
                                                          const int32_t seqid) {
   if (this->strict_write_) {
@@ -48,24 +48,24 @@ uint32_t TBinaryProtocolT<Transport_>::writeMessageBegin(const std::string& name
   }
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeMessageEnd() {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeMessageEnd() {
   return 0;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeStructBegin(const char* name) {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeStructBegin(const char* name) {
   (void)name;
   return 0;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeStructEnd() {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeStructEnd() {
   return 0;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeFieldBegin(const char* name,
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeFieldBegin(const char* name,
                                                        const TType fieldType,
                                                        const int16_t fieldId) {
   (void)name;
@@ -75,18 +75,18 @@ uint32_t TBinaryProtocolT<Transport_>::writeFieldBegin(const char* name,
   return wsize;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeFieldEnd() {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeFieldEnd() {
   return 0;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeFieldStop() {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeFieldStop() {
   return writeByte((int8_t)T_STOP);
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeMapBegin(const TType keyType,
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeMapBegin(const TType keyType,
                                                      const TType valType,
                                                      const uint32_t size) {
   uint32_t wsize = 0;
@@ -96,85 +96,85 @@ uint32_t TBinaryProtocolT<Transport_>::writeMapBegin(const TType keyType,
   return wsize;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeMapEnd() {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeMapEnd() {
   return 0;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeListBegin(const TType elemType, const uint32_t size) {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeListBegin(const TType elemType, const uint32_t size) {
   uint32_t wsize = 0;
   wsize += writeByte((int8_t)elemType);
   wsize += writeI32((int32_t)size);
   return wsize;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeListEnd() {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeListEnd() {
   return 0;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeSetBegin(const TType elemType, const uint32_t size) {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeSetBegin(const TType elemType, const uint32_t size) {
   uint32_t wsize = 0;
   wsize += writeByte((int8_t)elemType);
   wsize += writeI32((int32_t)size);
   return wsize;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeSetEnd() {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeSetEnd() {
   return 0;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeBool(const bool value) {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeBool(const bool value) {
   uint8_t tmp = value ? 1 : 0;
   this->trans_->write(&tmp, 1);
   return 1;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeByte(const int8_t byte) {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeByte(const int8_t byte) {
   this->trans_->write((uint8_t*)&byte, 1);
   return 1;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeI16(const int16_t i16) {
-  int16_t net = (int16_t)htons(i16);
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeI16(const int16_t i16) {
+  int16_t net = (int16_t)ByteOrder_::toWire16(i16);
   this->trans_->write((uint8_t*)&net, 2);
   return 2;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeI32(const int32_t i32) {
-  int32_t net = (int32_t)htonl(i32);
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeI32(const int32_t i32) {
+  int32_t net = (int32_t)ByteOrder_::toWire32(i32);
   this->trans_->write((uint8_t*)&net, 4);
   return 4;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeI64(const int64_t i64) {
-  int64_t net = (int64_t)htonll(i64);
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeI64(const int64_t i64) {
+  int64_t net = (int64_t)ByteOrder_::toWire64(i64);
   this->trans_->write((uint8_t*)&net, 8);
   return 8;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeDouble(const double dub) {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeDouble(const double dub) {
   BOOST_STATIC_ASSERT(sizeof(double) == sizeof(uint64_t));
   BOOST_STATIC_ASSERT(std::numeric_limits<double>::is_iec559);
 
   uint64_t bits = bitwise_cast<uint64_t>(dub);
-  bits = htonll(bits);
+  bits = ByteOrder_::toWire64(bits);
   this->trans_->write((uint8_t*)&bits, 8);
   return 8;
 }
 
-template <class Transport_>
+template <class Transport_, class ByteOrder_>
 template <typename StrType>
-uint32_t TBinaryProtocolT<Transport_>::writeString(const StrType& str) {
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeString(const StrType& str) {
   if (str.size() > static_cast<size_t>((std::numeric_limits<int32_t>::max)()))
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   uint32_t size = static_cast<uint32_t>(str.size());
@@ -185,17 +185,17 @@ uint32_t TBinaryProtocolT<Transport_>::writeString(const StrType& str) {
   return result + size;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeBinary(const std::string& str) {
-  return TBinaryProtocolT<Transport_>::writeString(str);
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeBinary(const std::string& str) {
+  return TBinaryProtocolT<Transport_, ByteOrder_>::writeString(str);
 }
 
 /**
  * Reading functions
  */
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readMessageBegin(std::string& name,
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readMessageBegin(std::string& name,
                                                         TMessageType& messageType,
                                                         int32_t& seqid) {
   uint32_t result = 0;
@@ -227,24 +227,24 @@ uint32_t TBinaryProtocolT<Transport_>::readMessageBegin(std::string& name,
   return result;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readMessageEnd() {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readMessageEnd() {
   return 0;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readStructBegin(std::string& name) {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readStructBegin(std::string& name) {
   name = "";
   return 0;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readStructEnd() {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readStructEnd() {
   return 0;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readFieldBegin(std::string& name,
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readFieldBegin(std::string& name,
                                                       TType& fieldType,
                                                       int16_t& fieldId) {
   (void)name;
@@ -260,13 +260,13 @@ uint32_t TBinaryProtocolT<Transport_>::readFieldBegin(std::string& name,
   return result;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readFieldEnd() {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readFieldEnd() {
   return 0;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readMapBegin(TType& keyType,
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readMapBegin(TType& keyType,
                                                     TType& valType,
                                                     uint32_t& size) {
   int8_t k, v;
@@ -286,13 +286,13 @@ uint32_t TBinaryProtocolT<Transport_>::readMapBegin(TType& keyType,
   return result;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readMapEnd() {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readMapEnd() {
   return 0;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readListBegin(TType& elemType, uint32_t& size) {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readListBegin(TType& elemType, uint32_t& size) {
   int8_t e;
   uint32_t result = 0;
   int32_t sizei;
@@ -308,13 +308,13 @@ uint32_t TBinaryProtocolT<Transport_>::readListBegin(TType& elemType, uint32_t& 
   return result;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readListEnd() {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readListEnd() {
   return 0;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readSetBegin(TType& elemType, uint32_t& size) {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readSetBegin(TType& elemType, uint32_t& size) {
   int8_t e;
   uint32_t result = 0;
   int32_t sizei;
@@ -330,62 +330,62 @@ uint32_t TBinaryProtocolT<Transport_>::readSetBegin(TType& elemType, uint32_t& s
   return result;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readSetEnd() {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readSetEnd() {
   return 0;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readBool(bool& value) {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readBool(bool& value) {
   uint8_t b[1];
   this->trans_->readAll(b, 1);
   value = *(int8_t*)b != 0;
   return 1;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readByte(int8_t& byte) {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readByte(int8_t& byte) {
   uint8_t b[1];
   this->trans_->readAll(b, 1);
   byte = *(int8_t*)b;
   return 1;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readI16(int16_t& i16) {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readI16(int16_t& i16) {
   union bytes {
     uint8_t b[2];
     int16_t all;
   } theBytes;
   this->trans_->readAll(theBytes.b, 2);
-  i16 = (int16_t)ntohs(theBytes.all);
+  i16 = (int16_t)ByteOrder_::fromWire16(theBytes.all);
   return 2;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readI32(int32_t& i32) {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readI32(int32_t& i32) {
   union bytes {
     uint8_t b[4];
     int32_t all;
   } theBytes;
   this->trans_->readAll(theBytes.b, 4);
-  i32 = (int32_t)ntohl(theBytes.all);
+  i32 = (int32_t)ByteOrder_::fromWire32(theBytes.all);
   return 4;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readI64(int64_t& i64) {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readI64(int64_t& i64) {
   union bytes {
     uint8_t b[8];
     int64_t all;
   } theBytes;
   this->trans_->readAll(theBytes.b, 8);
-  i64 = (int64_t)ntohll(theBytes.all);
+  i64 = (int64_t)ByteOrder_::fromWire64(theBytes.all);
   return 8;
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readDouble(double& dub) {
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readDouble(double& dub) {
   BOOST_STATIC_ASSERT(sizeof(double) == sizeof(uint64_t));
   BOOST_STATIC_ASSERT(std::numeric_limits<double>::is_iec559);
 
@@ -394,28 +394,28 @@ uint32_t TBinaryProtocolT<Transport_>::readDouble(double& dub) {
     uint64_t all;
   } theBytes;
   this->trans_->readAll(theBytes.b, 8);
-  theBytes.all = ntohll(theBytes.all);
+  theBytes.all = ByteOrder_::fromWire64(theBytes.all);
   dub = bitwise_cast<double>(theBytes.all);
   return 8;
 }
 
-template <class Transport_>
+template <class Transport_, class ByteOrder_>
 template <typename StrType>
-uint32_t TBinaryProtocolT<Transport_>::readString(StrType& str) {
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readString(StrType& str) {
   uint32_t result;
   int32_t size;
   result = readI32(size);
   return result + readStringBody(str, size);
 }
 
-template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readBinary(std::string& str) {
-  return TBinaryProtocolT<Transport_>::readString(str);
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readBinary(std::string& str) {
+  return TBinaryProtocolT<Transport_, ByteOrder_>::readString(str);
 }
 
-template <class Transport_>
+template <class Transport_, class ByteOrder_>
 template <typename StrType>
-uint32_t TBinaryProtocolT<Transport_>::readStringBody(StrType& str, int32_t size) {
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readStringBody(StrType& str, int32_t size) {
   uint32_t result = 0;
 
   // Catch error cases

@@ -250,3 +250,22 @@ BOOST_AUTO_TEST_CASE(test_json_proto_7) {
 
   BOOST_CHECK(base == base2);
 }
+
+BOOST_AUTO_TEST_CASE(test_json_proto_8) {
+  const char* json_string =
+  "{\"1\":{\"tf\":1},\"2\":{\"tf\":0},\"3\":{\"i8\":127},\"4\":{\"i16\":27000},"
+  "\"5\":{\"i32\":16.77216},\"6\":{\"i64\":6000000000},\"7\":{\"dbl\":3.1415926"
+  "53589793},\"8\":{\"str\":\"JSON THIS! \\\"\\u0001\"},\"9\":{\"str\":\"\xd7\\"
+  "n\\u0007\\t\"},\"10\":{\"tf\":0},\"11\":{\"str\":\"AQIDrQ\"},\"12\":{\"lst\""
+  ":[\"i8\",3,1,2,3]},\"13\":{\"lst\":[\"i16\",3,1,2,3]},\"14\":{\"lst\":[\"i64"
+  "\",3,1,2,3]}}";
+
+  boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
+    (uint8_t*)(json_string), strlen(json_string)*sizeof(char)));
+  boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
+
+  OneOfEach ooe2;
+
+  BOOST_CHECK_THROW(ooe2.read(proto.get()),
+    apache::thrift::protocol::TProtocolException);
+}
