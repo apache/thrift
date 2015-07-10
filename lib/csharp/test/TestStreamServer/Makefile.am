@@ -20,6 +20,8 @@
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 CSC=gmcs
 
+all-local: TestStreamServer.exe
+
 stubs: $(top_srcdir)/test/ThriftTest.thrift
 	$(THRIFT) --gen csharp -o . $(top_srcdir)/test/ThriftTest.thrift
 
