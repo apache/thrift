@@ -21,7 +21,7 @@
 
 language: cpp
 
-sudo: required
+sudo: 9000
 
 cache:
  - apt
