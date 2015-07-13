@@ -82,7 +82,7 @@ check_PROGRAMS = \
 	SpecializationTest \
 	AllProtocolsTest \
 	TransportTest \
-	TSocketInterruptTest \
+	TInterruptTest \
 	TServerIntegrationTest \
 	ZlibTest \
 	TFileTransportTest \
@@ -125,10 +125,10 @@ UnitTests_LDADD = \
   libtestgencpp.la \
   $(BOOST_TEST_LDADD)
 
-TSocketInterruptTest_SOURCES = \
+TInterruptTest_SOURCES = \
 	TSocketInterruptTest.cpp
 
-TSocketInterruptTest_LDADD = \
+TInterruptTest_LDADD = \
   libtestgencpp.la \
   $(BOOST_TEST_LDADD) \
   $(BOOST_CHRONO_LDADD) \
@@ -214,7 +214,7 @@ AllProtocolsTest_LDADD = \
 # DebugProtoTest
 #
 DebugProtoTest_SOURCES = \
-	DebugProtoTest.cpp 
+	DebugProtoTest.cpp
 
 DebugProtoTest_LDADD = \
 	libtestgencpp.la \

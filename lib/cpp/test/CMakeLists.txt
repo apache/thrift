@@ -83,16 +83,16 @@ target_link_libraries(UnitTests testgencpp ${Boost_LIBRARIES})
 LINK_AGAINST_THRIFT_LIBRARY(UnitTests thrift)
 add_test(NAME UnitTests COMMAND UnitTests)
 
-add_executable(TSocketInterruptTest TSocketInterruptTest.cpp)
-target_link_libraries(TSocketInterruptTest
+add_executable(TInterruptTest TSocketInterruptTest.cpp)
+target_link_libraries(TInterruptTest
     testgencpp
     ${Boost_LIBRARIES}
 )
-LINK_AGAINST_THRIFT_LIBRARY(TSocketInterruptTest thrift)
+LINK_AGAINST_THRIFT_LIBRARY(TInterruptTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-target_link_libraries(TSocketInterruptTest -lrt)
+target_link_libraries(TInterruptTest -lrt)
 endif ()
-add_test(NAME TSocketInterruptTest COMMAND TSocketInterruptTest)
+add_test(NAME TInterruptTest COMMAND TInterruptTest)
 
 add_executable(TServerIntegrationTest TServerIntegrationTest.cpp)
 target_link_libraries(TServerIntegrationTest
