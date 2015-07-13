@@ -122,7 +122,7 @@ matrix:
       before_install:
        - sh build/travis/installCXXDependencies.sh;
        - sh build/travis/installDependencies.sh 1> /dev/null;
-       - sudo apt-get install build-essential mono-gmcs mono-devel libmono-system-web2.0-cil erlang-base ruby1.8-dev python-all python-all-dev python-all-dbg php5 php5-dev
+       - sudo apt-get install build-essential mono-gmcs mono-devel libmono-system-web2.0-cil erlang-base ruby1.9.1-dev python-all python-all-dev python-all-dbg php5 php5-dev
       script:
        - dpkg-buildpackage -tc -us -uc
        - ls -al ..
