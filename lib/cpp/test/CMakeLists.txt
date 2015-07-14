@@ -83,7 +83,14 @@ target_link_libraries(UnitTests testgencpp ${Boost_LIBRARIES})
 LINK_AGAINST_THRIFT_LIBRARY(UnitTests thrift)
 add_test(NAME UnitTests COMMAND UnitTests)
 
-add_executable(TInterruptTest TSocketInterruptTest.cpp)
+
+set( TInterruptTest_SOURCES TSocketInterruptTest.cpp )
+if (WIN32)
+    list(APPEND TInterruptTest_SOURCES
+        TPipeInterruptTest.cpp
+    )
+endif()
+add_executable(TInterruptTest ${TInterruptTest_SOURCES})
 target_link_libraries(TInterruptTest
     testgencpp
     ${Boost_LIBRARIES}

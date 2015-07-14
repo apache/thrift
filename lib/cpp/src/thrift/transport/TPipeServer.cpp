@@ -45,7 +45,6 @@ public:
   TPipeServerImpl() {}
   virtual ~TPipeServerImpl() = 0 {}
   virtual void interrupt() = 0;
-  virtual void close() = 0;
   virtual boost::shared_ptr<TTransport> acceptImpl() = 0;
 
   virtual HANDLE getPipeHandle() = 0;
@@ -68,15 +67,14 @@ public:
     }
   }
 
-  virtual ~TAnonPipeServer() {}
-
-  virtual void interrupt() {} // not currently implemented
-  virtual void close() {
+  virtual ~TAnonPipeServer() {
     PipeR_.reset();
     PipeW_.reset();
     ClientAnonRead_.reset();
     ClientAnonWrite_.reset();
   }
+
+  virtual void interrupt() {} // not currently implemented
 
   virtual boost::shared_ptr<TTransport> acceptImpl();
 
@@ -100,10 +98,12 @@ private:
 class TNamedPipeServer : public TPipeServerImpl {
 public:
   TNamedPipeServer(const std::string& pipename, uint32_t bufsize, uint32_t maxconnections)
-    : stopping_(false), pipename_(pipename), bufsize_(bufsize), maxconns_(maxconnections) {
+    : stopping_(false), pipename_(pipename), bufsize_(bufsize), maxconns_(maxconnections)
+  {
     connectOverlap_.action = TOverlappedWorkItem::CONNECT;
     cancelOverlap_.action = TOverlappedWorkItem::CANCELIO;
-    initiateNamedConnect();
+    TAutoCrit lock(pipe_protect_);
+    initiateNamedConnect(lock);
   }
   virtual ~TNamedPipeServer() {}
 
@@ -115,11 +115,8 @@ public:
       cancelOverlap_.h = Pipe_.h;
       // This should wake up GetOverlappedResult
       thread_->addWorkItem(&cancelOverlap_);
-      close();
     }
   }
-
-  virtual void close() { Pipe_.reset(); }
 
   virtual boost::shared_ptr<TTransport> acceptImpl();
 
@@ -130,8 +127,8 @@ public:
   virtual HANDLE getNativeWaitHandle() { return listen_event_.h; }
 
 private:
-  bool createNamedPipe();
-  void initiateNamedConnect();
+  bool createNamedPipe(const TAutoCrit &lockProof);
+  void initiateNamedConnect(const TAutoCrit &lockProof);
 
   TAutoOverlapThread thread_;
   TOverlappedWorkItem connectOverlap_;
@@ -142,9 +139,11 @@ private:
   uint32_t bufsize_;
   uint32_t maxconns_;
   TManualResetEvent listen_event_;
+
+  TCriticalSection pipe_protect_;
+  // only read or write these variables underneath a locked pipe_protect_
   boost::shared_ptr<TPipe> cached_client_;
   TAutoHandle Pipe_;
-  TCriticalSection pipe_protect_;
 };
 
 HANDLE TPipeServer::getNativeWaitHandle() {
@@ -182,8 +181,7 @@ TPipeServer::TPipeServer() : bufsize_(1024), isAnonymous_(true) {
 }
 
 //---- Destructor ----
-TPipeServer::~TPipeServer() {
-}
+TPipeServer::~TPipeServer() {}
 
 //---------------------------------------------------------
 // Transport callbacks
@@ -217,10 +215,10 @@ shared_ptr<TTransport> TAnonPipeServer::acceptImpl() {
   return client;
 }
 
-void TNamedPipeServer::initiateNamedConnect() {
+void TNamedPipeServer::initiateNamedConnect(const TAutoCrit &lockProof) {
   if (stopping_)
     return;
-  if (!createNamedPipe()) {
+  if (!createNamedPipe(lockProof)) {
     GlobalOutput.perror("TPipeServer CreateNamedPipe failed, GLE=", GetLastError());
     throw TTransportException(TTransportException::NOT_OPEN, " TPipeServer CreateNamedPipe failed");
   }
@@ -236,8 +234,7 @@ void TNamedPipeServer::initiateNamedConnect() {
   // zero, GetLastError should return ERROR_PIPE_CONNECTED.
   if (connectOverlap_.success) {
     GlobalOutput.printf("Client connected.");
-    cached_client_.reset(new TPipe(Pipe_.h));
-    Pipe_.release();
+    cached_client_.reset(new TPipe(Pipe_));
     // make sure people know that a connection is ready
     SetEvent(listen_event_.h);
     return;
@@ -247,8 +244,7 @@ void TNamedPipeServer::initiateNamedConnect() {
   switch (dwErr) {
   case ERROR_PIPE_CONNECTED:
     GlobalOutput.printf("Client connected.");
-    cached_client_.reset(new TPipe(Pipe_.h));
-    Pipe_.release();
+    cached_client_.reset(new TPipe(Pipe_));
     // make sure people know that a connection is ready
     SetEvent(listen_event_.h);
     return;
@@ -270,7 +266,7 @@ shared_ptr<TTransport> TNamedPipeServer::acceptImpl() {
       client.swap(cached_client_);
 
       // kick off the next connection before returning
-      initiateNamedConnect();
+      initiateNamedConnect(lock);
       return client; // success!
     }
   }
@@ -281,18 +277,25 @@ shared_ptr<TTransport> TNamedPipeServer::acceptImpl() {
   }
 
   DWORD dwDummy = 0;
+
+  // For the most part, Pipe_ should be protected with pipe_protect_.  We can't
+  // reasonably do that here though without breaking interruptability.  However,
+  // this should be safe, though I'm not happy about it.  We only need to ensure
+  // that no one writes / modifies Pipe_.h while we are reading it.  Well, the
+  // only two things that should be modifying Pipe_ are acceptImpl, the
+  // functions it calls, and the destructor.  Those things shouldn't be run
+  // concurrently anyway.  So this call is 'really' just a read that may happen
+  // concurrently with interrupt, and that should be fine.
   if (GetOverlappedResult(Pipe_.h, &connectOverlap_.overlap, &dwDummy, TRUE)) {
     TAutoCrit lock(pipe_protect_);
     GlobalOutput.printf("Client connected.");
-    shared_ptr<TPipe> client(new TPipe(Pipe_.h));
-    Pipe_.release();
+    shared_ptr<TPipe> client(new TPipe(Pipe_));
     // kick off the next connection before returning
-    initiateNamedConnect();
+    initiateNamedConnect(lock);
     return client; // success!
   }
   // if we got here, then we are in an error / shutdown case
   DWORD gle = GetLastError(); // save error before doing cleanup
-  close();
   GlobalOutput.perror("TPipeServer ConnectNamedPipe GLE=", gle);
   throw TTransportException(TTransportException::NOT_OPEN, "TPipeServer: client connection failed");
 }
@@ -303,11 +306,10 @@ void TPipeServer::interrupt() {
 }
 
 void TPipeServer::close() {
-  if (impl_)
-    impl_->close();
+  impl_.reset();
 }
 
-bool TNamedPipeServer::createNamedPipe() {
+bool TNamedPipeServer::createNamedPipe(const TAutoCrit & /*lockProof*/) {
 
   // Windows - set security to allow non-elevated apps
   // to access pipes created by elevated apps.
