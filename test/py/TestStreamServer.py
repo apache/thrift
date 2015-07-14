@@ -1,12 +1,11 @@
 import sys
 import time
-# import pdb
-# sys.path.append('./gen-py')
 
 from ThriftTest import ThriftTest
 from ThriftTest.ttypes import *
 
 from thrift.transport import TTransport
+from thrift.protocol import TBinaryProtocol
 from thrift.protocol import TJSONProtocol
 from thrift.server import TServer
 
@@ -87,21 +86,11 @@ class TestHandler:
         return Xtruct(string_thing='Hello2',
                   byte_thing=arg0, i32_thing=arg1, i64_thing=arg2)
 
-# def fixed_pdb(Pdb=pdb.Pdb):
-#     '''make Pdb() tied to original stdout'''
-#     return Pdb(stdout=sys.stderr)
-#
-# #if __name__ == '__main__':
-# pdb.Pdb = fixed_pdb
-# pdb.main()
-
-# print >> sys.stderr, 'server says hi'
-# if __name__ == "__main__":
 handler = TestHandler()
 processor = ThriftTest.Processor(handler)
 transport = TTransport.TIOStreamTransport(sys.stdin, sys.stdout)
 server = TServer.TStreamServer(processor, transport,
          TTransport.TTransportFactoryBase(),
-         TJSONProtocol.TJSONProtocolFactory())
+         TBinaryProtocol.TBinaryProtocolFactory())
 
 server.serve()
