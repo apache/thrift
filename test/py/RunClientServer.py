@@ -185,16 +185,16 @@ print ' Executing individual test scripts with various generated code directorie
 print ' Directories to be tested: ' + ', '.join(generated_dirs)
 print ' Scripts to be tested: ' + ', '.join(SCRIPTS)
 print '----------------'
-# for genpydir in generated_dirs:
-#   for script in SCRIPTS:
-#     runScriptTest(genpydir, script)
+for genpydir in generated_dirs:
+  for script in SCRIPTS:
+    runScriptTest(genpydir, script)
 
 # run iostreamclient test
-print '----------------'
-print ' Executing iostreamclient test with TStreamServer and TIOStreamTransport'
-print ' Just JSON Protocol for now'
-print '----------------'
-runScriptTest('gen-py', 'TestIOStreamClient.py')
+# print '----------------'
+# print ' Executing iostreamclient test with TStreamServer and TIOStreamTransport'
+# print ' Just binary Protocol for now'
+# print '----------------'
+# runScriptTest('gen-py', 'TestIOStreamClient.py')
 
 print '----------------'
 print ' Executing Client/Server tests with various generated code directories'
@@ -203,20 +203,20 @@ print ' Directories to be tested: ' + ', '.join(generated_dirs)
 print ' Protocols to be tested: ' + ', '.join(PROTOS)
 print ' Options to be tested: ZLIB(yes/no), SSL(yes/no)'
 print '----------------'
-# for try_server in SERVERS:
-#   for genpydir in generated_dirs:
-#     for try_proto in PROTOS:
-#       for with_zlib in (False, True):
-#         # skip any servers that don't work with the Zlib transport
-#         if with_zlib and try_server in SKIP_ZLIB:
-#           continue
-#         for with_ssl in (False, True):
-#           # skip any servers that don't work with SSL
-#           if with_ssl and try_server in SKIP_SSL:
-#             continue
-#           test_count += 1
-#           if options.verbose > 0:
-#             print '\nTest run #%d:  (includes %s) Server=%s,  Proto=%s,  zlib=%s,  SSL=%s' % (test_count, genpydir, try_server, try_proto, with_zlib, with_ssl)
-#           runServiceTest(genpydir, try_server, try_proto, options.port, with_zlib, with_ssl)
-#           if options.verbose > 0:
-#             print 'OK: Finished (includes %s)  %s / %s proto / zlib=%s / SSL=%s.   %d combinations tested.' % (genpydir, try_server, try_proto, with_zlib, with_ssl, test_count)
+for try_server in SERVERS:
+  for genpydir in generated_dirs:
+    for try_proto in PROTOS:
+      for with_zlib in (False, True):
+        # skip any servers that don't work with the Zlib transport
+        if with_zlib and try_server in SKIP_ZLIB:
+          continue
+        for with_ssl in (False, True):
+          # skip any servers that don't work with SSL
+          if with_ssl and try_server in SKIP_SSL:
+            continue
+          test_count += 1
+          if options.verbose > 0:
+            print '\nTest run #%d:  (includes %s) Server=%s,  Proto=%s,  zlib=%s,  SSL=%s' % (test_count, genpydir, try_server, try_proto, with_zlib, with_ssl)
+          runServiceTest(genpydir, try_server, try_proto, options.port, with_zlib, with_ssl)
+          if options.verbose > 0:
+            print 'OK: Finished (includes %s)  %s / %s proto / zlib=%s / SSL=%s.   %d combinations tested.' % (genpydir, try_server, try_proto, with_zlib, with_ssl, test_count)
