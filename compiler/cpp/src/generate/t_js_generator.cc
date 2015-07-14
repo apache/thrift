@@ -2100,7 +2100,12 @@ string t_js_generator::ts_get_type(t_type* type) {
       ts_type = "void";
     }
   } else if (type->is_enum() || type->is_struct() || type->is_xception()) {
-    ts_type = type->get_name();
+    std::string type_name;
+    if (type->get_program()) {
+      type_name = js_namespace(type->get_program());
+    }
+    type_name.append(type->get_name());
+    ts_type = type_name;
   } else if (type->is_list() || type->is_set()) {
     t_type* etype;
 
