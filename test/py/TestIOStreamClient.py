@@ -55,11 +55,11 @@ parser.add_option('--protocol',  dest="proto", type="string",
 # parser.add_option('--transport',  dest="trans", type="string",
 #     help="transport to use, one of: buffered, framed")
 
-parser.set_defaults(proto='json')
+parser.set_defaults(proto='binary')
 options, args = parser.parse_args()
 
-# script_dir = os.path.dirname(__file__)
-# sys.path.insert(0, os.path.join(script_dir, options.genpydir))
+script_dir = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(script_dir, options.genpydir))
 
 from subprocess import Popen, PIPE
 
@@ -76,13 +76,20 @@ from thrift.protocol import TJSONProtocol
 class AbstractTest(unittest.TestCase):
   def setUp(self):
     self.p = Popen(['python', 'TestStreamServer.py'], stdin=PIPE, stdout=PIPE,
-              stderr=None, shell=False)
+              stderr=None, shell=False, universal_newlines=False)
+
+    # I don't think this is the problem:
+    # if options.proto == 'binary':
+    #     if sys.platform == "win32":
+    #         import os, msvcrt
+    #         msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+    #         msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
 
     sys.stdout = self.p.stdin
     sys.stdin = self.p.stdout
 
     self.transport = TTransport.TIOStreamTransport(sys.stdin, sys.stdout)
-    protocol = TJSONProtocol.TJSONProtocol(self.transport)
+    protocol = TBinaryProtocol.TBinaryProtocol(self.transport)
     # protocol = protocol_factory.getProtocol(self.transport)
     self.client = ThriftTest.Client(protocol)
 
@@ -227,19 +234,19 @@ class AcceleratedBinaryTest(AbstractTest):
 def suite():
   suite = unittest.TestSuite()
   loader = unittest.TestLoader()
-  suite.addTest(loader.loadTestsFromTestCase(JSONTest))
+  # suite.addTest(loader.loadTestsFromTestCase(JSONTest))
   # suite.addTest(AbstractTest('testDouble'))
-  # if options.proto == 'binary': # look for --proto on cmdline
-  #   suite.addTest(AbstractTest('testString'))
-  #   # suite.addTest(loader.loadTestsFromTestCase(NormalBinaryTest))
-  # elif options.proto == 'accel':
-  #   suite.addTest(loader.loadTestsFromTestCase(AcceleratedBinaryTest))
-  # elif options.proto == 'compact':
-  #   suite.addTest(loader.loadTestsFromTestCase(CompactTest))
-  # elif options.proto == 'json':
-  #   suite.addTest(loader.loadTestsFromTestCase(JSONTest))
-  # else:
-  #   raise AssertionError('Unknown protocol given with --protocol: %s' % options.proto)
+  if options.proto == 'binary': # look for --proto on cmdline
+    suite.addTest(AbstractTest('testDouble'))
+    # suite.addTest(loader.loadTestsFromTestCase(NormalBinaryTest))
+  elif options.proto == 'accel':
+    suite.addTest(loader.loadTestsFromTestCase(AcceleratedBinaryTest))
+  elif options.proto == 'compact':
+    suite.addTest(loader.loadTestsFromTestCase(CompactTest))
+  elif options.proto == 'json':
+    suite.addTest(loader.loadTestsFromTestCase(JSONTest))
+  else:
+    raise AssertionError('Unknown protocol given with --protocol: %s' % options.proto)
   return suite
 
 class OwnArgsTestProgram(unittest.TestProgram):
