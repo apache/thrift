@@ -145,6 +145,8 @@ class THttpClient(TTransportBase):
 
     # Get reply to flush the request
     self.code, self.message, self.headers = self.__http.getreply()
+    
+    self.close()
 
   # Decorate if we know how to timeout
   if hasattr(socket, 'getdefaulttimeout'):
