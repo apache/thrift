@@ -2440,16 +2440,38 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     indent(f_header_) << function_signature(*f_iter, ifstyle) << ";" << endl;
     // TODO(dreiss): Use private inheritance to avoid generating thise in cob-style.
-    t_function send_function(g_type_void,
-                             string("send_") + (*f_iter)->get_name(),
-                             (*f_iter)->get_arglist());
-    indent(f_header_) << function_signature(&send_function, "") << ";" << endl;
+    if(style == "Concurrent" && !(*f_iter)->is_oneway()) {
+      // concurrent clients need to move the seqid from the send function to the
+      // recv function.  Oneway methods don't have a recv function, so we don't need to
+      // move the seqid for them.  Attempting to do so would result in a seqid leak.
+      t_function send_function(g_type_i32, /*returning seqid*/
+          string("send_") + (*f_iter)->get_name(),
+          (*f_iter)->get_arglist());
+      indent(f_header_) << function_signature(&send_function, "") << ";" << endl;
+    }
+    else {
+      t_function send_function(g_type_void,
+          string("send_") + (*f_iter)->get_name(),
+          (*f_iter)->get_arglist());
+      indent(f_header_) << function_signature(&send_function, "") << ";" << endl;
+    }
     if (!(*f_iter)->is_oneway()) {
-      t_struct noargs(program_);
-      t_function recv_function((*f_iter)->get_returntype(),
-                               string("recv_") + (*f_iter)->get_name(),
-                               &noargs);
-      indent(f_header_) << function_signature(&recv_function, "") << ";" << endl;
+      if(style == "Concurrent") {
+        t_field seqIdArg(g_type_i32, "seqid");
+        t_struct seqIdArgStruct(program_);
+        seqIdArgStruct.append(&seqIdArg);
+        t_function recv_function((*f_iter)->get_returntype(),
+            string("recv_") + (*f_iter)->get_name(),
+            &seqIdArgStruct);
+        indent(f_header_) << function_signature(&recv_function, "") << ";" << endl;
+      }
+      else {
+        t_struct noargs(program_);
+        t_function recv_function((*f_iter)->get_returntype(),
+            string("recv_") + (*f_iter)->get_name(),
+            &noargs);
+        indent(f_header_) << function_signature(&recv_function, "") << ";" << endl;
+      }
     }
   }
   indent_down();
@@ -2467,10 +2489,16 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
                 << "boost::shared_ptr< ::apache::thrift::transport::TMemoryBuffer> otrans_;"
                 << endl;
     }
-    f_header_ << indent() << prot_ptr << " piprot_;" << endl << indent() << prot_ptr << " poprot_;"
-              << endl << indent() << protocol_type << "* iprot_;" << endl << indent()
-              << protocol_type << "* oprot_;" << endl;
+    f_header_ << 
+      indent() << prot_ptr << " piprot_;" << endl << 
+      indent() << prot_ptr << " poprot_;" << endl << 
+      indent() << protocol_type << "* iprot_;" << endl << 
+      indent() << protocol_type << "* oprot_;" << endl;
 
+    if (style == "Concurrent") {
+      f_header_ <<
+        indent() << "::apache::thrift::async::TConcurrentClientSyncInfo sync_;"<<endl;
+    }
     indent_down();
   }
 
@@ -2488,6 +2516,15 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
 
   // Generate client method implementations
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    string seqIdCapture;
+    string seqIdUse;
+    string seqIdCommaUse;
+    if (style == "Concurrent" && !(*f_iter)->is_oneway()) {
+      seqIdCapture = "int32_t seqid = ";
+      seqIdUse = "seqid";
+      seqIdCommaUse = ", seqid";
+    }
+
     string funname = (*f_iter)->get_name();
 
     // Open function
@@ -2496,7 +2533,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
     }
     indent(out) << function_signature(*f_iter, ifstyle, scope) << endl;
     scope_up(out);
-    indent(out) << "send_" << funname << "(";
+    indent(out) << seqIdCapture << "send_" << funname << "(";
 
     // Get the struct of function call params
     t_struct* arg_struct = (*f_iter)->get_arglist();
@@ -2520,12 +2557,12 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
         out << indent();
         if (!(*f_iter)->get_returntype()->is_void()) {
           if (is_complex_type((*f_iter)->get_returntype())) {
-            out << "recv_" << funname << "(_return);" << endl;
+            out << "recv_" << funname << "(_return" << seqIdCommaUse << ");" << endl;
           } else {
-            out << "return recv_" << funname << "();" << endl;
+            out << "return recv_" << funname << "(" << seqIdUse << ");" << endl;
           }
         } else {
-          out << "recv_" << funname << "();" << endl;
+          out << "recv_" << funname << "(" << seqIdUse << ");" << endl;
         }
       }
     } else {
@@ -2543,8 +2580,12 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
 
     // if (style != "Cob") // TODO(dreiss): Libify the client and don't generate this for cob-style
     if (true) {
+      t_type *send_func_return_type = g_type_void;
+      if (style == "Concurrent" && !(*f_iter)->is_oneway()) {
+        send_func_return_type = g_type_i32;
+      }
       // Function for sending
-      t_function send_function(g_type_void,
+      t_function send_function(send_func_return_type,
                                string("send_") + (*f_iter)->get_name(),
                                (*f_iter)->get_arglist());
 
@@ -2559,11 +2600,25 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
       string argsname = tservice->get_name() + "_" + (*f_iter)->get_name() + "_pargs";
       string resultname = tservice->get_name() + "_" + (*f_iter)->get_name() + "_presult";
 
+      string cseqidVal = "0";
+      if(style == "Concurrent") {
+        if (!(*f_iter)->is_oneway()) {
+          cseqidVal = "sync_.generateSeqId()";
+        }
+      }
       // Serialize the request
-      out << indent() << "int32_t cseqid = 0;" << endl << indent() << _this
-          << "oprot_->writeMessageBegin(\"" << (*f_iter)->get_name()
-          << "\", ::apache::thrift::protocol::" << ((*f_iter)->is_oneway() ? "T_ONEWAY" : "T_CALL")
-          << ", cseqid);" << endl << endl << indent() << argsname << " args;" << endl;
+      out << 
+        indent() << "int32_t cseqid = " << cseqidVal << ";" << endl;
+      if(style == "Concurrent") {
+        out <<
+          indent() << "::apache::thrift::concurrency::Guard writeGuard(sync_.getWriteMutex());" << endl;
+      }
+      out <<
+        indent() << _this << "oprot_->writeMessageBegin(\"" << 
+        (*f_iter)->get_name() << 
+        "\", ::apache::thrift::protocol::" << ((*f_iter)->is_oneway() ? "T_ONEWAY" : "T_CALL") << 
+        ", cseqid);" << endl << endl << 
+        indent() << argsname << " args;" << endl;
 
       for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
         out << indent() << "args." << (*fld_iter)->get_name() << " = &" << (*fld_iter)->get_name()
@@ -2575,15 +2630,29 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
           << "oprot_->getTransport()->writeEnd();" << endl << indent() << _this
           << "oprot_->getTransport()->flush();" << endl;
 
+      if ((style == "Concurrent") && !(*f_iter)->is_oneway()) {
+        out <<
+          indent() << "return cseqid;" << endl;
+      }
       scope_down(out);
       out << endl;
 
       // Generate recv function only if not an oneway function
       if (!(*f_iter)->is_oneway()) {
         t_struct noargs(program_);
+
+        t_field seqIdArg(g_type_i32, "seqid");
+        t_struct seqIdArgStruct(program_);
+        seqIdArgStruct.append(&seqIdArg);
+
+        t_struct *recv_function_args = &noargs;
+        if(style == "Concurrent") {
+          recv_function_args = &seqIdArgStruct;
+        }
+
         t_function recv_function((*f_iter)->get_returntype(),
                                  string("recv_") + (*f_iter)->get_name(),
-                                 &noargs);
+                                 recv_function_args);
         // Open the recv function
         if (gen_templates_) {
           indent(out) << template_header;
@@ -2591,18 +2660,44 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
         indent(out) << function_signature(&recv_function, "", scope) << endl;
         scope_up(out);
 
-        out << endl << indent() << "int32_t rseqid = 0;" << endl << indent() << "std::string fname;"
-            << endl << indent() << "::apache::thrift::protocol::TMessageType mtype;" << endl;
+        out << endl << 
+          indent() << "int32_t rseqid = 0;" << endl << 
+          indent() << "std::string fname;" << endl << 
+          indent() << "::apache::thrift::protocol::TMessageType mtype;" << endl;
+        if(style == "Concurrent") {
+          out <<
+            endl <<
+            indent() << "// the read mutex gets dropped and reacquired as part of waitForWork()" << endl <<
+            indent() << "::apache::thrift::concurrency::Guard readGuard(sync_.getReadMutex());" << endl;
+        }
         if (style == "Cob" && !gen_no_client_completion_) {
           out << indent() << "bool completed = false;" << endl << endl << indent() << "try {";
           indent_up();
         }
-        out << endl << indent() << _this << "iprot_->readMessageBegin(fname, mtype, rseqid);"
-            << endl << indent() << "if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {" << endl
-            << indent() << "  ::apache::thrift::TApplicationException x;" << endl << indent()
-            << "  x.read(" << _this << "iprot_);" << endl << indent() << "  " << _this
-            << "iprot_->readMessageEnd();" << endl << indent() << "  " << _this
-            << "iprot_->getTransport()->readEnd();" << endl;
+        out << endl;
+        if (style == "Concurrent") {
+          out <<
+            indent() << "while(true) {" << endl <<
+            indent() << "  if(!sync_.getPending(fname, mtype, rseqid)) {" << endl;
+          indent_up();
+          indent_up();
+        }
+        out <<
+          indent() << _this << "iprot_->readMessageBegin(fname, mtype, rseqid);" << endl;
+        if (style == "Concurrent") {
+          scope_down(out);
+          out << indent() << "if(seqid == rseqid) {" << endl;
+          indent_up();
+          out <<
+            indent() <<"//The destructor of this sentry wakes up other clients" << endl <<
+            indent() <<"::apache::thrift::async::TConcurrentRecvSentry sentry(&sync_, seqid);" <<endl;
+        }
+        out <<
+          indent() << "if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {" << endl << 
+          indent() << "  ::apache::thrift::TApplicationException x;" << endl << 
+          indent() << "  x.read(" << _this << "iprot_);" << endl << 
+          indent() << "  " << _this << "iprot_->readMessageEnd();" << endl << 
+          indent() << "  " << _this << "iprot_->getTransport()->readEnd();" << endl;
         if (style == "Cob" && !gen_no_client_completion_) {
           out << indent() << "  completed = true;" << endl << indent() << "  completed__(true);"
               << endl;
@@ -2694,6 +2789,18 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
                              "::apache::thrift::TApplicationException(::apache::thrift::"
                              "TApplicationException::MISSING_RESULT, \"" << (*f_iter)->get_name()
               << " failed: unknown result\");" << endl;
+        }
+        if(style == "Concurrent") {
+          indent_down();
+          indent_down();
+          out <<
+            indent() << "  }" << endl <<
+            indent() << "  // seqid != rseqid" << endl <<
+            indent() << "  sync_.updatePending(fname, mtype, rseqid);" << endl <<
+            endl <<
+            indent() << "  // this will temporarily unlock the readMutex, and let other clients get work done" << endl <<
+            indent() << "  sync_.waitForWork(seqid);" << endl <<
+            indent() << "} // end while(true)" << endl;
         }
         if (style == "Cob" && !gen_no_client_completion_) {
           indent_down();
@@ -3098,7 +3205,7 @@ void ProcessorGenerator::generate_factory() {
          << "return processor;" << endl;
 
   indent_down();
-  f_out_ << indent() << "}" << endl;
+  f_out_ << indent() << "}" << endl << endl;
 }
 
 /**

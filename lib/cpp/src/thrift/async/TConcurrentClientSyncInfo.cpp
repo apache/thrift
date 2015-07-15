@@ -116,7 +116,7 @@ void TConcurrentClientSyncInfo::throwBadSeqId_()
 void TConcurrentClientSyncInfo::throwDeadConnection_()
 {
   throw apache::thrift::transport::TTransportException(
-    apache::thrift::transport::TTransportException::PREVIOUS_DEATH,
+    apache::thrift::transport::TTransportException::NOT_OPEN,
     "this client died on another thread, and is now in an unusable state");
 }
 
