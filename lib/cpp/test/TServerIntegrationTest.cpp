@@ -122,7 +122,7 @@ public:
     _return = strings_;
   }
 
-  void getDataWait(std::string& _return, int32_t length) {
+  void getDataWait(std::string& _return, const int32_t length) {
     THRIFT_UNUSED_VARIABLE(_return);
     THRIFT_UNUSED_VARIABLE(length);
   }

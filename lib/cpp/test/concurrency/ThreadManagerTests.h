@@ -56,7 +56,7 @@ public:
 
         try {
           _sleep.wait(_timeout);
-        } catch (TimedOutException& e) {
+        } catch (TimedOutException&) {
           ;
         } catch (...) {
           assert(0);
@@ -183,7 +183,7 @@ public:
               << "ms min: " << minTime << "ms max: " << maxTime << "ms average: " << averageTime
               << "ms" << std::endl;
 
-    double expectedTime = ((count + (workerCount - 1)) / workerCount) * timeout;
+    double expectedTime = (double(count + (workerCount - 1)) / workerCount) * timeout;
 
     double error = ((time01 - time00) - expectedTime) / expectedTime;
 
@@ -290,18 +290,18 @@ public:
       try {
         threadManager->add(extraTask, 1);
         throw TException("Unexpected success adding task in excess of pending task count");
-      } catch (TooManyPendingTasksException& e) {
+      } catch (TooManyPendingTasksException&) {
         throw TException("Should have timed out adding task in excess of pending task count");
-      } catch (TimedOutException& e) {
+      } catch (TimedOutException&) {
         // Expected result
       }
 
       try {
         threadManager->add(extraTask, -1);
         throw TException("Unexpected success adding task in excess of pending task count");
-      } catch (TimedOutException& e) {
+      } catch (TimedOutException&) {
         throw TException("Unexpected timeout adding task in excess of pending task count");
-      } catch (TooManyPendingTasksException& e) {
+      } catch (TooManyPendingTasksException&) {
         // Expected result
       }
 
@@ -327,12 +327,12 @@ public:
 
       try {
         threadManager->add(extraTask, 1);
-      } catch (TimedOutException& e) {
+      } catch (TimedOutException&) {
         std::cout << "\t\t\t"
                   << "add timed out unexpectedly" << std::endl;
         throw TException("Unexpected timeout adding task");
 
-      } catch (TooManyPendingTasksException& e) {
+      } catch (TooManyPendingTasksException&) {
         std::cout << "\t\t\t"
                   << "add encountered too many pending exepctions" << std::endl;
         throw TException("Unexpected timeout adding task");
