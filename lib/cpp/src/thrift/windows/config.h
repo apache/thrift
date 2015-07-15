@@ -94,5 +94,6 @@ typedef boost::uint8_t uint8_t;
 #else
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "advapi32.lib") // For security APIs in TPipeServer
+#pragma comment(lib, "Shlwapi.lib") // For StrStrIA in TPipeServer
 #endif
 #endif // _THRIFT_WINDOWS_CONFIG_H_
