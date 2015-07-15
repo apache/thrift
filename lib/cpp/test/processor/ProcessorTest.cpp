@@ -522,7 +522,7 @@ void testEventSequencing() {
   // can test the timing for the preRead() call.
   string requestName = "getDataWait";
   string eventName = "ParentService.getDataWait";
-  int32_t seqid = time(NULL);
+  int32_t seqid = int32_t(time(NULL));
   TBinaryProtocol protocol(socket);
   protocol.writeMessageBegin(requestName, T_CALL, seqid);
   socket->flush();
@@ -819,7 +819,7 @@ void testUnexpectedError() {
   try {
     client->recv_unexpectedExceptionWait();
     BOOST_FAIL("expected TApplicationError to be thrown");
-  } catch (const TApplicationException& e) {
+  } catch (const TApplicationException&) {
   }
 
   // Now we should see a handler error event

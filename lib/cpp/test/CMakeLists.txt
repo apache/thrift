@@ -82,6 +82,11 @@ add_executable(UnitTests ${UnitTest_SOURCES})
 target_link_libraries(UnitTests testgencpp ${Boost_LIBRARIES})
 LINK_AGAINST_THRIFT_LIBRARY(UnitTests thrift)
 add_test(NAME UnitTests COMMAND UnitTests)
+if ( MSVC )
+    # Disable C4503: decorated name length exceeded, name was truncated
+    # 'insanity' results in very long decorated names
+    set_property( TARGET UnitTests APPEND_STRING PROPERTY COMPILE_FLAGS /wd4503 )
+endif ( MSVC )
 
 add_executable(TSocketInterruptTest TSocketInterruptTest.cpp)
 target_link_libraries(TSocketInterruptTest
