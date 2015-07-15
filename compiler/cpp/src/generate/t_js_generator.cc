@@ -439,7 +439,7 @@ void t_js_generator::generate_enum(t_enum* tenum) {
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     if (gen_ts_) {
-      f_types_ts_ << ts_indent() << "'" << (*c_iter)->get_name() << "' = " << value << "," << endl;
+      f_types_ts_ << ts_indent() << (*c_iter)->get_name() << " = " << value << "," << endl;
       // add 'value: key' in addition to 'key: value' for TypeScript enums
       f_types_ << indent() << "'" << value << "' : '" << (*c_iter)->get_name() << "'," << endl;
     }
@@ -2115,8 +2115,13 @@ string t_js_generator::ts_get_type(t_type* type) {
     string ktype = ts_get_type(((t_map*)type)->get_key_type());
     string vtype = ts_get_type(((t_map*)type)->get_val_type());
 
-    if (ktype == "number" || ktype == "string") {
+
+    if (ktype == "number" || ktype == "string" ) {
       ts_type = "{ [k: " + ktype + "]: " + vtype + "; }";
+    } else if ((((t_map*)type)->get_key_type())->is_enum()) {
+      // Not yet supported (enum map): https://github.com/Microsoft/TypeScript/pull/2652
+      //ts_type = "{ [k: " + ktype + "]: " + vtype + "; }";
+      ts_type = "{ [k: number /*" + ktype + "*/]: " + vtype + "; }";
     } else {
       ts_type = "any";
     }
