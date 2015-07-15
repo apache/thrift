@@ -227,4 +227,4 @@ if __name__ == "__main__":
           msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
 
   OwnArgsTestProgram(defaultTest="suite",
-        testRunner = unittest.TextTestRunner(stream = sys.stderr, verbosity=2))
+        testRunner = unittest.TextTestRunner(stream = sys.stderr, verbosity=1))

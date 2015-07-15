@@ -64,6 +64,12 @@ PROTOS= [
 # FIXME: add json
 # disabled because json HTTP test hangs... why?
 
+PROTOSWITHJSON= [
+    'accel',
+    'binary',
+    'compact',
+    'json']
+
 SERVERS = [
   "TSimpleServer",
   "TThreadedServer",
@@ -178,6 +184,16 @@ def runServiceTest(genpydir, server_class, proto, port, use_zlib, use_ssl):
     os.kill(serverproc.pid, signal.SIGKILL)
     serverproc.wait()
 
+def runIOStreamClientTest(genpydir, proto):
+    client_args = [sys.executable, relfile('TestIOStreamClient.py')]
+    client_args.append('--genpydir=%s' % genpydir)
+    client_args.append('--protocol=%s' % proto)
+    if options.verbose > 0:
+        print 'Testing IOStreamClient: '.join(client_args)
+    clientproc = subprocess.Popen(client_args)
+    clientproc.wait()
+    clientproc.kill()
+
 test_count = 0
 # run tests without a client/server first
 print '----------------'
@@ -190,11 +206,15 @@ for genpydir in generated_dirs:
     runScriptTest(genpydir, script)
 
 # run iostreamclient test
-# print '----------------'
-# print ' Executing iostreamclient test with TStreamServer and TIOStreamTransport'
-# print ' Just binary Protocol for now'
-# print '----------------'
-# runScriptTest('gen-py', 'TestIOStreamClient.py')
+print '----------------'
+print ' Executing iostreamclient test with TStreamServer and TIOStreamTransport'
+print ' Protocols to be tested: ' + ', '.join(PROTOSWITHJSON)
+print '----------------'
+for genpydir in generated_dirs:
+    for try_proto in PROTOSWITHJSON:
+        if options.verbose > 0:
+            print '\nTest run: (includes %s) server=TStreamServer, transport=TIOSTreamTransport, protocol=%s' % (genpydir, try_proto)
+        runIOStreamClientTest(genpydir, try_proto)
 
 print '----------------'
 print ' Executing Client/Server tests with various generated code directories'
