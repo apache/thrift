@@ -1368,7 +1368,7 @@ void t_cpp_generator::generate_struct_reader(ofstream& out, t_struct* tstruct, b
 
   // Declare stack tmp variables
   out << endl
-      << indent() << "apache::thrift::protocol::TRecursionTracker tracker(*iprot);" << endl
+      << indent() << "apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);" << endl
       << indent() << "uint32_t xfer = 0;" << endl
       << indent() << "std::string fname;" << endl
       << indent() << "::apache::thrift::protocol::TType ftype;" << endl
@@ -1492,7 +1492,7 @@ void t_cpp_generator::generate_struct_writer(ofstream& out, t_struct* tstruct, b
 
   out << indent() << "uint32_t xfer = 0;" << endl;
 
-  indent(out) << "apache::thrift::protocol::TRecursionTracker tracker(*oprot);" << endl;
+  indent(out) << "apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);" << endl;
   indent(out) << "xfer += oprot->writeStructBegin(\"" << name << "\");" << endl;
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -2618,7 +2618,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
         indent() << "int32_t cseqid = " << cseqidVal << ";" << endl;
       if(style == "Concurrent") {
         out <<
-          indent() << "::apache::thrift::concurrency::Guard writeGuard(sync_.getWriteMutex());" << endl;
+          indent() << "::apache::thrift::async::TConcurrentSendSentry sentry(&sync_);" << endl;
       }
       out <<
         indent() << _this << "oprot_->writeMessageBegin(\"" << 
@@ -2637,9 +2637,15 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
           << "oprot_->getTransport()->writeEnd();" << endl << indent() << _this
           << "oprot_->getTransport()->flush();" << endl;
 
-      if ((style == "Concurrent") && !(*f_iter)->is_oneway()) {
+      if (style == "Concurrent") {
         out <<
-          indent() << "return cseqid;" << endl;
+          endl <<
+          indent() << "sentry.commit();" << endl;
+
+        if(!(*f_iter)->is_oneway()) {
+          out <<
+            indent() << "return cseqid;" << endl;
+        }
       }
       scope_down(out);
       out << endl;
@@ -2675,7 +2681,8 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
           out <<
             endl <<
             indent() << "// the read mutex gets dropped and reacquired as part of waitForWork()" << endl <<
-            indent() << "::apache::thrift::concurrency::Guard readGuard(sync_.getReadMutex());" << endl;
+            indent() << "// The destructor of this sentry wakes up other clients" << endl <<
+            indent() << "::apache::thrift::async::TConcurrentRecvSentry sentry(&sync_, seqid);" << endl;
         }
         if (style == "Cob" && !gen_no_client_completion_) {
           out << indent() << "bool completed = false;" << endl << endl << indent() << "try {";
@@ -2695,9 +2702,6 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
           scope_down(out);
           out << indent() << "if(seqid == rseqid) {" << endl;
           indent_up();
-          out <<
-            indent() <<"//The destructor of this sentry wakes up other clients" << endl <<
-            indent() <<"::apache::thrift::async::TConcurrentRecvSentry sentry(&sync_, seqid);" <<endl;
         }
         out <<
           indent() << "if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {" << endl << 
@@ -2709,25 +2713,35 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
           out << indent() << "  completed = true;" << endl << indent() << "  completed__(true);"
               << endl;
         }
-        out << indent() << "  throw x;" << endl << indent() << "}" << endl << indent()
-            << "if (mtype != ::apache::thrift::protocol::T_REPLY) {" << endl << indent() << "  "
-            << _this << "iprot_->skip("
-            << "::apache::thrift::protocol::T_STRUCT);" << endl << indent() << "  " << _this
-            << "iprot_->readMessageEnd();" << endl << indent() << "  " << _this
-            << "iprot_->getTransport()->readEnd();" << endl;
+        if (style == "Concurrent") {
+          out << indent() << "  sentry.commit();" << endl;
+        }
+        out << 
+          indent() << "  throw x;" << endl << 
+          indent() << "}" << endl << 
+          indent() << "if (mtype != ::apache::thrift::protocol::T_REPLY) {" << endl << 
+          indent() << "  " << _this << "iprot_->skip(" << "::apache::thrift::protocol::T_STRUCT);" << endl << 
+          indent() << "  " << _this << "iprot_->readMessageEnd();" << endl << 
+          indent() << "  " << _this << "iprot_->getTransport()->readEnd();" << endl;
         if (style == "Cob" && !gen_no_client_completion_) {
           out << indent() << "  completed = true;" << endl << indent() << "  completed__(false);"
               << endl;
         }
-        out << indent() << "}" << endl << indent() << "if (fname.compare(\""
-            << (*f_iter)->get_name() << "\") != 0) {" << endl << indent() << "  " << _this
-            << "iprot_->skip("
-            << "::apache::thrift::protocol::T_STRUCT);" << endl << indent() << "  " << _this
-            << "iprot_->readMessageEnd();" << endl << indent() << "  " << _this
-            << "iprot_->getTransport()->readEnd();" << endl;
+        out << 
+          indent() << "}" << endl << 
+          indent() << "if (fname.compare(\"" << (*f_iter)->get_name() << "\") != 0) {" << endl << 
+          indent() << "  " << _this << "iprot_->skip(" << "::apache::thrift::protocol::T_STRUCT);" << endl << 
+          indent() << "  " << _this << "iprot_->readMessageEnd();" << endl << 
+          indent() << "  " << _this << "iprot_->getTransport()->readEnd();" << endl;
         if (style == "Cob" && !gen_no_client_completion_) {
           out << indent() << "  completed = true;" << endl << indent() << "  completed__(false);"
               << endl;
+        }
+        if (style == "Concurrent") {
+          out << endl <<
+            indent() << "  // in a bad state, don't commit" << endl <<
+            indent() << "  using ::apache::thrift::protocol::TProtocolException;" << endl <<
+            indent() << "  throw TProtocolException(TProtocolException::INVALID_DATA);" << endl;
         }
         out << indent() << "}" << endl;
 
@@ -2750,18 +2764,28 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
         // Careful, only look for _result if not a void function
         if (!(*f_iter)->get_returntype()->is_void()) {
           if (is_complex_type((*f_iter)->get_returntype())) {
-            out << indent() << "if (result.__isset.success) {" << endl << indent()
-                << "  // _return pointer has now been filled" << endl;
+            out << 
+              indent() << "if (result.__isset.success) {" << endl;
+            out <<
+              indent() << "  // _return pointer has now been filled" << endl;
             if (style == "Cob" && !gen_no_client_completion_) {
               out << indent() << "  completed = true;" << endl << indent() << "  completed__(true);"
                   << endl;
             }
-            out << indent() << "  return;" << endl << indent() << "}" << endl;
+            if (style == "Concurrent") {
+              out << indent() << "  sentry.commit();" << endl;
+            }
+            out << 
+              indent() << "  return;" << endl << 
+              indent() << "}" << endl;
           } else {
             out << indent() << "if (result.__isset.success) {" << endl;
             if (style == "Cob" && !gen_no_client_completion_) {
               out << indent() << "  completed = true;" << endl << indent() << "  completed__(true);"
                   << endl;
+            }
+            if (style == "Concurrent") {
+              out << indent() << "  sentry.commit();" << endl;
             }
             out << indent() << "  return _return;" << endl << indent() << "}" << endl;
           }
@@ -2776,6 +2800,9 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
             out << indent() << "  completed = true;" << endl << indent() << "  completed__(true);"
                 << endl;
           }
+          if (style == "Concurrent") {
+            out << indent() << "  sentry.commit();" << endl;
+          }
           out << indent() << "  throw result." << (*x_iter)->get_name() << ";" << endl << indent()
               << "}" << endl;
         }
@@ -2786,11 +2813,17 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
             out << indent() << "completed = true;" << endl << indent() << "completed__(true);"
                 << endl;
           }
+          if (style == "Concurrent") {
+            out << indent() << "sentry.commit();" << endl;
+          }
           indent(out) << "return;" << endl;
         } else {
           if (style == "Cob" && !gen_no_client_completion_) {
             out << indent() << "completed = true;" << endl << indent() << "completed__(true);"
                 << endl;
+          }
+          if (style == "Concurrent") {
+            out << indent() << "// in a bad state, don't commit" << endl;
           }
           out << indent() << "throw "
                              "::apache::thrift::TApplicationException(::apache::thrift::"
