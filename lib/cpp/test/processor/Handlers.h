@@ -56,7 +56,7 @@ public:
     _return = strings_;
   }
 
-  void getDataWait(std::string& _return, int32_t length) {
+  void getDataWait(std::string& _return, const int32_t length) {
     concurrency::Guard g(mutex_);
     log_->append(EventLog::ET_CALL_GET_DATA_WAIT, 0, 0);
 
@@ -139,11 +139,16 @@ protected:
   boost::shared_ptr<EventLog> log_;
 };
 
+#ifdef _WIN32
+  #pragma warning( push )
+  #pragma warning (disable : 4250 ) //inheriting methods via dominance
+#endif;
+
 class ChildHandler : public ParentHandler, virtual public ChildServiceIf {
 public:
   ChildHandler(const boost::shared_ptr<EventLog>& log) : ParentHandler(log), value_(0) {}
 
-  int32_t setValue(int32_t value) {
+  int32_t setValue(const int32_t value) {
     concurrency::Guard g(mutex_);
     log_->append(EventLog::ET_CALL_SET_VALUE, 0, 0);
 
@@ -162,6 +167,10 @@ public:
 protected:
   int32_t value_;
 };
+
+#ifdef _WIN32
+  #pragma warning( pop )
+#endif
 
 struct ConnContext {
 public:

@@ -58,7 +58,7 @@ public:
 
       delta = delta > _timeout ? delta - _timeout : _timeout - delta;
 
-      float error = delta / _timeout;
+      double error = double(delta) / _timeout;
 
       if (error < TEST_TOLERANCE) {
         _success = true;
@@ -119,7 +119,7 @@ public:
           _monitor.wait(1000);
           assert(
               0 == "ERROR: This wait should time out. TimerManager dispatcher may have a problem.");
-        } catch (TimedOutException& ex) {
+        } catch (TimedOutException&) {
         }
 
         task.reset(new TimerManagerTests::Task(_monitor, timeout));
