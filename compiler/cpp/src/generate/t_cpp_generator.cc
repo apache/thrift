@@ -1790,6 +1790,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
   if (gen_cob_style_) {
     f_header_ << "#include <thrift/async/TAsyncDispatchProcessor.h>" << endl;
   }
+  f_header_ << "#include <thrift/async/TConcurrentClientSyncInfo.h>" << endl;
   f_header_ << "#include \"" << get_include_prefix(*get_program()) << program_name_ << "_types.h\""
             << endl;
 
@@ -1839,6 +1840,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
   generate_service_processor(tservice, "");
   generate_service_multiface(tservice);
   generate_service_skeleton(tservice);
+  generate_service_client(tservice, "Concurrent");
 
   // Generate all the cob components
   if (gen_cob_style_) {
