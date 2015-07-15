@@ -2328,6 +2328,13 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
   }
 
   // Generate the header portion
+  if(style == "Concurrent")
+  {
+    f_header_ << 
+      "// The \'concurrent\' client is a thread safe client that correctly handles\n"
+      "// out of order responses.  It is slower than the regular client, so should\n"
+      "// only be used when you need to share a connection among multiple threads\n";
+  }
   f_header_ << template_header << "class " << service_name_ << style << "Client" << short_suffix
             << " : "
             << "virtual public " << service_name_ << ifstyle << if_suffix << extends_client << " {"
