@@ -26,34 +26,13 @@ import unittest
 
 import time
 from optparse import OptionParser
-#
+
 parser = OptionParser()
 parser.add_option('--genpydir', type='string', dest='genpydir',
                    default='gen-py',
                    help='include this local directory in sys.path for locating generated code')
-
-#parser.add_option("--port", type="int", dest="port",
-#    help="connect to server at port")
-#parser.add_option("--host", type="string", dest="host",
-#    help="connect to server")
-#parser.add_option("--zlib", action="store_true", dest="zlib",
-    # help="use zlib wrapper for compressed transport")
-# parser.add_option("--ssl", action="store_true", dest="ssl",
-#     help="use SSL for encrypted transport")
-# parser.add_option("--http", dest="http_path",
-#     help="Use the HTTP transport with the specified path")
-# parser.add_option('-v', '--verbose', action="store_const",
-#     dest="verbose", const=2,
-#     help="verbose output")
-# parser.add_option('-q', '--quiet', action="store_const",
-#     dest="verbose", const=0,
-#     help="minimal output")
-
 parser.add_option('--protocol',  dest="proto", type="string",
      help="protocol to use, one of: accel, binary, compact, json")
-
-# parser.add_option('--transport',  dest="trans", type="string",
-#     help="transport to use, one of: buffered, framed")
 
 parser.set_defaults(proto='binary')
 options, args = parser.parse_args()
@@ -66,31 +45,22 @@ from subprocess import Popen, PIPE
 from ThriftTest import ThriftTest, SecondService
 from ThriftTest.ttypes import *
 from thrift.transport import TTransport
-# from thrift.transport import TSocket
-# from thrift.transport import THttpClient
-# from thrift.transport import TZlibTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.protocol import TCompactProtocol
 from thrift.protocol import TJSONProtocol
+import thrift.Thrift
 
 class AbstractTest(unittest.TestCase):
   def setUp(self):
-    self.p = Popen(['python', 'TestStreamServer.py'], stdin=PIPE, stdout=PIPE,
+    self.p = Popen(['python', 'TestStreamServer.py', '--proto=' + options.proto,
+              '--genpydir=' + options.genpydir], stdin=PIPE, stdout=PIPE,
               stderr=None, shell=False, universal_newlines=False)
-
-    # I don't think this is the problem:
-    # if options.proto == 'binary':
-    #     if sys.platform == "win32":
-    #         import os, msvcrt
-    #         msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
-    #         msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
 
     sys.stdout = self.p.stdin
     sys.stdin = self.p.stdout
 
     self.transport = TTransport.TIOStreamTransport(sys.stdin, sys.stdout)
-    protocol = TBinaryProtocol.TBinaryProtocol(self.transport)
-    # protocol = protocol_factory.getProtocol(self.transport)
+    protocol = protocol_factory.getProtocol(self.transport)
     self.client = ThriftTest.Client(protocol)
 
     self.transport.open()
@@ -136,7 +106,7 @@ class AbstractTest(unittest.TestCase):
 
   def testNest(self):
     inner = Xtruct(string_thing="Zero", byte_thing=1, i32_thing=-3,
-      i64_thing=-5)
+      i64_thing=long(-5))
     x = Xtruct2(struct_thing=inner, byte_thing=0, i32_thing=0)
     y = self.client.testNest(x)
     self.assertEqual(y, x)
@@ -198,10 +168,10 @@ class AbstractTest(unittest.TestCase):
       #self.assertEqual(x_repr, 'Xception(errorCode=1001, message=\'Xception\')')
 
     try:
-      self.client.testException("throw_undeclared")
-      self.fail("should have thrown exception")
+        self.client.testException("throw_undeclared")
+        self.fail("should have thrown exception")
     except Exception: # type is undefined
-      pass
+        pass
 
   def testOneway(self):
     start = time.time()
@@ -234,11 +204,8 @@ class AcceleratedBinaryTest(AbstractTest):
 def suite():
   suite = unittest.TestSuite()
   loader = unittest.TestLoader()
-  # suite.addTest(loader.loadTestsFromTestCase(JSONTest))
-  # suite.addTest(AbstractTest('testDouble'))
   if options.proto == 'binary': # look for --proto on cmdline
-    suite.addTest(AbstractTest('testDouble'))
-    # suite.addTest(loader.loadTestsFromTestCase(NormalBinaryTest))
+    suite.addTest(loader.loadTestsFromTestCase(NormalBinaryTest))
   elif options.proto == 'accel':
     suite.addTest(loader.loadTestsFromTestCase(AcceleratedBinaryTest))
   elif options.proto == 'compact':
@@ -253,13 +220,14 @@ class OwnArgsTestProgram(unittest.TestProgram):
     def parseArgs(self, argv):
         self.testNames = (self.defaultTest,)
         self.createTests()
-    # def parseArgs(self, argv):
-    #     if argv:
-    #         self.testNames = argv
-    #     else:
-    #         self.testNames = (self.defaultTest,)
-    #     self.createTests()
 
 if __name__ == "__main__":
+  # On Windows, have to adjust for binary data in stdin, stdout
+  if options.proto == 'binary':
+      if sys.platform == "win32":
+          import msvcrt
+          msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+          msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
+
   OwnArgsTestProgram(defaultTest="suite",
         testRunner = unittest.TextTestRunner(stream = sys.stderr, verbosity=2))
