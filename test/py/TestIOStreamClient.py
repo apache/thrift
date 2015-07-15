@@ -60,7 +60,8 @@ class AbstractTest(unittest.TestCase):
     sys.stdin = self.p.stdout
 
     self.transport = TTransport.TIOStreamTransport(sys.stdin, sys.stdout)
-    protocol = protocol_factory.getProtocol(self.transport)
+    protocol = self.protocol_factory.getProtocol(self.transport)
+    # protocol = TJSONProtocol.TJSONProtocol(self.transport)
     self.client = ThriftTest.Client(protocol)
 
     self.transport.open()
@@ -186,19 +187,15 @@ class AbstractTest(unittest.TestCase):
 
 
 class NormalBinaryTest(AbstractTest):
-  global protocol_factory
   protocol_factory = TBinaryProtocol.TBinaryProtocolFactory()
 
 class CompactTest(AbstractTest):
-  global protocol_factory
   protocol_factory = TCompactProtocol.TCompactProtocolFactory()
 
 class JSONTest(AbstractTest):
-  global protocol_factory
   protocol_factory = TJSONProtocol.TJSONProtocolFactory()
 
 class AcceleratedBinaryTest(AbstractTest):
-  global protocol_factory
   protocol_factory = TBinaryProtocol.TBinaryProtocolAcceleratedFactory()
 
 def suite():
@@ -223,7 +220,7 @@ class OwnArgsTestProgram(unittest.TestProgram):
 
 if __name__ == "__main__":
   # On Windows, have to adjust for binary data in stdin, stdout
-  if options.proto == 'binary':
+  if options.proto != 'json':
       if sys.platform == "win32":
           import msvcrt
           msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)

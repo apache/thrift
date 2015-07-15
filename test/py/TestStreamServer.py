@@ -102,29 +102,28 @@ class TestHandler:
         return Xtruct(string_thing='Hello2',
                   byte_thing=arg0, i32_thing=arg1, i64_thing=arg2)
 
-if options.proto == 'binary':
+def getProtocolFactory():
+    if options.proto == 'binary':
+        protocol_factory = TBinaryProtocol.TBinaryProtocolFactory()
+    elif options.proto == 'accel':
+        protocol_factory = TBinaryProtocol.TBinaryProtocolAcceleratedFactory()
+    elif options.proto == 'compact':
+        protocol_factory = TCompactProtocol.TCompactProtocolFactory()
+    elif options.proto == 'json':
+        protocol_factory = TJSONProtocol.TJSONProtocolFactory()
+    return protocol_factory
+
+if options.proto != 'json':
     if sys.platform == "win32":
         import msvcrt
         msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
         msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
-
-global protocol_factory
-if options.proto == 'binary':
-    protocol_factory = TBinaryProtocol.TBinaryProtocolFactory()
-elif options.proto == 'accel':
-    protocol_factory = TBinaryProtocol.TBinaryProtocolAcceleratedFactory()
-elif options.proto == 'compact':
-    protocol_factory = TCompactProtocol.TCompactProtocolFactory()
-elif options.proto == 'json':
-    protocol_factory = TJSONProtocol.TJSONProtocolFactory()
-# else:
-#     raise AssertionError('Unknown protocol given to TestStreamServer with --protocol: %s' % options.proto)
 
 handler = TestHandler()
 processor = ThriftTest.Processor(handler)
 transport = TTransport.TIOStreamTransport(sys.stdin, sys.stdout)
 server = TServer.TStreamServer(processor, transport,
          TTransport.TTransportFactoryBase(),
-         protocol_factory)
+         getProtocolFactory())
 
 server.serve()
