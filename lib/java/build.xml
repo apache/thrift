@@ -69,6 +69,9 @@
     <fileset dir="${build.lib.dir}"> 
       <include name="**/*.jar"/>
     </fileset>
+    <fileset dir="${build.dir}"> 
+      <include name="*.jar"/>
+    </fileset>
   </path>
 
   <path id="test.classpath">
@@ -81,7 +84,7 @@
   </path>
 
   <!-- Tasks --> 
-  <target name="init" depends="setup.init,mvn.init" unless="init.finished">
+  <target name="init" depends="clean,setup.init,mvn.init" unless="init.finished">
     <property name="init.finished" value="true"/>
   </target>
 
@@ -156,10 +159,12 @@
 
   <target name="clean">
     <delete dir="${build.dir}"/>
-    <delete dir="${gen}"/>
+    <!--
+	<delete dir="${gen}"/>
     <delete dir="${genbean}"/>
     <delete dir="${genreuse}"/>
     <delete dir="${genfullcamel}"/>
+	-->
   </target>
 
   <target name="optional-generate" unless="no-gen-thrift"> 
@@ -194,7 +199,15 @@
     <jar jarfile="${test.jar.file}" basedir="${build.test.dir}"/>
   </target>
 
-  <target name="junit-test" description="Run the JUnit test suite" depends="compile-test">
+  <target name="compile-test-stream-server" description="builds streamServer jar used in TestIOStreamClient" depends="optional-generate,dist">
+	<jar destfile="${build.dir}/streamServer.jar" basedir="${build.test.dir}">
+		<manifest>
+			<attribute name="Main-Class" value="org.apache.thrift.test.TestStreamServer"/>
+		</manifest>
+	</jar>
+  </target>
+  
+  <target name="junit-test" description="Run the JUnit test suite" depends="compile-test,compile-test-stream-server">
     <mkdir dir="${test.log.dir}"/>
     <junit printsummary="true" showoutput="${test.output}" timeout="${test.timeout}" 
       haltonfailure="true" errorProperty="tests.failed" failureProperty="tests.failed"
@@ -214,6 +227,7 @@
           <exclude name="**/TestClient.java"/>
           <exclude name="**/TestServer.java"/>
           <exclude name="**/TestNonblockingServer.java"/>
+		  <exclude name="**/TestStreamServer.java"/>
         </fileset>
       </batchtest>
       <batchtest todir="${test.log.dir}" if="testcase">

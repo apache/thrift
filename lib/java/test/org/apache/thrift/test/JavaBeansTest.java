@@ -30,27 +30,27 @@ public class JavaBeansTest {
     OneOfEachBeans ooe = new OneOfEachBeans();
 
     // Nothing should be set
-    if (ooe.is_set_a_bite())
+    if (ooe.isSetA_bite())
       throw new RuntimeException("isSet method error: unset field returned as set!");
-    if (ooe.is_set_base64())
+    if (ooe.isSetBase64())
       throw new RuntimeException("isSet method error: unset field returned as set!");
-    if (ooe.is_set_byte_list())
+    if (ooe.isSetByte_list())
       throw new RuntimeException("isSet method error: unset field returned as set!");
-    if (ooe.is_set_double_precision())
+    if (ooe.isSetDouble_precision())
       throw new RuntimeException("isSet method error: unset field returned as set!");
-    if (ooe.is_set_i16_list())
+    if (ooe.isSetI16_list())
       throw new RuntimeException("isSet method error: unset field returned as set!");
-    if (ooe.is_set_i64_list())
+    if (ooe.isSetI64_list())
       throw new RuntimeException("isSet method error: unset field returned as set!");
-    if (ooe.is_set_boolean_field())
+    if (ooe.isSetBoolean_field())
       throw new RuntimeException("isSet method error: unset field returned as set!");
-    if (ooe.is_set_integer16())
+    if (ooe.isSetInteger16())
       throw new RuntimeException("isSet method error: unset field returned as set!");
-    if (ooe.is_set_integer32())
+    if (ooe.isSetInteger32())
       throw new RuntimeException("isSet method error: unset field returned as set!");
-    if (ooe.is_set_integer64())
+    if (ooe.isSetInteger64())
       throw new RuntimeException("isSet method error: unset field returned as set!");
-    if (ooe.is_set_some_characters())
+    if (ooe.isSetSome_characters())
       throw new RuntimeException("isSet method error: unset field returned as set!");
 
     for (int i = 1; i < 12; i++){
@@ -59,39 +59,39 @@ public class JavaBeansTest {
     }
 
     // Everything is set
-    ooe.set_a_bite((byte) 1);
-    ooe.set_base64(ByteBuffer.wrap("bytes".getBytes()));
-    ooe.set_byte_list(new LinkedList<Byte>());
-    ooe.set_double_precision(1);
-    ooe.set_i16_list(new LinkedList<Short>());
-    ooe.set_i64_list(new LinkedList<Long>());
-    ooe.set_boolean_field(true);
-    ooe.set_integer16((short) 1);
-    ooe.set_integer32(1);
-    ooe.set_integer64(1);
-    ooe.set_some_characters("string");
+    ooe.setA_bite((byte) 1);
+    ooe.setBase64(ByteBuffer.wrap("bytes".getBytes()));
+    ooe.setByte_list(new LinkedList<Byte>());
+    ooe.setDouble_precision(1);
+    ooe.setI16_list(new LinkedList<Short>());
+    ooe.setI64_list(new LinkedList<Long>());
+    ooe.setBoolean_field(true);
+    ooe.setInteger16((short) 1);
+    ooe.setInteger32(1);
+    ooe.setInteger64(1);
+    ooe.setSome_characters("string");
 
-    if (!ooe.is_set_a_bite())
+    if (!ooe.isSetA_bite())
       throw new RuntimeException("isSet method error: set field returned as unset!");
-    if (!ooe.is_set_base64())
+    if (!ooe.isSetBase64())
       throw new RuntimeException("isSet method error: set field returned as unset!");
-    if (!ooe.is_set_byte_list())
+    if (!ooe.isSetByte_list())
       throw new RuntimeException("isSet method error: set field returned as unset!");
-    if (!ooe.is_set_double_precision())
+    if (!ooe.isSetDouble_precision())
       throw new RuntimeException("isSet method error: set field returned as unset!");
-    if (!ooe.is_set_i16_list())
+    if (!ooe.isSetI16_list())
       throw new RuntimeException("isSet method error: set field returned as unset!");
-    if (!ooe.is_set_i64_list())
+    if (!ooe.isSetI64_list())
       throw new RuntimeException("isSet method error: set field returned as unset!");
-    if (!ooe.is_set_boolean_field())
+    if (!ooe.isSetBoolean_field())
       throw new RuntimeException("isSet method error: set field returned as unset!");
-    if (!ooe.is_set_integer16())
+    if (!ooe.isSetInteger16())
       throw new RuntimeException("isSet method error: set field returned as unset!");
-    if (!ooe.is_set_integer32())
+    if (!ooe.isSetInteger32())
       throw new RuntimeException("isSet method error: set field returned as unset!");
-    if (!ooe.is_set_integer64())
+    if (!ooe.isSetInteger64())
       throw new RuntimeException("isSet method error: set field returned as unset!");
-    if (!ooe.is_set_some_characters())
+    if (!ooe.isSetSome_characters())
       throw new RuntimeException("isSet method error: set field returned as unset!");
 
     for (int i = 1; i < 12; i++){

@@ -13,9 +13,10 @@ namespace Thrift.Test
     public class TestIOStreamClient
     {
         private static string protocolName = "";
-        //private static string serverFileName = "..\\..\\..\\TestStreamServer\\bin\\Debug\\TestStreamServer.exe";
-        private static string serverFileName = "..\\..\\TestStreamServer\\TestStreamServer.exe";
+        private static string serverFileName = "..\\..\\..\\TestStreamServer\\bin\\Debug\\TestStreamServer.exe";
+        //private static string serverFileName = "..\\..\\TestStreamServer\\TestStreamServer.exe";
 
+        private static TProtocolFactory protocolFactory = new TBinaryProtocol.Factory();
 
         public static bool Execute(string[] args)
         {
@@ -25,14 +26,22 @@ namespace Thrift.Test
                 //any protocol is OK though
                 for (int i = 0; i < args.Length; i++)
                 {
+                    if (args[i] == "--binary" || args[i] == "--protocol=binary")
+                    {
+                        protocolName = "binary";
+                        protocolFactory = new TBinaryProtocol.Factory();
+                        Console.WriteLine("Using binary protocol");
+                    }
                     if (args[i] == "--compact" || args[i] == "--protocol=compact")
                     {
                         protocolName = "compact";
+                        protocolFactory = new TCompactProtocol.Factory();
                         Console.WriteLine("Using compact protocol");
                     }
                     else if (args[i] == "--json" || args[i] == "--protocol=json")
                     {
                         protocolName = "json";
+                        protocolFactory = new TJSONProtocol.Factory();
                         Console.WriteLine("Using JSON protocol");
                     }
                 }
@@ -71,6 +80,7 @@ namespace Thrift.Test
             var tmp = Console.Out;//save output stream for writing the output back out to standard out at the end
             var server = new ProcessStartInfo();
             server.FileName = serverFileName;
+            server.Arguments = "--" + protocolName;
             server.UseShellExecute = false;
             server.RedirectStandardInput = true;
             server.RedirectStandardOutput = true;
@@ -81,7 +91,7 @@ namespace Thrift.Test
             Console.SetOut(other.StandardInput);
 
             TStreamTransport transport = new TStreamTransport(other.StandardOutput.BaseStream, other.StandardInput.BaseStream);
-            TProtocol protocol = new TJSONProtocol(transport);
+            TProtocol protocol = protocolFactory.GetProtocol(transport);
             ThriftTest.Client client = new ThriftTest.Client(protocol);
 
             transport.Open();
