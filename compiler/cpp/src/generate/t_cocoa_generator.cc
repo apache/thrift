@@ -216,6 +216,7 @@ public:
   std::string base_type_name(t_base_type* tbase);
   std::string declare_property(t_field* tfield);
   std::string declare_property_isset(t_field* tfield);
+  std::string declare_property_unset(t_field* tfield);
   std::string invalid_return_statement(t_function* tfunction);
   std::string function_signature(t_function* tfunction, bool include_error);
   std::string async_function_signature(t_function* tfunction, bool include_error);
@@ -560,6 +561,8 @@ void t_cocoa_generator::generate_cocoa_struct_interface(ofstream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       out << indent() << declare_property(*m_iter) << endl;
       out << indent() << declare_property_isset(*m_iter) << endl;
+      out << indent() << declare_property_unset(*m_iter) << endl;
+      out << endl;
     }
   }
   
@@ -2930,7 +2933,7 @@ string t_cocoa_generator::declare_property(t_field* tfield) {
     // Let Objective-C know not to return +1 for object pointers
     if (type_can_be_null(tfield->get_type())) {
       render << endl;
-      render << "-(" + type_name(tfield->get_type()) + ") " + decapitalize(tfield->get_name()) + " __attribute__((objc_method_family(none)));";
+      render << "- (" + type_name(tfield->get_type()) + ") " + decapitalize(tfield->get_name()) + " __attribute__((objc_method_family(none)));";
     }
   }
   
@@ -2944,6 +2947,15 @@ string t_cocoa_generator::declare_property(t_field* tfield) {
  */
 string t_cocoa_generator::declare_property_isset(t_field* tfield) {
   return "@property (assign, nonatomic) BOOL " + decapitalize(tfield->get_name()) + "IsSet;";
+}
+
+/**
+ * Declares property unset method.
+ *
+ * @param tfield The field to declare a property for
+ */
+string t_cocoa_generator::declare_property_unset(t_field* tfield) {
+  return "- (void) unset" + capitalize(tfield->get_name()) + ";";
 }
 
 /**
