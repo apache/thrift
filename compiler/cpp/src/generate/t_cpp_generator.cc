@@ -2610,7 +2610,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
       string cseqidVal = "0";
       if(style == "Concurrent") {
         if (!(*f_iter)->is_oneway()) {
-          cseqidVal = "sync_.generateSeqId()";
+          cseqidVal = "this->sync_.generateSeqId()";
         }
       }
       // Serialize the request
@@ -2618,7 +2618,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
         indent() << "int32_t cseqid = " << cseqidVal << ";" << endl;
       if(style == "Concurrent") {
         out <<
-          indent() << "::apache::thrift::async::TConcurrentSendSentry sentry(&sync_);" << endl;
+          indent() << "::apache::thrift::async::TConcurrentSendSentry sentry(&this->sync_);" << endl;
       }
       out <<
         indent() << _this << "oprot_->writeMessageBegin(\"" << 
@@ -2682,7 +2682,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
             endl <<
             indent() << "// the read mutex gets dropped and reacquired as part of waitForWork()" << endl <<
             indent() << "// The destructor of this sentry wakes up other clients" << endl <<
-            indent() << "::apache::thrift::async::TConcurrentRecvSentry sentry(&sync_, seqid);" << endl;
+            indent() << "::apache::thrift::async::TConcurrentRecvSentry sentry(&this->sync_, seqid);" << endl;
         }
         if (style == "Cob" && !gen_no_client_completion_) {
           out << indent() << "bool completed = false;" << endl << endl << indent() << "try {";
@@ -2692,7 +2692,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
         if (style == "Concurrent") {
           out <<
             indent() << "while(true) {" << endl <<
-            indent() << "  if(!sync_.getPending(fname, mtype, rseqid)) {" << endl;
+            indent() << "  if(!this->sync_.getPending(fname, mtype, rseqid)) {" << endl;
           indent_up();
           indent_up();
         }
@@ -2836,10 +2836,10 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
           out <<
             indent() << "  }" << endl <<
             indent() << "  // seqid != rseqid" << endl <<
-            indent() << "  sync_.updatePending(fname, mtype, rseqid);" << endl <<
+            indent() << "  this->sync_.updatePending(fname, mtype, rseqid);" << endl <<
             endl <<
             indent() << "  // this will temporarily unlock the readMutex, and let other clients get work done" << endl <<
-            indent() << "  sync_.waitForWork(seqid);" << endl <<
+            indent() << "  this->sync_.waitForWork(seqid);" << endl <<
             indent() << "} // end while(true)" << endl;
         }
         if (style == "Cob" && !gen_no_client_completion_) {
