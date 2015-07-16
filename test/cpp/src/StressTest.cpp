@@ -33,7 +33,6 @@
 #include <thrift/TLogging.h>
 
 #include "Service.h"
-#include <boost/make_shared.hpp>
 #include <iostream>
 #include <set>
 #include <stdexcept>
@@ -510,8 +509,8 @@ int main(int argc, char** argv) {
         boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(bufferedSocket));
         boost::shared_ptr<ServiceClient> serviceClient(new ServiceClient(protocol));
 
-        clientThreads.insert(threadFactory->newThread(boost::make_shared<ClientThread>(
-            socket, serviceClient, monitor, threadCount, loopCount, loopType, OpenAndCloseTransportInThread)));
+        clientThreads.insert(threadFactory->newThread(boost::shared_ptr<ClientThread>(
+            new ClientThread(socket, serviceClient, monitor, threadCount, loopCount, loopType, OpenAndCloseTransportInThread))));
       }
     } else if(clientType == "concurrent") {
       boost::shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port));
@@ -521,8 +520,8 @@ int main(int argc, char** argv) {
       boost::shared_ptr<ServiceConcurrentClient> serviceClient(new ServiceConcurrentClient(protocol));
       socket->open();
       for (size_t ix = 0; ix < clientCount; ix++) {
-        clientThreads.insert(threadFactory->newThread(boost::make_shared<ClientThread>(
-            socket, serviceClient, monitor, threadCount, loopCount, loopType, DontOpenAndCloseTransportInThread)));
+        clientThreads.insert(threadFactory->newThread(boost::shared_ptr<ClientThread>(
+            new ClientThread(socket, serviceClient, monitor, threadCount, loopCount, loopType, DontOpenAndCloseTransportInThread))));
       }
     }
 
