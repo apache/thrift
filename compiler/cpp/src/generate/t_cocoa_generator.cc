@@ -2914,11 +2914,13 @@ string t_cocoa_generator::declare_property(t_field* tfield) {
   std::ostringstream render;
   render << "@property (";
   
-  if (type_can_be_null(tfield->get_type()))
+  if (type_can_be_null(tfield->get_type())) {
     render << "strong, ";
+  } else {
+    render << "assign, ";
+  }
   
-  render << "nonatomic, getter=" << decapitalize(tfield->get_name()) << ", setter=set"
-  << capitalize(tfield->get_name()) + ":) " << type_name(tfield->get_type(), false, true) << " "
+  render << "nonatomic) " << type_name(tfield->get_type(), false, true) << " "
   << tfield->get_name() << ";";
   
   // Check if the property name is an Objective-C return +1 count signal
@@ -2941,15 +2943,7 @@ string t_cocoa_generator::declare_property(t_field* tfield) {
  * @param tfield The field to declare a property for
  */
 string t_cocoa_generator::declare_property_isset(t_field* tfield) {
-  std::ostringstream render;
-  render << "@property (nonatomic, assign, ";
-  
-  string isset_name = tfield->get_name() + "IsSet";
-  
-  render << "getter=" << decapitalize(isset_name) << ", setter=set"
-  << capitalize(isset_name) + ":) BOOL " << isset_name << ";";
-  
-  return render.str();
+  return "@property (assign, nonatomic) BOOL " + decapitalize(tfield->get_name()) + "IsSet;";
 }
 
 /**
