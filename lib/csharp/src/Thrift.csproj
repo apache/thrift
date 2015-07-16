@@ -93,6 +93,7 @@
     <Compile Include="Protocol\TMessageType.cs" />
     <Compile Include="Protocol\TMultiplexedProcessor.cs" />
     <Compile Include="Protocol\TMultiplexedProtocol.cs" />
+    <Compile Include="Protocol\TProcessorFactory.cs" />
     <Compile Include="Protocol\TProtocol.cs" />
     <Compile Include="Protocol\TProtocolDecorator.cs" />
     <Compile Include="Protocol\TProtocolException.cs" />
