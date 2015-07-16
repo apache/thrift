@@ -88,16 +88,23 @@ if ( MSVC )
     set_property( TARGET UnitTests APPEND_STRING PROPERTY COMPILE_FLAGS /wd4503 )
 endif ( MSVC )
 
-add_executable(TSocketInterruptTest TSocketInterruptTest.cpp)
-target_link_libraries(TSocketInterruptTest
+
+set( TInterruptTest_SOURCES TSocketInterruptTest.cpp )
+if (WIN32)
+    list(APPEND TInterruptTest_SOURCES
+        TPipeInterruptTest.cpp
+    )
+endif()
+add_executable(TInterruptTest ${TInterruptTest_SOURCES})
+target_link_libraries(TInterruptTest
     testgencpp
     ${Boost_LIBRARIES}
 )
-LINK_AGAINST_THRIFT_LIBRARY(TSocketInterruptTest thrift)
+LINK_AGAINST_THRIFT_LIBRARY(TInterruptTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-target_link_libraries(TSocketInterruptTest -lrt)
+target_link_libraries(TInterruptTest -lrt)
 endif ()
-add_test(NAME TSocketInterruptTest COMMAND TSocketInterruptTest)
+add_test(NAME TInterruptTest COMMAND TInterruptTest)
 
 add_executable(TServerIntegrationTest TServerIntegrationTest.cpp)
 target_link_libraries(TServerIntegrationTest
