@@ -565,23 +565,12 @@ void t_cocoa_generator::generate_cocoa_struct_interface(ofstream& out,
   
   out << endl;
 
-  // default initializer
-  out << indent() << "- (instancetype) init;" << endl;
-
   // initializer for all fields
   if (!members.empty()) {
     generate_cocoa_struct_initializer_signature(out, tstruct);
     out << ";" << endl;
   }
   out << endl;
-
-  // read and write
-  out << "- (BOOL) read: (id <TProtocol>) inProtocol error: (NSError *__autoreleasing *)__thriftError;" << endl;
-  out << "- (BOOL) write: (id <TProtocol>) outProtocol error: (NSError *__autoreleasing *)__thriftError;" << endl;
-  out << endl;
-
-  // validator
-  out << "- (BOOL) validate: (NSError *__autoreleasing *)__thriftError;" << endl << endl;
 
   out << "@end" << endl << endl;
 }

@@ -37,5 +37,10 @@
  */
 -(BOOL) write:(id <TProtocol>)outProtocol error:(NSError **)error;
 
-@end
 
+/**
+ * Validate required fields
+ */
+-(BOOL) validate:(NSError *__autoreleasing *)__thriftError;
+
+@end
