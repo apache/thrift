@@ -21,12 +21,11 @@
  * details.
  */
 
-
 namespace Thrift.Protocol
 {
-    public interface TProcessorFactory
-    {
-        TProcessor Create();
-        void Release(TProcessor processor);
-    }
+  public interface TProcessorFactory
+  {
+    TProcessor Create();
+    void Release(TProcessor processor);
+  }
 }
