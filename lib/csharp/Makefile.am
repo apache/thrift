@@ -38,6 +38,8 @@ THRIFTCODE= \
             src/Protocol/TProtocolDecorator.cs \
             src/Protocol/TMultiplexedProtocol.cs \
             src/Protocol/TMultiplexedProcessor.cs \
+            src/Protocol/TProcessorFactory.cs \
+            src/Protocol/TProcessorSingletonFactory.cs \
             src/Protocol/TType.cs \
             src/Protocol/TField.cs \
             src/Protocol/TMessage.cs \
