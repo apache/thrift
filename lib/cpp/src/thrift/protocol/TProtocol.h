@@ -552,26 +552,36 @@ public:
   inline boost::shared_ptr<TTransport> getInputTransport() { return ptrans_; }
   inline boost::shared_ptr<TTransport> getOutputTransport() { return ptrans_; }
 
-  void incrementRecursionDepth() {
-    if (recursion_limit_ < ++recursion_depth_) {
+  // input and output recursion depth are kept separate so that one protocol
+  // can be used concurrently for both input and output.
+  void incrementInputRecursionDepth() {
+    if (recursion_limit_ < ++input_recursion_depth_) {
       throw TProtocolException(TProtocolException::DEPTH_LIMIT);
     }
   }
+  void decrementInputRecursionDepth() { --input_recursion_depth_; }
 
-  void decrementRecursionDepth() { --recursion_depth_; }
+  void incrementOutputRecursionDepth() {
+    if (recursion_limit_ < ++output_recursion_depth_) {
+      throw TProtocolException(TProtocolException::DEPTH_LIMIT);
+    }
+  }
+  void decrementOutputRecursionDepth() { --output_recursion_depth_; }
+
   uint32_t getRecursionLimit() const {return recursion_limit_;}
   void setRecurisionLimit(uint32_t depth) {recursion_limit_ = depth;}
 
 protected:
   TProtocol(boost::shared_ptr<TTransport> ptrans)
-    : ptrans_(ptrans), recursion_depth_(0), recursion_limit_(DEFAULT_RECURSION_LIMIT)
+    : ptrans_(ptrans), input_recursion_depth_(0), output_recursion_depth_(0), recursion_limit_(DEFAULT_RECURSION_LIMIT)
   {}
 
   boost::shared_ptr<TTransport> ptrans_;
 
 private:
   TProtocol() {}
-  uint32_t recursion_depth_;
+  uint32_t input_recursion_depth_;
+  uint32_t output_recursion_depth_;
   uint32_t recursion_limit_;
 };
 
@@ -617,13 +627,23 @@ struct TNetworkLittleEndian
   static uint64_t fromWire64(uint64_t x) {return letohll(x);}
 };
 
-struct TRecursionTracker {
+struct TOutputRecursionTracker {
   TProtocol &prot_;
-  TRecursionTracker(TProtocol &prot) : prot_(prot) {
-    prot_.incrementRecursionDepth();
+  TOutputRecursionTracker(TProtocol &prot) : prot_(prot) {
+    prot_.incrementOutputRecursionDepth();
   }
-  ~TRecursionTracker() {
-    prot_.decrementRecursionDepth();
+  ~TOutputRecursionTracker() {
+    prot_.decrementOutputRecursionDepth();
+  }
+};
+
+struct TInputRecursionTracker {
+  TProtocol &prot_;
+  TInputRecursionTracker(TProtocol &prot) : prot_(prot) {
+    prot_.incrementInputRecursionDepth();
+  }
+  ~TInputRecursionTracker() {
+    prot_.decrementInputRecursionDepth();
   }
 };
 
@@ -634,7 +654,7 @@ struct TRecursionTracker {
  */
 template <class Protocol_>
 uint32_t skip(Protocol_& prot, TType type) {
-  TRecursionTracker tracker(prot);
+  TInputRecursionTracker tracker(prot);
 
   switch (type) {
   case T_BOOL: {
