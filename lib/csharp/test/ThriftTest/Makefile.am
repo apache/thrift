@@ -23,7 +23,8 @@ CSC=gmcs
 stubs: $(top_srcdir)/test/ThriftTest.thrift
 	$(THRIFT) --gen csharp -o . $(top_srcdir)/test/ThriftTest.thrift
 
-precross: TestClientServer.exe TestStreamServer.exe
+precross: TestClientServer.exe 
+	TestStreamServer.exe
 
 ThriftImpl.dll: stubs
 	$(CSC) /t:library /out:./ThriftImpl.dll /recurse:./gen-csharp/* /reference:../../Thrift.dll
@@ -32,7 +33,4 @@ TestClientServer.exe: TestClient.cs TestServer.cs ../TestStreamServer/TestHandle
 	$(CSC)  /out:TestClientServer.exe /reference:../../Thrift.dll /reference:ThriftImpl.dll TestClient.cs TestServer.cs ../TestStreamServer/TestHandler.cs TestIOStreamClient.cs Program.cs
 
 TestStreamServer.exe:
-	$(MAKE) -C ../TestStreamServer precross
-	
-#check:
-#	./bin/Debug/ThriftTest ioStreamClient
+	$(CSC) /out:TestStreamServer.exe /reference:../../Thrift.dll /reference:ThriftImpl.dll ../TestStreamServer/TestHandler.cs ../TestStreamServer/Program.cs

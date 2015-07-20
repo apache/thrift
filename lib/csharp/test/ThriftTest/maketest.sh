@@ -21,7 +21,7 @@
 
 ../../../../compiler/cpp/thrift --gen csharp -o . ../../../../test/ThriftTest.thrift
 gmcs /t:library /out:./ThriftImpl.dll /recurse:./gen-csharp/* /reference:../../Thrift.dll
-#gmcs /out:TestIOStreamServer.exe /reference:../../Thrift.dll /reference:ThriftImpl.dll TestHandler.cs Program.cs
+gmcs /out:TestIOStreamServer.exe /reference:../../Thrift.dll /reference:ThriftImpl.dll ../TestStreamServer/TestHandler.cs ../TestStreamServer/Program.cs
 gmcs  /out:TestClientServer.exe /reference:../../Thrift.dll /reference:ThriftImpl.dll TestClient.cs TestServer.cs ../TestStreamServer/TestHandler.cs TestIOStreamClient.cs Program.cs
 
 export MONO_PATH=../../
@@ -29,6 +29,6 @@ export MONO_PATH=../../
 timeout 120 ./TestClientServer.exe server &
 sleep 1
 ./TestClientServer.exe client
-#an untried idea: (have to kill other server first...)
-#sleep 1
-#./TestClientServer.exe ioStreamClient
+
+sleep 1
+./TestClientServer.exe ioStreamClient
