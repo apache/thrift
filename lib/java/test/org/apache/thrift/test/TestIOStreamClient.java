@@ -286,9 +286,10 @@ public class TestIOStreamClient extends TestCase {
 			assertEquals(1001, e.errorCode);
 		} 
 		
-		//Something that gets called in here prints 2 to stdout... Creepy...
+		//This will always fail--something must be wrong with the protocol
+		//because it throws an unexpected character exception (It gets the number 2).
 		/*try {
-			testClient.testException("TException");
+			testClient.testException("ThrowTException");
 			fail("should have thrown a TException");
 		} catch(TException e) {
 			assertEquals("TException", e.getMessage());

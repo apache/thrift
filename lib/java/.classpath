@@ -2,7 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry including="thrift/test" kind="src" path="test"/>
-	<classpathentry kind="lib" path="build/tools/maven-ant-tasks-2.1.3.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="C:/Users/esjohn/Documents/thrift/lib/java/lib/commons-codec-1.9.jar"/>
 	<classpathentry kind="lib" path="C:/Users/esjohn/Documents/thrift/lib/java/lib/commons-logging-1.2.jar"/>
@@ -14,5 +13,6 @@
 	<classpathentry kind="lib" path="C:/Users/esjohn/Documents/thrift/lib/java/lib/slf4j-api-1.5.8.jar"/>
 	<classpathentry kind="lib" path="C:/Users/esjohn/Documents/thrift/lib/java/lib/slf4j-api-1.7.12.jar"/>
 	<classpathentry kind="lib" path="C:/Users/esjohn/Documents/thrift/lib/java/lib/slf4j-log4j12-1.5.8.jar"/>
+	<classpathentry kind="lib" path="C:/Users/esjohn/Documents/thrift/lib/java/lib/maven-ant-tasks-2.1.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

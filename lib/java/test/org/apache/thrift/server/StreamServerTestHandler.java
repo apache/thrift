@@ -209,7 +209,7 @@ public class StreamServerTestHandler {
 		        x.errorCode = 1001;
 		        x.message = arg;
 		        throw x;
-			} else if (arg.equals("TException")) {
+			} else if (arg.equals("ThrowTException")) {
 		        throw new TException(arg);
 			} else {
 		        Xtruct result = new Xtruct();
