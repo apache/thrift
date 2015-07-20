@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestStreamServer", "..\test
 		{499EB63C-D74C-47E8-AE48-A2FC94538E9D} = {499EB63C-D74C-47E8-AE48-A2FC94538E9D}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestIOStreamServer", "..\test\TestIOStreamServer\TestIOStreamServer.csproj", "{64BDE487-12D7-4E6F-89E9-13A2FB143AA7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,6 +45,10 @@ Global
 		{E0AFF982-9EDE-41C3-9A33-7E2BC62F0DE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E0AFF982-9EDE-41C3-9A33-7E2BC62F0DE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E0AFF982-9EDE-41C3-9A33-7E2BC62F0DE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64BDE487-12D7-4E6F-89E9-13A2FB143AA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64BDE487-12D7-4E6F-89E9-13A2FB143AA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64BDE487-12D7-4E6F-89E9-13A2FB143AA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64BDE487-12D7-4E6F-89E9-13A2FB143AA7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -17,7 +17,7 @@
 # under the License.
 #
 
-SUBDIRS = . test/ThriftTest test/TestStreamServer
+SUBDIRS = . test/ThriftTest
 
 THRIFTCODE= \
             src/Collections/THashSet.cs \

@@ -27,7 +27,6 @@ using Thrift.Transport;
 using Thrift.Protocol;
 using Thrift.Test; //generated code
 using Thrift.Server;
-using Test;
 
 namespace Test
 {
