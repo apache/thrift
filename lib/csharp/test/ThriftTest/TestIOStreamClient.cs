@@ -13,7 +13,8 @@ namespace Thrift.Test
     public class TestIOStreamClient
     {
         private static string protocolName = "";
-        private static string serverFileName = "..\\..\\..\\TestStreamServer\\bin\\Debug\\TestStreamServer.exe";
+        private static string serverFileName = "TestStreamServer.exe";
+        //private static string serverFileName = "..\\..\\..\\TestStreamServer\\bin\\Debug\\TestStreamServer.exe";
         //private static string serverFileName = "..\\..\\TestStreamServer\\TestStreamServer.exe";
 
         private static TProtocolFactory protocolFactory = new TBinaryProtocol.Factory();
