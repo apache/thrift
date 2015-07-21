@@ -37,7 +37,7 @@ namespace Test
             
             if (args.Length == 0)
             {
-                Console.WriteLine("must provide 'server' or 'client' arg");
+                Console.WriteLine("must provide 'server', 'client' or 'ioStreamClient' arg");
                 return -1;
             }
 
@@ -61,7 +61,7 @@ namespace Test
             }
             else
             {
-                Console.WriteLine("first argument must be 'server' or 'client'");
+                Console.WriteLine("first argument must be 'server', 'client', or 'ioStreamClient'");
             }
             return 0;
              
