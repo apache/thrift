@@ -263,7 +263,7 @@ namespace Thrift.Test
             }
             if (arg == "TException")
             {
-                throw new Thrift.TException();
+                throw new Thrift.TException("TException");
             }
             return;
         }
