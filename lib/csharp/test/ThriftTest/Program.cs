@@ -50,11 +50,11 @@ namespace Test
             {
                 return TestClient.Execute(subArgs) ? 0 : 1;
             }
-            ////the client must spawn the server in this case so that it knows the server's input and output streams
-            //if (args[0] == "ioStreamClient")
-            //{
-            //    return TestIOStreamClient.Execute(subArgs) ? 0 : 1;
-            //}
+            //the client must spawn the server in this case so that it knows the server's input and output streams
+            if (args[0] == "ioStreamClient")
+            {
+                return TestIOStreamClient.Execute(subArgs) ? 0 : 1;
+            }
             else if (args[0] == "server")
             {
                 return TestServer.Execute(subArgs) ? 0 : 1;

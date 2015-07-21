@@ -104,6 +104,7 @@
     <Compile Include="generated files\StructA.cs" />
     <Compile Include="generated files\StructB.cs" />
     <Compile Include="TestClient.cs" />
+    <Compile Include="TestIOStreamClient.cs" />
     <Compile Include="TestServer.cs" />
     <Compile Include="generated files\ThriftTest.cs" />
     <Compile Include="generated files\THRIFT~1.Constants.cs" />
