@@ -23,76 +23,52 @@ import sys, glob, os
 sys.path.insert(0, glob.glob(os.path.join(os.path.dirname(__file__),'../../lib/py/build/lib.*'))[0])
 
 import unittest
+
 import time
 from optparse import OptionParser
 
 parser = OptionParser()
 parser.add_option('--genpydir', type='string', dest='genpydir',
-                  default='gen-py',
-                  help='include this local directory in sys.path for locating generated code')
-parser.add_option("--port", type="int", dest="port",
-    help="connect to server at port")
-parser.add_option("--host", type="string", dest="host",
-    help="connect to server")
-parser.add_option("--zlib", action="store_true", dest="zlib",
-    help="use zlib wrapper for compressed transport")
-parser.add_option("--ssl", action="store_true", dest="ssl",
-    help="use SSL for encrypted transport")
-parser.add_option("--http", dest="http_path",
-    help="Use the HTTP transport with the specified path")
-parser.add_option('-v', '--verbose', action="store_const",
-    dest="verbose", const=2,
-    help="verbose output")
-parser.add_option('-q', '--quiet', action="store_const",
-    dest="verbose", const=0,
-    help="minimal output")
+                   default='gen-py',
+                   help='include this local directory in sys.path for locating generated code')
 parser.add_option('--protocol',  dest="proto", type="string",
-    help="protocol to use, one of: accel, binary, compact, json")
-parser.add_option('--transport',  dest="trans", type="string",
-    help="transport to use, one of: buffered, framed")
-parser.set_defaults(framed=False, http_path=None, verbose=1, host='localhost', port=9090, proto='binary')
+     help="protocol to use, one of: accel, binary, compact, json")
+
+parser.set_defaults(proto='binary')
 options, args = parser.parse_args()
 
 script_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(script_dir, options.genpydir))
 
+from subprocess import Popen, PIPE
+
 from ThriftTest import ThriftTest, SecondService
 from ThriftTest.ttypes import *
 from thrift.transport import TTransport
-from thrift.transport import TSocket
-from thrift.transport import THttpClient
-from thrift.transport import TZlibTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.protocol import TCompactProtocol
 from thrift.protocol import TJSONProtocol
+import thrift.Thrift
 
 class AbstractTest(unittest.TestCase):
   def setUp(self):
-    if options.http_path:
-      self.transport = THttpClient.THttpClient(options.host, port=options.port, path=options.http_path)
-    else:
-      if options.ssl:
-        from thrift.transport import TSSLSocket
-        socket = TSSLSocket.TSSLSocket(options.host, options.port, validate=False)
-      else:
-        socket = TSocket.TSocket(options.host, options.port)
-      # frame or buffer depending upon args
-      self.transport = TTransport.TBufferedTransport(socket)
-      if options.trans == 'framed':
-        self.transport = TTransport.TFramedTransport(socket)
-      elif options.trans == 'buffered':
-        self.transport = TTransport.TBufferedTransport(socket)
-      elif options.trans == '':
-        raise AssertionError('Unknown --transport option: %s' % options.trans)
-      if options.zlib:
-        self.transport = TZlibTransport.TZlibTransport(self.transport, 9)
-    self.transport.open()
+    self.p = Popen(['python', 'TestStreamServer.py', '--proto=' + options.proto,
+              '--genpydir=' + options.genpydir], stdin=PIPE, stdout=PIPE,
+              stderr=None, shell=False, universal_newlines=False)
+
+    sys.stdout = self.p.stdin
+    sys.stdin = self.p.stdout
+
+    self.transport = TTransport.TIOStreamTransport(sys.stdin, sys.stdout)
     protocol = self.protocol_factory.getProtocol(self.transport)
+    # protocol = TJSONProtocol.TJSONProtocol(self.transport)
     self.client = ThriftTest.Client(protocol)
 
+    self.transport.open()
+
   def tearDown(self):
-    # Close!
     self.transport.close()
+    self.p.kill()
 
   def testVoid(self):
     self.client.testVoid()
@@ -131,7 +107,7 @@ class AbstractTest(unittest.TestCase):
 
   def testNest(self):
     inner = Xtruct(string_thing="Zero", byte_thing=1, i32_thing=-3,
-      i64_thing=-5)
+      i64_thing=long(-5))
     x = Xtruct2(struct_thing=inner, byte_thing=0, i32_thing=0)
     y = self.client.testNest(x)
     self.assertEqual(y, x)
@@ -193,10 +169,10 @@ class AbstractTest(unittest.TestCase):
       #self.assertEqual(x_repr, 'Xception(errorCode=1001, message=\'Xception\')')
 
     try:
-      self.client.testException("throw_undeclared")
-      self.fail("should have thrown exception")
+        self.client.testException("throw_undeclared")
+        self.fail("should have thrown exception")
     except Exception: # type is undefined
-      pass
+        pass
 
   def testOneway(self):
     start = time.time()
@@ -239,11 +215,16 @@ def suite():
 
 class OwnArgsTestProgram(unittest.TestProgram):
     def parseArgs(self, argv):
-        if args:
-            self.testNames = args
-        else:
-            self.testNames = (self.defaultTest,)
+        self.testNames = (self.defaultTest,)
         self.createTests()
 
 if __name__ == "__main__":
-  OwnArgsTestProgram(defaultTest="suite", testRunner=unittest.TextTestRunner(verbosity=1))
+  # On Windows, have to adjust for binary data in stdin, stdout
+  if options.proto != 'json':
+      if sys.platform == "win32":
+          import msvcrt
+          msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+          msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
+
+  OwnArgsTestProgram(defaultTest="suite",
+        testRunner = unittest.TextTestRunner(stream = sys.stderr, verbosity=1))

@@ -25,7 +25,6 @@ SCRIPTPATH=$( cd $(dirname $0) ; pwd -P )
 # General dependencies
 sh ${SCRIPTPATH}/installCXXDependencies.sh
 
-#I don't understand this, but it solves an error.
 sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 3B4FE6ACC0B21F32
 
 # Java dependencies
