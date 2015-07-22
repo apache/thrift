@@ -34,26 +34,27 @@ import thrift.test.UnderscoreSrv;
 public class TestFullCamel extends TestCase {
 
   public void testCamelCaseSyntax() throws Exception {
-    TSerializer   binarySerializer   = new   TSerializer(new TBinaryProtocol.Factory());
-    TDeserializer binaryDeserializer = new TDeserializer(new TBinaryProtocol.Factory());
+	  TSerializer binarySerializer = new TSerializer(new TBinaryProtocol.Factory());
+	  TDeserializer binaryDeserializer = new TDeserializer(new TBinaryProtocol.Factory());
 
-    OneOfEachZZ obj = new OneOfEachZZ();
-    obj.setA_bite((byte) 0xae);
-    obj.setIm_false(true);
-    byte[] serBytes = binarySerializer.serialize(obj);
-    binaryDeserializer.deserialize(obj, serBytes);
-    assertTrue( obj.getA_bite() == (byte) 0xae );
-    assertTrue( obj.isIm_false() == true );
+
+	  OneOfEachZZ obj = new OneOfEachZZ();
+	  obj.setABite((byte) 0xae);
+	  obj.setImFalse(true);
+	  byte[] serBytes = binarySerializer.serialize(obj);
+	  binaryDeserializer.deserialize(obj, serBytes);
+	  assertTrue( obj.getABite() == (byte) 0xae );
+	  assertTrue( obj.isImFalse() == true );
   }
 
   public void testCamelCaseRpcMethods() throws Exception {
     final UnderscoreSrv.Iface srv = new UnderscoreSrv.Iface() {
       @Override
-      public long some_rpc_call(String message) {
+      public long someRpcCall(String message) {
         return 1l;
       }
     };
-    assertTrue(1l == srv.some_rpc_call("test"));
+    assertTrue(1l == srv.someRpcCall("test"));
   }
 }
 
