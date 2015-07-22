@@ -84,7 +84,7 @@
   </path>
 
   <!-- Tasks --> 
-  <target name="init" depends="clean,setup.init,mvn.init" unless="init.finished">
+  <target name="init" depends="setup.init,mvn.init" unless="init.finished">
     <property name="init.finished" value="true"/>
   </target>
 
@@ -159,12 +159,10 @@
 
   <target name="clean">
     <delete dir="${build.dir}"/>
-    <!--
 	<delete dir="${gen}"/>
     <delete dir="${genbean}"/>
     <delete dir="${genreuse}"/>
     <delete dir="${genfullcamel}"/>
-	-->
   </target>
 
   <target name="optional-generate" unless="no-gen-thrift"> 
