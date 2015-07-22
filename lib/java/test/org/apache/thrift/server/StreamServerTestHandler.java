@@ -43,117 +43,80 @@ public class StreamServerTestHandler {
 		public TestHandler() { }
 		
 		public void testVoid() {
-		    //System.out.print("testVoid()\n");
+
 		}
 		  
 		public String testString(String thing) {
-			//System.out.print("testString(\"" + thing + "\")\n");
 			return thing;
 		}
 		  
 		public byte testByte(byte thing) {
-			//System.out.print("testByte(" + thing + ")\n");
 			return thing;
 		}
 		  
 		public int testI32(int thing) {
-			//System.out.print("testI32(" + thing + ")\n");
 			return thing;
 		}
 		  
 		public long testI64(long thing) {
-			//System.out.print("testI64(" + thing + ")\n");
 			return thing;
 		}
 		  
 		public double testDouble(double thing) {
-			//System.out.print("testDouble(" + thing + ")\n");
 			return thing;
 		}
 
 		public ByteBuffer testBinary(ByteBuffer thing) {
 			String hexstr = "TODO: toHexString(thing)";
-			//System.out.print("testBinary(" + hexstr + ")\n");
 			return thing;
 		}
 
 		public Xtruct testStruct(Xtruct thing) {
-			/*System.out.print("testStruct({" +
-					"\"" + thing.string_thing + "\", " +
-					thing.byte_thing + ", " +
-					thing.i32_thing + ", " +
-					thing.i64_thing + "})\n");*/
 		    return thing;
 		}
 		
 		public Xtruct2 testNest(Xtruct2 nest) {
 			Xtruct thing = nest.struct_thing;
-			/*System.out.print("testNest({" +
-					nest.byte_thing + ", {" +
-					"\"" + thing.string_thing + "\", " +
-					thing.byte_thing + ", " +
-					thing.i32_thing + ", " +
-					thing.i64_thing + "}, " +
-					nest.i32_thing + "})\n");*/
 			return nest;
 		}
 		  
 		public Map<Integer,Integer> testMap(Map<Integer,Integer> thing) {
-			//System.out.print("testMap({");
-			//System.out.print(thing);
-			//System.out.print("})\n");
 			return thing;
 		}
 
 		public Map<String,String> testStringMap(Map<String,String> thing) {
-			//System.out.print("testStringMap({");
-			//System.out.print(thing);
-			//System.out.print("})\n");
 			return thing;
 		}
 		  
 		public Set<Integer> testSet(Set<Integer> thing) {
-			//System.out.print("testSet({");
 			boolean first = true;
 			for (int elem : thing) {
 				if (first) {
 					first = false;
-				} else {
-					//System.out.print(", ");
 				}
-		        //System.out.print(elem);
 			}
-			//System.out.print("})\n");
 			return thing;
 		}
 		  
 		public List<Integer> testList(List<Integer> thing) {
-			//System.out.print("testList({");
 			boolean first = true;
 			for (int elem : thing) {
 				if (first) {
 					first = false;
-				} else {
-					//System.out.print(", ");
-		        }
-				//System.out.print(elem);
+				} 
 		      }
-			//System.out.print("})\n");
 			return thing;
 		}
 		  
 		public Numberz testEnum(Numberz thing) {
-			//System.out.print("testEnum(" + thing + ")\n");
 			return thing;
 		}
 		  
 		public long testTypedef(long thing) {
-			//System.out.print("testTypedef(" + thing + ")\n");
 			return thing;
 		}
 		  
 		public Map<Integer,Map<Integer,Integer>> testMapMap(int hello) {
-			//System.out.print("testMapMap(" + hello + ")\n");
 			Map<Integer,Map<Integer,Integer>> mapmap =
 					new HashMap<Integer,Map<Integer,Integer>>();
 		  
@@ -171,7 +134,6 @@ public class StreamServerTestHandler {
 		}
 		  
 		public Map<Long, Map<Numberz,Insanity>> testInsanity(Insanity argument) {
-			//System.out.print("testInsanity()\n");
 		  
 			Xtruct hello = new Xtruct();
 			hello.string_thing = "Hello2";
@@ -211,7 +173,6 @@ public class StreamServerTestHandler {
 		}
 		  
 		public Xtruct testMulti(byte arg0, int arg1, long arg2, Map<Short,String> arg3, Numberz arg4, long arg5) {
-			//System.out.print("testMulti()\n");
 		  
 			Xtruct hello = new Xtruct();;
 			hello.string_thing = "Hello2";
@@ -222,7 +183,6 @@ public class StreamServerTestHandler {
 		}
 		  
 		public void testException(String arg) throws Xception, TException {
-			//System.out.print("testException("+arg+")\n");
 			if (arg.equals("Xception")) {
 				Xception x = new Xception();
 		        x.errorCode = 1001;
@@ -238,7 +198,6 @@ public class StreamServerTestHandler {
 		}
 		  
 		public Xtruct testMultiException(String arg0, String arg1) throws Xception, Xception2 {
-			//System.out.print("testMultiException(" + arg0 + ", " + arg1 + ")\n");
 			if (arg0.equals("Xception")) {
 				Xception x = new Xception();
 		        x.errorCode = 1001;
@@ -258,11 +217,8 @@ public class StreamServerTestHandler {
 		}
 		  
 		public void testOneway(int sleepFor) {
-			/*System.out.println("testOneway(" + Integer.toString(sleepFor) +
-		                         ") => sleeping...");*/
 			try {
 				Thread.sleep(sleepFor * 1000);
-		        //System.out.println("Done sleeping!");
 			} catch (InterruptedException ie) {
 		        throw new RuntimeException(ie);
 			}

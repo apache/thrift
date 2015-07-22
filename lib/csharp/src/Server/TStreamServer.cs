@@ -64,11 +64,11 @@ namespace Thrift.Server
 
                 if (client != null)
                 {
-                    inputTransport = inputTransportFactory.GetTransport(client);//EMMA: This is a new TFramedTransport with the transport set to the client (which is the transport).
+                    inputTransport = inputTransportFactory.GetTransport(client);
 
-                    outputTransport = outputTransportFactory.GetTransport(client);// EMMA: same as above
+                    outputTransport = outputTransportFactory.GetTransport(client);
 
-                    inputProtocol = inputProtocolFactory.GetProtocol(inputTransport);//EMMA: these each return a TProtocol. Which gets created using the transport.
+                    inputProtocol = inputProtocolFactory.GetProtocol(inputTransport);
                     outputProtocol = outputProtocolFactory.GetProtocol(outputTransport);
 
                     //Process client requests until client disconnects
