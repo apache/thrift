@@ -48,6 +48,7 @@ script:
 
 after_failure:
   - if [ "x$ERROR_LOG" != "xnone" ] ; then cat $ERROR_LOG ; fi
+	"cat home/travis/build/emma58/thrift/lib/java/build/test/log/TEST-org.apache.thrift.test.TestIOStreamClient.txt"
 
 env:
   global:

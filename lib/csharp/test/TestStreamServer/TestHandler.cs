@@ -1,4 +1,23 @@
-﻿using System;
+﻿/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,72 +34,53 @@ namespace Thrift.Test
 
         public void testVoid()
         {
-            //Console.WriteLine("testVoid()");
+
         }
 
         public string testString(string thing)
         {
-            //Console.WriteLine("teststring(\"" + thing + "\")");
             return thing;
         }
 
         public sbyte testByte(sbyte thing)
         {
-            //Console.WriteLine("testByte(" + thing + ")");
             return thing;
         }
 
         public int testI32(int thing)
         {
-            //Console.WriteLine("testI32(" + thing + ")");
             return thing;
         }
 
         public long testI64(long thing)
         {
-            //Console.WriteLine("testI64(" + thing + ")");
             return thing;
         }
 
         public double testDouble(double thing)
         {
-            //Console.WriteLine("testDouble(" + thing + ")");
             return thing;
         }
 
         public byte[] testBinary(byte[] thing)
         {
             string hex = BitConverter.ToString(thing).Replace("-", string.Empty);
-            //Console.WriteLine("testBinary(" + hex + ")");
             return thing;
         }
 
         public Xtruct testStruct(Xtruct thing)
         {
-            /*Console.WriteLine("testStruct({" +
-                             "\"" + thing.String_thing + "\", " +
-                             thing.Byte_thing + ", " +
-                             thing.I32_thing + ", " +
-                             thing.I64_thing + "})");*/
             return thing;
         }
 
         public Xtruct2 testNest(Xtruct2 nest)
         {
             Xtruct thing = nest.Struct_thing;
-            /*Console.WriteLine("testNest({" +
-                             nest.Byte_thing + ", {" +
-                             "\"" + thing.String_thing + "\", " +
-                             thing.Byte_thing + ", " +
-                             thing.I32_thing + ", " +
-                             thing.I64_thing + "}, " +
-                             nest.I32_thing + "})");*/
             return nest;
         }
 
         public Dictionary<int, int> testMap(Dictionary<int, int> thing)
         {
-            //Console.WriteLine("testMap({");
             bool first = true;
             foreach (int key in thing.Keys)
             {
@@ -90,17 +90,13 @@ namespace Thrift.Test
                 }
                 else
                 {
-                    //Console.WriteLine(", ");
                 }
-                //Console.WriteLine(key + " => " + thing[key]);
             }
-            //Console.WriteLine("})");
             return thing;
         }
 
         public Dictionary<string, string> testStringMap(Dictionary<string, string> thing)
         {
-            //Console.WriteLine("testStringMap({");
             bool first = true;
             foreach (string key in thing.Keys)
             {
@@ -110,17 +106,13 @@ namespace Thrift.Test
                 }
                 else
                 {
-                    //Console.WriteLine(", ");
                 }
-                //Console.WriteLine(key + " => " + thing[key]);
             }
-            //Console.WriteLine("})");
             return thing;
         }
 
         public THashSet<int> testSet(THashSet<int> thing)
         {
-            //Console.WriteLine("testSet({");
             bool first = true;
             foreach (int elem in thing)
             {
@@ -130,17 +122,13 @@ namespace Thrift.Test
                 }
                 else
                 {
-                    //Console.WriteLine(", ");
                 }
-                //Console.WriteLine(elem);
             }
-            //Console.WriteLine("})");
             return thing;
         }
 
         public List<int> testList(List<int> thing)
         {
-            //Console.WriteLine("testList({");
             bool first = true;
             foreach (int elem in thing)
             {
@@ -150,29 +138,23 @@ namespace Thrift.Test
                 }
                 else
                 {
-                    //Console.WriteLine(", ");
                 }
-                //Console.WriteLine(elem);
             }
-            //Console.WriteLine("})");
             return thing;
         }
 
         public Numberz testEnum(Numberz thing)
         {
-            //Console.WriteLine("testEnum(" + thing + ")");
             return thing;
         }
 
         public long testTypedef(long thing)
         {
-            //Console.WriteLine("testTypedef(" + thing + ")");
             return thing;
         }
 
         public Dictionary<int, Dictionary<int, int>> testMapMap(int hello)
         {
-            //Console.WriteLine("testMapMap(" + hello + ")");
             Dictionary<int, Dictionary<int, int>> mapmap =
               new Dictionary<int, Dictionary<int, int>>();
 
@@ -192,7 +174,6 @@ namespace Thrift.Test
 
         public Dictionary<long, Dictionary<Numberz, Insanity>> testInsanity(Insanity argument)
         {
-            //Console.WriteLine("testInsanity()");
 
             Xtruct hello = new Xtruct();
             hello.String_thing = "Hello2";
@@ -234,8 +215,6 @@ namespace Thrift.Test
 
         public Xtruct testMulti(sbyte arg0, int arg1, long arg2, Dictionary<short, string> arg3, Numberz arg4, long arg5)
         {
-            //Console.WriteLine("testMulti()");
-
             Xtruct hello = new Xtruct(); ;
             hello.String_thing = "Hello2";
             hello.Byte_thing = arg0;
@@ -244,16 +223,8 @@ namespace Thrift.Test
             return hello;
         }
 
-        /**
-         * Print 'testException(%s)' with arg as '%s'
-         * @param string arg - a string indication what type of exception to throw
-         * if arg == "Xception" throw Xception with errorCode = 1001 and message = arg
-         * elsen if arg == "TException" throw TException
-         * else do not throw anything
-         */
         public void testException(string arg)
         {
-            //Console.WriteLine("testException(" + arg + ")");
             if (arg == "Xception")
             {
                 Xception x = new Xception();
@@ -270,7 +241,6 @@ namespace Thrift.Test
 
         public Xtruct testMultiException(string arg0, string arg1)
         {
-            //Console.WriteLine("testMultiException(" + arg0 + ", " + arg1 + ")");
             if (arg0 == "Xception")
             {
                 Xception x = new Xception();
@@ -302,9 +272,7 @@ namespace Thrift.Test
 
         public void testOneway(int arg)
         {
-            //Console.WriteLine("testOneway(" + arg + "), sleeping...");
             System.Threading.Thread.Sleep(arg * 1000);
-            //Console.WriteLine("testOneway finished");
         }
     }
 
