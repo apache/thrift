@@ -41,6 +41,7 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
 
 #include "t_oop_generator.h"
 
+
 /**
  * JS code generator.
  */
@@ -180,6 +181,8 @@ public:
            + "//\n" + "// DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING\n"
            + "//\n";
   }
+
+  t_type* get_contained_type(t_type* t);
 
   std::vector<std::string> js_namespace_pieces(t_program* p) {
     std::string ns = p->get_namespace("js");
@@ -436,7 +439,7 @@ void t_js_generator::generate_enum(t_enum* tenum) {
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     if (gen_ts_) {
-      f_types_ts_ << ts_indent() << "'" << (*c_iter)->get_name() << "' = " << value << "," << endl;
+      f_types_ts_ << ts_indent() << (*c_iter)->get_name() << " = " << value << "," << endl;
       // add 'value: key' in addition to 'key: value' for TypeScript enums
       f_types_ << indent() << "'" << value << "' : '" << (*c_iter)->get_name() << "'," << endl;
     }
@@ -601,6 +604,22 @@ void t_js_generator::generate_js_struct(t_struct* tstruct, bool is_exception) {
 }
 
 /**
+ * Return type of contained elements for a container type. For maps
+ * this is type of value (keys are always strings in js)
+ */
+t_type* t_js_generator::get_contained_type(t_type* t) {
+  t_type* etype;
+  if (t->is_list()) {
+    etype = ((t_list*)t)->get_elem_type();
+  } else if (t->is_set()) {
+    etype = ((t_set*)t)->get_elem_type();
+  } else {
+    etype = ((t_map*)t)->get_val_type();
+  }
+  return etype;
+}
+
+/**
  * Generates a struct definition for a thrift data type. This is nothing in JS
  * where the objects are all just associative arrays (unless of course we
  * decide to start using objects for them...)
@@ -685,9 +704,47 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
     }
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      t_type* t = get_true_type((*m_iter)->get_type());
       out << indent() << indent() << "if (args." << (*m_iter)->get_name() << " !== undefined) {"
-          << endl << indent() << indent() << indent() << "this." << (*m_iter)->get_name()
-          << " = args." << (*m_iter)->get_name() << ";" << endl;
+          << endl << indent() << indent() << indent() << "this." << (*m_iter)->get_name();
+
+      if (t->is_struct()) {
+        out << (" = new " + js_type_namespace(t->get_program()) + t->get_name() +
+                "(args."+(*m_iter)->get_name() +");");
+        out << endl;
+      } else if (t->is_container()) {
+        t_type* etype = get_contained_type(t);
+        string copyFunc = t->is_map() ? "Thrift.copyMap" : "Thrift.copyList";
+        string type_list = "";
+
+        while (etype->is_container()) {
+          if (type_list.length() > 0) {
+            type_list += ", ";
+          }
+          type_list += etype->is_map() ? "Thrift.copyMap" : "Thrift.copyList";
+          etype = get_contained_type(etype);
+        }
+
+        if (etype->is_struct()) {
+          if (type_list.length() > 0) {
+            type_list += ", ";
+          }
+          type_list += js_type_namespace(etype->get_program()) + etype->get_name();
+        }
+        else {
+          if (type_list.length() > 0) {
+            type_list += ", ";
+          }
+          type_list += "null";
+        }
+
+        out << (" = " + copyFunc + "(args." + (*m_iter)->get_name() +
+                ", [" + type_list + "]);");
+        out << endl;
+      } else {
+        out << " = args." << (*m_iter)->get_name() << ";" << endl;
+      }
+
       if (!(*m_iter)->get_req()) {
         out << indent() << indent() << "} else {" << endl << indent() << indent() << indent()
             << "throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, "
@@ -2043,7 +2100,12 @@ string t_js_generator::ts_get_type(t_type* type) {
       ts_type = "void";
     }
   } else if (type->is_enum() || type->is_struct() || type->is_xception()) {
-    ts_type = type->get_name();
+    std::string type_name;
+    if (type->get_program()) {
+      type_name = js_namespace(type->get_program());
+    }
+    type_name.append(type->get_name());
+    ts_type = type_name;
   } else if (type->is_list() || type->is_set()) {
     t_type* etype;
 
@@ -2058,8 +2120,13 @@ string t_js_generator::ts_get_type(t_type* type) {
     string ktype = ts_get_type(((t_map*)type)->get_key_type());
     string vtype = ts_get_type(((t_map*)type)->get_val_type());
 
-    if (ktype == "number" || ktype == "string") {
+
+    if (ktype == "number" || ktype == "string" ) {
       ts_type = "{ [k: " + ktype + "]: " + vtype + "; }";
+    } else if ((((t_map*)type)->get_key_type())->is_enum()) {
+      // Not yet supported (enum map): https://github.com/Microsoft/TypeScript/pull/2652
+      //ts_type = "{ [k: " + ktype + "]: " + vtype + "; }";
+      ts_type = "{ [k: number /*" + ktype + "*/]: " + vtype + "; }";
     } else {
       ts_type = "any";
     }
@@ -2085,7 +2152,7 @@ std::string t_js_generator::ts_function_signature(t_function* tfunction, bool in
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     str += (*f_iter)->get_name() + ts_get_req(*f_iter) + ": " + ts_get_type((*f_iter)->get_type());
 
-    if (f_iter + 1 != fields.end() || include_callback) {
+    if (f_iter + 1 != fields.end() || (include_callback && fields.size() > 0)) {
       str += ", ";
     }
   }

@@ -22,6 +22,10 @@
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TCompactProtocol.h>
 #include <thrift/transport/TBufferTransports.h>
+
+#define BOOST_TEST_MODULE AllProtocolTests
+#include <boost/test/unit_test.hpp>
+
 #include "AllProtocolTests.tcc"
 
 using namespace apache::thrift;
@@ -30,15 +34,14 @@ using namespace apache::thrift::transport;
 
 char errorMessage[ERR_LEN];
 
-int main(int argc, char** argv) {
-  (void)argc;
-  (void)argv;
-  try {
-    testProtocol<TBinaryProtocol>("TBinaryProtocol");
-    testProtocol<TCompactProtocol>("TCompactProtocol");
-  } catch (TException e) {
-    printf("%s\n", e.what());
-    return 1;
-  }
-  return 0;
+BOOST_AUTO_TEST_CASE(test_binary_protocol) {
+  testProtocol<TBinaryProtocol>("TBinaryProtocol");
+}
+
+BOOST_AUTO_TEST_CASE(test_little_binary_protocol) {
+  testProtocol<TLEBinaryProtocol>("TLEBinaryProtocol");
+}
+
+BOOST_AUTO_TEST_CASE(test_compact_protocol) {
+  testProtocol<TCompactProtocol>("TCompactProtocol");
 }

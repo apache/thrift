@@ -304,7 +304,7 @@ public:
     hello.i64_thing = (int64_t)arg2;
   }
 
-  void testException(const std::string& arg) throw(Xception, apache::thrift::TException) {
+  void testException(const std::string& arg) {
     printf("testException(%s)\n", arg.c_str());
     if (arg.compare("Xception") == 0) {
       Xception e;
@@ -323,7 +323,7 @@ public:
 
   void testMultiException(Xtruct& result,
                           const std::string& arg0,
-                          const std::string& arg1) throw(Xception, Xception2) {
+                          const std::string& arg1) {
 
     printf("testMultiException(%s, %s)\n", arg0.c_str(), arg1.c_str());
 

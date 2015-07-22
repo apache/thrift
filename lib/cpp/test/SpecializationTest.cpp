@@ -1,21 +1,20 @@
 #define _USE_MATH_DEFINES
-#include <iostream>
 #include <cmath>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <gen-cpp/DebugProtoTest_types.h>
 
-using std::cout;
-using std::endl;
 using namespace thrift::test::debug;
 using namespace apache::thrift::transport;
 using namespace apache::thrift::protocol;
 
+#define BOOST_TEST_MODULE SpecializationTest
+#include <boost/test/unit_test.hpp>
+
 typedef TBinaryProtocolT<TMemoryBuffer> MyProtocol;
 // typedef TBinaryProtocolT<TTransport> MyProtocol;
 
-int main() {
-
+BOOST_AUTO_TEST_CASE(test_specialization_1) {
   OneOfEach ooe;
   ooe.im_true = true;
   ooe.im_false = false;
@@ -35,9 +34,11 @@ int main() {
   n.my_ooe.integer64 = 64;
   n.my_ooe.double_precision = (std::sqrt(5.0) + 1) / 2;
   n.my_ooe.some_characters = ":R (me going \"rrrr\")";
-  n.my_ooe.zomg_unicode     = "\xd3\x80\xe2\x85\xae\xce\x9d\x20"
-                              "\xd0\x9d\xce\xbf\xe2\x85\xbf\xd0\xbe\xc9\xa1\xd0\xb3\xd0\xb0\xcf\x81\xe2\x84\x8e"
-                              "\x20\xce\x91\x74\x74\xce\xb1\xe2\x85\xbd\xce\xba\xc7\x83\xe2\x80\xbc";
+  n.my_ooe.zomg_unicode     = "\xd3\x80\xe2\x85\xae\xce\x9d\x20\xd0\x9d\xce"
+                              "\xbf\xe2\x85\xbf\xd0\xbe\xc9\xa1\xd0\xb3\xd0"
+                              "\xb0\xcf\x81\xe2\x84\x8e\x20\xce\x91\x74\x74"
+                              "\xce\xb1\xe2\x85\xbd\xce\xba\xc7\x83\xe2\x80"
+                              "\xbc";
   n.my_bonk.type = 31337;
   n.my_bonk.message = "I am a bonk... xor!";
 
@@ -84,25 +85,19 @@ int main() {
   boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
   boost::shared_ptr<TProtocol> proto(new MyProtocol(buffer));
 
-  cout << "Testing ooe" << endl;
-
   ooe.write(proto.get());
   OneOfEach ooe2;
   ooe2.read(proto.get());
 
-  assert(ooe == ooe2);
-
-  cout << "Testing hm" << endl;
+  BOOST_CHECK(ooe == ooe2);
 
   hm.write(proto.get());
   HolyMoley hm2;
   hm2.read(proto.get());
 
-  assert(hm == hm2);
+  BOOST_CHECK(hm == hm2);
 
   hm2.big[0].a_bite = 0x00;
 
-  assert(hm != hm2);
-
-  return 0;
+  BOOST_CHECK(hm != hm2);
 }

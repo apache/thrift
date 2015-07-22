@@ -160,7 +160,7 @@ type
     function Select( ReadReady, WriteReady, ExceptFlag: PBoolean;
                      TimeOut: Integer; var wsaError : Integer): Integer;
     function WaitForData( TimeOut : Integer; pBuf : Pointer; DesiredBytes: Integer;
-                          var wsaError : Integer): TWaitForData;
+                          var wsaError, bytesReady : Integer): TWaitForData;
   protected
     procedure Write( const buffer: TBytes; offset: Integer; count: Integer); override;
     function Read( var buffer: TBytes; offset: Integer; count: Integer): Integer; override;
@@ -1277,10 +1277,12 @@ end;
 
 function TTcpSocketStreamImpl.WaitForData( TimeOut : Integer; pBuf : Pointer;
                                            DesiredBytes : Integer;
-                                           var wsaError : Integer): TWaitForData;
+                                           var wsaError, bytesReady : Integer): TWaitForData;
 var bCanRead, bError : Boolean;
     retval : Integer;
 begin
+  bytesReady := 0;
+
   // The select function returns the total number of socket handles that are ready
   // and contained in the fd_set structures, zero if the time limit expired,
   // or SOCKET_ERROR if an error occurred. If the return value is SOCKET_ERROR,
@@ -1297,42 +1299,48 @@ begin
   if retval <= 0
   then Exit( TWaitForData.wfd_Error);
 
-  // Enough data ready to be read?
-  if retval = DesiredBytes
-  then result := TWaitForData.wfd_HaveData
-  else result := TWaitForData.wfd_Timeout;
+  // at least we have some data
+  bytesReady := Min( retval, DesiredBytes);
+  result := TWaitForData.wfd_HaveData;
 end;
 
 function TTcpSocketStreamImpl.Read(var buffer: TBytes; offset, count: Integer): Integer;
 var wfd : TWaitForData;
-    wsaError : Integer;
-    pDest : Pointer;
+    wsaError, nBytes : Integer;
+    pDest : PByte;
 const
   SLEEP_TIME = 200;
 begin
   inherited;
 
+  result := 0;
   pDest := Pointer(@buffer[offset]);
+  while count > 0 do begin
 
-  while TRUE do begin
-    if FTimeout > 0
-    then wfd := WaitForData( FTimeout,   pDest, count, wsaError)
-    else wfd := WaitForData( SLEEP_TIME, pDest, count, wsaError);
+    while TRUE do begin
+      if FTimeout > 0
+      then wfd := WaitForData( FTimeout,   pDest, count, wsaError, nBytes)
+      else wfd := WaitForData( SLEEP_TIME, pDest, count, wsaError, nBytes);
 
-    case wfd of
-      TWaitForData.wfd_Error    :  Exit(0);
-      TWaitForData.wfd_HaveData :  Break;
-      TWaitForData.wfd_Timeout  :  begin
-        if (FTimeout > 0)
-        then raise TTransportException.Create( TTransportException.TExceptionType.TimedOut,
-                                               SysErrorMessage(Cardinal(wsaError)));
+      case wfd of
+        TWaitForData.wfd_Error    :  Exit(0);
+        TWaitForData.wfd_HaveData :  Break;
+        TWaitForData.wfd_Timeout  :  begin
+          if (FTimeout > 0)
+          then raise TTransportException.Create( TTransportException.TExceptionType.TimedOut,
+                                                 SysErrorMessage(Cardinal(wsaError)));
+        end;
+      else
+        ASSERT( FALSE);
       end;
-    else
-      ASSERT( FALSE);
     end;
-  end;
 
-  Result := FTcpClient.ReceiveBuf( pDest^, count);
+    ASSERT( nBytes <= count);
+    nBytes := FTcpClient.ReceiveBuf( pDest^, nBytes);
+    Inc( pDest, nBytes);
+    Dec( count, nBytes);
+    Inc( result, nBytes);
+  end;
 end;
 
 function TTcpSocketStreamImpl.ToArray: TBytes;

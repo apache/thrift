@@ -38,7 +38,7 @@ struct Handler : public test::ParentServiceIf {
   // dummy overrides not used in this test
   int32_t incrementGeneration() { return 0; }
   int32_t getGeneration() { return 0; }
-  void getDataWait(std::string&, int32_t) {}
+  void getDataWait(std::string&, const int32_t) {}
   void onewayWait() {}
   void exceptionWait(const std::string&) {}
   void unexpectedExceptionWait(const std::string&) {}
@@ -46,14 +46,14 @@ struct Handler : public test::ParentServiceIf {
 
 class Fixture {
 private:
-  struct Runner : public concurrency::Runnable {
+  struct Runner : public apache::thrift::concurrency::Runnable {
     boost::shared_ptr<server::TNonblockingServer> server;
     bool error;
     virtual void run() {
       error = false;
       try {
         server->serve();
-      } catch (const TException& x) {
+      } catch (const TException&) {
         error = true;
       }
     }
@@ -80,8 +80,8 @@ protected:
   }
 
   int startServer(int port) {
-    boost::scoped_ptr<concurrency::ThreadFactory> threadFactory(
-        new concurrency::PlatformThreadFactory(
+    boost::scoped_ptr<apache::thrift::concurrency::ThreadFactory> threadFactory(
+      new apache::thrift::concurrency::PlatformThreadFactory(
 #if !USE_BOOST_THREAD && !USE_STD_THREAD
             concurrency::PlatformThreadFactory::OTHER,
             concurrency::PlatformThreadFactory::NORMAL,
@@ -95,7 +95,7 @@ protected:
       if (userEventBase_) {
         try {
           server->registerEvents(userEventBase_.get());
-        } catch (const TException& x) {
+        } catch (const TException&) {
           // retry with next port
           continue;
         }
@@ -128,7 +128,7 @@ protected:
 private:
   boost::shared_ptr<event_base> userEventBase_;
   boost::shared_ptr<test::ParentServiceProcessor> processor;
-  boost::shared_ptr<concurrency::Thread> thread;
+  boost::shared_ptr<apache::thrift::concurrency::Thread> thread;
 
 protected:
   boost::shared_ptr<server::TNonblockingServer> server;

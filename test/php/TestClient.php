@@ -38,8 +38,10 @@ $loader->register();
  */
 
 /** Include the Thrift base */
-/** Include the binary protocol */
+/** Include the protocols */
 use Thrift\Protocol\TBinaryProtocol;
+use Thrift\Protocol\TCompactProtocol;
+use Thrift\Protocol\TJSONProtocol;
 
 /** Include the socket layer */
 use Thrift\Transport\TSocket;
@@ -48,6 +50,19 @@ use Thrift\Transport\TSocketPool;
 /** Include the socket layer */
 use Thrift\Transport\TFramedTransport;
 use Thrift\Transport\TBufferedTransport;
+
+function makeProtocol($transport, $PROTO)
+{
+  if ($PROTO == 'binary') {
+    return new TBinaryProtocol($transport);
+  } else if ($PROTO == 'compact') {
+    return new TCompactProtocol($transport);
+  } else if ($PROTO == 'json') {
+    return new TJSONProtocol($transport);
+  }
+
+  die ("--protocol must be one of {binary|compact|json}");
+}
 
 $host = 'localhost';
 $port = 9090;
@@ -63,9 +78,11 @@ if ($argc > 2) {
 foreach ($argv as $arg) {
   if (substr($arg, 0, 7) == '--port=') {
     $port = substr($arg, 7);
-  } else if (substr($arg, 0, 11) == '--transport=') {
-    $MODE = substr($arg, 11);
-  }
+  } else if (substr($arg, 0, 12) == '--transport=') {
+    $MODE = substr($arg, 12);
+  } else if (substr($arg, 0, 11) == '--protocol=') {
+    $PROTO = substr($arg, 11);
+  } 
 }
 
 $hosts = array('localhost');
@@ -80,12 +97,12 @@ if ($MODE == 'inline') {
 } else if ($MODE == 'framed') {
   $framedSocket = new TFramedTransport($socket);
   $transport = $framedSocket;
-  $protocol = new TBinaryProtocol($transport);
+  $protocol = makeProtocol($transport, $PROTO);
   $testClient = new \ThriftTest\ThriftTestClient($protocol);
 } else {
   $bufferedSocket = new TBufferedTransport($socket, 1024, 1024);
   $transport = $bufferedSocket;
-  $protocol = new TBinaryProtocol($transport);
+  $protocol = makeProtocol($transport, $PROTO);
   $testClient = new \ThriftTest\ThriftTestClient($protocol);
 }
 

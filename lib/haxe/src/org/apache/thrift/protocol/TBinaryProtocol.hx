@@ -31,7 +31,7 @@ import org.apache.thrift.transport.TTransport;
 /**
 * Binary protocol implementation for thrift.
 */
-class TBinaryProtocol implements TProtocol {
+class TBinaryProtocol extends TRecursionTracker implements TProtocol {
 
     private static var ANONYMOUS_STRUCT:TStruct = new TStruct();
 

@@ -2339,6 +2339,10 @@ string t_py_generator::argument_list(t_struct* tstruct, vector<string>* pre, vec
 }
 
 string t_py_generator::type_name(t_type* ttype) {
+  while (ttype->is_typedef()) {
+    ttype = ((t_typedef*)ttype)->get_type();
+  }
+
   t_program* program = ttype->get_program();
   if (ttype->is_service()) {
     return get_real_py_module(program, gen_twisted_) + "." + ttype->get_name();

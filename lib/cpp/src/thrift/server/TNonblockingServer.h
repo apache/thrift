@@ -38,6 +38,8 @@
 #include <unistd.h>
 #endif
 #include <event.h>
+#include <event2/event_compat.h>
+#include <event2/event_struct.h>
 
 namespace apache {
 namespace thrift {

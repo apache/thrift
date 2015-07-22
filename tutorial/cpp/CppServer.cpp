@@ -18,14 +18,17 @@
  */
 
 #include <thrift/concurrency/ThreadManager.h>
-#include <thrift/concurrency/PosixThreadFactory.h>
+#include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/server/TThreadPoolServer.h>
 #include <thrift/server/TThreadedServer.h>
 #include <thrift/transport/TServerSocket.h>
+#include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/TToString.h>
+
+#include <boost/make_shared.hpp>
 
 #include <iostream>
 #include <stdexcept>
@@ -104,37 +107,71 @@ protected:
   map<int32_t, SharedStruct> log;
 };
 
-int main() {
-  boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
-  boost::shared_ptr<CalculatorHandler> handler(new CalculatorHandler());
-  boost::shared_ptr<TProcessor> processor(new CalculatorProcessor(handler));
-  boost::shared_ptr<TServerTransport> serverTransport(new TServerSocket(9090));
-  boost::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+/*
+  CalculatorIfFactory is code generated.
+  CalculatorCloneFactory is useful for getting access to the server side of the
+  transport.  It is also useful for making per-connection state.  Without this
+  CloneFactory, all connections will end up sharing the same handler instance.
+*/
+class CalculatorCloneFactory : virtual public CalculatorIfFactory {
+ public:
+  virtual ~CalculatorCloneFactory() {}
+  virtual CalculatorIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo)
+  {
+    boost::shared_ptr<TSocket> sock = boost::dynamic_pointer_cast<TSocket>(connInfo.transport);
+    cout << "Incoming connection\n";
+    cout << "\tSocketInfo: "  << sock->getSocketInfo() << "\n";
+    cout << "\tPeerHost: "    << sock->getPeerHost() << "\n";
+    cout << "\tPeerAddress: " << sock->getPeerAddress() << "\n";
+    cout << "\tPeerPort: "    << sock->getPeerPort() << "\n";
+    return new CalculatorHandler;
+  }
+  virtual void releaseHandler( ::shared::SharedServiceIf* handler) {
+    delete handler;
+  }
+};
 
-  TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
+int main() {
+  TThreadedServer server(
+    boost::make_shared<CalculatorProcessorFactory>(boost::make_shared<CalculatorCloneFactory>()),
+    boost::make_shared<TServerSocket>(9090), //port
+    boost::make_shared<TBufferedTransportFactory>(),
+    boost::make_shared<TBinaryProtocolFactory>());
+
+  /*
+  // if you don't need per-connection state, do the following instead
+  TThreadedServer server(
+    boost::make_shared<CalculatorProcessor>(boost::make_shared<CalculatorHandler>()),
+    boost::make_shared<TServerSocket>(9090), //port
+    boost::make_shared<TBufferedTransportFactory>(),
+    boost::make_shared<TBinaryProtocolFactory>());
+  */
 
   /**
-   * Or you could do one of these
+   * Here are some alternate server types...
+
+  // This server only allows one connection at a time, but spawns no threads
+  TSimpleServer server(
+    boost::make_shared<CalculatorProcessor>(boost::make_shared<CalculatorHandler>()),
+    boost::make_shared<TServerSocket>(9090),
+    boost::make_shared<TBufferedTransportFactory>(),
+    boost::make_shared<TBinaryProtocolFactory>());
 
   const int workerCount = 4;
 
   boost::shared_ptr<ThreadManager> threadManager =
     ThreadManager::newSimpleThreadManager(workerCount);
-  boost::shared_ptr<PosixThreadFactory> threadFactory =
-    boost::shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
-  threadManager->threadFactory(threadFactory);
+  threadManager->threadFactory(
+    boost::make_shared<PlatformThreadFactory>());
   threadManager->start();
-  TThreadPoolServer server(processor,
-                           serverTransport,
-                           transportFactory,
-                           protocolFactory,
-                           threadManager);
 
-  TThreadedServer server(processor,
-                         serverTransport,
-                         transportFactory,
-                         protocolFactory);
-
+  // This server allows "workerCount" connection at a time, and reuses threads
+  TThreadPoolServer server(
+    boost::make_shared<CalculatorProcessorFactory>(boost::make_shared<CalculatorCloneFactory>()),
+    boost::make_shared<TServerSocket>(9090),
+    boost::make_shared<TBufferedTransportFactory>(),
+    boost::make_shared<TBinaryProtocolFactory>(),
+    threadManager);
   */
 
   cout << "Starting the server..." << endl;

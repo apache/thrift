@@ -82,13 +82,14 @@ check_PROGRAMS = \
 	SpecializationTest \
 	AllProtocolsTest \
 	TransportTest \
-	TSocketInterruptTest \
+	TInterruptTest \
 	TServerIntegrationTest \
 	ZlibTest \
 	TFileTransportTest \
 	link_test \
 	OpenSSLManualInitTest \
-	EnumTest
+	EnumTest \
+	DenseProtoTest
 
 if AMX_HAVE_LIBEVENT
 noinst_PROGRAMS += \
@@ -124,10 +125,10 @@ UnitTests_LDADD = \
   libtestgencpp.la \
   $(BOOST_TEST_LDADD)
 
-TSocketInterruptTest_SOURCES = \
+TInterruptTest_SOURCES = \
 	TSocketInterruptTest.cpp
 
-TSocketInterruptTest_LDADD = \
+TInterruptTest_LDADD = \
   libtestgencpp.la \
   $(BOOST_TEST_LDADD) \
   $(BOOST_CHRONO_LDADD) \
@@ -182,8 +183,9 @@ TFileTransportTest_LDADD = \
 TFDTransportTest_SOURCES = \
 	TFDTransportTest.cpp
 
-TFDTransportTest_LDADD = \
-	$(top_builddir)/lib/cpp/libthrift.la
+TFDTransportTest_LDADD =  \
+	$(top_builddir)/lib/cpp/libthrift.la \
+	$(BOOST_TEST_LDADD)
 
 
 #
@@ -193,7 +195,8 @@ TPipedTransportTest_SOURCES = \
 	TPipedTransportTest.cpp
 
 TPipedTransportTest_LDADD = \
-	$(top_builddir)/lib/cpp/libthrift.la
+	$(top_builddir)/lib/cpp/libthrift.la \
+	$(BOOST_TEST_LDADD)
 
 #
 # AllProtocolsTest
@@ -203,7 +206,9 @@ AllProtocolsTest_SOURCES = \
 	AllProtocolTests.tcc \
 	GenericHelpers.h
 
-AllProtocolsTest_LDADD = libtestgencpp.la
+AllProtocolsTest_LDADD = \
+  libtestgencpp.la \
+  $(BOOST_TEST_LDADD)
 
 #
 # DebugProtoTest
@@ -211,7 +216,9 @@ AllProtocolsTest_LDADD = libtestgencpp.la
 DebugProtoTest_SOURCES = \
 	DebugProtoTest.cpp
 
-DebugProtoTest_LDADD = libtestgencpp.la
+DebugProtoTest_LDADD = \
+	libtestgencpp.la \
+	$(BOOST_TEST_LDADD)
 
 
 #
@@ -220,7 +227,9 @@ DebugProtoTest_LDADD = libtestgencpp.la
 JSONProtoTest_SOURCES = \
 	JSONProtoTest.cpp
 
-JSONProtoTest_LDADD = libtestgencpp.la
+JSONProtoTest_LDADD = \
+	libtestgencpp.la \
+	$(BOOST_TEST_LDADD)
 
 #
 # TNonblockingServerTest
@@ -240,7 +249,9 @@ TNonblockingServerTest_LDADD = libprocessortest.la \
 OptionalRequiredTest_SOURCES = \
 	OptionalRequiredTest.cpp
 
-OptionalRequiredTest_LDADD = libtestgencpp.la
+OptionalRequiredTest_LDADD = \
+	libtestgencpp.la \
+	$(BOOST_TEST_LDADD)
 
 #
 # OptionalRequiredTest
@@ -248,7 +259,19 @@ OptionalRequiredTest_LDADD = libtestgencpp.la
 RecursiveTest_SOURCES = \
 	RecursiveTest.cpp
 
-RecursiveTest_LDADD = libtestgencpp.la
+RecursiveTest_LDADD = \
+	libtestgencpp.la \
+	$(BOOST_TEST_LDADD)
+
+#
+# DenseProtoTest
+#
+DenseProtoTest_SOURCES = \
+	DenseProtoTest.cpp
+
+DenseProtoTest_LDADD = \
+	libtestgencpp.la \
+	$(BOOST_TEST_LDADD)
 
 #
 # SpecializationTest
@@ -256,7 +279,9 @@ RecursiveTest_LDADD = libtestgencpp.la
 SpecializationTest_SOURCES = \
 	SpecializationTest.cpp
 
-SpecializationTest_LDADD = libtestgencpp.la
+SpecializationTest_LDADD = \
+	libtestgencpp.la \
+	$(BOOST_TEST_LDADD)
 
 concurrency_test_SOURCES = \
 	concurrency/Tests.cpp \
@@ -331,7 +356,6 @@ clean-local:
 	$(RM) -r gen-cpp
 
 EXTRA_DIST = \
-	DenseProtoTest.cpp \
 	ThriftTest_extras.cpp \
 	DebugProtoTest_extras.cpp \
 	concurrency \

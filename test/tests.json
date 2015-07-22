@@ -332,7 +332,9 @@
         "ip"
       ],
       "protocols": [
-        "binary"
+        "binary",
+        "compact",
+        "binary:accel"
       ],
       "command": [
         "php",

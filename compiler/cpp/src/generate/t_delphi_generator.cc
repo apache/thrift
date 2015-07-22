@@ -2430,14 +2430,18 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
 
   indent_impl(s_service_impl) << "on E: Exception do begin" << endl;
   indent_up_impl();
-  indent_impl(s_service_impl) << "if events <> nil then events.UnhandledError(E);" << endl;
+  if(events_) {
+    indent_impl(s_service_impl) << "if events <> nil then events.UnhandledError(E);" << endl;
+  }
   if (!tfunction->is_oneway()) {
     indent_impl(s_service_impl) << "appx := TApplicationException.Create( "
                                    "TApplicationException.TExceptionType.InternalError, E.Message);"
                                 << endl;
     indent_impl(s_service_impl) << "try" << endl;
     indent_up_impl();
-    indent_impl(s_service_impl) << "if events <> nil then events.PreWrite;" << endl;
+    if(events_) {
+      indent_impl(s_service_impl) << "if events <> nil then events.PreWrite;" << endl;
+    }
     indent_impl(s_service_impl) << "msg := Thrift.Protocol.TMessageImpl.Create('"
                                 << tfunction->get_name() << "', TMessageType.Exception, seqid);"
                                 << endl;
@@ -2445,7 +2449,9 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
     indent_impl(s_service_impl) << "appx.Write(oprot);" << endl;
     indent_impl(s_service_impl) << "oprot.WriteMessageEnd();" << endl;
     indent_impl(s_service_impl) << "oprot.Transport.Flush();" << endl;
-    indent_impl(s_service_impl) << "if events <> nil then events.PostWrite;" << endl;
+    if(events_) {
+      indent_impl(s_service_impl) << "if events <> nil then events.PostWrite;" << endl;
+    }
     indent_impl(s_service_impl) << "Exit;" << endl;
     indent_down_impl();
     indent_impl(s_service_impl) << "finally" << endl;
@@ -3475,6 +3481,9 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out,
   indent_impl(code_block) << "begin" << endl;
   indent_up_impl();
 
+  indent_impl(local_vars) << "tracker : IProtocolRecursionTracker;" << endl;
+  indent_impl(code_block) << "tracker := iprot.NextRecursionLevel;" << endl;
+
   // local bools for required fields
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
@@ -3614,8 +3623,10 @@ void t_delphi_generator::generate_delphi_struct_result_writer_impl(ostream& out,
   indent_impl(code_block) << "begin" << endl;
   indent_up_impl();
 
+  indent_impl(local_vars) << "tracker : IProtocolRecursionTracker;" << endl;
+  indent_impl(code_block) << "tracker := oprot.NextRecursionLevel;" << endl;
+  
   indent_impl(code_block) << "struc := TStructImpl.Create('" << name << "');" << endl;
-
   indent_impl(code_block) << "oprot.WriteStructBegin(struc);" << endl;
 
   if (fields.size() > 0) {
@@ -3676,8 +3687,10 @@ void t_delphi_generator::generate_delphi_struct_writer_impl(ostream& out,
   indent_impl(code_block) << "begin" << endl;
   indent_up_impl();
 
-  indent_impl(code_block) << "struc := TStructImpl.Create('" << name << "');" << endl;
+  indent_impl(local_vars) << "tracker : IProtocolRecursionTracker;" << endl;
+  indent_impl(code_block) << "tracker := oprot.NextRecursionLevel;" << endl;
 
+  indent_impl(code_block) << "struc := TStructImpl.Create('" << name << "');" << endl;
   indent_impl(code_block) << "oprot.WriteStructBegin(struc);" << endl;
 
   if (fields.size() > 0) {

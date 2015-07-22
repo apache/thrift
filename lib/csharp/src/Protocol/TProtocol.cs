@@ -29,16 +29,41 @@ namespace Thrift.Protocol
 {
     public abstract class TProtocol : IDisposable
     {
+        private const int DEFAULT_RECURSION_DEPTH = 64;
+
         protected TTransport trans;
+        protected int recursionLimit;
+        protected int recursionDepth;
 
         protected TProtocol(TTransport trans)
         {
             this.trans = trans;
+            this.recursionLimit = DEFAULT_RECURSION_DEPTH;
+            this.recursionDepth = 0;
         }
 
         public TTransport Transport
         {
             get { return trans; }
+        }
+
+        public int RecursionLimit
+        {
+            get { return recursionLimit; }
+            set { recursionLimit = value; }
+        }
+
+        public void IncrementRecursionDepth()
+        {
+            if (recursionDepth < recursionLimit)
+                ++recursionDepth;
+            else
+                throw new TProtocolException(TProtocolException.DEPTH_LIMIT, "Depth limit exceeded");
+        }
+
+        public void DecrementRecursionDepth()
+        {
+            --recursionDepth;
         }
 
         #region " IDisposable Support "

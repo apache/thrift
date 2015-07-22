@@ -321,6 +321,9 @@ public:
     return std::string();
   }
 
+  const std::map<std::string, std::string>& get_all_namespaces(){
+     return namespaces_;
+  }
   // Language specific namespace / packaging
 
   void add_cpp_include(std::string path) { cpp_includes_.push_back(path); }

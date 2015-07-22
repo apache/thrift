@@ -23,6 +23,9 @@
 
 #include <thrift/transport/THttpServer.h>
 #include <thrift/transport/TSocket.h>
+#ifdef _MSC_VER
+#include <Shlwapi.h>
+#endif
 
 namespace apache {
 namespace thrift {
@@ -36,6 +39,14 @@ THttpServer::THttpServer(boost::shared_ptr<TTransport> transport) : THttpTranspo
 THttpServer::~THttpServer() {
 }
 
+#ifdef _MSC_VER
+  #define THRIFT_strncasecmp(str1, str2, len) _strnicmp(str1, str2, len)
+  #define THRIFT_strcasestr(haystack, needle) StrStrIA(haystack, needle)
+#else
+  #define THRIFT_strncasecmp(str1, str2, len) strncasecmp(str1, str2, len)
+  #define THRIFT_strcasestr(haystack, needle) strcasestr(haystack, needle)
+#endif
+
 void THttpServer::parseHeader(char* header) {
   char* colon = strchr(header, ':');
   if (colon == NULL) {
@@ -44,11 +55,11 @@ void THttpServer::parseHeader(char* header) {
   size_t sz = colon - header;
   char* value = colon + 1;
 
-  if (strncmp(header, "Transfer-Encoding", sz) == 0) {
-    if (strstr(value, "chunked") != NULL) {
+  if (THRIFT_strncasecmp(header, "Transfer-Encoding", sz) == 0) {
+    if (THRIFT_strcasestr(value, "chunked") != NULL) {
       chunked_ = true;
     }
-  } else if (strncmp(header, "Content-Length", sz) == 0) {
+  } else if (THRIFT_strncasecmp(header, "Content-length", sz) == 0) {
     chunked_ = false;
     contentLength_ = atoi(value);
   } else if (strncmp(header, "X-Forwarded-For", sz) == 0) {
