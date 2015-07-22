@@ -45,7 +45,7 @@ import org.apache.thrift.transport.TTransport;
 *
 *  Adapted from the Java version.
 */
-class TJSONProtocol implements TProtocol {
+class TJSONProtocol extends TRecursionTracker implements TProtocol {
 
     public var trans(default,null) : TTransport;
 

@@ -90,7 +90,7 @@ void ServerThread::run() {
     try {
       // Try to serve requests
       server_->serve();
-    } catch (const TException& x) {
+    } catch (const TException&) {
       // TNonblockingServer throws a generic TException if it fails to bind.
       // If we get a TException, we'll optimistically assume the bind failed.
       ++port_;

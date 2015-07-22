@@ -24,6 +24,7 @@ include(CMakeDependentOption)
 option(BUILD_COMPILER "Build Thrift compiler" ON)
 option(BUILD_TESTING "Build with unit tests" ON)
 option(BUILD_EXAMPLES "Build examples" ON)
+option(BUILD_TUTORIALS "Build Thrift tutorials" ON)
 option(BUILD_LIBRARIES "Build Thrift libraries" ON)
 
 # Libraries to build

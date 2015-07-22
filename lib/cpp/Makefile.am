@@ -66,6 +66,7 @@ libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/TOutput.cpp \
                        src/thrift/VirtualProfiling.cpp \
                        src/thrift/async/TAsyncChannel.cpp \
+                       src/thrift/async/TConcurrentClientSyncInfo.cpp \
                        src/thrift/concurrency/ThreadManager.cpp \
                        src/thrift/concurrency/TimerManager.cpp \
                        src/thrift/concurrency/Util.cpp \
@@ -75,6 +76,7 @@ libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/protocol/TJSONProtocol.cpp \
                        src/thrift/protocol/TBase64Utils.cpp \
                        src/thrift/protocol/TMultiplexedProtocol.cpp \
+                       src/thrift/protocol/TProtocol.cpp \
                        src/thrift/transport/TTransportException.cpp \
                        src/thrift/transport/TFDTransport.cpp \
                        src/thrift/transport/TFileTransport.cpp \

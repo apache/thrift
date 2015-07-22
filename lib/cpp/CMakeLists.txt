@@ -35,15 +35,18 @@ set( thriftcpp_SOURCES
    src/thrift/TApplicationException.cpp
    src/thrift/TOutput.cpp
    src/thrift/async/TAsyncChannel.cpp
+   src/thrift/async/TConcurrentClientSyncInfo.h
+   src/thrift/async/TConcurrentClientSyncInfo.cpp
    src/thrift/concurrency/ThreadManager.cpp
    src/thrift/concurrency/TimerManager.cpp
    src/thrift/concurrency/Util.cpp
    src/thrift/processor/PeekProcessor.cpp
+   src/thrift/protocol/TBase64Utils.cpp
    src/thrift/protocol/TDebugProtocol.cpp
    src/thrift/protocol/TDenseProtocol.cpp
    src/thrift/protocol/TJSONProtocol.cpp
-   src/thrift/protocol/TBase64Utils.cpp
    src/thrift/protocol/TMultiplexedProtocol.cpp
+   src/thrift/protocol/TProtocol.cpp
    src/thrift/transport/TTransportException.cpp
    src/thrift/transport/TFDTransport.cpp
    src/thrift/transport/TSimpleFileTransport.cpp

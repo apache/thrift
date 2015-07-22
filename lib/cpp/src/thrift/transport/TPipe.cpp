@@ -58,7 +58,7 @@ public:
 
 class TNamedPipeImpl : public TPipeImpl {
 public:
-  explicit TNamedPipeImpl(HANDLE pipehandle) : Pipe_(pipehandle) {}
+  explicit TNamedPipeImpl(TAutoHandle &pipehandle) : Pipe_(pipehandle.release()) {}
   virtual ~TNamedPipeImpl() {}
   virtual uint32_t read(uint8_t* buf, uint32_t len) {
     return pseudo_sync_read(Pipe_.h, read_event_.h, buf, len);
@@ -98,14 +98,15 @@ private:
 // than using the regular named pipe implementation
 class TWaitableNamedPipeImpl : public TPipeImpl {
 public:
-  explicit TWaitableNamedPipeImpl(HANDLE pipehandle)
-    : Pipe_(pipehandle), begin_unread_idx_(0), end_unread_idx_(0) {
+  explicit TWaitableNamedPipeImpl(TAutoHandle &pipehandle)
+    : begin_unread_idx_(0), end_unread_idx_(0) {
     readOverlap_.action = TOverlappedWorkItem::READ;
-    readOverlap_.h = Pipe_.h;
+    readOverlap_.h = pipehandle.h;
     cancelOverlap_.action = TOverlappedWorkItem::CANCELIO;
-    cancelOverlap_.h = Pipe_.h;
+    cancelOverlap_.h = pipehandle.h;
     buffer_.resize(1024 /*arbitrary buffer size*/, '\0');
     beginAsyncRead(&buffer_[0], static_cast<uint32_t>(buffer_.size()));
+    Pipe_.reset(pipehandle.release());
   }
   virtual ~TWaitableNamedPipeImpl() {
     // see if there is an outstanding read request
@@ -222,8 +223,15 @@ uint32_t pseudo_sync_read(HANDLE pipe, HANDLE event, uint8_t* buf, uint32_t len)
 }
 
 //---- Constructors ----
-TPipe::TPipe(HANDLE Pipe)
+TPipe::TPipe(TAutoHandle &Pipe)
   : impl_(new TWaitableNamedPipeImpl(Pipe)), TimeoutSeconds_(3), isAnonymous_(false) {
+}
+
+TPipe::TPipe(HANDLE Pipe)
+  : TimeoutSeconds_(3), isAnonymous_(false)
+{
+  TAutoHandle pipeHandle(Pipe);
+  impl_.reset(new TWaitableNamedPipeImpl(pipeHandle));
 }
 
 TPipe::TPipe(const char* pipename) : TimeoutSeconds_(3), isAnonymous_(false) {
@@ -284,8 +292,7 @@ void TPipe::open() {
     throw TTransportException(TTransportException::NOT_OPEN, "Unable to open pipe");
   }
 
-  impl_.reset(new TNamedPipeImpl(hPipe.h));
-  hPipe.release();
+  impl_.reset(new TNamedPipeImpl(hPipe));
 }
 
 void TPipe::close() {
@@ -355,7 +362,10 @@ void TPipe::setPipeHandle(HANDLE pipehandle) {
   if (isAnonymous_)
     impl_->setPipeHandle(pipehandle);
   else
-    impl_.reset(new TNamedPipeImpl(pipehandle));
+  {
+    TAutoHandle pipe(pipehandle);
+    impl_.reset(new TNamedPipeImpl(pipe));
+  }
 }
 
 HANDLE TPipe::getWrtPipeHandle() {

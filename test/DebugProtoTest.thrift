@@ -365,3 +365,7 @@ struct TupleProtocolTestStruct {
   optional i32 field11;
   optional i32 field12;
 }
+
+struct ListDoublePerf {
+  1: list<double> field;
+}

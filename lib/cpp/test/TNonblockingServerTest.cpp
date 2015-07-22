@@ -38,7 +38,7 @@ struct Handler : public test::ParentServiceIf {
   // dummy overrides not used in this test
   int32_t incrementGeneration() { return 0; }
   int32_t getGeneration() { return 0; }
-  void getDataWait(std::string&, int32_t) {}
+  void getDataWait(std::string&, const int32_t) {}
   void onewayWait() {}
   void exceptionWait(const std::string&) {}
   void unexpectedExceptionWait(const std::string&) {}
@@ -53,7 +53,7 @@ private:
       error = false;
       try {
         server->serve();
-      } catch (const TException& x) {
+      } catch (const TException&) {
         error = true;
       }
     }
@@ -95,7 +95,7 @@ protected:
       if (userEventBase_) {
         try {
           server->registerEvents(userEventBase_.get());
-        } catch (const TException& x) {
+        } catch (const TException&) {
           // retry with next port
           continue;
         }
