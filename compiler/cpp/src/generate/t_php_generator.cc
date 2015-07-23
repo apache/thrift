@@ -1097,6 +1097,8 @@ void t_php_generator::generate_php_struct_json_serialize(ofstream& out,
       indent(out) << "$json->" << name << " = ";
       if (type->is_map()) {
         out << "(object)";
+      } else {
+        out << type_to_cast(type);
       }
       out << "$this->" << name << ";" << endl;
       indent_down();
