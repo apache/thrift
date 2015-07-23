@@ -1076,7 +1076,7 @@ unittest {
 
       // If any attempt takes more than 500ms, treat that as a fatal failure to
       // avoid looping over a potentially very slow operation.
-      enforce(sw.peek().msecs < 500,
+      enforce(sw.peek().msecs < 1500,
         text("close() took ", sw.peek().msecs, "ms."));
 
       // Normally, it takes less than 5ms on my dev box.
@@ -1084,7 +1084,7 @@ unittest {
       // longer. Additionally, on a Windows Server 2008 instance running in
       // a VirtualBox VM, it has been observed that about a quarter of the runs
       // takes (217 ± 1) ms, for reasons not yet known.
-      if (sw.peek().msecs > 5) {
+      if (sw.peek().msecs > 50) {
         ++numOver;
       }
 
