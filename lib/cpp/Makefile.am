@@ -243,6 +243,7 @@ include_async_HEADERS = \
                      src/thrift/async/TAsyncProcessor.h \
                      src/thrift/async/TAsyncBufferProcessor.h \
                      src/thrift/async/TAsyncProtocolProcessor.h \
+                     src/thrift/async/TConcurrentClientSyncInfo.h \
                      src/thrift/async/TEvhttpClientChannel.h \
                      src/thrift/async/TEvhttpServer.h
 
