@@ -37,7 +37,7 @@ precross: $(THRIFT)
 	$(ANT) $(ANT_FLAGS) compile-test
 
 check-local: all
-	$(ANT) $(ANT_FLAGS) test
+	$(ANT) $(ANT_FLAGS) -debug test
 
 EXTRA_DIST = \
 	build.xml \

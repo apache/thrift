@@ -219,7 +219,7 @@
       <sysproperty key="javax.net.ssl.keyStorePassword" value="thrift"/>
       <classpath refid="test.classpath"/>
       <formatter type="${test.junit.output.format}"/>
-      <batchtest todir="${test.log.dir}" unless="testcase">
+      <batchtest>
         <fileset dir="${test.src.dir}">
           <include name="**/Test*.java"/>
           <exclude name="**/TestClient.java"/>
@@ -228,9 +228,11 @@
 		  <exclude name="**/TestStreamServer.java"/>
         </fileset>
       </batchtest>
+	  <!--
       <batchtest todir="${test.log.dir}" if="testcase">
         <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
       </batchtest>
+	  -->
     </junit>
     <fail if="tests.failed">Tests failed!</fail>
   </target>
