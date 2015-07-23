@@ -33,6 +33,11 @@ $loader->register();
 
 class JsonSerializeTest extends \PHPUnit_Framework_TestCase
 {
+  protected function setUp() {
+    if (version_compare(phpversion(), '5.4', '<')) {
+      $this->markTestSkipped('Requires PHP 5.4 or newer!');
+    }
+  }
 
   public function testEmptyStruct()
   {
@@ -98,6 +103,14 @@ class JsonSerializeTest extends \PHPUnit_Framework_TestCase
     $emptymap = new \ThriftTest\ThriftTest_testMap_args([]);
     $this->assertEquals('{"thing":{"0":"zero"}}', json_encode($intmap));
     $this->assertEquals('{}', json_encode($emptymap));
+  }
+
+  public function testScalarTypes()
+  {
+    $b = new \ThriftTest\Bools(['im_true' => '1', 'im_false' => '0']);
+    $this->assertEquals('{"im_true":true,"im_false":false}', json_encode($b));
+    $s = new \ThriftTest\StructA(['s' => 42]);
+    $this->assertEquals('{"s":"42"}', json_encode($s));
   }
 
 }
