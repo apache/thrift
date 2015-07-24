@@ -258,6 +258,7 @@ literal_begin (['\"])
 "nil"                { thrift_reserved_keyword(yytext); }
 "not"                { thrift_reserved_keyword(yytext); }
 "or"                 { thrift_reserved_keyword(yytext); }
+"package"            { thrift_reserved_keyword(yytext); }
 "pass"               { thrift_reserved_keyword(yytext); }
 "public"             { thrift_reserved_keyword(yytext); }
 "print"              { thrift_reserved_keyword(yytext); }
