@@ -66,7 +66,7 @@ public class TestIOStreamClient extends TestCase {
 		}
 		else
 		{
-			classpath = "build\\*:build\\lib\\*";
+			classpath = "build/*:build/lib/*";
 		}
 		
 		ProcessBuilder builder = new ProcessBuilder("java", "-cp", classpath, "org.apache.thrift.test.TestStreamServer");
