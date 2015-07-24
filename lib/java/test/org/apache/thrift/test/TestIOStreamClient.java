@@ -58,7 +58,18 @@ public class TestIOStreamClient extends TestCase {
 	@Before
 	public void setUp()
 	{
-		ProcessBuilder builder = new ProcessBuilder("java", "-cp", "build\\*;build\\lib\\*", "org.apache.thrift.test.TestStreamServer");
+		//class path separator is platform dependent (; on windows, : on linux)
+		String classpath;
+		if (System.getProperty("os.name").startsWith("Windows"))
+		{
+			classpath = "build\\*;build\\lib\\*";
+		}
+		else
+		{
+			classpath = "build\\*:build\\lib\\*";
+		}
+		
+		ProcessBuilder builder = new ProcessBuilder("java", "-cp", classpath, "org.apache.thrift.test.TestStreamServer");
 		  
 		try
 		{

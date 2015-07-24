@@ -197,15 +197,7 @@
     <jar jarfile="${test.jar.file}" basedir="${build.test.dir}"/>
   </target>
 
-  <target name="compile-test-stream-server" description="builds streamServer jar used in TestIOStreamClient" depends="optional-generate,dist">
-	<jar destfile="${build.dir}/streamServer.jar" basedir="${build.test.dir}">
-		<manifest>
-			<attribute name="Main-Class" value="org.apache.thrift.test.TestStreamServer"/>
-		</manifest>
-	</jar>
-  </target>
-  
-  <target name="junit-test" description="Run the JUnit test suite" depends="compile-test,compile-test-stream-server">
+  <target name="junit-test" description="Run the JUnit test suite" depends="compile-test">
     <mkdir dir="${test.log.dir}"/>
     <junit printsummary="true" showoutput="${test.output}" timeout="${test.timeout}" 
       haltonfailure="true" errorProperty="tests.failed" failureProperty="tests.failed"
@@ -219,7 +211,7 @@
       <sysproperty key="javax.net.ssl.keyStorePassword" value="thrift"/>
       <classpath refid="test.classpath"/>
       <formatter type="${test.junit.output.format}"/>
-      <batchtest>
+      <batchtest todir="${test.log.dir}" unless="testcase">
         <fileset dir="${test.src.dir}">
           <include name="**/Test*.java"/>
           <exclude name="**/TestClient.java"/>
@@ -228,11 +220,9 @@
 		  <exclude name="**/TestStreamServer.java"/>
         </fileset>
       </batchtest>
-	  <!--
       <batchtest todir="${test.log.dir}" if="testcase">
         <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
       </batchtest>
-	  -->
     </junit>
     <fail if="tests.failed">Tests failed!</fail>
   </target>
