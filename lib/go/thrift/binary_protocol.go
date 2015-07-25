@@ -258,7 +258,7 @@ func (p *TBinaryProtocol) ReadMessageBegin() (name string, typeId TMessageType, 
 	if p.strictRead {
 		return name, typeId, seqId, NewTProtocolExceptionWithType(BAD_VERSION, fmt.Errorf("Missing version in ReadMessageBegin"))
 	}
-	name, e2 := p.readStringBody(int(size))
+	name, e2 := p.readStringBody(size)
 	if e2 != nil {
 		return name, typeId, seqId, e2
 	}
@@ -434,7 +434,7 @@ func (p *TBinaryProtocol) ReadString() (value string, err error) {
 		return
 	}
 
-	return p.readStringBody(int(size))
+	return p.readStringBody(size)
 }
 
 func (p *TBinaryProtocol) ReadBinary() ([]byte, error) {
@@ -443,6 +443,9 @@ func (p *TBinaryProtocol) ReadBinary() ([]byte, error) {
 		return nil, e
 	}
 	if size < 0 {
+		return nil, invalidDataLength
+	}
+	if uint64(size) > p.trans.RemainingBytes() {
 		return nil, invalidDataLength
 	}
 
@@ -469,12 +472,15 @@ func (p *TBinaryProtocol) readAll(buf []byte) error {
 	return NewTProtocolException(err)
 }
 
-func (p *TBinaryProtocol) readStringBody(size int) (value string, err error) {
+func (p *TBinaryProtocol) readStringBody(size int32) (value string, err error) {
 	if size < 0 {
 		return "", nil
 	}
+	if uint64(size) > p.trans.RemainingBytes() {
+		return "", invalidDataLength
+	}
 	var buf []byte
-	if size <= len(p.buffer) {
+	if int(size) <= len(p.buffer) {
 		buf = p.buffer[0:size]
 	} else {
 		buf = make([]byte, size)

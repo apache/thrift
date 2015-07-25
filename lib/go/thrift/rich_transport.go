@@ -42,6 +42,10 @@ func (r *RichTransport) WriteString(s string) (n int, err error) {
 	return r.Write([]byte(s))
 }
 
+func (r *RichTransport) RemainingBytes() (num_bytes uint64) {
+	return r.TTransport.RemainingBytes()
+}
+
 func readByte(r io.Reader) (c byte, err error) {
 	v := [1]byte{0}
 	n, err := r.Read(v[0:1])
@@ -62,3 +66,4 @@ func writeByte(w io.Writer, c byte) error {
 	_, err := w.Write(v[0:1])
 	return err
 }
+

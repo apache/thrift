@@ -206,3 +206,9 @@ func (p *StreamTransport) WriteString(s string) (n int, err error) {
 	}
 	return
 }
+
+func (p *StreamTransport) RemainingBytes() (num_bytes uint64) {
+	const maxSize = ^uint64(0)
+	return maxSize  // the thruth is, we just don't know unless framed is used
+}
+

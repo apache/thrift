@@ -68,3 +68,8 @@ func (p *TBufferedTransport) Flush() error {
 	}
 	return p.tp.Flush()
 }
+
+func (p *TBufferedTransport) RemainingBytes() (num_bytes uint64) {
+	return p.tp.RemainingBytes()
+}
+
