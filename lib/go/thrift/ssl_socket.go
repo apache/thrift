@@ -163,3 +163,9 @@ func (p *TSSLSocket) Interrupt() error {
 	}
 	return p.conn.Close()
 }
+
+func (p *TSSLSocket) RemainingBytes() (num_bytes uint64) {
+	const maxSize = ^uint64(0)
+	return maxSize  // the thruth is, we just don't know unless framed is used
+}
+
