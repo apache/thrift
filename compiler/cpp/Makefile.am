@@ -23,7 +23,7 @@
 
 AM_YFLAGS = -d
 LIBS =
-BUILT_SOURCES = thrifty.cc
+BUILT_SOURCES = src/thrifty.cc
 
 bin_PROGRAMS = thrift
 

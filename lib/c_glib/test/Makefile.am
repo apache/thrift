@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-AUTOMAKE_OPTIONS = serial-tests
+AUTOMAKE_OPTIONS = subdir-objects serial-tests
 
 SUBDIRS =
 
@@ -58,70 +58,70 @@ endif
 
 testapplicationexception_SOURCES = testapplicationexception.c
 testapplicationexception_LDADD = \
-    ../libthrift_c_glib_la-thrift_application_exception.o \
-    ../libthrift_c_glib_la-thrift_protocol.o \
-    ../libthrift_c_glib_la-thrift_struct.o \
-    ../libthrift_c_glib_la-thrift_transport.o
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_application_exception.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_struct.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o
 
 testtransportsocket_SOURCES = testtransportsocket.c
 testtransportsocket_LDADD = \
-    ../libthrift_c_glib_la-thrift_transport.o \
-    ../libthrift_c_glib_la-thrift_buffered_transport.o \
-    ../libthrift_c_glib_la-thrift_server_transport.o \
-    ../libthrift_c_glib_la-thrift_server_socket.o
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_buffered_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_socket.o
 
 testbinaryprotocol_SOURCES = testbinaryprotocol.c
 testbinaryprotocol_LDADD = \
-    ../libthrift_c_glib_la-thrift_protocol.o \
-    ../libthrift_c_glib_la-thrift_transport.o \
-    ../libthrift_c_glib_la-thrift_socket.o \
-    ../libthrift_c_glib_la-thrift_server_transport.o \
-    ../libthrift_c_glib_la-thrift_server_socket.o
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_socket.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_socket.o
 
 testbufferedtransport_SOURCES = testbufferedtransport.c
 testbufferedtransport_LDADD = \
-    ../libthrift_c_glib_la-thrift_transport.o \
-    ../libthrift_c_glib_la-thrift_socket.o \
-    ../libthrift_c_glib_la-thrift_server_transport.o \
-    ../libthrift_c_glib_la-thrift_server_socket.o
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_socket.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_socket.o
 
 testframedtransport_SOURCES = testframedtransport.c
 testframedtransport_LDADD = \
-    ../libthrift_c_glib_la-thrift_transport.o \
-    ../libthrift_c_glib_la-thrift_socket.o \
-    ../libthrift_c_glib_la-thrift_server_transport.o \
-    ../libthrift_c_glib_la-thrift_server_socket.o
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_socket.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_socket.o
 
 testmemorybuffer_SOURCES = testmemorybuffer.c
 testmemorybuffer_LDADD = \
-    ../libthrift_c_glib_la-thrift_transport.o
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o
 
 teststruct_SOURCES = teststruct.c
 teststruct_LDADD = \
-    ../libthrift_c_glib_la-thrift_protocol.o \
-    ../libthrift_c_glib_la-thrift_transport.o
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o
 
 testsimpleserver_SOURCES = testsimpleserver.c
 testsimpleserver_LDADD = \
-    ../libthrift_c_glib_la-thrift_protocol.o \
-    ../libthrift_c_glib_la-thrift_transport.o \
-    ../libthrift_c_glib_la-thrift_transport_factory.o \
-    ../libthrift_c_glib_la-thrift_processor.o \
-    ../libthrift_c_glib_la-thrift_protocol_factory.o \
-    ../libthrift_c_glib_la-thrift_binary_protocol.o \
-    ../libthrift_c_glib_la-thrift_binary_protocol_factory.o \
-    ../libthrift_c_glib_la-thrift_socket.o \
-    ../libthrift_c_glib_la-thrift_server_transport.o \
-    ../libthrift_c_glib_la-thrift_server_socket.o \
-    ../libthrift_c_glib_la-thrift_server.o
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport_factory.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/processor/libthrift_c_glib_la-thrift_processor.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_protocol_factory.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_binary_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_binary_protocol_factory.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_socket.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_socket.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/server/libthrift_c_glib_la-thrift_server.o
 
 testdebugproto_SOURCES = testdebugproto.c
 testdebugproto_LDADD = libtestgenc.la
 
 testoptionalrequired_SOURCES = testoptionalrequired.c
 testoptionalrequired_LDADD = \
-    ../libthrift_c_glib_la-thrift_protocol.o \
-    ../libthrift_c_glib_la-thrift_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
     libtestgenc.la
 
 testthrifttest_SOURCES = testthrifttest.c
