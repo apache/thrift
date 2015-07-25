@@ -251,7 +251,7 @@ elif server_type == "TProcessPoolServer":
       except:
         pass
     signal.signal(signal.SIGALRM, clean_shutdown)
-    signal.alarm(2)
+    signal.alarm(4)
   set_alarm()
 else:
   # look up server class dynamically to instantiate server
