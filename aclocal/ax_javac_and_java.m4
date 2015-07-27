@@ -57,6 +57,10 @@ AC_DEFUN([AX_JAVAC_AND_JAVA],
             echo "Running \"$JAVAC configtest_ax_javac_and_java.java\"" >&AS_MESSAGE_LOG_FD
             if $JAVAC configtest_ax_javac_and_java.java >&AS_MESSAGE_LOG_FD 2>&1 ; then
 
+              # prevent $JAVA VM issues with UTF-8 path names (THRIFT-3271)
+              oLC_ALL="$LC_ALL"
+              LC_ALL=""
+
               IFS=","
               for JAVA in $JAVA_PROGS ; do
                 IFS="$oIFS"
@@ -68,6 +72,10 @@ AC_DEFUN([AX_JAVAC_AND_JAVA],
                 fi
 
               done
+
+              # restore LC_ALL
+              LC_ALL="$oLC_ALL"
+              oLC_ALL=""
 
             fi
 
