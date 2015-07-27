@@ -23,7 +23,7 @@ MAINTAINER Apache Thrift <dev@thrift.apache.org>
 
 ENV HOME /root
 
-RUN yum -y update
+# RUN yum -y update
 
 # General dependencies
 RUN yum -y install -y tar m4 perl gcc git libtool zlib-devel openssl-devel autoconf make bison bison-devel flex
@@ -56,9 +56,6 @@ RUN yum install -y python-devel python-setuptools python-twisted
 RUN yum install -y ruby ruby-devel rubygems && \
     gem install bundler rake
 
-# Node.js Dependencies
-RUN yum install -y nodejs nodejs-devel npm
-
 # Perl Dependencies
 RUN yum install -y perl-Bit-Vector perl-Class-Accessor perl-ExtUtils-MakeMaker perl-Test-Simple
 
@@ -69,7 +66,8 @@ RUN yum install -y php php-devel php-pear re2c
 RUN yum install -y glib2-devel
 
 # Erlang Dependencies
-RUN yum install -y erlang-kernel erlang-erts erlang-stdlib erlang-eunit erlang-rebar
+RUN curl -sSL http://packages.erlang-solutions.com/rpm/centos/erlang_solutions.repo -o /etc/yum.repos.d/erlang_solutions.repo && \
+    yum install -y erlang-kernel erlang-erts erlang-stdlib erlang-eunit erlang-rebar
 
 # Go Dependencies
 RUN curl -sSL https://storage.googleapis.com/golang/go1.4.2.linux-amd64.tar.gz | tar -C /usr/lib/ -xz && \
@@ -79,14 +77,17 @@ ENV GOROOT /usr/lib/go
 ENV GOPATH /usr/share/go
 ENV PATH ${GOROOT}/bin:${GOPATH}/bin:$PATH
 
-# C# Dependencies
-RUN yum install -y mono-core mono-devel mono-web-devel mono-extras mingw32-binutils mingw32-runtime mingw32-nsis
-
 # Haskell Dependencies
 RUN yum -y install cabal-dev && \
     cabal update && \
     cabal install cabal-install && \
     cd $HOME
+
+# Node.js Dependencies
+RUN yum install -y nodejs nodejs-devel npm
+
+# C# Dependencies
+RUN yum install -y mono-core mono-devel mono-web-devel mono-extras mingw32-binutils mingw32-runtime mingw32-nsis
 
 # Clean up
 RUN rm -rf /tmp/* && \

@@ -53,7 +53,10 @@ RUN apt-get install -y php5 php5-dev php5-cli php-pear re2c phpunit
 RUN apt-get install -y libglib2.0-dev
 
 # Erlang dependencies
-RUN apt-get install -y erlang-base erlang-eunit erlang-dev
+RUN echo 'deb http://packages.erlang-solutions.com/debian trusty contrib' > /etc/apt/sources.list.d/erlang_solutions.list && \
+    curl -sSL http://packages.erlang-solutions.com/debian/erlang_solutions.asc | sudo apt-key add - && \
+    apt-get update && \
+    apt-get install -y erlang-base erlang-eunit erlang-dev
 
 # GO dependencies
 RUN curl -sSL https://storage.googleapis.com/golang/go1.4.2.linux-amd64.tar.gz | tar -C /usr/lib/ -xz && \
@@ -71,8 +74,8 @@ RUN apt-get install -y ghc cabal-install libghc-binary-dev libghc-network-dev li
 # Haxe
 RUN apt-get install -y neko neko-dev libneko0 && \
     mkdir -p /tmp/haxe /usr/lib/haxe && \
-    curl http://haxe.org/website-content/downloads/3,1,3/downloads/haxe-3.1.3-linux64.tar.gz -o /tmp/haxe/haxe-3.1.3-linux64.tar.gz && \
-    tar -xvzf /tmp/haxe/haxe-3.1.3-linux64.tar.gz -C /usr/lib/haxe --strip-components=1 && \
+    curl http://haxe.org/website-content/downloads/3.2.0/downloads/haxe-3.2.0-linux64.tar.gz -o /tmp/haxe/haxe-3.2.0-linux64.tar.gz && \
+    tar -xvzf /tmp/haxe/haxe-3.2.0-linux64.tar.gz -C /usr/lib/haxe --strip-components=1 && \
     ln -s /usr/lib/haxe/haxe /usr/bin/haxe && \
     ln -s /usr/lib/haxe/haxelib /usr/bin/haxelib && \
     mkdir -p /usr/lib/haxe/lib  && \
@@ -92,10 +95,11 @@ RUN apt-get install -y mono-gmcs mono-devel mono-xbuild mono-complete libmono-sy
 
 # D dependencies
 # THRIFT-2916: DMD pinned to 2.065.0-0 due to regression in 2.066
-RUN curl http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -o /etc/apt/sources.list.d/d-apt.list && \
-    apt-get update && apt-get -y --allow-unauthenticated install --reinstall d-apt-keyring && \
-    apt-get update && \
-    apt-get install -y xdg-utils dmd-bin=2.065.0-0 libphobos2-dev=2.065.0-0
+# THRIFT-3253: DMD pinned to 2.065.0-0 due to deprecations 2.067.1
+RUN apt-get install -y gcc-multilib xdg-utils && \
+    curl -sSL http://downloads.dlang.org/releases/2.x/2.065.0/dmd_2.065.0-0_amd64.deb -o /tmp/dmd_2.065.0-0_amd64.deb && \
+    dpkg -i /tmp/dmd_2.065.0-0_amd64.deb && \
+    rm /tmp/dmd_2.065.0-0_amd64.deb
 
 # Clean up
 RUN apt-get clean && \
