@@ -2500,13 +2500,17 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
   f_service_ << "static void" << endl << class_name_lc << "_init (" << class_name << " *self)"
              << endl;
   scope_up(f_service_);
+  if (functions.size() > 0) {
+    f_service_ << indent() << "guint index;" << endl
+               << endl;
+  }
   f_service_ << indent() << "self->handler = NULL;" << endl << indent()
              << "self->process_map = "
                 "g_hash_table_new (g_str_hash, g_str_equal);" << endl;
   if (functions.size() > 0) {
     args_indent = string(21, ' ');
     f_service_ << endl
-               << indent() << "for (guint index = 0; index < "
+               << indent() << "for (index = 0; index < "
                << functions.size() << "; index += 1)" << endl;
     indent_up();
     f_service_ << indent() << "g_hash_table_insert (self->process_map," << endl
