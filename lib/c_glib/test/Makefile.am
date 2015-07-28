@@ -237,7 +237,7 @@ leakcheck-%: %
 	    ${$<_VALGRIND_LEAK_OPTS}  ./$<
 
 clean-local:
-	$(RM) -r gen-c_glib gen-cpp
+	$(RM) gen-c_glib/* gen-cpp/*
 
 CLEANFILES =                            \
     *.bb                                \
