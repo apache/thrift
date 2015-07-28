@@ -530,8 +530,7 @@ test_thrift_client (void)
   assert (t_test_thrift_test_client_test_exception (iface, "ApplicationException", &xception, &error) == FALSE);
   g_error_free (error);
   error = NULL;
-  g_object_unref (xception);
-  xception = NULL;
+  assert (xception == NULL);
 
   assert (t_test_thrift_test_client_test_exception (iface, "Test", &xception, &error) == TRUE);
   assert (error == NULL);
