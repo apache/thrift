@@ -1620,6 +1620,9 @@ void t_c_glib_generator::generate_service_client(t_service* tservice) {
     f_service_ << "  client->input_protocol = NULL;" << endl << "  client->output_protocol = NULL;"
                << endl;
   }
+  else {
+    f_service_ << "  THRIFT_UNUSED_VAR (client);" << endl;
+  }
   f_service_ << "}" << endl << endl;
 
   // create the client class initializer
@@ -1649,6 +1652,9 @@ void t_c_glib_generator::generate_service_client(t_service* tservice) {
                << "  g_object_class_install_property (gobject_class," << endl
                << "                                   PROP_" << this->nspace_uc << service_name_uc
                << "_CLIENT_OUTPUT_PROTOCOL, param_spec);" << endl;
+  }
+  else {
+    f_service_ << "  THRIFT_UNUSED_VAR (cls);" << endl;
   }
   f_service_ << "}" << endl << endl;
 }
