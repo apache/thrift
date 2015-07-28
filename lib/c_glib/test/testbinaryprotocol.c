@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <netdb.h>
 #include <string.h>
+#include <sys/wait.h>
 
 #include <thrift/c_glib/protocol/thrift_protocol.h>
 #include <thrift/c_glib/transport/thrift_socket.h>
@@ -660,7 +661,10 @@ thrift_server_complex_types (const int port)
 int
 main(int argc, char *argv[])
 {
+#if (!GLIB_CHECK_VERSION (2, 36, 0))
   g_type_init();
+#endif
+
   g_test_init (&argc, &argv, NULL);
 
   g_test_add_func ("/testbinaryprotocol/CreateAndDestroy", test_create_and_destroy);
