@@ -34,12 +34,13 @@ class AccessManager;
 class SSLContext;
 
 enum SSLProtocol {
-  SSLTLS = 0, // Supports SSLv3 and TLSv1.
-  // SSLv2		= 1,	// HORRIBLY INSECURE!
-  SSLv3 = 2,   // Supports SSLv3 only.
-  TLSv1_0 = 3, // Supports TLSv1_0 only.
-  TLSv1_1 = 4, // Supports TLSv1_1 only.
-  TLSv1_2 = 5  // Supports TLSv1_2 only.
+  SSLTLS  = 0,  // Supports SSLv2 and SSLv3 handshake but only negotiates at TLSv1_0 or later.
+//SSLv2   = 1,  // HORRIBLY INSECURE!
+  SSLv3   = 2,  // Supports SSLv3 only - also horribly insecure!
+  TLSv1_0 = 3,  // Supports TLSv1_0 or later.
+  TLSv1_1 = 4,  // Supports TLSv1_1 or later.
+  TLSv1_2 = 5,  // Supports TLSv1_2 or later.
+  LATEST  = TLSv1_2
 };
 
 /**
@@ -136,7 +137,7 @@ public:
    *
    * @param protocol The SSL/TLS protocol to use.
    */
-  TSSLSocketFactory(const SSLProtocol& protocol = SSLTLS);
+  TSSLSocketFactory(SSLProtocol protocol = SSLTLS);
   virtual ~TSSLSocketFactory();
   /**
    * Create an instance of TSSLSocket with a fresh new socket.

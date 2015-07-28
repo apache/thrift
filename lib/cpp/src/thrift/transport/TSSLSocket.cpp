@@ -160,9 +160,11 @@ SSLContext::SSLContext(const SSLProtocol& protocol) {
   }
   SSL_CTX_set_mode(ctx_, SSL_MODE_AUTO_RETRY);
 
-  // Disable horribly insecure SSLv2!
+  // Disable horribly insecure SSLv2 and SSLv3 protocols but allow a handshake
+  // with older clients so they get a graceful denial.
   if (protocol == SSLTLS) {
-    SSL_CTX_set_options(ctx_, SSL_OP_NO_SSLv2);
+      SSL_CTX_set_options(ctx_, SSL_OP_NO_SSLv2);
+      SSL_CTX_set_options(ctx_, SSL_OP_NO_SSLv3);   // THRIFT-3164
   }
 }
 
@@ -447,7 +449,7 @@ uint64_t TSSLSocketFactory::count_ = 0;
 Mutex TSSLSocketFactory::mutex_;
 bool TSSLSocketFactory::manualOpenSSLInitialization_ = false;
 
-TSSLSocketFactory::TSSLSocketFactory(const SSLProtocol& protocol) : server_(false) {
+TSSLSocketFactory::TSSLSocketFactory(SSLProtocol protocol) : server_(false) {
   Guard guard(mutex_);
   if (count_ == 0) {
     if (!manualOpenSSLInitialization_) {
