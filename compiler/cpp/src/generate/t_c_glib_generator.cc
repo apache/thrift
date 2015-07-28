@@ -1384,7 +1384,7 @@ void t_c_glib_generator::generate_service_client(t_service* tservice) {
              << "                         G_IMPLEMENT_INTERFACE (" << this->nspace_uc << "TYPE_"
              << service_name_uc << "_IF," << endl
              << "                                                " << this->nspace_lc
-             << service_name_lc << "_if_interface_init));" << endl << endl;
+             << service_name_lc << "_if_interface_init))" << endl << endl;
 
   // Generate property-related code only for base services---child
   // service-client classes have only properties inherited from their
@@ -1780,7 +1780,7 @@ void t_c_glib_generator::generate_service_handler(t_service* tservice) {
              << args_indent << "G_IMPLEMENT_INTERFACE (" << this->nspace_uc << "TYPE_"
              << service_name_uc << "_IF," << endl;
   args_indent += string(23, ' ');
-  f_service_ << args_indent << class_name_lc << "_" << service_name_lc << "_if_interface_init));"
+  f_service_ << args_indent << class_name_lc << "_" << service_name_lc << "_if_interface_init))"
              << endl << endl;
 
   // Generate the handler method implementations
@@ -1966,7 +1966,7 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
   // Generate the implementation boilerplate
   args_indent = string(15, ' ');
   f_service_ << "G_DEFINE_TYPE (" << class_name << "," << endl << args_indent << class_name_lc
-             << "," << endl << args_indent << parent_type_name << ");" << endl << endl;
+             << "," << endl << args_indent << parent_type_name << ")" << endl << endl;
 
   // Generate the processor's processing-function type
   args_indent = string(process_function_type_name.length() + 23, ' ');
