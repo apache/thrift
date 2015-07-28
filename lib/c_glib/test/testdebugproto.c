@@ -864,7 +864,7 @@ test_services_inherited (void)
 int
 main(int argc, char *argv[])
 {
-#if (GLIB_MAJOR_VERSION == 2) && (GLIB_MINOR_VERSION < 36)
+#if (!GLIB_CHECK_VERSION (2, 36, 0))
   g_type_init ();
 #endif
 

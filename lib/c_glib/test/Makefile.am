@@ -160,6 +160,7 @@ nodist_libtestgenc_la_SOURCES = \
         gen-c_glib/t_test_thrift_test.h \
         gen-c_glib/t_test_thrift_test_types.h
 libtestgenc_la_LIBADD = $(top_builddir)/lib/c_glib/libthrift_c_glib.la
+libtestgenc_la_CPPFLAGS = $(AM_CPPFLAGS) -Wno-unused-function
 
 nodist_libtestgencpp_la_SOURCES = \
         gen-cpp/ThriftTest.cpp \

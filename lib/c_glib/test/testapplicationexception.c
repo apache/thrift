@@ -99,7 +99,7 @@ test_properties_test (void)
 
 /* "g_test_expect_message" is required for the property range tests below but is
    not present in GLib before version 2.34 */
-#if (GLIB_MAJOR_VERSION == 2) && (GLIB_MINOR_VERSION >= 34)
+#if (GLIB_CHECK_VERSION (2, 34, 0))
   g_object_set (xception,
                 "type", THRIFT_APPLICATION_EXCEPTION_ERROR_UNKNOWN,
                 NULL);
@@ -161,7 +161,7 @@ test_properties_message (void)
 int
 main (int argc, char **argv)
 {
-#if (GLIB_MAJOR_VERSION == 2) && (GLIB_MINOR_VERSION < 36)
+#if (!GLIB_CHECK_VERSION (2, 36, 0))
   g_type_init ();
 #endif
 
