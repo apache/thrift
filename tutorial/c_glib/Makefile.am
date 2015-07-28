@@ -46,6 +46,8 @@ nodist_libtutorialgencglib_la_SOURCES = \
 libtutorialgencglib_la_LIBADD = \
 	$(top_builddir)/lib/c_glib/libthrift_c_glib.la
 
+libtutorialgencglib_la_CFLAGS = \
+	$(AM_CFLAGS) -Wno-unused-function
 
 noinst_PROGRAMS = \
 	tutorial_server \
