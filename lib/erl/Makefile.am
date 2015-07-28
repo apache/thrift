@@ -21,12 +21,19 @@ THRIFT = ../../compiler/cpp/thrift
 THRIFT_FILES = $(wildcard test/*.thrift) \
 		  ../../test/ThriftTest.thrift
 
-.generated: $(THRIFT_FILES)
+if ERLANG_OTP16
+.generated: $(THRIFT) $(THRIFT_FILES)
 	for f in $(THRIFT_FILES) ; do \
-	  $(THRIFT) --gen erl -o test $$f ; \
+		$(THRIFT) --gen erl:otp16 -o test $$f ; \
+	done ;
+else
+.generated: $(THRIFT) $(THRIFT_FILES)
+	for f in $(THRIFT_FILES) ; do \
+		$(THRIFT) --gen erl -o test $$f ; \
 	done ; \
 	$(THRIFT) --gen erl:maps -o test test/Thrift3214.thrift ; \
 	touch .generated
+endif
 
 all: .generated
 	./rebar get-deps
