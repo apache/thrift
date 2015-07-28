@@ -354,8 +354,10 @@ test_thrift_client (void)
   TTestXception *xception = NULL;
   TTestXception2 *xception2 = NULL;
 
+#if (!GLIB_CHECK_VERSION (2, 36, 0))
   // initialize gobject
   g_type_init ();
+#endif
 
   // create a C client
   tsocket = (ThriftSocket *) g_object_new (THRIFT_TYPE_SOCKET, 
