@@ -129,17 +129,22 @@ func (p *THttpClient) IsOpen() bool {
 	return p.response != nil || p.requestBuffer != nil
 }
 
-func (p *THttpClient) Close() error {
+func (p *THttpClient) closeResponse() error {
+	var err error
 	if p.response != nil && p.response.Body != nil {
-		err := p.response.Body.Close()
-		p.response = nil
-		return err
+		err = p.response.Body.Close()
 	}
+
+	p.response = nil
+	return err
+}
+
+func (p *THttpClient) Close() error {
 	if p.requestBuffer != nil {
 		p.requestBuffer.Reset()
 		p.requestBuffer = nil
 	}
-	return nil
+	return p.closeResponse()
 }
 
 func (p *THttpClient) Read(buf []byte) (int, error) {
@@ -171,6 +176,9 @@ func (p *THttpClient) WriteString(s string) (n int, err error) {
 }
 
 func (p *THttpClient) Flush() error {
+	// Close any previous response body to avoid leaking connections.
+	p.closeResponse()
+
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", p.url.String(), p.requestBuffer)
 	if err != nil {
