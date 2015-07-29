@@ -1882,6 +1882,10 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
   string handler_class_name = this->nspace + service_name_ + "Handler";
   string handler_class_name_lc = initial_caps_to_underscores(handler_class_name);
 
+  string process_function_type_name = class_name + "ProcessFunction";
+  string process_function_def_type_name =
+    class_name_lc + "_process_function_def";
+
   string function_name;
   string args_indent;
 
@@ -1965,11 +1969,67 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
              << "," << endl << args_indent << parent_type_name << ");" << endl << endl;
 
   // Generate the processor's processing-function type
-  function_name = class_name + "ProcessFunction";
-  args_indent = string(function_name.length() + 23, ' ');
-  f_service_ << "typedef gboolean (* " << function_name << ") (" << class_name << " *, " << endl
-             << args_indent << "gint32," << endl << args_indent << "ThriftProtocol *," << endl
-             << args_indent << "ThriftProtocol *," << endl << args_indent << "GError **);" << endl
+  args_indent = string(process_function_type_name.length() + 23, ' ');
+  f_service_ << "typedef gboolean (* " << process_function_type_name << ") ("
+             << class_name << " *, " << endl
+             << args_indent << "gint32," << endl
+             << args_indent << "ThriftProtocol *," << endl
+             << args_indent << "ThriftProtocol *," << endl
+             << args_indent << "GError **);" << endl
+             << endl;
+
+  // Generate the processor's processing-function-definition type
+  f_service_ << "typedef struct" << endl
+             << "{" << endl;
+  indent_up();
+  f_service_ << indent() << "gchar *name;" << endl
+             << indent() << process_function_type_name << " function;" << endl;
+  indent_down();
+  f_service_ << "} " << process_function_def_type_name << ";" << endl
+             << endl;
+
+  // Generate forward declarations of the processor's processing functions so we
+  // can refer to them in the processing-function-definition struct below and
+  // keep all of the processor's declarations in one place
+  for (function_iter = functions.begin();
+       function_iter != functions.end();
+       ++function_iter) {
+    function_name = class_name_lc + "_process_"
+      + initial_caps_to_underscores((*function_iter)->get_name());
+
+    args_indent = string(function_name.length() + 2, ' ');
+    f_service_ << "static gboolean" << endl
+               << function_name << " ("
+               << class_name << " *," << endl
+               << args_indent << "gint32," << endl
+               << args_indent << "ThriftProtocol *," << endl
+               << args_indent << "ThriftProtocol *," << endl
+               << args_indent << "GError **);" << endl;
+  }
+  f_service_ << endl;
+
+  // Generate the processor's processing-function definitions
+  f_service_ << indent() << "static " << process_function_def_type_name << endl
+             << indent() << class_name_lc << "_process_function_defs["
+             << functions.size() << "] = {" << endl;
+  indent_up();
+  for (function_iter = functions.begin();
+       function_iter != functions.end();
+       ++function_iter) {
+    string service_function_name = (*function_iter)->get_name();
+    string process_function_name = class_name_lc + "_process_"
+      + initial_caps_to_underscores(service_function_name);
+
+    f_service_ << indent() << "{" << endl;
+    indent_up();
+    f_service_ << indent() << "\"" << service_function_name << "\"," << endl
+               << indent() << process_function_name << endl;
+    indent_down();
+    f_service_ << indent() << "}"
+               << (function_iter == --functions.end() ? "" : ",") << endl;
+  }
+  indent_down();
+  f_service_ << indent() << "};" << endl
              << endl;
 
   // Generate the processor's processing functions
@@ -2308,7 +2368,8 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
              << endl << args_indent << "gint32 sequence_id," << endl << args_indent
              << "GError **error)" << endl;
   scope_up(f_service_);
-  f_service_ << indent() << class_name << "ProcessFunction process_function; " << endl;
+  f_service_ << indent() << class_name_lc << "_process_function_def *"
+             << "process_function_def;" << endl;
   f_service_ << indent() << "gboolean dispatch_result = FALSE;" << endl << endl << indent()
              << class_name << " *self = " << class_name_uc << " (dispatch_processor);" << endl;
   f_service_ << indent() << parent_class_name << "Class "
@@ -2317,14 +2378,18 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
   f_service_ << indent() << "g_type_class_peek_parent (" << class_name_uc << "_GET_CLASS (self));"
              << endl;
   indent_down();
-  f_service_ << endl << indent() << "process_function = g_hash_table_lookup ("
-             << "self->process_map, method_name);" << endl << indent()
-             << "if (process_function != NULL)" << endl;
+  f_service_ << endl
+             << indent() << "process_function_def = "
+             << "g_hash_table_lookup (self->process_map, method_name);" << endl
+             << indent() << "if (process_function_def != NULL)" << endl;
   scope_up(f_service_);
-  args_indent = indent() + string(39, ' ');
-  f_service_ << indent() << "dispatch_result = (*process_function) (self," << endl << args_indent
-             << "sequence_id," << endl << args_indent << "input_protocol," << endl << args_indent
-             << "output_protocol," << endl << args_indent << "error);" << endl;
+  args_indent = indent() + string(53, ' ');
+  f_service_ << indent() << "dispatch_result = "
+             << "(*process_function_def->function) (self," << endl
+             << args_indent << "sequence_id," << endl
+             << args_indent << "input_protocol," << endl
+             << args_indent << "output_protocol," << endl
+             << args_indent << "error);" << endl;
   scope_down(f_service_);
   f_service_ << indent() << "else" << endl;
   scope_up(f_service_);
@@ -2435,18 +2500,26 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
   f_service_ << "static void" << endl << class_name_lc << "_init (" << class_name << " *self)"
              << endl;
   scope_up(f_service_);
+  if (functions.size() > 0) {
+    f_service_ << indent() << "guint index;" << endl
+               << endl;
+  }
   f_service_ << indent() << "self->handler = NULL;" << endl << indent()
              << "self->process_map = "
-                "g_hash_table_new (g_str_hash, g_str_equal);" << endl << endl;
-  args_indent = string(21, ' ');
-  for (function_iter = functions.begin(); function_iter != functions.end(); ++function_iter) {
-    string service_function_name = (*function_iter)->get_name();
-    string process_function_name = class_name_lc + "_process_"
-                                   + initial_caps_to_underscores(service_function_name);
-
+                "g_hash_table_new (g_str_hash, g_str_equal);" << endl;
+  if (functions.size() > 0) {
+    args_indent = string(21, ' ');
+    f_service_ << endl
+               << indent() << "for (index = 0; index < "
+               << functions.size() << "; index += 1)" << endl;
+    indent_up();
     f_service_ << indent() << "g_hash_table_insert (self->process_map," << endl
-               << indent() + args_indent + "\"" << service_function_name << "\", " << endl
-               << indent() + args_indent + process_function_name << ");" << endl;
+               << indent() << args_indent
+               << class_name_lc << "_process_function_defs[index].name," << endl
+               << indent() << args_indent
+               << "&" << class_name_lc << "_process_function_defs[index]" << ");"
+               << endl;
+    indent_down();
   }
   scope_down(f_service_);
   f_service_ << endl;
