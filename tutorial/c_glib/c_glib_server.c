@@ -100,7 +100,7 @@ G_END_DECLS
 
 G_DEFINE_TYPE (TutorialCalculatorHandler,
                tutorial_calculator_handler,
-               TYPE_CALCULATOR_HANDLER);
+               TYPE_CALCULATOR_HANDLER)
 
 /* Each of a handler's methods accepts at least two parameters: A
    pointer to the service-interface implementation (the handler object
