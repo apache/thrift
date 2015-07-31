@@ -485,11 +485,20 @@ void t_c_glib_generator::generate_xception(t_struct* tstruct) {
 
   generate_object(tstruct);
 
-  f_types_ << "/* exception */" << endl << "typedef enum" << endl << "{" << endl << "  "
-           << this->nspace_uc << name_uc << "_ERROR_CODE" << endl << "} " << this->nspace << name
-           << "Error;" << endl << endl << "GQuark " << this->nspace_lc << name_lc
-           << "_error_quark (void);" << endl << "#define " << this->nspace_uc << name_uc
-           << "_ERROR (" << this->nspace_lc << name_lc << "_error_quark())" << endl << endl << endl;
+  f_types_ << "/* exception */" << endl
+           << "typedef enum" << endl
+           << "{" << endl;
+  indent_up();
+  f_types_ << indent() << this->nspace_uc << name_uc << "_ERROR_CODE" << endl;
+  indent_down();
+  f_types_ << "} " << this->nspace << name << "Error;" << endl
+           << endl
+           << "GQuark " << this->nspace_lc << name_lc
+           << "_error_quark (void);" << endl
+           << "#define " << this->nspace_uc << name_uc << "_ERROR ("
+           << this->nspace_lc << name_lc << "_error_quark())" << endl
+           << endl
+           << endl;
 
   f_types_impl_ << "/* define the GError domain for exceptions */" << endl << "#define "
                 << this->nspace_uc << name_uc << "_ERROR_DOMAIN \"" << this->nspace_lc << name_lc
