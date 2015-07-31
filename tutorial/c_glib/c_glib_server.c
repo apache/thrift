@@ -173,8 +173,6 @@ tutorial_calculator_handler_calculate (CalculatorIf      *iface,
                                        InvalidOperation **ouch,
                                        GError           **error)
 {
-  THRIFT_UNUSED_VAR (error);
-
   TutorialCalculatorHandler *self;
 
   gint *log_key;
@@ -185,6 +183,8 @@ tutorial_calculator_handler_calculate (CalculatorIf      *iface,
   gint num2;
   Operation op;
   gboolean result = TRUE;
+
+  THRIFT_UNUSED_VAR (error);
 
   g_return_val_if_fail (IS_TUTORIAL_CALCULATOR_HANDLER (iface),
                         FALSE);
@@ -300,13 +300,13 @@ tutorial_calculator_handler_get_struct (SharedServiceIf  *iface,
                                         const gint32      key32,
                                         GError          **error)
 {
-  THRIFT_UNUSED_VAR (error);
-
   gint key = (gint)key32;
   TutorialCalculatorHandler *self;
   SharedStruct *log_struct;
   gint log_key;
   gchar *log_value;
+
+  THRIFT_UNUSED_VAR (error);
 
   g_return_val_if_fail (IS_TUTORIAL_CALCULATOR_HANDLER (iface),
                         FALSE);
