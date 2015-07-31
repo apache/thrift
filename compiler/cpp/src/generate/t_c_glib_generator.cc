@@ -1485,42 +1485,74 @@ void t_c_glib_generator::generate_service_client(t_service* tservice) {
       indent(f_service_) << function_signature(&recv_function) << endl;
       scope_up(f_service_);
 
-      f_service_ << endl << indent() << "gint32 rseqid;" << endl << indent()
-                 << "gchar * fname = NULL;" << endl << indent() << "ThriftMessageType mtype;"
-                 << endl << indent() << "ThriftProtocol * protocol = " << this->nspace_uc
-                 << base_service_name_uc << "_CLIENT (iface)->input_protocol;" << endl << endl
+      f_service_ << indent() << "gint32 rseqid;" << endl
+                 << indent() << "gchar * fname = NULL;" << endl
+                 << indent() << "ThriftMessageType mtype;" << endl
+                 << indent() << "ThriftProtocol * protocol = "
+                 << this->nspace_uc << base_service_name_uc
+                 << "_CLIENT (iface)->input_protocol;" << endl
+                 << indent() << "ThriftApplicationException *xception;" << endl
+                 << endl
                  << indent() << "if (thrift_protocol_read_message_begin "
-                 << "(protocol, &fname, &mtype, &rseqid, error) < 0)" << endl << indent() << "{"
-                 << endl << indent() << "  if (fname) g_free (fname);" << endl << indent()
-                 << "  return FALSE;" << endl << indent() << "}" << endl << endl << indent()
-                 << "if (mtype == T_EXCEPTION) {" << endl << indent()
-                 << "  if (fname) g_free (fname);" << endl << indent()
-                 << "  ThriftApplicationException *xception = g_object_new "
-                    "(THRIFT_TYPE_APPLICATION_EXCEPTION, NULL);" << endl << indent()
-                 << "  thrift_struct_read (THRIFT_STRUCT (xception), protocol, NULL);" << endl
-                 << indent() << "  thrift_protocol_read_message_end (protocol, NULL);" << endl
-                 << indent() << "  thrift_transport_read_end (protocol->transport, NULL);" << endl
-                 << indent() << "  g_set_error (error, THRIFT_APPLICATION_EXCEPTION_ERROR, "
-                                "xception->type, \"application error: %s\", xception->message);"
-                 << endl << indent() << "  g_object_unref (xception);" << endl << indent()
-                 << "  return FALSE;" << endl << indent() << "} else if (mtype != T_REPLY) {"
-                 << endl << indent() << "  if (fname) g_free (fname);" << endl << indent()
-                 << "  thrift_protocol_skip (protocol, T_STRUCT, NULL);" << endl << indent()
-                 << "  thrift_protocol_read_message_end (protocol, NULL);" << endl << indent()
-                 << "  thrift_transport_read_end (protocol->transport, NULL);" << endl << indent()
-                 << "  g_set_error (error, THRIFT_APPLICATION_EXCEPTION_ERROR, "
-                    "THRIFT_APPLICATION_EXCEPTION_ERROR_INVALID_MESSAGE_TYPE, \"invalid message "
-                    "type %d, expected T_REPLY\", mtype);" << endl << indent() << "  return FALSE;"
-                 << endl << indent() << "} else if (strncmp (fname, \"" << name << "\", "
-                 << name.length() << ") != 0) {" << endl << indent()
-                 << "  thrift_protocol_skip (protocol, T_STRUCT, NULL);" << endl << indent()
-                 << "  thrift_protocol_read_message_end (protocol, error);" << endl << indent()
-                 << "  thrift_transport_read_end (protocol->transport, error);" << endl << indent()
-                 << "  g_set_error (error, THRIFT_APPLICATION_EXCEPTION_ERROR, "
-                    "THRIFT_APPLICATION_EXCEPTION_ERROR_WRONG_METHOD_NAME, \"wrong method name %s, "
-                    "expected " << name << "\", fname);" << endl << indent()
-                 << "  if (fname) g_free (fname);" << endl << indent() << "  return FALSE;" << endl
-                 << indent() << "}" << endl << indent() << "if (fname) g_free (fname);" << endl
+                    "(protocol, &fname, &mtype, &rseqid, error) < 0) {" << endl;
+      indent_up();
+      f_service_ << indent() << "if (fname) g_free (fname);" << endl
+                 << indent() << "return FALSE;" << endl;
+      indent_down();
+      f_service_ << indent() << "}" << endl
+                 << endl
+                 << indent() << "if (mtype == T_EXCEPTION) {" << endl;
+      indent_up();
+      f_service_ << indent() << "if (fname) g_free (fname);" << endl
+                 << indent() << "xception = g_object_new "
+                    "(THRIFT_TYPE_APPLICATION_EXCEPTION, NULL);" << endl
+                 << indent() << "thrift_struct_read (THRIFT_STRUCT (xception), "
+                    "protocol, NULL);" << endl
+                 << indent() << "thrift_protocol_read_message_end "
+                    "(protocol, NULL);" << endl
+                 << indent() << "thrift_transport_read_end "
+                    "(protocol->transport, NULL);" << endl
+                 << indent() << "g_set_error (error, "
+                    "THRIFT_APPLICATION_EXCEPTION_ERROR,xception->type, "
+                    "\"application error: %s\", xception->message);" << endl
+                 << indent() << "g_object_unref (xception);" << endl
+                 << indent() << "return FALSE;" << endl;
+      indent_down();
+      f_service_ << indent() << "} else if (mtype != T_REPLY) {" << endl;
+      indent_up();
+      f_service_ << indent() << "if (fname) g_free (fname);" << endl
+                 << indent() << "thrift_protocol_skip (protocol, T_STRUCT, "
+                    "NULL);" << endl
+                 << indent() << "thrift_protocol_read_message_end (protocol, "
+                    "NULL);" << endl
+                 << indent() << "thrift_transport_read_end ("
+                    "protocol->transport, NULL);" << endl
+                 << indent() << "g_set_error (error, "
+                    "THRIFT_APPLICATION_EXCEPTION_ERROR, "
+                    "THRIFT_APPLICATION_EXCEPTION_ERROR_INVALID_MESSAGE_TYPE, "
+                    "\"invalid message type %d, expected T_REPLY\", mtype);"
+                 << endl
+                 << indent() << "return FALSE;" << endl;
+      indent_down();
+      f_service_ << indent() << "} else if (strncmp (fname, \"" << name
+                 << "\", " << name.length() << ") != 0) {" << endl;
+      indent_up();
+      f_service_ << indent() << "thrift_protocol_skip (protocol, T_STRUCT, "
+                    "NULL);" << endl
+                 << indent() << "thrift_protocol_read_message_end (protocol,"
+                    "error);" << endl
+                 << indent() << "thrift_transport_read_end ("
+                    "protocol->transport, error);" << endl
+                 << indent() << "g_set_error (error, "
+                    "THRIFT_APPLICATION_EXCEPTION_ERROR, "
+                    "THRIFT_APPLICATION_EXCEPTION_ERROR_WRONG_METHOD_NAME, "
+                    "\"wrong method name %s, expected " << name
+                    << "\", fname);" << endl
+                 << indent() << "if (fname) g_free (fname);" << endl
+                 << indent() << "return FALSE;" << endl;
+      indent_down();
+      f_service_ << indent() << "}" << endl
+                 << indent() << "if (fname) g_free (fname);" << endl
                  << endl;
 
       t_struct* xs = (*f_iter)->get_xceptions();
