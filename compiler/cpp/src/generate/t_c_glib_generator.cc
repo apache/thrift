@@ -2116,10 +2116,10 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
                << "ThriftProtocol *output_protocol," << endl << args_indent << "GError **error)"
                << endl;
     scope_up(f_service_);
-    f_service_ << indent() << "gboolean result = TRUE;" << endl << indent()
-               << "ThriftTransport * transport;" << endl << indent()
-               << "ThriftApplicationException *xception;" << endl << indent()
-               << args_class_name + " * args =" << endl;
+    f_service_ << indent() << "gboolean result = TRUE;" << endl
+               << indent() << "ThriftTransport * transport;" << endl
+               << indent() << "ThriftApplicationException *xception;" << endl
+               << indent() << args_class_name + " * args =" << endl;
     indent_up();
     f_service_ << indent() << "g_object_new (" << args_class_type << ", NULL);" << endl << endl;
     indent_down();
