@@ -440,7 +440,7 @@ int main (void)
 
   struct sigaction sigint_action;
 
-  GError *error;
+  GError *error = NULL;
   int exit_status = 0;
 
 #if (!GLIB_CHECK_VERSION (2, 36, 0))
