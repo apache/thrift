@@ -2118,6 +2118,7 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
     scope_up(f_service_);
     f_service_ << indent() << "gboolean result = TRUE;" << endl << indent()
                << "ThriftTransport * transport;" << endl << indent()
+               << "ThriftApplicationException *xception;" << endl << indent()
                << args_class_name + " * args =" << endl;
     indent_up();
     f_service_ << indent() << "g_object_new (" << args_class_type << ", NULL);" << endl << endl;
@@ -2310,7 +2311,7 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
                << (*function_iter)->get_name() << " implementation returned FALSE \"" << endl
                << indent() << string(11, ' ') << "\"but did not set an error\");" << endl << endl;
     indent_down();
-    f_service_ << indent() << "ThriftApplicationException *xception =" << endl;
+    f_service_ << indent() << "xception =" << endl;
     indent_up();
     f_service_ << indent() << "g_object_new (THRIFT_TYPE_APPLICATION_EXCEPTION," << endl;
     args_indent = indent() + string(14, ' ');
