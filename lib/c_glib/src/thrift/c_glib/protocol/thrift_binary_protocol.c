@@ -53,12 +53,12 @@ thrift_binary_protocol_write_message_begin (ThriftProtocol *protocol,
     const gchar *name, const ThriftMessageType message_type,
     const gint32 seqid, GError **error)
 {
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
-
   gint32 version = (THRIFT_BINARY_PROTOCOL_VERSION_1)
                    | ((gint32) message_type);
   gint32 ret;
   gint32 xfer = 0;
+
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret = thrift_protocol_write_i32 (protocol, version, error)) < 0)
   {
@@ -117,11 +117,12 @@ thrift_binary_protocol_write_field_begin (ThriftProtocol *protocol,
                                           const gint16 field_id,
                                           GError **error)
 {
-  THRIFT_UNUSED_VAR (name);
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
-
   gint32 ret;
   gint32 xfer = 0;
+
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
+
+  THRIFT_UNUSED_VAR (name);
 
   if ((ret = thrift_protocol_write_byte (protocol, (gint8) field_type,
                                          error)) < 0)
@@ -162,10 +163,10 @@ thrift_binary_protocol_write_map_begin (ThriftProtocol *protocol,
                                         const guint32 size,
                                         GError **error)
 {
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
-
   gint32 ret;
   gint32 xfer = 0;
+
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret = thrift_protocol_write_byte (protocol, (gint8) key_type,
                                          error)) < 0)
@@ -202,10 +203,10 @@ thrift_binary_protocol_write_list_begin (ThriftProtocol *protocol,
                                          const guint32 size, 
                                          GError **error)
 {
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1); 
-
   gint32 ret;
   gint32 xfer = 0;
+
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret = thrift_protocol_write_byte (protocol, (gint8) element_type,
                                          error)) < 0)
@@ -256,8 +257,11 @@ gint32
 thrift_binary_protocol_write_bool (ThriftProtocol *protocol,
                                    const gboolean value, GError **error)
 {
+  guint8 tmp;
+
   g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
-  guint8 tmp = value ? 1 : 0;
+
+  tmp = value ? 1 : 0;
   return thrift_protocol_write_byte (protocol, tmp, error);
 }
 
@@ -280,9 +284,11 @@ gint32
 thrift_binary_protocol_write_i16 (ThriftProtocol *protocol, const gint16 value,
                                   GError **error)
 {
+  gint16 net;
+
   g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
-  gint16 net = g_htons (value);
+  net = g_htons (value);
   if (thrift_transport_write (protocol->transport,
                               (const gpointer) &net, 2, error))
   {
@@ -296,9 +302,11 @@ gint32
 thrift_binary_protocol_write_i32 (ThriftProtocol *protocol, const gint32 value,
                                   GError **error)
 {
+  gint32 net;
+
   g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
-  gint32 net = g_htonl (value);
+  net = g_htonl (value);
   if (thrift_transport_write (protocol->transport,
                               (const gpointer) &net, 4, error))
   {
@@ -312,9 +320,11 @@ gint32
 thrift_binary_protocol_write_i64 (ThriftProtocol *protocol, const gint64 value,
                                   GError **error)
 {
+  gint64 net;
+
   g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
-  gint64 net = GUINT64_TO_BE (value);
+  net = GUINT64_TO_BE (value);
   if (thrift_transport_write (protocol->transport,
                               (const gpointer) &net, 8, error))
   {
@@ -328,9 +338,11 @@ gint32
 thrift_binary_protocol_write_double (ThriftProtocol *protocol,
                                      const gdouble value, GError **error)
 {
+  guint64 bits;
+
   g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
-  guint64 bits = GUINT64_FROM_BE (thrift_bitwise_cast_guint64 (value));
+  bits = GUINT64_FROM_BE (thrift_bitwise_cast_guint64 (value));
   if (thrift_transport_write (protocol->transport,
                               (const gpointer) &bits, 8, error))
   {
@@ -344,9 +356,11 @@ gint32
 thrift_binary_protocol_write_string (ThriftProtocol *protocol,
                                      const gchar *str, GError **error)
 {
+  guint32 len;
+
   g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
-  guint32 len = str != NULL ? strlen (str) : 0;
+  len = str != NULL ? strlen (str) : 0;
   /* write the string length + 1 which includes the null terminator */
   return thrift_protocol_write_binary (protocol, (const gpointer) str, 
                                        len, error);
@@ -357,9 +371,10 @@ thrift_binary_protocol_write_binary (ThriftProtocol *protocol,
                                      const gpointer buf,
                                      const guint32 len, GError **error)
 {
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
   gint32 ret;
   gint32 xfer = 0;
+
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret = thrift_protocol_write_i32 (protocol, len, error)) < 0)
   {
@@ -386,11 +401,11 @@ thrift_binary_protocol_read_message_begin (ThriftProtocol *protocol,
                                            ThriftMessageType *message_type,
                                            gint32 *seqid, GError **error)
 {
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
-
   gint32 ret;
   gint32 xfer = 0;
   gint32 sz;
+
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret = thrift_protocol_read_i32 (protocol, &sz, error)) < 0)
   {
@@ -464,12 +479,13 @@ thrift_binary_protocol_read_field_begin (ThriftProtocol *protocol,
                                          gint16 *field_id,
                                          GError **error)
 {
-  THRIFT_UNUSED_VAR (name);
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
-
   gint32 ret;
   gint32 xfer = 0;
   gint8 type;
+
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
+
+  THRIFT_UNUSED_VAR (name);
 
   if ((ret = thrift_protocol_read_byte (protocol, &type, error)) < 0)
   {
@@ -506,12 +522,12 @@ thrift_binary_protocol_read_map_begin (ThriftProtocol *protocol,
                                        guint32 *size,
                                        GError **error)
 {
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
-
   gint32 ret;
   gint32 xfer = 0;
   gint8 k, v;
   gint32 sizei;
+
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret = thrift_protocol_read_byte (protocol, &k, error)) < 0)
   {
@@ -559,12 +575,12 @@ thrift_binary_protocol_read_list_begin (ThriftProtocol *protocol,
                                         ThriftType *element_type,
                                         guint32 *size, GError **error)
 {
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
-
   gint32 ret;
   gint32 xfer = 0;
   gint8 e;
   gint32 sizei;
+
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret = thrift_protocol_read_byte (protocol, &e, error)) < 0)
   {
@@ -623,9 +639,10 @@ gint32
 thrift_binary_protocol_read_bool (ThriftProtocol *protocol, gboolean *value,
                                   GError **error)
 {
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
   gint32 ret;
   gpointer b[1];
+
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret = 
        thrift_transport_read (protocol->transport,
@@ -641,9 +658,10 @@ gint32
 thrift_binary_protocol_read_byte (ThriftProtocol *protocol, gint8 *value,
                                   GError **error)
 {
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
   gint32 ret;
   gpointer b[1];
+
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret =
        thrift_transport_read (protocol->transport,
@@ -659,18 +677,22 @@ gint32
 thrift_binary_protocol_read_i16 (ThriftProtocol *protocol, gint16 *value,
                                  GError **error)
 {
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
   gint32 ret;
-  gpointer b[2];
+  union
+  {
+    gint8 byte_array[2];
+    gint16 int16;
+  } b;
+
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret =
        thrift_transport_read (protocol->transport,
-                              b, 2, error)) < 0)
+                              b.byte_array, 2, error)) < 0)
   {
     return -1;
   }
-  *value = *(gint16 *) b;
-  *value = g_ntohs (*value);
+  *value = g_ntohs (b.int16);
   return ret;
 }
 
@@ -678,18 +700,22 @@ gint32
 thrift_binary_protocol_read_i32 (ThriftProtocol *protocol, gint32 *value,
                                  GError **error)
 {
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
   gint32 ret;
-  gpointer b[4];
+  union
+  {
+    gint8 byte_array[4];
+    gint32 int32;
+  } b;
+
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret =
        thrift_transport_read (protocol->transport,
-                              b, 4, error)) < 0)
+                              b.byte_array, 4, error)) < 0)
   {
     return -1;
   }
-  *value = *(gint32 *) b;
-  *value = g_ntohl (*value);
+  *value = g_ntohl (b.int32);
   return ret;
 }
 
@@ -697,18 +723,22 @@ gint32
 thrift_binary_protocol_read_i64 (ThriftProtocol *protocol, gint64 *value,
                                  GError **error)
 {
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
   gint32 ret;
-  gpointer b[8];
+  union
+  {
+    gint8 byte_array[8];
+    gint64 int64;
+  } b;
+
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret =
        thrift_transport_read (protocol->transport,
-                              b, 8, error)) < 0)
+                              b.byte_array, 8, error)) < 0)
   {
     return -1;
   }
-  *value = *(gint64 *) b;
-  *value = GUINT64_FROM_BE (*value);
+  *value = GUINT64_FROM_BE (b.int64);
   return ret;
 }
 
@@ -716,19 +746,22 @@ gint32
 thrift_binary_protocol_read_double (ThriftProtocol *protocol,
                                     gdouble *value, GError **error)
 {
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
   gint32 ret;
-  gpointer b[8];
+  union
+  {
+    gint8 byte_array[8];
+    guint64 uint64;
+  } b;
+
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret =
        thrift_transport_read (protocol->transport,
-                              b, 8, error)) < 0)
+                              b.byte_array, 8, error)) < 0)
   {
     return -1;
   }
-  guint64 bits = *(guint64 *) b;
-  bits = GUINT64_FROM_BE (bits);
-  *value = thrift_bitwise_cast_gdouble (bits);
+  *value = thrift_bitwise_cast_gdouble (GUINT64_FROM_BE (b.uint64));
   return ret;
 }
 
@@ -736,11 +769,12 @@ gint32
 thrift_binary_protocol_read_string (ThriftProtocol *protocol,
                                     gchar **str, GError **error)
 {
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
   guint32 len;
   gint32 ret;
   gint32 xfer = 0;
   gint32 read_len = 0;
+
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   /* read the length into read_len */
   if ((ret =
@@ -753,7 +787,7 @@ thrift_binary_protocol_read_string (ThriftProtocol *protocol,
   if (read_len > 0)
   {
     /* allocate the memory for the string */
-    len = (guint32) read_len + 1; // space for null terminator
+    len = (guint32) read_len + 1; /* space for null terminator */
     *str = g_new0 (gchar, len);
     if ((ret =
          thrift_transport_read (protocol->transport,
@@ -777,11 +811,12 @@ thrift_binary_protocol_read_binary (ThriftProtocol *protocol,
                                     gpointer *buf, guint32 *len,
                                     GError **error)
 {
-  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
   gint32 ret;
   gint32 xfer = 0;
   gint32 read_len = 0;
  
+  g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
+
   /* read the length into read_len */
   if ((ret =
        thrift_protocol_read_i32 (protocol, &read_len, error)) < 0)

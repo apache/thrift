@@ -27,13 +27,13 @@ G_DEFINE_TYPE(ThriftSimpleServer, thrift_simple_server, THRIFT_TYPE_SERVER)
 gboolean
 thrift_simple_server_serve (ThriftServer *server, GError **error)
 {
-  g_return_val_if_fail (THRIFT_IS_SIMPLE_SERVER (server), FALSE);
-
   ThriftTransport *t = NULL;
   ThriftTransport *input_transport = NULL, *output_transport = NULL;
   ThriftProtocol *input_protocol = NULL, *output_protocol = NULL;
   ThriftSimpleServer *tss = THRIFT_SIMPLE_SERVER(server);
   GError *process_error = NULL;
+
+  g_return_val_if_fail (THRIFT_IS_SIMPLE_SERVER (server), FALSE);
 
   if (thrift_server_transport_listen (server->server_transport, error)) {
     tss->running = TRUE;
@@ -69,11 +69,11 @@ thrift_simple_server_serve (ThriftServer *server, GError **error)
           g_message ("thrift_simple_server_serve: %s", process_error->message);
           g_clear_error (&process_error);
 
-          // Note we do not propagate processing errors to the caller as they
-          // normally are transient and not fatal to the server
+          /* Note we do not propagate processing errors to the caller as they
+           * normally are transient and not fatal to the server */
         }
 
-        // TODO: handle exceptions
+        /* TODO: handle exceptions */
         THRIFT_TRANSPORT_GET_CLASS (input_transport)->close (input_transport,
                                                              NULL);
         THRIFT_TRANSPORT_GET_CLASS (output_transport)->close (output_transport,
@@ -81,13 +81,13 @@ thrift_simple_server_serve (ThriftServer *server, GError **error)
       }
     }
 
-    // attempt to shutdown
+    /* attempt to shutdown */
     THRIFT_SERVER_TRANSPORT_GET_CLASS (server->server_transport)
       ->close (server->server_transport, NULL);
   }
 
-  // Since this method is designed to run forever, it can only ever return on
-  // error
+  /* Since this method is designed to run forever, it can only ever return on
+   * error */
   return FALSE;
 }
 
@@ -101,9 +101,9 @@ thrift_simple_server_stop (ThriftServer *server)
 static void
 thrift_simple_server_init (ThriftSimpleServer *tss)
 {
-  tss->running = FALSE;
-
   ThriftServer *server = THRIFT_SERVER(tss);
+
+  tss->running = FALSE;
 
   if (server->input_transport_factory == NULL)
   {
