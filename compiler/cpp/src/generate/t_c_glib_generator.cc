@@ -2055,29 +2055,33 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
   }
   f_service_ << endl;
 
-  // Generate the processor's processing-function definitions
-  f_service_ << indent() << "static " << process_function_def_type_name << endl
-             << indent() << class_name_lc << "_process_function_defs["
-             << functions.size() << "] = {" << endl;
-  indent_up();
-  for (function_iter = functions.begin();
-       function_iter != functions.end();
-       ++function_iter) {
-    string service_function_name = (*function_iter)->get_name();
-    string process_function_name = class_name_lc + "_process_"
-      + initial_caps_to_underscores(service_function_name);
-
-    f_service_ << indent() << "{" << endl;
+  // Generate the processor's processing-function definitions, if the service
+  // defines any methods
+  if (functions.size() > 0) {
+    f_service_ << indent() << "static " << process_function_def_type_name
+               << endl
+               << indent() << class_name_lc << "_process_function_defs["
+               << functions.size() << "] = {" << endl;
     indent_up();
-    f_service_ << indent() << "\"" << service_function_name << "\"," << endl
-               << indent() << process_function_name << endl;
+    for (function_iter = functions.begin();
+         function_iter != functions.end();
+         ++function_iter) {
+      string service_function_name = (*function_iter)->get_name();
+      string process_function_name = class_name_lc + "_process_"
+        + initial_caps_to_underscores(service_function_name);
+
+      f_service_ << indent() << "{" << endl;
+      indent_up();
+      f_service_ << indent() << "\"" << service_function_name << "\"," << endl
+                 << indent() << process_function_name << endl;
+      indent_down();
+      f_service_ << indent() << "}"
+                 << (function_iter == --functions.end() ? "" : ",") << endl;
+    }
     indent_down();
-    f_service_ << indent() << "}"
-               << (function_iter == --functions.end() ? "" : ",") << endl;
+    f_service_ << indent() << "};" << endl
+               << endl;
   }
-  indent_down();
-  f_service_ << indent() << "};" << endl
-             << endl;
 
   // Generate the processor's processing functions
   for (function_iter = functions.begin(); function_iter != functions.end(); ++function_iter) {
