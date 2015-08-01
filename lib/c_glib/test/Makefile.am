@@ -32,11 +32,11 @@ BUILT_SOURCES = \
         gen-c_glib/t_test_thrift_test.h \
         gen-c_glib/t_test_thrift_test_types.h
 
-AM_CPPFLAGS = -g -Wall -I../src $(GLIB_CFLAGS)
+AM_CPPFLAGS = -I../src
+AM_CFLAGS = -g -Wall -Wextra -pedantic $(GLIB_CFLAGS) $(GOBJECT_CFLAGS) \
+	@GCOV_CFLAGS@
+AM_CXXFLAGS = $(AM_CFLAGS)
 AM_LDFLAGS = $(GLIB_LIBS) $(GOBJECT_LIBS) @GCOV_LDFLAGS@
-
-CFLAGS = @GCOV_CFLAGS@
-CXXFLAGS = -g
 
 check_PROGRAMS = \
   testapplicationexception \
