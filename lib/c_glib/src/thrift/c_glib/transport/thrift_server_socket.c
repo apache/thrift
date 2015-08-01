@@ -215,6 +215,7 @@ thrift_server_socket_set_property (GObject *object, guint property_id,
 static void
 thrift_server_socket_class_init (ThriftServerSocketClass *cls)
 {
+  ThriftServerTransportClass *tstc = THRIFT_SERVER_TRANSPORT_CLASS (cls);
   GObjectClass *gobject_class = G_OBJECT_CLASS (cls);
   GParamSpec *param_spec = NULL;
 
@@ -248,7 +249,6 @@ thrift_server_socket_class_init (ThriftServerSocketClass *cls)
 
   gobject_class->finalize = thrift_server_socket_finalize;
 
-  ThriftServerTransportClass *tstc = THRIFT_SERVER_TRANSPORT_CLASS (cls);
   tstc->listen = thrift_server_socket_listen;
   tstc->accept = thrift_server_socket_accept;
   tstc->close = thrift_server_socket_close;
