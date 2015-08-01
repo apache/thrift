@@ -27,10 +27,10 @@ ThriftProtocol *
 thrift_binary_protocol_factory_get_protocol (ThriftProtocolFactory *factory,
                                              ThriftTransport *transport)
 {
-  THRIFT_UNUSED_VAR (factory);
-
   ThriftBinaryProtocol *tb = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL,
                                            "transport", transport, NULL);
+
+  THRIFT_UNUSED_VAR (factory);
 
   return THRIFT_PROTOCOL (tb);
 }
