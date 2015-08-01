@@ -23,7 +23,7 @@
 
 G_DEFINE_ABSTRACT_TYPE (ThriftDispatchProcessor,
                         thrift_dispatch_processor,
-                        THRIFT_TYPE_PROCESSOR);
+                        THRIFT_TYPE_PROCESSOR)
 
 gboolean
 thrift_dispatch_processor_process (ThriftProcessor *processor,

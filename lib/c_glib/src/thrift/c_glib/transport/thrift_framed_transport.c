@@ -89,10 +89,12 @@ thrift_framed_transport_read_frame (ThriftTransport *transport,
                              sizeof (sz),
                              error) == sizeof (sz))
   {
+    guchar *tmpdata;
+
     sz = ntohl (sz);
 
     /* create a buffer to hold the data and read that much data */
-    guchar tmpdata[sz];
+    tmpdata = g_alloca (sz);
     bytes = thrift_transport_read (t->transport, tmpdata, sz, error);
 
     if (bytes > 0 && (error == NULL || *error == NULL))
@@ -117,10 +119,10 @@ thrift_framed_transport_read_slow (ThriftTransport *transport, gpointer buf,
   guint32 have = t->r_buf->len;
   gint32 result = -1;
 
-  // we shouldn't hit this unless the buffer doesn't have enough to read
+  /* we shouldn't hit this unless the buffer doesn't have enough to read */
   assert (t->r_buf->len < want);
 
-  // first copy what we have in our buffer, if there is anything left
+  /* first copy what we have in our buffer, if there is anything left */
   if (have > 0)
   {
     memcpy (buf, t->r_buf, t->r_buf->len);
@@ -128,14 +130,14 @@ thrift_framed_transport_read_slow (ThriftTransport *transport, gpointer buf,
     t->r_buf = g_byte_array_remove_range (t->r_buf, 0, t->r_buf->len);
   }
 
-  // read a frame of input and buffer it
+  /* read a frame of input and buffer it */
   if (thrift_framed_transport_read_frame (transport, error) == TRUE)
   {
-    // hand over what we have up to what the caller wants
+    /* hand over what we have up to what the caller wants */
     guint32 give = want < t->r_buf->len ? want : t->r_buf->len;
 
-    // copy the data into the buffer
-    memcpy (buf + len - want, t->r_buf->data, give);
+    /* copy the data into the buffer */
+    memcpy ((guint8 *)buf + len - want, t->r_buf->data, give);
     t->r_buf = g_byte_array_remove_range (t->r_buf, 0, give);
     want -= give;
 
@@ -179,10 +181,11 @@ gboolean
 thrift_framed_transport_write_slow (ThriftTransport *transport, gpointer buf,
                                     guint32 len, GError **error)
 {
-  THRIFT_UNUSED_VAR (error);
   ThriftFramedTransport *t = THRIFT_FRAMED_TRANSPORT (transport);
 
-  // append the data to the buffer and we're done
+  THRIFT_UNUSED_VAR (error);
+
+  /* append the data to the buffer and we're done */
   g_byte_array_append (t->w_buf, buf, len);
 
   return TRUE;
@@ -223,13 +226,14 @@ thrift_framed_transport_flush (ThriftTransport *transport, GError **error)
 {
   ThriftFramedTransport *t = THRIFT_FRAMED_TRANSPORT (transport);
   gint32 sz_hbo, sz_nbo;
+  guchar *tmpdata;
 
-  // get the size of the frame in host and network byte order
+  /* get the size of the frame in host and network byte order */
   sz_hbo = t->w_buf->len + sizeof(sz_nbo);
   sz_nbo = (gint32) htonl ((guint32) t->w_buf->len);
 
-  // copy the size of the frame and then the frame itself
-  guchar tmpdata[sz_hbo];
+  /* copy the size of the frame and then the frame itself */
+  tmpdata = g_alloca (sz_hbo);
   memcpy (tmpdata, (guint8 *) &sz_nbo, sizeof (sz_nbo));
 
   if (t->w_buf->len > 0)
@@ -238,7 +242,7 @@ thrift_framed_transport_flush (ThriftTransport *transport, GError **error)
     t->w_buf = g_byte_array_remove_range (t->w_buf, 0, t->w_buf->len);
   }
     
-  // write the buffer and then empty it
+  /* write the buffer and then empty it */
   THRIFT_TRANSPORT_GET_CLASS (t->transport)->write (t->transport,
                                                     tmpdata, sz_hbo,
                                                     error);
@@ -282,8 +286,9 @@ void
 thrift_framed_transport_get_property (GObject *object, guint property_id,
                                       GValue *value, GParamSpec *pspec)
 {
-  THRIFT_UNUSED_VAR (pspec);
   ThriftFramedTransport *transport = THRIFT_FRAMED_TRANSPORT (object);
+
+  THRIFT_UNUSED_VAR (pspec);
 
   switch (property_id)
   {
@@ -304,8 +309,9 @@ void
 thrift_framed_transport_set_property (GObject *object, guint property_id,
                                       const GValue *value, GParamSpec *pspec)
 {
-  THRIFT_UNUSED_VAR (pspec);
   ThriftFramedTransport *transport = THRIFT_FRAMED_TRANSPORT (object);
+
+  THRIFT_UNUSED_VAR (pspec);
 
   switch (property_id)
   {
@@ -325,6 +331,7 @@ thrift_framed_transport_set_property (GObject *object, guint property_id,
 static void
 thrift_framed_transport_class_init (ThriftFramedTransportClass *cls)
 {
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_CLASS (cls);
   GObjectClass *gobject_class = G_OBJECT_CLASS (cls);
   GParamSpec *param_spec = NULL;
 
@@ -363,9 +370,6 @@ thrift_framed_transport_class_init (ThriftFramedTransportClass *cls)
   g_object_class_install_property (gobject_class,
                                    PROP_THRIFT_FRAMED_TRANSPORT_WRITE_BUFFER_SIZE,
                                    param_spec);
-
-
-  ThriftTransportClass *ttc = THRIFT_TRANSPORT_CLASS (cls);
 
   gobject_class->finalize = thrift_framed_transport_finalize;
   ttc->is_open = thrift_framed_transport_is_open;

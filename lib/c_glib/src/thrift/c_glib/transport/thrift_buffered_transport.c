@@ -80,13 +80,13 @@ thrift_buffered_transport_read_slow (ThriftTransport *transport, gpointer buf,
   gint ret = 0;
   guint32 want = len;
   guint32 got = 0;
-  guchar tmpdata[len];
+  guchar *tmpdata = g_alloca (len);
   guint32 have = t->r_buf->len;
 
-  // we shouldn't hit this unless the buffer doesn't have enough to read
+  /* we shouldn't hit this unless the buffer doesn't have enough to read */
   assert (t->r_buf->len < want);
 
-  // first copy what we have in our buffer.
+  /* first copy what we have in our buffer. */
   if (have > 0)
   {
     memcpy (buf, t->r_buf, t->r_buf->len);
@@ -94,9 +94,9 @@ thrift_buffered_transport_read_slow (ThriftTransport *transport, gpointer buf,
     t->r_buf = g_byte_array_remove_range (t->r_buf, 0, t->r_buf->len);
   }
 
-  // if the buffer is still smaller than what we want to read, then just
-  // read it directly.  otherwise, fill the buffer and then give out
-  // enough to satisfy the read.
+  /* if the buffer is still smaller than what we want to read, then just
+   * read it directly.  otherwise, fill the buffer and then give out
+   * enough to satisfy the read. */
   if (t->r_buf_size < want)
   {
     if ((ret = THRIFT_TRANSPORT_GET_CLASS (t->transport)->read (t->transport,
@@ -107,10 +107,12 @@ thrift_buffered_transport_read_slow (ThriftTransport *transport, gpointer buf,
     }
     got += ret;
 
-    // copy the data starting from where we left off
-    memcpy (buf + have, tmpdata, got);
+    /* copy the data starting from where we left off */
+    memcpy ((guint8 *)buf + have, tmpdata, got);
     return got + have; 
   } else {
+    guint32 give;
+
     if ((ret = THRIFT_TRANSPORT_GET_CLASS (t->transport)->read (t->transport,
                                                                 tmpdata,
                                                                 want,
@@ -120,11 +122,11 @@ thrift_buffered_transport_read_slow (ThriftTransport *transport, gpointer buf,
     got += ret;
     t->r_buf = g_byte_array_append (t->r_buf, tmpdata, got);
     
-    // hand over what we have up to what the caller wants
-    guint32 give = want < t->r_buf->len ? want : t->r_buf->len;
+    /* hand over what we have up to what the caller wants */
+    give = want < t->r_buf->len ? want : t->r_buf->len;
 
 
-    memcpy (buf + len - want, t->r_buf->data, give);
+    memcpy ((guint8 *)buf + len - want, t->r_buf->data, give);
     t->r_buf = g_byte_array_remove_range (t->r_buf, 0, give);
     want -= give;
 
@@ -170,8 +172,8 @@ thrift_buffered_transport_write_slow (ThriftTransport *transport, gpointer buf,
   guint32 have_bytes = t->w_buf->len;
   guint32 space = t->w_buf_size - t->w_buf->len;
 
-  // we need two syscalls because the buffered data plus the buffer itself
-  // is too big.
+  /* we need two syscalls because the buffered data plus the buffer itself
+   * is too big. */
   if ((have_bytes + len >= 2*t->w_buf_size) || (have_bytes == 0))
   {
     if (have_bytes > 0)
@@ -200,7 +202,7 @@ thrift_buffered_transport_write_slow (ThriftTransport *transport, gpointer buf,
   }
 
   t->w_buf = g_byte_array_remove_range (t->w_buf, 0, t->w_buf->len);
-  t->w_buf = g_byte_array_append (t->w_buf, buf+space, len-space);
+  t->w_buf = g_byte_array_append (t->w_buf, (guint8 *)buf + space, len-space);
 
   return TRUE;
 }
@@ -242,7 +244,7 @@ thrift_buffered_transport_flush (ThriftTransport *transport, GError **error)
 
   if (t->w_buf != NULL && t->w_buf->len > 0)
   {
-    // write the buffer and then empty it
+    /* write the buffer and then empty it */
     if (!THRIFT_TRANSPORT_GET_CLASS (t->transport)->write (t->transport,
                                                            t->w_buf->data,
                                                            t->w_buf->len,
@@ -290,8 +292,9 @@ void
 thrift_buffered_transport_get_property (GObject *object, guint property_id,
                                         GValue *value, GParamSpec *pspec)
 {
-  THRIFT_UNUSED_VAR (pspec);
   ThriftBufferedTransport *transport = THRIFT_BUFFERED_TRANSPORT (object);
+
+  THRIFT_UNUSED_VAR (pspec);
 
   switch (property_id)
   {
@@ -312,8 +315,9 @@ void
 thrift_buffered_transport_set_property (GObject *object, guint property_id,
                                         const GValue *value, GParamSpec *pspec)
 {
-  THRIFT_UNUSED_VAR (pspec);
   ThriftBufferedTransport *transport = THRIFT_BUFFERED_TRANSPORT (object);
+
+  THRIFT_UNUSED_VAR (pspec);
 
   switch (property_id)
   {
@@ -333,6 +337,7 @@ thrift_buffered_transport_set_property (GObject *object, guint property_id,
 static void
 thrift_buffered_transport_class_init (ThriftBufferedTransportClass *cls)
 {
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_CLASS (cls);
   GObjectClass *gobject_class = G_OBJECT_CLASS (cls);
   GParamSpec *param_spec = NULL;
 
@@ -372,8 +377,6 @@ thrift_buffered_transport_class_init (ThriftBufferedTransportClass *cls)
                                    PROP_THRIFT_BUFFERED_TRANSPORT_WRITE_BUFFER_SIZE,
                                    param_spec);
 
-
-  ThriftTransportClass *ttc = THRIFT_TRANSPORT_CLASS (cls);
 
   gobject_class->finalize = thrift_buffered_transport_finalize;
   ttc->is_open = thrift_buffered_transport_is_open;

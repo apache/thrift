@@ -32,7 +32,7 @@
 enum _ThriftMemoryBufferProperties
 {
   PROP_0,
-  PROP_THRIFT_MEMORY_BUFFER_BUFFER_SIZE,
+  PROP_THRIFT_MEMORY_BUFFER_BUFFER_SIZE
 };
 
 G_DEFINE_TYPE(ThriftMemoryBuffer, thrift_memory_buffer, THRIFT_TYPE_TRANSPORT)
@@ -68,9 +68,10 @@ gint32
 thrift_memory_buffer_read (ThriftTransport *transport, gpointer buf,
                            guint32 len, GError **error)
 {
-  THRIFT_UNUSED_VAR (error);
   ThriftMemoryBuffer *t = THRIFT_MEMORY_BUFFER (transport);
   guint32 give = len; 
+
+  THRIFT_UNUSED_VAR (error);
 
   /* if the requested bytes are more than what we have available,
    * just give all that we have the buffer */
@@ -102,9 +103,9 @@ thrift_memory_buffer_write (ThriftTransport *transport,
                             const gpointer buf,     
                             const guint32 len, GError **error)
 {
-  THRIFT_UNUSED_VAR (error);
-
   ThriftMemoryBuffer *t = THRIFT_MEMORY_BUFFER (transport);
+
+  THRIFT_UNUSED_VAR (error);
 
   /* return an exception if the buffer doesn't have enough space. */
   if (len > t->buf_size - t->buf->len)
@@ -165,8 +166,9 @@ void
 thrift_memory_buffer_get_property (GObject *object, guint property_id,
                                    GValue *value, GParamSpec *pspec)
 {
-  THRIFT_UNUSED_VAR (pspec);
   ThriftMemoryBuffer *transport = THRIFT_MEMORY_BUFFER (object);
+
+  THRIFT_UNUSED_VAR (pspec);
 
   switch (property_id)
   {
@@ -181,8 +183,9 @@ void
 thrift_memory_buffer_set_property (GObject *object, guint property_id,
                                    const GValue *value, GParamSpec *pspec)
 {
-  THRIFT_UNUSED_VAR (pspec);
   ThriftMemoryBuffer *transport = THRIFT_MEMORY_BUFFER (object);
+
+  THRIFT_UNUSED_VAR (pspec);
 
   switch (property_id)
   {
@@ -196,6 +199,7 @@ thrift_memory_buffer_set_property (GObject *object, guint property_id,
 static void
 thrift_memory_buffer_class_init (ThriftMemoryBufferClass *cls)
 {
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_CLASS (cls);
   GObjectClass *gobject_class = G_OBJECT_CLASS (cls);
   GParamSpec *param_spec = NULL;
 
@@ -214,8 +218,6 @@ thrift_memory_buffer_class_init (ThriftMemoryBufferClass *cls)
   g_object_class_install_property (gobject_class,
                                    PROP_THRIFT_MEMORY_BUFFER_BUFFER_SIZE,
                                    param_spec);
-
-  ThriftTransportClass *ttc = THRIFT_TRANSPORT_CLASS (cls);
 
   gobject_class->finalize = thrift_memory_buffer_finalize;
   ttc->is_open = thrift_memory_buffer_is_open;
