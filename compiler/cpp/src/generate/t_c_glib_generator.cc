@@ -1648,15 +1648,22 @@ void t_c_glib_generator::generate_service_client(t_service* tservice) {
   // create the interface initializer
   f_service_ << "static void" << endl << this->nspace_lc << service_name_lc
              << "_if_interface_init (" << this->nspace << service_name_ << "IfInterface *iface)"
-             << endl << "{" << endl;
-  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    /* make the function name C friendly */
-    string funname = initial_caps_to_underscores((*f_iter)->get_name());
+             << endl;
+  scope_up(f_service_);
+  if (functions.size() > 0) {
+    for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+      /* make the function name C friendly */
+      string funname = initial_caps_to_underscores((*f_iter)->get_name());
 
-    f_service_ << "  iface->" << funname << " = " << this->nspace_lc << service_name_lc
-               << "_client_" << funname << ";" << endl;
+      f_service_ << "  iface->" << funname << " = " << this->nspace_lc << service_name_lc
+                 << "_client_" << funname << ";" << endl;
+    }
   }
-  f_service_ << "}" << endl << endl;
+  else {
+    f_service_ << indent() << "THRIFT_UNUSED_VAR (iface);" << endl;
+  }
+  scope_down(f_service_);
+  f_service_ << endl;
 
   // create the client instance initializer
   f_service_ << "static void" << endl << this->nspace_lc << service_name_lc << "_client_init ("
@@ -1879,11 +1886,16 @@ void t_c_glib_generator::generate_service_handler(t_service* tservice) {
              << "_if_interface_init (" << this->nspace << service_name_ << "IfInterface *iface)"
              << endl;
   scope_up(f_service_);
-  for (function_iter = functions.begin(); function_iter != functions.end(); ++function_iter) {
-    string method_name = initial_caps_to_underscores((*function_iter)->get_name());
+  if (functions.size() > 0) {
+    for (function_iter = functions.begin(); function_iter != functions.end(); ++function_iter) {
+      string method_name = initial_caps_to_underscores((*function_iter)->get_name());
 
-    f_service_ << indent() << "iface->" << method_name << " = " << class_name_lc << "_"
-               << method_name << ";" << endl;
+      f_service_ << indent() << "iface->" << method_name << " = " << class_name_lc << "_"
+                 << method_name << ";" << endl;
+    }
+  }
+  else {
+    f_service_ << "THRIFT_UNUSED_VAR (iface);" << endl;
   }
   scope_down(f_service_);
   f_service_ << endl;
@@ -1900,12 +1912,17 @@ void t_c_glib_generator::generate_service_handler(t_service* tservice) {
   f_service_ << "static void" << endl << class_name_lc << "_class_init (" << class_name
              << "Class *cls)" << endl;
   scope_up(f_service_);
-  for (function_iter = functions.begin(); function_iter != functions.end(); ++function_iter) {
-    string function_name = (*function_iter)->get_name();
-    string method_name = initial_caps_to_underscores(function_name);
+  if (functions.size() > 0) {
+    for (function_iter = functions.begin(); function_iter != functions.end(); ++function_iter) {
+      string function_name = (*function_iter)->get_name();
+      string method_name = initial_caps_to_underscores(function_name);
 
-    // All methods are pure virtual and must be implemented by subclasses
-    f_service_ << indent() << "cls->" << method_name << " = NULL;" << endl;
+      // All methods are pure virtual and must be implemented by subclasses
+      f_service_ << indent() << "cls->" << method_name << " = NULL;" << endl;
+    }
+  }
+  else {
+    f_service_ << indent() << "THRIFT_UNUSED_VAR (cls);" << endl;
   }
   scope_down(f_service_);
   f_service_ << endl;
