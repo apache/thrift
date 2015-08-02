@@ -34,15 +34,6 @@ public:
 
   bool is_set() const { return true; }
 
-  virtual std::string get_fingerprint_material() const {
-    return "set<" + elem_type_->get_fingerprint_material() + ">";
-  }
-
-  virtual void generate_fingerprint() {
-    t_type::generate_fingerprint();
-    elem_type_->generate_fingerprint();
-  }
-
 private:
   t_type* elem_type_;
 };

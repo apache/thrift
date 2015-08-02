@@ -86,15 +86,6 @@ public:
 
   t_struct* get_xsd_attrs() { return xsd_attrs_; }
 
-  // This is not the same function as t_type::get_fingerprint_material,
-  // but it does the same thing.
-  std::string get_fingerprint_material() const {
-    std::ostringstream keystm;
-    keystm << key_;
-    return keystm.str() + ":" + ((req_ == T_OPTIONAL) ? "opt-" : "")
-           + type_->get_fingerprint_material();
-  }
-
   /**
    * Comparator to sort fields in ascending order by key.
    * Make this a functor instead of a function to help GCC inline it.

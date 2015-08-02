@@ -27,9 +27,6 @@
     <ClCompile Include="src\thrift\protocol\TDebugProtocol.cpp">
       <Filter>protocol</Filter>
     </ClCompile>
-    <ClCompile Include="src\thrift\protocol\TDenseProtocol.cpp">
-      <Filter>protocol</Filter>
-    </ClCompile>
     <ClCompile Include="src\thrift\protocol\TBase64Utils.cpp">
       <Filter>protocol</Filter>
     </ClCompile>
@@ -204,9 +201,6 @@
       <Filter>protocol</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\protocol\TMultiplexedProtocol.h">
-      <Filter>protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="src\thrift\protocol\TDenseProtocol.h">
       <Filter>protocol</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\protocol\TDebugProtocol.h">

@@ -89,8 +89,7 @@ check_PROGRAMS = \
 	TFileTransportTest \
 	link_test \
 	OpenSSLManualInitTest \
-	EnumTest \
-	DenseProtoTest
+	EnumTest
 
 if AMX_HAVE_LIBEVENT
 noinst_PROGRAMS += \
@@ -276,16 +275,6 @@ RecursiveTest_LDADD = \
 	$(BOOST_TEST_LDADD)
 
 #
-# DenseProtoTest
-#
-DenseProtoTest_SOURCES = \
-	DenseProtoTest.cpp
-
-DenseProtoTest_LDADD = \
-	libtestgencpp.la \
-	$(BOOST_TEST_LDADD)
-
-#
 # SpecializationTest
 #
 SpecializationTest_SOURCES = \
@@ -337,7 +326,7 @@ OpenSSLManualInitTest_LDADD = \
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp gen-cpp/EmptyService.h: $(top_srcdir)/test/DebugProtoTest.thrift
-	$(THRIFT) --gen cpp:dense $<
+	$(THRIFT) --gen cpp $<
 
 gen-cpp/EnumTest_types.cpp gen-cpp/EnumTest_types.h: $(top_srcdir)/test/EnumTest.thrift
 	$(THRIFT) --gen cpp $<
@@ -346,16 +335,16 @@ gen-cpp/TypedefTest_types.cpp gen-cpp/TypedefTest_types.h: $(top_srcdir)/test/Ty
 	$(THRIFT) --gen cpp $<
 
 gen-cpp/OptionalRequiredTest_types.cpp gen-cpp/OptionalRequiredTest_types.h: $(top_srcdir)/test/OptionalRequiredTest.thrift
-	$(THRIFT) --gen cpp:dense $<
+	$(THRIFT) --gen cpp $<
 
 gen-cpp/Recursive_types.cpp gen-cpp/Recursive_types.h: $(top_srcdir)/test/Recursive.thrift
 	$(THRIFT) --gen cpp $<
 
 gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp: $(top_srcdir)/test/StressTest.thrift
-	$(THRIFT) --gen cpp:dense $<
+	$(THRIFT) --gen cpp $<
 
 gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_types.h: $(top_srcdir)/test/ThriftTest.thrift
-	$(THRIFT) --gen cpp:dense $<
+	$(THRIFT) --gen cpp $<
 
 gen-cpp/ChildService.cpp gen-cpp/ChildService.h gen-cpp/ParentService.cpp gen-cpp/ParentService.h gen-cpp/proc_types.cpp gen-cpp/proc_types.h: processor/proc.thrift
 	$(THRIFT) --gen cpp:templates,cob_style $<

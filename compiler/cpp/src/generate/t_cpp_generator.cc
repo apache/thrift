@@ -58,9 +58,6 @@ public:
     iter = parsed_options.find("pure_enums");
     gen_pure_enums_ = (iter != parsed_options.end());
 
-    iter = parsed_options.find("dense");
-    gen_dense_ = (iter != parsed_options.end());
-
     iter = parsed_options.find("include_prefix");
     use_include_prefix_ = (iter != parsed_options.end());
 
@@ -132,7 +129,6 @@ public:
   void generate_assignment_operator(std::ofstream& out, t_struct* tstruct);
   void generate_move_assignment_operator(std::ofstream& out, t_struct* tstruct);
   void generate_assignment_helper(std::ofstream& out, t_struct* tstruct, bool is_move);
-  void generate_struct_fingerprint(std::ofstream& out, t_struct* tstruct, bool is_definition);
   void generate_struct_reader(std::ofstream& out, t_struct* tstruct, bool pointers = false);
   void generate_struct_writer(std::ofstream& out, t_struct* tstruct, bool pointers = false);
   void generate_struct_result_writer(std::ofstream& out, t_struct* tstruct, bool pointers = false);
@@ -231,7 +227,6 @@ public:
                                      bool name_params = true);
   std::string argument_list(t_struct* tstruct, bool name_params = true, bool start_comma = false);
   std::string type_to_enum(t_type* ttype);
-  std::string local_reflection_name(const char*, t_type* ttype, bool external = false);
 
   void generate_enum_constant_list(std::ofstream& f,
                                    const vector<t_enum_value*>& constants,
@@ -243,10 +238,6 @@ public:
   void generate_exception_what_method_decl(std::ofstream& f,
                                            t_struct* tstruct,
                                            bool external = false);
-
-  // These handles checking gen_dense_ and checking for duplicates.
-  void generate_local_reflection(std::ofstream& out, t_type* ttype, bool is_definition);
-  void generate_local_reflection_pointer(std::ofstream& out, t_type* ttype);
 
   bool is_reference(t_field* tfield) { return tfield->get_reference(); }
 
@@ -271,11 +262,6 @@ private:
    * True if we should generate pure enums for Thrift enums, instead of wrapper classes.
    */
   bool gen_pure_enums_;
-
-  /**
-   * True if we should generate local reflection metadata for TDenseProtocol.
-   */
-  bool gen_dense_;
 
   /**
    * True if we should generate templatized reader/writer methods.
@@ -332,11 +318,6 @@ private:
   std::ofstream f_header_;
   std::ofstream f_service_;
   std::ofstream f_service_tcc_;
-
-  /**
-   * When generating local reflections, make sure we don't generate duplicates.
-   */
-  std::set<std::string> reflected_fingerprints_;
 
   // The ProcessorGenerator is used to generate parts of the code,
   // so it needs access to many of our protected members and methods.
@@ -417,12 +398,6 @@ void t_cpp_generator::init_generator() {
                 << "_types.h\"" << endl << endl;
   f_types_tcc_ << "#include \"" << get_include_prefix(*get_program()) << program_name_
                << "_types.h\"" << endl << endl;
-
-  // If we are generating local reflection metadata, we need to include
-  // the definition of TypeSpec.
-  if (gen_dense_) {
-    f_types_impl_ << "#include <thrift/TReflectionLocal.h>" << endl << endl;
-  }
 
   // The swap() code needs <algorithm> for std::swap()
   f_types_impl_ << "#include <algorithm>" << endl;
@@ -553,9 +528,6 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
                 << tenum->get_name() << "Values"
                 << ", _k" << tenum->get_name() << "Names), "
                 << "::apache::thrift::TEnumIterator(-1, NULL, NULL));" << endl << endl;
-
-  generate_local_reflection(f_types_, tenum, false);
-  generate_local_reflection(f_types_impl_, tenum, true);
 }
 
 /**
@@ -753,10 +725,6 @@ void t_cpp_generator::generate_forward_declaration(t_struct* tstruct) {
 void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) {
   generate_struct_declaration(f_types_, tstruct, is_exception, false, true, true, true);
   generate_struct_definition(f_types_impl_, f_types_impl_, tstruct);
-  generate_struct_fingerprint(f_types_impl_, tstruct, true);
-  generate_local_reflection(f_types_, tstruct, false);
-  generate_local_reflection(f_types_impl_, tstruct, true);
-  generate_local_reflection_pointer(f_types_impl_, tstruct);
 
   std::ofstream& out = (gen_templates_ ? f_types_tcc_ : f_types_impl_);
   generate_struct_reader(out, tstruct);
@@ -957,9 +925,6 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
       << " public:" << endl << endl;
   indent_up();
 
-  // Put the fingerprint up top for all to see.
-  generate_struct_fingerprint(out, tstruct, false);
-
   if (!pointers) {
     // Copy constructor
     indent(out) << tstruct->get_name() << "(const " << tstruct->get_name() << "&);" << endl;
@@ -1023,12 +988,6 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
 
   if (tstruct->annotations_.find("final") == tstruct->annotations_.end()) {
     out << endl << indent() << "virtual ~" << tstruct->get_name() << "() throw();" << endl;
-  }
-
-  // Pointer to this structure's reflection local typespec.
-  if (gen_dense_) {
-    indent(out) << "static ::apache::thrift::reflection::local::TypeSpec* local_reflection;" << endl
-                << endl;
   }
 
   // Declare all fields
@@ -1186,165 +1145,6 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     }
   }
   out << endl;
-}
-/**
- * Writes the fingerprint of a struct to either the header or implementation.
- *
- * @param out Output stream
- * @param tstruct The struct
- */
-void t_cpp_generator::generate_struct_fingerprint(ofstream& out,
-                                                  t_struct* tstruct,
-                                                  bool is_definition) {
-  string stat, nspace, comment;
-  if (is_definition) {
-    stat = "";
-    nspace = tstruct->get_name() + "::";
-    comment = " ";
-  } else {
-    stat = "static ";
-    nspace = "";
-    comment = "; // ";
-  }
-
-  if (!tstruct->has_fingerprint()) {
-    tstruct->generate_fingerprint(); // lazy fingerprint generation
-  }
-  if (tstruct->has_fingerprint()) {
-    out << indent() << stat << "const char* " << nspace << "ascii_fingerprint" << comment << "= \""
-        << tstruct->get_ascii_fingerprint() << "\";" << endl << indent() << stat << "const uint8_t "
-        << nspace << "binary_fingerprint[" << t_type::fingerprint_len << "]" << comment << "= {";
-    const char* comma = "";
-    for (int i = 0; i < t_type::fingerprint_len; i++) {
-      out << comma << "0x" << t_struct::byte_to_hex(tstruct->get_binary_fingerprint()[i]);
-      comma = ",";
-    }
-    out << "};" << endl << endl;
-  }
-}
-
-/**
- * Writes the local reflection of a type (either declaration or definition).
- */
-void t_cpp_generator::generate_local_reflection(std::ofstream& out,
-                                                t_type* ttype,
-                                                bool is_definition) {
-  if (!gen_dense_) {
-    return;
-  }
-  ttype = get_true_type(ttype);
-  string key = ttype->get_ascii_fingerprint() + (is_definition ? "-defn" : "-decl");
-  assert(ttype->has_fingerprint()); // test AFTER get due to lazy fingerprint generation
-
-  // Note that we have generated this fingerprint.  If we already did, bail out.
-  if (!reflected_fingerprints_.insert(key).second) {
-    return;
-  }
-  // Let each program handle its own structures.
-  if (ttype->get_program() != NULL && ttype->get_program() != program_) {
-    return;
-  }
-
-  // Do dependencies.
-  if (ttype->is_list()) {
-    generate_local_reflection(out, ((t_list*)ttype)->get_elem_type(), is_definition);
-  } else if (ttype->is_set()) {
-    generate_local_reflection(out, ((t_set*)ttype)->get_elem_type(), is_definition);
-  } else if (ttype->is_map()) {
-    generate_local_reflection(out, ((t_map*)ttype)->get_key_type(), is_definition);
-    generate_local_reflection(out, ((t_map*)ttype)->get_val_type(), is_definition);
-  } else if (ttype->is_struct() || ttype->is_xception()) {
-    // Hacky hacky.  For efficiency and convenience, we need a dummy "T_STOP"
-    // type at the end of our typespec array.  Unfortunately, there is no
-    // T_STOP type, so we use the global void type, and special case it when
-    // generating its typespec.
-
-    const vector<t_field*>& members = ((t_struct*)ttype)->get_sorted_members();
-    vector<t_field*>::const_iterator m_iter;
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      generate_local_reflection(out, (**m_iter).get_type(), is_definition);
-    }
-    generate_local_reflection(out, g_type_void, is_definition);
-
-    // For definitions of structures, do the arrays of metas and field specs also.
-    if (is_definition) {
-      out << indent() << "::apache::thrift::reflection::local::FieldMeta" << endl << indent()
-          << local_reflection_name("metas", ttype) << "[] = {" << endl;
-      indent_up();
-      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        indent(out) << "{ " << (*m_iter)->get_key() << ", "
-                    << (((*m_iter)->get_req() == t_field::T_OPTIONAL) ? "true" : "false") << " },"
-                    << endl;
-      }
-      // Zero for the T_STOP marker.
-      indent(out) << "{ 0, false }" << endl << "};" << endl;
-      indent_down();
-
-      out << indent() << "::apache::thrift::reflection::local::TypeSpec*" << endl << indent()
-          << local_reflection_name("specs", ttype) << "[] = {" << endl;
-      indent_up();
-      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        indent(out) << "&" << local_reflection_name("typespec", (*m_iter)->get_type(), true) << ","
-                    << endl;
-      }
-      indent(out) << "&" << local_reflection_name("typespec", g_type_void) << "," << endl;
-      indent_down();
-      indent(out) << "};" << endl;
-    }
-  }
-
-  out << indent() << "// " << ttype->get_fingerprint_material() << endl << indent()
-      << (is_definition ? "" : "extern ") << "::apache::thrift::reflection::local::TypeSpec" << endl
-      << local_reflection_name("typespec", ttype) << (is_definition ? "(" : ";") << endl;
-
-  if (!is_definition) {
-    out << endl;
-    return;
-  }
-
-  indent_up();
-
-  if (ttype->is_void()) {
-    indent(out) << "::apache::thrift::protocol::T_STOP";
-  } else {
-    indent(out) << type_to_enum(ttype);
-  }
-
-  if (ttype->is_struct()) {
-    out << "," << endl << indent() << type_name(ttype) << "::binary_fingerprint," << endl
-        << indent() << local_reflection_name("metas", ttype) << "," << endl << indent()
-        << local_reflection_name("specs", ttype);
-  } else if (ttype->is_list()) {
-    out << "," << endl << indent() << "&"
-        << local_reflection_name("typespec", ((t_list*)ttype)->get_elem_type(), true) << "," << endl
-        << indent() << "NULL";
-  } else if (ttype->is_set()) {
-    out << "," << endl << indent() << "&"
-        << local_reflection_name("typespec", ((t_set*)ttype)->get_elem_type(), true) << "," << endl
-        << indent() << "NULL";
-  } else if (ttype->is_map()) {
-    out << "," << endl << indent() << "&"
-        << local_reflection_name("typespec", ((t_map*)ttype)->get_key_type(), true) << "," << endl
-        << indent() << "&"
-        << local_reflection_name("typespec", ((t_map*)ttype)->get_val_type(), true);
-  }
-
-  out << ");" << endl << endl;
-
-  indent_down();
-}
-
-/**
- * Writes the structure's static pointer to its local reflection typespec
- * into the implementation file.
- */
-void t_cpp_generator::generate_local_reflection_pointer(std::ofstream& out, t_type* ttype) {
-  if (!gen_dense_) {
-    return;
-  }
-  indent(out) << "::apache::thrift::reflection::local::TypeSpec* " << ttype->get_name()
-              << "::local_reflection = " << endl << indent() << "  &"
-              << local_reflection_name("typespec", ttype) << ";" << endl << endl;
 }
 
 /**
@@ -4519,47 +4319,6 @@ string t_cpp_generator::type_to_enum(t_type* type) {
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
 }
 
-/**
- * Returns the symbol name of the local reflection of a type.
- */
-string t_cpp_generator::local_reflection_name(const char* prefix, t_type* ttype, bool external) {
-  ttype = get_true_type(ttype);
-
-  // We have to use the program name as part of the identifier because
-  // if two thrift "programs" are compiled into one actual program
-  // you would get a symbol collision if they both defined list<i32>.
-  // trlo = Thrift Reflection LOcal.
-  string prog;
-  string name;
-  string nspace;
-
-  // TODO(dreiss): Would it be better to pregenerate the base types
-  //               and put them in Thrift.{h,cpp} ?
-
-  if (ttype->is_base_type()) {
-    prog = program_->get_name();
-    name = ttype->get_ascii_fingerprint();
-  } else if (ttype->is_enum()) {
-    assert(ttype->get_program() != NULL);
-    prog = ttype->get_program()->get_name();
-    name = ttype->get_ascii_fingerprint();
-  } else if (ttype->is_container()) {
-    prog = program_->get_name();
-    name = ttype->get_ascii_fingerprint();
-  } else {
-    assert(ttype->is_struct() || ttype->is_xception());
-    assert(ttype->get_program() != NULL);
-    prog = ttype->get_program()->get_name();
-    name = ttype->get_ascii_fingerprint();
-  }
-
-  if (external && ttype->get_program() != NULL && ttype->get_program() != program_) {
-    nspace = namespace_prefix(ttype->get_program()->get_namespace("cpp"));
-  }
-
-  return nspace + "trlo_" + prefix + "_" + prog + "_" + name;
-}
-
 string t_cpp_generator::get_include_prefix(const t_program& program) const {
   string include_prefix = program.get_include_prefix();
   if (!use_include_prefix_ || (include_prefix.size() > 0 && include_prefix[0] == '/')) {
@@ -4586,6 +4345,5 @@ THRIFT_REGISTER_GENERATOR(
     "                     Omits generation of default operators ==, != and <\n"
     "    templates:       Generate templatized reader/writer methods.\n"
     "    pure_enums:      Generate pure enums instead of wrapper classes.\n"
-    "    dense:           Generate type specifications for the dense protocol.\n"
     "    include_prefix:  Use full include paths in generated files.\n"
     "    moveable_types:  Generate move constructors and assignment operators.\n")

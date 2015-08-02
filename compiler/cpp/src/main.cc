@@ -631,43 +631,6 @@ void dump_docstrings(t_program* program) {
 }
 
 /**
- * Call generate_fingerprint for every structure and enum.
- */
-void generate_all_fingerprints(t_program* program) {
-  const vector<t_struct*>& structs = program->get_structs();
-  vector<t_struct*>::const_iterator s_iter;
-  for (s_iter = structs.begin(); s_iter != structs.end(); ++s_iter) {
-    t_struct* st = *s_iter;
-    st->generate_fingerprint();
-  }
-
-  const vector<t_struct*>& xceptions = program->get_xceptions();
-  vector<t_struct*>::const_iterator x_iter;
-  for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-    t_struct* st = *x_iter;
-    st->generate_fingerprint();
-  }
-
-  const vector<t_enum*>& enums = program->get_enums();
-  vector<t_enum*>::const_iterator e_iter;
-  for (e_iter = enums.begin(); e_iter != enums.end(); ++e_iter) {
-    t_enum* e = *e_iter;
-    e->generate_fingerprint();
-  }
-
-  g_type_void->generate_fingerprint();
-
-  // If you want to generate fingerprints for implicit structures, start here.
-  /*
-  const vector<t_service*>& services = program->get_services();
-  vector<t_service*>::const_iterator v_iter;
-  for (v_iter = services.begin(); v_iter != services.end(); ++v_iter) {
-    t_service* sv = *v_iter;
-  }
-  */
-}
-
-/**
  * Emits a warning on list<byte>, binary type is typically a much better choice.
  */
 void check_for_list_of_bytes(t_type* list_elem_type) {

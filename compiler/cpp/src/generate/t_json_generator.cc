@@ -701,10 +701,8 @@ string t_json_generator::get_type_name(t_type* ttype) {
   if (ttype->is_xception()) {
     return "exception";
   }
-  if (ttype->is_base_type() && ((t_base_type*)ttype)->is_binary()) {
-    return "binary";
-  }
-  return ttype->get_fingerprint_material();
+  //if (ttype->is_base_type() && ((t_base_type*)ttype)->is_binary()) {
+  return "binary";
 }
 
 string t_json_generator::get_qualified_name(t_type* ttype) {
