@@ -64,45 +64,6 @@ public:
 
   t_type* get_true_type();
 
-  // Return a string that uniquely identifies this type
-  // from any other thrift type in the world, as far as
-  // TDenseProtocol is concerned.
-  // We don't cache this, which is a little sloppy,
-  // but the compiler is so fast that it doesn't really matter.
-  virtual std::string get_fingerprint_material() const = 0;
-
-  // Fingerprint should change whenever (and only when)
-  // the encoding via TDenseProtocol changes.
-  static const int fingerprint_len = 16;
-
-  // Call this before trying get_*_fingerprint().
-  virtual void generate_fingerprint();
-
-  bool has_fingerprint() const {
-    for (int i = 0; i < fingerprint_len; i++) {
-      if (fingerprint_[i] != 0) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  const uint8_t* get_binary_fingerprint() {
-    if (!has_fingerprint()) // lazy fingerprint generation, right now only used with the c++
-                            // generator
-      generate_fingerprint();
-    return fingerprint_;
-  }
-
-  std::string get_ascii_fingerprint() {
-    std::string rv;
-    const uint8_t* fp = get_binary_fingerprint();
-    for (int i = 0; i < fingerprint_len; i++) {
-      rv += byte_to_hex(fp[i]);
-    }
-    return rv;
-  }
-
   // This function will break (maybe badly) unless 0 <= num <= 16.
   static char nybble_to_xdigit(int num) {
     if (num < 10) {
@@ -122,22 +83,16 @@ public:
   std::map<std::string, std::string> annotations_;
 
 protected:
-  t_type() : program_(NULL) { memset(fingerprint_, 0, sizeof(fingerprint_)); }
+  t_type() : program_(NULL) { ; }
 
-  t_type(t_program* program) : program_(program) { memset(fingerprint_, 0, sizeof(fingerprint_)); }
+  t_type(t_program* program) : program_(program) { ; }
 
-  t_type(t_program* program, std::string name) : program_(program), name_(name) {
-    memset(fingerprint_, 0, sizeof(fingerprint_));
-  }
+  t_type(t_program* program, std::string name) : program_(program), name_(name) { ; }
 
-  t_type(std::string name) : program_(NULL), name_(name) {
-    memset(fingerprint_, 0, sizeof(fingerprint_));
-  }
+  t_type(std::string name) : program_(NULL), name_(name) { ; }
 
   t_program* program_;
   std::string name_;
-
-  uint8_t fingerprint_[fingerprint_len];
 };
 
 /**

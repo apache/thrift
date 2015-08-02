@@ -133,33 +133,6 @@ public:
 
   bool is_union() const { return is_union_; }
 
-  virtual std::string get_fingerprint_material() const {
-    std::string rv = "{";
-    bool do_reserve = (members_in_id_order_.size() > 1);
-    size_t estimation = 0;
-    members_type::const_iterator m_iter;
-    for (m_iter = members_in_id_order_.begin(); m_iter != members_in_id_order_.end(); ++m_iter) {
-      rv += (*m_iter)->get_fingerprint_material();
-      rv += ";";
-
-      if (do_reserve) {
-        estimation = members_in_id_order_.size() * rv.size() + 16;
-        rv.reserve(estimation);
-        do_reserve = false;
-      }
-    }
-    rv += "}";
-    return rv;
-  }
-
-  virtual void generate_fingerprint() {
-    t_type::generate_fingerprint();
-    members_type::const_iterator m_iter;
-    for (m_iter = members_in_id_order_.begin(); m_iter != members_in_id_order_.end(); ++m_iter) {
-      (*m_iter)->get_type()->generate_fingerprint();
-    }
-  }
-
   t_field* get_field_by_name(std::string field_name) {
     members_type::const_iterator m_iter;
     for (m_iter = members_in_id_order_.begin(); m_iter != members_in_id_order_.end(); ++m_iter) {

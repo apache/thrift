@@ -51,11 +51,6 @@ public:
 
   t_service* get_extends() { return extends_; }
 
-  virtual std::string get_fingerprint_material() const {
-    // Services should never be used in fingerprints.
-    throw "BUG: Can't get fingerprint material for service.";
-  }
-
 private:
   std::vector<t_function*> functions_;
   t_service* extends_;

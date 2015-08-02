@@ -57,23 +57,6 @@ public:
 
   bool is_typedef() const { return true; }
 
-  virtual std::string get_fingerprint_material() const {
-    if (!seen_) {
-      seen_ = true;
-      std::string ret = get_type()->get_fingerprint_material();
-      seen_ = false;
-      return ret;
-    }
-    return "";
-  }
-
-  virtual void generate_fingerprint() {
-    t_type::generate_fingerprint();
-    if (!get_type()->has_fingerprint()) {
-      get_type()->generate_fingerprint();
-    }
-  }
-
 private:
   t_type* type_;
   std::string symbolic_;
