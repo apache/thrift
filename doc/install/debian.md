@@ -1,7 +1,7 @@
 ## Debian or Ubuntu setup
 The following command install all the required tools and libraries to build and install the Apache Thrift compiler on a Debian/Ubuntu Linux based system.
 
-	sudo apt-get install libboost-dev libboost-test-dev libboost-program-options-dev libboost-system-dev libboost-filesystem-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev 
+	sudo apt-get install libboost-dev libboost-test-dev libboost-program-options-dev libboost-system-dev libboost-filesystem-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev ant
 
 Then install the Java JDK of your choice. Type **javac** to see a list of available packages, pick the one you prefer and **apt-get install** it.
 
