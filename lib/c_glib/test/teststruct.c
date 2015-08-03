@@ -51,6 +51,10 @@ gint32
 thrift_test_struct_read (ThriftStruct *object, ThriftProtocol *protocol,
                          GError **error)
 {
+  THRIFT_UNUSED_VAR (object);
+  THRIFT_UNUSED_VAR (protocol);
+  THRIFT_UNUSED_VAR (error);
+
   return 0;
 }
 
@@ -58,6 +62,10 @@ gint32
 thrift_test_struct_write (ThriftStruct *object, ThriftProtocol *protocol,
                           GError **error)
 {
+  THRIFT_UNUSED_VAR (object);
+  THRIFT_UNUSED_VAR (protocol);
+  THRIFT_UNUSED_VAR (error);
+
   return 0;
 }
 

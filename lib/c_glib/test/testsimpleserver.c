@@ -53,6 +53,11 @@ gboolean
 test_processor_process (ThriftProcessor *processor, ThriftProtocol *in,
                         ThriftProtocol *out, GError **error)
 {
+  THRIFT_UNUSED_VAR (processor);
+  THRIFT_UNUSED_VAR (in);
+  THRIFT_UNUSED_VAR (out);
+  THRIFT_UNUSED_VAR (error);
+
   return FALSE;
 }
 
