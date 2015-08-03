@@ -968,25 +968,38 @@ void t_c_glib_generator::generate_const_initializer(string name,
         }
       }
       if (field_type == NULL) {
-        throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
+        throw "type error: " + type->get_name() + " has no field "
+          + v_iter->first->get_string();
       }
       field_name = tmp(field_name);
 
-      generate_const_initializer(name + "_constant_" + field_name, field_type, v_iter->second);
+      generate_const_initializer(name + "_constant_" + field_name,
+                                 field_type,
+                                 v_iter->second);
       initializers << "    constant->" << v_iter->first->get_string() << " = "
-                   << constant_value(name + "_constant_" + field_name, field_type, v_iter->second)
-                   << ";" << endl << "    constant->__isset_" << v_iter->first->get_string()
+                   << constant_value(name + "_constant_" + field_name,
+                                     field_type,
+                                     v_iter->second) << ";" << endl
+                   << "    constant->__isset_" << v_iter->first->get_string()
                    << " = TRUE;" << endl;
     }
 
     // implement the initializer
-    f_types_impl_ << "static " << this->nspace << type->get_name() << " *" << endl
-                  << this->nspace_lc << name_lc << "_constant (void)" << endl << "{" << endl
-                  << "  static " << this->nspace << type->get_name() << " *constant = NULL;" << endl
-                  << "  if (constant == NULL)" << endl << "  {" << endl
-                  << "    constant = g_object_new (" << this->nspace_uc << "TYPE_" << type_uc
-                  << ", NULL);" << endl << initializers.str() << endl << "  }" << endl
-                  << "  return constant;" << endl << "}" << endl << endl;
+    f_types_impl_ << "static " << this->nspace << type->get_name() << " *"
+                  << endl
+                  << this->nspace_lc << name_lc << "_constant (void)" << endl;
+    scope_up(f_types_impl_);
+    f_types_impl_ << indent() << "static " << this->nspace << type->get_name()
+                  << " *constant = NULL;" << endl
+                  << indent() << "if (constant == NULL)" << endl;
+    scope_up(f_types_impl_);
+    f_types_impl_ << indent() << "constant = g_object_new (" << this->nspace_uc
+                  << "TYPE_" << type_uc << ", NULL);" << endl
+                  << initializers.str();
+    scope_down(f_types_impl_);
+    f_types_impl_ << indent() << "return constant;" << endl;
+    scope_down(f_types_impl_);
+    f_types_impl_ << endl;
   } else if (type->is_list()) {
     string list_type = "GPtrArray *";
     // TODO: This initialization should contain a free function for container
@@ -1029,20 +1042,34 @@ void t_c_glib_generator::generate_const_initializer(string name,
       generate_const_initializer(fname, etype, (*v_iter));
       if (list_variable) {
         initializers << "    " << type_name(etype) << " " << fname << " = "
-                     << constant_value(fname, (t_type*)etype, (*v_iter)) << ";" << endl;
-        appenders << "    " << list_appender << "(constant, " << fname << ");" << endl;
+                     << constant_value(fname, (t_type*)etype, (*v_iter)) << ";"
+                     << endl;
+        appenders << "    " << list_appender << "(constant, " << fname << ");"
+                  << endl;
       } else {
         appenders << "    " << list_appender << "(constant, "
-                  << constant_value(fname, (t_type*)etype, (*v_iter)) << ");" << endl;
+                  << constant_value(fname, (t_type*)etype, (*v_iter)) << ");"
+                  << endl;
       }
     }
 
-    f_types_impl_ << "static " << list_type << endl << this->nspace_lc << name_lc
-                  << "_constant (void)" << endl << "{" << endl << "  static " << list_type
-                  << " constant = NULL;" << endl << "  if (constant == NULL)" << endl << "  {"
-                  << endl << initializers.str() << endl << "    constant = "
-                  << list_initializer << endl << appenders.str() << "  }" << endl
-                  << "  return constant;" << endl << "}" << endl << endl;
+    f_types_impl_ << "static " << list_type << endl
+                  << this->nspace_lc << name_lc << "_constant (void)" << endl;
+    scope_up(f_types_impl_);
+    f_types_impl_ << indent() << "static " << list_type << " constant = NULL;"
+                  << endl
+                  << indent() << "if (constant == NULL)" << endl;
+    scope_up(f_types_impl_);
+    if (!initializers.str().empty()) {
+      f_types_impl_ << initializers.str()
+                    << endl;
+    }
+    f_types_impl_ << indent() << "constant = " << list_initializer << endl
+                  << appenders.str();
+    scope_down(f_types_impl_);
+    f_types_impl_ << indent() << "return constant;" << endl;
+    scope_down(f_types_impl_);
+    f_types_impl_ << endl;
   } else if (type->is_set()) {
     t_type* etype = ((t_set*)type)->get_elem_type();
     const vector<t_const_value*>& val = value->get_list();
@@ -1054,18 +1081,29 @@ void t_c_glib_generator::generate_const_initializer(string name,
       string fname = tmp(name);
       generate_const_initializer(fname, etype, (*v_iter));
       initializers << "    " << type_name(etype) << " " << fname << " = "
-                   << constant_value(fname, (t_type*)etype, (*v_iter)) << ";" << endl;
-      appenders << "    g_hash_table_insert (constant, &" << fname << ", &" << fname << ");"
-                << endl;
+                   << constant_value(fname, (t_type*)etype, (*v_iter)) << ";"
+                   << endl;
+      appenders << "    g_hash_table_insert (constant, &" << fname << ", &"
+                << fname << ");" << endl;
     }
 
-    f_types_impl_ << "static GHashTable *" << endl << this->nspace_lc << name_lc
-                  << "_constant (void)" << endl << "{" << endl
-                  << "  static GHashTable *constant = NULL;" << endl << "  if (constant == NULL)"
-                  << endl << "  {" << endl << initializers.str() << endl <<
-        // TODO: This initialization should contain a free function for elements
-        "    constant = g_hash_table_new (NULL, NULL);" << endl << appenders.str()
-                  << "  }" << endl << "  return constant;" << endl << "}" << endl << endl;
+    f_types_impl_ << "static GHashTable *" << endl
+                  << this->nspace_lc << name_lc << "_constant (void)" << endl;
+    scope_up(f_types_impl_);
+    f_types_impl_ << indent() << "static GHashTable *constant = NULL;" << endl
+                  << indent() << "if (constant == NULL)" << endl;
+    scope_up(f_types_impl_);
+    f_types_impl_ << initializers.str()
+                  << endl
+                  // TODO: This initialization should contain a free function
+                  // for elements
+                  << indent() << "constant = g_hash_table_new (NULL, NULL);"
+                  << endl
+                  << appenders.str();
+    scope_down(f_types_impl_);
+    f_types_impl_ << indent() << "return constant;" << endl;
+    scope_down(f_types_impl_);
+    f_types_impl_ << endl;
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
@@ -1082,20 +1120,33 @@ void t_c_glib_generator::generate_const_initializer(string name,
       generate_const_initializer(vname, vtype, (*v_iter));
 
       initializers << "    " << type_name(ktype) << " " << kname << " = "
-                   << constant_value(kname, (t_type*)ktype, (*v_iter)) << ";" << endl << "    "
-                   << type_name(vtype) << " " << vname << " = "
-                   << constant_value(vname, (t_type*)vtype, (*v_iter)) << ";" << endl;
-      appenders << "    g_hash_table_insert (constant, &" << fname << ", &" << fname << ");"
+                   << constant_value(kname, (t_type*)ktype, (*v_iter)) << ";"
+                   << endl
+                   << "    " << type_name(vtype) << " " << vname << " = "
+                   << constant_value(vname, (t_type*)vtype, (*v_iter)) << ";"
+                   << endl;
+      appenders << "    g_hash_table_insert (constant, &" << fname << ", &"
+                << fname << ");"
                 << endl;
     }
 
-    f_types_impl_ << "static GHashTable *" << endl << this->nspace_lc << name_lc
-                  << "_constant (void)" << endl << "{" << endl
-                  << "  static GHashTable *constant = NULL;" << endl << "  if (constant == NULL)"
-                  << endl << "  {" << endl << initializers.str() << endl <<
-        // TODO: This initialization should contain a free function for elements
-        "    constant = g_hash_table_new (NULL, NULL);" << endl << appenders.str()
-                  << "  }" << endl << "  return constant;" << endl << "}" << endl << endl;
+    f_types_impl_ << "static GHashTable *" << endl
+                  << this->nspace_lc << name_lc << "_constant (void)" << endl;
+    scope_up(f_types_impl_);
+    f_types_impl_ << indent() << "static GHashTable *constant = NULL;" << endl
+                  << indent() << "if (constant == NULL)" << endl;
+    scope_up(f_types_impl_);
+    f_types_impl_ << initializers.str()
+                  << endl
+                  // TODO: This initialization should contain a free function
+                  // for elements
+                  << indent() << "constant = g_hash_table_new (NULL, NULL);"
+                  << endl
+                  << appenders.str();
+    scope_down(f_types_impl_);
+    f_types_impl_ << indent() << "return constant;" << endl;
+    scope_down(f_types_impl_);
+    f_types_impl_ << endl;
   }
 }
 
@@ -1646,17 +1697,17 @@ void t_c_glib_generator::generate_service_client(t_service* tservice) {
   }
 
   // create the interface initializer
-  f_service_ << "static void" << endl << this->nspace_lc << service_name_lc
-             << "_if_interface_init (" << this->nspace << service_name_ << "IfInterface *iface)"
-             << endl;
+  f_service_ << "static void" << endl
+             << this->nspace_lc << service_name_lc << "_if_interface_init ("
+             << this->nspace << service_name_ << "IfInterface *iface)" << endl;
   scope_up(f_service_);
   if (functions.size() > 0) {
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
       /* make the function name C friendly */
       string funname = initial_caps_to_underscores((*f_iter)->get_name());
 
-      f_service_ << "  iface->" << funname << " = " << this->nspace_lc << service_name_lc
-                 << "_client_" << funname << ";" << endl;
+      f_service_ << indent() << "iface->" << funname << " = " << this->nspace_lc
+                 << service_name_lc << "_client_" << funname << ";" << endl;
     }
   }
   else {
@@ -1666,16 +1717,19 @@ void t_c_glib_generator::generate_service_client(t_service* tservice) {
   f_service_ << endl;
 
   // create the client instance initializer
-  f_service_ << "static void" << endl << this->nspace_lc << service_name_lc << "_client_init ("
-             << this->nspace << service_name_ << "Client *client)" << endl << "{" << endl;
+  f_service_ << "static void" << endl
+             << this->nspace_lc << service_name_lc << "_client_init ("
+             << this->nspace << service_name_ << "Client *client)" << endl;
+  scope_up(f_service_);
   if (!extends_service) {
-    f_service_ << "  client->input_protocol = NULL;" << endl << "  client->output_protocol = NULL;"
-               << endl;
+    f_service_ << indent() << "client->input_protocol = NULL;" << endl
+               << indent() << "client->output_protocol = NULL;" << endl;
   }
   else {
-    f_service_ << "  THRIFT_UNUSED_VAR (client);" << endl;
+    f_service_ << indent() << "THRIFT_UNUSED_VAR (client);" << endl;
   }
-  f_service_ << "}" << endl << endl;
+  scope_down(f_service_);
+  f_service_ << endl;
 
   // create the client class initializer
   f_service_ << "static void" << endl << this->nspace_lc << service_name_lc
@@ -1909,11 +1963,14 @@ void t_c_glib_generator::generate_service_handler(t_service* tservice) {
   f_service_ << endl;
 
   // Generate the handler class initializer
-  f_service_ << "static void" << endl << class_name_lc << "_class_init (" << class_name
-             << "Class *cls)" << endl;
+  f_service_ << "static void" << endl
+             << class_name_lc << "_class_init (" << class_name << "Class *cls)"
+             << endl;
   scope_up(f_service_);
   if (functions.size() > 0) {
-    for (function_iter = functions.begin(); function_iter != functions.end(); ++function_iter) {
+    for (function_iter = functions.begin();
+         function_iter != functions.end();
+         ++function_iter) {
       string function_name = (*function_iter)->get_name();
       string method_name = initial_caps_to_underscores(function_name);
 
@@ -3639,36 +3696,47 @@ void t_c_glib_generator::generate_serialize_container(ofstream& out,
      */
     out << indent() << "GList *key_list = NULL, *iter = NULL;" << endl
         << indent() << tkey_name << tkey_ptr << "* keys;" << endl
-        << indent() << "int i=0, key_count;" << endl
+        << indent() << "int i = 0, key_count;" << endl
         << endl
         << indent() << "if ((ret = thrift_protocol_write_map_begin (protocol, "
-        << type_to_enum(tkey) << ", " << type_to_enum(tval) << ", (gint32) " << length
-        << ", error)) < 0)" << endl << indent() << "  return " << error_ret << ";" << endl
-        << indent() << "xfer += ret;" << endl
+        << type_to_enum(tkey) << ", " << type_to_enum(tval) << ", (gint32) "
+        << length << ", error)) < 0)" << endl;
+    indent_up();
+    out << indent() << "return " << error_ret << ";" << endl;
+    indent_down();
+    out << indent() << "xfer += ret;" << endl
         << indent() << "g_hash_table_foreach ((GHashTable *) " << prefix
         << ", thrift_hash_table_get_keys, &key_list);" << endl
         << indent() << "key_count = g_list_length (key_list);" << endl
         << indent() << "keys = g_newa (" << tkey_name << tkey_ptr
-        << ", key_count);" << endl << indent()
-        << "for (iter = g_list_first (key_list); iter; iter = iter->next)" << endl << indent()
-        << "{" << endl << indent() << "  keys[i++] = (" << tkey_name << tkey_ptr << ") iter->data;"
-        << endl << indent() << "}" << endl << indent() << "g_list_free (key_list);" << endl << endl
+        << ", key_count);" << endl
+        << indent() << "for (iter = g_list_first (key_list); iter; "
+           "iter = iter->next)" << endl;
+    indent_up();
+    out << indent() << "keys[i++] = (" << tkey_name << tkey_ptr
+        << ") iter->data;" << endl;
+    indent_down();
+    out << indent() << "g_list_free (key_list);" << endl
+        << endl
         << indent() << "for (i = 0; i < key_count; ++i)" << endl;
-
     scope_up(out);
-    out << indent() << keyname << " = keys[i];" << endl << indent() << valname << " = ("
-        << tval_name << tval_ptr << ") g_hash_table_lookup (((GHashTable *) " << prefix
-        << "), (gpointer) " << keyname << ");" << endl << endl;
+    out << indent() << keyname << " = keys[i];" << endl
+        << indent() << valname << " = (" << tval_name << tval_ptr
+        << ") g_hash_table_lookup (((GHashTable *) " << prefix
+        << "), (gpointer) " << keyname << ");" << endl
+        << endl;
     generate_serialize_map_element(out,
                                    (t_map*)ttype,
                                    tkey_ptr + " " + keyname,
                                    tval_ptr + " " + valname,
                                    error_ret);
     scope_down(out);
-
-    out << indent() << "if ((ret = thrift_protocol_write_map_end (protocol, error)) < 0)" << endl
-        << indent() << "  return " << error_ret << ";" << endl << indent() << "xfer += ret;"
-        << endl;
+    out << indent() << "if ((ret = thrift_protocol_write_map_end (protocol, "
+           "error)) < 0)" << endl;
+    indent_up();
+    out << indent() << "return " << error_ret << ";" << endl;
+    indent_down();
+    out << indent() << "xfer += ret;" << endl;
   } else if (ttype->is_set()) {
     string length = "g_hash_table_size ((GHashTable *) " + prefix + ")";
     t_type* telem = ((t_set*)ttype)->get_elem_type();
@@ -3676,51 +3744,71 @@ void t_c_glib_generator::generate_serialize_container(ofstream& out,
     string telem_ptr = telem->is_string() || !telem->is_base_type() ? "" : "*";
     out << indent() << "GList *key_list = NULL, *iter = NULL;" << endl
         << indent() << telem_name << telem_ptr << "* keys;" << endl
-        << indent() << "int i=0, key_count;" << endl
-        << indent() << telem_name << telem_ptr
-        << " elem;" << endl << indent() << "gpointer value;" << endl << indent()
-        << "THRIFT_UNUSED_VAR (value);" << endl << endl
+        << indent() << "int i = 0, key_count;" << endl
+        << indent() << telem_name << telem_ptr << " elem;" << endl
+        << indent() << "gpointer value;" << endl
+        << indent() << "THRIFT_UNUSED_VAR (value);" << endl
+        << endl
         << indent() << "if ((ret = thrift_protocol_write_set_begin (protocol, "
-        << type_to_enum(telem) << ", (gint32) " << length << ", error)) < 0)" << endl << indent()
-        << "  return " << error_ret << ";" << endl << indent() << "xfer += ret;" << endl << indent()
-        << "g_hash_table_foreach ((GHashTable *) " << prefix
+        << type_to_enum(telem) << ", (gint32) " << length << ", error)) < 0)"
+        << endl;
+    indent_up();
+    out << indent() << "return " << error_ret << ";" << endl;
+    indent_down();
+    out << indent() << "xfer += ret;" << endl
+        << indent() << "g_hash_table_foreach ((GHashTable *) " << prefix
         << ", thrift_hash_table_get_keys, &key_list);" << endl
         << indent() << "key_count = g_list_length (key_list);" << endl
         << indent() << "keys = g_newa (" << telem_name << telem_ptr
-        << ", key_count);" << endl << indent()
-        << "for (iter = g_list_first (key_list); iter; iter = iter->next)" << endl << indent()
-        << "{" << endl << indent() << "  keys[i++] = (" << telem_name << telem_ptr
-        << ") iter->data;" << endl << indent() << "}" << endl << indent()
-        << "g_list_free (key_list);" << endl << endl << indent() << "for (i=0; i<key_count; ++i)"
-        << endl;
-
+        << ", key_count);" << endl
+        << indent() << "for (iter = g_list_first (key_list); iter; "
+           "iter = iter->next)" << endl;
+    indent_up();
+    out << indent() << "keys[i++] = (" << telem_name << telem_ptr
+        << ") iter->data;" << endl;
+    indent_down();
+    out << indent() << "g_list_free (key_list);" << endl
+        << endl
+        << indent() << "for (i = 0; i < key_count; ++i)" << endl;
     scope_up(out);
-    out << indent() << "elem = keys[i];" << endl << indent()
-        << "value = (gpointer) g_hash_table_lookup (((GHashTable *) " << prefix
-        << "), (gpointer) elem);" << endl << endl;
-    generate_serialize_set_element(out, (t_set*)ttype, telem_ptr + "elem", error_ret);
-    scope_down(out);
-
-    out << indent() << "if ((ret = thrift_protocol_write_set_end (protocol, error)) < 0)" << endl
-        << indent() << "  return " << error_ret << ";" << endl << indent() << "xfer += ret;"
+    out << indent() << "elem = keys[i];" << endl
+        << indent() << "value = (gpointer) g_hash_table_lookup "
+           "(((GHashTable *) " << prefix << "), (gpointer) elem);" << endl
         << endl;
+    generate_serialize_set_element(out,
+                                   (t_set*)ttype,
+                                   telem_ptr + "elem",
+                                   error_ret);
+    scope_down(out);
+    out << indent() << "if ((ret = thrift_protocol_write_set_end (protocol, "
+           "error)) < 0)" << endl;
+    indent_up();
+    out << indent() << "return " << error_ret << ";" << endl;
+    indent_down();
+    out << indent() << "xfer += ret;" << endl;
   } else if (ttype->is_list()) {
     string length = prefix + "->len";
     string i = tmp("i");
     out << indent() << "guint " << i << ";" << endl
+        << endl
         << indent() << "if ((ret = thrift_protocol_write_list_begin (protocol, "
-        << type_to_enum(((t_list*)ttype)->get_elem_type()) << ", (gint32) " << length
-        << ", error)) < 0)" << endl << indent() << "  return " << error_ret << ";" << endl
-        << indent() << "xfer += ret;" << endl
-        << indent() << "for (" << i << "=0; " << i << "<" << length << "; " << i << "++)" << endl;
-
+        << type_to_enum(((t_list*)ttype)->get_elem_type()) << ", (gint32) "
+        << length << ", error)) < 0)" << endl;
+    indent_up();
+    out << indent() << "return " << error_ret << ";" << endl;
+    indent_down();
+    out << indent() << "xfer += ret;" << endl
+        << indent() << "for (" << i << " = 0; " << i << " < " << length << "; "
+        << i << "++)" << endl;
     scope_up(out);
     generate_serialize_list_element(out, (t_list*)ttype, prefix, i, error_ret);
     scope_down(out);
-
-    out << indent() << "if ((ret = thrift_protocol_write_list_end (protocol, error)) < 0)" << endl
-        << indent() << "  return " << error_ret << ";" << endl << indent() << "xfer += ret;"
-        << endl;
+    out << indent() << "if ((ret = thrift_protocol_write_list_end (protocol, "
+           "error)) < 0)" << endl;
+    indent_up();
+    out << indent() << "return " << error_ret << ";" << endl;
+    indent_down();
+    out << indent() << "xfer += ret;" << endl;
   }
 
   scope_down(out);
@@ -3958,10 +4046,14 @@ void t_c_glib_generator::generate_deserialize_container(ofstream& out,
         << indent() << "ThriftType key_type;" << endl
         << indent() << "ThriftType value_type;" << endl
         << endl
-        << indent() << "/* read the map begin marker */" << endl << indent()
-        << "if ((ret = thrift_protocol_read_map_begin (protocol, &key_type, &value_type, &size, "
-           "error)) < 0)" << endl << indent() << "  return " << error_ret << ";" << endl << indent()
-        << "xfer += ret;" << endl << endl;
+        << indent() << "/* read the map begin marker */" << endl
+        << indent() << "if ((ret = thrift_protocol_read_map_begin (protocol, "
+           "&key_type, &value_type, &size, error)) < 0)" << endl;
+    indent_up();
+    out << indent() << "return " << error_ret << ";" << endl;
+    indent_down();
+    out << indent() << "xfer += ret;" << endl
+        << endl;
 
     // iterate over map elements
     out << indent() << "/* iterate through each of the map's fields */" << endl
@@ -3972,50 +4064,72 @@ void t_c_glib_generator::generate_deserialize_container(ofstream& out,
     out << endl;
 
     // read map end
-    out << indent() << "/* read the map end marker */" << endl << indent()
-        << "if ((ret = thrift_protocol_read_map_end (protocol, error)) < 0)" << endl << indent()
-        << "  return " << error_ret << ";" << endl << indent() << "xfer += ret;" << endl;
+    out << indent() << "/* read the map end marker */" << endl
+        << indent() << "if ((ret = thrift_protocol_read_map_end (protocol, "
+           "error)) < 0)" << endl;
+    indent_up();
+    out << indent() << "return " << error_ret << ";" << endl;
+    indent_down();
+    out << indent() << "xfer += ret;" << endl;
   } else if (ttype->is_set()) {
     out << indent() << "guint32 size;" << endl
         << indent() << "guint32 i;" << endl
         << indent() << "ThriftType element_type;" << endl
         << endl
-        << indent()
-        << "if ((ret = thrift_protocol_read_set_begin (protocol, &element_type, &size, error)) < 0)"
-        << endl << indent() << "  return " << error_ret << ";" << endl << indent() << "xfer += ret;"
-        << endl << endl;
+        << indent() << "if ((ret = thrift_protocol_read_set_begin (protocol, "
+           "&element_type, &size, error)) < 0)" << endl;
+    indent_up();
+    out << indent() << "return " << error_ret << ";" << endl;
+    indent_down();
+    out << indent() << "xfer += ret;" << endl
+        << endl;
 
     // iterate over the elements
     out << indent() << "/* iterate through the set elements */" << endl
         << indent() << "for (i = 0; i < size; ++i)" << endl;
-
     scope_up(out);
     generate_deserialize_set_element(out, (t_set*)ttype, prefix, error_ret);
     scope_down(out);
 
     // read set end
-    out << indent() << "if ((ret = thrift_protocol_read_set_end (protocol, error)) < 0)" << endl
-        << indent() << "  return " << error_ret << ";" << endl << indent() << "xfer += ret;" << endl
+    out << indent() << "if ((ret = thrift_protocol_read_set_end (protocol, "
+           "error)) < 0)" << endl;
+    indent_up();
+    out << indent() << "return " << error_ret << ";" << endl;
+    indent_down();
+    out << indent() << "xfer += ret;" << endl
         << endl;
   } else if (ttype->is_list()) {
     out << indent() << "guint32 size;" << endl
         << indent() << "guint32 i;" << endl
         << indent() << "ThriftType element_type;" << endl
         << endl
-        << indent() << "if ((ret = thrift_protocol_read_list_begin (protocol, &element_type, "
-                       "&size, error)) < 0)" << endl << indent() << "  return " << error_ret << ";"
-        << endl << indent() << "xfer += ret;" << endl << endl;
+        << indent() << "if ((ret = thrift_protocol_read_list_begin (protocol, "
+           "&element_type,&size, error)) < 0)" << endl;
+    indent_up();
+    out << indent() << "return " << error_ret << ";" << endl;
+    indent_down();
+    out << indent() << "xfer += ret;" << endl
+        << endl;
 
+    // iterate over the elements
     out << indent() << "/* iterate through list elements */" << endl
         << indent() << "for (i = 0; i < size; i++)" << endl;
-
     scope_up(out);
-    generate_deserialize_list_element(out, (t_list*)ttype, prefix, "i", error_ret);
+    generate_deserialize_list_element(out,
+                                      (t_list*)ttype,
+                                      prefix,
+                                      "i",
+                                      error_ret);
     scope_down(out);
 
-    out << indent() << "if ((ret = thrift_protocol_read_list_end (protocol, error)) < 0)" << endl
-        << indent() << "  return " << error_ret << ";" << endl << indent() << "xfer += ret;" << endl
-        << endl;
+    // read list end
+    out << indent() << "if ((ret = thrift_protocol_read_list_end (protocol, "
+           "error)) < 0)" << endl;
+    indent_up();
+    out << indent() << "return " << error_ret << ";" << endl;
+    indent_down();
+    out << indent() << "xfer += ret;" << endl;
   }
 
   scope_down(out);
