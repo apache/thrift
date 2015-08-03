@@ -74,7 +74,7 @@ test_simple (void)
   s2 = g_object_new (T_TEST_TYPE_SIMPLE, NULL);
   s3 = g_object_new (T_TEST_TYPE_SIMPLE, NULL);
 
-  // write-to-read with optional fields
+  /* write-to-read with optional fields */
   s1->im_optional = 10;
   assert (s1->__isset_im_default == FALSE);
   assert (s1->__isset_im_optional == FALSE);  
@@ -174,7 +174,7 @@ test_tricky4 (void)
   t2 = g_object_new (T_TEST_TYPE_TRICKY2, NULL);
   t3 = g_object_new (T_TEST_TYPE_TRICKY3, NULL);
 
-  // throws protocol exception
+  /* throws protocol exception */
   write_to_read (THRIFT_STRUCT (t2), THRIFT_STRUCT (t3), NULL, &read_error);
   assert (read_error != NULL);
   g_error_free (read_error);

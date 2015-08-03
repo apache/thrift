@@ -30,9 +30,6 @@
 
 #include "../src/thrift/c_glib/transport/thrift_framed_transport.c"
 
-static const char TEST_ADDRESS[] = "localhost";
-static const short TEST_PORT = 64444;
-
 static void thrift_server (const int port);
 
 /* test object creation and destruction */
