@@ -191,6 +191,8 @@ class TestHandler : public ThriftTestIf {
   }
 
   void testInsanity(map<UserId, map<Numberz::type,Insanity> > &insane, const Insanity &argument) {
+    THRIFT_UNUSED_VARIABLE (argument);
+
     printf("[C -> C++] testInsanity()\n");
 
     Xtruct hello;
@@ -260,6 +262,10 @@ class TestHandler : public ThriftTestIf {
   }
 
   void testMulti(Xtruct &hello, const int8_t arg0, const int32_t arg1, const int64_t arg2, const std::map<int16_t, std::string>  &arg3, const Numberz::type arg4, const UserId arg5) {
+    THRIFT_UNUSED_VARIABLE (arg3);
+    THRIFT_UNUSED_VARIABLE (arg4);
+    THRIFT_UNUSED_VARIABLE (arg5);
+
     printf("[C -> C++] testMulti()\n");
 
     hello.string_thing = "Hello2";
@@ -582,11 +588,13 @@ test_thrift_client (void)
 static void
 bailout (int signum)
 {
+  THRIFT_UNUSED_VARIABLE (signum);
+
   exit (1);
 }
 
 int
-main (int argc, char **argv)
+main (void)
 {
   int status;
   int pid = fork ();
@@ -607,7 +615,7 @@ main (int argc, char **argv)
     sleep (1);
     test_thrift_client ();
     kill (pid, SIGINT);
-    wait (&status) == pid;
+    assert (wait (&status) == pid);
   }
 
   return 0;

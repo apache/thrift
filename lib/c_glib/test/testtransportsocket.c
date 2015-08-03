@@ -70,9 +70,6 @@ my_send(int socket, const void *buffer, size_t length, int flags)
 #undef recv
 #undef send
 
-static const char TEST_ADDRESS[] = "localhost";
-static const short TEST_PORT = 64444;
-
 static void thrift_socket_server (const int port);
 
 /* test object creation and destruction */
