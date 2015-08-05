@@ -237,6 +237,7 @@ literal_begin (['\"])
 "float"              { thrift_reserved_keyword(yytext); }
 "for"                { thrift_reserved_keyword(yytext); }
 "foreach"            { thrift_reserved_keyword(yytext); }
+"from"               { thrift_reserved_keyword(yytext); }
 "function"           { thrift_reserved_keyword(yytext); }
 "global"             { thrift_reserved_keyword(yytext); }
 "goto"               { thrift_reserved_keyword(yytext); }
