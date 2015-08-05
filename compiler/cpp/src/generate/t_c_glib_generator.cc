@@ -2319,7 +2319,16 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
           indent_up();
 
           if (return_type->is_list()) {
-            f_service_ << indent() << "g_array_unref (return_value);" << endl;
+            t_type* elem_type = ((t_list*)return_type)->get_elem_type();
+
+            f_service_ << indent();
+            if ((elem_type->is_base_type() && !elem_type->is_string())
+                || elem_type->is_enum()) {
+              f_service_ << "g_array_unref";
+            } else {
+              f_service_ << "g_ptr_array_unref";
+            }
+            f_service_ << " (return_value);" << endl;
           } else if (return_type->is_map() || return_type->is_set()) {
             f_service_ << indent() << "g_hash_table_unref (return_value);" << endl;
           }
@@ -2446,7 +2455,16 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
         indent_up();
 
         if (arg_type->is_list()) {
-          f_service_ << indent() << "g_array_unref (" << arg_name << ");" << endl;
+          t_type* elem_type = ((t_list*)arg_type)->get_elem_type();
+
+          f_service_ << indent();
+          if ((elem_type->is_base_type() && !elem_type->is_string())
+              || elem_type->is_enum()) {
+            f_service_ << "g_array_unref";
+          } else {
+            f_service_ << "g_ptr_array_unref";
+          }
+          f_service_ << " (" << arg_name << ");" << endl;
         } else if (arg_type->is_map() || arg_type->is_set()) {
           f_service_ << indent() << "g_hash_table_unref (" << arg_name << ");" << endl;
         }
@@ -3001,6 +3019,7 @@ void t_c_glib_generator::generate_object(t_struct* tstruct) {
 
   // generate default-value structures for container-type members
   bool constant_declaration_output = false;
+  bool string_list_constant_output = false;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_field* member = *m_iter;
     t_const_value* member_value = member->get_value();
@@ -3021,12 +3040,23 @@ void t_c_glib_generator::generate_object(t_struct* tstruct) {
         indent_down();
 
         constant_declaration_output = true;
+
+        // If we are generating values for a pointer array (i.e. a list of
+        // strings), set a flag so we know to also declare an index variable to
+        // use in pre-populating the array
+        if (elem_type->is_string()) {
+          string_list_constant_output = true;
+        }
       }
 
       // TODO: Handle container types other than list
     }
   }
   if (constant_declaration_output) {
+    if (string_list_constant_output) {
+      indent(f_types_impl_) << "unsigned int list_index;" << endl;
+    }
+
     f_types_impl_ << endl;
   }
 
@@ -3060,16 +3090,17 @@ void t_c_glib_generator::generate_object(t_struct* tstruct) {
     } else if (t->is_container()) {
       string name = (*m_iter)->get_name();
       string init_function;
+      t_type* etype;
 
       if (t->is_map()) {
         t_type* key = ((t_map*)t)->get_key_type();
         t_type* value = ((t_map*)t)->get_val_type();
         init_function = generate_new_hash_from_type(key, value);
       } else if (t->is_set()) {
-        t_type* etype = ((t_set*)t)->get_elem_type();
+        etype = ((t_set*)t)->get_elem_type();
         init_function = generate_new_hash_from_type(etype, NULL);
       } else if (t->is_list()) {
-        t_type* etype = ((t_list*)t)->get_elem_type();
+        etype = ((t_list*)t)->get_elem_type();
         init_function = generate_new_array_from_type(etype);
       }
 
@@ -3082,8 +3113,23 @@ void t_c_glib_generator::generate_object(t_struct* tstruct) {
         if (t->is_list()) {
           const vector<t_const_value*>& list = member_value->get_list();
 
-          indent(f_types_impl_) << "g_array_append_vals (object->" << name << ", &__default_"
-                                << name << ", " << list.size() << ");" << endl;
+          if ((etype->is_base_type() && !etype->is_string())
+              || etype->is_enum()) {
+            indent(f_types_impl_) <<
+              "g_array_append_vals (object->" << name << ", &__default_" <<
+              name << ", " << list.size() << ");" << endl;
+          }
+          else {
+            indent(f_types_impl_) <<
+              "for (list_index = 0; list_index < " << list.size() << "; " <<
+              "list_index += 1)" << endl;
+            indent_up();
+            indent(f_types_impl_) <<
+              "g_ptr_array_add (object->" << name << "," << endl <<
+              indent() << string(17, ' ') << "g_strdup (__default_" <<
+              name << "[list_index]));" << endl;
+            indent_down();
+          }
         }
 
         // TODO: Handle container types other than list

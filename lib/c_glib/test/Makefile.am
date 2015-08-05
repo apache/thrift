@@ -21,6 +21,8 @@ AUTOMAKE_OPTIONS = subdir-objects serial-tests
 SUBDIRS =
 
 BUILT_SOURCES = \
+        gen-c_glib/t_test_container_test_types.c \
+        gen-c_glib/t_test_container_test_types.h \
         gen-c_glib/t_test_debug_proto_test_types.h \
         gen-c_glib/t_test_empty_service.h \
         gen-c_glib/t_test_inherited.h \
@@ -28,6 +30,8 @@ BUILT_SOURCES = \
         gen-c_glib/t_test_reverse_order_service.h \
         gen-c_glib/t_test_second_service.h \
         gen-c_glib/t_test_service_for_exception_with_a_map.h \
+        gen-c_glib/t_test_container_service.c \
+        gen-c_glib/t_test_container_service.h \
         gen-c_glib/t_test_srv.h \
         gen-c_glib/t_test_thrift_test.h \
         gen-c_glib/t_test_thrift_test_types.h
@@ -40,6 +44,7 @@ AM_LDFLAGS = $(GLIB_LIBS) $(GOBJECT_LIBS) @GCOV_LDFLAGS@
 
 check_PROGRAMS = \
   testapplicationexception \
+  testcontainertest \
   testtransportsocket \
   testbinaryprotocol \
   testbufferedtransport \
@@ -62,6 +67,22 @@ testapplicationexception_LDADD = \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_protocol.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_struct.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o
+
+testcontainertest_SOURCES = testcontainertest.c
+testcontainertest_LDADD = \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_struct.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport_factory.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/processor/libthrift_c_glib_la-thrift_processor.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_protocol_factory.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_binary_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_binary_protocol_factory.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_socket.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_socket.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/server/libthrift_c_glib_la-thrift_server.o \
+	  libtestgenc.la
 
 testtransportsocket_SOURCES = testtransportsocket.c
 testtransportsocket_LDADD = \
@@ -139,6 +160,7 @@ if WITH_CPP
 endif
 
 nodist_libtestgenc_la_SOURCES = \
+        gen-c_glib/t_test_container_test_types.c \
         gen-c_glib/t_test_debug_proto_test_types.c \
         gen-c_glib/t_test_empty_service.c \
         gen-c_glib/t_test_inherited.c \
@@ -147,8 +169,10 @@ nodist_libtestgenc_la_SOURCES = \
         gen-c_glib/t_test_second_service.c \
         gen-c_glib/t_test_service_for_exception_with_a_map.c \
         gen-c_glib/t_test_srv.c \
+        gen-c_glib/t_test_container_service.c \
         gen-c_glib/t_test_thrift_test.c \
         gen-c_glib/t_test_thrift_test_types.c \
+        gen-c_glib/t_test_container_test_types.h \
         gen-c_glib/t_test_debug_proto_test_types.h \
         gen-c_glib/t_test_empty_service.h \
         gen-c_glib/t_test_inherited.h \
@@ -157,6 +181,7 @@ nodist_libtestgenc_la_SOURCES = \
         gen-c_glib/t_test_second_service.h \
         gen-c_glib/t_test_service_for_exception_with_a_map.h \
         gen-c_glib/t_test_srv.h \
+        gen-c_glib/t_test_container_service.h \
         gen-c_glib/t_test_thrift_test.h \
         gen-c_glib/t_test_thrift_test_types.h
 libtestgenc_la_LIBADD = $(top_builddir)/lib/c_glib/libthrift_c_glib.la
@@ -172,6 +197,9 @@ nodist_libtestgencpp_la_SOURCES = \
 libtestgencpp_la_CPPFLAGS = -I../../cpp/src $(BOOST_CPPFLAGS) -I./gen-cpp
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
+
+gen-c_glib/t_test_container_test_types.c gen-c_glib/t_test_container_test_types.h gen-c_glib/t_test_container_service.c gen-c_glib/t_test_container_service.h: ContainerTest.thrift
+	$(THRIFT) --gen c_glib $<
 
 gen-c_glib/t_test_debug_proto_test_types.c gen-c_glib/t_test_debug_proto_test_types.h gen-c_glib/t_test_empty_service.c gen-c_glib/t_test_empty_service.h gen-c_glib/t_test_inherited.c gen-c_glib/t_test_inherited.h gen-c_glib/t_test_reverse_order_service.c gen-c_glib/t_test_reverse_order_service.h gen-c_glib/t_test_service_for_exception_with_a_map.c gen-c_glib/t_test_service_for_exception_with_a_map.h gen-c_glib/t_test_srv.c gen-c_glib/t_test_srv.h: ../../../test/DebugProtoTest.thrift
 	$(THRIFT) --gen c_glib $<
