@@ -164,8 +164,9 @@ public class TZlibTransport extends TTransport {
     @Override
     public void flush() throws TTransportException {
         byte[] buf = writeBuffer_.get();
+        int bufLength = writeBuffer_.len();
         writeBuffer_.reset();
-        compresser.setInput(buf);
+        compresser.setInput(buf, 0, bufLength);
 
         byte[] compBuf = new byte[buf.length * 2];
         int compressedDataLength = compresser.deflate(compBuf, 0, compBuf.length, Deflater.SYNC_FLUSH);
