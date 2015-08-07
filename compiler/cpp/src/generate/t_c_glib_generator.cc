@@ -525,7 +525,6 @@ bool t_c_glib_generator::is_complex_type(t_type* ttype) {
  * Maps a Thrift t_type to a C type.
  */
 string t_c_glib_generator::type_name(t_type* ttype, bool in_typedef, bool is_const) {
-  (void)in_typedef;
   if (ttype->is_base_type()) {
     string bname = base_type_name((t_base_type*)ttype);
 
@@ -543,16 +542,16 @@ string t_c_glib_generator::type_name(t_type* ttype, bool in_typedef, bool is_con
     if (tcontainer->has_cpp_name()) {
       cname = tcontainer->get_cpp_name();
     } else if (ttype->is_map()) {
-      cname = "GHashTable *";
+      cname = "GHashTable";
     } else if (ttype->is_set()) {
       // since a set requires unique elements, use a GHashTable, and
       // populate the keys and values with the same data, using keys for
       // the actual writes and reads.
       // TODO: discuss whether or not to implement TSet, THashSet or GHashSet
-      cname = "GHashTable *";
+      cname = "GHashTable";
     } else if (ttype->is_list()) {
       // TODO: investigate other implementations besides GPtrArray
-      cname = "GPtrArray *";
+      cname = "GPtrArray";
       t_type* etype = ((t_list*)ttype)->get_elem_type();
       if (etype->is_base_type()) {
         t_base_type::t_base tbase = ((t_base_type*)etype)->get_base();
@@ -565,7 +564,7 @@ string t_c_glib_generator::type_name(t_type* ttype, bool in_typedef, bool is_con
         case t_base_type::TYPE_I32:
         case t_base_type::TYPE_I64:
         case t_base_type::TYPE_DOUBLE:
-          cname = "GArray *";
+          cname = "GArray";
           break;
         case t_base_type::TYPE_STRING:
           break;
@@ -573,6 +572,13 @@ string t_c_glib_generator::type_name(t_type* ttype, bool in_typedef, bool is_con
           throw "compiler error: no array info for type";
         }
       }
+    }
+
+    /* Omit the dereference operator if we are aliasing this type within a
+       typedef, to allow the type to be used more naturally in client code;
+       otherwise, include it */
+    if (!in_typedef) {
+      cname += " *";
     }
 
     if (is_const) {
@@ -3885,7 +3891,7 @@ void t_c_glib_generator::generate_serialize_list_element(ofstream& out,
                                                          string list,
                                                          string index,
                                                          int error_ret) {
-  t_type* ttype = tlist->get_elem_type();
+  t_type* ttype = get_true_type(tlist->get_elem_type());
 
   // cast to non-const
   string cast = "";
