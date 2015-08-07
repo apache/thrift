@@ -20,6 +20,7 @@
 package common
 
 import (
+	"compress/zlib"
 	"crypto/tls"
 	"flag"
 	"fmt"
@@ -99,6 +100,8 @@ func StartServer(
 		transportFactory = thrift.NewTFramedTransportFactory(transportFactory)
 	case "buffered":
 		transportFactory = thrift.NewTBufferedTransportFactory(8192)
+	case "zlib":
+		transportFactory = thrift.NewTZlibTransportFactory(zlib.BestCompression)
 	case "":
 		transportFactory = thrift.NewTTransportFactory()
 	default:
