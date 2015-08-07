@@ -26,4 +26,6 @@ struct ContainersWithDefaultValues {
 service ContainerService {
   void receiveStringList(1: list<string> stringList);
   list<string> returnStringList();
+
+  list<list<string>> returnListStringList();
 }

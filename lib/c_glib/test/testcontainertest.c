@@ -136,6 +136,26 @@ test_container_service_handler_return_string_list (TTestContainerServiceIf *ifac
   return TRUE;
 }
 
+static gboolean
+test_container_service_handler_return_list_string_list (TTestContainerServiceIf *iface,
+                                                        GPtrArray **_return,
+                                                        GError **error)
+{
+  TestContainerServiceHandler *self = TEST_CONTAINER_SERVICE_HANDLER (iface);
+  GPtrArray *nested_list;
+
+  /* Return a list containing our list of strings */
+  nested_list
+    = g_ptr_array_new_with_free_func ((GDestroyNotify)g_ptr_array_unref);
+  g_ptr_array_add (nested_list, self->string_list);
+  g_ptr_array_ref (self->string_list);
+
+  g_ptr_array_add (*_return, nested_list);
+
+  g_clear_error (error);
+  return TRUE;
+}
+
 static void
 test_container_service_handler_finalize (GObject *object) {
   TestContainerServiceHandler *self = TEST_CONTAINER_SERVICE_HANDLER (object);
@@ -168,6 +188,8 @@ test_container_service_handler_class_init (TestContainerServiceHandlerClass *kla
     test_container_service_handler_receive_string_list;
   parent_class->return_string_list =
     test_container_service_handler_return_string_list;
+  parent_class->return_list_string_list =
+    test_container_service_handler_return_list_string_list;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -287,6 +309,67 @@ test_container_service_string_list (void)
   g_object_unref (socket);
 }
 
+static void
+test_container_service_list_string_list (void)
+{
+  ThriftSocket *socket;
+  ThriftTransport *transport;
+  ThriftProtocol *protocol;
+
+  TTestContainerServiceIf *client;
+
+  GPtrArray *incoming_list;
+  GPtrArray *nested_list;
+
+  GError *error = NULL;
+
+  /* Create a client with which to access the server */
+  socket    = g_object_new (THRIFT_TYPE_SOCKET,
+                            "hostname", TEST_SERVER_HOSTNAME,
+                            "port",     TEST_SERVER_PORT,
+                            NULL);
+  transport = g_object_new (THRIFT_TYPE_BUFFERED_TRANSPORT,
+                            "transport", socket,
+                            NULL);
+  protocol  = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL,
+                            "transport", transport,
+                            NULL);
+
+  thrift_transport_open (transport, &error);
+  g_assert_no_error (error);
+
+  client = g_object_new (T_TEST_TYPE_CONTAINER_SERVICE_CLIENT,
+                         "input_protocol",  protocol,
+                         "output_protocol", protocol,
+                         NULL);
+
+  /* Receive a list of string lists from the server */
+  incoming_list =
+    g_ptr_array_new_with_free_func ((GDestroyNotify)g_ptr_array_unref);
+  g_assert
+    (t_test_container_service_client_return_list_string_list (client,
+                                                              &incoming_list,
+                                                              &error) &&
+     error == NULL);
+
+  /* Make sure the list and its contents are valid */
+  g_assert_cmpint (incoming_list->len, >, 0);
+
+  nested_list = (GPtrArray *)g_ptr_array_index (incoming_list, 0);
+  g_assert (nested_list != NULL);
+  g_assert_cmpint (nested_list->len, >=, 0);
+
+  /* Clean up and exit */
+  g_ptr_array_unref (incoming_list);
+
+  thrift_transport_close (transport, NULL);
+
+  g_object_unref (client);
+  g_object_unref (protocol);
+  g_object_unref (transport);
+  g_object_unref (socket);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -313,6 +396,9 @@ main(int argc, char *argv[])
     g_test_add_func
       ("/testcontainertest/ContainerTest/Services/ContainerService/StringList",
        test_container_service_string_list);
+    g_test_add_func
+      ("/testcontainertest/ContainerTest/Services/ContainerService/ListStringList",
+       test_container_service_list_string_list);
 
     /* Run the tests and make the result available to our parent process */
     _exit (g_test_run ());
