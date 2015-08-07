@@ -4194,6 +4194,10 @@ void t_c_glib_generator::declare_local_variable(ofstream& out, t_type* ttype, st
     t_map* tmap = (t_map*)ttype;
     out << indent() << tname << ptr << " " << name << " = "
         << generate_new_hash_from_type(tmap->get_key_type(), tmap->get_val_type()) << endl;
+  } else if (ttype->is_list()) {
+    t_list* tlist = (t_list*)ttype;
+    out << indent() << tname << ptr << " " << name << " = "
+        << generate_new_array_from_type(tlist->get_elem_type()) << endl;
   } else if (ttype->is_enum()) {
     out << indent() << tname << ptr << " " << name << ";" << endl;
   } else {
