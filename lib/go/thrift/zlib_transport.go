@@ -65,8 +65,10 @@ func NewTZlibTransport(trans TTransport, level int) (*TZlibTransport, error) {
 // Close closes the reader and writer (flushing any unwritten data) and closes
 // the underlying transport.
 func (z *TZlibTransport) Close() error {
-	if err := z.reader.Close(); err != nil {
-		return err
+	if z.reader != nil {
+		if err := z.reader.Close(); err != nil {
+			return err
+		}
 	}
 	if err := z.writer.Close(); err != nil {
 		return err
