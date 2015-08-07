@@ -31,7 +31,7 @@ import (
 var host = flag.String("host", "localhost", "Host to connect")
 var port = flag.Int64("port", 9090, "Port number to connect")
 var domain_socket = flag.String("domain-socket", "", "Domain Socket (e.g. /tmp/thrifttest.thrift), instead of host and port")
-var transport = flag.String("transport", "buffered", "Transport: buffered, framed, http")
+var transport = flag.String("transport", "buffered", "Transport: buffered, framed, http, zlib")
 var protocol = flag.String("protocol", "binary", "Protocol: binary, compact, json")
 var ssl = flag.Bool("ssl", false, "Encrypted Transport using SSL")
 var testloops = flag.Int("testloops", 1, "Number of Tests")
