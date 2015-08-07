@@ -19,6 +19,9 @@
 
 namespace c_glib TTest
 
+typedef list<string> StringList
+typedef list<StringList> ListStringList
+
 struct ContainersWithDefaultValues {
   1: list<string> StringList = [ "Apache", "Thrift" ];
 }
@@ -26,4 +29,7 @@ struct ContainersWithDefaultValues {
 service ContainerService {
   void receiveStringList(1: list<string> stringList);
   list<string> returnStringList();
+
+  list<list<string>> returnListStringList();
+  ListStringList returnTypedefdListStringList();
 }
