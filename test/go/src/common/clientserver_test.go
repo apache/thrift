@@ -103,7 +103,7 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 		handler.EXPECT().TestEnum(thrifttest.Numberz_TWO).Return(thrifttest.Numberz_TWO, nil),
 		handler.EXPECT().TestTypedef(thrifttest.UserId(42)).Return(thrifttest.UserId(42), nil),
 		handler.EXPECT().TestMapMap(int32(42)).Return(rmapmap, nil),
-		//not testing insanity
+		// TODO: not testing insanity
 		handler.EXPECT().TestMulti(int8(42), int32(4242), int64(424242), map[int16]string{1: "blah", 2: "thing"}, thrifttest.Numberz_EIGHT, thrifttest.UserId(24)).Return(xxs, nil),
 		handler.EXPECT().TestException("some").Return(xcept),
 		handler.EXPECT().TestException("TException").Return(errors.New("Just random exception")),

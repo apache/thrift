@@ -241,6 +241,7 @@ test-driver
 /test/go/ThriftTest.thrift
 /test/go/gopath
 /test/go/pkg/
+/test/go/src/code.google.com/
 /test/go/src/github.com/golang/
 /test/go/src/gen/
 /test/go/src/thrift
