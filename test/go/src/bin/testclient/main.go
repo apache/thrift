@@ -192,6 +192,44 @@ func callEverything(client *thrifttest.ThriftTestClient) {
 		t.Fatalf("Unexpected TestMapmap() result expected %#v, got %#v ", rmapmap, mapmap)
 	}
 
+	crazy := thrifttest.NewInsanity()
+	crazy.UserMap = map[thrifttest.Numberz]thrifttest.UserId {
+		thrifttest.Numberz_FIVE: 5,
+		thrifttest.Numberz_EIGHT: 8,
+	}
+	truck1 := thrifttest.NewXtruct()
+	truck1.StringThing = "Goodbye4"
+	truck1.ByteThing = 4;
+	truck1.I32Thing = 4;
+	truck1.I64Thing = 4;
+	truck2 := thrifttest.NewXtruct()
+	truck2.StringThing = "Hello2"
+	truck2.ByteThing = 2;
+	truck2.I32Thing = 2;
+	truck2.I64Thing = 2;
+	crazy.Xtructs = []*thrifttest.Xtruct {
+		truck1,
+		truck2,
+	}
+	insanity, err := client.TestInsanity(crazy)
+	if err != nil {
+		t.Fatalf("Unexpected error in TestInsanity() call: ", err)
+	}
+	if !reflect.DeepEqual(crazy, insanity[1][2]) {
+		t.Fatalf("Unexpected TestInsanity() first result expected %#v, got %#v ",
+		crazy,
+		insanity[1][2])
+	}
+	if !reflect.DeepEqual(crazy, insanity[1][3]) {
+		t.Fatalf("Unexpected TestInsanity() second result expected %#v, got %#v ",
+		crazy,
+		insanity[1][3])
+	}
+	if len(insanity[2][6].UserMap) > 0 || len(insanity[2][6].Xtructs) > 0 {
+		t.Fatalf("Unexpected TestInsanity() non-empty result got %#v ",
+		insanity[2][6])
+	}
+
 	xxsret, err := client.TestMulti(42, 4242, 424242, map[int16]string{1: "blah", 2: "thing"}, thrifttest.Numberz_EIGHT, thrifttest.UserId(24))
 	if err != nil {
 		t.Fatalf("Unexpected error in TestMulti() call: ", err)
@@ -208,10 +246,9 @@ func callEverything(client *thrifttest.ThriftTestClient) {
 		t.Fatalf("Unexpected TestException() result expected %#v, got %#v ", xcept, err)
 	}
 
-	// TODO: connection is being closed on this
 	err = client.TestException("TException")
-	tex, ok := err.(thrift.TApplicationException)
-	if err == nil || !ok || tex.TypeId() != thrift.INTERNAL_ERROR {
+	_, ok := err.(thrift.TApplicationException)
+	if err == nil || !ok {
 		t.Fatalf("Unexpected TestException() result expected ApplicationError, got %#v ", err)
 	}
 
