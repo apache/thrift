@@ -705,7 +705,7 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* t = get_true_type((*m_iter)->get_type());
-      out << indent() << indent() << "if (args." << (*m_iter)->get_name() << " !== undefined) {"
+      out << indent() << indent() << "if (args." << (*m_iter)->get_name() << " !== undefined && args." << (*m_iter)->get_name() << " !== null) {"
           << endl << indent() << indent() << indent() << "this." << (*m_iter)->get_name();
 
       if (t->is_struct()) {
