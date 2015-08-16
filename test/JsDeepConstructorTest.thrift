@@ -10,3 +10,7 @@ struct Complex {
   5: list<set<map<string,list<Simple>>>> struct_nested_containers_field
   6: map<string, list<map<string,Simple>> > struct_nested_containers_field2
 }
+
+struct ComplexList {
+  1: list<Complex> struct_list_field;
+}
