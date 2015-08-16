@@ -69,7 +69,11 @@ THRIFTCODE= \
             src/TException.cs \
             src/TApplicationException.cs
 
+if MONO_MCS
+CSC=mcs
+else
 CSC=gmcs
+endif
 
 if NET_2_0
 MONO_DEFINES=/d:NET_2_0
