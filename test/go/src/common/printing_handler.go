@@ -263,7 +263,16 @@ func (p *printingHandler) TestMapMap(hello int32) (r map[int32]map[int32]int32, 
 // Parameters:
 //  - Argument
 func (p *printingHandler) TestInsanity(argument *Insanity) (r map[UserId]map[Numberz]*Insanity, err error) {
-	return nil, errors.New("No Insanity")
+	fmt.Printf("testInsanity()\n")
+	r = make(map[UserId]map[Numberz]*Insanity)
+	r[1] = map[Numberz]*Insanity {
+		2: argument,
+		3: argument,
+	}
+	r[2] = map[Numberz]*Insanity {
+		6: NewInsanity(),
+	}
+	return
 }
 
 // Prints 'testMulti()'
