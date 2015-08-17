@@ -18,19 +18,13 @@
  */
 package org.apache.thrift.transport;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import junit.framework.TestCase;
+
+import java.io.*;
 import java.util.Arrays;
 import java.util.zip.DataFormatException;
 import java.util.zip.DeflaterOutputStream;
-import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
-
-import junit.framework.TestCase;
 
 public class TestTZlibTransport extends TestCase {
 
@@ -44,6 +38,16 @@ public class TestTZlibTransport extends TestCase {
       result[i] = (byte)(start+i);
     }
     return result;
+  }
+
+  public void testClose() throws TTransportException {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    WriteCountingTransport countingTrans = new WriteCountingTransport(new TIOStreamTransport(new BufferedOutputStream
+        (baos)));
+    TTransport trans = getTransport(countingTrans);
+    trans.write(byteSequence(0, 245));
+    countingTrans.close();
+    trans.close();
   }
 
   public void testRead() throws IOException, TTransportException {
@@ -85,17 +89,17 @@ public class TestTZlibTransport extends TestCase {
     TTransport trans = getTransport(countingTrans);
 
     trans.write(byteSequence(0, 100));
-    assertEquals(0, countingTrans.writeCount);
+    assertEquals(1, countingTrans.writeCount);
     trans.write(byteSequence(101, 200));
     trans.write(byteSequence(201, 255));
-    assertEquals(0, countingTrans.writeCount);
+    assertEquals(1, countingTrans.writeCount);
 
     trans.flush();
-    assertEquals(1, countingTrans.writeCount);
+    assertEquals(2, countingTrans.writeCount);
 
     trans.write(byteSequence(0, 245));
     trans.flush();
-    assertEquals(2, countingTrans.writeCount);
+    assertEquals(3, countingTrans.writeCount);
 
     DataInputStream din = new DataInputStream(new InflaterInputStream(new ByteArrayInputStream(baos.toByteArray())));
     byte[] buf = new byte[256];
