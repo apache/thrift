@@ -37,6 +37,10 @@ before_install:
   - if [ "$ALL_DEPS" != "no" ] ; then sh build/travis/installDependencies.sh 1> /dev/null ; fi
   - if [ "$ALL_DEPS" != "no" ] ; then export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH ; fi
   - if [ "$ALL_DEPS" != "no" ] ; then cabal update ; fi
+  # Disabling any cabal concurrent jobs to workaround GHC crashes due to out of memory.
+  # We can safely remove this to speed up cabal install, once Travis infrastructure is upgraded.
+  - if [ "$ALL_DEPS" != "no" ] ; then sed -i 's/^\s*jobs\s*:\s*\$ncpus\s*$/jobs:1/g' $HOME/.cabal/config && cat $HOME/.cabal/config | grep jobs ; fi
+
 
 script:
   - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then mkdir cmake_build && cd cmake_build && cmake -GNinja -DQT_MOC_EXECUTABLE="moq-qt5" $CMAKE_CONFIG $TRAVIS_BUILD_DIR ; fi
