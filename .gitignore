@@ -127,6 +127,7 @@ test-driver
 /lib/c_glib/test/testapplicationexception
 /lib/c_glib/test/testbinaryprotocol
 /lib/c_glib/test/testbufferedtransport
+/lib/c_glib/test/testcontainertest
 /lib/c_glib/test/testdebugproto
 /lib/c_glib/test/testframedtransport
 /lib/c_glib/test/testmemorybuffer
