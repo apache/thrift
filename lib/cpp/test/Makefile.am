@@ -209,8 +209,11 @@ TPipedTransportTest_SOURCES = \
 	TPipeInterruptTest.cpp
 
 TPipedTransportTest_LDADD = \
+	libtestgencpp.la \
 	$(top_builddir)/lib/cpp/libthrift.la \
-	$(BOOST_TEST_LDADD)
+	$(BOOST_TEST_LDADD) \
+	$(BOOST_SYSTEM_LDADD) \
+	$(BOOST_THREAD_LDADD)
 
 #
 # AllProtocolsTest

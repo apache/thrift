@@ -28,7 +28,7 @@ using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TPipedTransport;
 using apache::thrift::transport::TMemoryBuffer;
 
-BOOST_AUTO_TEST_CASE(test_tpipedtransport_1) {
+BOOST_AUTO_TEST_CASE(test_read_write) {
   boost::shared_ptr<TMemoryBuffer> underlying(new TMemoryBuffer);
   boost::shared_ptr<TMemoryBuffer> pipe(new TMemoryBuffer);
   boost::shared_ptr<TPipedTransport> trans(new TPipedTransport(underlying, pipe));

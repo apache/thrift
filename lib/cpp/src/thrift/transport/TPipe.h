@@ -87,8 +87,8 @@ public:
   void setPipeHandle(HANDLE pipehandle);
   HANDLE getWrtPipeHandle();
   void setWrtPipeHandle(HANDLE pipehandle);
-  long getConnectTimeout();
-  void setConnectTimeout(long seconds);
+  long getConnTimeout();
+  void setConnTimeout(long seconds);
 
   // this function is intended to be used in generic / template situations,
   // so its name needs to be the same as TPipeServer's

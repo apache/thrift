@@ -17,6 +17,8 @@
  * under the License.
  */
 
+#ifdef _WIN32
+
 #include <boost/test/test_tools.hpp>
 #include <boost/test/unit_test_suite.hpp>
 
@@ -74,7 +76,7 @@ BOOST_AUTO_TEST_CASE(stress_pipe_accept_interruption) {
       for (;;)
       {
         TPipe client("TPipeInterruptTest");
-        client.setConnectTimeout(1);
+        client.setConnTimeout(1);
         client.open();
       }
     } catch (...) { /*just testing for crashes*/ }
@@ -84,3 +86,4 @@ BOOST_AUTO_TEST_CASE(stress_pipe_accept_interruption) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+#endif
