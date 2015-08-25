@@ -397,7 +397,9 @@ void t_php_generator::init_generator() {
 
   // Print header
   f_types_ << "<?php" << endl;
-  f_types_ << "namespace " << php_namespace_suffix(get_program()) << ";" << endl << endl;
+  if ( ! php_namespace_suffix(get_program()).empty() )  {
+    f_types_ << "namespace " << php_namespace_suffix(get_program()) << ";" << endl << endl;
+  }
   f_types_ << autogen_comment() << php_includes();
 
   f_types_ << endl;
@@ -1143,7 +1145,9 @@ void t_php_generator::generate_service(t_service* tservice) {
   f_service_.open(f_service_name.c_str());
 
   f_service_ << "<?php" << endl;
-  f_service_ << "namespace " << php_namespace_suffix(tservice->get_program()) << ";" << endl;
+  if ( ! php_namespace_suffix(tservice->get_program()).empty() ) {
+    f_service_ << "namespace " << php_namespace_suffix(tservice->get_program()) << ";" << endl;
+  }
   f_service_ << autogen_comment() << php_includes();
 
   f_service_ << endl;
