@@ -275,3 +275,8 @@ CLEANFILES =                            \
     *.gcno                              \
     *.gcda                              \
     *.gcov
+
+EXTRA_DIST = \
+             CMakeLists.txt \
+             ContainerTest.thrift
+

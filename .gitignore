@@ -181,6 +181,7 @@ test-driver
 /lib/hs/dist
 /lib/java/build
 /lib/js/test/build
+/lib/nodejs/coverage
 /lib/nodejs/node_modules/
 /lib/perl/MANIFEST
 /lib/perl/MYMETA.json

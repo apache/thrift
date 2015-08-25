@@ -65,6 +65,7 @@ maintainer-clean-local:
 EXTRA_DIST = \
 	include \
 	src \
+	coding_standards.md \
 	rebar \
 	rebar.config \
 	test \

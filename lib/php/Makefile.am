@@ -31,6 +31,10 @@ phpconf_DATA=thrift_protocol.ini
 
 phpmoduledir = `php-config --extension-dir`
 phpmodule_SCRIPTS = src/ext/thrift_protocol/modules/thrift_protocol.so
+
+distclean-local:
+	cd $(phpmodule_SCRIPTS) && $(PHPIZE) --clean
+
 endif
 
 phpdir = $(PHP_PREFIX)/Thrift
@@ -119,6 +123,7 @@ EXTRA_DIST = \
   src/ext/thrift_protocol/run-tests.php \
   src/Thrift.php \
   src/TStringUtils.php \
+  coding_standards.md \
   thrift_protocol.ini \
   README.apache.md \
   README.md

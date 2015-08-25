@@ -83,5 +83,6 @@ style-local:
 	$(CPPSTYLE_CMD)
 
 EXTRA_DIST = \
+	CMakeLists.txt \
 	CppClient.cpp \
 	CppServer.cpp

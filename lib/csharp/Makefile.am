@@ -100,4 +100,5 @@ EXTRA_DIST = \
              src/Properties/AssemblyInfo.WP7.cs \
              src/Transport/TSilverlightSocket.cs \
              test \
+             coding_standards.md \
              README.md
