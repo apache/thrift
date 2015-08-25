@@ -7,9 +7,9 @@
  to you under the Apache License, Version 2.0 (the
  "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
- 
+
  http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing,
  software distributed under the License is distributed on an
  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -19,7 +19,7 @@
  -->
 <project name="libthrift" default="dist" basedir="."
   xmlns:artifact="antlib:org.apache.maven.artifact.ant">
-  
+
   <description>Thrift Build File</description>
   <property name="thrift.root" location="../../"/>
   <property name="thrift.artifactid" value="libthrift"/>
@@ -32,7 +32,7 @@
   <condition property="version" value="${thrift.version}">
     <isset property="release"/>
   </condition>
-  <property name="version" value="${thrift.version}-snapshot"/> 
+  <property name="version" value="${thrift.version}-snapshot"/>
 
   <property name="final.name" value="${thrift.artifactid}-${version}"/>
 
@@ -60,13 +60,13 @@
   <property name="test.timeout" value="2000000"/>
   <property name="test.src.dir" location="${basedir}/test"/>
   <property name="test.log.dir" value="${build.test.dir}/log"/>
-  <property name="test.port" value="9090"/> 
+  <property name="test.port" value="9090"/>
 
   <!-- maven properties -->
   <property name="pom.xml" location="${build.dir}/${final.name}.pom"/>
 
   <path id="compile.classpath">
-    <fileset dir="${build.lib.dir}"> 
+    <fileset dir="${build.lib.dir}">
       <include name="**/*.jar"/>
     </fileset>
   </path>
@@ -80,7 +80,7 @@
 
   </path>
 
-  <!-- Tasks --> 
+  <!-- Tasks -->
   <target name="init" depends="setup.init,mvn.init" unless="init.finished">
     <property name="init.finished" value="true"/>
   </target>
@@ -94,7 +94,7 @@
   </target>
 
   <target name="compile" depends="init">
-    <javac srcdir="${src}" destdir="${build.dir}" source="1.5" target="1.5" 
+    <javac srcdir="${src}" destdir="${build.dir}" source="1.5" target="1.5"
     debug="true" classpathref="compile.classpath" includeantruntime="false" encoding="UTF-8">
       <compilerarg value="-Xlint:unchecked"/>
     </javac>
@@ -162,7 +162,7 @@
     <delete dir="${genfullcamel}"/>
   </target>
 
-  <target name="optional-generate" unless="no-gen-thrift"> 
+  <target name="optional-generate" unless="no-gen-thrift">
     <antcall target="generate">
     </antcall>
   </target>
@@ -187,7 +187,7 @@
     <javac debug="true" srcdir="${src.test}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false" encoding="UTF-8">
       <compilerarg value="-Xlint:deprecation"/>
       <!--<compilerarg value="-Xlint:unchecked"/>-->
-    </javac>  
+    </javac>
     <copy todir="${build.test.dir}">
       <fileset dir="${src.test}" includes="log4j.properties"/>
     </copy>
@@ -196,7 +196,7 @@
 
   <target name="junit-test" description="Run the JUnit test suite" depends="compile-test">
     <mkdir dir="${test.log.dir}"/>
-    <junit printsummary="true" showoutput="${test.output}" timeout="${test.timeout}" 
+    <junit printsummary="true" showoutput="${test.output}" timeout="${test.timeout}"
       haltonfailure="true" errorProperty="tests.failed" failureProperty="tests.failed"
       fork="true" forkmode="perTest" maxmemory="512m"
     >
@@ -229,7 +229,7 @@
   </target>
 
   <target name="test" description="Run the full test suite" depends="junit-test,deprecated-test"/>
-  
+
   <target name="testclient" description="Run a test client" depends="compile-test, run-testclient"/>
   <target name="run-testclient" description="Run a test client">
     <java classname="org.apache.thrift.test.TestClient"
@@ -239,17 +239,17 @@
       <arg line="${testargs}"/>
     </java>
   </target>
-  
+
   <target name="testserver" description="Run a test server" depends="compile-test, run-testserver"/>
   <target name="run-testserver" description="Run a test server">
     <java classname="org.apache.thrift.test.TestServer"
-      classpathref="test.classpath" failonerror="true" fork="true"> 
+      classpathref="test.classpath" failonerror="true" fork="true">
       <sysproperty key="javax.net.ssl.keyStore" value="${src.test}/.keystore"/>
       <sysproperty key="javax.net.ssl.keyStorePassword" value="thrift"/>
-      <arg line="${testargs}"/> 
+      <arg line="${testargs}"/>
     </java>
   </target>
-  
+
   <target name="testnonblockingserver" description="Run a test nonblocking server" depends="compile-test, run-testnonblockingserver"/>
   <target name="run-testnonblockingserver" description="Run a test nonblocking server">
     <java classname="org.apache.thrift.test.TestNonblockingServer"
@@ -302,7 +302,7 @@
     <condition property="mvn.ant.tasks.found">
       <typefound uri="antlib:org.apache.maven.artifact.ant" name="artifact"/>
     </condition>
-  </target> 
+  </target>
 
   <target name="mvn.init" depends="mvn.ant.tasks.download" unless="mvn.finished">
     <!-- Download mvn ant tasks, download dependencies, and setup pom file -->
@@ -313,10 +313,10 @@
     <artifact:remoteRepository id="apache" url="${apache.repo}"/>
 
     <!-- Pom file information -->
-    <artifact:pom id="pom" 
-      groupId="${thrift.groupid}" 
+    <artifact:pom id="pom"
+      groupId="${thrift.groupid}"
       artifactId="${thrift.artifactid}"
-      version="${version}" 
+      version="${version}"
       url="http://thrift.apache.org"
       name="Apache Thrift"
       description="Thrift is a software framework for scalable cross-language services development."
@@ -325,7 +325,7 @@
       <remoteRepository refid="central"/>
       <remoteRepository refid="apache"/>
       <license name="The Apache Software License, Version 2.0" url="${license}"/>
-      <scm connection="scm:git:https://git-wip-us.apache.org/repos/asf/thrift.git" 
+      <scm connection="scm:git:https://git-wip-us.apache.org/repos/asf/thrift.git"
       developerConnection="scm:git:https://git-wip-us.apache.org/repos/asf/thrift.git"
       url="https://git-wip-us.apache.org/repos/asf?p=thrift.git"
       />
@@ -391,7 +391,7 @@
     <attribute name="pom" default=""/>
     <sequential>
       <artifact:mvn fork="true">
-        <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.1:sign-and-deploy-file"/>
+        <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.6:sign-and-deploy-file"/>
         <arg value="-DrepositoryId=${maven-repository-id}"/>
         <arg value="-Durl=${maven-repository-url}"/>
         <arg value="-DpomFile=@{pom}"/>
@@ -407,8 +407,8 @@
     <!-- Compile, package, test and then send release to apache maven repo -->
     <!-- run with: ant -Drelease=true publish-->
     <signAndDeploy file="${pom.xml}" packaging="pom" classifier="" pom="${pom.xml}"/>
-    <signAndDeploy file="${jar.file}" packaging="jar" classifier="" pom="${pom.xml}"/>
-    <signAndDeploy file="${javadoc.jar.file}" packaging="jar" classifier="javadoc" pom="${pom.xml}"/>
-    <signAndDeploy file="${source.jar.file}" packaging="src" classifier="sources" pom="${pom.xml}"/>
+    <signAndDeploy file="${jar.file}" classifier="" pom="${pom.xml}"/>
+    <signAndDeploy file="${javadoc.jar.file}" classifier="javadoc" pom="${pom.xml}"/>
+    <signAndDeploy file="${source.jar.file}" classifier="sources" pom="${pom.xml}"/>
   </target>
 </project>
