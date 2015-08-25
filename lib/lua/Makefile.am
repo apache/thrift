@@ -54,7 +54,9 @@ liblualongnumber_la_SOURCES = \
 liblualongnumber_la_CPPFLAGS = $(AM_CPPFLAGS) -I/usr/include/lua5.2 -DLUA_COMPAT_MODULE
 liblualongnumber_la_LDFLAGS = $(AM_LDFLAGS) $(LUA_LIB) -lm
 
-EXTRA_DIST = TBinaryProtocol.lua \
+EXTRA_DIST = \
+		coding_standards.md \
+		TBinaryProtocol.lua \
 		TBufferedTransport.lua \
 		TFramedTransport.lua \
 		Thrift.lua \

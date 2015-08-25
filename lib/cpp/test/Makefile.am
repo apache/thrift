@@ -114,7 +114,9 @@ UnitTests_SOURCES = \
 	ToStringTest.cpp \
 	TypedefTest.cpp \
 	TServerSocketTest.cpp \
-	TServerTransportTest.cpp
+	TServerTransportTest.cpp \
+	TestPortFixture.h \
+	TTransportCheckThrow.h
 
 if !WITH_BOOSTTHREADS
 UnitTests_SOURCES += \
@@ -203,7 +205,8 @@ TFDTransportTest_LDADD =  \
 # TPipedTransportTest
 #
 TPipedTransportTest_SOURCES = \
-	TPipedTransportTest.cpp
+	TPipedTransportTest.cpp \
+	TPipeInterruptTest.cpp
 
 TPipedTransportTest_LDADD = \
 	$(top_builddir)/lib/cpp/libthrift.la \
@@ -357,7 +360,10 @@ clean-local:
 	$(RM) -r gen-cpp
 
 EXTRA_DIST = \
-	ThriftTest_extras.cpp \
-	DebugProtoTest_extras.cpp \
 	concurrency \
-	processor
+	processor \
+	qt \
+	CMakeLists.txt \
+	DebugProtoTest_extras.cpp \
+	tests.xml \
+	ThriftTest_extras.cpp

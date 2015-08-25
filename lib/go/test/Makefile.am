@@ -81,6 +81,7 @@ client: stubs
 	$(GO) run TestClient.go
 
 EXTRA_DIST = \
+	dontexportrwtest \
 	tests \
 	BinaryKeyTest.thrift \
 	GoTagTest.thrift \
