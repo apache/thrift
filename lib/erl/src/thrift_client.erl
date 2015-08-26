@@ -63,7 +63,7 @@ close(#tclient{protocol=Protocol}) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
--spec send_function_call(#tclient{}, atom(), list()) -> {sync | async | {error, any()}, #tclient{}}.
+-spec send_function_call(#tclient{}, atom(), list()) -> {ok | {error, any()}, #tclient{}}.
 send_function_call(Client = #tclient{service = Service}, Function, Args) ->
   {Params, Reply} = try
     {Service:function_info(Function, params_type), Service:function_info(Function, reply_type)}
@@ -82,17 +82,21 @@ send_function_call(Client = #tclient{service = Service}, Function, Args) ->
   end.
 
 -spec write_message(#tclient{}, atom(), list(), {struct, list()}, integer()) ->
-  {ok, #tclient{}}.
+  {ok | {error, any()}, #tclient{}}.
 write_message(Client = #tclient{protocol = P0, seqid = Seq}, Function, Args, Params, MsgType) ->
-  {P1, ok} = thrift_protocol:write(P0, #protocol_message_begin{
-    name = atom_to_list(Function),
-    type = MsgType,
-    seqid = Seq
-  }),
-  {P2, ok} = thrift_protocol:write(P1, {Params, list_to_tuple([Function|Args])}),
-  {P3, ok} = thrift_protocol:write(P2, message_end),
-  {P4, ok} = thrift_protocol:flush_transport(P3),
-  {ok, Client#tclient{protocol = P4}}.
+  try
+    {P1, ok} = thrift_protocol:write(P0, #protocol_message_begin{
+      name = atom_to_list(Function),
+      type = MsgType,
+      seqid = Seq
+    }),
+    {P2, ok} = thrift_protocol:write(P1, {Params, list_to_tuple([Function|Args])}),
+    {P3, ok} = thrift_protocol:write(P2, message_end),
+    {P4, ok} = thrift_protocol:flush_transport(P3),
+    {ok, Client#tclient{protocol = P4}}
+  catch
+    error:{badmatch, {_, {error, _} = Error}} -> {Error, Client}
+  end.
 
 -spec receive_function_result(#tclient{}, atom()) -> {#tclient{}, {ok, any()} | {error, any()}}.
 receive_function_result(Client = #tclient{service = Service}, Function) ->
