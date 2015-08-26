@@ -76,14 +76,19 @@ send_function_call(Client = #tclient{protocol = Proto0,
         {struct, PList} when length(PList) =/= length(Args) ->
             {Client, {error, {bad_args, Function, Args}}};
         {struct, _PList} ->
-            Begin = #protocol_message_begin{name = atom_to_list(Function),
-                                            type = ?tMessageType_CALL,
-                                            seqid = SeqId},
-            {Proto1, ok} = thrift_protocol:write(Proto0, Begin),
-            {Proto2, ok} = thrift_protocol:write(Proto1, {Params, list_to_tuple([Function | Args])}),
-            {Proto3, ok} = thrift_protocol:write(Proto2, message_end),
-            {Proto4, ok} = thrift_protocol:flush_transport(Proto3),
-            {Client#tclient{protocol = Proto4}, ok}
+            try
+                {Proto1, ok} = thrift_protocol:write(Proto0, #protocol_message_begin{
+                                                        name = atom_to_list(Function),
+                                                        type = ?tMessageType_CALL,
+                                                        seqid = SeqId}),
+                {Proto2, ok} = thrift_protocol:write(Proto1, {Params, list_to_tuple([Function | Args])}),
+                {Proto3, ok} = thrift_protocol:write(Proto2, message_end),
+                {Proto4, ok} = thrift_protocol:flush_transport(Proto3),
+                {Client#tclient{protocol = Proto4}, ok}
+            catch
+                error:{badmatch, {_, {error, _} = Error}} ->
+                    {Client, Error}
+            end
     end.
 
 -spec receive_function_result(#tclient{}, atom()) -> {#tclient{}, {ok, any()} | {error, any()}}.
