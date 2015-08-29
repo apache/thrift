@@ -73,6 +73,7 @@ thrift_SOURCES += src/generate/t_c_glib_generator.cc \
                   src/generate/t_java_generator.cc \
                   src/generate/t_json_generator.cc \
                   src/generate/t_as3_generator.cc \
+                  src/generate/t_dart_generator.cc \
                   src/generate/t_haxe_generator.cc \
                   src/generate/t_csharp_generator.cc \
                   src/generate/t_py_generator.cc \
