@@ -40,6 +40,11 @@ SUBDIRS += php
 PRECROSS_TARGET += precross-php
 endif
 
+if WITH_DART
+SUBDIRS += dart
+PRECROSS_TARGET += precross-dart
+endif
+
 if WITH_PYTHON
 SUBDIRS += py
 PRECROSS_TARGET += precross-py

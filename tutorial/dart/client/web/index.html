@@ -1,4 +1,4 @@
-/*
+<!--
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -15,26 +15,22 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- */
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thrift Tutorial</title>
+    <link rel="stylesheet" href="styles.css">
+    <script async src="client.dart" type="application/dart"></script>
+    <script async src="packages/browser/dart.js"></script>
+</head>
 
-/**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
- */
+<body>
 
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace dart shared
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
+  <div id="output"></div>
 
-struct SharedStruct {
-  1: i32 key
-  2: string value
-}
-
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
-}
+</body>
+</html>
