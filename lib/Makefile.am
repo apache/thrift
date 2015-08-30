@@ -88,6 +88,7 @@ EXTRA_DIST = \
 	as3 \
 	cocoa \
 	d \
+	dart \
 	delphi \
 	haxe \
 	javame \
