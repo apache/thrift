@@ -207,10 +207,8 @@ public:
    */
 
   std::string dart_library(string file_name);
-  std::string dart_async_imports();
+  std::string service_imports();
   std::string dart_thrift_imports();
-  std::string dart_thrift_gen_imports(t_struct* tstruct, string& imports);
-  std::string dart_thrift_gen_imports(t_service* tservice);
   std::string type_name(t_type* ttype, bool in_container = false, bool in_init = false);
   std::string base_type_name(t_base_type* tbase, bool in_container = false);
   std::string declare_field(t_field* tfield, bool init = false);
@@ -290,7 +288,7 @@ string t_dart_generator::dart_library(string file_name) {
  *
  * @return List of imports for Dart types that are used in here
  */
-string t_dart_generator::dart_async_imports() {
+string t_dart_generator::service_imports() {
   return "import 'dart:async';" + endl;
 }
 
@@ -301,61 +299,9 @@ string t_dart_generator::dart_async_imports() {
  */
 string t_dart_generator::dart_thrift_imports() {
   return string() +
+    "import 'dart:typed_data' show ByteBuffer;" + endl +
     "import 'package:thrift/thrift.dart';" + endl +
     "import 'package:" + library_name_ + "/" + library_name_ + ".dart';" + endl;
-}
-
-/**
- * Prints imports needed for a given type
- *
- * @return List of imports necessary for a given t_struct
- */
-string t_dart_generator::dart_thrift_gen_imports(t_struct* tstruct, string& imports) {
-
-  const vector<t_field*>& members = tstruct->get_members();
-  vector<t_field*>::const_iterator m_iter;
-
-  // For each type check if it is from a differnet namespace
-  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    t_program* program = (*m_iter)->get_type()->get_program();
-    if (program != NULL && program != program_) {
-      if (!library_name_.empty()) {
-        if (imports.find(library_name_ + "." + (*m_iter)->get_type()->get_name()) == string::npos) {
-          imports.append("import " + library_name_ + "." + (*m_iter)->get_type()->get_name() + ";\n");
-        }
-      }
-    }
-  }
-  return imports;
-}
-
-/**
- * Prints imports needed for a given type
- *
- * @return List of imports necessary for a given t_service
- */
-string t_dart_generator::dart_thrift_gen_imports(t_service* tservice) {
-  string imports;
-  const vector<t_function*>& functions = tservice->get_functions();
-  vector<t_function*>::const_iterator f_iter;
-
-  // For each type check if it is from a differnet namespace
-  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    t_program* program = (*f_iter)->get_returntype()->get_program();
-    if (program != NULL && program != program_) {
-      if (!library_name_.empty()) {
-        if (imports.find(library_name_ + "." + (*f_iter)->get_returntype()->get_name()) == string::npos) {
-          imports.append("import '" + library_name_ + "." + (*f_iter)->get_returntype()->get_name()
-                         + "';\n");
-        }
-      }
-    }
-
-    dart_thrift_gen_imports((*f_iter)->get_arglist(), imports);
-    dart_thrift_gen_imports((*f_iter)->get_xceptions(), imports);
-  }
-
-  return imports;
 }
 
 /**
@@ -422,7 +368,7 @@ void t_dart_generator::generate_enum(t_enum* tenum) {
   // Create a static Set with all valid values for this enum
   f_enum << endl;
 
-  indent(f_enum) << "static final VALID_VALUES:Set<int> = new Set([" << endl;
+  indent(f_enum) << "static final Set<int> VALID_VALUES = new Set.from([" << endl;
   indent_up();
   bool firstValue = true;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
@@ -434,7 +380,7 @@ void t_dart_generator::generate_enum(t_enum* tenum) {
   indent_down();
   indent(f_enum) << "]);" << endl;
 
-  indent(f_enum) << "static const VALUES_TO_NAMES:Map<int, String> = new Map({" << endl;
+  indent(f_enum) << "static final Map<int, String> VALUES_TO_NAMES = {" << endl;
   indent_up();
   firstValue = true;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
@@ -443,7 +389,7 @@ void t_dart_generator::generate_enum(t_enum* tenum) {
     firstValue = false;
   }
   indent_down();
-  indent(f_enum) << "});" << endl;
+  indent(f_enum) << "};" << endl;
 
   scope_down(f_enum); // end class
 
@@ -479,6 +425,7 @@ void t_dart_generator::generate_consts(std::vector<t_const*> consts) {
                       (*c_iter)->get_type(),
                       (*c_iter)->get_value(),
                       false);
+    f_consts << endl;
   }
 
   scope_down(f_consts);
@@ -568,7 +515,6 @@ void t_dart_generator::print_const_value(std::ofstream& out,
       indent(out) << name << "." << (type->is_list() ? "push" : "add") << "(" << val << ");"
                   << endl;
     }
-    out << endl;
   } else {
     throw "compiler error: no const of type " + type->get_name();
   }
@@ -612,6 +558,7 @@ string t_dart_generator::render_const_value(ofstream& out,
   } else {
     string t = tmp("tmp");
     print_const_value(out, t, type, value, true);
+    out << endl;
     render << t;
   }
 
@@ -652,7 +599,7 @@ void t_dart_generator::generate_dart_struct(t_struct* tstruct, bool is_exception
 
   string imports;
 
-  f_struct << dart_thrift_imports() << dart_thrift_gen_imports(tstruct, imports) << endl;
+  f_struct << dart_thrift_imports() << endl;
 
   generate_dart_struct_definition(f_struct, tstruct, is_exception, false, file_name);
 
@@ -731,9 +678,14 @@ void t_dart_generator::generate_dart_struct_definition(ofstream& out,
   indent(out) << tstruct->get_name() << "()";
   scope_up(out);
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_type* t = get_true_type((*m_iter)->get_type());
     if ((*m_iter)->get_value() != NULL) {
-      indent(out) << "this._" << get_field_name((*m_iter)->get_name()) << " = "
-                  << (*m_iter)->get_value()->get_integer() << ";" << endl;
+      print_const_value(out,
+                        "this." + (*m_iter)->get_name(),
+                        t,
+                        (*m_iter)->get_value(),
+                        true,
+                        true);
     }
   }
   scope_down(out);
@@ -834,7 +786,7 @@ void t_dart_generator::generate_dart_struct_reader(ofstream& out, t_struct* tstr
       string field_name = get_field_name((*f_iter)->get_name());
       indent(out) << "if (!__isset_" << field_name << ")";
       scope_up(out);
-      indent(out) << "  throw new TProtocolError(TProtocolError.UNKNOWN, \"Required field '"
+      indent(out) << "  throw new TProtocolError(TProtocolErrorType.UNKNOWN, \"Required field '"
           << field_name
           << "' was not found in serialized data! Struct: \" + toString());" << endl;
       scope_down(out, endl2);
@@ -863,7 +815,7 @@ void t_dart_generator::generate_dart_validator(ofstream& out, t_struct* tstruct)
       if (type_can_be_null((*f_iter)->get_type())) {
         indent(out) << "if (" << field_name << " == null)";
         scope_up(out);
-        indent(out) << "throw new TProtocolError(TProtocolError.UNKNOWN, \"Required field '"
+        indent(out) << "throw new TProtocolError(TProtocolErrorType.UNKNOWN, \"Required field '"
                     << field_name << "' was not present! Struct: \" + toString());"
                     << endl;
         scope_down(out);
@@ -885,9 +837,9 @@ void t_dart_generator::generate_dart_validator(ofstream& out, t_struct* tstruct)
       indent(out) << "if (" << generate_isset_check(field) << " && !" << get_enum_class_name(type)
                   << ".VALID_VALUES.contains(" << field_name << "))";
       scope_up(out);
-      indent(out) << "throw new TProtocolError(TProtocolError.UNKNOWN, \"The field '"
-                  << field_name << "' has been assigned the invalid value \" + "
-                  << field_name << ");" << endl;
+      indent(out) << "throw new TProtocolError(TProtocolErrorType.UNKNOWN, \"The field '"
+                  << field_name << "' has been assigned the invalid value "
+                  << "$" << field_name << "\");" << endl;
       scope_down(out);
     }
   }
@@ -1120,8 +1072,11 @@ void t_dart_generator::generate_dart_bean_boilerplate(ofstream& out,
 
     // Simple setter
     generate_dart_doc(out, field);
-    indent(out) << "set " << field_name << "(" << type_name(type) << " " << field_name
-                << ") => this._" << field_name << " = " << field_name << ";" << endl2;
+    indent(out) << "set " << field_name << "(" << type_name(type) << " " << field_name << ")";
+    scope_up(out);
+    indent(out) << "this._" << field_name << " = " << field_name << ";" << endl;
+    generate_isset_set(out, field);
+    scope_down(out, endl2);
 
     // isSet method
     indent(out) << "bool is" << get_cap_name("set") << cap_name << "()";
@@ -1282,9 +1237,7 @@ void t_dart_generator::generate_service(t_service* tservice) {
   f_service_.open(f_service_name.c_str());
 
   f_service_ << autogen_comment() << dart_library(file_name) << endl;
-
-  f_service_ << dart_async_imports() << dart_thrift_imports()
-             << dart_thrift_gen_imports(tservice) << endl;
+  f_service_ << service_imports() << dart_thrift_imports() << endl;
 
   if (tservice->get_extends() != NULL) {
     t_type* parent = tservice->get_extends();
@@ -1365,7 +1318,7 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
   scope_up(f_service_);
   f_service_ << endl;
 
-  indent(f_service_) << class_name << "(TProtocol iprot, TProtocol oprot=null)";
+  indent(f_service_) << class_name << "(TProtocol iprot, [TProtocol oprot = null])";
   scope_up(f_service_);
 
   if (extends.empty()) {
@@ -1417,7 +1370,7 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
     indent(f_service_) << "args.write(_oprot);" << endl;
     indent(f_service_) << "_oprot.writeMessageEnd();" << endl2;
 
-    indent(f_service_) << "await _oprot.getTransport().flush();" << endl2;
+    indent(f_service_) << "await _oprot.transport.flush();" << endl2;
 
     if (!(*f_iter)->is_oneway()) {
       indent(f_service_) << "TMessage msg = _iprot.readMessageBegin();" << endl;
@@ -1456,8 +1409,8 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
       if ((*f_iter)->get_returntype()->is_void()) {
         indent(f_service_) << "return;" << endl;
       } else {
-        indent(f_service_) << "throw new TApplicationError(TApplicationError.MISSING_RESULT, \""
-                   << (*f_iter)->get_name() << " failed: unknown result\"));" << endl;
+        indent(f_service_) << "throw new TApplicationError(TApplicationErrorType.MISSING_RESULT, \""
+                   << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
       }
     }
 
@@ -1524,12 +1477,12 @@ void t_dart_generator::generate_service_server(t_service* tservice) {
   scope_up(f_service_);
   indent(f_service_) << "TProtocolUtil.skip(iprot, TType.STRUCT);" << endl;
   indent(f_service_) << "iprot.readMessageEnd();" << endl;
-  indent(f_service_) << "TApplicationError x = new TApplicationError(TApplicationError.UNKNOWN_METHOD, "
+  indent(f_service_) << "TApplicationError x = new TApplicationError(TApplicationErrorType.UNKNOWN_METHOD, "
          "\"Invalid method name: '\"+msg.name+\"'\");" << endl;
   indent(f_service_) << "oprot.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));" << endl;
   indent(f_service_) << "x.write(oprot);" << endl;
   indent(f_service_) << "oprot.writeMessageEnd();" << endl;
-  indent(f_service_) << "oprot.getTransport().flush();" << endl;
+  indent(f_service_) << "oprot.transport.flush();" << endl;
   indent(f_service_) << "return true;" << endl;
   scope_down(f_service_);
   indent(f_service_) << "fn(msg.seqid, iprot, oprot);" << endl;
@@ -1627,13 +1580,6 @@ void t_dart_generator::generate_process_function(t_service* tservice, t_function
   }
   f_service_ << ");" << endl;
 
-  // Set isset on success field
-  if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()
-      && !type_can_be_null(tfunction->get_returntype())) {
-    indent(f_service_) << "result.set" << get_cap_name("success") << get_cap_name("isSet")
-               << "(true);" << endl;
-  }
-
   if (!tfunction->is_oneway() && xceptions.size() > 0) {
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       string result_field_name = get_field_name((*x_iter)->get_name());
@@ -1651,13 +1597,13 @@ void t_dart_generator::generate_process_function(t_service* tservice, t_function
     scope_up(f_service_);
     indent(f_service_) << "// Internal error" << endl;
     indent(f_service_) << "TApplicationError x = new "
-               "TApplicationError(TApplicationError.INTERNAL_ERROR, \"Internal error processing "
+               "TApplicationError(TApplicationErrorType.INTERNAL_ERROR, \"Internal error processing "
                << tfunction->get_name() << "\");" << endl;
     indent(f_service_) << "oprot.writeMessageBegin(new TMessage(\"" << tfunction->get_name()
                << "\", TMessageType.EXCEPTION, seqid));" << endl;
     indent(f_service_) << "x.write(oprot);" << endl;
     indent(f_service_) << "oprot.writeMessageEnd();" << endl;
-    indent(f_service_) << "oprot.getTransport().flush();" << endl;
+    indent(f_service_) << "oprot.transport.flush();" << endl;
     indent(f_service_) << "return;" << endl;
     scope_down(f_service_);
   }
@@ -1669,7 +1615,7 @@ void t_dart_generator::generate_process_function(t_service* tservice, t_function
                << "\", TMessageType.REPLY, seqid));" << endl;
     indent(f_service_) << "result.write(oprot);" << endl;
     indent(f_service_) << "oprot.writeMessageEnd();" << endl;
-    indent(f_service_) << "oprot.getTransport().flush();" << endl;
+    indent(f_service_) << "oprot.transport.flush();" << endl;
   }
 
   scope_down(f_service_, endl2);
@@ -2073,7 +2019,7 @@ string t_dart_generator::base_type_name(t_base_type* type, bool in_container) {
       return "String";
     }
   case t_base_type::TYPE_BOOL:
-    return "Boolean";
+    return "bool";
   case t_base_type::TYPE_BYTE:
   case t_base_type::TYPE_I16:
   case t_base_type::TYPE_I32:
@@ -2324,7 +2270,7 @@ void t_dart_generator::generate_isset_set(ofstream& out, t_field* field) {
 }
 
 std::string t_dart_generator::get_enum_class_name(t_type* type) {
-  return library_name_ + "." + type->get_name();
+  return type->get_name();
 }
 
 THRIFT_REGISTER_GENERATOR(
