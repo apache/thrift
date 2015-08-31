@@ -48,6 +48,13 @@ describe 'Union' do
       lambda { union.some_characters }.should raise_error(RuntimeError, "some_characters is not union's set field.")
     end
 
+    it "should raise for wrong set field when hash initialized and type checking is off" do
+      Thrift.type_checking = false
+      union = SpecNamespace::My_union.new({incorrect_field: :incorrect})
+      example = lambda { Thrift::Serializer.new.serialize(union) }
+      example.should raise_error(RuntimeError, "set_field is not valid for this union!")
+    end
+
     it "should not be equal to nil" do
       union = SpecNamespace::My_union.new
       union.should_not == nil
