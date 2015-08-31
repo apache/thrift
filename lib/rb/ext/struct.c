@@ -290,7 +290,7 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
 
     if (TYPE(value) == T_ARRAY) {
       items = value;
-    } else {        
+    } else {
       if (rb_cSet == CLASS_OF(value)) {
         items = rb_funcall(value, entries_method_id, 0);
       } else {
@@ -669,6 +669,10 @@ static VALUE rb_thrift_union_write(VALUE self, VALUE protocol) {
   VALUE field_id = rb_funcall(self, name_to_id_method_id, 1, rb_funcall(setfield, to_s_method_id, 0));
 
   VALUE field_info = rb_hash_aref(struct_fields, field_id);
+
+  if(NIL_P(field_info)) {
+    rb_raise(rb_eRuntimeError, "set_field is not valid for this union!");
+  }
 
   VALUE ttype_value = rb_hash_aref(field_info, type_sym);
   int ttype = FIX2INT(ttype_value);
