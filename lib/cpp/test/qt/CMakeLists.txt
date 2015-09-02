@@ -18,11 +18,15 @@
 #
 
 set(CMAKE_AUTOMOC ON)
-find_package(Qt5 REQUIRED COMPONENTS Test)
+find_package(Qt5 REQUIRED COMPONENTS Test Network)
 set(TQTcpServerTest_Qt5_SOURCES
     TQTcpServerTest.cpp
 )
 add_executable(TQTcpServerTest_Qt5 ${TQTcpServerTest_Qt5_SOURCES})
-target_link_libraries(TQTcpServerTest_Qt5 testgencpp_cob thriftqt5 thrift Qt5::Test)
+target_link_libraries(TQTcpServerTest_Qt5 testgencpp_cob)
+LINK_AGAINST_THRIFT_LIBRARY(TQTcpServerTest_Qt5 thriftqt5)
+LINK_AGAINST_THRIFT_LIBRARY(TQTcpServerTest_Qt5 thrift)
+target_link_libraries(TQTcpServerTest_Qt5 Qt5::Test Qt5::Network)
+
 add_test(NAME TQTcpServerTest_Qt5 COMMAND TQTcpServerTest_Qt5)
 

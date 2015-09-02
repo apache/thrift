@@ -117,17 +117,6 @@ target_link_libraries(TServerIntegrationTest -lrt)
 endif ()
 add_test(NAME TServerIntegrationTest COMMAND TServerIntegrationTest)
 
-add_executable(SecurityTest SecurityTest.cpp)
-target_link_libraries(SecurityTest
-    testgencpp
-    ${Boost_LIBRARIES}
-)
-LINK_AGAINST_THRIFT_LIBRARY(SecurityTest thrift)
-if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-target_link_libraries(SecurityTest -lrt)
-endif ()
-add_test(NAME SecurityTest COMMAND SecurityTest "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
-
 if(WITH_ZLIB)
 add_executable(TransportTest TransportTest.cpp)
 target_link_libraries(TransportTest
@@ -301,6 +290,18 @@ target_link_libraries(OpenSSLManualInitTest
 )
 LINK_AGAINST_THRIFT_LIBRARY(OpenSSLManualInitTest thrift)
 add_test(NAME OpenSSLManualInitTest COMMAND OpenSSLManualInitTest)
+
+add_executable(SecurityTest SecurityTest.cpp)
+target_link_libraries(SecurityTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
+LINK_AGAINST_THRIFT_LIBRARY(SecurityTest thrift)
+if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+target_link_libraries(SecurityTest -lrt)
+endif ()
+add_test(NAME SecurityTest COMMAND SecurityTest "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
+
 endif()
 
 if(WITH_QT4)
