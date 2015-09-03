@@ -198,6 +198,13 @@ AM_CONDITIONAL(WITH_C_GLIB, [test "$have_glib2" = "yes" -a "$have_gobject2" = "y
 
 AX_THRIFT_LIB(csharp, [C#], yes)
 if test "$with_csharp" = "yes";  then
+  PKG_CHECK_MODULES(MONO, mono >= 2.11.0, mono_2_11=yes, mono_2_11=no)
+  if test "$mono_2_11" == "yes"; then
+    AC_PATH_PROG([MCS], [mcs])
+    if test "x$MCS" != "x"; then
+      mono_mcs="yes"
+    fi
+  fi
   PKG_CHECK_MODULES(MONO, mono >= 2.0.0, net_3_5=yes, net_3_5=no)
   PKG_CHECK_MODULES(MONO, mono >= 1.2.4, have_mono=yes, have_mono=no)
   if test "$have_mono" = "yes" ; then
@@ -206,6 +213,7 @@ if test "$with_csharp" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_MONO, [test "$have_csharp" = "yes"])
 AM_CONDITIONAL(NET_2_0, [test "$net_3_5" = "no"])
+AM_CONDITIONAL(MONO_MCS, [test "$mono_mcs" = "yes"])
 
 AX_THRIFT_LIB(java, [Java], yes)
 if test "$with_java" = "yes";  then
