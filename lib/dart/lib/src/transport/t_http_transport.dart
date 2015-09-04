@@ -21,68 +21,64 @@ part of thrift;
 ///
 /// For example:
 ///
-///     var transport = new THttpTransport(url, new BrowserClient(), {
-///       'X-My-Custom-Header': 'my value'
-///     });
-///     var protocol  = new TJsonProtocol(transport);
+///     var transport = new THttpClientTransport(new BrowserClient(),
+///         new THttpConfig(url, {'X-My-Custom-Header': 'my value'}));
+///     var protocol = new TJsonProtocol(transport);
 ///     var client = new MyThriftServiceClient(protocol);
 ///     var result = client.myMethod();
 ///
 /// Adapted from the JS XHR HTTP transport.
-class THttpTransport extends TAsyncTransport {
+class THttpClientTransport extends TBufferedTransport {
 
-  final Uri url;
-  final http.Client httpClient;
+  final http.BrowserClient httpClient;
+  final THttpConfig config;
 
-  HttpConfig _config;
-
-  THttpTransport(this.url, this.httpClient, {Map headers}) {
-    if (url == null || !url.hasAuthority) {
-      throw new ArgumentError("Invalid url");
-    }
+  THttpClientTransport(this.httpClient, this.config) {
     if (httpClient == null) {
       throw new ArgumentError.notNull("httpClient");
     }
-
-    _config = new HttpConfig(headers: headers);
   }
 
-  bool get isOpen => true;
-
-  void open() {}
-
   void close() {
+    super.close();
     httpClient.close();
   }
 
   Future flush() async {
-    http.Response response = await httpClient.post(
-        url, headers: _config.headers, body: _sendBuffer);
-    _dataIterator = response.bodyBytes.iterator;
+    var body = _consumeWriteBuffer();
+    var response = await httpClient.post(
+        config.url, headers: config.headers, body: body);
+    _setReadBuffer(response.bodyBytes);
   }
 
 }
 
-class HttpConfig {
+class THttpConfig {
 
-  final Map<String, String> _baseHeaders;
+  final Uri url;
 
   Map<String, String> _headers;
   get headers => _headers;
 
-  HttpConfig({Map<String, String> headers}) : _baseHeaders = headers {
-    _initHeaders();
-  }
-
-  void _initHeaders() {
-    _headers = {};
-
-    if (_baseHeaders != null) {
-      _headers.addAll(_baseHeaders);
+  THttpConfig(this.url, Map<String, String> headers) {
+    if (url == null || !url.hasAuthority) {
+      throw new ArgumentError("Invalid url");
     }
 
-    _headers['Content-Type'] = 'application/x-thrift';
-    _headers['Accept'] = 'application/x-thrift';
+    _initHeaders(headers);
+  }
+
+  void _initHeaders(Map<String, String> initial) {
+    var h = {};
+
+    if (initial != null) {
+      h.addAll(initial);
+    }
+
+    h['Content-Type'] = 'application/x-thrift';
+    h['Accept'] = 'application/x-thrift';
+
+    _headers = new Map.unmodifiable(h);
   }
 
 }

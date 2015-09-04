@@ -17,13 +17,47 @@
 
 part of thrift;
 
-/// Socket implementation of [TTransport].
-///
-/// Adapted from the JS WebSocket transport.
-abstract class TAsyncTransport extends TTransport {
+/// Buffered implementation of [TTransport].
+class TBufferedTransport extends TTransport {
 
-  final List<int> _sendBuffer = [];
-  Iterator<int> _dataIterator;
+  final List<int> _writeBuffer = [];
+  Iterator<int> _readIterator;
+
+  List<int> _consumeWriteBuffer() {
+    List<int> buffer = new List.from(_writeBuffer, growable: false);
+    _writeBuffer.clear();
+    return buffer;
+  }
+
+  void _setReadBuffer(List<int> readBuffer) {
+    _readIterator = readBuffer != null ? readBuffer.iterator : null;
+  }
+
+  void _reset() {
+    _writeBuffer.clear();
+    _readIterator = null;
+  }
+
+  bool get hasReadData => _readIterator != null;
+
+  int get writeBufferLength => _writeBuffer.length;
+
+  bool _isOpen;
+  bool get isOpen => _isOpen;
+
+  void open() {
+    if (isOpen) {
+      throw new TTransportError(TTransportErrorType.ALREADY_OPEN,
+                                "The transport is already open");
+    }
+    _isOpen = true;
+    _reset();
+  }
+
+  void close() {
+    _isOpen = false;
+    _reset();
+  }
 
   int read(List<int> buffer, int offset, int length) {
     if (buffer == null) {
@@ -34,19 +68,19 @@ abstract class TAsyncTransport extends TTransport {
       throw new ArgumentError("The range exceeds the buffer length");
     }
 
-    if (_dataIterator == null || length <= 0) {
+    if (_readIterator == null || length <= 0) {
       return 0;
     }
 
     int i = 0;
-    while (i < length && _dataIterator.moveNext()) {
-      buffer[offset + i] = _dataIterator.current;
+    while (i < length && _readIterator.moveNext()) {
+      buffer[offset + i] = _readIterator.current;
       i++;
     }
 
     // cleanup iterator when we've reached the end
-    if (_dataIterator.current == null) {
-      _dataIterator = null;
+    if (_readIterator.current == null) {
+      _readIterator = null;
     }
 
     return i;
@@ -61,7 +95,11 @@ abstract class TAsyncTransport extends TTransport {
       throw new ArgumentError("The range exceeds the buffer length");
     }
 
-    _sendBuffer.addAll(buffer.sublist(offset, offset + length));
+    _writeBuffer.addAll(buffer.sublist(offset, offset + length));
+  }
+
+  Future flush() {
+    return new Future.value();
   }
 
 }

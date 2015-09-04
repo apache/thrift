@@ -6,7 +6,7 @@ import 'dart:typed_data' show ByteData;
 import 'dart:typed_data' show Uint8List;
 
 import 'package:crypto/crypto.dart' show CryptoUtils;
-import 'package:http/http.dart' as http;
+import 'package:http/browser_client.dart' as http;
 import 'package:logging/logging.dart';
 
 part 'src/t_application_error.dart';
@@ -27,7 +27,8 @@ part 'src/protocol/t_set.dart';
 part 'src/protocol/t_struct.dart';
 part 'src/protocol/t_type.dart';
 
-part 'src/transport/t_async_transport.dart';
+part 'src/transport/t_buffered_transport.dart';
+part 'src/transport/t_framed_transport.dart';
 part 'src/transport/t_http_transport.dart';
 part 'src/transport/t_socket.dart';
 part 'src/transport/t_transport.dart';

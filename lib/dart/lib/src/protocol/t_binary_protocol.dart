@@ -205,31 +205,31 @@ class TBinaryProtocol extends TProtocol {
 
   bool readBool() => readByte() == 1;
 
-  Uint8List _byteIn = new Uint8List(1);
+  final Uint8List _byteIn = new Uint8List(1);
   int readByte() {
     transport.readAll(_byteIn, 0, 1);
     return _byteIn.buffer.asByteData().getUint8(0);
   }
 
-  Uint8List _i16In = new Uint8List(2);
+  final Uint8List _i16In = new Uint8List(2);
   int readI16() {
     transport.readAll(_i16In, 0, 2);
     return _i16In.buffer.asByteData().getUint16(0);
   }
 
-  Uint8List _i32In = new Uint8List(4);
+  final Uint8List _i32In = new Uint8List(4);
   int readI32() {
     transport.readAll(_i32In, 0, 4);
     return _i32In.buffer.asByteData().getUint32(0);
   }
 
-  Uint8List _i64In = new Uint8List(8);
+  final Uint8List _i64In = new Uint8List(8);
   int readI64() {
     transport.readAll(_i64In, 0, 8);
     return _i64In.buffer.asByteData().getUint64(0);
   }
 
-  Uint8List _doubleIn = new Uint8List(8);
+  final Uint8List _doubleIn = new Uint8List(8);
   double readDouble() {
     transport.readAll(_doubleIn, 0, 8);
     return _doubleIn.buffer.asByteData().getFloat64(0);

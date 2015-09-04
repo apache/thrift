@@ -22,19 +22,15 @@ part of thrift;
 /// For example:
 ///
 ///     var transport = new TSocketTransport(new TWebSocket(url));
-///     var protocol  = new Thrift.Protocol(transport);
+///     var protocol = new TBinaryProtocol(transport);
 ///     var client = new MyThriftServiceClient(protocol);
 ///     var result = client.myMethod();
 ///
 /// Adapted from the JS WebSocket transport.
-class TSocketTransport extends TAsyncTransport {
+class TSocketTransport extends TBufferedTransport {
 
   final TSocket socket;
   final Logger log = new Logger('thrift.TSocketTransport');
-
-  final List<int> _sendBuffer = [];
-
-  Iterator<int> _dataIterator;
 
   TSocketTransport(this.socket) {
     if (socket == null) {
@@ -47,19 +43,18 @@ class TSocketTransport extends TAsyncTransport {
   bool get isOpen => socket.isOpen;
 
   void open() {
+    super.open();
     socket.open();
   }
 
   void close() {
+    super.close();
     socket.close();
   }
 
   Future flush() async {
-    List<int> request = new List.from(_sendBuffer, growable: false);
-    _sendBuffer.clear();
-
-    List<int> result = await socket.send(request);
-    _dataIterator = result.iterator;
+    List<int> result = await socket.send(_consumeWriteBuffer());
+    _setReadBuffer(result);
   }
 
 }
