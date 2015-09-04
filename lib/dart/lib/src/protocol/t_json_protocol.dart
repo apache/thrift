@@ -542,9 +542,12 @@ class _Constants {
   static const String ESCSEQ = r'\u00';
 
   static final List<int> JSON_CHAR_TABLE = new List.unmodifiable([
-    0,  0,  0,  0,  0,  0,  0,  0, 'b'.codeUnitAt(0), 't'.codeUnitAt(0), 'n'.codeUnitAt(0), 0, 'f'.codeUnitAt(0), 'r'.codeUnitAt(0), 0, 0,
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-    1,  1, '"'.codeUnitAt(0),  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1
+    0,  0,  0,  0,  0,  0,  0,  0, // 8 bytes
+    'b'.codeUnitAt(0), 't'.codeUnitAt(0), 'n'.codeUnitAt(0), 0, 'f'.codeUnitAt(0), 'r'.codeUnitAt(0), 0, 0, // 8 bytes
+    0,  0,  0,  0,  0,  0,  0,  0, // 8 bytes
+    0,  0,  0,  0,  0,  0,  0,  0, // 8 bytes
+    1,  1, '"'.codeUnitAt(0),  1,  1,  1,  1,  1, // 8 bytes
+    1,  1,  1,  1,  1,  1,  1,  1  // 8 bytes
   ]);
 
   static const String ESCAPE_CHARS = r'"\/bfnrt';

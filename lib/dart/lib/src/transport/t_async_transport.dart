@@ -19,47 +19,49 @@ part of thrift;
 
 /// Socket implementation of [TTransport].
 ///
-/// For example:
-///
-///     var transport = new TSocketTransport(new TWebSocket(url));
-///     var protocol  = new Thrift.Protocol(transport);
-///     var client = new MyThriftServiceClient(protocol);
-///     var result = client.myMethod();
-///
 /// Adapted from the JS WebSocket transport.
-class TSocketTransport extends TAsyncTransport {
-
-  final TSocket socket;
-  final Logger log = new Logger('thrift.TSocketTransport');
+abstract class TAsyncTransport extends TTransport {
 
   final List<int> _sendBuffer = [];
-
   Iterator<int> _dataIterator;
 
-  TSocketTransport(this.socket) {
-    if (socket == null) {
-      throw new ArgumentError.notNull("socket");
+  int read(List<int> buffer, int offset, int length) {
+    if (buffer == null) {
+      throw new ArgumentError.notNull("buffer");
     }
 
-    socket.onError.listen((String e) => log.warning(e));
+    if (offset + length > buffer.length) {
+      throw new ArgumentError("The range exceeds the buffer length");
+    }
+
+    if (_dataIterator == null || length <= 0) {
+      return 0;
+    }
+
+    int i = 0;
+    while (i < length && _dataIterator.moveNext()) {
+      buffer[offset + i] = _dataIterator.current;
+      i++;
+    }
+
+    // cleanup iterator when we've reached the end
+    if (_dataIterator.current == null) {
+      _dataIterator = null;
+    }
+
+    return i;
   }
 
-  bool get isOpen => socket.isOpen;
+  void write(List<int> buffer, int offset, int length) {
+    if (buffer == null) {
+      throw new ArgumentError.notNull("buffer");
+    }
 
-  void open() {
-    socket.open();
-  }
+    if (offset + length > buffer.length) {
+      throw new ArgumentError("The range exceeds the buffer length");
+    }
 
-  void close() {
-    socket.close();
-  }
-
-  Future flush() async {
-    List<int> request = new List.from(_sendBuffer, growable: false);
-    _sendBuffer.clear();
-
-    List<int> result = await socket.send(request);
-    _dataIterator = result.iterator;
+    _sendBuffer.addAll(buffer.sublist(offset, offset + length));
   }
 
 }

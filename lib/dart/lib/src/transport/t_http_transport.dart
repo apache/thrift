@@ -1,0 +1,88 @@
+/// Licensed to the Apache Software Foundation (ASF) under one
+/// or more contributor license agreements. See the NOTICE file
+/// distributed with this work for additional information
+/// regarding copyright ownership. The ASF licenses this file
+/// to you under the Apache License, Version 2.0 (the
+/// "License"); you may not use this file except in compliance
+/// with the License. You may obtain a copy of the License at
+///
+/// http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing,
+/// software distributed under the License is distributed on an
+/// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+/// KIND, either express or implied. See the License for the
+/// specific language governing permissions and limitations
+/// under the License.
+
+part of thrift;
+
+/// HTTP implementation of [TTransport].
+///
+/// For example:
+///
+///     var transport = new THttpTransport(url, new BrowserClient(), {
+///       'X-My-Custom-Header': 'my value'
+///     });
+///     var protocol  = new TJsonProtocol(transport);
+///     var client = new MyThriftServiceClient(protocol);
+///     var result = client.myMethod();
+///
+/// Adapted from the JS XHR HTTP transport.
+class THttpTransport extends TAsyncTransport {
+
+  final Uri url;
+  final http.Client httpClient;
+
+  HttpConfig _config;
+
+  THttpTransport(this.url, this.httpClient, {Map headers}) {
+    if (url == null || !url.hasAuthority) {
+      throw new ArgumentError("Invalid url");
+    }
+    if (httpClient == null) {
+      throw new ArgumentError.notNull("httpClient");
+    }
+
+    _config = new HttpConfig(headers: headers);
+  }
+
+  bool get isOpen => true;
+
+  void open() {}
+
+  void close() {
+    httpClient.close();
+  }
+
+  Future flush() async {
+    http.Response response = await httpClient.post(
+        url, headers: _config.headers, body: _sendBuffer);
+    _dataIterator = response.bodyBytes.iterator;
+  }
+
+}
+
+class HttpConfig {
+
+  final Map<String, String> _baseHeaders;
+
+  Map<String, String> _headers;
+  get headers => _headers;
+
+  HttpConfig({Map<String, String> headers}) : _baseHeaders = headers {
+    _initHeaders();
+  }
+
+  void _initHeaders() {
+    _headers = {};
+
+    if (_baseHeaders != null) {
+      _headers.addAll(_baseHeaders);
+    }
+
+    _headers['Content-Type'] = 'application/x-thrift';
+    _headers['Accept'] = 'application/x-thrift';
+  }
+
+}

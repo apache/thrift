@@ -41,13 +41,13 @@ class TWebSocket implements TSocket {
   Stream<Object> get onError => _onErrorController.stream;
 
   final List<Completer<List<int>>> _completers = [];
-  final List<_Send> _sendPending = [];
+  final List<_Request> _requests = [];
 
   TWebSocket(this.url) :
     _onStateController = new StreamController.broadcast(),
     _onErrorController = new StreamController.broadcast() {
     if (url == null || !url.hasAuthority || !url.hasPort) {
-      throw new TTransportError(TTransportErrorType.NOT_OPEN, "Invalid url");
+      throw new ArgumentError("Invalid url");
     }
   }
 
@@ -79,33 +79,29 @@ class TWebSocket implements TSocket {
   Future<List<int>> send(List<int> data) {
     Completer<List<int>> completer = new Completer();
 
-    if (!isOpen) {
-      _sendPending.add(new _Send(data, completer));
-    } else {
-      _send(completer, data);
-    }
+    _requests.add(new _Request(data, completer));
+    _sendRequests();
 
     return completer.future;
   }
 
-  void _send(Completer<List<int>> completer, List<int> data) {
-    _completers.add(completer);
-    _socket.sendString(utf8Codec.decode(data));
+  void _sendRequests() {
+    while (isOpen && _requests.length > 0) {
+      _Request request = _requests.removeAt(0);
+      _completers.add(request.completer);
+      _socket.sendString(utf8Codec.decode(request.data));
+    }
   }
 
   void _onOpen(Event event) {
     _onStateController.add(TSocketState.OPEN);
-
-    while (_sendPending.length > 0) {
-      _Send s = _sendPending.removeAt(0);
-      _send(s.completer, s.data);
-    }
+    _sendRequests();
   }
 
   void _onClose(CloseEvent event) {
     _socket = null;
     _completers.clear();
-    _sendPending.clear();
+    _requests.clear();
 
     _onStateController.add(TSocketState.CLOSED);
   }
@@ -125,13 +121,14 @@ class TWebSocket implements TSocket {
   }
 
   void _onError(Event event) {
+    close();
     _onErrorController.add(event.toString());
   }
 }
 
-class _Send {
+class _Request {
   final List<int> data;
   final Completer<List<int>> completer;
 
-  _Send(this.data, this.completer);
+  _Request(this.data, this.completer);
 }
