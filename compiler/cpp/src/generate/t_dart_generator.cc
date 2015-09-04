@@ -63,11 +63,11 @@ public:
       library_name_ = "";
     }
 
-    iter = parsed_options.find("skip_server");
+    iter = parsed_options.find("gen_server");
     if (iter != parsed_options.end()) {
-      skip_server_ = true;
+      gen_server_ = true;
     } else {
-      skip_server_ = false;
+      gen_server_ = false;
     }
 
     out_dir_base_ = "gen-dart";
@@ -238,7 +238,7 @@ public:
 private:
   std::ofstream f_service_;
 
-  bool skip_server_;
+  bool gen_server_;
   std::string library_name_;
 
   std::string base_dir_;
@@ -1257,7 +1257,7 @@ void t_dart_generator::generate_service(t_service* tservice) {
   generate_service_interface(tservice);
   generate_service_client(tservice);
 
-  if (!skip_server_) {
+  if (gen_server_) {
     generate_service_server(tservice);
   }
 
@@ -2297,5 +2297,5 @@ THRIFT_REGISTER_GENERATOR(
     dart,
     "Dart",
     "    library_name=thrift    Optional override for library name.\n"
-    "    skip_server            Skip generation of service server code.\n"
+    "    gen_server             Generate service server classes.\n"
 );
