@@ -22,54 +22,48 @@ abstract class TTransport {
 
   /// Queries whether the transport is open.
   /// Returns [true] if the transport is open.
-  bool isOpen();
-
-  /// Is there more data to be read?
-  /// Returns [true] if the remote side is still alive and feeding us.
-  bool peek() {
-    return isOpen();
-  }
+  bool get isOpen;
 
   /// Opens the transport for reading/writing.
   /// Throws [TTransportError] if the transport could not be opened.
-  open();
+  void open();
 
   /// Closes the transport.
-  close();
+  void close();
 
   /// Reads up to [length] bytes into [buffer], starting at [offset].
   /// Returns the number of bytes actually read.
   /// Throws [TTransportError] if there was an error reading data
-  int read(ByteBuffer buffer, int offset, int length);
+  int read(List<int> buffer, int offset, int length);
 
   /// Guarantees that all of [length] bytes are actually read off the transport.
   /// Returns the number of bytes actually read, which must be equal to
   /// [length].
   /// Throws [TTransportError] if there was an error reading data
-  int readAll(ByteBuffer buffer, int offset, int length) {
+  int readAll(List<int> buffer, int offset, int length) {
     int got = 0;
-      int ret = 0;
-      while (got < length) {
-        ret = read(buffer, offset+got, length-got);
-        if (ret <= 0) {
-          throw new TTransportError(TTransportErrorType.UNKNOWN,
-              "Cannot read. Remote side has closed. Tried to read $length "
-              "bytes, but only got $got bytes.");
-        }
-        got += ret;
+    int ret = 0;
+    while (got < length) {
+      ret = read(buffer, offset+got, length-got);
+      if (ret <= 0) {
+        throw new TTransportError(TTransportErrorType.UNKNOWN,
+            "Cannot read. Remote side has closed. Tried to read $length "
+            "bytes, but only got $got bytes.");
       }
-      return got;
+      got += ret;
     }
+    return got;
+  }
 
-  /// Writes the [buffer] to the output
+  /// Writes the [bytes] to the output.
   /// Throws [TTransportError] if there was an error writing data
-  writeAll(ByteBuffer buffer) {
-    write(buffer, 0, buffer.lengthInBytes);
+  void writeAll(List<int> buffer) {
+    write(buffer, 0, buffer.length);
   }
 
   /// Writes up to [len] bytes from the buffer.
   /// Throws [TTransportError] if there was an error writing data
-  write(ByteBuffer buffer, int offset, int length);
+  void write(List<int> buffer, int offset, int length);
 
   /// Flush any pending data out of a transport buffer.
   /// Throws [TTransportError] if there was an error writing out data.

@@ -6,7 +6,10 @@ author: Mark Erickson <mark.erickson@workiva.com>
 homepage: https://github.com/apache/thrift
 documentation: https://github.com/apache/thrift
 dependencies:
-  logging: '>=0.9.0 <0.12.0'
+  crypto: '>=0.9.0'
+  http: '>=0.11.3'
+  logging: '>=0.11.0'
 dev_dependencies:
-  mockito: '>=0.10.0 <0.11.0'
-  test: '0.12.2'
+  test: '>=0.12.0'
+environment:
+  sdk: '>=0.12.0'

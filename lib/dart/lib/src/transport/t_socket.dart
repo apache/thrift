@@ -18,10 +18,25 @@
 part of thrift;
 
 
-class TStruct {
+enum TSocketState {
+  CLOSED,
+  OPEN
+}
 
-  final String name;
+abstract class TSocket {
 
-  TStruct([this.name=""]);
+  Stream<TSocketState> get onState;
+
+  Stream<String> get onError;
+
+  bool get isOpen;
+
+  bool get isClosed;
+
+  void open();
+
+  void close();
+
+  Future<List<int>> send(List<int> data);
 
 }

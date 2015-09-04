@@ -17,7 +17,6 @@
 
 part of thrift;
 
-/// Protocol interface definition
 abstract class TProtocol {
 
   final TTransport transport;
@@ -25,59 +24,59 @@ abstract class TProtocol {
   TProtocol(this.transport);
 
   /// Write
-  writeMessageBegin(TMessage message);
-  writeMessageEnd();
+  void writeMessageBegin(TMessage message);
+  void writeMessageEnd();
 
-  writeStructBegin(TStruct struct);
-  writeStructEnd();
+  void writeStructBegin(TStruct struct);
+  void writeStructEnd();
 
-  writeFieldBegin(TField field);
-  writeFieldEnd();
-  writeFieldStop();
+  void writeFieldBegin(TField field);
+  void writeFieldEnd();
+  void writeFieldStop();
 
-  writeMapBegin(TMap map);
-  writeMapEnd();
+  void writeMapBegin(TMap map);
+  void writeMapEnd();
 
-  writeListBegin(TList list);
-  writeListEnd();
+  void writeListBegin(TList list);
+  void writeListEnd();
 
-  writeSetBegin(TSet set);
-  writeSetEnd();
+  void writeSetBegin(TSet set);
+  void writeSetEnd();
 
-  writeBool(bool b);
+  void writeBool(bool b);
 
-  writeByte(int b);
+  void writeByte(int b);
 
-  writeI16(int i16);
+  void writeI16(int i16);
 
-  writeI32(int i32);
+  void writeI32(int i32);
 
-  writeI64(num i64);
+  void writeI64(int i64);
 
-  writeDouble(num dub);
+  void writeDouble(double d);
 
-  writeString(String str);
+  void writeString(String str);
 
-  writeBinary(ByteBuffer bin);
+  void writeBinary(ByteData bytes);
 
   /// Read
   TMessage readMessageBegin();
-  readMessageEnd();
+  void readMessageEnd();
 
   TStruct readStructBegin();
-  readStructEnd();
+  void readStructEnd();
 
   TField readFieldBegin();
-  readFieldEnd();
+  void readFieldEnd();
 
   TMap readMapBegin();
-  readMapEnd();
+  void readMapEnd();
 
   TList readListBegin();
-  readListEnd();
+  void readListEnd();
 
   TSet readSetBegin();
-  readSetEnd();
+  void readSetEnd();
 
   bool readBool();
 
@@ -87,11 +86,11 @@ abstract class TProtocol {
 
   int readI32();
 
-  num readI64();
+  int readI64();
 
-  num readDouble();
+  double readDouble();
 
   String readString();
 
-  ByteBuffer readBinary();
+  ByteData readBinary();
 }
