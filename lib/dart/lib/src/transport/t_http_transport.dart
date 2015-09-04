@@ -29,7 +29,6 @@ part of thrift;
 ///
 /// Adapted from the JS XHR HTTP transport.
 class THttpClientTransport extends TBufferedTransport {
-
   final http.BrowserClient httpClient;
   final THttpConfig config;
 
@@ -46,15 +45,13 @@ class THttpClientTransport extends TBufferedTransport {
 
   Future flush() async {
     var body = _consumeWriteBuffer();
-    var response = await httpClient.post(
-        config.url, headers: config.headers, body: body);
+    var response =
+        await httpClient.post(config.url, headers: config.headers, body: body);
     _setReadBuffer(response.bodyBytes);
   }
-
 }
 
 class THttpConfig {
-
   final Uri url;
 
   Map<String, String> _headers;
@@ -80,5 +77,4 @@ class THttpConfig {
 
     _headers = new Map.unmodifiable(h);
   }
-
 }

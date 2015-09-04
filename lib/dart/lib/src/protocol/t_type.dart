@@ -18,19 +18,17 @@
 part of thrift;
 
 class TType {
-
-  static const int STOP   = 0;
-  static const int VOID   = 1;
-  static const int BOOL   = 2;
-  static const int BYTE   = 3;
+  static const int STOP = 0;
+  static const int VOID = 1;
+  static const int BOOL = 2;
+  static const int BYTE = 3;
   static const int DOUBLE = 4;
-  static const int I16    = 6;
-  static const int I32    = 8;
-  static const int I64    = 10;
+  static const int I16 = 6;
+  static const int I32 = 8;
+  static const int I64 = 10;
   static const int STRING = 11;
   static const int STRUCT = 12;
-  static const int MAP    = 13;
-  static const int SET    = 14;
-  static const int LIST   = 15;
-
+  static const int MAP = 13;
+  static const int SET = 14;
+  static const int LIST = 15;
 }

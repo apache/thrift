@@ -18,7 +18,6 @@
 part of thrift;
 
 class TApplicationErrorType {
-
   static const int UNKNOWN = 0;
   static const int UNKNOWN_METHOD = 1;
   static const int INVALID_MESSAGE_TYPE = 2;
@@ -30,19 +29,19 @@ class TApplicationErrorType {
   static const int INVALID_TRANSFORM = 8;
   static const int INVALID_PROTOCOL = 9;
   static const int UNSUPPORTED_CLIENT_TYPE = 10;
-
 }
 
 class TApplicationError extends TError {
-
   static final TStruct _struct = new TStruct("TApplicationError");
   static const int MESSAGE = 1;
-  static final TField _messageField = new TField("message", TType.STRING, MESSAGE);
+  static final TField _messageField =
+      new TField("message", TType.STRING, MESSAGE);
   static const int TYPE = 2;
   static final TField _typeField = new TField("type", TType.I32, TYPE);
 
-  TApplicationError([int type = TApplicationErrorType.UNKNOWN,
-      String message = ""]) : super(type, message);
+  TApplicationError(
+      [int type = TApplicationErrorType.UNKNOWN, String message = ""])
+      : super(type, message);
 
   static TApplicationError read(TProtocol iprot) {
     TField field;
@@ -62,8 +61,7 @@ class TApplicationError extends TError {
         case MESSAGE:
           if (field.type == TType.STRING) {
             message = iprot.readString();
-          }
-          else {
+          } else {
             TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -71,8 +69,7 @@ class TApplicationError extends TError {
         case TYPE:
           if (field.type == TType.I32) {
             type = iprot.readI32();
-          }
-          else {
+          } else {
             TProtocolUtil.skip(iprot, field.type);
           }
           break;

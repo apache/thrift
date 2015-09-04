@@ -17,12 +17,9 @@
 
 part of thrift;
 
-
 class TList {
-
   final int elementType;
   final int length;
 
   TList(this.elementType, this.length);
-
 }

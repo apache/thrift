@@ -17,9 +17,7 @@
 
 part of thrift;
 
-
 abstract class TBase {
-
   /// Reads the TObject from the given input protocol.
   void read(TProtocol iprot);
 
@@ -36,5 +34,4 @@ abstract class TBase {
   /// Set a field's value by [fieldId]. Primitive types must be "boxed" in the
   /// appropriate object wrapper type.
   setFieldValue(int fieldId, Object value);
-
 }

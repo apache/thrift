@@ -19,7 +19,6 @@ part of thrift;
 
 /// Buffered implementation of [TTransport].
 class TBufferedTransport extends TTransport {
-
   final List<int> _writeBuffer = [];
   Iterator<int> _readIterator;
 
@@ -45,8 +44,8 @@ class TBufferedTransport extends TTransport {
 
   void open() {
     if (isOpen) {
-      throw new TTransportError(TTransportErrorType.ALREADY_OPEN,
-                                "The transport is already open");
+      throw new TTransportError(
+          TTransportErrorType.ALREADY_OPEN, "The transport is already open");
     }
     _isOpen = true;
     _reset();
@@ -99,5 +98,4 @@ class TBufferedTransport extends TTransport {
   Future flush() {
     return new Future.value();
   }
-
 }

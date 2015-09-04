@@ -18,7 +18,6 @@
 part of thrift;
 
 abstract class TProtocol {
-
   final TTransport transport;
 
   TProtocol(this.transport);

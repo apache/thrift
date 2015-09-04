@@ -28,7 +28,6 @@ part of thrift;
 ///
 /// Adapted from the JS WebSocket transport.
 class TSocketTransport extends TBufferedTransport {
-
   final TSocket socket;
   final Logger log = new Logger('thrift.TSocketTransport');
 
@@ -56,5 +55,4 @@ class TSocketTransport extends TBufferedTransport {
     List<int> result = await socket.send(_consumeWriteBuffer());
     _setReadBuffer(result);
   }
-
 }

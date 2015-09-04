@@ -21,7 +21,6 @@ part of thrift;
 ///
 /// Adapted from the C# version.
 class TBinaryProtocol extends TProtocol {
-
   static const int VERSION_MASK = 0xffff0000;
   static const int VERSION_1 = 0x80010000;
 
@@ -30,8 +29,9 @@ class TBinaryProtocol extends TProtocol {
   final bool strictRead;
   final bool strictWrite;
 
-
-  TBinaryProtocol(TTransport transport, {this.strictRead: false, this.strictWrite: true}) : super(transport);
+  TBinaryProtocol(TTransport transport,
+      {this.strictRead: false, this.strictWrite: true})
+      : super(transport);
 
   /// write
   void writeMessageBegin(TMessage message) {
@@ -141,14 +141,16 @@ class TBinaryProtocol extends TProtocol {
     if (size < 0) {
       int version = size & VERSION_MASK;
       if (version != VERSION_1) {
-          throw new TProtocolError(TProtocolErrorType.BAD_VERSION, "Bad version in readMessageBegin: $version");
+        throw new TProtocolError(TProtocolErrorType.BAD_VERSION,
+            "Bad version in readMessageBegin: $version");
       }
       type = size & 0x000000ff;
       name = readString();
       seqid = readI32();
     } else {
       if (strictRead) {
-        throw new TProtocolError(TProtocolErrorType.BAD_VERSION, "Missing version in readMessageBegin");
+        throw new TProtocolError(TProtocolErrorType.BAD_VERSION,
+            "Missing version in readMessageBegin");
       }
       name = _readString(size);
       type = readByte();
@@ -252,5 +254,4 @@ class TBinaryProtocol extends TProtocol {
     transport.readAll(binaryIn, 0, size);
     return binaryIn.buffer.asByteData();
   }
-
 }

@@ -17,20 +17,15 @@
 
 part of thrift;
 
-
 class TTransportErrorType {
-
   static const int UNKNOWN = 0;
   static const int NOT_OPEN = 1;
   static const int ALREADY_OPEN = 2;
   static const int TIMED_OUT = 3;
   static const int END_OF_FILE = 4;
-
 }
 
 class TTransportError extends TError {
-
   TTransportError([int type = TTransportErrorType.UNKNOWN, String message = ""])
       : super(type, message);
-
 }

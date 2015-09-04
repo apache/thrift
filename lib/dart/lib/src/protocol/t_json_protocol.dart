@@ -21,7 +21,6 @@ part of thrift;
 ///
 /// Adapted from the C# version.
 class TJsonProtocol extends TProtocol {
-
   static const int VERSION_1 = 1;
 
   static const Utf8Codec utf8Codec = const Utf8Codec();
@@ -61,7 +60,7 @@ class TJsonProtocol extends TProtocol {
         byte <= _Constants.HEX_9.codeUnitAt(0)) {
       return byte - _Constants.HEX_0.codeUnitAt(0);
     } else if (byte >= _Constants.HEX_A.codeUnitAt(0) &&
-               byte <= _Constants.HEX_F.codeUnitAt(0)) {
+        byte <= _Constants.HEX_F.codeUnitAt(0)) {
       byte += 10;
       return byte - _Constants.HEX_A.codeUnitAt(0);
     } else {
@@ -268,7 +267,6 @@ class TJsonProtocol extends TProtocol {
     _writeJsonBase64(bytes.buffer.asUint8List());
   }
 
-
   /// read
 
   List<int> _readJsonString({bool skipContext: false}) {
@@ -342,7 +340,7 @@ class TJsonProtocol extends TProtocol {
 
     try {
       return int.parse(str);
-    } on FormatException catch(_) {
+    } on FormatException catch (_) {
       throw new TProtocolError(TProtocolErrorType.INVALID_DATA,
           "Bad data encounted in numeric data");
     }
@@ -355,11 +353,11 @@ class TJsonProtocol extends TProtocol {
       List<int> bytes = _readJsonString(skipContext: true);
       double d = double.parse(utf8Codec.decode(bytes), (_) {
         throw new TProtocolError(TProtocolErrorType.INVALID_DATA,
-                                 "Bad data encounted in numeric data");
+            "Bad data encounted in numeric data");
       });
       if (!_context.escapeNumbers && !d.isNaN && !d.isInfinite) {
         throw new TProtocolError(TProtocolErrorType.INVALID_DATA,
-                                 "Numeric data unexpectedly quoted");
+            "Numeric data unexpectedly quoted");
       }
       return d;
     } else {
@@ -369,7 +367,7 @@ class TJsonProtocol extends TProtocol {
       }
       return double.parse(_readJsonNumericChars(), (_) {
         throw new TProtocolError(TProtocolErrorType.INVALID_DATA,
-                                 "Bad data encounted in numeric data");
+            "Bad data encounted in numeric data");
       });
     }
   }
@@ -405,8 +403,8 @@ class TJsonProtocol extends TProtocol {
   TMessage readMessageBegin() {
     _readJsonArrayStart();
     if (_readJsonInteger() != VERSION_1) {
-      throw new TProtocolError(TProtocolErrorType.BAD_VERSION,
-                               "Message contained bad version.");
+      throw new TProtocolError(
+          TProtocolErrorType.BAD_VERSION, "Message contained bad version.");
     }
 
     List<int> buffer = _readJsonString();
@@ -519,11 +517,9 @@ class TJsonProtocol extends TProtocol {
   ByteData readBinary() {
     return new Uint8List.fromList(_readJsonBase64()).buffer.asByteData();
   }
-
 }
 
 class _Constants {
-
   static const utf8codec = const Utf8Codec();
 
   static const String HEX_0 = '0';
@@ -542,12 +538,13 @@ class _Constants {
   static const String ESCSEQ = r'\u00';
 
   static final List<int> JSON_CHAR_TABLE = new List.unmodifiable([
-    0,  0,  0,  0,  0,  0,  0,  0, // 8 bytes
-    'b'.codeUnitAt(0), 't'.codeUnitAt(0), 'n'.codeUnitAt(0), 0, 'f'.codeUnitAt(0), 'r'.codeUnitAt(0), 0, 0, // 8 bytes
-    0,  0,  0,  0,  0,  0,  0,  0, // 8 bytes
-    0,  0,  0,  0,  0,  0,  0,  0, // 8 bytes
-    1,  1, '"'.codeUnitAt(0),  1,  1,  1,  1,  1, // 8 bytes
-    1,  1,  1,  1,  1,  1,  1,  1  // 8 bytes
+    0, 0, 0, 0, 0, 0, 0, 0, // 8 bytes
+    'b'.codeUnitAt(0), 't'.codeUnitAt(0), 'n'.codeUnitAt(0), 0, // 4 bytes
+    'f'.codeUnitAt(0), 'r'.codeUnitAt(0), 0, 0, // 4 bytes
+    0, 0, 0, 0, 0, 0, 0, 0, // 8 bytes
+    0, 0, 0, 0, 0, 0, 0, 0, // 8 bytes
+    1, 1, '"'.codeUnitAt(0), 1, 1, 1, 1, 1, // 8 bytes
+    1, 1, 1, 1, 1, 1, 1, 1 // 8 bytes
   ]);
 
   static const String ESCAPE_CHARS = r'"\/bfnrt';
@@ -613,17 +610,29 @@ class _Constants {
   }
 
   static final Set<int> _JSON_NUMERICS = new Set.from([
-    '+', '-', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'E', 'e'
-  ].map((String s) => s.codeUnitAt(0)));
+    '+'.codeUnitAt(0),
+    '-'.codeUnitAt(0),
+    '.'.codeUnitAt(0),
+    '0'.codeUnitAt(0),
+    '1'.codeUnitAt(0),
+    '2'.codeUnitAt(0),
+    '3'.codeUnitAt(0),
+    '4'.codeUnitAt(0),
+    '5'.codeUnitAt(0),
+    '6'.codeUnitAt(0),
+    '7'.codeUnitAt(0),
+    '8'.codeUnitAt(0),
+    '9'.codeUnitAt(0),
+    'E'.codeUnitAt(0),
+    'e'.codeUnitAt(0)
+  ]);
 
   static bool isJsonNumeric(int byte) {
     return _JSON_NUMERICS.contains(byte);
   }
-
 }
 
 class _LookaheadReader {
-
   final TJsonProtocol protocol;
 
   _LookaheadReader(this.protocol);
@@ -649,11 +658,9 @@ class _LookaheadReader {
 
     return _data[0];
   }
-
 }
 
 class _BaseContext {
-
   final TJsonProtocol protocol;
 
   _BaseContext(this.protocol);
@@ -663,11 +670,9 @@ class _BaseContext {
   void read() {}
 
   bool get escapeNumbers => false;
-
 }
 
 class _ListContext extends _BaseContext {
-
   _ListContext(TJsonProtocol protocol) : super(protocol);
 
   bool _first = true;
@@ -687,11 +692,9 @@ class _ListContext extends _BaseContext {
       protocol.readJsonSyntaxChar(_Constants.COMMA);
     }
   }
-
 }
 
 class _PairContext extends _BaseContext {
-
   _PairContext(TJsonProtocol protocol) : super(protocol);
 
   bool _first = true;
@@ -720,5 +723,4 @@ class _PairContext extends _BaseContext {
   }
 
   bool get escapeNumbers => _colon;
-
 }

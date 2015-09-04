@@ -18,11 +18,9 @@
 part of thrift;
 
 class TField {
-
   final String name;
   final int type;
   final int id;
 
   TField(this.name, this.type, this.id);
-
 }

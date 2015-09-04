@@ -17,12 +17,9 @@
 
 part of thrift;
 
-
 class TSet {
-
   final int elementType;
   final int length;
 
   TSet(this.elementType, this.length);
-
 }

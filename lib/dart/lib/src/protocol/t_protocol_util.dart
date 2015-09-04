@@ -17,9 +17,7 @@
 
 part of thrift;
 
-
 class TProtocolUtil {
-
   // equal to JavaScript Number.MAX_SAFE_INTEGER, 2^53 - 1
   static const int defaultRecursionLimit = 9007199254740991;
 
@@ -106,5 +104,4 @@ class TProtocolUtil {
         break;
     }
   }
-
 }

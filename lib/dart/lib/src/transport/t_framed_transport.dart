@@ -21,7 +21,6 @@ part of thrift;
 ///
 /// Adapted from the Java Framed transport.
 class TFramedTransport extends TBufferedTransport {
-
   static const I32_LENGTH = 4;
 
   final TTransport _transport;
@@ -62,8 +61,8 @@ class TFramedTransport extends TBufferedTransport {
     int size = headerBytes.buffer.asByteData().getUint32(0);
 
     if (size < 0) {
-      throw new TTransportError(TTransportErrorType.UNKNOWN,
-          "Read a negative frame size: $size");
+      throw new TTransportError(
+          TTransportErrorType.UNKNOWN, "Read a negative frame size: $size");
     }
 
     List<int> buffer = new List(size);

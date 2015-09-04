@@ -17,11 +17,8 @@
 
 part of thrift;
 
-
 class TStruct {
-
   final String name;
 
-  TStruct([this.name=""]);
-
+  TStruct([this.name = ""]);
 }

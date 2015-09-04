@@ -18,16 +18,13 @@
 part of thrift;
 
 class TMessageType {
-
-  static const int CALL  = 1;
+  static const int CALL = 1;
   static const int REPLY = 2;
   static const int EXCEPTION = 3;
   static const int ONEWAY = 4;
-
 }
 
 class TMessage {
-
   final String name;
   final int type;
   final int seqid;
@@ -35,5 +32,4 @@ class TMessage {
   TMessage(this.name, this.type, this.seqid);
 
   String toString() => "<TMessage name: '$name' type: $type seqid: $seqid>";
-
 }

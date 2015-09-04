@@ -26,10 +26,8 @@ import 'dart:html' show WebSocket;
 
 import 'package:thrift/thrift.dart';
 
-
 /// A [TSocket] backed by a [WebSocket] from dart:html
 class TWebSocket implements TSocket {
-
   static const utf8Codec = const Utf8Codec();
 
   final Uri url;
@@ -43,9 +41,9 @@ class TWebSocket implements TSocket {
   final List<Completer<List<int>>> _completers = [];
   final List<_Request> _requests = [];
 
-  TWebSocket(this.url) :
-    _onStateController = new StreamController.broadcast(),
-    _onErrorController = new StreamController.broadcast() {
+  TWebSocket(this.url)
+      : _onStateController = new StreamController.broadcast(),
+        _onErrorController = new StreamController.broadcast() {
     if (url == null || !url.hasAuthority || !url.hasPort) {
       throw new ArgumentError("Invalid url");
     }
@@ -55,12 +53,13 @@ class TWebSocket implements TSocket {
 
   bool get isOpen => _socket != null && _socket.readyState == WebSocket.OPEN;
 
-  bool get isClosed => _socket == null || _socket.readyState == WebSocket.CLOSED;
+  bool get isClosed =>
+      _socket == null || _socket.readyState == WebSocket.CLOSED;
 
   void open() {
     if (!isClosed) {
-      throw new TTransportError(TTransportErrorType.ALREADY_OPEN,
-                                "Socket already connected");
+      throw new TTransportError(
+          TTransportErrorType.ALREADY_OPEN, "Socket already connected");
     }
 
     _socket = new WebSocket(url.toString());

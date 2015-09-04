@@ -19,18 +19,17 @@ part of thrift;
 
 /// Adapted from the C# version.
 class TMultiplexedProtocol extends TProtocolDecorator {
-
   static const SEPARATOR = ':';
 
   final String _serviceName;
 
   TMultiplexedProtocol(TProtocol protocol, String serviceName)
-      : _serviceName = serviceName, super(protocol) {
+      : _serviceName = serviceName,
+        super(protocol) {
     if (serviceName == null) {
       throw new ArgumentError.notNull("serviceName");
     }
   }
-
 
   void writeMessageBegin(TMessage message) {
     if (message.type == TMessageType.CALL ||
@@ -41,5 +40,4 @@ class TMultiplexedProtocol extends TProtocolDecorator {
 
     super.writeMessageBegin(message);
   }
-
 }

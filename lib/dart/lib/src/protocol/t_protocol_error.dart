@@ -18,7 +18,6 @@
 part of thrift;
 
 class TProtocolErrorType {
-
   static const int UNKNOWN = 0;
   static const int INVALID_DATA = 1;
   static const int NEGATIVE_SIZE = 2;
@@ -26,12 +25,9 @@ class TProtocolErrorType {
   static const int BAD_VERSION = 4;
   static const int NOT_IMPLEMENTED = 5;
   static const int DEPTH_LIMIT = 6;
-
 }
 
 class TProtocolError extends TError {
-
   TProtocolError([int type = TProtocolErrorType.UNKNOWN, String message = ""])
       : super(type, message);
-
 }

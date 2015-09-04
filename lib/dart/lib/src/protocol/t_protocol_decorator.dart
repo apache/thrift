@@ -21,17 +21,18 @@ part of thrift;
 ///
 /// Adapted from the C# version.
 class TProtocolDecorator extends TProtocol {
-
   final TProtocol _protocol;
 
   TProtocolDecorator(TProtocol protocol)
-      : _protocol = protocol, super(protocol.transport);
+      : _protocol = protocol,
+        super(protocol.transport);
 
   /// Write
 
   void writeMessageBegin(TMessage message) {
     _protocol.writeMessageBegin(message);
   }
+
   void writeMessageEnd() {
     _protocol.writeMessageEnd();
   }
@@ -39,6 +40,7 @@ class TProtocolDecorator extends TProtocol {
   void writeStructBegin(TStruct struct) {
     _protocol.writeStructBegin(struct);
   }
+
   void writeStructEnd() {
     _protocol.writeStructEnd();
   }
@@ -46,9 +48,11 @@ class TProtocolDecorator extends TProtocol {
   void writeFieldBegin(TField field) {
     _protocol.writeFieldBegin(field);
   }
+
   void writeFieldEnd() {
     _protocol.writeFieldEnd();
   }
+
   void writeFieldStop() {
     _protocol.writeFieldStop();
   }
@@ -56,6 +60,7 @@ class TProtocolDecorator extends TProtocol {
   void writeMapBegin(TMap map) {
     _protocol.writeMapBegin(map);
   }
+
   void writeMapEnd() {
     _protocol.writeMapEnd();
   }
@@ -63,6 +68,7 @@ class TProtocolDecorator extends TProtocol {
   void writeListBegin(TList list) {
     _protocol.writeListBegin(list);
   }
+
   void writeListEnd() {
     _protocol.writeListEnd();
   }
@@ -70,6 +76,7 @@ class TProtocolDecorator extends TProtocol {
   void writeSetBegin(TSet set) {
     _protocol.writeSetBegin(set);
   }
+
   void writeSetEnd() {
     _protocol.writeSetEnd();
   }

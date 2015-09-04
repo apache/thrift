@@ -17,14 +17,9 @@
 
 part of thrift;
 
-
-enum TSocketState {
-  CLOSED,
-  OPEN
-}
+enum TSocketState { CLOSED, OPEN }
 
 abstract class TSocket {
-
   Stream<TSocketState> get onState;
 
   Stream<String> get onError;
@@ -38,5 +33,4 @@ abstract class TSocket {
   void close();
 
   Future<List<int>> send(List<int> data);
-
 }

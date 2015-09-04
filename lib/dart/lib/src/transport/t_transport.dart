@@ -17,9 +17,7 @@
 
 part of thrift;
 
-
 abstract class TTransport {
-
   /// Queries whether the transport is open.
   /// Returns [true] if the transport is open.
   bool get isOpen;
@@ -44,9 +42,10 @@ abstract class TTransport {
     int got = 0;
     int ret = 0;
     while (got < length) {
-      ret = read(buffer, offset+got, length-got);
+      ret = read(buffer, offset + got, length - got);
       if (ret <= 0) {
-        throw new TTransportError(TTransportErrorType.UNKNOWN,
+        throw new TTransportError(
+            TTransportErrorType.UNKNOWN,
             "Cannot read. Remote side has closed. Tried to read $length "
             "bytes, but only got $got bytes.");
       }
@@ -68,5 +67,4 @@ abstract class TTransport {
   /// Flush any pending data out of a transport buffer.
   /// Throws [TTransportError] if there was an error writing out data.
   Future flush();
-
 }

@@ -17,13 +17,10 @@
 
 part of thrift;
 
-
 class TMap {
-
   final int keyType;
   final int valueType;
   final int length;
 
   TMap(this.keyType, this.valueType, this.length);
-
 }
