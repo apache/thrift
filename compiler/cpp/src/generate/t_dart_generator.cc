@@ -63,6 +63,13 @@ public:
       library_name_ = "";
     }
 
+    iter = parsed_options.find("skip_server");
+    if (iter != parsed_options.end()) {
+      skip_server_ = true;
+    } else {
+      skip_server_ = false;
+    }
+
     out_dir_base_ = "gen-dart";
   }
 
@@ -154,6 +161,8 @@ public:
   void generate_function_helpers(t_function* tfunction);
   std::string get_cap_name(std::string name);
   std::string get_field_name(std::string name);
+  std::string get_args_class_name(std::string name);
+  std::string get_result_class_name(std::string name);
   std::string get_file_name(std::string name);
   std::string generate_isset_check(t_field* field);
   std::string generate_isset_check(std::string field);
@@ -227,12 +236,11 @@ public:
   std::string constant_name(std::string name);
 
 private:
-  /**
-   * File streams
-   */
   std::ofstream f_service_;
 
+  bool skip_server_;
   std::string library_name_;
+
   std::string base_dir_;
   std::string src_dir_;
   std::string library_exports_;
@@ -284,9 +292,9 @@ string t_dart_generator::dart_library(string file_name) {
 }
 
 /**
- * Prints standard Dart imports
+ * Prints imports for services
  *
- * @return List of imports for Dart types that are used in here
+ * @return List of imports for services
  */
 string t_dart_generator::service_imports() {
   return "import 'dart:async';" + endl;
@@ -299,7 +307,7 @@ string t_dart_generator::service_imports() {
  */
 string t_dart_generator::dart_thrift_imports() {
   return string() +
-    "import 'dart:typed_data' show ByteBuffer;" + endl +
+    "import 'dart:typed_data' show ByteData;" + endl +
     "import 'package:thrift/thrift.dart';" + endl +
     "import 'package:" + library_name_ + "/" + library_name_ + ".dart';" + endl;
 }
@@ -635,7 +643,7 @@ void t_dart_generator::generate_dart_struct_definition(ofstream& out,
   out << "implements TBase";
   scope_up(out);
 
-  indent(out) << "static final TStruct _STRUCT_DESC = new TStruct(\"" << tstruct->get_name()
+  indent(out) << "static final TStruct _STRUCT_DESC = new TStruct(\"" << class_name
               << "\");" << endl;
 
   // Members are public for -dart, private for -dartbean
@@ -1248,7 +1256,11 @@ void t_dart_generator::generate_service(t_service* tservice) {
 
   generate_service_interface(tservice);
   generate_service_client(tservice);
-  generate_service_server(tservice);
+
+  if (!skip_server_) {
+    generate_service_server(tservice);
+  }
+
   generate_service_helpers(tservice);
 
   f_service_.close();
@@ -1308,10 +1320,10 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
   string extends_client = "";
   if (tservice->get_extends() != NULL) {
     extends = tservice->get_extends()->get_name();
-    extends_client = " extends " + extends + "Impl";
+    extends_client = " extends " + extends + "Client";
   }
 
-  string class_name = service_name_ + "Impl";
+  string class_name = service_name_ + "Client";
   export_class_to_library(get_file_name(service_name_), class_name);
   indent(f_service_) << "class " << class_name << extends_client
                      << " extends " << service_name_;
@@ -1352,7 +1364,7 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
     // Get the struct of function call params
     t_struct* arg_struct = (*f_iter)->get_arglist();
 
-    string argsname = (*f_iter)->get_name() + "_args";
+    string argsname = get_args_class_name((*f_iter)->get_name());
     vector<t_field*>::const_iterator fld_iter;
     const vector<t_field*>& fields = arg_struct->get_members();
 
@@ -1381,7 +1393,7 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
       indent(f_service_) << "throw error;" << endl;
       scope_down(f_service_, endl2);
 
-      string result_class = (*f_iter)->get_name() + "_result";
+      string result_class = get_result_class_name((*f_iter)->get_name());
       indent(f_service_) << result_class << " result = new " << result_class << "();" << endl;
       indent(f_service_) << "result.read(_iprot);" << endl;
       indent(f_service_) << "_iprot.readMessageEnd();" << endl;
@@ -1507,7 +1519,7 @@ void t_dart_generator::generate_function_helpers(t_function* tfunction) {
     return;
   }
 
-  t_struct result(program_, tfunction->get_name() + "_result");
+  t_struct result(program_, get_result_class_name(tfunction->get_name()));
   t_field success(tfunction->get_returntype(), "success", 0);
   if (!tfunction->get_returntype()->is_void()) {
     result.append(&success);
@@ -1539,8 +1551,8 @@ void t_dart_generator::generate_process_function(t_service* tservice, t_function
   }
   scope_up(f_service_);
 
-  string argsname = tfunction->get_name() + "_args";
-  string resultname = tfunction->get_name() + "_result";
+  string argsname = get_args_class_name(tfunction->get_name());
+  string resultname = get_result_class_name(tfunction->get_name());
 
   indent(f_service_) << argsname << " args = new " << argsname << "();" << endl;
   indent(f_service_) << "args.read(iprot);" << endl;
@@ -2014,7 +2026,7 @@ string t_dart_generator::base_type_name(t_base_type* type, bool in_container) {
     return "void";
   case t_base_type::TYPE_STRING:
     if (type->is_binary()) {
-      return "ByteBuffer";
+      return "ByteData";
     } else {
       return "String";
     }
@@ -2171,6 +2183,14 @@ std::string t_dart_generator::get_field_name(std::string name) {
   return name;
 }
 
+std::string t_dart_generator::get_args_class_name(std::string name) {
+  return name + "_args";
+}
+
+std::string t_dart_generator::get_result_class_name(std::string name) {
+  return name + "_result";
+}
+
 std::string t_dart_generator::get_file_name(std::string name) {
   // e.g. change APIForFileIO to api_for_file_io
 
@@ -2276,4 +2296,6 @@ std::string t_dart_generator::get_enum_class_name(t_type* type) {
 THRIFT_REGISTER_GENERATOR(
     dart,
     "Dart",
-    "    library_name=thrift    Optional override for library name.\n");
+    "    library_name=thrift    Optional override for library name.\n"
+    "    skip_server            Skip generation of service server code.\n"
+);
