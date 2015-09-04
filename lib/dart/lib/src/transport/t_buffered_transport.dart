@@ -40,8 +40,6 @@ class TBufferedTransport extends TTransport {
 
   bool get hasReadData => _readIterator != null;
 
-  int get writeBufferLength => _writeBuffer.length;
-
   bool _isOpen;
   bool get isOpen => _isOpen;
 
