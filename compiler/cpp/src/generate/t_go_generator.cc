@@ -3049,7 +3049,7 @@ void t_go_generator::generate_serialize_field(ofstream& out,
         break;
 
       case t_base_type::TYPE_BYTE:
-        out << "WriteByte(byte(" << name << "))";
+        out << "WriteByte(int8(" << name << "))";
         break;
 
       case t_base_type::TYPE_I16:
