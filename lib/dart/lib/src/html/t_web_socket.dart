@@ -85,7 +85,7 @@ class TWebSocket implements TSocket {
   }
 
   void _sendRequests() {
-    while (isOpen && _requests.length > 0) {
+    while (isOpen && _requests.isNotEmpty) {
       _Request request = _requests.removeAt(0);
       _completers.add(request.completer);
       _socket.sendString(utf8Codec.decode(request.data));

@@ -80,7 +80,8 @@ class TJsonProtocol extends TProtocol {
     _context.write();
     transport.writeAll(_Constants.QUOTE.codeUnits);
 
-    for (int i = 0; i < bytes.length; i++) {
+    int length = bytes.length;
+    for (int i = 0; i < length; i++) {
       int byte = bytes[i];
       if ((byte & 0x00FF) >= 0x30) {
         if (byte == _Constants.BACKSLASH.codeUnitAt(0)) {

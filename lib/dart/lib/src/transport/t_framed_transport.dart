@@ -21,11 +21,11 @@ part of thrift;
 ///
 /// Adapted from the Java Framed transport.
 class TFramedTransport extends TBufferedTransport {
-  static const I32_LENGTH = 4;
+  static const uint32ByteCount = 4;
 
   final TTransport _transport;
 
-  final Uint8List headerBytes = new Uint8List(I32_LENGTH);
+  final Uint8List headerBytes = new Uint8List(uint32ByteCount);
 
   TFramedTransport(TTransport transport) : _transport = transport {
     if (transport == null) {
@@ -57,7 +57,7 @@ class TFramedTransport extends TBufferedTransport {
   }
 
   void _readFrame() {
-    _transport.readAll(headerBytes, 0, I32_LENGTH);
+    _transport.readAll(headerBytes, 0, uint32ByteCount);
     int size = headerBytes.buffer.asByteData().getUint32(0);
 
     if (size < 0) {
@@ -72,10 +72,11 @@ class TFramedTransport extends TBufferedTransport {
 
   Future flush() {
     List<int> buffer = _consumeWriteBuffer();
+    int length = buffer.length;
 
-    headerBytes.buffer.asByteData().setUint32(0, buffer.length);
-    _transport.writeAll(headerBytes);
-    _transport.writeAll(buffer);
+    headerBytes.buffer.asByteData().setUint32(0, length);
+    _transport.write(headerBytes, 0, uint32ByteCount);
+    _transport.write(buffer, 0, length);
 
     return _transport.flush();
   }
