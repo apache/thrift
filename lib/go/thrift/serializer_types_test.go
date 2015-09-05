@@ -459,7 +459,7 @@ func (p *MyTestStruct) writeField2(oprot TProtocol) (err error) {
 	if err := oprot.WriteFieldBegin("b", BYTE, 2); err != nil {
 		return PrependError(fmt.Sprintf("%T write field begin error 2:b: ", p), err)
 	}
-	if err := oprot.WriteByte(byte(p.B)); err != nil {
+	if err := oprot.WriteByte(int8(p.B)); err != nil {
 		return PrependError(fmt.Sprintf("%T.b (2) field write error: ", p), err)
 	}
 	if err := oprot.WriteFieldEnd(); err != nil {
