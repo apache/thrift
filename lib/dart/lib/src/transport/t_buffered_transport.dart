@@ -96,6 +96,8 @@ class TBufferedTransport extends TTransport {
   }
 
   Future flush() {
+    _readIterator = _consumeWriteBuffer().iterator;
+
     return new Future.value();
   }
 }
