@@ -334,7 +334,7 @@ void t_cocoa_generator::generate_enum(t_enum* tenum) {
     } else {
       f_header_ << "," << endl;
     }
-    f_header_ << indent() << tenum->get_name() << "_" << (*c_iter)->get_name();
+    f_header_ << indent() << cocoa_prefix_ << tenum->get_name() << "_" << (*c_iter)->get_name();
     f_header_ << " = " << (*c_iter)->get_value();
   }
 
