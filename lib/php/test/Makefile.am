@@ -42,6 +42,7 @@ check-protocol:	stubs
 if HAVE_PHPUNIT
 	$(PHPUNIT) --log-junit=TEST-log-json-protocol.xml Test/Thrift/Protocol/TestTJSONProtocol.php
 	$(PHPUNIT) --log-junit=TEST-binary-serializer.xml Test/Thrift/Protocol/TestBinarySerializer.php
+	$(PHPUNIT) --log-junit=TEST-log-simple-json-protocol.xml Test/Thrift/Protocol/TestTSimpleJSONProtocol.php
 endif
 
 check: stubs \
