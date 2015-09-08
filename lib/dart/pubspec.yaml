@@ -12,4 +12,4 @@ dependencies:
 dev_dependencies:
   test: '>=0.12.0'
 environment:
-  sdk: '>=0.12.0'
+  sdk: '>=1.12.0'
