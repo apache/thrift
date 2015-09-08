@@ -1411,8 +1411,9 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
     indent(f_service_) << "TProtocol get iprot => _iprot;" << endl2;
     indent(f_service_) << "TProtocol _oprot;" << endl2;
     indent(f_service_) << "TProtocol get oprot => _oprot;" << endl2;
-    indent(f_service_) << "int _seqid;" << endl2;
+    indent(f_service_) << "int _seqid = 0;" << endl2;
     indent(f_service_) << "int get seqid => _seqid;" << endl2;
+    indent(f_service_) << "int nextSeqid() => ++_seqid;" << endl2;
   }
 
   // Generate client method implementations
@@ -1435,7 +1436,7 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
     // Serialize the request
     indent(f_service_) << "oprot.writeMessageBegin(new TMessage(\"" << funname << "\", "
                << ((*f_iter)->is_oneway() ? "TMessageType.ONEWAY" : "TMessageType.CALL")
-               << ", seqid));" << endl;
+               << ", nextSeqid()));" << endl;
     indent(f_service_) << argsname << " args = new " << argsname << "();" << endl;
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
