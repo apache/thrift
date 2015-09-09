@@ -31,6 +31,7 @@ precross: TestClientServer.exe
 
 ThriftImpl.dll: stubs
 	$(CSC) /t:library /out:./ThriftImpl.dll /recurse:./gen-csharp/* /reference:../../Thrift.dll
-
-TestClientServer.exe: TestClient.cs TestServer.cs Program.cs ThriftImpl.dll
-	$(CSC)  /out:TestClientServer.exe /reference:../../Thrift.dll /reference:ThriftImpl.dll TestClient.cs TestServer.cs Program.cs
+	
+TestClientServer.exe: TestClient.cs TestServer.cs ../TestStreamServer/TestHandler.cs TestIOStreamClient.cs Program.cs ThriftImpl.dll
+	$(CSC) /out:TestClientServer.exe /reference:../../Thrift.dll /reference:ThriftImpl.dll TestClient.cs TestServer.cs ../TestStreamServer/TestHandler.cs TestIOStreamClient.cs Program.cs
+	$(CSC) /out:TestStreamServer.exe /reference:../../Thrift.dll /reference:ThriftImpl.dll ../TestStreamServer/TestHandler.cs ../TestStreamServer/Program.cs

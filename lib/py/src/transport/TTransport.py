@@ -335,9 +335,32 @@ class TFileObjectTransport(TTransportBase):
     self.fileobj.flush()
 
 
+class TIOStreamTransport(TTransportBase):
+  """Like TFileObjectTransport except it keeps track of input and output."""
+
+  def __init__(self, input, output):
+    self.inputStream = input
+    self.outputStream = output
+
+  def isOpen(self):
+    return True
+
+  def close(self):
+    self.outputStream.close()
+
+  def read(self, sz):
+    return self.inputStream.read(sz)
+
+  def write(self, buf):
+    self.outputStream.write(buf)
+
+  def flush(self):
+    self.outputStream.flush()
+
+
 class TSaslClientTransport(TTransportBase, CReadableTransport):
   """
-  SASL transport 
+  SASL transport
   """
 
   START = 1
@@ -443,4 +466,3 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
       prefix += self.__rbuf.getvalue()
     self.__rbuf = StringIO(prefix)
     return self.__rbuf
-

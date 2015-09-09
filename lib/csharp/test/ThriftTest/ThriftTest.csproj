@@ -71,16 +71,50 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="Thrift, Version=0.9.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\src\bin\Debug\Thrift.dll</HintPath>
+    </Reference>
     <Reference Include="ThriftImpl, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>.\ThriftImpl.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="generated files\Bonk.cs" />
+    <Compile Include="generated files\Bools.cs" />
+    <Compile Include="generated files\BoolTest.cs" />
+    <Compile Include="generated files\CrazyNesting.cs" />
+    <Compile Include="generated files\EmptyStruct.cs" />
+    <Compile Include="generated files\GuessProtocolStruct.cs" />
+    <Compile Include="generated files\Insanity.cs" />
+    <Compile Include="generated files\LargeDeltas.cs" />
+    <Compile Include="generated files\ListBonks.cs" />
+    <Compile Include="generated files\ListTypeVersioningV1.cs" />
+    <Compile Include="generated files\ListTypeVersioningV2.cs" />
+    <Compile Include="generated files\NestedListsBonk.cs" />
+    <Compile Include="generated files\NestedListsI32x2.cs" />
+    <Compile Include="generated files\NestedListsI32x3.cs" />
+    <Compile Include="generated files\NestedMixedx2.cs" />
+    <Compile Include="generated files\Numberz.cs" />
+    <Compile Include="generated files\OneField.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="generated files\SecondService.cs" />
+    <Compile Include="generated files\StructA.cs" />
+    <Compile Include="generated files\StructB.cs" />
     <Compile Include="TestClient.cs" />
+    <Compile Include="TestIOStreamClient.cs" />
     <Compile Include="TestServer.cs" />
+    <Compile Include="generated files\ThriftTest.cs" />
+    <Compile Include="generated files\THRIFT~1.Constants.cs" />
+    <Compile Include="generated files\VersioningTestV1.cs" />
+    <Compile Include="generated files\VersioningTestV2.cs" />
+    <Compile Include="generated files\Xception.cs" />
+    <Compile Include="generated files\Xception2.cs" />
+    <Compile Include="generated files\Xtruct.cs" />
+    <Compile Include="generated files\Xtruct2.cs" />
+    <Compile Include="generated files\Xtruct3.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
@@ -114,12 +148,7 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\Thrift.csproj">
-      <Project>{499EB63C-D74C-47E8-AE48-A2FC94538E9D}</Project>
-      <Name>Thrift</Name>
-    </ProjectReference>
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -129,13 +158,7 @@
   </Target>
   -->
   <PropertyGroup>
-    <PreBuildEvent>rmdir /s /q "$(ProjectDir)gen-csharp"
-del /f /q "$(ProjectDir)ThriftImpl.dll"
-SET OUTPUT_DIR=$(ProjectDir)
-SET THRIFT_FILE=$(ProjectDir)\..\..\..\..\test\ThriftTest.thrift
-for %25%25I in ("%25OUTPUT_DIR%25") do set SHORT_DIR=%25%25~fsI
-for %25%25I in ("%25THRIFT_FILE%25") do set THRIFT_SHORT=%25%25~fsI
-"$(ProjectDir)\..\..\..\..\compiler\cpp\thrift.exe" --gen csharp -o %25SHORT_DIR%25 %25THRIFT_SHORT%25
-$(MSBuildToolsPath)\Csc.exe /t:library /out:"$(ProjectDir)ThriftImpl.dll" /recurse:"$(ProjectDir)gen-csharp"\* /reference:"$(ProjectDir)..\..\src\bin\Debug\Thrift.dll"</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
 </Project>

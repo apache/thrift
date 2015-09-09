@@ -26,6 +26,7 @@ using System;
 using Thrift.Transport;
 using Thrift.Protocol;
 using Thrift.Test; //generated code
+using Thrift.Server;
 
 namespace Test
 {
@@ -33,9 +34,10 @@ namespace Test
     {
         static int Main(string[] args)
         {
+            
             if (args.Length == 0)
             {
-                Console.WriteLine("must provide 'server' or 'client' arg");
+                Console.WriteLine("must provide 'server', 'client' or 'ioStreamClient' arg");
                 return -1;
             }
 
@@ -48,15 +50,21 @@ namespace Test
             {
                 return TestClient.Execute(subArgs) ? 0 : 1;
             }
+            //the client must spawn the server in this case so that it knows the server's input and output streams
+            if (args[0] == "ioStreamClient")
+            {
+                return TestIOStreamClient.Execute(subArgs) ? 0 : 1;
+            }
             else if (args[0] == "server")
             {
                 return TestServer.Execute(subArgs) ? 0 : 1;
             }
             else
             {
-                Console.WriteLine("first argument must be 'server' or 'client'");
+                Console.WriteLine("first argument must be 'server', 'client', or 'ioStreamClient'");
             }
             return 0;
+             
         }
     }
 }

@@ -80,7 +80,7 @@ namespace Thrift.Transport
             {
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen, "Cannot read from null inputstream");
             }
-
+            
             return inputStream.Read(buf, off, len);
         }
 
