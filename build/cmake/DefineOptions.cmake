@@ -62,8 +62,10 @@ endif()
 find_package(OpenSSL QUIET)
 CMAKE_DEPENDENT_OPTION(WITH_OPENSSL "Build with OpenSSL support" ON
                        "OPENSSL_FOUND" OFF)
-option(WITH_BOOSTTHREADS "Build with Boost thread support" OFF)
 option(WITH_STDTHREADS "Build with C++ std::thread support" OFF)
+CMAKE_DEPENDENT_OPTION(WITH_BOOSTTHREADS "Build with Boost threads support" OFF
+    "NOT WITH_STDTHREADS;Boost_FOUND" OFF)
+
 
 # C GLib
 option(WITH_C_GLIB "Build C (GLib) Thrift library" ON)
