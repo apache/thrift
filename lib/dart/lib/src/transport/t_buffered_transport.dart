@@ -32,7 +32,8 @@ class TBufferedTransport extends TTransport {
     _readIterator = readBuffer != null ? readBuffer.iterator : null;
   }
 
-  void _reset() {
+  void _reset({bool isOpen: false}) {
+    _isOpen = isOpen;
     _writeBuffer.clear();
     _readIterator = null;
   }
@@ -42,18 +43,12 @@ class TBufferedTransport extends TTransport {
   bool _isOpen;
   bool get isOpen => _isOpen;
 
-  void open() {
-    if (isOpen) {
-      throw new TTransportError(
-          TTransportErrorType.ALREADY_OPEN, "The transport is already open");
-    }
-    _isOpen = true;
-    _reset();
+  Future open() async {
+    _reset(isOpen: true);
   }
 
-  void close() {
-    _isOpen = false;
-    _reset();
+  Future close() async {
+    _reset(isOpen: false);
   }
 
   int read(List<int> buffer, int offset, int length) {

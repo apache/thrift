@@ -24,10 +24,10 @@ abstract class TTransport {
 
   /// Opens the transport for reading/writing.
   /// Throws [TTransportError] if the transport could not be opened.
-  void open();
+  Future open();
 
   /// Closes the transport.
-  void close();
+  Future close();
 
   /// Reads up to [length] bytes into [buffer], starting at [offset].
   /// Returns the number of bytes actually read.

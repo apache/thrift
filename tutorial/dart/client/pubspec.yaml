@@ -1,0 +1,17 @@
+name: tutorial_client
+version: 0.1.0
+description: A Dart client implementation of the Apache Thrift tutorial
+author: Mark Erickson <mark.erickson@workiva.com>
+homepage: https://github.com/apache/thrift
+
+environment:
+  sdk: '>=1.0.0'
+
+dependencies:
+  browser: '>=0.10.0'
+  shared:
+    path: ../gen-dart/shared
+  thrift:
+    path: ../../../lib/dart
+  tutorial:
+    path: ../gen-dart/tutorial

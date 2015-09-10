@@ -29,7 +29,7 @@ part of thrift;
 ///
 /// Adapted from the JS XHR HTTP transport.
 class THttpClientTransport extends TBufferedTransport {
-  final http.BrowserClient httpClient;
+  final Client httpClient;
   final THttpConfig config;
 
   THttpClientTransport(this.httpClient, this.config) {
@@ -38,8 +38,8 @@ class THttpClientTransport extends TBufferedTransport {
     }
   }
 
-  void close() {
-    super.close();
+  Future close() async {
+    _reset(isOpen: false);
     httpClient.close();
   }
 

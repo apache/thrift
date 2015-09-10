@@ -31,28 +31,47 @@ class TSocketTransport extends TBufferedTransport {
   final TSocket socket;
   final Logger log = new Logger('thrift.TSocketTransport');
 
-  TSocketTransport(this.socket) {
+  final bool isListening;
+
+  /// A transport using the provided [socket].  If [isListening] is true, then
+  /// messages received from [socket] will be written to the transport and made
+  /// available for reading.
+  TSocketTransport(this.socket, {isListening: false})
+      : this.isListening = isListening {
     if (socket == null) {
       throw new ArgumentError.notNull("socket");
     }
 
     socket.onError.listen((String e) => log.warning(e));
+
+    if (isListening) {
+      socket.onMessage.listen(_onMessage);
+    }
   }
 
   bool get isOpen => socket.isOpen;
 
-  void open() {
-    super.open();
-    socket.open();
+  Future open() {
+    _reset(isOpen: true);
+    return socket.open();
   }
 
-  void close() {
-    super.close();
-    socket.close();
+  Future close() {
+    _reset(isOpen: false);
+    return socket.close();
   }
 
   Future flush() async {
-    List<int> result = await socket.send(_consumeWriteBuffer());
-    _setReadBuffer(result);
+    if (isListening) {
+      _setReadBuffer(_consumeWriteBuffer());
+    } else {
+      List<int> result = await socket.send(_consumeWriteBuffer());
+      _setReadBuffer(result);
+    }
+  }
+
+  void _onMessage(List<int> message) {
+    writeAll(message);
+    _setReadBuffer(_consumeWriteBuffer());
   }
 }

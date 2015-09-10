@@ -15,24 +15,8 @@
 /// specific language governing permissions and limitations
 /// under the License.
 
-part of thrift;
+library thrift_browser;
 
-enum TSocketState { CLOSED, OPEN }
+/// Classes that are only supported in browser applications go here
 
-abstract class TSocket {
-  Stream<TSocketState> get onState;
-
-  Stream<String> get onError;
-
-  Stream<List<int>> get onMessage;
-
-  bool get isOpen;
-
-  bool get isClosed;
-
-  Future open();
-
-  Future close();
-
-  Future<List<int>> send(List<int> data);
-}
+export 'src/browser/t_web_socket.dart' show TWebSocket;

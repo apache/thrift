@@ -1,0 +1,16 @@
+name: tutorial_server
+version: 0.0.1
+description: A Dart server to support the Apache Thrift tutorial
+author: Mark Erickson <mark.erickson@workiva.com>
+homepage: https://github.com/apache/thrift
+
+environment:
+  sdk: '>=1.0.0'
+
+dependencies:
+  shared:
+    path: ../gen-dart/shared
+  thrift:
+    path: ../../../lib/dart
+  tutorial:
+    path: ../gen-dart/tutorial

@@ -66,13 +66,6 @@ public:
       library_name_ = "";
     }
 
-    iter = parsed_options.find("gen_server");
-    if (iter != parsed_options.end()) {
-      gen_server_ = true;
-    } else {
-      gen_server_ = false;
-    }
-
     out_dir_base_ = "gen-dart";
   }
 
@@ -242,7 +235,6 @@ public:
 private:
   std::ofstream f_service_;
 
-  bool gen_server_;
   std::string library_name_;
 
   std::string base_dir_;
@@ -1317,11 +1309,7 @@ void t_dart_generator::generate_service(t_service* tservice) {
 
   generate_service_interface(tservice);
   generate_service_client(tservice);
-
-  if (gen_server_) {
-    generate_service_server(tservice);
-  }
-
+  generate_service_server(tservice);
   generate_service_helpers(tservice);
 
   f_service_.close();
@@ -2319,7 +2307,7 @@ string t_dart_generator::constant_name(string name) {
  */
 void t_dart_generator::generate_dart_doc(ofstream& out, t_doc* tdoc) {
   if (tdoc->has_doc()) {
-    generate_docstring_comment(out, "///\n", "///", tdoc->get_doc(), "///\n");
+    generate_docstring_comment(out, "", "/// ", tdoc->get_doc(), "");
   }
 }
 
@@ -2340,7 +2328,7 @@ void t_dart_generator::generate_dart_doc(ofstream& out, t_function* tfunction) {
         ss << " " << p->get_doc();
       }
     }
-    generate_docstring_comment(out, "///\n", "///", ss.str(), "///\n");
+    generate_docstring_comment(out, "", "/// ", ss.str(), "");
   }
 }
 
@@ -2368,5 +2356,4 @@ THRIFT_REGISTER_GENERATOR(
     dart,
     "Dart",
     "    library_name=my_library    Optional override for library name.\n"
-    "    gen_server                 Generate server service implementations.\n"
 );

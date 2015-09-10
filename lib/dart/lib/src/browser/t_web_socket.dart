@@ -15,7 +15,7 @@
 /// specific language governing permissions and limitations
 /// under the License.
 
-library thrift.src.html;
+library thrift.src.browser;
 
 import 'dart:async';
 import 'dart:convert' show Utf8Codec;
@@ -38,12 +38,16 @@ class TWebSocket implements TSocket {
   final StreamController<Object> _onErrorController;
   Stream<Object> get onError => _onErrorController.stream;
 
+  final StreamController<List<int>> _onMessageController;
+  Stream<List<int>> get onMessage => _onMessageController.stream;
+
   final List<Completer<List<int>>> _completers = [];
   final List<_Request> _requests = [];
 
   TWebSocket(this.url)
       : _onStateController = new StreamController.broadcast(),
-        _onErrorController = new StreamController.broadcast() {
+        _onErrorController = new StreamController.broadcast(),
+        _onMessageController = new StreamController.broadcast() {
     if (url == null || !url.hasAuthority || !url.hasPort) {
       throw new ArgumentError("Invalid url");
     }
@@ -56,7 +60,7 @@ class TWebSocket implements TSocket {
   bool get isClosed =>
       _socket == null || _socket.readyState == WebSocket.CLOSED;
 
-  void open() {
+  Future open() async {
     if (!isClosed) {
       throw new TTransportError(
           TTransportErrorType.ALREADY_OPEN, "Socket already connected");
@@ -69,7 +73,7 @@ class TWebSocket implements TSocket {
     _socket.onMessage.listen(_onMessage);
   }
 
-  void close() {
+  Future close() async {
     if (_socket != null) {
       _socket.close();
     }
@@ -117,6 +121,8 @@ class TWebSocket implements TSocket {
     if (!_completers.isEmpty) {
       _completers.removeAt(0).complete(data);
     }
+
+    _onMessageController.add(data);
   }
 
   void _onError(Event event) {

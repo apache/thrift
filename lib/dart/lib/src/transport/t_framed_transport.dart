@@ -35,14 +35,14 @@ class TFramedTransport extends TBufferedTransport {
 
   bool get isOpen => _transport.isOpen;
 
-  void open() {
-    super.open();
-    _transport.open();
+  Future open() {
+    _reset(isOpen: true);
+    return _transport.open();
   }
 
-  void close() {
-    super.close();
-    _transport.close();
+  Future close() {
+    _reset(isOpen: false);
+    return _transport.close();
   }
 
   int read(List<int> buffer, int offset, int length) {
