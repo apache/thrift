@@ -5,10 +5,10 @@ author: Mark Erickson <mark.erickson@workiva.com>
 homepage: https://github.com/apache/thrift
 
 environment:
-  sdk: '>=1.0.0'
+  sdk: ^1.12.0
 
 dependencies:
-  browser: '>=0.10.0'
+  browser: ^0.10.0
   shared:
     path: ../gen-dart/shared
   thrift:

@@ -352,13 +352,12 @@ void t_dart_generator::generate_dart_pubspec() {
 
   indent(f_pubspec) << "environment:" << endl;
   indent_up();
-  indent(f_pubspec) << "sdk: '>=1.12.0'" << endl;
+  indent(f_pubspec) << "sdk: ^1.12.0" << endl;
   indent_down();
   f_pubspec << endl;
 
   indent(f_pubspec) << "dependencies:" << endl;
   indent_up();
-  indent(f_pubspec) << "logging: '>=0.9.0 <0.12.0'" << endl;
   indent(f_pubspec) << "thrift: # '>=" << dart_thrift_version << "'" << endl;
   indent_up();
   indent(f_pubspec) << "path: ../../../../lib/dart" << endl;

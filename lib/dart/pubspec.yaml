@@ -5,11 +5,11 @@ description: >
 author: Mark Erickson <mark.erickson@workiva.com>
 homepage: https://github.com/apache/thrift
 documentation: https://github.com/apache/thrift
-dependencies:
-  crypto: '>=0.9.0'
-  http: '>=0.11.3'
-  logging: '>=0.11.0'
-dev_dependencies:
-  test: '>=0.12.0'
 environment:
-  sdk: '>=1.12.0'
+  sdk: ^1.12.0
+dependencies:
+  crypto: ^0.9.0
+  http: ^0.11.3
+  logging: ^0.11.0
+dev_dependencies:
+  test: ^0.12.0
