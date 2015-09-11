@@ -48,7 +48,7 @@ class TWebSocket implements TSocket {
         _onErrorController = new StreamController.broadcast(),
         _onMessageController = new StreamController.broadcast() {
     if (url == null || !url.hasAuthority || !url.hasPort) {
-      throw new ArgumentError("Invalid url");
+      throw new ArgumentError('Invalid url');
     }
   }
 
@@ -62,7 +62,7 @@ class TWebSocket implements TSocket {
   Future open() async {
     if (!isClosed) {
       throw new TTransportError(
-          TTransportErrorType.ALREADY_OPEN, "Socket already connected");
+          TTransportErrorType.ALREADY_OPEN, 'Socket already connected');
     }
 
     _socket = new WebSocket(url.toString());
@@ -104,12 +104,12 @@ class TWebSocket implements TSocket {
     _socket = null;
 
     for (var completer in _completers) {
-      completer.completeError(new StateError("The socket has closed"));
+      completer.completeError(new StateError('The socket has closed'));
     }
     _completers.clear();
 
     for (var request in _requests) {
-      request.completer.completeError(new StateError("The socket has closed"));
+      request.completer.completeError(new StateError('The socket has closed'));
     }
     _requests.clear();
 
@@ -124,7 +124,7 @@ class TWebSocket implements TSocket {
           new Uint8List.fromList(CryptoUtils.base64StringToBytes(event.data));
     } on FormatException catch (_) {
       _onErrorController
-          .add(new UnsupportedError("Expected a Base 64 encoded string."));
+          .add(new UnsupportedError('Expected a Base 64 encoded string.'));
     }
 
     if (!_completers.isEmpty) {

@@ -50,7 +50,7 @@ class TJsonProtocol extends TProtocol {
   }
 
   /// Read a byte that must match [char]; otherwise throw a [TProtocolError].
-  void readJsonSyntaxChar(String char) {
+  void _readJsonSyntaxChar(String char) {
     int charByte = char.codeUnitAt(0);
     int byte = _reader.read();
     if (byte != charByte) {
@@ -281,7 +281,7 @@ class TJsonProtocol extends TProtocol {
       _context.read();
     }
 
-    readJsonSyntaxChar(_Constants.QUOTE);
+    _readJsonSyntaxChar(_Constants.QUOTE);
     while (true) {
       int byte = _reader.read();
       if (byte == _Constants.QUOTE.codeUnitAt(0)) {
@@ -310,8 +310,8 @@ class TJsonProtocol extends TProtocol {
       }
 
       // it's \u00XX
-      readJsonSyntaxChar(_Constants.HEX_0);
-      readJsonSyntaxChar(_Constants.HEX_0);
+      _readJsonSyntaxChar(_Constants.HEX_0);
+      _readJsonSyntaxChar(_Constants.HEX_0);
       transport.readAll(_tempBuffer, 0, 2);
       byte = _hexVal(_tempBuffer[0]) << 4 + _hexVal(_tempBuffer[1]);
       bytes.add(byte);
@@ -335,11 +335,11 @@ class TJsonProtocol extends TProtocol {
     _context.read();
 
     if (_context.escapeNumbers) {
-      readJsonSyntaxChar(_Constants.QUOTE);
+      _readJsonSyntaxChar(_Constants.QUOTE);
     }
     String str = _readJsonNumericChars();
     if (_context.escapeNumbers) {
-      readJsonSyntaxChar(_Constants.QUOTE);
+      _readJsonSyntaxChar(_Constants.QUOTE);
     }
 
     try {
@@ -367,7 +367,7 @@ class TJsonProtocol extends TProtocol {
     } else {
       if (_context.escapeNumbers) {
         // This will throw - we should have had a quote if escapeNumbers == true
-        readJsonSyntaxChar(_Constants.QUOTE);
+        _readJsonSyntaxChar(_Constants.QUOTE);
       }
       return double.parse(_readJsonNumericChars(), (_) {
         throw new TProtocolError(TProtocolErrorType.INVALID_DATA,
@@ -386,23 +386,23 @@ class TJsonProtocol extends TProtocol {
 
   void _readJsonObjectStart() {
     _context.read();
-    readJsonSyntaxChar(_Constants.LBRACE);
+    _readJsonSyntaxChar(_Constants.LBRACE);
     _pushContext(new _PairContext(this));
   }
 
   void _readJsonObjectEnd() {
-    readJsonSyntaxChar(_Constants.RBRACE);
+    _readJsonSyntaxChar(_Constants.RBRACE);
     _popContext();
   }
 
   void _readJsonArrayStart() {
     _context.read();
-    readJsonSyntaxChar(_Constants.LBRACKET);
+    _readJsonSyntaxChar(_Constants.LBRACKET);
     _pushContext(new _ListContext(this));
   }
 
   void _readJsonArrayEnd() {
-    readJsonSyntaxChar(_Constants.RBRACKET);
+    _readJsonSyntaxChar(_Constants.RBRACKET);
     _popContext();
   }
 
@@ -696,7 +696,7 @@ class _ListContext extends _BaseContext {
     if (_first) {
       _first = false;
     } else {
-      protocol.readJsonSyntaxChar(_Constants.COMMA);
+      protocol._readJsonSyntaxChar(_Constants.COMMA);
     }
   }
 }
@@ -724,7 +724,7 @@ class _PairContext extends _BaseContext {
       _first = false;
       _colon = true;
     } else {
-      protocol.readJsonSyntaxChar(symbol);
+      protocol._readJsonSyntaxChar(symbol);
       _colon = !_colon;
     }
   }

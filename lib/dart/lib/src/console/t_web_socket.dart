@@ -68,7 +68,7 @@ class TWebSocket implements TSocket {
     }
 
     for (var completer in _completers) {
-      completer.completeError(new StateError("The socket has closed"));
+      completer.completeError(new StateError('The socket has closed'));
     }
     _completers.clear();
 
@@ -98,7 +98,7 @@ class TWebSocket implements TSocket {
       data = new Uint8List.fromList(CryptoUtils.base64StringToBytes(message));
     } on FormatException catch (_) {
       _onErrorController
-          .add(new UnsupportedError("Expected a Base 64 encoded string."));
+          .add(new UnsupportedError('Expected a Base 64 encoded string.'));
     }
 
     if (!_completers.isEmpty) {
@@ -110,6 +110,6 @@ class TWebSocket implements TSocket {
 
   void _onError(Object error) {
     close();
-    _onErrorController.add("$error");
+    _onErrorController.add('$error');
   }
 }
