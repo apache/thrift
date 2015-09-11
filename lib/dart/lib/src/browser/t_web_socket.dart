@@ -102,7 +102,15 @@ class TWebSocket implements TSocket {
 
   void _onClose(CloseEvent event) {
     _socket = null;
+
+    for (var completer in _completers) {
+      completer.completeError(new StateError("The socket has closed"));
+    }
     _completers.clear();
+
+    for (var request in _requests) {
+      request.completer.completeError(new StateError("The socket has closed"));
+    }
     _requests.clear();
 
     _onStateController.add(TSocketState.CLOSED);
@@ -112,7 +120,8 @@ class TWebSocket implements TSocket {
     Uint8List data;
 
     try {
-      data = new Uint8List.fromList(CryptoUtils.base64StringToBytes(event.data));
+      data =
+          new Uint8List.fromList(CryptoUtils.base64StringToBytes(event.data));
     } on FormatException catch (_) {
       _onErrorController
           .add(new UnsupportedError("Expected a Base 64 encoded string."));

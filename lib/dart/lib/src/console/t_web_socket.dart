@@ -67,6 +67,11 @@ class TWebSocket implements TSocket {
       _socket = null;
     }
 
+    for (var completer in _completers) {
+      completer.completeError(new StateError("The socket has closed"));
+    }
+    _completers.clear();
+
     _onStateController.add(TSocketState.CLOSED);
   }
 

@@ -73,9 +73,7 @@ class TJsonProtocol extends TProtocol {
     }
   }
 
-  int _hexChar(int byte) {
-    return byte.toRadixString(16).codeUnitAt(0);
-  }
+  int _hexChar(int byte) => byte.toRadixString(16).codeUnitAt(0);
 
   /// write
 

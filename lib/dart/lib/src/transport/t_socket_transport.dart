@@ -39,7 +39,7 @@ class TSocketTransport extends TBufferedTransport {
   TSocketTransport(this.socket, {isListening: false})
       : this.isListening = isListening {
     if (socket == null) {
-      throw new ArgumentError.notNull("socket");
+      throw new ArgumentError.notNull('socket');
     }
 
     socket.onError.listen((String e) => log.warning(e));

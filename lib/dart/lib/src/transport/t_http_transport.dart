@@ -50,7 +50,8 @@ class THttpClientTransport extends TBufferedTransport {
 
     Uint8List data;
     try {
-      data = new Uint8List.fromList(CryptoUtils.base64StringToBytes(response.body));
+      data = new Uint8List.fromList(
+          CryptoUtils.base64StringToBytes(response.body));
     } on FormatException catch (_) {
       throw new TProtocolError(TProtocolErrorType.INVALID_DATA,
           "Expected a Base 64 encoded string.");
