@@ -4,4 +4,6 @@ thrift --gen "dart:gen_server" "../shared.thrift" && \
 thrift --gen "dart:gen_server" "../tutorial.thrift";
 	cd gen-dart/tutorial && pub get && cd ../.. && \
 cd client && pub get && cd .. && \
+cd server && pub get && cd .. && \
+dartfmt -w gen-dart && \
 echo "Enjoy the Dart tutorial!"

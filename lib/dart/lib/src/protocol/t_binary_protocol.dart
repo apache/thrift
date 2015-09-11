@@ -216,19 +216,19 @@ class TBinaryProtocol extends TProtocol {
   final Uint8List _i16In = new Uint8List(2);
   int readI16() {
     transport.readAll(_i16In, 0, 2);
-    return _i16In.buffer.asByteData().getUint16(0);
+    return _i16In.buffer.asByteData().getInt16(0);
   }
 
   final Uint8List _i32In = new Uint8List(4);
   int readI32() {
     transport.readAll(_i32In, 0, 4);
-    return _i32In.buffer.asByteData().getUint32(0);
+    return _i32In.buffer.asByteData().getInt32(0);
   }
 
   final Uint8List _i64In = new Uint8List(8);
   int readI64() {
     transport.readAll(_i64In, 0, 8);
-    return _i64In.buffer.asByteData().getUint64(0);
+    return _i64In.buffer.asByteData().getInt64(0);
   }
 
   final Uint8List _doubleIn = new Uint8List(8);

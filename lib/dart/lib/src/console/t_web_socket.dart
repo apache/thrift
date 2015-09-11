@@ -18,15 +18,13 @@
 library thrift.src.console;
 
 import 'dart:async';
-import 'dart:convert' show Utf8Codec;
 import 'dart:io';
 
+import 'package:crypto/crypto.dart' show CryptoUtils;
 import 'package:thrift/thrift.dart';
 
 /// A [TSocket] backed by a [WebSocket] from dart:io
 class TWebSocket implements TSocket {
-  static const utf8Codec = const Utf8Codec();
-
   final StreamController<TSocketState> _onStateController;
   Stream<TSocketState> get onState => _onStateController.stream;
 
@@ -82,18 +80,19 @@ class TWebSocket implements TSocket {
       result = completer.future;
     }
 
-    _socket.add(data);
+    _socket.add(CryptoUtils.bytesToBase64(data));
 
     return result;
   }
 
   void _onMessage(Object message) {
-    List<int> data = message;
+    List<int> data;
 
-    if (message is String) {
-      data = utf8Codec.encode(message);
-    } else {
-      data = message;
+    try {
+      data = CryptoUtils.base64StringToBytes(message);
+    } on FormatException catch (_) {
+      _onErrorController
+          .add(new UnsupportedError("Expected a Base 64 encoded string."));
     }
 
     if (!_completers.isEmpty) {

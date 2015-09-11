@@ -28,21 +28,25 @@ class TJsonProtocol extends TProtocol {
   _BaseContext _context;
   _LookaheadReader _reader;
 
-  List<_BaseContext> contextStack = [];
+  final List<_BaseContext> _contextStack = [];
   final List<int> _tempBuffer = new List(4);
 
   TJsonProtocol(TTransport transport) : super(transport) {
-    _context = new _BaseContext(this);
     _reader = new _LookaheadReader(this);
   }
 
   void _pushContext(_BaseContext c) {
-    contextStack.add(c);
+    _contextStack.add(c);
     _context = c;
   }
 
   void _popContext() {
-    _context = contextStack.removeLast();
+    _context = _contextStack.removeLast();
+  }
+
+  void _resetContext() {
+    _contextStack.clear();
+    _context = new _BaseContext(this);
   }
 
   /// Read a byte that must match [char]; otherwise throw a [TProtocolError].
@@ -51,7 +55,7 @@ class TJsonProtocol extends TProtocol {
     int byte = _reader.read();
     if (byte != charByte) {
       throw new TProtocolError(TProtocolErrorType.INVALID_DATA,
-          "Unexpected character: ${new String.fromCharCode(byte)}");
+          "Expected character $char but found: ${new String.fromCharCode(byte)}");
     }
   }
 
@@ -95,7 +99,7 @@ class TJsonProtocol extends TProtocol {
         if (_tempBuffer[0] == 1) {
           transport.write(bytes, i, 1);
         } else if (_tempBuffer[0] > 1) {
-          transport.write(_Constants.BACKSLASH.codeUnits, i, 1);
+          transport.writeAll(_Constants.BACKSLASH.codeUnits);
           transport.write(_tempBuffer, 0, 1);
         } else {
           transport.writeAll(_Constants.ESCSEQ.codeUnits);
@@ -169,6 +173,8 @@ class TJsonProtocol extends TProtocol {
   }
 
   void writeMessageBegin(TMessage message) {
+    _resetContext();
+
     _writeJsonArrayStart();
     _writeJsonInteger(VERSION_1);
 
@@ -319,11 +325,10 @@ class TJsonProtocol extends TProtocol {
   String _readJsonNumericChars() {
     StringBuffer buffer = new StringBuffer();
     while (true) {
-      int byte = _reader.peek();
-      if (!_Constants.isJsonNumeric(byte)) {
+      if (!_Constants.isJsonNumeric(_reader.peek())) {
         break;
       }
-      buffer.write(new String.fromCharCode(byte));
+      buffer.write(new String.fromCharCode(_reader.read()));
     }
     return buffer.toString();
   }
@@ -402,6 +407,8 @@ class TJsonProtocol extends TProtocol {
   }
 
   TMessage readMessageBegin() {
+    _resetContext();
+
     _readJsonArrayStart();
     if (_readJsonInteger() != VERSION_1) {
       throw new TProtocolError(
@@ -430,14 +437,13 @@ class TJsonProtocol extends TProtocol {
   }
 
   TField readFieldBegin() {
-    int byte = _reader.peek();
-
     String name = "";
     int type = TType.STOP;
     int id = 0;
 
-    if (byte != _Constants.RBRACE.codeUnitAt(0)) {
+    if (_reader.peek() != _Constants.RBRACE.codeUnitAt(0)) {
       id = _readJsonInteger();
+      _readJsonObjectStart();
       type = _Constants.getTypeIdForTypeName(_readJsonString());
     }
 
@@ -586,18 +592,18 @@ class _Constants {
     return _TYPE_ID_TO_NAME[typeId];
   }
 
-  static final Map<List<int>, int> _NAME_TO_TYPE_ID = new Map.unmodifiable({
-    NAME_BOOL.codeUnits: TType.BOOL,
-    NAME_BYTE.codeUnits: TType.BYTE,
-    NAME_I16.codeUnits: TType.I16,
-    NAME_I32.codeUnits: TType.I32,
-    NAME_I64.codeUnits: TType.I64,
-    NAME_DOUBLE.codeUnits: TType.DOUBLE,
-    NAME_STRING.codeUnits: TType.STRING,
-    NAME_STRUCT.codeUnits: TType.STRUCT,
-    NAME_MAP.codeUnits: TType.MAP,
-    NAME_SET.codeUnits: TType.SET,
-    NAME_LIST.codeUnits: TType.LIST
+  static final Map<String, int> _NAME_TO_TYPE_ID = new Map.unmodifiable({
+    NAME_BOOL: TType.BOOL,
+    NAME_BYTE: TType.BYTE,
+    NAME_I16: TType.I16,
+    NAME_I32: TType.I32,
+    NAME_I64: TType.I64,
+    NAME_DOUBLE: TType.DOUBLE,
+    NAME_STRING: TType.STRING,
+    NAME_STRUCT: TType.STRUCT,
+    NAME_MAP: TType.MAP,
+    NAME_SET: TType.SET,
+    NAME_LIST: TType.LIST
   });
 
   static int getTypeIdForTypeName(List<int> bytes) {

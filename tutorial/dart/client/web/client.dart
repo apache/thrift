@@ -19,6 +19,7 @@ import 'dart:html';
 
 import 'package:thrift/thrift.dart';
 import 'package:thrift/thrift_browser.dart';
+import 'package:shared/shared.dart';
 import 'package:tutorial/tutorial.dart';
 
 /// Adapted from the AS3 tutorial
@@ -39,53 +40,6 @@ class CalculatorUI {
     _initConnection();
   }
 
-  void _buildInterface() {
-    output.children.forEach((e) {
-      e.remove();
-    });
-
-    output.append(new BRElement());
-    ButtonElement pingButton = new ButtonElement()
-      ..text = "PING"
-      ..onClick.listen(_onPingClick);
-    output.append(pingButton);
-    output.append(new BRElement());
-
-    output.append(new BRElement());
-    InputElement num1 = new InputElement()
-      ..id = "add1"
-      ..width = 50;
-    output.append(num1);
-    InputElement num2 = new InputElement()
-      ..id = "add2"
-      ..width = 50;
-    output.append(num2);
-    ButtonElement addButton = new ButtonElement()
-      ..text = "ADD"
-      ..onClick.listen(_onAddClick);
-    output.append(addButton);
-    output.append(new BRElement());
-  }
-
-  void _onPingClick(MouseEvent e) {
-    _validate();
-
-    _calculatorClient.ping();
-  }
-
-  void _onAddClick(MouseEvent e) {
-    _validate();
-
-    InputElement add1 = querySelector("#add1");
-    InputElement add2 = querySelector("#add2");
-
-    _calculatorClient
-        .add(int.parse(add1.value), int.parse(add2.value))
-        .then((int result) {
-      window.alert("The answer is $result");
-    });
-  }
-
   void _validate() {
     if (!_transport.isOpen) {
       window.alert("The transport is not open!");
@@ -95,10 +49,236 @@ class CalculatorUI {
   void _initConnection() {
     _transport = new TSocketTransport(
         new TWebSocket(Uri.parse('ws://127.0.0.1:9090/ws')));
-    TProtocol protocol =
-        new TBinaryProtocol(_transport, strictRead: false, strictWrite: false);
+    TProtocol protocol = new TJsonProtocol(_transport);
     _transport.open();
 
     _calculatorClient = new CalculatorClient(protocol);
+  }
+
+  void _buildInterface() {
+    output.children.forEach((e) {
+      e.remove();
+    });
+
+    _buildPingComponent();
+
+    _buildAddComponent();
+
+    _buildCalculatorComponent();
+
+    _buildGetStructComponent();
+  }
+
+  void _buildPingComponent() {
+    output.append(new HeadingElement.h3()..text = "Ping");
+    ButtonElement pingButton = new ButtonElement()
+      ..text = "PING"
+      ..onClick.listen(_onPingClick);
+    output.append(pingButton);
+    output.append(new BRElement());
+  }
+
+  void _onPingClick(MouseEvent e) {
+    _validate();
+
+    _calculatorClient.ping();
+  }
+
+  void _buildAddComponent() {
+    output.append(new BRElement());
+    output.append(new HRElement());
+    output.append(new HeadingElement.h3()..text = "Add");
+    InputElement num1 = new InputElement()
+      ..id = "add1"
+      ..type = "number"
+      ..style.fontSize = "14px"
+      ..style.width = "50px";
+    output.append(num1);
+    SpanElement op = new SpanElement()
+      ..text = "+"
+      ..style.fontSize = "14px"
+      ..style.marginLeft = "10px";
+    output.append(op);
+    InputElement num2 = new InputElement()
+      ..id = "add2"
+      ..type = "number"
+      ..style.fontSize = "14px"
+      ..style.width = "50px"
+      ..style.marginLeft = "10px";
+    output.append(num2);
+    ButtonElement addButton = new ButtonElement()
+      ..text = "="
+      ..style.fontSize = "14px"
+      ..style.marginLeft = "10px"
+      ..onClick.listen(_onAddClick);
+    output.append(addButton);
+    SpanElement result = new SpanElement()
+      ..id = "addResult"
+      ..style.fontSize = "14px"
+      ..style.marginLeft = "10px";
+    output.append(result);
+    output.append(new BRElement());
+  }
+
+  void _onAddClick(MouseEvent e) {
+    _validate();
+
+    InputElement num1 = querySelector("#add1");
+    InputElement num2 = querySelector("#add2");
+    SpanElement result = querySelector("#addResult");
+
+    _calculatorClient
+        .add(int.parse(num1.value), int.parse(num2.value))
+        .then((int n) {
+      result.text = "$n";
+    });
+  }
+
+  void _buildCalculatorComponent() {
+    output.append(new BRElement());
+    output.append(new HRElement());
+    output.append(new HeadingElement.h3()..text = "Calculator");
+    InputElement num1 = new InputElement()
+      ..id = "calc1"
+      ..type = "number"
+      ..style.fontSize = "14px"
+      ..style.width = "50px";
+    output.append(num1);
+    SelectElement op = new SelectElement()
+      ..id = "calcOp"
+      ..multiple = false
+      ..selectedIndex = 0
+      ..style.fontSize = "16px"
+      ..style.marginLeft = "10px"
+      ..style.width = "50px";
+    OptionElement addOp = new OptionElement()
+      ..text = "+"
+      ..value = Operation.ADD.toString();
+    op.add(addOp, 0);
+    OptionElement subtractOp = new OptionElement()
+      ..text = "-"
+      ..value = Operation.SUBTRACT.toString();
+    op.add(subtractOp, 1);
+    OptionElement multiplyOp = new OptionElement()
+      ..text = "*"
+      ..value = Operation.MULTIPLY.toString();
+    op.add(multiplyOp, 2);
+    OptionElement divideOp = new OptionElement()
+      ..text = "/"
+      ..value = Operation.DIVIDE.toString();
+    op.add(divideOp, 3);
+    output.append(op);
+    InputElement num2 = new InputElement()
+      ..id = "calc2"
+      ..type = "number"
+      ..style.fontSize = "14px"
+      ..style.width = "50px"
+      ..style.marginLeft = "10px";
+    output.append(num2);
+    ButtonElement calcButton = new ButtonElement()
+      ..text = "="
+      ..style.fontSize = "14px"
+      ..style.marginLeft = "10px"
+      ..onClick.listen(_onCalcClick);
+    output.append(calcButton);
+    SpanElement result = new SpanElement()
+      ..id = "calcResult"
+      ..style.fontSize = "14px"
+      ..style.marginLeft = "10px";
+    output.append(result);
+    output.append(new BRElement());
+    output.append(new BRElement());
+    LabelElement logIdLabel = new LabelElement()
+      ..text = "Log ID:"
+      ..style.fontSize = "14px";
+    output.append(logIdLabel);
+    InputElement logId = new InputElement()
+      ..id = "logId"
+      ..type = "number"
+      ..value = "1"
+      ..style.fontSize = "14px"
+      ..style.width = "50px"
+      ..style.marginLeft = "10px";
+    output.append(logId);
+    LabelElement commentLabel = new LabelElement()
+      ..text = "Comment:"
+      ..style.fontSize = "14px"
+      ..style.marginLeft = "10px";
+    output.append(commentLabel);
+    InputElement comment = new InputElement()
+      ..id = "comment"
+      ..style.fontSize = "14px"
+      ..style.width = "100px"
+      ..style.marginLeft = "10px";
+    output.append(comment);
+    output.append(new BRElement());
+  }
+
+  void _onCalcClick(MouseEvent e) {
+    _validate();
+
+    InputElement num1 = querySelector("#calc1");
+    InputElement num2 = querySelector("#calc2");
+    SelectElement op = querySelector("#calcOp");
+    SpanElement result = querySelector("#calcResult");
+    SelectElement logId = querySelector("#logId");
+    InputElement comment = querySelector("#comment");
+
+    Work work = new Work();
+    work.num1 = int.parse(num1.value);
+    work.num2 = int.parse(num2.value);
+    work.op = int.parse(op.options[op.selectedIndex].value);
+    work.comment = comment.value;
+
+    _calculatorClient.calculate(int.parse(logId.value), work).then((int n) {
+      result.text = "$n";
+    });
+  }
+
+  void _buildGetStructComponent() {
+    output.append(new BRElement());
+    output.append(new HRElement());
+    output.append(new HeadingElement.h3()..text = "Get Struct");
+    LabelElement logIdLabel = new LabelElement()
+      ..text = "Struct Key:"
+      ..style.fontSize = "14px";
+    output.append(logIdLabel);
+    InputElement logId = new InputElement()
+      ..id = "structKey"
+      ..type = "number"
+      ..value = "1"
+      ..style.fontSize = "14px"
+      ..style.width = "50px"
+      ..style.marginLeft = "10px";
+    output.append(logId);
+    ButtonElement getStructButton = new ButtonElement()
+      ..text = "GET"
+      ..style.fontSize = "14px"
+      ..style.marginLeft = "10px"
+      ..onClick.listen(_onGetStructClick);
+    output.append(getStructButton);
+    output.append(new BRElement());
+    output.append(new BRElement());
+    TextAreaElement result = new TextAreaElement()
+      ..id = "getStructResult"
+      ..style.fontSize = "14px"
+      ..style.width = "300px"
+      ..style.height = "50px"
+      ..style.marginLeft = "10px";
+    output.append(result);
+    output.append(new BRElement());
+  }
+
+  void _onGetStructClick(MouseEvent e) {
+    _validate();
+
+    InputElement structKey = querySelector("#structKey");
+    SpanElement result = querySelector("#getStructResult");
+
+    _calculatorClient
+        .getStruct(int.parse(structKey.value))
+        .then((SharedStruct s) {
+      result.text = "${s.toString()}";
+    });
   }
 }

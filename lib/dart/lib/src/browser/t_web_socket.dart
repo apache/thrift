@@ -18,18 +18,16 @@
 library thrift.src.browser;
 
 import 'dart:async';
-import 'dart:convert' show Utf8Codec;
 import 'dart:html' show CloseEvent;
 import 'dart:html' show Event;
 import 'dart:html' show MessageEvent;
 import 'dart:html' show WebSocket;
 
+import 'package:crypto/crypto.dart' show CryptoUtils;
 import 'package:thrift/thrift.dart';
 
 /// A [TSocket] backed by a [WebSocket] from dart:html
 class TWebSocket implements TSocket {
-  static const utf8Codec = const Utf8Codec();
-
   final Uri url;
 
   final StreamController<TSocketState> _onStateController;
@@ -92,7 +90,7 @@ class TWebSocket implements TSocket {
     while (isOpen && _requests.isNotEmpty) {
       _Request request = _requests.removeAt(0);
       _completers.add(request.completer);
-      _socket.sendString(utf8Codec.decode(request.data));
+      _socket.sendString(CryptoUtils.bytesToBase64(request.data));
     }
   }
 
@@ -112,10 +110,11 @@ class TWebSocket implements TSocket {
   void _onMessage(MessageEvent event) {
     List<int> data;
 
-    if (event.data is String) {
-      data = utf8Codec.encode(event.data);
-    } else {
-      data = event.data;
+    try {
+      data = CryptoUtils.base64StringToBytes(event.data);
+    } on FormatException catch (_) {
+      _onErrorController
+          .add(new UnsupportedError("Expected a Base 64 encoded string."));
     }
 
     if (!_completers.isEmpty) {
