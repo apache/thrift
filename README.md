@@ -46,9 +46,11 @@ Hierarchy
 thrift/
 
   compiler/
+
     Contains the Thrift compiler, implemented in C++.
 
   lib/
+
     Contains the Thrift software library implementation, subdivided by
     language of implementation.
 

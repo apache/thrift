@@ -41,6 +41,7 @@ thrift_SOURCES = src/main.cc \
                  src/logging.h \
                  src/md5.h \
                  src/audit/t_audit.cpp \
+                 src/audit/t_audit.h \
                  src/parse/t_doc.h \
                  src/parse/t_type.h \
                  src/parse/t_base_type.h \
@@ -111,6 +112,7 @@ WINDOWS_DIST = \
              compiler.vcxproj.filters
 
 EXTRA_DIST = \
+             coding_standards.md \
              README.md \
              CMakeLists.txt \
              $(WINDOWS_DIST)

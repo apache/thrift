@@ -261,12 +261,15 @@ WINDOWS_DIST = \
              3rdparty.props
 
 EXTRA_DIST = \
+             CMakeLists.txt \
+             coding_standards.md \
              README.md \
              thrift-nb.pc.in \
              thrift.pc.in \
              thrift-z.pc.in \
              thrift-qt.pc.in \
              thrift-qt5.pc.in \
+             src/thrift/qt/CMakeLists.txt \
              $(WINDOWS_DIST)
 
 style-local:

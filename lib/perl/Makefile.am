@@ -42,6 +42,7 @@ clean-local:
 	rm -f Makefile-perl.mk.old
 
 EXTRA_DIST = \
+	coding_standards.md \
 	Makefile.PL \
 	test.pl \
 	lib/Thrift.pm \
@@ -57,6 +58,9 @@ EXTRA_DIST = \
 	lib/Thrift/Protocol.pm \
 	lib/Thrift/ProtocolDecorator.pm \
 	lib/Thrift/Server.pm \
+	lib/Thrift/ServerSocket.pm \
 	lib/Thrift/Socket.pm \
+	lib/Thrift/SSLSocket.pm \
+	lib/Thrift/SSLServerSocket.pm \
 	lib/Thrift/Transport.pm \
 	README.md

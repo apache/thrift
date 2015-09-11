@@ -87,15 +87,22 @@ style-local:
 	codespell --write-changes --skip=$(skipped_files) --disable-colors
 
 EXTRA_DIST = \
+	.clang-format \
+	.editorconfig \
 	.travis.yml \
+	appveyor.yml \
 	bower.json \
+	build \
+	CMakeLists.txt \
 	composer.json \
 	contrib \
 	CONTRIBUTING.md \
 	debian \
 	doc \
 	doap.rdf \
+	json-schema.json \
 	package.json \
+	rat_exclude \
 	sonar-project.properties \
 	LICENSE \
 	CHANGES \

@@ -95,7 +95,7 @@ func TestWriteSimpleJSONProtocolByte(t *testing.T) {
 		if s != fmt.Sprint(value) {
 			t.Fatalf("Bad value for %s %v: %s", thetype, value, s)
 		}
-		v := byte(0)
+		v := int8(0)
 		if err := json.Unmarshal([]byte(s), &v); err != nil || v != value {
 			t.Fatalf("Bad json-decoded value for %s %v, wrote: '%s', expected: '%v'", thetype, value, s, v)
 		}
