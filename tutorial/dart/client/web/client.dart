@@ -75,7 +75,6 @@ class CalculatorUI {
       ..text = "PING"
       ..onClick.listen(_onPingClick);
     output.append(pingButton);
-    output.append(new BRElement());
   }
 
   void _onPingClick(MouseEvent e) {
@@ -85,8 +84,6 @@ class CalculatorUI {
   }
 
   void _buildAddComponent() {
-    output.append(new BRElement());
-    output.append(new HRElement());
     output.append(new HeadingElement.h3()..text = "Add");
     InputElement num1 = new InputElement()
       ..id = "add1"
@@ -117,7 +114,6 @@ class CalculatorUI {
       ..style.fontSize = "14px"
       ..style.marginLeft = "10px";
     output.append(result);
-    output.append(new BRElement());
   }
 
   void _onAddClick(MouseEvent e) {
@@ -135,8 +131,6 @@ class CalculatorUI {
   }
 
   void _buildCalculatorComponent() {
-    output.append(new BRElement());
-    output.append(new HRElement());
     output.append(new HeadingElement.h3()..text = "Calculator");
     InputElement num1 = new InputElement()
       ..id = "calc1"
@@ -211,7 +205,6 @@ class CalculatorUI {
       ..style.width = "100px"
       ..style.marginLeft = "10px";
     output.append(comment);
-    output.append(new BRElement());
   }
 
   void _onCalcClick(MouseEvent e) {
@@ -224,20 +217,21 @@ class CalculatorUI {
     SelectElement logId = querySelector("#logId");
     InputElement comment = querySelector("#comment");
 
+    int logIdValue = int.parse(logId.value);
+    logId.value = (logIdValue + 1).toString();
+
     Work work = new Work();
     work.num1 = int.parse(num1.value);
     work.num2 = int.parse(num2.value);
     work.op = int.parse(op.options[op.selectedIndex].value);
     work.comment = comment.value;
 
-    _calculatorClient.calculate(int.parse(logId.value), work).then((int n) {
+    _calculatorClient.calculate(logIdValue, work).then((int n) {
       result.text = "$n";
     });
   }
 
   void _buildGetStructComponent() {
-    output.append(new BRElement());
-    output.append(new HRElement());
     output.append(new HeadingElement.h3()..text = "Get Struct");
     LabelElement logIdLabel = new LabelElement()
       ..text = "Struct Key:"
@@ -266,7 +260,6 @@ class CalculatorUI {
       ..style.height = "50px"
       ..style.marginLeft = "10px";
     output.append(result);
-    output.append(new BRElement());
   }
 
   void _onGetStructClick(MouseEvent e) {

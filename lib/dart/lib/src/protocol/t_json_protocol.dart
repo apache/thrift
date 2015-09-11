@@ -29,7 +29,7 @@ class TJsonProtocol extends TProtocol {
   _LookaheadReader _reader;
 
   final List<_BaseContext> _contextStack = [];
-  final List<int> _tempBuffer = new List(4);
+  final Uint8List _tempBuffer = new Uint8List(4);
 
   TJsonProtocol(TTransport transport) : super(transport) {
     _reader = new _LookaheadReader(this);
@@ -80,7 +80,7 @@ class TJsonProtocol extends TProtocol {
   /// write
 
   /// Write the [bytes] as JSON characters, escaping as needed.
-  void _writeJsonString(List<int> bytes) {
+  void _writeJsonString(Uint8List bytes) {
     _context.write();
     transport.writeAll(_Constants.QUOTE.codeUnits);
 
@@ -140,7 +140,7 @@ class TJsonProtocol extends TProtocol {
     }
   }
 
-  void _writeJsonBase64(List<int> bytes) {
+  void _writeJsonBase64(Uint8List bytes) {
     _context.write();
     transport.writeAll(_Constants.QUOTE.codeUnits);
 
@@ -276,7 +276,7 @@ class TJsonProtocol extends TProtocol {
 
   /// read
 
-  List<int> _readJsonString({bool skipContext: false}) {
+  Uint8List _readJsonString({bool skipContext: false}) {
     List<int> bytes = [];
 
     if (!skipContext) {
@@ -319,7 +319,7 @@ class TJsonProtocol extends TProtocol {
       bytes.add(byte);
     }
 
-    return bytes;
+    return new Uint8List.fromList(bytes);
   }
 
   String _readJsonNumericChars() {
@@ -356,7 +356,7 @@ class TJsonProtocol extends TProtocol {
     _context.read();
 
     if (_reader.peek() == _Constants.QUOTE.codeUnitAt(0)) {
-      List<int> bytes = _readJsonString(skipContext: true);
+      Uint8List bytes = _readJsonString(skipContext: true);
       double d = double.parse(utf8Codec.decode(bytes), (_) {
         throw new TProtocolError(TProtocolErrorType.INVALID_DATA,
             "Bad data encounted in numeric data");
@@ -378,10 +378,12 @@ class TJsonProtocol extends TProtocol {
     }
   }
 
-  List<int> _readJsonBase64() {
-    List<int> bytes = _readJsonString();
-    String base64 = utf8Codec.decode(bytes);
-    return CryptoUtils.base64StringToBytes(base64);
+  Uint8List _readJsonBase64() {
+    // convert UTF-8 bytes of a Base 64 encoded string to binary bytes
+    Uint8List base64Bytes = _readJsonString();
+    String base64 = utf8Codec.decode(base64Bytes);
+
+    return new Uint8List.fromList(CryptoUtils.base64StringToBytes(base64));
   }
 
   void _readJsonObjectStart() {
@@ -415,7 +417,7 @@ class TJsonProtocol extends TProtocol {
           TProtocolErrorType.BAD_VERSION, "Message contained bad version.");
     }
 
-    List<int> buffer = _readJsonString();
+    Uint8List buffer = _readJsonString();
     String name = utf8Codec.decode(buffer);
     int type = _readJsonInteger();
     int seqid = _readJsonInteger();
@@ -544,7 +546,7 @@ class _Constants {
 
   static const String ESCSEQ = r'\u00';
 
-  static final List<int> JSON_CHAR_TABLE = new List.unmodifiable([
+  static final Uint8List JSON_CHAR_TABLE = new Uint8List.fromList([
     0, 0, 0, 0, 0, 0, 0, 0, // 8 bytes
     'b'.codeUnitAt(0), 't'.codeUnitAt(0), 'n'.codeUnitAt(0), 0, // 4 bytes
     'f'.codeUnitAt(0), 'r'.codeUnitAt(0), 0, 0, // 4 bytes
@@ -606,7 +608,7 @@ class _Constants {
     NAME_LIST: TType.LIST
   });
 
-  static int getTypeIdForTypeName(List<int> bytes) {
+  static int getTypeIdForTypeName(Uint8List bytes) {
     String name = utf8codec.decode(bytes);
     if (!_NAME_TO_TYPE_ID.containsKey(name)) {
       throw new TProtocolError(
@@ -645,7 +647,7 @@ class _LookaheadReader {
   _LookaheadReader(this.protocol);
 
   bool _hasData;
-  final List<int> _data = new List(1);
+  final Uint8List _data = new Uint8List(1);
 
   int read() {
     if (_hasData) {

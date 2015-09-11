@@ -65,12 +65,12 @@ class TSocketTransport extends TBufferedTransport {
     if (isListening) {
       _setReadBuffer(_consumeWriteBuffer());
     } else {
-      List<int> result = await socket.send(_consumeWriteBuffer());
+      Uint8List result = await socket.send(_consumeWriteBuffer());
       _setReadBuffer(result);
     }
   }
 
-  void _onMessage(List<int> message) {
+  void _onMessage(Uint8List message) {
     writeAll(message);
     _setReadBuffer(_consumeWriteBuffer());
   }

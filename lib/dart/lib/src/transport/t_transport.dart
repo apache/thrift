@@ -32,13 +32,13 @@ abstract class TTransport {
   /// Reads up to [length] bytes into [buffer], starting at [offset].
   /// Returns the number of bytes actually read.
   /// Throws [TTransportError] if there was an error reading data
-  int read(List<int> buffer, int offset, int length);
+  int read(Uint8List buffer, int offset, int length);
 
   /// Guarantees that all of [length] bytes are actually read off the transport.
   /// Returns the number of bytes actually read, which must be equal to
   /// [length].
   /// Throws [TTransportError] if there was an error reading data
-  int readAll(List<int> buffer, int offset, int length) {
+  int readAll(Uint8List buffer, int offset, int length) {
     int got = 0;
     int ret = 0;
     while (got < length) {
@@ -56,13 +56,13 @@ abstract class TTransport {
 
   /// Writes the [bytes] to the output.
   /// Throws [TTransportError] if there was an error writing data
-  void writeAll(List<int> buffer) {
+  void writeAll(Uint8List buffer) {
     write(buffer, 0, buffer.length);
   }
 
   /// Writes up to [len] bytes from the buffer.
   /// Throws [TTransportError] if there was an error writing data
-  void write(List<int> buffer, int offset, int length);
+  void write(Uint8List buffer, int offset, int length);
 
   /// Flush any pending data out of a transport buffer.
   /// Throws [TTransportError] if there was an error writing out data.

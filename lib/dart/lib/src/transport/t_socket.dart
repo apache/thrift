@@ -24,7 +24,7 @@ abstract class TSocket {
 
   Stream<String> get onError;
 
-  Stream<List<int>> get onMessage;
+  Stream<Uint8List> get onMessage;
 
   bool get isOpen;
 
@@ -34,5 +34,5 @@ abstract class TSocket {
 
   Future close();
 
-  Future<List<int>> send(List<int> data);
+  Future<Uint8List> send(Uint8List data);
 }

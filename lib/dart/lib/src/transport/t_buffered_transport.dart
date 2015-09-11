@@ -22,13 +22,13 @@ class TBufferedTransport extends TTransport {
   final List<int> _writeBuffer = [];
   Iterator<int> _readIterator;
 
-  List<int> _consumeWriteBuffer() {
-    List<int> buffer = new List.from(_writeBuffer, growable: false);
+  Uint8List _consumeWriteBuffer() {
+    Uint8List buffer = new Uint8List.fromList(_writeBuffer);
     _writeBuffer.clear();
     return buffer;
   }
 
-  void _setReadBuffer(List<int> readBuffer) {
+  void _setReadBuffer(Uint8List readBuffer) {
     _readIterator = readBuffer != null ? readBuffer.iterator : null;
   }
 
@@ -51,7 +51,7 @@ class TBufferedTransport extends TTransport {
     _reset(isOpen: false);
   }
 
-  int read(List<int> buffer, int offset, int length) {
+  int read(Uint8List buffer, int offset, int length) {
     if (buffer == null) {
       throw new ArgumentError.notNull("buffer");
     }
@@ -78,7 +78,7 @@ class TBufferedTransport extends TTransport {
     return i;
   }
 
-  void write(List<int> buffer, int offset, int length) {
+  void write(Uint8List buffer, int offset, int length) {
     if (buffer == null) {
       throw new ArgumentError.notNull("buffer");
     }

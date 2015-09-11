@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data' show Uint8List;
 
 import 'package:thrift/thrift.dart';
 import 'package:thrift/thrift_console.dart';
@@ -52,7 +53,7 @@ Future _initWebSocket(HttpRequest request) async {
   socket.onMessage.listen(_onMessage);
 }
 
-Future _onMessage(List<int> data) async {
+Future _onMessage(Uint8List data) async {
   _processor.process(_inputProtocol, _outputProtocol);
 }
 

@@ -45,7 +45,7 @@ class TFramedTransport extends TBufferedTransport {
     return _transport.close();
   }
 
-  int read(List<int> buffer, int offset, int length) {
+  int read(Uint8List buffer, int offset, int length) {
     if (hasReadData) {
       int got = super.read(buffer, offset, length);
       if (got > 0) return got;
@@ -65,13 +65,13 @@ class TFramedTransport extends TBufferedTransport {
           TTransportErrorType.UNKNOWN, "Read a negative frame size: $size");
     }
 
-    List<int> buffer = new List(size);
+    Uint8List buffer = new Uint8List(size);
     _transport.readAll(buffer, 0, size);
     _setReadBuffer(buffer);
   }
 
   Future flush() {
-    List<int> buffer = _consumeWriteBuffer();
+    Uint8List buffer = _consumeWriteBuffer();
     int length = buffer.length;
 
     headerBytes.buffer.asByteData().setUint32(0, length);

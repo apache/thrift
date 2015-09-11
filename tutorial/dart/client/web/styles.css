@@ -7,3 +7,9 @@ html, body {
     padding: 10px;
     font-family: 'Roboto', sans-serif;
 }
+
+h3 {
+    border-bottom: solid;
+    border-width: thin;
+    padding-top: 20px;
+}

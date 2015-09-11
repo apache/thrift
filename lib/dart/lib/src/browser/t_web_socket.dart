@@ -22,6 +22,7 @@ import 'dart:html' show CloseEvent;
 import 'dart:html' show Event;
 import 'dart:html' show MessageEvent;
 import 'dart:html' show WebSocket;
+import 'dart:typed_data' show Uint8List;
 
 import 'package:crypto/crypto.dart' show CryptoUtils;
 import 'package:thrift/thrift.dart';
@@ -36,10 +37,10 @@ class TWebSocket implements TSocket {
   final StreamController<Object> _onErrorController;
   Stream<Object> get onError => _onErrorController.stream;
 
-  final StreamController<List<int>> _onMessageController;
-  Stream<List<int>> get onMessage => _onMessageController.stream;
+  final StreamController<Uint8List> _onMessageController;
+  Stream<Uint8List> get onMessage => _onMessageController.stream;
 
-  final List<Completer<List<int>>> _completers = [];
+  final List<Completer<Uint8List>> _completers = [];
   final List<_Request> _requests = [];
 
   TWebSocket(this.url)
@@ -77,8 +78,8 @@ class TWebSocket implements TSocket {
     }
   }
 
-  Future<List<int>> send(List<int> data) {
-    Completer<List<int>> completer = new Completer();
+  Future<Uint8List> send(Uint8List data) {
+    Completer<Uint8List> completer = new Completer();
 
     _requests.add(new _Request(data, completer));
     _sendRequests();
@@ -108,10 +109,10 @@ class TWebSocket implements TSocket {
   }
 
   void _onMessage(MessageEvent event) {
-    List<int> data;
+    Uint8List data;
 
     try {
-      data = CryptoUtils.base64StringToBytes(event.data);
+      data = new Uint8List.fromList(CryptoUtils.base64StringToBytes(event.data));
     } on FormatException catch (_) {
       _onErrorController
           .add(new UnsupportedError("Expected a Base 64 encoded string."));
@@ -131,8 +132,8 @@ class TWebSocket implements TSocket {
 }
 
 class _Request {
-  final List<int> data;
-  final Completer<List<int>> completer;
+  final Uint8List data;
+  final Completer<Uint8List> completer;
 
   _Request(this.data, this.completer);
 }

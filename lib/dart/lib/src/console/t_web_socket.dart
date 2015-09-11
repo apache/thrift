@@ -19,6 +19,7 @@ library thrift.src.console;
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data' show Uint8List;
 
 import 'package:crypto/crypto.dart' show CryptoUtils;
 import 'package:thrift/thrift.dart';
@@ -31,10 +32,10 @@ class TWebSocket implements TSocket {
   final StreamController<Object> _onErrorController;
   Stream<Object> get onError => _onErrorController.stream;
 
-  final StreamController<List<int>> _onMessageController;
-  Stream<List<int>> get onMessage => _onMessageController.stream;
+  final StreamController<Uint8List> _onMessageController;
+  Stream<Uint8List> get onMessage => _onMessageController.stream;
 
-  final List<Completer<List<int>>> _completers = [];
+  final List<Completer<Uint8List>> _completers = [];
 
   TWebSocket(WebSocket socket, {this.isServer: true})
       : _onStateController = new StreamController.broadcast(),
@@ -69,13 +70,13 @@ class TWebSocket implements TSocket {
     _onStateController.add(TSocketState.CLOSED);
   }
 
-  Future<List<int>> send(List<int> data) async {
+  Future<Uint8List> send(Uint8List data) async {
     Future result;
     if (isServer) {
       result = new Future.value();
     } else {
       // if we are a client, then we expect a result
-      Completer<List<int>> completer = new Completer();
+      Completer<Uint8List> completer = new Completer();
       _completers.add(completer);
       result = completer.future;
     }
@@ -86,10 +87,10 @@ class TWebSocket implements TSocket {
   }
 
   void _onMessage(Object message) {
-    List<int> data;
+    Uint8List data;
 
     try {
-      data = CryptoUtils.base64StringToBytes(message);
+      data = new Uint8List.fromList(CryptoUtils.base64StringToBytes(message));
     } on FormatException catch (_) {
       _onErrorController
           .add(new UnsupportedError("Expected a Base 64 encoded string."));
