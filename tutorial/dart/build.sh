@@ -1,11 +1,33 @@
 #!/bin/sh
 
-rm -r gen-dart || true && \
-thrift --gen "dart:gen_server" "../shared.thrift" && \
-	cd gen-dart/shared && pub get && cd ../.. && \
-thrift --gen "dart:gen_server" "../tutorial.thrift" && \
-	cd gen-dart/tutorial && pub get && cd ../.. && \
-cd client && pub get && cd .. && \
-cd server && pub get && cd .. && \
-dartfmt -w gen-dart && \
-echo "Enjoy the Dart tutorial!"
+set -e;
+rm -r gen-dart || true;
+
+thrift --gen "dart:gen_server" "../shared.thrift";
+cd gen-dart/shared;
+pub get;
+cd ../..;
+
+thrift --gen "dart:gen_server" "../tutorial.thrift";
+cd gen-dart/tutorial;
+pub get;
+cd ../..;
+
+cd client;
+pub get;
+cd ..;
+
+cd server;
+pub get;
+cd ..;
+
+dartfmt -w gen-dart;
+
+echo "\nEnjoy the Dart tutorial!";
+echo "\nTo run the server:";
+echo "> dart server/bin/main.dart";
+echo "\nTo run the client:";
+echo "# Serve the app from the client directory and view in a browser";
+echo "> cd client;";
+echo "> pub serve;";
+echo "";

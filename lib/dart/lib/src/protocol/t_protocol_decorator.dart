@@ -109,7 +109,7 @@ class TProtocolDecorator extends TProtocol {
     _protocol.writeString(str);
   }
 
-  void writeBinary(ByteData bytes) {
+  void writeBinary(Uint8List bytes) {
     _protocol.writeBinary(bytes);
   }
 
@@ -146,5 +146,5 @@ class TProtocolDecorator extends TProtocol {
 
   String readString() => _protocol.readString();
 
-  ByteData readBinary() => _protocol.readBinary();
+  Uint8List readBinary() => _protocol.readBinary();
 }

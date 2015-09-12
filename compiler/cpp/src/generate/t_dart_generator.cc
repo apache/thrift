@@ -302,7 +302,7 @@ string t_dart_generator::service_imports() {
  * @return List of imports necessary for thrift
  */
 string t_dart_generator::dart_thrift_imports() {
-  string imports = "import 'dart:typed_data' show ByteData;" + endl +
+  string imports = "import 'dart:typed_data' show Uint8List;" + endl +
     "import 'package:thrift/thrift.dart';" + endl +
     "import 'package:" + library_name_ + "/" + library_name_ + ".dart';" + endl;
 
@@ -2084,7 +2084,7 @@ string t_dart_generator::base_type_name(t_base_type* type, bool in_container) {
     return "void";
   case t_base_type::TYPE_STRING:
     if (type->is_binary()) {
-      return "ByteData";
+      return "Uint8List";
     } else {
       return "String";
     }

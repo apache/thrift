@@ -268,8 +268,8 @@ class TJsonProtocol extends TProtocol {
     _writeJsonString(utf8Codec.encode(s));
   }
 
-  void writeBinary(ByteData bytes) {
-    _writeJsonBase64(bytes.buffer.asUint8List());
+  void writeBinary(Uint8List bytes) {
+    _writeJsonBase64(bytes);
   }
 
   /// read
@@ -521,8 +521,8 @@ class TJsonProtocol extends TProtocol {
     return utf8Codec.decode(_readJsonString());
   }
 
-  ByteData readBinary() {
-    return new Uint8List.fromList(_readJsonBase64()).buffer.asByteData();
+  Uint8List readBinary() {
+    return new Uint8List.fromList(_readJsonBase64());
   }
 }
 

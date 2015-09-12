@@ -56,7 +56,7 @@ abstract class TProtocol {
 
   void writeString(String str);
 
-  void writeBinary(ByteData bytes);
+  void writeBinary(Uint8List bytes);
 
   /// Read
   TMessage readMessageBegin();
@@ -91,5 +91,5 @@ abstract class TProtocol {
 
   String readString();
 
-  ByteData readBinary();
+  Uint8List readBinary();
 }

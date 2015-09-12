@@ -126,9 +126,10 @@ class TBinaryProtocol extends TProtocol {
     transport.write(_doubleOut.buffer.asUint8List(), 0, 8);
   }
 
-  void writeBinary(ByteData bytes) {
-    writeI32(bytes.lengthInBytes);
-    transport.write(bytes.buffer.asUint8List(), 0, bytes.lengthInBytes);
+  void writeBinary(Uint8List bytes) {
+    var length = bytes.length;
+    writeI32(length);
+    transport.write(bytes, 0, length);
   }
 
   /// read
@@ -248,10 +249,10 @@ class TBinaryProtocol extends TProtocol {
     return _utf8Codec.decode(stringIn);
   }
 
-  ByteData readBinary() {
-    int size = readI32();
-    Uint8List binaryIn = new Uint8List(size);
-    transport.readAll(binaryIn, 0, size);
-    return binaryIn.buffer.asByteData();
+  Uint8List readBinary() {
+    int length = readI32();
+    Uint8List binaryIn = new Uint8List(length);
+    transport.readAll(binaryIn, 0, length);
+    return binaryIn;
   }
 }
