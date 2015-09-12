@@ -33,7 +33,6 @@ void main() {
     transport.readAll(buffer, 0, expectedBytes.length);
 
     var bufferText = utf8Codec.decode(buffer);
-
     expect(bufferText, expectedText);
   });
 
