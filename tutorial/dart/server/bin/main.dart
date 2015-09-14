@@ -1,18 +1,22 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data' show Uint8List;
 
+import 'package:logging/logging.dart';
 import 'package:thrift/thrift.dart';
 import 'package:thrift/thrift_console.dart';
 import 'package:tutorial/tutorial.dart';
 import 'package:shared/shared.dart';
 
-TProtocol _inputProtocol;
-TProtocol _outputProtocol;
+TProtocol _protocol;
 TProcessor _processor;
 WebSocket _webSocket;
 
 main(List<String> args) {
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((LogRecord rec) {
+    print('${rec.level.name}: ${rec.time}: ${rec.message}');
+  });
+
   int port = 9090;
   if (!args.isEmpty) {
     port = int.parse(args[0]);
@@ -40,21 +44,16 @@ Future _initWebSocket(HttpRequest request) async {
   _webSocket = await WebSocketTransformer.upgrade(request);
 
   TWebSocket socket = new TWebSocket(_webSocket);
+  TServerSocketTransport transport = new TServerSocketTransport(socket);
+  transport.onIncomingMessage.listen(_processMessage);
 
   _processor = new CalculatorProcessor(new CalculatorServer());
-  _inputProtocol =
-      new TJsonProtocol(new TSocketTransport(socket, isListening: true));
-  await _inputProtocol.transport.open();
-
-  _outputProtocol = new TJsonProtocol(new TSocketTransport(socket));
-  await _outputProtocol.transport.open();
-
-  socket.onError.listen((error) => print('Error: $error'));
-  socket.onMessage.listen(_onMessage);
+  _protocol = new TJsonProtocol(transport);
+  await _protocol.transport.open();
 }
 
-Future _onMessage(Uint8List data) async {
-  _processor.process(_inputProtocol, _outputProtocol);
+Future _processMessage(_) async {
+  _processor.process(_protocol, _protocol);
 }
 
 class CalculatorServer implements Calculator {

@@ -22,9 +22,7 @@ import 'dart:html' show CloseEvent;
 import 'dart:html' show Event;
 import 'dart:html' show MessageEvent;
 import 'dart:html' show WebSocket;
-import 'dart:typed_data' show Uint8List;
 
-import 'package:crypto/crypto.dart' show CryptoUtils;
 import 'package:thrift/thrift.dart';
 
 /// A [TSocket] backed by a [WebSocket] from dart:html
@@ -37,11 +35,10 @@ class TWebSocket implements TSocket {
   final StreamController<Object> _onErrorController;
   Stream<Object> get onError => _onErrorController.stream;
 
-  final StreamController<Uint8List> _onMessageController;
-  Stream<Uint8List> get onMessage => _onMessageController.stream;
+  final StreamController<String> _onMessageController;
+  Stream<String> get onMessage => _onMessageController.stream;
 
-  final List<Completer<Uint8List>> _completers = [];
-  final List<_Request> _requests = [];
+  final List<String> _requests = [];
 
   TWebSocket(this.url)
       : _onStateController = new StreamController.broadcast(),
@@ -78,20 +75,15 @@ class TWebSocket implements TSocket {
     }
   }
 
-  Future<Uint8List> send(Uint8List data) {
-    Completer<Uint8List> completer = new Completer();
-
-    _requests.add(new _Request(data, completer));
+  void send(String data) {
+    _requests.add(data);
     _sendRequests();
-
-    return completer.future;
   }
 
   void _sendRequests() {
     while (isOpen && _requests.isNotEmpty) {
-      _Request request = _requests.removeAt(0);
-      _completers.add(request.completer);
-      _socket.sendString(CryptoUtils.bytesToBase64(request.data));
+      String data = _requests.removeAt(0);
+      _socket.sendString(data);
     }
   }
 
@@ -103,13 +95,8 @@ class TWebSocket implements TSocket {
   void _onClose(CloseEvent event) {
     _socket = null;
 
-    for (var completer in _completers) {
-      completer.completeError(new StateError('The socket has closed'));
-    }
-    _completers.clear();
-
-    for (var request in _requests) {
-      request.completer.completeError(new StateError('The socket has closed'));
+    if (_requests.isNotEmpty) {
+      _onErrorController.add('Socket was closed with pending requests');
     }
     _requests.clear();
 
@@ -117,32 +104,11 @@ class TWebSocket implements TSocket {
   }
 
   void _onMessage(MessageEvent event) {
-    Uint8List data;
-
-    try {
-      data =
-          new Uint8List.fromList(CryptoUtils.base64StringToBytes(event.data));
-    } on FormatException catch (_) {
-      _onErrorController
-          .add(new UnsupportedError('Expected a Base 64 encoded string.'));
-    }
-
-    if (!_completers.isEmpty) {
-      _completers.removeAt(0).complete(data);
-    }
-
-    _onMessageController.add(data);
+    _onMessageController.add(event.data);
   }
 
   void _onError(Event event) {
     close();
     _onErrorController.add(event.toString());
   }
-}
-
-class _Request {
-  final Uint8List data;
-  final Completer<Uint8List> completer;
-
-  _Request(this.data, this.completer);
 }

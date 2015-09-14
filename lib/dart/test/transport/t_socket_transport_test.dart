@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:convert' show Utf8Codec;
 import 'dart:typed_data' show Uint8List;
 
+import 'package:crypto/crypto.dart' show CryptoUtils;
 import 'package:test/test.dart';
 import 'package:thrift/thrift.dart';
 
@@ -11,62 +12,85 @@ void main() {
 
   const utf8Codec = const Utf8Codec();
 
-  final expectedText = 'my test data';
-  final expectedBytes = new Uint8List.fromList(utf8Codec.encode(expectedText));
+  final requestText = 'my test request';
+  final requestBytes = new Uint8List.fromList(utf8Codec.encode(requestText));
+  final requestBase64 = CryptoUtils.bytesToBase64(requestBytes);
 
-  test('Test transport listens to socket', () async {
-    var socket = new FakeSocket(isServer: true);
-    await socket.open();
-    expect(socket.isOpen, isTrue);
+  final responseText = 'a response!';
+  final responseBytes = new Uint8List.fromList(utf8Codec.encode(responseText));
+  final responseBase64 = CryptoUtils.bytesToBase64(responseBytes);
 
-    var transport = new TSocketTransport(socket, isListening: true);
-    expect(transport.hasReadData, isFalse);
+  group('TClientTransport', () {
+    test('Test client sending data over transport', () async {
+      var socket = new FakeSocket();
+      await socket.open();
 
-    socket.receiveFakeMessage(expectedBytes);
+      var transport = new TClientSocketTransport(socket);
 
-    // allow microtask events to finish
-    await new Future.value();
+      transport.writeAll(requestBytes);
+      expect(socket.sendPayload, isNull);
 
-    expect(transport.hasReadData, isTrue);
+      Future responseReady = transport.flush();
 
-    var buffer = new Uint8List(expectedBytes.length);
-    transport.readAll(buffer, 0, expectedBytes.length);
+      // allow microtask events to finish
+      await new Future.value();
 
-    var bufferText = utf8Codec.decode(buffer);
-    expect(bufferText, expectedText);
-  });
+      expect(socket.sendPayload, isNotNull);
+      expect(socket.sendPayload, requestBase64);
 
-  test('Test transport does not listen to socket', () async {
-    var socket = new FakeSocket();
-    await socket.open();
+      // simulate a response
+      socket.receiveFakeMessage(responseBase64);
 
-    var transport = new TSocketTransport(socket, isListening: false);
+      await responseReady;
+      var buffer = new Uint8List(responseBytes.length);
+      transport.readAll(buffer, 0, responseBytes.length);
+      var bufferText = utf8Codec.decode(buffer);
 
-    socket.receiveFakeMessage(expectedBytes);
+      expect(bufferText, responseText);
+    });
+  }, timeout: new Timeout(new Duration(seconds: 1)));
 
-    // allow microtask events to finish
-    await new Future.value();
+  group('TServerTransport', () {
+    test('Test server transport listens to socket', () async {
+      var socket = new FakeSocket();
+      await socket.open();
+      expect(socket.isOpen, isTrue);
 
-    expect(transport.hasReadData, isFalse);
-  });
+      var transport = new TServerSocketTransport(socket);
+      expect(transport.hasReadData, isFalse);
 
-  test('Test sending data over transport', () async {
-    var socket = new FakeSocket(isServer: true);
-    await socket.open();
+      socket.receiveFakeMessage(requestBase64);
 
-    var transport = new TSocketTransport(socket, isListening: false);
+      // allow microtask events to finish
+      await new Future.value();
 
-    transport.writeAll(expectedBytes);
-    expect(socket.sendPayload, isNull);
+      expect(transport.hasReadData, isTrue);
 
-    transport.flush();
+      var buffer = new Uint8List(requestBytes.length);
+      transport.readAll(buffer, 0, requestBytes.length);
 
-    // allow microtask events to finish
-    await new Future.value();
+      var bufferText = utf8Codec.decode(buffer);
+      expect(bufferText, requestText);
+    });
 
-    expect(socket.sendPayload, isNotNull);
-    expect(utf8Codec.decode(socket.sendPayload), expectedText);
-  });
+    test('Test server sending data over transport', () async {
+      var socket = new FakeSocket();
+      await socket.open();
+
+      var transport = new TServerSocketTransport(socket);
+
+      transport.writeAll(responseBytes);
+      expect(socket.sendPayload, isNull);
+
+      transport.flush();
+
+      // allow microtask events to finish
+      await new Future.value();
+
+      expect(socket.sendPayload, isNotNull);
+      expect(socket.sendPayload, responseBase64);
+    });
+  }, timeout: new Timeout(new Duration(seconds: 1)));
 
 }
 
@@ -79,17 +103,13 @@ class FakeSocket extends TSocket {
   final StreamController<Object> _onErrorController;
   Stream<Object> get onError => _onErrorController.stream;
 
-  final StreamController<Uint8List> _onMessageController;
-  Stream<Uint8List> get onMessage => _onMessageController.stream;
+  final StreamController<String> _onMessageController;
+  Stream<String> get onMessage => _onMessageController.stream;
 
-  final List<Completer<Uint8List>> _completers = [];
-
-  FakeSocket({this.isServer: false})
+  FakeSocket()
       : _onStateController = new StreamController.broadcast(),
         _onErrorController = new StreamController.broadcast(),
         _onMessageController = new StreamController.broadcast();
-
-  final bool isServer;
 
   bool _isOpen;
 
@@ -104,39 +124,20 @@ class FakeSocket extends TSocket {
 
   Future close() async {
     _isOpen = false;
-    for (var completer in _completers) {
-      completer.completeError(new StateError('The socked has closed'));
-    }
     _onStateController.add(TSocketState.CLOSED);
   }
 
-  Uint8List _sendPayload;
+  String _sendPayload;
+  String get sendPayload => _sendPayload;
 
-  Uint8List get sendPayload => _sendPayload;
-
-  Future<Uint8List> send(Uint8List data) {
+  void send(String data) {
     if (!isOpen) throw new StateError("The socket is not open");
-
-    Future<Uint8List> result;
-    if (isServer) {
-      result = new Future.value();
-    } else {
-      Completer<Uint8List> completer = new Completer();
-      _completers.add(completer);
-      result = completer.future;
-    }
 
     _sendPayload = data;
-
-    return result;
   }
 
-  void receiveFakeMessage(Uint8List message) {
+  void receiveFakeMessage(String message) {
     if (!isOpen) throw new StateError("The socket is not open");
-
-    if (!_completers.isEmpty) {
-      _completers.removeAt(0).complete(message);
-    }
 
     _onMessageController.add(message);
   }

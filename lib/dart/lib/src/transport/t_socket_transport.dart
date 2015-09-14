@@ -21,32 +21,25 @@ part of thrift;
 ///
 /// For example:
 ///
-///     var transport = new TSocketTransport(new TWebSocket(url));
+///     var transport = new TClientSocketTransport(new TWebSocket(url));
 ///     var protocol = new TBinaryProtocol(transport);
 ///     var client = new MyThriftServiceClient(protocol);
 ///     var result = client.myMethod();
 ///
 /// Adapted from the JS WebSocket transport.
-class TSocketTransport extends TBufferedTransport {
-  final TSocket socket;
+abstract class TSocketTransport extends TBufferedTransport {
   final Logger log = new Logger('thrift.TSocketTransport');
 
-  final bool isListening;
+  final TSocket socket;
 
-  /// A transport using the provided [socket].  If [isListening] is true, then
-  /// messages received from [socket] will be written to the transport and made
-  /// available for reading.
-  TSocketTransport(this.socket, {isListening: false})
-      : this.isListening = isListening {
+  /// A transport using the provided [socket].
+  TSocketTransport(this.socket) {
     if (socket == null) {
       throw new ArgumentError.notNull('socket');
     }
 
     socket.onError.listen((String e) => log.warning(e));
-
-    if (isListening) {
-      socket.onMessage.listen(_onMessage);
-    }
+    socket.onMessage.listen(handleIncomingMessage);
   }
 
   bool get isOpen => socket.isOpen;
@@ -61,17 +54,79 @@ class TSocketTransport extends TBufferedTransport {
     return socket.close();
   }
 
-  Future flush() async {
-    if (isListening) {
-      _setReadBuffer(_consumeWriteBuffer());
-    } else {
-      Uint8List result = await socket.send(_consumeWriteBuffer());
-      _setReadBuffer(result);
+  /// Make an incoming message available to read from the transport.
+  void handleIncomingMessage(String message) {
+    Uint8List data;
+
+    try {
+      data =
+          new Uint8List.fromList(CryptoUtils.base64StringToBytes(message));
+    } on FormatException catch (_) {
+      throw new TProtocolError(TProtocolErrorType.INVALID_DATA,
+          "Expected a Base 64 encoded string.");
     }
+
+    _setReadBuffer(data);
   }
 
-  void _onMessage(Uint8List message) {
-    writeAll(message);
-    _setReadBuffer(_consumeWriteBuffer());
+  /// Send the bytes in the write buffer to the socket
+  void sendMessage() {
+    Uint8List message = _consumeWriteBuffer();
+    socket.send(CryptoUtils.bytesToBase64(message));
+  }
+
+}
+
+/// [TClientSocketTransport] sends outgoing messages and expects a response
+///
+/// NOTE:  Currently this assumes serialized responses from a single threaded
+/// server.
+///
+/// TODO Give [TClientSocketTransport] more information so it can correlate
+/// requests and responses, e.g. a protocol-aware function that can read the
+/// sequence id from the message header.
+class TClientSocketTransport extends TSocketTransport {
+
+  final List<Completer<Uint8List>> _completers = [];
+
+  TClientSocketTransport(TSocket socket) : super(socket);
+
+  Future flush() {
+    Completer completer = new Completer();
+    _completers.add(completer);
+
+    sendMessage();
+
+    return completer.future;
+  }
+
+  void handleIncomingMessage(String message) {
+    super.handleIncomingMessage(message);
+
+    if (_completers.isNotEmpty) {
+      _completers.removeAt(0).complete();
+    }
+  }
+}
+
+/// [TServerSocketTransport] listens for incoming messages.  When it sends a
+/// response, it does not expect an acknowledgement.
+class TServerSocketTransport extends TSocketTransport {
+
+  final StreamController _onIncomingMessageController;
+  Stream get onIncomingMessage => _onIncomingMessageController.stream;
+
+  TServerSocketTransport(TSocket socket)
+    : _onIncomingMessageController = new StreamController.broadcast(),
+      super(socket);
+
+  Future flush() async {
+    sendMessage();
+  }
+
+  void handleIncomingMessage(String message) {
+    super.handleIncomingMessage(message);
+
+    _onIncomingMessageController.add(null);
   }
 }
