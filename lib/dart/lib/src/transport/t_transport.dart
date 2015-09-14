@@ -54,15 +54,15 @@ abstract class TTransport {
     return got;
   }
 
+  /// Writes up to [len] bytes from the buffer.
+  /// Throws [TTransportError] if there was an error writing data
+  void write(Uint8List buffer, int offset, int length);
+
   /// Writes the [bytes] to the output.
   /// Throws [TTransportError] if there was an error writing data
   void writeAll(Uint8List buffer) {
     write(buffer, 0, buffer.length);
   }
-
-  /// Writes up to [len] bytes from the buffer.
-  /// Throws [TTransportError] if there was an error writing data
-  void write(Uint8List buffer, int offset, int length);
 
   /// Flush any pending data out of a transport buffer.
   /// Throws [TTransportError] if there was an error writing out data.

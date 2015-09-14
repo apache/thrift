@@ -214,7 +214,7 @@ class CalculatorUI {
     InputElement num2 = querySelector("#calc2");
     SelectElement op = querySelector("#calcOp");
     SpanElement result = querySelector("#calcResult");
-    SelectElement logId = querySelector("#logId");
+    InputElement logId = querySelector("#logId");
     InputElement comment = querySelector("#comment");
 
     int logIdValue = int.parse(logId.value);
@@ -266,7 +266,7 @@ class CalculatorUI {
     _validate();
 
     InputElement structKey = querySelector("#structKey");
-    SpanElement result = querySelector("#getStructResult");
+    TextAreaElement result = querySelector("#getStructResult");
 
     _calculatorClient
         .getStruct(int.parse(structKey.value))
