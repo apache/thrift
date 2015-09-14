@@ -19,7 +19,9 @@ library thrift.src.console;
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data' show Uint8List;
 
+import 'package:crypto/crypto.dart' show CryptoUtils;
 import 'package:thrift/thrift.dart';
 
 /// A [TSocket] backed by a [WebSocket] from dart:io
@@ -30,8 +32,8 @@ class TWebSocket implements TSocket {
   final StreamController<Object> _onErrorController;
   Stream<Object> get onError => _onErrorController.stream;
 
-  final StreamController<String> _onMessageController;
-  Stream<String> get onMessage => _onMessageController.stream;
+  final StreamController<Uint8List> _onMessageController;
+  Stream<Uint8List> get onMessage => _onMessageController.stream;
 
   TWebSocket(WebSocket socket)
       : _onStateController = new StreamController.broadcast(),
@@ -64,12 +66,20 @@ class TWebSocket implements TSocket {
     _onStateController.add(TSocketState.CLOSED);
   }
 
-  void send(String data) {
-    _socket.add(data);
+  void send(Uint8List data) {
+    _socket.add(CryptoUtils.bytesToBase64(data));
   }
 
   void _onMessage(String message) {
-    _onMessageController.add(message);
+    try {
+      Uint8List data =
+          new Uint8List.fromList(CryptoUtils.base64StringToBytes(message));
+      _onMessageController.add(data);
+    } on FormatException catch (_) {
+      var error = new TProtocolError(TProtocolErrorType.INVALID_DATA,
+          "Expected a Base 64 encoded string.");
+      _onErrorController.add(error);
+    }
   }
 
   void _onError(Object error) {

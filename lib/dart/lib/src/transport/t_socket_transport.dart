@@ -55,26 +55,15 @@ abstract class TSocketTransport extends TBufferedTransport {
   }
 
   /// Make an incoming message available to read from the transport.
-  void handleIncomingMessage(String message) {
-    Uint8List data;
-
-    try {
-      data =
-          new Uint8List.fromList(CryptoUtils.base64StringToBytes(message));
-    } on FormatException catch (_) {
-      throw new TProtocolError(TProtocolErrorType.INVALID_DATA,
-          "Expected a Base 64 encoded string.");
-    }
-
-    _setReadBuffer(data);
+  void handleIncomingMessage(Uint8List message) {
+    _setReadBuffer(message);
   }
 
   /// Send the bytes in the write buffer to the socket
   void sendMessage() {
     Uint8List message = _consumeWriteBuffer();
-    socket.send(CryptoUtils.bytesToBase64(message));
+    socket.send(message);
   }
-
 }
 
 /// [TClientSocketTransport] sends outgoing messages and expects a response
@@ -86,7 +75,6 @@ abstract class TSocketTransport extends TBufferedTransport {
 /// requests and responses, e.g. a protocol-aware function that can read the
 /// sequence id from the message header.
 class TClientSocketTransport extends TSocketTransport {
-
   final List<Completer<Uint8List>> _completers = [];
 
   TClientSocketTransport(TSocket socket) : super(socket);
@@ -100,7 +88,7 @@ class TClientSocketTransport extends TSocketTransport {
     return completer.future;
   }
 
-  void handleIncomingMessage(String message) {
+  void handleIncomingMessage(Uint8List message) {
     super.handleIncomingMessage(message);
 
     if (_completers.isNotEmpty) {
@@ -112,19 +100,18 @@ class TClientSocketTransport extends TSocketTransport {
 /// [TServerSocketTransport] listens for incoming messages.  When it sends a
 /// response, it does not expect an acknowledgement.
 class TServerSocketTransport extends TSocketTransport {
-
   final StreamController _onIncomingMessageController;
   Stream get onIncomingMessage => _onIncomingMessageController.stream;
 
   TServerSocketTransport(TSocket socket)
-    : _onIncomingMessageController = new StreamController.broadcast(),
-      super(socket);
+      : _onIncomingMessageController = new StreamController.broadcast(),
+        super(socket);
 
   Future flush() async {
     sendMessage();
   }
 
-  void handleIncomingMessage(String message) {
+  void handleIncomingMessage(Uint8List message) {
     super.handleIncomingMessage(message);
 
     _onIncomingMessageController.add(null);

@@ -36,7 +36,7 @@ void main() {
       await new Future.value();
 
       expect(socket.sendPayload, isNotNull);
-      expect(socket.sendPayload, requestBase64);
+      expect(socket.sendPayload, requestBytes);
 
       // simulate a response
       socket.receiveFakeMessage(responseBase64);
@@ -88,7 +88,7 @@ void main() {
       await new Future.value();
 
       expect(socket.sendPayload, isNotNull);
-      expect(socket.sendPayload, responseBase64);
+      expect(socket.sendPayload, responseBytes);
     });
   }, timeout: new Timeout(new Duration(seconds: 1)));
 
@@ -103,8 +103,8 @@ class FakeSocket extends TSocket {
   final StreamController<Object> _onErrorController;
   Stream<Object> get onError => _onErrorController.stream;
 
-  final StreamController<String> _onMessageController;
-  Stream<String> get onMessage => _onMessageController.stream;
+  final StreamController<Uint8List> _onMessageController;
+  Stream<Uint8List> get onMessage => _onMessageController.stream;
 
   FakeSocket()
       : _onStateController = new StreamController.broadcast(),
@@ -127,18 +127,20 @@ class FakeSocket extends TSocket {
     _onStateController.add(TSocketState.CLOSED);
   }
 
-  String _sendPayload;
-  String get sendPayload => _sendPayload;
+  Uint8List _sendPayload;
+  Uint8List get sendPayload => _sendPayload;
 
-  void send(String data) {
+  void send(Uint8List data) {
     if (!isOpen) throw new StateError("The socket is not open");
 
     _sendPayload = data;
   }
 
-  void receiveFakeMessage(String message) {
+  void receiveFakeMessage(String base64) {
     if (!isOpen) throw new StateError("The socket is not open");
 
+    var message =
+        new Uint8List.fromList(CryptoUtils.base64StringToBytes(base64));
     _onMessageController.add(message);
   }
 

@@ -22,7 +22,9 @@ import 'dart:html' show CloseEvent;
 import 'dart:html' show Event;
 import 'dart:html' show MessageEvent;
 import 'dart:html' show WebSocket;
+import 'dart:typed_data' show Uint8List;
 
+import 'package:crypto/crypto.dart' show CryptoUtils;
 import 'package:thrift/thrift.dart';
 
 /// A [TSocket] backed by a [WebSocket] from dart:html
@@ -35,10 +37,10 @@ class TWebSocket implements TSocket {
   final StreamController<Object> _onErrorController;
   Stream<Object> get onError => _onErrorController.stream;
 
-  final StreamController<String> _onMessageController;
-  Stream<String> get onMessage => _onMessageController.stream;
+  final StreamController<Uint8List> _onMessageController;
+  Stream<Uint8List> get onMessage => _onMessageController.stream;
 
-  final List<String> _requests = [];
+  final List<Uint8List> _requests = [];
 
   TWebSocket(this.url)
       : _onStateController = new StreamController.broadcast(),
@@ -75,15 +77,15 @@ class TWebSocket implements TSocket {
     }
   }
 
-  void send(String data) {
+  void send(Uint8List data) {
     _requests.add(data);
     _sendRequests();
   }
 
   void _sendRequests() {
     while (isOpen && _requests.isNotEmpty) {
-      String data = _requests.removeAt(0);
-      _socket.sendString(data);
+      Uint8List data = _requests.removeAt(0);
+      _socket.sendString(CryptoUtils.bytesToBase64(data));
     }
   }
 
@@ -96,15 +98,24 @@ class TWebSocket implements TSocket {
     _socket = null;
 
     if (_requests.isNotEmpty) {
-      _onErrorController.add('Socket was closed with pending requests');
+      _onErrorController
+          .add(new StateError('Socket was closed with pending requests'));
     }
     _requests.clear();
 
     _onStateController.add(TSocketState.CLOSED);
   }
 
-  void _onMessage(MessageEvent event) {
-    _onMessageController.add(event.data);
+  void _onMessage(MessageEvent message) {
+    try {
+      Uint8List data =
+          new Uint8List.fromList(CryptoUtils.base64StringToBytes(message.data));
+      _onMessageController.add(data);
+    } on FormatException catch (_) {
+      var error = new TProtocolError(TProtocolErrorType.INVALID_DATA,
+          "Expected a Base 64 encoded string.");
+      _onErrorController.add(error);
+    }
   }
 
   void _onError(Event event) {
