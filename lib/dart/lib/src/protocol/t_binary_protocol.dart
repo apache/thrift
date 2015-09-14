@@ -17,6 +17,18 @@
 
 part of thrift;
 
+class TBinaryProtocolFactory implements TProtocolFactory<TBinaryProtocol> {
+  TBinaryProtocolFactory({this.strictRead: false, this.strictWrite: true});
+
+  final bool strictRead;
+  final bool strictWrite;
+
+  TBinaryProtocol getProtocol(TTransport transport) {
+    return new TBinaryProtocol(transport,
+        strictRead: strictRead, strictWrite: strictWrite);
+  }
+}
+
 /// Binary protocol implementation for Thrift.
 ///
 /// Adapted from the C# version.
