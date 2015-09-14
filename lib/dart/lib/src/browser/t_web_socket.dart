@@ -58,7 +58,7 @@ class TWebSocket implements TSocket {
   bool get isClosed =>
       _socket == null || _socket.readyState == WebSocket.CLOSED;
 
-  Future open() async {
+  Future open() {
     if (!isClosed) {
       throw new TTransportError(
           TTransportErrorType.ALREADY_OPEN, 'Socket already connected');
@@ -69,11 +69,16 @@ class TWebSocket implements TSocket {
     _socket.onOpen.listen(_onOpen);
     _socket.onClose.listen(_onClose);
     _socket.onMessage.listen(_onMessage);
+
+    return _socket.onOpen.first;
   }
 
-  Future close() async {
+  Future close() {
     if (_socket != null) {
       _socket.close();
+      return _socket.onClose.first;
+    } else {
+      return new Future.value();
     }
   }
 
