@@ -40,8 +40,7 @@ class TWebSocket implements TSocket {
   final StreamController<Uint8List> _onMessageController;
   Stream<Uint8List> get onMessage => _onMessageController.stream;
 
-  final List<Completer<Uint8List>> _completers = [];
-  final List<_Request> _requests = [];
+  final List<Uint8List> _requests = [];
 
   TWebSocket(this.url)
       : _onStateController = new StreamController.broadcast(),
@@ -59,7 +58,7 @@ class TWebSocket implements TSocket {
   bool get isClosed =>
       _socket == null || _socket.readyState == WebSocket.CLOSED;
 
-  Future open() async {
+  Future open() {
     if (!isClosed) {
       throw new TTransportError(
           TTransportErrorType.ALREADY_OPEN, 'Socket already connected');
@@ -70,28 +69,28 @@ class TWebSocket implements TSocket {
     _socket.onOpen.listen(_onOpen);
     _socket.onClose.listen(_onClose);
     _socket.onMessage.listen(_onMessage);
+
+    return _socket.onOpen.first;
   }
 
-  Future close() async {
+  Future close() {
     if (_socket != null) {
       _socket.close();
+      return _socket.onClose.first;
+    } else {
+      return new Future.value();
     }
   }
 
-  Future<Uint8List> send(Uint8List data) {
-    Completer<Uint8List> completer = new Completer();
-
-    _requests.add(new _Request(data, completer));
+  void send(Uint8List data) {
+    _requests.add(data);
     _sendRequests();
-
-    return completer.future;
   }
 
   void _sendRequests() {
     while (isOpen && _requests.isNotEmpty) {
-      _Request request = _requests.removeAt(0);
-      _completers.add(request.completer);
-      _socket.sendString(CryptoUtils.bytesToBase64(request.data));
+      Uint8List data = _requests.removeAt(0);
+      _socket.sendString(CryptoUtils.bytesToBase64(data));
     }
   }
 
@@ -103,46 +102,29 @@ class TWebSocket implements TSocket {
   void _onClose(CloseEvent event) {
     _socket = null;
 
-    for (var completer in _completers) {
-      completer.completeError(new StateError('The socket has closed'));
-    }
-    _completers.clear();
-
-    for (var request in _requests) {
-      request.completer.completeError(new StateError('The socket has closed'));
+    if (_requests.isNotEmpty) {
+      _onErrorController
+          .add(new StateError('Socket was closed with pending requests'));
     }
     _requests.clear();
 
     _onStateController.add(TSocketState.CLOSED);
   }
 
-  void _onMessage(MessageEvent event) {
-    Uint8List data;
-
+  void _onMessage(MessageEvent message) {
     try {
-      data =
-          new Uint8List.fromList(CryptoUtils.base64StringToBytes(event.data));
+      Uint8List data =
+          new Uint8List.fromList(CryptoUtils.base64StringToBytes(message.data));
+      _onMessageController.add(data);
     } on FormatException catch (_) {
-      _onErrorController
-          .add(new UnsupportedError('Expected a Base 64 encoded string.'));
+      var error = new TProtocolError(TProtocolErrorType.INVALID_DATA,
+          "Expected a Base 64 encoded string.");
+      _onErrorController.add(error);
     }
-
-    if (!_completers.isEmpty) {
-      _completers.removeAt(0).complete(data);
-    }
-
-    _onMessageController.add(data);
   }
 
   void _onError(Event event) {
     close();
     _onErrorController.add(event.toString());
   }
-}
-
-class _Request {
-  final Uint8List data;
-  final Completer<Uint8List> completer;
-
-  _Request(this.data, this.completer);
 }

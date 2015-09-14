@@ -35,9 +35,7 @@ class TWebSocket implements TSocket {
   final StreamController<Uint8List> _onMessageController;
   Stream<Uint8List> get onMessage => _onMessageController.stream;
 
-  final List<Completer<Uint8List>> _completers = [];
-
-  TWebSocket(WebSocket socket, {this.isServer: true})
+  TWebSocket(WebSocket socket)
       : _onStateController = new StreamController.broadcast(),
         _onErrorController = new StreamController.broadcast(),
         _onMessageController = new StreamController.broadcast() {
@@ -48,8 +46,6 @@ class TWebSocket implements TSocket {
     _socket = socket;
     _socket.listen(_onMessage, onError: _onError, onDone: close);
   }
-
-  final bool isServer;
 
   WebSocket _socket;
 
@@ -67,45 +63,23 @@ class TWebSocket implements TSocket {
       _socket = null;
     }
 
-    for (var completer in _completers) {
-      completer.completeError(new StateError('The socket has closed'));
-    }
-    _completers.clear();
-
     _onStateController.add(TSocketState.CLOSED);
   }
 
-  Future<Uint8List> send(Uint8List data) async {
-    Future result;
-    if (isServer) {
-      result = new Future.value();
-    } else {
-      // if we are a client, then we expect a result
-      Completer<Uint8List> completer = new Completer();
-      _completers.add(completer);
-      result = completer.future;
-    }
-
+  void send(Uint8List data) {
     _socket.add(CryptoUtils.bytesToBase64(data));
-
-    return result;
   }
 
-  void _onMessage(Object message) {
-    Uint8List data;
-
+  void _onMessage(String message) {
     try {
-      data = new Uint8List.fromList(CryptoUtils.base64StringToBytes(message));
+      Uint8List data =
+          new Uint8List.fromList(CryptoUtils.base64StringToBytes(message));
+      _onMessageController.add(data);
     } on FormatException catch (_) {
-      _onErrorController
-          .add(new UnsupportedError('Expected a Base 64 encoded string.'));
+      var error = new TProtocolError(TProtocolErrorType.INVALID_DATA,
+          "Expected a Base 64 encoded string.");
+      _onErrorController.add(error);
     }
-
-    if (!_completers.isEmpty) {
-      _completers.removeAt(0).complete(data);
-    }
-
-    _onMessageController.add(data);
   }
 
   void _onError(Object error) {

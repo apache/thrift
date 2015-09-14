@@ -34,5 +34,5 @@ abstract class TSocket {
 
   Future close();
 
-  Future<Uint8List> send(Uint8List data);
+  void send(Uint8List data);
 }
