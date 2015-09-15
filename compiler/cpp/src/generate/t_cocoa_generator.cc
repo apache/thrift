@@ -224,6 +224,7 @@ public:
   std::string argument_list(t_struct* tstruct, string protocol_name, bool include_error);
   std::string type_to_enum(t_type* ttype);
   std::string format_string_for_type(t_type* type);
+  std::string format_cast_for_type(t_type* type);
   std::string call_field_setter(t_field* tfield, std::string fieldName);
   std::string containerize(t_type* ttype, std::string fieldName);
   std::string decontainerize(t_field* tfield, std::string fieldName);
@@ -385,7 +386,7 @@ void t_cocoa_generator::generate_typedef(t_typedef* ttypedef) {
  * @param tenum The enumeration
  */
 void t_cocoa_generator::generate_enum(t_enum* tenum) {
-  f_header_ << indent() << "typedef NS_ENUM(int, " << cocoa_prefix_ << tenum->get_name() << ") {" << endl;
+  f_header_ << indent() << "typedef NS_ENUM(SInt32, " << cocoa_prefix_ << tenum->get_name() << ") {" << endl;
   indent_up();
 
   vector<t_enum_value*> constants = tenum->get_constants();
@@ -988,8 +989,8 @@ void t_cocoa_generator::generate_cocoa_struct_reader(ofstream& out, t_struct* ts
 
   // Declare stack tmp variables
   indent(out) << "NSString * fieldName;" << endl;
-  indent(out) << "int fieldType;" << endl;
-  indent(out) << "int fieldID;" << endl;
+  indent(out) << "SInt32 fieldType;" << endl;
+  indent(out) << "SInt32 fieldID;" << endl;
   out << endl;
 
   indent(out) << "if (![inProtocol readStructBeginReturningName: NULL error: __thriftError]) return NO;" << endl;
@@ -1029,7 +1030,7 @@ void t_cocoa_generator::generate_cocoa_struct_reader(ofstream& out, t_struct* ts
     out << indent() << "} else { " << endl;
     if (log_unexpected_) {
       out << indent() << "  NSLog(@\"%s: field ID %i has unexpected type %i.  Skipping.\", "
-                         "__PRETTY_FUNCTION__, fieldID, fieldType);" << endl;
+                         "__PRETTY_FUNCTION__, (int)fieldID, (int)fieldType);" << endl;
     }
     
     out << indent() << "  if (![TProtocolUtil skipType: fieldType onProtocol: inProtocol error: __thriftError]) return NO;" << endl;
@@ -1041,7 +1042,7 @@ void t_cocoa_generator::generate_cocoa_struct_reader(ofstream& out, t_struct* ts
   out << indent() << "default:" << endl;
   if (log_unexpected_) {
     out << indent() << "  NSLog(@\"%s: unexpected field ID %i with type %i.  Skipping.\", "
-                       "__PRETTY_FUNCTION__, fieldID, fieldType);" << endl;
+                       "__PRETTY_FUNCTION__, (int)fieldID, (int)fieldType);" << endl;
   }
 
   out << indent() << "  if (![TProtocolUtil skipType: fieldType onProtocol: inProtocol error: __thriftError]) return NO;" << endl;
@@ -1284,8 +1285,8 @@ void t_cocoa_generator::generate_cocoa_struct_description(ofstream& out, t_struc
       indent(out) << "[ms appendString: @\"," << (*f_iter)->get_name() << ":\"];" << endl;
     }
     t_type* ttype = (*f_iter)->get_type();
-    indent(out) << "[ms appendFormat: @\"" << format_string_for_type(ttype) << "\", _"
-                << (*f_iter)->get_name() << "];" << endl;
+    indent(out) << "[ms appendFormat: @\"" << format_string_for_type(ttype) << "\", "
+                << format_cast_for_type(ttype) << "_" << (*f_iter)->get_name() << "];" << endl;
   }
   out << indent() << "[ms appendString: @\")\"];" << endl << indent()
       << "return [NSString stringWithString: ms];" << endl;
@@ -1994,8 +1995,8 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
   out << indent() << "                          error: (NSError *__autoreleasing *)__thriftError" << endl;
   out << indent() << "{" << endl;
   out << indent() << "  NSString * messageName;" << endl;
-  out << indent() << "  int messageType;" << endl;
-  out << indent() << "  int seqID;" << endl;
+  out << indent() << "  SInt32 messageType;" << endl;
+  out << indent() << "  SInt32 seqID;" << endl;
   out << indent() << "  if (![inProtocol readMessageBeginReturningName: &messageName" << endl;
   out << indent() << "                                       type: &messageType" << endl;
   out << indent() << "                                 sequenceID: &seqID" << endl;
@@ -2192,7 +2193,7 @@ void t_cocoa_generator::generate_deserialize_container(ofstream& out,
                                                        t_type* ttype,
                                                        string fieldName) {
   string size = tmp("_size");
-  indent(out) << "int " << size << ";" << endl;
+  indent(out) << "SInt32 " << size << ";" << endl;
 
   // Declare variables, read header
   if (ttype->is_map()) {
@@ -3140,6 +3141,47 @@ string t_cocoa_generator::format_string_for_type(t_type* type) {
   }
 
   throw "INVALID TYPE IN format_string_for_type: " + type->get_name();
+}
+
+/**
+ * Returns a format cast for the supplied parse type.
+ */
+string t_cocoa_generator::format_cast_for_type(t_type* type) {
+  type = get_true_type(type);
+  
+  if (type->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+    switch (tbase) {
+    case t_base_type::TYPE_VOID:
+      throw "NO T_VOID CONSTRUCT";
+    case t_base_type::TYPE_STRING:
+      return ""; // "\\\"%@\\\"";
+    case t_base_type::TYPE_BOOL:
+      return ""; // "%i";
+    case t_base_type::TYPE_BYTE:
+      return ""; // "%i";
+    case t_base_type::TYPE_I16:
+      return ""; // "%hi";
+    case t_base_type::TYPE_I32:
+      return "(int)"; // "%i";
+    case t_base_type::TYPE_I64:
+      return ""; // "%qi";
+    case t_base_type::TYPE_DOUBLE:
+      return ""; // "%f";
+    }
+  } else if (type->is_enum()) {
+    return "(int)"; // "%i";
+  } else if (type->is_struct() || type->is_xception()) {
+    return ""; // "%@";
+  } else if (type->is_map()) {
+    return ""; // "%@";
+  } else if (type->is_set()) {
+    return ""; // "%@";
+  } else if (type->is_list()) {
+    return ""; // "%@";
+  }
+  
+  throw "INVALID TYPE IN format_cast_for_type: " + type->get_name();
 }
 
 /**
