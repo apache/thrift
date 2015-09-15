@@ -3,12 +3,12 @@
 set -e;
 rm -r gen-dart || true;
 
-thrift --gen "dart:gen_server" "../shared.thrift";
+thrift --gen dart ../shared.thrift;
 cd gen-dart/shared;
 pub get;
 cd ../..;
 
-thrift --gen "dart:gen_server" "../tutorial.thrift";
+thrift --gen dart ../tutorial.thrift;
 cd gen-dart/tutorial;
 pub get;
 cd ../..;
