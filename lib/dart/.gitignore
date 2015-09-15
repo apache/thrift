@@ -2,3 +2,4 @@
 packages
 .pub/
 pubspec.lock
+/coverage/
