@@ -22,7 +22,8 @@
 
 extern NSString *TSSLSocketTransportErrorDomain;
 
-enum {
+
+typedef NS_ENUM (int, TSSLSocketTransportError) {
   TSSLSocketTransportErrorHostanameResolution  = -10000,
   TSSLSocketTransportErrorSocketCreate         = -10001,
   TSSLSocketTransportErrorConnect              = -10002,

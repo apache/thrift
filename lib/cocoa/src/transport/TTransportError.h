@@ -19,7 +19,9 @@
 
 #import "TError.h"
 
+
 extern NSString *TTransportErrorDomain;
+
 
 typedef NS_ENUM (int, TTransportError) {
   TTransportErrorUnknown        = 30000,
