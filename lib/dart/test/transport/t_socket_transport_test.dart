@@ -52,6 +52,23 @@ void main() {
 
       expect(bufferText, responseText);
     });
+
+    test('Test response timeout', () async {
+      var socket = new FakeSocket();
+      await socket.open();
+
+      FakeProtocolFactory protocolFactory = new FakeProtocolFactory();
+      protocolFactory.message = new TMessage("foo", TMessageType.CALL, 123);
+      var transport = new TClientSocketTransport(socket, protocolFactory, responseTimeout: Duration.ZERO);
+      transport.writeAll(requestBytes);
+
+      Future responseReady = transport.flush();
+
+      expect(responseReady, throwsA(new isInstanceOf<TimeoutException>()));
+
+      // allow the timeout to occur
+      await new Future.delayed(new Duration(milliseconds: 100));
+    });
   }, timeout: new Timeout(new Duration(seconds: 1)));
 
   group('TServerTransport', () {

@@ -62,20 +62,37 @@ abstract class TSocketTransport extends TBufferedTransport {
 
 /// [TClientSocketTransport] sends outgoing messages and expects a response
 class TClientSocketTransport extends TSocketTransport {
+  static const defaultTimeout = const Duration(seconds: 30);
+
   final Map<int, Completer<Uint8List>> _completers = {};
 
   final TMessageReader messageReader;
 
-  TClientSocketTransport(TSocket socket, TProtocolFactory protocolFactory)
+  final Duration responseTimeout;
+
+  TClientSocketTransport(TSocket socket, TProtocolFactory protocolFactory,
+      {Duration responseTimeout: defaultTimeout})
       : messageReader = new TMessageReader(protocolFactory),
+        this.responseTimeout = responseTimeout,
         super(socket);
 
   Future flush() {
     Uint8List bytes = _consumeWriteBuffer();
     TMessage message = messageReader.readMessage(bytes);
+    int seqid = message.seqid;
 
     Completer completer = new Completer();
-    _completers[message.seqid] = completer;
+    _completers[seqid] = completer;
+
+    if (responseTimeout != null) {
+      new Future.delayed(responseTimeout, () {
+        var completer = _completers.remove(seqid);
+        if (completer != null) {
+          completer.completeError(
+              new TimeoutException("Response timed out.", responseTimeout));
+        }
+      });
+    }
 
     socket.send(bytes);
 
