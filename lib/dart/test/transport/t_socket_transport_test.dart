@@ -65,9 +65,6 @@ void main() {
       Future responseReady = transport.flush();
 
       expect(responseReady, throwsA(new isInstanceOf<TimeoutException>()));
-
-      // allow the timeout to occur
-      await new Future.delayed(new Duration(milliseconds: 100));
     });
   }, timeout: new Timeout(new Duration(seconds: 1)));
 

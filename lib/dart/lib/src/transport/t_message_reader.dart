@@ -19,20 +19,34 @@ part of thrift;
 
 /// [TMessageReader] extracts a [TMessage] from bytes.  This is used to allow a
 /// transport to inspect the message seqid and map responses to requests.
-class TMessageReader extends TTransport {
+class TMessageReader {
   final TProtocolFactory protocolFactory;
 
-  TMessageReader(this.protocolFactory);
+  final _TMessageReaderTransport _transport;
+
+  TMessageReader(this.protocolFactory)
+      : _transport = new _TMessageReaderTransport();
+
+  TMessage readMessage(Uint8List bytes) {
+    _transport.reset(bytes);
+    TProtocol protocol = protocolFactory.getProtocol(_transport);
+    TMessage message = protocol.readMessageBegin();
+    _transport.reset(null);
+
+    return message;
+  }
+
+}
+
+/// An internal class used to support [TMessageReader].
+class _TMessageReaderTransport extends TTransport {
+
+  _TMessageReaderTransport();
 
   Iterator<int> _readIterator;
 
-  TMessage readMessage(Uint8List bytes) {
-    TProtocol protocol = protocolFactory.getProtocol(this);
-    _readIterator = bytes.iterator;
-    TMessage message = protocol.readMessageBegin();
-    _readIterator = null;
-
-    return message;
+  void reset(Uint8List bytes) {
+    _readIterator = bytes != null ? bytes.iterator : null;
   }
 
   get isOpen => true;
