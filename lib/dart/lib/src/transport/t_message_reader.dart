@@ -37,9 +37,9 @@ class TMessageReader extends TTransport {
 
   get isOpen => true;
 
-  Future open() => throw new UnsupportedError("Unsuppored in MessageReader");
+  Future open() => throw new UnsupportedError("Unsupported in MessageReader");
 
-  Future close() => throw new UnsupportedError("Unsuppored in MessageReader");
+  Future close() => throw new UnsupportedError("Unsupported in MessageReader");
 
   int read(Uint8List buffer, int offset, int length) {
     if (buffer == null) {
@@ -64,7 +64,7 @@ class TMessageReader extends TTransport {
   }
 
   void write(Uint8List buffer, int offset, int length) =>
-      throw new UnsupportedError("Unsuppored in MessageReader");
+      throw new UnsupportedError("Unsupported in MessageReader");
 
-  Future flush() => throw new UnsupportedError("Unsuppored in MessageReader");
+  Future flush() => throw new UnsupportedError("Unsupported in MessageReader");
 }
