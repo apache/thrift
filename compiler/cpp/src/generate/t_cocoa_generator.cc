@@ -1868,7 +1868,7 @@ void t_cocoa_generator::generate_cocoa_service_client_async_implementation(ofstr
       indent(out) << "- " << promise_function_signature(*f_iter) << endl;
       scope_up(out);
       
-      out << indent() << "return [PMKPromise promiseWithResolverBlock:^(PMKResolver resolver) {" << endl;
+      out << indent() << "return [AnyPromise promiseWithResolverBlock:^(PMKResolver resolver) {" << endl;
       indent_up();
       
       out << indent() << "NSError *thriftError;" << endl
