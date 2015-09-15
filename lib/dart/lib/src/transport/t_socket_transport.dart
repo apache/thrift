@@ -55,44 +55,57 @@ abstract class TSocketTransport extends TBufferedTransport {
   }
 
   /// Make an incoming message available to read from the transport.
-  void handleIncomingMessage(Uint8List message) {
-    _setReadBuffer(message);
-  }
-
-  /// Send the bytes in the write buffer to the socket
-  void sendMessage() {
-    Uint8List message = _consumeWriteBuffer();
-    socket.send(message);
+  void handleIncomingMessage(Uint8List messageBytes) {
+    _setReadBuffer(messageBytes);
   }
 }
 
 /// [TClientSocketTransport] sends outgoing messages and expects a response
-///
-/// NOTE:  Currently this assumes serialized responses from a single threaded
-/// server.
-///
-/// TODO Give [TClientSocketTransport] more information so it can correlate
-/// requests and responses, e.g. a protocol-aware function that can read the
-/// sequence id from the message header.
 class TClientSocketTransport extends TSocketTransport {
-  final List<Completer<Uint8List>> _completers = [];
+  static const defaultTimeout = const Duration(seconds: 30);
 
-  TClientSocketTransport(TSocket socket) : super(socket);
+  final Map<int, Completer<Uint8List>> _completers = {};
+
+  final TMessageReader messageReader;
+
+  final Duration responseTimeout;
+
+  TClientSocketTransport(TSocket socket, TProtocolFactory protocolFactory,
+      {Duration responseTimeout: defaultTimeout})
+      : messageReader = new TMessageReader(protocolFactory),
+        this.responseTimeout = responseTimeout,
+        super(socket);
 
   Future flush() {
-    Completer completer = new Completer();
-    _completers.add(completer);
+    Uint8List bytes = _consumeWriteBuffer();
+    TMessage message = messageReader.readMessage(bytes);
+    int seqid = message.seqid;
 
-    sendMessage();
+    Completer completer = new Completer();
+    _completers[seqid] = completer;
+
+    if (responseTimeout != null) {
+      new Future.delayed(responseTimeout, () {
+        var completer = _completers.remove(seqid);
+        if (completer != null) {
+          completer.completeError(
+              new TimeoutException("Response timed out.", responseTimeout));
+        }
+      });
+    }
+
+    socket.send(bytes);
 
     return completer.future;
   }
 
-  void handleIncomingMessage(Uint8List message) {
-    super.handleIncomingMessage(message);
+  void handleIncomingMessage(Uint8List messageBytes) {
+    super.handleIncomingMessage(messageBytes);
 
-    if (_completers.isNotEmpty) {
-      _completers.removeAt(0).complete();
+    TMessage message = messageReader.readMessage(messageBytes);
+    var completer = _completers.remove(message.seqid);
+    if (completer != null) {
+      completer.complete();
     }
   }
 }
@@ -108,11 +121,12 @@ class TServerSocketTransport extends TSocketTransport {
         super(socket);
 
   Future flush() async {
-    sendMessage();
+    Uint8List message = _consumeWriteBuffer();
+    socket.send(message);
   }
 
-  void handleIncomingMessage(Uint8List message) {
-    super.handleIncomingMessage(message);
+  void handleIncomingMessage(Uint8List messageBytes) {
+    super.handleIncomingMessage(messageBytes);
 
     _onIncomingMessageController.add(null);
   }

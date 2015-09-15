@@ -5,6 +5,7 @@ import 'dart:convert' show Utf8Codec;
 import 'dart:typed_data' show Uint8List;
 
 import 'package:crypto/crypto.dart' show CryptoUtils;
+import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 import 'package:thrift/thrift.dart';
 
@@ -25,7 +26,9 @@ void main() {
       var socket = new FakeSocket();
       await socket.open();
 
-      var transport = new TClientSocketTransport(socket);
+      FakeProtocolFactory protocolFactory = new FakeProtocolFactory();
+      protocolFactory.message = new TMessage("foo", TMessageType.CALL, 123);
+      var transport = new TClientSocketTransport(socket, protocolFactory);
 
       transport.writeAll(requestBytes);
       expect(socket.sendPayload, isNull);
@@ -39,6 +42,7 @@ void main() {
       expect(socket.sendPayload, requestBytes);
 
       // simulate a response
+      protocolFactory.message = new TMessage("foo", TMessageType.REPLY, 123);
       socket.receiveFakeMessage(responseBase64);
 
       await responseReady;
@@ -47,6 +51,20 @@ void main() {
       var bufferText = utf8Codec.decode(buffer);
 
       expect(bufferText, responseText);
+    });
+
+    test('Test response timeout', () async {
+      var socket = new FakeSocket();
+      await socket.open();
+
+      FakeProtocolFactory protocolFactory = new FakeProtocolFactory();
+      protocolFactory.message = new TMessage("foo", TMessageType.CALL, 123);
+      var transport = new TClientSocketTransport(socket, protocolFactory, responseTimeout: Duration.ZERO);
+      transport.writeAll(requestBytes);
+
+      Future responseReady = transport.flush();
+
+      expect(responseReady, throwsA(new isInstanceOf<TimeoutException>()));
     });
   }, timeout: new Timeout(new Duration(seconds: 1)));
 
@@ -143,5 +161,26 @@ class FakeSocket extends TSocket {
         new Uint8List.fromList(CryptoUtils.base64StringToBytes(base64));
     _onMessageController.add(message);
   }
+
+}
+
+
+class FakeProtocolFactory implements TProtocolFactory {
+
+  FakeProtocolFactory();
+
+  TMessage message;
+
+  getProtocol(TTransport transport) => new FakeProtocol(message);
+
+}
+
+class FakeProtocol extends Mock implements TProtocol {
+
+  FakeProtocol(this._message);
+
+  TMessage _message;
+
+  readMessageBegin() => _message;
 
 }

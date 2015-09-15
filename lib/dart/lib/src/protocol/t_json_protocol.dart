@@ -17,6 +17,12 @@
 
 part of thrift;
 
+class TJsonProtocolFactory implements TProtocolFactory<TJsonProtocol> {
+  TJsonProtocol getProtocol(TTransport transport) {
+    return new TJsonProtocol(transport);
+  }
+}
+
 /// JSON protocol implementation for Thrift.
 ///
 /// Adapted from the C# version.
