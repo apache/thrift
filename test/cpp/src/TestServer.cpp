@@ -114,6 +114,11 @@ public:
     out = thing;
   }
 
+  void testEmptyStruct(EmptyStruct& out, const EmptyStruct& thing) {
+    printf("testEmptyStruct(%s)\n", thing);
+    out = thing;
+  }
+
   void testNest(Xtruct2& out, const Xtruct2& nest) {
     const Xtruct& thing = nest.struct_thing;
     printf("testNest({%d, {\"%s\", %d, %d, %" PRId64 "}, %d})\n",
