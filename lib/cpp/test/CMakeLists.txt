@@ -19,7 +19,7 @@
 
 # Find required packages
 set(Boost_USE_STATIC_LIBS ON) # Force the use of static boost test framework
-find_package(Boost 1.53.0 REQUIRED COMPONENTS chrono system thread unit_test_framework)
+find_package(Boost 1.53.0 REQUIRED COMPONENTS chrono filesystem system thread unit_test_framework)
 include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 
 #Make sure gen-cpp files can be included
@@ -290,6 +290,18 @@ target_link_libraries(OpenSSLManualInitTest
 )
 LINK_AGAINST_THRIFT_LIBRARY(OpenSSLManualInitTest thrift)
 add_test(NAME OpenSSLManualInitTest COMMAND OpenSSLManualInitTest)
+
+add_executable(SecurityTest SecurityTest.cpp)
+target_link_libraries(SecurityTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
+LINK_AGAINST_THRIFT_LIBRARY(SecurityTest thrift)
+if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+target_link_libraries(SecurityTest -lrt)
+endif ()
+add_test(NAME SecurityTest COMMAND SecurityTest "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
+
 endif()
 
 if(WITH_QT4)
@@ -314,7 +326,7 @@ endif()
 
 
 add_custom_command(OUTPUT gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp  gen-cpp/EmptyService.h
-    COMMAND thrift-compiler --gen cpp:dense ${PROJECT_SOURCE_DIR}/test/DebugProtoTest.thrift
+    COMMAND thrift-compiler --gen cpp ${PROJECT_SOURCE_DIR}/test/DebugProtoTest.thrift
 )
 
 add_custom_command(OUTPUT gen-cpp/EnumTest_types.cpp gen-cpp/EnumTest_types.h
@@ -326,7 +338,7 @@ add_custom_command(OUTPUT gen-cpp/TypedefTest_types.cpp gen-cpp/TypedefTest_type
 )
 
 add_custom_command(OUTPUT gen-cpp/OptionalRequiredTest_types.cpp gen-cpp/OptionalRequiredTest_types.h
-    COMMAND thrift-compiler --gen cpp:dense ${PROJECT_SOURCE_DIR}/test/OptionalRequiredTest.thrift
+    COMMAND thrift-compiler --gen cpp ${PROJECT_SOURCE_DIR}/test/OptionalRequiredTest.thrift
 )
 
 add_custom_command(OUTPUT gen-cpp/Recursive_types.cpp gen-cpp/Recursive_types.h
@@ -334,11 +346,11 @@ add_custom_command(OUTPUT gen-cpp/Recursive_types.cpp gen-cpp/Recursive_types.h
 )
 
 add_custom_command(OUTPUT gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
-    COMMAND thrift-compiler --gen cpp:dense ${PROJECT_SOURCE_DIR}/test/StressTest.thrift
+    COMMAND thrift-compiler --gen cpp ${PROJECT_SOURCE_DIR}/test/StressTest.thrift
 )
 
 add_custom_command(OUTPUT gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_types.h
-    COMMAND thrift-compiler --gen cpp:dense ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+    COMMAND thrift-compiler --gen cpp ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
 )
 
 add_custom_command(OUTPUT gen-cpp/ChildService.cpp gen-cpp/ChildService.h gen-cpp/ParentService.cpp gen-cpp/ParentService.h gen-cpp/proc_types.cpp gen-cpp/proc_types.h

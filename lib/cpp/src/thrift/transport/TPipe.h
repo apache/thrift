@@ -51,7 +51,6 @@ public:
   // Constructs a new pipe object.
   TPipe();
   // Named pipe constructors -
-  explicit TPipe(TAutoHandle &Pipe); // The Pipe will be pseudo-moved from in here
   explicit TPipe(HANDLE Pipe); // HANDLE is a void*
   explicit TPipe(TAutoHandle &Pipe); // this ctor will clear out / move from Pipe
   // need a const char * overload so string literals don't go to the HANDLE overload
@@ -88,8 +87,8 @@ public:
   void setPipeHandle(HANDLE pipehandle);
   HANDLE getWrtPipeHandle();
   void setWrtPipeHandle(HANDLE pipehandle);
-  long getConnectTimeout();
-  void setConnectTimeout(long seconds);
+  long getConnTimeout();
+  void setConnTimeout(long seconds);
 
   // this function is intended to be used in generic / template situations,
   // so its name needs to be the same as TPipeServer's

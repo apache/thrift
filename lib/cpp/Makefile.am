@@ -72,7 +72,6 @@ libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/concurrency/Util.cpp \
                        src/thrift/processor/PeekProcessor.cpp \
                        src/thrift/protocol/TDebugProtocol.cpp \
-                       src/thrift/protocol/TDenseProtocol.cpp \
                        src/thrift/protocol/TJSONProtocol.cpp \
                        src/thrift/protocol/TBase64Utils.cpp \
                        src/thrift/protocol/TMultiplexedProtocol.cpp \
@@ -153,7 +152,6 @@ include_thrift_HEADERS = \
                          src/thrift/TDispatchProcessor.h \
                          src/thrift/Thrift.h \
                          src/thrift/TOutput.h \
-                         src/thrift/TReflectionLocal.h \
                          src/thrift/TProcessor.h \
                          src/thrift/TApplicationException.h \
                          src/thrift/TLogging.h \
@@ -184,7 +182,6 @@ include_protocol_HEADERS = \
                          src/thrift/protocol/TBinaryProtocol.tcc \
                          src/thrift/protocol/TCompactProtocol.h \
                          src/thrift/protocol/TCompactProtocol.tcc \
-                         src/thrift/protocol/TDenseProtocol.h \
                          src/thrift/protocol/TDebugProtocol.h \
                          src/thrift/protocol/TBase64Utils.h \
                          src/thrift/protocol/TJSONProtocol.h \
@@ -264,12 +261,15 @@ WINDOWS_DIST = \
              3rdparty.props
 
 EXTRA_DIST = \
+             CMakeLists.txt \
+             coding_standards.md \
              README.md \
              thrift-nb.pc.in \
              thrift.pc.in \
              thrift-z.pc.in \
              thrift-qt.pc.in \
              thrift-qt5.pc.in \
+             src/thrift/qt/CMakeLists.txt \
              $(WINDOWS_DIST)
 
 style-local:

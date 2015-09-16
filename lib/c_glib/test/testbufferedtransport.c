@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <netdb.h>
 #include <signal.h>
+#include <sys/wait.h>
 
 #include <thrift/c_glib/transport/thrift_transport.h>
 #include <thrift/c_glib/transport/thrift_socket.h>
@@ -29,9 +30,6 @@
 #define TEST_DATA { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j' }
 
 #include "../src/thrift/c_glib/transport/thrift_buffered_transport.c"
-
-static const char TEST_ADDRESS[] = "localhost";
-static const short TEST_PORT = 64444;
 
 static void thrift_server (const int port);
 
@@ -273,7 +271,10 @@ test_write_fail(void)
 int
 main(int argc, char *argv[])
 {
+#if (!GLIB_CHECK_VERSION (2, 36, 0))
   g_type_init();
+#endif
+
   g_test_init (&argc, &argv, NULL);
 
   g_test_add_func ("/testbufferedtransport/CreateAndDestroy", test_create_and_destroy);

@@ -25,17 +25,21 @@ Using Thrift with Perl
 
 Thrift requires Perl >= 5.6.0
 
-Exceptions are thrown with die so be sure to wrap eval{} statments
-around any code that contains exceptions.
+Unexpected exceptions in a service handler are converted to
+TApplicationException with type INTERNAL ERROR and the string
+of the exception is delivered as the message.
 
-The 64bit Integers work only up to 2^42 on my machine :-?
-Math::BigInt is probably needed.
+On the client side, exceptions are thrown with die, so be sure
+to wrap eval{} statments around any code that contains exceptions.
 
-Please see tutoral and test dirs for examples...
+Please see tutoral and test dirs for examples.
 
 Dependencies
 ============
 
-Bit::Vector     - comes with modern perl installations.
+Bit::Vector       - comes with modern perl installations.
 Class::Accessor
-
+IO::Socket::INET  - comes with modern perl installations.
+IO::Socket::SSL   - required if using SSL/TLS.
+NET::SSLeay
+Crypt::SSLeay     - for make cross

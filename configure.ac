@@ -24,7 +24,7 @@ AC_INIT([thrift], [1.0.0-dev])
 
 AC_CONFIG_AUX_DIR([.])
 
-AM_INIT_AUTOMAKE([1.13 tar-ustar])
+AM_INIT_AUTOMAKE([1.13 subdir-objects tar-ustar])
 PKG_PROG_PKG_CONFIG
 
 AC_ARG_VAR([PY_PREFIX], [Prefix for installing Python modules.
@@ -137,6 +137,7 @@ if test "$with_cpp" = "yes";  then
   if test "x$succeeded" = "xyes" ; then
     AC_SUBST([BOOST_LIB_DIR], [$(echo "$BOOST_LDFLAGS" | sed -e 's/^\-L//')])
     AC_SUBST([BOOST_CHRONO_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_chrono.a")])
+    AC_SUBST([BOOST_FILESYSTEM_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_filesystem.a")])
     AC_SUBST([BOOST_SYSTEM_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_system.a")])
     AC_SUBST([BOOST_TEST_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_unit_test_framework.a")])
     AC_SUBST([BOOST_THREAD_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_thread.a")])
@@ -197,6 +198,13 @@ AM_CONDITIONAL(WITH_C_GLIB, [test "$have_glib2" = "yes" -a "$have_gobject2" = "y
 
 AX_THRIFT_LIB(csharp, [C#], yes)
 if test "$with_csharp" = "yes";  then
+  PKG_CHECK_MODULES(MONO, mono >= 2.11.0, mono_2_11=yes, mono_2_11=no)
+  if test "$mono_2_11" == "yes"; then
+    AC_PATH_PROG([MCS], [mcs])
+    if test "x$MCS" != "x"; then
+      mono_mcs="yes"
+    fi
+  fi
   PKG_CHECK_MODULES(MONO, mono >= 2.0.0, net_3_5=yes, net_3_5=no)
   PKG_CHECK_MODULES(MONO, mono >= 1.2.4, have_mono=yes, have_mono=no)
   if test "$have_mono" = "yes" ; then
@@ -205,6 +213,7 @@ if test "$with_csharp" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_MONO, [test "$have_csharp" = "yes"])
 AM_CONDITIONAL(NET_2_0, [test "$net_3_5" = "no"])
+AM_CONDITIONAL(MONO_MCS, [test "$mono_mcs" = "yes"])
 
 AX_THRIFT_LIB(java, [Java], yes)
 if test "$with_java" = "yes";  then
@@ -231,9 +240,16 @@ if test "$with_erlang" = "yes";  then
   fi
   if test -n "$ERL" -a -n "$ERLC" ; then
     have_erlang="yes"
+
+    # otp_release is simply a number (like "17") for OTP17+ while "R16..." for OTP16 or less.
+    # OTP version is currently only used for running tests.
+    if $ERL -eval 'erlang:display(erlang:system_info(otp_release)),halt().' -noshell | grep "^\"R" >/dev/null; then
+      erlang_otp16_or_less="yes"
+    fi
   fi
 fi
 AM_CONDITIONAL(WITH_ERLANG, [test "$have_erlang" = "yes"])
+AM_CONDITIONAL(ERLANG_OTP16, [test "$erlang_otp16_or_less" = "yes"])
 
 AX_THRIFT_LIB(nodejs, [Nodejs], yes)
 have_nodejs=no

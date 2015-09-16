@@ -42,6 +42,8 @@ check-local: all
 EXTRA_DIST = \
 	build.xml \
 	build.properties \
+	CMakeLists.txt \
+	coding_standards.md \
 	src \
 	test \
 	README.md

@@ -39,4 +39,5 @@ EXTRA_DIST = \
 	examples \
 	lib \
 	test \
+	coding_standards.md \
 	README.md

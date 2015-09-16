@@ -115,8 +115,8 @@ sub _handleException
         my $out     = $code . ':' . $message;
 
         $message =~ m/TTransportException/ and die $out;
-        if ($message =~ m/TSocket/) {
-            # suppress TSocket messages
+        if ($message =~ m/Socket/) {
+            # suppress Socket messages
         } else {
             warn $out;
         }

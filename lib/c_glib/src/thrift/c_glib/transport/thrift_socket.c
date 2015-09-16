@@ -186,7 +186,7 @@ thrift_socket_read (ThriftTransport *transport, gpointer buf,
 
   while (got < len)
   {
-    ret = recv (socket->sd, buf+got, len-got, 0);
+    ret = recv (socket->sd, (guint8 *)buf + got, len-got, 0);
     if (ret <= 0)
     {
       g_set_error (error, THRIFT_TRANSPORT_ERROR,
@@ -224,7 +224,7 @@ thrift_socket_write (ThriftTransport *transport, const gpointer buf,
 
   while (sent < len)
   {
-    ret = send (socket->sd, buf + sent, len - sent, 0);
+    ret = send (socket->sd, (guint8 *)buf + sent, len - sent, 0);
     if (ret < 0)
     {
       g_set_error (error, THRIFT_TRANSPORT_ERROR,
@@ -291,8 +291,9 @@ void
 thrift_socket_get_property (GObject *object, guint property_id,
                             GValue *value, GParamSpec *pspec)
 {
-  THRIFT_UNUSED_VAR (pspec);
   ThriftSocket *socket = THRIFT_SOCKET (object);
+
+  THRIFT_UNUSED_VAR (pspec);
 
   switch (property_id)
   {
@@ -310,8 +311,9 @@ void
 thrift_socket_set_property (GObject *object, guint property_id,
                             const GValue *value, GParamSpec *pspec)
 {
-  THRIFT_UNUSED_VAR (pspec);
   ThriftSocket *socket = THRIFT_SOCKET (object);
+
+  THRIFT_UNUSED_VAR (pspec);
 
   switch (property_id)
   {
@@ -328,6 +330,7 @@ thrift_socket_set_property (GObject *object, guint property_id,
 static void
 thrift_socket_class_init (ThriftSocketClass *cls)
 {
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_CLASS (cls);
   GObjectClass *gobject_class = G_OBJECT_CLASS (cls);
   GParamSpec *param_spec = NULL;
 
@@ -354,8 +357,6 @@ thrift_socket_class_init (ThriftSocketClass *cls)
                                   G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class, PROP_THRIFT_SOCKET_PORT,
                                    param_spec);
-
-  ThriftTransportClass *ttc = THRIFT_TRANSPORT_CLASS (cls);
 
   gobject_class->finalize = thrift_socket_finalize;
   ttc->is_open = thrift_socket_is_open;

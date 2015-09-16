@@ -158,3 +158,9 @@ func (p *TSocket) Interrupt() error {
 	}
 	return p.conn.Close()
 }
+
+func (p *TSocket) RemainingBytes() (num_bytes uint64) {
+	const maxSize = ^uint64(0)
+	return maxSize  // the thruth is, we just don't know unless framed is used
+}
+

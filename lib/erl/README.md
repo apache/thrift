@@ -31,6 +31,7 @@ old naming conventions (for backwards compatibility) use the compiler option
 
 Example session using thrift_client:
 
+```erl
 1> {ok, C0} = thrift_client_util:new("localhost", 9090, thrift_test_thrift, []), ok.
 ok
 2> {C1, R1} = thrift_client:call(C0, testVoid, []), R1.
@@ -47,3 +48,4 @@ ok
 {ok,ok}
 8> {C7, R7} = (catch thrift_client:call(C6, testException, ["Xception"])), R7.
 {exception,{xception,1001,<<"Xception">>}}
+```

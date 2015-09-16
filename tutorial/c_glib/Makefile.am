@@ -46,6 +46,8 @@ nodist_libtutorialgencglib_la_SOURCES = \
 libtutorialgencglib_la_LIBADD = \
 	$(top_builddir)/lib/c_glib/libthrift_c_glib.la
 
+libtutorialgencglib_la_CFLAGS = \
+	$(AM_CFLAGS) -Wno-unused-function
 
 noinst_PROGRAMS = \
 	tutorial_server \
@@ -70,7 +72,7 @@ gen-c_glib/calculator.c gen-c_glib/calculator.h gen-c_glib/shared_service.c gen-
 	$(THRIFT) --gen c_glib -r $<
 
 clean-local:
-	$(RM) -r gen-c_glib
+	$(RM) gen-c_glib/*
 
 tutorialserver: all
 	./tutorial_server

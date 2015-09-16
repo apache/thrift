@@ -38,4 +38,5 @@ all-local:
 
 EXTRA_DIST = \
 	thrift \
+	coding_standards.md \
 	README.md

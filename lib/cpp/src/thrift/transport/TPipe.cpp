@@ -385,11 +385,11 @@ HANDLE TPipe::getNativeWaitHandle() {
   return INVALID_HANDLE_VALUE;
 }
 
-long TPipe::getConnectTimeout() {
+long TPipe::getConnTimeout() {
   return TimeoutSeconds_;
 }
 
-void TPipe::setConnectTimeout(long seconds) {
+void TPipe::setConnTimeout(long seconds) {
   TimeoutSeconds_ = seconds;
 }
 

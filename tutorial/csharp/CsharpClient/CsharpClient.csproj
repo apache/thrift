@@ -61,23 +61,45 @@
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="Thrift, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\lib\csharp\src\bin\Release\Thrift.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\gen-csharp\Calculator.cs">
+      <Link>Calculator.cs</Link>
+    </Compile>
+    <Compile Include="..\gen-csharp\InvalidOperation.cs">
+      <Link>InvalidOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\gen-csharp\Operation.cs">
+      <Link>Operation.cs</Link>
+    </Compile>
+    <Compile Include="..\gen-csharp\SharedService.cs">
+      <Link>SharedService.cs</Link>
+    </Compile>
+    <Compile Include="..\gen-csharp\SharedStruct.cs">
+      <Link>SharedStruct.cs</Link>
+    </Compile>
+    <Compile Include="..\gen-csharp\tutorial.Constants.cs">
+      <Link>tutorial.Constants.cs</Link>
+    </Compile>
+    <Compile Include="..\gen-csharp\Work.cs">
+      <Link>Work.cs</Link>
+    </Compile>
     <Compile Include="CsharpClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="..\..\gen-csharp\Calculator.cs" />
-    <Compile Include="..\..\gen-csharp\Constants.cs" />
-    <Compile Include="..\..\gen-csharp\InvalidOperation.cs" />
-    <Compile Include="..\..\gen-csharp\Operation.cs" />
-    <Compile Include="..\..\gen-csharp\SharedService.cs" />
-    <Compile Include="..\..\gen-csharp\SharedStruct.cs" />
-    <Compile Include="..\..\gen-csharp\Work.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\lib\csharp\src\Thrift.csproj">
+      <Project>{499eb63c-d74c-47e8-ae48-a2fc94538e9d}</Project>
+      <Name>Thrift</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>pushd "$(SolutionDir)"
+thrift  -gen csharp   -r  ../tutorial.thrift
+popd
+</PreBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

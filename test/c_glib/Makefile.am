@@ -65,7 +65,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/lib/c_glib/src -Igen-c_glib
 AM_LDFLAGS = $(GLIB_LIBS) $(GOBJECT_LIBS) @GCOV_LDFLAGS@
 
 clean-local:
-	$(RM) -r gen-c_glib
+	$(RM) gen-c_glib/*
 
 EXTRA_DIST = \
 	src/test_client.c \

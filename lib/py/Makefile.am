@@ -35,6 +35,8 @@ clean-local:
 check-local: all
 
 EXTRA_DIST = \
+	CMakeLists.txt \
+	coding_standards.md \
 	compat \
 	setup.py \
 	setup.cfg \

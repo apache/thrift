@@ -37,17 +37,6 @@ public:
 
   bool is_map() const { return true; }
 
-  virtual std::string get_fingerprint_material() const {
-    return "map<" + key_type_->get_fingerprint_material() + ","
-           + val_type_->get_fingerprint_material() + ">";
-  }
-
-  virtual void generate_fingerprint() {
-    t_type::generate_fingerprint();
-    key_type_->generate_fingerprint();
-    val_type_->generate_fingerprint();
-  }
-
 private:
   t_type* key_type_;
   t_type* val_type_;

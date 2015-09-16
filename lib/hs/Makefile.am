@@ -18,6 +18,7 @@
 #
 
 EXTRA_DIST = \
+	coding_standards.md \
 	LICENSE \
 	README.md \
 	Setup.lhs \

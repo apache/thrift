@@ -17,12 +17,21 @@
  * under the License.
  */
 
+/* Disable string-function optimizations when glibc is used, as these produce
+   compiler warnings about string length when a string function is used inside
+   a call to assert () */
+#include <features.h>
+#ifdef __GLIBC__
+#define __NO_STRING_INLINES 1
+#endif
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
 #include <netdb.h>
 #include <string.h>
+#include <sys/wait.h>
 
 #include <thrift/c_glib/protocol/thrift_protocol.h>
 #include <thrift/c_glib/transport/thrift_socket.h>
@@ -32,7 +41,7 @@
 #define TEST_BYTE 123
 #define TEST_I16 12345
 #define TEST_I32 1234567890
-#define TEST_I64 123456789012345LL
+#define TEST_I64 123456789012345
 #define TEST_DOUBLE 1234567890.123
 #define TEST_STRING "this is a test string 1234567890!@#$%^&*()"
 #define TEST_PORT 51199
@@ -653,14 +662,17 @@ thrift_server_complex_types (const int port)
   thrift_binary_protocol_read_string (protocol, &message_name, NULL);
 
   g_object_unref (client);
-  // TODO: investigate g_object_unref (tbp);
+  /* TODO: investigate g_object_unref (tbp); */
   g_object_unref (tsocket);
 }
 
 int
 main(int argc, char *argv[])
 {
+#if (!GLIB_CHECK_VERSION (2, 36, 0))
   g_type_init();
+#endif
+
   g_test_init (&argc, &argv, NULL);
 
   g_test_add_func ("/testbinaryprotocol/CreateAndDestroy", test_create_and_destroy);

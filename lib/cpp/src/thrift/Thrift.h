@@ -96,13 +96,6 @@ protected:
   std::string message_;
 };
 
-// Forward declare this structure used by TDenseProtocol
-namespace reflection {
-namespace local {
-struct TypeSpec;
-}
-}
-
 class TDelayedException {
 public:
   template <class E>

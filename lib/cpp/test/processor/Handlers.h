@@ -142,7 +142,7 @@ protected:
 #ifdef _WIN32
   #pragma warning( push )
   #pragma warning (disable : 4250 ) //inheriting methods via dominance
-#endif;
+#endif
 
 class ChildHandler : public ParentHandler, virtual public ChildServiceIf {
 public:

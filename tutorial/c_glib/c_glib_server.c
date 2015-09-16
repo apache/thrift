@@ -100,7 +100,7 @@ G_END_DECLS
 
 G_DEFINE_TYPE (TutorialCalculatorHandler,
                tutorial_calculator_handler,
-               TYPE_CALCULATOR_HANDLER);
+               TYPE_CALCULATOR_HANDLER)
 
 /* Each of a handler's methods accepts at least two parameters: A
    pointer to the service-interface implementation (the handler object
@@ -173,8 +173,6 @@ tutorial_calculator_handler_calculate (CalculatorIf      *iface,
                                        InvalidOperation **ouch,
                                        GError           **error)
 {
-  THRIFT_UNUSED_VAR (error);
-
   TutorialCalculatorHandler *self;
 
   gint *log_key;
@@ -185,6 +183,8 @@ tutorial_calculator_handler_calculate (CalculatorIf      *iface,
   gint num2;
   Operation op;
   gboolean result = TRUE;
+
+  THRIFT_UNUSED_VAR (error);
 
   g_return_val_if_fail (IS_TUTORIAL_CALCULATOR_HANDLER (iface),
                         FALSE);
@@ -300,13 +300,13 @@ tutorial_calculator_handler_get_struct (SharedServiceIf  *iface,
                                         const gint32      key32,
                                         GError          **error)
 {
-  THRIFT_UNUSED_VAR (error);
-
   gint key = (gint)key32;
   TutorialCalculatorHandler *self;
   SharedStruct *log_struct;
   gint log_key;
   gchar *log_value;
+
+  THRIFT_UNUSED_VAR (error);
 
   g_return_val_if_fail (IS_TUTORIAL_CALCULATOR_HANDLER (iface),
                         FALSE);
@@ -440,7 +440,7 @@ int main (void)
 
   struct sigaction sigint_action;
 
-  GError *error;
+  GError *error = NULL;
   int exit_status = 0;
 
 #if (!GLIB_CHECK_VERSION (2, 36, 0))

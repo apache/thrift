@@ -24,7 +24,8 @@ pkgconfigdir = $(libdir)/pkgconfig
 lib_LTLIBRARIES = libthrift_c_glib.la
 pkgconfig_DATA = thrift_c_glib.pc
 
-AM_CFLAGS = -Isrc -I src/thrift/c_glib
+AM_CPPFLAGS = -Isrc -I src/thrift/c_glib
+AM_CFLAGS = -Wall -Wextra -pedantic
 
 # Define the source files for the module
 
@@ -87,6 +88,8 @@ include_processor_HEADERS = src/thrift/c_glib/processor/thrift_processor.h \
 
 
 EXTRA_DIST = \
+             CMakeLists.txt \
+             coding_standards.md \
              README.md \
              test/glib.suppress \
              thrift_c_glib.pc.in

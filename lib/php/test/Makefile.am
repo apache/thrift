@@ -34,9 +34,9 @@ if HAVE_PHPUNIT
 	$(PHPUNIT) --log-junit=TEST-json-serializer.xml Test/Thrift/JsonSerialize/
 endif
 
-check-validator: stubs 
-	php Test/Thrift/TestValidators.php 
-	php Test/Thrift/TestValidators.php -oop 
+check-validator: stubs
+	php Test/Thrift/TestValidators.php
+	php Test/Thrift/TestValidators.php -oop
 
 check-protocol:	stubs
 if HAVE_PHPUNIT
@@ -53,5 +53,8 @@ clean-local:
 	$(RM) -r ./packages
 	$(RM) TEST-*.xml
 
-EXTRA_DIST = Test
+EXTRA_DIST = \
+	Test \
+	TestValidators.thrift
+
 

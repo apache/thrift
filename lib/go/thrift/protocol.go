@@ -43,7 +43,7 @@ type TProtocol interface {
 	WriteSetBegin(elemType TType, size int) error
 	WriteSetEnd() error
 	WriteBool(value bool) error
-	WriteByte(value byte) error
+	WriteByte(value int8) error
 	WriteI16(value int16) error
 	WriteI32(value int32) error
 	WriteI64(value int64) error
@@ -64,7 +64,7 @@ type TProtocol interface {
 	ReadSetBegin() (elemType TType, size int, err error)
 	ReadSetEnd() error
 	ReadBool() (value bool, err error)
-	ReadByte() (value byte, err error)
+	ReadByte() (value int8, err error)
 	ReadI16() (value int16, err error)
 	ReadI32() (value int32, err error)
 	ReadI64() (value int64, err error)

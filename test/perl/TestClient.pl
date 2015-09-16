@@ -23,6 +23,7 @@ require 5.6.0;
 use strict;
 use warnings;
 use Data::Dumper;
+use Getopt::Long qw(GetOptions);
 use Time::HiRes qw(gettimeofday);
 
 use lib '../../lib/perl/lib';
@@ -30,33 +31,89 @@ use lib 'gen-perl';
 
 use Thrift;
 use Thrift::BinaryProtocol;
-use Thrift::Socket;
 use Thrift::BufferedTransport;
+use Thrift::FramedTransport;
+use Thrift::SSLSocket;
+use Thrift::Socket;
 
 use ThriftTest::ThriftTest;
 use ThriftTest::Types;
 
 $|++;
 
-my $host = 'localhost';
-my $port = 9090;
+sub usage {
+    print <<EOF;
+Usage: $0 [OPTIONS]
 
-foreach my $arg (@ARGV) {
-  if($arg =~ /^--port=([0-9]+)/) {
-    $port = $1;
-  }
+Options:                          (default)
+  --cert                                       Certificate to use.
+                                               Required if using --ssl.
+  --help                                       Show usage.
+  --port <portnum>                9090         Port to use.
+  --protocol {binary}             binary       Protocol to use.
+  --ssl                                        If present, use SSL.
+  --transport {buffered|framed}   buffered     Transport to use.
+                                   
+EOF
 }
 
-my $socket = new Thrift::Socket($host, $port);
+my %opts = (
+    'port' => 9090,
+    'protocol' => 'binary',
+    'transport' => 'buffered'
+);
 
-my $bufferedSocket = new Thrift::BufferedTransport($socket, 1024, 1024);
-my $transport = $bufferedSocket;
-my $protocol = new Thrift::BinaryProtocol($transport);
+GetOptions(\%opts, qw (
+    cert=s
+    help
+    host=s
+    port=i
+    protocol=s
+    ssl
+    transport=s
+)) || exit 1;
+
+if ($opts{help}) {
+    usage();
+    exit 0;
+}
+
+if ($opts{ssl} and not defined $opts{cert}) {
+    usage();
+    exit 1;
+}
+
+my $socket = undef;
+if ($opts{ssl}) {
+	$socket = new Thrift::SSLSocket($opts{host}, $opts{port});
+} else {
+	$socket = new Thrift::Socket($opts{host}, $opts{port});
+}
+
+my $transport;
+if ($opts{transport} eq 'buffered') {
+    $transport = new Thrift::BufferedTransport($socket, 1024, 1024);
+} elsif ($opts{transport} eq 'framed') {
+    $transport = new Thrift::FramedTransport($socket);
+} else {
+    usage();
+    exit 1;
+}
+
+my $protocol;
+if ($opts{protocol} eq 'binary') {
+    $protocol = new Thrift::BinaryProtocol($transport);
+} else {
+    usage();
+    exit 1;
+}
+
 my $testClient = new ThriftTest::ThriftTestClient($protocol);
 
-eval{
-$transport->open();
-}; if($@){
+eval {
+  $transport->open();
+}; 
+if($@){
     die(Dumper($@));
 }
 my $start = gettimeofday();

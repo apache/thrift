@@ -73,14 +73,6 @@ public:
 
   bool is_base_type() const { return true; }
 
-  virtual std::string get_fingerprint_material() const {
-    std::string rv = t_base_name(base_);
-    if (rv == "(unknown)") {
-      throw "BUG: Can't get fingerprint material for this base type.";
-    }
-    return rv;
-  }
-
   static std::string t_base_name(t_base tbase) {
     switch (tbase) {
     case TYPE_VOID:

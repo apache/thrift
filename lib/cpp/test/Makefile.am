@@ -84,12 +84,12 @@ check_PROGRAMS = \
 	TransportTest \
 	TInterruptTest \
 	TServerIntegrationTest \
+	SecurityTest \
 	ZlibTest \
 	TFileTransportTest \
 	link_test \
 	OpenSSLManualInitTest \
-	EnumTest \
-	DenseProtoTest
+	EnumTest
 
 if AMX_HAVE_LIBEVENT
 noinst_PROGRAMS += \
@@ -114,7 +114,9 @@ UnitTests_SOURCES = \
 	ToStringTest.cpp \
 	TypedefTest.cpp \
 	TServerSocketTest.cpp \
-	TServerTransportTest.cpp
+	TServerTransportTest.cpp \
+	TestPortFixture.h \
+	TTransportCheckThrow.h
 
 if !WITH_BOOSTTHREADS
 UnitTests_SOURCES += \
@@ -142,6 +144,17 @@ TServerIntegrationTest_LDADD = \
   libtestgencpp.la \
   libprocessortest.la \
   $(BOOST_TEST_LDADD) \
+  $(BOOST_SYSTEM_LDADD) \
+  $(BOOST_THREAD_LDADD)
+
+SecurityTest_SOURCES = \
+	SecurityTest.cpp
+
+SecurityTest_LDADD = \
+  libtestgencpp.la \
+  libprocessortest.la \
+  $(BOOST_TEST_LDADD) \
+  $(BOOST_FILESYSTEM_LDADD) \
   $(BOOST_SYSTEM_LDADD) \
   $(BOOST_THREAD_LDADD)
 
@@ -192,11 +205,15 @@ TFDTransportTest_LDADD =  \
 # TPipedTransportTest
 #
 TPipedTransportTest_SOURCES = \
-	TPipedTransportTest.cpp
+	TPipedTransportTest.cpp \
+	TPipeInterruptTest.cpp
 
 TPipedTransportTest_LDADD = \
+	libtestgencpp.la \
 	$(top_builddir)/lib/cpp/libthrift.la \
-	$(BOOST_TEST_LDADD)
+	$(BOOST_TEST_LDADD) \
+	$(BOOST_SYSTEM_LDADD) \
+	$(BOOST_THREAD_LDADD)
 
 #
 # AllProtocolsTest
@@ -264,16 +281,6 @@ RecursiveTest_LDADD = \
 	$(BOOST_TEST_LDADD)
 
 #
-# DenseProtoTest
-#
-DenseProtoTest_SOURCES = \
-	DenseProtoTest.cpp
-
-DenseProtoTest_LDADD = \
-	libtestgencpp.la \
-	$(BOOST_TEST_LDADD)
-
-#
 # SpecializationTest
 #
 SpecializationTest_SOURCES = \
@@ -325,7 +332,7 @@ OpenSSLManualInitTest_LDADD = \
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp gen-cpp/EmptyService.h: $(top_srcdir)/test/DebugProtoTest.thrift
-	$(THRIFT) --gen cpp:dense $<
+	$(THRIFT) --gen cpp $<
 
 gen-cpp/EnumTest_types.cpp gen-cpp/EnumTest_types.h: $(top_srcdir)/test/EnumTest.thrift
 	$(THRIFT) --gen cpp $<
@@ -334,16 +341,16 @@ gen-cpp/TypedefTest_types.cpp gen-cpp/TypedefTest_types.h: $(top_srcdir)/test/Ty
 	$(THRIFT) --gen cpp $<
 
 gen-cpp/OptionalRequiredTest_types.cpp gen-cpp/OptionalRequiredTest_types.h: $(top_srcdir)/test/OptionalRequiredTest.thrift
-	$(THRIFT) --gen cpp:dense $<
+	$(THRIFT) --gen cpp $<
 
 gen-cpp/Recursive_types.cpp gen-cpp/Recursive_types.h: $(top_srcdir)/test/Recursive.thrift
 	$(THRIFT) --gen cpp $<
 
 gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp: $(top_srcdir)/test/StressTest.thrift
-	$(THRIFT) --gen cpp:dense $<
+	$(THRIFT) --gen cpp $<
 
 gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_types.h: $(top_srcdir)/test/ThriftTest.thrift
-	$(THRIFT) --gen cpp:dense $<
+	$(THRIFT) --gen cpp $<
 
 gen-cpp/ChildService.cpp gen-cpp/ChildService.h gen-cpp/ParentService.cpp gen-cpp/ParentService.h gen-cpp/proc_types.cpp gen-cpp/proc_types.h: processor/proc.thrift
 	$(THRIFT) --gen cpp:templates,cob_style $<
@@ -356,7 +363,10 @@ clean-local:
 	$(RM) -r gen-cpp
 
 EXTRA_DIST = \
-	ThriftTest_extras.cpp \
-	DebugProtoTest_extras.cpp \
 	concurrency \
-	processor
+	processor \
+	qt \
+	CMakeLists.txt \
+	DebugProtoTest_extras.cpp \
+	tests.xml \
+	ThriftTest_extras.cpp

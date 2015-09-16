@@ -883,6 +883,8 @@ void TSocket::setCachedAddress(const sockaddr* addr, socklen_t len) {
     }
     break;
   }
+  peerAddress_.clear();
+  peerHost_.clear();
 }
 
 sockaddr* TSocket::getCachedAddress(socklen_t* len) const {

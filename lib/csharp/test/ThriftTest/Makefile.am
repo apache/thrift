@@ -18,7 +18,11 @@
 #
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
+if MONO_MCS
+CSC=mcs
+else
 CSC=gmcs
+endif
 
 stubs: $(top_srcdir)/test/ThriftTest.thrift
 	$(THRIFT) --gen csharp -o . $(top_srcdir)/test/ThriftTest.thrift
