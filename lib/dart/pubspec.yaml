@@ -6,11 +6,14 @@ author: Mark Erickson <mark.erickson@workiva.com>
 homepage: https://github.com/apache/thrift
 documentation: https://github.com/apache/thrift
 environment:
-  sdk: ^1.12.0
+  sdk: ">=1.12.0 <2.0.0"
 dependencies:
-  crypto: ^0.9.0
-  http: ^0.11.3
-  logging: ^0.11.0
+  crypto: "^0.9.0"
+  http: "^0.11.3"
+  logging: "^0.11.0"
 dev_dependencies:
-  mockito: ^0.11.0
-  test: ^0.12.0
+  coverage: "^0.7.2"
+  dart_dev: "^1.0.1"
+  dart_style: "^0.2.0"
+  mockito: "^0.11.0"
+  test: "^0.12.0"

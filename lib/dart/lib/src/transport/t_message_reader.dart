@@ -35,12 +35,10 @@ class TMessageReader {
 
     return message;
   }
-
 }
 
 /// An internal class used to support [TMessageReader].
 class _TMessageReaderTransport extends TTransport {
-
   _TMessageReaderTransport();
 
   Iterator<int> _readIterator;
