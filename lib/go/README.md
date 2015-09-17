@@ -27,7 +27,7 @@ Using Thrift with Go
 In following Go conventions, we recommend you use the 'go' tool to install
 Thrift for go.
 
-    $ go get git.apache.org/thrift.git/lib/go/thrift
+    $ go get git.apache.org/thrift.git/lib/go/thrift/...
 
 Will retrieve and install the most recent version of the package.
 

@@ -32,6 +32,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				GoTagTest.thrift \
 				TypedefFieldTest.thrift \
 				RefAnnotationFieldsTest.thrift \
+				UnionDefaultValueTest.thrift \
 				ErrorTest.thrift \
 				NamesTest.thrift \
 				InitialismsTest.thrift \
@@ -49,6 +50,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) GoTagTest.thrift
 	$(THRIFT) $(THRIFTARGS) TypedefFieldTest.thrift
 	$(THRIFT) $(THRIFTARGS) RefAnnotationFieldsTest.thrift
+	$(THRIFT) $(THRIFTARGS) UnionDefaultValueTest.thrift
 	$(THRIFT) $(THRIFTARGS) ErrorTest.thrift
 	$(THRIFT) $(THRIFTARGS) NamesTest.thrift
 	$(THRIFT) $(THRIFTARGS) InitialismsTest.thrift
@@ -91,6 +93,7 @@ EXTRA_DIST = \
 	OnewayTest.thrift \
 	OptionalFieldsTest.thrift \
 	RefAnnotationFieldsTest.thrift \
+	UnionDefaultValueTest.thrift \
 	ServicesTest.thrift \
 	TypedefFieldTest.thrift \
 	ErrorTest.thrift \
