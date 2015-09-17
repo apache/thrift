@@ -15,32 +15,19 @@
 // specific language governing permissions and limitations
 // under the License.
 
-library thrift.test.t_application_error_test;
+library tool.dev;
 
-import 'package:test/test.dart';
-import 'package:thrift/thrift.dart';
+import 'package:dart_dev/dart_dev.dart' show dev, config;
 
-void main() {
-  TProtocol protocol;
+main(List<String> args) async {
+  // https://github.com/Workiva/dart_dev
 
-  setUp(() {
-    protocol = new TBinaryProtocol(new TBufferedTransport());
-  });
+  var directories = ['lib/', 'test/', 'tool/'];
+  config.analyze.entryPoints = directories;
+  config.format.directories = directories;
+  config.copyLicense
+    ..licensePath = 'LICENSE_HEADER'
+    ..directories = directories;
 
-  test('Write and read an application error', () {
-    var expectedType = TApplicationErrorType.INTERNAL_ERROR;
-    var expectedMessage = 'test error message';
-
-    TApplicationError error =
-        new TApplicationError(expectedType, expectedMessage);
-    error.write(protocol);
-
-    protocol.transport.flush();
-
-    TApplicationError subject = TApplicationError.read(protocol);
-
-    expect(subject, isNotNull);
-    expect(subject.type, expectedType);
-    expect(subject.message, expectedMessage);
-  });
+  await dev(args);
 }

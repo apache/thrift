@@ -1,3 +1,20 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements. See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership. The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License. You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 library thrift.test.transport.t_socket_transport_test;
 
 import 'dart:async';
@@ -10,7 +27,6 @@ import 'package:test/test.dart';
 import 'package:thrift/thrift.dart';
 
 void main() {
-
   const utf8Codec = const Utf8Codec();
 
   final requestText = 'my test request';
@@ -59,7 +75,8 @@ void main() {
 
       FakeProtocolFactory protocolFactory = new FakeProtocolFactory();
       protocolFactory.message = new TMessage("foo", TMessageType.CALL, 123);
-      var transport = new TClientSocketTransport(socket, protocolFactory, responseTimeout: Duration.ZERO);
+      var transport = new TClientSocketTransport(socket, protocolFactory,
+          responseTimeout: Duration.ZERO);
       transport.writeAll(requestBytes);
 
       Future responseReady = transport.flush();
@@ -109,12 +126,9 @@ void main() {
       expect(socket.sendPayload, responseBytes);
     });
   }, timeout: new Timeout(new Duration(seconds: 1)));
-
 }
 
-
 class FakeSocket extends TSocket {
-
   final StreamController<TSocketState> _onStateController;
   Stream<TSocketState> get onState => _onStateController.stream;
 
@@ -161,26 +175,20 @@ class FakeSocket extends TSocket {
         new Uint8List.fromList(CryptoUtils.base64StringToBytes(base64));
     _onMessageController.add(message);
   }
-
 }
 
-
 class FakeProtocolFactory implements TProtocolFactory {
-
   FakeProtocolFactory();
 
   TMessage message;
 
   getProtocol(TTransport transport) => new FakeProtocol(message);
-
 }
 
 class FakeProtocol extends Mock implements TProtocol {
-
   FakeProtocol(this._message);
 
   TMessage _message;
 
   readMessageBegin() => _message;
-
 }
