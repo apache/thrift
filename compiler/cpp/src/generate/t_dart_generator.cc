@@ -215,8 +215,8 @@ public:
   std::string dart_library(string file_name);
   std::string service_imports();
   std::string dart_thrift_imports();
-  std::string type_name(t_type* ttype, bool in_container = false, bool in_init = false);
-  std::string base_type_name(t_base_type* tbase, bool in_container = false);
+  std::string type_name(t_type* ttype);
+  std::string base_type_name(t_base_type* tbase);
   std::string declare_field(t_field* tfield, bool init = false);
   std::string function_signature(t_function* tfunction);
   std::string argument_list(t_struct* tstruct);
@@ -515,7 +515,7 @@ void t_dart_generator::print_const_value(std::ofstream& out,
     vector<t_field*>::const_iterator f_iter;
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
-    out << type_name(type) << " " << name << " = new " << type_name(type, false, true) << "();"
+    out << type_name(type) << " " << name << " = new " << type_name(type) << "();"
         << endl;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       t_type* field_type = NULL;
@@ -562,7 +562,7 @@ void t_dart_generator::print_const_value(std::ofstream& out,
       out << "[" << endl;
       etype = ((t_list*)type)->get_elem_type();
     } else {
-      out << "new " << type_name(type, false, true) << ".from([" << endl;
+      out << "new " << type_name(type) << ".from([" << endl;
       etype = ((t_set*)type)->get_elem_type();
     }
     const vector<t_const_value*>& val = value->get_list();
@@ -1654,7 +1654,7 @@ void t_dart_generator::generate_process_function(t_service* tservice, t_function
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       string result_field_name = get_field_name((*x_iter)->get_name());
       scope_down(f_service_, "");
-      f_service_ << " on " << type_name((*x_iter)->get_type(), false, false)
+      f_service_ << " on " << type_name((*x_iter)->get_type())
               << " catch(" << result_field_name << ")";
       scope_up(f_service_);
       if (!tfunction->is_oneway()) {
@@ -1794,7 +1794,7 @@ void t_dart_generator::generate_deserialize_container(ofstream& out, t_type* tty
     indent(out) << "TList " << obj << " = iprot.readListBegin();" << endl;
   }
 
-  indent(out) << prefix << " = new " << type_name(ttype, false, true) << "();" << endl;
+  indent(out) << prefix << " = new " << type_name(ttype) << "();" << endl;
 
   // For loop iterates over elements
   string i = tmp("_i");
@@ -2049,21 +2049,23 @@ void t_dart_generator::generate_serialize_list_element(ofstream& out, t_list* tl
  * @param container Is the type going inside a container?
  * @return Dart type name, i.e. HashMap<Key,Value>
  */
-string t_dart_generator::type_name(t_type* ttype, bool in_container, bool in_init) {
-  (void)in_init;
+string t_dart_generator::type_name(t_type* ttype) {
   ttype = get_true_type(ttype);
-  string prefix;
 
   if (ttype->is_base_type()) {
-    return base_type_name((t_base_type*)ttype, in_container);
+    return base_type_name((t_base_type*)ttype);
   } else if (ttype->is_enum()) {
     return "int";
   } else if (ttype->is_map()) {
-    return "Map";
+    t_map* tmap = (t_map*)ttype;
+    return "Map<" + type_name(tmap->get_key_type()) + ", "
+                  + type_name(tmap->get_val_type()) + ">";
   } else if (ttype->is_set()) {
-    return "Set";
+    t_set* tset = (t_set*)ttype;
+    return "Set<" + type_name(tset->get_elem_type()) + ">";
   } else if (ttype->is_list()) {
-    return "List";
+    t_list* tlist = (t_list*)ttype;
+    return "List<" + type_name(tlist->get_elem_type()) + ">";
   }
 
   return ttype->get_name();
@@ -2075,8 +2077,7 @@ string t_dart_generator::type_name(t_type* ttype, bool in_container, bool in_ini
  * @param tbase The base type
  * @param container Is it going in a Dart container?
  */
-string t_dart_generator::base_type_name(t_base_type* type, bool in_container) {
-  (void)in_container;
+string t_dart_generator::base_type_name(t_base_type* type) {
   t_base_type::t_base tbase = type->get_base();
 
   switch (tbase) {
@@ -2140,9 +2141,9 @@ string t_dart_generator::declare_field(t_field* tfield, bool init) {
     } else if (ttype->is_enum()) {
       result += " = 0";
     } else if (ttype->is_container()) {
-      result += " = new " + type_name(ttype, false, true) + "()";
+      result += " = new " + type_name(ttype) + "()";
     } else {
-      result += " = new " + type_name(ttype, false, true) + "()";
+      result += " = new " + type_name(ttype) + "()";
       ;
     }
   }
