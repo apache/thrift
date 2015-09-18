@@ -26,7 +26,7 @@ void main() {
     test('transport is returned from base factory', () async {
       TTransport result;
       TTransport transport = null;
-      ;
+
       var factory = new TTransportFactory();
 
       result = await factory.getTransport(transport);
