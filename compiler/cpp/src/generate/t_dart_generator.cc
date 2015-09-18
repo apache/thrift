@@ -2046,8 +2046,7 @@ void t_dart_generator::generate_serialize_list_element(ofstream& out, t_list* tl
  * Returns a Dart type name
  *
  * @param ttype The type
- * @param container Is the type going inside a container?
- * @return Dart type name, i.e. HashMap<Key,Value>
+ * @return Dart type name, i.e. Map<Key, Value>
  */
 string t_dart_generator::type_name(t_type* ttype) {
   ttype = get_true_type(ttype);
@@ -2075,7 +2074,6 @@ string t_dart_generator::type_name(t_type* ttype) {
  * Returns the Dart type that corresponds to the thrift type.
  *
  * @param tbase The base type
- * @param container Is it going in a Dart container?
  */
 string t_dart_generator::base_type_name(t_base_type* type) {
   t_base_type::t_base tbase = type->get_base();
