@@ -54,4 +54,5 @@ part 'src/transport/t_message_reader.dart';
 part 'src/transport/t_socket.dart';
 part 'src/transport/t_transport.dart';
 part 'src/transport/t_transport_error.dart';
+part 'src/transport/t_transport_factory.dart';
 part 'src/transport/t_socket_transport.dart';
