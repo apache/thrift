@@ -2486,7 +2486,7 @@ void t_go_generator::generate_service_server(t_service* tservice) {
     }
   }
 
-  string pServiceName(privatize(serviceName));
+  string pServiceName(privatize(tservice->get_name()));
   // Generate the header portion
   string self(tmp("self"));
 
