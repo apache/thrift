@@ -81,7 +81,10 @@ class TClientSocketTransport extends TSocketTransport {
     TMessage message = messageReader.readMessage(bytes);
     int seqid = message.seqid;
 
-    Completer completer = new Completer();
+    // Use a sync completer to ensure that the buffer can be read immediately
+    // after the read buffer is set, and avoid a race condition where another
+    // response could overwrite the read buffer.
+    Completer completer = new Completer.sync();
     _completers[seqid] = completer;
 
     if (responseTimeout != null) {
