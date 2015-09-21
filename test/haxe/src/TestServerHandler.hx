@@ -51,6 +51,19 @@ class TestServerHandler implements ThriftTest {
         trace("testVoid()");
     }
 
+	/**
+	* Prints 'testBool("%s")' where '%s' with thing as 'true' or 'false'
+	* @param bool  thing - the bool data to print
+	* @return bool  - returns the bool 'thing'
+	* 
+	* @param thing
+	*/
+	public function testBool(thing : Bool) : Bool
+    {
+        trace('testBool($thing)');
+        return thing;
+    }
+
     /**
     * Prints 'testString("%s")' with thing as '%s'
     * @param string thing - the string to print
