@@ -37,6 +37,10 @@ func (p *simpleHandler) TestString(thing string) (r string, err error) {
 	return thing, nil
 }
 
+func (p *simpleHandler) TestBool(thing []byte) (r []byte, err error) {
+	return thing, nil
+}
+
 func (p *simpleHandler) TestByte(thing int8) (r int8, err error) {
 	return thing, nil
 }

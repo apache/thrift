@@ -60,6 +60,21 @@ thrift_test_handler_test_string (TTestThriftTestIf  *iface,
 }
 
 gboolean
+thrift_test_handler_test_bool (TTestThriftTestIf  *iface,
+                               gboolean           *_return,
+                               const gboolean      thing,
+                               GError            **error)
+{
+  THRIFT_UNUSED_VAR (iface);
+  THRIFT_UNUSED_VAR (error);
+
+  printf ("testByte(%s)\n", thing ? "true" : "false");
+  *_return = thing;
+
+  return TRUE;
+}
+
+gboolean
 thrift_test_handler_test_byte (TTestThriftTestIf  *iface,
                                gint8              *_return,
                                const gint8         thing,
@@ -796,6 +811,9 @@ thrift_test_handler_class_init (ThriftTestHandlerClass *klass)
   base_class->test_string =
     klass->test_string =
     thrift_test_handler_test_string;
+  base_class->test_bool =
+    klass->test_bool =
+    thrift_test_handler_test_bool;
   base_class->test_byte =
     klass->test_byte =
     thrift_test_handler_test_byte;

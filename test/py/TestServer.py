@@ -76,6 +76,11 @@ class TestHandler:
       print 'testString(%s)' % str
     return str
 
+  def testBool(self, boolean):
+    if options.verbose > 1:
+      print 'testBool(%s)' % str(boolean).lower()
+    return boolean
+
   def testByte(self, byte):
     if options.verbose > 1:
       print 'testByte(%d)' % byte

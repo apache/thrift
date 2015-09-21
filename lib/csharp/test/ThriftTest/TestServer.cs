@@ -73,6 +73,12 @@ namespace Test
                 return thing;
             }
 
+            public bool testBool(bool thing)
+            {
+                Console.WriteLine("testBool(" + thing + ")");
+                return thing;
+            }
+
             public sbyte testByte(sbyte thing)
             {
                 Console.WriteLine("testByte(" + thing + ")");
