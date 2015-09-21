@@ -58,6 +58,7 @@ type
         FServer : IServer;
       protected
         procedure testVoid();
+        function testBool(thing: Boolean): Boolean;
         function testString(const thing: string): string;
         function testByte(thing: ShortInt): ShortInt;
         function testI32(thing: Integer): Integer;
@@ -392,6 +393,12 @@ begin
   begin
     FServer.Stop;
   end;
+end;
+
+function TTestServer.TTestHandlerImpl.testBool(thing: Boolean): Boolean;
+begin
+  Console.WriteLine('testBool(' + BoolToStr(thing,true) + ')');
+  Result := thing;
 end;
 
 function TTestServer.TTestHandlerImpl.testString( const thing: string): string;
