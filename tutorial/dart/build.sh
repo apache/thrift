@@ -17,6 +17,10 @@ cd client;
 pub get;
 cd ..;
 
+cd console-client;
+pub get;
+cd ..;
+
 cd server;
 pub get;
 cd ..;
@@ -30,4 +34,6 @@ echo "\nTo run the client:";
 echo "# Serve the app from the client directory and view in a browser";
 echo "> cd client;";
 echo "> pub serve;";
+echo "\nTo run the console client:";
+echo "> dart console-client/bin/main.dart";
 echo "";

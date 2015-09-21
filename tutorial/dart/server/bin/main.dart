@@ -35,38 +35,59 @@ main(List<String> args) {
   });
 
   int port = 9090;
-  if (!args.isEmpty) {
-    port = int.parse(args[0]);
+  if (args.length > 0) {
+    try {
+      port = int.parse(args[0]);
+    } catch(e) {
+      print('dart server/bin/main.dart [port socketType]');
+      print('  port .......... : port to listen on');
+      print('  socket type ... : type of socket, one of [ws, tcp]');
+      exit(0);
+    }
   }
 
-  _runServer(port);
-}
+  String socketType;
+  if (args.length > 1) {
+    socketType = args[1];
+  }
 
-Future _runServer(int port) async {
-  var httpServer = await HttpServer.bind('127.0.0.1', port);
-  httpServer.listen((HttpRequest request) => _handleRequest(request));
-
-  print('listening for connections on $port');
-}
-
-Future _handleRequest(HttpRequest request) async {
-  if (request.uri.path == '/ws') {
-    await _initWebSocket(request);
+  if (socketType == 'tcp') {
+    _runTcpServer(port);
   } else {
-    print('Invalid path: ${request.uri.path}');
+    _runWebSocketServer(port);
   }
 }
 
-Future _initWebSocket(HttpRequest request) async {
-  _webSocket = await WebSocketTransformer.upgrade(request);
+Future _runWebSocketServer(int port) async {
+  var httpServer = await HttpServer.bind('127.0.0.1', port);
+  print('listening for WebSocket connections on $port');
 
-  TWebSocket socket = new TWebSocket(_webSocket);
+  httpServer.listen((HttpRequest request) async {
+    if (request.uri.path == '/ws') {
+      _webSocket = await WebSocketTransformer.upgrade(request);
+      await _initProcessor(new TWebSocket(_webSocket));
+    } else {
+      print('Invalid path: ${request.uri.path}');
+    }
+  });
+}
+
+Future _runTcpServer(int port) async {
+  var serverSocket = await ServerSocket.bind('127.0.0.1', port);
+  print('listening for TCP connections on $port');
+
+  Socket socket = await serverSocket.first;
+  await _initProcessor(new TTcpSocket(socket));
+}
+
+Future _initProcessor(TSocket socket) async {
   TServerSocketTransport transport = new TServerSocketTransport(socket);
   transport.onIncomingMessage.listen(_processMessage);
-
   _processor = new CalculatorProcessor(new CalculatorServer());
-  _protocol = new TJsonProtocol(transport);
+  _protocol = new TBinaryProtocol(transport);
   await _protocol.transport.open();
+
+  print('connected');
 }
 
 Future _processMessage(_) async {
