@@ -133,6 +133,17 @@ my $s = $testClient->testString("Test");
 print(" = \"$s\"\n");
 
 #
+# BOOL TEST
+#
+print("testBool(1)");
+my $u8 = $testClient->testBool(1);
+print(" = $u8\n");
+print("testBool(0)");
+my $u8 = $testClient->testBool(0);
+print(" = $u8\n");
+
+
+#
 # BYTE TEST
 #
 print("testByte(1)");

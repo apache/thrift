@@ -307,6 +307,21 @@ int main(int argc, char** argv) {
       failCount++;
 
     /**
+     * BOOL TEST
+     */
+    printf("testBool(true)");
+    bool bl = testClient.testBool(true);
+    printf(" = %s\n", bl ? "true" : "false");
+    if (bl != true)
+      failCount++;
+
+    printf("testBool(false)");
+    bl = testClient.testBool(false);
+    printf(" = %s\n", bl ? "true" : "false");
+    if (bl != false)
+      failCount++;
+
+    /**
      * BYTE TEST
      */
     printf("testByte(1)");

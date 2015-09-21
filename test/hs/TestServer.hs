@@ -111,6 +111,10 @@ instance ThriftTest_Iface TestHandler where
     System.IO.putStrLn $ "testString(" ++ show s ++ ")"
     return s
 
+  testBool _ x = do
+    System.IO.putStrLn $ "testBool(" ++ show x ++ ")"
+    return x
+
   testByte _ x = do
     System.IO.putStrLn $ "testByte(" ++ show x ++ ")"
     return x
