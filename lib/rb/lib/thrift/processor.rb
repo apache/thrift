@@ -26,16 +26,18 @@ module Thrift
     def process(iprot, oprot)
       name, type, seqid  = iprot.read_message_begin
       if respond_to?("process_#{name}")
-        send("process_#{name}", seqid, iprot, oprot)
+        begin
+          send("process_#{name}", seqid, iprot, oprot)
+        rescue => e
+          x = ApplicationException.new(ApplicationException::INTERNAL_ERROR, 'Internal error')
+          write_error(x, oprot, name, seqid)
+        end
         true
       else
         iprot.skip(Types::STRUCT)
         iprot.read_message_end
         x = ApplicationException.new(ApplicationException::UNKNOWN_METHOD, 'Unknown function '+name)
-        oprot.write_message_begin(name, MessageTypes::EXCEPTION, seqid)
-        x.write(oprot)
-        oprot.write_message_end
-        oprot.trans.flush
+        write_error(x, oprot, name, seqid)
         false
       end
     end
@@ -52,6 +54,15 @@ module Thrift
       result.write(oprot)
       oprot.write_message_end
       oprot.trans.flush
+    end
+
+    def write_error(err, oprot, name, seqid)
+      p 'write_error'
+      oprot.write_message_begin(name, MessageTypes::EXCEPTION, seqid)
+      err.write(oprot)
+      oprot.write_message_end
+      oprot.trans.flush
+      p 'write_error end'
     end
   end
 end
