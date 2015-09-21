@@ -19,4 +19,5 @@ library thrift_console;
 
 /// Classes that are only supported in console applications go here
 
+export 'src/console/t_tcp_socket.dart' show TTcpSocket;
 export 'src/console/t_web_socket.dart' show TWebSocket;

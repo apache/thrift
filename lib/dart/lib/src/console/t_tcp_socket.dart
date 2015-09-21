@@ -15,17 +15,16 @@
 /// specific language governing permissions and limitations
 /// under the License.
 
-library thrift.src.console.t_web_socket;
+library thrift.src.console.t_tcp_socket;
 
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data' show Uint8List;
 
-import 'package:crypto/crypto.dart' show CryptoUtils;
 import 'package:thrift/thrift.dart';
 
-/// A [TSocket] backed by a [WebSocket] from dart:io
-class TWebSocket implements TSocket {
+/// A [TSocket] backed by a [Socket] from dart:io
+class TTcpSocket implements TSocket {
   final StreamController<TSocketState> _onStateController;
   Stream<TSocketState> get onState => _onStateController.stream;
 
@@ -35,7 +34,7 @@ class TWebSocket implements TSocket {
   final StreamController<Uint8List> _onMessageController;
   Stream<Uint8List> get onMessage => _onMessageController.stream;
 
-  TWebSocket(WebSocket socket)
+  TTcpSocket(Socket socket)
       : _onStateController = new StreamController.broadcast(),
         _onErrorController = new StreamController.broadcast(),
         _onMessageController = new StreamController.broadcast() {
@@ -47,7 +46,7 @@ class TWebSocket implements TSocket {
     _socket.listen(_onMessage, onError: _onError, onDone: close);
   }
 
-  WebSocket _socket;
+  Socket _socket;
 
   bool get isOpen => _socket != null;
 
@@ -67,19 +66,12 @@ class TWebSocket implements TSocket {
   }
 
   void send(Uint8List data) {
-    _socket.add(CryptoUtils.bytesToBase64(data));
+    _socket.add(data);
   }
 
-  void _onMessage(String message) {
-    try {
-      Uint8List data =
-          new Uint8List.fromList(CryptoUtils.base64StringToBytes(message));
-      _onMessageController.add(data);
-    } on FormatException catch (_) {
-      var error = new TProtocolError(TProtocolErrorType.INVALID_DATA,
-          "Expected a Base 64 encoded string.");
-      _onErrorController.add(error);
-    }
+  void _onMessage(List<int> message) {
+    Uint8List data = new Uint8List.fromList(message);
+    _onMessageController.add(data);
   }
 
   void _onError(Object error) {
