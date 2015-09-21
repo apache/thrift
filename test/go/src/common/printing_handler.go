@@ -48,6 +48,17 @@ func (p *printingHandler) TestString(thing string) (r string, err error) {
 	return thing, nil
 }
 
+// Prints 'testBool("%d")' with thing as 'true' or 'false'
+// @param bool thing - the bool to print
+// @return bool - returns the bool 'thing'
+//
+// Parameters:
+//  - Thing
+func (p *printingHandler) TestBool(thing bool) (r bool, err error) {
+	fmt.Printf("testBool(%d)\n", thing)
+	return thing, nil
+}
+
 // Prints 'testByte("%d")' with thing as '%d'
 // @param byte thing - the byte to print
 // @return byte - returns the byte 'thing'

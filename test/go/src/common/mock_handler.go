@@ -48,6 +48,18 @@ func (_m *MockThriftTest) EXPECT() *_MockThriftTestRecorder {
 	return _m.recorder
 }
 
+func (_m *MockThriftTest) TestBool(_param0 bool) (bool, error) {
+	ret := _m.ctrl.Call(_m, "TestBool", _param0)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+func (_mr *_MockThriftTestRecorder) TestBool(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestBool", arg0)
+}
+
+
 func (_m *MockThriftTest) TestByte(_param0 int8) (int8, error) {
 	ret := _m.ctrl.Call(_m, "TestByte", _param0)
 	ret0, _ := ret[0].(int8)

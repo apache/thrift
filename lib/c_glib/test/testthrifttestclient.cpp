@@ -67,6 +67,10 @@ class TestHandler : public ThriftTestIf {
     out = thing;
   }
 
+  bool testBool(const bool thing) {
+    printf("[C -> C++] testBool(%s)\n", thing ? "true" : "false");
+    return thing;
+  }
   int8_t testByte(const int8_t thing) {
     printf("[C -> C++] testByte(%d)\n", (int)thing);
     return thing;

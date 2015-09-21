@@ -148,6 +148,14 @@ sub testString() {
   return $thing;
 }
 
+sub testBool() {
+  my $self = shift;
+  my $thing = shift;
+  my $str = $thing ? "true" : "false";
+  print("testBool($str)\n");
+  return $thing;
+}
+
 sub testByte() {
   my $self = shift;
   my $thing = shift;

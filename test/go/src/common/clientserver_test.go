@@ -89,6 +89,8 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 	gomock.InOrder(
 		handler.EXPECT().TestVoid(),
 		handler.EXPECT().TestString("thing").Return("thing", nil),
+		handler.EXPECT().TestBool(true).Return(true, nil),
+		handler.EXPECT().TestBool(false).Return(false, nil),
 		handler.EXPECT().TestByte(int8(42)).Return(int8(42), nil),
 		handler.EXPECT().TestI32(int32(4242)).Return(int32(4242), nil),
 		handler.EXPECT().TestI64(int64(424242)).Return(int64(424242), nil),
@@ -123,6 +125,21 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 	}
 	if thing != "thing" {
 		t.Errorf("Unexpected TestString() result, expected 'thing' got '%s' ", thing)
+	}
+
+	bl, err := client.TestBool(true)
+	if err != nil {
+		t.Errorf("Unexpected error in TestBool() call: ", err)
+	}
+	if !bl {
+		t.Errorf("Unexpected TestBool() result expected true, got %f ", bl)
+	}
+	bl, err = client.TestBool(false)
+	if err != nil {
+		t.Errorf("Unexpected error in TestBool() call: ", err)
+	}
+	if bl {
+		t.Errorf("Unexpected TestBool() result expected false, got %f ", bl)
 	}
 
 	b, err := client.TestByte(42)

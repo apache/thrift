@@ -101,6 +101,10 @@ class AbstractTest(unittest.TestCase):
     self.assertEqual(self.client.testString('Python' * 20), 'Python' * 20)
     self.assertEqual(self.client.testString(''), '')
 
+  def testBool(self):
+    self.assertEqual(self.client.testBool(True), True)
+    self.assertEqual(self.client.testBool(False), False)
+
   def testByte(self):
     self.assertEqual(self.client.testByte(63), 63)
     self.assertEqual(self.client.testByte(-127), -127)

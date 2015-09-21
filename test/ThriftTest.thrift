@@ -144,6 +144,13 @@ service ThriftTest
   string       testString(1: string thing),
 
   /**
+   * Prints 'testBool("%s")' where '%s' with thing as 'true' or 'false'
+   * @param bool  thing - the bool data to print
+   * @return bool  - returns the bool 'thing'
+   */
+  bool         testBool(1: bool thing),
+
+  /**
    * Prints 'testByte("%d")' with thing as '%d'
    * @param byte thing - the byte to print
    * @return byte - returns the byte 'thing'
