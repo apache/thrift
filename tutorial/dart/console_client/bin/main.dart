@@ -18,6 +18,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:args/args.dart';
 import 'package:logging/logging.dart';
 import 'package:thrift/thrift.dart';
 import 'package:thrift/thrift_console.dart';
@@ -40,10 +41,22 @@ main(List<String> args) {
     print('${rec.level.name}: ${rec.time}: ${rec.message}');
   });
 
-  int port = 9090;
-  if (!args.isEmpty) {
-    port = int.parse(args[0]);
+  var parser = new ArgParser();
+  parser.addOption('port', defaultsTo: '9090', help: 'The port to connect to');
+
+  ArgResults results;
+  try {
+    results = parser.parse(args);
+  } catch (e) {
+    results = null;
   }
+
+  if (results == null) {
+    print(parser.usage);
+    exit(0);
+  }
+
+  int port = int.parse(results['port']);
 
   _initConnection(port).then((_) => _run());
 }

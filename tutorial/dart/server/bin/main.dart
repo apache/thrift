@@ -18,6 +18,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:args/args.dart';
 import 'package:logging/logging.dart';
 import 'package:thrift/thrift.dart';
 import 'package:thrift/thrift_console.dart';
@@ -34,26 +35,31 @@ main(List<String> args) {
     print('${rec.level.name}: ${rec.time}: ${rec.message}');
   });
 
-  int port = 9090;
-  if (args.length > 0) {
-    try {
-      port = int.parse(args[0]);
-    } catch(e) {
-      print('dart server/bin/main.dart [port socketType]');
-      print('  port .......... : port to listen on');
-      print('  socket type ... : type of socket, one of [ws, tcp]');
-      exit(0);
-    }
+  var parser = new ArgParser();
+  parser.addOption('port', defaultsTo: '9090', help: 'The port to listen on');
+  parser.addOption('type', defaultsTo: 'ws', allowed: ['ws', 'tcp'], help: 'The type of socket', allowedHelp: {
+    'ws': 'WebSocket',
+    'tcp': 'TCP Socket'
+  });
+
+  ArgResults results;
+  try {
+    results = parser.parse(args);
+  } catch (e) {
+    results = null;
   }
 
-  String socketType;
-  if (args.length > 1) {
-    socketType = args[1];
+  if (results == null) {
+    print(parser.usage);
+    exit(0);
   }
+
+  int port = int.parse(results['port']);
+  String socketType = results['type'];
 
   if (socketType == 'tcp') {
     _runTcpServer(port);
-  } else {
+  } else if (socketType == 'ws') {
     _runWebSocketServer(port);
   }
 }
