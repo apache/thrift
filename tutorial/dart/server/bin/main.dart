@@ -1,6 +1,24 @@
+/// Licensed to the Apache Software Foundation (ASF) under one
+/// or more contributor license agreements. See the NOTICE file
+/// distributed with this work for additional information
+/// regarding copyright ownership. The ASF licenses this file
+/// to you under the Apache License, Version 2.0 (the
+/// "License"); you may not use this file except in compliance
+/// with the License. You may obtain a copy of the License at
+///
+/// http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing,
+/// software distributed under the License is distributed on an
+/// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+/// KIND, either express or implied. See the License for the
+/// specific language governing permissions and limitations
+/// under the License.
+
 import 'dart:async';
 import 'dart:io';
 
+import 'package:args/args.dart';
 import 'package:logging/logging.dart';
 import 'package:thrift/thrift.dart';
 import 'package:thrift/thrift_console.dart';
@@ -17,39 +35,66 @@ main(List<String> args) {
     print('${rec.level.name}: ${rec.time}: ${rec.message}');
   });
 
-  int port = 9090;
-  if (!args.isEmpty) {
-    port = int.parse(args[0]);
+  var parser = new ArgParser();
+  parser.addOption('port', defaultsTo: '9090', help: 'The port to listen on');
+  parser.addOption('type',
+      defaultsTo: 'ws',
+      allowed: ['ws', 'tcp'],
+      help: 'The type of socket',
+      allowedHelp: {'ws': 'WebSocket', 'tcp': 'TCP Socket'});
+
+  ArgResults results;
+  try {
+    results = parser.parse(args);
+  } catch (e) {
+    results = null;
   }
 
-  _runServer(port);
+  if (results == null) {
+    print(parser.usage);
+    exit(0);
+  }
+
+  int port = int.parse(results['port']);
+  String socketType = results['type'];
+
+  if (socketType == 'tcp') {
+    _runTcpServer(port);
+  } else if (socketType == 'ws') {
+    _runWebSocketServer(port);
+  }
 }
 
-Future _runServer(int port) async {
+Future _runWebSocketServer(int port) async {
   var httpServer = await HttpServer.bind('127.0.0.1', port);
-  httpServer.listen((HttpRequest request) => _handleRequest(request));
+  print('listening for WebSocket connections on $port');
 
-  print('listening for connections on $port');
+  httpServer.listen((HttpRequest request) async {
+    if (request.uri.path == '/ws') {
+      _webSocket = await WebSocketTransformer.upgrade(request);
+      await _initProcessor(new TWebSocket(_webSocket));
+    } else {
+      print('Invalid path: ${request.uri.path}');
+    }
+  });
 }
 
-Future _handleRequest(HttpRequest request) async {
-  if (request.uri.path == '/ws') {
-    await _initWebSocket(request);
-  } else {
-    print('Invalid path: ${request.uri.path}');
-  }
+Future _runTcpServer(int port) async {
+  var serverSocket = await ServerSocket.bind('127.0.0.1', port);
+  print('listening for TCP connections on $port');
+
+  Socket socket = await serverSocket.first;
+  await _initProcessor(new TTcpSocket(socket));
 }
 
-Future _initWebSocket(HttpRequest request) async {
-  _webSocket = await WebSocketTransformer.upgrade(request);
-
-  TWebSocket socket = new TWebSocket(_webSocket);
+Future _initProcessor(TSocket socket) async {
   TServerSocketTransport transport = new TServerSocketTransport(socket);
   transport.onIncomingMessage.listen(_processMessage);
-
   _processor = new CalculatorProcessor(new CalculatorServer());
-  _protocol = new TJsonProtocol(transport);
+  _protocol = new TBinaryProtocol(transport);
   await _protocol.transport.open();
+
+  print('connected');
 }
 
 Future _processMessage(_) async {

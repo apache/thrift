@@ -1,6 +1,7 @@
-name: tutorial_server
+name: tutorial_console_client
 version: 0.0.1
-description: A Dart server to support the Apache Thrift tutorial
+description: >
+  A Dart console client to implementation of the Apache Thrift tutorial
 author: Mark Erickson <mark.erickson@workiva.com>
 homepage: https://github.com/apache/thrift
 
