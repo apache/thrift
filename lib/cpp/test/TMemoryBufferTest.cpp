@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(test_copy) {
   string* str2 = new string("plsreuse");
   bool obj_reuse = (str1 == str2);
   bool dat_reuse = (data1 == str2->data());
-  BOOST_MESSAGE("Object reuse: " << obj_reuse << "   Data reuse: " << dat_reuse
+  BOOST_TEST_MESSAGE("Object reuse: " << obj_reuse << "   Data reuse: " << dat_reuse
                 << ((obj_reuse && dat_reuse) ? "   YAY!" : ""));
   delete str2;
 
