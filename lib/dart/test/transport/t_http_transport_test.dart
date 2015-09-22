@@ -33,58 +33,106 @@ import 'package:thrift/thrift.dart';
 void main() {
   const utf8Codec = const Utf8Codec();
 
-  FakeHttpClient client;
-  THttpClientTransport transport;
+  group('THttpClientTransport', () {
+    FakeHttpClient client;
+    THttpClientTransport transport;
 
-  setUp(() {
-    client = new FakeHttpClient();
-    var config = new THttpConfig(Uri.parse("http://localhost"), {});
-    transport = new THttpClientTransport(client, config);
+    setUp(() {
+      client = new FakeHttpClient(sync: false);
+      var config = new THttpConfig(Uri.parse('http://localhost'), {});
+      transport = new THttpClientTransport(client, config);
+    });
+
+    test('Test transport sends body', () async {
+      var expectedText = 'my request';
+      transport.writeAll(utf8Codec.encode(expectedText));
+
+      expect(client.postRequest, isEmpty);
+
+      await transport.flush();
+
+      expect(client.postRequest, isNotEmpty);
+
+      var requestText =
+          utf8Codec.decode(CryptoUtils.base64StringToBytes(client.postRequest));
+      expect(requestText, expectedText);
+    });
+
+    test('Test transport receives response', () async {
+      var expectedText = 'my response';
+      var expectedBytes = utf8Codec.encode(expectedText);
+      client.postResponse = CryptoUtils.bytesToBase64(expectedBytes);
+
+      transport.writeAll(utf8Codec.encode('my request'));
+      expect(transport.hasReadData, isFalse);
+
+      await transport.flush();
+
+      expect(transport.hasReadData, isTrue);
+
+      var buffer = new Uint8List(expectedBytes.length);
+      transport.readAll(buffer, 0, expectedBytes.length);
+
+      var bufferText = utf8Codec.decode(buffer);
+      expect(bufferText, expectedText);
+    });
   });
 
-  test('Test transport sends body', () async {
-    var expectedText = "my request";
-    transport.writeAll(utf8Codec.encode(expectedText));
+  group('THttpClientTransport with multiple messages', () {
+    FakeHttpClient client;
+    THttpClientTransport transport;
 
-    expect(client.postRequest, isEmpty);
+    setUp(() {
+      client = new FakeHttpClient(sync: true);
+      var config = new THttpConfig(Uri.parse('http://localhost'), {});
+      transport = new THttpClientTransport(client, config);
+    });
 
-    await transport.flush();
+    test('Test read correct buffer after flush', () async {
+      String bufferText;
+      var expectedText = 'response 1';
+      var expectedBytes = utf8Codec.encode(expectedText);
 
-    expect(client.postRequest, isNotEmpty);
+      // prepare a response
+      transport.writeAll(utf8Codec.encode('request 1'));
+      client.postResponse = CryptoUtils.bytesToBase64(expectedBytes);
 
-    var requestText =
-        utf8Codec.decode(CryptoUtils.base64StringToBytes(client.postRequest));
-    expect(requestText, expectedText);
-  });
+      Future responseReady = transport.flush().then((_) {
+        var buffer = new Uint8List(expectedBytes.length);
+        transport.readAll(buffer, 0, expectedBytes.length);
+        bufferText = utf8Codec.decode(buffer);
+      });
 
-  test('Test transport receives response', () async {
-    var expectedText = "my response";
-    var expectedBytes = utf8Codec.encode(expectedText);
-    client.postResponse = CryptoUtils.bytesToBase64(expectedBytes);
+      // prepare a second response
+      transport.writeAll(utf8Codec.encode('request 2'));
+      var response2Bytes = utf8Codec.encode('response 2');
+      client.postResponse = CryptoUtils.bytesToBase64(response2Bytes);
+      await transport.flush();
 
-    transport.writeAll(utf8Codec.encode("my request"));
-    expect(transport.hasReadData, isFalse);
-
-    await transport.flush();
-
-    expect(transport.hasReadData, isTrue);
-
-    var buffer = new Uint8List(expectedBytes.length);
-    transport.readAll(buffer, 0, expectedBytes.length);
-
-    var bufferText = utf8Codec.decode(buffer);
-    expect(bufferText, expectedText);
+      await responseReady;
+      expect(bufferText, expectedText);
+    });
   });
 }
 
 class FakeHttpClient implements Client {
-  String postResponse = "";
-  String postRequest = "";
+  String postResponse = '';
+  String postRequest = '';
+
+  final bool sync;
+
+  FakeHttpClient({this.sync: false});
 
   Future<Response> post(url,
-      {Map<String, String> headers, body, Encoding encoding}) async {
+      {Map<String, String> headers, body, Encoding encoding}) {
     postRequest = body;
-    return new Response(postResponse, 200);
+    var response = new Response(postResponse, 200);
+
+    if (sync) {
+      return new Future.sync(() => response);
+    } else {
+      return new Future.value(response);
+    }
   }
 
   Future<Response> head(url, {Map<String, String> headers}) =>
