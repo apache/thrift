@@ -33,20 +33,27 @@ void main() {
   final requestBytes = new Uint8List.fromList(utf8Codec.encode(requestText));
   final requestBase64 = CryptoUtils.bytesToBase64(requestBytes);
 
-  final responseText = 'a response!';
+  final responseText = 'response 1';
   final responseBytes = new Uint8List.fromList(utf8Codec.encode(responseText));
   final responseBase64 = CryptoUtils.bytesToBase64(responseBytes);
 
   group('TClientTransport', () {
-    test('Test client sending data over transport', () async {
-      var socket = new FakeSocket();
+    FakeSocket socket;
+    FakeProtocolFactory protocolFactory;
+    TTransport transport;
+
+    setUp(() async {
+      socket = new FakeSocket(sync: false);
       await socket.open();
 
-      FakeProtocolFactory protocolFactory = new FakeProtocolFactory();
-      protocolFactory.message = new TMessage("foo", TMessageType.CALL, 123);
-      var transport = new TClientSocketTransport(socket, protocolFactory);
-
+      protocolFactory = new FakeProtocolFactory();
+      protocolFactory.message = new TMessage('foo', TMessageType.CALL, 123);
+      transport = new TClientSocketTransport(socket, protocolFactory,
+          responseTimeout: Duration.ZERO);
       transport.writeAll(requestBytes);
+    });
+
+    test('Test client sending data over transport', () async {
       expect(socket.sendPayload, isNull);
 
       Future responseReady = transport.flush();
@@ -58,7 +65,7 @@ void main() {
       expect(socket.sendPayload, requestBytes);
 
       // simulate a response
-      protocolFactory.message = new TMessage("foo", TMessageType.REPLY, 123);
+      protocolFactory.message = new TMessage('foo', TMessageType.REPLY, 123);
       socket.receiveFakeMessage(responseBase64);
 
       await responseReady;
@@ -70,18 +77,50 @@ void main() {
     });
 
     test('Test response timeout', () async {
-      var socket = new FakeSocket();
+      Future responseReady = transport.flush();
+      expect(responseReady, throwsA(new isInstanceOf<TimeoutException>()));
+    });
+  }, timeout: new Timeout(new Duration(seconds: 1)));
+
+  group('TClientTransport with multiple messages', () {
+    FakeSocket socket;
+    FakeProtocolFactory protocolFactory;
+    TTransport transport;
+
+    setUp(() async {
+      socket = new FakeSocket(sync: true);
       await socket.open();
 
-      FakeProtocolFactory protocolFactory = new FakeProtocolFactory();
-      protocolFactory.message = new TMessage("foo", TMessageType.CALL, 123);
-      var transport = new TClientSocketTransport(socket, protocolFactory,
+      protocolFactory = new FakeProtocolFactory();
+      protocolFactory.message = new TMessage('foo', TMessageType.CALL, 123);
+      transport = new TClientSocketTransport(socket, protocolFactory,
           responseTimeout: Duration.ZERO);
       transport.writeAll(requestBytes);
+    });
 
-      Future responseReady = transport.flush();
+    test('Test read correct buffer after flush', () async {
+      String bufferText;
 
-      expect(responseReady, throwsA(new isInstanceOf<TimeoutException>()));
+      Future responseReady = transport.flush().then((_) {
+        var buffer = new Uint8List(responseBytes.length);
+        transport.readAll(buffer, 0, responseBytes.length);
+        bufferText = utf8Codec.decode(buffer);
+      });
+
+      // simulate a response
+      protocolFactory.message = new TMessage('foo', TMessageType.REPLY, 123);
+      socket.receiveFakeMessage(responseBase64);
+
+      // simulate a second response
+      var response2Text = 'response 2';
+      var response2Bytes =
+          new Uint8List.fromList(utf8Codec.encode(response2Text));
+      var response2Base64 = CryptoUtils.bytesToBase64(response2Bytes);
+      protocolFactory.message = new TMessage('foo2', TMessageType.REPLY, 124);
+      socket.receiveFakeMessage(response2Base64);
+
+      await responseReady;
+      expect(bufferText, responseText);
     });
   }, timeout: new Timeout(new Duration(seconds: 1)));
 
@@ -138,10 +177,10 @@ class FakeSocket extends TSocket {
   final StreamController<Uint8List> _onMessageController;
   Stream<Uint8List> get onMessage => _onMessageController.stream;
 
-  FakeSocket()
-      : _onStateController = new StreamController.broadcast(),
-        _onErrorController = new StreamController.broadcast(),
-        _onMessageController = new StreamController.broadcast();
+  FakeSocket({bool sync: false})
+      : _onStateController = new StreamController.broadcast(sync: sync),
+        _onErrorController = new StreamController.broadcast(sync: sync),
+        _onMessageController = new StreamController.broadcast(sync: sync);
 
   bool _isOpen;
 
@@ -163,13 +202,13 @@ class FakeSocket extends TSocket {
   Uint8List get sendPayload => _sendPayload;
 
   void send(Uint8List data) {
-    if (!isOpen) throw new StateError("The socket is not open");
+    if (!isOpen) throw new StateError('The socket is not open');
 
     _sendPayload = data;
   }
 
   void receiveFakeMessage(String base64) {
-    if (!isOpen) throw new StateError("The socket is not open");
+    if (!isOpen) throw new StateError('The socket is not open');
 
     var message =
         new Uint8List.fromList(CryptoUtils.base64StringToBytes(base64));
