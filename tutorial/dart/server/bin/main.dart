@@ -37,10 +37,11 @@ main(List<String> args) {
 
   var parser = new ArgParser();
   parser.addOption('port', defaultsTo: '9090', help: 'The port to listen on');
-  parser.addOption('type', defaultsTo: 'ws', allowed: ['ws', 'tcp'], help: 'The type of socket', allowedHelp: {
-    'ws': 'WebSocket',
-    'tcp': 'TCP Socket'
-  });
+  parser.addOption('type',
+      defaultsTo: 'ws',
+      allowed: ['ws', 'tcp'],
+      help: 'The type of socket',
+      allowedHelp: {'ws': 'WebSocket', 'tcp': 'TCP Socket'});
 
   ArgResults results;
   try {
