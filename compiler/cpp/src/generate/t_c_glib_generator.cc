@@ -3096,7 +3096,7 @@ void t_c_glib_generator::generate_object(t_struct* tstruct) {
     } else if (t->is_container()) {
       string name = (*m_iter)->get_name();
       string init_function;
-      t_type* etype;
+      t_type* etype = NULL;
 
       if (t->is_map()) {
         t_type* key = ((t_map*)t)->get_key_type();
