@@ -352,7 +352,7 @@ void t_py_generator::init_generator() {
   f_types_ << py_autogen_comment() << endl << py_imports() << endl << render_includes() << endl
            << render_fastbinary_includes() << endl << endl;
 
-  f_consts_ << py_autogen_comment() << endl << py_imports() << endl << "from ttypes import *"
+  f_consts_ << py_autogen_comment() << endl << py_imports() << endl << "from .ttypes import *"
             << endl << endl;
 }
 
@@ -960,7 +960,7 @@ void t_py_generator::generate_service(t_service* tservice) {
                << tservice->get_extends()->get_name() << endl;
   }
 
-  f_service_ << "from ttypes import *" << endl << "from thrift.Thrift import TProcessor" << endl
+  f_service_ << "from .ttypes import *" << endl << "from thrift.Thrift import TProcessor" << endl
              << render_fastbinary_includes() << endl;
 
   if (gen_twisted_) {
