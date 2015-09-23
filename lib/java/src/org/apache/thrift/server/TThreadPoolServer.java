@@ -295,22 +295,19 @@ public class TThreadPoolServer extends TServer {
         LOGGER.error("Thrift error occurred during processing of message.", tx);
       } catch (Exception x) {
         LOGGER.error("Error occurred during processing of message.", x);
-      }
-
-      if (eventHandler != null) {
-        eventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
-      }
-
-      if (inputTransport != null) {
-        inputTransport.close();
-      }
-
-      if (outputTransport != null) {
-        outputTransport.close();
-      }
-
-      if (client_.isOpen()) {
-        client_.close();
+      } finally {
+        if (eventHandler != null) {
+          eventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
+        }
+        if (inputTransport != null) {
+          inputTransport.close();
+        }
+        if (outputTransport != null) {
+          outputTransport.close();
+        }
+        if (client_.isOpen()) {
+          client_.close();
+        }
       }
     }
   }
