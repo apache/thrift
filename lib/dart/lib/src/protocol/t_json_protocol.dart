@@ -117,6 +117,8 @@ class TJsonProtocol extends TProtocol {
   }
 
   void _writeJsonInteger(int i) {
+    if (i == null) i = 0;
+
     _context.write();
     String str = i.toString();
 
@@ -130,6 +132,8 @@ class TJsonProtocol extends TProtocol {
   }
 
   void _writeJsonDouble(double d) {
+    if (d == null) d = 0.0;
+
     _context.write();
     String str = d.toString();
     bool escapeNumbers = d.isNaN || d.isInfinite || _context.escapeNumbers;
@@ -244,6 +248,7 @@ class TJsonProtocol extends TProtocol {
   }
 
   void writeBool(bool b) {
+    if (b == null) b = false;
     _writeJsonInteger(b ? 1 : 0);
   }
 
@@ -268,7 +273,8 @@ class TJsonProtocol extends TProtocol {
   }
 
   void writeString(String s) {
-    _writeJsonString(utf8Codec.encode(s));
+    var bytes = s != null ? utf8Codec.encode(s) : new Uint8List.fromList([]);
+    _writeJsonString(bytes);
   }
 
   void writeBinary(Uint8List bytes) {
