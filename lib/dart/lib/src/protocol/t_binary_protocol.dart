@@ -99,41 +99,47 @@ class TBinaryProtocol extends TProtocol {
   void writeSetEnd() {}
 
   void writeBool(bool b) {
+    if (b == null) b = false;
     writeByte(b ? 1 : 0);
   }
 
   final ByteData _byteOut = new ByteData(1);
   void writeByte(int byte) {
+    if (byte == null) byte = 0;
     _byteOut.setUint8(0, byte);
     transport.write(_byteOut.buffer.asUint8List(), 0, 1);
   }
 
   final ByteData _i16Out = new ByteData(2);
   void writeI16(int i16) {
+    if (i16 == null) i16 = 0;
     _i16Out.setInt16(0, i16);
     transport.write(_i16Out.buffer.asUint8List(), 0, 2);
   }
 
   final ByteData _i32Out = new ByteData(4);
   void writeI32(int i32) {
+    if (i32 == null) i32 = 0;
     _i32Out.setInt32(0, i32);
     transport.write(_i32Out.buffer.asUint8List(), 0, 4);
   }
 
   final ByteData _i64Out = new ByteData(8);
   void writeI64(int i64) {
+    if (i64 == null) i64 = 0;
     _i64Out.setInt64(0, i64);
     transport.write(_i64Out.buffer.asUint8List(), 0, 8);
   }
 
   void writeString(String s) {
-    var bytes = _utf8Codec.encode(s);
+    var bytes = s != null ? _utf8Codec.encode(s) : new Uint8List.fromList([]);
     writeI32(bytes.length);
     transport.write(bytes, 0, bytes.length);
   }
 
   final ByteData _doubleOut = new ByteData(8);
   void writeDouble(double d) {
+    if (d == null) d = 0.0;
     _doubleOut.setFloat64(0, d);
     transport.write(_doubleOut.buffer.asUint8List(), 0, 8);
   }

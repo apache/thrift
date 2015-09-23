@@ -17,6 +17,7 @@
 
 library thrift.test.transport.t_json_protocol_test;
 
+import 'dart:async';
 import 'dart:typed_data' show Uint8List;
 
 import 'package:test/test.dart';
@@ -26,6 +27,58 @@ void main() {
   final message = new TMessage('my message', TMessageType.ONEWAY, 123);
 
   TProtocol protocol;
+
+  Primitive getPrimitive(int tType) {
+    switch (tType) {
+      case TType.BOOL:
+        return new Primitive(protocol.readBool, protocol.writeBool, false);
+
+      case TType.BYTE:
+        return new Primitive(protocol.readByte, protocol.writeByte, 0);
+
+      case TType.I16:
+        return new Primitive(protocol.readI16, protocol.writeI16, 0);
+
+      case TType.I32:
+        return new Primitive(protocol.readI32, protocol.writeI32, 0);
+
+      case TType.I64:
+        return new Primitive(protocol.readI64, protocol.writeI64, 0);
+
+      case TType.DOUBLE:
+        return new Primitive(protocol.readDouble, protocol.writeDouble, 0);
+
+      case TType.STRING:
+        return new Primitive(protocol.readString, protocol.writeString, '');
+
+      default:
+        throw new UnsupportedError("Unsupported TType $tType");
+    }
+  }
+
+  Future primitiveTest(Primitive primitive, input) async {
+    primitive.write(input);
+    protocol.writeMessageEnd();
+
+    await protocol.transport.flush();
+
+    protocol.readMessageBegin();
+    var output = primitive.read();
+
+    expect(output, input);
+  }
+
+  Future primitiveNullTest(Primitive primitive) async {
+    primitive.write(null);
+    protocol.writeMessageEnd();
+
+    await protocol.transport.flush();
+
+    protocol.readMessageBegin();
+    var output = primitive.read();
+
+    expect(output, primitive.defaultValue);
+  }
 
   var sharedTests = () {
     test('Test message', () async {
@@ -123,102 +176,61 @@ void main() {
     });
 
     test('Test bool', () async {
-      var input = true;
+      await primitiveTest(getPrimitive(TType.BOOL), true);
+    });
 
-      protocol.writeBool(input);
-      protocol.writeMessageEnd();
-
-      await protocol.transport.flush();
-
-      protocol.readMessageBegin();
-      var output = protocol.readBool();
-
-      expect(output, input);
+    test('Test bool null', () async {
+      await primitiveNullTest(getPrimitive(TType.BOOL));
     });
 
     test('Test byte', () async {
-      var input = 64;
+      await primitiveTest(getPrimitive(TType.BYTE), 64);
+    });
 
-      protocol.writeByte(input);
-      protocol.writeMessageEnd();
-
-      await protocol.transport.flush();
-
-      protocol.readMessageBegin();
-      var output = protocol.readByte();
-
-      expect(output, input);
+    test('Test byte null', () async {
+      await primitiveNullTest(getPrimitive(TType.BYTE));
     });
 
     test('Test I16', () async {
-      var input = 32767;
+      await primitiveTest(getPrimitive(TType.I16), 32767);
+    });
 
-      protocol.writeI16(input);
-      protocol.writeMessageEnd();
-
-      await protocol.transport.flush();
-
-      protocol.readMessageBegin();
-      var output = protocol.readI16();
-
-      expect(output, input);
+    test('Test I16 null', () async {
+      await primitiveNullTest(getPrimitive(TType.I16));
     });
 
     test('Test I32', () async {
-      var input = 2147483647;
+      await primitiveTest(getPrimitive(TType.I32), 2147483647);
+    });
 
-      protocol.writeI32(input);
-      protocol.writeMessageEnd();
-
-      await protocol.transport.flush();
-
-      protocol.readMessageBegin();
-      var output = protocol.readI32();
-
-      expect(output, input);
+    test('Test I32 null', () async {
+      await primitiveNullTest(getPrimitive(TType.I32));
     });
 
     test('Test I64', () async {
-      var input = 9223372036854775807;
+      await primitiveTest(getPrimitive(TType.I64), 9223372036854775807);
+    });
 
-      protocol.writeI64(input);
-      protocol.writeMessageEnd();
-
-      await protocol.transport.flush();
-
-      protocol.readMessageBegin();
-      var output = protocol.readI64();
-
-      expect(output, input);
+    test('Test I64 null', () async {
+      await primitiveNullTest(getPrimitive(TType.I64));
     });
 
     test('Test double', () async {
-      var input = 3.1415926;
+      await primitiveTest(getPrimitive(TType.DOUBLE),  3.1415926);
+    });
 
-      protocol.writeDouble(input);
-      protocol.writeMessageEnd();
-
-      await protocol.transport.flush();
-
-      protocol.readMessageBegin();
-      var output = protocol.readDouble();
-
-      expect(output, input);
+    test('Test double null', () async {
+      await primitiveNullTest(getPrimitive(TType.DOUBLE));
     });
 
     test('Test string', () async {
       var input = 'There are only two hard things in computer science: '
           'cache invalidation, naming things, and off-by-one errors.';
+      await primitiveTest(getPrimitive(TType.STRING), input);
+    });
 
-      protocol.writeString(input);
-      protocol.writeMessageEnd();
-
-      await protocol.transport.flush();
-
-      protocol.readMessageBegin();
-      var output = protocol.readString();
-
-      expect(output, input);
+    test('Test string null', () async {
+      await primitiveNullTest(getPrimitive(TType.STRING));
     });
 
     test('Test binary', () async {
@@ -254,4 +266,13 @@ void main() {
 
     group('shared tests', sharedTests);
   });
+}
+
+
+class Primitive {
+  final Function read;
+  final Function write;
+  final defaultValue;
+
+  Primitive(this.read, this.write, this.defaultValue);
 }
