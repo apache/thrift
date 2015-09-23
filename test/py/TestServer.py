@@ -19,11 +19,14 @@
 # under the License.
 #
 from __future__ import division
-import sys, glob, time, os
-sys.path.insert(0, glob.glob(os.path.join(os.path.dirname(__file__),'../../lib/py/build/lib.*'))[0])
+import glob
+import logging
+import os
+import sys
+import time
 from optparse import OptionParser
 
-import logging
+# Print TServer log to stdout so that the test-runner can redirect it to log files
 logging.basicConfig()
 
 parser = OptionParser()
@@ -49,8 +52,11 @@ parser.add_option('--transport',  dest="trans", type="string",
 parser.set_defaults(port=9090, verbose=1, proto='binary')
 options, args = parser.parse_args()
 
-script_dir = os.path.dirname(__file__) #<-- absolute dir the script is in
+script_dir = os.path.realpath(os.path.dirname(__file__))  # <-- absolute dir the script is in
+lib_dir = os.path.join(os.path.dirname(os.path.dirname(script_dir)), 'lib', 'py', 'build', 'lib.*')
+
 sys.path.insert(0, os.path.join(script_dir, options.genpydir))
+sys.path.insert(0, glob.glob(lib_dir)[0])
 
 from ThriftTest import ThriftTest
 from ThriftTest.ttypes import *
@@ -63,60 +69,67 @@ from thrift.protocol import TCompactProtocol
 from thrift.protocol import TJSONProtocol
 from thrift.server import TServer, TNonblockingServer, THttpServer
 
-PROT_FACTORIES = {'binary': TBinaryProtocol.TBinaryProtocolFactory,
+PROT_FACTORIES = {
+    'binary': TBinaryProtocol.TBinaryProtocolFactory,
     'accel': TBinaryProtocol.TBinaryProtocolAcceleratedFactory,
     'compact': TCompactProtocol.TCompactProtocolFactory,
-    'json': TJSONProtocol.TJSONProtocolFactory}
+    'json': TJSONProtocol.TJSONProtocolFactory,
+}
 
-class TestHandler:
 
+class TestHandler(object):
   def testVoid(self):
     if options.verbose > 1:
-      print 'testVoid()'
+      print('testVoid()')
 
   def testString(self, str):
     if options.verbose > 1:
-      print 'testString(%s)' % str
+      print('testString(%s)' % str)
     return str
+
+  def testBool(self, boolean):
+    if options.verbose > 1:
+      print('testBool(%s)' % str(boolean).lower())
+    return boolean
 
   def testByte(self, byte):
     if options.verbose > 1:
-      print 'testByte(%d)' % byte
+      print('testByte(%d)' % byte)
     return byte
 
   def testI16(self, i16):
     if options.verbose > 1:
-      print 'testI16(%d)' % i16
+      print('testI16(%d)' % i16)
     return i16
 
   def testI32(self, i32):
     if options.verbose > 1:
-      print 'testI32(%d)' % i32
+      print('testI32(%d)' % i32)
     return i32
 
   def testI64(self, i64):
     if options.verbose > 1:
-      print 'testI64(%d)' % i64
+      print('testI64(%d)' % i64)
     return i64
 
   def testDouble(self, dub):
     if options.verbose > 1:
-      print 'testDouble(%f)' % dub
+      print('testDouble(%f)' % dub)
     return dub
 
   def testBinary(self, thing):
     if options.verbose > 1:
-      print 'testBinary()' # TODO: hex output
+      print('testBinary()')  # TODO: hex output
     return thing
 
   def testStruct(self, thing):
     if options.verbose > 1:
-      print 'testStruct({%s, %d, %d, %d})' % (thing.string_thing, thing.byte_thing, thing.i32_thing, thing.i64_thing)
+      print('testStruct({%s, %d, %d, %d})' % (thing.string_thing, thing.byte_thing, thing.i32_thing, thing.i64_thing))
     return thing
 
   def testException(self, arg):
-    #if options.verbose > 1:
-    print 'testException(%s)' % arg
+    # if options.verbose > 1:
+    print('testException(%s)' % arg)
     if arg == 'Xception':
       raise Xception(errorCode=1001, message=arg)
     elif arg == 'TException':
@@ -124,7 +137,7 @@ class TestHandler:
 
   def testMultiException(self, arg0, arg1):
     if options.verbose > 1:
-      print 'testMultiException(%s, %s)' % (arg0, arg1)
+      print('testMultiException(%s, %s)' % (arg0, arg1))
     if arg0 == 'Xception':
       raise Xception(errorCode=1001, message='This is an Xception')
     elif arg0 == 'Xception2':
@@ -135,54 +148,78 @@ class TestHandler:
 
   def testOneway(self, seconds):
     if options.verbose > 1:
-      print 'testOneway(%d) => sleeping...' % seconds
-    time.sleep(seconds / 3) # be quick
+      print('testOneway(%d) => sleeping...' % seconds)
+    time.sleep(seconds / 3)  # be quick
     if options.verbose > 1:
-      print 'done sleeping'
+      print('done sleeping')
 
   def testNest(self, thing):
     if options.verbose > 1:
-      print 'testNest(%s)' % thing
+      print('testNest(%s)' % thing)
     return thing
 
   def testMap(self, thing):
     if options.verbose > 1:
-      print 'testMap(%s)' % thing
+      print('testMap(%s)' % thing)
+    return thing
+
+  def testStringMap(self, thing):
+    if options.verbose > 1:
+      print('testStringMap(%s)' % thing)
     return thing
 
   def testSet(self, thing):
     if options.verbose > 1:
-      print 'testSet(%s)' % thing
+      print('testSet(%s)' % thing)
     return thing
 
   def testList(self, thing):
     if options.verbose > 1:
-      print 'testList(%s)' % thing
+      print('testList(%s)' % thing)
     return thing
 
   def testEnum(self, thing):
     if options.verbose > 1:
-      print 'testEnum(%s)' % thing
+      print('testEnum(%s)' % thing)
     return thing
 
   def testTypedef(self, thing):
     if options.verbose > 1:
-      print 'testTypedef(%s)' % thing
+      print('testTypedef(%s)' % thing)
     return thing
 
   def testMapMap(self, thing):
     if options.verbose > 1:
-      print 'testMapMap(%s)' % thing
-    return {thing: {thing: thing}}
+      print('testMapMap(%s)' % thing)
+    return {
+      -4: {
+        -4: -4,
+        -3: -3,
+        -2: -2,
+        -1: -1,
+      },
+      4: {
+        4: 4,
+        3: 3,
+        2: 2,
+        1: 1,
+      },
+    }
 
   def testInsanity(self, argument):
     if options.verbose > 1:
-      print 'testInsanity(%s)' % argument
-    return {123489: {Numberz.ONE:argument}}
+      print('testInsanity(%s)' % argument)
+    return {
+      1: {
+        2: argument,
+        3: argument,
+      },
+      2: {6: Insanity()},
+    }
 
   def testMulti(self, arg0, arg1, arg2, arg3, arg4, arg5):
     if options.verbose > 1:
-      print 'testMulti(%s)' % [arg0, arg1, arg2, arg3, arg4, arg5]
+      print('testMulti(%s)' % [arg0, arg1, arg2, arg3, arg4, arg5])
     return Xtruct(string_thing='Hello2',
                   byte_thing=arg0, i32_thing=arg1, i64_thing=arg2)
 
@@ -210,8 +247,7 @@ if server_type == 'THttpServer':
 
 # set up server transport and transport factory
 
-rel_path = "../keys/server.pem"
-abs_key_path = os.path.join(script_dir, rel_path)
+abs_key_path = os.path.join(os.path.dirname(script_dir), 'keys', 'server.pem')
 
 host = None
 if options.ssl:
@@ -241,14 +277,15 @@ elif server_type == "TProcessPoolServer":
   from thrift.server import TProcessPoolServer
   server = TProcessPoolServer.TProcessPoolServer(processor, transport, tfactory, pfactory)
   server.setNumWorkers(5)
+
   def set_alarm():
     def clean_shutdown(signum, frame):
       for worker in server.workers:
         if options.verbose > 0:
-          print 'Terminating worker: %s' % worker
+          print('Terminating worker: %s' % worker)
         worker.terminate()
       if options.verbose > 0:
-        print 'Requesting server to stop()'
+        print('Requesting server to stop()')
       try:
         server.stop()
       except:

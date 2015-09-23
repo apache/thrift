@@ -19,11 +19,11 @@
 # under the License.
 #
 
-import sys, glob, os
-sys.path.insert(0, glob.glob(os.path.join(os.path.dirname(__file__),'../../lib/py/build/lib.*'))[0])
-
-import unittest
+import glob
+import os
+import sys
 import time
+import unittest
 from optparse import OptionParser
 
 parser = OptionParser()
@@ -53,8 +53,10 @@ parser.add_option('--transport',  dest="trans", type="string",
 parser.set_defaults(framed=False, http_path=None, verbose=1, host='localhost', port=9090, proto='binary')
 options, args = parser.parse_args()
 
-script_dir = os.path.dirname(__file__)
+script_dir = os.path.abspath(os.path.dirname(__file__))
+lib_dir = os.path.join(os.path.dirname(os.path.dirname(script_dir)), 'lib', 'py', 'build', 'lib.*')
 sys.path.insert(0, os.path.join(script_dir, options.genpydir))
+sys.path.insert(0, glob.glob(lib_dir)[0])
 
 from ThriftTest import ThriftTest, SecondService
 from ThriftTest.ttypes import *
@@ -65,6 +67,7 @@ from thrift.transport import TZlibTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.protocol import TCompactProtocol
 from thrift.protocol import TJSONProtocol
+
 
 class AbstractTest(unittest.TestCase):
   def setUp(self):
@@ -95,32 +98,49 @@ class AbstractTest(unittest.TestCase):
     self.transport.close()
 
   def testVoid(self):
+    print('testVoid')
     self.client.testVoid()
 
   def testString(self):
+    print('testString')
     self.assertEqual(self.client.testString('Python' * 20), 'Python' * 20)
     self.assertEqual(self.client.testString(''), '')
 
+  def testBool(self):
+    print('testBool')
+    self.assertEqual(self.client.testBool(True), True)
+    self.assertEqual(self.client.testBool(False), False)
+
   def testByte(self):
+    print('testByte')
     self.assertEqual(self.client.testByte(63), 63)
     self.assertEqual(self.client.testByte(-127), -127)
 
   def testI32(self):
+    print('testI32')
     self.assertEqual(self.client.testI32(-1), -1)
     self.assertEqual(self.client.testI32(0), 0)
 
   def testI64(self):
+    print('testI64')
     self.assertEqual(self.client.testI64(1), 1)
     self.assertEqual(self.client.testI64(-34359738368), -34359738368)
 
   def testDouble(self):
+    print('testDouble')
     self.assertEqual(self.client.testDouble(-5.235098235), -5.235098235)
     self.assertEqual(self.client.testDouble(0), 0)
     self.assertEqual(self.client.testDouble(-1), -1)
 
-  # TODO: def testBinary(self)	...
-	
+  def testBinary(self):
+    if isinstance(self, JSONTest):
+      self.skipTest('JSON protocol does not handle binary correctly.')
+    print('testBinary')
+    val = bytearray([i for i in range(0, 256)])
+    self.assertEqual(bytearray(self.client.testBinary(bytes(val))), val)
+
   def testStruct(self):
+    print('testStruct')
     x = Xtruct()
     x.string_thing = "Zero"
     x.byte_thing = 1
@@ -130,23 +150,26 @@ class AbstractTest(unittest.TestCase):
     self.assertEqual(y, x)
 
   def testNest(self):
-    inner = Xtruct(string_thing="Zero", byte_thing=1, i32_thing=-3,
-      i64_thing=-5)
+    print('testNest')
+    inner = Xtruct(string_thing="Zero", byte_thing=1, i32_thing=-3, i64_thing=-5)
     x = Xtruct2(struct_thing=inner, byte_thing=0, i32_thing=0)
     y = self.client.testNest(x)
     self.assertEqual(y, x)
 
   def testMap(self):
+    print('testMap')
     x = {0:1, 1:2, 2:3, 3:4, -1:-2}
     y = self.client.testMap(x)
     self.assertEqual(y, x)
 
   def testSet(self):
+    print('testSet')
     x = set([8, 1, 42])
     y = self.client.testSet(x)
     self.assertEqual(y, x)
 
   def testList(self):
+    print('testList')
     x = [1, 4, 9, -42]
     y = self.client.testList(x)
     self.assertEqual(y, x)

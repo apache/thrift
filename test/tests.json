@@ -145,19 +145,19 @@
     },
     "client": {
       "timeout": 6,
+      "transports": [
+        "http"
+      ],
       "command": [
         "TestClient"
       ]
     },
     "transports": [
       "buffered",
-      "framed",
-      "http",
-      "http:evhttp"
+      "framed"
     ],
     "sockets": [
-      "ip",
-      "ip-ssl"
+      "ip"
     ],
     "protocols": [
       "compact",
@@ -173,6 +173,7 @@
       "extra_args": ["TSimpleServer"],
       "command": [
         "TestServer.py",
+        "--verbose",
         "--genpydir=gen-py"
       ]
     },

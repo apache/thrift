@@ -194,11 +194,12 @@ main (int argc, char **argv)
   /* Execute the actual tests */
   for (test_num = 0; test_num < num_tests; ++test_num) {
     if (thrift_transport_open (transport, &error)) {
-      gchar  *string = NULL;
-      gint8   byte   = 0;
-      gint32  int32  = 0;
-      gint64  int64  = 0;
-      gdouble dub    = 0;
+      gchar   *string  = NULL;
+      gboolean boolean = 0;
+      gint8    byte    = 0;
+      gint32   int32   = 0;
+      gint64   int64   = 0;
+      gdouble  dub     = 0;
 
       gint byte_thing, i32_thing, inner_byte_thing, inner_i32_thing;
       gint64 i64_thing, inner_i64_thing;
@@ -290,6 +291,42 @@ main (int argc, char **argv)
 
         g_free (string);
         string = NULL;
+      }
+      else {
+        printf ("%s\n", error->message);
+        g_error_free (error);
+        error = NULL;
+
+        fail_count++;
+      }
+
+      /**
+       * BOOL TEST
+       */
+      printf ("testByte(true)");
+      if (t_test_thrift_test_if_test_bool (test_client,
+                                           &boolean,
+                                           1,
+                                           &error)) {
+        printf (" = %s\n", boolean ? "true" : "false");
+        if (boolean != 1)
+          fail_count++;
+      }
+      else {
+        printf ("%s\n", error->message);
+        g_error_free (error);
+        error = NULL;
+
+        fail_count++;
+      }
+      printf ("testByte(false)");
+      if (t_test_thrift_test_if_test_bool (test_client,
+                                           &boolean,
+                                           0,
+                                           &error)) {
+        printf (" = %s\n", boolean ? "true" : "false");
+        if (boolean != 0)
+          fail_count++;
       }
       else {
         printf ("%s\n", error->message);

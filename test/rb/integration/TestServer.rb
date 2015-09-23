@@ -24,10 +24,11 @@ $:.push File.dirname(__FILE__) + '/..'
 require 'test_helper'
 require 'thrift'
 require 'thrift_test'
+require 'thrift_test_types'
 
 class SimpleHandler
-  [:testVoid, :testString, :testByte, :testI32, :testI64, :testDouble, :testBinary,
-   :testStruct, :testMap, :testSet, :testList, :testNest,
+  [:testVoid, :testString, :testBool, :testByte, :testI32, :testI64, :testDouble, :testBinary,
+   :testStruct, :testMap, :testStringMap, :testSet, :testList, :testNest, :testEnum, :testTypedef,
    :testEnum, :testTypedef, :testMultiException].each do |meth|
 
     define_method(meth) do |thing|
@@ -40,40 +41,65 @@ class SimpleHandler
   end
 
   def testInsanity(thing)
-    num, uid = thing.userMap.find { true }
-    return {uid => {num => thing}}
+    return {
+      1 => {
+        2 => thing,
+        3 => thing
+      },
+      2 => {
+        6 => Thrift::Test::Insanity::new()
+      }
+    }
   end
 
   def testMapMap(thing)
-    return {thing => {thing => thing}}
+    return {
+      -4 => {
+        -4 => -4,
+        -3 => -3,
+        -2 => -2,
+        -1 => -1,
+      },
+      4 => {
+        4 => 4,
+        3 => 3,
+        2 => 2,
+        1 => 1,
+      }
+    }
   end
 
-  def testEnum(thing)
-    return thing
-  end
-
-  def testTypedef(thing)
-    return thing
+  def testMulti(arg0, arg1, arg2, arg3, arg4, arg5)
+    return Thrift::Test::Xtruct.new({
+      'string_thing' => 'Hello2',
+      'byte_thing' => arg0,
+      'i32_thing' => arg1,
+      'i64_thing' => arg2,
+    })
   end
 
   def testException(thing)
     if thing == "Xception"
-      raise Thrift::Test::Xception, :message => thing
+      raise Thrift::Test::Xception, :errorCode => 1001, :message => thing
     elsif thing == "TException"
-      raise Thrift::Test::TException, :message => thing
+      raise Thrift::Exception, :message => thing
     else
-      return arg1
+      # no-op
     end
   end
 
   def testMultiException(arg0, arg1)
     if arg0 == "Xception2"
-      raise Thrift::Test::Xception2, :message => 'This is an Xception2'
+      raise Thrift::Test::Xception2, :errorCode => 2002, :struct_thing => ::Thrift::Test::Xtruct.new({ :string_thing => 'This is an Xception2' })
     elsif arg0 == "Xception"
-      raise Thrift::Test::Xception, :message => 'This is an Xception'
+      raise Thrift::Test::Xception, :errorCode => 1001, :message => 'This is an Xception'
     else
-      return arg1
+      return ::Thrift::Test::Xtruct.new({'string_thing' => arg1})
     end
+  end
+
+  def testOneway(arg0)
+    sleep(arg0)
   end
 
 end

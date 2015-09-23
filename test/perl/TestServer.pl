@@ -148,6 +148,14 @@ sub testString() {
   return $thing;
 }
 
+sub testBool() {
+  my $self = shift;
+  my $thing = shift;
+  my $str = $thing ? "true" : "false";
+  print("testBool($str)\n");
+  return $thing;
+}
+
 sub testByte() {
   my $self = shift;
   my $thing = shift;
@@ -320,8 +328,8 @@ sub testInsanity() {
   my @goodbyes;
   push(@goodbyes, $goodbye);
   my $crazy = new ThriftTest::Insanity({userMap => { ThriftTest::Numberz::EIGHT => 8 }, xtructs => \@goodbyes});
-  my $loony = new ThriftTest::Insanity({userMap => { ThriftTest::Numberz::FIVE  => 5 }, xtructs => \@hellos});
-  my $result = { 1 => { ThriftTest::Numberz::TWO => $crazy, ThriftTest::Numberz::THREE => $crazy },
+  my $loony = new ThriftTest::Insanity();
+  my $result = { 1 => { ThriftTest::Numberz::TWO => $argument, ThriftTest::Numberz::THREE => $argument },
                  2 => { ThriftTest::Numberz::SIX => $loony } };
   return $result;
 }
