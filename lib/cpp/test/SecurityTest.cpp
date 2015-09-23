@@ -55,54 +55,37 @@ struct GlobalFixture
     GlobalFixture()
     {
         using namespace boost::unit_test::framework;
-        try
-        {
-            for (int i = 0; i < master_test_suite().argc; ++i)
-            {
-                BOOST_TEST_MESSAGE(boost::format("argv[%1%] = \"%2%\"") % i % master_test_suite().argv[i]);
-            }
+		for (int i = 0; i < master_test_suite().argc; ++i)
+		{
+			BOOST_TEST_MESSAGE(boost::format("argv[%1%] = \"%2%\"") % i % master_test_suite().argv[i]);
+		}
 
     #ifdef linux
-            // OpenSSL calls send() without MSG_NOSIGPIPE so writing to a socket that has
-            // disconnected can cause a SIGPIPE signal...
-            signal(SIGPIPE, SIG_IGN);
+		// OpenSSL calls send() without MSG_NOSIGPIPE so writing to a socket that has
+		// disconnected can cause a SIGPIPE signal...
+		signal(SIGPIPE, SIG_IGN);
     #endif
 
-            TSSLSocketFactory::setManualOpenSSLInitialization(true);
-            apache::thrift::transport::initializeOpenSSL();
+		TSSLSocketFactory::setManualOpenSSLInitialization(true);
+		apache::thrift::transport::initializeOpenSSL();
 
-            keyDir = boost::filesystem::current_path().parent_path().parent_path().parent_path() / "test" / "keys";
-            if (!boost::filesystem::exists(certFile("server.crt")))
-            {
-                keyDir = boost::filesystem::path(master_test_suite().argv[master_test_suite().argc - 1]);
-                if (!boost::filesystem::exists(certFile("server.crt")))
-                {
-                	std::cerr << "The last argument to this test must be the directory containing the test certificate(s)." << std::endl;
-                	exit(1);
-                }
-            }
-        }
-        catch (std::exception& ex)
-        {
-        	std::cerr << typeid(ex).name() << ": " << ex.what() << std::endl;
-        	exit(1);
-        }
+		keyDir = boost::filesystem::current_path().parent_path().parent_path().parent_path() / "test" / "keys";
+		if (!boost::filesystem::exists(certFile("server.crt")))
+		{
+			keyDir = boost::filesystem::path(master_test_suite().argv[master_test_suite().argc - 1]);
+			if (!boost::filesystem::exists(certFile("server.crt")))
+			{
+				throw std::invalid_argument("The last argument to this test must be the directory containing the test certificate(s).");
+			}
+		}
     }
 
     virtual ~GlobalFixture()
     {
-        try
-        {
-            apache::thrift::transport::cleanupOpenSSL();
+		apache::thrift::transport::cleanupOpenSSL();
 #ifdef linux
-            signal(SIGPIPE, SIG_DFL);
+		signal(SIGPIPE, SIG_DFL);
 #endif
-        }
-        catch (std::exception& ex)
-        {
-        	std::cerr << typeid(ex).name() << ": " << ex.what() << std::endl;
-        	exit(1);
-        }
     }
 };
 
