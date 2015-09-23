@@ -23,6 +23,9 @@ import sys, glob, time, os
 sys.path.insert(0, glob.glob(os.path.join(os.path.dirname(__file__),'../../lib/py/build/lib.*'))[0])
 from optparse import OptionParser
 
+import logging
+logging.basicConfig()
+
 parser = OptionParser()
 parser.add_option('--genpydir', type='string', dest='genpydir',
                   default='gen-py',
@@ -104,8 +107,8 @@ class TestHandler:
   def testBinary(self, thing):
     if options.verbose > 1:
       print 'testBinary()' # TODO: hex output
-    return thring
-	
+    return thing
+
   def testStruct(self, thing):
     if options.verbose > 1:
       print 'testStruct({%s, %d, %d, %d})' % (thing.string_thing, thing.byte_thing, thing.i32_thing, thing.i64_thing)

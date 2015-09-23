@@ -1,17 +1,15 @@
-name: tutorial_server
+name: thrift_test_client
 version: 0.1.0
-description: A Dart server to support the Apache Thrift tutorial
+description: A client integration test for the Dart Thrift library
 author: Mark Erickson <mark.erickson@workiva.com>
 homepage: https://github.com/apache/thrift
-
 environment:
   sdk: ^1.12.0
-
 dependencies:
   args: ^0.13.0
-  shared:
-    path: ../gen-dart/shared
   thrift:
     path: ../../../lib/dart
-  tutorial:
-    path: ../gen-dart/tutorial
+  thrift_test:
+    path: ../gen-dart/thrift_test
+dev_dependencies:
+  test: "^0.12.0"

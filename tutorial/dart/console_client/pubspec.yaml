@@ -1,5 +1,5 @@
 name: tutorial_console_client
-version: 0.0.1
+version: 0.1.0
 description: >
   A Dart console client to implementation of the Apache Thrift tutorial
 author: Mark Erickson <mark.erickson@workiva.com>
@@ -10,6 +10,7 @@ environment:
 
 dependencies:
   args: ^0.13.0
+  collection: ^1.1.0
   shared:
     path: ../gen-dart/shared
   thrift:

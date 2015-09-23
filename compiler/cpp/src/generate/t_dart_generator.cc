@@ -1966,15 +1966,8 @@ void t_dart_generator::generate_serialize_container(ofstream& out, t_type* ttype
 
   if (ttype->is_map()) {
     string iter = tmp("_key");
-    string counter = tmp("_sizeCounter");
-    indent(out) << "int " << counter << " = 0;" << endl;
-    indent(out) << "for (var " << iter << " in " << prefix << ")";
-    scope_up(out);
-    indent(out) << counter << +"++;" << endl;
-    scope_down(out);
-
     indent(out) << "oprot.writeMapBegin(new TMap(" << type_to_enum(((t_map*)ttype)->get_key_type())
-                << ", " << type_to_enum(((t_map*)ttype)->get_val_type()) << ", " << counter << "));"
+                << ", " << type_to_enum(((t_map*)ttype)->get_val_type()) << ", " << prefix << ".length));"
                 << endl;
   } else if (ttype->is_set()) {
     indent(out) << "oprot.writeSetBegin(new TSet(" << type_to_enum(((t_set*)ttype)->get_elem_type())
@@ -1986,7 +1979,9 @@ void t_dart_generator::generate_serialize_container(ofstream& out, t_type* ttype
   }
 
   string iter = tmp("elem");
-  if (ttype->is_map() || ttype->is_set() || ttype->is_list()) {
+  if (ttype->is_map()) {
+    indent(out) << "for (var " << iter << " in " << prefix << ".keys)";
+  } else if (ttype->is_set() || ttype->is_list()) {
     indent(out) << "for (var " << iter << " in " << prefix << ")";
   }
 
@@ -2354,4 +2349,4 @@ THRIFT_REGISTER_GENERATOR(
     dart,
     "Dart",
     "    library_name=my_library    Optional override for library name.\n"
-);
+)
