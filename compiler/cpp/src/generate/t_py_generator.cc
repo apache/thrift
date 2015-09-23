@@ -66,7 +66,7 @@ public:
       gen_newstyle_ = 0; // dynamic is newstyle
       gen_dynbaseclass_ = "TBase";
       gen_dynbaseclass_exc_ = "TExceptionBase";
-      import_dynbase_ = "from thrift.protocol.TBase import TBase, TExceptionBase\n";
+      import_dynbase_ = "from thrift.protocol.TBase import TBase, TExceptionBase, TTransport\n";
     }
 
     iter = parsed_options.find("dynbase");
@@ -960,7 +960,9 @@ void t_py_generator::generate_service(t_service* tservice) {
                << tservice->get_extends()->get_name() << endl;
   }
 
-  f_service_ << "from ttypes import *" << endl << "from thrift.Thrift import TProcessor" << endl
+  f_service_ << "import logging" << endl
+             << "from ttypes import *" << endl
+             << "from thrift.Thrift import TProcessor" << endl
              << render_fastbinary_includes() << endl;
 
   if (gen_twisted_) {
@@ -1656,6 +1658,8 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
   }
 
   if (gen_twisted_) {
+    // TODO: Propagate arbitrary exception raised by handler to client as does plain "py"
+
     // Generate the function call
     t_struct* arg_struct = tfunction->get_arglist();
     const std::vector<t_field*>& fields = arg_struct->get_members();
@@ -1760,6 +1764,8 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
     }
     */
 
+    // TODO: Propagate arbitrary exception raised by handler to client as does plain "py"
+
     // Generate the function call
     t_struct* arg_struct = tfunction->get_arglist();
     const std::vector<t_field*>& fields = arg_struct->get_members();
@@ -1814,10 +1820,9 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
 
   } else { // py
     // Try block for a function with exceptions
-    if (xceptions.size() > 0) {
-      f_service_ << indent() << "try:" << endl;
-      indent_up();
-    }
+    // It also catches arbitrary exceptions raised by handler method to propagate them to the client
+    f_service_ << indent() << "try:" << endl;
+    indent_up();
 
     // Generate the function call
     t_struct* arg_struct = tfunction->get_arglist();
@@ -1838,36 +1843,39 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
       }
       f_service_ << "args." << (*f_iter)->get_name();
     }
-    f_service_ << ")" << endl;
+    f_service_ << ")" << endl << indent() << "msg_type = TMessageType.REPLY" << endl;
 
-    if (!tfunction->is_oneway() && xceptions.size() > 0) {
-      indent_down();
+    indent_down();
+    f_service_ << indent()
+               << "except (TTransport.TTransportException, KeyboardInterrupt, SystemExit):" << endl
+               << indent() << "  raise" << endl;
+
+    if (!tfunction->is_oneway()) {
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ << indent() << "except " << type_name((*x_iter)->get_type()) << " as "
                    << (*x_iter)->get_name() << ":" << endl;
-        if (!tfunction->is_oneway()) {
-          indent_up();
-          f_service_ << indent() << "result." << (*x_iter)->get_name() << " = "
-                     << (*x_iter)->get_name() << endl;
-          indent_down();
-        } else {
-          f_service_ << indent() << "pass" << endl;
-        }
+        indent_up();
+        f_service_ << indent() << "msg_type = TMessageType.REPLY" << endl
+                   << indent() << "result." << (*x_iter)->get_name() << " = "
+                   << (*x_iter)->get_name() << endl;
+        indent_down();
       }
-    }
 
-    // Shortcut out here for oneway functions
-    if (tfunction->is_oneway()) {
-      f_service_ << indent() << "return" << endl;
-      indent_down();
-      f_service_ << endl;
-      return;
+      f_service_ << indent() << "except Exception as ex:" << endl
+                 << indent() << "  msg_type = TMessageType.EXCEPTION" << endl
+                 << indent() << "  logging.exception(ex)" << endl
+                 << indent()
+                 << "  result = TApplicationException(TApplicationException.INTERNAL_ERROR, "
+                    "'Internal error')" << endl
+                 << indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name()
+                 << "\", msg_type, seqid)" << endl
+                 << indent() << "result.write(oprot)" << endl
+                 << indent() << "oprot.writeMessageEnd()" << endl
+                 << indent() << "oprot.trans.flush()" << endl;
+    } else {
+      f_service_ << indent() << "except:" << endl
+                 << indent() << "  pass" << endl;
     }
-
-    f_service_ << indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name()
-               << "\", TMessageType.REPLY, seqid)" << endl << indent() << "result.write(oprot)"
-               << endl << indent() << "oprot.writeMessageEnd()" << endl << indent()
-               << "oprot.trans.flush()" << endl;
 
     // Close function
     indent_down();
