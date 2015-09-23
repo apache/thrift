@@ -39,7 +39,7 @@ Base Types
 The mapping from Thrift types to Haskell's is:
 
  * double -> Double
- * byte -> Data.Word.Word8
+ * byte -> Data.Int.Int8
  * i16 -> Data.Int.Int16
  * i32 -> Data.Int.Int32
  * i64 -> Data.Int.Int64

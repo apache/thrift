@@ -242,6 +242,13 @@ namespace Test
             string s = client.testString("Test");
             Console.WriteLine(" = \"" + s + "\"");
 
+            Console.Write("testBool(true)");
+            bool t = client.testBool((bool)true);
+            Console.WriteLine(" = " + t);
+            Console.Write("testBool(false)");
+            bool f = client.testBool((bool)false);
+            Console.WriteLine(" = " + f);
+
             Console.Write("testByte(1)");
             sbyte i8 = client.testByte((sbyte)1);
             Console.WriteLine(" = " + i8);

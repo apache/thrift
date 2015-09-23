@@ -368,5 +368,4 @@ EXTRA_DIST = \
 	qt \
 	CMakeLists.txt \
 	DebugProtoTest_extras.cpp \
-	tests.xml \
 	ThriftTest_extras.cpp

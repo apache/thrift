@@ -133,6 +133,17 @@ my $s = $testClient->testString("Test");
 print(" = \"$s\"\n");
 
 #
+# BOOL TEST
+#
+print("testBool(1)");
+my $t = $testClient->testBool(1);
+print(" = $t\n");
+print("testBool(0)");
+my $f = $testClient->testBool(0);
+print(" = $f\n");
+
+
+#
 # BYTE TEST
 #
 print("testByte(1)");
@@ -310,11 +321,17 @@ print("}\n");
 my $insane = new ThriftTest::Insanity();
 $insane->{userMap}->{ThriftTest::Numberz::FIVE} = 5000;
 my $truck = new ThriftTest::Xtruct();
-$truck->string_thing("Truck");
-$truck->byte_thing(8);
-$truck->i32_thing(8);
-$truck->i64_thing(8);
+$truck->string_thing("Hello2");
+$truck->byte_thing(2);
+$truck->i32_thing(2);
+$truck->i64_thing(2);
+my $truck2 = new ThriftTest::Xtruct();
+$truck2->string_thing("Goodbye4");
+$truck2->byte_thing(4);
+$truck2->i32_thing(4);
+$truck2->i64_thing(4);
 push(@{$insane->{xtructs}}, $truck);
+push(@{$insane->{xtructs}}, $truck2);
 
 print("testInsanity()");
 my $whoa = $testClient->testInsanity($insane);

@@ -75,6 +75,21 @@ func callEverything(client *thrifttest.ThriftTestClient) {
 		t.Fatalf("Unexpected TestString() result, expected 'thing' got '%s' ", thing)
 	}
 
+	bl, err := client.TestBool(true)
+	if err != nil {
+		t.Fatalf("Unexpected error in TestBool() call: ", err)
+	}
+	if !bl {
+		t.Fatalf("Unexpected TestBool() result expected true, got %f ", bl)
+	}
+	bl, err = client.TestBool(false)
+	if err != nil {
+		t.Fatalf("Unexpected error in TestBool() call: ", err)
+	}
+	if bl {
+		t.Fatalf("Unexpected TestBool() result expected false, got %f ", bl)
+	}
+
 	b, err := client.TestByte(42)
 	if err != nil {
 		t.Fatalf("Unexpected error in TestByte() call: ", err)
@@ -186,10 +201,10 @@ func callEverything(client *thrifttest.ThriftTestClient) {
 
 	mapmap, err := client.TestMapMap(42)
 	if err != nil {
-		t.Fatalf("Unexpected error in TestMapmap() call: ", err)
+		t.Fatalf("Unexpected error in TestMapMap() call: ", err)
 	}
 	if !reflect.DeepEqual(mapmap, rmapmap) {
-		t.Fatalf("Unexpected TestMapmap() result expected %#v, got %#v ", rmapmap, mapmap)
+		t.Fatalf("Unexpected TestMapMap() result expected %#v, got %#v ", rmapmap, mapmap)
 	}
 
 	crazy := thrifttest.NewInsanity()

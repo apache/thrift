@@ -322,6 +322,8 @@ class TestClient {
 
     // core module unit tests
     public static function ModuleUnitTests( args : Arguments, rslt : TestResults) : Void {
+		#if debug
+		
         try {
             BitConverter.UnitTest();
             rslt.Expect( true, 'BitConverter.UnitTest  Test #100');
@@ -337,6 +339,8 @@ class TestClient {
         catch( e : Dynamic) {
             rslt.Expect( false, 'ZigZag.UnitTest: $e  Test #101');
         }
+		
+		#end
     }
 
 
@@ -456,6 +460,15 @@ class TestClient {
         client.testVoid();
         trace(' = void');
         rslt.Expect(true,"testVoid()");  // bump counter
+
+        trace('testBool(${true})');
+        var b = client.testBool(true);
+        trace(' = $b');
+		rslt.Expect(b, '$b == "${true}"');
+        trace('testBool(${false})');
+        b = client.testBool(false);
+        trace(' = $b');
+		rslt.Expect( ! b, '$b == "${false}"');
 
         trace('testString("Test")');
         var s = client.testString("Test");

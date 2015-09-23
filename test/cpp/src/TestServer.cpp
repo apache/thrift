@@ -78,6 +78,11 @@ public:
     out = thing;
   }
 
+  bool testBool(const bool thing) {
+    printf("testBool(%s)\n", thing ? "true" : "false");
+    return thing;
+  }
+
   int8_t testByte(const int8_t thing) {
     printf("testByte(%d)\n", (int)thing);
     return thing;
@@ -395,6 +400,11 @@ public:
                           const std::string& thing) {
     std::string res;
     _delegate->testString(res, thing);
+    cob(res);
+  }
+
+  virtual void testBool(tcxx::function<void(bool const& _return)> cob, const bool thing) {
+    bool res = _delegate->testBool(thing);
     cob(res);
   }
 

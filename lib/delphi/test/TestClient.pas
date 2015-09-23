@@ -510,6 +510,11 @@ begin
   client.testVoid();
   Expect( TRUE, 'testVoid()');  // success := no exception
 
+  s := BoolToString( client.testBool(TRUE));
+  Expect( s = BoolToString(TRUE),  'testBool(TRUE) = '+s);
+  s := BoolToString( client.testBool(FALSE));
+  Expect( s = BoolToString(FALSE),  'testBool(FALSE) = '+s);
+
   s := client.testString('Test');
   Expect( s = 'Test', 'testString(''Test'') = "'+s+'"');
 
