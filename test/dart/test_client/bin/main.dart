@@ -101,8 +101,7 @@ Future init(
     transport = new THttpClientTransport(httpClient, config);
   } else {
     var socket = await Socket.connect(host, port);
-    transport =
-        new TClientSocketTransport(new TTcpSocket(socket), protocolFactory);
+    transport = new TClientSocketTransport(new TTcpSocket(socket));
     if (transportType == 'framed') {
       transport = new TFramedTransport(transport);
     }

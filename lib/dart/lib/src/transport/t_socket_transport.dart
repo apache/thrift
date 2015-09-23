@@ -60,8 +60,47 @@ abstract class TSocketTransport extends TBufferedTransport {
   }
 }
 
-/// [TClientSocketTransport] sends outgoing messages and expects a response
+/// [TClientSocketTransport] is a basic client socket transport.  It sends
+/// outgoing messages and expects a response.
+///
+/// NOTE: This transport expects a single threaded server, as it will process
+/// responses in FIFO order.
 class TClientSocketTransport extends TSocketTransport {
+  final List<Completer<Uint8List>> _completers = [];
+
+  TClientSocketTransport(TSocket socket) : super(socket);
+
+  Future flush() {
+    Uint8List bytes = _consumeWriteBuffer();
+
+    // Use a sync completer to ensure that the buffer can be read immediately
+    // after the read buffer is set, and avoid a race condition where another
+    // response could overwrite the read buffer.
+    Completer completer = new Completer.sync();
+    _completers.add(completer);
+
+    socket.send(bytes);
+
+    return completer.future;
+  }
+
+  void handleIncomingMessage(Uint8List messageBytes) {
+    super.handleIncomingMessage(messageBytes);
+
+    if (_completers.isNotEmpty) {
+      var completer = _completers.removeAt(0);
+      completer.complete();
+    }
+  }
+}
+
+/// [TAsyncClientSocketTransport] sends outgoing messages and expects an
+/// asynchronous response.
+///
+/// NOTE: This transport uses a [MessageReader] to read a [TMessage] when an
+/// incoming message arrives to correlate a response to a request, using the
+/// seqid.
+class TAsyncClientSocketTransport extends TSocketTransport {
   static const defaultTimeout = const Duration(seconds: 30);
 
   final Map<int, Completer<Uint8List>> _completers = {};
@@ -70,9 +109,9 @@ class TClientSocketTransport extends TSocketTransport {
 
   final Duration responseTimeout;
 
-  TClientSocketTransport(TSocket socket, TProtocolFactory protocolFactory,
+  TAsyncClientSocketTransport(TSocket socket, TMessageReader messageReader,
       {Duration responseTimeout: defaultTimeout})
-      : messageReader = new TMessageReader(protocolFactory),
+      : this.messageReader = messageReader,
         this.responseTimeout = responseTimeout,
         super(socket);
 

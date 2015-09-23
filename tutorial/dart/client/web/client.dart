@@ -47,8 +47,9 @@ class CalculatorUI {
   }
 
   void _initConnection() {
-    _transport = new TClientSocketTransport(
-        new TWebSocket(Uri.parse('ws://127.0.0.1:9090/ws')), new TBinaryProtocolFactory());
+    _transport = new TAsyncClientSocketTransport(
+        new TWebSocket(Uri.parse('ws://127.0.0.1:9090/ws')),
+        new TMessageReader(new TBinaryProtocolFactory()));
     TProtocol protocol = new TBinaryProtocol(_transport);
     _transport.open();
 

@@ -63,8 +63,9 @@ main(List<String> args) {
 
 Future _initConnection(int port) async {
   var socket = await Socket.connect('127.0.0.1', port);
-  _transport = new TClientSocketTransport(
-      new TTcpSocket(socket), new TBinaryProtocolFactory());
+  _transport = new TAsyncClientSocketTransport(
+      new TTcpSocket(socket),
+      new TMessageReader(new TBinaryProtocolFactory()));
   TProtocol protocol = new TBinaryProtocol(_transport);
   await _transport.open();
 
