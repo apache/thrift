@@ -173,6 +173,7 @@
       "extra_args": ["TSimpleServer"],
       "command": [
         "TestServer.py",
+        "--verbose",
         "--genpydir=gen-py"
       ]
     },
