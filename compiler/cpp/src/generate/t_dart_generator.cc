@@ -41,7 +41,7 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
 static const string endl2 = "\n\n";
 
 /* Should reflect the current version in lib/dart/pubspec.yaml */
-static const string dart_thrift_version = "0.1.0";
+static const string dart_thrift_version = "0.9.3";
 
 /* forward declarations */
 string initial_caps_to_underscores(string name);
@@ -358,7 +358,7 @@ void t_dart_generator::generate_dart_pubspec() {
 
   indent(f_pubspec) << "dependencies:" << endl;
   indent_up();
-  indent(f_pubspec) << "thrift: # '>=" << dart_thrift_version << "'" << endl;
+  indent(f_pubspec) << "thrift:  # ^" << dart_thrift_version << endl;
   indent_up();
   indent(f_pubspec) << "path: ../../../../lib/dart" << endl;
   indent_down();
