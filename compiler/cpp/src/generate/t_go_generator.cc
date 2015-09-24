@@ -168,6 +168,30 @@ public:
   void generate_service_server(t_service* tservice);
   void generate_process_function(t_service* tservice, t_function* tfunction);
 
+  enum IsOptional {
+    IS_OPTIONAL, IS_REQUIRED
+  };
+
+  enum InContainer {
+    IN_CONTAINER, NOT_IN_CONTAINER
+  };
+
+  enum InKey {
+    IN_KEY, NOT_IN_KEY
+  };
+
+  enum CoerceData {
+    COERCE_DATA, NO_COERCE_DATA
+  };
+
+  enum InClass {
+    IN_CLASS, NOT_IN_CLASS,
+  };
+
+  enum UseType {
+    USE_DEFAULT_TYPE, USE_TRUE_TYPE,
+  };
+
   /**
    * Serialization constructs
    */
@@ -176,11 +200,11 @@ public:
                                   t_field* tfield,
                                   bool declare,
                                   std::string prefix = "",
-                                  bool inclass = false,
-                                  bool coerceData = false,
-                                  bool inkey = false,
-                                  bool in_container = false,
-                                  bool use_true_type = false);
+                                  InClass in_class = NOT_IN_CLASS,
+                                  CoerceData coerce_data = NO_COERCE_DATA,
+                                  InKey in_key = NOT_IN_KEY,
+                                  InContainer in_container = NOT_IN_CONTAINER,
+                                  UseType use_type = USE_DEFAULT_TYPE);
 
   void generate_deserialize_struct(std::ofstream& out,
                                    t_struct* tstruct,
@@ -263,10 +287,10 @@ public:
                                     bool addError = false);
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
-  std::string type_to_go_type(t_type* ttype, bool is_container_value = false);
+  std::string type_to_go_type(t_type* ttype, InContainer in_container = NOT_IN_CONTAINER);
   std::string type_to_go_type_with_opt(t_type* ttype,
-                                       bool optional_field,
-                                       bool is_container_value = false);
+                                       IsOptional is_optional,
+                                       InContainer in_container = NOT_IN_CONTAINER);
   std::string type_to_go_key_type(t_type* ttype);
   std::string type_to_spec_args(t_type* ttype);
 
@@ -313,7 +337,7 @@ private:
   std::string privatize(const std::string& value) const;
   std::string new_prefix(const std::string& value) const;
   static std::string variable_name_to_go_name(const std::string& value);
-  static bool is_pointer_field(t_field* tfield, bool in_container = false);
+  static bool is_pointer_field(t_field* tfield, InContainer in_container = NOT_IN_CONTAINER);
   static bool omit_initialization(t_field* tfield);
 };
 
@@ -368,8 +392,8 @@ static bool type_need_reference(t_type* type) {
 }
 
 // returns false if field could not use comparison to default value as !IsSet*
-bool t_go_generator::is_pointer_field(t_field* tfield, bool in_container_value) {
-  (void)in_container_value;
+bool t_go_generator::is_pointer_field(t_field* tfield, InContainer in_container) {
+  (void)in_container;
   if (tfield->annotations_.count("cpp.ref") != 0) {
     return true;
   }
@@ -1111,7 +1135,7 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
     const map<t_const_value*, t_const_value*>& val = value->get_map();
-    out << "map[" << type_to_go_type(ktype) << "]" << type_to_go_type(vtype, true) << "{" << endl;
+    out << "map[" << type_to_go_type(ktype) << "]" << type_to_go_type(vtype, IN_CONTAINER) << "{" << endl;
     indent_up();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
 
@@ -1274,7 +1298,8 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
       }
 
       t_type* fieldType = (*m_iter)->get_type();
-      string goType = type_to_go_type_with_opt(fieldType, is_pointer_field(*m_iter));
+      IsOptional is_member_optional = is_pointer_field(*m_iter) ? IS_OPTIONAL : IS_REQUIRED;
+      string goType = type_to_go_type_with_opt(fieldType, is_member_optional);
       string gotag = "db:\"" + escape_string((*m_iter)->get_name())  + "\" ";
       if ((*m_iter)->get_req() == t_field::T_OPTIONAL) {
         gotag += "json:\"" + escape_string((*m_iter)->get_name()) + ",omitempty\"";
@@ -1316,7 +1341,7 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
     t_const_value* def_value;
     get_publicized_name_and_def_value(*m_iter, &publicized_name, &def_value);
     t_type* fieldType = (*m_iter)->get_type();
-    string goType = type_to_go_type_with_opt(fieldType, false);
+    string goType = type_to_go_type_with_opt(fieldType, IS_REQUIRED);
     string def_var_name = tstruct_name + "_" + publicized_name + "_DEFAULT";
     if ((*m_iter)->get_req() == t_field::T_OPTIONAL || is_pointer_field(*m_iter)) {
       out << indent() << "var " << def_var_name << " " << goType;
@@ -1326,7 +1351,7 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
       out << endl;
     }
     if (is_pointer_field(*m_iter)) {
-      string goOptType = type_to_go_type_with_opt(fieldType, true);
+      string goOptType = type_to_go_type_with_opt(fieldType, IS_OPTIONAL);
       string maybepointer = goOptType != goType ? "*" : "";
       out << indent() << "func (p *" << tstruct_name << ") Get" << publicized_name << "() "
           << goType << " {" << endl;
@@ -2807,16 +2832,17 @@ void t_go_generator::generate_deserialize_field(ofstream& out,
                                                 t_field* tfield,
                                                 bool declare,
                                                 string prefix,
-                                                bool inclass,
-                                                bool coerceData,
-                                                bool inkey,
-                                                bool in_container_value,
-                                                bool use_true_type) {
-  (void)inclass;
-  (void)coerceData;
+                                                InClass in_class,
+                                                CoerceData coerce_data,
+                                                InKey in_key,
+                                                InContainer in_container,
+                                                UseType use_type) {
+  (void)in_class;
+  (void)coerce_data;
   t_type* orig_type = tfield->get_type();
   t_type* type = get_true_type(orig_type);
   string name(prefix + publicize(tfield->get_name()));
+  bool use_true_type = use_type == USE_TRUE_TYPE;
 
   if (type->is_void()) {
     throw "CANNOT GENERATE DESERIALIZE CODE FOR void TYPE: " + name;
@@ -2825,7 +2851,7 @@ void t_go_generator::generate_deserialize_field(ofstream& out,
   if (type->is_struct() || type->is_xception()) {
     generate_deserialize_struct(out,
                                 (t_struct*)type,
-                                is_pointer_field(tfield, in_container_value),
+                                is_pointer_field(tfield, in_container),
                                 declare,
                                 name);
   } else if (type->is_container()) {
@@ -2833,10 +2859,11 @@ void t_go_generator::generate_deserialize_field(ofstream& out,
   } else if (type->is_base_type() || type->is_enum()) {
 
     if (declare) {
-      t_type* actual_type = use_true_type ? tfield->get_type()->get_true_type()
-                                          : tfield->get_type();
+      t_type* actual_type = use_true_type ? tfield->get_type()->get_true_type() : tfield->get_type();
 
-      string type_name = inkey ? type_to_go_key_type(actual_type) : type_to_go_type(actual_type);
+      string type_name = in_key == IN_KEY
+        ? type_to_go_key_type(actual_type)
+        : type_to_go_type(actual_type);
 
       out << "var " << tfield->get_name() << " " << type_name << endl;
     }
@@ -2852,7 +2879,7 @@ void t_go_generator::generate_deserialize_field(ofstream& out,
         break;
 
       case t_base_type::TYPE_STRING:
-        if (((t_base_type*)type)->is_binary() && !inkey) {
+        if (((t_base_type*)type)->is_binary() && in_key == NOT_IN_KEY) {
           out << "ReadBinary()";
         } else {
           out << "ReadString()";
@@ -3030,8 +3057,8 @@ void t_go_generator::generate_deserialize_map_element(ofstream& out,
   t_field fval(tmap->get_val_type(), val);
   fkey.set_req(t_field::T_OPT_IN_REQ_OUT);
   fval.set_req(t_field::T_OPT_IN_REQ_OUT);
-  generate_deserialize_field(out, &fkey, true, "", false, false, true);
-  generate_deserialize_field(out, &fval, true, "", false, false, false, true);
+  generate_deserialize_field(out, &fkey, true /* declare */, "", NOT_IN_CLASS, NO_COERCE_DATA, NOT_IN_KEY);
+  generate_deserialize_field(out, &fval, true /* declare */, "", NOT_IN_CLASS, NO_COERCE_DATA, NOT_IN_KEY, IN_CONTAINER);
   indent(out) << prefix << "[" << key << "] = " << val << endl;
 }
 
@@ -3046,7 +3073,7 @@ void t_go_generator::generate_deserialize_set_element(ofstream& out,
   string elem = tmp("_elem");
   t_field felem(tset->get_elem_type(), elem);
   felem.set_req(t_field::T_OPT_IN_REQ_OUT);
-  generate_deserialize_field(out, &felem, true, "", false, false, false, true, true);
+  generate_deserialize_field(out, &felem, true, "", NOT_IN_CLASS, NO_COERCE_DATA, NOT_IN_KEY, IN_CONTAINER, USE_TRUE_TYPE);
   indent(out) << prefix << "[" << elem << "] = true" << endl;
 }
 
@@ -3061,7 +3088,7 @@ void t_go_generator::generate_deserialize_list_element(ofstream& out,
   string elem = tmp("_elem");
   t_field felem(((t_list*)tlist)->get_elem_type(), elem);
   felem.set_req(t_field::T_OPT_IN_REQ_OUT);
-  generate_deserialize_field(out, &felem, true, "", false, false, false, true, true);
+  generate_deserialize_field(out, &felem, true, "", NOT_IN_CLASS, NO_COERCE_DATA, NOT_IN_KEY, IN_CONTAINER, USE_TRUE_TYPE);
   indent(out) << prefix << " = append(" << prefix << ", " << elem << ")" << endl;
 }
 
@@ -3540,14 +3567,14 @@ string t_go_generator::type_to_go_key_type(t_type* type) {
   if (resolved_type->is_string() && ((t_base_type*)resolved_type)->is_binary())
     return "string";
 
-  return type_to_go_type(type, true);
+  return type_to_go_type(type, IN_CONTAINER);
 }
 
 /**
  * Converts the parse type to a go type
  */
-string t_go_generator::type_to_go_type(t_type* type, bool is_container_value) {
-  return type_to_go_type_with_opt(type, false, is_container_value);
+string t_go_generator::type_to_go_type(t_type* type, InContainer in_container) {
+  return type_to_go_type_with_opt(type, IS_REQUIRED, in_container);
 }
 
 /**
@@ -3555,10 +3582,10 @@ string t_go_generator::type_to_go_type(t_type* type, bool is_container_value) {
  * associated with the type is T_OPTIONAL.
  */
 string t_go_generator::type_to_go_type_with_opt(t_type* type,
-                                                bool optional_field,
-                                                bool is_container_value) {
-  (void)is_container_value;
-  string maybe_pointer(optional_field ? "*" : "");
+                                                IsOptional is_optional_field,
+                                                InContainer in_container) {
+  (void)in_container;
+  string maybe_pointer(is_optional_field == IS_OPTIONAL ? "*" : "");
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
 
@@ -3598,7 +3625,7 @@ string t_go_generator::type_to_go_type_with_opt(t_type* type,
   } else if (type->is_map()) {
     t_map* t = (t_map*)type;
     string keyType = type_to_go_key_type(t->get_key_type());
-    string valueType = type_to_go_type(t->get_val_type(), true);
+    string valueType = type_to_go_type(t->get_val_type(), IN_CONTAINER);
     return maybe_pointer + string("map[") + keyType + "]" + valueType;
   } else if (type->is_set()) {
     t_set* t = (t_set*)type;
@@ -3606,7 +3633,7 @@ string t_go_generator::type_to_go_type_with_opt(t_type* type,
     return maybe_pointer + string("map[") + elemType + string("]bool");
   } else if (type->is_list()) {
     t_list* t = (t_list*)type;
-    string elemType = type_to_go_type(t->get_elem_type()->get_true_type(), true);
+    string elemType = type_to_go_type(t->get_elem_type()->get_true_type(), IN_CONTAINER);
     return maybe_pointer + string("[]") + elemType;
   } else if (type->is_typedef()) {
     return maybe_pointer + publicize(type_name(type));
