@@ -216,7 +216,7 @@ void main() {
     });
 
     test('Test double', () async {
-      await primitiveTest(getPrimitive(TType.DOUBLE),  3.1415926);
+      await primitiveTest(getPrimitive(TType.DOUBLE), 3.1415926);
     });
 
     test('Test double null', () async {
@@ -247,6 +247,103 @@ void main() {
       expect(output.length, input.length);
       expect(output.every((i) => i == 123), isTrue);
     });
+
+    test('Test complex struct', () async {
+      // {1: {10: 20}, 2: {30: 40}}
+      protocol.writeStructBegin(new TStruct());
+      protocol.writeFieldBegin(new TField('success', TType.MAP, 0));
+      protocol.writeMapBegin(new TMap(TType.I32, TType.MAP, 2));
+
+      protocol.writeI32(1); // key
+      protocol.writeMapBegin(new TMap(TType.I32, TType.I32, 1));
+      protocol.writeI32(10); // key
+      protocol.writeI32(20); // value
+      protocol.writeMapEnd();
+
+      protocol.writeI32(2); // key
+      protocol.writeMapBegin(new TMap(TType.I32, TType.I32, 1));
+      protocol.writeI32(30); // key
+      protocol.writeI32(40); // value
+      protocol.writeMapEnd();
+
+      protocol.writeMapEnd();
+      protocol.writeFieldEnd();
+      protocol.writeFieldStop();
+      protocol.writeStructEnd();
+      protocol.writeMessageEnd();
+
+      await protocol.transport.flush();
+
+      protocol.readMessageBegin();
+      protocol.readStructBegin();
+      expect(protocol.readFieldBegin().type, TType.MAP);
+      expect(protocol.readMapBegin().length, 2);
+
+      expect(protocol.readI32(), 1); // key
+      expect(protocol.readMapBegin().length, 1);
+      expect(protocol.readI32(), 10); // key
+      expect(protocol.readI32(), 20); // value
+      protocol.readMapEnd();
+
+      expect(protocol.readI32(), 2); // key
+      expect(protocol.readMapBegin().length, 1);
+      expect(protocol.readI32(), 30); // key
+      expect(protocol.readI32(), 40); // value
+      protocol.readMapEnd();
+
+      protocol.readMapEnd();
+      protocol.readFieldEnd();
+      protocol.readStructEnd();
+      protocol.readMessageEnd();
+    });
+
+    test('Test nested maps and lists', () async {
+      // {1: [{10: 20}], 2: [{30: 40}]}
+      protocol.writeMapBegin(new TMap(TType.I32, TType.LIST, 2));
+
+      protocol.writeI32(1); // key
+      protocol.writeListBegin(new TList(TType.MAP, 1));
+      protocol.writeMapBegin(new TMap(TType.I32, TType.I32, 1));
+      protocol.writeI32(10); // key
+      protocol.writeI32(20); // value
+      protocol.writeMapEnd();
+      protocol.writeListEnd();
+
+      protocol.writeI32(2); // key
+      protocol.writeListBegin(new TList(TType.MAP, 1));
+      protocol.writeMapBegin(new TMap(TType.I32, TType.I32, 1));
+      protocol.writeI32(30); // key
+      protocol.writeI32(40); // value
+      protocol.writeMapEnd();
+      protocol.writeListEnd();
+
+      protocol.writeMapEnd();
+      protocol.writeMessageEnd();
+
+      await protocol.transport.flush();
+
+      protocol.readMessageBegin();
+      expect(protocol.readMapBegin().length, 2);
+
+      expect(protocol.readI32(), 1); // key
+      expect(protocol.readListBegin().length, 1);
+      expect(protocol.readMapBegin().length, 1);
+      expect(protocol.readI32(), 10); // key
+      expect(protocol.readI32(), 20); // value
+      protocol.readMapEnd();
+      protocol.readListEnd();
+
+      expect(protocol.readI32(), 2); // key
+      expect(protocol.readListBegin().length, 1);
+      expect(protocol.readMapBegin().length, 1);
+      expect(protocol.readI32(), 30); // key
+      expect(protocol.readI32(), 40); // value
+      protocol.readMapEnd();
+      protocol.readListEnd();
+
+      protocol.readMapEnd();
+      protocol.readMessageEnd();
+    });
   };
 
   group('JSON', () {
@@ -267,7 +364,6 @@ void main() {
     group('shared tests', sharedTests);
   });
 }
-
 
 class Primitive {
   final Function read;

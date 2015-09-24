@@ -15,20 +15,18 @@
 # specific language governing permissions and limitations
 # under the License.
 
-name: tutorial_console_client
+name: thrift_test_client
 version: 1.0.0-dev
-description: >
-  A Dart console client to implementation of the Apache Thrift tutorial
+description: A client integration test for the Dart Thrift library
 author: Mark Erickson <mark.erickson@workiva.com>
 homepage: https://github.com/apache/thrift
 environment:
   sdk: ^1.12.0
 dependencies:
   args: ^0.13.0
-  collection: ^1.1.0
-  shared:
-    path: ../gen-dart/shared
   thrift:
     path: ../../../lib/dart
-  tutorial:
-    path: ../gen-dart/tutorial
+  thrift_test:
+    path: ../gen-dart/thrift_test
+dev_dependencies:
+  test: "^0.12.0"

@@ -65,6 +65,10 @@ if WITH_PHP
 SUBDIRS += php
 endif
 
+if WITH_DART
+SUBDIRS += dart
+endif
+
 if WITH_GO
 SUBDIRS += go
 endif

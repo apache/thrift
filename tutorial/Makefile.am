@@ -62,6 +62,10 @@ if WITH_NODEJS
 SUBDIRS += nodejs
 endif
 
+if WITH_DART
+SUBDIRS += dart
+endif
+
 #
 # generate html for ThriftTest.thrift
 #

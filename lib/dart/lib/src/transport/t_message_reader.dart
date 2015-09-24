@@ -22,13 +22,17 @@ part of thrift;
 class TMessageReader {
   final TProtocolFactory protocolFactory;
 
+  final int byteOffset;
   final _TMessageReaderTransport _transport;
 
-  TMessageReader(this.protocolFactory)
-      : _transport = new _TMessageReaderTransport();
+  /// Construct a [MessageReader].  The optional [byteOffset] specifies the
+  /// number of bytes to skip before reading the [TMessage].
+  TMessageReader(this.protocolFactory, {int byteOffset: 0})
+      : _transport = new _TMessageReaderTransport(),
+        this.byteOffset = byteOffset;
 
   TMessage readMessage(Uint8List bytes) {
-    _transport.reset(bytes);
+    _transport.reset(bytes, byteOffset);
     TProtocol protocol = protocolFactory.getProtocol(_transport);
     TMessage message = protocol.readMessageBegin();
     _transport.reset(null);
@@ -43,8 +47,21 @@ class _TMessageReaderTransport extends TTransport {
 
   Iterator<int> _readIterator;
 
-  void reset(Uint8List bytes) {
-    _readIterator = bytes != null ? bytes.iterator : null;
+  void reset(Uint8List bytes, [int offset = 0]) {
+    if (bytes == null) {
+      _readIterator = null;
+      return;
+    }
+
+    if (offset > bytes.length) {
+      throw new ArgumentError("The offset exceeds the bytes length");
+    }
+
+    _readIterator = bytes.iterator;
+
+    for (var i = 0; i < offset; i++) {
+      _readIterator.moveNext();
+    }
   }
 
   get isOpen => true;
