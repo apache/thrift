@@ -16,7 +16,7 @@
 # under the License.
 
 name: thrift_test_client
-version: 0.9.3
+version: 1.0.0-dev
 description: A client integration test for the Dart Thrift library
 author: Mark Erickson <mark.erickson@workiva.com>
 homepage: https://github.com/apache/thrift

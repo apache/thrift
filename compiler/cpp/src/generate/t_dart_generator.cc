@@ -40,8 +40,17 @@ using std::vector;
 static const string endl = "\n"; // avoid ostream << std::endl flushes
 static const string endl2 = "\n\n";
 
-/* Should reflect the current version in lib/dart/pubspec.yaml */
-static const string dart_thrift_version = "0.9.3";
+/**
+ * Use the current Thrift version for static libraries.  When releasing, update
+ * the version in these files.
+ * - lib/dart/pubspec.yaml
+ * - test/dart/test_client/pubspec.yaml
+ * - tutorial/dart/client/pubspec.yaml
+ * - tutorial/dart/console_client/pubspec.yaml
+ * - tutorial/dart/server/pubspec.yaml
+ * See https://thrift.apache.org/docs/committers/HowToVersion
+ */
+static const string dart_thrift_version = THRIFT_VERSION;
 
 /* forward declarations */
 string initial_caps_to_underscores(string name);

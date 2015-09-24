@@ -16,7 +16,7 @@
 # under the License.
 
 name: thrift
-version: 0.9.3
+version: 1.0.0-dev
 description: >
   A Dart library for Apache Thrift
 author: Mark Erickson <mark.erickson@workiva.com>

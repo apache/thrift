@@ -16,7 +16,7 @@
 # under the License.
 
 name: tutorial_server
-version: 0.9.3
+version: 1.0.0-dev
 description: A Dart server to support the Apache Thrift tutorial
 author: Mark Erickson <mark.erickson@workiva.com>
 homepage: https://github.com/apache/thrift
