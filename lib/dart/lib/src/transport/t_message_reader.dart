@@ -25,8 +25,8 @@ class TMessageReader {
   final int byteOffset;
   final _TMessageReaderTransport _transport;
 
-  /// Construct a [MessageReader].  The [readOffset] specifies the number of
-  /// bytes to skip before reading the [TMessage].
+  /// Construct a [MessageReader].  The optional [byteOffset] specifies the
+  /// number of bytes to skip before reading the [TMessage].
   TMessageReader(this.protocolFactory, {int byteOffset: 0})
       : _transport = new _TMessageReaderTransport(),
         this.byteOffset = byteOffset;
@@ -50,11 +50,17 @@ class _TMessageReaderTransport extends TTransport {
   void reset(Uint8List bytes, [int offset = 0]) {
     if (bytes == null) {
       _readIterator = null;
-    } else {
-      _readIterator = bytes.iterator;
-      for (var i = 0; i < offset; i++) {
-        _readIterator.moveNext();
-      }
+      return;
+    }
+
+    if (offset > bytes.length) {
+      throw new ArgumentError("The offset exceeds the bytes length");
+    }
+
+    _readIterator = bytes.iterator;
+
+    for (var i = 0; i < offset; i++) {
+      _readIterator.moveNext();
     }
   }
 

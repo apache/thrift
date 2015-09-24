@@ -22,6 +22,12 @@ THRIFT = $(top_builddir)/compiler/cpp/thrift
 gen-dart/thrift_test/lib/thrift_test.dart: ../ThriftTest.thrift
 	$(THRIFT) --gen dart ../ThriftTest.thrift
 
+pub-get-gen: gen-dart/thrift_test/lib/thrift_test.dart
+	cd gen-dart/thrift_test; ${DARTPUB} get
+
+pub-get: pub-get-gen
+	cd test_client; ${DARTPUB} get
+
 stubs: gen-dart/thrift_test/lib/thrift_test.dart pub-get
 
 precross: stubs
@@ -29,15 +35,7 @@ precross: stubs
 check: stubs
 
 clean-local:
-	$(RM) -r gen-dart
-
-pub-get: pub-get-gen pub-get-client
-
-pub-get-gen: gen-dart/thrift_test/lib/thrift_test.dart
-	cd gen-dart/thrift_test; ${DARTPUB} get
-
-pub-get-client:
-	cd test_client; ${DARTPUB} get
+	$(RM) -r gen-dart test_client/.pub
 
 client: stubs
 	${DART} test_client/bin/main.dart
