@@ -138,6 +138,12 @@ Future runTests() async {
     if (result != input) throw new StateError('$result != $input');
   });
 
+  await _test('testBool', () async {
+    var input = true;
+    var result = await client.testBool(input);
+    if (result != input) throw new StateError('$result != $input');
+  });
+
   await _test('testByte', () async {
     var input = 64;
     var result = await client.testByte(input);
@@ -223,13 +229,6 @@ Future runTests() async {
     var input = 309858235082523;
     var result = await client.testTypedef(input);
     if (result != input) throw new StateError('$result != $input');
-  });
-
-  await _test('testMapMap', () async {
-    Map<int, Map<int, int>> result = await client.testMapMap(1);
-    if (result.isEmpty ||
-        result[result.keys.first].isEmpty) throw new StateError(
-        'expected Map<int, Map<int, int>> got $result');
   });
 
   await _test('testMapMap', () async {

@@ -32,12 +32,14 @@ class TJsonProtocol extends TProtocol {
   static const Utf8Codec utf8Codec = const Utf8Codec();
 
   _BaseContext _context;
+  _BaseContext _rootContext;
   _LookaheadReader _reader;
 
   final List<_BaseContext> _contextStack = [];
   final Uint8List _tempBuffer = new Uint8List(4);
 
   TJsonProtocol(TTransport transport) : super(transport) {
+    _rootContext = new _BaseContext(this);
     _reader = new _LookaheadReader(this);
   }
 
@@ -47,12 +49,13 @@ class TJsonProtocol extends TProtocol {
   }
 
   void _popContext() {
-    _context = _contextStack.removeLast();
+    _contextStack.removeLast();
+    _context = _contextStack.isEmpty ? _rootContext : _contextStack.last;
   }
 
   void _resetContext() {
     _contextStack.clear();
-    _context = new _BaseContext(this);
+    _context = _rootContext;
   }
 
   /// Read a byte that must match [char]; otherwise throw a [TProtocolError].
@@ -688,6 +691,8 @@ class _BaseContext {
   void read() {}
 
   bool get escapeNumbers => false;
+
+  String toString() => 'BaseContext';
 }
 
 class _ListContext extends _BaseContext {
@@ -710,6 +715,8 @@ class _ListContext extends _BaseContext {
       protocol._readJsonSyntaxChar(_Constants.COMMA_BYTES[0]);
     }
   }
+
+  String toString() => 'ListContext';
 }
 
 class _PairContext extends _BaseContext {
@@ -742,4 +749,6 @@ class _PairContext extends _BaseContext {
   }
 
   bool get escapeNumbers => _colon;
+
+  String toString() => 'PairContext';
 }

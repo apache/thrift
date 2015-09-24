@@ -116,8 +116,8 @@ void main() {
 
       protocolFactory = new FakeProtocolFactory();
       protocolFactory.message = new TMessage('foo', TMessageType.CALL, 123);
-      transport = new TAsyncClientSocketTransport(socket,
-          new TMessageReader(protocolFactory),
+      transport = new TAsyncClientSocketTransport(
+          socket, new TMessageReader(protocolFactory),
           responseTimeout: Duration.ZERO);
       await transport.open();
       transport.writeAll(requestBytes);
@@ -168,8 +168,8 @@ void main() {
       var messageReader = new TMessageReader(protocolFactory,
           byteOffset: TFramedTransport.headerByteCount);
 
-      transport = new TFramedTransport(new TAsyncClientSocketTransport(socket,
-          messageReader,
+      transport = new TFramedTransport(new TAsyncClientSocketTransport(
+          socket, messageReader,
           responseTimeout: Duration.ZERO));
       await transport.open();
       transport.writeAll(requestBytes);
