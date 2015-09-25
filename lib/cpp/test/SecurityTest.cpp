@@ -18,7 +18,7 @@
  */
 
 #define BOOST_TEST_MODULE SecurityTest
-#include <boost/test/auto_unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
@@ -55,53 +55,45 @@ struct GlobalFixture
     GlobalFixture()
     {
         using namespace boost::unit_test::framework;
-        try
-        {
-            for (int i = 0; i < master_test_suite().argc; ++i)
-            {
-                BOOST_MESSAGE(boost::format("argv[%1%] = \"%2%\"") % i % master_test_suite().argv[i]);
-            }
+		for (int i = 0; i < master_test_suite().argc; ++i)
+		{
+			BOOST_TEST_MESSAGE(boost::format("argv[%1%] = \"%2%\"") % i % master_test_suite().argv[i]);
+		}
 
     #ifdef linux
-            // OpenSSL calls send() without MSG_NOSIGPIPE so writing to a socket that has
-            // disconnected can cause a SIGPIPE signal...
-            signal(SIGPIPE, SIG_IGN);
+		// OpenSSL calls send() without MSG_NOSIGPIPE so writing to a socket that has
+		// disconnected can cause a SIGPIPE signal...
+		signal(SIGPIPE, SIG_IGN);
     #endif
 
-            TSSLSocketFactory::setManualOpenSSLInitialization(true);
-            apache::thrift::transport::initializeOpenSSL();
+		TSSLSocketFactory::setManualOpenSSLInitialization(true);
+		apache::thrift::transport::initializeOpenSSL();
 
-            keyDir = boost::filesystem::current_path().parent_path().parent_path().parent_path() / "test" / "keys";
-            if (!boost::filesystem::exists(certFile("server.crt")))
-            {
-                keyDir = boost::filesystem::path(master_test_suite().argv[master_test_suite().argc - 1]);
-                BOOST_REQUIRE_MESSAGE(boost::filesystem::exists(certFile("server.crt")),
-                                      "The last argument to this test must be the directory containing the test certificate(s).");
-            }
-        }
-        catch (std::exception& ex)
-        {
-            BOOST_FAIL(boost::format("%1%: %2%") % typeid(ex).name() % ex.what());
-        }
+		keyDir = boost::filesystem::current_path().parent_path().parent_path().parent_path() / "test" / "keys";
+		if (!boost::filesystem::exists(certFile("server.crt")))
+		{
+			keyDir = boost::filesystem::path(master_test_suite().argv[master_test_suite().argc - 1]);
+			if (!boost::filesystem::exists(certFile("server.crt")))
+			{
+				throw std::invalid_argument("The last argument to this test must be the directory containing the test certificate(s).");
+			}
+		}
     }
 
     virtual ~GlobalFixture()
     {
-        try
-        {
-            apache::thrift::transport::cleanupOpenSSL();
+		apache::thrift::transport::cleanupOpenSSL();
 #ifdef linux
-            signal(SIGPIPE, SIG_DFL);
+		signal(SIGPIPE, SIG_DFL);
 #endif
-        }
-        catch (std::exception& ex)
-        {
-            BOOST_MESSAGE(boost::format("%1%: %2%") % typeid(ex).name() % ex.what());
-        }
     }
 };
 
+#if (BOOST_VERSION >= 105900)
+BOOST_GLOBAL_FIXTURE(GlobalFixture);
+#else
 BOOST_GLOBAL_FIXTURE(GlobalFixture)
+#endif
 
 struct SecurityFixture : public TestPortFixture
 {
@@ -139,7 +131,7 @@ struct SecurityFixture : public TestPortFixture
             catch (apache::thrift::transport::TTransportException& ex)
             {
                 boost::mutex::scoped_lock lock(gMutex);
-                BOOST_MESSAGE(boost::format("SRV %1% Exception: %2%") % boost::this_thread::get_id() % ex.what());
+                BOOST_TEST_MESSAGE(boost::format("SRV %1% Exception: %2%") % boost::this_thread::get_id() % ex.what());
             }
 
             if (connectedClient)
@@ -184,7 +176,7 @@ struct SecurityFixture : public TestPortFixture
             catch (apache::thrift::transport::TTransportException& ex)
             {
                 boost::mutex::scoped_lock lock(gMutex);
-                BOOST_MESSAGE(boost::format("CLI %1% Exception: %2%") % boost::this_thread::get_id() % ex.what());
+                BOOST_TEST_MESSAGE(boost::format("CLI %1% Exception: %2%") % boost::this_thread::get_id() % ex.what());
             }
 
             if (pClientSocket)
@@ -249,7 +241,7 @@ BOOST_AUTO_TEST_CASE(ssl_security_matrix)
 
                 boost::mutex::scoped_lock lock(mMutex);
 
-                BOOST_MESSAGE(boost::format("TEST: Server = %1%, Client = %2%")
+                BOOST_TEST_MESSAGE(boost::format("TEST: Server = %1%, Client = %2%")
                     % protocol2str(si) % protocol2str(ci));
 
                 mConnected = false;
