@@ -1,8 +1,16 @@
-thrift (1.0.0-dev) stable; urgency=low
-  * update version
-  * fix libthrift0.install
+thrift (0.9.3) stable; urgency=low
+  * update to 0.9.3
 
- -- Roger Meier <roger@apache.org>  Tue, 08 Jan 2013 22:40:12 +0100
+ -- Jake Farrell <jfarrell@apache.org>  Fri, 25 Sep 2015 12:00:00 -0500
+
+thrift (0.9.2) stable; urgency=low
+
+  * update to 0.9.2
+
+ -- Jake Farrell <jfarrell@apache.org>  Thu, 30 Oct 2014 12:00:00 -0500
+
+thrift (0.9.1) stable; urgency=low
+  * update to 0.9.1
 
 thrift (0.9.0) stable; urgency=low
 

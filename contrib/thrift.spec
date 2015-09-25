@@ -28,7 +28,7 @@ Name:           thrift
 License:        Apache License v2.0
 Group:          Development
 Summary:        RPC and serialization framework
-Version:        0.9.1
+Version:        0.9.3
 Release:        0
 URL:            http://thrift.apache.org
 Packager:       Thrift Developers <dev@thrift.apache.org>
@@ -234,5 +234,5 @@ umask 007
 /sbin/ldconfig > /dev/null 2>&1
 
 %changelog
-* Wed Oct 10 2012 Thrift Dev <dev@thrift.apache.org> 
-- Thrift 0.9.0 release.
+* Wed Sept 25 2015 Thrift Dev <dev@thrift.apache.org>
+- Thrift 0.9.3 release.

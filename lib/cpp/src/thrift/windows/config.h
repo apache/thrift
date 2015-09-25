@@ -60,7 +60,7 @@
 
 #pragma warning(disable : 4996) // Deprecated posix name.
 
-#define VERSION "1.0.0-dev"
+#define VERSION "0.9.3"
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_SYS_STAT_H 1
 

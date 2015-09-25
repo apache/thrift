@@ -4,7 +4,7 @@
 	"license": "Apache 2.0",
 	"tags": ["thrift", "rpc", "serialization", "cross", "framework"],
 	"description": "Haxe bindings for the Apache Thrift RPC and serialization framework",
-	"version": "1.0.0-dev.141115",
+	"version": "0.9.3",
 	"releasenote": "The Apache Thrift compiler needs to be installed separately, see http://thrift.apache.org",
 	"contributors": ["Apache Software Foundation (ASF)"],
 	"dependencies": { }

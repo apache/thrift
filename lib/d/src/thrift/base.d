@@ -50,7 +50,7 @@ class TCompoundOperationException : TException {
 /// The Thrift version string, used for informative purposes.
 // Note: This is currently hardcoded, but will likely be filled in by the build
 // system in future versions.
-enum VERSION = "0.9.0 dev";
+enum VERSION = "0.9.3";
 
 /**
  * Functions used for logging inside Thrift.

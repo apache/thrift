@@ -1,5 +1,442 @@
 Apache Thrift Changelog
 
+Thrift 0.9.3
+--------------------------------------------------------------------------------
+## Bug
+    * [THRIFT-2441] - Cannot shutdown TThreadedServer when clients are still connected
+    * [THRIFT-2465] - TBinaryProtocolT breaks if copied/moved
+    * [THRIFT-2474] - thrift.h causes a compile failure
+    * [THRIFT-2540] - Running configure from outside the source directory fails
+    * [THRIFT-2598] - Add check for minimum Go version to configure.ac
+    * [THRIFT-2647] - compiler-hs: don't decapitalize field names, do decapitalize argument bindings
+    * [THRIFT-2773] - Generated Java code for 'oneway' methods is incorrect.
+    * [THRIFT-2789] - TNonblockingServer leaks socket FD's under load
+    * [THRIFT-2682] - TThreadedServer leaks per-thread memory
+    * [THRIFT-2674] - JavaScript: declare Accept: and Content-Type: in request
+    * [THRIFT-3078] - TNonblockingServerSocket's logger is not named after TNonblockingServerSocket
+    * [THRIFT-3077] - C++ TFileTransport ignores return code from ftruncate
+    * [THRIFT-3067] - C++ cppcheck performance related warnings
+    * [THRIFT-3066] - C++ TDenseProtocol assert modifies instead of checks
+    * [THRIFT-3071] - bootstrap.sh on Ubuntu 12.04 (Precise) automake error
+    * [THRIFT-3069] - C++ TServerSocket leaks socket on fcntl get or set flags error
+    * [THRIFT-3079] - TNonblockingServerSocket's logger is not named after TNonblockingServerSocket
+    * [THRIFT-3080] - C++ TNonblockingServer connection leak while accept huge number connections.
+    * [THRIFT-3086] - C++ Valgrind Error Cleanup
+    * [THRIFT-3085] - thrift_reconnecting_client never try to reconnect
+    * [THRIFT-3123] - Missing include in compiler/cpp/src/main.h breaks build in some environments
+    * [THRIFT-3125] - Fix the list of exported headers in automake input
+    * [THRIFT-3126] - PHP JSON serializer converts empty or int-indexed maps to lists
+    * [THRIFT-3132] - Properly format date in Java @Generated annotations
+    * [THRIFT-3137] - Travis build hangs after failure
+    * [THRIFT-3138] - "make check" parallel execution is underministic
+    * [THRIFT-3139] - JS library test is flaky
+    * [THRIFT-3140] - ConcurrentModificationException is thrown by JavaScript test server
+    * [THRIFT-3124] - Some signed/unsigned warnings while building compiler
+    * [THRIFT-3128] - Go generated code produces name collisions between services
+    * [THRIFT-3146] - Graphviz generates function name collisions between services
+    * [THRIFT-3147] - Segfault while receiving data
+    * [THRIFT-3148] - Markdown links to coding_standards are dead
+    * [THRIFT-3090] - cmake build is broken on MacOSX
+    * [THRIFT-3097] - cmake targets unconditionally depend on optional libraries
+    * [THRIFT-3094] - master as of 2015-APR-13 fails -DBOOST_THREADS cmake build
+    * [THRIFT-3099] - cmake build is broken on FreeBSD
+    * [THRIFT-3089] - Assigning default ENUM values results in non-compilable java code if java namespace is not defined
+    * [THRIFT-3093] - mingw compile fixes for c++ library 0.9.2
+    * [THRIFT-3098] - Thrift does not pretty print binary typedefs the way it does binary fields
+    * [THRIFT-3091] - c_glib service method should return result from handler method
+    * [THRIFT-3088] - TThreadPoolServer with Sasl auth may leak CLOSE_WAIT socket
+    * [THRIFT-3109] - Cross test log file cannot be browsed when served in HTTP server
+    * [THRIFT-3113] - m4 C++11 macro issue
+    * [THRIFT-3105] - C++ libthriftnb library on Windows build failure
+    * [THRIFT-3115] - Uncompileable code due to name collision with predefined used types
+    * [THRIFT-3117] - Java TSSLTransportFactory can't load certificates within JAR archive
+    * [THRIFT-3102] - could not make check for Go Library
+    * [THRIFT-3120] - Minor spelling errors and an outdated URL
+    * [THRIFT-3121] - Librt does not exist on OS X
+    * [THRIFT-3152] - Compiler error on Mac OSX (missing #include <cstdlib>)
+    * [THRIFT-3162] - make fails for dmd 2.067
+    * [THRIFT-3164] - Thrift C++ library SSL socket by default allows for unsecure SSLv3 negotiation
+    * [THRIFT-3168] - Fix Maven POM
+    * [THRIFT-3170] - Initialism code in the Go compiler causes chaos
+    * [THRIFT-3169] - Do not export thrift.TestStruct and thrift.TestEnum in thrift Go library 
+    * [THRIFT-3191] - Perl compiler does not add support for unexpected exception handling
+    * [THRIFT-3178] - glib C does not compile
+    * [THRIFT-3189] - Perl ServerSocket should allow a specific interface to be listened to
+    * [THRIFT-3252] - Missing TConcurrentClientSyncInfo.h in cpp Makefile, so doesn't install
+    * [THRIFT-3255] - Thrift generator doesn't exclude 'package' keyword for thrift property names breaking java builds
+    * [THRIFT-3260] - multiple warnings in c_glib tutorial
+    * [THRIFT-3256] - Some D test timings are too aggressive for slow machines
+    * [THRIFT-3257] - warning: extra tokens at end of #endif directive
+    * [THRIFT-3184] - Thrift Go leaves file descriptors open
+    * [THRIFT-3203] - DOAP - please fix "Ocaml" => "OCaml"
+    * [THRIFT-3210] - (uncompileable) code generated for server events while are events not enabled
+    * [THRIFT-3215] - TJSONProtocol '(c++) uses "throw new" to throw exceptions instead of "throw"
+    * [THRIFT-3202] - Allow HSHAServer to configure min and max worker threads separately.
+    * [THRIFT-3205] - TCompactProtocol return a wrong error when the io.EOF happens
+    * [THRIFT-3209] - LGPL mentioned in license file
+    * [THRIFT-3197] - keepAliveTime is hard coded as 60 sec in TThreadPoolServer
+    * [THRIFT-3196] - Misspelling in lua TBinaryProtocol (stirctWrite => strictWrite)
+    * [THRIFT-3198] - Allow construction of TTransportFactory with a specified maxLength
+    * [THRIFT-3192] - Go import paths changed in 1.4, and expired June 1
+    * [THRIFT-3271] - Could not find or load main class configtest_ax_javac_and_java on some non-english systems
+    * [THRIFT-3273] - c_glib: Generated code tries to convert between function and void pointers
+    * [THRIFT-3264] - Fix Erlang 16 namespaced types
+    * [THRIFT-3270] - reusing TNonblockingServer::TConnection cause dirty TSocket
+    * [THRIFT-3267] - c_glib: "Critical" failure during unit tests
+    * [THRIFT-3277] - THttpClient leaks connections if it's used for multiple requests
+    * [THRIFT-3278] - NodeJS: Fix exception stack traces and names
+    * [THRIFT-3279] - Fix a bug in retry_max_delay (NodeJS)
+    * [THRIFT-3280] - Initialize retry variables on construction
+    * [THRIFT-3283] - c_glib: Tutorial server always exits with warning
+    * [THRIFT-3284] - c_glib: Empty service produces unused-variable warning
+    * [THRIFT-1925] - c_glib generated code does not compile
+    * [THRIFT-1849] - after transport->open() opens isOpen returns true and next open() goes thru when it shall not
+    * [THRIFT-1866] - java compiler generates non-compiling code with const's defined in a thrift when name includes non-identifier chars
+    * [THRIFT-1938] - FunctionRunner.h -- uses wrong path for Thread.h when installed
+    * [THRIFT-1844] - Password string not cleared
+    * [THRIFT-2004] - Thrift::Union violates :== method contract and crashes
+    * [THRIFT-2073] - Thrift C++ THttpClient error: cannot refill buffer
+    * [THRIFT-2127] - Autoconf scripting does not properly account for cross-compile
+    * [THRIFT-2180] - Integer types issues in Cocoa lib on ARM64
+    * [THRIFT-2189] - Go needs "isset" to fully support "union" type (and optionals)
+    * [THRIFT-2192] - autotools on Redhat based systems
+    * [THRIFT-2546] - cross language tests fails at 'TestMultiException' when using nodejs server
+    * [THRIFT-2547] - nodejs servers and clients fails to connect with cpp using compact protocol
+    * [THRIFT-2548] - Nodejs servers and clients does not work properly with  -ssl
+    * [THRIFT-1471] - toString() does not print ByteBuffer values when nested in a List
+    * [THRIFT-1201] - getaddrinfo resource leak
+    * [THRIFT-615] - TThreadPoolServer doesn't call task_done after pulling tasks from it's clients queue
+    * [THRIFT-162] - Thrift structures are unhashable, preventing them from being used as set elements
+    * [THRIFT-810] - Crashed client on TSocket::close under loads
+    * [THRIFT-557] - charset problem with file Autogenerated by Thrift
+    * [THRIFT-233] - IDL doesn't support negative hex literals
+    * [THRIFT-1649] - contrib/zeromq does not build in 0.8.0
+    * [THRIFT-1642] - Miscalculation lead to throw unexpected "TTransportException::TIMED_OUT"(or called "EAGAIN (timed out)") exception
+    * [THRIFT-1587] - TSocket::setRecvTimeout error
+    * [THRIFT-1248] - pointer subtraction in TMemoryBuffer relies on undefined behavior
+    * [THRIFT-1774] - Sasl Transport client would hang when trying to connect non-sasl transport server
+    * [THRIFT-1754] - RangeError in buffer handling
+    * [THRIFT-1618] - static structMap in FieldMetaData is not thread safe and can lead to deadlocks
+    * [THRIFT-2335] - thrift incompatibility with py:tornado as server, java as client
+    * [THRIFT-2803] - TCP_DEFER_ACCEPT not supported with domain sockets
+    * [THRIFT-2799] - Build Problem(s): ld: library not found for -l:libboost_unit_test_framework.a
+    * [THRIFT-2801] - C++ test suite compilation warnings
+    * [THRIFT-2802] - C++ tutorial compilation warnings
+    * [THRIFT-2795] - thrift_binary_protocol.c: 'dereferencing type-punned pointer will break strict-aliasing rules'
+    * [THRIFT-2817] - TSimpleJSONProtocol reads beyond end of message
+    * [THRIFT-2826] - html:standalone sometimes ignored
+    * [THRIFT-2829] - Support haxelib installation via github
+    * [THRIFT-2828] - slightly wrong help screen indent
+    * [THRIFT-2831] - Removes dead code in web_server.js introduced in THRIFT-2819
+    * [THRIFT-2823] - All JS-tests are failing when run with grunt test
+    * [THRIFT-2827] - Thrift 0.9.2 fails to compile on Yosemite due to tr1/functional include in ProcessorTest.cpp
+    * [THRIFT-2843] - Automake configure.ac has possible typo related to Java
+    * [THRIFT-2813] - multiple haxe library fixes/improvements
+    * [THRIFT-2825] - Supplying unicode to python Thrift client can cause next request arguments to get overwritten
+    * [THRIFT-2840] - Cabal file points to LICENSE file outside the path of the Haskell project.
+    * [THRIFT-2818] - Trailing commas in array
+    * [THRIFT-2830] - Clean up ant warnings in tutorial dir
+    * [THRIFT-2842] - Erlang thrift client has infinite timeout
+    * [THRIFT-2810] - Do not leave the underlying ServerSocket open if construction of TServerSocket fails
+    * [THRIFT-2812] - Go server adding redundant buffering layer
+    * [THRIFT-2839] - TFramedTransport read bug
+    * [THRIFT-2844] - Nodejs support broken when running under Browserify
+    * [THRIFT-2814] - args/result classes not found when no namespace is set
+    * [THRIFT-2847] - function IfValue() is a duplicate of System.StrUtils.IfThen
+    * [THRIFT-2848] - certain Delphi tests do not build if TypeRegistry is used
+    * [THRIFT-2854] - Go Struct writer and reader looses important error information
+    * [THRIFT-2858] - Enable header field case insensitive match in THttpServer
+    * [THRIFT-2857] - C# generator creates uncompilable code for struct constants
+    * [THRIFT-2860] - Delphi server closes connection on unexpected exceptions
+    * [THRIFT-2868] - Enhance error handling in the Go client 
+    * [THRIFT-2879] - TMemoryBuffer: using lua string in wrong way
+    * [THRIFT-2851] - Remove strange public Peek() from Go transports
+    * [THRIFT-2852] - Better Open/IsOpen/Close behavior for StreamTransport.
+    * [THRIFT-2871] - Missing semicolon in thrift.js
+    * [THRIFT-2872] - ThreadManager deadlock for task expiration
+    * [THRIFT-2881] - Handle errors from Accept() correctly
+    * [THRIFT-2849] - Spell errors reported by codespell tool
+    * [THRIFT-2870] - C++ TJSONProtocol using locale dependent formatting
+    * [THRIFT-2882] - Lua Generator: using string.len funtion to get struct(map,list,set) size
+    * [THRIFT-2864] - JSON generator missing from Visual Studio build project 
+    * [THRIFT-2878] - Go validation support of required fields
+    * [THRIFT-2873] - TPipe and TPipeServer don't compile on Windows with UNICODE enabled
+    * [THRIFT-2888] - import of <limits> is missing in JSON generator
+    * [THRIFT-2900] - Python THttpClient does not reset socket timeout on exception
+    * [THRIFT-2907] - 'ntohll' macro redefined
+    * [THRIFT-2884] - Map does not serialize correctly for JSON protocol in Go library
+    * [THRIFT-2887] - --with-openssl configure flag is ignored
+    * [THRIFT-2894] - PHP json serializer skips maps with int/bool keys
+    * [THRIFT-2904] - json_protocol_test.go fails
+    * [THRIFT-2906] - library not found for -l:libboost_unit_test_framework.a
+    * [THRIFT-2890] - binary data may lose bytes with JSON transport under specific circumstances
+    * [THRIFT-2891] - binary data may cause a failure with JSON transport under specific circumstances
+    * [THRIFT-2901] - Fix for generated TypeScript functions + indentation of JavaScript maps
+    * [THRIFT-2916] - make check fails for D language
+    * [THRIFT-2918] - Race condition in Python TProcessPoolServer test
+    * [THRIFT-2920] - Erlang Thrift test uses wrong IDL file
+    * [THRIFT-2922] - $TRIAL is used with Python tests but not tested accordingly
+    * [THRIFT-2912] - Autotool build for C++ Qt library is invalid
+    * [THRIFT-2914] - explicit dependency to Lua5.2 fails on some systems
+    * [THRIFT-2910] - libevent is not really optional
+    * [THRIFT-2911] - fix c++ version zeromq transport, the old version cannot work
+    * [THRIFT-2915] - Lua generator missing from Visual Studio build project
+    * [THRIFT-2917] - "make clean" breaks test/c_glib
+    * [THRIFT-2919] - Haxe test server timeout too large
+    * [THRIFT-2923] - JavaScript client assumes a message being written
+    * [THRIFT-2924] - TNonblockingServer crashes when user-provided event_base is used
+    * [THRIFT-2925] - CMake build does not work with OpenSSL nor anything installed in non-system location
+    * [THRIFT-2931] - Access to undeclared static property: Thrift\Protocol\TProtocol::$TBINARYPROTOCOLACCELERATED
+    * [THRIFT-2893] - CMake build fails with boost thread or std thread
+    * [THRIFT-2902] - Generated c_glib code does not compile with clang
+    * [THRIFT-2903] - Qt4 library built with CMake does not work
+    * [THRIFT-2942] - CSharp generate invalid code for property named read or write
+    * [THRIFT-2932] - Node.js Thrift connection libraries throw Exceptions into event emitter
+    * [THRIFT-2933] - v0.9.2: doubles encoded in node with compact protocol cannot be decoded by python
+    * [THRIFT-2934] - createServer signature mismatch
+    * [THRIFT-2981] - IDL with no namespace produces unparsable PHP
+    * [THRIFT-2999] - Addition of .gitattributes text auto in THRIFT-2724 causes modified files on checkout
+    * [THRIFT-2949] - typo in compiler/cpp/README.md
+    * [THRIFT-2957] - warning: source file %s is in a subdirectory, but option 'subdir-objects' is disabled
+    * [THRIFT-2953] - TNamedPipeServerTransport is not Stop()able
+    * [THRIFT-2962] - Docker Thrift env for development and testing
+    * [THRIFT-2971] - C++ test and tutorial parallel build is unstable
+    * [THRIFT-2972] - Missing backslash in lib/cpp/test/Makefile.am
+    * [THRIFT-2951] - Fix Erlang name conflict test
+    * [THRIFT-2955] - Using list of typedefs does not compile on Go
+    * [THRIFT-2960] - namespace regression for Ruby
+    * [THRIFT-2959] - nodejs: fix binary unit tests
+    * [THRIFT-2966] - nodejs: Fix bad references to TProtocolException and TProtocolExceptionType
+    * [THRIFT-2970] - grunt-jsdoc fails due to dependency issues
+    * [THRIFT-3001] - C# Equals fails for binary fields (byte[])
+    * [THRIFT-3003] - Missing LICENSE file prevents package from being installed
+    * [THRIFT-3008] - Node.js server does not fully support exception
+    * [THRIFT-3007] - Travis build is broken because of directory conflict
+    * [THRIFT-3009] - TSSLSocket does not use the correct hostname (breaks certificate checks)
+    * [THRIFT-3011] - C# test server testException() not implemented according to specs
+    * [THRIFT-3012] - Timing problems in NamedPipe implementation due to unnecessary open/close
+    * [THRIFT-3019] - Golang generator missing docstring for structs
+    * [THRIFT-3021] - Service remote tool does not import stub package with package prefix
+    * [THRIFT-3026] - TMultiplexedProcessor does not have a constructor
+    * [THRIFT-3028] - Regression caused by THRIFT-2180
+    * [THRIFT-3017] - order of map key/value types incorrect for one CTOR
+    * [THRIFT-3020] - Cannot compile thrift as C++03
+    * [THRIFT-3024] - User-Agent "BattleNet" used in some Thrift library files
+    * [THRIFT-3047] - Uneven calls to indent_up and indent_down in Cocoa generator
+    * [THRIFT-3048] - NodeJS decoding of I64 is inconsistent across protocols
+    * [THRIFT-3043] - go compiler generator uses non C++98 code
+    * [THRIFT-3044] - Docker README.md paths to Dockerfiles are incorrect
+    * [THRIFT-3040] - bower.json wrong "main" path
+    * [THRIFT-3051] - Go Thrift generator creates bad go code
+    * [THRIFT-3057] - Java compiler build is broken
+    * [THRIFT-3061] - C++ TSSLSocket shutdown delay/vulnerability
+    * [THRIFT-3062] - C++ TServerSocket invalid port number (over 999999) causes stack corruption
+    * [THRIFT-3065] - Update libthrift dependencies (slf4j, httpcore, httpclient)
+    * [THRIFT-3244] - TypeScript: fix namespace of included types
+    * [THRIFT-3246] - Reduce the number of trivial warnings in Windows C++ CMake builds
+    * [THRIFT-3224] - Fix TNamedPipeServer unpredictable behavior on accept
+    * [THRIFT-3230] - Python compiler generates wrong code if there is function throwing a typedef of exception with another namespace
+    * [THRIFT-3236] - MaxSkipDepth never checked
+    * [THRIFT-3239] - Limit recursion depth
+    * [THRIFT-3241] - fatal error: runtime: cannot map pages in arena address space
+    * [THRIFT-3242] - OSGi Import-Package directive is missing the Apache HTTP packages
+    * [THRIFT-3234] - Limit recursion depth
+    * [THRIFT-3222] - TypeScript: Generated Enums are quoted
+    * [THRIFT-3229] - unexpected Timeout exception when desired bytes are only partially available
+    * [THRIFT-3231] - CPP: Limit recursion depth to 64
+    * [THRIFT-3235] - Limit recursion depth
+    * [THRIFT-3175] - fastbinary.c python deserialize can cause huge allocations from garbage
+    * [THRIFT-3176] - Union incorrectly implements ==
+    * [THRIFT-3177] - Fails to run rake test
+    * [THRIFT-3180] - lua plugin: framed transport do not work
+    * [THRIFT-3179] - lua plugin cant connect to remote server because function l_socket_create_and_connect always bind socket to localhost
+    * [THRIFT-3248] - TypeScript: additional comma in method signature without parameters
+    * [THRIFT-3302] - Go JSON protocol should encode Thrift byte type as signed integer string
+    * [THRIFT-3297] - c_glib: an abstract base class is not generated
+    * [THRIFT-3294] - TZlibTransport for Java does not write data correctly
+    * [THRIFT-3296] - Go cross test does not conform to spec
+    * [THRIFT-3295] - C# library does not build on Mono 4.0.2.5 or later
+    * [THRIFT-3293] - JavaScript: null values turn into empty structs in constructor
+    * [THRIFT-3310] - lib/erl/README.md has incorrect formatting
+    * [THRIFT-3319] - CSharp tutorial will not build using the *.sln
+    * [THRIFT-3335] - Ruby server does not handle processor exception
+    * [THRIFT-3338] - Stray underscore in generated go when service name starts with "New"
+    * [THRIFT-3324] - Update Go Docs for pulling all packages
+    * [THRIFT-3345] - Clients blocked indefinitely when a java.lang.Error is thrown
+    * [THRIFT-3332] - make dist fails on clean build
+    * [THRIFT-3326] - Tests do not compile under *BSD
+    * [THRIFT-3334] - Markdown notation of protocol spec is malformed
+    * [THRIFT-3331] - warning: ‘etype’ may be used uninitialized in this function
+    * [THRIFT-3349] - Python server does not handle processor exception
+    * [THRIFT-3343] - Fix haskell README
+    * [THRIFT-3340] - Python: enable json tests again
+    * [THRIFT-3311] - Top level README.md has incorrect formmating
+    * [THRIFT-2936] - Minor memory leak in SSL
+    * [THRIFT-3290] - Using from in variable names causes the generated Python code to have errors
+    * [THRIFT-3225] - Fix TPipeServer unpredictable behavior on interrupt()
+    * [THRIFT-3354] - Fix word-extraction substr bug in initialism code
+    * [THRIFT-2006] - TBinaryProtocol message header call name length is not validated and can be used to core the server
+    * [THRIFT-3329] - C++ library unit tests don't compile against the new boost-1.59 unit test framework
+    * [THRIFT-2630] - windows7 64bit pc. ipv4 and ipv6 pc.can't use
+    * [THRIFT-3336] - Thrift generated streaming operators added in 0.9.2 cannot be overridden
+    * [THRIFT-2681] - Core of unwind_cleanup
+    * [THRIFT-3317] - cpp namespace org.apache issue appears in 0.9
+
+## Documentation
+    * [THRIFT-3286] - Apache Ant is a necessary dependency
+
+## Improvement
+    * [THRIFT-227] - Byte[] in collections aren't pretty printed like regular binary fields
+    * [THRIFT-2744] - Vagrantfile for Centos 6.5
+    * [THRIFT-2644] - Haxe support
+    * [THRIFT-2756] - register Media Type @ IANA
+    * [THRIFT-3076] - Compatibility with Haxe 3.2.0
+    * [THRIFT-3081] - C++ Consolidate client processing loops in TServers
+    * [THRIFT-3083] - C++ Consolidate server processing loops in TSimpleServer, TThreadedServer, TThreadPoolServer
+    * [THRIFT-3084] - C++ add concurrent client limit to threaded servers
+    * [THRIFT-3074] -     Add compiler/cpp/lex.yythriftl.cc to gitignore.
+    * [THRIFT-3134] - Remove use of deprecated "phantom.args"
+    * [THRIFT-3133] - Allow "make cross" and "make precross" to run without building all languages
+    * [THRIFT-3142] - Make JavaScript use downloaded libraries
+    * [THRIFT-3141] - Improve logging of JavaScript test
+    * [THRIFT-3144] - Proposal: make String representation of enums in generated go code less verbose
+    * [THRIFT-3130] - Remove the last vestiges of THRIFT_OVERLOAD_IF from THRIFT-1316
+    * [THRIFT-3131] - Consolidate suggested import path for go thrift library to git.apache.org in docs and code
+    * [THRIFT-3092] - Generated Haskell types should derive Generic
+    * [THRIFT-3110] -  Print error log after cross test failures on Travis
+    * [THRIFT-3114] - Using local temp variables to not pollute the global table
+    * [THRIFT-3106] - CMake summary should give more information why a library is set to off
+    * [THRIFT-3119] - Java's TThreadedSelectorServer has indistinguishable log messages in run()
+    * [THRIFT-3122] - Javascript struct constructor should properly initialize struct and container members from plain js arguments
+    * [THRIFT-3151] - Fix links to git-wip* - should be git.apache.org
+    * [THRIFT-3167] - Windows build from source instructions need to be revised
+    * [THRIFT-3155] - move contrib/mingw32-toolchain.cmake to build/cmake/
+    * [THRIFT-3160] - Make generated go enums implement TextMarshaller and TextUnmarshaller interfaces
+    * [THRIFT-3150] - Add an option to thrift go generator to make Read and Write methods private
+    * [THRIFT-3149] - Make ReadFieldN methods in generated Go code private
+    * [THRIFT-3172] - Add tutorial to Thrift web site
+    * [THRIFT-3214] - Add Erlang option for using maps instead of dicts
+    * [THRIFT-3201] - Capture github test artifacts for failed builds
+    * [THRIFT-3266] - c_glib: Multiple compiler warnings building unit tests
+    * [THRIFT-3285] - c_glib: Build library with all warnings enabled, no warnings generated
+    * [THRIFT-1954] - Allow for a separate connection timeout value 
+    * [THRIFT-2098] - Add support for Qt5+
+    * [THRIFT-2199] - Remove Dense protocol (was: move to Contrib)
+    * [THRIFT-406] - C++ Test suite cleanup
+    * [THRIFT-902] - socket and connect timeout in TSocket should be distinguished
+    * [THRIFT-388] - Use a separate wire format for async calls
+    * [THRIFT-727] - support native C++ language specific exception message
+    * [THRIFT-1784] - pep-3110 compliance for exception handling 
+    * [THRIFT-1025] - C++ ServerSocket should inherit from Socket with the necessary Ctor to listen on connections from a specific host
+    * [THRIFT-2269] - Can deploy libthrift-source.jar to maven center repository
+    * [THRIFT-2804] - Pull an interface out of TBaseAsyncProcessor
+    * [THRIFT-2806] - more whitespace fixups
+    * [THRIFT-2811] - Make remote socket address accessible
+    * [THRIFT-2809] - .gitignore update for compiler's visual project
+    * [THRIFT-2846] - Expose ciphers parameter from ssl.wrap_socket()
+    * [THRIFT-2859] - JSON generator: output complete descriptors
+    * [THRIFT-2861] - add buffered transport
+    * [THRIFT-2865] - Test case for Go: SeqId out of sequence
+    * [THRIFT-2866] - Go generator source code is hard to read and maintain
+    * [THRIFT-2880] - Read the network address from the listener if available.
+    * [THRIFT-2875] - Typo in TDenseProtocol.h comment
+    * [THRIFT-2874] - TBinaryProtocol  member variable "string_buf_" is never used.
+    * [THRIFT-2855] - Move contributing.md to the root of the repository
+    * [THRIFT-2862] - Enable RTTI and/or build macros for generated code
+    * [THRIFT-2876] -  Add test for THRIFT-2526 Assignment operators and copy constructors in c++ don't copy the __isset struct
+    * [THRIFT-2897] - Generate -isEqual: and -hash methods
+    * [THRIFT-2909] - Improve travis build
+    * [THRIFT-2921] - Make Erlang impl ready for OTP 18 release (dict/0 and set/0 are deprecated)
+    * [THRIFT-2928] - Rename the erlang test_server module
+    * [THRIFT-2940] - Allow installing Thrift from git as NPM module by providing package.json in top level directory
+    * [THRIFT-2937] - Allow setting a maximum frame size in TFramedTransport
+    * [THRIFT-2976] - nodejs: xhr and websocket support for browserify
+    * [THRIFT-2996] - Test for Haxe 3.1.3 or better 
+    * [THRIFT-2969] - nodejs: DRY up library tests
+    * [THRIFT-2973] - Update Haxe lib readme regarding Haxe 3.1.3
+    * [THRIFT-2952] - Improve handling of Server.Stop() 
+    * [THRIFT-2964] - nodejs: move protocols and transports into separate files
+    * [THRIFT-2963] - nodejs - add test coverage
+    * [THRIFT-3006] - Attach 'omitempty' json tag for optional fields in Go
+    * [THRIFT-3027] - Go compiler does not ensure common initialisms have consistent case
+    * [THRIFT-3030] - TThreadedServer: Property for number of clientThreads
+    * [THRIFT-3023] - Go compiler is a little overly conservative with names of attributes
+    * [THRIFT-3018] - Compact protocol for Delphi
+    * [THRIFT-3025] - Change pure Int constants into @enums (where possible)
+    * [THRIFT-3031] - migrate "shouldStop" flag to TServer
+    * [THRIFT-3022] - Compact protocol for Haxe
+    * [THRIFT-3041] - Generate asynchronous clients for Cocoa
+    * [THRIFT-3053] - Perl SSL Socket Support (Encryption)
+    * [THRIFT-3247] - Generate a C++ thread-safe client
+    * [THRIFT-3217] - Provide a little endian variant of the binary protocol in C++
+    * [THRIFT-3223] - TypeScript: Add initial support for Enum Maps
+    * [THRIFT-3220] - Option to suppress @Generated Annotation entirely
+    * [THRIFT-3300] - Reimplement TZlibTransport in Java using streams
+    * [THRIFT-3288] - c_glib: Build unit tests with all warnings enabled, no warnings generated
+    * [THRIFT-3347] - Improve cross test servers and clients
+    * [THRIFT-3342] - Improve ruby cross test client and server compatibility
+    * [THRIFT-2296] - Add C++ Base class for service
+    * [THRIFT-3337] - Add testBool method to cross tests
+    * [THRIFT-3303] - Disable concurrent cabal jobs on Travis to avoid GHC crash
+    * [THRIFT-2623] - Docker container for Thrift
+    * [THRIFT-3298] - thrift endian converters may conflict with other libraries
+    * [THRIFT-1559] - Provide memory pool for TBinaryProtocol to eliminate memory fragmentation
+    * [THRIFT-424] - Steal ProtocolBuffers' VarInt implementation for C++
+
+## New Feature
+    * [THRIFT-3070] - Add ability to set the LocalCertificateSelectionCallback
+    * [THRIFT-1909] - Java: Add compiler flag to use the "option pattern" for optional fields
+    * [THRIFT-2099] - Stop TThreadPoolServer with alive connections.
+    * [THRIFT-123] - implement TZlibTransport in Java
+    * [THRIFT-2368] - New option: reuse-objects for Java generator
+    * [THRIFT-2836] - Optionally generate C++11 MoveConstructible types
+    * [THRIFT-2824] - Flag to disable html escaping doctext
+    * [THRIFT-2819] - Add WebsSocket client to node.js
+    * [THRIFT-3050] - Client certificate authentication for non-http TLS in C#
+    * [THRIFT-3292] - Implement TZlibTransport in Go
+
+## Question
+    * [THRIFT-2583] - Thrift on xPC target (SpeedGoat)
+    * [THRIFT-2592] - thrift server using c_glib
+    * [THRIFT-2832] - c_glib: Handle string lists correctly
+    * [THRIFT-3136] - thrift installation problem on mac
+    * [THRIFT-3346] - c_glib: Tutorials example crashes saying Calculator.ping implementation returned FALSE but did not set an error
+
+## Sub-task
+    * [THRIFT-2578] - Moving 'make cross' from test.sh to test.py
+    * [THRIFT-2734] - Go coding standards
+    * [THRIFT-2748] - Add Vagrantfile for Centos 6.5
+    * [THRIFT-2753] - Misc. Haxe improvements
+    * [THRIFT-2640] - Compact Protocol in Cocoa
+    * [THRIFT-3262] - warning: overflow in implicit constant conversion in DenseProtoTest.cpp
+    * [THRIFT-3194] - Can't build with go enabled.  gomock SCC path incorrect.
+    * [THRIFT-3275] - c_glib tutorial warnings in generated code
+    * [THRIFT-1125] - Multiplexing support for the Ruby Library
+    * [THRIFT-2807] - PHP Code Style
+    * [THRIFT-2841] - Add comprehensive integration tests for the whole Go stack
+    * [THRIFT-2815] - Haxe: Support for Multiplexing Services on any Transport, Protocol and Server
+    * [THRIFT-2886] - Integrate binary type in standard Thrift cross test
+    * [THRIFT-2946] - Enhance usability of cross test framework
+    * [THRIFT-2967] - Add .editorconfig to root
+    * [THRIFT-3033] - Perl: Support for Multiplexing Services on any Transport, Protocol and Server
+    * [THRIFT-3174] - Initialism code in the Go compiler doesn't check first word
+    * [THRIFT-3193] - Option to supress date value in @Generated annotation
+    * [THRIFT-3305] - Missing dist files for 0.9.3 release candidate
+    * [THRIFT-3341] - Add testBool methods
+    * [THRIFT-3308] - Fix broken test cases for 0.9.3 release candidate
+
+## Task
+    * [THRIFT-2834] - Remove semi-colons from python code generator
+    * [THRIFT-2853] - Adjust comments not applying anymore after THRIFT-2852
+
+## Test
+    * [THRIFT-3211] - Add make cross support for php TCompactProtocol
+
+## Wish
+    * [THRIFT-2838] - TNonblockingServer can bind to port 0 (i.e., get an OS-assigned port) but there is no way to get the port number
+
+
+
 Thrift 0.9.2
 --------------------------------------------------------------------------------
 ## Bug

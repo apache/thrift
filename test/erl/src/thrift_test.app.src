@@ -22,7 +22,7 @@
   {description, "tests for thrift erlang compiler backend"},
 
   % The version of the applicaton
-  {vsn, "1.0.0-dev"},
+  {vsn, "0.9.3"},
 
   % All modules used by the application.
   {modules, [legacy_names_test, name_conflict_test, thrift_test_test]},
