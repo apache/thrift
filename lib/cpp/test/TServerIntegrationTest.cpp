@@ -176,7 +176,7 @@ public:
       pEventHandler->wait();
     }
 
-    BOOST_MESSAGE("server is listening");
+    BOOST_TEST_MESSAGE("server is listening");
   }
 
   void blockUntilAccepted(uint64_t numAccepted) {
@@ -185,16 +185,16 @@ public:
       pEventHandler->wait();
     }
 
-    BOOST_MESSAGE(boost::format("server has accepted %1%") % numAccepted);
+    BOOST_TEST_MESSAGE(boost::format("server has accepted %1%") % numAccepted);
   }
 
   void stopServer() {
     if (pServerThread) {
       pServer->stop();
-      BOOST_MESSAGE("server stop completed");
+      BOOST_TEST_MESSAGE("server stop completed");
 
       pServerThread->join();
-      BOOST_MESSAGE("server thread joined");
+      BOOST_TEST_MESSAGE("server thread joined");
       pServerThread.reset();
     }
   }
