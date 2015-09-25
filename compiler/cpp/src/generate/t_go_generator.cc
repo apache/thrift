@@ -446,7 +446,11 @@ std::string t_go_generator::camelcase(const std::string& value) const {
 // and if so replaces it with the upper case version of the word.
 void t_go_generator::fix_common_initialism(std::string& value, int i) const {
   if (!ignore_initialisms_) {
-    std::string word = value.substr(i, value.find('_', i));
+    size_t wordLen = value.find('_', i);
+    if (wordLen != std::string::npos) {
+      wordLen -= i;
+    }
+    std::string word = value.substr(i, wordLen);
     std::transform(word.begin(), word.end(), word.begin(), ::toupper);
     if (commonInitialisms.find(word) != commonInitialisms.end()) {
       value.replace(i, word.length(), word);
