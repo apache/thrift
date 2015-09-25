@@ -124,10 +124,9 @@ void cleanupOpenSSL() {
   CRYPTO_set_dynlock_create_callback(NULL);
   CRYPTO_set_dynlock_lock_callback(NULL);
   CRYPTO_set_dynlock_destroy_callback(NULL);
-  sk_SSL_COMP_free(SSL_COMP_get_compression_methods());
-  CRYPTO_cleanup_all_ex_data();
   ERR_free_strings();
   EVP_cleanup();
+  CRYPTO_cleanup_all_ex_data();
   ERR_remove_state(0);
   mutexes.reset();
 }
