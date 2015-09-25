@@ -115,7 +115,8 @@ public:
                                    bool pointers = false,
                                    bool read = true,
                                    bool write = true,
-                                   bool swap = false);
+                                   bool swap = false,
+                                   bool stream = false);
   void generate_struct_definition(std::ofstream& out,
                                   std::ofstream& force_cpp_out,
                                   t_struct* tstruct,
@@ -133,7 +134,7 @@ public:
   void generate_struct_writer(std::ofstream& out, t_struct* tstruct, bool pointers = false);
   void generate_struct_result_writer(std::ofstream& out, t_struct* tstruct, bool pointers = false);
   void generate_struct_swap(std::ofstream& out, t_struct* tstruct);
-  void generate_struct_ostream_operator(std::ofstream& out, t_struct* tstruct);
+  void generate_struct_print_method(std::ofstream& out, t_struct* tstruct);
   void generate_exception_what_method(std::ofstream& out, t_struct* tstruct);
 
   /**
@@ -234,7 +235,8 @@ public:
                                    const char* suffix,
                                    bool include_values);
 
-  void generate_struct_ostream_operator_decl(std::ofstream& f, t_struct* tstruct);
+  void generate_struct_ostream_operator(std::ofstream& f, t_struct* tstruct);
+  void generate_struct_print_method_decl(std::ofstream& f, t_struct* tstruct);
   void generate_exception_what_method_decl(std::ofstream& f,
                                            t_struct* tstruct,
                                            bool external = false);
@@ -362,10 +364,13 @@ void t_cpp_generator::init_generator() {
                << "_TYPES_TCC" << endl << endl;
 
   // Include base types
-  f_types_ << "#include <iosfwd>" << endl << endl << "#include <thrift/Thrift.h>" << endl
+  f_types_ << "#include <iosfwd>" << endl
+           << endl
+           << "#include <thrift/Thrift.h>" << endl
            << "#include <thrift/TApplicationException.h>" << endl
            << "#include <thrift/protocol/TProtocol.h>" << endl
-           << "#include <thrift/transport/TTransport.h>" << endl << endl;
+           << "#include <thrift/transport/TTransport.h>" << endl
+           << endl;
   // Include C++xx compatibility header
   f_types_ << "#include <thrift/cxxfunctional.h>" << endl;
 
@@ -723,7 +728,7 @@ void t_cpp_generator::generate_forward_declaration(t_struct* tstruct) {
  * @param tstruct The struct definition
  */
 void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) {
-  generate_struct_declaration(f_types_, tstruct, is_exception, false, true, true, true);
+  generate_struct_declaration(f_types_, tstruct, is_exception, false, true, true, true, true);
   generate_struct_definition(f_types_impl_, f_types_impl_, tstruct);
 
   std::ofstream& out = (gen_templates_ ? f_types_tcc_ : f_types_impl_);
@@ -738,7 +743,7 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
   if (gen_moveable_) {
     generate_move_assignment_operator(f_types_impl_, tstruct);
   }
-  generate_struct_ostream_operator(f_types_impl_, tstruct);
+  generate_struct_print_method(f_types_impl_, tstruct);
   if (is_exception) {
     generate_exception_what_method(f_types_impl_, tstruct);
   }
@@ -866,7 +871,8 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
                                                   bool pointers,
                                                   bool read,
                                                   bool write,
-                                                  bool swap) {
+                                                  bool swap,
+                                                  bool stream) {
   string extends = "";
   if (is_exception) {
     extends = " : public ::apache::thrift::TException";
@@ -1076,10 +1082,11 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
   }
   out << endl;
 
-  // ostream operator<<
-  out << indent() << "friend ";
-  generate_struct_ostream_operator_decl(out, tstruct);
-  out << ";" << endl << endl;
+  if (stream) {
+    out << indent() << "virtual ";
+    generate_struct_print_method_decl(out, NULL);
+    out << ";" << endl;
+  }
 
   // std::exception::what()
   if (is_exception) {
@@ -1096,6 +1103,10 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
     // Generate a namespace-scope swap() function
     out << indent() << "void swap(" << tstruct->get_name() << " &a, " << tstruct->get_name()
         << " &b);" << endl << endl;
+  }
+
+  if (stream) {
+    generate_struct_ostream_operator(out, tstruct);
   }
 }
 
@@ -1443,8 +1454,23 @@ void t_cpp_generator::generate_struct_swap(ofstream& out, t_struct* tstruct) {
   out << endl;
 }
 
-void t_cpp_generator::generate_struct_ostream_operator_decl(std::ofstream& out, t_struct* tstruct) {
-  out << "std::ostream& operator<<(std::ostream& out, const " << tstruct->get_name() << "& obj)";
+void t_cpp_generator::generate_struct_ostream_operator(std::ofstream& out, t_struct* tstruct) {
+  out << "inline std::ostream& operator<<(std::ostream& out, const "
+      << tstruct->get_name()
+      << "& obj)" << endl;
+  scope_up(out);
+  out << indent() << "obj.printTo(out);" << endl
+      << indent() << "return out;" << endl;
+  scope_down(out);
+  out << endl;
+}
+
+void t_cpp_generator::generate_struct_print_method_decl(std::ofstream& out, t_struct* tstruct) {
+  out << "void ";
+  if (tstruct) {
+    out << tstruct->get_name() << "::";
+  }
+  out << "printTo(std::ostream& out) const";
 }
 
 void t_cpp_generator::generate_exception_what_method_decl(std::ofstream& out,
@@ -1459,11 +1485,11 @@ void t_cpp_generator::generate_exception_what_method_decl(std::ofstream& out,
 
 namespace struct_ostream_operator_generator {
 void generate_required_field_value(std::ofstream& out, const t_field* field) {
-  out << " << to_string(obj." << field->get_name() << ")";
+  out << " << to_string(" << field->get_name() << ")";
 }
 
 void generate_optional_field_value(std::ofstream& out, const t_field* field) {
-  out << "; (obj.__isset." << field->get_name() << " ? (out";
+  out << "; (__isset." << field->get_name() << " ? (out";
   generate_required_field_value(out, field);
   out << ") : (out << \"<null>\"))";
 }
@@ -1506,25 +1532,17 @@ void generate_fields(std::ofstream& out,
 /**
  * Generates operator<<
  */
-void t_cpp_generator::generate_struct_ostream_operator(std::ofstream& out, t_struct* tstruct) {
+void t_cpp_generator::generate_struct_print_method(std::ofstream& out, t_struct* tstruct) {
   out << indent();
-  generate_struct_ostream_operator_decl(out, tstruct);
+  generate_struct_print_method_decl(out, tstruct);
   out << " {" << endl;
 
   indent_up();
 
   out << indent() << "using apache::thrift::to_string;" << endl;
-
-  // eliminate compiler unused warning
-  const vector<t_field*>& fields = tstruct->get_members();
-  if (fields.empty())
-    out << indent() << "(void) obj;" << endl;
-
   out << indent() << "out << \"" << tstruct->get_name() << "(\";" << endl;
-
-  struct_ostream_operator_generator::generate_fields(out, fields, indent());
-
-  out << indent() << "out << \")\";" << endl << indent() << "return out;" << endl;
+  struct_ostream_operator_generator::generate_fields(out, tstruct->get_members(), indent());
+  out << indent() << "out << \")\";" << endl;
 
   indent_down();
   out << "}" << endl << endl;
