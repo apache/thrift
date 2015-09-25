@@ -12,6 +12,7 @@
     "email": "dev@thrift.apache.org",
     "url": "http://thrift.apache.org"
   },
+  "license": "Apache-2.0",
   "licenses": [
     {
       "type": "Apache-2.0",
