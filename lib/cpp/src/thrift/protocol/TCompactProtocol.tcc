@@ -255,7 +255,7 @@ uint32_t TCompactProtocolT<Transport_>::writeDouble(const double dub) {
   BOOST_STATIC_ASSERT(std::numeric_limits<double>::is_iec559);
 
   uint64_t bits = bitwise_cast<uint64_t>(dub);
-  bits = htolell(bits);
+  bits = THRIFT_htolell(bits);
   trans_->write((uint8_t*)&bits, 8);
   return 8;
 }
@@ -659,7 +659,7 @@ uint32_t TCompactProtocolT<Transport_>::readDouble(double& dub) {
     uint8_t b[8];
   } u;
   trans_->readAll(u.b, 8);
-  u.bits = letohll(u.bits);
+  u.bits = THRIFT_letohll(u.bits);
   dub = bitwise_cast<double>(u.bits);
   return 8;
 }
