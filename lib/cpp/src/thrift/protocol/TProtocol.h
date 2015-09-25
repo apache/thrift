@@ -98,14 +98,14 @@ static inline To bitwise_cast(From from) {
 #endif
 
 #if __THRIFT_BYTE_ORDER == __THRIFT_BIG_ENDIAN
-# if !defined(ntohll)
-#  define ntohll(n) (n)
-#  define htonll(n) (n)
+# if !defined(THRIFT_ntohll)
+#  define THRIFT_ntohll(n) (n)
+#  define THRIFT_htonll(n) (n)
 # endif
 # if defined(__GNUC__) && defined(__GLIBC__)
 #  include <byteswap.h>
-#  define htolell(n) bswap_64(n)
-#  define letohll(n) bswap_64(n)
+#  define THRIFT_htolell(n) bswap_64(n)
+#  define THRIFT_letohll(n) bswap_64(n)
 #  define THRIFT_htolel(n) bswap_32(n)
 #  define THRIFT_letohl(n) bswap_32(n)
 #  define THRIFT_htoles(n) bswap_16(n)
@@ -128,33 +128,33 @@ static inline To bitwise_cast(From from) {
 #  define bswap_16(n) \
       ( (((n) & ((unsigned short)0xff00ul)) >> 8)  \
       | (((n) & ((unsigned short)0x00fful)) << 8)  )
-#  define htolell(n) bswap_64(n)
-#  define letohll(n) bswap_64(n)
+#  define THRIFT_htolell(n) bswap_64(n)
+#  define THRIFT_letohll(n) bswap_64(n)
 #  define THRIFT_htolel(n) bswap_32(n)
 #  define THRIFT_letohl(n) bswap_32(n)
 #  define THRIFT_htoles(n) bswap_16(n)
 #  define THRIFT_letohs(n) bswap_16(n)
 # endif /* GNUC & GLIBC */
 #elif __THRIFT_BYTE_ORDER == __THRIFT_LITTLE_ENDIAN
-#  define htolell(n) (n)
-#  define letohll(n) (n)
+#  define THRIFT_htolell(n) (n)
+#  define THRIFT_letohll(n) (n)
 #  define THRIFT_htolel(n) (n)
 #  define THRIFT_letohl(n) (n)
 #  define THRIFT_htoles(n) (n)
 #  define THRIFT_letohs(n) (n)
 # if defined(__GNUC__) && defined(__GLIBC__)
 #  include <byteswap.h>
-#  define ntohll(n) bswap_64(n)
-#  define htonll(n) bswap_64(n)
+#  define THRIFT_ntohll(n) bswap_64(n)
+#  define THRIFT_htonll(n) bswap_64(n)
 # elif defined(_MSC_VER) /* Microsoft Visual C++ */
-#  define ntohll(n) ( _byteswap_uint64((uint64_t)n) )
-#  define htonll(n) ( _byteswap_uint64((uint64_t)n) )
-# elif !defined(ntohll) /* Not GNUC/GLIBC or MSVC */
-#  define ntohll(n) ( (((uint64_t)ntohl((uint32_t)n)) << 32) + ntohl((uint32_t)(n >> 32)) )
-#  define htonll(n) ( (((uint64_t)htonl((uint32_t)n)) << 32) + htonl((uint32_t)(n >> 32)) )
+#  define THRIFT_ntohll(n) ( _byteswap_uint64((uint64_t)n) )
+#  define THRIFT_htonll(n) ( _byteswap_uint64((uint64_t)n) )
+# elif !defined(THRIFT_ntohll) /* Not GNUC/GLIBC or MSVC */
+#  define THRIFT_ntohll(n) ( (((uint64_t)ntohl((uint32_t)n)) << 32) + ntohl((uint32_t)(n >> 32)) )
+#  define THRIFT_htonll(n) ( (((uint64_t)htonl((uint32_t)n)) << 32) + htonl((uint32_t)(n >> 32)) )
 # endif /* GNUC/GLIBC or MSVC or something else */
 #else /* __THRIFT_BYTE_ORDER */
-# error "Can't define htonll or ntohll!"
+# error "Can't define THRIFT_htonll or THRIFT_ntohll!"
 #endif
 
 namespace apache {
@@ -610,10 +610,10 @@ struct TNetworkBigEndian
 {
   static uint16_t toWire16(uint16_t x)   {return htons(x);}
   static uint32_t toWire32(uint32_t x)   {return htonl(x);}
-  static uint64_t toWire64(uint64_t x)   {return htonll(x);}
+  static uint64_t toWire64(uint64_t x)   {return THRIFT_htonll(x);}
   static uint16_t fromWire16(uint16_t x) {return ntohs(x);}
   static uint32_t fromWire32(uint32_t x) {return ntohl(x);}
-  static uint64_t fromWire64(uint64_t x) {return ntohll(x);}
+  static uint64_t fromWire64(uint64_t x) {return THRIFT_ntohll(x);}
 };
 
 // On most systems, this will be a bit faster than TNetworkBigEndian
@@ -621,10 +621,10 @@ struct TNetworkLittleEndian
 {
   static uint16_t toWire16(uint16_t x)   {return THRIFT_htoles(x);}
   static uint32_t toWire32(uint32_t x)   {return THRIFT_htolel(x);}
-  static uint64_t toWire64(uint64_t x)   {return htolell(x);}
+  static uint64_t toWire64(uint64_t x)   {return THRIFT_htolell(x);}
   static uint16_t fromWire16(uint16_t x) {return THRIFT_letohs(x);}
   static uint32_t fromWire32(uint32_t x) {return THRIFT_letohl(x);}
-  static uint64_t fromWire64(uint64_t x) {return letohll(x);}
+  static uint64_t fromWire64(uint64_t x) {return THRIFT_letohll(x);}
 };
 
 struct TOutputRecursionTracker {
