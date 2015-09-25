@@ -22,6 +22,7 @@
 rm -rf gen-py
 ../../../compiler/cpp/thrift --gen py test1.thrift || exit 1
 ../../../compiler/cpp/thrift --gen py test2.thrift || exit 1
+../../../compiler/cpp/thrift --gen py test3.thrift && exit 1  # Fail since test3.thrift has python keywords
 PYTHONPATH=./gen-py python -c 'import foo.bar.baz' || exit 1
 PYTHONPATH=./gen-py python -c 'import test2' || exit 1
 PYTHONPATH=./gen-py python -c 'import test1' &>/dev/null && exit 1  # Should fail.
