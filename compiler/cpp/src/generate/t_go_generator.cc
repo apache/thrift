@@ -967,7 +967,7 @@ void t_go_generator::generate_enum(t_enum* tenum) {
   f_types_ << "func (p *" << tenum_name << ") Scan(value interface{}) error {" <<endl;
   f_types_ << "v, ok := value.(int64)" <<endl;
   f_types_ << "if !ok {" <<endl;
-  f_types_ << "return errors.New(\"Scan source is not int64\")" <<endl;
+  f_types_ << "return errors.New(\"Scan value is not int64\")" <<endl;
   f_types_ << "}" <<endl;
   f_types_ << "*p = " << tenum_name << "(v)" << endl;
   f_types_ << "return nil" << endl;
