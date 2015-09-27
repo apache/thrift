@@ -45,7 +45,7 @@ void pseudo_sync_write(HANDLE pipe, HANDLE event, const uint8_t* buf, uint32_t l
 class TPipeImpl : boost::noncopyable {
 public:
   TPipeImpl() {}
-  virtual ~TPipeImpl() = 0 {}
+  virtual ~TPipeImpl() {}
   virtual uint32_t read(uint8_t* buf, uint32_t len) = 0;
   virtual void write(const uint8_t* buf, uint32_t len) = 0;
   virtual HANDLE getPipeHandle() = 0; // doubles as the read handle for anon pipe

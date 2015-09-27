@@ -69,6 +69,10 @@
 #define PRIu64 "I64u"
 #endif
 
+#if (_WIN32_WINNT < 0x0600)
+  #define AI_ADDRCONFIG 0x0400
+#endif
+
 namespace apache {
 namespace thrift {
 namespace server {
