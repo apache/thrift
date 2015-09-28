@@ -161,7 +161,9 @@ failing tests:
       #define TEST_STRUCTS       2  // 0000 0010
       #define TEST_CONTAINERS    4  // 0000 0100
       #define TEST_EXCEPTIONS    8  // 0000 1000
-      #define TEST_NOTUSED     240  // 1111 0000 (reserved bits)
+      #define TEST_UNKNOWN      64  // 0100 0000 (Failed to prepare environemt etc.)
+      #define TEST_TIMEOUT     128  // 1000 0000
+      #define TEST_NOTUSED      48  // 0011 0000 (reserved bits)
 
 Tests that have not been executed at all count as errors.
 
