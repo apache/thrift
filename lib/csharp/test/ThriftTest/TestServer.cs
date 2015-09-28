@@ -145,9 +145,9 @@ namespace Test
                     }
                     else
                     {
-                        Console.WriteLine(", ");
+                        Console.Write(", ");
                     }
-                    Console.WriteLine(key + " => " + thing[key]);
+                    Console.Write(key + " => " + thing[key]);
                 }
                 Console.WriteLine("})");
                 return thing;
@@ -165,9 +165,9 @@ namespace Test
                     }
                     else
                     {
-                        Console.WriteLine(", ");
+                        Console.Write(", ");
                     }
-                    Console.WriteLine(key + " => " + thing[key]);
+                    Console.Write(key + " => " + thing[key]);
                 }
                 Console.WriteLine("})");
                 return thing;
@@ -185,9 +185,9 @@ namespace Test
                     }
                     else
                     {
-                        Console.WriteLine(", ");
+                        Console.Write(", ");
                     }
-                    Console.WriteLine(elem);
+                    Console.Write(elem);
                 }
                 Console.WriteLine("})");
                 return thing;
@@ -205,9 +205,9 @@ namespace Test
                     }
                     else
                     {
-                        Console.WriteLine(", ");
+                        Console.Write(", ");
                     }
-                    Console.WriteLine(elem);
+                    Console.Write(elem);
                 }
                 Console.WriteLine("})");
                 return thing;
@@ -371,7 +371,6 @@ namespace Test
                 bool useBufferedSockets = false, useFramed = false, useEncryption = false, compact = false, json = false;
                 int port = 9090;
                 string pipe = null;
-                string certPath = "../../../../../keys/server.pem";
                 for (int i = 0; i < args.Length; i++)
                 {
                     if (args[i] == "-pipe")  // -pipe name
@@ -402,10 +401,6 @@ namespace Test
                     {
                         useEncryption = true;
                     }
-                    else if (args[i].StartsWith("--cert="))
-                    {
-                        certPath = args[i].Substring("--cert=".Length);
-                    }
                 }
 
                 // Processor
@@ -422,7 +417,8 @@ namespace Test
                 {
                     if (useEncryption)
                     {
-                        trans = new TTLSServerSocket(port, 0, useBufferedSockets, new X509Certificate2(certPath));
+                        string certPath = "../../../../test/keys/server.p12";
+                        trans = new TTLSServerSocket(port, 0, useBufferedSockets, new X509Certificate2(certPath, "thrift"));
                     }
                     else
                     {

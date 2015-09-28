@@ -34,7 +34,7 @@ namespace Thrift.Transport
         }
 
         private byte[] _peekBuffer = new byte[1];
-        private bool _hasPeekByte = false;
+        private bool _hasPeekByte;
 
         public bool Peek()
         {
@@ -66,10 +66,23 @@ namespace Thrift.Transport
 
         public abstract void Close();
 
+        protected static void ValidateBufferArgs(byte[] buf, int off, int len)
+        {
+            if (buf == null)
+                throw new ArgumentNullException("buf");
+            if (off < 0)
+                throw new ArgumentOutOfRangeException("Buffer offset is smaller than zero.");
+            if (len < 0)
+                throw new ArgumentOutOfRangeException("Buffer length is smaller than zero.");
+            if (off + len > buf.Length)
+                throw new ArgumentOutOfRangeException("Not enough data.");
+        }
+
         public abstract int Read(byte[] buf, int off, int len);
 
         public int ReadAll(byte[] buf, int off, int len)
         {
+            ValidateBufferArgs(buf, off, len);
             int got = 0;
 
             //If we previously peeked a byte, we need to use that first.

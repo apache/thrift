@@ -96,6 +96,10 @@ namespace Thrift.Transport
             this.certValidator = certValidator;
             this.localCertificateSelectionCallback = localCertificateSelectionCallback;
             this.isServer = isServer;
+            if (isServer && certificate == null)
+            {
+                throw new ArgumentException("TTLSSocket needs certificate to be used for server", "certificate");
+            }
 
             if (IsOpen)
             {
@@ -133,7 +137,7 @@ namespace Thrift.Transport
         public TTLSSocket(
             string host,
             int port,
-            X509Certificate certificate,
+            X509Certificate certificate = null,
             RemoteCertificateValidationCallback certValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null)
             : this(host, port, 0, certificate, certValidator, localCertificateSelectionCallback)
@@ -315,7 +319,8 @@ namespace Thrift.Transport
                 else
                 {
                     // Client authentication
-                    this.secureStream.AuthenticateAsClient(host, new X509CertificateCollection { certificate }, SslProtocols.Tls, true);
+                    X509CertificateCollection certs = certificate != null ?  new X509CertificateCollection { certificate } : new X509CertificateCollection();
+                    this.secureStream.AuthenticateAsClient(host, null, SslProtocols.Tls, true);
                 }
             }
             catch (Exception)
