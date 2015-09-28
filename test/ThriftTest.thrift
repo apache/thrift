@@ -292,7 +292,7 @@ service ThriftTest
    * Print 'testMultiException(%s, %s)' with arg0 as '%s' and arg1 as '%s'
    * @param string arg - a string indication what type of exception to throw
    * if arg0 == "Xception" throw Xception with errorCode = 1001 and message = "This is an Xception"
-   * elsen if arg0 == "Xception2" throw Xception2 with errorCode = 2002 and message = "This is an Xception2"
+   * elsen if arg0 == "Xception2" throw Xception2 with errorCode = 2002 and struct_thing.string_thing = "This is an Xception2"
    * else do not throw anything
    * @return Xtruct - an Xtruct with string_thing = arg1
    */

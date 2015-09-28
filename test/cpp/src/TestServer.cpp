@@ -221,34 +221,14 @@ public:
   }
 
   void testInsanity(map<UserId, map<Numberz::type, Insanity> >& insane, const Insanity& argument) {
-    (void)argument;
     printf("testInsanity()\n");
 
-    Xtruct hello;
-    hello.string_thing = "Hello2";
-    hello.byte_thing = 2;
-    hello.i32_thing = 2;
-    hello.i64_thing = 2;
-
-    Xtruct goodbye;
-    goodbye.string_thing = "Goodbye4";
-    goodbye.byte_thing = 4;
-    goodbye.i32_thing = 4;
-    goodbye.i64_thing = 4;
-
-    Insanity crazy;
-    crazy.userMap.insert(make_pair(Numberz::EIGHT, 8));
-    crazy.xtructs.push_back(goodbye);
-
     Insanity looney;
-    crazy.userMap.insert(make_pair(Numberz::FIVE, 5));
-    crazy.xtructs.push_back(hello);
-
     map<Numberz::type, Insanity> first_map;
     map<Numberz::type, Insanity> second_map;
 
-    first_map.insert(make_pair(Numberz::TWO, crazy));
-    first_map.insert(make_pair(Numberz::THREE, crazy));
+    first_map.insert(make_pair(Numberz::TWO, argument));
+    first_map.insert(make_pair(Numberz::THREE, argument));
 
     second_map.insert(make_pair(Numberz::SIX, looney));
 
