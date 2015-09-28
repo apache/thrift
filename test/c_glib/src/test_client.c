@@ -204,7 +204,7 @@ main (int argc, char **argv)
       gint byte_thing, i32_thing, inner_byte_thing, inner_i32_thing;
       gint64 i64_thing, inner_i64_thing;
 
-      TTestXtruct  *xtruct_out,  *xtruct_in,  *inner_xtruct_in;
+      TTestXtruct  *xtruct_out,  *xtruct_out2, *xtruct_in,  *inner_xtruct_in;
       TTestXtruct2 *xtruct2_out, *xtruct2_in;
 
       GHashTable *map_out, *map_in, *inner_map_in;
@@ -217,8 +217,9 @@ main (int argc, char **argv)
       GArray *list_out, *list_in;
 
       TTestNumberz numberz;
+      TTestNumberz numberz2;
 
-      TTestUserId user_id, *user_id_ptr;
+      TTestUserId user_id, *user_id_ptr, *user_id_ptr2;
 
       TTestInsanity *insanity_out, *insanity_in;
       GHashTable *user_map;
@@ -1021,17 +1022,28 @@ main (int argc, char **argv)
                     NULL);
 
       numberz = T_TEST_NUMBERZ_FIVE;
+      numberz2 = T_TEST_NUMBERZ_EIGHT;
       user_id_ptr = g_malloc (sizeof *user_id_ptr);
-      *user_id_ptr = 5000;
+      *user_id_ptr = 5;
+      user_id_ptr2 = g_malloc (sizeof *user_id_ptr);
+      *user_id_ptr2 = 8;
       g_hash_table_insert (user_map, (gpointer)numberz, user_id_ptr);
+      g_hash_table_insert (user_map, (gpointer)numberz2, user_id_ptr2);
       g_hash_table_unref (user_map);
 
       xtruct_out = g_object_new (T_TEST_TYPE_XTRUCT,
-                                 "string_thing", "Truck",
-                                 "byte_thing",   8,
-                                 "i32_thing",    8,
-                                 "i64_thing",    8LL,
+                                 "string_thing", "Hello2",
+                                 "byte_thing",   2,
+                                 "i32_thing",    2,
+                                 "i64_thing",    2LL,
                                  NULL);
+      xtruct_out2 = g_object_new (T_TEST_TYPE_XTRUCT,
+                                 "string_thing", "Goodbye4",
+                                 "byte_thing",   4,
+                                 "i32_thing",    4,
+                                 "i64_thing",    4LL,
+                                 NULL);
+      g_ptr_array_add (xtructs, xtruct_out2);
       g_ptr_array_add (xtructs, xtruct_out);
       g_ptr_array_unref (xtructs);
 

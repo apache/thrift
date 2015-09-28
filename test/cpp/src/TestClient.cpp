@@ -107,6 +107,12 @@ static void testVoid_clientReturn(const char* host,
 }
 
 int main(int argc, char** argv) {
+  int ERR_BASETYPES = 1;
+  int ERR_STRUCTS = 2;
+  int ERR_CONTAINERS = 4;
+  int ERR_EXCEPTIONS = 8;
+  int ERR_UNKNOWN = 64;
+
   string file_path = boost::filesystem::system_complete(argv[0]).string();
   string dir_path = file_path.substr(0, file_path.size() - EXECUTABLE_FILE_NAME_LENGTH);
 #if _WIN32
@@ -149,7 +155,7 @@ int main(int argc, char** argv) {
 
   if (vm.count("help")) {
     cout << desc << "\n";
-    return 1;
+    return ERR_UNKNOWN;
   }
 
   try {
@@ -175,7 +181,7 @@ int main(int argc, char** argv) {
   } catch (std::exception& e) {
     cerr << e.what() << endl;
     cout << desc << "\n";
-    return 1;
+    return ERR_UNKNOWN;
   }
 
   if (vm.count("ssl")) {
@@ -267,10 +273,6 @@ int main(int argc, char** argv) {
   uint64_t time_tot = 0;
 
   int return_code = 0;
-  int ERR_BASETYPES = 1;
-  int ERR_STRUCTS = 2;
-  int ERR_CONTAINERS = 4;
-  int ERR_EXCEPTIONS = 8;
 
   int test = 0;
   for (test = 0; test < numTests; ++test) {
@@ -279,7 +281,7 @@ int main(int argc, char** argv) {
       transport->open();
     } catch (TTransportException& ttx) {
       printf("Connect failed: %s\n", ttx.what());
-      return 1;
+      return ERR_UNKNOWN;
     }
 
     /**

@@ -39,3 +39,5 @@ clean-local:
 all-local: stubs
 	ghc -igen-hs TestServer.hs
 	ghc -igen-hs TestClient.hs
+
+precross: all-local
