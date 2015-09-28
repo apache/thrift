@@ -47,7 +47,7 @@ set(libparse_SOURCES
 add_library(libparse STATIC ${libparse_SOURCES})
 
 # Create the thrift compiler
-set( thrift_SOURCES 
+set( thrift_SOURCES
     src/main.cc
     src/md5.c
     src/generate/t_generator.cc
@@ -100,6 +100,7 @@ THRIFT_ADD_COMPILER(c_glib  "Enable compiler for C with Glib" ON)
 THRIFT_ADD_COMPILER(cpp     "Enable compiler for C++" ON)
 THRIFT_ADD_COMPILER(java    "Enable compiler for Java"   ON)
 THRIFT_ADD_COMPILER(as3     "Enable compiler for ActionScript 3" ON)
+THRIFT_ADD_COMPILER(dart    "Enable compiler for Dart" ON)
 THRIFT_ADD_COMPILER(haxe    "Enable compiler for Haxe" ON)
 THRIFT_ADD_COMPILER(csharp  "Enable compiler for C#" ON)
 THRIFT_ADD_COMPILER(py      "Enable compiler for Python 2.0" ON)

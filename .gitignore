@@ -145,6 +145,10 @@ test-driver
 /lib/d/test/serialization_benchmark
 /lib/d/test/transport_test
 /lib/d/unittest/
+/lib/dart/**/.packages
+/lib/dart/**/packages
+/lib/dart/**/.pub/
+/lib/dart/**/pubspec.lock
 /lib/delphi/src/*.dcu
 /lib/delphi/test/*.identcache
 /lib/delphi/test/*.local
@@ -235,6 +239,10 @@ test-driver
 /test/cpp/StressTestNonBlocking
 /test/cpp/TestClient
 /test/cpp/TestServer
+/test/dart/**/.packages
+/test/dart/**/packages
+/test/dart/**/.pub/
+/test/dart/**/pubspec.lock
 /test/log/
 /test/test.log
 /test/erl/.eunit/
@@ -256,6 +264,10 @@ test-driver
 /tutorial/cpp/TutorialServer
 /tutorial/c_glib/tutorial_client
 /tutorial/c_glib/tutorial_server
+/tutorial/dart/**/.packages
+/tutorial/dart/**/packages
+/tutorial/dart/**/.pub/
+/tutorial/dart/**/pubspec.lock
 /tutorial/delphi/*.dsk
 /tutorial/delphi/*.local
 /tutorial/delphi/*.tvsconfig

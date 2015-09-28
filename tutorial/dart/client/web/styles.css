@@ -16,25 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+@import url(https://fonts.googleapis.com/css?family=Roboto);
 
-/**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
- */
-
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace dart shared
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
-
-struct SharedStruct {
-  1: i32 key
-  2: string value
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 10px;
+    font-family: 'Roboto', sans-serif;
 }
 
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
+h3 {
+    border-bottom: solid;
+    border-width: thin;
+    padding-top: 20px;
 }

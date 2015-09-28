@@ -356,5 +356,27 @@
       ]
     },
     "workdir": "php"
+  },
+  {
+    "name": "dart",
+    "client": {
+      "transports": [
+        "buffered",
+        "framed",
+        "http"
+      ],
+      "sockets": [
+        "ip"
+      ],
+      "protocols": [
+        "binary",
+        "json"
+      ],
+      "command": [
+        "dart",
+        "test_client/bin/main.dart"
+      ]
+    },
+    "workdir": "dart"
   }
 ]
