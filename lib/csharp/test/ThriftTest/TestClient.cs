@@ -55,9 +55,15 @@ namespace Test
                     else
                     {
                         if (encrypted)
-                            trans = new TTLSSocket(host, port, (X509Certificate)null, (o, cert, chain, errors) => true);
+                        {
+                            string certPath = "../../../../test/keys/client.p12";
+                            X509Certificate cert = new X509Certificate2(certPath, "thrift");
+                            trans = new TTLSSocket(host, port, cert, (o, c, chain, errors) => true);
+                        }
                         else
+                        {
                             trans = new TSocket(host, port);
+                        }
                     }
 
                     // layered transport
@@ -709,7 +715,7 @@ namespace Test
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
             }
-            catch (Thrift.TException ex)
+            catch (Thrift.TException)
             {
                 // OK
             }

@@ -69,7 +69,7 @@ namespace Test
 
             public string testString(string thing)
             {
-                Console.WriteLine("teststring(\"" + thing + "\")");
+                Console.WriteLine("testString(\"" + thing + "\")");
                 return thing;
             }
 

@@ -33,43 +33,43 @@ namespace Thrift.Transport
         /// <summary>
         /// Internal TCP Client
         /// </summary>
-        private TcpClient client = null;
+        private TcpClient client;
 
         /// <summary>
         /// The host
         /// </summary>
-        private string host = null;
+        private string host;
 
         /// <summary>
         /// The port
         /// </summary>
-        private int port = 0;
+        private int port;
 
         /// <summary>
         /// The timeout for the connection
         /// </summary>
-        private int timeout = 0;
+        private int timeout;
 
         /// <summary>
         /// Internal SSL Stream for IO
         /// </summary>
-        private SslStream secureStream = null;
+        private SslStream secureStream;
 
         /// <summary>
         /// Defines wheter or not this socket is a server socket<br/>
         /// This is used for the TLS-authentication
         /// </summary>
-        private bool isServer = false;
+        private bool isServer;
 
         /// <summary>
         /// The certificate
         /// </summary>
-        private X509Certificate certificate = null;
+        private X509Certificate certificate;
 
         /// <summary>
         /// User defined certificate validator.
         /// </summary>
-        private RemoteCertificateValidationCallback certValidator = null;
+        private RemoteCertificateValidationCallback certValidator;
 
         /// <summary>
         /// The function to determine which certificate to use.
@@ -320,7 +320,7 @@ namespace Thrift.Transport
                 {
                     // Client authentication
                     X509CertificateCollection certs = certificate != null ?  new X509CertificateCollection { certificate } : new X509CertificateCollection();
-                    this.secureStream.AuthenticateAsClient(host, null, SslProtocols.Tls, true);
+                    this.secureStream.AuthenticateAsClient(host, certs, SslProtocols.Tls, true);
                 }
             }
             catch (Exception)
