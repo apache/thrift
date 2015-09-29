@@ -256,6 +256,10 @@ test-driver
 /tutorial/cpp/TutorialServer
 /tutorial/c_glib/tutorial_client
 /tutorial/c_glib/tutorial_server
+/tutorial/csharp/CsharpServer/obj
+/tutorial/csharp/CsharpServer/bin
+/tutorial/csharp/CsharpClient/obj
+/tutorial/csharp/CsharpClient/bin
 /tutorial/delphi/*.dsk
 /tutorial/delphi/*.local
 /tutorial/delphi/*.tvsconfig
