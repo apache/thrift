@@ -175,24 +175,27 @@ class AbstractTest(unittest.TestCase):
     self.assertEqual(y, x)
 
   def testEnum(self):
+    print('testEnum')
     x = Numberz.FIVE
     y = self.client.testEnum(x)
     self.assertEqual(y, x)
 
   def testTypedef(self):
+    print('testTypedef')
     x = 0xffffffffffffff # 7 bytes of 0xff
     y = self.client.testTypedef(x)
     self.assertEqual(y, x)
 
+  @unittest.skip('Cannot use dict as dict key')
   def testMapMap(self):
+    print('testMapMap')
     # does not work: dict() is not a hashable type, so a dict() cannot be used as a key in another dict()
-    #x = { {1:10, 2:20}, {1:100, 2:200, 3:300}, {1:1000, 2:2000, 3:3000, 4:4000} }
-    try:
-      y = self.client.testMapMap()
-    except:
-      pass
+    x = {{1: 10, 2: 20}, {1: 100, 2: 200, 3: 300}, {1: 1000, 2: 2000, 3: 3000, 4: 4000}}
+    y = self.client.testMapMap(x)
+    self.assertEqual(y, x)
 
   def testMulti(self):
+    print('testMulti')
     xpected = Xtruct(string_thing='Hello2', byte_thing=74, i32_thing=0xff00ff, i64_thing=0xffffffffd0d0)
     y = self.client.testMulti(xpected.byte_thing,
           xpected.i32_thing,
@@ -203,11 +206,12 @@ class AbstractTest(unittest.TestCase):
     self.assertEqual(y, xpected)
 
   def testException(self):
+    print('testException')
     self.client.testException('Safe')
     try:
       self.client.testException('Xception')
       self.fail("should have gotten exception")
-    except Xception, x:
+    except Xception as x:
       self.assertEqual(x.errorCode, 1001)
       self.assertEqual(x.message, 'Xception')
       # TODO ensure same behavior for repr within generated python variants
@@ -216,12 +220,33 @@ class AbstractTest(unittest.TestCase):
       #self.assertEqual(x_repr, 'Xception(errorCode=1001, message=\'Xception\')')
 
     try:
-      self.client.testException("throw_undeclared")
-      self.fail("should have thrown exception")
-    except Exception: # type is undefined
+      self.client.testException('TException')
+      self.fail("should have gotten exception")
+    except TException as x:
       pass
 
+    # Should not throw
+    self.client.testException('success')
+
+  def testMultiException(self):
+    print('testMultiException')
+    try:
+      self.client.testMultiException('Xception', 'ignore')
+    except Xception as ex:
+      self.assertEqual(ex.errorCode, 1001)
+      self.assertEqual(ex.message, 'This is an Xception')
+
+    try:
+      self.client.testMultiException('Xception2', 'ignore')
+    except Xception2 as ex:
+      self.assertEqual(ex.errorCode, 2002)
+      self.assertEqual(ex.struct_thing.string_thing, 'This is an Xception2')
+
+    y = self.client.testMultiException('success', 'foobar')
+    self.assertEqual(y.string_thing, 'foobar')
+
   def testOneway(self):
+    print('testOneway')
     start = time.time()
     self.client.testOneway(1) # type is int, not float
     end = time.time()
@@ -229,6 +254,7 @@ class AbstractTest(unittest.TestCase):
                     "oneway sleep took %f sec" % (end - start))
 
   def testOnewayThenNormal(self):
+    print('testOnewayThenNormal')
     self.client.testOneway(1) # type is int, not float
     self.assertEqual(self.client.testString('Python'), 'Python')
 
