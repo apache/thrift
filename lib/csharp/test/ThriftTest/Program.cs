@@ -46,7 +46,7 @@ namespace Test
             }
             if (args[0] == "client")
             {
-                return TestClient.Execute(subArgs) ? 0 : 1;
+                return TestClient.Execute(subArgs);
             }
             else if (args[0] == "server")
             {
