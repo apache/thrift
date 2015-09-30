@@ -30,7 +30,7 @@ stubs: $(top_srcdir)/test/ThriftTest.thrift
 precross: TestClientServer.exe
 
 ThriftImpl.dll: stubs
-	$(CSC) /t:library /out:./ThriftImpl.dll /recurse:./gen-csharp/* /reference:../../Thrift.dll
+	$(CSC) /t:library /out:./ThriftImpl.dll /recurse:./gen-csharp/Thrift/Test/*.cs /reference:../../Thrift.dll
 
 TestClientServer.exe: TestClient.cs TestServer.cs Program.cs ThriftImpl.dll
 	$(CSC)  /out:TestClientServer.exe /reference:../../Thrift.dll /reference:ThriftImpl.dll TestClient.cs TestServer.cs Program.cs

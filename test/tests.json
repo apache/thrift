@@ -286,16 +286,14 @@
       "delay": 3,
       "command": [
         "TestClientServer.exe",
-        "server",
-        "--cert=../../../../test/keys/server.pem"
+        "server"
       ]
     },
     "client": {
       "timeout": 9,
       "command": [
         "TestClientServer.exe",
-        "client",
-        "--cert=../../../../test/keys/client.pem"
+        "client"
       ]
     },
     "workdir": "../lib/csharp/test/ThriftTest"
