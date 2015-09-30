@@ -17,32 +17,17 @@
 # under the License.
 #
 
+add_test(NAME python_test_generate
+    COMMAND ${CMAKE_COMMAND}
+            -DTHRIFTCOMPILER=$<TARGET_FILE:thrift-compiler>
+            -DMY_PROJECT_DIR=${PROJECT_SOURCE_DIR}
+            -DMY_CURRENT_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/generate.cmake
+)
+
 add_test(NAME python_test
     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RunClientServer.py
-    DEPENDS gen-py-default/ThriftTest/ThriftTest.py
+    DEPENDS python_test_generate
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-add_custom_command(OUTPUT gen-py-default/ThriftTest/ThriftTest.py
-    COMMAND thrift-compiler --gen gen-py-default -out gen-py-default ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
-)
-
-add_custom_command(OUTPUT gen-py-slots/ThriftTest/ThriftTest.py
-    COMMAND thrift-compiler --gen py:slots -out gen-py-slots ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
-)
-
-add_custom_command(OUTPUT gen-py-newstyle/ThriftTest/ThriftTest.py
-    COMMAND thrift-compiler --gen py:new_style -out gen-py-newstyle ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
-)
-
-add_custom_command(OUTPUT gen-py-newstyleslots/ThriftTest/ThriftTest.py
-    COMMAND thrift-compiler --gen py:new_style,slots -out gen-py-newstyleslots ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
-)
-
-add_custom_command(OUTPUT gen-py-dynamic/ThriftTest/ThriftTest.py
-    COMMAND thrift-compiler --gen py:dynamic -out gen-py-dynamic ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
-)
-
-add_custom_command(OUTPUT gen-py-dynamicslots/ThriftTest/ThriftTest.py
-    COMMAND thrift-compiler --gen py:dynamic,slots -out gen-py-dynamicslots ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
-)
