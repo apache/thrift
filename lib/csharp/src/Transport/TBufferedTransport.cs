@@ -75,7 +75,7 @@ namespace Thrift.Transport
             CheckNotDisposed();
             ValidateBufferArgs(buf, off, len);
             if (!IsOpen)
-                throw new InvalidOperationException("Transport is not open.");
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             if (inputBuffer.Capacity < bufSize)
                 inputBuffer.Capacity = bufSize;
             int got = inputBuffer.Read(buf, off, len);
@@ -96,7 +96,7 @@ namespace Thrift.Transport
             CheckNotDisposed();
             ValidateBufferArgs(buf, off, len);
             if (!IsOpen)
-                throw new InvalidOperationException("Transport is not open.");
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             // Relative offset from "off" argument
             int offset = 0;
             if (outputBuffer.Length > 0)
@@ -129,7 +129,7 @@ namespace Thrift.Transport
         {
             CheckNotDisposed();
             if (!IsOpen)
-                throw new InvalidOperationException("Transport is not open.");
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             if (outputBuffer.Length > 0)
             {
                 transport.Write(outputBuffer.GetBuffer(), 0, (int)outputBuffer.Length);
