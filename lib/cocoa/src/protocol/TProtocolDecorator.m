@@ -36,13 +36,13 @@
     return [mConcreteProtocol transport];
 }
 
-- (void) readMessageBeginReturningName: (NSString **) name
-                                  type: (int *) type
-                            sequenceID: (int *) sequenceID
+- (NSString *) readMessageBeginReturningType: (int *) type
+                                  sequenceID: (int *) sequenceID
 {
-    [mConcreteProtocol readMessageBeginReturningName:name
-                                                type:type
-                                          sequenceID:sequenceID];
+    NSString *name = [mConcreteProtocol
+                      readMessageBeginReturningType:type
+                      sequenceID:sequenceID];
+    return name;
 }
 
 - (void) readMessageEnd
@@ -50,9 +50,10 @@
     [mConcreteProtocol readMessageEnd];
 }
 
-- (void) readStructBeginReturningName: (NSString **) name
+- (NSString *) readStructBegin
 {
-    [mConcreteProtocol readStructBeginReturningName:name];
+    NSString *name = [mConcreteProtocol readStructBegin];
+    return name;
 }
 
 - (void) readStructEnd
@@ -60,13 +61,13 @@
     [mConcreteProtocol readStructEnd];
 }
 
-- (void) readFieldBeginReturningName: (NSString **) name
-                                type: (int *) fieldType
-                             fieldID: (int *) fieldID
+- (NSString *) readFieldBeginReturningType: (int *) fieldType
+                                   fieldID: (int *) fieldID
 {
-    [mConcreteProtocol readFieldBeginReturningName:name
-                                              type:fieldType
-                                           fieldID:fieldID];
+    NSString *name = [mConcreteProtocol
+                      readFieldBeginReturningType:fieldType
+                      fieldID:fieldID];
+    return name;
 }
 - (void) readFieldEnd
 {

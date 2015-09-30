@@ -77,12 +77,12 @@
   int fieldType;
   int fieldID;
 
-  [protocol readStructBeginReturningName: NULL];
+  (void)[protocol readStructBegin];
 
   while (true) {
-    [protocol readFieldBeginReturningName: NULL
-              type: &fieldType
-              fieldID: &fieldID];
+    (void)[protocol
+           readFieldBeginReturningType: &fieldType
+           fieldID: &fieldID];
     if (fieldType == TType_STOP) {
       break;
     }

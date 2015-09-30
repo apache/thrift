@@ -46,10 +46,10 @@
     [protocol readString];
     break;
   case TType_STRUCT:
-    [protocol readStructBeginReturningName: NULL];
+    (void)[protocol readStructBegin];
     while (true) {
       int fieldType;
-      [protocol readFieldBeginReturningName: nil type: &fieldType fieldID: nil];
+      (void)[protocol readFieldBeginReturningType: &fieldType fieldID: nil];
       if (fieldType == TType_STOP) {
         break;
       }

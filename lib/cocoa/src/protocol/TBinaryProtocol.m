@@ -152,9 +152,8 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 }
 
 
-- (void) readMessageBeginReturningName: (NSString **) name
-                                  type: (int *) type
-                            sequenceID: (int *) sequenceID
+- (NSString *) readMessageBeginReturningType: (int *) type
+                                  sequenceID: (int *) sequenceID
 {
   int32_t size = [self readI32];
   if (size < 0) {
@@ -171,13 +170,11 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
       *type = size & 0x00FF;
     }
     NSString * messageName = [self readString];
-    if (name != NULL) {
-      *name = messageName;
-    }
     int seqID = [self readI32];
     if (sequenceID != NULL) {
       *sequenceID = seqID;
     }
+    return messageName;
   } else {
     if (mStrictRead) {
       @throw [TProtocolException exceptionWithName: @"TProtocolException"
@@ -190,9 +187,6 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
                                                      size]];
     }
     NSString * messageName = [self readStringBody: size];
-    if (name != NULL) {
-      *name = messageName;
-    }
     int messageType = [self readByte];
     if (type != NULL) {
       *type = messageType;
@@ -201,6 +195,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
     if (sequenceID != NULL) {
       *sequenceID = seqID;
     }
+    return messageName;
   }
 }
 
@@ -208,24 +203,18 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 - (void) readMessageEnd {}
 
 
-- (void) readStructBeginReturningName: (NSString **) name
+- (NSString *) readStructBegin
 {
-  if (name != NULL) {
-    *name = nil;
-  }
+  return nil;
 }
 
 
 - (void) readStructEnd {}
 
 
-- (void) readFieldBeginReturningName: (NSString **) name
-                                type: (int *) fieldType
-                             fieldID: (int *) fieldID
+- (NSString *) readFieldBeginReturningType: (int *) fieldType
+                                   fieldID: (int *) fieldID
 {
-  if (name != NULL) {
-    *name = nil;
-  }
   int ft = [self readByte];
   if (fieldType != NULL) {
     *fieldType = ft;
@@ -236,6 +225,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
       *fieldID = fid;
     }
   }
+  return nil;
 }
 
 
