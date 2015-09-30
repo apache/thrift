@@ -73,7 +73,7 @@ namespace Thrift.Transport
             CheckNotDisposed();
             ValidateBufferArgs(buf, off, len);
             if (!IsOpen)
-                throw new InvalidOperationException("Transport is not open.");
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             int got = readBuffer.Read(buf, off, len);
             if (got > 0)
             {
@@ -102,7 +102,7 @@ namespace Thrift.Transport
             CheckNotDisposed();
             ValidateBufferArgs(buf, off, len);
             if (!IsOpen)
-                throw new InvalidOperationException("Transport is not open.");
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             if (writeBuffer.Length + (long)len > (long)int.MaxValue)
                 Flush();
             writeBuffer.Write(buf, off, len);
@@ -112,7 +112,7 @@ namespace Thrift.Transport
         {
             CheckNotDisposed();
             if (!IsOpen)
-                throw new InvalidOperationException("Transport is not open.");
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             byte[] buf = writeBuffer.GetBuffer();
             int len = (int)writeBuffer.Length;
             int data_len = len - HeaderSize;
