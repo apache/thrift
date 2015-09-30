@@ -87,7 +87,7 @@ Thrift.dll: $(THRIFTCODE)
 clean-local:
 	$(RM) Thrift.dll
 
-precross:
+precross: all-local
 	$(MAKE) -C test/ThriftTest precross
 
 # run csharp tests?
