@@ -125,7 +125,7 @@ class SimpleClientTest < Test::Unit::TestCase
 
   def test_binary
     p 'test_binary'
-    val = [42, 0, 142, 242]
+    val = (0...256).reverse_each.to_a
     ret = @client.testBinary(val.pack('C*'))
     assert_equal(val, ret.bytes.to_a)
   end

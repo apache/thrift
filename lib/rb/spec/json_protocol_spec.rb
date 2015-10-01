@@ -57,7 +57,7 @@ describe 'JsonProtocol' do
 
     it "should write json base64" do
       @prot.write_json_base64("this is a base64 string")
-      @trans.read(@trans.available).should == "\"\"dGhpcyBpcyBhIGJhc2U2NCBzdHJpbmc=\\n\"\""
+      @trans.read(@trans.available).should == "\"dGhpcyBpcyBhIGJhc2U2NCBzdHJpbmc=\""
     end
 
     it "should write json integer" do
@@ -244,7 +244,12 @@ describe 'JsonProtocol' do
 
     it "should write binary" do
       @prot.write_binary("this is a base64 string")
-      @trans.read(@trans.available).should == "\"\"dGhpcyBpcyBhIGJhc2U2NCBzdHJpbmc=\\n\"\""
+      @trans.read(@trans.available).should == "\"dGhpcyBpcyBhIGJhc2U2NCBzdHJpbmc=\""
+    end
+
+    it "should write long binary" do
+      @prot.write_binary((0...256).to_a.pack('C*'))
+      @trans.read(@trans.available).should == "\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==\""
     end
 
     it "should get type name for type id" do
@@ -502,6 +507,11 @@ describe 'JsonProtocol' do
     it "should read binary" do
       @trans.write("\"dGhpcyBpcyBhIHRlc3Qgc3RyaW5n\"")
       @prot.read_binary.should == "this is a test string"
+    end
+
+    it "should read long binary" do
+      @trans.write("\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==\"")
+      @prot.read_binary.bytes.to_a.should == (0...256).to_a
     end
   end
 

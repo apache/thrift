@@ -32,6 +32,8 @@ class SimpleHandler
    :testEnum, :testTypedef, :testMultiException].each do |meth|
 
     define_method(meth) do |thing|
+      p meth
+      p thing
       thing
     end
 
