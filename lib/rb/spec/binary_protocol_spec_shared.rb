@@ -423,9 +423,9 @@ shared_examples_for 'a binary protocol' do
     clientproto = protocol_class.new(clientside)
     serverproto = protocol_class.new(serverside)
 
-    processor = Srv::Processor.new(SrvHandler.new)
+    processor = Thrift::Test::Srv::Processor.new(SrvHandler.new)
 
-    client = Srv::Client.new(clientproto, clientproto)
+    client = Thrift::Test::Srv::Client.new(clientproto, clientproto)
 
     # first block
     firstblock.call(client)
