@@ -57,12 +57,10 @@ module Thrift
     end
 
     def write_error(err, oprot, name, seqid)
-      p 'write_error'
       oprot.write_message_begin(name, MessageTypes::EXCEPTION, seqid)
       err.write(oprot)
       oprot.write_message_end
       oprot.trans.flush
-      p 'write_error end'
     end
   end
 end

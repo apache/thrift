@@ -96,8 +96,6 @@
   "go-nodejs_json_framed-ip-ssl",
   "go-perl_binary_buffered-ip-ssl",
   "go-perl_binary_framed-ip-ssl",
-  "go-rb_json_buffered-ip",
-  "go-rb_json_framed-ip",
   "hs-cpp_json_buffered-ip",
   "hs-cpp_json_framed-ip",
   "hs-csharp_binary_framed-ip",
@@ -220,15 +218,9 @@
   "py-rb_json_framed-ip",
   "rb-cpp_json_buffered-ip",
   "rb-cpp_json_framed-ip",
-  "rb-csharp_json_buffered-ip",
-  "rb-csharp_json_framed-ip",
-  "rb-hs_json_buffered-ip",
-  "rb-hs_json_framed-ip",
   "rb-java_json_buffered-ip",
   "rb-java_json_framed-fastframed-ip",
   "rb-java_json_framed-ip",
   "rb-nodejs_json_buffered-ip",
-  "rb-nodejs_json_framed-ip",
-  "rb-rb_json_buffered-ip",
-  "rb-rb_json_framed-ip"
+  "rb-nodejs_json_framed-ip"
 ]

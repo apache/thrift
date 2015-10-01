@@ -54,7 +54,7 @@ require 'thrift_spec_types'
 require 'nonblocking_service'
 
 module Fixtures
-  COMPACT_PROTOCOL_TEST_STRUCT = COMPACT_TEST.dup
+  COMPACT_PROTOCOL_TEST_STRUCT = Thrift::Test::COMPACT_TEST.dup
   COMPACT_PROTOCOL_TEST_STRUCT.a_binary = [0,1,2,3,4,5,6,7,8].pack('c*')
   COMPACT_PROTOCOL_TEST_STRUCT.set_byte_map = nil
   COMPACT_PROTOCOL_TEST_STRUCT.map_byte_map = nil
