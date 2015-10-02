@@ -19,9 +19,9 @@ name: thrift
 version: 1.0.0-dev
 description: >
   A Dart library for Apache Thrift
-author: Mark Erickson <mark.erickson@workiva.com>
-homepage: https://github.com/apache/thrift
-documentation: https://github.com/apache/thrift
+author: Apache Thrift Developers <dev@thrift.apache.org>
+homepage: http://thrift.apache.org
+documentation: http://thrift.apache.org
 environment:
   sdk: ">=1.12.0 <2.0.0"
 dependencies:
