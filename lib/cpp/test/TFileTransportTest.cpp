@@ -30,6 +30,14 @@
 
 #include <thrift/transport/TFileTransport.h>
 
+#ifdef __MINGW32__
+  #include <io.h>
+  #include <unistd.h>
+  #include <sys/types.h>
+  #include <fcntl.h>
+  #include <sys\stat.h>
+#endif
+  
 using namespace apache::thrift::transport;
 
 /**************************************************************************
@@ -91,19 +99,35 @@ private:
 class TempFile {
 public:
   TempFile(const char* directory, const char* prefix) {
+  #ifdef __MINGW32__
+    size_t path_len = strlen(prefix) + 8;
+    path_ = new char[path_len];
+    snprintf(path_, path_len, "%sXXXXXX", prefix);
+    if (_mktemp_s(path_,path_len) == 0) {
+      fd_ = open(path_,O_CREAT | O_RDWR | O_BINARY,S_IREAD | S_IWRITE);
+      if (fd_ < 0) {
+        throw apache::thrift::TException("_mktemp_s() failed");
+      }
+    } else {
+      throw apache::thrift::TException("_mktemp_s() failed");
+    }
+  #else
     size_t path_len = strlen(directory) + strlen(prefix) + 8;
     path_ = new char[path_len];
     snprintf(path_, path_len, "%s/%sXXXXXX", directory, prefix);
-
     fd_ = mkstemp(path_);
     if (fd_ < 0) {
       throw apache::thrift::TException("mkstemp() failed");
     }
+  #endif
   }
 
   ~TempFile() {
     unlink();
     close();
+  #ifdef __MINGW32__
+    remove(path_);
+  #endif
   }
 
   const char* getPath() const { return path_; }
@@ -367,10 +391,21 @@ void parse_args(int argc, char* argv[]) {
   }
 }
 
-boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
+static int myArgc = 0;
+static char **myArgv = NULL;
+
+bool init_unit_test_suite() {
   boost::unit_test::framework::master_test_suite().p_name.value = "TFileTransportTest";
 
   // Parse arguments
-  parse_args(argc, argv);
-  return NULL;
+  parse_args(myArgc,myArgv);
+  return true;
+}
+
+int
+main( int argc, char* argv[] )
+{
+  myArgc = argc;
+  myArgv = argv;
+  return ::boost::unit_test::unit_test_main(&init_unit_test_suite,argc,argv);
 }

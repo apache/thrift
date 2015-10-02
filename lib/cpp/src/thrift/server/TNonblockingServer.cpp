@@ -1004,6 +1004,10 @@ void TNonblockingServer::handleEvent(THRIFT_SOCKET fd, short which) {
  * Creates a socket to listen on and binds it to the local port.
  */
 void TNonblockingServer::createAndListenOnSocket() {
+#ifdef _WIN32
+  TWinsockSingleton::create();
+#endif // _WIN32
+
   THRIFT_SOCKET s;
 
   struct addrinfo hints, *res, *res0;
@@ -1109,10 +1113,17 @@ void TNonblockingServer::listenSocket(THRIFT_SOCKET s) {
   serverSocket_ = s;
 
   if (!port_) {
-    sockaddr_in addr;
-    socklen_t size = sizeof(addr);
-    if (!getsockname(serverSocket_, reinterpret_cast<sockaddr*>(&addr), &size)) {
-      listenPort_ = ntohs(addr.sin_port);
+    #ifdef _WIN32
+      struct sockaddr_storage addr;
+      struct sockaddr_in *pAddr = (sockaddr_in *) &addr;
+      socklen_t size = sizeof(addr);
+    #else
+      struct sockaddr_in addr;
+      struct sockaddr_in *pAddr = &addr;
+      socklen_t size = sizeof(addr);
+    #endif
+    if (!getsockname(serverSocket_, reinterpret_cast<sockaddr*>(pAddr), &size)) {
+      listenPort_ = ntohs(pAddr->sin_port);
     } else {
       GlobalOutput.perror("TNonblocking: failed to get listen port: ", THRIFT_GET_SOCKET_ERROR);
     }
