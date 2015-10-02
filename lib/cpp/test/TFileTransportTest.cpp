@@ -391,6 +391,7 @@ void parse_args(int argc, char* argv[]) {
   }
 }
 
+#ifdef BOOST_TEST_DYN_LINK
 static int myArgc = 0;
 static char **myArgv = NULL;
 
@@ -409,3 +410,12 @@ main( int argc, char* argv[] )
   myArgv = argv;
   return ::boost::unit_test::unit_test_main(&init_unit_test_suite,argc,argv);
 }
+#else
+boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
+  boost::unit_test::framework::master_test_suite().p_name.value = "TFileTransportTest";
+
+  // Parse arguments
+  parse_args(argc, argv);
+  return NULL;
+}
+#endif
