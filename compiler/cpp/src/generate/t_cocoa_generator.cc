@@ -2576,7 +2576,7 @@ void t_cocoa_generator::generate_serialize_list_element(ofstream& out,
  *
  * @param ttype The type
  * @param class_ref Do we want a Class reference istead of a type reference?
- * @return Java type name, i.e. HashMap<Key,Value>
+ * @return Objective-C type name, i.e. NSDictionary<Key,Value> *
  */
 string t_cocoa_generator::type_name(t_type* ttype, bool class_ref, bool needs_mutable) {
   if (ttype->is_typedef()) {
@@ -3228,4 +3228,6 @@ THRIFT_REGISTER_GENERATOR(
     "    log_unexpected:  Log every time an unexpected field ID or type is encountered.\n"
     "    validate_required:\n"
     "                     Throws exception if any required field is not set.\n"
-    "    async_clients:   Generate clients which invoke asynchronously via block syntax.\n")
+    "    async_clients:   Generate clients which invoke asynchronously via block syntax.\n"
+    "    pods:            Generate imports in Cocopods framework format.\n"
+    "    promise_kit:     Generate clients which invoke asynchronously via promises.\n")
