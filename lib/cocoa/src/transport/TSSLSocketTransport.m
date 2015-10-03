@@ -182,6 +182,7 @@
 
       CFArrayRef policies;
       if (SecTrustCopyPolicies(trust, &policies) != errSecSuccess) {
+        CFRelease(policy);
         break;
       }
 
