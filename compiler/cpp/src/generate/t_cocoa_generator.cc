@@ -368,6 +368,27 @@ void t_cocoa_generator::close_generator() {
  * @param ttypedef The type definition
  */
 void t_cocoa_generator::generate_typedef(t_typedef* ttypedef) {
+  if (ttypedef->get_type()->is_map()) {
+    t_map *map = (t_map *)ttypedef->get_type();
+    if (map->get_key_type()->is_struct()) {
+      f_header_ << indent() << "@class " << type_name(map->get_key_type(), true) << ";" << endl;
+    }
+    if (map->get_val_type()->is_struct()) {
+      f_header_ << indent() << "@class " << type_name(map->get_val_type(), true) << ";" << endl;
+    }
+  }
+  else if (ttypedef->get_type()->is_set()) {
+    t_set *set = (t_set *)ttypedef->get_type();
+    if (set->get_elem_type()->is_struct()) {
+      f_header_ << indent() << "@class " << type_name(set->get_elem_type(), true) << ";" << endl;
+    }
+  }
+  else if (ttypedef->get_type()->is_list()) {
+    t_list *list = (t_list *)ttypedef->get_type();
+    if (list->get_elem_type()->is_struct()) {
+      f_header_ << indent() << "@class " << type_name(list->get_elem_type(), true) << ";" << endl;
+    }
+  }
   f_header_ << indent() << "typedef " << type_name(ttypedef->get_type()) << " " << cocoa_prefix_
             << ttypedef->get_symbolic() << ";" << endl << endl;
   if (ttypedef->get_type()->is_container()) {
@@ -2570,11 +2591,17 @@ string t_cocoa_generator::type_name(t_type* ttype, bool class_ref, bool needs_mu
   } else if (ttype->is_enum()) {
     return cocoa_prefix_ + ttype->get_name();
   } else if (ttype->is_map()) {
+    t_map *map = (t_map *)ttype;
     result = needs_mutable ? "NSMutableDictionary" : "NSDictionary";
+    result += "<" + type_name(map->get_key_type()) + ", " + type_name(map->get_val_type()) + ">";
   } else if (ttype->is_set()) {
+    t_set *set = (t_set *)ttype;
     result = needs_mutable ? "NSMutableSet" : "NSSet";
+    result += "<" + type_name(set->get_elem_type()) + ">";
   } else if (ttype->is_list()) {
+    t_list *list = (t_list *)ttype;
     result = needs_mutable ? "NSMutableArray" : "NSArray";
+    result += "<" + type_name(list->get_elem_type()) + ">";
   } else {
     // Check for prefix
     t_program* program = ttype->get_program();
