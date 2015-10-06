@@ -17,6 +17,12 @@
  * under the License.
  */
 
+#import <Foundation/Foundation.h>
+
+
+NS_ASSUME_NONNULL_BEGIN
+
+
 @protocol TTransport <NSObject>
 
 /**
@@ -28,12 +34,15 @@
  * @return YES if succeeded, NO if failed
  * @throws TTransportError if there was an error reading data
  */
--(BOOL) readAll:(UInt8 *)buf offset:(UInt32)off length:(UInt32)len error:(NSError **)error;
+-(BOOL) readAll:(UInt8 *)buf offset:(UInt32)off length:(UInt32)len error:(NSError *__autoreleasing *)error;
 
--(UInt32) readAvail:(UInt8 *)buf offset:(UInt32)off maxLength:(UInt32)maxLen error:(NSError **)error;
+-(UInt32) readAvail:(UInt8 *)buf offset:(UInt32)off maxLength:(UInt32)maxLen error:(NSError *__autoreleasing *)error;
 
--(BOOL) write:(const UInt8 *)data offset:(UInt32)offset length:(UInt32)length error:(NSError **)error;
+-(BOOL) write:(const UInt8 *)data offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error;
 
--(BOOL) flush:(NSError **)error;
+-(BOOL) flush:(NSError *__autoreleasing *)error;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

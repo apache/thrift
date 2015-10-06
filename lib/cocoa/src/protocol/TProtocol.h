@@ -22,6 +22,9 @@
 #import "TTransport.h"
 
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 typedef NS_ENUM (int, TMessageType) {
   TMessageTypeCALL = 1,
   TMessageTypeREPLY = 2,
@@ -50,110 +53,112 @@ typedef NS_ENUM (int, TType) {
 
 -(id <TTransport>) transport;
 
--(BOOL) readMessageBeginReturningName:(NSString **)name
-                                 type:(SInt32 *)type
-                           sequenceID:(SInt32 *)sequenceID
-                                error:(NSError **)error;
--(BOOL) readMessageEnd:(NSError **)error;
+-(BOOL) readMessageBeginReturningName:(NSString *__nullable __autoreleasing *__nullable)name
+                                 type:(nullable SInt32 *)type
+                           sequenceID:(nullable SInt32 *)sequenceID
+                                error:(NSError *__autoreleasing *)error;
+-(BOOL) readMessageEnd:(NSError *__autoreleasing *)error;
 
--(BOOL) readStructBeginReturningName:(NSString **)name
-                               error:(NSError **)error;
--(BOOL) readStructEnd:(NSError **)error;
+-(BOOL) readStructBeginReturningName:(NSString *__nullable __autoreleasing *__nullable)name
+                               error:(NSError *__autoreleasing *)error;
+-(BOOL) readStructEnd:(NSError *__autoreleasing *)error;
 
--(BOOL) readFieldBeginReturningName:(NSString **)name
+-(BOOL) readFieldBeginReturningName:(NSString *__nullable __autoreleasing *__nullable)name
                                type:(SInt32 *)fieldType
-                            fieldID:(SInt32 *)fieldID
-                              error:(NSError **)error;
--(BOOL) readFieldEnd:(NSError **)error;
+                            fieldID:(nullable SInt32 *)fieldID
+                              error:(NSError *__autoreleasing *)error;
+-(BOOL) readFieldEnd:(NSError *__autoreleasing *)error;
 
--(BOOL) readString:(NSString **)value error:(NSError **)error;
+-(BOOL) readString:(NSString *__nonnull __autoreleasing *__nonnull)value error:(NSError **)error;
 
--(BOOL) readBool:(BOOL *)value error:(NSError **)error;
+-(BOOL) readBool:(BOOL *)value error:(NSError *__autoreleasing *)error;
 
--(BOOL) readByte:(UInt8 *)value error:(NSError **)error;
+-(BOOL) readByte:(UInt8 *)value error:(NSError *__autoreleasing *)error;
 
--(BOOL) readI16:(SInt16 *)value error:(NSError **)error;
+-(BOOL) readI16:(SInt16 *)value error:(NSError *__autoreleasing *)error;
 
--(BOOL) readI32:(SInt32 *)value error:(NSError **)error;
+-(BOOL) readI32:(SInt32 *)value error:(NSError *__autoreleasing *)error;
 
--(BOOL) readI64:(SInt64 *)value error:(NSError **)error;
+-(BOOL) readI64:(SInt64 *)value error:(NSError *__autoreleasing *)error;
 
--(BOOL) readDouble:(double *)value error:(NSError **)error;
+-(BOOL) readDouble:(double *)value error:(NSError *__autoreleasing *)error;
 
--(BOOL) readBinary:(NSData **)value error:(NSError **)error;
+-(BOOL) readBinary:(NSData *__nonnull __autoreleasing *__nonnull)value error:(NSError **)error;
 
--(BOOL) readMapBeginReturningKeyType:(SInt32 *)keyType
-                           valueType:(SInt32 *)valueType
+-(BOOL) readMapBeginReturningKeyType:(nullable SInt32 *)keyType
+                           valueType:(nullable SInt32 *)valueType
                                 size:(SInt32 *)size
-                               error:(NSError **)error;
--(BOOL) readMapEnd:(NSError **)error;
+                               error:(NSError *__autoreleasing *)error;
+-(BOOL) readMapEnd:(NSError *__autoreleasing *)error;
 
 
--(BOOL) readSetBeginReturningElementType:(SInt32 *)elementType
+-(BOOL) readSetBeginReturningElementType:(nullable SInt32 *)elementType
                                     size:(SInt32 *)size
-                                   error:(NSError **)error;
--(BOOL) readSetEnd:(NSError **)error;
+                                   error:(NSError *__autoreleasing *)error;
+-(BOOL) readSetEnd:(NSError *__autoreleasing *)error;
 
 
--(BOOL) readListBeginReturningElementType:(SInt32 *)elementType
+-(BOOL) readListBeginReturningElementType:(nullable SInt32 *)elementType
                                      size:(SInt32 *)size
-                                    error:(NSError **)error;
--(BOOL) readListEnd:(NSError **)error;
+                                    error:(NSError *__autoreleasing *)error;
+-(BOOL) readListEnd:(NSError *__autoreleasing *)error;
 
 
 -(BOOL) writeMessageBeginWithName:(NSString *)name
                              type:(SInt32)messageType
                        sequenceID:(SInt32)sequenceID
-                            error:(NSError **)error;
--(BOOL) writeMessageEnd:(NSError **)error;
+                            error:(NSError *__autoreleasing *)error;
+-(BOOL) writeMessageEnd:(NSError *__autoreleasing *)error;
 
 -(BOOL) writeStructBeginWithName:(NSString *)name error:(NSError **)error;
--(BOOL) writeStructEnd:(NSError **)error;
+-(BOOL) writeStructEnd:(NSError *__autoreleasing *)error;
 
 -(BOOL) writeFieldBeginWithName:(NSString *)name
                            type:(SInt32)fieldType
                         fieldID:(SInt32)fieldID
-                          error:(NSError **)error;
+                          error:(NSError *__autoreleasing *)error;
 
--(BOOL) writeI32:(SInt32)value error:(NSError **)error;
+-(BOOL) writeI32:(SInt32)value error:(NSError *__autoreleasing *)error;
 
--(BOOL) writeI64:(SInt64)value error:(NSError **)error;
+-(BOOL) writeI64:(SInt64)value error:(NSError *__autoreleasing *)error;
 
--(BOOL) writeI16:(short)value error:(NSError **)error;
+-(BOOL) writeI16:(short)value error:(NSError *__autoreleasing *)error;
 
--(BOOL) writeByte:(UInt8)value error:(NSError **)error;
+-(BOOL) writeByte:(UInt8)value error:(NSError *__autoreleasing *)error;
 
--(BOOL) writeString:(NSString *)value error:(NSError **)error;
+-(BOOL) writeString:(NSString *)value error:(NSError *__autoreleasing *)error;
 
--(BOOL) writeDouble:(double)value error:(NSError **)error;
+-(BOOL) writeDouble:(double)value error:(NSError *__autoreleasing *)error;
 
--(BOOL) writeBool:(BOOL)value error:(NSError **)error;
+-(BOOL) writeBool:(BOOL)value error:(NSError *__autoreleasing *)error;
 
--(BOOL) writeBinary:(NSData *)data error:(NSError **)error;
+-(BOOL) writeBinary:(NSData *)data error:(NSError *__autoreleasing *)error;
 
--(BOOL) writeFieldStop:(NSError **)error;
+-(BOOL) writeFieldStop:(NSError *__autoreleasing *)error;
 
--(BOOL) writeFieldEnd:(NSError **)error;
+-(BOOL) writeFieldEnd:(NSError *__autoreleasing *)error;
 
 -(BOOL) writeMapBeginWithKeyType:(SInt32)keyType
                        valueType:(SInt32)valueType
                             size:(SInt32)size
-                           error:(NSError **)error;
--(BOOL) writeMapEnd:(NSError **)error;
+                           error:(NSError *__autoreleasing *)error;
+-(BOOL) writeMapEnd:(NSError *__autoreleasing *)error;
 
 
 -(BOOL) writeSetBeginWithElementType:(SInt32)elementType
                                 size:(SInt32)size
-                               error:(NSError **)error;
--(BOOL) writeSetEnd:(NSError **)error;
+                               error:(NSError *__autoreleasing *)error;
+-(BOOL) writeSetEnd:(NSError *__autoreleasing *)error;
 
 
 -(BOOL) writeListBeginWithElementType:(SInt32)elementType
                                  size:(SInt32)size
-                                error:(NSError **)error;
+                                error:(NSError *__autoreleasing *)error;
 
--(BOOL) writeListEnd:(NSError **)error;
+-(BOOL) writeListEnd:(NSError *__autoreleasing *)error;
 
 
 @end
 
+
+NS_ASSUME_NONNULL_END

@@ -20,6 +20,9 @@
 #import "TTransport.h"
 
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 @protocol TAsyncTransport;
 
 
@@ -31,7 +34,7 @@
 
 
 typedef void (^TAsyncCompletionBlock)();
-typedef void (^TAsyncFailureBlock)(NSError *);
+typedef void (^TAsyncFailureBlock)(NSError * __nonnull);
 
 
 @protocol TAsyncTransport <TTransport>
@@ -39,3 +42,6 @@ typedef void (^TAsyncFailureBlock)(NSError *);
 -(void) flushWithCompletion:(TAsyncCompletionBlock)completed failure:(TAsyncFailureBlock)failure;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

@@ -22,7 +22,7 @@
 
 extern NSString *TProtocolErrorDomain;
 
-typedef NS_OPTIONS (int, TProtocolError) {
+typedef NS_ENUM (int, TProtocolError) {
   TProtocolErrorNoMemory                  = 10000,
   TProtocolErrorBadMessageVersion         = 10001,
   TProtocolErrorMissingMessageVersion     = 10002,
@@ -32,6 +32,7 @@ typedef NS_OPTIONS (int, TProtocolError) {
   TProtocolErrorProtocolVersionMismatch   = 10006,
   TProtocolErrorUnknown                   = 10007,
   TProtocolErrorTransportFailed           = 10008,
+  TProtocolErrorUnexpectedType            = 10009,
 };
 
 
