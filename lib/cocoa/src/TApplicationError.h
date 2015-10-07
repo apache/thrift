@@ -46,6 +46,8 @@ extern NSString *TApplicationErrorMethodKey;
 @property (readonly, copy) NSString *name;
 @property (readonly, copy) NSString *reason;
 
++(instancetype) errorWithType:(TApplicationError)type reason:(NSString *)reason;
+
 +(instancetype) read:(id<TProtocol>)protocol;
 
 -(BOOL) write:(id<TProtocol>)outProtocol error:(NSError *__autoreleasing *)error;

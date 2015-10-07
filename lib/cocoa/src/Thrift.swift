@@ -273,10 +273,8 @@ public extension TProtocol {
     let (_, type, _) = try readMessageBegin();
     
     if type == .EXCEPTION {
-
-      // TODO: read exception
-      throw NSError(domain: TApplicationErrorDomain, code: 0, userInfo: nil)
-      
+      let x = try readException()
+      throw x
     }
     
     return
@@ -291,6 +289,48 @@ public extension TProtocol {
         userInfo: [TProtocolErrorFieldNameKey: name])
     }
     
+  }
+  
+  public func readException() throws -> ErrorType {
+    
+    var reason : String?
+    var type = TApplicationError.Unknown
+    
+    try readStructBegin()
+    
+    fields: while (true) {
+      
+      let (_, fieldType, fieldID) = try readFieldBegin()
+      
+      switch (fieldID, fieldType) {
+      case (_, .STOP):
+        break fields
+        
+      case (1, .STRING):
+        reason = try readValue() as String
+      
+      case (2, .I32):
+        let typeVal = try readValue() as Int32
+        if let tmp = TApplicationError(rawValue: typeVal) {
+          type = tmp
+        }
+        
+      case let (_, unknownType):
+        try skipType(unknownType)
+      }
+      
+      try readFieldEnd()
+    }
+    
+    try readStructEnd()
+
+    return NSError(type:type, reason:reason ?? "")
+  }
+  
+  public func writeExceptionForMessageName(name: String, sequenceID: Int, ex: NSError) throws {
+    try writeMessageBeginWithName(name, type: .EXCEPTION, sequenceID: sequenceID)
+    try ex.write(self)
+    try writeMessageEnd()
   }
   
   public func skipType(type: TType) throws {

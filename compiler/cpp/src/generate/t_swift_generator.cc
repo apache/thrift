@@ -1639,6 +1639,7 @@ void t_swift_generator::generate_swift_service_server_implementation(ofstream& o
       
       indent(out) << "catch let error";
       block_open(out);
+      out << indent() << "throw error" << endl;
       block_close(out);
       
       out << endl;
@@ -1669,17 +1670,28 @@ void t_swift_generator::generate_swift_service_server_implementation(ofstream& o
       << endl
       << indent() << "if let processorHandler = " << name << ".processorHandlers[messageName]";
   block_open(out);
+  out << indent() << "do";
+  block_open(out);
   out << indent() << "try processorHandler(sequenceID, inProtocol, outProtocol, service)" << endl;
+  block_close(out);
+  out << indent() << "catch let error as NSError";
+  block_open(out);
+  out << indent() << "try outProtocol.writeExceptionForMessageName(messageName, sequenceID: sequenceID, ex: error)" << endl;
+  block_close(out);
   block_close(out);
   out << indent() << "else";
   block_open(out);
   out << indent() << "try inProtocol.skipType(.STRUCT)" << endl
       << indent() << "try inProtocol.readMessageEnd()" << endl
-      << indent() << "throw NSError(" << endl;
+      << indent() << "try outProtocol.writeExceptionForMessageName(messageName," << endl;
+  indent_up();
+  out << indent() << "sequenceID: sequenceID," << endl
+      << indent() << "ex: NSError(" << endl;
   indent_up();
   out << indent() << "domain: TApplicationErrorDomain, " << endl
       << indent() << "code: Int(TApplicationError.UnknownMethod.rawValue), " << endl
-      << indent() << "userInfo: [TApplicationErrorMethodKey: messageName])" << endl;
+      << indent() << "userInfo: [TApplicationErrorMethodKey: messageName]))" << endl;
+  indent_down();
   indent_down();
   block_close(out);
   
