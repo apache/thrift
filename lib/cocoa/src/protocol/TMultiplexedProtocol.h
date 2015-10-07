@@ -21,6 +21,8 @@
 
 #import "TProtocolDecorator.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 
 extern NSString *TMultiplexedProtocolSeperator;
 
@@ -31,3 +33,6 @@ extern NSString *TMultiplexedProtocolSeperator;
            serviceName:(NSString *)name;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

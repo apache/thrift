@@ -21,6 +21,8 @@
 #import "TTransport.h"
 #import "TProtocolFactory.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 
 @interface TBinaryProtocol : NSObject <TProtocol>
 
@@ -42,3 +44,6 @@
 -(TBinaryProtocol *) newProtocolOnTransport:(id <TTransport>)transport;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

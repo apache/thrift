@@ -27,6 +27,9 @@
 #import <CFNetwork/CFNetwork.h>
 #endif
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 extern NSString *const TSocketServerClientConnectionFinished;
 extern NSString *const TSocketServerProcessorKey;
 extern NSString *const TSockerServerTransportKey;
@@ -39,3 +42,6 @@ extern NSString *const TSockerServerTransportKey;
             processorFactory:(id <TProcessorFactory>)processorFactory;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

@@ -22,6 +22,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+
 @protocol TProcessor <NSObject>
 
 -(BOOL) processOnInputProtocol:(id <TProtocol>)inProtocol
@@ -29,5 +30,6 @@ NS_ASSUME_NONNULL_BEGIN
                          error:(NSError **)error;
 
 @end
+
 
 NS_ASSUME_NONNULL_END

@@ -20,6 +20,8 @@
 #import <Foundation/Foundation.h>
 #import "TNSStreamTransport.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 
 @interface TSSLSocketTransport : TNSStreamTransport <NSStreamDelegate>
 
@@ -30,3 +32,6 @@
 -(BOOL) isOpen;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

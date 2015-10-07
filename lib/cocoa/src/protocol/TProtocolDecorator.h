@@ -21,9 +21,14 @@
 
 #import "TProtocol.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 
 @interface TProtocolDecorator : NSObject <TProtocol>
 
 -(id) initWithProtocol:(id <TProtocol>)protocol;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

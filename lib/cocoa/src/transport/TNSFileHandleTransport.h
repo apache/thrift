@@ -21,6 +21,9 @@
 #import <Foundation/Foundation.h>
 #import "TTransport.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 @interface TNSFileHandleTransport : NSObject <TTransport>
 
 -(id) initWithFileHandle:(NSFileHandle *)fileHandle;
@@ -30,3 +33,6 @@
 
 
 @end
+
+
+NS_ASSUME_NONNULL_END

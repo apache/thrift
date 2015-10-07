@@ -20,16 +20,20 @@
 #import <Foundation/Foundation.h>
 #import "TTransport.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 
 @interface THTTPTransport : NSObject <TTransport>
 
 -(id) initWithURL:(NSURL *)aURL;
 
 -(id) initWithURL:(NSURL *)aURL
-        userAgent:(NSString *)userAgent
+        userAgent:(nullable NSString *)userAgent
           timeout:(int)timeout;
 
 -(void) setURL:(NSURL *)aURL;
 
 @end
 
+
+NS_ASSUME_NONNULL_END

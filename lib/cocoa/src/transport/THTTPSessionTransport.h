@@ -20,9 +20,10 @@
 #import <Foundation/Foundation.h>
 #import "TAsyncTransport.h"
 
+NS_ASSUME_NONNULL_BEGIN
 
 
-typedef NSError *(^THTTPSessionTransportResponseValidateBlock) (NSHTTPURLResponse *response, NSData *responseData);
+typedef NSError *__nullable (^THTTPSessionTransportResponseValidateBlock) (NSHTTPURLResponse *response, NSData *responseData);
 
 
 @interface THTTPSessionTransportFactory : NSObject<TAsyncTransportFactory>
@@ -41,3 +42,6 @@ typedef NSError *(^THTTPSessionTransportResponseValidateBlock) (NSHTTPURLRespons
 @interface THTTPSessionTransport : NSObject <TAsyncTransport>
 
 @end
+
+
+NS_ASSUME_NONNULL_END
