@@ -1585,7 +1585,7 @@ void t_swift_generator::generate_swift_service_server_implementation(ofstream& o
     
     string args_type = function_args_helper_struct_type(tservice, *f_iter);
     
-    out << indent() << "processorHandlers[\"" << tfunction->get_name() << "\"] = { sequenceId, inProtocol, outProtocol, handler in" << endl
+    out << indent() << "processorHandlers[\"" << tfunction->get_name() << "\"] = { sequenceID, inProtocol, outProtocol, handler in" << endl
         << endl;
     
     indent_up();
@@ -1643,7 +1643,11 @@ void t_swift_generator::generate_swift_service_server_implementation(ofstream& o
       
       out << endl;
       
-      indent(out) << "try " << result_type << ".writeValue(result, toProtocol: outProtocol)" << endl;
+      if (!tfunction->is_oneway()) {
+        out << indent() << "try outProtocol.writeMessageBeginWithName(\"" << tfunction->get_name() << "\", type: .REPLY, sequenceID: sequenceID)" << endl
+            << indent() << "try " << result_type << ".writeValue(result, toProtocol: outProtocol)" << endl
+            << indent() << "try outProtocol.writeMessageEnd()" << endl;
+      }
     }
     block_close(out);
     
