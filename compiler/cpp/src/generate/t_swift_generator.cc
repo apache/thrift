@@ -401,7 +401,7 @@ void t_swift_generator::generate_struct(t_struct* tstruct) {
 }
 
 /**
- * Exceptions are structs, but they inherit from NSException
+ * Exceptions are structs, but they conform to ErrorType
  *
  * @param tstruct The struct definition
  */
@@ -613,9 +613,9 @@ void t_swift_generator::generate_swift_struct_implementation(ofstream& out,
   
   if (!is_private && !is_result) {
     generate_swift_struct_printable_extension(out, tstruct);
-    generate_swift_struct_hashable_extension(out, tstruct, is_private);
   }
   
+  generate_swift_struct_hashable_extension(out, tstruct, is_private);
   generate_swift_struct_thrift_extension(out, tstruct, is_result, is_private);
 
   out << endl << endl;
@@ -1681,7 +1681,7 @@ void t_swift_generator::generate_swift_service_server_implementation(ofstream& o
  *
  * @param ttype The type
  * @param class_ref Do we want a Class reference istead of a type reference?
- * @return Swift type name, i.e. NSDictionary<Key,Value> *
+ * @return Swift type name, i.e. Dictionary<Key,Value>
  */
 string t_swift_generator::type_name(t_type* ttype, bool is_optional, bool is_forced) {
   string result;
@@ -1689,13 +1689,13 @@ string t_swift_generator::type_name(t_type* ttype, bool is_optional, bool is_for
     result = base_type_name((t_base_type*)ttype);
   } else if (ttype->is_map()) {
     t_map *map = (t_map *)ttype;
-    result = "Dictionary<" + type_name(map->get_key_type()) + ", " + type_name(map->get_val_type()) + ">";
+    result = "Thrift.Map<" + type_name(map->get_key_type()) + ", " + type_name(map->get_val_type()) + ">";
   } else if (ttype->is_set()) {
     t_set *set = (t_set *)ttype;
-    result = "Set<" + type_name(set->get_elem_type()) + ">";
+    result = "Thrift.Set<" + type_name(set->get_elem_type()) + ">";
   } else if (ttype->is_list()) {
     t_list *list = (t_list *)ttype;
-    result = "Array<" + type_name(list->get_elem_type()) + ">";
+    result = "Thrift.List<" + type_name(list->get_elem_type()) + ">";
   }
   else {
     result = ttype->get_name();
@@ -1725,7 +1725,7 @@ string t_swift_generator::base_type_name(t_base_type* type) {
     return "Void";
   case t_base_type::TYPE_STRING:
     if (type->is_binary()) {
-      return "NSData";
+      return "Binary";
     } else {
       return "String";
     }

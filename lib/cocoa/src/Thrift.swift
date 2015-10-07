@@ -9,7 +9,7 @@
 import Foundation
 
 
-public protocol TSerializable {
+public protocol TSerializable : Hashable {
   
   static var thriftType : TType { get }
 
@@ -67,6 +67,22 @@ extension Int16 : TSerializable {
     try proto.writeI16(value)
   }
 
+}
+
+extension Int : TSerializable {
+
+  public static let thriftType = TType.I32
+  
+  public static func readValueFromProtocol(proto: TProtocol) throws -> Int {
+    var value = Int32()
+    try proto.readI32(&value)
+    return Int(value)
+  }
+  
+  public static func writeValue(value: Int, toProtocol proto: TProtocol) throws {
+    try proto.writeI32(Int32(value))
+  }
+  
 }
 
 extension Int32 : TSerializable {
@@ -241,290 +257,18 @@ public extension TProtocol {
     try writeListBeginWithElementType(elementType.rawValue, size: Int32(size))
   }
   
-  public func readValue<T: TSerializable>() throws -> T {
-    return try T.readValueFromProtocol(self)
-  }
-  
-  public func readValue() throws -> NSData {
-    var value : NSData?
-    try readBinary(&value);
-    return value!
-  }
-  
-  public func readValue<T: TSerializable>() throws -> Array<T> {
-    var vals = [T]()
-    let (elementType, size) = try readListBegin()
-    if elementType != T.thriftType {
-      throw NSError(
-        domain: TProtocolErrorDomain,
-        code: Int(TProtocolError.UnexpectedType.rawValue),
-        userInfo: nil)
-    }
-    for _ in 0..<size {
-      let element : T = try readValue()
-      vals.append(element)
-    }
-    try readListEnd()
-    return vals
-  }
-  
-  public func readValue() throws -> Array<NSData> {
-    var vals = [NSData]()
-    let (elementType, size) = try readListBegin()
-    if elementType != .STRING {
-      throw NSError(
-        domain: TProtocolErrorDomain,
-        code: Int(TProtocolError.UnexpectedType.rawValue),
-        userInfo: nil)
-    }
-    for _ in 0..<size {
-      let element : NSData = try readValue()
-      vals.append(element)
-    }
-    try readListEnd()
-    return vals
-  }
-  
-  public func readValue<T: TSerializable>() throws -> Set<T> {
-    var vals = Set<T>()
-    let (elementType, size) = try readSetBegin()
-    if elementType != T.thriftType {
-      throw NSError(
-        domain: TProtocolErrorDomain,
-        code: Int(TProtocolError.UnexpectedType.rawValue),
-        userInfo: nil)
-    }
-    for _ in 0..<size {
-      let element : T = try readValue()
-      vals.insert(element)
-    }
-    try readSetEnd()
-    return vals
-  }
-  
-  public func readValue() throws -> Set<NSData> {
-    var vals = Set<NSData>()
-    let (elementType, size) = try readSetBegin()
-    if elementType != .STRING {
-      throw NSError(
-        domain: TProtocolErrorDomain,
-        code: Int(TProtocolError.UnexpectedType.rawValue),
-        userInfo: nil)
-    }
-    for _ in 0..<size {
-      let element : NSData = try readValue()
-      vals.insert(element)
-    }
-    try readSetEnd()
-    return vals
-  }
-  
-  public func readValue<K: TSerializable, V: TSerializable>() throws -> Dictionary<K,V> {
-    var vals = Dictionary<K,V>()
-    let (keyType, valueType, size) = try readMapBegin()
-    if keyType != K.thriftType || valueType != V.thriftType {
-      throw NSError(
-        domain: TProtocolErrorDomain,
-        code: Int(TProtocolError.UnexpectedType.rawValue),
-        userInfo: nil)
-    }
-    for _ in 0..<size {
-      let key : K = try readValue()
-      let value : V = try readValue()
-      vals[key] = value
-    }
-    try readMapEnd()
-    return vals
-  }
-  
-  public func readValue<V: TSerializable>() throws -> Dictionary<NSData,V> {
-    var vals = Dictionary<NSData,V>()
-    let (keyType, valueType, size) = try readMapBegin()
-    if keyType != .STRING || valueType != V.thriftType {
-      throw NSError(
-        domain: TProtocolErrorDomain,
-        code: Int(TProtocolError.UnexpectedType.rawValue),
-        userInfo: nil)
-    }
-    for _ in 0..<size {
-      let key : NSData = try readValue()
-      let value : V = try readValue()
-      vals[key] = value
-    }
-    try readMapEnd()
-    return vals
-  }
-  
-  public func readValue<K: TSerializable>() throws -> Dictionary<K,NSData> {
-    var vals = Dictionary<K,NSData>()
-    let (keyType, valueType, size) = try readMapBegin()
-    if keyType != K.thriftType || valueType != .STRING {
-      throw NSError(
-        domain: TProtocolErrorDomain,
-        code: Int(TProtocolError.UnexpectedType.rawValue),
-        userInfo: nil)
-    }
-    for _ in 0..<size {
-      let key : K = try readValue()
-      let value : NSData = try readValue()
-      vals[key] = value
-    }
-    try readMapEnd()
-    return vals
-  }
-  
-  public func readValue() throws -> Dictionary<NSData,NSData> {
-    var vals = Dictionary<NSData,NSData>()
-    let (keyType, valueType, size) = try readMapBegin()
-    if keyType != .STRING || valueType != .STRING {
-      throw NSError(
-        domain: TProtocolErrorDomain,
-        code: Int(TProtocolError.UnexpectedType.rawValue),
-        userInfo: nil)
-    }
-    for _ in 0..<size {
-      let key : NSData = try readValue()
-      let value : NSData = try readValue()
-      vals[key] = value
-    }
-    try readMapEnd()
-    return vals
-  }
-  
-  public func writeValue<T: TSerializable>(value: T) throws {
-    try T.writeValue(value, toProtocol: self)
-  }
-  
-  public func writeValue(value: NSData) throws {
-    try writeBinary(value)
-  }
-  
-  public func writeValue<T: TSerializable>(values: Array<T>) throws {
-    try writeListBeginWithElementType(T.thriftType, size: values.count)
-    for element in values {
-      try writeValue(element)
-    }
-    try writeListEnd()
-  }
-  
-  public func writeValue(values: Array<NSData>) throws {
-    try writeListBeginWithElementType(.STRING, size: values.count)
-    for element in values {
-      try writeValue(element)
-    }
-    try writeListEnd()
-  }
-  
-  public func writeValue<T: TSerializable>(values: Set<T>) throws {
-    try writeSetBeginWithElementType(T.thriftType, size: values.count)
-    for element in values {
-      try writeValue(element)
-    }
-    try writeSetEnd()
-  }
-  
-  public func writeValue(values: Set<NSData>) throws {
-    try writeSetBeginWithElementType(.STRING, size: values.count)
-    for element in values {
-      try writeValue(element)
-    }
-    try writeSetEnd()
-  }
-  
-  public func writeValue<K: TSerializable, V: TSerializable>(values: Dictionary<K, V>) throws {
-    try writeMapBeginWithKeyType(K.thriftType, valueType: V.thriftType, size: values.count)
-    for (key,value) in values {
-      try writeValue(key)
-      try writeValue(value)
-    }
-    try writeMapEnd()
-  }
-  
-  public func writeValue<V: TSerializable>(values: Dictionary<NSData, V>) throws {
-    try writeMapBeginWithKeyType(.STRING, valueType: V.thriftType, size: values.count)
-    for (key,value) in values {
-      try writeValue(key)
-      try writeValue(value)
-    }
-    try writeMapEnd()
-  }
-  
-  public func writeValue<K: TSerializable>(values: Dictionary<K, NSData>) throws {
-    try writeMapBeginWithKeyType(K.thriftType, valueType: .STRING, size: values.count)
-    for (key,value) in values {
-      try writeValue(key)
-      try writeValue(value)
-    }
-    try writeMapEnd()
-  }
-  
-  public func writeValue(values: Dictionary<NSData, NSData>) throws {
-    try writeMapBeginWithKeyType(.STRING, valueType: .STRING, size: values.count)
-    for (key,value) in values {
-      try writeValue(key)
-      try writeValue(value)
-    }
-    try writeMapEnd()
-  }
-  
   public func writeFieldValue<T: TSerializable>(value: T, name: String, type: TType, id: Int32) throws {
     try writeFieldBeginWithName(name, type: type.rawValue, fieldID: id)
     try writeValue(value)
     try writeFieldEnd()
   }
-  
-  public func writeFieldValue<T: TSerializable>(value: Array<T>, name: String, type: TType, id: Int32) throws {
-    try writeFieldBeginWithName(name, type: type.rawValue, fieldID: id)
-    try writeValue(value)
-    try writeFieldEnd()
+
+  public func readValue<T: TSerializable>() throws -> T {
+    return try T.readValueFromProtocol(self)
   }
   
-  public func writeFieldValue<T: TSerializable>(value: Set<T>, name: String, type: TType, id: Int32) throws {
-    try writeFieldBeginWithName(name, type: type.rawValue, fieldID: id)
-    try writeValue(value)
-    try writeFieldEnd()
-  }
-  
-  public func writeFieldValue<K: TSerializable, V: TSerializable>(value: Dictionary<K,V>, name: String, type: TType, id: Int32) throws {
-    try writeFieldBeginWithName(name, type: type.rawValue, fieldID: id)
-    try writeValue(value)
-    try writeFieldEnd()
-  }
-  
-  public func writeFieldValue(value: NSData, name: String, type: TType, id: Int32) throws {
-    try writeFieldBeginWithName(name, type: type.rawValue, fieldID: id)
-    try writeValue(value)
-    try writeFieldEnd()
-  }
-  
-  public func writeFieldValue(value: Array<NSData>, name: String, type: TType, id: Int32) throws {
-    try writeFieldBeginWithName(name, type: type.rawValue, fieldID: id)
-    try writeValue(value)
-    try writeFieldEnd()
-  }
-  
-  public func writeFieldValue(value: Set<NSData>, name: String, type: TType, id: Int32) throws {
-    try writeFieldBeginWithName(name, type: type.rawValue, fieldID: id)
-    try writeValue(value)
-    try writeFieldEnd()
-  }
-  
-  public func writeFieldValue<V: TSerializable>(value: Dictionary<NSData, V>, name: String, type: TType, id: Int32) throws {
-    try writeFieldBeginWithName(name, type: type.rawValue, fieldID: id)
-    try writeValue(value)
-    try writeFieldEnd()
-  }
-  
-  public func writeFieldValue<K: TSerializable>(value: Dictionary<K, NSData>, name: String, type: TType, id: Int32) throws {
-    try writeFieldBeginWithName(name, type: type.rawValue, fieldID: id)
-    try writeValue(value)
-    try writeFieldEnd()
-  }
-  
-  public func writeFieldValue(value: Dictionary<NSData, NSData>, name: String, type: TType, id: Int32) throws {
-    try writeFieldBeginWithName(name, type: type.rawValue, fieldID: id)
-    try writeValue(value)
-    try writeFieldEnd()
+  public func writeValue<T: TSerializable>(value: T) throws {
+    try T.writeValue(value, toProtocol: self)
   }
   
   public func readResultMessageBegin() throws {
@@ -561,61 +305,13 @@ public extension TProtocol {
 
 infix operator ?== {}
 
-public func ?==<T: Equatable>(lhs: T?, rhs: T?) -> Bool {
+public func ?==<T: TSerializable>(lhs: T?, rhs: T?) -> Bool {
   if let l = lhs, r = rhs {
     return l == r
   }
   return lhs == rhs
 }
 
-public func ?==<T: Equatable>(lhs: T, rhs: T) -> Bool {
+public func ?==<T: TSerializable>(lhs: T, rhs: T) -> Bool {
   return lhs == rhs
-}
-
-public func ?==<T: Equatable>(lhs: Array<T>?, rhs: Array<T>?) -> Bool {
-  if let l = lhs, r = rhs {
-    return l == r
-  }
-  return lhs == nil && rhs == nil
-}
-
-public func ?==<T: Equatable>(lhs: Set<T>?, rhs: Set<T>?) -> Bool {
-  if let l = lhs, r = rhs {
-    return l == r
-  }
-  return lhs == nil && rhs == nil
-}
-
-public func ?==<K: Equatable, V: Equatable>(lhs: Dictionary<K,V>?, rhs: Dictionary<K,V>?) -> Bool {
-  if let l = lhs, r = rhs {
-    return l == r
-  }
-  return lhs == nil && rhs == nil
-}
-
-extension Array where Element : Hashable {
-  
-  public var hashValue : Int {
-    let prime = 31
-    var result = 1
-    for element in self {
-      result = prime * result + element.hashValue
-    }
-    return result
-  }
-  
-}
-
-extension Dictionary where Value : Hashable {
-  
-  public var hashValue : Int {
-    let prime = 31
-    var result = 1
-    for (key, value) in self {
-      result = prime * result + key.hashValue
-      result = prime * result + value.hashValue
-    }
-    return result
-  }
-  
 }
