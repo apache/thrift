@@ -150,16 +150,13 @@ extension String : TSerializable {
 }
 
 public protocol TEnum : TSerializable {
+  
 }
 
 public extension TEnum {
   
   public static var thriftType : TType { return TType.I32 }
 
-  public init() {
-    self.init()
-  }
-  
 }
 
 public protocol TStruct : TSerializable {
