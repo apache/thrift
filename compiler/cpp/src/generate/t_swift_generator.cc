@@ -55,9 +55,6 @@ public:
     iter = parsed_options.find("log_unexpected");
     log_unexpected_ = (iter != parsed_options.end());
 
-    iter = parsed_options.find("validate_required");
-    validate_required_ = (iter != parsed_options.end());
-
     iter = parsed_options.find("async_clients");
     async_clients_ = (iter != parsed_options.end());
       
@@ -224,7 +221,6 @@ private:
   ofstream f_impl_;
 
   bool log_unexpected_;
-  bool validate_required_;
   bool async_clients_;
   bool promise_kit_;
   bool debug_descriptions_;
@@ -735,15 +731,11 @@ void t_swift_generator::generate_swift_struct_reader(ofstream& out, t_struct* ts
   out << endl;
   
   // performs various checks (e.g. check that all required fields are set)
-  if (validate_required_ && struct_has_required_fields(tstruct)) {
-    
-    indent(out) << "// Required fields" << endl;
-    
-    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-      indent(out) << "try __proto.validateValue(" << (*f_iter)->get_name() << ", "
-                  << "named: \"" << (*f_iter)->get_name() << "\")" << endl;
-    }
-    
+  indent(out) << "// Required fields" << endl;
+  
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    indent(out) << "try __proto.validateValue(" << (*f_iter)->get_name() << ", "
+                << "named: \"" << (*f_iter)->get_name() << "\")" << endl;
   }
   
   out << endl;
@@ -2079,7 +2071,5 @@ THRIFT_REGISTER_GENERATOR(
     swift,
     "Swift",
     "    log_unexpected:  Log every time an unexpected field ID or type is encountered.\n"
-    "    validate_required:\n"
-    "                     Throws exception if any required field is not set.\n"
     "    async_clients:   Generate clients which invoke asynchronously via block syntax.\n"
     "    promise_kit:     Generate clients which invoke asynchronously via promises.\n")
