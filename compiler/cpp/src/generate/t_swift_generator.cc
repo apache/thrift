@@ -97,8 +97,7 @@ public:
                          bool is_property = false);
   void render_const_value(ostream& out,
                           t_type* type,
-                          t_const_value* value,
-                          bool containerize_it = false);
+                          t_const_value* value);
 
   void generate_swift_struct(ofstream& out,
                              t_struct* tstruct,
@@ -389,9 +388,9 @@ void t_swift_generator::generate_consts(vector<t_const*> consts) {
   vector<t_const*>::iterator c_iter;
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
     t_type* type = (*c_iter)->get_type();
-    const_interface << "public let " << capitalize((*c_iter)->get_name()) << " = ";
+    const_interface << "public let " << capitalize((*c_iter)->get_name()) << " : " << type_name(type) << " = ";
     render_const_value(const_interface, type, (*c_iter)->get_value());
-    const_interface << endl;
+    const_interface << endl << endl;
   }
   
   // this gets spit into the header file in ::close_generator
@@ -1757,101 +1756,12 @@ string t_swift_generator::base_type_name(t_base_type* type) {
 }
 
 /**
- * Prints the value of a constant with the given type. Note that type checking
- * is NOT performed in this function as it is always run beforehand using the
- * validate_types method in main.cc
+ * Renders full constant value (as would be seen after an '=')
+ *
  */
-void t_swift_generator::print_const_value(ostream& out,
-                                          string name,
-                                          t_type* type,
-                                          t_const_value* value,
-                                          bool defval,
-                                          bool is_property) {
-  type = get_true_type(type);
-
-  indent(out);
-  if (type->is_base_type()) {
-    ostringstream v2;
-    render_const_value(v2, type, value);
-    if (defval)
-      out << type_name(type) << " ";
-    out << name << " = " << v2.str() << ";" << endl << endl;
-  } else if (type->is_enum()) {
-    if (defval)
-      out << type_name(type) << " ";
-    out << name << " = ";
-    render_const_value(out, type, value);
-    out << ";" << endl << endl;
-  } else if (type->is_struct() || type->is_xception()) {
-    const vector<t_field*>& fields = ((t_struct*)type)->get_members();
-    vector<t_field*>::const_iterator f_iter;
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
-    if (defval)
-      out << type_name(type) << " ";
-    if (defval || is_property)
-      out << name << " = [" << type_name(type) << " new];"
-          << endl;
-    else
-      out << name << " = [" << type_name(type) << " new];" << endl;
-    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      t_type* field_type = NULL;
-      for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-        if ((*f_iter)->get_name() == v_iter->first->get_string()) {
-          field_type = (*f_iter)->get_type();
-        }
-      }
-      if (field_type == NULL) {
-        throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
-      }
-      render_const_value(out, field_type, v_iter->second);
-    }
-    out << endl;
-  } else if (type->is_map()) {
-    t_type* ktype = ((t_map*)type)->get_key_type();
-    t_type* vtype = ((t_map*)type)->get_val_type();
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
-    if (defval)
-      out << "NSMutableDictionary *"
-          << name << " = [[NSMutableDictionary alloc] initWithCapacity:" << val.size() << "]; "
-          << endl;
-    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      render_const_value(out, ktype, v_iter->first, true);
-      render_const_value(out, vtype, v_iter->second, true);
-    }
-    out << endl;
-  } else if (type->is_list()) {
-    t_type* etype = ((t_list*)type)->get_elem_type();
-    const vector<t_const_value*>& val = value->get_list();
-    vector<t_const_value*>::const_iterator v_iter;
-    if (defval)
-      out << "NSMutableArray *"
-          << name << " = [[NSMutableArray alloc] initWithCapacity:" << val.size() << "];" << endl;
-    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      render_const_value(out, etype, *v_iter, true);
-    }
-    out << endl;
-  } else if (type->is_set()) {
-    t_type* etype = ((t_set*)type)->get_elem_type();
-    const vector<t_const_value*>& val = value->get_list();
-    vector<t_const_value*>::const_iterator v_iter;
-    if (defval)
-      out << "NSMutableSet *"
-          << name << " = [[NSMutableSet alloc] initWithCapacity:" << val.size() << "];" << endl;
-    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      render_const_value(out, etype, *v_iter, true);
-    }
-    out << endl;
-  } else {
-    throw "compiler error: no const of type " + type->get_name();
-  }
-}
-
 void t_swift_generator::render_const_value(ostream& out,
                                              t_type* type,
-                                             t_const_value* value,
-                                             bool containerize_it) {
+                                             t_const_value* value) {
   type = get_true_type(type);
   
   if (type->is_base_type()) {
@@ -1867,28 +1777,121 @@ void t_swift_generator::render_const_value(ostream& out,
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
-      out << value->get_integer();
+      out << type_name(type) << "(" << value->get_integer() << ")";
       break;
     case t_base_type::TYPE_DOUBLE:
+      out << type_name(type) << "(";
       if (value->get_type() == t_const_value::CV_INTEGER) {
         out << value->get_integer();
       } else {
         out << value->get_double();
       }
+      out << ")";
       break;
     default:
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
     out << value->get_identifier();
-  } else {
-    string t = tmp("tmp");
-    print_const_value(out, t, type, value, true, false);
-    out << t;
-  }
+  } else if (type->is_struct() || type->is_xception()) {
+    
+    out << type_name(type) << "(";
+    
+    const vector<t_field*>& fields = ((t_struct*)type)->get_members();
+    vector<t_field*>::const_iterator f_iter;
+    
+    const map<t_const_value*, t_const_value*>& val = value->get_map();
+    map<t_const_value*, t_const_value*>::const_iterator v_iter;
 
-  if (containerize_it) {
-    //return containerize(type, render.str());
+    for (f_iter = fields.begin(); f_iter != fields.end();) {
+      t_field* tfield = *f_iter;
+      t_const_value* value = NULL;
+      for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+        if (tfield->get_name() == v_iter->first->get_string()) {
+          value = v_iter->second;
+        }
+      }
+      
+      if (value) {
+        out << tfield->get_name() << ": ";
+        render_const_value(out, tfield->get_type(), value);
+      }
+      else if (!field_is_optional(tfield)) {
+        throw "constant error: required field " + type->get_name() + "." + tfield->get_name() + " has no value";
+      }
+      
+      if (++f_iter != fields.end()) {
+        out << ", ";
+      }
+    }
+    
+    out << ")";
+    
+  } else if (type->is_map()) {
+    
+    out << "[";
+    
+    t_type* ktype = ((t_map*)type)->get_key_type();
+    t_type* vtype = ((t_map*)type)->get_val_type();
+
+    const map<t_const_value*, t_const_value*>& val = value->get_map();
+    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+
+    for (v_iter = val.begin(); v_iter != val.end();) {
+    
+      render_const_value(out, ktype, v_iter->first);
+      out << ": ";
+      render_const_value(out, vtype, v_iter->second);
+      
+      if (++v_iter != val.end()) {
+        out << ", ";
+      }
+    }
+    
+    out << "]";
+    
+  } else if (type->is_list()) {
+    
+    out << "[";
+    
+    t_type* etype = ((t_list*)type)->get_elem_type();
+    
+    const map<t_const_value*, t_const_value*>& val = value->get_map();
+    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    
+    for (v_iter = val.begin(); v_iter != val.end();) {
+      
+      render_const_value(out, etype, v_iter->first);
+      
+      if (++v_iter != val.end()) {
+        out << ", ";
+      }
+    }
+    
+    out << "]";
+
+  } else if (type->is_set()) {
+
+    out << "[";
+    
+    t_type* etype = ((t_set*)type)->get_elem_type();
+    
+    const map<t_const_value*, t_const_value*>& val = value->get_map();
+    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    
+    for (v_iter = val.begin(); v_iter != val.end();) {
+      
+      render_const_value(out, etype, v_iter->first);
+      
+      if (++v_iter != val.end()) {
+        out << ", ";
+      }
+    }
+    
+    out << "]";
+    
+  } else {
+    throw "compiler error: no const of type " + type->get_name();
   }
 
 }
