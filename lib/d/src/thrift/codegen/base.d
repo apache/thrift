@@ -48,6 +48,7 @@ import std.traits : BaseTypeTuple, isPointer, isSomeFunction, PointerTarget,
 import thrift.base;
 import thrift.internal.codegen;
 import thrift.protocol.base;
+import thrift.util.hashset;
 
 /*
  * Thrift struct/service meta data, which is used to store information from
