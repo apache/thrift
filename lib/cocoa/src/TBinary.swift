@@ -1,5 +1,5 @@
 //
-//  Binary.swift
+//  TBinary.swift
 //  Pods
 //
 //  Created by Kevin Wooten on 10/6/15.
@@ -9,7 +9,7 @@
 import Foundation
 
 
-public struct Binary : TSerializable {
+public struct TBinary : TSerializable {
   
   public static var thriftType : TType { return .STRING }
   
@@ -58,8 +58,8 @@ public struct Binary : TSerializable {
     storage.getBytes(buffer, range: NSRange(range))
   }
   
-  public func subBinaryWithRange(range: Range<Int>) -> Binary {
-    return Binary(data: storage.subdataWithRange(NSRange(range)))
+  public func subBinaryWithRange(range: Range<Int>) -> TBinary {
+    return TBinary(data: storage.subdataWithRange(NSRange(range)))
   }
   
   public func writeToFile(path: String, options: NSDataWritingOptions = []) throws {
@@ -82,19 +82,19 @@ public struct Binary : TSerializable {
     }
   }
   
-  public static func readValueFromProtocol(proto: TProtocol) throws -> Binary {
+  public static func readValueFromProtocol(proto: TProtocol) throws -> TBinary {
     var data : NSData?
     try proto.readBinary(&data)
-    return Binary(data: data!)
+    return TBinary(data: data!)
   }
   
-  public static func writeValue(value: Binary, toProtocol proto: TProtocol) throws {
+  public static func writeValue(value: TBinary, toProtocol proto: TProtocol) throws {
     try proto.writeBinary(value.storage)
   }
   
 }
 
-extension Binary : CustomStringConvertible, CustomDebugStringConvertible {
+extension TBinary : CustomStringConvertible, CustomDebugStringConvertible {
   
   public var description : String {
     return storage.description
@@ -106,6 +106,6 @@ extension Binary : CustomStringConvertible, CustomDebugStringConvertible {
   
 }
 
-public func ==(lhs: Binary, rhs: Binary) -> Bool {
+public func ==(lhs: TBinary, rhs: TBinary) -> Bool {
   return lhs.storage == rhs.storage
 }

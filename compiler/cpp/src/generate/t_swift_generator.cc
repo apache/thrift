@@ -1708,13 +1708,13 @@ string t_swift_generator::type_name(t_type* ttype, bool is_optional, bool is_for
     result = base_type_name((t_base_type*)ttype);
   } else if (ttype->is_map()) {
     t_map *map = (t_map *)ttype;
-    result = "Thrift.Map<" + type_name(map->get_key_type()) + ", " + type_name(map->get_val_type()) + ">";
+    result = "TMap<" + type_name(map->get_key_type()) + ", " + type_name(map->get_val_type()) + ">";
   } else if (ttype->is_set()) {
     t_set *set = (t_set *)ttype;
-    result = "Thrift.Set<" + type_name(set->get_elem_type()) + ">";
+    result = "TSet<" + type_name(set->get_elem_type()) + ">";
   } else if (ttype->is_list()) {
     t_list *list = (t_list *)ttype;
-    result = "Thrift.List<" + type_name(list->get_elem_type()) + ">";
+    result = "TList<" + type_name(list->get_elem_type()) + ">";
   }
   else {
     result = ttype->get_name();
@@ -1744,7 +1744,7 @@ string t_swift_generator::base_type_name(t_base_type* type) {
     return "Void";
   case t_base_type::TYPE_STRING:
     if (type->is_binary()) {
-      return "Binary";
+      return "TBinary";
     } else {
       return "String";
     }

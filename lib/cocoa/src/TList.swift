@@ -1,5 +1,5 @@
 //
-//  List.swift
+//  TList.swift
 //  Pods
 //
 //  Created by Kevin Wooten on 10/6/15.
@@ -10,7 +10,7 @@ import Foundation
 
 
 
-public struct List<Element : TSerializable> : MutableCollectionType, Hashable, ArrayLiteralConvertible, TSerializable {
+public struct TList<Element : TSerializable> : MutableCollectionType, Hashable, ArrayLiteralConvertible, TSerializable {
   
   public static var thriftType : TType { return .LIST }
   
@@ -94,12 +94,12 @@ public struct List<Element : TSerializable> : MutableCollectionType, Hashable, A
     self.storage.reserveCapacity(minimumCapacity)
   }
   
-  public static func readValueFromProtocol(proto: TProtocol) throws -> List {
+  public static func readValueFromProtocol(proto: TProtocol) throws -> TList {
     let (elementType, size) = try proto.readListBegin()
     if elementType != Element.thriftType {
       throw NSError(domain: TProtocolErrorDomain, code: Int(TProtocolError.UnexpectedType.rawValue), userInfo: nil)
     }
-    var list = List()
+    var list = TList()
     for _ in 0..<size {
       let element = try Element.readValueFromProtocol(proto)
       list.storage.append(element)
@@ -108,7 +108,7 @@ public struct List<Element : TSerializable> : MutableCollectionType, Hashable, A
     return list
   }
   
-  public static func writeValue(value: List, toProtocol proto: TProtocol) throws {
+  public static func writeValue(value: TList, toProtocol proto: TProtocol) throws {
     try proto.writeListBeginWithElementType(Element.thriftType, size: value.count)
     for element in value.storage {
       try Element.writeValue(element, toProtocol: proto)
@@ -117,7 +117,7 @@ public struct List<Element : TSerializable> : MutableCollectionType, Hashable, A
   }
 }
 
-extension List : CustomStringConvertible, CustomDebugStringConvertible {
+extension TList : CustomStringConvertible, CustomDebugStringConvertible {
   
   public var description : String {
     return storage.description
@@ -129,6 +129,6 @@ extension List : CustomStringConvertible, CustomDebugStringConvertible {
   
 }
 
-public func ==<Element>(lhs: List<Element>, rhs: List<Element>) -> Bool {
+public func ==<Element>(lhs: TList<Element>, rhs: TList<Element>) -> Bool {
   return lhs.storage == rhs.storage
 }

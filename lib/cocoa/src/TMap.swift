@@ -1,5 +1,5 @@
 //
-//  Map.swift
+//  TMap.swift
 //  Pods
 //
 //  Created by Kevin Wooten on 10/6/15.
@@ -9,7 +9,7 @@
 import Foundation
 
 
-public struct Map<Key : TSerializable, Value : TSerializable> : CollectionType, DictionaryLiteralConvertible, TSerializable {
+public struct TMap<Key : TSerializable, Value : TSerializable> : CollectionType, DictionaryLiteralConvertible, TSerializable {
   
   public static var thriftType : TType { return .MAP }
 
@@ -97,12 +97,12 @@ public struct Map<Key : TSerializable, Value : TSerializable> : CollectionType, 
     return result
   }
   
-  public static func readValueFromProtocol(proto: TProtocol) throws -> Map {
+  public static func readValueFromProtocol(proto: TProtocol) throws -> TMap {
     let (keyType, valueType, size) = try proto.readMapBegin()
     if keyType != Key.thriftType && valueType != Value.thriftType {
       throw NSError(domain: TProtocolErrorDomain, code: Int(TProtocolError.UnexpectedType.rawValue), userInfo: nil)
     }
-    var map = Map()
+    var map = TMap()
     for _ in 0..<size {
       let key = try Key.readValueFromProtocol(proto)
       let value = try Value.readValueFromProtocol(proto)
@@ -112,7 +112,7 @@ public struct Map<Key : TSerializable, Value : TSerializable> : CollectionType, 
     return map
   }
   
-  public static func writeValue(value: Map, toProtocol proto: TProtocol) throws {
+  public static func writeValue(value: TMap, toProtocol proto: TProtocol) throws {
     try proto.writeMapBeginWithKeyType(Key.thriftType, valueType: Value.thriftType, size: value.count)
     for (key, value) in value.storage {
       try Key.writeValue(key, toProtocol: proto)
@@ -124,7 +124,7 @@ public struct Map<Key : TSerializable, Value : TSerializable> : CollectionType, 
 }
 
 
-extension Map : CustomStringConvertible, CustomDebugStringConvertible {
+extension TMap : CustomStringConvertible, CustomDebugStringConvertible {
   
   public var description : String {
     return storage.description
@@ -136,7 +136,7 @@ extension Map : CustomStringConvertible, CustomDebugStringConvertible {
   
 }
 
-public func ==<Key, Value>(lhs: Map<Key,Value>, rhs: Map<Key, Value>) -> Bool {
+public func ==<Key, Value>(lhs: TMap<Key,Value>, rhs: TMap<Key, Value>) -> Bool {
   if lhs.count != rhs.count {
     return false
   }

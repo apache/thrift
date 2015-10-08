@@ -1,5 +1,5 @@
 //
-//  Set.swift
+//  TSet.swift
 //  Pods
 //
 //  Created by Kevin Wooten on 10/6/15.
@@ -9,13 +9,13 @@
 import Foundation
 
 
-public struct Set<Element : TSerializable> : CollectionType, ArrayLiteralConvertible, TSerializable {
+public struct TSet<Element : TSerializable> : CollectionType, ArrayLiteralConvertible, TSerializable {
   
   public static var thriftType : TType { return .SET }
   
   public typealias Index = Storage.Index
   
-  typealias Storage = Swift.Set<Element>
+  typealias Storage = Set<Element>
   
   private var storage : Storage
   
@@ -55,43 +55,43 @@ public struct Set<Element : TSerializable> : CollectionType, ArrayLiteralConvert
     return storage[position]
   }
   
-  public func union(other: Set) -> Set {
-    return Set(storage.union(other))
+  public func union(other: TSet) -> TSet {
+    return TSet(storage.union(other))
   }
   
-  public func intersect(other: Set) -> Set {
-    return Set(storage.intersect(other))
+  public func intersect(other: TSet) -> TSet {
+    return TSet(storage.intersect(other))
   }
   
-  public func exclusiveOr(other: Set) -> Set {
-    return Set(storage.exclusiveOr(other))
+  public func exclusiveOr(other: TSet) -> TSet {
+    return TSet(storage.exclusiveOr(other))
   }
   
-  public func subtract(other: Set) -> Set {
-    return Set(storage.subtract(other))
+  public func subtract(other: TSet) -> TSet {
+    return TSet(storage.subtract(other))
   }
   
-  public mutating func intersectInPlace(other: Set) {
+  public mutating func intersectInPlace(other: TSet) {
     storage.intersectInPlace(other)
   }
 
-  public mutating func exclusiveOrInPlace(other: Set) {
+  public mutating func exclusiveOrInPlace(other: TSet) {
     storage.exclusiveOrInPlace(other)
   }
 
-  public mutating func subtractInPlace(other: Set) {
+  public mutating func subtractInPlace(other: TSet) {
     storage.subtractInPlace(other)
   }  
 
-  public func isSubsetOf(other: Set) -> Bool {
+  public func isSubsetOf(other: TSet) -> Bool {
     return storage.isSubsetOf(other)
   }
 
-  public func isDisjointWith(other: Set) -> Bool {
+  public func isDisjointWith(other: TSet) -> Bool {
     return storage.isDisjointWith(other)
   }
   
-  public func isSupersetOf(other: Set) -> Bool {
+  public func isSupersetOf(other: TSet) -> Bool {
     return storage.isSupersetOf(other)
   }
 
@@ -106,12 +106,12 @@ public struct Set<Element : TSerializable> : CollectionType, ArrayLiteralConvert
     return result
   }
   
-  public static func readValueFromProtocol(proto: TProtocol) throws -> Set {
+  public static func readValueFromProtocol(proto: TProtocol) throws -> TSet {
     let (elementType, size) = try proto.readSetBegin()
     if elementType != Element.thriftType {
       throw NSError(domain: TProtocolErrorDomain, code: Int(TProtocolError.UnexpectedType.rawValue), userInfo: nil)
     }
-    var set = Set()
+    var set = TSet()
     for _ in 0..<size {
       let element = try Element.readValueFromProtocol(proto)
       set.storage.insert(element)
@@ -120,7 +120,7 @@ public struct Set<Element : TSerializable> : CollectionType, ArrayLiteralConvert
     return set
   }
   
-  public static func writeValue(value: Set, toProtocol proto: TProtocol) throws {
+  public static func writeValue(value: TSet, toProtocol proto: TProtocol) throws {
     try proto.writeSetBeginWithElementType(Element.thriftType, size: value.count)
     for element in value.storage {
       try Element.writeValue(element, toProtocol: proto)
@@ -130,7 +130,7 @@ public struct Set<Element : TSerializable> : CollectionType, ArrayLiteralConvert
   
 }
 
-extension Set : CustomStringConvertible, CustomDebugStringConvertible {
+extension TSet : CustomStringConvertible, CustomDebugStringConvertible {
   
   public var description : String {
     return storage.description
@@ -142,6 +142,6 @@ extension Set : CustomStringConvertible, CustomDebugStringConvertible {
   
 }
 
-public func ==<Element>(lhs: Set<Element>, rhs: Set<Element>) -> Bool {
+public func ==<Element>(lhs: TSet<Element>, rhs: TSet<Element>) -> Bool {
   return lhs.storage == rhs.storage
 }
