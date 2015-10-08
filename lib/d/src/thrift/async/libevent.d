@@ -392,7 +392,7 @@ private:
       TAsyncEventReason.NORMAL;
     (*(cast(TSocketEventListener*)arg))(reason);
     GC.removeRange(arg);
-    clear(arg);
+    destroy(arg);
     free(arg);
   }
 
@@ -402,7 +402,7 @@ private:
     assert(flags & EV_TIMEOUT);
     (*(cast(void delegate()*)arg))();
     GC.removeRange(arg);
-    clear(arg);
+    destroy(arg);
     free(arg);
   }
 

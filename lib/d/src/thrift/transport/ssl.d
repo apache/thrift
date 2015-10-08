@@ -518,7 +518,7 @@ private:
       const(char)* file, int line)
     {
       GC.removeRange(l);
-      clear(cast(Mutex)l);
+      destroy(cast(Mutex)l);
       free(l);
     }
 
