@@ -43,6 +43,18 @@ public struct Binary : TSerializable {
   
 }
 
+extension Binary : CustomStringConvertible, CustomDebugStringConvertible {
+  
+  public var description : String {
+    return storage.description
+  }
+  
+  public var debugDescription : String {
+    return storage.debugDescription
+  }
+  
+}
+
 public func ==(lhs: Binary, rhs: Binary) -> Bool {
   return lhs.storage == rhs.storage
 }

@@ -117,6 +117,18 @@ public struct List<Element : TSerializable> : MutableCollectionType, Hashable, A
   }
 }
 
+extension List : CustomStringConvertible, CustomDebugStringConvertible {
+  
+  public var description : String {
+    return storage.description
+  }
+  
+  public var debugDescription : String {
+    return storage.debugDescription
+  }
+  
+}
+
 public func ==<Element>(lhs: List<Element>, rhs: List<Element>) -> Bool {
   return lhs.storage == rhs.storage
 }

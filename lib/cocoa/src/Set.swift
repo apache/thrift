@@ -130,6 +130,18 @@ public struct Set<Element : TSerializable> : CollectionType, ArrayLiteralConvert
   
 }
 
+extension Set : CustomStringConvertible, CustomDebugStringConvertible {
+  
+  public var description : String {
+    return storage.description
+  }
+  
+  public var debugDescription : String {
+    return storage.debugDescription
+  }
+  
+}
+
 public func ==<Element>(lhs: Set<Element>, rhs: Set<Element>) -> Bool {
   return lhs.storage == rhs.storage
 }

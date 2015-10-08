@@ -100,6 +100,18 @@ public struct Map<Key : TSerializable, Value : TSerializable> : CollectionType, 
 }
 
 
+extension Map : CustomStringConvertible, CustomDebugStringConvertible {
+  
+  public var description : String {
+    return storage.description
+  }
+  
+  public var debugDescription : String {
+    return storage.debugDescription
+  }
+  
+}
+
 public func ==<Key, Value>(lhs: Map<Key,Value>, rhs: Map<Key, Value>) -> Bool {
   if lhs.count != rhs.count {
     return false
