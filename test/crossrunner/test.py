@@ -60,10 +60,11 @@ class TestProgram(object):
       cmd[0] = abs_if_exists(cmd[0])
     return cmd
 
-  def _socket_arg(self, socket, port):
+  def _socket_args(self, socket, port):
     return {
-      'ip-ssl': '--ssl',
-      'domain': '--domain-socket=%s' % domain_socket_path(port),
+      'ip-ssl': ['--ssl'],
+      'domain': ['--domain-socket=%s' % domain_socket_path(port)],
+      'abstract': ['--abstract-namespace', '--domain-socket=%s' % domain_socket_path(port)],
     }.get(socket, None)
 
   def build_command(self, port):
@@ -71,9 +72,9 @@ class TestProgram(object):
     args = []
     args.append('--protocol=' + self.protocol)
     args.append('--transport=' + self.transport)
-    socket_arg = self._socket_arg(self.socket, port)
-    if socket_arg:
-      args.append(socket_arg)
+    socket_args = self._socket_args(self.socket, port)
+    if socket_args:
+      args += socket_args
     args.append('--port=%d' % port)
     if self._join_args:
       cmd.append('%s' % " ".join(args))
