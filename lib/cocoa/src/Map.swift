@@ -28,6 +28,14 @@ public struct Map<Key : TSerializable, Value : TSerializable> : CollectionType, 
   public var endIndex: Index {
     return storage.endIndex
   }
+
+  public var keys: LazyMapCollection<[Key : Value], Key> {
+    return storage.keys
+  }
+  
+  public var values: LazyMapCollection<[Key : Value], Value> {
+    return storage.values
+  }
   
   public init() {
     storage = Storage()
@@ -62,7 +70,23 @@ public struct Map<Key : TSerializable, Value : TSerializable> : CollectionType, 
       storage[key] = newValue
     }
   }
+
+  public mutating func updateValue(value: Value, forKey key: Key) -> Value? {
+    return updateValue(value, forKey: key)
+  }
   
+  public mutating func removeAtIndex(index: DictionaryIndex<Key, Value>) -> (Key, Value) {
+    return removeAtIndex(index)
+  }
+  
+  public mutating func removeValueForKey(key: Key) -> Value? {
+    return storage.removeValueForKey(key)
+  }
+  
+  public mutating func removeAll(keepCapacity keepCapacity: Bool = false) {
+    storage.removeAll(keepCapacity: keepCapacity)
+  }
+
   public var hashValue : Int {
     let prime = 31
     var result = 1
