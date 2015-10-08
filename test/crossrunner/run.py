@@ -204,7 +204,7 @@ class PortAllocator(object):
     return port if ok else self._get_domain_port()
 
   def alloc_port(self, socket_type):
-    if socket_type == 'domain':
+    if socket_type in ('domain', 'abstract'):
       return self._get_domain_port()
     else:
       return self._get_tcp_port()
@@ -226,6 +226,8 @@ class PortAllocator(object):
         path = domain_socket_path(port)
         if os.path.exists(path):
           os.remove(path)
+      elif socket_type == 'abstract':
+        self._dom_ports.remove(port)
       else:
         self._ports.remove(port)
     except IOError as err:
