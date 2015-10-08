@@ -727,12 +727,17 @@ void t_swift_generator::generate_swift_struct_reader(ofstream& out, t_struct* ts
 
   out << endl;
   
-  // performs various checks (e.g. check that all required fields are set)
-  indent(out) << "// Required fields" << endl;
-  
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    indent(out) << "try __proto.validateValue(" << (*f_iter)->get_name() << ", "
-                << "named: \"" << (*f_iter)->get_name() << "\")" << endl;
+  if (struct_has_required_fields(tstruct)) {
+    // performs various checks (e.g. check that all required fields are set)
+    indent(out) << "// Required fields" << endl;
+    
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      if (field_is_optional(*f_iter)) {
+        continue;
+      }
+      indent(out) << "try __proto.validateValue(" << (*f_iter)->get_name() << ", "
+                  << "named: \"" << (*f_iter)->get_name() << "\")" << endl;
+    }
   }
   
   out << endl;
