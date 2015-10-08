@@ -443,7 +443,7 @@ private:
 private {
   timeval toTimeval(const(Duration) dur) {
     timeval tv = {tv_sec: cast(int)dur.total!"seconds"(),
-      tv_usec: dur.fracSec.usecs};
+      tv_usec: dur.total!"usecs"};
     return tv;
   }
 
