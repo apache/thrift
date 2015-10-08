@@ -58,6 +58,7 @@
     <ClCompile Include="src\generate\t_csharp_generator.cc" />
     <ClCompile Include="src\generate\t_c_glib_generator.cc" />
     <ClCompile Include="src\generate\t_d_generator.cc" />
+    <ClCompile Include="src\generate\t_dart_generator.cc" />
     <ClCompile Include="src\generate\t_delphi_generator.cc" />
     <ClCompile Include="src\generate\t_erl_generator.cc" />
     <ClCompile Include="src\generate\t_generator.cc" />
