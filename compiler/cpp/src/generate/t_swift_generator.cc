@@ -341,18 +341,15 @@ void t_swift_generator::generate_enum(t_enum* tenum) {
             << " = " << (*c_iter)->get_value() << endl;
   }
 
+  f_decl_ << endl;
+  f_decl_ << indent() << "public init() { self.init(rawValue: " << constants.front()->get_value() << ")! }" << endl;
+  
   block_close(f_decl_);
   f_decl_ << endl;
   
   f_impl_ << indent() << "extension " << tenum->get_name() << " : TEnum";
   block_open(f_impl_);
 
-  f_impl_ << endl;
-  
-  f_impl_ << indent() << "public init()";
-  block_open(f_impl_);
-  f_impl_ << indent() << "self.init(rawValue: " << constants.front()->get_value() << ")!" << endl;
-  block_close(f_impl_);
   f_impl_ << endl;
   
   f_impl_ << indent() << "public static func readValueFromProtocol(proto: TProtocol) throws -> " << tenum->get_name();
