@@ -469,8 +469,8 @@ mixin template TStructHelpers(alias fieldMetaData = cast(TFieldMeta[])null) if (
 
   private size_t thriftToHashImpl() const @trusted nothrow {
     size_t hash = 0;
-    foreach (name; FieldNames!This) {
-      auto val = mixin("this." ~ name);
+    foreach (i, _; this.tupleof) {
+      auto val = this.tupleof[i];
       hash += typeid(val).getHash(&val);
     }
     return hash;
