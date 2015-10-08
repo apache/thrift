@@ -54,18 +54,18 @@ extension Bool : TSerializable {
   
 }
 
-extension UInt8 : TSerializable {
+extension Int8 : TSerializable {
   
   public static let thriftType = TType.BYTE
   
-  public static func readValueFromProtocol(proto: TProtocol) throws -> UInt8 {
+  public static func readValueFromProtocol(proto: TProtocol) throws -> Int8 {
     var value = UInt8()
     try proto.readByte(&value)
-    return value
+    return Int8(value)
   }
   
-  public static func writeValue(value: UInt8, toProtocol proto: TProtocol) throws {
-    try proto.writeByte(value)
+  public static func writeValue(value: Int8, toProtocol proto: TProtocol) throws {
+    try proto.writeByte(UInt8(value))
   }
   
 }

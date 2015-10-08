@@ -2167,7 +2167,7 @@ void t_cocoa_generator::generate_deserialize_field(ofstream& out,
         out << "readBool:&" << fieldName << " error: __thriftError]";
         break;
       case t_base_type::TYPE_BYTE:
-        out << "readByte:&" << fieldName << " error: __thriftError]";
+        out << "readByte:(UInt8 *)&" << fieldName << " error: __thriftError]";
         break;
       case t_base_type::TYPE_I16:
         out << "readI16:&" << fieldName << " error: __thriftError]";
@@ -2282,7 +2282,7 @@ string t_cocoa_generator::containerize(t_type* ttype, string fieldName) {
     case t_base_type::TYPE_BOOL:
       return "[NSNumber numberWithBool: " + fieldName + "]";
     case t_base_type::TYPE_BYTE:
-      return "[NSNumber numberWithUnsignedChar: " + fieldName + "]";
+      return "[NSNumber numberWithChar: " + fieldName + "]";
     case t_base_type::TYPE_I16:
       return "[NSNumber numberWithShort: " + fieldName + "]";
     case t_base_type::TYPE_I32:
@@ -2388,7 +2388,7 @@ void t_cocoa_generator::generate_serialize_field(ofstream& out, t_field* tfield,
         out << "writeBool: " << fieldName << " error: __thriftError]";
         break;
       case t_base_type::TYPE_BYTE:
-        out << "writeByte: " << fieldName << " error: __thriftError]";
+        out << "writeByte: (UInt8)" << fieldName << " error: __thriftError]";
         break;
       case t_base_type::TYPE_I16:
         out << "writeI16: " << fieldName << " error: __thriftError]";
@@ -2519,7 +2519,7 @@ string t_cocoa_generator::decontainerize(t_type* ttype, string fieldName) {
       case t_base_type::TYPE_BOOL:
         return "[" + fieldName + " boolValue]";
       case t_base_type::TYPE_BYTE:
-        return "((UInt8)[" + fieldName + " unsignedCharValue])";
+        return "((SInt8)[" + fieldName + " charValue])";
       case t_base_type::TYPE_I16:
         return "((SInt16)[" + fieldName + " shortValue])";
       case t_base_type::TYPE_I32:
@@ -2638,7 +2638,7 @@ string t_cocoa_generator::base_type_name(t_base_type* type) {
   case t_base_type::TYPE_BOOL:
     return "BOOL";
   case t_base_type::TYPE_BYTE:
-    return "UInt8";
+    return "SInt8";
   case t_base_type::TYPE_I16:
     return "SInt16";
   case t_base_type::TYPE_I32:

@@ -1751,7 +1751,7 @@ string t_swift_generator::base_type_name(t_base_type* type) {
   case t_base_type::TYPE_BOOL:
     return "Bool";
   case t_base_type::TYPE_BYTE:
-    return "UInt8";
+    return "Int8";
   case t_base_type::TYPE_I16:
     return "Int16";
   case t_base_type::TYPE_I32:
