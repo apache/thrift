@@ -1,173 +1,12 @@
 //
-//  Messages.swift
-//  ReTxt
+//  TProtocol.swift
+//  Pods
 //
-//  Created by Kevin Wooten on 10/2/15.
-//  Copyright © 2015 reTXT Labs, LLC. All rights reserved.
+//  Created by Kevin Wooten on 10/7/15.
+//
 //
 
 import Foundation
-
-
-public protocol TSerializable : Hashable {
-  
-  static var thriftType : TType { get }
-
-  init()
-  
-  static func readValueFromProtocol(proto: TProtocol) throws -> Self
-  
-  static func writeValue(value: Self, toProtocol proto: TProtocol) throws
-
-}
-
-extension Bool : TSerializable {
-
-  public static let thriftType = TType.BOOL
-  
-  public static func readValueFromProtocol(proto: TProtocol) throws -> Bool {
-    var value : ObjCBool = false
-    try proto.readBool(&value)
-    return value.boolValue
-  }
-  
-  public static func writeValue(value: Bool, toProtocol proto: TProtocol) throws {
-    try proto.writeBool(value)
-  }
-
-}
-
-extension UInt8 : TSerializable {
-  
-  public static let thriftType = TType.BYTE
-  
-  public static func readValueFromProtocol(proto: TProtocol) throws -> UInt8 {
-    var value = UInt8()
-    try proto.readByte(&value)
-    return value
-  }
-  
-  public static func writeValue(value: UInt8, toProtocol proto: TProtocol) throws {
-    try proto.writeByte(value)
-  }
-
-}
-
-extension Int16 : TSerializable {
-  
-  public static let thriftType = TType.I16
-  
-  public static func readValueFromProtocol(proto: TProtocol) throws -> Int16 {
-    var value = Int16()
-    try proto.readI16(&value)
-    return value
-  }
-  
-  public static func writeValue(value: Int16, toProtocol proto: TProtocol) throws {
-    try proto.writeI16(value)
-  }
-
-}
-
-extension Int : TSerializable {
-
-  public static let thriftType = TType.I32
-  
-  public static func readValueFromProtocol(proto: TProtocol) throws -> Int {
-    var value = Int32()
-    try proto.readI32(&value)
-    return Int(value)
-  }
-  
-  public static func writeValue(value: Int, toProtocol proto: TProtocol) throws {
-    try proto.writeI32(Int32(value))
-  }
-  
-}
-
-extension Int32 : TSerializable {
-  
-  public static let thriftType = TType.I32
-  
-  public static func readValueFromProtocol(proto: TProtocol) throws -> Int32 {
-    var value = Int32()
-    try proto.readI32(&value)
-    return value
-  }
-  
-  public static func writeValue(value: Int32, toProtocol proto: TProtocol) throws {
-    try proto.writeI32(value)
-  }
-
-}
-
-extension Int64 : TSerializable {
-  
-  public static let thriftType = TType.I64
-  
-  public static func readValueFromProtocol(proto: TProtocol) throws -> Int64 {
-    var value = Int64()
-    try proto.readI64(&value)
-    return value
-  }
-  
-  public static func writeValue(value: Int64, toProtocol proto: TProtocol) throws {
-    try proto.writeI64(value)
-  }
-
-}
-
-extension Double : TSerializable {
-  
-  public static let thriftType = TType.DOUBLE
-  
-  public static func readValueFromProtocol(proto: TProtocol) throws -> Double {
-    var value = Double()
-    try proto.readDouble(&value)
-    return value
-  }
-  
-  public static func writeValue(value: Double, toProtocol proto: TProtocol) throws {
-    try proto.writeDouble(value)
-  }
-  
-}
-
-extension String : TSerializable {
-
-  public static let thriftType = TType.STRING
-  
-  public static func readValueFromProtocol(proto: TProtocol) throws -> String {
-    var value : NSString?
-    try proto.readString(&value)
-    return value as! String
-  }
-
-  public static func writeValue(value: String, toProtocol proto: TProtocol) throws {
-    try proto.writeString(value)
-  }
-
-}
-
-public protocol TEnum : TSerializable {
-  
-}
-
-public extension TEnum {
-  
-  public static var thriftType : TType { return TType.I32 }
-
-}
-
-public protocol TStruct : TSerializable {
-}
-
-
-public extension TStruct {
-  
-  public static var thriftType : TType { return TType.STRUCT }
-  
-}
 
 
 public extension TProtocol {
@@ -188,11 +27,11 @@ public extension TProtocol {
   }
   
   public func readStructBegin() throws -> (String?) {
-
+    
     var name : NSString? = nil
     
     try readStructBeginReturningName(&name)
-
+    
     return (name as String?)
   }
   
@@ -249,7 +88,7 @@ public extension TProtocol {
     
     return (TType(rawValue: elementType)!, size)
   }
-
+  
   public func writeListBeginWithElementType(elementType: TType, size: Int) throws {
     try writeListBeginWithElementType(elementType.rawValue, size: Int32(size))
   }
@@ -259,7 +98,7 @@ public extension TProtocol {
     try writeValue(value)
     try writeFieldEnd()
   }
-
+  
   public func readValue<T: TSerializable>() throws -> T {
     return try T.readValueFromProtocol(self)
   }
@@ -308,7 +147,7 @@ public extension TProtocol {
         
       case (1, .STRING):
         reason = try readValue() as String
-      
+        
       case (2, .I32):
         let typeVal = try readValue() as Int32
         if let tmp = TApplicationError(rawValue: typeVal) {
@@ -323,7 +162,7 @@ public extension TProtocol {
     }
     
     try readStructEnd()
-
+    
     return NSError(type:type, reason:reason ?? "")
   }
   
@@ -337,18 +176,4 @@ public extension TProtocol {
     try TProtocolUtil.skipType(type.rawValue, onProtocol: self)
   }
   
-}
-
-
-infix operator ?== {}
-
-public func ?==<T: TSerializable>(lhs: T?, rhs: T?) -> Bool {
-  if let l = lhs, r = rhs {
-    return l == r
-  }
-  return lhs == rhs
-}
-
-public func ?==<T: TSerializable>(lhs: T, rhs: T) -> Bool {
-  return lhs == rhs
 }
