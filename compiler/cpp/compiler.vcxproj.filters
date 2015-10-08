@@ -111,6 +111,9 @@
     <ClCompile Include="src\generate\t_d_generator.cc">
       <Filter>generate</Filter>
     </ClCompile>
+    <ClCompile Include="src\generate\t_dart_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
     <ClCompile Include="src\generate\t_delphi_generator.cc">
       <Filter>generate</Filter>
     </ClCompile>
