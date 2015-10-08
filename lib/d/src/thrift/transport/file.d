@@ -847,7 +847,7 @@ private {
         (immutable(ubyte)[] data) {
           while (errorOpening) {
             logError("Writer thread going to sleep for %s µs due to IO errors",
-              ioErrorSleepDuration.fracSec.usecs);
+              ioErrorSleepDuration.total!"usecs");
 
             // Sleep for ioErrorSleepDuration, being ready to be interrupted
             // by shutdown requests.
