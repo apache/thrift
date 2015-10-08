@@ -420,7 +420,19 @@ void TServerSocket::listen() {
     struct sockaddr_un address;
     address.sun_family = AF_UNIX;
     memcpy(address.sun_path, path_.c_str(), len);
+
     socklen_t structlen = static_cast<socklen_t>(sizeof(address));
+
+    if (!address.sun_path[0]) { // abstract namespace socket
+#ifdef __linux__
+      // sun_path is not null-terminated in this case and structlen determines its length
+      structlen -= sizeof(address.sun_path) - len;
+#else
+      GlobalOutput.perror("TSocket::open() Abstract Namespace Domain sockets only supported on linux: ", -99);
+      throw TTransportException(TTransportException::NOT_OPEN,
+                                " Abstract Namespace Domain socket path not supported");
+#endif
+    }
 
     do {
       if (0 == ::bind(serverSocket_, (struct sockaddr*)&address, structlen)) {
