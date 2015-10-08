@@ -546,6 +546,7 @@ int main(int argc, char** argv) {
   string protocol_type = "binary";
   string server_type = "simple";
   string domain_socket = "";
+  bool abstract_namespace = false;
   size_t workers = 4;
 
   boost::program_options::options_description desc("Allowed options");
@@ -556,6 +557,8 @@ int main(int argc, char** argv) {
                                boost::program_options::value<string>(&domain_socket)
                                    ->default_value(domain_socket),
                                "Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)")(
+      "abstract-namespace",
+      "Create the domain socket in the Abstract Namespace (no connection with filesystem pathnames)")(
       "server-type",
       boost::program_options::value<string>(&server_type)->default_value(server_type),
       "type of server, \"simple\", \"thread-pool\", \"threaded\", or \"nonblocking\"")(
@@ -618,6 +621,10 @@ int main(int argc, char** argv) {
     ssl = true;
   }
 
+  if (vm.count("abstract-namespace")) {
+    abstract_namespace = true;
+  }
+
   // Dispatcher
   boost::shared_ptr<TProtocolFactory> protocolFactory;
   if (protocol_type == "json") {
@@ -653,8 +660,14 @@ int main(int argc, char** argv) {
     serverSocket = boost::shared_ptr<TServerSocket>(new TSSLServerSocket(port, sslSocketFactory));
   } else {
     if (domain_socket != "") {
-      unlink(domain_socket.c_str());
-      serverSocket = boost::shared_ptr<TServerSocket>(new TServerSocket(domain_socket));
+      if (abstract_namespace) {
+        std::string abstract_socket("\0", 1);
+        abstract_socket += domain_socket;
+        serverSocket = boost::shared_ptr<TServerSocket>(new TServerSocket(abstract_socket));
+      } else {
+        unlink(domain_socket.c_str());
+        serverSocket = boost::shared_ptr<TServerSocket>(new TServerSocket(domain_socket));
+      }
       port = 0;
     } else {
       serverSocket = boost::shared_ptr<TServerSocket>(new TServerSocket(port));
@@ -677,7 +690,11 @@ int main(int argc, char** argv) {
 
   // Server Info
   cout << "Starting \"" << server_type << "\" server (" << transport_type << "/" << protocol_type
-       << ") listen on: " << domain_socket;
+       << ") listen on: ";
+  if (abstract_namespace) {
+    cout << '@';
+  }
+  cout << domain_socket;
   if (port != 0) {
     cout << port;
   }

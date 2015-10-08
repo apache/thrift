@@ -125,6 +125,7 @@ int main(int argc, char** argv) {
   string transport_type = "buffered";
   string protocol_type = "binary";
   string domain_socket = "";
+  bool abstract_namespace = false;
   bool noinsane = false;
 
   boost::program_options::options_description desc("Allowed options");
@@ -139,6 +140,8 @@ int main(int argc, char** argv) {
       "domain-socket",
       boost::program_options::value<string>(&domain_socket)->default_value(domain_socket),
       "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")(
+      "abstract-namespace",
+      "Look for the domain socket in the Abstract Namespace (no connection with filesystem pathnames)")(
       "transport",
       boost::program_options::value<string>(&transport_type)->default_value(transport_type),
       "Transport: buffered, framed, http, evhttp")(
@@ -188,6 +191,10 @@ int main(int argc, char** argv) {
     ssl = true;
   }
 
+  if (vm.count("abstract-namespace")) {
+    abstract_namespace = true;
+  }
+
   if (vm.count("noinsane")) {
     noinsane = true;
   }
@@ -206,7 +213,13 @@ int main(int argc, char** argv) {
     socket = factory->createSocket(host, port);
   } else {
     if (domain_socket != "") {
-      socket = boost::shared_ptr<TSocket>(new TSocket(domain_socket));
+      if (abstract_namespace) {
+        std::string abstract_socket("\0", 1);
+        abstract_socket += domain_socket;
+        socket = boost::shared_ptr<TSocket>(new TSocket(abstract_socket));
+      } else {
+        socket = boost::shared_ptr<TSocket>(new TSocket(domain_socket));
+      }
       port = 0;
     } else {
       socket = boost::shared_ptr<TSocket>(new TSocket(host, port));
@@ -236,7 +249,11 @@ int main(int argc, char** argv) {
   }
 
   // Connection info
-  cout << "Connecting (" << transport_type << "/" << protocol_type << ") to: " << domain_socket;
+  cout << "Connecting (" << transport_type << "/" << protocol_type << ") to: ";
+  if (abstract_namespace) {
+    cout << '@';
+  }
+  cout << domain_socket;
   if (port != 0) {
     cout << host << ":" << port;
   }
