@@ -41,7 +41,7 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
 /**
  * Swift code generator.
  *
- * mostly copy/pasting/tweaking from mcslee's work.
+ * Designed from the Objective-C (aka Cocoa) generator.
  */
 class t_swift_generator : public t_oop_generator {
 public:
@@ -277,9 +277,9 @@ string t_swift_generator::swift_imports() {
 }
 
 /**
- * Prints thrift runtime imports
+ * Prints Thrift runtime imports
  *
- * @return List of imports necessary for thrift runtime
+ * @return List of imports necessary for Thrift runtime
  */
 string t_swift_generator::swift_thrift_imports() {
 
@@ -371,7 +371,9 @@ void t_swift_generator::generate_enum(t_enum* tenum) {
 }
 
 /**
- * Generates a class that holds all the constants.
+ * Generates public constants for all Thrift constants.
+ * 
+ * @param consts Constants to generate
  */
 void t_swift_generator::generate_consts(vector<t_const*> consts) {
 
@@ -392,8 +394,13 @@ void t_swift_generator::generate_consts(vector<t_const*> consts) {
 }
 
 /**
- * Generates a struct definition for a thrift data type. This is a class
- * with protected data members, read(), write(), and getters and setters.
+ * Generates a struct definition for a thrift data type. This is a struct
+ * with public members. Optional types are used for optional properties to
+ * allow them to be tested for availability. Separate inits are included for
+ * required properties & all properties.
+ * 
+ * Generates extensions to provide conformance to TStruct, TSerializable,
+ * Hashable & Equatable
  *
  * @param tstruct The struct definition
  */
@@ -413,9 +420,12 @@ void t_swift_generator::generate_xception(t_struct* txception) {
 }
 
 /**
- * Generate the interface for a struct
+ * Generate the interface for a struct. Only properties and 
+ * init methods are included.
  *
  * @param tstruct The struct definition
+ * @param is_private
+ *                Is the struct public or private
  */
 void t_swift_generator::generate_swift_struct(ofstream& out,
                                               t_struct* tstruct,
@@ -467,6 +477,8 @@ void t_swift_generator::generate_swift_struct(ofstream& out,
  *
  * @param tstruct The structure definition
  * @param all     Generate init with all or just required properties
+ * @param is_private
+ *                Is the initializer public or private
  */
 void t_swift_generator::generate_swift_struct_init(ofstream& out,
                                                    t_struct* tstruct,
@@ -510,6 +522,10 @@ void t_swift_generator::generate_swift_struct_init(ofstream& out,
 
 /**
  * Generate the hashable protocol implmentation
+ *
+ * @param tstruct The structure definition
+ * @param is_private
+ *                Is the struct public or private
  */
 void t_swift_generator::generate_swift_struct_hashable_extension(ofstream& out,
                                                                  t_struct* tstruct,
@@ -559,8 +575,14 @@ void t_swift_generator::generate_swift_struct_hashable_extension(ofstream& out,
 
 /**
  * Generate the equatable protocol implementation
+ *
+ * @param tstruct The structure definition
+ * @param is_private
+ *                Is the struct public or private
  */
-void t_swift_generator::generate_swift_struct_equatable_extension(ofstream& out, t_struct* tstruct, bool is_private) {
+void t_swift_generator::generate_swift_struct_equatable_extension(ofstream& out,
+                                                                  t_struct* tstruct,
+                                                                  bool is_private) {
 
   string visibility = is_private ? "private" : "public";
   
@@ -601,10 +623,14 @@ void t_swift_generator::generate_swift_struct_equatable_extension(ofstream& out,
 }
 
 /**
- * Generate struct implementation.
+ * Generate struct implementation. Produces extensions that
+ * fulfill the requisite protocols to complete the value.
  *
- * @param tstruct      The struct definition
- * @param is_result    If this is a result it needs a different writer
+ * @param tstruct The struct definition
+ * @param is_result
+ *                If this is a result it needs a different writer
+ * @param is_private
+ *                Is the struct public or private
  */
 void t_swift_generator::generate_swift_struct_implementation(ofstream& out,
                                                              t_struct* tstruct,
@@ -624,7 +650,13 @@ void t_swift_generator::generate_swift_struct_implementation(ofstream& out,
 }
 
 /**
+ * Generate the TStruct protocol implementation.
  *
+ * @param tstruct The structure definition
+ * @param is_result
+ *                Is the struct a result value
+ * @param is_private
+ *                Is the struct public or private
  */
 void t_swift_generator::generate_swift_struct_thrift_extension(ofstream& out,
                                                                t_struct* tstruct,
@@ -652,11 +684,16 @@ void t_swift_generator::generate_swift_struct_thrift_extension(ofstream& out,
 }
 
 /**
- * Generates a function to read all the fields of the struct.
+ * Generates a function to read a struct from
+ * from a protocol. (TStruct compliance)
  *
- * @param tstruct The struct definition
+ * @param tstruct The structure definition
+ * @param is_private
+ *                Is the struct public or private
  */
-void t_swift_generator::generate_swift_struct_reader(ofstream& out, t_struct* tstruct, bool is_private) {
+void t_swift_generator::generate_swift_struct_reader(ofstream& out,
+                                                     t_struct* tstruct,
+                                                     bool is_private) {
   
   string visibility = is_private ? "private" : "public";
   
@@ -757,11 +794,16 @@ void t_swift_generator::generate_swift_struct_reader(ofstream& out, t_struct* ts
 }
 
 /**
- * Generates a function to write all the fields of the struct
+ * Generates a function to write a struct to
+ * a protocol. (TStruct compliance)
  *
- * @param tstruct The struct definition
+ * @param tstruct The structure definition
+ * @param is_private
+ *                Is the struct public or private
  */
-void t_swift_generator::generate_swift_struct_writer(ofstream& out, t_struct* tstruct, bool is_private) {
+void t_swift_generator::generate_swift_struct_writer(ofstream& out,
+                                                     t_struct* tstruct,
+                                                     bool is_private) {
   
   string visibility = is_private ? "private" : "public";
   
@@ -811,11 +853,13 @@ void t_swift_generator::generate_swift_struct_writer(ofstream& out, t_struct* ts
 }
 
 /**
- * Generates a function to write all the fields of the struct, which
- * is a function result. These fields are only written if they are
- * set, and only one of them can be set at a time.
+ * Generates a function to read a struct from
+ * from a protocol. (TStruct compliance)
  *
- * @param tstruct The struct definition
+ * This is specifically a function result. Only
+ * the first available field is written.
+ *
+ * @param tstruct The structure definition
  */
 void t_swift_generator::generate_swift_struct_result_writer(ofstream& out, t_struct* tstruct) {
   
@@ -1147,9 +1191,8 @@ void t_swift_generator::generate_swift_service_client_async(ofstream& out,
 }
 
 /**
- * Generates a service server interface definition. In other words, the TProcess implementation for
- *the
- * service definition.
+ * Generates a service server interface definition. In other words, 
+ * the TProcess implementation for the service definition.
  *
  * @param tservice The service to generate a client interface definition for
  */
@@ -1179,6 +1222,16 @@ void t_swift_generator::generate_swift_service_server(ofstream& out,
   out << endl;
 }
 
+/**
+ * Generates a function that will send the arguments
+ * for a service function via a protocol.
+ *
+ * @param tservice  The service to generate
+ * @param tfunction The function to generate
+ * @param needs_protocol
+ *                  Wether the first parameter must be a protocol or if
+ *                  the protocol is to be assumed
+ */
 void t_swift_generator::generate_swift_service_client_send_function_implementation(ofstream& out,
                                                                                    t_service *tservice,
                                                                                    t_function* tfunction,
@@ -1230,6 +1283,16 @@ void t_swift_generator::generate_swift_service_client_send_function_implementati
   out << endl;
 }
 
+/**
+ * Generates a function that will recv the result for a
+ * service function via a protocol.
+ *
+ * @param tservice  The service to generate
+ * @param tfunction The function to generate
+ * @param needs_protocol
+ *                  Wether the first parameter must be a protocol or if
+ *                  the protocol is to be assumed
+ */
 void t_swift_generator::generate_swift_service_client_recv_function_implementation(ofstream& out,
                                                                                    t_service* tservice,
                                                                                    t_function* tfunction,
@@ -1301,7 +1364,8 @@ void t_swift_generator::generate_swift_service_client_recv_function_implementati
 }
 
 /**
- * Generates an invocation of a given 'send_' function.
+ * Generates an invocation of a given the send function for the
+ * service function.
  *
  * @param tfunction The service to generate an implementation for
  */
@@ -1326,7 +1390,8 @@ void t_swift_generator::generate_swift_service_client_send_function_invocation(o
 }
 
 /**
- * Generates an invocation of a given 'send_' function.
+ * Generates an invocation of a given the send function for the
+ * service function. This is for asynchronous protocols.
  *
  * @param tfunction The service to generate an implementation for
  */
@@ -1405,7 +1470,7 @@ void t_swift_generator::generate_swift_service_client_implementation(ofstream& o
 }
 
 /**
- * Generates a service client implementation for its asynchronous interface.
+ * Generates a service asynchronous client protocol implementation via extension.
  *
  * @param tservice The service to generate an implementation for
  */
@@ -1548,8 +1613,11 @@ void t_swift_generator::generate_swift_service_client_async_implementation(ofstr
 }
 
 /**
- * Generates a service server implementation.  In other words the actual TProcessor implementation
- * for the service.
+ * Generates a service server implementation.
+ *
+ * Implemented by generating a block for each service function that
+ * handles the processing of that function. The blocks are stored in
+ * a map and looked up via function/message name.
  *
  * @param tservice The service to generate an implementation for
  */
