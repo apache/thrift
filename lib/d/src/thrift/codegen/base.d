@@ -421,7 +421,7 @@ mixin template TStructHelpers(alias fieldMetaData = cast(TFieldMeta[])null) if (
       return (cast()super).opEquals(other);
     }
 
-    size_t toHash() const {
+    override size_t toHash() const {
       return thriftToHashImpl();
     }
   } else {
