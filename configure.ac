@@ -780,11 +780,11 @@ if test "$have_java" = "yes" ; then MAYBE_JAVA="java" ; else MAYBE_JAVA="" ; fi
 AC_SUBST([MAYBE_JAVA])
 if test "$have_csharp" = "yes" ; then MAYBE_CSHARP="csharp" ; else MAYBE_CSHARP="" ; fi
 AC_SUBST([MAYBE_CSHARP])
-if test "$have_python" = "yes" ; then MAYBE_PYTHON="python" ; else MAYBE_PYTHON="" ; fi
+if test "$have_python" = "yes" ; then MAYBE_PYTHON="py" ; else MAYBE_PYTHON="" ; fi
 AC_SUBST([MAYBE_PYTHON])
 if test "$have_ruby" = "yes" ; then MAYBE_RUBY="rb" ; else MAYBE_RUBY="" ; fi
 AC_SUBST([MAYBE_RUBY])
-if test "$have_haskell" = "yes" ; then MAYBE_HASKELL="haskell" ; else MAYBE_HASKELL="" ; fi
+if test "$have_haskell" = "yes" ; then MAYBE_HASKELL="hs" ; else MAYBE_HASKELL="" ; fi
 AC_SUBST([MAYBE_HASKELL])
 if test "$have_perl" = "yes" ; then MAYBE_PERL="perl" ; else MAYBE_PERL="" ; fi
 AC_SUBST([MAYBE_PERL])

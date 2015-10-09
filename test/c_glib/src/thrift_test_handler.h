@@ -86,6 +86,10 @@ struct _ThriftTestHandlerClass {
                                     gdouble*_return,
                                     const gdouble         thing,
                                     GError              **error);
+  gboolean (*test_binary)          (TTestThriftTestIf    *iface,
+                                    GByteArray        **_return,
+                                    const GByteArray     *thing,
+                                    GError              **error);
   gboolean (*test_struct)          (TTestThriftTestIf    *iface,
                                     TTestXtruct         **_return,
                                     const TTestXtruct    *thing,
