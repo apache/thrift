@@ -17,13 +17,7 @@
  * under the License.
  */
 
-#import "TTransportException.h"
+#import "TSSLSocketTransportError.h"
 
-@interface TSSLSocketException : TTransportException
 
-+ (id) exceptionWithReason: (NSString *) reason
-                     error: (NSError *) error;
-
-+ (id) exceptionWithReason: (NSString *) reason;
-
-@end
+NSString *TSSLSocketTransportErrorDomain = @"TSSLSocketTransportErrorDomain";

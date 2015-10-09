@@ -17,26 +17,17 @@
  * under the License.
  */
 
-#import <Foundation/Foundation.h>
-#import "TTransport.h"
+#import "TProtocolError.h"
 
-@interface THTTPClient : NSObject <TTransport> {
-  NSURL * mURL;
-  NSMutableURLRequest * mRequest;
-  NSMutableData * mRequestData;
-  NSData * mResponseData;
-  size_t mResponseDataOffset;
-  NSString * mUserAgent;
-  int mTimeout;
-}
 
-- (id) initWithURL: (NSURL *) aURL;
+NSString *TProtocolErrorDomain = @"TProtocolErrorDomain";
 
-- (id) initWithURL: (NSURL *) aURL
-         userAgent: (NSString *) userAgent
-           timeout: (int) timeout;
-
-- (void) setURL: (NSURL *) aURL;
-
-@end
-
+NSString *TProtocolErrorExtendedErrorKey = @"extendedError";
+NSString *TProtocolErrorFieldNameKey = @"field";
+NSString *TProtocolErrorExpectedIdKey = @"expectedId";
+NSString *TProtocolErrorExpectedVersionKey = @"expectedVersion";
+NSString *TProtocolErrorTypeKey = @"type";
+NSString *TProtocolErrorSourceLineKey = @"sourceLine";
+NSString *TProtocolErrorSourceFileKey = @"sourceFile";
+NSString *TProtocolErrorSourceMethodKey = @"sourceMethod";
+NSString *TProtocolErrorMessageNameKey = @"messageName";

@@ -17,28 +17,31 @@
  * under the License.
  */
 
-#import "TTransportException.h"
-#import "TObjective-C.h"
+#import <Foundation/Foundation.h>
+#import "TAsyncTransport.h"
 
-@implementation TTransportException
-
-+ (id) exceptionWithReason: (NSString *) reason
-                     error: (NSError *) error
-{
-  NSDictionary * userInfo = nil;
-  if (error != nil) {
-    userInfo = [NSDictionary dictionaryWithObject: error forKey: @"error"];
-  }
-
-  return [super exceptionWithName: @"TTransportException"
-                           reason: reason
-                         userInfo: userInfo];
-}
+NS_ASSUME_NONNULL_BEGIN
 
 
-+ (id) exceptionWithReason: (NSString *) reason
-{
-  return [self exceptionWithReason: reason error: nil];
-}
+typedef NSError *__nullable (^THTTPSessionTransportResponseValidateBlock) (NSHTTPURLResponse *response, NSData *responseData);
+
+
+@interface THTTPSessionTransportFactory : NSObject<TAsyncTransportFactory>
+
+@property (strong, nonatomic) THTTPSessionTransportResponseValidateBlock responseValidate;
+
++(void) setupDefaultsForSessionConfiguration:(NSURLSessionConfiguration *)config
+                            withProtocolName:(NSString *)protocolName;
+
+-(id) initWithSession:(NSURLSession *)session
+                  URL:(NSURL *)aURL;
 
 @end
+
+
+@interface THTTPSessionTransport : NSObject <TAsyncTransport>
+
+@end
+
+
+NS_ASSUME_NONNULL_END
