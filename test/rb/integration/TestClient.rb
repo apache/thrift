@@ -45,13 +45,13 @@ ARGV.each do|a|
   elsif a.start_with?("--transport")
     $transport = a.split("=")[1]
   elsif a.start_with?("--port")
-    $port = a.split("=")[1].to_i 
+    $port = a.split("=")[1].to_i
   end
 end
 ARGV=[]
 
 class SimpleClientTest < Test::Unit::TestCase
-  def setup 
+  def setup
     unless @socket
       @socket   = Thrift::Socket.new($host, $port)
       if $transport == "buffered"
@@ -77,7 +77,11 @@ class SimpleClientTest < Test::Unit::TestCase
       @socket.open
     end
   end
-  
+
+  def teardown
+    @socket.close
+  end
+
   def test_void
     p 'test_void'
     @client.testVoid()
@@ -129,7 +133,7 @@ class SimpleClientTest < Test::Unit::TestCase
     ret = @client.testBinary(val.pack('C*'))
     assert_equal(val, ret.bytes.to_a)
   end
-  
+
   def test_map
     p 'test_map'
     val = {1 => 1, 2 => 2, 3 => 3}
