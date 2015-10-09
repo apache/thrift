@@ -21,15 +21,18 @@
 #import <Foundation/Foundation.h>
 #import "TTransport.h"
 
-@interface TNSFileHandleTransport : NSObject <TTransport> {
-  NSFileHandle * mInputFileHandle;
-  NSFileHandle * mOutputFileHandle;
-}
+NS_ASSUME_NONNULL_BEGIN
 
-- (id) initWithFileHandle: (NSFileHandle *) fileHandle;
 
-- (id) initWithInputFileHandle: (NSFileHandle *) inputFileHandle
-              outputFileHandle: (NSFileHandle *) outputFileHandle;
+@interface TNSFileHandleTransport : NSObject <TTransport>
+
+-(id) initWithFileHandle:(NSFileHandle *)fileHandle;
+
+-(id) initWithInputFileHandle:(NSFileHandle *)inputFileHandle
+             outputFileHandle:(NSFileHandle *)outputFileHandle;
 
 
 @end
+
+
+NS_ASSUME_NONNULL_END

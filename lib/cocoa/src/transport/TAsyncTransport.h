@@ -18,12 +18,29 @@
  */
 
 #import "TTransport.h"
-#import "TException.h"
 
-typedef void(^TAsyncFailureBlock)(TException *);
+NS_ASSUME_NONNULL_BEGIN
+
+
+@protocol TAsyncTransport;
+
+
+@protocol TAsyncTransportFactory <NSObject>
+
+-(id<TAsyncTransport>) newTransport;
+
+@end
+
+
+typedef void (^TAsyncCompletionBlock)();
+typedef void (^TAsyncFailureBlock)(NSError * __nonnull);
+
 
 @protocol TAsyncTransport <TTransport>
 
-- (void) flush:(dispatch_block_t)flushed failure:(TAsyncFailureBlock)failure;
+-(void) flushWithCompletion:(TAsyncCompletionBlock)completed failure:(TAsyncFailureBlock)failure;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

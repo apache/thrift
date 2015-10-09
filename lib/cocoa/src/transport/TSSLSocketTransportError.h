@@ -17,11 +17,14 @@
  * under the License.
  */
 
-#import "TProtocol.h"
-#import "TApplicationError.h"
+#import "TTransportError.h"
 
-@interface TBaseClient : NSObject
 
--(NSError *) checkIncomingMessageException:(id<TProtocol>)protocol;
+extern NSString *TSSLSocketTransportErrorDomain;
 
-@end
+
+typedef NS_ENUM (int, TSSLSocketTransportError) {
+  TSSLSocketTransportErrorHostanameResolution  = -10000,
+  TSSLSocketTransportErrorSocketCreate         = -10001,
+  TSSLSocketTransportErrorConnect              = -10002,
+};

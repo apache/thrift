@@ -17,11 +17,7 @@
  * under the License.
  */
 
-#import "TProtocol.h"
-#import "TApplicationError.h"
+#import "TError.h"
 
-@interface TBaseClient : NSObject
 
--(NSError *) checkIncomingMessageException:(id<TProtocol>)protocol;
-
-@end
+NSString *TErrorDomain = @"TErrorDomain";

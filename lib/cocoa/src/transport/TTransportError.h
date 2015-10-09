@@ -17,18 +17,27 @@
  * under the License.
  */
 
-#import <Foundation/Foundation.h>
+#import "TError.h"
 
-@interface TException : NSException {
-}
 
-+ (id) exceptionWithName: (NSString *) name;
+extern NSString *TTransportErrorDomain;
 
-+ (id) exceptionWithName: (NSString *) name
-                  reason: (NSString *) reason;
 
-+ (id) exceptionWithName: (NSString *) name
-                  reason: (NSString *) reason
-                   error: (NSError *) error;
+typedef NS_ENUM (int, TTransportError) {
+  TTransportErrorUnknown        = 0,
+  TTransportErrorNotOpen        = 1,
+  TTransportErrorAlreadyOpen    = 2,
+  TTransportErrorTimedOut       = 3,
+  TTransportErrorEndOfFile      = 4,
+};
 
-@end
+
+extern NSString *TTransportErrorExtendedErrorKey;
+extern NSString *TTransportErrorHttpErrorKey;
+
+
+typedef NS_ENUM(int, THttpTransportError) {
+  THttpTransportErrorInvalidResponse  = 1001,
+  THttpTransportErrorInvalidStatus    = 1002,
+  THttpTransportErrorAuthentication   = 1003,
+};

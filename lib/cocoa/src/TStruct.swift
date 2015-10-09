@@ -17,11 +17,15 @@
  * under the License.
  */
 
-#import "TProtocol.h"
-#import "TApplicationError.h"
+import Foundation
 
-@interface TBaseClient : NSObject
 
--(NSError *) checkIncomingMessageException:(id<TProtocol>)protocol;
+public protocol TStruct : TSerializable {
+}
 
-@end
+
+public extension TStruct {
+  
+  public static var thriftType : TType { return TType.STRUCT }
+  
+}

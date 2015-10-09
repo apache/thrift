@@ -20,21 +20,24 @@
 #import <Foundation/Foundation.h>
 #import "TTransport.h"
 
-@interface TNSStreamTransport : NSObject <TTransport> {
+NS_ASSUME_NONNULL_BEGIN
 
-}
 
-@property (nonatomic, strong) NSInputStream * mInput;
-@property (nonatomic, strong) NSOutputStream * mOutput;
+@interface TNSStreamTransport : NSObject <TTransport>
 
-- (id) initWithInputStream: (NSInputStream *) input
-              outputStream: (NSOutputStream *) output;
+@property (strong, nonatomic) NSInputStream *input;
+@property (strong, nonatomic) NSOutputStream *output;
 
-- (id) initWithInputStream: (NSInputStream *) input;
+-(id) initWithInputStream:(nullable NSInputStream *)input
+             outputStream:(nullable NSOutputStream *)output;
 
-- (id) initWithOutputStream: (NSOutputStream *) output;
+-(id) initWithInputStream:(NSInputStream *)input;
+
+-(id) initWithOutputStream:(NSOutputStream *)output;
+
+-(void) close;
 
 @end
 
 
-
+NS_ASSUME_NONNULL_END
