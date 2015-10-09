@@ -38,7 +38,7 @@ enum _ThriftSocketProperties
 };
 
 /* for errors coming from socket() and connect() */
-extern int errno;
+//extern int errno;
 
 G_DEFINE_TYPE(ThriftSocket, thrift_socket, THRIFT_TYPE_TRANSPORT)
 
