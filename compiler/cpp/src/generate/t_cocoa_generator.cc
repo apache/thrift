@@ -322,7 +322,7 @@ void t_cocoa_generator::generate_typedef(t_typedef* ttypedef) {
  * @param tenum The enumeration
  */
 void t_cocoa_generator::generate_enum(t_enum* tenum) {
-  f_header_ << indent() << "enum " << cocoa_prefix_ << tenum->get_name() << " {" << endl;
+  f_header_ << indent() << "typedef NS_ENUM(int, " << cocoa_prefix_ << tenum->get_name() << ") {" << endl;
   indent_up();
 
   vector<t_enum_value*> constants = tenum->get_constants();
@@ -2316,7 +2316,7 @@ string t_cocoa_generator::type_name(t_type* ttype, bool class_ref) {
   if (ttype->is_base_type()) {
     return base_type_name((t_base_type*)ttype);
   } else if (ttype->is_enum()) {
-    return "int";
+    return cocoa_prefix_ + ttype->get_name();
   } else if (ttype->is_map()) {
     result = "NSMutableDictionary";
   } else if (ttype->is_set()) {
