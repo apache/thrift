@@ -130,7 +130,6 @@ if test "$enable_libs" = "no"; then
   with_lua="no"
 fi
 
-
 AX_THRIFT_LIB(cpp, [C++], yes)
 have_cpp=no
 if test "$with_cpp" = "yes";  then
@@ -144,8 +143,6 @@ if test "$with_cpp" = "yes";  then
     AC_SUBST([BOOST_THREAD_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_thread.a")])
     have_cpp="yes"
   fi
-
-  AX_CHECK_OPENSSL()
 
   AX_LIB_EVENT([1.0])
   have_libevent=$success
@@ -196,6 +193,12 @@ if test "$with_c_glib" = "yes"; then
   fi
 fi
 AM_CONDITIONAL(WITH_C_GLIB, [test "$have_glib2" = "yes" -a "$have_gobject2" = "yes"])
+
+echo "OpenSSL check"
+if test "$have_cpp" = "yes" -o "$have_c_glib" = "yes";  then
+	echo "Have cpp or c so we check for OpenSSL"
+	AX_CHECK_OPENSSL()
+fi
 
 AX_THRIFT_LIB(csharp, [C#], yes)
 if test "$with_csharp" = "yes";  then
