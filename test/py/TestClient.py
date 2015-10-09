@@ -158,6 +158,7 @@ class AbstractTest(unittest.TestCase):
     self.assertEqual(self.client.testDouble(-5.235098235), -5.235098235)
     self.assertEqual(self.client.testDouble(0), 0)
     self.assertEqual(self.client.testDouble(-1), -1)
+    self.assertEqual(self.client.testDouble(-0.000341012439638598279), -0.000341012439638598279)
 
   def testBinary(self):
     if isinstance(self, JSONTest):

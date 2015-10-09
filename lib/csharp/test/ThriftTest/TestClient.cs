@@ -358,6 +358,14 @@ namespace Test
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorBaseTypes;
             }
+            Console.Write("testDouble(-0.000341012439638598279)");
+            dub = client.testDouble(-0.000341012439638598279);
+            Console.WriteLine(" = " + dub);
+            if (-0.000341012439638598279 != dub)
+            {
+                Console.WriteLine("*** FAILED ***");
+                returnCode |= ErrorBaseTypes;
+            }
 
             byte[] binOut = PrepareTestData(true);
             Console.Write("testBinary(" + BytesToHex(binOut) + ")");
