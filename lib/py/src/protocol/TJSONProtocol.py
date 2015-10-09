@@ -174,13 +174,13 @@ class TJSONProtocolBase(TProtocolBase):
 
   def writeJSONString(self, string):
     self.context.write()
-    self.trans.write(json.dumps(string))
+    self.trans.write(json.dumps(string, ensure_ascii=False))
 
   def writeJSONNumber(self, number):
     self.context.write()
     jsNumber = str(number)
     if self.context.escapeNum():
-      jsNumber = "%s%s%s" % (QUOTE, jsNumber,  QUOTE)
+      jsNumber = "%s%s%s" % (QUOTE, jsNumber, QUOTE)
     self.trans.write(jsNumber)
 
   def writeJSONBase64(self, binary):
