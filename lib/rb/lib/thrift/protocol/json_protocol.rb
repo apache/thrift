@@ -514,7 +514,7 @@ module Thrift
       # The elements of this array must match up with the sequence of characters in
       # escape_chars
       escape_char_vals = [
-        '"', '\\', '/', '\b', '\f', '\n', '\r', '\t',
+        "\"", "\\", "\/", "\b", "\f", "\n", "\r", "\t",
       ]
 
       if !skipContext
