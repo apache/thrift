@@ -42,9 +42,6 @@ enum _ThriftServerSocketProperties
 /* define the GError domain string */
 #define THRIFT_SERVER_SOCKET_ERROR_DOMAIN "thrift-server-socket-error-quark"
 
-/* for errors coming from socket() and connect() */
-extern int errno;
-
 G_DEFINE_TYPE(ThriftServerSocket, thrift_server_socket, THRIFT_TYPE_SERVER_TRANSPORT)
 
 gboolean
