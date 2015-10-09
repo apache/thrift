@@ -38,7 +38,7 @@ thrift_gen =                                    \
         gen-py-dynamicslots/ThriftTest/__init__.py           \
         gen-py-dynamicslots/DebugProtoTest/__init__.py
 
-precross: $(THRIFT) $(thrift_gen)
+precross: $(thrift_gen)
 BUILT_SOURCES = $(thrift_gen)
 
 helper_scripts=                                 \
@@ -53,30 +53,30 @@ check_SCRIPTS=                                  \
 TESTS= $(py_unit_tests)
 
 
-gen-py/%/__init__.py: ../%.thrift
+gen-py/%/__init__.py: ../%.thrift $(THRIFT)
 	$(THRIFT) --gen py  $<
 
-gen-py-default/%/__init__.py: ../%.thrift
+gen-py-default/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-default || $(MKDIR_P) gen-py-default
 	$(THRIFT) --gen py -out gen-py-default $<
 
-gen-py-slots/%/__init__.py: ../%.thrift
+gen-py-slots/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-slots || $(MKDIR_P) gen-py-slots
 	$(THRIFT) --gen py:slots -out gen-py-slots $<
 
-gen-py-newstyle/%/__init__.py: ../%.thrift
+gen-py-newstyle/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-newstyle || $(MKDIR_P) gen-py-newstyle
 	$(THRIFT) --gen py:new_style -out gen-py-newstyle $<
 
-gen-py-newstyleslots/%/__init__.py: ../%.thrift
+gen-py-newstyleslots/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-newstyleslots || $(MKDIR_P) gen-py-newstyleslots
 	$(THRIFT) --gen py:new_style,slots -out gen-py-newstyleslots $<
 
-gen-py-dynamic/%/__init__.py: ../%.thrift
+gen-py-dynamic/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-dynamic || $(MKDIR_P) gen-py-dynamic
 	$(THRIFT) --gen py:dynamic -out gen-py-dynamic $<
 
-gen-py-dynamicslots/%/__init__.py: ../%.thrift
+gen-py-dynamicslots/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-dynamicslots || $(MKDIR_P) gen-py-dynamicslots
 	$(THRIFT) --gen py:dynamic,slots -out gen-py-dynamicslots $<
 

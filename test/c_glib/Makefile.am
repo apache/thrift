@@ -29,7 +29,7 @@ nodist_libtestcglib_la_SOURCES = \
 
 libtestcglib_la_LIBADD = $(top_builddir)/lib/c_glib/libthrift_c_glib.la
 
-precross: test_client test_server
+precross: libtestcglib.la test_client test_server
 
 check_PROGRAMS = \
 	test_client \
