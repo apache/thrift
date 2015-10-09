@@ -68,7 +68,7 @@ thrift_test_handler_test_bool (TTestThriftTestIf  *iface,
   THRIFT_UNUSED_VAR (iface);
   THRIFT_UNUSED_VAR (error);
 
-  printf ("testByte(%s)\n", thing ? "true" : "false");
+  printf ("testBool(%s)\n", thing ? "true" : "false");
   *_return = thing;
 
   return TRUE;
@@ -144,7 +144,7 @@ thrift_test_handler_test_binary (TTestThriftTestIf *iface,
   THRIFT_UNUSED_VAR (error);
 
   printf ("testBinary()\n");  // TODO: hex output
-  g_byte_array_append( *_return, thing->data, thing->len);
+  *_return = thing;
 
   return TRUE;
 }
@@ -701,16 +701,17 @@ thrift_test_handler_test_multi_exception (TTestThriftTestIf  *iface,
   g_assert (*err1 == NULL);
   g_assert (*err2 == NULL);
 
-  if (strncmp (arg0, "Xception", 9) == 0) {
+  if (strncmp (arg0, "Xception", 8) == 0 && strlen(arg0) == 8) {
     *err1 = g_object_new (T_TEST_TYPE_XCEPTION,
                           "errorCode", 1001,
                           "message",   g_strdup ("This is an Xception"),
                           NULL);
     result = FALSE;
   }
-  else if (strncmp (arg0, "Xception2", 10) == 0) {
+  else if (strncmp (arg0, "Xception2", 9) == 0) {
     *err2 = g_object_new (T_TEST_TYPE_XCEPTION2,
-                          "errorCode", 2002);
+                          "errorCode", 2002,
+                          NULL);
 
     g_object_get (*err2,
                   "struct_thing", &struct_thing,
@@ -783,6 +784,9 @@ thrift_test_handler_class_init (ThriftTestHandlerClass *klass)
   base_class->test_double =
     klass->test_double =
     thrift_test_handler_test_double;
+  base_class->test_binary =
+    klass->test_binary =
+    thrift_test_handler_test_binary;
   base_class->test_struct =
     klass->test_struct =
     thrift_test_handler_test_struct;
