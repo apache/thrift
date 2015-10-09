@@ -106,6 +106,29 @@ static void testVoid_clientReturn(const char* host,
   }
 }
 
+// Workaround for absense of C++11 "auto" keywoard.
+template <typename T>
+bool print_eq(T expected, T actual) {
+  cout << "(" << actual << ")" << endl;
+  if (expected != actual) {
+    cout << "*** FAILED ***" << endl << "Expected: " << expected << " but got: " << actual << endl;
+    return false;
+  }
+  return true;
+}
+
+#define BASETYPE_IDENTITY_TEST(func, value)                                                        \
+  cout << #func "(" << value << ") = ";                                                            \
+  try {                                                                                            \
+    if (!print_eq(value, testClient.func(value)))                                                  \
+      return_code |= ERR_BASETYPES;                                                                \
+  } catch (TTransportException&) {                                                                 \
+    throw;                                                                                         \
+  } catch (exception & ex) {                                                                       \
+    cout << "*** FAILED ***" << endl << ex.what() << endl;                                         \
+    return_code |= ERR_BASETYPES;                                                                  \
+  }
+
 int main(int argc, char** argv) {
   int ERR_BASETYPES = 1;
   int ERR_STRUCTS = 2;
@@ -371,11 +394,47 @@ int main(int argc, char** argv) {
     /**
      * DOUBLE TEST
      */
-    printf("testDouble(-5.2098523)");
-    double dub = testClient.testDouble(-5.2098523);
-    printf(" = %f\n", dub);
-    if ((dub - (-5.2098523)) > 0.001) {
-      printf("*** FAILED ***\n");
+    // Comparing double values with plain equality because Thrift handles full precision of double
+    BASETYPE_IDENTITY_TEST(testDouble, 0.0);
+    BASETYPE_IDENTITY_TEST(testDouble, -1.0);
+    BASETYPE_IDENTITY_TEST(testDouble, -5.2098523);
+    BASETYPE_IDENTITY_TEST(testDouble, -0.000341012439638598279);
+    BASETYPE_IDENTITY_TEST(testDouble, pow(2, 32));
+    BASETYPE_IDENTITY_TEST(testDouble, pow(2, 32) + 1);
+    BASETYPE_IDENTITY_TEST(testDouble, pow(2, 53) - 1);
+    BASETYPE_IDENTITY_TEST(testDouble, -pow(2, 32));
+    BASETYPE_IDENTITY_TEST(testDouble, -pow(2, 32) - 1);
+    BASETYPE_IDENTITY_TEST(testDouble, -pow(2, 53) + 1);
+
+    try {
+      double expected = pow(10, 307);
+      cout << "testDouble(" << expected << ") = ";
+      double actual = testClient.testDouble(expected);
+      cout << "(" << actual << ")" << endl;
+      if (expected - actual > pow(10, 292)) {
+        cout << "*** FAILED ***" << endl
+             << "Expected: " << expected << " but got: " << actual << endl;
+      }
+    } catch (TTransportException&) {
+      throw;
+    } catch (exception& ex) {
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      return_code |= ERR_BASETYPES;
+    }
+
+    try {
+      double expected = pow(10, -292);
+      cout << "testDouble(" << expected << ") = ";
+      double actual = testClient.testDouble(expected);
+      cout << "(" << actual << ")" << endl;
+      if (expected - actual > pow(10, -307)) {
+        cout << "*** FAILED ***" << endl
+             << "Expected: " << expected << " but got: " << actual << endl;
+      }
+    } catch (TTransportException&) {
+      throw;
+    } catch (exception& ex) {
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
       return_code |= ERR_BASETYPES;
     }
 
