@@ -18,57 +18,104 @@
  */
 
 #import "TMemoryBuffer.h"
-#import "TTransportException.h"
-#import "TObjective-C.h"
+#import "TTransportError.h"
+
 
 #define GARBAGE_BUFFER_SIZE 4096 // 4KiB
 
+
+@interface TMemoryBuffer ()
+
+@property(strong, nonatomic) NSMutableData *buffer;
+@property(assign, nonatomic) UInt32 bufferOffset;
+
+@end
+
+
 @implementation TMemoryBuffer
-- (id)init {
-	if ((self = [super init])) {
-		mBuffer = [[NSMutableData alloc] init];
-		mOffset = 0;
-	}
-	return self;
-}
 
-- (id)initWithData:(NSData *)data {
-	if ((self = [super init])) {
-		mBuffer = [data mutableCopy];
-		mOffset = 0;
-	}
-	return self;
-}
-
-- (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
+-(id) init
 {
-	if ([mBuffer length] - mOffset < length) {
-		@throw [TTransportException exceptionWithReason:@"Not enough bytes remain in buffer"];
-	}
-	[mBuffer getBytes:buf range:NSMakeRange(mOffset, length)];
-	mOffset += length;
-	if (mOffset >= GARBAGE_BUFFER_SIZE) {
-		[mBuffer replaceBytesInRange:NSMakeRange(0, mOffset) withBytes:NULL length:0];
-		mOffset = 0;
-	}
-	return length;
+  if ((self = [super init])) {
+    _buffer = [NSMutableData new];
+    _bufferOffset = 0;
+  }
+  return self;
 }
 
-- (void) write: (const uint8_t *) data offset: (size_t) offset length: (size_t) length
+-(id) initWithData:(NSData *)data
 {
-	[mBuffer appendBytes:data+offset length:length];
+  if (self = [super init]) {
+    _buffer = [data mutableCopy];
+    _bufferOffset = 0;
+  }
+  return self;
 }
 
-- (void)flush {
-	// noop
+-(id) initWithDataNoCopy:(NSMutableData *)data
+{
+  if (self = [super init]) {
+    _buffer = data;
+    _bufferOffset = 0;
+  }
+  return self;
 }
 
-- (NSData *)getBuffer {
-	return [[mBuffer copy] autorelease_stub];
+-(BOOL) readAll:(UInt8 *)outBuffer offset:(UInt32)outBufferOffset length:(UInt32)length error:(NSError *__autoreleasing *)error
+{
+  UInt32 got = [self readAvail:outBuffer offset:outBufferOffset maxLength:length error:error];
+  if (got != length) {
+
+    // Report underflow only if readAvail didn't report error already
+    if (error && !*error) {
+      *error = [NSError errorWithDomain:TTransportErrorDomain
+                                   code:TTransportErrorEndOfFile
+                               userInfo:nil];
+    }
+
+    return NO;
+  }
+
+  return YES;
 }
 
-- (void)dealloc {
-	[mBuffer release_stub];
-	[super dealloc_stub];
+-(UInt32) readAvail:(UInt8 *)outBuffer offset:(UInt32)outBufferOffset maxLength:(UInt32)maxLength error:(NSError *__autoreleasing *)error
+{
+  UInt32 avail = (UInt32)_buffer.length - _bufferOffset;
+  if (avail == 0) {
+    return 0;
+  }
+
+  NSRange range;
+  range.location = _bufferOffset;
+  range.length = MIN(maxLength, avail);
+
+  [_buffer getBytes:outBuffer + outBufferOffset range:range];
+  _bufferOffset += range.length;
+
+  if (_bufferOffset >= GARBAGE_BUFFER_SIZE) {
+    [_buffer replaceBytesInRange:NSMakeRange(0, _bufferOffset) withBytes:NULL length:0];
+    _bufferOffset = 0;
+  }
+
+  return (UInt32)range.length;
 }
+
+-(BOOL) write:(const UInt8 *)inBuffer offset:(UInt32)inBufferOffset length:(UInt32)length error:(NSError *__autoreleasing *)error
+{
+  [_buffer appendBytes:inBuffer + inBufferOffset length:length];
+
+  return YES;
+}
+
+-(NSData *) buffer
+{
+  return _buffer;
+}
+
+-(BOOL) flush:(NSError *__autoreleasing *)error
+{
+  return YES;
+}
+
 @end

@@ -17,14 +17,18 @@
  * under the License.
  */
 
-#import "TException.h"
+#import <Foundation/Foundation.h>
+#import "TNSStreamTransport.h"
 
-@interface TTransportException : TException {
-}
+NS_ASSUME_NONNULL_BEGIN
 
-+ (id) exceptionWithReason: (NSString *) reason
-                     error: (NSError *) error;
 
-+ (id) exceptionWithReason: (NSString *) reason;
+@interface TSocketTransport : TNSStreamTransport
+
+-(id) initWithHostname:(NSString *)hostname
+                  port:(int)port;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

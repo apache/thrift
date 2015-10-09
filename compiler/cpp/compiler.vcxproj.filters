@@ -165,6 +165,9 @@
     <ClCompile Include="src\generate\t_st_generator.cc">
       <Filter>generate</Filter>
     </ClCompile>
+    <ClCompile Include="src\generate\t_swift_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
     <ClCompile Include="src\generate\t_xsd_generator.cc">
       <Filter>generate</Filter>
     </ClCompile>

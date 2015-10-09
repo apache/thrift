@@ -22,127 +22,143 @@
 #import "TTransport.h"
 
 
-enum {
-  TMessageType_CALL = 1,
-  TMessageType_REPLY = 2,
-  TMessageType_EXCEPTION = 3,
-  TMessageType_ONEWAY = 4
+NS_ASSUME_NONNULL_BEGIN
+
+
+typedef NS_ENUM (int, TMessageType) {
+  TMessageTypeCALL = 1,
+  TMessageTypeREPLY = 2,
+  TMessageTypeEXCEPTION = 3,
+  TMessageTypeONEWAY = 4
 };
 
-enum {
-  TType_STOP   = 0,
-  TType_VOID   = 1,
-  TType_BOOL   = 2,
-  TType_BYTE   = 3,
-  TType_DOUBLE = 4,
-  TType_I16    = 6,
-  TType_I32    = 8,
-  TType_I64    = 10,
-  TType_STRING = 11,
-  TType_STRUCT = 12,
-  TType_MAP    = 13,
-  TType_SET    = 14,
-  TType_LIST   = 15
+typedef NS_ENUM (int, TType) {
+  TTypeSTOP   = 0,
+  TTypeVOID   = 1,
+  TTypeBOOL   = 2,
+  TTypeBYTE   = 3,
+  TTypeDOUBLE = 4,
+  TTypeI16    = 6,
+  TTypeI32    = 8,
+  TTypeI64    = 10,
+  TTypeSTRING = 11,
+  TTypeSTRUCT = 12,
+  TTypeMAP    = 13,
+  TTypeSET    = 14,
+  TTypeLIST   = 15
 };
 
 
 @protocol TProtocol <NSObject>
 
-- (id <TTransport>) transport;
+-(id <TTransport>) transport;
 
-- (void) readMessageBeginReturningName: (NSString **) name
-                                  type: (int *) type
-                            sequenceID: (int *) sequenceID;
-- (void) readMessageEnd;
+-(BOOL) readMessageBeginReturningName:(NSString *__nullable __autoreleasing *__nullable)name
+                                 type:(nullable SInt32 *)type
+                           sequenceID:(nullable SInt32 *)sequenceID
+                                error:(NSError *__autoreleasing *)error;
+-(BOOL) readMessageEnd:(NSError *__autoreleasing *)error;
 
-- (void) readStructBeginReturningName: (NSString **) name;
-- (void) readStructEnd;
+-(BOOL) readStructBeginReturningName:(NSString *__nullable __autoreleasing *__nullable)name
+                               error:(NSError *__autoreleasing *)error;
+-(BOOL) readStructEnd:(NSError *__autoreleasing *)error;
 
-- (void) readFieldBeginReturningName: (NSString **) name
-                                type: (int *) fieldType
-                             fieldID: (int *) fieldID;
-- (void) readFieldEnd;
+-(BOOL) readFieldBeginReturningName:(NSString *__nullable __autoreleasing *__nullable)name
+                               type:(SInt32 *)fieldType
+                            fieldID:(nullable SInt32 *)fieldID
+                              error:(NSError *__autoreleasing *)error;
+-(BOOL) readFieldEnd:(NSError *__autoreleasing *)error;
 
-- (NSString *) readString;
+-(BOOL) readString:(NSString *__nonnull __autoreleasing *__nonnull)value error:(NSError **)error;
 
-- (BOOL) readBool;
+-(BOOL) readBool:(BOOL *)value error:(NSError *__autoreleasing *)error;
 
-- (unsigned char) readByte;
+-(BOOL) readByte:(UInt8 *)value error:(NSError *__autoreleasing *)error;
 
-- (short) readI16;
+-(BOOL) readI16:(SInt16 *)value error:(NSError *__autoreleasing *)error;
 
-- (int32_t) readI32;
+-(BOOL) readI32:(SInt32 *)value error:(NSError *__autoreleasing *)error;
 
-- (int64_t) readI64;
+-(BOOL) readI64:(SInt64 *)value error:(NSError *__autoreleasing *)error;
 
-- (double) readDouble;
+-(BOOL) readDouble:(double *)value error:(NSError *__autoreleasing *)error;
 
-- (NSData *) readBinary;
+-(BOOL) readBinary:(NSData *__nonnull __autoreleasing *__nonnull)value error:(NSError **)error;
 
-- (void) readMapBeginReturningKeyType: (int *) keyType
-                            valueType: (int *) valueType
-                                 size: (int *) size;
-- (void) readMapEnd;
-
-
-- (void) readSetBeginReturningElementType: (int *) elementType
-                                     size: (int *) size;
-- (void) readSetEnd;
-
-
-- (void) readListBeginReturningElementType: (int *) elementType
-                                      size: (int *) size;
-- (void) readListEnd;
+-(BOOL) readMapBeginReturningKeyType:(nullable SInt32 *)keyType
+                           valueType:(nullable SInt32 *)valueType
+                                size:(SInt32 *)size
+                               error:(NSError *__autoreleasing *)error;
+-(BOOL) readMapEnd:(NSError *__autoreleasing *)error;
 
 
-- (void) writeMessageBeginWithName: (NSString *) name
-                              type: (int) messageType
-                        sequenceID: (int) sequenceID;
-- (void) writeMessageEnd;
-
-- (void) writeStructBeginWithName: (NSString *) name;
-- (void) writeStructEnd;
-
-- (void) writeFieldBeginWithName: (NSString *) name
-                            type: (int) fieldType
-                         fieldID: (int) fieldID;
-
-- (void) writeI32: (int32_t) value;
-
-- (void) writeI64: (int64_t) value;
-
-- (void) writeI16: (short) value;
-
-- (void) writeByte: (uint8_t) value;
-
-- (void) writeString: (NSString *) value;
-
-- (void) writeDouble: (double) value;
-
-- (void) writeBool: (BOOL) value;
-
-- (void) writeBinary: (NSData *) data;
-
-- (void) writeFieldStop;
-
-- (void) writeFieldEnd;
-
-- (void) writeMapBeginWithKeyType: (int) keyType
-                        valueType: (int) valueType
-                             size: (int) size;
-- (void) writeMapEnd;
+-(BOOL) readSetBeginReturningElementType:(nullable SInt32 *)elementType
+                                    size:(SInt32 *)size
+                                   error:(NSError *__autoreleasing *)error;
+-(BOOL) readSetEnd:(NSError *__autoreleasing *)error;
 
 
-- (void) writeSetBeginWithElementType: (int) elementType
-                                 size: (int) size;
-- (void) writeSetEnd;
+-(BOOL) readListBeginReturningElementType:(nullable SInt32 *)elementType
+                                     size:(SInt32 *)size
+                                    error:(NSError *__autoreleasing *)error;
+-(BOOL) readListEnd:(NSError *__autoreleasing *)error;
 
 
-- (void) writeListBeginWithElementType: (int) elementType
-                                  size: (int) size;
+-(BOOL) writeMessageBeginWithName:(NSString *)name
+                             type:(SInt32)messageType
+                       sequenceID:(SInt32)sequenceID
+                            error:(NSError *__autoreleasing *)error;
+-(BOOL) writeMessageEnd:(NSError *__autoreleasing *)error;
 
-- (void) writeListEnd;
+-(BOOL) writeStructBeginWithName:(NSString *)name error:(NSError **)error;
+-(BOOL) writeStructEnd:(NSError *__autoreleasing *)error;
+
+-(BOOL) writeFieldBeginWithName:(NSString *)name
+                           type:(SInt32)fieldType
+                        fieldID:(SInt32)fieldID
+                          error:(NSError *__autoreleasing *)error;
+
+-(BOOL) writeI32:(SInt32)value error:(NSError *__autoreleasing *)error;
+
+-(BOOL) writeI64:(SInt64)value error:(NSError *__autoreleasing *)error;
+
+-(BOOL) writeI16:(short)value error:(NSError *__autoreleasing *)error;
+
+-(BOOL) writeByte:(UInt8)value error:(NSError *__autoreleasing *)error;
+
+-(BOOL) writeString:(NSString *)value error:(NSError *__autoreleasing *)error;
+
+-(BOOL) writeDouble:(double)value error:(NSError *__autoreleasing *)error;
+
+-(BOOL) writeBool:(BOOL)value error:(NSError *__autoreleasing *)error;
+
+-(BOOL) writeBinary:(NSData *)data error:(NSError *__autoreleasing *)error;
+
+-(BOOL) writeFieldStop:(NSError *__autoreleasing *)error;
+
+-(BOOL) writeFieldEnd:(NSError *__autoreleasing *)error;
+
+-(BOOL) writeMapBeginWithKeyType:(SInt32)keyType
+                       valueType:(SInt32)valueType
+                            size:(SInt32)size
+                           error:(NSError *__autoreleasing *)error;
+-(BOOL) writeMapEnd:(NSError *__autoreleasing *)error;
+
+
+-(BOOL) writeSetBeginWithElementType:(SInt32)elementType
+                                size:(SInt32)size
+                               error:(NSError *__autoreleasing *)error;
+-(BOOL) writeSetEnd:(NSError *__autoreleasing *)error;
+
+
+-(BOOL) writeListBeginWithElementType:(SInt32)elementType
+                                 size:(SInt32)size
+                                error:(NSError *__autoreleasing *)error;
+
+-(BOOL) writeListEnd:(NSError *__autoreleasing *)error;
 
 
 @end
 
+
+NS_ASSUME_NONNULL_END

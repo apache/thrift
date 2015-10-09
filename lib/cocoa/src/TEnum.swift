@@ -17,7 +17,15 @@
  * under the License.
  */
 
-#import "TProtocolException.h"
+import Foundation
 
-@implementation TProtocolException
-@end
+
+public protocol TEnum : TSerializable {
+  
+}
+
+public extension TEnum {
+  
+  public static var thriftType : TType { return TType.I32 }
+  
+}
