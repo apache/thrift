@@ -194,9 +194,8 @@ if test "$with_c_glib" = "yes"; then
 fi
 AM_CONDITIONAL(WITH_C_GLIB, [test "$have_glib2" = "yes" -a "$have_gobject2" = "yes"])
 
-echo "OpenSSL check"
+# check we have openssl
 if test "$have_cpp" = "yes" -o "$have_c_glib" = "yes";  then
-	echo "Have cpp or c so we check for OpenSSL"
 	AX_CHECK_OPENSSL()
 fi
 
