@@ -130,7 +130,7 @@ class SimpleClientTest < Test::Unit::TestCase
 
   def test_double
     p 'test_double'
-    val = 3.14
+    val = 3.14159265358979323846
     assert_equal(@client.testDouble(val), val)
     assert_equal(@client.testDouble(-val), -val)
     assert_kind_of(Float, @client.testDouble(val))
