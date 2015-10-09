@@ -94,7 +94,7 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
 {
   NSMutableData *data = [NSMutableData dataWithLength:size];
   if (!data) {
-    PROTOCOL_ERROR(nil, NoMemory, @"Unable to allocate %d bytes", size);
+    PROTOCOL_ERROR(nil, Unknown, @"Unable to allocate %d bytes", size);
   }
 
   if (![_transport readAll:data.mutableBytes offset:0 length:size error:error]) {
@@ -119,7 +119,7 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
   if (size < 0) {
     int version = size & VERSION_MASK;
     if (version != VERSION_1) {
-      PROTOCOL_ERROR(NO, BadMessageVersion, @"Bad message version");
+      PROTOCOL_ERROR(NO, BadVersion, @"Bad message version");
     }
     if (type != NULL) {
       *type = size & 0x00FF;
@@ -135,11 +135,11 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
   else {
 
     if (_strictRead) {
-      PROTOCOL_ERROR(NO, MissingMessageVersion, @"Missing message version, old client?");
+      PROTOCOL_ERROR(NO, InvalidData, @"Missing message version, old client?");
     }
 
     if (_messageSizeLimit > 0 && size > _messageSizeLimit) {
-      PROTOCOL_ERROR(NO, MessageTooBig, @"Message exceeeds size limit of %d", (int)size);
+      PROTOCOL_ERROR(NO, SizeLimit, @"Message exceeeds size limit of %d", (int)size);
     }
 
     NSString *messageName = [self readStringBody:size error:error];
@@ -339,7 +339,7 @@ static TBinaryProtocolFactory *gSharedFactory = nil;
 
   NSMutableData *data = [NSMutableData dataWithLength:size];
   if (!data) {
-    PROTOCOL_ERROR(NO, NoMemory, @"Unable to allocate %d bytes", (int)size);
+    PROTOCOL_ERROR(NO, Unknown, @"Unable to allocate %d bytes", (int)size);
   }
 
   if (![_transport readAll:data.mutableBytes offset:0 length:size error:error]) {

@@ -120,7 +120,10 @@ public struct TSet<Element : TSerializable> : CollectionType, ArrayLiteralConver
   public static func readValueFromProtocol(proto: TProtocol) throws -> TSet {
     let (elementType, size) = try proto.readSetBegin()
     if elementType != Element.thriftType {
-      throw NSError(domain: TProtocolErrorDomain, code: Int(TProtocolError.UnexpectedType.rawValue), userInfo: nil)
+      throw NSError(
+        domain: TProtocolErrorDomain,
+        code: Int(TProtocolError.InvalidData.rawValue),
+        userInfo: [TProtocolErrorExtendedErrorKey: NSNumber(int: elementType.rawValue)])
     }
     var set = TSet()
     for _ in 0..<size {

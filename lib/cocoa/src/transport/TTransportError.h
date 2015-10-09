@@ -24,14 +24,20 @@ extern NSString *TTransportErrorDomain;
 
 
 typedef NS_ENUM (int, TTransportError) {
-  TTransportErrorUnknown        = 30000,
-  TTransportErrorNoFrameHeader  = 30001,
-  TTransportErrorUnderflow      = 30002,
-  TTransportErrorFailedWrite    = 30003,
-  TTransportErrorStreamClosed   = 30004,
-  TTransportErrorEOF            = 30005,
+  TTransportErrorUnknown        = 0,
+  TTransportErrorNotOpen        = 1,
+  TTransportErrorAlreadyOpen    = 2,
+  TTransportErrorTimedOut       = 3,
+  TTransportErrorEndOfFile      = 4,
+};
 
-  TTransportErrorHttpInvalidResponse  = 40001,
-  TTransportErrorHttpInvalidStatus    = 40002,
-  TTransportErrorHttpAuthentication   = 40003,
+
+extern NSString *TTransportErrorExtendedErrorKey;
+extern NSString *TTransportErrorHttpErrorKey;
+
+
+typedef NS_ENUM(int, THttpTransportError) {
+  THttpTransportErrorInvalidResponse  = 1001,
+  THttpTransportErrorInvalidStatus    = 1002,
+  THttpTransportErrorAuthentication   = 1003,
 };

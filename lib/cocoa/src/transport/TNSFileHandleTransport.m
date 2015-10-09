@@ -60,7 +60,7 @@
     if (d.length == 0) {
       if (error) {
         *error = [NSError errorWithDomain:TTransportErrorDomain
-                                     code:TTransportErrorUnderflow
+                                     code:TTransportErrorEndOfFile
                                  userInfo:nil];
       }
       return NO;
@@ -100,7 +100,7 @@
   @catch (NSException *e) {
     if (error) {
       *error = [NSError errorWithDomain:TTransportErrorDomain
-                                   code:TTransportErrorFailedWrite
+                                   code:TTransportErrorNotOpen
                                userInfo:@{}];
     }
     return NO;

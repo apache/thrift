@@ -135,7 +135,7 @@ public extension TProtocol {
     if value == nil {
       throw NSError(
         domain: TProtocolErrorDomain,
-        code: Int(TProtocolError.MissingRequiredField.rawValue),
+        code: Int(TProtocolError.Unknown.rawValue),
         userInfo: [TProtocolErrorFieldNameKey: name])
     }
     

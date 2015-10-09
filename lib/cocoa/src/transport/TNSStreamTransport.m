@@ -62,7 +62,7 @@
     if (read <= 0) {
       if (error) {
         *error = [NSError errorWithDomain:TTransportErrorDomain
-                                     code:TTransportErrorStreamClosed
+                                     code:TTransportErrorNotOpen
                                  userInfo:@{}];
       }
       return NO;
@@ -102,7 +102,7 @@
     if (total == -1) {
       if (error) {
         *error = [NSError errorWithDomain:TTransportErrorDomain
-                                     code:TTransportErrorFailedWrite
+                                     code:TTransportErrorNotOpen
                                  userInfo:@{}];
       }
       return NO;
@@ -110,7 +110,7 @@
     else if (total == 0) {
       if (error) {
         *error = [NSError errorWithDomain:TTransportErrorDomain
-                                     code:TTransportErrorEOF
+                                     code:TTransportErrorEndOfFile
                                  userInfo:@{}];
       }
       return NO;

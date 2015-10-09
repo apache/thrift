@@ -449,8 +449,9 @@ enum {
   if (protocolId != COMPACT_PROTOCOL_ID) {
     if (error) {
       *error = [NSError errorWithDomain:TProtocolErrorDomain
-                                   code:TProtocolErrorProtocolIdMismatch
-                               userInfo:@{TProtocolErrorExpectedIdKey: @(COMPACT_PROTOCOL_ID)}];
+                                   code:TProtocolErrorUnknown
+                               userInfo:@{TProtocolErrorExtendedErrorKey: @(TProtocolExtendedErrorMismatchedProtocol),
+                                          TProtocolErrorExpectedIdKey: @(COMPACT_PROTOCOL_ID)}];
     }
     return NO;
   }
@@ -464,7 +465,7 @@ enum {
   if (version != COMPACT_VERSION) {
     if (error) {
       *error = [NSError errorWithDomain:TProtocolErrorDomain
-                                   code:TProtocolErrorProtocolVersionMismatch
+                                   code:TProtocolErrorBadVersion
                                userInfo:@{TProtocolErrorExpectedVersionKey: @(COMPACT_VERSION)}];
     }
     return NO;

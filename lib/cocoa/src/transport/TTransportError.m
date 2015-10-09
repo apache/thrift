@@ -21,3 +21,7 @@
 
 
 NSString *TTransportErrorDomain = @"TTransportErrorDomain";
+
+
+NSString *TTransportErrorExtendedErrorKey = @"extendedError";
+NSString *TTransportErrorHttpErrorKey = @"httpError";

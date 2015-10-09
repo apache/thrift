@@ -124,7 +124,7 @@
     // Report underflow only if readAvail didn't report error already
     if (error && !*error) {
       *error = [NSError errorWithDomain:TTransportErrorDomain
-                                   code:TTransportErrorUnderflow
+                                   code:TTransportErrorEndOfFile
                                userInfo:nil];
     }
 
@@ -175,8 +175,8 @@
     if (!error && ![response isKindOfClass:NSHTTPURLResponse.class]) {
 
       error = [NSError errorWithDomain:TTransportErrorDomain
-                                  code:TTransportErrorHttpInvalidResponse
-                              userInfo:@{}];
+                                   code:TTransportErrorUnknown
+                               userInfo:@{TTransportErrorHttpErrorKey: @(THttpTransportErrorInvalidResponse)}];
 
     }
 
@@ -184,17 +184,18 @@
     NSHTTPURLResponse *httpResponse = (id)response;
     if (!error && httpResponse.statusCode != 200) {
 
-      TTransportError code;
+      THttpTransportError code;
       if (httpResponse.statusCode == 401) {
-        code = TTransportErrorHttpAuthentication;
+        code = THttpTransportErrorAuthentication;
       }
       else {
-        code = TTransportErrorHttpInvalidStatus;
+        code = THttpTransportErrorInvalidStatus;
       }
 
       error = [NSError errorWithDomain:TTransportErrorDomain
-                                  code:code
-                              userInfo:@{@"statusCode":@(httpResponse.statusCode)}];
+                                  code:TTransportErrorUnknown
+                              userInfo:@{TTransportErrorHttpErrorKey: @(code),
+                                         @"statusCode":@(httpResponse.statusCode)}];
     }
 
     // Allow factory to check

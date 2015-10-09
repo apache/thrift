@@ -54,7 +54,7 @@
   if (data_len < 0) {
     if (error) {
       *error = [NSError errorWithDomain:TTransportErrorDomain
-                                   code:TTransportErrorNoFrameHeader
+                                   code:TTransportErrorUnknown
                                userInfo:@{}];
     }
     return NO;
@@ -99,7 +99,7 @@
     // Report underflow only if readAvail didn't report error already
     if (error && !*error) {
       *error = [NSError errorWithDomain:TTransportErrorDomain
-                                   code:TTransportErrorUnderflow
+                                   code:TTransportErrorEndOfFile
                                userInfo:nil];
     }
 

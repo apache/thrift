@@ -1225,8 +1225,9 @@ void t_cocoa_generator::generate_cocoa_struct_validator(ofstream& out, t_struct*
       indent(out) << "if (__thriftError) ";
       scope_up(out);
       out << indent() << "*__thriftError = [NSError errorWithDomain: TProtocolErrorDomain" << endl
-          << indent() << "                                     code: TProtocolErrorMissingRequiredField" << endl
-          << indent() << "                                 userInfo: @{TProtocolErrorFieldNameKey: @\"" << (*f_iter)->get_name() << "\"}];" << endl;
+          << indent() << "                                     code: TProtocolErrorUnknown" << endl
+          << indent() << "                                 userInfo: @{TProtocolErrorExtendedErrorKey: @(TProtocolExtendedErrorMissingRequiredField)," << endl
+          << indent() << "                                             TProtocolErrorFieldNameKey: @\"" << (*f_iter)->get_name() << "\"}];" << endl;
       scope_down(out);
       scope_down(out);
     }

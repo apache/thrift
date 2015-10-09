@@ -22,6 +22,7 @@
 
 NSString *TProtocolErrorDomain = @"TProtocolErrorDomain";
 
+NSString *TProtocolErrorExtendedErrorKey = @"extendedError";
 NSString *TProtocolErrorFieldNameKey = @"field";
 NSString *TProtocolErrorExpectedIdKey = @"expectedId";
 NSString *TProtocolErrorExpectedVersionKey = @"expectedVersion";

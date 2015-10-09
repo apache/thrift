@@ -110,8 +110,11 @@ public struct TMap<Key : TSerializable, Value : TSerializable> : CollectionType,
   
   public static func readValueFromProtocol(proto: TProtocol) throws -> TMap {
     let (keyType, valueType, size) = try proto.readMapBegin()
-    if keyType != Key.thriftType && valueType != Value.thriftType {
-      throw NSError(domain: TProtocolErrorDomain, code: Int(TProtocolError.UnexpectedType.rawValue), userInfo: nil)
+    if keyType != Key.thriftType || valueType != Value.thriftType {
+      throw NSError(
+        domain: TProtocolErrorDomain,
+        code: Int(TProtocolError.InvalidData.rawValue),
+        userInfo: [TProtocolErrorExtendedErrorKey: NSNumber(int: TProtocolExtendedError.UnexpectedType.rawValue)])
     }
     var map = TMap()
     for _ in 0..<size {

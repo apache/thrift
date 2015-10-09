@@ -108,7 +108,10 @@ public struct TList<Element : TSerializable> : MutableCollectionType, Hashable, 
   public static func readValueFromProtocol(proto: TProtocol) throws -> TList {
     let (elementType, size) = try proto.readListBegin()
     if elementType != Element.thriftType {
-      throw NSError(domain: TProtocolErrorDomain, code: Int(TProtocolError.UnexpectedType.rawValue), userInfo: nil)
+      throw NSError(
+        domain: TProtocolErrorDomain,
+        code: Int(TProtocolError.InvalidData.rawValue),
+        userInfo: [TProtocolErrorExtendedErrorKey: NSNumber(int: TProtocolExtendedError.UnexpectedType.rawValue)])
     }
     var list = TList()
     for _ in 0..<size {
