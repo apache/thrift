@@ -85,7 +85,16 @@ class SimpleClientTest < Test::Unit::TestCase
 
   def test_string
     p 'test_string'
-    assert_equal(@client.testString('string'), 'string')
+    test_string =
+      'quote: \" backslash:' +
+      ' forwardslash-escaped: \/ ' +
+      ' backspace: \b formfeed: \f newline: \n return: \r tab: ' +
+      ' now-all-of-them-together: "\\\/\b\n\r\t' +
+      ' now-a-bunch-of-junk: !@#$%&()(&%$#{}{}<><><' +
+      ' char-to-test-json-parsing: ]] \"]] \\" }}}{ [[[ '
+
+    result_string = @client.testString(test_string)
+    assert_equal(test_string, result_string.force_encoding(Encoding::UTF_8))
   end
 
   def test_bool
