@@ -441,7 +441,7 @@ string t_java_generator::java_type_imports() {
 }
 
 string t_java_generator::java_suppressions() {
-  return "@SuppressWarnings({\"cast\", \"rawtypes\", \"serial\", \"unchecked\"})\n";
+  return "@SuppressWarnings({\"cast\", \"rawtypes\", \"serial\", \"unchecked\", \"unused\"})\n";
 }
 
 /**
