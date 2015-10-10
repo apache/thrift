@@ -2302,7 +2302,13 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
     // The handler reported success; return the result, if any, to the caller
     if (!(*function_iter)->is_oneway()) {
       if (has_return_value) {
-        f_service_ << indent() << "g_object_set (result_struct, \"success\", return_value, "
+        f_service_ << indent() << "g_object_set (result_struct, \"success\", ";
+        if (type_name(return_type) != property_type_name(return_type)) {
+          // Roundtrip cast to fix the position of sign bit.
+          f_service_ << "(" << property_type_name(return_type) << ")"
+                     << "(" << type_name(return_type) << ")";
+        }
+        f_service_ << "return_value, "
                    << "NULL);" << endl;
 
         // Deallocate (or unref) return_value
