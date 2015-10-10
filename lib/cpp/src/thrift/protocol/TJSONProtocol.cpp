@@ -743,25 +743,19 @@ uint32_t TJSONProtocol::readJSONString(std::string& str, bool skipContext) {
       if (ch == kJSONEscapeChar) {
         uint16_t cp;
         result += readJSONEscapeChar(&cp);
-        try {
-          // Checking for surrogate pair
-          if (cp >= 0xD800 && cp <= 0xDBFF) {
-            codepoints.push_back(cp);
-          } else {
-            if (cp >= 0xDC00 && cp <= 0xDFFF
-                 && codepoints.empty()) {
-              throw TProtocolException(TProtocolException::INVALID_DATA,
-                                       "Missing UTF-16 high surrogate pair.");
-            }
-            codepoints.push_back(cp);
-            codepoints.push_back(0);
-            str += boost::locale::conv::utf_to_utf<char>(codepoints.data());
-            codepoints.clear();
+        // Checking for surrogate pair
+        if (cp >= 0xD800 && cp <= 0xDBFF) {
+          codepoints.push_back(cp);
+        } else {
+          if (cp >= 0xDC00 && cp <= 0xDFFF
+               && codepoints.empty()) {
+            throw TProtocolException(TProtocolException::INVALID_DATA,
+                                     "Missing UTF-16 high surrogate pair.");
           }
-        } catch (std::range_error& e) {
-          throw TProtocolException(TProtocolException::INVALID_DATA,
-                                   "Cannot convert Unicode character. " + std::string(e.what())
-                                   + ".");
+          codepoints.push_back(cp);
+          codepoints.push_back(0);
+          str += boost::locale::conv::utf_to_utf<char>(codepoints.data());
+          codepoints.clear();
         }
         continue;
       } else {
