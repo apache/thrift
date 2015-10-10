@@ -356,6 +356,22 @@ main (int argc, char **argv)
 
         fail_count++;
       }
+      printf ("testByte(-1)");
+      if (t_test_thrift_test_if_test_byte (test_client,
+                                           &byte,
+                                           -1,
+                                           &error)) {
+        printf (" = %d\n", byte);
+        if (byte != -1)
+          fail_count++;
+      }
+      else {
+        printf ("%s\n", error->message);
+        g_error_free (error);
+        error = NULL;
+
+        fail_count++;
+      }
 
       /**
        * I32 TEST
