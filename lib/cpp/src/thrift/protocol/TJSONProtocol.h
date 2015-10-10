@@ -53,6 +53,10 @@ class TJSONContext;
  *    The readBinary() method is written such that it will properly skip if
  *    called on a Thrift string (although it will decode garbage data).
  *
+ *    NOTE: Base64 padding is optional for Thrift binary value encoding. So
+ *    the readBinary() method needs to decode both input strings with padding
+ *    and those without one.
+ *
  * 5. Thrift structs are represented as JSON objects, with the field ID as the
  *    key, and the field value represented as a JSON object with a single
  *    key-value pair. The key is a short string identifier for that type,
