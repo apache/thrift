@@ -123,7 +123,7 @@ private:
 
   uint32_t readJSONSyntaxChar(uint8_t ch);
 
-  uint32_t readJSONEscapeChar(uint8_t* out);
+  uint32_t readJSONEscapeChar(uint16_t* out);
 
   uint32_t readJSONString(std::string& str, bool skipContext = false);
 
