@@ -728,7 +728,7 @@ uint32_t TJSONProtocol::readJSONEscapeChar(uint16_t* out) {
 uint32_t TJSONProtocol::readJSONString(std::string& str, bool skipContext) {
   uint32_t result = (skipContext ? 0 : context_->read(reader_));
   result += readJSONSyntaxChar(kJSONStringDelimiter);
-  std::vector<char16_t> codepoints;
+  std::vector<uint16_t> codepoints;
   uint8_t ch;
   str.clear();
   while (true) {
