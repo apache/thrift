@@ -23,10 +23,10 @@
 #include <locale>
 #include <sstream>
 #include <cmath>
-#include <codecvt>
 
 #include <boost/math/special_functions/fpclassify.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/locale.hpp>
 
 #include <thrift/protocol/TBase64Utils.h>
 #include <thrift/transport/TTransportException.h>
@@ -728,7 +728,6 @@ uint32_t TJSONProtocol::readJSONEscapeChar(uint16_t* out) {
 uint32_t TJSONProtocol::readJSONString(std::string& str, bool skipContext) {
   uint32_t result = (skipContext ? 0 : context_->read(reader_));
   result += readJSONSyntaxChar(kJSONStringDelimiter);
-  std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
   std::vector<char16_t> codepoints;
   uint8_t ch;
   str.clear();
@@ -748,17 +747,16 @@ uint32_t TJSONProtocol::readJSONString(std::string& str, bool skipContext) {
           // Checking for surrogate pair
           if (cp >= 0xD800 && cp <= 0xDBFF) {
             codepoints.push_back(cp);
-          } else if (cp >= 0xDC00 && cp <= 0xDFFF) {
-            if (codepoints.empty()) {
+          } else {
+            if (cp >= 0xDC00 && cp <= 0xDFFF
+                 && codepoints.empty()) {
               throw TProtocolException(TProtocolException::INVALID_DATA,
                                        "Missing UTF-16 high surrogate pair.");
             }
             codepoints.push_back(cp);
             codepoints.push_back(0);
-            str += converter.to_bytes(codepoints.data());
+            str += boost::locale::conv::utf_to_utf<char>(codepoints.data());
             codepoints.clear();
-          } else {
-            str += converter.to_bytes(cp);
           }
         } catch (std::range_error& e) {
           throw TProtocolException(TProtocolException::INVALID_DATA,
