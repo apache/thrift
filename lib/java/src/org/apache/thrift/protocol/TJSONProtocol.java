@@ -769,6 +769,11 @@ public class TJSONProtocol extends TProtocol {
     int len = arr.len();
     int off = 0;
     int size = 0;
+    // Ignore padding
+    int bound = len >= 2 ? len - 2 : 0;
+    for (int i = len - 1; i >= bound && b[i] == '='; --i) {
+      --len;
+    }
     while (len >= 4) {
       // Decode 4 bytes at a time
       TBase64Utils.decode(b, off, 4, b, size); // NB: decoded in place
