@@ -387,7 +387,7 @@ func (p *TJSONProtocol) ReadString() (string, error) {
 		if err != nil {
 			return v, err
 		}
-	} else if len(f) >= 0 && f[0] == JSON_NULL[0] {
+	} else if len(f) > 0 && f[0] == JSON_NULL[0] {
 		b := make([]byte, len(JSON_NULL))
 		_, err := p.reader.Read(b)
 		if err != nil {
@@ -417,7 +417,7 @@ func (p *TJSONProtocol) ReadBinary() ([]byte, error) {
 		if err != nil {
 			return v, err
 		}
-	} else if len(f) >= 0 && f[0] == JSON_NULL[0] {
+	} else if len(f) > 0 && f[0] == JSON_NULL[0] {
 		b := make([]byte, len(JSON_NULL))
 		_, err := p.reader.Read(b)
 		if err != nil {
