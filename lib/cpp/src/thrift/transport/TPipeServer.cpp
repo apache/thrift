@@ -351,12 +351,17 @@ bool TNamedPipeServer::createNamedPipe(const TAutoCrit & /*lockProof*/) {
                                      0,                    // client time-out
                                      &sa));                // security attributes
 
+  DWORD lastError = GetLastError();
+  LocalFree(sd);
+  LocalFree(acl);
+  FreeSid(everyone_sid);
+
   if (hPipe.h == INVALID_HANDLE_VALUE) {
     Pipe_.reset();
-    GlobalOutput.perror("TPipeServer::TCreateNamedPipe() GLE=", GetLastError());
+    GlobalOutput.perror("TPipeServer::TCreateNamedPipe() GLE=", lastError);
     throw TTransportException(TTransportException::NOT_OPEN,
                               "TCreateNamedPipe() failed",
-                              GetLastError());
+							  lastError);
     return false;
   }
 
