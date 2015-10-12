@@ -21,7 +21,7 @@ THRIFT = $(top_builddir)/compiler/cpp/thrift
 stubs: $(top_srcdir)/test/ThriftTest.thrift
 	$(THRIFT) --gen js:node -o test/ $(top_srcdir)/test/ThriftTest.thrift
 
-deps: $(top_srcdir)/package.json
+deps: package.json
 	$(NPM) install --no-bin-links $(top_srcdir)/
 
 all-local: deps
