@@ -29,11 +29,11 @@ all-local: deps
 precross: deps stubs
 
 check: deps
-	cd $(top_srcdir) && $(NPM) test && cd lib/nodejs
+	$(NPM) test
 
 clean-local:
 	$(RM) -r test/gen-nodejs
-	$(RM) -r $(top_srcdir)/node_modules
+	$(RM) -r node_modules
 
 EXTRA_DIST = \
 	examples \
