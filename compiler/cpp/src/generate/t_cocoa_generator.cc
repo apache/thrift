@@ -96,8 +96,7 @@ public:
                          string name,
                          t_type* type,
                          t_const_value* value,
-                         bool defval = false,
-                         bool is_property = false);
+                         bool defval = false);
   std::string render_const_value(ostream& out,
                                  t_type* type,
                                  t_const_value* value,
@@ -512,7 +511,6 @@ void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
                           cocoa_prefix_ + (*c_iter)->get_name(),
                           (*c_iter)->get_type(),
                           (*c_iter)->get_value(),
-                          false,
                           false);
         f_impl_ << ";" << endl;
       }
@@ -939,8 +937,7 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream& out,
                             "self." + (*m_iter)->get_name(),
                             t,
                             (*m_iter)->get_value(),
-                            false,
-                            true);
+                            false);
         }
       }
     }
@@ -2700,8 +2697,7 @@ void t_cocoa_generator::print_const_value(ostream& out,
                                           string name,
                                           t_type* type,
                                           t_const_value* value,
-                                          bool defval,
-                                          bool is_property) {
+                                          bool defval) {
   type = get_true_type(type);
 
   if (type->is_base_type()) {
@@ -2837,7 +2833,7 @@ string t_cocoa_generator::render_const_value(ostream& out,
     render << value->get_integer();
   } else {
     string t = tmp("tmp");
-    print_const_value(out, t, type, value, true, false);
+    print_const_value(out, t, type, value, true);
     render << t;
   }
 
