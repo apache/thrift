@@ -29,6 +29,7 @@
 #include "platform.h"
 
 using std::map;
+using std::ostream;
 using std::ofstream;
 using std::ostringstream;
 using std::string;
@@ -91,16 +92,16 @@ public:
   void generate_xception(t_struct* txception);
   void generate_service(t_service* tservice);
 
-  void print_const_value(std::ofstream& out,
-                         std::string name,
+  void print_const_value(ostream& out,
+                         string name,
                          t_type* type,
                          t_const_value* value,
                          bool defval = false,
                          bool is_property = false);
-  std::string render_const_value(ofstream& out,
+  std::string render_const_value(ostream& out,
                                  t_type* type,
                                  t_const_value* value,
-                                 bool containerize_it = false);
+                                 bool box_it = false);
 
   void generate_cocoa_struct(t_struct* tstruct, bool is_exception);
   void generate_cocoa_struct_interface(std::ofstream& out,
@@ -227,9 +228,8 @@ public:
   std::string format_string_for_type(t_type* type);
   std::string format_cast_for_type(t_type* type);
   std::string call_field_setter(t_field* tfield, std::string fieldName);
-  std::string containerize(t_type* ttype, std::string fieldName);
-  std::string decontainerize(t_field* tfield, std::string fieldName);
-  std::string decontainerize(t_type* ttype, std::string fieldName);
+  std::string box(t_type *ttype, std::string field_name);
+  std::string unbox(t_type* ttype, std::string field_name);
   std::string getter_name(string field_name);
   std::string setter_name(string field_name);
 
@@ -443,7 +443,7 @@ void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
   // Public constants for base types & strings
   vector<t_const*>::iterator c_iter;
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
-    t_type* type = (*c_iter)->get_type();
+    t_type* type = (*c_iter)->get_type()->get_true_type();
     if (!type->is_container() && !type->is_struct()) {
       const_interface << "FOUNDATION_EXPORT " << type_name(type) << " "
                       << cocoa_prefix_ << capitalize((*c_iter)->get_name()) << ";" << endl;
@@ -457,6 +457,8 @@ void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
   string constants_class_name = cocoa_prefix_ + capitalize(program_name_) + "Constants";
 
   if (needs_class) {
+    
+    const_interface << endl;
 
     const_interface << "@interface " << constants_class_name << " : NSObject ";
     scope_up(const_interface);
@@ -465,14 +467,14 @@ void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
     // getter method for each constant defined.
     for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
       string name = (*c_iter)->get_name();
-      t_type* type = (*c_iter)->get_type();
+      t_type* type = (*c_iter)->get_type()->get_true_type();
       if (type->is_container() || type->is_struct()) {
         t_type* type = (*c_iter)->get_type();
-        const_interface << "+ (" << type_name(type) << ") " << name << ";" << endl;
+        const_interface << endl << "+ (" << type_name(type) << ") " << name << ";" << endl;
       }
     }
 
-    const_interface << "@end";
+    const_interface << endl << "@end";
   }
 
   // this gets spit into the header file in ::close_generator
@@ -486,7 +488,8 @@ void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
     string name = (*c_iter)->get_name();
     t_type* type = (*c_iter)->get_type();
     f_impl_ << type_name(type) << " " << cocoa_prefix_ << name;
-    if (!type->is_container() && !type->is_struct()) {
+    t_type* ttype = type->get_true_type();
+    if (!ttype->is_container() && !ttype->is_struct()) {
       f_impl_ << " = " << render_const_value(f_impl_, type, (*c_iter)->get_value());
     }
     f_impl_ << ";" << endl;
@@ -494,14 +497,17 @@ void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
   f_impl_ << endl;
 
   if (needs_class) {
-    f_impl_ << "@implementation " << constants_class_name << endl;
+
+    f_impl_ << "@implementation " << constants_class_name << endl << endl;
 
     // initialize complex constants when the class is loaded
     f_impl_ << "+ (void) initialize ";
     scope_up(f_impl_);
 
     for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
-      if ((*c_iter)->get_type()->is_container() || (*c_iter)->get_type()->is_struct()) {
+      t_type* ttype = (*c_iter)->get_type()->get_true_type();
+      if (ttype->is_container() || ttype->is_struct()) {
+        f_impl_ << endl;
         print_const_value(f_impl_,
                           cocoa_prefix_ + (*c_iter)->get_name(),
                           (*c_iter)->get_type(),
@@ -516,9 +522,9 @@ void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
     // getter method for each constant
     for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
       string name = (*c_iter)->get_name();
-      t_type* type = (*c_iter)->get_type();
+      t_type* type = (*c_iter)->get_type()->get_true_type();
       if (type->is_container() || type->is_struct()) {
-        f_impl_ << "+ (" << type_name(type) << ") " << name;
+        f_impl_ << endl << "+ (" << type_name(type) << ") " << name << " ";
         scope_up(f_impl_);
         indent(f_impl_) << "return " << cocoa_prefix_ << name << ";" << endl;
         scope_down(f_impl_);
@@ -2108,7 +2114,7 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
     out << ": __thriftError];" << endl;
     out << indent() << "if (!serviceResult) return NO;" << endl;
     if (!(*f_iter)->get_returntype()->is_void()) {
-      out << indent() << "[result setSuccess: " << decontainerize((*f_iter)->get_returntype(), "serviceResult") << "];" << endl;
+      out << indent() << "[result setSuccess: " << unbox((*f_iter)->get_returntype(), "serviceResult") << "];" << endl;
     }
     
     // write out the result if not oneway
@@ -2271,35 +2277,63 @@ void t_cocoa_generator::generate_deserialize_container(ofstream& out,
  * suitable for putting into a container, if necessary.  Basically,
  * wrap scaler primitives in NSNumber objects.
  */
-string t_cocoa_generator::containerize(t_type* ttype, string fieldName) {
-  // FIXME - optimize here to avoid autorelease pool?
+string t_cocoa_generator::box(t_type* ttype, string field_name) {
+
   ttype = get_true_type(ttype);
   if (ttype->is_enum()) {
-    return "[NSNumber numberWithInt: " + fieldName + "]";
+    return "@(" + field_name + ")";
   } else if (ttype->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
     switch (tbase) {
-    case t_base_type::TYPE_VOID:
-      throw "can't containerize void";
-    case t_base_type::TYPE_BOOL:
-      return "[NSNumber numberWithBool: " + fieldName + "]";
-    case t_base_type::TYPE_BYTE:
-      return "[NSNumber numberWithChar: " + fieldName + "]";
-    case t_base_type::TYPE_I16:
-      return "[NSNumber numberWithShort: " + fieldName + "]";
-    case t_base_type::TYPE_I32:
-      return "[NSNumber numberWithLong: " + fieldName + "]";
-    case t_base_type::TYPE_I64:
-      return "[NSNumber numberWithLongLong: " + fieldName + "]";
-    case t_base_type::TYPE_DOUBLE:
-      return "[NSNumber numberWithDouble: " + fieldName + "]";
-    default:
-      break;
+      case t_base_type::TYPE_VOID:
+        throw "can't box void";
+      case t_base_type::TYPE_BOOL:
+      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I16:
+      case t_base_type::TYPE_I32:
+      case t_base_type::TYPE_I64:
+      case t_base_type::TYPE_DOUBLE:
+        return "@(" + field_name + ")";
+      default:
+        break;
     }
   }
 
   // do nothing
-  return fieldName;
+  return field_name;
+}
+
+/**
+ * Extracts the actual value from a boxed value
+ */
+string t_cocoa_generator::unbox(t_type* ttype, string field_name) {
+  ttype = get_true_type(ttype);
+  if (ttype->is_enum()) {
+    return "[" + field_name + " intValue]";
+  } else if (ttype->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
+    switch (tbase) {
+      case t_base_type::TYPE_VOID:
+        throw "can't unbox void";
+      case t_base_type::TYPE_BOOL:
+        return "[" + field_name + " boolValue]";
+      case t_base_type::TYPE_BYTE:
+        return "((SInt8)[" + field_name + " charValue])";
+      case t_base_type::TYPE_I16:
+        return "((SInt16)[" + field_name + " shortValue])";
+      case t_base_type::TYPE_I32:
+        return "((SInt32)[" + field_name + " longValue])";
+      case t_base_type::TYPE_I64:
+        return "((SInt64)[" + field_name + " longLongValue])";
+      case t_base_type::TYPE_DOUBLE:
+        return "[" + field_name + " doubleValue]";
+      default:
+        break;
+    }
+  }
+  
+  // do nothing
+  return field_name;
 }
 
 /**
@@ -2318,8 +2352,8 @@ void t_cocoa_generator::generate_deserialize_map_element(ofstream& out,
   generate_deserialize_field(out, &fkey, key);
   generate_deserialize_field(out, &fval, val);
 
-  indent(out) << "[" << fieldName << " setObject: " << containerize(valType, val)
-              << " forKey: " << containerize(keyType, key) << "];" << endl;
+  indent(out) << "[" << fieldName << " setObject: " << box(valType, val)
+              << " forKey: " << box(keyType, key) << "];" << endl;
 }
 
 /**
@@ -2334,7 +2368,7 @@ void t_cocoa_generator::generate_deserialize_set_element(ofstream& out,
 
   generate_deserialize_field(out, &felem, elem);
 
-  indent(out) << "[" << fieldName << " addObject: " << containerize(type, elem) << "];" << endl;
+  indent(out) << "[" << fieldName << " addObject: " << box(type, elem) << "];" << endl;
 }
 
 /**
@@ -2349,7 +2383,7 @@ void t_cocoa_generator::generate_deserialize_list_element(ofstream& out,
 
   generate_deserialize_field(out, &felem, elem);
 
-  indent(out) << "[" << fieldName << " addObject: " << containerize(type, elem) << "];" << endl;
+  indent(out) << "[" << fieldName << " addObject: " << box(type, elem) << "];" << endl;
 }
 
 /**
@@ -2502,44 +2536,6 @@ void t_cocoa_generator::generate_serialize_container(ofstream& out,
 }
 
 /**
- * Given a field variable name, wrap it in code that converts it to a
- * primitive type, if necessary.
- */
-string t_cocoa_generator::decontainerize(t_field* tfield, string fieldName) {
-  return decontainerize(tfield->get_type(), fieldName);
-}
-
-string t_cocoa_generator::decontainerize(t_type* ttype, string fieldName) {
-  ttype = get_true_type(ttype);
-  if (ttype->is_enum()) {
-    return "[" + fieldName + " intValue]";
-  } else if (ttype->is_base_type()) {
-    t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
-    switch (tbase) {
-      case t_base_type::TYPE_VOID:
-        throw "can't decontainerize void";
-      case t_base_type::TYPE_BOOL:
-        return "[" + fieldName + " boolValue]";
-      case t_base_type::TYPE_BYTE:
-        return "((SInt8)[" + fieldName + " charValue])";
-      case t_base_type::TYPE_I16:
-        return "((SInt16)[" + fieldName + " shortValue])";
-      case t_base_type::TYPE_I32:
-        return "((SInt32)[" + fieldName + " longValue])";
-      case t_base_type::TYPE_I64:
-        return "((SInt64)[" + fieldName + " longLongValue])";
-      case t_base_type::TYPE_DOUBLE:
-        return "[" + fieldName + " doubleValue]";
-      default:
-        break;
-    }
-  }
-  
-  // do nothing
-  return fieldName;
-}
-
-/**
  * Serializes the members of a map.
  */
 void t_cocoa_generator::generate_serialize_map_element(ofstream& out,
@@ -2547,9 +2543,9 @@ void t_cocoa_generator::generate_serialize_map_element(ofstream& out,
                                                        string key,
                                                        string mapName) {
   t_field kfield(tmap->get_key_type(), key);
-  generate_serialize_field(out, &kfield, decontainerize(&kfield, key));
+  generate_serialize_field(out, &kfield, unbox(kfield.get_type(), key));
   t_field vfield(tmap->get_val_type(), "[" + mapName + " objectForKey: " + key + "]");
-  generate_serialize_field(out, &vfield, decontainerize(&vfield, vfield.get_name()));
+  generate_serialize_field(out, &vfield, unbox(vfield.get_type(), vfield.get_name()));
 }
 
 /**
@@ -2559,7 +2555,7 @@ void t_cocoa_generator::generate_serialize_set_element(ofstream& out,
                                                        t_set* tset,
                                                        string elementName) {
   t_field efield(tset->get_elem_type(), elementName);
-  generate_serialize_field(out, &efield, decontainerize(&efield, elementName));
+  generate_serialize_field(out, &efield, unbox(efield.get_type(), elementName));
 }
 
 /**
@@ -2570,7 +2566,7 @@ void t_cocoa_generator::generate_serialize_list_element(ofstream& out,
                                                         string index,
                                                         string listName) {
   t_field efield(tlist->get_elem_type(), "[" + listName + " objectAtIndex: " + index + "]");
-  generate_serialize_field(out, &efield, decontainerize(&efield, efield.get_name()));
+  generate_serialize_field(out, &efield, unbox(efield.get_type(), efield.get_name()));
 }
 
 /**
@@ -2700,36 +2696,35 @@ string t_cocoa_generator::base_type_name(t_base_type* type) {
  * is NOT performed in this function as it is always run beforehand using the
  * validate_types method in main.cc
  */
-void t_cocoa_generator::print_const_value(std::ofstream& out,
-                                          std::string name,
+void t_cocoa_generator::print_const_value(ostream& out,
+                                          string name,
                                           t_type* type,
                                           t_const_value* value,
                                           bool defval,
                                           bool is_property) {
   type = get_true_type(type);
 
-  indent(out);
   if (type->is_base_type()) {
     string v2 = render_const_value(out, type, value);
+    indent(out);
     if (defval)
       out << type_name(type) << " ";
     out << name << " = " << v2 << ";" << endl << endl;
   } else if (type->is_enum()) {
+    indent(out);
     if (defval)
       out << type_name(type) << " ";
     out << name << " = " << render_const_value(out, type, value) << ";" << endl << endl;
   } else if (type->is_struct() || type->is_xception()) {
+    indent(out);
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
     if (defval)
       out << type_name(type) << " ";
-    if (defval || is_property)
-      out << name << " = [" << type_name(type, true) << " new];"
-          << endl;
-    else
-      out << name << " = [" << type_name(type, true) << " new];" << endl;
+    out << name << " = [" << type_name(type, true) << " new];"
+        << endl;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       t_type* field_type = NULL;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -2744,55 +2739,68 @@ void t_cocoa_generator::print_const_value(std::ofstream& out,
       std::string cap_name = capitalize(v_iter->first->get_string());
       indent(out) << "[" << name << " set" << cap_name << ":" << val << "];" << endl;
     }
-    out << endl;
   } else if (type->is_map()) {
+    ostringstream mapout;
+    indent(mapout);
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
     if (defval)
-      out << "NSMutableDictionary *"
-          << name << " = [[NSMutableDictionary alloc] initWithCapacity:" << val.size() << "]; "
-          << endl;
-    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      string key = render_const_value(out, ktype, v_iter->first, true);
-      string val = render_const_value(out, vtype, v_iter->second, true);
-      indent(out) << "[" << name << " setObject:" << val << " forKey:" << key << "];" << endl;
+      mapout << type_name(type) << " ";
+    mapout << name << " = @{";
+    for (v_iter = val.begin(); v_iter != val.end();) {
+      mapout << render_const_value(out, ktype, v_iter->first, true) << ": "
+          << render_const_value(out, vtype, v_iter->second, true);
+      if (++v_iter != val.end()) {
+        mapout << ", ";
+      }
     }
-    out << endl;
+    mapout << "}";
+    out << mapout.str();
   } else if (type->is_list()) {
+    ostringstream listout;
+    indent(listout);
     t_type* etype = ((t_list*)type)->get_elem_type();
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
     if (defval)
-      out << "NSMutableArray *"
-          << name << " = [[NSMutableArray alloc] initWithCapacity:" << val.size() << "];" << endl;
-    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      string val = render_const_value(out, etype, *v_iter, true);
-      indent(out) << "[" << name << " addObject:" << val << "];" << endl;
+      listout << type_name(type) << " ";
+    listout << name << " = @[";
+    for (v_iter = val.begin(); v_iter != val.end();) {
+      listout << render_const_value(out, etype, *v_iter, true);
+      if (++v_iter != val.end()) {
+        listout << ", ";
+      }
     }
-    out << endl;
+    listout << "]";
+    out << listout.str();
   } else if (type->is_set()) {
+    ostringstream setout;
+    indent(setout);
     t_type* etype = ((t_set*)type)->get_elem_type();
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
     if (defval)
-      out << "NSMutableSet *"
-          << name << " = [[NSMutableSet alloc] initWithCapacity:" << val.size() << "];" << endl;
-    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      string val = render_const_value(out, etype, *v_iter, true);
-      indent(out) << "[" << name << " addObject:" << val << "];" << endl;
+      setout << type_name(type) << " ";
+    setout << name << " = NSSet setWithArray:@[";
+    for (v_iter = val.begin(); v_iter != val.end();) {
+      setout << render_const_value(out, etype, *v_iter, true);
+      if (++v_iter != val.end()) {
+        setout << ", ";
+      }
     }
-    out << endl;
+    setout << "]]";
+    out << setout.str();
   } else {
     throw "compiler error: no const of type " + type->get_name();
   }
 }
 
-string t_cocoa_generator::render_const_value(ofstream& out,
+string t_cocoa_generator::render_const_value(ostream& out,
                                              t_type* type,
                                              t_const_value* value,
-                                             bool containerize_it) {
+                                             bool box_it) {
   type = get_true_type(type);
   std::ostringstream render;
 
@@ -2833,8 +2841,8 @@ string t_cocoa_generator::render_const_value(ofstream& out,
     render << t;
   }
 
-  if (containerize_it) {
-    return containerize(type, render.str());
+  if (box_it) {
+    return box(type, render.str());
   }
   return render.str();
 }
@@ -2847,7 +2855,7 @@ ORIGINAL
 string t_cocoa_generator::render_const_value(string name,
                                              t_type* type,
                                              t_const_value* value,
-                                             bool containerize_it) {
+                                             bool box_it) {
   type = get_true_type(type);
   std::ostringstream render;
 
@@ -2971,8 +2979,8 @@ string t_cocoa_generator::render_const_value(string name,
     throw "don't know how to render constant for type: " + type->get_name();
   }
 
-  if (containerize_it) {
-    return containerize(type, render.str());
+  if (box_it) {
+    return box(type, render.str());
   }
 
   return render.str();
