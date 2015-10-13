@@ -23,8 +23,8 @@ fi
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 
-ISTANBUL="$DIR/../../../node_modules/istanbul/lib/cli.js"
-RUNBROWSER="$DIR/../../../node_modules/run-browser/bin/cli.js"
+ISTANBUL="$DIR/../node_modules/istanbul/lib/cli.js"
+RUNBROWSER="$DIR/../node_modules/run-browser/bin/cli.js"
 
 REPORT_PREFIX="${DIR}/../coverage/report"
 
