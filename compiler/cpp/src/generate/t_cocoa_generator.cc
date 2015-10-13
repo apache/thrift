@@ -2618,9 +2618,13 @@ string t_cocoa_generator::type_name(t_type* ttype, bool class_ref, bool needs_mu
  * 
  * @param ttype the type
  */
-string t_cocoa_generator::element_type_name(t_type* ttype) {
+string t_cocoa_generator::element_type_name(t_type* etype) {
   
-  ttype = ttype->get_true_type();
+  t_type* ttype = etype->get_true_type();
+  
+  if (etype->is_typedef() && type_can_be_null(ttype)) {
+    return type_name(etype);
+  }
   
   string result;
   if (ttype->is_base_type()) {
