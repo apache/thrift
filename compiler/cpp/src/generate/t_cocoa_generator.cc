@@ -213,6 +213,7 @@ public:
   std::string cocoa_imports();
   std::string cocoa_thrift_imports();
   std::string type_name(t_type* ttype, bool class_ref = false, bool needs_mutable = false);
+  std::string element_type_name(t_type* ttype);
   std::string base_type_name(t_base_type* tbase);
   std::string declare_property(t_field* tfield);
   std::string declare_property_isset(t_field* tfield);
@@ -2594,15 +2595,15 @@ string t_cocoa_generator::type_name(t_type* ttype, bool class_ref, bool needs_mu
   } else if (ttype->is_map()) {
     t_map *map = (t_map *)ttype;
     result = needs_mutable ? "NSMutableDictionary" : "NSDictionary";
-    result += "<" + type_name(map->get_key_type()) + ", " + type_name(map->get_val_type()) + ">";
+    result += "<" + element_type_name(map->get_key_type()) + ", " + element_type_name(map->get_val_type()) + ">";
   } else if (ttype->is_set()) {
     t_set *set = (t_set *)ttype;
     result = needs_mutable ? "NSMutableSet" : "NSSet";
-    result += "<" + type_name(set->get_elem_type()) + ">";
+    result += "<" + element_type_name(set->get_elem_type()) + ">";
   } else if (ttype->is_list()) {
     t_list *list = (t_list *)ttype;
     result = needs_mutable ? "NSMutableArray" : "NSArray";
-    result += "<" + type_name(list->get_elem_type()) + ">";
+    result += "<" + element_type_name(list->get_elem_type()) + ">";
   } else {
     // Check for prefix
     t_program* program = ttype->get_program();
@@ -2616,6 +2617,47 @@ string t_cocoa_generator::type_name(t_type* ttype, bool class_ref, bool needs_mu
   if (!class_ref) {
     result += " *";
   }
+  return result;
+}
+
+/**
+ * Returns an Objective-C type name for container types
+ * 
+ * @param ttype the type
+ */
+string t_cocoa_generator::element_type_name(t_type* ttype) {
+  
+  ttype = ttype->get_true_type();
+  
+  string result;
+  if (ttype->is_base_type()) {
+    t_base_type* tbase = (t_base_type*)ttype;
+    switch (tbase->get_base()) {
+    case t_base_type::TYPE_STRING:
+      if (tbase->is_binary()) {
+        result = "NSData *";
+      }
+      else {
+        result = "NSString *";
+      }
+      break;
+    default:
+      result = "NSNumber *";
+      break;
+    }
+  } else if (ttype->is_map()) {
+    t_map *map = (t_map *)ttype;
+    result = "NSDictionary<" + element_type_name(map->get_key_type()) + ", " + element_type_name(map->get_val_type()) + ">";
+  } else if (ttype->is_set()) {
+    t_set *set = (t_set *)ttype;
+    result = "NSSet<" + element_type_name(set->get_elem_type()) + ">";
+  } else if (ttype->is_list()) {
+    t_list *list = (t_list *)ttype;
+    result = "NSArray<" + element_type_name(list->get_elem_type()) + ">";
+  } else if (ttype->is_struct() || ttype->is_xception()) {
+    result = cocoa_prefix_ + ttype->get_name() + " *";
+  }
+  
   return result;
 }
 
