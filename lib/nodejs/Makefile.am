@@ -40,4 +40,5 @@ EXTRA_DIST = \
 	lib \
 	test \
 	coding_standards.md \
+	package.json \
 	README.md

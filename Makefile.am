@@ -101,7 +101,6 @@ EXTRA_DIST = \
 	doc \
 	doap.rdf \
 	json-schema.json \
-	package.json \
 	rat_exclude \
 	sonar-project.properties \
 	LICENSE \
