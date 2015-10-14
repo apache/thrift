@@ -116,7 +116,8 @@ public:
                                    bool read = true,
                                    bool write = true,
                                    bool swap = false,
-                                   bool stream = false);
+                                   bool stream = false,
+                                   bool is_struct = false);
   void generate_struct_definition(std::ofstream& out,
                                   std::ofstream& force_cpp_out,
                                   t_struct* tstruct,
@@ -368,6 +369,7 @@ void t_cpp_generator::init_generator() {
            << endl
            << "#include <thrift/Thrift.h>" << endl
            << "#include <thrift/TApplicationException.h>" << endl
+           << "#include <thrift/TBase.h>" << endl
            << "#include <thrift/protocol/TProtocol.h>" << endl
            << "#include <thrift/transport/TTransport.h>" << endl
            << endl;
@@ -728,7 +730,7 @@ void t_cpp_generator::generate_forward_declaration(t_struct* tstruct) {
  * @param tstruct The struct definition
  */
 void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) {
-  generate_struct_declaration(f_types_, tstruct, is_exception, false, true, true, true, true);
+  generate_struct_declaration(f_types_, tstruct, is_exception, false, true, true, true, true, true);
   generate_struct_definition(f_types_impl_, f_types_impl_, tstruct);
 
   std::ofstream& out = (gen_templates_ ? f_types_tcc_ : f_types_impl_);
@@ -872,10 +874,15 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
                                                   bool read,
                                                   bool write,
                                                   bool swap,
-                                                  bool stream) {
+                                                  bool stream,
+                                                  bool is_struct) {
   string extends = "";
   if (is_exception) {
     extends = " : public ::apache::thrift::TException";
+  } else {
+    if (is_struct && !gen_templates_) {
+      extends = " : public virtual ::apache::thrift::TBase";
+    }
   }
 
   // Get members
