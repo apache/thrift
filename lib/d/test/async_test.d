@@ -130,7 +130,7 @@ void main(string[] args) {
   }
 
   auto managers = new TLibeventAsyncManager[managerCount];
-  scope (exit) foreach (ref m; managers) clear(m);
+  scope (exit) foreach (ref m; managers) destroy(m);
 
   auto clientsThreads = new ThreadGroup;
   foreach (managerIndex, ref manager; managers) {

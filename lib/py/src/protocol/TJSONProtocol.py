@@ -174,13 +174,13 @@ class TJSONProtocolBase(TProtocolBase):
 
   def writeJSONString(self, string):
     self.context.write()
-    self.trans.write(json.dumps(string))
+    self.trans.write(json.dumps(string, ensure_ascii=False))
 
-  def writeJSONNumber(self, number):
+  def writeJSONNumber(self, number, formatter='{}'):
     self.context.write()
-    jsNumber = str(number)
+    jsNumber = formatter.format(number)
     if self.context.escapeNum():
-      jsNumber = "%s%s%s" % (QUOTE, jsNumber,  QUOTE)
+      jsNumber = "%s%s%s" % (QUOTE, jsNumber, QUOTE)
     self.trans.write(jsNumber)
 
   def writeJSONBase64(self, binary):
@@ -467,7 +467,8 @@ class TJSONProtocol(TJSONProtocolBase):
     self.writeJSONNumber(i64)
 
   def writeDouble(self, dbl):
-    self.writeJSONNumber(dbl)
+    # 17 significant digits should be just enough for any double precision value.
+    self.writeJSONNumber(dbl, '{:.17g}')
 
   def writeString(self, string):
     self.writeJSONString(string)

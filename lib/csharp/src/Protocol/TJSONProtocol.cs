@@ -505,7 +505,7 @@ namespace Thrift.Protocol
         private void WriteJSONDouble(double num)
         {
             context.Write();
-            String str = num.ToString(CultureInfo.InvariantCulture);
+            String str = num.ToString("R", CultureInfo.InvariantCulture);
             bool special = false;
 
             switch (str[0])
@@ -544,6 +544,11 @@ namespace Thrift.Protocol
             int len = b.Length;
             int off = 0;
 
+            // Ignore padding
+            int bound = len >= 2 ? len - 2 : 0;
+            for (int i = len - 1; i >= bound && b[i] == '='; --i) {
+                --len;
+            }
             while (len >= 3)
             {
                 // Encode 3 bytes at a time

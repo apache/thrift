@@ -18,257 +18,278 @@
  */
 
 #import "TProtocolDecorator.h"
-#import "TObjective-C.h"
+
+
+@interface TProtocolDecorator ()
+
+@property(strong, nonatomic) id<TProtocol> concreteProtocol;
+
+@end
+
 
 @implementation TProtocolDecorator
 
-- (id) initWithProtocol: (id <TProtocol>) protocol
+-(id) initWithProtocol:(id <TProtocol>)protocol
 {
-    self = [super init];
-    if (self) {
-        mConcreteProtocol = [protocol retain_stub];
-    }
-    return self;
+  self = [super init];
+  if (self) {
+    _concreteProtocol = protocol;
+  }
+  return self;
 }
 
-- (id <TTransport>) transport
+-(id <TTransport>) transport
 {
-    return [mConcreteProtocol transport];
+  return [_concreteProtocol transport];
 }
 
-- (void) readMessageBeginReturningName: (NSString **) name
-                                  type: (int *) type
-                            sequenceID: (int *) sequenceID
+-(BOOL) readMessageBeginReturningName:(NSString **)name
+                                 type:(SInt32 *)type
+                           sequenceID:(SInt32 *)sequenceID
+                                error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol readMessageBeginReturningName:name
-                                                type:type
-                                          sequenceID:sequenceID];
+  return [_concreteProtocol readMessageBeginReturningName:name
+                                                     type:type
+                                               sequenceID:sequenceID
+                                                    error:error];
 }
 
-- (void) readMessageEnd
+-(BOOL) readMessageEnd:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol readMessageEnd];
+  return [_concreteProtocol readMessageEnd:error];
 }
 
-- (void) readStructBeginReturningName: (NSString **) name
+-(BOOL) readStructBeginReturningName:(NSString **)name
+                               error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol readStructBeginReturningName:name];
+  return [_concreteProtocol readStructBeginReturningName:name error:error];
 }
 
-- (void) readStructEnd
+-(BOOL) readStructEnd:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol readStructEnd];
+  return [_concreteProtocol readStructEnd:error];
 }
 
-- (void) readFieldBeginReturningName: (NSString **) name
-                                type: (int *) fieldType
-                             fieldID: (int *) fieldID
+-(BOOL) readFieldBeginReturningName:(NSString **)name
+                               type:(SInt32 *)fieldType
+                            fieldID:(SInt32 *)fieldID
+                              error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol readFieldBeginReturningName:name
-                                              type:fieldType
-                                           fieldID:fieldID];
+  return [_concreteProtocol readFieldBeginReturningName:name
+                                                   type:fieldType
+                                                fieldID:fieldID
+                                                  error:error];
 }
-- (void) readFieldEnd
+-(BOOL) readFieldEnd:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol readFieldEnd];
-}
-
-- (NSString *) readString
-{
-    return [mConcreteProtocol readString];
+  return [_concreteProtocol readFieldEnd:error];
 }
 
-- (BOOL) readBool
+-(BOOL) readString:(NSString *__autoreleasing *)value error:(NSError *__autoreleasing *)error
 {
-    return [mConcreteProtocol readBool];
+  return [_concreteProtocol readString:value error:error];
 }
 
-- (unsigned char) readByte
+-(BOOL) readBool:(BOOL *)value error:(NSError *__autoreleasing *)error
 {
-    return [mConcreteProtocol readByte];
+  return [_concreteProtocol readBool:value error:error];
 }
 
-- (short) readI16
+-(BOOL) readByte:(UInt8 *)value error:(NSError *__autoreleasing *)error
 {
-    return [mConcreteProtocol readI16];
+  return [_concreteProtocol readByte:value error:error];
 }
 
-- (int32_t) readI32
+-(BOOL) readI16:(SInt16 *)value error:(NSError *__autoreleasing *)error
 {
-    return [mConcreteProtocol readI32];
+  return [_concreteProtocol readI16:value error:error];
 }
 
-- (int64_t) readI64
+-(BOOL) readI32:(SInt32 *)value error:(NSError *__autoreleasing *)error
 {
-    return [mConcreteProtocol readI64];
+  return [_concreteProtocol readI32:value error:error];
 }
 
-- (double) readDouble
+-(BOOL) readI64:(SInt64 *)value error:(NSError *__autoreleasing *)error
 {
-    return [mConcreteProtocol readDouble];
+  return [_concreteProtocol readI64:value error:error];
 }
 
-- (NSData *) readBinary
+-(BOOL) readDouble:(double *)value error:(NSError *__autoreleasing *)error
 {
-    return [mConcreteProtocol readBinary];
+  return [_concreteProtocol readDouble:value error:error];
 }
 
-- (void) readMapBeginReturningKeyType: (int *) keyType
-                            valueType: (int *) valueType
-                                 size: (int *) size
+-(BOOL) readBinary:(NSData *__autoreleasing *)value error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol readMapBeginReturningKeyType:keyType
-                                          valueType:valueType
-                                               size:size];
+  return [_concreteProtocol readBinary:value error:error];
 }
-- (void) readMapEnd
+
+-(BOOL) readMapBeginReturningKeyType:(SInt32 *)keyType
+                           valueType:(SInt32 *)valueType
+                                size:(SInt32 *)size
+                               error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol readMapEnd];
+  return [_concreteProtocol readMapBeginReturningKeyType:keyType
+                                               valueType:valueType
+                                                    size:size
+                                                   error:error];
+}
+-(BOOL) readMapEnd:(NSError *__autoreleasing *)error
+{
+  return [_concreteProtocol readMapEnd:error];
 }
 
 
-- (void) readSetBeginReturningElementType: (int *) elementType
-                                     size: (int *) size
+-(BOOL) readSetBeginReturningElementType:(SInt32 *)elementType
+                                    size:(SInt32 *)size
+                                   error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol readSetBeginReturningElementType:elementType
-                                                   size:size];
+  return [_concreteProtocol readSetBeginReturningElementType:elementType
+                                                        size:size
+                                                       error:error];
 }
-- (void) readSetEnd
+-(BOOL) readSetEnd:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol readSetEnd];
-}
-
-- (void) readListBeginReturningElementType: (int *) elementType
-                                      size: (int *) size
-{
-    [mConcreteProtocol readListBeginReturningElementType:elementType
-                                                    size:size];
-}
-- (void) readListEnd
-{
-    [mConcreteProtocol readListEnd];
+  return [_concreteProtocol readSetEnd:error];
 }
 
-- (void) writeMessageBeginWithName: (NSString *) name
-                              type: (int) messageType
-                        sequenceID: (int) sequenceID
+-(BOOL) readListBeginReturningElementType:(SInt32 *)elementType
+                                     size:(SInt32 *)size
+                                    error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeMessageBeginWithName:name
-                                            type:messageType
-                                      sequenceID:sequenceID];
+  return [_concreteProtocol readListBeginReturningElementType:elementType
+                                                         size:size
+                                                        error:error];
 }
-- (void) writeMessageEnd
+-(BOOL) readListEnd:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeMessageEnd];
-}
-
-- (void) writeStructBeginWithName: (NSString *) name
-{
-    [mConcreteProtocol writeStructBeginWithName:name];
-}
-- (void) writeStructEnd
-{
-    [mConcreteProtocol writeStructEnd];
+  return [_concreteProtocol readListEnd:error];
 }
 
-- (void) writeFieldBeginWithName: (NSString *) name
-                            type: (int) fieldType
-                         fieldID: (int) fieldID
+-(BOOL) writeMessageBeginWithName:(NSString *)name
+                             type:(SInt32)messageType
+                       sequenceID:(SInt32)sequenceID
+                            error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeFieldBeginWithName:name
-                                          type:fieldType
-                                       fieldID:fieldID];
+  return [_concreteProtocol writeMessageBeginWithName:name
+                                                 type:messageType
+                                           sequenceID:sequenceID
+                                                error:error];
+}
+-(BOOL) writeMessageEnd:(NSError *__autoreleasing *)error
+{
+  return [_concreteProtocol writeMessageEnd:error];
 }
 
-- (void) writeI32: (int32_t) value
+-(BOOL) writeStructBeginWithName:(NSString *)name error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeI32:value];
+  return [_concreteProtocol writeStructBeginWithName:name error:error];
+}
+-(BOOL) writeStructEnd:(NSError *__autoreleasing *)error
+{
+  return [_concreteProtocol writeStructEnd:error];
 }
 
-- (void) writeI64: (int64_t) value
+-(BOOL) writeFieldBeginWithName:(NSString *)name
+                           type:(SInt32)fieldType
+                        fieldID:(SInt32)fieldID
+                          error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeI64:value];
+  return [_concreteProtocol writeFieldBeginWithName:name
+                                               type:fieldType
+                                            fieldID:fieldID
+                                              error:error];
 }
 
-- (void) writeI16: (short) value
+-(BOOL) writeI32:(SInt32)value error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeI16:value];
+  return [_concreteProtocol writeI32:value error:error];
 }
 
-- (void) writeByte: (uint8_t) value
+-(BOOL) writeI64:(SInt64)value error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeByte:value];
+  return [_concreteProtocol writeI64:value error:error];
 }
 
-- (void) writeString: (NSString *) value
+-(BOOL) writeI16:(SInt16)value error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeString:value];
+  return [_concreteProtocol writeI16:value error:error];
 }
 
-- (void) writeDouble: (double) value
+-(BOOL) writeByte:(UInt8)value error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeDouble:value];
+  return [_concreteProtocol writeByte:value error:error];
 }
 
-- (void) writeBool: (BOOL) value
+-(BOOL) writeString:(NSString *)value error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeBool:value];
+  return [_concreteProtocol writeString:value error:error];
 }
 
-- (void) writeBinary: (NSData *) data
+-(BOOL) writeDouble:(double)value error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeBinary:data];
+  return [_concreteProtocol writeDouble:value error:error];
 }
 
-- (void) writeFieldStop
+-(BOOL) writeBool:(BOOL)value error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeFieldStop];
+  return [_concreteProtocol writeBool:value error:error];
 }
 
-- (void) writeFieldEnd
+-(BOOL) writeBinary:(NSData *)data error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeFieldEnd];
+  return [_concreteProtocol writeBinary:data error:error];
 }
 
-- (void) writeMapBeginWithKeyType: (int) keyType
-                        valueType: (int) valueType
-                             size: (int) size
+-(BOOL) writeFieldStop:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeMapBeginWithKeyType:keyType
-                                      valueType:valueType
-                                           size:size];
-}
-- (void) writeMapEnd
-{
-    [mConcreteProtocol writeMapEnd];
+  return [_concreteProtocol writeFieldStop:error];
 }
 
-- (void) writeSetBeginWithElementType: (int) elementType
-                                 size: (int) size
+-(BOOL) writeFieldEnd:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeSetBeginWithElementType:elementType size:size];
+  return [_concreteProtocol writeFieldEnd:error];
 }
 
-- (void) writeSetEnd
+-(BOOL) writeMapBeginWithKeyType:(SInt32)keyType
+                       valueType:(SInt32)valueType
+                            size:(SInt32)size
+                           error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeSetEnd];
+  return [_concreteProtocol writeMapBeginWithKeyType:keyType
+                                           valueType:valueType
+                                                size:size
+                                               error:error];
 }
 
-- (void) writeListBeginWithElementType: (int) elementType
-                                  size: (int) size
+-(BOOL) writeMapEnd:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeListBeginWithElementType:elementType size:size];
+  return [_concreteProtocol writeMapEnd:error];
 }
 
-- (void) writeListEnd
+-(BOOL) writeSetBeginWithElementType:(SInt32)elementType
+                                size:(SInt32)size
+                               error:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol writeListEnd];
+  return [_concreteProtocol writeSetBeginWithElementType:elementType size:size error:error];
 }
 
-- (void) dealloc
+-(BOOL) writeSetEnd:(NSError *__autoreleasing *)error
 {
-    [mConcreteProtocol release_stub];
-    [super dealloc_stub];
+  return [_concreteProtocol writeSetEnd:error];
+}
+
+-(BOOL) writeListBeginWithElementType:(SInt32)elementType
+                                 size:(SInt32)size
+                                error:(NSError *__autoreleasing *)error
+{
+  return [_concreteProtocol writeListBeginWithElementType:elementType size:size error:error];
+}
+
+-(BOOL) writeListEnd:(NSError *__autoreleasing *)error
+{
+  return [_concreteProtocol writeListEnd:error];
 }
 
 @end

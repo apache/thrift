@@ -21,16 +21,22 @@
 #import "TTransport.h"
 #import "TProtocolFactory.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 @interface TCompactProtocol : NSObject <TProtocol>
 
-- (id) initWithTransport: (id <TTransport>) transport;
+-(id) initWithTransport:(id <TTransport>)transport;
 
 @end
 
 @interface TCompactProtocolFactory : NSObject <TProtocolFactory>
 
-+ (TCompactProtocolFactory *) sharedFactory;
++(TCompactProtocolFactory *) sharedFactory;
 
-- (TCompactProtocol *) newProtocolOnTransport: (id <TTransport>) transport;
+-(TCompactProtocol *) newProtocolOnTransport:(id <TTransport>)transport;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

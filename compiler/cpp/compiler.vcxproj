@@ -58,6 +58,7 @@
     <ClCompile Include="src\generate\t_csharp_generator.cc" />
     <ClCompile Include="src\generate\t_c_glib_generator.cc" />
     <ClCompile Include="src\generate\t_d_generator.cc" />
+    <ClCompile Include="src\generate\t_dart_generator.cc" />
     <ClCompile Include="src\generate\t_delphi_generator.cc" />
     <ClCompile Include="src\generate\t_erl_generator.cc" />
     <ClCompile Include="src\generate\t_generator.cc" />
@@ -77,6 +78,7 @@
     <ClCompile Include="src\generate\t_py_generator.cc" />
     <ClCompile Include="src\generate\t_rb_generator.cc" />
     <ClCompile Include="src\generate\t_st_generator.cc" />
+	<ClCompile Include="src\generate\t_swift_generator.cc" />
     <ClCompile Include="src\generate\t_xsd_generator.cc" />
     <ClCompile Include="src\main.cc" />
     <ClCompile Include="src\md5.c" />

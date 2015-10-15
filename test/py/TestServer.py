@@ -27,7 +27,7 @@ import time
 from optparse import OptionParser
 
 # Print TServer log to stdout so that the test-runner can redirect it to log files
-logging.basicConfig()
+logging.basicConfig(level=logging.DEBUG)
 
 parser = OptionParser()
 parser.add_option('--genpydir', type='string', dest='genpydir',
@@ -80,56 +80,56 @@ PROT_FACTORIES = {
 class TestHandler(object):
   def testVoid(self):
     if options.verbose > 1:
-      print('testVoid()')
+      logging.info('testVoid()')
 
   def testString(self, str):
     if options.verbose > 1:
-      print('testString(%s)' % str)
+      logging.info('testString(%s)' % str)
     return str
 
   def testBool(self, boolean):
     if options.verbose > 1:
-      print('testBool(%s)' % str(boolean).lower())
+      logging.info('testBool(%s)' % str(boolean).lower())
     return boolean
 
   def testByte(self, byte):
     if options.verbose > 1:
-      print('testByte(%d)' % byte)
+      logging.info('testByte(%d)' % byte)
     return byte
 
   def testI16(self, i16):
     if options.verbose > 1:
-      print('testI16(%d)' % i16)
+      logging.info('testI16(%d)' % i16)
     return i16
 
   def testI32(self, i32):
     if options.verbose > 1:
-      print('testI32(%d)' % i32)
+      logging.info('testI32(%d)' % i32)
     return i32
 
   def testI64(self, i64):
     if options.verbose > 1:
-      print('testI64(%d)' % i64)
+      logging.info('testI64(%d)' % i64)
     return i64
 
   def testDouble(self, dub):
     if options.verbose > 1:
-      print('testDouble(%f)' % dub)
+      logging.info('testDouble(%f)' % dub)
     return dub
 
   def testBinary(self, thing):
     if options.verbose > 1:
-      print('testBinary()')  # TODO: hex output
+      logging.info('testBinary()')  # TODO: hex output
     return thing
 
   def testStruct(self, thing):
     if options.verbose > 1:
-      print('testStruct({%s, %d, %d, %d})' % (thing.string_thing, thing.byte_thing, thing.i32_thing, thing.i64_thing))
+      logging.info('testStruct({%s, %s, %s, %s})' % (thing.string_thing, thing.byte_thing, thing.i32_thing, thing.i64_thing))
     return thing
 
   def testException(self, arg):
     # if options.verbose > 1:
-    print('testException(%s)' % arg)
+    logging.info('testException(%s)' % arg)
     if arg == 'Xception':
       raise Xception(errorCode=1001, message=arg)
     elif arg == 'TException':
@@ -137,7 +137,7 @@ class TestHandler(object):
 
   def testMultiException(self, arg0, arg1):
     if options.verbose > 1:
-      print('testMultiException(%s, %s)' % (arg0, arg1))
+      logging.info('testMultiException(%s, %s)' % (arg0, arg1))
     if arg0 == 'Xception':
       raise Xception(errorCode=1001, message='This is an Xception')
     elif arg0 == 'Xception2':
@@ -148,49 +148,49 @@ class TestHandler(object):
 
   def testOneway(self, seconds):
     if options.verbose > 1:
-      print('testOneway(%d) => sleeping...' % seconds)
+      logging.info('testOneway(%d) => sleeping...' % seconds)
     time.sleep(seconds / 3)  # be quick
     if options.verbose > 1:
-      print('done sleeping')
+      logging.info('done sleeping')
 
   def testNest(self, thing):
     if options.verbose > 1:
-      print('testNest(%s)' % thing)
+      logging.info('testNest(%s)' % thing)
     return thing
 
   def testMap(self, thing):
     if options.verbose > 1:
-      print('testMap(%s)' % thing)
+      logging.info('testMap(%s)' % thing)
     return thing
 
   def testStringMap(self, thing):
     if options.verbose > 1:
-      print('testStringMap(%s)' % thing)
+      logging.info('testStringMap(%s)' % thing)
     return thing
 
   def testSet(self, thing):
     if options.verbose > 1:
-      print('testSet(%s)' % thing)
+      logging.info('testSet(%s)' % thing)
     return thing
 
   def testList(self, thing):
     if options.verbose > 1:
-      print('testList(%s)' % thing)
+      logging.info('testList(%s)' % thing)
     return thing
 
   def testEnum(self, thing):
     if options.verbose > 1:
-      print('testEnum(%s)' % thing)
+      logging.info('testEnum(%s)' % thing)
     return thing
 
   def testTypedef(self, thing):
     if options.verbose > 1:
-      print('testTypedef(%s)' % thing)
+      logging.info('testTypedef(%s)' % thing)
     return thing
 
   def testMapMap(self, thing):
     if options.verbose > 1:
-      print('testMapMap(%s)' % thing)
+      logging.info('testMapMap(%s)' % thing)
     return {
       -4: {
         -4: -4,
@@ -208,7 +208,7 @@ class TestHandler(object):
 
   def testInsanity(self, argument):
     if options.verbose > 1:
-      print('testInsanity(%s)' % argument)
+      logging.info('testInsanity(%s)' % argument)
     return {
       1: {
         2: argument,
@@ -219,7 +219,7 @@ class TestHandler(object):
 
   def testMulti(self, arg0, arg1, arg2, arg3, arg4, arg5):
     if options.verbose > 1:
-      print('testMulti(%s)' % [arg0, arg1, arg2, arg3, arg4, arg5])
+      logging.info('testMulti(%s)' % [arg0, arg1, arg2, arg3, arg4, arg5])
     return Xtruct(string_thing='Hello2',
                   byte_thing=arg0, i32_thing=arg1, i64_thing=arg2)
 
@@ -241,7 +241,7 @@ processor = ThriftTest.Processor(handler)
 
 # Handle THttpServer as a special case
 if server_type == 'THttpServer':
-  server =THttpServer.THttpServer(processor, ('', options.port), pfactory)
+  server = THttpServer.THttpServer(processor, ('', options.port), pfactory)
   server.serve()
   sys.exit(0)
 
@@ -266,7 +266,7 @@ else:
   tfactory = TTransport.TBufferedTransportFactory()
 # if --zlib, then wrap server transport, and use a different transport factory
 if options.zlib:
-  transport = TZlibTransport.TZlibTransport(transport) # wrap  with zlib
+  transport = TZlibTransport.TZlibTransport(transport)  # wrap  with zlib
   tfactory = TZlibTransport.TZlibTransportFactory()
 
 # do server-specific setup here:
@@ -282,10 +282,10 @@ elif server_type == "TProcessPoolServer":
     def clean_shutdown(signum, frame):
       for worker in server.workers:
         if options.verbose > 0:
-          print('Terminating worker: %s' % worker)
+          logging.info('Terminating worker: %s' % worker)
         worker.terminate()
       if options.verbose > 0:
-        print('Requesting server to stop()')
+        logging.info('Requesting server to stop()')
       try:
         server.stop()
       except:

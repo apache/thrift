@@ -86,6 +86,11 @@ class TestHandler : ThriftTest {
     return thing;
   }
 
+  override bool testBool(bool thing) {
+    if (trace_) writefln("testBool(\"%s\")", thing);
+    return thing;
+  }
+
   override Xtruct testStruct(ref const(Xtruct) thing) {
     if (trace_) writefln("testStruct({\"%s\", %s, %s, %s})",
       thing.string_thing, thing.byte_thing, thing.i32_thing, thing.i64_thing);

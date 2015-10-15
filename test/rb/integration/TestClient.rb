@@ -45,13 +45,13 @@ ARGV.each do|a|
   elsif a.start_with?("--transport")
     $transport = a.split("=")[1]
   elsif a.start_with?("--port")
-    $port = a.split("=")[1].to_i 
+    $port = a.split("=")[1].to_i
   end
 end
 ARGV=[]
 
 class SimpleClientTest < Test::Unit::TestCase
-  def setup 
+  def setup
     unless @socket
       @socket   = Thrift::Socket.new($host, $port)
       if $transport == "buffered"
@@ -77,7 +77,11 @@ class SimpleClientTest < Test::Unit::TestCase
       @socket.open
     end
   end
-  
+
+  def teardown
+    @socket.close
+  end
+
   def test_void
     p 'test_void'
     @client.testVoid()
@@ -85,7 +89,16 @@ class SimpleClientTest < Test::Unit::TestCase
 
   def test_string
     p 'test_string'
-    assert_equal(@client.testString('string'), 'string')
+    test_string =
+      'quote: \" backslash:' +
+      ' forwardslash-escaped: \/ ' +
+      ' backspace: \b formfeed: \f newline: \n return: \r tab: ' +
+      ' now-all-of-them-together: "\\\/\b\n\r\t' +
+      ' now-a-bunch-of-junk: !@#$%&()(&%$#{}{}<><><' +
+      ' char-to-test-json-parsing: ]] \"]] \\" }}}{ [[[ '
+
+    result_string = @client.testString(test_string)
+    assert_equal(test_string, result_string.force_encoding(Encoding::UTF_8))
   end
 
   def test_bool
@@ -117,7 +130,7 @@ class SimpleClientTest < Test::Unit::TestCase
 
   def test_double
     p 'test_double'
-    val = 3.14
+    val = 3.14159265358979323846
     assert_equal(@client.testDouble(val), val)
     assert_equal(@client.testDouble(-val), -val)
     assert_kind_of(Float, @client.testDouble(val))
@@ -129,7 +142,7 @@ class SimpleClientTest < Test::Unit::TestCase
     ret = @client.testBinary(val.pack('C*'))
     assert_equal(val, ret.bytes.to_a)
   end
-  
+
   def test_map
     p 'test_map'
     val = {1 => 1, 2 => 2, 3 => 3}

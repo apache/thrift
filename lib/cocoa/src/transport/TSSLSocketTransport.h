@@ -17,9 +17,21 @@
  * under the License.
  */
 
-#import "TException.h"
+#import <Foundation/Foundation.h>
+#import "TNSStreamTransport.h"
 
-@interface TProtocolException : TException {
-}
+NS_ASSUME_NONNULL_BEGIN
+
+
+@interface TSSLSocketTransport : TNSStreamTransport <NSStreamDelegate>
+
+-(id) initWithHostname:(NSString *)hostname
+                  port:(int)port
+                 error:(NSError **)error;
+
+-(BOOL) isOpen;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

@@ -106,6 +106,29 @@ static void testVoid_clientReturn(const char* host,
   }
 }
 
+// Workaround for absense of C++11 "auto" keyword.
+template <typename T>
+bool print_eq(T expected, T actual) {
+  cout << "(" << actual << ")" << endl;
+  if (expected != actual) {
+    cout << "*** FAILED ***" << endl << "Expected: " << expected << " but got: " << actual << endl;
+    return false;
+  }
+  return true;
+}
+
+#define BASETYPE_IDENTITY_TEST(func, value)                                                        \
+  cout << #func "(" << value << ") = ";                                                            \
+  try {                                                                                            \
+    if (!print_eq(value, testClient.func(value)))                                                  \
+      return_code |= ERR_BASETYPES;                                                                \
+  } catch (TTransportException&) {                                                                 \
+    throw;                                                                                         \
+  } catch (exception & ex) {                                                                       \
+    cout << "*** FAILED ***" << endl << ex.what() << endl;                                         \
+    return_code |= ERR_BASETYPES;                                                                  \
+  }
+
 int main(int argc, char** argv) {
   int ERR_BASETYPES = 1;
   int ERR_STRUCTS = 2;
@@ -125,6 +148,7 @@ int main(int argc, char** argv) {
   string transport_type = "buffered";
   string protocol_type = "binary";
   string domain_socket = "";
+  bool abstract_namespace = false;
   bool noinsane = false;
 
   boost::program_options::options_description desc("Allowed options");
@@ -139,6 +163,8 @@ int main(int argc, char** argv) {
       "domain-socket",
       boost::program_options::value<string>(&domain_socket)->default_value(domain_socket),
       "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")(
+      "abstract-namespace",
+      "Look for the domain socket in the Abstract Namespace (no connection with filesystem pathnames)")(
       "transport",
       boost::program_options::value<string>(&transport_type)->default_value(transport_type),
       "Transport: buffered, framed, http, evhttp")(
@@ -188,6 +214,10 @@ int main(int argc, char** argv) {
     ssl = true;
   }
 
+  if (vm.count("abstract-namespace")) {
+    abstract_namespace = true;
+  }
+
   if (vm.count("noinsane")) {
     noinsane = true;
   }
@@ -206,7 +236,13 @@ int main(int argc, char** argv) {
     socket = factory->createSocket(host, port);
   } else {
     if (domain_socket != "") {
-      socket = boost::shared_ptr<TSocket>(new TSocket(domain_socket));
+      if (abstract_namespace) {
+        std::string abstract_socket("\0", 1);
+        abstract_socket += domain_socket;
+        socket = boost::shared_ptr<TSocket>(new TSocket(abstract_socket));
+      } else {
+        socket = boost::shared_ptr<TSocket>(new TSocket(domain_socket));
+      }
       port = 0;
     } else {
       socket = boost::shared_ptr<TSocket>(new TSocket(host, port));
@@ -236,7 +272,11 @@ int main(int argc, char** argv) {
   }
 
   // Connection info
-  cout << "Connecting (" << transport_type << "/" << protocol_type << ") to: " << domain_socket;
+  cout << "Connecting (" << transport_type << "/" << protocol_type << ") to: ";
+  if (abstract_namespace) {
+    cout << '@';
+  }
+  cout << domain_socket;
   if (port != 0) {
     cout << host << ":" << port;
   }
@@ -371,11 +411,47 @@ int main(int argc, char** argv) {
     /**
      * DOUBLE TEST
      */
-    printf("testDouble(-5.2098523)");
-    double dub = testClient.testDouble(-5.2098523);
-    printf(" = %f\n", dub);
-    if ((dub - (-5.2098523)) > 0.001) {
-      printf("*** FAILED ***\n");
+    // Comparing double values with plain equality because Thrift handles full precision of double
+    BASETYPE_IDENTITY_TEST(testDouble, 0.0);
+    BASETYPE_IDENTITY_TEST(testDouble, -1.0);
+    BASETYPE_IDENTITY_TEST(testDouble, -5.2098523);
+    BASETYPE_IDENTITY_TEST(testDouble, -0.000341012439638598279);
+    BASETYPE_IDENTITY_TEST(testDouble, pow(2, 32));
+    BASETYPE_IDENTITY_TEST(testDouble, pow(2, 32) + 1);
+    BASETYPE_IDENTITY_TEST(testDouble, pow(2, 53) - 1);
+    BASETYPE_IDENTITY_TEST(testDouble, -pow(2, 32));
+    BASETYPE_IDENTITY_TEST(testDouble, -pow(2, 32) - 1);
+    BASETYPE_IDENTITY_TEST(testDouble, -pow(2, 53) + 1);
+
+    try {
+      double expected = pow(10, 307);
+      cout << "testDouble(" << expected << ") = ";
+      double actual = testClient.testDouble(expected);
+      cout << "(" << actual << ")" << endl;
+      if (expected - actual > pow(10, 292)) {
+        cout << "*** FAILED ***" << endl
+             << "Expected: " << expected << " but got: " << actual << endl;
+      }
+    } catch (TTransportException&) {
+      throw;
+    } catch (exception& ex) {
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      return_code |= ERR_BASETYPES;
+    }
+
+    try {
+      double expected = pow(10, -292);
+      cout << "testDouble(" << expected << ") = ";
+      double actual = testClient.testDouble(expected);
+      cout << "(" << actual << ")" << endl;
+      if (expected - actual > pow(10, -307)) {
+        cout << "*** FAILED ***" << endl
+             << "Expected: " << expected << " but got: " << actual << endl;
+      }
+    } catch (TTransportException&) {
+      throw;
+    } catch (exception& ex) {
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
       return_code |= ERR_BASETYPES;
     }
 

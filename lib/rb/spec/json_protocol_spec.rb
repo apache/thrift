@@ -293,14 +293,35 @@ describe 'JsonProtocol' do
     it "should read json escape char" do
       @trans.write('0054')
       @prot.read_json_escape_char.should == 'T'
+
+      @trans.write("\"\\\"\"")
+      @prot.read_json_string(false).should == "\""
+
+      @trans.write("\"\\\\\"")
+      @prot.read_json_string(false).should == "\\"
+
+      @trans.write("\"\\/\"")
+      @prot.read_json_string(false).should == "\/"
+
+      @trans.write("\"\\b\"")
+      @prot.read_json_string(false).should == "\b"
+
+      @trans.write("\"\\f\"")
+      @prot.read_json_string(false).should == "\f"
+
+      @trans.write("\"\\n\"")
+      @prot.read_json_string(false).should == "\n"
+
+      @trans.write("\"\\r\"")
+      @prot.read_json_string(false).should == "\r"
+
+      @trans.write("\"\\t\"")
+      @prot.read_json_string(false).should == "\t"
     end
 
     it "should read json string" do
       @trans.write("\"\\P")
       expect {@prot.read_json_string(false)}.to raise_error(Thrift::ProtocolException)
-
-      @trans.write("\"\\n\"")
-      @prot.read_json_string(false).should == "\\n"
 
       @trans.write("\"this is a test string\"")
       @prot.read_json_string.should == "this is a test string"

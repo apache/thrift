@@ -20,10 +20,18 @@
 #import <Foundation/Foundation.h>
 #import "TTransport.h"
 
-@interface TMemoryBuffer : NSObject <TTransport> {
-	NSMutableData *mBuffer;
-	NSUInteger mOffset;
-}
-- (id)initWithData:(NSData *)data;
-- (NSData *)getBuffer;
+NS_ASSUME_NONNULL_BEGIN
+
+
+@interface TMemoryBuffer : NSObject <TTransport>
+
+-(NSData *) buffer;
+
+-(id) initWithData:(NSData *)data;
+
+-(id) initWithDataNoCopy:(NSMutableData *)data;
+
 @end
+
+
+NS_ASSUME_NONNULL_END

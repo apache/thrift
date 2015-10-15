@@ -26,16 +26,21 @@
 /**
  * De-serialize object from the given input protocol
  *
- * @param input protocol used for reading 
+ * @param input protocol used for reading
  */
-- (void) read: (id <TProtocol>) inProtocol;
+-(BOOL) read:(id <TProtocol>)inProtocol error:(NSError **)error;
 
 /**
  * Serialize object to the given protocol
  *
  * @param buf output protocol used for writing
  */
-- (void) write: (id <TProtocol>) outProtocol;
+-(BOOL) write:(id <TProtocol>)outProtocol error:(NSError **)error;
+
+
+/**
+ * Validate required fields
+ */
+-(BOOL) validate:(NSError *__autoreleasing *)__thriftError;
 
 @end
-

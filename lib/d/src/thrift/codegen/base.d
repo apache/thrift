@@ -48,6 +48,7 @@ import std.traits : BaseTypeTuple, isPointer, isSomeFunction, PointerTarget,
 import thrift.base;
 import thrift.internal.codegen;
 import thrift.protocol.base;
+import thrift.util.hashset;
 
 /*
  * Thrift struct/service meta data, which is used to store information from
@@ -420,7 +421,7 @@ mixin template TStructHelpers(alias fieldMetaData = cast(TFieldMeta[])null) if (
       return (cast()super).opEquals(other);
     }
 
-    size_t toHash() const {
+    override size_t toHash() const {
       return thriftToHashImpl();
     }
   } else {
@@ -469,8 +470,8 @@ mixin template TStructHelpers(alias fieldMetaData = cast(TFieldMeta[])null) if (
 
   private size_t thriftToHashImpl() const @trusted nothrow {
     size_t hash = 0;
-    foreach (name; FieldNames!This) {
-      auto val = mixin("this." ~ name);
+    foreach (i, _; this.tupleof) {
+      auto val = this.tupleof[i];
       hash += typeid(val).getHash(&val);
     }
     return hash;
