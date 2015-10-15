@@ -286,6 +286,16 @@ static bool isJSONNumeric(uint8_t ch) {
   return false;
 }
 
+// Return true if the code unit is high surrogate
+static bool isHighSurrogate(uint16_t val) {
+  return val >= 0xD800 && val <= 0xDBFF;
+}
+
+// Return true if the code unit is low surrogate
+static bool isLowSurrogate(uint16_t val) {
+  return val >= 0xDC00 && val <= 0xDFFF;
+}
+
 /**
  * Class to serve as base JSON context and as base class for other context
  * implementations
@@ -710,7 +720,7 @@ uint32_t TJSONProtocol::readJSONSyntaxChar(uint8_t ch) {
 }
 
 // Decodes the four hex parts of a JSON escaped string character and returns
-// the codepoint via out.
+// the UTF-16 code unit via out.
 uint32_t TJSONProtocol::readJSONEscapeChar(uint16_t* out) {
   uint8_t b[4];
   b[0] = reader_.read();
@@ -728,7 +738,7 @@ uint32_t TJSONProtocol::readJSONEscapeChar(uint16_t* out) {
 uint32_t TJSONProtocol::readJSONString(std::string& str, bool skipContext) {
   uint32_t result = (skipContext ? 0 : context_->read(reader_));
   result += readJSONSyntaxChar(kJSONStringDelimiter);
-  std::vector<uint16_t> codepoints;
+  std::vector<uint16_t> codeunits;
   uint8_t ch;
   str.clear();
   while (true) {
@@ -743,19 +753,18 @@ uint32_t TJSONProtocol::readJSONString(std::string& str, bool skipContext) {
       if (ch == kJSONEscapeChar) {
         uint16_t cp;
         result += readJSONEscapeChar(&cp);
-        // Checking for surrogate pair
-        if (cp >= 0xD800 && cp <= 0xDBFF) {
-          codepoints.push_back(cp);
+        if (isHighSurrogate(cp)) {
+          codeunits.push_back(cp);
         } else {
-          if (cp >= 0xDC00 && cp <= 0xDFFF
-               && codepoints.empty()) {
+          if (isLowSurrogate(cp)
+               && codeunits.empty()) {
             throw TProtocolException(TProtocolException::INVALID_DATA,
                                      "Missing UTF-16 high surrogate pair.");
           }
-          codepoints.push_back(cp);
-          codepoints.push_back(0);
-          str += boost::locale::conv::utf_to_utf<char>(codepoints.data());
-          codepoints.clear();
+          codeunits.push_back(cp);
+          codeunits.push_back(0);
+          str += boost::locale::conv::utf_to_utf<char>(codeunits.data());
+          codeunits.clear();
         }
         continue;
       } else {
@@ -768,14 +777,14 @@ uint32_t TJSONProtocol::readJSONString(std::string& str, bool skipContext) {
         ch = kEscapeCharVals[pos];
       }
     }
-    if (!codepoints.empty()) {
+    if (!codeunits.empty()) {
       throw TProtocolException(TProtocolException::INVALID_DATA,
                                "Missing UTF-16 low surrogate pair.");
     }
     str += ch;
   }
 
-  if (!codepoints.empty()) {
+  if (!codeunits.empty()) {
     throw TProtocolException(TProtocolException::INVALID_DATA,
                              "Missing UTF-16 low surrogate pair.");
   }

@@ -272,7 +272,7 @@ BOOST_AUTO_TEST_CASE(test_json_proto_8) {
     apache::thrift::protocol::TProtocolException);
 }
 
-std::string toHexSequence(const std::string& str) {
+static std::string toHexSequence(const std::string& str) {
   std::stringstream ss;
   ss << std::hex << std::setfill('0');
   for (std::size_t i = 0; i < str.size(); i++) {
@@ -282,7 +282,7 @@ std::string toHexSequence(const std::string& str) {
 }
 
 BOOST_AUTO_TEST_CASE(test_json_unicode_escaped) {
-  const char* json_string =
+  const char json_string[] =
   "{\"1\":{\"tf\":1},\"2\":{\"tf\":0},\"3\":{\"i8\":127},\"4\":{\"i16\":27000},"
   "\"5\":{\"i32\":16},\"6\":{\"i64\":6000000000},\"7\":{\"dbl\":3.1415926"
   "53589793},\"8\":{\"str\":\"JSON THIS!\"},\"9\":{\"str\":\"\\u0e01 \\ud835\\udd3e\"},"
@@ -292,7 +292,7 @@ BOOST_AUTO_TEST_CASE(test_json_unicode_escaped) {
   const char* expected_zomg_unicode = "\xe0\xb8\x81 \xf0\x9d\x94\xbe";
 
   boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
-    (uint8_t*)(json_string), strlen(json_string)*sizeof(char)));
+    (uint8_t*)(json_string), sizeof(json_string)));
   boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
 
   OneOfEach ooe2;
@@ -304,7 +304,7 @@ BOOST_AUTO_TEST_CASE(test_json_unicode_escaped) {
 }
 
 BOOST_AUTO_TEST_CASE(test_json_unicode_escaped_missing_low_surrogate) {
-  const char* json_string =
+  const char json_string[] =
   "{\"1\":{\"tf\":1},\"2\":{\"tf\":0},\"3\":{\"i8\":127},\"4\":{\"i16\":27000},"
   "\"5\":{\"i32\":16},\"6\":{\"i64\":6000000000},\"7\":{\"dbl\":3.1415926"
   "53589793},\"8\":{\"str\":\"JSON THIS!\"},\"9\":{\"str\":\"\\ud835\"},"
@@ -313,7 +313,7 @@ BOOST_AUTO_TEST_CASE(test_json_unicode_escaped_missing_low_surrogate) {
   "\",3,1,2,3]}}";
 
   boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
-    (uint8_t*)(json_string), strlen(json_string)*sizeof(char)));
+    (uint8_t*)(json_string), sizeof(json_string)));
   boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
 
   OneOfEach ooe2;
@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_CASE(test_json_unicode_escaped_missing_low_surrogate) {
 }
 
 BOOST_AUTO_TEST_CASE(test_json_unicode_escaped_missing_hi_surrogate) {
-  const char* json_string =
+  const char json_string[] =
   "{\"1\":{\"tf\":1},\"2\":{\"tf\":0},\"3\":{\"i8\":127},\"4\":{\"i16\":27000},"
   "\"5\":{\"i32\":16},\"6\":{\"i64\":6000000000},\"7\":{\"dbl\":3.1415926"
   "53589793},\"8\":{\"str\":\"JSON THIS!\"},\"9\":{\"str\":\"\\udd3e\"},"
@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_CASE(test_json_unicode_escaped_missing_hi_surrogate) {
   "\",3,1,2,3]}}";
 
   boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
-    (uint8_t*)(json_string), strlen(json_string)*sizeof(char)));
+    (uint8_t*)(json_string), sizeof(json_string)));
   boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
 
   OneOfEach ooe2;
