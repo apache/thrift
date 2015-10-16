@@ -695,7 +695,7 @@ string t_java_generator::render_const_value(ofstream& out, t_type* type, t_const
     case t_base_type::TYPE_BOOL:
       render << ((value->get_integer() > 0) ? "true" : "false");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       render << "(byte)" << value->get_integer();
       break;
     case t_base_type::TYPE_I16:
@@ -1666,7 +1666,7 @@ void t_java_generator::generate_java_struct_parcelable(ofstream& out, t_struct* 
         case t_base_type::TYPE_BOOL:
           indent(out) << "out.writeInt(" << name << " ? 1 : 0);" << endl;
           break;
-        case t_base_type::TYPE_BYTE:
+        case t_base_type::TYPE_I8:
           indent(out) << "out.writeByte(" << name << ");" << endl;
           break;
         case t_base_type::TYPE_DOUBLE:
@@ -1763,7 +1763,7 @@ void t_java_generator::generate_java_struct_parcelable(ofstream& out, t_struct* 
         case t_base_type::TYPE_BOOL:
           indent(out) << prefix << " = (in.readInt()==1);" << endl;
           break;
-        case t_base_type::TYPE_BYTE:
+        case t_base_type::TYPE_I8:
           indent(out) << prefix << " = in.readByte();" << endl;
           break;
         case t_base_type::TYPE_DOUBLE:
@@ -2558,7 +2558,7 @@ std::string t_java_generator::get_java_type_string(t_type* type) {
     case t_base_type::TYPE_BOOL:
       return "org.apache.thrift.protocol.TType.BOOL";
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "org.apache.thrift.protocol.TType.BYTE";
       break;
     case t_base_type::TYPE_I16:
@@ -3527,7 +3527,7 @@ void t_java_generator::generate_deserialize_field(ofstream& out,
     case t_base_type::TYPE_BOOL:
       out << "readBool();";
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       out << "readByte();";
       break;
     case t_base_type::TYPE_I16:
@@ -3812,7 +3812,7 @@ void t_java_generator::generate_serialize_field(ofstream& out,
       case t_base_type::TYPE_BOOL:
         out << "writeBool(" << name << ");";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "writeByte(" << name << ");";
         break;
       case t_base_type::TYPE_I16:
@@ -4043,7 +4043,7 @@ string t_java_generator::base_type_name(t_base_type* type, bool in_container) {
     }
   case t_base_type::TYPE_BOOL:
     return (in_container ? "Boolean" : "boolean");
-  case t_base_type::TYPE_BYTE:
+  case t_base_type::TYPE_I8:
     return (in_container ? "Byte" : "byte");
   case t_base_type::TYPE_I16:
     return (in_container ? "Short" : "short");
@@ -4083,7 +4083,7 @@ string t_java_generator::declare_field(t_field* tfield, bool init, bool comment)
       case t_base_type::TYPE_BOOL:
         result += " = false";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
@@ -4244,7 +4244,7 @@ string t_java_generator::type_to_enum(t_type* type) {
       return "org.apache.thrift.protocol.TType.STRING";
     case t_base_type::TYPE_BOOL:
       return "org.apache.thrift.protocol.TType.BOOL";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "org.apache.thrift.protocol.TType.BYTE";
     case t_base_type::TYPE_I16:
       return "org.apache.thrift.protocol.TType.I16";
@@ -4759,7 +4759,7 @@ void t_java_generator::generate_java_struct_clear(std::ofstream& out, t_struct* 
     t_base_type* base_type = (t_base_type*)t;
 
     switch (base_type->get_base()) {
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:

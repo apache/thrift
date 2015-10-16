@@ -337,7 +337,7 @@ string t_xsd_generator::base_type_name(t_base_type::t_base tbase) {
     return "string";
   case t_base_type::TYPE_BOOL:
     return "boolean";
-  case t_base_type::TYPE_BYTE:
+  case t_base_type::TYPE_I8:
     return "byte";
   case t_base_type::TYPE_I16:
     return "short";
