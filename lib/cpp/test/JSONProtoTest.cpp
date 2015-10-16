@@ -19,6 +19,8 @@
 
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <iomanip>
+#include <sstream>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/protocol/TJSONProtocol.h>
 #include "gen-cpp/DebugProtoTest_types.h"
@@ -266,6 +268,73 @@ BOOST_AUTO_TEST_CASE(test_json_proto_8) {
 
   OneOfEach ooe2;
 
+  BOOST_CHECK_THROW(ooe2.read(proto.get()),
+    apache::thrift::protocol::TProtocolException);
+}
+
+static std::string toHexSequence(const std::string& str) {
+  std::stringstream ss;
+  ss << std::hex << std::setfill('0');
+  for (std::size_t i = 0; i < str.size(); i++) {
+    ss << "\\x" << int(uint8_t(str[i]));
+  }
+  return ss.str();
+}
+
+BOOST_AUTO_TEST_CASE(test_json_unicode_escaped) {
+  const char json_string[] =
+  "{\"1\":{\"tf\":1},\"2\":{\"tf\":0},\"3\":{\"i8\":127},\"4\":{\"i16\":27000},"
+  "\"5\":{\"i32\":16},\"6\":{\"i64\":6000000000},\"7\":{\"dbl\":3.1415926"
+  "53589793},\"8\":{\"str\":\"JSON THIS!\"},\"9\":{\"str\":\"\\u0e01 \\ud835\\udd3e\"},"
+  "\"10\":{\"tf\":0},\"11\":{\"str\":\"000000\"},\"12\":{\"lst\""
+  ":[\"i8\",3,1,2,3]},\"13\":{\"lst\":[\"i16\",3,1,2,3]},\"14\":{\"lst\":[\"i64"
+  "\",3,1,2,3]}}";
+  const char* expected_zomg_unicode = "\xe0\xb8\x81 \xf0\x9d\x94\xbe";
+
+  boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
+    (uint8_t*)(json_string), sizeof(json_string)));
+  boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
+
+  OneOfEach ooe2;
+  ooe2.read(proto.get());
+  BOOST_CHECK_MESSAGE(!ooe2.zomg_unicode.compare(expected_zomg_unicode),
+    "Expected:\n" << toHexSequence(expected_zomg_unicode) << "\nGotten:\n"
+                  << toHexSequence(ooe2.zomg_unicode));
+
+}
+
+BOOST_AUTO_TEST_CASE(test_json_unicode_escaped_missing_low_surrogate) {
+  const char json_string[] =
+  "{\"1\":{\"tf\":1},\"2\":{\"tf\":0},\"3\":{\"i8\":127},\"4\":{\"i16\":27000},"
+  "\"5\":{\"i32\":16},\"6\":{\"i64\":6000000000},\"7\":{\"dbl\":3.1415926"
+  "53589793},\"8\":{\"str\":\"JSON THIS!\"},\"9\":{\"str\":\"\\ud835\"},"
+  "\"10\":{\"tf\":0},\"11\":{\"str\":\"000000\"},\"12\":{\"lst\""
+  ":[\"i8\",3,1,2,3]},\"13\":{\"lst\":[\"i16\",3,1,2,3]},\"14\":{\"lst\":[\"i64"
+  "\",3,1,2,3]}}";
+
+  boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
+    (uint8_t*)(json_string), sizeof(json_string)));
+  boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
+
+  OneOfEach ooe2;
+  BOOST_CHECK_THROW(ooe2.read(proto.get()),
+    apache::thrift::protocol::TProtocolException);
+}
+
+BOOST_AUTO_TEST_CASE(test_json_unicode_escaped_missing_hi_surrogate) {
+  const char json_string[] =
+  "{\"1\":{\"tf\":1},\"2\":{\"tf\":0},\"3\":{\"i8\":127},\"4\":{\"i16\":27000},"
+  "\"5\":{\"i32\":16},\"6\":{\"i64\":6000000000},\"7\":{\"dbl\":3.1415926"
+  "53589793},\"8\":{\"str\":\"JSON THIS!\"},\"9\":{\"str\":\"\\udd3e\"},"
+  "\"10\":{\"tf\":0},\"11\":{\"str\":\"000000\"},\"12\":{\"lst\""
+  ":[\"i8\",3,1,2,3]},\"13\":{\"lst\":[\"i16\",3,1,2,3]},\"14\":{\"lst\":[\"i64"
+  "\",3,1,2,3]}}";
+
+  boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
+    (uint8_t*)(json_string), sizeof(json_string)));
+  boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
+
+  OneOfEach ooe2;
   BOOST_CHECK_THROW(ooe2.read(proto.get()),
     apache::thrift::protocol::TProtocolException);
 }
