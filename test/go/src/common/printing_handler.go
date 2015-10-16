@@ -48,14 +48,14 @@ func (p *printingHandler) TestString(thing string) (r string, err error) {
 	return thing, nil
 }
 
-// Prints 'testBool("%d")' with thing as 'true' or 'false'
+// Prints 'testBool("%t")' with thing as 'true' or 'false'
 // @param bool thing - the bool to print
 // @return bool - returns the bool 'thing'
 //
 // Parameters:
 //  - Thing
 func (p *printingHandler) TestBool(thing bool) (r bool, err error) {
-	fmt.Printf("testBool(%d)\n", thing)
+	fmt.Printf("testBool(%t)\n", thing)
 	return thing, nil
 }
 
