@@ -171,7 +171,13 @@ class TTornadoServer(tcpserver.TCPServer):
 
         try:
             while not trans.stream.closed():
-                frame = yield trans.readFrame()
+                try:
+                    frame = yield trans.readFrame()
+                except TTransportException as e:
+                    if e.type == TTransportException.END_OF_FILE:
+                        break
+                    else:
+                        raise
                 tr = TMemoryBuffer(frame)
                 iprot = self._iprot_factory.getProtocol(tr)
                 yield self._processor.process(iprot, oprot)
