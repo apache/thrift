@@ -74,11 +74,11 @@ public class TZlibTransport extends TIOStreamTransport {
 
     @Override
     public void close() {
+        super.close();
         if (transport_.isOpen()) {
             transport_.close();
         }
     }
-
 }
 
 class TTransportInputStream extends InputStream {
