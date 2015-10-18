@@ -31,6 +31,7 @@ import java.util.zip.InflaterInputStream;
  */
 public class TZlibTransport extends TIOStreamTransport {
 
+    private final int compression_;
     private TTransport transport_ = null;
 
     public static class Factory extends TTransportFactory {
@@ -58,8 +59,7 @@ public class TZlibTransport extends TIOStreamTransport {
      */
     public TZlibTransport(TTransport transport, int compressionLevel) {
         transport_ = transport;
-        inputStream_ = new InflaterInputStream(new TTransportInputStream(transport_), new Inflater());
-        outputStream_ = new DeflaterOutputStream(new TTransportOutputStream(transport_), new Deflater(compressionLevel, false), true);
+        compression_ = compressionLevel;
     }
 
     @Override
@@ -73,10 +73,19 @@ public class TZlibTransport extends TIOStreamTransport {
     }
 
     @Override
-    public void close() {
-        if (transport_.isOpen()) {
-            transport_.close();
+    public int read(byte[] buf, int off, int len) throws TTransportException {
+        if (inputStream_ == null) {
+            inputStream_ = new InflaterInputStream(new TTransportInputStream(transport_), new Inflater());
         }
+        return super.read(buf, off, len);
+    }
+
+    @Override
+    public void write(byte[] buf, int off, int len) throws TTransportException {
+        if (outputStream_ == null) {
+            outputStream_ = new DeflaterOutputStream(new TTransportOutputStream(transport_), new Deflater(compression_, false), true);
+        }
+        super.write(buf, off, len);
     }
 
 }
