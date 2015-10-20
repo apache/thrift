@@ -18,6 +18,7 @@
 library thrift.test.transport.t_json_protocol_test;
 
 import 'dart:async';
+import 'dart:convert' show UTF8;
 import 'dart:typed_data' show Uint8List;
 
 import 'package:test/test.dart';
@@ -350,6 +351,28 @@ void main() {
     setUp(() {
       protocol = new TJsonProtocol(new TBufferedTransport());
       protocol.writeMessageBegin(message);
+    });
+
+
+    test('Test escaped unicode', () async {
+      /*
+         KOR_KAI
+           UTF-8:  0xE0 0xB8 0x81
+           UTF-16: 0x0E01
+         G clef:
+           UTF-8:  0xF0 0x9D 0x84 0x9E
+           UTF-16: 0xD834 0xDD1E
+       */
+      var buffer = UTF8.encode(r'"\u0001\u0e01 \ud834\udd1e"');
+      var transport = new TBufferedTransport();
+      transport.writeAll(buffer);
+
+      var protocol = new TJsonProtocol(transport);
+
+      await protocol.transport.flush();
+
+      var subject = protocol.readString();
+      expect(subject, UTF8.decode([0x01, 0xE0, 0xB8, 0x81, 0x20, 0xF0, 0x9D, 0x84, 0x9E]));
     });
 
     group('shared tests', sharedTests);
