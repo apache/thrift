@@ -559,7 +559,7 @@ string t_c_glib_generator::type_name(t_type* ttype, bool in_typedef, bool is_con
         case t_base_type::TYPE_VOID:
           throw "compiler error: cannot determine array type";
         case t_base_type::TYPE_BOOL:
-        case t_base_type::TYPE_BYTE:
+        case t_base_type::TYPE_I8:
         case t_base_type::TYPE_I16:
         case t_base_type::TYPE_I32:
         case t_base_type::TYPE_I64:
@@ -615,7 +615,7 @@ string t_c_glib_generator::property_type_name(t_type* ttype, bool in_typedef, bo
 
   if (ttype->is_base_type()) {
     switch (((t_base_type*)ttype)->get_base()) {
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
       if (is_const) {
@@ -652,7 +652,7 @@ string t_c_glib_generator::base_type_name(t_base_type* type) {
     }
   case t_base_type::TYPE_BOOL:
     return "gboolean";
-  case t_base_type::TYPE_BYTE:
+  case t_base_type::TYPE_I8:
     return "gint8";
   case t_base_type::TYPE_I16:
     return "gint16";
@@ -684,7 +684,7 @@ string t_c_glib_generator::type_to_enum(t_type* type) {
       return "T_STRING";
     case t_base_type::TYPE_BOOL:
       return "T_BOOL";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "T_BYTE";
     case t_base_type::TYPE_I16:
       return "T_I16";
@@ -729,7 +729,7 @@ string t_c_glib_generator::constant_literal(t_type* type, t_const_value* value) 
     case t_base_type::TYPE_BOOL:
       render << ((value->get_integer() != 0) ? "TRUE" : "FALSE");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -791,7 +791,7 @@ string t_c_glib_generator::constant_value(string name, t_type* type, t_const_val
     case t_base_type::TYPE_BOOL:
       render << ((value->get_integer() != 0) ? 1 : 0);
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -915,7 +915,7 @@ string t_c_glib_generator::declare_field(t_field* tfield,
       case t_base_type::TYPE_VOID:
         break;
       case t_base_type::TYPE_BOOL:
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
@@ -1026,7 +1026,7 @@ void t_c_glib_generator::generate_const_initializer(string name,
       case t_base_type::TYPE_VOID:
         throw "compiler error: cannot determine array type";
       case t_base_type::TYPE_BOOL:
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
@@ -2857,7 +2857,7 @@ void t_c_glib_generator::generate_object(t_struct* tstruct) {
             assign_function_name = "g_value_get_boolean";
             break;
 
-          case t_base_type::TYPE_BYTE:
+          case t_base_type::TYPE_I8:
           case t_base_type::TYPE_I16:
           case t_base_type::TYPE_I32:
             assign_function_name = "g_value_get_int";
@@ -2967,7 +2967,7 @@ void t_c_glib_generator::generate_object(t_struct* tstruct) {
           setter_function_name = "g_value_set_boolean";
           break;
 
-        case t_base_type::TYPE_BYTE:
+        case t_base_type::TYPE_I8:
         case t_base_type::TYPE_I16:
         case t_base_type::TYPE_I32:
           setter_function_name = "g_value_set_int";
@@ -3190,7 +3190,7 @@ void t_c_glib_generator::generate_object(t_struct* tstruct) {
           case t_base_type::TYPE_VOID:
             throw "compiler error: cannot determine array type";
           case t_base_type::TYPE_BOOL:
-          case t_base_type::TYPE_BYTE:
+          case t_base_type::TYPE_I8:
           case t_base_type::TYPE_I16:
           case t_base_type::TYPE_I32:
           case t_base_type::TYPE_I64:
@@ -3302,7 +3302,7 @@ void t_c_glib_generator::generate_object(t_struct* tstruct) {
                                 ? "TRUE"
                                 : "FALSE") << "," << endl << args_indent << "G_PARAM_READWRITE));"
                         << endl;
-        } else if ((base_type == t_base_type::TYPE_BYTE) || (base_type == t_base_type::TYPE_I16)
+        } else if ((base_type == t_base_type::TYPE_I8) || (base_type == t_base_type::TYPE_I16)
                    || (base_type == t_base_type::TYPE_I32) || (base_type == t_base_type::TYPE_I64)
                    || (base_type == t_base_type::TYPE_DOUBLE)) {
           string param_spec_function_name = "g_param_spec_int";
@@ -3311,7 +3311,7 @@ void t_c_glib_generator::generate_object(t_struct* tstruct) {
           ostringstream default_value;
 
           switch (base_type) {
-          case t_base_type::TYPE_BYTE:
+          case t_base_type::TYPE_I8:
             min_value = "G_MININT8";
             max_value = "G_MAXINT8";
             break;
@@ -3670,7 +3670,7 @@ void t_c_glib_generator::generate_serialize_field(ofstream& out,
       case t_base_type::TYPE_BOOL:
         out << "bool (protocol, " << name;
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "byte (protocol, " << name;
         break;
       case t_base_type::TYPE_I16:
@@ -3912,7 +3912,7 @@ void t_c_glib_generator::generate_serialize_list_element(ofstream& out,
     case t_base_type::TYPE_BOOL:
       name = "g_array_index (" + list + ", gboolean, " + index + ")";
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       name = "g_array_index (" + list + ", gint8, " + index + ")";
       break;
     case t_base_type::TYPE_I16:
@@ -3943,7 +3943,7 @@ void t_c_glib_generator::generate_serialize_list_element(ofstream& out,
         throw "compiler error: cannot determine array type";
         break;
       case t_base_type::TYPE_BOOL:
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
@@ -4009,7 +4009,7 @@ void t_c_glib_generator::generate_deserialize_field(ofstream& out,
     case t_base_type::TYPE_BOOL:
       out << "bool (protocol, &" << name;
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       out << "byte (protocol, &" << name;
       break;
     case t_base_type::TYPE_I16:
@@ -4292,7 +4292,7 @@ void t_c_glib_generator::generate_deserialize_list_element(ofstream& out,
       out << "g_ptr_array_add (" << prefix << ", " << elem << ");" << endl;
       return;
     case t_base_type::TYPE_BOOL:
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -4317,7 +4317,7 @@ string t_c_glib_generator::generate_free_func_from_type(t_type* ttype) {
       throw "compiler error: cannot determine hash type";
       break;
     case t_base_type::TYPE_BOOL:
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -4346,7 +4346,7 @@ string t_c_glib_generator::generate_free_func_from_type(t_type* ttype) {
         throw "compiler error: cannot determine array type";
         break;
       case t_base_type::TYPE_BOOL:
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
@@ -4383,7 +4383,7 @@ string t_c_glib_generator::generate_hash_func_from_type(t_type* ttype) {
       throw "compiler error: cannot determine hash type";
       break;
     case t_base_type::TYPE_BOOL:
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
       return "g_int_hash";
@@ -4418,7 +4418,7 @@ string t_c_glib_generator::generate_cmp_func_from_type(t_type* ttype) {
       throw "compiler error: cannot determine hash type";
       break;
     case t_base_type::TYPE_BOOL:
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
       return "g_int_equal";
@@ -4461,7 +4461,7 @@ string t_c_glib_generator::generate_new_array_from_type(t_type* ttype) {
       break;
     case t_base_type::TYPE_BOOL:
       return "g_array_new (0, 1, sizeof (gboolean));";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "g_array_new (0, 1, sizeof (gint8));";
     case t_base_type::TYPE_I16:
       return "g_array_new (0, 1, sizeof (gint16));";

@@ -421,7 +421,7 @@ t_rb_ofstream& t_rb_generator::render_const_value(t_rb_ofstream& out,
     case t_base_type::TYPE_BOOL:
       out << (value->get_integer() > 0 ? "true" : "false");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -1125,7 +1125,7 @@ string t_rb_generator::type_to_enum(t_type* type) {
       return "::Thrift::Types::STRING";
     case t_base_type::TYPE_BOOL:
       return "::Thrift::Types::BOOL";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "::Thrift::Types::BYTE";
     case t_base_type::TYPE_I16:
       return "::Thrift::Types::I16";

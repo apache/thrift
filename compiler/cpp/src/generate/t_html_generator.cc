@@ -740,7 +740,7 @@ void t_html_generator::print_const_value(t_type* type, t_const_value* tvalue) {
     case t_base_type::TYPE_BOOL:
       f_out_ << ((tvalue->get_integer() != 0) ? "true" : "false");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       f_out_ << tvalue->get_integer();
       break;
     case t_base_type::TYPE_I16:

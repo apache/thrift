@@ -37,7 +37,7 @@ public:
     TYPE_VOID,
     TYPE_STRING,
     TYPE_BOOL,
-    TYPE_BYTE,
+    TYPE_I8,
     TYPE_I16,
     TYPE_I32,
     TYPE_I64,
@@ -84,8 +84,8 @@ public:
     case TYPE_BOOL:
       return "bool";
       break;
-    case TYPE_BYTE:
-      return "byte";
+    case TYPE_I8:
+      return "i8";
       break;
     case TYPE_I16:
       return "i16";

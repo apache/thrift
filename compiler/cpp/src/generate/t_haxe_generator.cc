@@ -610,7 +610,7 @@ string t_haxe_generator::render_const_value(ofstream& out,
     case t_base_type::TYPE_BOOL:
       render << ((value->get_integer() > 0) ? "true" : "false");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       render << "(byte)" << value->get_integer();
       break;
     case t_base_type::TYPE_I16:
@@ -1392,7 +1392,7 @@ std::string t_haxe_generator::get_haxe_type_string(t_type* type) {
     case t_base_type::TYPE_BOOL:
       return "TType.BOOL";
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "TType.BYTE";
       break;
     case t_base_type::TYPE_I16:
@@ -2194,7 +2194,7 @@ void t_haxe_generator::generate_deserialize_field(ofstream& out, t_field* tfield
       case t_base_type::TYPE_BOOL:
         out << "readBool();";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "readByte();";
         break;
       case t_base_type::TYPE_I16:
@@ -2378,7 +2378,7 @@ void t_haxe_generator::generate_serialize_field(ofstream& out, t_field* tfield, 
       case t_base_type::TYPE_BOOL:
         out << "writeBool(" << name << ");";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "writeByte(" << name << ");";
         break;
       case t_base_type::TYPE_I16:
@@ -2541,7 +2541,7 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
         if (!(((t_base_type*)tkey)->is_binary())) {
           return "StringMap< " + type_name(tval) + ">";
         }
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
         return "IntMap< " + type_name(tval) + ">";
@@ -2566,7 +2566,7 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
         if (!(((t_base_type*)tkey)->is_binary())) {
           return "StringSet";
         }
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
         return "IntSet";
@@ -2620,7 +2620,7 @@ string t_haxe_generator::base_type_name(t_base_type* type, bool in_container) {
     }
   case t_base_type::TYPE_BOOL:
     return "Bool";
-  case t_base_type::TYPE_BYTE:
+  case t_base_type::TYPE_I8:
   case t_base_type::TYPE_I16:
   case t_base_type::TYPE_I32:
     return "haxe.Int32";
@@ -2657,7 +2657,7 @@ string t_haxe_generator::declare_field(t_field* tfield, bool init) {
       case t_base_type::TYPE_BOOL:
         result += " = false";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
@@ -2756,7 +2756,7 @@ string t_haxe_generator::type_to_enum(t_type* type) {
       return "TType.STRING";
     case t_base_type::TYPE_BOOL:
       return "TType.BOOL";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "TType.BYTE";
     case t_base_type::TYPE_I16:
       return "TType.I16";
