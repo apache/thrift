@@ -22,6 +22,7 @@
 -define(tType_VOID, 1).
 -define(tType_BOOL, 2).
 -define(tType_BYTE, 3).
+-define(tType_I8, 3).
 -define(tType_DOUBLE, 4).
 -define(tType_I16, 6).
 -define(tType_I32, 8).

@@ -70,7 +70,7 @@ extern t_type* g_type_string;
 extern t_type* g_type_binary;
 extern t_type* g_type_slist;
 extern t_type* g_type_bool;
-extern t_type* g_type_byte;
+extern t_type* g_type_i8;
 extern t_type* g_type_i16;
 extern t_type* g_type_i32;
 extern t_type* g_type_i64;

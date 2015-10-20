@@ -56,6 +56,7 @@
 typeid_to_json(?tType_BOOL) -> "tf";
 typeid_to_json(?tType_BYTE) -> "i8";
 typeid_to_json(?tType_DOUBLE) -> "dbl";
+typeid_to_json(?tType_I8) -> "i8";
 typeid_to_json(?tType_I16) -> "i16";
 typeid_to_json(?tType_I32) -> "i32";
 typeid_to_json(?tType_I64) -> "i64";
@@ -66,8 +67,8 @@ typeid_to_json(?tType_SET) -> "set";
 typeid_to_json(?tType_LIST) -> "lst".
 
 json_to_typeid("tf") -> ?tType_BOOL;
-json_to_typeid("i8") -> ?tType_BYTE;
 json_to_typeid("dbl") -> ?tType_DOUBLE;
+json_to_typeid("i8") -> ?tType_I8;
 json_to_typeid("i16") -> ?tType_I16;
 json_to_typeid("i32") -> ?tType_I32;
 json_to_typeid("i64") -> ?tType_I64;

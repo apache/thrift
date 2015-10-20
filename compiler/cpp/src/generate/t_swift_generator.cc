@@ -1818,7 +1818,7 @@ string t_swift_generator::base_type_name(t_base_type* type) {
     }
   case t_base_type::TYPE_BOOL:
     return "Bool";
-  case t_base_type::TYPE_BYTE:
+  case t_base_type::TYPE_I8:
     return "Int8";
   case t_base_type::TYPE_I16:
     return "Int16";
@@ -1851,7 +1851,7 @@ void t_swift_generator::render_const_value(ostream& out,
     case t_base_type::TYPE_BOOL:
       out << ((value->get_integer() > 0) ? "true" : "false");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -2110,7 +2110,7 @@ string t_swift_generator::type_to_enum(t_type* type, bool qualified) {
       return result + "STRING";
     case t_base_type::TYPE_BOOL:
       return result + "BOOL";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return result + "BYTE";
     case t_base_type::TYPE_I16:
       return result + "I16";

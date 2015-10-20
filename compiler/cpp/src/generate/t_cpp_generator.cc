@@ -685,7 +685,7 @@ string t_cpp_generator::render_const_value(ofstream& out,
     case t_base_type::TYPE_BOOL:
       render << ((value->get_integer() > 0) ? "true" : "false");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
       render << value->get_integer();
@@ -3641,7 +3641,7 @@ void t_cpp_generator::generate_deserialize_field(ofstream& out,
     case t_base_type::TYPE_BOOL:
       out << "readBool(" << name << ");";
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       out << "readByte(" << name << ");";
       break;
     case t_base_type::TYPE_I16:
@@ -3848,7 +3848,7 @@ void t_cpp_generator::generate_serialize_field(ofstream& out,
       case t_base_type::TYPE_BOOL:
         out << "writeBool(" << name << ");";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "writeByte(" << name << ");";
         break;
       case t_base_type::TYPE_I16:
@@ -4142,7 +4142,7 @@ string t_cpp_generator::base_type_name(t_base_type::t_base tbase) {
     return "std::string";
   case t_base_type::TYPE_BOOL:
     return "bool";
-  case t_base_type::TYPE_BYTE:
+  case t_base_type::TYPE_I8:
     return "int8_t";
   case t_base_type::TYPE_I16:
     return "int16_t";
@@ -4196,7 +4196,7 @@ string t_cpp_generator::declare_field(t_field* tfield,
       case t_base_type::TYPE_BOOL:
         result += " = false";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
@@ -4309,7 +4309,7 @@ string t_cpp_generator::type_to_enum(t_type* type) {
       return "::apache::thrift::protocol::T_STRING";
     case t_base_type::TYPE_BOOL:
       return "::apache::thrift::protocol::T_BOOL";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "::apache::thrift::protocol::T_BYTE";
     case t_base_type::TYPE_I16:
       return "::apache::thrift::protocol::T_I16";
