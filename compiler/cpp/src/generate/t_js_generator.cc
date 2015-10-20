@@ -495,7 +495,7 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
     case t_base_type::TYPE_BOOL:
       out << (value->get_integer() > 0 ? "true" : "false");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -1596,7 +1596,7 @@ void t_js_generator::generate_deserialize_field(ofstream& out,
       case t_base_type::TYPE_BOOL:
         out << "readBool()";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "readByte()";
         break;
       case t_base_type::TYPE_I16:
@@ -1649,9 +1649,9 @@ void t_js_generator::generate_deserialize_container(ofstream& out, t_type* ttype
   string rtmp3 = tmp("_rtmp3");
 
   t_field fsize(g_type_i32, size);
-  t_field fktype(g_type_byte, ktype);
-  t_field fvtype(g_type_byte, vtype);
-  t_field fetype(g_type_byte, etype);
+  t_field fktype(g_type_i8, ktype);
+  t_field fvtype(g_type_i8, vtype);
+  t_field fetype(g_type_i8, etype);
 
   out << indent() << "var " << size << " = 0;" << endl;
   out << indent() << "var " << rtmp3 << ";" << endl;
@@ -1794,7 +1794,7 @@ void t_js_generator::generate_serialize_field(ofstream& out, t_field* tfield, st
       case t_base_type::TYPE_BOOL:
         out << "writeBool(" << name << ")";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "writeByte(" << name << ")";
         break;
       case t_base_type::TYPE_I16:
@@ -1950,7 +1950,7 @@ string t_js_generator::declare_field(t_field* tfield, bool init, bool obj) {
         break;
       case t_base_type::TYPE_STRING:
       case t_base_type::TYPE_BOOL:
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
@@ -2042,7 +2042,7 @@ string t_js_generator::type_to_enum(t_type* type) {
       return "Thrift.Type.STRING";
     case t_base_type::TYPE_BOOL:
       return "Thrift.Type.BOOL";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "Thrift.Type.BYTE";
     case t_base_type::TYPE_I16:
       return "Thrift.Type.I16";
@@ -2087,7 +2087,7 @@ string t_js_generator::ts_get_type(t_type* type) {
     case t_base_type::TYPE_BOOL:
       ts_type = "boolean";
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       ts_type = "any";
       break;
     case t_base_type::TYPE_I16:

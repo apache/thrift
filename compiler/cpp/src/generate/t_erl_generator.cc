@@ -387,7 +387,7 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
     case t_base_type::TYPE_BOOL:
       out << (value->get_integer() > 0 ? "true" : "false");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -517,7 +517,7 @@ string t_erl_generator::render_member_type(t_field* field) {
       return "string() | binary()";
     case t_base_type::TYPE_BOOL:
       return "boolean()";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -918,8 +918,8 @@ string t_erl_generator::type_to_enum(t_type* type) {
       return "?tType_STRING";
     case t_base_type::TYPE_BOOL:
       return "?tType_BOOL";
-    case t_base_type::TYPE_BYTE:
-      return "?tType_BYTE";
+    case t_base_type::TYPE_I8:
+      return "?tType_I8";
     case t_base_type::TYPE_I16:
       return "?tType_I16";
     case t_base_type::TYPE_I32:
@@ -961,7 +961,7 @@ std::string t_erl_generator::render_type_term(t_type* type,
       return "string";
     case t_base_type::TYPE_BOOL:
       return "bool";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "byte";
     case t_base_type::TYPE_I16:
       return "i16";

@@ -63,8 +63,8 @@ close_transport(#protocol{module = Module,
 typeid_to_atom(?tType_STOP) -> field_stop;
 typeid_to_atom(?tType_VOID) -> void;
 typeid_to_atom(?tType_BOOL) -> bool;
-typeid_to_atom(?tType_BYTE) -> byte;
 typeid_to_atom(?tType_DOUBLE) -> double;
+typeid_to_atom(?tType_I8) -> byte;
 typeid_to_atom(?tType_I16) -> i16;
 typeid_to_atom(?tType_I32) -> i32;
 typeid_to_atom(?tType_I64) -> i64;
@@ -76,8 +76,9 @@ typeid_to_atom(?tType_LIST) -> list.
 
 term_to_typeid(void) -> ?tType_VOID;
 term_to_typeid(bool) -> ?tType_BOOL;
-term_to_typeid(byte) -> ?tType_BYTE;
+term_to_typeid(byte) -> ?tType_I8;
 term_to_typeid(double) -> ?tType_DOUBLE;
+term_to_typeid(i8) -> ?tType_I8;
 term_to_typeid(i16) -> ?tType_I16;
 term_to_typeid(i32) -> ?tType_I32;
 term_to_typeid(i64) -> ?tType_I64;
