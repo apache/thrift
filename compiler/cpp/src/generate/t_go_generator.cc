@@ -339,7 +339,7 @@ bool t_go_generator::omit_initialization(t_field* tfield) {
       return value->get_string().empty();
 
     case t_base_type::TYPE_BOOL:
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -397,7 +397,7 @@ bool t_go_generator::is_pointer_field(t_field* tfield, bool in_container_value) 
       return !has_default;
 
     case t_base_type::TYPE_BOOL:
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -1027,7 +1027,7 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
       out << (value->get_integer() > 0 ? "true" : "false");
       break;
 
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -2294,7 +2294,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
                    << endl;
           break;
 
-        case t_base_type::TYPE_BYTE:
+        case t_base_type::TYPE_I8:
           f_remote << indent() << "tmp" << i << ", " << err << " := (strconv.Atoi(flag.Arg("
                    << flagArg << ")))" << endl;
           f_remote << indent() << "if " << err << " != nil {" << endl;
@@ -2440,7 +2440,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
 
         case t_base_type::TYPE_STRING:
         case t_base_type::TYPE_BOOL:
-        case t_base_type::TYPE_BYTE:
+        case t_base_type::TYPE_I8:
         case t_base_type::TYPE_I16:
         case t_base_type::TYPE_I32:
         case t_base_type::TYPE_I64:
@@ -2819,7 +2819,7 @@ void t_go_generator::generate_deserialize_field(ofstream& out,
         out << "ReadBool()";
         break;
 
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "ReadByte()";
         break;
 
@@ -2855,7 +2855,7 @@ void t_go_generator::generate_deserialize_field(ofstream& out,
 
     if (type->is_enum() || (orig_type->is_typedef() && !use_true_type)) {
       wrap = publicize(type_name(orig_type));
-    } else if (((t_base_type*)type)->get_base() == t_base_type::TYPE_BYTE) {
+    } else if (((t_base_type*)type)->get_base() == t_base_type::TYPE_I8) {
       wrap = "int8";
     }
 
@@ -3070,7 +3070,7 @@ void t_go_generator::generate_serialize_field(ofstream& out,
         out << "WriteBool(bool(" << name << "))";
         break;
 
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "WriteByte(int8(" << name << "))";
         break;
 
@@ -3438,7 +3438,7 @@ string t_go_generator::type_to_enum(t_type* type) {
     case t_base_type::TYPE_BOOL:
       return "thrift.BOOL";
 
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "thrift.BYTE";
 
     case t_base_type::TYPE_I16:
@@ -3522,7 +3522,7 @@ string t_go_generator::type_to_go_type_with_opt(t_type* type,
     case t_base_type::TYPE_BOOL:
       return maybe_pointer + "bool";
 
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return maybe_pointer + "int8";
 
     case t_base_type::TYPE_I16:

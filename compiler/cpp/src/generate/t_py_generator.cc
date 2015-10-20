@@ -494,7 +494,7 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
     case t_base_type::TYPE_BOOL:
       out << (value->get_integer() > 0 ? "True" : "False");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -1922,7 +1922,7 @@ void t_py_generator::generate_deserialize_field(ofstream& out,
       case t_base_type::TYPE_BOOL:
         out << "readBool()";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "readByte()";
         break;
       case t_base_type::TYPE_I16:
@@ -1971,9 +1971,9 @@ void t_py_generator::generate_deserialize_container(ofstream& out, t_type* ttype
   string etype = tmp("_etype");
 
   t_field fsize(g_type_i32, size);
-  t_field fktype(g_type_byte, ktype);
-  t_field fvtype(g_type_byte, vtype);
-  t_field fetype(g_type_byte, etype);
+  t_field fktype(g_type_i8, ktype);
+  t_field fvtype(g_type_i8, vtype);
+  t_field fetype(g_type_i8, etype);
 
   // Declare variables, read header
   if (ttype->is_map()) {
@@ -2094,7 +2094,7 @@ void t_py_generator::generate_serialize_field(ofstream& out, t_field* tfield, st
       case t_base_type::TYPE_BOOL:
         out << "writeBool(" << name << ")";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "writeByte(" << name << ")";
         break;
       case t_base_type::TYPE_I16:
@@ -2391,7 +2391,7 @@ string t_py_generator::type_to_enum(t_type* type) {
       return "TType.STRING";
     case t_base_type::TYPE_BOOL:
       return "TType.BOOL";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "TType.BYTE";
     case t_base_type::TYPE_I16:
       return "TType.I16";

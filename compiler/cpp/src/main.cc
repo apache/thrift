@@ -71,7 +71,7 @@ t_type* g_type_string;
 t_type* g_type_binary;
 t_type* g_type_slist;
 t_type* g_type_bool;
-t_type* g_type_byte;
+t_type* g_type_i8;
 t_type* g_type_i16;
 t_type* g_type_i32;
 t_type* g_type_i64;
@@ -636,11 +636,25 @@ void dump_docstrings(t_program* program) {
 void check_for_list_of_bytes(t_type* list_elem_type) {
   if ((g_parse_mode == PROGRAM) && (list_elem_type != NULL) && list_elem_type->is_base_type()) {
     t_base_type* tbase = (t_base_type*)list_elem_type;
-    if (tbase->get_base() == t_base_type::TYPE_BYTE) {
+    if (tbase->get_base() == t_base_type::TYPE_I8) {
       pwarning(1, "Consider using the more efficient \"binary\" type instead of \"list<byte>\".");
     }
   }
 }
+
+
+static bool g_byte_warning_emitted = false;
+
+/**
+ * Emits a one-time warning on byte type, promoting the new i8 type instead
+ */
+void emit_byte_type_warning() {
+  if( ! g_byte_warning_emitted) {
+    pwarning(1, "The \"byte\" type is a compatibility alias for \"i8\". Use \"i8\" to emphasize the signedness of this type.\n");
+	g_byte_warning_emitted = true;  
+  } 
+}
+
 
 /**
  * Prints the version number
@@ -733,7 +747,7 @@ void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
         throw "type error: const \"" + name + "\" was declared as bool";
       }
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       if (value->get_type() != t_const_value::CV_INTEGER) {
         throw "type error: const \"" + name + "\" was declared as byte";
       }
@@ -1185,7 +1199,7 @@ int main(int argc, char** argv) {
   g_type_slist = new t_base_type("string", t_base_type::TYPE_STRING);
   ((t_base_type*)g_type_slist)->set_string_list(true);
   g_type_bool = new t_base_type("bool", t_base_type::TYPE_BOOL);
-  g_type_byte = new t_base_type("byte", t_base_type::TYPE_BYTE);
+  g_type_i8 = new t_base_type("i8", t_base_type::TYPE_I8);
   g_type_i16 = new t_base_type("i16", t_base_type::TYPE_I16);
   g_type_i32 = new t_base_type("i32", t_base_type::TYPE_I32);
   g_type_i64 = new t_base_type("i64", t_base_type::TYPE_I64);
@@ -1275,7 +1289,7 @@ int main(int argc, char** argv) {
   delete g_type_void;
   delete g_type_string;
   delete g_type_bool;
-  delete g_type_byte;
+  delete g_type_i8;
   delete g_type_i16;
   delete g_type_i32;
   delete g_type_i64;
