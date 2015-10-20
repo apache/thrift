@@ -2642,6 +2642,8 @@ string t_cocoa_generator::element_type_name(t_type* etype) {
       result = "NSNumber *";
       break;
     }
+  } else if (ttype->is_enum()) {
+      result = "NSNumber *";      
   } else if (ttype->is_map()) {
     t_map *map = (t_map *)ttype;
     result = "NSDictionary<" + element_type_name(map->get_key_type()) + ", " + element_type_name(map->get_val_type()) + ">";
