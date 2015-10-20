@@ -642,6 +642,20 @@ void check_for_list_of_bytes(t_type* list_elem_type) {
   }
 }
 
+
+static bool g_byte_warning_emitted = false;
+
+/**
+ * Emits a one-time warning on byte type, promoting the new i8 type instead
+ */
+void emit_byte_type_warning() {
+  if( ! g_byte_warning_emitted) {
+    pwarning(1, "The \"byte\" type is a compatibility alias for \"i8\". Use \"i8\" to emphasize the signedness of this type.\n");
+	g_byte_warning_emitted = true;  
+  } 
+}
+
+
 /**
  * Prints the version number
  */

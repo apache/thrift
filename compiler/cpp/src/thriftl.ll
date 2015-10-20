@@ -155,7 +155,10 @@ literal_begin (['\"])
 "include"            { return tok_include;              }
 "void"               { return tok_void;                 }
 "bool"               { return tok_bool;                 }
-"byte"               { return tok_i8;                   }
+"byte"               { 
+  emit_byte_type_warning();
+  return tok_i8;
+}
 "i8"                 { return tok_i8;                   }
 "i16"                { return tok_i16;                  }
 "i32"                { return tok_i32;                  }
