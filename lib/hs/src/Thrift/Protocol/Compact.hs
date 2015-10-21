@@ -40,7 +40,7 @@ import Data.Monoid
 import Data.Word
 import Data.Text.Lazy.Encoding ( decodeUtf8, encodeUtf8 )
 
-import Thrift.Protocol hiding (versionMask)
+import Thrift.Protocol
 import Thrift.Transport
 import Thrift.Types
 
@@ -55,7 +55,7 @@ import qualified Data.Text.Lazy as LT
 data CompactProtocol a = CompactProtocol a
                          -- ^ Constuct a 'CompactProtocol' with a 'Transport'
 
-protocolID, version, typeMask :: Int8
+protocolID, version, versionMask, typeMask, typeBits :: Word8
 protocolID  = 0x82 -- 1000 0010
 version     = 0x01
 versionMask = 0x1f -- 0001 1111
@@ -69,8 +69,8 @@ instance Protocol CompactProtocol where
     getTransport (CompactProtocol t) = t
 
     writeMessageBegin p (n, t, s) = tWrite (getTransport p) $ toLazyByteString $
-      B.int8 protocolID <>
-      B.int8 ((version .&. versionMask) .|.
+      B.word8 protocolID <>
+      B.word8 ((version .&. versionMask) .|.
               (((fromIntegral $ fromEnum t) `shiftL`
                 typeShiftAmount) .&. typeMask)) <>
       buildVarint (i32ToZigZag s) <>
@@ -275,7 +275,7 @@ typeOf v = case v of
   TSet{} -> 0x0A
   TMap{} -> 0x0B
   TStruct{} -> 0x0C
-  
+
 typeFrom :: Word8 -> ThriftType
 typeFrom w = case w of
   0x01 -> T_BOOL

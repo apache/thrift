@@ -35,6 +35,7 @@ import Data.Functor
 import Data.Int
 import Data.Monoid
 import Data.Text.Lazy.Encoding ( decodeUtf8, encodeUtf8 )
+import Data.Word
 
 import Thrift.Protocol
 import Thrift.Transport
@@ -47,7 +48,15 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.HashMap.Strict as Map
 import qualified Data.Text.Lazy as LT
 
+-- | The Binary Protocol uses the standard Thrift 'TBinaryProtocol'
 data BinaryProtocol a = BinaryProtocol a
+                        -- ^ Construct a 'BinaryProtocol' with a 'Transport'
+
+versionMask :: Int32
+versionMask = fromIntegral (0xffff0000 :: Word32)
+
+version1 :: Int32
+version1 = fromIntegral (0x80010000 :: Word32)
 
 -- NOTE: Reading and Writing functions rely on Builders and Data.Binary to
 -- encode and decode data.  Data.Binary assumes that the binary values it is

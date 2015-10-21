@@ -25,6 +25,9 @@ module Thrift.Transport.Empty
 
 import Thrift.Transport
 
+-- | The Empty Transport has no reading or writing abilities and is permanently
+-- closed.  It allows you to use 'Protocols' when you are only serializing and
+-- deserializing 'ByteString's, not actually reading and writing
 data EmptyTransport = EmptyTransport
 
 instance Transport EmptyTransport where
