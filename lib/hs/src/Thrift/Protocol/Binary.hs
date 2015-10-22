@@ -65,19 +65,23 @@ version1 = fromIntegral (0x80010000 :: Word32)
 instance Protocol BinaryProtocol where
     getTransport (BinaryProtocol t) = t
 
-    writeMessageBegin p (n, t, s) = tWrite (getTransport p) $ toLazyByteString $
-        buildBinaryValue (TI32 (version1 .|. fromIntegral (fromEnum t))) <>
-        buildBinaryValue (TString $ encodeUtf8 n) <>
-        buildBinaryValue (TI32 s)
+    writeMessage p (n, t, s) = (writeMessageBegin >>)
+      where
+        writeMessageBegin = tWrite (getTransport p) $ toLazyByteString $
+          buildBinaryValue (TI32 (version1 .|. fromIntegral (fromEnum t))) <>
+          buildBinaryValue (TString $ encodeUtf8 n) <>
+          buildBinaryValue (TI32 s)
 
-    readMessageBegin p = runParser p $ do
-      TI32 ver <- parseBinaryValue T_I32
-      if ver .&. versionMask /= version1
-        then throw $ ProtocolExn PE_BAD_VERSION "Missing version identifier"
-        else do
-          TString s <- parseBinaryValue T_STRING
-          TI32 sz <- parseBinaryValue T_I32
-          return (decodeUtf8 s, toEnum $ fromIntegral $ ver .&. 0xFF, sz)
+    readMessage p = (readMessageBegin >>=)
+      where
+        readMessageBegin =runParser p $ do
+          TI32 ver <- parseBinaryValue T_I32
+          if ver .&. versionMask /= version1
+            then throw $ ProtocolExn PE_BAD_VERSION "Missing version identifier"
+            else do
+              TString s <- parseBinaryValue T_STRING
+              TI32 sz <- parseBinaryValue T_I32
+              return (decodeUtf8 s, toEnum $ fromIntegral $ ver .&. 0xFF, sz)
 
     serializeVal _ = toLazyByteString . buildBinaryValue
     deserializeVal _ ty bs =

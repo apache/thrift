@@ -57,13 +57,17 @@ class Protocol a where
   -- | Get the underlying Transport for this Protocol
   getTransport :: Transport t => a t -> t
 
-  writeMessageBegin :: Transport t => a t -> (Text, MessageType, Int32) -> IO ()
-  writeMessageEnd :: Transport t => a t -> IO ()
-  writeMessageEnd _ = return ()
-  
-  readMessageBegin :: Transport t => a t -> IO (Text, MessageType, Int32)
-  readMessageEnd :: Transport t => a t -> IO ()
-  readMessageEnd _ = return ()
+  -- | Write a message using this Protocol
+  writeMessage :: Transport t
+               => a t
+               -> (Text, MessageType, Int32) -- ^ The message parameters
+               -> IO () -- ^ IO action to perform inside message
+               -> IO ()
+  -- | Read a message using this Protocol
+  readMessage :: Transport t
+              => a t
+              -> ((Text, MessageType, Int32) -> IO b) -- ^ Read function
+              -> IO b
 
   -- | Serialize a 'ThriftVal' using this protocol without any monadic action.
   -- You should use 'Empty.EmptyTransport' when constructing a 'Protocol' if you

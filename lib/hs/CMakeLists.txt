@@ -25,6 +25,9 @@ set(haskell_sources
     src/Thrift/Protocol/Binary.hs
     src/Thrift/Protocol/Compact.hs
     src/Thrift/Protocol/JSON.hs
+    src/Thrift/Protocol/JSONUtils.hs
+    src/Thrift/Protocol/PrettyJSON.hs
+    src/Thrift/Protocol/SimpleJSON.hs
     src/Thrift/Server.hs
     src/Thrift/Transport.hs
     src/Thrift/Transport/Empty.hs
