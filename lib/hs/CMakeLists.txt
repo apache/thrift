@@ -65,7 +65,55 @@ add_custom_command(
 add_custom_target(haskell_library ALL
     DEPENDS ${haskell_artifacts})
 
+set(hs_unittest_gen
+    Hs_test_Consts.hs
+    Hs_test_Types.hs
+    IncludeTest_Consts.hs
+    IncludeTest_Types.hs
+    ThriftTest.hs
+    ThriftTest_Client.hs
+    ThriftTest_Consts.hs
+    ThriftTest_Iface.hs
+    ThriftTest_Types.hs
+)
+
+set(hs_unittest_gen_sources
+    ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+    src/tests/if/hs_test.thrift
+    src/tests/if/IncludeTest.thrift
+    src/tests/if/IncludedTest.thrift
+)
+
+set(hs_unittest_sources
+    src/tests/BinaryTests.hs
+    src/tests/CompactTests.hs
+    src/tests/IncludeTest.hs
+    src/tests/JSONTests.hs
+    src/tests/PrettyJSONTests.hs
+    src/tests/SimpleJSONTests.hs
+)
 if(BUILD_TESTING)
+    set(hs_unittest_args
+        -Wall
+        -XScopedTypeVariables
+        -i${CMAKE_CURRENT_SOURCE_DIR}/src/tests
+        -i${CMAKE_CURRENT_SOURCE_DIR}/src
+        -i${CMAKE_CURRENT_BINARY_DIR}/gen-hs
+    )
+    add_custom_command(OUTPUT ${hs_unittest_gen}
+        COMMAND thrift-compiler --gen hs ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+        COMMAND thrift-compiler --gen hs ${CMAKE_CURRENT_SOURCE_DIR}/src/tests/if/hs_test.thrift
+        COMMAND thrift-compiler --gen hs ${CMAKE_CURRENT_SOURCE_DIR}/src/tests/if/IncludeTest.thrift
+        COMMAND thrift-compiler --gen hs ${CMAKE_CURRENT_SOURCE_DIR}/src/tests/if/IncludedTest.thrift
+        DEPENDS thrift-compiler ${hs_unittest_gen_sources}
+        COMMENT "Generating Haskell stubs for testing")
+    add_custom_target(haskell_unittests ALL DEPENDS ${hs_unittest_gen})
+    foreach(SRC ${hs_unittest_sources})
+        get_filename_component(BASE ${SRC} NAME_WE)
+        add_test(NAME HaskellUnitTests-${BASE}
+            COMMAND ${RUN_HASKELL} ${hs_unittest_args} ${SRC}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    endforeach()
     add_test(NAME CabalCheck
             COMMAND ${CABAL} check
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
