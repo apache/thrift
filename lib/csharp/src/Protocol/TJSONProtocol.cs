@@ -505,7 +505,7 @@ namespace Thrift.Protocol
         private void WriteJSONDouble(double num)
         {
             context.Write();
-            String str = num.ToString("R", CultureInfo.InvariantCulture);
+            String str = num.ToString("G17", CultureInfo.InvariantCulture);
             bool special = false;
 
             switch (str[0])
