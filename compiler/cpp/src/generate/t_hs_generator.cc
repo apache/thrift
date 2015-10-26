@@ -383,14 +383,14 @@ string t_hs_generator::render_const_value(t_type* type, t_const_value* value) {
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
-      out << value->get_integer();
+      out << "(" << value->get_integer() << ")";
       break;
 
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {
-        out << value->get_integer();
+        out << "(" << value->get_integer() << ")";
       } else {
-        out << value->get_double();
+        out << "(" << value->get_double() << ")";
       }
       break;
 
