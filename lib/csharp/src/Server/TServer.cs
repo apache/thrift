@@ -31,7 +31,7 @@ namespace Thrift.Server
   public abstract class TServer
   {
     //Attributes
-    protected TProcessor processor;
+    protected TProcessorFactory processorFactory;
     protected TServerTransport serverTransport;
     protected TTransportFactory inputTransportFactory;
     protected TTransportFactory outputTransportFactory;
@@ -63,23 +63,23 @@ namespace Thrift.Server
     }
 
     //Construction
-    public TServer(TProcessor processor,
+    public TServer(TProcessorFactory processorFactory,
               TServerTransport serverTransport)
-      : this(processor, serverTransport, new TTransportFactory(), new TTransportFactory(), new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(), DefaultLogDelegate)
+        : this(processorFactory, serverTransport, new TTransportFactory(), new TTransportFactory(), new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(), DefaultLogDelegate)
     {
     }
 
-    public TServer(TProcessor processor,
+    public TServer(TProcessorFactory processorFactory,
             TServerTransport serverTransport,
             LogDelegate logDelegate)
-      : this(processor, serverTransport, new TTransportFactory(), new TTransportFactory(), new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(), DefaultLogDelegate)
+        : this(processorFactory, serverTransport, new TTransportFactory(), new TTransportFactory(), new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(), DefaultLogDelegate)
     {
     }
 
-    public TServer(TProcessor processor,
+    public TServer(TProcessorFactory processorFactory,
               TServerTransport serverTransport,
               TTransportFactory transportFactory)
-      : this(processor,
+        : this(processorFactory,
          serverTransport,
          transportFactory,
          transportFactory,
@@ -89,11 +89,11 @@ namespace Thrift.Server
     {
     }
 
-    public TServer(TProcessor processor,
+    public TServer(TProcessorFactory processorFactory,
               TServerTransport serverTransport,
               TTransportFactory transportFactory,
               TProtocolFactory protocolFactory)
-      : this(processor,
+        : this(processorFactory,
          serverTransport,
          transportFactory,
          transportFactory,
@@ -103,7 +103,7 @@ namespace Thrift.Server
     {
     }
 
-    public TServer(TProcessor processor,
+    public TServer(TProcessorFactory processorFactory,
               TServerTransport serverTransport,
               TTransportFactory inputTransportFactory,
               TTransportFactory outputTransportFactory,
@@ -111,7 +111,7 @@ namespace Thrift.Server
               TProtocolFactory outputProtocolFactory,
               LogDelegate logDelegate)
     {
-      this.processor = processor;
+      this.processorFactory = processorFactory;
       this.serverTransport = serverTransport;
       this.inputTransportFactory = inputTransportFactory;
       this.outputTransportFactory = outputTransportFactory;

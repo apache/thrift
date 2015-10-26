@@ -406,6 +406,7 @@ namespace Test
                 // Processor
                 TestHandler testHandler = new TestHandler();
                 ThriftTest.Processor testProcessor = new ThriftTest.Processor(testHandler);
+                TProcessorSingletonFactory testProcessorSingletonfactory = new TProcessorSingletonFactory(testProcessor);
 
                 // Transport
                 TServerTransport trans;
@@ -437,9 +438,9 @@ namespace Test
                 // Simple Server
                 TServer serverEngine;
                 if ( useFramed )
-                    serverEngine = new TSimpleServer(testProcessor, trans, new TFramedTransport.Factory(), proto);
+                    serverEngine = new TSimpleServer(testProcessorSingletonfactory, trans, new TFramedTransport.Factory(), proto);
                 else
-                    serverEngine = new TSimpleServer(testProcessor, trans, new TTransportFactory(), proto);
+                    serverEngine = new TSimpleServer(testProcessorSingletonfactory, trans, new TTransportFactory(), proto);
 
                 // ThreadPool Server
                 // serverEngine = new TThreadPoolServer(testProcessor, tServerSocket);

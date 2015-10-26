@@ -34,23 +34,23 @@ namespace Thrift.Server
   {
     private bool stop = false;
 
-    public TSimpleServer(TProcessor processor,
+    public TSimpleServer(TProcessorFactory processorFactory,
               TServerTransport serverTransport)
-      : base(processor, serverTransport, new TTransportFactory(), new TTransportFactory(), new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(), DefaultLogDelegate)
+        : base(processorFactory, serverTransport, new TTransportFactory(), new TTransportFactory(), new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(), DefaultLogDelegate)
     {
     }
 
-    public TSimpleServer(TProcessor processor,
+    public TSimpleServer(TProcessorFactory processorFactory,
               TServerTransport serverTransport,
               LogDelegate logDel)
-      : base(processor, serverTransport, new TTransportFactory(), new TTransportFactory(), new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(), logDel)
+        : base(processorFactory, serverTransport, new TTransportFactory(), new TTransportFactory(), new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(), logDel)
     {
     }
 
-    public TSimpleServer(TProcessor processor,
+    public TSimpleServer(TProcessorFactory processorFactory,
               TServerTransport serverTransport,
               TTransportFactory transportFactory)
-      : base(processor,
+        : base(processorFactory,
          serverTransport,
          transportFactory,
          transportFactory,
@@ -60,11 +60,11 @@ namespace Thrift.Server
     {
     }
 
-    public TSimpleServer(TProcessor processor,
+    public TSimpleServer(TProcessorFactory processorFactory,
               TServerTransport serverTransport,
               TTransportFactory transportFactory,
               TProtocolFactory protocolFactory)
-      : base(processor,
+        : base(processorFactory,
          serverTransport,
          transportFactory,
          transportFactory,
@@ -128,8 +128,16 @@ namespace Thrift.Server
                     if (serverEventHandler != null)
                       serverEventHandler.processContext(connectionContext, inputTransport);
                     //Process client request (blocks until transport is readable)
-                    if (!processor.Process(inputProtocol, outputProtocol))
-                      break;
+                    var processor = processorFactory.Create();
+                    try
+                    {
+                      if (!processor.Process(inputProtocol, outputProtocol))
+                        break;
+                    }
+                    finally
+                    {
+                      processorFactory.Release(processor);
+                    }
                   }
                 }
               }
