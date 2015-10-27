@@ -20,7 +20,7 @@
 #ifndef _THRIFT_TBASE_H_
 #define _THRIFT_TBASE_H_ 1
 
-#include <sys/types.h>
+#include <thrift/thrift.h>
 #include <thrift/protocol/TProtocol.h>
 
 namespace apache {
@@ -29,8 +29,8 @@ namespace thrift {
 class TBase {
 public:
   virtual ~TBase(){};
-  virtual uint32_t read(::apache::thrift::protocol::TProtocol* iprot) = 0;
-  virtual uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const = 0;
+  virtual uint32_t read(protocol::TProtocol* iprot) = 0;
+  virtual uint32_t write(protocol::TProtocol* oprot) const = 0;
 };
 
 }
