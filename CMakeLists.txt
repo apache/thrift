@@ -100,4 +100,11 @@ if(BUILD_PYTHON)
     endif()
 endif()
 
+if(BUILD_HASKELL)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/hs)
+    if(BUILD_TESTING)
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/hs)
+    endif()
+endif()
+
 PRINT_CONFIG_SUMMARY()
