@@ -86,6 +86,13 @@ find_package(PythonLibs QUIET) # for Python.h
 CMAKE_DEPENDENT_OPTION(BUILD_PYTHON "Build Python library" ON
                        "BUILD_LIBRARIES;WITH_PYTHON;PYTHONLIBS_FOUND" OFF)
 
+# Haskell
+option(WITH_HASKELL "Build Haskell Thrift library" ON)
+find_package(GHC QUIET)
+find_package(Cabal QUIET)
+CMAKE_DEPENDENT_OPTION(BUILD_HASKELL "Build GHC library" ON
+                       "BUILD_LIBRARIES;WITH_HASKELL;GHC_FOUND;CABAL_FOUND" OFF)
+
 # Common library options
 option(WITH_SHARED_LIB "Build shared libraries" ON)
 option(WITH_STATIC_LIB "Build static libraries" ON)
@@ -129,6 +136,10 @@ MESSAGE_DEP(ANT_FOUND "Ant missing")
 message(STATUS "  Build Python library:               ${BUILD_PYTHON}")
 MESSAGE_DEP(WITH_PYTHON "Disabled by via WITH_PYTHON=OFF")
 MESSAGE_DEP(PYTHONLIBS_FOUND "Python libraries missing")
+message(STATUS "  Build Haskell library:              ${BUILD_HASKELL}")
+MESSAGE_DEP(WITH_HASKELL "Disabled by via WITH_HASKELL=OFF")
+MESSAGE_DEP(GHC_FOUND "GHC missing")
+MESSAGE_DEP(CABAL_FOUND "Cabal missing")
 message(STATUS " Library features:")
 message(STATUS "  Build shared libraries:             ${WITH_SHARED_LIB}")
 message(STATUS "  Build static libraries:             ${WITH_STATIC_LIB}")
