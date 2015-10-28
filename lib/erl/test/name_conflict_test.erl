@@ -22,7 +22,7 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
--include("name_conflict_test_constants.hrl").
+-include("gen-erl/name_conflict_test_constants.hrl").
 
 record_generation_test_() ->
   [

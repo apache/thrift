@@ -72,6 +72,7 @@ endif
 
 if WITH_ERLANG
 SUBDIRS += erl
+PRECROSS_TARGET += precross-erl
 endif
 
 #
