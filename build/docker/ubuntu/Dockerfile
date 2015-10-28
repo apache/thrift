@@ -56,7 +56,7 @@ RUN apt-get install -y libglib2.0-dev
 RUN echo 'deb http://packages.erlang-solutions.com/debian trusty contrib' > /etc/apt/sources.list.d/erlang_solutions.list && \
     curl -sSL http://packages.erlang-solutions.com/debian/erlang_solutions.asc | sudo apt-key add - && \
     apt-get update && \
-    apt-get install -y erlang-base erlang-eunit erlang-dev
+    apt-get install -y erlang-base erlang-eunit erlang-dev erlang-tools
 
 # GO dependencies
 RUN curl -sSL https://storage.googleapis.com/golang/go1.4.2.linux-amd64.tar.gz | tar -C /usr/lib/ -xz && \

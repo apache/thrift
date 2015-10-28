@@ -23,7 +23,7 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
--include("thrift_test_constants.hrl").
+-include("gen-erl/thrift_test_constants.hrl").
 
 constant_test_() ->
   [

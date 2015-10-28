@@ -27,26 +27,35 @@
                   client_opts = []}).
 
 parse_args(Args) -> parse_args(Args, #options{}).
-parse_args([], Opts) -> Opts;
+parse_args([], Opts) ->
+  Opts;
 parse_args([Head | Rest], Opts) ->
     NewOpts =
-        case catch list_to_integer(Head) of
-            Port when is_integer(Port) ->
-                Opts#options{port = Port};
-            _Else ->
-                case Head of
+        case Head of
+            "--port=" ++ Port ->
+                case string:to_integer(Port) of
+                  {IntPort,_} when is_integer(IntPort) ->
+                    Opts#options{port = IntPort};
+                  _Else ->
+                    erlang:error({bad_arg, Head})
+                end;
+            "--transport=" ++ Trans ->
+                % TODO: Enable Buffered and HTTP transport
+                case Trans of
                     "framed" ->
                         Opts#options{client_opts = [{framed, true} | Opts#options.client_opts]};
-                    "" ->
-                        Opts;
                     _Else ->
-                        erlang:error({bad_arg, Head})
-                end
+                        Opts
+                end;
+            "--protocol=binary" ->
+                % TODO: Enable JSON protocol
+                Opts;
+            _Else ->
+                erlang:error({bad_arg, Head})
         end,
     parse_args(Rest, NewOpts).
 
-
-start() -> start([]).
+start() -> start(init:get_plain_arguments()).
 start(Args) ->
   #options{port = Port, client_opts = ClientOpts} = parse_args(Args),
   {ok, Client0} = thrift_client_util:new(
@@ -70,9 +79,9 @@ start(Args) ->
   DemoDict = dict:from_list([ {Key, Key-10} || Key <- lists:seq(0,10) ]),
   DemoSet = sets:from_list([ Key || Key <- lists:seq(-3,3) ]),
 
-  %DemoInsane = #insanity{
-  %  userMap = dict:from_list([{?thriftTest_FIVE, 5000}]),
-  %  xtructs = [#xtruct{ string_thing = <<"Truck">>, byte_thing = 8, i32_thing = 8, i64_thing = 8}]},
+  DemoInsane = #'Insanity'{
+    userMap = dict:from_list([{?THRIFT_TEST_NUMBERZ_FIVE, 5000}]),
+    xtructs = [#'Xtruct'{ string_thing = <<"Truck">>, byte_thing = 8, i32_thing = 8, i64_thing = 8}]},
 
   {Client01, {ok, ok}} = thrift_client:call(Client0, testVoid, []),
 
@@ -91,11 +100,8 @@ start(Args) ->
   {Client13, {ok, [-1,2,3]}}        = thrift_client:call(Client12, testList, [[-1,2,3]]),
   {Client14, {ok, 1}}               = thrift_client:call(Client13, testEnum, [?THRIFT_TEST_NUMBERZ_ONE]),
   {Client15, {ok, 309858235082523}} = thrift_client:call(Client14, testTypedef, [309858235082523]),
-
-  % No python implementation, but works with C++ and Erlang.
-  %{Client16, {ok, InsaneResult}}    = thrift_client:call(Client15, testInsanity, [DemoInsane]),
-  %io:format("~p~n", [InsaneResult]),
-  Client16 = Client15,
+  {Client16, {ok, InsaneResult}}    = thrift_client:call(Client15, testInsanity, [DemoInsane]),
+  io:format("~p~n", [InsaneResult]),
 
   {Client17, {ok, #'Xtruct'{string_thing = <<"Message">>}}} =
     thrift_client:call(Client16, testMultiException, ["Safe", "Message"]),

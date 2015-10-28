@@ -376,5 +376,52 @@
       ]
     },
     "workdir": "dart"
+  },
+  {
+    "name": "erl",
+    "transports": [
+      "buffered",
+      "framed"
+    ],
+    "sockets": [
+      "ip"
+    ],
+    "protocols": [
+      "binary"
+    ],
+    "client": {
+      "command": [
+        "erl",
+        "+K",
+        "true",
+        "-noshell",
+        "-pa",
+        "../../lib/erl/ebin/",
+        "-pa",
+        "./ebin",
+        "-s",
+        "test_client",
+        "-s",
+        "init",
+        "stop",
+        "-extra"
+      ]
+    },
+    "server": {
+      "command": [
+        "erl",
+        "+K",
+        "true",
+        "-noshell",
+        "-pa",
+        "../../lib/erl/ebin/",
+        "-pa",
+        "./ebin",
+        "-s",
+        "test_thrift_server",
+        "-extra"
+      ]
+    },
+    "workdir": "erl"
   }
 ]

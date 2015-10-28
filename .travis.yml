@@ -67,7 +67,7 @@ env:
     # Put it here because it's most time consuming
     - TEST_NAME="make cross (automake)"
       THRIFT_CROSSTEST_CONCURRENCY=6
-      CONFIG="--enable-tutorial=no --without-erlang --without-lua --without-haxe --without-d"
+      CONFIG="--enable-tutorial=no --without-lua --without-haxe --without-d"
       ALL_DEPS="yes"
       MAKE_TARGET="cross"
       ERROR_LOG="test/log/unexpected_failures.log"

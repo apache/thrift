@@ -245,8 +245,8 @@ test-driver
 /test/dart/**/pubspec.lock
 /test/log/
 /test/test.log
-/test/erl/.eunit/
 /test/erl/.generated
+/test/erl/ebin
 /test/go/bin/
 /test/go/ThriftTest.thrift
 /test/go/gopath

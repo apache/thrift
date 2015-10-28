@@ -67,7 +67,7 @@ RUN yum install -y glib2-devel
 
 # Erlang Dependencies
 RUN curl -sSL http://packages.erlang-solutions.com/rpm/centos/erlang_solutions.repo -o /etc/yum.repos.d/erlang_solutions.repo && \
-    yum install -y erlang-kernel erlang-erts erlang-stdlib erlang-eunit erlang-rebar
+    yum install -y erlang-kernel erlang-erts erlang-stdlib erlang-eunit erlang-rebar erlang-tools
 
 # Go Dependencies
 RUN curl -sSL https://storage.googleapis.com/golang/go1.4.2.linux-amd64.tar.gz | tar -C /usr/lib/ -xz && \
