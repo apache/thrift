@@ -79,6 +79,8 @@
   <ItemGroup>
     <Compile Include="Collections\TCollections.cs" />
     <Compile Include="Collections\THashSet.cs" />
+    <Compile Include="TControllingHandler.cs" />
+    <Compile Include="TProcessorFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Protocol\TAbstractBase.cs" />
     <Compile Include="Protocol\TBase.cs" />
@@ -101,6 +103,8 @@
     <Compile Include="Protocol\TSet.cs" />
     <Compile Include="Protocol\TStruct.cs" />
     <Compile Include="Protocol\TType.cs" />
+    <Compile Include="TPrototypeProcessorFactory.cs" />
+    <Compile Include="TSingletonProcessorFactory.cs" />
     <Compile Include="Server\TThreadedServer.cs" />
     <Compile Include="Server\TServer.cs" />
     <Compile Include="Server\TServerEventHandler.cs" />
