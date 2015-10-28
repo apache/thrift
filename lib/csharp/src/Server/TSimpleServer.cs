@@ -61,10 +61,24 @@ namespace Thrift.Server
     }
 
     public TSimpleServer(TProcessor processor,
+        TServerTransport serverTransport,
+        TTransportFactory transportFactory,
+        TProtocolFactory protocolFactory)
+        : base(processor,
+           serverTransport,
+           transportFactory,
+           transportFactory,
+           protocolFactory,
+           protocolFactory,
+           DefaultLogDelegate)
+    {
+    }
+
+    public TSimpleServer(TProcessorFactory processorFactory,
               TServerTransport serverTransport,
               TTransportFactory transportFactory,
               TProtocolFactory protocolFactory)
-      : base(processor,
+      : base(processorFactory,
          serverTransport,
          transportFactory,
          transportFactory,
@@ -92,6 +106,7 @@ namespace Thrift.Server
 
       while (!stop)
       {
+        TProcessor processor = null;
         TTransport client = null;
         TTransport inputTransport = null;
         TTransport outputTransport = null;
@@ -102,6 +117,7 @@ namespace Thrift.Server
         {
           using (client = serverTransport.Accept())
           {
+            processor = processorFactory.GetProcessor(client);
             if (client != null)
             {
               using (inputTransport = inputTransportFactory.GetTransport(client))
