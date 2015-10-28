@@ -31,7 +31,7 @@ namespace Thrift.Server
   public abstract class TServer
   {
     //Attributes
-    protected TProcessor processor;
+    protected TProcessorFactory processorFactory;
     protected TServerTransport serverTransport;
     protected TTransportFactory inputTransportFactory;
     protected TTransportFactory outputTransportFactory;
@@ -65,14 +65,25 @@ namespace Thrift.Server
     //Construction
     public TServer(TProcessor processor,
               TServerTransport serverTransport)
-      : this(processor, serverTransport, new TTransportFactory(), new TTransportFactory(), new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(), DefaultLogDelegate)
+      : this(processor, serverTransport, 
+         new TTransportFactory(), 
+         new TTransportFactory(), 
+         new TBinaryProtocol.Factory(), 
+         new TBinaryProtocol.Factory(), 
+         DefaultLogDelegate)
     {
     }
 
     public TServer(TProcessor processor,
             TServerTransport serverTransport,
             LogDelegate logDelegate)
-      : this(processor, serverTransport, new TTransportFactory(), new TTransportFactory(), new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(), DefaultLogDelegate)
+      : this(processor, 
+         serverTransport, 
+         new TTransportFactory(), 
+         new TTransportFactory(), 
+         new TBinaryProtocol.Factory(), 
+         new TBinaryProtocol.Factory(), 
+         logDelegate)
     {
     }
 
@@ -104,6 +115,23 @@ namespace Thrift.Server
     }
 
     public TServer(TProcessor processor,
+        TServerTransport serverTransport,
+        TTransportFactory inputTransportFactory,
+        TTransportFactory outputTransportFactory,
+        TProtocolFactory inputProtocolFactory,
+        TProtocolFactory outputProtocolFactory,
+        LogDelegate logDelegate)
+    {
+        this.processorFactory = new TSingletonProcessorFactory(processor);
+        this.serverTransport = serverTransport;
+        this.inputTransportFactory = inputTransportFactory;
+        this.outputTransportFactory = outputTransportFactory;
+        this.inputProtocolFactory = inputProtocolFactory;
+        this.outputProtocolFactory = outputProtocolFactory;
+        this.logDelegate = (logDelegate != null) ? logDelegate : DefaultLogDelegate;
+    }
+
+    public TServer(TProcessorFactory processorFactory,
               TServerTransport serverTransport,
               TTransportFactory inputTransportFactory,
               TTransportFactory outputTransportFactory,
@@ -111,13 +139,13 @@ namespace Thrift.Server
               TProtocolFactory outputProtocolFactory,
               LogDelegate logDelegate)
     {
-      this.processor = processor;
-      this.serverTransport = serverTransport;
-      this.inputTransportFactory = inputTransportFactory;
-      this.outputTransportFactory = outputTransportFactory;
-      this.inputProtocolFactory = inputProtocolFactory;
-      this.outputProtocolFactory = outputProtocolFactory;
-      this.logDelegate = (logDelegate != null) ? logDelegate : DefaultLogDelegate;
+        this.processorFactory = processorFactory;
+        this.serverTransport = serverTransport;
+        this.inputTransportFactory = inputTransportFactory;
+        this.outputTransportFactory = outputTransportFactory;
+        this.inputProtocolFactory = inputProtocolFactory;
+        this.outputProtocolFactory = outputProtocolFactory;
+        this.logDelegate = (logDelegate != null) ? logDelegate : DefaultLogDelegate;
     }
 
     //Abstract Interface

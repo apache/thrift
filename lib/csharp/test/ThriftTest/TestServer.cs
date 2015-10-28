@@ -29,11 +29,17 @@ using Thrift.Test; //generated code
 using Thrift.Transport;
 using Thrift.Protocol;
 using Thrift.Server;
+using Thrift;
+using System.Threading;
+using System.Text;
 
 namespace Test
 {
     public class TestServer
     {
+        public static int _clientID = -1;
+        public delegate void TestLogDelegate(string msg, params object[] values);
+
     public class TradeServerEventHandler : TServerEventHandler
     {
       public int callCount = 0;
@@ -56,86 +62,100 @@ namespace Test
       }
     };
 
-        public class TestHandler : ThriftTest.Iface
+        public class TestHandler : ThriftTest.Iface, Thrift.TControllingHandler
         {
-            public TServer server;
+            public TServer server { get; set; }
+            private int handlerID;
+            private StringBuilder reusableStringBuilder = new StringBuilder();
+            private TestLogDelegate testLogDelegate;
 
-            public TestHandler() { }
+            public TestHandler()
+            {
+                handlerID = Interlocked.Increment(ref _clientID);
+                testLogDelegate += testConsoleLogger;
+                testLogDelegate.Invoke("New TestHandler instance created");
+            }
+
+            public void testConsoleLogger(string msg, params object[] values)
+            {
+                reusableStringBuilder.Clear();
+                reusableStringBuilder.AppendFormat("handler{0:D3}:",handlerID);
+                reusableStringBuilder.AppendFormat(msg, values);
+                reusableStringBuilder.AppendLine();
+                Console.Write( reusableStringBuilder.ToString() );
+            }
 
             public void testVoid()
             {
-                Console.WriteLine("testVoid()");
+                testLogDelegate.Invoke("testVoid()");
             }
 
             public string testString(string thing)
             {
-                Console.WriteLine("testString(\"" + thing + "\")");
+                testLogDelegate.Invoke("testString({0})", thing);
                 return thing;
             }
 
             public bool testBool(bool thing)
             {
-                Console.WriteLine("testBool(" + thing + ")");
+                testLogDelegate.Invoke("testBool({0})", thing);
                 return thing;
             }
 
             public sbyte testByte(sbyte thing)
             {
-                Console.WriteLine("testByte(" + thing + ")");
+                testLogDelegate.Invoke("testByte({0})", thing);
                 return thing;
             }
 
             public int testI32(int thing)
             {
-                Console.WriteLine("testI32(" + thing + ")");
+                testLogDelegate.Invoke("testI32({0})", thing);
                 return thing;
             }
 
             public long testI64(long thing)
             {
-                Console.WriteLine("testI64(" + thing + ")");
+                testLogDelegate.Invoke("testI64({0})", thing);
                 return thing;
             }
 
             public double testDouble(double thing)
             {
-                Console.WriteLine("testDouble(" + thing + ")");
+                testLogDelegate.Invoke("testDouble({0})", thing);
                 return thing;
             }
 
             public byte[] testBinary(byte[] thing)
             {
                 string hex = BitConverter.ToString(thing).Replace("-", string.Empty);
-                Console.WriteLine("testBinary(" + hex + ")");
+                testLogDelegate.Invoke("testBinary({0:X})", hex);
                 return thing;
             }
 
             public Xtruct testStruct(Xtruct thing)
             {
-                Console.WriteLine("testStruct({" +
-                                 "\"" + thing.String_thing + "\", " +
-                                 thing.Byte_thing + ", " +
-                                 thing.I32_thing + ", " +
-                                 thing.I64_thing + "})");
+                testLogDelegate.Invoke("testStruct({{\"{0}\", {1}, {2}, {3}}})", thing.String_thing, thing.Byte_thing, thing.I32_thing, thing.I64_thing);
                 return thing;
             }
 
             public Xtruct2 testNest(Xtruct2 nest)
             {
                 Xtruct thing = nest.Struct_thing;
-                Console.WriteLine("testNest({" +
-                                 nest.Byte_thing + ", {" +
-                                 "\"" + thing.String_thing + "\", " +
-                                 thing.Byte_thing + ", " +
-                                 thing.I32_thing + ", " +
-                                 thing.I64_thing + "}, " +
-                                 nest.I32_thing + "})");
+                testLogDelegate.Invoke("testNest({{{0}, {{\"{1}\", {2}, {3}, {4}, {5}}}}})",
+                                 nest.Byte_thing,
+                                 thing.String_thing,
+                                 thing.Byte_thing,
+                                 thing.I32_thing,
+                                 thing.I64_thing,
+                                 nest.I32_thing);
                 return nest;
             }
 
             public Dictionary<int, int> testMap(Dictionary<int, int> thing)
             {
-                Console.WriteLine("testMap({");
+                reusableStringBuilder.Clear();
+                reusableStringBuilder.Append("testMap({{");
                 bool first = true;
                 foreach (int key in thing.Keys)
                 {
@@ -145,17 +165,19 @@ namespace Test
                     }
                     else
                     {
-                        Console.Write(", ");
+                        reusableStringBuilder.Append(", ");
                     }
-                    Console.Write(key + " => " + thing[key]);
+                    reusableStringBuilder.AppendFormat("{0} => {1}", key, thing[key]);
                 }
-                Console.WriteLine("})");
+                reusableStringBuilder.Append("}})");
+                testLogDelegate.Invoke(reusableStringBuilder.ToString());
                 return thing;
             }
 
             public Dictionary<string, string> testStringMap(Dictionary<string, string> thing)
             {
-                Console.WriteLine("testStringMap({");
+                reusableStringBuilder.Clear();
+                reusableStringBuilder.Append("testStringMap({{");
                 bool first = true;
                 foreach (string key in thing.Keys)
                 {
@@ -165,17 +187,19 @@ namespace Test
                     }
                     else
                     {
-                        Console.Write(", ");
+                        reusableStringBuilder.Append(", ");
                     }
-                    Console.Write(key + " => " + thing[key]);
+                    reusableStringBuilder.AppendFormat("{0} => {1}", key, thing[key]);
                 }
-                Console.WriteLine("})");
+                reusableStringBuilder.Append("}})");
+                testLogDelegate.Invoke(reusableStringBuilder.ToString());
                 return thing;
             }
 
             public THashSet<int> testSet(THashSet<int> thing)
             {
-                Console.WriteLine("testSet({");
+                reusableStringBuilder.Clear();
+                reusableStringBuilder.Append("testSet({{");
                 bool first = true;
                 foreach (int elem in thing)
                 {
@@ -185,17 +209,19 @@ namespace Test
                     }
                     else
                     {
-                        Console.Write(", ");
+                        reusableStringBuilder.Append(", ");
                     }
-                    Console.Write(elem);
+                    reusableStringBuilder.AppendFormat("{0}", elem);
                 }
-                Console.WriteLine("})");
+                reusableStringBuilder.Append("}})");
+                testLogDelegate.Invoke(reusableStringBuilder.ToString());
                 return thing;
             }
 
             public List<int> testList(List<int> thing)
             {
-                Console.WriteLine("testList({");
+                reusableStringBuilder.Clear();
+                reusableStringBuilder.Append("testList({{");
                 bool first = true;
                 foreach (int elem in thing)
                 {
@@ -205,29 +231,30 @@ namespace Test
                     }
                     else
                     {
-                        Console.Write(", ");
+                        reusableStringBuilder.Append(", ");
                     }
-                    Console.Write(elem);
+                    reusableStringBuilder.AppendFormat("{0}", elem);
                 }
-                Console.WriteLine("})");
+                reusableStringBuilder.Append("}})");
+                testLogDelegate.Invoke(reusableStringBuilder.ToString());
                 return thing;
             }
 
             public Numberz testEnum(Numberz thing)
             {
-                Console.WriteLine("testEnum(" + thing + ")");
+                testLogDelegate.Invoke("testEnum({0})", thing);
                 return thing;
             }
 
             public long testTypedef(long thing)
             {
-                Console.WriteLine("testTypedef(" + thing + ")");
+                testLogDelegate.Invoke("testTypedef({0})", thing);
                 return thing;
             }
 
             public Dictionary<int, Dictionary<int, int>> testMapMap(int hello)
             {
-                Console.WriteLine("testMapMap(" + hello + ")");
+                testLogDelegate.Invoke("testMapMap({0})", hello);
                 Dictionary<int, Dictionary<int, int>> mapmap =
                   new Dictionary<int, Dictionary<int, int>>();
 
@@ -247,7 +274,7 @@ namespace Test
 
             public Dictionary<long, Dictionary<Numberz, Insanity>> testInsanity(Insanity argument)
             {
-                Console.WriteLine("testInsanity()");
+                testLogDelegate.Invoke("testInsanity()");
 
                 Xtruct hello = new Xtruct();
                 hello.String_thing = "Hello2";
@@ -289,7 +316,7 @@ namespace Test
 
             public Xtruct testMulti(sbyte arg0, int arg1, long arg2, Dictionary<short, string> arg3, Numberz arg4, long arg5)
             {
-                Console.WriteLine("testMulti()");
+                testLogDelegate.Invoke("testMulti()");
 
                 Xtruct hello = new Xtruct(); ;
                 hello.String_thing = "Hello2";
@@ -308,7 +335,7 @@ namespace Test
              */
             public void testException(string arg)
             {
-                Console.WriteLine("testException(" + arg + ")");
+                testLogDelegate.Invoke("testException({0})", arg);
                 if (arg == "Xception")
                 {
                     Xception x = new Xception();
@@ -325,7 +352,7 @@ namespace Test
 
             public Xtruct testMultiException(string arg0, string arg1)
             {
-                Console.WriteLine("testMultiException(" + arg0 + ", " + arg1 + ")");
+                testLogDelegate.Invoke("testMultiException({0}, {1})", arg0,arg1);
                 if (arg0 == "Xception")
                 {
                     Xception x = new Xception();
@@ -357,18 +384,33 @@ namespace Test
 
             public void testOneway(int arg)
             {
-                Console.WriteLine("testOneway(" + arg + "), sleeping...");
+                testLogDelegate.Invoke("testOneway({0}), sleeping...", arg);
                 System.Threading.Thread.Sleep(arg * 1000);
-                Console.WriteLine("testOneway finished");
+                testLogDelegate.Invoke("testOneway finished");
             }
 
         } // class TestHandler
+
+        private enum ServerType
+        {
+            TSimpleServer,
+            TThreadedServer,
+            TThreadPoolServer,
+        }
+
+        private enum ProcessorFactoryType
+        {
+            TSingletonProcessorFactory,
+            TPrototypeProcessorFactory,
+        }
 
         public static bool Execute(string[] args)
         {
             try
             {
                 bool useBufferedSockets = false, useFramed = false, useEncryption = false, compact = false, json = false;
+                ServerType serverType = ServerType.TSimpleServer;
+                ProcessorFactoryType processorFactoryType = ProcessorFactoryType.TSingletonProcessorFactory;
                 int port = 9090;
                 string pipe = null;
                 for (int i = 0; i < args.Length; i++)
@@ -379,13 +421,13 @@ namespace Test
                     }
                     else if (args[i].Contains("--port="))
                     {
-                        port = int.Parse(args[i].Substring(args[i].IndexOf("=")+1));
+                        port = int.Parse(args[i].Substring(args[i].IndexOf("=") + 1));
                     }
                     else if (args[i] == "-b" || args[i] == "--buffered" || args[i] == "--transport=buffered")
                     {
                         useBufferedSockets = true;
                     }
-                    else if (args[i] == "-f" || args[i] == "--framed"  || args[i] == "--transport=framed")
+                    else if (args[i] == "-f" || args[i] == "--framed" || args[i] == "--transport=framed")
                     {
                         useFramed = true;
                     }
@@ -397,19 +439,27 @@ namespace Test
                     {
                         json = true;
                     }
+                    else if (args[i] == "--threaded" || args[i] == "--server-type=threaded")
+                    {
+                        serverType = ServerType.TThreadedServer;
+                    }
+                    else if (args[i] == "--threadpool" || args[i] == "--server-type=threadpool")
+                    {
+                        serverType = ServerType.TThreadPoolServer;
+                    }
+                    else if (args[i] == "--prototype" || args[i] == "--processor=prototype")
+                    {
+                        processorFactoryType = ProcessorFactoryType.TPrototypeProcessorFactory;
+                    }
                     else if (args[i] == "--ssl")
                     {
                         useEncryption = true;
                     }
                 }
 
-                // Processor
-                TestHandler testHandler = new TestHandler();
-                ThriftTest.Processor testProcessor = new ThriftTest.Processor(testHandler);
-
                 // Transport
                 TServerTransport trans;
-                if( pipe != null)
+                if (pipe != null)
                 {
                     trans = new TNamedPipeServerTransport(pipe);
                 }
@@ -427,35 +477,54 @@ namespace Test
                 }
 
                 TProtocolFactory proto;
-                if ( compact )
+                if (compact)
                     proto = new TCompactProtocol.Factory();
-                else if ( json )
+                else if (json)
                     proto = new TJSONProtocol.Factory();
                 else
                     proto = new TBinaryProtocol.Factory();
 
-                // Simple Server
-                TServer serverEngine;
-                if ( useFramed )
-                    serverEngine = new TSimpleServer(testProcessor, trans, new TFramedTransport.Factory(), proto);
+                TProcessorFactory processorFactory;
+                if (processorFactoryType == ProcessorFactoryType.TPrototypeProcessorFactory)
+                {
+                    processorFactory = new TPrototypeProcessorFactory<ThriftTest.Processor, TestHandler>();
+                }
                 else
-                    serverEngine = new TSimpleServer(testProcessor, trans, new TTransportFactory(), proto);
+                {
+                    // Processor
+                    TestHandler testHandler = new TestHandler();
+                    ThriftTest.Processor testProcessor = new ThriftTest.Processor(testHandler);
+                    processorFactory = new TSingletonProcessorFactory(testProcessor);
+                }
 
-                // ThreadPool Server
-                // serverEngine = new TThreadPoolServer(testProcessor, tServerSocket);
+                TTransportFactory transFactory;
+                if (useFramed)
+                    transFactory = new TFramedTransport.Factory();
+                else
+                    transFactory = new TTransportFactory();
 
-                // Threaded Server
-                // serverEngine = new TThreadedServer(testProcessor, tServerSocket);
+                TServer serverEngine;
+                switch (serverType)
+                {
+                    case ServerType.TThreadPoolServer:
+                        serverEngine = new TThreadPoolServer(processorFactory, trans, transFactory, proto);
+                        break;
+                    case ServerType.TThreadedServer:
+                        serverEngine = new TThreadedServer(processorFactory, trans, transFactory, proto);
+                        break;
+                    default:
+                        serverEngine = new TSimpleServer(processorFactory, trans, transFactory, proto);
+                        break;
+                }
 
-        //Server event handler
-        TradeServerEventHandler serverEvents = new TradeServerEventHandler();
-        serverEngine.setEventHandler(serverEvents);
-
-                testHandler.server = serverEngine;
+                //Server event handler
+                TradeServerEventHandler serverEvents = new TradeServerEventHandler();
+                serverEngine.setEventHandler(serverEvents);
 
                 // Run it
-                string where = ( pipe != null ? "on pipe "+pipe : "on port " + port);
-                Console.WriteLine("Starting the server " + where +
+                string where = (pipe != null ? "on pipe " + pipe : "on port " + port);
+                Console.WriteLine("Starting the " + serverType.ToString() + " " + where +
+                    (processorFactoryType == ProcessorFactoryType.TPrototypeProcessorFactory ? " with processor prototype factory " : "") +
                     (useBufferedSockets ? " with buffered socket" : "") +
                     (useFramed ? " with framed transport" : "") +
                     (useEncryption ? " with encryption" : "") +
