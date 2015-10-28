@@ -2646,13 +2646,13 @@ string t_cocoa_generator::element_type_name(t_type* etype) {
       result = "NSNumber *";      
   } else if (ttype->is_map()) {
     t_map *map = (t_map *)ttype;
-    result = "NSDictionary<" + element_type_name(map->get_key_type()) + ", " + element_type_name(map->get_val_type()) + ">";
+    result = "NSDictionary<" + element_type_name(map->get_key_type()) + ", " + element_type_name(map->get_val_type()) + "> *";
   } else if (ttype->is_set()) {
     t_set *set = (t_set *)ttype;
-    result = "NSSet<" + element_type_name(set->get_elem_type()) + ">";
+    result = "NSSet<" + element_type_name(set->get_elem_type()) + "> *";
   } else if (ttype->is_list()) {
     t_list *list = (t_list *)ttype;
-    result = "NSArray<" + element_type_name(list->get_elem_type()) + ">";
+    result = "NSArray<" + element_type_name(list->get_elem_type()) + "> *";
   } else if (ttype->is_struct() || ttype->is_xception()) {
     result = cocoa_prefix_ + ttype->get_name() + " *";
   }
