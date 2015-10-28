@@ -43,6 +43,8 @@ namespace Test
             public bool framed;
             public string protocol;
             public bool encrypted = false;
+            protected bool _isFirstTransport = true;
+
 
             public TTransport CreateTransport()
             {
@@ -72,9 +74,13 @@ namespace Test
                     if (framed)
                         trans = new TFramedTransport(trans);
 
-                    //ensure proper open/close of transport
-                    trans.Open();
-                    trans.Close();
+                    if (_isFirstTransport)
+                    {
+                        //ensure proper open/close of transport
+                        trans.Open();
+                        trans.Close();
+                        _isFirstTransport = false;
+                    }
                     return trans;
                 }
                 else

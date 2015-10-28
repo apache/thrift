@@ -39,6 +39,15 @@ namespace Test
                 return -1;
             }
 
+            try
+            {
+                Console.SetBufferSize(Console.BufferWidth, 4096);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Failed to grow scroll-back buffer");
+            }
+
             string[] subArgs = new string[args.Length - 1];
             for(int i = 1; i < args.Length; i++)
             {
