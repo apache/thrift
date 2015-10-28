@@ -27,8 +27,8 @@
 
 -export([t/0]).
 
-%% Client constructor for the common-case of socket transports
-%% with the binary protocol
+%% Client constructor for the http transports
+%% with the json protocol
 new_client(Host, Path, Service, _Options) ->
     {ProtoOpts, TransOpts} = {[],[]},
     TransportFactory = fun() -> thrift_http_transport:new(Host, Path, TransOpts) end,

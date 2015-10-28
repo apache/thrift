@@ -22,7 +22,7 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
--include("legacyNames_constants.hrl").
+-include("gen-erl/legacyNames_constants.hrl").
 
 record_generation_test_() ->
   [
