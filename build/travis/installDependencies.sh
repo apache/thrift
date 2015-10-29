@@ -22,9 +22,6 @@ SCRIPTPATH=$( cd $(dirname $0) ; pwd -P )
 # Mainly aiming Travis CI's Ubuntu machines for now
 # see what we need: http://thrift.apache.org/docs/install/ubuntu
 
-# General dependencies
-sh ${SCRIPTPATH}/installCXXDependencies.sh
-
 # Java dependencies
 sudo apt-get install -qq ant openjdk-7-jdk
 sudo update-java-alternatives -s java-1.7.0-openjdk-amd64
