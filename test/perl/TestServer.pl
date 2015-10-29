@@ -36,6 +36,7 @@ use Thrift::FramedTransport;
 use Thrift::SSLServerSocket;
 use Thrift::ServerSocket;
 use Thrift::Server;
+use Thrift::UnixServerSocket;
 
 use ThriftTest::ThriftTest;
 use ThriftTest::Types;
@@ -50,6 +51,7 @@ Options:                          (default)
   --ca                                         Certificate authority file (optional).
   --cert                                       Certificate file.
                                                Required if using --ssl.                                               
+  --domain-socket <file>                       Use a unix domain socket.
   --help                                       Show usage.
   --key                                        Private key file for certificate.
                                                Required if using --ssl and private key is
@@ -71,6 +73,7 @@ my %opts = (
 GetOptions(\%opts, qw (
     ca=s
     cert=s
+    domain-socket=s
     help
     host=s
     key=s
@@ -93,7 +96,10 @@ if ($opts{ssl} and not defined $opts{cert}) {
 my $handler = new ThriftTestHandler();
 my $processor = new ThriftTest::ThriftTestProcessor($handler);
 my $serversocket;
-if ($opts{ssl}) {
+if ($opts{"domain-socket"}) {
+    unlink($opts{"domain-socket"});
+    $serversocket = new Thrift::UnixServerSocket($opts{"domain-socket"});
+} elsif ($opts{ssl}) {
     $serversocket = new Thrift::SSLServerSocket(\%opts);
 } else {
     $serversocket = new Thrift::ServerSocket(\%opts);
@@ -119,8 +125,12 @@ my $ssltag = '';
 if ($opts{ssl}) {
     $ssltag = "(SSL)";
 }
+my $listening_on = "$opts{port} $ssltag";
+if ($opts{"domain-socket"}) {
+    $listening_on = $opts{"domain-socket"};
+}
 my $server = new Thrift::SimpleServer($processor, $serversocket, $transport, $protocol);
-print "Starting \"simple\" server ($opts{transport}/$opts{protocol}) listen on: $opts{port} $ssltag\n";
+print "Starting \"simple\" server ($opts{transport}/$opts{protocol}) listen on: $listening_on\n";
 $server->serve();
 
 ###    
