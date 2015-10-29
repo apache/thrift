@@ -66,6 +66,10 @@ THRIFTCODE= \
             src/Transport/TTLSSocket.cs \
             src/Transport/TTLSServerSocket.cs \
             src/TProcessor.cs \
+            src/TProcessorFactory.cs \
+            src/TSingletonProcessorFactory.cs \
+            src/TPrototypeProcessorFactory.cs \
+            src/TControllingHandler.cs \
             src/TException.cs \
             src/TApplicationException.cs
 
