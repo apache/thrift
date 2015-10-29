@@ -126,8 +126,8 @@
       "framed"
     ],
     "sockets": [
-      "ip-ssl",
-      "ip"
+      "ip",
+      "ip-ssl"
     ],
     "protocols": [
       "compact",
@@ -190,8 +190,8 @@
       "framed"
     ],
     "sockets": [
-      "ip-ssl",
-      "ip"
+      "ip",
+      "ip-ssl"
     ],
     "protocols": [
       "compact",
@@ -221,8 +221,8 @@
       "framed"
     ],
     "sockets": [
-      "ip-ssl",
       "ip",
+      "ip-ssl",
       "domain"
     ],
     "protocols": [
@@ -307,7 +307,8 @@
     ],
     "sockets": [
       "ip",
-      "ip-ssl"
+      "ip-ssl",
+      "domain"
     ],
     "protocols": [
       "binary"
