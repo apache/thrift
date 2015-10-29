@@ -215,6 +215,44 @@ class TJSONProtocol extends TProtocol
         return dechex($val);
     }
 
+    private function hasJSONUnescapedUnicode()
+    {
+        if (PHP_MAJOR_VERSION > 5
+            || (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 4))
+            return true;
+
+        return false;
+    }
+
+    private function unescapedUnicode($str)
+    {
+        if ($this->hasJSONUnescapedUnicode()) {
+            return json_encode($str, JSON_UNESCAPED_UNICODE);
+        }
+
+        $json = json_encode($str);
+
+        /*
+         * Unescaped character outside the Basic Multilingual Plane
+         * High surrogate: 0xD800 - 0xDBFF
+         * Low surrogate: 0xDC00 - 0xDFFF
+         */
+        $json = preg_replace_callback('/\\\\u(d[89ab][0-9a-f]{2})\\\\u(d[cdef][0-9a-f]{2})/i',
+            function ($matches) {
+                return mb_convert_encoding(pack('H*', $matches[1].$matches[2]), 'UTF-8', 'UTF-16BE');
+            }, $json);
+
+        /*
+         * Unescaped characters within the Basic Multilingual Plane
+         */
+        $json = preg_replace_callback('/\\\\u([0-9a-f]{4})/i',
+            function ($matches) {
+                return mb_convert_encoding(pack('H*', $matches[1]), 'UTF-8', 'UTF-16BE');
+            }, $json);
+
+        return $json;
+    }
+
     private function writeJSONString($b)
     {
         $this->context_->write();
@@ -223,7 +261,7 @@ class TJSONProtocol extends TProtocol
             $this->trans_->write(self::QUOTE);
         }
 
-        $this->trans_->write(json_encode($b));
+        $this->trans_->write($this->unescapedUnicode($b));
 
         if (is_numeric($b) && $this->context_->escapeNum()) {
             $this->trans_->write(self::QUOTE);
