@@ -18,6 +18,12 @@
  */
 package org.apache.thrift.protocol;
 
+import java.io.IOException;
+
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TJSONProtocol;
+import org.apache.thrift.transport.TMemoryBuffer;
+
 public class TestTJSONProtocol extends ProtocolTestBase {
   @Override
   protected TProtocolFactory getFactory() {
@@ -27,5 +33,16 @@ public class TestTJSONProtocol extends ProtocolTestBase {
   @Override
   protected boolean canBeUsedNaked() {
     return false;
+  }
+
+  public void testEscapedUnicode() throws TException, IOException {
+    String jsonString = "\"hello unicode \\u0e01\\ud834\\udd1e world\"";
+    String expectedString = "hello unicode \u0e01\ud834\udd1e world";
+
+    TMemoryBuffer buffer = new TMemoryBuffer(1000);
+    TJSONProtocol protocol = new TJSONProtocol(buffer);
+    buffer.write(jsonString.getBytes("UTF-8"));
+
+    assertEquals(expectedString, protocol.readString());
   }
 }
