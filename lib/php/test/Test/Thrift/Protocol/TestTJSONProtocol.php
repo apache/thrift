@@ -200,7 +200,12 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     $actual = $this->transport->read( BUFSIZ );
     $expected = TestTJSONProtocol_Fixtures::$testArgsJSON['testStringMap'];
 
-    $this->assertEquals( $expected, $actual );
+    /*
+     * The $actual returns unescaped string.
+     * It is required to to decode then encode it again
+     * to get the expected escaped unicode.
+     */
+    $this->assertEquals( $expected, json_encode(json_decode($actual)) );
   }
 
   public function testSet_Write()
@@ -304,6 +309,18 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
 
     $actual = $this->transport->read( BUFSIZ );
     $expected = TestTJSONProtocol_Fixtures::$testArgsJSON['testString3'];
+
+    $this->assertEquals( $expected, $actual );
+  }
+
+  public function testString4_Write()
+  {
+    $args = new \ThriftTest\ThriftTest_testString_args();
+    $args->thing = Fixtures::$testArgs['testUnicodeStringWithNonBMP'];
+    $args->write( $this->protocol );
+
+    $actual = $this->transport->read( BUFSIZ );
+    $expected = TestTJSONProtocol_Fixtures::$testArgsJSON['testUnicodeStringWithNonBMP'];
 
     $this->assertEquals( $expected, $actual );
   }
@@ -527,6 +544,8 @@ class TestTJSONProtocol_Fixtures
     self::$testArgsJSON['testString2'] = '{"1":{"str":"quote: \\\\\" backslash: forwardslash-escaped: \\\\\/  backspace: \\\\b formfeed: \f newline: \n return: \r tab:  now-all-of-them-together: \"\\\\\\\\\/\\\\b\n\r\t now-a-bunch-of-junk: !@#$%&()(&%$#{}{}<><><"}}';
 
     self::$testArgsJSON['testString3'] = '{"1":{"str":"string that ends in double-backslash \\\\\\\\"}}';
+
+    self::$testArgsJSON['testUnicodeStringWithNonBMP'] = '{"1":{"str":"สวัสดี\/𝒯"}}';
 
     self::$testArgsJSON['testDouble'] = '{"1":{"dbl":3.1415926535898}}';
 
