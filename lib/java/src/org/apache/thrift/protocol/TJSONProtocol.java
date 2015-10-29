@@ -19,8 +19,10 @@
 
 package org.apache.thrift.protocol;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Stack;
 
 import org.apache.thrift.TByteArrayOutputStream;
@@ -640,6 +642,7 @@ public class TJSONProtocol extends TProtocol {
   private TByteArrayOutputStream readJSONString(boolean skipContext)
     throws TException {
     TByteArrayOutputStream arr = new TByteArrayOutputStream(DEF_STRING_SIZE);
+    ArrayList<Character> codeunits = new ArrayList<Character>();
     if (!skipContext) {
       context_.read();
     }
@@ -652,10 +655,43 @@ public class TJSONProtocol extends TProtocol {
       if (ch == ESCSEQ[0]) {
         ch = reader_.read();
         if (ch == ESCSEQ[1]) {
-          readJSONSyntaxChar(ZERO);
-          readJSONSyntaxChar(ZERO);
-          trans_.readAll(tmpbuf_, 0, 2);
-          ch = (byte)((hexVal((byte)tmpbuf_[0]) << 4) + hexVal(tmpbuf_[1]));
+          trans_.readAll(tmpbuf_, 0, 4);
+          short cu = (short)(
+              ((short)hexVal(tmpbuf_[0]) << 12) +
+              ((short)hexVal(tmpbuf_[1]) << 8) +
+              ((short)hexVal(tmpbuf_[2]) << 4) +
+              (short)hexVal(tmpbuf_[3]));
+          try {
+            if (Character.isHighSurrogate((char)cu)) {
+              if (codeunits.size() > 0) {
+                throw new TProtocolException(TProtocolException.INVALID_DATA,
+                    "Expected low surrogate char");
+              }
+              codeunits.add((char)cu);
+            }
+            else if (Character.isLowSurrogate((char)cu)) {
+              if (codeunits.size() == 0) {
+                throw new TProtocolException(TProtocolException.INVALID_DATA,
+                    "Expected high surrogate char");
+              }
+
+              codeunits.add((char)cu);
+              arr.write((new String(new int[] { codeunits.get(0), codeunits.get(1) }, 0, 2)).getBytes("UTF-8"));
+              codeunits.clear();
+            }
+            else {
+              arr.write((new String(new int[] { cu }, 0, 1)).getBytes("UTF-8"));
+            }
+            continue;
+          }
+          catch (UnsupportedEncodingException ex) {
+            throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED,
+                "JVM does not support UTF-8");
+          }
+          catch (IOException ex) {
+            throw new TProtocolException(TProtocolException.INVALID_DATA,
+                "Invalid unicode sequence");
+          }
         }
         else {
           int off = ESCAPE_CHARS.indexOf(ch);
