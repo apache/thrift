@@ -20,10 +20,12 @@
 DESTDIR ?= /
 EXTRA_DIST = setup.py src
 
+THRIFT = $(if $(wildcard $(thrift_home)/thrift),$(thrift_home)/thrift, $(thrift_home)/bin/thrift)
+
 all:
 
 all-local:
-	$(thrift_home)/bin/thrift --gen py $(top_srcdir)/if/fb303.thrift
+	$(THRIFT) --gen py $(top_srcdir)/if/fb303.thrift
 	mv gen-py/fb303/* fb303
 	$(PYTHON) setup.py build
 

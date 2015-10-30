@@ -36,8 +36,7 @@ else
 endif
 
 all: .generated
-	./rebar get-deps
-	./rebar compile
+	./rebar get-deps compile
 
 check: .generated
 	./rebar skip_deps=true eunit

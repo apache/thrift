@@ -21,6 +21,16 @@ under the License.
 
 ## Release Notes ##
 
+### 0.9.3 ###
+
+Added support for UNIX Domain Sockets using https://github.com/saleyn/euds project.
+
+Here's what's needed to start a client:
+
+```
+{ok, C0} = thrift_client_util:new("/tmp/thrift.sock", thrift_test_thrift, []).
+```
+
 ### 0.9.2 ###
 
 as of 0.9.2 struct and function naming conventions have changed. to retain the

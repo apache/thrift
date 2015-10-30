@@ -19,7 +19,7 @@
 
 -module(thrift_client_util).
 
--export([new/4]).
+-export([new/3, new/4]).
 
 %%
 %% Splits client options into client, protocol, and transport options
@@ -44,7 +44,17 @@ split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn)
        OptKey =:= sockopts ->
     split_options(Rest, ProtoIn, [Opt | TransIn]).
 
-
+%% @doc UNIX Domain Socket transport option
+new(Address, Service, Options)
+  when is_list(Address), is_atom(Service), is_list(Options) ->
+    SockOpts  = proplists:get_value(sockopts, Options, []),
+    Options1  = proplists:delete   (sockopts, Options),
+    {ProtoOpts, TransOpts0} = split_options(Options1),
+    TransOpts = [{module, gen_uds}, {sockopts, [stream | SockOpts]} | TransOpts0],
+    {ok, TransportFactory}  =
+        thrift_socket_transport:new_transport_factory(Address, 0, TransOpts),
+    new2(TransportFactory, Service, ProtoOpts).
+ 
 %% Client constructor for the common-case of socket transports
 %% with the binary protocol
 new(Host, Port, Service, Options)
@@ -53,7 +63,9 @@ new(Host, Port, Service, Options)
 
     {ok, TransportFactory} =
         thrift_socket_transport:new_transport_factory(Host, Port, TransOpts),
+    new2(TransportFactory, Service, ProtoOpts).
 
+new2(TransportFactory, Service, ProtoOpts) ->
     {ok, ProtocolFactory} = thrift_binary_protocol:new_protocol_factory(
                               TransportFactory, ProtoOpts),
 

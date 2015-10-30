@@ -35,7 +35,8 @@ def service_ctrl(
                  command,
                  port,
                  trans_factory = None,
-                 prot_factory = None):
+                 prot_factory = None,
+                 unix_socket = None):
     """
     service_ctrl is a generic function to execute standard fb303 functions
 
@@ -49,8 +50,9 @@ def service_ctrl(
 
     if command in ["status"]:
         try:
-            status = fb303_wrapper('status', port, trans_factory, prot_factory)
-            status_details = fb303_wrapper('get_status_details', port, trans_factory, prot_factory)
+            status = fb303_wrapper('status', port, trans_factory, prot_factory, unix_socket)
+            status_details = fb303_wrapper('get_status_details', port, trans_factory,
+                prot_factory, unix_socket)
 
             msg = fb_status_string(status)
             if (len(status_details)):
@@ -68,7 +70,7 @@ def service_ctrl(
     # scalar commands
     if command in ["version","alive","name"]:
         try:
-            result = fb303_wrapper(command,  port, trans_factory, prot_factory)
+            result = fb303_wrapper(command,  port, trans_factory, prot_factory, unix_socket)
             print result
             return 0
         except:
@@ -78,7 +80,7 @@ def service_ctrl(
     # counters
     if command in ["counters"]:
         try:
-            counters = fb303_wrapper('counters',  port, trans_factory, prot_factory)
+            counters = fb303_wrapper('counters',  port, trans_factory, prot_factory, unix_socket)
             for counter in counters:
                 print "%s: %d" % (counter, counters[counter])
             return 0
@@ -92,7 +94,7 @@ def service_ctrl(
         # async commands
         if command in ["stop","reload"] :
             try:
-                fb303_wrapper(command, port, trans_factory, prot_factory)
+                fb303_wrapper(command, port, trans_factory, prot_factory, unix_socket)
                 return 0
             except:
                 print "failed to tell the service to ", command
@@ -114,8 +116,9 @@ def service_ctrl(
     return 0;
 
 
-def fb303_wrapper(command, port, trans_factory = None, prot_factory = None):
-    sock = TSocket.TSocket('localhost', port)
+def fb303_wrapper(command, port, trans_factory = None, prot_factory = None, unix_socket = None):
+    sock = TSocket.TSocket(unix_socket = unix_socket) if unix_socket else \
+           TSocket.TSocket('localhost', port)
 
     # use input transport factory if provided
     if (trans_factory is None):
@@ -185,9 +188,11 @@ def main():
                       choices=commands, default="status")
     parser.add_option("-p","--port",dest="port",help="the service's port",
                       default=9082)
+    parser.add_option("-u","--unix-socket",dest="unix_socket",
+                      help="the service's unix domain socket")
 
     (options, args) = parser.parse_args()
-    status = service_ctrl(options.command, options.port)
+    status = service_ctrl(options.command, options.port, options.unix_socket)
     sys.exit(status)
 
 

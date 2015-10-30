@@ -25,7 +25,7 @@
 # User specified path variables set in configure.ac.
 # thrift_home
 #
-THRIFT = $(thrift_home)/bin/thrift
+THRIFT = $(if $(wildcard $(thrift_home)/thrift),$(thrift_home)/thrift, $(thrift_home)/bin/thrift)
 
 # User defined conditionals and conditonal statements set up in configure.ac.
 if DEBUG
@@ -38,7 +38,8 @@ endif
 
 AM_CPPFLAGS = -I..
 AM_CPPFLAGS += -Igen-cpp
-AM_CPPFLAGS += -I$(thrift_home)/include/thrift 
+AM_CPPFLAGS += -I$(thrift_home)/include/thrift
+AM_CPPFLAGS += -I../../../lib/cpp/src
 AM_CPPFLAGS += $(BOOST_CPPFLAGS)
 AM_CPPFLAGS += $(FB_CPPFLAGS) $(DEBUG_CPPFLAGS)
 

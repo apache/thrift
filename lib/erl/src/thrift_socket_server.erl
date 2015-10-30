@@ -30,6 +30,8 @@
 
 -record(thrift_socket_server,
         {port,
+         address,
+         module = gen_tcp   :: gen_tcp|gen_uds,
          service,
          handler,
          name,
@@ -43,7 +45,7 @@
 
 start(State=#thrift_socket_server{}) ->
     start_server(State);
-start(Options) ->
+start(Options) when is_list(Options) ->
     start(parse_options(Options)).
 
 stop(Name) when is_atom(Name) ->
@@ -73,6 +75,10 @@ parse_options([{name, A} | Rest], State) when is_atom(A) ->
     parse_options(Rest, State#thrift_socket_server{name=Name});
 parse_options([{name, Name} | Rest], State) ->
     parse_options(Rest, State#thrift_socket_server{name=Name});
+parse_options([{address, Addr} | Rest], State) when is_list(Addr)->
+    parse_options(Rest, State#thrift_socket_server{address=Addr});
+parse_options([{module, M} | Rest], State) when is_atom(M)->
+    parse_options(Rest, State#thrift_socket_server{module=M});
 parse_options([{port, L} | Rest], State) when is_list(L) ->
     Port = list_to_integer(L),
     parse_options(Rest, State#thrift_socket_server{port=Port});
@@ -114,7 +120,7 @@ start_server(State=#thrift_socket_server{name=Name}) ->
             gen_server:start_link(Name, ?MODULE, State, [])
     end.
 
-init(State=#thrift_socket_server{ip=Ip, port=Port}) ->
+init(State=#thrift_socket_server{address=Addr, ip=Ip, port=Port}) ->
     process_flag(trap_exit, true),
     BaseOpts = [binary,
                 {reuseaddr, true},
@@ -128,8 +134,13 @@ init(State=#thrift_socket_server{ip=Ip, port=Port}) ->
                Ip ->
                    [{ip, Ip} | BaseOpts]
            end,
-    case gen_tcp_listen(Port, Opts, State) of
-        {stop, eacces} ->
+    Addr = if is_list(Addr) ->
+               Addr;
+           true ->
+               Port
+           end,
+    case gen_tcp_listen(Addr, Opts, State) of
+        {stop, eacces} when is_integer(Addr) ->
             %% fdsrv module allows another shot to bind
             %% ports which require root access
             case Port < 1024 of
@@ -149,12 +160,12 @@ init(State=#thrift_socket_server{ip=Ip, port=Port}) ->
                     {stop, eacces}
             end;
         Other ->
-            error_logger:info_msg("thrift service listening on port ~p", [Port]),
+            error_logger:info_msg("thrift service listening on port ~p", [Addr]),
             Other
     end.
 
-gen_tcp_listen(Port, Opts, State) ->
-    case gen_tcp:listen(Port, Opts) of
+gen_tcp_listen(Addr, Opts, #thrift_socket_server{module=M} = State) ->
+    case M:listen(Addr, Opts) of
         {ok, Listen} ->
             {ok, ListenPort} = inet:port(Listen),
             {ok, new_acceptor(State#thrift_socket_server{listen=Listen,

@@ -37,6 +37,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
 #include <event.h>
 #include <event2/event_compat.h>
 #include <event2/event_struct.h>
@@ -157,11 +160,11 @@ private:
   /// Server socket file descriptor
   THRIFT_SOCKET serverSocket_;
 
-  /// Port server runs on. Zero when letting OS decide actual port
-  int port_;
-
   /// Port server actually runs on
   int listenPort_;
+
+  /// Path to UNIX domain socket the server listens to
+  std::string unix_socket_;
 
   /// The optional user-provided event-base (for single-thread servers)
   event_base* userEventBase_;
@@ -279,7 +282,19 @@ private:
    */
   void handleEvent(THRIFT_SOCKET fd, short which);
 
+  void init(const std::string& path) {
+    unix_socket_ = path.substr(0, sizeof((struct sockaddr_un*)0)->sun_path);
+    port_ = -1;
+    do_init();
+  }
+
   void init(int port) {
+    unix_socket_.clear();
+    port_ = port;
+    do_init();
+  }
+
+  void do_init() {
     serverSocket_ = THRIFT_INVALID_SOCKET;
     numIOThreads_ = DEFAULT_IO_THREADS;
     nextIOThread_ = 0;
@@ -322,6 +337,15 @@ public:
                      int port,
                      const boost::shared_ptr<ThreadManager>& threadManager
                      = boost::shared_ptr<ThreadManager>())
+    : TServer(processorFactory) {
+
+  template<typename ProcessorFactory, typename AddrType>
+  TNonblockingServer(
+      const boost::shared_ptr<ProcessorFactory>& processorFactory,
+      const boost::shared_ptr<TProtocolFactory>& protocolFactory,
+      AddrType port,
+      const boost::shared_ptr<ThreadManager>& threadManager =
+        boost::shared_ptr<ThreadManager>())
     : TServer(processorFactory) {
 
     init(port);

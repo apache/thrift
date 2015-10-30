@@ -76,13 +76,15 @@ close(This = #data{socket = Socket}) ->
 %% proplists-style option list. They're parsed like this so it is an O(n)
 %% operation instead of O(n^2)
 -record(factory_opts, {connect_timeout = infinity,
-                       sockopts = [],
+                       sockopts = [], module = gen_tcp,
                        framed = false}).
 
 parse_factory_options([], Opts) ->
     Opts;
 parse_factory_options([{framed, Bool} | Rest], Opts) when is_boolean(Bool) ->
     parse_factory_options(Rest, Opts#factory_opts{framed=Bool});
+parse_factory_options([{module, Mod} | Rest], Opts) when is_atom(Mod) ->
+    parse_factory_options(Rest, Opts#factory_opts{module=Mod});
 parse_factory_options([{sockopts, OptList} | Rest], Opts) when is_list(OptList) ->
     parse_factory_options(Rest, Opts#factory_opts{sockopts=OptList});
 parse_factory_options([{connect_timeout, TO} | Rest], Opts) when TO =:= infinity; is_integer(TO) ->
@@ -106,8 +108,9 @@ new_transport_factory(Host, Port, Options) ->
                             {active, false},
                             {nodelay, true} |
                             ParsedOpts#factory_opts.sockopts],
-                case catch gen_tcp:connect(Host, Port, SockOpts,
-                                           ParsedOpts#factory_opts.connect_timeout) of
+                Module   = ParsedOpts#factory_opts.module,
+                case catch Module:connect(Host, Port, SockOpts,
+                                          ParsedOpts#factory_opts.connect_timeout) of
                     {ok, Sock} ->
                         {ok, Transport} =
                           thrift_socket_transport:new(Sock, Options),
