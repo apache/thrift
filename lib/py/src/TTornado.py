@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 from thrift.transport.TTransport import TTransportException, TTransportBase, TMemoryBuffer
 
-from io import BytesIO
+from cStringIO import StringIO
 from collections import deque
 from contextlib import contextmanager
 from tornado import gen, iostream, ioloop, tcpserver, concurrent
@@ -70,7 +70,7 @@ class TTornadoStreamTransport(TTransportBase):
         self.host = host
         self.port = port
         self.io_loop = io_loop or ioloop.IOLoop.current()
-        self.__wbuf = BytesIO()
+        self.__wbuf = StringIO()
         self._read_lock = _Lock()
 
         # servers provide a ready-to-go stream
@@ -147,7 +147,7 @@ class TTornadoStreamTransport(TTransportBase):
         frame = self.__wbuf.getvalue()
         # reset wbuf before write/flush to preserve state on underlying failure
         frame_length = struct.pack('!i', len(frame))
-        self.__wbuf = BytesIO()
+        self.__wbuf = StringIO()
         with self.io_exception_context():
             return self.stream.write(frame_length + frame)
 
@@ -181,6 +181,8 @@ class TTornadoServer(tcpserver.TCPServer):
                 tr = TMemoryBuffer(frame)
                 iprot = self._iprot_factory.getProtocol(tr)
                 yield self._processor.process(iprot, oprot)
+        except TTransportException as tx:
+            pass
         except Exception:
             logger.exception('thrift exception in handle_stream')
             trans.close()

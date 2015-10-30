@@ -38,8 +38,8 @@ from tornado import gen
 from tornado import ioloop
 
 
-@gen.engine
-def communicate(callback=None):
+@gen.coroutine
+def communicate(callback):
     # create client
     transport = TTornado.TTornadoStreamTransport('localhost', 9090)
     pfactory = TBinaryProtocol.TBinaryProtocolFactory()
@@ -55,22 +55,16 @@ def communicate(callback=None):
         return
 
     # ping
-    yield gen.Task(client.ping)
+    yield client.ping()
     print "ping()"
 
     # add
-    sum_ = yield gen.Task(client.add, 1, 1)
+    sum_ = yield client.add(1, 1)
     print "1 + 1 = {}".format(sum_)
 
-    # make a oneway call without a callback (schedule the write and continue
-    # without blocking)
+    # zip, make a oneway call(schedule the write and continue without blocking)
     client.zip()
     print "zip() without callback"
-
-    # make a oneway call with a callback (we'll wait for the stream write to
-    # complete before continuing)
-    yield gen.Task(client.zip)
-    print "zip() with callback"
 
     # calculate 1/0
     work = Work()
@@ -79,7 +73,7 @@ def communicate(callback=None):
     work.num2 = 0
 
     try:
-        quotient = yield gen.Task(client.calculate, 1, work)
+        quotient = yield client.calculate(1, work)
         print "Whoa? You know how to divide by zero?"
     except InvalidOperation as io:
         print "InvalidOperation: {}".format(io)
@@ -89,11 +83,11 @@ def communicate(callback=None):
     work.num1 = 15
     work.num2 = 10
 
-    diff = yield gen.Task(client.calculate, 1, work)
+    diff = yield client.calculate(1, work)
     print "15 - 10 = {}".format(diff)
 
     # getStruct
-    log = yield gen.Task(client.getStruct, 1)
+    log = yield client.getStruct(1)
     print "Check log: {}".format(log.value)
 
     # close the transport
@@ -106,9 +100,7 @@ def communicate(callback=None):
 def main():
     # create an ioloop, do the above, then stop
     io_loop = ioloop.IOLoop.instance()
-    def this_joint():
-        communicate(callback=io_loop.stop)
-    io_loop.add_callback(this_joint)
+    io_loop.add_callback(communicate, io_loop.stop)
     io_loop.start()
 
 
