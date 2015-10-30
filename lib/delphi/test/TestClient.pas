@@ -1028,9 +1028,9 @@ const
   TEST_DOUBLE  = -1.234e-56;
   DELTA_DOUBLE = TEST_DOUBLE * 1e-14;
   TEST_STRING  = 'abc-'#$00E4#$00f6#$00fc; // german umlauts (en-us: "funny chars")
-  // Test THRIFT-2336 with 'Русское Название';
-  RUSSIAN_TEXT = #$0420#$0443#$0441#$0441#$043a#$043e#$0435' '#$041d#$0430#$0437#$0432#$0430#$043d#$0438#$0435;
-  RUSSIAN_JSON = '"\u0420\u0443\u0441\u0441\u043a\u043e\u0435 \u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435"';
+  // Test THRIFT-2336 and THRIFT-3404 with U+1D11E (G Clef symbol) and 'Русское Название';
+  G_CLEF_AND_CYRILLIC_TEXT = #$1d11e' '#$0420#$0443#$0441#$0441#$043a#$043e#$0435' '#$041d#$0430#$0437#$0432#$0430#$043d#$0438#$0435;
+  G_CLEF_AND_CYRILLIC_JSON = '"\ud834\udd1e \u0420\u0443\u0441\u0441\u043a\u043e\u0435 \u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435"';
   // test both possible solidus encodings
   SOLIDUS_JSON_DATA = '"one/two\/three"';
   SOLIDUS_EXCPECTED = 'one/two/three';
@@ -1117,22 +1117,22 @@ begin
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
                 nil, TThriftStreamAdapterDelphi.Create( stm, FALSE)));
-    prot.WriteString( RUSSIAN_TEXT);
+    prot.WriteString( G_CLEF_AND_CYRILLIC_TEXT);
     stm.Position := 0;
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
                 TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
-    Expect( prot.ReadString = RUSSIAN_TEXT, 'Writing JSON with chars > 8 bit');
+    Expect( prot.ReadString = G_CLEF_AND_CYRILLIC_TEXT, 'Writing JSON with chars > 8 bit');
 
     // Widechars should work with hex-encoding too. Do they?
     stm.Position := 0;
     stm.Size     := 0;
-    stm.WriteString( RUSSIAN_JSON);
+    stm.WriteString( G_CLEF_AND_CYRILLIC_JSON);
     stm.Position := 0;
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
                 TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
-    Expect( prot.ReadString = RUSSIAN_TEXT, 'Reading JSON with chars > 8 bit');
+    Expect( prot.ReadString = G_CLEF_AND_CYRILLIC_TEXT, 'Reading JSON with chars > 8 bit');
 
 
   finally

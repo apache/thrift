@@ -24,6 +24,7 @@ unit Thrift.Protocol.JSON;
 interface
 
 uses
+  Character,
   Classes,
   SysUtils,
   Math,
@@ -821,9 +822,12 @@ function TJSONProtocolImpl.ReadJSONString( skipContext : Boolean) : TBytes;
 var buffer : TMemoryStream;
     ch  : Byte;
     wch : Word;
+    highSurogate: Char;
+    surrogatePairs: Array[0..1] of Char;
     off : Integer;
     tmp : TBytes;
 begin
+  highSurogate := #0;
   buffer := TMemoryStream.Create;
   try
     if not skipContext
@@ -862,10 +866,30 @@ begin
            + (HexVal(tmp[1]) shl 8)
            + (HexVal(tmp[2]) shl 4)
            +  HexVal(tmp[3]);
+
       // we need to make UTF8 bytes from it, to be decoded later
-      tmp := SysUtils.TEncoding.UTF8.GetBytes(Char(wch));
-      buffer.Write( tmp[0], length(tmp));
+      if Character.IsHighSurrogate(char(wch)) then begin
+        if highSurogate <> #0
+        then raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Expected low surrogate char');
+        highSurogate := char(wch);
+      end
+      else if Character.IsLowSurrogate(char(wch)) then begin
+        if highSurogate = #0
+        then TProtocolException.Create( TProtocolException.INVALID_DATA, 'Expected high surrogate char');
+        surrogatePairs[0] := highSurogate;
+        surrogatePairs[1] := char(wch);
+        tmp := TEncoding.UTF8.GetBytes(surrogatePairs);
+        buffer.Write( tmp[0], Length(tmp));
+        highSurogate := #0;
+      end
+      else begin
+        tmp := SysUtils.TEncoding.UTF8.GetBytes(Char(wch));
+        buffer.Write( tmp[0], Length(tmp));
+      end;
     end;
+
+    if highSurogate <> #0
+    then raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Expected low surrogate char');
 
     SetLength( result, buffer.Size);
     if buffer.Size > 0 then Move( buffer.Memory^, result[0], Length(result));
