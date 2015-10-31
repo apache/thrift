@@ -384,7 +384,8 @@
       "framed"
     ],
     "sockets": [
-      "ip"
+      "ip",
+      "ip-ssl"
     ],
     "protocols": [
       "binary"
