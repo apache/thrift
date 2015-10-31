@@ -136,6 +136,15 @@ start(Args) ->
         ClientS4
     end,
 
+  %% Use deprecated erlang:now until we start requiring OTP18
+  %% Started = erlang:monotonic_time(milli_seconds),
+  {_, StartSec, StartUSec} = erlang:now(),
   {Client20, {ok, ok}} = thrift_client:call(Client19, testOneway, [1]),
+  {_, EndSec, EndUSec} = erlang:now(),
+  Elapsed = (EndSec - StartSec) * 1000 + (EndUSec - StartUSec) / 1000,
+  if
+    Elapsed > 1000 -> exit(1);
+    true -> true
+  end,
 
   thrift_client:close(Client20).
