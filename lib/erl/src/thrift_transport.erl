@@ -101,8 +101,12 @@ when is_integer(Len), Len >= 0 ->
 
 read_exact(Transport = #t_transport{module = Module}, Len)
 when is_integer(Len), Len >= 0 ->
-  {NewState, Result} = Module:read_exact(Transport#t_transport.state, Len),
-  {Transport#t_transport{state = NewState}, Result}.
+  case erlang:function_exported(Module, read_exact, 2) of
+      true ->
+        {NewState, Result} = Module:read_exact(Transport#t_transport.state, Len),
+        {Transport#t_transport{state = NewState}, Result};
+      false -> read(Transport, Len)
+  end.
 
 
 write(Transport = #t_transport{module = Module}, Data) ->
