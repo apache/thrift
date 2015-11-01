@@ -453,9 +453,6 @@ void TServerSocket::listen() {
       // use short circuit evaluation here to only sleep if we need to
     } while ((retries++ < retryLimit_) && (THRIFT_SLEEP_SEC(retryDelay_) == 0));
 
-    // free addrinfo
-    freeaddrinfo(res0);
-
     // retrieve bind info
     if (port_ == 0 && retries <= retryLimit_) {
       struct sockaddr sa;
@@ -475,6 +472,9 @@ void TServerSocket::listen() {
       }
     }
   }
+
+  // free addrinfo
+  freeaddrinfo(res0);
 
   // throw an error if we failed to bind properly
   if (retries > retryLimit_) {
