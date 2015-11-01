@@ -149,8 +149,12 @@ read(IProto0, {list, Type}) ->
 read(IProto0, {map, KeyType, ValType}) ->
     {IProto1, #protocol_map_begin{size = Size, ktype = KType, vtype = VType}} =
         read(IProto0, map_begin),
-    {KType, KType} = {term_to_typeid(KeyType), KType},
-    {VType, VType} = {term_to_typeid(ValType), VType},
+    _ = case Size of
+      0 -> 0;
+      _ ->
+        {KType, KType} = {term_to_typeid(KeyType), KType},
+        {VType, VType} = {term_to_typeid(ValType), VType}
+    end,
     {List, IProto2} = lists:mapfoldl(fun(_, ProtoS0) ->
                                              {ProtoS1, {ok, Key}} = read(ProtoS0, KeyType),
                                              {ProtoS2, {ok, Val}} = read(ProtoS1, ValType),
@@ -192,7 +196,8 @@ read_struct_loop(IProto0, SDict, RTuple) ->
         thrift_protocol:read(IProto0, field_begin),
     case {FType, Fid} of
         {?tType_STOP, _} ->
-            {IProto1, RTuple};
+            {IProto2, ok} = read(IProto1, struct_end),
+            {IProto2, RTuple};
         _Else ->
             case dict:find(Fid, SDict) of
                 {ok, {Type, Index}} ->

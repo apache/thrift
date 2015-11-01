@@ -55,7 +55,8 @@ parse_args([Head | Rest], Opts) ->
                         ,{keyfile,  "../keys/server.key"}
                     ]},
                 Opts#options{server_opts = [{ssltransport, true} | [SslOptions | Opts#options.server_opts]]};
-            "--protocol=" ++ _ -> Opts;
+            "--protocol=" ++ Proto ->
+                Opts#options{server_opts = [{protocol, list_to_atom(Proto)} | Opts#options.server_opts]};
             _Else ->
                 erlang:error({bad_arg, Head})
         end,
