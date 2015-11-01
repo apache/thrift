@@ -34,7 +34,8 @@ split_options([], ProtoIn, TransIn) ->
 
 split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn)
   when OptKey =:= strict_read;
-       OptKey =:= strict_write ->
+       OptKey =:= strict_write;
+       OptKey =:= protocol ->
     split_options(Rest, [Opt | ProtoIn], TransIn);
 
 split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn)
@@ -48,7 +49,6 @@ split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn)
 
 
 %% Client constructor for the common-case of socket transports
-%% with the binary protocol
 new(Host, Port, Service, Options)
   when is_integer(Port), is_atom(Service), is_list(Options) ->
     {ProtoOpts, TransOpts0} = split_options(Options),
@@ -58,11 +58,17 @@ new(Host, Port, Service, Options)
                                         false -> {thrift_socket_transport, TransOpts0}
                                     end,
 
+    {ProtocolModule, ProtoOpts1} = case lists:keytake(protocol, 1, ProtoOpts) of
+                                     {value, {_, compact}, Opts} -> {thrift_compact_protocol, Opts};
+                                     {value, {_, json}, Opts} -> {thrift_json_protocol, Opts};
+                                     {value, {_, binary}, Opts} -> {thrift_binary_protocol, Opts};
+                                     false -> {thrift_binary_protocol, ProtoOpts}
+                                   end,
     {ok, TransportFactory} =
         TransportModule:new_transport_factory(Host, Port, TransOpts2),
 
-    {ok, ProtocolFactory} = thrift_binary_protocol:new_protocol_factory(
-                              TransportFactory, ProtoOpts),
+    {ok, ProtocolFactory} = ProtocolModule:new_protocol_factory(
+                              TransportFactory, ProtoOpts1),
 
     case ProtocolFactory() of
         {ok, Protocol} ->

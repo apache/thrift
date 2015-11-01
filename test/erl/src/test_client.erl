@@ -55,9 +55,8 @@ parse_args([Head | Rest], Opts) ->
                         ,{keyfile, "../keys/server.key"}
                     ]},
                 Opts#options{client_opts = [{ssltransport, true} | [SslOptions | Opts#options.client_opts]]};
-            "--protocol=binary" ->
-                % TODO: Enable JSON protocol
-                Opts;
+            "--protocol=" ++ Proto ->
+                Opts#options{client_opts = [{protocol, list_to_atom(Proto)}]};
             _Else ->
                 erlang:error({bad_arg, Head})
         end,
@@ -91,23 +90,39 @@ start(Args) ->
     userMap = dict:from_list([{?THRIFT_TEST_NUMBERZ_FIVE, 5000}]),
     xtructs = [#'Xtruct'{ string_thing = <<"Truck">>, byte_thing = 8, i32_thing = 8, i64_thing = 8}]},
 
+  error_logger:info_msg("testVoid"),
   {Client01, {ok, ok}} = thrift_client:call(Client0, testVoid, []),
 
+  error_logger:info_msg("testString"),
   {Client02, {ok, <<"Test">>}}      = thrift_client:call(Client01, testString, ["Test"]),
+  error_logger:info_msg("testString"),
   {Client03, {ok, <<"Test">>}}      = thrift_client:call(Client02, testString, [<<"Test">>]),
+  error_logger:info_msg("testByte"),
   {Client04, {ok, 63}}              = thrift_client:call(Client03, testByte, [63]),
+  error_logger:info_msg("testI32"),
   {Client05, {ok, -1}}              = thrift_client:call(Client04, testI32, [-1]),
+  error_logger:info_msg("testI32"),
   {Client06, {ok, 0}}               = thrift_client:call(Client05, testI32, [0]),
+  error_logger:info_msg("testI64"),
   {Client07, {ok, -34359738368}}    = thrift_client:call(Client06, testI64, [-34359738368]),
+  error_logger:info_msg("testDouble"),
   {Client08, {ok, -5.2098523}}      = thrift_client:call(Client07, testDouble, [-5.2098523]),
   %% TODO: add testBinary() call
+  error_logger:info_msg("testStruct"),
   {Client09, {ok, DemoXtruct}}      = thrift_client:call(Client08, testStruct, [DemoXtruct]),
+  error_logger:info_msg("testNest"),
   {Client10, {ok, DemoNest}}        = thrift_client:call(Client09, testNest, [DemoNest]),
+  error_logger:info_msg("testMap"),
   {Client11, {ok, DemoDict}}        = thrift_client:call(Client10, testMap, [DemoDict]),
+  error_logger:info_msg("testSet"),
   {Client12, {ok, DemoSet}}         = thrift_client:call(Client11, testSet, [DemoSet]),
+  error_logger:info_msg("testList"),
   {Client13, {ok, [-1,2,3]}}        = thrift_client:call(Client12, testList, [[-1,2,3]]),
+  error_logger:info_msg("testEnum"),
   {Client14, {ok, 1}}               = thrift_client:call(Client13, testEnum, [?THRIFT_TEST_NUMBERZ_ONE]),
+  error_logger:info_msg("testTypedef"),
   {Client15, {ok, 309858235082523}} = thrift_client:call(Client14, testTypedef, [309858235082523]),
+  error_logger:info_msg("testInsanity"),
   {Client16, {ok, InsaneResult}}    = thrift_client:call(Client15, testInsanity, [DemoInsane]),
   io:format("~p~n", [InsaneResult]),
 
@@ -147,6 +162,7 @@ start(Args) ->
   %% Use deprecated erlang:now until we start requiring OTP18
   %% Started = erlang:monotonic_time(milli_seconds),
   {_, StartSec, StartUSec} = erlang:now(),
+  error_logger:info_msg("testOneway"),
   {Client20, {ok, ok}} = thrift_client:call(Client19, testOneway, [1]),
   {_, EndSec, EndUSec} = erlang:now(),
   Elapsed = (EndSec - StartSec) * 1000 + (EndUSec - StartUSec) / 1000,
