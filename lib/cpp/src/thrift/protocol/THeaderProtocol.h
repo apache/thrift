@@ -203,9 +203,6 @@ class THeaderProtocol
   uint32_t readBinary(std::string& binary);
 
  protected:
-  template<typename StrType>
-  uint32_t readStringBody(StrType& str, int32_t sz);
-
   boost::shared_ptr<THeaderTransport> trans_;
 
   boost::shared_ptr<TProtocol> proto_;

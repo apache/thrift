@@ -252,12 +252,6 @@ uint32_t THeaderProtocol::readBinary(std::string& binary) {
   return proto_->readBinary(binary);
 }
 
-template<typename StrType>
-uint32_t THeaderProtocol::readStringBody(StrType& str,
-                                         int32_t size) {
-  return proto_->readStringBody<StrType>(str, size);
-}
-
 }}} // apache::thrift::protocol
 
 #endif // #ifndef THRIFT_PROTOCOL_THEADERPROTOCOL_CPP_
