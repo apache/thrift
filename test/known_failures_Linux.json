@@ -11,6 +11,8 @@
   "c_glib-rb_binary_framed-ip",
   "cpp-cpp_binary_http-ip",
   "cpp-cpp_compact_http-domain",
+  "cpp-cpp_header_http-domain",
+  "cpp-cpp_header_http-ip",
   "cpp-cpp_json_http-ip",
   "cpp-hs_json_buffered-ip",
   "cpp-hs_json_framed-ip",
