@@ -46,12 +46,12 @@
 
     inputStream = (__bridge NSInputStream *)readStream;
     [inputStream setDelegate:self];
-    [inputStream scheduleInRunLoop:NSRunLoop.mainRunLoop forMode:NSDefaultRunLoopMode];
+    [inputStream scheduleInRunLoop:NSRunLoop.currentRunLoop forMode:NSDefaultRunLoopMode];
     [inputStream open];
 
     outputStream = (__bridge NSOutputStream *)writeStream;
     [outputStream setDelegate:self];
-    [outputStream scheduleInRunLoop:NSRunLoop.mainRunLoop forMode:NSDefaultRunLoopMode];
+    [outputStream scheduleInRunLoop:NSRunLoop.currentRunLoop forMode:NSDefaultRunLoopMode];
     [outputStream open];
   }
   else {
