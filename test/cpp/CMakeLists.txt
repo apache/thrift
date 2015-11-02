@@ -54,12 +54,13 @@ add_library(crossstressgencpp STATIC ${crossstressgencpp_SOURCES})
 LINK_AGAINST_THRIFT_LIBRARY(crossstressgencpp thrift)
 
 add_executable(TestServer src/TestServer.cpp)
-target_link_libraries(TestServer crosstestgencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB})
+target_link_libraries(TestServer crosstestgencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB} ${ZLIB_LIBRARIES})
 LINK_AGAINST_THRIFT_LIBRARY(TestServer thrift)
+LINK_AGAINST_THRIFT_LIBRARY(TestServer thriftnb)
 LINK_AGAINST_THRIFT_LIBRARY(TestServer thriftnb)
 
 add_executable(TestClient src/TestClient.cpp)
-target_link_libraries(TestClient crosstestgencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB})
+target_link_libraries(TestClient crosstestgencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB} ${ZLIB_LIBRARIES})
 LINK_AGAINST_THRIFT_LIBRARY(TestClient thrift)
 LINK_AGAINST_THRIFT_LIBRARY(TestClient thriftnb)
 
