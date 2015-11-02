@@ -45,7 +45,9 @@ add_custom_command(OUTPUT gen-cpp/Calculator.cpp gen-cpp/SharedService.cpp gen-c
 add_executable(TutorialServer CppServer.cpp)
 target_link_libraries(TutorialServer tutorialgencpp)
 LINK_AGAINST_THRIFT_LIBRARY(TutorialServer thrift)
+target_link_libraries(TutorialServer ${ZLIB_LIBRARIES})
 
 add_executable(TutorialClient CppClient.cpp)
 target_link_libraries(TutorialClient tutorialgencpp)
 LINK_AGAINST_THRIFT_LIBRARY(TutorialClient thrift)
+target_link_libraries(TutorialClient ${ZLIB_LIBRARIES})
