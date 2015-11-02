@@ -310,7 +310,7 @@ public:
 
   /// Use default buffer sizes.
   TFramedTransport()
-    : transport_(NULL),
+    : transport_(),
       rBufSize_(0),
       wBufSize_(DEFAULT_BUFFER_SIZE),
       rBuf_(),

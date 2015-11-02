@@ -38,11 +38,11 @@ void THeaderProtocol::resetProtocol() {
 
   switch (protoId_) {
     case T_BINARY_PROTOCOL:
-      proto_ = boost::make_shared<TBinaryProtocolT<THeaderTransport>>(trans_);
+      proto_ = boost::make_shared<TBinaryProtocolT<THeaderTransport> >(trans_);
       break;
 
     case T_COMPACT_PROTOCOL:
-      proto_ = boost::make_shared<TCompactProtocolT<THeaderTransport>>(trans_);
+      proto_ = boost::make_shared<TCompactProtocolT<THeaderTransport> >(trans_);
       break;
 
     default:

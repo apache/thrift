@@ -213,7 +213,7 @@ class THeaderProtocolFactory : public TProtocolFactory {
  public:
   virtual boost::shared_ptr<TProtocol> getProtocol(
       boost::shared_ptr<transport::TTransport> trans) {
-    THeaderProtocol *headerProtocol = new THeaderProtocol(trans, NULL,
+    THeaderProtocol *headerProtocol = new THeaderProtocol(trans, boost::shared_ptr<transport::TTransport>(),
                                                           T_BINARY_PROTOCOL);
     return boost::shared_ptr<TProtocol>(headerProtocol);
   }

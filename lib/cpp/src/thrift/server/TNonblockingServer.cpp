@@ -545,7 +545,7 @@ bool TNonblockingServer::getHeaderTransport() {
   // Currently if there is no output protocol factory, 
   // we assume header transport (without having to create
   // a new transport and check)
-  return getOutputProtocolFactory() == nullptr;
+  return getOutputProtocolFactory() == NULL;
 }
 
 
