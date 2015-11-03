@@ -32,11 +32,12 @@ using boost::shared_ptr;
 using std::string;
 using std::vector;
 
-namespace apache { namespace thrift { namespace transport {
+namespace apache {
+namespace thrift {
+namespace transport {
 
 using namespace apache::thrift::protocol;
 using apache::thrift::protocol::TBinaryProtocol;
-
 
 uint32_t THeaderTransport::readAll(uint8_t* buf, uint32_t len) {
   // We want to call TBufferBase's version here, because
@@ -160,10 +161,8 @@ bool THeaderTransport::readFrame(uint32_t minFrameSize) {
     }
   }
 
-
   return true;
 }
-
 
 /**
  * Reads a string from ptr, taking care not to reach headerBoundary
@@ -172,8 +171,9 @@ bool THeaderTransport::readFrame(uint32_t minFrameSize) {
  * @param   str                  output string
  * @throws  CORRUPTED_DATA  if size of string exceeds boundary
  */
-void THeaderTransport::readString(uint8_t* &ptr, /* out */ string &str,
-                uint8_t const* headerBoundary) {
+void THeaderTransport::readString(uint8_t*& ptr,
+                                  /* out */ string& str,
+                                  uint8_t const* headerBoundary) {
   int32_t strLen;
 
   uint32_t bytes = readVarint32(ptr, &strLen, headerBoundary);
@@ -187,7 +187,7 @@ void THeaderTransport::readString(uint8_t* &ptr, /* out */ string &str,
 }
 
 void THeaderTransport::readHeaderFormat(uint16_t headerSize, uint32_t sz) {
-  readTrans_.clear(); // Clear out any previous transforms.
+  readTrans_.clear();   // Clear out any previous transforms.
   readHeaders_.clear(); // Clear out any previous headers.
 
   // skip over already processed magic(4), seqId(4), headerSize(2)
@@ -228,22 +228,22 @@ void THeaderTransport::readHeaderFormat(uint16_t headerSize, uint32_t sz) {
       break;
     }
     switch (infoId) {
-      case infoIdType::KEYVALUE:
-        // Process key-value headers
-        uint32_t numKVHeaders;
-        ptr += readVarint32(ptr, (int32_t*)&numKVHeaders, headerBoundary);
-        // continue until we reach (padded) end of packet
-        while (numKVHeaders-- && ptr < headerBoundary) {
-          // format: key; value
-          // both: length (varint32); value (string)
-          string key, value;
-          readString(ptr, key, headerBoundary);
-          // value
-          readString(ptr, value, headerBoundary);
-          // save to headers
-          readHeaders_[key] = value;
-        }
-        break;
+    case infoIdType::KEYVALUE:
+      // Process key-value headers
+      uint32_t numKVHeaders;
+      ptr += readVarint32(ptr, (int32_t*)&numKVHeaders, headerBoundary);
+      // continue until we reach (padded) end of packet
+      while (numKVHeaders-- && ptr < headerBoundary) {
+        // format: key; value
+        // both: length (varint32); value (string)
+        string key, value;
+        readString(ptr, key, headerBoundary);
+        // value
+        readString(ptr, value, headerBoundary);
+        // save to headers
+        readHeaders_[key] = value;
+      }
+      break;
     }
   }
 
@@ -255,8 +255,7 @@ void THeaderTransport::untransform(uint8_t* ptr, uint32_t sz) {
   // Update the transform buffer size if needed
   resizeTransformBuffer();
 
-  for (vector<uint16_t>::const_iterator it = readTrans_.begin();
-       it != readTrans_.end(); ++it) {
+  for (vector<uint16_t>::const_iterator it = readTrans_.begin(); it != readTrans_.end(); ++it) {
     const uint16_t transId = *it;
 
     if (transId == ZLIB_TRANSFORM) {
@@ -292,8 +291,7 @@ void THeaderTransport::untransform(uint8_t* ptr, uint32_t sz) {
 
       memcpy(ptr, tBuf_.get(), sz);
     } else {
-      throw TApplicationException(TApplicationException::MISSING_RESULT,
-                                "Unknown transform");
+      throw TApplicationException(TApplicationException::MISSING_RESULT, "Unknown transform");
     }
   }
 
@@ -320,8 +318,7 @@ void THeaderTransport::transform(uint8_t* ptr, uint32_t sz) {
   // Update the transform buffer size if needed
   resizeTransformBuffer();
 
-  for (vector<uint16_t>::const_iterator it = writeTrans_.begin();
-       it != writeTrans_.end(); ++it) {
+  for (vector<uint16_t>::const_iterator it = writeTrans_.begin(); it != writeTrans_.end(); ++it) {
     const uint16_t transId = *it;
 
     if (transId == ZLIB_TRANSFORM) {
@@ -341,12 +338,12 @@ void THeaderTransport::transform(uint8_t* ptr, uint32_t sz) {
       }
       uint32_t tbuf_size = 0;
       while (err == Z_OK) {
-	resizeTransformBuffer(tbuf_size);
+        resizeTransformBuffer(tbuf_size);
 
-	stream.next_out = tBuf_.get();
-	stream.avail_out = tBufSize_;
-	err = deflate(&stream, Z_FINISH);
-	tbuf_size += DEFAULT_BUFFER_SIZE;
+        stream.next_out = tBuf_.get();
+        stream.avail_out = tBufSize_;
+        err = deflate(&stream, Z_FINISH);
+        tbuf_size += DEFAULT_BUFFER_SIZE;
       }
       sz = stream.total_out;
 
@@ -358,8 +355,7 @@ void THeaderTransport::transform(uint8_t* ptr, uint32_t sz) {
 
       memcpy(ptr, tBuf_.get(), sz);
     } else {
-      throw TTransportException(TTransportException::CORRUPTED_DATA,
-                                "Unknown transform");
+      throw TTransportException(TTransportException::CORRUPTED_DATA, "Unknown transform");
     }
   }
 
@@ -383,7 +379,7 @@ uint32_t THeaderTransport::getWriteBytes() {
  * terminated)
  * Automatically advances ptr to after the written portion
  */
-void THeaderTransport::writeString(uint8_t* &ptr, const string& str) {
+void THeaderTransport::writeString(uint8_t*& ptr, const string& str) {
   uint32_t strLen = str.length();
   ptr += writeVarint32(strLen, ptr);
   memcpy(ptr, str.c_str(), strLen); // no need to write \0
@@ -400,8 +396,7 @@ size_t THeaderTransport::getMaxWriteHeadersSize() const {
   for (it = writeHeaders_.begin(); it != writeHeaders_.end(); ++it) {
     // add sizes of key and value to maxWriteHeadersSize
     // 2 varints32 + the strings themselves
-    maxWriteHeadersSize += 5 + 5 + (it->first).length() +
-      (it->second).length();
+    maxWriteHeadersSize += 5 + 5 + (it->first).length() + (it->second).length();
   }
   return maxWriteHeadersSize;
 }
@@ -410,7 +405,7 @@ void THeaderTransport::clearHeaders() {
   writeHeaders_.clear();
 }
 
-void THeaderTransport::flush()  {
+void THeaderTransport::flush() {
   // Write out any data waiting in the write buffer.
   uint32_t haveBytes = getWriteBytes();
 
@@ -473,8 +468,7 @@ void THeaderTransport::flush()  {
     pkt += writeVarint32(getNumTransforms(), pkt);
 
     // For now, each transform is only the ID, no following data.
-    for (vector<uint16_t>::const_iterator it = writeTrans_.begin();
-         it != writeTrans_.end(); ++it) {
+    for (vector<uint16_t>::const_iterator it = writeTrans_.begin(); it != writeTrans_.end(); ++it) {
       pkt += writeVarint32(*it, pkt);
     }
 
@@ -506,8 +500,8 @@ void THeaderTransport::flush()  {
     }
 
     // Pkt size
-    szHbo = headerSize + haveBytes           // thrift header + payload
-            + (headerStart - pktStart - 4);  // common header section
+    szHbo = headerSize + haveBytes          // thrift header + payload
+            + (headerStart - pktStart - 4); // common header section
     headerSizeN = htons(headerSize / 4);
     memcpy(headerSizePtr, &headerSizeN, sizeof(headerSizeN));
 
@@ -526,8 +520,7 @@ void THeaderTransport::flush()  {
   } else if (clientType == THRIFT_UNFRAMED_DEPRECATED) {
     outTransport_->write(wBuf_.get(), haveBytes);
   } else {
-    throw TTransportException(TTransportException::BAD_ARGS,
-                              "Unknown client type");
+    throw TTransportException(TTransportException::BAD_ARGS, "Unknown client type");
   }
 
   // Flush the underlying transport.
@@ -538,8 +531,7 @@ void THeaderTransport::flush()  {
  * Read an i16 from the wire as a varint. The MSB of each byte is set
  * if there is another byte to follow. This can read up to 3 bytes.
  */
-uint32_t THeaderTransport::readVarint16(uint8_t const* ptr, int16_t* i16,
-					uint8_t const* boundary) {
+uint32_t THeaderTransport::readVarint16(uint8_t const* ptr, int16_t* i16, uint8_t const* boundary) {
   int32_t val;
   uint32_t rsize = readVarint32(ptr, &val, boundary);
   *i16 = (int16_t)val;
@@ -550,8 +542,7 @@ uint32_t THeaderTransport::readVarint16(uint8_t const* ptr, int16_t* i16,
  * Read an i32 from the wire as a varint. The MSB of each byte is set
  * if there is another byte to follow. This can read up to 5 bytes.
  */
-uint32_t THeaderTransport::readVarint32(uint8_t const* ptr, int32_t* i32,
-					uint8_t const* boundary) {
+uint32_t THeaderTransport::readVarint32(uint8_t const* ptr, int32_t* i32, uint8_t const* boundary) {
 
   uint32_t rsize = 0;
   uint32_t val = 0;
@@ -559,9 +550,8 @@ uint32_t THeaderTransport::readVarint32(uint8_t const* ptr, int32_t* i32,
 
   while (true) {
     if (ptr == boundary) {
-      throw TApplicationException(
-        TApplicationException::INVALID_MESSAGE_TYPE,
-        "Trying to read past header boundary");
+      throw TApplicationException(TApplicationException::INVALID_MESSAGE_TYPE,
+                                  "Trying to read past header boundary");
     }
     uint8_t byte = *(ptr++);
     rsize++;
@@ -602,5 +592,6 @@ uint32_t THeaderTransport::writeVarint32(int32_t n, uint8_t* pkt) {
 uint32_t THeaderTransport::writeVarint16(int16_t n, uint8_t* pkt) {
   return writeVarint32(n, pkt);
 }
-
-}}} // apache::thrift::transport
+}
+}
+} // apache::thrift::transport

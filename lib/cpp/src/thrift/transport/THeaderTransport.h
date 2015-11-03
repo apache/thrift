@@ -41,7 +41,9 @@ enum CLIENT_TYPE {
   THRIFT_UNKNOWN_CLIENT_TYPE = 4,
 };
 
-namespace apache { namespace thrift { namespace transport {
+namespace apache {
+namespace thrift {
+namespace transport {
 
 using apache::thrift::protocol::T_COMPACT_PROTOCOL;
 
@@ -56,54 +58,44 @@ using apache::thrift::protocol::T_COMPACT_PROTOCOL;
  *
  * Header Transport *must* be the same transport for both input and
  * output when used on the server side - client responses should be
- * the same protocol as those in the request. 
+ * the same protocol as those in the request.
  */
-class THeaderTransport
-    : public TVirtualTransport<THeaderTransport, TFramedTransport> {
- public:
-
+class THeaderTransport : public TVirtualTransport<THeaderTransport, TFramedTransport> {
+public:
   static const int DEFAULT_BUFFER_SIZE = 512u;
   static const int THRIFT_MAX_VARINT32_BYTES = 5;
 
   /// Use default buffer sizes.
   explicit THeaderTransport(const boost::shared_ptr<TTransport>& transport)
-    : transport_(transport)
-    , outTransport_(transport)
-    , protoId(T_COMPACT_PROTOCOL)
-    , clientType(THRIFT_HEADER_CLIENT_TYPE)
-    , seqId(0)
-    , flags(0)
-    , tBufSize_(0)
-    , tBuf_(NULL)
-  {
+    : transport_(transport),
+      outTransport_(transport),
+      protoId(T_COMPACT_PROTOCOL),
+      clientType(THRIFT_HEADER_CLIENT_TYPE),
+      seqId(0),
+      flags(0),
+      tBufSize_(0),
+      tBuf_(NULL) {
     initBuffers();
   }
 
   THeaderTransport(const boost::shared_ptr<TTransport> inTransport,
                    const boost::shared_ptr<TTransport> outTransport)
-    : transport_(inTransport)
-    , outTransport_(outTransport)
-    , protoId(T_COMPACT_PROTOCOL)
-    , clientType(THRIFT_HEADER_CLIENT_TYPE)
-    , seqId(0)
-    , flags(0)
-    , tBufSize_(0)
-    , tBuf_(NULL)
-  {
+    : transport_(inTransport),
+      outTransport_(outTransport),
+      protoId(T_COMPACT_PROTOCOL),
+      clientType(THRIFT_HEADER_CLIENT_TYPE),
+      seqId(0),
+      flags(0),
+      tBufSize_(0),
+      tBuf_(NULL) {
     initBuffers();
   }
 
-  void open() {
-    transport_->open();
-  }
+  void open() { transport_->open(); }
 
-  bool isOpen() {
-    return transport_->isOpen();
-  }
+  bool isOpen() { return transport_->isOpen(); }
 
-  bool peek() {
-    return (this->rBase_ < this->rBound_) || transport_->peek();
-  }
+  bool peek() { return (this->rBase_ < this->rBound_) || transport_->peek(); }
 
   void close() {
     flush();
@@ -116,9 +108,7 @@ class THeaderTransport
 
   void resizeTransformBuffer(uint32_t additionalSize = 0);
 
-  boost::shared_ptr<TTransport> getUnderlyingTransport() {
-    return transport_;
-  }
+  boost::shared_ptr<TTransport> getUnderlyingTransport() { return transport_; }
 
   /*
    * TVirtualTransport provides a default implementation of readAll().
@@ -175,14 +165,10 @@ class THeaderTransport
 
   void clearHeaders();
 
-  StringToStringMap& getWriteHeaders() {
-    return writeHeaders_;
-  }
+  StringToStringMap& getWriteHeaders() { return writeHeaders_; }
 
   // these work with read headers
-  const StringToStringMap& getHeaders() const {
-    return readHeaders_;
-  }
+  const StringToStringMap& getHeaders() const { return readHeaders_; }
 
   // accessors for seqId
   int32_t getSequenceNumber() const { return seqId; }
@@ -192,8 +178,7 @@ class THeaderTransport
     ZLIB_TRANSFORM = 0x01,
   };
 
- protected:
-
+protected:
   std::bitset<CLIENT_TYPES_LEN> supported_clients;
 
   void initSupportedClients(std::bitset<CLIENT_TYPES_LEN> const*);
@@ -245,7 +230,7 @@ class THeaderTransport
     enum idType {
       // start at 1 to avoid confusing header padding for an infoId
       KEYVALUE = 1,
-      END        // signal the end of infoIds we can handle
+      END // signal the end of infoIds we can handle
     };
   };
 
@@ -253,25 +238,22 @@ class THeaderTransport
   uint32_t tBufSize_;
   boost::scoped_array<uint8_t> tBuf_;
 
-  void readString(uint8_t* &ptr, /* out */ std::string &str,
-		  uint8_t const* headerBoundary);
+  void readString(uint8_t*& ptr, /* out */ std::string& str, uint8_t const* headerBoundary);
 
-  void writeString(uint8_t* &ptr, const std::string& str);
+  void writeString(uint8_t*& ptr, const std::string& str);
 
   // Varint utils
   /**
    * Read an i16 from the wire as a varint. The MSB of each byte is set
    * if there is another byte to follow. This can read up to 3 bytes.
    */
-  uint32_t readVarint16(uint8_t const* ptr, int16_t* i16,
-			uint8_t const* boundary);
+  uint32_t readVarint16(uint8_t const* ptr, int16_t* i16, uint8_t const* boundary);
 
   /**
    * Read an i32 from the wire as a varint. The MSB of each byte is set
    * if there is another byte to follow. This can read up to 5 bytes.
    */
-  uint32_t readVarint32(uint8_t const* ptr, int32_t* i32,
-			uint8_t const* boundary);
+  uint32_t readVarint32(uint8_t const* ptr, int32_t* i32, uint8_t const* boundary);
 
   /**
    * Write an i32 as a varint. Results in 1-5 bytes on the wire.
@@ -282,15 +264,14 @@ class THeaderTransport
    * Write an i16 as a varint. Results in 1-3 bytes on the wire.
    */
   uint32_t writeVarint16(int16_t n, uint8_t* pkt);
-
- };
+};
 
 /**
  * Wraps a transport into a header one.
  *
  */
 class THeaderTransportFactory : public TTransportFactory {
- public:
+public:
   THeaderTransportFactory() {}
 
   virtual ~THeaderTransportFactory() {}
@@ -298,14 +279,12 @@ class THeaderTransportFactory : public TTransportFactory {
   /**
    * Wraps the transport into a header one.
    */
-  virtual boost::shared_ptr<TTransport>
-  getTransport(boost::shared_ptr<TTransport> trans) {
-    return boost::shared_ptr<TTransport>(
-      new THeaderTransport(trans));
+  virtual boost::shared_ptr<TTransport> getTransport(boost::shared_ptr<TTransport> trans) {
+    return boost::shared_ptr<TTransport>(new THeaderTransport(trans));
   }
-
 };
-
-}}} // apache::thrift::transport
+}
+}
+} // apache::thrift::transport
 
 #endif // #ifndef THRIFT_TRANSPORT_THEADERTRANSPORT_H_

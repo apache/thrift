@@ -26,8 +26,9 @@
 #include <limits>
 #include <boost/static_assert.hpp>
 
-
-namespace apache { namespace thrift { namespace protocol {
+namespace apache {
+namespace thrift {
+namespace protocol {
 
 void THeaderProtocol::resetProtocol() {
   if (proto_ && protoId_ == trans_->getProtocolId()) {
@@ -37,17 +38,17 @@ void THeaderProtocol::resetProtocol() {
   protoId_ = trans_->getProtocolId();
 
   switch (protoId_) {
-    case T_BINARY_PROTOCOL:
-      proto_ = boost::make_shared<TBinaryProtocolT<THeaderTransport> >(trans_);
-      break;
+  case T_BINARY_PROTOCOL:
+    proto_ = boost::make_shared<TBinaryProtocolT<THeaderTransport> >(trans_);
+    break;
 
-    case T_COMPACT_PROTOCOL:
-      proto_ = boost::make_shared<TCompactProtocolT<THeaderTransport> >(trans_);
-      break;
+  case T_COMPACT_PROTOCOL:
+    proto_ = boost::make_shared<TCompactProtocolT<THeaderTransport> >(trans_);
+    break;
 
-    default:
-      throw TApplicationException(TApplicationException::INVALID_PROTOCOL,
-                                  "Unknown protocol requested");
+  default:
+    throw TApplicationException(TApplicationException::INVALID_PROTOCOL,
+                                "Unknown protocol requested");
   }
 }
 
@@ -95,8 +96,7 @@ uint32_t THeaderProtocol::writeMapEnd() {
   return proto_->writeMapEnd();
 }
 
-uint32_t THeaderProtocol::writeListBegin(const TType elemType,
-                                         const uint32_t size) {
+uint32_t THeaderProtocol::writeListBegin(const TType elemType, const uint32_t size) {
   return proto_->writeListBegin(elemType, size);
 }
 
@@ -104,8 +104,7 @@ uint32_t THeaderProtocol::writeListEnd() {
   return proto_->writeListEnd();
 }
 
-uint32_t THeaderProtocol::writeSetBegin(const TType elemType,
-                                        const uint32_t size) {
+uint32_t THeaderProtocol::writeSetBegin(const TType elemType, const uint32_t size) {
   return proto_->writeSetBegin(elemType, size);
 }
 
@@ -161,7 +160,7 @@ uint32_t THeaderProtocol::readMessageBegin(std::string& name,
     ex.write((TProtocol*)this);
     writeMessageEnd();
     trans_->flush();
-    
+
     // The framing is still good, but we don't know about this protocol.
     // In the future, this could be made a client-side only error if
     // connection pooling is used.
@@ -182,9 +181,7 @@ uint32_t THeaderProtocol::readStructEnd() {
   return proto_->readStructEnd();
 }
 
-uint32_t THeaderProtocol::readFieldBegin(std::string& name,
-                                         TType& fieldType,
-                                         int16_t& fieldId) {
+uint32_t THeaderProtocol::readFieldBegin(std::string& name, TType& fieldType, int16_t& fieldId) {
   return proto_->readFieldBegin(name, fieldType, fieldId);
 }
 
@@ -192,9 +189,7 @@ uint32_t THeaderProtocol::readFieldEnd() {
   return proto_->readFieldEnd();
 }
 
-uint32_t THeaderProtocol::readMapBegin(TType& keyType,
-                                       TType& valType,
-                                       uint32_t& size) {
+uint32_t THeaderProtocol::readMapBegin(TType& keyType, TType& valType, uint32_t& size) {
   return proto_->readMapBegin(keyType, valType, size);
 }
 
@@ -202,8 +197,7 @@ uint32_t THeaderProtocol::readMapEnd() {
   return proto_->readMapEnd();
 }
 
-uint32_t THeaderProtocol::readListBegin(TType& elemType,
-                                        uint32_t& size) {
+uint32_t THeaderProtocol::readListBegin(TType& elemType, uint32_t& size) {
   return proto_->readListBegin(elemType, size);
 }
 
@@ -211,8 +205,7 @@ uint32_t THeaderProtocol::readListEnd() {
   return proto_->readListEnd();
 }
 
-uint32_t THeaderProtocol::readSetBegin(TType& elemType,
-                                       uint32_t& size) {
+uint32_t THeaderProtocol::readSetBegin(TType& elemType, uint32_t& size) {
   return proto_->readSetBegin(elemType, size);
 }
 
@@ -251,7 +244,8 @@ uint32_t THeaderProtocol::readString(std::string& str) {
 uint32_t THeaderProtocol::readBinary(std::string& binary) {
   return proto_->readBinary(binary);
 }
-
-}}} // apache::thrift::protocol
+}
+}
+} // apache::thrift::protocol
 
 #endif // #ifndef THRIFT_PROTOCOL_THEADERPROTOCOL_CPP_
