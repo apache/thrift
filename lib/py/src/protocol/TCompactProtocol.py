@@ -17,10 +17,10 @@
 # under the License.
 #
 
-from .TProtocol import *
+from .TProtocol import TType, TProtocolBase, TProtocolException, checkIntegerLimits
 from struct import pack, unpack
-from six.moves import map
-from six.moves import zip
+
+from ..compat import binary_to_str, str_to_binary
 
 __all__ = ['TCompactProtocol', 'TCompactProtocolFactory']
 
@@ -143,7 +143,7 @@ class TCompactProtocol(TProtocolBase):
     self.__writeUByte(self.PROTOCOL_ID)
     self.__writeUByte(self.VERSION | (type << self.TYPE_SHIFT_AMOUNT))
     self.__writeVarint(seqid)
-    self.__writeString(name)
+    self.__writeBinary(str_to_binary(name))
     self.state = VALUE_WRITE
 
   def writeMessageEnd(self):
@@ -256,11 +256,10 @@ class TCompactProtocol(TProtocolBase):
   def writeDouble(self, dub):
     self.trans.write(pack('<d', dub))
 
-  def __writeString(self, s):
-    b = s.encode('utf8')
-    self.__writeSize(len(b))
-    self.trans.write(b)
-  writeString = writer(__writeString)
+  def __writeBinary(self, s):
+    self.__writeSize(len(s))
+    self.trans.write(s)
+  writeBinary = writer(__writeBinary)
 
   def readFieldBegin(self):
     assert self.state == FIELD_READ, self.state
@@ -305,7 +304,7 @@ class TCompactProtocol(TProtocolBase):
   def __readSize(self):
     result = self.__readVarint()
     if result < 0:
-      raise TException("Length < 0")
+      raise TProtocolException("Length < 0")
     return result
 
   def readMessageBegin(self):
@@ -313,15 +312,15 @@ class TCompactProtocol(TProtocolBase):
     proto_id = self.__readUByte()
     if proto_id != self.PROTOCOL_ID:
       raise TProtocolException(TProtocolException.BAD_VERSION,
-          'Bad protocol id in the message: %d' % proto_id)
+                               'Bad protocol id in the message: %d' % proto_id)
     ver_type = self.__readUByte()
     type = (ver_type >> self.TYPE_SHIFT_AMOUNT) & self.TYPE_BITS
     version = ver_type & self.VERSION_MASK
     if version != self.VERSION:
       raise TProtocolException(TProtocolException.BAD_VERSION,
-          'Bad version: %d (expect %d)' % (version, self.VERSION))
+                               'Bad version: %d (expect %d)' % (version, self.VERSION))
     seqid = self.__readVarint()
-    name = self.__readString()
+    name = binary_to_str(self.__readBinary())
     return (name, type, seqid)
 
   def readMessageEnd(self):
@@ -391,10 +390,10 @@ class TCompactProtocol(TProtocolBase):
     val, = unpack('<d', buff)
     return val
 
-  def __readString(self):
+  def __readBinary(self):
     len = self.__readSize()
-    return self.trans.readAll(len).decode('utf8')
-  readString = reader(__readString)
+    return self.trans.readAll(len)
+  readBinary = reader(__readBinary)
 
   def __getTType(self, byte):
     return TTYPES[byte & 0x0f]

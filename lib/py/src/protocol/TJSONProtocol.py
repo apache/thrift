@@ -19,10 +19,11 @@
 
 from .TProtocol import TType, TProtocolBase, TProtocolException, checkIntegerLimits
 import base64
-import json
 import math
+import sys
 
-from six import u, unichr
+from ..compat import str_to_binary
+
 
 __all__ = ['TJSONProtocol',
            'TJSONProtocolFactory',
@@ -41,8 +42,18 @@ QUOTE = b'"'
 BACKSLASH = b'\\'
 ZERO = b'0'
 
-ESCSEQ = b'\\u00'
-ESCAPE_CHAR_VALS = [b'"', b'\\', b'\b', b'\f', b'\n', b'\r', b'\t', b'/']
+ESCSEQ0 = ord('\\')
+ESCSEQ1 = ord('u')
+ESCAPE_CHAR_VALS = {
+  '"': '\\"',
+  '\\': '\\\\',
+  '\b': '\\b',
+  '\f': '\\f',
+  '\n': '\\n',
+  '\r': '\\r',
+  '\t': '\\t',
+  # '/': '\\/',
+}
 ESCAPE_CHARS = {
     b'"': '"',
     b'\\': '\\',
@@ -156,6 +167,7 @@ class LookaheadReader():
     self.hasData = True
     return self.data
 
+
 class TJSONProtocolBase(TProtocolBase):
 
   def __init__(self, trans):
@@ -184,14 +196,22 @@ class TJSONProtocolBase(TProtocolBase):
 
   def writeJSONString(self, string):
     self.context.write()
-    self.trans.write(json.dumps(string, ensure_ascii=False))
+    json_str = ['"']
+    for s in string:
+      escaped = ESCAPE_CHAR_VALS.get(s, s)
+      json_str.append(escaped)
+    json_str.append('"')
+    self.trans.write(str_to_binary(''.join(json_str)))
 
   def writeJSONNumber(self, number, formatter='{}'):
     self.context.write()
     jsNumber = str(formatter.format(number)).encode('ascii')
     if self.context.escapeNum():
-      jsNumber = "%s%s%s" % (QUOTE, jsNumber, QUOTE)
-    self.trans.write(jsNumber)
+      self.trans.write(QUOTE)
+      self.trans.write(jsNumber)
+      self.trans.write(QUOTE)
+    else:
+      self.trans.write(jsNumber)
 
   def writeJSONBase64(self, binary):
     self.context.write()
@@ -232,23 +252,25 @@ class TJSONProtocolBase(TProtocolBase):
       character = self.reader.read()
       if character == QUOTE:
         break
-      if character == ESCSEQ[0]:
+      if ord(character) == ESCSEQ0:
         character = self.reader.read()
-        if character == ESCSEQ[1]:
-          cp = int(self.trans.read(4), 16)
-          character = unichr(cp)
+        if ord(character) == ESCSEQ1:
+          character = chr(int(self.trans.read(4)))
         else:
           if character not in ESCAPE_CHARS:
             raise TProtocolException(TProtocolException.INVALID_DATA,
                                      "Expected control char")
           character = ESCAPE_CHARS[character]
-      else:
+      elif character in ESCAPE_CHAR_VALS:
+        raise TProtocolException(TProtocolException.INVALID_DATA,
+                                 "Unescaped control char")
+      elif sys.version_info[0] > 2:
         utf8_bytes = bytearray([ord(character)])
-        while utf8_bytes[-1] >= 0x80:
+        while ord(self.reader.peek()) >= 0x80:
           utf8_bytes.append(ord(self.reader.read()))
         character = utf8_bytes.decode('utf8')
       string.append(character)
-    return u('').join(string)
+    return ''.join(string)
 
   def isJSONNumeric(self, character):
     return (True if NUMERIC_CHAR.find(character) != - 1 else False)
@@ -280,12 +302,12 @@ class TJSONProtocolBase(TProtocolBase):
   def readJSONDouble(self):
     self.context.read()
     if self.reader.peek() == QUOTE:
-      string  = self.readJSONString(True)
+      string = self.readJSONString(True)
       try:
         double = float(string)
         if (self.context.escapeNum is False and
-            not math.isinf(double) and
-            not math.isnan(double)):
+           not math.isinf(double) and
+           not math.isnan(double)):
           raise TProtocolException(TProtocolException.INVALID_DATA,
                                    "Numeric data unexpectedly quoted")
         return double

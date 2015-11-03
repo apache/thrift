@@ -17,8 +17,10 @@
 # under the License.
 #
 
-from thrift.Thrift import *
+from thrift.Thrift import TException, TType
 import six
+
+from ..compat import binary_to_str, str_to_binary
 
 
 class TProtocolException(TException):
@@ -101,6 +103,9 @@ class TProtocolBase:
     pass
 
   def writeString(self, str_val):
+    self.writeBinary(str_to_binary(str_val))
+
+  def writeBinary(self, str_val):
     pass
 
   def readMessageBegin(self):
@@ -158,6 +163,9 @@ class TProtocolBase:
     pass
 
   def readString(self):
+    return binary_to_str(self.readBinary())
+
+  def readBinary(self):
     pass
 
   def skip(self, ttype):
@@ -403,6 +411,7 @@ class TProtocolBase:
     else:
       writer(val)
 
+
 def checkIntegerLimits(i, bits):
     if bits == 8 and (i < -128 or i > 127):
         raise TProtocolException(TProtocolException.INVALID_DATA,
@@ -416,6 +425,7 @@ def checkIntegerLimits(i, bits):
     elif bits == 64 and (i < -9223372036854775808 or i > 9223372036854775807):
          raise TProtocolException(TProtocolException.INVALID_DATA,
                                   "i64 requires -9223372036854775808 <= number <= 9223372036854775807")
+
 
 class TProtocolFactory:
   def getProtocol(self, trans):

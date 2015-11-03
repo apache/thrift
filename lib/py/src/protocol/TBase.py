@@ -17,7 +17,6 @@
 # under the License.
 #
 
-from thrift.Thrift import *
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TTransport
 
@@ -31,8 +30,7 @@ class TBase(object):
   __slots__ = []
 
   def __repr__(self):
-    L = ['%s=%r' % (key, getattr(self, key))
-              for key in self.__slots__]
+    L = ['%s=%r' % (key, getattr(self, key)) for key in self.__slots__]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
@@ -50,9 +48,9 @@ class TBase(object):
 
   def read(self, iprot):
     if (iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
-        isinstance(iprot.trans, TTransport.CReadableTransport) and
-        self.thrift_spec is not None and
-        fastbinary is not None):
+       isinstance(iprot.trans, TTransport.CReadableTransport) and
+       self.thrift_spec is not None and
+       fastbinary is not None):
       fastbinary.decode_binary(self,
                                iprot.trans,
                                (self.__class__, self.thrift_spec))
@@ -61,8 +59,8 @@ class TBase(object):
 
   def write(self, oprot):
     if (oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
-        self.thrift_spec is not None and
-        fastbinary is not None):
+       self.thrift_spec is not None and
+       fastbinary is not None):
       oprot.trans.write(
         fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
