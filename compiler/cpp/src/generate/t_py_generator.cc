@@ -969,11 +969,10 @@ void t_py_generator::generate_service(t_service* tservice) {
                << tservice->get_extends()->get_name() << endl;
   }
 
-  f_service_ <<
-    "import logging" << endl
-    "from .ttypes import *" << endl
-    "from thrift.Thrift import TProcessor" << endl
-    render_fastbinary_includes() << endl;
+  f_service_ << "import logging" << endl
+             << "from .ttypes import *" << endl
+             << "from thrift.Thrift import TProcessor" << endl
+             << render_fastbinary_includes() << endl;
 
   if (gen_twisted_) {
     f_service_ << "from zope.interface import Interface, implements" << endl
@@ -1884,7 +1883,7 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
                    << (*x_iter)->get_name() << ":" << endl;
         if (!tfunction->is_oneway()) {
           indent_up();
-          f_service_ << indent() << "msg_type = TMessageType.REPLY" << endl
+          f_service_ << indent() << "msg_type = TMessageType.REPLY" << endl;
           f_service_ << indent() << "result." << (*x_iter)->get_name() << " = "
                      << (*x_iter)->get_name() << endl;
           indent_down();
