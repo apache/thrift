@@ -701,8 +701,12 @@ string t_json_generator::get_type_name(t_type* ttype) {
   if (ttype->is_xception()) {
     return "exception";
   }
-  //if (ttype->is_base_type() && ((t_base_type*)ttype)->is_binary()) {
-  return "binary";
+  if (ttype->is_base_type()) {
+    t_base_type* tbasetype = (t_base_type*)ttype;
+    return tbasetype->is_binary() ? "binary" : t_base_type::t_base_name(tbasetype->get_base());
+  }
+
+  return "(unknown)";
 }
 
 string t_json_generator::get_qualified_name(t_type* ttype) {
