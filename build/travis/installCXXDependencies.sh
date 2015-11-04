@@ -24,6 +24,9 @@
 # General dependencies
 # sudo apt-add-repository "deb http://archive.ubuntu.com/ubuntu/ trusty main restricted" -y
 
+# clean up held packages
+sudo apt-get autoremove
+
 # for cmake-2.8.12 on precise
 sudo add-apt-repository ppa:smspillaz/cmake-2.8.12 -y
 
