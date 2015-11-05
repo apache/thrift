@@ -27,76 +27,75 @@
 #include <string>
 #include <map>
 
-namespace apache { namespace thrift { namespace async {
+namespace apache {
+namespace thrift {
+namespace async {
 
 class TConcurrentClientSyncInfo;
 
-class TConcurrentSendSentry
-{
+class TConcurrentSendSentry {
 public:
-  explicit TConcurrentSendSentry(TConcurrentClientSyncInfo *sync);
+  explicit TConcurrentSendSentry(TConcurrentClientSyncInfo* sync);
   ~TConcurrentSendSentry();
 
   void commit();
+
 private:
-  TConcurrentClientSyncInfo &sync_;
+  TConcurrentClientSyncInfo& sync_;
   bool committed_;
 };
 
-class TConcurrentRecvSentry
-{
+class TConcurrentRecvSentry {
 public:
-  TConcurrentRecvSentry(TConcurrentClientSyncInfo *sync, int32_t seqid);
+  TConcurrentRecvSentry(TConcurrentClientSyncInfo* sync, int32_t seqid);
   ~TConcurrentRecvSentry();
 
   void commit();
+
 private:
-  TConcurrentClientSyncInfo &sync_;
+  TConcurrentClientSyncInfo& sync_;
   int32_t seqid_;
   bool committed_;
 };
 
-class TConcurrentClientSyncInfo
-{
-private: //typedefs
+class TConcurrentClientSyncInfo {
+private: // typedefs
   typedef boost::shared_ptr< ::apache::thrift::concurrency::Monitor> MonitorPtr;
   typedef std::map<int32_t, MonitorPtr> MonitorMap;
+
 public:
   TConcurrentClientSyncInfo();
 
   int32_t generateSeqId();
 
-  bool getPending(
-    std::string &fname,
-    ::apache::thrift::protocol::TMessageType &mtype,
-    int32_t &rseqid); /* requires readMutex_ */
+  bool getPending(std::string& fname,
+                  ::apache::thrift::protocol::TMessageType& mtype,
+                  int32_t& rseqid); /* requires readMutex_ */
 
-  void updatePending(
-    const std::string &fname,
-    ::apache::thrift::protocol::TMessageType mtype,
-    int32_t rseqid); /* requires readMutex_ */
+  void updatePending(const std::string& fname,
+                     ::apache::thrift::protocol::TMessageType mtype,
+                     int32_t rseqid); /* requires readMutex_ */
 
   void waitForWork(int32_t seqid); /* requires readMutex_ */
 
-  ::apache::thrift::concurrency::Mutex &getReadMutex() {return readMutex_;}
-  ::apache::thrift::concurrency::Mutex &getWriteMutex() {return writeMutex_;}
+  ::apache::thrift::concurrency::Mutex& getReadMutex() { return readMutex_; }
+  ::apache::thrift::concurrency::Mutex& getWriteMutex() { return writeMutex_; }
 
-private: //constants
-  enum {MONITOR_CACHE_SIZE = 10};
-private: //functions
+private: // constants
+  enum { MONITOR_CACHE_SIZE = 10 };
+
+private: // functions
   MonitorPtr newMonitor_(
-    const ::apache::thrift::concurrency::Guard &seqidGuard); /* requires seqidMutex_ */
-  void deleteMonitor_(
-    const ::apache::thrift::concurrency::Guard &seqidGuard,
-    MonitorPtr &m); /*noexcept*/ /* requires seqidMutex_ */
+      const ::apache::thrift::concurrency::Guard& seqidGuard); /* requires seqidMutex_ */
+  void deleteMonitor_(const ::apache::thrift::concurrency::Guard& seqidGuard, MonitorPtr& m);
+      /*noexcept*/ /* requires seqidMutex_ */
   void wakeupAnyone_(
-    const ::apache::thrift::concurrency::Guard &seqidGuard); /* requires seqidMutex_ */
-  void markBad_(
-    const ::apache::thrift::concurrency::Guard &seqidGuard); /* requires seqidMutex_ */
+      const ::apache::thrift::concurrency::Guard& seqidGuard);           /* requires seqidMutex_ */
+  void markBad_(const ::apache::thrift::concurrency::Guard& seqidGuard); /* requires seqidMutex_ */
   void throwBadSeqId_();
   void throwDeadConnection_();
-private: //data members
 
+private: // data members
   volatile bool stop_;
 
   ::apache::thrift::concurrency::Mutex seqidMutex_;
@@ -117,11 +116,11 @@ private: //data members
   ::apache::thrift::protocol::TMessageType mtypePending_;
   // end readMutex_ protected members
 
-
   friend class TConcurrentSendSentry;
   friend class TConcurrentRecvSentry;
 };
-
-}}} // apache::thrift::async
+}
+}
+} // apache::thrift::async
 
 #endif // _THRIFT_TCONCURRENTCLIENTSYNCINFO_H_

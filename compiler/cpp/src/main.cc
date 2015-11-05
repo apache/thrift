@@ -642,19 +642,19 @@ void check_for_list_of_bytes(t_type* list_elem_type) {
   }
 }
 
-
 static bool g_byte_warning_emitted = false;
 
 /**
  * Emits a one-time warning on byte type, promoting the new i8 type instead
  */
 void emit_byte_type_warning() {
-  if( ! g_byte_warning_emitted) {
-    pwarning(1, "The \"byte\" type is a compatibility alias for \"i8\". Use \"i8\" to emphasize the signedness of this type.\n");
-	g_byte_warning_emitted = true;  
-  } 
+  if (!g_byte_warning_emitted) {
+    pwarning(1,
+             "The \"byte\" type is a compatibility alias for \"i8\". Use \"i8\" to emphasize the "
+             "signedness of this type.\n");
+    g_byte_warning_emitted = true;
+  }
 }
-
 
 /**
  * Prints the version number
@@ -1025,17 +1025,19 @@ void generate(t_program* program, const vector<string>& generator_strings) {
   }
 }
 
-void audit(t_program* new_program, t_program* old_program, string new_thrift_include_path, string old_thrift_include_path)
-{
+void audit(t_program* new_program,
+           t_program* old_program,
+           string new_thrift_include_path,
+           string old_thrift_include_path) {
   vector<string> temp_incl_searchpath = g_incl_searchpath;
-  if(!old_thrift_include_path.empty()) {
+  if (!old_thrift_include_path.empty()) {
     g_incl_searchpath.push_back(old_thrift_include_path);
   }
 
   parse(old_program, NULL);
 
   g_incl_searchpath = temp_incl_searchpath;
-  if(!new_thrift_include_path.empty()) {
+  if (!new_thrift_include_path.empty()) {
     g_incl_searchpath.push_back(new_thrift_include_path);
   }
 
@@ -1154,7 +1156,7 @@ int main(int argc, char** argv) {
           failure("Could not open input file with realpath: %s", arg);
         }
         old_input_file = string(old_thrift_file_rp);
-      } else if(strcmp(arg, "-audit-nofatal") == 0){
+      } else if (strcmp(arg, "-audit-nofatal") == 0) {
         g_audit_fatal = false;
       } else if (strcmp(arg, "-Iold") == 0) {
         arg = argv[++i];
@@ -1165,9 +1167,9 @@ int main(int argc, char** argv) {
         old_thrift_include_path = string(arg);
       } else if (strcmp(arg, "-Inew") == 0) {
         arg = argv[++i];
-        if(arg == NULL) {
-        fprintf(stderr, "Missing Include directory for new thrift file\n");
-        usage();
+        if (arg == NULL) {
+          fprintf(stderr, "Missing Include directory for new thrift file\n");
+          usage();
         }
         new_thrift_include_path = string(arg);
       } else {
@@ -1205,8 +1207,7 @@ int main(int argc, char** argv) {
   g_type_i64 = new t_base_type("i64", t_base_type::TYPE_I64);
   g_type_double = new t_base_type("double", t_base_type::TYPE_DOUBLE);
 
-  if(g_audit)
-  {
+  if (g_audit) {
     // Audit operation
 
     if (old_input_file.empty()) {
@@ -1231,7 +1232,7 @@ int main(int argc, char** argv) {
 
   } else {
     // Generate options
-    
+
     // You gotta generate something!
     if (generator_strings.empty()) {
       fprintf(stderr, "No output language(s) specified\n");

@@ -1625,11 +1625,10 @@ void t_cpp_generator::generate_service(t_service* tservice) {
 
   f_header_ << endl << ns_open_ << endl << endl;
 
-  f_header_ <<
-    "#ifdef _WIN32\n"
-    "  #pragma warning( push )\n"
-    "  #pragma warning (disable : 4250 ) //inheriting methods via dominance \n"
-    "#endif\n\n";
+  f_header_ << "#ifdef _WIN32\n"
+               "  #pragma warning( push )\n"
+               "  #pragma warning (disable : 4250 ) //inheriting methods via dominance \n"
+               "#endif\n\n";
 
   // Service implementation file includes
   string f_service_name = get_out_dir() + svcname + ".cpp";
@@ -1682,10 +1681,9 @@ void t_cpp_generator::generate_service(t_service* tservice) {
     generate_service_async_skeleton(tservice);
   }
 
-  f_header_ <<
-    "#ifdef _WIN32\n"
-    "  #pragma warning( pop )\n"
-    "#endif\n\n";
+  f_header_ << "#ifdef _WIN32\n"
+               "  #pragma warning( pop )\n"
+               "#endif\n\n";
 
   // Close the namespace
   f_service_ << ns_close_ << endl << endl;
@@ -2151,12 +2149,10 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
   }
 
   // Generate the header portion
-  if(style == "Concurrent")
-  {
-    f_header_ << 
-      "// The \'concurrent\' client is a thread safe client that correctly handles\n"
-      "// out of order responses.  It is slower than the regular client, so should\n"
-      "// only be used when you need to share a connection among multiple threads\n";
+  if (style == "Concurrent") {
+    f_header_ << "// The \'concurrent\' client is a thread safe client that correctly handles\n"
+                 "// out of order responses.  It is slower than the regular client, so should\n"
+                 "// only be used when you need to share a connection among multiple threads\n";
   }
   f_header_ << template_header << "class " << service_name_ << style << "Client" << short_suffix
             << " : "
@@ -2270,36 +2266,34 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     indent(f_header_) << function_signature(*f_iter, ifstyle) << ";" << endl;
     // TODO(dreiss): Use private inheritance to avoid generating thise in cob-style.
-    if(style == "Concurrent" && !(*f_iter)->is_oneway()) {
+    if (style == "Concurrent" && !(*f_iter)->is_oneway()) {
       // concurrent clients need to move the seqid from the send function to the
       // recv function.  Oneway methods don't have a recv function, so we don't need to
       // move the seqid for them.  Attempting to do so would result in a seqid leak.
       t_function send_function(g_type_i32, /*returning seqid*/
-          string("send_") + (*f_iter)->get_name(),
-          (*f_iter)->get_arglist());
+                               string("send_") + (*f_iter)->get_name(),
+                               (*f_iter)->get_arglist());
       indent(f_header_) << function_signature(&send_function, "") << ";" << endl;
-    }
-    else {
+    } else {
       t_function send_function(g_type_void,
-          string("send_") + (*f_iter)->get_name(),
-          (*f_iter)->get_arglist());
+                               string("send_") + (*f_iter)->get_name(),
+                               (*f_iter)->get_arglist());
       indent(f_header_) << function_signature(&send_function, "") << ";" << endl;
     }
     if (!(*f_iter)->is_oneway()) {
-      if(style == "Concurrent") {
+      if (style == "Concurrent") {
         t_field seqIdArg(g_type_i32, "seqid");
         t_struct seqIdArgStruct(program_);
         seqIdArgStruct.append(&seqIdArg);
         t_function recv_function((*f_iter)->get_returntype(),
-            string("recv_") + (*f_iter)->get_name(),
-            &seqIdArgStruct);
+                                 string("recv_") + (*f_iter)->get_name(),
+                                 &seqIdArgStruct);
         indent(f_header_) << function_signature(&recv_function, "") << ";" << endl;
-      }
-      else {
+      } else {
         t_struct noargs(program_);
         t_function recv_function((*f_iter)->get_returntype(),
-            string("recv_") + (*f_iter)->get_name(),
-            &noargs);
+                                 string("recv_") + (*f_iter)->get_name(),
+                                 &noargs);
         indent(f_header_) << function_signature(&recv_function, "") << ";" << endl;
       }
     }
@@ -2410,7 +2404,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
 
     // if (style != "Cob") // TODO(dreiss): Libify the client and don't generate this for cob-style
     if (true) {
-      t_type *send_func_return_type = g_type_void;
+      t_type* send_func_return_type = g_type_void;
       if (style == "Concurrent" && !(*f_iter)->is_oneway()) {
         send_func_return_type = g_type_i32;
       }
@@ -2431,7 +2425,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
       string resultname = tservice->get_name() + "_" + (*f_iter)->get_name() + "_presult";
 
       string cseqidVal = "0";
-      if(style == "Concurrent") {
+      if (style == "Concurrent") {
         if (!(*f_iter)->is_oneway()) {
           cseqidVal = "this->sync_.generateSeqId()";
         }
@@ -2461,13 +2455,10 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
           << "oprot_->getTransport()->flush();" << endl;
 
       if (style == "Concurrent") {
-        out <<
-          endl <<
-          indent() << "sentry.commit();" << endl;
+        out << endl << indent() << "sentry.commit();" << endl;
 
-        if(!(*f_iter)->is_oneway()) {
-          out <<
-            indent() << "return cseqid;" << endl;
+        if (!(*f_iter)->is_oneway()) {
+          out << indent() << "return cseqid;" << endl;
         }
       }
       scope_down(out);
@@ -2481,8 +2472,8 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
         t_struct seqIdArgStruct(program_);
         seqIdArgStruct.append(&seqIdArg);
 
-        t_struct *recv_function_args = &noargs;
-        if(style == "Concurrent") {
+        t_struct* recv_function_args = &noargs;
+        if (style == "Concurrent") {
           recv_function_args = &seqIdArgStruct;
         }
 
@@ -2653,7 +2644,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
                              "TApplicationException::MISSING_RESULT, \"" << (*f_iter)->get_name()
               << " failed: unknown result\");" << endl;
         }
-        if(style == "Concurrent") {
+        if (style == "Concurrent") {
           indent_down();
           indent_down();
           out <<

@@ -100,7 +100,7 @@ void check_for_list_of_bytes(t_type* list_elem_type);
  * Emits a one-time warning on byte type, promoting the new i8 type instead
  */
 void emit_byte_type_warning();
-	
+
 /**
  * Flex utilities
  */
