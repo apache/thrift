@@ -20,15 +20,17 @@
 #ifndef THRIFT_PROTOCOL_TPROTOCOLTYPES_H_
 #define THRIFT_PROTOCOL_TPROTOCOLTYPES_H_ 1
 
-namespace apache { namespace thrift { namespace protocol {
+namespace apache {
+namespace thrift {
+namespace protocol {
 
 enum PROTOCOL_TYPES {
   T_BINARY_PROTOCOL = 0,
   T_JSON_PROTOCOL = 1,
   T_COMPACT_PROTOCOL = 2,
 };
-
-}}} // apache::thrift::protocol
+}
+}
+} // apache::thrift::protocol
 
 #endif // #define _THRIFT_PROTOCOL_TPROTOCOLTYPES_H_ 1
-

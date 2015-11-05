@@ -394,7 +394,7 @@ void TNonblockingServer::TConnection::init(THRIFT_SOCKET socket,
   // Create protocol
   if (server_->getHeaderTransport()) {
     inputProtocol_ = server_->getInputProtocolFactory()->getProtocol(factoryInputTransport_,
-								     factoryOutputTransport_);
+                                                                     factoryOutputTransport_);
     outputProtocol_ = inputProtocol_;
   } else {
     inputProtocol_ = server_->getInputProtocolFactory()->getProtocol(factoryInputTransport_);
@@ -542,12 +542,11 @@ void TNonblockingServer::TConnection::workSocket() {
 }
 
 bool TNonblockingServer::getHeaderTransport() {
-  // Currently if there is no output protocol factory, 
+  // Currently if there is no output protocol factory,
   // we assume header transport (without having to create
   // a new transport and check)
   return getOutputProtocolFactory() == NULL;
 }
-
 
 /**
  * This is called when the application transitions from one state into
