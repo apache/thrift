@@ -30,7 +30,7 @@ sudo apt-get install -qq ant openjdk-7-jdk
 sudo update-java-alternatives -s java-1.7.0-openjdk-amd64
 
 # Python dependencies
-sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools python-support python-twisted
+sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools python-support python-twisted python-six python3-six
 
 # Ruby dependencies
 sudo apt-get install -qq ruby ruby-dev

@@ -28,12 +28,12 @@ import unittest
 
 basepath = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, basepath+'/gen-py.tornado')
-sys.path.insert(0, glob.glob(os.path.join(basepath, '../../lib/py/build/lib.*'))[0])
+sys.path.insert(0, glob.glob(os.path.join(basepath, '../../lib/py/build/lib*'))[0])
 
 try:
     __import__('tornado')
 except ImportError:
-    print "module `tornado` not found, skipping test"
+    print("module `tornado` not found, skipping test")
     sys.exit(0)
 
 from tornado import gen
@@ -188,9 +188,9 @@ class ThriftTestCase(AsyncTestCase):
         self.assertEqual(y.i64_thing, -5)
 
     def test_oneway(self):
-        self.client.testOneway(0.5)
+        self.client.testOneway(0)
         start, end, seconds = self.wait(timeout=1)
-        self.assertAlmostEquals(seconds, (end - start), places=3)
+        self.assertAlmostEqual(seconds, (end - start), places=3)
 
     @gen_test
     def test_map(self):

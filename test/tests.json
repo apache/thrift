@@ -202,6 +202,45 @@
     "workdir": "py"
   },
   {
+    "comment": "Using 'python3' executable to test py2 and 3 at once",
+    "name": "py3",
+    "server": {
+      "delay": 1,
+      "extra_args": ["TSimpleServer"],
+      "command": [
+        "python3",
+        "TestServer.py",
+        "--verbose",
+        "--libpydir=../../lib/py/build/lib",
+        "--genpydir=gen-py"
+      ]
+    },
+    "client": {
+      "timeout": 10,
+      "command": [
+        "python3",
+        "TestClient.py",
+        "--host=localhost",
+        "--libpydir=../../lib/py/build/lib",
+        "--genpydir=gen-py"
+      ]
+    },
+    "transports": [
+      "buffered",
+      "framed"
+    ],
+    "sockets": [
+      "ip-ssl",
+      "ip"
+    ],
+    "protocols": [
+      "compact",
+      "binary",
+      "json"
+    ],
+    "workdir": "py"
+  },
+  {
     "name": "cpp",
     "server": {
       "delay": 2,

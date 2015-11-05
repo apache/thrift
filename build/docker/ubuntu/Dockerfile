@@ -37,7 +37,7 @@ RUN apt-get install -y ant openjdk-7-jdk maven && \
 
 # Python dependencies
 RUN apt-get install -y python-all python-all-dev python-all-dbg python-setuptools python-support \
-    python-twisted python-zope.interface
+    python-twisted python-zope.interface python-six python3-six
 
 # Ruby dependencies
 RUN apt-get install -y ruby ruby-dev && \

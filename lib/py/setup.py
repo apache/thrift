@@ -19,6 +19,7 @@
 # under the License.
 #
 
+import platform
 import sys
 try:
     from setuptools import setup, Extension
@@ -69,7 +70,7 @@ def run_setup(with_binary):
         )
     else:
         extensions = dict()
-        
+
     setup(name = 'thrift',
         version = '1.0.0-dev',
         description = 'Python bindings for the Apache Thrift RPC system',
@@ -77,6 +78,7 @@ def run_setup(with_binary):
         author_email = 'dev@thrift.apache.org',
         url = 'http://thrift.apache.org',
         license = 'Apache License 2.0',
+        install_requires=['six>=1.7.2'],
         packages = [
             'thrift',
             'thrift.protocol',
@@ -90,15 +92,20 @@ def run_setup(with_binary):
             'Intended Audience :: Developers',
             'Programming Language :: Python',
             'Programming Language :: Python :: 2',
+            'Programming Language :: Python :: 3',
             'Topic :: Software Development :: Libraries',
             'Topic :: System :: Networking'
         ],
-        use_2to3 = True,
         **extensions
     )
 
 try:
-    run_setup(True)
+    with_binary = False
+    # Don't even try to build the C module unless we're on CPython 2.x.
+    # TODO: fix it for CPython 3.x
+    if platform.python_implementation() == 'CPython' and sys.version_info < (3,):
+        with_binary = True
+    run_setup(with_binary)
 except BuildFailed:
     print()
     print('*' * 80)
