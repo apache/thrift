@@ -51,8 +51,8 @@ public:
   // Constructs a new pipe object.
   TPipe();
   // Named pipe constructors -
-  explicit TPipe(HANDLE Pipe); // HANDLE is a void*
-  explicit TPipe(TAutoHandle &Pipe); // this ctor will clear out / move from Pipe
+  explicit TPipe(HANDLE Pipe);       // HANDLE is a void*
+  explicit TPipe(TAutoHandle& Pipe); // this ctor will clear out / move from Pipe
   // need a const char * overload so string literals don't go to the HANDLE overload
   explicit TPipe(const char* pipename);
   explicit TPipe(const std::string& pipename);

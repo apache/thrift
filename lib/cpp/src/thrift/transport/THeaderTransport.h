@@ -130,7 +130,7 @@ public:
   void readHeaderFormat(uint16_t headerSize, uint32_t sz);
 
   /**
-   * Untransform the data based on the recieved header flags
+   * Untransform the data based on the received header flags
    * On conclusion of function, setReadBuffer is called with the
    * untransformed data.
    *

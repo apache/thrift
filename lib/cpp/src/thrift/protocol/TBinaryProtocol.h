@@ -216,19 +216,17 @@ public:
     boost::shared_ptr<Transport_> specific_trans = boost::dynamic_pointer_cast<Transport_>(trans);
     TProtocol* prot;
     if (specific_trans) {
-      prot = new TBinaryProtocolT<Transport_, ByteOrder_>(
-        specific_trans,
-        string_limit_,
-        container_limit_,
-        strict_read_,
-        strict_write_);
+      prot = new TBinaryProtocolT<Transport_, ByteOrder_>(specific_trans,
+                                                          string_limit_,
+                                                          container_limit_,
+                                                          strict_read_,
+                                                          strict_write_);
     } else {
-      prot = new TBinaryProtocolT<TTransport, ByteOrder_>(
-        trans,
-        string_limit_,
-        container_limit_,
-        strict_read_,
-        strict_write_);
+      prot = new TBinaryProtocolT<TTransport, ByteOrder_>(trans,
+                                                          string_limit_,
+                                                          container_limit_,
+                                                          strict_read_,
+                                                          strict_write_);
     }
 
     return boost::shared_ptr<TProtocol>(prot);
