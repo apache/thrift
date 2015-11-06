@@ -243,7 +243,14 @@ class TJSONProtocolBase(TProtocolBase):
       raise TProtocolException(TProtocolException.INVALID_DATA,
                                "Unexpected character: %s" % current)
 
+  def _isHighSurrogate(self, codeunit):
+    return codeunit >= 0xd800 and codeunit <= 0xdbff
+
+  def _isLowSurrogate(self, codeunit):
+    return codeunit >= 0xdc00 and codeunit <= 0xdfff
+
   def readJSONString(self, skipContext):
+    highSurrogate = None
     string = []
     if skipContext is False:
       self.context.read()
@@ -255,7 +262,26 @@ class TJSONProtocolBase(TProtocolBase):
       if ord(character) == ESCSEQ0:
         character = self.reader.read()
         if ord(character) == ESCSEQ1:
-          character = chr(int(self.trans.read(4)))
+          if sys.version_info[0] == 2:
+            import json
+            character = self.trans.read(4)
+            codeunit = int(character, 16)
+            if self._isHighSurrogate(codeunit):
+              if highSurrogate:
+                raise TProtocolException(TProtocolException.INVALID_DATA,
+                                         "Expected low surrogate char")
+              highSurrogate = character
+              continue
+            elif self._isLowSurrogate(codeunit):
+              if not highSurrogate:
+                raise TProtocolException(TProtocolException.INVALID_DATA,
+                                         "Expected high surrogate char")
+              character = json.JSONDecoder().decode('"\\u%s\\u%s"' % (highSurrogate, character))
+              highSurrogate = None
+            else:
+              character = json.JSONDecoder().decode('"\\u%s"' % character)
+          else:
+              character = chr(int(self.trans.read(4)))
         else:
           if character not in ESCAPE_CHARS:
             raise TProtocolException(TProtocolException.INVALID_DATA,
@@ -270,6 +296,10 @@ class TJSONProtocolBase(TProtocolBase):
           utf8_bytes.append(ord(self.reader.read()))
         character = utf8_bytes.decode('utf8')
       string.append(character)
+
+      if highSurrogate:
+        raise TProtocolException(TProtocolException.INVALID_DATA,
+                                 "Expected low surrogate char")
     return ''.join(string)
 
   def isJSONNumeric(self, character):
