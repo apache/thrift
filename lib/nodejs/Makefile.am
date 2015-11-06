@@ -21,23 +21,24 @@ THRIFT = $(top_builddir)/compiler/cpp/thrift
 stubs: $(top_srcdir)/test/ThriftTest.thrift
 	$(THRIFT) --gen js:node -o test/ $(top_srcdir)/test/ThriftTest.thrift
 
-deps: $(top_srcdir)/package.json
-	$(NPM) install --no-bin-links $(top_srcdir)/
+deps: package.json
+	$(NPM) install --no-bin-links
 
 all-local: deps
 
 precross: deps stubs
 
 check: deps
-	cd $(top_srcdir) && $(NPM) test && cd lib/nodejs
+	$(NPM) test
 
 clean-local:
 	$(RM) -r test/gen-nodejs
-	$(RM) -r $(top_srcdir)/node_modules
+	$(RM) -r node_modules
 
 EXTRA_DIST = \
 	examples \
 	lib \
 	test \
 	coding_standards.md \
+	package.json \
 	README.md
