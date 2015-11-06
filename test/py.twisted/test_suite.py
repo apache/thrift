@@ -172,7 +172,7 @@ class ThriftTestCase(unittest.TestCase):
         try:
             yield self.client.testException('Xception')
             self.fail("should have gotten exception")
-        except Xception, x:
+        except Xception as x:
             self.assertEquals(x.errorCode, 1001)
             self.assertEquals(x.message, 'Xception')
 
