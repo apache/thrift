@@ -50,7 +50,7 @@ RUN yum install -y libboost-dev libevent-devel
 RUN yum install -y ant junit ant-nodeps ant-junit java-1.7.0-openjdk-devel
 
 # Python Dependencies
-RUN yum install -y python-devel python-setuptools python-twisted
+RUN yum install -y python-devel python-setuptools python-twisted python-six
 
 # Ruby Dependencies
 RUN yum install -y ruby ruby-devel rubygems && \
