@@ -18,7 +18,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-from __future__ import division
+from __future__ import division, print_function
 import glob
 import logging
 import os
@@ -53,7 +53,7 @@ parser.set_defaults(port=9090, verbose=1, proto='binary')
 options, args = parser.parse_args()
 
 script_dir = os.path.realpath(os.path.dirname(__file__))  # <-- absolute dir the script is in
-lib_dir = os.path.join(os.path.dirname(os.path.dirname(script_dir)), 'lib', 'py', 'build', 'lib.*')
+lib_dir = os.path.join(os.path.dirname(os.path.dirname(script_dir)), 'lib', 'py', 'build', 'lib*')
 
 sys.path.insert(0, os.path.join(script_dir, options.genpydir))
 sys.path.insert(0, glob.glob(lib_dir)[0])

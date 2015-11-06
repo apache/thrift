@@ -21,7 +21,7 @@
 
 import sys, glob
 sys.path.append('gen-py.twisted')
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
+sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])
 
 from tutorial import Calculator
 from tutorial.ttypes import *
@@ -37,10 +37,10 @@ from thrift.protocol import TBinaryProtocol
 @inlineCallbacks
 def main(client):
   yield client.ping()
-  print 'ping()'
+  print('ping()')
 
   sum = yield client.add(1,1)
-  print '1+1=%d' % (sum)
+  print(('1+1=%d' % (sum)))
 
   work = Work()
 
@@ -50,19 +50,19 @@ def main(client):
 
   try:
     quotient = yield client.calculate(1, work)
-    print 'Whoa? You know how to divide by zero?'
-  except InvalidOperation, io:
-    print 'InvalidOperation: %r' % io
+    print('Whoa? You know how to divide by zero?')
+  except InvalidOperation as e:
+    print(('InvalidOperation: %r' % e))
 
   work.op = Operation.SUBTRACT
   work.num1 = 15
   work.num2 = 10
 
   diff = yield client.calculate(1, work)
-  print '15-10=%d' % (diff)
+  print(('15-10=%d' % (diff)))
 
   log = yield client.getStruct(1)
-  print 'Check log: %s' % (log.value)
+  print(('Check log: %s' % (log.value)))
   reactor.stop()
 
 if __name__ == '__main__':

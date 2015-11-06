@@ -17,7 +17,7 @@
 # under the License.
 #
 
-import Queue
+from six.moves import queue
 import os
 import sys
 import threading
@@ -139,7 +139,7 @@ class TThreadPoolServer(TServer):
 
   def __init__(self, *args, **kwargs):
     TServer.__init__(self, *args)
-    self.clients = Queue.Queue()
+    self.clients = queue.Queue()
     self.threads = 10
     self.daemon = kwargs.get("daemon", False)
 
@@ -250,7 +250,7 @@ class TForkingServer(TServer):
             try:
               while True:
                 self.processor.process(iprot, oprot)
-            except TTransport.TTransportException as tx:
+            except TTransport.TTransportException:
               pass
             except Exception as e:
               logger.exception(e)
@@ -261,7 +261,7 @@ class TForkingServer(TServer):
 
           os._exit(ecode)
 
-      except TTransport.TTransportException as tx:
+      except TTransport.TTransportException:
         pass
       except Exception as x:
         logger.exception(x)
