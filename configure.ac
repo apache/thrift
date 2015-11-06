@@ -285,6 +285,16 @@ if test "$with_python" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_PYTHON, [test "$have_python" = "yes"])
 
+# Find "python3" executable.
+# It's distro specific and far from ideal but needed to cross test py2-3 at once.
+if test "x$have_python" = "xyes"; then
+  AC_PATH_PROG([PYTHON3], [python3])
+  if test "x$PYTHON3" != "x" && test "x$PYTHON3" != "x:" ; then
+    have_py3="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_PY3, [test "$have_py3" = "yes"])
+
 AX_THRIFT_LIB(perl, [Perl], yes)
 if test "$with_perl" = "yes"; then
   AC_PATH_PROG([PERL], [perl])
@@ -782,6 +792,8 @@ if test "$have_csharp" = "yes" ; then MAYBE_CSHARP="csharp" ; else MAYBE_CSHARP=
 AC_SUBST([MAYBE_CSHARP])
 if test "$have_python" = "yes" ; then MAYBE_PYTHON="py" ; else MAYBE_PYTHON="" ; fi
 AC_SUBST([MAYBE_PYTHON])
+if test "$have_py3" = "yes" ; then MAYBE_PY3="py3" ; else MAYBE_PY3="" ; fi
+AC_SUBST([MAYBE_PY3])
 if test "$have_ruby" = "yes" ; then MAYBE_RUBY="rb" ; else MAYBE_RUBY="" ; fi
 AC_SUBST([MAYBE_RUBY])
 if test "$have_haskell" = "yes" ; then MAYBE_HASKELL="hs" ; else MAYBE_HASKELL="" ; fi
