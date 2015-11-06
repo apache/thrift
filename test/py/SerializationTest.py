@@ -26,7 +26,7 @@ parser.add_option('--genpydir', type='string', dest='genpydir', default='gen-py'
 options, args = parser.parse_args()
 del sys.argv[1:] # clean up hack so unittest doesn't complain
 sys.path.insert(0, options.genpydir)
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
+sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])
 
 from ThriftTest.ttypes import *
 from DebugProtoTest.ttypes import CompactProtoTestStruct, Empty
@@ -305,7 +305,7 @@ class AcceleratedFramedTest(unittest.TestCase):
     prot.writeString(bigstring)
     prot.writeI16(24)
     data = databuf.getvalue()
-    cutpoint = len(data)/2
+    cutpoint = len(data) // 2
     parts = [ data[:cutpoint], data[cutpoint:] ]
 
     framed_buffer = TTransport.TMemoryBuffer()
@@ -346,14 +346,14 @@ class SerializersTest(unittest.TestCase):
     objcopy = Bools()
     deserialize(objcopy, serialize(obj))
     self.assertEquals(obj, objcopy)
-    
+
     # test enums
-    for num, name in Numberz._VALUES_TO_NAMES.iteritems():
+    for num, name in Numberz._VALUES_TO_NAMES.items():
       obj = Bonk(message='enum Numberz value %d is string %s' % (num, name), type=num)
       objcopy = Bonk()
       deserialize(objcopy, serialize(obj))
       self.assertEquals(obj, objcopy)
-  
+
 
 def suite():
   suite = unittest.TestSuite()

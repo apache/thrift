@@ -54,11 +54,11 @@ parser.set_defaults(framed=False, http_path=None, verbose=1, host='localhost', p
 options, args = parser.parse_args()
 
 script_dir = os.path.abspath(os.path.dirname(__file__))
-lib_dir = os.path.join(os.path.dirname(os.path.dirname(script_dir)), 'lib', 'py', 'build', 'lib.*')
+lib_dir = os.path.join(os.path.dirname(os.path.dirname(script_dir)), 'lib', 'py', 'build', 'lib*')
 sys.path.insert(0, os.path.join(script_dir, options.genpydir))
 sys.path.insert(0, glob.glob(lib_dir)[0])
 
-from ThriftTest import ThriftTest, SecondService
+from ThriftTest import ThriftTest
 from ThriftTest.ttypes import *
 from thrift.transport import TTransport
 from thrift.transport import TSocket
@@ -105,8 +105,8 @@ class AbstractTest(unittest.TestCase):
     print('testString')
     self.assertEqual(self.client.testString('Python' * 20), 'Python' * 20)
     self.assertEqual(self.client.testString(''), '')
-    self.assertEqual(self.client.testString(u'パイソン'.encode('utf8')), u'パイソン'.encode('utf8'))
-    s = u"""Afrikaans, Alemannisch, Aragonés, العربية, مصرى,
+    s1 = u'\b\t\n/\\\\\r{}:パイソン"'
+    s2 = u"""Afrikaans, Alemannisch, Aragonés, العربية, مصرى,
         Asturianu, Aymar aru, Azərbaycan, Башҡорт, Boarisch, Žemaitėška,
         Беларуская, Беларуская (тарашкевіца), Български, Bamanankan,
         বাংলা, Brezhoneg, Bosanski, Català, Mìng-dĕ̤ng-ngṳ̄, Нохчийн,
@@ -131,7 +131,11 @@ class AbstractTest(unittest.TestCase):
         Türkçe, Татарча/Tatarça, Українська, اردو, Tiếng Việt, Volapük,
         Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文,
         Bân-lâm-gú, 粵語"""
-    self.assertEqual(self.client.testString(s.encode('utf8')), s.encode('utf8'))
+    if sys.version_info[0] == 2:
+      s1 = s1.encode('utf8')
+      s2 = s2.encode('utf8')
+    self.assertEqual(self.client.testString(s1), s1)
+    self.assertEqual(self.client.testString(s2), s2)
 
   def testBool(self):
     print('testBool')
@@ -290,19 +294,23 @@ class AbstractTest(unittest.TestCase):
 class NormalBinaryTest(AbstractTest):
   protocol_factory = TBinaryProtocol.TBinaryProtocolFactory()
 
+
 class CompactTest(AbstractTest):
   protocol_factory = TCompactProtocol.TCompactProtocolFactory()
+
 
 class JSONTest(AbstractTest):
   protocol_factory = TJSONProtocol.TJSONProtocolFactory()
 
+
 class AcceleratedBinaryTest(AbstractTest):
   protocol_factory = TBinaryProtocol.TBinaryProtocolAcceleratedFactory()
+
 
 def suite():
   suite = unittest.TestSuite()
   loader = unittest.TestLoader()
-  if options.proto == 'binary': # look for --proto on cmdline
+  if options.proto == 'binary':  # look for --proto on cmdline
     suite.addTest(loader.loadTestsFromTestCase(NormalBinaryTest))
   elif options.proto == 'accel':
     suite.addTest(loader.loadTestsFromTestCase(AcceleratedBinaryTest))
@@ -313,6 +321,7 @@ def suite():
   else:
     raise AssertionError('Unknown protocol given with --protocol: %s' % options.proto)
   return suite
+
 
 class OwnArgsTestProgram(unittest.TestProgram):
     def parseArgs(self, argv):

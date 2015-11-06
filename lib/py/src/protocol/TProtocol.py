@@ -17,7 +17,10 @@
 # under the License.
 #
 
-from thrift.Thrift import *
+from thrift.Thrift import TException, TType
+import six
+
+from ..compat import binary_to_str, str_to_binary
 
 
 class TProtocolException(TException):
@@ -100,6 +103,9 @@ class TProtocolBase:
     pass
 
   def writeString(self, str_val):
+    self.writeBinary(str_to_binary(str_val))
+
+  def writeBinary(self, str_val):
     pass
 
   def readMessageBegin(self):
@@ -157,6 +163,9 @@ class TProtocolBase:
     pass
 
   def readString(self):
+    return binary_to_str(self.readBinary())
+
+  def readBinary(self):
     pass
 
   def skip(self, ttype):
@@ -187,18 +196,18 @@ class TProtocolBase:
       self.readStructEnd()
     elif ttype == TType.MAP:
       (ktype, vtype, size) = self.readMapBegin()
-      for i in xrange(size):
+      for i in range(size):
         self.skip(ktype)
         self.skip(vtype)
       self.readMapEnd()
     elif ttype == TType.SET:
       (etype, size) = self.readSetBegin()
-      for i in xrange(size):
+      for i in range(size):
         self.skip(etype)
       self.readSetEnd()
     elif ttype == TType.LIST:
       (etype, size) = self.readListBegin()
-      for i in xrange(size):
+      for i in range(size):
         self.skip(etype)
       self.readListEnd()
 
@@ -246,13 +255,13 @@ class TProtocolBase:
     (list_type, list_len) = self.readListBegin()
     if tspec is None:
       # list values are simple types
-      for idx in xrange(list_len):
+      for idx in range(list_len):
         results.append(reader())
     else:
       # this is like an inlined readFieldByTType
       container_reader = self._TTYPE_HANDLERS[list_type][0]
       val_reader = getattr(self, container_reader)
-      for idx in xrange(list_len):
+      for idx in range(list_len):
         val = val_reader(tspec)
         results.append(val)
     self.readListEnd()
@@ -266,12 +275,12 @@ class TProtocolBase:
     (set_type, set_len) = self.readSetBegin()
     if tspec is None:
       # set members are simple types
-      for idx in xrange(set_len):
+      for idx in range(set_len):
         results.add(reader())
     else:
       container_reader = self._TTYPE_HANDLERS[set_type][0]
       val_reader = getattr(self, container_reader)
-      for idx in xrange(set_len):
+      for idx in range(set_len):
         results.add(val_reader(tspec))
     self.readSetEnd()
     return results
@@ -292,7 +301,7 @@ class TProtocolBase:
     key_reader = getattr(self, self._TTYPE_HANDLERS[key_ttype][0])
     val_reader = getattr(self, self._TTYPE_HANDLERS[val_ttype][0])
     # list values are simple types
-    for idx in xrange(map_len):
+    for idx in range(map_len):
       if key_spec is None:
         k_val = key_reader()
       else:
@@ -363,7 +372,7 @@ class TProtocolBase:
     k_writer = getattr(self, ktype_name)
     v_writer = getattr(self, vtype_name)
     self.writeMapBegin(k_type, v_type, len(val))
-    for m_key, m_val in val.iteritems():
+    for m_key, m_val in six.iteritems(val):
       if not k_is_container:
         k_writer(m_key)
       else:
@@ -402,6 +411,7 @@ class TProtocolBase:
     else:
       writer(val)
 
+
 def checkIntegerLimits(i, bits):
     if bits == 8 and (i < -128 or i > 127):
         raise TProtocolException(TProtocolException.INVALID_DATA,
@@ -415,6 +425,7 @@ def checkIntegerLimits(i, bits):
     elif bits == 64 and (i < -9223372036854775808 or i > 9223372036854775807):
          raise TProtocolException(TProtocolException.INVALID_DATA,
                                   "i64 requires -9223372036854775808 <= number <= 9223372036854775807")
+
 
 class TProtocolFactory:
   def getProtocol(self, trans):

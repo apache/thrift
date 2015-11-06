@@ -21,7 +21,7 @@
 
 import sys, glob
 sys.path.append('gen-py')
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
+sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])
 
 from tutorial import Calculator
 from tutorial.ttypes import *
@@ -38,14 +38,14 @@ class CalculatorHandler:
     self.log = {}
 
   def ping(self):
-    print 'ping()'
+    print('ping()')
 
   def add(self, n1, n2):
-    print 'add(%d,%d)' % (n1, n2)
+    print('add(%d,%d)' % (n1, n2))
     return n1+n2
 
   def calculate(self, logid, work):
-    print 'calculate(%d, %r)' % (logid, work)
+    print('calculate(%d, %r)' % (logid, work))
 
     if work.op == Operation.ADD:
       val = work.num1 + work.num2
@@ -74,11 +74,11 @@ class CalculatorHandler:
     return val
 
   def getStruct(self, key):
-    print 'getStruct(%d)' % (key)
+    print('getStruct(%d)' % (key))
     return self.log[key]
 
   def zip(self):
-    print 'zip()'
+    print('zip()')
 
 handler = CalculatorHandler()
 processor = Calculator.Processor(handler)
@@ -92,6 +92,6 @@ server = TServer.TSimpleServer(processor, transport, tfactory, pfactory)
 #server = TServer.TThreadedServer(processor, transport, tfactory, pfactory)
 #server = TServer.TThreadPoolServer(processor, transport, tfactory, pfactory)
 
-print 'Starting the server...'
+print('Starting the server...')
 server.serve()
-print 'done.'
+print('done.')
