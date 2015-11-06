@@ -276,10 +276,10 @@ class TJSONProtocolBase(TProtocolBase):
               if not highSurrogate:
                 raise TProtocolException(TProtocolException.INVALID_DATA,
                                          "Expected high surrogate char")
-              character = json.JSONDecoder().decode('"\\u%s\\u%s"' % (highSurrogate, character))
+              character = json.JSONDecoder().decode('"\\u%s\\u%s"' % (highSurrogate, character)).encode('utf-8')
               highSurrogate = None
             else:
-              character = json.JSONDecoder().decode('"\\u%s"' % character)
+              character = json.JSONDecoder().decode('"\\u%s"' % character).encode('utf-8')
           else:
               character = chr(int(self.trans.read(4)))
         else:
