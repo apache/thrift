@@ -19,17 +19,7 @@
 # under the License.
 #
 
-import sys
-import glob
-from optparse import OptionParser
-parser = OptionParser()
-parser.add_option('--genpydir', type='string', dest='genpydir', default='gen-py')
-options, args = parser.parse_args()
-del sys.argv[1:] # clean up hack so unittest doesn't complain
-sys.path.insert(0, options.genpydir)
-sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])
-
-from ThriftTest.ttypes import *
+from ThriftTest.ttypes import Bonk, VersioningTestV1, VersioningTestV2
 from thrift.protocol import TJSONProtocol
 from thrift.transport import TTransport
 
@@ -40,7 +30,7 @@ import unittest
 class SimpleJSONProtocolTest(unittest.TestCase):
   protocol_factory = TJSONProtocol.TSimpleJSONProtocolFactory()
 
-  def _assertDictEqual(self, a ,b, msg=None):
+  def _assertDictEqual(self, a, b, msg=None):
     if hasattr(self, 'assertDictEqual'):
       # assertDictEqual only in Python 2.7. Depends on your machine.
       self.assertDictEqual(a, b, msg)
@@ -89,9 +79,9 @@ class SimpleJSONProtocolTest(unittest.TestCase):
           newlong=4,
           newdouble=5.0,
           newstruct=Bonk(message="Hello!", type=123),
-          newlist=[7,8,9],
-          newset=set([42,1,8]),
-          newmap={1:2,2:3},
+          newlist=[7, 8, 9],
+          newset=set([42, 1, 8]),
+          newmap={1: 2, 2: 3},
           newstring="Hola!",
           end_in_both=54321)
       expected = dict(begin_in_both=v2obj.begin_in_both,
@@ -116,4 +106,3 @@ class SimpleJSONProtocolTest(unittest.TestCase):
 
 if __name__ == '__main__':
   unittest.main()
-
