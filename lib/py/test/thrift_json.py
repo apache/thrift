@@ -15,7 +15,7 @@ import unittest
 class TestJSONString(unittest.TestCase):
 
   def test_escaped_unicode_string(self):
-    unicode_json = '"hello \\u0e01\\u0e02\\u0e03\\ud835\\udcab unicode"'
+    unicode_json = b'"hello \\u0e01\\u0e02\\u0e03\\ud835\\udcab unicode"'
     unicode_text = u'hello \u0e01\u0e02\u0e03\U0001D4AB unicode'
 
     buf = TTransport.TMemoryBuffer(unicode_json)

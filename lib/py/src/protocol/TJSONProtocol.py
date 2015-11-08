@@ -20,6 +20,7 @@
 from .TProtocol import TType, TProtocolBase, TProtocolException, checkIntegerLimits
 import base64
 import math
+import json
 import sys
 
 from ..compat import str_to_binary
@@ -262,26 +263,27 @@ class TJSONProtocolBase(TProtocolBase):
       if ord(character) == ESCSEQ0:
         character = self.reader.read()
         if ord(character) == ESCSEQ1:
-          if sys.version_info[0] == 2:
-            import json
-            character = self.trans.read(4)
-            codeunit = int(character, 16)
-            if self._isHighSurrogate(codeunit):
-              if highSurrogate:
-                raise TProtocolException(TProtocolException.INVALID_DATA,
-                                         "Expected low surrogate char")
-              highSurrogate = character
-              continue
-            elif self._isLowSurrogate(codeunit):
-              if not highSurrogate:
-                raise TProtocolException(TProtocolException.INVALID_DATA,
-                                         "Expected high surrogate char")
-              character = json.JSONDecoder().decode('"\\u%s\\u%s"' % (highSurrogate, character)).encode('utf-8')
-              highSurrogate = None
-            else:
-              character = json.JSONDecoder().decode('"\\u%s"' % character).encode('utf-8')
+          character = self.trans.read(4).decode('ascii')
+          codeunit = int(character, 16)
+          if self._isHighSurrogate(codeunit):
+            if highSurrogate:
+              raise TProtocolException(TProtocolException.INVALID_DATA,
+                                       "Expected low surrogate char")
+            highSurrogate = character
+            continue
+          elif self._isLowSurrogate(codeunit):
+            if not highSurrogate:
+              raise TProtocolException(TProtocolException.INVALID_DATA,
+                                       "Expected high surrogate char")
+            character = json.JSONDecoder().decode('"\\u%s\\u%s"' % (highSurrogate, character))
+            if sys.version_info[0] == 2:
+              character = character.encode('utf-8')
+            highSurrogate = None
           else:
-              character = chr(int(self.trans.read(4)))
+            if sys.version_info[0] == 2:
+              character = json.JSONDecoder().decode('"\\u%s"' % character).encode('utf-8')
+            else:
+              character = chr(codeunit)
         else:
           if character not in ESCAPE_CHARS:
             raise TProtocolException(TProtocolException.INVALID_DATA,
