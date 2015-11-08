@@ -249,6 +249,21 @@ class TJSONProtocolBase(TProtocolBase):
   def _isLowSurrogate(self, codeunit):
     return codeunit >= 0xdc00 and codeunit <= 0xdfff
 
+  def _toChar(self, high, low=None):
+    if not low:
+      if sys.version_info[0] == 2:
+        return ("\\u%04x" % high).decode('unicode-escape').encode('utf-8')
+      else:
+        return chr(high)
+    else:
+      codepoint = (1 << 16) + ((high & 0x3ff) << 10)
+      codepoint += low & 0x3ff
+      if sys.version_info[0] == 2:
+        s = "\\U%08x" % codepoint
+        return s.decode('unicode-escape').encode('utf-8')
+      else:
+        return chr(codepoint)
+
   def readJSONString(self, skipContext):
     highSurrogate = None
     string = []
@@ -262,26 +277,22 @@ class TJSONProtocolBase(TProtocolBase):
       if ord(character) == ESCSEQ0:
         character = self.reader.read()
         if ord(character) == ESCSEQ1:
-          if sys.version_info[0] == 2:
-            import json
-            character = self.trans.read(4)
-            codeunit = int(character, 16)
-            if self._isHighSurrogate(codeunit):
-              if highSurrogate:
-                raise TProtocolException(TProtocolException.INVALID_DATA,
-                                         "Expected low surrogate char")
-              highSurrogate = character
-              continue
-            elif self._isLowSurrogate(codeunit):
-              if not highSurrogate:
-                raise TProtocolException(TProtocolException.INVALID_DATA,
-                                         "Expected high surrogate char")
-              character = json.JSONDecoder().decode('"\\u%s\\u%s"' % (highSurrogate, character)).encode('utf-8')
-              highSurrogate = None
-            else:
-              character = json.JSONDecoder().decode('"\\u%s"' % character).encode('utf-8')
+          character = self.trans.read(4).decode('ascii')
+          codeunit = int(character, 16)
+          if self._isHighSurrogate(codeunit):
+            if highSurrogate:
+              raise TProtocolException(TProtocolException.INVALID_DATA,
+                                       "Expected low surrogate char")
+            highSurrogate = codeunit
+            continue
+          elif self._isLowSurrogate(codeunit):
+            if not highSurrogate:
+              raise TProtocolException(TProtocolException.INVALID_DATA,
+                                       "Expected high surrogate char")
+            character = self._toChar(highSurrogate, codeunit)
+            highSurrogate = None
           else:
-              character = chr(int(self.trans.read(4)))
+            character = self._toChar(codeunit)
         else:
           if character not in ESCAPE_CHARS:
             raise TProtocolException(TProtocolException.INVALID_DATA,
