@@ -20,7 +20,6 @@
 from .TProtocol import TType, TProtocolBase, TProtocolException, checkIntegerLimits
 import base64
 import math
-import json
 import sys
 
 from ..compat import str_to_binary
@@ -250,6 +249,22 @@ class TJSONProtocolBase(TProtocolBase):
   def _isLowSurrogate(self, codeunit):
     return codeunit >= 0xdc00 and codeunit <= 0xdfff
 
+  def _toChar(self, high, low = None):
+    if not low:
+      if sys.version_info[0] == 2:
+        return ("\\u%04x" % high).decode('unicode-escape').encode('utf-8')
+      else:
+        return chr(high)
+    else:
+      codepoint = ((high & 0x3c0) + 1) << 16  # 0b000000000001111000000
+      codepoint += (high & 0x3f) << 10        # 0b000000000000000111111
+      codepoint += low & 0x3ff                # 0b000000000001111111111
+      if sys.version_info[0] == 2:
+        s = "\\U%08x" % codepoint
+        return s.decode('unicode-escape').encode('utf-8')
+      else:
+        return chr(codepoint)
+
   def readJSONString(self, skipContext):
     highSurrogate = None
     string = []
@@ -269,21 +284,16 @@ class TJSONProtocolBase(TProtocolBase):
             if highSurrogate:
               raise TProtocolException(TProtocolException.INVALID_DATA,
                                        "Expected low surrogate char")
-            highSurrogate = character
+            highSurrogate = codeunit
             continue
           elif self._isLowSurrogate(codeunit):
             if not highSurrogate:
               raise TProtocolException(TProtocolException.INVALID_DATA,
                                        "Expected high surrogate char")
-            character = json.JSONDecoder().decode('"\\u%s\\u%s"' % (highSurrogate, character))
-            if sys.version_info[0] == 2:
-              character = character.encode('utf-8')
+            character = self._toChar(highSurrogate, codeunit)
             highSurrogate = None
           else:
-            if sys.version_info[0] == 2:
-              character = json.JSONDecoder().decode('"\\u%s"' % character).encode('utf-8')
-            else:
-              character = chr(codeunit)
+            character = self._toChar(codeunit)
         else:
           if character not in ESCAPE_CHARS:
             raise TProtocolException(TProtocolException.INVALID_DATA,
