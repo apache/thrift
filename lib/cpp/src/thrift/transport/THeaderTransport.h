@@ -28,7 +28,6 @@
 
 #include <bitset>
 #include <boost/scoped_array.hpp>
-#include <pwd.h>
 #include <unistd.h>
 
 // Don't include the unknown client.
