@@ -256,9 +256,8 @@ class TJSONProtocolBase(TProtocolBase):
       else:
         return chr(high)
     else:
-      codepoint = ((high & 0x3c0) + 1) << 16  # 0b000000000001111000000
-      codepoint += (high & 0x3f) << 10        # 0b000000000000000111111
-      codepoint += low & 0x3ff                # 0b000000000001111111111
+      codepoint = (1 << 16) + ((high & 0x3ff) << 10)
+      codepoint += low & 0x3ff
       if sys.version_info[0] == 2:
         s = "\\U%08x" % codepoint
         return s.decode('unicode-escape').encode('utf-8')
