@@ -1634,7 +1634,7 @@ void t_java_generator::generate_java_struct_parcelable(ofstream& out, t_struct* 
     } else if (type_name(t) == "float") {
       indent(out) << "out.writeFloat(" << name << ");" << endl;
     } else if (t->is_enum()) {
-      indent(out) << "out.writeInt(" << name << ".getValue());" << endl;
+      indent(out) << "out.writeInt(" << name << " != null ? " << name << ".getValue() : -1);" << endl;
     } else if (t->is_list()) {
       if (((t_list*)t)->get_elem_type()->get_true_type()->is_struct()) {
         indent(out) << "out.writeTypedList(" << name << ");" << endl;
