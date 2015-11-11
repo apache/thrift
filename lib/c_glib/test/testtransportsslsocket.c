@@ -146,6 +146,39 @@ test_ssl_open_and_close(void)
   g_error_free (error);
 }
 
+extern void print_cn_name(const char* label, X509_NAME* const name);
+
+gboolean my_access_manager(ThriftTransport * transport, X509 *cert, struct sockaddr_storage *addr, GError **error)
+{
+	ThriftSSLSocket *sslSocket = THRIFT_SSL_SOCKET (transport);
+
+	g_info("Processing access to the server");
+    X509_NAME* iname = cert ? X509_get_issuer_name(cert) : NULL;
+    X509_NAME* sname = cert ? X509_get_subject_name(cert) : NULL;
+
+    /* Issuer is the authority we trust that warrants nothing useful */
+    print_cn_name("Issuer (cn)", iname);
+
+    /* Subject is who the certificate is issued to by the authority  */
+    print_cn_name("Subject (cn)", sname);
+
+    char host[NI_MAXHOST];
+    getnameinfo((struct sockaddr *)addr,  sizeof(struct sockaddr_storage), host, sizeof(host), NULL, 0, NI_NUMERICHOST);
+    g_info("Host retrieved from network %s", host);
+    /* No documentation. See the source code for tls.h and s_client.c */
+    long res = SSL_set_tlsext_host_name(sslSocket->ssl, host);
+     if(!(1 == res))
+     {
+   	    unsigned long ssl_err = ERR_get_error();
+         /* Non-fatal, but who knows what cert might be served by an SNI server  */
+         /* (We know its the default site's cert in Apache and IIS...)           */
+     	g_info("%s failed: %lu (0x%lx)\n", "SSL_set_tlsext_host_name", ssl_err, ssl_err);
+     	return FALSE;
+     }
+     return TRUE;
+
+}
+
 static void
 test_ssl_read_and_write(void)
 {
@@ -171,20 +204,23 @@ test_ssl_read_and_write(void)
     /* parent connects, wait a bit for the socket to be created */
     sleep (1);
 
-    tSSLsocket = thrift_ssl_socket_new_with_host(SSLTLS, "owncloud.level2crm.com", port, &error);
+    tSSLsocket = thrift_ssl_socket_new_with_host(SSLTLS, "seglan.com", port, &error);
+
+
 
     transport = THRIFT_TRANSPORT (tSSLsocket);
     assert (thrift_ssl_socket_open (transport, NULL) == TRUE);
     assert (thrift_ssl_socket_is_open (transport));
+
     thrift_ssl_socket_write (transport, buf, 17, NULL);
 
     /* write fail */
     send_error = 1;
-    thrift_ssl_socket_write (transport, buf, 1, NULL);
-    send_error = 0;
+//    thrift_ssl_socket_write (transport, buf, 1, NULL);
+ //   send_error = 0;
 
-    thrift_ssl_socket_write_end (transport, NULL);
-    thrift_ssl_socket_flush (transport, NULL);
+//    thrift_ssl_socket_write_end (transport, NULL);
+//    thrift_ssl_socket_flush (transport, NULL);
     thrift_ssl_socket_close (transport, NULL);
     g_object_unref (tSSLsocket);
 
