@@ -332,42 +332,6 @@ thrift_ssl_socket_create_ssl_context(ThriftTransport * transport, GError **error
 	return TRUE;
 }
 
-//
-///**
-// * Print the common name of certificate
-// */
-//void print_cn_name(const char* label, X509_NAME* const name)
-//{
-//	int idx = -1, success = 0;
-//	unsigned char *utf8 = NULL;
-//
-//	do
-//	{
-//		if(!name) break; /* failed */
-//
-//		idx = X509_NAME_get_index_by_NID(name, NID_commonName, -1);
-//		if(!(idx > -1))  break; /* failed */
-//
-//		X509_NAME_ENTRY* entry = X509_NAME_get_entry(name, idx);
-//		if(!entry) break; /* failed */
-//
-//		ASN1_STRING* data = X509_NAME_ENTRY_get_data(entry);
-//		if(!data) break; /* failed */
-//
-//		int length = ASN1_STRING_to_UTF8(&utf8, data);
-//		if(!utf8 || !(length > 0))  break; /* failed */
-//
-//		g_info("  %s: %s", label, utf8);
-//		success = 1;
-//
-//	} while (0);
-//
-//	if(utf8)
-//		OPENSSL_free(utf8);
-//
-//	if(!success)
-//		g_info("  %s: <not available>", label);
-//}
 
 gboolean thrift_ssl_load_cert_from_buffer(ThriftSSLSocket *ssl_socket, const char chain_certs[])
 {
@@ -382,12 +346,12 @@ gboolean thrift_ssl_load_cert_from_buffer(ThriftSSLSocket *ssl_socket, const cha
 	if(cert_store!=NULL){
 		int index = 0;
 		while ((cacert = PEM_read_bio_X509(mem, NULL, 0, NULL))!=NULL) {
-//			X509_NAME* iname = cacert ? X509_get_issuer_name(cacert) : NULL;
-//			X509_NAME* sname = cacert ? X509_get_subject_name(cacert) : NULL;
-//			/* Issuer is the authority we trust that warrants nothing useful */
-//			print_cn_name("Issuer (cn)", iname);
-//			/* Subject is who the certificate is issued to by the authority  */
-//			print_cn_name("Subject (cn)", sname);
+			//			X509_NAME* iname = cacert ? X509_get_issuer_name(cacert) : NULL;
+			//			X509_NAME* sname = cacert ? X509_get_subject_name(cacert) : NULL;
+			//			/* Issuer is the authority we trust that warrants nothing useful */
+			//			print_cn_name("Issuer (cn)", iname);
+			//			/* Subject is who the certificate is issued to by the authority  */
+			//			print_cn_name("Subject (cn)", sname);
 			X509_STORE_add_cert(cert_store, cacert);
 			if(cacert) {
 				X509_free(cacert);
@@ -411,9 +375,9 @@ thrift_ssl_socket_authorize(ThriftTransport * transport, GError **error)
 	gboolean authorization_result = FALSE;
 	// We still don't support it
 	if(cls!=NULL && ssl_socket->ssl!=NULL){
-//		if(!thrift_ssl_load_cert_from_buffer(ssl_socket, chain_certs)){
-//			g_warning("Cannot load the certificate chain");
-//		}
+		//		if(!thrift_ssl_load_cert_from_buffer(ssl_socket, chain_certs)){
+		//			g_warning("Cannot load the certificate chain");
+		//		}
 		int rc = SSL_get_verify_result(ssl_socket->ssl);
 		if (rc != X509_V_OK) { // verify authentication result
 			g_warning("The certificate verification failed!: %s", X509_verify_cert_error_string(rc));
@@ -640,10 +604,10 @@ thrift_ssl_socket_new(ThriftSSLSocketProtocol ssl_protocol, GError **error)
 
 void thrift_ssl_socket_set_manager(ThriftSSLSocket *ssl_socket, AUTHORIZATION_MANAGER_CALLBACK callback)
 {
-ThriftSSLSocketClass *sslSocketClass = THRIFT_SSL_SOCKET_GET_CLASS (ssl_socket);
- if(sslSocketClass){
- 	sslSocketClass->authorize_peer = callback;
- }
+	ThriftSSLSocketClass *sslSocketClass = THRIFT_SSL_SOCKET_GET_CLASS (ssl_socket);
+	if(sslSocketClass){
+		sslSocketClass->authorize_peer = callback;
+	}
 }
 
 

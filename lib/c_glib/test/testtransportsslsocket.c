@@ -146,8 +146,43 @@ test_ssl_open_and_close(void)
   g_error_free (error);
 }
 
-extern void print_cn_name(const char* label, X509_NAME* const name);
 
+
+/**
+ * Print the common name of certificate
+ */
+void print_cn_name(const char* label, X509_NAME* const name)
+{
+	int idx = -1, success = 0;
+	unsigned char *utf8 = NULL;
+
+	do
+	{
+		if(!name) break; /* failed */
+
+		idx = X509_NAME_get_index_by_NID(name, NID_commonName, -1);
+		if(!(idx > -1))  break; /* failed */
+
+		X509_NAME_ENTRY* entry = X509_NAME_get_entry(name, idx);
+		if(!entry) break; /* failed */
+
+		ASN1_STRING* data = X509_NAME_ENTRY_get_data(entry);
+		if(!data) break; /* failed */
+
+		int length = ASN1_STRING_to_UTF8(&utf8, data);
+		if(!utf8 || !(length > 0))  break; /* failed */
+
+		g_info("  %s: %s", label, utf8);
+		success = 1;
+
+	} while (0);
+
+	if(utf8)
+		OPENSSL_free(utf8);
+
+	if(!success)
+		g_info("  %s: <not available>", label);
+}
 gboolean my_access_manager(ThriftTransport * transport, X509 *cert, struct sockaddr_storage *addr, GError **error)
 {
 	ThriftSSLSocket *sslSocket = THRIFT_SSL_SOCKET (transport);
@@ -204,8 +239,8 @@ test_ssl_read_and_write(void)
     /* parent connects, wait a bit for the socket to be created */
     sleep (1);
 
-    tSSLsocket = thrift_ssl_socket_new_with_host(SSLTLS, "seglan.com", port, &error);
-
+    tSSLsocket = thrift_ssl_socket_new_with_host(SSLTLS, "www.seglan.com", port, &error);
+    thrift_ssl_socket_set_manager(tSSLsocket, my_access_manager);
 
 
     transport = THRIFT_TRANSPORT (tSSLsocket);
