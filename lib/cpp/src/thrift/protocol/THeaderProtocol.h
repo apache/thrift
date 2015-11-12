@@ -25,10 +25,8 @@
 #include <thrift/protocol/TVirtualProtocol.h>
 #include <thrift/transport/THeaderTransport.h>
 
-#include <bitset>
-
 #include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
+
 using apache::thrift::transport::THeaderTransport;
 
 namespace apache {

@@ -21,10 +21,13 @@
 
 #include <thrift/protocol/THeaderProtocol.h>
 #include <thrift/protocol/TCompactProtocol.h>
+#include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/TApplicationException.h>
 
 #include <limits>
+
 #include <boost/static_assert.hpp>
+#include <boost/make_shared.hpp>
 
 namespace apache {
 namespace thrift {
