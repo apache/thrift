@@ -112,7 +112,8 @@ phptransport_DATA = \
 phptypedir = $(phpdir)/Type
 phptype_DATA = \
   lib/Thrift/Type/TMessageType.php \
-  lib/Thrift/Type/TType.php
+  lib/Thrift/Type/TType.php \
+  lib/Thrift/Type/TConstant.php
 
 EXTRA_DIST = \
   lib \
