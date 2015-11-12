@@ -20,12 +20,13 @@
 #include <thrift/transport/THeaderTransport.h>
 #include <thrift/TApplicationException.h>
 #include <thrift/protocol/TProtocolTypes.h>
+#include <thrift/protocol/TBinaryProtocol.h>
 
-#include <algorithm>
-#include <bitset>
+#include <utility>
 #include <cassert>
 #include <string>
 #include <zlib.h>
+#include <string.h>
 
 using std::map;
 using boost::shared_ptr;
