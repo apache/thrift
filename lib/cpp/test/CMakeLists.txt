@@ -92,7 +92,10 @@ if ( MSVC )
 endif ( MSVC )
 
 
-set( TInterruptTest_SOURCES TSocketInterruptTest.cpp )
+set( TInterruptTest_SOURCES
+     TSocketInterruptTest.cpp
+     TSSLSocketInterruptTest.cpp
+)
 if (WIN32)
     list(APPEND TInterruptTest_SOURCES
         TPipeInterruptTest.cpp
@@ -108,7 +111,7 @@ LINK_AGAINST_THRIFT_LIBRARY(TInterruptTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 target_link_libraries(TInterruptTest -lrt)
 endif ()
-add_test(NAME TInterruptTest COMMAND TInterruptTest)
+add_test(NAME TInterruptTest COMMAND TInterruptTest "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
 
 add_executable(TServerIntegrationTest TServerIntegrationTest.cpp)
 target_link_libraries(TServerIntegrationTest
