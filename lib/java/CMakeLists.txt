@@ -17,32 +17,50 @@
 # under the License.
 #
 
-if(IS_ABSOLUTE "${LIB_INSTALL_DIR}")
-    set(JAVA_INSTALL_DIR "${LIB_INSTALL_DIR}/java")
-else()
-    set(JAVA_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}/java")
-endif()
+file(GLOB java_sources src/**/*.java)
 
-if(IS_ABSOLUTE "${DOC_INSTALL_DIR}")
-    set(JAVA_DOC_INSTALL_DIR "${DOC_INSTALL_DIR}/java")
-else()
-    set(JAVA_DOC_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/${DOC_INSTALL_DIR}/java")
-endif()
+if(ANDROID)
+    set(android_sources
+        android/build.gradle
+        android/settings.gradle
+        android/src/main/AndroidManifest.xml
+    )
+    set(THRIFT_AAR outputs/aar/thrift-debug.aar outputs/aar/thrift-release.aar)
+    add_custom_command(
+        OUTPUT ${THRIFT_AAR}
+        COMMAND ${GRADLE_EXECUTABLE} -p${CMAKE_CURRENT_SOURCE_DIR}/android -PbuildDir=${CMAKE_CURRENT_BINARY_DIR} assemble
+        DEPENDS ${java_sources} ${android_sources})
+    add_custom_target(thrift_aar ALL DEPENDS ${THRIFT_AAR})
 
-add_custom_target(ant_build ALL
-    COMMAND ${Ant_EXECUTABLE} ${ANT_FLAGS} -Dbuild.dir=${CMAKE_CURRENT_BINARY_DIR} -Dworking.dir=${work_dir} -f build.xml
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMENT "Building Java library using Ant"
-)
+else(ANDROID)
 
-# Hook the ant install task into CMake install
-install(CODE "execute_process(
-    COMMAND ${Ant_EXECUTABLE} ${ANT_FLAGS} install
-    -Dbuild.dir=${CMAKE_CURRENT_BINARY_DIR} -Dworking.dir=${work_dir}
-    -Dinstall.path=${JAVA_INSTALL_DIR} -Dinstall.javadoc.path=${JAVA_DOC_INSTALL_DIR} -f build.xml
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)")
+    if(IS_ABSOLUTE "${LIB_INSTALL_DIR}")
+        set(JAVA_INSTALL_DIR "${LIB_INSTALL_DIR}/java")
+    else()
+        set(JAVA_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}/java")
+    endif()
 
-if(BUILD_TESTING)
-    #add_subdirectory(test)
-endif()
+    if(IS_ABSOLUTE "${DOC_INSTALL_DIR}")
+        set(JAVA_DOC_INSTALL_DIR "${DOC_INSTALL_DIR}/java")
+    else()
+        set(JAVA_DOC_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/${DOC_INSTALL_DIR}/java")
+    endif()
+
+    add_custom_target(ant_build ALL
+        COMMAND ${Ant_EXECUTABLE} ${ANT_FLAGS} -Dbuild.dir=${CMAKE_CURRENT_BINARY_DIR} -Dworking.dir=${work_dir} -f build.xml
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Building Java library using Ant"
+    )
+
+    # Hook the ant install task into CMake install
+    install(CODE "execute_process(
+        COMMAND ${Ant_EXECUTABLE} ${ANT_FLAGS} install
+        -Dbuild.dir=${CMAKE_CURRENT_BINARY_DIR} -Dworking.dir=${work_dir}
+        -Dinstall.path=${JAVA_INSTALL_DIR} -Dinstall.javadoc.path=${JAVA_DOC_INSTALL_DIR} -f build.xml
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )")
+
+    if(BUILD_TESTING)
+        #add_subdirectory(test)
+    endif()
+endif(ANDROID)
