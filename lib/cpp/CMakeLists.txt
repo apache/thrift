@@ -46,7 +46,6 @@ set( thriftcpp_SOURCES
    src/thrift/protocol/TJSONProtocol.cpp
    src/thrift/protocol/TMultiplexedProtocol.cpp
    src/thrift/protocol/TProtocol.cpp
-   src/thrift/protocol/THeaderProtocol.cpp
    src/thrift/transport/TTransportException.cpp
    src/thrift/transport/TFDTransport.cpp
    src/thrift/transport/TSimpleFileTransport.cpp
@@ -58,7 +57,6 @@ set( thriftcpp_SOURCES
    src/thrift/transport/TServerSocket.cpp
    src/thrift/transport/TTransportUtils.cpp
    src/thrift/transport/TBufferTransports.cpp
-   src/thrift/transport/THeaderTransport.cpp
    src/thrift/server/TConnectedClient.cpp
    src/thrift/server/TServerFramework.cpp
    src/thrift/server/TSimpleServer.cpp
@@ -119,7 +117,11 @@ if(WITH_BOOSTTHREADS)
     )
     list(APPEND SYSLIBS "${Boost_LIBRARIES}")
 elseif(UNIX AND NOT WITH_STDTHREADS)
-    list(APPEND SYSLIBS pthread)
+    if(ANDROID)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+    else()
+        list(APPEND SYSLIBS pthread)
+    endif()
     set( thriftcpp_threads_SOURCES
         src/thrift/concurrency/PosixThreadFactory.cpp
         src/thrift/concurrency/Mutex.cpp
@@ -127,8 +129,11 @@ elseif(UNIX AND NOT WITH_STDTHREADS)
     )
 else()
     if(UNIX)
-        # need pthread for multi-thread support
-        list(APPEND SYSLIBS pthread)
+        if(ANDROID)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+        else()
+            list(APPEND SYSLIBS pthread)
+        endif()
     endif()
     set( thriftcpp_threads_SOURCES
         src/thrift/concurrency/StdThreadFactory.cpp
@@ -148,6 +153,8 @@ set( thriftcppnb_SOURCES
 # Thrift zlib server
 set( thriftcppz_SOURCES
     src/thrift/transport/TZlibTransport.cpp
+    src/thrift/protocol/THeaderProtocol.cpp
+    src/thrift/transport/THeaderTransport.cpp
     src/thrift/protocol/THeaderProtocol.cpp
     src/thrift/transport/THeaderTransport.cpp
 )
