@@ -297,12 +297,16 @@ Header:
     {
       pdebug("Header -> Include");
     }
-| tok_namespace tok_identifier tok_identifier
+| tok_namespace tok_identifier tok_identifier TypeAnnotations
     {
       pdebug("Header -> tok_namespace tok_identifier tok_identifier");
       declare_valid_program_doctext();
       if (g_parse_mode == PROGRAM) {
         g_program->set_namespace($2, $3);
+      }
+      if ($4 != NULL) {
+        g_program->set_namespace_annotations($2, $4->annotations_);
+        delete $4;
       }
     }
 | tok_namespace '*' tok_identifier
