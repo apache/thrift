@@ -54,24 +54,25 @@ add_library(crossstressgencpp STATIC ${crossstressgencpp_SOURCES})
 LINK_AGAINST_THRIFT_LIBRARY(crossstressgencpp thrift)
 
 add_executable(TestServer src/TestServer.cpp)
-target_link_libraries(TestServer crosstestgencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB} ${ZLIB_LIBRARIES})
+target_link_libraries(TestServer crosstestgencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB})
 LINK_AGAINST_THRIFT_LIBRARY(TestServer thrift)
 LINK_AGAINST_THRIFT_LIBRARY(TestServer thriftnb)
-LINK_AGAINST_THRIFT_LIBRARY(TestServer thriftnb)
+LINK_AGAINST_THRIFT_LIBRARY(TestServer thriftz)
 
 add_executable(TestClient src/TestClient.cpp)
-target_link_libraries(TestClient crosstestgencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB} ${ZLIB_LIBRARIES})
+target_link_libraries(TestClient crosstestgencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB})
 LINK_AGAINST_THRIFT_LIBRARY(TestClient thrift)
 LINK_AGAINST_THRIFT_LIBRARY(TestClient thriftnb)
+LINK_AGAINST_THRIFT_LIBRARY(TestClient thriftz)
 
 add_executable(StressTest src/StressTest.cpp)
-target_link_libraries(StressTest crossstressgencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB} ${ZLIB_LIBRARIES})
+target_link_libraries(StressTest crossstressgencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB})
 LINK_AGAINST_THRIFT_LIBRARY(StressTest thrift)
 LINK_AGAINST_THRIFT_LIBRARY(StressTest thriftnb)
 add_test(NAME StressTest COMMAND StressTest)
 
 add_executable(StressTestNonBlocking src/StressTestNonBlocking.cpp)
-target_link_libraries(StressTestNonBlocking crossstressgencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB} ${ZLIB_LIBRARIES})
+target_link_libraries(StressTestNonBlocking crossstressgencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB})
 LINK_AGAINST_THRIFT_LIBRARY(StressTestNonBlocking thrift)
 LINK_AGAINST_THRIFT_LIBRARY(StressTestNonBlocking thriftnb)
 LINK_AGAINST_THRIFT_LIBRARY(StressTestNonBlocking thriftz)
@@ -82,9 +83,9 @@ add_test(NAME StressTestNonBlocking COMMAND StressTestNonBlocking)
 #
 
 add_custom_command(OUTPUT gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_constants.cpp
-    COMMAND thrift-compiler --gen cpp:templates,cob_style -r ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+    COMMAND ${THRIFT_COMPILER} --gen cpp:templates,cob_style -r ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
 )
 
 add_custom_command(OUTPUT gen-cpp/StressTest_types.cpp gen-cpp/StressTest_constants.cpp gen-cpp/Service.cpp
-    COMMAND thrift-compiler --gen cpp ${PROJECT_SOURCE_DIR}/test/StressTest.thrift
+    COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/StressTest.thrift
 )
