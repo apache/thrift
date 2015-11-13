@@ -123,6 +123,8 @@ public:
 protected:
   boost::shared_ptr<TTransport> acceptImpl();
   virtual boost::shared_ptr<TSocket> createSocket(THRIFT_SOCKET client);
+  bool interruptableChildren_;
+  boost::shared_ptr<THRIFT_SOCKET> pChildInterruptSockReader_; // if interruptableChildren_ this is shared with child TSockets
 
 private:
   void notify(THRIFT_SOCKET notifySock);
@@ -140,13 +142,11 @@ private:
   int tcpSendBuffer_;
   int tcpRecvBuffer_;
   bool keepAlive_;
-  bool interruptableChildren_;
   bool listening_;
 
   THRIFT_SOCKET interruptSockWriter_;                          // is notified on interrupt()
   THRIFT_SOCKET interruptSockReader_;                          // is used in select/poll with serverSocket_ for interruptability
   THRIFT_SOCKET childInterruptSockWriter_;                     // is notified on interruptChildren()
-  boost::shared_ptr<THRIFT_SOCKET> pChildInterruptSockReader_; // if interruptableChildren_ this is shared with child TSockets
 
   socket_func_t listenCallback_;
   socket_func_t acceptCallback_;
