@@ -39,7 +39,7 @@ add_library(tutorialgencpp STATIC ${tutorialgencpp_SOURCES})
 LINK_AGAINST_THRIFT_LIBRARY(tutorialgencpp thrift)
 
 add_custom_command(OUTPUT gen-cpp/Calculator.cpp gen-cpp/SharedService.cpp gen-cpp/shared_constants.cpp gen-cpp/shared_types.cpp gen-cpp/tutorial_constants.cpp gen-cpp/tutorial_types.cpp
-    COMMAND thrift-compiler --gen cpp -r ${PROJECT_SOURCE_DIR}/tutorial/tutorial.thrift
+    COMMAND ${THRIFT_COMPILER} --gen cpp -r ${PROJECT_SOURCE_DIR}/tutorial/tutorial.thrift
 )
 
 add_executable(TutorialServer CppServer.cpp)

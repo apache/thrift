@@ -99,9 +99,9 @@ set(hs_test_gen_sources
     ${PROJECT_SOURCE_DIR}/test/Include.thrift
 )
 add_custom_command(OUTPUT ${hs_test_gen}
-    COMMAND thrift-compiler --gen hs ${PROJECT_SOURCE_DIR}/test/ConstantsDemo.thrift
-    COMMAND thrift-compiler --gen hs ${PROJECT_SOURCE_DIR}/test/DebugProtoTest.thrift
-    COMMAND thrift-compiler --gen hs ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
-    COMMAND thrift-compiler --gen hs ${PROJECT_SOURCE_DIR}/test/Include.thrift
-    DEPENDS thrift-compiler ${hs_test_gen_sources}
+    COMMAND ${THRIFT_COMPILER} --gen hs ${PROJECT_SOURCE_DIR}/test/ConstantsDemo.thrift
+    COMMAND ${THRIFT_COMPILER} --gen hs ${PROJECT_SOURCE_DIR}/test/DebugProtoTest.thrift
+    COMMAND ${THRIFT_COMPILER} --gen hs ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+    COMMAND ${THRIFT_COMPILER} --gen hs ${PROJECT_SOURCE_DIR}/test/Include.thrift
+    DEPENDS ${hs_test_gen_sources}
 )

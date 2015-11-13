@@ -18,13 +18,13 @@
 #
 
 
-#  ANT_FOUND - system has Ant
-#  Ant_EXECUTABLE - the Ant executable
+#  GRADLE_FOUND - system has Gradle
+#  GRADLE_EXECUTABLE - the Gradle executable
 #
 # It will search the environment variable ANT_HOME if it is set
 
 include(FindPackageHandleStandardArgs)
 
-find_program(Ant_EXECUTABLE NAMES ant PATHS $ENV{ANT_HOME}/bin)
-find_package_handle_standard_args(Ant DEFAULT_MSG Ant_EXECUTABLE)
-mark_as_advanced(Ant_EXECUTABLE)
+find_program(GRADLE_EXECUTABLE NAMES gradle PATHS $ENV{GRADLE_HOME}/bin NO_CMAKE_FIND_ROOT_PATH)
+find_package_handle_standard_args(Gradle DEFAULT_MSG GRADLE_EXECUTABLE)
+mark_as_advanced(GRADLE_EXECUTABLE)
