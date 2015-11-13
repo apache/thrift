@@ -260,6 +260,11 @@ void t_xsd_generator::generate_service(t_service* tservice) {
   f_xsd_.open(f_xsd_name.c_str());
 
   string ns = program_->get_namespace("xsd");
+  const std::map<std::string, std::string> annot = program_->get_namespace_annotations("xsd");
+  const std::map<std::string, std::string>::const_iterator uri = annot.find("uri");
+  if (uri != annot.end()) {
+    ns = uri->second;
+  }
   if (ns.size() > 0) {
     ns = " targetNamespace=\"" + ns + "\" xmlns=\"" + ns + "\" "
          + "elementFormDefault=\"qualified\"";
