@@ -123,6 +123,7 @@ public:
 protected:
   boost::shared_ptr<TTransport> acceptImpl();
   virtual boost::shared_ptr<TSocket> createSocket(THRIFT_SOCKET client);
+  boost::shared_ptr<THRIFT_SOCKET> getInterruptSocket();
 
 private:
   void notify(THRIFT_SOCKET notifySock);

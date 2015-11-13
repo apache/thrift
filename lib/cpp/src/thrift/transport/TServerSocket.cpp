@@ -659,6 +659,10 @@ shared_ptr<TSocket> TServerSocket::createSocket(THRIFT_SOCKET clientSocket) {
   }
 }
 
+boost::shared_ptr<THRIFT_SOCKET> TServerSocket::getInterruptSocket() {
+    return pChildInterruptSockReader_;
+}
+
 void TServerSocket::notify(THRIFT_SOCKET notifySocket) {
   if (notifySocket != THRIFT_INVALID_SOCKET) {
     int8_t byte = 0;
