@@ -233,13 +233,14 @@ AX_THRIFT_LIB(erlang, [Erlang], yes)
 if test "$with_erlang" = "yes";  then
   AC_ERLANG_PATH_ERL
   AC_ERLANG_PATH_ERLC
+  AC_PATH_PROG([REBAR], [rebar])
   if test -n "$ERLC" ; then
     AC_ERLANG_SUBST_LIB_DIR
     # Install into the detected Erlang directory instead of $libdir/erlang/lib
     ERLANG_INSTALL_LIB_DIR="$ERLANG_LIB_DIR"
     AC_ERLANG_SUBST_INSTALL_LIB_SUBDIR(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
   fi
-  if test -n "$ERL" -a -n "$ERLC" ; then
+  if test -n "$ERL" -a -n "$ERLC" && test "x$REBAR" != "x" ; then
     have_erlang="yes"
 
     # otp_release is simply a number (like "17") for OTP17+ while "R16..." for OTP16 or less.
@@ -897,6 +898,7 @@ if test "$have_erlang" = "yes" ; then
   echo
   echo "Erlang Library:"
   echo "   Using erlc ................ : $ERLC"
+  echo "   Using rebar ............... : $REBAR"
 fi
 if test "$have_go" = "yes" ; then
   echo

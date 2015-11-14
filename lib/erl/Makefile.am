@@ -41,13 +41,13 @@ endif
 	touch .generated
 
 all: .generated
-	./rebar get-deps
-	./rebar compile
+	$(REBAR) get-deps
+	$(REBAR) compile
 
 check: .generated
-	./rebar -C rebar.test.config get-deps
-	./rebar -C rebar.test.config compile
-	./rebar -C rebar.test.config skip_deps=true eunit
+	$(REBAR) -C rebar.test.config get-deps
+	$(REBAR) -C rebar.test.config compile
+	$(REBAR) -C rebar.test.config skip_deps=true eunit
 
 install: all
 	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift) ; \
@@ -64,7 +64,7 @@ uninstall:
 clean:
 	rm -f .generated
 	rm -rf test/gen-erl/
-	./rebar clean
+	$(REBAR) clean
 
 maintainer-clean-local:
 	rm -rf ebin
@@ -73,7 +73,6 @@ EXTRA_DIST = \
 	include \
 	src \
 	coding_standards.md \
-	rebar \
 	rebar.config \
 	test \
 	README.md
