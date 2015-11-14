@@ -381,7 +381,7 @@ private:
   std::map<std::string, std::string> namespaces_;
 
   // Annotations for dynamic namespaces
-  std::map<std::string, std::map<std::string, std::string>> namespace_annotations_;
+  std::map<std::string, std::map<std::string, std::string> > namespace_annotations_;
 
   // C++ extra includes
   std::vector<std::string> cpp_includes_;
