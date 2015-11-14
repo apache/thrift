@@ -1944,7 +1944,9 @@ void t_py_generator::generate_deserialize_field(ofstream& out,
         throw "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        if (((t_base_type*)type)->is_binary() || !gen_utf8strings_) {
+        if (((t_base_type*)type)->is_binary()) {
+          out << "readBinary()";
+        } else if(!gen_utf8strings_) {
           out << "readString()";
         } else {
           out << "readString().decode('utf-8')";
@@ -2117,7 +2119,9 @@ void t_py_generator::generate_serialize_field(ofstream& out, t_field* tfield, st
         throw "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        if (((t_base_type*)type)->is_binary() || !gen_utf8strings_) {
+        if (((t_base_type*)type)->is_binary()) {
+          out << "writeBinary(" << name << ")";
+        } else if (!gen_utf8strings_) {
           out << "writeString(" << name << ")";
         } else {
           out << "writeString(" << name << ".encode('utf-8'))";
@@ -2455,8 +2459,10 @@ string t_py_generator::type_to_spec_args(t_type* ttype) {
     ttype = ((t_typedef*)ttype)->get_type();
   }
 
-  if (ttype->is_base_type() || ttype->is_enum()) {
-    return "None";
+  if (ttype->is_base_type() && reinterpret_cast<t_base_type*>(ttype)->is_binary()) {
+    return  "'BINARY'";
+  } else if (ttype->is_base_type() || ttype->is_enum()) {
+    return  "None";
   } else if (ttype->is_struct() || ttype->is_xception()) {
     return "(" + type_name(ttype) + ", " + type_name(ttype) + ".thrift_spec)";
   } else if (ttype->is_map()) {

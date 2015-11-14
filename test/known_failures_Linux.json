@@ -1,8 +1,4 @@
 [
-  "c_glib-py_binary-accel_buffered-ip",
-  "c_glib-py_binary-accel_framed-ip",
-  "c_glib-py_binary_buffered-ip",
-  "c_glib-py_binary_framed-ip",
   "c_glib-rb_binary-accel_buffered-ip",
   "c_glib-rb_binary-accel_framed-ip",
   "c_glib-rb_binary_buffered-ip",

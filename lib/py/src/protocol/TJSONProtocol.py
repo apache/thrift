@@ -362,6 +362,12 @@ class TJSONProtocolBase(TProtocolBase):
 
   def readJSONBase64(self):
     string = self.readJSONString(False)
+    size = len(string)
+    m = size % 4
+    # Force padding since b64encode method does not allow it
+    if m != 0:
+      for i in range(4 - m):
+        string += '='
     return base64.b64decode(string)
 
   def readJSONObjectStart(self):

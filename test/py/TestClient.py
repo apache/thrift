@@ -126,8 +126,6 @@ class AbstractTest(unittest.TestCase):
     self.assertEqual(self.client.testDouble(-0.000341012439638598279), -0.000341012439638598279)
 
   def testBinary(self):
-    if isinstance(self, JSONTest):
-      self.skipTest('JSON protocol does not handle binary correctly.')
     print('testBinary')
     val = bytearray([i for i in range(0, 256)])
     self.assertEqual(bytearray(self.client.testBinary(bytes(val))), val)
