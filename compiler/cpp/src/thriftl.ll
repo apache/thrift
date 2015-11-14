@@ -134,23 +134,23 @@ literal_begin (['\"])
 "true"               { yylval.iconst=1; return tok_int_constant; }
 
 "namespace"          { return tok_namespace;            }
-"cpp_namespace"      { return tok_cpp_namespace;        }
+"cpp_namespace"      { error_unsupported_namespace_decl("cpp"); /* do nothing */ }
 "cpp_include"        { return tok_cpp_include;          }
 "cpp_type"           { return tok_cpp_type;             }
-"java_package"       { return tok_java_package;         }
-"cocoa_prefix"       { return tok_cocoa_prefix;         }
-"csharp_namespace"   { return tok_csharp_namespace;     }
-"delphi_namespace"   { return tok_delphi_namespace;     }
-"php_namespace"      { return tok_php_namespace;        }
-"py_module"          { return tok_py_module;            }
-"perl_package"       { return tok_perl_package;         }
-"ruby_namespace"     { return tok_ruby_namespace;       }
-"smalltalk_category" { return tok_smalltalk_category;   }
-"smalltalk_prefix"   { return tok_smalltalk_prefix;     }
+"java_package"       { error_unsupported_namespace_decl("java_package", "java"); /* do nothing */ }
+"cocoa_prefix"       { error_unsupported_namespace_decl("cocoa_prefix", "cocoa"); /* do nothing */ }
+"csharp_namespace"   { error_unsupported_namespace_decl("csharp"); /* do nothing */ }
+"delphi_namespace"   { error_unsupported_namespace_decl("delphi"); /* do nothing */ }
+"php_namespace"      { error_unsupported_namespace_decl("php"); /* do nothing */ }
+"py_module"          { error_unsupported_namespace_decl("py_module", "py"); /* do nothing */ }
+"perl_package"       { error_unsupported_namespace_decl("perl_package", "perl"); /* do nothing */ }
+"ruby_namespace"     { error_unsupported_namespace_decl("ruby"); /* do nothing */ }
+"smalltalk_category" { error_unsupported_namespace_decl("smalltalk_category", "smalltalk.category"); /* do nothing */ }
+"smalltalk_prefix"   { error_unsupported_namespace_decl("smalltalk_category", "smalltalk.category"); /* do nothing */ }
 "xsd_all"            { return tok_xsd_all;              }
 "xsd_optional"       { return tok_xsd_optional;         }
 "xsd_nillable"       { return tok_xsd_nillable;         }
-"xsd_namespace"      { return tok_xsd_namespace;        }
+"xsd_namespace"      { error_unsupported_namespace_decl("xsd"); /* do nothing */ }
 "xsd_attrs"          { return tok_xsd_attrs;            }
 "include"            { return tok_include;              }
 "void"               { return tok_void;                 }
