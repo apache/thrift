@@ -112,24 +112,12 @@ const int struct_is_union = 1;
  */
 %token tok_include
 %token tok_namespace
-%token tok_cpp_namespace
 %token tok_cpp_include
 %token tok_cpp_type
-%token tok_php_namespace
-%token tok_py_module
-%token tok_perl_package
-%token tok_java_package
 %token tok_xsd_all
 %token tok_xsd_optional
 %token tok_xsd_nillable
-%token tok_xsd_namespace
 %token tok_xsd_attrs
-%token tok_ruby_namespace
-%token tok_smalltalk_category
-%token tok_smalltalk_prefix
-%token tok_cocoa_prefix
-%token tok_csharp_namespace
-%token tok_delphi_namespace
 
 /**
  * Base datatype keywords
@@ -317,16 +305,6 @@ Header:
         g_program->set_namespace("*", $3);
       }
     }
-/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
-| tok_cpp_namespace tok_identifier
-    {
-      pwarning(1, "'cpp_namespace' is deprecated. Use 'namespace cpp' instead");
-      pdebug("Header -> tok_cpp_namespace tok_identifier");
-      declare_valid_program_doctext();
-      if (g_parse_mode == PROGRAM) {
-        g_program->set_namespace("cpp", $2);
-      }
-    }
 | tok_cpp_include tok_literal
     {
       pdebug("Header -> tok_cpp_include tok_literal");
@@ -335,115 +313,6 @@ Header:
         g_program->add_cpp_include($2);
       }
     }
-| tok_php_namespace tok_identifier
-    {
-      pwarning(1, "'php_namespace' is deprecated. Use 'namespace php' instead");
-      pdebug("Header -> tok_php_namespace tok_identifier");
-      declare_valid_program_doctext();
-      if (g_parse_mode == PROGRAM) {
-        g_program->set_namespace("php", $2);
-      }
-    }
-/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
-| tok_py_module tok_identifier
-    {
-      pwarning(1, "'py_module' is deprecated. Use 'namespace py' instead");
-      pdebug("Header -> tok_py_module tok_identifier");
-      declare_valid_program_doctext();
-      if (g_parse_mode == PROGRAM) {
-        g_program->set_namespace("py", $2);
-      }
-    }
-/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
-| tok_perl_package tok_identifier
-    {
-      pwarning(1, "'perl_package' is deprecated. Use 'namespace perl' instead");
-      pdebug("Header -> tok_perl_namespace tok_identifier");
-      declare_valid_program_doctext();
-      if (g_parse_mode == PROGRAM) {
-        g_program->set_namespace("perl", $2);
-      }
-    }
-/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
-| tok_ruby_namespace tok_identifier
-    {
-      pwarning(1, "'ruby_namespace' is deprecated. Use 'namespace rb' instead");
-      pdebug("Header -> tok_ruby_namespace tok_identifier");
-      declare_valid_program_doctext();
-      if (g_parse_mode == PROGRAM) {
-        g_program->set_namespace("rb", $2);
-      }
-    }
-/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
-| tok_smalltalk_category tok_st_identifier
-    {
-      pwarning(1, "'smalltalk_category' is deprecated. Use 'namespace smalltalk.category' instead");
-      pdebug("Header -> tok_smalltalk_category tok_st_identifier");
-      declare_valid_program_doctext();
-      if (g_parse_mode == PROGRAM) {
-        g_program->set_namespace("smalltalk.category", $2);
-      }
-    }
-/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
-| tok_smalltalk_prefix tok_identifier
-    {
-      pwarning(1, "'smalltalk_prefix' is deprecated. Use 'namespace smalltalk.prefix' instead");
-      pdebug("Header -> tok_smalltalk_prefix tok_identifier");
-      declare_valid_program_doctext();
-      if (g_parse_mode == PROGRAM) {
-        g_program->set_namespace("smalltalk.prefix", $2);
-      }
-    }
-/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
-| tok_java_package tok_identifier
-    {
-      pwarning(1, "'java_package' is deprecated. Use 'namespace java' instead");
-      pdebug("Header -> tok_java_package tok_identifier");
-      declare_valid_program_doctext();
-      if (g_parse_mode == PROGRAM) {
-        g_program->set_namespace("java", $2);
-      }
-    }
-/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
-| tok_cocoa_prefix tok_identifier
-    {
-      pwarning(1, "'cocoa_prefix' is deprecated. Use 'namespace cocoa' instead");
-      pdebug("Header -> tok_cocoa_prefix tok_identifier");
-      declare_valid_program_doctext();
-      if (g_parse_mode == PROGRAM) {
-        g_program->set_namespace("cocoa", $2);
-      }
-    }
-/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
-| tok_xsd_namespace tok_literal
-    {
-      pwarning(1, "'xsd_namespace' is deprecated. Use 'namespace xsd' instead");
-      pdebug("Header -> tok_xsd_namespace tok_literal");
-      declare_valid_program_doctext();
-      if (g_parse_mode == PROGRAM) {
-        g_program->set_namespace("cocoa", $2);
-      }
-    }
-/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
-| tok_csharp_namespace tok_identifier
-   {
-     pwarning(1, "'csharp_namespace' is deprecated. Use 'namespace csharp' instead");
-     pdebug("Header -> tok_csharp_namespace tok_identifier");
-     declare_valid_program_doctext();
-     if (g_parse_mode == PROGRAM) {
-       g_program->set_namespace("csharp", $2);
-     }
-   }
-/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
-| tok_delphi_namespace tok_identifier
-   {
-     pwarning(1, "'delphi_namespace' is deprecated. Use 'namespace delphi' instead");
-     pdebug("Header -> tok_delphi_namespace tok_identifier");
-     declare_valid_program_doctext();
-     if (g_parse_mode == PROGRAM) {
-       g_program->set_namespace("delphi", $2);
-     }
-   }
 
 Include:
   tok_include tok_literal
