@@ -466,5 +466,24 @@
       ]
     },
     "workdir": "erl"
+  },
+  {
+    "name": "js",
+    "transports": [
+      "http"
+    ],
+    "sockets": [
+      "ip"
+    ],
+    "protocols": [
+      "json"
+    ],
+    "client": {
+      "command": [
+        "phantomjs",
+        "test/phantom-client.js"
+      ]
+    },
+    "workdir": "../lib/js"
   }
 ]
