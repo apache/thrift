@@ -657,6 +657,20 @@ void emit_byte_type_warning() {
 }
 
 /**
+ * Prints deprecation notice for old NS declarations that are no longer supported
+ * If new_form is NULL, old_form is assumed to be a language identifier, such as "cpp"
+ * If new_form is not NULL, both arguments are used exactly as given
+ */
+void error_unsupported_namespace_decl(char* old_form, char* new_form) {
+  char* remainder = "";
+  if( new_form == NULL) {
+    new_form = old_form;
+    remainder = "_namespace";
+  }
+  failure("Unsupported declaration '%s%s'. Use 'namespace %s' instead.", old_form, remainder, new_form);
+}
+
+/**
  * Prints the version number
  */
 void version() {
