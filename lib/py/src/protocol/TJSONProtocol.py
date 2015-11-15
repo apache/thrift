@@ -251,14 +251,18 @@ class TJSONProtocolBase(TProtocolBase):
 
   def _toChar(self, high, low=None):
     if not low:
-      codepoint = high
+      if sys.version_info[0] == 2:
+        return ("\\u%04x" % high).decode('unicode-escape').encode('utf-8')
+      else:
+        return chr(high)
     else:
       codepoint = (1 << 16) + ((high & 0x3ff) << 10)
       codepoint += low & 0x3ff
-    if sys.version_info[0] == 2:
-      return unichr(codepoint).encode('utf-8')
-    else:
-      return chr(codepoint)
+      if sys.version_info[0] == 2:
+        s = "\\U%08x" % codepoint
+        return s.decode('unicode-escape').encode('utf-8')
+      else:
+        return chr(codepoint)
 
   def readJSONString(self, skipContext):
     highSurrogate = None
