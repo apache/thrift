@@ -18,7 +18,6 @@
 #
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
-REBAR = $(top_srcdir)/lib/erl/rebar
 
 THRIFT_FILES = $(wildcard ../*.thrift)
 
