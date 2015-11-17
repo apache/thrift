@@ -158,18 +158,17 @@ class ExecReporter(TestReporter):
   def maybe_false_positive(self):
     """Searches through log file for socket bind error.
     Returns True if suspicious expression is found, otherwise False"""
-    def match(line):
-      for expr in exprs:
-        if expr.search(line):
-          return True
     try:
       if self.out and not self.out.closed:
         self.out.flush()
-      exprs = list(map(re.compile, self._init_failure_exprs[self._prog.kind]))
+      exprs = self._init_failure_exprs[self._prog.kind]
 
-      server_logfile = self.logpath
-      # need to handle unicode errors on Python 3
-      with logfile_open(server_logfile, 'r') as fp:
+      def match(line):
+        for expr in exprs:
+          if expr.search(line):
+            return True
+
+      with logfile_open(self.logpath, 'r') as fp:
         if any(map(match, fp)):
           return True
     except (KeyboardInterrupt, SystemExit):

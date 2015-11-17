@@ -19,7 +19,9 @@
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-
+#include <limits>
+#include <locale>
+#include <ios>
 #include <iostream>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TCompactProtocol.h>
@@ -131,6 +133,7 @@ bool print_eq(T expected, T actual) {
   }
 
 int main(int argc, char** argv) {
+  cout.precision(19);
   int ERR_BASETYPES = 1;
   int ERR_STRUCTS = 2;
   int ERR_CONTAINERS = 4;
@@ -151,6 +154,8 @@ int main(int argc, char** argv) {
   string domain_socket = "";
   bool abstract_namespace = false;
   bool noinsane = false;
+
+  int return_code = 0;
 
   boost::program_options::options_description desc("Allowed options");
   desc.add_options()("help,h",
@@ -181,7 +186,7 @@ int main(int argc, char** argv) {
   boost::program_options::notify(vm);
 
   if (vm.count("help")) {
-    cout << desc << "\n";
+    cout << desc << endl;
     return ERR_UNKNOWN;
   }
 
@@ -206,9 +211,9 @@ int main(int argc, char** argv) {
       }
     }
 
-  } catch (std::exception& e) {
+  } catch (exception& e) {
     cerr << e.what() << endl;
-    cout << desc << "\n";
+    cout << desc << endl;
     return ERR_UNKNOWN;
   }
 
@@ -317,15 +322,13 @@ int main(int argc, char** argv) {
   uint64_t time_max = 0;
   uint64_t time_tot = 0;
 
-  int return_code = 0;
-
   int test = 0;
   for (test = 0; test < numTests; ++test) {
 
     try {
       transport->open();
-    } catch (TTransportException& ttx) {
-      printf("Connect failed: %s\n", ttx.what());
+    } catch (TTransportException& ex) {
+      cout << "Connect failed: " << ex.what() << endl;
       return ERR_UNKNOWN;
     }
 
@@ -340,78 +343,138 @@ int main(int argc, char** argv) {
      * VOID TEST
      */
     try {
-      printf("testVoid()");
+      cout << "testVoid()" << flush;
       testClient.testVoid();
-      printf(" = void\n");
-    } catch (TApplicationException& tax) {
-      printf("*** FAILED ***\n");
-      printf("%s\n", tax.what());
+      cout << " = void" << endl;
+    } catch (TTransportException&) {
+      // Stop here if transport got broken
+      throw;
+    } catch (exception& ex) {
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
       return_code |= ERR_BASETYPES;
     }
 
     /**
      * STRING TEST
      */
-    printf("testString(\"Test\")");
+    cout << "testString(\"Test\")" << flush;
     string s;
     testClient.testString(s, "Test");
-    printf(" = \"%s\"\n", s.c_str());
+    cout << " = " << s << endl;
     if (s != "Test") {
-      printf("*** FAILED ***\n");
+      cout << "*** FAILED ***" << endl;
       return_code |= ERR_BASETYPES;
+    }
+
+    try {
+      string str(
+          "}{Afrikaans, Alemannisch, Aragonés, العربية, مصرى, "
+          "Asturianu, Aymar aru, Azərbaycan, Башҡорт, Boarisch, Žemaitėška, "
+          "Беларуская, Беларуская (тарашкевіца), Български, Bamanankan, "
+          "বাংলা, Brezhoneg, Bosanski, Català, Mìng-dĕ̤ng-ngṳ̄, Нохчийн, "
+          "Cebuano, ᏣᎳᎩ, Česky, Словѣ́ньскъ / ⰔⰎⰑⰂⰡⰐⰠⰔⰍⰟ, Чӑвашла, Cymraeg, "
+          "Dansk, Zazaki, ދިވެހިބަސް, Ελληνικά, Emiliàn e rumagnòl, English, "
+          "Esperanto, Español, Eesti, Euskara, فارسی, Suomi, Võro, Føroyskt, "
+          "Français, Arpetan, Furlan, Frysk, Gaeilge, 贛語, Gàidhlig, Galego, "
+          "Avañe'ẽ, ગુજરાતી, Gaelg, עברית, हिन्दी, Fiji Hindi, Hrvatski, "
+          "Kreyòl ayisyen, Magyar, Հայերեն, Interlingua, Bahasa Indonesia, "
+          "Ilokano, Ido, Íslenska, Italiano, 日本語, Lojban, Basa Jawa, "
+          "ქართული, Kongo, Kalaallisut, ಕನ್ನಡ, 한국어, Къарачай-Малкъар, "
+          "Ripoarisch, Kurdî, Коми, Kernewek, Кыргызча, Latina, Ladino, "
+          "Lëtzebuergesch, Limburgs, Lingála, ລາວ, Lietuvių, Latviešu, Basa "
+          "Banyumasan, Malagasy, Македонски, മലയാളം, मराठी, مازِرونی, Bahasa "
+          "Melayu, Nnapulitano, Nedersaksisch, नेपाल भाषा, Nederlands, ‪"
+          "Norsk (nynorsk)‬, ‪Norsk (bokmål)‬, Nouormand, Diné bizaad, "
+          "Occitan, Иронау, Papiamentu, Deitsch, Polski, پنجابی, پښتو, "
+          "Norfuk / Pitkern, Português, Runa Simi, Rumantsch, Romani, Română, "
+          "Русский, Саха тыла, Sardu, Sicilianu, Scots, Sámegiella, Simple "
+          "English, Slovenčina, Slovenščina, Српски / Srpski, Seeltersk, "
+          "Svenska, Kiswahili, தமிழ், తెలుగు, Тоҷикӣ, ไทย, Türkmençe, Tagalog, "
+          "Türkçe, Татарча/Tatarça, Українська, اردو, Tiếng Việt, Volapük, "
+          "Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文, "
+          "Bân-lâm-gú, 粵語");
+      cout << "testString(" << str << ") = " << flush;
+      testClient.testString(s, str);
+      cout << s << endl;
+      if (s != str) {
+        cout.imbue(locale("en_US.UTF8"));
+        cout << "*** FAILED ***" << endl << "Expected string: " << str << " but got: " << s << endl << "CLEAR";
+        return_code |= ERR_BASETYPES;
+      }
+    } catch (TTransportException&) {
+      throw;
+    } catch (exception& ex) {
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      return_code |= ERR_BASETYPES;
+      return return_code;
+    }
+    try {
+      string str(
+          "quote: \" backslash:"
+          " forwardslash-escaped: \\/ "
+          " backspace: \b formfeed: \f newline: \n return: \r tab: "
+          " now-all-of-them-together: \"\\\\/\b\n\r\t"
+          " now-a-bunch-of-junk: !@#$%&()(&%$#{}{}<><><"
+          " char-to-test-json-parsing: ]] \"]] \\\" }}}{ [[[ ");
+      cout << "testString(" << str << ") = " << flush;
+      testClient.testString(s, str);
+      cout << s << endl;
+      if (s != str) {
+        cout.imbue(locale("en_US.UTF8"));
+        cout << "*** FAILED ***" << endl
+             << "Expected string: " << str << " but got: " << s << endl
+             << "CLEAR";
+        ;
+        return_code |= ERR_BASETYPES;
+      }
+    } catch (TTransportException&) {
+      throw;
+    } catch (exception& ex) {
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      return_code |= ERR_BASETYPES;
+      return return_code;
     }
 
     /**
      * BOOL TEST
      */
-    printf("testBool(true)");
-    bool bl = testClient.testBool(true);
-    printf(" = %s\n", bl ? "true" : "false");
-    if (bl != true) {
-      printf("*** FAILED ***\n");
-      return_code |= ERR_BASETYPES;
-    }
-
-    printf("testBool(false)");
-    bl = testClient.testBool(false);
-    printf(" = %s\n", bl ? "true" : "false");
-    if (bl != false) {
-      printf("*** FAILED ***\n");
-      return_code |= ERR_BASETYPES;
-    }
+    cout << boolalpha;
+    BASETYPE_IDENTITY_TEST(testBool, true);
+    BASETYPE_IDENTITY_TEST(testBool, false);
 
     /**
      * BYTE TEST
      */
-    printf("testByte(1)");
-    uint8_t u8 = testClient.testByte(1);
-    printf(" = %d\n", (int)u8);
-    if (u8 != 1) {
-      printf("*** FAILED ***\n");
-      return_code |= ERR_BASETYPES;
-    }
+    BASETYPE_IDENTITY_TEST(testByte, (int8_t)0);
+    BASETYPE_IDENTITY_TEST(testByte, (int8_t)-1);
+    BASETYPE_IDENTITY_TEST(testByte, (int8_t)42);
+    BASETYPE_IDENTITY_TEST(testByte, (int8_t)-42);
+    BASETYPE_IDENTITY_TEST(testByte, (int8_t)127);
+    BASETYPE_IDENTITY_TEST(testByte, (int8_t)-128);
 
     /**
      * I32 TEST
      */
-    printf("testI32(-1)");
-    int32_t i32 = testClient.testI32(-1);
-    printf(" = %d\n", i32);
-    if (i32 != -1) {
-      printf("*** FAILED ***\n");
-      return_code |= ERR_BASETYPES;
-    }
+    BASETYPE_IDENTITY_TEST(testI32, 0);
+    BASETYPE_IDENTITY_TEST(testI32, -1);
+    BASETYPE_IDENTITY_TEST(testI32, 190000013);
+    BASETYPE_IDENTITY_TEST(testI32, -190000013);
+    BASETYPE_IDENTITY_TEST(testI32, numeric_limits<int32_t>::max());
+    BASETYPE_IDENTITY_TEST(testI32, numeric_limits<int32_t>::min());
 
     /**
      * I64 TEST
      */
-    printf("testI64(-34359738368)");
-    int64_t i64 = testClient.testI64(-34359738368LL);
-    printf(" = %" PRId64 "\n", i64);
-    if (i64 != -34359738368LL) {
-      printf("*** FAILED ***\n");
-      return_code |= ERR_BASETYPES;
-    }
+    BASETYPE_IDENTITY_TEST(testI64, (int64_t)0);
+    BASETYPE_IDENTITY_TEST(testI64, (int64_t)-1);
+    BASETYPE_IDENTITY_TEST(testI64, (int64_t)7000000000000000123LL);
+    BASETYPE_IDENTITY_TEST(testI64, (int64_t)-7000000000000000123LL);
+    BASETYPE_IDENTITY_TEST(testI64, (int64_t)pow(2LL, 32));
+    BASETYPE_IDENTITY_TEST(testI64, (int64_t)-pow(2LL, 32));
+    BASETYPE_IDENTITY_TEST(testI64, (int64_t)pow(2LL, 32) + 1);
+    BASETYPE_IDENTITY_TEST(testI64, (int64_t)-pow(2LL, 32) - 1);
+    BASETYPE_IDENTITY_TEST(testI64, numeric_limits<int64_t>::max());
+    BASETYPE_IDENTITY_TEST(testI64, numeric_limits<int64_t>::min());
 
     /**
      * DOUBLE TEST
@@ -430,7 +493,7 @@ int main(int argc, char** argv) {
 
     try {
       double expected = pow(10, 307);
-      cout << "testDouble(" << expected << ") = ";
+      cout << "testDouble(" << expected << ") = " << flush;
       double actual = testClient.testDouble(expected);
       cout << "(" << actual << ")" << endl;
       if (expected - actual > pow(10, 292)) {
@@ -446,7 +509,7 @@ int main(int argc, char** argv) {
 
     try {
       double expected = pow(10, -292);
-      cout << "testDouble(" << expected << ") = ";
+      cout << "testDouble(" << expected << ") = " << flush;
       double actual = testClient.testDouble(expected);
       cout << "(" << actual << ")" << endl;
       if (expected - actual > pow(10, -307)) {
@@ -463,21 +526,22 @@ int main(int argc, char** argv) {
     /**
      * BINARY TEST
      */
-    printf("testBinary(empty)\n");
+    cout << "testBinary(empty)" << endl;
     try {
       string bin_result;
       testClient.testBinary(bin_result, string());
       if (!bin_result.empty()) {
-        printf("*** FAILED ***\n");
-        printf("invalid length: %lu\n", static_cast<long unsigned int>(bin_result.size()));
+        cout << endl << "*** FAILED ***" << endl;
+        cout << "invalid length: " << bin_result.size() << endl;
         return_code |= ERR_BASETYPES;
       }
+    } catch (TTransportException&) {
+      throw;
     } catch (exception& ex) {
-      printf("}\n*** FAILED ***\n");
-      printf("%s\n", ex.what());
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
       return_code |= ERR_BASETYPES;
     }
-    printf("testBinary([-128..127]) = {");
+    cout << "testBinary([-128..127]) = {" << flush;
     const char bin_data[256]
         = {-128, -127, -126, -125, -124, -123, -122, -121, -120, -119, -118, -117, -116, -115, -114,
            -113, -112, -111, -110, -109, -108, -107, -106, -105, -104, -103, -102, -101, -100, -99,
@@ -501,31 +565,32 @@ int main(int argc, char** argv) {
       string bin_result;
       testClient.testBinary(bin_result, string(bin_data, 256));
       if (bin_result.size() != 256) {
-        printf("}\n*** FAILED ***\n");
-        printf("invalid length: %lu\n", static_cast<long unsigned int>(bin_result.size()));
+        cout << endl << "*** FAILED ***" << endl;
+        cout << "invalid length: " << bin_result.size() << endl;
         return_code |= ERR_BASETYPES;
       } else {
         bool first = true;
         bool failed = false;
         for (int i = 0; i < 256; ++i) {
           if (!first)
-            printf(" ,");
+            cout << ",";
           else
             first = false;
-          printf("%d", bin_result[i]);
+          cout << static_cast<int>(bin_result[i]);
           if (!failed && bin_result[i] != i - 128) {
             failed = true;
           }
         }
-        printf("}\n");
+        cout << "}" << endl;
         if (failed) {
-          printf("*** FAILED ***\n");
+          cout << "*** FAILED ***" << endl;
           return_code |= ERR_BASETYPES;
         }
       }
+    } catch (TTransportException&) {
+      throw;
     } catch (exception& ex) {
-      printf("}\n*** FAILED ***\n");
-      printf("%s\n", ex.what());
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
       return_code |= ERR_BASETYPES;
     }
 
@@ -533,7 +598,7 @@ int main(int argc, char** argv) {
     /**
      * STRUCT TEST
      */
-    printf("testStruct({\"Zero\", 1, -3, -5})");
+    cout << "testStruct({\"Zero\", 1, -3, -5})" << flush;
     Xtruct out;
     out.string_thing = "Zero";
     out.byte_thing = 1;
@@ -547,14 +612,14 @@ int main(int argc, char** argv) {
            in.i32_thing,
            in.i64_thing);
     if (in != out) {
-      printf("*** FAILED ***\n");
+      cout << "*** FAILED ***" << endl;
       return_code |= ERR_STRUCTS;
     }
 
     /**
      * NESTED STRUCT TEST
      */
-    printf("testNest({1, {\"Zero\", 1, -3, -5}), 5}");
+    cout << "testNest({1, {\"Zero\", 1, -3, -5}), 5}" << flush;
     Xtruct2 out2;
     out2.byte_thing = 1;
     out2.struct_thing = out;
@@ -570,7 +635,7 @@ int main(int argc, char** argv) {
            in.i64_thing,
            in2.i32_thing);
     if (in2 != out2) {
-      printf("*** FAILED ***\n");
+      cout << "*** FAILED ***" << endl;
       return_code |= ERR_STRUCTS;
     }
 
@@ -581,40 +646,40 @@ int main(int argc, char** argv) {
     for (int32_t i = 0; i < 5; ++i) {
       mapout.insert(make_pair(i, i - 10));
     }
-    printf("testMap({");
+    cout << "testMap({" << flush;
     map<int32_t, int32_t>::const_iterator m_iter;
     bool first = true;
     for (m_iter = mapout.begin(); m_iter != mapout.end(); ++m_iter) {
       if (first) {
         first = false;
       } else {
-        printf(", ");
+        cout << ",";
       }
-      printf("%d => %d", m_iter->first, m_iter->second);
+      cout << m_iter->first << " => " << m_iter->second;
     }
-    printf("})");
+    cout << "})";
     map<int32_t, int32_t> mapin;
     testClient.testMap(mapin, mapout);
-    printf(" = {");
+    cout << " = {";
     first = true;
     for (m_iter = mapin.begin(); m_iter != mapin.end(); ++m_iter) {
       if (first) {
         first = false;
       } else {
-        printf(", ");
+        cout << ",";
       }
-      printf("%d => %d", m_iter->first, m_iter->second);
+      cout << m_iter->first << " => " << m_iter->second;
     }
-    printf("}\n");
+    cout << "}" << endl;
     if (mapin != mapout) {
-      printf("*** FAILED ***\n");
+      cout << "*** FAILED ***" << endl;
       return_code |= ERR_CONTAINERS;
     }
 
     /**
      * STRING MAP TEST
      */
-    printf("testStringMap({a => 2, b => blah, some => thing}) = {");
+    cout << "testStringMap({a => 2, b => blah, some => thing}) = {" << flush;
     map<string, string> smapin;
     map<string, string> smapout;
     smapin["a"] = "2";
@@ -625,19 +690,20 @@ int main(int argc, char** argv) {
       first = true;
       for (map<string, string>::const_iterator it = smapout.begin(); it != smapout.end(); ++it) {
         if (first)
-          printf(",");
+          cout << ",";
         else
           first = false;
-        printf("%s => %s", it->first.c_str(), it->second.c_str());
+        cout << it->first << " => " << it->second;
       }
-      printf("}\n");
+      cout << "}" << endl;
       if (smapin != smapout) {
-        printf("*** FAILED ***\n");
+        cout << "*** FAILED ***" << endl;
         return_code |= ERR_CONTAINERS;
       }
+    } catch (TTransportException&) {
+      throw;
     } catch (exception& ex) {
-      printf("}\n*** FAILED ***\n");
-      printf("%s\n", ex.what());
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
       return_code |= ERR_CONTAINERS;
     }
 
@@ -648,144 +714,166 @@ int main(int argc, char** argv) {
     for (int32_t i = -2; i < 3; ++i) {
       setout.insert(i);
     }
-    printf("testSet({");
+    cout << "testSet({" << flush;
     set<int32_t>::const_iterator s_iter;
     first = true;
     for (s_iter = setout.begin(); s_iter != setout.end(); ++s_iter) {
       if (first) {
         first = false;
       } else {
-        printf(", ");
+        cout << ",";
       }
-      printf("%d", *s_iter);
+      cout << *s_iter;
     }
-    printf("})");
+    cout << "})";
     set<int32_t> setin;
     testClient.testSet(setin, setout);
-    printf(" = {");
+    cout << " = {";
     first = true;
     for (s_iter = setin.begin(); s_iter != setin.end(); ++s_iter) {
       if (first) {
         first = false;
       } else {
-        printf(", ");
+        cout << ",";
       }
-      printf("%d", *s_iter);
+      cout << *s_iter;
     }
-    printf("}\n");
+    cout << "}" << endl;
     if (setin != setout) {
-      printf("*** FAILED ***\n");
+      cout << "*** FAILED ***" << endl;
       return_code |= ERR_CONTAINERS;
     }
 
     /**
      * LIST TEST
      */
-    vector<int32_t> listout;
-    for (int32_t i = -2; i < 3; ++i) {
-      listout.push_back(i);
-    }
-    printf("testList({");
-    vector<int32_t>::const_iterator l_iter;
-    first = true;
-    for (l_iter = listout.begin(); l_iter != listout.end(); ++l_iter) {
-      if (first) {
-        first = false;
-      } else {
-        printf(", ");
+    cout << "testList(empty)" << flush;
+    try {
+      vector<int32_t> listout;
+      testClient.testList(listout, vector<int32_t>());
+      if (!listout.empty()) {
+        cout << "*** FAILED ***" << endl;
+        cout << "invalid length: " << listout.size() << endl;
+        return_code |= ERR_CONTAINERS;
       }
-      printf("%d", *l_iter);
+    } catch (TTransportException&) {
+      throw;
+    } catch (exception& ex) {
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      return_code |= ERR_CONTAINERS;
     }
-    printf("})");
-    vector<int32_t> listin;
-    testClient.testList(listin, listout);
-    printf(" = {");
-    first = true;
-    for (l_iter = listin.begin(); l_iter != listin.end(); ++l_iter) {
-      if (first) {
-        first = false;
-      } else {
-        printf(", ");
+    try {
+      vector<int32_t> listout;
+      for (int32_t i = -2; i < 3; ++i) {
+        listout.push_back(i);
       }
-      printf("%d", *l_iter);
-    }
-    printf("}\n");
-    if (listin != listout) {
-      printf("*** FAILED ***\n");
+      cout << "testList({" << flush;
+      vector<int32_t>::const_iterator l_iter;
+      first = true;
+      for (l_iter = listout.begin(); l_iter != listout.end(); ++l_iter) {
+        if (first) {
+          first = false;
+        } else {
+          cout << ",";
+        }
+        cout << *l_iter;
+      }
+      cout << "})";
+      vector<int32_t> listin;
+      testClient.testList(listin, listout);
+      cout << " = {";
+      first = true;
+      for (l_iter = listin.begin(); l_iter != listin.end(); ++l_iter) {
+        if (first) {
+          first = false;
+        } else {
+          cout << ",";
+        }
+        cout << *l_iter;
+      }
+      cout << "}" << endl;
+      if (listin != listout) {
+        cout << "*** FAILED ***" << endl;
+        return_code |= ERR_CONTAINERS;
+      }
+    } catch (TTransportException&) {
+      throw;
+    } catch (exception& ex) {
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
       return_code |= ERR_CONTAINERS;
     }
 
     /**
      * ENUM TEST
      */
-    printf("testEnum(ONE)");
+    cout << "testEnum(ONE)" << flush;
     Numberz::type ret = testClient.testEnum(Numberz::ONE);
-    printf(" = %d\n", ret);
+    cout << " = " << ret << endl;
     if (ret != Numberz::ONE) {
-      printf("*** FAILED ***\n");
+      cout << "*** FAILED ***" << endl;
       return_code |= ERR_STRUCTS;
     }
 
-    printf("testEnum(TWO)");
+    cout << "testEnum(TWO)" << flush;
     ret = testClient.testEnum(Numberz::TWO);
-    printf(" = %d\n", ret);
+    cout << " = " << ret << endl;
     if (ret != Numberz::TWO) {
-      printf("*** FAILED ***\n");
+      cout << "*** FAILED ***" << endl;
       return_code |= ERR_STRUCTS;
     }
 
-    printf("testEnum(THREE)");
+    cout << "testEnum(THREE)" << flush;
     ret = testClient.testEnum(Numberz::THREE);
-    printf(" = %d\n", ret);
+    cout << " = " << ret << endl;
     if (ret != Numberz::THREE) {
-      printf("*** FAILED ***\n");
+      cout << "*** FAILED ***" << endl;
       return_code |= ERR_STRUCTS;
     }
 
-    printf("testEnum(FIVE)");
+    cout << "testEnum(FIVE)" << flush;
     ret = testClient.testEnum(Numberz::FIVE);
-    printf(" = %d\n", ret);
+    cout << " = " << ret << endl;
     if (ret != Numberz::FIVE) {
-      printf("*** FAILED ***\n");
+      cout << "*** FAILED ***" << endl;
       return_code |= ERR_STRUCTS;
     }
 
-    printf("testEnum(EIGHT)");
+    cout << "testEnum(EIGHT)" << flush;
     ret = testClient.testEnum(Numberz::EIGHT);
-    printf(" = %d\n", ret);
+    cout << " = " << ret << endl;
     if (ret != Numberz::EIGHT) {
-      printf("*** FAILED ***\n");
+      cout << "*** FAILED ***" << endl;
       return_code |= ERR_STRUCTS;
     }
 
     /**
      * TYPEDEF TEST
      */
-    printf("testTypedef(309858235082523)");
+    cout << "testTypedef(309858235082523)" << flush;
     UserId uid = testClient.testTypedef(309858235082523LL);
-    printf(" = %" PRId64 "\n", uid);
+    cout << " = " << uid << endl;
     if (uid != 309858235082523LL) {
-      printf("*** FAILED ***\n");
+      cout << "*** FAILED ***" << endl;
       return_code |= ERR_STRUCTS;
     }
 
     /**
      * NESTED MAP TEST
      */
-    printf("testMapMap(1)");
+    cout << "testMapMap(1)" << flush;
     map<int32_t, map<int32_t, int32_t> > mm;
     testClient.testMapMap(mm, 1);
-    printf(" = {");
+    cout << " = {";
     map<int32_t, map<int32_t, int32_t> >::const_iterator mi;
     for (mi = mm.begin(); mi != mm.end(); ++mi) {
       printf("%d => {", mi->first);
       map<int32_t, int32_t>::const_iterator mi2;
       for (mi2 = mi->second.begin(); mi2 != mi->second.end(); ++mi2) {
-        printf("%d => %d, ", mi2->first, mi2->second);
+        cout << mi2->first << " => " << mi2->second;
       }
-      printf("}, ");
+      cout << "}, ";
     }
-    printf("}\n");
+    cout << "}" << endl;
     if (mm.size() != 2 ||
         mm[-4][-4] != -4 ||
         mm[-4][-3] != -3 ||
@@ -795,7 +883,7 @@ int main(int argc, char** argv) {
         mm[4][3] != 3 ||
         mm[4][2] != 2 ||
         mm[4][1] != 1) {
-      printf("*** FAILED ***\n");
+      cout << "*** FAILED ***" << endl;
       return_code |= ERR_CONTAINERS;
     }
 
@@ -818,10 +906,10 @@ int main(int argc, char** argv) {
       truck2.i64_thing = 2;
       insane.xtructs.push_back(truck);
       insane.xtructs.push_back(truck2);
-      printf("testInsanity()");
+      cout << "testInsanity()" << flush;
       map<UserId, map<Numberz::type, Insanity> > whoa;
       testClient.testInsanity(whoa, insane);
-      printf(" = {");
+      cout << " = {";
       map<UserId, map<Numberz::type, Insanity> >::const_iterator i_iter;
       for (i_iter = whoa.begin(); i_iter != whoa.end(); ++i_iter) {
         printf("%" PRId64 " => {", i_iter->first);
@@ -830,15 +918,15 @@ int main(int argc, char** argv) {
           printf("%d => {", i2_iter->first);
           map<Numberz::type, UserId> userMap = i2_iter->second.userMap;
           map<Numberz::type, UserId>::const_iterator um;
-          printf("{");
+          cout << "{";
           for (um = userMap.begin(); um != userMap.end(); ++um) {
-            printf("%d => %" PRId64 ", ", um->first, um->second);
+            cout << um->first << " => " << um->second;
           }
-          printf("}, ");
+          cout << "}, ";
 
           vector<Xtruct> xtructs = i2_iter->second.xtructs;
           vector<Xtruct>::const_iterator x;
-          printf("{");
+          cout << "{";
           for (x = xtructs.begin(); x != xtructs.end(); ++x) {
             printf("{\"%s\", %d, %d, %" PRId64 "}, ",
                    x->string_thing.c_str(),
@@ -846,13 +934,13 @@ int main(int argc, char** argv) {
                    x->i32_thing,
                    x->i64_thing);
           }
-          printf("}");
+          cout << "}";
 
-          printf("}, ");
+          cout << "}, ";
         }
-        printf("}, ");
+        cout << "}, ";
       }
-      printf("}\n");
+      cout << "}" << endl;
       bool failed = false;
       map<UserId, map<Numberz::type, Insanity> >::const_iterator it1 = whoa.find(UserId(1));
       if (whoa.size() != 2) {
@@ -880,7 +968,7 @@ int main(int argc, char** argv) {
         }
       }
       if (failed) {
-        printf("*** FAILED ***\n");
+        cout << "*** FAILED ***" << endl;
         return_code |= ERR_STRUCTS;
       }
     }
@@ -888,7 +976,7 @@ int main(int argc, char** argv) {
     /**
      * MULTI TEST
      */
-    printf("testMulti()\n");
+    cout << "testMulti()" << endl;
     try {
       map<int16_t, string> mul_map;
       Xtruct mul_result;
@@ -901,20 +989,22 @@ int main(int argc, char** argv) {
       xxs.i32_thing = 4242;
       xxs.i64_thing = 424242;
       if (mul_result != xxs) {
-        printf("*** FAILED ***\n");
+        cout << "*** FAILED ***" << endl;
         return_code |= ERR_STRUCTS;
       }
+    } catch (TTransportException&) {
+      throw;
     } catch (exception& ex) {
-      printf("*** FAILED ***\n");
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
       return_code |= ERR_STRUCTS;
     }
 
     /* test exception */
 
     try {
-      printf("testClient.testException(\"Xception\") =>");
+      cout << "testClient.testException(\"Xception\") =>" << flush;
       testClient.testException("Xception");
-      printf("  void\n*** FAILED ***\n");
+      cout << "  void\n*** FAILED ***" << endl;
       return_code |= ERR_EXCEPTIONS;
 
     } catch (Xception& e) {
@@ -922,41 +1012,41 @@ int main(int argc, char** argv) {
     }
 
     try {
-      printf("testClient.testException(\"TException\") =>");
+      cout << "testClient.testException(\"TException\") =>" << flush;
       testClient.testException("TException");
-      printf("  void\n*** FAILED ***\n");
+      cout << "  void\n*** FAILED ***" << endl;
       return_code |= ERR_EXCEPTIONS;
 
     } catch (const TException&) {
-      printf("  Caught TException\n");
+      cout << "  Caught TException" << endl;
     }
 
     try {
-      printf("testClient.testException(\"success\") =>");
+      cout << "testClient.testException(\"success\") =>" << flush;
       testClient.testException("success");
-      printf("  void\n");
-    } catch (...) {
-      printf("  exception\n*** FAILED ***\n");
+      cout << "  void" << endl;
+    } catch (exception & ex) {                                                                       \
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
       return_code |= ERR_EXCEPTIONS;
     }
 
     /* test multi exception */
 
     try {
-      printf("testClient.testMultiException(\"Xception\", \"test 1\") =>");
+      cout << "testClient.testMultiException(\"Xception\", \"test 1\") =>" << flush;
       Xtruct result;
       testClient.testMultiException(result, "Xception", "test 1");
-      printf("  result\n*** FAILED ***\n");
+      cout << "  result\n*** FAILED ***" << endl;
       return_code |= ERR_EXCEPTIONS;
     } catch (Xception& e) {
       printf("  {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
     }
 
     try {
-      printf("testClient.testMultiException(\"Xception2\", \"test 2\") =>");
+      cout << "testClient.testMultiException(\"Xception2\", \"test 2\") =>" << flush;
       Xtruct result;
       testClient.testMultiException(result, "Xception2", "test 2");
-      printf("  result\n*** FAILED ***\n");
+      cout << "  result\n*** FAILED ***" << endl;
       return_code |= ERR_EXCEPTIONS;
 
     } catch (Xception2& e) {
@@ -964,18 +1054,18 @@ int main(int argc, char** argv) {
     }
 
     try {
-      printf("testClient.testMultiException(\"success\", \"test 3\") =>");
+      cout << "testClient.testMultiException(\"success\", \"test 3\") =>" << flush;
       Xtruct result;
       testClient.testMultiException(result, "success", "test 3");
       printf("  {{\"%s\"}}\n", result.string_thing.c_str());
-    } catch (...) {
-      printf("  exception\n*** FAILED ***\n");
+    } catch (exception & ex) {                                                                       \
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
       return_code |= ERR_EXCEPTIONS;
     }
 
     /* test oneway void */
     {
-      printf("testClient.testOneway(1) =>");
+      cout << "testClient.testOneway(1) =>" << flush;
       uint64_t startOneway = now();
       testClient.testOneway(1);
       uint64_t elapsed = now() - startOneway;
@@ -998,16 +1088,16 @@ int main(int argc, char** argv) {
     /**
      * I32 TEST
      */
-    printf("re-test testI32(-1)");
-    i32 = testClient.testI32(-1);
-    printf(" = %d\n", i32);
+    cout << "re-test testI32(-1)";
+    int i32 = testClient.testI32(-1);
+    cout << " = " << i32 << endl;
     if (i32 != -1)
       return_code |= ERR_BASETYPES;
 
     uint64_t stop = now();
     uint64_t tot = stop - start;
 
-    printf("Total time: %" PRIu64 " us\n", stop - start);
+    cout << "Total time: " << stop - start << " us" << endl;
 
     time_tot += tot;
     if (time_min == 0 || tot < time_min) {
@@ -1020,13 +1110,13 @@ int main(int argc, char** argv) {
     transport->close();
   }
 
-  printf("\nAll tests done.\n");
+  cout << endl << "All tests done." << endl;
 
   uint64_t time_avg = time_tot / numTests;
 
-  printf("Min time: %" PRIu64 " us\n", time_min);
-  printf("Max time: %" PRIu64 " us\n", time_max);
-  printf("Avg time: %" PRIu64 " us\n", time_avg);
+  cout << "Min time: " << time_min << " us" << endl;
+  cout << "Max time: " << time_max << " us" << endl;
+  cout << "Avg time: " << time_avg << " us" << endl;
 
   return return_code;
 }
