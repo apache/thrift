@@ -27,7 +27,7 @@ except:
 
 
 class TBase(object):
-  __slots__ = []
+  __slots__ = ()
 
   def __repr__(self):
     L = ['%s=%r' % (key, getattr(self, key)) for key in self.__slots__]
@@ -68,4 +68,27 @@ class TBase(object):
 
 
 class TExceptionBase(TBase, Exception):
-  __slots__ = []
+  pass
+
+
+class TFrozenBase(TBase):
+  def __setitem__(self, *args):
+    raise TypeError("Can't modify frozen struct")
+
+  def __delitem__(self, *args):
+    raise TypeError("Can't modify frozen struct")
+
+  def __hash__(self, *args):
+    return hash(self.__class__) ^ hash(self.__slots__)
+
+  @classmethod
+  def read(cls, iprot):
+    if (iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
+       isinstance(iprot.trans, TTransport.CReadableTransport) and
+       cls.thrift_spec is not None and
+       fastbinary is not None):
+      self = cls()
+      return fastbinary.decode_binary(None,
+                                      iprot.trans,
+                                      (self.__class__, self.thrift_spec))
+    return iprot.readStruct(cls, cls.thrift_spec, True)
