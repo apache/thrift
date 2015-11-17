@@ -488,7 +488,7 @@ int main(int argc, char** argv) {
       testClient.testBinary(bin_result, string(bin_data, 256));
       if (bin_result.size() != 256) {
         printf("}\n*** FAILED ***\n");
-        printf("invalid length: %lu\n", bin_result.size());
+        printf("invalid length: %lu\n", static_cast<long unsigned int>(bin_result.size()));
         return_code |= ERR_BASETYPES;
       } else {
         bool first = true;
