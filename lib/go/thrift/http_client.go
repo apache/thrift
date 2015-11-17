@@ -27,7 +27,13 @@ import (
 	"strconv"
 )
 
+// Default to using the shared http client. Library users are
+// free to change this global client or specify one through
+// THttpClientOptions.
+var DefaultHttpClient *http.Client = http.DefaultClient
+
 type THttpClient struct {
+	client             *http.Client
 	response           *http.Response
 	url                *url.URL
 	requestBuffer      *bytes.Buffer
@@ -37,8 +43,9 @@ type THttpClient struct {
 }
 
 type THttpClientTransportFactory struct {
-	url    string
-	isPost bool
+	options THttpClientOptions
+	url     string
+	isPost  bool
 }
 
 func (p *THttpClientTransportFactory) GetTransport(trans TTransport) TTransport {
@@ -46,30 +53,43 @@ func (p *THttpClientTransportFactory) GetTransport(trans TTransport) TTransport 
 		t, ok := trans.(*THttpClient)
 		if ok && t.url != nil {
 			if t.requestBuffer != nil {
-				t2, _ := NewTHttpPostClient(t.url.String())
+				t2, _ := NewTHttpPostClientWithOptions(t.url.String(), p.options)
 				return t2
 			}
-			t2, _ := NewTHttpClient(t.url.String())
+			t2, _ := NewTHttpClientWithOptions(t.url.String(), p.options)
 			return t2
 		}
 	}
 	if p.isPost {
-		s, _ := NewTHttpPostClient(p.url)
+		s, _ := NewTHttpPostClientWithOptions(p.url, p.options)
 		return s
 	}
-	s, _ := NewTHttpClient(p.url)
+	s, _ := NewTHttpClientWithOptions(p.url, p.options)
 	return s
 }
 
+type THttpClientOptions struct {
+	// If nil, DefaultHttpClient is used
+	Client *http.Client
+}
+
 func NewTHttpClientTransportFactory(url string) *THttpClientTransportFactory {
-	return &THttpClientTransportFactory{url: url, isPost: false}
+	return NewTHttpClientTransportFactoryWithOptions(url, THttpClientOptions{})
+}
+
+func NewTHttpClientTransportFactoryWithOptions(url string, options THttpClientOptions) *THttpClientTransportFactory {
+	return &THttpClientTransportFactory{url: url, isPost: false, options: options}
 }
 
 func NewTHttpPostClientTransportFactory(url string) *THttpClientTransportFactory {
-	return &THttpClientTransportFactory{url: url, isPost: true}
+	return NewTHttpPostClientTransportFactoryWithOptions(url, THttpClientOptions{})
 }
 
-func NewTHttpClient(urlstr string) (TTransport, error) {
+func NewTHttpPostClientTransportFactoryWithOptions(url string, options THttpClientOptions) *THttpClientTransportFactory {
+	return &THttpClientTransportFactory{url: url, isPost: true, options: options}
+}
+
+func NewTHttpClientWithOptions(urlstr string, options THttpClientOptions) (TTransport, error) {
 	parsedURL, err := url.Parse(urlstr)
 	if err != nil {
 		return nil, err
@@ -78,16 +98,32 @@ func NewTHttpClient(urlstr string) (TTransport, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &THttpClient{response: response, url: parsedURL}, nil
+	client := options.Client
+	if client == nil {
+		client = DefaultHttpClient
+	}
+	return &THttpClient{client: client, response: response, url: parsedURL}, nil
 }
 
-func NewTHttpPostClient(urlstr string) (TTransport, error) {
+func NewTHttpClient(urlstr string) (TTransport, error) {
+	return NewTHttpClientWithOptions(urlstr, THttpClientOptions{})
+}
+
+func NewTHttpPostClientWithOptions(urlstr string, options THttpClientOptions) (TTransport, error) {
 	parsedURL, err := url.Parse(urlstr)
 	if err != nil {
 		return nil, err
 	}
 	buf := make([]byte, 0, 1024)
-	return &THttpClient{url: parsedURL, requestBuffer: bytes.NewBuffer(buf), header: http.Header{}}, nil
+	client := options.Client
+	if client == nil {
+		client = DefaultHttpClient
+	}
+	return &THttpClient{client: client, url: parsedURL, requestBuffer: bytes.NewBuffer(buf), header: http.Header{}}, nil
+}
+
+func NewTHttpPostClient(urlstr string) (TTransport, error) {
+	return NewTHttpPostClientWithOptions(urlstr, THttpClientOptions{})
 }
 
 // Set the HTTP Header for this specific Thrift Transport
@@ -179,14 +215,13 @@ func (p *THttpClient) Flush() error {
 	// Close any previous response body to avoid leaking connections.
 	p.closeResponse()
 
-	client := &http.Client{}
 	req, err := http.NewRequest("POST", p.url.String(), p.requestBuffer)
 	if err != nil {
 		return NewTTransportExceptionFromError(err)
 	}
 	p.header.Add("Content-Type", "application/x-thrift")
 	req.Header = p.header
-	response, err := client.Do(req)
+	response, err := p.client.Do(req)
 	if err != nil {
 		return NewTTransportExceptionFromError(err)
 	}
@@ -201,12 +236,11 @@ func (p *THttpClient) Flush() error {
 }
 
 func (p *THttpClient) RemainingBytes() (num_bytes uint64) {
-	len := p.response.ContentLength 
+	len := p.response.ContentLength
 	if len >= 0 {
 		return uint64(len)
 	}
-	
-	const maxSize = ^uint64(0)
-	return maxSize  // the thruth is, we just don't know unless framed is used
-}
 
+	const maxSize = ^uint64(0)
+	return maxSize // the thruth is, we just don't know unless framed is used
+}
