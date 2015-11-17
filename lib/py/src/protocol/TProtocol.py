@@ -17,7 +17,7 @@
 # under the License.
 #
 
-from thrift.Thrift import TException, TType
+from thrift.Thrift import TException, TType, TFrozenDict
 import six
 
 from ..compat import binary_to_str, str_to_binary
@@ -108,9 +108,6 @@ class TProtocolBase:
   def writeBinary(self, str_val):
     pass
 
-  def writeBinary(self, str_val):
-    return self.writeString(str_val)
-
   def readMessageBegin(self):
     pass
 
@@ -170,9 +167,6 @@ class TProtocolBase:
 
   def readBinary(self):
     pass
-
-  def readBinary(self):
-    return self.readString()
 
   def skip(self, ttype):
     if ttype == TType.STOP:
@@ -264,6 +258,7 @@ class TProtocolBase:
   def readContainerList(self, spec):
     results = []
     ttype, tspec = spec[0], spec[1]
+    is_immutable = spec[2]
     r_handler = self._ttype_handlers(ttype, spec)[0]
     reader = getattr(self, r_handler)
     (list_type, list_len) = self.readListBegin()
@@ -279,11 +274,12 @@ class TProtocolBase:
         val = val_reader(tspec)
         results.append(val)
     self.readListEnd()
-    return results
+    return tuple(results) if is_immutable else results
 
   def readContainerSet(self, spec):
     results = set()
     ttype, tspec = spec[0], spec[1]
+    is_immutable = spec[2]
     r_handler = self._ttype_handlers(ttype, spec)[0]
     reader = getattr(self, r_handler)
     (set_type, set_len) = self.readSetBegin()
@@ -297,7 +293,7 @@ class TProtocolBase:
       for idx in range(set_len):
         results.add(val_reader(tspec))
     self.readSetEnd()
-    return results
+    return frozenset(results) if is_immutable else results
 
   def readContainerStruct(self, spec):
     (obj_class, obj_spec) = spec
@@ -309,6 +305,7 @@ class TProtocolBase:
     results = dict()
     key_ttype, key_spec = spec[0], spec[1]
     val_ttype, val_spec = spec[2], spec[3]
+    is_immutable = spec[4]
     (map_ktype, map_vtype, map_len) = self.readMapBegin()
     # TODO: compare types we just decoded with thrift_spec and
     # abort/skip if types disagree
@@ -328,9 +325,11 @@ class TProtocolBase:
       # i.e. this fails: d=dict(); d[[0,1]] = 2
       results[k_val] = v_val
     self.readMapEnd()
-    return results
+    return TFrozenDict(results) if is_immutable else results
 
-  def readStruct(self, obj, thrift_spec):
+  def readStruct(self, obj, thrift_spec, is_immutable=False):
+    if is_immutable:
+      fields = {}
     self.readStructBegin()
     while True:
       (fname, ftype, fid) = self.readFieldBegin()
@@ -345,11 +344,16 @@ class TProtocolBase:
           fname = field[2]
           fspec = field[3]
           val = self.readFieldByTType(ftype, fspec)
-          setattr(obj, fname, val)
+          if is_immutable:
+            fields[fname] = val
+          else:
+            setattr(obj, fname, val)
         else:
           self.skip(ftype)
       self.readFieldEnd()
     self.readStructEnd()
+    if is_immutable:
+      return obj(**fields)
 
   def writeContainerStruct(self, val, spec):
     val.write(self)
