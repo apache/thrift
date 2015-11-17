@@ -72,11 +72,15 @@ struct Backwards {
 }
 
 struct Empty {
-}
+} (
+  python.immutable = "",
+)
 
 struct Wrapper {
   1: Empty foo
-}
+} (
+  python.immutable = "",
+)
 
 struct RandomStuff {
   1: i32 a,
@@ -153,9 +157,9 @@ struct CompactProtoTestStruct {
   42: map<byte, binary>           byte_binary_map;
   43: map<byte, bool>             byte_boolean_map;
   // collections as keys
-  44: map<list<byte>, byte>       list_byte_map;
-  45: map<set<byte>, byte>        set_byte_map;
-  46: map<map<byte,byte>, byte>   map_byte_map;
+  44: map<list<byte> (python.immutable = ""), byte>       list_byte_map;
+  45: map<set<byte> (python.immutable = ""), byte>        set_byte_map;
+  46: map<map<byte,byte> (python.immutable = ""), byte>   map_byte_map;
   // collections as values
   47: map<byte, map<byte,byte>>   byte_map_map;
   48: map<byte, set<byte>>        byte_set_map;

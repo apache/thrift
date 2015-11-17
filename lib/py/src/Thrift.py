@@ -168,3 +168,23 @@ class TApplicationException(TException):
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+
+
+class TFrozenDict(dict):
+  """A dictionary that is "frozen" like a frozenset"""
+
+  def __init__(self, *args, **kwargs):
+    super(TFrozenDict, self).__init__(*args, **kwargs)
+    # Sort the items so they will be in a consistent order.
+    # XOR in the hash of the class so we don't collide with
+    # the hash of a list of tuples.
+    self.__hashval = hash(TFrozenDict) ^ hash(tuple(sorted(self.items())))
+
+  def __setitem__(self, *args):
+    raise TypeError("Can't modify frozen TFreezableDict")
+
+  def __delitem__(self, *args):
+    raise TypeError("Can't modify frozen TFreezableDict")
+
+  def __hash__(self):
+    return self.__hashval
