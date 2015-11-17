@@ -177,12 +177,13 @@ class AbstractTest(unittest.TestCase):
     y = self.client.testTypedef(x)
     self.assertEqual(y, x)
 
-  @unittest.skip('Cannot use dict as dict key')
   def testMapMap(self):
     print('testMapMap')
-    # does not work: dict() is not a hashable type, so a dict() cannot be used as a key in another dict()
-    x = {{1: 10, 2: 20}, {1: 100, 2: 200, 3: 300}, {1: 1000, 2: 2000, 3: 3000, 4: 4000}}
-    y = self.client.testMapMap(x)
+    x = {
+      -4: {-4: -4, -3: -3, -2: -2, -1: -1},
+      4: {4: 4, 3: 3, 2: 2, 1: 1},
+    }
+    y = self.client.testMapMap(42)
     self.assertEqual(y, x)
 
   def testMulti(self):
