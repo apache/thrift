@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# encoding: utf-8
 
 #
 # Licensed to the Apache Software Foundation (ASF) under one
@@ -96,6 +97,31 @@ class SimpleClientTest < Test::Unit::TestCase
       ' now-all-of-them-together: "\\\/\b\n\r\t' +
       ' now-a-bunch-of-junk: !@#$%&()(&%$#{}{}<><><' +
       ' char-to-test-json-parsing: ]] \"]] \\" }}}{ [[[ '
+    test_string = "Afrikaans, Alemannisch, Aragonés, العربية, مصرى, " +
+      "Asturianu, Aymar aru, Azərbaycan, Башҡорт, Boarisch, Žemaitėška, " +
+      "Беларуская, Беларуская (тарашкевіца), Български, Bamanankan, " +
+      "বাংলা, Brezhoneg, Bosanski, Català, Mìng-dĕ̤ng-ngṳ̄, Нохчийн, " +
+      "Cebuano, ᏣᎳᎩ, Česky, Словѣ́ньскъ / ⰔⰎⰑⰂⰡⰐⰠⰔⰍⰟ, Чӑвашла, Cymraeg, " +
+      "Dansk, Zazaki, ދިވެހިބަސް, Ελληνικά, Emiliàn e rumagnòl, English, " +
+      "Esperanto, Español, Eesti, Euskara, فارسی, Suomi, Võro, Føroyskt, " +
+      "Français, Arpetan, Furlan, Frysk, Gaeilge, 贛語, Gàidhlig, Galego, " +
+      "Avañe'ẽ, ગુજરાતી, Gaelg, עברית, हिन्दी, Fiji Hindi, Hrvatski, " +
+      "Kreyòl ayisyen, Magyar, Հայերեն, Interlingua, Bahasa Indonesia, " +
+      "Ilokano, Ido, Íslenska, Italiano, 日本語, Lojban, Basa Jawa, " +
+      "ქართული, Kongo, Kalaallisut, ಕನ್ನಡ, 한국어, Къарачай-Малкъар, " +
+      "Ripoarisch, Kurdî, Коми, Kernewek, Кыргызча, Latina, Ladino, " +
+      "Lëtzebuergesch, Limburgs, Lingála, ລາວ, Lietuvių, Latviešu, Basa " +
+      "Banyumasan, Malagasy, Македонски, മലയാളം, मराठी, مازِرونی, Bahasa " +
+      "Melayu, Nnapulitano, Nedersaksisch, नेपाल भाषा, Nederlands, ‪" +
+      "Norsk (nynorsk)‬, ‪Norsk (bokmål)‬, Nouormand, Diné bizaad, " +
+      "Occitan, Иронау, Papiamentu, Deitsch, Polski, پنجابی, پښتو, " +
+      "Norfuk / Pitkern, Português, Runa Simi, Rumantsch, Romani, Română, " +
+      "Русский, Саха тыла, Sardu, Sicilianu, Scots, Sámegiella, Simple " +
+      "English, Slovenčina, Slovenščina, Српски / Srpski, Seeltersk, " +
+      "Svenska, Kiswahili, தமிழ், తెలుగు, Тоҷикӣ, ไทย, Türkmençe, Tagalog, " +
+      "Türkçe, Татарча/Tatarça, Українська, اردو, Tiếng Việt, Volapük, " +
+      "Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文, " +
+      "Bân-lâm-gú, 粵語"
 
     result_string = @client.testString(test_string)
     assert_equal(test_string, result_string.force_encoding(Encoding::UTF_8))
