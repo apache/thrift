@@ -124,11 +124,6 @@ typedef enum TType {
 #define INT_CONV_ERROR_OCCURRED(v) ( ((v) == -1) && PyErr_Occurred() )
 #define CHECK_RANGE(v, min, max) ( ((v) <= (max)) && ((v) >= (min)) )
 
-// Py_ssize_t was not defined before Python 2.5
-#if (PY_VERSION_HEX < 0x02050000)
-typedef int Py_ssize_t;
-#endif
-
 /**
  * A cache of the spec_args for a set or list,
  * so we don't have to keep calling PyTuple_GET_ITEM.
@@ -136,6 +131,7 @@ typedef int Py_ssize_t;
 typedef struct {
   TType element_type;
   PyObject* typeargs;
+  bool immutable;
 } SetListTypeArgs;
 
 /**
@@ -147,6 +143,7 @@ typedef struct {
   TType vtag;
   PyObject* ktypeargs;
   PyObject* vtypeargs;
+  bool immutable;
 } MapTypeArgs;
 
 /**
@@ -156,6 +153,7 @@ typedef struct {
 typedef struct {
   PyObject* klass;
   PyObject* spec;
+  bool immutable;
 } StructTypeArgs;
 
 /**
@@ -233,8 +231,8 @@ parse_pyint(PyObject* o, int32_t* ret, int32_t min, int32_t max) {
 
 static bool
 parse_set_list_args(SetListTypeArgs* dest, PyObject* typeargs) {
-  if (PyTuple_Size(typeargs) != 2) {
-    PyErr_SetString(PyExc_TypeError, "expecting tuple of size 2 for list/set type args");
+  if (PyTuple_Size(typeargs) != 3) {
+    PyErr_SetString(PyExc_TypeError, "expecting tuple of size 3 for list/set type args");
     return false;
   }
 
@@ -245,13 +243,15 @@ parse_set_list_args(SetListTypeArgs* dest, PyObject* typeargs) {
 
   dest->typeargs = PyTuple_GET_ITEM(typeargs, 1);
 
+  dest->immutable = Py_True == PyTuple_GET_ITEM(typeargs, 2);
+
   return true;
 }
 
 static bool
 parse_map_args(MapTypeArgs* dest, PyObject* typeargs) {
-  if (PyTuple_Size(typeargs) != 4) {
-    PyErr_SetString(PyExc_TypeError, "expecting 4 arguments for typeargs to map");
+  if (PyTuple_Size(typeargs) != 5) {
+    PyErr_SetString(PyExc_TypeError, "expecting 5 arguments for typeargs to map");
     return false;
   }
 
@@ -267,6 +267,7 @@ parse_map_args(MapTypeArgs* dest, PyObject* typeargs) {
 
   dest->ktypeargs = PyTuple_GET_ITEM(typeargs, 1);
   dest->vtypeargs = PyTuple_GET_ITEM(typeargs, 3);
+  dest->immutable = Py_True == PyTuple_GET_ITEM(typeargs, 4);
 
   return true;
 }
@@ -289,7 +290,7 @@ parse_struct_item_spec(StructItemSpec* dest, PyObject* spec_tuple) {
 
   // i'd like to use ParseArgs here, but it seems to be a bottleneck.
   if (PyTuple_Size(spec_tuple) != 5) {
-    PyErr_SetString(PyExc_TypeError, "expecting 5 arguments for spec tuple");
+    PyErr_Format(PyExc_TypeError, "expecting 5 arguments for spec tuple but got %d", PyTuple_Size(spec_tuple));
     return false;
   }
 
@@ -885,11 +886,21 @@ skip(DecodeBuffer* input, TType type) {
 static PyObject*
 decode_val(DecodeBuffer* input, TType type, PyObject* typeargs);
 
-static bool
-decode_struct(DecodeBuffer* input, PyObject* output, PyObject* spec_seq) {
+static PyObject*
+decode_struct(DecodeBuffer* input, PyObject* output, PyObject* klass, PyObject* spec_seq) {
   int spec_seq_len = PyTuple_Size(spec_seq);
+  bool immutable = output == Py_None;
+  PyObject* kwargs = NULL;
   if (spec_seq_len == -1) {
-    return false;
+    return NULL;
+  }
+
+  if (immutable) {
+    kwargs = PyDict_New();
+    if (!kwargs) {
+      PyErr_SetString(PyExc_TypeError, "failed to prepare kwargument storage");
+      return NULL;
+    }
   }
 
   while (true) {
@@ -901,14 +912,14 @@ decode_struct(DecodeBuffer* input, PyObject* output, PyObject* spec_seq) {
 
     type = readByte(input);
     if (type == -1) {
-      return false;
+      goto error;
     }
     if (type == T_STOP) {
       break;
     }
     tag = readI16(input);
     if (INT_CONV_ERROR_OCCURRED(tag)) {
-      return false;
+      goto error;
     }
     if (tag >= 0 && tag < spec_seq_len) {
       item_spec = PyTuple_GET_ITEM(spec_seq, tag);
@@ -918,19 +929,19 @@ decode_struct(DecodeBuffer* input, PyObject* output, PyObject* spec_seq) {
 
     if (item_spec == Py_None) {
       if (!skip(input, type)) {
-        return false;
+        goto error;
       } else {
         continue;
       }
     }
 
     if (!parse_struct_item_spec(&parsedspec, item_spec)) {
-      return false;
+      goto error;
     }
     if (parsedspec.type != type) {
       if (!skip(input, type)) {
         PyErr_SetString(PyExc_TypeError, "struct field had wrong type while reading and can't be skipped");
-        return false;
+        goto error;
       } else {
         continue;
       }
@@ -938,16 +949,34 @@ decode_struct(DecodeBuffer* input, PyObject* output, PyObject* spec_seq) {
 
     fieldval = decode_val(input, parsedspec.type, parsedspec.typeargs);
     if (fieldval == NULL) {
-      return false;
+      goto error;
     }
 
-    if (PyObject_SetAttr(output, parsedspec.attrname, fieldval) == -1) {
+    if ((immutable && PyDict_SetItem(kwargs, parsedspec.attrname, fieldval) == -1)
+        || (!immutable && PyObject_SetAttr(output, parsedspec.attrname, fieldval) == -1)) {
       Py_DECREF(fieldval);
-      return false;
+      goto error;
     }
     Py_DECREF(fieldval);
   }
-  return true;
+  if (immutable) {
+    PyObject* args = PyTuple_New(0);
+    PyObject* ret = NULL;
+    if (!args) {
+      PyErr_SetString(PyExc_TypeError, "failed to prepare argument storage");
+      goto error;
+    }
+    ret = PyObject_Call(klass, args, kwargs);
+    Py_DECREF(kwargs);
+    Py_DECREF(args);
+    return ret;
+  }
+  Py_INCREF(output);
+  return output;
+
+  error:
+  Py_XDECREF(kwargs);
+  return NULL;
 }
 
 
@@ -1033,6 +1062,7 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
     int32_t len;
     PyObject* ret = NULL;
     int i;
+    bool use_tuple = false;
 
     if (!parse_set_list_args(&parsedargs, typeargs)) {
       return NULL;
@@ -1047,7 +1077,8 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
       return NULL;
     }
 
-    ret = PyList_New(len);
+    use_tuple = type == T_LIST && parsedargs.immutable;
+    ret = use_tuple ? PyTuple_New(len) : PyList_New(len);
     if (!ret) {
       return NULL;
     }
@@ -1058,20 +1089,18 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
         Py_DECREF(ret);
         return NULL;
       }
-      PyList_SET_ITEM(ret, i, item);
+      if (use_tuple) {
+        PyTuple_SET_ITEM(ret, i, item);
+      } else  {
+        PyList_SET_ITEM(ret, i, item);
+      }
     }
 
     // TODO(dreiss): Consider biting the bullet and making two separate cases
     //               for list and set, avoiding this post facto conversion.
     if (type == T_SET) {
       PyObject* setret;
-#if (PY_VERSION_HEX < 0x02050000)
-      // hack needed for older versions
-      setret = PyObject_CallFunctionObjArgs((PyObject*)&PySet_Type, ret, NULL);
-#else
-      // official version
-      setret = PySet_New(ret);
-#endif
+      setret = parsedargs.immutable ? PyFrozenSet_New(ret) : PySet_New(ret);
       Py_DECREF(ret);
       return setret;
     }
@@ -1131,6 +1160,22 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
       goto error;
     }
 
+    if (parsedargs.immutable) {
+      PyObject* thrift = PyImport_ImportModule("thrift.Thrift");
+      PyObject* cls = NULL;
+      PyObject* arg = NULL;
+      if (!thrift) {
+        goto error;
+      }
+      cls = PyObject_GetAttrString(thrift, "TFrozenDict");
+      if (!cls) {
+        goto error;
+      }
+      arg = PyTuple_New(1);
+      PyTuple_SET_ITEM(arg, 0, ret);
+      return PyObject_CallObject(cls, arg);
+    }
+
     return ret;
 
     error:
@@ -1140,22 +1185,12 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
 
   case T_STRUCT: {
     StructTypeArgs parsedargs;
-	PyObject* ret;
+    PyObject* ret;
     if (!parse_struct_args(&parsedargs, typeargs)) {
       return NULL;
     }
 
-    ret = PyObject_CallObject(parsedargs.klass, NULL);
-    if (!ret) {
-      return NULL;
-    }
-
-    if (!decode_struct(input, ret, parsedargs.spec)) {
-      Py_DECREF(ret);
-      return NULL;
-    }
-
-    return ret;
+    return decode_struct(input, Py_None, parsedargs.klass, parsedargs.spec);
   }
 
   case T_STOP:
@@ -1179,6 +1214,7 @@ decode_binary(PyObject *self, PyObject *args) {
   PyObject* typeargs = NULL;
   StructTypeArgs parsedargs;
   DecodeBuffer input = {0, 0};
+  PyObject* ret = NULL;
 
   if (!PyArg_ParseTuple(args, "OOO", &output_obj, &transport, &typeargs)) {
     return NULL;
@@ -1192,14 +1228,9 @@ decode_binary(PyObject *self, PyObject *args) {
     return NULL;
   }
 
-  if (!decode_struct(&input, output_obj, parsedargs.spec)) {
-    free_decodebuf(&input);
-    return NULL;
-  }
-
+  ret = decode_struct(&input, output_obj, parsedargs.klass, parsedargs.spec);
   free_decodebuf(&input);
-
-  Py_RETURN_NONE;
+  return  ret;
 }
 
 /* ====== END READING FUNCTIONS ====== */
