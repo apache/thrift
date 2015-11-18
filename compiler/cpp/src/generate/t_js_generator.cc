@@ -221,6 +221,11 @@ public:
     return js_namespace(p);
   }
 
+  bool has_js_namespace(t_program* p) {
+    std::string ns = p->get_namespace("js");
+    return (ns.size() > 0);
+  }
+
   std::string js_namespace(t_program* p) {
     std::string ns = p->get_namespace("js");
     if (ns.size() > 0) {
@@ -383,7 +388,7 @@ string t_js_generator::render_includes() {
     const vector<t_program*>& includes = program_->get_includes();
     for (size_t i = 0; i < includes.size(); ++i) {
       result += "var " + includes[i]->get_name() + "_ttypes = require('./" + includes[i]->get_name()
-                + "_types')\n";
+                + "_types');\n";
     }
     if (includes.size() > 0) {
       result += "\n";
@@ -634,11 +639,12 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
   vector<t_field*>::const_iterator m_iter;
 
   if (gen_node_) {
+    string prefix = has_js_namespace(tstruct->get_program()) ? js_namespace(tstruct->get_program()) : "var ";
     if (is_exported) {
-      out << js_namespace(tstruct->get_program()) << tstruct->get_name() << " = "
+      out << prefix << tstruct->get_name() << " = "
           << "module.exports." << tstruct->get_name() << " = function(args) {" << endl;
     } else {
-      out << js_namespace(tstruct->get_program()) << tstruct->get_name() << " = function(args) {"
+      out << prefix << tstruct->get_name() << " = function(args) {"
           << endl;
     }
   } else {
@@ -935,11 +941,11 @@ void t_js_generator::generate_service(t_service* tservice) {
   if (gen_node_) {
     if (tservice->get_extends() != NULL) {
       f_service_ << "var " << tservice->get_extends()->get_name() << " = require('./"
-                 << tservice->get_extends()->get_name() << "')" << endl << "var "
+                 << tservice->get_extends()->get_name() << "');" << endl << "var "
                  << tservice->get_extends()->get_name()
-                 << "Client = " << tservice->get_extends()->get_name() << ".Client" << endl
+                 << "Client = " << tservice->get_extends()->get_name() << ".Client;" << endl
                  << "var " << tservice->get_extends()->get_name()
-                 << "Processor = " << tservice->get_extends()->get_name() << ".Processor" << endl;
+                 << "Processor = " << tservice->get_extends()->get_name() << ".Processor;" << endl;
     }
 
     f_service_ << "var ttypes = require('./" + program_->get_name() + "_types');" << endl;
@@ -971,8 +977,13 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
 
-  f_service_ << js_namespace(tservice->get_program()) << service_name_ << "Processor = "
+  if (gen_node_) {
+    string prefix = has_js_namespace(tservice->get_program()) ? js_namespace(tservice->get_program()) : "var ";
+    f_service_ << prefix << service_name_ << "Processor = " << "exports.Processor = function(handler) ";
+  } else {
+    f_service_ << js_namespace(tservice->get_program()) << service_name_ << "Processor = "
              << "exports.Processor = function(handler) ";
+  }
 
   scope_up(f_service_);
 
@@ -1245,7 +1256,8 @@ void t_js_generator::generate_service_rest(t_service* tservice) {
  */
 void t_js_generator::generate_service_client(t_service* tservice) {
   if (gen_node_) {
-    f_service_ << js_namespace(tservice->get_program()) << service_name_ << "Client = "
+    string prefix = has_js_namespace(tservice->get_program()) ? js_namespace(tservice->get_program()) : "var ";
+    f_service_ << prefix << service_name_ << "Client = "
                << "exports.Client = function(output, pClass) {" << endl;
   } else {
     f_service_ << js_namespace(tservice->get_program()) << service_name_
