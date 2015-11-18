@@ -700,6 +700,11 @@ public class TJSONProtocol extends TProtocol {
       }
       arr.write(ch);
     }
+
+    if (highSurrogate != 0) {
+      throw new TProtocolException(TProtocolException.INVALID_DATA,
+          "Expected low surrogate char");
+    }
     return arr;
   }
 
