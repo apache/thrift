@@ -22,6 +22,7 @@ package thrift
 import (
 	"bytes"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -168,6 +169,13 @@ func (p *THttpClient) IsOpen() bool {
 func (p *THttpClient) closeResponse() error {
 	var err error
 	if p.response != nil && p.response.Body != nil {
+		// The docs specify that if keepalive is enabled and the response body is not
+		// read to completion the connection will never be returned to the pool and
+		// reused. Errors are being ignored here because if the connection is invalid
+		// and this fails for some reason, the Close() method will do any remaining
+		// cleanup.
+		io.Copy(ioutil.Discard, p.response.Body)
+
 		err = p.response.Body.Close()
 	}
 
@@ -226,8 +234,11 @@ func (p *THttpClient) Flush() error {
 		return NewTTransportExceptionFromError(err)
 	}
 	if response.StatusCode != http.StatusOK {
-		// Close the response to avoid leaking file descriptors.
-		response.Body.Close()
+		// Close the response to avoid leaking file descriptors. closeResponse does
+		// more than just call Close(), so temporarily assign it and reuse the logic.
+		p.response = response
+		p.closeResponse()
+
 		// TODO(pomack) log bad response
 		return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, "HTTP Response code: "+strconv.Itoa(response.StatusCode))
 	}
