@@ -383,7 +383,7 @@ string t_js_generator::render_includes() {
     const vector<t_program*>& includes = program_->get_includes();
     for (size_t i = 0; i < includes.size(); ++i) {
       result += "var " + includes[i]->get_name() + "_ttypes = require('./" + includes[i]->get_name()
-                + "_types')\n";
+                + "_types');\n";
     }
     if (includes.size() > 0) {
       result += "\n";
@@ -935,11 +935,11 @@ void t_js_generator::generate_service(t_service* tservice) {
   if (gen_node_) {
     if (tservice->get_extends() != NULL) {
       f_service_ << "var " << tservice->get_extends()->get_name() << " = require('./"
-                 << tservice->get_extends()->get_name() << "')" << endl << "var "
+                 << tservice->get_extends()->get_name() << "');" << endl << "var "
                  << tservice->get_extends()->get_name()
-                 << "Client = " << tservice->get_extends()->get_name() << ".Client" << endl
+                 << "Client = " << tservice->get_extends()->get_name() << ".Client;" << endl
                  << "var " << tservice->get_extends()->get_name()
-                 << "Processor = " << tservice->get_extends()->get_name() << ".Processor" << endl;
+                 << "Processor = " << tservice->get_extends()->get_name() << ".Processor;" << endl;
     }
 
     f_service_ << "var ttypes = require('./" + program_->get_name() + "_types');" << endl;
