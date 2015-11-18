@@ -21,7 +21,6 @@ package org.apache.thrift.protocol;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.Stack;
 
 import org.apache.thrift.TByteArrayOutputStream;
