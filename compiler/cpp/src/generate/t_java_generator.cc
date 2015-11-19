@@ -214,6 +214,8 @@ public:
   void generate_java_struct_tuple_reader(ofstream& out, t_struct* tstruct);
   void generate_java_struct_tuple_writer(ofstream& out, t_struct* tstruct);
 
+  void generate_java_scheme_lookup(ofstream& out);
+
   void generate_javax_generated_annotation(ofstream& out);
   /**
    * Serialization constructs
@@ -1585,6 +1587,7 @@ void t_java_generator::generate_java_struct_definition(ofstream& out,
 
   generate_java_struct_standard_scheme(out, tstruct, is_result);
   generate_java_struct_tuple_scheme(out, tstruct);
+  generate_java_scheme_lookup(out);
 
   scope_down(out);
   out << endl;
@@ -1953,7 +1956,7 @@ void t_java_generator::generate_java_struct_reader(ofstream& out, t_struct* tstr
   indent(out) << "public void read(org.apache.thrift.protocol.TProtocol iprot) throws "
                  "org.apache.thrift.TException {" << endl;
   indent_up();
-  indent(out) << "schemes.get(iprot.getScheme()).getScheme().read(iprot, this);" << endl;
+  indent(out) << "scheme(iprot).read(iprot, this);" << endl;
   indent_down();
   indent(out) << "}" << endl << endl;
 }
@@ -2015,7 +2018,7 @@ void t_java_generator::generate_java_struct_writer(ofstream& out, t_struct* tstr
   indent(out) << "public void write(org.apache.thrift.protocol.TProtocol oprot) throws "
                  "org.apache.thrift.TException {" << endl;
   indent_up();
-  indent(out) << "schemes.get(oprot.getScheme()).getScheme().write(oprot, this);" << endl;
+  indent(out) << "scheme(oprot).write(oprot, this);" << endl;
 
   indent_down();
   indent(out) << "}" << endl << endl;
@@ -2034,7 +2037,7 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out, t_struc
   indent(out) << "public void write(org.apache.thrift.protocol.TProtocol oprot) throws "
                  "org.apache.thrift.TException {" << endl;
   indent_up();
-  indent(out) << "schemes.get(oprot.getScheme()).getScheme().write(oprot, this);" << endl;
+  indent(out) << "scheme(oprot).write(oprot, this);" << endl;
 
   indent_down();
   indent(out) << "  }" << endl << endl;
@@ -4581,14 +4584,10 @@ void t_java_generator::generate_field_descs(ofstream& out, t_struct* tstruct) {
 }
 
 void t_java_generator::generate_scheme_map(ofstream& out, t_struct* tstruct) {
-  indent(out) << "private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new "
-                 "HashMap<Class<? extends IScheme>, SchemeFactory>();" << endl;
-  indent(out) << "static {" << endl;
-  indent(out) << "  schemes.put(StandardScheme.class, new " << tstruct->get_name()
-              << "StandardSchemeFactory());" << endl;
-  indent(out) << "  schemes.put(TupleScheme.class, new " << tstruct->get_name()
-              << "TupleSchemeFactory());" << endl;
-  indent(out) << "}" << endl;
+  indent(out) << "private static final SchemeFactory STANDARD_SCHEME_FACTORY = new "
+      << tstruct->get_name() << "StandardSchemeFactory();" << endl;
+  indent(out) << "private static final SchemeFactory TUPLE_SCHEME_FACTORY = new "
+      << tstruct->get_name() << "TupleSchemeFactory();" << endl;
 }
 
 void t_java_generator::generate_field_name_constants(ofstream& out, t_struct* tstruct) {
@@ -5108,6 +5107,18 @@ void t_java_generator::generate_java_struct_tuple_scheme(ofstream& out, t_struct
   generate_java_struct_tuple_reader(out, tstruct);
   indent_down();
   out << indent() << "}" << endl << endl;
+}
+
+void t_java_generator::generate_java_scheme_lookup(ofstream& out) {
+  indent(out) << "private static <S extends IScheme> S scheme("
+      << "org.apache.thrift.protocol.TProtocol proto) {" << endl;
+  indent_up();
+  indent(out) << "return (StandardScheme.class.equals(proto.getScheme()) "
+      << "? STANDARD_SCHEME_FACTORY "
+      << ": TUPLE_SCHEME_FACTORY"
+      << ").getScheme();" << endl;
+  indent_down();
+  indent(out) << "}" << endl;
 }
 
 void t_java_generator::generate_javax_generated_annotation(ofstream& out) {
