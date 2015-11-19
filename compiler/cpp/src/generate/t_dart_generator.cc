@@ -221,6 +221,7 @@ public:
    * Helper rendering functions
    */
 
+  std::string find_library_name(t_program* program);
   std::string dart_library(string file_name);
   std::string service_imports();
   std::string dart_thrift_imports();
@@ -261,12 +262,8 @@ void t_dart_generator::init_generator() {
   MKDIR(get_out_dir().c_str());
 
   if (library_name_.empty()) {
-    library_name_ = program_->get_namespace("dart");
+    library_name_ = find_library_name(program_);
   }
-  if (library_name_.empty()) {
-    library_name_ = program_->get_name();
-  }
-  library_name_ = replace_all(library_name_, ".", "_");
 
   string subdir = get_out_dir() + "/" + library_name_;
   MKDIR(subdir.c_str());
@@ -278,6 +275,15 @@ void t_dart_generator::init_generator() {
   subdir += "/src";
   MKDIR(subdir.c_str());
   src_dir_ = subdir;
+}
+
+string t_dart_generator::find_library_name(t_program* program) {
+  string name = program->get_namespace("dart");
+  if (name.empty()) {
+    name = program->get_name();
+  }
+  name = replace_all(name, ".", "_");
+  return name;
 }
 
 /**
@@ -375,7 +381,7 @@ void t_dart_generator::generate_dart_pubspec() {
   // add included thrift files as dependencies
   const vector<t_program*>& includes = program_->get_includes();
   for (size_t i = 0; i < includes.size(); ++i) {
-    string include_name = includes[i]->get_namespace("dart");
+    string include_name = find_library_name(includes[i]);
     indent(f_pubspec) << include_name << ":" << endl;
     indent_up();
     indent(f_pubspec) << "path: ../" << include_name << endl;
