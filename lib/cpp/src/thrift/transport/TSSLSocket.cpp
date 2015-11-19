@@ -244,16 +244,32 @@ bool TSSLSocket::peek() {
   checkHandshake();
   int rc;
   uint8_t byte;
-  rc = SSL_peek(ssl_, &byte, 1);
-  if (rc < 0) {
-    int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    string errors;
-    buildErrors(errors, errno_copy);
-    throw TSSLException("SSL_peek: " + errors);
-  }
-  if (rc == 0) {
-    ERR_clear_error();
-  }
+  do {
+    rc = SSL_peek(ssl_, &byte, 1);
+    if (rc < 0) {
+
+      int errno_copy = THRIFT_GET_SOCKET_ERROR;
+      int error = SSL_get_error(ssl_, rc);
+      switch (error) {
+        case SSL_ERROR_SYSCALL:
+          if ((errno_copy != THRIFT_EINTR)
+              || (errno_copy != THRIFT_EAGAIN)) {
+            break;
+          }
+        case SSL_ERROR_WANT_READ:
+        case SSL_ERROR_WANT_WRITE:
+          waitForEvent(error == SSL_ERROR_WANT_READ);
+              continue;
+        default:;// do nothing
+      }
+      string errors;
+      buildErrors(errors, errno_copy);
+      throw TSSLException("SSL_peek: " + errors);
+    } else if (rc == 0) {
+      ERR_clear_error();
+      break;
+    }
+  } while (true);
   return (rc > 0);
 }
 
@@ -266,7 +282,28 @@ void TSSLSocket::open() {
 
 void TSSLSocket::close() {
   if (ssl_ != NULL) {
-    int rc = SSL_shutdown(ssl_);
+    int rc;
+
+    do {
+      rc = SSL_shutdown(ssl_);
+      if (rc <= 0) {
+        int errno_copy = THRIFT_GET_SOCKET_ERROR;
+        int error = SSL_get_error(ssl_, rc);
+        switch (error) {
+          case SSL_ERROR_SYSCALL:
+            if ((errno_copy != THRIFT_EINTR)
+                || (errno_copy != THRIFT_EAGAIN)) {
+              break;
+            }
+          case SSL_ERROR_WANT_READ:
+          case SSL_ERROR_WANT_WRITE:
+            waitForEvent(error == SSL_ERROR_WANT_READ);
+                rc = 2;
+          default:;// do nothing
+        }
+      }
+    } while (rc == 2);
+
     if (rc < 0) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       string errors;
@@ -377,22 +414,6 @@ void TSSLSocket::checkHandshake() {
   if (ssl_ != NULL) {
     return;
   }
-  ssl_ = ctx_->createSSL();
-  SSL_set_fd(ssl_, static_cast<int>(socket_));
-  int rc;
-  if (server()) {
-    rc = SSL_accept(ssl_);
-  } else {
-    rc = SSL_connect(ssl_);
-  }
-  if (rc <= 0) {
-    int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    string fname(server() ? "SSL_accept" : "SSL_connect");
-    string errors;
-    buildErrors(errors, errno_copy);
-    throw TSSLException(fname + ": " + errors);
-  }
-  authorize();
 
   // set underlying socket to non-blocking
   int flags;
@@ -404,18 +425,74 @@ void TSSLSocket::checkHandshake() {
     return;
   }
 
+  ssl_ = ctx_->createSSL();
+
   //set read and write bios to non-blocking
-  BIO* wbio = SSL_get_wbio(ssl_);
+  BIO* wbio =  BIO_new(BIO_s_mem());
   if (wbio == NULL) {
     throw TSSLException("SSL_get_wbio returns NULL");
   }
   BIO_set_nbio(wbio, 1);
 
-  BIO* rbio = SSL_get_rbio(ssl_);
+  BIO* rbio = BIO_new(BIO_s_mem());
   if (rbio == NULL) {
     throw TSSLException("SSL_get_rbio returns NULL");
   }
   BIO_set_nbio(rbio, 1);
+
+  SSL_set_bio(ssl_, rbio, wbio);
+
+  SSL_set_fd(ssl_, static_cast<int>(socket_));
+  int rc;
+  if (server()) {
+    do {
+      rc = SSL_accept(ssl_);
+      if (rc <= 0) {
+        int errno_copy = THRIFT_GET_SOCKET_ERROR;
+        int error = SSL_get_error(ssl_, rc);
+        switch (error) {
+          case SSL_ERROR_SYSCALL:
+            if ((errno_copy != THRIFT_EINTR)
+                || (errno_copy != THRIFT_EAGAIN)) {
+              break;
+            }
+          case SSL_ERROR_WANT_READ:
+          case SSL_ERROR_WANT_WRITE:
+            waitForEvent(error == SSL_ERROR_WANT_READ);
+            rc = 2;
+          default:;// do nothing
+        }
+      }
+    } while (rc == 2);
+  } else {
+    do {
+      rc = SSL_connect(ssl_);
+      if (rc <= 0) {
+        int errno_copy = THRIFT_GET_SOCKET_ERROR;
+        int error = SSL_get_error(ssl_, rc);
+        switch (error) {
+          case SSL_ERROR_SYSCALL:
+            if ((errno_copy != THRIFT_EINTR)
+                || (errno_copy != THRIFT_EAGAIN)) {
+              break;
+            }
+          case SSL_ERROR_WANT_READ:
+          case SSL_ERROR_WANT_WRITE:
+            waitForEvent(error == SSL_ERROR_WANT_READ);
+                rc = 2;
+          default:;// do nothing
+        }
+      }
+    } while (rc == 2);
+  }
+  if (rc <= 0) {
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    string fname(server() ? "SSL_accept" : "SSL_connect");
+    string errors;
+    buildErrors(errors, errno_copy);
+    throw TSSLException(fname + ": " + errors);
+  }
+  authorize();
 }
 
 void TSSLSocket::authorize() {

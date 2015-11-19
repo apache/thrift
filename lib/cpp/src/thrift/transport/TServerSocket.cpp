@@ -119,7 +119,8 @@ using namespace std;
 using boost::shared_ptr;
 
 TServerSocket::TServerSocket(int port)
-  : port_(port),
+  : interruptableChildren_(true),
+    port_(port),
     serverSocket_(THRIFT_INVALID_SOCKET),
     acceptBacklog_(DEFAULT_BACKLOG),
     sendTimeout_(0),
@@ -130,7 +131,6 @@ TServerSocket::TServerSocket(int port)
     tcpSendBuffer_(0),
     tcpRecvBuffer_(0),
     keepAlive_(false),
-    interruptableChildren_(true),
     listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
@@ -138,7 +138,8 @@ TServerSocket::TServerSocket(int port)
 }
 
 TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout)
-  : port_(port),
+  : interruptableChildren_(true),
+    port_(port),
     serverSocket_(THRIFT_INVALID_SOCKET),
     acceptBacklog_(DEFAULT_BACKLOG),
     sendTimeout_(sendTimeout),
@@ -149,7 +150,6 @@ TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout)
     tcpSendBuffer_(0),
     tcpRecvBuffer_(0),
     keepAlive_(false),
-    interruptableChildren_(true),
     listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
@@ -157,7 +157,8 @@ TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout)
 }
 
 TServerSocket::TServerSocket(const string& address, int port)
-  : port_(port),
+  : interruptableChildren_(true),
+    port_(port),
     address_(address),
     serverSocket_(THRIFT_INVALID_SOCKET),
     acceptBacklog_(DEFAULT_BACKLOG),
@@ -169,7 +170,6 @@ TServerSocket::TServerSocket(const string& address, int port)
     tcpSendBuffer_(0),
     tcpRecvBuffer_(0),
     keepAlive_(false),
-    interruptableChildren_(true),
     listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
@@ -177,7 +177,8 @@ TServerSocket::TServerSocket(const string& address, int port)
 }
 
 TServerSocket::TServerSocket(const string& path)
-  : port_(0),
+  : interruptableChildren_(true),
+    port_(0),
     path_(path),
     serverSocket_(THRIFT_INVALID_SOCKET),
     acceptBacklog_(DEFAULT_BACKLOG),
@@ -189,7 +190,6 @@ TServerSocket::TServerSocket(const string& path)
     tcpSendBuffer_(0),
     tcpRecvBuffer_(0),
     keepAlive_(false),
-    interruptableChildren_(true),
     listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
@@ -657,10 +657,6 @@ shared_ptr<TSocket> TServerSocket::createSocket(THRIFT_SOCKET clientSocket) {
   } else {
     return shared_ptr<TSocket>(new TSocket(clientSocket));
   }
-}
-
-boost::shared_ptr<THRIFT_SOCKET> TServerSocket::getInterruptSocket() {
-    return pChildInterruptSockReader_;
 }
 
 void TServerSocket::notify(THRIFT_SOCKET notifySocket) {

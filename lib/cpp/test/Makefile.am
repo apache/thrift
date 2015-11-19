@@ -128,11 +128,13 @@ UnitTests_LDADD = \
   $(BOOST_TEST_LDADD)
 
 TInterruptTest_SOURCES = \
-	TSocketInterruptTest.cpp
+	TSocketInterruptTest.cpp \
+	TSSLSocketInterruptTest.cpp
 
 TInterruptTest_LDADD = \
   libtestgencpp.la \
   $(BOOST_TEST_LDADD) \
+  $(BOOST_FILESYSTEM_LDADD) \
   $(BOOST_CHRONO_LDADD) \
   $(BOOST_SYSTEM_LDADD) \
   $(BOOST_THREAD_LDADD)

@@ -92,7 +92,10 @@ if ( MSVC )
 endif ( MSVC )
 
 
-set( TInterruptTest_SOURCES TSocketInterruptTest.cpp )
+set( TInterruptTest_SOURCES
+     TSocketInterruptTest.cpp
+     TSSLSocketInterruptTest.cpp
+)
 if (WIN32)
     list(APPEND TInterruptTest_SOURCES
         TPipeInterruptTest.cpp
