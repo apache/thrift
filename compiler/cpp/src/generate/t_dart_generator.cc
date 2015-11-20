@@ -283,6 +283,7 @@ string t_dart_generator::find_library_name(t_program* program) {
     name = program->get_name();
   }
   name = replace_all(name, ".", "_");
+  name = replace_all(name, "-", "_");
   return name;
 }
 
