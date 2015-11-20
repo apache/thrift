@@ -325,7 +325,7 @@ string t_dart_generator::dart_thrift_imports() {
   // add imports for included thrift files
   const vector<t_program*>& includes = program_->get_includes();
   for (size_t i = 0; i < includes.size(); ++i) {
-    string include_name = includes[i]->get_namespace("dart");
+    string include_name = find_library_name(includes[i]);
     imports += "import 'package:" + include_name + "/" + include_name + ".dart';" + endl;
   }
 
