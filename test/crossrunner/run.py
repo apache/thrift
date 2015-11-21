@@ -31,8 +31,9 @@ import threading
 import time
 import traceback
 
-from crossrunner.test import TestEntry, domain_socket_path
-from crossrunner.report import ExecReporter, SummaryReporter
+from .compat import str_join
+from .test import TestEntry, domain_socket_path
+from .report import ExecReporter, SummaryReporter
 
 RESULT_TIMEOUT = 128
 RESULT_ERROR = 64
@@ -82,16 +83,12 @@ class ExecutionContext(object):
     return args
 
   def start(self, timeout=0):
-    tmp = list()
-    joined = ''
-    for item in self.cmd:
-      tmp.append( item.decode(sys.getfilesystemencoding()))
-    joined = ' '.join(tmp).encode(sys.getfilesystemencoding())    
+    joined = str_join(' ', self.cmd)
     self._log.debug('COMMAND: %s', joined)
     self._log.debug('WORKDIR: %s', self.cwd)
     self._log.debug('LOGFILE: %s', self.report.logpath)
     self.report.begin()
-    self.proc = subprocess.Popen(tmp, **self._popen_args())
+    self.proc = subprocess.Popen(self.cmd, **self._popen_args())
     if timeout > 0:
       self.timer = threading.Timer(timeout, self._expire)
       self.timer.start()
