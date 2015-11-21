@@ -221,6 +221,11 @@ public:
     return js_namespace(p);
   }
 
+  bool has_js_namespace(t_program* p) {
+    std::string ns = p->get_namespace("js");
+    return (ns.size() > 0);
+  }
+
   std::string js_namespace(t_program* p) {
     std::string ns = p->get_namespace("js");
     if (ns.size() > 0) {
