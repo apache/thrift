@@ -51,7 +51,9 @@ class TestProgram(object):
   def _fix_cmd_path(self, cmd):
     # if the arg is a file in the current directory, make it path
     def abs_if_exists(arg):
-      p = os.path.join(self.workdir, arg)
+      p = self.workdir.decode(sys.getfilesystemencoding())
+      p = os.path.join(p, arg.decode(sys.getfilesystemencoding()))
+      p = p.encode(sys.getfilesystemencoding())
       return p if os.path.exists(p) else arg
 
     if cmd[0] == 'python':
@@ -113,7 +115,11 @@ class TestEntry(object):
     if os.path.isabs(path):
       path = os.path.realpath(path)
     else:
-      path = os.path.realpath(os.path.join(self.testdir, path))
+      tmp  = self.testdir.decode(sys.getfilesystemencoding())
+      path = path.decode(sys.getfilesystemencoding())
+      path = os.path.join(tmp, path)
+      path = path.encode(sys.getfilesystemencoding())
+      path = os.path.realpath(path)
     config.update({key: path})
     return config
 
