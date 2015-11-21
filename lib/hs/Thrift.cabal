@@ -40,7 +40,7 @@ Library
   Hs-Source-Dirs:
     src
   Build-Depends:
-    base >= 4, base < 5, containers, ghc-prim, attoparsec, binary, bytestring >= 0.10, hashable, HTTP, text, unordered-containers, vector, QuickCheck, split
+    base >= 4, base < 5, containers, ghc-prim, attoparsec, binary, bytestring >= 0.10, hashable, HTTP, text, unordered-containers, vector, QuickCheck, split, HUnit
   if flag(network-uri)
      build-depends: network-uri >= 2.6, network >= 2.6
   else
@@ -52,6 +52,9 @@ Library
     Thrift.Protocol.Binary,
     Thrift.Protocol.Compact,
     Thrift.Protocol.JSON,
+    Thrift.Protocol.JSONUtils,
+    Thrift.Protocol.PrettyJSON,
+    Thrift.Protocol.SimpleJSON,
     Thrift.Server,
     Thrift.Transport,
     Thrift.Transport.Empty,

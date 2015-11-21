@@ -17,6 +17,31 @@
 # under the License.
 #
 
+THRIFT = $(top_builddir)/compiler/cpp/thrift
+
+gensrcs = \
+	$(top_srcdir)/test/ThriftTest.thrift \
+	$(srcdir)/src/tests/if/hs_test.thrift \
+	$(srcdir)/src/tests/if/IncludeTest.thrift \
+	$(srcdir)/src/tests/if/IncludedTest.thrift
+
+stubs = \
+	Hs_test_Consts.hs \
+	Hs_test_Types.hs \
+	IncludeTest_Consts.hs \
+	IncludeTest_Types.hs \
+	ThriftTest.hs \
+	ThriftTest_Client.hs \
+	ThriftTest_Consts.hs \
+	ThriftTest_Iface.hs \
+	ThriftTest_Types.hs
+
+$(stubs): $(gensrcs) $(THRIFT)
+	$(THRIFT) --gen hs $(top_srcdir)/test/ThriftTest.thrift
+	$(THRIFT) --gen hs $(srcdir)/src/tests/if/hs_test.thrift
+	$(THRIFT) --gen hs $(srcdir)/src/tests/if/IncludeTest.thrift
+	$(THRIFT) --gen hs $(srcdir)/src/tests/if/IncludedTest.thrift
+
 EXTRA_DIST = \
 	coding_standards.md \
 	LICENSE \
@@ -40,5 +65,11 @@ clean-local:
 maintainer-clean-local:
 	$(CABAL) clean
 
-check-local:
+check-local: $(stubs)
 	$(CABAL) check
+	$(srcdir)/run-test.sh BinaryTests
+	$(srcdir)/run-test.sh CompactTests
+	$(srcdir)/run-test.sh IncludeTest
+	$(srcdir)/run-test.sh JSONTests
+	$(srcdir)/run-test.sh PrettyJSONTests
+	$(srcdir)/run-test.sh SimpleJSONTests

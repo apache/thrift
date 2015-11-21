@@ -98,7 +98,7 @@ writeAppExn pt ae = writeVal pt $ TStruct $ Map.fromList
 
 readAppExn :: (Protocol p, Transport t) => p t -> IO AppExn
 readAppExn pt = do
-    let typemap = Map.fromList [(1,("message",T_STRING)),(2,("type",T_I32))]
+    let typemap = Map.fromList [("message",(1,T_STRING)),("type",(2,T_I32))]
     TStruct fields <- readVal pt $ T_STRUCT typemap
     return $ readAppExnFields fields
 

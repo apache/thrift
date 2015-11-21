@@ -26,8 +26,6 @@ module Thrift.Protocol
     , ProtocolExnType(..)
     , getTypeOf
     , runParser
-    , versionMask
-    , version1
     , bsToDouble
     ) where
 
@@ -51,28 +49,42 @@ import qualified Data.HashMap.Strict as Map
 import Thrift.Types
 import Thrift.Transport
 
-versionMask :: Int32
-versionMask = fromIntegral (0xffff0000 :: Word32)
-
-version1 :: Int32
-version1 = fromIntegral (0x80010000 :: Word32)
-
+-- | The Thrift Protocol type class.  A 'Protocol' defines a way in which a
+-- Thrift type should be serialized and deserialized (ie JSON, Binary, etc).
+-- All 'Protocol's should satisfy the round trip property:
+-- >>> @deserializeVal p t (serializeVal p v) = v@
 class Protocol a where
+  -- | Get the underlying Transport for this Protocol
   getTransport :: Transport t => a t -> t
 
-  writeMessageBegin :: Transport t => a t -> (Text, MessageType, Int32) -> IO ()
-  writeMessageEnd :: Transport t => a t -> IO ()
-  writeMessageEnd _ = return ()
-  
-  readMessageBegin :: Transport t => a t -> IO (Text, MessageType, Int32)
-  readMessageEnd :: Transport t => a t -> IO ()
-  readMessageEnd _ = return ()
+  -- | Write a message using this Protocol
+  writeMessage :: Transport t
+               => a t
+               -> (Text, MessageType, Int32) -- ^ The message parameters
+               -> IO () -- ^ IO action to perform inside message
+               -> IO ()
+  -- | Read a message using this Protocol
+  readMessage :: Transport t
+              => a t
+              -> ((Text, MessageType, Int32) -> IO b) -- ^ Read function
+              -> IO b
 
+  -- | Serialize a 'ThriftVal' using this protocol without any monadic action.
+  -- You should use 'Empty.EmptyTransport' when constructing a 'Protocol' if you
+  -- are only planning on using this function
   serializeVal :: Transport t => a t -> ThriftVal -> ByteString
+  -- | Deserialize a 'ThriftVal' using this protocol without any monadic action.
+  -- You should use 'Empty.EmptyTransport' when constructing a 'Protocol' if you
+  -- are only planning on using this function
   deserializeVal :: Transport t => a t -> ThriftType -> ByteString -> ThriftVal
 
+  -- | Write a 'ThriftVal' using the underlying transport for this Protocol
+  -- This function has a default definition in terms of `serializeVal`
   writeVal :: Transport t => a t -> ThriftVal -> IO ()
   writeVal p = tWrite (getTransport p) . serializeVal p
+  -- | Read a 'ThriftVal' using the underlying Transport
+  -- There is no default definition since the input should be incrementally
+  -- parsed, not read all at once
   readVal :: Transport t => a t -> ThriftType -> IO ThriftVal
 
 data ProtocolExnType
@@ -103,19 +115,21 @@ getTypeOf v =  case v of
   TString{} -> T_STRING
   TDouble{} -> T_DOUBLE
 
+-- | Run an attoparsec Parser using the 'tRead' function of the underlying
+-- transport
 runParser :: (Protocol p, Transport t, Show a) => p t -> Parser a -> IO a
 runParser prot p = refill >>= getResult . parse p
   where
-    refill = handle handleEOF $ toStrict <$> tRead (getTransport prot) 1
+    refill = handle handleEOF $ toStrict <$> tReadAll (getTransport prot) 1
     getResult (Done _ a) = return a
     getResult (Partial k) = refill >>= getResult . k
-    getResult f = throw $ ProtocolExn PE_INVALID_DATA (show f)
+    getResult f = throw $ ProtocolExn PE_INVALID_DATA $ show f
 
 handleEOF :: SomeException -> IO BS.ByteString
 handleEOF = const $ return mempty
 
--- | Converts a ByteString to a Floating point number
--- The ByteString is assumed to be encoded in network order (Big Endian)
+-- | Converts a 'ByteString' to a floating point number
+-- The 'ByteString' is assumed to be encoded in network order (Big Endian)
 -- therefore the behavior of this function varies based on whether the local
 -- machine is big endian or little endian.
 bsToDouble :: BS.ByteString -> Double

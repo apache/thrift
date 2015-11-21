@@ -34,23 +34,36 @@ import Data.Word
 import qualified Data.ByteString.Lazy as LBS
 import Data.Monoid
 
+-- | Type class for Thrift Transports.  A 'Transport' is used in conjunction
+-- with a 'Protocol' to serialize/deserialize and read/write data.  The
+-- 'Transport' layer specifically deals with reading and writing
 class Transport a where
-    tIsOpen :: a -> IO Bool
-    tClose  :: a -> IO ()
-    tRead   :: a -> Int -> IO LBS.ByteString
-    tPeek   :: a -> IO (Maybe Word8)
-    tWrite  :: a -> LBS.ByteString -> IO ()
-    tFlush  :: a -> IO ()
-    tReadAll :: a -> Int -> IO LBS.ByteString
+  -- | Is the transport open?  There is no explicit open function in this type
+  -- class because the type of open may depend on the specific instance of
+  -- 'Transport' you are using.
+  tIsOpen :: a -> IO Bool
+  -- | Close the transport.  The type of this can be abstracted, unlike open
+  tClose  :: a -> IO ()
+  -- | Read the speciified number of bytes from the transport
+  tRead   :: a -> Int -> IO LBS.ByteString
+  -- | Peek a single byte
+  tPeek   :: a -> IO (Maybe Word8)
+  -- | Write a 'ByteString' to the 'Transport'
+  tWrite  :: a -> LBS.ByteString -> IO ()
+  -- | Flush the 'Transport' buffer.  Default implementation is nop
+  tFlush  :: a -> IO ()
+  tFlush = const $ return ()
+  -- | Keep reading until you get the desired number of bytes
+  tReadAll :: a -> Int -> IO LBS.ByteString
 
-    tReadAll _ 0 = return mempty
-    tReadAll a len = do
-        result <- tRead a len
-        let rlen = fromIntegral $ LBS.length result
-        when (rlen == 0) (throw $ TransportExn "Cannot read. Remote side has closed." TE_UNKNOWN)
-        if len <= rlen
-          then return result
-          else (result `mappend`) <$> tReadAll a (len - rlen)
+  tReadAll _ 0 = return mempty
+  tReadAll a len = do
+    result <- tRead a len
+    let rlen = fromIntegral $ LBS.length result
+    when (rlen == 0) (throw $ TransportExn "Cannot read. Remote side has closed." TE_UNKNOWN)
+    if len <= rlen
+      then return result
+      else (result `mappend`) <$> tReadAll a (len - rlen)
 
 data TransportExn = TransportExn String TransportExnType
   deriving ( Show, Typeable )
