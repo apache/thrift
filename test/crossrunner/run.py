@@ -21,6 +21,7 @@ import contextlib
 import multiprocessing
 import multiprocessing.managers
 import os
+import sys
 import platform
 import random
 import socket
@@ -81,11 +82,16 @@ class ExecutionContext(object):
     return args
 
   def start(self, timeout=0):
-    self._log.debug('COMMAND: %s', ' '.join(self.cmd))
+    tmp = list()
+    joined = ''
+    for item in self.cmd:
+      tmp.append( item.decode(sys.getfilesystemencoding()))
+    joined = ' '.join(tmp).encode(sys.getfilesystemencoding())    
+    self._log.debug('COMMAND: %s', joined)
     self._log.debug('WORKDIR: %s', self.cwd)
     self._log.debug('LOGFILE: %s', self.report.logpath)
     self.report.begin()
-    self.proc = subprocess.Popen(self.cmd, **self._popen_args())
+    self.proc = subprocess.Popen(tmp, **self._popen_args())
     if timeout > 0:
       self.timer = threading.Timer(timeout, self._expire)
       self.timer.start()

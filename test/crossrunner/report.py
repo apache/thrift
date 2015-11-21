@@ -84,7 +84,7 @@ class TestReporter(object):
   @classmethod
   def test_logfile(cls, test_name, prog_kind, dir=None):
     relpath = os.path.join('log', '%s_%s.log' % (test_name, prog_kind))
-    return relpath if not dir else os.path.realpath(os.path.join(dir, relpath))
+    return relpath if not dir else os.path.realpath(os.path.join(dir.decode(sys.getfilesystemencoding()), relpath.decode(sys.getfilesystemencoding())).encode(sys.getfilesystemencoding()))	
 
   def _start(self):
     self._start_time = time.time()
@@ -194,8 +194,13 @@ class ExecReporter(TestReporter):
     self.out.close()
 
   def _print_header(self):
+    tmp = list()
+    joined = ''
+    for item in self._prog.command:
+      tmp.append( item.decode(sys.getfilesystemencoding()))
+    joined = ' '.join(tmp).encode(sys.getfilesystemencoding())    
     self._print_date()
-    self.out.write('Executing: %s\n' % ' '.join(self._prog.command))
+    self.out.write('Executing: %s\n' % joined)
     self.out.write('Directory: %s\n' % self._prog.workdir)
     self.out.write('config:delay: %s\n' % self._test.delay)
     self.out.write('config:timeout: %s\n' % self._test.timeout)
