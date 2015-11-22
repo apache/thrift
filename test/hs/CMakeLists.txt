@@ -103,5 +103,5 @@ add_custom_command(OUTPUT ${hs_test_gen}
     COMMAND ${THRIFT_COMPILER} --gen hs ${PROJECT_SOURCE_DIR}/test/DebugProtoTest.thrift
     COMMAND ${THRIFT_COMPILER} --gen hs ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
     COMMAND ${THRIFT_COMPILER} --gen hs ${PROJECT_SOURCE_DIR}/test/Include.thrift
-    DEPENDS ${THRIFT_COMPILER} ${hs_test_gen_sources}
+    DEPENDS ${hs_test_gen_sources}
 )
