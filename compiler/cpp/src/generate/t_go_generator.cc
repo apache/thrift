@@ -782,7 +782,7 @@ string t_go_generator::render_included_programs() {
       }
     }
 
-    result += "\t\"" + gen_package_prefix_ + go_module + "\"\n";
+    result += "\t_ \"" + gen_package_prefix_ + go_module + "\"\n";
   }
 
   return result;
