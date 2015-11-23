@@ -18,36 +18,62 @@
 
 # build Apache Thrift on AppVeyor - https://ci.appveyor.com
 
+shallow_clone: true
+clone_depth: 10
+
 version: '{build}'
 os:
-- Windows Server 2012 R2
-- Visual Studio 2014 CTP4
-- Visual Studio 2015 CTP
-- Visual Studio 2015 CTP 6
-- Visual Studio 2015 Preview
+# - Windows Server 2012 R2
+- Visual Studio 2015
 
 environment:
   BOOST_ROOT: c:\Libraries\boost
   BOOST_LIBRARYDIR: c:\Libraries\boost\stage\lib
 
 install:
-- cinst cmake
-- cinst nsis
-- cinst ant
+- '"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64'
+  # Zlib
+- appveyor DownloadFile https://github.com/madler/zlib/archive/v1.2.8.tar.gz
+- 7z x v1.2.8.tar.gz -so | 7z x -si -ttar
+- cd zlib-1.2.8
+- cmake -G "Visual Studio 14 2015 Win64" .
+- cmake --build . --config release
+- cd ..
+  # OpenSSL
+- appveyor DownloadFile https://slproweb.com/download/Win64OpenSSL-1_0_2d.exe
+- ps: Start-Process Win64OpenSSL-1_0_2d.exe -ArgumentList "/silent /verysilent /sp- /suppressmsgboxes" -Wait
+  # Libevent
+- appveyor DownloadFile https://github.com/libevent/libevent/releases/download/release-2.0.22-stable/libevent-2.0.22-stable.tar.gz
+- 7z x libevent-2.0.22-stable.tar.gz -so | 7z x -si -ttar
+- cd libevent-2.0.22-stable
+- nmake -f Makefile.nmake
+- mkdir lib
+- move *.lib lib\
+- move WIN32-Code\event2\* include\event2\
+- move *.h include\
+- cd ..
 - cinst winflexbison
+- cinst nsis
+# TODO: Enable Java build
+# - cinst ant -ignoreDependencies
+# TODO: Enable Haskell build
+# - cinst HaskellPlatform -version 2014.2.0.0
+
 
 build_script:
-- set PATH=C:\ProgramData\chocolatey\bin;C:\tools\apache-ant-1.9.4\bin;%PATH%
-- mv C:\ProgramData\chocolatey\bin\win_bison.exe C:\ProgramData\chocolatey\bin\bison.exe
-- mv C:\ProgramData\chocolatey\bin\win_flex.exe C:\ProgramData\chocolatey\bin\flex.exe
-- set JAVA_HOME=C:\Program Files\Java\jdk1.7.0
-- set PATH=%JAVA_HOME%\bin;%PATH%
+# - set PATH=C:\ProgramData\chocolatey\bin;C:\tools\apache-ant-1.9.4\bin;%PATH%
+# - set JAVA_HOME=C:\Program Files\Java\jdk1.7.0
+# - set PATH=%JAVA_HOME%\bin;%PATH%
+# - set PATH=%PATH%;C:\Program Files (x86)\Haskell Platform\2014.2.0.0\bin
+# - set PATH=%PATH%;C:\Program Files (x86)\Haskell Platform\2014.2.0.0\lib\extralibs\bin
+- set PATH=C:\Python27-x64;%PATH%
 - mkdir cmake-build
 - cd cmake-build
-- cmake -DBUILD_TESTING=OFF ..
-- cmake --build .
+- cmake -G "Visual Studio 14 2015 Win64" -DWITH_JAVA=OFF -DWITH_SHARED_LIB=OFF -DLIBEVENT_ROOT=%APPVEYOR_BUILD_FOLDER%\libevent-2.0.22-stable -DZLIB_INCLUDE_DIR=%APPVEYOR_BUILD_FOLDER%\zlib-1.2.8 -DZLIB_LIBRARY=%APPVEYOR_BUILD_FOLDER%\zlib-1.2.8\release\zlibstatic.lib -DBOOST_ROOT="%BOOST_ROOT% -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR% ..
+# - cmake --build .
 - cmake --build . --config Release
-- cpack
+# TODO: Fix cpack
+# - cpack
+- ctest -C Release -VV -E "(concurrency_test|processor_test|python_test$)"
 
-#TODO enable testing
 #TODO make it perfect ;-r

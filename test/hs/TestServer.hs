@@ -31,7 +31,7 @@ import Network
 import System.Environment
 import System.Exit
 import System.IO
-import System.Posix.Unistd
+import Control.Concurrent (threadDelay)
 import qualified System.IO as IO
 import qualified Data.HashMap.Strict as Map
 import qualified Data.HashSet as Set
@@ -241,7 +241,7 @@ instance ThriftTest_Iface TestHandler where
 
   testOneway _ i = do
     System.IO.putStrLn $ "testOneway(" ++ show i ++ "): Sleeping..."
-    sleep (fromIntegral i)
+    threadDelay $ (fromIntegral i) * 1000000
     System.IO.putStrLn $ "testOneway(" ++ show i ++ "): done sleeping!"
 
 main :: IO ()

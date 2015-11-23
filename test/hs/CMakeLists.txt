@@ -61,10 +61,17 @@ set(hs_crosstest_args
     -odir=${CMAKE_CURRENT_BINARY_DIR}
     -hidir=${CMAKE_CURRENT_BINARY_DIR}
 )
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set(hs_optimize -O0)
+else()
+  set(hs_optimize -O1)
+endif()
+
 add_custom_command(
     OUTPUT ${hs_crosstest_apps}
-    COMMAND ${GHC} ${hs_crosstest_args} ${CMAKE_CURRENT_SOURCE_DIR}/TestServer.hs -o TestServer
-    COMMAND ${GHC} ${hs_crosstest_args} ${CMAKE_CURRENT_SOURCE_DIR}/TestClient.hs -o TestClient
+    COMMAND ${GHC} ${hs_optimize} ${hs_crosstest_args} ${CMAKE_CURRENT_SOURCE_DIR}/TestServer.hs -o TestServer
+    COMMAND ${GHC} ${hs_optimize} ${hs_crosstest_args} ${CMAKE_CURRENT_SOURCE_DIR}/TestClient.hs -o TestClient
     DEPENDS ${hs_test_gen} haskell_library TestServer.hs TestClient.hs
 )
 add_custom_target(haskell_crosstest ALL
