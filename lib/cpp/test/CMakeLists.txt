@@ -63,7 +63,7 @@ add_executable(Benchmark Benchmark.cpp)
 target_link_libraries(Benchmark testgencpp)
 LINK_AGAINST_THRIFT_LIBRARY(Benchmark thrift)
 add_test(NAME Benchmark COMMAND Benchmark)
-target_link_libraries(Benchmark testgencpp ${ZLIB_LIBRARIES})
+target_link_libraries(Benchmark testgencpp)
 
 set(UnitTest_SOURCES
     UnitTestMain.cpp
@@ -81,8 +81,7 @@ if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS AND NOT MSVC)
 endif()
 
 add_executable(UnitTests ${UnitTest_SOURCES})
-target_link_libraries(UnitTests testgencpp ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES})
+target_link_libraries(UnitTests testgencpp ${Boost_LIBRARIES})
 LINK_AGAINST_THRIFT_LIBRARY(UnitTests thrift)
 add_test(NAME UnitTests COMMAND UnitTests)
 if ( MSVC )
@@ -105,7 +104,6 @@ add_executable(TInterruptTest ${TInterruptTest_SOURCES})
 target_link_libraries(TInterruptTest
     testgencpp
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(TInterruptTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -117,7 +115,6 @@ add_executable(TServerIntegrationTest TServerIntegrationTest.cpp)
 target_link_libraries(TServerIntegrationTest
     testgencpp_cob
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(TServerIntegrationTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -152,7 +149,6 @@ add_executable(EnumTest EnumTest.cpp)
 target_link_libraries(EnumTest
     testgencpp
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(EnumTest thrift)
 add_test(NAME EnumTest COMMAND EnumTest)
@@ -162,7 +158,6 @@ add_executable(TFileTransportTest TFileTransportTest.cpp)
 target_link_libraries(TFileTransportTest
     testgencpp
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(TFileTransportTest thrift)
 add_test(NAME TFileTransportTest COMMAND TFileTransportTest)
@@ -171,7 +166,6 @@ endif()
 add_executable(TFDTransportTest TFDTransportTest.cpp)
 target_link_libraries(TFDTransportTest
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(TFDTransportTest thrift)
 add_test(NAME TFDTransportTest COMMAND TFDTransportTest)
@@ -179,7 +173,6 @@ add_test(NAME TFDTransportTest COMMAND TFDTransportTest)
 add_executable(TPipedTransportTest TPipedTransportTest.cpp)
 target_link_libraries(TPipedTransportTest
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(TPipedTransportTest thrift)
 add_test(NAME TPipedTransportTest COMMAND TPipedTransportTest)
@@ -194,7 +187,6 @@ add_executable(AllProtocolsTest ${AllProtocolsTest_SOURCES})
 target_link_libraries(AllProtocolsTest
     testgencpp
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(AllProtocolsTest thrift)
 add_test(NAME AllProtocolsTest COMMAND AllProtocolsTest)
@@ -205,7 +197,6 @@ add_executable(DebugProtoTest DebugProtoTest.cpp)
 target_link_libraries(DebugProtoTest
     testgencpp
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(DebugProtoTest thrift)
 add_test(NAME DebugProtoTest COMMAND DebugProtoTest)
@@ -215,7 +206,6 @@ add_executable(JSONProtoTest JSONProtoTest.cpp)
 target_link_libraries(JSONProtoTest
     testgencpp
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(JSONProtoTest thrift)
 add_test(NAME JSONProtoTest COMMAND JSONProtoTest)
@@ -224,7 +214,6 @@ add_executable(OptionalRequiredTest OptionalRequiredTest.cpp)
 target_link_libraries(OptionalRequiredTest
     testgencpp
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(OptionalRequiredTest thrift)
 add_test(NAME OptionalRequiredTest COMMAND OptionalRequiredTest)
@@ -233,7 +222,6 @@ add_executable(RecursiveTest RecursiveTest.cpp)
 target_link_libraries(RecursiveTest
     testgencpp
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(RecursiveTest thrift)
 add_test(NAME RecursiveTest COMMAND RecursiveTest)
@@ -242,7 +230,6 @@ add_executable(SpecializationTest SpecializationTest.cpp)
 target_link_libraries(SpecializationTest
     testgencpp
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(SpecializationTest thrift)
 add_test(NAME SpecializationTest COMMAND SpecializationTest)
@@ -256,7 +243,6 @@ set(concurrency_test_SOURCES
 add_executable(concurrency_test ${concurrency_test_SOURCES})
 LINK_AGAINST_THRIFT_LIBRARY(concurrency_test thrift)
 add_test(NAME concurrency_test COMMAND concurrency_test)
-target_link_libraries(concurrency_test ${ZLIB_LIBRARIES})
 
 set(link_test_SOURCES
     link/LinkTest.cpp
@@ -268,7 +254,7 @@ set(link_test_SOURCES
 add_executable(link_test ${link_test_SOURCES})
 target_link_libraries(link_test testgencpp_cob)
 LINK_AGAINST_THRIFT_LIBRARY(link_test thrift)
-target_link_libraries(link_test testgencpp ${ZLIB_LIBRARIES})
+target_link_libraries(link_test testgencpp)
 add_test(NAME link_test COMMAND link_test)
 
 if(WITH_LIBEVENT)
@@ -284,7 +270,6 @@ add_executable(processor_test ${processor_test_SOURCES})
 target_link_libraries(processor_test
     testgencpp_cob
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(processor_test thrift)
 LINK_AGAINST_THRIFT_LIBRARY(processor_test thriftnb)
@@ -297,7 +282,6 @@ target_link_libraries(TNonblockingServerTest
     testgencpp_cob
     ${LIBEVENT_LIBRARIES}
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(TNonblockingServerTest thrift)
 LINK_AGAINST_THRIFT_LIBRARY(TNonblockingServerTest thriftnb)
@@ -309,7 +293,6 @@ add_executable(OpenSSLManualInitTest OpenSSLManualInitTest.cpp)
 target_link_libraries(OpenSSLManualInitTest
     ${OPENSSL_LIBRARIES}
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(OpenSSLManualInitTest thrift)
 add_test(NAME OpenSSLManualInitTest COMMAND OpenSSLManualInitTest)
@@ -318,7 +301,6 @@ add_executable(SecurityTest SecurityTest.cpp)
 target_link_libraries(SecurityTest
     testgencpp
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(SecurityTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

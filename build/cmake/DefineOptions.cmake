@@ -49,6 +49,10 @@ CMAKE_DEPENDENT_OPTION(BUILD_CPP "Build C++ library" ON
 # but in future other libraries might reuse them.
 # So they are not dependent on WITH_CPP but setting them without WITH_CPP currently
 # has no effect.
+if(ZLIB_LIBRARY)
+    # FindZLIB.cmake does not normalize path so we need to do it ourselves.
+    file(TO_CMAKE_PATH ${ZLIB_LIBRARY} ZLIB_LIBRARY)
+endif()
 find_package(ZLIB QUIET)
 CMAKE_DEPENDENT_OPTION(WITH_ZLIB "Build with ZLIB support" ON
                        "ZLIB_FOUND" OFF)

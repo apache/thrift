@@ -48,11 +48,18 @@ foreach(SRC ${haskell_sources})
     endif()
 endforeach()
 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set(hs_optimize -O0)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+  set(hs_optimize -O1)
+endif()
+
 add_custom_command(
     OUTPUT ${haskell_artifacts}
     COMMAND ${CABAL} update
     # Build dependencies first without --builddir, otherwise it fails.
-    COMMAND ${CABAL} install --dependencies-only
+    COMMAND ${CABAL} install --only-dependencies
+    COMMAND ${CABAL} configure ${hs_optimize}
     COMMAND ${CABAL} install --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/thrift_cabal.stamp
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
