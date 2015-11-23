@@ -29,7 +29,6 @@ import Network
 import Network.URI
 import System.Environment
 import System.Exit
-import System.Posix.Unistd
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.HashMap.Strict as Map
 import qualified Data.HashSet as Set
