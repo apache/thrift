@@ -251,3 +251,15 @@ For the compiler/cpp/src/thrift/md5.[ch] components:
   ghost@aladdin.com
 
  */
+--------------------------------------------------
+For the lib/nodejs/lib/thrift/json_parse.js:
+
+/*
+    json_parse.js
+    2015-05-02
+    Public Domain.
+    NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
+
+*/
+(By Douglas Crockford <douglas@crockford.com>)
+--------------------------------------------------
