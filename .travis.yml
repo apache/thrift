@@ -35,20 +35,24 @@ compiler:
 before_install:
   - sh build/travis/installCXXDependencies.sh
   - if [ "$ALL_DEPS" != "no" ] ; then sh build/travis/installDependencies.sh 1> /dev/null ; fi
-  - if [ "$ALL_DEPS" != "no" ] ; then export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH ; fi
-  - if [ "$ALL_DEPS" != "no" ] ; then cabal update ; fi
+  - if [ "$BUILD_HASKELL" != "no" ] ; then export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH ; fi
+  - if [ "$BUILD_HASKELL" != "no" ] ; then cabal update ; fi
   # Disabling any cabal concurrent jobs to workaround GHC crashes due to out of memory.
   # We can safely remove this to speed up cabal install, once Travis infrastructure is upgraded.
-  - if [ "$ALL_DEPS" != "no" ] ; then sed -i 's/^\s*jobs\s*:\s*\$ncpus\s*$/jobs:1/g' $HOME/.cabal/config && cat $HOME/.cabal/config | grep jobs ; fi
+  - if [ "$BUILD_HASKELL" != "no" ] ; then sed -i 's/^\s*jobs\s*:\s*\$ncpus\s*$/jobs:1/g' $HOME/.cabal/config && cat $HOME/.cabal/config | grep jobs ; fi
 
+before_script:
+  - sudo /etc/init.d/mysql stop
+  - sudo /etc/init.d/postgresql stop
 
 script:
   - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then mkdir cmake_build && cd cmake_build && cmake -GNinja -DQT_MOC_EXECUTABLE="moq-qt5" $CMAKE_CONFIG $TRAVIS_BUILD_DIR ; fi
-  - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then ninja ; fi
-  - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then cpack ; cd $TRAVIS_BUILD_DIR ; fi
+  - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then ninja -j $CONCURRENT_JOBS ; fi
+  - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then cpack ; fi
+  - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then ctest -VV -E "(concurrency_test|processor_test|Haskell)" ; fi
   - if [ "x$CONFIG" != "xnone" ] ; then sh bootstrap.sh ; fi
   - if [ "x$CONFIG" != "xnone" ] ; then sh configure $CONFIG ; fi
-  - if [ "x$CONFIG" != "xnone" ] ; then make $MAKE_TARGET -j2 ; fi
+  - if [ "x$CONFIG" != "xnone" ] ; then make $MAKE_TARGET -j $CONCURRENT_JOBS ; fi
 
 after_failure:
   - if [ "x$ERROR_LOG" != "xnone" ] ; then cat $ERROR_LOG ; fi
@@ -60,8 +64,11 @@ env:
     - CONFIG="none"
     - MAKE_TARGET="check"
     - ALL_DEPS="no"
+    # Invoke cabal only when necessary because it is flaky due to network and package updates.
+    - BUILD_HASKELL="no"
     - GHCVER=7.8.3
     - ERROR_LOG="none"
+    - CONCURRENT_JOBS=2
 
   matrix:
     # Put it here because it's most time consuming
@@ -69,6 +76,7 @@ env:
       THRIFT_CROSSTEST_CONCURRENCY=6
       CONFIG="--enable-tutorial=no --without-lua --without-haxe --without-d"
       ALL_DEPS="yes"
+      BUILD_HASKELL="yes"
       MAKE_TARGET="cross"
       ERROR_LOG="test/log/unexpected_failures.log"
 
@@ -78,10 +86,11 @@ env:
     - TEST_NAME="all (CMake + CPack)"
       CMAKE_CONFIG=""
       ALL_DEPS="yes"
+      BUILD_HASKELL="yes"
     - TEST_NAME="C++/boost-threads (CMake + CPack)"
-      CMAKE_CONFIG="-DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF -DWITH_BOOSTTHREADS=ON"
+      CMAKE_CONFIG="-DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF -DWITH_BOOSTTHREADS=ON"
     - TEST_NAME="C++/std-threads (CMake + CPack)"
-      CMAKE_CONFIG="-DCMAKE_CXX_FLAGS=-std=c++0x -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF -DWITH_STDTHREADS=ON"
+      CMAKE_CONFIG="-DCMAKE_CXX_FLAGS=-std=c++0x -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF -DWITH_STDTHREADS=ON"
     - TEST_NAME="compiler (mingw32-gcc, CMake + CPack)"
       CMAKE_CONFIG="-DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
 
@@ -89,19 +98,30 @@ env:
     # TODO: Remove them as migration is made
     - TEST_NAME="compiler (automake)"
       CONFIG="--disable-libs"
-    - TEST_NAME="all (automake)"
-      CONFIG="--without-erlang --without-python --without-go --without-lua"
+
+    - TEST_NAME="C C# D Dart Erlang Go Haxe (automake)"
+      CONFIG="--without-cpp --without-haskell --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-ruby"
       ALL_DEPS="yes"
-    - TEST_NAME="C & C++ & Haskell (automake)"
-      CONFIG="--without-csharp --without-java --without-erlang --without-nodejs --without-lua --without-python --without-perl --without-php --without-php-extension --without-ruby --without-go --without-d"
+
+    - TEST_NAME="Java Lua Node.js Perl PHP Python Ruby (automake)"
+      CONFIG="--without-cpp --without-haskell --without-c_glib --without-csharp --without-d --without-dart --without-erlang --without-go --without-haxe"
       ALL_DEPS="yes"
-    - TEST_NAME="Small Set (automake)"
-      CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua --without-d --without-ruby --without-nodejs --without-java"
+
+    # Isolate unstable builds from others
+    - TEST_NAME="C++ (automake)"
+      CONFIG="--without-haskell --without-c_glib --without-csharp --without-d --without-dart --without-erlang --without-go --without-haxe --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-ruby"
+
+    - TEST_NAME="Haskell (automake)"
+      CONFIG="--without-cpp --without-c_glib --without-csharp --without-d --without-dart --without-erlang --without-go --without-haxe --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-ruby"
       ALL_DEPS="yes"
+      BUILD_HASKELL="yes"
+
     - TEST_NAME="dist (automake)"
       CONFIG=""
       ALL_DEPS="yes"
+      BUILD_HASKELL="yes"
       MAKE_TARGET="dist"
+
 
 matrix:
   allow_failures:
@@ -134,55 +154,41 @@ matrix:
 
     # QA jobs for code analytics and metrics
 
-    # static code analysis with cppcheck (we can add --enable=all later)
-    - env:    TEST_NAME="cppcheck (compiler) error"
-      script: cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 compiler/cpp/src
+    # static code analysis with cppcheck
+    # add --error-exitcode=1 to --enable=all as soon as everything is fixed
+    - env:    TEST_NAME="cppcheck"
       before_install: sudo apt-get install cppcheck
-    - env:    TEST_NAME="cppcheck (cpp) error"
-      script: cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
-      before_install: sudo apt-get install cppcheck
-    - env:    TEST_NAME="cppcheck (c_glib) error"
-      script: cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
-      before_install: sudo apt-get install cppcheck
-    # add --error-exitcode=1 as soon as everything is fixed
-    - env:    TEST_NAME="cppcheck (compiler) all"
-      script: cppcheck --force --quiet --inline-suppr --enable=all -j2 compiler/cpp/src
-      before_install: sudo apt-get install cppcheck
-    - env:    TEST_NAME="cppcheck (cpp) all"
-      script: cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
-      before_install: sudo apt-get install cppcheck
-    - env:    TEST_NAME="cppcheck (c_glib) all"
-      script: cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
-      before_install: sudo apt-get install cppcheck
+      script:
+        # Compiler cppcheck (All)
+        - cppcheck --force --quiet --inline-suppr --enable=all -j2 compiler/cpp/src
+        # C++ cppcheck (All)
+        - cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
+        # C Glib cppcheck (All)
+        - cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
+        # Silent error checks
+        - cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 compiler/cpp/src
+        - cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
+        - cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
 
     # TODO use findbugs for Java
     # TODO use fxcop for C#
 
     # TODO do style checks
 
-    # search for TODO within source tree
-    - env:    TEST_NAME="TODO"
-      before_install:
-      script: grep -r TODO *
-    # search for FIXME within source tree
-    - env:    TEST_NAME="FIXME"
-      before_install:
-      script: grep -r FIXME *
-    # search for HACK within source tree
-    - env:    TEST_NAME="HACK"
-      before_install:
-      script: grep -r HACK *
+    # search for TODO etc within source tree
     # some statistics about the code base
-    - env:    TEST_NAME="sloccount"
-      before_install:
-      script: sloccount .
-      before_install: sudo apt-get install sloccount
     # some info about the build machine
-    - env:    TEST_NAME="info"
-      before_install:
+    - env:    TEST_NAME="TODO FIXME HACK, LoC and system info"
+      before_install: sudo apt-get install sloccount
       script:
-       - dpkg -l
-       - uname -a
+        - grep -r TODO *
+        - grep -r FIXME *
+        - grep -r HACK *
+        # LoC
+        - sloccount .
+        # System Info
+        - dpkg -l
+        - uname -a
 
 # TODO make it perfect ;-r
 #
