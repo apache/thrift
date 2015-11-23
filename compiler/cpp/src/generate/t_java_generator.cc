@@ -319,6 +319,7 @@ public:
   std::string type_to_enum(t_type* ttype);
   void generate_struct_desc(ofstream& out, t_struct* tstruct);
   void generate_field_descs(ofstream& out, t_struct* tstruct);
+  void generate_exception_message_glue(ofstream& out);
   void generate_field_name_constants(ofstream& out, t_struct* tstruct);
 
   std::string make_valid_java_filename(std::string const& fromName);
@@ -1378,6 +1379,14 @@ void t_java_generator::generate_java_struct_definition(ofstream& out,
   out << endl;
 
   generate_field_descs(out, tstruct);
+
+  out << endl;
+
+  // Throwable messages will not show up in stack traces unless we override
+  // getMessage.
+  if (is_exception) {
+    generate_exception_message_glue(out);
+  }
 
   out << endl;
 
@@ -4578,6 +4587,11 @@ void t_java_generator::generate_field_descs(ofstream& out, t_struct* tstruct) {
                 << "\", " << type_to_enum((*m_iter)->get_type()) << ", "
                 << "(short)" << (*m_iter)->get_key() << ");" << endl;
   }
+}
+
+void t_java_generator::generate_exception_message_glue(ofstream& out) {
+  indent(out) << "@Override" << endl;
+  indent(out) << "public String getMessage() { return msg; }" << endl;
 }
 
 void t_java_generator::generate_scheme_map(ofstream& out, t_struct* tstruct) {
