@@ -75,6 +75,13 @@ public:
       library_name_ = "";
     }
 
+    iter = parsed_options.find("pubspec_lib");
+    if (iter != parsed_options.end()) {
+      pubspec_lib_ = (iter->second);
+    } else {
+      pubspec_lib_ = "";
+    }
+
     out_dir_base_ = "gen-dart";
   }
 
@@ -240,12 +247,23 @@ public:
            || ttype->is_string();
   }
 
+  vector<std::string> split(const string& s, char delim) {
+    vector<std::string> elems;
+    stringstream ss(s);
+    string item;
+    while (getline(ss, item, delim)) {
+      elems.push_back(item);
+    }
+    return elems;
+  }
+
   std::string constant_name(std::string name);
 
 private:
   std::ofstream f_service_;
 
   std::string library_name_;
+  std::string pubspec_lib_;
 
   std::string base_dir_;
   std::string src_dir_;
@@ -374,10 +392,19 @@ void t_dart_generator::generate_dart_pubspec() {
 
   indent(f_pubspec) << "dependencies:" << endl;
   indent_up();
-  indent(f_pubspec) << "thrift:  # ^" << dart_thrift_version << endl;
-  indent_up();
-  indent(f_pubspec) << "path: ../../../../lib/dart" << endl;
-  indent_down();
+
+  if (pubspec_lib_.empty()) {
+    // default to relative path within working directory, which works for tests
+    indent(f_pubspec) << "thrift:  # ^" << dart_thrift_version << endl;
+    indent_up();
+    indent(f_pubspec) << "path: ../../../../lib/dart" << endl;
+    indent_down();
+  } else {
+    const vector<std::string> lines = split(pubspec_lib_, '|');
+    for (size_t line_index = 0; line_index < lines.size(); line_index++) {
+      indent(f_pubspec) << lines[line_index] << endl;
+    }
+  }
 
   // add included thrift files as dependencies
   const vector<t_program*>& includes = program_->get_includes();
@@ -2364,5 +2391,8 @@ std::string t_dart_generator::get_enum_class_name(t_type* type) {
 THRIFT_REGISTER_GENERATOR(
     dart,
     "Dart",
-    "    library_name=my_library    Optional override for library name.\n"
+    "    library_name:    Optional override for library name.\n"
+    "    pubspec_lib:     Optional override for thrift lib dependency in pubspec.yaml,\n"
+    "                     e.g. \"thrift: 0.x.x\".  Use a pipe delimiter to separate lines,\n"
+    "                     e.g. \"thrift:|  git:|    url: git@foo.com\"\n"
 )
