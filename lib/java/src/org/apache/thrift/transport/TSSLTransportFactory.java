@@ -309,7 +309,7 @@ public class TSSLTransportFactory {
       if (protocol != null) {
         this.protocol = protocol;
       }
-      this.cipherSuites = Arrays.copyOf(cipherSuites, cipherSuites.length);
+      this.cipherSuites = cipherSuites != null ? Arrays.copyOf(cipherSuites, cipherSuites.length) : null;
       this.clientAuth = clientAuth;
     }
 
