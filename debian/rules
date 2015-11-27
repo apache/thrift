@@ -86,7 +86,8 @@ clean:
 	rm -f build-arch-stamp build-indep-stamp configure-stamp
 
 	# Add here commands to clean up after the build process.
-	-$(MAKE) clean
+	# -$(MAKE) clean
+	[ ! -f Makefile ] || $(MAKE) distclean
 
 	dh_clean
 
@@ -107,11 +108,6 @@ install-indep:
 		$(CURDIR)/debian/libthrift-java/usr/share/java/
 
         # Ruby
-	mkdir -p $(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.8 && \
-	cp $(CURDIR)/lib/rb/lib/thrift.rb \
-		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.8
-	cp -r $(CURDIR)/lib/rb/lib/thrift \
-		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.8
 	mkdir -p $(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1 && \
 	cp $(CURDIR)/lib/rb/lib/thrift.rb \
 		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1
@@ -199,7 +195,7 @@ binary-indep: build-indep install-indep
 
 # Build architecture dependent packages using the common target.
 binary-arch: build-arch install-arch
-	echo "php:Depends=phpapi-$(php-config5 --phpapi)" > debian/substvars
+	# echo "php:Depends=phpapi-$(php-config5 --phpapi)" > debian/substvars
 	$(MAKE) -f debian/rules DH_OPTIONS=-s binary-common
 
 binary: binary-arch binary-indep

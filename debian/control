@@ -1,18 +1,43 @@
 Source: thrift
 Section: devel
 Priority: extra
-Build-Depends: debhelper (>= 5), build-essential, mono-gmcs, python-dev, ant,
-    mono-devel,  libmono-system-web2.0-cil, erlang-base, ruby1.8-dev, autoconf, automake,
-    pkg-config, libtool, bison, flex, libboost-dev | libboost1.40-dev, python-all,
-    python-all-dev, python-all-dbg, openjdk-6-jdk | java-sdk,
-    libboost-test-dev | libboost-test1.40-dev, libevent-dev, perl (>= 5.8.0-7),
-    php5, php5-dev, libglib2.0-dev, libqt4-dev
+Build-Depends: debhelper (>= 9),
+               ant,
+               autoconf,
+               automake,
+               bison,
+               dpkg-dev (>= 1.13.5),
+#               erlang-base,
+               flex,
+               gcc (>= 4:4.4.3),
+               g++ (>= 4:4.4.3),
+               libboost-dev,
+               libboost-test-dev,
+               libc6-dev (>= 2.19),
+               libevent-dev,
+               libglib2.0-dev,
+               libmono-system-web2.0-cil,
+               libqt4-dev,
+               libtool,
+               make (>= 3.81),
+               mono-devel,
+               mono-gmcs,
+               openjdk-7-jdk | default-jdk,
+               perl (>= 5.18),
+               pkg-config,
+               python-all,
+               python-all-dbg,
+               python-all-dev,
+               php5,
+               php5-dev,
+               phpunit,
+               ruby1.9.1-dev
 Maintainer: Thrift Developer's <dev@thrift.apache.org>
 Homepage: http://thrift.apache.org/
 Vcs-Git: https://git-wip-us.apache.org/repos/asf/thrift.git
 Vcs-Browser: https://git-wip-us.apache.org/repos/asf?p=thrift.git
-Standards-Version: 3.7.2
-X-Python-Version: >= 2.6
+Standards-Version: 3.9.5
+X-Python-Version: >= 2.7
 
 Package: thrift-compiler
 Architecture: any
@@ -44,7 +69,7 @@ Description: Python bindings for Thrift
 
 Package: python-thrift-dbg
 Architecture: any
-Section: python
+Section: debug
 Depends: ${shlibs:Depends}, ${misc:Depends}, python-thrift (= ${binary:Version}), python-all-dbg
 Provides: ${python:Provides}
 Description: Python bindings for Thrift (debug version)
@@ -76,7 +101,7 @@ Description: Ruby bindings for Thrift
 
 Package: libthrift-java
 Architecture: all
-Section: libs
+Section: java
 Depends: java-gcj-compat | java1-runtime | java2-runtime, ${misc:Depends}
 Description: Java bindings for Thrift
  Thrift is a software framework for scalable cross-language services
@@ -90,7 +115,7 @@ Description: Java bindings for Thrift
 
 Package: libthrift-cil
 Architecture: all
-Section: libs
+Section: cli-mono
 Depends: cli-common, libmono-corlib1.0-cil (>= 1.0), libmono-system1.0-cil (>= 1.0), 
     libmono-system-web2.0-cil, ${misc:Depends}
 Description: CLI bindings for Thrift
@@ -131,7 +156,7 @@ Description: Thrift C++ library
 Package: libthrift-dev
 Architecture: any
 Section: libdevel
-Depends: ${shlibs:Depends}, ${misc:Depends}, libthrift0, libglib2.0-dev
+Depends: ${shlibs:Depends}, ${misc:Depends}, libthrift0 (= ${binary:Version}), libglib2.0-dev
 Description: Thrift C++ library (development headers)
  Thrift is a software framework for scalable cross-language services
  development. It combines a software stack with a code generation engine to
