@@ -20,7 +20,7 @@
 import platform
 from itertools import product
 
-from crossrunner.util import merge_dict
+from .util import merge_dict
 
 # Those keys are passed to execution as is.
 # Note that there are keys other than these, namely:
