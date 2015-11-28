@@ -20,7 +20,7 @@
 import os
 import subprocess
 
-from crossrunner.collect import collect_testlibs
+from .collect import collect_testlibs
 
 
 def prepare(config_dict, testdir, server_match, client_match):

@@ -107,11 +107,6 @@ install-indep:
 		$(CURDIR)/debian/libthrift-java/usr/share/java/
 
         # Ruby
-	mkdir -p $(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.8 && \
-	cp $(CURDIR)/lib/rb/lib/thrift.rb \
-		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.8
-	cp -r $(CURDIR)/lib/rb/lib/thrift \
-		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.8
 	mkdir -p $(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1 && \
 	cp $(CURDIR)/lib/rb/lib/thrift.rb \
 		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1

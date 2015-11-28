@@ -2,10 +2,10 @@ Source: thrift
 Section: devel
 Priority: extra
 Build-Depends: debhelper (>= 5), build-essential, mono-gmcs, python-dev, ant,
-    mono-devel,  libmono-system-web2.0-cil, erlang-base, ruby1.8-dev, autoconf, automake,
-    pkg-config, libtool, bison, flex, libboost-dev | libboost1.40-dev, python-all,
+    mono-devel,  libmono-system-web2.0-cil, erlang-base, ruby-dev | ruby1.9.1-dev, autoconf, automake,
+    pkg-config, libtool, bison, flex, libboost-dev | libboost1.53-dev, python-all,
     python-all-dev, python-all-dbg, openjdk-6-jdk | java-sdk,
-    libboost-test-dev | libboost-test1.40-dev, libevent-dev, perl (>= 5.8.0-7),
+    libboost-test-dev | libboost-test1.53-dev, libevent-dev, perl (>= 5.8.0-7),
     php5, php5-dev, libglib2.0-dev, libqt4-dev
 Maintainer: Thrift Developer's <dev@thrift.apache.org>
 Homepage: http://thrift.apache.org/
@@ -29,8 +29,8 @@ Description: Compiler for Thrift definition files
 Package: python-thrift
 Architecture: any
 Section: python
-Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}
-Recommends: python-twisted-core
+Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}, python-six
+Recommends: python-twisted-web
 Provides: ${python:Provides}
 Description: Python bindings for Thrift
  Thrift is a software framework for scalable cross-language services
