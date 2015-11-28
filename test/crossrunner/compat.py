@@ -13,9 +13,12 @@ if sys.version_info[0] == 2:
     b = s.decode(_ENCODE)
     return b.join(bin_args).encode(_ENCODE)
 
+  logfile_open = open
+
 else:
 
   path_join = os.path.join
+  str_join = str.join
 
-  def str_join(s, l):
-    return s.join(l)
+  def logfile_open(*args):
+    return open(*args, errors='replace')

@@ -325,6 +325,7 @@
     "server": {
       "delay": 3,
       "command": [
+        "mono",
         "TestClientServer.exe",
         "server"
       ]
@@ -332,6 +333,7 @@
     "client": {
       "timeout": 9,
       "command": [
+        "mono",
         "TestClientServer.exe",
         "client"
       ]
@@ -451,6 +453,7 @@
       ]
     },
     "server": {
+      "delay": 5,
       "command": [
         "erl",
         "+K",

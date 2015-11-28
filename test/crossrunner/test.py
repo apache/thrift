@@ -22,8 +22,7 @@ import multiprocessing
 import os
 import sys
 from .compat import path_join
-
-from crossrunner.util import merge_dict
+from .util import merge_dict
 
 
 def domain_socket_path(port):
