@@ -318,9 +318,9 @@ class SimpleClientTest < Test::Unit::TestCase
   def test_oneway
     p 'test_oneway'
     time1 = Time.now.to_f
-    @client.testOneway(3)
+    @client.testOneway(1)
     time2 = Time.now.to_f
-    assert_equal((time2-time1)*1000000<400, true)
+    assert_operator (time2-time1), :<, 0.1
   end
 
 end

@@ -21,15 +21,14 @@ import contextlib
 import multiprocessing
 import multiprocessing.managers
 import os
-import sys
 import platform
 import random
-import socket
 import signal
+import socket
 import subprocess
+import sys
 import threading
 import time
-import traceback
 
 from .compat import str_join
 from .test import TestEntry, domain_socket_path
@@ -165,10 +164,10 @@ def run_test(testdir, test_dict, async=True, max_retry=3):
     stop.set()
     return None
   except Exception as ex:
-    logger.warn('Error while executing test : %s' % str(ex))
+    logger.warn('%s', ex)
     if not async:
       raise
-    logger.info(traceback.print_exc())
+    logger.debug('Error executing [%s]', test.name, exc_info=sys.exc_info())
     return RESULT_ERROR
 
 

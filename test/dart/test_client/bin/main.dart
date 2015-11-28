@@ -104,7 +104,7 @@ ArgResults _parseArgs(List<String> args) {
   parser.addOption('port', defaultsTo: '9090', help: 'The port to connect to');
   parser.addOption('transport',
       defaultsTo: 'buffered',
-      allowed: ['buffered', 'framed'],
+      allowed: ['buffered', 'framed', 'http'],
       help: 'The transport name',
       allowedHelp: {
         'buffered': 'TBufferedTransport',
