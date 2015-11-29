@@ -74,7 +74,11 @@ static void callbackLocking(int mode, int n, const char*, int) {
 
 #if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
 static unsigned long callbackThreadID() {
+#ifdef _WIN32
+  return (unsigned long)GetCurrentThreadId();
+#else
   return (unsigned long)pthread_self();
+#endif
 }
 #endif
 
