@@ -345,7 +345,7 @@ string t_cocoa_generator::cocoa_thrift_imports() {
   // Include other Thrift includes
   const vector<t_program*>& other_includes = program_->get_includes();
   for (size_t i = 0; i < other_includes.size(); ++i) {
-    includes << "#import \"" << other_includes[i]->get_name() << ".h\"" << endl;
+    includes << "#import \"" << cocoa_prefix_ << capitalize(other_includes[i]->get_name()) << ".h\"" << endl;
   }
   
   includes << endl;
