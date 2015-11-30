@@ -551,7 +551,7 @@ version (unittest) {
 
   struct WithDefaults {
     string a = "asdf";
-    double b = 3.1415;
+    double b = 1.0e+20;
     WithoutMeta c;
 
     mixin TStructHelpers!([
@@ -644,7 +644,7 @@ version (unittest) {
   static assert(structIdlString!WithDefaults ==
 `struct WithDefaults {
   -1: string a = "asdf",
-  -2: double b = 3.1415,
+  -2: double b = 1.0e+20,
   1: WithoutMeta c = {a: "foo", b: 3, },
 }
 `);
