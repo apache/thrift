@@ -1002,9 +1002,13 @@ void t_go_generator::generate_enum(t_enum* tenum) {
   f_types_ << "}" << endl << endl;
 
   // Generate Value for driver.Valuer interface
-  f_types_ << "func (p " << tenum_name << ") Value() (driver.Value, error) {" <<endl;
-  f_types_ << "return int64(p), nil" << endl;
+  f_types_ << "func (p * " << tenum_name << ") Value() (driver.Value, error) {" <<endl;
+  f_types_ << "  if p == nil {" << endl;
+  f_types_ << "    return nil, nil" << endl;
+  f_types_ << "  }" << endl;
+  f_types_ << "return int64(*p), nil" << endl;
   f_types_ << "}" << endl;
+
 }
 
 /**
