@@ -43,6 +43,7 @@ AM_CXXFLAGS = $(AM_CFLAGS)
 AM_LDFLAGS = $(GLIB_LIBS) $(GOBJECT_LIBS) @GCOV_LDFLAGS@
 
 check_PROGRAMS = \
+  testserialization \
   testapplicationexception \
   testcontainertest \
   testtransportsocket \
@@ -60,6 +61,12 @@ if WITH_CPP
   BUILT_SOURCES += gen-cpp/ThriftTest_types.cpp
   check_PROGRAMS += testthrifttestclient
 endif
+
+testserialization_SOURCES = testserialization.c
+testserialization_LDADD = \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
+    libtestgenc.la
 
 testapplicationexception_SOURCES = testapplicationexception.c
 testapplicationexception_LDADD = \

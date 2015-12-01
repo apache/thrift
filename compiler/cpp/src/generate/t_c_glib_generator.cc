@@ -3699,7 +3699,10 @@ void t_c_glib_generator::generate_serialize_field(ofstream& out,
     } else if (type->is_enum()) {
       out << "i32 (protocol, (gint32) " << name;
     }
-    out << ", error)) < 0)" << endl << indent() << "  return " << error_ret << ";" << endl;
+    out << ", error)) < 0)" << endl
+        << indent() << "  return " << error_ret << ";" << endl
+        << indent() << "xfer += ret;" << endl
+        << endl;
   } else {
     printf("DO NOT KNOW HOW TO SERIALIZE FIELD '%s' TYPE '%s'\n",
            name.c_str(),
