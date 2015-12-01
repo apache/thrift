@@ -138,6 +138,7 @@ erl_crash.dump
 /lib/c_glib/test/testthrifttest
 /lib/c_glib/test/testthrifttestclient
 /lib/c_glib/test/testtransportsocket
+/lib/c_glib/test/testserialization
 /lib/c_glib/thriftc.pc
 /lib/c_glib/thrift_c_glib.pc
 /lib/csharp/**/bin/
