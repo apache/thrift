@@ -32,7 +32,7 @@
  * The first thing to know about are types. The available types in Thrift are:
  *
  *  bool        Boolean, one byte
- *  byte        Signed byte
+ *  i8 (byte)   Signed 8-bit integer
  *  i16         Signed 16-bit integer
  *  i32         Signed 32-bit integer
  *  i64         Signed 64-bit integer
