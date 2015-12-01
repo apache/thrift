@@ -37,7 +37,7 @@ sudo gem install bundler rake
 sudo apt-get install -qq libbit-vector-perl libclass-accessor-class-perl libio-socket-ssl-perl libnet-ssleay-perl libcrypt-ssleay-perl
 
 # Php dependencies
-sudo apt-get install -qq php5 php5-dev php5-cli php-pear re2c
+sudo apt-get install -qq php5 php5-dev php5-cli php-pear phpunit re2c
 
 # GlibC dependencies
 sudo apt-get install -qq libglib2.0-dev
