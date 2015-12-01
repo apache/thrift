@@ -33,6 +33,17 @@
 
 void thrift_hash_table_get_keys (gpointer key, gpointer value,
                                  gpointer user_data);
+void thrift_safe_hash_table_destroy(GHashTable* hash_table);
+
+guint thrift_boolean_hash(gconstpointer v);
+gboolean thrift_boolean_equal(gconstpointer a, gconstpointer b);
+
+guint thrift_int8_hash(gconstpointer v);
+gboolean thrift_int8_equal(gconstpointer a, gconstpointer b);
+
+guint thrift_int16_hash(gconstpointer v);
+gboolean thrift_int16_equal(gconstpointer a, gconstpointer b);
+
 void thrift_string_free (gpointer str);
 
 #endif /* #ifndef _THRIFT_THRIFT_H */
