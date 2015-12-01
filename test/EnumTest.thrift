@@ -21,6 +21,8 @@
  * details.
  */
 
+namespace c_glib TTest
+
 enum MyEnum1 {
   ME1_0 = 0,
   ME1_1 = 1,
@@ -70,3 +72,38 @@ struct MyStruct {
   3: MyEnum3 me3_d1 = MyEnum3.ME3_D1
 }
 
+struct EnumTestStruct {
+  1: MyEnum3 a_enum;
+  2: list<MyEnum3> enum_list;
+  3: set<MyEnum3> enum_set;
+  4: map<MyEnum3, MyEnum3> enum_enum_map;
+  // collections as keys
+  44: map<list<MyEnum3> (python.immutable = ""), MyEnum3> list_enum_map;
+  45: map<set<MyEnum3> (python.immutable = ""), MyEnum3> set_enum_map;
+  46: map<map<MyEnum3,MyEnum3> (python.immutable = ""), MyEnum3> map_enum_map;
+  // collections as values
+  47: map<MyEnum3, map<MyEnum3, MyEnum3>> enum_map_map;
+  48: map<MyEnum3, set<MyEnum3>> enum_set_map;
+  49: map<MyEnum3, list<MyEnum3>> enum_list_map;
+}
+
+const EnumTestStruct ENUM_TEST = {
+  'a_enum': MyEnum3.ME3_D1,
+  'enum_list': [MyEnum3.ME3_D1, MyEnum3.ME3_0, MyEnum3.ME3_N2],
+  'enum_set': [MyEnum3.ME3_D1, MyEnum3.ME3_N1],
+  'enum_enum_map': {MyEnum3.ME3_D1: MyEnum3.ME3_0, MyEnum3.ME3_0: MyEnum3.ME3_D1},
+  'list_enum_map': {[MyEnum3.ME3_D1, MyEnum3.ME3_0]: MyEnum3.ME3_0, [MyEnum3.ME3_D1]: MyEnum3.ME3_0, [MyEnum3.ME3_0]: MyEnum3.ME3_D1},
+  'set_enum_map': {[MyEnum3.ME3_D1, MyEnum3.ME3_0]: MyEnum3.ME3_0, [MyEnum3.ME3_D1]: MyEnum3.ME3_0},
+  'map_enum_map': {{MyEnum3.ME3_N1: MyEnum3.ME3_10}: MyEnum3.ME3_1},
+  'enum_map_map': {MyEnum3.ME3_N1: {MyEnum3.ME3_D1: MyEnum3.ME3_D1}},
+  'enum_set_map': {MyEnum3.ME3_N2: [MyEnum3.ME3_D1, MyEnum3.ME3_N1], MyEnum3.ME3_10: [MyEnum3.ME3_D1, MyEnum3.ME3_N1]},
+  'enum_list_map': {MyEnum3.ME3_D1: [MyEnum3.ME3_10], MyEnum3.ME3_0: [MyEnum3.ME3_9, MyEnum3.ME3_10]},
+}
+
+service EnumTestService {
+  MyEnum3 testEnum(1: MyEnum3 enum1),
+  list<MyEnum3> testEnumList(1: list<MyEnum3> enum1),
+  set<MyEnum3> testEnumSet(1: set<MyEnum3> enum1),
+  map<MyEnum3, MyEnum3> testEnumMap(1: map<MyEnum3, MyEnum3> enum1),
+  EnumTestStruct testEnumStruct(1: EnumTestStruct enum1),
+}

@@ -144,6 +144,7 @@ thrift_test_handler_test_binary (TTestThriftTestIf *iface,
   THRIFT_UNUSED_VAR (error);
 
   printf ("testBinary()\n");  // TODO: hex output
+  g_byte_array_ref(thing);
   *_return = thing;
 
   return TRUE;
