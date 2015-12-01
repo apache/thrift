@@ -53,6 +53,10 @@ add_library(testgenc STATIC ${testgenc_SOURCES})
 target_link_libraries(testgenc thrift_c_glib)
 
 
+add_executable(testserialization testserialization.c)
+target_link_libraries(testserialization testgenc thrift_c_glib)
+add_test(NAME testserialization COMMAND testserialization)
+
 add_executable(testapplicationexception testapplicationexception.c)
 target_link_libraries(testapplicationexception thrift_c_glib)
 add_test(NAME testapplicationexception COMMAND testapplicationexception)
