@@ -216,8 +216,9 @@ main (int argc, char **argv)
 
       GArray *list_out, *list_in;
 
-      TTestNumberz numberz;
-      TTestNumberz numberz2;
+      TTestNumberz *numberz;
+      TTestNumberz *numberz2;
+      TTestNumberz numberz3;
 
       TTestUserId user_id, *user_id_ptr, *user_id_ptr2;
 
@@ -828,11 +829,11 @@ main (int argc, char **argv)
        */
       printf("testEnum(ONE)");
       if (t_test_thrift_test_if_test_enum (test_client,
-                                           &numberz,
+                                           &numberz3,
                                            T_TEST_NUMBERZ_ONE,
                                            &error)) {
-        printf(" = %d\n", numberz);
-        if (numberz != T_TEST_NUMBERZ_ONE)
+        printf(" = %d\n", numberz3);
+        if (numberz3 != T_TEST_NUMBERZ_ONE)
           fail_count++;
       }
       else {
@@ -845,11 +846,11 @@ main (int argc, char **argv)
 
       printf("testEnum(TWO)");
       if (t_test_thrift_test_if_test_enum (test_client,
-                                           &numberz,
+                                           &numberz3,
                                            T_TEST_NUMBERZ_TWO,
                                            &error)) {
-        printf(" = %d\n", numberz);
-        if (numberz != T_TEST_NUMBERZ_TWO)
+        printf(" = %d\n", numberz3);
+        if (numberz3 != T_TEST_NUMBERZ_TWO)
           fail_count++;
       }
       else {
@@ -862,11 +863,11 @@ main (int argc, char **argv)
 
       printf("testEnum(THREE)");
       if (t_test_thrift_test_if_test_enum (test_client,
-                                           &numberz,
+                                           &numberz3,
                                            T_TEST_NUMBERZ_THREE,
                                            &error)) {
-        printf(" = %d\n", numberz);
-        if (numberz != T_TEST_NUMBERZ_THREE)
+        printf(" = %d\n", numberz3);
+        if (numberz3 != T_TEST_NUMBERZ_THREE)
           fail_count++;
       }
       else {
@@ -879,11 +880,11 @@ main (int argc, char **argv)
 
       printf("testEnum(FIVE)");
       if (t_test_thrift_test_if_test_enum (test_client,
-                                           &numberz,
+                                           &numberz3,
                                            T_TEST_NUMBERZ_FIVE,
                                            &error)) {
-        printf(" = %d\n", numberz);
-        if (numberz != T_TEST_NUMBERZ_FIVE)
+        printf(" = %d\n", numberz3);
+        if (numberz3 != T_TEST_NUMBERZ_FIVE)
           fail_count++;
       }
       else {
@@ -896,11 +897,11 @@ main (int argc, char **argv)
 
       printf("testEnum(EIGHT)");
       if (t_test_thrift_test_if_test_enum (test_client,
-                                           &numberz,
+                                           &numberz3,
                                            T_TEST_NUMBERZ_EIGHT,
                                            &error)) {
-        printf(" = %d\n", numberz);
-        if (numberz != T_TEST_NUMBERZ_EIGHT)
+        printf(" = %d\n", numberz3);
+        if (numberz3 != T_TEST_NUMBERZ_EIGHT)
           fail_count++;
       }
       else {
@@ -1037,14 +1038,16 @@ main (int argc, char **argv)
                     "xtructs", &xtructs,
                     NULL);
 
-      numberz = T_TEST_NUMBERZ_FIVE;
-      numberz2 = T_TEST_NUMBERZ_EIGHT;
+      numberz = g_malloc (sizeof *numberz);
+      *numberz = T_TEST_NUMBERZ_FIVE;
+      numberz2 = g_malloc (sizeof *numberz2);
+      *numberz2 = T_TEST_NUMBERZ_EIGHT;
       user_id_ptr = g_malloc (sizeof *user_id_ptr);
       *user_id_ptr = 5;
       user_id_ptr2 = g_malloc (sizeof *user_id_ptr);
       *user_id_ptr2 = 8;
-      g_hash_table_insert (user_map, (gpointer)numberz, user_id_ptr);
-      g_hash_table_insert (user_map, (gpointer)numberz2, user_id_ptr2);
+      g_hash_table_insert (user_map, numberz, user_id_ptr);
+      g_hash_table_insert (user_map, numberz2, user_id_ptr2);
       g_hash_table_unref (user_map);
 
       xtruct_out = g_object_new (T_TEST_TYPE_XTRUCT,
@@ -1149,8 +1152,7 @@ main (int argc, char **argv)
             for (i = 0; i < 2; ++i) {
               numberz_key = numberz_key_values[i];
               insanity_in =
-                g_hash_table_lookup (inner_map_in,
-                                     (gconstpointer)numberz_key);
+                g_hash_table_lookup (inner_map_in, &numberz_key);
               if (insanity_in == NULL)
                 fail_count++;
               else {
@@ -1169,8 +1171,7 @@ main (int argc, char **argv)
                       numberz_key = (TTestNumberz)user_map_values[j];
 
                       value =
-                        g_hash_table_lookup (user_map,
-                                             (gconstpointer)numberz_key);
+                        g_hash_table_lookup (user_map, &numberz_key);
                       if (value == NULL ||
                           *(TTestUserId *)value != (TTestUserId)user_map_values[j])
                         fail_count++;
@@ -1233,9 +1234,9 @@ main (int argc, char **argv)
               g_hash_table_size (inner_map_in) != 1)
             fail_count++;
           else {
+            numberz3 = T_TEST_NUMBERZ_SIX;
             insanity_in =
-              g_hash_table_lookup (inner_map_in,
-                                   (gconstpointer)T_TEST_NUMBERZ_SIX);
+              g_hash_table_lookup (inner_map_in, &numberz3);
             if (insanity_in == NULL)
               fail_count++;
             else {

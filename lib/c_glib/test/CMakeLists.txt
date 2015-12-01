@@ -28,6 +28,8 @@ include_directories(${Boost_INCLUDE_DIRS})
 # Create the thrift C test library
 set(testgenc_SOURCES
     gen-c_glib/t_test_debug_proto_test_types.c
+    gen-c_glib/t_test_enum_test_types.c
+    gen-c_glib/t_test_enum_test_service.c
     gen-c_glib/t_test_empty_service.c
     gen-c_glib/t_test_inherited.c
     gen-c_glib/t_test_optional_required_test_types.c
@@ -38,6 +40,8 @@ set(testgenc_SOURCES
     gen-c_glib/t_test_thrift_test.c
     gen-c_glib/t_test_thrift_test_types.c
     gen-c_glib/t_test_debug_proto_test_types.h
+    gen-c_glib/t_test_enum_test_types.h
+    gen-c_glib/t_test_enum_test_service.h
     gen-c_glib/t_test_empty_service.h
     gen-c_glib/t_test_inherited.h
     gen-c_glib/t_test_optional_required_test_types.h
@@ -143,6 +147,14 @@ add_custom_command(OUTPUT
     gen-c_glib/t_test_srv.c
     gen-c_glib/t_test_srv.h
     COMMAND ${THRIFT_COMPILER} --gen c_glib ${PROJECT_SOURCE_DIR}/test/DebugProtoTest.thrift
+)
+
+add_custom_command(OUTPUT
+    gen-c_glib/t_test_enum_test_types.c
+    gen-c_glib/t_test_enum_test_types.h
+    gen-c_glib/t_test_enum_test_service.c
+    gen-c_glib/t_test_enum_test_service.h
+    COMMAND ${THRIFT_COMPILER} --gen c_glib ${PROJECT_SOURCE_DIR}/test/EnumTest.thrift
 )
 
 add_custom_command(OUTPUT

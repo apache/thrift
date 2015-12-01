@@ -144,6 +144,7 @@ thrift_test_handler_test_binary (TTestThriftTestIf *iface,
   THRIFT_UNUSED_VAR (error);
 
   printf ("testBinary()\n");  // TODO: hex output
+  g_array_ref(thing);
   *_return = thing;
 
   return TRUE;
@@ -498,6 +499,10 @@ thrift_test_handler_test_insanity (TTestThriftTestIf    *iface,
 
   guint i;
 
+  TTestNumberz *num2;
+  TTestNumberz *num3;
+  TTestNumberz *num6;
+
   THRIFT_UNUSED_VAR (iface);
   THRIFT_UNUSED_VAR (error);
 
@@ -512,12 +517,16 @@ thrift_test_handler_test_insanity (TTestThriftTestIf    *iface,
                                       NULL,
                                       g_object_unref);
 
-  g_hash_table_insert (first_map,
-                       GINT_TO_POINTER (T_TEST_NUMBERZ_TWO),
-                       argument);
-  g_hash_table_insert (first_map,
-                       GINT_TO_POINTER (T_TEST_NUMBERZ_THREE),
-                       argument);
+  num2 = g_malloc(sizeof *num2);
+  *num2 = T_TEST_NUMBERZ_TWO;
+  num3 = g_malloc(sizeof *num3);
+  *num3 = T_TEST_NUMBERZ_THREE;
+  num6 = g_malloc(sizeof *num6);
+  *num6 = T_TEST_NUMBERZ_SIX;
+  g_object_ref(argument);
+  g_object_ref(argument);
+  g_hash_table_insert (first_map, num2, argument);
+  g_hash_table_insert (first_map, num3, argument);
 
   /* Increment argument's ref count since first_map now holds two
      references to it and would otherwise attempt to deallocate it
@@ -527,9 +536,7 @@ thrift_test_handler_test_insanity (TTestThriftTestIf    *iface,
   g_object_ref (argument);
 
   looney = g_object_new (T_TEST_TYPE_INSANITY, NULL);
-  g_hash_table_insert (second_map,
-                       GINT_TO_POINTER (T_TEST_NUMBERZ_SIX),
-                       looney);
+  g_hash_table_insert (second_map, num6, looney);
 
   user_id = g_malloc (sizeof *user_id);
   *user_id = 1;
