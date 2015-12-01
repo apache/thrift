@@ -19,8 +19,9 @@
 # under the License.
 #
 
-import sys
 import glob
+import sys
+
 sys.path.append('gen-py.tornado')
 sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])
 
@@ -42,15 +43,14 @@ class CalculatorHandler(object):
     def __init__(self):
         self.log = {}
 
-    def ping(self, callback):
+    def ping(self):
         print("ping()")
-        callback()
 
-    def add(self, n1, n2, callback):
+    def add(self, n1, n2):
         print("add({}, {})".format(n1, n2))
-        callback(n1 + n2)
+        return n1 + n2
 
-    def calculate(self, logid, work, callback):
+    def calculate(self, logid, work):
         print("calculate({}, {})".format(logid, work))
 
         if work.op == Operation.ADD:
@@ -76,15 +76,14 @@ class CalculatorHandler(object):
         log.key = logid
         log.value = '%d' % (val)
         self.log[logid] = log
-        callback(val)
+        return val
 
-    def getStruct(self, key, callback):
+    def getStruct(self, key):
         print("getStruct({})".format(key))
-        callback(self.log[key])
+        return self.log[key]
 
-    def zip(self, callback):
+    def zip(self):
         print("zip()")
-        callback()
 
 
 def main():
