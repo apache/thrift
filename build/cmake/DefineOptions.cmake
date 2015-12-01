@@ -89,7 +89,7 @@ if(ANDROID)
     CMAKE_DEPENDENT_OPTION(BUILD_JAVA "Build Java library" ON
                            "BUILD_LIBRARIES;WITH_JAVA;GRADLE_FOUND" OFF)
 else()
-    find_package(Java REQUIRED)
+    find_package(Java QUIET)
     find_package(Ant QUIET)
     CMAKE_DEPENDENT_OPTION(BUILD_JAVA "Build Java library" ON
                            "BUILD_LIBRARIES;WITH_JAVA;JAVA_FOUND;ANT_FOUND" OFF)
