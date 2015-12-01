@@ -61,6 +61,8 @@ string TDebugProtocol::fieldTypeName(TType type) {
     return "i64";
   case T_DOUBLE:
     return "double";
+  case T_FLOAT:
+    return "float";
   case T_STRING:
     return "string";
   case T_STRUCT:
@@ -329,6 +331,10 @@ uint32_t TDebugProtocol::writeI64(const int64_t i64) {
 
 uint32_t TDebugProtocol::writeDouble(const double dub) {
   return writeItem(boost::lexical_cast<string>(dub));
+}
+
+uint32_t TDebugProtocol::writeFloat(const float flt) {
+  return writeItem(boost::lexical_cast<string>(flt));
 }
 
 uint32_t TDebugProtocol::writeString(const string& str) {

@@ -164,6 +164,7 @@ literal_begin (['\"])
 "i32"                { return tok_i32;                  }
 "i64"                { return tok_i64;                  }
 "double"             { return tok_double;               }
+"float"              { return tok_float;                }
 "string"             { return tok_string;               }
 "binary"             { return tok_binary;               }
 "slist" {

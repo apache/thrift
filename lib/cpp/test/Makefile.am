@@ -19,6 +19,7 @@
 AUTOMAKE_OPTIONS = subdir-objects serial-tests
 
 BUILT_SOURCES = gen-cpp/DebugProtoTest_types.h \
+		gen-cpp/FloatTest_types.h \
                 gen-cpp/EnumTest_types.h \
                 gen-cpp/OptionalRequiredTest_types.h \
                 gen-cpp/Recursive_types.h \
@@ -33,6 +34,8 @@ noinst_LTLIBRARIES = libtestgencpp.la libprocessortest.la
 nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/DebugProtoTest_types.cpp \
 	gen-cpp/DebugProtoTest_types.h \
+	gen-cpp/FloatTest_types.cpp \
+	gen-cpp/FloatTest_types.h \
 	gen-cpp/EnumTest_types.cpp \
 	gen-cpp/EnumTest_types.h \
 	gen-cpp/OptionalRequiredTest_types.cpp \
@@ -76,6 +79,7 @@ check_PROGRAMS = \
 	TFDTransportTest \
 	TPipedTransportTest \
 	DebugProtoTest \
+	FloatTest \
 	JSONProtoTest \
 	OptionalRequiredTest \
 	RecursiveTest \
@@ -241,6 +245,17 @@ DebugProtoTest_LDADD = \
 
 
 #
+# DebugProtoTest
+#
+FloatTest_SOURCES = \
+	FloatTest.cpp
+
+FloatTest_LDADD = \
+	libtestgencpp.la \
+	$(BOOST_TEST_LDADD)
+
+
+#
 # JSONProtoTest
 #
 JSONProtoTest_SOURCES = \
@@ -334,6 +349,9 @@ OpenSSLManualInitTest_LDADD = \
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp gen-cpp/EmptyService.h: $(top_srcdir)/test/DebugProtoTest.thrift
+	$(THRIFT) --gen cpp $<
+
+gen-cpp/FloatTest_types.cpp gen-cpp/FloatTest_types.h: $(top_srcdir)/test/FloatTest.thrift
 	$(THRIFT) --gen cpp $<
 
 gen-cpp/EnumTest_types.cpp gen-cpp/EnumTest_types.h: $(top_srcdir)/test/EnumTest.thrift

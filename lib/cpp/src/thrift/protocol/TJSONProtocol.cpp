@@ -65,6 +65,7 @@ static const std::string kTypeNameI16("i16");
 static const std::string kTypeNameI32("i32");
 static const std::string kTypeNameI64("i64");
 static const std::string kTypeNameDouble("dbl");
+static const std::string kTypeNameFloat("flt");
 static const std::string kTypeNameStruct("rec");
 static const std::string kTypeNameString("str");
 static const std::string kTypeNameMap("map");
@@ -85,6 +86,8 @@ static const std::string& getTypeNameForTypeID(TType typeID) {
     return kTypeNameI64;
   case T_DOUBLE:
     return kTypeNameDouble;
+  case T_FLOAT:
+    return kTypeNameFloat;
   case T_STRING:
     return kTypeNameString;
   case T_STRUCT:
@@ -106,6 +109,9 @@ static TType getTypeIDForTypeName(const std::string& name) {
     switch (name[0]) {
     case 'd':
       result = T_DOUBLE;
+      break;
+    case 'f':
+      result = T_FLOAT;
       break;
     case 'i':
       switch (name[1]) {
@@ -521,10 +527,15 @@ uint32_t TJSONProtocol::writeJSONInteger(NumberType num) {
 }
 
 namespace {
-std::string doubleToString(double d) {
+template <typename NumberType>
+std::string doubleToString(NumberType d) {
   std::ostringstream str;
   str.imbue(std::locale::classic());
-  str.precision(std::numeric_limits<double>::digits10 + 1);
+  // This used to use digits10+1, but should use max_digits10, because
+  // otherwise correct round-tripping to text is not guaranteed. See
+  // http://en.cppreference.com/w/cpp/types/numeric_limits/max_digits10
+  // for details.
+  str.precision(std::numeric_limits<NumberType>::max_digits10);
   str << d;
   return str.str();
 }
@@ -532,7 +543,8 @@ std::string doubleToString(double d) {
 
 // Convert the given double to a JSON string, which is either the number,
 // "NaN" or "Infinity" or "-Infinity".
-uint32_t TJSONProtocol::writeJSONDouble(double num) {
+template <typename NumberType>
+uint32_t TJSONProtocol::writeJSONDouble(NumberType num) {
   uint32_t result = context_->write(*trans_);
   std::string val;
 
@@ -702,6 +714,10 @@ uint32_t TJSONProtocol::writeDouble(const double dub) {
   return writeJSONDouble(dub);
 }
 
+uint32_t TJSONProtocol::writeFloat(const float flt) {
+  return writeJSONDouble(flt);
+}
+
 uint32_t TJSONProtocol::writeString(const std::string& str) {
   return writeJSONString(str);
 }
@@ -860,8 +876,9 @@ uint32_t TJSONProtocol::readJSONInteger(NumberType& num) {
 }
 
 namespace {
-double stringToDouble(const std::string& s) {
-  double d;
+template <typename NumberType>
+NumberType stringToDouble(const std::string& s) {
+  NumberType d;
   std::istringstream str(s);
   str.imbue(std::locale::classic());
   str >> d;
@@ -872,7 +889,8 @@ double stringToDouble(const std::string& s) {
 }
 
 // Reads a JSON number or string and interprets it as a double.
-uint32_t TJSONProtocol::readJSONDouble(double& num) {
+template <typename NumberType>
+uint32_t TJSONProtocol::readJSONDouble(NumberType& num) {
   uint32_t result = context_->read(reader_);
   std::string str;
   if (reader_.peek() == kJSONStringDelimiter) {
@@ -891,7 +909,7 @@ uint32_t TJSONProtocol::readJSONDouble(double& num) {
                                      "Numeric data unexpectedly quoted");
       }
       try {
-        num = stringToDouble(str);
+        num = stringToDouble<NumberType>(str);
       } catch (std::runtime_error e) {
         throw TProtocolException(TProtocolException::INVALID_DATA,
                                      "Expected numeric value; got \"" + str + "\"");
@@ -904,7 +922,7 @@ uint32_t TJSONProtocol::readJSONDouble(double& num) {
     }
     result += readJSONNumericChars(str);
     try {
-      num = stringToDouble(str);
+      num = stringToDouble<NumberType>(str);
     } catch (std::runtime_error e) {
       throw TProtocolException(TProtocolException::INVALID_DATA,
                                    "Expected numeric value; got \"" + str + "\"");
@@ -1078,6 +1096,10 @@ uint32_t TJSONProtocol::readI64(int64_t& i64) {
 
 uint32_t TJSONProtocol::readDouble(double& dub) {
   return readJSONDouble(dub);
+}
+
+uint32_t TJSONProtocol::readFloat(float& flt) {
+  return readJSONDouble(flt);
 }
 
 uint32_t TJSONProtocol::readString(std::string& str) {

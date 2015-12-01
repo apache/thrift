@@ -90,6 +90,7 @@ public:
   virtual uint32_t writeI64_virt(const int64_t i64) { return protocol->writeI64(i64); }
 
   virtual uint32_t writeDouble_virt(const double dub) { return protocol->writeDouble(dub); }
+  virtual uint32_t writeFloat_virt(const float flt) { return protocol->writeFloat(flt); }
   virtual uint32_t writeString_virt(const std::string& str) { return protocol->writeString(str); }
   virtual uint32_t writeBinary_virt(const std::string& str) { return protocol->writeBinary(str); }
 
@@ -137,6 +138,7 @@ public:
   virtual uint32_t readI64_virt(int64_t& i64) { return protocol->readI64(i64); }
 
   virtual uint32_t readDouble_virt(double& dub) { return protocol->readDouble(dub); }
+  virtual uint32_t readFloat_virt(float& flt) { return protocol->readFloat(flt); }
 
   virtual uint32_t readString_virt(std::string& str) { return protocol->readString(str); }
   virtual uint32_t readBinary_virt(std::string& str) { return protocol->readBinary(str); }

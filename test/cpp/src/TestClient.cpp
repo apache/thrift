@@ -461,6 +461,51 @@ int main(int argc, char** argv) {
     }
 
     /**
+     * FLOAT TEST
+     */
+    // Comparing float values with plain equality because Thrift handles full precision of float
+    BASETYPE_IDENTITY_TEST(testFloat, 0.0f);
+    BASETYPE_IDENTITY_TEST(testFloat, -1.0f);
+    BASETYPE_IDENTITY_TEST(testFloat, -5.2098523f);
+    BASETYPE_IDENTITY_TEST(testFloat, -0.00034101243f);
+    BASETYPE_IDENTITY_TEST(testFloat, pow(2.0f, 30.0f));
+    BASETYPE_IDENTITY_TEST(testFloat, pow(2.0f, 30.0f) + 1);
+    BASETYPE_IDENTITY_TEST(testFloat, -pow(2.0f, 30.0f));
+    BASETYPE_IDENTITY_TEST(testFloat, -pow(2.0f, 30.0f) - 1);
+
+    try {
+      float expected = pow(10, 38);
+      cout << "testFloat(" << expected << ") = ";
+      float actual = testClient.testFloat(expected);
+      cout << "(" << actual << ")" << endl;
+      if (expected - actual > pow(10, 32)) {
+        cout << "*** FAILED ***" << endl
+             << "Expected: " << expected << " but got: " << actual << endl;
+      }
+    } catch (TTransportException&) {
+      throw;
+    } catch (exception& ex) {
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      return_code |= ERR_BASETYPES;
+    }
+
+    try {
+      float expected = pow(10, -32);
+      cout << "testFloat(" << expected << ") = ";
+      float actual = testClient.testFloat(expected);
+      cout << "(" << actual << ")" << endl;
+      if (expected - actual > pow(10, -38)) {
+        cout << "*** FAILED ***" << endl
+             << "Expected: " << expected << " but got: " << actual << endl;
+      }
+    } catch (TTransportException&) {
+      throw;
+    } catch (exception& ex) {
+      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      return_code |= ERR_BASETYPES;
+    }
+
+    /**
      * BINARY TEST
      */
     printf("testBinary([-128..127]) = {");

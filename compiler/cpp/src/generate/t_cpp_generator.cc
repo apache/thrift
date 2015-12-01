@@ -695,6 +695,7 @@ string t_cpp_generator::render_const_value(ofstream& out,
       render << value->get_integer() << "LL";
       break;
     case t_base_type::TYPE_DOUBLE:
+    case t_base_type::TYPE_FLOAT:
       if (value->get_type() == t_const_value::CV_INTEGER) {
         render << value->get_integer();
       } else {
@@ -3652,6 +3653,9 @@ void t_cpp_generator::generate_deserialize_field(ofstream& out,
     case t_base_type::TYPE_DOUBLE:
       out << "readDouble(" << name << ");";
       break;
+    case t_base_type::TYPE_FLOAT:
+      out << "readFloat(" << name << ");";
+      break;
     default:
       throw "compiler error: no C++ reader for base type " + t_base_type::t_base_name(tbase) + name;
     }
@@ -3858,6 +3862,9 @@ void t_cpp_generator::generate_serialize_field(ofstream& out,
         break;
       case t_base_type::TYPE_DOUBLE:
         out << "writeDouble(" << name << ");";
+        break;
+      case t_base_type::TYPE_FLOAT:
+        out << "writeFloat(" << name << ");";
         break;
       default:
         throw "compiler error: no C++ writer for base type " + t_base_type::t_base_name(tbase)
@@ -4148,6 +4155,8 @@ string t_cpp_generator::base_type_name(t_base_type::t_base tbase) {
     return "int64_t";
   case t_base_type::TYPE_DOUBLE:
     return "double";
+  case t_base_type::TYPE_FLOAT:
+    return "float";
   default:
     throw "compiler error: no C++ base type name for base type " + t_base_type::t_base_name(tbase);
   }
@@ -4200,6 +4209,9 @@ string t_cpp_generator::declare_field(t_field* tfield,
         break;
       case t_base_type::TYPE_DOUBLE:
         result += " = (double)0";
+        break;
+      case t_base_type::TYPE_FLOAT:
+        result += " = (float)0";
         break;
       default:
         throw "compiler error: no C++ initializer for base type " + t_base_type::t_base_name(tbase);
@@ -4315,6 +4327,8 @@ string t_cpp_generator::type_to_enum(t_type* type) {
       return "::apache::thrift::protocol::T_I64";
     case t_base_type::TYPE_DOUBLE:
       return "::apache::thrift::protocol::T_DOUBLE";
+    case t_base_type::TYPE_FLOAT:
+      return "::apache::thrift::protocol::T_FLOAT";
     }
   } else if (type->is_enum()) {
     return "::apache::thrift::protocol::T_I32";

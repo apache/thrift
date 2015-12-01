@@ -30,6 +30,8 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 set(testgencpp_SOURCES
     gen-cpp/DebugProtoTest_types.cpp
     gen-cpp/DebugProtoTest_types.h
+    gen-cpp/FloatTest_types.cpp
+    gen-cpp/FloatTest_types.h
     gen-cpp/EnumTest_types.cpp
     gen-cpp/EnumTest_types.h
     gen-cpp/OptionalRequiredTest_types.cpp
@@ -202,6 +204,17 @@ LINK_AGAINST_THRIFT_LIBRARY(DebugProtoTest thrift)
 add_test(NAME DebugProtoTest COMMAND DebugProtoTest)
 endif()
 
+# The debug run-time in Windows asserts on isprint() with negative inputs
+if (NOT MSVC OR (MSVC AND CMAKE_BUILD_TYPE EQUAL "DEBUG"))
+add_executable(FloatTest FloatTest.cpp)
+target_link_libraries(FloatTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
+LINK_AGAINST_THRIFT_LIBRARY(FloatTest thrift)
+add_test(NAME FloatTest COMMAND FloatTest)
+endif()
+
 add_executable(JSONProtoTest JSONProtoTest.cpp)
 target_link_libraries(JSONProtoTest
     testgencpp
@@ -333,6 +346,10 @@ endif()
 
 add_custom_command(OUTPUT gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp  gen-cpp/EmptyService.h
     COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/DebugProtoTest.thrift
+)
+
+add_custom_command(OUTPUT gen-cpp/FloatTest_types.cpp gen-cpp/FloatTest_types.h
+    COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/FloatTest.thrift
 )
 
 add_custom_command(OUTPUT gen-cpp/EnumTest_types.cpp gen-cpp/EnumTest_types.h

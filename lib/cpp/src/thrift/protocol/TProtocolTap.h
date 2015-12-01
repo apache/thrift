@@ -154,6 +154,12 @@ public:
     return rv;
   }
 
+  uint32_t readFloat(float& flt) {
+    uint32_t rv = source_->readFloat(flt);
+    sink_->writeFloat(flt);
+    return rv;
+  }
+
   uint32_t readString(std::string& str) {
     uint32_t rv = source_->readString(str);
     sink_->writeString(str);

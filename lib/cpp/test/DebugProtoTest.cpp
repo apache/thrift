@@ -40,6 +40,9 @@ void testCaseSetup_1() {
   ooe->double_precision = M_PI;
   ooe->some_characters = "Debug THIS!";
   ooe->zomg_unicode = "\xd7\n\a\t";
+  ooe->float_precision = (float)M_PI;
+  ooe->rank_map[567419810] = (float)0.211184;
+  ooe->rank_map[507959914] = (float)0.080382;
 }
 
 BOOST_AUTO_TEST_CASE(test_debug_proto_1) {
@@ -73,6 +76,11 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_1) {
     "    [1] = 2,\n"
     "    [2] = 3,\n"
     "  },\n"
+    "  17: float_precision (float) = 3.14159274,\n"
+    "  18: rank_map (map) = map<i64,float>[2] {\n"
+    "    507959914 -> 0.0803819969,\n"
+    "    567419810 -> 0.211183995,\n"
+    "  },\n"
     "}");
   const std::string result(apache::thrift::ThriftDebugString(*ooe));
 
@@ -91,6 +99,7 @@ void testCaseSetup_2() {
   n->my_ooe.integer32 = 32;
   n->my_ooe.integer64 = 64;
   n->my_ooe.double_precision = (std::sqrt(5.0) + 1) / 2;
+  n->my_ooe.float_precision = (std::sqrt(5.0f) + 1) / 2;
   n->my_ooe.some_characters = ":R (me going \"rrrr\")";
   n->my_ooe.zomg_unicode     = "\xd3\x80\xe2\x85\xae\xce\x9d\x20\xd0\x9d\xce"
                                "\xbf\xe2\x85\xbf\xd0\xbe\xc9\xa1\xd0\xb3\xd0"
@@ -139,6 +148,11 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_2) {
     "      [0] = 1,\n"
     "      [1] = 2,\n"
     "      [2] = 3,\n"
+    "    },\n"
+    "    17: float_precision (float) = 1.61803401,\n"
+    "    18: rank_map (map) = map<i64,float>[2] {\n"
+    "      507959914 -> 0.0803819969,\n"
+    "      567419810 -> 0.211183995,\n"
     "    },\n"
     "  },\n"
     "}");
@@ -227,6 +241,11 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_3) {
     "        [1] = 2,\n"
     "        [2] = 3,\n"
     "      },\n"
+    "      17: float_precision (float) = 3.14159274,\n"
+    "      18: rank_map (map) = map<i64,float>[2] {\n"
+    "        507959914 -> 0.0803819969,\n"
+    "        567419810 -> 0.211183995,\n"
+    "      },\n"
     "    },\n"
     "    [1] = OneOfEach {\n"
     "      01: im_true (bool) = true,\n"
@@ -257,6 +276,11 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_3) {
     "        [0] = 1,\n"
     "        [1] = 2,\n"
     "        [2] = 3,\n"
+    "      },\n"
+    "      17: float_precision (float) = 1.61803401,\n"
+    "      18: rank_map (map) = map<i64,float>[2] {\n"
+    "        507959914 -> 0.0803819969,\n"
+    "        567419810 -> 0.211183995,\n"
     "      },\n"
     "    },\n"
     "  },\n"

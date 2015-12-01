@@ -41,7 +41,8 @@ public:
     TYPE_I16,
     TYPE_I32,
     TYPE_I64,
-    TYPE_DOUBLE
+    TYPE_DOUBLE,
+    TYPE_FLOAT,
   };
 
   t_base_type(std::string name, t_base base)
@@ -98,6 +99,9 @@ public:
       break;
     case TYPE_DOUBLE:
       return "double";
+      break;
+    case TYPE_FLOAT:
+      return "float";
       break;
     default:
       return "(unknown)";

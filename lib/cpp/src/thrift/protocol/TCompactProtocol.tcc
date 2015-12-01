@@ -58,10 +58,11 @@ enum Types {
   CT_LIST           = 0x09,
   CT_SET            = 0x0A,
   CT_MAP            = 0x0B,
-  CT_STRUCT         = 0x0C
+  CT_STRUCT         = 0x0C,
+  CT_FLOAT          = 0x0D
 };
 
-const int8_t TTypeToCType[16] = {
+const int8_t TTypeToCType[20] = {
   CT_STOP, // T_STOP
   0, // unused
   CT_BOOLEAN_TRUE, // T_BOOL
@@ -78,6 +79,10 @@ const int8_t TTypeToCType[16] = {
   CT_MAP, // T_MAP
   CT_SET, // T_SET
   CT_LIST, // T_LIST
+  0, // unused
+  0, // unused
+  0, // unused
+  CT_FLOAT, // T_FLOAT
 };
 
 }} // end detail::compact namespace
@@ -258,6 +263,20 @@ uint32_t TCompactProtocolT<Transport_>::writeDouble(const double dub) {
   bits = THRIFT_htolell(bits);
   trans_->write((uint8_t*)&bits, 8);
   return 8;
+}
+
+/**
+ * Write a float to the wire as 4 bytes.
+ */
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeFloat(const float flt) {
+  BOOST_STATIC_ASSERT(sizeof(float) == sizeof(uint32_t));
+  BOOST_STATIC_ASSERT(std::numeric_limits<float>::is_iec559);
+
+  uint32_t bits = bitwise_cast<uint32_t>(flt);
+  bits = THRIFT_htolel(bits);
+  trans_->write((uint8_t*)&bits, 4);
+  return 4;
 }
 
 /**
@@ -664,6 +683,24 @@ uint32_t TCompactProtocolT<Transport_>::readDouble(double& dub) {
   return 8;
 }
 
+/**
+ * No magic here - just read a float off the wire.
+ */
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readFloat(float& flt) {
+  BOOST_STATIC_ASSERT(sizeof(float) == sizeof(uint32_t));
+  BOOST_STATIC_ASSERT(std::numeric_limits<float>::is_iec559);
+
+  union {
+    uint32_t bits;
+    uint8_t b[4];
+  } u;
+  trans_->readAll(u.b, 4);
+  u.bits = THRIFT_letohl(u.bits);
+  flt = bitwise_cast<float>(u.bits);
+  return 4;
+}
+
 template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::readString(std::string& str) {
   return readBinary(str);
@@ -804,6 +841,8 @@ TType TCompactProtocolT<Transport_>::getTType(int8_t type) {
       return T_I64;
     case detail::compact::CT_DOUBLE:
       return T_DOUBLE;
+    case detail::compact::CT_FLOAT:
+      return T_FLOAT;
     case detail::compact::CT_BINARY:
       return T_STRING;
     case detail::compact::CT_LIST:

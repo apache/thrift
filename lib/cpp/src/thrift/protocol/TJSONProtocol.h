@@ -115,7 +115,8 @@ private:
   template <typename NumberType>
   uint32_t writeJSONInteger(NumberType num);
 
-  uint32_t writeJSONDouble(double num);
+  template <typename NumberType>
+  uint32_t writeJSONDouble(NumberType num);
 
   uint32_t writeJSONObjectStart();
 
@@ -138,7 +139,8 @@ private:
   template <typename NumberType>
   uint32_t readJSONInteger(NumberType& num);
 
-  uint32_t readJSONDouble(double& num);
+  template <typename NumberType>
+  uint32_t readJSONDouble(NumberType& num);
 
   uint32_t readJSONObjectStart();
 
@@ -193,6 +195,8 @@ public:
 
   uint32_t writeDouble(const double dub);
 
+  uint32_t writeFloat(const float flt);
+
   uint32_t writeString(const std::string& str);
 
   uint32_t writeBinary(const std::string& str);
@@ -239,6 +243,8 @@ public:
   uint32_t readI64(int64_t& i64);
 
   uint32_t readDouble(double& dub);
+
+  uint32_t readFloat(float& flt);
 
   uint32_t readString(std::string& str);
 

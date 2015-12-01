@@ -186,7 +186,8 @@ enum TType {
   T_SET        = 14,
   T_LIST       = 15,
   T_UTF8       = 16,
-  T_UTF16      = 17
+  T_UTF16      = 17,
+  T_FLOAT      = 19,
 };
 
 /**
@@ -266,6 +267,8 @@ public:
   virtual uint32_t writeI64_virt(const int64_t i64) = 0;
 
   virtual uint32_t writeDouble_virt(const double dub) = 0;
+
+  virtual uint32_t writeFloat_virt(const float flt) = 0;
 
   virtual uint32_t writeString_virt(const std::string& str) = 0;
 
@@ -368,6 +371,11 @@ public:
     return writeDouble_virt(dub);
   }
 
+  uint32_t writeFloat(const float flt) {
+    T_VIRTUAL_CALL();
+    return writeFloat_virt(flt);
+  }
+
   uint32_t writeString(const std::string& str) {
     T_VIRTUAL_CALL();
     return writeString_virt(str);
@@ -421,6 +429,8 @@ public:
   virtual uint32_t readI64_virt(int64_t& i64) = 0;
 
   virtual uint32_t readDouble_virt(double& dub) = 0;
+
+  virtual uint32_t readFloat_virt(float& flt) = 0;
 
   virtual uint32_t readString_virt(std::string& str) = 0;
 
@@ -514,6 +524,11 @@ public:
   uint32_t readDouble(double& dub) {
     T_VIRTUAL_CALL();
     return readDouble_virt(dub);
+  }
+
+  uint32_t readFloat(float& flt) {
+    T_VIRTUAL_CALL();
+    return readFloat_virt(flt);
   }
 
   uint32_t readString(std::string& str) {
@@ -685,6 +700,10 @@ uint32_t skip(Protocol_& prot, TType type) {
   case T_DOUBLE: {
     double dub;
     return prot.readDouble(dub);
+  }
+  case T_FLOAT: {
+    float flt;
+    return prot.readFloat(flt);
   }
   case T_STRING: {
     std::string str;
