@@ -250,7 +250,7 @@ public:
   std::string go_imports_begin(bool ttypes);
   std::string go_imports_end();
   std::string render_includes(bool ttypes);
-  std::string render_included_programs();
+  std::string render_included_programs(string& unused_protection);
   std::string render_import_protection();
   std::string render_fastbinary_includes();
   std::string declare_argument(t_field* tfield);
@@ -767,9 +767,11 @@ void t_go_generator::init_generator() {
 }
 
 
-string t_go_generator::render_included_programs() {
+string t_go_generator::render_included_programs(string& unused_protection) {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
+
+  unused_protection = "";
 
   for (size_t i = 0; i < includes.size(); ++i) {
     string go_module = get_real_go_module(includes[i]);
@@ -783,6 +785,7 @@ string t_go_generator::render_included_programs() {
     }
 
     result += "\t\"" + gen_package_prefix_ + go_module + "\"\n";
+    unused_protection += "var _ = " + go_module.substr(found) + ".GoUnusedProtection__\n";
   }
 
   return result;
@@ -2120,6 +2123,8 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     service_module = gen_package_prefix_ + service_module;
   }
 
+  string unused_protection;
+
   f_remote << go_autogen_comment();
   f_remote << indent() << "package main" << endl << endl;
   f_remote << indent() << "import (" << endl;
@@ -2132,9 +2137,11 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "        \"strconv\"" << endl;
   f_remote << indent() << "        \"strings\"" << endl;
   f_remote << indent() << "        \"" + gen_thrift_import_ + "\"" << endl;
-  f_remote << indent() << render_included_programs();
+  f_remote << indent() << render_included_programs(unused_protection);
   f_remote << indent() << "        \"" << service_module << "\"" << endl;
   f_remote << indent() << ")" << endl;
+  f_remote << indent() << endl;
+  f_remote << indent() << unused_protection; // filled in render_included_programs()
   f_remote << indent() << endl;
   f_remote << indent() << "func Usage() {" << endl;
   f_remote << indent() << "  fmt.Fprintln(os.Stderr, \"Usage of \", os.Args[0], \" "
