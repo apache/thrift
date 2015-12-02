@@ -551,7 +551,7 @@ version (unittest) {
 
   struct WithDefaults {
     string a = "asdf";
-    double b = 1.0e+20;
+    double b = 3.1415;
     WithoutMeta c;
 
     mixin TStructHelpers!([
@@ -641,13 +641,16 @@ version (unittest) {
 }
 `);
 
-  static assert(structIdlString!WithDefaults ==
+import std.algorithm;
+  static assert(structIdlString!WithDefaults.startsWith(
 `struct WithDefaults {
   -1: string a = "asdf",
-  -2: double b = 1.0e+20,
-  1: WithoutMeta c = {a: "foo", b: 3, },
+  -2: double b = 3.141`));
+
+  static assert(structIdlString!WithDefaults.endsWith(
+`1: WithoutMeta c = {a: "foo", b: 3, },
 }
-`);
+`));
 
   static assert(structIdlString!OneOfEach ==
 `struct OneOfEach {
