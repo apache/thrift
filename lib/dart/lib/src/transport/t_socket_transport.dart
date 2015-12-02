@@ -28,7 +28,7 @@ part of thrift;
 ///
 /// Adapted from the JS WebSocket transport.
 abstract class TSocketTransport extends TBufferedTransport {
-  final Logger log = new Logger('thrift.TSocketTransport');
+  final Logger logger = new Logger('thrift.TSocketTransport');
 
   final TSocket socket;
 
@@ -38,7 +38,7 @@ abstract class TSocketTransport extends TBufferedTransport {
       throw new ArgumentError.notNull('socket');
     }
 
-    socket.onError.listen((String e) => log.warning(e));
+    socket.onError.listen((e) => logger.warning(e));
     socket.onMessage.listen(handleIncomingMessage);
   }
 
