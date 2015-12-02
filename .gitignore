@@ -146,6 +146,7 @@ erl_crash.dump
 /lib/d/test/serialization_benchmark
 /lib/d/test/transport_test
 /lib/d/unittest/
+/lib/dart/coverage
 /lib/dart/**/.packages
 /lib/dart/**/packages
 /lib/dart/**/.pub/
