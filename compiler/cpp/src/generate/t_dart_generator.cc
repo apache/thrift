@@ -1470,8 +1470,9 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
     indent(f_service_) << argsname << " args = new " << argsname << "();" << endl;
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-      indent(f_service_) << "args." << (*fld_iter)->get_name() << " = "
-                 << (*fld_iter)->get_name() << ";" << endl;
+      string arg_field_name = get_field_name((*fld_iter)->get_name());
+      indent(f_service_) << "args." << arg_field_name << " = "
+                 << arg_field_name << ";" << endl;
     }
 
     indent(f_service_) << "args.write(oprot);" << endl;
