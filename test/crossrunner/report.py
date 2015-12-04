@@ -17,6 +17,7 @@
 # under the License.
 #
 
+from __future__ import print_function
 import datetime
 import json
 import multiprocessing
@@ -28,7 +29,7 @@ import sys
 import time
 import traceback
 
-from .compat import path_join, str_join
+from .compat import logfile_open, path_join, str_join
 from .test import TestEntry
 
 LOG_DIR = 'log'
@@ -44,7 +45,7 @@ def generate_known_failures(testdir, overwrite, save, out):
       if not r[success_index]:
         yield TestEntry.get_name(*r)
   try:
-    with open(os.path.join(testdir, RESULT_JSON), 'r') as fp:
+    with logfile_open(os.path.join(testdir, RESULT_JSON), 'r') as fp:
       results = json.load(fp)
   except IOError:
     sys.stderr.write('Unable to load last result. Did you run tests ?\n')
@@ -67,7 +68,7 @@ def generate_known_failures(testdir, overwrite, save, out):
 
 def load_known_failures(testdir):
   try:
-    with open(os.path.join(testdir, FAIL_JSON % platform.system()), 'r') as fp:
+    with logfile_open(os.path.join(testdir, FAIL_JSON % platform.system()), 'r') as fp:
       return json.load(fp)
   except IOError:
     return []
@@ -138,16 +139,7 @@ class ExecReporter(TestReporter):
       self._lock.release()
 
   def killed(self):
-    self._lock.acquire()
-    try:
-      if self.out and not self.out.closed:
-        self._print_footer()
-        self._close()
-        self.out = None
-      else:
-        self._log.debug('Output stream is not available.')
-    finally:
-      self._lock.release()
+    self.end(None)
 
   _init_failure_exprs = {
     'server': list(map(re.compile, [
@@ -177,8 +169,7 @@ class ExecReporter(TestReporter):
 
       server_logfile = self.logpath
       # need to handle unicode errors on Python 3
-      kwargs = {} if sys.version_info[0] < 3 else {'errors': 'replace'}
-      with open(server_logfile, 'r', **kwargs) as fp:
+      with logfile_open(server_logfile, 'r') as fp:
         if any(map(match, fp)):
           return True
     except (KeyboardInterrupt, SystemExit):
@@ -345,12 +336,12 @@ class SummaryReporter(TestReporter):
   def _assemble_log(self, title, indexes):
     if len(indexes) > 0:
       def add_prog_log(fp, test, prog_kind):
-        fp.write('*************************** %s message ***************************\n'
-                 % prog_kind)
+        print('*************************** %s message ***************************' % prog_kind,
+              file=fp)
         path = self.test_logfile(test.name, prog_kind, self.testdir)
-        kwargs = {} if sys.version_info[0] < 3 else {'errors': 'replace'}
-        with open(path, 'r', **kwargs) as prog_fp:
-          fp.write(prog_fp.read())
+        if os.path.exists(path):
+          with logfile_open(path, 'r') as prog_fp:
+            print(prog_fp.read(), file=fp)
       filename = title.replace(' ', '_') + '.log'
       with open(os.path.join(self.logdir, filename), 'w+') as fp:
         for test in map(self._tests.__getitem__, indexes):
@@ -358,7 +349,7 @@ class SummaryReporter(TestReporter):
           add_prog_log(fp, test, test.server.kind)
           add_prog_log(fp, test, test.client.kind)
           fp.write('**********************************************************************\n\n')
-      self.out.write('%s are logged to test/%s/%s\n' % (title.capitalize(), LOG_DIR, filename))
+      print('%s are logged to test/%s/%s' % (title.capitalize(), LOG_DIR, filename))
 
   def end(self):
     self._print_footer()
