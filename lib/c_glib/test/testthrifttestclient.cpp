@@ -490,7 +490,7 @@ test_thrift_client (void)
   // insanity
   insanity_out = (TTestInsanity *) g_object_new (T_TEST_TYPE_INSANITY, NULL);
   insanity_out->userMap = g_hash_table_new (NULL, NULL);
-  g_hash_table_insert (insanity_out->userMap, &enum_out, &user_id_out);
+  g_hash_table_insert (insanity_out->userMap, GINT_TO_POINTER (enum_out), &user_id_out);
 
   xtruct1 = (TTestXtruct *) g_object_new (T_TEST_TYPE_XTRUCT, NULL);
   xtruct1->byte_thing = 1;
