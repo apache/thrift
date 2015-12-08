@@ -116,7 +116,6 @@ doctext       ("/**"([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
 comment       ("//"[^\n]*)
 unixcomment   ("#"[^\n]*)
 symbol        ([:;\,\{\}\(\)\=<>\[\]])
-st_identifier ([a-zA-Z-](\.[a-zA-Z_0-9-]|[a-zA-Z_0-9-])*)
 literal_begin (['\"])
 
 %%
@@ -328,11 +327,6 @@ literal_begin (['\"])
 {identifier} {
   yylval.id = strdup(yytext);
   return tok_identifier;
-}
-
-{st_identifier} {
-  yylval.id = strdup(yytext);
-  return tok_st_identifier;
 }
 
 {dubconstant} {
