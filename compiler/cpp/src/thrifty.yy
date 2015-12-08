@@ -99,7 +99,6 @@ const int struct_is_union = 1;
 %token<id>     tok_identifier
 %token<id>     tok_literal
 %token<dtext>  tok_doctext
-%token<id>     tok_st_identifier
 
 /**
  * Constant values
