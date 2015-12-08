@@ -45,6 +45,28 @@ public class THsHaServer extends TNonblockingServer {
       super(transport);
     }
 
+
+    /**
+     * Sets the min and max threads.
+     *
+     * @deprecated use {@link #minWorkerThreads(int)} and {@link #maxWorkerThreads(int)}  instead.
+     */
+    @Deprecated
+    public Args workerThreads(int n) {
+      minWorkerThreads = n;
+      maxWorkerThreads = n;
+      return this;
+    }
+
+    /**
+     * @return what the min threads was set to.
+     * @deprecated use {@link #getMinWorkerThreads()} and {@link #getMaxWorkerThreads()} instead.
+     */
+    @Deprecated
+    public int getWorkerThreads() {
+      return minWorkerThreads;
+    }
+
     public Args minWorkerThreads(int n) {
       minWorkerThreads = n;
       return this;
