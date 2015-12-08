@@ -1,0 +1,38 @@
+# General dependencies
+build-essential
+automake libtool flex bison pkg-config g++ libssl-dev make libqt4-dev git debhelper cmake bc
+# cpp
+# C++
+libboost1.55-dev libboost-test1.55-dev libboost-program-options1.55-dev libboost-filesystem1.55-dev libboost-system1.55-dev libboost-thread1.55-dev libevent-dev
+# c_glib
+# GLib
+libglib2.0-dev
+# csharp
+# C#
+mono-gmcs mono-devel libmono-system-web2.0-cil
+# d
+xdg-utils
+# erlang
+erlang-base erlang-eunit erlang-dev
+# go
+golang golang-go
+# haskell
+ghc cabal-install libghc-binary-dev libghc-network-dev libghc-http-dev libghc-hashable-dev libghc-unordered-containers-dev libghc-vector-dev libghc-transformers-dev libghc-text-dev libghc-primitive-dev libghc-parsec3-dev libghc-mtl-dev libghc-hashable-dev
+# java
+ant openjdk-7-jdk maven
+# lua
+lua5.2 lua5.2-dev
+# nodejs
+# Node.js
+nodejs nodejs-dev nodejs-legacy npm
+# Perl
+libbit-vector-perl libclass-accessor-class-perl
+# php
+php5 php5-dev php5-cli php-pear re2c
+# python
+python-all python-all-dev python-all-dbg python-setuptools python-support python-twisted-core python-twisted-web
+# ruby
+ruby ruby-dev
+# cross builds and installer for Windows
+mingw32 mingw-w64 nsis
+
