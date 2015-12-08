@@ -4,6 +4,7 @@ module Thrift.Transport.Memory
        ) where
 
 import Data.ByteString.Lazy.Builder
+import Data.Functor
 import Data.IORef
 import Data.Monoid
 import qualified Data.ByteString.Lazy as LBS
