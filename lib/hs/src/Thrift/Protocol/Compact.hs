@@ -55,7 +55,7 @@ import qualified Data.Text.Lazy as LT
 data CompactProtocol a = CompactProtocol a
                          -- ^ Constuct a 'CompactProtocol' with a 'Transport'
 
-protocolID, version, typeMask :: Int8
+protocolID, version, versionMask, typeMask, typeBits :: Word8
 protocolID  = 0x82 -- 1000 0010
 version     = 0x01
 versionMask = 0x1f -- 0001 1111
@@ -69,8 +69,8 @@ instance Protocol CompactProtocol where
     getTransport (CompactProtocol t) = t
 
     writeMessageBegin p (n, t, s) = tWrite (getTransport p) $ toLazyByteString $
-      B.int8 protocolID <>
-      B.int8 ((version .&. versionMask) .|.
+      B.word8 protocolID <>
+      B.word8 ((version .&. versionMask) .|.
               (((fromIntegral $ fromEnum t) `shiftL`
                 typeShiftAmount) .&. typeMask)) <>
       buildVarint (i32ToZigZag s) <>
@@ -120,7 +120,7 @@ buildCompactValue (TByte b) = int8 b
 buildCompactValue (TI16 i) = buildVarint $ i16ToZigZag i
 buildCompactValue (TI32 i) = buildVarint $ i32ToZigZag i
 buildCompactValue (TI64 i) = buildVarint $ i64ToZigZag i
-buildCompactValue (TDouble d) = doubleBE d
+buildCompactValue (TDouble d) = doubleLE d
 buildCompactValue (TString s) = buildVarint len <> lazyByteString s
   where
     len = fromIntegral (LBS.length s) :: Word32
@@ -163,7 +163,7 @@ parseCompactValue T_BYTE = TByte . fromIntegral <$> P.anyWord8
 parseCompactValue T_I16 = TI16 <$> parseVarint zigZagToI16
 parseCompactValue T_I32 = TI32 <$> parseVarint zigZagToI32
 parseCompactValue T_I64 = TI64 <$> parseVarint zigZagToI64
-parseCompactValue T_DOUBLE = TDouble . bsToDouble <$> P.take 8
+parseCompactValue T_DOUBLE = TDouble . bsToDoubleLE <$> P.take 8
 parseCompactValue T_STRING = do
   len :: Word32 <- parseVarint id
   TString . LBS.fromStrict <$> P.take (fromIntegral len)
