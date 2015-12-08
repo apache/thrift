@@ -39,12 +39,14 @@ public abstract class ProcessFunction<I, T extends TBase> {
       result = getResult(iface, args);
     } catch(TException tex) {
       LOGGER.error("Internal error processing " + getMethodName(), tex);
-      TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, 
-        "Internal error processing " + getMethodName());
-      oprot.writeMessageBegin(new TMessage(getMethodName(), TMessageType.EXCEPTION, seqid));
-      x.write(oprot);
-      oprot.writeMessageEnd();
-      oprot.getTransport().flush();
+      if (!isOneway()) {
+        TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, 
+          "Internal error processing " + getMethodName());
+        oprot.writeMessageBegin(new TMessage(getMethodName(), TMessageType.EXCEPTION, seqid));
+        x.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
       return;
     }
 
