@@ -325,11 +325,6 @@ literal_begin (['\"])
   return tok_int_constant;
 }
 
-{dubconstant} {
-  yylval.dconst = atof(yytext);
-  return tok_dub_constant;
-}
-
 {identifier} {
   yylval.id = strdup(yytext);
   return tok_identifier;
@@ -338,6 +333,12 @@ literal_begin (['\"])
 {st_identifier} {
   yylval.id = strdup(yytext);
   return tok_st_identifier;
+}
+
+{dubconstant} {
+ /* Deliberately placed after identifier, since "e10" is NOT a double literal (THRIFT-3477) */
+  yylval.dconst = atof(yytext);
+  return tok_dub_constant;
 }
 
 {literal_begin} {
