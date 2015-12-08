@@ -36,6 +36,15 @@ set(haskell_sources
     Thrift.cabal
 )
 
+if(BUILD_TESTING)
+    list(APPEND haskell_soruces
+        test/Spec.hs
+        test/BinarySpec.hs
+        test/CompactSpec.hs
+    )
+    set(hs_enable_test "--enable-tests")
+endif()
+
 set(haskell_artifacts thrift_cabal.stamp)
 # Adding *.hi files so that any missing file triggers the build
 foreach(SRC ${haskell_sources})
@@ -48,18 +57,19 @@ foreach(SRC ${haskell_sources})
     endif()
 endforeach()
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(hs_optimize -O0)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(hs_optimize -O0)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-  set(hs_optimize -O1)
+    set(hs_optimize -O1)
 endif()
 
 add_custom_command(
     OUTPUT ${haskell_artifacts}
     COMMAND ${CABAL} update
     # Build dependencies first without --builddir, otherwise it fails.
-    COMMAND ${CABAL} install --only-dependencies
-    COMMAND ${CABAL} configure ${hs_optimize}
+    COMMAND ${CABAL} install --only-dependencies ${hs_enable_test}
+    COMMAND ${CABAL} configure ${hs_optimize} ${hs_enable_test} --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
+    COMMAND ${CABAL} build --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
     COMMAND ${CABAL} install --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/thrift_cabal.stamp
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -70,7 +80,13 @@ add_custom_target(haskell_library ALL
     DEPENDS ${haskell_artifacts})
 
 if(BUILD_TESTING)
-    add_test(NAME CabalCheck
+    add_test(NAME HaskellCabalCheck
             COMMAND ${CABAL} check
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    add_test(NAME HaskellCabalTest
+            # Cabal fails to find built executable when --builddir is specified.
+            # So we invoke the executable directly.
+            # COMMAND ${CABAL} test --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
+            # WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+            COMMAND dist/build/spec/spec)
 endif()
