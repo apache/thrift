@@ -59,6 +59,7 @@ Library
     Thrift.Transport.Handle,
     Thrift.Transport.HttpClient,
     Thrift.Transport.IOBuffer,
+    Thrift.Transport.Memory,
     Thrift.Types
   Extensions:
     DeriveDataTypeable,
@@ -70,3 +71,10 @@ Library
     RecordWildCards,
     ScopedTypeVariables,
     TypeSynonymInstances
+
+Test-Suite spec
+  Type: exitcode-stdio-1.0
+  Hs-Source-Dirs: test
+  Ghc-Options: -Wall
+  main-is: Spec.hs
+  Build-Depends: base, thrift, hspec, QuickCheck, bytestring >= 0.10, unordered-containers
