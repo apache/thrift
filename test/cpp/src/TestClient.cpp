@@ -463,6 +463,20 @@ int main(int argc, char** argv) {
     /**
      * BINARY TEST
      */
+    printf("testBinary(empty\n)");
+    try {
+      string bin_result;
+      testClient.testBinary(bin_result, string());
+      if (!bin_result.empty()) {
+        printf("*** FAILED ***\n");
+        printf("invalid length: %lu\n", static_cast<long unsigned int>(bin_result.size()));
+        return_code |= ERR_BASETYPES;
+      }
+    } catch (exception& ex) {
+      printf("}\n*** FAILED ***\n");
+      printf("%s\n", ex.what());
+      return_code |= ERR_BASETYPES;
+    }
     printf("testBinary([-128..127]) = {");
     const char bin_data[256]
         = {-128, -127, -126, -125, -124, -123, -122, -121, -120, -119, -118, -117, -116, -115, -114,
