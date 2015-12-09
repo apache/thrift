@@ -68,7 +68,7 @@ add_custom_command(
     COMMAND ${CABAL} update
     # Build dependencies first without --builddir, otherwise it fails.
     COMMAND ${CABAL} install --only-dependencies ${hs_enable_test}
-    COMMAND ${CABAL} configure ${hs_optimize} ${hs_enable_test}
+    COMMAND ${CABAL} configure ${hs_optimize} ${hs_enable_test} --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
     COMMAND ${CABAL} build --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
     COMMAND ${CABAL} install --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/thrift_cabal.stamp
