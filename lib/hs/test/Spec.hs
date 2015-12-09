@@ -18,7 +18,7 @@
 --
 
 -- Our CI does not work well with auto discover.
--- Need to add build-time PATH variable to hspec-discover variable from CMake
+-- Need to add build-time PATH variable to hspec-discover dir from CMake
 -- or install hspec system-wide for the following to work.
 -- {-# OPTIONS_GHC -F -pgmF hspec-discover #-}
 
