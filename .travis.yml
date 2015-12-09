@@ -25,8 +25,7 @@ services:
   - docker
 
 install:
-  # TODO: Once merged, remove experimental tag and use latest
-  - docker pull thrift/$DISTRO:experiment || true
+  - docker pull thrift/$DISTRO:latest || true
   - cp -r ./build/docker/scripts/*.sh ./build/docker/$DISTRO/scripts/
   - docker build -q -t thrift-build build/docker/$DISTRO
 
