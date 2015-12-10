@@ -47,6 +47,12 @@ env:
       BUILD_ARG="--enable-tutorial=no"
       BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
+    - TEST_NAME="Cross Language Tests (Debian)"
+      BUILD_CMD="../cross-test.sh"
+      BUILD_ARG="--enable-tutorial=no"
+      BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
+      DISTRO=debian
+
     # TODO: Remove them once migrated to CMake
     # Autotools builds
     - TEST_NAME="C C++ C# D Erlang Go Haxe (automake)"
@@ -74,6 +80,10 @@ env:
     # CMake build
     - TEST_NAME="All"
       BUILD_CMD="../cmake.sh"
+
+    - TEST_NAME="All (Debian)"
+      BUILD_CMD="../cmake.sh"
+      DISTRO=debian
 
     - TEST_NAME="C C++ - GCC"
       BUILD_CMD="../cmake.sh"
@@ -127,6 +137,16 @@ env:
     - TEST_NAME="Debian Packages"
       BUILD_CMD="../dpkg.sh"
       BUILD_ENV="-e CC=gcc -e CXX=g++"
+
+    - TEST_NAME="make dist (Debian)"
+      BUILD_CMD="../make-dist.sh"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
+      DISTRO=debian
+
+    - TEST_NAME="Debian Packages (Debian)"
+      BUILD_CMD="../dpkg.sh"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
+      DISTRO=debian
 
 matrix:
   include:
