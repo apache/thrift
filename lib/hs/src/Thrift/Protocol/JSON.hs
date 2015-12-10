@@ -49,9 +49,10 @@ import Thrift.Transport
 import Thrift.Types
 
 import qualified Data.ByteString.Lazy as LBS
+import qualified Data.ByteString.Lazy.Char8 as LBSC
 import qualified Data.Text.Lazy as LT
 
--- | The JSON Protocol data uses the standard 'TSimpleJSONProtocol'.  Data is
+-- | The JSON Protocol data uses the standard 'TJSONProtocol'.  Data is
 -- encoded as a JSON 'ByteString'
 data JSONProtocol t = JSONProtocol t
                       -- ^ Construct a 'JSONProtocol' with a 'Transport'
@@ -105,7 +106,7 @@ buildJSONValue (TList ty entries) =
    else mempty) <>
   B.char8 ']'
 buildJSONValue (TSet ty entries) = buildJSONValue (TList ty entries)
-buildJSONValue (TBool b) = if b then B.string8 "true" else B.string8 "false"
+buildJSONValue (TBool b) = if b then B.char8 '1' else B.char8 '0'
 buildJSONValue (TByte b) = buildShowable b
 buildJSONValue (TI16 i) = buildShowable i
 buildJSONValue (TI32 i) = buildShowable i
@@ -160,7 +161,7 @@ parseJSONValue (T_SET ty) = fmap (TSet ty) $
       then  lexeme (PC.char8 ',') *> parseJSONList ty
       else return []
 parseJSONValue T_BOOL =
-  (TBool True <$ string "true") <|> (TBool False <$ string "false")
+  (TBool True <$ PC.char8 '1') <|> (TBool False <$ PC.char8 '0')
 parseJSONValue T_BYTE = TByte <$> signed decimal
 parseJSONValue T_I16 = TI16 <$> signed decimal
 parseJSONValue T_I32 = TI32 <$> signed decimal
@@ -202,9 +203,12 @@ parseJSONStruct tmap = Map.fromList . catMaybes <$> parseField
 
 parseJSONMap :: ThriftType -> ThriftType -> Parser [(ThriftVal, ThriftVal)]
 parseJSONMap kt vt =
-  ((,) <$> lexeme (PC.char8 '"' *> parseJSONValue kt <* PC.char8 '"') <*>
+  ((,) <$> lexeme (parseJSONKey kt) <*>
    (lexeme (PC.char8 ':') *> lexeme (parseJSONValue vt))) `sepBy`
   lexeme (PC.char8 ',')
+  where
+    parseJSONKey T_STRING = parseJSONValue T_STRING
+    parseJSONKey kt = PC.char8 '"' *> parseJSONValue kt <* PC.char8 '"'
 
 parseJSONList :: ThriftType -> Parser [ThriftVal]
 parseJSONList ty = lexeme (parseJSONValue ty) `sepBy` lexeme (PC.char8 ',')
