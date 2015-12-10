@@ -107,7 +107,7 @@ getTypeOf v =  case v of
 runParser :: (Protocol p, Transport t, Show a) => p t -> Parser a -> IO a
 runParser prot p = refill >>= getResult . parse p
   where
-    refill = handle handleEOF $ toStrict <$> tRead (getTransport prot) 1
+    refill = handle handleEOF $ toStrict <$> tReadAll (getTransport prot) 1
     getResult (Done _ a) = return a
     getResult (Partial k) = refill >>= getResult . k
     getResult f = throw $ ProtocolExn PE_INVALID_DATA (show f)
