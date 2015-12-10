@@ -26,6 +26,7 @@ import Test.Hspec
 
 import qualified BinarySpec
 import qualified CompactSpec
+import qualified JSONSpec
 
 main :: IO ()
 main = hspec spec
@@ -34,3 +35,4 @@ spec :: Spec
 spec = do
   describe "Binary" BinarySpec.spec
   describe "Compact" CompactSpec.spec
+  describe "JSON" JSONSpec.spec

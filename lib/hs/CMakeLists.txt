@@ -41,6 +41,7 @@ if(BUILD_TESTING)
         test/Spec.hs
         test/BinarySpec.hs
         test/CompactSpec.hs
+        test/JSONSpec.hs
     )
     set(hs_enable_test "--enable-tests")
 endif()
