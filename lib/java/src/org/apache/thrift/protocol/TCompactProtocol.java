@@ -37,6 +37,8 @@ import org.apache.thrift.transport.TTransport;
  * and i64 fields you have, the more benefit you'll see.
  */
 public class TCompactProtocol extends TProtocol {
+  private final static byte[] EMPTY_BYTES = new byte[0];
+  private final static ByteBuffer EMPTY_BUFFER = ByteBuffer.wrap(EMPTY_BYTES);
 
   private final static long NO_LENGTH_LIMIT = -1;
 
@@ -142,6 +144,12 @@ public class TCompactProtocol extends TProtocol {
    * containers (maps, sets, lists), or {@link #NO_LENGTH_LIMIT} for unlimited.
    */
   private final long containerLengthLimit_;
+
+  /**
+   * Temporary buffer used for various operations that would otherwise require a
+   * small allocation.
+   */
+  private final byte[] temp = new byte[10];
 
   /**
    * Create a TCompactProtocol.
@@ -343,9 +351,8 @@ public class TCompactProtocol extends TProtocol {
    * Write a double to the wire as 8 bytes.
    */
   public void writeDouble(double dub) throws TException {
-    byte[] data = new byte[]{0, 0, 0, 0, 0, 0, 0, 0};
-    fixedLongToBytes(Double.doubleToLongBits(dub), data, 0);
-    trans_.write(data);
+    fixedLongToBytes(Double.doubleToLongBits(dub), temp, 0);
+    trans_.write(temp, 0, 8);
   }
 
   /**
@@ -405,40 +412,38 @@ public class TCompactProtocol extends TProtocol {
    * Write an i32 as a varint. Results in 1-5 bytes on the wire.
    * TODO: make a permanent buffer like writeVarint64?
    */
-  byte[] i32buf = new byte[5];
   private void writeVarint32(int n) throws TException {
     int idx = 0;
     while (true) {
       if ((n & ~0x7F) == 0) {
-        i32buf[idx++] = (byte)n;
+        temp[idx++] = (byte)n;
         // writeByteDirect((byte)n);
         break;
         // return;
       } else {
-        i32buf[idx++] = (byte)((n & 0x7F) | 0x80);
+        temp[idx++] = (byte)((n & 0x7F) | 0x80);
         // writeByteDirect((byte)((n & 0x7F) | 0x80));
         n >>>= 7;
       }
     }
-    trans_.write(i32buf, 0, idx);
+    trans_.write(temp, 0, idx);
   }
 
   /**
    * Write an i64 as a varint. Results in 1-10 bytes on the wire.
    */
-  byte[] varint64out = new byte[10];
   private void writeVarint64(long n) throws TException {
     int idx = 0;
     while (true) {
       if ((n & ~0x7FL) == 0) {
-        varint64out[idx++] = (byte)n;
+        temp[idx++] = (byte)n;
         break;
       } else {
-        varint64out[idx++] = ((byte)((n & 0x7F) | 0x80));
+        temp[idx++] = ((byte)((n & 0x7F) | 0x80));
         n >>>= 7;
       }
     }
-    trans_.write(varint64out, 0, idx);
+    trans_.write(temp, 0, idx);
   }
 
   /**
@@ -476,10 +481,9 @@ public class TCompactProtocol extends TProtocol {
    * Writes a byte without any possibility of all that field header nonsense.
    * Used internally by other writing methods that know they need to write a byte.
    */
-  private byte[] byteDirectBuffer = new byte[1];
   private void writeByteDirect(byte b) throws TException {
-    byteDirectBuffer[0] = b;
-    trans_.write(byteDirectBuffer);
+    temp[0] = b;
+    trans_.write(temp, 0, 1);
   }
 
   /**
@@ -621,7 +625,6 @@ public class TCompactProtocol extends TProtocol {
     return readByte() == Types.BOOLEAN_TRUE;
   }
 
-  byte[] byteRawBuf = new byte[1];
   /**
    * Read a single byte off the wire. Nothing interesting here.
    */
@@ -631,8 +634,8 @@ public class TCompactProtocol extends TProtocol {
       b = trans_.getBuffer()[trans_.getBufferPosition()];
       trans_.consumeBuffer(1);
     } else {
-      trans_.readAll(byteRawBuf, 0, 1);
-      b = byteRawBuf[0];
+      trans_.readAll(temp, 0, 1);
+      b = temp[0];
     }
     return b;
   }
@@ -662,9 +665,8 @@ public class TCompactProtocol extends TProtocol {
    * No magic here - just read a double off the wire.
    */
   public double readDouble() throws TException {
-    byte[] longBits = new byte[8];
-    trans_.readAll(longBits, 0, 8);
-    return Double.longBitsToDouble(bytesToLong(longBits));
+    trans_.readAll(temp, 0, 8);
+    return Double.longBitsToDouble(bytesToLong(temp));
   }
 
   /**
@@ -697,7 +699,7 @@ public class TCompactProtocol extends TProtocol {
   public ByteBuffer readBinary() throws TException {
     int length = readVarint32();
     checkStringReadLength(length);
-    if (length == 0) return ByteBuffer.wrap(new byte[0]);
+    if (length == 0) return EMPTY_BUFFER;
 
     if (trans_.getBytesRemainingInBuffer() >= length) {
       ByteBuffer bb = ByteBuffer.wrap(trans_.getBuffer(), trans_.getBufferPosition(), length);
@@ -714,7 +716,7 @@ public class TCompactProtocol extends TProtocol {
    * Read a byte[] of a known length from the wire.
    */
   private byte[] readBinary(int length) throws TException {
-    if (length == 0) return new byte[0];
+    if (length == 0) return EMPTY_BYTES;
 
     byte[] buf = new byte[length];
     trans_.readAll(buf, 0, length);
