@@ -36,12 +36,11 @@ namespace protocol {
  */
 template <class Transport_, class ByteOrder_ = TNetworkBigEndian>
 class TBinaryProtocolT : public TVirtualProtocol<TBinaryProtocolT<Transport_, ByteOrder_> > {
-protected:
+public:
   static const int32_t VERSION_MASK = ((int32_t)0xffff0000);
   static const int32_t VERSION_1 = ((int32_t)0x80010000);
   // VERSION_2 (0x80020000) was taken by TDenseProtocol (which has since been removed)
 
-public:
   TBinaryProtocolT(boost::shared_ptr<Transport_> trans)
     : TVirtualProtocol<TBinaryProtocolT<Transport_, ByteOrder_> >(trans),
       trans_(trans.get()),
@@ -217,19 +216,17 @@ public:
     boost::shared_ptr<Transport_> specific_trans = boost::dynamic_pointer_cast<Transport_>(trans);
     TProtocol* prot;
     if (specific_trans) {
-      prot = new TBinaryProtocolT<Transport_, ByteOrder_>(
-        specific_trans,
-        string_limit_,
-        container_limit_,
-        strict_read_,
-        strict_write_);
+      prot = new TBinaryProtocolT<Transport_, ByteOrder_>(specific_trans,
+                                                          string_limit_,
+                                                          container_limit_,
+                                                          strict_read_,
+                                                          strict_write_);
     } else {
-      prot = new TBinaryProtocolT<TTransport, ByteOrder_>(
-        trans,
-        string_limit_,
-        container_limit_,
-        strict_read_,
-        strict_write_);
+      prot = new TBinaryProtocolT<TTransport, ByteOrder_>(trans,
+                                                          string_limit_,
+                                                          container_limit_,
+                                                          strict_read_,
+                                                          strict_write_);
     }
 
     return boost::shared_ptr<TProtocol>(prot);

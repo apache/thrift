@@ -17,7 +17,10 @@
 # under the License.
 #
 
-from thrift.Thrift import *
+from thrift.Thrift import TException, TType, TFrozenDict
+import six
+
+from ..compat import binary_to_str, str_to_binary
 
 
 class TProtocolException(TException):
@@ -100,6 +103,9 @@ class TProtocolBase:
     pass
 
   def writeString(self, str_val):
+    self.writeBinary(str_to_binary(str_val))
+
+  def writeBinary(self, str_val):
     pass
 
   def readMessageBegin(self):
@@ -157,6 +163,9 @@ class TProtocolBase:
     pass
 
   def readString(self):
+    return binary_to_str(self.readBinary())
+
+  def readBinary(self):
     pass
 
   def skip(self, ttype):
@@ -187,18 +196,18 @@ class TProtocolBase:
       self.readStructEnd()
     elif ttype == TType.MAP:
       (ktype, vtype, size) = self.readMapBegin()
-      for i in xrange(size):
+      for i in range(size):
         self.skip(ktype)
         self.skip(vtype)
       self.readMapEnd()
     elif ttype == TType.SET:
       (etype, size) = self.readSetBegin()
-      for i in xrange(size):
+      for i in range(size):
         self.skip(etype)
       self.readSetEnd()
     elif ttype == TType.LIST:
       (etype, size) = self.readListBegin()
-      for i in xrange(size):
+      for i in range(size):
         self.skip(etype)
       self.readListEnd()
 
@@ -207,7 +216,7 @@ class TProtocolBase:
        (None, None, False),  # 0 TType.STOP
        (None, None, False),  # 1 TType.VOID # TODO: handle void?
        ('readBool', 'writeBool', False),  # 2 TType.BOOL
-       ('readByte',  'writeByte', False),  # 3 TType.BYTE and I08
+       ('readByte', 'writeByte', False),  # 3 TType.BYTE and I08
        ('readDouble', 'writeDouble', False),  # 4 TType.DOUBLE
        (None, None, False),  # 5 undefined
        ('readI16', 'writeI16', False),  # 6 TType.I16
@@ -224,9 +233,17 @@ class TProtocolBase:
        (None, None, False)  # 17 TType.UTF16 # TODO: handle utf16 types?
       )
 
+  def _ttype_handlers(self, ttype, spec):
+    if spec == 'BINARY':
+      if ttype != TType.STRING:
+        raise TProtocolException(type=TProtocolException.INVALID_DATA,
+                                 message='Invalid binary field type %d' % ttype)
+      return ('readBinary', 'writeBinary', False)
+    return self._TTYPE_HANDLERS[ttype]
+
   def readFieldByTType(self, ttype, spec):
     try:
-      (r_handler, w_handler, is_container) = self._TTYPE_HANDLERS[ttype]
+      (r_handler, w_handler, is_container) = self._ttype_handlers(ttype, spec)
     except IndexError:
       raise TProtocolException(type=TProtocolException.INVALID_DATA,
                                message='Invalid field type %d' % (ttype))
@@ -241,40 +258,42 @@ class TProtocolBase:
   def readContainerList(self, spec):
     results = []
     ttype, tspec = spec[0], spec[1]
-    r_handler = self._TTYPE_HANDLERS[ttype][0]
+    is_immutable = spec[2]
+    r_handler = self._ttype_handlers(ttype, spec)[0]
     reader = getattr(self, r_handler)
     (list_type, list_len) = self.readListBegin()
     if tspec is None:
       # list values are simple types
-      for idx in xrange(list_len):
+      for idx in range(list_len):
         results.append(reader())
     else:
       # this is like an inlined readFieldByTType
-      container_reader = self._TTYPE_HANDLERS[list_type][0]
+      container_reader = self._ttype_handlers(list_type, tspec)[0]
       val_reader = getattr(self, container_reader)
-      for idx in xrange(list_len):
+      for idx in range(list_len):
         val = val_reader(tspec)
         results.append(val)
     self.readListEnd()
-    return results
+    return tuple(results) if is_immutable else results
 
   def readContainerSet(self, spec):
     results = set()
     ttype, tspec = spec[0], spec[1]
-    r_handler = self._TTYPE_HANDLERS[ttype][0]
+    is_immutable = spec[2]
+    r_handler = self._ttype_handlers(ttype, spec)[0]
     reader = getattr(self, r_handler)
     (set_type, set_len) = self.readSetBegin()
     if tspec is None:
       # set members are simple types
-      for idx in xrange(set_len):
+      for idx in range(set_len):
         results.add(reader())
     else:
-      container_reader = self._TTYPE_HANDLERS[set_type][0]
+      container_reader = self._ttype_handlers(set_type, tspec)[0]
       val_reader = getattr(self, container_reader)
-      for idx in xrange(set_len):
+      for idx in range(set_len):
         results.add(val_reader(tspec))
     self.readSetEnd()
-    return results
+    return frozenset(results) if is_immutable else results
 
   def readContainerStruct(self, spec):
     (obj_class, obj_spec) = spec
@@ -286,13 +305,14 @@ class TProtocolBase:
     results = dict()
     key_ttype, key_spec = spec[0], spec[1]
     val_ttype, val_spec = spec[2], spec[3]
+    is_immutable = spec[4]
     (map_ktype, map_vtype, map_len) = self.readMapBegin()
     # TODO: compare types we just decoded with thrift_spec and
     # abort/skip if types disagree
-    key_reader = getattr(self, self._TTYPE_HANDLERS[key_ttype][0])
-    val_reader = getattr(self, self._TTYPE_HANDLERS[val_ttype][0])
+    key_reader = getattr(self, self._ttype_handlers(key_ttype, key_spec)[0])
+    val_reader = getattr(self, self._ttype_handlers(val_ttype, val_spec)[0])
     # list values are simple types
-    for idx in xrange(map_len):
+    for idx in range(map_len):
       if key_spec is None:
         k_val = key_reader()
       else:
@@ -305,9 +325,11 @@ class TProtocolBase:
       # i.e. this fails: d=dict(); d[[0,1]] = 2
       results[k_val] = v_val
     self.readMapEnd()
-    return results
+    return TFrozenDict(results) if is_immutable else results
 
-  def readStruct(self, obj, thrift_spec):
+  def readStruct(self, obj, thrift_spec, is_immutable=False):
+    if is_immutable:
+      fields = {}
     self.readStructBegin()
     while True:
       (fname, ftype, fid) = self.readFieldBegin()
@@ -322,18 +344,23 @@ class TProtocolBase:
           fname = field[2]
           fspec = field[3]
           val = self.readFieldByTType(ftype, fspec)
-          setattr(obj, fname, val)
+          if is_immutable:
+            fields[fname] = val
+          else:
+            setattr(obj, fname, val)
         else:
           self.skip(ftype)
       self.readFieldEnd()
     self.readStructEnd()
+    if is_immutable:
+      return obj(**fields)
 
   def writeContainerStruct(self, val, spec):
     val.write(self)
 
   def writeContainerList(self, val, spec):
     self.writeListBegin(spec[0], len(val))
-    r_handler, w_handler, is_container = self._TTYPE_HANDLERS[spec[0]]
+    r_handler, w_handler, is_container = self._ttype_handlers(spec[0], spec)
     e_writer = getattr(self, w_handler)
     if not is_container:
       for elem in val:
@@ -345,7 +372,7 @@ class TProtocolBase:
 
   def writeContainerSet(self, val, spec):
     self.writeSetBegin(spec[0], len(val))
-    r_handler, w_handler, is_container = self._TTYPE_HANDLERS[spec[0]]
+    r_handler, w_handler, is_container = self._ttype_handlers(spec[0], spec)
     e_writer = getattr(self, w_handler)
     if not is_container:
       for elem in val:
@@ -358,12 +385,12 @@ class TProtocolBase:
   def writeContainerMap(self, val, spec):
     k_type = spec[0]
     v_type = spec[2]
-    ignore, ktype_name, k_is_container = self._TTYPE_HANDLERS[k_type]
-    ignore, vtype_name, v_is_container = self._TTYPE_HANDLERS[v_type]
+    ignore, ktype_name, k_is_container = self._ttype_handlers(k_type, spec)
+    ignore, vtype_name, v_is_container = self._ttype_handlers(v_type, spec)
     k_writer = getattr(self, ktype_name)
     v_writer = getattr(self, vtype_name)
     self.writeMapBegin(k_type, v_type, len(val))
-    for m_key, m_val in val.iteritems():
+    for m_key, m_val in six.iteritems(val):
       if not k_is_container:
         k_writer(m_key)
       else:
@@ -395,12 +422,13 @@ class TProtocolBase:
     self.writeStructEnd()
 
   def writeFieldByTType(self, ttype, val, spec):
-    r_handler, w_handler, is_container = self._TTYPE_HANDLERS[ttype]
+    r_handler, w_handler, is_container = self._ttype_handlers(ttype, spec)
     writer = getattr(self, w_handler)
     if is_container:
       writer(val, spec)
     else:
       writer(val)
+
 
 def checkIntegerLimits(i, bits):
     if bits == 8 and (i < -128 or i > 127):
@@ -415,6 +443,7 @@ def checkIntegerLimits(i, bits):
     elif bits == 64 and (i < -9223372036854775808 or i > 9223372036854775807):
          raise TProtocolException(TProtocolException.INVALID_DATA,
                                   "i64 requires -9223372036854775808 <= number <= 9223372036854775807")
+
 
 class TProtocolFactory:
   def getProtocol(self, trans):

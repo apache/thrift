@@ -19,7 +19,17 @@
 AUTOMAKE_OPTIONS = serial-tests
 DESTDIR ?= /
 
-all-local:
+if WITH_PY3
+py3-build:
+	$(PYTHON3) setup.py build
+py3-test: py3-build
+	PYTHONPATH=build/lib $(PYTHON3) test/thrift_json.py
+else
+py3-build:
+py3-test:
+endif
+
+all-local: py3-build
 	$(PYTHON) setup.py build
 
 # We're ignoring prefix here because site-packages seems to be
@@ -32,7 +42,8 @@ install-exec-hook:
 clean-local:
 	$(RM) -r build
 
-check-local: all
+check-local: all py3-test
+	PYTHONPATH=$(shell ls build/lib* -dr | head -n1) $(PYTHON) test/thrift_json.py
 
 EXTRA_DIST = \
 	CMakeLists.txt \

@@ -19,34 +19,51 @@
 
 -module(test_thrift_server).
 
--export([go/0, go/1, start_link/2, handle_function/2]).
+-export([start/0, start/1, start_link/2, handle_function/2]).
 
+-include("thrift_constants.hrl").
 -include("gen-erl/thrift_test_types.hrl").
 
 -record(options, {port = 9090,
                   server_opts = []}).
 
 parse_args(Args) -> parse_args(Args, #options{}).
-parse_args([], Opts) -> Opts;
+parse_args([], Opts) ->
+  Opts;
 parse_args([Head | Rest], Opts) ->
     NewOpts =
-        case catch list_to_integer(Head) of
-            Port when is_integer(Port) ->
-                Opts#options{port = Port};
-            _Else ->
-                case Head of
+        case Head of
+            "--port=" ++ Port ->
+                case string:to_integer(Port) of
+                  {IntPort,_} when is_integer(IntPort) ->
+                    Opts#options{port = IntPort};
+                  _Else ->
+                    erlang:error({bad_arg, Head})
+                end;
+            "--transport=" ++ Trans ->
+                case Trans of
                     "framed" ->
                         Opts#options{server_opts = [{framed, true} | Opts#options.server_opts]};
-                    "" ->
-                        Opts;
                     _Else ->
-                        erlang:error({bad_arg, Head})
-                end
+                        Opts
+                end;
+            "--ssl" ->
+                ssl:start(),
+                SslOptions =
+                    {ssloptions, [
+                         {certfile, "../keys/server.crt"}
+                        ,{keyfile,  "../keys/server.key"}
+                    ]},
+                Opts#options{server_opts = [{ssltransport, true} | [SslOptions | Opts#options.server_opts]]};
+            "--protocol=" ++ Proto ->
+                Opts#options{server_opts = [{protocol, list_to_atom(Proto)} | Opts#options.server_opts]};
+            _Else ->
+                erlang:error({bad_arg, Head})
         end,
     parse_args(Rest, NewOpts).
 
-go() -> go([]).
-go(Args) ->
+start() -> start(init:get_plain_arguments()).
+start(Args) ->
     #options{port = Port, server_opts = ServerOpts} = parse_args(Args),
     spawn(fun() -> start_link(Port, ServerOpts), receive after infinity -> ok end end).
 
@@ -64,6 +81,10 @@ handle_function(testVoid, {}) ->
 handle_function(testString, {S}) when is_binary(S) ->
     io:format("testString: ~p~n", [S]),
     {reply, S};
+
+handle_function(testBool, {B}) when is_boolean(B) ->
+    io:format("testBool: ~p~n", [B]),
+    {reply, B};
 
 handle_function(testByte, {I8}) when is_integer(I8) ->
     io:format("testByte: ~p~n", [I8]),
@@ -107,6 +128,10 @@ handle_function(testMap, {Map}) ->
     io:format("testMap: ~p~n", [dict:to_list(Map)]),
     {reply, Map};
 
+handle_function(testStringMap, {Map}) ->
+    io:format("testStringMap: ~p~n", [dict:to_list(Map)]),
+    {reply, Map};
+
 handle_function(testSet, {Set}) ->
     true = sets:is_set(Set),
     io:format("testSet: ~p~n", [sets:to_list(Set)]),
@@ -127,8 +152,8 @@ handle_function(testTypedef, {UserID}) when is_integer(UserID) ->
 handle_function(testMapMap, {Hello}) ->
     io:format("testMapMap: ~p~n", [Hello]),
 
-    PosList = [{I, I}   || I <- lists:seq(1, 5)],
-    NegList = [{-I, -I} || I <- lists:seq(1, 5)],
+    PosList = [{I, I}   || I <- lists:seq(1, 4)],
+    NegList = [{-I, -I} || I <- lists:seq(1, 4)],
 
     MapMap = dict:from_list([{4,  dict:from_list(PosList)},
                              {-4, dict:from_list(NegList)}]),
@@ -149,13 +174,10 @@ handle_function(testInsanity, {Insanity}) when is_record(Insanity, 'Insanity') -
       xtructs = [Goodbye]
       },
 
-    Looney = #'Insanity'{
-      userMap = dict:from_list([{?THRIFT_TEST_NUMBERZ_FIVE, 5}]),
-      xtructs = [Hello]
-      },
+    Looney = #'Insanity'{},
 
-    FirstMap = dict:from_list([{?THRIFT_TEST_NUMBERZ_TWO, Crazy},
-                               {?THRIFT_TEST_NUMBERZ_THREE, Crazy}]),
+    FirstMap = dict:from_list([{?THRIFT_TEST_NUMBERZ_TWO, Insanity},
+                               {?THRIFT_TEST_NUMBERZ_THREE, Insanity}]),
 
     SecondMap = dict:from_list([{?THRIFT_TEST_NUMBERZ_SIX, Looney}]),
 
@@ -185,6 +207,8 @@ handle_function(testException, {String}) when is_binary(String) ->
         <<"Xception">> ->
             throw(#'Xception'{errorCode = 1001,
                             message = String});
+        <<"TException">> ->
+            throw({?TApplicationException_Structure});
         _ ->
             ok
     end;
@@ -204,5 +228,6 @@ handle_function(testMultiException, {Arg0, Arg1}) ->
     end;
 
 handle_function(testOneway, {Seconds}) ->
+    io:format("testOneway: ~p~n", [Seconds]),
     timer:sleep(1000 * Seconds),
     ok.

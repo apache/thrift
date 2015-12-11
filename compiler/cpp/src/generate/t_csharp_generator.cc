@@ -620,7 +620,7 @@ std::string t_csharp_generator::render_const_value(ofstream& out,
     case t_base_type::TYPE_BOOL:
       render << ((value->get_integer() > 0) ? "true" : "false");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -2163,7 +2163,7 @@ void t_csharp_generator::generate_deserialize_field(ofstream& out,
       case t_base_type::TYPE_BOOL:
         out << "ReadBool();";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "ReadByte();";
         break;
       case t_base_type::TYPE_I16:
@@ -2341,7 +2341,7 @@ void t_csharp_generator::generate_serialize_field(ofstream& out,
       case t_base_type::TYPE_BOOL:
         out << "WriteBool(" << nullable_name << ");";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "WriteByte(" << nullable_name << ");";
         break;
       case t_base_type::TYPE_I16:
@@ -2683,7 +2683,7 @@ string t_csharp_generator::base_type_name(t_base_type* tbase,
     }
   case t_base_type::TYPE_BOOL:
     return "bool" + postfix;
-  case t_base_type::TYPE_BYTE:
+  case t_base_type::TYPE_I8:
     return "sbyte" + postfix;
   case t_base_type::TYPE_I16:
     return "short" + postfix;
@@ -2719,7 +2719,7 @@ string t_csharp_generator::declare_field(t_field* tfield, bool init, std::string
       case t_base_type::TYPE_BOOL:
         result += " = false";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
@@ -2798,7 +2798,7 @@ string t_csharp_generator::type_to_enum(t_type* type) {
       return "TType.String";
     case t_base_type::TYPE_BOOL:
       return "TType.Bool";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "TType.Byte";
     case t_base_type::TYPE_I16:
       return "TType.I16";

@@ -41,6 +41,7 @@ class TJsonProtocol extends TProtocol {
   TJsonProtocol(TTransport transport) : super(transport) {
     _rootContext = new _BaseContext(this);
     _reader = new _LookaheadReader(this);
+    _resetContext();
   }
 
   void _pushContext(_BaseContext c) {
@@ -284,10 +285,15 @@ class TJsonProtocol extends TProtocol {
     _writeJsonBase64(bytes);
   }
 
+  bool _isHighSurrogate(int b) => b >= 0xD800 && b <= 0xDBFF;
+
+  bool _isLowSurrogate(int b) => b >= 0xDC00 && b <= 0xDFFF;
+
   /// read
 
   Uint8List _readJsonString({bool skipContext: false}) {
     List<int> bytes = [];
+    List<int> codeunits = [];
 
     if (!skipContext) {
       _context.read();
@@ -308,7 +314,7 @@ class TJsonProtocol extends TProtocol {
 
       byte = _reader.read();
 
-      // distinguish between \u00XX and control chars like \n
+      // distinguish between \uXXXX and control chars like \n
       if (byte != _Constants.ESCSEQ_BYTES[1]) {
         String char = new String.fromCharCode(byte);
         int offset = _Constants.ESCAPE_CHARS.indexOf(char);
@@ -321,12 +327,36 @@ class TJsonProtocol extends TProtocol {
         continue;
       }
 
-      // it's \u00XX
-      _readJsonSyntaxChar(_Constants.HEX_0_BYTES[0]);
-      _readJsonSyntaxChar(_Constants.HEX_0_BYTES[0]);
-      transport.readAll(_tempBuffer, 0, 2);
-      byte = _hexVal(_tempBuffer[0]) << 4 + _hexVal(_tempBuffer[1]);
-      bytes.add(byte);
+      // it's \uXXXX
+      transport.readAll(_tempBuffer, 0, 4);
+      byte = (_hexVal(_tempBuffer[0]) << 12)
+        + (_hexVal(_tempBuffer[1]) << 8)
+        + (_hexVal(_tempBuffer[2]) << 4)
+        + _hexVal(_tempBuffer[3]);
+      if (_isHighSurrogate(byte)) {
+        if (codeunits.isNotEmpty) {
+          throw new TProtocolError(
+              TProtocolErrorType.INVALID_DATA, "Expected low surrogate");
+        }
+        codeunits.add(byte);
+      }
+      else if (_isLowSurrogate(byte)) {
+        if (codeunits.isEmpty) {
+          throw new TProtocolError(
+              TProtocolErrorType.INVALID_DATA, "Expected high surrogate");
+        }
+        codeunits.add(byte);
+        bytes.addAll(utf8Codec.encode(new String.fromCharCodes(codeunits)));
+        codeunits.clear();
+      }
+      else {
+        bytes.addAll(utf8Codec.encode(new String.fromCharCode(byte)));
+      }
+    }
+
+    if (codeunits.isNotEmpty) {
+      throw new TProtocolError(
+          TProtocolErrorType.INVALID_DATA, "Expected low surrogate");
     }
 
     return new Uint8List.fromList(bytes);

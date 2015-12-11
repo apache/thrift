@@ -17,7 +17,6 @@
 # under the License.
 #
 
-from thrift.Thrift import *
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TTransport
 
@@ -28,11 +27,10 @@ except:
 
 
 class TBase(object):
-  __slots__ = []
+  __slots__ = ()
 
   def __repr__(self):
-    L = ['%s=%r' % (key, getattr(self, key))
-              for key in self.__slots__]
+    L = ['%s=%r' % (key, getattr(self, key)) for key in self.__slots__]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
@@ -50,9 +48,9 @@ class TBase(object):
 
   def read(self, iprot):
     if (iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
-        isinstance(iprot.trans, TTransport.CReadableTransport) and
-        self.thrift_spec is not None and
-        fastbinary is not None):
+       isinstance(iprot.trans, TTransport.CReadableTransport) and
+       self.thrift_spec is not None and
+       fastbinary is not None):
       fastbinary.decode_binary(self,
                                iprot.trans,
                                (self.__class__, self.thrift_spec))
@@ -61,21 +59,36 @@ class TBase(object):
 
   def write(self, oprot):
     if (oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
-        self.thrift_spec is not None and
-        fastbinary is not None):
+       self.thrift_spec is not None and
+       fastbinary is not None):
       oprot.trans.write(
         fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStruct(self, self.thrift_spec)
 
 
-class TExceptionBase(Exception):
-  # old style class so python2.4 can raise exceptions derived from this
-  #  This can't inherit from TBase because of that limitation.
-  __slots__ = []
+class TExceptionBase(TBase, Exception):
+  pass
 
-  __repr__ = TBase.__repr__.im_func
-  __eq__ = TBase.__eq__.im_func
-  __ne__ = TBase.__ne__.im_func
-  read = TBase.read.im_func
-  write = TBase.write.im_func
+
+class TFrozenBase(TBase):
+  def __setitem__(self, *args):
+    raise TypeError("Can't modify frozen struct")
+
+  def __delitem__(self, *args):
+    raise TypeError("Can't modify frozen struct")
+
+  def __hash__(self, *args):
+    return hash(self.__class__) ^ hash(self.__slots__)
+
+  @classmethod
+  def read(cls, iprot):
+    if (iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
+       isinstance(iprot.trans, TTransport.CReadableTransport) and
+       cls.thrift_spec is not None and
+       fastbinary is not None):
+      self = cls()
+      return fastbinary.decode_binary(None,
+                                      iprot.trans,
+                                      (self.__class__, self.thrift_spec))
+    return iprot.readStruct(cls, cls.thrift_spec, True)

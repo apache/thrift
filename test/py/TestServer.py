@@ -18,7 +18,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-from __future__ import division
+from __future__ import division, print_function
 import glob
 import logging
 import os
@@ -26,55 +26,9 @@ import sys
 import time
 from optparse import OptionParser
 
-# Print TServer log to stdout so that the test-runner can redirect it to log files
-logging.basicConfig(level=logging.DEBUG)
-
-parser = OptionParser()
-parser.add_option('--genpydir', type='string', dest='genpydir',
-                  default='gen-py',
-                  help='include this local directory in sys.path for locating generated code')
-parser.add_option("--port", type="int", dest="port",
-    help="port number for server to listen on")
-parser.add_option("--zlib", action="store_true", dest="zlib",
-    help="use zlib wrapper for compressed transport")
-parser.add_option("--ssl", action="store_true", dest="ssl",
-    help="use SSL for encrypted transport")
-parser.add_option('-v', '--verbose', action="store_const",
-    dest="verbose", const=2,
-    help="verbose output")
-parser.add_option('-q', '--quiet', action="store_const",
-    dest="verbose", const=0,
-    help="minimal output")
-parser.add_option('--protocol',  dest="proto", type="string",
-    help="protocol to use, one of: accel, binary, compact, json")
-parser.add_option('--transport',  dest="trans", type="string",
-    help="transport to use, one of: buffered, framed")
-parser.set_defaults(port=9090, verbose=1, proto='binary')
-options, args = parser.parse_args()
-
-script_dir = os.path.realpath(os.path.dirname(__file__))  # <-- absolute dir the script is in
-lib_dir = os.path.join(os.path.dirname(os.path.dirname(script_dir)), 'lib', 'py', 'build', 'lib.*')
-
-sys.path.insert(0, os.path.join(script_dir, options.genpydir))
-sys.path.insert(0, glob.glob(lib_dir)[0])
-
-from ThriftTest import ThriftTest
-from ThriftTest.ttypes import *
-from thrift.Thrift import TException
-from thrift.transport import TTransport
-from thrift.transport import TSocket
-from thrift.transport import TZlibTransport
-from thrift.protocol import TBinaryProtocol
-from thrift.protocol import TCompactProtocol
-from thrift.protocol import TJSONProtocol
-from thrift.server import TServer, TNonblockingServer, THttpServer
-
-PROT_FACTORIES = {
-    'binary': TBinaryProtocol.TBinaryProtocolFactory,
-    'accel': TBinaryProtocol.TBinaryProtocolAcceleratedFactory,
-    'compact': TCompactProtocol.TCompactProtocolFactory,
-    'json': TJSONProtocol.TJSONProtocolFactory,
-}
+SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
+ROOT_DIR = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+DEFAULT_LIBDIR_GLOB = os.path.join(ROOT_DIR, 'lib', 'py', 'build', 'lib.*')
 
 
 class TestHandler(object):
@@ -224,78 +178,133 @@ class TestHandler(object):
                   byte_thing=arg0, i32_thing=arg1, i64_thing=arg2)
 
 
-# set up the protocol factory form the --protocol option
-pfactory_cls = PROT_FACTORIES.get(options.proto, None)
-if pfactory_cls is None:
-  raise AssertionError('Unknown --protocol option: %s' % options.proto)
-pfactory = pfactory_cls()
+def main(options):
+  # Print TServer log to stdout so that the test-runner can redirect it to log files
+  logging.basicConfig(level=logging.DEBUG)
 
-# get the server type (TSimpleServer, TNonblockingServer, etc...)
-if len(args) > 1:
-  raise AssertionError('Only one server type may be specified, not multiple types.')
-server_type = args[0]
+  # set up the protocol factory form the --protocol option
+  prot_factories = {
+    'binary': TBinaryProtocol.TBinaryProtocolFactory,
+    'accel': TBinaryProtocol.TBinaryProtocolAcceleratedFactory,
+    'compact': TCompactProtocol.TCompactProtocolFactory,
+    'json': TJSONProtocol.TJSONProtocolFactory,
+  }
+  pfactory_cls = prot_factories.get(options.proto, None)
+  if pfactory_cls is None:
+    raise AssertionError('Unknown --protocol option: %s' % options.proto)
+  pfactory = pfactory_cls()
 
-# Set up the handler and processor objects
-handler   = TestHandler()
-processor = ThriftTest.Processor(handler)
+  # get the server type (TSimpleServer, TNonblockingServer, etc...)
+  if len(args) > 1:
+    raise AssertionError('Only one server type may be specified, not multiple types.')
+  server_type = args[0]
 
-# Handle THttpServer as a special case
-if server_type == 'THttpServer':
-  server = THttpServer.THttpServer(processor, ('', options.port), pfactory)
-  server.serve()
-  sys.exit(0)
+  # Set up the handler and processor objects
+  handler = TestHandler()
+  processor = ThriftTest.Processor(handler)
 
-# set up server transport and transport factory
+  # Handle THttpServer as a special case
+  if server_type == 'THttpServer':
+    server = THttpServer.THttpServer(processor, ('', options.port), pfactory)
+    server.serve()
+    sys.exit(0)
 
-abs_key_path = os.path.join(os.path.dirname(script_dir), 'keys', 'server.pem')
+  # set up server transport and transport factory
 
-host = None
-if options.ssl:
-  from thrift.transport import TSSLSocket
-  transport = TSSLSocket.TSSLServerSocket(host, options.port, certfile=abs_key_path)
-else:
-  transport = TSocket.TServerSocket(host, options.port)
-tfactory = TTransport.TBufferedTransportFactory()
-if options.trans == 'buffered':
+  abs_key_path = os.path.join(os.path.dirname(SCRIPT_DIR), 'keys', 'server.pem')
+
+  host = None
+  if options.ssl:
+    from thrift.transport import TSSLSocket
+    transport = TSSLSocket.TSSLServerSocket(host, options.port, certfile=abs_key_path)
+  else:
+    transport = TSocket.TServerSocket(host, options.port)
   tfactory = TTransport.TBufferedTransportFactory()
-elif options.trans == 'framed':
-  tfactory = TTransport.TFramedTransportFactory()
-elif options.trans == '':
-  raise AssertionError('Unknown --transport option: %s' % options.trans)
-else:
-  tfactory = TTransport.TBufferedTransportFactory()
-# if --zlib, then wrap server transport, and use a different transport factory
-if options.zlib:
-  transport = TZlibTransport.TZlibTransport(transport)  # wrap  with zlib
-  tfactory = TZlibTransport.TZlibTransportFactory()
+  if options.trans == 'buffered':
+    tfactory = TTransport.TBufferedTransportFactory()
+  elif options.trans == 'framed':
+    tfactory = TTransport.TFramedTransportFactory()
+  elif options.trans == '':
+    raise AssertionError('Unknown --transport option: %s' % options.trans)
+  else:
+    tfactory = TTransport.TBufferedTransportFactory()
+  # if --zlib, then wrap server transport, and use a different transport factory
+  if options.zlib:
+    transport = TZlibTransport.TZlibTransport(transport)  # wrap  with zlib
+    tfactory = TZlibTransport.TZlibTransportFactory()
 
-# do server-specific setup here:
-if server_type == "TNonblockingServer":
-  server = TNonblockingServer.TNonblockingServer(processor, transport, inputProtocolFactory=pfactory)
-elif server_type == "TProcessPoolServer":
-  import signal
-  from thrift.server import TProcessPoolServer
-  server = TProcessPoolServer.TProcessPoolServer(processor, transport, tfactory, pfactory)
-  server.setNumWorkers(5)
+  # do server-specific setup here:
+  if server_type == "TNonblockingServer":
+    server = TNonblockingServer.TNonblockingServer(processor, transport, inputProtocolFactory=pfactory)
+  elif server_type == "TProcessPoolServer":
+    import signal
+    from thrift.server import TProcessPoolServer
+    server = TProcessPoolServer.TProcessPoolServer(processor, transport, tfactory, pfactory)
+    server.setNumWorkers(5)
 
-  def set_alarm():
-    def clean_shutdown(signum, frame):
-      for worker in server.workers:
+    def set_alarm():
+      def clean_shutdown(signum, frame):
+        for worker in server.workers:
+          if options.verbose > 0:
+            logging.info('Terminating worker: %s' % worker)
+          worker.terminate()
         if options.verbose > 0:
-          logging.info('Terminating worker: %s' % worker)
-        worker.terminate()
-      if options.verbose > 0:
-        logging.info('Requesting server to stop()')
-      try:
-        server.stop()
-      except:
-        pass
-    signal.signal(signal.SIGALRM, clean_shutdown)
-    signal.alarm(4)
-  set_alarm()
-else:
-  # look up server class dynamically to instantiate server
-  ServerClass = getattr(TServer, server_type)
-  server = ServerClass(processor, transport, tfactory, pfactory)
-# enter server main loop
-server.serve()
+          logging.info('Requesting server to stop()')
+        try:
+          server.stop()
+        except:
+          pass
+      signal.signal(signal.SIGALRM, clean_shutdown)
+      signal.alarm(4)
+    set_alarm()
+  else:
+    # look up server class dynamically to instantiate server
+    ServerClass = getattr(TServer, server_type)
+    server = ServerClass(processor, transport, tfactory, pfactory)
+  # enter server main loop
+  server.serve()
+
+if __name__ == '__main__':
+  parser = OptionParser()
+  parser.add_option('--libpydir', type='string', dest='libpydir',
+                    help='include this directory to sys.path for locating library code')
+  parser.add_option('--genpydir', type='string', dest='genpydir',
+                    default='gen-py',
+                    help='include this directory to sys.path for locating generated code')
+  parser.add_option("--port", type="int", dest="port",
+                    help="port number for server to listen on")
+  parser.add_option("--zlib", action="store_true", dest="zlib",
+                    help="use zlib wrapper for compressed transport")
+  parser.add_option("--ssl", action="store_true", dest="ssl",
+                    help="use SSL for encrypted transport")
+  parser.add_option('-v', '--verbose', action="store_const",
+                    dest="verbose", const=2,
+                    help="verbose output")
+  parser.add_option('-q', '--quiet', action="store_const",
+                    dest="verbose", const=0,
+                    help="minimal output")
+  parser.add_option('--protocol', dest="proto", type="string",
+                    help="protocol to use, one of: accel, binary, compact, json")
+  parser.add_option('--transport', dest="trans", type="string",
+                    help="transport to use, one of: buffered, framed")
+  parser.set_defaults(port=9090, verbose=1, proto='binary')
+  options, args = parser.parse_args()
+
+  sys.path.insert(0, os.path.join(SCRIPT_DIR, options.genpydir))
+  if options.libpydir:
+    sys.path.insert(0, glob.glob(options.libpydir)[0])
+  else:
+    sys.path.insert(0, glob.glob(DEFAULT_LIBDIR_GLOB)[0])
+
+  from ThriftTest import ThriftTest
+  from ThriftTest.ttypes import Xtruct, Xception, Xception2, Insanity
+  from thrift.Thrift import TException
+  from thrift.transport import TTransport
+  from thrift.transport import TSocket
+  from thrift.transport import TZlibTransport
+  from thrift.protocol import TBinaryProtocol
+  from thrift.protocol import TCompactProtocol
+  from thrift.protocol import TJSONProtocol
+  from thrift.server import TServer, TNonblockingServer, THttpServer
+
+  sys.exit(main(options))

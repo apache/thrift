@@ -22,15 +22,12 @@ SCRIPTPATH=$( cd $(dirname $0) ; pwd -P )
 # Mainly aiming Travis CI's Ubuntu machines for now
 # see what we need: http://thrift.apache.org/docs/install/ubuntu
 
-# General dependencies
-sh ${SCRIPTPATH}/installCXXDependencies.sh
-
 # Java dependencies
 sudo apt-get install -qq ant openjdk-7-jdk
 sudo update-java-alternatives -s java-1.7.0-openjdk-amd64
 
 # Python dependencies
-sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools python-support python-twisted
+sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools python-support python-twisted python-six python3-six
 
 # Ruby dependencies
 sudo apt-get install -qq ruby ruby-dev
@@ -46,7 +43,7 @@ sudo apt-get install -qq php5 php5-dev php5-cli php-pear re2c
 sudo apt-get install -qq libglib2.0-dev
 
 # Erlang dependencies
-sudo apt-get install -qq erlang-base erlang-eunit erlang-dev
+sudo apt-get install -qq erlang-base erlang-eunit erlang-dev erlang-tools rebar
 
 # GO dependencies
 echo "golang-go golang-go/dashboard boolean false" | debconf-set-selections

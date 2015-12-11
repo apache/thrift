@@ -279,7 +279,7 @@
       <arg line="-p ${genfullcamel}"/>
     </exec>
     <exec executable="../../compiler/cpp/thrift" failonerror="true">
-      <arg line="--gen java:hashcode,fullcamel -out ${genfullcamel} ${test.thrift.home}/DenseLinkingTest.thrift"/>
+      <arg line="--gen java:hashcode,fullcamel -out ${genfullcamel} ${test.thrift.home}/FullCamelTest.thrift"/>
     </exec>
     <exec executable="mkdir" failonerror="true">
       <arg line="-p ${genreuse}"/>

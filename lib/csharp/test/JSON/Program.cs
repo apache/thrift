@@ -34,6 +34,7 @@ namespace JSONTest
         {
             TestThrift2365();  // JSON binary decodes too much data
             TestThrift2336();  // hex encoding using \uXXXX where 0xXXXX > 0xFF
+            TestThrift3403(); // JSON escaped unicode surrogate pair support.
         }
 
 
@@ -77,6 +78,18 @@ namespace JSONTest
             var trans = new TStreamTransport(stm, null);
             var prot = new TJSONProtocol(trans);
             Debug.Assert(prot.ReadString() == RUSSIAN_TEXT, "reading JSON with hex-encoded chars > 8 bit");
+        }
+
+        public static void TestThrift3403()
+        {
+            string GCLEF_TEXT = "\ud834\udd1e";
+            const string GCLEF_JSON = "\"\\ud834\\udd1e\"";
+
+            // parse and check
+            var stm = new MemoryStream(Encoding.UTF8.GetBytes(GCLEF_JSON));
+            var trans = new TStreamTransport(stm, null);
+            var prot = new TJSONProtocol(trans);
+            Debug.Assert(prot.ReadString() == GCLEF_TEXT, "reading JSON with surrogate pair hex-encoded chars");
         }
     }
 }

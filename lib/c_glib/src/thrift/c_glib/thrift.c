@@ -31,6 +31,67 @@ thrift_hash_table_get_keys (gpointer key, gpointer value, gpointer user_data)
 
   *list = g_list_append (*list, key);
 }
+void thrift_safe_hash_table_destroy(GHashTable* hash_table)
+{
+  if (hash_table)
+  {
+    g_hash_table_destroy(hash_table);
+  }
+}
+
+guint thrift_boolean_hash(gconstpointer v)
+{
+  const gboolean* p = v;
+  return p && *p ? 1 : 0;
+}
+gboolean thrift_boolean_equal(gconstpointer a, gconstpointer b)
+{
+  if (a == b) {
+    return TRUE;
+  }
+  if (!a || !b) {
+    return FALSE;
+  }
+  const gboolean* pa = a;
+  const gboolean* pb = b;
+  return *pa == *pb;
+}
+
+guint thrift_int8_hash(gconstpointer v)
+{
+  const gint8* p = v;
+  return p ? *p : 0;
+}
+gboolean thrift_int8_equal(gconstpointer a, gconstpointer b)
+{
+  if (a == b) {
+    return TRUE;
+  }
+  if (!a || !b) {
+    return FALSE;
+  }
+  const gint8* pa = a;
+  const gint8* pb = b;
+  return *pa == *pb;
+}
+
+guint thrift_int16_hash(gconstpointer v)
+{
+  const gint16* p = v;
+  return p ? *p : 0;
+}
+gboolean thrift_int16_equal(gconstpointer a, gconstpointer b)
+{
+  if (a == b) {
+    return TRUE;
+  }
+  if (!a || !b) {
+    return FALSE;
+  }
+  const gint16* pa = a;
+  const gint16* pb = b;
+  return *pa == *pb;
+}
 
 void
 thrift_string_free (gpointer str)

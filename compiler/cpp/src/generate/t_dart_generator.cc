@@ -75,6 +75,13 @@ public:
       library_name_ = "";
     }
 
+    iter = parsed_options.find("pubspec_lib");
+    if (iter != parsed_options.end()) {
+      pubspec_lib_ = (iter->second);
+    } else {
+      pubspec_lib_ = "";
+    }
+
     out_dir_base_ = "gen-dart";
   }
 
@@ -221,6 +228,7 @@ public:
    * Helper rendering functions
    */
 
+  std::string find_library_name(t_program* program);
   std::string dart_library(string file_name);
   std::string service_imports();
   std::string dart_thrift_imports();
@@ -239,12 +247,23 @@ public:
            || ttype->is_string();
   }
 
+  vector<std::string> split(const string& s, char delim) {
+    vector<std::string> elems;
+    stringstream ss(s);
+    string item;
+    while (getline(ss, item, delim)) {
+      elems.push_back(item);
+    }
+    return elems;
+  }
+
   std::string constant_name(std::string name);
 
 private:
   std::ofstream f_service_;
 
   std::string library_name_;
+  std::string pubspec_lib_;
 
   std::string base_dir_;
   std::string src_dir_;
@@ -261,12 +280,8 @@ void t_dart_generator::init_generator() {
   MKDIR(get_out_dir().c_str());
 
   if (library_name_.empty()) {
-    library_name_ = program_->get_namespace("dart");
+    library_name_ = find_library_name(program_);
   }
-  if (library_name_.empty()) {
-    library_name_ = program_->get_name();
-  }
-  library_name_ = replace_all(library_name_, ".", "_");
 
   string subdir = get_out_dir() + "/" + library_name_;
   MKDIR(subdir.c_str());
@@ -278,6 +293,16 @@ void t_dart_generator::init_generator() {
   subdir += "/src";
   MKDIR(subdir.c_str());
   src_dir_ = subdir;
+}
+
+string t_dart_generator::find_library_name(t_program* program) {
+  string name = program->get_namespace("dart");
+  if (name.empty()) {
+    name = program->get_name();
+  }
+  name = replace_all(name, ".", "_");
+  name = replace_all(name, "-", "_");
+  return name;
 }
 
 /**
@@ -318,7 +343,7 @@ string t_dart_generator::dart_thrift_imports() {
   // add imports for included thrift files
   const vector<t_program*>& includes = program_->get_includes();
   for (size_t i = 0; i < includes.size(); ++i) {
-    string include_name = includes[i]->get_namespace("dart");
+    string include_name = find_library_name(includes[i]);
     imports += "import 'package:" + include_name + "/" + include_name + ".dart';" + endl;
   }
 
@@ -367,15 +392,24 @@ void t_dart_generator::generate_dart_pubspec() {
 
   indent(f_pubspec) << "dependencies:" << endl;
   indent_up();
-  indent(f_pubspec) << "thrift:  # ^" << dart_thrift_version << endl;
-  indent_up();
-  indent(f_pubspec) << "path: ../../../../lib/dart" << endl;
-  indent_down();
+
+  if (pubspec_lib_.empty()) {
+    // default to relative path within working directory, which works for tests
+    indent(f_pubspec) << "thrift:  # ^" << dart_thrift_version << endl;
+    indent_up();
+    indent(f_pubspec) << "path: ../../../../lib/dart" << endl;
+    indent_down();
+  } else {
+    const vector<std::string> lines = split(pubspec_lib_, '|');
+    for (size_t line_index = 0; line_index < lines.size(); line_index++) {
+      indent(f_pubspec) << lines[line_index] << endl;
+    }
+  }
 
   // add included thrift files as dependencies
   const vector<t_program*>& includes = program_->get_includes();
   for (size_t i = 0; i < includes.size(); ++i) {
-    string include_name = includes[i]->get_namespace("dart");
+    string include_name = find_library_name(includes[i]);
     indent(f_pubspec) << include_name << ":" << endl;
     indent_up();
     indent(f_pubspec) << "path: ../" << include_name << endl;
@@ -612,7 +646,7 @@ string t_dart_generator::render_const_value(ofstream& out,
     case t_base_type::TYPE_BOOL:
       render << ((value->get_integer() > 0) ? "true" : "false");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -1279,7 +1313,7 @@ std::string t_dart_generator::get_dart_type_string(t_type* type) {
     case t_base_type::TYPE_BOOL:
       return "TType.BOOL";
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "TType.BYTE";
       break;
     case t_base_type::TYPE_I16:
@@ -1436,8 +1470,9 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
     indent(f_service_) << argsname << " args = new " << argsname << "();" << endl;
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-      indent(f_service_) << "args." << (*fld_iter)->get_name() << " = "
-                 << (*fld_iter)->get_name() << ";" << endl;
+      string arg_field_name = get_field_name((*fld_iter)->get_name());
+      indent(f_service_) << "args." << arg_field_name << " = "
+                 << arg_field_name << ";" << endl;
     }
 
     indent(f_service_) << "args.write(oprot);" << endl;
@@ -1740,7 +1775,7 @@ void t_dart_generator::generate_deserialize_field(ofstream& out, t_field* tfield
       case t_base_type::TYPE_BOOL:
         out << "readBool();";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "readByte();";
         break;
       case t_base_type::TYPE_I16:
@@ -1922,7 +1957,7 @@ void t_dart_generator::generate_serialize_field(ofstream& out, t_field* tfield, 
       case t_base_type::TYPE_BOOL:
         out << "writeBool(" << name << ");";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "writeByte(" << name << ");";
         break;
       case t_base_type::TYPE_I16:
@@ -2093,7 +2128,7 @@ string t_dart_generator::base_type_name(t_base_type* type) {
     }
   case t_base_type::TYPE_BOOL:
     return "bool";
-  case t_base_type::TYPE_BYTE:
+  case t_base_type::TYPE_I8:
   case t_base_type::TYPE_I16:
   case t_base_type::TYPE_I32:
   case t_base_type::TYPE_I64:
@@ -2129,7 +2164,7 @@ string t_dart_generator::declare_field(t_field* tfield, bool init) {
       case t_base_type::TYPE_BOOL:
         result += " = false";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
@@ -2208,7 +2243,7 @@ string t_dart_generator::type_to_enum(t_type* type) {
       return "TType.STRING";
     case t_base_type::TYPE_BOOL:
       return "TType.BOOL";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "TType.BYTE";
     case t_base_type::TYPE_I16:
       return "TType.I16";
@@ -2357,5 +2392,8 @@ std::string t_dart_generator::get_enum_class_name(t_type* type) {
 THRIFT_REGISTER_GENERATOR(
     dart,
     "Dart",
-    "    library_name=my_library    Optional override for library name.\n"
+    "    library_name:    Optional override for library name.\n"
+    "    pubspec_lib:     Optional override for thrift lib dependency in pubspec.yaml,\n"
+    "                     e.g. \"thrift: 0.x.x\".  Use a pipe delimiter to separate lines,\n"
+    "                     e.g. \"thrift:|  git:|    url: git@foo.com\"\n"
 )

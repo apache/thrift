@@ -69,7 +69,7 @@ TestServer_LDADD = \
 	$(top_builddir)/lib/cpp/libthrift.la \
 	$(top_builddir)/lib/cpp/libthriftz.la \
 	$(top_builddir)/lib/cpp/libthriftnb.la \
-	-levent -lboost_program_options -lboost_system -lboost_filesystem
+	-levent -lboost_program_options -lboost_system -lboost_filesystem $(ZLIB_LIBS)
 
 TestClient_SOURCES = \
 	src/TestClient.cpp
@@ -79,7 +79,7 @@ TestClient_LDADD = \
 	$(top_builddir)/lib/cpp/libthrift.la \
 	$(top_builddir)/lib/cpp/libthriftz.la \
 	$(top_builddir)/lib/cpp/libthriftnb.la \
-	-levent -lboost_program_options -lboost_system -lboost_filesystem
+	-levent -lboost_program_options -lboost_system -lboost_filesystem $(ZLIB_LIBS)
 
 StressTest_SOURCES = \
 	src/StressTest.cpp
@@ -111,7 +111,7 @@ AM_CXXFLAGS = -Wall -Wextra -pedantic
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS) $(ZLIB_LIBS)
 
 clean-local:
-	$(RM) -r gen-cpp
+	$(RM) gen-cpp/*
 
 style-local:
 	$(CPPSTYLE_CMD)

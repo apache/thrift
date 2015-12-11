@@ -112,7 +112,7 @@ public:
           case t_base_type::TYPE_I32:
           case t_base_type::TYPE_I64:
           case t_base_type::TYPE_BOOL:
-          case t_base_type::TYPE_BYTE:
+          case t_base_type::TYPE_I8:
             const_val->set_integer(constant->get_value()->get_integer());
             break;
           case t_base_type::TYPE_STRING:

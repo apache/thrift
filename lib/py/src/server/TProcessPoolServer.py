@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 from multiprocessing import  Process, Value, Condition, reduction
 
-from TServer import TServer
+from .TServer import TServer
 from thrift.transport.TTransport import TTransportException
 
 

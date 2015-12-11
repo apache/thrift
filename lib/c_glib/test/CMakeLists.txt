@@ -28,6 +28,8 @@ include_directories(${Boost_INCLUDE_DIRS})
 # Create the thrift C test library
 set(testgenc_SOURCES
     gen-c_glib/t_test_debug_proto_test_types.c
+    gen-c_glib/t_test_enum_test_types.c
+    gen-c_glib/t_test_enum_test_service.c
     gen-c_glib/t_test_empty_service.c
     gen-c_glib/t_test_inherited.c
     gen-c_glib/t_test_optional_required_test_types.c
@@ -38,6 +40,8 @@ set(testgenc_SOURCES
     gen-c_glib/t_test_thrift_test.c
     gen-c_glib/t_test_thrift_test_types.c
     gen-c_glib/t_test_debug_proto_test_types.h
+    gen-c_glib/t_test_enum_test_types.h
+    gen-c_glib/t_test_enum_test_service.h
     gen-c_glib/t_test_empty_service.h
     gen-c_glib/t_test_inherited.h
     gen-c_glib/t_test_optional_required_test_types.h
@@ -52,6 +56,10 @@ set(testgenc_SOURCES
 add_library(testgenc STATIC ${testgenc_SOURCES})
 target_link_libraries(testgenc thrift_c_glib)
 
+
+add_executable(testserialization testserialization.c)
+target_link_libraries(testserialization testgenc thrift_c_glib)
+add_test(NAME testserialization COMMAND testserialization)
 
 add_executable(testapplicationexception testapplicationexception.c)
 target_link_libraries(testapplicationexception thrift_c_glib)
@@ -116,7 +124,7 @@ if(BUILD_CPP)
     include_directories("${CMAKE_CURRENT_BINARY_DIR}/gen-cpp" "${CMAKE_CURRENT_BINARY_DIR}/gen-c_glib")
 
     add_executable(testthrifttestclient testthrifttestclient.cpp)
-    target_link_libraries(testthrifttestclient testgenc testgenc_cpp)
+    target_link_libraries(testthrifttestclient testgenc testgenc_cpp ${ZLIB_LIBRARIES})
     add_test(NAME testthrifttestclient COMMAND testthrifttestclient)
 
 endif(BUILD_CPP)
@@ -138,13 +146,21 @@ add_custom_command(OUTPUT
     gen-c_glib/t_test_service_for_exception_with_a_map.h
     gen-c_glib/t_test_srv.c
     gen-c_glib/t_test_srv.h
-    COMMAND thrift-compiler --gen c_glib ${PROJECT_SOURCE_DIR}/test/DebugProtoTest.thrift
+    COMMAND ${THRIFT_COMPILER} --gen c_glib ${PROJECT_SOURCE_DIR}/test/DebugProtoTest.thrift
+)
+
+add_custom_command(OUTPUT
+    gen-c_glib/t_test_enum_test_types.c
+    gen-c_glib/t_test_enum_test_types.h
+    gen-c_glib/t_test_enum_test_service.c
+    gen-c_glib/t_test_enum_test_service.h
+    COMMAND ${THRIFT_COMPILER} --gen c_glib ${PROJECT_SOURCE_DIR}/test/EnumTest.thrift
 )
 
 add_custom_command(OUTPUT
     gen-c_glib/t_test_optional_required_test_types.c
     gen-c_glib/t_test_optional_required_test_types.h
-    COMMAND thrift-compiler --gen c_glib ${PROJECT_SOURCE_DIR}/test/OptionalRequiredTest.thrift
+    COMMAND ${THRIFT_COMPILER} --gen c_glib ${PROJECT_SOURCE_DIR}/test/OptionalRequiredTest.thrift
 )
 
 add_custom_command(OUTPUT
@@ -154,7 +170,7 @@ add_custom_command(OUTPUT
     gen-c_glib/t_test_second_service.h
     gen-c_glib/t_test_thrift_test.h
     gen-c_glib/t_test_thrift_test_types.h
-    COMMAND thrift-compiler --gen c_glib ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+    COMMAND ${THRIFT_COMPILER} --gen c_glib ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
 )
 
 add_custom_command(OUTPUT
@@ -164,7 +180,7 @@ add_custom_command(OUTPUT
     gen-cpp/ThriftTest.h
     gen-cpp/ThriftTest_constants.h
     gen-cpp/ThriftTest_types.h
-    COMMAND thrift-compiler --gen cpp ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+    COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
 )
 
 # TODO: Add memory checks using ctest_memcheck or similar

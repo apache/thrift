@@ -43,6 +43,7 @@ AM_CXXFLAGS = $(AM_CFLAGS)
 AM_LDFLAGS = $(GLIB_LIBS) $(GOBJECT_LIBS) @GCOV_LDFLAGS@
 
 check_PROGRAMS = \
+  testserialization \
   testapplicationexception \
   testcontainertest \
   testtransportsocket \
@@ -60,6 +61,12 @@ if WITH_CPP
   BUILT_SOURCES += gen-cpp/ThriftTest_types.cpp
   check_PROGRAMS += testthrifttestclient
 endif
+
+testserialization_SOURCES = testserialization.c
+testserialization_LDADD = \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
+    libtestgenc.la
 
 testapplicationexception_SOURCES = testapplicationexception.c
 testapplicationexception_LDADD = \
@@ -162,6 +169,8 @@ endif
 nodist_libtestgenc_la_SOURCES = \
         gen-c_glib/t_test_container_test_types.c \
         gen-c_glib/t_test_debug_proto_test_types.c \
+        gen-c_glib/t_test_enum_test_types.c \
+        gen-c_glib/t_test_enum_test_service.c \
         gen-c_glib/t_test_empty_service.c \
         gen-c_glib/t_test_inherited.c \
         gen-c_glib/t_test_optional_required_test_types.c \
@@ -174,6 +183,8 @@ nodist_libtestgenc_la_SOURCES = \
         gen-c_glib/t_test_thrift_test_types.c \
         gen-c_glib/t_test_container_test_types.h \
         gen-c_glib/t_test_debug_proto_test_types.h \
+        gen-c_glib/t_test_enum_test_types.h \
+        gen-c_glib/t_test_enum_test_service.h \
         gen-c_glib/t_test_empty_service.h \
         gen-c_glib/t_test_inherited.h \
         gen-c_glib/t_test_optional_required_test_types.h \
@@ -202,6 +213,9 @@ gen-c_glib/t_test_container_test_types.c gen-c_glib/t_test_container_test_types.
 	$(THRIFT) --gen c_glib $<
 
 gen-c_glib/t_test_debug_proto_test_types.c gen-c_glib/t_test_debug_proto_test_types.h gen-c_glib/t_test_empty_service.c gen-c_glib/t_test_empty_service.h gen-c_glib/t_test_inherited.c gen-c_glib/t_test_inherited.h gen-c_glib/t_test_reverse_order_service.c gen-c_glib/t_test_reverse_order_service.h gen-c_glib/t_test_service_for_exception_with_a_map.c gen-c_glib/t_test_service_for_exception_with_a_map.h gen-c_glib/t_test_srv.c gen-c_glib/t_test_srv.h: ../../../test/DebugProtoTest.thrift
+	$(THRIFT) --gen c_glib $<
+
+gen-c_glib/t_test_enum_test_types.c gen-c_glib/t_test_enum_test_types.h gen-c_glib/t_test_enum_test_service.c gen-c_glib/t_test_enum_test_service.h : ../../../test/EnumTest.thrift
 	$(THRIFT) --gen c_glib $<
 
 gen-c_glib/t_test_optional_required_test_types.c gen-c_glib/t_test_optional_required_test_types.h: ../../../test/OptionalRequiredTest.thrift

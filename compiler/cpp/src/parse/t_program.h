@@ -324,6 +324,15 @@ public:
   const std::map<std::string, std::string>& get_all_namespaces(){
      return namespaces_;
   }
+
+  void set_namespace_annotations(std::string language, std::map<std::string, std::string> annotations) {
+    namespace_annotations_[language] = annotations;
+  }
+
+  const std::map<std::string, std::string>& get_namespace_annotations(std::string language) {
+    return namespace_annotations_[language];
+  }
+
   // Language specific namespace / packaging
 
   void add_cpp_include(std::string path) { cpp_includes_.push_back(path); }
@@ -370,6 +379,9 @@ private:
 
   // Dynamic namespaces
   std::map<std::string, std::string> namespaces_;
+
+  // Annotations for dynamic namespaces
+  std::map<std::string, std::map<std::string, std::string> > namespace_annotations_;
 
   // C++ extra includes
   std::vector<std::string> cpp_includes_;

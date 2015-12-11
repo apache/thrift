@@ -21,83 +21,105 @@
 
 -behaviour(thrift_transport).
 
-%% API
+%% constructor
 -export([new/1]).
+%% protocol callbacks
+-export([read/2, read_exact/2, write/2, flush/1, close/1]).
 
-%% thrift_transport callbacks
--export([write/2, read/2, flush/1, close/1]).
 
--record(framed_transport, {wrapped, % a thrift_transport
-                           read_buffer, % iolist()
-                           write_buffer % iolist()
-                          }).
--type state() :: #framed_transport{}.
+-record(t_framed, {
+  wrapped,
+  read_buffer,
+  write_buffer
+}).
+
+-type state() :: #t_framed{}.
+
+
+-spec new(Transport::thrift_transport:t_transport()) ->
+  thrift_transport:t_transport().
+
+new(Wrapped) ->
+  State = #t_framed{
+    wrapped = Wrapped,
+    read_buffer = [],
+    write_buffer = []
+  },
+  thrift_transport:new(?MODULE, State).
+
+
 -include("thrift_transport_behaviour.hrl").
 
-new(WrappedTransport) ->
-    State = #framed_transport{wrapped = WrappedTransport,
-                              read_buffer = [],
-                              write_buffer = []},
-    thrift_transport:new(?MODULE, State).
 
-%% Writes data into the buffer
-write(State = #framed_transport{write_buffer = WBuf}, Data) ->
-    {State#framed_transport{write_buffer = [WBuf, Data]}, ok}.
+read(State = #t_framed{wrapped = Wrapped, read_buffer = Buffer}, Len)
+when is_integer(Len), Len >= 0 ->
+  Binary = iolist_to_binary(Buffer),
+  case Binary of
+    <<>> when Len > 0 ->
+      case next_frame(Wrapped) of
+        {NewState, {ok, Frame}} ->
+          NewBinary = iolist_to_binary([Binary, Frame]),
+          Give = min(iolist_size(NewBinary), Len),
+          {Result, Remaining} = split_binary(NewBinary, Give),
+          {State#t_framed{wrapped = NewState, read_buffer = Remaining}, {ok, Result}};
+        Error -> Error
+      end;
+    %% read of zero bytes
+    <<>> -> {State, {ok, <<>>}};
+    %% read buffer is nonempty
+    _ ->
+      Give = min(iolist_size(Binary), Len),
+      {Result, Remaining} = split_binary(Binary, Give),
+      {State#t_framed{read_buffer = Remaining}, {ok, Result}}
+  end.
 
-%% Flushes the buffer through to the wrapped transport
-flush(State0 = #framed_transport{write_buffer = Buffer,
-                                   wrapped = Wrapped0}) ->
-    FrameLen = iolist_size(Buffer),
-    Data     = [<<FrameLen:32/integer-signed-big>>, Buffer],
 
-    {Wrapped1, Response} = thrift_transport:write(Wrapped0, Data),
+read_exact(State = #t_framed{wrapped = Wrapped, read_buffer = Buffer}, Len)
+when is_integer(Len), Len >= 0 ->
+  Binary = iolist_to_binary(Buffer),
+  case iolist_size(Binary) of
+    %% read buffer is larger than requested read size
+    X when X >= Len ->
+      {Result, Remaining} = split_binary(Binary, Len),
+      {State#t_framed{read_buffer = Remaining}, {ok, Result}};
+    %% read buffer is insufficient for requested read size
+    _ ->
+      case next_frame(Wrapped) of
+        {NewState, {ok, Frame}} ->
+          read_exact(
+            State#t_framed{wrapped = NewState, read_buffer = [Buffer, Frame]},
+            Len
+          );
+        {NewState, Error} ->
+          {State#t_framed{wrapped = NewState}, Error}
+      end
+  end.
 
-    {Wrapped2, _} = thrift_transport:flush(Wrapped1),
+next_frame(Transport) ->
+  case thrift_transport:read_exact(Transport, 4) of
+    {NewState, {ok, <<FrameLength:32/integer-signed-big>>}} ->
+      thrift_transport:read_exact(NewState, FrameLength);
+    Error -> Error
+  end.
 
-    State1 = State0#framed_transport{wrapped = Wrapped2, write_buffer = []},
-    {State1, Response}.
 
-%% Closes the transport and the wrapped transport
-close(State = #framed_transport{wrapped = Wrapped0}) ->
-    {Wrapped1, Result} = thrift_transport:close(Wrapped0),
-    NewState = State#framed_transport{wrapped = Wrapped1},
-    {NewState, Result}.
+write(State = #t_framed{write_buffer = Buffer}, Data) ->
+  {State#t_framed{write_buffer = [Buffer, Data]}, ok}.
 
-%% Reads data through from the wrapped transport
-read(State0 = #framed_transport{wrapped = Wrapped0, read_buffer = RBuf},
-     Len) when is_integer(Len) ->
-    {Wrapped1, {RBuf1, RBuf1Size}} =
-        %% if the read buffer is empty, read another frame
-        %% otherwise, just read from what's left in the buffer
-        case iolist_size(RBuf) of
-            0 ->
-                %% read the frame length
-                case thrift_transport:read(Wrapped0, 4) of
-                  {WrappedS1,
-                    {ok, <<FrameLen:32/integer-signed-big, _/binary>>}} ->
-                    %% then read the data
-                    case thrift_transport:read(WrappedS1, FrameLen) of
-                      {WrappedS2, {ok, Bin}} ->
-                        {WrappedS2, {Bin, erlang:byte_size(Bin)}};
-                      {WrappedS2, {error, Reason1}} ->
-                        {WrappedS2, {error, Reason1}}
-                    end;
-                  {WrappedS1, {error, Reason2}} ->
-                    {WrappedS1, {error, Reason2}}
-                end;
-            Sz ->
-                {Wrapped0, {RBuf, Sz}}
-        end,
 
-    %% pull off Give bytes, return them to the user, leave the rest in the buffer
-    case RBuf1 of
-      error ->
-        { State0#framed_transport {wrapped = Wrapped1, read_buffer = [] },
-          {RBuf1, RBuf1Size} };
-      _ ->
-        Give = min(RBuf1Size, Len),
-        <<Data:Give/binary, RBuf2/binary>> = iolist_to_binary(RBuf1),
+flush(State = #t_framed{write_buffer = Buffer, wrapped = Wrapped}) ->
+  case iolist_size(Buffer) of
+    %% if write buffer is empty, do nothing
+    0 -> {State, ok};
+    FrameLen ->
+      Data = [<<FrameLen:32/integer-signed-big>>, Buffer],
+      {Written, Response} = thrift_transport:write(Wrapped, Data),
+      {Flushed, ok} = thrift_transport:flush(Written),
+      {State#t_framed{wrapped = Flushed, write_buffer = []}, Response}
+  end.
 
-        { State0#framed_transport{wrapped = Wrapped1, read_buffer=RBuf2},
-          {ok, Data} }
-    end.
+
+close(State = #t_framed{wrapped = Wrapped}) ->
+  {Closed, Result} = thrift_transport:close(Wrapped),
+  {State#t_framed{wrapped = Closed}, Result}.
+

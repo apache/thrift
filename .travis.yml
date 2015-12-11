@@ -19,170 +19,147 @@
 
 # build Apache Thrift on Travis CI - https://travis-ci.org/
 
-language: cpp
-
 sudo: required
 
-cache:
- - apt
- - npm
- - maven
+services:
+  - docker
 
-compiler:
-  - clang
-  - gcc
-
-before_install:
-  - sh build/travis/installCXXDependencies.sh
-  - if [ "$ALL_DEPS" != "no" ] ; then sh build/travis/installDependencies.sh 1> /dev/null ; fi
-  - if [ "$ALL_DEPS" != "no" ] ; then export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH ; fi
-  - if [ "$ALL_DEPS" != "no" ] ; then cabal update ; fi
-  # Disabling any cabal concurrent jobs to workaround GHC crashes due to out of memory.
-  # We can safely remove this to speed up cabal install, once Travis infrastructure is upgraded.
-  - if [ "$ALL_DEPS" != "no" ] ; then sed -i 's/^\s*jobs\s*:\s*\$ncpus\s*$/jobs:1/g' $HOME/.cabal/config && cat $HOME/.cabal/config | grep jobs ; fi
-
+install:
+  - docker pull thrift/$DISTRO:latest || true
+  - cp -r ./build/docker/scripts/*.sh ./build/docker/$DISTRO/scripts/
+  - docker build -q -t thrift-build build/docker/$DISTRO
 
 script:
-  - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then mkdir cmake_build && cd cmake_build && cmake -GNinja -DQT_MOC_EXECUTABLE="moq-qt5" $CMAKE_CONFIG $TRAVIS_BUILD_DIR ; fi
-  - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then ninja ; fi
-  - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then cpack ; cd $TRAVIS_BUILD_DIR ; fi
-  - if [ "x$CONFIG" != "xnone" ] ; then sh bootstrap.sh ; fi
-  - if [ "x$CONFIG" != "xnone" ] ; then sh configure $CONFIG ; fi
-  - if [ "x$CONFIG" != "xnone" ] ; then make $MAKE_TARGET -j2 ; fi
-
-after_failure:
-  - if [ "x$ERROR_LOG" != "xnone" ] ; then cat $ERROR_LOG ; fi
+  - docker run $BUILD_ENV -v $(pwd):/thrift/src -it thrift-build $BUILD_CMD $BUILD_ARG
 
 env:
   global:
     - TEST_NAME=""
-    - CMAKE_CONFIG="none"
-    - CONFIG="none"
-    - MAKE_TARGET="check"
-    - ALL_DEPS="no"
-    - GHCVER=7.8.3
-    - ERROR_LOG="none"
+    - BUILD_CMD="none"
+    - BUILD_ARG=""
+    - BUILD_ENV="-e CC=clang -e CXX=clang++"
+    - DISTRO=ubuntu
 
   matrix:
-    # Put it here because it's most time consuming
-    - TEST_NAME="make cross (automake)"
-      THRIFT_CROSSTEST_CONCURRENCY=6
-      CONFIG="--enable-tutorial=no --without-erlang --without-lua --without-haxe --without-d"
-      ALL_DEPS="yes"
-      MAKE_TARGET="cross"
-      ERROR_LOG="test/log/unexpected_failures.log"
+    # TODO: Break up by protocol types to avoid 50min limit
+    - TEST_NAME="Cross Language Tests"
+      BUILD_CMD="../cross-test.sh"
+      BUILD_ARG="--enable-tutorial=no"
+      BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
-    # CMake builds
-    - TEST_NAME="compiler (CMake + CPack)"
-      CMAKE_CONFIG="-DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
-    - TEST_NAME="all (CMake + CPack)"
-      CMAKE_CONFIG=""
-      ALL_DEPS="yes"
-    - TEST_NAME="C++/boost-threads (CMake + CPack)"
-      CMAKE_CONFIG="-DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_BOOSTTHREADS=ON"
-    - TEST_NAME="C++/std-threads (CMake + CPack)"
-      CMAKE_CONFIG="-DCMAKE_CXX_FLAGS=-std=c++0x -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_STDTHREADS=ON"
-    - TEST_NAME="compiler (mingw32-gcc, CMake + CPack)"
-      CMAKE_CONFIG="-DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
+    # TODO: Remove them once migrated to CMake
+    # Autotools builds
+    - TEST_NAME="C C++ C# D Erlang Go Haxe (automake)"
+      BUILD_CMD="../autotools.sh"
+      BUILD_ARG="--without-dart --without-haskell --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-ruby"
 
-    # Autotool builds
-    # TODO: Remove them as migration is made
-    - TEST_NAME="compiler (automake)"
-      CONFIG="--disable-libs"
-    - TEST_NAME="all (automake)"
-      CONFIG="--without-erlang --without-python --without-go --without-lua"
-      ALL_DEPS="yes"
-    - TEST_NAME="C & C++ & Haskell (automake)"
-      CONFIG="--without-csharp --without-java --without-erlang --without-nodejs --without-lua --without-python --without-perl --without-php --without-php-extension --without-ruby --without-go --without-d"
-      ALL_DEPS="yes"
-    - TEST_NAME="Small Set (automake)"
-      CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua --without-d --without-ruby --without-nodejs --without-java"
-      ALL_DEPS="yes"
-    - TEST_NAME="dist (automake)"
-      CONFIG=""
-      ALL_DEPS="yes"
-      MAKE_TARGET="dist"
+    - TEST_NAME="C C++ - GCC (automake)"
+      BUILD_CMD="../autotools.sh"
+      BUILD_ARG="--without-csharp --without-java --without-erlang --without-nodejs --without-lua --without-python --without-perl --without-php --without-php_extension --without-dart --without-ruby --without-haskell --without-go --without-haxe --without-d"
+
+    - TEST_NAME="Java Lua Perl PHP Python Ruby (automake)"
+      BUILD_CMD="../autotools.sh"
+      BUILD_ARG="--without-cpp --without-haskell --without-c_glib --without-csharp --without-d --without-dart --without-erlang --without-go --without-haxe"
+
+    # Tutorial build is unstable
+    - TEST_NAME="Dart (automake)"
+      BUILD_CMD="../autotools.sh"
+      BUILD_ARG="--without-cpp --without-haskell --without-c_glib --without-csharp --without-d --without-erlang --without-go --without-haxe --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-ruby --enable-tutorial=no"
+
+    # These are flaky and also have lengthy output
+    - TEST_NAME="Haskell Node.js (automake)"
+      BUILD_CMD="../autotools.sh"
+      BUILD_ARG="--without-cpp --without-c_glib --without-csharp --without-d --without-dart --without-erlang --without-go --without-haxe --without-java --without-lua --without-perl --without-php --without-php_extension --without-python --without-ruby"
+
+    # CMake build
+    - TEST_NAME="All"
+      BUILD_CMD="../cmake.sh"
+
+    - TEST_NAME="C C++ - GCC"
+      BUILD_CMD="../cmake.sh"
+      BUILD_ARG="-DWITH_PYTHON=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
+
+    - TEST_NAME="C++ (Boost Thread)"
+      BUILD_CMD="../cmake.sh"
+      BUILD_ARG="-DWITH_BOOSTTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+
+    - TEST_NAME="C++ (Boost Thread - GCC)"
+      BUILD_CMD="../cmake.sh"
+      BUILD_ARG="-DWITH_BOOSTTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
+
+    - TEST_NAME="C++ (Std Thread)"
+      BUILD_CMD="../cmake.sh"
+      BUILD_ARG="-DWITH_STDTHREADS=ON -DCMAKE_CXX_FLAGS='-std=c++11' -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+
+    - TEST_NAME="C++ (Std Thread - GCC)"
+      BUILD_CMD="../cmake.sh"
+      BUILD_ARG="-DWITH_STDTHREADS=ON -DCMAKE_CXX_FLAGS='-std=c++11' -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
+
+    - TEST_NAME="Compiler (mingw)"
+      BUILD_CMD="../cmake.sh"
+      BUILD_ARG="-DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
+      BUILD_ENV=""
+
+    - TEST_NAME="All (CentOS)"
+      BUILD_CMD="../cmake.sh"
+      DISTRO=centos
+
+    - TEST_NAME="C C++ - GCC (CentOS)"
+      BUILD_CMD="../cmake.sh"
+      BUILD_ARG="-DWITH_PYTHON=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
+      DISTRO=centos
+
+    # Distribution
+    - TEST_NAME="make dist"
+      BUILD_CMD="../make-dist.sh"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
+
+    - TEST_NAME="Debian Packages"
+      BUILD_CMD="../dpkg.sh"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
 
 matrix:
   allow_failures:
-    # gcc fails on travis seemingly due to out of memory
-    - compiler: gcc
-
-  exclude:
-    # This one takes very long
-    - compiler: gcc
-      env: TEST_NAME="make cross (automake)" CONFIG="--without-python" ALL_DEPS="yes" MAKE_TARGET="cross"
-
-    # Does not use native compiler, no need to do it twice
-    - compiler: gcc
-      env: TEST_NAME="compiler (mingw32-gcc, CMake + CPack)" CMAKE_CONFIG="-DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
-    - compiler: gcc
-      env: TEST_NAME="dist (automake)" CONFIG="" ALL_DEPS="yes" MAKE_TARGET="dist"
+    - env: TEST_NAME="All (CentOS)" BUILD_CMD="../cmake.sh" DISTRO=centos
 
   include:
-    - env:
-        - TEST_NAME="Debian Packages"
-      compiler: clang
-      before_install:
-       - sh build/travis/installCXXDependencies.sh;
-       - sh build/travis/installDependencies.sh 1> /dev/null;
-       - sudo apt-get install build-essential mono-gmcs mono-devel libmono-system-web2.0-cil erlang-base ruby1.8-dev python-all python-all-dev python-all-dbg php5 php5-dev
-      script:
-       - dpkg-buildpackage -tc -us -uc
-       - ls -al ..
-
-
     # QA jobs for code analytics and metrics
-
-    # static code analysis with cppcheck (we can add --enable=all later)
-    - env:    TEST_NAME="cppcheck (compiler) error"
-      script: cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 compiler/cpp/src
-      before_install: sudo apt-get install cppcheck
-    - env:    TEST_NAME="cppcheck (cpp) error"
-      script: cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
-      before_install: sudo apt-get install cppcheck
-    - env:    TEST_NAME="cppcheck (c_glib) error"
-      script: cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
-      before_install: sudo apt-get install cppcheck
-    # add --error-exitcode=1 as soon as everything is fixed
-    - env:    TEST_NAME="cppcheck (compiler) all"
-      script: cppcheck --force --quiet --inline-suppr --enable=all -j2 compiler/cpp/src
-      before_install: sudo apt-get install cppcheck
-    - env:    TEST_NAME="cppcheck (cpp) all"
-      script: cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
-      before_install: sudo apt-get install cppcheck
-    - env:    TEST_NAME="cppcheck (c_glib) all"
-      script: cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
-      before_install: sudo apt-get install cppcheck
-
-    # TODO use findbugs for Java
-    # TODO use fxcop for C#
-
-    # TODO do style checks
-
-    # search for TODO within source tree
-    - env:    TEST_NAME="TODO"
-      before_install:
-      script: grep -r TODO *
-    # search for FIXME within source tree
-    - env:    TEST_NAME="FIXME"
-      before_install:
-      script: grep -r FIXME *
-    # search for HACK within source tree
-    - env:    TEST_NAME="HACK"
-      before_install:
-      script: grep -r HACK *
-    # some statistics about the code base
-    - env:    TEST_NAME="sloccount"
-      before_install:
-      script: sloccount .
-      before_install: sudo apt-get install sloccount
-    # some info about the build machine
-    - env:    TEST_NAME="info"
-      before_install:
+    #
+    # static code analysis with cppcheck
+    # add --error-exitcode=1 to --enable=all as soon as everything is fixed
+    - env: TEST_NAME="cppcheck"
+      install:
+        - sudo apt-get update
+        - sudo apt-get install cppcheck
       script:
-       - dpkg -l
-       - uname -a
+        # Compiler cppcheck (All)
+        - cppcheck --force --quiet --inline-suppr --enable=all -j2 compiler/cpp/src
+        # C++ cppcheck (All)
+        - cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
+        # C Glib cppcheck (All)
+        - cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
+        # Silent error checks
+        - cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 compiler/cpp/src
+        - cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
+        - cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
 
-# TODO make it perfect ;-r
-#
+    # search for TODO etc within source tree
+    # some statistics about the code base
+    # some info about the build machine
+    - env:    TEST_NAME="TODO FIXME HACK, LoC and system info"
+      install:
+        - sudo apt-get update
+        - sudo apt-get install sloccount
+      script:
+        - grep -r TODO *
+        - grep -r FIXME *
+        - grep -r HACK *
+        # LoC
+        - sloccount .
+        # System Info
+        - dpkg -l
+        - uname -a

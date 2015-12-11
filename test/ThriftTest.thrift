@@ -36,6 +36,7 @@ namespace php ThriftTest
 namespace delphi Thrift.Test
 namespace cocoa ThriftTest
 namespace lua ThriftTest
+namespace xsd test (uri = 'http://thrift.apache.org/ns/ThriftTest')
 
 // Presence of namespaces and sub-namespaces for which there is
 // no generator should compile with warnings only
@@ -86,7 +87,7 @@ struct Xtruct
 
 struct Xtruct2
 {
-  1: byte   byte_thing,
+  1: i8     byte_thing,  // used to be byte, hence the name
   2: Xtruct struct_thing,
   3: i32    i32_thing
 }
@@ -104,12 +105,13 @@ struct Insanity
 {
   1: map<Numberz, UserId> userMap,
   2: list<Xtruct> xtructs
-}
+} (python.immutable= "")
 
 struct CrazyNesting {
   1: string string_field,
   2: optional set<Insanity> set_field,
-  3: required list< map<set<i32>,map<i32,set<list<map<Insanity,string>>>>>> list_field,
+  // Do not insert line break as test/go/Makefile.am is removing this line with pattern match
+  3: required list<map<set<i32> (python.immutable = ""), map<i32,set<list<map<Insanity,string>(python.immutable = "")> (python.immutable = "")>>>> list_field,
   4: binary binary_field
 }
 
@@ -152,10 +154,11 @@ service ThriftTest
 
   /**
    * Prints 'testByte("%d")' with thing as '%d'
-   * @param byte thing - the byte to print
-   * @return byte - returns the byte 'thing'
+   * The types i8 and byte are synonyms, use of i8 is encouraged, byte still exists for the sake of compatibility.
+   * @param byte thing - the i8/byte to print
+   * @return i8 - returns the i8/byte 'thing'
    */
-  byte         testByte(1: byte thing),
+  i8         testByte(1: byte thing),
 
   /**
    * Prints 'testI32("%d")' with thing as '%d'

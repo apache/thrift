@@ -19,17 +19,7 @@
 # under the License.
 #
 
-import sys
-import glob
-from optparse import OptionParser
-parser = OptionParser()
-parser.add_option('--genpydir', type='string', dest='genpydir', default='gen-py')
-options, args = parser.parse_args()
-del sys.argv[1:] # clean up hack so unittest doesn't complain
-sys.path.insert(0, options.genpydir)
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
-
-from ThriftTest.ttypes import *
+from ThriftTest.ttypes import Bonk, VersioningTestV1, VersioningTestV2
 from thrift.protocol import TJSONProtocol
 from thrift.transport import TTransport
 
@@ -40,12 +30,12 @@ import unittest
 class SimpleJSONProtocolTest(unittest.TestCase):
   protocol_factory = TJSONProtocol.TSimpleJSONProtocolFactory()
 
-  def _assertDictEqual(self, a ,b, msg=None):
+  def _assertDictEqual(self, a, b, msg=None):
     if hasattr(self, 'assertDictEqual'):
       # assertDictEqual only in Python 2.7. Depends on your machine.
       self.assertDictEqual(a, b, msg)
       return
-    
+
     # Substitute implementation not as good as unittest library's
     self.assertEquals(len(a), len(b), msg)
     for k, v in a.iteritems():
@@ -66,7 +56,7 @@ class SimpleJSONProtocolTest(unittest.TestCase):
 
   def testWriteOnly(self):
     self.assertRaises(NotImplementedError,
-                      self._deserialize, VersioningTestV1, '{}')
+                      self._deserialize, VersioningTestV1, b'{}')
 
   def testSimpleMessage(self):
       v1obj = VersioningTestV1(
@@ -76,10 +66,10 @@ class SimpleJSONProtocolTest(unittest.TestCase):
       expected = dict(begin_in_both=v1obj.begin_in_both,
                       old_string=v1obj.old_string,
                       end_in_both=v1obj.end_in_both)
-      actual = json.loads(self._serialize(v1obj))
+      actual = json.loads(self._serialize(v1obj).decode('ascii'))
 
       self._assertDictEqual(expected, actual)
-     
+
   def testComplicated(self):
       v2obj = VersioningTestV2(
           begin_in_both=12345,
@@ -89,9 +79,9 @@ class SimpleJSONProtocolTest(unittest.TestCase):
           newlong=4,
           newdouble=5.0,
           newstruct=Bonk(message="Hello!", type=123),
-          newlist=[7,8,9],
-          newset=set([42,1,8]),
-          newmap={1:2,2:3},
+          newlist=[7, 8, 9],
+          newset=set([42, 1, 8]),
+          newmap={1: 2, 2: 3},
           newstring="Hola!",
           end_in_both=54321)
       expected = dict(begin_in_both=v2obj.begin_in_both,
@@ -107,13 +97,12 @@ class SimpleJSONProtocolTest(unittest.TestCase):
                       newmap=v2obj.newmap,
                       newstring=v2obj.newstring,
                       end_in_both=v2obj.end_in_both)
-      
+
       # Need to load/dump because map keys get escaped.
       expected = json.loads(json.dumps(expected))
-      actual = json.loads(self._serialize(v2obj))
+      actual = json.loads(self._serialize(v2obj).decode('ascii'))
       self._assertDictEqual(expected, actual)
 
 
 if __name__ == '__main__':
   unittest.main()
-

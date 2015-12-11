@@ -221,6 +221,11 @@ public:
     return js_namespace(p);
   }
 
+  bool has_js_namespace(t_program* p) {
+    std::string ns = p->get_namespace("js");
+    return (ns.size() > 0);
+  }
+
   std::string js_namespace(t_program* p) {
     std::string ns = p->get_namespace("js");
     if (ns.size() > 0) {
@@ -383,7 +388,7 @@ string t_js_generator::render_includes() {
     const vector<t_program*>& includes = program_->get_includes();
     for (size_t i = 0; i < includes.size(); ++i) {
       result += "var " + includes[i]->get_name() + "_ttypes = require('./" + includes[i]->get_name()
-                + "_types')\n";
+                + "_types');\n";
     }
     if (includes.size() > 0) {
       result += "\n";
@@ -495,7 +500,7 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
     case t_base_type::TYPE_BOOL:
       out << (value->get_integer() > 0 ? "true" : "false");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -634,11 +639,12 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
   vector<t_field*>::const_iterator m_iter;
 
   if (gen_node_) {
+    string prefix = has_js_namespace(tstruct->get_program()) ? js_namespace(tstruct->get_program()) : "var ";
     if (is_exported) {
-      out << js_namespace(tstruct->get_program()) << tstruct->get_name() << " = "
+      out << prefix << tstruct->get_name() << " = "
           << "module.exports." << tstruct->get_name() << " = function(args) {" << endl;
     } else {
-      out << js_namespace(tstruct->get_program()) << tstruct->get_name() << " = function(args) {"
+      out << prefix << tstruct->get_name() << " = function(args) {"
           << endl;
     }
   } else {
@@ -935,11 +941,11 @@ void t_js_generator::generate_service(t_service* tservice) {
   if (gen_node_) {
     if (tservice->get_extends() != NULL) {
       f_service_ << "var " << tservice->get_extends()->get_name() << " = require('./"
-                 << tservice->get_extends()->get_name() << "')" << endl << "var "
+                 << tservice->get_extends()->get_name() << "');" << endl << "var "
                  << tservice->get_extends()->get_name()
-                 << "Client = " << tservice->get_extends()->get_name() << ".Client" << endl
+                 << "Client = " << tservice->get_extends()->get_name() << ".Client;" << endl
                  << "var " << tservice->get_extends()->get_name()
-                 << "Processor = " << tservice->get_extends()->get_name() << ".Processor" << endl;
+                 << "Processor = " << tservice->get_extends()->get_name() << ".Processor;" << endl;
     }
 
     f_service_ << "var ttypes = require('./" + program_->get_name() + "_types');" << endl;
@@ -971,8 +977,13 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
 
-  f_service_ << js_namespace(tservice->get_program()) << service_name_ << "Processor = "
+  if (gen_node_) {
+    string prefix = has_js_namespace(tservice->get_program()) ? js_namespace(tservice->get_program()) : "var ";
+    f_service_ << prefix << service_name_ << "Processor = " << "exports.Processor = function(handler) ";
+  } else {
+    f_service_ << js_namespace(tservice->get_program()) << service_name_ << "Processor = "
              << "exports.Processor = function(handler) ";
+  }
 
   scope_up(f_service_);
 
@@ -1245,7 +1256,8 @@ void t_js_generator::generate_service_rest(t_service* tservice) {
  */
 void t_js_generator::generate_service_client(t_service* tservice) {
   if (gen_node_) {
-    f_service_ << js_namespace(tservice->get_program()) << service_name_ << "Client = "
+    string prefix = has_js_namespace(tservice->get_program()) ? js_namespace(tservice->get_program()) : "var ";
+    f_service_ << prefix << service_name_ << "Client = "
                << "exports.Client = function(output, pClass) {" << endl;
   } else {
     f_service_ << js_namespace(tservice->get_program()) << service_name_
@@ -1596,7 +1608,7 @@ void t_js_generator::generate_deserialize_field(ofstream& out,
       case t_base_type::TYPE_BOOL:
         out << "readBool()";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "readByte()";
         break;
       case t_base_type::TYPE_I16:
@@ -1649,9 +1661,9 @@ void t_js_generator::generate_deserialize_container(ofstream& out, t_type* ttype
   string rtmp3 = tmp("_rtmp3");
 
   t_field fsize(g_type_i32, size);
-  t_field fktype(g_type_byte, ktype);
-  t_field fvtype(g_type_byte, vtype);
-  t_field fetype(g_type_byte, etype);
+  t_field fktype(g_type_i8, ktype);
+  t_field fvtype(g_type_i8, vtype);
+  t_field fetype(g_type_i8, etype);
 
   out << indent() << "var " << size << " = 0;" << endl;
   out << indent() << "var " << rtmp3 << ";" << endl;
@@ -1794,7 +1806,7 @@ void t_js_generator::generate_serialize_field(ofstream& out, t_field* tfield, st
       case t_base_type::TYPE_BOOL:
         out << "writeBool(" << name << ")";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "writeByte(" << name << ")";
         break;
       case t_base_type::TYPE_I16:
@@ -1950,7 +1962,7 @@ string t_js_generator::declare_field(t_field* tfield, bool init, bool obj) {
         break;
       case t_base_type::TYPE_STRING:
       case t_base_type::TYPE_BOOL:
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
@@ -2042,7 +2054,7 @@ string t_js_generator::type_to_enum(t_type* type) {
       return "Thrift.Type.STRING";
     case t_base_type::TYPE_BOOL:
       return "Thrift.Type.BOOL";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "Thrift.Type.BYTE";
     case t_base_type::TYPE_I16:
       return "Thrift.Type.I16";
@@ -2087,7 +2099,7 @@ string t_js_generator::ts_get_type(t_type* type) {
     case t_base_type::TYPE_BOOL:
       ts_type = "boolean";
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       ts_type = "any";
       break;
     case t_base_type::TYPE_I16:

@@ -36,13 +36,12 @@ new(Protocol, Service)
 
 -spec call(#tclient{}, atom(), list()) -> {#tclient{}, {ok, any()} | {error, any()}}.
 call(Client = #tclient{}, Function, Args)
-  when is_atom(Function), is_list(Args) ->
-    case send_function_call(Client, Function, Args) of
-        {Client1, ok} ->
-            receive_function_result(Client1, Function);
-        Else ->
-            Else
-    end.
+when is_atom(Function), is_list(Args) ->
+  case send_function_call(Client, Function, Args) of
+    {ok, Client1} -> receive_function_result(Client1, Function);
+    {{error, X}, Client1} -> {Client1, {error, X}};
+    Else -> Else
+  end.
 
 
 %% Sends a function call but does not read the result. This is useful
@@ -51,7 +50,10 @@ call(Client = #tclient{}, Function, Args)
 -spec send_call(#tclient{}, atom(), list()) -> {#tclient{}, ok}.
 send_call(Client = #tclient{}, Function, Args)
   when is_atom(Function), is_list(Args) ->
-    send_function_call(Client, Function, Args).
+    case send_function_call(Client, Function, Args) of
+      {ok, Client1} -> {Client1, ok};
+      Else -> Else
+    end.
 
 -spec close(#tclient{}) -> ok.
 close(#tclient{protocol=Protocol}) ->
@@ -61,30 +63,40 @@ close(#tclient{protocol=Protocol}) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
--spec send_function_call(#tclient{}, atom(), list()) -> {#tclient{}, ok | {error, any()}}.
-send_function_call(Client = #tclient{protocol = Proto0,
-                                     service  = Service,
-                                     seqid    = SeqId},
-                   Function,
-                   Args) ->
-    Params = try Service:function_info(Function, params_type)
-    catch error:function_clause -> no_function
-    end,
-    case Params of
-        no_function ->
-            {Client, {error, {no_function, Function}}};
-        {struct, PList} when length(PList) =/= length(Args) ->
-            {Client, {error, {bad_args, Function, Args}}};
-        {struct, _PList} ->
-            Begin = #protocol_message_begin{name = atom_to_list(Function),
-                                            type = ?tMessageType_CALL,
-                                            seqid = SeqId},
-            {Proto1, ok} = thrift_protocol:write(Proto0, Begin),
-            {Proto2, ok} = thrift_protocol:write(Proto1, {Params, list_to_tuple([Function | Args])}),
-            {Proto3, ok} = thrift_protocol:write(Proto2, message_end),
-            {Proto4, ok} = thrift_protocol:flush_transport(Proto3),
-            {Client#tclient{protocol = Proto4}, ok}
-    end.
+-spec send_function_call(#tclient{}, atom(), list()) -> {ok | {error, any()}, #tclient{}}.
+send_function_call(Client = #tclient{service = Service}, Function, Args) ->
+  {Params, Reply} = try
+    {Service:function_info(Function, params_type), Service:function_info(Function, reply_type)}
+  catch error:function_clause -> {no_function, 0}
+  end,
+  MsgType = case Reply of
+    oneway_void -> ?tMessageType_ONEWAY;
+    _ -> ?tMessageType_CALL
+  end,
+  case Params of
+    no_function ->
+      {{error, {no_function, Function}}, Client};
+    {struct, PList} when length(PList) =/= length(Args) ->
+      {{error, {bad_args, Function, Args}}, Client};
+    {struct, _PList} -> write_message(Client, Function, Args, Params, MsgType)
+  end.
+
+-spec write_message(#tclient{}, atom(), list(), {struct, list()}, integer()) ->
+  {ok | {error, any()}, #tclient{}}.
+write_message(Client = #tclient{protocol = P0, seqid = Seq}, Function, Args, Params, MsgType) ->
+  try
+    {P1, ok} = thrift_protocol:write(P0, #protocol_message_begin{
+      name = atom_to_list(Function),
+      type = MsgType,
+      seqid = Seq
+    }),
+    {P2, ok} = thrift_protocol:write(P1, {Params, list_to_tuple([Function|Args])}),
+    {P3, ok} = thrift_protocol:write(P2, message_end),
+    {P4, ok} = thrift_protocol:flush_transport(P3),
+    {ok, Client#tclient{protocol = P4}}
+  catch
+    error:{badmatch, {_, {error, _} = Error}} -> {Error, Client}
+  end.
 
 -spec receive_function_result(#tclient{}, atom()) -> {#tclient{}, {ok, any()} | {error, any()}}.
 receive_function_result(Client = #tclient{service = Service}, Function) ->

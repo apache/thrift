@@ -46,6 +46,9 @@ class Fixtures
     self::$testArgs['testString3'] =
       "string that ends in double-backslash \\\\";
 
+    self::$testArgs['testUnicodeStringWithNonBMP'] =
+      "สวัสดี/𝒯";
+
     self::$testArgs['testDouble'] = 3.1415926535898;
 
 	// TODO: add testBinary() call

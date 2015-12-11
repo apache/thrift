@@ -26,47 +26,9 @@ import time
 import unittest
 from optparse import OptionParser
 
-parser = OptionParser()
-parser.add_option('--genpydir', type='string', dest='genpydir',
-                  default='gen-py',
-                  help='include this local directory in sys.path for locating generated code')
-parser.add_option("--port", type="int", dest="port",
-    help="connect to server at port")
-parser.add_option("--host", type="string", dest="host",
-    help="connect to server")
-parser.add_option("--zlib", action="store_true", dest="zlib",
-    help="use zlib wrapper for compressed transport")
-parser.add_option("--ssl", action="store_true", dest="ssl",
-    help="use SSL for encrypted transport")
-parser.add_option("--http", dest="http_path",
-    help="Use the HTTP transport with the specified path")
-parser.add_option('-v', '--verbose', action="store_const",
-    dest="verbose", const=2,
-    help="verbose output")
-parser.add_option('-q', '--quiet', action="store_const",
-    dest="verbose", const=0,
-    help="minimal output")
-parser.add_option('--protocol',  dest="proto", type="string",
-    help="protocol to use, one of: accel, binary, compact, json")
-parser.add_option('--transport',  dest="trans", type="string",
-    help="transport to use, one of: buffered, framed")
-parser.set_defaults(framed=False, http_path=None, verbose=1, host='localhost', port=9090, proto='binary')
-options, args = parser.parse_args()
-
-script_dir = os.path.abspath(os.path.dirname(__file__))
-lib_dir = os.path.join(os.path.dirname(os.path.dirname(script_dir)), 'lib', 'py', 'build', 'lib.*')
-sys.path.insert(0, os.path.join(script_dir, options.genpydir))
-sys.path.insert(0, glob.glob(lib_dir)[0])
-
-from ThriftTest import ThriftTest, SecondService
-from ThriftTest.ttypes import *
-from thrift.transport import TTransport
-from thrift.transport import TSocket
-from thrift.transport import THttpClient
-from thrift.transport import TZlibTransport
-from thrift.protocol import TBinaryProtocol
-from thrift.protocol import TCompactProtocol
-from thrift.protocol import TJSONProtocol
+SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
+ROOT_DIR = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+DEFAULT_LIBDIR_GLOB = os.path.join(ROOT_DIR, 'lib', 'py', 'build', 'lib.*')
 
 
 class AbstractTest(unittest.TestCase):
@@ -90,11 +52,10 @@ class AbstractTest(unittest.TestCase):
       if options.zlib:
         self.transport = TZlibTransport.TZlibTransport(self.transport, 9)
     self.transport.open()
-    protocol = self.protocol_factory.getProtocol(self.transport)
+    protocol = self.get_protocol(self.transport)
     self.client = ThriftTest.Client(protocol)
 
   def tearDown(self):
-    # Close!
     self.transport.close()
 
   def testVoid(self):
@@ -105,8 +66,8 @@ class AbstractTest(unittest.TestCase):
     print('testString')
     self.assertEqual(self.client.testString('Python' * 20), 'Python' * 20)
     self.assertEqual(self.client.testString(''), '')
-    self.assertEqual(self.client.testString(u'パイソン'.encode('utf8')), u'パイソン'.encode('utf8'))
-    s = u"""Afrikaans, Alemannisch, Aragonés, العربية, مصرى,
+    s1 = u'\b\t\n/\\\\\r{}:パイソン"'
+    s2 = u"""Afrikaans, Alemannisch, Aragonés, العربية, مصرى,
         Asturianu, Aymar aru, Azərbaycan, Башҡорт, Boarisch, Žemaitėška,
         Беларуская, Беларуская (тарашкевіца), Български, Bamanankan,
         বাংলা, Brezhoneg, Bosanski, Català, Mìng-dĕ̤ng-ngṳ̄, Нохчийн,
@@ -131,7 +92,11 @@ class AbstractTest(unittest.TestCase):
         Türkçe, Татарча/Tatarça, Українська, اردو, Tiếng Việt, Volapük,
         Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文,
         Bân-lâm-gú, 粵語"""
-    self.assertEqual(self.client.testString(s.encode('utf8')), s.encode('utf8'))
+    if sys.version_info[0] == 2:
+      s1 = s1.encode('utf8')
+      s2 = s2.encode('utf8')
+    self.assertEqual(self.client.testString(s1), s1)
+    self.assertEqual(self.client.testString(s2), s2)
 
   def testBool(self):
     print('testBool')
@@ -161,8 +126,6 @@ class AbstractTest(unittest.TestCase):
     self.assertEqual(self.client.testDouble(-0.000341012439638598279), -0.000341012439638598279)
 
   def testBinary(self):
-    if isinstance(self, JSONTest):
-      self.skipTest('JSON protocol does not handle binary correctly.')
     print('testBinary')
     val = bytearray([i for i in range(0, 256)])
     self.assertEqual(bytearray(self.client.testBinary(bytes(val))), val)
@@ -186,7 +149,7 @@ class AbstractTest(unittest.TestCase):
 
   def testMap(self):
     print('testMap')
-    x = {0:1, 1:2, 2:3, 3:4, -1:-2}
+    x = {0: 1, 1: 2, 2: 3, 3: 4, -1: -2}
     y = self.client.testMap(x)
     self.assertEqual(y, x)
 
@@ -210,7 +173,7 @@ class AbstractTest(unittest.TestCase):
 
   def testTypedef(self):
     print('testTypedef')
-    x = 0xffffffffffffff # 7 bytes of 0xff
+    x = 0xffffffffffffff  # 7 bytes of 0xff
     y = self.client.testTypedef(x)
     self.assertEqual(y, x)
 
@@ -226,11 +189,11 @@ class AbstractTest(unittest.TestCase):
     print('testMulti')
     xpected = Xtruct(string_thing='Hello2', byte_thing=74, i32_thing=0xff00ff, i64_thing=0xffffffffd0d0)
     y = self.client.testMulti(xpected.byte_thing,
-          xpected.i32_thing,
-          xpected.i64_thing,
-          { 0:'abc' },
-          Numberz.FIVE,
-          0xf0f0f0)
+                              xpected.i32_thing,
+                              xpected.i64_thing,
+                              {0: 'abc'},
+                              Numberz.FIVE,
+                              0xf0f0f0)
     self.assertEqual(y, xpected)
 
   def testException(self):
@@ -244,8 +207,8 @@ class AbstractTest(unittest.TestCase):
       self.assertEqual(x.message, 'Xception')
       # TODO ensure same behavior for repr within generated python variants
       # ensure exception's repr method works
-      #x_repr = repr(x)
-      #self.assertEqual(x_repr, 'Xception(errorCode=1001, message=\'Xception\')')
+      # x_repr = repr(x)
+      # self.assertEqual(x_repr, 'Xception(errorCode=1001, message=\'Xception\')')
 
     try:
       self.client.testException('TException')
@@ -276,33 +239,41 @@ class AbstractTest(unittest.TestCase):
   def testOneway(self):
     print('testOneway')
     start = time.time()
-    self.client.testOneway(1) # type is int, not float
+    self.client.testOneway(1)  # type is int, not float
     end = time.time()
     self.assertTrue(end - start < 3,
                     "oneway sleep took %f sec" % (end - start))
 
   def testOnewayThenNormal(self):
     print('testOnewayThenNormal')
-    self.client.testOneway(1) # type is int, not float
+    self.client.testOneway(1)  # type is int, not float
     self.assertEqual(self.client.testString('Python'), 'Python')
 
 
 class NormalBinaryTest(AbstractTest):
-  protocol_factory = TBinaryProtocol.TBinaryProtocolFactory()
+  def get_protocol(self, transport):
+    return TBinaryProtocol.TBinaryProtocolFactory().getProtocol(transport)
+
 
 class CompactTest(AbstractTest):
-  protocol_factory = TCompactProtocol.TCompactProtocolFactory()
+  def get_protocol(self, transport):
+    return TCompactProtocol.TCompactProtocolFactory().getProtocol(transport)
+
 
 class JSONTest(AbstractTest):
-  protocol_factory = TJSONProtocol.TJSONProtocolFactory()
+  def get_protocol(self, transport):
+    return TJSONProtocol.TJSONProtocolFactory().getProtocol(transport)
+
 
 class AcceleratedBinaryTest(AbstractTest):
-  protocol_factory = TBinaryProtocol.TBinaryProtocolAcceleratedFactory()
+  def get_protocol(self, transport):
+    return TBinaryProtocol.TBinaryProtocolAcceleratedFactory().getProtocol(transport)
+
 
 def suite():
   suite = unittest.TestSuite()
   loader = unittest.TestLoader()
-  if options.proto == 'binary': # look for --proto on cmdline
+  if options.proto == 'binary':  # look for --proto on cmdline
     suite.addTest(loader.loadTestsFromTestCase(NormalBinaryTest))
   elif options.proto == 'accel':
     suite.addTest(loader.loadTestsFromTestCase(AcceleratedBinaryTest))
@@ -314,13 +285,60 @@ def suite():
     raise AssertionError('Unknown protocol given with --protocol: %s' % options.proto)
   return suite
 
+
 class OwnArgsTestProgram(unittest.TestProgram):
     def parseArgs(self, argv):
         if args:
             self.testNames = args
         else:
-            self.testNames = (self.defaultTest,)
+            self.testNames = ([self.defaultTest])
         self.createTests()
 
 if __name__ == "__main__":
+  parser = OptionParser()
+  parser.add_option('--libpydir', type='string', dest='libpydir',
+                    help='include this directory in sys.path for locating library code')
+  parser.add_option('--genpydir', type='string', dest='genpydir',
+                    default='gen-py',
+                    help='include this directory in sys.path for locating generated code')
+  parser.add_option("--port", type="int", dest="port",
+                    help="connect to server at port")
+  parser.add_option("--host", type="string", dest="host",
+                    help="connect to server")
+  parser.add_option("--zlib", action="store_true", dest="zlib",
+                    help="use zlib wrapper for compressed transport")
+  parser.add_option("--ssl", action="store_true", dest="ssl",
+                    help="use SSL for encrypted transport")
+  parser.add_option("--http", dest="http_path",
+                    help="Use the HTTP transport with the specified path")
+  parser.add_option('-v', '--verbose', action="store_const",
+                    dest="verbose", const=2,
+                    help="verbose output")
+  parser.add_option('-q', '--quiet', action="store_const",
+                    dest="verbose", const=0,
+                    help="minimal output")
+  parser.add_option('--protocol', dest="proto", type="string",
+                    help="protocol to use, one of: accel, binary, compact, json")
+  parser.add_option('--transport', dest="trans", type="string",
+                    help="transport to use, one of: buffered, framed")
+  parser.set_defaults(framed=False, http_path=None, verbose=1, host='localhost', port=9090, proto='binary')
+  options, args = parser.parse_args()
+
+  sys.path.insert(0, os.path.join(SCRIPT_DIR, options.genpydir))
+  if options.libpydir:
+    sys.path.insert(0, glob.glob(options.libpydir)[0])
+  else:
+    sys.path.insert(0, glob.glob(DEFAULT_LIBDIR_GLOB)[0])
+
+  from ThriftTest import ThriftTest
+  from ThriftTest.ttypes import Xtruct, Xtruct2, Numberz, Xception, Xception2
+  from thrift.Thrift import TException
+  from thrift.transport import TTransport
+  from thrift.transport import TSocket
+  from thrift.transport import THttpClient
+  from thrift.transport import TZlibTransport
+  from thrift.protocol import TBinaryProtocol
+  from thrift.protocol import TCompactProtocol
+  from thrift.protocol import TJSONProtocol
+
   OwnArgsTestProgram(defaultTest="suite", testRunner=unittest.TextTestRunner(verbosity=1))

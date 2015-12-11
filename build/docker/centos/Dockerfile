@@ -21,76 +21,119 @@
 FROM centos:7
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
 
-ENV HOME /root
-
-# RUN yum -y update
+RUN yum install -y epel-release
 
 # General dependencies
-RUN yum -y install -y tar m4 perl gcc git libtool zlib-devel openssl-devel autoconf make bison bison-devel flex
-
-RUN mkdir -p /tmp/epel && \
-    curl -sSL "http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm" -o /tmp/epel/epel-release-7-5.noarch.rpm && \
-    cd /tmp/epel && \
-    rpm -ivh epel-release*.rpm && \
-    cd $HOME
-
-# Automake
-RUN mkdir -p /tmp/automake && \
-    curl -SL "http://ftp.gnu.org/gnu/automake/automake-1.14.tar.gz" | tar -xzC /tmp/automake && \
-    cd /tmp/automake/automake-1.14 && \
-    ./configure --prefix=/usr && \
-    make && \
-    make install && \
-    cd $HOME
+RUN yum install -y \
+      tar \
+      m4 \
+      perl \
+      clang \
+      gcc \
+      gcc-c++ \
+      git \
+      libtool \
+      autoconf \
+      make \
+      bison \
+      bison-devel \
+      flex
 
 # C++ dependencies
-RUN yum install -y libboost-dev libevent-devel
+RUN yum install -y \
+      boost-devel-static \
+      zlib-devel \
+      openssl-devel \
+      libevent-devel
 
 # Java Dependencies
-RUN yum install -y ant junit ant-nodeps ant-junit java-1.7.0-openjdk-devel
+RUN yum install -y \
+      ant \
+      junit \
+      ant-junit \
+      java-1.7.0-openjdk-devel
 
 # Python Dependencies
-RUN yum install -y python-devel python-setuptools python-twisted
+RUN yum install -y \
+      python-devel \
+      python-setuptools \
+      python-twisted-web \
+      python-six
 
 # Ruby Dependencies
-RUN yum install -y ruby ruby-devel rubygems && \
+RUN yum install -y \
+      ruby \
+      ruby-devel \
+      rubygems && \
     gem install bundler rake
 
 # Perl Dependencies
-RUN yum install -y perl-Bit-Vector perl-Class-Accessor perl-ExtUtils-MakeMaker perl-Test-Simple
+RUN yum install -y \
+      perl-Bit-Vector \
+      perl-Class-Accessor \
+      perl-ExtUtils-MakeMaker \
+      perl-Test-Simple \
+      perl-IO-Socket-SSL \
+      perl-Net-SSLeay \
+      perl-Crypt-SSLeay
 
 # PHP Dependencies
-RUN yum install -y php php-devel php-pear re2c
+RUN yum install -y \
+      php \
+      php-devel \
+      php-pear \
+      re2c \
+      php-phpunit-PHPUnit \
+      bzip2
 
 # GLibC Dependencies
 RUN yum install -y glib2-devel
 
 # Erlang Dependencies
 RUN curl -sSL http://packages.erlang-solutions.com/rpm/centos/erlang_solutions.repo -o /etc/yum.repos.d/erlang_solutions.repo && \
-    yum install -y erlang-kernel erlang-erts erlang-stdlib erlang-eunit erlang-rebar
+    yum install -y \
+      erlang-kernel \
+      erlang-erts \
+      erlang-stdlib \
+      erlang-eunit \
+      erlang-rebar \
+      erlang-tools
 
 # Go Dependencies
-RUN curl -sSL https://storage.googleapis.com/golang/go1.4.2.linux-amd64.tar.gz | tar -C /usr/lib/ -xz && \
-    mkdir -p /usr/share/go
-
-ENV GOROOT /usr/lib/go
-ENV GOPATH /usr/share/go
-ENV PATH ${GOROOT}/bin:${GOPATH}/bin:$PATH
+RUN curl -sSL https://storage.googleapis.com/golang/go1.4.3.linux-amd64.tar.gz | tar -C /usr/local/ -xz
+ENV PATH /usr/local/go/bin:$PATH
 
 # Haskell Dependencies
-RUN yum -y install cabal-dev && \
-    cabal update && \
-    cabal install cabal-install && \
-    cd $HOME
+RUN yum -y install haskell-platform
 
 # Node.js Dependencies
-RUN yum install -y nodejs nodejs-devel npm
+RUN yum install -y \
+      nodejs \
+      nodejs-devel \
+      npm
 
 # C# Dependencies
-RUN yum install -y mono-core mono-devel mono-web-devel mono-extras mingw32-binutils mingw32-runtime mingw32-nsis
+RUN yum install -y \
+      mono-core \
+      mono-devel \
+      mono-web-devel \
+      mono-extras \
+
+# MinGW Dependencies
+RUN yum install -y \
+      mingw32-binutils \
+      mingw32-crt \
+      mingw32-nsis
+
+# CMake
+RUN curl -sSL https://cmake.org/files/v3.4/cmake-3.4.0.tar.gz | tar -xz && \
+    cd cmake-3.4.0 && ./bootstrap && make -j4 && make install
 
 # Clean up
 RUN rm -rf /tmp/* && \
     yum clean all
 
-WORKDIR $HOME
+ENV THRIFT_ROOT /thrift
+RUN mkdir -p $THRIFT_ROOT/src
+COPY scripts $THRIFT_ROOT
+WORKDIR $THRIFT_ROOT/src

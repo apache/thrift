@@ -19,15 +19,6 @@
 # under the License.
 #
 
-import sys, glob
-from optparse import OptionParser
-parser = OptionParser()
-parser.add_option('--genpydir', type='string', dest='genpydir', default='gen-py')
-options, args = parser.parse_args()
-del sys.argv[1:] # clean up hack so unittest doesn't complain
-sys.path.insert(0, options.genpydir)
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
-
 # Just import these generated files to make sure they are syntactically valid
 from DebugProtoTest import EmptyService
 from DebugProtoTest import Inherited

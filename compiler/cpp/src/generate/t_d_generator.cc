@@ -504,7 +504,7 @@ private:
       case t_base_type::TYPE_BOOL:
         out << ((value->get_integer() > 0) ? "true" : "false");
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
         out << "cast(" << render_type_name(type) << ")" << value->get_integer();
         break;
@@ -622,7 +622,7 @@ private:
         return "string";
       case t_base_type::TYPE_BOOL:
         return "bool";
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         return "byte";
       case t_base_type::TYPE_I16:
         return "short";

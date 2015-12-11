@@ -97,6 +97,18 @@ void declare_valid_program_doctext();
 void check_for_list_of_bytes(t_type* list_elem_type);
 
 /**
+ * Emits a one-time warning on byte type, promoting the new i8 type instead
+ */
+void emit_byte_type_warning();
+
+/**
+ * Prints deprecation notice for old NS declarations that are no longer supported
+ * If new_form is NULL, old_form is assumed to be a language identifier, such as "cpp"
+ * If new_form is not NULL, both arguments are used exactly as given
+ */
+void error_unsupported_namespace_decl(char* old_form, char* new_form = NULL);
+
+/**
  * Flex utilities
  */
 

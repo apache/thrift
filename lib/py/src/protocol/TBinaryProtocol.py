@@ -17,7 +17,7 @@
 # under the License.
 #
 
-from TProtocol import *
+from .TProtocol import TType, TProtocolBase, TProtocolException
 from struct import pack, unpack
 
 
@@ -118,7 +118,7 @@ class TBinaryProtocol(TProtocolBase):
     buff = pack("!d", dub)
     self.trans.write(buff)
 
-  def writeString(self, str):
+  def writeBinary(self, str):
     self.writeI32(len(str))
     self.trans.write(str)
 
@@ -217,10 +217,10 @@ class TBinaryProtocol(TProtocolBase):
     val, = unpack('!d', buff)
     return val
 
-  def readString(self):
+  def readBinary(self):
     len = self.readI32()
-    str = self.trans.readAll(len)
-    return str
+    s = self.trans.readAll(len)
+    return s
 
 
 class TBinaryProtocolFactory:

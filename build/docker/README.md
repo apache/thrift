@@ -23,5 +23,5 @@ From the Apache Thrift code base root
 
 * Run
 
-	docker run -v $(pwd):/thrift -it thrift /bin/bash
+	docker run -v $(pwd):/thrift/src -it thrift /bin/bash
 

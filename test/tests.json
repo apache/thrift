@@ -126,8 +126,8 @@
       "framed"
     ],
     "sockets": [
-      "ip-ssl",
-      "ip"
+      "ip",
+      "ip-ssl"
     ],
     "protocols": [
       "compact",
@@ -190,14 +190,53 @@
       "framed"
     ],
     "sockets": [
-      "ip-ssl",
-      "ip"
+      "ip",
+      "ip-ssl"
     ],
     "protocols": [
       "compact",
       "binary",
       "json",
       "binary:accel"
+    ],
+    "workdir": "py"
+  },
+  {
+    "comment": "Using 'python3' executable to test py2 and 3 at once",
+    "name": "py3",
+    "server": {
+      "delay": 1,
+      "extra_args": ["TSimpleServer"],
+      "command": [
+        "python3",
+        "TestServer.py",
+        "--verbose",
+        "--libpydir=../../lib/py/build/lib",
+        "--genpydir=gen-py"
+      ]
+    },
+    "client": {
+      "timeout": 10,
+      "command": [
+        "python3",
+        "TestClient.py",
+        "--host=localhost",
+        "--libpydir=../../lib/py/build/lib",
+        "--genpydir=gen-py"
+      ]
+    },
+    "transports": [
+      "buffered",
+      "framed"
+    ],
+    "sockets": [
+      "ip-ssl",
+      "ip"
+    ],
+    "protocols": [
+      "compact",
+      "binary",
+      "json"
     ],
     "workdir": "py"
   },
@@ -221,14 +260,15 @@
       "framed"
     ],
     "sockets": [
-      "ip-ssl",
       "ip",
+      "ip-ssl",
       "domain"
     ],
     "protocols": [
       "compact",
       "binary",
-      "json"
+      "json",
+      "header"
     ],
     "workdir": "cpp"
   },
@@ -285,6 +325,7 @@
     "server": {
       "delay": 3,
       "command": [
+        "mono",
         "TestClientServer.exe",
         "server"
       ]
@@ -292,6 +333,7 @@
     "client": {
       "timeout": 9,
       "command": [
+        "mono",
         "TestClientServer.exe",
         "client"
       ]
@@ -306,7 +348,8 @@
     ],
     "sockets": [
       "ip",
-      "ip-ssl"
+      "ip-ssl",
+      "domain"
     ],
     "protocols": [
       "binary"
@@ -376,5 +419,74 @@
       ]
     },
     "workdir": "dart"
+  },
+  {
+    "name": "erl",
+    "transports": [
+      "buffered",
+      "framed"
+    ],
+    "sockets": [
+      "ip",
+      "ip-ssl"
+    ],
+    "protocols": [
+      "binary",
+      "compact"
+    ],
+    "client": {
+      "command": [
+        "erl",
+        "+K",
+        "true",
+        "-noshell",
+        "-pa",
+        "../../lib/erl/ebin/",
+        "-pa",
+        "./ebin",
+        "-s",
+        "test_client",
+        "-s",
+        "init",
+        "stop",
+        "-extra"
+      ]
+    },
+    "server": {
+      "delay": 5,
+      "command": [
+        "erl",
+        "+K",
+        "true",
+        "-noshell",
+        "-pa",
+        "../../lib/erl/ebin/",
+        "-pa",
+        "./ebin",
+        "-s",
+        "test_thrift_server",
+        "-extra"
+      ]
+    },
+    "workdir": "erl"
+  },
+  {
+    "name": "js",
+    "transports": [
+      "http"
+    ],
+    "sockets": [
+      "ip"
+    ],
+    "protocols": [
+      "json"
+    ],
+    "client": {
+      "command": [
+        "phantomjs",
+        "test/phantom-client.js"
+      ]
+    },
+    "workdir": "../lib/js"
   }
 ]

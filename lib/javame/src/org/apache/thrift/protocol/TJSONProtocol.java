@@ -19,6 +19,7 @@
 
 package org.apache.thrift.protocol;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Stack;
 
@@ -348,6 +349,47 @@ public class TJSONProtocol extends TProtocol {
     }
   }
 
+  private static boolean isHighSurrogate(char c) {
+    return c >= '\uD800' && c <= '\uDBFF';
+  }
+
+  private static boolean isLowSurrogate(char c) {
+    return c >= '\uDC00' && c <= '\uDFFF';
+  }
+
+  private static byte[] toUTF8(int codepoint) {
+    final int[] FIRST_BYTE_MASK = { 0, 0xc0, 0xe0, 0xf0 };
+    int length = 0;
+    if (codepoint <= 0x7f) length = 1;
+    else if (codepoint <= 0x7ff) length = 2;
+    else if (codepoint <= 0xffff) length = 3;
+    else if (codepoint <= 0x1fffff) length = 4;
+    else throw new RuntimeException("Code point over U+1FFFFF is not supported");
+
+    byte[] bytes = new byte[length];
+    switch (length) {
+    case 4:
+      bytes[3] = (byte)((codepoint & 0x3f) | 0x80);
+      codepoint >>= 6;
+    case 3:
+      bytes[2] = (byte)((codepoint & 0x3f) | 0x80);
+      codepoint >>= 6;
+    case 2:
+      bytes[1] = (byte)((codepoint & 0x3f) | 0x80);
+      codepoint >>= 6;
+    case 1:
+      bytes[0] = (byte)(codepoint | FIRST_BYTE_MASK[length - 1]);
+    }
+
+    return bytes;
+  }
+
+  private static byte[] toUTF8(int high, int low) {
+    int codepoint = (1 << 16) + ((high & 0x3ff) << 10);
+    codepoint += low & 0x3ff;
+    return toUTF8(codepoint);
+  }
+
   // Write the bytes in array buf as a JSON characters, escaping as needed
   private void writeJSONString(byte[] b) throws TException {
     context_.write();
@@ -596,6 +638,7 @@ public class TJSONProtocol extends TProtocol {
   private TByteArrayOutputStream readJSONString(boolean skipContext)
                                                                     throws TException {
     TByteArrayOutputStream arr = new TByteArrayOutputStream(DEF_STRING_SIZE);
+    int highSurrogate = 0;
     if (!skipContext) {
       context_.read();
     }
@@ -608,10 +651,42 @@ public class TJSONProtocol extends TProtocol {
       if (ch == ESCSEQ[0]) {
         ch = reader_.read();
         if (ch == ESCSEQ[1]) {
-          readJSONSyntaxChar(ZERO);
-          readJSONSyntaxChar(ZERO);
-          trans_.readAll(tmpbuf_, 0, 2);
-          ch = (byte)((hexVal(tmpbuf_[0]) << 4) + hexVal(tmpbuf_[1]));
+          trans_.readAll(tmpbuf_, 0, 4);
+          short cu = (short)(
+              ((short)hexVal(tmpbuf_[0]) << 12) +
+              ((short)hexVal(tmpbuf_[1]) << 8) +
+              ((short)hexVal(tmpbuf_[2]) << 4) +
+              (short)hexVal(tmpbuf_[3]));
+          try {
+            if (isHighSurrogate((char)cu)) {
+              if (highSurrogate != 0) {
+                throw new TProtocolException(TProtocolException.INVALID_DATA,
+                    "Expected low surrogate char");
+              }
+              highSurrogate = cu;
+            }
+            else if (isLowSurrogate((char)cu)) {
+              if (highSurrogate == 0) {
+                throw new TProtocolException(TProtocolException.INVALID_DATA,
+                    "Expected high surrogate char");
+              }
+
+              arr.write(toUTF8(highSurrogate, cu));
+              highSurrogate = 0;
+            }
+            else {
+              arr.write(toUTF8(cu));
+            }
+            continue;
+          }
+          catch (UnsupportedEncodingException ex) {
+            throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED,
+                "JVM does not support UTF-8");
+          }
+          catch (IOException ex) {
+            throw new TProtocolException(TProtocolException.INVALID_DATA,
+                "Invalid unicode sequence");
+          }
         }
         else {
           int off = ESCAPE_CHARS.indexOf(ch);
@@ -623,6 +698,11 @@ public class TJSONProtocol extends TProtocol {
         }
       }
       arr.write(ch);
+    }
+
+    if (highSurrogate != 0) {
+      throw new TProtocolException(TProtocolException.INVALID_DATA,
+          "Expected low surrogate char");
     }
     return arr;
   }

@@ -20,11 +20,17 @@
 
 include(CMakeDependentOption)
 
+set(THRIFT_COMPILER "" CACHE FILEPATH "External Thrift compiler to use during build")
+
 # Additional components
 option(BUILD_COMPILER "Build Thrift compiler" ON)
-option(BUILD_TESTING "Build with unit tests" ON)
-option(BUILD_EXAMPLES "Build examples" ON)
-option(BUILD_TUTORIALS "Build Thrift tutorials" ON)
+
+if(BUILD_COMPILER OR EXISTS ${THRIFT_COMPILER})
+    set(HAVE_COMPILER ON)
+endif()
+CMAKE_DEPENDENT_OPTION(BUILD_TESTING "Build with unit tests" ON "HAVE_COMPILER" OFF)
+CMAKE_DEPENDENT_OPTION(BUILD_EXAMPLES "Build examples" ON "HAVE_COMPILER" OFF)
+CMAKE_DEPENDENT_OPTION(BUILD_TUTORIALS "Build Thrift tutorials" ON "HAVE_COMPILER" OFF)
 option(BUILD_LIBRARIES "Build Thrift libraries" ON)
 
 # Libraries to build
@@ -43,6 +49,10 @@ CMAKE_DEPENDENT_OPTION(BUILD_CPP "Build C++ library" ON
 # but in future other libraries might reuse them.
 # So they are not dependent on WITH_CPP but setting them without WITH_CPP currently
 # has no effect.
+if(ZLIB_LIBRARY)
+    # FindZLIB.cmake does not normalize path so we need to do it ourselves.
+    file(TO_CMAKE_PATH ${ZLIB_LIBRARY} ZLIB_LIBRARY)
+endif()
 find_package(ZLIB QUIET)
 CMAKE_DEPENDENT_OPTION(WITH_ZLIB "Build with ZLIB support" ON
                        "ZLIB_FOUND" OFF)
@@ -74,10 +84,16 @@ CMAKE_DEPENDENT_OPTION(BUILD_C_GLIB "Build C (GLib) library" ON
                        "BUILD_LIBRARIES;WITH_C_GLIB;GLIB_FOUND" OFF)
 # Java
 option(WITH_JAVA "Build Java Thrift library" ON)
-find_package(Java QUIET)
-find_package(Ant QUIET)
-CMAKE_DEPENDENT_OPTION(BUILD_JAVA "Build Java library" ON
-                       "BUILD_LIBRARIES;WITH_JAVA;JAVA_FOUND;ANT_FOUND" OFF)
+if(ANDROID)
+    find_package(Gradle QUIET)
+    CMAKE_DEPENDENT_OPTION(BUILD_JAVA "Build Java library" ON
+                           "BUILD_LIBRARIES;WITH_JAVA;GRADLE_FOUND" OFF)
+else()
+    find_package(Java QUIET)
+    find_package(Ant QUIET)
+    CMAKE_DEPENDENT_OPTION(BUILD_JAVA "Build Java library" ON
+                           "BUILD_LIBRARIES;WITH_JAVA;JAVA_FOUND;ANT_FOUND" OFF)
+endif()
 
 # Python
 option(WITH_PYTHON "Build Python Thrift library" ON)
@@ -85,6 +101,13 @@ find_package(PythonInterp QUIET) # for Python executable
 find_package(PythonLibs QUIET) # for Python.h
 CMAKE_DEPENDENT_OPTION(BUILD_PYTHON "Build Python library" ON
                        "BUILD_LIBRARIES;WITH_PYTHON;PYTHONLIBS_FOUND" OFF)
+
+# Haskell
+option(WITH_HASKELL "Build Haskell Thrift library" ON)
+find_package(GHC QUIET)
+find_package(Cabal QUIET)
+CMAKE_DEPENDENT_OPTION(BUILD_HASKELL "Build GHC library" ON
+                       "BUILD_LIBRARIES;WITH_HASKELL;GHC_FOUND;CABAL_FOUND" OFF)
 
 # Common library options
 option(WITH_SHARED_LIB "Build shared libraries" ON)
@@ -113,7 +136,9 @@ message(STATUS "Thrift package version:               ${PACKAGE_VERSION}")
 message(STATUS "Build configuration Summary")
 message(STATUS "  Build Thrift compiler:              ${BUILD_COMPILER}")
 message(STATUS "  Build with unit tests:              ${BUILD_TESTING}")
+MESSAGE_DEP(HAVE_COMPILER "Disabled because BUILD_THRIFT=OFF and no valid THRIFT_COMPILER is given")
 message(STATUS "  Build examples:                     ${BUILD_EXAMPLES}")
+MESSAGE_DEP(HAVE_COMPILER "Disabled because BUILD_THRIFT=OFF and no valid THRIFT_COMPILER is given")
 message(STATUS "  Build Thrift libraries:             ${BUILD_LIBRARIES}")
 message(STATUS " Language libraries:")
 message(STATUS "  Build C++ library:                  ${BUILD_CPP}")
@@ -124,11 +149,19 @@ MESSAGE_DEP(WITH_C_GLIB "Disabled by via WITH_C_GLIB=OFF")
 MESSAGE_DEP(GLIB_FOUND "GLib missing")
 message(STATUS "  Build Java library:                 ${BUILD_JAVA}")
 MESSAGE_DEP(WITH_JAVA "Disabled by via WITH_JAVA=OFF")
-MESSAGE_DEP(JAVA_FOUND "Java Runtime missing")
-MESSAGE_DEP(ANT_FOUND "Ant missing")
+if(ANDROID)
+    MESSAGE_DEP(GRADLE_FOUND "Gradle missing")
+else()
+    MESSAGE_DEP(JAVA_FOUND "Java Runtime missing")
+    MESSAGE_DEP(ANT_FOUND "Ant missing")
+endif()
 message(STATUS "  Build Python library:               ${BUILD_PYTHON}")
 MESSAGE_DEP(WITH_PYTHON "Disabled by via WITH_PYTHON=OFF")
 MESSAGE_DEP(PYTHONLIBS_FOUND "Python libraries missing")
+message(STATUS "  Build Haskell library:              ${BUILD_HASKELL}")
+MESSAGE_DEP(WITH_HASKELL "Disabled by via WITH_HASKELL=OFF")
+MESSAGE_DEP(GHC_FOUND "GHC missing")
+MESSAGE_DEP(CABAL_FOUND "Cabal missing")
 message(STATUS " Library features:")
 message(STATUS "  Build shared libraries:             ${WITH_SHARED_LIB}")
 message(STATUS "  Build static libraries:             ${WITH_STATIC_LIB}")

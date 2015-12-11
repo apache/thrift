@@ -19,23 +19,12 @@
 # under the License.
 #
 
-import sys, glob
-from optparse import OptionParser
-parser = OptionParser()
-parser.add_option('--genpydir', type='string', dest='genpydir', default='gen-py')
-options, args = parser.parse_args()
-del sys.argv[1:] # clean up hack so unittest doesn't complain
-sys.path.insert(0, options.genpydir)
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
-
-from ThriftTest import ThriftTest
-from ThriftTest.ttypes import *
+from ThriftTest.ttypes import Xtruct
 from thrift.transport import TTransport
-from thrift.transport import TSocket
 from thrift.protocol import TBinaryProtocol
 from thrift.protocol import TCompactProtocol
 import unittest
-import time
+
 
 class TestEof(unittest.TestCase):
 
@@ -99,7 +88,7 @@ class TestEof(unittest.TestCase):
     # TODO: we should make sure this covers more of the code paths
 
     data = self.make_data(pfactory)
-    for i in xrange(0, len(data) + 1):
+    for i in range(0, len(data) + 1):
       trans = TTransport.TMemoryBuffer(data[0:i])
       prot = pfactory.getProtocol(trans)
       try:
@@ -125,6 +114,7 @@ class TestEof(unittest.TestCase):
     """Test that TCompactProtocol throws an EOFError when it reaches the end of the stream"""
     self.eofTestHelper(TCompactProtocol.TCompactProtocolFactory())
     self.eofTestHelperStress(TCompactProtocol.TCompactProtocolFactory())
+
 
 def suite():
   suite = unittest.TestSuite()

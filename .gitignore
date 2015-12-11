@@ -35,6 +35,7 @@ cmake-*
 node_modules
 compile
 test-driver
+erl_crash.dump
 
 .sonar
 .DS_Store
@@ -137,6 +138,7 @@ test-driver
 /lib/c_glib/test/testthrifttest
 /lib/c_glib/test/testthrifttestclient
 /lib/c_glib/test/testtransportsocket
+/lib/c_glib/test/testserialization
 /lib/c_glib/thriftc.pc
 /lib/c_glib/thrift_c_glib.pc
 /lib/csharp/**/bin/
@@ -145,6 +147,7 @@ test-driver
 /lib/d/test/serialization_benchmark
 /lib/d/test/transport_test
 /lib/d/unittest/
+/lib/dart/coverage
 /lib/dart/**/.packages
 /lib/dart/**/packages
 /lib/dart/**/.pub/
@@ -182,6 +185,9 @@ test-driver
 /lib/erl/.eunit
 /lib/erl/ebin
 /lib/erl/deps/
+/lib/erl/src/thrift.app.src
+/lib/erl/test/*.hrl
+/lib/erl/test/*.beam
 /lib/haxe/test/bin
 /lib/hs/dist
 /lib/java/build
@@ -245,8 +251,8 @@ test-driver
 /test/dart/**/pubspec.lock
 /test/log/
 /test/test.log
-/test/erl/.eunit/
 /test/erl/.generated
+/test/erl/ebin
 /test/go/bin/
 /test/go/ThriftTest.thrift
 /test/go/gopath

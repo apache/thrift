@@ -30,8 +30,8 @@ namespace protocol {
 
 template <class Transport_, class ByteOrder_>
 uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeMessageBegin(const std::string& name,
-                                                         const TMessageType messageType,
-                                                         const int32_t seqid) {
+                                                                     const TMessageType messageType,
+                                                                     const int32_t seqid) {
   if (this->strict_write_) {
     int32_t version = (VERSION_1) | ((int32_t)messageType);
     uint32_t wsize = 0;
@@ -66,8 +66,8 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeStructEnd() {
 
 template <class Transport_, class ByteOrder_>
 uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeFieldBegin(const char* name,
-                                                       const TType fieldType,
-                                                       const int16_t fieldId) {
+                                                                   const TType fieldType,
+                                                                   const int16_t fieldId) {
   (void)name;
   uint32_t wsize = 0;
   wsize += writeByte((int8_t)fieldType);
@@ -87,8 +87,8 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeFieldStop() {
 
 template <class Transport_, class ByteOrder_>
 uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeMapBegin(const TType keyType,
-                                                     const TType valType,
-                                                     const uint32_t size) {
+                                                                 const TType valType,
+                                                                 const uint32_t size) {
   uint32_t wsize = 0;
   wsize += writeByte((int8_t)keyType);
   wsize += writeByte((int8_t)valType);
@@ -102,7 +102,8 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeMapEnd() {
 }
 
 template <class Transport_, class ByteOrder_>
-uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeListBegin(const TType elemType, const uint32_t size) {
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeListBegin(const TType elemType,
+                                                                  const uint32_t size) {
   uint32_t wsize = 0;
   wsize += writeByte((int8_t)elemType);
   wsize += writeI32((int32_t)size);
@@ -115,7 +116,8 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeListEnd() {
 }
 
 template <class Transport_, class ByteOrder_>
-uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeSetBegin(const TType elemType, const uint32_t size) {
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeSetBegin(const TType elemType,
+                                                                 const uint32_t size) {
   uint32_t wsize = 0;
   wsize += writeByte((int8_t)elemType);
   wsize += writeI32((int32_t)size);
@@ -196,8 +198,8 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeBinary(const std::string
 
 template <class Transport_, class ByteOrder_>
 uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readMessageBegin(std::string& name,
-                                                        TMessageType& messageType,
-                                                        int32_t& seqid) {
+                                                                    TMessageType& messageType,
+                                                                    int32_t& seqid) {
   uint32_t result = 0;
   int32_t sz;
   result += readI32(sz);
@@ -245,8 +247,8 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readStructEnd() {
 
 template <class Transport_, class ByteOrder_>
 uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readFieldBegin(std::string& name,
-                                                      TType& fieldType,
-                                                      int16_t& fieldId) {
+                                                                  TType& fieldType,
+                                                                  int16_t& fieldId) {
   (void)name;
   uint32_t result = 0;
   int8_t type;
@@ -267,8 +269,8 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readFieldEnd() {
 
 template <class Transport_, class ByteOrder_>
 uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readMapBegin(TType& keyType,
-                                                    TType& valType,
-                                                    uint32_t& size) {
+                                                                TType& valType,
+                                                                uint32_t& size) {
   int8_t k, v;
   uint32_t result = 0;
   int32_t sizei;

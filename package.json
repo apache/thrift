@@ -23,6 +23,10 @@
     "mail": "dev@thrift.apache.org",
     "url": "https://issues.apache.org/jira/browse/THRIFT"
   },
+  "files": [
+    "lib/nodejs/lib/thrift",
+    "lib/nodejs/README.md"
+  ],
   "directories": {
     "lib": "./lib/nodejs/lib/thrift"
   },

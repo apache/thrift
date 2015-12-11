@@ -71,7 +71,7 @@ t_type* g_type_string;
 t_type* g_type_binary;
 t_type* g_type_slist;
 t_type* g_type_bool;
-t_type* g_type_byte;
+t_type* g_type_i8;
 t_type* g_type_i16;
 t_type* g_type_i32;
 t_type* g_type_i64;
@@ -636,10 +636,38 @@ void dump_docstrings(t_program* program) {
 void check_for_list_of_bytes(t_type* list_elem_type) {
   if ((g_parse_mode == PROGRAM) && (list_elem_type != NULL) && list_elem_type->is_base_type()) {
     t_base_type* tbase = (t_base_type*)list_elem_type;
-    if (tbase->get_base() == t_base_type::TYPE_BYTE) {
+    if (tbase->get_base() == t_base_type::TYPE_I8) {
       pwarning(1, "Consider using the more efficient \"binary\" type instead of \"list<byte>\".");
     }
   }
+}
+
+static bool g_byte_warning_emitted = false;
+
+/**
+ * Emits a one-time warning on byte type, promoting the new i8 type instead
+ */
+void emit_byte_type_warning() {
+  if (!g_byte_warning_emitted) {
+    pwarning(1,
+             "The \"byte\" type is a compatibility alias for \"i8\". Use \"i8\" to emphasize the "
+             "signedness of this type.\n");
+    g_byte_warning_emitted = true;
+  }
+}
+
+/**
+ * Prints deprecation notice for old NS declarations that are no longer supported
+ * If new_form is NULL, old_form is assumed to be a language identifier, such as "cpp"
+ * If new_form is not NULL, both arguments are used exactly as given
+ */
+void error_unsupported_namespace_decl(char* old_form, char* new_form) {
+  char* remainder = "";
+  if( new_form == NULL) {
+    new_form = old_form;
+    remainder = "_namespace";
+  }
+  failure("Unsupported declaration '%s%s'. Use 'namespace %s' instead.", old_form, remainder, new_form);
 }
 
 /**
@@ -733,7 +761,7 @@ void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
         throw "type error: const \"" + name + "\" was declared as bool";
       }
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       if (value->get_type() != t_const_value::CV_INTEGER) {
         throw "type error: const \"" + name + "\" was declared as byte";
       }
@@ -1011,17 +1039,19 @@ void generate(t_program* program, const vector<string>& generator_strings) {
   }
 }
 
-void audit(t_program* new_program, t_program* old_program, string new_thrift_include_path, string old_thrift_include_path)
-{
+void audit(t_program* new_program,
+           t_program* old_program,
+           string new_thrift_include_path,
+           string old_thrift_include_path) {
   vector<string> temp_incl_searchpath = g_incl_searchpath;
-  if(!old_thrift_include_path.empty()) {
+  if (!old_thrift_include_path.empty()) {
     g_incl_searchpath.push_back(old_thrift_include_path);
   }
 
   parse(old_program, NULL);
 
   g_incl_searchpath = temp_incl_searchpath;
-  if(!new_thrift_include_path.empty()) {
+  if (!new_thrift_include_path.empty()) {
     g_incl_searchpath.push_back(new_thrift_include_path);
   }
 
@@ -1140,7 +1170,7 @@ int main(int argc, char** argv) {
           failure("Could not open input file with realpath: %s", arg);
         }
         old_input_file = string(old_thrift_file_rp);
-      } else if(strcmp(arg, "-audit-nofatal") == 0){
+      } else if (strcmp(arg, "-audit-nofatal") == 0) {
         g_audit_fatal = false;
       } else if (strcmp(arg, "-Iold") == 0) {
         arg = argv[++i];
@@ -1151,9 +1181,9 @@ int main(int argc, char** argv) {
         old_thrift_include_path = string(arg);
       } else if (strcmp(arg, "-Inew") == 0) {
         arg = argv[++i];
-        if(arg == NULL) {
-        fprintf(stderr, "Missing Include directory for new thrift file\n");
-        usage();
+        if (arg == NULL) {
+          fprintf(stderr, "Missing Include directory for new thrift file\n");
+          usage();
         }
         new_thrift_include_path = string(arg);
       } else {
@@ -1185,14 +1215,13 @@ int main(int argc, char** argv) {
   g_type_slist = new t_base_type("string", t_base_type::TYPE_STRING);
   ((t_base_type*)g_type_slist)->set_string_list(true);
   g_type_bool = new t_base_type("bool", t_base_type::TYPE_BOOL);
-  g_type_byte = new t_base_type("byte", t_base_type::TYPE_BYTE);
+  g_type_i8 = new t_base_type("i8", t_base_type::TYPE_I8);
   g_type_i16 = new t_base_type("i16", t_base_type::TYPE_I16);
   g_type_i32 = new t_base_type("i32", t_base_type::TYPE_I32);
   g_type_i64 = new t_base_type("i64", t_base_type::TYPE_I64);
   g_type_double = new t_base_type("double", t_base_type::TYPE_DOUBLE);
 
-  if(g_audit)
-  {
+  if (g_audit) {
     // Audit operation
 
     if (old_input_file.empty()) {
@@ -1217,7 +1246,7 @@ int main(int argc, char** argv) {
 
   } else {
     // Generate options
-    
+
     // You gotta generate something!
     if (generator_strings.empty()) {
       fprintf(stderr, "No output language(s) specified\n");
@@ -1275,7 +1304,7 @@ int main(int argc, char** argv) {
   delete g_type_void;
   delete g_type_string;
   delete g_type_bool;
-  delete g_type_byte;
+  delete g_type_i8;
   delete g_type_i16;
   delete g_type_i32;
   delete g_type_i64;

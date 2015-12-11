@@ -975,7 +975,7 @@ void t_delphi_generator::init_known_types_list() {
   types_known[type_name(g_type_string)] = 1;
   types_known[type_name(g_type_binary)] = 1;
   types_known[type_name(g_type_bool)] = 1;
-  types_known[type_name(g_type_byte)] = 1;
+  types_known[type_name(g_type_i8)] = 1;
   types_known[type_name(g_type_i16)] = 1;
   types_known[type_name(g_type_i32)] = 1;
   types_known[type_name(g_type_i64)] = 1;
@@ -1329,7 +1329,7 @@ string t_delphi_generator::render_const_value(ostream& vars,
     case t_base_type::TYPE_BOOL:
       render << ((value->get_integer() > 0) ? "True" : "False");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       render << "ShortInt( " << value->get_integer() << ")";
       break;
     case t_base_type::TYPE_I16:
@@ -2537,7 +2537,7 @@ void t_delphi_generator::generate_deserialize_field(ostream& out,
       case t_base_type::TYPE_BOOL:
         out << "ReadBool();";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "ReadByte();";
         break;
       case t_base_type::TYPE_I16:
@@ -2739,7 +2739,7 @@ void t_delphi_generator::generate_serialize_field(ostream& out,
       case t_base_type::TYPE_BOOL:
         out << "WriteBool(" << name << ");";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "WriteByte(" << name << ");";
         break;
       case t_base_type::TYPE_I16:
@@ -3029,7 +3029,7 @@ string t_delphi_generator::input_arg_prefix(t_type* ttype) {
       return "const ";
 
     // all others don't need to be
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_BOOL:
@@ -3078,7 +3078,7 @@ string t_delphi_generator::base_type_name(t_base_type* tbase) {
     }
   case t_base_type::TYPE_BOOL:
     return "Boolean";
-  case t_base_type::TYPE_BYTE:
+  case t_base_type::TYPE_I8:
     return "ShortInt";
   case t_base_type::TYPE_I16:
     return "SmallInt";
@@ -3214,7 +3214,7 @@ string t_delphi_generator::type_to_enum(t_type* type) {
       return "TType.String_";
     case t_base_type::TYPE_BOOL:
       return "TType.Bool_";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "TType.Byte_";
     case t_base_type::TYPE_I16:
       return "TType.I16";
@@ -3262,7 +3262,7 @@ string t_delphi_generator::empty_value(t_type* type) {
       }
     case t_base_type::TYPE_BOOL:
       return "False";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:

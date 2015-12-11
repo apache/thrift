@@ -548,7 +548,7 @@ string t_php_generator::render_const_value(t_type* type, t_const_value* value) {
     case t_base_type::TYPE_BOOL:
       out << (value->get_integer() > 0 ? "true" : "false");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -861,7 +861,7 @@ void t_php_generator::generate_php_struct_reader(ofstream& out, t_struct* tstruc
 
   // Read beginning field marker
   if (binary_inline_) {
-    t_field fftype(g_type_byte, "ftype");
+    t_field fftype(g_type_i8, "ftype");
     t_field ffid(g_type_i16, "fid");
     generate_deserialize_field(out, &fftype);
     out << indent() << "if ($ftype == "
@@ -1097,6 +1097,8 @@ void t_php_generator::generate_php_struct_json_serialize(ofstream& out,
       indent(out) << "$json->" << name << " = ";
       if (type->is_map()) {
         out << "(object)";
+      } else {
+        out << type_to_cast(type);
       }
       out << "$this->" << name << ";" << endl;
       indent_down();
@@ -1211,7 +1213,7 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
 
   if (binary_inline_) {
     t_field ffname(g_type_string, "fname");
-    t_field fmtype(g_type_byte, "mtype");
+    t_field fmtype(g_type_i8, "mtype");
     t_field fseqid(g_type_i32, "rseqid");
     generate_deserialize_field(f_service_, &ffname, "", true);
     generate_deserialize_field(f_service_, &fmtype, "", true);
@@ -1770,7 +1772,7 @@ void t_php_generator::generate_deserialize_field(ofstream& out,
             out << indent() << "$" << name << " = unpack('c', " << itrans << "->readAll(1));"
                 << endl << indent() << "$" << name << " = (bool)$" << name << "[1];" << endl;
             break;
-          case t_base_type::TYPE_BYTE:
+          case t_base_type::TYPE_I8:
             out << indent() << "$" << name << " = unpack('c', " << itrans << "->readAll(1));"
                 << endl << indent() << "$" << name << " = $" << name << "[1];" << endl;
             break;
@@ -1825,7 +1827,7 @@ void t_php_generator::generate_deserialize_field(ofstream& out,
           case t_base_type::TYPE_BOOL:
             out << "readBool($" << name << ");";
             break;
-          case t_base_type::TYPE_BYTE:
+          case t_base_type::TYPE_I8:
             out << "readByte($" << name << ");";
             break;
           case t_base_type::TYPE_I16:
@@ -1875,9 +1877,9 @@ void t_php_generator::generate_deserialize_container(ofstream& out, t_type* ttyp
   string etype = tmp("_etype");
 
   t_field fsize(g_type_i32, size);
-  t_field fktype(g_type_byte, ktype);
-  t_field fvtype(g_type_byte, vtype);
-  t_field fetype(g_type_byte, etype);
+  t_field fktype(g_type_i8, ktype);
+  t_field fvtype(g_type_i8, vtype);
+  t_field fetype(g_type_i8, etype);
 
   out << indent() << "$" << prefix << " = array();" << endl << indent() << "$" << size << " = 0;"
       << endl;
@@ -2024,7 +2026,7 @@ void t_php_generator::generate_serialize_field(ofstream& out, t_field* tfield, s
         case t_base_type::TYPE_BOOL:
           out << indent() << "$output .= pack('c', $" << name << " ? 1 : 0);" << endl;
           break;
-        case t_base_type::TYPE_BYTE:
+        case t_base_type::TYPE_I8:
           out << indent() << "$output .= pack('c', $" << name << ");" << endl;
           break;
         case t_base_type::TYPE_I16:
@@ -2062,7 +2064,7 @@ void t_php_generator::generate_serialize_field(ofstream& out, t_field* tfield, s
         case t_base_type::TYPE_BOOL:
           out << "writeBool($" << name << ");";
           break;
-        case t_base_type::TYPE_BYTE:
+        case t_base_type::TYPE_I8:
           out << "writeByte($" << name << ");";
           break;
         case t_base_type::TYPE_I16:
@@ -2320,7 +2322,7 @@ string t_php_generator::declare_field(t_field* tfield, bool init, bool obj) {
       case t_base_type::TYPE_BOOL:
         result += " = false";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
@@ -2402,7 +2404,7 @@ string t_php_generator::type_to_cast(t_type* type) {
     switch (btype->get_base()) {
     case t_base_type::TYPE_BOOL:
       return "(bool)";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -2435,7 +2437,7 @@ string t_php_generator::type_to_enum(t_type* type) {
       return "TType::STRING";
     case t_base_type::TYPE_BOOL:
       return "TType::BOOL";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "TType::BYTE";
     case t_base_type::TYPE_I16:
       return "TType::I16";
@@ -2476,7 +2478,7 @@ string t_php_generator::type_to_phpdoc(t_type* type) {
       return "string";
     case t_base_type::TYPE_BOOL:
       return "bool";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "int";
     case t_base_type::TYPE_I16:
       return "int";

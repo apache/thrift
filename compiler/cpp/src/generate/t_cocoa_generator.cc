@@ -345,7 +345,7 @@ string t_cocoa_generator::cocoa_thrift_imports() {
   // Include other Thrift includes
   const vector<t_program*>& other_includes = program_->get_includes();
   for (size_t i = 0; i < other_includes.size(); ++i) {
-    includes << "#import \"" << other_includes[i]->get_name() << ".h\"" << endl;
+    includes << "#import \"" << cocoa_prefix_ << capitalize(other_includes[i]->get_name()) << ".h\"" << endl;
   }
   
   includes << endl;
@@ -669,7 +669,7 @@ void t_cocoa_generator::generate_cocoa_struct_init_with_coder_method(ofstream& o
       case t_base_type::TYPE_BOOL:
         out << "[decoder decodeBoolForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "[decoder decodeIntForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
         break;
       case t_base_type::TYPE_I16:
@@ -736,7 +736,7 @@ void t_cocoa_generator::generate_cocoa_struct_encode_with_coder_method(ofstream&
         out << indent() << "[encoder encodeBool: _" << (*m_iter)->get_name() << " forKey: @\""
             << (*m_iter)->get_name() << "\"];" << endl;
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << indent() << "[encoder encodeInt: _" << (*m_iter)->get_name() << " forKey: @\""
             << (*m_iter)->get_name() << "\"];" << endl;
         break;
@@ -2171,7 +2171,7 @@ void t_cocoa_generator::generate_deserialize_field(ofstream& out,
       case t_base_type::TYPE_BOOL:
         out << "readBool:&" << fieldName << " error: __thriftError]";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "readByte:(UInt8 *)&" << fieldName << " error: __thriftError]";
         break;
       case t_base_type::TYPE_I16:
@@ -2285,7 +2285,7 @@ string t_cocoa_generator::box(t_type* ttype, string field_name) {
       case t_base_type::TYPE_VOID:
         throw "can't box void";
       case t_base_type::TYPE_BOOL:
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
@@ -2314,7 +2314,7 @@ string t_cocoa_generator::unbox(t_type* ttype, string field_name) {
         throw "can't unbox void";
       case t_base_type::TYPE_BOOL:
         return "[" + field_name + " boolValue]";
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         return "((SInt8)[" + field_name + " charValue])";
       case t_base_type::TYPE_I16:
         return "((SInt16)[" + field_name + " shortValue])";
@@ -2420,7 +2420,7 @@ void t_cocoa_generator::generate_serialize_field(ofstream& out, t_field* tfield,
       case t_base_type::TYPE_BOOL:
         out << "writeBool: " << fieldName << " error: __thriftError]";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "writeByte: (UInt8)" << fieldName << " error: __thriftError]";
         break;
       case t_base_type::TYPE_I16:
@@ -2646,13 +2646,13 @@ string t_cocoa_generator::element_type_name(t_type* etype) {
       result = "NSNumber *";      
   } else if (ttype->is_map()) {
     t_map *map = (t_map *)ttype;
-    result = "NSDictionary<" + element_type_name(map->get_key_type()) + ", " + element_type_name(map->get_val_type()) + ">";
+    result = "NSDictionary<" + element_type_name(map->get_key_type()) + ", " + element_type_name(map->get_val_type()) + "> *";
   } else if (ttype->is_set()) {
     t_set *set = (t_set *)ttype;
-    result = "NSSet<" + element_type_name(set->get_elem_type()) + ">";
+    result = "NSSet<" + element_type_name(set->get_elem_type()) + "> *";
   } else if (ttype->is_list()) {
     t_list *list = (t_list *)ttype;
-    result = "NSArray<" + element_type_name(list->get_elem_type()) + ">";
+    result = "NSArray<" + element_type_name(list->get_elem_type()) + "> *";
   } else if (ttype->is_struct() || ttype->is_xception()) {
     result = cocoa_prefix_ + ttype->get_name() + " *";
   }
@@ -2679,7 +2679,7 @@ string t_cocoa_generator::base_type_name(t_base_type* type) {
     }
   case t_base_type::TYPE_BOOL:
     return "BOOL";
-  case t_base_type::TYPE_BYTE:
+  case t_base_type::TYPE_I8:
     return "SInt8";
   case t_base_type::TYPE_I16:
     return "SInt16";
@@ -2819,7 +2819,7 @@ string t_cocoa_generator::render_const_value(ostream& out,
     case t_base_type::TYPE_BOOL:
       render << ((value->get_integer() > 0) ? "YES" : "NO");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -2870,7 +2870,7 @@ string t_cocoa_generator::render_const_value(string name,
     case t_base_type::TYPE_BOOL:
       render << ((value->get_integer() > 0) ? "YES" : "NO");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -3156,7 +3156,7 @@ string t_cocoa_generator::type_to_enum(t_type* type) {
       return "TTypeSTRING";
     case t_base_type::TYPE_BOOL:
       return "TTypeBOOL";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "TTypeBYTE";
     case t_base_type::TYPE_I16:
       return "TTypeI16";
@@ -3197,7 +3197,7 @@ string t_cocoa_generator::format_string_for_type(t_type* type) {
       return "\\\"%@\\\"";
     case t_base_type::TYPE_BOOL:
       return "%i";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "%i";
     case t_base_type::TYPE_I16:
       return "%hi";
@@ -3238,7 +3238,7 @@ string t_cocoa_generator::format_cast_for_type(t_type* type) {
       return ""; // "\\\"%@\\\"";
     case t_base_type::TYPE_BOOL:
       return ""; // "%i";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return ""; // "%i";
     case t_base_type::TYPE_I16:
       return ""; // "%hi";

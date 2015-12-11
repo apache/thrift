@@ -23,6 +23,7 @@
 #include <iostream>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TCompactProtocol.h>
+#include <thrift/protocol/THeaderProtocol.h>
 #include <thrift/protocol/TJSONProtocol.h>
 #include <thrift/transport/THttpClient.h>
 #include <thrift/transport/TTransportUtils.h>
@@ -170,7 +171,7 @@ int main(int argc, char** argv) {
       "Transport: buffered, framed, http, evhttp")(
       "protocol",
       boost::program_options::value<string>(&protocol_type)->default_value(protocol_type),
-      "Protocol: binary, compact, json")("ssl", "Encrypted Transport using SSL")(
+      "Protocol: binary, header, compact, json")("ssl", "Encrypted Transport using SSL")(
       "testloops,n",
       boost::program_options::value<int>(&numTests)->default_value(numTests),
       "Number of Tests")("noinsane", "Do not run insanity test");
@@ -188,6 +189,7 @@ int main(int argc, char** argv) {
     if (!protocol_type.empty()) {
       if (protocol_type == "binary") {
       } else if (protocol_type == "compact") {
+      } else if (protocol_type == "header") {
       } else if (protocol_type == "json") {
       } else {
         throw invalid_argument("Unknown protocol type " + protocol_type);
@@ -266,6 +268,9 @@ int main(int argc, char** argv) {
   } else if (protocol_type.compare("compact") == 0) {
     boost::shared_ptr<TProtocol> compactProtocol(new TCompactProtocol(transport));
     protocol = compactProtocol;
+  } else if (protocol_type == "header") {
+    boost::shared_ptr<TProtocol> headerProtocol(new THeaderProtocol(transport));
+    protocol = headerProtocol;
   } else {
     boost::shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol(transport));
     protocol = binaryProtocol;
@@ -458,6 +463,20 @@ int main(int argc, char** argv) {
     /**
      * BINARY TEST
      */
+    printf("testBinary(empty)\n");
+    try {
+      string bin_result;
+      testClient.testBinary(bin_result, string());
+      if (!bin_result.empty()) {
+        printf("*** FAILED ***\n");
+        printf("invalid length: %lu\n", static_cast<long unsigned int>(bin_result.size()));
+        return_code |= ERR_BASETYPES;
+      }
+    } catch (exception& ex) {
+      printf("}\n*** FAILED ***\n");
+      printf("%s\n", ex.what());
+      return_code |= ERR_BASETYPES;
+    }
     printf("testBinary([-128..127]) = {");
     const char bin_data[256]
         = {-128, -127, -126, -125, -124, -123, -122, -121, -120, -119, -118, -117, -116, -115, -114,
@@ -483,7 +502,7 @@ int main(int argc, char** argv) {
       testClient.testBinary(bin_result, string(bin_data, 256));
       if (bin_result.size() != 256) {
         printf("}\n*** FAILED ***\n");
-        printf("invalid length: %lu\n", bin_result.size());
+        printf("invalid length: %lu\n", static_cast<long unsigned int>(bin_result.size()));
         return_code |= ERR_BASETYPES;
       } else {
         bool first = true;
