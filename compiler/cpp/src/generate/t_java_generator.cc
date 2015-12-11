@@ -341,6 +341,10 @@ public:
            || ttype->is_enum();
   }
 
+  bool is_deprecated(const std::map<std::string, std::string>& annotations) {
+    return annotations.find("deprecated") != annotations.end();
+  }
+
   std::string constant_name(std::string name);
 
 private:
@@ -475,6 +479,7 @@ void t_java_generator::generate_typedef(t_typedef* ttypedef) {
  * @param tenum The enumeration
  */
 void t_java_generator::generate_enum(t_enum* tenum) {
+  bool is_deprecated = this->is_deprecated(tenum->annotations_);
   // Make output file
   string f_enum_name = package_dir_ + "/" + make_valid_java_filename(tenum->get_name()) + ".java";
   ofstream f_enum;
@@ -488,6 +493,9 @@ void t_java_generator::generate_enum(t_enum* tenum) {
             + "import org.apache.thrift.TEnum;" << endl << endl;
 
   generate_java_doc(f_enum, tenum);
+  if (is_deprecated) {
+    indent(f_enum) << "@Deprecated" << endl;
+  }
   indent(f_enum) << "public enum " << tenum->get_name() << " implements org.apache.thrift.TEnum ";
   scope_up(f_enum);
 
@@ -504,6 +512,9 @@ void t_java_generator::generate_enum(t_enum* tenum) {
     }
 
     generate_java_doc(f_enum, *c_iter);
+    if (this->is_deprecated((*c_iter)->annotations_)) {
+      indent(f_enum) << "@Deprecated" << endl;
+    }
     indent(f_enum) << (*c_iter)->get_name() << "(" << value << ")";
   }
   f_enum << ";" << endl << endl;
@@ -798,7 +809,11 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
   generate_java_doc(f_struct, tstruct);
 
   bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
+  bool is_deprecated = this->is_deprecated(tstruct->annotations_);
 
+  if (is_deprecated) {
+    indent(f_struct) << "@Deprecated" << endl;
+  }
   indent(f_struct) << "public " << (is_final ? "final " : "") << "class " << tstruct->get_name()
                    << " extends org.apache.thrift.TUnion<" << tstruct->get_name() << ", "
                    << tstruct->get_name() << "._Fields> ";
@@ -930,9 +945,13 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
     t_field* field = (*m_iter);
     t_type* type = field->get_type();
     std::string cap_name = get_cap_name(field->get_name());
+    bool is_deprecated = this->is_deprecated(field->annotations_);
 
     generate_java_doc(out, field);
     if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
+      if (is_deprecated) {
+        indent(out) << "@Deprecated" << endl;
+      }
       indent(out) << "public byte[] get" << cap_name << "() {" << endl;
       indent(out) << "  set" << cap_name << "(org.apache.thrift.TBaseHelper.rightSize(buffer"
                   << get_cap_name("for") << cap_name << "()));" << endl;
@@ -956,6 +975,9 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
       indent(out) << "  }" << endl;
       indent(out) << "}" << endl;
     } else {
+      if (is_deprecated) {
+        indent(out) << "@Deprecated" << endl;
+      }
       indent(out) << "public " << type_name(field->get_type()) << " get"
                   << get_cap_name(field->get_name()) << "() {" << endl;
       indent(out) << "  if (getSetField() == _Fields." << constant_name(field->get_name()) << ") {"
@@ -974,6 +996,9 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
 
     generate_java_doc(out, field);
     if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
+      if (is_deprecated) {
+        indent(out) << "@Deprecated" << endl;
+      }
       indent(out) << "public void set" << get_cap_name(field->get_name()) << "(byte[] value) {"
                   << endl;
       indent(out) << "  set" << get_cap_name(field->get_name())
@@ -981,6 +1006,9 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
       indent(out) << "}" << endl;
 
       out << endl;
+    }
+    if (is_deprecated) {
+      indent(out) << "@Deprecated" << endl;
     }
     indent(out) << "public void set" << get_cap_name(field->get_name()) << "("
                 << type_name(field->get_type()) << " value) {" << endl;
@@ -1355,11 +1383,15 @@ void t_java_generator::generate_java_struct_definition(ofstream& out,
   generate_java_doc(out, tstruct);
 
   bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
+  bool is_deprecated = this->is_deprecated(tstruct->annotations_);
 
   if (!in_class && !suppress_generated_annotations_) {
     generate_javax_generated_annotation(out);
   }
 
+  if (is_deprecated) {
+    indent(out) << "@Deprecated" << endl;
+  }
   indent(out) << "public " << (is_final ? "final " : "") << (in_class ? "static " : "") << "class "
               << tstruct->get_name() << " ";
 
@@ -2212,10 +2244,14 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
     std::string field_name = field->get_name();
     std::string cap_name = get_cap_name(field_name);
     bool optional = use_option_type_ && field->get_req() == t_field::T_OPTIONAL;
+    bool is_deprecated = this->is_deprecated(field->annotations_);
 
     if (type->is_container()) {
       // Method to return the size of the collection
       if (optional) {
+        if (is_deprecated) {
+          indent(out) << "@Deprecated" << endl;
+        }
         indent(out) << "public Option<Integer> get" << cap_name;
         out << get_cap_name("size() {") << endl;
 
@@ -2232,6 +2268,9 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
         indent_down();
         indent(out) << "}" << endl << endl;
       } else {
+        if (is_deprecated) {
+          indent(out) << "@Deprecated" << endl;
+        }
         indent(out) << "public int get" << cap_name;
         out << get_cap_name("size() {") << endl;
 
@@ -2253,6 +2292,9 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
 
       // Iterator getter for sets and lists
       if (optional) {
+        if (is_deprecated) {
+          indent(out) << "@Deprecated" << endl;
+        }
         indent(out) << "public Option<java.util.Iterator<" << type_name(element_type, true, false)
                     << ">> get" << cap_name;
         out << get_cap_name("iterator() {") << endl;
@@ -2270,6 +2312,9 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
         indent_down();
         indent(out) << "}" << endl << endl;
       } else {
+        if (is_deprecated) {
+          indent(out) << "@Deprecated" << endl;
+        }
         indent(out) << "public java.util.Iterator<" << type_name(element_type, true, false)
                     << "> get" << cap_name;
         out << get_cap_name("iterator() {") << endl;
@@ -2283,6 +2328,9 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
 
       // Add to set or list, create if the set/list is null
       indent(out);
+      if (is_deprecated) {
+        indent(out) << "@Deprecated" << endl;
+      }
       out << "public void add" << get_cap_name("to");
       out << cap_name << "(" << type_name(element_type) << " elem) {" << endl;
 
@@ -2302,6 +2350,9 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
       t_type* val_type = ((t_map*)type)->get_val_type();
 
       indent(out);
+      if (is_deprecated) {
+        indent(out) << "@Deprecated" << endl;
+      }
       out << "public void put" << get_cap_name("to");
       out << cap_name << "(" << type_name(key_type) << " key, " << type_name(val_type) << " val) {"
           << endl;
@@ -2321,6 +2372,9 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
     // Simple getter
     generate_java_doc(out, field);
     if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
+      if (is_deprecated) {
+        indent(out) << "@Deprecated" << endl;
+      }
       indent(out) << "public byte[] get" << cap_name << "() {" << endl;
       indent(out) << "  set" << cap_name << "(org.apache.thrift.TBaseHelper.rightSize("
                   << field_name << "));" << endl;
@@ -2335,6 +2389,9 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
       indent(out) << "}" << endl << endl;
     } else {
       if (optional) {
+        if (is_deprecated) {
+          indent(out) << "@Deprecated" << endl;
+        }
         indent(out) << "public Option<" << type_name(type, true) << ">";
         if (type->is_base_type() && ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
           out << " is";
@@ -2356,6 +2413,9 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
         indent_down();
         indent(out) << "}" << endl << endl;
       } else {
+        if (is_deprecated) {
+          indent(out) << "@Deprecated" << endl;
+        }
         indent(out) << "public " << type_name(type);
         if (type->is_base_type() && ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
           out << " is";
@@ -2373,6 +2433,9 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
     // Simple setter
     generate_java_doc(out, field);
     if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
+      if (is_deprecated) {
+        indent(out) << "@Deprecated" << endl;
+      }
       indent(out) << "public ";
       if (bean_style_) {
         out << "void";
@@ -2387,6 +2450,9 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
         indent(out) << "  return this;" << endl;
       }
       indent(out) << "}" << endl << endl;
+    }
+    if (is_deprecated) {
+      indent(out) << "@Deprecated" << endl;
     }
     indent(out) << "public ";
     if (bean_style_) {
@@ -2412,6 +2478,9 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
     indent(out) << "}" << endl << endl;
 
     // Unsetter
+    if (is_deprecated) {
+      indent(out) << "@Deprecated" << endl;
+    }
     indent(out) << "public void unset" << cap_name << "() {" << endl;
     indent_up();
     if (type_can_be_null(type)) {
@@ -2428,6 +2497,9 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
     // isSet method
     indent(out) << "/** Returns true if field " << field_name
                 << " is set (has been assigned a value) and false otherwise */" << endl;
+    if (is_deprecated) {
+      indent(out) << "@Deprecated" << endl;
+    }
     indent(out) << "public boolean is" << get_cap_name("set") << cap_name << "() {" << endl;
     indent_up();
     if (type_can_be_null(type)) {
@@ -2441,6 +2513,9 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
     indent_down();
     indent(out) << "}" << endl << endl;
 
+    if (is_deprecated) {
+      indent(out) << "@Deprecated" << endl;
+    }
     indent(out) << "public void set" << cap_name << get_cap_name("isSet") << "(boolean value) {"
                 << endl;
     indent_up();
