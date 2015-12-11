@@ -106,7 +106,7 @@ void emit_byte_type_warning();
  * If new_form is NULL, old_form is assumed to be a language identifier, such as "cpp"
  * If new_form is not NULL, both arguments are used exactly as given
  */
-void error_unsupported_namespace_decl(char* old_form, char* new_form = NULL);
+void error_unsupported_namespace_decl(const char* old_form, const char* new_form = NULL);
 
 /**
  * Flex utilities
