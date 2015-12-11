@@ -3444,8 +3444,6 @@ string t_go_generator::argument_list(t_struct* tstruct) {
 }
 
 string t_go_generator::type_name(t_type* ttype) {
-  t_program* program = ttype->get_program();
-
   string module( module_name(ttype));
   if( ! module.empty()) {
     return module + "." + ttype->get_name();
