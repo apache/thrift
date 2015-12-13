@@ -22,6 +22,7 @@ module JSONSpec where
 import Test.Hspec
 import Test.Hspec.QuickCheck (prop)
 
+import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as C
 
 import Thrift.Types
@@ -81,6 +82,35 @@ spec = do
         writeVal proto (TString $ C.pack val)
         val2 <- readVal proto (T_STRING)
         val2 `shouldBe` (TString $ C.pack val)
+
+    describe "binary" $ do
+      it "writes with padding" $ do
+        trans <- openMemoryBuffer
+        let proto = JSONProtocol trans
+        writeVal proto (TBinary $ LBS.pack [1])
+        bin <- tRead trans 100
+        (C.unpack bin) `shouldBe` "\"AQ==\""
+
+      it "reads with padding" $ do
+        trans <- openMemoryBuffer
+        let proto = JSONProtocol trans
+        tWrite trans $ C.pack "\"AQ==\""
+        val <- readVal proto (T_BINARY)
+        val `shouldBe` (TBinary $ LBS.pack [1])
+
+      it "reads without padding" $ do
+        trans <- openMemoryBuffer
+        let proto = JSONProtocol trans
+        tWrite trans $ C.pack "\"AQ\""
+        val <- readVal proto (T_BINARY)
+        val `shouldBe` (TBinary $ LBS.pack [1])
+
+      prop "round trip" $ \val -> do
+        trans <- openMemoryBuffer
+        let proto = JSONProtocol trans
+        writeVal proto (TBinary $ LBS.pack val)
+        val2 <- readVal proto (T_BINARY)
+        val2 `shouldBe` (TBinary $ LBS.pack val)
 
     describe "list" $ do
       it "writes empty list" $ do

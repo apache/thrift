@@ -181,6 +181,7 @@
       "timeout": 10,
       "command": [
         "TestClient.py",
+        "--verbose",
         "--host=localhost",
         "--genpydir=gen-py"
       ]

@@ -53,6 +53,7 @@ data ThriftVal = TStruct (Map.HashMap Int16 (Text, ThriftVal))
                | TI32 Int32
                | TI64 Int64
                | TString LBS.ByteString
+               | TBinary LBS.ByteString
                | TDouble Double
                  deriving (Eq, Show)
 
@@ -70,6 +71,7 @@ data ThriftType
     | T_I32
     | T_I64
     | T_STRING
+    | T_BINARY
     | T_STRUCT TypeMap
     | T_MAP ThriftType ThriftType
     | T_SET ThriftType
@@ -89,6 +91,7 @@ instance Enum ThriftType where
     fromEnum T_I32        = 8
     fromEnum T_I64        = 10
     fromEnum T_STRING     = 11
+    fromEnum T_BINARY     = 11
     fromEnum (T_STRUCT _) = 12
     fromEnum (T_MAP _ _)  = 13
     fromEnum (T_SET _)    = 14
@@ -103,6 +106,7 @@ instance Enum ThriftType where
     toEnum 8  = T_I32
     toEnum 10 = T_I64
     toEnum 11 = T_STRING
+    -- toEnum 11 = T_BINARY
     toEnum 12 = T_STRUCT Map.empty
     toEnum 13 = T_MAP T_VOID T_VOID
     toEnum 14 = T_SET T_VOID

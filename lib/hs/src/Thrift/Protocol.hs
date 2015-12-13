@@ -102,6 +102,7 @@ getTypeOf v =  case v of
   TI32{} -> T_I32
   TI64{} -> T_I64
   TString{} -> T_STRING
+  TBinary{} -> T_BINARY
   TDouble{} -> T_DOUBLE
 
 runParser :: (Protocol p, Transport t, Show a) => p t -> Parser a -> IO a

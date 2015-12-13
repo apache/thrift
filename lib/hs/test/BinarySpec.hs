@@ -66,3 +66,26 @@ spec = do
         writeVal proto (TString val)
         bin <- tRead trans 7
         (LBS.unpack bin) `shouldBe` [0, 0, 0, 3, 97, 97, 97]
+
+    describe "binary" $ do
+      it "writes" $ do
+        trans <- openMemoryBuffer
+        let proto = BinaryProtocol trans
+        writeVal proto (TBinary $ LBS.pack [42, 43, 44])
+        bin <- tRead trans 100
+        (LBS.unpack bin) `shouldBe` [0, 0, 0, 3, 42, 43, 44]
+
+      it "reads" $ do
+        trans <- openMemoryBuffer
+        let proto = BinaryProtocol trans
+        tWrite trans $ LBS.pack [0, 0, 0, 3, 42, 43, 44]
+        val <- readVal proto (T_BINARY)
+        val `shouldBe` (TBinary $ LBS.pack [42, 43, 44])
+
+      prop "round trip" $ \val -> do
+        trans <- openMemoryBuffer
+        let proto = BinaryProtocol trans
+        writeVal proto (TBinary $ LBS.pack val)
+        val2 <- readVal proto (T_BINARY)
+        val2 `shouldBe` (TBinary $ LBS.pack val)
+

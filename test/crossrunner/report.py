@@ -57,7 +57,7 @@ def generate_known_failures(testdir, overwrite, save, out):
     fails = known
   fails_json = json.dumps(sorted(set(fails)), indent=2, separators=(',', ': '))
   if save:
-    with open(os.path.join(testdir, FAIL_JSON % platform.system()), 'w+') as fp:
+    with logfile_open(os.path.join(testdir, FAIL_JSON % platform.system()), 'w+') as fp:
       fp.write(fails_json)
     sys.stdout.write('Successfully updated known failures.\n')
   if out:
@@ -180,7 +180,7 @@ class ExecReporter(TestReporter):
     return False
 
   def _open(self):
-    self.out = open(self.logpath, 'w+')
+    self.out = logfile_open(self.logpath, 'w+')
 
   def _close(self):
     self.out.close()
@@ -324,7 +324,7 @@ class SummaryReporter(TestReporter):
   def _write_html_data(self):
     """Writes JSON data to be read by result html"""
     results = [self._render_result(r) for r in self._tests]
-    with open(self.out_path, 'w+') as fp:
+    with logfile_open(self.out_path, 'w+') as fp:
       fp.write(json.dumps({
         'date': self._format_date(),
         'revision': str(self._revision),
@@ -343,7 +343,7 @@ class SummaryReporter(TestReporter):
           with logfile_open(path, 'r') as prog_fp:
             print(prog_fp.read(), file=fp)
       filename = title.replace(' ', '_') + '.log'
-      with open(os.path.join(self.logdir, filename), 'w+') as fp:
+      with logfile_open(os.path.join(self.logdir, filename), 'w+') as fp:
         for test in map(self._tests.__getitem__, indexes):
           fp.write('TEST: [%s]\n' % test.name)
           add_prog_log(fp, test, test.server.kind)
