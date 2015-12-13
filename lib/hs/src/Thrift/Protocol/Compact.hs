@@ -124,6 +124,7 @@ buildCompactValue (TDouble d) = doubleLE d
 buildCompactValue (TString s) = buildVarint len <> lazyByteString s
   where
     len = fromIntegral (LBS.length s) :: Word32
+buildCompactValue (TBinary s) = buildCompactValue (TString s)
 
 buildCompactStruct :: Map.HashMap Int16 (LT.Text, ThriftVal) -> Builder
 buildCompactStruct = flip (loop 0) mempty . Map.toList
@@ -146,7 +147,7 @@ buildCompactList = foldr (mappend . buildCompactValue) mempty
 
 -- | Reading Functions
 parseCompactValue :: ThriftType -> Parser ThriftVal
-parseCompactValue (T_STRUCT _) = TStruct <$> parseCompactStruct
+parseCompactValue (T_STRUCT tmap) = TStruct <$> parseCompactStruct tmap
 parseCompactValue (T_MAP kt' vt') = do
   n <- parseVarint id
   if n == 0
@@ -164,13 +165,16 @@ parseCompactValue T_I16 = TI16 <$> parseVarint zigZagToI16
 parseCompactValue T_I32 = TI32 <$> parseVarint zigZagToI32
 parseCompactValue T_I64 = TI64 <$> parseVarint zigZagToI64
 parseCompactValue T_DOUBLE = TDouble . bsToDoubleLE <$> P.take 8
-parseCompactValue T_STRING = do
-  len :: Word32 <- parseVarint id
-  TString . LBS.fromStrict <$> P.take (fromIntegral len)
+parseCompactValue T_STRING = parseCompactString TString
+parseCompactValue T_BINARY = parseCompactString TBinary
 parseCompactValue ty = error $ "Cannot read value of type " ++ show ty
 
-parseCompactStruct :: Parser (Map.HashMap Int16 (LT.Text, ThriftVal))
-parseCompactStruct = Map.fromList <$> parseFields 0
+parseCompactString ty = do
+  len :: Word32 <- parseVarint id
+  ty . LBS.fromStrict <$> P.take (fromIntegral len)
+
+parseCompactStruct :: TypeMap -> Parser (Map.HashMap Int16 (LT.Text, ThriftVal))
+parseCompactStruct tmap = Map.fromList <$> parseFields 0
   where
     parseFields :: Int16 -> Parser [(Int16, (LT.Text, ThriftVal))]
     parseFields lastId = do
@@ -185,7 +189,9 @@ parseCompactStruct = Map.fromList <$> parseFields 0
                  else parseVarint zigZagToI16
           val <- if ty == T_BOOL
                  then return (TBool $ (w .&. 0x0F) == 0x01)
-                 else parseCompactValue ty
+                 else case (ty, Map.lookup fid tmap) of
+                        (T_STRING, Just (_, T_BINARY)) -> parseCompactValue T_BINARY
+                        _ -> parseCompactValue ty
           ((fid, (LT.empty, val)) : ) <$> parseFields fid
 
 parseCompactMap :: ThriftType -> ThriftType -> Int32 ->
@@ -255,6 +261,7 @@ fromTType ty = case ty of
   T_I64 -> 0x06
   T_DOUBLE -> 0x07
   T_STRING -> 0x08
+  T_BINARY -> 0x08
   T_LIST{} -> 0x09
   T_SET{} -> 0x0A
   T_MAP{} -> 0x0B
@@ -271,6 +278,7 @@ typeOf v = case v of
   TI64 _ -> 0x06
   TDouble _ -> 0x07
   TString _ -> 0x08
+  TBinary _ -> 0x08
   TList{} -> 0x09
   TSet{} -> 0x0A
   TMap{} -> 0x0B

@@ -168,13 +168,13 @@ runClient p = do
                       }
   putStrLn "testNest"
   nestOut <- Client.testNest prot nestIn
-  when (nestIn /= nestOut) exitSuccess
+  when (nestIn /= nestOut) exitFailure
 
   -- Map Test
   let mapIn = Map.fromList $ map (\i -> (i, i-10)) [1..5]
   putStrLn "testMap"
   mapOut <- Client.testMap prot mapIn
-  when (mapIn /= mapOut) exitSuccess
+  when (mapIn /= mapOut) exitFailure
 
   -- Set Test
   let setIn = Set.fromList [-2..3]

@@ -56,3 +56,26 @@ spec = do
         writeVal proto $ TDouble val
         val2 <- readVal proto T_DOUBLE
         val2 `shouldBe` (TDouble val)
+
+    describe "binary" $ do
+      it "writes" $ do
+        trans <- openMemoryBuffer
+        let proto = CompactProtocol trans
+        writeVal proto (TBinary $ LBS.pack [42, 43, 44])
+        bin <- tRead trans 100
+        (LBS.unpack bin) `shouldBe` [3, 42, 43, 44]
+
+      it "reads" $ do
+        trans <- openMemoryBuffer
+        let proto = CompactProtocol trans
+        tWrite trans $ LBS.pack [3, 42, 43, 44]
+        val <- readVal proto (T_BINARY)
+        val `shouldBe` (TBinary $ LBS.pack [42, 43, 44])
+
+      prop "round trip" $ \val -> do
+        trans <- openMemoryBuffer
+        let proto = CompactProtocol trans
+        writeVal proto (TBinary $ LBS.pack val)
+        val2 <- readVal proto (T_BINARY)
+        val2 `shouldBe` (TBinary $ LBS.pack val)
+
