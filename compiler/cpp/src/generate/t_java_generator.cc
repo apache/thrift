@@ -2064,12 +2064,23 @@ void t_java_generator::generate_reflection_setters(ostringstream& out,
                                                    t_type* type,
                                                    string field_name,
                                                    string cap_name) {
+  const bool is_binary = type->is_base_type() && ((t_base_type*)type)->is_binary();
   indent(out) << "case " << constant_name(field_name) << ":" << endl;
   indent_up();
   indent(out) << "if (value == null) {" << endl;
   indent(out) << "  unset" << get_cap_name(field_name) << "();" << endl;
   indent(out) << "} else {" << endl;
+  if (is_binary) {
+    indent_up();
+    indent(out) << "if (value instanceof byte[]) {" << endl;
+    indent(out) << "  set" << cap_name << "((byte[])value);" << endl;
+    indent(out) << "} else {" << endl;
+  }
   indent(out) << "  set" << cap_name << "((" << type_name(type, true, false) << ")value);" << endl;
+  if (is_binary) {
+    indent(out) << "}" << endl;
+    indent_down();
+  }
   indent(out) << "}" << endl;
   indent(out) << "break;" << endl << endl;
 
