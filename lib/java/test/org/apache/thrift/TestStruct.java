@@ -309,11 +309,33 @@ public class TestStruct extends TestCase {
   }
 
   public void testBytesBufferFeatures() throws Exception {
-    JavaTestHelper o = new JavaTestHelper();
+    
+    final String testString = "testBytesBufferFeatures";
+    final JavaTestHelper o = new JavaTestHelper();
+
     o.setReq_bin((ByteBuffer)null);
     assertNull(o.getReq_bin());
+
+    o.setReq_bin(ByteBuffer.wrap(testString.getBytes()));
+    assertNotNull(o.getReq_bin());
+
     o.setReq_bin((byte[])null);
     assertNull(o.getReq_bin());
+
+    o.setReq_bin(testString.getBytes());
+    assertNotNull(o.getReq_bin());
+
+    o.setFieldValue(JavaTestHelper._Fields.REQ_BIN, null);
+    assertNull(o.getReq_bin());
+
+    o.setFieldValue(JavaTestHelper._Fields.REQ_BIN, testString.getBytes());
+    assertNotNull(o.getReq_bin());
+
+    o.setFieldValue(JavaTestHelper._Fields.REQ_BIN, null);
+    assertNull(o.getReq_bin());
+
+    o.setFieldValue(JavaTestHelper._Fields.REQ_BIN, ByteBuffer.wrap(testString.getBytes()));
+    assertNotNull(o.getReq_bin());
   }
 
   public void testJavaSerializable() throws Exception {
