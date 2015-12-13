@@ -104,6 +104,7 @@ buildBinaryValue (TDouble d) = doubleBE d
 buildBinaryValue (TString s) = int32BE len <> lazyByteString s
   where
     len :: Int32 = fromIntegral (LBS.length s)
+buildBinaryValue (TBinary s) = buildBinaryValue (TString s)
 
 buildBinaryStruct :: Map.HashMap Int16 (LT.Text, ThriftVal) -> Builder
 buildBinaryStruct = Map.foldrWithKey combine mempty
@@ -121,7 +122,7 @@ buildBinaryList = foldr (mappend . buildBinaryValue) mempty
 
 -- | Reading Functions
 parseBinaryValue :: ThriftType -> P.Parser ThriftVal
-parseBinaryValue (T_STRUCT _) = TStruct <$> parseBinaryStruct
+parseBinaryValue (T_STRUCT tmap) = TStruct <$> parseBinaryStruct tmap
 parseBinaryValue (T_MAP _ _) = do
   kt <- parseType
   vt <- parseType
@@ -141,18 +142,23 @@ parseBinaryValue T_I16 = TI16 . Binary.decode . LBS.fromStrict <$> P.take 2
 parseBinaryValue T_I32 = TI32 . Binary.decode . LBS.fromStrict <$> P.take 4
 parseBinaryValue T_I64 = TI64 . Binary.decode . LBS.fromStrict <$> P.take 8
 parseBinaryValue T_DOUBLE = TDouble . bsToDouble <$> P.take 8
-parseBinaryValue T_STRING = do
-  i :: Int32  <- Binary.decode . LBS.fromStrict <$> P.take 4
-  TString . LBS.fromStrict <$> P.take (fromIntegral i)
+parseBinaryValue T_STRING = parseBinaryString TString
+parseBinaryValue T_BINARY = parseBinaryString TBinary
 parseBinaryValue ty = error $ "Cannot read value of type " ++ show ty
 
-parseBinaryStruct :: P.Parser (Map.HashMap Int16 (LT.Text, ThriftVal))
-parseBinaryStruct = Map.fromList <$> P.manyTill parseField (matchType T_STOP)
+parseBinaryString ty = do
+  i :: Int32  <- Binary.decode . LBS.fromStrict <$> P.take 4
+  ty . LBS.fromStrict <$> P.take (fromIntegral i)
+
+parseBinaryStruct :: TypeMap -> P.Parser (Map.HashMap Int16 (LT.Text, ThriftVal))
+parseBinaryStruct tmap = Map.fromList <$> P.manyTill parseField (matchType T_STOP)
   where
     parseField = do
       t <- parseType
       n <- Binary.decode . LBS.fromStrict <$> P.take 2
-      v <- parseBinaryValue t
+      v <- case (t, Map.lookup n tmap) of
+             (T_STRING, Just (_, T_BINARY)) -> parseBinaryValue T_BINARY
+             _ -> parseBinaryValue t
       return (n, ("", v))
 
 parseBinaryMap :: ThriftType -> ThriftType -> Int32 -> P.Parser [(ThriftVal, ThriftVal)]
