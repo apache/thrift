@@ -140,11 +140,11 @@ class TSocket extends TTransport {
                               $port=9090,
                               $persist=false,
                               $debugHandler=null) {
-      $this->host_ = $host;
-      $this->port_ = $port;
-      $this->persist_ = $persist;
-      $this->debugHandler_ = $debugHandler ? $debugHandler : 'error_log';
-    }
+    $this->host_ = $host;
+    $this->port_ = $port;
+    $this->persist_ = $persist;
+    $this->debugHandler_ = $debugHandler ? $debugHandler : 'error_log';
+  }
 
   /**
    * @param resource $handle
@@ -241,16 +241,16 @@ class TSocket extends TTransport {
 
     if ($this->persist_) {
       $this->handle_ = pfsockopen($this->host_,
-        $this->port_,
-        $errno,
-        $errstr,
-        $this->connTimeoutSec_ + ($this->connTimeoutUsec_ / 1000000));
+                       $this->port_,
+                       $errno,
+                       $errstr,
+                       $this->connTimeoutSec_ + ($this->connTimeoutUsec_ / 1000000));
     } else {
       $this->handle_ = fsockopen($this->host_,
-        $this->port_,
-        $errno,
-        $errstr,
-        $this->connTimeoutSec_ + ($this->connTimeoutUsec_ / 1000000));
+                       $this->port_,
+                       $errno,
+                       $errstr,
+                       $this->connTimeoutSec_ + ($this->connTimeoutUsec_ / 1000000));
     }
 
     // Connect failed?
