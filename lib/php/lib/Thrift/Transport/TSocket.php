@@ -31,8 +31,7 @@ use Thrift\Factory\TStringFuncFactory;
  *
  * @package thrift.transport
  */
-class TSocket extends TTransport
-{
+class TSocket extends TTransport {
   /**
    * Handle to PHP socket
    *
@@ -151,8 +150,7 @@ class TSocket extends TTransport
    * @param resource $handle
    * @return void
    */
-  public function setHandle($handle)
-  {
+  public function setHandle($handle) {
     $this->handle_ = $handle;
   }
 
@@ -161,8 +159,7 @@ class TSocket extends TTransport
    *
    * @param int $timeout  Timeout in milliseconds.
    */
-  public function setConnTimeout($timeout)
-  {
+  public function setConnTimeout($timeout) {
     $this->connTimeoutSec_ = floor($timeout / 1000);
     $this->connTimeoutUsec_ =
       ($timeout - ($this->connTimeoutSec_ * 1000)) * 1000;
@@ -173,8 +170,7 @@ class TSocket extends TTransport
    *
    * @param int $timeout  Timeout in milliseconds.
    */
-  public function setSendTimeout($timeout)
-  {
+  public function setSendTimeout($timeout) {
     $this->sendTimeoutSec_ = floor($timeout / 1000);
     $this->sendTimeoutUsec_ =
       ($timeout - ($this->sendTimeoutSec_ * 1000)) * 1000;
@@ -185,8 +181,7 @@ class TSocket extends TTransport
    *
    * @param int $timeout  Timeout in milliseconds.
    */
-  public function setRecvTimeout($timeout)
-  {
+  public function setRecvTimeout($timeout) {
     $this->recvTimeoutSec_ = floor($timeout / 1000);
     $this->recvTimeoutUsec_ =
       ($timeout - ($this->recvTimeoutSec_ * 1000)) * 1000;
@@ -197,8 +192,7 @@ class TSocket extends TTransport
    *
    * @param bool $debug
    */
-  public function setDebug($debug)
-  {
+  public function setDebug($debug) {
     $this->debug_ = $debug;
   }
 
@@ -207,8 +201,7 @@ class TSocket extends TTransport
    *
    * @return string host
    */
-  public function getHost()
-  {
+  public function getHost() {
     return $this->host_;
   }
 
@@ -217,8 +210,7 @@ class TSocket extends TTransport
    *
    * @return int port
    */
-  public function getPort()
-  {
+  public function getPort() {
     return $this->port_;
   }
 
@@ -227,16 +219,14 @@ class TSocket extends TTransport
    *
    * @return bool true if the socket is open
    */
-  public function isOpen()
-  {
+  public function isOpen() {
     return is_resource($this->handle_);
   }
 
   /**
    * Connects the socket.
    */
-  public function open()
-  {
+  public function open() {
     if ($this->isOpen()) {
       throw new TTransportException('Socket already connected', TTransportException::ALREADY_OPEN);
     }
@@ -276,8 +266,7 @@ class TSocket extends TTransport
   /**
    * Closes the socket.
    */
-  public function close()
-  {
+  public function close() {
     if (!$this->persist_) {
       fclose($this->handle_);
       $this->handle_ = null;
@@ -293,8 +282,7 @@ class TSocket extends TTransport
    * @param int $len Maximum number of bytes to read.
    * @return string Binary data
    */
-  public function read($len)
-  {
+  public function read($len) {
     if($len <= 0) {
       throw new TTransportException("TSocket: read len $len invalid"); 
     }
@@ -338,8 +326,7 @@ class TSocket extends TTransport
    *
    * @param string $buf The data to write
    */
-  public function write($buf)
-  {
+  public function write($buf) {
     $null = null;
     $write = array($this->handle_);
 
@@ -377,8 +364,7 @@ class TSocket extends TTransport
    * If you wish to have flushable buffering behaviour, wrap this TSocket
    * in a TBufferedTransport.
    */
-  public function flush()
-  {
+  public function flush() {
     // no-op
   }
 
@@ -388,8 +374,7 @@ class TSocket extends TTransport
    * Improvement of stream_select. The tv_sec and tv_usec will be updated after the function
    *
    */
-  public static function stream_select_ex(&$read,&$write,&$except,&$tv_sec,&$tv_usec)
-  {
+  public static function stream_select_ex(&$read,&$write,&$except,&$tv_sec,&$tv_usec) {
     $timeout = $tv_sec * 1000000 + $tv_usec;
     $begin = gettimeofday();
     $ret = stream_select($read,$write,$except,$tv_sec,$tv_usec);  
@@ -403,8 +388,7 @@ class TSocket extends TTransport
     return $ret;
   }
 
-  private static function sockErr_()
-  {
+  private static function sockErr_() {
     $errno = socket_last_error(); 
     return "errno:".$errno." msg:".socket_strerror($errno)." ";
   }
