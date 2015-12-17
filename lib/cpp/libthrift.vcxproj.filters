@@ -105,6 +105,10 @@
       <Filter>transport</Filter>
     </ClCompile>
     <ClCompile Include="src\thrift\windows\OverlappedSubmissionThread.cpp" />
+    <ClCompile Include="src\thrift\protocol\TProtocol.cpp">
+      <Filter>protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\TOutput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\thrift\transport\TBufferTransports.h">
@@ -228,6 +232,7 @@
       <Filter>transport</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\windows\OverlappedSubmissionThread.h" />
+    <ClInclude Include="src\thrift\TOutput.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="protocol">

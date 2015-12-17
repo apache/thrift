@@ -48,10 +48,12 @@
     <ClCompile Include="src\thrift\protocol\TDebugProtocol.cpp" />
     <ClCompile Include="src\thrift\protocol\TJSONProtocol.cpp" />
     <ClCompile Include="src\thrift\protocol\TMultiplexedProtocol.cpp" />
+    <ClCompile Include="src\thrift\protocol\TProtocol.cpp" />
     <ClCompile Include="src\thrift\server\TSimpleServer.cpp" />
     <ClCompile Include="src\thrift\server\TThreadPoolServer.cpp" />
     <ClCompile Include="src\thrift\server\TThreadedServer.cpp" />
     <ClCompile Include="src\thrift\TApplicationException.cpp" />
+    <ClCompile Include="src\thrift\TOutput.cpp" />
     <ClCompile Include="src\thrift\transport\TBufferTransports.cpp" />
     <ClCompile Include="src\thrift\transport\TFDTransport.cpp" />
     <ClCompile Include="src\thrift\transport\THttpClient.cpp" />
@@ -92,6 +94,7 @@
     <ClInclude Include="src\thrift\server\TThreadedServer.h" />
     <ClInclude Include="src\thrift\TApplicationException.h" />
     <ClInclude Include="src\thrift\Thrift.h" />
+    <ClInclude Include="src\thrift\TOutput.h" />
     <ClInclude Include="src\thrift\TProcessor.h" />
     <ClInclude Include="src\thrift\transport\TBufferTransports.h" />
     <ClInclude Include="src\thrift\transport\TFDTransport.h" />
