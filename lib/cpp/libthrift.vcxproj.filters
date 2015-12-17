@@ -4,11 +4,7 @@
     <ClCompile Include="src\thrift\transport\TBufferTransports.cpp">
       <Filter>transport</Filter>
     </ClCompile>
-    <ClCompile Include="src\thrift\Thrift.cpp" />
     <ClCompile Include="src\thrift\TApplicationException.cpp" />
-    <ClCompile Include="src\thrift\windows\StdAfx.cpp">
-      <Filter>windows</Filter>
-    </ClCompile>
     <ClCompile Include="src\thrift\transport\TTransportException.cpp">
       <Filter>transport</Filter>
     </ClCompile>
@@ -108,6 +104,11 @@
     <ClCompile Include="src\thrift\transport\TPipeServer.cpp">
       <Filter>transport</Filter>
     </ClCompile>
+    <ClCompile Include="src\thrift\windows\OverlappedSubmissionThread.cpp" />
+    <ClCompile Include="src\thrift\protocol\TProtocol.cpp">
+      <Filter>protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\TOutput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\thrift\transport\TBufferTransports.h">
@@ -122,12 +123,6 @@
     <ClInclude Include="src\thrift\Thrift.h" />
     <ClInclude Include="src\thrift\TProcessor.h" />
     <ClInclude Include="src\thrift\TApplicationException.h" />
-    <ClInclude Include="src\thrift\windows\StdAfx.h">
-      <Filter>windows</Filter>
-    </ClInclude>
-    <ClInclude Include="src\thrift\windows\TargetVersion.h">
-      <Filter>windows</Filter>
-    </ClInclude>
     <ClInclude Include="src\thrift\concurrency\Exception.h">
       <Filter>concurrency</Filter>
     </ClInclude>
@@ -218,9 +213,6 @@
     <ClInclude Include="src\thrift\windows\SocketPair.h">
       <Filter>windows</Filter>
     </ClInclude>
-    <ClInclude Include="src\thrift\windows\force_inc.h">
-      <Filter>windows</Filter>
-    </ClInclude>
     <ClInclude Include="src\thrift\concurrency\BoostThreadFactory.h">
       <Filter>concurrency</Filter>
     </ClInclude>
@@ -239,6 +231,8 @@
     <ClInclude Include="src\thrift\transport\TPipeServer.h">
       <Filter>transport</Filter>
     </ClInclude>
+    <ClInclude Include="src\thrift\windows\OverlappedSubmissionThread.h" />
+    <ClInclude Include="src\thrift\TOutput.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="protocol">
@@ -269,9 +263,6 @@
   <ItemGroup>
     <None Include="src\thrift\protocol\TBinaryProtocol.tcc">
       <Filter>protocol</Filter>
-    </None>
-    <None Include="src\thrift\windows\tr1\functional">
-      <Filter>windows\tr1</Filter>
     </None>
   </ItemGroup>
 </Project>
