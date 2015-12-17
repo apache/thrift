@@ -77,7 +77,7 @@ public class TMultiplexedProcessor implements TProcessor {
      *     <li>Dispatch to the processor, with a decorated instance of TProtocol
      *         that allows readMessageBegin() to return the original TMessage.</li>
      * </ol>
-     *  
+     *
      * @throws TException If the message type is not CALL or ONEWAY, if
      * the service name was not found in the message, or if the service
      * name was not found in the service map.  You called {@link #registerProcessor(String, TProcessor) registerProcessor}
@@ -128,7 +128,7 @@ public class TMultiplexedProcessor implements TProcessor {
      *  to allow them to call readMessageBegin() and get a TMessage in exactly
      *  the standard format, without the service name prepended to TMessage.name.
      */
-    private static class StoredMessageProtocol extends TProtocolDecorator {
+    static final class StoredMessageProtocol extends TProtocolDecorator {
         TMessage messageBegin;
         public StoredMessageProtocol(TProtocol protocol, TMessage messageBegin) {
             super(protocol);
