@@ -2437,6 +2437,10 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
         out <<
           indent() << "::apache::thrift::async::TConcurrentSendSentry sentry(&this->sync_);" << endl;
       }
+      if (style == "Cob") {
+        out <<
+          indent() << _this << "otrans_->resetBuffer();" << endl;
+      }
       out <<
         indent() << _this << "oprot_->writeMessageBegin(\"" << 
         (*f_iter)->get_name() << 
