@@ -86,7 +86,6 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
         return true;
     }
 
-    @Override
     public boolean process(TProtocol in, TProtocol out) throws TException {
         return false;
     }

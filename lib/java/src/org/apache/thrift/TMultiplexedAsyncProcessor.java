@@ -36,7 +36,7 @@ import java.util.Map;
  * </code></blockquote>
  */
 public final class TMultiplexedAsyncProcessor implements TAsyncProcessor, TProcessor {
-    private final Map<String,TBaseAsyncProcessor> SERVICE_PROCESSOR_MAP = new HashMap<>();
+    private final Map<String,TBaseAsyncProcessor> SERVICE_PROCESSOR_MAP = new HashMap<String, TBaseAsyncProcessor>();
 
     /**
      * 'Register' a service with this <code>TMultiplexedAsyncProcessor</code>.  This
@@ -72,7 +72,6 @@ public final class TMultiplexedAsyncProcessor implements TAsyncProcessor, TProce
      * name was not found in the service map.  You called {@link #registerProcessor(String, TBaseAsyncProcessor) registerProcessor}
      * during initialization, right? :)
      */
-    @Override
     public boolean process(AsyncFrameBuffer fb) throws TException {
         final TMessage messageBegin = fb.getInputProtocol().readMessageBegin();
 
@@ -123,7 +122,6 @@ public final class TMultiplexedAsyncProcessor implements TAsyncProcessor, TProce
         return actualProcessor;
     }
 
-    @Override
     public boolean process(TProtocol in, TProtocol out) {
         return false;
     }
