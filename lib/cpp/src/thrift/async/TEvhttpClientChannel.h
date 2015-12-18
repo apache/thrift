@@ -20,7 +20,9 @@
 #ifndef _THRIFT_TEVHTTP_CLIENT_CHANNEL_H_
 #define _THRIFT_TEVHTTP_CLIENT_CHANNEL_H_ 1
 
+#include <queue>
 #include <string>
+#include <utility>
 #include <boost/shared_ptr.hpp>
 #include <thrift/async/TAsyncChannel.h>
 
@@ -72,8 +74,9 @@ private:
 
   std::string host_;
   std::string path_;
-  VoidCallback cob_;
-  apache::thrift::transport::TMemoryBuffer* recvBuf_;
+  typedef std::pair<VoidCallback, apache::thrift::transport::TMemoryBuffer*> Completion;
+  typedef std::queue<Completion> CompletionQueue;
+  CompletionQueue completionQueue_;
   struct evhttp_connection* conn_;
 };
 }
