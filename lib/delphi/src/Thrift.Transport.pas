@@ -19,6 +19,11 @@
 
  {$SCOPEDENUMS ON}
 
+{$IF CompilerVersion < 28.0}
+  {$DEFINE OLD_SOCKETS}   // TODO: add socket support for CompilerVersion >= 28.0
+{$IFEND}
+
+
 unit Thrift.Transport;
 
 interface
@@ -27,7 +32,10 @@ uses
   Classes,
   SysUtils,
   Math,
-  Sockets, WinSock,
+  WinSock,
+  {$IFDEF OLD_SOCKETS}
+  Sockets,
+  {$ENDIF}
   Generics.Collections,
   Thrift.Collections,
   Thrift.Utils,
@@ -151,6 +159,7 @@ type
     function GetTransport( const ATrans: ITransport): ITransport; virtual;
   end;
 
+  {$IFDEF OLD_SOCKETS}
   TTcpSocketStreamImpl = class( TThriftStreamImpl )
   private type
     TWaitForData = ( wfd_HaveData, wfd_Timeout, wfd_Error);
@@ -173,6 +182,7 @@ type
   public
     constructor Create( const ATcpClient: TCustomIpClient; const aTimeout : Integer = 0);
   end;
+  {$ENDIF}
 
   IStreamTransport = interface( ITransport )
     ['{A8479B47-2A3E-4421-A9A0-D5A9EDCC634A}']
@@ -223,6 +233,7 @@ type
     destructor Destroy; override;
   end;
 
+  {$IFDEF OLD_SOCKETS}
   TServerSocketImpl = class( TServerTransportImpl)
   private
     FServer : TTcpServer;
@@ -239,6 +250,7 @@ type
     procedure Listen; override;
     procedure Close; override;
   end;
+  {$ENDIF}
 
   TBufferedTransportImpl = class( TTransportImpl )
   private
@@ -263,6 +275,7 @@ type
     property IsOpen: Boolean read GetIsOpen;
   end;
 
+  {$IFDEF OLD_SOCKETS}
   TSocketImpl = class(TStreamTransportImpl)
   private
     FClient : TCustomIpClient;
@@ -284,6 +297,7 @@ type
     property Host : string read FHost;
     property Port: Integer read FPort;
   end;
+  {$ENDIF}
 
   TFramedTransportImpl = class( TTransportImpl)
   private const
@@ -531,6 +545,7 @@ end;
 
 { TServerSocket }
 
+{$IFDEF OLD_SOCKETS}
 constructor TServerSocketImpl.Create( const AServer: TTcpServer; AClientTimeout: Integer);
 begin
   inherited Create;
@@ -727,6 +742,7 @@ begin
   FInputStream := TTcpSocketStreamImpl.Create( FClient, FTimeout);
   FOutputStream := FInputStream;
 end;
+{$ENDIF}
 
 { TBufferedStream }
 
@@ -1168,6 +1184,7 @@ end;
 
 { TTcpSocketStreamImpl }
 
+{$IFDEF OLD_SOCKETS}
 procedure TTcpSocketStreamImpl.Close;
 begin
   FTcpClient.Close;
@@ -1385,6 +1402,7 @@ begin
 
   FTcpClient.SendBuf( Pointer(@buffer[offset])^, count);
 end;
+{$ENDIF}
 
 {$IF CompilerVersion < 21.0}
 initialization

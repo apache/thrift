@@ -140,7 +140,7 @@ function TThriftStreamAdapterCOM.ToArray: TBytes;
 var
   statstg: TStatStg;
   len : Integer;
-  NewPos : Int64;
+  NewPos : {$IF CompilerVersion >= 30.0} UInt64 {$ELSE} Int64  {$IFEND};
   cbRead : Integer;
 begin
   FillChar( statstg, SizeOf( statstg), 0);
