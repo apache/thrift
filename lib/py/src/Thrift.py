@@ -20,7 +20,7 @@
 import sys
 
 
-class TType:
+class TType(object):
   STOP   = 0
   VOID   = 1
   BOOL   = 2
@@ -59,14 +59,14 @@ class TType:
                      'UTF16')
 
 
-class TMessageType:
+class TMessageType(object):
   CALL = 1
   REPLY = 2
   EXCEPTION = 3
   ONEWAY = 4
 
 
-class TProcessor:
+class TProcessor(object):
   """Base class for procsessor, which works on two streams."""
 
   def process(iprot, oprot):

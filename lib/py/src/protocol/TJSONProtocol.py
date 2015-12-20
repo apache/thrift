@@ -559,7 +559,7 @@ class TJSONProtocol(TJSONProtocolBase):
     self.writeJSONBase64(binary)
 
 
-class TJSONProtocolFactory:
+class TJSONProtocolFactory(object):
 
   def getProtocol(self, trans):
     return TJSONProtocol(trans)
