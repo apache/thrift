@@ -39,7 +39,7 @@ class TProtocolException(TException):
     self.type = type
 
 
-class TProtocolBase:
+class TProtocolBase(object):
   """Base class for Thrift protocol driver."""
 
   def __init__(self, trans):
@@ -445,6 +445,6 @@ def checkIntegerLimits(i, bits):
                                   "i64 requires -9223372036854775808 <= number <= 9223372036854775807")
 
 
-class TProtocolFactory:
+class TProtocolFactory(object):
   def getProtocol(self, trans):
     pass

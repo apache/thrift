@@ -79,7 +79,7 @@ def readVarint(trans):
     shift += 7
 
 
-class CompactType:
+class CompactType(object):
   STOP = 0x00
   TRUE = 0x01
   FALSE = 0x02
@@ -399,7 +399,7 @@ class TCompactProtocol(TProtocolBase):
     return TTYPES[byte & 0x0f]
 
 
-class TCompactProtocolFactory:
+class TCompactProtocolFactory(object):
   def __init__(self):
     pass
 

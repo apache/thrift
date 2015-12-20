@@ -223,7 +223,7 @@ class TBinaryProtocol(TProtocolBase):
     return s
 
 
-class TBinaryProtocolFactory:
+class TBinaryProtocolFactory(object):
   def __init__(self, strictRead=False, strictWrite=True):
     self.strictRead = strictRead
     self.strictWrite = strictWrite
@@ -255,6 +255,6 @@ class TBinaryProtocolAccelerated(TBinaryProtocol):
   pass
 
 
-class TBinaryProtocolAcceleratedFactory:
+class TBinaryProtocolAcceleratedFactory(object):
   def getProtocol(self, trans):
     return TBinaryProtocolAccelerated(trans)
