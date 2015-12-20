@@ -84,7 +84,7 @@
 
   <target name="validate-schema" depends="init">
     <java classname="com.github.fge.jsonschema.main.cli.Main"
-          classpathref="test.classpath">
+          classpathref="test.classpath" failonerror="true">
       <arg value="--syntax"/>
       <arg value="${json.schema}"/>
     </java>
@@ -129,7 +129,8 @@
   <macrodef name="validate-json">
     <attribute name="file" default=""/>
     <sequential>
-      <java fork="true"
+      <java failonerror="true"
+            fork="true"
             dir="${json.dir}"
             classname="com.github.fge.jsonschema.main.cli.Main"
             classpathref="test.classpath">
