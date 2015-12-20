@@ -25,5 +25,5 @@ SUBDIRS += test
 endif
 
 EXTRA_DIST = \
-    json-schema.json \
+    schema.json \
     test
