@@ -20,7 +20,8 @@
 from .TProtocol import TType, TProtocolBase, TProtocolException, checkIntegerLimits
 from struct import pack, unpack
 
-from ..compat import binary_to_str, str_to_binary
+from ..compat import binary_to_string
+from ..compat import string_to_binary
 
 __all__ = ['TCompactProtocol', 'TCompactProtocolFactory']
 
@@ -143,7 +144,7 @@ class TCompactProtocol(TProtocolBase):
     self.__writeUByte(self.PROTOCOL_ID)
     self.__writeUByte(self.VERSION | (type << self.TYPE_SHIFT_AMOUNT))
     self.__writeVarint(seqid)
-    self.__writeBinary(str_to_binary(name))
+    self.__writeBinary(string_to_binary(name))
     self.state = VALUE_WRITE
 
   def writeMessageEnd(self):
@@ -320,7 +321,7 @@ class TCompactProtocol(TProtocolBase):
       raise TProtocolException(TProtocolException.BAD_VERSION,
                                'Bad version: %d (expect %d)' % (version, self.VERSION))
     seqid = self.__readVarint()
-    name = binary_to_str(self.__readBinary())
+    name = binary_to_string(self.__readBinary())
     return (name, type, seqid)
 
   def readMessageEnd(self):

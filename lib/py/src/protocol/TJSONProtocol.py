@@ -22,8 +22,8 @@ import base64
 import math
 import sys
 
-from ..compat import str_to_binary
-from ..compat import binary_to_str
+from ..compat import binary_to_string
+from ..compat import string_to_binary
 
 
 __all__ = ['TJSONProtocol',
@@ -212,7 +212,7 @@ class TJSONProtocolBase(TProtocolBase):
       escaped = ESCAPE_CHAR_VALS.get(s, s)
       json_str.append(escaped)
     json_str.append(QUOTE_CHAR)
-    self.trans.write(str_to_binary(EMPTY_STRING.join(json_str)))
+    self.trans.write(string_to_binary(EMPTY_STRING.join(json_str)))
 
   def writeJSONNumber(self, number, formatter='{}'):
     self.context.write()
@@ -331,7 +331,7 @@ class TJSONProtocolBase(TProtocolBase):
     # A JSON String must be decoded to the most String like type a language
     #  has, which is unicode in Python 2 and str in python 3.
     if PY2:
-      return binary_to_str(''.join(string))
+      return binary_to_string(''.join(string))
     return EMPTY_STRING.join(string)
 
   def isJSONNumeric(self, character):
