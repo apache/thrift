@@ -12,6 +12,7 @@
         "string",
         "bool",
         "byte",
+        "i8",
         "i16",
         "i32",
         "i64",
@@ -29,7 +30,7 @@
       "type": "object",
       "properties": {
         "typeId": {
-          "enum": ["void", "string", "bool", "byte", "i16", "i32", "i64", "double", "binary" ]
+          "enum": ["void", "string", "bool", "byte", "i8", "i16", "i32", "i64", "double", "binary" ]
         }
       },
       "required": [ "typeId" ]
