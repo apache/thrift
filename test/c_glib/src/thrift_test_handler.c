@@ -144,8 +144,8 @@ thrift_test_handler_test_binary (TTestThriftTestIf *iface,
   THRIFT_UNUSED_VAR (error);
 
   printf ("testBinary()\n");  // TODO: hex output
-  g_byte_array_ref(thing);
-  *_return = thing;
+  g_byte_array_ref((GByteArray *)thing);
+  *_return = (GByteArray *)thing;
 
   return TRUE;
 }
@@ -515,17 +515,17 @@ thrift_test_handler_test_insanity (TTestThriftTestIf    *iface,
 
   g_hash_table_insert (first_map,
                        GINT_TO_POINTER (T_TEST_NUMBERZ_TWO),
-                       argument);
+                       (gpointer)argument);
   g_hash_table_insert (first_map,
                        GINT_TO_POINTER (T_TEST_NUMBERZ_THREE),
-                       argument);
+                       (gpointer)argument);
 
   /* Increment argument's ref count since first_map now holds two
      references to it and would otherwise attempt to deallocate it
      twice during destruction. We do this instead of creating a copy
      of argument in order to mimic the C++ implementation (and since,
      frankly, the world needs less argument, not more). */
-  g_object_ref (argument);
+  g_object_ref ((gpointer)argument);
 
   looney = g_object_new (T_TEST_TYPE_INSANITY, NULL);
   g_hash_table_insert (second_map,
