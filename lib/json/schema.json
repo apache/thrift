@@ -41,7 +41,9 @@
       "properties": {
         "typeId": {
           "enum": [ "list", "set" ]
-        }
+        },
+        "elemTypeId":  { "$ref": "#/definitions/type-id" },
+        "elemType":    { "$ref": "#/definitions/type-desc" }
       },
       "required": [ "typeId", "elemTypeId" ]
     },
@@ -51,7 +53,11 @@
       "properties": {
         "typeId": {
           "enum": [ "map" ]
-        }
+        },
+        "keyTypeId":   { "$ref": "#/definitions/type-id" },
+        "keyType":     { "$ref": "#/definitions/type-desc" },
+        "valueTypeId": { "$ref": "#/definitions/type-id" },
+        "valueType":   { "$ref": "#/definitions/type-desc" }
       },
       "required": [ "typeId", "keyTypeId", "valueTypeId" ]
     },
@@ -72,13 +78,7 @@
             "type": "object",
             "properties": {
                 "typeId":      { "type": "string" },
-                "keyTypeId":   { "$ref": "#/definitions/type-id" },
-                "keyType":     { "$ref": "#/definitions/type-desc" },
-                "valueTypeId": { "$ref": "#/definitions/type-id" },
-                "valueType":   { "$ref": "#/definitions/type-desc" },
-                "class":       { "type": "string" },
-                "elemTypeId":  { "$ref": "#/definitions/type-id" },
-                "elemType":    { "$ref": "#/definitions/type-desc" }
+                "class":       { "type": "string" }
             }
         },
         {
