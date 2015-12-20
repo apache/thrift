@@ -31,7 +31,7 @@ from thrift.protocol import TBinaryProtocol
 from thrift.transport import TTransport
 
 
-class TServer:
+class TServer(object):
   """Base interface for a server, which must have a serve() method.
 
   Three constructors for all servers:

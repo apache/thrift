@@ -88,7 +88,7 @@ def socket_exception(func):
     return read
 
 
-class Connection:
+class Connection(object):
     """Basic class is represented connection.
 
     It can be in state:
@@ -222,7 +222,7 @@ class Connection:
         self.socket.close()
 
 
-class TNonblockingServer:
+class TNonblockingServer(object):
     """Non-blocking server."""
 
     def __init__(self,
