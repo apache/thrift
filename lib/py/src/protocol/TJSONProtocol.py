@@ -23,12 +23,16 @@ import math
 import sys
 
 from ..compat import str_to_binary
+from ..compat import binary_to_str
 
 
 __all__ = ['TJSONProtocol',
            'TJSONProtocolFactory',
            'TSimpleJSONProtocol',
            'TSimpleJSONProtocolFactory']
+
+PY2 = (sys.version_info[0] == 2)
+EMPTY_STRING = b''.decode()
 
 VERSION = 1
 
@@ -42,20 +46,22 @@ QUOTE = b'"'
 BACKSLASH = b'\\'
 ZERO = b'0'
 
+QUOTE_CHAR = QUOTE.decode()
+
 ESCSEQ0 = ord('\\')
 ESCSEQ1 = ord('u')
 ESCAPE_CHAR_VALS = {
-  '"': '\\"',
-  '\\': '\\\\',
-  '\b': '\\b',
-  '\f': '\\f',
-  '\n': '\\n',
-  '\r': '\\r',
-  '\t': '\\t',
-  # '/': '\\/',
+  b'"'.decode(): b'\\"'.decode(),
+  b'\\'.decode(): b'\\\\'.decode(),
+  b'\b'.decode(): b'\\b'.decode(),
+  b'\f'.decode(): b'\\f'.decode(),
+  b'\n'.decode(): b'\\n'.decode(),
+  b'\r'.decode(): b'\\r'.decode(),
+  b'\t'.decode(): b'\\t'.decode(),
+  # '/.decode()': b'\\/'.decode(),
 }
 ESCAPE_CHARS = {
-    b'"': '"',
+    b'"': QUOTE_CHAR,
     b'\\': '\\',
     b'b': '\b',
     b'f': '\f',
@@ -195,13 +201,18 @@ class TJSONProtocolBase(TProtocolBase):
       self.context = JSONBaseContext(self)
 
   def writeJSONString(self, string):
+    """
+    Write a String to a JSON String.
+    This means a Python 2 unicode/u'' and Python 3 str/'', must be
+    encoded to JSON String.
+    """
     self.context.write()
-    json_str = ['"']
+    json_str = [QUOTE_CHAR]
     for s in string:
       escaped = ESCAPE_CHAR_VALS.get(s, s)
       json_str.append(escaped)
-    json_str.append('"')
-    self.trans.write(str_to_binary(''.join(json_str)))
+    json_str.append(QUOTE_CHAR)
+    self.trans.write(str_to_binary(EMPTY_STRING.join(json_str)))
 
   def writeJSONNumber(self, number, formatter='{}'):
     self.context.write()
@@ -251,20 +262,24 @@ class TJSONProtocolBase(TProtocolBase):
 
   def _toChar(self, high, low=None):
     if not low:
-      if sys.version_info[0] == 2:
+      if PY2:
         return ("\\u%04x" % high).decode('unicode-escape').encode('utf-8')
       else:
         return chr(high)
     else:
       codepoint = (1 << 16) + ((high & 0x3ff) << 10)
       codepoint += low & 0x3ff
-      if sys.version_info[0] == 2:
+      if PY2:
         s = "\\U%08x" % codepoint
         return s.decode('unicode-escape').encode('utf-8')
       else:
         return chr(codepoint)
 
   def readJSONString(self, skipContext):
+    """
+    Read a String from a JSON String. In Python 2, a String is unicode/u'',
+    and in Python 3, a String is str/''.
+    """
     highSurrogate = None
     string = []
     if skipContext is False:
@@ -311,7 +326,13 @@ class TJSONProtocolBase(TProtocolBase):
       if highSurrogate:
         raise TProtocolException(TProtocolException.INVALID_DATA,
                                  "Expected low surrogate char")
-    return ''.join(string)
+
+    # In Python 2, a '' is akin to binary, and u'' is a String.
+    # A JSON String must be decoded to the most String like type a language
+    #  has, which is unicode in Python 2 and str in python 3.
+    if PY2:
+      return binary_to_str(''.join(string))
+    return EMPTY_STRING.join(string)
 
   def isJSONNumeric(self, character):
     return (True if NUMERIC_CHAR.find(character) != - 1 else False)
