@@ -21,6 +21,7 @@
 #include <inttypes.h>
 
 #include <iostream>
+#include <sstream>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TCompactProtocol.h>
 #include <thrift/protocol/THeaderProtocol.h>
@@ -63,45 +64,38 @@ uint64_t now() {
   return ret;
 }
 
-static void testString_clientReturn(const char* host,
-                                    int port,
-                                    event_base* base,
-                                    TProtocolFactory* protocolFactory,
+static void testString_clientReturn(event_base* base,
+                                    int testNr,
                                     ThriftTestCobClient* client) {
-  (void)host;
-  (void)port;
-  (void)protocolFactory;
   try {
     string s;
     client->recv_testString(s);
-    cout << "testString: " << s << endl;
+    std::ostringstream os;
+    os << "test" << testNr;
+    const bool ok = (s == os.str());
+    cout << "testString: " << s << " " << ((ok) ? "ok" : "failed") << endl;
   } catch (TException& exn) {
     cout << "Error: " << exn.what() << endl;
   }
 
-  event_base_loopbreak(base); // end test
+  if (testNr == 9)
+    event_base_loopbreak(base); // end test
 }
 
-static void testVoid_clientReturn(const char* host,
-                                  int port,
-                                  event_base* base,
-                                  TProtocolFactory* protocolFactory,
-                                  ThriftTestCobClient* client) {
+static void testVoid_clientReturn(event_base* base, ThriftTestCobClient* client) {
   try {
     client->recv_testVoid();
     cout << "testVoid" << endl;
 
-    // next test
-    delete client;
-    boost::shared_ptr<TAsyncChannel> channel(new TEvhttpClientChannel(host, "/", host, port, base));
-    client = new ThriftTestCobClient(channel, protocolFactory);
-    client->testString(tcxx::bind(testString_clientReturn,
-                                  host,
-                                  port,
-                                  base,
-                                  protocolFactory,
-                                  tcxx::placeholders::_1),
-                       "Test");
+    for (int testNr = 0; testNr < 10; ++testNr) {
+      std::ostringstream os;
+      os << "test" << testNr;
+      client->testString(tcxx::bind(testString_clientReturn,
+                                    base,
+                                    testNr,
+                                    tcxx::placeholders::_1),
+                       os.str());
+    }
   } catch (TException& exn) {
     cout << "Error: " << exn.what() << endl;
   }
@@ -301,10 +295,7 @@ int main(int argc, char** argv) {
         new TEvhttpClientChannel(host.c_str(), "/", host.c_str(), port, base));
     ThriftTestCobClient* client = new ThriftTestCobClient(channel, protocolFactory.get());
     client->testVoid(tcxx::bind(testVoid_clientReturn,
-                                host.c_str(),
-                                port,
                                 base,
-                                protocolFactory.get(),
                                 tcxx::placeholders::_1));
 
     event_base_loop(base, 0);
