@@ -124,9 +124,11 @@ public:
     policy_ = PosixThreadFactory::OTHER;
 #endif
 
+#if _POSIX_THREAD_PRIORITY_SCHEDULING > 0
     if (pthread_attr_setschedpolicy(&thread_attr, policy_) != 0) {
       throw SystemResourceException("pthread_attr_setschedpolicy failed");
     }
+#endif
 
     struct sched_param sched_param;
     sched_param.sched_priority = priority_;
