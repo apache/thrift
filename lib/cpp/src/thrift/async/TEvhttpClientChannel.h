@@ -74,8 +74,8 @@ private:
 
   std::string host_;
   std::string path_;
-  using Completion = std::pair<VoidCallback, apache::thrift::transport::TMemoryBuffer*>;
-  using CompletionQueue = std::queue<Completion>;
+  typedef std::pair<VoidCallback, apache::thrift::transport::TMemoryBuffer*> Completion;
+  typedef std::queue<Completion> CompletionQueue;
   CompletionQueue completionQueue_;
   struct evhttp_connection* conn_;
 };
