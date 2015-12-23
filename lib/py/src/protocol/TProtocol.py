@@ -20,7 +20,8 @@
 from thrift.Thrift import TException, TType, TFrozenDict
 import six
 
-from ..compat import binary_to_str, str_to_binary
+from ..compat import binary_to_string
+from ..compat import string_to_binary
 
 
 class TProtocolException(TException):
@@ -103,7 +104,7 @@ class TProtocolBase:
     pass
 
   def writeString(self, str_val):
-    self.writeBinary(str_to_binary(str_val))
+    self.writeBinary(string_to_binary(str_val))
 
   def writeBinary(self, str_val):
     pass
@@ -163,7 +164,7 @@ class TProtocolBase:
     pass
 
   def readString(self):
-    return binary_to_str(self.readBinary())
+    return binary_to_string(self.readBinary())
 
   def readBinary(self):
     pass
