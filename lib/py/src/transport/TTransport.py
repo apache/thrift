@@ -139,7 +139,8 @@ class TBufferedTransport(TTransportBase, CReadableTransport):
   def __init__(self, trans, rbuf_size=DEFAULT_BUFFER):
     self.__trans = trans
     self.__wbuf = BufferIO()
-    self.__rbuf = BufferIO()
+    # Pass string argument to initialize read buffer as cStringIO.InputType
+    self.__rbuf = BufferIO(b'')
     self.__rbuf_size = rbuf_size
 
   def isOpen(self):
@@ -256,7 +257,7 @@ class TFramedTransport(TTransportBase, CReadableTransport):
 
   def __init__(self, trans,):
     self.__trans = trans
-    self.__rbuf = BufferIO()
+    self.__rbuf = BufferIO(b'')
     self.__wbuf = BufferIO()
 
   def isOpen(self):
@@ -364,7 +365,7 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
     self.sasl = SASLClient(host, service, mechanism, **sasl_kwargs)
 
     self.__wbuf = BufferIO()
-    self.__rbuf = BufferIO()
+    self.__rbuf = BufferIO(b'')
 
   def open(self):
     if not self.transport.isOpen():

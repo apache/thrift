@@ -62,7 +62,7 @@ struct Nesting {
 
 struct HolyMoley {
   1: list<OneOfEach> big,
-  2: set<list<string>> contain,
+  2: set<list<string> (python.immutable = "")> contain,
   3: map<string,list<Bonk>> bonks,
 }
 
@@ -259,10 +259,10 @@ service EmptyService {}
 // The only purpose of this thing is to increase the size of the generated code
 // so that ZlibTest has more highly compressible data to play with.
 struct BlowUp {
-  1: map<list<i32>,set<map<i32,string>>> b1;
-  2: map<list<i32>,set<map<i32,string>>> b2;
-  3: map<list<i32>,set<map<i32,string>>> b3;
-  4: map<list<i32>,set<map<i32,string>>> b4;
+  1: map<list<i32>(python.immutable = ""),set<map<i32,string> (python.immutable = "")>> b1;
+  2: map<list<i32>(python.immutable = ""),set<map<i32,string> (python.immutable = "")>> b2;
+  3: map<list<i32>(python.immutable = ""),set<map<i32,string> (python.immutable = "")>> b3;
+  4: map<list<i32>(python.immutable = ""),set<map<i32,string> (python.immutable = "")>> b4;
 }
 
 

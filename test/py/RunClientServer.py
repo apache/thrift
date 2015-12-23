@@ -37,6 +37,7 @@ DEFAULT_LIBDIR_GLOB = os.path.join(ROOT_DIR, 'lib', 'py', 'build', 'lib.*')
 DEFAULT_LIBDIR_PY3 = os.path.join(ROOT_DIR, 'lib', 'py', 'build', 'lib')
 
 SCRIPTS = [
+  'FastbinaryTest.py',
   'TestFrozen.py',
   'TSimpleJSONProtocolTest.py',
   'SerializationTest.py',
