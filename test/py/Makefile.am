@@ -29,10 +29,10 @@ thrift_gen =                                    \
         gen-py-default/DebugProtoTest/__init__.py \
         gen-py-slots/ThriftTest/__init__.py           \
         gen-py-slots/DebugProtoTest/__init__.py \
-        gen-py-newstyle/ThriftTest/__init__.py           \
-        gen-py-newstyle/DebugProtoTest/__init__.py \
-        gen-py-newstyleslots/ThriftTest/__init__.py           \
-        gen-py-newstyleslots/DebugProtoTest/__init__.py \
+        gen-py-oldstyle/ThriftTest/__init__.py \
+        gen-py-oldstyle/DebugProtoTest/__init__.py \
+        gen-py-oldstyleslots/ThriftTest/__init__.py \
+        gen-py-oldstyleslots/DebugProtoTest/__init__.py \
         gen-py-dynamic/ThriftTest/__init__.py           \
         gen-py-dynamic/DebugProtoTest/__init__.py \
         gen-py-dynamicslots/ThriftTest/__init__.py           \
@@ -64,13 +64,13 @@ gen-py-slots/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-slots || $(MKDIR_P) gen-py-slots
 	$(THRIFT) --gen py:slots -out gen-py-slots $<
 
-gen-py-newstyle/%/__init__.py: ../%.thrift $(THRIFT)
-	test -d gen-py-newstyle || $(MKDIR_P) gen-py-newstyle
-	$(THRIFT) --gen py:new_style -out gen-py-newstyle $<
+gen-py-oldstyle/%/__init__.py: ../%.thrift $(THRIFT)
+	test -d gen-py-oldstyle || $(MKDIR_P) gen-py-oldstyle
+	$(THRIFT) --gen py:old_style -out gen-py-oldstyle $<
 
-gen-py-newstyleslots/%/__init__.py: ../%.thrift $(THRIFT)
-	test -d gen-py-newstyleslots || $(MKDIR_P) gen-py-newstyleslots
-	$(THRIFT) --gen py:new_style,slots -out gen-py-newstyleslots $<
+gen-py-oldstyleslots/%/__init__.py: ../%.thrift $(THRIFT)
+	test -d gen-py-oldstyleslots || $(MKDIR_P) gen-py-oldstyleslots
+	$(THRIFT) --gen py:old_style,slots -out gen-py-oldstyleslots $<
 
 gen-py-dynamic/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-dynamic || $(MKDIR_P) gen-py-dynamic
@@ -81,4 +81,4 @@ gen-py-dynamicslots/%/__init__.py: ../%.thrift $(THRIFT)
 	$(THRIFT) --gen py:dynamic,slots -out gen-py-dynamicslots $<
 
 clean-local:
-	$(RM) -r gen-py gen-py-slots gen-py-default gen-py-newstyle gen-py-newstyleslots gen-py-dynamic gen-py-dynamicslots
+	$(RM) -r gen-py gen-py-slots gen-py-default gen-py-oldstyle gen-py-oldstyleslots gen-py-dynamic gen-py-dynamicslots
