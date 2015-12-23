@@ -26,7 +26,7 @@ we use the following parameters for test key and certificate creation
     openssl x509 -in server.crt -text > CA.pem
     cat server.crt server.key > server.pem
 
-Export password is **thrift**
+Export password is "thrift" without the quotes
 
     openssl pkcs12 -export -clcerts -in server.crt -inkey server.key -out server.p12
 
@@ -40,9 +40,9 @@ create a signing request:
 
 sign the client certificate with the server.key
 
-    openssl x509 -req -days 365 -in client.csr -CA CA.pem -CAkey server.key -set_serial 01 -out client.crt
+    openssl x509 -req -days 3000 -in client.csr -CA CA.pem -CAkey server.key -set_serial 01 -out client.crt
 
-export certificate in PKCS12 format (Export password is **thrift**)
+export certificate in PKCS12 format (Export password is "thrift" without the quotes)
 
     openssl pkcs12 -export -clcerts -in client.crt -inkey client.key -out client.p12
 
@@ -52,7 +52,7 @@ export certificate in PEM format for OpenSSL usage
 
 
 ## Java key and certificate import
-Java Test Environment uses key and trust store password **thrift**
+Java Test Environment uses key and trust store password "thrift" without the quotes
 
 list keystore entries
 
