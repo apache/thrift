@@ -74,6 +74,6 @@ build_script:
 - cmake --build . --config Release
 # TODO: Fix cpack
 # - cpack
-- ctest -C Release -VV -E "(concurrency_test|processor_test|python_test$)"
+- ctest -C Release -VV -E "(concurrency_test|processor_test|python_test$|^Python)"
 
 #TODO make it perfect ;-r
