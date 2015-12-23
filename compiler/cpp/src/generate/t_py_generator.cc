@@ -2087,7 +2087,7 @@ void t_py_generator::generate_deserialize_container(ofstream& out, t_type* ttype
   // Declare variables, read header
   if (ttype->is_map()) {
     out << indent() << prefix << " = {}" << endl << indent() << "(" << ktype << ", " << vtype
-        << ", " << size << " ) = iprot.readMapBegin()" << endl;
+        << ", " << size << ") = iprot.readMapBegin()" << endl;
   } else if (ttype->is_set()) {
     out << indent() << prefix << " = set()" << endl << indent() << "(" << etype << ", " << size
         << ") = iprot.readSetBegin()" << endl;
