@@ -54,7 +54,16 @@ public:
     std::map<std::string, std::string>::const_iterator iter;
 
     iter = parsed_options.find("new_style");
-    gen_newstyle_ = (iter != parsed_options.end());
+    if (iter != parsed_options.end()) {
+      pwarning(0, "new_style is enabled by default, so the option will be removed in the near future.\n");
+    }
+
+    gen_newstyle_ = true;
+    iter = parsed_options.find("old_style");
+    if (iter != parsed_options.end()) {
+      gen_newstyle_ = false;
+      pwarning(0, "old_style is deprecated and may be removed in the future.\n");
+    }
 
     iter = parsed_options.find("slots");
     gen_slots_ = (iter != parsed_options.end());
@@ -63,7 +72,7 @@ public:
     gen_dynamic_ = (iter != parsed_options.end());
 
     if (gen_dynamic_) {
-      gen_newstyle_ = 0; // dynamic is newstyle
+      gen_newstyle_ = false; // dynamic is newstyle
       gen_dynbaseclass_ = "TBase";
       gen_dynbaseclass_frozen_ = "TFrozenBase";
       gen_dynbaseclass_exc_ = "TExceptionBase";
@@ -2574,7 +2583,8 @@ string t_py_generator::type_to_spec_args(t_type* ttype) {
 THRIFT_REGISTER_GENERATOR(
     py,
     "Python",
-    "    new_style:       Generate new-style classes.\n"
+    "    new_style:       No effect. Kept for backward compatibility.\n"
+    "    old_style:       Deprecated. Generate old-style classes.\n"
     "    twisted:         Generate Twisted-friendly RPC services.\n"
     "    tornado:         Generate code for use with Tornado.\n"
     "    utf8strings:     Encode/decode strings using utf8 in the generated code.\n"
