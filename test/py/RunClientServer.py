@@ -250,7 +250,7 @@ def main():
   parser = OptionParser()
   parser.add_option('--all', action="store_true", dest='all')
   parser.add_option('--genpydirs', type='string', dest='genpydirs',
-                    default='default,slots,newstyle,newstyleslots,dynamic,dynamicslots',
+                    default='default,slots,oldstyle,dynamic,dynamicslots',
                     help='directory extensions for generated code, used as suffixes for \"gen-py-*\" added sys.path for individual tests')
   parser.add_option("--port", type="int", dest="port", default=9090,
                     help="port number for server to listen on")
