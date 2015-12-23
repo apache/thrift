@@ -290,7 +290,7 @@ parse_struct_item_spec(StructItemSpec* dest, PyObject* spec_tuple) {
 
   // i'd like to use ParseArgs here, but it seems to be a bottleneck.
   if (PyTuple_Size(spec_tuple) != 5) {
-    PyErr_Format(PyExc_TypeError, "expecting 5 arguments for spec tuple but got %d", PyTuple_Size(spec_tuple));
+    PyErr_Format(PyExc_TypeError, "expecting 5 arguments for spec tuple but got %d", (int)PyTuple_Size(spec_tuple));
     return false;
   }
 
@@ -350,7 +350,7 @@ static void writeDouble(PyObject* outbuf, double dub) {
 
 /* --- MAIN RECURSIVE OUTPUT FUNCTION -- */
 
-static int
+static bool
 output_val(PyObject* output, PyObject* value, TType type, PyObject* typeargs) {
   /*
    * Refcounting Strategy:
@@ -1185,7 +1185,6 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
 
   case T_STRUCT: {
     StructTypeArgs parsedargs;
-    PyObject* ret;
     if (!parse_struct_args(&parsedargs, typeargs)) {
       return NULL;
     }
