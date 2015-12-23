@@ -494,14 +494,14 @@ void TServerSocket::listen() {
 
     // retrieve bind info
     if (port_ == 0 && retries <= retryLimit_) {
-      struct sockaddr sa;
+      struct sockaddr_storage sa;
       socklen_t len = sizeof(sa);
       std::memset(&sa, 0, len);
-      if (::getsockname(serverSocket_, &sa, &len) < 0) {
+      if (::getsockname(serverSocket_, reinterpret_cast<struct sockaddr*>(&sa), &len) < 0) {
         int errno_copy = errno;
         GlobalOutput.perror("TServerSocket::getPort() getsockname() ", errno_copy);
       } else {
-        if (sa.sa_family == AF_INET6) {
+        if (sa.ss_family == AF_INET6) {
           const struct sockaddr_in6* sin = reinterpret_cast<const struct sockaddr_in6*>(&sa);
           port_ = ntohs(sin->sin6_port);
         } else {
