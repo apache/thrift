@@ -146,7 +146,7 @@ test_structs_one_of_each_initialize_default_values (void)
 
   g_assert_cmpint (a_bite,    ==, 0x7f);
   g_assert_cmpint (integer16, ==, 0x7fff);
-  g_assert_cmpint (integer64, ==, 10000000000);
+  g_assert_cmpint (integer64, ==, G_GINT64_CONSTANT (10000000000));
 
   g_assert (byte_list != NULL);
   g_assert_cmpint (byte_list->len, ==, 3);
@@ -179,8 +179,11 @@ test_structs_one_of_each_initialize_specified_values (void)
   static const gint16 initial_i16_list[5] = { 4181, 6765, 10946, 17711, 28657 };
   static const gint64 initial_i64_list[5] =
     {
-      1100087778366101931, 1779979416004714189, 2880067194370816120,
-      4660046610375530309, 7540113804746346429
+      G_GINT64_CONSTANT (1100087778366101931),
+      G_GINT64_CONSTANT (1779979416004714189),
+      G_GINT64_CONSTANT (2880067194370816120),
+      G_GINT64_CONSTANT (4660046610375530309),
+      G_GINT64_CONSTANT (7540113804746346429)
     };
   static const guint8 initial_base64[8] =
     {
@@ -216,22 +219,23 @@ test_structs_one_of_each_initialize_specified_values (void)
   g_array_append_vals (i64_list, initial_i64_list, 5);
 
   /* All of OneOfEach's properties can be set at construction... */
-  one_of_each = g_object_new (T_TEST_TYPE_ONE_OF_EACH,
-                              "im_true",          TRUE,
-                              "im_false",         FALSE,
-                              "a_bite",           0x50,
-                              "integer16",        0x7e57,
-                              "integer32",        0xdeadbeef,
-                              "integer64",        0xfa15efacade15bad,
-                              "double_precision", M_PI,
-                              "some_characters",  "Debug THIS!",
-                              "zomg_unicode",     "\xd7\n\a\t",
-                              "what_who",         TRUE,
-                              "base64",           base64,
-                              "byte_list",        byte_list,
-                              "i16_list",         i16_list,
-                              "i64_list",         i64_list,
-                              NULL);
+  one_of_each =
+    g_object_new (T_TEST_TYPE_ONE_OF_EACH,
+                  "im_true",          TRUE,
+                  "im_false",         FALSE,
+                  "a_bite",           0x50,
+                  "integer16",        0x7e57,
+                  "integer32",        0xdeadbeef,
+                  "integer64",        G_GINT64_CONSTANT (0xfa15efacade15bad),
+                  "double_precision", M_PI,
+                  "some_characters",  "Debug THIS!",
+                  "zomg_unicode",     "\xd7\n\a\t",
+                  "what_who",         TRUE,
+                  "base64",           base64,
+                  "byte_list",        byte_list,
+                  "i16_list",         i16_list,
+                  "i64_list",         i64_list,
+                  NULL);
   g_assert (one_of_each != NULL);
 
   g_array_unref (i64_list);
@@ -267,7 +271,7 @@ test_structs_one_of_each_initialize_specified_values (void)
   g_assert_cmphex (a_bite,    ==, 0x50);
   g_assert_cmphex (integer16, ==, 0x7e57);
   g_assert_cmphex (integer32, ==, (gint32)0xdeadbeef);
-  g_assert_cmphex (integer64, ==, 0xfa15efacade15bad);
+  g_assert_cmphex (integer64, ==, G_GINT64_CONSTANT (0xfa15efacade15bad));
 
   g_assert_cmpfloat (double_precision, ==, M_PI);
 
