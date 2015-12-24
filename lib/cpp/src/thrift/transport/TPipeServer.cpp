@@ -43,7 +43,7 @@ using boost::shared_ptr;
 class TPipeServerImpl : boost::noncopyable {
 public:
   TPipeServerImpl() {}
-  virtual ~TPipeServerImpl() = 0 {}
+  virtual ~TPipeServerImpl() {}
   virtual void interrupt() = 0;
   virtual boost::shared_ptr<TTransport> acceptImpl() = 0;
 

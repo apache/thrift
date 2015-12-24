@@ -60,6 +60,10 @@
 #endif // _WIN32
 #endif
 
+#if defined(_WIN32) && (_WIN32_WINNT < 0x0600)
+  #define AI_ADDRCONFIG 0x0400
+#endif
+
 template <class T>
 inline const SOCKOPT_CAST_T* const_cast_sockopt(const T* v) {
   return reinterpret_cast<const SOCKOPT_CAST_T*>(v);
@@ -494,18 +498,25 @@ void TServerSocket::listen() {
 
     // retrieve bind info
     if (port_ == 0 && retries <= retryLimit_) {
-      struct sockaddr sa;
+    #ifdef _WIN32
+      struct sockaddr_storage sa;
+      struct sockaddr *pSa = (sockaddr *) &sa;
       socklen_t len = sizeof(sa);
-      std::memset(&sa, 0, len);
-      if (::getsockname(serverSocket_, &sa, &len) < 0) {
-        int errno_copy = errno;
+    #else
+      struct sockaddr sa;
+      struct sockaddr *pSa = &sa;
+      socklen_t len = sizeof(sa);
+    #endif
+      std::memset(pSa, 0, len);
+      if (::getsockname(serverSocket_, pSa, &len) < 0) {
+        int errno_copy = THRIFT_GET_SOCKET_ERROR;
         GlobalOutput.perror("TServerSocket::getPort() getsockname() ", errno_copy);
       } else {
-        if (sa.sa_family == AF_INET6) {
-          const struct sockaddr_in6* sin = reinterpret_cast<const struct sockaddr_in6*>(&sa);
+        if (pSa->sa_family == AF_INET6) {
+          const struct sockaddr_in6* sin = reinterpret_cast<const struct sockaddr_in6*>(pSa);
           port_ = ntohs(sin->sin6_port);
         } else {
-          const struct sockaddr_in* sin = reinterpret_cast<const struct sockaddr_in*>(&sa);
+          const struct sockaddr_in* sin = reinterpret_cast<const struct sockaddr_in*>(pSa);
           port_ = ntohs(sin->sin_port);
         }
       }
