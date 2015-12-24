@@ -808,8 +808,10 @@ string t_c_glib_generator::constant_value(string name, t_type* type, t_const_val
     case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
-    case t_base_type::TYPE_I64:
       render << value->get_integer();
+      break;
+    case t_base_type::TYPE_I64:
+      render << "G_GINT64_CONSTANT (" << value->get_integer() << ")";
       break;
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {

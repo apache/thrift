@@ -14,12 +14,14 @@ static void enum_constants_read_write() {
   TTestEnumTestStruct* src = T_TEST_ENUM_TEST;
   TTestEnumTestStruct* dst = g_object_new(T_TEST_TYPE_ENUM_TEST_STRUCT, NULL);
   TTestEnumTestStructClass* cls = T_TEST_ENUM_TEST_STRUCT_GET_CLASS(src);
+  int write_len;
+  int read_len;
 
-  int write_len = THRIFT_STRUCT_CLASS(cls)->write(THRIFT_STRUCT(src), protocol, &error);
+  write_len = THRIFT_STRUCT_CLASS(cls)->write(THRIFT_STRUCT(src), protocol, &error);
   g_assert(!error);
   g_assert(write_len > 0);
 
-  int read_len = THRIFT_STRUCT_CLASS(cls)->read(THRIFT_STRUCT(dst), protocol, &error);
+  read_len = THRIFT_STRUCT_CLASS(cls)->read(THRIFT_STRUCT(dst), protocol, &error);
   g_assert(!error);
   g_assert_cmpint(write_len, ==, read_len);
 
@@ -37,12 +39,14 @@ static void struct_constants_read_write() {
   TTestCompactProtoTestStruct* src = T_TEST_COMPACT_TEST;
   TTestCompactProtoTestStruct* dst = g_object_new(T_TEST_TYPE_COMPACT_PROTO_TEST_STRUCT, NULL);
   TTestCompactProtoTestStructClass* cls = T_TEST_COMPACT_PROTO_TEST_STRUCT_GET_CLASS(src);
+  int write_len;
+  int read_len;
 
-  int write_len = THRIFT_STRUCT_CLASS(cls)->write(THRIFT_STRUCT(src), protocol, &error);
+  write_len = THRIFT_STRUCT_CLASS(cls)->write(THRIFT_STRUCT(src), protocol, &error);
   g_assert(!error);
   g_assert(write_len > 0);
 
-  int read_len = THRIFT_STRUCT_CLASS(cls)->read(THRIFT_STRUCT(dst), protocol, &error);
+  read_len = THRIFT_STRUCT_CLASS(cls)->read(THRIFT_STRUCT(dst), protocol, &error);
   g_assert(!error);
   g_assert_cmpint(write_len, ==, read_len);
 
@@ -60,12 +64,14 @@ static void struct_read_write_length_should_equal() {
   TTestBonk* src = g_object_new(T_TEST_TYPE_BONK, NULL);
   TTestBonk* dst = g_object_new(T_TEST_TYPE_BONK, NULL);
   TTestBonkClass* cls = T_TEST_BONK_GET_CLASS(src);
+  int write_len;
+  int read_len;
 
-  int write_len = THRIFT_STRUCT_CLASS(cls)->write(THRIFT_STRUCT(src), protocol, &error);
+  write_len = THRIFT_STRUCT_CLASS(cls)->write(THRIFT_STRUCT(src), protocol, &error);
   g_assert(!error);
   g_assert(write_len > 0);
 
-  int read_len = THRIFT_STRUCT_CLASS(cls)->read(THRIFT_STRUCT(dst), protocol, &error);
+  read_len = THRIFT_STRUCT_CLASS(cls)->read(THRIFT_STRUCT(dst), protocol, &error);
   g_assert(!error);
   g_assert_cmpint(write_len, ==, read_len);
 

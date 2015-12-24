@@ -201,7 +201,7 @@ test_non_set_binary (void)
   g_assert(!error);
   write_to_read (THRIFT_STRUCT (b2), THRIFT_STRUCT (b1), NULL, &error);
   g_assert(!error);
-  // OK. No segfault
+  /* OK. No segfault */
 
   g_object_unref (b1);
   g_object_unref (b2);
