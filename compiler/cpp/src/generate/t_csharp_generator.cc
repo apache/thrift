@@ -140,10 +140,18 @@ public:
 
   void generate_function_helpers(t_function* tfunction);
   void generate_service_interface(t_service* tservice);
+  void generate_separate_service_interfaces(t_service* tservice);
+  void generate_sync_service_interface(t_service* tservice);
+  void generate_async_service_interface(t_service* tservice);
+  void generate_combined_service_interface(t_service* tservice);
+  void generate_silverlight_async_methods(t_service* tservice);
   void generate_service_helpers(t_service* tservice);
   void generate_service_client(t_service* tservice);
   void generate_service_server(t_service* tservice);
+  void generate_service_server_sync(t_service* tservice);
+  void generate_service_server_async(t_service* tservice);
   void generate_process_function(t_service* tservice, t_function* function);
+  void generate_process_function_async(t_service* tservice, t_function* function);
 
   void generate_deserialize_field(std::ofstream& out,
                                   t_field* tfield,
@@ -1422,11 +1430,25 @@ void t_csharp_generator::generate_service(t_service* tservice) {
 }
 
 void t_csharp_generator::generate_service_interface(t_service* tservice) {
+  generate_separate_service_interfaces(tservice);
+}
+
+void t_csharp_generator::generate_separate_service_interfaces(t_service* tservice) {
+  generate_sync_service_interface(tservice);
+
+  if (async_ || async_ctp_) {
+    generate_async_service_interface(tservice);
+  }
+
+  generate_combined_service_interface(tservice);
+}
+
+void t_csharp_generator::generate_sync_service_interface(t_service* tservice) {
   string extends = "";
   string extends_iface = "";
   if (tservice->get_extends() != NULL) {
     extends = type_name(tservice->get_extends());
-    extends_iface = " : " + extends + ".Iface";
+    extends_iface = " : " + extends + ".ISync";
   }
 
   generate_csharp_doc(f_service_, tservice);
@@ -1434,7 +1456,7 @@ void t_csharp_generator::generate_service_interface(t_service* tservice) {
   if (wcf_) {
     indent(f_service_) << "[ServiceContract(Namespace=\"" << wcf_namespace_ << "\")]" << endl;
   }
-  indent(f_service_) << "public interface Iface" << extends_iface << " {" << endl;
+  indent(f_service_) << "public interface ISync" << extends_iface << " {" << endl;
 
   indent_up();
   vector<t_function*> functions = tservice->get_functions();
@@ -1450,25 +1472,102 @@ void t_csharp_generator::generate_service_interface(t_service* tservice) {
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         indent(f_service_) << "[FaultContract(typeof("
-                              + type_name((*x_iter)->get_type(), false, false) + "Fault))]" << endl;
+          + type_name((*x_iter)->get_type(), false, false) + "Fault))]" << endl;
       }
     }
 
     indent(f_service_) << function_signature(*f_iter) << ";" << endl;
+  }
+  indent_down();
+  f_service_ << indent() << "}" << endl << endl;
+}
+
+void t_csharp_generator::generate_async_service_interface(t_service* tservice) {
+  string extends = "";
+  string extends_iface = "";
+  if (tservice->get_extends() != NULL) {
+    extends = type_name(tservice->get_extends());
+    extends_iface = " : " + extends + ".IAsync";
+  }
+
+  generate_csharp_doc(f_service_, tservice);
+
+  if (wcf_) {
+    indent(f_service_) << "[ServiceContract(Namespace=\"" << wcf_namespace_ << "\")]" << endl;
+  }
+  indent(f_service_) << "public interface IAsync" << extends_iface << " {" << endl;
+
+  indent_up();
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator f_iter;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    generate_csharp_doc(f_service_, *f_iter);
+
+    // if we're using WCF, add the corresponding attributes
+    if (wcf_) {
+      indent(f_service_) << "[OperationContract]" << endl;
+
+      const std::vector<t_field*>& xceptions = (*f_iter)->get_xceptions()->get_members();
+      vector<t_field*>::const_iterator x_iter;
+      for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+        indent(f_service_) << "[FaultContract(typeof("
+          + type_name((*x_iter)->get_type(), false, false) + "Fault))]" << endl;
+      }
+    }
+
+    indent(f_service_) << function_signature_async(*f_iter) << ";" << endl;
+  }
+  indent_down();
+  f_service_ << indent() << "}" << endl << endl;
+}
+
+void t_csharp_generator::generate_combined_service_interface(t_service* tservice) {
+  string extends_iface = " : ISync";
+
+  if (async_ || async_ctp_) {
+    extends_iface += ", IAsync";
+  }
+
+  generate_csharp_doc(f_service_, tservice);
+
+  if (wcf_) {
+    indent(f_service_) << "[ServiceContract(Namespace=\"" << wcf_namespace_ << "\")]" << endl;
+  }
+
+  indent(f_service_) << "public interface Iface" << extends_iface << " {" << endl;
+
+  indent_up();
+
+  // We need to generate extra old style async methods for silverlight. Since
+  // this isn't something you'd want to implement server-side, just put them into
+  // the main Iface interface.
+  generate_silverlight_async_methods(tservice);
+
+  indent_down();
+
+  f_service_ << indent() << "}" << endl << endl;
+}
+
+void t_csharp_generator::generate_silverlight_async_methods(t_service* tservice) {
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator f_iter;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    generate_csharp_doc(f_service_, *f_iter);
+
+    // For backwards compatibility, include the Begin_, End_ methods if we're generating
+    // with the async flag. I'm not sure this is necessary, so someone with more knowledge
+    // can maybe remove these checks if they know it's safe.
     if (!async_) {
       indent(f_service_) << "#if SILVERLIGHT" << endl;
     }
+
     indent(f_service_) << function_signature_async_begin(*f_iter, "Begin_") << ";" << endl;
     indent(f_service_) << function_signature_async_end(*f_iter, "End_") << ";" << endl;
-    if (async_ || async_ctp_) {
-      indent(f_service_) << function_signature_async(*f_iter) << ";" << endl;
-    }
+
     if (!async_) {
       indent(f_service_) << "#endif" << endl;
     }
   }
-  indent_down();
-  f_service_ << indent() << "}" << endl << endl;
 }
 
 void t_csharp_generator::generate_service_helpers(t_service* tservice) {
@@ -1823,6 +1922,16 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
 }
 
 void t_csharp_generator::generate_service_server(t_service* tservice) {
+  if (async_) {
+    generate_service_server_async(tservice);
+    generate_service_server_sync(tservice);
+  }
+  else {
+    generate_service_server_sync(tservice);
+  }
+}
+
+void t_csharp_generator::generate_service_server_sync(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
 
@@ -1836,7 +1945,8 @@ void t_csharp_generator::generate_service_server(t_service* tservice) {
   indent(f_service_) << "public class Processor : " << extends_processor << "TProcessor {" << endl;
   indent_up();
 
-  indent(f_service_) << "public Processor(Iface iface)";
+  indent(f_service_) << "public Processor(ISync iface)";
+
   if (!extends.empty()) {
     f_service_ << " : base(iface)";
   }
@@ -1846,7 +1956,7 @@ void t_csharp_generator::generate_service_server(t_service* tservice) {
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_service_ << indent() << "processMap_[\"" << (*f_iter)->get_name()
-               << "\"] = " << (*f_iter)->get_name() << "_Process;" << endl;
+      << "\"] = " << (*f_iter)->get_name() << "_Process;" << endl;
   }
 
   scope_down(f_service_);
@@ -1854,23 +1964,24 @@ void t_csharp_generator::generate_service_server(t_service* tservice) {
 
   if (extends.empty()) {
     f_service_
-        << indent()
-        << "protected delegate void ProcessFunction(int seqid, TProtocol iprot, TProtocol oprot);"
-        << endl;
+      << indent()
+      << "protected delegate void ProcessFunction(int seqid, TProtocol iprot, TProtocol oprot);"
+      << endl;
   }
 
-  f_service_ << indent() << "private Iface iface_;" << endl;
+  f_service_ << indent() << "private ISync iface_;" << endl;
 
   if (extends.empty()) {
     f_service_ << indent() << "protected Dictionary<string, ProcessFunction> processMap_ = new "
-                              "Dictionary<string, ProcessFunction>();" << endl;
+      "Dictionary<string, ProcessFunction>();" << endl;
   }
 
   f_service_ << endl;
 
   if (extends.empty()) {
     indent(f_service_) << "public bool Process(TProtocol iprot, TProtocol oprot)" << endl;
-  } else {
+  }
+  else {
     indent(f_service_) << "public new bool Process(TProtocol iprot, TProtocol oprot)" << endl;
   }
   scope_up(f_service_);
@@ -1881,17 +1992,17 @@ void t_csharp_generator::generate_service_server(t_service* tservice) {
   f_service_ << indent() << "TMessage msg = iprot.ReadMessageBegin();" << endl;
 
   f_service_
-      << indent() << "ProcessFunction fn;" << endl << indent()
-      << "processMap_.TryGetValue(msg.Name, out fn);" << endl << indent() << "if (fn == null) {"
-      << endl << indent() << "  TProtocolUtil.Skip(iprot, TType.Struct);" << endl << indent()
-      << "  iprot.ReadMessageEnd();" << endl << indent()
-      << "  TApplicationException x = new TApplicationException "
-         "(TApplicationException.ExceptionType.UnknownMethod, \"Invalid method name: '\" + "
-         "msg.Name + \"'\");" << endl << indent()
-      << "  oprot.WriteMessageBegin(new TMessage(msg.Name, TMessageType.Exception, msg.SeqID));"
-      << endl << indent() << "  x.Write(oprot);" << endl << indent() << "  oprot.WriteMessageEnd();"
-      << endl << indent() << "  oprot.Transport.Flush();" << endl << indent() << "  return true;"
-      << endl << indent() << "}" << endl << indent() << "fn(msg.SeqID, iprot, oprot);" << endl;
+    << indent() << "ProcessFunction fn;" << endl << indent()
+    << "processMap_.TryGetValue(msg.Name, out fn);" << endl << indent() << "if (fn == null) {"
+    << endl << indent() << "  TProtocolUtil.Skip(iprot, TType.Struct);" << endl << indent()
+    << "  iprot.ReadMessageEnd();" << endl << indent()
+    << "  TApplicationException x = new TApplicationException "
+    "(TApplicationException.ExceptionType.UnknownMethod, \"Invalid method name: '\" + "
+    "msg.Name + \"'\");" << endl << indent()
+    << "  oprot.WriteMessageBegin(new TMessage(msg.Name, TMessageType.Exception, msg.SeqID));"
+    << endl << indent() << "  x.Write(oprot);" << endl << indent() << "  oprot.WriteMessageEnd();"
+    << endl << indent() << "  oprot.Transport.Flush();" << endl << indent() << "  return true;"
+    << endl << indent() << "}" << endl << indent() << "fn(msg.SeqID, iprot, oprot);" << endl;
 
   scope_down(f_service_);
 
@@ -1907,6 +2018,98 @@ void t_csharp_generator::generate_service_server(t_service* tservice) {
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     generate_process_function(tservice, *f_iter);
+  }
+
+  indent_down();
+  indent(f_service_) << "}" << endl << endl;
+}
+
+void t_csharp_generator::generate_service_server_async(t_service* tservice) {
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator f_iter;
+
+  string extends = "";
+  string extends_processor = "";
+  if (tservice->get_extends() != NULL) {
+    extends = type_name(tservice->get_extends());
+    extends_processor = extends + ".Processor, ";
+  }
+
+  indent(f_service_) << "public class AsyncProcessor : " << extends_processor << "TAsyncProcessor {" << endl;
+  indent_up();
+
+  indent(f_service_) << "public AsyncProcessor(IAsync iface)";
+  if (!extends.empty()) {
+    f_service_ << " : base(iface)";
+  }
+  f_service_ << endl;
+  scope_up(f_service_);
+  f_service_ << indent() << "iface_ = iface;" << endl;
+
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    f_service_ << indent() << "processMap_[\"" << (*f_iter)->get_name()
+      << "\"] = " << (*f_iter)->get_name() << "_ProcessAsync;" << endl;
+  }
+
+  scope_down(f_service_);
+  f_service_ << endl;
+
+  if (extends.empty()) {
+    f_service_
+      << indent()
+      << "protected delegate Task ProcessFunction(int seqid, TProtocol iprot, TProtocol oprot);"
+      << endl;
+  }
+
+  f_service_ << indent() << "private IAsync iface_;" << endl;
+
+  if (extends.empty()) {
+    f_service_ << indent() << "protected Dictionary<string, ProcessFunction> processMap_ = new "
+      "Dictionary<string, ProcessFunction>();" << endl;
+  }
+
+  f_service_ << endl;
+
+  if (extends.empty()) {
+    indent(f_service_) << "public async Task<bool> ProcessAsync(TProtocol iprot, TProtocol oprot)" << endl;
+  }
+  else {
+    indent(f_service_) << "public new async Task<bool> ProcessAsync(TProtocol iprot, TProtocol oprot)" << endl;
+  }
+  scope_up(f_service_);
+
+  f_service_ << indent() << "try" << endl;
+  scope_up(f_service_);
+
+  f_service_ << indent() << "TMessage msg = iprot.ReadMessageBegin();" << endl;
+
+  f_service_
+    << indent() << "ProcessFunction fn;" << endl << indent()
+    << "processMap_.TryGetValue(msg.Name, out fn);" << endl << indent() << "if (fn == null) {"
+    << endl << indent() << "  TProtocolUtil.Skip(iprot, TType.Struct);" << endl << indent()
+    << "  iprot.ReadMessageEnd();" << endl << indent()
+    << "  TApplicationException x = new TApplicationException "
+    "(TApplicationException.ExceptionType.UnknownMethod, \"Invalid method name: '\" + "
+    "msg.Name + \"'\");" << endl << indent()
+    << "  oprot.WriteMessageBegin(new TMessage(msg.Name, TMessageType.Exception, msg.SeqID));"
+    << endl << indent() << "  x.Write(oprot);" << endl << indent() << "  oprot.WriteMessageEnd();"
+    << endl << indent() << "  oprot.Transport.Flush();" << endl << indent() << "  return true;"
+    << endl << indent() << "}" << endl << indent() << "await fn(msg.SeqID, iprot, oprot);" << endl;
+
+  scope_down(f_service_);
+
+  f_service_ << indent() << "catch (IOException)" << endl;
+  scope_up(f_service_);
+  f_service_ << indent() << "return false;" << endl;
+  scope_down(f_service_);
+
+  f_service_ << indent() << "return true;" << endl;
+
+  scope_down(f_service_);
+  f_service_ << endl;
+
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    generate_process_function_async(tservice, *f_iter);
   }
 
   indent_down();
@@ -2038,6 +2241,119 @@ void t_csharp_generator::generate_process_function(t_service* tservice, t_functi
                << indent() << "}" << endl;
     f_service_ << indent() << "oprot.WriteMessageEnd();" << endl
                << indent() << "oprot.Transport.Flush();" << endl;
+  }
+
+  scope_down(f_service_);
+
+  f_service_ << endl;
+}
+
+void t_csharp_generator::generate_process_function_async(t_service* tservice, t_function* tfunction) {
+  (void)tservice;
+  indent(f_service_) << "public async Task " << tfunction->get_name()
+    << "_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot)" << endl;
+  scope_up(f_service_);
+
+  string argsname = tfunction->get_name() + "_args";
+  string resultname = tfunction->get_name() + "_result";
+
+  f_service_ << indent() << argsname << " args = new " << argsname << "();" << endl
+    << indent() << "args.Read(iprot);" << endl
+    << indent() << "iprot.ReadMessageEnd();" << endl;
+
+  t_struct* xs = tfunction->get_xceptions();
+  const std::vector<t_field*>& xceptions = xs->get_members();
+  vector<t_field*>::const_iterator x_iter;
+
+  if (!tfunction->is_oneway()) {
+    f_service_ << indent() << resultname << " result = new " << resultname << "();" << endl;
+  }
+
+  f_service_ << indent() << "try" << endl
+    << indent() << "{" << endl;
+  indent_up();
+
+  if (xceptions.size() > 0) {
+    f_service_ << indent() << "try" << endl
+      << indent() << "{" << endl;
+    indent_up();
+  }
+
+  t_struct* arg_struct = tfunction->get_arglist();
+  const std::vector<t_field*>& fields = arg_struct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+
+  f_service_ << indent();
+  if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
+    f_service_ << "result.Success = ";
+  }
+  f_service_ << "await iface_." << normalize_name(tfunction->get_name()) << "Async(";
+  bool first = true;
+  prepare_member_name_mapping(arg_struct);
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if (first) {
+      first = false;
+    }
+    else {
+      f_service_ << ", ";
+    }
+    f_service_ << "args." << prop_name(*f_iter);
+    if (nullable_ && !type_can_be_null((*f_iter)->get_type())) {
+      f_service_ << ".Value";
+    }
+  }
+  cleanup_member_name_mapping(arg_struct);
+  f_service_ << ");" << endl;
+
+  prepare_member_name_mapping(xs, xs->get_members(), resultname);
+  if (xceptions.size() > 0) {
+    indent_down();
+    f_service_ << indent() << "}" << endl;
+    for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+      f_service_ << indent() << "catch (" << type_name((*x_iter)->get_type(), false, false) << " "
+        << (*x_iter)->get_name() << ")" << endl
+        << indent() << "{" << endl;
+      if (!tfunction->is_oneway()) {
+        indent_up();
+        f_service_ << indent() << "result." << prop_name(*x_iter) << " = " << (*x_iter)->get_name()
+          << ";" << endl;
+        indent_down();
+      }
+      f_service_ << indent() << "}" << endl;
+    }
+  }
+  if (!tfunction->is_oneway()) {
+    f_service_ << indent() << "oprot.WriteMessageBegin(new TMessage(\"" << tfunction->get_name()
+      << "\", TMessageType.Reply, seqid)); " << endl;
+    f_service_ << indent() << "result.Write(oprot);" << endl;
+  }
+  indent_down();
+
+  cleanup_member_name_mapping(xs);
+
+  f_service_ << indent() << "}" << endl
+    << indent() << "catch (TTransportException)" << endl
+    << indent() << "{" << endl
+    << indent() << "  throw;" << endl
+    << indent() << "}" << endl
+    << indent() << "catch (Exception ex)" << endl
+    << indent() << "{" << endl
+    << indent() << "  Console.Error.WriteLine(\"Error occurred in processor:\");" << endl
+    << indent() << "  Console.Error.WriteLine(ex.ToString());" << endl;
+
+  if (tfunction->is_oneway()) {
+    f_service_ << indent() << "}" << endl;
+  }
+  else {
+    f_service_ << indent() << "  TApplicationException x = new TApplicationException" << indent()
+      << "(TApplicationException.ExceptionType.InternalError,\" Internal error.\");"
+      << endl
+      << indent() << "  oprot.WriteMessageBegin(new TMessage(\"" << tfunction->get_name()
+      << "\", TMessageType.Exception, seqid));" << endl
+      << indent() << "  x.Write(oprot);" << endl
+      << indent() << "}" << endl;
+    f_service_ << indent() << "oprot.WriteMessageEnd();" << endl
+      << indent() << "oprot.Transport.Flush();" << endl;
   }
 
   scope_down(f_service_);

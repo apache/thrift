@@ -143,6 +143,7 @@ erl_crash.dump
 /lib/c_glib/thrift_c_glib.pc
 /lib/csharp/**/bin/
 /lib/csharp/**/obj/
+/lib/csharp/src/packages
 /lib/d/libthriftd.a
 /lib/d/test/serialization_benchmark
 /lib/d/test/transport_test
