@@ -290,7 +290,7 @@ namespace Thrift.Transport
         public void setupTLS()
         {
             RemoteCertificateValidationCallback validator = this.certValidator ?? DefaultCertificateValidator;
-            
+
             if( this.localCertificateSelectionCallback != null)
             {
                 this.secureStream = new SslStream(
@@ -308,7 +308,7 @@ namespace Thrift.Transport
                     validator
                 );
             }
-            
+
             try
             {
                 if (isServer)
