@@ -29,10 +29,10 @@ namespace Thrift
     public class TPrototypeProcessorFactory<P, H> : TProcessorFactory where P : TProcessor
     {
         object[] handlerArgs = null;
-        
-        public TPrototypeProcessorFactory() 
+
+        public TPrototypeProcessorFactory()
         {
-            handlerArgs = new object[0]; 
+            handlerArgs = new object[0];
         }
 
         public TPrototypeProcessorFactory(params object[] handlerArgs)
