@@ -21,6 +21,14 @@
 #include "config.h"
 #endif
 
+#include "php.h"
+#include "zend_interfaces.h"
+#include "zend_exceptions.h"
+#include "php_thrift_protocol.h"
+
+/* GUARD FOR PHP 5 */
+#if PHP_VERSION_ID < 70000 && PHP_VERSION_ID > 50000
+
 #include <sys/types.h>
 #if defined( WIN32 ) || defined( _WIN64 )
 typedef int  int32_t; 
@@ -86,11 +94,6 @@ const int8_t T_EXCEPTION = 3;
 // tprotocolexception
 const int INVALID_DATA = 1;
 const int BAD_VERSION = 4;
-
-#include "php.h"
-#include "zend_interfaces.h"
-#include "zend_exceptions.h"
-#include "php_thrift_protocol.h"
 
 static zend_function_entry thrift_protocol_functions[] = {
   PHP_FE(thrift_protocol_write_binary, NULL)
@@ -1067,3 +1070,4 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
   }
 }
 
+#endif /* PHP_VERSION_ID < 70000 && PHP_VERSION_ID > 50000 */
