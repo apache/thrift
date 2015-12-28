@@ -753,6 +753,8 @@ AC_CONFIG_FILES([
   lib/py/Makefile
   lib/rb/Makefile
   lib/lua/Makefile
+  lib/xml/Makefile
+  lib/xml/test/Makefile
   test/Makefile
   test/c_glib/Makefile
   test/cpp/Makefile
