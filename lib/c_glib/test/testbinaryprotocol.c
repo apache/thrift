@@ -20,12 +20,8 @@
 /* Disable string-function optimizations when glibc is used, as these produce
    compiler warnings about string length when a string function is used inside
    a call to assert () */
-#if !defined(__APPLE__) && !defined(__FreeBSD__) && \
-    !defined(__OpenBSD__) && !defined(__NetBSD__)
-#include <features.h>
-#endif
-
 #ifdef __GLIBC__
+#include <features.h>
 #define __NO_STRING_INLINES 1
 #endif
 
