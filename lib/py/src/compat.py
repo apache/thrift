@@ -22,6 +22,6 @@ else:
 
   def str_to_binary(str_val):
     try:
-      return bytearray(str_val, 'utf8')
+      return bytes(str_val, 'utf8')
     except:
       return str_val
