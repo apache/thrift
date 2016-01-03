@@ -113,6 +113,12 @@ env:
       BUILD_ENV="-e CC=gcc -e CXX=g++"
       DISTRO=centos
 
+    - TEST_NAME="Python 2.6 (CentOS 6)"
+      BUILD_CMD="../cmake.sh"
+      BUILD_ARG="-DWITH_PYTHON=ON -DWITH_CPP=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
+      DISTRO=centos6
+
     # Distribution
     - TEST_NAME="make dist"
       BUILD_CMD="../make-dist.sh"
