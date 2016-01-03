@@ -1,0 +1,27 @@
+[
+  {
+    "description": "THeader detects unframed binary wire format",
+    "name": "theader_unframed_binary",
+    "command": [
+      "python",
+      "theader_binary.py"
+    ],
+    "protocols": ["header"],
+    "transports": ["buffered"],
+    "sockets": ["ip"],
+    "workdir": "features"
+  },
+  {
+    "description": "THeader detects framed binary wire format",
+    "name": "theader_framed_binary",
+    "command": [
+      "python",
+      "theader_binary.py",
+      "--override-transport=framed"
+    ],
+    "protocols": ["header"],
+    "transports": ["buffered"],
+    "sockets": ["ip"],
+    "workdir": "features"
+  }
+]

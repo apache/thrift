@@ -18,6 +18,7 @@
 #
 
 import platform
+import re
 from itertools import product
 
 from .util import merge_dict
@@ -51,7 +52,7 @@ DEFAULT_DELAY = 1
 DEFAULT_TIMEOUT = 5
 
 
-def collect_testlibs(config, server_match, client_match):
+def _collect_testlibs(config, server_match, client_match=[None]):
   """Collects server/client configurations from library configurations"""
   def expand_libs(config):
     for lib in config:
@@ -73,7 +74,12 @@ def collect_testlibs(config, server_match, client_match):
   return servers, clients
 
 
-def do_collect_tests(servers, clients):
+def collect_features(config, match):
+  res = list(map(re.compile, match))
+  return list(filter(lambda c: any(map(lambda r: r.search(c['name']), res)), config))
+
+
+def _do_collect_tests(servers, clients):
   def intersection(key, o1, o2):
     """intersection of two collections.
     collections are replaced with sets the first time"""
@@ -137,6 +143,12 @@ def do_collect_tests(servers, clients):
           }
 
 
-def collect_tests(tests_dict, server_match, client_match):
-  sv, cl = collect_testlibs(tests_dict, server_match, client_match)
-  return list(do_collect_tests(sv, cl))
+def collect_cross_tests(tests_dict, server_match, client_match):
+  sv, cl = _collect_testlibs(tests_dict, server_match, client_match)
+  return list(_do_collect_tests(sv, cl))
+
+
+def collect_feature_tests(tests_dict, features_dict, server_match, feature_match):
+  sv, _ = _collect_testlibs(tests_dict, server_match)
+  ft = collect_features(features_dict, feature_match)
+  return list(_do_collect_tests(sv, ft))

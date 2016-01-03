@@ -53,6 +53,7 @@ CROSS_LANGS = @MAYBE_CPP@ @MAYBE_C_GLIB@ @MAYBE_JAVA@ @MAYBE_CSHARP@ @MAYBE_PYTH
 CROSS_LANGS_COMMA_SEPARATED = $(subst $(space),$(comma),$(CROSS_LANGS))
 
 cross: precross
+	$(PYTHON) test/test.py -F.* -s --server $(CROSS_LANGS_COMMA_SEPARATED)
 	$(PYTHON) test/test.py -s --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED)
 
 TIMES = 1 2 3

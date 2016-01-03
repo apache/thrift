@@ -110,13 +110,13 @@ class ExecutionContext(object):
     return self.proc.returncode if self.proc else None
 
 
-def exec_context(port, testdir, test, prog):
-  report = ExecReporter(testdir, test, prog)
+def exec_context(port, logdir, test, prog):
+  report = ExecReporter(logdir, test, prog)
   prog.build_command(port)
   return ExecutionContext(prog.command, prog.workdir, prog.env, report)
 
 
-def run_test(testdir, test_dict, async=True, max_retry=3):
+def run_test(testdir, logdir, test_dict, async=True, max_retry=3):
   try:
     logger = multiprocessing.get_logger()
     retry_count = 0
@@ -128,8 +128,8 @@ def run_test(testdir, test_dict, async=True, max_retry=3):
       logger.debug('Start')
       with PortAllocator.alloc_port_scoped(ports, test.socket) as port:
         logger.debug('Start with port %d' % port)
-        sv = exec_context(port, testdir, test, test.server)
-        cl = exec_context(port, testdir, test, test.client)
+        sv = exec_context(port, logdir, test, test.server)
+        cl = exec_context(port, logdir, test, test.client)
 
         logger.debug('Starting server')
         with sv.start():
@@ -256,9 +256,10 @@ class NonAsyncResult(object):
 
 
 class TestDispatcher(object):
-  def __init__(self, testdir, concurrency):
+  def __init__(self, testdir, logdir, concurrency):
     self._log = multiprocessing.get_logger()
     self.testdir = testdir
+    self.logdir = logdir
     # seems needed for python 2.x to handle keyboard interrupt
     self._stop = multiprocessing.Event()
     self._async = concurrency > 1
@@ -273,7 +274,7 @@ class TestDispatcher(object):
       self._m.register('ports', PortAllocator)
       self._m.start()
       self._pool = multiprocessing.Pool(concurrency, self._pool_init, (self._m.address,))
-    self._report = SummaryReporter(testdir, concurrency > 1)
+    self._report = SummaryReporter(logdir, concurrency > 1)
     self._log.debug(
         'TestDispatcher started with %d concurrent jobs' % concurrency)
 
@@ -287,12 +288,13 @@ class TestDispatcher(object):
     ports = m.ports()
 
   def _dispatch_sync(self, test, cont):
-    r = run_test(self.testdir, test, False)
+    r = run_test(self.testdir, self.logdir, test, False)
     cont(r)
     return NonAsyncResult(r)
 
   def _dispatch_async(self, test, cont):
-    return self._pool.apply_async(func=run_test, args=(self.testdir, test,), callback=cont)
+    self._log.debug('_dispatch_async')
+    return self._pool.apply_async(func=run_test, args=(self.testdir, self.logdir, test,), callback=cont)
 
   def dispatch(self, test):
     index = self._report.add_test(test)
