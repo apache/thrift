@@ -150,7 +150,7 @@ N.B.: These have  some internal purpose at Facebook but serve no current purpose
 
     [25] DefinitionType  ::=  BaseType | ContainerType
 
-    [26] BaseType        ::=  'bool' | 'byte' | 'i16' | 'i32' | 'i64' | 'double' | 'string' | 'binary' | 'slist'
+    [26] BaseType        ::=  'bool' | 'byte' | 'i8' | 'i16' | 'i32' | 'i64' | 'double' | 'string' | 'binary' | 'slist'
 
     [27] ContainerType   ::=  MapType | SetType | ListType
 
