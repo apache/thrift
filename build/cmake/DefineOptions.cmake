@@ -42,46 +42,50 @@ option(BUILD_LIBRARIES "Build Thrift libraries" ON)
 
 # C++
 option(WITH_CPP "Build C++ Thrift library" ON)
-find_package(Boost 1.53 QUIET)
+if(WITH_CPP)
+    find_package(Boost 1.53 QUIET)
+    # NOTE: Currently the following options are C++ specific,
+    # but in future other libraries might reuse them.
+    # So they are not dependent on WITH_CPP but setting them without WITH_CPP currently
+    # has no effect.
+    if(ZLIB_LIBRARY)
+        # FindZLIB.cmake does not normalize path so we need to do it ourselves.
+        file(TO_CMAKE_PATH ${ZLIB_LIBRARY} ZLIB_LIBRARY)
+    endif()
+    find_package(ZLIB QUIET)
+    CMAKE_DEPENDENT_OPTION(WITH_ZLIB "Build with ZLIB support" ON
+                           "ZLIB_FOUND" OFF)
+    find_package(Libevent QUIET)
+    CMAKE_DEPENDENT_OPTION(WITH_LIBEVENT "Build with libevent support" ON
+                           "Libevent_FOUND" OFF)
+    find_package(Qt4 QUIET COMPONENTS QtCore QtNetwork)
+    CMAKE_DEPENDENT_OPTION(WITH_QT4 "Build with Qt4 support" ON
+                           "QT4_FOUND" OFF)
+    find_package(Qt5 QUIET COMPONENTS Core Network)
+    CMAKE_DEPENDENT_OPTION(WITH_QT5 "Build with Qt5 support" ON
+                           "Qt5_FOUND" OFF)
+    if(${WITH_QT4} AND ${WITH_QT5} AND ${CMAKE_MAJOR_VERSION} LESS 3)
+      # cmake < 3.0.0 causes conflict when building both Qt4 and Qt5
+      set(WITH_QT4 OFF)
+    endif()
+    find_package(OpenSSL QUIET)
+    CMAKE_DEPENDENT_OPTION(WITH_OPENSSL "Build with OpenSSL support" ON
+                           "OPENSSL_FOUND" OFF)
+    option(WITH_STDTHREADS "Build with C++ std::thread support" OFF)
+    CMAKE_DEPENDENT_OPTION(WITH_BOOSTTHREADS "Build with Boost threads support" OFF
+        "NOT WITH_STDTHREADS;Boost_FOUND" OFF)
+endif()
 CMAKE_DEPENDENT_OPTION(BUILD_CPP "Build C++ library" ON
                        "BUILD_LIBRARIES;WITH_CPP;Boost_FOUND" OFF)
-# NOTE: Currently the following options are C++ specific,
-# but in future other libraries might reuse them.
-# So they are not dependent on WITH_CPP but setting them without WITH_CPP currently
-# has no effect.
-if(ZLIB_LIBRARY)
-    # FindZLIB.cmake does not normalize path so we need to do it ourselves.
-    file(TO_CMAKE_PATH ${ZLIB_LIBRARY} ZLIB_LIBRARY)
-endif()
-find_package(ZLIB QUIET)
-CMAKE_DEPENDENT_OPTION(WITH_ZLIB "Build with ZLIB support" ON
-                       "ZLIB_FOUND" OFF)
-find_package(Libevent QUIET)
-CMAKE_DEPENDENT_OPTION(WITH_LIBEVENT "Build with libevent support" ON
-                       "Libevent_FOUND" OFF)
-find_package(Qt4 QUIET COMPONENTS QtCore QtNetwork)
-CMAKE_DEPENDENT_OPTION(WITH_QT4 "Build with Qt4 support" ON
-                       "QT4_FOUND" OFF)
-find_package(Qt5 QUIET COMPONENTS Core Network)
-CMAKE_DEPENDENT_OPTION(WITH_QT5 "Build with Qt5 support" ON
-                       "Qt5_FOUND" OFF)
-if(${WITH_QT4} AND ${WITH_QT5} AND ${CMAKE_MAJOR_VERSION} LESS 3)
-  # cmake < 3.0.0 causes conflict when building both Qt4 and Qt5
-  set(WITH_QT4 OFF)
-endif()
-find_package(OpenSSL QUIET)
-CMAKE_DEPENDENT_OPTION(WITH_OPENSSL "Build with OpenSSL support" ON
-                       "OPENSSL_FOUND" OFF)
-option(WITH_STDTHREADS "Build with C++ std::thread support" OFF)
-CMAKE_DEPENDENT_OPTION(WITH_BOOSTTHREADS "Build with Boost threads support" OFF
-    "NOT WITH_STDTHREADS;Boost_FOUND" OFF)
-
 
 # C GLib
 option(WITH_C_GLIB "Build C (GLib) Thrift library" ON)
-find_package(GLIB QUIET COMPONENTS gobject)
+if(WITH_C_GLIB)
+    find_package(GLIB QUIET COMPONENTS gobject)
+endif()
 CMAKE_DEPENDENT_OPTION(BUILD_C_GLIB "Build C (GLib) library" ON
                        "BUILD_LIBRARIES;WITH_C_GLIB;GLIB_FOUND" OFF)
+
 # Java
 option(WITH_JAVA "Build Java Thrift library" ON)
 if(ANDROID)
