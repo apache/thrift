@@ -56,7 +56,7 @@ def fromZigZag(n):
 
 
 def writeVarint(trans, n):
-  out = []
+  out = bytearray()
   while True:
     if n & ~0x7f == 0:
       out.append(n)
@@ -64,7 +64,7 @@ def writeVarint(trans, n):
     else:
       out.append((n & 0xff) | 0x80)
       n = n >> 7
-  trans.write(bytearray(out))
+  trans.write(bytes(out))
 
 
 def readVarint(trans):
