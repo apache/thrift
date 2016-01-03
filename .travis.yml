@@ -123,9 +123,6 @@ env:
       BUILD_ENV="-e CC=gcc -e CXX=g++"
 
 matrix:
-  allow_failures:
-    - env: TEST_NAME="All (CentOS)" BUILD_CMD="../cmake.sh" DISTRO=centos
-
   include:
     # QA jobs for code analytics and metrics
     #
