@@ -45,7 +45,7 @@ def generate_known_failures(testdir, overwrite, save, out):
       if not r[success_index]:
         yield TestEntry.get_name(*r)
   try:
-    with logfile_open(os.path.join(testdir, RESULT_JSON), 'r') as fp:
+    with logfile_open(path_join(testdir, RESULT_JSON), 'r') as fp:
       results = json.load(fp)
   except IOError:
     sys.stderr.write('Unable to load last result. Did you run tests ?\n')
@@ -68,7 +68,7 @@ def generate_known_failures(testdir, overwrite, save, out):
 
 def load_known_failures(testdir):
   try:
-    with logfile_open(os.path.join(testdir, FAIL_JSON % platform.system()), 'r') as fp:
+    with logfile_open(path_join(testdir, FAIL_JSON % platform.system()), 'r') as fp:
       return json.load(fp)
   except IOError:
     return []
@@ -85,7 +85,7 @@ class TestReporter(object):
 
   @classmethod
   def test_logfile(cls, test_name, prog_kind, dir=None):
-    relpath = os.path.join('log', '%s_%s.log' % (test_name, prog_kind))
+    relpath = path_join('log', '%s_%s.log' % (test_name, prog_kind))
     return relpath if not dir else os.path.realpath(path_join(dir, relpath))
 
   def _start(self):
@@ -207,8 +207,8 @@ class SummaryReporter(TestReporter):
   def __init__(self, testdir, concurrent=True):
     super(SummaryReporter, self).__init__()
     self.testdir = testdir
-    self.logdir = os.path.join(testdir, LOG_DIR)
-    self.out_path = os.path.join(testdir, RESULT_JSON)
+    self.logdir = path_join(testdir, LOG_DIR)
+    self.out_path = path_join(testdir, RESULT_JSON)
     self.concurrent = concurrent
     self.out = sys.stdout
     self._platform = platform.system()

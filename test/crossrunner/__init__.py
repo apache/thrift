@@ -18,7 +18,6 @@
 #
 
 from .test import test_name
-from .collect import collect_tests
+from .collect import collect_cross_tests, collect_feature_tests
 from .run import TestDispatcher
 from .report import generate_known_failures, load_known_failures
-from .prepare import prepare
