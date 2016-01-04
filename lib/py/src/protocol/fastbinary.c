@@ -226,6 +226,10 @@ parse_pyint(PyObject* o, int32_t* ret, int32_t min, int32_t max) {
   return true;
 }
 
+static bool
+is_utf8(PyObject* typeargs) {
+  return PyString_Check(typeargs) && !strcmp(PyString_AS_STRING(typeargs), "UTF8");
+}
 
 /* --- FUNCTIONS TO PARSE STRUCT SPECIFICATOINS --- */
 
@@ -430,7 +434,10 @@ output_val(PyObject* output, PyObject* value, TType type, PyObject* typeargs) {
   }
 
   case T_STRING: {
-    Py_ssize_t len = PyString_Size(value);
+    Py_ssize_t len = 0;
+    if (is_utf8(typeargs) && PyUnicode_Check(value))
+      value = PyUnicode_AsUTF8String(value);
+    len = PyString_Size(value);
 
     if (!check_ssize_t_32(len)) {
       return false;
@@ -1053,7 +1060,10 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
       return NULL;
     }
 
-    return PyString_FromStringAndSize(buf, len);
+    if (is_utf8(typeargs))
+      return PyUnicode_DecodeUTF8(buf, len, 0);
+    else
+      return PyString_FromStringAndSize(buf, len);
   }
 
   case T_LIST:
