@@ -119,8 +119,8 @@ boost::shared_ptr<TSSLSocketFactory> createServerSocketFactory() {
 
   pServerSocketFactory.reset(new TSSLSocketFactory());
   pServerSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-  pServerSocketFactory->loadCertificate(certFile("server.crt").native().c_str());
-  pServerSocketFactory->loadPrivateKey(certFile("server.key").native().c_str());
+  pServerSocketFactory->loadCertificate(certFile("server.crt").string().c_str());
+  pServerSocketFactory->loadPrivateKey(certFile("server.key").string().c_str());
   pServerSocketFactory->server(true);
   return pServerSocketFactory;
 }
@@ -130,9 +130,9 @@ boost::shared_ptr<TSSLSocketFactory> createClientSocketFactory() {
 
   pClientSocketFactory.reset(new TSSLSocketFactory());
   pClientSocketFactory->authenticate(true);
-  pClientSocketFactory->loadCertificate(certFile("client.crt").native().c_str());
-  pClientSocketFactory->loadPrivateKey(certFile("client.key").native().c_str());
-  pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").native().c_str());
+  pClientSocketFactory->loadCertificate(certFile("client.crt").string().c_str());
+  pClientSocketFactory->loadPrivateKey(certFile("client.key").string().c_str());
+  pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").string().c_str());
   return pClientSocketFactory;
 }
 

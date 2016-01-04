@@ -169,7 +169,11 @@ set( thriftcppqt_SOURCES
 include(ThriftMacros)
 
 ADD_LIBRARY_THRIFT(thrift ${thriftcpp_SOURCES} ${thriftcpp_threads_SOURCES})
-TARGET_LINK_LIBRARIES_THRIFT(thrift ${SYSLIBS})
+if(WIN32)
+    TARGET_LINK_LIBRARIES_THRIFT(thrift ${SYSLIBS} ws2_32)
+else()
+    TARGET_LINK_LIBRARIES_THRIFT(thrift ${SYSLIBS})
+endif()
 
 if(WITH_LIBEVENT)
     find_package(Libevent REQUIRED)  # Libevent comes with CMake support form upstream

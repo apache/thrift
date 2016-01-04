@@ -108,8 +108,8 @@ struct SecurityFixture : public TestPortFixture
 
             pServerSocketFactory.reset(new TSSLSocketFactory(static_cast<apache::thrift::transport::SSLProtocol>(protocol)));
             pServerSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-            pServerSocketFactory->loadCertificate(certFile("server.crt").native().c_str());
-            pServerSocketFactory->loadPrivateKey(certFile("server.key").native().c_str());
+            pServerSocketFactory->loadCertificate(certFile("server.crt").string().c_str());
+            pServerSocketFactory->loadPrivateKey(certFile("server.key").string().c_str());
             pServerSocketFactory->server(true);
             pServerSocket.reset(new TSSLServerSocket("localhost", m_serverPort, pServerSocketFactory));
             boost::shared_ptr<TTransport> connectedClient;
@@ -160,9 +160,9 @@ struct SecurityFixture : public TestPortFixture
             {
                 pClientSocketFactory.reset(new TSSLSocketFactory(static_cast<apache::thrift::transport::SSLProtocol>(protocol)));
                 pClientSocketFactory->authenticate(true);
-                pClientSocketFactory->loadCertificate(certFile("client.crt").native().c_str());
-                pClientSocketFactory->loadPrivateKey(certFile("client.key").native().c_str());
-                pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").native().c_str());
+                pClientSocketFactory->loadCertificate(certFile("client.crt").string().c_str());
+                pClientSocketFactory->loadPrivateKey(certFile("client.key").string().c_str());
+                pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").string().c_str());
                 pClientSocket = pClientSocketFactory->createSocket("localhost", m_serverPort);
                 pClientSocket->open();
 

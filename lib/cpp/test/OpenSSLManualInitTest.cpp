@@ -67,6 +67,20 @@ void test_openssl_availability() {
   openssl_cleanup();
 }
 
+#ifdef BOOST_TEST_DYN_LINK
+bool init_unit_test_suite() {
+  boost::unit_test::test_suite* suite = &boost::unit_test::framework::master_test_suite();
+  suite->p_name.value = "OpenSSLManualInit";
+
+  suite->add(BOOST_TEST_CASE(test_openssl_availability));
+
+  return true;
+}
+ 
+int main( int argc, char* argv[] ) {
+  return ::boost::unit_test::unit_test_main(&init_unit_test_suite,argc,argv);
+}
+#else
 boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   THRIFT_UNUSED_VARIABLE(argc);
   THRIFT_UNUSED_VARIABLE(argv);
@@ -77,3 +91,4 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
 
   return NULL;
 }
+#endif

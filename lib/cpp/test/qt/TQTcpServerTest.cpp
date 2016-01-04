@@ -1,18 +1,20 @@
 #define BOOST_TEST_MODULE TQTcpServerTest
 #include <QTest>
-#include <boost/smart_ptr.hpp>
 #include <iostream>
 
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QHostAddress>
 
-#include "thrift/protocol/TBinaryProtocol.h"
-#include "thrift/async/TAsyncProcessor.h"
-#include "thrift/qt/TQTcpServer.h"
-#include "thrift/qt/TQIODeviceTransport.h"
-
-#include "gen-cpp/ParentService.h"
+#ifndef Q_MOC_RUN
+  #include <boost/smart_ptr.hpp>
+  #include "thrift/protocol/TBinaryProtocol.h"
+  #include "thrift/async/TAsyncProcessor.h"
+  #include "thrift/qt/TQTcpServer.h"
+  #include "thrift/qt/TQIODeviceTransport.h"
+  
+  #include "gen-cpp/ParentService.h"
+#endif
 
 using namespace apache::thrift;
 

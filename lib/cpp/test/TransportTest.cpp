@@ -1024,6 +1024,25 @@ BOOST_GLOBAL_FIXTURE(global_fixture);
 BOOST_GLOBAL_FIXTURE(global_fixture)
 #endif
 
+#ifdef BOOST_TEST_DYN_LINK
+bool init_unit_test_suite() {
+  struct timeval tv;
+  THRIFT_GETTIMEOFDAY(&tv, NULL);
+  int seed = tv.tv_sec ^ tv.tv_usec;
+
+  initrand(seed);
+
+  boost::unit_test::test_suite* suite = &boost::unit_test::framework::master_test_suite();
+  suite->p_name.value = "TransportTest";
+  TransportTestGen transport_test_generator(suite, 1);
+  transport_test_generator.generate();
+  return true;
+}
+
+int main( int argc, char* argv[] ) {
+  return ::boost::unit_test::unit_test_main(&init_unit_test_suite,argc,argv);
+}
+#else
 boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   THRIFT_UNUSED_VARIABLE(argc);
   THRIFT_UNUSED_VARIABLE(argv);
@@ -1039,3 +1058,4 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   transport_test_generator.generate();
   return NULL;
 }
+#endif
