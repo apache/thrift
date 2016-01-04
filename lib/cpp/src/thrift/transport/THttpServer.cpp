@@ -23,8 +23,8 @@
 
 #include <thrift/transport/THttpServer.h>
 #include <thrift/transport/TSocket.h>
-#ifdef _MSC_VER
-#include <Shlwapi.h>
+#if defined(_MSC_VER) || defined(__MINGW32__)
+  #include <Shlwapi.h>
 #endif
 
 namespace apache {
@@ -39,7 +39,7 @@ THttpServer::THttpServer(boost::shared_ptr<TTransport> transport) : THttpTranspo
 THttpServer::~THttpServer() {
 }
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__MINGW32__)
   #define THRIFT_strncasecmp(str1, str2, len) _strnicmp(str1, str2, len)
   #define THRIFT_strcasestr(haystack, needle) StrStrIA(haystack, needle)
 #else

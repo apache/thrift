@@ -23,6 +23,10 @@ find_package(Boost 1.53.0 REQUIRED COMPONENTS chrono filesystem system thread un
 include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 include_directories(SYSTEM "${ZLIB_INCLUDE_DIRS}")
 
+if (WITH_DYN_LINK_TEST)
+    add_definitions( -DBOOST_TEST_DYN_LINK )
+endif()
+
 #Make sure gen-cpp files can be included
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
@@ -106,7 +110,7 @@ target_link_libraries(TInterruptTest
     ${Boost_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(TInterruptTest thrift)
-if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT MINGW)
 target_link_libraries(TInterruptTest -lrt)
 endif ()
 add_test(NAME TInterruptTest COMMAND TInterruptTest "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
@@ -117,7 +121,7 @@ target_link_libraries(TServerIntegrationTest
     ${Boost_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(TServerIntegrationTest thrift)
-if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT MINGW)
 target_link_libraries(TServerIntegrationTest -lrt)
 endif ()
 add_test(NAME TServerIntegrationTest COMMAND TServerIntegrationTest)
@@ -303,7 +307,7 @@ target_link_libraries(SecurityTest
     ${Boost_LIBRARIES}
 )
 LINK_AGAINST_THRIFT_LIBRARY(SecurityTest thrift)
-if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT MINGW)
 target_link_libraries(SecurityTest -lrt)
 endif ()
 add_test(NAME SecurityTest COMMAND SecurityTest "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
