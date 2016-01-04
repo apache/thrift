@@ -23,17 +23,28 @@
 // win32
 #include <time.h>
 
+#if defined(__MINGW32__)
+  #include <sys/time.h>
+#endif
+
 #if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
 #define DELTA_EPOCH_IN_MICROSECS 11644473600000000Ui64
 #else
 #define DELTA_EPOCH_IN_MICROSECS 11644473600000000ULL
 #endif
 
+#if !defined(__MINGW32__)
 struct timezone {
   int tz_minuteswest; /* minutes W of Greenwich */
   int tz_dsttime;     /* type of dst correction */
 };
+#endif
 
+#if defined(__MINGW32__)
+int thrift_gettimeofday(struct timeval* tv, struct timezone* tz) {
+  return gettimeofday(tv,tz);
+}
+#else
 int thrift_gettimeofday(struct timeval* tv, struct timezone* tz) {
   FILETIME ft;
   unsigned __int64 tmpres(0);
@@ -79,6 +90,7 @@ int thrift_gettimeofday(struct timeval* tv, struct timezone* tz) {
 
   return 0;
 }
+#endif
 
 int thrift_sleep(unsigned int seconds) {
   ::Sleep(seconds * 1000);

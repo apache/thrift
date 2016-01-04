@@ -412,6 +412,31 @@ void print_usage(FILE* f, const char* argv0) {
   fprintf(f, "  --help\n");
 }
 
+#ifdef BOOST_TEST_DYN_LINK
+bool init_unit_test_suite() {
+  uint32_t seed = static_cast<uint32_t>(time(NULL));
+#ifdef HAVE_INTTYPES_H
+  printf("seed: %" PRIu32 "\n", seed);
+#endif
+  rng.seed(seed);
+
+  boost::unit_test::test_suite* suite = &boost::unit_test::framework::master_test_suite();
+  suite->p_name.value = "ZlibTest";
+
+  uint32_t buf_len = 1024 * 32;
+  add_tests(suite, gen_uniform_buffer(buf_len, 'a'), buf_len, "uniform");
+  add_tests(suite, gen_compressible_buffer(buf_len), buf_len, "compressible");
+  add_tests(suite, gen_random_buffer(buf_len), buf_len, "random");
+
+  suite->add(BOOST_TEST_CASE(test_no_write));
+
+  return true;
+}
+
+int main( int argc, char* argv[] ) {
+  return ::boost::unit_test::unit_test_main(&init_unit_test_suite,argc,argv);
+}
+#else
 boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   THRIFT_UNUSED_VARIABLE(argc);
   THRIFT_UNUSED_VARIABLE(argv);
@@ -433,3 +458,4 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
 
   return NULL;
 }
+#endif
