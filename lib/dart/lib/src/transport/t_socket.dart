@@ -22,7 +22,7 @@ enum TSocketState { CLOSED, OPEN }
 abstract class TSocket {
   Stream<TSocketState> get onState;
 
-  Stream<String> get onError;
+  Stream<Object> get onError;
 
   Stream<Uint8List> get onMessage;
 
