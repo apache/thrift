@@ -2555,6 +2555,9 @@ string t_py_generator::type_to_spec_args(t_type* ttype) {
 
   if (ttype->is_base_type() && reinterpret_cast<t_base_type*>(ttype)->is_binary()) {
     return  "'BINARY'";
+  } else if (gen_utf8strings_ && ttype->is_base_type()
+             && reinterpret_cast<t_base_type*>(ttype)->is_string()) {
+    return "'UTF8'";
   } else if (ttype->is_base_type() || ttype->is_enum()) {
     return  "None";
   } else if (ttype->is_struct() || ttype->is_xception()) {
