@@ -72,6 +72,9 @@
     <ClCompile Include="src\thrift\async\TAsyncChannel.cpp">
       <Filter>async</Filter>
     </ClCompile>
+    <ClCompile Include="src\thrift\async\TConcurrentClientSyncInfo.cpp">
+      <Filter>async</Filter>
+    </ClCompile>
     <ClCompile Include="src\thrift\processor\PeekProcessor.cpp">
       <Filter>processor</Filter>
     </ClCompile>
@@ -168,6 +171,9 @@
       <Filter>server</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\async\TAsyncChannel.h">
+      <Filter>async</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\async\TConcurrentClientSyncInfo.h">
       <Filter>async</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\processor\PeekProcessor.h">
