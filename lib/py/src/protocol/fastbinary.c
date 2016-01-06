@@ -947,7 +947,7 @@ decode_struct(DecodeBuffer* input, PyObject* output, PyObject* klass, PyObject* 
     }
     if (parsedspec.type != type) {
       if (!skip(input, type)) {
-        PyErr_SetString(PyExc_TypeError, "struct field had wrong type while reading and can't be skipped");
+        PyErr_Format(PyExc_TypeError, "struct field had wrong type: expected %d but got %d", parsedspec.type, type);
         goto error;
       } else {
         continue;
