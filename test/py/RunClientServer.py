@@ -73,7 +73,7 @@ def relfile(fname):
 
 
 def setup_pypath(dirs):
-  env = copy.copy(os.environ)
+  env = copy.deepcopy(os.environ)
   pypath = env.get('PYTHONPATH', None)
   if pypath:
     dirs.append(pypath)
@@ -83,6 +83,8 @@ def setup_pypath(dirs):
 
 def runScriptTest(libdir, genpydir, script):
   env = setup_pypath([libdir, genpydir])
+  if genpydir == 'gen-py-no_utf8strings':
+    env['THRIFT_TEST_PY_NO_UTF8STRINGS'] = '1'
   script_args = [sys.executable, relfile(script)]
   print('\nTesting script: %s\n----' % (' '.join(script_args)))
   ret = subprocess.call(script_args, env=env)
@@ -250,7 +252,7 @@ def main():
   parser = OptionParser()
   parser.add_option('--all', action="store_true", dest='all')
   parser.add_option('--genpydirs', type='string', dest='genpydirs',
-                    default='default,slots,oldstyle,dynamic,dynamicslots',
+                    default='default,slots,oldstyle,no_utf8strings,dynamic,dynamicslots',
                     help='directory extensions for generated code, used as suffixes for \"gen-py-*\" added sys.path for individual tests')
   parser.add_option("--port", type="int", dest="port", default=9090,
                     help="port number for server to listen on")
