@@ -22,11 +22,12 @@ add_test(NAME python_test_generate
             -DTHRIFTCOMPILER=$<TARGET_FILE:thrift-compiler>
             -DMY_PROJECT_DIR=${PROJECT_SOURCE_DIR}
             -DMY_CURRENT_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+            -DMY_CURRENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}
     -P ${CMAKE_CURRENT_SOURCE_DIR}/generate.cmake
 )
 
 add_test(NAME python_test
-    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RunClientServer.py
+    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RunClientServer.py --gen-base=${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS python_test_generate
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
