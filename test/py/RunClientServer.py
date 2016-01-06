@@ -72,19 +72,20 @@ def relfile(fname):
     return os.path.join(SCRIPT_DIR, fname)
 
 
-def setup_pypath(dirs):
+def setup_pypath(libdir, gendir):
+  dirs = [libdir, gendir]
   env = copy.deepcopy(os.environ)
   pypath = env.get('PYTHONPATH', None)
   if pypath:
     dirs.append(pypath)
   env['PYTHONPATH'] = ':'.join(dirs)
+  if gendir.endswith('gen-py-no_utf8strings'):
+    env['THRIFT_TEST_PY_NO_UTF8STRINGS'] = '1'
   return env
 
 
 def runScriptTest(libdir, genbase, genpydir, script):
-  env = setup_pypath([libdir, os.path.join(genbase, genpydir)])
-  if genpydir == 'gen-py-no_utf8strings':
-    env['THRIFT_TEST_PY_NO_UTF8STRINGS'] = '1'
+  env = setup_pypath(libdir, os.path.join(genbase, genpydir))
   script_args = [sys.executable, relfile(script)]
   print('\nTesting script: %s\n----' % (' '.join(script_args)))
   ret = subprocess.call(script_args, env=env)
@@ -97,7 +98,7 @@ def runScriptTest(libdir, genbase, genpydir, script):
 
 
 def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zlib, use_ssl, verbose):
-  env = setup_pypath([libdir, os.path.join(genbase, genpydir)])
+  env = setup_pypath(libdir, os.path.join(genbase, genpydir))
   # Build command line arguments
   server_args = [sys.executable, relfile('TestServer.py')]
   cli_args = [sys.executable, relfile('TestClient.py')]
