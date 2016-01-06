@@ -92,7 +92,7 @@ class AbstractTest(unittest.TestCase):
         Türkçe, Татарча/Tatarça, Українська, اردو, Tiếng Việt, Volapük,
         Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文,
         Bân-lâm-gú, 粵語"""
-    if sys.version_info[0] == 2:
+    if sys.version_info[0] == 2 and os.environ.get('THRIFT_TEST_PY_NO_UTF8STRINGS'):
       s1 = s1.encode('utf8')
       s2 = s2.encode('utf8')
     self.assertEqual(self.client.testString(s1), s1)
@@ -300,7 +300,6 @@ if __name__ == "__main__":
   parser.add_option('--libpydir', type='string', dest='libpydir',
                     help='include this directory in sys.path for locating library code')
   parser.add_option('--genpydir', type='string', dest='genpydir',
-                    default='gen-py',
                     help='include this directory in sys.path for locating generated code')
   parser.add_option("--port", type="int", dest="port",
                     help="connect to server at port")
@@ -325,7 +324,8 @@ if __name__ == "__main__":
   parser.set_defaults(framed=False, http_path=None, verbose=1, host='localhost', port=9090, proto='binary')
   options, args = parser.parse_args()
 
-  sys.path.insert(0, os.path.join(SCRIPT_DIR, options.genpydir))
+  if options.genpydir:
+    sys.path.insert(0, os.path.join(SCRIPT_DIR, options.genpydir))
   if options.libpydir:
     sys.path.insert(0, glob.glob(options.libpydir)[0])
   else:
