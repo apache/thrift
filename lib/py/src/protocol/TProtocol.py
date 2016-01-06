@@ -111,6 +111,9 @@ class TProtocolBase(object):
   def writeBinary(self, str_val):
     pass
 
+  def writeUtf8(self, str_val):
+    self.writeString(str_val.encode('utf8'))
+
   def readMessageBegin(self):
     pass
 
@@ -170,6 +173,9 @@ class TProtocolBase(object):
 
   def readBinary(self):
     pass
+
+  def readUtf8(self):
+    return self.readString().decode('utf8')
 
   def skip(self, ttype):
     if ttype == TType.STOP:
@@ -242,6 +248,11 @@ class TProtocolBase(object):
         raise TProtocolException(type=TProtocolException.INVALID_DATA,
                                  message='Invalid binary field type %d' % ttype)
       return ('readBinary', 'writeBinary', False)
+    if sys.version_info[0] == 2 and spec == 'UTF8':
+      if ttype != TType.STRING:
+        raise TProtocolException(type=TProtocolException.INVALID_DATA,
+                                 message='Invalid string field type %d' % ttype)
+      return ('readUtf8', 'writeUtf8', False)
     return self._TTYPE_HANDLERS[ttype] if ttype < len(self._TTYPE_HANDLERS) else (None, None, False)
 
   def _read_by_ttype(self, ttype, spec, espec):
