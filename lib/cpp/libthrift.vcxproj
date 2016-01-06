@@ -36,6 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\thrift\async\TAsyncChannel.cpp"/>
+    <ClCompile Include="src\thrift\async\TConcurrentClientSyncInfo.cpp"/>
     <ClCompile Include="src\thrift\concurrency\BoostMonitor.cpp" />
     <ClCompile Include="src\thrift\concurrency\BoostMutex.cpp" />
     <ClCompile Include="src\thrift\concurrency\BoostThreadFactory.cpp" />
@@ -76,6 +77,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\thrift\async\TAsyncChannel.h" />
+    <ClInclude Include="src\thrift\async\TConcurrentClientSyncInfo.h" />
     <ClInclude Include="src\thrift\concurrency\BoostThreadFactory.h" />
     <ClInclude Include="src\thrift\concurrency\StdThreadFactory.h" />
     <ClInclude Include="src\thrift\concurrency\Exception.h" />
