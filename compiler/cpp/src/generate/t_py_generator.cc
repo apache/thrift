@@ -427,7 +427,9 @@ string t_py_generator::py_autogen_comment() {
  * Prints standard thrift imports
  */
 string t_py_generator::py_imports() {
-  return string("from thrift.Thrift import TType, TMessageType, TFrozenDict, TException, TApplicationException");
+  return gen_utf8strings_
+    ? string("from thrift.Thrift import TType, TMessageType, TFrozenDict, TException, TApplicationException\nimport sys")
+    : string("from thrift.Thrift import TType, TMessageType, TFrozenDict, TException, TApplicationException");
 }
 
 /**
@@ -1510,7 +1512,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     py_autogen_comment() << endl <<
     "import sys" << endl <<
     "import pprint" << endl <<
-    "if sys.version_info[0] == 3:" << endl <<
+    "if sys.version_info[0] > 2:" << endl <<
     "  from urllib.parse import urlparse" << endl <<
     "else:" << endl <<
     "  from urlparse import urlparse" << endl <<
@@ -2030,7 +2032,7 @@ void t_py_generator::generate_deserialize_field(ofstream& out,
         } else if(!gen_utf8strings_) {
           out << "readString()";
         } else {
-          out << "readString().decode('utf-8')";
+          out << "readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()";
         }
         break;
       case t_base_type::TYPE_BOOL:
@@ -2218,7 +2220,7 @@ void t_py_generator::generate_serialize_field(ofstream& out, t_field* tfield, st
         } else if (!gen_utf8strings_) {
           out << "writeString(" << name << ")";
         } else {
-          out << "writeString(" << name << ".encode('utf-8'))";
+          out << "writeString(" << name << ".encode('utf-8') if sys.version_info[0] == 2 else " << name << ")";
         }
         break;
       case t_base_type::TYPE_BOOL:
