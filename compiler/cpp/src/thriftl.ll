@@ -268,7 +268,6 @@ literal_begin (['\"])
 "print"              { thrift_reserved_keyword(yytext); }
 "private"            { thrift_reserved_keyword(yytext); }
 "protected"          { thrift_reserved_keyword(yytext); }
-"public"             { thrift_reserved_keyword(yytext); }
 "raise"              { thrift_reserved_keyword(yytext); }
 "redo"               { thrift_reserved_keyword(yytext); }
 "rescue"             { thrift_reserved_keyword(yytext); }
@@ -287,7 +286,6 @@ literal_begin (['\"])
 "transient"          { thrift_reserved_keyword(yytext); }
 "try"                { thrift_reserved_keyword(yytext); }
 "undef"              { thrift_reserved_keyword(yytext); }
-"union"              { thrift_reserved_keyword(yytext); }
 "unless"             { thrift_reserved_keyword(yytext); }
 "unsigned"           { thrift_reserved_keyword(yytext); }
 "until"              { thrift_reserved_keyword(yytext); }
@@ -407,13 +405,8 @@ literal_begin (['\"])
 }
 
 . {
-  unexpected_token(yytext);
-}
-
-
-. {
   /* Catch-all to let us catch "*" in the parser. */
-  return (int) yytext[0];
+  unexpected_token(yytext);
 }
 
 %%
