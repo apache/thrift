@@ -533,6 +533,8 @@ protected:
   boost::shared_ptr<TestHandler> _delegate;
 };
 
+namespace po = boost::program_options;
+
 int main(int argc, char** argv) {
 
   string file_path = boost::filesystem::system_complete(argv[0]).string();
@@ -549,34 +551,27 @@ int main(int argc, char** argv) {
   string domain_socket = "";
   bool abstract_namespace = false;
   size_t workers = 4;
+  int string_limit = 0;
+  int container_limit = 0;
 
-  boost::program_options::options_description desc("Allowed options");
-  desc.add_options()("help,h", "produce help message")(
-      "port",
-      boost::program_options::value<int>(&port)->default_value(port),
-      "Port number to listen")("domain-socket",
-                               boost::program_options::value<string>(&domain_socket)
-                                   ->default_value(domain_socket),
-                               "Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)")(
-      "abstract-namespace",
-      "Create the domain socket in the Abstract Namespace (no connection with filesystem pathnames)")(
-      "server-type",
-      boost::program_options::value<string>(&server_type)->default_value(server_type),
-      "type of server, \"simple\", \"thread-pool\", \"threaded\", or \"nonblocking\"")(
-      "transport",
-      boost::program_options::value<string>(&transport_type)->default_value(transport_type),
-      "transport: buffered, framed, http")(
-      "protocol",
-      boost::program_options::value<string>(&protocol_type)->default_value(protocol_type),
-      "protocol: binary, compact, header, json")("ssl", "Encrypted Transport using SSL")(
-      "processor-events",
-      "processor-events")("workers,n",
-                          boost::program_options::value<size_t>(&workers)->default_value(workers),
-                          "Number of thread pools workers. Only valid for thread-pool server type");
+  po::options_description desc("Allowed options");
+  desc.add_options()
+    ("help,h", "produce help message")
+    ("port", po::value<int>(&port)->default_value(port), "Port number to listen")
+    ("domain-socket", po::value<string>(&domain_socket) ->default_value(domain_socket), "Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)")
+    ("abstract-namespace", "Create the domain socket in the Abstract Namespace (no connection with filesystem pathnames)")
+    ("server-type", po::value<string>(&server_type)->default_value(server_type), "type of server, \"simple\", \"thread-pool\", \"threaded\", or \"nonblocking\"")
+    ("transport", po::value<string>(&transport_type)->default_value(transport_type), "transport: buffered, framed, http")
+    ("protocol", po::value<string>(&protocol_type)->default_value(protocol_type), "protocol: binary, compact, header, json")
+    ("ssl", "Encrypted Transport using SSL")
+    ("processor-events", "processor-events")
+    ("workers,n", po::value<size_t>(&workers)->default_value(workers), "Number of thread pools workers. Only valid for thread-pool server type")
+    ("string-limit", po::value<int>(&string_limit))
+    ("container-limit", po::value<int>(&container_limit));
 
-  boost::program_options::variables_map vm;
-  boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
-  boost::program_options::notify(vm);
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+  po::notify(vm);
 
   if (vm.count("help")) {
     cout << desc << "\n";
@@ -633,15 +628,18 @@ int main(int argc, char** argv) {
     boost::shared_ptr<TProtocolFactory> jsonProtocolFactory(new TJSONProtocolFactory());
     protocolFactory = jsonProtocolFactory;
   } else if (protocol_type == "compact") {
-    boost::shared_ptr<TProtocolFactory> compactProtocolFactory(new TCompactProtocolFactory());
-    protocolFactory = compactProtocolFactory;
+    TCompactProtocolFactoryT<TBufferBase> *compactProtocolFactory = new TCompactProtocolFactoryT<TBufferBase>();
+    compactProtocolFactory->setContainerSizeLimit(container_limit);
+    compactProtocolFactory->setStringSizeLimit(string_limit);
+    protocolFactory.reset(compactProtocolFactory);
   } else if (protocol_type == "header") {
     boost::shared_ptr<TProtocolFactory> headerProtocolFactory(new THeaderProtocolFactory());
     protocolFactory = headerProtocolFactory;
   } else {
-    boost::shared_ptr<TProtocolFactory> binaryProtocolFactory(
-        new TBinaryProtocolFactoryT<TBufferBase>());
-    protocolFactory = binaryProtocolFactory;
+    TBinaryProtocolFactoryT<TBufferBase>* binaryProtocolFactory = new TBinaryProtocolFactoryT<TBufferBase>();
+    binaryProtocolFactory->setContainerSizeLimit(container_limit);
+    binaryProtocolFactory->setStringSizeLimit(string_limit);
+    protocolFactory.reset(binaryProtocolFactory);
   }
 
   // Processor

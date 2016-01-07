@@ -31,7 +31,7 @@ def domain_socket_path(port):
 
 class TestProgram(object):
   def __init__(self, kind, name, protocol, transport, socket, workdir, command, env=None,
-               extra_args=[], join_args=False, **kwargs):
+               extra_args=[], extra_args2=[], join_args=False, **kwargs):
     self.kind = kind
     self.name = name
     self.protocol = protocol
@@ -46,6 +46,7 @@ class TestProgram(object):
     else:
       self.env = os.environ
     self._extra_args = extra_args
+    self._extra_args2 = extra_args2
     self._join_args = join_args
 
   def _fix_cmd_path(self, cmd):
@@ -69,7 +70,7 @@ class TestProgram(object):
 
   def build_command(self, port):
     cmd = copy.copy(self._base_command)
-    args = []
+    args = self._extra_args2
     args.append('--protocol=' + self.protocol)
     args.append('--transport=' + self.transport)
     socket_args = self._socket_args(self.socket, port)
@@ -94,8 +95,12 @@ class TestEntry(object):
     self.protocol = kwargs['protocol']
     self.transport = kwargs['transport']
     self.socket = kwargs['socket']
-    self.server = TestProgram('server', **self._fix_workdir(merge_dict(self._config, server)))
-    self.client = TestProgram('client', **self._fix_workdir(merge_dict(self._config, client)))
+    srv_dict = self._fix_workdir(merge_dict(self._config, server))
+    cli_dict = self._fix_workdir(merge_dict(self._config, client))
+    cli_dict['extra_args2'] = srv_dict.pop('remote_args', [])
+    srv_dict['extra_args2'] = cli_dict.pop('remote_args', [])
+    self.server = TestProgram('server', **srv_dict)
+    self.client = TestProgram('client', **cli_dict)
     self.delay = delay
     self.timeout = timeout
     self._name = None
