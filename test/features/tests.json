@@ -23,5 +23,41 @@
     "transports": ["buffered"],
     "sockets": ["ip"],
     "workdir": "features"
+  },
+  {
+    "name": "limit_string_length",
+    "command": [
+      "python",
+      "string_limit.py",
+      "--limit=50"
+    ],
+    "remote_args": [
+      "--string-limit=50"
+    ],
+    "protocols": [
+      "binary",
+      "compact"
+    ],
+    "transports": ["buffered"],
+    "sockets": ["ip"],
+    "workdir": "features"
+  },
+  {
+    "name": "limit_container_length",
+    "command": [
+      "python",
+      "container_limit.py",
+      "--limit=50"
+    ],
+    "remote_args": [
+      "--container-limit=50"
+    ],
+    "protocols": [
+      "binary",
+      "compact"
+    ],
+    "transports": ["buffered"],
+    "sockets": ["ip"],
+    "workdir": "features"
   }
 ]
