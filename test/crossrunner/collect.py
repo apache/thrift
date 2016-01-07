@@ -44,6 +44,7 @@ VALID_JSON_KEYS = [
   'workdir',  # work directory where command is executed
   'command',  # test command
   'extra_args',  # args appended to command after other args are appended
+  'remote_args',  # args added to the other side of the program
   'join_args',  # whether args should be passed as single concatenated string
   'env',  # additional environmental variable
 ]
