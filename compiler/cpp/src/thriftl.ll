@@ -405,7 +405,6 @@ literal_begin (['\"])
 }
 
 . {
-  /* Catch-all to let us catch "*" in the parser. */
   unexpected_token(yytext);
 }
 
