@@ -39,6 +39,7 @@ import crossrunner
 from crossrunner.compat import path_join
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
+FEATURE_DIR = path_join(TEST_DIR, 'features')
 CONFIG_FILE = 'tests.json'
 
 
@@ -101,8 +102,7 @@ def run_cross_tests(server_match, client_match, jobs, skip_known_failures):
 
 
 def run_feature_tests(server_match, feature_match, jobs, skip_known_failures):
-  basedir = path_join(TEST_DIR, 'features')
-  # run_tests(crossrunner.collect_feature_tests, basedir, server_match, feature_match, jobs, skip_known_failures)
+  basedir = FEATURE_DIR
   logger = multiprocessing.get_logger()
   logger.debug('Collecting tests')
   with open(path_join(TEST_DIR, CONFIG_FILE), 'r') as fp:
@@ -153,7 +153,7 @@ def main(argv):
                       default=default_concurrenty(),
                       help='number of concurrent test executions')
   parser.add_argument('-F', '--features', nargs='*', default=None,
-                      help='run feature tests instead of cross language tests')
+                      help='run server feature tests instead of cross language tests')
 
   g = parser.add_argument_group(title='Advanced')
   g.add_argument('-v', '--verbose', action='store_const',
@@ -170,13 +170,18 @@ def main(argv):
   logger = multiprocessing.log_to_stderr()
   logger.setLevel(options.log_level)
 
+  if options.features is not None and options.client:
+    print('Cannot specify both --features and --client ', file=sys.stderr)
+    return 1
+
   # Allow multiple args separated with ',' for backward compatibility
   server_match = list(chain(*[x.split(',') for x in options.server]))
   client_match = list(chain(*[x.split(',') for x in options.client]))
 
   if options.update_failures or options.print_failures:
+    dire = FEATURE_DIR if options.features is not None else TEST_DIR
     res = crossrunner.generate_known_failures(
-        TEST_DIR, options.update_failures == 'overwrite',
+        dire, options.update_failures == 'overwrite',
         options.update_failures, options.print_failures)
   elif options.features is not None:
     features = options.features or ['.*']
