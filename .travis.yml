@@ -47,6 +47,12 @@ env:
       BUILD_ARG="--enable-tutorial=no"
       BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
+    - TEST_NAME="Cross Language Tests (Debian)"
+      BUILD_CMD="../cross-test.sh"
+      BUILD_ARG="--enable-tutorial=no"
+      BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
+      DISTRO=debian
+
     # TODO: Remove them once migrated to CMake
     # Autotools builds
     - TEST_NAME="C C++ C# D Erlang Go Haxe (automake)"
@@ -103,6 +109,46 @@ env:
       BUILD_ARG="-DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
       BUILD_ENV=""
 
+
+    - TEST_NAME="All (Debian)"
+      BUILD_CMD="../cmake.sh"
+      DISTRO=debian
+
+    - TEST_NAME="C C++ - GCC (Debian)"
+      BUILD_CMD="../cmake.sh"
+      BUILD_ARG="-DWITH_PYTHON=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
+      DISTRO=debian
+
+    - TEST_NAME="C++ (Boost Thread) (Debian)"
+      BUILD_CMD="../cmake.sh"
+      BUILD_ARG="-DWITH_BOOSTTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+      DISTRO=debian
+
+    - TEST_NAME="C++ (Boost Thread - GCC) (Debian)"
+      BUILD_CMD="../cmake.sh"
+      BUILD_ARG="-DWITH_BOOSTTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
+      DISTRO=debian
+
+    - TEST_NAME="C++ (Std Thread) (Debian)"
+      BUILD_CMD="../cmake.sh"
+      BUILD_ARG="-DWITH_STDTHREADS=ON -DCMAKE_CXX_FLAGS='-std=c++11' -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+      DISTRO=debian
+
+    - TEST_NAME="C++ (Std Thread - GCC) (Debian)"
+      BUILD_CMD="../cmake.sh"
+      BUILD_ARG="-DWITH_STDTHREADS=ON -DCMAKE_CXX_FLAGS='-std=c++11' -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
+      DISTRO=debian
+
+    - TEST_NAME="Compiler (mingw) (Debian)"
+      BUILD_CMD="../cmake.sh"
+      BUILD_ARG="-DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
+      BUILD_ENV=""
+      DISTRO=debian
+
+
     - TEST_NAME="All (CentOS)"
       BUILD_CMD="../cmake.sh"
       DISTRO=centos
@@ -127,6 +173,17 @@ env:
     - TEST_NAME="Debian Packages"
       BUILD_CMD="../dpkg.sh"
       BUILD_ENV="-e CC=gcc -e CXX=g++"
+
+
+    - TEST_NAME="make dist (Debian)"
+      BUILD_CMD="../make-dist.sh"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
+      DISTRO=debian
+
+    - TEST_NAME="Debian Packages (Debian)"
+      BUILD_CMD="../dpkg.sh"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
+      DISTRO=debian
 
 matrix:
   include:
