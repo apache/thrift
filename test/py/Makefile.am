@@ -31,8 +31,8 @@ thrift_gen =                                    \
         gen-py-slots/DebugProtoTest/__init__.py \
         gen-py-oldstyle/ThriftTest/__init__.py \
         gen-py-oldstyle/DebugProtoTest/__init__.py \
-        gen-py-oldstyleslots/ThriftTest/__init__.py \
-        gen-py-oldstyleslots/DebugProtoTest/__init__.py \
+        gen-py-no_utf8strings/ThriftTest/__init__.py \
+        gen-py-no_utf8strings/DebugProtoTest/__init__.py \
         gen-py-dynamic/ThriftTest/__init__.py           \
         gen-py-dynamic/DebugProtoTest/__init__.py \
         gen-py-dynamicslots/ThriftTest/__init__.py           \
@@ -68,9 +68,9 @@ gen-py-oldstyle/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-oldstyle || $(MKDIR_P) gen-py-oldstyle
 	$(THRIFT) --gen py:old_style -out gen-py-oldstyle $<
 
-gen-py-oldstyleslots/%/__init__.py: ../%.thrift $(THRIFT)
-	test -d gen-py-oldstyleslots || $(MKDIR_P) gen-py-oldstyleslots
-	$(THRIFT) --gen py:old_style,slots -out gen-py-oldstyleslots $<
+gen-py-no_utf8strings/%/__init__.py: ../%.thrift $(THRIFT)
+	test -d gen-py-no_utf8strings || $(MKDIR_P) gen-py-no_utf8strings
+	$(THRIFT) --gen py:no_utf8strings -out gen-py-no_utf8strings $<
 
 gen-py-dynamic/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-dynamic || $(MKDIR_P) gen-py-dynamic
@@ -81,4 +81,4 @@ gen-py-dynamicslots/%/__init__.py: ../%.thrift $(THRIFT)
 	$(THRIFT) --gen py:dynamic,slots -out gen-py-dynamicslots $<
 
 clean-local:
-	$(RM) -r gen-py gen-py-slots gen-py-default gen-py-oldstyle gen-py-oldstyleslots gen-py-dynamic gen-py-dynamicslots
+	$(RM) -r gen-py gen-py-slots gen-py-default gen-py-oldstyle gen-py-no_utf8strings gen-py-dynamic gen-py-dynamicslots

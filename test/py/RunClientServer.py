@@ -72,17 +72,20 @@ def relfile(fname):
     return os.path.join(SCRIPT_DIR, fname)
 
 
-def setup_pypath(dirs):
-  env = copy.copy(os.environ)
+def setup_pypath(libdir, gendir):
+  dirs = [libdir, gendir]
+  env = copy.deepcopy(os.environ)
   pypath = env.get('PYTHONPATH', None)
   if pypath:
     dirs.append(pypath)
   env['PYTHONPATH'] = ':'.join(dirs)
+  if gendir.endswith('gen-py-no_utf8strings'):
+    env['THRIFT_TEST_PY_NO_UTF8STRINGS'] = '1'
   return env
 
 
-def runScriptTest(libdir, genpydir, script):
-  env = setup_pypath([libdir, genpydir])
+def runScriptTest(libdir, genbase, genpydir, script):
+  env = setup_pypath(libdir, os.path.join(genbase, genpydir))
   script_args = [sys.executable, relfile(script)]
   print('\nTesting script: %s\n----' % (' '.join(script_args)))
   ret = subprocess.call(script_args, env=env)
@@ -94,8 +97,8 @@ def runScriptTest(libdir, genpydir, script):
     raise Exception("Script subprocess failed, retcode=%d, args: %s" % (ret, ' '.join(script_args)))
 
 
-def runServiceTest(libdir, genpydir, server_class, proto, port, use_zlib, use_ssl, verbose):
-  env = setup_pypath([libdir, genpydir])
+def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zlib, use_ssl, verbose):
+  env = setup_pypath(libdir, os.path.join(genbase, genpydir))
   # Build command line arguments
   server_args = [sys.executable, relfile('TestServer.py')]
   cli_args = [sys.executable, relfile('TestClient.py')]
@@ -169,7 +172,8 @@ def runServiceTest(libdir, genpydir, server_class, proto, port, use_zlib, use_ss
 
 
 class TestCases(object):
-  def __init__(self, libdir, port, gendirs, servers, verbose):
+  def __init__(self, genbase, libdir, port, gendirs, servers, verbose):
+    self.genbase = genbase
     self.libdir = libdir
     self.port = port
     self.verbose = verbose
@@ -200,7 +204,7 @@ class TestCases(object):
     if self.verbose > 0:
       print('\nTest run #%d:  (includes %s) Server=%s,  Proto=%s,  zlib=%s,  SSL=%s'
             % (test_count, genpydir, try_server, try_proto, with_zlib, with_ssl))
-    runServiceTest(self.libdir, genpydir, try_server, try_proto, self.port, with_zlib, with_ssl, self.verbose)
+    runServiceTest(self.libdir, self.genbase, genpydir, try_server, try_proto, self.port, with_zlib, with_ssl, self.verbose)
     if self.verbose > 0:
       print('OK: Finished (includes %s)  %s / %s proto / zlib=%s / SSL=%s.   %d combinations tested.'
             % (genpydir, try_server, try_proto, with_zlib, with_ssl, test_count))
@@ -232,7 +236,7 @@ class TestCases(object):
               if self.verbose > 0:
                 print('\nTest run #%d:  (includes %s) Server=%s,  Proto=%s,  zlib=%s,  SSL=%s'
                       % (test_count, genpydir, try_server, try_proto, with_zlib, with_ssl))
-              runServiceTest(self.libdir, genpydir, try_server, try_proto, self.port, with_zlib, with_ssl)
+              runServiceTest(self.libdir, self.genbase, genpydir, try_server, try_proto, self.port, with_zlib, with_ssl)
               if self.verbose > 0:
                 print('OK: Finished (includes %s)  %s / %s proto / zlib=%s / SSL=%s.   %d combinations tested.'
                       % (genpydir, try_server, try_proto, with_zlib, with_ssl, test_count))
@@ -250,7 +254,7 @@ def main():
   parser = OptionParser()
   parser.add_option('--all', action="store_true", dest='all')
   parser.add_option('--genpydirs', type='string', dest='genpydirs',
-                    default='default,slots,oldstyle,dynamic,dynamicslots',
+                    default='default,slots,oldstyle,no_utf8strings,dynamic,dynamicslots',
                     help='directory extensions for generated code, used as suffixes for \"gen-py-*\" added sys.path for individual tests')
   parser.add_option("--port", type="int", dest="port", default=9090,
                     help="port number for server to listen on")
@@ -261,6 +265,8 @@ def main():
                     dest="verbose", const=0,
                     help="minimal output")
   parser.add_option('-L', '--libdir', dest="libdir", default=default_libdir(),
+                    help="directory path that contains Thrift Python library")
+  parser.add_option('--gen-base', dest="gen_base", default=SCRIPT_DIR,
                     help="directory path that contains Thrift Python library")
   parser.set_defaults(verbose=1)
   options, args = parser.parse_args()
@@ -278,7 +284,7 @@ def main():
       print('Unavailable server type "%s", please choose one of: %s' % (args[0], servers))
       sys.exit(0)
 
-  tests = TestCases(options.libdir, options.port, generated_dirs, servers, options.verbose)
+  tests = TestCases(options.gen_base, options.libdir, options.port, generated_dirs, servers, options.verbose)
 
   # run tests without a client/server first
   print('----------------')
@@ -288,7 +294,7 @@ def main():
   print('----------------')
   for genpydir in generated_dirs:
     for script in SCRIPTS:
-      runScriptTest(options.libdir, genpydir, script)
+      runScriptTest(options.libdir, options.gen_base, genpydir, script)
 
   print('----------------')
   print(' Executing Client/Server tests with various generated code directories')
