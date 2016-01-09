@@ -75,6 +75,15 @@ public:
       library_name_ = "";
     }
 
+    iter = parsed_options.find("library_prefix");
+    if (iter != parsed_options.end()) {
+      library_prefix_ = (iter->second) + ".";
+      package_prefix_ = replace_all(library_prefix_, ".", "/");
+    } else {
+      library_prefix_ = "";
+      package_prefix_ = "";
+    }
+
     iter = parsed_options.find("pubspec_lib");
     if (iter != parsed_options.end()) {
       pubspec_lib_ = (iter->second);
@@ -263,6 +272,8 @@ private:
   std::ofstream f_service_;
 
   std::string library_name_;
+  std::string library_prefix_;
+  std::string package_prefix_;
   std::string pubspec_lib_;
 
   std::string base_dir_;
@@ -285,14 +296,17 @@ void t_dart_generator::init_generator() {
 
   string subdir = get_out_dir() + "/" + library_name_;
   MKDIR(subdir.c_str());
-
   base_dir_ = subdir;
-  subdir += "/lib";
-  MKDIR(subdir.c_str());
 
-  subdir += "/src";
-  MKDIR(subdir.c_str());
-  src_dir_ = subdir;
+  if (library_prefix_.empty()) {
+    subdir += "/lib";
+    MKDIR(subdir.c_str());
+    subdir += "/src";
+    MKDIR(subdir.c_str());
+    src_dir_ = subdir;
+  } else {
+    src_dir_ = base_dir_;
+  }
 }
 
 string t_dart_generator::find_library_name(t_program* program) {
@@ -311,12 +325,13 @@ string t_dart_generator::find_library_name(t_program* program) {
  * @return String of the library, e.g. "library myservice;"
  */
 string t_dart_generator::dart_library(string file_name) {
-  string out = "library ";
-  if (!library_name_.empty()) {
-    out += library_name_;
-  }
+  string out = "library " + library_prefix_ + library_name_;
   if (!file_name.empty()) {
-    out += ".src." + file_name;
+    if (library_prefix_.empty()) {
+      out += ".src." + file_name;
+    } else {
+      out += "." + file_name;
+    }
   }
   return out + ";\n";
 }
@@ -337,14 +352,24 @@ string t_dart_generator::service_imports() {
  */
 string t_dart_generator::dart_thrift_imports() {
   string imports = "import 'dart:typed_data' show Uint8List;" + endl +
-    "import 'package:thrift/thrift.dart';" + endl +
-    "import 'package:" + library_name_ + "/" + library_name_ + ".dart';" + endl;
+                   "import 'package:thrift/thrift.dart';" + endl;
+
+  // add import for this library
+  if (package_prefix_.empty()) {
+    imports += "import 'package:" + library_name_ + "/" + library_name_ + ".dart';" + endl;
+  } else {
+    imports += "import 'package:" + package_prefix_ + library_name_ + ".dart';" + endl;
+  }
 
   // add imports for included thrift files
   const vector<t_program*>& includes = program_->get_includes();
   for (size_t i = 0; i < includes.size(); ++i) {
     string include_name = find_library_name(includes[i]);
-    imports += "import 'package:" + include_name + "/" + include_name + ".dart';" + endl;
+    if (package_prefix_.empty()) {
+      imports += "import 'package:" + include_name + "/" + include_name + ".dart';" + endl;
+    } else {
+      imports += "import 'package:" + package_prefix_ + include_name + ".dart';" + endl;
+    }
   }
 
   return imports;
@@ -355,23 +380,38 @@ string t_dart_generator::dart_thrift_imports() {
  */
 void t_dart_generator::close_generator() {
   generate_dart_library();
-  generate_dart_pubspec();
+
+  if (library_prefix_.empty()) {
+    generate_dart_pubspec();
+  }
 }
 
 void t_dart_generator::generate_dart_library() {
-  string f_library_name = base_dir_ + "/lib/" + library_name_ + ".dart";
+  string f_library_name;
+  if (library_prefix_.empty()) {
+    f_library_name = base_dir_ + "/lib/" + library_name_ + ".dart";
+  } else {
+    f_library_name = get_out_dir() + "/" + library_name_ + ".dart";
+  }
+
   ofstream f_library;
   f_library.open(f_library_name.c_str());
 
   f_library << autogen_comment() << endl;
-  f_library << "library " << library_name_ << ";" << endl2;
+  f_library << "library " << library_prefix_ << library_name_ << ";" << endl2;
   f_library << library_exports_;
 
   f_library.close();
 }
 
 void t_dart_generator::export_class_to_library(string file_name, string class_name) {
-  library_exports_ += "export 'src/" + file_name + ".dart' show " + class_name + ";" + endl;
+  string subdir;
+  if (library_prefix_.empty()) {
+    subdir = "src";
+  } else {
+    subdir = library_name_;
+  }
+  library_exports_ += "export '" + subdir + "/" + file_name + ".dart' show " + class_name + ";" + endl;
 }
 
 void t_dart_generator::generate_dart_pubspec() {
@@ -2393,6 +2433,8 @@ THRIFT_REGISTER_GENERATOR(
     dart,
     "Dart",
     "    library_name:    Optional override for library name.\n"
+    "    library_prefix:  Generate code that can be used within an existing library.\n"
+    "                     Use a dot-separated string, e.g. \"my_parent_lib.src.gen\"\n"
     "    pubspec_lib:     Optional override for thrift lib dependency in pubspec.yaml,\n"
     "                     e.g. \"thrift: 0.x.x\".  Use a pipe delimiter to separate lines,\n"
     "                     e.g. \"thrift:|  git:|    url: git@foo.com\"\n"
