@@ -689,6 +689,7 @@ AM_CONDITIONAL([WITH_BOOSTTHREADS], [test "x[$]ENABLE_BOOSTTHREADS" = "x1"])
 
 AC_CONFIG_HEADERS(config.h:config.hin)
 AC_CONFIG_HEADERS(lib/cpp/src/thrift/config.h:config.hin)
+AC_CONFIG_HEADERS(lib/c_glib/src/thrift/config.h:config.hin)
 # gruard against pre defined config.h
 AH_TOP([
 #ifndef CONFIG_H

@@ -24,6 +24,8 @@
 #include <thrift/c_glib/protocol/thrift_protocol.h>
 #include <thrift/c_glib/protocol/thrift_compact_protocol.h>
 
+#include <thrift/config.h>
+
 /*
  * *_to_zigzag depend on the fact that the right shift
  * operator on a signed integer is an arithmetic (sign-extending) shift.
