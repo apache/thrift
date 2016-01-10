@@ -148,8 +148,8 @@ public:
   void generate_service_helpers(t_service* tservice);
   void generate_service_client(t_service* tservice);
   void generate_service_server(t_service* tservice);
-  void t_csharp_generator::generate_service_server_sync(t_service* tservice);
-  void t_csharp_generator::generate_service_server_async(t_service* tservice);
+  void generate_service_server_sync(t_service* tservice);
+  void generate_service_server_async(t_service* tservice);
   void generate_process_function(t_service* tservice, t_function* function);
   void generate_process_function_async(t_service* tservice, t_function* function);
 
