@@ -73,6 +73,10 @@ add_executable(testbinaryprotocol testbinaryprotocol.c)
 target_link_libraries(testbinaryprotocol thrift_c_glib)
 add_test(NAME testbinaryprotocol COMMAND testbinaryprotocol)
 
+add_executable(testcompactprotocol testcompactprotocol.c)
+target_link_libraries(testcompactprotocol thrift_c_glib)
+add_test(NAME testcompactprotocol COMMAND testcompactprotocol)
+
 add_executable(testbufferedtransport testbufferedtransport.c)
 target_link_libraries(testbufferedtransport thrift_c_glib)
 add_test(NAME testbufferedtransport COMMAND testbufferedtransport)
