@@ -4,7 +4,7 @@
     <ClCompile Include="src\thrift\transport\TBufferTransports.cpp">
       <Filter>transport</Filter>
     </ClCompile>
-    <ClCompile Include="src\thrift\Thrift.cpp" />
+    <ClCompile Include="src\thrift\TOutput.cpp" />
     <ClCompile Include="src\thrift\TApplicationException.cpp" />
     <ClCompile Include="src\thrift\windows\StdAfx.cpp">
       <Filter>windows</Filter>
