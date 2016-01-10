@@ -63,12 +63,6 @@ public:
       throw "argument error: Cannot specify both async and asyncctp; they are incompatible.";
     }
 
-    iter = parsed_options.find("separateasync");
-    separate_async_ = (iter != parsed_options.end());
-    if (separate_async_ && (async_ || async_ctp_)) {
-      throw "argument error: Cannot specify separateasync along with async or asyncctp; they are incompatible.";
-    }
-
     iter = parsed_options.find("nullable");
     nullable_ = (iter != parsed_options.end());
 
@@ -146,16 +140,16 @@ public:
 
   void generate_function_helpers(t_function* tfunction);
   void generate_service_interface(t_service* tservice);
-  void generate_single_service_interface(t_service* tservice);
   void generate_separate_service_interfaces(t_service* tservice);
   void generate_sync_service_interface(t_service* tservice);
   void generate_async_service_interface(t_service* tservice);
   void generate_combined_service_interface(t_service* tservice);
+  void generate_silverlight_async_methods(t_service* tservice);
   void generate_service_helpers(t_service* tservice);
   void generate_service_client(t_service* tservice);
   void generate_service_server(t_service* tservice);
-  void generate_service_server_sync(t_service* tservice);
-  void generate_service_server_async(t_service* tservice);
+  void t_csharp_generator::generate_service_server_sync(t_service* tservice);
+  void t_csharp_generator::generate_service_server_async(t_service* tservice);
   void generate_process_function(t_service* tservice, t_function* function);
   void generate_process_function_async(t_service* tservice, t_function* function);
 
@@ -231,7 +225,6 @@ private:
   std::string namespace_dir_;
   bool async_;
   bool async_ctp_;
-  bool separate_async_;
   bool nullable_;
   bool union_;
   bool hashcode_;
@@ -424,7 +417,7 @@ void t_csharp_generator::end_csharp_namespace(ofstream& out) {
 string t_csharp_generator::csharp_type_usings() {
   return string() + "using System;\n" + "using System.Collections;\n"
          + "using System.Collections.Generic;\n" + "using System.Text;\n" + "using System.IO;\n"
-         + ((async_ || async_ctp_ || separate_async_) ? "using System.Threading.Tasks;\n" : "") + "using Thrift;\n"
+         + ((async_ || async_ctp_) ? "using System.Threading.Tasks;\n" : "") + "using Thrift;\n"
          + "using Thrift.Collections;\n" + ((serialize_ || wcf_) ? "#if !SILVERLIGHT\n" : "")
          + ((serialize_ || wcf_) ? "using System.Xml.Serialization;\n" : "")
          + ((serialize_ || wcf_) ? "#endif\n" : "") + (wcf_ ? "//using System.ServiceModel;\n" : "")
@@ -1437,72 +1430,20 @@ void t_csharp_generator::generate_service(t_service* tservice) {
 }
 
 void t_csharp_generator::generate_service_interface(t_service* tservice) {
-  if (separate_async_) {
-    generate_separate_service_interfaces(tservice);
-  }
-  else {
-    generate_single_service_interface(tservice);
-  }
-}
-
-void t_csharp_generator::generate_single_service_interface(t_service* tservice) {
-  string extends = "";
-  string extends_iface = "";
-  if (tservice->get_extends() != NULL) {
-    extends = type_name(tservice->get_extends());
-    extends_iface = " : " + extends + ".Iface";
-  }
-
-  generate_csharp_doc(f_service_, tservice);
-
-  if (wcf_) {
-    indent(f_service_) << "[ServiceContract(Namespace=\"" << wcf_namespace_ << "\")]" << endl;
-  }
-  indent(f_service_) << "public interface Iface" << extends_iface << " {" << endl;
-
-  indent_up();
-  vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter;
-  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    generate_csharp_doc(f_service_, *f_iter);
-
-    // if we're using WCF, add the corresponding attributes
-    if (wcf_) {
-      indent(f_service_) << "[OperationContract]" << endl;
-
-      const std::vector<t_field*>& xceptions = (*f_iter)->get_xceptions()->get_members();
-      vector<t_field*>::const_iterator x_iter;
-      for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-        indent(f_service_) << "[FaultContract(typeof("
-          + type_name((*x_iter)->get_type(), false, false) + "Fault))]" << endl;
-      }
-    }
-
-    indent(f_service_) << function_signature(*f_iter) << ";" << endl;
-    if (!async_) {
-      indent(f_service_) << "#if SILVERLIGHT" << endl;
-    }
-    indent(f_service_) << function_signature_async_begin(*f_iter, "Begin_") << ";" << endl;
-    indent(f_service_) << function_signature_async_end(*f_iter, "End_") << ";" << endl;
-    if (async_ || async_ctp_) {
-      indent(f_service_) << function_signature_async(*f_iter) << ";" << endl;
-    }
-    if (!async_) {
-      indent(f_service_) << "#endif" << endl;
-    }
-  }
-  indent_down();
-  f_service_ << indent() << "}" << endl << endl;
+  generate_separate_service_interfaces(tservice);
 }
 
 void t_csharp_generator::generate_separate_service_interfaces(t_service* tservice) {
   generate_sync_service_interface(tservice);
-  generate_async_service_interface(tservice);
+
+  if (async_ || async_ctp_) {
+    generate_async_service_interface(tservice);
+  }
+
   generate_combined_service_interface(tservice);
 }
 
 void t_csharp_generator::generate_sync_service_interface(t_service* tservice) {
-
   string extends = "";
   string extends_iface = "";
   if (tservice->get_extends() != NULL) {
@@ -1581,8 +1522,11 @@ void t_csharp_generator::generate_async_service_interface(t_service* tservice) {
 }
 
 void t_csharp_generator::generate_combined_service_interface(t_service* tservice) {
-  string extends = "";
-  string extends_iface = " : ISync, IAsync";
+  string extends_iface = " : ISync";
+
+  if (async_ || async_ctp_) {
+    extends_iface += ", IAsync";
+  }
 
   generate_csharp_doc(f_service_, tservice);
 
@@ -1592,7 +1536,38 @@ void t_csharp_generator::generate_combined_service_interface(t_service* tservice
 
   indent(f_service_) << "public interface Iface" << extends_iface << " {" << endl;
 
+  indent_up();
+
+  // We need to generate extra old style async methods for silverlight. Since
+  // this isn't something you'd want to implement server-side, just put them into
+  // the main Iface interface.
+  generate_silverlight_async_methods(tservice);
+
+  indent_down();
+
   f_service_ << indent() << "}" << endl << endl;
+}
+
+void t_csharp_generator::generate_silverlight_async_methods(t_service* tservice) {
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator f_iter;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    generate_csharp_doc(f_service_, *f_iter);
+
+    // For backwards compatibility, include the Begin_, End_ methods if we're generating
+    // with the async flag. I'm not sure this is necessary, so someone with more knowledge
+    // can maybe remove these checks if they know it's safe.
+    if (!async_) {
+      indent(f_service_) << "#if SILVERLIGHT" << endl;
+    }
+
+    indent(f_service_) << function_signature_async_begin(*f_iter, "Begin_") << ";" << endl;
+    indent(f_service_) << function_signature_async_end(*f_iter, "End_") << ";" << endl;
+
+    if (!async_) {
+      indent(f_service_) << "#endif" << endl;
+    }
+  }
 }
 
 void t_csharp_generator::generate_service_helpers(t_service* tservice) {
@@ -1692,7 +1667,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
 
     indent(f_service_) << endl;
 
-    if (!async_ && !separate_async_) {
+    if (!async_) {
       indent(f_service_) << "#if SILVERLIGHT" << endl;
     }
     // Begin_
@@ -1730,7 +1705,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
 
     // async
     bool first;
-    if (async_ || async_ctp_ || separate_async_) {
+    if (async_ || async_ctp_) {
       indent(f_service_) << "public async " << function_signature_async(*f_iter, "") << endl;
       scope_up(f_service_);
 
@@ -1740,7 +1715,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
       } else {
         indent(f_service_);
       }
-      if (async_ || separate_async_) {
+      if (async_) {
         f_service_ << "await Task.Run(() =>" << endl;
       } else {
         f_service_ << "await TaskEx.Run(() =>" << endl;
@@ -1770,7 +1745,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
       f_service_ << endl;
     }
 
-    if (!async_ && !separate_async_) {
+    if (!async_) {
       indent(f_service_) << "#endif" << endl << endl;
     }
 
@@ -1779,7 +1754,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
     indent(f_service_) << "public " << function_signature(*f_iter) << endl;
     scope_up(f_service_);
 
-    if (!async_ && !separate_async_) {
+    if (!async_) {
       indent(f_service_) << "#if !SILVERLIGHT" << endl;
       indent(f_service_) << "send_" << funname << "(";
 
@@ -1822,7 +1797,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
     }
     f_service_ << endl;
 
-    if (!async_ && !separate_async_) {
+    if (!async_) {
       indent(f_service_) << "#endif" << endl;
     }
     scope_down(f_service_);
@@ -1834,11 +1809,11 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
 
     string argsname = (*f_iter)->get_name() + "_args";
 
-    if (!async_ && !separate_async_) {
+    if (!async_) {
       indent(f_service_) << "#if SILVERLIGHT" << endl;
     }
     indent(f_service_) << "public " << function_signature_async_begin(&send_function) << endl;
-    if (!async_ && !separate_async_) {
+    if (!async_) {
       indent(f_service_) << "#else" << endl;
       indent(f_service_) << "public " << function_signature(&send_function) << endl;
       indent(f_service_) << "#endif" << endl;
@@ -1859,11 +1834,11 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
                << "oprot_.WriteMessageEnd();" << endl;
     ;
 
-    if (!async_ && !separate_async_) {
+    if (!async_) {
       indent(f_service_) << "#if SILVERLIGHT" << endl;
     }
     indent(f_service_) << "return oprot_.Transport.BeginFlush(callback, state);" << endl;
-    if (!async_ && !separate_async_) {
+    if (!async_) {
       indent(f_service_) << "#else" << endl;
       indent(f_service_) << "oprot_.Transport.Flush();" << endl;
       indent(f_service_) << "#endif" << endl;
@@ -1947,7 +1922,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
 }
 
 void t_csharp_generator::generate_service_server(t_service* tservice) {
-  if (separate_async_) {
+  if (async_) {
     generate_service_server_async(tservice);
     generate_service_server_sync(tservice);
   }
@@ -1970,12 +1945,7 @@ void t_csharp_generator::generate_service_server_sync(t_service* tservice) {
   indent(f_service_) << "public class Processor : " << extends_processor << "TProcessor {" << endl;
   indent_up();
 
-  if (separate_async_) {
-    indent(f_service_) << "public Processor(ISync iface)";
-  }
-  else {
-    indent(f_service_) << "public Processor(Iface iface)";
-  }
+  indent(f_service_) << "public Processor(ISync iface)";
 
   if (!extends.empty()) {
     f_service_ << " : base(iface)";
@@ -1999,12 +1969,7 @@ void t_csharp_generator::generate_service_server_sync(t_service* tservice) {
       << endl;
   }
 
-  if (separate_async_) {
-    f_service_ << indent() << "private ISync iface_;" << endl;
-  }
-  else {
-    f_service_ << indent() << "private Iface iface_;" << endl;
-  }
+  f_service_ << indent() << "private ISync iface_;" << endl;
 
   if (extends.empty()) {
     f_service_ << indent() << "protected Dictionary<string, ProcessFunction> processMap_ = new "
@@ -3233,7 +3198,6 @@ THRIFT_REGISTER_GENERATOR(
     "C#",
     "    async:           Adds Async support using Task.Run.\n"
     "    asyncctp:        Adds Async CTP support using TaskEx.Run.\n"
-    "    separateasync:   Generates separate Async and Sync interfaces.\n"
     "    wcf:             Adds bindings for WCF to generated classes.\n"
     "    serial:          Add serialization support to generated classes.\n"
     "    nullable:        Use nullable types for properties.\n"

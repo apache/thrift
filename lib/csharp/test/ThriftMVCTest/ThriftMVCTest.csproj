@@ -170,7 +170,7 @@ SET OUTPUT_DIR=$(ProjectDir)
 SET THRIFT_FILE=$(ProjectDir)\..\..\..\..\test\ThriftTest.thrift
 for %25%25I in ("%25OUTPUT_DIR%25") do set SHORT_DIR=%25%25~fsI
 for %25%25I in ("%25THRIFT_FILE%25") do set THRIFT_SHORT=%25%25~fsI
-"$(ProjectDir)\..\..\..\..\compiler\cpp\Debug\thrift.exe" --gen csharp:separateasync=true -o %25SHORT_DIR%25 %25THRIFT_SHORT%25
+"$(ProjectDir)\..\..\..\..\compiler\cpp\Debug\thrift.exe" --gen csharp:async=true -o %25SHORT_DIR%25 %25THRIFT_SHORT%25
 "$(MSBuildToolsPath)\Csc.exe" /t:library /out:"$(ProjectDir)ThriftImpl.dll" /recurse:"$(ProjectDir)gen-csharp"\* /reference:"$(ProjectDir)..\..\src\bin\Debug\Thrift45.dll"</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
