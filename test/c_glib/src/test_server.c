@@ -24,6 +24,7 @@
 
 #include <thrift/c_glib/thrift.h>
 #include <thrift/c_glib/protocol/thrift_binary_protocol_factory.h>
+#include <thrift/c_glib/protocol/thrift_compact_protocol_factory.h>
 #include <thrift/c_glib/server/thrift_server.h>
 #include <thrift/c_glib/server/thrift_simple_server.h>
 #include <thrift/c_glib/transport/thrift_buffered_transport.h>
@@ -68,6 +69,8 @@ main (int argc, char **argv)
   static gchar *server_type_option = NULL;
   static gchar *transport_option = NULL;
   static gchar *protocol_option = NULL;
+  static gint   string_limit = 0;
+  static gint   container_limit = 0;
 
   static
     GOptionEntry option_entries[] = {
@@ -78,7 +81,11 @@ main (int argc, char **argv)
     { "transport",       0, 0, G_OPTION_ARG_STRING,   &transport_option,
       "Transport: buffered, framed (=buffered)", NULL },
     { "protocol",        0, 0, G_OPTION_ARG_STRING,   &protocol_option,
-      "Protocol: binary (=binary)", NULL },
+      "Protocol: binary, compact (=binary)", NULL },
+    { "string-limit",    0, 0, G_OPTION_ARG_INT,      &string_limit,
+      "Max string length (=none)", NULL },
+    { "container-limit", 0, 0, G_OPTION_ARG_INT,      &container_limit,
+      "Max container length (=none)", NULL },
     { NULL }
   };
 
@@ -126,10 +133,15 @@ main (int argc, char **argv)
     options_valid = FALSE;
   }
 
-  if (protocol_option != NULL &&
-      strncmp (protocol_option, "binary", 7) != 0) {
-    fprintf (stderr, "Unknown protocol type %s\n", protocol_option);
-    options_valid = FALSE;
+  if (protocol_option != NULL) {
+    if (strncmp (protocol_option, "compact", 8) == 0) {
+      protocol_factory_type = THRIFT_TYPE_COMPACT_PROTOCOL_FACTORY;
+      protocol_name = "compact";
+    }
+    else if (strncmp (protocol_option, "binary", 7) != 0) {
+      fprintf (stderr, "Unknown protocol type %s\n", protocol_option);
+      options_valid = FALSE;
+    }
   }
 
   if (transport_option != NULL) {
@@ -157,8 +169,16 @@ main (int argc, char **argv)
                                     NULL);
   transport_factory = g_object_new (transport_factory_type,
                                     NULL);
-  protocol_factory  = g_object_new (protocol_factory_type,
-                                    NULL);
+
+  if (strncmp (protocol_name, "compact", 8) == 0) {
+    protocol_factory  = g_object_new (protocol_factory_type,
+                                      "string_limit", string_limit,
+                                      "container_limit", container_limit,
+                                      NULL);
+  } else {
+    protocol_factory  = g_object_new (protocol_factory_type,
+                                      NULL);
+  }
 
   server = g_object_new (THRIFT_TYPE_SIMPLE_SERVER,
                          "processor",                processor,

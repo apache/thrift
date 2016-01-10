@@ -23,7 +23,8 @@
       "ip"
     ],
     "protocols": [
-      "binary"
+      "binary",
+      "compact"
     ],
     "workdir": "c_glib"
   },
