@@ -37,6 +37,8 @@ set(thrift_c_glib_SOURCES
     src/thrift/c_glib/protocol/thrift_protocol_factory.c
     src/thrift/c_glib/protocol/thrift_binary_protocol.c
     src/thrift/c_glib/protocol/thrift_binary_protocol_factory.c
+    src/thrift/c_glib/protocol/thrift_compact_protocol.c
+    src/thrift/c_glib/protocol/thrift_compact_protocol_factory.c
     src/thrift/c_glib/transport/thrift_transport.c
     src/thrift/c_glib/transport/thrift_transport_factory.c
     src/thrift/c_glib/transport/thrift_buffered_transport_factory.c
