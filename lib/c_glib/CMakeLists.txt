@@ -62,6 +62,9 @@ TARGET_LINK_LIBRARIES_THRIFT(thrift_c_glib ${SYSLIBS})
 # Install the headers
 install(DIRECTORY "src/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
     FILES_MATCHING PATTERN "*.h")
+# Copy config.h file
+install(DIRECTORY "${CMAKE_BINARY_DIR}/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
+    FILES_MATCHING PATTERN "*.h")
 
 if(BUILD_TESTING)
     add_subdirectory(test)
