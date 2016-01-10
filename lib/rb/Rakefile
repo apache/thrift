@@ -47,15 +47,15 @@ namespace :'gen-rb' do
 
   task :'namespaced_spec' do
     dir = File.dirname(__FILE__) + '/spec'
-    sh THRIFT, '--gen', 'rb:namespaced', '-recurse', '-o', dir, "#{dir}/ThriftNamespacedSpec.thrift"
-    sh THRIFT, '--gen', 'rb:namespaced', '-recurse', '-o', dir, "#{dir}/BaseService.thrift"
-    sh THRIFT, '--gen', 'rb:namespaced', '-recurse', '-o', dir, "#{dir}/ExtendedService.thrift"
+    sh THRIFT, '--gen', 'rb:namespaced', '--recurse', '-o', dir, "#{dir}/ThriftNamespacedSpec.thrift"
+    sh THRIFT, '--gen', 'rb:namespaced', '--recurse', '-o', dir, "#{dir}/BaseService.thrift"
+    sh THRIFT, '--gen', 'rb:namespaced', '--recurse', '-o', dir, "#{dir}/ExtendedService.thrift"
   end
 
   task :'flat_spec' do
     dir = File.dirname(__FILE__) + '/spec'
     mkdir_p("#{dir}/gen-rb/flat")
-    sh THRIFT, '--gen', 'rb', '-recurse', '-out', "#{dir}/gen-rb/flat", "#{dir}/ThriftNamespacedSpec.thrift"
+    sh THRIFT, '--gen', 'rb', '--recurse', '-out', "#{dir}/gen-rb/flat", "#{dir}/ThriftNamespacedSpec.thrift"
   end
 
   task :'benchmark' do
