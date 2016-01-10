@@ -104,8 +104,6 @@ EXTRA_DIST = \
              ThriftMSBuildTask \
              src/Thrift.csproj \
              src/Thrift.sln \
-             src/Thrift.WP7.csproj \
-             src/Properties/AssemblyInfo.WP7.cs \
              src/Transport/TSilverlightSocket.cs \
              test \
              coding_standards.md \
