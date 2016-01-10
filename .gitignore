@@ -122,6 +122,7 @@ erl_crash.dump
 /lib/c_glib/*.gcda
 /lib/c_glib/*.gcno
 /lib/c_glib/*.loT
+/lib/c_glib/src/thrift/config.h
 /lib/c_glib/test/*.gcno
 /lib/c_glib/test/testwrapper.sh
 /lib/c_glib/test/testwrapper-test*
