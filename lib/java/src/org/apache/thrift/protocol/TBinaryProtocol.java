@@ -71,6 +71,10 @@ public class TBinaryProtocol extends TProtocol {
       this(strictRead, strictWrite, NO_LENGTH_LIMIT, NO_LENGTH_LIMIT);
     }
 
+    public Factory(long stringLengthLimit, long containerLengthLimit) {
+      this(false, true, stringLengthLimit, containerLengthLimit);
+    }
+
     public Factory(boolean strictRead, boolean strictWrite, long stringLengthLimit, long containerLengthLimit) {
       stringLengthLimit_ = stringLengthLimit;
       containerLengthLimit_ = containerLengthLimit;
@@ -92,6 +96,10 @@ public class TBinaryProtocol extends TProtocol {
 
   public TBinaryProtocol(TTransport trans, boolean strictRead, boolean strictWrite) {
     this(trans, NO_LENGTH_LIMIT, NO_LENGTH_LIMIT, strictRead, strictWrite);
+  }
+
+  public TBinaryProtocol(TTransport trans, long stringLengthLimit, long containerLengthLimit) {
+    this(trans, stringLengthLimit, containerLengthLimit, false, true);
   }
 
   public TBinaryProtocol(TTransport trans, long stringLengthLimit, long containerLengthLimit, boolean strictRead, boolean strictWrite) {
@@ -350,10 +358,6 @@ public class TBinaryProtocol extends TProtocol {
     int size = readI32();
 
     checkStringReadLength(size);
-    if (stringLengthLimit_ > 0 && size > stringLengthLimit_) {
-      throw new TProtocolException(TProtocolException.SIZE_LIMIT,
-                                   "String field exceeded string size limit");
-    }
 
     if (trans_.getBytesRemainingInBuffer() >= size) {
       try {
@@ -381,10 +385,7 @@ public class TBinaryProtocol extends TProtocol {
   public ByteBuffer readBinary() throws TException {
     int size = readI32();
 
-    if (stringLengthLimit_ > 0 && size > stringLengthLimit_) {
-      throw new TProtocolException(TProtocolException.SIZE_LIMIT,
-                                   "Binary field exceeded string size limit");
-    }
+    checkStringReadLength(size);
 
     if (trans_.getBytesRemainingInBuffer() >= size) {
       ByteBuffer bb = ByteBuffer.wrap(trans_.getBuffer(), trans_.getBufferPosition(), size);
