@@ -19,65 +19,70 @@
 # under the License.
 #
 
-import sys, glob
+import sys
+import glob
 sys.path.append('gen-py')
 sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])
 
 from tutorial import Calculator
-from tutorial.ttypes import *
+from tutorial.ttypes import InvalidOperation, Operation, Work
 
 from thrift import Thrift
 from thrift.transport import TSocket
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 
-try:
 
-  # Make socket
-  transport = TSocket.TSocket('localhost', 9090)
+def main():
+    # Make socket
+    transport = TSocket.TSocket('localhost', 9090)
 
-  # Buffering is critical. Raw sockets are very slow
-  transport = TTransport.TBufferedTransport(transport)
+    # Buffering is critical. Raw sockets are very slow
+    transport = TTransport.TBufferedTransport(transport)
 
-  # Wrap in a protocol
-  protocol = TBinaryProtocol.TBinaryProtocol(transport)
+    # Wrap in a protocol
+    protocol = TBinaryProtocol.TBinaryProtocol(transport)
 
-  # Create a client to use the protocol encoder
-  client = Calculator.Client(protocol)
+    # Create a client to use the protocol encoder
+    client = Calculator.Client(protocol)
 
-  # Connect!
-  transport.open()
+    # Connect!
+    transport.open()
 
-  client.ping()
-  print('ping()')
+    client.ping()
+    print('ping()')
 
-  sum = client.add(1,1)
-  print(('1+1=%d' % (sum)))
+    sum = client.add(1, 1)
+    print(('1+1=%d' % (sum)))
 
-  work = Work()
+    work = Work()
 
-  work.op = Operation.DIVIDE
-  work.num1 = 1
-  work.num2 = 0
+    work.op = Operation.DIVIDE
+    work.num1 = 1
+    work.num2 = 0
 
-  try:
-    quotient = client.calculate(1, work)
-    print('Whoa? You know how to divide by zero?')
-  except InvalidOperation as e:
-    print(('InvalidOperation: %r' % e))
+    try:
+        quotient = client.calculate(1, work)
+        print('Whoa? You know how to divide by zero?')
+        print('FYI the answer is %d' % quotient)
+    except InvalidOperation as e:
+        print(('InvalidOperation: %r' % e))
 
-  work.op = Operation.SUBTRACT
-  work.num1 = 15
-  work.num2 = 10
+    work.op = Operation.SUBTRACT
+    work.num1 = 15
+    work.num2 = 10
 
-  diff = client.calculate(1, work)
-  print(('15-10=%d' % (diff)))
+    diff = client.calculate(1, work)
+    print(('15-10=%d' % (diff)))
 
-  log = client.getStruct(1)
-  print(('Check log: %s' % (log.value)))
+    log = client.getStruct(1)
+    print(('Check log: %s' % (log.value)))
 
-  # Close!
-  transport.close()
+    # Close!
+    transport.close()
 
-except Thrift.TException as tx:
-  print(('%s' % (tx.message)))
+if __name__ == '__main__':
+    try:
+        main()
+    except Thrift.TException as tx:
+        print(('%s' % (tx.message)))
