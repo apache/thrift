@@ -20,12 +20,13 @@
 package common
 
 import (
-	"github.com/golang/mock/gomock"
 	"errors"
 	"gen/thrifttest"
 	"reflect"
 	"testing"
 	"thrift"
+
+	"github.com/golang/mock/gomock"
 )
 
 type test_unit struct {
@@ -56,7 +57,15 @@ func doUnit(t *testing.T, unit *test_unit) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	handler := NewMockThriftTest(ctrl)
-	server, err := StartServer(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl, "../../../keys", handler)
+
+	processor, serverTransport, transportFactory, protocolFactory, err := GetServerParams(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl, "../../../keys", handler)
+
+	server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
+	if err = server.Listen(); err != nil {
+		return
+	}
+	go server.AcceptLoop()
+	server.Serve()
 	if err != nil {
 		t.Errorf("Unable to start server", err)
 		t.FailNow()
@@ -175,7 +184,7 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 	}
 
 	// TODO: add TestBinary() call
-	
+
 	xs := thrifttest.NewXtruct()
 	xs.StringThing = "thing"
 	xs.ByteThing = 42

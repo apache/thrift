@@ -45,7 +45,8 @@
     },
     "transports": [
       "buffered",
-      "framed"
+      "framed",
+      "http"
     ],
     "sockets": [
       "ip",
