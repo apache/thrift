@@ -53,7 +53,9 @@ class TBase(object):
        fastbinary is not None):
       fastbinary.decode_binary(self,
                                iprot.trans,
-                               (self.__class__, self.thrift_spec))
+                               (self.__class__, self.thrift_spec),
+                               iprot.string_length_limit,
+                               iprot.container_length_limit)
       return
     iprot.readStruct(self, self.thrift_spec)
 
@@ -90,5 +92,7 @@ class TFrozenBase(TBase):
       self = cls()
       return fastbinary.decode_binary(None,
                                       iprot.trans,
-                                      (self.__class__, self.thrift_spec))
+                                      (self.__class__, self.thrift_spec),
+                                      iprot.string_length_limit,
+                                      iprot.container_length_limit)
     return iprot.readStruct(cls, cls.thrift_spec, True)
