@@ -36,10 +36,18 @@ class TBinaryProtocol(TProtocolBase):
 
   TYPE_MASK = 0x000000ff
 
-  def __init__(self, trans, strictRead=False, strictWrite=True):
+  def __init__(self, trans, strictRead=False, strictWrite=True, **kwargs):
     TProtocolBase.__init__(self, trans)
     self.strictRead = strictRead
     self.strictWrite = strictWrite
+    self.string_length_limit = kwargs.get('string_length_limit', None)
+    self.container_length_limit = kwargs.get('container_length_limit', None)
+
+  def _check_string_length(self, length):
+    self._check_length(self.string_length_limit, length)
+
+  def _check_container_length(self, length):
+    self._check_length(self.container_length_limit, length)
 
   def writeMessageBegin(self, name, type, seqid):
     if self.strictWrite:
@@ -165,6 +173,7 @@ class TBinaryProtocol(TProtocolBase):
     ktype = self.readByte()
     vtype = self.readByte()
     size = self.readI32()
+    self._check_container_length(size)
     return (ktype, vtype, size)
 
   def readMapEnd(self):
@@ -173,6 +182,7 @@ class TBinaryProtocol(TProtocolBase):
   def readListBegin(self):
     etype = self.readByte()
     size = self.readI32()
+    self._check_container_length(size)
     return (etype, size)
 
   def readListEnd(self):
@@ -181,6 +191,7 @@ class TBinaryProtocol(TProtocolBase):
   def readSetBegin(self):
     etype = self.readByte()
     size = self.readI32()
+    self._check_container_length(size)
     return (etype, size)
 
   def readSetEnd(self):
@@ -218,18 +229,23 @@ class TBinaryProtocol(TProtocolBase):
     return val
 
   def readBinary(self):
-    len = self.readI32()
-    s = self.trans.readAll(len)
+    size = self.readI32()
+    self._check_string_length(size)
+    s = self.trans.readAll(size)
     return s
 
 
 class TBinaryProtocolFactory(object):
-  def __init__(self, strictRead=False, strictWrite=True):
+  def __init__(self, strictRead=False, strictWrite=True, **kwargs):
     self.strictRead = strictRead
     self.strictWrite = strictWrite
+    self.string_length_limit = kwargs.get('string_length_limit', None)
+    self.container_length_limit = kwargs.get('container_length_limit', None)
 
   def getProtocol(self, trans):
-    prot = TBinaryProtocol(trans, self.strictRead, self.strictWrite)
+    prot = TBinaryProtocol(trans, self.strictRead, self.strictWrite,
+                           string_length_limit=self.string_length_limit,
+                           container_length_limit=self.container_length_limit)
     return prot
 
 
@@ -256,5 +272,14 @@ class TBinaryProtocolAccelerated(TBinaryProtocol):
 
 
 class TBinaryProtocolAcceleratedFactory(object):
+  def __init__(self,
+               string_length_limit=None,
+               container_length_limit=None):
+    self.string_length_limit = string_length_limit
+    self.container_length_limit = container_length_limit
+
   def getProtocol(self, trans):
-    return TBinaryProtocolAccelerated(trans)
+    return TBinaryProtocolAccelerated(
+        trans,
+        string_length_limit=self.string_length_limit,
+        container_length_limit=self.container_length_limit)
