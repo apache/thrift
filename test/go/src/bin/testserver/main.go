@@ -22,7 +22,10 @@ package main
 import (
 	"common"
 	"flag"
+	"fmt"
 	"log"
+	"net/http"
+	"thrift"
 )
 
 var host = flag.String("host", "localhost", "Host to connect")
@@ -35,9 +38,33 @@ var certPath = flag.String("certPath", "keys", "Directory that contains SSL cert
 
 func main() {
 	flag.Parse()
-	server, err := common.StartServer(*host, *port, *domain_socket, *transport, *protocol, *ssl, *certPath, common.PrintingHandler)
+
+	processor, serverTransport, transportFactory, protocolFactory, err := common.GetServerParams(*host, *port, *domain_socket, *transport, *protocol, *ssl, *certPath, common.PrintingHandler)
+
 	if err != nil {
-		log.Fatalf("Unable to start server: ", err)
+		log.Fatalf("Unable to process server params: ", err)
 	}
-	server.Serve()
+
+	if *transport == "http" {
+		http.HandleFunc("/", thrift.NewThriftHandlerFunc(processor, protocolFactory, protocolFactory))
+
+		if *ssl {
+			err := http.ListenAndServeTLS(fmt.Sprintf(":%d", *port),
+				*certPath+"/server.pem", *certPath+"/server.key", nil)
+
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+		} else {
+			http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
+		}
+	} else {
+		server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
+		if err = server.Listen(); err != nil {
+			return
+		}
+		go server.AcceptLoop()
+		server.Serve()
+	}
 }
