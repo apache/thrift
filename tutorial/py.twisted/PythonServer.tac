@@ -22,12 +22,14 @@
 from twisted.application import internet, service
 from thrift.transport import TTwisted
 
-import sys, glob
+import glob
+import sys
 sys.path.append('gen-py.twisted')
 sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])
 from tutorial import Calculator
-from tutorial.ttypes import *
 from PythonServer import CalculatorHandler
+from thrift.protocol import TBinaryProtocol
+
 
 def make_application():
     application = service.Application('CalcServer')
@@ -35,8 +37,9 @@ def make_application():
     handler = CalculatorHandler()
     processor = Calculator.Processor(handler)
 
-    serverFactory = TTwisted.ThriftServerFactory(processor,
-                                 TBinaryProtocol.TBinaryProtocolFactory())
+    serverFactory = TTwisted.ThriftServerFactory(
+        processor,
+        TBinaryProtocol.TBinaryProtocolFactory())
 
     calcService = internet.TCPServer(9090, serverFactory)
 
@@ -46,4 +49,5 @@ def make_application():
 
     return application
 
-application = make_application()
+if __name__ == '__main__':
+    application = make_application()
