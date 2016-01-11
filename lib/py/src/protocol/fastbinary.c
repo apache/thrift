@@ -189,22 +189,19 @@ check_ssize_t_32(Py_ssize_t len) {
     return false;
   }
   if (!CHECK_RANGE(len, 0, INT32_MAX)) {
-    PyErr_SetString(PyExc_OverflowError, "string size out of range");
+    PyErr_SetString(PyExc_OverflowError, "size out of range: exceeded INT32_MAX");
     return false;
   }
   return true;
 }
 
-#define MAX_LIST_SIZE (10000)
-
 static inline bool
-check_list_length(Py_ssize_t len) {
-  // error from getting the int
-  if (INT_CONV_ERROR_OCCURRED(len)) {
+check_length_limit(Py_ssize_t len, long limit) {
+  if (!check_ssize_t_32(len)) {
     return false;
   }
-  if (!CHECK_RANGE(len, 0, MAX_LIST_SIZE)) {
-    PyErr_SetString(PyExc_OverflowError, "list size out of the sanity limit (10000 items max)");
+  if (len > limit) {
+    PyErr_Format(PyExc_OverflowError, "size exceeded specified limit: %d", limit);
     return false;
   }
   return true;
@@ -891,10 +888,10 @@ skip(DecodeBuffer* input, TType type) {
 /* --- HELPER FUNCTION FOR DECODE_VAL --- */
 
 static PyObject*
-decode_val(DecodeBuffer* input, TType type, PyObject* typeargs);
+decode_val(DecodeBuffer* input, TType type, PyObject* typeargs, long string_limit, long container_limit);
 
 static PyObject*
-decode_struct(DecodeBuffer* input, PyObject* output, PyObject* klass, PyObject* spec_seq) {
+decode_struct(DecodeBuffer* input, PyObject* output, PyObject* klass, PyObject* spec_seq, long string_limit, long container_limit) {
   int spec_seq_len = PyTuple_Size(spec_seq);
   bool immutable = output == Py_None;
   PyObject* kwargs = NULL;
@@ -954,7 +951,7 @@ decode_struct(DecodeBuffer* input, PyObject* output, PyObject* klass, PyObject* 
       }
     }
 
-    fieldval = decode_val(input, parsedspec.type, parsedspec.typeargs);
+    fieldval = decode_val(input, parsedspec.type, parsedspec.typeargs, string_limit, container_limit);
     if (fieldval == NULL) {
       goto error;
     }
@@ -991,7 +988,7 @@ decode_struct(DecodeBuffer* input, PyObject* output, PyObject* klass, PyObject* 
 
 // Returns a new reference.
 static PyObject*
-decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
+decode_val(DecodeBuffer* input, TType type, PyObject* typeargs, long string_limit, long container_limit) {
   switch (type) {
 
   case T_BOOL: {
@@ -1059,6 +1056,9 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
     if (!readBytes(input, &buf, len)) {
       return NULL;
     }
+    if (!check_length_limit(len, string_limit)) {
+      return NULL;
+    }
 
     if (is_utf8(typeargs))
       return PyUnicode_DecodeUTF8(buf, len, 0);
@@ -1083,7 +1083,7 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
     }
 
     len = readI32(input);
-    if (!check_list_length(len)) {
+    if (!check_length_limit(len, container_limit)) {
       return NULL;
     }
 
@@ -1094,7 +1094,7 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
     }
 
     for (i = 0; i < len; i++) {
-      PyObject* item = decode_val(input, parsedargs.element_type, parsedargs.typeargs);
+      PyObject* item = decode_val(input, parsedargs.element_type, parsedargs.typeargs, string_limit, container_limit);
       if (!item) {
         Py_DECREF(ret);
         return NULL;
@@ -1135,8 +1135,8 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
     }
 
     len = readI32(input);
-    if (!check_ssize_t_32(len)) {
-      return false;
+    if (!check_length_limit(len, container_limit)) {
+      return NULL;
     }
 
     ret = PyDict_New();
@@ -1147,11 +1147,11 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
     for (i = 0; i < len; i++) {
       PyObject* k = NULL;
       PyObject* v = NULL;
-      k = decode_val(input, parsedargs.ktag, parsedargs.ktypeargs);
+      k = decode_val(input, parsedargs.ktag, parsedargs.ktypeargs, string_limit, container_limit);
       if (k == NULL) {
         goto loop_error;
       }
-      v = decode_val(input, parsedargs.vtag, parsedargs.vtypeargs);
+      v = decode_val(input, parsedargs.vtag, parsedargs.vtypeargs, string_limit, container_limit);
       if (v == NULL) {
         goto loop_error;
       }
@@ -1199,7 +1199,7 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
       return NULL;
     }
 
-    return decode_struct(input, Py_None, parsedargs.klass, parsedargs.spec);
+    return decode_struct(input, Py_None, parsedargs.klass, parsedargs.spec, string_limit, container_limit);
   }
 
   case T_STOP:
@@ -1213,6 +1213,15 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
   }
 }
 
+static long as_long_or(PyObject* value, long default_value) {
+  long v = PyInt_AsLong(value);
+  if (INT_CONV_ERROR_OCCURRED(v)) {
+    PyErr_Clear();
+    return default_value;
+  }
+  return v;
+}
+
 
 /* --- TOP-LEVEL WRAPPER FOR INPUT -- */
 
@@ -1222,12 +1231,18 @@ decode_binary(PyObject *self, PyObject *args) {
   PyObject* transport = NULL;
   PyObject* typeargs = NULL;
   StructTypeArgs parsedargs;
+  PyObject* string_limit_obj = NULL;
+  PyObject* container_limit_obj = NULL;
+  long string_limit = 0;
+  long container_limit = 0;
   DecodeBuffer input = {0, 0};
   PyObject* ret = NULL;
 
-  if (!PyArg_ParseTuple(args, "OOO", &output_obj, &transport, &typeargs)) {
+  if (!PyArg_ParseTuple(args, "OOOOO", &output_obj, &transport, &typeargs, &string_limit_obj, &container_limit_obj)) {
     return NULL;
   }
+  string_limit = as_long_or(string_limit_obj, INT32_MAX);
+  container_limit = as_long_or(container_limit_obj, INT32_MAX);
 
   if (!parse_struct_args(&parsedargs, typeargs)) {
     return NULL;
@@ -1237,7 +1252,7 @@ decode_binary(PyObject *self, PyObject *args) {
     return NULL;
   }
 
-  ret = decode_struct(&input, output_obj, parsedargs.klass, parsedargs.spec);
+  ret = decode_struct(&input, output_obj, parsedargs.klass, parsedargs.spec, string_limit, container_limit);
   free_decodebuf(&input);
   return  ret;
 }

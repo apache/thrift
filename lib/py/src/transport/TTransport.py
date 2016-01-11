@@ -30,6 +30,8 @@ class TTransportException(TException):
   ALREADY_OPEN = 2
   TIMED_OUT = 3
   END_OF_FILE = 4
+  NEGATIVE_SIZE = 5
+  SIZE_LIMIT = 6
 
   def __init__(self, type=UNKNOWN, message=None):
     TException.__init__(self, message)

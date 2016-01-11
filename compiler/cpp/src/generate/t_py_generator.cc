@@ -902,10 +902,10 @@ void t_py_generator::generate_py_struct_reader(ofstream& out, t_struct* tstruct)
 
   if (is_immutable(tstruct)) {
     indent(out)
-        << "return fastbinary.decode_binary(None, iprot.trans, (cls, cls.thrift_spec))"
+        << "return fastbinary.decode_binary(None, iprot.trans, (cls, cls.thrift_spec), iprot.string_length_limit, iprot.container_length_limit)"
         << endl;
   } else {
-    indent(out) << "fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))"
+    indent(out) << "fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec), iprot.string_length_limit, iprot.container_length_limit)"
                 << endl;
     indent(out) << "return" << endl;
   }
