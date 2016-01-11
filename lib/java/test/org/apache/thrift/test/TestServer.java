@@ -111,6 +111,8 @@ public class TestServer {
       String protocol_type = "binary";
       String server_type = "thread-pool";
       String domain_socket = "";
+      int string_limit = -1;
+      int container_limit = -1;
       try {
         for (int i = 0; i < args.length; i++) {
           if (args[i].startsWith("--port")) {
@@ -128,6 +130,10 @@ public class TestServer {
             transport_type.trim();
           } else if (args[i].equals("--ssl")) {
             ssl = true;
+          } else if (args[i].startsWith("--string-limit")) {
+            string_limit = Integer.valueOf(args[i].split("=")[1]);
+          } else if (args[i].startsWith("--container-limit")) {
+            container_limit = Integer.valueOf(args[i].split("=")[1]);
           } else if (args[i].equals("--help")) {
             System.out.println("Allowed options:");
             System.out.println("  --help\t\t\tProduce help message");
@@ -136,6 +142,8 @@ public class TestServer {
             System.out.println("  --protocol=arg (=" + protocol_type + ")\tProtocol: binary, json, compact");
             System.out.println("  --ssl\t\t\tEncrypted Transport using SSL");
             System.out.println("  --server-type=arg (=" + server_type +")\n\t\t\t\tType of server: simple, thread-pool, nonblocking, threaded-selector");
+            System.out.println("  --string-limit=arg (=" + string_limit + ")\tString read length limit");
+            System.out.println("  --container-limit=arg (=" + container_limit + ")\tContainer read length limit");
             System.exit(0);
           }
         }
@@ -186,9 +194,9 @@ public class TestServer {
       if (protocol_type.equals("json")) {
         tProtocolFactory = new TJSONProtocol.Factory();
       } else if (protocol_type.equals("compact")) {
-        tProtocolFactory = new TCompactProtocol.Factory();
+        tProtocolFactory = new TCompactProtocol.Factory(string_limit, container_limit);
       } else {
-        tProtocolFactory = new TBinaryProtocol.Factory();
+        tProtocolFactory = new TBinaryProtocol.Factory(string_limit, container_limit);
       }
 
       TTransportFactory tTransportFactory = null;
