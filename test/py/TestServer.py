@@ -18,7 +18,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-from __future__ import division, print_function
+from __future__ import division
 import glob
 import logging
 import os
@@ -179,9 +179,6 @@ class TestHandler(object):
 
 
 def main(options):
-  # Print TServer log to stdout so that the test-runner can redirect it to log files
-  logging.basicConfig(level=logging.DEBUG)
-
   # set up the protocol factory form the --protocol option
   prot_factories = {
     'binary': TBinaryProtocol.TBinaryProtocolFactory,
@@ -193,6 +190,12 @@ def main(options):
   if pfactory_cls is None:
     raise AssertionError('Unknown --protocol option: %s' % options.proto)
   pfactory = pfactory_cls()
+  try:
+    pfactory.string_length_limit = options.string_limit
+    pfactory.container_length_limit = options.container_limit
+  except:
+    # Ignore errors for those protocols that does not support length limit
+    pass
 
   # get the server type (TSimpleServer, TNonblockingServer, etc...)
   if len(args) > 1:
@@ -287,8 +290,13 @@ if __name__ == '__main__':
                     help="protocol to use, one of: accel, binary, compact, json")
   parser.add_option('--transport', dest="trans", type="string",
                     help="transport to use, one of: buffered, framed")
+  parser.add_option('--container-limit', dest='container_limit', type='int', default=None)
+  parser.add_option('--string-limit', dest='string_limit', type='int', default=None)
   parser.set_defaults(port=9090, verbose=1, proto='binary')
   options, args = parser.parse_args()
+
+  # Print TServer log to stdout so that the test-runner can redirect it to log files
+  logging.basicConfig(level=options.verbose)
 
   sys.path.insert(0, os.path.join(SCRIPT_DIR, options.genpydir))
   if options.libpydir:

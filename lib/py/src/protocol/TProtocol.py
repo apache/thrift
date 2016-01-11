@@ -18,6 +18,7 @@
 #
 
 from thrift.Thrift import TException, TType, TFrozenDict
+from thrift.transport.TTransport import TTransportException
 from ..compat import binary_to_str, str_to_binary
 
 import six
@@ -47,6 +48,15 @@ class TProtocolBase(object):
 
   def __init__(self, trans):
     self.trans = trans
+
+  @staticmethod
+  def _check_length(limit, length):
+    if length < 0:
+      raise TTransportException(TTransportException.NEGATIVE_SIZE,
+                                'Negative length: %d' % length)
+    if limit is not None and length > limit:
+      raise TTransportException(TTransportException.SIZE_LIMIT,
+                                'Length exceeded max allowed: %d' % limit)
 
   def writeMessageBegin(self, name, ttype, seqid):
     pass

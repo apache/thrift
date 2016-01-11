@@ -175,6 +175,15 @@ class TJSONProtocolBase(TProtocolBase):
     self.resetWriteContext()
     self.resetReadContext()
 
+  # We don't have length limit implementation for JSON protocols
+  @property
+  def string_length_limit(senf):
+    return None
+
+  @property
+  def container_length_limit(senf):
+    return None
+
   def resetWriteContext(self):
     self.context = JSONBaseContext(self)
     self.contextStack = [self.context]
@@ -560,9 +569,16 @@ class TJSONProtocol(TJSONProtocolBase):
 
 
 class TJSONProtocolFactory(object):
-
   def getProtocol(self, trans):
     return TJSONProtocol(trans)
+
+  @property
+  def string_length_limit(senf):
+    return None
+
+  @property
+  def container_length_limit(senf):
+    return None
 
 
 class TSimpleJSONProtocol(TJSONProtocolBase):
