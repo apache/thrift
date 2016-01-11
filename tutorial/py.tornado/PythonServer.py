@@ -31,10 +31,7 @@ from tutorial.ttypes import Operation, InvalidOperation
 from shared.ttypes import SharedStruct
 
 from thrift import TTornado
-from thrift.transport import TSocket
-from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
-from thrift.server import TServer
 
 from tornado import ioloop
 
