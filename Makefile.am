@@ -42,9 +42,6 @@ precross-%: all
 	$(MAKE) -C $* precross
 precross: all precross-test precross-lib
 
-# TODO: generate --server and --client switches from "--with(out)-..." build flags
-
-
 empty :=
 space := $(empty) $(empty)
 comma := ,
@@ -52,14 +49,20 @@ comma := ,
 CROSS_LANGS = @MAYBE_CPP@ @MAYBE_C_GLIB@ @MAYBE_JAVA@ @MAYBE_CSHARP@ @MAYBE_PYTHON@ @MAYBE_PY3@ @MAYBE_RUBY@ @MAYBE_HASKELL@ @MAYBE_PERL@ @MAYBE_PHP@ @MAYBE_GO@ @MAYBE_NODEJS@ @MAYBE_DART@ @MAYBE_ERLANG@
 CROSS_LANGS_COMMA_SEPARATED = $(subst $(space),$(comma),$(CROSS_LANGS))
 
+if WITH_PY3
+CROSS_PY=$(PYTHON3)
+else
+CROSS_PY=$(PYTHON)
+endif
+
 cross: precross
-	$(PYTHON) test/test.py -F.* -s --server $(CROSS_LANGS_COMMA_SEPARATED)
-	$(PYTHON) test/test.py -s --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED)
+	$(CROSS_PY) test/test.py -F.* -s --server $(CROSS_LANGS_COMMA_SEPARATED)
+	$(CROSS_PY) test/test.py -s --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED)
 
 TIMES = 1 2 3
 fail: precross
-	$(PYTHON) test/test.py || true
-	$(PYTHON) test/test.py --update-expected-failures=overwrite
+	$(CROSS_PY) test/test.py || true
+	$(CROSS_PY) test/test.py --update-expected-failures=overwrite
 	$(foreach var,$(TIMES),test/test.py -s || true;test/test.py --update-expected-failures=merge;)
 
 codespell_skip_files = \
