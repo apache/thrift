@@ -47,6 +47,7 @@ class ExecutionContext(object):
     self.env = env
     self.timer = None
     self.expired = False
+    self.killed = False
 
   def _expire(self):
     self._log.info('Timeout')
@@ -55,6 +56,7 @@ class ExecutionContext(object):
 
   def kill(self):
     self._log.debug('Killing process : %d' % self.proc.pid)
+    self.killed = True
     if platform.system() != 'Windows':
       try:
         os.killpg(self.proc.pid, signal.SIGKILL)
@@ -64,7 +66,6 @@ class ExecutionContext(object):
       self.proc.kill()
     except Exception as err:
       self._log.info('Failed to kill process : %s' % str(err))
-    self.report.killed()
 
   def _popen_args(self):
     args = {
@@ -97,7 +98,12 @@ class ExecutionContext(object):
   def _scoped(self):
     yield self
     self._log.debug('Killing scoped process')
-    self.kill()
+    if self.proc.poll() is None:
+      self.kill()
+      self.report.killed()
+    else:
+      self._log.debug('Process died unexpectedly')
+      self.report.died()
 
   def wait(self):
     self.proc.communicate()
@@ -147,6 +153,8 @@ def run_test(testdir, logdir, test_dict, async=True, max_retry=3):
             if not cl.report.maybe_false_positive() or cl_retry_count >= cl_max_retry:
               if cl_retry_count > 0 and cl_retry_count < cl_max_retry:
                 logger.warn('[%s]: Connected after %d retry (%.2f sec each)' % (test.server.name, cl_retry_count, cl_retry_wait))
+              # Wait for 50 ms to see if server does not die at the end.
+              time.sleep(0.05)
               break
             logger.debug('Server may not be ready, waiting %.2f second...' % cl_retry_wait)
             time.sleep(cl_retry_wait)
@@ -154,7 +162,13 @@ def run_test(testdir, logdir, test_dict, async=True, max_retry=3):
 
       if not sv.report.maybe_false_positive() or retry_count >= max_retry:
         logger.debug('Finish')
-        return RESULT_TIMEOUT if cl.expired else cl.proc.returncode
+        if cl.expired:
+          return RESULT_TIMEOUT
+        elif not sv.killed and cl.proc.returncode == 0:
+          # Server should be alive at the end.
+          return RESULT_ERROR
+        else:
+          return cl.proc.returncode
       logger.warn('[%s]: Detected socket bind failure, retrying...' % test.server.name)
       retry_count += 1
   except (KeyboardInterrupt, SystemExit):
@@ -163,11 +177,10 @@ def run_test(testdir, logdir, test_dict, async=True, max_retry=3):
       raise
     stop.set()
     return None
-  except Exception as ex:
-    logger.warn('%s', ex)
+  except:
     if not async:
       raise
-    logger.debug('Error executing [%s]', test.name, exc_info=sys.exc_info())
+    logger.warn('Error executing [%s]', test.name, exc_info=sys.exc_info())
     return RESULT_ERROR
 
 

@@ -139,6 +139,11 @@ class ExecReporter(TestReporter):
       self._lock.release()
 
   def killed(self):
+    self.out.write('Process is killed.\n')
+    self.end(None)
+
+  def died(self):
+    self.out.write('Process is died unexpectedly.\n')
     self.end(None)
 
   _init_failure_exprs = {
