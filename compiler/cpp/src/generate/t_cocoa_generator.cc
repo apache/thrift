@@ -2758,7 +2758,7 @@ void t_cocoa_generator::print_const_value(ostream& out,
         mapout << ", ";
       }
     }
-    mapout << "}";
+    mapout << "};" << endl;
     out << mapout.str();
   } else if (type->is_list()) {
     ostringstream listout;
@@ -2775,7 +2775,7 @@ void t_cocoa_generator::print_const_value(ostream& out,
         listout << ", ";
       }
     }
-    listout << "]";
+    listout << "];" << endl;
     out << listout.str();
   } else if (type->is_set()) {
     ostringstream setout;
@@ -2785,14 +2785,14 @@ void t_cocoa_generator::print_const_value(ostream& out,
     vector<t_const_value*>::const_iterator v_iter;
     if (defval)
       setout << type_name(type) << " ";
-    setout << name << " = NSSet setWithArray:@[";
+    setout << name << " = [[NSSet alloc] initWithArray:@[";
     for (v_iter = val.begin(); v_iter != val.end();) {
       setout << render_const_value(out, etype, *v_iter, true);
       if (++v_iter != val.end()) {
         setout << ", ";
       }
     }
-    setout << "]]";
+    setout << "]];" << endl;
     out << setout.str();
   } else {
     throw "compiler error: no const of type " + type->get_name();
