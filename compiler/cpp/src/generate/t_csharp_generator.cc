@@ -45,6 +45,11 @@ using std::vector;
 
 static const string endl = "\n"; // avoid ostream << std::endl flushes
 
+struct member_mapping_scope {
+  void* scope_member;
+  std::map<std::string, std::string> mapping_table;
+};
+
 class t_csharp_generator : public t_oop_generator {
 public:
   t_csharp_generator(t_program* program,
@@ -233,9 +238,7 @@ private:
   std::string wcf_namespace_;
 
   std::map<std::string, int> csharp_keywords;
-
-  void* member_mapping_scope;
-  std::map<std::string, std::string> member_name_mapping;
+  std::vector<member_mapping_scope>  member_mapping_scopes;
 
   void init_keywords();
   std::string normalize_name(std::string name);
@@ -268,7 +271,10 @@ void t_csharp_generator::init_generator() {
 
   namespace_dir_ = subdir;
   init_keywords();
-  member_mapping_scope = NULL;
+  
+  while( ! member_mapping_scopes.empty()) {
+    cleanup_member_name_mapping( member_mapping_scopes.back().scope_member);
+  }
 
   pverbose("C# options:\n");
   pverbose("- async ...... %s\n", (async_ ? "ON" : "off"));
@@ -2856,23 +2862,27 @@ std::string t_csharp_generator::make_valid_csharp_identifier(std::string const& 
 }
 
 void t_csharp_generator::cleanup_member_name_mapping(void* scope) {
-  if (member_mapping_scope != scope) {
-    if (member_mapping_scope == NULL) {
-      throw "internal error: cleanup_member_name_mapping() not active";
-    } else {
-      throw "internal error: cleanup_member_name_mapping() called for wrong struct";
-    }
+  if( member_mapping_scopes.empty()) {
+    throw "internal error: cleanup_member_name_mapping() no scope active";
+  }
+  
+  member_mapping_scope& active = member_mapping_scopes.back();
+  if (active.scope_member != scope) {
+    throw "internal error: cleanup_member_name_mapping() called for wrong struct";
   }
 
-  member_mapping_scope = NULL;
-  member_name_mapping.clear();
+  member_mapping_scopes.pop_back();
 }
 
 string t_csharp_generator::get_mapped_member_name(string name) {
-  map<string, string>::iterator iter = member_name_mapping.find(name);
-  if (member_name_mapping.end() != iter) {
-    return iter->second;
+  if( ! member_mapping_scopes.empty()) {
+    member_mapping_scope& active = member_mapping_scopes.back();
+    map<string, string>::iterator iter = active.mapping_table.find(name);
+    if (active.mapping_table.end() != iter) {
+      return iter->second;
+    }
   }
+  
   pverbose("no mapping for member %s\n", name.c_str());
   return name;
 }
@@ -2884,23 +2894,16 @@ void t_csharp_generator::prepare_member_name_mapping(t_struct* tstruct) {
 void t_csharp_generator::prepare_member_name_mapping(void* scope,
                                                      const vector<t_field*>& members,
                                                      const string& structname) {
-  if (member_mapping_scope != NULL) {
-    if (member_mapping_scope != scope) {
-      throw "internal error: prepare_member_name_mapping() already active for different struct";
-    } else {
-      throw "internal error: prepare_member_name_mapping() already active for this struct";
-    }
-  }
-
-  member_mapping_scope = scope;
-  member_name_mapping.clear();
-
-  std::set<std::string> used_member_names;
-  vector<t_field*>::const_iterator iter;
+  // begin new scope
+  member_mapping_scopes.push_back({});
+  member_mapping_scope& active = member_mapping_scopes.back();
+  active.scope_member = scope;
 
   // current C# generator policy:
   // - prop names are always rendered with an Uppercase first letter
   // - struct names are used as given
+  std::set<std::string> used_member_names;
+  vector<t_field*>::const_iterator iter;
 
   // prevent name conflicts with struct (CS0542 error)
   used_member_names.insert(structname);
@@ -2929,7 +2932,7 @@ void t_csharp_generator::prepare_member_name_mapping(void* scope,
                structname.c_str(),
                oldname.c_str(),
                newname.c_str());
-      member_name_mapping[oldname] = newname;
+      active.mapping_table[oldname] = newname;
       used_member_names.insert(newname);
       break;
     }
@@ -3192,6 +3195,7 @@ std::string t_csharp_generator::get_enum_class_name(t_type* type) {
   }
   return package + type->get_name();
 }
+
 
 THRIFT_REGISTER_GENERATOR(
     csharp,
