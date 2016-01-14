@@ -98,6 +98,7 @@ thrift_dispatch_processor_real_dispatch_call (ThriftDispatchProcessor *self,
                                            error) < 0)
     return FALSE;
   message = g_strconcat ("Invalid method name: '", fname, "'", NULL);
+  g_free (fname);
   xception =
     g_object_new (THRIFT_TYPE_APPLICATION_EXCEPTION,
                   "type",    THRIFT_APPLICATION_EXCEPTION_ERROR_UNKNOWN_METHOD,
