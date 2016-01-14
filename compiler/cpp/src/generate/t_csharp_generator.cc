@@ -62,11 +62,6 @@ public:
 
     iter = parsed_options.find("async");
     async_ = (iter != parsed_options.end());
-    iter = parsed_options.find("asyncctp");
-    async_ctp_ = (iter != parsed_options.end());
-    if (async_ && async_ctp_) {
-      throw "argument error: Cannot specify both async and asyncctp; they are incompatible.";
-    }
 
     iter = parsed_options.find("nullable");
     nullable_ = (iter != parsed_options.end());
@@ -229,7 +224,6 @@ private:
   std::ofstream f_service_;
   std::string namespace_dir_;
   bool async_;
-  bool async_ctp_;
   bool nullable_;
   bool union_;
   bool hashcode_;
@@ -278,7 +272,6 @@ void t_csharp_generator::init_generator() {
 
   pverbose("C# options:\n");
   pverbose("- async ...... %s\n", (async_ ? "ON" : "off"));
-  pverbose("- async_ctp .. %s\n", (async_ctp_ ? "ON" : "off"));
   pverbose("- nullable ... %s\n", (nullable_ ? "ON" : "off"));
   pverbose("- union ...... %s\n", (union_ ? "ON" : "off"));
   pverbose("- hashcode ... %s\n", (hashcode_ ? "ON" : "off"));
@@ -423,7 +416,7 @@ void t_csharp_generator::end_csharp_namespace(ofstream& out) {
 string t_csharp_generator::csharp_type_usings() {
   return string() + "using System;\n" + "using System.Collections;\n"
          + "using System.Collections.Generic;\n" + "using System.Text;\n" + "using System.IO;\n"
-         + ((async_ || async_ctp_) ? "using System.Threading.Tasks;\n" : "") + "using Thrift;\n"
+         + ((async_) ? "using System.Threading.Tasks;\n" : "") + "using Thrift;\n"
          + "using Thrift.Collections;\n" + ((serialize_ || wcf_) ? "#if !SILVERLIGHT\n" : "")
          + ((serialize_ || wcf_) ? "using System.Xml.Serialization;\n" : "")
          + ((serialize_ || wcf_) ? "#endif\n" : "") + (wcf_ ? "//using System.ServiceModel;\n" : "")
@@ -1442,7 +1435,7 @@ void t_csharp_generator::generate_service_interface(t_service* tservice) {
 void t_csharp_generator::generate_separate_service_interfaces(t_service* tservice) {
   generate_sync_service_interface(tservice);
 
-  if (async_ || async_ctp_) {
+  if (async_) {
     generate_async_service_interface(tservice);
   }
 
@@ -1530,7 +1523,7 @@ void t_csharp_generator::generate_async_service_interface(t_service* tservice) {
 void t_csharp_generator::generate_combined_service_interface(t_service* tservice) {
   string extends_iface = " : ISync";
 
-  if (async_ || async_ctp_) {
+  if (async_) {
     extends_iface += ", IAsync";
   }
 
@@ -1711,7 +1704,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
 
     // async
     bool first;
-    if (async_ || async_ctp_) {
+    if (async_) {
       indent(f_service_) << "public async " << function_signature_async(*f_iter, "") << endl;
       scope_up(f_service_);
 
@@ -1721,11 +1714,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
       } else {
         indent(f_service_);
       }
-      if (async_) {
-        f_service_ << "await Task.Run(() =>" << endl;
-      } else {
-        f_service_ << "await TaskEx.Run(() =>" << endl;
-      }
+      f_service_ << "await Task.Run(() =>" << endl;
       scope_up(f_service_);
       indent(f_service_);
       if (!(*f_iter)->get_returntype()->is_void()) {
@@ -3201,7 +3190,6 @@ THRIFT_REGISTER_GENERATOR(
     csharp,
     "C#",
     "    async:           Adds Async support using Task.Run.\n"
-    "    asyncctp:        Adds Async CTP support using TaskEx.Run.\n"
     "    wcf:             Adds bindings for WCF to generated classes.\n"
     "    serial:          Add serialization support to generated classes.\n"
     "    nullable:        Use nullable types for properties.\n"
