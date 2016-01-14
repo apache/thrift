@@ -2584,7 +2584,8 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
              << indent() << "if (process_function_def != NULL)" << endl;
   scope_up(f_service_);
   args_indent = indent() + string(53, ' ');
-  f_service_ << indent() << "dispatch_result = "
+  f_service_ << indent() << "g_free (method_name);" << endl
+             << indent() << "dispatch_result = "
              << "(*process_function_def->function) (self," << endl
              << args_indent << "sequence_id," << endl
              << args_indent << "input_protocol," << endl
