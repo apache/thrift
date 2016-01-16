@@ -79,7 +79,7 @@ test_simple (void)
   assert (s1->__isset_im_default == FALSE);
   assert (s1->__isset_im_optional == FALSE);  
   write_to_read (THRIFT_STRUCT (s1), THRIFT_STRUCT (s2), NULL, NULL);
-  assert (s2->__isset_im_default = TRUE);
+  assert (s2->__isset_im_default == TRUE);
   assert (s2->__isset_im_optional == FALSE);
   assert (s2->im_optional == 0);
 
