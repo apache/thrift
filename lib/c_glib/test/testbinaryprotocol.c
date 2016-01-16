@@ -432,11 +432,11 @@ thrift_server_primitives (const int port)
                                               &len, NULL) > 0);
 
   assert (value_boolean == TEST_BOOL);
-  assert (value_byte = TEST_BYTE);
-  assert (value_16 = TEST_I16);
-  assert (value_32 = TEST_I32);
-  assert (value_64 = TEST_I64);
-  assert (value_double = TEST_DOUBLE);
+  assert (value_byte == TEST_BYTE);
+  assert (value_16 == TEST_I16);
+  assert (value_32 == TEST_I32);
+  assert (value_64 == TEST_I64);
+  assert (value_double == TEST_DOUBLE);
   assert (strcmp (TEST_STRING, string) == 0);
   assert (memcmp (comparator, binary, len) == 0);
 
