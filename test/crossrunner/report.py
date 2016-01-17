@@ -295,7 +295,7 @@ class SummaryReporter(TestReporter):
       '# If you use Chrome, run:\n',
       '# \tcd %s\n#\t%s\n' % (self.testdir, self._http_server_command(8001)),
       '# then browse:\n',
-      '# \thttp://localhost:%d/%s\n' % (8001, RESULT_HTML),
+      '# \thttp://localhost:%d/test/%s\n' % (8001, RESULT_HTML),
       'Full log for each test is here:\n',
       '\ttest/log/client_server_protocol_transport_client.log\n',
       '\ttest/log/client_server_protocol_transport_server.log\n',
