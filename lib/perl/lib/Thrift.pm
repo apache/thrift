@@ -17,6 +17,8 @@
 # under the License.
 #
 
+package Thrift;
+
 our $VERSION = '1.0.0-dev';
 
 require 5.6.0;
