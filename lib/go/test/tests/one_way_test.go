@@ -60,6 +60,7 @@ func TestInitOneway(t *testing.T) {
 	server = thrift.NewTSimpleServer2(processor, serverTransport)
 
 	go server.Serve()
+	time.Sleep(10 * time.Millisecond)
 }
 
 func TestInitOnewayClient(t *testing.T) {
