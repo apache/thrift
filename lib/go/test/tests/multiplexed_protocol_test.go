@@ -24,6 +24,7 @@ import (
 	"net"
 	"testing"
 	"thrift"
+	"time"
 )
 
 func FindAvailableTCPServerPort() net.Addr {
@@ -68,6 +69,7 @@ func TestInitTwoServers(t *testing.T) {
 	processor.RegisterProcessor("SecondService", secondProcessor)
 
 	go server.Serve()
+	time.Sleep(10 * time.Millisecond)
 }
 
 var firstClient *multiplexedprotocoltest.FirstClient
