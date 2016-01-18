@@ -101,7 +101,12 @@ add_executable(testoptionalrequired testoptionalrequired.c)
 target_link_libraries(testoptionalrequired testgenc)
 add_test(NAME testoptionalrequired COMMAND testoptionalrequired)
 
-add_executable(testthrifttest testthrifttest.c)
+include_directories("${PROJECT_SOURCE_DIR}/test/c_glib/src" "${CMAKE_CURRENT_BINARY_DIR}/gen-c_glib")
+
+add_executable(testthrifttest testthrifttest.c
+    ${PROJECT_SOURCE_DIR}/test/c_glib/src/thrift_test_handler.c
+    ${PROJECT_SOURCE_DIR}/test/c_glib/src/thrift_test_handler.h
+    gen-c_glib/t_test_thrift_test_types.h)
 target_link_libraries(testthrifttest testgenc)
 add_test(NAME testthrifttest COMMAND testthrifttest)
 
