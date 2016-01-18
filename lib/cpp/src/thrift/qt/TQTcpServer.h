@@ -59,8 +59,7 @@ private Q_SLOTS:
   void socketClosed();
 
 private:
-  TQTcpServer(const TQTcpServer&);
-  TQTcpServer& operator=(const TQTcpServer&);
+  Q_DISABLE_COPY(TQTcpServer)
 
   struct ConnectionContext;
 
