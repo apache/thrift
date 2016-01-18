@@ -520,11 +520,15 @@ thrift_test_handler_test_insanity (TTestThriftTestIf    *iface,
                        GINT_TO_POINTER (T_TEST_NUMBERZ_THREE),
                        (gpointer)argument);
 
-  /* Increment argument's ref count since first_map now holds two
-     references to it and would otherwise attempt to deallocate it
-     twice during destruction. We do this instead of creating a copy
-     of argument in order to mimic the C++ implementation (and since,
-     frankly, the world needs less argument, not more). */
+  /* Increment argument's ref count by two because first_map now holds
+     two references to it and the caller is not aware we have made any
+     additional references to argument.  (That is, caller owns argument
+     and will unref it explicitly in addition to unref-ing *_return.)
+
+     We do this instead of creating a copy of argument in order to mimic
+     the C++ implementation (and since, frankly, the world needs less
+     argument, not more). */
+  g_object_ref ((gpointer)argument);
   g_object_ref ((gpointer)argument);
 
   looney = g_object_new (T_TEST_TYPE_INSANITY, NULL);
