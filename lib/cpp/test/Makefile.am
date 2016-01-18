@@ -326,7 +326,9 @@ OpenSSLManualInitTest_SOURCES = \
 
 OpenSSLManualInitTest_LDADD = \
 	$(top_builddir)/lib/cpp/libthrift.la \
-	$(BOOST_TEST_LDADD)
+	$(BOOST_TEST_LDADD) \
+	$(OPENSSL_LDFLAGS) \
+	$(OPENSSL_LIBS)
 
 #
 # Common thrift code generation rules
