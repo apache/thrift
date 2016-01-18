@@ -372,7 +372,7 @@ public:
    * TVirtualTransport provides a default implementation of readAll().
    * We want to use the TBufferBase version instead.
    */
-  uint32_t readAll(uint8_t* buf, uint32_t len) { return TBufferBase::readAll(buf, len); }
+  using TBufferBase::readAll;
 
   /**
    * Returns the origin of the underlying transport
@@ -396,7 +396,7 @@ protected:
    * Returns true if a frame was read successfully, or false on EOF.
    * (Raises a TTransportException if EOF occurs after a partial frame.)
    */
-  bool readFrame();
+  virtual bool readFrame();
 
   void initPointers() {
     setReadBuffer(NULL, 0);
