@@ -50,15 +50,13 @@ private slots:
   void test_communicate();
 
 private:
-  boost::shared_ptr<QTcpServer> serverSocket;
   boost::shared_ptr<async::TQTcpServer> server;
-  boost::shared_ptr<QTcpSocket> socket;
   boost::shared_ptr<test::ParentServiceClient> client;
 };
 
 void TQTcpServerTest::init() {
   // setup server
-  serverSocket.reset(new QTcpServer);
+  boost::shared_ptr<QTcpServer> serverSocket = boost::make_shared<QTcpServer>();
   server.reset(new async::TQTcpServer(serverSocket,
                                       boost::make_shared<test::ParentServiceAsyncProcessor>(
                                           boost::make_shared<AsyncHandler>()),
@@ -68,7 +66,7 @@ void TQTcpServerTest::init() {
   QVERIFY(port > 0);
 
   // setup client
-  socket.reset(new QTcpSocket);
+  boost::shared_ptr<QTcpSocket> socket = boost::make_shared<QTcpSocket>();
   client.reset(new test::ParentServiceClient(boost::make_shared<protocol::TBinaryProtocol>(
       boost::make_shared<transport::TQIODeviceTransport>(socket))));
   socket->connectToHost(QHostAddress::LocalHost, port);
@@ -76,8 +74,6 @@ void TQTcpServerTest::init() {
 }
 
 void TQTcpServerTest::cleanup() {
-  socket->close();
-  serverSocket->close();
 }
 
 void TQTcpServerTest::test_communicate() {
