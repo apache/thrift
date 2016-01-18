@@ -57,19 +57,22 @@ private Q_SLOTS:
   void processIncoming();
   void beginDecode();
   void socketClosed();
+  void deleteConnectionContext(QTcpSocket* connection);
 
 private:
   Q_DISABLE_COPY(TQTcpServer)
 
   struct ConnectionContext;
 
+  void scheduleDeleteConnectionContext(QTcpSocket* connection);
   void finish(boost::shared_ptr<ConnectionContext> ctx, bool healthy);
 
   boost::shared_ptr<QTcpServer> server_;
   boost::shared_ptr<TAsyncProcessor> processor_;
   boost::shared_ptr<apache::thrift::protocol::TProtocolFactory> pfact_;
 
-  std::map<QTcpSocket*, boost::shared_ptr<ConnectionContext> > ctxMap_;
+  typedef std::map<QTcpSocket*, boost::shared_ptr<ConnectionContext> > ConnectionContextMap;
+  ConnectionContextMap ctxMap_;
 };
 }
 }
