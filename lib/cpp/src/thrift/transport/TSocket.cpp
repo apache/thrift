@@ -174,7 +174,7 @@ TSocket::~TSocket() {
   close();
 }
 
-bool TSocket::isOpen() {
+bool TSocket::isOpen() const {
   return (socket_ != THRIFT_INVALID_SOCKET);
 }
 
@@ -674,11 +674,11 @@ uint32_t TSocket::write_partial(const uint8_t* buf, uint32_t len) {
   return b;
 }
 
-std::string TSocket::getHost() {
+std::string TSocket::getHost() const {
   return host_;
 }
 
-int TSocket::getPort() {
+int TSocket::getPort() const {
   return port_;
 }
 
@@ -789,7 +789,7 @@ void TSocket::setMaxRecvRetries(int maxRecvRetries) {
   maxRecvRetries_ = maxRecvRetries;
 }
 
-string TSocket::getSocketInfo() {
+string TSocket::getSocketInfo() const {
   std::ostringstream oss;
   if (host_.empty() || port_ == 0) {
     oss << "<Host: " << getPeerAddress();
@@ -800,7 +800,7 @@ string TSocket::getSocketInfo() {
   return oss.str();
 }
 
-std::string TSocket::getPeerHost() {
+std::string TSocket::getPeerHost() const {
   if (peerHost_.empty() && path_.empty()) {
     struct sockaddr_storage addr;
     struct sockaddr* addrPtr;
@@ -819,7 +819,7 @@ std::string TSocket::getPeerHost() {
       }
       addrPtr = (sockaddr*)&addr;
 
-      setCachedAddress(addrPtr, addrLen);
+      const_cast<TSocket*>(this)->setCachedAddress(addrPtr, addrLen);
     }
 
     char clienthost[NI_MAXHOST];
@@ -838,7 +838,7 @@ std::string TSocket::getPeerHost() {
   return peerHost_;
 }
 
-std::string TSocket::getPeerAddress() {
+std::string TSocket::getPeerAddress() const {
   if (peerAddress_.empty() && path_.empty()) {
     struct sockaddr_storage addr;
     struct sockaddr* addrPtr;
@@ -857,7 +857,7 @@ std::string TSocket::getPeerAddress() {
       }
       addrPtr = (sockaddr*)&addr;
 
-      setCachedAddress(addrPtr, addrLen);
+      const_cast<TSocket*>(this)->setCachedAddress(addrPtr, addrLen);
     }
 
     char clienthost[NI_MAXHOST];
@@ -877,7 +877,7 @@ std::string TSocket::getPeerAddress() {
   return peerAddress_;
 }
 
-int TSocket::getPeerPort() {
+int TSocket::getPeerPort() const {
   getPeerAddress();
   return peerPort_;
 }
@@ -927,7 +927,7 @@ bool TSocket::getUseLowMinRto() {
   return useLowMinRto_;
 }
 
-const std::string TSocket::getOrigin() {
+const std::string TSocket::getOrigin() const {
   std::ostringstream oss;
   oss << getPeerHost() << ":" << getPeerPort();
   return oss.str();

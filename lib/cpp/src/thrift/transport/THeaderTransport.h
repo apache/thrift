@@ -95,7 +95,7 @@ public:
 
   void open() { transport_->open(); }
 
-  bool isOpen() { return transport_->isOpen(); }
+  bool isOpen() const { return transport_->isOpen(); }
 
   bool peek() { return (this->rBase_ < this->rBound_) || transport_->peek(); }
 

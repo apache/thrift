@@ -72,7 +72,7 @@ public:
   /**
    * TTransport interface.
    */
-  bool isOpen();
+  bool isOpen() const;
   bool peek();
   void open();
   void close();

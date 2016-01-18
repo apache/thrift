@@ -40,7 +40,7 @@ public:
   virtual ~TQIODeviceTransport();
 
   void open();
-  bool isOpen();
+  bool isOpen() const;
   bool peek();
   void close();
 

@@ -217,7 +217,7 @@ public:
 
   void open() { transport_->open(); }
 
-  bool isOpen() { return transport_->isOpen(); }
+  bool isOpen() const { return transport_->isOpen(); }
 
   bool peek() {
     if (rBase_ == rBound_) {
@@ -240,7 +240,7 @@ public:
   /**
    * Returns the origin of the underlying transport
    */
-  virtual const std::string getOrigin() { return transport_->getOrigin(); }
+  virtual const std::string getOrigin() const { return transport_->getOrigin(); }
 
   /**
    * The following behavior is currently implemented by TBufferedTransport,
@@ -345,7 +345,7 @@ public:
 
   void open() { transport_->open(); }
 
-  bool isOpen() { return transport_->isOpen(); }
+  bool isOpen() const { return transport_->isOpen(); }
 
   bool peek() { return (rBase_ < rBound_) || transport_->peek(); }
 
@@ -377,7 +377,7 @@ public:
   /**
    * Returns the origin of the underlying transport
    */
-  virtual const std::string getOrigin() { return transport_->getOrigin(); }
+  virtual const std::string getOrigin() const { return transport_->getOrigin(); }
 
   /**
    * Set the maximum size of the frame at read
@@ -547,7 +547,7 @@ public:
     }
   }
 
-  bool isOpen() { return true; }
+  bool isOpen() const { return true; }
 
   bool peek() { return (rBase_ < wBase_); }
 

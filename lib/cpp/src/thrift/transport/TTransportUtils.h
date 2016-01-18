@@ -46,7 +46,7 @@ public:
 
   ~TNullTransport() {}
 
-  bool isOpen() { return true; }
+  bool isOpen() const { return true; }
 
   void open() {}
 
@@ -112,7 +112,7 @@ public:
     std::free(wBuf_);
   }
 
-  bool isOpen() { return srcTrans_->isOpen(); }
+  bool isOpen() const { return srcTrans_->isOpen(); }
 
   bool peek() {
     if (rPos_ >= rLen_) {
@@ -242,7 +242,7 @@ public:
   ~TPipedFileReaderTransport();
 
   // TTransport functions
-  bool isOpen();
+  bool isOpen() const;
   bool peek();
   void open();
   void close();

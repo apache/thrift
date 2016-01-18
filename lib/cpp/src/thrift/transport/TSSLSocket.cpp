@@ -227,7 +227,7 @@ TSSLSocket::~TSSLSocket() {
   close();
 }
 
-bool TSSLSocket::isOpen() {
+bool TSSLSocket::isOpen() const {
   if (ssl_ == NULL || !TSocket::isOpen()) {
     return false;
   }
