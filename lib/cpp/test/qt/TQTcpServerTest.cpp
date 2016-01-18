@@ -42,45 +42,54 @@ struct AsyncHandler : public test::ParentServiceCobSvIf {
 };
 
 class TQTcpServerTest : public QObject {
-  void init() {
-    // setup server
-    serverSocket.reset(new QTcpServer);
-    server.reset(new async::TQTcpServer(serverSocket,
-                                        boost::make_shared<test::ParentServiceAsyncProcessor>(
-                                            boost::make_shared<AsyncHandler>()),
-                                        boost::make_shared<protocol::TBinaryProtocolFactory>()));
-    QVERIFY(serverSocket->listen(QHostAddress::LocalHost));
-    int port = serverSocket->serverPort();
-    QVERIFY(port > 0);
+  Q_OBJECT
 
-    // setup client
-    socket.reset(new QTcpSocket);
-    client.reset(new test::ParentServiceClient(boost::make_shared<protocol::TBinaryProtocol>(
-        boost::make_shared<transport::TQIODeviceTransport>(socket))));
-    socket->connectToHost(QHostAddress::LocalHost, port);
-    QVERIFY(socket->waitForConnected());
-  }
+private slots:
+  void init();
+  void cleanup();
+  void test_communicate();
 
-  void cleanup() {
-    socket->close();
-    serverSocket->close();
-  }
-
-  void test_communicate() {
-    client->addString("foo");
-    client->addString("bar");
-
-    std::vector<std::string> reply;
-    client->getStrings(reply);
-    QCOMPARE(reply[0], "foo");
-    QCOMPARE(reply[1], "foo");
-  }
-
+private:
   boost::shared_ptr<QTcpServer> serverSocket;
   boost::shared_ptr<async::TQTcpServer> server;
   boost::shared_ptr<QTcpSocket> socket;
   boost::shared_ptr<test::ParentServiceClient> client;
 };
+
+void TQTcpServerTest::init() {
+  // setup server
+  serverSocket.reset(new QTcpServer);
+  server.reset(new async::TQTcpServer(serverSocket,
+                                      boost::make_shared<test::ParentServiceAsyncProcessor>(
+                                          boost::make_shared<AsyncHandler>()),
+                                      boost::make_shared<protocol::TBinaryProtocolFactory>()));
+  QVERIFY(serverSocket->listen(QHostAddress::LocalHost));
+  int port = serverSocket->serverPort();
+  QVERIFY(port > 0);
+
+  // setup client
+  socket.reset(new QTcpSocket);
+  client.reset(new test::ParentServiceClient(boost::make_shared<protocol::TBinaryProtocol>(
+      boost::make_shared<transport::TQIODeviceTransport>(socket))));
+  socket->connectToHost(QHostAddress::LocalHost, port);
+  QVERIFY(socket->waitForConnected());
+}
+
+void TQTcpServerTest::cleanup() {
+  socket->close();
+  serverSocket->close();
+}
+
+void TQTcpServerTest::test_communicate() {
+  client->addString("foo");
+  client->addString("bar");
+
+  std::vector<std::string> reply;
+  client->getStrings(reply);
+  QCOMPARE(QString::fromStdString(reply[0]), QString("foo"));
+  QCOMPARE(QString::fromStdString(reply[1]), QString("foo"));
+}
+
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
 QTEST_GUILESS_MAIN(TQTcpServerTest);
