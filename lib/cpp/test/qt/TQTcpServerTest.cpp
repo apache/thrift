@@ -5,6 +5,7 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QHostAddress>
+#include <QThread>
 
 #ifndef Q_MOC_RUN
   #include <boost/smart_ptr.hpp>
@@ -45,16 +46,17 @@ class TQTcpServerTest : public QObject {
   Q_OBJECT
 
 private slots:
-  void init();
-  void cleanup();
+  void initTestCase();
+  void cleanupTestCase();
   void test_communicate();
 
 private:
+  boost::shared_ptr<QThread> serverThread;
   boost::shared_ptr<async::TQTcpServer> server;
   boost::shared_ptr<test::ParentServiceClient> client;
 };
 
-void TQTcpServerTest::init() {
+void TQTcpServerTest::initTestCase() {
   // setup server
   boost::shared_ptr<QTcpServer> serverSocket = boost::make_shared<QTcpServer>();
   server.reset(new async::TQTcpServer(serverSocket,
@@ -65,6 +67,12 @@ void TQTcpServerTest::init() {
   int port = serverSocket->serverPort();
   QVERIFY(port > 0);
 
+  //setup server thread and move server to it
+  serverThread.reset(new QThread());
+  serverSocket->moveToThread(serverThread.get());
+  server->moveToThread(serverThread.get());
+  serverThread->start();
+
   // setup client
   boost::shared_ptr<QTcpSocket> socket = boost::make_shared<QTcpSocket>();
   client.reset(new test::ParentServiceClient(boost::make_shared<protocol::TBinaryProtocol>(
@@ -73,7 +81,17 @@ void TQTcpServerTest::init() {
   QVERIFY(socket->waitForConnected());
 }
 
-void TQTcpServerTest::cleanup() {
+void TQTcpServerTest::cleanupTestCase() {
+  //first, stop the thread which holds the server
+  serverThread->quit();
+  serverThread->wait();
+  // now, it is safe to delete the server
+  server.reset();
+  // delete thread now
+  serverThread.reset();
+
+  // cleanup client
+  client.reset();
 }
 
 void TQTcpServerTest::test_communicate() {
@@ -83,7 +101,7 @@ void TQTcpServerTest::test_communicate() {
   std::vector<std::string> reply;
   client->getStrings(reply);
   QCOMPARE(QString::fromStdString(reply[0]), QString("foo"));
-  QCOMPARE(QString::fromStdString(reply[1]), QString("foo"));
+  QCOMPARE(QString::fromStdString(reply[1]), QString("bar"));
 }
 
 
