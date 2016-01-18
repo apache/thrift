@@ -47,7 +47,7 @@ public:
     return process(_return, io, io);
   }
 
-  boost::shared_ptr<TProcessorEventHandler> getEventHandler() { return eventHandler_; }
+  boost::shared_ptr<TProcessorEventHandler> getEventHandler() const { return eventHandler_; }
 
   void setEventHandler(boost::shared_ptr<TProcessorEventHandler> eventHandler) {
     eventHandler_ = eventHandler;
