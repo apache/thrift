@@ -40,14 +40,7 @@ namespace transport {
 using namespace apache::thrift::protocol;
 using apache::thrift::protocol::TBinaryProtocol;
 
-uint32_t THeaderTransport::readAll(uint8_t* buf, uint32_t len) {
-  // We want to call TBufferBase's version here, because
-  // TFramedTransport would try and call its own readFrame function
-  return TBufferBase::readAll(buf, len);
-}
-
 uint32_t THeaderTransport::readSlow(uint8_t* buf, uint32_t len) {
-
   if (clientType == THRIFT_UNFRAMED_DEPRECATED) {
     return transport_->read(buf, len);
   }
@@ -70,7 +63,7 @@ void THeaderTransport::ensureReadBuffer(uint32_t sz) {
   }
 }
 
-bool THeaderTransport::readFrame(uint32_t minFrameSize) {
+bool THeaderTransport::readFrame() {
   // szN is network byte order of sz
   uint32_t szN;
   uint32_t sz;
@@ -99,6 +92,7 @@ bool THeaderTransport::readFrame(uint32_t minFrameSize) {
 
   sz = ntohl(szN);
 
+  uint32_t minFrameSize = 0;
   ensureReadBuffer(minFrameSize + 4);
 
   if ((sz & TBinaryProtocol::VERSION_MASK) == (uint32_t)TBinaryProtocol::VERSION_1) {
@@ -368,7 +362,7 @@ void THeaderTransport::resetProtocol() {
   clientType = THRIFT_HEADER_CLIENT_TYPE;
 
   // Read the header and decide which protocol to go with
-  readFrame(0);
+  readFrame();
 }
 
 uint32_t THeaderTransport::getWriteBytes() {
