@@ -33,7 +33,7 @@ from .compat import logfile_open, path_join, str_join
 from .test import TestEntry
 
 LOG_DIR = 'log'
-RESULT_HTML = 'result.html'
+RESULT_HTML = 'index.html'
 RESULT_JSON = 'results.json'
 FAIL_JSON = 'known_failures_%s.json'
 
@@ -209,11 +209,12 @@ class ExecReporter(TestReporter):
 
 
 class SummaryReporter(TestReporter):
-  def __init__(self, testdir, concurrent=True):
+  def __init__(self, basedir, testdir_relative, concurrent=True):
     super(SummaryReporter, self).__init__()
-    self.testdir = testdir
-    self.logdir = path_join(testdir, LOG_DIR)
-    self.out_path = path_join(testdir, RESULT_JSON)
+    self._basedir = basedir
+    self._testdir_rel = testdir_relative
+    self.logdir = path_join(self.testdir, LOG_DIR)
+    self.out_path = path_join(self.testdir, RESULT_JSON)
     self.concurrent = concurrent
     self.out = sys.stdout
     self._platform = platform.system()
@@ -221,11 +222,15 @@ class SummaryReporter(TestReporter):
     self._tests = []
     if not os.path.exists(self.logdir):
       os.mkdir(self.logdir)
-    self._known_failures = load_known_failures(testdir)
+    self._known_failures = load_known_failures(self.testdir)
     self._unexpected_success = []
     self._unexpected_failure = []
     self._expected_failure = []
     self._print_header()
+
+  @property
+  def testdir(self):
+    return path_join(self._basedir, self._testdir_rel)
 
   def _get_revision(self):
     p = subprocess.Popen(['git', 'rev-parse', '--short', 'HEAD'],
@@ -296,11 +301,11 @@ class SummaryReporter(TestReporter):
     self._assemble_log('known failures', self._expected_failure)
     self.out.writelines([
       'You can browse results at:\n',
-      '\tfile://%s/%s\n' % (self.testdir, RESULT_HTML),
+      '\tfile://%s/%s\n' % (self._basedir, RESULT_HTML),
       '# If you use Chrome, run:\n',
-      '# \tcd %s\n#\t%s\n' % (self.testdir, self._http_server_command(8001)),
+      '# \tcd %s\n#\t%s\n' % (self._basedir, self._http_server_command(8001)),
       '# then browse:\n',
-      '# \thttp://localhost:%d/test/%s\n' % (8001, RESULT_HTML),
+      '# \thttp://localhost:%d/%s/\n' % (8001, self._testdir_rel),
       'Full log for each test is here:\n',
       '\ttest/log/client_server_protocol_transport_client.log\n',
       '\ttest/log/client_server_protocol_transport_server.log\n',
