@@ -740,6 +740,7 @@ AC_CONFIG_FILES([
   lib/xml/Makefile
   lib/xml/test/Makefile
   test/Makefile
+  test/features/Makefile
   test/c_glib/Makefile
   test/cpp/Makefile
   test/erl/Makefile

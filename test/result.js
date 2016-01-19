@@ -1,4 +1,4 @@
-<!--
+/*
  Licensed to the Apache Software Foundation (ASF) under one
  or more contributor license agreements. See the NOTICE file
  distributed with this work for additional information
@@ -16,16 +16,8 @@
  specific language governing permissions and limitations
  under the License.
 
--->
-<!DOCTYPE HTML>
-<html>
-<head>
-<meta charset="utf-8">
-<title>Apache Thrift - integration test suite</title>
-<link rel="stylesheet" type="text/css" href="http://cdn.datatables.net/1.10.4/css/jquery.dataTables.css">
-<script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
-<script type="text/javascript" charset="utf-8" src="http://cdn.datatables.net/1.10.4/js/jquery.dataTables.js"></script>
-<script>
+*/
+
 $.getJSON('results.json', function(results) {
     $(document).ready(function() {
         var transport = 3;
@@ -69,23 +61,4 @@ $.getJSON('results.json', function(results) {
             "Test duration: " + results['duration']) + " seconds";
     });
 });
-</script>
-</head>
-<body>
-<h2>Apache Thrift - integration test suite: Results</h2>
-<table id="test_results" class="display">
-    <thead>
-        <tr>
-            <th>Server</th>
-            <th>Client</th>
-            <th>Protocol</th>
-            <th>Transport</th>
-            <th>Result (log)</th>
-            <th>Expected</th>
-        </tr>
-    </thead>
-</table>
-<h2>Test Information</h2>
-<pre id="test_info"></pre>
-</body>
-</html>
+

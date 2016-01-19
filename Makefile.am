@@ -55,9 +55,15 @@ else
 CROSS_PY=$(PYTHON)
 endif
 
+if WITH_PYTHON
 cross: precross
 	$(CROSS_PY) test/test.py -F.* -s --server $(CROSS_LANGS_COMMA_SEPARATED)
 	$(CROSS_PY) test/test.py -s --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED)
+else
+# feature test needs python build
+cross: precross
+	$(CROSS_PY) test/test.py -s --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED)
+endif
 
 TIMES = 1 2 3
 fail: precross

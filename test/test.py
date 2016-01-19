@@ -38,38 +38,11 @@ import sys
 import crossrunner
 from crossrunner.compat import path_join
 
-TEST_DIR = os.path.realpath(os.path.dirname(__file__))
-FEATURE_DIR = path_join(TEST_DIR, 'features')
+ROOT_DIR = os.path.dirname(os.path.realpath(os.path.dirname(__file__)))
+TEST_DIR_RELATIVE = 'test'
+TEST_DIR = path_join(ROOT_DIR, TEST_DIR_RELATIVE)
+FEATURE_DIR_RELATIVE = path_join(TEST_DIR_RELATIVE, 'features')
 CONFIG_FILE = 'tests.json'
-
-
-def run_tests(collect_func, basedir, server_match, client_match, jobs, skip):
-  logger = multiprocessing.get_logger()
-  logger.debug('Collecting tests')
-  with open(path_join(basedir, CONFIG_FILE), 'r') as fp:
-    j = json.load(fp)
-  tests = collect_func(j, server_match, client_match)
-  if not tests:
-    print('No test found that matches the criteria', file=sys.stderr)
-    # print('  servers: %s' % server_match, file=sys.stderr)
-    # print('  clients: %s' % client_match, file=sys.stderr)
-    return False
-  if skip:
-    logger.debug('Skipping known failures')
-    known = crossrunner.load_known_failures(basedir)
-    tests = list(filter(lambda t: crossrunner.test_name(**t) not in known, tests))
-
-  dispatcher = crossrunner.TestDispatcher(TEST_DIR, basedir, jobs)
-  logger.debug('Executing %d tests' % len(tests))
-  try:
-    for r in [dispatcher.dispatch(test) for test in tests]:
-      r.wait()
-    logger.debug('Waiting for completion')
-    return dispatcher.wait()
-  except (KeyboardInterrupt, SystemExit):
-    logger.debug('Interrupted, shutting down')
-    dispatcher.terminate()
-    return False
 
 
 def run_cross_tests(server_match, client_match, jobs, skip_known_failures):
@@ -88,7 +61,7 @@ def run_cross_tests(server_match, client_match, jobs, skip_known_failures):
     known = crossrunner.load_known_failures(TEST_DIR)
     tests = list(filter(lambda t: crossrunner.test_name(**t) not in known, tests))
 
-  dispatcher = crossrunner.TestDispatcher(TEST_DIR, TEST_DIR, jobs)
+  dispatcher = crossrunner.TestDispatcher(TEST_DIR, ROOT_DIR, TEST_DIR_RELATIVE, jobs)
   logger.debug('Executing %d tests' % len(tests))
   try:
     for r in [dispatcher.dispatch(test) for test in tests]:
@@ -102,7 +75,7 @@ def run_cross_tests(server_match, client_match, jobs, skip_known_failures):
 
 
 def run_feature_tests(server_match, feature_match, jobs, skip_known_failures):
-  basedir = FEATURE_DIR
+  basedir = path_join(ROOT_DIR, FEATURE_DIR_RELATIVE)
   logger = multiprocessing.get_logger()
   logger.debug('Collecting tests')
   with open(path_join(TEST_DIR, CONFIG_FILE), 'r') as fp:
@@ -120,7 +93,7 @@ def run_feature_tests(server_match, feature_match, jobs, skip_known_failures):
     known = crossrunner.load_known_failures(basedir)
     tests = list(filter(lambda t: crossrunner.test_name(**t) not in known, tests))
 
-  dispatcher = crossrunner.TestDispatcher(TEST_DIR, basedir, jobs)
+  dispatcher = crossrunner.TestDispatcher(TEST_DIR, ROOT_DIR, FEATURE_DIR_RELATIVE, jobs)
   logger.debug('Executing %d tests' % len(tests))
   try:
     for r in [dispatcher.dispatch(test) for test in tests]:
@@ -179,7 +152,7 @@ def main(argv):
   client_match = list(chain(*[x.split(',') for x in options.client]))
 
   if options.update_failures or options.print_failures:
-    dire = FEATURE_DIR if options.features is not None else TEST_DIR
+    dire = path_join(ROOT_DIR, FEATURE_DIR_RELATIVE) if options.features is not None else TEST_DIR
     res = crossrunner.generate_known_failures(
         dire, options.update_failures == 'overwrite',
         options.update_failures, options.print_failures)

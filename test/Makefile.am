@@ -17,7 +17,7 @@
 # under the License.
 #
 
-SUBDIRS =
+SUBDIRS = features
 PRECROSS_TARGET =
 
 if WITH_C_GLIB
@@ -124,7 +124,8 @@ EXTRA_DIST = \
 	tests.json \
 	ThriftTest.thrift \
 	TypedefTest.thrift \
-	result.html \
+	result.js \
+	index.html \
 	README.md \
 	valgrind.suppress
 

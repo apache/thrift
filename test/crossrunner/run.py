@@ -269,10 +269,11 @@ class NonAsyncResult(object):
 
 
 class TestDispatcher(object):
-  def __init__(self, testdir, logdir, concurrency):
+  def __init__(self, testdir, basedir, logdir_rel, concurrency):
     self._log = multiprocessing.get_logger()
     self.testdir = testdir
-    self.logdir = logdir
+    self._report = SummaryReporter(basedir, logdir_rel, concurrency > 1)
+    self.logdir = self._report.testdir
     # seems needed for python 2.x to handle keyboard interrupt
     self._stop = multiprocessing.Event()
     self._async = concurrency > 1
@@ -287,7 +288,6 @@ class TestDispatcher(object):
       self._m.register('ports', PortAllocator)
       self._m.start()
       self._pool = multiprocessing.Pool(concurrency, self._pool_init, (self._m.address,))
-    self._report = SummaryReporter(logdir, concurrency > 1)
     self._log.debug(
         'TestDispatcher started with %d concurrent jobs' % concurrency)
 
