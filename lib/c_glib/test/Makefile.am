@@ -163,8 +163,8 @@ testoptionalrequired_LDADD = \
 
 testthrifttest_SOURCES = testthrifttest.c \
     $(top_srcdir)/test/c_glib/src/thrift_test_handler.c \
-    $(top_srcdir)/test/c_glib/src/thrift_test_handler.h \
-    gen-c_glib/t_test_thrift_test_types.h
+    $(top_srcdir)/test/c_glib/src/thrift_test_handler.h
+
 testthrifttest_LDADD = libtestgenc.la
 testthrifttest_CFLAGS = -I$(top_srcdir)/test/c_glib/src -I./gen-c_glib $(GLIB_CFLAGS)
 
