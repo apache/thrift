@@ -53,7 +53,7 @@ public:
     }
   }
 
-  bool isOpen() { return fd_ >= 0; }
+  bool isOpen() const { return fd_ >= 0; }
 
   void open() {}
 

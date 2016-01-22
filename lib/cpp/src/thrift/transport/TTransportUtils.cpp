@@ -102,7 +102,7 @@ TPipedFileReaderTransport::TPipedFileReaderTransport(
 TPipedFileReaderTransport::~TPipedFileReaderTransport() {
 }
 
-bool TPipedFileReaderTransport::isOpen() {
+bool TPipedFileReaderTransport::isOpen() const {
   return TPipedTransport::isOpen();
 }
 

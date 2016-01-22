@@ -180,7 +180,7 @@ public:
 
   // TODO: what is the correct behaviour for this?
   // the log file is generally always open
-  bool isOpen() { return true; }
+  bool isOpen() const { return true; }
 
   void write(const uint8_t* buf, uint32_t len);
   void flush();

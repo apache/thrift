@@ -41,7 +41,7 @@ public:
   TShortReadTransport(boost::shared_ptr<TTransport> transport, double full_prob)
     : transport_(transport), fullProb_(full_prob) {}
 
-  bool isOpen() { return transport_->isOpen(); }
+  bool isOpen() const { return transport_->isOpen(); }
 
   bool peek() { return transport_->peek(); }
 

@@ -81,7 +81,7 @@ public:
    *
    * @return Is the socket alive?
    */
-  virtual bool isOpen();
+  virtual bool isOpen() const;
 
   /**
    * Calls select on the socket to see if there is more data available.
@@ -127,14 +127,14 @@ public:
    *
    * @return string host identifier
    */
-  std::string getHost();
+  std::string getHost() const;
 
   /**
    * Get the port that the socket is connected to
    *
    * @return int port number
    */
-  int getPort();
+  int getPort() const;
 
   /**
    * Set the host that socket will connect to
@@ -195,27 +195,27 @@ public:
   /**
    * Get socket information formatted as a string <Host: x Port: x>
    */
-  std::string getSocketInfo();
+  std::string getSocketInfo() const;
 
   /**
    * Returns the DNS name of the host to which the socket is connected
    */
-  std::string getPeerHost();
+  std::string getPeerHost() const;
 
   /**
    * Returns the address of the host to which the socket is connected
    */
-  std::string getPeerAddress();
+  std::string getPeerAddress() const;
 
   /**
    * Returns the port of the host to which the socket is connected
    **/
-  int getPeerPort();
+  int getPeerPort() const;
 
   /**
    * Returns the underlying socket file descriptor.
    */
-  THRIFT_SOCKET getSocketFD() { return socket_; }
+  THRIFT_SOCKET getSocketFD() const { return socket_; }
 
   /**
    * (Re-)initialize a TSocket for the supplied descriptor.  This is only
@@ -226,7 +226,7 @@ public:
    */
   void setSocketFD(THRIFT_SOCKET fd);
 
-  /*
+  /**
    * Returns a cached copy of the peer address.
    */
   sockaddr* getCachedAddress(socklen_t* len) const;
@@ -246,7 +246,7 @@ public:
    *
    * @return string peer host identifier and port
    */
-  virtual const std::string getOrigin();
+  virtual const std::string getOrigin() const;
 
   /**
    * Constructor to create socket from file descriptor.
@@ -273,13 +273,13 @@ protected:
   std::string host_;
 
   /** Peer hostname */
-  std::string peerHost_;
+  mutable std::string peerHost_;
 
   /** Peer address */
-  std::string peerAddress_;
+  mutable std::string peerAddress_;
 
   /** Peer port */
-  int peerPort_;
+  mutable int peerPort_;
 
   /** Port number to connect on */
   int port_;

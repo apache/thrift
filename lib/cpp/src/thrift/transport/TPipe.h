@@ -63,7 +63,7 @@ public:
   virtual ~TPipe();
 
   // Returns whether the pipe is open & valid.
-  virtual bool isOpen();
+  virtual bool isOpen() const;
 
   // Checks whether more data is available in the pipe.
   virtual bool peek();

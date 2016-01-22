@@ -42,7 +42,7 @@ public:
 
   void open() { transport_->open(); }
 
-  bool isOpen() { return transport_->isOpen(); }
+  bool isOpen() const { return transport_->isOpen(); }
 
   bool peek() { return transport_->peek(); }
 
@@ -56,7 +56,7 @@ public:
 
   virtual void flush() = 0;
 
-  virtual const std::string getOrigin();
+  virtual const std::string getOrigin() const;
 
 protected:
   boost::shared_ptr<TTransport> transport_;

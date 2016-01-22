@@ -63,7 +63,7 @@ public:
   /**
    * Whether this transport is open.
    */
-  virtual bool isOpen() { return false; }
+  virtual bool isOpen() const { return false; }
 
   /**
    * Tests whether there is more data to read or if the remote side is
@@ -236,7 +236,7 @@ public:
    *
    * The returned value can be used in a log message for example
    */
-  virtual const std::string getOrigin() { return "Unknown"; }
+  virtual const std::string getOrigin() const { return "Unknown"; }
 
 protected:
   /**
