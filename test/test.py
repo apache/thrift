@@ -45,7 +45,7 @@ FEATURE_DIR_RELATIVE = path_join(TEST_DIR_RELATIVE, 'features')
 CONFIG_FILE = 'tests.json'
 
 
-def run_cross_tests(server_match, client_match, jobs, skip_known_failures):
+def run_cross_tests(server_match, client_match, jobs, skip_known_failures, retry_count):
   logger = multiprocessing.get_logger()
   logger.debug('Collecting tests')
   with open(path_join(TEST_DIR, CONFIG_FILE), 'r') as fp:
@@ -64,7 +64,7 @@ def run_cross_tests(server_match, client_match, jobs, skip_known_failures):
   dispatcher = crossrunner.TestDispatcher(TEST_DIR, ROOT_DIR, TEST_DIR_RELATIVE, jobs)
   logger.debug('Executing %d tests' % len(tests))
   try:
-    for r in [dispatcher.dispatch(test) for test in tests]:
+    for r in [dispatcher.dispatch(test, retry_count) for test in tests]:
       r.wait()
     logger.debug('Waiting for completion')
     return dispatcher.wait()
@@ -74,7 +74,7 @@ def run_cross_tests(server_match, client_match, jobs, skip_known_failures):
     return False
 
 
-def run_feature_tests(server_match, feature_match, jobs, skip_known_failures):
+def run_feature_tests(server_match, feature_match, jobs, skip_known_failures, retry_count):
   basedir = path_join(ROOT_DIR, FEATURE_DIR_RELATIVE)
   logger = multiprocessing.get_logger()
   logger.debug('Collecting tests')
@@ -96,7 +96,7 @@ def run_feature_tests(server_match, feature_match, jobs, skip_known_failures):
   dispatcher = crossrunner.TestDispatcher(TEST_DIR, ROOT_DIR, FEATURE_DIR_RELATIVE, jobs)
   logger.debug('Executing %d tests' % len(tests))
   try:
-    for r in [dispatcher.dispatch(test) for test in tests]:
+    for r in [dispatcher.dispatch(test, retry_count) for test in tests]:
       r.wait()
     logger.debug('Waiting for completion')
     return dispatcher.wait()
@@ -120,13 +120,15 @@ def main(argv):
                       help='list of servers to test')
   parser.add_argument('--client', default='', nargs='*',
                       help='list of clients to test')
+  parser.add_argument('-F', '--features', nargs='*', default=None,
+                      help='run server feature tests instead of cross language tests')
   parser.add_argument('-s', '--skip-known-failures', action='store_true', dest='skip_known_failures',
                       help='do not execute tests that are known to fail')
+  parser.add_argument('-r', '--retry-count', type=int,
+                      default=0, help='maximum retry on failure')
   parser.add_argument('-j', '--jobs', type=int,
                       default=default_concurrenty(),
                       help='number of concurrent test executions')
-  parser.add_argument('-F', '--features', nargs='*', default=None,
-                      help='run server feature tests instead of cross language tests')
 
   g = parser.add_argument_group(title='Advanced')
   g.add_argument('-v', '--verbose', action='store_const',
@@ -158,9 +160,9 @@ def main(argv):
         options.update_failures, options.print_failures)
   elif options.features is not None:
     features = options.features or ['.*']
-    res = run_feature_tests(server_match, features, options.jobs, options.skip_known_failures)
+    res = run_feature_tests(server_match, features, options.jobs, options.skip_known_failures, options.retry_count)
   else:
-    res = run_cross_tests(server_match, client_match, options.jobs, options.skip_known_failures)
+    res = run_cross_tests(server_match, client_match, options.jobs, options.skip_known_failures, options.retry_count)
   return 0 if res else 1
 
 if __name__ == '__main__':
