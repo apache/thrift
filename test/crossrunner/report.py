@@ -100,14 +100,15 @@ class TestReporter(object):
     return '%s' % datetime.datetime.now().strftime(cls.DATETIME_FORMAT)
 
   def _print_date(self):
-    self.out.write('%s\n' % self._format_date())
+    print(self._format_date(), file=self.out)
 
   def _print_bar(self, out=None):
-    (out or self.out).write(
-      '======================================================================\n')
+    print(
+      '==========================================================================',
+      file=(out or self.out))
 
   def _print_exec_time(self):
-    self.out.write('Test execution took {:.1f} seconds.\n'.format(self._elapsed))
+    print('Test execution took {:.1f} seconds.'.format(self._elapsed), file=self.out)
 
 
 class ExecReporter(TestReporter):
@@ -139,11 +140,13 @@ class ExecReporter(TestReporter):
       self._lock.release()
 
   def killed(self):
-    self.out.write('Process is killed.\n')
+    print(file=self.out)
+    print('Server process is successfully killed.', file=self.out)
     self.end(None)
 
   def died(self):
-    self.out.write('Process is died unexpectedly.\n')
+    print(file=self.out)
+    print('*** Server process has died unexpectedly ***', file=self.out)
     self.end(None)
 
   _init_failure_exprs = {
@@ -191,19 +194,19 @@ class ExecReporter(TestReporter):
 
   def _print_header(self):
     self._print_date()
-    self.out.write('Executing: %s\n' % str_join(' ', self._prog.command))
-    self.out.write('Directory: %s\n' % self._prog.workdir)
-    self.out.write('config:delay: %s\n' % self._test.delay)
-    self.out.write('config:timeout: %s\n' % self._test.timeout)
+    print('Executing: %s' % str_join(' ', self._prog.command), file=self.out)
+    print('Directory: %s' % self._prog.workdir, file=self.out)
+    print('config:delay: %s' % self._test.delay, file=self.out)
+    print('config:timeout: %s' % self._test.timeout, file=self.out)
     self._print_bar()
     self.out.flush()
 
   def _print_footer(self, returncode=None):
     self._print_bar()
     if returncode is not None:
-      self.out.write('Return code: %d\n' % returncode)
+      print('Return code: %d' % returncode, file=self.out)
     else:
-      self.out.write('Process is killed.\n')
+      print('Process is killed.', file=self.out)
     self._print_exec_time()
     self._print_date()
 
@@ -224,6 +227,7 @@ class SummaryReporter(TestReporter):
       os.mkdir(self.logdir)
     self._known_failures = load_known_failures(self.testdir)
     self._unexpected_success = []
+    self._flaky_success = []
     self._unexpected_failure = []
     self._expected_failure = []
     self._print_header()
@@ -231,6 +235,19 @@ class SummaryReporter(TestReporter):
   @property
   def testdir(self):
     return path_join(self._basedir, self._testdir_rel)
+
+  def _result_string(self, test):
+    if test.success:
+      if test.retry_count == 0:
+        return 'success'
+      elif test.retry_count == 1:
+        return 'flaky(1 retry)'
+      else:
+        return 'flaky(%d retries)' % test.retry_count
+    elif test.expired:
+      return 'failure(timeout)'
+    else:
+      return 'failure(%d)' % test.returncode
 
   def _get_revision(self):
     p = subprocess.Popen(['git', 'rev-parse', '--short', 'HEAD'],
@@ -242,23 +259,19 @@ class SummaryReporter(TestReporter):
     name = '%s-%s' % (test.server.name, test.client.name)
     trans = '%s-%s' % (test.transport, test.socket)
     if not with_result:
-      return '{:19s}{:13s}{:25s}'.format(name[:18], test.protocol[:12], trans[:24])
+      return '{:24s}{:13s}{:25s}'.format(name[:23], test.protocol[:12], trans[:24])
     else:
-      result = 'success' if test.success else (
-          'timeout' if test.expired else 'failure')
-      result_string = '%s(%d)' % (result, test.returncode)
-      return '{:19s}{:13s}{:25s}{:s}\n'.format(name[:18], test.protocol[:12], trans[:24], result_string)
+      return '{:24s}{:13s}{:25s}{:s}\n'.format(name[:23], test.protocol[:12], trans[:24], self._result_string(test))
 
   def _print_test_header(self):
     self._print_bar()
-    self.out.write(
-      '{:19s}{:13s}{:25s}{:s}\n'.format('server-client:', 'protocol:', 'transport:', 'result:'))
+    print(
+      '{:24s}{:13s}{:25s}{:s}'.format('server-client:', 'protocol:', 'transport:', 'result:'),
+      file=self.out)
 
   def _print_header(self):
     self._start()
-    self.out.writelines([
-      'Apache Thrift - Integration Test Suite\n',
-    ])
+    print('Apache Thrift - Integration Test Suite', file=self.out)
     self._print_date()
     self._print_test_header()
 
@@ -274,12 +287,23 @@ class SummaryReporter(TestReporter):
         self.out.write(self._format_test(self._tests[i]))
       self._print_bar()
     else:
-      self.out.write('No unexpected failures.\n')
+      print('No unexpected failures.', file=self.out)
+
+  def _print_flaky_success(self):
+    if len(self._flaky_success) > 0:
+      print(
+          'Following %d tests were expected to cleanly succeed but needed retry:' % len(self._flaky_success),
+          file=self.out)
+      self._print_test_header()
+      for i in self._flaky_success:
+        self.out.write(self._format_test(self._tests[i]))
+      self._print_bar()
 
   def _print_unexpected_success(self):
     if len(self._unexpected_success) > 0:
-      self.out.write(
-        'Following %d tests were known to fail but succeeded (it\'s normal):\n' % len(self._unexpected_success))
+      print(
+        'Following %d tests were known to fail but succeeded (maybe flaky):' % len(self._unexpected_success),
+        file=self.out)
       self._print_test_header()
       for i in self._unexpected_success:
         self.out.write(self._format_test(self._tests[i]))
@@ -295,13 +319,14 @@ class SummaryReporter(TestReporter):
     fail_count = len(self._expected_failure) + len(self._unexpected_failure)
     self._print_bar()
     self._print_unexpected_success()
+    self._print_flaky_success()
     self._print_unexpected_failure()
     self._write_html_data()
     self._assemble_log('unexpected failures', self._unexpected_failure)
     self._assemble_log('known failures', self._expected_failure)
     self.out.writelines([
       'You can browse results at:\n',
-      '\tfile://%s/%s\n' % (self._basedir, RESULT_HTML),
+      '\tfile://%s/%s\n' % (self.testdir, RESULT_HTML),
       '# If you use Chrome, run:\n',
       '# \tcd %s\n#\t%s\n' % (self._basedir, self._http_server_command(8001)),
       '# then browse:\n',
@@ -358,7 +383,7 @@ class SummaryReporter(TestReporter):
           add_prog_log(fp, test, test.server.kind)
           add_prog_log(fp, test, test.client.kind)
           fp.write('**********************************************************************\n\n')
-      print('%s are logged to test/%s/%s' % (title.capitalize(), LOG_DIR, filename))
+      print('%s are logged to %s/%s/%s' % (title.capitalize(), self._testdir_rel, LOG_DIR, filename))
 
   def end(self):
     self._print_footer()
@@ -376,10 +401,11 @@ class SummaryReporter(TestReporter):
     finally:
       self._lock.release()
 
-  def add_result(self, index, returncode, expired):
+  def add_result(self, index, returncode, expired, retry_count):
     self._lock.acquire()
     try:
       failed = returncode is None or returncode != 0
+      flaky = not failed and retry_count != 0
       test = self._tests[index]
       known = test.name in self._known_failures
       if failed:
@@ -389,17 +415,19 @@ class SummaryReporter(TestReporter):
         else:
           self._log.info('unexpected failure: %s' % test.name)
           self._unexpected_failure.append(index)
-      elif known:
+      elif flaky and not known:
+        self._log.info('unexpected flaky success: %s' % test.name)
+        self._flaky_success.append(index)
+      elif not flaky and known:
         self._log.info('unexpected success: %s' % test.name)
         self._unexpected_success.append(index)
       test.success = not failed
       test.returncode = returncode
+      test.retry_count = retry_count
       test.expired = expired
       test.as_expected = known == failed
       if not self.concurrent:
-        result = 'success' if not failed else 'failure'
-        result_string = '%s(%d)' % (result, returncode)
-        self.out.write(result_string + '\n')
+        self.out.write(self._result_string(test) + '\n')
       else:
         self.out.write(self._format_test(test))
     finally:
