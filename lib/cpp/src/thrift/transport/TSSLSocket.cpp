@@ -257,7 +257,7 @@ bool TSSLSocket::peek() {
       switch (error) {
         case SSL_ERROR_SYSCALL:
           if ((errno_copy != THRIFT_EINTR)
-              || (errno_copy != THRIFT_EAGAIN)) {
+              && (errno_copy != THRIFT_EAGAIN)) {
             break;
           }
         case SSL_ERROR_WANT_READ:
@@ -296,7 +296,7 @@ void TSSLSocket::close() {
         switch (error) {
           case SSL_ERROR_SYSCALL:
             if ((errno_copy != THRIFT_EINTR)
-                || (errno_copy != THRIFT_EAGAIN)) {
+                && (errno_copy != THRIFT_EAGAIN)) {
               break;
             }
           case SSL_ERROR_WANT_READ:
@@ -334,7 +334,7 @@ uint32_t TSSLSocket::read(uint8_t* buf, uint32_t len) {
     switch (error) {
       case SSL_ERROR_SYSCALL:
         if ((errno_copy != THRIFT_EINTR)
-            || (errno_copy != THRIFT_EAGAIN)) {
+            && (errno_copy != THRIFT_EAGAIN)) {
               break;
         }
         if (retries++ >= maxRecvRetries_) {
@@ -376,7 +376,7 @@ void TSSLSocket::write(const uint8_t* buf, uint32_t len) {
       switch (error) {
         case SSL_ERROR_SYSCALL:
           if ((errno_copy != THRIFT_EINTR)
-              || (errno_copy != THRIFT_EAGAIN)) {
+              && (errno_copy != THRIFT_EAGAIN)) {
             break;
           }
         case SSL_ERROR_WANT_READ:
@@ -457,7 +457,7 @@ void TSSLSocket::checkHandshake() {
         switch (error) {
           case SSL_ERROR_SYSCALL:
             if ((errno_copy != THRIFT_EINTR)
-                || (errno_copy != THRIFT_EAGAIN)) {
+                && (errno_copy != THRIFT_EAGAIN)) {
               break;
             }
           case SSL_ERROR_WANT_READ:
@@ -477,7 +477,7 @@ void TSSLSocket::checkHandshake() {
         switch (error) {
           case SSL_ERROR_SYSCALL:
             if ((errno_copy != THRIFT_EINTR)
-                || (errno_copy != THRIFT_EAGAIN)) {
+                && (errno_copy != THRIFT_EAGAIN)) {
               break;
             }
           case SSL_ERROR_WANT_READ:
