@@ -10,6 +10,24 @@ from thrift.Thrift import TMessageType, TType
 from thrift.transport.TSocket import TSocket
 from thrift.transport.TTransport import TBufferedTransport, TFramedTransport
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
+from thrift.protocol.TCompactProtocol import TCompactProtocol
+
+
+def test_void(proto):
+  proto.writeMessageBegin('testVoid', TMessageType.CALL, 3)
+  proto.writeStructBegin('testVoid_args')
+  proto.writeFieldStop()
+  proto.writeStructEnd()
+  proto.writeMessageEnd()
+  proto.trans.flush()
+
+  _, mtype, _ = proto.readMessageBegin()
+  assert mtype == TMessageType.REPLY
+  proto.readStructBegin()
+  _, ftype, _ = proto.readFieldBegin()
+  assert ftype == TType.STOP
+  proto.readStructEnd()
+  proto.readMessageEnd()
 
 
 # THeader stack should accept binary protocol with optionally framed transport
@@ -19,6 +37,7 @@ def main(argv):
   # Since THeaderTransport acts as framed transport when detected frame, we
   # cannot use --transport=framed as it would result in 2 layered frames.
   p.add_argument('--override-transport')
+  p.add_argument('--override-protocol')
   args = p.parse_args()
   assert args.protocol == 'header'
   assert args.transport == 'buffered'
@@ -32,22 +51,16 @@ def main(argv):
   else:
     raise ValueError('invalid transport')
   trans.open()
-  proto = TBinaryProtocol(trans)
-  proto.writeMessageBegin('testVoid', TMessageType.CALL, 3)
-  proto.writeStructBegin('testVoid_args')
-  proto.writeFieldStop()
-  proto.writeStructEnd()
-  proto.writeMessageEnd()
-  trans.flush()
 
-  _, mtype, _ = proto.readMessageBegin()
-  assert mtype == TMessageType.REPLY
-  proto.readStructBegin()
-  _, ftype, _ = proto.readFieldBegin()
-  assert ftype == TType.STOP
-  proto.readFieldEnd()
-  proto.readStructEnd()
-  proto.readMessageEnd()
+  if not args.override_protocol or args.override_protocol == 'binary':
+    proto = TBinaryProtocol(sock)
+  elif args.override_protocol == 'compact':
+    proto = TCompactProtocol(sock)
+  else:
+    raise ValueError('invalid transport')
+
+  test_void(proto)
+  test_void(proto)
 
   trans.close()
 
