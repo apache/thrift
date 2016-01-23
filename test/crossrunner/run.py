@@ -60,12 +60,12 @@ class ExecutionContext(object):
     if platform.system() != 'Windows':
       try:
         os.killpg(self.proc.pid, signal.SIGKILL)
-      except Exception as err:
-        self._log.info('Failed to kill process group : %s' % str(err))
+      except Exception:
+        self._log.info('Failed to kill process group', exc_info=sys.exc_info())
     try:
       self.proc.kill()
-    except Exception as err:
-      self._log.info('Failed to kill process : %s' % str(err))
+    except Exception:
+      self._log.info('Failed to kill process', exc_info=sys.exc_info())
 
   def _popen_args(self):
     args = {
@@ -122,15 +122,17 @@ def exec_context(port, logdir, test, prog):
   return ExecutionContext(prog.command, prog.workdir, prog.env, report)
 
 
-def run_test(testdir, logdir, test_dict, async=True, max_retry=3):
+def run_test(testdir, logdir, test_dict, max_retry, async=True):
   try:
     logger = multiprocessing.get_logger()
+    max_bind_retry = 3
     retry_count = 0
+    bind_retry_count = 0
     test = TestEntry(testdir, **test_dict)
     while True:
       if stop.is_set():
         logger.debug('Skipping because shutting down')
-        return None
+        return (retry_count, None)
       logger.debug('Start')
       with PortAllocator.alloc_port_scoped(ports, test.socket) as port:
         logger.debug('Start with port %d' % port)
@@ -142,35 +144,41 @@ def run_test(testdir, logdir, test_dict, async=True, max_retry=3):
           if test.delay > 0:
             logger.debug('Delaying client for %.2f seconds' % test.delay)
             time.sleep(test.delay)
-          cl_retry_count = 0
-          cl_max_retry = 10
-          cl_retry_wait = 0.5
+          connect_retry_count = 0
+          max_connect_retry = 10
+          connect_retry_wait = 0.5
           while True:
             logger.debug('Starting client')
             cl.start(test.timeout)
             logger.debug('Waiting client')
             cl.wait()
-            if not cl.report.maybe_false_positive() or cl_retry_count >= cl_max_retry:
-              if cl_retry_count > 0 and cl_retry_count < cl_max_retry:
-                logger.warn('[%s]: Connected after %d retry (%.2f sec each)' % (test.server.name, cl_retry_count, cl_retry_wait))
-              # Wait for 50 ms to see if server does not die at the end.
+            if not cl.report.maybe_false_positive() or connect_retry_count >= max_connect_retry:
+              if connect_retry_count > 0 and connect_retry_count < max_connect_retry:
+                logger.warn('[%s]: Connected after %d retry (%.2f sec each)' % (test.server.name, connect_retry_count, connect_retry_wait))
+              # Wait for 50ms to see if server does not die at the end.
               time.sleep(0.05)
               break
-            logger.debug('Server may not be ready, waiting %.2f second...' % cl_retry_wait)
-            time.sleep(cl_retry_wait)
-            cl_retry_count += 1
+            logger.debug('Server may not be ready, waiting %.2f second...' % connect_retry_wait)
+            time.sleep(connect_retry_wait)
+            connect_retry_count += 1
 
-      if not sv.report.maybe_false_positive() or retry_count >= max_retry:
-        logger.debug('Finish')
+      if sv.report.maybe_false_positive() and bind_retry_count < max_bind_retry:
+        logger.warn('[%s]: Detected socket bind failure, retrying...', test.server.name)
+        bind_retry_count += 1
+      else:
         if cl.expired:
-          return RESULT_TIMEOUT
+          result = RESULT_TIMEOUT
         elif not sv.killed and cl.proc.returncode == 0:
           # Server should be alive at the end.
-          return RESULT_ERROR
+          result = RESULT_ERROR
         else:
-          return cl.proc.returncode
-      logger.warn('[%s]: Detected socket bind failure, retrying...' % test.server.name)
-      retry_count += 1
+          result = cl.proc.returncode
+
+        if result == 0 or retry_count >= max_retry:
+          return (retry_count, result)
+        else:
+          logger.info('[%s-%s]: test failed, retrying...', test.server.name, test.client.name)
+          retry_count += 1
   except (KeyboardInterrupt, SystemExit):
     logger.info('Interrupted execution')
     if not async:
@@ -181,7 +189,7 @@ def run_test(testdir, logdir, test_dict, async=True, max_retry=3):
     if not async:
       raise
     logger.warn('Error executing [%s]', test.name, exc_info=sys.exc_info())
-    return RESULT_ERROR
+    return (retry_count, RESULT_ERROR)
 
 
 class PortAllocator(object):
@@ -245,8 +253,8 @@ class PortAllocator(object):
         self._dom_ports.remove(port)
       else:
         self._ports.remove(port)
-    except IOError as err:
-      self._log.info('Error while freeing port : %s' % str(err))
+    except IOError:
+      self._log.info('Error while freeing port', exc_info=sys.exc_info())
     finally:
       self._lock.release()
 
@@ -300,26 +308,27 @@ class TestDispatcher(object):
     m.connect()
     ports = m.ports()
 
-  def _dispatch_sync(self, test, cont):
-    r = run_test(self.testdir, self.logdir, test, False)
+  def _dispatch_sync(self, test, cont, max_retry):
+    r = run_test(self.testdir, self.logdir, test, max_retry, False)
     cont(r)
     return NonAsyncResult(r)
 
-  def _dispatch_async(self, test, cont):
+  def _dispatch_async(self, test, cont, max_retry):
     self._log.debug('_dispatch_async')
-    return self._pool.apply_async(func=run_test, args=(self.testdir, self.logdir, test,), callback=cont)
+    return self._pool.apply_async(func=run_test, args=(self.testdir, self.logdir, test, max_retry), callback=cont)
 
-  def dispatch(self, test):
+  def dispatch(self, test, max_retry):
     index = self._report.add_test(test)
 
-    def cont(r):
+    def cont(result):
       if not self._stop.is_set():
+        retry_count, returncode = result
         self._log.debug('freeing port')
         self._log.debug('adding result')
-        self._report.add_result(index, r, r == RESULT_TIMEOUT)
+        self._report.add_result(index, returncode, returncode == RESULT_TIMEOUT, retry_count)
         self._log.debug('finish continuation')
     fn = self._dispatch_async if self._async else self._dispatch_sync
-    return fn(test, cont)
+    return fn(test, cont, max_retry)
 
   def wait(self):
     if self._async:

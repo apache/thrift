@@ -57,8 +57,8 @@ endif
 
 if WITH_PYTHON
 cross: precross
-	$(CROSS_PY) test/test.py -F.* -s --server $(CROSS_LANGS_COMMA_SEPARATED)
-	$(CROSS_PY) test/test.py -s --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED)
+	$(CROSS_PY) test/test.py --retry-count 3 --features .* --skip-known-failures --server $(CROSS_LANGS_COMMA_SEPARATED)
+	$(CROSS_PY) test/test.py --retry-count 3 --skip-known-failures --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED)
 else
 # feature test needs python build
 cross: precross
