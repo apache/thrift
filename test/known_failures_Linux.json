@@ -229,6 +229,8 @@
   "go-java_json_http-ip",
   "go-java_json_http-ip-ssl",
   "go-nodejs_json_framed-ip",
+  "hs-csharp_binary_framed-ip",
+  "hs-csharp_compact_framed-ip",
   "hs-dart_binary_framed-ip",
   "hs-dart_compact_framed-ip",
   "hs-dart_json_framed-ip",

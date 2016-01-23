@@ -25,6 +25,8 @@
 module Thrift.Protocol.Binary
     ( module Thrift.Protocol
     , BinaryProtocol(..)
+    , versionMask
+    , version1
     ) where
 
 import Control.Exception ( throw )
@@ -35,6 +37,7 @@ import Data.Functor
 import Data.Int
 import Data.Monoid
 import Data.Text.Lazy.Encoding ( decodeUtf8, encodeUtf8 )
+import Data.Word
 
 import Thrift.Protocol
 import Thrift.Transport
@@ -47,36 +50,54 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.HashMap.Strict as Map
 import qualified Data.Text.Lazy as LT
 
-data BinaryProtocol a = BinaryProtocol a
+versionMask :: Int32
+versionMask = fromIntegral (0xffff0000 :: Word32)
+
+version1 :: Int32
+version1 = fromIntegral (0x80010000 :: Word32)
+
+data BinaryProtocol a = Transport a => BinaryProtocol a
+
+getTransport :: Transport t => BinaryProtocol t -> t
+getTransport (BinaryProtocol t) = t
 
 -- NOTE: Reading and Writing functions rely on Builders and Data.Binary to
 -- encode and decode data.  Data.Binary assumes that the binary values it is
 -- encoding to and decoding from are in BIG ENDIAN format, and converts the
 -- endianness as necessary to match the local machine.
-instance Protocol BinaryProtocol where
-    getTransport (BinaryProtocol t) = t
+instance Transport t => Protocol (BinaryProtocol t) where
+    readByte p = tReadAll (getTransport p) 1
+    -- flushTransport p = tFlush (getTransport p)
+    writeMessage p (n, t, s) f = do
+      tWrite (getTransport p) messageBegin
+      f
+      tFlush $ getTransport p
+      where
+        messageBegin = toLazyByteString $
+          buildBinaryValue (TI32 (version1 .|. fromIntegral (fromEnum t))) <>
+          buildBinaryValue (TString $ encodeUtf8 n) <>
+          buildBinaryValue (TI32 s)
 
-    writeMessageBegin p (n, t, s) = tWrite (getTransport p) $ toLazyByteString $
-        buildBinaryValue (TI32 (version1 .|. fromIntegral (fromEnum t))) <>
-        buildBinaryValue (TString $ encodeUtf8 n) <>
-        buildBinaryValue (TI32 s)
+    readMessage p = (readMessageBegin p >>=)
+      where
+        readMessageBegin p = runParser p $ do
+          TI32 ver <- parseBinaryValue T_I32
+          if ver .&. versionMask /= version1
+            then throw $ ProtocolExn PE_BAD_VERSION "Missing version identifier"
+            else do
+              TString s <- parseBinaryValue T_STRING
+              TI32 sz <- parseBinaryValue T_I32
+              return (decodeUtf8 s, toEnum $ fromIntegral $ ver .&. 0xFF, sz)
 
-    readMessageBegin p = runParser p $ do
-      TI32 ver <- parseBinaryValue T_I32
-      if ver .&. versionMask /= version1
-        then throw $ ProtocolExn PE_BAD_VERSION "Missing version identifier"
-        else do
-          TString s <- parseBinaryValue T_STRING
-          TI32 sz <- parseBinaryValue T_I32
-          return (decodeUtf8 s, toEnum $ fromIntegral $ ver .&. 0xFF, sz)
+    writeVal p = tWrite (getTransport p) . toLazyByteString . buildBinaryValue
+    readVal p = runParser p . parseBinaryValue
 
+instance Transport t => StatelessProtocol (BinaryProtocol t) where
     serializeVal _ = toLazyByteString . buildBinaryValue
     deserializeVal _ ty bs =
       case LP.eitherResult $ LP.parse (parseBinaryValue ty) bs of
         Left s -> error s
         Right val -> val
-
-    readVal p = runParser p . parseBinaryValue
 
 -- | Writing Functions
 buildBinaryValue :: ThriftVal -> Builder
