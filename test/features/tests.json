@@ -4,7 +4,9 @@
     "name": "theader_unframed_binary",
     "command": [
       "python",
-      "theader_binary.py"
+      "theader_binary.py",
+      "--override-protocol=binary",
+      "--override-transport=buffered"
     ],
     "protocols": ["header"],
     "transports": ["buffered"],
@@ -17,6 +19,35 @@
     "command": [
       "python",
       "theader_binary.py",
+      "--override-protocol=binary",
+      "--override-transport=framed"
+    ],
+    "protocols": ["header"],
+    "transports": ["buffered"],
+    "sockets": ["ip"],
+    "workdir": "features"
+  },
+  {
+    "description": "THeader detects unframed compact wire format",
+    "name": "theader_unframed_compact",
+    "command": [
+      "python",
+      "theader_binary.py",
+      "--override-protocol=compact",
+      "--override-transport=buffered"
+    ],
+    "protocols": ["header"],
+    "transports": ["buffered"],
+    "sockets": ["ip"],
+    "workdir": "features"
+  },
+  {
+    "description": "THeader detects framed compact wire format",
+    "name": "theader_framed_compact",
+    "command": [
+      "python",
+      "theader_binary.py",
+      "--override-protocol=compact",
       "--override-transport=framed"
     ],
     "protocols": ["header"],
