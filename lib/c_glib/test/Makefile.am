@@ -36,7 +36,7 @@ BUILT_SOURCES = \
         gen-c_glib/t_test_thrift_test.h \
         gen-c_glib/t_test_thrift_test_types.h
 
-AM_CPPFLAGS = -I../src
+AM_CPPFLAGS = -I../src -I./gen-c_glib
 AM_CFLAGS = -g -Wall -Wextra -pedantic $(GLIB_CFLAGS) $(GOBJECT_CFLAGS) \
 	@GCOV_CFLAGS@
 AM_CXXFLAGS = $(AM_CFLAGS)
@@ -161,11 +161,9 @@ testoptionalrequired_LDADD = \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
     libtestgenc.la
 
-testthrifttest_SOURCES = testthrifttest.c \
-    $(top_srcdir)/test/c_glib/src/thrift_test_handler.c \
-    $(top_srcdir)/test/c_glib/src/thrift_test_handler.h \
-    gen-c_glib/t_test_thrift_test_types.h
-testthrifttest_LDADD = libtestgenc.la
+testthrifttest_SOURCES = testthrifttest.c
+testthrifttest_LDADD = libtestgenc.la \
+    $(top_builddir)/test/c_glib/src/thrift_test_handler.o
 testthrifttest_CFLAGS = -I$(top_srcdir)/test/c_glib/src -I./gen-c_glib $(GLIB_CFLAGS)
 
 testthrifttestclient_SOURCES = testthrifttestclient.cpp
@@ -222,22 +220,22 @@ libtestgencpp_la_CPPFLAGS = -I../../cpp/src $(BOOST_CPPFLAGS) -I./gen-cpp
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
-gen-c_glib/t_test_container_test_types.c gen-c_glib/t_test_container_test_types.h gen-c_glib/t_test_container_service.c gen-c_glib/t_test_container_service.h: ContainerTest.thrift
+gen-c_glib/t_test_container_test_types.c gen-c_glib/t_test_container_test_types.h gen-c_glib/t_test_container_service.c gen-c_glib/t_test_container_service.h: ContainerTest.thrift $(THRIFT)
 	$(THRIFT) --gen c_glib $<
 
-gen-c_glib/t_test_debug_proto_test_types.c gen-c_glib/t_test_debug_proto_test_types.h gen-c_glib/t_test_empty_service.c gen-c_glib/t_test_empty_service.h gen-c_glib/t_test_inherited.c gen-c_glib/t_test_inherited.h gen-c_glib/t_test_reverse_order_service.c gen-c_glib/t_test_reverse_order_service.h gen-c_glib/t_test_service_for_exception_with_a_map.c gen-c_glib/t_test_service_for_exception_with_a_map.h gen-c_glib/t_test_srv.c gen-c_glib/t_test_srv.h: ../../../test/DebugProtoTest.thrift
+gen-c_glib/t_test_debug_proto_test_types.c gen-c_glib/t_test_debug_proto_test_types.h gen-c_glib/t_test_empty_service.c gen-c_glib/t_test_empty_service.h gen-c_glib/t_test_inherited.c gen-c_glib/t_test_inherited.h gen-c_glib/t_test_reverse_order_service.c gen-c_glib/t_test_reverse_order_service.h gen-c_glib/t_test_service_for_exception_with_a_map.c gen-c_glib/t_test_service_for_exception_with_a_map.h gen-c_glib/t_test_srv.c gen-c_glib/t_test_srv.h: ../../../test/DebugProtoTest.thrift $(THRIFT)
 	$(THRIFT) --gen c_glib $<
 
-gen-c_glib/t_test_enum_test_types.c gen-c_glib/t_test_enum_test_types.h gen-c_glib/t_test_enum_test_service.c gen-c_glib/t_test_enum_test_service.h : ../../../test/EnumTest.thrift
+gen-c_glib/t_test_enum_test_types.c gen-c_glib/t_test_enum_test_types.h gen-c_glib/t_test_enum_test_service.c gen-c_glib/t_test_enum_test_service.h : ../../../test/EnumTest.thrift $(THRIFT)
 	$(THRIFT) --gen c_glib $<
 
-gen-c_glib/t_test_optional_required_test_types.c gen-c_glib/t_test_optional_required_test_types.h: ../../../test/OptionalRequiredTest.thrift
+gen-c_glib/t_test_optional_required_test_types.c gen-c_glib/t_test_optional_required_test_types.h: ../../../test/OptionalRequiredTest.thrift $(THRIFT)
 	$(THRIFT) --gen c_glib $<
 
-gen-c_glib/t_test_second_service.c gen-c_glib/t_test_thrift_test.c gen-c_glib/t_test_thrift_test_types.c gen-c_glib/t_test_second_service.h gen-c_glib/t_test_thrift_test.h gen-c_glib/t_test_thrift_test_types.h: ../../../test/ThriftTest.thrift
+gen-c_glib/t_test_second_service.c gen-c_glib/t_test_thrift_test.c gen-c_glib/t_test_thrift_test_types.c gen-c_glib/t_test_second_service.h gen-c_glib/t_test_thrift_test.h gen-c_glib/t_test_thrift_test_types.h: ../../../test/ThriftTest.thrift $(THRIFT)
 	$(THRIFT) --gen c_glib $<
 
-gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest_types.cpp: ../../../test/ThriftTest.thrift
+gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest_types.cpp: ../../../test/ThriftTest.thrift $(THRIFT)
 	$(THRIFT) --gen cpp $<
 
 TESTS = \
