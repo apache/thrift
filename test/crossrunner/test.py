@@ -70,7 +70,7 @@ class TestProgram(object):
 
   def build_command(self, port):
     cmd = copy.copy(self._base_command)
-    args = self._extra_args2
+    args = copy.copy(self._extra_args2)
     args.append('--protocol=' + self.protocol)
     args.append('--transport=' + self.transport)
     socket_args = self._socket_args(self.socket, port)
@@ -109,6 +109,7 @@ class TestEntry(object):
     self.as_expected = None
     self.returncode = None
     self.expired = False
+    self.retry_count = 0
 
   def _fix_workdir(self, config):
     key = 'workdir'
