@@ -25,10 +25,11 @@
 module Thrift.Protocol.Compact
     ( module Thrift.Protocol
     , CompactProtocol(..)
+    , parseVarint
+    , buildVarint
     ) where
 
 import Control.Applicative
-import Control.Exception ( throw )
 import Control.Monad
 import Data.Attoparsec.ByteString as P
 import Data.Attoparsec.ByteString.Lazy as LP
@@ -40,7 +41,7 @@ import Data.Monoid
 import Data.Word
 import Data.Text.Lazy.Encoding ( decodeUtf8, encodeUtf8 )
 
-import Thrift.Protocol hiding (versionMask)
+import Thrift.Protocol
 import Thrift.Transport
 import Thrift.Types
 
@@ -64,37 +65,46 @@ typeBits    = 0x07 -- 0000 0111
 typeShiftAmount :: Int
 typeShiftAmount = 5
 
+getTransport :: Transport t => CompactProtocol t -> t
+getTransport (CompactProtocol t) = t
 
-instance Protocol CompactProtocol where
-    getTransport (CompactProtocol t) = t
+instance Transport t => Protocol (CompactProtocol t) where
+    readByte p = tReadAll (getTransport p) 1
+    writeMessage p (n, t, s) f = do
+      tWrite (getTransport p) messageBegin
+      f
+      tFlush $ getTransport p
+      where
+        messageBegin = toLazyByteString $
+          B.word8 protocolID <>
+          B.word8 ((version .&. versionMask) .|.
+                  (((fromIntegral $ fromEnum t) `shiftL`
+                  typeShiftAmount) .&. typeMask)) <>
+          buildVarint (i32ToZigZag s) <>
+          buildCompactValue (TString $ encodeUtf8 n)
 
-    writeMessageBegin p (n, t, s) = tWrite (getTransport p) $ toLazyByteString $
-      B.word8 protocolID <>
-      B.word8 ((version .&. versionMask) .|.
-              (((fromIntegral $ fromEnum t) `shiftL`
-                typeShiftAmount) .&. typeMask)) <>
-      buildVarint (i32ToZigZag s) <>
-      buildCompactValue (TString $ encodeUtf8 n)
-    
-    readMessageBegin p = runParser p $ do
-      pid <- fromIntegral <$> P.anyWord8
-      when (pid /= protocolID) $ error "Bad Protocol ID"
-      w <- fromIntegral <$> P.anyWord8
-      let ver = w .&. versionMask 
-      when (ver /= version) $ error "Bad Protocol version"
-      let typ = (w `shiftR` typeShiftAmount) .&. typeBits
-      seqId <- parseVarint zigZagToI32
-      TString name <- parseCompactValue T_STRING
-      return (decodeUtf8 name, toEnum $ fromIntegral $ typ, seqId)
+    readMessage p f = readMessageBegin >>= f
+      where
+        readMessageBegin = runParser p $ do
+          pid <- fromIntegral <$> P.anyWord8
+          when (pid /= protocolID) $ error "Bad Protocol ID"
+          w <- fromIntegral <$> P.anyWord8
+          let ver = w .&. versionMask
+          when (ver /= version) $ error "Bad Protocol version"
+          let typ = (w `shiftR` typeShiftAmount) .&. typeBits
+          seqId <- parseVarint zigZagToI32
+          TString name <- parseCompactValue T_STRING
+          return (decodeUtf8 name, toEnum $ fromIntegral $ typ, seqId)
 
+    writeVal p = tWrite (getTransport p) . toLazyByteString . buildCompactValue
+    readVal p ty = runParser p $ parseCompactValue ty
+
+instance Transport t => StatelessProtocol (CompactProtocol t) where
     serializeVal _ = toLazyByteString . buildCompactValue
     deserializeVal _ ty bs =
       case LP.eitherResult $ LP.parse (parseCompactValue ty) bs of
         Left s -> error s
         Right val -> val
-
-    readVal p ty = runParser p $ parseCompactValue ty
-
 
 -- | Writing Functions
 buildCompactValue :: ThriftVal -> Builder
@@ -283,7 +293,7 @@ typeOf v = case v of
   TSet{} -> 0x0A
   TMap{} -> 0x0B
   TStruct{} -> 0x0C
-  
+
 typeFrom :: Word8 -> ThriftType
 typeFrom w = case w of
   0x01 -> T_BOOL
