@@ -21,6 +21,7 @@
 #include <thrift/TApplicationException.h>
 #include <thrift/protocol/TProtocolTypes.h>
 #include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/protocol/TCompactProtocol.h>
 
 #include <utility>
 #include <cassert>
@@ -41,7 +42,7 @@ using namespace apache::thrift::protocol;
 using apache::thrift::protocol::TBinaryProtocol;
 
 uint32_t THeaderTransport::readSlow(uint8_t* buf, uint32_t len) {
-  if (clientType == THRIFT_UNFRAMED_DEPRECATED) {
+  if (clientType == THRIFT_UNFRAMED_BINARY || clientType == THRIFT_UNFRAMED_COMPACT) {
     return transport_->read(buf, len);
   }
 
@@ -51,6 +52,8 @@ uint32_t THeaderTransport::readSlow(uint8_t* buf, uint32_t len) {
 uint16_t THeaderTransport::getProtocolId() const {
   if (clientType == THRIFT_HEADER_CLIENT_TYPE) {
     return protoId;
+  } else if (clientType == THRIFT_UNFRAMED_COMPACT || clientType == THRIFT_FRAMED_COMPACT) {
+    return T_COMPACT_PROTOCOL;
   } else {
     return T_BINARY_PROTOCOL; // Assume other transports use TBinary
   }
@@ -92,19 +95,19 @@ bool THeaderTransport::readFrame() {
 
   sz = ntohl(szN);
 
-  uint32_t minFrameSize = 0;
-  ensureReadBuffer(minFrameSize + 4);
+  ensureReadBuffer(4);
 
   if ((sz & TBinaryProtocol::VERSION_MASK) == (uint32_t)TBinaryProtocol::VERSION_1) {
     // unframed
-    clientType = THRIFT_UNFRAMED_DEPRECATED;
+    clientType = THRIFT_UNFRAMED_BINARY;
     memcpy(rBuf_.get(), &szN, sizeof(szN));
-    if (minFrameSize > 4) {
-      transport_->readAll(rBuf_.get() + 4, minFrameSize - 4);
-      setReadBuffer(rBuf_.get(), minFrameSize);
-    } else {
-      setReadBuffer(rBuf_.get(), 4);
-    }
+    setReadBuffer(rBuf_.get(), 4);
+  } else if (static_cast<int8_t>(sz >> 24) == TCompactProtocol::PROTOCOL_ID
+             && (static_cast<int8_t>(sz >> 16) & TCompactProtocol::VERSION_MASK)
+                    == TCompactProtocol::VERSION_N) {
+    clientType = THRIFT_UNFRAMED_COMPACT;
+    memcpy(rBuf_.get(), &szN, sizeof(szN));
+    setReadBuffer(rBuf_.get(), 4);
   } else {
     // Could be header format or framed. Check next uint32
     uint32_t magic_n;
@@ -124,7 +127,13 @@ bool THeaderTransport::readFrame() {
 
     if ((magic & TBinaryProtocol::VERSION_MASK) == (uint32_t)TBinaryProtocol::VERSION_1) {
       // framed
-      clientType = THRIFT_FRAMED_DEPRECATED;
+      clientType = THRIFT_FRAMED_BINARY;
+      transport_->readAll(rBuf_.get() + 4, sz - 4);
+      setReadBuffer(rBuf_.get(), sz);
+    } else if (static_cast<int8_t>(magic >> 24) == TCompactProtocol::PROTOCOL_ID
+               && (static_cast<int8_t>(magic >> 16) & TCompactProtocol::VERSION_MASK)
+                      == TCompactProtocol::VERSION_N) {
+      clientType = THRIFT_FRAMED_COMPACT;
       transport_->readAll(rBuf_.get() + 4, sz - 4);
       setReadBuffer(rBuf_.get(), sz);
     } else if (HEADER_MAGIC == (magic & HEADER_MASK)) {
@@ -506,13 +515,13 @@ void THeaderTransport::flush() {
 
     outTransport_->write(pktStart, szHbo - haveBytes + 4);
     outTransport_->write(wBuf_.get(), haveBytes);
-  } else if (clientType == THRIFT_FRAMED_DEPRECATED) {
+  } else if (clientType == THRIFT_FRAMED_BINARY || clientType == THRIFT_FRAMED_COMPACT) {
     uint32_t szHbo = (uint32_t)haveBytes;
     uint32_t szNbo = htonl(szHbo);
 
     outTransport_->write(reinterpret_cast<uint8_t*>(&szNbo), 4);
     outTransport_->write(wBuf_.get(), haveBytes);
-  } else if (clientType == THRIFT_UNFRAMED_DEPRECATED) {
+  } else if (clientType == THRIFT_UNFRAMED_BINARY || clientType == THRIFT_UNFRAMED_COMPACT) {
     outTransport_->write(wBuf_.get(), haveBytes);
   } else {
     throw TTransportException(TTransportException::BAD_ARGS, "Unknown client type");

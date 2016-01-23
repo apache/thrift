@@ -34,14 +34,13 @@
 #include <thrift/transport/TTransport.h>
 #include <thrift/transport/TVirtualTransport.h>
 
-// Don't include the unknown client.
-#define CLIENT_TYPES_LEN 3
-
 enum CLIENT_TYPE {
   THRIFT_HEADER_CLIENT_TYPE = 0,
-  THRIFT_FRAMED_DEPRECATED = 1,
-  THRIFT_UNFRAMED_DEPRECATED = 2,
-  THRIFT_UNKNOWN_CLIENT_TYPE = 4,
+  THRIFT_FRAMED_BINARY = 1,
+  THRIFT_UNFRAMED_BINARY = 2,
+  THRIFT_FRAMED_COMPACT = 3,
+  THRIFT_UNFRAMED_COMPACT = 4,
+  THRIFT_UNKNOWN_CLIENT_TYPE = 5,
 };
 
 namespace apache {
@@ -165,10 +164,6 @@ public:
   };
 
 protected:
-  std::bitset<CLIENT_TYPES_LEN> supported_clients;
-
-  void initSupportedClients(std::bitset<CLIENT_TYPES_LEN> const*);
-
   /**
    * Reads a frame of input from the underlying stream.
    *
