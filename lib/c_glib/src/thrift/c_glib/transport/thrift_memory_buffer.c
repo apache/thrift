@@ -32,7 +32,9 @@
 enum _ThriftMemoryBufferProperties
 {
   PROP_0,
-  PROP_THRIFT_MEMORY_BUFFER_BUFFER_SIZE
+  PROP_THRIFT_MEMORY_BUFFER_BUFFER_SIZE,
+  PROP_THRIFT_MEMORY_BUFFER_BUFFER,
+  PROP_THRIFT_MEMORY_BUFFER_OWNER
 };
 
 G_DEFINE_TYPE(ThriftMemoryBuffer, thrift_memory_buffer, THRIFT_TYPE_TRANSPORT)
@@ -141,24 +143,24 @@ thrift_memory_buffer_flush (ThriftTransport *transport, GError **error)
   return TRUE;
 }
 
-/* initializes the instance */
+/* initializes class before constructor properties are set */
 static void
-thrift_memory_buffer_init (ThriftMemoryBuffer *transport)
+thrift_memory_buffer_init (ThriftMemoryBuffer *t)
 {
-  transport->buf = g_byte_array_new ();
+  THRIFT_UNUSED_VAR (t);
 }
 
 /* destructor */
 static void
 thrift_memory_buffer_finalize (GObject *object)
 {
-  ThriftMemoryBuffer *transport = THRIFT_MEMORY_BUFFER (object);
+  ThriftMemoryBuffer *t = THRIFT_MEMORY_BUFFER (object);
 
-  if (transport->buf != NULL)
+  if (t->owner && t->buf != NULL)
   {
-    g_byte_array_free (transport->buf, TRUE);
+    g_byte_array_unref (t->buf);
   }
-  transport->buf = NULL;
+  t->buf = NULL;
 }
 
 /* property accessor */
@@ -166,14 +168,23 @@ void
 thrift_memory_buffer_get_property (GObject *object, guint property_id,
                                    GValue *value, GParamSpec *pspec)
 {
-  ThriftMemoryBuffer *transport = THRIFT_MEMORY_BUFFER (object);
+  ThriftMemoryBuffer *t = THRIFT_MEMORY_BUFFER (object);
 
   THRIFT_UNUSED_VAR (pspec);
 
   switch (property_id)
   {
     case PROP_THRIFT_MEMORY_BUFFER_BUFFER_SIZE:
-      g_value_set_uint (value, transport->buf_size);
+      g_value_set_uint (value, t->buf_size);
+      break;
+    case PROP_THRIFT_MEMORY_BUFFER_BUFFER:
+      g_value_set_pointer (value, (gpointer) (t->buf));
+      break;
+    case PROP_THRIFT_MEMORY_BUFFER_OWNER:
+      g_value_set_boolean (value, t->owner);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
       break;
   }
 }
@@ -183,16 +194,38 @@ void
 thrift_memory_buffer_set_property (GObject *object, guint property_id,
                                    const GValue *value, GParamSpec *pspec)
 {
-  ThriftMemoryBuffer *transport = THRIFT_MEMORY_BUFFER (object);
+  ThriftMemoryBuffer *t = THRIFT_MEMORY_BUFFER (object);
 
   THRIFT_UNUSED_VAR (pspec);
 
   switch (property_id)
   {
     case PROP_THRIFT_MEMORY_BUFFER_BUFFER_SIZE:
-      transport->buf_size = g_value_get_uint (value);
+      t->buf_size = g_value_get_uint (value);
+      break;
+    case PROP_THRIFT_MEMORY_BUFFER_BUFFER:
+      t->buf = (GByteArray*) g_value_get_pointer (value);
+      break;
+    case PROP_THRIFT_MEMORY_BUFFER_OWNER:
+      t->owner = g_value_get_boolean (value);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
       break;
   }
+}
+
+/* initializes class after constructor properties are set */
+static void
+thrift_memory_buffer_constructed (GObject *object)
+{
+  ThriftMemoryBuffer *t = THRIFT_MEMORY_BUFFER (object);
+
+  if (t->buf == NULL) {
+    t->buf = g_byte_array_new ();
+  }
+
+  G_OBJECT_CLASS (thrift_memory_buffer_parent_class)->constructed (object);
 }
 
 /* initializes the class */
@@ -209,16 +242,38 @@ thrift_memory_buffer_class_init (ThriftMemoryBufferClass *cls)
 
   param_spec = g_param_spec_uint ("buf_size",
                                   "buffer size (construct)",
-                                  "Set the read buffer size",
+                                  "Set the read/write buffer size limit",
                                   0, /* min */
-                                  1048576, /* max, 1024*1024 */
-                                  512, /* default value */
+                                  G_MAXUINT32, /* max */
+                                  G_MAXUINT32, /* default */
                                   G_PARAM_CONSTRUCT_ONLY |
                                   G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class,
                                    PROP_THRIFT_MEMORY_BUFFER_BUFFER_SIZE,
                                    param_spec);
 
+  param_spec = g_param_spec_pointer ("buf",
+                                     "internal buffer (GByteArray)",
+                                     "Set the internal buffer (GByteArray)",
+                                     G_PARAM_CONSTRUCT_ONLY |
+                                     G_PARAM_READWRITE);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_MEMORY_BUFFER_BUFFER,
+                                   param_spec);
+
+  param_spec = g_param_spec_boolean ("owner",
+                                     "internal buffer memory management policy",
+                                     "Set whether internal buffer should be"
+                                       " unreferenced when thrift_memory_buffer"
+                                       " is finalized",
+                                     TRUE,
+                                     G_PARAM_CONSTRUCT_ONLY |
+                                     G_PARAM_READWRITE);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_MEMORY_BUFFER_OWNER,
+                                   param_spec);
+
+  gobject_class->constructed = thrift_memory_buffer_constructed;
   gobject_class->finalize = thrift_memory_buffer_finalize;
   ttc->is_open = thrift_memory_buffer_is_open;
   ttc->open = thrift_memory_buffer_open;
