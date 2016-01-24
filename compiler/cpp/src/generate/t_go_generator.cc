@@ -2033,7 +2033,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
                  << " := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "
                     "\"Unknown Exception\")" << endl;
       f_service_ << indent() << "  var " << error2 << " error" << endl;
-      f_service_ << indent() << "  " << error2 << ", err = " << error << "." << read_method_name_ << "(iprot)" << endl;
+      f_service_ << indent() << "  " << error2 << ", err = " << error << ".Read(iprot)" << endl;
       f_service_ << indent() << "  if err != nil {" << endl;
       f_service_ << indent() << "    return" << endl;
       f_service_ << indent() << "  }" << endl;
@@ -2616,7 +2616,7 @@ void t_go_generator::generate_service_server(t_service* tservice) {
                << " := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, \"Unknown function "
                   "\" + name)" << endl;
     f_service_ << indent() << "  oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)" << endl;
-    f_service_ << indent() << "  " << x << "." << write_method_name_ << "(oprot)" << endl;
+    f_service_ << indent() << "  " << x << ".Write(oprot)" << endl;
     f_service_ << indent() << "  oprot.WriteMessageEnd()" << endl;
     f_service_ << indent() << "  oprot.Flush()" << endl;
     f_service_ << indent() << "  return false, " << x << endl;
@@ -2680,7 +2680,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
                << endl;
     f_service_ << indent() << "  oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name())
                << "\", thrift.EXCEPTION, seqId)" << endl;
-    f_service_ << indent() << "  x." << write_method_name_ << "(oprot)" << endl;
+    f_service_ << indent() << "  x.Write(oprot)" << endl;
     f_service_ << indent() << "  oprot.WriteMessageEnd()" << endl;
     f_service_ << indent() << "  oprot.Flush()" << endl;
   }
@@ -2746,7 +2746,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
                << ": \" + err2.Error())" << endl;
     f_service_ << indent() << "  oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name())
                << "\", thrift.EXCEPTION, seqId)" << endl;
-    f_service_ << indent() << "  x." << write_method_name_ << "(oprot)" << endl;
+    f_service_ << indent() << "  x.Write(oprot)" << endl;
     f_service_ << indent() << "  oprot.WriteMessageEnd()" << endl;
     f_service_ << indent() << "  oprot.Flush()" << endl;
   }
