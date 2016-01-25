@@ -60,6 +60,15 @@ use constant ONEWAY    => 4;
 
 package Thrift::TException;
 
+use overload '""' => sub {
+    return
+          ref( $_[0] )
+        . " error: "
+        . ( $_[0]->{message} || 'empty message' )
+        . " (code "
+        . ( defined $_[0]->{code} ? $_[0]->{code} : 'undefined' ) . ")";
+    };
+
 sub new {
     my $classname = shift;
     my $self = {message => shift, code => shift || 0};
