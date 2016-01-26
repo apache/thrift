@@ -29,7 +29,7 @@ import org.apache.thrift.protocol.TType;
  * Application level exception
  *
  */
-public class TApplicationException extends TException {
+public class TApplicationException extends TException implements TSerializer {
 
   private static final TStruct TAPPLICATION_EXCEPTION_STRUCT = new TStruct("TApplicationException");
   private static final TField MESSAGE_FIELD = new TField("message", TType.STRING, (short)1);
