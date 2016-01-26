@@ -27,7 +27,7 @@ import org.apache.thrift.protocol.TProtocol;
  * Generic base interface for generated Thrift objects.
  *
  */
-public interface TBase<T extends TBase<T,F>, F extends TFieldIdEnum> extends Comparable<T>,  TSerializable {
+public interface TBase<T extends TBase<T,F>, F extends TFieldIdEnum> extends Comparable<T>,  TSerializable, Serializable {
 
   /**
    * Get the F instance that corresponds to fieldId.
@@ -42,7 +42,7 @@ public interface TBase<T extends TBase<T,F>, F extends TFieldIdEnum> extends Com
   public boolean isSet(F field);
 
   /**
-   * Get a field's value by field variable. Primitive types will be wrapped in 
+   * Get a field's value by field variable. Primitive types will be wrapped in
    * the appropriate "boxed" types.
    *
    * @param field

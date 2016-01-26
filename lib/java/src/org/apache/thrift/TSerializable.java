@@ -19,15 +19,13 @@
 
 package org.apache.thrift;
 
-import java.io.Serializable;
-
 import org.apache.thrift.protocol.TProtocol;
 
 /**
  * Generic base interface for generated Thrift objects.
  *
  */
-public interface TSerializable extends Serializable {
+public interface TSerializable {
 
   /**
    * Reads the TObject from the given input protocol.

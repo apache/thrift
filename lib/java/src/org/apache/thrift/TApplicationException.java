@@ -123,7 +123,18 @@ public class TApplicationException extends TException implements TSerializable {
     message_ = message;
   }
 
-  public void write(TProtocol oprot) throws TException {
+  /**
+   * Convenience factory method for constructing a TApplicationException given a TProtocol input
+   */
+  public static TApplicationException readFrom(TProtocol iprot) throws TException
+  {
+    TApplicationException result = new TApplicationException();
+    result.read(iprot);
+    return result;
+  }
+
+  public void write(TProtocol oprot) throws TException
+  {
     oprot.writeStructBegin(TAPPLICATION_EXCEPTION_STRUCT);
     if (getMessage() != null) {
       oprot.writeFieldBegin(MESSAGE_FIELD);
