@@ -50,6 +50,7 @@ public class TApplicationException extends TException implements TSerializable {
   public static final int UNSUPPORTED_CLIENT_TYPE = 10;
 
   protected int type_ = UNKNOWN;
+  private String message_ = null;
 
   public TApplicationException() {
     super();
@@ -73,7 +74,18 @@ public class TApplicationException extends TException implements TSerializable {
     return type_;
   }
 
-  public static TApplicationException read(TProtocol iprot) throws TException {
+  @Override
+  public String getMessage() {
+    if (message_ == null) {
+      return super.getMessage();
+    }
+    else {
+      return message_;
+    }
+  }
+
+  public void read(TProtocol iprot) throws TException
+  {
     TField field;
     iprot.readStructBegin();
 
@@ -86,29 +98,29 @@ public class TApplicationException extends TException implements TSerializable {
         break;
       }
       switch (field.id) {
-      case 1:
-        if (field.type == TType.STRING) {
-          message = iprot.readString();
-        } else {
+        case 1:
+          if (field.type == TType.STRING) {
+            message = iprot.readString();
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2:
+          if (field.type == TType.I32) {
+            type = iprot.readI32();
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
           TProtocolUtil.skip(iprot, field.type);
-        }
-        break;
-      case 2:
-        if (field.type == TType.I32) {
-          type = iprot.readI32();
-        } else {
-          TProtocolUtil.skip(iprot, field.type);
-        }
-        break;
-      default:
-        TProtocolUtil.skip(iprot, field.type);
-        break;
+          break;
       }
       iprot.readFieldEnd();
     }
     iprot.readStructEnd();
-
-    return new TApplicationException(type, message);
+    type_ = type;
+    message_ = message;
   }
 
   public void write(TProtocol oprot) throws TException {
