@@ -101,12 +101,16 @@ public:
   void generate_erl_struct_info(std::ostream& out, t_struct* tstruct);
   void generate_erl_extended_struct_info(std::ostream& out, t_struct* tstruct);
   void generate_erl_function_helpers(t_function* tfunction);
+  void generate_type_metadata(std::string function_name, vector<string> names);
+  void generate_enum_info(t_enum* tenum);
+  void generate_enum_metadata();
 
   /**
    * Service-level generation functions
    */
 
   void generate_service_helpers(t_service* tservice);
+  void generate_service_metadata(t_service* tservice);
   void generate_service_interface(t_service* tservice);
   void generate_function_info(t_service* tservice, t_function* tfunction);
 
@@ -204,6 +208,13 @@ private:
   std::ostringstream f_service_;
   std::ofstream f_service_file_;
   std::ofstream f_service_hrl_;
+
+  /**
+   * Metadata containers
+   */
+  std::vector<std::string> v_struct_names_;
+  std::vector<std::string> v_enum_names_;
+  std::vector<t_enum*> v_enums_;
 };
 
 /**
@@ -312,6 +323,10 @@ void t_erl_generator::close_generator() {
 
   export_types_string("struct_info", 1);
   export_types_string("struct_info_ext", 1);
+  export_types_string("enum_info", 1);
+  export_types_string("enum_names", 0);
+  export_types_string("struct_names", 0);
+
   f_types_file_ << "-export([" << export_types_lines_.str() << "])." << endl << endl;
 
   f_types_file_ << f_info_.str();
@@ -320,11 +335,36 @@ void t_erl_generator::close_generator() {
   f_types_file_ << f_info_ext_.str();
   f_types_file_ << "struct_info_ext(_) -> erlang:error(function_clause)." << endl << endl;
 
+  generate_type_metadata("struct_names", v_struct_names_);
+  generate_enum_metadata();
+  generate_type_metadata("enum_names", v_enum_names_);
+
   hrl_footer(f_types_hrl_file_, string("BOGUS"));
 
   f_types_file_.close();
   f_types_hrl_file_.close();
   f_consts_.close();
+}
+
+void t_erl_generator::generate_type_metadata(std::string function_name, vector<string> names) {
+  vector<string>::iterator s_iter;
+  size_t num_structs = names.size();
+
+  indent(f_types_file_) << function_name << "() ->\n";
+  indent_up();
+  indent(f_types_file_) << "[";
+
+
+  for(size_t i=0; i < num_structs; i++) {
+    f_types_file_ << atomify(names.at(i));
+
+    if (i < num_structs - 1) {
+      f_types_file_ << ", ";
+    }
+  }
+
+  f_types_file_ << "].\n\n";
+  indent_down();
 }
 
 /**
@@ -346,6 +386,9 @@ void t_erl_generator::generate_enum(t_enum* tenum) {
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
 
+  v_enums_.push_back(tenum);
+  v_enum_names_.push_back(tenum->get_name());
+
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     string name = (*c_iter)->get_name();
@@ -355,6 +398,40 @@ void t_erl_generator::generate_enum(t_enum* tenum) {
   }
 
   f_types_hrl_file_ << endl;
+}
+
+void t_erl_generator::generate_enum_info(t_enum* tenum){
+  vector<t_enum_value*> constants = tenum->get_constants();
+  size_t num_constants = constants.size();
+
+  indent(f_types_file_) << "enum_info(" << atomify(tenum->get_name()) << ") ->\n";
+  indent_up();
+  indent(f_types_file_) << "[\n";
+
+  for(size_t i=0; i < num_constants; i++) {
+    indent_up();
+    t_enum_value* value = constants.at(i);
+    indent(f_types_file_) << "{" << atomify(value->get_name()) << ", " << value->get_value() << "}";
+
+    if (i < num_constants - 1) {
+      f_types_file_ << ",\n";
+    }
+    indent_down();
+  }
+  f_types_file_ << "\n";
+  indent(f_types_file_) << "];\n\n";
+  indent_down();
+}
+
+void t_erl_generator::generate_enum_metadata() {
+  size_t enum_count = v_enums_.size();
+
+  for(size_t i=0; i < enum_count; i++) {
+    t_enum* tenum = v_enums_.at(i);
+    generate_enum_info(tenum);
+  }
+
+  indent(f_types_file_) << "enum_info(_) -> erlang:error(function_clause).\n\n";
 }
 
 /**
@@ -567,6 +644,7 @@ string t_erl_generator::render_member_requiredness(t_field* field) {
  * Generates a struct
  */
 void t_erl_generator::generate_struct(t_struct* tstruct) {
+  v_struct_names_.push_back(tstruct->get_name());
   generate_erl_struct(tstruct, false);
 }
 
@@ -705,6 +783,8 @@ void t_erl_generator::generate_service(t_service* tservice) {
 
   generate_service_interface(tservice);
 
+  generate_service_metadata(tservice);
+
   // indent_down();
 
   f_service_file_ << erl_autogen_comment() << endl << "-module(" << service_name_ << "_thrift)."
@@ -722,6 +802,28 @@ void t_erl_generator::generate_service(t_service* tservice) {
   // Close service file
   f_service_file_.close();
   f_service_hrl_.close();
+}
+
+void t_erl_generator::generate_service_metadata(t_service* tservice) {
+  export_string("function_names", 0);
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator f_iter;
+  size_t num_functions = functions.size();
+
+  indent(f_service_) << "function_names() -> " << endl;
+  indent_up();
+  indent(f_service_) << "[";
+
+  for (size_t i=0; i < num_functions; i++) {
+    t_function* current = functions.at(i);
+    f_service_ << atomify(current->get_name());
+    if (i < num_functions - 1) {
+      f_service_ << ", ";
+    }
+  }
+
+  f_service_ << "].\n\n";
+  indent_down();
 }
 
 /**
