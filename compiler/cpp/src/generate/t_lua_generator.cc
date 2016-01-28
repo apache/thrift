@@ -463,7 +463,9 @@ void t_lua_generator::generate_lua_struct_writer(ofstream& out, t_struct* tstruc
 
   indent(out) << "oprot:writeStructBegin('" << tstruct->get_name() << "')" << endl;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    indent(out) << "if self." << (*f_iter)->get_name() << " then" << endl;
+    // To check element of self whether nil or not.
+    // avoid the value(false) of BOOL is lost.
+    indent(out) << "if self." << (*f_iter)->get_name() << " ~= nil then" << endl;
     indent_up();
     indent(out) << "oprot:writeFieldBegin('" << (*f_iter)->get_name() << "', "
                 << type_to_enum((*f_iter)->get_type()) << ", " << (*f_iter)->get_key() << ")"
