@@ -1532,7 +1532,7 @@ void t_java_generator::generate_java_struct_definition(ofstream& out,
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_field* field = (*m_iter);
     std::string field_name = field->get_name();
-    t_type* type = field->get_type();
+    t_type* type = field->get_type()->get_true_type();
     bool can_be_null = type_can_be_null(type);
 
     if (can_be_null) {
