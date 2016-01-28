@@ -246,4 +246,12 @@ typedef i32 TotallyDegenerate
 
 /**no room for newline here*/
 
+/* * / */
+typedef i32 TestFor3501a
+
+/**
+ * /
+ */
+typedef i32 TestFor3501b
+
 /* THE END */
