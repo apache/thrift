@@ -1865,9 +1865,23 @@ void t_cpp_generator::generate_service(t_service* tservice) {
   // Print header file includes
   f_header_ <<
     autogen_comment();
+  // Prepend the header guard with namespace names so it's unique
+  auto header_guard = tservice->get_program()->get_namespace("cpp");
+
+  // Replace dots with underscores to make the compiler happy
+  size_t pos = 0;
+  while ((pos = header_guard.find(".", pos)) != string::npos) {
+    header_guard.replace(pos, 1, "_");
+    pos += 1;
+  }
+
+  header_guard = header_guard + "_" + svcname + "_H";
+  for (auto& c : header_guard) {
+    c = toupper(c);
+  }
   f_header_ <<
-    "#ifndef " << svcname << "_H" << endl <<
-    "#define " << svcname << "_H" << endl <<
+    "#ifndef " << header_guard << endl <<
+    "#define " << header_guard << endl <<
     endl;
   if (gen_cob_style_) {
     f_header_ <<
