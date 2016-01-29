@@ -868,12 +868,12 @@ begin
            +  HexVal(tmp[3]);
 
       // we need to make UTF8 bytes from it, to be decoded later
-      if Character.IsHighSurrogate(char(wch)) then begin
+      if CharUtils.IsHighSurrogate(char(wch)) then begin
         if highSurogate <> #0
         then raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Expected low surrogate char');
         highSurogate := char(wch);
       end
-      else if Character.IsLowSurrogate(char(wch)) then begin
+      else if CharUtils.IsLowSurrogate(char(wch)) then begin
         if highSurogate = #0
         then TProtocolException.Create( TProtocolException.INVALID_DATA, 'Expected high surrogate char');
         surrogatePairs[0] := highSurogate;
