@@ -830,7 +830,7 @@ void t_dart_generator::generate_dart_struct_definition(ofstream& out,
     t_type* t = get_true_type((*m_iter)->get_type());
     if ((*m_iter)->get_value() != NULL) {
       print_const_value(out,
-                        "this." + (*m_iter)->get_name(),
+                        "this." + get_field_name((*m_iter)->get_name()),
                         t,
                         (*m_iter)->get_value(),
                         true,
