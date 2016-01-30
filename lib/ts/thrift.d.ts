@@ -304,7 +304,7 @@ declare module Thrift {
      */
     constructor(url: string);
 
-    __reset(url): void;
+    __reset(url: string): void;
 
     /**
      * Sends the current WS request and registers callback. The async 
@@ -694,6 +694,6 @@ declare module Thrift {
      * @param {Thrift.ServiceClient} SCl - The Service Client Class.
      * @param {Thrift.Transport} transport - Thrift.Transport instance which provides remote host:port.
      */
-    createClient(serviceName: string, SCl: any, transport: Object);
+    createClient(serviceName: string, SCl: any, transport: Object): any;
   }
 }
