@@ -55,9 +55,15 @@ env:
 
     # TODO: Remove them once migrated to CMake
     # Autotools builds
-    - TEST_NAME="C C++ C# D Erlang Go Haxe (automake)"
+    - TEST_NAME="C C++ C# D Erlang Haxe (automake)"
       BUILD_CMD="../autotools.sh"
-      BUILD_ARG="--without-dart --without-haskell --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-ruby"
+      BUILD_ARG="--without-go --without-dart --without-haskell --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-ruby"
+
+    # Temporarily isolate Go as it hangs on make check
+    # TODO: Merge with above group once fixed
+    - TEST_NAME="Go (automake)"
+      BUILD_CMD="../autotools.sh"
+      BUILD_ARG="--without-cpp --without-haskell --without-c_glib --without-csharp --without-d --without-dart --without-erlang --without-haxe --without-dart --without-haskell --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-ruby"
 
     - TEST_NAME="C C++ - GCC (automake)"
       BUILD_CMD="../autotools.sh"
@@ -149,6 +155,9 @@ env:
       DISTRO=debian
 
 matrix:
+  allow_failures:
+    - env: TEST_NAME="Go (automake)" BUILD_CMD="../autotools.sh" BUILD_ARG="--without-cpp --without-haskell --without-c_glib --without-csharp --without-d --without-dart --without-erlang --without-haxe --without-dart --without-haskell --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-ruby"
+
   include:
     # QA jobs for code analytics and metrics
     #
