@@ -40,6 +40,7 @@ CLIENT_KEY = os.path.join(ROOT_DIR, 'test', 'keys', 'client.key')
 
 TEST_PORT = 23458
 TEST_ADDR = '/tmp/.thrift.domain.sock.%d' % TEST_PORT
+CONNECT_DELAY = 0.5
 CONNECT_TIMEOUT = 10.0
 TEST_CIPHERS = 'DES-CBC3-SHA'
 
@@ -74,7 +75,7 @@ class TSSLSocketTest(unittest.TestCase):
     try:
       acc = ServerAcceptor(server)
       acc.start()
-      time.sleep(0.15)
+      time.sleep(CONNECT_DELAY)
       client.setTimeout(CONNECT_TIMEOUT)
       with self._assert_raises(Exception):
         client.open()
