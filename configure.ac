@@ -748,6 +748,7 @@ AC_CONFIG_FILES([
   test/go/Makefile
   test/haxe/Makefile
   test/hs/Makefile
+  test/lua/Makefile
   test/php/Makefile
   test/dart/Makefile
   test/perl/Makefile
@@ -799,6 +800,8 @@ if test "$have_nodejs" = "yes" ; then MAYBE_NODEJS="nodejs" ; else MAYBE_NODEJS=
 AC_SUBST([MAYBE_NODEJS])
 if test "$have_erlang" = "yes" ; then MAYBE_ERLANG="erl" ; else MAYBE_ERLANG="" ; fi
 AC_SUBST([MAYBE_ERLANG])
+if test "$have_lua" = "yes" ; then MAYBE_LUA="lua" ; else MAYBE_LUA="" ; fi
+AC_SUBST([MAYBE_LUA])
 
 AC_OUTPUT
 
