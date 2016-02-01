@@ -491,5 +491,31 @@
       ]
     },
     "workdir": "../lib/js"
+  },
+  {
+    "name": "lua",
+    "TODO": "Add dll to LUA_CPATH",
+    "env": {
+      "LUA_PATH": ";;gen-lua/?.lua;../../lib/lua/?.lua",
+      "LUA_CPATH": ";;../../lib/lua/.libs/?.so"
+    },
+    "client": {
+      "timeout": 5,
+      "transports": [
+        "buffered",
+        "framed"
+      ],
+      "sockets": [
+        "ip"
+      ],
+      "protocols": [
+        "binary"
+      ],
+      "command": [
+        "lua",
+        "test_basic_client.lua"
+      ]
+    },
+    "workdir": "lua"
   }
 ]

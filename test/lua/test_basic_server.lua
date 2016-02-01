@@ -28,7 +28,6 @@ TestHandler = ThriftTestIface:new{}
 
 -- Stops the server
 function TestHandler:testVoid()
-  self.__server:stop()
 end
 
 function TestHandler:testString(str)
