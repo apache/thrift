@@ -75,6 +75,11 @@ SUBDIRS += erl
 PRECROSS_TARGET += precross-erl
 endif
 
+if WITH_LUA
+SUBDIRS += lua
+PRECROSS_TARGET += precross-lua
+endif
+
 #
 # generate html for ThriftTest.thrift
 #
