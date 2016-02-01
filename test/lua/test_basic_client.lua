@@ -17,6 +17,8 @@
 
 
 require('TSocket')
+require('TBufferedTransport')
+require('TFramedTransport')
 require('TBinaryProtocol')
 require('ThriftTest_ThriftTest')
 require('liblualongnumber')
@@ -25,27 +27,55 @@ local client
 
 function teardown()
   if client then
-    -- Shuts down the server
-    client:testVoid()
-
     -- close the connection
     client:close()
   end
+end
+
+function parseArgs(rawArgs)
+  local opt = {
+    protocol='binary',
+    transport='buffered',
+    port='9090',
+  }
+  for i, str in pairs(rawArgs) do
+    if i > 0 then
+      k, v = string.match(str, '--(%w+)=(%w+)')
+      assert(opt[k] ~= nil, 'Unknown argument')
+      opt[k] = v
+    end
+  end
+  return opt
 end
 
 function assertEqual(val1, val2, msg)
   assert(val1 == val2, msg)
 end
 
-function testBasicClient()
+function testBasicClient(rawArgs)
+  local opt = parseArgs(rawArgs)
   local socket = TSocket:new{
-    port = 9090
+    port = tonumber(opt.port)
   }
   assert(socket, 'Failed to create client socket')
   socket:setTimeout(5000)
 
-  local protocol = TBinaryProtocol:new{
+  local transports = {
+    buffered = TBufferedTransport,
+    framed = TFramedTransport,
+  }
+  assert(transports[opt.transport] ~= nil)
+  local transport = transports[opt.transport]:new{
     trans = socket
+  }
+
+  local protocols = {
+    binary = TBinaryProtocol,
+    -- compact = TCompactProtocol,
+  }
+  assert(protocols[opt.protocol] ~= nil)
+  local protocol = protocols[opt.protocol]:new{
+    trans = transport
   }
   assert(protocol, 'Failed to create binary protocol')
 
@@ -61,6 +91,10 @@ function testBasicClient()
   -- String
   assertEqual(client:testString('lala'),  'lala',  'Failed testString')
   assertEqual(client:testString('wahoo'), 'wahoo', 'Failed testString')
+
+  -- Bool
+  assertEqual(client:testBool(true), true, 'Failed testBool true')
+  -- assertEqual(client:testBool(false), false, 'Failed testBool false')
 
   -- Byte
   assertEqual(client:testByte(0x01), 1,    'Failed testByte 1')
@@ -130,9 +164,8 @@ function testBasicClient()
   -- TODO fix client struct equality
   --assertEqual(client:testStruct(a), a, 'Failed testStruct')
 
-  -- Call the void function and end the test (handler stops server)
-  client:testVoid()
+  -- TODO add list map set exception etc etc
 end
 
-testBasicClient()
+testBasicClient(arg)
 teardown()
