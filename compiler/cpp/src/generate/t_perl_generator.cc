@@ -1426,7 +1426,7 @@ void t_perl_generator::generate_serialize_container(ofstream& out, t_type* ttype
   } else if (ttype->is_set()) {
     indent(out) << "$xfer += $output->writeSetBegin("
                 << type_to_enum(((t_set*)ttype)->get_elem_type()) << ", "
-                << "scalar(@{$" << prefix << "}));" << endl;
+                << "scalar(keys %{$" << prefix << "}));" << endl;
 
   } else if (ttype->is_list()) {
 
@@ -1449,7 +1449,7 @@ void t_perl_generator::generate_serialize_container(ofstream& out, t_type* ttype
 
   } else if (ttype->is_set()) {
     string iter = tmp("iter");
-    indent(out) << "foreach my $" << iter << " (@{$" << prefix << "})" << endl;
+    indent(out) << "foreach my $" << iter << " (keys %{$" << prefix << "})" << endl;
     scope_up(out);
     generate_serialize_set_element(out, (t_set*)ttype, iter);
     scope_down(out);
