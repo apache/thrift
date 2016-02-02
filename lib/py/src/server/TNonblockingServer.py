@@ -127,7 +127,7 @@ class Connection(object):
             self.len, = struct.unpack('!i', self.message)
             if self.len < 0:
                 logger.error("negative frame size, it seems client "
-                              "doesn't use FramedTransport")
+                             "doesn't use FramedTransport")
                 self.close()
             elif self.len == 0:
                 logger.error("empty frame, it's really strange")
@@ -149,7 +149,7 @@ class Connection(object):
             read = self.socket.recv(self.len - len(self.message))
             if len(read) == 0:
                 logger.error("can't read frame from socket (get %d of "
-                              "%d bytes)" % (len(self.message), self.len))
+                             "%d bytes)" % (len(self.message), self.len))
                 self.close()
                 return
             self.message += read

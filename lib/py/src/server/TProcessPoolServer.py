@@ -21,7 +21,7 @@
 import logging
 logger = logging.getLogger(__name__)
 
-from multiprocessing import  Process, Value, Condition, reduction
+from multiprocessing import Process, Value, Condition, reduction
 
 from .TServer import TServer
 from thrift.transport.TTransport import TTransportException
@@ -59,7 +59,7 @@ class TProcessPoolServer(TServer):
             try:
                 client = self.serverTransport.accept()
                 if not client:
-                  continue
+                    continue
                 self.serveClient(client)
             except (KeyboardInterrupt, SystemExit):
                 return 0

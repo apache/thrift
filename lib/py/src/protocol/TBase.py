@@ -21,78 +21,78 @@ from thrift.protocol import TBinaryProtocol
 from thrift.transport import TTransport
 
 try:
-  from thrift.protocol import fastbinary
+    from thrift.protocol import fastbinary
 except:
-  fastbinary = None
+    fastbinary = None
 
 
 class TBase(object):
-  __slots__ = ()
+    __slots__ = ()
 
-  def __repr__(self):
-    L = ['%s=%r' % (key, getattr(self, key)) for key in self.__slots__]
-    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+    def __repr__(self):
+        L = ['%s=%r' % (key, getattr(self, key)) for key in self.__slots__]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
-  def __eq__(self, other):
-    if not isinstance(other, self.__class__):
-      return False
-    for attr in self.__slots__:
-      my_val = getattr(self, attr)
-      other_val = getattr(other, attr)
-      if my_val != other_val:
-        return False
-    return True
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        for attr in self.__slots__:
+            my_val = getattr(self, attr)
+            other_val = getattr(other, attr)
+            if my_val != other_val:
+                return False
+        return True
 
-  def __ne__(self, other):
-    return not (self == other)
+    def __ne__(self, other):
+        return not (self == other)
 
-  def read(self, iprot):
-    if (iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
-       isinstance(iprot.trans, TTransport.CReadableTransport) and
-       self.thrift_spec is not None and
-       fastbinary is not None):
-      fastbinary.decode_binary(self,
-                               iprot.trans,
-                               (self.__class__, self.thrift_spec),
-                               iprot.string_length_limit,
-                               iprot.container_length_limit)
-      return
-    iprot.readStruct(self, self.thrift_spec)
+    def read(self, iprot):
+        if (iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
+                isinstance(iprot.trans, TTransport.CReadableTransport) and
+                self.thrift_spec is not None and
+                fastbinary is not None):
+            fastbinary.decode_binary(self,
+                                     iprot.trans,
+                                     (self.__class__, self.thrift_spec),
+                                     iprot.string_length_limit,
+                                     iprot.container_length_limit)
+            return
+        iprot.readStruct(self, self.thrift_spec)
 
-  def write(self, oprot):
-    if (oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
-       self.thrift_spec is not None and
-       fastbinary is not None):
-      oprot.trans.write(
-        fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
-      return
-    oprot.writeStruct(self, self.thrift_spec)
+    def write(self, oprot):
+        if (oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
+                self.thrift_spec is not None and
+                fastbinary is not None):
+            oprot.trans.write(
+                fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+            return
+        oprot.writeStruct(self, self.thrift_spec)
 
 
 class TExceptionBase(TBase, Exception):
-  pass
+    pass
 
 
 class TFrozenBase(TBase):
-  def __setitem__(self, *args):
-    raise TypeError("Can't modify frozen struct")
+    def __setitem__(self, *args):
+        raise TypeError("Can't modify frozen struct")
 
-  def __delitem__(self, *args):
-    raise TypeError("Can't modify frozen struct")
+    def __delitem__(self, *args):
+        raise TypeError("Can't modify frozen struct")
 
-  def __hash__(self, *args):
-    return hash(self.__class__) ^ hash(self.__slots__)
+    def __hash__(self, *args):
+        return hash(self.__class__) ^ hash(self.__slots__)
 
-  @classmethod
-  def read(cls, iprot):
-    if (iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
-       isinstance(iprot.trans, TTransport.CReadableTransport) and
-       cls.thrift_spec is not None and
-       fastbinary is not None):
-      self = cls()
-      return fastbinary.decode_binary(None,
-                                      iprot.trans,
-                                      (self.__class__, self.thrift_spec),
-                                      iprot.string_length_limit,
-                                      iprot.container_length_limit)
-    return iprot.readStruct(cls, cls.thrift_spec, True)
+    @classmethod
+    def read(cls, iprot):
+        if (iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
+                isinstance(iprot.trans, TTransport.CReadableTransport) and
+                cls.thrift_spec is not None and
+                fastbinary is not None):
+            self = cls()
+            return fastbinary.decode_binary(None,
+                                            iprot.trans,
+                                            (self.__class__, self.thrift_spec),
+                                            iprot.string_length_limit,
+                                            iprot.container_length_limit)
+        return iprot.readStruct(cls, cls.thrift_spec, True)

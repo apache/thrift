@@ -46,124 +46,124 @@ CONFIG_FILE = 'tests.json'
 
 
 def run_cross_tests(server_match, client_match, jobs, skip_known_failures, retry_count):
-  logger = multiprocessing.get_logger()
-  logger.debug('Collecting tests')
-  with open(path_join(TEST_DIR, CONFIG_FILE), 'r') as fp:
-    j = json.load(fp)
-  tests = crossrunner.collect_cross_tests(j, server_match, client_match)
-  if not tests:
-    print('No test found that matches the criteria', file=sys.stderr)
-    print('  servers: %s' % server_match, file=sys.stderr)
-    print('  clients: %s' % client_match, file=sys.stderr)
-    return False
-  if skip_known_failures:
-    logger.debug('Skipping known failures')
-    known = crossrunner.load_known_failures(TEST_DIR)
-    tests = list(filter(lambda t: crossrunner.test_name(**t) not in known, tests))
+    logger = multiprocessing.get_logger()
+    logger.debug('Collecting tests')
+    with open(path_join(TEST_DIR, CONFIG_FILE), 'r') as fp:
+        j = json.load(fp)
+    tests = crossrunner.collect_cross_tests(j, server_match, client_match)
+    if not tests:
+        print('No test found that matches the criteria', file=sys.stderr)
+        print('  servers: %s' % server_match, file=sys.stderr)
+        print('  clients: %s' % client_match, file=sys.stderr)
+        return False
+    if skip_known_failures:
+        logger.debug('Skipping known failures')
+        known = crossrunner.load_known_failures(TEST_DIR)
+        tests = list(filter(lambda t: crossrunner.test_name(**t) not in known, tests))
 
-  dispatcher = crossrunner.TestDispatcher(TEST_DIR, ROOT_DIR, TEST_DIR_RELATIVE, jobs)
-  logger.debug('Executing %d tests' % len(tests))
-  try:
-    for r in [dispatcher.dispatch(test, retry_count) for test in tests]:
-      r.wait()
-    logger.debug('Waiting for completion')
-    return dispatcher.wait()
-  except (KeyboardInterrupt, SystemExit):
-    logger.debug('Interrupted, shutting down')
-    dispatcher.terminate()
-    return False
+    dispatcher = crossrunner.TestDispatcher(TEST_DIR, ROOT_DIR, TEST_DIR_RELATIVE, jobs)
+    logger.debug('Executing %d tests' % len(tests))
+    try:
+        for r in [dispatcher.dispatch(test, retry_count) for test in tests]:
+            r.wait()
+        logger.debug('Waiting for completion')
+        return dispatcher.wait()
+    except (KeyboardInterrupt, SystemExit):
+        logger.debug('Interrupted, shutting down')
+        dispatcher.terminate()
+        return False
 
 
 def run_feature_tests(server_match, feature_match, jobs, skip_known_failures, retry_count):
-  basedir = path_join(ROOT_DIR, FEATURE_DIR_RELATIVE)
-  logger = multiprocessing.get_logger()
-  logger.debug('Collecting tests')
-  with open(path_join(TEST_DIR, CONFIG_FILE), 'r') as fp:
-    j = json.load(fp)
-  with open(path_join(basedir, CONFIG_FILE), 'r') as fp:
-    j2 = json.load(fp)
-  tests = crossrunner.collect_feature_tests(j, j2, server_match, feature_match)
-  if not tests:
-    print('No test found that matches the criteria', file=sys.stderr)
-    print('  servers: %s' % server_match, file=sys.stderr)
-    print('  features: %s' % feature_match, file=sys.stderr)
-    return False
-  if skip_known_failures:
-    logger.debug('Skipping known failures')
-    known = crossrunner.load_known_failures(basedir)
-    tests = list(filter(lambda t: crossrunner.test_name(**t) not in known, tests))
+    basedir = path_join(ROOT_DIR, FEATURE_DIR_RELATIVE)
+    logger = multiprocessing.get_logger()
+    logger.debug('Collecting tests')
+    with open(path_join(TEST_DIR, CONFIG_FILE), 'r') as fp:
+        j = json.load(fp)
+    with open(path_join(basedir, CONFIG_FILE), 'r') as fp:
+        j2 = json.load(fp)
+    tests = crossrunner.collect_feature_tests(j, j2, server_match, feature_match)
+    if not tests:
+        print('No test found that matches the criteria', file=sys.stderr)
+        print('  servers: %s' % server_match, file=sys.stderr)
+        print('  features: %s' % feature_match, file=sys.stderr)
+        return False
+    if skip_known_failures:
+        logger.debug('Skipping known failures')
+        known = crossrunner.load_known_failures(basedir)
+        tests = list(filter(lambda t: crossrunner.test_name(**t) not in known, tests))
 
-  dispatcher = crossrunner.TestDispatcher(TEST_DIR, ROOT_DIR, FEATURE_DIR_RELATIVE, jobs)
-  logger.debug('Executing %d tests' % len(tests))
-  try:
-    for r in [dispatcher.dispatch(test, retry_count) for test in tests]:
-      r.wait()
-    logger.debug('Waiting for completion')
-    return dispatcher.wait()
-  except (KeyboardInterrupt, SystemExit):
-    logger.debug('Interrupted, shutting down')
-    dispatcher.terminate()
-    return False
+    dispatcher = crossrunner.TestDispatcher(TEST_DIR, ROOT_DIR, FEATURE_DIR_RELATIVE, jobs)
+    logger.debug('Executing %d tests' % len(tests))
+    try:
+        for r in [dispatcher.dispatch(test, retry_count) for test in tests]:
+            r.wait()
+        logger.debug('Waiting for completion')
+        return dispatcher.wait()
+    except (KeyboardInterrupt, SystemExit):
+        logger.debug('Interrupted, shutting down')
+        dispatcher.terminate()
+        return False
 
 
 def default_concurrenty():
-  try:
-    return int(os.environ.get('THRIFT_CROSSTEST_CONCURRENCY'))
-  except (TypeError, ValueError):
-    # Since much time is spent sleeping, use many threads
-    return int(multiprocessing.cpu_count() * 1.25) + 1
+    try:
+        return int(os.environ.get('THRIFT_CROSSTEST_CONCURRENCY'))
+    except (TypeError, ValueError):
+        # Since much time is spent sleeping, use many threads
+        return int(multiprocessing.cpu_count() * 1.25) + 1
 
 
 def main(argv):
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--server', default='', nargs='*',
-                      help='list of servers to test')
-  parser.add_argument('--client', default='', nargs='*',
-                      help='list of clients to test')
-  parser.add_argument('-F', '--features', nargs='*', default=None,
-                      help='run server feature tests instead of cross language tests')
-  parser.add_argument('-s', '--skip-known-failures', action='store_true', dest='skip_known_failures',
-                      help='do not execute tests that are known to fail')
-  parser.add_argument('-r', '--retry-count', type=int,
-                      default=0, help='maximum retry on failure')
-  parser.add_argument('-j', '--jobs', type=int,
-                      default=default_concurrenty(),
-                      help='number of concurrent test executions')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--server', default='', nargs='*',
+                        help='list of servers to test')
+    parser.add_argument('--client', default='', nargs='*',
+                        help='list of clients to test')
+    parser.add_argument('-F', '--features', nargs='*', default=None,
+                        help='run server feature tests instead of cross language tests')
+    parser.add_argument('-s', '--skip-known-failures', action='store_true', dest='skip_known_failures',
+                        help='do not execute tests that are known to fail')
+    parser.add_argument('-r', '--retry-count', type=int,
+                        default=0, help='maximum retry on failure')
+    parser.add_argument('-j', '--jobs', type=int,
+                        default=default_concurrenty(),
+                        help='number of concurrent test executions')
 
-  g = parser.add_argument_group(title='Advanced')
-  g.add_argument('-v', '--verbose', action='store_const',
-                 dest='log_level', const=logging.DEBUG, default=logging.WARNING,
-                 help='show debug output for test runner')
-  g.add_argument('-P', '--print-expected-failures', choices=['merge', 'overwrite'],
-                 dest='print_failures',
-                 help="generate expected failures based on last result and print to stdout")
-  g.add_argument('-U', '--update-expected-failures', choices=['merge', 'overwrite'],
-                 dest='update_failures',
-                 help="generate expected failures based on last result and save to default file location")
-  options = parser.parse_args(argv)
+    g = parser.add_argument_group(title='Advanced')
+    g.add_argument('-v', '--verbose', action='store_const',
+                   dest='log_level', const=logging.DEBUG, default=logging.WARNING,
+                   help='show debug output for test runner')
+    g.add_argument('-P', '--print-expected-failures', choices=['merge', 'overwrite'],
+                   dest='print_failures',
+                   help="generate expected failures based on last result and print to stdout")
+    g.add_argument('-U', '--update-expected-failures', choices=['merge', 'overwrite'],
+                   dest='update_failures',
+                   help="generate expected failures based on last result and save to default file location")
+    options = parser.parse_args(argv)
 
-  logger = multiprocessing.log_to_stderr()
-  logger.setLevel(options.log_level)
+    logger = multiprocessing.log_to_stderr()
+    logger.setLevel(options.log_level)
 
-  if options.features is not None and options.client:
-    print('Cannot specify both --features and --client ', file=sys.stderr)
-    return 1
+    if options.features is not None and options.client:
+        print('Cannot specify both --features and --client ', file=sys.stderr)
+        return 1
 
-  # Allow multiple args separated with ',' for backward compatibility
-  server_match = list(chain(*[x.split(',') for x in options.server]))
-  client_match = list(chain(*[x.split(',') for x in options.client]))
+    # Allow multiple args separated with ',' for backward compatibility
+    server_match = list(chain(*[x.split(',') for x in options.server]))
+    client_match = list(chain(*[x.split(',') for x in options.client]))
 
-  if options.update_failures or options.print_failures:
-    dire = path_join(ROOT_DIR, FEATURE_DIR_RELATIVE) if options.features is not None else TEST_DIR
-    res = crossrunner.generate_known_failures(
-        dire, options.update_failures == 'overwrite',
-        options.update_failures, options.print_failures)
-  elif options.features is not None:
-    features = options.features or ['.*']
-    res = run_feature_tests(server_match, features, options.jobs, options.skip_known_failures, options.retry_count)
-  else:
-    res = run_cross_tests(server_match, client_match, options.jobs, options.skip_known_failures, options.retry_count)
-  return 0 if res else 1
+    if options.update_failures or options.print_failures:
+        dire = path_join(ROOT_DIR, FEATURE_DIR_RELATIVE) if options.features is not None else TEST_DIR
+        res = crossrunner.generate_known_failures(
+            dire, options.update_failures == 'overwrite',
+            options.update_failures, options.print_failures)
+    elif options.features is not None:
+        features = options.features or ['.*']
+        res = run_feature_tests(server_match, features, options.jobs, options.skip_known_failures, options.retry_count)
+    else:
+        res = run_cross_tests(server_match, client_match, options.jobs, options.skip_known_failures, options.retry_count)
+    return 0 if res else 1
 
 if __name__ == '__main__':
-  sys.exit(main(sys.argv[1:]))
+    sys.exit(main(sys.argv[1:]))
