@@ -18,17 +18,14 @@
 #
 
 from six.moves import queue
-import os
-import sys
-import threading
-import traceback
-
 import logging
-logger = logging.getLogger(__name__)
+import os
+import threading
 
-from thrift.Thrift import TProcessor
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TTransport
+
+logger = logging.getLogger(__name__)
 
 
 class TServer(object):
@@ -86,7 +83,7 @@ class TSimpleServer(TServer):
             try:
                 while True:
                     self.processor.process(iprot, oprot)
-            except TTransport.TTransportException as tx:
+            except TTransport.TTransportException:
                 pass
             except Exception as x:
                 logger.exception(x)
@@ -125,7 +122,7 @@ class TThreadedServer(TServer):
         try:
             while True:
                 self.processor.process(iprot, oprot)
-        except TTransport.TTransportException as tx:
+        except TTransport.TTransportException:
             pass
         except Exception as x:
             logger.exception(x)
@@ -165,7 +162,7 @@ class TThreadPoolServer(TServer):
         try:
             while True:
                 self.processor.process(iprot, oprot)
-        except TTransport.TTransportException as tx:
+        except TTransport.TTransportException:
             pass
         except Exception as x:
             logger.exception(x)

@@ -26,7 +26,7 @@ import warnings
 from six.moves import urllib
 from six.moves import http_client
 
-from .TTransport import *
+from .TTransport import TTransportBase
 import six
 
 

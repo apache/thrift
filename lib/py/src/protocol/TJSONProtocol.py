@@ -17,7 +17,8 @@
 # under the License.
 #
 
-from .TProtocol import TType, TProtocolBase, TProtocolException, checkIntegerLimits
+from .TProtocol import (TType, TProtocolBase, TProtocolException,
+                        checkIntegerLimits)
 import base64
 import math
 import sys
@@ -66,17 +67,19 @@ ESCAPE_CHARS = {
 }
 NUMERIC_CHAR = b'+-.0123456789Ee'
 
-CTYPES = {TType.BOOL: 'tf',
-          TType.BYTE: 'i8',
-          TType.I16: 'i16',
-          TType.I32: 'i32',
-          TType.I64: 'i64',
-          TType.DOUBLE: 'dbl',
-          TType.STRING: 'str',
-          TType.STRUCT: 'rec',
-          TType.LIST: 'lst',
-          TType.SET: 'set',
-          TType.MAP: 'map'}
+CTYPES = {
+    TType.BOOL: 'tf',
+    TType.BYTE: 'i8',
+    TType.I16: 'i16',
+    TType.I32: 'i32',
+    TType.I64: 'i64',
+    TType.DOUBLE: 'dbl',
+    TType.STRING: 'str',
+    TType.STRUCT: 'rec',
+    TType.LIST: 'lst',
+    TType.SET: 'set',
+    TType.MAP: 'map',
+}
 
 JTYPES = {}
 for key in CTYPES.keys():
@@ -261,7 +264,8 @@ class TJSONProtocolBase(TProtocolBase):
     def _toChar(self, high, low=None):
         if not low:
             if sys.version_info[0] == 2:
-                return ("\\u%04x" % high).decode('unicode-escape').encode('utf-8')
+                return ("\\u%04x" % high).decode('unicode-escape') \
+                                         .encode('utf-8')
             else:
                 return chr(high)
         else:
@@ -290,22 +294,25 @@ class TJSONProtocolBase(TProtocolBase):
                     codeunit = int(character, 16)
                     if self._isHighSurrogate(codeunit):
                         if highSurrogate:
-                            raise TProtocolException(TProtocolException.INVALID_DATA,
-                                                     "Expected low surrogate char")
+                            raise TProtocolException(
+                                TProtocolException.INVALID_DATA,
+                                "Expected low surrogate char")
                         highSurrogate = codeunit
                         continue
                     elif self._isLowSurrogate(codeunit):
                         if not highSurrogate:
-                            raise TProtocolException(TProtocolException.INVALID_DATA,
-                                                     "Expected high surrogate char")
+                            raise TProtocolException(
+                                TProtocolException.INVALID_DATA,
+                                "Expected high surrogate char")
                         character = self._toChar(highSurrogate, codeunit)
                         highSurrogate = None
                     else:
                         character = self._toChar(codeunit)
                 else:
                     if character not in ESCAPE_CHARS:
-                        raise TProtocolException(TProtocolException.INVALID_DATA,
-                                                 "Expected control char")
+                        raise TProtocolException(
+                            TProtocolException.INVALID_DATA,
+                            "Expected control char")
                     character = ESCAPE_CHARS[character]
             elif character in ESCAPE_CHAR_VALS:
                 raise TProtocolException(TProtocolException.INVALID_DATA,
@@ -358,8 +365,9 @@ class TJSONProtocolBase(TProtocolBase):
                 if (self.context.escapeNum is False and
                         not math.isinf(double) and
                         not math.isnan(double)):
-                    raise TProtocolException(TProtocolException.INVALID_DATA,
-                                             "Numeric data unexpectedly quoted")
+                    raise TProtocolException(
+                        TProtocolException.INVALID_DATA,
+                        "Numeric data unexpectedly quoted")
                 return double
             except ValueError:
                 raise TProtocolException(TProtocolException.INVALID_DATA,
@@ -558,7 +566,8 @@ class TJSONProtocol(TJSONProtocolBase):
         self.writeJSONNumber(i64)
 
     def writeDouble(self, dbl):
-        # 17 significant digits should be just enough for any double precision value.
+        # 17 significant digits should be just enough for any double precision
+        # value.
         self.writeJSONNumber(dbl, '{0:.17g}')
 
     def writeString(self, string):

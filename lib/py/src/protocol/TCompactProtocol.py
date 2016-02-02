@@ -94,19 +94,20 @@ class CompactType(object):
     MAP = 0x0B
     STRUCT = 0x0C
 
-CTYPES = {TType.STOP: CompactType.STOP,
-          TType.BOOL: CompactType.TRUE,  # used for collection
-          TType.BYTE: CompactType.BYTE,
-          TType.I16: CompactType.I16,
-          TType.I32: CompactType.I32,
-          TType.I64: CompactType.I64,
-          TType.DOUBLE: CompactType.DOUBLE,
-          TType.STRING: CompactType.BINARY,
-          TType.STRUCT: CompactType.STRUCT,
-          TType.LIST: CompactType.LIST,
-          TType.SET: CompactType.SET,
-          TType.MAP: CompactType.MAP
-          }
+CTYPES = {
+    TType.STOP: CompactType.STOP,
+    TType.BOOL: CompactType.TRUE,  # used for collection
+    TType.BYTE: CompactType.BYTE,
+    TType.I16: CompactType.I16,
+    TType.I32: CompactType.I32,
+    TType.I64: CompactType.I64,
+    TType.DOUBLE: CompactType.DOUBLE,
+    TType.STRING: CompactType.BINARY,
+    TType.STRUCT: CompactType.STRUCT,
+    TType.LIST: CompactType.LIST,
+    TType.SET: CompactType.SET,
+    TType.MAP: CompactType.MAP,
+}
 
 TTYPES = {}
 for k, v in CTYPES.items():

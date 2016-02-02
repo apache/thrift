@@ -24,13 +24,12 @@ only from the main thread.
 The thread poool should be sized for concurrent tasks, not
 maximum connections
 """
-import threading
-import socket
-import select
-import struct
 
 import logging
-logger = logging.getLogger(__name__)
+import select
+import socket
+import struct
+import threading
 
 from six.moves import queue
 
@@ -38,6 +37,8 @@ from thrift.transport import TTransport
 from thrift.protocol.TBinaryProtocol import TBinaryProtocolFactory
 
 __all__ = ['TNonblockingServer']
+
+logger = logging.getLogger(__name__)
 
 
 class Worker(threading.Thread):

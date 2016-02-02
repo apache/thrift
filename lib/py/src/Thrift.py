@@ -39,24 +39,26 @@ class TType(object):
     UTF8 = 16
     UTF16 = 17
 
-    _VALUES_TO_NAMES = ('STOP',
-                        'VOID',
-                        'BOOL',
-                        'BYTE',
-                        'DOUBLE',
-                        None,
-                        'I16',
-                        None,
-                        'I32',
-                        None,
-                        'I64',
-                        'STRING',
-                        'STRUCT',
-                        'MAP',
-                        'SET',
-                        'LIST',
-                        'UTF8',
-                        'UTF16')
+    _VALUES_TO_NAMES = (
+        'STOP',
+        'VOID',
+        'BOOL',
+        'BYTE',
+        'DOUBLE',
+        None,
+        'I16',
+        None,
+        'I32',
+        None,
+        'I64',
+        'STRING',
+        'STRUCT',
+        'MAP',
+        'SET',
+        'LIST',
+        'UTF8',
+        'UTF16',
+    )
 
 
 class TMessageType(object):

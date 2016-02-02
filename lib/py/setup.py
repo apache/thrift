@@ -9,7 +9,7 @@
 # "License"); you may not use this file except in compliance
 # with the License. You may obtain a copy of the License at
 #
-#	http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
@@ -24,7 +24,7 @@ import sys
 try:
     from setuptools import setup, Extension
 except:
-    from distutils.core import setup, Extension, Command
+    from distutils.core import setup, Extension
 
 from distutils.command.build_ext import build_ext
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
@@ -50,13 +50,13 @@ class ve_build_ext(build_ext):
     def run(self):
         try:
             build_ext.run(self)
-        except DistutilsPlatformError as x:
+        except DistutilsPlatformError:
             raise BuildFailed()
 
     def build_extension(self, ext):
         try:
             build_ext.build_extension(self, ext)
-        except ext_errors as x:
+        except ext_errors:
             raise BuildFailed()
 
 

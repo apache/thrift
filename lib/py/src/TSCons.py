@@ -20,7 +20,6 @@
 from os import path
 from SCons.Builder import Builder
 from six.moves import map
-from six.moves import zip
 
 
 def scons_env(env, add=''):

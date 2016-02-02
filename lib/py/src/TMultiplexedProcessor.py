@@ -39,14 +39,10 @@ class TMultiplexedProcessor(TProcessor):
 
         serviceName = name[0:index]
         call = name[index + len(TMultiplexedProtocol.SEPARATOR):]
-        if not serviceName in self.services:
+        if serviceName not in self.services:
             raise TException("Service name not found: " + serviceName + ". Did you forget to call registerProcessor()?")
 
-        standardMessage = (
-            call,
-            type,
-            seqid
-        )
+        standardMessage = (call, type, seqid)
         return self.services[serviceName].process(StoredMessageProtocol(iprot, standardMessage), oprot)
 
 
