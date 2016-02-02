@@ -120,7 +120,7 @@ class ThriftSASLClientProtocol(ThriftClientProtocol):
     MAX_LENGTH = 2 ** 31 - 1
 
     def __init__(self, client_class, iprot_factory, oprot_factory=None,
-            host=None, service=None, mechanism='GSSAPI', **sasl_kwargs):
+                 host=None, service=None, mechanism='GSSAPI', **sasl_kwargs):
         """
         host: the name of the server, from a SASL perspective
         service: the name of the server's service, from a SASL perspective
@@ -236,7 +236,7 @@ class ThriftServerProtocol(basic.Int32StringReceiver):
 
         d = self.factory.processor.process(iprot, oprot)
         d.addCallbacks(self.processOk, self.processError,
-            callbackArgs=(tmo,))
+                       callbackArgs=(tmo,))
 
 
 class IThriftServerFactory(Interface):
@@ -288,7 +288,7 @@ class ThriftClientFactory(ClientFactory):
 
     def buildProtocol(self, addr):
         p = self.protocol(self.client_class, self.iprot_factory,
-            self.oprot_factory)
+                          self.oprot_factory)
         p.factory = self
         return p
 
@@ -298,7 +298,7 @@ class ThriftResource(resource.Resource):
     allowedMethods = ('POST',)
 
     def __init__(self, processor, inputProtocolFactory,
-        outputProtocolFactory=None):
+                 outputProtocolFactory=None):
         resource.Resource.__init__(self)
         self.inputProtocolFactory = inputProtocolFactory
         if outputProtocolFactory is None:

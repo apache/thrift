@@ -20,44 +20,45 @@ import zmq
 from cStringIO import StringIO
 from thrift.transport.TTransport import TTransportBase, CReadableTransport
 
+
 class TZmqClient(TTransportBase, CReadableTransport):
-  def __init__(self, ctx, endpoint, sock_type):
-    self._sock = ctx.socket(sock_type)
-    self._endpoint = endpoint
-    self._wbuf = StringIO()
-    self._rbuf = StringIO()
+    def __init__(self, ctx, endpoint, sock_type):
+        self._sock = ctx.socket(sock_type)
+        self._endpoint = endpoint
+        self._wbuf = StringIO()
+        self._rbuf = StringIO()
 
-  def open(self):
-    self._sock.connect(self._endpoint)
+    def open(self):
+        self._sock.connect(self._endpoint)
 
-  def read(self, size):
-    ret = self._rbuf.read(size)
-    if len(ret) != 0:
-      return ret
-    self._read_message()
-    return self._rbuf.read(size)
+    def read(self, size):
+        ret = self._rbuf.read(size)
+        if len(ret) != 0:
+            return ret
+        self._read_message()
+        return self._rbuf.read(size)
 
-  def _read_message(self):
-    msg = self._sock.recv()
-    self._rbuf = StringIO(msg)
+    def _read_message(self):
+        msg = self._sock.recv()
+        self._rbuf = StringIO(msg)
 
-  def write(self, buf):
-    self._wbuf.write(buf)
+    def write(self, buf):
+        self._wbuf.write(buf)
 
-  def flush(self):
-    msg = self._wbuf.getvalue()
-    self._wbuf = StringIO()
-    self._sock.send(msg)
+    def flush(self):
+        msg = self._wbuf.getvalue()
+        self._wbuf = StringIO()
+        self._sock.send(msg)
 
-  # Implement the CReadableTransport interface.
-  @property
-  def cstringio_buf(self):
-    return self._rbuf
+    # Implement the CReadableTransport interface.
+    @property
+    def cstringio_buf(self):
+        return self._rbuf
 
-  # NOTE: This will probably not actually work.
-  def cstringio_refill(self, prefix, reqlen):
-    while len(prefix) < reqlen:
-      self.read_message()
-      prefix += self._rbuf.getvalue()
-    self._rbuf = StringIO(prefix)
-    return self._rbuf
+    # NOTE: This will probably not actually work.
+    def cstringio_refill(self, prefix, reqlen):
+        while len(prefix) < reqlen:
+            self.read_message()
+            prefix += self._rbuf.getvalue()
+        self._rbuf = StringIO(prefix)
+        return self._rbuf

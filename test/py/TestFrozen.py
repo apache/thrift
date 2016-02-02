@@ -28,89 +28,89 @@ import unittest
 
 
 class TestFrozenBase(unittest.TestCase):
-  def _roundtrip(self, src, dst):
-    otrans = TTransport.TMemoryBuffer()
-    optoro = self.protocol(otrans)
-    src.write(optoro)
-    itrans = TTransport.TMemoryBuffer(otrans.getvalue())
-    iproto = self.protocol(itrans)
-    return dst.read(iproto) or dst
+    def _roundtrip(self, src, dst):
+        otrans = TTransport.TMemoryBuffer()
+        optoro = self.protocol(otrans)
+        src.write(optoro)
+        itrans = TTransport.TMemoryBuffer(otrans.getvalue())
+        iproto = self.protocol(itrans)
+        return dst.read(iproto) or dst
 
-  def test_dict_is_hashable_only_after_frozen(self):
-    d0 = {}
-    self.assertFalse(isinstance(d0, collections.Hashable))
-    d1 = TFrozenDict(d0)
-    self.assertTrue(isinstance(d1, collections.Hashable))
+    def test_dict_is_hashable_only_after_frozen(self):
+        d0 = {}
+        self.assertFalse(isinstance(d0, collections.Hashable))
+        d1 = TFrozenDict(d0)
+        self.assertTrue(isinstance(d1, collections.Hashable))
 
-  def test_struct_with_collection_fields(self):
-    pass
+    def test_struct_with_collection_fields(self):
+        pass
 
-  def test_set(self):
-    """Test that annotated set field can be serialized and deserialized"""
-    x = CompactProtoTestStruct(set_byte_map={
-      frozenset([42, 100, -100]): 99,
-      frozenset([0]): 100,
-      frozenset([]): 0,
-    })
-    x2 = self._roundtrip(x, CompactProtoTestStruct())
-    self.assertEqual(x2.set_byte_map[frozenset([42, 100, -100])], 99)
-    self.assertEqual(x2.set_byte_map[frozenset([0])], 100)
-    self.assertEqual(x2.set_byte_map[frozenset([])], 0)
+    def test_set(self):
+        """Test that annotated set field can be serialized and deserialized"""
+        x = CompactProtoTestStruct(set_byte_map={
+            frozenset([42, 100, -100]): 99,
+            frozenset([0]): 100,
+            frozenset([]): 0,
+        })
+        x2 = self._roundtrip(x, CompactProtoTestStruct())
+        self.assertEqual(x2.set_byte_map[frozenset([42, 100, -100])], 99)
+        self.assertEqual(x2.set_byte_map[frozenset([0])], 100)
+        self.assertEqual(x2.set_byte_map[frozenset([])], 0)
 
-  def test_map(self):
-    """Test that annotated map field can be serialized and deserialized"""
-    x = CompactProtoTestStruct(map_byte_map={
-      TFrozenDict({42: 42, 100: -100}): 99,
-      TFrozenDict({0: 0}): 100,
-      TFrozenDict({}): 0,
-    })
-    x2 = self._roundtrip(x, CompactProtoTestStruct())
-    self.assertEqual(x2.map_byte_map[TFrozenDict({42: 42, 100: -100})], 99)
-    self.assertEqual(x2.map_byte_map[TFrozenDict({0: 0})], 100)
-    self.assertEqual(x2.map_byte_map[TFrozenDict({})], 0)
+    def test_map(self):
+        """Test that annotated map field can be serialized and deserialized"""
+        x = CompactProtoTestStruct(map_byte_map={
+            TFrozenDict({42: 42, 100: -100}): 99,
+            TFrozenDict({0: 0}): 100,
+            TFrozenDict({}): 0,
+        })
+        x2 = self._roundtrip(x, CompactProtoTestStruct())
+        self.assertEqual(x2.map_byte_map[TFrozenDict({42: 42, 100: -100})], 99)
+        self.assertEqual(x2.map_byte_map[TFrozenDict({0: 0})], 100)
+        self.assertEqual(x2.map_byte_map[TFrozenDict({})], 0)
 
-  def test_list(self):
-    """Test that annotated list field can be serialized and deserialized"""
-    x = CompactProtoTestStruct(list_byte_map={
-      (42, 100, -100): 99,
-      (0,): 100,
-      (): 0,
-    })
-    x2 = self._roundtrip(x, CompactProtoTestStruct())
-    self.assertEqual(x2.list_byte_map[(42, 100, -100)], 99)
-    self.assertEqual(x2.list_byte_map[(0,)], 100)
-    self.assertEqual(x2.list_byte_map[()], 0)
+    def test_list(self):
+        """Test that annotated list field can be serialized and deserialized"""
+        x = CompactProtoTestStruct(list_byte_map={
+            (42, 100, -100): 99,
+            (0,): 100,
+            (): 0,
+        })
+        x2 = self._roundtrip(x, CompactProtoTestStruct())
+        self.assertEqual(x2.list_byte_map[(42, 100, -100)], 99)
+        self.assertEqual(x2.list_byte_map[(0,)], 100)
+        self.assertEqual(x2.list_byte_map[()], 0)
 
-  def test_empty_struct(self):
-    """Test that annotated empty struct can be serialized and deserialized"""
-    x = CompactProtoTestStruct(empty_struct_field=Empty())
-    x2 = self._roundtrip(x, CompactProtoTestStruct())
-    self.assertEqual(x2.empty_struct_field, Empty())
+    def test_empty_struct(self):
+        """Test that annotated empty struct can be serialized and deserialized"""
+        x = CompactProtoTestStruct(empty_struct_field=Empty())
+        x2 = self._roundtrip(x, CompactProtoTestStruct())
+        self.assertEqual(x2.empty_struct_field, Empty())
 
-  def test_struct(self):
-    """Test that annotated struct can be serialized and deserialized"""
-    x = Wrapper(foo=Empty())
-    self.assertEqual(x.foo, Empty())
-    x2 = self._roundtrip(x, Wrapper)
-    self.assertEqual(x2.foo, Empty())
+    def test_struct(self):
+        """Test that annotated struct can be serialized and deserialized"""
+        x = Wrapper(foo=Empty())
+        self.assertEqual(x.foo, Empty())
+        x2 = self._roundtrip(x, Wrapper)
+        self.assertEqual(x2.foo, Empty())
 
 
 class TestFrozen(TestFrozenBase):
-  def protocol(self, trans):
-    return TBinaryProtocol.TBinaryProtocolFactory().getProtocol(trans)
+    def protocol(self, trans):
+        return TBinaryProtocol.TBinaryProtocolFactory().getProtocol(trans)
 
 
 class TestFrozenAccelerated(TestFrozenBase):
-  def protocol(self, trans):
-    return TBinaryProtocol.TBinaryProtocolAcceleratedFactory().getProtocol(trans)
+    def protocol(self, trans):
+        return TBinaryProtocol.TBinaryProtocolAcceleratedFactory().getProtocol(trans)
 
 
 def suite():
-  suite = unittest.TestSuite()
-  loader = unittest.TestLoader()
-  suite.addTest(loader.loadTestsFromTestCase(TestFrozen))
-  suite.addTest(loader.loadTestsFromTestCase(TestFrozenAccelerated))
-  return suite
+    suite = unittest.TestSuite()
+    loader = unittest.TestLoader()
+    suite.addTest(loader.loadTestsFromTestCase(TestFrozen))
+    suite.addTest(loader.loadTestsFromTestCase(TestFrozenAccelerated))
+    return suite
 
 if __name__ == "__main__":
-  unittest.main(defaultTest="suite", testRunner=unittest.TextTestRunner(verbosity=2))
+    unittest.main(defaultTest="suite", testRunner=unittest.TextTestRunner(verbosity=2))
