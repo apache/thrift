@@ -17,26 +17,34 @@
 # under the License.
 #
 
+import types
+
 from thrift.protocol.TProtocol import TProtocolBase
-from types import *
+
 
 class TProtocolDecorator():
-  def __init__(self, protocol):
-    TProtocolBase(protocol)
-    self.protocol = protocol
+    def __init__(self, protocol):
+        TProtocolBase(protocol)
+        self.protocol = protocol
 
-  def __getattr__(self, name):
-    if hasattr(self.protocol, name):
-      member = getattr(self.protocol, name)
-      if type(member) in [MethodType, FunctionType, LambdaType, BuiltinFunctionType, BuiltinMethodType]:
-        return lambda *args, **kwargs: self._wrap(member, args, kwargs)
-      else:
-        return member
-    raise AttributeError(name)
+    def __getattr__(self, name):
+        if hasattr(self.protocol, name):
+            member = getattr(self.protocol, name)
+            if type(member) in [
+                types.MethodType,
+                types.FunctionType,
+                types.LambdaType,
+                types.BuiltinFunctionType,
+                types.BuiltinMethodType,
+            ]:
+                return lambda *args, **kwargs: self._wrap(member, args, kwargs)
+            else:
+                return member
+        raise AttributeError(name)
 
-  def _wrap(self, func, args, kwargs):
-    if type(func) == MethodType:
-      result = func(*args, **kwargs)
-    else:
-      result = func(self.protocol, *args, **kwargs)
-    return result
+    def _wrap(self, func, args, kwargs):
+        if isinstance(func, types.MethodType):
+            result = func(*args, **kwargs)
+        else:
+            result = func(self.protocol, *args, **kwargs)
+        return result

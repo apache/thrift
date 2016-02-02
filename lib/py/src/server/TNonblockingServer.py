@@ -24,13 +24,12 @@ only from the main thread.
 The thread poool should be sized for concurrent tasks, not
 maximum connections
 """
-import threading
-import socket
-import select
-import struct
 
 import logging
-logger = logging.getLogger(__name__)
+import select
+import socket
+import struct
+import threading
 
 from six.moves import queue
 
@@ -38,6 +37,8 @@ from thrift.transport import TTransport
 from thrift.protocol.TBinaryProtocol import TBinaryProtocolFactory
 
 __all__ = ['TNonblockingServer']
+
+logger = logging.getLogger(__name__)
 
 
 class Worker(threading.Thread):
@@ -127,7 +128,7 @@ class Connection(object):
             self.len, = struct.unpack('!i', self.message)
             if self.len < 0:
                 logger.error("negative frame size, it seems client "
-                              "doesn't use FramedTransport")
+                             "doesn't use FramedTransport")
                 self.close()
             elif self.len == 0:
                 logger.error("empty frame, it's really strange")
@@ -149,7 +150,7 @@ class Connection(object):
             read = self.socket.recv(self.len - len(self.message))
             if len(read) == 0:
                 logger.error("can't read frame from socket (get %d of "
-                              "%d bytes)" % (len(self.message), self.len))
+                             "%d bytes)" % (len(self.message), self.len))
                 self.close()
                 return
             self.message += read

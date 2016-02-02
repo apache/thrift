@@ -46,6 +46,8 @@ class AddressInfo(object):
 
 
 g_addrs_by_filename = {}
+
+
 def get_address(filename, address):
     """
     Retrieve an AddressInfo object for the specified object file and address.
@@ -103,12 +105,12 @@ def translate_file_addresses(filename, addresses, options):
         idx = file_and_line.rfind(':')
         if idx < 0:
             msg = 'expected file and line number from addr2line; got %r' % \
-                    (file_and_line,)
+                (file_and_line,)
             msg += '\nfile=%r, address=%r' % (filename, address.address)
             raise Exception(msg)
 
         address.sourceFile = file_and_line[:idx]
-        address.sourceLine = file_and_line[idx+1:]
+        address.sourceLine = file_and_line[idx + 1:]
 
     (remaining_out, cmd_err) = proc.communicate()
     retcode = proc.wait()
@@ -180,7 +182,7 @@ def process_file(in_file, out_file, options):
 
     virt_call_regex = re.compile(r'^\s*T_VIRTUAL_CALL: (\d+) calls on (.*):$')
     gen_prot_regex = re.compile(
-            r'^\s*T_GENERIC_PROTOCOL: (\d+) calls to (.*) with a (.*):$')
+        r'^\s*T_GENERIC_PROTOCOL: (\d+) calls to (.*) with a (.*):$')
     bt_regex = re.compile(r'^\s*#(\d+)\s*(.*) \[(0x[0-9A-Za-z]+)\]$')
 
     # Parse all of the input, and store it as Entry objects
@@ -209,7 +211,7 @@ def process_file(in_file, out_file, options):
                 # "_Z" to the type name to make it look like an external name.
                 type_name = '_Z' + type_name
             header = 'T_VIRTUAL_CALL: %d calls on "%s"' % \
-                    (num_calls, type_name)
+                (num_calls, type_name)
             if current_entry is not None:
                 entries.append(current_entry)
             current_entry = Entry(header)
@@ -224,7 +226,7 @@ def process_file(in_file, out_file, options):
                 type_name1 = '_Z' + type_name1
                 type_name2 = '_Z' + type_name2
             header = 'T_GENERIC_PROTOCOL: %d calls to "%s" with a "%s"' % \
-                    (num_calls, type_name1, type_name2)
+                (num_calls, type_name1, type_name2)
             if current_entry is not None:
                 entries.append(current_entry)
             current_entry = Entry(header)
