@@ -103,7 +103,11 @@ static int l_bunpack(lua_State *L) {
   const char *code = luaL_checkstring(L, 1);
   luaL_argcheck(L, code[1] == '\0', 0, "Format code must be one character.");
   const char *data = luaL_checkstring(L, 2);
+  #if LUA_VERSION_NUM>= 502
   size_t len = lua_rawlen(L, 2);
+  #else
+  size_t len = lua_objlen(L, 2);
+  #endif
 
   switch (code[0]) {
     case 'c': {
