@@ -63,8 +63,8 @@ RUN apt-get update && apt-get install -y \
       python-support \
       python-twisted \
       python-zope.interface \
-      python-six \
-      python3-six
+      python-pip \
+      python3-pip
 
 # Ruby dependencies
 RUN apt-get update && apt-get install -y \
