@@ -509,7 +509,8 @@
         "ip"
       ],
       "protocols": [
-        "binary"
+        "binary",
+        "compact"
       ],
       "command": [
         "lua",
