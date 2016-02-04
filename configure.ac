@@ -278,6 +278,7 @@ AM_CONDITIONAL(WITH_LUA, [test "$have_lua" = "yes"])
 AM_PATH_PYTHON(2.6,, :)
 AX_THRIFT_LIB(python, [Python], yes)
 if test "$with_python" = "yes";  then
+  AC_PATH_PROG([PIP], [pip])
   AC_PATH_PROG([TRIAL], [trial])
   if test -n "$TRIAL" && test "x$PYTHON" != "x" && test "x$PYTHON" != "x:" ; then
     have_python="yes"
@@ -288,7 +289,8 @@ AM_CONDITIONAL(WITH_PYTHON, [test "$have_python" = "yes"])
 # Find "python3" executable.
 # It's distro specific and far from ideal but needed to cross test py2-3 at once.
 AC_PATH_PROG([PYTHON3], [python3])
-if test "x$PYTHON3" != "x" && test "x$PYTHON3" != "x:" ; then
+AC_PATH_PROG([PIP3], [pip3])
+if test "x$PYTHON3" != "x" && test "x$PYTHON3" != "x:" && test "x$PIP3" != "x" ; then
   have_py3="yes"
 fi
 AM_CONDITIONAL(WITH_PY3, [test "$have_py3" = "yes"])
