@@ -62,7 +62,7 @@ class TimeoutTest(unittest.TestCase):
             socket.open()
             lsock = self.listen_sock.accept()
             while True:
-                socket.write("hi" * 100)
+                lsock.write("hi" * 100)
 
         except:
             self.assert_(time.time() - starttime < 5.0)

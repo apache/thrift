@@ -176,7 +176,7 @@ protected:
     std::string ind = "";
     int i;
     for (i = 0; i < indent_; ++i) {
-      ind += "  ";
+      ind += indent_str();
     }
     return ind;
   }
@@ -286,6 +286,10 @@ protected:
    * Map of characters to escape in string literals.
    */
   std::map<char, std::string> escape_;
+
+  virtual std::string indent_str() const {
+    return "  ";
+  }
 
 private:
   /**

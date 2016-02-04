@@ -140,6 +140,10 @@ public:
     }
   }
 
+  virtual std::string indent_str() const {
+    return "    ";
+  }
+
   /**
    * Init and close methods
    */
@@ -414,10 +418,10 @@ string t_py_generator::render_fastbinary_includes() {
   } else {
     hdr += "from thrift.transport import TTransport\n"
            "from thrift.protocol import TBinaryProtocol, TProtocol\n"
-           "try:\n"
-           "  from thrift.protocol import fastbinary\n"
-           "except:\n"
-           "  fastbinary = None\n";
+           "try:\n" +
+           indent_str() + "from thrift.protocol import fastbinary\n"
+           "except:\n" +
+           indent_str() + "fastbinary = None\n";
   }
   return hdr;
 }
@@ -546,7 +550,7 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
-    indent(out) << value->get_integer();
+    out << value->get_integer();
   } else if (type->is_struct() || type->is_xception()) {
     out << type_name(type) << "(**{" << endl;
     indent_up();
@@ -564,11 +568,8 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
       if (field_type == NULL) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
-      out << indent();
-      out << render_const_value(g_type_string, v_iter->first);
-      out << " : ";
-      out << render_const_value(field_type, v_iter->second);
-      out << "," << endl;
+      indent(out) << render_const_value(g_type_string, v_iter->first) << ": "
+          << render_const_value(field_type, v_iter->second) << "," << endl;
     }
     indent_down();
     indent(out) << "})";
@@ -583,11 +584,8 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      out << indent();
-      out << render_const_value(ktype, v_iter->first);
-      out << " : ";
-      out << render_const_value(vtype, v_iter->second);
-      out << "," << endl;
+      indent(out) << render_const_value(ktype, v_iter->first) << ": "
+          << render_const_value(vtype, v_iter->second) << "," << endl;
     }
     indent_down();
     indent(out) << "}";
@@ -616,9 +614,7 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      out << indent();
-      out << render_const_value(etype, *v_iter);
-      out << "," << endl;
+      indent(out) << render_const_value(etype, *v_iter) << "," << endl;
     }
     indent_down();
     if (is_immutable(type) || type->is_set()) {
@@ -755,9 +751,9 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
   } else {
     indent(out) << "thrift_spec = None" << endl;
   }
-  out << endl;
 
   if (members.size() > 0) {
+    out << endl;
     out << indent() << "def __init__(self,";
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -795,31 +791,31 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
     }
 
     indent_down();
-
-    out << endl;
   }
 
   if (is_immutable(tstruct)) {
+    out << endl;
     out << indent() << "def __setattr__(self, *args):" << endl
-        << indent() << "  raise TypeError(\"can't modify immutable instance\")" << endl
+        << indent() << indent_str() << "raise TypeError(\"can't modify immutable instance\")" << endl
         << endl;
     out << indent() << "def __delattr__(self, *args):" << endl
-        << indent() << "  raise TypeError(\"can't modify immutable instance\")" << endl
+        << indent() << indent_str() << "raise TypeError(\"can't modify immutable instance\")" << endl
         << endl;
 
     // Hash all of the members in order, and also hash in the class
     // to avoid collisions for stuff like single-field structures.
     out << indent() << "def __hash__(self):" << endl
-        << indent() << "  return hash(self.__class__) ^ hash((";
+        << indent() << indent_str() << "return hash(self.__class__) ^ hash((";
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       out << "self." << (*m_iter)->get_name() << ", ";
     }
 
-    out << "))" << endl << endl;
+    out << "))" << endl;
   }
 
   if (!gen_dynamic_) {
+    out << endl;
     generate_py_struct_reader(out, tstruct);
     generate_py_struct_writer(out, tstruct);
   }
@@ -828,19 +824,22 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
   // because when raised exceptions are printed to the console, __repr__
   // isn't used. See python bug #5882
   if (is_exception) {
-    out << indent() << "def __str__(self):" << endl << indent() << "  return repr(self)" << endl
-        << endl;
+    out << endl;
+    out << indent() << "def __str__(self):" << endl
+        << indent() << indent_str() << "return repr(self)" << endl;
   }
 
   if (!gen_slots_) {
+    out << endl;
     // Printing utilities so that on the command line thrift
     // structs look pretty like dictionaries
-    out <<
-      indent() << "def __repr__(self):" << endl <<
-      indent() << "  L = ['%s=%r' % (key, value)" << endl <<
-      indent() << "       for key, value in self.__dict__.items()]" << endl <<
-      indent() << "  return '%s(%s)' % (self.__class__.__name__, ', '.join(L))" << endl <<
-      endl;
+    indent(out) << "def __repr__(self):" << endl;
+    indent_up();
+    out << indent() << "L = ['%s=%r' % (key, value)" << endl
+        << indent() << "     for key, value in self.__dict__.items()]" << endl
+        << indent() << "return '%s(%s)' % (self.__class__.__name__, ', '.join(L))" << endl
+        << endl;
+    indent_down();
 
     // Equality and inequality methods that compare by value
     out << indent() << "def __eq__(self, other):" << endl;
@@ -856,24 +855,33 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
     out << indent() << "return not (self == other)" << endl;
     indent_down();
   } else if (!gen_dynamic_) {
+    out << endl;
     // no base class available to implement __eq__ and __repr__ and __ne__ for us
     // so we must provide one that uses __slots__
-    out << indent() << "def __repr__(self):" << endl << indent()
-        << "  L = ['%s=%r' % (key, getattr(self, key))" << endl << indent()
-        << "    for key in self.__slots__]" << endl << indent()
-        << "  return '%s(%s)' % (self.__class__.__name__, ', '.join(L))" << endl << endl;
+    indent(out) << "def __repr__(self):" << endl;
+    indent_up();
+    out << indent() << "L = ['%s=%r' % (key, getattr(self, key))" << endl
+        << indent() << "     for key in self.__slots__]" << endl
+        << indent() << "return '%s(%s)' % (self.__class__.__name__, ', '.join(L))" << endl
+        << endl;
+    indent_down();
 
     // Equality method that compares each attribute by value and type, walking __slots__
-    out << indent() << "def __eq__(self, other):" << endl << indent()
-        << "  if not isinstance(other, self.__class__):" << endl << indent() << "    return False"
-        << endl << indent() << "  for attr in self.__slots__:" << endl << indent()
-        << "    my_val = getattr(self, attr)" << endl << indent()
-        << "    other_val = getattr(other, attr)" << endl << indent()
-        << "    if my_val != other_val:" << endl << indent() << "      return False" << endl
-        << indent() << "  return True" << endl << endl;
+    out << indent() << "def __eq__(self, other):" << endl;
+    indent_up();
+    out << indent() << "if not isinstance(other, self.__class__):" << endl
+        << indent() << indent_str() << "return False" << endl
+        << indent() << "for attr in self.__slots__:" << endl
+        << indent() << indent_str() << "my_val = getattr(self, attr)" << endl
+        << indent() << indent_str() << "other_val = getattr(other, attr)" << endl
+        << indent() << indent_str() << "if my_val != other_val:" << endl
+        << indent() << indent_str() << indent_str() << "return False" << endl
+        << indent() << "return True" << endl
+        << endl;
+    indent_down();
 
-    out << indent() << "def __ne__(self, other):" << endl << indent()
-        << "  return not (self == other)" << endl;
+    out << indent() << "def __ne__(self, other):" << endl
+        << indent() << indent_str() << "return not (self == other)" << endl;
   }
   indent_down();
 }
@@ -947,12 +955,12 @@ void t_py_generator::generate_py_struct_reader(ofstream& out, t_struct* tstruct)
       generate_deserialize_field(out, *f_iter, "self.");
     }
     indent_down();
-    out << indent() << "else:" << endl << indent() << "  iprot.skip(ftype)" << endl;
+    out << indent() << "else:" << endl << indent() << indent_str() << "iprot.skip(ftype)" << endl;
     indent_down();
   }
 
   // In the default case we skip the field
-  out << indent() << "else:" << endl << indent() << "  iprot.skip(ftype)" << endl;
+  out << indent() << "else:" << endl << indent() << indent_str() << "iprot.skip(ftype)" << endl;
 
   // Read field end marker
   indent(out) << "iprot.readFieldEnd()" << endl;
@@ -1036,13 +1044,13 @@ void t_py_generator::generate_py_struct_required_validator(ofstream& out, t_stru
       t_field* field = (*f_iter);
       if (field->get_req() == t_field::T_REQUIRED) {
         indent(out) << "if self." << field->get_name() << " is None:" << endl;
-        indent(out) << "  raise TProtocol.TProtocolException(message='Required field "
+        indent(out) << indent_str() << "raise TProtocol.TProtocolException(message='Required field "
                     << field->get_name() << " is unset!')" << endl;
       }
     }
   }
 
-  indent(out) << "return" << endl << endl;
+  indent(out) << "return" << endl;
   indent_down();
 }
 
@@ -1075,7 +1083,6 @@ void t_py_generator::generate_service(t_service* tservice) {
   } else if (gen_tornado_) {
     f_service_ << "from tornado import gen" << endl;
     f_service_ << "from tornado import concurrent" << endl;
-    f_service_ << "from thrift.transport import TTransport" << endl;
   }
 
   // Generate the three main parts of the service
@@ -1199,7 +1206,8 @@ void t_py_generator::generate_service_client(t_service* tservice) {
   f_service_ << endl << endl;
 
   if (gen_twisted_) {
-    f_service_ << "class Client" << extends_client << ":" << endl << "  implements(Iface)" << endl
+    f_service_ << "class Client" << extends_client << ":" << endl
+               << indent_str() << "implements(Iface)" << endl
                << endl;
   } else {
     f_service_ << "class Client(" << extends_client << "Iface):" << endl;
@@ -1216,62 +1224,72 @@ void t_py_generator::generate_service_client(t_service* tservice) {
   } else {
     f_service_ << indent() << "def __init__(self, iprot, oprot=None):" << endl;
   }
+  indent_up();
   if (extends.empty()) {
     if (gen_twisted_) {
-      f_service_ << indent() << "  self._transport = transport" << endl << indent()
-                 << "  self._oprot_factory = oprot_factory" << endl << indent()
-                 << "  self._seqid = 0" << endl << indent() << "  self._reqs = {}" << endl;
+      f_service_ << indent() << "self._transport = transport" << endl
+                 << indent() << "self._oprot_factory = oprot_factory" << endl
+                 << indent() << "self._seqid = 0" << endl
+                 << indent() << "self._reqs = {}" << endl;
     } else if (gen_tornado_) {
-      f_service_ << indent() << "  self._transport = transport" << endl << indent()
-                 << "  self._iprot_factory = iprot_factory" << endl << indent()
-                 << "  self._oprot_factory = (oprot_factory if oprot_factory is not None" << endl
-                 << indent() << "                         else iprot_factory)" << endl << indent()
-                 << "  self._seqid = 0" << endl << indent() << "  self._reqs = {}" << endl
-                 << indent() << "  self._transport.io_loop.spawn_callback(self._start_receiving)"
+      f_service_ << indent() << "self._transport = transport" << endl
+                 << indent() << "self._iprot_factory = iprot_factory" << endl
+                 << indent() << "self._oprot_factory = (oprot_factory if oprot_factory is not None"
+                 << endl
+                 << indent() << "                       else iprot_factory)" << endl
+                 << indent() << "self._seqid = 0" << endl
+                 << indent() << "self._reqs = {}" << endl
+                 << indent() << "self._transport.io_loop.spawn_callback(self._start_receiving)"
                  << endl;
     } else {
-      f_service_ << indent() << "  self._iprot = self._oprot = iprot" << endl << indent()
-                 << "  if oprot is not None:" << endl << indent() << "    self._oprot = oprot"
-                 << endl << indent() << "  self._seqid = 0" << endl;
+      f_service_ << indent() << "self._iprot = self._oprot = iprot" << endl
+                 << indent() << "if oprot is not None:" << endl
+                 << indent() << indent_str() << "self._oprot = oprot" << endl
+                 << indent() << "self._seqid = 0" << endl;
     }
   } else {
     if (gen_twisted_) {
-      f_service_ << indent() << "  " << extends
+      f_service_ << indent() << extends
                  << ".Client.__init__(self, transport, oprot_factory)" << endl;
     } else if (gen_tornado_) {
-      f_service_ << indent() << "  " << extends
+      f_service_ << indent() << extends
                  << ".Client.__init__(self, transport, iprot_factory, oprot_factory)" << endl;
     } else {
-      f_service_ << indent() << "  " << extends << ".Client.__init__(self, iprot, oprot)" << endl;
+      f_service_ << indent() << extends << ".Client.__init__(self, iprot, oprot)" << endl;
     }
   }
+  indent_down();
 
   if (gen_tornado_ && extends.empty()) {
     f_service_ << endl <<
       indent() << "@gen.engine" << endl <<
-      indent() << "def _start_receiving(self):" << endl <<
-      indent() << "  while True:" << endl <<
-      indent() << "    try:" << endl <<
-      indent() << "      frame = yield self._transport.readFrame()" << endl <<
-      indent() << "    except TTransport.TTransportException as e:" << endl <<
-      indent() << "      for future in self._reqs.values():" << endl <<
-      indent() << "        future.set_exception(e)" << endl <<
-      indent() << "      self._reqs = {}" << endl <<
-      indent() << "      return" << endl <<
-      indent() << "    tr = TTransport.TMemoryBuffer(frame)" << endl <<
-      indent() << "    iprot = self._iprot_factory.getProtocol(tr)" << endl <<
-      indent() << "    (fname, mtype, rseqid) = iprot.readMessageBegin()" << endl <<
-      indent() << "    method = getattr(self, 'recv_' + fname)" << endl <<
-      indent() << "    future = self._reqs.pop(rseqid, None)" << endl <<
-      indent() << "    if not future:" << endl <<
-      indent() << "      # future has already been discarded" << endl <<
-      indent() << "      continue" << endl <<
-      indent() << "    try:" << endl <<
-      indent() << "      result = method(iprot, mtype, rseqid)" << endl <<
-      indent() << "    except Exception as e:" << endl <<
-      indent() << "      future.set_exception(e)" << endl <<
-      indent() << "    else:" << endl <<
-      indent() << "      future.set_result(result)" << endl;
+      indent() << "def _start_receiving(self):" << endl;
+    indent_up();
+    indent(f_service_) << "while True:" << endl;
+    indent_up();
+    f_service_ << indent() << "try:" << endl
+               << indent() << indent_str() << "frame = yield self._transport.readFrame()" << endl
+               << indent() << "except TTransport.TTransportException as e:" << endl
+               << indent() << indent_str() << "for future in self._reqs.values():" << endl
+               << indent() << indent_str() << indent_str() << "future.set_exception(e)" << endl
+               << indent() << indent_str() << "self._reqs = {}" << endl
+               << indent() << indent_str() << "return" << endl
+               << indent() << "tr = TTransport.TMemoryBuffer(frame)" << endl
+               << indent() << "iprot = self._iprot_factory.getProtocol(tr)" << endl
+               << indent() << "(fname, mtype, rseqid) = iprot.readMessageBegin()" << endl
+               << indent() << "method = getattr(self, 'recv_' + fname)" << endl
+               << indent() << "future = self._reqs.pop(rseqid, None)" << endl
+               << indent() << "if not future:" << endl
+               << indent() << indent_str() << "# future has already been discarded" << endl
+               << indent() << indent_str() << "continue" << endl
+               << indent() << "try:" << endl
+               << indent() << indent_str() << "result = method(iprot, mtype, rseqid)" << endl
+               << indent() << "except Exception as e:" << endl
+               << indent() << indent_str() << "future.set_exception(e)" << endl
+               << indent() << "else:" << endl
+               << indent() << indent_str() << "future.set_result(result)" << endl;
+    indent_down();
+    indent_down();
   }
 
   // Generate client method implementations
@@ -1433,17 +1451,17 @@ void t_py_generator::generate_service_client(t_service* tservice) {
                    << "(fname, mtype, rseqid) = iprot.readMessageBegin()" << endl;
       }
 
-      f_service_ << indent() << "if mtype == TMessageType.EXCEPTION:" << endl << indent()
-                 << "  x = TApplicationException()" << endl;
+      f_service_ << indent() << "if mtype == TMessageType.EXCEPTION:" << endl
+                 << indent() << indent_str() << "x = TApplicationException()" << endl;
 
       if (gen_twisted_) {
-        f_service_ << indent() << "  x.read(iprot)" << endl << indent()
-                   << "  iprot.readMessageEnd()" << endl << indent() << "  return d.errback(x)"
+        f_service_ << indent() << indent_str() << "x.read(iprot)" << endl << indent()
+                   << indent_str() << "iprot.readMessageEnd()" << endl << indent() << indent_str() << "return d.errback(x)"
                    << endl << indent() << "result = " << resultname << "()" << endl << indent()
                    << "result.read(iprot)" << endl << indent() << "iprot.readMessageEnd()" << endl;
       } else {
-        f_service_ << indent() << "  x.read(iprot)" << endl << indent()
-                   << "  iprot.readMessageEnd()" << endl << indent() << "  raise x" << endl
+        f_service_ << indent() << indent_str() << "x.read(iprot)" << endl << indent()
+                   << indent_str() << "iprot.readMessageEnd()" << endl << indent() << indent_str() << "raise x" << endl
                    << indent() << "result = " << resultname << "()" << endl << indent()
                    << "result.read(iprot)" << endl << indent() << "iprot.readMessageEnd()" << endl;
       }
@@ -1452,9 +1470,9 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_ << indent() << "if result.success is not None:" << endl;
         if (gen_twisted_) {
-          f_service_ << indent() << "  return d.callback(result.success)" << endl;
+          f_service_ << indent() << indent_str() << "return d.callback(result.success)" << endl;
         } else {
-          f_service_ << indent() << "  return result.success" << endl;
+          f_service_ << indent() << indent_str() << "return result.success" << endl;
         }
       }
 
@@ -1464,10 +1482,10 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ << indent() << "if result." << (*x_iter)->get_name() << " is not None:" << endl;
         if (gen_twisted_) {
-          f_service_ << indent() << "  return d.errback(result." << (*x_iter)->get_name() << ")"
+          f_service_ << indent() << indent_str() << "return d.errback(result." << (*x_iter)->get_name() << ")"
                      << endl;
         } else {
-          f_service_ << indent() << "  raise result." << (*x_iter)->get_name() << "" << endl;
+          f_service_ << indent() << indent_str() << "raise result." << (*x_iter)->get_name() << "" << endl;
         }
       }
 
@@ -1525,9 +1543,9 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     "import sys" << endl <<
     "import pprint" << endl <<
     "if sys.version_info[0] > 2:" << endl <<
-    "  from urllib.parse import urlparse" << endl <<
+    indent_str() << "from urllib.parse import urlparse" << endl <<
     "else:" << endl <<
-    "  from urlparse import urlparse" << endl <<
+    indent_str() << "from urlparse import urlparse" << endl <<
     "from thrift.transport import TTransport" << endl <<
     "from thrift.transport import TSocket" << endl <<
     "from thrift.transport import TSSLSocket" << endl <<
@@ -1542,12 +1560,12 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
 
   f_remote <<
     "if len(sys.argv) <= 1 or sys.argv[1] == '--help':" << endl <<
-    "  print('')" << endl <<
-    "  print('Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] [-s[sl]] function [arg1 [arg2...]]')" << endl <<
-    "  print('')" << endl <<
-    "  print('Functions:')" << endl;
+    indent_str() << "print('')" << endl <<
+    indent_str() << "print('Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] [-s[sl]] function [arg1 [arg2...]]')" << endl <<
+    indent_str() << "print('')" << endl <<
+    indent_str() << "print('Functions:')" << endl;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    f_remote << "  print('  " << (*f_iter)->get_returntype()->get_name() << " "
+    f_remote << indent_str() << "print('  " << (*f_iter)->get_returntype()->get_name() << " "
              << (*f_iter)->get_name() << "(";
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const std::vector<t_field*>& args = arg_struct->get_members();
@@ -1564,33 +1582,63 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     }
     f_remote << ")')" << endl;
   }
-  f_remote << "  print('')" << endl << "  sys.exit(0)" << endl << endl;
+  f_remote << indent_str() << "print('')" << endl << indent_str() << "sys.exit(0)" << endl << endl;
 
-  f_remote << "pp = pprint.PrettyPrinter(indent = 2)" << endl << "host = 'localhost'" << endl
-           << "port = 9090" << endl << "uri = ''" << endl << "framed = False" << endl
-           << "ssl = False" << endl << "http = False" << endl << "argi = 1" << endl << endl
-           << "if sys.argv[argi] == '-h':" << endl << "  parts = sys.argv[argi+1].split(':')"
-           << endl << "  host = parts[0]" << endl << "  if len(parts) > 1:" << endl
-           << "    port = int(parts[1])" << endl << "  argi += 2" << endl << endl
-           << "if sys.argv[argi] == '-u':" << endl << "  url = urlparse(sys.argv[argi+1])" << endl
-           << "  parts = url[1].split(':')" << endl << "  host = parts[0]" << endl
-           << "  if len(parts) > 1:" << endl << "    port = int(parts[1])" << endl
-           << "  else:" << endl << "    port = 80" << endl << "  uri = url[2]" << endl
-           << "  if url[4]:" << endl << "    uri += '?%s' % url[4]" << endl << "  http = True"
-           << endl << "  argi += 2" << endl << endl
+  f_remote << "pp = pprint.PrettyPrinter(indent=2)" << endl
+           << "host = 'localhost'" << endl
+           << "port = 9090" << endl
+           << "uri = ''" << endl
+           << "framed = False" << endl
+           << "ssl = False" << endl
+           << "http = False" << endl
+           << "argi = 1" << endl
+           << endl
+           << "if sys.argv[argi] == '-h':" << endl
+           << indent_str() << "parts = sys.argv[argi + 1].split(':')" << endl
+           << indent_str() << "host = parts[0]" << endl
+           << indent_str() << "if len(parts) > 1:" << endl
+           << indent_str() << indent_str() << "port = int(parts[1])" << endl
+           << indent_str() << "argi += 2" << endl
+           << endl
+           << "if sys.argv[argi] == '-u':" << endl
+           << indent_str() << "url = urlparse(sys.argv[argi + 1])" << endl
+           << indent_str() << "parts = url[1].split(':')" << endl
+           << indent_str() << "host = parts[0]" << endl
+           << indent_str() << "if len(parts) > 1:" << endl
+           << indent_str() << indent_str() << "port = int(parts[1])" << endl
+           << indent_str() << "else:" << endl
+           << indent_str() << indent_str() << "port = 80" << endl
+           << indent_str() << "uri = url[2]" << endl
+           << indent_str() << "if url[4]:" << endl
+           << indent_str() << indent_str() << "uri += '?%s' % url[4]" << endl
+           << indent_str() << "http = True" << endl
+           << indent_str() << "argi += 2" << endl
+           << endl
            << "if sys.argv[argi] == '-f' or sys.argv[argi] == '-framed':" << endl
-           << "  framed = True" << endl << "  argi += 1" << endl << endl
-           << "if sys.argv[argi] == '-s' or sys.argv[argi] == '-ssl':" << endl << "  ssl = True"
-           << endl << "  argi += 1" << endl << endl << "cmd = sys.argv[argi]" << endl
-           << "args = sys.argv[argi+1:]" << endl << endl << "if http:" << endl
-           << "  transport = THttpClient.THttpClient(host, port, uri)" << endl << "else:" << endl
-           << "  socket = TSSLSocket.TSSLSocket(host, port, validate=False) if ssl else "
-              "TSocket.TSocket(host, port)" << endl << "  if framed:" << endl
-           << "    transport = TTransport.TFramedTransport(socket)" << endl << "  else:" << endl
-           << "    transport = TTransport.TBufferedTransport(socket)" << endl
+           << indent_str() << "framed = True" << endl
+           << indent_str() << "argi += 1" << endl
+           << endl
+           << "if sys.argv[argi] == '-s' or sys.argv[argi] == '-ssl':" << endl
+           << indent_str() << "ssl = True" << endl
+           << indent_str() << "argi += 1" << endl
+           << endl
+           << "cmd = sys.argv[argi]" << endl
+           << "args = sys.argv[argi + 1:]" << endl
+           << endl
+           << "if http:" << endl
+           << indent_str() << "transport = THttpClient.THttpClient(host, port, uri)" << endl
+           << "else:" << endl
+           << indent_str() << "socket = TSSLSocket.TSSLSocket(host, port, validate=False) if ssl else "
+              "TSocket.TSocket(host, port)"
+           << endl
+           << indent_str() << "if framed:" << endl
+           << indent_str() << indent_str() << "transport = TTransport.TFramedTransport(socket)" << endl
+           << indent_str() << "else:" << endl
+           << indent_str() << indent_str() << "transport = TTransport.TBufferedTransport(socket)" << endl
            << "protocol = TBinaryProtocol.TBinaryProtocol(transport)" << endl
-           << "client = " << service_name_ << ".Client(protocol)" << endl << "transport.open()"
-           << endl << endl;
+           << "client = " << service_name_ << ".Client(protocol)" << endl
+           << "transport.open()" << endl
+           << endl;
 
   // Generate the dispatch methods
   bool first = true;
@@ -1607,11 +1655,20 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     vector<t_field*>::const_iterator a_iter;
     std::vector<t_field*>::size_type num_args = args.size();
 
-    f_remote << "if cmd == '" << (*f_iter)->get_name() << "':" << endl
-             << "  if len(args) != " << num_args << ":" << endl << "    print('"
-             << (*f_iter)->get_name() << " requires " << num_args << " args')" << endl
-             << "    sys.exit(1)" << endl << "  pp.pprint(client." << (*f_iter)->get_name() << "(";
+    f_remote << "if cmd == '" << (*f_iter)->get_name() << "':" << endl;
+    indent_up();
+    f_remote << indent() << "if len(args) != " << num_args << ":" << endl
+             << indent() << indent_str() << "print('" << (*f_iter)->get_name() << " requires " << num_args
+             << " args')" << endl
+             << indent() << indent_str() << "sys.exit(1)" << endl
+             << indent() << "pp.pprint(client." << (*f_iter)->get_name() << "(";
+    indent_down();
+    bool first_arg = true;
     for (std::vector<t_field*>::size_type i = 0; i < num_args; ++i) {
+      if (first_arg)
+        first_arg = false;
+      else
+        f_remote << " ";
       if (args[i]->get_type()->is_string()) {
         f_remote << "args[" << i << "],";
       } else {
@@ -1625,8 +1682,8 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
 
   if (functions.size() > 0) {
     f_remote << "else:" << endl;
-    f_remote << "  print('Unrecognized method %s' % cmd)" << endl;
-    f_remote << "  sys.exit(1)" << endl;
+    f_remote << indent_str() << "print('Unrecognized method %s' % cmd)" << endl;
+    f_remote << indent_str() << "sys.exit(1)" << endl;
     f_remote << endl;
   }
 
@@ -1670,7 +1727,7 @@ void t_py_generator::generate_service_server(t_service* tservice) {
   // Generate the header portion
   if (gen_twisted_) {
     f_service_ << "class Processor(" << extends_processor << "TProcessor):" << endl
-               << "  implements(Iface)" << endl << endl;
+               << indent_str() << "implements(Iface)" << endl << endl;
   } else {
     f_service_ << "class Processor(" << extends_processor << "Iface, TProcessor):" << endl;
   }
@@ -1710,27 +1767,34 @@ void t_py_generator::generate_service_server(t_service* tservice) {
   // TODO(mcslee): validate message
 
   // HOT: dictionary function lookup
-  f_service_ << indent() << "if name not in self._processMap:" << endl << indent()
-             << "  iprot.skip(TType.STRUCT)" << endl << indent() << "  iprot.readMessageEnd()"
-             << endl << indent()
-             << "  x = TApplicationException(TApplicationException.UNKNOWN_METHOD, 'Unknown "
-                "function %s' % (name))" << endl << indent()
-             << "  oprot.writeMessageBegin(name, TMessageType.EXCEPTION, seqid)" << endl << indent()
-             << "  x.write(oprot)" << endl << indent() << "  oprot.writeMessageEnd()" << endl
-             << indent() << "  oprot.trans.flush()" << endl;
+  f_service_ << indent() << "if name not in self._processMap:" << endl;
+  indent_up();
+  f_service_ << indent() << "iprot.skip(TType.STRUCT)" << endl
+             << indent() << "iprot.readMessageEnd()" << endl
+             << indent()
+             << "x = TApplicationException(TApplicationException.UNKNOWN_METHOD, 'Unknown "
+                "function %s' % (name))"
+             << endl
+             << indent() << "oprot.writeMessageBegin(name, TMessageType.EXCEPTION, seqid)" << endl
+             << indent() << "x.write(oprot)" << endl
+             << indent() << "oprot.writeMessageEnd()" << endl
+             << indent() << "oprot.trans.flush()" << endl;
 
   if (gen_twisted_) {
-    f_service_ << indent() << "  return defer.succeed(None)" << endl;
+    f_service_ << indent() << "return defer.succeed(None)" << endl;
   } else {
-    f_service_ << indent() << "  return" << endl;
+    f_service_ << indent() << "return" << endl;
   }
+  indent_down();
 
   f_service_ << indent() << "else:" << endl;
 
   if (gen_twisted_ || gen_tornado_) {
-    f_service_ << indent() << "  return self._processMap[name](self, seqid, iprot, oprot)" << endl;
+    f_service_ << indent() << indent_str()
+               << "return self._processMap[name](self, seqid, iprot, oprot)" << endl;
   } else {
-    f_service_ << indent() << "  self._processMap[name](self, seqid, iprot, oprot)" << endl;
+    f_service_ << indent() << indent_str() << "self._processMap[name](self, seqid, iprot, oprot)"
+               << endl;
 
     // Read end of args field, the T_STOP, and the struct close
     f_service_ << indent() << "return True" << endl;
@@ -1831,17 +1895,17 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
                << endl << indent() << "oprot.writeMessageEnd()" << endl << indent()
                << "oprot.trans.flush()" << endl;
     indent_down();
-    f_service_ << endl;
 
     // Try block for a function with exceptions
     if (!tfunction->is_oneway() && xceptions.size() > 0) {
+      f_service_ << endl;
       indent(f_service_) << "def write_results_exception_" << tfunction->get_name()
                          << "(self, error, result, seqid, oprot):" << endl;
       indent_up();
       f_service_ << indent() << "try:" << endl;
 
       // Kinda absurd
-      f_service_ << indent() << "  error.raiseException()" << endl;
+      f_service_ << indent() << indent_str() << "error.raiseException()" << endl;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
           indent() << "except " << type_name((*x_iter)->get_type()) << " as " << (*x_iter)->get_name() << ":" << endl;
@@ -1859,34 +1923,9 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
                  << endl << indent() << "oprot.writeMessageEnd()" << endl << indent()
                  << "oprot.trans.flush()" << endl;
       indent_down();
-      f_service_ << endl;
     }
 
   } else if (gen_tornado_) {
-    /*
-    if (!tfunction->is_oneway() && xceptions.size() > 0) {
-      f_service_ <<
-        endl <<
-        indent() << "def handle_exception(xtype, value, traceback):" << endl;
-
-      for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-        f_service_ <<
-          indent() << "  if xtype == " << type_name((*x_iter)->get_type()) << ":" << endl;
-        if (!tfunction->is_oneway()) {
-          f_service_ <<
-            indent() << "    result." << (*x_iter)->get_name() << " = value" << endl;
-        }
-        f_service_ <<
-          indent() << "    return True" << endl;
-      }
-
-      f_service_ <<
-        endl <<
-        indent() << "try:" << endl;
-      indent_up();
-    }
-    */
-
     // TODO: Propagate arbitrary exception raised by handler to client as does plain "py"
 
     // Generate the function call
@@ -1939,7 +1978,6 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
 
     // Close function
     indent_down();
-    f_service_ << endl;
 
   } else { // py
     // Try block for a function with exceptions
@@ -1974,7 +2012,7 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
     indent_down();
     f_service_ << indent()
                << "except (TTransport.TTransportException, KeyboardInterrupt, SystemExit):" << endl
-               << indent() << "  raise" << endl;
+               << indent() << indent_str() << "raise" << endl;
 
     if (!tfunction->is_oneway()) {
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
@@ -1992,10 +2030,10 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
       }
 
       f_service_ << indent() << "except Exception as ex:" << endl
-                 << indent() << "  msg_type = TMessageType.EXCEPTION" << endl
-                 << indent() << "  logging.exception(ex)" << endl
+                 << indent() << indent_str() << "msg_type = TMessageType.EXCEPTION" << endl
+                 << indent() << indent_str() << "logging.exception(ex)" << endl
                  << indent()
-                 << "  result = TApplicationException(TApplicationException.INTERNAL_ERROR, "
+                 << indent_str() << "result = TApplicationException(TApplicationException.INTERNAL_ERROR, "
                     "'Internal error')" << endl
                  << indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name()
                  << "\", msg_type, seqid)" << endl
@@ -2004,7 +2042,7 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
                  << indent() << "oprot.trans.flush()" << endl;
     } else {
       f_service_ << indent() << "except:" << endl
-                 << indent() << "  pass" << endl;
+                 << indent() << indent_str() << "pass" << endl;
     }
 
     // Close function
