@@ -94,7 +94,7 @@ function testBasicClient(rawArgs)
 
   -- Bool
   assertEqual(client:testBool(true), true, 'Failed testBool true')
-  -- assertEqual(client:testBool(false), false, 'Failed testBool false')
+  assertEqual(client:testBool(false), false, 'Failed testBool false')
 
   -- Byte
   assertEqual(client:testByte(0x01), 1,    'Failed testByte 1')
