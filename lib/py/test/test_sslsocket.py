@@ -41,7 +41,7 @@ CLIENT_KEY = os.path.join(ROOT_DIR, 'test', 'keys', 'client.key')
 TEST_PORT = 23458
 TEST_ADDR = '/tmp/.thrift.domain.sock.%d' % TEST_PORT
 CONNECT_DELAY = 0.5
-CONNECT_TIMEOUT = 10.0
+CONNECT_TIMEOUT = 20.0
 TEST_CIPHERS = 'DES-CBC3-SHA'
 
 
@@ -72,19 +72,21 @@ class AssertRaises(object):
 
 class TSSLSocketTest(unittest.TestCase):
     def _assert_connection_failure(self, server, client):
+        acc = ServerAcceptor(server)
         try:
-            acc = ServerAcceptor(server)
             acc.start()
-            time.sleep(CONNECT_DELAY)
-            client.setTimeout(CONNECT_TIMEOUT)
+            time.sleep(CONNECT_DELAY / 2)
+            client.setTimeout(CONNECT_TIMEOUT / 2)
             with self._assert_raises(Exception):
                 client.open()
-                select.select([], [client.handle], [], CONNECT_TIMEOUT)
+                select.select([], [client.handle], [], CONNECT_TIMEOUT / 2)
             # self.assertIsNone(acc.client)
             self.assertTrue(acc.client is None)
         finally:
-            server.close()
             client.close()
+            if acc.client:
+                acc.client.close()
+            server.close()
 
     def _assert_raises(self, exc):
         if sys.hexversion >= 0x020700F0:
@@ -93,18 +95,20 @@ class TSSLSocketTest(unittest.TestCase):
             return AssertRaises(exc)
 
     def _assert_connection_success(self, server, client):
+        acc = ServerAcceptor(server)
         try:
-            acc = ServerAcceptor(server)
             acc.start()
-            time.sleep(0.15)
+            time.sleep(CONNECT_DELAY)
             client.setTimeout(CONNECT_TIMEOUT)
             client.open()
             select.select([], [client.handle], [], CONNECT_TIMEOUT)
             # self.assertIsNotNone(acc.client)
             self.assertTrue(acc.client is not None)
         finally:
-            server.close()
             client.close()
+            if acc.client:
+                acc.client.close()
+            server.close()
 
     # deprecated feature
     def test_deprecation(self):
