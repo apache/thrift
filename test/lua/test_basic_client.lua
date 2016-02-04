@@ -84,8 +84,8 @@ function testBasicClient(rawArgs)
   }
   assert(client, 'Failed to create client')
 
-  -- Open the socket
-  local status, _ = pcall(socket.open, socket)
+  -- Open the transport
+  local status, _ = pcall(transport.open, transport)
   assert(status, 'Failed to connect to server')
 
   -- String
