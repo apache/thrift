@@ -62,14 +62,10 @@ func doUnit(t *testing.T, unit *test_unit) {
 
 	server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
 	if err = server.Listen(); err != nil {
-		return
-	}
-	go server.AcceptLoop()
-	server.Serve()
-	if err != nil {
 		t.Errorf("Unable to start server", err)
 		t.FailNow()
 	}
+	go server.AcceptLoop()
 	defer server.Stop()
 	client, err := StartClient(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl)
 	if err != nil {
