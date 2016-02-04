@@ -125,12 +125,10 @@
   "perl-perl_binary_framed-ip-ssl",
   "perl-php_binary_framed-ip",
   "py-cpp_compact_buffered-ip",
-  "py-lua_accel-binary_buffered-ip",
   "py-perl_accel-binary_buffered-ip-ssl",
   "py-perl_accel-binary_framed-ip-ssl",
   "py-perl_binary_buffered-ip-ssl",
   "py-perl_binary_framed-ip-ssl",
   "py3-perl_binary_buffered-ip-ssl",
-  "py3-perl_binary_framed-ip-ssl",
-  "rb-lua_accel-binary_buffered-ip"
+  "py3-perl_binary_framed-ip-ssl"
 ]
