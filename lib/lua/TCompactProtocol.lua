@@ -20,6 +20,7 @@
 require 'TProtocol'
 require 'libluabpack'
 require 'libluabitwise'
+require 'liblualongnumber'
 
 TCompactProtocol = __TObject.new(TProtocolBase, {
   __type = 'TCompactProtocol',
@@ -175,6 +176,7 @@ function TCompactProtocol:writeBool(bool)
   if bool then
     value = TCompactType.COMPACT_BOOLEAN_TRUE
   end
+  print(value,self.booleanFieldPending,self.booleanFieldId)
   if self.booleanFieldPending then
     self:writeFieldBeginInternal(self.booleanFieldName, TType.BOOL, self.booleanFieldId, value)
     self.booleanFieldPending = false
@@ -252,12 +254,12 @@ function TCompactProtocol:writeVarint64(i64)
 end
 
 function TCompactProtocol:readMessageBegin()
-  local protocolId = self:readByte()
+  local protocolId = self:readSignByte()
   if protocolId ~= self.COMPACT_PROTOCOL_ID then
     terror(TProtocolException:new{
       message = "Expected protocol id " .. self.COMPACT_PROTOCOL_ID .. " but got " .. protocolId})
   end
-  local versionAndType = self:readByte()
+  local versionAndType = self:readSignByte()
   local version = libluabitwise.band(versionAndType, self.COMPACT_VERSION_MASK)
   local ttype = libluabitwise.band(libluabitwise.shiftr(versionAndType,
     self.COMPACT_TYPE_SHIFT_AMOUNT), self.COMPACT_TYPE_BITS)
@@ -286,7 +288,7 @@ function TCompactProtocol:readStructEnd()
 end
 
 function TCompactProtocol:readFieldBegin()
-  local field_and_ttype = self:readByte()
+  local field_and_ttype = self:readSignByte()
   local ttype = self:getTType(field_and_ttype)
   if ttype == TType.STOP then
     return nil, ttype, 0
@@ -315,7 +317,7 @@ function TCompactProtocol:readMapBegin()
   if size < 0 then
     return nil,nil,nil
   end
-  local kvtype = self:readByte()
+  local kvtype = self:readSignByte()
   local ktype = self:getTType(libluabitwise.shiftr(kvtype, 4))
   local vtype = self:getTType(kvtype)
   return ktype, vtype, size
@@ -325,7 +327,7 @@ function TCompactProtocol:readMapEnd()
 end
 
 function TCompactProtocol:readListBegin()
-  local size_and_type = self:readByte()
+  local size_and_type = self:readSignByte()
   local size = libluabitwise.band(libluabitwise.shiftr(size_and_type, 4), 0x0f)
   if size == 15 then
     size = self:readVarint32()
@@ -352,7 +354,7 @@ function TCompactProtocol:readBool()
     boolValueIsNotNull = true
     return boolValue
   end
-  local val = self:readByte()
+  local val = self:readSignByte()
   if val == TCompactType.COMPACT_BOOLEAN_TRUE then
     return true
   end
@@ -361,13 +363,13 @@ end
 
 function TCompactProtocol:readByte()
   local buff = self.trans:readAll(1)
-  local val = libluabpack.bunpack('C', buff)
+  local val = libluabpack.bunpack('c', buff)
   return val
 end
 
 function TCompactProtocol:readSignByte()
   local buff = self.trans:readAll(1)
-  local val = libluabpack.bunpack('c', buff)
+  local val = libluabpack.bunpack('C', buff)
   return val
 end
 
@@ -382,8 +384,7 @@ function TCompactProtocol:readI32()
 end
 
 function TCompactProtocol:readI64()
-  local v = self:readVarint64()
-  local value = libluabpack.zigzagToI64(v)
+  local value = self:readVarint64()
   return value
 end
 
@@ -406,10 +407,6 @@ function TCompactProtocol:readBinary()
 end
 
 function TCompactProtocol:readVarint32()
-  return self:readVarint64()
-end
-
-function TCompactProtocol:readVarint64()
   local shiftl = 0
   local result = 0
   while true do
@@ -422,6 +419,21 @@ function TCompactProtocol:readVarint64()
     shiftl = shiftl + 7
   end
   return result
+end
+
+function TCompactProtocol:readVarint64()
+  local result = liblualongnumber.new
+  local data = result(0)
+  local shiftl = 0
+  while true do
+    b = self:readByte()
+    endFlag, data = libluabpack.fromVarint64(b, shiftl, data)
+    shiftl = shiftl + 7
+    if endFlag == 0 then
+      break
+    end
+  end
+  return data
 end
 
 function TCompactProtocol:getTType(ctype)
