@@ -37,7 +37,7 @@ function TBufferedTransport:new(obj)
     error('You must provide ' .. ttype(self) .. ' with a trans')
   end
 
-  return TTransportBase:new(obj)
+  return TTransportBase.new(self, obj)
 end
 
 function TBufferedTransport:isOpen()
