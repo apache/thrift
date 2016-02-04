@@ -372,6 +372,11 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
         Alternative keyword arguments: (Python 2.7.9 or later)
           ``ssl_context``: ssl.SSLContext to be used for SSLContext.wrap_socket
           ``server_hostname``: Passed to SSLContext.wrap_socket
+
+        Common keyword argument:
+          ``validate_callback`` (cert, hostname) -> None:
+              Called after SSL handshake. Can raise when hostname does not
+              match the cert.
         """
         if args:
             if len(args) > 3:
@@ -389,6 +394,8 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
                 kwargs['certfile'] = 'cert.pem'
 
         unix_socket = kwargs.pop('unix_socket', None)
+        self._validate_callback = \
+            kwargs.pop('validate_callback', match_hostname)
         TSSLBase.__init__(self, True, None, kwargs)
         TSocket.TServerSocket.__init__(self, host, port, unix_socket)
 
@@ -419,6 +426,19 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
             # Instead, return None, and let the TServer instance deal with it in
             # other exception handling.  (but TSimpleServer dies anyway)
             return None
+
+        if self._should_verify:
+            client.peercert = client.getpeercert()
+            try:
+                self._validate_callback(client.peercert, addr[0])
+                client.is_valid = True
+            except Exception:
+                logger.warn('Failed to validate client certificate address',
+                            exc_info=True)
+                client.close()
+                plain_client.close()
+                return None
+
         result = TSocket.TSocket()
         result.setHandle(client)
         return result
