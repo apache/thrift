@@ -609,7 +609,7 @@ void t_lua_generator::generate_service_client(ofstream& out, t_service* tservice
 
       // Return the result if it's not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
-        out << indent() << "if result.success then" << endl << indent() << "  return result.success"
+        out << indent() << "if result.success ~= nil then" << endl << indent() << "  return result.success"
             << endl;
 
         // Throw custom exceptions
