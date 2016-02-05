@@ -269,7 +269,7 @@ sub testStringMap() {
 sub testSet() {
   my $self = shift;
   my $thing = shift;
-  printf "testSet({%s})\n", join(',', keys %$thing);
+  printf "testSet({%s})\n", join(', ', keys %$thing);
   return $thing;
 }
 

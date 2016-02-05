@@ -382,22 +382,23 @@ string t_perl_generator::render_const_value(t_type* type, t_const_value* value) 
     }
 
     out << "}";
-  } else if (type->is_list() || type->is_set()) {
-    t_type* etype;
-    if (type->is_list()) {
-      etype = ((t_list*)type)->get_elem_type();
-    } else {
-      etype = ((t_set*)type)->get_elem_type();
+  } else if (type->is_set()) {
+    t_type* etype = ((t_set*)type)->get_elem_type();
+    out << "{" << endl;
+    const vector<t_const_value*>& val = value->get_list();
+    vector<t_const_value*>::const_iterator v_iter;
+    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+      out << render_const_value(etype, *v_iter);
+      out << " => 1," << endl;
     }
+    out << "}";
+  } else if (type->is_list()) {
+    t_type* etype = ((t_list*)type)->get_elem_type();
     out << "[" << endl;
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-
       out << render_const_value(etype, *v_iter);
-      if (type->is_set()) {
-        out << " => 1";
-      }
       out << "," << endl;
     }
     out << "]";
