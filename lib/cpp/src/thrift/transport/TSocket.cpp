@@ -84,7 +84,7 @@ TSocket::TSocket(string host, int port) :
   sendTimeout_(0),
   recvTimeout_(0),
   keepAlive_(false),
-  lingerOn_(1),
+  lingerOn_(0),
   lingerVal_(0),
   noDelay_(1),
   maxRecvRetries_(5) {
@@ -99,7 +99,7 @@ TSocket::TSocket(string path) :
   sendTimeout_(0),
   recvTimeout_(0),
   keepAlive_(false),
-  lingerOn_(1),
+  lingerOn_(0),
   lingerVal_(0),
   noDelay_(1),
   maxRecvRetries_(5) {
@@ -115,7 +115,7 @@ TSocket::TSocket() :
   sendTimeout_(0),
   recvTimeout_(0),
   keepAlive_(false),
-  lingerOn_(1),
+  lingerOn_(0),
   lingerVal_(0),
   noDelay_(1),
   maxRecvRetries_(5) {
@@ -131,7 +131,7 @@ TSocket::TSocket(THRIFT_SOCKET socket) :
   sendTimeout_(0),
   recvTimeout_(0),
   keepAlive_(false),
-  lingerOn_(1),
+  lingerOn_(0),
   lingerVal_(0),
   noDelay_(1),
   maxRecvRetries_(5) {
