@@ -106,7 +106,7 @@ abstract class AbstractThriftMojo extends AbstractMojo {
      * Since {@code thrift} cannot access jars, thrift files in dependencies are extracted to this location
      * and deleted on exit. This directory is always cleaned during execution.
      *
-     * @parameter property="${project.build.directory}/thrift-dependencies"
+     * @parameter default-value="${project.build.directory}/thrift-dependencies"
      * @required
      */
     private File temporaryThriftFileDirectory;
