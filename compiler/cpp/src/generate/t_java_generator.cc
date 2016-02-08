@@ -3029,7 +3029,8 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
 
     // TAsyncMethod object for this function call
     indent(f_service_) << "public static class " + funclassname
-                          + " extends org.apache.thrift.async.TAsyncMethodCall {" << endl;
+                          + " extends org.apache.thrift.async.TAsyncMethodCall<"
+                          + type_name((*f_iter)->get_returntype(), true) + "> {" << endl;
     indent_up();
 
     // Member variables
@@ -3082,7 +3083,7 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
     indent(f_service_) << "}" << endl << endl;
 
     // Return method
-    indent(f_service_) << "public " + type_name(ret_type) + " getResult() throws ";
+    indent(f_service_) << "public " + type_name(ret_type, true) + " getResult() throws ";
     vector<t_field*>::const_iterator x_iter;
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       f_service_ << type_name((*x_iter)->get_type(), false, false) + ", ";
@@ -3099,12 +3100,11 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
            "org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());" << endl
         << indent() << "org.apache.thrift.protocol.TProtocol prot = "
                        "client.getProtocolFactory().getProtocol(memoryTransport);" << endl;
-    if (!(*f_iter)->is_oneway()) {
-      indent(f_service_);
-      if (!ret_type->is_void()) {
-        f_service_ << "return ";
-      }
-      f_service_ << "(new Client(prot)).recv" + sep + javaname + "();" << endl;
+    indent(f_service_);
+    if (ret_type->is_void()) { // NB: Includes oneways which always return void.
+      f_service_ << "return null;" << endl;
+    } else {
+      f_service_ << "return (new Client(prot)).recv" + sep + javaname + "();" << endl;
     }
 
     // Close function
@@ -4224,7 +4224,8 @@ string t_java_generator::async_function_call_arglist(t_function* tfunc,
   }
 
   if (include_types) {
-    arglist += "org.apache.thrift.async.AsyncMethodCallback ";
+    arglist += "org.apache.thrift.async.AsyncMethodCallback<";
+    arglist += type_name(tfunc->get_returntype(), true) + "> ";
   }
   arglist += "resultHandler";
 
@@ -4279,7 +4280,8 @@ string t_java_generator::async_argument_list(t_function* tfunct,
     result += ", ";
   }
   if (include_types) {
-    result += "org.apache.thrift.async.AsyncMethodCallback ";
+    result += "org.apache.thrift.async.AsyncMethodCallback<";
+    result += type_name(tfunct->get_returntype(), true) + "> ";
   }
   result += "resultHandler";
   return result;
