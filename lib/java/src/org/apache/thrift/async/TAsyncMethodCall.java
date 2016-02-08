@@ -33,11 +33,15 @@ import org.apache.thrift.transport.TNonblockingTransport;
 import org.apache.thrift.transport.TTransportException;
 
 /**
- * Encapsulates an async method call
+ * Encapsulates an async method call.
+ * <p>
  * Need to generate:
- *   - private void write_args(TProtocol protocol)
- *   - public T getResult() throws &lt;Exception_1&gt;, &lt;Exception_2&gt;, ...
- * @param <T>
+ * <ul>
+ *   <li>protected abstract void write_args(TProtocol protocol)</li>
+ *   <li>protected abstract T getResult() throws &lt;Exception_1&gt;, &lt;Exception_2&gt;, ...</li>
+ * </ul>
+ *
+ * @param <T> The return type of the encapsulated method call.
  */
 public abstract class TAsyncMethodCall<T> {
 
@@ -112,6 +116,8 @@ public abstract class TAsyncMethodCall<T> {
   }
 
   protected abstract void write_args(TProtocol protocol) throws TException;
+
+  protected abstract T getResult() throws Exception;
 
   /**
    * Initialize buffers.
@@ -225,8 +231,13 @@ public abstract class TAsyncMethodCall<T> {
     key.interestOps(0);
     // this ensures that the TAsyncMethod instance doesn't hang around
     key.attach(null);
-    client.onComplete();
-    callback.onComplete((T)this);
+    try {
+      T result = this.getResult();
+      client.onComplete();
+      callback.onComplete(result);
+    } catch (Exception e) {
+      onError(e);
+    }
   }
 
   private void doReadingResponseSize() throws IOException {
