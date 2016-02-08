@@ -248,6 +248,8 @@ service Srv {
   void methodWithDefaultArgs(1: i32 something = MYCONST);
 
   oneway void onewayMethod();
+
+  bool declaredExceptionMethod(1: bool shouldThrow) throws (1: ExceptionWithAMap xwamap);
 }
 
 service Inherited extends Srv {
