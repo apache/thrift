@@ -62,6 +62,12 @@ public:
     iter = parsed_options.find("jquery");
     gen_jquery_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("angular");
+    gen_angular_ = (iter != parsed_options.end());
+    if (gen_angular_){
+        gen_angular_appvar = iter->second;
+    }
+
     if (!gen_node_) {
       iter = parsed_options.find("ts");
       gen_ts_ = (iter != parsed_options.end());
@@ -297,6 +303,12 @@ private:
   bool gen_jquery_;
 
   /**
+   * True if we should generate services that use AngularJS $http (async/sync).
+   */
+  bool gen_angular_;
+  string gen_angular_appvar;
+
+  /**
    * True if we should generate a TypeScript Definition File for each service.
    */
   bool gen_ts_;
@@ -313,6 +325,7 @@ private:
   std::ofstream f_service_;
   std::ofstream f_types_ts_;
   std::ofstream f_service_ts_;
+  std::ofstream f_service_angular_;
 };
 
 /**
@@ -953,6 +966,44 @@ void t_js_generator::generate_service(t_service* tservice) {
     f_service_ << "var ttypes = require('./" + program_->get_name() + "_types');" << endl;
   }
 
+
+  if (gen_angular_ && gen_angular_appvar.compare("") != 0) {
+      /*
+       * Generate Angular JS Factory if appvar is provided
+       */
+      std::string f_service_angular_name = get_out_dir() + service_name_ + "_ngprovider.js";
+      f_service_angular_.open(f_service_angular_name.c_str());
+
+      f_service_angular_ << endl;
+      f_service_angular_ << "angular.module('" << gen_angular_appvar << "').provider('"<< service_name_
+                         <<"Client', function " << service_name_ << "ClientProvider(){" << endl;
+      indent_up();
+      // default url derived from service name
+      f_service_angular_ << indent() << "var url = '/"<< service_name_ <<"';" << endl;
+      // add function to change service path before provider usage
+      f_service_angular_ << indent() << "this.setUrl = function(val) {" << endl;
+      indent_up();
+      f_service_angular_ << indent() << "url = val;" << endl;
+      indent_down();
+      f_service_angular_ << indent() << "};" << endl;
+
+      f_service_angular_ << indent() << "this.$get = ['$http', function "<< service_name_
+          <<"ClientFactory($http) {" << endl;
+
+      indent_up();
+      f_service_angular_ << indent() << "var config = {'$http' : $http};" << endl
+          << indent() << "var transport = new Thrift.Transport(url, config);" << endl
+          << indent() << "var protocol = new Thrift.Protocol(transport);" << endl
+          << indent() << "var client = new " << js_namespace(program_) << service_name_
+          << "Client(protocol);" << endl
+          << indent() << "return client;" << endl;
+      indent_down();
+      f_service_angular_ << indent() << "}];" << endl;
+
+      f_service_angular_    << "});" << endl;
+      f_service_angular_.close();
+  }
+
   generate_service_helpers(tservice);
   generate_service_interface(tservice);
   generate_service_client(tservice);
@@ -1367,7 +1418,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
                  << "this.send_" << funname << "(" << arglist << ");" << endl;
       indent_down();
       indent(f_service_) << "}" << endl;
-    } else if (gen_jquery_) { // jQuery output       ./gen-js
+    } else if (gen_jquery_ || gen_angular_) { // jQuery/Anagular output ./gen-js
       f_service_ << indent() << "if (callback === undefined) {" << endl;
       indent_up();
       f_service_ << indent() << "this.send_" << funname << "(" << arglist << ");" << endl;
@@ -1385,8 +1436,15 @@ void t_js_generator::generate_service_client(t_service* tservice) {
                  << (arglist.empty() ? "" : ", ") << "true);" << endl;
       f_service_ << indent() << "return this.output.getTransport()" << endl;
       indent_up();
-      f_service_ << indent() << ".jqRequest(this, postData, arguments, this.recv_" << funname
-                 << ");" << endl;
+
+      if (gen_jquery_) {
+        f_service_ << indent() << ".jqRequest(this, postData, arguments, this.recv_" << funname
+                   << ");" << endl;
+      } else if (gen_angular_) {
+        f_service_ << indent() << ".ngRequest(this, postData, arguments, this.recv_" << funname
+                   << ");" << endl;
+      }
+
       indent_down();
       indent_down();
       f_service_ << indent() << "}" << endl;
@@ -1451,7 +1509,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     if (gen_node_) {
       f_service_ << indent() << "return this.output.flush();" << endl;
     } else {
-      if (gen_jquery_) {
+      if (gen_jquery_ || gen_angular_) {
         f_service_ << indent() << "return this.output.getTransport().flush(callback);" << endl;
       } else {
         f_service_ << indent() << "if (callback) {" << endl;
@@ -2221,6 +2279,8 @@ std::string t_js_generator::make_valid_nodeJs_identifier(std::string const& name
 
 THRIFT_REGISTER_GENERATOR(js,
                           "Javascript",
+                          "    angular:         Generate AngularJS compatible code.\n"
+                          "                     (use angular=appvar to enable factory creation)\n"
                           "    jquery:          Generate jQuery compatible code.\n"
                           "    node:            Generate node.js compatible code.\n"
                           "    ts:              Generate TypeScript definition files.\n")
