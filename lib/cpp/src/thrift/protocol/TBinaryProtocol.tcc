@@ -175,6 +175,17 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeDouble(const double dub)
 }
 
 template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeFloat(const float flt) {
+  BOOST_STATIC_ASSERT(sizeof(float) == sizeof(uint32_t));
+  BOOST_STATIC_ASSERT(std::numeric_limits<float>::is_iec559);
+
+  uint32_t bits = bitwise_cast<uint32_t>(flt);
+  bits = ByteOrder_::toWire32(bits);
+  this->trans_->write((uint8_t*)&bits, 4);
+  return 4;
+}
+
+template <class Transport_, class ByteOrder_>
 template <typename StrType>
 uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeString(const StrType& str) {
   if (str.size() > static_cast<size_t>((std::numeric_limits<int32_t>::max)()))
@@ -399,6 +410,21 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readDouble(double& dub) {
   theBytes.all = ByteOrder_::fromWire64(theBytes.all);
   dub = bitwise_cast<double>(theBytes.all);
   return 8;
+}
+
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readFloat(float& flt) {
+  BOOST_STATIC_ASSERT(sizeof(float) == sizeof(uint32_t));
+  BOOST_STATIC_ASSERT(std::numeric_limits<float>::is_iec559);
+
+  union bytes {
+    uint8_t b[4];
+    uint32_t all;
+  } theBytes;
+  this->trans_->readAll(theBytes.b, 4);
+  theBytes.all = ByteOrder_::fromWire32(theBytes.all);
+  flt = bitwise_cast<float>(theBytes.all);
+  return 4;
 }
 
 template <class Transport_, class ByteOrder_>

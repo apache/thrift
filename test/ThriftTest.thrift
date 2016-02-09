@@ -182,12 +182,19 @@ service ThriftTest
   double       testDouble(1: double thing),
 
   /**
+   * Prints 'testFloat("%f")' with thing as '%f'
+   * @param float thing - the double to print
+   * @return float - returns the float 'thing'
+   */
+  float        testFloat(1: float thing),
+
+  /**
    * Prints 'testBinary("%s")' where '%s' is a hex-formatted string of thing's data
    * @param binary  thing - the binary data to print
-   * @return binary  - returns the binary 'thing'
+   * @return binary  - returns the bingary 'thing'
    */
   binary       testBinary(1: binary thing),
-  
+
   /**
    * Prints 'testStruct("{%s}")' where thing has been formatted into a string of comma separated values
    * @param Xtruct thing - the Xtruct to print

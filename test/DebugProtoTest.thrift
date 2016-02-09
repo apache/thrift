@@ -33,6 +33,17 @@ struct Doubles {
  8: double negzero,
 }
 
+struct Floats {
+ 1: float nan,
+ 2: float inf,
+ 3: float neginf,
+ 4: float repeating,
+ 5: float big,
+ 6: float tiny,
+ 7: float zero,
+ 8: float negzero,
+}
+
 struct OneOfEach {
   1: bool im_true,
   2: bool im_false,
@@ -48,6 +59,8 @@ struct OneOfEach {
   12: list<byte> byte_list = [1, 2, 3],
   13: list<i16> i16_list = [1,2,3],
   14: list<i64> i64_list = [1,2,3]
+  17: float float_precision,
+  18: map<i64, float> rank_map,
 }
 
 struct Bonk {
@@ -164,6 +177,9 @@ struct CompactProtoTestStruct {
   47: map<byte, map<byte,byte>>   byte_map_map;
   48: map<byte, set<byte>>        byte_set_map;
   49: map<byte, list<byte>>       byte_list_map;
+
+  58: list<float>                 float_list;
+  59: map<i16, float>             i16_float_map;
 }
 
 // To be used to test the serialization of an empty map
@@ -187,6 +203,7 @@ const CompactProtoTestStruct COMPACT_TEST = {
   'i32_list'           : [-1, 0, 0xff, 0xffff, 0xffffff, 0x7fffffff],
   'i64_list'           : [-1, 0, 0xff, 0xffff, 0xffffff, 0xffffffff, 0xffffffffff, 0xffffffffffff, 0xffffffffffffff, 0x7fffffffffffffff],
   'double_list'        : [0.1, 0.2, 0.3],
+  'float_list'         : [0.1, 0.2, 0.3],
   'string_list'        : ["first", "second", "third"],
 //'binary_list,'
   'boolean_list'       : [1, 1, 1, 0, 0, 0],
@@ -221,6 +238,7 @@ const CompactProtoTestStruct COMPACT_TEST = {
   'byte_map_map'       : {0 : {}, 1 : {1 : 1}, 2 : {1 : 1, 2 : 2}},
   'byte_set_map'       : {0 : [], 1 : [1], 2 : [1, 2]},
   'byte_list_map'      : {0 : [], 1 : [1], 2 : [1, 2]},
+  'i16_float_map'      : {1 : 2.0},
 }
 
 

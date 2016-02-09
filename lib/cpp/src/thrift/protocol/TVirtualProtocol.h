@@ -157,6 +157,12 @@ public:
                              "this protocol does not support reading (yet).");
   }
 
+  uint32_t readFloat(float& flt) {
+    (void)flt;
+    throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
+                             "this protocol does not support reading (yet).");
+  }
+
   uint32_t readString(std::string& str) {
     (void)str;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
@@ -286,6 +292,12 @@ public:
                              "this protocol does not support writing (yet).");
   }
 
+  uint32_t writeFloat(const float flt) {
+    (void)flt;
+    throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
+                             "this protocol does not support writing (yet).");
+  }
+
   uint32_t writeString(const std::string& str) {
     (void)str;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
@@ -385,6 +397,10 @@ public:
     return static_cast<Protocol_*>(this)->writeDouble(dub);
   }
 
+  virtual uint32_t writeFloat_virt(const float flt) {
+    return static_cast<Protocol_*>(this)->writeFloat(flt);
+  }
+
   virtual uint32_t writeString_virt(const std::string& str) {
     return static_cast<Protocol_*>(this)->writeString(str);
   }
@@ -461,6 +477,10 @@ public:
 
   virtual uint32_t readDouble_virt(double& dub) {
     return static_cast<Protocol_*>(this)->readDouble(dub);
+  }
+
+  virtual uint32_t readFloat_virt(float& flt) {
+    return static_cast<Protocol_*>(this)->readFloat(flt);
   }
 
   virtual uint32_t readString_virt(std::string& str) {

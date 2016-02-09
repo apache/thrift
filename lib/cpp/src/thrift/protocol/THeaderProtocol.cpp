@@ -139,6 +139,10 @@ uint32_t THeaderProtocol::writeDouble(const double dub) {
   return proto_->writeDouble(dub);
 }
 
+uint32_t THeaderProtocol::writeFloat(const float flt) {
+  return proto_->writeFloat(flt);
+}
+
 uint32_t THeaderProtocol::writeString(const std::string& str) {
   return proto_->writeString(str);
 }
@@ -238,6 +242,10 @@ uint32_t THeaderProtocol::readI64(int64_t& i64) {
 
 uint32_t THeaderProtocol::readDouble(double& dub) {
   return proto_->readDouble(dub);
+}
+
+uint32_t THeaderProtocol::readFloat(float& flt) {
+  return proto_->readFloat(flt);
 }
 
 uint32_t THeaderProtocol::readString(std::string& str) {

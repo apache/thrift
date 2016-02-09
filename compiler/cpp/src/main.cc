@@ -76,6 +76,7 @@ t_type* g_type_i16;
 t_type* g_type_i32;
 t_type* g_type_i64;
 t_type* g_type_double;
+t_type* g_type_float;
 
 /**
  * Global scope
@@ -787,6 +788,12 @@ void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
         throw "type error: const \"" + name + "\" was declared as double";
       }
       break;
+    case t_base_type::TYPE_FLOAT:
+      if (value->get_type() != t_const_value::CV_INTEGER
+          && value->get_type() != t_const_value::CV_DOUBLE) {
+        throw "type error: const \"" + name + "\" was declared as float";
+      }
+      break;
     default:
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase) + name;
     }
@@ -1220,6 +1227,7 @@ int main(int argc, char** argv) {
   g_type_i32 = new t_base_type("i32", t_base_type::TYPE_I32);
   g_type_i64 = new t_base_type("i64", t_base_type::TYPE_I64);
   g_type_double = new t_base_type("double", t_base_type::TYPE_DOUBLE);
+  g_type_float = new t_base_type("float", t_base_type::TYPE_FLOAT);
 
   if (g_audit) {
     // Audit operation
@@ -1309,6 +1317,7 @@ int main(int argc, char** argv) {
   delete g_type_i32;
   delete g_type_i64;
   delete g_type_double;
+  delete g_type_float;
 
   // Finished
   if (g_return_failure && g_audit_fatal) {

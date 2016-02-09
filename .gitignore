@@ -90,6 +90,7 @@ erl_crash.dump
 /lib/cpp/test/Benchmark
 /lib/cpp/test/AllProtocolsTest
 /lib/cpp/test/DebugProtoTest
+/lib/cpp/test/FloatTest
 /lib/cpp/test/DenseProtoTest
 /lib/cpp/test/EnumTest
 /lib/cpp/test/JSONProtoTest

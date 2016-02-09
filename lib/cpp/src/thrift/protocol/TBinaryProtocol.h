@@ -114,6 +114,8 @@ public:
 
   inline uint32_t writeDouble(const double dub);
 
+  inline uint32_t writeFloat(const float flt);
+
   template <typename StrType>
   inline uint32_t writeString(const StrType& str);
 
@@ -160,6 +162,8 @@ public:
   inline uint32_t readI64(int64_t& i64);
 
   inline uint32_t readDouble(double& dub);
+
+  inline uint32_t readFloat(float& flt);
 
   template <typename StrType>
   inline uint32_t readString(StrType& str);

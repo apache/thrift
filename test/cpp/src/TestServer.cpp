@@ -104,6 +104,11 @@ public:
     return thing;
   }
 
+  float testFloat(const float thing) {
+    printf("testFloat(%f)\n", thing);
+    return thing;
+  }
+
   void testBinary(std::string& _return, const std::string& thing) {
     std::ostringstream hexstr;
     hexstr << std::hex << thing;
@@ -406,6 +411,11 @@ public:
 
   virtual void testDouble(tcxx::function<void(double const& _return)> cob, const double thing) {
     double res = _delegate->testDouble(thing);
+    cob(res);
+  }
+
+  virtual void testFloat(tcxx::function<void(float const& _return)> cob, const float thing) {
+    float res = _delegate->testFloat(thing);
     cob(res);
   }
 

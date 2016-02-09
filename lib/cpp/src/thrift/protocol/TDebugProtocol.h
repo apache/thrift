@@ -106,6 +106,8 @@ public:
 
   uint32_t writeDouble(const double dub);
 
+  uint32_t writeFloat(const float flt);
+
   uint32_t writeString(const std::string& str);
 
   uint32_t writeBinary(const std::string& str);
