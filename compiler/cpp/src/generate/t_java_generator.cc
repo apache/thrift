@@ -79,6 +79,9 @@ public:
     iter = parsed_options.find("sorted_containers");
     sorted_containers_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("enum_containers");
+    enum_containers_ = (iter != parsed_options.end());
+
     iter = parsed_options.find("java5");
     java5_ = (iter != parsed_options.end());
     if (java5_) {
@@ -333,6 +336,44 @@ public:
            || ttype->is_enum();
   }
 
+  bool is_enum_set(t_type* ttype) {
+    if (enum_containers_) {
+      ttype = get_true_type(ttype);
+      if (ttype->is_set()) {
+        t_set* tset = (t_set*)ttype;
+        t_type* elem_type = get_true_type(tset->get_elem_type());
+        return elem_type->is_enum();
+      }
+    }
+    return false;
+  }
+
+  bool is_enum_map(t_type* ttype) {
+    if (enum_containers_) {
+      ttype = get_true_type(ttype);
+      if (ttype->is_map()) {
+        t_map* tmap = (t_map*)ttype;
+        t_type* key_type = get_true_type(tmap->get_key_type());
+        return key_type->is_enum();
+      }
+    }
+    return false;
+  }
+
+  std::string inner_enum_type_name(t_type* ttype) {
+    ttype = get_true_type(ttype);
+    if (ttype->is_map()) {
+      t_map* tmap = (t_map*)ttype;
+      t_type* key_type = get_true_type(tmap->get_key_type());
+      return type_name(key_type, true) + ".class";
+    } else if (ttype->is_set()) {
+      t_set* tset = (t_set*)ttype;
+      t_type* elem_type = get_true_type(tset->get_elem_type());
+      return type_name(elem_type, true) + ".class";
+    }
+    return "";
+  }
+
   std::string constant_name(std::string name);
 
 private:
@@ -352,6 +393,7 @@ private:
   bool android_legacy_;
   bool java5_;
   bool sorted_containers_;
+  bool enum_containers_;
   bool reuse_objects_;
   bool use_option_type_;
   bool undated_generated_annotations_;
@@ -637,7 +679,11 @@ void t_java_generator::print_const_value(std::ofstream& out,
     }
     out << endl;
   } else if (type->is_map()) {
-    out << name << " = new " << type_name(type, false, true) << "();" << endl;
+    std::string constructor_args;
+    if (is_enum_map(type)) {
+      constructor_args = inner_enum_type_name(type);
+    }
+    out << name << " = new " << type_name(type, false, true) << "(" << constructor_args << ");" << endl;
     if (!in_static) {
       indent(out) << "static {" << endl;
       indent_up();
@@ -657,7 +703,11 @@ void t_java_generator::print_const_value(std::ofstream& out,
     }
     out << endl;
   } else if (type->is_list() || type->is_set()) {
-    out << name << " = new " << type_name(type, false, true) << "();" << endl;
+    if (is_enum_set(type)) {
+      out << name << " = " << type_name(type, false, true, true) << ".noneOf(" << inner_enum_type_name(type) << ");" << endl;
+    } else {
+      out << name << " = new " << type_name(type, false, true) << "();" << endl;
+    }
     if (!in_static) {
       indent(out) << "static {" << endl;
       indent_up();
@@ -2249,8 +2299,12 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
       indent_up();
       indent(out) << "if (this." << field_name << " == null) {" << endl;
       indent_up();
-      indent(out) << "this." << field_name << " = new " << type_name(type, false, true) << "();"
-                  << endl;
+      indent(out) << "this." << field_name;
+      if (is_enum_set(type)) {
+        out << " = " << type_name(type, false, true, true) << ".noneOf(" << inner_enum_type_name(type) << ");" << endl;
+      } else {
+        out << " = new " << type_name(type, false, true) << "();" << endl;
+      }
       indent_down();
       indent(out) << "}" << endl;
       indent(out) << "this." << field_name << ".add(elem);" << endl;
@@ -2269,7 +2323,11 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
       indent_up();
       indent(out) << "if (this." << field_name << " == null) {" << endl;
       indent_up();
-      indent(out) << "this." << field_name << " = new " << type_name(type, false, true) << "();"
+      std::string constructor_args;
+      if (is_enum_map(type)) {
+        constructor_args = inner_enum_type_name(type);
+      }
+      indent(out) << "this." << field_name << " = new " << type_name(type, false, true) << "(" << constructor_args << ");"
                   << endl;
       indent_down();
       indent(out) << "}" << endl;
@@ -3648,11 +3706,17 @@ void t_java_generator::generate_deserialize_container(ofstream& out,
     indent_up();
   }
 
-  out << indent() << prefix << " = new " << type_name(ttype, false, true);
+  if (is_enum_set(ttype)) {
+    out << indent() << prefix << " = " << type_name(ttype, false, true, true) << ".noneOf";
+  } else {
+    out << indent() << prefix << " = new " << type_name(ttype, false, true);
+  }
 
-  // size the collection correctly
-  if (sorted_containers_ && (ttype->is_map() || ttype->is_set())) {
-    // TreeSet and TreeMap don't have any constructor which takes a capactity as an argument
+  // construct the collection correctly i.e. with appropriate size/type
+  if (is_enum_set(ttype) || is_enum_map(ttype)) {
+    out << "(" << inner_enum_type_name(ttype) << ");" << endl;
+  } else if (sorted_containers_ && (ttype->is_map() || ttype->is_set())) {
+    // TreeSet and TreeMap don't have any constructor which takes a capacity as an argument
     out << "();" << endl;
   } else {
     out << "(" << (ttype->is_list() ? "" : "2*") << obj << ".size"
@@ -3993,7 +4057,9 @@ string t_java_generator::type_name(t_type* ttype,
   } else if (ttype->is_map()) {
     t_map* tmap = (t_map*)ttype;
     if (in_init) {
-      if (sorted_containers_) {
+      if (is_enum_map(tmap)) {
+        prefix = "EnumMap";
+      } else if (sorted_containers_) {
         prefix = "TreeMap";
       } else {
         prefix = "HashMap";
@@ -4006,7 +4072,9 @@ string t_java_generator::type_name(t_type* ttype,
   } else if (ttype->is_set()) {
     t_set* tset = (t_set*)ttype;
     if (in_init) {
-      if (sorted_containers_) {
+      if (is_enum_set(tset)) {
+        prefix = "EnumSet";
+      } else if (sorted_containers_) {
         prefix = "TreeSet";
       } else {
         prefix = "HashSet";
@@ -4430,13 +4498,21 @@ void t_java_generator::generate_deep_copy_container(ofstream& out,
     return;
   }
 
-  std::string capacity;
-  if (!(sorted_containers_ && (container->is_map() || container->is_set()))) {
+  std::string constructor_args;
+  if (is_enum_set(container) || is_enum_map(container)) {
+    constructor_args = inner_enum_type_name(container);
+  } else if (!(sorted_containers_ && (container->is_map() || container->is_set()))) {
     // unsorted containers accept a capacity value
-    capacity = source_name + ".size()";
+    constructor_args = source_name + ".size()";
   }
-  indent(out) << type_name(type, true, false) << " " << result_name << " = new "
-              << type_name(container, false, true) << "(" << capacity << ");" << endl;
+
+  if (is_enum_set(container)) {
+    indent(out) << type_name(type, true, false) << " " << result_name << " = "
+                << type_name(container, false, true, true) << ".noneOf(" << constructor_args << ");" << endl;
+  } else {
+    indent(out) << type_name(type, true, false) << " " << result_name << " = new "
+                << type_name(container, false, true) << "(" << constructor_args << ");" << endl;
+  }
 
   std::string iterator_element_name = source_name_p1 + "_element";
   std::string result_element_name = result_name + "_copy";
@@ -5161,8 +5237,11 @@ THRIFT_REGISTER_GENERATOR(
     "    reuse-objects:   Data objects will not be allocated, but existing instances will be used "
     "(read and write).\n"
     "    sorted_containers:\n"
-    "                     Use TreeSet/TreeMap instead of HashSet/HashMap as a implementation of "
+    "                     Use TreeSet/TreeMap instead of HashSet/HashMap as an implementation of "
     "set/map.\n"
+    "    enum_containers:\n"
+    "                     Use EnumSet/EnumMap as an implementation of set/map when elements/keys are enums.\n"
+    "                     Takes precedence over sorted_containers.\n"
     "    generated_annotations=[undated|suppress]:\n"
     "                     undated: suppress the date at @Generated annotations\n"
     "                     suppress: suppress @Generated annotations entirely\n")
