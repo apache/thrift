@@ -21,8 +21,8 @@
 
 import datetime
 import glob
-import sys
 import os
+import sys
 import time
 import unittest
 
@@ -40,8 +40,8 @@ from tornado import gen
 from tornado.testing import AsyncTestCase, get_unused_port, gen_test
 
 from thrift import TTornado
+from thrift.Thrift import TApplicationException
 from thrift.protocol import TBinaryProtocol
-from thrift.transport.TTransport import TTransportException
 
 from ThriftTest import ThriftTest
 from ThriftTest.ttypes import Xception, Xtruct
@@ -55,6 +55,8 @@ class TestHandler(object):
         pass
 
     def testString(self, s):
+        if s == 'unexpected_error':
+            raise Exception(s)
         return s
 
     def testByte(self, b):
@@ -85,7 +87,7 @@ class TestHandler(object):
             x.message = s
             raise x
         elif s == 'throw_undeclared':
-            raise ValueError("foo")
+            raise ValueError('testing undeclared exception')
 
     def testOneway(self, seconds):
         start = time.time()
@@ -97,6 +99,7 @@ class TestHandler(object):
         self.test_instance.io_loop.add_timeout(
             datetime.timedelta(seconds=seconds),
             fire_oneway)
+        raise Exception('testing exception in oneway method')
 
     def testNest(self, thing):
         return thing
@@ -187,10 +190,11 @@ class ThriftTestCase(AsyncTestCase):
         self.assertEqual(y.i32_thing, -3)
         self.assertEqual(y.i64_thing, -5)
 
+    @gen_test
     def test_oneway(self):
-        self.client.testOneway(0)
-        start, end, seconds = self.wait(timeout=1)
-        self.assertAlmostEqual(seconds, (end - start), places=3)
+        self.client.testOneway(1)
+        v = yield self.client.testI32(-1)
+        self.assertEqual(v, -1)
 
     @gen_test
     def test_map(self):
@@ -203,8 +207,6 @@ class ThriftTestCase(AsyncTestCase):
 
     @gen_test
     def test_exception(self):
-        yield self.client.testException('Safe')
-
         try:
             yield self.client.testException('Xception')
         except Xception as ex:
@@ -214,10 +216,12 @@ class ThriftTestCase(AsyncTestCase):
             self.fail("should have gotten exception")
         try:
             yield self.client.testException('throw_undeclared')
-        except TTransportException as ex:
+        except TApplicationException:
             pass
         else:
             self.fail("should have gotten exception")
+
+        yield self.client.testException('Safe')
 
 
 def suite():
