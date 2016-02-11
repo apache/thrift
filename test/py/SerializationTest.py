@@ -292,7 +292,7 @@ class NormalBinaryTest(AbstractTest):
 
 
 class AcceleratedBinaryTest(AbstractTest):
-    protocol_factory = TBinaryProtocol.TBinaryProtocolAcceleratedFactory()
+    protocol_factory = TBinaryProtocol.TBinaryProtocolAcceleratedFactory(fallback=False)
 
 
 class CompactProtocolTest(AbstractTest):
@@ -300,7 +300,7 @@ class CompactProtocolTest(AbstractTest):
 
 
 class AcceleratedCompactTest(AbstractTest):
-    protocol_factory = TCompactProtocol.TCompactProtocolAcceleratedFactory()
+    protocol_factory = TCompactProtocol.TCompactProtocolAcceleratedFactory(fallback=False)
 
 
 class JSONProtocolTest(AbstractTest):
