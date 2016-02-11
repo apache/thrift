@@ -132,6 +132,7 @@ erl_crash.dump
 /lib/c_glib/test/testbufferedtransport
 /lib/c_glib/test/testcontainertest
 /lib/c_glib/test/testdebugproto
+/lib/c_glib/test/testfdtransport
 /lib/c_glib/test/testframedtransport
 /lib/c_glib/test/testmemorybuffer
 /lib/c_glib/test/testoptionalrequired

@@ -47,6 +47,7 @@ set(thrift_c_glib_SOURCES
     src/thrift/c_glib/transport/thrift_server_transport.c
     src/thrift/c_glib/transport/thrift_server_socket.c
     src/thrift/c_glib/transport/thrift_buffered_transport.c
+    src/thrift/c_glib/transport/thrift_fd_transport.c
     src/thrift/c_glib/transport/thrift_framed_transport.c
     src/thrift/c_glib/transport/thrift_memory_buffer.c
     src/thrift/c_glib/server/thrift_server.c

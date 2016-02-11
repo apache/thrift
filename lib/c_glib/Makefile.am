@@ -50,6 +50,7 @@ libthrift_c_glib_la_SOURCES = src/thrift/c_glib/thrift.c \
                               src/thrift/c_glib/transport/thrift_server_transport.c \
                               src/thrift/c_glib/transport/thrift_server_socket.c \
                               src/thrift/c_glib/transport/thrift_buffered_transport.c \
+                              src/thrift/c_glib/transport/thrift_fd_transport.c \
                               src/thrift/c_glib/transport/thrift_framed_transport.c \
                               src/thrift/c_glib/transport/thrift_memory_buffer.c \
                               src/thrift/c_glib/server/thrift_server.c \
@@ -76,6 +77,7 @@ include_protocol_HEADERS = src/thrift/c_glib/protocol/thrift_protocol.h \
 
 include_transportdir = $(include_thriftdir)/transport
 include_transport_HEADERS = src/thrift/c_glib/transport/thrift_buffered_transport.h \
+                            src/thrift/c_glib/transport/thrift_fd_transport.h \
                             src/thrift/c_glib/transport/thrift_framed_transport.h \
                             src/thrift/c_glib/transport/thrift_memory_buffer.h \
                             src/thrift/c_glib/transport/thrift_server_socket.h \
