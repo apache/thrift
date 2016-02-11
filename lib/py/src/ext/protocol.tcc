@@ -23,11 +23,17 @@
 #define CHECK_RANGE(v, min, max) (((v) <= (max)) && ((v) >= (min)))
 #define INIT_OUTBUF_SIZE 128
 
+#if PY_MAJOR_VERSION < 3
 #include <cStringIO.h>
+#else
+#include <algorithm>
+#endif
 
 namespace apache {
 namespace thrift {
 namespace py {
+
+#if PY_MAJOR_VERSION < 3
 
 namespace detail {
 
@@ -100,6 +106,82 @@ inline bool ProtocolBase<Impl>::writeBuffer(char* data, size_t size) {
   }
   return true;
 }
+
+#else
+
+namespace detail {
+
+inline bool input_check(PyObject* input) {
+  // TODO: Check for BytesIO type
+  return true;
+}
+
+inline EncodeBuffer* new_encode_buffer(size_t size) {
+  EncodeBuffer* buffer = new EncodeBuffer;
+  buffer->buf.reserve(size);
+  buffer->pos = 0;
+  return buffer;
+}
+
+struct bytesio {
+  PyObject_HEAD
+#if PY_MINOR_VERSION < 5
+      char* buf;
+#else
+      PyObject* buf;
+#endif
+  Py_ssize_t pos;
+  Py_ssize_t string_size;
+};
+
+inline int read_buffer(PyObject* buf, char** output, int len) {
+  bytesio* buf2 = reinterpret_cast<bytesio*>(buf);
+#if PY_MINOR_VERSION < 5
+  *output = buf2->buf + buf2->pos;
+#else
+  *output = PyBytes_AS_STRING(buf2->buf) + buf2->pos;
+#endif
+  Py_ssize_t pos0 = buf2->pos;
+  buf2->pos = std::min(buf2->pos + static_cast<Py_ssize_t>(len), buf2->string_size);
+  return static_cast<int>(buf2->pos - pos0);
+}
+}
+
+template <typename Impl>
+inline ProtocolBase<Impl>::~ProtocolBase() {
+  if (output_) {
+    delete output_;
+  }
+}
+
+template <typename Impl>
+inline bool ProtocolBase<Impl>::isUtf8(PyObject* typeargs) {
+  // while condition for py2 is "arg == 'UTF8'", it should be "arg != 'BINARY'" for py3.
+  // HACK: check the length and don't bother reading the value
+  return !PyUnicode_Check(typeargs) || PyUnicode_GET_LENGTH(typeargs) != 6;
+}
+
+template <typename Impl>
+PyObject* ProtocolBase<Impl>::getEncodedValue() {
+  return PyBytes_FromStringAndSize(output_->buf.data(), output_->buf.size());
+}
+
+template <typename Impl>
+inline bool ProtocolBase<Impl>::writeBuffer(char* data, size_t size) {
+  size_t need = size + output_->pos;
+  if (output_->buf.capacity() < need) {
+    try {
+      output_->buf.reserve(need);
+    } catch (std::bad_alloc& ex) {
+      PyErr_SetString(PyExc_MemoryError, "Failed to allocate write buffer");
+      return false;
+    }
+  }
+  std::copy(data, data + size, std::back_inserter(output_->buf));
+  return true;
+}
+
+#endif
 
 namespace detail {
 
@@ -192,8 +274,8 @@ bool ProtocolBase<Impl>::readBytes(char** output, int len) {
     return false;
   } else {
     // using building functions as this is a rare codepath
-    ScopedPyObject newiobuf(
-        PyObject_CallFunction(input_.refill_callable.get(), refill_signature, *output, rlen, len, NULL));
+    ScopedPyObject newiobuf(PyObject_CallFunction(input_.refill_callable.get(), refill_signature,
+                                                  *output, rlen, len, NULL));
     if (!newiobuf) {
       return false;
     }

@@ -60,8 +60,12 @@
   "csharp-nodejs_json_framed-ip-ssl",
   "csharp-perl_binary_buffered-ip-ssl",
   "csharp-perl_binary_framed-ip-ssl",
+  "csharp-py3_binary-accel_buffered-ip-ssl",
+  "csharp-py3_binary-accel_framed-ip-ssl",
   "csharp-py3_binary_buffered-ip-ssl",
   "csharp-py3_binary_framed-ip-ssl",
+  "csharp-py3_compact-accelc_buffered-ip-ssl",
+  "csharp-py3_compact-accelc_framed-ip-ssl",
   "csharp-py3_compact_buffered-ip-ssl",
   "csharp-py3_compact_framed-ip-ssl",
   "csharp-py3_json_buffered-ip-ssl",
@@ -131,6 +135,8 @@
   "py-perl_accel-binary_framed-ip-ssl",
   "py-perl_binary_buffered-ip-ssl",
   "py-perl_binary_framed-ip-ssl",
+  "py3-perl_accel-binary_buffered-ip-ssl",
+  "py3-perl_accel-binary_framed-ip-ssl",
   "py3-perl_binary_buffered-ip-ssl",
   "py3-perl_binary_framed-ip-ssl"
 ]

@@ -19,7 +19,6 @@
 # under the License.
 #
 
-import platform
 import sys
 try:
     from setuptools import setup, Extension
@@ -108,11 +107,7 @@ def run_setup(with_binary):
           )
 
 try:
-    with_binary = False
-    # Don't even try to build the C module unless we're on CPython 2.x.
-    # TODO: fix it for CPython 3.x
-    if platform.python_implementation() == 'CPython' and sys.version_info < (3,):
-        with_binary = True
+    with_binary = True
     run_setup(with_binary)
 except BuildFailed:
     print()

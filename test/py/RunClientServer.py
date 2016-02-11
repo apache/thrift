@@ -22,7 +22,6 @@
 from __future__ import division
 from __future__ import print_function
 import copy
-import glob
 import os
 import signal
 import socket
@@ -31,10 +30,9 @@ import sys
 import time
 from optparse import OptionParser
 
+from util import local_libpath
+
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
-ROOT_DIR = os.path.dirname(os.path.dirname(SCRIPT_DIR))
-DEFAULT_LIBDIR_GLOB = os.path.join(ROOT_DIR, 'lib', 'py', 'build', 'lib.*')
-DEFAULT_LIBDIR_PY3 = os.path.join(ROOT_DIR, 'lib', 'py', 'build', 'lib')
 
 SCRIPTS = [
     'FastbinaryTest.py',
@@ -244,13 +242,6 @@ class TestCases(object):
         return test_count
 
 
-def default_libdir():
-    if sys.version_info[0] == 2:
-        return glob.glob(DEFAULT_LIBDIR_GLOB)[0]
-    else:
-        return DEFAULT_LIBDIR_PY3
-
-
 def main():
     parser = OptionParser()
     parser.add_option('--all', action="store_true", dest='all')
@@ -265,7 +256,7 @@ def main():
     parser.add_option('-q', '--quiet', action="store_const",
                       dest="verbose", const=0,
                       help="minimal output")
-    parser.add_option('-L', '--libdir', dest="libdir", default=default_libdir(),
+    parser.add_option('-L', '--libdir', dest="libdir", default=local_libpath(),
                       help="directory path that contains Thrift Python library")
     parser.add_option('--gen-base', dest="gen_base", default=SCRIPT_DIR,
                       help="directory path that contains Thrift Python library")
