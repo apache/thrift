@@ -40,6 +40,7 @@
 #include <thrift/c_glib/protocol/thrift_protocol.h>
 #include <thrift/c_glib/transport/thrift_socket.h>
 #include <thrift/c_glib/transport/thrift_server_socket.h>
+#include <thrift/c_glib/transport/thrift_framed_transport.h>
 
 #define TEST_BOOL TRUE
 #define TEST_BYTE 123
@@ -57,14 +58,14 @@ static int transport_read_count = 0;
 static int transport_read_error = 0;
 static int transport_read_error_at = -1;
 gint32
-my_thrift_transport_read (ThriftTransport *transport, gpointer buf,
-                          guint32 len, GError **error)
+my_thrift_transport_read_all (ThriftTransport *transport, gpointer buf,
+                              guint32 len, GError **error)
 {
   if (transport_read_count != transport_read_error_at
       && transport_read_error == 0)
   {
     transport_read_count++;
-    return thrift_transport_read (transport, buf, len, error);
+    return thrift_transport_read_all (transport, buf, len, error);
   }
   return -1;
 }
@@ -85,14 +86,15 @@ my_thrift_transport_write (ThriftTransport *transport, const gpointer buf,
   return FALSE;
 }
 
-#define thrift_transport_read my_thrift_transport_read
+#define thrift_transport_read_all my_thrift_transport_read_all
 #define thrift_transport_write my_thrift_transport_write
 #include "../src/thrift/c_glib/protocol/thrift_compact_protocol.c"
-#undef thrift_transport_read
+#undef thrift_transport_read_all
 #undef thrift_transport_write
 
 static void thrift_server_primitives (const int port);
 static void thrift_server_complex_types (const int port);
+static void thrift_server_many_frames (const int port);
 
 static void
 test_create_and_destroy (void)
@@ -544,6 +546,112 @@ test_read_and_write_complex_types (void)
     thrift_transport_close (transport, NULL);
     g_object_unref (tsocket);
     g_object_unref (protocol);
+    assert (wait (&status) == pid);
+    assert (status == 0);
+  }
+}
+
+static void
+test_read_and_write_many_frames (void)
+{
+  int status;
+  pid_t pid;
+  ThriftSocket *tsocket = NULL;
+  ThriftTransport *transport = NULL;
+  ThriftFramedTransport *ft = NULL;
+  ThriftCompactProtocol *tc = NULL;
+  ThriftProtocol *protocol = NULL;
+  gpointer binary = (gpointer *) TEST_STRING;
+  const guint32 len = strlen (TEST_STRING);
+  int port = TEST_PORT;
+
+  /* fork a server from the client */
+  pid = fork ();
+  assert (pid >= 0);
+
+  if (pid == 0)
+  {
+    /* child listens */
+    thrift_server_many_frames (port);
+    exit (0);
+  } else {
+    /* parent.  wait a bit for the socket to be created. */
+    sleep (1);
+
+    /* create a ThriftSocket */
+    tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
+                            "port", port, NULL);
+    assert (tsocket != NULL);
+    transport = THRIFT_TRANSPORT (tsocket);
+
+    /* wrap in a framed transport */
+    ft = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT, "transport", transport,
+                       "w_buf_size", 1, NULL);
+    assert (ft != NULL);
+    transport = THRIFT_TRANSPORT (ft);
+
+    thrift_transport_open (transport, NULL);
+    assert (thrift_transport_is_open (transport));
+
+    /* create a compact protocol */
+    tc = g_object_new (THRIFT_TYPE_COMPACT_PROTOCOL, "transport",
+                       transport, NULL);
+    protocol = THRIFT_PROTOCOL (tc);
+    assert (protocol != NULL);
+
+    /* write a bunch of primitives */
+    assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL,
+                                                NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_byte (protocol, TEST_BYTE,
+                                                NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_i16 (protocol, TEST_I16, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_i32 (protocol, TEST_I32, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_i64 (protocol, TEST_I64, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_i16 (protocol, TEST_NI16, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_i32 (protocol, TEST_NI32, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_i64 (protocol, TEST_NI64, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_i16 (protocol, 2, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_i32 (protocol, 2, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_i64 (protocol, 2, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_i16 (protocol, -2, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_i32 (protocol, -2, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_i64 (protocol, -2, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_double (protocol,
+                                                 TEST_DOUBLE, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_string (protocol,
+                                                 TEST_STRING, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_binary (protocol, binary,
+                                                 len, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_binary (protocol, NULL,
+                                                  0, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+    assert (thrift_compact_protocol_write_binary (protocol, binary,
+                                                 len, NULL) > 0);
+    thrift_transport_flush (transport, NULL);
+
+    /* clean up */
+    thrift_transport_write_end (transport, NULL);
+    thrift_transport_close (transport, NULL);
+    g_object_unref (ft);
+    g_object_unref (tsocket);
+    g_object_unref (tc);
     assert (wait (&status) == pid);
     assert (status == 0);
   }
@@ -1053,6 +1161,94 @@ thrift_server_complex_types (const int port)
   g_object_unref (tsocket);
 }
 
+static void
+thrift_server_many_frames (const int port)
+{
+  ThriftServerTransport *transport = NULL;
+  ThriftTransport *client = NULL;
+  ThriftCompactProtocol *tcp = NULL;
+  ThriftProtocol *protocol = NULL;
+  ThriftServerSocket *tsocket = NULL;
+  gboolean value_boolean = FALSE;
+  gint8 value_byte = 0,
+    zigzag_p16 = 0, zigzag_p32 = 0, zigzag_p64 = 0,
+    zigzag_n16 = 0, zigzag_n32 = 0, zigzag_n64 = 0;
+  gint16 value_16 = 0;
+  gint32 value_32 = 0;
+  gint64 value_64 = 0;
+  gint16 value_n16 = 0;
+  gint32 value_n32 = 0;
+  gint64 value_n64 = 0;
+  gdouble value_double = 0;
+  gchar *string = NULL;
+  gpointer binary = NULL;
+  guint32 len = 0;
+  void *comparator = (void *) TEST_STRING;
+
+  tsocket = g_object_new (THRIFT_TYPE_SERVER_SOCKET, "port", port, NULL);
+  transport = THRIFT_SERVER_TRANSPORT (tsocket);
+  thrift_server_transport_listen (transport, NULL);
+
+  /* wrap the client in a framed transport */
+  client = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT, "transport",
+                         thrift_server_transport_accept (transport, NULL),
+                         "r_buf_size", 1, NULL);
+  assert (client != NULL);
+
+  tcp = g_object_new (THRIFT_TYPE_COMPACT_PROTOCOL, "transport",
+                      client, NULL);
+  protocol = THRIFT_PROTOCOL (tcp);
+
+  assert (thrift_compact_protocol_read_bool (protocol,
+                                            &value_boolean, NULL) > 0);
+  assert (thrift_compact_protocol_read_byte (protocol, &value_byte, NULL) > 0);
+  assert (thrift_compact_protocol_read_i16 (protocol, &value_16, NULL) > 0);
+  assert (thrift_compact_protocol_read_i32 (protocol, &value_32, NULL) > 0);
+  assert (thrift_compact_protocol_read_i64 (protocol, &value_64, NULL) > 0);
+  assert (thrift_compact_protocol_read_i16 (protocol, &value_n16, NULL) > 0);
+  assert (thrift_compact_protocol_read_i32 (protocol, &value_n32, NULL) > 0);
+  assert (thrift_compact_protocol_read_i64 (protocol, &value_n64, NULL) > 0);
+  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_p16, NULL) > 0);
+  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_p32, NULL) > 0);
+  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_p64, NULL) > 0);
+  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_n16, NULL) > 0);
+  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_n32, NULL) > 0);
+  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_n64, NULL) > 0);
+  assert (thrift_compact_protocol_read_double (protocol,
+                                              &value_double, NULL) > 0);
+  assert (thrift_compact_protocol_read_string (protocol, &string, NULL) > 0);
+  assert (thrift_compact_protocol_read_binary (protocol, &binary,
+                                              &len, NULL) > 0);
+
+  assert (value_boolean == TEST_BOOL);
+  assert (value_byte == TEST_BYTE);
+  assert (value_16 == TEST_I16);
+  assert (value_32 == TEST_I32);
+  assert (value_64 == TEST_I64);
+  assert (value_n16 == TEST_NI16);
+  assert (value_n32 == TEST_NI32);
+  assert (value_n64 == TEST_NI64);
+  assert (zigzag_p16 == 4);
+  assert (zigzag_p32 == 4);
+  assert (zigzag_p64 == 4);
+  assert (zigzag_n16 == 3);
+  assert (zigzag_n32 == 3);
+  assert (zigzag_n64 == 3);
+  assert (value_double == TEST_DOUBLE);
+  assert (strcmp (TEST_STRING, string) == 0);
+  assert (memcmp (comparator, binary, len) == 0);
+
+  g_free (string);
+  g_free (binary);
+
+  thrift_transport_read_end (client, NULL);
+  thrift_transport_close (client, NULL);
+
+  g_object_unref (tcp);
+  g_object_unref (client);
+  g_object_unref (tsocket);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -1069,6 +1265,8 @@ main (int argc, char *argv[])
                    test_read_and_write_primitives);
   g_test_add_func ("/testcompactprotocol/ReadAndWriteComplexTypes",
                    test_read_and_write_complex_types);
+  g_test_add_func ("/testcompactprotocol/ReadAndWriteManyFrames",
+                   test_read_and_write_many_frames);
 
   return g_test_run ();
 }
