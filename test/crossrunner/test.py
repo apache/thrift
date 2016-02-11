@@ -124,8 +124,8 @@ class TestEntry(object):
         return config
 
     @classmethod
-    def get_name(cls, server, client, proto, trans, sock, *args):
-        return '%s-%s_%s_%s-%s' % (server, client, proto, trans, sock)
+    def get_name(cls, server, client, protocol, transport, socket, *args, **kwargs):
+        return '%s-%s_%s_%s-%s' % (server, client, protocol, transport, socket)
 
     @property
     def name(self):
