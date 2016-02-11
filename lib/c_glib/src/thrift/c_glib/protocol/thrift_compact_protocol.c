@@ -269,20 +269,22 @@ thrift_compact_protocol_read_varint64 (ThriftCompactProtocol *protocol,
                                        gint64 *i64,
                                        GError **error)
 {
+  ThriftProtocol *tp;
   gint32 ret;
   gint32 xfer;
   guint64 val;
   gint shift;
   guint8 byte;
 
+  tp = THRIFT_PROTOCOL (protocol);
   xfer = 0;
   val = 0;
   shift = 0;
   byte = 0;
 
   while (TRUE) {
-    if ((ret = thrift_transport_read (THRIFT_PROTOCOL (protocol)->transport,
-                                      (gpointer) &byte, 1, error)) < 0) {
+    if ((ret = thrift_transport_read_all (tp->transport,
+                                          (gpointer) &byte, 1, error)) < 0) {
       return -1;
     }
     ++xfer;
@@ -1243,8 +1245,8 @@ thrift_compact_protocol_read_byte (ThriftProtocol *protocol, gint8 *value,
   g_return_val_if_fail (THRIFT_IS_COMPACT_PROTOCOL (protocol), -1);
 
   if ((ret =
-       thrift_transport_read (protocol->transport,
-                              b, 1, error)) < 0) {
+       thrift_transport_read_all (protocol->transport,
+                                  b, 1, error)) < 0) {
     return -1;
   }
   *value = *(gint8 *) b;
@@ -1344,8 +1346,8 @@ thrift_compact_protocol_read_double (ThriftProtocol *protocol,
   g_return_val_if_fail (THRIFT_IS_COMPACT_PROTOCOL (protocol), -1);
 
   if ((ret =
-       thrift_transport_read (protocol->transport,
-                              u.b, 8, error)) < 0) {
+       thrift_transport_read_all (protocol->transport,
+                                  u.b, 8, error)) < 0) {
     return -1;
   }
   u.bits = GUINT64_FROM_LE (u.bits);
@@ -1390,8 +1392,8 @@ thrift_compact_protocol_read_string (ThriftProtocol *protocol,
     /* allocate the memory as an array of unsigned char for binary data */
     *str = g_new0 (gchar, read_len + 1);
     if ((ret =
-         thrift_transport_read (protocol->transport,
-                                *str, read_len, error)) < 0) {
+         thrift_transport_read_all (protocol->transport,
+                                    *str, read_len, error)) < 0) {
       g_free (*str);
       *str = NULL;
       return -1;
@@ -1452,8 +1454,8 @@ thrift_compact_protocol_read_binary (ThriftProtocol *protocol,
     *len = (guint32) read_len;
     *buf = g_new (guchar, *len);
     if ((ret =
-         thrift_transport_read (protocol->transport,
-                                *buf, *len, error)) < 0) {
+         thrift_transport_read_all (protocol->transport,
+                                    *buf, *len, error)) < 0) {
       g_free (*buf);
       *buf = NULL;
       *len = 0;
