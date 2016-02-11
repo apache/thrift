@@ -17,6 +17,7 @@
 # under the License.
 #
 
+import logging
 import os
 import platform
 import select
@@ -81,11 +82,13 @@ class TSSLSocketTest(unittest.TestCase):
             time.sleep(CONNECT_DELAY / 2)
             client.setTimeout(CONNECT_TIMEOUT / 2)
             with self._assert_raises(Exception):
+                logging.disable(logging.CRITICAL)
                 client.open()
                 select.select([], [client.handle], [], CONNECT_TIMEOUT / 2)
             # self.assertIsNone(acc.client)
             self.assertTrue(acc.client is None)
         finally:
+            logging.disable(logging.NOTSET)
             client.close()
             if acc.client:
                 acc.client.close()
