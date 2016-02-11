@@ -70,6 +70,8 @@
   "csharp-py_binary-accel_framed-ip-ssl",
   "csharp-py_binary_buffered-ip-ssl",
   "csharp-py_binary_framed-ip-ssl",
+  "csharp-py_compact-accelc_buffered-ip-ssl",
+  "csharp-py_compact-accelc_framed-ip-ssl",
   "csharp-py_compact_buffered-ip-ssl",
   "csharp-py_compact_framed-ip-ssl",
   "csharp-py_json_buffered-ip-ssl",
