@@ -31,7 +31,7 @@
 #include <thrift/transport/TTransport.h>
 #include "TestPortFixture.h"
 #include <vector>
-#ifdef linux
+#ifdef __linux__
 #include <signal.h>
 #endif
 
@@ -60,7 +60,7 @@ struct GlobalFixture
 			BOOST_TEST_MESSAGE(boost::format("argv[%1%] = \"%2%\"") % i % master_test_suite().argv[i]);
 		}
 
-    #ifdef linux
+    #ifdef __linux__
 		// OpenSSL calls send() without MSG_NOSIGPIPE so writing to a socket that has
 		// disconnected can cause a SIGPIPE signal...
 		signal(SIGPIPE, SIG_IGN);
@@ -83,7 +83,7 @@ struct GlobalFixture
     virtual ~GlobalFixture()
     {
 		apache::thrift::transport::cleanupOpenSSL();
-#ifdef linux
+#ifdef __linux__
 		signal(SIGPIPE, SIG_DFL);
 #endif
     }
