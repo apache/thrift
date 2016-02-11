@@ -25,6 +25,8 @@ PYTHONPATH=./gen-py:../../lib/py/build/lib... ./FastbinaryTest.py
 
 # TODO(dreiss): Test error cases.  Check for memory leaks.
 
+from __future__ import print_function
+
 import math
 import os
 import sys
@@ -34,7 +36,8 @@ from copy import deepcopy
 from pprint import pprint
 
 from thrift.transport import TTransport
-from thrift.protocol import TBinaryProtocol
+from thrift.protocol.TBinaryProtocol import TBinaryProtocol, TBinaryProtocolAccelerated
+from thrift.protocol.TCompactProtocol import TCompactProtocol, TCompactProtocolAccelerated
 
 from DebugProtoTest import Srv
 from DebugProtoTest.ttypes import Backwards, Bonk, Empty, HolyMoley, OneOfEach, RandomStuff, Wrapper
@@ -99,123 +102,150 @@ rs = RandomStuff()
 rs.a = 1
 rs.b = 2
 rs.c = 3
-rs.myintlist = range(20)
+rs.myintlist = list(range(20))
 rs.maps = {1: Wrapper(**{"foo": Empty()}), 2: Wrapper(**{"foo": Empty()})}
 rs.bigint = 124523452435
 rs.triple = 3.14
 
 # make sure this splits two buffers in a buffered protocol
 rshuge = RandomStuff()
-rshuge.myintlist = range(10000)
+rshuge.myintlist = list(range(10000))
 
 my_zero = Srv.Janky_result(**{"success": 5})
 
 
-def check_write(o):
-    trans_fast = TTransport.TMemoryBuffer()
-    trans_slow = TTransport.TMemoryBuffer()
-    prot_fast = TBinaryProtocol.TBinaryProtocolAccelerated(trans_fast)
-    prot_slow = TBinaryProtocol.TBinaryProtocol(trans_slow)
+class Test(object):
+    def __init__(self, fast, slow):
+        self._fast = fast
+        self._slow = slow
 
-    o.write(prot_fast)
-    o.write(prot_slow)
-    ORIG = trans_slow.getvalue()
-    MINE = trans_fast.getvalue()
-    if ORIG != MINE:
-        print("mine: %s\norig: %s" % (repr(MINE), repr(ORIG)))
+    def _check_write(self, o):
+        trans_fast = TTransport.TMemoryBuffer()
+        trans_slow = TTransport.TMemoryBuffer()
+        prot_fast = self._fast(trans_fast)
+        prot_slow = self._slow(trans_slow)
+
+        o.write(prot_fast)
+        o.write(prot_slow)
+        ORIG = trans_slow.getvalue()
+        MINE = trans_fast.getvalue()
+        if ORIG != MINE:
+            print("actual  : %s\nexpected: %s" % (repr(MINE), repr(ORIG)))
+            raise Exception('write value mismatch')
+
+    def _check_read(self, o):
+        prot = self._slow(TTransport.TMemoryBuffer())
+        o.write(prot)
+
+        slow_version_binary = prot.trans.getvalue()
+
+        prot = self._fast(
+            TTransport.TMemoryBuffer(slow_version_binary))
+        c = o.__class__()
+        c.read(prot)
+        if c != o:
+            print("actual  : ")
+            pprint(repr(c))
+            print("expected: ")
+            pprint(repr(o))
+            raise Exception('read value mismatch')
+
+        prot = self._fast(
+            TTransport.TBufferedTransport(
+                TTransport.TMemoryBuffer(slow_version_binary)))
+        c = o.__class__()
+        c.read(prot)
+        if c != o:
+            print("actual  : ")
+            pprint(repr(c))
+            print("expected: ")
+            pprint(repr(o))
+            raise Exception('read value mismatch')
+
+    def do_test(self):
+        self._check_write(HolyMoley())
+        self._check_read(HolyMoley())
+
+        self._check_write(hm)
+        no_set = deepcopy(hm)
+        no_set.contain = set()
+        self._check_read(no_set)
+        self._check_read(hm)
+
+        self._check_write(rs)
+        self._check_read(rs)
+
+        self._check_write(rshuge)
+        self._check_read(rshuge)
+
+        self._check_write(my_zero)
+        self._check_read(my_zero)
+
+        self._check_read(Backwards(**{"first_tag2": 4, "second_tag1": 2}))
+
+        # One case where the serialized form changes, but only superficially.
+        o = Backwards(**{"first_tag2": 4, "second_tag1": 2})
+        trans_fast = TTransport.TMemoryBuffer()
+        trans_slow = TTransport.TMemoryBuffer()
+        prot_fast = self._fast(trans_fast)
+        prot_slow = self._slow(trans_slow)
+
+        o.write(prot_fast)
+        o.write(prot_slow)
+        ORIG = trans_slow.getvalue()
+        MINE = trans_fast.getvalue()
+        assert id(ORIG) != id(MINE)
+
+        prot = self._fast(TTransport.TMemoryBuffer())
+        o.write(prot)
+        prot = self._slow(
+            TTransport.TMemoryBuffer(prot.trans.getvalue()))
+        c = o.__class__()
+        c.read(prot)
+        if c != o:
+            print("copy: ")
+            pprint(repr(c))
+            print("orig: ")
+            pprint(repr(o))
 
 
-def check_read(o):
-    prot = TBinaryProtocol.TBinaryProtocol(TTransport.TMemoryBuffer())
-    o.write(prot)
-
-    slow_version_binary = prot.trans.getvalue()
-
-    prot = TBinaryProtocol.TBinaryProtocolAccelerated(
-        TTransport.TMemoryBuffer(slow_version_binary))
-    c = o.__class__()
-    c.read(prot)
-    if c != o:
-        print("copy: ")
-        pprint(eval(repr(c)))
-        print("orig: ")
-        pprint(eval(repr(o)))
-
-    prot = TBinaryProtocol.TBinaryProtocolAccelerated(
-        TTransport.TBufferedTransport(
-            TTransport.TMemoryBuffer(slow_version_binary)))
-    c = o.__class__()
-    c.read(prot)
-    if c != o:
-        print("copy: ")
-        pprint(eval(repr(c)))
-        print("orig: ")
-        pprint(eval(repr(o)))
+def do_test(fast, slow):
+    Test(fast, slow).do_test()
 
 
-def do_test():
-    check_write(hm)
-    check_read(HolyMoley())
-    no_set = deepcopy(hm)
-    no_set.contain = set()
-    check_read(no_set)
-    check_write(rs)
-    check_read(rs)
-    check_write(rshuge)
-    check_read(rshuge)
-    check_write(my_zero)
-    check_read(my_zero)
-    check_read(Backwards(**{"first_tag2": 4, "second_tag1": 2}))
-
-    # One case where the serialized form changes, but only superficially.
-    o = Backwards(**{"first_tag2": 4, "second_tag1": 2})
-    trans_fast = TTransport.TMemoryBuffer()
-    trans_slow = TTransport.TMemoryBuffer()
-    prot_fast = TBinaryProtocol.TBinaryProtocolAccelerated(trans_fast)
-    prot_slow = TBinaryProtocol.TBinaryProtocol(trans_slow)
-
-    o.write(prot_fast)
-    o.write(prot_slow)
-    ORIG = trans_slow.getvalue()
-    MINE = trans_fast.getvalue()
-    assert id(ORIG) != id(MINE)
-
-    prot = TBinaryProtocol.TBinaryProtocolAccelerated(TTransport.TMemoryBuffer())
-    o.write(prot)
-    prot = TBinaryProtocol.TBinaryProtocol(
-        TTransport.TMemoryBuffer(prot.trans.getvalue()))
-    c = o.__class__()
-    c.read(prot)
-    if c != o:
-        print("copy: ")
-        pprint(eval(repr(c)))
-        print("orig: ")
-        pprint(eval(repr(o)))
-
-
-def do_benchmark(iters=5000):
+def do_benchmark(protocol, iters=5000, skip_slow=False):
     setup = """
 from __main__ import hm, rs, TDevNullTransport
-from thrift.protocol import TBinaryProtocol
+from thrift.protocol.{0} import {0}{1}
 trans = TDevNullTransport()
-prot = TBinaryProtocol.TBinaryProtocol%s(trans)
+prot = {0}{1}(trans)
 """
 
-    setup_fast = setup % "Accelerated"
-    setup_slow = setup % ""
+    setup_fast = setup.format(protocol, 'Accelerated')
+    if not skip_slow:
+        setup_slow = setup.format(protocol, '')
 
     print("Starting Benchmarks")
 
-    print("HolyMoley Standard = %f" %
-          timeit.Timer('hm.write(prot)', setup_slow).timeit(number=iters))
+    if not skip_slow:
+        print("HolyMoley Standard = %f" %
+              timeit.Timer('hm.write(prot)', setup_slow).timeit(number=iters))
+
     print("HolyMoley Acceler. = %f" %
           timeit.Timer('hm.write(prot)', setup_fast).timeit(number=iters))
 
-    print("FastStruct Standard = %f" %
-          timeit.Timer('rs.write(prot)', setup_slow).timeit(number=iters))
+    if not skip_slow:
+        print("FastStruct Standard = %f" %
+              timeit.Timer('rs.write(prot)', setup_slow).timeit(number=iters))
+
     print("FastStruct Acceler. = %f" %
           timeit.Timer('rs.write(prot)', setup_fast).timeit(number=iters))
 
+
 if __name__ == '__main__':
-    do_test()
-    do_benchmark()
+    print('Testing TBinaryAccelerated')
+    do_test(TBinaryProtocolAccelerated, TBinaryProtocol)
+    do_benchmark('TBinaryProtocol')
+    print('Testing TCompactAccelerated')
+    do_test(TCompactProtocolAccelerated, TCompactProtocol)
+    do_benchmark('TCompactProtocol')

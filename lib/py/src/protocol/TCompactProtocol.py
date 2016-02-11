@@ -424,3 +424,49 @@ class TCompactProtocolFactory(object):
         return TCompactProtocol(trans,
                                 self.string_length_limit,
                                 self.container_length_limit)
+
+
+class TCompactProtocolAccelerated(TCompactProtocol):
+    """C-Accelerated version of TCompactProtocol.
+
+    This class does not override any of TCompactProtocol's methods,
+    but the generated code recognizes it directly and will call into
+    our C module to do the encoding, bypassing this object entirely.
+    We inherit from TCompactProtocol so that the normal TCompactProtocol
+    encoding can happen if the fastbinary module doesn't work for some
+    reason.
+    To disable this behavior, pass fallback=False constructor argument.
+
+    In order to take advantage of the C module, just use
+    TCompactProtocolAccelerated instead of TCompactProtocol.
+    """
+    pass
+
+    def __init__(self, *args, **kwargs):
+        fallback = kwargs.pop('fallback', True)
+        super(TCompactProtocolAccelerated, self).__init__(*args, **kwargs)
+        try:
+            from thrift.protocol import fastbinary
+        except ImportError:
+            if not fallback:
+                raise
+        else:
+            self._fast_decode = fastbinary.decode_compact
+            self._fast_encode = fastbinary.encode_compact
+
+
+class TCompactProtocolAcceleratedFactory(object):
+    def __init__(self,
+                 string_length_limit=None,
+                 container_length_limit=None,
+                 fallback=True):
+        self.string_length_limit = string_length_limit
+        self.container_length_limit = container_length_limit
+        self._fallback = fallback
+
+    def getProtocol(self, trans):
+        return TCompactProtocolAccelerated(
+            trans,
+            string_length_limit=self.string_length_limit,
+            container_length_limit=self.container_length_limit,
+            fallback=self._fallback)
