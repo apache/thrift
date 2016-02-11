@@ -51,6 +51,7 @@ check_PROGRAMS = \
   testcompactprotocol \
   testbufferedtransport \
   testframedtransport \
+  testfdtransport \
   testmemorybuffer \
   teststruct \
   testsimpleserver \
@@ -128,6 +129,11 @@ testframedtransport_LDADD = \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_socket.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_transport.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_socket.o
+
+testfdtransport_SOURCES = testfdtransport.c
+testfdtransport_LDADD = \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_fd_transport.o
 
 testmemorybuffer_SOURCES = testmemorybuffer.c
 testmemorybuffer_LDADD = \
