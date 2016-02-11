@@ -272,17 +272,17 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
 
     def open(self):
         try:
-            res0 = self._resolveAddr()
-            for res in res0:
-                sock_family, sock_type = res[0:2]
-                ip_port = res[4]
+            addrs = self._resolveAddr()
+            for addr in addrs:
+                sock_family, sock_type, _, _, ip_port = addr
                 plain_sock = socket.socket(sock_family, sock_type)
                 self.handle = self._wrap_socket(plain_sock)
                 self.handle.settimeout(self._timeout)
                 try:
                     self.handle.connect(ip_port)
-                except socket.error as e:
-                    if res is not res0[-1]:
+                except socket.error:
+                    self.handle.close()
+                    if addr is not addrs[-1]:
                         logger.warning(
                             'Error while connecting with %s. Trying next one.',
                             ip_port, exc_info=True)
@@ -297,8 +297,8 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
             else:
                 message = 'Could not connect to %s:%d: %s' \
                           % (self.host, self.port, e)
-            logger.error(
-                'Error while connecting with %s.', ip_port, exc_info=True)
+            logger.exception(
+                'Error while connecting with %s.', ip_port)
             raise TTransportException(TTransportException.NOT_OPEN, message)
 
         if self._should_verify:
@@ -417,7 +417,7 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
         try:
             client = self._wrap_socket(plain_client)
         except ssl.SSLError:
-            logger.error('Error while accepting from %s', addr, exc_info=True)
+            logger.exception('Error while accepting from %s', addr)
             # failed handshake/ssl wrap, close socket to client
             plain_client.close()
             # raise
