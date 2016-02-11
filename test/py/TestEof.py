@@ -107,8 +107,8 @@ class TestEof(unittest.TestCase):
 
     def testBinaryProtocolAcceleratedBinaryEof(self):
         """Test that TBinaryProtocolAccelerated throws an EOFError when it reaches the end of the stream"""
-        self.eofTestHelper(TBinaryProtocol.TBinaryProtocolAcceleratedFactory())
-        self.eofTestHelperStress(TBinaryProtocol.TBinaryProtocolAcceleratedFactory())
+        self.eofTestHelper(TBinaryProtocol.TBinaryProtocolAcceleratedFactory(fallback=False))
+        self.eofTestHelperStress(TBinaryProtocol.TBinaryProtocolAcceleratedFactory(fallback=False))
 
     def testCompactProtocolEof(self):
         """Test that TCompactProtocol throws an EOFError when it reaches the end of the stream"""
@@ -117,8 +117,8 @@ class TestEof(unittest.TestCase):
 
     def testCompactProtocolAcceleratedCompactEof(self):
         """Test that TCompactProtocolAccelerated throws an EOFError when it reaches the end of the stream"""
-        self.eofTestHelper(TCompactProtocol.TCompactProtocolAcceleratedFactory())
-        self.eofTestHelperStress(TCompactProtocol.TCompactProtocolAcceleratedFactory())
+        self.eofTestHelper(TCompactProtocol.TCompactProtocolAcceleratedFactory(fallback=False))
+        self.eofTestHelperStress(TCompactProtocol.TCompactProtocolAcceleratedFactory(fallback=False))
 
 
 def suite():

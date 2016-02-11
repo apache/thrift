@@ -102,12 +102,12 @@ class TestFrozen(TestFrozenBase):
 
 class TestFrozenAcceleratedBinary(TestFrozenBase):
     def protocol(self, trans):
-        return TBinaryProtocol.TBinaryProtocolAcceleratedFactory().getProtocol(trans)
+        return TBinaryProtocol.TBinaryProtocolAcceleratedFactory(fallback=False).getProtocol(trans)
 
 
 class TestFrozenAcceleratedCompact(TestFrozenBase):
     def protocol(self, trans):
-        return TCompactProtocol.TCompactProtocolAcceleratedFactory().getProtocol(trans)
+        return TCompactProtocol.TCompactProtocolAcceleratedFactory(fallback=False).getProtocol(trans)
 
 
 def suite():
