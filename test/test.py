@@ -45,12 +45,12 @@ FEATURE_DIR_RELATIVE = path_join(TEST_DIR_RELATIVE, 'features')
 CONFIG_FILE = 'tests.json'
 
 
-def run_cross_tests(server_match, client_match, jobs, skip_known_failures, retry_count):
+def run_cross_tests(server_match, client_match, jobs, skip_known_failures, retry_count, regex):
     logger = multiprocessing.get_logger()
     logger.debug('Collecting tests')
     with open(path_join(TEST_DIR, CONFIG_FILE), 'r') as fp:
         j = json.load(fp)
-    tests = crossrunner.collect_cross_tests(j, server_match, client_match)
+    tests = crossrunner.collect_cross_tests(j, server_match, client_match, regex)
     if not tests:
         print('No test found that matches the criteria', file=sys.stderr)
         print('  servers: %s' % server_match, file=sys.stderr)
@@ -74,7 +74,7 @@ def run_cross_tests(server_match, client_match, jobs, skip_known_failures, retry
         return False
 
 
-def run_feature_tests(server_match, feature_match, jobs, skip_known_failures, retry_count):
+def run_feature_tests(server_match, feature_match, jobs, skip_known_failures, retry_count, regex):
     basedir = path_join(ROOT_DIR, FEATURE_DIR_RELATIVE)
     logger = multiprocessing.get_logger()
     logger.debug('Collecting tests')
@@ -82,7 +82,7 @@ def run_feature_tests(server_match, feature_match, jobs, skip_known_failures, re
         j = json.load(fp)
     with open(path_join(basedir, CONFIG_FILE), 'r') as fp:
         j2 = json.load(fp)
-    tests = crossrunner.collect_feature_tests(j, j2, server_match, feature_match)
+    tests = crossrunner.collect_feature_tests(j, j2, server_match, feature_match, regex)
     if not tests:
         print('No test found that matches the criteria', file=sys.stderr)
         print('  servers: %s' % server_match, file=sys.stderr)
@@ -122,6 +122,7 @@ def main(argv):
                         help='list of clients to test')
     parser.add_argument('-F', '--features', nargs='*', default=None,
                         help='run server feature tests instead of cross language tests')
+    parser.add_argument('-R', '--regex', help='test name pattern to run')
     parser.add_argument('-s', '--skip-known-failures', action='store_true', dest='skip_known_failures',
                         help='do not execute tests that are known to fail')
     parser.add_argument('-r', '--retry-count', type=int,
@@ -160,9 +161,9 @@ def main(argv):
             options.update_failures, options.print_failures)
     elif options.features is not None:
         features = options.features or ['.*']
-        res = run_feature_tests(server_match, features, options.jobs, options.skip_known_failures, options.retry_count)
+        res = run_feature_tests(server_match, features, options.jobs, options.skip_known_failures, options.retry_count, options.regex)
     else:
-        res = run_cross_tests(server_match, client_match, options.jobs, options.skip_known_failures, options.retry_count)
+        res = run_cross_tests(server_match, client_match, options.jobs, options.skip_known_failures, options.retry_count, options.regex)
     return 0 if res else 1
 
 if __name__ == '__main__':

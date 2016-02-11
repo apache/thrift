@@ -22,6 +22,7 @@ import re
 from itertools import product
 
 from .util import merge_dict
+from .test import TestEntry
 
 # Those keys are passed to execution as is.
 # Note that there are keys other than these, namely:
@@ -144,12 +145,18 @@ def _do_collect_tests(servers, clients):
                     }
 
 
-def collect_cross_tests(tests_dict, server_match, client_match):
+def _filter_entries(tests, regex):
+    if regex:
+        return filter(lambda t: re.search(regex, TestEntry.get_name(**t)), tests)
+    return tests
+
+
+def collect_cross_tests(tests_dict, server_match, client_match, regex):
     sv, cl = _collect_testlibs(tests_dict, server_match, client_match)
-    return list(_do_collect_tests(sv, cl))
+    return list(_filter_entries(_do_collect_tests(sv, cl), regex))
 
 
-def collect_feature_tests(tests_dict, features_dict, server_match, feature_match):
+def collect_feature_tests(tests_dict, features_dict, server_match, feature_match, regex):
     sv, _ = _collect_testlibs(tests_dict, server_match)
     ft = collect_features(features_dict, feature_match)
-    return list(_do_collect_tests(sv, ft))
+    return list(_filter_entries(_do_collect_tests(sv, ft), regex))
