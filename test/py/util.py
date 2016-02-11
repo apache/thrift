@@ -17,24 +17,16 @@
 # under the License.
 #
 
+import glob
+import os
 import sys
 
-if sys.version_info[0] == 2:
+_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
+_ROOT_DIR = os.path.dirname(os.path.dirname(_SCRIPT_DIR))
 
-    from cStringIO import StringIO as BufferIO
 
-    def binary_to_str(bin_val):
-        return bin_val
-
-    def str_to_binary(str_val):
-        return str_val
-
-else:
-
-    from io import BytesIO as BufferIO
-
-    def binary_to_str(bin_val):
-        return bin_val.decode('utf8')
-
-    def str_to_binary(str_val):
-        return bytes(str_val, 'utf8')
+def local_libpath():
+    globdir = os.path.join(_ROOT_DIR, 'lib', 'py', 'build', 'lib.*')
+    for libpath in glob.glob(globdir):
+        if libpath.endswith('-%d.%d' % (sys.version_info[0], sys.version_info[1])):
+            return libpath

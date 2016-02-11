@@ -142,6 +142,24 @@ static PyMethodDef ThriftFastBinaryMethods[] = {
     {NULL, NULL, 0, NULL} /* Sentinel */
 };
 
+#if PY_MAJOR_VERSION >= 3
+
+static struct PyModuleDef ThriftFastBinaryDef = {PyModuleDef_HEAD_INIT,
+                                                 "thrift.protocol.fastbinary",
+                                                 NULL,
+                                                 0,
+                                                 ThriftFastBinaryMethods,
+                                                 NULL,
+                                                 NULL,
+                                                 NULL,
+                                                 NULL};
+
+#define INITERROR return NULL;
+
+PyObject* PyInit_fastbinary() {
+
+#else
+
 #define INITERROR return;
 
 void initfastbinary() {
@@ -149,6 +167,8 @@ void initfastbinary() {
   PycString_IMPORT;
   if (PycStringIO == NULL)
     INITERROR
+
+#endif
 
   const rlim_t kStackSize = 16 * 1024 * 1024; // min stack size = 16 MB
   struct rlimit rl;
@@ -181,9 +201,16 @@ void initfastbinary() {
 #undef INIT_INTERN_STRING
 
   PyObject* module =
+#if PY_MAJOR_VERSION >= 3
+      PyModule_Create(&ThriftFastBinaryDef);
+#else
       Py_InitModule("thrift.protocol.fastbinary", ThriftFastBinaryMethods);
+#endif
   if (module == NULL)
     INITERROR;
 
+#if PY_MAJOR_VERSION >= 3
+  return module;
+#endif
 }
 }

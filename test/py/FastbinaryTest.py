@@ -122,7 +122,7 @@ class Test(object):
     def _check_write(self, o):
         trans_fast = TTransport.TMemoryBuffer()
         trans_slow = TTransport.TMemoryBuffer()
-        prot_fast = self._fast(trans_fast)
+        prot_fast = self._fast(trans_fast, fallback=False)
         prot_slow = self._slow(trans_slow)
 
         o.write(prot_fast)
@@ -140,7 +140,7 @@ class Test(object):
         slow_version_binary = prot.trans.getvalue()
 
         prot = self._fast(
-            TTransport.TMemoryBuffer(slow_version_binary))
+            TTransport.TMemoryBuffer(slow_version_binary), fallback=False)
         c = o.__class__()
         c.read(prot)
         if c != o:
@@ -152,7 +152,7 @@ class Test(object):
 
         prot = self._fast(
             TTransport.TBufferedTransport(
-                TTransport.TMemoryBuffer(slow_version_binary)))
+                TTransport.TMemoryBuffer(slow_version_binary)), fallback=False)
         c = o.__class__()
         c.read(prot)
         if c != o:
@@ -187,7 +187,7 @@ class Test(object):
         o = Backwards(**{"first_tag2": 4, "second_tag1": 2})
         trans_fast = TTransport.TMemoryBuffer()
         trans_slow = TTransport.TMemoryBuffer()
-        prot_fast = self._fast(trans_fast)
+        prot_fast = self._fast(trans_fast, fallback=False)
         prot_slow = self._slow(trans_slow)
 
         o.write(prot_fast)
@@ -196,7 +196,7 @@ class Test(object):
         MINE = trans_fast.getvalue()
         assert id(ORIG) != id(MINE)
 
-        prot = self._fast(TTransport.TMemoryBuffer())
+        prot = self._fast(TTransport.TMemoryBuffer(), fallback=False)
         o.write(prot)
         prot = self._slow(
             TTransport.TMemoryBuffer(prot.trans.getvalue()))
@@ -218,12 +218,12 @@ def do_benchmark(protocol, iters=5000, skip_slow=False):
 from __main__ import hm, rs, TDevNullTransport
 from thrift.protocol.{0} import {0}{1}
 trans = TDevNullTransport()
-prot = {0}{1}(trans)
+prot = {0}{1}(trans{2})
 """
 
-    setup_fast = setup.format(protocol, 'Accelerated')
+    setup_fast = setup.format(protocol, 'Accelerated', ', fallback=False')
     if not skip_slow:
-        setup_slow = setup.format(protocol, '')
+        setup_slow = setup.format(protocol, '', '')
 
     print("Starting Benchmarks")
 

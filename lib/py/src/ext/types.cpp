@@ -26,7 +26,11 @@ namespace py {
 
 PyObject* ThriftModule = NULL;
 
+#if PY_MAJOR_VERSION < 3
 char refill_signature[] = {'s', '#', 'i'};
+#else
+const char* refill_signature = "y#i";
+#endif
 
 bool parse_struct_item_spec(StructItemSpec* dest, PyObject* spec_tuple) {
   // i'd like to use ParseArgs here, but it seems to be a bottleneck.
