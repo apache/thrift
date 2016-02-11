@@ -31,6 +31,11 @@ implementation (currently `cpp` and `java` are recommended) like this:
     test/test.py --server cpp,java --client nodejs
     test/test.py --server nodejs --client cpp,java
 
+Another useful flag is --regex. For example, to run all tests that involve
+Java TBinaryProtocol:
+
+    test/test.py --regex "java.*binary"
+
 ## Test case definition file
 
 The cross test cases are defined in [tests.json](tests.json).
