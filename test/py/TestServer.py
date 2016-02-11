@@ -184,6 +184,7 @@ def main(options):
         'binary': TBinaryProtocol.TBinaryProtocolFactory,
         'accel': TBinaryProtocol.TBinaryProtocolAcceleratedFactory,
         'compact': TCompactProtocol.TCompactProtocolFactory,
+        'accelc': TCompactProtocol.TCompactProtocolAcceleratedFactory,
         'json': TJSONProtocol.TJSONProtocolFactory,
     }
     pfactory_cls = prot_factories.get(options.proto, None)

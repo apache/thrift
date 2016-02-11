@@ -86,7 +86,7 @@ public:
       gen_dynbaseclass_ = "TBase";
       gen_dynbaseclass_frozen_ = "TFrozenBase";
       gen_dynbaseclass_exc_ = "TExceptionBase";
-      import_dynbase_ = "from thrift.protocol.TBase import TBase, TFrozenBase, TExceptionBase, TTransport\n";
+      import_dynbase_ = "from thrift.protocol.TBase import TBase, TFrozenBase, TExceptionBase\n";
     }
 
     iter = parsed_options.find("dynbase");
@@ -241,7 +241,6 @@ public:
   std::string py_autogen_comment();
   std::string py_imports();
   std::string render_includes();
-  std::string render_fastbinary_includes();
   std::string declare_argument(t_field* tfield);
   std::string render_field_default_value(t_field* tfield);
   std::string type_name(t_type* ttype);
@@ -384,11 +383,11 @@ void t_py_generator::init_generator() {
   f_init.close();
 
   // Print header
-  f_types_ <<
-    py_autogen_comment() << endl <<
-    py_imports() << endl <<
-    render_includes() << endl <<
-    render_fastbinary_includes();
+  f_types_ << py_autogen_comment() << endl
+           << py_imports() << endl
+           << render_includes() << endl
+           << "from thrift.transport import TTransport" << endl
+           << import_dynbase_;
 
   f_consts_ <<
     py_autogen_comment() << endl <<
@@ -406,24 +405,6 @@ string t_py_generator::render_includes() {
     result += "import " + get_real_py_module(includes[i], gen_twisted_, package_prefix_) + ".ttypes\n";
   }
   return result;
-}
-
-/**
- * Renders all the imports necessary to use the accelerated TBinaryProtocol
- */
-string t_py_generator::render_fastbinary_includes() {
-  string hdr = "";
-  if (gen_dynamic_) {
-    hdr += std::string(import_dynbase_);
-  } else {
-    hdr += "from thrift.transport import TTransport\n"
-           "from thrift.protocol import TBinaryProtocol, TProtocol\n"
-           "try:\n" +
-           indent_str() + "from thrift.protocol import fastbinary\n"
-           "except:\n" +
-           indent_str() + "fastbinary = None\n";
-  }
-  return hdr;
 }
 
 /**
@@ -902,19 +883,16 @@ void t_py_generator::generate_py_struct_reader(ofstream& out, t_struct* tstruct)
 
   const char* id = is_immutable(tstruct) ? "cls" : "self";
 
-  indent(out) << "if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated "
+  indent(out) << "if iprot._fast_decode is not None "
                  "and isinstance(iprot.trans, TTransport.CReadableTransport) "
-                 "and " << id << ".thrift_spec is not None "
-                 "and fastbinary is not None:" << endl;
+                 "and "
+              << id << ".thrift_spec is not None:" << endl;
   indent_up();
 
   if (is_immutable(tstruct)) {
-    indent(out)
-        << "return fastbinary.decode_binary(None, iprot.trans, (cls, cls.thrift_spec), iprot.string_length_limit, iprot.container_length_limit)"
-        << endl;
+    indent(out) << "return iprot._fast_decode(None, iprot, (cls, cls.thrift_spec))" << endl;
   } else {
-    indent(out) << "fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec), iprot.string_length_limit, iprot.container_length_limit)"
-                << endl;
+    indent(out) << "iprot._fast_decode(self, iprot, (self.__class__, self.thrift_spec))" << endl;
     indent(out) << "return" << endl;
   }
   indent_down();
@@ -991,13 +969,11 @@ void t_py_generator::generate_py_struct_writer(ofstream& out, t_struct* tstruct)
   indent(out) << "def write(self, oprot):" << endl;
   indent_up();
 
-  indent(out) << "if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated "
-                 "and self.thrift_spec is not None "
-                 "and fastbinary is not None:" << endl;
+  indent(out) << "if oprot._fast_encode is not None and self.thrift_spec is not None:" << endl;
   indent_up();
 
   indent(out)
-      << "oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))"
+      << "oprot.trans.write(oprot._fast_encode(self, (self.__class__, self.thrift_spec)))"
       << endl;
   indent(out) << "return" << endl;
   indent_down();
@@ -1074,7 +1050,8 @@ void t_py_generator::generate_service(t_service* tservice) {
   f_service_ << "import logging" << endl
              << "from .ttypes import *" << endl
              << "from thrift.Thrift import TProcessor" << endl
-             << render_fastbinary_includes();
+             << "from thrift.transport import TTransport" << endl
+             << import_dynbase_;
 
   if (gen_twisted_) {
     f_service_ << "from zope.interface import Interface, implements" << endl
@@ -1546,11 +1523,8 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     indent_str() << "from urllib.parse import urlparse" << endl <<
     "else:" << endl <<
     indent_str() << "from urlparse import urlparse" << endl <<
-    "from thrift.transport import TTransport" << endl <<
-    "from thrift.transport import TSocket" << endl <<
-    "from thrift.transport import TSSLSocket" << endl <<
-    "from thrift.transport import THttpClient" << endl <<
-    "from thrift.protocol import TBinaryProtocol" << endl <<
+    "from thrift.transport import TTransport, TSocket, TSSLSocket, THttpClient" << endl <<
+    "from thrift.protocol.TBinaryProtocol import TBinaryProtocol" << endl <<
     endl;
 
   f_remote <<
@@ -1635,7 +1609,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
            << indent_str() << indent_str() << "transport = TTransport.TFramedTransport(socket)" << endl
            << indent_str() << "else:" << endl
            << indent_str() << indent_str() << "transport = TTransport.TBufferedTransport(socket)" << endl
-           << "protocol = TBinaryProtocol.TBinaryProtocol(transport)" << endl
+           << "protocol = TBinaryProtocol(transport)" << endl
            << "client = " << service_name_ << ".Client(protocol)" << endl
            << "transport.open()" << endl
            << endl;

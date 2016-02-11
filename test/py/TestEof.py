@@ -84,7 +84,7 @@ class TestEof(unittest.TestCase):
         self.fail("Should have gotten EOFError")
 
     def eofTestHelperStress(self, pfactory):
-        """Teest the ability of TBinaryProtocol to deal with the removal of every byte in the file"""
+        """Test the ability of TBinaryProtocol to deal with the removal of every byte in the file"""
         # TODO: we should make sure this covers more of the code paths
 
         data = self.make_data(pfactory)
@@ -105,7 +105,7 @@ class TestEof(unittest.TestCase):
         self.eofTestHelper(TBinaryProtocol.TBinaryProtocolFactory())
         self.eofTestHelperStress(TBinaryProtocol.TBinaryProtocolFactory())
 
-    def testBinaryProtocolAcceleratedEof(self):
+    def testBinaryProtocolAcceleratedBinaryEof(self):
         """Test that TBinaryProtocolAccelerated throws an EOFError when it reaches the end of the stream"""
         self.eofTestHelper(TBinaryProtocol.TBinaryProtocolAcceleratedFactory())
         self.eofTestHelperStress(TBinaryProtocol.TBinaryProtocolAcceleratedFactory())
@@ -114,6 +114,11 @@ class TestEof(unittest.TestCase):
         """Test that TCompactProtocol throws an EOFError when it reaches the end of the stream"""
         self.eofTestHelper(TCompactProtocol.TCompactProtocolFactory())
         self.eofTestHelperStress(TCompactProtocol.TCompactProtocolFactory())
+
+    def testCompactProtocolAcceleratedCompactEof(self):
+        """Test that TCompactProtocolAccelerated throws an EOFError when it reaches the end of the stream"""
+        self.eofTestHelper(TCompactProtocol.TCompactProtocolAcceleratedFactory())
+        self.eofTestHelperStress(TCompactProtocol.TCompactProtocolAcceleratedFactory())
 
 
 def suite():

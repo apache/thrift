@@ -17,13 +17,7 @@
 # under the License.
 #
 
-from thrift.protocol import TBinaryProtocol
 from thrift.transport import TTransport
-
-try:
-    from thrift.protocol import fastbinary
-except:
-    fastbinary = None
 
 
 class TBase(object):
@@ -47,27 +41,19 @@ class TBase(object):
         return not (self == other)
 
     def read(self, iprot):
-        if (iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
+        if (iprot._fast_decode is not None and
                 isinstance(iprot.trans, TTransport.CReadableTransport) and
-                self.thrift_spec is not None and
-                fastbinary is not None):
-            fastbinary.decode_binary(self,
-                                     iprot.trans,
-                                     (self.__class__, self.thrift_spec),
-                                     iprot.string_length_limit,
-                                     iprot.container_length_limit)
-            return
-        iprot.readStruct(self, self.thrift_spec)
+                self.thrift_spec is not None):
+            iprot._fast_decode(self, iprot, (self.__class__, self.thrift_spec))
+        else:
+            iprot.readStruct(self, self.thrift_spec)
 
     def write(self, oprot):
-        if (oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
-                self.thrift_spec is not None and
-                fastbinary is not None):
+        if (oprot._fast_encode is not None and self.thrift_spec is not None):
             oprot.trans.write(
-                fastbinary.encode_binary(
-                    self, (self.__class__, self.thrift_spec)))
-            return
-        oprot.writeStruct(self, self.thrift_spec)
+                oprot._fast_encode(self, (self.__class__, self.thrift_spec)))
+        else:
+            oprot.writeStruct(self, self.thrift_spec)
 
 
 class TExceptionBase(TBase, Exception):
@@ -86,14 +72,11 @@ class TFrozenBase(TBase):
 
     @classmethod
     def read(cls, iprot):
-        if (iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
+        if (iprot._fast_decode is not None and
                 isinstance(iprot.trans, TTransport.CReadableTransport) and
-                cls.thrift_spec is not None and
-                fastbinary is not None):
+                cls.thrift_spec is not None):
             self = cls()
-            return fastbinary.decode_binary(None,
-                                            iprot.trans,
-                                            (self.__class__, self.thrift_spec),
-                                            iprot.string_length_limit,
-                                            iprot.container_length_limit)
-        return iprot.readStruct(cls, cls.thrift_spec, True)
+            return iprot._fast_decode(None, iprot,
+                                      (self.__class__, self.thrift_spec))
+        else:
+            return iprot.readStruct(cls, cls.thrift_spec, True)
