@@ -271,6 +271,11 @@ class AcceleratedBinaryTest(AbstractTest):
         return TBinaryProtocol.TBinaryProtocolAcceleratedFactory().getProtocol(transport)
 
 
+class AcceleratedCompactTest(AbstractTest):
+    def get_protocol(self, transport):
+        return TCompactProtocol.TCompactProtocolAcceleratedFactory().getProtocol(transport)
+
+
 def suite():
     suite = unittest.TestSuite()
     loader = unittest.TestLoader()
@@ -280,6 +285,8 @@ def suite():
         suite.addTest(loader.loadTestsFromTestCase(AcceleratedBinaryTest))
     elif options.proto == 'compact':
         suite.addTest(loader.loadTestsFromTestCase(CompactTest))
+    elif options.proto == 'accelc':
+        suite.addTest(loader.loadTestsFromTestCase(AcceleratedCompactTest))
     elif options.proto == 'json':
         suite.addTest(loader.loadTestsFromTestCase(JSONTest))
     else:

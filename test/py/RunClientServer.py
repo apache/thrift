@@ -52,6 +52,7 @@ EXTRA_DELAY = dict(TProcessPoolServer=5.5)
 
 PROTOS = [
     'accel',
+    'accelc',
     'binary',
     'compact',
     'json',

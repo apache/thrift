@@ -22,7 +22,7 @@
 from DebugProtoTest.ttypes import CompactProtoTestStruct, Empty, Wrapper
 from thrift.Thrift import TFrozenDict
 from thrift.transport import TTransport
-from thrift.protocol import TBinaryProtocol
+from thrift.protocol import TBinaryProtocol, TCompactProtocol
 import collections
 import unittest
 
@@ -100,16 +100,22 @@ class TestFrozen(TestFrozenBase):
         return TBinaryProtocol.TBinaryProtocolFactory().getProtocol(trans)
 
 
-class TestFrozenAccelerated(TestFrozenBase):
+class TestFrozenAcceleratedBinary(TestFrozenBase):
     def protocol(self, trans):
         return TBinaryProtocol.TBinaryProtocolAcceleratedFactory().getProtocol(trans)
+
+
+class TestFrozenAcceleratedCompact(TestFrozenBase):
+    def protocol(self, trans):
+        return TCompactProtocol.TCompactProtocolAcceleratedFactory().getProtocol(trans)
 
 
 def suite():
     suite = unittest.TestSuite()
     loader = unittest.TestLoader()
     suite.addTest(loader.loadTestsFromTestCase(TestFrozen))
-    suite.addTest(loader.loadTestsFromTestCase(TestFrozenAccelerated))
+    suite.addTest(loader.loadTestsFromTestCase(TestFrozenAcceleratedBinary))
+    suite.addTest(loader.loadTestsFromTestCase(TestFrozenAcceleratedCompact))
     return suite
 
 if __name__ == "__main__":

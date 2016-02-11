@@ -200,7 +200,8 @@
       "compact",
       "binary",
       "json",
-      "binary:accel"
+      "binary:accel",
+      "compact:accelc"
     ],
     "workdir": "py"
   },
