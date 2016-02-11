@@ -73,6 +73,8 @@ struct _ThriftTransportClass
                    const guint32 len, GError **error);
   gboolean (*write_end) (ThriftTransport *transport, GError **error);
   gboolean (*flush) (ThriftTransport *transport, GError **error);
+  gint32 (*read_all) (ThriftTransport *transport, gpointer buf,
+                      guint32 len, GError **error);
 };
 
 /* used by THRIFT_TYPE_TRANSPORT */
@@ -142,6 +144,13 @@ gboolean thrift_transport_write_end (ThriftTransport *transport,
  * \public \memberof ThriftTransportInterface
  */
 gboolean thrift_transport_flush (ThriftTransport *transport, GError **error);
+
+/*!
+ * Read len bytes of data into the buffer buf.
+ * \public \memberof ThriftTransportInterface
+ */
+gint32 thrift_transport_read_all (ThriftTransport *transport, gpointer buf,
+                                  guint32 len, GError **error);
 
 /* define error/exception types */
 typedef enum
