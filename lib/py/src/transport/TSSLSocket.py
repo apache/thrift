@@ -88,9 +88,9 @@ class TSSLBase(object):
             return
         real_pos = pos + 3
         warnings.warn(
-            '%dth positional argument is deprecated. Use keyward argument insteand.'
-            % real_pos,
-            DeprecationWarning)
+            '%dth positional argument is deprecated.'
+            'please use keyward argument insteand.'
+            % real_pos, DeprecationWarning, stacklevel=3)
 
         if key in kwargs:
             raise TypeError(
@@ -107,16 +107,19 @@ class TSSLBase(object):
 
     def __getattr__(self, key):
         if key == 'SSL_VERSION':
-            warnings.warn('Use ssl_version attribute instead.',
-                          DeprecationWarning)
+            warnings.warn(
+                'SSL_VERSION is deprecated.'
+                'please use ssl_version attribute instead.',
+                DeprecationWarning, stacklevel=2)
             return self.ssl_version
 
     def __init__(self, server_side, host, ssl_opts):
         self._server_side = server_side
         if TSSLBase.SSL_VERSION != self._default_protocol:
             warnings.warn(
-                'SSL_VERSION is deprecated. Use ssl_version keyward argument instead.',
-                DeprecationWarning)
+                'SSL_VERSION is deprecated.'
+                'please use ssl_version keyward argument instead.',
+                DeprecationWarning, stacklevel=2)
         self._context = ssl_opts.pop('ssl_context', None)
         self._server_hostname = None
         if not self._server_side:
@@ -248,9 +251,9 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
         if validate is not None:
             cert_reqs_name = 'CERT_REQUIRED' if validate else 'CERT_NONE'
             warnings.warn(
-                'validate is deprecated. Use cert_reqs=ssl.%s instead'
+                'validate is deprecated. please use cert_reqs=ssl.%s instead'
                 % cert_reqs_name,
-                DeprecationWarning)
+                DeprecationWarning, stacklevel=2)
             if 'cert_reqs' in kwargs:
                 raise TypeError('Cannot specify both validate and cert_reqs')
             kwargs['cert_reqs'] = ssl.CERT_REQUIRED if validate else ssl.CERT_NONE
@@ -262,12 +265,14 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
 
     @property
     def validate(self):
-        warnings.warn('Use cert_reqs instead', DeprecationWarning)
+        warnings.warn('validate is deprecated. please use cert_reqs instead',
+                      DeprecationWarning, stacklevel=2)
         return self.cert_reqs != ssl.CERT_NONE
 
     @validate.setter
     def validate(self, value):
-        warnings.warn('Use cert_reqs instead', DeprecationWarning)
+        warnings.warn('validate is deprecated. please use cert_reqs instead',
+                      DeprecationWarning, stacklevel=2)
         self.cert_reqs = ssl.CERT_REQUIRED if value else ssl.CERT_NONE
 
     def open(self):
@@ -409,7 +414,9 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
 
         Raises an IOError exception if the certfile is not present or unreadable.
         """
-        warnings.warn('Use certfile property instead.', DeprecationWarning)
+        warnings.warn(
+            'setCertfile is deprecated. please use certfile property instead.',
+            DeprecationWarning, stacklevel=2)
         self.certfile = certfile
 
     def accept(self):
@@ -440,5 +447,5 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
                 return None
 
         result = TSocket.TSocket()
-        result.setHandle(client)
+        result.handle = client
         return result
