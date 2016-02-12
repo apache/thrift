@@ -78,7 +78,7 @@ class ServerAcceptor(threading.Thread):
             self._client_accepted.set()
 
     def await_listening(self):
-        self._port_bound.wait()
+        self._listening.wait()
 
     @property
     def port(self):
