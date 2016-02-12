@@ -28,9 +28,7 @@ import unittest
 import warnings
 from contextlib import contextmanager
 
-import six
-
-import _import_local_thrift
+import _import_local_thrift  # noqa
 from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket
 from thrift.transport.TTransport import TTransportException
 
@@ -153,49 +151,51 @@ class TSSLSocketTest(unittest.TestCase):
 
     # deprecated feature
     def test_deprecation(self):
-        if not six.PY3:
-            # The checks below currently only work for python3.
-            # See: https://issues.apache.org/jira/browse/THRIFT-3618
-            print('skiping test_deprecation')
-            return
-
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', category=DeprecationWarning, module='thrift.*SSL.*')
+            warnings.filterwarnings('always', category=DeprecationWarning, module=self.__module__)
             TSSLSocket('localhost', 0, validate=True, ca_certs=SERVER_CERT)
             self.assertEqual(len(w), 1)
 
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', category=DeprecationWarning, module='thrift.*SSL.*')
+            warnings.filterwarnings('always', category=DeprecationWarning, module=self.__module__)
             # Deprecated signature
             # def __init__(self, host='localhost', port=9090, validate=True, ca_certs=None, keyfile=None, certfile=None, unix_socket=None, ciphers=None):
-            client = TSSLSocket('localhost', 0, True, SERVER_CERT, CLIENT_KEY, CLIENT_CERT, None, TEST_CIPHERS)
+            TSSLSocket('localhost', 0, True, SERVER_CERT, CLIENT_KEY, CLIENT_CERT, None, TEST_CIPHERS)
             self.assertEqual(len(w), 7)
 
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', category=DeprecationWarning, module='thrift.*SSL.*')
+            warnings.filterwarnings('always', category=DeprecationWarning, module=self.__module__)
             # Deprecated signature
             # def __init__(self, host=None, port=9090, certfile='cert.pem', unix_socket=None, ciphers=None):
-            server = TSSLServerSocket(None, 0, SERVER_PEM, None, TEST_CIPHERS)
+            TSSLServerSocket(None, 0, SERVER_PEM, None, TEST_CIPHERS)
             self.assertEqual(len(w), 3)
 
     # deprecated feature
     def test_set_cert_reqs_by_validate(self):
-        c1 = TSSLSocket('localhost', 0, validate=True, ca_certs=SERVER_CERT)
-        self.assertEqual(c1.cert_reqs, ssl.CERT_REQUIRED)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', category=DeprecationWarning, module=self.__module__)
+            c1 = TSSLSocket('localhost', 0, validate=True, ca_certs=SERVER_CERT)
+            self.assertEqual(c1.cert_reqs, ssl.CERT_REQUIRED)
 
-        c1 = TSSLSocket('localhost', 0, validate=False)
-        self.assertEqual(c1.cert_reqs, ssl.CERT_NONE)
+            c1 = TSSLSocket('localhost', 0, validate=False)
+            self.assertEqual(c1.cert_reqs, ssl.CERT_NONE)
+
+            self.assertEqual(len(w), 2)
 
     # deprecated feature
     def test_set_validate_by_cert_reqs(self):
-        c1 = TSSLSocket('localhost', 0, cert_reqs=ssl.CERT_NONE)
-        self.assertFalse(c1.validate)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', category=DeprecationWarning, module=self.__module__)
+            c1 = TSSLSocket('localhost', 0, cert_reqs=ssl.CERT_NONE)
+            self.assertFalse(c1.validate)
 
-        c2 = TSSLSocket('localhost', 0, cert_reqs=ssl.CERT_REQUIRED, ca_certs=SERVER_CERT)
-        self.assertTrue(c2.validate)
+            c2 = TSSLSocket('localhost', 0, cert_reqs=ssl.CERT_REQUIRED, ca_certs=SERVER_CERT)
+            self.assertTrue(c2.validate)
 
-        c3 = TSSLSocket('localhost', 0, cert_reqs=ssl.CERT_OPTIONAL, ca_certs=SERVER_CERT)
-        self.assertTrue(c3.validate)
+            c3 = TSSLSocket('localhost', 0, cert_reqs=ssl.CERT_OPTIONAL, ca_certs=SERVER_CERT)
+            self.assertTrue(c3.validate)
+
+            self.assertEqual(len(w), 3)
 
     def test_unix_domain_socket(self):
         if platform.system() == 'Windows':
