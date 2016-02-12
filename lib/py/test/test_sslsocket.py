@@ -155,6 +155,7 @@ class TSSLSocketTest(unittest.TestCase):
     def test_deprecation(self):
         if not six.PY3:
             # The checks below currently only work for python3.
+            # See: https://issues.apache.org/jira/browse/THRIFT-3618
             print('skiping test_deprecation')
             return
 
