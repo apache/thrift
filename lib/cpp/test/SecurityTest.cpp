@@ -29,7 +29,6 @@
 #include <thrift/transport/TSSLServerSocket.h>
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TTransport.h>
-#include "TestPortFixture.h"
 #include <vector>
 #ifdef __linux__
 #include <signal.h>
@@ -95,7 +94,7 @@ BOOST_GLOBAL_FIXTURE(GlobalFixture);
 BOOST_GLOBAL_FIXTURE(GlobalFixture)
 #endif
 
-struct SecurityFixture : public TestPortFixture
+struct SecurityFixture
 {
     void server(apache::thrift::transport::SSLProtocol protocol)
     {
@@ -111,12 +110,13 @@ struct SecurityFixture : public TestPortFixture
             pServerSocketFactory->loadCertificate(certFile("server.crt").string().c_str());
             pServerSocketFactory->loadPrivateKey(certFile("server.key").string().c_str());
             pServerSocketFactory->server(true);
-            pServerSocket.reset(new TSSLServerSocket("localhost", m_serverPort, pServerSocketFactory));
+            pServerSocket.reset(new TSSLServerSocket("localhost", 0, pServerSocketFactory));
             boost::shared_ptr<TTransport> connectedClient;
 
             try
             {
                 pServerSocket->listen();
+                mPort = pServerSocket->getPort();
                 mCVar.notify_one();
                 lock.unlock();
 
@@ -163,7 +163,7 @@ struct SecurityFixture : public TestPortFixture
                 pClientSocketFactory->loadCertificate(certFile("client.crt").string().c_str());
                 pClientSocketFactory->loadPrivateKey(certFile("client.key").string().c_str());
                 pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").string().c_str());
-                pClientSocket = pClientSocketFactory->createSocket("localhost", m_serverPort);
+                pClientSocket = pClientSocketFactory->createSocket("localhost", mPort);
                 pClientSocket->open();
 
                 uint8_t buf[3];
@@ -207,6 +207,7 @@ struct SecurityFixture : public TestPortFixture
 
     boost::mutex mMutex;
     boost::condition_variable mCVar;
+    int mPort;
     bool mConnected;
 };
 
