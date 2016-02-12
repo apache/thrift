@@ -28,6 +28,8 @@ import unittest
 import warnings
 from contextlib import contextmanager
 
+import six
+
 import _import_local_thrift
 from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket
 from thrift.transport.TTransport import TTransportException
@@ -151,6 +153,11 @@ class TSSLSocketTest(unittest.TestCase):
 
     # deprecated feature
     def test_deprecation(self):
+        if not six.PY3:
+            # The checks below currently only work for python3.
+            print('skiping test_deprecation')
+            return
+
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', category=DeprecationWarning, module='thrift.*SSL.*')
             TSSLSocket('localhost', 0, validate=True, ca_certs=SERVER_CERT)
