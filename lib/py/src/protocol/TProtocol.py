@@ -48,6 +48,8 @@ class TProtocolBase(object):
 
     def __init__(self, trans):
         self.trans = trans
+        self._fast_decode = None
+        self._fast_encode = None
 
     @staticmethod
     def _check_length(limit, length):
@@ -276,7 +278,7 @@ class TProtocolBase(object):
             yield read()
 
     def readFieldByTType(self, ttype, spec):
-        return self._read_by_ttype(ttype, spec, spec).next()
+        return next(self._read_by_ttype(ttype, spec, spec))
 
     def readContainerList(self, spec):
         ttype, tspec, is_immutable = spec
@@ -394,7 +396,7 @@ class TProtocolBase(object):
             yield write(v)
 
     def writeFieldByTType(self, ttype, val, spec):
-        self._write_by_ttype(ttype, [val], spec, spec).next()
+        next(self._write_by_ttype(ttype, [val], spec, spec))
 
 
 def checkIntegerLimits(i, bits):

@@ -34,7 +34,7 @@ import os
 if 'vagrant' in str(os.environ):
     del os.link
 
-include_dirs = []
+include_dirs = ['src']
 if sys.platform == 'win32':
     include_dirs.append('compat/win32')
     ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError, IOError)
@@ -65,7 +65,12 @@ def run_setup(with_binary):
         extensions = dict(
             ext_modules=[
                 Extension('thrift.protocol.fastbinary',
-                          sources=['src/protocol/fastbinary.c'],
+                          sources=[
+                              'src/ext/module.cpp',
+                              'src/ext/types.cpp',
+                              'src/ext/binary.cpp',
+                              'src/ext/compact.cpp',
+                          ],
                           include_dirs=include_dirs,
                           )
             ],
