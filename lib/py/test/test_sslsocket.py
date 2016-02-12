@@ -77,17 +77,17 @@ class ServerAcceptor(threading.Thread):
         finally:
             self._client_accepted.set()
 
-    def await_listening(self, timeout=None):
-        self._port_bound.wait(timeout=timeout)
+    def await_listening(self):
+        self._port_bound.wait()
 
     @property
-    def port(self, timeout=None):
-        self._port_bound.wait(timeout=timeout)
+    def port(self):
+        self._port_bound.wait()
         return self._port
 
     @property
-    def client(self, timeout=None):
-        self._client_accepted.wait(timeout=timeout)
+    def client(self):
+        self._client_accepted.wait()
         return self._client
 
 
