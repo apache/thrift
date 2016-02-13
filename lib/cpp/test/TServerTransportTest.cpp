@@ -20,7 +20,6 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TServerTransport.h>
-#include "TestPortFixture.h"
 
 using apache::thrift::transport::TServerTransport;
 using apache::thrift::transport::TTransport;
