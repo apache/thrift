@@ -81,10 +81,21 @@ public:
                  const std::string& option_string)
     : t_oop_generator(program) {
     (void)option_string;
-    out_dir_base_ = "gen-rb";
+    std::map<std::string, std::string>::const_iterator iter;
 
-    require_rubygems_ = (parsed_options.find("rubygems") != parsed_options.end());
-    namespaced_ = (parsed_options.find("namespaced") != parsed_options.end());
+    require_rubygems_ = false;
+    namespaced_ = false;
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("rubygems") == 0) {
+        require_rubygems_ = true;
+      } else if( iter->first.compare("namespaced") == 0) {
+        namespaced_ = true;
+      } else {
+        throw "unknown option ruby:" + iter->first; 
+      }
+    }
+
+    out_dir_base_ = "gen-rb";
   }
 
   /**

@@ -57,10 +57,16 @@ public:
                      const map<string, string>& parsed_options,
                      const string& option_string)
     : t_oop_generator(program) {
-    (void)parsed_options;
     (void)option_string;
+    std::map<std::string, std::string>::const_iterator iter;
+
     /* set the output directory */
     this->out_dir_base_ = "gen-c_glib";
+
+    /* no options yet */
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      throw "unknown option c_glib:" + iter->first; 
+    }
 
     /* set the namespace */
     this->nspace = program_->get_namespace("c_glib");

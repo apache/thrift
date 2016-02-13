@@ -49,13 +49,19 @@ public:
                  const std::map<std::string, std::string>& parsed_options,
                  const std::string& option_string)
     : t_generator(program) {
-    (void)parsed_options;
     (void)option_string;
-    out_dir_base_ = "gen-gv";
-
     std::map<std::string, std::string>::const_iterator iter;
-    iter = parsed_options.find("exceptions");
-    exception_arrows = (iter != parsed_options.end());
+
+    exception_arrows = false;
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("exceptions") == 0) {
+        exception_arrows = true;
+      } else {
+        throw "unknown option gv:" + iter->first; 
+      }
+    }
+
+    out_dir_base_ = "gen-gv";
   }
 
   /**

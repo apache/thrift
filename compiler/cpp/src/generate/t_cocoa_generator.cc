@@ -52,24 +52,30 @@ public:
     (void)option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
-    iter = parsed_options.find("log_unexpected");
-    log_unexpected_ = (iter != parsed_options.end());
+    log_unexpected_ = false;
+    validate_required_ = false;
+    async_clients_ = false;
+    promise_kit_ = false;
+    debug_descriptions_ = false;
+    pods_ = false;
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("log_unexpected") == 0) {
+        log_unexpected_ = true;
+      } else if( iter->first.compare("validate_required") == 0) {
+        validate_required_ = true;
+      } else if( iter->first.compare("async_clients") == 0) {
+        async_clients_ = true;
+      } else if( iter->first.compare("promise_kit") == 0) {
+        promise_kit_ = true;
+      } else if( iter->first.compare("debug_descriptions") == 0) {
+        debug_descriptions_ = true;
+      } else if( iter->first.compare("pods") == 0) {
+        pods_ = true;
+      } else {
+        throw "unknown option cocoa:" + iter->first; 
+      }
+    }
 
-    iter = parsed_options.find("validate_required");
-    validate_required_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("async_clients");
-    async_clients_ = (iter != parsed_options.end());
-      
-    iter = parsed_options.find("promise_kit");
-    promise_kit_ = (iter != parsed_options.end());
-      
-    iter = parsed_options.find("debug_descriptions");
-    debug_descriptions_ = (iter != parsed_options.end());
-    
-    iter = parsed_options.find("pods");
-    pods_ = (iter != parsed_options.end());
-      
     out_dir_base_ = "gen-cocoa";
   }
 
@@ -3282,6 +3288,8 @@ THRIFT_REGISTER_GENERATOR(
     cocoa,
     "Cocoa",
     "    log_unexpected:  Log every time an unexpected field ID or type is encountered.\n"
+    "    debug_descriptions:\n"
+    "                     Allow use of debugDescription so the app can add description via a cateogory/extension\n"
     "    validate_required:\n"
     "                     Throws exception if any required field is not set.\n"
     "    async_clients:   Generate clients which invoke asynchronously via block syntax.\n"

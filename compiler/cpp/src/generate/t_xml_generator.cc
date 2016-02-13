@@ -58,19 +58,25 @@ public:
                    const std::map<std::string, std::string>& parsed_options,
                    const std::string& option_string)
     : t_generator(program) {
-    (void)parsed_options;
     (void)option_string;
-    out_dir_base_ = "gen-xml";
-
     std::map<std::string, std::string>::const_iterator iter;
-    iter = parsed_options.find("merge");
-    should_merge_includes_ = (iter != parsed_options.end());
 
-    iter = parsed_options.find("no_default_ns");
-    should_use_default_ns_ = (iter == parsed_options.end());
+    should_merge_includes_ = false;
+    should_use_default_ns_ = true;
+    should_use_namespaces_ = true;
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("merge") == 0) {
+        should_merge_includes_ = true;
+      } else if( iter->first.compare("no_default_ns") == 0) {
+        should_use_default_ns_ = false;
+      } else if( iter->first.compare("no_namespaces") == 0) {
+        should_use_namespaces_ = false;
+      } else {
+        throw "unknown option xml:" + iter->first; 
+      }
+    }
 
-    iter = parsed_options.find("no_namespaces");
-    should_use_namespaces_ = (iter == parsed_options.end());
+    out_dir_base_ = "gen-xml";
   }
 
   virtual ~t_xml_generator() {}

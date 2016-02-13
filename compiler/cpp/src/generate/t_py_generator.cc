@@ -50,83 +50,74 @@ public:
                  const std::map<std::string, std::string>& parsed_options,
                  const std::string& option_string)
     : t_generator(program) {
-    (void)option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
-    iter = parsed_options.find("new_style");
-    if (iter != parsed_options.end()) {
-      pwarning(0, "new_style is enabled by default, so the option will be removed in the near future.\n");
-    }
-    iter = parsed_options.find("utf8strings");
-    if (iter != parsed_options.end()) {
-      pwarning(0, "utf8strings is enabled by default, so the option will be removed in the near future.\n");
-    }
 
     gen_newstyle_ = true;
-    iter = parsed_options.find("old_style");
-    if (iter != parsed_options.end()) {
-      gen_newstyle_ = false;
-      pwarning(0, "old_style is deprecated and may be removed in the future.\n");
+    gen_utf8strings_ = true;
+    gen_dynbase_ = false;
+    gen_slots_ = false;
+    gen_tornado_ = false;
+    gen_twisted_ = false;
+    gen_dynamic_ = false;
+    coding_ = "";
+    gen_dynbaseclass_ = "";
+    gen_dynbaseclass_exc_ = "";
+    gen_dynbaseclass_frozen_ = "";
+    import_dynbase_ = "";
+    package_prefix_ = "";
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("new_style") == 0) {
+        pwarning(0, "new_style is enabled by default, so the option will be removed in the near future.\n");
+      } else if( iter->first.compare("old_style") == 0) {
+        gen_newstyle_ = false;
+        pwarning(0, "old_style is deprecated and may be removed in the future.\n");
+      } else if( iter->first.compare("utf8strings") == 0) {
+        pwarning(0, "utf8strings is enabled by default, so the option will be removed in the near future.\n");
+      } else if( iter->first.compare("no_utf8strings") == 0) {
+        gen_utf8strings_ = false;
+      } else if( iter->first.compare("slots") == 0) {
+        gen_slots_ = true;
+      } else if( iter->first.compare("package_prefix") == 0) {
+        package_prefix_ = iter->second;
+      } else if( iter->first.compare("dynamic") == 0) {
+        gen_dynamic_ = true;
+        gen_newstyle_ = false; // dynamic is newstyle
+        if( gen_dynbaseclass_.empty()) {
+          gen_dynbaseclass_ = "TBase";
+        }
+        if( gen_dynbaseclass_frozen_.empty()) {
+          gen_dynbaseclass_frozen_ = "TFrozenBase";
+        }
+        if( gen_dynbaseclass_exc_.empty()) {
+          gen_dynbaseclass_exc_ = "TExceptionBase";
+        }
+        if( import_dynbase_.empty()) {
+          import_dynbase_ = "from thrift.protocol.TBase import TBase, TFrozenBase, TExceptionBase, TTransport\n";
+        }
+      } else if( iter->first.compare("dynbase") == 0) {
+        gen_dynbase_ = true;
+        gen_dynbaseclass_ = (iter->second);
+      } else if( iter->first.compare("dynfrozen") == 0) {
+        gen_dynbaseclass_frozen_ = (iter->second);
+      } else if( iter->first.compare("dynexc") == 0) {
+        gen_dynbaseclass_exc_ = (iter->second);
+      } else if( iter->first.compare("dynimport") == 0) {
+        gen_dynbase_ = true;
+        import_dynbase_ = (iter->second);
+      } else if( iter->first.compare("twisted") == 0) {
+        gen_twisted_ = true;
+      } else if( iter->first.compare("tornado") == 0) {
+        gen_tornado_ = true;
+      } else if( iter->first.compare("coding") == 0) {
+        coding_ = iter->second;
+      } else {
+        throw "unknown option py:" + iter->first; 
+      }
     }
-
-    iter = parsed_options.find("slots");
-    gen_slots_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("package_prefix");
-    if (iter != parsed_options.end()) {
-      package_prefix_ = iter->second;
-    }
-
-
-    iter = parsed_options.find("dynamic");
-    gen_dynamic_ = (iter != parsed_options.end());
-
-    if (gen_dynamic_) {
-      gen_newstyle_ = false; // dynamic is newstyle
-      gen_dynbaseclass_ = "TBase";
-      gen_dynbaseclass_frozen_ = "TFrozenBase";
-      gen_dynbaseclass_exc_ = "TExceptionBase";
-      import_dynbase_ = "from thrift.protocol.TBase import TBase, TFrozenBase, TExceptionBase\n";
-    }
-
-    iter = parsed_options.find("dynbase");
-    if (iter != parsed_options.end()) {
-      gen_dynbase_ = true;
-      gen_dynbaseclass_ = (iter->second);
-    }
-
-    iter = parsed_options.find("dynfrozen");
-    if (iter != parsed_options.end()) {
-      gen_dynbaseclass_frozen_ = (iter->second);
-    }
-
-    iter = parsed_options.find("dynexc");
-    if (iter != parsed_options.end()) {
-      gen_dynbaseclass_exc_ = (iter->second);
-    }
-
-    iter = parsed_options.find("dynimport");
-    if (iter != parsed_options.end()) {
-      gen_dynbase_ = true;
-      import_dynbase_ = (iter->second);
-    }
-
-    iter = parsed_options.find("twisted");
-    gen_twisted_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("tornado");
-    gen_tornado_ = (iter != parsed_options.end());
 
     if (gen_twisted_ && gen_tornado_) {
       throw "at most one of 'twisted' and 'tornado' are allowed";
-    }
-
-    iter = parsed_options.find("no_utf8strings");
-    gen_utf8strings_ = (iter == parsed_options.end());
-
-    iter = parsed_options.find("coding");
-    if (iter != parsed_options.end()) {
-        coding_ = iter->second;
     }
 
     copy_options_ = option_string;

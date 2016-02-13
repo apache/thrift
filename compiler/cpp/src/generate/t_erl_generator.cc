@@ -50,16 +50,29 @@ public:
                   const std::map<std::string, std::string>& parsed_options,
                   const std::string& option_string)
     : t_generator(program) {
-    (void)parsed_options;
     (void)option_string;
-    out_dir_base_ = "gen-erl";
+    std::map<std::string, std::string>::const_iterator iter;
 
-    legacy_names_ = (parsed_options.find("legacynames") != parsed_options.end());
-    maps_ = (parsed_options.find("maps") != parsed_options.end());
-    otp16_ = (parsed_options.find("otp16") != parsed_options.end());
+    legacy_names_ = false;
+    maps_ = false;
+    otp16_ = false;
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("legacynames") == 0) {
+        legacy_names_ = true;
+      } else if( iter->first.compare("maps") == 0) {
+        maps_ = true;
+      } else if( iter->first.compare("otp16") == 0) {
+        otp16_ = true;
+      } else {
+        throw "unknown option erl:" + iter->first; 
+      }
+    }
+
     if (maps_ && otp16_) {
       throw "argument error: Cannot specify both maps and otp16; maps are not available for Erlang/OTP R16 or older";
     }
+
+    out_dir_base_ = "gen-erl";
   }
 
   /**

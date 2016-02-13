@@ -261,25 +261,25 @@
   <target name="generate">
     <!-- Generate the thrift gen-java source -->
     <exec executable="../../compiler/cpp/thrift" failonerror="true">
-      <arg line="--gen java:hashcode ${test.thrift.home}/ThriftTest.thrift"/>
+      <arg line="--gen java ${test.thrift.home}/ThriftTest.thrift"/>
     </exec>
     <exec executable="../../compiler/cpp/thrift" failonerror="true">
-      <arg line="--gen java:hashcode ${test.thrift.home}/DebugProtoTest.thrift"/>
+      <arg line="--gen java ${test.thrift.home}/DebugProtoTest.thrift"/>
     </exec>
     <exec executable="../../compiler/cpp/thrift" failonerror="true">
-      <arg line="--gen java:hashcode ${test.thrift.home}/OptionalRequiredTest.thrift"/>
+      <arg line="--gen java ${test.thrift.home}/OptionalRequiredTest.thrift"/>
     </exec>
     <exec executable="../../compiler/cpp/thrift" failonerror="true">
       <arg line="--gen java:beans,nocamel ${test.thrift.home}/JavaBeansTest.thrift"/>
     </exec>
     <exec executable="../../compiler/cpp/thrift" failonerror="true">
-      <arg line="--gen java:hashcode ${test.thrift.home}/ManyOptionals.thrift"/>
+      <arg line="--gen java ${test.thrift.home}/ManyOptionals.thrift"/>
     </exec>
     <exec executable="mkdir" failonerror="true">
       <arg line="-p ${genfullcamel}"/>
     </exec>
     <exec executable="../../compiler/cpp/thrift" failonerror="true">
-      <arg line="--gen java:hashcode,fullcamel -out ${genfullcamel} ${test.thrift.home}/FullCamelTest.thrift"/>
+      <arg line="--gen java:fullcamel -out ${genfullcamel} ${test.thrift.home}/FullCamelTest.thrift"/>
     </exec>
     <exec executable="mkdir" failonerror="true">
       <arg line="-p ${genreuse}"/>

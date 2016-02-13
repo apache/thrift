@@ -60,16 +60,26 @@ public:
     has_const = false;
     std::map<std::string, std::string>::const_iterator iter;
 
-    iter = parsed_options.find("ansistr_binary");
-    ansistr_binary_ = (iter != parsed_options.end());
-    iter = parsed_options.find("register_types");
-    register_types_ = (iter != parsed_options.end());
-    iter = parsed_options.find("constprefix");
-    constprefix_ = (iter != parsed_options.end());
-    iter = parsed_options.find("events");
-    events_ = (iter != parsed_options.end());
-    iter = parsed_options.find("xmldoc");
-    xmldoc_ = (iter != parsed_options.end());
+    ansistr_binary_ = false;
+    register_types_ = false;
+    constprefix_ = false;
+    events_ = false;
+    xmldoc_ = false;
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("ansistr_binary") == 0) {
+        ansistr_binary_ = true;
+      } else if( iter->first.compare("register_types") == 0) {
+        register_types_ = true;
+      } else if( iter->first.compare("constprefix") == 0) {
+        constprefix_ = true;
+      } else if( iter->first.compare("events") == 0) {
+        events_ = true;
+      } else if( iter->first.compare("xmldoc") == 0) {
+        xmldoc_ = true;
+      } else {
+        throw "unknown option delphi:" + iter->first; 
+      }
+    }
 
     out_dir_base_ = "gen-delphi";
     escape_.clear();
