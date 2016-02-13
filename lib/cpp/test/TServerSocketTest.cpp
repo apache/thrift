@@ -28,6 +28,8 @@ using apache::thrift::transport::TSocket;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 
+BOOST_AUTO_TEST_SUITE(TServerSocketTest)
+
 BOOST_AUTO_TEST_CASE(test_bind_to_address) {
   TServerSocket sock1("localhost", 0);
   sock1.listen();
@@ -61,3 +63,5 @@ BOOST_AUTO_TEST_CASE(test_get_port) {
   TServerSocket sock1("localHost", 888);
   BOOST_CHECK_EQUAL(888, sock1.getPort());
 }
+
+BOOST_AUTO_TEST_SUITE_END();
