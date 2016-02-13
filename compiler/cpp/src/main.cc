@@ -1033,9 +1033,9 @@ void generate(t_program* program, const vector<string>& generator_strings) {
       }
     }
   } catch (string s) {
-    printf("Error: %s\n", s.c_str());
+    failure("Error: %s\n", s.c_str());
   } catch (const char* exc) {
-    printf("Error: %s\n", exc);
+    failure("Error: %s\n", exc);
   }
 }
 
