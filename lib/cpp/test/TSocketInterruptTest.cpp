@@ -32,6 +32,8 @@ using apache::thrift::transport::TSocket;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 
+BOOST_AUTO_TEST_SUITE(TSocketInterruptTest)
+
 void readerWorker(boost::shared_ptr<TTransport> tt, uint32_t expectedResult) {
   uint8_t buf[4];
   BOOST_CHECK_EQUAL(expectedResult, tt->read(buf, 4));
@@ -139,3 +141,5 @@ BOOST_AUTO_TEST_CASE(test_non_interruptable_child_peek) {
   accepted->close();
   sock1.close();
 }
+
+BOOST_AUTO_TEST_SUITE_END()
