@@ -52,8 +52,14 @@ public:
     (void)option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
-    iter = parsed_options.find("bindable");
-    bindable_ = (iter != parsed_options.end());
+    bindable_ = false;
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("bindable") == 0) {
+        bindable_ = true;
+      } else {
+        throw "unknown option as3:" + iter->first; 
+      }
+    }
 
     out_dir_base_ = "gen-as3";
   }

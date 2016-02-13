@@ -58,46 +58,54 @@ public:
     (void)option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
-    iter = parsed_options.find("beans");
-    bean_style_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("android");
-    android_style_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("private-members");
-    private_members_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("nocamel");
-    nocamel_style_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("fullcamel");
-    fullcamel_style_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("android_legacy");
-    android_legacy_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("sorted_containers");
-    sorted_containers_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("java5");
-    java5_ = (iter != parsed_options.end());
-    if (java5_) {
-      android_legacy_ = true;
+    bean_style_ = false;
+    android_style_ = false;
+    private_members_ = false;
+    nocamel_style_ = false;
+    fullcamel_style_ = false;
+    android_legacy_ = false;
+    sorted_containers_ = false;
+    java5_ = false;
+    reuse_objects_ = false;
+    use_option_type_ = false;
+    undated_generated_annotations_  = false;
+    suppress_generated_annotations_ = false;
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("beans") == 0) {
+        bean_style_ = true;
+      } else if( iter->first.compare("android") == 0) {
+        android_style_ = true;
+      } else if( iter->first.compare("private-members") == 0) {
+        private_members_ = true;
+      } else if( iter->first.compare("nocamel") == 0) {
+        nocamel_style_ = true;
+      } else if( iter->first.compare("fullcamel") == 0) {
+        fullcamel_style_ = true;
+      } else if( iter->first.compare("android_legacy") == 0) {
+        android_legacy_ = true;
+      } else if( iter->first.compare("sorted_containers") == 0) {
+        sorted_containers_ = true;
+      } else if( iter->first.compare("java5") == 0) {
+        java5_ = true;
+      } else if( iter->first.compare("reuse-objects") == 0) {
+        reuse_objects_ = true;
+      } else if( iter->first.compare("option_type") == 0) {
+        use_option_type_ = true;
+      } else if( iter->first.compare("generated_annotations") == 0) {
+        if( iter->second.compare("undated") == 0) {
+          undated_generated_annotations_  = true;
+        } else if(iter->second.compare("suppress") == 0) {
+          suppress_generated_annotations_ = true;
+        } else {
+          throw "unknown option java:" + iter->first + "=" + iter->second; 
+        }
+      } else {
+        throw "unknown option java:" + iter->first; 
+      }
     }
 
-    iter = parsed_options.find("reuse-objects");
-    reuse_objects_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("option_type");
-    use_option_type_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("generated_annotations");
-    if (iter != parsed_options.end()) {
-      undated_generated_annotations_  = (iter->second.compare("undated") == 0);
-      suppress_generated_annotations_ = (iter->second.compare("suppress") == 0);
-    } else {
-      undated_generated_annotations_  = false;
-      suppress_generated_annotations_ = false;
+    if (java5_) {
+      android_legacy_ = true;
     }
 
     out_dir_base_ = (bean_style_ ? "gen-javabean" : "gen-java");

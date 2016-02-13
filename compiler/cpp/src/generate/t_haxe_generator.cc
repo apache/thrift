@@ -52,14 +52,20 @@ public:
     (void)option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
-    iter = parsed_options.find("callbacks");
-    callbacks_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("rtti");
-    rtti_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("buildmacro");
-    buildmacro_ = (iter != parsed_options.end()) ? (iter->second) : "";
+    callbacks_ = false;
+    rtti_ = false;
+    buildmacro_ = "";
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("callbacks") == 0) {
+        callbacks_ = true;
+      } else if( iter->first.compare("rtti") == 0) {
+        rtti_ = true;
+      } else if( iter->first.compare("buildmacro") == 0) {
+        buildmacro_ = (iter->second);
+      } else {
+        throw "unknown option haxe:" + iter->first; 
+      }
+    }
 
     out_dir_base_ = "gen-haxe";
   }

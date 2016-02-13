@@ -60,7 +60,7 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
  */
 bool format_go_output(const string& file_path);
 
-const string default_thrift_import = "git.apache.org/thrift.git/lib/go/thrift";
+const string DEFAULT_THRIFT_IMPORT = "git.apache.org/thrift.git/lib/go/thrift";
 static std::string package_flag;
 
 /**
@@ -74,32 +74,30 @@ public:
     : t_generator(program) {
     (void)option_string;
     std::map<std::string, std::string>::const_iterator iter;
+
+
+    gen_thrift_import_ = DEFAULT_THRIFT_IMPORT;
+    gen_package_prefix_ = "";
+    package_flag = "";
+    read_write_private_ = false;
+    ignore_initialisms_ = false;
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("package_prefix") == 0) {
+        gen_package_prefix_ = (iter->second);
+      } else if( iter->first.compare("thrift_import") == 0) {
+        gen_thrift_import_ = (iter->second);
+      } else if( iter->first.compare("package") == 0) {
+        package_flag = (iter->second);
+      } else if( iter->first.compare("read_write_private") == 0) {
+        read_write_private_ = true;
+      } else if( iter->first.compare("ignore_initialisms") == 0) {
+        ignore_initialisms_ =  true;
+      } else {
+        throw "unknown option go:" + iter->first; 
+      }
+    }
+
     out_dir_base_ = "gen-go";
-    gen_thrift_import_ = default_thrift_import;
-
-    iter = parsed_options.find("package_prefix");
-
-    if (iter != parsed_options.end()) {
-      gen_package_prefix_ = (iter->second);
-    }
-
-    iter = parsed_options.find("thrift_import");
-
-    if (iter != parsed_options.end()) {
-      gen_thrift_import_ = (iter->second);
-    }
-
-    iter = parsed_options.find("package");
-
-    if (iter != parsed_options.end()) {
-      package_flag = (iter->second);
-    }
-
-    iter = parsed_options.find("read_write_private");
-    read_write_private_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("ignore_initialisms");
-    ignore_initialisms_ = (iter != parsed_options.end());
   }
 
   /**
@@ -3654,7 +3652,7 @@ bool format_go_output(const string& file_path) {
 
 THRIFT_REGISTER_GENERATOR(go, "Go",
                           "    package_prefix=  Package prefix for generated files.\n" \
-                          "    thrift_import=   Override thrift package import path (default:" + default_thrift_import + ")\n" \
+                          "    thrift_import=   Override thrift package import path (default:" + DEFAULT_THRIFT_IMPORT + ")\n" \
                           "    package=         Package name (default: inferred from thrift file name)\n" \
                           "    ignore_initialisms\n"
                           "                     Disable automatic spelling correction of initialisms (e.g. \"URL\")\n" \

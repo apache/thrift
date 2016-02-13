@@ -53,13 +53,19 @@ public:
                    const std::map<std::string, std::string>& parsed_options,
                    const std::string& option_string)
     : t_generator(program) {
-    (void)parsed_options;
     (void)option_string;
-    out_dir_base_ = "gen-json";
-
     std::map<std::string, std::string>::const_iterator iter;
-    iter = parsed_options.find("merge");
-    should_merge_includes_ = (iter != parsed_options.end());
+
+    should_merge_includes_ = false;
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("merge") == 0) {
+        should_merge_includes_ = true;
+      } else {
+        throw "unknown option json:" + iter->first; 
+      }
+    }
+
+    out_dir_base_ = "gen-json";
   }
 
   virtual ~t_json_generator() {}

@@ -53,20 +53,25 @@ public:
                  const std::string& option_string)
     : t_oop_generator(program) {
     (void)option_string;
-
     std::map<std::string, std::string>::const_iterator iter;
 
-    iter = parsed_options.find("node");
-    gen_node_ = (iter != parsed_options.end());
+    gen_node_ = false;
+    gen_jquery_ = false;
+    gen_ts_ = false;
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("node") == 0) {
+        gen_node_ = true;
+      } else if( iter->first.compare("jquery") == 0) {
+        gen_jquery_ = true;
+      } else if( iter->first.compare("ts") == 0) {
+        gen_ts_ = true;
+      } else {
+        throw "unknown option js:" + iter->first; 
+      }
+    }
 
-    iter = parsed_options.find("jquery");
-    gen_jquery_ = (iter != parsed_options.end());
-
-    if (!gen_node_) {
-      iter = parsed_options.find("ts");
-      gen_ts_ = (iter != parsed_options.end());
-    } else {
-      gen_ts_ = false;
+    if (gen_node_ && gen_ts_) {
+      throw "Invalid switch: [-gen js:node,ts] options not compatible";
     }
 
     if (gen_node_ && gen_jquery_) {

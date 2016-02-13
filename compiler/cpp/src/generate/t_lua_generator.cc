@@ -41,8 +41,14 @@ public:
     (void)option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
-    iter = parsed_options.find("omit_requires");
-    gen_requires_ = (iter == parsed_options.end());
+    gen_requires_ = true;
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("omit_requires") == 0) {
+        gen_requires_ = false;
+      } else {
+        throw "unknown option lua:" + iter->first; 
+      }
+    }
 
     out_dir_base_ = "gen-lua";
   }
@@ -1126,4 +1132,7 @@ string t_lua_generator::type_to_enum(t_type* type) {
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
 }
 
-THRIFT_REGISTER_GENERATOR(lua, "Lua", "")
+THRIFT_REGISTER_GENERATOR(
+    lua,
+    "Lua",
+    "    omit_requires:   Suppress generation of require 'somefile'.\n")

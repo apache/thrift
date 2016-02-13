@@ -55,29 +55,31 @@ public:
     (void)option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
-    iter = parsed_options.find("inlined");
-    binary_inline_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("rest");
-    rest_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("server");
-    phps_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("oop");
-    oop_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("validate");
-    validate_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("json");
-    json_serializable_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("nsglobal");
-    if (iter != parsed_options.end()) {
-      nsglobal_ = iter->second;
-    } else {
-      nsglobal_ = ""; // by default global namespace is empty
+    binary_inline_ = false;
+    rest_ = false;
+    phps_ = false;
+    oop_ = false;
+    validate_ = false;
+    json_serializable_ = false;
+    nsglobal_ = ""; // by default global namespace is empty
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("inlined") == 0) {
+        binary_inline_ = true;
+      } else if( iter->first.compare("rest") == 0) {
+        rest_ = true;
+      } else if( iter->first.compare("server") == 0) {
+        phps_ = true;
+      } else if( iter->first.compare("oop") == 0) {
+        oop_ = true;
+      } else if( iter->first.compare("validate") == 0) {
+        validate_ = true;
+      } else if( iter->first.compare("json") == 0) {
+        json_serializable_ = true;
+      } else if( iter->first.compare("nsglobal") == 0) {
+        nsglobal_ = iter->second;
+      } else {
+        throw "unknown option php:" + iter->first; 
+      }
     }
 
     if (oop_ && binary_inline_) {
