@@ -209,7 +209,7 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen) {
     return;
   }
 
-  std::auto_ptr<eventInfo> toEnqueue(new eventInfo());
+  std::unique_ptr<eventInfo> toEnqueue(new eventInfo());
   toEnqueue->eventBuff_ = new uint8_t[(sizeof(uint8_t) * eventLen) + 4];
 
   // first 4 bytes is the event length

@@ -27,7 +27,7 @@
 
 using namespace thrift::test::debug;
 
-static std::auto_ptr<OneOfEach> ooe;
+static std::unique_ptr<OneOfEach> ooe;
 
 void testCaseSetup_1() {
   ooe.reset(new OneOfEach);
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_1) {
     "Expected:\n" << expected_result << "\nGotten:\n" << result);
 }
 
-static std::auto_ptr<Nesting> n;
+static std::unique_ptr<Nesting> n;
 
 void testCaseSetup_2() {
   testCaseSetup_1();
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_2) {
     "Expected:\n" << expected_result << "\nGotten:\n" << result);
 }
 
-static std::auto_ptr<HolyMoley> hm;
+static std::unique_ptr<HolyMoley> hm;
 
 void testCaseSetup_3() {
   testCaseSetup_2();
