@@ -326,15 +326,12 @@ public final class TBaseHelper {
   }
 
   public static int hashCode(long value) {
-    return (int)(value ^ (value >>> 32));
-  }
-
-  public static int hashCode(byte value) {
-    return (int) value;
+    int low = (int) value;
+    int high = (int) (value >>> 32);
+    return high * 127 + low;
   }
 
   public static int hashCode(double value) {
-    long bits = Double.doubleToLongBits(value);
-    return (int)(bits ^ (bits >>> 32));
+    return hashCode(Double.doubleToRawLongBits(value));
   }
 }
