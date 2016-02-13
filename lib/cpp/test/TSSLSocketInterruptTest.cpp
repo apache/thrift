@@ -28,7 +28,6 @@
 #include <boost/shared_ptr.hpp>
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TSSLServerSocket.h>
-#include "TestPortFixture.h"
 #ifdef __linux__
 #include <signal.h>
 #endif
@@ -91,8 +90,6 @@ BOOST_GLOBAL_FIXTURE(GlobalFixtureSSL);
 BOOST_GLOBAL_FIXTURE(GlobalFixtureSSL)
 #endif
 
-BOOST_FIXTURE_TEST_SUITE(TSSLSocketInterruptTest, TestPortFixture)
-
 void readerWorker(boost::shared_ptr<TTransport> tt, uint32_t expectedResult) {
   uint8_t buf[4];
   try {
@@ -138,10 +135,11 @@ boost::shared_ptr<TSSLSocketFactory> createClientSocketFactory() {
 
 BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_read_while_handshaking) {
   boost::shared_ptr<TSSLSocketFactory> pServerSocketFactory = createServerSocketFactory();
-  TSSLServerSocket sock1("localhost", m_serverPort, pServerSocketFactory);
+  TSSLServerSocket sock1("localhost", 0, pServerSocketFactory);
   sock1.listen();
+  int port = sock1.getPort();
   boost::shared_ptr<TSSLSocketFactory> pClientSocketFactory = createClientSocketFactory();
-  boost::shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", m_serverPort);
+  boost::shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
   clientSock->open();
   boost::shared_ptr<TTransport> accepted = sock1.accept();
   boost::thread readThread(boost::bind(readerWorkerMustThrow, accepted));
@@ -157,10 +155,11 @@ BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_read_while_handshaking) {
 
 BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_read) {
   boost::shared_ptr<TSSLSocketFactory> pServerSocketFactory = createServerSocketFactory();
-  TSSLServerSocket sock1("localhost", m_serverPort, pServerSocketFactory);
+  TSSLServerSocket sock1("localhost", 0, pServerSocketFactory);
   sock1.listen();
+  int port = sock1.getPort();
   boost::shared_ptr<TSSLSocketFactory> pClientSocketFactory = createClientSocketFactory();
-  boost::shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", m_serverPort);
+  boost::shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
   clientSock->open();
   boost::shared_ptr<TTransport> accepted = sock1.accept();
   boost::thread readThread(boost::bind(readerWorkerMustThrow, accepted));
@@ -178,11 +177,12 @@ BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_read) {
 BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_read) {
   std::cout << "An error message from SSL_Shutdown on the console is expected:" << std::endl;
   boost::shared_ptr<TSSLSocketFactory> pServerSocketFactory = createServerSocketFactory();
-  TSSLServerSocket sock1("localhost", m_serverPort, pServerSocketFactory);
+  TSSLServerSocket sock1("localhost", 0, pServerSocketFactory);
   sock1.setInterruptableChildren(false); // returns to pre-THRIFT-2441 behavior
   sock1.listen();
+  int port = sock1.getPort();
   boost::shared_ptr<TSSLSocketFactory> pClientSocketFactory = createClientSocketFactory();
-  boost::shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", m_serverPort);
+  boost::shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
   clientSock->open();
   boost::shared_ptr<TTransport> accepted = sock1.accept();
   boost::thread readThread(boost::bind(readerWorker, accepted, 0));
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_read) {
 
 BOOST_AUTO_TEST_CASE(test_ssl_cannot_change_after_listen) {
   boost::shared_ptr<TSSLSocketFactory> pServerSocketFactory = createServerSocketFactory();
-  TSSLServerSocket sock1("localhost", m_serverPort, pServerSocketFactory);
+  TSSLServerSocket sock1("localhost", 0, pServerSocketFactory);
   sock1.listen();
   BOOST_CHECK_THROW(sock1.setInterruptableChildren(false), std::logic_error);
   sock1.close();
@@ -228,10 +228,11 @@ void peekerWorkerInterrupt(boost::shared_ptr<TTransport> tt) {
 BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_peek) {
   std::cout << "An error message from SSL_Shutdown on the console is expected:" << std::endl;
   boost::shared_ptr<TSSLSocketFactory> pServerSocketFactory = createServerSocketFactory();
-  TSSLServerSocket sock1("localhost", m_serverPort, pServerSocketFactory);
+  TSSLServerSocket sock1("localhost", 0, pServerSocketFactory);
   sock1.listen();
+  int port = sock1.getPort();
   boost::shared_ptr<TSSLSocketFactory> pClientSocketFactory = createClientSocketFactory();
-  boost::shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", m_serverPort);
+  boost::shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
   clientSock->open();
   boost::shared_ptr<TTransport> accepted = sock1.accept();
   // peek() will return false if child is interrupted
@@ -253,11 +254,12 @@ BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_peek) {
 BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_peek) {
   std::cout << "An error message from SSL_Shutdown on the console is expected:" << std::endl;
   boost::shared_ptr<TSSLSocketFactory> pServerSocketFactory = createServerSocketFactory();
-  TSSLServerSocket sock1("localhost", m_serverPort, pServerSocketFactory);
+  TSSLServerSocket sock1("localhost", 0, pServerSocketFactory);
   sock1.setInterruptableChildren(false); // returns to pre-THRIFT-2441 behavior
   sock1.listen();
+  int port = sock1.getPort();
   boost::shared_ptr<TSSLSocketFactory> pClientSocketFactory = createClientSocketFactory();
-  boost::shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", m_serverPort);
+  boost::shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
   clientSock->open();
   boost::shared_ptr<TTransport> accepted = sock1.accept();
   // peek() will return false when remote side is closed
@@ -279,5 +281,3 @@ BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_peek) {
   accepted->close();
   sock1.close();
 }
-
-BOOST_AUTO_TEST_SUITE_END()
