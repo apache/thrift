@@ -55,28 +55,35 @@ public:
     (void)option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
-    iter = parsed_options.find("pure_enums");
-    gen_pure_enums_ = (iter != parsed_options.end());
 
-    iter = parsed_options.find("include_prefix");
-    use_include_prefix_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("cob_style");
-    gen_cob_style_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("no_client_completion");
-    gen_no_client_completion_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("no_default_operators");
-    gen_no_default_operators_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("templates");
-    gen_templates_ = (iter != parsed_options.end());
-
-    gen_templates_only_ = (iter != parsed_options.end() && iter->second == "only");
-
-    iter = parsed_options.find("moveable_types");
-    gen_moveable_ = (iter != parsed_options.end());
+    gen_pure_enums_ = false;
+    use_include_prefix_ = false;
+    gen_cob_style_ = false;
+    gen_no_client_completion_ = false;
+    gen_no_default_operators_ = false;
+    gen_templates_ = false;
+    gen_templates_only_ = false;
+    gen_moveable_ = false;
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("pure_enums") == 0) {
+        gen_pure_enums_ = true;
+      } else if( iter->first.compare("include_prefix") == 0) {
+        use_include_prefix_ = true;
+      } else if( iter->first.compare("cob_style") == 0) {
+        gen_cob_style_ = true;
+      } else if( iter->first.compare("no_client_completion") == 0) {
+        gen_no_client_completion_ = true;
+      } else if( iter->first.compare("no_default_operators") == 0) {
+        gen_no_default_operators_ = true;
+      } else if( iter->first.compare("templates") == 0) {
+        gen_templates_ = true;
+        gen_templates_only_ = (iter->second == "only");
+      } else if( iter->first.compare("moveable_types") == 0) {
+        gen_moveable_ = true;
+      } else {
+        throw "unknown option cpp:" + iter->first; 
+      }
+    }
 
     out_dir_base_ = "gen-cpp";
   }

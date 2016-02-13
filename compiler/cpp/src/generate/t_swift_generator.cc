@@ -52,18 +52,25 @@ public:
     (void)option_string;
     map<string, string>::const_iterator iter;
 
-    iter = parsed_options.find("log_unexpected");
-    log_unexpected_ = (iter != parsed_options.end());
+    log_unexpected_ = false;
+    async_clients_ = false;
+    promise_kit_ = false;
+    debug_descriptions_ = false;
 
-    iter = parsed_options.find("async_clients");
-    async_clients_ = (iter != parsed_options.end());
-      
-    iter = parsed_options.find("promise_kit");
-    promise_kit_ = (iter != parsed_options.end());
-      
-    iter = parsed_options.find("debug_descriptions");
-    debug_descriptions_ = (iter != parsed_options.end());
-    
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("log_unexpected") == 0) {
+        log_unexpected_ = true;
+      } else if( iter->first.compare("async_clients") == 0) {
+        async_clients_ = true;
+      } else if( iter->first.compare("promise_kit") == 0) {
+        promise_kit_ = true;
+      } else if( iter->first.compare("debug_descriptions") == 0) {
+        debug_descriptions_ = true;
+      } else {
+        throw "unknown option swift:" + iter->first; 
+      }
+    }
+
     out_dir_base_ = "gen-swift";
   }
 
@@ -2141,5 +2148,7 @@ THRIFT_REGISTER_GENERATOR(
     swift,
     "Swift",
     "    log_unexpected:  Log every time an unexpected field ID or type is encountered.\n"
+    "    debug_descriptions:\n"
+    "                     Allow use of debugDescription so the app can add description via a cateogory/extension\n"
     "    async_clients:   Generate clients which invoke asynchronously via block syntax.\n"
     "    promise_kit:     Generate clients which invoke asynchronously via promises.\n")
