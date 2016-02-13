@@ -33,7 +33,6 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransport.h>
 #include "gen-cpp/ParentService.h"
-#include "TestPortFixture.h"
 #include <vector>
 
 using apache::thrift::concurrency::Guard;
@@ -145,12 +144,12 @@ void autoSocketCloser(TSocket* pSock) {
 }
 
 template <class TServerType>
-class TServerIntegrationTestFixture : public TestPortFixture {
+class TServerIntegrationTestFixture {
 public:
   TServerIntegrationTestFixture(const boost::shared_ptr<TProcessorFactory>& _processorFactory)
     : pServer(new TServerType(_processorFactory,
                               boost::shared_ptr<TServerTransport>(
-                                  new TServerSocket("localhost", m_serverPort)),
+                                  new TServerSocket("localhost", 0)),
                               boost::shared_ptr<TTransportFactory>(new TTransportFactory),
                               boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory))),
       pEventHandler(boost::shared_ptr<TServerReadyEventHandler>(new TServerReadyEventHandler)) {
