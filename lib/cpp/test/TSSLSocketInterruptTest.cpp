@@ -38,6 +38,8 @@ using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TSSLSocketFactory;
 
+BOOST_AUTO_TEST_SUITE(TSSLSocketInterruptTest)
+
 boost::filesystem::path keyDir;
 boost::filesystem::path certFile(const std::string& filename)
 {
@@ -281,3 +283,5 @@ BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_peek) {
   accepted->close();
   sock1.close();
 }
+
+BOOST_AUTO_TEST_SUITE_END()
