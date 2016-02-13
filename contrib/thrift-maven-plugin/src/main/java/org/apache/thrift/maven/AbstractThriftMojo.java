@@ -93,7 +93,7 @@ abstract class AbstractThriftMojo extends AbstractMojo {
      * it will generate Java output. The main reason for this option is to be able to add options
      * to the Java generator - if you generate something else, you're on your own.
      *
-     * @parameter default-value="java:hashcode"
+     * @parameter default-value="java"
      */
     private String generator;
 

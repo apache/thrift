@@ -68,27 +68,21 @@ public:
     (void)option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
-    iter = parsed_options.find("library_name");
-    if (iter != parsed_options.end()) {
-      library_name_ = (iter->second);
-    } else {
-      library_name_ = "";
-    }
-
-    iter = parsed_options.find("library_prefix");
-    if (iter != parsed_options.end()) {
-      library_prefix_ = (iter->second) + ".";
-      package_prefix_ = replace_all(library_prefix_, ".", "/");
-    } else {
-      library_prefix_ = "";
-      package_prefix_ = "";
-    }
-
-    iter = parsed_options.find("pubspec_lib");
-    if (iter != parsed_options.end()) {
-      pubspec_lib_ = (iter->second);
-    } else {
-      pubspec_lib_ = "";
+    library_name_ = "";
+    library_prefix_ = "";
+    package_prefix_ = "";
+    pubspec_lib_ = "";
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("library_name") == 0) {
+        library_name_ = (iter->second);
+      } else if( iter->first.compare("library_prefix") == 0) {
+        library_prefix_ = (iter->second) + ".";
+        package_prefix_ = replace_all(library_prefix_, ".", "/");
+      } else if( iter->first.compare("pubspec_lib") == 0) {
+        pubspec_lib_ = (iter->second);
+      } else {
+        throw "unknown option dart:" + iter->first; 
+      }
     }
 
     out_dir_base_ = "gen-dart";

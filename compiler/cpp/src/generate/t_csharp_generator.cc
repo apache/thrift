@@ -60,28 +60,31 @@ public:
 
     std::map<std::string, std::string>::const_iterator iter;
 
-    iter = parsed_options.find("async");
-    async_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("nullable");
-    nullable_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("hashcode");
-    hashcode_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("union");
-    union_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("serial");
-    serialize_ = (iter != parsed_options.end());
-    if (serialize_) {
-      wcf_namespace_ = iter->second; // since there can be only one namespace
-    }
-
-    iter = parsed_options.find("wcf");
-    wcf_ = (iter != parsed_options.end());
-    if (wcf_) {
-      wcf_namespace_ = iter->second;
+    async_ = false;
+    nullable_ = false;
+    hashcode_ = false;
+    union_ = false;
+    serialize_ = false;
+    wcf_ = false;
+    wcf_namespace_.clear();
+    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if( iter->first.compare("async") == 0) {
+        async_ = true;
+      } else if( iter->first.compare("nullable") == 0) {
+        nullable_ = true;
+      } else if( iter->first.compare("hashcode") == 0) {
+        hashcode_ = true;
+      } else if( iter->first.compare("union") == 0) {
+        union_ = true;
+      } else if( iter->first.compare("serial") == 0) {
+        serialize_ = true;
+        wcf_namespace_ = iter->second; // since there can be only one namespace
+      } else if( iter->first.compare("wcf") == 0) {
+        wcf_ = true;
+        wcf_namespace_ = iter->second;
+      } else {
+        throw "unknown option csharp:" + iter->first; 
+      }
     }
 
     out_dir_base_ = "gen-csharp";
