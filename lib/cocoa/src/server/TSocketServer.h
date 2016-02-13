@@ -43,6 +43,8 @@ extern NSString * const kTSockerServer_TransportKey;
     protocolFactory: (id <TProtocolFactory>) protocolFactory
    processorFactory: (id <TProcessorFactory>) processorFactory;
 
+- (void)stop;
+
 @end
 
 

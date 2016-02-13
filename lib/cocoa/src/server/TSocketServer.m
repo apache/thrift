@@ -32,6 +32,13 @@ NSString * const kTSocketServer_ClientConnectionFinishedForProcessorNotification
 NSString * const kTSocketServer_ProcessorKey = @"TSocketServer_Processor";
 NSString * const kTSockerServer_TransportKey = @"TSockerServer_Transport";
 
+@interface TSocketServer ()
+
+@property (nonatomic) NSMutableSet *clientSockets;
+@property (nonatomic) dispatch_queue_t clientSocketQueue;
+
+@end
+
 
 @implementation TSocketServer
 
@@ -79,6 +86,9 @@ NSString * const kTSockerServer_TransportKey = @"TSockerServer_Transport";
   // throw away our socket
   CFSocketInvalidate(socket);
   CFRelease(socket);
+
+  self.clientSockets = [[NSMutableSet alloc] init];
+  self.clientSocketQueue = dispatch_queue_create("com.kamama.tsocketserver.queue", DISPATCH_QUEUE_SERIAL);
   
     // register for notifications of accepted incoming connections
   [[NSNotificationCenter defaultCenter] addObserver: self
@@ -115,6 +125,8 @@ NSString * const kTSockerServer_TransportKey = @"TSockerServer_Transport";
                          withObject: socket];
 
   [[aNotification object] acceptConnectionInBackgroundAndNotify];
+
+  [self.clientSockets addObject:socket];
 }
 
 
@@ -149,6 +161,10 @@ NSString * const kTSockerServer_TransportKey = @"TSockerServer_Transport";
                                                                     kTSockerServer_TransportKey,
                                                                     nil]];
         [[NSNotificationCenter defaultCenter] performSelectorOnMainThread: @selector(postNotification:) withObject: n waitUntilDone: YES];
+
+        dispatch_sync(self.clientSocketQueue, ^{
+            [self.clientSockets removeObject:clientSocket];
+        });
         
     }
 #else
@@ -186,7 +202,14 @@ NSString * const kTSockerServer_TransportKey = @"TSockerServer_Transport";
 #endif
 }
 
-
+- (void)stop
+{
+    dispatch_sync(self.clientSocketQueue, ^{
+        [self.clientSockets enumerateObjectsUsingBlock:^(NSFileHandle *  _Nonnull clientSocket, BOOL * _Nonnull stop) {
+            [clientSocket closeFile];
+        }];
+    });
+}
 
 @end
 
