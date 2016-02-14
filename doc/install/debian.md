@@ -1,20 +1,27 @@
 ## Debian or Ubuntu setup
-The following command install all the required tools and libraries to build and install the Apache Thrift compiler on a Debian/Ubuntu Linux based system.
+The following command will install tools and libraries required to build and install the Apache Thrift compiler and C++ libraries on a Debian/Ubuntu Linux based system.
 
-	sudo apt-get install libboost-dev libboost-test-dev libboost-program-options-dev libboost-system-dev libboost-filesystem-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev ant
+	sudo apt-get install libboost-dev libboost-test-dev libboost-program-options-dev libboost-system-dev libboost-filesystem-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev libboost-thread-dev make
 
-Then install the Java JDK of your choice. Type **javac** to see a list of available packages, pick the one you prefer and **apt-get install** it.
+You will want to add the git package to the list above if you plan to clone the Apache Thrift source code repository.
 
-Debian stable users need to manually install a more recent automake version:
+Debian 7/Ubuntu 12 users need to manually install a more recent version of automake and (for C++ library and test support) boost:
 
-    wget http://ftp.debian.org/debian/pool/main/a/automake-1.14/automake_1.14.1-3_all.deb
-    sudo dpkg -i automake_1.14.1-3_all.deb
+    wget http://ftp.debian.org/debian/pool/main/a/automake-1.15/automake_1.15-3_all.deb
+    sudo dpkg -i automake_1.15-3_all.deb
+
+		wget http://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.gz                                                                      tar xvf boost_1_60_0.tar.gz
+		cd boost_1_60_0
+		./bootstrap.sh
+		sudo ./b2 install
 
 ## Optional packages
 
-Some other packages depend on what languages you want Thrift to support.
+If you would like to build Apache Thrift libraries for other programming languages you may need to install additional packages. The following languages require the specified additional packages:
 
- * Ruby 
+ * Java
+  * To build Apache Thrift support for Java you will need to install the ant package and Java JDK v1.7 or higher. Type **javac** to see a list of available packages, pick the one you prefer and **apt-get install** it (e.g. openjdk-7-jdk).
+ * Ruby
 	* ruby-full ruby-dev ruby-rspec rake rubygems libdaemons-ruby libgemplugin-ruby mongrel
  * Python
 	* python-all python-all-dev python-all-dbg
