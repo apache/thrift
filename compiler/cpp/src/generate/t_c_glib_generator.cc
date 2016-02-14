@@ -3767,7 +3767,6 @@ void t_c_glib_generator::generate_serialize_container(ofstream& out,
   scope_up(out);
 
   if (ttype->is_map()) {
-    string length = "g_hash_table_size ((GHashTable *) " + prefix + ")";
     t_type* tkey = ((t_map*)ttype)->get_key_type();
     t_type* tval = ((t_map*)ttype)->get_val_type();
     string tkey_name = type_name(tkey);
@@ -3800,13 +3799,15 @@ void t_c_glib_generator::generate_serialize_container(ofstream& out,
         << indent() << "int i = 0, key_count;" << endl
         << endl
         << indent() << "if ((ret = thrift_protocol_write_map_begin (protocol, "
-        << type_to_enum(tkey) << ", " << type_to_enum(tval) << ", (gint32) "
-        << length << ", error)) < 0)" << endl;
+        << type_to_enum(tkey) << ", " << type_to_enum(tval) << ", " << prefix << " ? "
+        << "(gint32) g_hash_table_size ((GHashTable *) " << prefix << ") : 0"
+        << ", error)) < 0)" << endl;
     indent_up();
     out << indent() << "return " << error_ret << ";" << endl;
     indent_down();
     out << indent() << "xfer += ret;" << endl
-        << indent() << "g_hash_table_foreach ((GHashTable *) " << prefix
+        << indent() << "if (" << prefix << ")" << endl
+        << indent() << "  g_hash_table_foreach ((GHashTable *) " << prefix
         << ", thrift_hash_table_get_keys, &key_list);" << endl
         << indent() << "key_count = g_list_length (key_list);" << endl
         << indent() << "keys = g_newa (" << tkey_name << tkey_ptr
@@ -3839,7 +3840,6 @@ void t_c_glib_generator::generate_serialize_container(ofstream& out,
     indent_down();
     out << indent() << "xfer += ret;" << endl;
   } else if (ttype->is_set()) {
-    string length = "g_hash_table_size ((GHashTable *) " + prefix + ")";
     t_type* telem = ((t_set*)ttype)->get_elem_type();
     string telem_name = type_name(telem);
     string telem_ptr = telem->is_string() || !telem->is_base_type() ? "" : "*";
@@ -3851,13 +3851,15 @@ void t_c_glib_generator::generate_serialize_container(ofstream& out,
         << indent() << "THRIFT_UNUSED_VAR (value);" << endl
         << endl
         << indent() << "if ((ret = thrift_protocol_write_set_begin (protocol, "
-        << type_to_enum(telem) << ", (gint32) " << length << ", error)) < 0)"
-        << endl;
+        << type_to_enum(telem) << ", " << prefix << " ? "
+        << "(gint32) g_hash_table_size ((GHashTable *) " << prefix << ") : 0"
+        << ", error)) < 0)" << endl;
     indent_up();
     out << indent() << "return " << error_ret << ";" << endl;
     indent_down();
     out << indent() << "xfer += ret;" << endl
-        << indent() << "g_hash_table_foreach ((GHashTable *) " << prefix
+        << indent() << "if (" << prefix << ")" << endl
+        << indent() << "  g_hash_table_foreach ((GHashTable *) " << prefix
         << ", thrift_hash_table_get_keys, &key_list);" << endl
         << indent() << "key_count = g_list_length (key_list);" << endl
         << indent() << "keys = g_newa (" << telem_name << telem_ptr
@@ -3888,7 +3890,7 @@ void t_c_glib_generator::generate_serialize_container(ofstream& out,
     indent_down();
     out << indent() << "xfer += ret;" << endl;
   } else if (ttype->is_list()) {
-    string length = prefix + "->len";
+    string length = "(" + prefix + " ? " + prefix + "->len : 0)";
     string i = tmp("i");
     out << indent() << "guint " << i << ";" << endl
         << endl
