@@ -510,7 +510,8 @@
       ],
       "protocols": [
         "binary",
-        "compact"
+        "compact",
+        "json"
       ],
       "command": [
         "lua",
