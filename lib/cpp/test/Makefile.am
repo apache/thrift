@@ -115,7 +115,6 @@ UnitTests_SOURCES = \
 	TypedefTest.cpp \
 	TServerSocketTest.cpp \
 	TServerTransportTest.cpp \
-	TestPortFixture.h \
 	TTransportCheckThrow.h
 
 if !WITH_BOOSTTHREADS
