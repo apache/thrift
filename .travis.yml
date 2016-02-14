@@ -62,6 +62,7 @@ env:
     - TEST_NAME="C C++ - GCC (automake)"
       BUILD_CMD="../autotools.sh"
       BUILD_ARG="--without-csharp --without-java --without-erlang --without-nodejs --without-lua --without-python --without-perl --without-php --without-php_extension --without-dart --without-ruby --without-haskell --without-go --without-haxe --without-d"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
 
     - TEST_NAME="Java Lua Perl PHP Python Ruby (automake)"
       BUILD_CMD="../autotools.sh"
