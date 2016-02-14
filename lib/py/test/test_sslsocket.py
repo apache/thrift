@@ -17,6 +17,7 @@
 # under the License.
 #
 
+import inspect
 import logging
 import os
 import platform
@@ -47,7 +48,7 @@ TEST_CIPHERS = 'DES-CBC3-SHA'
 
 
 class ServerAcceptor(threading.Thread):
-    def __init__(self, server):
+    def __init__(self, server, expect_failure=False):
         super(ServerAcceptor, self).__init__()
         self.daemon = True
         self._server = server
@@ -56,6 +57,10 @@ class ServerAcceptor(threading.Thread):
         self._port_bound = threading.Event()
         self._client = None
         self._client_accepted = threading.Event()
+        self._expect_failure = expect_failure
+        frame = inspect.stack(3)[2]
+        self.name = frame[3]
+        del frame
 
     def run(self):
         self._server.listen()
@@ -72,6 +77,10 @@ class ServerAcceptor(threading.Thread):
 
         try:
             self._client = self._server.accept()
+        except Exception:
+            logging.exception('error on server side (%s):' % self.name)
+            if not self._expect_failure:
+                raise
         finally:
             self._client_accepted.set()
 
@@ -108,14 +117,14 @@ class TSSLSocketTest(unittest.TestCase):
         return TSSLServerSocket(port=0, **kwargs)
 
     @contextmanager
-    def _connectable_client(self, server, path=None, **client_kwargs):
-        acc = ServerAcceptor(server)
+    def _connectable_client(self, server, expect_failure=False, path=None, **client_kwargs):
+        acc = ServerAcceptor(server, expect_failure)
         try:
             acc.start()
             acc.await_listening()
 
             host, port = ('localhost', acc.port) if path is None else (None, None)
-            client = TSSLSocket(host, port, path, **client_kwargs)
+            client = TSSLSocket(host, port, unix_socket=path, **client_kwargs)
             yield acc, client
         finally:
             if acc.client:
@@ -123,9 +132,9 @@ class TSSLSocketTest(unittest.TestCase):
             server.close()
 
     def _assert_connection_failure(self, server, path=None, **client_args):
-        with self._connectable_client(server, path=path, **client_args) as (acc, client):
+        logging.disable(logging.CRITICAL)
+        with self._connectable_client(server, True, path=path, **client_args) as (acc, client):
             try:
-                logging.disable(logging.CRITICAL)
                 # We need to wait for a connection failure, but not too long.  20ms is a tunable
                 # compromise between test speed and stability
                 client.setTimeout(20)
