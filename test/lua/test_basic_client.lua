@@ -20,6 +20,7 @@ require('TSocket')
 require('TBufferedTransport')
 require('TFramedTransport')
 require('TCompactProtocol')
+require('TJsonProtocol')
 require('TBinaryProtocol')
 require('ThriftTest_ThriftTest')
 require('liblualongnumber')
@@ -73,6 +74,7 @@ function testBasicClient(rawArgs)
   local protocols = {
     binary = TBinaryProtocol,
     compact = TCompactProtocol,
+    json = TJSONProtocol,
   }
   assert(protocols[opt.protocol] ~= nil)
   local protocol = protocols[opt.protocol]:new{
