@@ -18,11 +18,14 @@
 #
 
 import errno
+import logging
 import os
 import socket
 import sys
 
 from .TTransport import TTransportBase, TTransportException, TServerTransportBase
+
+logger = logging.getLogger(__name__)
 
 
 class TSocketBase(TTransportBase):
@@ -78,27 +81,36 @@ class TSocket(TSocketBase):
         if self.handle is not None:
             self.handle.settimeout(self._timeout)
 
+    def _do_open(self, family, socktype):
+        return socket.socket(family, socktype)
+
+    @property
+    def _address(self):
+        return self._unix_socket if self._unix_socket else '%s:%d' % (self.host, self.port)
+
     def open(self):
+        if self.handle:
+            raise TTransportException(TTransportException.ALREADY_OPEN)
         try:
-            res0 = self._resolveAddr()
-            for res in res0:
-                self.handle = socket.socket(res[0], res[1])
-                self.handle.settimeout(self._timeout)
-                try:
-                    self.handle.connect(res[4])
-                except socket.error as e:
-                    if res is not res0[-1]:
-                        continue
-                    else:
-                        raise e
-                break
-        except socket.error as e:
-            if self._unix_socket:
-                message = 'Could not connect to socket %s' % self._unix_socket
-            else:
-                message = 'Could not connect to %s:%d' % (self.host, self.port)
-            raise TTransportException(type=TTransportException.NOT_OPEN,
-                                      message=message)
+            addrs = self._resolveAddr()
+        except socket.gaierror:
+            msg = 'failed to resolve sockaddr for ' + str(self._address)
+            logger.exception(msg)
+            raise TTransportException(TTransportException.NOT_OPEN, msg)
+        for family, socktype, _, _, sockaddr in addrs:
+            handle = self._do_open(family, socktype)
+            handle.settimeout(self._timeout)
+            try:
+                handle.connect(sockaddr)
+                self.handle = handle
+                return
+            except socket.error:
+                handle.close()
+                logger.info('Could not connect to %s', sockaddr, exc_info=True)
+        msg = 'Could not connect to any of %s' % list(map(lambda a: a[4],
+                                                          addrs))
+        logger.error(msg)
+        raise TTransportException(TTransportException.NOT_OPEN, msg)
 
     def read(self, sz):
         try:

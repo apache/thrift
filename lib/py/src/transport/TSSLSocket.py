@@ -275,37 +275,18 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
                       DeprecationWarning, stacklevel=2)
         self.cert_reqs = ssl.CERT_REQUIRED if value else ssl.CERT_NONE
 
-    def open(self):
+    def _do_open(self, family, socktype):
+        plain_sock = socket.socket(family, socktype)
         try:
-            addrs = self._resolveAddr()
-            for addr in addrs:
-                sock_family, sock_type, _, _, ip_port = addr
-                plain_sock = socket.socket(sock_family, sock_type)
-                self.handle = self._wrap_socket(plain_sock)
-                self.handle.settimeout(self._timeout)
-                try:
-                    self.handle.connect(ip_port)
-                except socket.error:
-                    self.handle.close()
-                    if addr is not addrs[-1]:
-                        logger.warning(
-                            'Error while connecting with %s. Trying next one.',
-                            ip_port, exc_info=True)
-                        continue
-                    else:
-                        raise
-                break
-        except socket.error as e:
-            if self._unix_socket:
-                message = 'Could not connect to secure socket %s: %s' \
-                          % (self._unix_socket, e)
-            else:
-                message = 'Could not connect to %s:%d: %s' \
-                          % (self.host, self.port, e)
-            logger.exception(
-                'Error while connecting with %s.', ip_port)
-            raise TTransportException(TTransportException.NOT_OPEN, message)
+            return self._wrap_socket(plain_sock)
+        except Exception:
+            plain_sock.close()
+            msg = 'failed to initialize SSL'
+            logger.exception(msg)
+            raise TTransportException(TTransportException.NOT_OPEN, msg)
 
+    def open(self):
+        super(TSSLSocket, self).open()
         if self._should_verify:
             self.peercert = self.handle.getpeercert()
             try:
