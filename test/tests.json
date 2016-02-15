@@ -415,6 +415,7 @@
       ],
       "protocols": [
         "binary",
+        "compact",
         "json"
       ],
       "command": [

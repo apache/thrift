@@ -386,6 +386,15 @@ void main() {
 
     group('shared tests', sharedTests);
   });
+
+  group('compact', () {
+    setUp(() {
+      protocol = new TCompactProtocol(new TBufferedTransport());
+      protocol.writeMessageBegin(message);
+    });
+
+    group('shared tests', sharedTests);
+  });
 }
 
 class Primitive {
