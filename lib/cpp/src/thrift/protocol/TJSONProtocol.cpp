@@ -524,7 +524,8 @@ namespace {
 std::string doubleToString(double d) {
   std::ostringstream str;
   str.imbue(std::locale::classic());
-  str.precision(std::numeric_limits<double>::digits10 + 1);
+  // precision should be 16 bits after dot instead os 15 bits.
+  str.precision(std::numeric_limits<double>::digits10 + 2);
   str << d;
   return str.str();
 }
