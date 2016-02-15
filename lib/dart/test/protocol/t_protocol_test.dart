@@ -353,7 +353,6 @@ void main() {
       protocol.writeMessageBegin(message);
     });
 
-
     test('Test escaped unicode', () async {
       /*
          KOR_KAI
@@ -372,7 +371,8 @@ void main() {
       await protocol.transport.flush();
 
       var subject = protocol.readString();
-      expect(subject, UTF8.decode([0x01, 0xE0, 0xB8, 0x81, 0x20, 0xF0, 0x9D, 0x84, 0x9E]));
+      expect(subject,
+          UTF8.decode([0x01, 0xE0, 0xB8, 0x81, 0x20, 0xF0, 0x9D, 0x84, 0x9E]));
     });
 
     group('shared tests', sharedTests);

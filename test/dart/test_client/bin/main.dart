@@ -114,7 +114,11 @@ ArgResults _parseArgs(List<String> args) {
       defaultsTo: 'binary',
       allowed: ['binary', 'compact', 'json'],
       help: 'The protocol name',
-      allowedHelp: {'binary': 'TBinaryProtocol', 'compact': 'TCompactProtocol', 'json': 'TJsonProtocol'});
+      allowedHelp: {
+        'binary': 'TBinaryProtocol',
+        'compact': 'TCompactProtocol',
+        'json': 'TJsonProtocol'
+      });
   parser.addFlag('verbose', defaultsTo: false);
 
   ArgResults results;
@@ -132,7 +136,7 @@ ArgResults _parseArgs(List<String> args) {
 TProtocolFactory getProtocolFactory(String protocolType) {
   if (protocolType == 'binary') {
     return new TBinaryProtocolFactory();
-  } else if(protocolType == 'compact') {
+  } else if (protocolType == 'compact') {
     return new TCompactProtocolFactory();
   } else if (protocolType == 'json') {
     return new TJsonProtocolFactory();

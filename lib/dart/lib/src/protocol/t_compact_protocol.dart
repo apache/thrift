@@ -1,3 +1,20 @@
+/// Licensed to the Apache Software Foundation (ASF) under one
+/// or more contributor license agreements. See the NOTICE file
+/// distributed with this work for additional information
+/// regarding copyright ownership. The ASF licenses this file
+/// to you under the Apache License, Version 2.0 (the
+/// 'License'); you may not use this file except in compliance
+/// with the License. You may obtain a copy of the License at
+///
+/// http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing,
+/// software distributed under the License is distributed on an
+/// 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+/// KIND, either express or implied. See the License for the
+/// specific language governing permissions and limitations
+/// under the License.
+
 part of thrift;
 
 class TCompactProtocolFactory implements TProtocolFactory<TCompactProtocol> {
@@ -67,7 +84,8 @@ class TCompactProtocol extends TProtocol {
   /// Write
   void writeMessageBegin(TMessage message) {
     writeByte(PROTOCOL_ID);
-    writeByte((VERSION & VERSION_MASK) | ((message.type << TYPE_SHIFT_AMOUNT) & TYPE_MASK));
+    writeByte((VERSION & VERSION_MASK) |
+        ((message.type << TYPE_SHIFT_AMOUNT) & TYPE_MASK));
     _writeVarInt32(new Int32(message.seqid));
     writeString(message.name);
   }
@@ -84,7 +102,7 @@ class TCompactProtocol extends TProtocol {
   }
 
   void writeFieldBegin(TField field) {
-    if(field.type == TType.BOOL) {
+    if (field.type == TType.BOOL) {
       _booleanField = field;
     } else {
       _writeFieldBegin(field, -1);
@@ -92,9 +110,10 @@ class TCompactProtocol extends TProtocol {
   }
 
   void _writeFieldBegin(TField field, int typeOverride) {
-    int typeToWrite = typeOverride == -1 ? _getCompactType(field.type) : typeOverride;
+    int typeToWrite =
+        typeOverride == -1 ? _getCompactType(field.type) : typeOverride;
 
-    if(field.id > _lastFieldId && field.id - _lastFieldId <= 15) {
+    if (field.id > _lastFieldId && field.id - _lastFieldId <= 15) {
       writeByte((field.id - _lastFieldId) << 4 | typeToWrite);
     } else {
       writeByte(typeToWrite);
@@ -111,11 +130,12 @@ class TCompactProtocol extends TProtocol {
   }
 
   void writeMapBegin(TMap map) {
-    if(map.length == 0) {
+    if (map.length == 0) {
       writeByte(0);
     } else {
       _writeVarInt32(new Int32(map.length));
-      writeByte(_getCompactType(map.keyType) << 4 | _getCompactType(map.valueType));
+      writeByte(
+          _getCompactType(map.keyType) << 4 | _getCompactType(map.valueType));
     }
   }
 
@@ -134,9 +154,10 @@ class TCompactProtocol extends TProtocol {
   void writeSetEnd() {}
 
   void writeBool(bool b) {
-    if(b == null) b = false;
-    if(_booleanField != null) {
-      _writeFieldBegin(_booleanField, b ? TYPE_BOOLEAN_TRUE : TYPE_BOOLEAN_FALSE);
+    if (b == null) b = false;
+    if (_booleanField != null) {
+      _writeFieldBegin(
+          _booleanField, b ? TYPE_BOOLEAN_TRUE : TYPE_BOOLEAN_FALSE);
       _booleanField = null;
     } else {
       writeByte(b ? TYPE_BOOLEAN_TRUE : TYPE_BOOLEAN_FALSE);
@@ -144,34 +165,35 @@ class TCompactProtocol extends TProtocol {
   }
 
   void writeByte(int b) {
-    if(b == null) b = 0;
+    if (b == null) b = 0;
     tempList[0] = b;
     transport.write(tempList, 0, 1);
   }
 
   void writeI16(int i16) {
-    if(i16 == null) i16 = 0;
+    if (i16 == null) i16 = 0;
     _writeVarInt32(_int32ToZigZag(new Int32(i16)));
   }
 
   void writeI32(int i32) {
-    if(i32 == null) i32 = 0;
+    if (i32 == null) i32 = 0;
     _writeVarInt32(_int32ToZigZag(new Int32(i32)));
   }
 
   void writeI64(int i64) {
-    if(i64 == null) i64 = 0;
+    if (i64 == null) i64 = 0;
     _writeVarInt64(_int64ToZigZag(new Int64(i64)));
   }
 
   void writeDouble(double d) {
-    if(d == null) d = 0.0;
+    if (d == null) d = 0.0;
     tempBD.setFloat64(0, d);
     transport.write(tempBD.buffer.asUint8List(), 0, 8);
   }
 
   void writeString(String str) {
-    Uint8List bytes = str != null ? _utf8Codec.encode(str) : new Uint8List.fromList([]);
+    Uint8List bytes =
+        str != null ? _utf8Codec.encode(str) : new Uint8List.fromList([]);
     writeBinary(bytes);
   }
 
@@ -182,8 +204,8 @@ class TCompactProtocol extends TProtocol {
 
   void _writeVarInt32(Int32 n) {
     int idx = 0;
-    while(true) {
-      if((n & ~0x7F) == 0) {
+    while (true) {
+      if ((n & ~0x7F) == 0) {
         tempList[idx++] = (n & 0xFF).toInt();
         break;
       } else {
@@ -196,8 +218,8 @@ class TCompactProtocol extends TProtocol {
 
   void _writeVarInt64(Int64 n) {
     int idx = 0;
-    while(true) {
-      if((n & ~0x7F) == 0) {
+    while (true) {
+      if ((n & ~0x7F) == 0) {
         tempList[idx++] = (n & 0xFF).toInt();
         break;
       } else {
@@ -209,7 +231,7 @@ class TCompactProtocol extends TProtocol {
   }
 
   void _writeCollectionBegin(int elemType, int length) {
-    if(length <= 14) {
+    if (length <= 14) {
       writeByte(length << 4 | _getCompactType(elemType));
     } else {
       writeByte(0xF0 | _getCompactType(elemType));
@@ -228,13 +250,15 @@ class TCompactProtocol extends TProtocol {
   /// Read
   TMessage readMessageBegin() {
     int protocolId = readByte();
-    if(protocolId != PROTOCOL_ID) {
-      throw new TProtocolError(TProtocolErrorType.BAD_VERSION, 'Expected protocol id $PROTOCOL_ID but got $protocolId');
+    if (protocolId != PROTOCOL_ID) {
+      throw new TProtocolError(TProtocolErrorType.BAD_VERSION,
+          'Expected protocol id $PROTOCOL_ID but got $protocolId');
     }
     int versionAndType = readByte();
     int version = versionAndType & VERSION_MASK;
-    if(version != VERSION) {
-      throw new TProtocolError(TProtocolErrorType.BAD_VERSION, 'Expected version $VERSION but got $version');
+    if (version != VERSION) {
+      throw new TProtocolError(TProtocolErrorType.BAD_VERSION,
+          'Expected version $VERSION but got $version');
     }
     int type = (versionAndType >> TYPE_SHIFT_AMOUNT) & TYPE_BITS;
     int seqId = _readVarInt32().toInt();
@@ -257,20 +281,20 @@ class TCompactProtocol extends TProtocol {
 
   TField readFieldBegin() {
     int type = readByte();
-    if(type == TType.STOP) {
+    if (type == TType.STOP) {
       return TSTOP;
     }
 
     int fieldId;
     int modifier = (type & 0xF0) >> 4;
-    if(modifier == 0) {
+    if (modifier == 0) {
       fieldId = readI16();
     } else {
       fieldId = _lastFieldId + modifier;
     }
 
     TField field = new TField('', _getTType(type & 0x0F), fieldId);
-    if(_isBoolType(type)) {
+    if (_isBoolType(type)) {
       _boolValue = (type & 0x0F) == TYPE_BOOLEAN_TRUE;
     }
 
@@ -295,7 +319,7 @@ class TCompactProtocol extends TProtocol {
   TList readListBegin() {
     int lengthAndType = readByte();
     int length = (lengthAndType >> 4) & 0x0F;
-    if(length == 15) {
+    if (length == 15) {
       length = _readVarInt32().toInt();
     }
     _checkNegReadLength(length);
@@ -313,7 +337,7 @@ class TCompactProtocol extends TProtocol {
   void readSetEnd() {}
 
   bool readBool() {
-    if(_boolValue != null) {
+    if (_boolValue != null) {
       bool result = _boolValue;
       _boolValue = null;
       return result;
@@ -365,10 +389,10 @@ class TCompactProtocol extends TProtocol {
   Int32 _readVarInt32() {
     Int32 result = Int32.ZERO;
     int shift = 0;
-    while(true) {
+    while (true) {
       Int32 b = new Int32(readByte());
       result |= (b & 0x7f) << shift;
-      if((b & 0x80) != 0x80) break;
+      if ((b & 0x80) != 0x80) break;
       shift += 7;
     }
     return result;
@@ -377,10 +401,10 @@ class TCompactProtocol extends TProtocol {
   Int64 _readVarInt64() {
     Int64 result = Int64.ZERO;
     int shift = 0;
-    while(true) {
+    while (true) {
       Int64 b = new Int64(readByte());
       result |= (b & 0x7f) << shift;
-      if((b & 0x80) != 0x80) break;
+      if ((b & 0x80) != 0x80) break;
       shift += 7;
     }
     return result;
@@ -395,8 +419,9 @@ class TCompactProtocol extends TProtocol {
   }
 
   void _checkNegReadLength(int length) {
-    if(length < 0) {
-      throw new TProtocolError(TProtocolErrorType.NEGATIVE_SIZE, 'Negative length: $length');
+    if (length < 0) {
+      throw new TProtocolError(
+          TProtocolErrorType.NEGATIVE_SIZE, 'Negative length: $length');
     }
   }
 
@@ -432,12 +457,14 @@ class TCompactProtocol extends TProtocol {
       case TYPE_STRUCT:
         return TType.STRUCT;
       default:
-        throw new TProtocolError(TProtocolErrorType.INVALID_DATA, "Unknown type: ${type & 0x0F}");
+        throw new TProtocolError(
+            TProtocolErrorType.INVALID_DATA, "Unknown type: ${type & 0x0F}");
     }
   }
 
   bool _isBoolType(int b) {
     int lowerNibble = b & 0x0F;
-    return lowerNibble == TYPE_BOOLEAN_TRUE || lowerNibble == TYPE_BOOLEAN_FALSE;
+    return lowerNibble == TYPE_BOOLEAN_TRUE ||
+        lowerNibble == TYPE_BOOLEAN_FALSE;
   }
 }
