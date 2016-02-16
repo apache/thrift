@@ -34,8 +34,10 @@ AC_ARG_VAR([PY_PREFIX], [Prefix for installing Python modules.
 AS_IF([test "x$PY_PREFIX" = x], [PY_PREFIX="/usr"])
 
 AC_ARG_VAR([JAVA_PREFIX], [Prefix for installing the Java lib jar.
-                           Default = "PREFIX/usr/local/lib"])
-AS_IF([test "x$JAVA_PREFIX" = x], [JAVA_PREFIX="$prefix/usr/local/lib"])
+                           Default = "/usr/local/lib"])
+AS_IF([test "x$JAVA_PREFIX" != x], [JAVA_PREFIX="$JAVA_PREFIX/usr/local/lib"],
+      [test "x$PREFIX" != x], [JAVA_PREFIX="$PREFIX/usr/local/lib"],
+      [JAVA_PREFIX="/usr/local/lib"])
 
 AC_ARG_VAR([RUBY_PREFIX], [Prefix for installing Ruby modules.
                            (Normal --prefix is ignored for Ruby because
