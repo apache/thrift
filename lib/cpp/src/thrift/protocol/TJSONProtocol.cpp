@@ -524,8 +524,9 @@ namespace {
 std::string doubleToString(double d) {
   std::ostringstream str;
   str.imbue(std::locale::classic());
-  // new precision is 17 equal to max_digits10(c++11) or digits10+2
-  str.precision(17);
+  // new precision is max_digits10 equal to max_digits10(c++11) or digits10+2
+  const double max_digits10 = 2 + std::numeric_limits<double>::digits10;
+  str.precision(max_digits10);
   str << d;
   return str.str();
 }
