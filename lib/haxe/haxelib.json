@@ -1,11 +1,11 @@
 {
 	"name": "thrift",
-	"url" : "https://github.com/apache/thrift/tree/master/lib/haxe",
-	"license": "Apache 2.0",
+	"url" : "http://thrift.apache.org",
+	"license": "Apache",
 	"tags": ["thrift", "rpc", "serialization", "cross", "framework"],
 	"description": "Haxe bindings for the Apache Thrift RPC and serialization framework",
-	"version": "1.0.0-dev.141115",
-	"releasenote": "The Apache Thrift compiler needs to be installed separately, see http://thrift.apache.org",
+	"version": "1.0.0-alpha.160215",
+	"releasenote": "Licensed under Apache License, Version 2.0. The Apache Thrift compiler needs to be installed separately.",
 	"contributors": ["Apache Software Foundation (ASF)"],
 	"dependencies": { }
 }
