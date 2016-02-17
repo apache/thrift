@@ -27,6 +27,7 @@ using Thrift.Collections;
 using Thrift.Protocol;
 using Thrift.Transport;
 using Thrift.Test;
+using System.Security.Authentication;
 
 namespace Test
 {
@@ -60,7 +61,7 @@ namespace Test
                         {
                             string certPath = "../../../../test/keys/client.p12";
                             X509Certificate cert = new X509Certificate2(certPath, "thrift");
-                            trans = new TTLSSocket(host, port, cert, (o, c, chain, errors) => true);
+                            trans = new TTLSSocket(host, port, 0, cert, (o, c, chain, errors) => true, null, SslProtocols.Tls);
                         }
                         else
                         {

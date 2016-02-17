@@ -77,6 +77,11 @@ namespace Thrift.Transport
         private LocalCertificateSelectionCallback localCertificateSelectionCallback;
 
         /// <summary>
+        /// The SslProtocols value that represents the protocol used for authentication.SSL protocols to be used.
+        /// </summary>
+        private readonly SslProtocols sslProtocols;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="TTLSSocket"/> class.
         /// </summary>
         /// <param name="client">An already created TCP-client</param>
@@ -84,17 +89,21 @@ namespace Thrift.Transport
         /// <param name="isServer">if set to <c>true</c> [is server].</param>
         /// <param name="certValidator">User defined cert validator.</param>
         /// <param name="localCertificateSelectionCallback">The callback to select which certificate to use.</param>
+        /// <param name="sslProtocols">The SslProtocols value that represents the protocol used for authentication.</param>
         public TTLSSocket(
             TcpClient client,
             X509Certificate certificate,
             bool isServer = false,
             RemoteCertificateValidationCallback certValidator = null,
-            LocalCertificateSelectionCallback localCertificateSelectionCallback = null)
+            LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
+            // TODO: Enable Tls11 and Tls12 (TLS 1.1 and 1.2) by default once we start using .NET 4.5+.
+            SslProtocols sslProtocols = SslProtocols.Tls)
         {
             this.client = client;
             this.certificate = certificate;
             this.certValidator = certValidator;
             this.localCertificateSelectionCallback = localCertificateSelectionCallback;
+            this.sslProtocols = sslProtocols;
             this.isServer = isServer;
             if (isServer && certificate == null)
             {
@@ -116,13 +125,15 @@ namespace Thrift.Transport
         /// <param name="certificatePath">The certificate path.</param>
         /// <param name="certValidator">User defined cert validator.</param>
         /// <param name="localCertificateSelectionCallback">The callback to select which certificate to use.</param>
+        /// <param name="sslProtocols">The SslProtocols value that represents the protocol used for authentication.</param>
         public TTLSSocket(
             string host,
             int port,
             string certificatePath,
             RemoteCertificateValidationCallback certValidator = null,
-            LocalCertificateSelectionCallback localCertificateSelectionCallback = null)
-            : this(host, port, 0, X509Certificate.CreateFromCertFile(certificatePath), certValidator, localCertificateSelectionCallback)
+            LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
+            SslProtocols sslProtocols = SslProtocols.Tls)
+            : this(host, port, 0, X509Certificate.CreateFromCertFile(certificatePath), certValidator, localCertificateSelectionCallback, sslProtocols)
         {
         }
 
@@ -134,13 +145,15 @@ namespace Thrift.Transport
         /// <param name="certificate">The certificate.</param>
         /// <param name="certValidator">User defined cert validator.</param>
         /// <param name="localCertificateSelectionCallback">The callback to select which certificate to use.</param>
+        /// <param name="sslProtocols">The SslProtocols value that represents the protocol used for authentication.</param>
         public TTLSSocket(
             string host,
             int port,
             X509Certificate certificate = null,
             RemoteCertificateValidationCallback certValidator = null,
-            LocalCertificateSelectionCallback localCertificateSelectionCallback = null)
-            : this(host, port, 0, certificate, certValidator, localCertificateSelectionCallback)
+            LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
+            SslProtocols sslProtocols = SslProtocols.Tls)
+            : this(host, port, 0, certificate, certValidator, localCertificateSelectionCallback, sslProtocols)
         {
         }
 
@@ -153,13 +166,15 @@ namespace Thrift.Transport
         /// <param name="certificate">The certificate.</param>
         /// <param name="certValidator">User defined cert validator.</param>
         /// <param name="localCertificateSelectionCallback">The callback to select which certificate to use.</param>
+        /// <param name="sslProtocols">The SslProtocols value that represents the protocol used for authentication.</param>
         public TTLSSocket(
             string host,
             int port,
             int timeout,
             X509Certificate certificate,
             RemoteCertificateValidationCallback certValidator = null,
-            LocalCertificateSelectionCallback localCertificateSelectionCallback = null)
+            LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
+            SslProtocols sslProtocols = SslProtocols.Tls)
         {
             this.host = host;
             this.port = port;
@@ -167,6 +182,7 @@ namespace Thrift.Transport
             this.certificate = certificate;
             this.certValidator = certValidator;
             this.localCertificateSelectionCallback = localCertificateSelectionCallback;
+            this.sslProtocols = sslProtocols;
 
             InitSocket();
         }
@@ -314,13 +330,13 @@ namespace Thrift.Transport
                 if (isServer)
                 {
                     // Server authentication
-                    this.secureStream.AuthenticateAsServer(this.certificate, this.certValidator != null, SslProtocols.Tls, true);
+                    this.secureStream.AuthenticateAsServer(this.certificate, this.certValidator != null, sslProtocols, true);
                 }
                 else
                 {
                     // Client authentication
                     X509CertificateCollection certs = certificate != null ?  new X509CertificateCollection { certificate } : new X509CertificateCollection();
-                    this.secureStream.AuthenticateAsClient(host, certs, SslProtocols.Tls, true);
+                    this.secureStream.AuthenticateAsClient(host, certs, sslProtocols, true);
                 }
             }
             catch (Exception)
