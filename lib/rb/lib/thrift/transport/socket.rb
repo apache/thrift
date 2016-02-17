@@ -33,26 +33,28 @@ module Thrift
     attr_accessor :handle, :timeout
 
     def open
-      begin
-        addrinfo = ::Socket::getaddrinfo(@host, @port, nil, ::Socket::SOCK_STREAM).first
-        @handle = ::Socket.new(addrinfo[4], ::Socket::SOCK_STREAM, 0)
-        @handle.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
-        sockaddr = ::Socket.sockaddr_in(addrinfo[1], addrinfo[3])
+      for addrinfo in ::Socket::getaddrinfo(@host, @port, nil, ::Socket::SOCK_STREAM) do
         begin
-          @handle.connect_nonblock(sockaddr)
-        rescue Errno::EINPROGRESS
-          unless IO.select(nil, [ @handle ], nil, @timeout)
-            raise TransportException.new(TransportException::NOT_OPEN, "Connection timeout to #{@desc}")
-          end
+          socket = ::Socket.new(addrinfo[4], ::Socket::SOCK_STREAM, 0)
+          socket.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
+          sockaddr = ::Socket.sockaddr_in(addrinfo[1], addrinfo[3])
           begin
-            @handle.connect_nonblock(sockaddr)
-          rescue Errno::EISCONN
+            socket.connect_nonblock(sockaddr)
+          rescue Errno::EINPROGRESS
+            unless IO.select(nil, [ socket ], nil, @timeout)
+              next
+            end
+            begin
+              socket.connect_nonblock(sockaddr)
+            rescue Errno::EISCONN
+            end
           end
+          return @handle = socket
+        rescue StandardError => e
+          next
         end
-        @handle
-      rescue StandardError => e
-        raise TransportException.new(TransportException::NOT_OPEN, "Could not connect to #{@desc}: #{e}")
       end
+      raise TransportException.new(TransportException::NOT_OPEN, "Could not connect to #{@desc}: #{e}")
     end
 
     def open?

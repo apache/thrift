@@ -35,7 +35,7 @@ describe 'Socket' do
     it_should_behave_like "a socket"
 
     it "should raise a TransportException when it cannot open a socket" do
-      ::Socket.should_receive(:new).and_raise(StandardError)
+      ::Socket.should_receive(:getaddrinfo).with("localhost", 9090, nil, ::Socket::SOCK_STREAM).and_return([[]])
       lambda { @socket.open }.should raise_error(Thrift::TransportException) { |e| e.type.should == Thrift::TransportException::NOT_OPEN }
     end
 
