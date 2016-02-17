@@ -32,6 +32,7 @@ using Thrift.Server;
 using Thrift;
 using System.Threading;
 using System.Text;
+using System.Security.Authentication;
 
 namespace Test
 {
@@ -468,7 +469,7 @@ namespace Test
                     if (useEncryption)
                     {
                         string certPath = "../../../../test/keys/server.p12";
-                        trans = new TTLSServerSocket(port, 0, useBufferedSockets, new X509Certificate2(certPath, "thrift"));
+                        trans = new TTLSServerSocket(port, 0, useBufferedSockets, new X509Certificate2(certPath, "thrift"), null, null, SslProtocols.Tls);
                     }
                     else
                     {
