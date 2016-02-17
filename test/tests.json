@@ -5,7 +5,6 @@
       "Linux"
     ],
     "server": {
-      "delay": 1,
       "command": [
         "test_server"
       ]
@@ -31,7 +30,6 @@
   {
     "name": "go",
     "server": {
-      "delay": 1,
       "command": [
         "testserver",
         "--certPath=../../keys"
@@ -76,7 +74,7 @@
       "compile-test"
     ],
     "server": {
-      "delay": 5,
+      "delay": 10,
       "extra_args": ["run-testserver"]
     },
     "client": {
@@ -108,7 +106,6 @@
       "NODE_PATH": "../lib"
     },
     "server": {
-      "delay": 1,
       "command": [
         "node",
         "server.js",
@@ -171,7 +168,6 @@
   {
     "name": "py",
     "server": {
-      "delay": 1,
       "extra_args": ["TSimpleServer"],
       "command": [
         "TestServer.py",
@@ -209,7 +205,6 @@
     "comment": "Using 'python3' executable to test py2 and 3 at once",
     "name": "py3",
     "server": {
-      "delay": 1,
       "extra_args": ["TSimpleServer"],
       "command": [
         "python3",
@@ -247,7 +242,6 @@
   {
     "name": "cpp",
     "server": {
-      "delay": 2,
       "command": [
         "TestServer"
       ]
@@ -279,7 +273,6 @@
   {
     "name": "rb",
     "server": {
-      "delay": 1,
       "command": [
         "ruby",
         "../integration/TestServer.rb"
@@ -326,7 +319,6 @@
       "json"
     ],
     "server": {
-      "delay": 3,
       "command": [
         "mono",
         "TestClientServer.exe",
@@ -363,7 +355,7 @@
         "-Igen-perl/",
         "-I../../lib/perl/lib/",
         "TestClient.pl",
-        "--cert=../../test/keys/client.pem"
+        "--cert=../keys/client.pem"
       ]
     },
     "server": {
@@ -372,8 +364,8 @@
         "-Igen-perl/",
         "-I../../lib/perl/lib/",
         "TestServer.pl",
-        "--cert=../../test/keys/server.pem",
-        "--key=../../test/keys/server.key"
+        "--cert=../keys/server.pem",
+        "--key=../keys/server.key"
       ]
     },
     "workdir": "perl"
@@ -456,7 +448,6 @@
       ]
     },
     "server": {
-      "delay": 5,
       "command": [
         "erl",
         "+K",

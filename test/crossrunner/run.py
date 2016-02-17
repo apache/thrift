@@ -48,6 +48,7 @@ class ExecutionContext(object):
         self.timer = None
         self.expired = False
         self.killed = False
+        self.proc = None
 
     def _expire(self):
         self._log.info('Timeout')
@@ -123,8 +124,31 @@ def exec_context(port, logdir, test, prog):
 
 
 def run_test(testdir, logdir, test_dict, max_retry, async=True):
+    logger = multiprocessing.get_logger()
+
+    def ensure_socket_open(proc, port, max_delay):
+        sleeped = 0.1
+        time.sleep(sleeped)
+        sock4 = socket.socket()
+        sock6 = socket.socket(family=socket.AF_INET6)
+        sleep_step = 0.2
+        try:
+            while sock4.connect_ex(('127.0.0.1', port)) and sock6.connect_ex(('::1', port)):
+                if proc.poll() is not None:
+                    logger.warn('server process is exited')
+                    return False
+                if sleeped > max_delay:
+                    logger.warn('sleeped for %f seconds but server port is not open' % sleeped)
+                    return False
+                time.sleep(sleep_step)
+                sleeped += sleep_step
+            logger.debug('waited %f sec for server port open' % sleeped)
+            return True
+        finally:
+            sock4.close()
+            sock6.close()
+
     try:
-        logger = multiprocessing.get_logger()
         max_bind_retry = 3
         retry_count = 0
         bind_retry_count = 0
@@ -141,13 +165,18 @@ def run_test(testdir, logdir, test_dict, max_retry, async=True):
 
                 logger.debug('Starting server')
                 with sv.start():
-                    if test.delay > 0:
-                        logger.debug('Delaying client for %.2f seconds' % test.delay)
-                        time.sleep(test.delay)
+                    if test.socket in ('domain', 'abstract'):
+                        time.sleep(0.1)
+                    else:
+                        if not ensure_socket_open(sv.proc, port, test.delay):
+                            break
                     connect_retry_count = 0
-                    max_connect_retry = 10
+                    max_connect_retry = 3
                     connect_retry_wait = 0.5
                     while True:
+                        if sv.proc.poll() is not None:
+                            logger.info('not starting client because server process is absent')
+                            break
                         logger.debug('Starting client')
                         cl.start(test.timeout)
                         logger.debug('Waiting client')
@@ -168,27 +197,27 @@ def run_test(testdir, logdir, test_dict, max_retry, async=True):
             else:
                 if cl.expired:
                     result = RESULT_TIMEOUT
-                elif not sv.killed and cl.proc.returncode == 0:
-                    # Server should be alive at the end.
-                    result = RESULT_ERROR
                 else:
-                    result = cl.proc.returncode
+                    result = cl.proc.returncode if cl.proc else RESULT_ERROR
+                    if not sv.killed:
+                        # Server died without being killed.
+                        result |= RESULT_ERROR
 
                 if result == 0 or retry_count >= max_retry:
                     return (retry_count, result)
                 else:
                     logger.info('[%s-%s]: test failed, retrying...', test.server.name, test.client.name)
                     retry_count += 1
-    except (KeyboardInterrupt, SystemExit):
-        logger.info('Interrupted execution')
+    except Exception:
+        if not async:
+            raise
+        logger.warn('Error executing [%s]', test.name, exc_info=True)
+        return (retry_count, RESULT_ERROR)
+    except:
+        logger.info('Interrupted execution', exc_info=True)
         if not async:
             raise
         stop.set()
-        return None
-    except:
-        if not async:
-            raise
-        logger.warn('Error executing [%s]', test.name, exc_info=sys.exc_info())
         return (retry_count, RESULT_ERROR)
 
 
@@ -202,7 +231,8 @@ class PortAllocator(object):
 
     def _get_tcp_port(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind(('127.0.0.1', 0))
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(('', 0))
         port = sock.getsockname()[1]
         self._lock.acquire()
         try:
@@ -322,7 +352,11 @@ class TestDispatcher(object):
 
         def cont(result):
             if not self._stop.is_set():
-                retry_count, returncode = result
+                if result and len(result) == 2:
+                    retry_count, returncode = result
+                else:
+                    retry_count = 0
+                    returncode = RESULT_ERROR
                 self._log.debug('freeing port')
                 self._log.debug('adding result')
                 self._report.add_result(index, returncode, returncode == RESULT_TIMEOUT, retry_count)

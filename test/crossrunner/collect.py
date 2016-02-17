@@ -50,7 +50,7 @@ VALID_JSON_KEYS = [
     'env',  # additional environmental variable
 ]
 
-DEFAULT_DELAY = 1
+DEFAULT_MAX_DELAY = 5
 DEFAULT_TIMEOUT = 5
 
 
@@ -137,7 +137,7 @@ def _do_collect_tests(servers, clients):
                     yield {
                         'server': merge_metadata(sv, **{'protocol': proto1, 'transport': trans1}),
                         'client': merge_metadata(cl, **{'protocol': proto2, 'transport': trans2}),
-                        'delay': maybe_max('delay', sv, cl, DEFAULT_DELAY),
+                        'delay': maybe_max('delay', sv, cl, DEFAULT_MAX_DELAY),
                         'timeout': maybe_max('timeout', sv, cl, DEFAULT_TIMEOUT),
                         'protocol': proto,
                         'transport': trans,
