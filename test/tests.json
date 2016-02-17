@@ -289,8 +289,7 @@
       "timeout": 5,
       "command": [
         "ruby",
-        "../integration/TestClient.rb",
-        "--host=127.0.0.1"
+        "../integration/TestClient.rb"
       ]
     },
     "transports": [

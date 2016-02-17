@@ -35,7 +35,6 @@
   "cpp-perl_binary_buffered-ip-ssl",
   "cpp-perl_binary_framed-ip-ssl",
   "cpp-py_binary-accel_framed-ip-ssl",
-  "cpp-rb_binary-accel_framed-ip",
   "csharp-cpp_binary_buffered-ip-ssl",
   "csharp-cpp_binary_framed-ip-ssl",
   "csharp-cpp_compact_buffered-ip-ssl",
