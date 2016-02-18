@@ -155,15 +155,17 @@ function testBasicClient(rawArgs)
   assertEqual(client:testDouble(a), b, 'Failed testDouble 5')
 
   -- Struct
-  local a = {
+  local o = Xtruct:new{
     string_thing = 'Zero',
     byte_thing = 1,
     i32_thing = -3,
     i64_thing = long(-5)
   }
-
-  -- TODO fix client struct equality
-  --assertEqual(client:testStruct(a), a, 'Failed testStruct')
+  local r = client:testStruct(o)
+  assertEqual(o.string_thing, r.string_thing, 'Failed testStruct 1')
+  assertEqual(o.byte_thing, r.byte_thing, 'Failed testStruct 2')
+  assertEqual(o.i32_thing, r.i32_thing, 'Failed testStruct 3')
+  assertEqual(o.i64_thing, r.i64_thing, 'Failed testStruct 4')
 
   -- TODO add list map set exception etc etc
 end
