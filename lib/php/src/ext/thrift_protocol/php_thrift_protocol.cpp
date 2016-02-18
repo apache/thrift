@@ -394,7 +394,7 @@ void protocol_writeMessageBegin(zval *transport, const char* method_name, int32_
 
 
 // Create a PHP object given a typename and call the ctor, optionally passing up to 2 arguments
-void createObject(char* obj_typename, zval* return_value, int nargs = 0, zval* arg1 = NULL, zval* arg2 = NULL) {
+void createObject(const char* obj_typename, zval* return_value, int nargs = 0, zval* arg1 = NULL, zval* arg2 = NULL) {
   TSRMLS_FETCH();
   size_t obj_typename_len = strlen(obj_typename);
   zend_class_entry* ce = zend_fetch_class(obj_typename, obj_typename_len, ZEND_FETCH_CLASS_DEFAULT TSRMLS_CC);
@@ -410,7 +410,7 @@ void createObject(char* obj_typename, zval* return_value, int nargs = 0, zval* a
   zval_ptr_dtor(&ctor_rv);
 }
 
-void throw_tprotocolexception(char* what, long errorcode) {
+void throw_tprotocolexception(const char* what, long errorcode) {
   TSRMLS_FETCH();
 
   zval *zwhat, *zerrorcode;
