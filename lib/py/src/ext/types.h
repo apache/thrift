@@ -53,6 +53,7 @@ extern PyObject* ThriftModule;
 // Stolen out of TProtocol.h.
 // It would be a huge pain to have both get this from one place.
 enum TType {
+  T_INVALID = -1,
   T_STOP = 0,
   T_VOID = 1,
   T_BOOL = 2,
