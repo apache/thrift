@@ -17,7 +17,10 @@
 
 require('ThriftTest_ThriftTest')
 require('TSocket')
+require('TBufferedTransport')
 require('TFramedTransport')
+require('TCompactProtocol')
+require('TJsonProtocol')
 require('TBinaryProtocol')
 require('TServer')
 require('liblualongnumber')
@@ -32,6 +35,10 @@ end
 
 function TestHandler:testString(str)
   return str
+end
+
+function TestHandler:testBool(bool)
+  return bool
 end
 
 function TestHandler:testByte(byte)
@@ -68,7 +75,24 @@ function teardown()
   end
 end
 
-function testBasicServer()
+function parseArgs(rawArgs)
+  local opt = {
+    protocol='binary',
+    transport='buffered',
+    port='9090',
+  }
+  for i, str in pairs(rawArgs) do
+    if i > 0 then
+      k, v = string.match(str, '--(%w+)=(%w+)')
+      assert(opt[k] ~= nil, 'Unknown argument')
+      opt[k] = v
+    end
+  end
+  return opt
+end
+
+function testBasicServer(rawArgs)
+  local opt = parseArgs(rawArgs)
   -- Handler & Processor
   local handler = TestHandler:new{}
   assert(handler, 'Failed to create handler')
@@ -79,14 +103,23 @@ function testBasicServer()
 
   -- Server Socket
   local socket = TServerSocket:new{
-    port = 9090
+    port = opt.port
   }
   assert(socket, 'Failed to create server socket')
 
   -- Transport & Factory
-  local trans_factory = TFramedTransportFactory:new{}
-  assert(trans_factory, 'Failed to create framed transport factory')
-  local prot_factory = TBinaryProtocolFactory:new{}
+  local transports = {
+    buffered = TBufferedTransportFactory,
+    framed = TFramedTransportFactory,
+  }
+  assert(transports[opt.transport], 'Failed to create framed transport factory')
+  local trans_factory = transports[opt.transport]:new{}
+  local protocols = {
+    binary = TBinaryProtocolFactory,
+    compact = TCompactProtocolFactory,
+    json = TJSONProtocolFactory,
+  }
+  local prot_factory = protocols[opt.protocol]:new{}
   assert(prot_factory, 'Failed to create binary protocol factory')
 
   -- Simple Server
@@ -103,5 +136,5 @@ function testBasicServer()
   server = nil
 end
 
-testBasicServer()
+testBasicServer(arg)
 teardown()
