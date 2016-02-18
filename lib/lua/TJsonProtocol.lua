@@ -244,7 +244,9 @@ function TJSONProtocol:writeJSONInteger(num)
   if self:escapeNum() then
     self.trans:write(JSONNode.StringDelimiter)
   end
-  self.trans:write(num)
+  local numstr = "" .. num
+  numstr = string.sub(numstr, string.find(numstr, "^[+-]?%d+"))
+  self.trans:write(numstr)
   if self:escapeNum() then
     self.trans:write(JSONNode.StringDelimiter)
   end
