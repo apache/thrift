@@ -101,7 +101,7 @@ inline bool ProtocolBase<Impl>::writeBuffer(char* data, size_t size) {
     return false;
   }
   if (len != size) {
-    PyErr_Format(PyExc_EOFError, "write length mismatch: expected %d got %d", size, len);
+    PyErr_Format(PyExc_EOFError, "write length mismatch: expected %lu got %d", size, len);
     return false;
   }
   return true;
@@ -246,11 +246,11 @@ inline bool ProtocolBase<Impl>::checkType(TType got, TType expected) {
 template <typename Impl>
 bool ProtocolBase<Impl>::checkLengthLimit(int32_t len, long limit) {
   if (len < 0) {
-    PyErr_Format(PyExc_OverflowError, "negative length: %d", limit);
+    PyErr_Format(PyExc_OverflowError, "negative length: %ld", limit);
     return false;
   }
   if (len > limit) {
-    PyErr_Format(PyExc_OverflowError, "size exceeded specified limit: %d", limit);
+    PyErr_Format(PyExc_OverflowError, "size exceeded specified limit: %ld", limit);
     return false;
   }
   return true;

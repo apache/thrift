@@ -27,9 +27,6 @@ bool BinaryProtocol::readFieldBegin(TType& type, int16_t& tag) {
   if (!readByte(b)) {
     return false;
   }
-  if (b == -1) {
-    return false;
-  }
   type = static_cast<TType>(b);
   if (type == T_STOP) {
     return true;
