@@ -382,13 +382,17 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
                 self.send_sasl_msg(self.OK, self.sasl.process(challenge))
             elif status == self.COMPLETE:
                 if not self.sasl.complete:
-                    raise TTransportException("The server erroneously indicated "
-                                              "that SASL negotiation was complete")
+                    raise TTransportException(
+                        TTransportException.NOT_OPEN,
+                        "The server erroneously indicated "
+                        "that SASL negotiation was complete")
                 else:
                     break
             else:
-                raise TTransportException("Bad SASL negotiation status: %d (%s)"
-                                          % (status, challenge))
+                raise TTransportException(
+                    TTransportException.NOT_OPEN,
+                    "Bad SASL negotiation status: %d (%s)"
+                    % (status, challenge))
 
     def send_sasl_msg(self, status, body):
         header = pack(">BI", status, len(body))
