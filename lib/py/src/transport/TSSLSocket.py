@@ -23,8 +23,8 @@ import socket
 import ssl
 import sys
 import warnings
-from backports.ssl_match_hostname import match_hostname
 
+from .sslcompat import _match_hostname, _match_has_ipaddress
 from thrift.transport import TSocket
 from thrift.transport.TTransport import TTransportException
 
@@ -259,7 +259,7 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
             kwargs['cert_reqs'] = ssl.CERT_REQUIRED if validate else ssl.CERT_NONE
 
         unix_socket = kwargs.pop('unix_socket', None)
-        self._validate_callback = kwargs.pop('validate_callback', match_hostname)
+        self._validate_callback = kwargs.pop('validate_callback', _match_hostname)
         TSSLBase.__init__(self, False, host, kwargs)
         TSocket.TSocket.__init__(self, host, port, unix_socket)
 
@@ -296,45 +296,6 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
                 raise
             except Exception as ex:
                 raise TTransportException(TTransportException.UNKNOWN, str(ex))
-
-    @staticmethod
-    def legacy_validate_callback(self, cert, hostname):
-        """legacy method to validate the peer's SSL certificate, and to check
-        the commonName of the certificate to ensure it matches the hostname we
-        used to make this connection.  Does not support subjectAltName records
-        in certificates.
-
-        raises TTransportException if the certificate fails validation.
-        """
-        if 'subject' not in cert:
-            raise TTransportException(
-                TTransportException.NOT_OPEN,
-                'No SSL certificate found from %s:%s' % (self.host, self.port))
-        fields = cert['subject']
-        for field in fields:
-            # ensure structure we get back is what we expect
-            if not isinstance(field, tuple):
-                continue
-            cert_pair = field[0]
-            if len(cert_pair) < 2:
-                continue
-            cert_key, cert_value = cert_pair[0:2]
-            if cert_key != 'commonName':
-                continue
-            certhost = cert_value
-            # this check should be performed by some sort of Access Manager
-            if certhost == hostname:
-                # success, cert commonName matches desired hostname
-                return
-            else:
-                raise TTransportException(
-                    TTransportException.UNKNOWN,
-                    'Hostname we connected to "%s" doesn\'t match certificate '
-                    'provided commonName "%s"' % (self.host, certhost))
-        raise TTransportException(
-            TTransportException.UNKNOWN,
-            'Could not validate SSL certificate from host "%s".  Cert=%s'
-            % (hostname, cert))
 
 
 class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
@@ -381,9 +342,12 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
 
         unix_socket = kwargs.pop('unix_socket', None)
         self._validate_callback = \
-            kwargs.pop('validate_callback', match_hostname)
+            kwargs.pop('validate_callback', _match_hostname)
         TSSLBase.__init__(self, True, None, kwargs)
         TSocket.TServerSocket.__init__(self, host, port, unix_socket)
+        if self._should_verify and not _match_has_ipaddress:
+            raise ValueError('Need ipaddress and backports.ssl_match_hostname'
+                             'module to verify client certificate')
 
     def setCertfile(self, certfile):
         """Set or change the server certificate file used to wrap new
