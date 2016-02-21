@@ -151,14 +151,12 @@ RUN apt-get update && apt-get install -y \
       mono-xbuild
 
 # D dependencies
-# THRIFT-2916: DMD pinned to 2.065.0-0 due to regression in 2.066
-# THRIFT-3253: DMD pinned to 2.065.0-0 due to deprecations 2.067.1
 RUN apt-get update && apt-get install -y \
       gcc-multilib \
       xdg-utils \
-    && curl -sSL http://downloads.dlang.org/releases/2.x/2.065.0/dmd_2.065.0-0_amd64.deb -o /tmp/dmd_2.065.0-0_amd64.deb && \
-    dpkg -i /tmp/dmd_2.065.0-0_amd64.deb && \
-    rm /tmp/dmd_2.065.0-0_amd64.deb
+    && curl -sSL http://downloads.dlang.org/releases/2.x/2.070.0/dmd_2.070.0-0_amd64.deb -o /tmp/dmd_2.070.0-0_amd64.deb && \
+    dpkg -i /tmp/dmd_2.070.0-0_amd64.deb && \
+    rm /tmp/dmd_2.070.0-0_amd64.deb
 
 # Dart dependencies
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
