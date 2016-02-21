@@ -507,9 +507,9 @@ main(int argc, char *argv[])
 
     /* Make sure the server stopped only because it was interrupted (by the
        child process terminating) */
-    g_assert (g_error_matches (error,
-                               THRIFT_SERVER_SOCKET_ERROR,
-                               THRIFT_SERVER_SOCKET_ERROR_ACCEPT));
+    g_assert(!error || g_error_matches(error,
+                                       THRIFT_SERVER_SOCKET_ERROR,
+                                       THRIFT_SERVER_SOCKET_ERROR_ACCEPT));
 
     /* Free our resources */
     g_object_unref (server);
