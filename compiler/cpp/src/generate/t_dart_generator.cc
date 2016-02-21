@@ -1010,6 +1010,11 @@ void t_dart_generator::generate_dart_struct_writer(ofstream& out, t_struct* tstr
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     string field_name = get_field_name((*f_iter)->get_name());
+    bool could_be_unset = (*f_iter)->get_req() == t_field::T_OPTIONAL;
+    if (could_be_unset) {
+      indent(out) << "if (" << generate_isset_check(*f_iter) << ")";
+      scope_up(out);
+    }
     bool null_allowed = type_can_be_null((*f_iter)->get_type());
     if (null_allowed) {
       indent(out) << "if (this." << field_name << " != null)";
@@ -1026,6 +1031,9 @@ void t_dart_generator::generate_dart_struct_writer(ofstream& out, t_struct* tstr
     indent(out) << "oprot.writeFieldEnd();" << endl;
 
     if (null_allowed) {
+      scope_down(out);
+    }
+    if (could_be_unset) {
       scope_down(out);
     }
   }
