@@ -66,12 +66,16 @@ public:
   void validate_union_member(t_field* field) {
     if (is_union_ && (!name_.empty())) {
 
-      // unions can't have required fields
-      if (field->get_req() == t_field::T_REQUIRED) {
-        pwarning(1,
-                 "Required field %s of union %s set to optional.\n",
-                 field->get_name().c_str(),
-                 name_.c_str());
+      // 1) unions can't have required fields
+      // 2) union members are implicitly optional, otherwise bugs like THRIFT-3650 wait to happen
+      if (field->get_req() != t_field::T_OPTIONAL) {
+        // no warning on default requiredness, but do warn on anything else that is explicitly asked for
+        if(field->get_req() != t_field::T_OPT_IN_REQ_OUT) {
+          pwarning(1,
+                   "Union %s field %s: union members must be optional, ignoring specified requiredness.\n",
+                   name_.c_str(),
+                   field->get_name().c_str());
+        }
         field->set_req(t_field::T_OPTIONAL);
       }
 
