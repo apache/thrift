@@ -637,7 +637,7 @@ final class TFileWriterTransport : TBaseTransport {
   override void close() {
     if (!isOpen) return;
 
-    prioritySend(writerThread_, ShutdownMessage(), thisTid); // FIXME: Should use normal send here.
+    send(writerThread_, ShutdownMessage(), thisTid);
     receive((ShutdownMessage msg, Tid tid){});
     isOpen_ = false;
   }
