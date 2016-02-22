@@ -49,13 +49,11 @@ add_library(libparse STATIC ${libparse_SOURCES})
 # Create the thrift compiler
 set( thrift_SOURCES
     src/main.cc
-    src/md5.c
     src/generate/t_generator.cc
     src/generate/t_generator_registry.h
     src/globals.h
     src/main.h
     src/platform.h
-    src/md5.h
     src/audit/t_audit.cpp
     src/parse/t_doc.h
     src/parse/t_type.h
