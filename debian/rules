@@ -45,19 +45,6 @@ build-arch-stamp: configure-stamp
 	# Compile compiler
 	$(MAKE) -C $(CURDIR)/compiler/cpp
 
-	# Compile C++ library
-	$(MAKE) -C $(CURDIR)/lib/cpp
-
-	# Compile C (glib) library
-	$(MAKE) -C $(CURDIR)/lib/c_glib
-
-	# Python library
-	cd $(CURDIR)/lib/py && \
-    for py in $(PYVERS); do  \
-        $$py setup.py build; \
-        $$py-dbg setup.py build; \
-    done
-
 	# PHP
 	cd $(CURDIR)/lib/php/src/ext/thrift_protocol && \
 		phpize && \
@@ -70,19 +57,6 @@ build-indep-stamp: configure-stamp
 
 	# Add here commands to compile the indep part of the package.
 	#$(MAKE) doc
-
-	# Java
-	cd $(CURDIR)/lib/java && \
-		ant
-
-	# C#
-	$(MAKE) -C $(CURDIR)/lib/csharp
-
-	# Ruby
-	$(MAKE) -C $(CURDIR)/lib/rb
-
-	# Perl
-	$(MAKE) -C $(CURDIR)/lib/perl INSTALLDIRS=vendor
 
 	touch $@
 
@@ -107,26 +81,6 @@ install-indep:
 	# debian/<package>-doc.
 	#INSTALLDOC#
 
-        # Java
-	mkdir -p $(CURDIR)/debian/libthrift-java/usr/share/java/ && \
-	cp $(CURDIR)/lib/java/build/libthrift*.jar \
-		$(CURDIR)/debian/libthrift-java/usr/share/java/
-
-        # Ruby
-	mkdir -p $(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1 && \
-	cp $(CURDIR)/lib/rb/lib/thrift.rb \
-		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1
-	cp -r $(CURDIR)/lib/rb/lib/thrift \
-		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1
-
-	# C#
-	mkdir -p $(CURDIR)/debian/libthrift-cil/usr/lib/cli/thrift/ && \
-	cp $(CURDIR)/lib/csharp/Thrift.dll \
-		$(CURDIR)/debian/libthrift-cil/usr/lib/cli/thrift/Thrift.dll
-
-	# Perl
-	$(MAKE) -C $(CURDIR)/lib/perl install DESTDIR=$(CURDIR)/debian/libthrift-perl/usr
-
 	dh_install -i
 
 install-arch:
@@ -145,29 +99,10 @@ install-arch:
 		$(CURDIR)/debian/thrift-compiler/usr/bin/thrift && \
 	rmdir $(CURDIR)/debian/thrift-compiler/usr/sbin
 
-	# Python
-	cd $(CURDIR)/lib/py && \
-	for py in $(PYVERS); do \
-		$$py setup.py install --no-compile --root=$(CURDIR)/debian/python-thrift; \
-		$$py-dbg setup.py install --no-compile --root=$(CURDIR)/debian/python-thrift-dbg; \
-	done
-
-	find $(CURDIR)/debian/python-thrift-dbg -name "*.pyc" -print0 | xargs -0 rm -f
-	find $(CURDIR)/debian/python-thrift-dbg -name "*.py" -print0 | xargs -0 rm -f
-	find $(CURDIR)/debian/python-thrift-dbg -name "*.egg-info" -print0 | xargs -0 rm -rf
-	find $(CURDIR)/debian/python-thrift-dbg -depth -type d -empty -exec rmdir {} \;
-
 	# PHP
 	mkdir -p $(CURDIR)/debian/php5-thrift
 	cd $(CURDIR)/lib/php && \
 		$(MAKE) DESTDIR=$(CURDIR)/debian/php5-thrift install
-
-	# C++ and C (glib)
-	mkdir -p $(CURDIR)/debian/tmp; \
-	cd $(CURDIR)/lib/cpp && \
-		make DESTDIR=$(CURDIR)/debian/tmp install
-	cd $(CURDIR)/lib/c_glib && \
-		make DESTDIR=$(CURDIR)/debian/tmp install
 
 	dh_install --sourcedir=debian/tmp -s
 
@@ -183,8 +118,7 @@ binary-common:
 	dh_installexamples
 	dh_installman
 	dh_link
-	dh_strip -Npython-thrift-dbg -Nthrift-compiler -Nlibthrift0 --dbg=python-thrift-dbg
-	dh_strip -Npython-thrift-dbg
+	dh_strip -Nthrift-compiler
 	dh_compress
 	dh_fixperms
 	dh_makeshlibs
