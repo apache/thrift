@@ -1013,9 +1013,6 @@ void generate(t_program* program, const vector<string>& generator_strings) {
   try {
     pverbose("Program: %s\n", program->get_path().c_str());
 
-    // Compute fingerprints. - not anymore, we do it on the fly now
-    // generate_all_fingerprints(program);
-
     if (dump_docs) {
       dump_docstrings(program);
     }

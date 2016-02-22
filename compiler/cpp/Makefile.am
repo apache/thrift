@@ -32,14 +32,12 @@ noinst_LIBRARIES = libparse.a
 thrift_OBJDIR = obj
 
 thrift_SOURCES = src/main.cc \
-                 src/md5.c \
                  src/generate/t_generator.cc \
                  src/generate/t_generator_registry.h \
                  src/globals.h \
                  src/main.h \
                  src/platform.h \
                  src/logging.h \
-                 src/md5.h \
                  src/audit/t_audit.cpp \
                  src/audit/t_audit.h \
                  src/parse/t_doc.h \
