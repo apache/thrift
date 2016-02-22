@@ -59,6 +59,7 @@ copy openssl.cnf from your system e.g. /etc/ssl/openssl.cnf and append following
     [ alternate_names ]
     IP.1=127.0.0.1
     IP.2=::1
+    IP.3=::ffff:127.0.0.1
 
 create a signing request:
 
