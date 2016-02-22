@@ -143,12 +143,19 @@ RUN apt-get update && apt-get install -y \
       mono-xbuild
 
 # D dependencies
-RUN apt-get update && apt-get install -y \
-      gcc-multilib \
-      xdg-utils \
-    && curl -sSL http://downloads.dlang.org/releases/2.x/2.070.0/dmd_2.070.0-0_amd64.deb -o /tmp/dmd_2.070.0-0_amd64.deb && \
+RUN apt-get update && apt-get install -y --no-install-recommends xdg-utils && \
+    curl -sSL http://downloads.dlang.org/releases/2.x/2.070.0/dmd_2.070.0-0_amd64.deb -o /tmp/dmd_2.070.0-0_amd64.deb && \
     dpkg -i /tmp/dmd_2.070.0-0_amd64.deb && \
-    rm /tmp/dmd_2.070.0-0_amd64.deb
+    rm /tmp/dmd_2.070.0-0_amd64.deb && \
+    curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/master.tar.gz| tar xz && \
+    curl -sSL https://github.com/D-Programming-Deimos/libevent/archive/master.tar.gz| tar xz && \
+    mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
+    mv libevent-master/deimos/* openssl-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+    mv libevent-master/C/* openssl-master/C/* /usr/include/dmd/druntime/import/C/ && \
+    rm -rf libevent-master openssl-master && \
+    echo 'gcc -Wl,--no-as-needed $*' > /usr/local/bin/gcc-dmd && \
+    chmod 755 /usr/local/bin/gcc-dmd && \
+    echo 'CC=/usr/local/bin/gcc-dmd' >> /etc/dmd.conf
 
 # Dart dependencies
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
