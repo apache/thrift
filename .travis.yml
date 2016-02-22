@@ -31,7 +31,7 @@ install:
   - travis_retry travis_wait docker build -q -t thrift-build build/docker/$DISTRO
 
 script:
-  - docker run $BUILD_ENV -v $(pwd):/thrift/src -it thrift-build $BUILD_CMD $BUILD_ARG
+  - docker run -e BUILD_LIBS="$BUILD_LIBS" $BUILD_ENV -v $(pwd):/thrift/src -it thrift-build $BUILD_CMD $BUILD_ARG
 
 env:
   global:
@@ -40,6 +40,7 @@ env:
     - BUILD_ARG=""
     - BUILD_ENV="-e CC=clang -e CXX=clang++"
     - DISTRO=ubuntu
+    - BUILD_LIBS="CPP C_GLIB HASKELL JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
 
   matrix:
     # TODO: Break up by protocol types to avoid 50min limit
@@ -84,29 +85,35 @@ env:
 
     - TEST_NAME="C C++ - GCC"
       BUILD_CMD="../cmake.sh"
+      BUILD_LIBS="CPP C_GLIB TESTING TUTORIALS"
       BUILD_ARG="-DWITH_PYTHON=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
       BUILD_ENV="-e CC=gcc -e CXX=g++"
 
     - TEST_NAME="C++ (Boost Thread)"
       BUILD_CMD="../cmake.sh"
+      BUILD_LIBS="CPP TESTING TUTORIALS"
       BUILD_ARG="-DWITH_BOOSTTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
 
     - TEST_NAME="C++ (Boost Thread - GCC)"
       BUILD_CMD="../cmake.sh"
+      BUILD_LIBS="CPP TESTING TUTORIALS"
       BUILD_ARG="-DWITH_BOOSTTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
       BUILD_ENV="-e CC=gcc -e CXX=g++"
 
     - TEST_NAME="C++ (Std Thread)"
       BUILD_CMD="../cmake.sh"
+      BUILD_LIBS="CPP TESTING TUTORIALS"
       BUILD_ARG="-DWITH_STDTHREADS=ON -DCMAKE_CXX_FLAGS='-std=c++11' -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
 
     - TEST_NAME="C++ (Std Thread - GCC)"
       BUILD_CMD="../cmake.sh"
+      BUILD_LIBS="CPP TESTING TUTORIALS"
       BUILD_ARG="-DWITH_STDTHREADS=ON -DCMAKE_CXX_FLAGS='-std=c++11' -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
       BUILD_ENV="-e CC=gcc -e CXX=g++"
 
     - TEST_NAME="Compiler (mingw)"
       BUILD_CMD="../cmake.sh"
+      BUILD_LIBS=""
       BUILD_ARG="-DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
       BUILD_ENV=""
 
@@ -117,11 +124,13 @@ env:
 
     - TEST_NAME="C C++ - Clang (CentOS)"
       BUILD_CMD="../cmake.sh"
+      BUILD_LIBS="CPP C_GLIB TESTING TUTORIALS"
       BUILD_ARG="-DWITH_PYTHON=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
       DISTRO=centos
 
     - TEST_NAME="Python 2.6 (CentOS 6)"
       BUILD_CMD="../cmake.sh"
+      BUILD_LIBS="PYTHON TESTING TUTORIALS"
       BUILD_ARG="-DWITH_PYTHON=ON -DWITH_CPP=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
       BUILD_ENV="-e CC=gcc -e CXX=g++"
       DISTRO=centos6
