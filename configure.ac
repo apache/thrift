@@ -763,6 +763,7 @@ AC_CONFIG_FILES([
   tutorial/Makefile
   tutorial/c_glib/Makefile
   tutorial/cpp/Makefile
+  tutorial/d/Makefile
   tutorial/go/Makefile
   tutorial/haxe/Makefile
   tutorial/hs/Makefile
