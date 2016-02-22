@@ -13,7 +13,7 @@
 # Apache Thrift Docker build environment for Centos
 #
 # Known missing client libraries:
-#  - Haskell
+#  - None
 
 FROM debian:jessie
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
@@ -106,15 +106,9 @@ ENV PATH /usr/local/go/bin:$PATH
 
 
 # Haskell dependencies
-#RUN apt-get update && apt-get install -y \
-#      ghc \
-#      cabal-install \
-#      libghc-binary-dev \
-#      libghc-network-dev \
-#      libghc-http-dev \
-#      libghc-hashable-dev \
-#      libghc-unordered-containers-dev \
-#      libghc-vector-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ghc \
+      cabal-install
 
 # Haxe
 RUN apt-get update && apt-get install -y \
@@ -180,6 +174,9 @@ RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /tmp/* && \
     rm -rf /var/tmp/*
+
+# Force utf8 locale to successfully build Haskell tf-random
+ENV LC_ALL C.UTF-8
 
 ENV THRIFT_ROOT /thrift
 RUN mkdir -p $THRIFT_ROOT/src
