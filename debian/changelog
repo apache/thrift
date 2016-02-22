@@ -1,3 +1,9 @@
+thrift (1.0.0.jimdo2) stable; urgency=low
+  * update version
+  * only build compiler and php package 
+
+ -- Jan Brauer <jan.brauer@jimdo.com>  Mon, 22 Feb 2016 11:56:12 +0100
+
 thrift (1.0.0-dev) stable; urgency=low
   * update version
   * fix libthrift0.install
