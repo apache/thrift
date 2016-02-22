@@ -280,6 +280,9 @@ erl_crash.dump
 /tutorial/csharp/CsharpServer/bin
 /tutorial/csharp/CsharpClient/obj
 /tutorial/csharp/CsharpClient/bin
+/tutorial/d/async_client
+/tutorial/d/client
+/tutorial/d/server
 /tutorial/dart/**/.packages
 /tutorial/dart/**/packages
 /tutorial/dart/**/.pub/

@@ -31,6 +31,10 @@ if WITH_CPP
 SUBDIRS += cpp
 endif
 
+if WITH_D
+SUBDIRS += d
+endif
+
 if WITH_JAVA
 SUBDIRS += java
 SUBDIRS += js
