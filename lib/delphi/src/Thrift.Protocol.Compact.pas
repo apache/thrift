@@ -801,7 +801,7 @@ var data : TBytes;
 begin
   SetLength( data, 1);
   Transport.ReadAll( data, 0, 1);
-  result := data[0];
+  result := ShortInt(data[0]);
 end;
 
 
