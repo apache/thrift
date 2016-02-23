@@ -469,6 +469,8 @@ void TSSLSocket::checkHandshake() {
       }
     } while (rc == 2);
   } else {
+    // set the SNI hostname
+    SSL_set_tlsext_host_name(ssl_, getHost().c_str());
     do {
       rc = SSL_connect(ssl_);
       if (rc <= 0) {
