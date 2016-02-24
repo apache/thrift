@@ -52,9 +52,6 @@ using namespace apache::thrift::transport;
 using namespace thrift::test;
 using namespace apache::thrift::async;
 
-// Length of argv[0] - Length of script dir
-#define EXECUTABLE_FILE_NAME_LENGTH 19
-
 // Current time, microseconds since the epoch
 uint64_t now() {
   int64_t ret;
@@ -134,8 +131,8 @@ int main(int argc, char** argv) {
   int ERR_EXCEPTIONS = 8;
   int ERR_UNKNOWN = 64;
 
-  string file_path = boost::filesystem::system_complete(argv[0]).string();
-  string dir_path = file_path.substr(0, file_path.size() - EXECUTABLE_FILE_NAME_LENGTH);
+  string testDir = boost::filesystem::system_complete(argv[0]).parent_path().parent_path().parent_path().string();
+  string pemPath = testDir + "/keys/CA.pem";
 #if _WIN32
   transport::TWinsockSingleton::create();
 #endif
@@ -232,7 +229,7 @@ int main(int argc, char** argv) {
   if (ssl) {
     factory = boost::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
     factory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-    factory->loadTrustedCertificates((dir_path + "../keys/CA.pem").c_str());
+    factory->loadTrustedCertificates(pemPath.c_str());
     factory->authenticate(true);
     socket = factory->createSocket(host, port);
   } else {
