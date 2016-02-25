@@ -2130,10 +2130,10 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         if (first) out << indent();
         first = false;
-        out << indent() << "if ([*__thriftError isKindOfClass: [" << type_name(x_iter, true) << " class]]) {" << endl;
+        out << "if ([*__thriftError isKindOfClass: [" << type_name((*x_iter)->get_type(), true) << " class]]) {" << endl;
         indent_up();
-        std::string cap_name = capitalize(*x_iter->get_name());
-        out << indent() << "[result set" << cap_name << ": *__thriftError];" << endl;
+        std::string cap_name = capitalize((*x_iter)->get_name());
+        out << indent() << "[result set" << cap_name << ": (" << type_name((*x_iter)->get_type()) << ") *__thriftError];" << endl;
         indent_down();
         out << indent() << "} else ";
       }
