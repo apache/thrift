@@ -2125,17 +2125,17 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
       t_struct* xs = (*f_iter)->get_xceptions();
       const std::vector<t_field*>& xceptions = xs->get_members();
       vector<t_field*>::const_iterator x_iter;
-      bool generic_xc_as_else = !xceptions->empty();
+      bool generic_xc_as_else = !xceptions.empty();
       bool first = true;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         if (first) out << indent();
         first = false;
-        out << indent() << "if ([*__thriftError isKindOfClass: [" << type_name(*x_iter, true) << " class]]) {" << endl;
+        out << indent() << "if ([*__thriftError isKindOfClass: [" << type_name(x_iter, true) << " class]]) {" << endl;
         indent_up();
-        std::string cap_name = capitalize(x_iter->get_name());
+        std::string cap_name = capitalize(*x_iter->get_name());
         out << indent() << "[result set" << cap_name << ": *__thriftError];" << endl;
         indent_down();
-        out << indent() << "} else "
+        out << indent() << "} else ";
       }
       if (generic_xc_as_else) {
         out << "{" << endl;
@@ -2151,7 +2151,7 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
       out << indent() << "if (![[outProtocol transport] flush: __thriftError]) return NO;" << endl;
       out << indent() << "return NO;" << endl;
       if (generic_xc_as_else) {
-        out << indent() << "}"
+        out << indent() << "}";
         indent_down();
       }
     } else { // if oneway
