@@ -2118,7 +2118,16 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
       out << " error";
     }
     out << ": __thriftError];" << endl;
-    out << indent() << "if (!serviceResult) return NO;" << endl;
+    out << indent() << "if (!serviceResult) {" << endl;
+    out << indent() << "  if ((__thriftError == NULL) || (*__thriftError == nil)) return NO;" << endl;
+    out << indent() << "  if (![outProtocol writeMessageBeginWithName: @\"" << funname << "\"" << endl;
+    out << indent() << "                                         type: TMessageTypeEXCEPTION" << endl;
+    out << indent() << "                                   sequenceID: seqID" << endl;
+    out << indent() << "                                        error: __thriftError]) return NO;" << endl;
+    out << indent() << "  if (![*__thriftError write: outProtocol error: __thriftError]) return NO;" << endl;
+    out << indent() << "  if (![outProtocol writeMessageEnd: __thriftError]) return NO;" << endl;
+    out << indent() << "  if (![[outProtocol transport] flush: __thriftError]) return NO;" << endl;
+    out << indent() << "}" << endl;
     if (!(*f_iter)->get_returntype()->is_void()) {
       out << indent() << "[result setSuccess: " << unbox((*f_iter)->get_returntype(), "serviceResult") << "];" << endl;
     }
