@@ -2119,18 +2119,55 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
     }
     out << ": __thriftError];" << endl;
     out << indent() << "if (!serviceResult) {" << endl;
-    out << indent() << "  if ((__thriftError == NULL) || (*__thriftError == nil)) return NO;" << endl;
-    out << indent() << "  if (![outProtocol writeMessageBeginWithName: @\"" << funname << "\"" << endl;
-    out << indent() << "                                         type: TMessageTypeEXCEPTION" << endl;
-    out << indent() << "                                   sequenceID: seqID" << endl;
-    out << indent() << "                                        error: __thriftError]) return NO;" << endl;
-    out << indent() << "  if (![*__thriftError write: outProtocol error: __thriftError]) return NO;" << endl;
-    out << indent() << "  if (![outProtocol writeMessageEnd: __thriftError]) return NO;" << endl;
-    out << indent() << "  if (![[outProtocol transport] flush: __thriftError]) return NO;" << endl;
-    out << indent() << "}" << endl;
-    if (!(*f_iter)->get_returntype()->is_void()) {
-      out << indent() << "[result setSuccess: " << unbox((*f_iter)->get_returntype(), "serviceResult") << "];" << endl;
+    indent_up();
+    if (!(*f_iter)->is_oneway()) {
+      out << indent() << "if ((__thriftError == NULL) || (*__thriftError == nil)) return NO;" << endl;
+      t_struct* xs = (*f_iter)->get_xceptions();
+      const std::vector<t_field*>& xceptions = xs->get_members();
+      vector<t_field*>::const_iterator x_iter;
+      bool generic_xc_as_else = !xceptions->empty();
+      bool first = true;
+      for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+        if (first) out << indent();
+        first = false;
+        out << indent() << "if ([*__thriftError isKindOfClass: [" << type_name(*x_iter, true) << " class]]) {" << endl;
+        indent_up();
+        std::string cap_name = capitalize(x_iter->get_name());
+        out << indent() << "[result set" << cap_name << ": *__thriftError];" << endl;
+        indent_down();
+        out << indent() << "} else "
+      }
+      if (generic_xc_as_else) {
+        out << "{" << endl;
+        indent_up();
+      }
+
+      out << indent() << "if (![outProtocol writeMessageBeginWithName: @\"" << funname << "\"" << endl;
+      out << indent() << "                                       type: TMessageTypeEXCEPTION" << endl;
+      out << indent() << "                                 sequenceID: seqID" << endl;
+      out << indent() << "                                      error: __thriftError]) return NO;" << endl;
+      out << indent() << "if (![*__thriftError write: outProtocol error: __thriftError]) return NO;" << endl;
+      out << indent() << "if (![outProtocol writeMessageEnd: __thriftError]) return NO;" << endl;
+      out << indent() << "if (![[outProtocol transport] flush: __thriftError]) return NO;" << endl;
+      out << indent() << "return NO;" << endl;
+      if (generic_xc_as_else) {
+        out << indent() << "}"
+        indent_down();
+      }
+    } else { // if oneway
+      out << indent() << "return NO;" << endl;
     }
+
+    indent_down();
+    out << indent() << "}";
+    if (!(*f_iter)->get_returntype()->is_void()) {
+      out << " else {" << endl;
+      indent_up();
+      out << indent() << "[result setSuccess: " << unbox((*f_iter)->get_returntype(), "serviceResult") << "];" << endl;
+      indent_down();
+      out << indent() << "}";
+    }
+    out << endl;
     
     // write out the result if not oneway
     if (!(*f_iter)->is_oneway()) {
