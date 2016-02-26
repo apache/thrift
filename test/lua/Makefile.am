@@ -22,7 +22,8 @@ THRIFT = $(top_builddir)/compiler/cpp/thrift
 # Remove "MapType =" line to ignore some map bug for now
 stubs: ../ThriftTest.thrift $(THRIFT)
 	$(THRIFT) --gen lua $<
-	$(SED) -i 's/MapType =//g' gen-lua/ThriftTest_ttypes.lua
+	$(SED) -i.bak 's/MapType =//g' gen-lua/ThriftTest_ttypes.lua
+	$(RM) gen-lua/ThriftTest_ttypes.lua.bak
 
 precross: stubs
 
