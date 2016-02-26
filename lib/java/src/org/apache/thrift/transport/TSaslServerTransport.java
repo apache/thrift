@@ -145,7 +145,7 @@ public class TSaslServerTransport extends TSaslTransport {
 
   /**
    * <code>TTransportFactory</code> to create
-   * <code>TSaslServerTransports<c/ode>. Ensures that a given
+   * <code>TSaslServerTransports</code>. Ensures that a given
    * underlying <code>TTransport</code> instance receives the same
    * <code>TSaslServerTransport</code>. This is kind of an awful hack to work
    * around the fact that Thrift is designed assuming that

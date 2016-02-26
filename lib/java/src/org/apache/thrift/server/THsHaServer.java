@@ -131,7 +131,7 @@ public class THsHaServer extends TNonblockingServer {
   }
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   @Override
   protected void waitForShutdown() {

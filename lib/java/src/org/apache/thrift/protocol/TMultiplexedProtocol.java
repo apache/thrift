@@ -31,21 +31,23 @@ import org.apache.thrift.TException;
  *
  * <p>This example uses a single socket transport to invoke two services:
  *
- * <blockquote><code>
- *     TSocket transport = new TSocket("localhost", 9090);<br/>
- *     transport.open();<br/>
- *<br/>
- *     TBinaryProtocol protocol = new TBinaryProtocol(transport);<br/>
- *<br/>
- *     TMultiplexedProtocol mp = new TMultiplexedProtocol(protocol, "Calculator");<br/>
- *     Calculator.Client service = new Calculator.Client(mp);<br/>
- *<br/>
- *     TMultiplexedProtocol mp2 = new TMultiplexedProtocol(protocol, "WeatherReport");<br/>
- *     WeatherReport.Client service2 = new WeatherReport.Client(mp2);<br/>
- *<br/>
- *     System.out.println(service.add(2,2));<br/>
- *     System.out.println(service2.getTemperature());<br/>
- * </code></blockquote>
+ * <pre>
+ * {@code
+ *     TSocket transport = new TSocket("localhost", 9090);
+ *     transport.open();
+ *
+ *     TBinaryProtocol protocol = new TBinaryProtocol(transport);
+ *
+ *     TMultiplexedProtocol mp = new TMultiplexedProtocol(protocol, "Calculator");
+ *     Calculator.Client service = new Calculator.Client(mp);
+ *
+ *     TMultiplexedProtocol mp2 = new TMultiplexedProtocol(protocol, "WeatherReport");
+ *     WeatherReport.Client service2 = new WeatherReport.Client(mp2);
+ *
+ *     System.out.println(service.add(2,2));
+ *     System.out.println(service2.getTemperature());
+ * }
+ * </pre>
  *
  * @see org.apache.thrift.protocol.TProtocolDecorator
  */
