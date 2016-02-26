@@ -53,7 +53,7 @@ class TCompactProtocol extends TProtocol {
   static const int TYPE_MAP = 0x0B;
   static const int TYPE_STRUCT = 0x0C;
 
-  List<int> _typeMap = new List(16)
+  static final List<int> _typeMap = new List.unmodifiable(new List(16)
     ..[TType.STOP] = TType.STOP
     ..[TType.BOOL] = TYPE_BOOLEAN_TRUE
     ..[TType.BYTE] = TYPE_BYTE
@@ -65,7 +65,7 @@ class TCompactProtocol extends TProtocol {
     ..[TType.LIST] = TYPE_LIST
     ..[TType.SET] = TYPE_SET
     ..[TType.MAP] = TYPE_MAP
-    ..[TType.STRUCT] = TYPE_STRUCT;
+    ..[TType.STRUCT] = TYPE_STRUCT);
 
   static const Utf8Codec _utf8Codec = const Utf8Codec();
 
