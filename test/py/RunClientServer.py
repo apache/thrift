@@ -133,20 +133,26 @@ def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zli
                             % (server_class, ' '.join(server_args)))
 
     # Wait for the server to start accepting connections on the given port.
-    sock = socket.socket()
     sleep_time = 0.1  # Seconds
     max_attempts = 100
-    try:
-        attempt = 0
-        while sock.connect_ex(('127.0.0.1', port)) != 0:
+    # try:
+    attempt = 0
+    while True:
+        sock4 = socket.socket()
+        sock6 = socket.socket(socket.AF_INET6)
+        try:
+            if sock4.connect_ex(('127.0.0.1', port)) == 0 \
+                    or sock6.connect_ex(('::1', port)) == 0:
+                break
             attempt += 1
             if attempt >= max_attempts:
                 raise Exception("TestServer not ready on port %d after %.2f seconds"
                                 % (port, sleep_time * attempt))
             ensureServerAlive()
             time.sleep(sleep_time)
-    finally:
-        sock.close()
+        finally:
+            sock4.close()
+            sock6.close()
 
     try:
         if verbose > 0:
