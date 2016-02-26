@@ -43,7 +43,7 @@
                   thrift_opts,
                   reconn_min,
                   reconn_max,
-                  reconn_time,
+                  reconn_time = 0,
                   op_cnt_dict,
                   op_time_dict } ).
 
