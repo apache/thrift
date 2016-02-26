@@ -2125,7 +2125,7 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
       t_struct* xs = (*f_iter)->get_xceptions();
       const std::vector<t_field*>& xceptions = xs->get_members();
       vector<t_field*>::const_iterator x_iter;
-      bool generic_xc_as_else = !xceptions.empty();
+      bool unchecked_xc_as_else = !xceptions.empty();
       bool first = true;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         if (first) out << indent();
@@ -2137,7 +2137,7 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
         indent_down();
         out << indent() << "} else ";
       }
-      if (generic_xc_as_else) {
+      if (unchecked_xc_as_else) {
         out << "{" << endl;
         indent_up();
       }
@@ -2150,7 +2150,7 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
       out << indent() << "if (![outProtocol writeMessageEnd: __thriftError]) return NO;" << endl;
       out << indent() << "if (![[outProtocol transport] flush: __thriftError]) return NO;" << endl;
       out << indent() << "return YES;" << endl;
-      if (generic_xc_as_else) {
+      if (unchecked_xc_as_else) {
         out << indent() << "}";
         indent_down();
       }
