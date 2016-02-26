@@ -64,16 +64,11 @@ env:
       BUILD_ARG="--without-csharp --without-java --without-erlang --without-nodejs --without-lua --without-python --without-perl --without-php --without-php_extension --without-dart --without-ruby --without-haskell --without-go --without-haxe --without-d"
       BUILD_ENV="-e CC=gcc -e CXX=g++"
 
-    - TEST_NAME="Java Lua Perl PHP Python Ruby (automake)"
+    - TEST_NAME="Java Lua Perl PHP Python Ruby Dart (automake)"
       BUILD_CMD="../autotools.sh"
-      BUILD_ARG="--without-cpp --without-haskell --without-c_glib --without-csharp --without-d --without-dart --without-erlang --without-go --without-haxe"
+      BUILD_ARG="--without-cpp --without-haskell --without-c_glib --without-csharp --without-d --without-erlang --without-go --without-haxe"
 
-    # Tutorial build is unstable
-    - TEST_NAME="Dart (automake)"
-      BUILD_CMD="../autotools.sh"
-      BUILD_ARG="--without-cpp --without-haskell --without-c_glib --without-csharp --without-d --without-erlang --without-go --without-haxe --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-ruby --enable-tutorial=no"
-
-    # These are flaky and also have lengthy output
+    # These are flaky (due to cabal and npm network/server failures) and also have lengthy output
     - TEST_NAME="Haskell Node.js (automake)"
       BUILD_CMD="../autotools.sh"
       BUILD_ARG="--without-cpp --without-c_glib --without-csharp --without-d --without-dart --without-erlang --without-go --without-haxe --without-java --without-lua --without-perl --without-php --without-php_extension --without-python --without-ruby"

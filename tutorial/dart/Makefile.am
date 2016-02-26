@@ -17,6 +17,8 @@
 # under the License.
 #
 
+BUILT_SOURCES = gen-dart/tutorial/lib/tutorial.dart gen-dart/shared/lib/shared.dart
+
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 gen-dart/tutorial/lib/tutorial.dart gen-dart/shared/lib/shared.dart: $(top_srcdir)/tutorial/tutorial.thrift
@@ -44,7 +46,7 @@ pub-get-console-client:
 	cd console_client; ${DARTPUB} get
 
 pub-get-server:
-	cd client; ${DARTPUB} get
+	cd server; ${DARTPUB} get
 
 tutorialserver: pub-get-gen pub-get-server
 	${DART} server/bin/main.dart
@@ -53,4 +55,4 @@ tutorialclient: pub-get-gen pub-get-client
 	cd client; ${DARTPUB} serve
 
 tutorialconsoleclient: pub-get-console-client
-	${DART} console-client/bin/main.dart
+	${DART} console_client/bin/main.dart
