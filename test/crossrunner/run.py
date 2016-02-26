@@ -129,11 +129,16 @@ def run_test(testdir, logdir, test_dict, max_retry, async=True):
     def ensure_socket_open(proc, port, max_delay):
         sleeped = 0.1
         time.sleep(sleeped)
-        sock4 = socket.socket()
-        sock6 = socket.socket(family=socket.AF_INET6)
         sleep_step = 0.2
-        try:
-            while sock4.connect_ex(('127.0.0.1', port)) and sock6.connect_ex(('::1', port)):
+        while True:
+            # Create sockets every iteration because refused sockets cannot be
+            # reused on some systems.
+            sock4 = socket.socket()
+            sock6 = socket.socket(family=socket.AF_INET6)
+            try:
+                if sock4.connect_ex(('127.0.0.1', port)) == 0 \
+                        or sock6.connect_ex(('::1', port)) == 0:
+                    return True
                 if proc.poll() is not None:
                     logger.warn('server process is exited')
                     return False
@@ -142,11 +147,11 @@ def run_test(testdir, logdir, test_dict, max_retry, async=True):
                     return False
                 time.sleep(sleep_step)
                 sleeped += sleep_step
-            logger.debug('waited %f sec for server port open' % sleeped)
-            return True
-        finally:
-            sock4.close()
-            sock6.close()
+            finally:
+                sock4.close()
+                sock6.close()
+        logger.debug('waited %f sec for server port open' % sleeped)
+        return True
 
     try:
         max_bind_retry = 3
