@@ -36,6 +36,7 @@
 
   <property name="final.name" value="${thrift.artifactid}-${version}"/>
 
+  <property name="thrift.compiler" location="../../compiler/cpp/thrift"/>
   <property name="src" location="${basedir}/src"/>
   <property name="build.dir" location="${basedir}/build"/>
   <property name="build.lib.dir" location="${build.dir}/lib"/>
@@ -260,31 +261,31 @@
 
   <target name="generate">
     <!-- Generate the thrift gen-java source -->
-    <exec executable="../../compiler/cpp/thrift" failonerror="true">
+    <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen java ${test.thrift.home}/ThriftTest.thrift"/>
     </exec>
-    <exec executable="../../compiler/cpp/thrift" failonerror="true">
+    <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen java ${test.thrift.home}/DebugProtoTest.thrift"/>
     </exec>
-    <exec executable="../../compiler/cpp/thrift" failonerror="true">
+    <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen java ${test.thrift.home}/OptionalRequiredTest.thrift"/>
     </exec>
-    <exec executable="../../compiler/cpp/thrift" failonerror="true">
+    <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen java:beans,nocamel ${test.thrift.home}/JavaBeansTest.thrift"/>
     </exec>
-    <exec executable="../../compiler/cpp/thrift" failonerror="true">
+    <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen java ${test.thrift.home}/ManyOptionals.thrift"/>
     </exec>
     <exec executable="mkdir" failonerror="true">
       <arg line="-p ${genfullcamel}"/>
     </exec>
-    <exec executable="../../compiler/cpp/thrift" failonerror="true">
+    <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen java:fullcamel -out ${genfullcamel} ${test.thrift.home}/FullCamelTest.thrift"/>
     </exec>
     <exec executable="mkdir" failonerror="true">
       <arg line="-p ${genreuse}"/>
     </exec>
-    <exec executable="../../compiler/cpp/thrift" failonerror="true">
+    <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen java:reuse-objects -out ${genreuse} ${test.thrift.home}/ReuseObjects.thrift"/>
     </exec>
   </target>
@@ -370,7 +371,7 @@
 
     <!-- Dependencies needed for testing -->
     <artifact:dependencies filesetId="test-dependency-jars" useScope="runtime">
-      <dependency groupId="org.slf4j" artifactId="slf4j-log4j12" version="1.5.8"/>
+      <dependency groupId="org.slf4j" artifactId="slf4j-log4j12" version="${slf4j.version}"/>
       <dependency groupId="junit" artifactId="junit" version="4.4"/>
     </artifact:dependencies>
 
