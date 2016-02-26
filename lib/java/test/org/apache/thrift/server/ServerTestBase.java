@@ -92,8 +92,13 @@ public abstract class ServerTestBase extends TestCase {
     }
 
     public ByteBuffer testBinary(ByteBuffer thing) {
-      String hexstr = "TODO: toHexString(thing)";
-	  System.out.print("testBinary(" + hexstr + ")\n");
+      StringBuilder sb = new StringBuilder(thing.remaining() * 3);
+      thing.mark();
+      while (thing.remaining() > 0) {
+        sb.append(String.format("%02X ", thing.get()));
+      }
+      System.out.print("testBinary(" + sb.toString() + ")\n");
+      thing.reset();
       return thing;
     }
 
