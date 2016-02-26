@@ -230,7 +230,7 @@ public class TCompactProtocol extends TProtocol {
 
   /**
    * Write a field header containing the field id and field type. If the
-   * difference between the current field id and the last one is small (< 15),
+   * difference between the current field id and the last one is small (&lt; 15),
    * then the field id will be encoded in the 4 MSB as a delta. Otherwise, the
    * field id will follow the type header as a zigzag varint.
    */

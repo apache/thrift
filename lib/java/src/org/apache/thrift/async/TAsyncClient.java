@@ -66,7 +66,7 @@ public abstract class TAsyncClient {
 
   /**
    * Get the client's error - returns null if no error
-   * @return Get the client's error. <br /> returns null if no error
+   * @return Get the client's error. <p> returns null if no error
    */
   public Exception getError() {
     return ___error;
