@@ -33,8 +33,6 @@ import java.util.Random;
  * It may make better sense to provide a basic stream access on top of the framed file format
  * The FileTransport can then be a user of this framed file format with some additional logic
  * for chunking.
- *
- * @author Joydeep Sen Sarma <jssarma@facebook.com>
  */
 public class TFileTransport extends TTransport {
 

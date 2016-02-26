@@ -49,9 +49,9 @@ public class TSSLTransportFactory {
    * from System properties that are set.
    *
    * Example system properties:
-   * -Djavax.net.ssl.trustStore=<truststore location>
+   * -Djavax.net.ssl.trustStore=&lt;truststore location&gt;
    * -Djavax.net.ssl.trustStorePassword=password
-   * -Djavax.net.ssl.keyStore=<keystore location>
+   * -Djavax.net.ssl.keyStore=&lt;keystore location&gt;
    * -Djavax.net.ssl.keyStorePassword=password
    *
    * @param port

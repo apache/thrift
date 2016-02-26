@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A superclass for SASL client/server thrift transports. A subclass need only
- * implement the <code>open</open> method.
+ * implement the <code>open</code> method.
  */
 abstract class TSaslTransport extends TTransport {
 

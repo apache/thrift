@@ -36,7 +36,7 @@ import org.apache.thrift.transport.TTransportException;
  * Encapsulates an async method call
  * Need to generate:
  *   - private void write_args(TProtocol protocol)
- *   - public T getResult() throws <Exception_1>, <Exception_2>, ...
+ *   - public T getResult() throws &lt;Exception_1&gt;, &lt;Exception_2&gt;, ...
  * @param <T>
  */
 public abstract class TAsyncMethodCall<T> {

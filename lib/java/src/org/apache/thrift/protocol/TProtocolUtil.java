@@ -152,7 +152,7 @@ public class TProtocolUtil {
    * In some cases, no guess can be done, in that case we return the
    * fallback TProtocolFactory.
    * To be certain to correctly detect the protocol, the first encoded
-   * field should have a field id < 256
+   * field should have a field id &lt; 256
    *
    * @param data The serialized data to guess the protocol for.
    * @param fallback The TProtocol to return if no guess can be made.
