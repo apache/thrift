@@ -2149,13 +2149,13 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
       out << indent() << "if (![*__thriftError write: outProtocol error: __thriftError]) return NO;" << endl;
       out << indent() << "if (![outProtocol writeMessageEnd: __thriftError]) return NO;" << endl;
       out << indent() << "if (![[outProtocol transport] flush: __thriftError]) return NO;" << endl;
-      out << indent() << "return NO;" << endl;
+      out << indent() << "return YES;" << endl;
       if (generic_xc_as_else) {
         out << indent() << "}";
         indent_down();
       }
     } else { // if oneway
-      out << indent() << "return NO;" << endl;
+      out << indent() << "return YES;" << endl;
     }
 
     indent_down();
