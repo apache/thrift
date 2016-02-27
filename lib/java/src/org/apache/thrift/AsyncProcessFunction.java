@@ -24,7 +24,7 @@ import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.server.AbstractNonblockingServer;
 
-public abstract class AsyncProcessFunction<I, T, R> {
+public abstract class AsyncProcessFunction<I, T extends TBase, R> {
     final String methodName;
 
     public AsyncProcessFunction(String methodName) {
@@ -37,13 +37,13 @@ public abstract class AsyncProcessFunction<I, T, R> {
 
     public abstract T getEmptyArgsInstance();
 
-    public abstract AsyncMethodCallback getResultHandler(final AbstractNonblockingServer.AsyncFrameBuffer fb, int seqid);
+    public abstract AsyncMethodCallback<R> getResultHandler(final AbstractNonblockingServer.AsyncFrameBuffer fb, int seqid);
 
     public String getMethodName() {
         return methodName;
     }
 
-    public void sendResponse(final AbstractNonblockingServer.AsyncFrameBuffer fb, final TBase result, final byte type, final int seqid) throws TException {
+    public void sendResponse(final AbstractNonblockingServer.AsyncFrameBuffer fb, final TSerializable result, final byte type, final int seqid) throws TException {
         TProtocol oprot = fb.getOutputProtocol();
 
         oprot.writeMessageBegin(new TMessage(getMethodName(), type, seqid));

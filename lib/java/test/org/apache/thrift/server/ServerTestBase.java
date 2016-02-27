@@ -228,12 +228,12 @@ public abstract class ServerTestBase extends TestCase {
   
     public void testException(String arg) throws Xception, TException {
       System.out.print("testException("+arg+")\n");
-      if (arg.equals("Xception")) {
+      if ("Xception".equals(arg)) {
         Xception x = new Xception();
         x.errorCode = 1001;
         x.message = arg;
         throw x;
-      } else if (arg.equals("TException")) {
+      } else if ("TException".equals(arg)) {
         throw new TException(arg);
       } else {
         Xtruct result = new Xtruct();
@@ -416,8 +416,10 @@ public abstract class ServerTestBase extends TestCase {
       testTypedef(testClient);
       testNestedMap(testClient);
       testInsanity(testClient);
-      testOneway(testClient);
       testException(testClient);
+      testOneway(testClient);
+      // FIXME: a call after oneway does not work for async client
+      // testI32(testClient);
       transport.close();
 
       stopServer();
@@ -553,18 +555,19 @@ public abstract class ServerTestBase extends TestCase {
   }
 
   private void testException(ThriftTest.Client testClient) throws TException, Xception {
-    //@TODO testException
-    //testClient.testException("no Exception");
-    /*try {
-        testClient.testException("Xception");
+    try {
+      testClient.testException("Xception");
+      assert false;
     } catch(Xception e) {
-    	assertEquals(e.message, "Xception");
-    }*/
-    /*try {
-        testClient.testException("ApplicationException");
+      assertEquals(e.message, "Xception");
+      assertEquals(e.errorCode, 1001);
+    }
+    try {
+      testClient.testException("TException");
+      assert false;
     } catch(TException e) {
-    	assertEquals(e.message, "ApplicationException");
-    }*/
+    }
+    testClient.testException("no Exception");
   }
 
 
@@ -669,11 +672,21 @@ public abstract class ServerTestBase extends TestCase {
 
     @Override
     public void testException(String arg, AsyncMethodCallback<Void> resultHandler) throws TException {
-      try {
-        // handler.testException();
-      } catch (Exception e) {
-
+      System.out.print("testException("+arg+")\n");
+      if ("Xception".equals(arg)) {
+        Xception x = new Xception();
+        x.errorCode = 1001;
+        x.message = arg;
+        // throw and onError yield the same result.
+        // resultHandler.onError(x);
+        // return;
+        throw x;
+      } else if ("TException".equals(arg)) {
+        // throw new TException(arg);
+        resultHandler.onError(new TException(arg));
+        return;
       }
+      resultHandler.onComplete(null);
     }
 
     @Override

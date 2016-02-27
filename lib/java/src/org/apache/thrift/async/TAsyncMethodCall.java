@@ -173,7 +173,7 @@ public abstract class TAsyncMethodCall<T> {
    * select interests without worrying about concurrency.
    * @param key
    */
-  protected void transition(SelectionKey key) {
+  void transition(SelectionKey key) {
     // Ensure key is valid
     if (!key.isValid()) {
       key.cancel();
