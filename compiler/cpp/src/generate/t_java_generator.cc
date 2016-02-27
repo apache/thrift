@@ -438,8 +438,6 @@ string t_java_generator::java_type_imports() {
          + "import org.apache.thrift.protocol.TProtocolException;\n"
          + "import org.apache.thrift.EncodingUtils;\n"
          + option
-         + "import org.apache.thrift.TException;\n"
-         + "import org.apache.thrift.async.AsyncMethodCallback;\n"
          + "import org.apache.thrift.server.AbstractNonblockingServer.*;\n"
          + "import java.util.List;\n" + "import java.util.ArrayList;\n" + "import java.util.Map;\n"
          + "import java.util.HashMap;\n" + "import java.util.EnumMap;\n" + "import java.util.Set;\n"
@@ -1366,7 +1364,7 @@ void t_java_generator::generate_java_struct_definition(ofstream& out,
               << tstruct->get_name() << " ";
 
   if (is_exception) {
-    out << "extends TException ";
+    out << "extends org.apache.thrift.TException ";
   }
   out << "implements org.apache.thrift.TBase<" << tstruct->get_name() << ", " << tstruct->get_name()
       << "._Fields>, java.io.Serializable, Cloneable, Comparable<" << tstruct->get_name() << ">";
@@ -3303,11 +3301,12 @@ void t_java_generator::generate_process_async_function(t_service* tservice, t_fu
   indent(f_service_) << "  return new " << argsname << "();" << endl;
   indent(f_service_) << "}" << endl << endl;
 
-  indent(f_service_) << "public AsyncMethodCallback<" << resulttype
+  indent(f_service_) << "public org.apache.thrift.async.AsyncMethodCallback<" << resulttype
                      << "> getResultHandler(final AsyncFrameBuffer fb, final int seqid) {" << endl;
   indent_up();
   indent(f_service_) << "final org.apache.thrift.AsyncProcessFunction fcall = this;" << endl;
-  indent(f_service_) << "return new AsyncMethodCallback<" << resulttype << ">() { " << endl;
+  indent(f_service_) << "return new org.apache.thrift.async.AsyncMethodCallback<" << resulttype
+                     << ">() { " << endl;
   indent_up();
   indent(f_service_) << "public void onComplete(" << resulttype << " o) {" << endl;
 
@@ -3341,48 +3340,65 @@ void t_java_generator::generate_process_async_function(t_service* tservice, t_fu
   indent(f_service_) << "public void onError(Exception e) {" << endl;
   indent_up();
 
-  if (!tfunction->is_oneway()) {
+  if (tfunction->is_oneway()) {
+    f_service_ << indent() << "LOGGER.error(\"Exception inside oneway handler\", e);" << endl;
+  } else {
     indent(f_service_) << "byte msgType = org.apache.thrift.protocol.TMessageType.REPLY;" << endl;
-    indent(f_service_) << "org.apache.thrift.TBase msg;" << endl;
+    indent(f_service_) << "org.apache.thrift.TSerializable msg;" << endl;
     indent(f_service_) << resultname << " result = new " << resultname << "();" << endl;
 
     t_struct* xs = tfunction->get_xceptions();
     const std::vector<t_field*>& xceptions = xs->get_members();
+
     vector<t_field*>::const_iterator x_iter;
     if (xceptions.size() > 0) {
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-        if (x_iter != xceptions.begin())
-          indent(f_service_) << "else ";
-        indent(f_service_) << "if (e instanceof " << type_name((*x_iter)->get_type(), false, false)
-                           << ") {" << endl;
-        indent(f_service_) << indent() << "result." << (*x_iter)->get_name() << " = ("
-                           << type_name((*x_iter)->get_type(), false, false) << ") e;" << endl;
-        indent(f_service_) << indent() << "result.set" << get_cap_name((*x_iter)->get_name())
-                           << get_cap_name("isSet") << "(true);" << endl;
-        indent(f_service_) << indent() << "msg = result;" << endl;
-
-        indent(f_service_) << "}" << endl;
+        if (x_iter == xceptions.begin())
+          f_service_ << indent();
+        string type = type_name((*x_iter)->get_type(), false, false);
+        string name = (*x_iter)->get_name();
+        f_service_ << "if (e instanceof " << type << ") {" << endl;
+        indent_up();
+        f_service_ << indent() << "result." << name << " = (" << type << ") e;" << endl
+                   << indent() << "result.set" << get_cap_name(name) << get_cap_name("isSet")
+                   << "(true);" << endl
+                   << indent() << "msg = result;" << endl;
+        indent_down();
+        indent(f_service_) << "} else ";
       }
-      indent(f_service_) << " else " << endl;
+    } else {
+      indent(f_service_);
     }
-
-    indent(f_service_) << "{" << endl;
+    f_service_ << "if (e instanceof org.apache.thrift.transport.TTransportException) {" << endl;
     indent_up();
-    indent(f_service_) << "msgType = org.apache.thrift.protocol.TMessageType.EXCEPTION;" << endl;
-    indent(f_service_) << "msg = (org.apache.thrift.TBase)new "
-                          "org.apache.thrift.TApplicationException(org.apache.thrift."
-                          "TApplicationException.INTERNAL_ERROR, e.getMessage());" << endl;
+    f_service_ << indent() << "LOGGER.error(\"TTransportException inside handler\", e);" << endl
+               << indent() << "fb.close();" << endl
+               << indent() << "return;" << endl;
     indent_down();
-    indent(f_service_) << "}" << endl;
-
-    indent(f_service_) << "try {" << endl;
-    indent(f_service_) << "  fcall.sendResponse(fb,msg,msgType,seqid);" << endl;
-    indent(f_service_) << "  return;" << endl;
-    indent(f_service_) << "} catch (Exception ex) {" << endl;
-    indent(f_service_) << "  LOGGER.error(\"Exception writing to internal frame buffer\", ex);"
+    indent(f_service_) << "} else if (e instanceof org.apache.thrift.TApplicationException) {"
                        << endl;
-    indent(f_service_) << "}" << endl;
-    indent(f_service_) << "fb.close();" << endl;
+    indent_up();
+    f_service_ << indent() << "LOGGER.error(\"TApplicationException inside handler\", e);" << endl
+               << indent() << "msgType = org.apache.thrift.protocol.TMessageType.EXCEPTION;" << endl
+               << indent() << "msg = (org.apache.thrift.TApplicationException)e;" << endl;
+    indent_down();
+    indent(f_service_) << "} else {" << endl;
+    indent_up();
+    f_service_ << indent() << "LOGGER.error(\"Exception inside handler\", e);" << endl
+               << indent() << "msgType = org.apache.thrift.protocol.TMessageType.EXCEPTION;" << endl
+               << indent() << "msg = new "
+                              "org.apache.thrift.TApplicationException(org.apache.thrift."
+                              "TApplicationException.INTERNAL_ERROR, e.getMessage());"
+               << endl;
+    indent_down();
+    f_service_ << indent() << "}" << endl
+               << indent() << "try {" << endl
+               << indent() << "  fcall.sendResponse(fb,msg,msgType,seqid);" << endl
+               << indent() << "} catch (Exception ex) {" << endl
+               << indent() << "  LOGGER.error(\"Exception writing to internal frame buffer\", ex);"
+               << endl
+               << indent() << "  fb.close();" << endl
+               << indent() << "}" << endl;
   }
   indent_down();
   indent(f_service_) << "}" << endl;
@@ -3397,7 +3413,7 @@ void t_java_generator::generate_process_async_function(t_service* tservice, t_fu
 
   indent(f_service_) << "public void start(I iface, " << argsname
                      << " args, org.apache.thrift.async.AsyncMethodCallback<" << resulttype
-                     << "> resultHandler) throws TException {" << endl;
+                     << "> resultHandler) throws org.apache.thrift.TException {" << endl;
   indent_up();
 
   // Generate the function call
