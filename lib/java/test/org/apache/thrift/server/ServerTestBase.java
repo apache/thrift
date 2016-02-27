@@ -234,7 +234,8 @@ public abstract class ServerTestBase extends TestCase {
         x.message = arg;
         throw x;
       } else if ("TException".equals(arg)) {
-        throw new TException(arg);
+        // Unspecified exception should yield a TApplicationException on client side
+        throw new RuntimeException(arg);
       } else {
         Xtruct result = new Xtruct();
         result.string_thing = arg;
@@ -681,13 +682,15 @@ public abstract class ServerTestBase extends TestCase {
         x.errorCode = 1001;
         x.message = arg;
         // throw and onError yield the same result.
-        // resultHandler.onError(x);
-        // return;
-        throw x;
-      } else if ("TException".equals(arg)) {
-        // throw new TException(arg);
-        resultHandler.onError(new TException(arg));
+        // throw x;
+        resultHandler.onError(x);
         return;
+      } else if ("TException".equals(arg)) {
+        // throw and onError yield the same result.
+        // resultHandler.onError(new TException(arg));
+        // return;
+        // Unspecified exception should yield a TApplicationException on client side
+        throw new RuntimeException(arg);
       }
       resultHandler.onComplete(null);
     }
