@@ -19,6 +19,7 @@
 package org.apache.thrift;
 
 import org.apache.thrift.protocol.*;
+import org.apache.thrift.async.AsyncMethodCallback;
 
 import org.apache.thrift.server.AbstractNonblockingServer.*;
 import org.slf4j.Logger;
@@ -63,7 +64,7 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
         }
 
         //Get Args
-        TBase args = (TBase)fn.getEmptyArgsInstance();
+        TBase args = fn.getEmptyArgsInstance();
 
         try {
             args.read(in);
@@ -81,7 +82,12 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
 
 
         //start off processing function
-        fn.start(iface, args,fn.getResultHandler(fb,msg.seqid));
+        AsyncMethodCallback resultHandler = fn.getResultHandler(fb,msg.seqid);
+        try {
+          fn.start(iface, args, resultHandler);
+        } catch (Exception e) {
+          resultHandler.onError(e);
+        }
         return true;
     }
 
