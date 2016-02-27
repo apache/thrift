@@ -236,6 +236,7 @@ public abstract class TAsyncMethodCall<T> {
       client.onComplete();
       callback.onComplete(result);
     } catch (Exception e) {
+      key.cancel();
       onError(e);
     }
   }
