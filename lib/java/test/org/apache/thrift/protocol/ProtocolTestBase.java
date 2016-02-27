@@ -327,6 +327,11 @@ public abstract class ProtocolTestBase extends TestCase {
       @Override
       public void onewayMethod() throws TException {
       }
+
+      @Override
+      public boolean declaredExceptionMethod(boolean shouldThrow) throws TException {
+        return shouldThrow;
+      }
     };
 
     Srv.Processor testProcessor = new Srv.Processor(handler);

@@ -7,6 +7,7 @@ import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
+import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,23 +34,29 @@ public abstract class ProcessFunction<I, T extends TBase> {
       return;
     }
     iprot.readMessageEnd();
-    TBase result = null;
+    TSerializable result = null;
+    byte msgType = TMessageType.REPLY;
 
     try {
       result = getResult(iface, args);
-    } catch(TException tex) {
-      LOGGER.error("Internal error processing " + getMethodName(), tex);
-      TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, 
-        "Internal error processing " + getMethodName());
-      oprot.writeMessageBegin(new TMessage(getMethodName(), TMessageType.EXCEPTION, seqid));
-      x.write(oprot);
-      oprot.writeMessageEnd();
-      oprot.getTransport().flush();
-      return;
+    } catch (TTransportException ex) {
+      LOGGER.error("Transport error whiel processing " + getMethodName(), ex);
+      throw ex;
+    } catch (TApplicationException ex) {
+      LOGGER.error("Internal application error processing " + getMethodName(), ex);
+      result = ex;
+      msgType = TMessageType.EXCEPTION;
+    } catch (Exception ex) {
+      LOGGER.error("Internal error processing " + getMethodName(), ex);
+      if(!isOneway()) {
+        result = new TApplicationException(TApplicationException.INTERNAL_ERROR,
+            "Internal error processing " + getMethodName());
+        msgType = TMessageType.EXCEPTION;
+      }
     }
 
     if(!isOneway()) {
-      oprot.writeMessageBegin(new TMessage(getMethodName(), TMessageType.REPLY, seqid));
+      oprot.writeMessageBegin(new TMessage(getMethodName(), msgType, seqid));
       result.write(oprot);
       oprot.writeMessageEnd();
       oprot.getTransport().flush();
