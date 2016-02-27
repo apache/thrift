@@ -223,12 +223,12 @@ public abstract class ServerTestBase extends TestCase {
   
     public void testException(String arg) throws Xception, TException {
       System.out.print("testException("+arg+")\n");
-      if (arg.equals("Xception")) {
+      if ("Xception".equals(arg)) {
         Xception x = new Xception();
         x.errorCode = 1001;
         x.message = arg;
         throw x;
-      } else if (arg.equals("TException")) {
+      } else if ("TException".equals(arg)) {
         throw new TException(arg);
       } else {
         Xtruct result = new Xtruct();
@@ -411,8 +411,10 @@ public abstract class ServerTestBase extends TestCase {
       testTypedef(testClient);
       testNestedMap(testClient);
       testInsanity(testClient);
-      testOneway(testClient);
       testException(testClient);
+      testOneway(testClient);
+      // FIXME: a call after oneway does not work for async client
+      // testI32(testClient);
       transport.close();
 
       stopServer();
@@ -548,139 +550,150 @@ public abstract class ServerTestBase extends TestCase {
   }
 
   private void testException(ThriftTest.Client testClient) throws TException, Xception {
-    //@TODO testException
-    //testClient.testException("no Exception");
-    /*try {
-        testClient.testException("Xception");
+    try {
+      testClient.testException("Xception");
+      assert false;
     } catch(Xception e) {
-    	assertEquals(e.message, "Xception");
-    }*/
-    /*try {
-        testClient.testException("ApplicationException");
+      assertEquals(e.message, "Xception");
+      assertEquals(e.errorCode, 1001);
+    }
+    try {
+      testClient.testException("TException");
+      assert false;
     } catch(TException e) {
-    	assertEquals(e.message, "ApplicationException");
-    }*/
+    }
+    testClient.testException("no Exception");
   }
 
 
-    public static class AsyncTestHandler implements ThriftTest.AsyncIface {
+  public static class AsyncTestHandler implements ThriftTest.AsyncIface {
 
-        TestHandler handler = new TestHandler();
+    TestHandler handler = new TestHandler();
 
-        @Override
-        public void testVoid(AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(null);
-        }
-
-        @Override
-        public void testString(String thing, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testString(thing));
-        }
-
-        @Override
-        public void testBool(boolean thing, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testBool(thing));
-        }
-
-        @Override
-        public void testByte(byte thing, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testByte(thing));
-        }
-
-        @Override
-        public void testI32(int thing, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testI32(thing));
-        }
-
-        @Override
-        public void testI64(long thing, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testI64(thing));
-        }
-
-        @Override
-        public void testDouble(double thing, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testDouble(thing));
-        }
-
-        @Override 
-        public void testBinary(ByteBuffer thing, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testBinary(thing));
-        }
-
-        @Override
-        public void testStruct(Xtruct thing, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testStruct(thing));
-        }
-
-        @Override
-        public void testNest(Xtruct2 thing, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testNest(thing));
-        }
-
-        @Override
-        public void testMap(Map<Integer, Integer> thing, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testMap(thing));
-        }
-
-        @Override
-        public void testStringMap(Map<String, String> thing, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testStringMap(thing));
-        }
-
-        @Override
-        public void testSet(Set<Integer> thing, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testSet(thing));
-        }
-
-        @Override
-        public void testList(List<Integer> thing, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testList(thing));
-        }
-
-        @Override
-        public void testEnum(Numberz thing, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testEnum(thing));
-        }
-
-        @Override
-        public void testTypedef(long thing, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testTypedef(thing));
-        }
-
-        @Override
-        public void testMapMap(int hello, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testMapMap(hello));
-        }
-
-        @Override
-        public void testInsanity(Insanity argument, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testInsanity(argument));
-        }
-
-        @Override
-        public void testMulti(byte arg0, int arg1, long arg2, Map<Short, String> arg3, Numberz arg4, long arg5, AsyncMethodCallback resultHandler) throws TException {
-            resultHandler.onComplete(handler.testMulti(arg0,arg1,arg2,arg3,arg4,arg5));
-        }
-
-        @Override
-        public void testException(String arg, AsyncMethodCallback resultHandler) throws TException {
-            try {
-               // handler.testException();
-            } catch (Exception e) {
-
-            }
-        }
-
-        @Override
-        public void testMultiException(String arg0, String arg1, AsyncMethodCallback resultHandler) throws TException {
-            //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        @Override
-        public void testOneway(int secondsToSleep, AsyncMethodCallback resultHandler) throws TException {
-            handler.testOneway(secondsToSleep);
-            resultHandler.onComplete(null);
-        }
+    @Override
+    public void testVoid(AsyncMethodCallback<Void> resultHandler) throws TException {
+      resultHandler.onComplete(null);
     }
+
+    @Override
+    public void testString(String thing, AsyncMethodCallback<String> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testString(thing));
+    }
+
+    @Override
+    public void testBool(boolean thing, AsyncMethodCallback<Boolean> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testBool(thing));
+    }
+
+    @Override
+    public void testByte(byte thing, AsyncMethodCallback<Byte> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testByte(thing));
+    }
+
+    @Override
+    public void testI32(int thing, AsyncMethodCallback<Integer> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testI32(thing));
+    }
+
+    @Override
+    public void testI64(long thing, AsyncMethodCallback<Long> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testI64(thing));
+    }
+
+    @Override
+    public void testDouble(double thing, AsyncMethodCallback<Double> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testDouble(thing));
+    }
+
+    @Override
+    public void testBinary(ByteBuffer thing, AsyncMethodCallback<ByteBuffer> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testBinary(thing));
+    }
+
+    @Override
+    public void testStruct(Xtruct thing, AsyncMethodCallback<Xtruct> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testStruct(thing));
+    }
+
+    @Override
+    public void testNest(Xtruct2 thing, AsyncMethodCallback<Xtruct2> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testNest(thing));
+    }
+
+    @Override
+    public void testMap(Map<Integer, Integer> thing, AsyncMethodCallback<Map<Integer, Integer>> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testMap(thing));
+    }
+
+    @Override
+    public void testStringMap(Map<String, String> thing, AsyncMethodCallback<Map<String, String>> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testStringMap(thing));
+    }
+
+    @Override
+    public void testSet(Set<Integer> thing, AsyncMethodCallback<Set<Integer>> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testSet(thing));
+    }
+
+    @Override
+    public void testList(List<Integer> thing, AsyncMethodCallback<List<Integer>> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testList(thing));
+    }
+
+    @Override
+    public void testEnum(Numberz thing, AsyncMethodCallback<Numberz> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testEnum(thing));
+    }
+
+    @Override
+    public void testTypedef(long thing, AsyncMethodCallback<Long> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testTypedef(thing));
+    }
+
+    @Override
+    public void testMapMap(int hello, AsyncMethodCallback<Map<Integer,Map<Integer,Integer>>> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testMapMap(hello));
+    }
+
+    @Override
+    public void testInsanity(Insanity argument, AsyncMethodCallback<Map<Long, Map<Numberz,Insanity>>> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testInsanity(argument));
+    }
+
+    @Override
+    public void testMulti(byte arg0, int arg1, long arg2, Map<Short, String> arg3, Numberz arg4, long arg5, AsyncMethodCallback<Xtruct> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testMulti(arg0,arg1,arg2,arg3,arg4,arg5));
+    }
+
+    @Override
+    public void testException(String arg, AsyncMethodCallback<Void> resultHandler) throws TException {
+      System.out.print("testException("+arg+")\n");
+      if ("Xception".equals(arg)) {
+        Xception x = new Xception();
+        x.errorCode = 1001;
+        x.message = arg;
+        // throw and onError yield the same result.
+        // resultHandler.onError(x);
+        // return;
+        throw x;
+      } else if ("TException".equals(arg)) {
+        // throw new TException(arg);
+        resultHandler.onError(new TException(arg));
+        return;
+      }
+      resultHandler.onComplete(null);
+    }
+
+    @Override
+    public void testMultiException(String arg0, String arg1, AsyncMethodCallback<Xtruct> resultHandler) throws TException {
+      //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void testOneway(int secondsToSleep, AsyncMethodCallback<Void> resultHandler) throws TException {
+      handler.testOneway(secondsToSleep);
+      resultHandler.onComplete(null);
+    }
+  }
 
 }

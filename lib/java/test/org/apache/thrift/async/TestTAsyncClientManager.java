@@ -22,11 +22,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
 
@@ -39,12 +41,9 @@ import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingSocket;
 
 import thrift.test.CompactProtoTestStruct;
+import thrift.test.ExceptionWithAMap;
 import thrift.test.Srv;
 import thrift.test.Srv.Iface;
-import thrift.test.Srv.AsyncClient.Janky_call;
-import thrift.test.Srv.AsyncClient.onewayMethod_call;
-import thrift.test.Srv.AsyncClient.primitiveMethod_call;
-import thrift.test.Srv.AsyncClient.voidMethod_call;
 
 public class TestTAsyncClientManager extends TestCase {
 
@@ -83,53 +82,113 @@ public class TestTAsyncClientManager extends TestCase {
     basicCall(client);
   }
 
-  public void testTimeoutCall() throws Exception {
-    final CountDownLatch latch = new CountDownLatch(1);
-    Srv.AsyncClient client = getClient();
-    client.setTimeout(100);
-    client.primitiveMethod(new AsyncMethodCallback<primitiveMethod_call>() {
-      @Override
-      public void onError(Exception exception) {
-        try {
-          if (!(exception instanceof TimeoutException)) {
-            StringWriter sink = new StringWriter();
-            exception.printStackTrace(new PrintWriter(sink, true));
-            fail("expected TimeoutException but got " + sink.toString());
-          }
-        } finally {
+  private static abstract class ErrorCallTest<C extends TAsyncClient, R> {
+    final void runTest() throws Exception {
+      final CountDownLatch latch = new CountDownLatch(1);
+      final AtomicReference<Exception> error = new AtomicReference<Exception>();
+      C client = executeErroringCall(new AsyncMethodCallback<R>() {
+        @Override
+        public void onComplete(R response) {
           latch.countDown();
         }
+
+        @Override
+        public void onError(Exception exception) {
+          error.set(exception);
+          latch.countDown();
+        }
+      });
+      latch.await(2, TimeUnit.SECONDS);
+      assertTrue(client.hasError());
+      Exception exception = error.get();
+      assertNotNull(exception);
+      assertSame(exception, client.getError());
+      validateError(client, exception);
+    }
+
+    /**
+     * Executes a call that is expected to raise an exception.
+     *
+     * @param callback The testing callback that should be installed.
+     * @return The client the call was made against.
+     * @throws Exception if there was a problem setting up the client or making the call.
+     */
+    abstract C executeErroringCall(AsyncMethodCallback<R> callback) throws Exception;
+
+    /**
+     * Further validates the properties of the error raised in the remote call and the state of the
+     * client after that call.
+     *
+     * @param client The client returned from {@link #executeErroringCall(AsyncMethodCallback)}.
+     * @param error The exception raised by the remote call.
+     */
+    abstract void validateError(C client, Exception error);
+  }
+
+  public void testUnexpectedRemoteExceptionCall() throws Exception {
+    new ErrorCallTest<Srv.AsyncClient, Boolean>() {
+      @Override
+      Srv.AsyncClient executeErroringCall(AsyncMethodCallback<Boolean> callback) throws Exception {
+        Srv.AsyncClient client = getClient();
+        client.declaredExceptionMethod(false, callback);
+        return client;
       }
 
       @Override
-      public void onComplete(primitiveMethod_call response) {
-        try {
-          fail("Should not have finished timed out call.");
-        } finally {
-          latch.countDown();
-        }
+      void validateError(Srv.AsyncClient client, Exception error) {
+        assertFalse(client.hasTimeout());
+        assertTrue(error instanceof TException);
       }
-    });
-    latch.await(2, TimeUnit.SECONDS);
-    assertTrue(client.hasError());
-    assertTrue(client.getError() instanceof TimeoutException);
+    }.runTest();
+  }
+
+  public void testDeclaredRemoteExceptionCall() throws Exception {
+    new ErrorCallTest<Srv.AsyncClient, Boolean>() {
+      @Override
+      Srv.AsyncClient executeErroringCall(AsyncMethodCallback<Boolean> callback) throws Exception {
+        Srv.AsyncClient client = getClient();
+        client.declaredExceptionMethod(true, callback);
+        return client;
+      }
+
+      @Override
+      void validateError(Srv.AsyncClient client, Exception error) {
+        assertFalse(client.hasTimeout());
+        assertEquals(ExceptionWithAMap.class, error.getClass());
+        ExceptionWithAMap exceptionWithAMap = (ExceptionWithAMap) error;
+        assertEquals("blah", exceptionWithAMap.getBlah());
+        assertEquals(new HashMap<String, String>(), exceptionWithAMap.getMap_field());
+      }
+    }.runTest();
+  }
+
+  public void testTimeoutCall() throws Exception {
+    new ErrorCallTest<Srv.AsyncClient, Integer>() {
+      @Override
+      Srv.AsyncClient executeErroringCall(AsyncMethodCallback<Integer> callback) throws Exception {
+        Srv.AsyncClient client = getClient();
+        client.setTimeout(100);
+        client.primitiveMethod(callback);
+        return client;
+      }
+
+      @Override
+      void validateError(Srv.AsyncClient client, Exception error) {
+        assertTrue(client.hasTimeout());
+        assertTrue(error instanceof TimeoutException);
+      }
+    }.runTest();
   }
 
   public void testVoidCall() throws Exception {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean returned = new AtomicBoolean(false);
     Srv.AsyncClient client = getClient();
-    client.voidMethod(new FailureLessCallback<Srv.AsyncClient.voidMethod_call>() {
+    client.voidMethod(new FailureLessCallback<Void>() {
       @Override
-      public void onComplete(voidMethod_call response) {
-        try {
-          response.getResult();
-          returned.set(true);
-        } catch (TException e) {
-          fail(e);
-        } finally {
-          latch.countDown();
-        }
+      public void onComplete(Void response) {
+        returned.set(true);
+        latch.countDown();
       }
     });
     latch.await(1, TimeUnit.SECONDS);
@@ -140,17 +199,11 @@ public class TestTAsyncClientManager extends TestCase {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean returned = new AtomicBoolean(false);
     Srv.AsyncClient client = getClient();
-    client.onewayMethod(new FailureLessCallback<onewayMethod_call>() {
+    client.onewayMethod(new FailureLessCallback<Void>() {
       @Override
-      public void onComplete(onewayMethod_call response) {
-        try {
-          response.getResult();
-          returned.set(true);
-        } catch (TException e) {
-          fail(e);
-        } finally {
-          latch.countDown();
-        }
+      public void onComplete(Void response) {
+        returned.set(true);
+        latch.countDown();
       }
     });
     latch.await(1, TimeUnit.SECONDS);
@@ -188,17 +241,12 @@ public class TestTAsyncClientManager extends TestCase {
   private void basicCall(Srv.AsyncClient client) throws Exception {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean returned = new AtomicBoolean(false);
-    client.Janky(1, new FailureLessCallback<Srv.AsyncClient.Janky_call>() {
+    client.Janky(1, new FailureLessCallback<Integer>() {
       @Override
-      public void onComplete(Janky_call response) {
-        try {
-          assertEquals(3, response.getResult());
-          returned.set(true);
-        } catch (TException e) {
-          fail(e);
-        } finally {
-          latch.countDown();
-        }
+      public void onComplete(Integer response) {
+        assertEquals(3, response.intValue());
+        returned.set(true);
+        latch.countDown();
       }
 
       @Override
@@ -250,9 +298,18 @@ public class TestTAsyncClientManager extends TestCase {
     @Override
     public void onewayMethod() throws TException {
     }
+
+    @Override
+    public boolean declaredExceptionMethod(boolean shouldThrowDeclared) throws TException {
+      if (shouldThrowDeclared) {
+        throw new ExceptionWithAMap("blah", new HashMap<String, String>());
+      } else {
+        throw new TException("Unexpected!");
+      }
+    }
   }
 
-  private static abstract class FailureLessCallback<T extends TAsyncMethodCall> implements AsyncMethodCallback<T> {
+  private static abstract class FailureLessCallback<T> implements AsyncMethodCallback<T> {
     @Override
     public void onError(Exception exception) {
       fail(exception);
@@ -287,18 +344,13 @@ public class TestTAsyncClientManager extends TestCase {
           // connect an async client
           final CountDownLatch latch = new CountDownLatch(1);
           final AtomicBoolean returned = new AtomicBoolean(false);
-          client_.Janky(1, new AsyncMethodCallback<Srv.AsyncClient.Janky_call>() {
+          client_.Janky(1, new AsyncMethodCallback<Integer>() {
 
             @Override
-            public void onComplete(Janky_call response) {
-              try {
-                assertEquals(3, response.getResult());
-                returned.set(true);
-                latch.countDown();
-              } catch (TException e) {
-                latch.countDown();
-                fail(e);
-              }
+            public void onComplete(Integer result) {
+              assertEquals(3, result.intValue());
+              returned.set(true);
+              latch.countDown();
             }
 
             @Override
