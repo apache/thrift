@@ -3,7 +3,7 @@ set -ev
 
 ./bootstrap.sh
 ./configure --enable-tutorial=no
-make -j4 precross
+make -j3 precross
 
 set +e
 make cross
