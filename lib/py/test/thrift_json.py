@@ -20,7 +20,7 @@
 import sys
 import unittest
 
-import _import_local_thrift
+import _import_local_thrift  # noqa
 from thrift.protocol.TJSONProtocol import TJSONProtocol
 from thrift.transport import TTransport
 

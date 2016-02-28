@@ -80,7 +80,7 @@ class AbstractTest(unittest.TestCase):
             vertwo2000=VersioningTestV2(newstruct=Bonk(message='World!', type=314)),
             a_set2500=set(['lazy', 'brown', 'cow']),
             vertwo3000=VersioningTestV2(newset=set([2, 3, 5, 7, 11])),
-            big_numbers=[2**8, 2**16, 2**31 - 1, -(2**31 - 1)]
+            big_numbers=[2 ** 8, 2 ** 16, 2 ** 31 - 1, -(2 ** 31 - 1)]
         )
 
         self.compact_struct = CompactProtoTestStruct(
@@ -160,10 +160,9 @@ class AbstractTest(unittest.TestCase):
             # note, the sets below are sets of chars, since the strings are iterated
             map_int_strset={10: set('abc'), 20: set('def'), 30: set('GHI')},
             map_int_strset_list=[
-            {10: set('abc'), 20: set('def'), 30: set('GHI')},
-            {100: set('lmn'), 200: set('opq'), 300: set('RST')},
-            {1000: set('uvw'), 2000: set('wxy'), 3000: set('XYZ')}
-        ]
+                {10: set('abc'), 20: set('def'), 30: set('GHI')},
+                {100: set('lmn'), 200: set('opq'), 300: set('RST')},
+                {1000: set('uvw'), 2000: set('wxy'), 3000: set('XYZ')}]
         )
 
         self.nested_lists_bonk = NestedListsBonk(

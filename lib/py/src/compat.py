@@ -31,7 +31,7 @@ if sys.version_info[0] == 2:
 
 else:
 
-    from io import BytesIO as BufferIO
+    from io import BytesIO as BufferIO  # noqa
 
     def binary_to_str(bin_val):
         return bin_val.decode('utf8')

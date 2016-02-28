@@ -356,6 +356,7 @@ string include_file(string filename) {
   if (filename[0] == '/') {
     // Realpath!
     char rp[THRIFT_PATH_MAX];
+    // cppcheck-suppress uninitvar
     if (saferealpath(filename.c_str(), rp) == NULL) {
       pwarning(0, "Cannot open include file %s\n", filename.c_str());
       return std::string();
@@ -378,6 +379,7 @@ string include_file(string filename) {
 
       // Realpath!
       char rp[THRIFT_PATH_MAX];
+      // cppcheck-suppress uninitvar
       if (saferealpath(sfilename.c_str(), rp) == NULL) {
         continue;
       }
@@ -1163,6 +1165,7 @@ int main(int argc, char** argv) {
         }
         char old_thrift_file_rp[THRIFT_PATH_MAX];
 
+        // cppcheck-suppress uninitvar
         if (saferealpath(arg, old_thrift_file_rp) == NULL) {
           failure("Could not open input file with realpath: %s", arg);
         }
@@ -1231,6 +1234,7 @@ int main(int argc, char** argv) {
       fprintf(stderr, "Missing file name of new thrift file for audit\n");
       usage();
     }
+    // cppcheck-suppress uninitvar
     if (saferealpath(argv[i], new_thrift_file_rp) == NULL) {
       failure("Could not open input file with realpath: %s", argv[i]);
     }
@@ -1256,6 +1260,7 @@ int main(int argc, char** argv) {
       fprintf(stderr, "Missing file name\n");
       usage();
     }
+    // cppcheck-suppress uninitvar
     if (saferealpath(argv[i], rp) == NULL) {
       failure("Could not open input file with realpath: %s", argv[i]);
     }
