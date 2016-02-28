@@ -52,8 +52,8 @@ def main():
     client.ping()
     print('ping()')
 
-    sum = client.add(1, 1)
-    print(('1+1=%d' % (sum)))
+    sum_ = client.add(1, 1)
+    print('1+1=%d' % sum_)
 
     work = Work()
 
@@ -66,17 +66,17 @@ def main():
         print('Whoa? You know how to divide by zero?')
         print('FYI the answer is %d' % quotient)
     except InvalidOperation as e:
-        print(('InvalidOperation: %r' % e))
+        print('InvalidOperation: %r' % e)
 
     work.op = Operation.SUBTRACT
     work.num1 = 15
     work.num2 = 10
 
     diff = client.calculate(1, work)
-    print(('15-10=%d' % (diff)))
+    print('15-10=%d' % diff)
 
     log = client.getStruct(1)
-    print(('Check log: %s' % (log.value)))
+    print('Check log: %s' % log.value)
 
     # Close!
     transport.close()
@@ -85,4 +85,4 @@ if __name__ == '__main__':
     try:
         main()
     except Thrift.TException as tx:
-        print(('%s' % (tx.message)))
+        print('%s' % tx.message)

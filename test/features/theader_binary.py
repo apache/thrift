@@ -5,7 +5,7 @@ import socket
 import sys
 
 from util import add_common_args
-from local_thrift import thrift
+from local_thrift import thrift  # noqa
 from thrift.Thrift import TMessageType, TType
 from thrift.transport.TSocket import TSocket
 from thrift.transport.TTransport import TBufferedTransport, TFramedTransport

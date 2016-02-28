@@ -113,9 +113,8 @@ class ThriftTestCase(unittest.TestCase):
         self.processor = ThriftTest.Processor(self.handler)
         self.pfactory = TBinaryProtocol.TBinaryProtocolFactory()
 
-        self.server = reactor.listenTCP(0,
-                                        TTwisted.ThriftServerFactory(self.processor,
-                                                                     self.pfactory), interface="127.0.0.1")
+        self.server = reactor.listenTCP(
+            0, TTwisted.ThriftServerFactory(self.processor, self.pfactory), interface="127.0.0.1")
 
         self.portNo = self.server.getHost().port
 
