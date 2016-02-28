@@ -21,6 +21,7 @@
 
 from __future__ import division
 from __future__ import print_function
+import platform
 import copy
 import os
 import signal
@@ -56,15 +57,19 @@ PROTOS = [
     'json',
 ]
 
-SERVERS = [
-    "TSimpleServer",
-    "TThreadedServer",
-    "TThreadPoolServer",
-    "TProcessPoolServer",
-    "TForkingServer",
-    "TNonblockingServer",
-    "THttpServer",
-]
+
+def default_servers():
+    servers = [
+        'TSimpleServer',
+        'TThreadedServer',
+        'TThreadPoolServer',
+        'TNonblockingServer',
+        'THttpServer',
+    ]
+    if platform.system() != 'Windows':
+        servers.append('TProcessPoolServer')
+        servers.append('TForkingServer')
+    return servers
 
 
 def relfile(fname):
@@ -77,7 +82,7 @@ def setup_pypath(libdir, gendir):
     pypath = env.get('PYTHONPATH', None)
     if pypath:
         dirs.append(pypath)
-    env['PYTHONPATH'] = ':'.join(dirs)
+    env['PYTHONPATH'] = os.pathsep.join(dirs)
     if gendir.endswith('gen-py-no_utf8strings'):
         env['THRIFT_TEST_PY_NO_UTF8STRINGS'] = '1'
     return env
@@ -135,7 +140,6 @@ def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zli
     # Wait for the server to start accepting connections on the given port.
     sleep_time = 0.1  # Seconds
     max_attempts = 100
-    # try:
     attempt = 0
     while True:
         sock4 = socket.socket()
@@ -172,7 +176,8 @@ def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zli
                   'processes to terminate via alarm'
                   % (server_class, proto, use_zlib, use_ssl, extra_sleep))
             time.sleep(extra_sleep)
-        os.kill(serverproc.pid, signal.SIGKILL)
+        sig = signal.SIGKILL if platform.system() != 'Windows' else signal.SIGABRT
+        os.kill(serverproc.pid, sig)
         serverproc.wait()
 
 
@@ -274,9 +279,9 @@ def main():
         generated_dirs.append('gen-py-%s' % (gp_dir))
 
     # commandline permits a single class name to be specified to override SERVERS=[...]
-    servers = SERVERS
+    servers = default_servers()
     if len(args) == 1:
-        if args[0] in SERVERS:
+        if args[0] in servers:
             servers = args
         else:
             print('Unavailable server type "%s", please choose one of: %s' % (args[0], servers))
