@@ -17,7 +17,7 @@
 # under the License.
 #
 
-from .test import test_name
-from .collect import collect_cross_tests, collect_feature_tests
-from .run import TestDispatcher
-from .report import generate_known_failures, load_known_failures
+from .test import test_name  # noqa
+from .collect import collect_cross_tests, collect_feature_tests  # noqa
+from .run import TestDispatcher  # noqa
+from .report import generate_known_failures, load_known_failures  # noqa
