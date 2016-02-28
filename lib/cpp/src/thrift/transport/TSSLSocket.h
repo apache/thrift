@@ -20,11 +20,12 @@
 #ifndef _THRIFT_TRANSPORT_TSSLSOCKET_H_
 #define _THRIFT_TRANSPORT_TSSLSOCKET_H_ 1
 
+// Put this first to avoid WIN32 build failure
+#include <thrift/transport/TSocket.h>
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include <openssl/ssl.h>
 #include <thrift/concurrency/Mutex.h>
-#include <thrift/transport/TSocket.h>
 
 namespace apache {
 namespace thrift {
