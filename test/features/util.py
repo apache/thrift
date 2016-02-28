@@ -1,7 +1,7 @@
 import argparse
 import socket
 
-from local_thrift import thrift
+from local_thrift import thrift  # noqa
 from thrift.transport.TSocket import TSocket
 from thrift.transport.TTransport import TBufferedTransport, TFramedTransport
 from thrift.transport.THttpClient import THttpClient

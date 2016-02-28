@@ -37,6 +37,10 @@ from .report import ExecReporter, SummaryReporter
 RESULT_TIMEOUT = 128
 RESULT_ERROR = 64
 
+# globals
+ports = None
+stop = None
+
 
 class ExecutionContext(object):
     def __init__(self, cmd, cwd, env, report):
