@@ -19,7 +19,8 @@
 FROM centos:6
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
 
-RUN yum install -y \
+RUN yum install -y epel-release && \
+    yum install -y \
       autoconf \
       bison \
       bison-devel \
@@ -36,7 +37,7 @@ RUN yum install -y \
       python-devel \
       python-setuptools \
       python-twisted-web \
-      python-six \
+      python-pip \
     && yum clean all
 
 # CMake

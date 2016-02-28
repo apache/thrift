@@ -110,14 +110,14 @@ env:
       BUILD_ARG="-DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
       BUILD_ENV=""
 
-    - TEST_NAME="All (CentOS)"
+    - TEST_NAME="All - GCC (CentOS)"
       BUILD_CMD="../cmake.sh"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
       DISTRO=centos
 
-    - TEST_NAME="C C++ - GCC (CentOS)"
+    - TEST_NAME="C C++ - Clang (CentOS)"
       BUILD_CMD="../cmake.sh"
       BUILD_ARG="-DWITH_PYTHON=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
-      BUILD_ENV="-e CC=gcc -e CXX=g++"
       DISTRO=centos
 
     - TEST_NAME="Python 2.6 (CentOS 6)"
