@@ -172,29 +172,30 @@ def run_test(testdir, logdir, test_dict, max_retry, async=True):
                 with sv.start():
                     if test.socket in ('domain', 'abstract'):
                         time.sleep(0.1)
+                        port_ok = True
                     else:
-                        if not ensure_socket_open(sv.proc, port, test.delay):
-                            break
-                    connect_retry_count = 0
-                    max_connect_retry = 3
-                    connect_retry_wait = 0.5
-                    while True:
-                        if sv.proc.poll() is not None:
-                            logger.info('not starting client because server process is absent')
-                            break
-                        logger.debug('Starting client')
-                        cl.start(test.timeout)
-                        logger.debug('Waiting client')
-                        cl.wait()
-                        if not cl.report.maybe_false_positive() or connect_retry_count >= max_connect_retry:
-                            if connect_retry_count > 0 and connect_retry_count < max_connect_retry:
-                                logger.warn('[%s]: Connected after %d retry (%.2f sec each)' % (test.server.name, connect_retry_count, connect_retry_wait))
-                            # Wait for 50ms to see if server does not die at the end.
-                            time.sleep(0.05)
-                            break
-                        logger.debug('Server may not be ready, waiting %.2f second...' % connect_retry_wait)
-                        time.sleep(connect_retry_wait)
-                        connect_retry_count += 1
+                        port_ok = ensure_socket_open(sv.proc, port, test.delay)
+                    if port_ok:
+                        connect_retry_count = 0
+                        max_connect_retry = 3
+                        connect_retry_wait = 0.5
+                        while True:
+                            if sv.proc.poll() is not None:
+                                logger.info('not starting client because server process is absent')
+                                break
+                            logger.debug('Starting client')
+                            cl.start(test.timeout)
+                            logger.debug('Waiting client')
+                            cl.wait()
+                            if not cl.report.maybe_false_positive() or connect_retry_count >= max_connect_retry:
+                                if connect_retry_count > 0 and connect_retry_count < max_connect_retry:
+                                    logger.warn('[%s]: Connected after %d retry (%.2f sec each)' % (test.server.name, connect_retry_count, connect_retry_wait))
+                                # Wait for 50ms to see if server does not die at the end.
+                                time.sleep(0.05)
+                                break
+                            logger.debug('Server may not be ready, waiting %.2f second...' % connect_retry_wait)
+                            time.sleep(connect_retry_wait)
+                            connect_retry_count += 1
 
             if sv.report.maybe_false_positive() and bind_retry_count < max_bind_retry:
                 logger.warn('[%s]: Detected socket bind failure, retrying...', test.server.name)
