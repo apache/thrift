@@ -4,7 +4,7 @@ import argparse
 import sys
 
 from util import add_common_args, init_protocol
-from local_thrift import thrift
+from local_thrift import thrift  # noqa
 from thrift.Thrift import TMessageType, TType
 
 

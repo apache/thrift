@@ -44,7 +44,7 @@ from thrift.protocol import TBinaryProtocol
 from thrift.transport.TTransport import TTransportException
 
 from ThriftTest import ThriftTest
-from ThriftTest.ttypes import *
+from ThriftTest.ttypes import Xception, Xtruct
 
 
 class TestHandler(object):

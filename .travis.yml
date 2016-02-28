@@ -20,6 +20,7 @@
 # build Apache Thrift on Travis CI - https://travis-ci.org/
 
 sudo: required
+dist: trusty
 
 services:
   - docker
@@ -148,12 +149,18 @@ matrix:
   include:
     # QA jobs for code analytics and metrics
     #
-    # static code analysis with cppcheck
+    # C/C++ static code analysis with cppcheck
     # add --error-exitcode=1 to --enable=all as soon as everything is fixed
-    - env: TEST_NAME="cppcheck"
+    #
+    # Python code style check with flake8
+    #
+    # search for TODO etc within source tree
+    # some statistics about the code base
+    # some info about the build machine
+    - env: TEST_NAME="cppcheck, flake8, TODO FIXME HACK, LoC and system info"
       install:
         - sudo apt-get update
-        - sudo apt-get install cppcheck
+        - sudo apt-get install -y cppcheck sloccount python-flake8
       script:
         # Compiler cppcheck (All)
         - cppcheck --force --quiet --inline-suppr --enable=all -j2 compiler/cpp/src
@@ -165,15 +172,16 @@ matrix:
         - cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 compiler/cpp/src
         - cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
         - cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
-
-    # search for TODO etc within source tree
-    # some statistics about the code base
-    # some info about the build machine
-    - env:    TEST_NAME="TODO FIXME HACK, LoC and system info"
-      install:
-        - sudo apt-get update
-        - sudo apt-get install sloccount
-      script:
+        # Python code style
+        - flake8 --ignore=E501 lib/py
+        - flake8 tutorial/py
+        - flake8 --ignore=E501 test/py
+        - flake8 test/py.twisted
+        - flake8 test/py.tornado
+        - flake8 --ignore=E501 test/test.py
+        - flake8 --ignore=E501 test/crossrunner
+        - flake8 test/features
+        # TODO etc
         - grep -r TODO *
         - grep -r FIXME *
         - grep -r HACK *

@@ -20,5 +20,5 @@
 #
 
 # Just import these generated files to make sure they are syntactically valid
-from DebugProtoTest import EmptyService
-from DebugProtoTest import Inherited
+from DebugProtoTest import EmptyService  # noqa
+from DebugProtoTest import Inherited  # noqa
