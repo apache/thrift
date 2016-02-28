@@ -19,6 +19,9 @@
 
 AUTOMAKE_OPTIONS = serial-tests
 
+BUILT_SOURCES = trusted-ca-certificate.pem server-certificate.pem
+
+
 # Thrift compiler rules
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
