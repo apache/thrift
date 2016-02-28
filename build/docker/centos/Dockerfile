@@ -58,7 +58,7 @@ RUN yum install -y \
       python-devel \
       python-setuptools \
       python-twisted-web \
-      python-six
+      python-pip
 
 # Ruby Dependencies
 RUN yum install -y \
