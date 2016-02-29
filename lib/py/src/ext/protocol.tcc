@@ -20,6 +20,8 @@
 #ifndef THRIFT_PY_PROTOCOL_TCC
 #define THRIFT_PY_PROTOCOL_TCC
 
+#include <iterator>
+
 #define CHECK_RANGE(v, min, max) (((v) <= (max)) && ((v) >= (min)))
 #define INIT_OUTBUF_SIZE 128
 
@@ -210,7 +212,7 @@ inline bool check_ssize_t_32(Py_ssize_t len) {
   if (INT_CONV_ERROR_OCCURRED(len)) {
     return false;
   }
-  if (!CHECK_RANGE(len, 0, INT32_MAX)) {
+  if (!CHECK_RANGE(len, 0, std::numeric_limits<int32_t>::max())) {
     PyErr_SetString(PyExc_OverflowError, "size out of range: exceeded INT32_MAX");
     return false;
   }
@@ -358,7 +360,8 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
   case T_I08: {
     int8_t val;
 
-    if (!parse_pyint(value, &val, INT8_MIN, INT8_MAX)) {
+    if (!parse_pyint(value, &val, std::numeric_limits<int8_t>::min(),
+                     std::numeric_limits<int8_t>::max())) {
       return false;
     }
 
@@ -368,7 +371,8 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
   case T_I16: {
     int16_t val;
 
-    if (!parse_pyint(value, &val, INT16_MIN, INT16_MAX)) {
+    if (!parse_pyint(value, &val, std::numeric_limits<int16_t>::min(),
+                     std::numeric_limits<int16_t>::max())) {
       return false;
     }
 
@@ -378,7 +382,8 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
   case T_I32: {
     int32_t val;
 
-    if (!parse_pyint(value, &val, INT32_MIN, INT32_MAX)) {
+    if (!parse_pyint(value, &val, std::numeric_limits<int32_t>::min(),
+                     std::numeric_limits<int32_t>::max())) {
       return false;
     }
 
@@ -392,7 +397,8 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
       return false;
     }
 
-    if (!CHECK_RANGE(nval, INT64_MIN, INT64_MAX)) {
+    if (!CHECK_RANGE(nval, std::numeric_limits<int64_t>::min(),
+                     std::numeric_limits<int64_t>::max())) {
       PyErr_SetString(PyExc_OverflowError, "int out of range");
       return false;
     }
