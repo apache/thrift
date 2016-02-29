@@ -18,11 +18,13 @@
 library thrift;
 
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert' show Utf8Codec;
 import 'dart:typed_data' show ByteData;
 import 'dart:typed_data' show Uint8List;
 
 import 'package:crypto/crypto.dart' show CryptoUtils;
+import 'package:fixnum/fixnum.dart';
 import 'package:http/http.dart' show Client;
 import 'package:logging/logging.dart';
 
@@ -32,6 +34,7 @@ part 'src/t_error.dart';
 part 'src/t_processor.dart';
 
 part 'src/protocol/t_binary_protocol.dart';
+part 'src/protocol/t_compact_protocol.dart';
 part 'src/protocol/t_field.dart';
 part 'src/protocol/t_json_protocol.dart';
 part 'src/protocol/t_list.dart';
