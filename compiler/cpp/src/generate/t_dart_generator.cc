@@ -81,7 +81,7 @@ public:
       } else if( iter->first.compare("pubspec_lib") == 0) {
         pubspec_lib_ = (iter->second);
       } else {
-        throw "unknown option dart:" + iter->first; 
+        throw "unknown option dart:" + iter->first;
       }
     }
 
@@ -241,7 +241,7 @@ public:
   std::string function_signature(t_function* tfunction);
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
-  std::string get_enum_class_name(t_type* type);
+  std::string get_ttype_class_name(t_type* ttype);
 
   bool type_can_be_null(t_type* ttype) {
     ttype = get_true_type(ttype);
@@ -359,10 +359,11 @@ string t_dart_generator::dart_thrift_imports() {
   const vector<t_program*>& includes = program_->get_includes();
   for (size_t i = 0; i < includes.size(); ++i) {
     string include_name = find_library_name(includes[i]);
+    string named_import = "t_" + include_name;
     if (package_prefix_.empty()) {
-      imports += "import 'package:" + include_name + "/" + include_name + ".dart';" + endl;
+      imports += "import 'package:" + include_name + "/" + include_name + ".dart' as " + named_import + ";" + endl;
     } else {
-      imports += "import 'package:" + package_prefix_ + include_name + ".dart';" + endl;
+      imports += "import 'package:" + package_prefix_ + include_name + ".dart' as " + named_import + ";" + endl;
     }
   }
 
@@ -977,7 +978,7 @@ void t_dart_generator::generate_dart_validator(ofstream& out, t_struct* tstruct)
     // if field is an enum, check that its value is valid
     if (type->is_enum()) {
       string field_name = get_field_name(field->get_name());
-      indent(out) << "if (" << generate_isset_check(field) << " && !" << get_enum_class_name(type)
+      indent(out) << "if (" << generate_isset_check(field) << " && !" << get_ttype_class_name(type)
                   << ".VALID_VALUES.contains(" << field_name << "))";
       scope_up(out);
       indent(out) << "throw new TProtocolError(TProtocolErrorType.UNKNOWN, \"The field '"
@@ -1293,7 +1294,7 @@ void t_dart_generator::generate_dart_struct_tostring(ofstream& out,
       indent(out) << "ret.write(\"BINARY\");" << endl;
     } else if (field->get_type()->is_enum()) {
       indent(out) << "String " << field_name << "_name = "
-                  << get_enum_class_name(field->get_type())
+                  << get_ttype_class_name(field->get_type())
                   << ".VALUES_TO_NAMES[this." << field_name << "];" << endl;
       indent(out) << "if (" << field_name << "_name != null)";
       scope_up(out);
@@ -1407,7 +1408,7 @@ void t_dart_generator::generate_service(t_service* tservice) {
 void t_dart_generator::generate_service_interface(t_service* tservice) {
   string extends_iface = "";
   if (tservice->get_extends() != NULL) {
-    extends_iface = " extends " + tservice->get_extends()->get_name();
+    extends_iface = " extends " + get_ttype_class_name(tservice->get_extends());
   }
 
   generate_dart_doc(f_service_, tservice);
@@ -1452,7 +1453,7 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
   string extends = "";
   string extends_client = "";
   if (tservice->get_extends() != NULL) {
-    extends = tservice->get_extends()->get_name();
+    extends = get_ttype_class_name(tservice->get_extends());
     extends_client = " extends " + extends + "Client";
   }
 
@@ -1587,7 +1588,7 @@ void t_dart_generator::generate_service_server(t_service* tservice) {
   string extends = "";
   string extends_processor = "";
   if (tservice->get_extends() != NULL) {
-    extends = type_name(tservice->get_extends());
+    extends = get_ttype_class_name(tservice->get_extends());
     extends_processor = " extends " + extends + "Processor";
   }
 
@@ -2148,7 +2149,7 @@ string t_dart_generator::type_name(t_type* ttype) {
     return "List<" + type_name(tlist->get_elem_type()) + ">";
   }
 
-  return ttype->get_name();
+  return get_ttype_class_name(ttype);
 }
 
 /**
@@ -2427,8 +2428,13 @@ void t_dart_generator::generate_isset_set(ofstream& out, t_field* field) {
   }
 }
 
-std::string t_dart_generator::get_enum_class_name(t_type* type) {
-  return type->get_name();
+std::string t_dart_generator::get_ttype_class_name(t_type* ttype) {
+  if (program_ == ttype->get_program()) {
+    return ttype->get_name();
+  } else {
+    string named_import = "t_" + find_library_name(ttype->get_program());
+    return named_import + "." + ttype->get_name();
+  }
 }
 
 THRIFT_REGISTER_GENERATOR(
