@@ -17,6 +17,8 @@
 # under the License.
 #
 
+import sys
+
 from thrift.transport.TTransport import TTransportException
 
 
@@ -69,9 +71,10 @@ try:
     from backports.ssl_match_hostname import match_hostname
     _match_hostname = match_hostname
 except ImportError:
+    if sys.hexversion < 0x030500F0:
+        _match_has_ipaddress = False
     try:
         from ssl import match_hostname
         _match_hostname = match_hostname
     except ImportError:
         _match_hostname = legacy_validate_callback
-        _match_has_ipaddress = False
