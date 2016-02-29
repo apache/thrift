@@ -159,8 +159,8 @@ matrix:
     # some info about the build machine
     - env: TEST_NAME="cppcheck, flake8, TODO FIXME HACK, LoC and system info"
       install:
-        - sudo apt-get update
-        - sudo apt-get install -y cppcheck sloccount python-flake8
+        - travis_retry sudo apt-get update
+        - travis_retry sudo apt-get install -ym cppcheck sloccount python-flake8
       script:
         # Compiler cppcheck (All)
         - cppcheck --force --quiet --inline-suppr --enable=all -j2 compiler/cpp/src
