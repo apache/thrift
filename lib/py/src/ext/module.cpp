@@ -21,8 +21,8 @@
 #include "types.h"
 #include "binary.h"
 #include "compact.h"
+#include <limits>
 #include <stdint.h>
-#include <sys/resource.h>
 
 // TODO(dreiss): defval appears to be unused.  Look into removing it.
 // TODO(dreiss): Make parse_spec_args recursive, and cache the output
@@ -87,11 +87,18 @@ static PyObject* decode_impl(PyObject* args) {
   }
 
   T protocol;
+#ifdef _MSC_VER
+  // workaround strange VC++ 2015 bug where #else path does not compile
+  int32_t default_limit = INT32_MAX;
+#else
+  int32_t default_limit = std::numeric_limits<int32_t>::max();
+#endif
   protocol.setStringLengthLimit(
-      as_long_then_delete(PyObject_GetAttr(oprot, INTERN_STRING(string_length_limit)), INT32_MAX));
+      as_long_then_delete(PyObject_GetAttr(oprot, INTERN_STRING(string_length_limit)),
+                          default_limit));
   protocol.setContainerLengthLimit(
       as_long_then_delete(PyObject_GetAttr(oprot, INTERN_STRING(container_length_limit)),
-                          INT32_MAX));
+                          default_limit));
   ScopedPyObject transport(PyObject_GetAttr(oprot, INTERN_STRING(trans)));
   if (!transport) {
     return NULL;
@@ -169,21 +176,6 @@ void initfastbinary() {
     INITERROR
 
 #endif
-
-  const rlim_t kStackSize = 16 * 1024 * 1024; // min stack size = 16 MB
-  struct rlimit rl;
-  int result;
-
-  result = getrlimit(RLIMIT_STACK, &rl);
-  if (result == 0) {
-    if (rl.rlim_cur < kStackSize) {
-      rl.rlim_cur = kStackSize;
-      result = setrlimit(RLIMIT_STACK, &rl);
-      if (result != 0) {
-        fprintf(stderr, "setrlimit returned result = %d\n", result);
-      }
-    }
-  }
 
 #define INIT_INTERN_STRING(value)                                                                  \
   do {                                                                                             \
