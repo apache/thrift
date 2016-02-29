@@ -21,6 +21,8 @@
 #define THRIFT_PY_PROTOCOL_H
 
 #include "ext/types.h"
+#include <limits>
+#include <stdint.h>
 
 namespace apache {
 namespace thrift {
@@ -30,13 +32,15 @@ template <typename Impl>
 class ProtocolBase {
 
 public:
-  ProtocolBase() : stringLimit_(INT32_MAX), containerLimit_(INT32_MAX), output_(NULL) {}
+  ProtocolBase()
+    : stringLimit_(std::numeric_limits<int32_t>::max()),
+      containerLimit_(std::numeric_limits<int32_t>::max()),
+      output_(NULL) {}
   inline virtual ~ProtocolBase();
 
   bool prepareDecodeBufferFromTransport(PyObject* trans);
 
   PyObject* readStruct(PyObject* output, PyObject* klass, PyObject* spec_seq);
-
 
   bool prepareEncodeBuffer();
 

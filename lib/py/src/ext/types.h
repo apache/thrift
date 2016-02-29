@@ -22,6 +22,11 @@
 
 #include <Python.h>
 
+#ifdef _MSC_VER
+#define __STDC_LIMIT_MACROS
+#endif
+#include <stdint.h>
+
 #if PY_MAJOR_VERSION >= 3
 
 #include <vector>
