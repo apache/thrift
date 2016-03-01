@@ -24,6 +24,7 @@ environment:
   sdk: ^1.12.0
 dependencies:
   args: ^0.13.0
+  http: ^0.11.0
   thrift:
     path: ../../../lib/dart
   thrift_test:

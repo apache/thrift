@@ -20,7 +20,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:args/args.dart';
-import 'package:collection/equality.dart';
+import 'package:collection/collection.dart';
+import 'package:http/http.dart' as http;
 import 'package:thrift/thrift.dart';
 import 'package:thrift/thrift_console.dart';
 import 'package:thrift_test/thrift_test.dart';
@@ -151,8 +152,9 @@ Future _initTestClient(
   var protocolFactory = getProtocolFactory(protocolType);
 
   if (transportType == 'http') {
-    var httpClient = new HttpClient();
-    var config = new THttpConfig(Uri.parse('http://localhost'), {});
+    var httpClient = new http.IOClient();
+    var uri = Uri.parse('http://$host:$port');
+    var config = new THttpConfig(uri, {});
     transport = new THttpClientTransport(httpClient, config);
   } else {
     var socket = await Socket.connect(host, port);
@@ -309,7 +311,7 @@ List<TTest> _createTests() {
   tests.add(new TTest(TEST_EXCEPTIONS, 'testException', () async {
     try {
       await client.testException('Xception');
-    } on Xception catch (x) {
+    } on Xception catch (_) {
       return;
     }
 
@@ -319,7 +321,7 @@ List<TTest> _createTests() {
   tests.add(new TTest(TEST_EXCEPTIONS, 'testMultiException', () async {
     try {
       await client.testMultiException('Xception2', 'foo');
-    } on Xception2 catch (x) {
+    } on Xception2 catch (_) {
       return;
     }
 
