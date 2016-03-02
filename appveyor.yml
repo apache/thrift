@@ -41,8 +41,9 @@ install:
 - cmake --build . --config release
 - cd ..
   # OpenSSL
-- appveyor DownloadFile https://slproweb.com/download/Win64OpenSSL-1_0_2f.exe
-- ps: Start-Process Win64OpenSSL-1_0_2f.exe -ArgumentList "/silent /verysilent /sp- /suppressmsgboxes" -Wait
+  # Unfurtunately, OpenSSL version below needs constant update (2 places) because old versions are quickly deleted.
+- appveyor DownloadFile https://slproweb.com/download/Win64OpenSSL-1_0_2g.exe
+- ps: Start-Process Win64OpenSSL-1_0_2g.exe -ArgumentList "/silent /verysilent /sp- /suppressmsgboxes" -Wait
   # Libevent
 - appveyor DownloadFile https://github.com/libevent/libevent/releases/download/release-2.0.22-stable/libevent-2.0.22-stable.tar.gz
 - 7z x libevent-2.0.22-stable.tar.gz -so | 7z x -si -ttar > nul
