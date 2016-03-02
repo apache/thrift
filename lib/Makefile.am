@@ -17,7 +17,7 @@
 # under the License.
 #
 
-SUBDIRS = json xml 
+SUBDIRS = json xml
 PRECROSS_TARGET =
 
 if WITH_CPP
@@ -47,6 +47,7 @@ endif
 
 if WITH_ERLANG
 SUBDIRS += erl
+SUBDIRS += erlang
 endif
 
 if WITH_RUBY

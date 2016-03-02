@@ -80,6 +80,7 @@ thrift_SOURCES += src/generate/t_c_glib_generator.cc \
                   src/generate/t_perl_generator.cc \
                   src/generate/t_php_generator.cc \
                   src/generate/t_erl_generator.cc \
+                  src/generate/t_erlang_generator.cc \
                   src/generate/t_cocoa_generator.cc \
                   src/generate/t_swift_generator.cc \
                   src/generate/t_st_generator.cc \
