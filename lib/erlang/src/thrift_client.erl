@@ -85,18 +85,33 @@ send_function_call(Client = #tclient{service = Service}, Function, Args) ->
   {ok | {error, any()}, #tclient{}}.
 write_message(Client = #tclient{protocol = P0, seqid = Seq}, Function, Args, Params, MsgType) ->
   try
-    {P1, ok} = thrift_protocol:write(P0, #protocol_message_begin{
-      name = atom_to_list(Function),
-      type = MsgType,
-      seqid = Seq
-    }),
-    {P2, ok} = thrift_protocol:write(P1, {Params, list_to_tuple([Function|Args])}),
-    {P3, ok} = thrift_protocol:write(P2, message_end),
-    {P4, ok} = thrift_protocol:flush_transport(P3),
-    {ok, Client#tclient{protocol = P4}}
+    Fragments = [
+      #protocol_message_begin{
+        name = atom_to_list(Function),
+        type = MsgType,
+        seqid = Seq
+      },
+      {Params, list_to_tuple([Function | Args])},
+      message_end
+    ],
+    case write_many(P0, Fragments) of
+      {P1, ok} ->
+        {P2, ok} = thrift_protocol:flush_transport(P1),
+        {ok, Client#tclient{protocol = P2}};
+      {P1, WriteError} ->
+        {Client#tclient{protocol = P1}, WriteError}
+    end
   catch
     error:{badmatch, {_, {error, _} = Error}} -> {Error, Client}
   end.
+
+write_many(Proto, [Data | Rest]) ->
+    case thrift_protocol:write(Proto, Data) of
+        {Proto1, ok} -> write_many(Proto1, Rest);
+        Error -> Error
+    end;
+write_many(Proto, []) ->
+    {Proto, ok}.
 
 -spec receive_function_result(#tclient{}, atom()) -> {#tclient{}, {ok, any()} | {error, any()}}.
 receive_function_result(Client = #tclient{service = Service}, Function) ->

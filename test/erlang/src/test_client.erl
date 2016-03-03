@@ -94,7 +94,7 @@ start(Args) ->
   {Client01, {ok, ok}} = thrift_client:call(Client0, testVoid, []),
 
   error_logger:info_msg("testString"),
-  {Client02, {ok, <<"Test">>}}      = thrift_client:call(Client01, testString, ["Test"]),
+  {Client02, {ok, <<>>}}      = thrift_client:call(Client01, testString, [<<>>]),
   error_logger:info_msg("testString"),
   {Client03, {ok, <<"Test">>}}      = thrift_client:call(Client02, testString, [<<"Test">>]),
   error_logger:info_msg("testByte"),
@@ -127,11 +127,11 @@ start(Args) ->
   io:format("~p~n", [InsaneResult]),
 
   {Client17, {ok, #'Xtruct'{string_thing = <<"Message">>}}} =
-    thrift_client:call(Client16, testMultiException, ["Safe", "Message"]),
+    thrift_client:call(Client16, testMultiException, [<<"Safe">>, <<"Message">>]),
 
   Client18 =
     try
-      {ClientS1, Result1} = thrift_client:call(Client17, testMultiException, ["Xception", "Message"]),
+      {ClientS1, Result1} = thrift_client:call(Client17, testMultiException, [<<"Xception">>, <<"Message">>]),
       io:format("Unexpected return! ~p~n", [Result1]),
       ClientS1
     catch
@@ -145,7 +145,7 @@ start(Args) ->
 
   Client19 =
     try
-      {ClientS3, Result2} = thrift_client:call(Client18, testMultiException, ["Xception2", "Message"]),
+      {ClientS3, Result2} = thrift_client:call(Client18, testMultiException, [<<"Xception2">>, <<"Message">>]),
       io:format("Unexpected return! ~p~n", [Result2]),
       ClientS3
     catch
