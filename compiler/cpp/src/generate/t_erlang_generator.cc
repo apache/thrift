@@ -160,6 +160,24 @@ public:
   std::string type_to_enum(t_type* ttype);
   std::string type_module(t_type* ttype);
 
+  std::string underscore(std::string const& in) {
+    string r = "";
+    char c1, c2, c3;
+    for (size_t i = 0, j = in.size() - 1; i < j + 1; ++i) {
+      c1 = in[0 == i ? i : i - 1];
+      c2 = in[i];
+      c3 = in[j == i ? i : i + 1];
+      if (isupper(c2) && islower(c3) && i > 0) {
+        r.push_back('_');
+      }
+      else if (islower(c1) && isupper(c2)) {
+        r.push_back('_');
+      }
+      r.push_back(tolower(c2));
+    }
+    return r;
+  }
+
   std::string modulify() {
     return modulify(program_);
   }
