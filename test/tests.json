@@ -494,6 +494,55 @@
     "workdir": "erl"
   },
   {
+    "name": "erlang",
+    "transports": [
+      "buffered",
+      "framed"
+    ],
+    "sockets": [
+      "ip",
+      "ip-ssl"
+    ],
+    "protocols": [
+      "binary",
+      "compact"
+    ],
+    "client": {
+      "command": [
+        "erl",
+        "+K",
+        "true",
+        "-noshell",
+        "-pa",
+        "../../lib/erlang/ebin/",
+        "-pa",
+        "./ebin",
+        "-s",
+        "test_client",
+        "-s",
+        "init",
+        "stop",
+        "-extra"
+      ]
+    },
+    "server": {
+      "command": [
+        "erl",
+        "+K",
+        "true",
+        "-noshell",
+        "-pa",
+        "../../lib/erlang/ebin/",
+        "-pa",
+        "./ebin",
+        "-s",
+        "test_thrift_server",
+        "-extra"
+      ]
+    },
+    "workdir": "erlang"
+  },
+  {
     "name": "js",
     "transports": [
       "http"

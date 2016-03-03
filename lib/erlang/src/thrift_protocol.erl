@@ -84,6 +84,7 @@ term_to_typeid(i32) -> ?tType_I32;
 term_to_typeid(i64) -> ?tType_I64;
 term_to_typeid(string) -> ?tType_STRING;
 term_to_typeid({struct, _}) -> ?tType_STRUCT;
+term_to_typeid({enum, _}) -> ?tType_I32;
 term_to_typeid({map, _, _}) -> ?tType_MAP;
 term_to_typeid({set, _}) -> ?tType_SET;
 term_to_typeid({list, _}) -> ?tType_LIST.

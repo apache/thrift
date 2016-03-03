@@ -168,7 +168,7 @@ handle_exception(State = #thrift_processor{service = Service},
                          ExceptionType -> Exception;
                          _ -> undefined
                      end
-                     || {_Fid, {struct, {_Module, Type}}} <- XInfo],
+                     || {_Fid, _, {struct, {_Module, Type}}, _, _} <- XInfo],
 
     ExceptionTuple = list_to_tuple([Function | ExceptionList]),
 

@@ -750,6 +750,7 @@ AC_CONFIG_FILES([
   test/c_glib/Makefile
   test/cpp/Makefile
   test/erl/Makefile
+  test/erlang/Makefile
   test/go/Makefile
   test/haxe/Makefile
   test/hs/Makefile
