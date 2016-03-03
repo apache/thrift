@@ -49,12 +49,17 @@ public:
   t_erlang_generator(t_program* program,
                   const std::map<std::string, std::string>& parsed_options,
                   const std::string& option_string)
-    : t_generator(program) {
+    : t_generator(program)
+    , idiomatic_names_(false) {
     (void)option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
-    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
-      throw "unknown option erl:" + iter->first;
+    for (iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if (iter->first.compare("idiomatic") == 0) {
+        idiomatic_names_ = true;
+        continue;
+      }
+      throw "unknown option:" + iter->first;
     }
 
     out_dir_base_ = "gen-erlang";
@@ -153,6 +158,8 @@ public:
   std::string render_includes();
   std::string render_include(t_program* p);
   std::string type_name(t_type* ttype);
+  std::string function_name(t_function* ttype);
+  std::string field_name(t_field* ttype);
 
   std::string function_signature(t_function* tfunction, std::string prefix = "");
 
@@ -197,6 +204,11 @@ public:
   static std::string comment(string in);
 
 private:
+  /**
+   * options
+   */
+  bool idiomatic_names_;
+
   bool has_default_value(t_field*);
 
   /**
@@ -424,7 +436,7 @@ void t_erlang_generator::generate_type_metadata(std::ostream& os, std::string fu
      << "[" << i.nlup();
 
   for (size_t j = 0; j < types.size();) {
-    os << atomify(types[j]->get_name());
+    os << type_name(types[j]);
     if (++j != types.size()) {
       os << ", " << i.nl();
     }
@@ -470,7 +482,7 @@ void t_erlang_generator::generate_enum_info(std::ostream& buf, t_enum* tenum) {
   vector<t_enum_value*>::iterator c_iter;
 
   indenter i;
-  buf << "enum_info(" << atomify(tenum->get_name()) << ") ->" << i.nlup()
+  buf << "enum_info(" << type_name(tenum) << ") ->" << i.nlup()
       << "{enum, [" << i.nlup();
 
   for (c_iter = constants.begin(); c_iter != constants.end(); ) {
@@ -557,7 +569,7 @@ string t_erlang_generator::render_const_value(t_type* type, t_const_value* value
     indent(out) << value->get_integer();
 
   } else if (type->is_struct() || type->is_xception()) {
-    out << "#" << atomify(type->get_name()) << "{";
+    out << "#" << type_name(type) << "{";
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
     const map<t_const_value*, t_const_value*>& val = value->get_map();
@@ -638,7 +650,7 @@ string t_erlang_generator::render_const_value(t_type* type, t_const_value* value
 string t_erlang_generator::render_default_value(t_field* field) {
   t_type* type = field->get_type();
   if (type->is_struct() || type->is_xception()) {
-    return "#" + atomify(type->get_name()) + "{}";
+    return "#" + type_name(type) + "{}";
   } else if (type->is_map()) {
     return "#{}";
   } else if (type->is_set()) {
@@ -672,7 +684,7 @@ string t_erlang_generator::render_member_type(t_field* field) {
   } else if (type->is_enum()) {
     return "integer()";
   } else if (type->is_struct() || type->is_xception()) {
-    return atomify(type->get_name()) + "()";
+    return type_name(type) + "()";
   } else if (type->is_map()) {
     return "#{}";
   } else if (type->is_set()) {
@@ -741,7 +753,7 @@ void t_erlang_generator::generate_erl_struct_definition(ostream& out, t_struct* 
  */
 
 void t_erlang_generator::generate_erl_struct_member(ostream& out, t_field* tmember) {
-  out << atomify(tmember->get_name());
+  out << field_name(tmember);
   if (has_default_value(tmember))
     out << " = " << render_member_value(tmember);
   out << " :: " << render_member_type(tmember);
@@ -842,7 +854,7 @@ void t_erlang_generator::generate_service_metadata(t_service* tservice) {
 
   for (size_t i=0; i < num_functions; i++) {
     t_function* current = functions.at(i);
-    f_service_file_ << atomify(current->get_name());
+    f_service_file_ << function_name(current);
     if (i < num_functions - 1) {
       f_service_file_ << "," << ind.nl();
     }
@@ -909,7 +921,7 @@ void t_erlang_generator::generate_service_interface(t_service* tservice) {
  */
 void t_erlang_generator::generate_function_info(t_service* tservice, t_function* tfunction) {
   (void)tservice;
-  string name_atom = atomify(tfunction->get_name());
+  string name_atom = function_name(tfunction);
 
   t_struct* xs = tfunction->get_xceptions();
   t_struct* arg_struct = tfunction->get_arglist();
@@ -999,7 +1011,18 @@ string t_erlang_generator::argument_list(t_struct* tstruct) {
 }
 
 string t_erlang_generator::type_name(t_type* ttype) {
-  return atomify(ttype->get_name());
+  string const& n = ttype->get_name();
+  return atomify(idiomatic_names_ ? underscore(n) : n);
+}
+
+string t_erlang_generator::function_name(t_function* tfun) {
+  string const& n = tfun->get_name();
+  return atomify(idiomatic_names_ ? underscore(n) : n);
+}
+
+string t_erlang_generator::field_name(t_field* tfield) {
+  string const& n = tfield->get_name();
+  return atomify(idiomatic_names_ ? underscore(n) : n);
 }
 
 /**
@@ -1091,11 +1114,10 @@ std::string t_erlang_generator::render_type_term(t_type* type,
         string type = render_type_term(member->get_type(), false, ind); // recursive call
 
         // Convert to format: {struct, [{Fid, Req, Type, Name, Def}|...]}
-        string name = member->get_name();
+        string name = field_name(member);
         string value = render_member_value(member);
         string requiredness = render_member_requiredness(member);
-        buf << "{" << key << ", " << requiredness << ", " << type << ", " << atomify(name) << ", "
-            << value << "}";
+        buf << "{" << key << ", " << requiredness << ", " << type << ", " << name << ", " << value << "}";
 
         if (++i != end) {
           buf << "," << ind.nl();
@@ -1133,4 +1155,7 @@ std::string t_erlang_generator::type_module(t_type* ttype) {
   return modulify(ttype->get_program()) + "_types";
 }
 
-THRIFT_REGISTER_GENERATOR(erlang, "Erlang", "")
+THRIFT_REGISTER_GENERATOR(
+  erlang,
+  "Erlang",
+  "    idiomatic: Adapt every name to look idiomatically correct in Erlang (i.e. snake case).\n")
