@@ -27,23 +27,23 @@ new(Data) -> thrift_membuffer_transport:new(Data).
 new_test_() ->
   [
     {"new empty membuffer", ?_assertMatch(
-      {ok, {_, _, {t_membuffer, []}}},
+      {ok, {_, _, {t_membuffer, <<>>}}},
       new()
     )},
     {"new membuffer with <<>>", ?_assertMatch(
-      {ok, {_, _, {t_membuffer, [<<>>]}}},
+      {ok, {_, _, {t_membuffer, <<>>}}},
       new(<<>>)
     )},
     {"new membuffer with []", ?_assertMatch(
-      {ok, {_, _, {t_membuffer, []}}},
+      {ok, {_, _, {t_membuffer, <<>>}}},
       new([])
     )},
     {"new membuffer with <<\"hallo world\">>", ?_assertMatch(
-      {ok, {_, _, {t_membuffer, [<<"hallo world">>]}}},
+      {ok, {_, _, {t_membuffer, <<"hallo world">>}}},
       new(<<"hallo world">>)
     )},
     {"new membuffer with \"hallo world\"", ?_assertMatch(
-      {ok, {_, _, {t_membuffer, "hallo world"}}},
+      {ok, {_, _, {t_membuffer, <<"hallo world">>}}},
       new("hallo world")
     )}
   ].
@@ -55,23 +55,23 @@ read_test_() ->
   [
     {"read zero bytes from an empty membuffer", ?_assertMatch(
       {_, {ok, <<>>}},
-      read({t_membuffer, []}, 0)
+      read({t_membuffer, <<>>}, 0)
     )},
     {"read 1 byte from an empty membuffer", ?_assertMatch(
       {_, {ok, <<>>}},
-      read({t_membuffer, []}, 1)
+      read({t_membuffer, <<>>}, 1)
     )},
     {"read zero bytes from nonempty membuffer", ?_assertMatch(
       {{t_membuffer, <<"hallo world">>}, {ok, <<>>}},
-      read({t_membuffer, [["hallo", " "], "world"]}, 0)
+      read({t_membuffer, <<"hallo", " ", "world">>}, 0)
     )},
     {"read 1 byte from nonempty membuffer", ?_assertMatch(
       {{t_membuffer, <<"allo world">>}, {ok, <<"h">>}},
-      read({t_membuffer, [["hallo", " "], "world"]}, 1)
+      read({t_membuffer, <<"hallo", " ", "world">>}, 1)
     )},
     {"read a zillion bytes from nonempty buffer", ?_assertMatch(
       {{t_membuffer, <<>>}, {ok, <<"hallo world">>}},
-      read({t_membuffer, [["hallo", " "], "world"]}, 65536)
+      read({t_membuffer, <<"hallo", " ", "world">>}, 65536)
     )}
   ].
 
@@ -83,23 +83,23 @@ read_exact_test_() ->
   [
     {"read exactly zero bytes from an empty membuffer", ?_assertMatch(
       {_, {ok, <<>>}},
-      read_exact({t_membuffer, []}, 0)
+      read_exact({t_membuffer, <<>>}, 0)
     )},
     {"read exactly 1 byte from an empty membuffer", ?_assertMatch(
       {_, {error, eof}},
-      read_exact({t_membuffer, []}, 1)
+      read_exact({t_membuffer, <<>>}, 1)
     )},
     {"read exactly zero bytes from nonempty membuffer", ?_assertMatch(
       {{t_membuffer, <<"hallo world">>}, {ok, <<>>}},
-      read_exact({t_membuffer, [["hallo", " "], "world"]}, 0)
+      read_exact({t_membuffer, <<"hallo", " ", "world">>}, 0)
     )},
     {"read exactly 1 byte from nonempty membuffer", ?_assertMatch(
       {{t_membuffer, <<"allo world">>}, {ok, <<"h">>}},
-      read_exact({t_membuffer, [["hallo", " "], "world"]}, 1)
+      read_exact({t_membuffer, <<"hallo", " ", "world">>}, 1)
     )},
     {"read exactly a zillion bytes from nonempty buffer", ?_assertMatch(
-      {{t_membuffer, [["hallo", " "], "world"]}, {error, eof}},
-      read_exact({t_membuffer, [["hallo", " "], "world"]}, 65536)
+      {{t_membuffer, <<"hallo", " ", "world">>}, {error, eof}},
+      read_exact({t_membuffer, <<"hallo", " ", "world">>}, 65536)
     )}
   ].
 
@@ -109,36 +109,36 @@ write(Membuffer, Data) -> thrift_membuffer_transport:write(Membuffer, Data).
 write_test_() ->
   [
     {"write empty list to empty membuffer", ?_assertMatch(
-      {{t_membuffer, [[], []]}, ok},
-      write({t_membuffer, []}, [])
+      {{t_membuffer, <<>>}, ok},
+      write({t_membuffer, <<>>}, <<>>)
     )},
     {"write empty list to nonempty membuffer", ?_assertMatch(
-      {{t_membuffer, ["hallo world", []]}, ok},
-      write({t_membuffer, "hallo world"}, [])
+      {{t_membuffer, <<"hallo world">>}, ok},
+      write({t_membuffer, <<"hallo world">>}, [])
     )},
     {"write empty binary to empty membuffer", ?_assertMatch(
-      {{t_membuffer, [[], <<>>]}, ok},
-      write({t_membuffer, []}, <<>>)
+      {{t_membuffer, <<>>}, ok},
+      write({t_membuffer, <<>>}, <<>>)
     )},
     {"write empty binary to nonempty membuffer", ?_assertMatch(
-      {{t_membuffer, ["hallo world", <<>>]}, ok},
-      write({t_membuffer, "hallo world"}, <<>>)
+      {{t_membuffer, <<"hallo world">>}, ok},
+      write({t_membuffer, <<"hallo world">>}, <<>>)
     )},
     {"write a list to empty membuffer", ?_assertMatch(
-      {{t_membuffer, [[], "hallo world"]}, ok},
-      write({t_membuffer, []}, "hallo world")
+      {{t_membuffer, <<"hallo world">>}, ok},
+      write({t_membuffer, <<>>}, "hallo world")
     )},
     {"write a list to nonempty membuffer", ?_assertMatch(
-      {{t_membuffer, [["hallo", " "], "world"]}, ok},
-      write({t_membuffer, ["hallo", " "]}, "world")
+      {{t_membuffer, <<"hallo", " ", "world">>}, ok},
+      write({t_membuffer, <<"hallo", " ">>}, "world")
     )},
     {"write a binary to empty membuffer", ?_assertMatch(
-      {{t_membuffer, [[], <<"hallo world">>]}, ok},
-      write({t_membuffer, []}, <<"hallo world">>)
+      {{t_membuffer, <<"hallo world">>}, ok},
+      write({t_membuffer, <<>>}, <<"hallo world">>)
     )},
     {"write a binary to nonempty membuffer", ?_assertMatch(
-      {{t_membuffer, [["hallo", " "], <<"world">>]}, ok},
-      write({t_membuffer, ["hallo", " "]}, <<"world">>)
+      {{t_membuffer, <<"hallo", " ", "world">>}, ok},
+      write({t_membuffer, <<"hallo", " ">>}, <<"world">>)
     )}
   ].
 
@@ -148,12 +148,12 @@ flush(Transport) -> thrift_membuffer_transport:flush(Transport).
 flush_test_() ->
   [
     {"flush empty membuffer", ?_assertMatch(
-      {{t_membuffer, []}, ok},
-      flush({t_membuffer, []})
+      {{t_membuffer, <<>>}, ok},
+      flush({t_membuffer, <<>>})
     )},
     {"flush nonempty membuffer", ?_assertMatch(
-      {{t_membuffer, [<<"hallo world">>]}, ok},
-      flush({t_membuffer, [<<"hallo world">>]})
+      {{t_membuffer, <<"hallo world">>}, ok},
+      flush({t_membuffer, <<"hallo world">>})
     )}
   ].
 
@@ -163,5 +163,5 @@ close(Transport) -> thrift_membuffer_transport:close(Transport).
 close_test_() ->
   {"close membuffer", ?_assertMatch(
     {{t_membuffer, _}, ok},
-    close({t_membuffer, []})
+    close({t_membuffer, <<>>})
   )}.

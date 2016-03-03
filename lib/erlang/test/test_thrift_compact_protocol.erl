@@ -37,12 +37,12 @@ read(This, Type) -> thrift_protocol:read(This, Type).
 str(This0, Value0) ->
   {This1, ok} = write(This0, {string, Value0}),
   {This2, {ok, Value1}} = read(This1, string),
-  ?assertEqual(Value0, binary_to_list(Value1)),
+  ?assertEqual(Value0, Value1),
   {This2, ok}.
 string_test() ->
   {ok, This0} = new(),
-  {This1, ok} = str(This0, "aaa"),
-  {This2, ok} = str(This1, ""),
+  {This1, ok} = str(This0, <<"aaa">>),
+  {This2, ok} = str(This1, <<"">>),
   {This2, ok}.
 
 round_trip(This0, Type, Value0) ->

@@ -36,15 +36,15 @@
 
 -spec new() -> thrift_transport:t_transport().
 
-new() -> new([]).
+new() -> new(<<>>).
 
 -spec new(Buf::iodata()) -> thrift_transport:t_transport().
 
 new(Buf) when is_list(Buf) ->
-  State = #t_membuffer{buffer = Buf},
+  State = #t_membuffer{buffer = iolist_to_binary(Buf)},
   thrift_transport:new(?MODULE, State);
 new(Buf) when is_binary(Buf) ->
-  State = #t_membuffer{buffer = [Buf]},
+  State = #t_membuffer{buffer = Buf},
   thrift_transport:new(?MODULE, State).
 
 
@@ -53,18 +53,16 @@ new(Buf) when is_binary(Buf) ->
 
 read(State = #t_membuffer{buffer = Buf}, Len)
 when is_integer(Len), Len >= 0 ->
-  Binary = iolist_to_binary(Buf),
-  Give = min(iolist_size(Binary), Len),
-  {Result, Remaining} = split_binary(Binary, Give),
+  Give = min(byte_size(Buf), Len),
+  {Result, Remaining} = split_binary(Buf, Give),
   {State#t_membuffer{buffer = Remaining}, {ok, Result}}.
 
 
 read_exact(State = #t_membuffer{buffer = Buf}, Len)
 when is_integer(Len), Len >= 0 ->
-  Binary = iolist_to_binary(Buf),
-  case iolist_size(Binary) of
+  case byte_size(Buf) of
     X when X >= Len ->
-      {Result, Remaining} = split_binary(Binary, Len),
+      {Result, Remaining} = split_binary(Buf, Len),
       {State#t_membuffer{buffer = Remaining}, {ok, Result}};
     _ ->
       {State, {error, eof}}
@@ -73,7 +71,7 @@ when is_integer(Len), Len >= 0 ->
 
 write(State = #t_membuffer{buffer = Buf}, Data)
 when is_list(Data); is_binary(Data) ->
-  {State#t_membuffer{buffer = [Buf, Data]}, ok}.
+  {State#t_membuffer{buffer = <<Buf/binary, (iolist_to_binary(Data))/binary>>}, ok}.
 
 
 flush(State) -> {State, ok}.

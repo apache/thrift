@@ -327,7 +327,7 @@ flush_test_() ->
     {"flush nonempty buffered membuffer", ?_assertMatch(
       {{t_buffered,
           {t_transport, thrift_membuffer_transport, {t_membuffer,
-            [<<>>, <<"hallo world">>]
+            <<"hallo world">>
           }},
           []
         },
