@@ -13,6 +13,9 @@
       "command": [
         "test_client"
       ],
+      "protocols": [
+        "multiplexed"
+      ],
       "sockets": [
         "ip-ssl"
       ]
@@ -106,7 +109,10 @@
     ],
     "server": {
       "delay": 10,
-      "extra_args": ["run-testserver"]
+      "extra_args": ["run-testserver"],
+      "protocols": [
+        "multiplexed"
+      ]
     },
     "client": {
       "timeout": 13,
@@ -125,8 +131,8 @@
       "ip-ssl"
     ],
     "protocols": [
-      "compact",
       "binary",
+      "compact",
       "json"
     ],
     "workdir": "../lib/java"

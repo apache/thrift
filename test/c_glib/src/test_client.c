@@ -28,6 +28,7 @@
 #include <thrift/c_glib/thrift.h>
 #include <thrift/c_glib/protocol/thrift_binary_protocol.h>
 #include <thrift/c_glib/protocol/thrift_compact_protocol.h>
+#include <thrift/c_glib/protocol/thrift_multiplexed_protocol.h>
 #include <thrift/c_glib/transport/thrift_buffered_transport.h>
 #include <thrift/c_glib/transport/thrift_framed_transport.h>
 #include <thrift/c_glib/transport/thrift_ssl_socket.h>
@@ -73,6 +74,32 @@ gint32_compare (gconstpointer a, gconstpointer b)
   return result;
 }
 
+/**
+ * It gets a multiplexed protocol which uses binary underneath
+ * @param  transport      the underlying transport
+ * @param  service_name   the single supported service name
+ * @todo                  need to allow multiple services to fully test multiplexed
+ * @return                a multiplexed protocol wrapping the correct underlying protocol
+ */
+ThriftProtocol *
+get_multiplexed_protocol(ThriftTransport *transport, gchar *service_name)
+{
+  ThriftProtocol * result_protocol=NULL;
+  ThriftProtocol * multiplexed_protocol=NULL;
+
+  multiplexed_protocol = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL,
+               "transport", transport,
+               NULL);
+
+  result_protocol = g_object_new (THRIFT_TYPE_MULTIPLEXED_PROTOCOL,
+          "transport",  transport,
+          "protocol",   multiplexed_protocol,
+          "service-name",   service_name,
+          NULL);
+
+  return result_protocol;
+}
+
 int
 main (int argc, char **argv)
 {
@@ -94,7 +121,7 @@ main (int argc, char **argv)
     { "transport",       't', 0, G_OPTION_ARG_STRING,   &transport_option,
       "Transport: buffered, framed (=buffered)", NULL },
     { "protocol",        'r', 0, G_OPTION_ARG_STRING,   &protocol_option,
-      "Protocol: binary, compact (=binary)", NULL },
+      "Protocol: binary, compact, multiplexed (=binary)", NULL },
     { "testloops",       'n', 0, G_OPTION_ARG_INT,      &num_tests,
       "Number of tests (=1)", NULL },
     { NULL }
@@ -153,7 +180,14 @@ main (int argc, char **argv)
       protocol_type = THRIFT_TYPE_COMPACT_PROTOCOL;
       protocol_name = "compact";
     }
-    else if (strncmp (protocol_option, "binary", 7) != 0) {
+    else if (strncmp (protocol_option, "multiplexed", 12) == 0) {
+      protocol_type = THRIFT_TYPE_MULTIPLEXED_PROTOCOL;
+      protocol_name = "multiplexed(binary)";
+    }
+    else if (strncmp (protocol_option, "binary", 7) == 0) {
+      printf("We are going with default binary protocol");
+    }
+    else {
       fprintf (stderr, "Unknown protocol type %s\n", protocol_option);
       options_valid = FALSE;
     }
@@ -213,9 +247,22 @@ main (int argc, char **argv)
   transport = g_object_new (transport_type,
                             "transport", socket,
                             NULL);
-  protocol = g_object_new (protocol_type,
-                           "transport", transport,
-                           NULL);
+
+  if(protocol_type==THRIFT_TYPE_MULTIPLEXED_PROTOCOL) {
+    // TODO: A multiplexed test should also test "Second" (see Java TestServer)
+    // The context comes from the name of the thrift file. If multiple thrift
+    // schemas are used we have to redo the way this is done.
+    protocol = get_multiplexed_protocol(transport, "ThriftTest");
+    if (NULL == protocol) {
+      g_object_unref (transport);
+      g_object_unref (socket);
+      return 252;
+    }
+  }else{
+    protocol = g_object_new (protocol_type,
+           "transport", transport,
+           NULL);
+  }
   test_client = g_object_new (T_TEST_TYPE_THRIFT_TEST_CLIENT,
                               "input_protocol",  protocol,
                               "output_protocol", protocol,
