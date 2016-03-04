@@ -3595,8 +3595,8 @@ string t_go_generator::type_to_go_type_with_opt(t_type* type,
     return "*" + publicize(type_name(type));
   } else if (type->is_map()) {
     t_map* t = (t_map*)type;
-    string keyType = type_to_go_key_type(t->get_key_type());
-    string valueType = type_to_go_type(t->get_val_type(), true);
+    string keyType = type_to_go_key_type(t->get_key_type()->get_true_type());
+    string valueType = type_to_go_type(t->get_val_type()->get_true_type(), true);
     return maybe_pointer + string("map[") + keyType + "]" + valueType;
   } else if (type->is_set()) {
     t_set* t = (t_set*)type;
