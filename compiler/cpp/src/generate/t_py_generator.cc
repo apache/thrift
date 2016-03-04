@@ -415,9 +415,15 @@ string t_py_generator::py_autogen_comment() {
  * Prints standard thrift imports
  */
 string t_py_generator::py_imports() {
-  return gen_utf8strings_
-    ? string("from thrift.Thrift import TType, TMessageType, TFrozenDict, TException, TApplicationException\nimport sys")
-    : string("from thrift.Thrift import TType, TMessageType, TFrozenDict, TException, TApplicationException");
+  ostringstream ss;
+  ss << "from thrift.Thrift import TType, TMessageType, TFrozenDict, TException, "
+        "TApplicationException"
+     << endl
+     << "from thrift.protocol.TProtocol import TProtocolException";
+  if (gen_utf8strings_) {
+    ss << endl << "import sys";
+  }
+  return ss.str();
 }
 
 /**
@@ -1011,7 +1017,7 @@ void t_py_generator::generate_py_struct_required_validator(ofstream& out, t_stru
       t_field* field = (*f_iter);
       if (field->get_req() == t_field::T_REQUIRED) {
         indent(out) << "if self." << field->get_name() << " is None:" << endl;
-        indent(out) << indent_str() << "raise TProtocol.TProtocolException(message='Required field "
+        indent(out) << indent_str() << "raise TProtocolException(message='Required field "
                     << field->get_name() << " is unset!')" << endl;
       }
     }
