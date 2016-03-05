@@ -35,6 +35,7 @@ libthrift_c_glib_la_SOURCES = src/thrift/c_glib/thrift.c \
                               src/thrift/c_glib/processor/thrift_processor.c \
                               src/thrift/c_glib/processor/thrift_dispatch_processor.c \
                               src/thrift/c_glib/protocol/thrift_protocol.c \
+                              src/thrift/c_glib/protocol/thrift_protocol_decorator.c \
                               src/thrift/c_glib/protocol/thrift_protocol_factory.c \
                               src/thrift/c_glib/protocol/thrift_binary_protocol.c \
                               src/thrift/c_glib/protocol/thrift_multiplexed_protocol.c \
@@ -68,6 +69,7 @@ include_thrift_HEADERS = \
 
 include_protocoldir = $(include_thriftdir)/protocol
 include_protocol_HEADERS = src/thrift/c_glib/protocol/thrift_protocol.h \
+                           src/thrift/c_glib/protocol/thrift_protocol_decorator.h \
                            src/thrift/c_glib/protocol/thrift_protocol_factory.h \
                            src/thrift/c_glib/protocol/thrift_binary_protocol.h \
                            src/thrift/c_glib/protocol/thrift_binary_protocol_factory.h \
