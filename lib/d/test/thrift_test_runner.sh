@@ -51,7 +51,11 @@ for protocol in $protocols; do
         # Give the server some time to get up and check if it runs (yes, this
         # is a huge kludge, should add a connect timeout to test client).
         client_rc=-1
-        sleep 0.01
+        if [ "$server" = "taskpool" ]; then
+          sleep 0.5
+        else
+          sleep 0.02
+        fi
         kill -0 $server_pid 2>/dev/null
         if [ $? -eq 0 ]; then
           ${CUR}/thrift_test_client $args --numTests=10 > /dev/null
