@@ -148,8 +148,13 @@ erl_crash.dump
 /lib/csharp/**/bin/
 /lib/csharp/**/obj/
 /lib/csharp/src/packages
-/lib/d/libthriftd.a
+/lib/d/libthriftd*.a
+/lib/d/test/async_test
+/lib/d/test/client_pool_test
 /lib/d/test/serialization_benchmark
+/lib/d/test/stress_test_server
+/lib/d/test/thrift_test_client
+/lib/d/test/thrift_test_server
 /lib/d/test/transport_test
 /lib/d/unittest/
 /lib/dart/coverage
