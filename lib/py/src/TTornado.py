@@ -164,7 +164,7 @@ class TTornadoServer(tcpserver.TCPServer):
 
     @gen.coroutine
     def handle_stream(self, stream, address):
-        host, port = address
+        host, port = address[:2]
         trans = TTornadoStreamTransport(host=host, port=port, stream=stream,
                                         io_loop=self.io_loop)
         oprot = self._oprot_factory.getProtocol(trans)
