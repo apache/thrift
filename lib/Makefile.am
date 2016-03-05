@@ -75,6 +75,7 @@ endif
 
 if WITH_D
 SUBDIRS += d
+PRECROSS_TARGET += precross-d
 endif
 
 if WITH_NODEJS
