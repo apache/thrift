@@ -25,6 +25,7 @@ import std.getopt;
 import std.stdio;
 import std.string;
 import std.traits;
+import thrift.base;
 import thrift.codegen.client;
 import thrift.protocol.base;
 import thrift.protocol.binary;
@@ -75,6 +76,7 @@ void main(string[] args) {
     "ssl", &ssl,
     "transport", &transportType,
     "trace", &trace,
+    "port", &port,
     "host", (string _, string value) {
       auto parts = split(value, ":");
       if (parts.length > 1) {
@@ -87,13 +89,14 @@ void main(string[] args) {
       }
     }
   );
+  port = to!ushort(port);
 
   TSocket socket;
   if (ssl) {
     auto sslContext = new TSSLContext();
     sslContext.ciphers = "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH";
     sslContext.authenticate = true;
-    sslContext.loadTrustedCertificates("./trusted-ca-certificate.pem");
+    sslContext.loadTrustedCertificates("../../../test/keys/CA.pem");
     socket = new TSSLSocket(sslContext, host, port);
   } else {
     socket = new TSocket(host, port);
@@ -277,6 +280,15 @@ void main(string[] args) {
         throw new Exception("testException failed.");
       } catch (Xception e) {
         if (trace) writefln("  {%s, \"%s\"}", e.errorCode, e.message);
+      }
+
+      try {
+        if (trace) write("client.testException(\"TException\") =>");
+        client.testException("Xception");
+        if (trace) writeln("  void\nFAILURE");
+        throw new Exception("testException failed.");
+      } catch (TException e) {
+        if (trace) writefln("  {%s}", e.msg);
       }
 
       try {

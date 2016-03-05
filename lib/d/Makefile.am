@@ -185,6 +185,8 @@ unittest/release/%: src/%.d $(all_targets) unittest/emptymain.d
 TESTS = $(addprefix unittest/debug/, $(d_test_modules)) \
 	$(addprefix unittest/release/, $(d_test_modules))
 
+precross: all-local
+	$(MAKE) -C test precross
 
 EXTRA_DIST = \
 	src \
