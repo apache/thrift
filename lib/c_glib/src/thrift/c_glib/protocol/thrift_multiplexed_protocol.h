@@ -23,6 +23,7 @@
 #include <glib-object.h>
 
 #include <thrift/c_glib/protocol/thrift_protocol.h>
+#include <thrift/c_glib/protocol/thrift_protocol_decorator.h>
 #include <thrift/c_glib/transport/thrift_transport.h>
 
 G_BEGIN_DECLS
@@ -41,27 +42,18 @@ G_BEGIN_DECLS
 #define THRIFT_MULTIPLEXED_PROTOCOL_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_MULTIPLEXED_PROTOCOL, ThriftMultiplexedProtocolClass))
 
 /* version numbers */
-#define THRIFT_MULTIPLEXED_PROTOCOL_VERSION_1 0x90010000
-#define THRIFT_MULTIPLEXED_PROTOCOL_VERSION_MASK 0xffff0000
-
 #define THRIFT_MULTIPLEXED_PROTOCOL_DEFAULT_SEPARATOR ":"
 
 typedef struct _ThriftMultiplexedProtocol ThriftMultiplexedProtocol;
 
 
-enum
-{
-  PROP_SERVICE_NAME = 1,
-  PROP_SEPARATOR,
-  N_PROPERTIES
-};
 
 /*!
  * Thrift Multiplexed Protocol instance.
  */
 struct _ThriftMultiplexedProtocol
 {
-  ThriftProtocol parent;
+  ThriftProtocolDecorator parent;
 
   gchar *service_name;
   gchar *separator;
@@ -74,8 +66,7 @@ typedef struct _ThriftMultiplexedProtocolClass ThriftMultiplexedProtocolClass;
  */
 struct _ThriftMultiplexedProtocolClass
 {
-  ThriftProtocolClass parent;
-
+  ThriftProtocolDecoratorClass parent;
 };
 
 /* used by THRIFT_TYPE_MULTIPLEXED_PROTOCOL */

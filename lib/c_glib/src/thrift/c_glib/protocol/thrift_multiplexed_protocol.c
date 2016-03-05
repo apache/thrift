@@ -24,58 +24,48 @@
 
 #include <thrift/c_glib/thrift.h>
 #include <thrift/c_glib/protocol/thrift_protocol.h>
+#include <thrift/c_glib/protocol/thrift_protocol_decorator.h>
 #include <thrift/c_glib/protocol/thrift_multiplexed_protocol.h>
 
-G_DEFINE_TYPE(ThriftMultiplexedProtocol, thrift_multiplexed_protocol, THRIFT_TYPE_PROTOCOL)
+
+enum
+{
+  PROP_THRIFT_MULTIPLEXED_PROTOCOL_SERVICE_NAME = 1,
+  PROP_THRIFT_MULTIPLEXED_PROTOCOL_SEPARATOR,
+  PROP_THRIFT_MULTIPLEXED_PROTOCOL_END
+};
+
+G_DEFINE_TYPE(ThriftMultiplexedProtocol, thrift_multiplexed_protocol, THRIFT_TYPE_PROTOCOL_DECORATOR)
 
 
-static GParamSpec *thrift_multiplexed_protocol_obj_properties[N_PROPERTIES] = { NULL, };
+static GParamSpec *thrift_multiplexed_protocol_obj_properties[PROP_THRIFT_MULTIPLEXED_PROTOCOL_END] = { NULL, };
 
 gint32
-thrift_multiplexed_protocol_write_message_begin (ThriftProtocol *protocol,
+thrift_multiplexed_protocol_write_message_begin (ThriftMultiplexedProtocol *protocol,
 		const gchar *name, const ThriftMessageType message_type,
 		const gint32 seqid, GError **error)
 {
-	gint32 version = (THRIFT_MULTIPLEXED_PROTOCOL_VERSION_1)
-                				   | ((gint32) message_type);
 	gint32 ret;
-	gint32 xfer = 0;
-
+	gchar *service_name = NULL;
 	g_return_val_if_fail (THRIFT_IS_MULTIPLEXED_PROTOCOL (protocol), -1);
 
 	ThriftMultiplexedProtocol *self = THRIFT_MULTIPLEXED_PROTOCOL (protocol);
-
-
-
-	if ((ret = thrift_protocol_write_i32 (protocol, version, error)) < 0)
-	{
-		return -1;
-	}
-	xfer += ret;
+	ThriftMultiplexedProtocolClass *multiplexClass = THRIFT_MULTIPLEXED_PROTOCOL_GET_CLASS(self);
+	ThriftProtocolClass *cls = THRIFT_PROTOCOL_CLASS (multiplexClass);
 
 	if( (message_type == T_CALL || message_type == T_ONEWAY) && self->service_name != NULL) {
-		gchar *service_name = g_strdup_printf("%s%s%s", self->service_name, self->separator, name);
-		if ((ret = thrift_protocol_write_string (protocol, name, error)) < 0)
-		{
-			g_free(service_name);
-			return -1;
-		}
-		g_free(service_name);
+		service_name = g_strdup_printf("%s%s%s", self->service_name, self->separator, name);
 
 	}else{
-		if ((ret = thrift_protocol_write_string (protocol, name, error)) < 0)
-		{
-			return -1;
-		}
+		service_name = g_strdup(name);
 	}
-	xfer += ret;
 
-	if ((ret = thrift_protocol_write_i32 (protocol, seqid, error)) < 0)
-	{
-		return -1;
-	}
-	xfer += ret;
-	return xfer;
+	// relay to the protocol_decorator
+	ret = thrift_protocol_decorator_write_message_begin(protocol, service_name, message_type, seqid, error);
+
+	g_free(service_name);
+
+	return ret;
 }
 
 
@@ -91,13 +81,13 @@ thrift_multiplexed_protocol_set_property (GObject      *object,
 
 	switch (property_id)
 	{
-	case PROP_SERVICE_NAME:
+	case PROP_THRIFT_MULTIPLEXED_PROTOCOL_SERVICE_NAME:
 		if(self->service_name!=NULL)
 			g_free (self->service_name);
 		self->service_name= g_value_dup_string (value);
 		break;
 
-	case PROP_SEPARATOR:
+	case PROP_THRIFT_MULTIPLEXED_PROTOCOL_SEPARATOR:
 		if(self->separator!=NULL)
 			g_free (self->separator);
 		self->separator= g_value_dup_string (value);
@@ -120,11 +110,11 @@ thrift_multiplexed_protocol_get_property (GObject    *object,
 
 	switch (property_id)
 	{
-	case PROP_SERVICE_NAME:
+	case PROP_THRIFT_MULTIPLEXED_PROTOCOL_SERVICE_NAME:
 		g_value_set_string (value, self->service_name);
 		break;
 
-	case PROP_SEPARATOR:
+	case PROP_THRIFT_MULTIPLEXED_PROTOCOL_SEPARATOR:
 		g_value_set_string (value, self->separator);
 		break;
 
@@ -140,7 +130,7 @@ static void
 thrift_multiplexed_protocol_init (ThriftMultiplexedProtocol *protocol)
 {
 	//  THRIFT_UNUSED_VAR (protocol);
-	protocol->separator = g_value_dup_string (THRIFT_MULTIPLEXED_PROTOCOL_DEFAULT_SEPARATOR);
+	protocol->separator = g_strdup (THRIFT_MULTIPLEXED_PROTOCOL_DEFAULT_SEPARATOR);
 	protocol->service_name = NULL;
 }
 
@@ -159,8 +149,9 @@ thrift_multiplexed_protocol_finalize (ThriftMultiplexedProtocol *protocol)
 	 * the parent class implements the dispose() virtual function: it is
 	 * always guaranteed to do so
 	 */
-	G_OBJECT_CLASS (protocol)->finalize(protocol);
+	/* This fails, why? G_OBJECT_CLASS (protocol)->finalize(protocol); */
 }
+
 
 /* initialize the class */
 static void
@@ -169,6 +160,7 @@ thrift_multiplexed_protocol_class_init (ThriftMultiplexedProtocolClass *klass)
 	ThriftProtocolClass *cls = THRIFT_PROTOCOL_CLASS (klass);
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
+	g_info("Current Multiplexed write_message_begin addr %p, new %p", cls->write_message_begin, thrift_multiplexed_protocol_write_message_begin);
 	cls->write_message_begin = thrift_multiplexed_protocol_write_message_begin;
 
 
@@ -176,13 +168,13 @@ thrift_multiplexed_protocol_class_init (ThriftMultiplexedProtocolClass *klass)
 	object_class->get_property = thrift_multiplexed_protocol_get_property;
 	object_class->finalize = thrift_multiplexed_protocol_finalize;
 
-	thrift_multiplexed_protocol_obj_properties[PROP_SERVICE_NAME] =
+	thrift_multiplexed_protocol_obj_properties[PROP_THRIFT_MULTIPLEXED_PROTOCOL_SERVICE_NAME] =
 			g_param_spec_string ("service-name",
 					"Service name the protocol points to",
 					"Set the service name",
 					NULL /* default value */,
 					(G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	thrift_multiplexed_protocol_obj_properties[PROP_SEPARATOR] =
+	thrift_multiplexed_protocol_obj_properties[PROP_THRIFT_MULTIPLEXED_PROTOCOL_SEPARATOR] =
 			g_param_spec_string ("separator",
 					"Separator for service name and pointer",
 					"Set service name separator",
@@ -190,6 +182,6 @@ thrift_multiplexed_protocol_class_init (ThriftMultiplexedProtocolClass *klass)
 					G_PARAM_READWRITE);
 
 	g_object_class_install_properties (object_class,
-			N_PROPERTIES,
+			PROP_THRIFT_MULTIPLEXED_PROTOCOL_END,
 			thrift_multiplexed_protocol_obj_properties);
 }
