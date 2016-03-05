@@ -28,6 +28,34 @@
     "workdir": "c_glib"
   },
   {
+    "name": "d",
+    "server": {
+      "command": [
+        "thrift_test_server"
+      ]
+    },
+    "client": {
+      "command": [
+        "thrift_test_client"
+      ]
+    },
+    "transports": [
+      "http",
+      "buffered",
+      "framed"
+    ],
+    "sockets": [
+      "ip",
+      "ip-ssl"
+    ],
+    "protocols": [
+      "binary",
+      "compact",
+      "json"
+    ],
+    "workdir": "../lib/d/test"
+  },
+  {
     "name": "go",
     "server": {
       "command": [
