@@ -50,7 +50,7 @@
     <ClInclude Include="src\windows\version.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\audit\t_audit.cpp"/>
+    <ClCompile Include="src\audit\t_audit.cpp" />
     <ClCompile Include="src\generate\t_as3_generator.cc" />
     <ClCompile Include="src\generate\t_cocoa_generator.cc" />
     <ClCompile Include="src\generate\t_cpp_generator.cc" />
@@ -77,7 +77,7 @@
     <ClCompile Include="src\generate\t_py_generator.cc" />
     <ClCompile Include="src\generate\t_rb_generator.cc" />
     <ClCompile Include="src\generate\t_st_generator.cc" />
-	<ClCompile Include="src\generate\t_swift_generator.cc" />
+    <ClCompile Include="src\generate\t_swift_generator.cc" />
     <ClCompile Include="src\generate\t_xml_generator.cc" />
     <ClCompile Include="src\generate\t_xsd_generator.cc" />
     <ClCompile Include="src\main.cc" />
