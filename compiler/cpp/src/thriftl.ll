@@ -111,8 +111,8 @@ dubconstant   ([+-]?[0-9]*(\.[0-9]+)?([eE][+-]?[0-9]+)?)
 identifier    ([a-zA-Z_](\.[a-zA-Z_0-9]|[a-zA-Z_0-9])*)
 whitespace    ([ \t\r\n]*)
 sillycomm     ("/*""*"*"*/")
-multicomm     ("/*"[^*]([^*]|"*"[^/])*"*/")
-doctext       ("/**"([^*]|"*"[^/])*"*/")
+multicm_begin ("/*")
+doctext_begin ("/**")
 comment       ("//"[^\n]*)
 unixcomment   ("#"[^\n]*)
 symbol        ([:;\,\{\}\(\)\=<>\[\]])
@@ -122,7 +122,75 @@ literal_begin (['\"])
 
 {whitespace}         { /* do nothing */                 }
 {sillycomm}          { /* do nothing */                 }
-{multicomm}          { /* do nothing */                 }
+
+{doctext_begin} {
+  std::string parsed("/**");
+  int state = 0;  // 0 = normal, 1 = "*" seen, "*/" seen
+  while(state < 2)
+  {
+    int ch = yyinput();
+    parsed.push_back(ch);
+    switch (ch) {
+      case EOF:
+        yyerror("Unexpected end of file in doc-comment at %d\n", yylineno);
+        exit(1);
+      case '*':
+        state = 1;
+        break;
+      case '/':
+        state = (state == 1) ? 2 : 0;
+        break;
+      default:
+        state = 0;
+        break;
+    }
+  }
+  pdebug("doctext = \"%s\"\n",parsed.c_str());
+
+ /* This does not show up in the parse tree. */
+ /* Rather, the parser will grab it out of the global. */
+  if (g_parse_mode == PROGRAM) {
+    clear_doctext();
+    g_doctext = strdup(parsed.c_str() + 3);
+    assert(strlen(g_doctext) >= 2);
+    g_doctext[strlen(g_doctext) - 2] = ' ';
+    g_doctext[strlen(g_doctext) - 1] = '\0';
+    g_doctext = clean_up_doctext(g_doctext);
+    g_doctext_lineno = yylineno;
+    if( (g_program_doctext_candidate == NULL) && (g_program_doctext_status == INVALID)){
+      g_program_doctext_candidate = strdup(g_doctext);
+      g_program_doctext_lineno = g_doctext_lineno;
+      g_program_doctext_status = STILL_CANDIDATE;
+      pdebug("%s","program doctext set to STILL_CANDIDATE");
+    }
+  }
+}
+
+{multicm_begin}  { /* parsed, but thrown away */
+  std::string parsed("/*");
+  int state = 0;  // 0 = normal, 1 = "*" seen, "*/" seen
+  while(state < 2)
+  {
+    int ch = yyinput();
+    parsed.push_back(ch);
+    switch (ch) {
+      case EOF:
+        yyerror("Unexpected end of file in multiline comment at %d\n", yylineno);
+        exit(1);
+      case '*':
+        state = 1;
+        break;
+      case '/':
+        state = (state == 1) ? 2 : 0;
+        break;
+      default:
+        state = 0;
+        break;
+    }
+  }
+  pdebug("multi_comm = \"%s\"\n",parsed.c_str());
+}
+
 {comment}            { /* do nothing */                 }
 {unixcomment}        { /* do nothing */                 }
 
@@ -383,26 +451,6 @@ literal_begin (['\"])
   }
 }
 
-
-{doctext} {
- /* This does not show up in the parse tree. */
- /* Rather, the parser will grab it out of the global. */
-  if (g_parse_mode == PROGRAM) {
-    clear_doctext();
-    g_doctext = strdup(yytext + 3);
-    assert(strlen(g_doctext) >= 2);
-    g_doctext[strlen(g_doctext) - 2] = ' ';
-    g_doctext[strlen(g_doctext) - 1] = '\0';
-    g_doctext = clean_up_doctext(g_doctext);
-    g_doctext_lineno = yylineno;
-    if( (g_program_doctext_candidate == NULL) && (g_program_doctext_status == INVALID)){
-      g_program_doctext_candidate = strdup(g_doctext);
-      g_program_doctext_lineno = g_doctext_lineno;
-      g_program_doctext_status = STILL_CANDIDATE;
-      pdebug("%s","program doctext set to STILL_CANDIDATE");
-    }
-  }
-}
 
 . {
   unexpected_token(yytext);
