@@ -254,4 +254,34 @@ typedef i32 TestFor3501a
  */
 typedef i32 TestFor3501b
 
+
+/* Comment-end tokens can of course have more than one asterisk */
+struct TestFor3709_00 { /* ? */ 1: i32 foo }
+/* Comment-end tokens can of course have more than one asterisk **/
+struct TestFor3709_01 { /* ? */ 1: i32 foo }
+/* Comment-end tokens can of course have more than one asterisk ***/
+struct TestFor3709_02 { /* ? */ 1: i32 foo }
+/** Comment-end tokens can of course have more than one asterisk */
+struct TestFor3709_03 { /* ? */ 1: i32 foo }
+/** Comment-end tokens can of course have more than one asterisk **/
+struct TestFor3709_04 { /* ? */ 1: i32 foo }
+/** Comment-end tokens can of course have more than one asterisk ***/
+struct TestFor3709_05 { /* ? */ 1: i32 foo }
+/*** Comment-end tokens can of course have more than one asterisk */
+struct TestFor3709_06 { /* ? */ 1: i32 foo }
+/*** Comment-end tokens can of course have more than one asterisk **/
+struct TestFor3709_07 { /* ? */ 1: i32 foo }
+/*** Comment-end tokens can of course have more than one asterisk ***/
+struct TestFor3709_08 { /* ? */ 1: i32 foo }
+
+struct TestFor3709 {
+  /** This is a comment */
+  1: required string id,
+  /** This is also a comment **/
+  2: required string typeId,
+  /** Yet another comment! */
+  3: required i32 endTimestamp
+}
+
+
 /* THE END */
