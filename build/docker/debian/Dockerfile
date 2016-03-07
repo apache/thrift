@@ -21,12 +21,15 @@ MAINTAINER Apache Thrift <dev@thrift.apache.org>
 ENV DEBIAN_FRONTEND noninteractive
 
 # General dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
       apt-transport-https \
+      autoconf \
       automake \
       bison \
+      build-essential \
       clang \
       cmake \
+      curl \
       debhelper \
       flex \
       g++ \
@@ -36,7 +39,7 @@ RUN apt-get update && apt-get install -y \
       pkg-config
 
 # C++ dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
       libboost-dev \
       libboost-filesystem-dev \
       libboost-program-options-dev \
@@ -44,12 +47,15 @@ RUN apt-get update && apt-get install -y \
       libboost-test-dev \
       libboost-thread-dev \
       libevent-dev \
-      libqt4-dev \
-      libssl-dev
+      libssl-dev \
+      qt5-default \
+      qtbase5-dev \
+      qtbase5-dev-tools
 
 # Java dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
       ant \
+      ant-optional \
       openjdk-7-jdk \
       maven \
     && update-java-alternatives -s java-1.7.0-openjdk-amd64
@@ -68,13 +74,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       python3-pip
 
 # Ruby dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
       ruby \
       ruby-dev \
     && gem install bundler rake
 
 # Perl dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
       libbit-vector-perl \
       libclass-accessor-class-perl \
       libcrypt-ssleay-perl \
@@ -82,7 +88,7 @@ RUN apt-get update && apt-get install -y \
       libnet-ssleay-perl
 
 # Php dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
       php5 \
       php5-dev \
       php5-cli \
@@ -91,10 +97,10 @@ RUN apt-get update && apt-get install -y \
       phpunit
 
 # GlibC dependencies
-RUN apt-get update && apt-get install -y libglib2.0-dev
+RUN apt-get update && apt-get install -y --no-install-recommends libglib2.0-dev
 
 # Erlang dependencies
-RUN  apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
       erlang-base \
       erlang-eunit \
       erlang-dev \
@@ -112,31 +118,29 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       cabal-install
 
 # Haxe
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
       neko \
       neko-dev \
       libneko0 \
-    && mkdir -p /tmp/haxe /usr/lib/haxe && \
-    curl http://haxe.org/website-content/downloads/3.2.0/downloads/haxe-3.2.0-linux64.tar.gz -o /tmp/haxe/haxe-3.2.0-linux64.tar.gz && \
-    tar -xvzf /tmp/haxe/haxe-3.2.0-linux64.tar.gz -C /usr/lib/haxe --strip-components=1 && \
+    && mkdir -p /usr/lib/haxe && \
+    curl http://haxe.org/website-content/downloads/3.2.0/downloads/haxe-3.2.0-linux64.tar.gz | \
+    tar -C /usr/lib/haxe --strip-components=1 -xz && \
     ln -s /usr/lib/haxe/haxe /usr/bin/haxe && \
     ln -s /usr/lib/haxe/haxelib /usr/bin/haxelib && \
     mkdir -p /usr/lib/haxe/lib  && \
     chmod -R 777 /usr/lib/haxe/lib && \
     haxelib setup /usr/lib/haxe/lib && \
-    haxelib install hxcpp && \
-    rm -rf /tmp/haxe
-
+    haxelib install hxcpp
 
 # Node.js dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
       nodejs \
       nodejs-dev \
       nodejs-legacy \
       npm
 
 # CSharp dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
       libmono-system-web2.0-cil \
       mono-complete \
       mono-devel \
@@ -161,16 +165,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends xdg-utils && \
 # Dart dependencies
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
-    apt-get update && apt-get install -y dart
+    apt-get update && apt-get install -y --no-install-recommends dart
 ENV PATH /usr/lib/dart/bin:$PATH
 
 # Lua dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
       lua5.2 \
       lua5.2-dev
 
 # MinGW dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
       mingw32 \
       mingw32-binutils \
 #      mingw32-runtime \
