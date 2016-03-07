@@ -56,10 +56,10 @@ static unsigned long callbackThreadID() {
 
 static void thrift_ssl_socket_static_locking_callback(int mode, int n, const char* unk, int id) {
 	if (mode & CRYPTO_LOCK) {
-//		g_printf("We should lock thread %d\n", n);
+		//		g_printf("We should lock thread %d\n", n);
 		//mutexes[n].lock();
 	} else {
-//		g_printf("We should unlock thread %d\n", n);
+		//		g_printf("We should unlock thread %d\n", n);
 		//mutexes[n].unlock();
 	}
 }
@@ -232,10 +232,10 @@ thrift_ssl_socket_write (ThriftTransport *transport, const gpointer buf,
 gboolean
 thrift_ssl_socket_write_end (ThriftTransport *transport, GError **error)
 {
-	  /* satisfy -Wall */
-	  THRIFT_UNUSED_VAR (transport);
-	  THRIFT_UNUSED_VAR (error);
-	  return TRUE;
+	/* satisfy -Wall */
+	THRIFT_UNUSED_VAR (transport);
+	THRIFT_UNUSED_VAR (error);
+	return TRUE;
 }
 
 /* implements thrift_transport_flush
@@ -323,53 +323,109 @@ thrift_ssl_socket_create_ssl_context(ThriftTransport * transport, GError **error
 					THRIFT_SSL_SOCKET_ERROR_TRANSPORT,
 					"Unable to create SSL context");
 			return FALSE;
-			//		    string errors;
-			//		    buildErrors(errors);
-			//		    throw TSSLException("SSL_new: " + errors);
 		}
 	}
 
 	return TRUE;
 }
 
+/**
+ *
+ * @param ssl_socket The ssl socket
+ * @param file_name The file name of the PEM certificate chain
+ * @return
+ */
+gboolean thrift_ssl_load_cert_from_file(ThriftSSLSocket *ssl_socket, const char *file_name)
+{
+	int rc = SSL_CTX_load_verify_locations(ssl_socket->ctx, file_name, NULL);
+	if (rc != 1) { // verify authentication result
+		g_warning("Load of certificates failed!: %s", X509_verify_cert_error_string(ERR_get_error()));
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/**
+ * Load a certificate chain from memory
+ * @param ssl_socket the ssl socket
+ * @param chain_certs the buffer to load PEM from
+ * @return
+ */
+gboolean thrift_ssl_load_cert_from_buffer(ThriftSSLSocket *ssl_socket, const char chain_certs[])
+{
+	gboolean retval = FALSE;
+	// Load chain of certs
+	X509 *cacert=NULL;
+	BIO *mem = BIO_new_mem_buf(chain_certs,strlen(chain_certs));
+	X509_STORE *cert_store = SSL_CTX_get_cert_store(ssl_socket->ctx);
+
+	if(cert_store!=NULL){
+		int index = 0;
+		while ((cacert = PEM_read_bio_X509(mem, NULL, 0, NULL))!=NULL) {
+			if(cacert) {
+				g_debug("Our certificate name is %s", cacert->name);
+				X509_STORE_add_cert(cert_store, cacert);
+				X509_free(cacert);
+				cacert=NULL;
+			} /* Free immediately */
+			index++;
+		}
+		retval=TRUE;
+	}
+	BIO_free(mem);
+	return retval;
+}
+
 gboolean
 thrift_ssl_socket_authorize(ThriftTransport * transport, GError **error)
 {
-	ThriftSSLSocket *socket = THRIFT_SSL_SOCKET (transport);
-	void *access_manager = NULL; // We still don't support it
-	if(socket->ssl!=NULL){
-		int rc = SSL_get_verify_result(socket->ssl);
+	ThriftSocket *socket = THRIFT_SOCKET (transport);
+	ThriftSSLSocket *ssl_socket = THRIFT_SSL_SOCKET (transport);
+	ThriftSSLSocketClass *cls = THRIFT_SSL_SOCKET_GET_CLASS(ssl_socket);
+	gboolean authorization_result = FALSE;
+	// We still don't support it
+	if(cls!=NULL && ssl_socket->ssl!=NULL){
+		int rc = SSL_get_verify_result(ssl_socket->ssl);
 		if (rc != X509_V_OK) { // verify authentication result
-			//		    throw TSSLException(string("SSL_get_verify_result(), ") + X509_verify_cert_error_string(rc));
-			g_warning("The certificate verification failed!");
-//			return FALSE;
+			g_warning("The certificate verification failed!: %s", X509_verify_cert_error_string(rc));
+			return authorization_result;
 		}
-		X509* cert = SSL_get_peer_certificate(socket->ssl);
+		X509* cert = SSL_get_peer_certificate(ssl_socket->ssl);
 		if (cert == NULL) {
 			// certificate is not present
-			if (SSL_get_verify_mode(socket->ssl) & SSL_VERIFY_FAIL_IF_NO_PEER_CERT) {
-				return FALSE;
+			if (SSL_get_verify_mode(ssl_socket->ssl) & SSL_VERIFY_FAIL_IF_NO_PEER_CERT) {
+				g_warning("There's no certificate present!");
+				return authorization_result;
 				//throw TSSLException("authorize: required certificate not present");
 			}
 			// certificate was optional: didn't intend to authorize remote
-			if (socket->server && access_manager != NULL) {
-				return FALSE;
+			if (ssl_socket->server && cls->authorize_peer != NULL) {
+				g_warning("Certificate required for authorization!");
+				return authorization_result;
 				//				throw TSSLException("authorize: certificate required for authorization");
 			}
-			return FALSE;
+			return authorization_result;
 		}
 		// certificate is present, since we don't support access manager we are done
-		if (access_manager == NULL) {
+		if (cls->authorize_peer == NULL) {
 			X509_free(cert);
-			return TRUE;
-		}
+			return authorization_result;
+		}else{
+			// both certificate and access manager are present
+			struct sockaddr_storage sa;
+			socklen_t saLength = sizeof(struct sockaddr_storage);
 
-		// Fill with line 365 and after on TSSLSocket
+			if (getpeername(socket->sd, (struct sockaddr*)&sa, &saLength) != 0) {
+				sa.ss_family = AF_UNSPEC;
+			}
+			authorization_result = cls->authorize_peer(transport, cert, &sa, error);
+		}
+		if(cert!=NULL){
+			X509_free(cert);
+		}
 	}
 
-
-
-	return TRUE;
+	return authorization_result;
 }
 
 
@@ -458,7 +514,8 @@ thrift_ssl_socket_initialize_openssl(void)
 }
 
 
-void thrift_ssl_socket_finalize_openssl(void) {
+void thrift_ssl_socket_finalize_openssl(void)
+{
 
 	// FIXME This should not be here
 	if (thrift_ssl_socket_global_context != NULL) {
@@ -554,6 +611,15 @@ thrift_ssl_socket_new(ThriftSSLSocketProtocol ssl_protocol, GError **error)
 	thriftSSLSocket = g_object_new (THRIFT_TYPE_SSL_SOCKET, "ssl_context", thrift_ssl_socket_global_context, NULL);
 	return thriftSSLSocket;
 }
+
+void thrift_ssl_socket_set_manager(ThriftSSLSocket *ssl_socket, AUTHORIZATION_MANAGER_CALLBACK callback)
+{
+	ThriftSSLSocketClass *sslSocketClass = THRIFT_SSL_SOCKET_GET_CLASS (ssl_socket);
+	if(sslSocketClass){
+		sslSocketClass->authorize_peer = callback;
+	}
+}
+
 
 ThriftSSLSocket*
 thrift_ssl_socket_new_with_host(ThriftSSLSocketProtocol ssl_protocol, gchar *hostname, guint port, GError **error)

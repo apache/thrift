@@ -21,10 +21,12 @@
 #define _THRIFT_SSL_SOCKET_H
 
 #include <glib-object.h>
+#include <glib.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
+#include <sys/socket.h>
 
 #include <thrift/c_glib/transport/thrift_transport.h>
 #include <thrift/c_glib/transport/thrift_socket.h>
@@ -80,7 +82,7 @@ struct _ThriftSSLSocket
 };
 
 typedef struct _ThriftSSLSocketClass ThriftSSLSocketClass;
-
+typedef gboolean (* AUTHORIZATION_MANAGER_CALLBACK) (ThriftTransport * transport, X509 *cert, struct sockaddr_storage *addr, GError **error);
 /*!
  * Thrift Socket class.
  */
@@ -90,13 +92,12 @@ struct _ThriftSSLSocketClass
 
 	gboolean (* handle_handshake) (ThriftTransport * transport, GError **error);
 	gboolean (* create_ssl_context) (ThriftTransport * transport, GError **error);
+	gboolean (* authorize_peer) (ThriftTransport * transport, X509 *cert, struct sockaddr_storage *addr, GError **error);
 
 	/* Padding to allow adding up to 12 new virtual functions without
 	 * breaking ABI. */
 	gpointer padding[12];
 };
-
-typedef enum _ThriftSSLSocketProtocol ThriftSSLSocketProtocol;
 
 enum _ThriftSSLSocketProtocol {
   SSLTLS  = 0,  // Supports SSLv2 and SSLv3 handshake but only negotiates at TLSv1_0 or later.
@@ -107,17 +108,34 @@ enum _ThriftSSLSocketProtocol {
   TLSv1_2 = 5,  // Supports TLSv1_2 or later.
   LATEST  = TLSv1_2
 };
+typedef enum _ThriftSSLSocketProtocol ThriftSSLSocketProtocol;
+
+
+/* Internal functions */
+gboolean
+thrift_ssl_socket_context_initialize(ThriftSSLSocketProtocol ssl_protocol, GError **error);
+
 
 /* used by THRIFT_TYPE_SSL_SOCKET */
 GType thrift_ssl_socket_get_type (void);
+void thrift_ssl_socket_get_error(GError **error, const guchar *error_msg, guint thrift_error_no);
 
+
+void thrift_ssl_socket_set_manager(ThriftSSLSocket *ssl_socket, AUTHORIZATION_MANAGER_CALLBACK callback);
+
+/* This is the SSL API */
 ThriftSSLSocket*
 thrift_ssl_socket_new_with_host(ThriftSSLSocketProtocol ssl_protocol, gchar *hostname, guint port, GError **error);
 ThriftSSLSocket*
 thrift_ssl_socket_new(ThriftSSLSocketProtocol ssl_protocol, GError **error);
+gboolean
+thrift_ssl_load_cert_from_file(ThriftSSLSocket *ssl_socket, const char *file_name);
+gboolean
+thrift_ssl_load_cert_from_buffer(ThriftSSLSocket *ssl_socket, const char chain_certs[]);
+void
+thrift_ssl_socket_initialize_openssl(void);
+void
+thrift_ssl_socket_finalize_openssl(void);
 
 G_END_DECLS
-
-
-
 #endif
