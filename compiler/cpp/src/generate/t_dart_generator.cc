@@ -180,6 +180,7 @@ public:
   std::string get_args_class_name(std::string name);
   std::string get_result_class_name(std::string name);
   std::string get_file_name(std::string name);
+  std::string get_class_name(std::string name);
   std::string generate_isset_check(t_field* field);
   std::string generate_isset_check(std::string field);
   void generate_isset_set(ofstream& out, t_field* field);
@@ -534,7 +535,7 @@ void t_dart_generator::generate_consts(std::vector<t_const*> consts) {
     return;
   }
 
-  string class_name = get_cap_name(program_name_) + "Constants";
+  string class_name = get_class_name(program_name_) + "Constants";
   string file_name = get_file_name(class_name);
 
   string f_consts_name = src_dir_ + "/" + file_name + ".dart";
@@ -2355,6 +2356,29 @@ std::string t_dart_generator::get_file_name(std::string name) {
 
     is_prev_lc = is_current_lc;
     is_current_lc = is_next_lc;
+  }
+
+  return ret;
+}
+
+std::string t_dart_generator::get_class_name(std::string name) {
+  // e.g. change my_great_model to MyGreatModel
+  string ret;
+  const char* tmp = name.c_str();
+  bool is_prev_underscore = true;
+
+  for (unsigned int i = 0; i < name.length(); i++) {
+    if (tmp[i] == '_') {
+      is_prev_underscore = true;
+    } else {
+      if (is_prev_underscore) {
+        ret += toupper(tmp[i]);
+      } else {
+        ret += tmp[i];
+      }
+
+      is_prev_underscore = false;
+    }
   }
 
   return ret;
