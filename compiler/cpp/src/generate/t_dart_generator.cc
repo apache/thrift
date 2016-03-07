@@ -2368,17 +2368,17 @@ std::string t_dart_generator::get_class_name(std::string name) {
   bool is_prev_underscore = true;
 
   for (unsigned int i = 0; i < name.length(); i++) {
-  	if (tmp[i] == '_') {
-  		is_prev_underscore = true;
-  	} else {
-		if (is_prev_underscore) {
-			ret += toupper(tmp[i]);
-		} else {
-			ret += tmp[i];
-		}
+    if (tmp[i] == '_') {
+      is_prev_underscore = true;
+    } else {
+      if (is_prev_underscore) {
+        ret += toupper(tmp[i]);
+      } else {
+        ret += tmp[i];
+      }
 
-  		is_prev_underscore = false;
-  	}
+      is_prev_underscore = false;
+    }
   }
 
   return ret;
