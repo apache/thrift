@@ -5,14 +5,14 @@ Build-Depends: debhelper (>= 9), build-essential, mono-gmcs, python-dev, ant,
     mono-devel,  libmono-system-web2.0-cil, erlang-base, ruby-dev | ruby1.9.1-dev, autoconf, automake,
     pkg-config, libtool, bison, flex, libboost-dev | libboost1.53-dev, python-all,
     python-all-dev, python-all-dbg, openjdk-6-jdk | java-sdk,
-    libboost-test-dev | libboost-test1.53-dev, libevent-dev, perl (>= 5.8.0-7),
-    php5, php5-dev, libglib2.0-dev, libqt4-dev
+    libboost-test-dev | libboost-test1.53-dev, libevent-dev, libssl-dev, perl (>= 5.8.0-7),
+    php5, php5-dev, libglib2.0-dev, qtbase5-dev, qtbase5-dev-tools
 Maintainer: Thrift Developer's <dev@thrift.apache.org>
 Homepage: http://thrift.apache.org/
 Vcs-Git: https://git-wip-us.apache.org/repos/asf/thrift.git
 Vcs-Browser: https://git-wip-us.apache.org/repos/asf?p=thrift.git
 Standards-Version: 3.9.5
-X-Python-Version: >= 2.7
+X-Python-Version: >= 2.6
 
 Package: thrift-compiler
 Architecture: any
