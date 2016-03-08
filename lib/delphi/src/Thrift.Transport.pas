@@ -1340,7 +1340,7 @@ begin
       else wfd := WaitForData( SLEEP_TIME, pDest, count, wsaError, nBytes);
 
       case wfd of
-        TWaitForData.wfd_Error    :  Exit(0);
+        TWaitForData.wfd_Error    :  Exit;
         TWaitForData.wfd_HaveData :  Break;
         TWaitForData.wfd_Timeout  :  begin
           if (FTimeout > 0)
