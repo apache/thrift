@@ -54,6 +54,7 @@ EXTRA_DIST = \
 	CMakeLists.txt \
 	coding_standards.md \
 	compat \
+	requirements.txt \
 	setup.py \
 	setup.cfg \
 	src \
