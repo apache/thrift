@@ -70,7 +70,8 @@ function testBasicClient(rawArgs)
   }
   assert(transports[opt.transport] ~= nil)
   local transport = transports[opt.transport]:new{
-    trans = socket
+    trans = socket,
+    isServer = false
   }
 
   local protocols = {
