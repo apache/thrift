@@ -19,6 +19,7 @@ require('ThriftTest_ThriftTest')
 require('TSocket')
 require('TBufferedTransport')
 require('TFramedTransport')
+require('THttpTransport')
 require('TCompactProtocol')
 require('TJsonProtocol')
 require('TBinaryProtocol')
@@ -111,6 +112,7 @@ function testBasicServer(rawArgs)
   local transports = {
     buffered = TBufferedTransportFactory,
     framed = TFramedTransportFactory,
+    http = THttpTransportFactory,
   }
   assert(transports[opt.transport], 'Failed to create framed transport factory')
   local trans_factory = transports[opt.transport]:new{}
