@@ -65,9 +65,6 @@ using namespace apache::thrift::async;
 
 using namespace thrift::test;
 
-// Length of argv[0] - Length of script dir
-#define EXECUTABLE_FILE_NAME_LENGTH 19
-
 class TestHandler : public ThriftTestIf {
 public:
   TestHandler() {}
@@ -537,8 +534,9 @@ namespace po = boost::program_options;
 
 int main(int argc, char** argv) {
 
-  string file_path = boost::filesystem::system_complete(argv[0]).string();
-  string dir_path = file_path.substr(0, file_path.size() - EXECUTABLE_FILE_NAME_LENGTH);
+  string testDir = boost::filesystem::system_complete(argv[0]).parent_path().parent_path().parent_path().string();
+  string certPath = testDir + "/keys/server.crt";
+  string keyPath = testDir + "/keys/server.key";
 
 #if _WIN32
   transport::TWinsockSingleton::create();
@@ -657,8 +655,8 @@ int main(int argc, char** argv) {
 
   if (ssl) {
     sslSocketFactory = boost::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
-    sslSocketFactory->loadCertificate((dir_path + "../keys/server.crt").c_str());
-    sslSocketFactory->loadPrivateKey((dir_path + "../keys/server.key").c_str());
+    sslSocketFactory->loadCertificate(certPath.c_str());
+    sslSocketFactory->loadPrivateKey(keyPath.c_str());
     sslSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
     serverSocket = boost::shared_ptr<TServerSocket>(new TSSLServerSocket(port, sslSocketFactory));
   } else {
