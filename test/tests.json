@@ -523,7 +523,8 @@
       "timeout": 5,
       "transports": [
         "buffered",
-        "framed"
+        "framed",
+        "http"
       ],
       "sockets": [
         "ip"
