@@ -115,6 +115,7 @@
   "d-d_json_http-ip-ssl",
   "d-dart_binary_framed-ip",
   "d-dart_binary_http-ip",
+  "d-dart_compact_framed-ip",
   "d-dart_compact_http-ip",
   "d-dart_json_framed-ip",
   "d-dart_json_http-ip",
