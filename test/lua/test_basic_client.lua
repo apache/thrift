@@ -19,6 +19,7 @@
 require('TSocket')
 require('TBufferedTransport')
 require('TFramedTransport')
+require('THttpTransport')
 require('TCompactProtocol')
 require('TJsonProtocol')
 require('TBinaryProtocol')
@@ -65,6 +66,7 @@ function testBasicClient(rawArgs)
   local transports = {
     buffered = TBufferedTransport,
     framed = TFramedTransport,
+    http = THttpTransport,
   }
   assert(transports[opt.transport] ~= nil)
   local transport = transports[opt.transport]:new{
