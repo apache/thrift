@@ -93,15 +93,16 @@ end
 
 function TServer:serve() end
 function TServer:handle(client)
-  local itrans, otrans, iprot, oprot, ret, err =
+  local itrans, otrans =
     self.inputTransportFactory:getTransport(client),
-    self.outputTransportFactory:getTransport(client),
-    self.inputProtocolFactory:getProtocol(client),
-    self.outputProtocolFactory:getProtocol(client)
+    self.outputTransportFactory:getTransport(client)
+  local iprot, oprot =
+    self.inputProtocolFactory:getProtocol(itrans),
+    self.outputProtocolFactory:getProtocol(otrans)
 
   self:_clientBegin(iprot, oprot)
   while true do
-    ret, err = pcall(self.processor.process, self.processor, iprot, oprot)
+    local ret, err = pcall(self.processor.process, self.processor, iprot, oprot)
     if ret == false and err then
       if not string.find(err, "TTransportException") then
         self:_handleException(err)
