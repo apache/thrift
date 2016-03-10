@@ -74,7 +74,12 @@ function THttpTransport:read(len)
 end
 
 function THttpTransport:_readMsg()
-  self.rBuf = self.trans:read(2048, true)
+  while true do
+    self.rBuf = self.rBuf .. self.trans:read(4)
+    if string.find(self.rBuf, self.CRLF .. self.CRLF) then
+      break
+    end
+  end
   if not self.rBuf then
     self.rBuf = ""
     return
@@ -90,19 +95,11 @@ function THttpTransport:_readMsg()
   if length then
     length = length - string.len(self.rBuf)
     self.rBuf = self.rBuf .. self.trans:readAll(length)
-  else
-    local encoding = headers["Transfer-Encoding"]
-    if encoding and string.lower(encoding) == "chunked" then
-      self.rBuf = self.rBuf.. self:_readChunked()
-    else
-      self.rBuf = self.rBuf .. self.trans:read(2048, true)
-    end
   end
   if self.rBuf == nil then
     self.rBuf = ""
   end
 end
-
 
 function THttpTransport:getLine()
   local a,b = string.find(self.rBuf, self.CRLF)
@@ -133,41 +130,6 @@ function THttpTransport:_parseHeaders()
   until string.find(line, "^%s*$")
 
   return headers
-end
-
-function THttpTransport:_readChunked()
-  local chunks = {}
-
-  local size = 0
-  local done = false
-  repeat
-    local str = self.trans:read(1024, true)
-    if not str then
-      return nil
-    end
-
-    local length = tonumber(str, 16)
-
-    if not length then
-      return nil
-    end
-
-    size = size + length
-
-    if length > 0 then
-      local str = self.trans:readAll(length)
-      if not str then
-        return nil
-      end
-      chunks[#chunks + 1] = str
-    else
-      done = true
-    end
-    -- read the CRLF
-    self.trans:readAll(2)
-  until done
-
-  return table.concat(chunks)
 end
 
 function THttpTransport:write(buf, len)
