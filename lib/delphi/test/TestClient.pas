@@ -490,10 +490,10 @@ begin
     on e:Exception do Expect( FALSE, 'Unexpected exception type "'+e.ClassName+'"');
   end;
 
-  {
+
   if FTransport.IsOpen then FTransport.Close;
   FTransport.Open;   // re-open connection, server has already closed
-  }
+
 
   // case 3: no exception
   try
