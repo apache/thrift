@@ -1069,9 +1069,9 @@ begin
   end;
 
   data_len := len - FHeaderSize;
-  if (data_len < 0) then
-  begin
-    raise Exception.Create( 'TFramedTransport.Flush: data_len < 0' );
+  if (data_len < 0) then begin
+    raise TTransportException.Create( TTransportException.TExceptionType.Unknown,
+                                      'TFramedTransport.Flush: data_len < 0' );
   end;
 
   InitWriteBuffer;
