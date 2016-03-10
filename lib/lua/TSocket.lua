@@ -86,9 +86,9 @@ function TSocket:open()
   end
 end
 
-function TSocket:read(len)
+function TSocket:read(len, tag)
   local buf = self.handle:receive(self.handle, len)
-  if not buf or string.len(buf) ~= len then
+  if not buf or (tag == nil and string.len(buf) ~= len) then
     terror(TTransportException:new{errorCode = TTransportException.UNKNOWN})
   end
   return buf
