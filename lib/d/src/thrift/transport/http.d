@@ -134,7 +134,7 @@ protected:
     }
 
     static bool compToLower(ubyte a, ubyte b) {
-      return a == toLower(cast(char)b);
+      return toLower(cast(char)a) == toLower(cast(char)b);
     }
 
     if (startsWith!compToLower(split[0], cast(ubyte[])"transfer-encoding")) {
