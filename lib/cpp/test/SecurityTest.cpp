@@ -240,6 +240,14 @@ BOOST_AUTO_TEST_CASE(ssl_security_matrix)
                     continue;
                 }
 
+#ifdef OPENSSL_NO_SSL3
+                if (si == 2 || ci == 2)
+                {
+                    // Skip all SSLv3 cases - protocol not supported
+                    continue;
+                }
+#endif
+
                 boost::mutex::scoped_lock lock(mMutex);
 
                 BOOST_TEST_MESSAGE(boost::format("TEST: Server = %1%, Client = %2%")
