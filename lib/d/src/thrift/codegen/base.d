@@ -592,7 +592,7 @@ template TIsSetFlags(T, alias fieldMetaData) {
  * the wire without altering their definitions.
  */
 void readStruct(T, Protocol, alias fieldMetaData = cast(TFieldMeta[])null,
-  bool pointerStruct = false)(ref T s, Protocol p) if (isTProtocol!Protocol)
+  bool pointerStruct = false)(auto ref T s, Protocol p) if (isTProtocol!Protocol)
 {
   mixin({
     string code;
