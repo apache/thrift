@@ -22,6 +22,14 @@ import logging
 import os
 import socket
 import sys
+try:
+    from select import poll, POLLIN
+except ImportError:  # `poll` doesn't exist on OSX and other platforms
+    poll = False
+    try:
+        from select import select
+    except ImportError:  # `select` doesn't exist on AppEngine.
+        select = False
 
 from .TTransport import TTransportBase, TTransportException, TServerTransportBase
 
@@ -70,7 +78,7 @@ class TSocket(TSocketBase):
         self.handle = h
 
     def isOpen(self):
-        return self.handle is not None
+        return not is_connection_dropped(self.handle)
 
     def setTimeout(self, ms):
         if ms is None:
@@ -90,7 +98,10 @@ class TSocket(TSocketBase):
 
     def open(self):
         if self.handle:
-            raise TTransportException(TTransportException.ALREADY_OPEN)
+            if is_connection_dropped(self.handle):
+                self.close()
+            else:
+                raise TTransportException(TTransportException.ALREADY_OPEN)
         try:
             addrs = self._resolveAddr()
         except socket.gaierror:
@@ -190,3 +201,36 @@ class TServerSocket(TSocketBase, TServerTransportBase):
         result = TSocket()
         result.setHandle(client)
         return result
+
+
+def is_connection_dropped(sock):  # Platform-specific
+    """
+    Returns True if the connection is dropped and should be closed.
+
+    :param sock:
+        :class:`socket.socket` object.
+
+    Note: For platforms like AppEngine, this will always return ``False`` to
+    let the platform handle connection recycling transparently for us.
+    """
+    if sock is False:  # Platform-specific: AppEngine
+        return False
+    if sock is None:  # Connection already closed (such as by httplib).
+        return True
+
+    if not poll:
+        if not select:  # Platform-specific: AppEngine
+            return False
+
+        try:
+            return select([sock], [], [], 0.0)[0]
+        except socket.error:
+            return True
+
+    # This version is better on platforms that support it.
+    p = poll()
+    p.register(sock, POLLIN)
+    for (fno, ev) in p.poll(0.0):
+        if fno == sock.fileno():
+            # Either data is buffered (bad), or the connection is dropped.
+            return True
