@@ -80,6 +80,13 @@ class TSocket(TSocketBase):
         self.handle = h
 
     def isOpen(self):
+        """
+        Returns True if the connection is open (not been closed explicitly).
+
+        Note: If you want to know if the connection could be used to
+            communicate with the other side, do NOT use this method, call
+            `isActive()` instead.
+        """
         return self.handle is not None
 
     def isActive(self):
@@ -89,8 +96,8 @@ class TSocket(TSocketBase):
         :param sock:
             :class:`socket.socket` object.
 
-        Note: You should use this method rather than `isOpen` to determine if
-            you need close and reopen the connection.
+        Note: If the connection is still open but not "active" any more, you
+            must close before reopen it. Otherwise you'll expect an exception.
             For platforms like AppEngine, this will always return `True` to
             let the platform handle connection recycling transparently for us.
         """
