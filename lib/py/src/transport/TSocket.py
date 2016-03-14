@@ -133,7 +133,7 @@ class TSocket(TSocketBase):
                 else:
                     raise
             return len(buff) > 0
-        return False
+        return True
 
     def setTimeout(self, ms):
         if ms is None:
