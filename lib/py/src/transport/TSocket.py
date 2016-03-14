@@ -42,12 +42,14 @@ class TSocketBase(TTransportBase):
             return [(socket.AF_UNIX, socket.SOCK_STREAM, None, None,
                      self._unix_socket)]
         else:
-            return socket.getaddrinfo(self.host,
-                                      self.port,
-                                      self._socket_family,
-                                      socket.SOCK_STREAM,
-                                      0,
-                                      socket.AI_PASSIVE | socket.AI_ADDRCONFIG)
+            return socket.getaddrinfo(
+                self.host,
+                self.port,
+                self._socket_family,
+                socket.SOCK_STREAM,
+                0,
+                socket.AI_PASSIVE | socket.AI_ADDRCONFIG
+            )
 
     def close(self):
         if self.handle:
@@ -78,7 +80,60 @@ class TSocket(TSocketBase):
         self.handle = h
 
     def isOpen(self):
-        return not is_connection_dropped(self.handle)
+        return self.handle is not None
+
+    def isActive(self):
+        """
+        Returns False if the connection is dropped and should be closed.
+
+        :param sock:
+            :class:`socket.socket` object.
+
+        Note: You should use this method rather than `isOpen` to determine if
+            you need close and reopen the connection.
+            For platforms like AppEngine, this will always return `True` to
+            let the platform handle connection recycling transparently for us.
+        """
+        if not self.isOpen():  # Connection already closed.
+            return False
+
+        readable = False
+        if not poll:
+            if not select:  # Platform-specific: AppEngine
+                return True
+
+            try:
+                readable = bool(select([self.handle], [], [], 0.0)[0])
+            except socket.error:
+                return False
+
+        else:
+            # This version is better on platforms that support it.
+            p = poll()
+            p.register(self.handle, POLLIN)
+            for (fno, ev) in p.poll(0.0):
+                if fno == self.handle.fileno():
+                    # Either data is buffered, or the connection is dropped.
+                    readable = True
+                    break
+
+        if readable:
+            try:
+                buff = self.handle.recv(1, socket.MSG_PEEK)
+            except socket.error as e:
+                if (e.args[0] == errno.ECONNRESET and
+                        (sys.platform == 'darwin' or sys.platform.startswith('freebsd'))):
+                    # freebsd and Mach don't follow POSIX semantic of recv
+                    # and fail with ECONNRESET if peer performed shutdown.
+                    # See corresponding comment and code in TSocket::read()
+                    # in lib/cpp/src/transport/TSocket.cpp.
+                    self.close()
+                    # Trigger the check to raise the END_OF_FILE exception below.
+                    buff = ''
+                else:
+                    raise
+            return len(buff) > 0
+        return False
 
     def setTimeout(self, ms):
         if ms is None:
@@ -97,11 +152,8 @@ class TSocket(TSocketBase):
         return self._unix_socket if self._unix_socket else '%s:%d' % (self.host, self.port)
 
     def open(self):
-        if self.handle:
-            if is_connection_dropped(self.handle):
-                self.close()
-            else:
-                raise TTransportException(TTransportException.ALREADY_OPEN)
+        if self.isOpen():
+            raise TTransportException(TTransportException.ALREADY_OPEN)
         try:
             addrs = self._resolveAddr()
         except socket.gaierror:
@@ -201,36 +253,3 @@ class TServerSocket(TSocketBase, TServerTransportBase):
         result = TSocket()
         result.setHandle(client)
         return result
-
-
-def is_connection_dropped(sock):  # Platform-specific
-    """
-    Returns True if the connection is dropped and should be closed.
-
-    :param sock:
-        :class:`socket.socket` object.
-
-    Note: For platforms like AppEngine, this will always return ``False`` to
-    let the platform handle connection recycling transparently for us.
-    """
-    if sock is False:  # Platform-specific: AppEngine
-        return False
-    if sock is None:  # Connection already closed (such as by httplib).
-        return True
-
-    if not poll:
-        if not select:  # Platform-specific: AppEngine
-            return False
-
-        try:
-            return select([sock], [], [], 0.0)[0]
-        except socket.error:
-            return True
-
-    # This version is better on platforms that support it.
-    p = poll()
-    p.register(sock, POLLIN)
-    for (fno, ev) in p.poll(0.0):
-        if fno == sock.fileno():
-            # Either data is buffered (bad), or the connection is dropped.
-            return True
