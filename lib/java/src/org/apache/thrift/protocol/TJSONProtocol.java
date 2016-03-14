@@ -308,6 +308,13 @@ public class TJSONProtocol extends TProtocol {
     context_ = contextStack_.pop();
   }
 
+  // Reset the context stack to its initial state
+  private void resetContext() {
+    while (!contextStack_.isEmpty()) {
+      popContext();
+    }
+  }
+
   /**
    * Constructor
    */
@@ -503,6 +510,7 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public void writeMessageBegin(TMessage message) throws TException {
+    resetContext(); // THRIFT-3743
     writeJSONArrayStart();
     writeJSONInteger(VERSION);
     try {
@@ -854,6 +862,7 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public TMessage readMessageBegin() throws TException {
+    resetContext(); // THRIFT-3743
     readJSONArrayStart();
     if (readJSONInteger() != VERSION) {
       throw new TProtocolException(TProtocolException.BAD_VERSION,

@@ -143,6 +143,15 @@ public class TSimpleJSONProtocol extends TProtocol {
   }
 
   /**
+   * Reset the write context stack to its initial state.
+   */
+  protected void resetWriteContext() {
+    while (!writeContextStack_.isEmpty()) {
+      popWriteContext();
+    }
+  }
+
+  /**
    * Used to make sure that we are not encountering a map whose keys are containers
    */
   protected void assertContextIsNotMapKey(String invalidKeyType) throws CollectionMapKeyException {
@@ -159,6 +168,7 @@ public class TSimpleJSONProtocol extends TProtocol {
   }
 
   public void writeMessageBegin(TMessage message) throws TException {
+    resetWriteContext(); // THRIFT-3743
     trans_.write(LBRACKET);
     pushWriteContext(new ListContext());
     writeString(message.name);
