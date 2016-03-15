@@ -133,7 +133,7 @@ final class TJsonProtocol(Transport = TTransport) if (
     bool escapeNum = value !is null || context_.escapeNum;
 
     if (value is null) {
-      value = format("%.16g", dub);
+      value = format("%.17g", dub);
     }
 
     if (escapeNum) trans_.write(STRING_DELIMITER);
