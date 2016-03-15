@@ -24,6 +24,7 @@ AGGR = $(top_srcdir)/contrib/async-test/aggr.thrift
 BENCHMARK = $(top_srcdir)/lib/rb/benchmark/Benchmark.thrift
 
 BIN_CPP = bin/Main-debug
+BIN_PHP = bin/php/Main-debug.php
 
 gen-haxe/thrift/test/ThriftTest.hx: $(THRIFTTEST)
 	$(THRIFTCMD) $(THRIFTTEST)
@@ -34,7 +35,7 @@ gen-haxe/thrift/test/Aggr.hx: $(AGGR)
 gen-haxe/thrift/test/BenchmarkService.hx: $(BENCHMARK)
 	$(THRIFTCMD) $(BENCHMARK)
 
-all-local: $(BIN_CPP)
+all-local: $(BIN_CPP) $(BIN_PHP)
 
 $(BIN_CPP): \
 		src/*.hx \
@@ -44,6 +45,14 @@ $(BIN_CPP): \
 		gen-haxe/thrift/test/BenchmarkService.hx
 	$(HAXE) --cwd .  cpp.hxml
 
+$(BIN_PHP): \
+		src/*.hx \
+		../src/org/apache/thrift/**/*.hx \
+		gen-haxe/thrift/test/ThriftTest.hx \
+		gen-haxe/thrift/test/Aggr.hx \
+		gen-haxe/thrift/test/BenchmarkService.hx
+	$(HAXE) --cwd .  php.hxml
+
 
 #TODO: other haxe targets
 #    $(HAXE)  --cwd .  csharp
@@ -51,15 +60,15 @@ $(BIN_CPP): \
 #    $(HAXE)  --cwd .  java
 #    $(HAXE)  --cwd .  javascript
 #    $(HAXE)  --cwd .  neko
-#    $(HAXE)  --cwd .  php
 #    $(HAXE)  --cwd .  python  # needs Haxe 3.2.0
 
 
 clean-local:
 	$(RM) -r gen-haxe bin
 
-check: $(BIN_CPP)
+check: $(BIN_CPP) $(BIN_PHP)
 	$(BIN_CPP)
+	php -f $(BIN_PHP)
 
 EXTRA_DIST = \
              src \
