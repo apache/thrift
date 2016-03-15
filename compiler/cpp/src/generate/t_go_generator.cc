@@ -261,10 +261,9 @@ public:
                                     bool addError = false);
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
-  std::string type_to_go_type(t_type* ttype, bool is_container_value = false);
+  std::string type_to_go_type(t_type* ttype);
   std::string type_to_go_type_with_opt(t_type* ttype,
-                                       bool optional_field,
-                                       bool is_container_value = false);
+                                       bool optional_field);
   std::string type_to_go_key_type(t_type* ttype);
   std::string type_to_spec_args(t_type* ttype);
 
@@ -1109,7 +1108,7 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
     const map<t_const_value*, t_const_value*>& val = value->get_map();
-    out << "map[" << type_to_go_type(ktype) << "]" << type_to_go_type(vtype, true) << "{" << endl;
+    out << "map[" << type_to_go_type(ktype) << "]" << type_to_go_type(vtype) << "{" << endl;
     indent_up();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
 
@@ -3538,14 +3537,14 @@ string t_go_generator::type_to_go_key_type(t_type* type) {
   if (resolved_type->is_string() && ((t_base_type*)resolved_type)->is_binary())
     return "string";
 
-  return type_to_go_type(type, true);
+  return type_to_go_type(type);
 }
 
 /**
  * Converts the parse type to a go type
  */
-string t_go_generator::type_to_go_type(t_type* type, bool is_container_value) {
-  return type_to_go_type_with_opt(type, false, is_container_value);
+string t_go_generator::type_to_go_type(t_type* type) {
+  return type_to_go_type_with_opt(type, false);
 }
 
 /**
@@ -3553,10 +3552,13 @@ string t_go_generator::type_to_go_type(t_type* type, bool is_container_value) {
  * associated with the type is T_OPTIONAL.
  */
 string t_go_generator::type_to_go_type_with_opt(t_type* type,
-                                                bool optional_field,
-                                                bool is_container_value) {
-  (void)is_container_value;
+                                                bool optional_field) {
   string maybe_pointer(optional_field ? "*" : "");
+
+  if (type->is_typedef() && ((t_typedef*)type)->is_forward_typedef()) {
+    type = ((t_typedef*)type)->get_true_type();
+  }
+
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
 
@@ -3596,15 +3598,15 @@ string t_go_generator::type_to_go_type_with_opt(t_type* type,
   } else if (type->is_map()) {
     t_map* t = (t_map*)type;
     string keyType = type_to_go_key_type(t->get_key_type());
-    string valueType = type_to_go_type(t->get_val_type(), true);
+    string valueType = type_to_go_type(t->get_val_type());
     return maybe_pointer + string("map[") + keyType + "]" + valueType;
   } else if (type->is_set()) {
     t_set* t = (t_set*)type;
-    string elemType = type_to_go_key_type(t->get_elem_type()->get_true_type());
+    string elemType = type_to_go_key_type(t->get_elem_type());
     return maybe_pointer + string("map[") + elemType + string("]bool");
   } else if (type->is_list()) {
     t_list* t = (t_list*)type;
-    string elemType = type_to_go_type(t->get_elem_type()->get_true_type(), true);
+    string elemType = type_to_go_type(t->get_elem_type());
     return maybe_pointer + string("[]") + elemType;
   } else if (type->is_typedef()) {
     return maybe_pointer + publicize(type_name(type));
