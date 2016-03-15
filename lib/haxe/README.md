@@ -94,6 +94,7 @@ project files in these folders.
 Current status
 ========================
 - tested with Haxe C++ target
+- tested with Haxe PHP target (console, binary protocols)
 - transports: Socket, HTTP (client only), Stream
 - protocols: Binary, JSON, Multiplex, Compact
 - tutorial client and server available

@@ -24,25 +24,25 @@ import org.apache.thrift.*;
 
 class TRecursionTracker {
 
-	// default 
-    private static inline var DEFAULT_RECURSION_DEPTH : Int = 64; 
+    // default
+    private static inline var DEFAULT_RECURSION_DEPTH : Int = 64;
 
-	// limit and actual value
-	public var recursionLimit : Int = DEFAULT_RECURSION_DEPTH;
+    // limit and actual value
+    public var recursionLimit : Int = DEFAULT_RECURSION_DEPTH;
     private var recursionDepth : Int = 0;
 
-	public function IncrementRecursionDepth() : Void 
-	{
-		if (recursionDepth < recursionLimit)
-			++recursionDepth;
-		else
-			throw new TProtocolException(TProtocolException.DEPTH_LIMIT, "Depth limit exceeded");
-	}
+    public function IncrementRecursionDepth() : Void
+    {
+        if (recursionDepth < recursionLimit)
+            ++recursionDepth;
+        else
+            throw new TProtocolException(TProtocolException.DEPTH_LIMIT, "Depth limit exceeded");
+    }
 
-	public function DecrementRecursionDepth() : Void 
-	{
-		--recursionDepth;
-	}
+    public function DecrementRecursionDepth() : Void
+    {
+        --recursionDepth;
+    }
 
 
 }

@@ -20,6 +20,7 @@
 package org.apache.thrift.helper;
 
 import haxe.Int64;
+import haxe.Int32;
 
 class ZigZag {
 
@@ -28,7 +29,15 @@ class ZigZag {
      * represented compactly as a varint.
      */
     public static function FromInt( n : Int) : UInt    {
+        #if php
+
+        return cast(cast(cast(n,Int32) << 1,Int32) ^ cast(cast(n,Int32) >> 31,Int32),UInt);
+
+        #else
+
         return cast(n << 1,UInt) ^ cast(n >> 31,UInt);
+
+        #end
     }
 
 
@@ -36,7 +45,22 @@ class ZigZag {
      * Convert from zigzag int to int.
      */
     public static function ToInt( n : UInt) : Int {
+        #if php
+
+        var convertedLong = ToLong(n);
+        //if overflow return high
+        if( convertedLong.high != convertedLong.low >> 31 ) {
+            return convertedLong.high;
+        } else {
+            return convertedLong.low;
+        }
+
+
+        #else
+
         return (0x7FFFFFFF & cast(n >> 1,Int)) ^ (-cast(n & 1,Int));
+
+        #end
     }
 
 
@@ -125,4 +149,5 @@ class ZigZag {
     }
     #end
 }
-    
+
+   

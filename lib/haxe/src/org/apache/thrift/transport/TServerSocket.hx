@@ -39,26 +39,22 @@ class TServerSocket extends TServerTransport {
     // Underlying server with socket
     private var _socket : Socket= null;
 
-    // Port to listen on
-    private var _port : Int = 0;
-
     // Timeout for client sockets from accept
-    private var _clientTimeout : Float = 0;
+    private var _clientTimeout : Float = 5;
 
     // Whether or not to wrap new TSocket connections in buffers
     private var _useBufferedSockets : Bool = false;
 
 
-    public function new( port : Int, clientTimeout : Float = 0, useBufferedSockets : Bool = false)
+    public function new(?address : String = 'localhost',  port : Int, clientTimeout : Float = 5, useBufferedSockets : Bool = false)
     {
-        _port = port;
         _clientTimeout = clientTimeout;
         _useBufferedSockets = useBufferedSockets;
 
         try
         {
             _socket = new Socket();
-            _socket.bind( new Host('localhost'), port);
+            _socket.bind( new Host(address), port);
         }
         catch (e : Dynamic)
         {
@@ -74,7 +70,9 @@ class TServerSocket extends TServerTransport {
         if (_socket != null)    {
             try
             {
+                #if !php
                 _socket.listen(1);
+                #end
             }
             catch (e : Dynamic)
             {
@@ -94,7 +92,7 @@ class TServerSocket extends TServerTransport {
         {
             var accepted = _socket.accept();
             var result = TSocket.fromSocket(accepted);
-            accepted.setTimeout( _clientTimeout);
+            result.setTimeout( _clientTimeout);
 
             if( _useBufferedSockets)
             {

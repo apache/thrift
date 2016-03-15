@@ -18,11 +18,13 @@
 #
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
+BIN_PHP = bin/php/Main-debug.php
+
 
 gen-haxe/tutorial/calculator.hx gen-haxe/shared/shared_service.hx: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen haxe -r $<
 
-all-local: bin/Main-debug
+all-local: bin/Main-debug $(BIN_PHP)
 
 check: gen-haxe/tutorial/calculator.hx
 
@@ -32,17 +34,35 @@ bin/Main-debug: \
 		gen-haxe/tutorial/calculator.hx
 	$(HAXE) --cwd .  cpp.hxml
 
+$(BIN_PHP): \
+		src/*.hx \
+		../../lib/haxe/src/org/apache/thrift/**/*.hx \
+		gen-haxe/tutorial/calculator.hx
+	$(HAXE) --cwd .  php.hxml
+
 tutorialserver: all
 	bin/Main-debug server
+
+tutorialserver_php: all
+	php -f $(BIN_PHP) server
 
 tutorialclient: all
 	bin/Main-debug
 
+tutorialclient_php: all
+	php -f $(BIN_PHP) 
+
 tutorialsecureserver: all
 	bin/Main-debug server secure
 
+tutorialsecureserver_php: all
+	php -f $(BIN_PHP) server secure
+
 tutorialsecureclient: all
 	bin/Main-debug secure
+
+tutorialsecureclient_php: all
+	php -f $(BIN_PHP) secure
 
 clean-local:
 	$(RM) -r gen-haxe bin
