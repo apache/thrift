@@ -133,6 +133,7 @@ final class TJsonProtocol(Transport = TTransport) if (
     bool escapeNum = value !is null || context_.escapeNum;
 
     if (value is null) {
+      /* precision is 17 */
       value = format("%.17g", dub);
     }
 
