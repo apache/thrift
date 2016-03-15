@@ -290,7 +290,7 @@ class TJSONProtocol extends TProtocol
         if ($this->context_->escapeNum()) {
             $this->trans_->write(self::QUOTE);
         }
-
+        ini_set("precision",17);
         $this->trans_->write(json_encode($num));
 
         if ($this->context_->escapeNum()) {
