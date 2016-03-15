@@ -216,11 +216,11 @@ class TProtocolDecorator implements TProtocol
         return wrapped.readBinary();
     }
 
-	public function IncrementRecursionDepth() : Void {
+    public function IncrementRecursionDepth() : Void {
         return wrapped.IncrementRecursionDepth();
-	}
+    }
 
-	public function DecrementRecursionDepth() : Void {
+    public function DecrementRecursionDepth() : Void {
         return wrapped.DecrementRecursionDepth();
-	}
+    }
 }

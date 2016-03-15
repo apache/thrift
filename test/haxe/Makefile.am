@@ -22,17 +22,26 @@ THRIFTCMD = $(THRIFT) --gen haxe -r
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
 BIN_CPP = bin/Main-debug
+BIN_PHP = bin/php/Main-debug.php
 
 gen-haxe/thrift/test/ThriftTest.hx: $(THRIFTTEST)
 	$(THRIFTCMD) $(THRIFTTEST)
 
-all-local: $(BIN_CPP)
+all-local: $(BIN_CPP) $(BIN_PHP)
 
 $(BIN_CPP): \
 		src/*.hx \
 		../../lib/haxe/src/org/apache/thrift/**/*.hx \
 		gen-haxe/thrift/test/ThriftTest.hx
 	$(HAXE) --cwd .  cpp.hxml
+
+$(BIN_PHP): \
+		src/*.hx \
+		../../lib/haxe/src/org/apache/thrift/**/*.hx \
+		gen-haxe/thrift/test/ThriftTest.hx
+	$(HAXE) --cwd .  php.hxml
+
+
 
 
 #TODO: other haxe targets
@@ -41,18 +50,26 @@ $(BIN_CPP): \
 #    $(HAXE)  --cwd .  java
 #    $(HAXE)  --cwd .  javascript
 #    $(HAXE)  --cwd .  neko
-#    $(HAXE)  --cwd .  php
 #    $(HAXE)  --cwd .  python  # needs Haxe 3.2.0
 
 
 clean-local:
 	$(RM) -r gen-haxe bin
 
-check: $(BIN_CPP)
+check: check_cpp check_php
+
+check_cpp: $(BIN_CPP) 
 	timeout 10 $(BIN_CPP) server &
 	sleep 1
 	$(BIN_CPP) client
 	sleep 10
+
+check_php: $(BIN_PHP) 
+	timeout 10 php -f $(BIN_PHP) server &
+	sleep 1
+	php -f $(BIN_PHP) client
+	sleep 10
+
 
 EXTRA_DIST = \
              src \

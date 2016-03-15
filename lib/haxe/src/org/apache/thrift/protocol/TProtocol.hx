@@ -79,7 +79,7 @@ interface TProtocol {
     function readString() : String;
     function readBinary() : Bytes;
 
-	// recursion tracking
-	function IncrementRecursionDepth() : Void;
-	function DecrementRecursionDepth() : Void;
+    // recursion tracking
+    function IncrementRecursionDepth() : Void;
+    function DecrementRecursionDepth() : Void;
 }

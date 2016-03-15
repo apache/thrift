@@ -35,76 +35,76 @@ class TProtocolUtil {
      * @param type  the next value will be intepreted as this TType value.
      */
     public static function skip(prot:TProtocol, type : Int) : Void {
-		prot.IncrementRecursionDepth();
-		try
-		{
-			switch (type) {
-				case TType.BOOL: 
-					prot.readBool();
+        prot.IncrementRecursionDepth();
+        try
+        {
+            switch (type) {
+                case TType.BOOL:
+                    prot.readBool();
 
-				case TType.BYTE: 
-					prot.readByte();
+                case TType.BYTE:
+                    prot.readByte();
 
-				case TType.I16: 
-					prot.readI16();
+                case TType.I16:
+                    prot.readI16();
 
-				case TType.I32: 
-					prot.readI32();
+                case TType.I32:
+                    prot.readI32();
 
-				case TType.I64: 
-					prot.readI64();
+                case TType.I64:
+                    prot.readI64();
 
-				case TType.DOUBLE: 
-					prot.readDouble();
+                case TType.DOUBLE:
+                    prot.readDouble();
 
-				case TType.STRING: 
-					prot.readBinary();
+                case TType.STRING:
+                    prot.readBinary();
 
-				case TType.STRUCT: 
-					prot.readStructBegin();
-					while (true) {
-						var field:TField = prot.readFieldBegin();
-						if (field.type == TType.STOP) {
-						  break;
-						}
-						skip(prot, field.type);
-						prot.readFieldEnd();
-					}
-					prot.readStructEnd();
+                case TType.STRUCT:
+                    prot.readStructBegin();
+                    while (true) {
+                        var field:TField = prot.readFieldBegin();
+                        if (field.type == TType.STOP) {
+                          break;
+                        }
+                        skip(prot, field.type);
+                        prot.readFieldEnd();
+                    }
+                    prot.readStructEnd();
 
-				case TType.MAP: 
-					var map:TMap = prot.readMapBegin();
-					for (i in 0 ... map.size) {
-						skip(prot, map.keyType);
-						skip(prot, map.valueType);
-					}
-					prot.readMapEnd();
+                case TType.MAP:
+                    var map:TMap = prot.readMapBegin();
+                    for (i in 0 ... map.size) {
+                        skip(prot, map.keyType);
+                        skip(prot, map.valueType);
+                    }
+                    prot.readMapEnd();
 
-				case TType.SET: 
-					var set:TSet = prot.readSetBegin();
-					for (j in 0 ... set.size) {
-						skip(prot, set.elemType);
-					}
-					prot.readSetEnd();
+                case TType.SET:
+                    var set:TSet = prot.readSetBegin();
+                    for (j in 0 ... set.size) {
+                        skip(prot, set.elemType);
+                    }
+                    prot.readSetEnd();
 
-				case TType.LIST: 
-					var list:TList = prot.readListBegin();
-					for (k in 0 ... list.size) {
-						skip(prot, list.elemType);
-					}
-					prot.readListEnd();
+                case TType.LIST:
+                    var list:TList = prot.readListBegin();
+                    for (k in 0 ... list.size) {
+                        skip(prot, list.elemType);
+                    }
+                    prot.readListEnd();
 
-				default:
-					trace("Unknown field type ",type," in skipMaxDepth()");
-			}
-			
-			prot.DecrementRecursionDepth();
-		}
-		catch(e:Dynamic)
-		{
-			prot.DecrementRecursionDepth();
-			throw e;
-		}
+                default:
+                    trace("Unknown field type ",type," in skipMaxDepth()");
+            }
+
+            prot.DecrementRecursionDepth();
+        }
+        catch(e:Dynamic)
+        {
+            prot.DecrementRecursionDepth();
+            throw e;
+        }
     }
 
 }
