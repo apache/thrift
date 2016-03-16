@@ -156,7 +156,8 @@ func mismatch(expected, actual string) error {
 }
 
 func (p *TSimpleJSONProtocol) WriteMessageBegin(name string, typeId TMessageType, seqId int32) error {
-	p.resetContextStack() // THRIFT-3735
+	p.resetContextStack() 
+	p.writer.Reset(p.trans)
 	if e := p.OutputListBegin(); e != nil {
 		return e
 	}
@@ -270,18 +271,17 @@ func (p *TSimpleJSONProtocol) WriteBinary(v []byte) error {
 	if e := p.OutputPreValue(); e != nil {
 		return e
 	}
-	if _, e := p.write(JSON_QUOTE_BYTES); e != nil {
+	if _, e := p.writer.Write(JSON_QUOTE_BYTES); e != nil {
 		return NewTProtocolException(e)
 	}
 	writer := base64.NewEncoder(base64.StdEncoding, p.writer)
 	if _, e := writer.Write(v); e != nil {
-		p.writer.Reset(p.trans) // THRIFT-3735
 		return NewTProtocolException(e)
 	}
 	if e := writer.Close(); e != nil {
 		return NewTProtocolException(e)
 	}
-	if _, e := p.write(JSON_QUOTE_BYTES); e != nil {
+	if _, e := p.writer.Write(JSON_QUOTE_BYTES); e != nil {
 		return NewTProtocolException(e)
 	}
 	return p.OutputPostValue()
@@ -289,7 +289,8 @@ func (p *TSimpleJSONProtocol) WriteBinary(v []byte) error {
 
 // Reading methods.
 func (p *TSimpleJSONProtocol) ReadMessageBegin() (name string, typeId TMessageType, seqId int32, err error) {
-	p.resetContextStack() // THRIFT-3735
+	p.resetContextStack()   
+	p.reader.Reset(p.trans) 
 	if isNull, err := p.ParseListBegin(); isNull || err != nil {
 		return name, typeId, seqId, err
 	}
@@ -568,12 +569,12 @@ func (p *TSimpleJSONProtocol) OutputPreValue() error {
 	cxt := _ParseContext(p.dumpContext[len(p.dumpContext)-1])
 	switch cxt {
 	case _CONTEXT_IN_LIST, _CONTEXT_IN_OBJECT_NEXT_KEY:
-		if _, e := p.write(JSON_COMMA); e != nil {
+		if _, e := p.writer.Write(JSON_COMMA); e != nil {
 			return NewTProtocolException(e)
 		}
 		break
 	case _CONTEXT_IN_OBJECT_NEXT_VALUE:
-		if _, e := p.write(JSON_COLON); e != nil {
+		if _, e := p.writer.Write(JSON_COLON); e != nil {
 			return NewTProtocolException(e)
 		}
 		break
@@ -629,7 +630,7 @@ func (p *TSimpleJSONProtocol) OutputNull() error {
 	if e := p.OutputPreValue(); e != nil {
 		return e
 	}
-	if _, e := p.write(JSON_NULL); e != nil {
+	if _, e := p.writer.Write(JSON_NULL); e != nil {
 		return NewTProtocolException(e)
 	}
 	return p.OutputPostValue()
@@ -687,7 +688,7 @@ func (p *TSimpleJSONProtocol) OutputString(s string) error {
 }
 
 func (p *TSimpleJSONProtocol) OutputStringData(s string) error {
-	_, e := p.write([]byte(s))
+	_, e := p.writer.Write([]byte(s))
 	return NewTProtocolException(e)
 }
 
@@ -695,7 +696,7 @@ func (p *TSimpleJSONProtocol) OutputObjectBegin() error {
 	if e := p.OutputPreValue(); e != nil {
 		return e
 	}
-	if _, e := p.write(JSON_LBRACE); e != nil {
+	if _, e := p.writer.Write(JSON_LBRACE); e != nil {
 		return NewTProtocolException(e)
 	}
 	p.dumpContext = append(p.dumpContext, int(_CONTEXT_IN_OBJECT_FIRST))
@@ -703,7 +704,7 @@ func (p *TSimpleJSONProtocol) OutputObjectBegin() error {
 }
 
 func (p *TSimpleJSONProtocol) OutputObjectEnd() error {
-	if _, e := p.write(JSON_RBRACE); e != nil {
+	if _, e := p.writer.Write(JSON_RBRACE); e != nil {
 		return NewTProtocolException(e)
 	}
 	p.dumpContext = p.dumpContext[:len(p.dumpContext)-1]
@@ -717,7 +718,7 @@ func (p *TSimpleJSONProtocol) OutputListBegin() error {
 	if e := p.OutputPreValue(); e != nil {
 		return e
 	}
-	if _, e := p.write(JSON_LBRACKET); e != nil {
+	if _, e := p.writer.Write(JSON_LBRACKET); e != nil {
 		return NewTProtocolException(e)
 	}
 	p.dumpContext = append(p.dumpContext, int(_CONTEXT_IN_LIST_FIRST))
@@ -725,7 +726,7 @@ func (p *TSimpleJSONProtocol) OutputListBegin() error {
 }
 
 func (p *TSimpleJSONProtocol) OutputListEnd() error {
-	if _, e := p.write(JSON_RBRACKET); e != nil {
+	if _, e := p.writer.Write(JSON_RBRACKET); e != nil {
 		return NewTProtocolException(e)
 	}
 	p.dumpContext = p.dumpContext[:len(p.dumpContext)-1]
@@ -1326,12 +1327,4 @@ func (p *TSimpleJSONProtocol) safePeekContains(b []byte) bool {
 func (p *TSimpleJSONProtocol) resetContextStack() {
 	p.parseContextStack = []int{int(_CONTEXT_IN_TOPLEVEL)}
 	p.dumpContext = []int{int(_CONTEXT_IN_TOPLEVEL)}
-}
-
-func (p *TSimpleJSONProtocol) write(b []byte) (int, error) {
-	n, err := p.writer.Write(b)
-	if err != nil {
-		p.writer.Reset(p.trans) // THRIFT-3735
-	}
-	return n, err
 }
