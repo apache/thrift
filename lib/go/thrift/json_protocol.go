@@ -60,7 +60,8 @@ func NewTJSONProtocolFactory() *TJSONProtocolFactory {
 }
 
 func (p *TJSONProtocol) WriteMessageBegin(name string, typeId TMessageType, seqId int32) error {
-	p.resetContextStack() // THRIFT-3735
+	p.resetContextStack()
+	p.writer.Reset(p.trans)
 	if e := p.OutputListBegin(); e != nil {
 		return e
 	}
@@ -203,18 +204,17 @@ func (p *TJSONProtocol) WriteBinary(v []byte) error {
 	if e := p.OutputPreValue(); e != nil {
 		return e
 	}
-	if _, e := p.write(JSON_QUOTE_BYTES); e != nil {
+	if _, e := p.writer.Write(JSON_QUOTE_BYTES); e != nil {
 		return NewTProtocolException(e)
 	}
 	writer := base64.NewEncoder(base64.StdEncoding, p.writer)
 	if _, e := writer.Write(v); e != nil {
-		p.writer.Reset(p.trans) // THRIFT-3735
 		return NewTProtocolException(e)
 	}
 	if e := writer.Close(); e != nil {
 		return NewTProtocolException(e)
 	}
-	if _, e := p.write(JSON_QUOTE_BYTES); e != nil {
+	if _, e := p.writer.Write(JSON_QUOTE_BYTES); e != nil {
 		return NewTProtocolException(e)
 	}
 	return p.OutputPostValue()
@@ -222,7 +222,8 @@ func (p *TJSONProtocol) WriteBinary(v []byte) error {
 
 // Reading methods.
 func (p *TJSONProtocol) ReadMessageBegin() (name string, typeId TMessageType, seqId int32, err error) {
-	p.resetContextStack() // THRIFT-3735
+	p.resetContextStack()
+	p.reader.Reset(p.trans)
 	if isNull, err := p.ParseListBegin(); isNull || err != nil {
 		return name, typeId, seqId, err
 	}
