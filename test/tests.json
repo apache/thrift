@@ -539,6 +539,6 @@
         "test_basic_client.lua"
       ]
     },
-    "workdir": "lua" 
+    "workdir": "lua"
   }
 ]
