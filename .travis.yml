@@ -68,7 +68,7 @@ env:
 
     - TEST_NAME="Java Lua Perl PHP Python Ruby Dart (automake)"
       BUILD_CMD="../autotools.sh"
-      BUILD_ARG="--without-cpp --without-haskell --without-c_glib --without-csharp --without-d --without-erlang --without-go --without-haxe"
+      BUILD_ARG="--without-cpp --without-haskell --without-c_glib --without-csharp --without-d --without-erlang --without-go --without-haxe --without-nodejs"
 
     # These are flaky (due to cabal and npm network/server failures) and also have lengthy output
     - TEST_NAME="Haskell Node.js (automake)"
