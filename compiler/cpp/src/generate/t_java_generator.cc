@@ -2327,11 +2327,10 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
       }
 
       // Add to set or list, create if the set/list is null
-      indent(out);
       if (is_deprecated) {
         indent(out) << "@Deprecated" << endl;
       }
-      out << "public void add" << get_cap_name("to");
+      indent(out) << "public void add" << get_cap_name("to");
       out << cap_name << "(" << type_name(element_type) << " elem) {" << endl;
 
       indent_up();
@@ -2349,11 +2348,10 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
       t_type* key_type = ((t_map*)type)->get_key_type();
       t_type* val_type = ((t_map*)type)->get_val_type();
 
-      indent(out);
       if (is_deprecated) {
         indent(out) << "@Deprecated" << endl;
       }
-      out << "public void put" << get_cap_name("to");
+      indent(out) << "public void put" << get_cap_name("to");
       out << cap_name << "(" << type_name(key_type) << " key, " << type_name(val_type) << " val) {"
           << endl;
 
