@@ -56,3 +56,14 @@ tutorialclient: pub-get-gen pub-get-client
 
 tutorialconsoleclient: pub-get-console-client
 	${DART} console_client/bin/main.dart
+
+EXTRA_DIST = \
+	client/web/client.dart \
+	client/web/index.html \
+	client/web/styles.css \
+	client/pubspec.yaml \
+	console_client/bin/main.dart \
+	console_client/pubspec.yaml \
+	server/bin/main.dart \
+	server/pubspec.yaml \
+	build.sh

@@ -61,8 +61,11 @@ EXTRA_DIST = \
 		coding_standards.md \
 		TBinaryProtocol.lua \
 		TBufferedTransport.lua \
+		TCompactProtocol.lua \
 		TFramedTransport.lua \
 		Thrift.lua \
+		THttpTransport.lua \
+		TJsonProtocol.lua \
 		TMemoryBuffer.lua \
 		TProtocol.lua \
 		TServer.lua \
