@@ -3325,14 +3325,22 @@ void t_java_generator::generate_process_async_function(t_service* tservice, t_fu
 
     indent(f_service_) << "try {" << endl;
     indent(f_service_)
-        << "  fcall.sendResponse(fb,result, org.apache.thrift.protocol.TMessageType.REPLY,seqid);"
+        << "  fcall.sendResponse(fb, result, org.apache.thrift.protocol.TMessageType.REPLY,seqid);"
         << endl;
-    indent(f_service_) << "  return;" << endl;
+    indent(f_service_) << "} catch (org.apache.thrift.transport.TTransportException e) {" << endl;
+    indent_up();
+    f_service_ << indent()
+               << "LOGGER.error(\"TTransportException writing to internal frame buffer\", e);"
+               << endl
+               << indent() << "fb.close();" << endl;
+    indent_down();
     indent(f_service_) << "} catch (Exception e) {" << endl;
-    indent(f_service_) << "  LOGGER.error(\"Exception writing to internal frame buffer\", e);"
-                       << endl;
+    indent_up();
+    f_service_ << indent() << "LOGGER.error(\"Exception writing to internal frame buffer\", e);"
+               << endl
+               << indent() << "onError(e);" << endl;
+    indent_down();
     indent(f_service_) << "}" << endl;
-    indent(f_service_) << "fb.close();" << endl;
   }
   indent_down();
   indent(f_service_) << "}" << endl;
@@ -3341,7 +3349,21 @@ void t_java_generator::generate_process_async_function(t_service* tservice, t_fu
   indent_up();
 
   if (tfunction->is_oneway()) {
+    indent(f_service_) << "if (e instanceof org.apache.thrift.transport.TTransportException) {"
+                       << endl;
+    indent_up();
+
+    f_service_ << indent() << "LOGGER.error(\"TTransportException inside handler\", e);" << endl
+               << indent() << "fb.close();" << endl;
+
+    indent_down();
+    indent(f_service_) << "} else {" << endl;
+    indent_up();
+
     f_service_ << indent() << "LOGGER.error(\"Exception inside oneway handler\", e);" << endl;
+
+    indent_down();
+    indent(f_service_) << "}" << endl;
   } else {
     indent(f_service_) << "byte msgType = org.apache.thrift.protocol.TMessageType.REPLY;" << endl;
     indent(f_service_) << "org.apache.thrift.TSerializable msg;" << endl;
