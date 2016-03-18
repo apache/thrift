@@ -95,6 +95,7 @@ EXTRA_DIST = \
 	keys \
 	c_glib \
 	cpp \
+	dart \
 	erl \
 	hs \
 	lua \
@@ -113,7 +114,7 @@ EXTRA_DIST = \
 	DenseLinkingTest.thrift \
 	DocTest.thrift \
 	EnumTest.thrift \
-	known_failures_Linux.json \
+	FullCamelTest.thrift \
 	Include.thrift \
 	JavaBeansTest.thrift \
 	JsDeepConstructorTest.thrift \
@@ -125,10 +126,11 @@ EXTRA_DIST = \
 	ReuseObjects.thrift \
 	SmallTest.thrift \
 	StressTest.thrift \
-	test.py \
-	tests.json \
 	ThriftTest.thrift \
 	TypedefTest.thrift \
+	known_failures_Linux.json \
+	test.py \
+	tests.json \
 	result.js \
 	index.html \
 	README.md \

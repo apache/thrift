@@ -58,4 +58,5 @@ EXTRA_DIST = \
 	setup.py \
 	setup.cfg \
 	src \
+	test \
 	README.md
