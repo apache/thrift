@@ -281,7 +281,7 @@ public abstract class ServerTestBase extends TestCase {
   public static final String HOST = "localhost";
   public static final int PORT = Integer.valueOf(
     System.getProperty("test.port", "9090"));
-  protected static final int SOCKET_TIMEOUT = 1000;
+  protected static final int SOCKET_TIMEOUT = 1500;
   private static final Xtruct XSTRUCT = new Xtruct("Zero", (byte) 1, -3, -5);
   private static final Xtruct2 XSTRUCT2 = new Xtruct2((byte)1, XSTRUCT, 5);
 
@@ -418,8 +418,7 @@ public abstract class ServerTestBase extends TestCase {
       testInsanity(testClient);
       testException(testClient);
       testOneway(testClient);
-      // FIXME: a call after oneway does not work for async client
-      // testI32(testClient);
+      testI32(testClient);
       transport.close();
 
       stopServer();
@@ -486,7 +485,10 @@ public abstract class ServerTestBase extends TestCase {
   }
 
   private void testOneway(ThriftTest.Client testClient) throws Exception {
-    testClient.testOneway(3);
+    long begin = System.currentTimeMillis();
+    testClient.testOneway(1);
+    long elapsed = System.currentTimeMillis() - begin;
+    assertTrue(elapsed < 500);
   }
 
   private void testSet(ThriftTest.Client testClient) throws TException {
@@ -531,21 +533,20 @@ public abstract class ServerTestBase extends TestCase {
   }
 
   public void testTransportFactory() throws Exception {
-    
     for (TProtocolFactory protoFactory : getProtocols()) {
       TestHandler handler = new TestHandler();
       ThriftTest.Processor processor = new ThriftTest.Processor(handler);
-  
+
       final CallCountingTransportFactory factory = new CallCountingTransportFactory(new TFramedTransport.Factory());
-  
+
       startServer(processor, protoFactory, factory);
       assertEquals(0, factory.count);
-  
+
       TSocket socket = new TSocket(HOST, PORT);
       socket.setTimeout(SOCKET_TIMEOUT);
       TTransport transport = getClientTransport(socket);
       open(transport);
-  
+
       TProtocol protocol = protoFactory.getProtocol(transport);
       ThriftTest.Client testClient = new ThriftTest.Client(protocol);
       assertEquals(0, testClient.testByte((byte) 0));
