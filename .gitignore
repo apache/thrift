@@ -148,6 +148,7 @@ erl_crash.dump
 /lib/csharp/**/bin/
 /lib/csharp/**/obj/
 /lib/csharp/src/packages
+/lib/d/test/*.pem
 /lib/d/libthriftd*.a
 /lib/d/test/async_test
 /lib/d/test/client_pool_test
