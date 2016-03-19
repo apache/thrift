@@ -60,11 +60,13 @@ THRIFTCODE= \
             src/Transport/TTransportFactory.cs \
             src/Transport/THttpClient.cs \
             src/Transport/THttpHandler.cs \
+            src/Transport/THttpTaskAsyncHandler.cs \
             src/Transport/TMemoryBuffer.cs \
             src/Transport/TNamedPipeClientTransport.cs \
             src/Transport/TNamedPipeServerTransport.cs \
             src/Transport/TTLSSocket.cs \
             src/Transport/TTLSServerSocket.cs \
+            src/TAsyncProcessor.cs \
             src/TProcessor.cs \
             src/TProcessorFactory.cs \
             src/TSingletonProcessorFactory.cs \
@@ -103,6 +105,7 @@ EXTRA_DIST = \
              $(THRIFTCODE) \
              ThriftMSBuildTask \
              src/Thrift.csproj \
+             src/Thrift.45.csproj \
              src/Thrift.sln \
              src/Transport/TSilverlightSocket.cs \
              test \
