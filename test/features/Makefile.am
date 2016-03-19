@@ -24,4 +24,5 @@ EXTRA_DIST = \
 	string_limit.py \
 	tests.json \
 	theader_binary.py \
+	setup.cfg \
 	util.py
