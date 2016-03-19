@@ -112,7 +112,9 @@ EXTRA_DIST = \
 	doap.rdf \
 	package.json \
 	sonar-project.properties \
+	Dockerfile \
 	LICENSE \
 	CHANGES \
 	NOTICE \
-	README.md
+	README.md \
+	Thrift.podspec

@@ -34,5 +34,6 @@ clean-local:
 	$(RM) -r gen-*
 
 EXTRA_DIST = \
+	setup.cfg \
 	PythonServer.py \
 	PythonClient.py

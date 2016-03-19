@@ -131,6 +131,7 @@ EXTRA_DIST = \
 	known_failures_Linux.json \
 	test.py \
 	tests.json \
+	rebuild_known_failures.sh \
 	result.js \
 	index.html \
 	README.md \

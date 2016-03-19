@@ -44,6 +44,7 @@ EXTRA_DIST = \
 	build.properties \
 	CMakeLists.txt \
 	coding_standards.md \
+	android \
 	src \
 	test \
 	README.md
