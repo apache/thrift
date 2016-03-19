@@ -57,6 +57,8 @@ EXTRA_DIST = \
 	lib/Thrift/Socket.pm \
 	lib/Thrift/SSLSocket.pm \
 	lib/Thrift/SSLServerSocket.pm \
+	lib/Thrift/UnixServerSocket.pm \
+	lib/Thrift/UnixSocket.pm \
 	lib/Thrift/Transport.pm \
 	README.md
 
