@@ -224,7 +224,7 @@ void TServerFramework::newlyConnectedClient(const boost::shared_ptr<TConnectedCl
   // Count a concurrent client added.
   Synchronized sync(mon_);
   ++clients_;
-  hwm_ = std::max(hwm_, clients_);
+  hwm_ = (std::max)(hwm_, clients_);
 }
 
 void TServerFramework::disposeConnectedClient(TConnectedClient* pClient) {

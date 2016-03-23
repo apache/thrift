@@ -43,7 +43,6 @@ static const uint8_t kJSONObjectStart = '{';
 static const uint8_t kJSONObjectEnd = '}';
 static const uint8_t kJSONArrayStart = '[';
 static const uint8_t kJSONArrayEnd = ']';
-static const uint8_t kJSONNewline = '\n';
 static const uint8_t kJSONPairSeparator = ':';
 static const uint8_t kJSONElemSeparator = ',';
 static const uint8_t kJSONBackslash = '\\';

@@ -700,7 +700,7 @@ void TSocket::setLinger(bool on, int linger) {
 #ifndef _WIN32
   struct linger l = {(lingerOn_ ? 1 : 0), lingerVal_};
 #else
-  struct linger l = {(lingerOn_ ? 1 : 0), static_cast<u_short>(lingerVal_)};
+  struct linger l = {static_cast<u_short>(lingerOn_ ? 1 : 0), static_cast<u_short>(lingerVal_)};
 #endif
 
   int ret = setsockopt(socket_, SOL_SOCKET, SO_LINGER, cast_sockopt(&l), sizeof(l));

@@ -1436,8 +1436,8 @@ bool TNonblockingIOThread::notify(TNonblockingServer::TConnection* conn) {
   }
 
   fd_set wfds, efds;
-  int ret = -1;
-  int kSize = sizeof(conn);
+  long ret = -1;
+  long kSize = sizeof(conn);
   const char* pos = (const char*)const_cast_sockopt(&conn);
 
   while (kSize > 0) {
@@ -1445,7 +1445,7 @@ bool TNonblockingIOThread::notify(TNonblockingServer::TConnection* conn) {
     FD_ZERO(&efds);
     FD_SET(fd, &wfds);
     FD_SET(fd, &efds);
-    ret = select(fd + 1, NULL, &wfds, &efds, NULL);
+    ret = select(static_cast<int>(fd + 1), NULL, &wfds, &efds, NULL);
     if (ret < 0) {
       return false;
     } else if (ret == 0) {

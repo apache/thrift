@@ -162,8 +162,7 @@ TimerManager::~TimerManager() {
     try {
       stop();
     } catch (...) {
-      throw;
-      // uhoh
+      // We're really hosed.
     }
   }
 }
