@@ -214,8 +214,10 @@ void TServerFramework::setConcurrentClientLimit(int64_t newLimit) {
 }
 
 void TServerFramework::stop() {
-  serverTransport_->interrupt();
+  // Order is important because serve() releases serverTransport_ when it is
+  // interrupted, which closes the socket that interruptChildren uses.
   serverTransport_->interruptChildren();
+  serverTransport_->interrupt();
 }
 
 void TServerFramework::newlyConnectedClient(const boost::shared_ptr<TConnectedClient>& pClient) {
