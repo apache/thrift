@@ -347,7 +347,9 @@ uint32_t TDebugProtocol::writeString(const string& str) {
       output += "\\\\";
     } else if (*it == '"') {
       output += "\\\"";
-    } else if (std::isprint(*it)) {
+      // passing characters <0 to std::isprint causes asserts. isprint takes an
+      // int, so we need to be careful of sign extension
+    } else if (std::isprint((unsigned char)*it)) {
       output += *it;
     } else {
       switch (*it) {
