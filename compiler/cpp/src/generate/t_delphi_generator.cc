@@ -3538,8 +3538,7 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out,
     indent_impl(code_block) << (*f_iter)->get_key() << ": begin" << endl;
     indent_up_impl();
     indent_impl(code_block) << "if (field_.Type_ = " << type_to_enum((*f_iter)->get_type())
-                            << ") then" << endl;
-    indent_impl(code_block) << "begin" << endl;
+                            << ") then begin" << endl;
     indent_up_impl();
 
     generate_deserialize_field(code_block, is_exception, *f_iter, "", local_vars);
@@ -3552,8 +3551,7 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out,
 
     indent_down_impl();
 
-    indent_impl(code_block) << "end else" << endl;
-    indent_impl(code_block) << "begin" << endl;
+    indent_impl(code_block) << "end else begin" << endl;
     indent_up_impl();
     indent_impl(code_block) << "TProtocolUtil.Skip(iprot, field_.Type_);" << endl;
     indent_down_impl();
@@ -3595,8 +3593,9 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out,
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
       indent_impl(code_block) << "if not _req_isset_" << prop_name(*f_iter, is_exception) << endl;
       indent_impl(code_block)
-          << "then raise TProtocolException.Create( TProtocolException.INVALID_DATA, '"
-          << prop_name(*f_iter, is_exception) << "');" << endl;
+          << "then raise TProtocolException.Create( TProtocolException.INVALID_DATA, "
+          << "'required field " << prop_name(*f_iter, is_exception) << " not set');" 
+          << endl;
     }
   }
 
@@ -3708,24 +3707,28 @@ void t_delphi_generator::generate_delphi_struct_writer_impl(ostream& out,
   }
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    string fieldname = prop_name((*f_iter), is_exception);
     bool null_allowed = type_can_be_null((*f_iter)->get_type());
-    bool is_optional = ((*f_iter)->get_req() != t_field::T_REQUIRED);
+    bool is_required = ((*f_iter)->get_req() == t_field::T_REQUIRED);
+    bool has_isset = (!is_required);
+    if (is_required && null_allowed) {
+      null_allowed = false;
+      indent_impl(code_block) << "if (" << fieldname << " = nil)" << endl;
+      indent_impl(code_block) << "then raise TProtocolException.Create( TProtocolException.INVALID_DATA, "
+                              << "'required field " << fieldname << " not set');" 
+                              << endl;
+    }
     if (null_allowed) {
-      indent_impl(code_block) << "if (" << prop_name((*f_iter), is_exception) << " <> nil)";
-      if (is_optional) {
-        code_block << " and __isset_" << prop_name(*f_iter, is_exception);
+      indent_impl(code_block) << "if (" << fieldname << " <> nil)";
+      if (has_isset) {
+        code_block << " and __isset_" << fieldname;
       }
-      code_block << " then" << endl;
-      indent_impl(code_block) << "begin" << endl;
+      code_block << " then begin" << endl;
       indent_up_impl();
     } else {
-      if (is_optional) {
-        indent_impl(code_block) << "if (__isset_" << prop_name(*f_iter, is_exception) << ") then"
-                                << endl;
-        indent_impl(code_block) << "begin" << endl;
+      if (has_isset) {
+        indent_impl(code_block) << "if (__isset_" << fieldname << ") then begin" << endl;
         indent_up_impl();
-      } else {
-        indent_impl(code_block) << "// required field" << endl;
       }
     }
     indent_impl(code_block) << "field_.Name := '" << (*f_iter)->get_name() << "';" << endl;
@@ -3735,7 +3738,7 @@ void t_delphi_generator::generate_delphi_struct_writer_impl(ostream& out,
     indent_impl(code_block) << "oprot.WriteFieldBegin(field_);" << endl;
     generate_serialize_field(code_block, is_exception, *f_iter, "", local_vars);
     indent_impl(code_block) << "oprot.WriteFieldEnd();" << endl;
-    if (null_allowed || is_optional) {
+    if (null_allowed || has_isset) {
       indent_down_impl();
       indent_impl(code_block) << "end;" << endl;
     }
