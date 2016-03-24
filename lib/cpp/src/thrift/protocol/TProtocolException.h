@@ -67,7 +67,7 @@ public:
    *
    * @return Error code
    */
-  TProtocolExceptionType getType() { return type_; }
+  TProtocolExceptionType getType() const { return type_; }
 
   virtual const char* what() const throw() {
     if (message_.empty()) {

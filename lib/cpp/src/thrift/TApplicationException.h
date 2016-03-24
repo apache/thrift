@@ -65,7 +65,7 @@ public:
    *
    * @return Error code
    */
-  TApplicationExceptionType getType() { return type_; }
+  TApplicationExceptionType getType() const { return type_; }
 
   virtual const char* what() const throw() {
     if (message_.empty()) {
