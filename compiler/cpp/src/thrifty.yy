@@ -913,11 +913,19 @@ FieldIdentifier:
         $$.value = static_cast<int32_t>($1);
         $$.auto_assigned = false;
       }
+      if( (SHRT_MIN > $$.value) || ($$.value > SHRT_MAX)) {
+        pwarning(1, "Field key (%d) exceeds allowed range (%d..%d).\n",
+                 $$.value, SHRT_MIN, SHRT_MAX);
+      }
     }
 |
     {
       $$.value = y_field_val--;
       $$.auto_assigned = true;
+      if( (SHRT_MIN > $$.value) || ($$.value > SHRT_MAX)) {
+        pwarning(1, "Field key (%d) exceeds allowed range (%d..%d).\n",
+                 $$.value, SHRT_MIN, SHRT_MAX);
+      }
     }
 
 FieldReference:
