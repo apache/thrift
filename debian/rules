@@ -29,7 +29,7 @@ configure-stamp:
 
 	# Add here commands to configure the package.
 	if [ -f bootstrap.sh ]; then $(CURDIR)/bootstrap.sh; fi
-	$(CURDIR)/configure --prefix=/usr --with-c_glib --without-erlang
+	$(CURDIR)/configure --prefix=/usr
 
 	touch configure-stamp
 
@@ -40,7 +40,7 @@ build: build-arch build-indep
 	# $(MAKE) -C test check
 
 build-arch: build-arch-stamp
-build-arch-stamp: configure-stamp
+$(CURDIR)/compiler/cpp/thrift build-arch-stamp: configure-stamp
 
 	# Compile compiler
 	$(MAKE) -C $(CURDIR)/compiler/cpp
@@ -61,12 +61,12 @@ build-arch-stamp: configure-stamp
 	# PHP
 	cd $(CURDIR)/lib/php/src/ext/thrift_protocol && \
 		phpize && \
-		./configure && make
+		./configure && $(MAKE)
 
 	touch $@
 
 build-indep: build-indep-stamp
-build-indep-stamp: configure-stamp
+build-indep-stamp: configure-stamp $(CURDIR)/compiler/cpp/thrift
 
 	# Add here commands to compile the indep part of the package.
 	#$(MAKE) doc
@@ -91,6 +91,8 @@ clean:
 	dh_testroot
 	rm -f build-arch-stamp build-indep-stamp configure-stamp
 
+	cd $(CURDIR)/lib/py && python setup.py clean --all
+
 	# Add here commands to clean up after the build process.
 	-$(MAKE) clean
 
@@ -107,12 +109,12 @@ install-indep:
 	# debian/<package>-doc.
 	#INSTALLDOC#
 
-        # Java
+	# Java
 	mkdir -p $(CURDIR)/debian/libthrift-java/usr/share/java/ && \
 	cp $(CURDIR)/lib/java/build/libthrift*.jar \
 		$(CURDIR)/debian/libthrift-java/usr/share/java/
 
-        # Ruby
+	# Ruby
 	mkdir -p $(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1 && \
 	cp $(CURDIR)/lib/rb/lib/thrift.rb \
 		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1
@@ -125,7 +127,10 @@ install-indep:
 		$(CURDIR)/debian/libthrift-cil/usr/lib/cli/thrift/Thrift.dll
 
 	# Perl
-	$(MAKE) -C $(CURDIR)/lib/perl install DESTDIR=$(CURDIR)/debian/libthrift-perl/usr
+	$(MAKE) -C $(CURDIR)/lib/perl install DESTDIR=$(CURDIR)/debian/libthrift-perl
+	mv $(CURDIR)/debian/libthrift-perl/usr/local/lib/perl5 $(CURDIR)/debian/libthrift-perl/usr/lib
+	rmdir $(CURDIR)/debian/libthrift-perl/usr/local/lib
+	rmdir $(CURDIR)/debian/libthrift-perl/usr/local
 
 	dh_install -i
 
@@ -148,11 +153,14 @@ install-arch:
 	# Python
 	cd $(CURDIR)/lib/py && \
 	for py in $(PYVERS); do \
-		$$py setup.py install --no-compile --root=$(CURDIR)/debian/python-thrift; \
-		$$py-dbg setup.py install --no-compile --root=$(CURDIR)/debian/python-thrift-dbg; \
+		$$py setup.py install --install-layout=deb --no-compile --root=$(CURDIR)/debian/python-thrift; \
+		$$py-dbg setup.py install --install-layout=deb --no-compile --root=$(CURDIR)/debian/python-thrift-dbg; \
 	done
 
-	find $(CURDIR)/debian/python-thrift-dbg -name "*.pyc" -print0 | xargs -0 rm -f
+	find $(CURDIR)/debian/python-thrift -name "*.py[co]" -print0 | xargs -0 rm -f
+	find $(CURDIR)/debian/python-thrift -name "__pycache__" -print0 | xargs -0 rm -fr
+	find $(CURDIR)/debian/python-thrift-dbg -name "__pycache__" -print0 | xargs -0 rm -fr
+	find $(CURDIR)/debian/python-thrift-dbg -name "*.py[co]" -print0 | xargs -0 rm -f
 	find $(CURDIR)/debian/python-thrift-dbg -name "*.py" -print0 | xargs -0 rm -f
 	find $(CURDIR)/debian/python-thrift-dbg -name "*.egg-info" -print0 | xargs -0 rm -rf
 	find $(CURDIR)/debian/python-thrift-dbg -depth -type d -empty -exec rmdir {} \;
@@ -165,9 +173,9 @@ install-arch:
 	# C++ and C (glib)
 	mkdir -p $(CURDIR)/debian/tmp; \
 	cd $(CURDIR)/lib/cpp && \
-		make DESTDIR=$(CURDIR)/debian/tmp install
+		$(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
 	cd $(CURDIR)/lib/c_glib && \
-		make DESTDIR=$(CURDIR)/debian/tmp install
+		$(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
 
 	dh_install --sourcedir=debian/tmp -s
 
@@ -183,8 +191,8 @@ binary-common:
 	dh_installexamples
 	dh_installman
 	dh_link
-	dh_strip -Npython-thrift-dbg -Nthrift-compiler -Nlibthrift0 --dbg=python-thrift-dbg
-	dh_strip -Npython-thrift-dbg
+	dh_strip -ppython-thrift --dbg=python-thrift-dbg
+	dh_strip -pthrift-compiler -plibthrift0
 	dh_compress
 	dh_fixperms
 	dh_makeshlibs
@@ -200,7 +208,7 @@ binary-indep: build-indep install-indep
 
 # Build architecture dependent packages using the common target.
 binary-arch: build-arch install-arch
-	echo "php:Depends=phpapi-$(php-config5 --phpapi)" > debian/substvars
+	echo "php:Depends=phpapi-$(shell php-config5 --phpapi)" > $(CURDIR)/debian/substvars
 	$(MAKE) -f debian/rules DH_OPTIONS=-s binary-common
 
 binary: binary-arch binary-indep
