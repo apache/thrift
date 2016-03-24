@@ -30,7 +30,7 @@ Package: python-thrift
 Architecture: any
 Section: python
 Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}, python-six
-Recommends: python-twisted-web
+Recommends: python-twisted-web, python-backports.ssl-match-hostname, python-ipaddress
 Provides: ${python:Provides}
 Description: Python bindings for Thrift
  Thrift is a software framework for scalable cross-language services
