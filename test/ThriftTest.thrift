@@ -80,7 +80,7 @@ struct Bools {
 struct Xtruct
 {
   1:  string string_thing,
-  4:  byte   byte_thing,
+  4:  i8     byte_thing,
   9:  i32    i32_thing,
   11: i64    i64_thing
 }
@@ -158,7 +158,7 @@ service ThriftTest
    * @param byte thing - the i8/byte to print
    * @return i8 - returns the i8/byte 'thing'
    */
-  i8         testByte(1: byte thing),
+  i8           testByte(1: i8 thing),
 
   /**
    * Prints 'testI32("%d")' with thing as '%d'
@@ -271,7 +271,7 @@ service ThriftTest
 
   /**
    * Prints 'testMulti()'
-   * @param byte arg0 -
+   * @param i8 arg0 -
    * @param i32 arg1 -
    * @param i64 arg2 -
    * @param map<i16, string> arg3 -
@@ -280,7 +280,7 @@ service ThriftTest
    * @return Xtruct - returns an Xtruct with string_thing = "Hello2, byte_thing = arg0, i32_thing = arg1
    *    and i64_thing = arg2
    */
-  Xtruct testMulti(1: byte arg0, 2: i32 arg1, 3: i64 arg2, 4: map<i16, string> arg3, 5: Numberz arg4, 6: UserId arg5),
+  Xtruct testMulti(1: i8 arg0, 2: i32 arg1, 3: i64 arg2, 4: map<i16, string> arg3, 5: Numberz arg4, 6: UserId arg5),
 
   /**
    * Print 'testException(%s)' with arg as '%s'
@@ -331,7 +331,7 @@ struct VersioningTestV2 {
        1: i32 begin_in_both,
 
        2: i32 newint,
-       3: byte newbyte,
+       3: i8 newbyte,
        4: i16 newshort,
        5: i64 newlong,
        6: double newdouble

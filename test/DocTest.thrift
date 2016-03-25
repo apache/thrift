@@ -58,7 +58,7 @@ struct Xtruct
   1:  string string_thing
 
   /** doct text goes before a comma */
-  4:  byte   byte_thing,
+  4:  i8     byte_thing,
 
   9:  i32    i32_thing,
   11: i64    i64_thing
@@ -74,7 +74,7 @@ const map<string,string> MAPCONSTANT = {'hello':'world', 'goodnight':'moon'}
 
 struct Xtruct2
 {
-  1: byte   byte_thing,
+  1: i8     byte_thing,
   2: Xtruct struct_thing,
   3: i32    i32_thing
 }
@@ -117,7 +117,7 @@ service ThriftTest
   /** And this is how you would document functions in a service */
   void         testVoid(),
   string       testString(1: string thing),
-  byte         testByte(1: byte thing),
+  i8           testByte(1: byte thing),
   i32          testI32(1: i32 thing),
 
   /** Like this one */
