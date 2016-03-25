@@ -152,10 +152,10 @@ install-arch:
 
 	# Python
 	cd $(CURDIR)/lib/py && \
-	for py in $(PYVERS); do \
-		$$py setup.py install --install-layout=deb --no-compile --root=$(CURDIR)/debian/python-thrift; \
-		$$py-dbg setup.py install --install-layout=deb --no-compile --root=$(CURDIR)/debian/python-thrift-dbg; \
-	done
+	python2 setup.py install --install-layout=deb --no-compile --root=$(CURDIR)/debian/python-thrift && \
+	python2-dbg setup.py install --install-layout=deb --no-compile --root=$(CURDIR)/debian/python-thrift-dbg && \
+	python3 setup.py install --install-layout=deb --no-compile --root=$(CURDIR)/debian/python3-thrift && \
+	python3-dbg setup.py install --install-layout=deb --no-compile --root=$(CURDIR)/debian/python3-thrift-dbg
 
 	find $(CURDIR)/debian/python-thrift -name "*.py[co]" -print0 | xargs -0 rm -f
 	find $(CURDIR)/debian/python-thrift -name "__pycache__" -print0 | xargs -0 rm -fr
@@ -164,6 +164,14 @@ install-arch:
 	find $(CURDIR)/debian/python-thrift-dbg -name "*.py" -print0 | xargs -0 rm -f
 	find $(CURDIR)/debian/python-thrift-dbg -name "*.egg-info" -print0 | xargs -0 rm -rf
 	find $(CURDIR)/debian/python-thrift-dbg -depth -type d -empty -exec rmdir {} \;
+
+	find $(CURDIR)/debian/python3-thrift -name "*.py[co]" -print0 | xargs -0 rm -f
+	find $(CURDIR)/debian/python3-thrift -name "__pycache__" -print0 | xargs -0 rm -fr
+	find $(CURDIR)/debian/python3-thrift-dbg -name "__pycache__" -print0 | xargs -0 rm -fr
+	find $(CURDIR)/debian/python3-thrift-dbg -name "*.py[co]" -print0 | xargs -0 rm -f
+	find $(CURDIR)/debian/python3-thrift-dbg -name "*.py" -print0 | xargs -0 rm -f
+	find $(CURDIR)/debian/python3-thrift-dbg -name "*.egg-info" -print0 | xargs -0 rm -rf
+	find $(CURDIR)/debian/python3-thrift-dbg -depth -type d -empty -exec rmdir {} \;
 
 	# PHP
 	mkdir -p $(CURDIR)/debian/php5-thrift
@@ -192,6 +200,7 @@ binary-common:
 	dh_installman
 	dh_link
 	dh_strip -ppython-thrift --dbg=python-thrift-dbg
+	dh_strip -ppython3-thrift --dbg=python3-thrift-dbg
 	dh_strip -pthrift-compiler -plibthrift0
 	dh_compress
 	dh_fixperms

@@ -66,11 +66,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       python-all-dev \
       python-all-dbg \
       python-setuptools \
-      python-support \
       python-twisted \
       python-zope.interface \
       python-pip \
-      python3-dev \
+      python3-all \
+      python3-all-dbg \
+      python3-all-dev \
+      python3-setuptools \
       python3-pip
 
 # Ruby dependencies
