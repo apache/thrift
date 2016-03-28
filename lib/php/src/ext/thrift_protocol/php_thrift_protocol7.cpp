@@ -32,6 +32,7 @@
 
 #include <cstdint>
 #include <stdexcept>
+#include <algorithm>
 
 #ifndef bswap_64
 #define	bswap_64(x)     (((uint64_t)(x) << 56) | \
@@ -896,7 +897,7 @@ void binary_serialize_spec(zval* zthis, PHPOutputTransport& transport, HashTable
        (val_ptr = zend_hash_get_current_data_ex(spec, &key_ptr)) != nullptr;
        zend_hash_move_forward_ex(spec, &key_ptr)) {
 
-    ulong fieldno;
+    zend_ulong fieldno;
     if (zend_hash_get_current_key_ex(spec, nullptr, &fieldno, &key_ptr) != HASH_KEY_IS_LONG) {
       throw_tprotocolexception("Bad keytype in TSPEC (expected 'long')", INVALID_DATA);
       return;
