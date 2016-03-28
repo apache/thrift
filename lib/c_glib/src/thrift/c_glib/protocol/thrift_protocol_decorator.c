@@ -637,6 +637,7 @@ thrift_protocol_decorator_class_init (ThriftProtocolDecoratorClass *klass)
 	  cls->read_map_begin = thrift_protocol_decorator_read_map_begin;
 	  cls->read_map_end = thrift_protocol_decorator_read_map_end;
 	  cls->read_list_begin = thrift_protocol_decorator_read_list_begin;
+	  cls->read_list_end = thrift_protocol_decorator_read_list_end;
 	  cls->read_set_begin = thrift_protocol_decorator_read_set_begin;
 	  cls->read_set_end = thrift_protocol_decorator_read_set_end;
 	  cls->read_bool = thrift_protocol_decorator_read_bool;

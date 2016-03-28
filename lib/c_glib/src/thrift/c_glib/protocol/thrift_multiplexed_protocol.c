@@ -160,7 +160,7 @@ thrift_multiplexed_protocol_class_init (ThriftMultiplexedProtocolClass *klass)
 	ThriftProtocolClass *cls = THRIFT_PROTOCOL_CLASS (klass);
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-	g_info("Current Multiplexed write_message_begin addr %p, new %p", cls->write_message_begin, thrift_multiplexed_protocol_write_message_begin);
+	g_debug("Current Multiplexed write_message_begin addr %p, new %p", cls->write_message_begin, thrift_multiplexed_protocol_write_message_begin);
 	cls->write_message_begin = thrift_multiplexed_protocol_write_message_begin;
 
 
