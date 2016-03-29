@@ -98,7 +98,7 @@ N.B.: The `xsd_all` keyword has some purpose internal to Facebook but serves no 
 
 ### Union
 
-Unions are similar to structs, except that they provide a means to transport exactly one field of a possible set of fields, just like union {} in C++. Consequently, union members cannot be required fields.
+Unions are similar to structs, except that they provide a means to transport exactly one field of a possible set of fields, just like union {} in C++. Consequently, union members are implicitly considered optional (see requiredness).
 
     [13] Union          ::=  'union' Identifier 'xsd_all'? '{' Field* '}'
 
@@ -126,8 +126,39 @@ A service provides the interface for a set of functionality provided by a Thrift
 
 ### Field Requiredness
 
-    [18] FieldReq        ::=  'required' | 'optional'
+There are two explicit requiredness values, and a third one that is applied implicity if neither  *required* nor *optional* are given: *default* requiredness.
 
+    [18] FieldReq        ::=  'required' | 'optional' 
+
+The general rules for requiredness are as follows:
+
+#### required
+
+- Write: Required fields are always written and are expected to be set.
+- Read: Required fields are always read and are expected to be contained in the input stream.
+- Defaults values: are always written
+
+If a required field is missing during read, the expected behaviour is to indicate an unsuccessful read operation to the caller, e.g. by throwing an exception or returning an error. 
+
+Because of this behaviour, required fields drastically limit the options with regard to soft versioning. Because they must be present on read, the fields cannot be deprecated. If a required field would be removed (or changed to optional), the data are no longer compatible between versions.
+	
+#### optional
+
+- Write: Optional fields are only written when they are set
+- Read: Optional fields may, or may not be part of the input stream. 
+- Default values: are written when the isset flag is set
+
+Most language implementations use the recommended pratice of so-called "isset" flags to indicate whether a particular optional field is set or not. Only fields with this flag set are written, and conversely the flag is only set when a field value has been read from the input stream. 
+	
+#### default requiredness (implicit)
+
+- Write: Like required, the fields are always written.
+- Read: Like optional, the field may, or may not be part of the input stream. 
+- Default values: may not be written
+
+Default requiredess is a good starting point. The desired behaviour is a mix of optional and required, hence the internal name "opt-in, req-out". 
+	
+	
 ### XSD Options
 
 N.B.: These have  some internal purpose at Facebook but serve no current purpose in Thrift. Use of these options is strongly discouraged.
