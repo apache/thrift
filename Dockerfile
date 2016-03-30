@@ -33,8 +33,9 @@ ENV DEBIAN_FRONTEND noninteractive
 ADD . /thrift
 
 RUN \
-    BUILD_DEPS="flex bison g++ make cmake curl" \
-    && apt-get update && apt-get install -y --no-install-recommends ${BUILD_DEPS} \
+    DEPS="make curl" \
+    BUILD_DEPS="flex bison g++ cmake" \
+    && apt-get update && apt-get install -y --no-install-recommends ${DEPS} ${BUILD_DEPS} \
     && mkdir /tmp/cmake-build && cd /tmp/cmake-build \
     && cmake \
        -DBUILD_COMPILER=ON \
@@ -50,4 +51,11 @@ RUN \
     && rm -rf /tmp/* \
     && rm -rf /var/lib/apt/lists/*
 
-ENTRYPOINT ["thrift"]
+ENV GOVERSION "1.6"
+RUN \
+    curl -k -sSL "https://storage.googleapis.com/golang/go${GOVERSION}.linux-amd64.tar.gz" -o /tmp/go.tar.gz \
+    && tar xzf /tmp/go.tar.gz -C /tmp \
+    && cp /tmp/go/bin/gofmt /usr/bin/gofmt \
+    && rm -rf /tmp/*
+
+CMD ["thrift", "-help"]
