@@ -120,6 +120,9 @@ public:
   std::string render_const_value(t_type* type, t_const_value* value);
   std::string render_type_term(t_type* ttype, bool expand_structs, indenter& ind);
 
+  template <class Type>
+  std::string render_string(Type const& v);
+
   /**
    * Struct generation code
    */
@@ -968,11 +971,11 @@ string t_erlang_generator::render_include(string filename) {
 }
 
 string t_erlang_generator::render_export(string name, int arity) {
-  return render_attribute_list("export", name + "/" + std::to_string(arity));
+  return render_attribute_list("export", name + "/" + render_string(arity));
 }
 
 string t_erlang_generator::render_export_type(string type, int arity) {
-  return render_attribute_list("export_type", type + "/" + std::to_string(arity));
+  return render_attribute_list("export_type", type + "/" + render_string(arity));
 }
 
 string t_erlang_generator::render_attribute_list(string type, string content) {
@@ -987,6 +990,13 @@ string t_erlang_generator::render_export_function(t_function* tfunction, string 
   return render_export(prefix + tfunction->get_name(),
                 1 // This
                 + ((tfunction->get_arglist())->get_members()).size());
+}
+
+template <class Type>
+std::string t_erlang_generator::render_string(Type const& v) {
+  std::ostringstream s;
+  s << v;
+  return s.str();
 }
 
 /**
