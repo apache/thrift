@@ -26,21 +26,15 @@
 # TODO: push to apache/thrift-compiler instead of thrift/thrift-compiler
 
 FROM debian:jessie
-MAINTAINER Apache Thrift <dev@thrift.apache.org>
+MAINTAINER Mayorov Andrey <a.mayorov@rbkmoney.com>
 
 ENV DEBIAN_FRONTEND noninteractive
 
 ADD . /thrift
 
-RUN buildDeps=" \
-        flex \
-        bison \
-        g++ \
-        make \
-        cmake \
-        curl \
-        "; \
-    apt-get update && apt-get install -y --no-install-recommends $buildDeps \
+RUN \
+    BUILD_DEPS="flex bison g++ make cmake curl" \
+    && apt-get update && apt-get install -y --no-install-recommends ${BUILD_DEPS} \
     && mkdir /tmp/cmake-build && cd /tmp/cmake-build \
     && cmake \
        -DBUILD_COMPILER=ON \
@@ -50,10 +44,8 @@ RUN buildDeps=" \
        /thrift \
     && cmake --build . --config Release \
     && make install \
-    && curl -k -sSL "https://storage.googleapis.com/golang/go1.5.2.linux-amd64.tar.gz" -o /tmp/go.tar.gz \
-    && tar xzf /tmp/go.tar.gz -C /tmp \
-    && cp /tmp/go/bin/gofmt /usr/bin/gofmt \
-    && apt-get purge -y --auto-remove $buildDeps \
+    && rm -rf /thrift \
+    && apt-get purge -y --auto-remove ${BUILD_DEPS} \
     && apt-get clean \
     && rm -rf /tmp/* \
     && rm -rf /var/lib/apt/lists/*
