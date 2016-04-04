@@ -20,19 +20,26 @@
 #ifndef _THRIFT_SERVER_TTHREADEDSERVER_H_
 #define _THRIFT_SERVER_TTHREADEDSERVER_H_ 1
 
-#include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/concurrency/Thread.h>
-#include <thrift/server/TServerFramework.h>
+#include <thrift/server/TThreadPoolServer.h>
 
 namespace apache {
 namespace thrift {
 namespace server {
 
 /**
- * Manage clients using a thread pool.
+ * Manage clients using threads.  Once the refactoring for THRIFT-3083 took place it became
+ * obvious that the differences between the two threaded server types was becoming insignificant.
+ * Therefore to satisfy THRIFT-3096 and fix THRIFT-3768, TThreadedServer is simply a wrapper
+ * around TThreadedPoolServer now.  If backwards compatibility was not a concern, it would have
+ * been removed.
+ *
+ * The default thread pool size is
  */
-class TThreadedServer : public TServerFramework {
+
+/* [[deprecated]] */
+class TThreadedServer : public TThreadPoolServer {
 public:
   TThreadedServer(
       const boost::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
@@ -76,19 +83,10 @@ public:
 
   virtual ~TThreadedServer();
 
-  /**
-   * Post-conditions (return guarantees):
-   *   There will be no clients connected.
-   */
-  virtual void serve();
-
 protected:
   virtual void onClientConnected(const boost::shared_ptr<TConnectedClient>& pClient) /* override */;
-  virtual void onClientDisconnected(TConnectedClient* pClient) /* override */;
-
-  boost::shared_ptr<apache::thrift::concurrency::ThreadFactory> threadFactory_;
-  apache::thrift::concurrency::Monitor clientsMonitor_;
 };
+
 }
 }
 } // apache::thrift::server
