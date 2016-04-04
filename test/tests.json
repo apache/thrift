@@ -268,6 +268,41 @@
     "workdir": "py"
   },
   {
+    "comment": "Using 'python3' executable with asyncio",
+    "name": "py3.asyncio",
+    "server": {
+      "extra_args": ["TSimpleServer"],
+      "command": [
+        "python3",
+        "TestAsyncioServer.py",
+        "--verbose",
+        "--genpydir=gen-py.asyncio"
+      ]
+    },
+    "client": {
+      "timeout": 10,
+      "command": [
+        "python3",
+        "TestAsyncioClient.py",
+        "--host=localhost",
+        "--genpydir=gen-py.asyncio"
+      ]
+    },
+    "transports": [
+      "buffered",
+      "framed"
+    ],
+    "sockets": [
+      "ip-ssl",
+      "ip"
+    ],
+    "protocols": [
+      "compact",
+      "binary"
+    ],
+    "workdir": "py"
+  },
+  {
     "name": "cpp",
     "server": {
       "command": [
