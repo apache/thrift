@@ -169,7 +169,7 @@ matrix:
     - env: TEST_NAME="cppcheck, flake8, TODO FIXME HACK, LoC and system info"
       install:
         - travis_retry sudo apt-get update
-        - travis_retry sudo apt-get install -ym cppcheck sloccount python-flake8
+        - travis_retry sudo apt-get install -ym cppcheck sloccount python3-flake8
       script:
         # Compiler cppcheck (All)
         - cppcheck --force --quiet --inline-suppr --enable=all -j2 compiler/cpp/src
@@ -182,9 +182,11 @@ matrix:
         - cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
         - cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
         # Python code style
-        - flake8 --ignore=E501 lib/py
-        - flake8 tutorial/py
-        - flake8 --ignore=E501 test/py
+        - shopt -s expand_aliases
+        - alias flake83="PYTHONPATH=/usr/lib/python3/dist-packages python3 -m flake8.run"
+        - flake83 --ignore=E501 lib/py
+        - flake83 tutorial/py
+        - flake83 --ignore=E501 test/py
         - flake8 test/py.twisted
         - flake8 test/py.tornado
         - flake8 --ignore=E501 test/test.py
