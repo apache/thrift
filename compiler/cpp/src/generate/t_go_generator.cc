@@ -776,7 +776,12 @@ string t_go_generator::render_included_programs(string& unused_protection) {
 
   unused_protection = "";
 
+  string local_namespace = program_->get_namespace("go");
   for (size_t i = 0; i < includes.size(); ++i) {
+    if (local_namespace == includes[i]->get_namespace("go")) {
+      continue;
+    }
+
     string go_module = get_real_go_module(includes[i]);
     size_t found = 0;
     for (size_t j = 0; j < go_module.size(); j++) {
@@ -803,7 +808,12 @@ string t_go_generator::render_includes(bool ttypes) {
   string result = "";
   string unused_prot = "";
 
+  string local_namespace = program_->get_namespace("go");
   for (size_t i = 0; i < includes.size(); ++i) {
+    if (local_namespace == includes[i]->get_namespace("go")) {
+      continue;
+    }
+
     string go_module = get_real_go_module(includes[i]);
     size_t found = 0;
     for (size_t j = 0; j < go_module.size(); j++) {
@@ -3458,7 +3468,7 @@ string t_go_generator::type_name(t_type* ttype) {
 string t_go_generator::module_name(t_type* ttype) {
   t_program* program = ttype->get_program();
 
-  if (program != NULL && program != program_) {
+  if (program != NULL && program != program_ && program->get_namespace("go") != program_->get_namespace("go")) {
     string module(get_real_go_module(program));
     // for namespaced includes, only keep part after dot.
     size_t dot = module.rfind('.');
