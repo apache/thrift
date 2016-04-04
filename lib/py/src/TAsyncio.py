@@ -20,56 +20,86 @@
 import asyncio
 from io import BytesIO
 import logging
-from struct import unpack
+from struct import pack, unpack
 
 from thrift.Thrift import TType, TApplicationException
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol, \
     TBinaryProtocolFactory
+from thrift.protocol.TCompactProtocol import TCompactProtocol, \
+    TCompactProtocolFactory, fromZigZag, reader, CLEAR, FIELD_READ, \
+    CONTAINER_READ, VALUE_READ, BOOL_READ, CompactType
 from thrift.protocol.TProtocol import TProtocolException
 from thrift.transport import TTransport
 
 
 class TAsyncioTransport(TTransport.TTransportBase):
-    """a framed, buffered transport over an asyncio stream"""
-    def __init__(self, reader, writer):
+    """A buffered transport over an asyncio stream"""
+    def __init__(self, reader, writer, framed=False):
         self._reader = reader
         self._writer = writer
         self._wbuf = BytesIO()
+        self._rbuf = BytesIO()
         self._logger = logging.getLogger("TAsyncioTransport")
+        self._framed = framed
+
+    @property
+    def framed(self):
+        return self._framed
 
     # not the same number of parameters as TTransportBase.open
     @classmethod
     @asyncio.coroutine
-    def connect(cls, host, port, loop=None):
-        reader, writer = yield from asyncio.open_connection(host, port, loop=loop)
-        return cls(reader, writer)
+    def connect(cls, host, port, loop=None, ssl=False, framed=False):
+        reader, writer = yield from asyncio.open_connection(
+            host, port, loop=loop, ssl=ssl)
+        return cls(reader, writer, framed=framed)
 
     @asyncio.coroutine
     def readAll(self, n):
+        if self.framed:
+            ret = self._rbuf.read(n)
+            n -= len(ret)
+            while n:
+                yield from self.readFrame()
+                buf = self._rbuf.read(n)
+                ret += buf
+                n -= len(buf)
+            return ret
         data = yield from self._reader.readexactly(n)
         return data
+
+    @asyncio.coroutine
+    def readFrame(self):
+        assert self.framed
+        buff = yield from self._reader.readexactly(4)
+        sz, = unpack('!i', buff)
+        self._rbuf = BytesIO((yield from self._reader.readexactly(sz)))
 
     def write(self, buf):
         self._wbuf.write(buf)
 
     @asyncio.coroutine
-    def flush(self, callback=None):
+    def flush(self):
         wbuf = self._wbuf
         size = wbuf.tell()
-
         if self._logger.isEnabledFor(logging.DEBUG):
-            self._logger.debug('writing frame of size %d: %s', size,
+            self._logger.debug('writing %s of size %d: %s',
+                               size, 'frame' if self.framed else "data",
                                wbuf.getvalue()[:size])
-        if size < 1024:
-            data = wbuf.getvalue()[:size]
+
+        if self.framed:
+            data = pack("!i", size) + wbuf.getvalue()[:size]
         else:
-            data = memoryview(wbuf.getvalue())[:size]
+            if size < 1024:
+                data = wbuf.getvalue()[:size]
+            else:
+                data = memoryview(wbuf.getvalue())[:size]
         self._writer.write(data)
         wbuf.seek(0)
         yield from self._writer.drain()
 
     def close(self):
-        self._reader.close()
+        self._reader.feed_eof()
         self._writer.close()
 
 
@@ -259,6 +289,171 @@ class TAsyncioBinaryProtocolFactory(TBinaryProtocolFactory):
         return TAsyncioBinaryProtocol(trans, self.strictRead, self.strictWrite)
 
 
+class TAsyncioCompactProtocol(TCompactProtocol):
+    """Compact implementation of the Thrift protocol driver with asyncio."""
+
+    @asyncio.coroutine
+    def readString(self):
+        return (yield from self.readBinary()).decode("utf-8")
+
+    @asyncio.coroutine
+    def readFieldBegin(self):
+        assert self.state == FIELD_READ, self.state
+        type = yield from self.__readUByte()
+        if type & 0x0f == TType.STOP:
+            return (None, 0, 0)
+        delta = type >> 4
+        if delta == 0:
+            fid = yield from self.__readI16()
+        else:
+            fid = self._last_fid + delta
+        self._last_fid = fid
+        type = type & 0x0f
+        if type == CompactType.TRUE:
+            self.state = BOOL_READ
+            self._bool_value = True
+        elif type == CompactType.FALSE:
+            self.state = BOOL_READ
+            self._bool_value = False
+        else:
+            self.state = VALUE_READ
+        return (None, self._getTType(type), fid)
+
+    @asyncio.coroutine
+    def readFieldEnd(self):
+        super(TAsyncioCompactProtocol, self).readFieldEnd()
+
+    @asyncio.coroutine
+    def __readUByte(self):
+        result, = unpack('!B', (yield from self.trans.readAll(1)))
+        return result
+
+    @asyncio.coroutine
+    def __readByte(self):
+        result, = unpack('!b', (yield from self.trans.readAll(1)))
+        return result
+
+    @asyncio.coroutine
+    def __readVarint(self):
+        result = 0
+        shift = 0
+        while True:
+            x = yield from self.trans.readAll(1)
+            byte = ord(x)
+            result |= (byte & 0x7f) << shift
+            if byte >> 7 == 0:
+                return result
+            shift += 7
+
+    @asyncio.coroutine
+    def __readZigZag(self):
+        return fromZigZag((yield from self.__readVarint()))
+
+    @asyncio.coroutine
+    def __readSize(self):
+        result = yield from self.__readVarint()
+        if result < 0:
+            raise TProtocolException("Length < 0")
+        return result
+
+    @asyncio.coroutine
+    def readMessageBegin(self):
+        assert self.state == CLEAR
+        proto_id = yield from self.__readUByte()
+        if proto_id != self.PROTOCOL_ID:
+            raise TProtocolException(TProtocolException.BAD_VERSION,
+                                     'Bad protocol id in the message: %d' % proto_id)
+        ver_type = yield from self.__readUByte()
+        type = (ver_type >> self.TYPE_SHIFT_AMOUNT) & self.TYPE_BITS
+        version = ver_type & self.VERSION_MASK
+        if version != self.VERSION:
+            raise TProtocolException(TProtocolException.BAD_VERSION,
+                                     'Bad version: %d (expect %d)' % (version, self.VERSION))
+        seqid = yield from self.__readVarint()
+        name = (yield from self.__readBinary()).decode("utf-8")
+        return (name, type, seqid)
+
+    @asyncio.coroutine
+    def readMessageEnd(self):
+        super(TAsyncioCompactProtocol, self).readMessageEnd()
+
+    @asyncio.coroutine
+    def readStructBegin(self):
+        super(TAsyncioCompactProtocol, self).readStructBegin()
+
+    @asyncio.coroutine
+    def readStructEnd(self):
+        super(TAsyncioCompactProtocol, self).readStructEnd()
+
+    @asyncio.coroutine
+    def readCollectionBegin(self):
+        assert self.state in (VALUE_READ, CONTAINER_READ), self.state
+        size_type = yield from self.__readUByte()
+        size = size_type >> 4
+        type = self._getTType(size_type)
+        if size == 15:
+            size = yield from self.__readSize()
+        self._check_container_length(size)
+        self._containers.append(self.state)
+        self.state = CONTAINER_READ
+        return type, size
+    readSetBegin = readCollectionBegin
+    readListBegin = readCollectionBegin
+
+    @asyncio.coroutine
+    def readMapBegin(self):
+        assert self.state in (VALUE_READ, CONTAINER_READ), self.state
+        size = yield from self.__readSize()
+        self._check_container_length(size)
+        types = 0
+        if size > 0:
+            types = yield from self.__readUByte()
+        vtype = self._getTType(types)
+        ktype = self._getTType(types >> 4)
+        self._containers.append(self.state)
+        self.state = CONTAINER_READ
+        return (ktype, vtype, size)
+
+    @asyncio.coroutine
+    def readCollectionEnd(self):
+        assert self.state == CONTAINER_READ, self.state
+        self.state = self._containers.pop()
+    readSetEnd = readCollectionEnd
+    readListEnd = readCollectionEnd
+    readMapEnd = readCollectionEnd
+
+    @asyncio.coroutine
+    def readBool(self):
+        return super(TAsyncioCompactProtocol, self).readBool()
+
+    readByte = reader(__readByte)
+    __readI16 = __readZigZag
+    readI16 = reader(__readZigZag)
+    readI32 = reader(__readZigZag)
+    readI64 = reader(__readZigZag)
+
+    @asyncio.coroutine
+    @reader
+    def readDouble(self):
+        buff = yield from self.trans.readAll(8)
+        val, = unpack('<d', buff)
+        return val
+
+    @asyncio.coroutine
+    def __readBinary(self):
+        size = yield from self.__readSize()
+        self._check_string_length(size)
+        return (yield from self.trans.readAll(size))
+    readBinary = reader(__readBinary)
+
+
+class TAsyncioCompactProtocolFactory(TCompactProtocolFactory):
+    def getProtocol(self, trans):
+        return TAsyncioCompactProtocol(trans,
+                                       self.string_length_limit,
+                                       self.container_length_limit)
+
+
 class TAsyncioApplicationException(TApplicationException):
     @asyncio.coroutine
     def read(self, iprot):
@@ -270,8 +465,7 @@ class TAsyncioApplicationException(TApplicationException):
             if fid == 1:
                 if ftype == TType.STRING:
                     message = yield from iprot.readString()
-                    if sys.version_info.major >= 3 and isinstance(
-                            message, bytes):
+                    if isinstance(message, bytes):
                         try:
                             message = message.decode('utf-8')
                         except UnicodeDecodeError:

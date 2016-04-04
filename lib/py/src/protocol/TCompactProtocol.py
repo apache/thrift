@@ -132,11 +132,11 @@ class TCompactProtocol(TProtocolBase):
                  container_length_limit=None):
         TProtocolBase.__init__(self, trans)
         self.state = CLEAR
-        self.__last_fid = 0
-        self.__bool_fid = None
-        self.__bool_value = None
-        self.__structs = []
-        self.__containers = []
+        self._last_fid = 0
+        self._bool_fid = None
+        self._bool_value = None
+        self._structs = []
+        self._containers = []
         self.string_length_limit = string_length_limit
         self.container_length_limit = container_length_limit
 
@@ -163,31 +163,31 @@ class TCompactProtocol(TProtocolBase):
 
     def writeStructBegin(self, name):
         assert self.state in (CLEAR, CONTAINER_WRITE, VALUE_WRITE), self.state
-        self.__structs.append((self.state, self.__last_fid))
+        self._structs.append((self.state, self._last_fid))
         self.state = FIELD_WRITE
-        self.__last_fid = 0
+        self._last_fid = 0
 
     def writeStructEnd(self):
         assert self.state == FIELD_WRITE
-        self.state, self.__last_fid = self.__structs.pop()
+        self.state, self._last_fid = self._structs.pop()
 
     def writeFieldStop(self):
         self.__writeByte(0)
 
     def __writeFieldHeader(self, type, fid):
-        delta = fid - self.__last_fid
+        delta = fid - self._last_fid
         if 0 < delta <= 15:
             self.__writeUByte(delta << 4 | type)
         else:
             self.__writeByte(type)
             self.__writeI16(fid)
-        self.__last_fid = fid
+        self._last_fid = fid
 
     def writeFieldBegin(self, name, type, fid):
         assert self.state == FIELD_WRITE, self.state
         if type == TType.BOOL:
             self.state = BOOL_WRITE
-            self.__bool_fid = fid
+            self._bool_fid = fid
         else:
             self.state = VALUE_WRITE
             self.__writeFieldHeader(CTYPES[type], fid)
@@ -215,7 +215,7 @@ class TCompactProtocol(TProtocolBase):
         else:
             self.__writeUByte(0xf0 | CTYPES[etype])
             self.__writeSize(size)
-        self.__containers.append(self.state)
+        self._containers.append(self.state)
         self.state = CONTAINER_WRITE
     writeSetBegin = writeCollectionBegin
     writeListBegin = writeCollectionBegin
@@ -227,12 +227,12 @@ class TCompactProtocol(TProtocolBase):
         else:
             self.__writeSize(size)
             self.__writeUByte(CTYPES[ktype] << 4 | CTYPES[vtype])
-        self.__containers.append(self.state)
+        self._containers.append(self.state)
         self.state = CONTAINER_WRITE
 
     def writeCollectionEnd(self):
         assert self.state == CONTAINER_WRITE, self.state
-        self.state = self.__containers.pop()
+        self.state = self._containers.pop()
     writeMapEnd = writeCollectionEnd
     writeSetEnd = writeCollectionEnd
     writeListEnd = writeCollectionEnd
@@ -243,7 +243,7 @@ class TCompactProtocol(TProtocolBase):
                 ctype = CompactType.TRUE
             else:
                 ctype = CompactType.FALSE
-            self.__writeFieldHeader(ctype, self.__bool_fid)
+            self.__writeFieldHeader(ctype, self._bool_fid)
         elif self.state == CONTAINER_WRITE:
             if bool:
                 self.__writeByte(CompactType.TRUE)
@@ -281,18 +281,18 @@ class TCompactProtocol(TProtocolBase):
         if delta == 0:
             fid = self.__readI16()
         else:
-            fid = self.__last_fid + delta
-        self.__last_fid = fid
+            fid = self._last_fid + delta
+        self._last_fid = fid
         type = type & 0x0f
         if type == CompactType.TRUE:
             self.state = BOOL_READ
-            self.__bool_value = True
+            self._bool_value = True
         elif type == CompactType.FALSE:
             self.state = BOOL_READ
-            self.__bool_value = False
+            self._bool_value = False
         else:
             self.state = VALUE_READ
-        return (None, self.__getTType(type), fid)
+        return (None, self._getTType(type), fid)
 
     def readFieldEnd(self):
         assert self.state in (VALUE_READ, BOOL_READ), self.state
@@ -336,27 +336,27 @@ class TCompactProtocol(TProtocolBase):
 
     def readMessageEnd(self):
         assert self.state == CLEAR
-        assert len(self.__structs) == 0
+        assert len(self._structs) == 0
 
     def readStructBegin(self):
         assert self.state in (CLEAR, CONTAINER_READ, VALUE_READ), self.state
-        self.__structs.append((self.state, self.__last_fid))
+        self._structs.append((self.state, self._last_fid))
         self.state = FIELD_READ
-        self.__last_fid = 0
+        self._last_fid = 0
 
     def readStructEnd(self):
         assert self.state == FIELD_READ
-        self.state, self.__last_fid = self.__structs.pop()
+        self.state, self._last_fid = self._structs.pop()
 
     def readCollectionBegin(self):
         assert self.state in (VALUE_READ, CONTAINER_READ), self.state
         size_type = self.__readUByte()
         size = size_type >> 4
-        type = self.__getTType(size_type)
+        type = self._getTType(size_type)
         if size == 15:
             size = self.__readSize()
         self._check_container_length(size)
-        self.__containers.append(self.state)
+        self._containers.append(self.state)
         self.state = CONTAINER_READ
         return type, size
     readSetBegin = readCollectionBegin
@@ -369,22 +369,22 @@ class TCompactProtocol(TProtocolBase):
         types = 0
         if size > 0:
             types = self.__readUByte()
-        vtype = self.__getTType(types)
-        ktype = self.__getTType(types >> 4)
-        self.__containers.append(self.state)
+        vtype = self._getTType(types)
+        ktype = self._getTType(types >> 4)
+        self._containers.append(self.state)
         self.state = CONTAINER_READ
         return (ktype, vtype, size)
 
     def readCollectionEnd(self):
         assert self.state == CONTAINER_READ, self.state
-        self.state = self.__containers.pop()
+        self.state = self._containers.pop()
     readSetEnd = readCollectionEnd
     readListEnd = readCollectionEnd
     readMapEnd = readCollectionEnd
 
     def readBool(self):
         if self.state == BOOL_READ:
-            return self.__bool_value == CompactType.TRUE
+            return self._bool_value == CompactType.TRUE
         elif self.state == CONTAINER_READ:
             return self.__readByte() == CompactType.TRUE
         else:
@@ -409,7 +409,7 @@ class TCompactProtocol(TProtocolBase):
         return self.trans.readAll(size)
     readBinary = reader(__readBinary)
 
-    def __getTType(self, byte):
+    def _getTType(self, byte):
         return TTYPES[byte & 0x0f]
 
 
