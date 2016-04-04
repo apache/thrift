@@ -223,9 +223,9 @@ func (_mr *_MockThriftTestRecorder) TestOneway(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestOneway", arg0)
 }
 
-func (_m *MockThriftTest) TestSet(_param0 map[int32]bool) (map[int32]bool, error) {
+func (_m *MockThriftTest) TestSet(_param0 map[int32]struct{}) (map[int32]struct{}, error) {
 	ret := _m.ctrl.Call(_m, "TestSet", _param0)
-	ret0, _ := ret[0].(map[int32]bool)
+	ret0, _ := ret[0].(map[int32]struct{})
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

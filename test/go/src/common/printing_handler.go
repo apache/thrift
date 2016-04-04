@@ -188,7 +188,7 @@ func (p *printingHandler) TestStringMap(thing map[string]string) (r map[string]s
 //
 // Parameters:
 //  - Thing
-func (p *printingHandler) TestSet(thing map[int32]bool) (r map[int32]bool, err error) {
+func (p *printingHandler) TestSet(thing map[int32]struct{}) (r map[int32]struct{}, err error) {
 	fmt.Printf("testSet({")
 	first := true
 	for k, _ := range thing {

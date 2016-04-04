@@ -97,18 +97,18 @@ func MyTestEnumFromString(s string) (MyTestEnum, error) {
 func MyTestEnumPtr(v MyTestEnum) *MyTestEnum { return &v }
 
 type MyTestStruct struct {
-	On         bool              `thrift:"on,1" json:"on"`
-	B          int8              `thrift:"b,2" json:"b"`
-	Int16      int16             `thrift:"int16,3" json:"int16"`
-	Int32      int32             `thrift:"int32,4" json:"int32"`
-	Int64      int64             `thrift:"int64,5" json:"int64"`
-	D          float64           `thrift:"d,6" json:"d"`
-	St         string            `thrift:"st,7" json:"st"`
-	Bin        []byte            `thrift:"bin,8" json:"bin"`
-	StringMap  map[string]string `thrift:"stringMap,9" json:"stringMap"`
-	StringList []string          `thrift:"stringList,10" json:"stringList"`
-	StringSet  map[string]bool   `thrift:"stringSet,11" json:"stringSet"`
-	E          MyTestEnum        `thrift:"e,12" json:"e"`
+	On         bool                `thrift:"on,1" json:"on"`
+	B          int8                `thrift:"b,2" json:"b"`
+	Int16      int16               `thrift:"int16,3" json:"int16"`
+	Int32      int32               `thrift:"int32,4" json:"int32"`
+	Int64      int64               `thrift:"int64,5" json:"int64"`
+	D          float64             `thrift:"d,6" json:"d"`
+	St         string              `thrift:"st,7" json:"st"`
+	Bin        []byte              `thrift:"bin,8" json:"bin"`
+	StringMap  map[string]string   `thrift:"stringMap,9" json:"stringMap"`
+	StringList []string            `thrift:"stringList,10" json:"stringList"`
+	StringSet  map[string]struct{} `thrift:"stringSet,11" json:"stringSet"`
+	E          MyTestEnum          `thrift:"e,12" json:"e"`
 }
 
 func NewMyTestStruct() *MyTestStruct {
@@ -155,7 +155,7 @@ func (p *MyTestStruct) GetStringList() []string {
 	return p.StringList
 }
 
-func (p *MyTestStruct) GetStringSet() map[string]bool {
+func (p *MyTestStruct) GetStringSet() map[string]struct{} {
 	return p.StringSet
 }
 
@@ -366,7 +366,7 @@ func (p *MyTestStruct) readField11(iprot TProtocol) error {
 	if err != nil {
 		return PrependError("error reading set begin: ", err)
 	}
-	tSet := make(map[string]bool, size)
+	tSet := make(map[string]struct{}, size)
 	p.StringSet = tSet
 	for i := 0; i < size; i++ {
 		var _elem3 string
@@ -375,7 +375,7 @@ func (p *MyTestStruct) readField11(iprot TProtocol) error {
 		} else {
 			_elem3 = v
 		}
-		p.StringSet[_elem3] = true
+		p.StringSet[_elem3] = struct{}{}
 	}
 	if err := iprot.ReadSetEnd(); err != nil {
 		return PrependError("error reading set end: ", err)

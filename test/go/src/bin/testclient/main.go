@@ -174,7 +174,7 @@ func callEverything(client *thrifttest.ThriftTestClient) {
 		t.Fatalf("Unexpected TestStringMap() result expected %#v, got %#v ", sm, smret)
 	}
 
-	s := map[int32]bool{1: true, 2: true, 42: true}
+	s := map[int32]struct{}{1: struct{}{}, 2: struct{}{}, 42: struct{}{}}
 	sret, err := client.TestSet(s)
 	if err != nil {
 		t.Fatalf("Unexpected error in TestSet() call: ", err)

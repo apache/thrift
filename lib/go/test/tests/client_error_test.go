@@ -402,7 +402,7 @@ func TestClientReportTTransportErrors(t *testing.T) {
 	thing := errortest.NewTestStruct()
 	thing.M = make(map[string]string)
 	thing.L = make([]string, 0)
-	thing.S = make(map[string]bool)
+	thing.S = make(map[string]struct{})
 	thing.I = 3
 
 	err := thrift.NewTTransportException(thrift.TIMED_OUT, "test")
@@ -434,7 +434,7 @@ func TestClientReportTProtocolErrors(t *testing.T) {
 	thing := errortest.NewTestStruct()
 	thing.M = make(map[string]string)
 	thing.L = make([]string, 0)
-	thing.S = make(map[string]bool)
+	thing.S = make(map[string]struct{})
 	thing.I = 3
 
 	err := thrift.NewTProtocolExceptionWithType(thrift.INVALID_DATA, errors.New("test"))
