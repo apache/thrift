@@ -33,7 +33,7 @@ ENV DEBIAN_FRONTEND noninteractive
 ADD . /thrift
 
 RUN \
-    DEPS="make curl" \
+    DEPS="make curl openssl ca-certificates" \
     BUILD_DEPS="flex bison g++ cmake" \
     && apt-get update && apt-get install -y --no-install-recommends ${DEPS} ${BUILD_DEPS} \
     && mkdir /tmp/cmake-build && cd /tmp/cmake-build \
