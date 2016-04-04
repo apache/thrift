@@ -77,7 +77,7 @@ func (p *simpleHandler) TestStringMap(thing map[string]string) (r map[string]str
 	return thing, nil
 }
 
-func (p *simpleHandler) TestSet(thing map[int32]bool) (r map[int32]bool, err error) {
+func (p *simpleHandler) TestSet(thing map[int32]struct{}) (r map[int32]struct{}, err error) {
 	return thing, nil
 }
 
