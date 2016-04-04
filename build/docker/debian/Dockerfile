@@ -72,9 +72,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       python3-setuptools \
       python3-pip
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN echo 'deb http://deb.debian.org/debian jessie-backports main' >> /etc/apt/sources.list \
+      && apt-get update && apt-get install -y --no-install-recommends \
 `# Ruby dependencies` \
       ruby \
+      ruby-bundler \
       ruby-dev \
 `# Perl dependencies` \
       libbit-vector-perl \
