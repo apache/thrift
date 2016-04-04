@@ -740,10 +740,10 @@ void t_go_generator::init_generator() {
   }
 
   // Make output files
-  f_types_name_ = package_dir_ + "/" + "ttypes.go";
+  f_types_name_ = package_dir_ + "/" + program_name_ + ".go";
   f_types_.open(f_types_name_.c_str());
 
-  f_consts_name_ = package_dir_ + "/" + "constants.go";
+  f_consts_name_ = package_dir_ + "/" + program_name_ + "-consts.go";
   f_consts_.open(f_consts_name_.c_str());
 
   vector<t_service*> services = program_->get_services();
@@ -755,12 +755,18 @@ void t_go_generator::init_generator() {
   }
 
   // Print header
-  f_types_ << go_autogen_comment() << go_package() << render_includes(true)
-           << render_import_protection();
+  f_types_ << go_autogen_comment() << go_package() << render_includes(true);
 
   f_consts_ << go_autogen_comment() << go_package() << render_includes(false);
 
   f_const_values_ << endl << "func init() {" << endl;
+
+  // Create file for the GoUnusedProtection__ variable
+  string f_unused_prot_name_ = package_dir_ + "/" + "UnusedProtection.go";
+  ofstream f_unused_prot_ = ofstream();
+  f_unused_prot_.open(f_unused_prot_name_.c_str());
+  f_unused_prot_ << go_autogen_comment() << go_package() << render_import_protection();
+  f_unused_prot_.close();
 }
 
 
