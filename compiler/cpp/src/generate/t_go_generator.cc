@@ -763,7 +763,7 @@ void t_go_generator::init_generator() {
 
   // Create file for the GoUnusedProtection__ variable
   string f_unused_prot_name_ = package_dir_ + "/" + "GoUnusedProtection__.go";
-  ofstream f_unused_prot_ = ofstream();
+  ofstream f_unused_prot_;
   f_unused_prot_.open(f_unused_prot_name_.c_str());
   f_unused_prot_ << go_autogen_comment() << go_package() << render_import_protection();
   f_unused_prot_.close();
