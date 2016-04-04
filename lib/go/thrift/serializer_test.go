@@ -85,7 +85,7 @@ func ProtocolTest1(test *testing.T, pf ProtocolFactory) (bool, error) {
 	m.Bin = make([]byte, 10)
 	m.StringMap = make(map[string]string, 5)
 	m.StringList = make([]string, 5)
-	m.StringSet = make(map[string]bool, 5)
+	m.StringSet = make(map[string]struct{}, 5)
 	m.E = 2
 
 	s, err := t.WriteString(&m)
@@ -119,7 +119,7 @@ func ProtocolTest2(test *testing.T, pf ProtocolFactory) (bool, error) {
 	m.Bin = make([]byte, 10)
 	m.StringMap = make(map[string]string, 5)
 	m.StringList = make([]string, 5)
-	m.StringSet = make(map[string]bool, 5)
+	m.StringSet = make(map[string]struct{}, 5)
 	m.E = 2
 
 	s, err := t.WriteString(&m)

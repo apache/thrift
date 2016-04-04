@@ -105,7 +105,7 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 		handler.EXPECT().TestNest(&thrifttest.Xtruct2{StructThing: &thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}}).Return(&thrifttest.Xtruct2{StructThing: &thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}}, nil),
 		handler.EXPECT().TestMap(map[int32]int32{1: 2, 3: 4, 5: 42}).Return(map[int32]int32{1: 2, 3: 4, 5: 42}, nil),
 		handler.EXPECT().TestStringMap(map[string]string{"a": "2", "b": "blah", "some": "thing"}).Return(map[string]string{"a": "2", "b": "blah", "some": "thing"}, nil),
-		handler.EXPECT().TestSet(map[int32]bool{1: true, 2: true, 42: true}).Return(map[int32]bool{1: true, 2: true, 42: true}, nil),
+		handler.EXPECT().TestSet(map[int32]struct{}{1: struct{}{}, 2: struct{}{}, 42: struct{}{}}).Return(map[int32]struct{}{1: struct{}{}, 2: struct{}{}, 42: struct{}{}}, nil),
 		handler.EXPECT().TestList([]int32{1, 2, 42}).Return([]int32{1, 2, 42}, nil),
 		handler.EXPECT().TestEnum(thrifttest.Numberz_TWO).Return(thrifttest.Numberz_TWO, nil),
 		handler.EXPECT().TestTypedef(thrifttest.UserId(42)).Return(thrifttest.UserId(42), nil),
@@ -222,7 +222,7 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 		t.Errorf("Unexpected TestStringMap() result expected %#v, got %#v ", sm, smret)
 	}
 
-	s := map[int32]bool{1: true, 2: true, 42: true}
+	s := map[int32]struct{}{1: struct{}{}, 2: struct{}{}, 42: struct{}{}}
 	sret, err := client.TestSet(s)
 	if err != nil {
 		t.Errorf("Unexpected error in TestSet() call: ", err)

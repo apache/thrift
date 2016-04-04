@@ -1150,12 +1150,12 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
   } else if (type->is_set()) {
     t_type* etype = ((t_set*)type)->get_elem_type();
     const vector<t_const_value*>& val = value->get_list();
-    out << "map[" << type_to_go_key_type(etype) << "]bool{" << endl;
+    out << "map[" << type_to_go_key_type(etype) << "]struct{}{" << endl;
     indent_up();
     vector<t_const_value*>::const_iterator v_iter;
 
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      out << indent() << render_const_value(etype, *v_iter, name) << ": true," << endl;
+      out << indent() << render_const_value(etype, *v_iter, name) << ": struct{}{}," << endl;
     }
 
     indent_down();
@@ -2969,7 +2969,7 @@ void t_go_generator::generate_deserialize_container(ofstream& out,
     out << indent() << "  return thrift.PrependError(\"error reading set begin: \", err)" << endl;
     out << indent() << "}" << endl;
     out << indent() << "tSet := make(map["
-        << type_to_go_key_type(t->get_elem_type()->get_true_type()) << "]bool, size)" << endl;
+        << type_to_go_key_type(t->get_elem_type()->get_true_type()) << "]struct{}, size)" << endl;
     out << indent() << prefix << eq << " " << (pointer_field ? "&" : "") << "tSet" << endl;
   } else if (ttype->is_list()) {
     out << indent() << "_, size, err := iprot.ReadListBegin()" << endl;
@@ -3048,7 +3048,7 @@ void t_go_generator::generate_deserialize_set_element(ofstream& out,
   t_field felem(tset->get_elem_type(), elem);
   felem.set_req(t_field::T_OPT_IN_REQ_OUT);
   generate_deserialize_field(out, &felem, true, "", false, false, false, true, true);
-  indent(out) << prefix << "[" << elem << "] = true" << endl;
+  indent(out) << prefix << "[" << elem << "] = struct{}{}" << endl;
 }
 
 /**
@@ -3611,7 +3611,7 @@ string t_go_generator::type_to_go_type_with_opt(t_type* type,
   } else if (type->is_set()) {
     t_set* t = (t_set*)type;
     string elemType = type_to_go_key_type(t->get_elem_type());
-    return maybe_pointer + string("map[") + elemType + string("]bool");
+    return maybe_pointer + string("map[") + elemType + string("]struct{}");
   } else if (type->is_list()) {
     t_list* t = (t_list*)type;
     string elemType = type_to_go_type(t->get_elem_type());
