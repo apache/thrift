@@ -201,7 +201,27 @@ func client(protocolFactory thrift.TProtocolFactory) {
 			atomic.AddInt64(&clicounter, 1)
 		}
 	case echoSet:
-		s := map[int8]bool{-10: true, -9: true, -8: true, -7: true, -6: true, -5: true, -4: true, -3: true, -2: true, -1: true, 0: true, 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true}
+		s := map[int8]struct{}{
+			-10: struct{}{},
+			-9: struct{}{},
+			-8: struct{}{},
+			-7: struct{}{},
+			-6: struct{}{},
+			-5: struct{}{},
+			-4: struct{}{},
+			-3: struct{}{},
+			-2: struct{}{},
+			-1: struct{}{},
+			0: struct{}{},
+			1: struct{}{},
+			2: struct{}{},
+			3: struct{}{},
+			4: struct{}{},
+			5: struct{}{},
+			6: struct{}{},
+			7: struct{}{},
+			8: struct{}{},
+		}
 		for i := 0; i < *loop; i++ {
 			client.EchoSet(s)
 			atomic.AddInt64(&clicounter, 1)
@@ -244,7 +264,7 @@ func (h *handler) EchoList(arg []int8) (r []int8, err error) {
 	atomic.AddInt64(&counter, 1)
 	return arg, nil
 }
-func (h *handler) EchoSet(arg map[int8]bool) (r map[int8]bool, err error) {
+func (h *handler) EchoSet(arg map[int8]struct{}) (r map[int8]struct{}, err error) {
 	atomic.AddInt64(&counter, 1)
 	return arg, nil
 }
