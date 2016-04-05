@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <algorithm>
 #include <boost/bind.hpp>
 #include <stdexcept>
 #include <stdint.h>
@@ -221,25 +222,25 @@ void TServerFramework::stop() {
 }
 
 void TServerFramework::newlyConnectedClient(const boost::shared_ptr<TConnectedClient>& pClient) {
-  onClientConnected(pClient);
+  {
+    Synchronized sync(mon_);
+    ++clients_;
+    hwm_ = (std::max)(hwm_, clients_);
+  }
 
-  // Count a concurrent client added.
-  Synchronized sync(mon_);
-  ++clients_;
-  hwm_ = (std::max)(hwm_, clients_);
+  onClientConnected(pClient);
 }
 
 void TServerFramework::disposeConnectedClient(TConnectedClient* pClient) {
-  {
-    // Count a concurrent client removed.
-    Synchronized sync(mon_);
-    if (limit_ - --clients_ > 0) {
-      mon_.notify();
-    }
-  }
   onClientDisconnected(pClient);
   delete pClient;
+
+  Synchronized sync(mon_);
+  if (limit_ - --clients_ > 0) {
+    mon_.notify();
+  }
 }
+
 }
 }
 } // apache::thrift::server
