@@ -20,6 +20,7 @@
 #ifndef _THRIFT_SERVER_TTHREADEDSERVER_H_
 #define _THRIFT_SERVER_TTHREADEDSERVER_H_ 1
 
+#include <map>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/concurrency/Thread.h>
@@ -30,7 +31,9 @@ namespace thrift {
 namespace server {
 
 /**
- * Manage clients using a thread pool.
+ * Manage clients using threads - threads are created one for each client and are
+ * released when the client disconnects.  This server is used to make a dynamically
+ * scalable server up to the concurrent connection limit.
  */
 class TThreadedServer : public TServerFramework {
 public:
@@ -83,12 +86,37 @@ public:
   virtual void serve();
 
 protected:
+  /**
+   * Implementation of TServerFramework::onClientConnected
+   */
   virtual void onClientConnected(const boost::shared_ptr<TConnectedClient>& pClient) /* override */;
-  virtual void onClientDisconnected(TConnectedClient* pClient) /* override */;
+
+  /**
+   * Implementation of TServerFramework::onClientDisconnected
+   */
+  virtual void onClientDisconnected(TConnectedClient *pClient) /* override */;
 
   boost::shared_ptr<apache::thrift::concurrency::ThreadFactory> threadFactory_;
-  apache::thrift::concurrency::Monitor clientsMonitor_;
+
+  /**
+   * A helper wrapper used to wrap the client in something we can use to maintain
+   * the lifetime of the connected client within a detached thread.
+   */
+  class TConnectedClientTracker : public apache::thrift::concurrency::Runnable
+  {
+  public:
+    TConnectedClientTracker(const boost::shared_ptr<TConnectedClient>& pClient);
+    virtual ~TConnectedClientTracker();
+    virtual void run() /* override */;
+  private:
+    boost::shared_ptr<TConnectedClient> pClient_;
+  };
+
+  typedef std::map<TConnectedClient *, boost::shared_ptr<TConnectedClientTracker> > ClientMap;
+  apache::thrift::concurrency::Monitor clientMonitor_;
+  ClientMap clientMap_;
 };
+
 }
 }
 } // apache::thrift::server

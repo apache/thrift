@@ -17,6 +17,11 @@
  * under the License.
  */
 
+#include <boost/bind.hpp>
+#include <boost/function.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/shared_ptr.hpp>
+#include <string>
 #include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/server/TThreadedServer.h>
 
@@ -24,6 +29,7 @@ namespace apache {
 namespace thrift {
 namespace server {
 
+using apache::thrift::concurrency::Runnable;
 using apache::thrift::concurrency::Synchronized;
 using apache::thrift::concurrency::Thread;
 using apache::thrift::concurrency::ThreadFactory;
@@ -34,7 +40,6 @@ using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TTransportFactory;
 using boost::shared_ptr;
-using std::string;
 
 TThreadedServer::TThreadedServer(const shared_ptr<TProcessorFactory>& processorFactory,
                                  const shared_ptr<TServerTransport>& serverTransport,
@@ -92,29 +97,42 @@ TThreadedServer::~TThreadedServer() {
 void TThreadedServer::serve() {
   TServerFramework::serve();
 
-  // Drain all clients - no more will arrive
-  try {
-    Synchronized s(clientsMonitor_);
-    while (getConcurrentClientCount() > 0) {
-      clientsMonitor_.wait();
-    }
-  } catch (TException& tx) {
-    string errStr = string("TThreadedServer: Exception joining workers: ") + tx.what();
-    GlobalOutput(errStr.c_str());
+  // Ensure post-condition of no active clients
+  Synchronized s(clientMonitor_);
+  while (!clientMap_.empty()) {
+    clientMonitor_.wait();
   }
 }
 
 void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient) {
-  threadFactory_->newThread(pClient)->start();
+  Synchronized sync(clientMonitor_);
+  clientMap_.insert(ClientMap::value_type(pClient.get(), boost::make_shared<TConnectedClientTracker>(pClient)));
+
+  // We do not track the threads themselves
+  ClientMap::const_iterator it = clientMap_.find(pClient.get());
+  threadFactory_->newThread(it->second)->start();
 }
 
 void TThreadedServer::onClientDisconnected(TConnectedClient* pClient) {
-  THRIFT_UNUSED_VARIABLE(pClient);
-  Synchronized s(clientsMonitor_);
-  if (getConcurrentClientCount() == 0) {
-    clientsMonitor_.notify();
+  Synchronized sync(clientMonitor_);
+  clientMap_.erase(pClient);
+  if (clientMap_.empty()) {
+    clientMonitor_.notify();
   }
 }
+
+TThreadedServer::TConnectedClientTracker::TConnectedClientTracker(const boost::shared_ptr<TConnectedClient>& pClient)
+  : pClient_(pClient) {
+}
+
+TThreadedServer::TConnectedClientTracker::~TConnectedClientTracker() {
+}
+
+void TThreadedServer::TConnectedClientTracker::run() /* override */ {
+  pClient_->run();  // Run the client
+  pClient_.reset(); // The client is done - release it here rather than in the destructor for safety
+}
+
 }
 }
 } // apache::thrift::server
