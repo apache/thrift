@@ -416,8 +416,7 @@ class TAsyncioCompactProtocol(TCompactProtocol):
 
     @asyncio.coroutine
     def readCollectionEnd(self):
-        assert self.state == CONTAINER_READ, self.state
-        self.state = self._containers.pop()
+        super(TAsyncioCompactProtocol, self).readCollectionEnd()
     readSetEnd = readCollectionEnd
     readListEnd = readCollectionEnd
     readMapEnd = readCollectionEnd
