@@ -1512,10 +1512,11 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
 
     // if negative id, ensure we generate a valid method name
     string field_method_prefix("ReadField");
+    int32_t field_method_suffix = field_id;
 
-    if (field_id < 0) {
+    if (field_method_suffix < 0) {
       field_method_prefix += "_";
-      field_id *= -1;
+      field_method_suffix *= -1;
     }
 
     out << indent() << "case " << field_id << ":" << endl;
@@ -1526,7 +1527,7 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
       thriftFieldTypeId = "thrift.STRING";
     }
 
-    out << indent() << "if err := p." << field_method_prefix << field_id << "(iprot); err != nil {"
+    out << indent() << "if err := p." << field_method_prefix << field_method_suffix << "(iprot); err != nil {"
         << endl;
     out << indent() << "  return err" << endl;
     out << indent() << "}" << endl;
@@ -1588,13 +1589,14 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
     string field_name(publicize((*f_iter)->get_name()));
     string field_method_prefix("ReadField");
     int32_t field_id = (*f_iter)->get_key();
+    int32_t field_method_suffix = field_id;
 
-    if (field_id < 0) {
+    if (field_method_suffix < 0) {
       field_method_prefix += "_";
-      field_id *= -1;
+      field_method_suffix *= -1;
     }
 
-    out << indent() << "func (p *" << tstruct_name << ")  " << field_method_prefix << field_id
+    out << indent() << "func (p *" << tstruct_name << ")  " << field_method_prefix << field_method_suffix
         << "(iprot thrift.TProtocol) error {" << endl;
     indent_up();
     generate_deserialize_field(out, *f_iter, false, "p.");
@@ -1637,13 +1639,14 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
     field_name = (*f_iter)->get_name();
     escape_field_name = escape_string(field_name);
     field_id = (*f_iter)->get_key();
+    int32_t field_method_suffix = field_id;
 
-    if (field_id < 0) {
+    if (field_method_suffix < 0) {
       field_method_prefix += "_";
-      field_id *= -1;
+      field_method_suffix *= -1;
     }
 
-    out << indent() << "if err := p." << field_method_prefix << field_id
+    out << indent() << "if err := p." << field_method_prefix << field_method_suffix
         << "(oprot); err != nil { return err }" << endl;
   }
 
@@ -1663,13 +1666,14 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
     escape_field_name = escape_string(field_name);
     // field_default_value = (*f_iter)->get_value();
     field_required = (*f_iter)->get_req();
+    int32_t field_method_suffix = field_id;
 
-    if (field_id < 0) {
+    if (field_method_suffix < 0) {
       field_method_prefix += "_";
-      field_id *= -1;
+      field_method_suffix *= -1;
     }
 
-    out << indent() << "func (p *" << tstruct_name << ") " << field_method_prefix << field_id
+    out << indent() << "func (p *" << tstruct_name << ") " << field_method_prefix << field_method_suffix
         << "(oprot thrift.TProtocol) (err error) {" << endl;
     indent_up();
 
