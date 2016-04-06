@@ -272,3 +272,9 @@ OpenSSL's RAND_poll() when OpenSSL library is first initialized.
 
 The PRNG seed is key to the application security. This method should be
 overridden if it's not strong enough for you.
+
+#Qt Client Windows, Android
+libthriftQt.pro creates .dll and .lib for Windows but also .so and .a libraries for Android.
+To generate .lib or .a library uncomment CONFIG += staticlib inside the .pro file.
+The port is based on TQtcpSocket class. Currently it only supports TBinaryProtocol and TCompactProtocol.
+The TQtcpSocket is not tested for server or SSL usage.
