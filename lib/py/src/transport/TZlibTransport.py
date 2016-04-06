@@ -86,10 +86,10 @@ class TZlibTransport(TTransportBase, CReadableTransport):
         from 0 (no compression) to 9 (best compression).  Default is 9.
         @type compresslevel: int
         """
-        self.__trans = trans
+        self._trans = trans
         self.compresslevel = compresslevel
-        self.__rbuf = BufferIO()
-        self.__wbuf = BufferIO()
+        self._rbuf = BufferIO()
+        self._wbuf = BufferIO()
         self._init_zlib()
         self._init_stats()
 
@@ -97,8 +97,8 @@ class TZlibTransport(TTransportBase, CReadableTransport):
         """Internal method to initialize/reset the internal StringIO objects
         for read and write buffers.
         """
-        self.__rbuf = BufferIO()
-        self.__wbuf = BufferIO()
+        self._rbuf = BufferIO()
+        self._wbuf = BufferIO()
 
     def _init_stats(self):
         """Internal method to reset the internal statistics counters
@@ -157,68 +157,60 @@ class TZlibTransport(TTransportBase, CReadableTransport):
 
     def isOpen(self):
         """Return the underlying transport's open status"""
-        return self.__trans.isOpen()
+        return self._trans.isOpen()
 
     def open(self):
         """Open the underlying transport"""
         self._init_stats()
-        return self.__trans.open()
+        return self._trans.open()
 
     def listen(self):
         """Invoke the underlying transport's listen() method"""
-        self.__trans.listen()
+        self._trans.listen()
 
     def accept(self):
         """Accept connections on the underlying transport"""
-        return self.__trans.accept()
+        return self._trans.accept()
 
     def close(self):
         """Close the underlying transport,"""
         self._reinit_buffers()
         self._init_zlib()
-        return self.__trans.close()
+        return self._trans.close()
 
     def read(self, sz):
         """Read up to sz bytes from the decompressed bytes buffer, and
         read from the underlying transport if the decompression
         buffer is empty.
         """
-        ret = self.__rbuf.read(sz)
+        ret = self._rbuf.read(sz)
         if len(ret) > 0:
             return ret
         # keep reading from transport until something comes back
         while True:
             if self.readComp(sz):
                 break
-        ret = self.__rbuf.read(sz)
+        ret = self._rbuf.read(sz)
         return ret
 
     def readComp(self, sz):
         """Read compressed data from the underlying transport, then
         decompress it and append it to the internal StringIO read buffer
         """
-        zbuf = self.__trans.read(sz)
-        zbuf = self._zcomp_read.unconsumed_tail + zbuf
-        buf = self._zcomp_read.decompress(zbuf)
-        self.bytes_in += len(zbuf)
-        self.bytes_in_comp += len(buf)
-        old = self.__rbuf.read()
-        self.__rbuf = BufferIO(old + buf)
-        if len(old) + len(buf) == 0:
-            return False
-        return True
+        zbuf = self._trans.read(sz)
+        return self._readComp(zbuf)
 
     def write(self, buf):
         """Write some bytes, putting them into the internal write
         buffer for eventual compression.
         """
-        self.__wbuf.write(buf)
+        self._wbuf.write(buf)
 
     def flush(self):
         """Flush any queued up data in the write buffer and ensure the
         compression buffer is flushed out to the underlying transport
         """
-        wout = self.__wbuf.getvalue()
+        wout = self._wbuf.getvalue()
         if len(wout) > 0:
             zbuf = self._zcomp_write.compress(wout)
             self.bytes_out += len(wout)
@@ -228,14 +220,14 @@ class TZlibTransport(TTransportBase, CReadableTransport):
         ztail = self._zcomp_write.flush(zlib.Z_SYNC_FLUSH)
         self.bytes_out_comp += len(ztail)
         if (len(zbuf) + len(ztail)) > 0:
-            self.__wbuf = BufferIO()
-            self.__trans.write(zbuf + ztail)
-        self.__trans.flush()
+            self._wbuf = BufferIO()
+            self._trans.write(zbuf + ztail)
+        self._trans.flush()
 
     @property
     def cstringio_buf(self):
         """Implement the CReadableTransport interface"""
-        return self.__rbuf
+        return self._rbuf
 
     def cstringio_refill(self, partialread, reqlen):
         """Implement the CReadableTransport interface for refill"""
@@ -244,5 +236,17 @@ class TZlibTransport(TTransportBase, CReadableTransport):
             retstring += self.read(self.DEFAULT_BUFFSIZE)
         while len(retstring) < reqlen:
             retstring += self.read(reqlen - len(retstring))
-        self.__rbuf = BufferIO(retstring)
-        return self.__rbuf
+        self._rbuf = BufferIO(retstring)
+        return self._rbuf
+
+    def _readComp(self, zbuf):
+        """Decompress data read from the underlying transport, then
+        append it to the internal StringIO read buffer
+        """
+        zbuf = self._zcomp_read.unconsumed_tail + zbuf
+        buf = self._zcomp_read.decompress(zbuf)
+        self.bytes_in += len(zbuf)
+        self.bytes_in_comp += len(buf)
+        old = self._rbuf.read()
+        self._rbuf = BufferIO(old + buf)
+        return (len(old) + len(buf)) != 0

@@ -50,10 +50,19 @@ class AbstractTest(unittest.TestCase):
             ssl_ctx.verify_mode = ssl.CERT_NONE
         else:
             ssl_ctx = None
-        self.transport = yield from TAsyncio.TAsyncioTransport.connect(
-            options.host, options.port, ssl=ssl_ctx,
-            framed=(options.trans == 'framed'))
 
+        if options.trans == 'framed':
+            self.transport = \
+                yield from TAsyncio.TAsyncioFramedTransport.connect(
+                    options.host, options.port, ssl=ssl_ctx)
+        elif options.trans == 'buffered':
+            self.transport = \
+                yield from TAsyncio.TAsyncioBufferedTransport.connect(
+                    options.host, options.port, ssl=ssl_ctx)
+        elif options.trans == '':
+            raise AssertionError('Unknown --transport option: %s' % options.trans)
+        if options.zlib:
+            self.transport = TAsyncio.TAsyncioZlibTransport(self.transport, 9)
         self.transport.open()
         protocol = self.get_protocol(self.transport)
         self.client = ThriftTest.Client(protocol)
@@ -312,6 +321,8 @@ if __name__ == "__main__":
                       help="connect to server at port")
     parser.add_option("--host", type="string", dest="host",
                       help="connect to server")
+    parser.add_option("--zlib", action="store_true", dest="zlib",
+                      help="use zlib wrapper for compressed transport")
     parser.add_option("--ssl", action="store_true", dest="ssl",
                       help="use SSL for encrypted transport")
     parser.add_option('-v', '--verbose', action="store_const",

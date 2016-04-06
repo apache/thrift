@@ -29,54 +29,46 @@ from thrift.protocol.TCompactProtocol import TCompactProtocol, \
     TCompactProtocolFactory, fromZigZag, reader, CLEAR, FIELD_READ, \
     CONTAINER_READ, VALUE_READ, BOOL_READ, CompactType
 from thrift.protocol.TProtocol import TProtocolException
-from thrift.transport import TTransport
+from thrift.transport import TTransport, TZlibTransport
 
 
-class TAsyncioTransport(TTransport.TTransportBase):
-    """A buffered transport over an asyncio stream"""
-    def __init__(self, reader, writer, framed=False):
+class TAsyncioBaseTransport(TTransport.TTransportBase):
+    @asyncio.coroutine
+    def readAll(self, sz):
+        buff = b''
+        while sz:
+            chunk = yield from self.read(sz)
+            sz -= len(chunk)
+            buff += chunk
+
+            if len(chunk) == 0:
+                raise EOFError()
+
+        return buff
+
+
+class TAsyncioTransport(TAsyncioBaseTransport):
+    """An abstract transport over asyncio streams"""
+    def __init__(self, reader, writer):
         self._reader = reader
         self._writer = writer
         self._wbuf = BytesIO()
-        self._rbuf = BytesIO()
         self._logger = logging.getLogger("TAsyncioTransport")
-        self._framed = framed
 
-    @property
-    def framed(self):
-        return self._framed
-
-    # not the same number of parameters as TTransportBase.open
     @classmethod
     @asyncio.coroutine
-    def connect(cls, host, port, loop=None, ssl=False, framed=False):
+    def connect(cls, host, port, loop=None, ssl=False):
         reader, writer = yield from asyncio.open_connection(
             host, port, loop=loop, ssl=ssl)
-        return cls(reader, writer, framed=framed)
-
-    @asyncio.coroutine
-    def readAll(self, n):
-        if self.framed:
-            ret = self._rbuf.read(n)
-            n -= len(ret)
-            while n:
-                yield from self.readFrame()
-                buf = self._rbuf.read(n)
-                ret += buf
-                n -= len(buf)
-            return ret
-        data = yield from self._reader.readexactly(n)
-        return data
-
-    @asyncio.coroutine
-    def readFrame(self):
-        assert self.framed
-        buff = yield from self._reader.readexactly(4)
-        sz, = unpack('!i', buff)
-        self._rbuf = BytesIO((yield from self._reader.readexactly(sz)))
+        return cls(reader, writer)
 
     def write(self, buf):
-        self._wbuf.write(buf)
+        try:
+            self._wbuf.write(buf)
+        except Exception as e:
+            # reset wbuf so it doesn't contain a partial function call
+            self._wbuf.seek(0)
+            raise e from None
 
     @asyncio.coroutine
     def flush(self):
@@ -86,14 +78,7 @@ class TAsyncioTransport(TTransport.TTransportBase):
             self._logger.debug('writing %s of size %d: %s',
                                size, 'frame' if self.framed else "data",
                                wbuf.getvalue()[:size])
-
-        if self.framed:
-            data = pack("!i", size) + wbuf.getvalue()[:size]
-        else:
-            if size < 1024:
-                data = wbuf.getvalue()[:size]
-            else:
-                data = memoryview(wbuf.getvalue())[:size]
+        data = self._get_flushed_data()
         self._writer.write(data)
         wbuf.seek(0)
         yield from self._writer.drain()
@@ -101,6 +86,99 @@ class TAsyncioTransport(TTransport.TTransportBase):
     def close(self):
         self._reader.feed_eof()
         self._writer.close()
+
+
+class TAsyncioBufferedTransport(TAsyncioTransport):
+    """A buffered transport over asyncio streams"""
+
+    @asyncio.coroutine
+    def read(self, sz):
+        return (yield from self._reader.read(sz))
+
+    def _get_flushed_data(self):
+        wbuf = self._wbuf
+        size = wbuf.tell()
+        if size < 1024:
+            return wbuf.getvalue()[:size]
+        return memoryview(wbuf.getvalue())[:size]
+
+
+class TAsyncioFramedTransport(TAsyncioTransport):
+    """A buffered transport over an asyncio stream"""
+    def __init__(self, reader, writer):
+        super(TAsyncioFramedTransport, self).__init__(reader, writer)
+        self._rbuf = BytesIO()
+
+    @asyncio.coroutine
+    def read(self, sz):
+        ret = self._rbuf.read(sz)
+        if ret:
+            return ret
+        yield from self.readFrame()
+        return self._rbuf.read(sz)
+
+    @asyncio.coroutine
+    def readFrame(self):
+        buff = yield from self._reader.readexactly(4)
+        sz, = unpack('!i', buff)
+        self._rbuf = BytesIO((yield from self._reader.readexactly(sz)))
+
+    def _get_flushed_data(self):
+        wbuf = self._wbuf
+        size = wbuf.tell()
+        return pack("!i", size) + wbuf.getvalue()[:size]
+
+
+class TAsyncioZlibTransport(TZlibTransport.TZlibTransport,
+                            TAsyncioBaseTransport):
+    """Class that wraps an asyncio-friendly transport with zlib, compressing
+    writes and decompresses reads, using the python standard
+    library zlib module.
+    """
+
+    @asyncio.coroutine
+    def read(self, sz):
+        """Read up to sz bytes from the decompressed bytes buffer, and
+        read from the underlying transport if the decompression
+        buffer is empty.
+        """
+        ret = self._rbuf.read(sz)
+        if len(ret) > 0:
+            return ret
+        # keep reading from transport until something comes back
+        while True:
+            if (yield from self.readComp(sz)):
+                break
+        ret = self._rbuf.read(sz)
+        return ret
+
+    @asyncio.coroutine
+    def readComp(self, sz):
+        """Read compressed data from the underlying transport, then
+        decompress it and append it to the internal StringIO read buffer
+        """
+        zbuf = yield from self._trans.read(sz)
+        return self._readComp(zbuf)
+
+    @asyncio.coroutine
+    def flush(self):
+        """Flush any queued up data in the write buffer and ensure the
+        compression buffer is flushed out to the underlying transport
+        """
+        super(TAsyncioZlibTransport, self).flush()
+        # flush() in the base class is effectively a no-op
+        yield from self._trans.flush()
+
+    @asyncio.coroutine
+    def cstringio_refill(self, partialread, reqlen):
+        """Implement the CReadableTransport interface for refill"""
+        retstring = partialread
+        if reqlen < self.DEFAULT_BUFFSIZE:
+            retstring += yield from self.read(self.DEFAULT_BUFFSIZE)
+        while len(retstring) < reqlen:
+            retstring += yield from self.read(reqlen - len(retstring))
+        self._rbuf = BytesIO(retstring)
+        return self._rbuf
 
 
 class TAsyncioBinaryProtocol(TBinaryProtocol):
