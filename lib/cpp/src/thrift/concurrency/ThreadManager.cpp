@@ -545,7 +545,6 @@ public:
 private:
   const size_t workerCount_;
   const size_t pendingTaskCountMax_;
-  Monitor monitor_;
 };
 
 shared_ptr<ThreadManager> ThreadManager::newThreadManager() {
