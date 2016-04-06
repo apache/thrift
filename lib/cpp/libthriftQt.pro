@@ -134,14 +134,14 @@ win32 {
 }
 android {
     #SOURCES +=
-    HEADERS += libthriftQt/thrift/config.h \
+    HEADERS += src/thrift/thrift-config.h \
                src/thrift/concurrency/Mutex.h \
-                src/thrift/concurrency/Monitor.h
+               src/thrift/concurrency/Monitor.h
 
     SOURCES += src/thrift/concurrency/Mutex.cpp \
                src/thrift/concurrency/Monitor.cpp
 
-    INCLUDEPATH += "libthriftQt"
+    INCLUDEPATH += "src/thrift/android"
 
     CONFIG(debug, debug|release) {
         DESTDIR = ../cpp/DebugQtAndroid
