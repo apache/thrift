@@ -162,7 +162,7 @@ func (p *ThriftTestDriver) Start() {
 		t.Fatal("TestStringMap failed")
 	}
 
-	setTestInput := map[int32]struct{}{1: struct{}{}, 2: struct{}{}, 3: struct{}{}}
+	setTestInput := map[int32]struct{}{1: {}, 2: {}, 3: {}}
 	if r, err := client.TestSet(setTestInput); !reflect.DeepEqual(r, setTestInput) || err != nil {
 		t.Fatal("TestSet failed")
 	}
