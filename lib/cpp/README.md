@@ -278,3 +278,10 @@ libthriftQt.pro creates .dll and .lib for Windows but also .so and .a libraries 
 To generate .lib or .a library uncomment CONFIG += staticlib inside the .pro file.
 The port is based on TQtcpSocket class. Currently it only supports TBinaryProtocol and TCompactProtocol.
 The TQtcpSocket is not tested for server or SSL usage.
+##Dependencies
+Currently it only depends on boost, set the path inside the .pro file.
+For android you do not need to have boost compiled for android, since it 
+needs header only libraries which seems to work as it is.
+## Linking Against Thrift Qt
+On your Android .pro add the library using 
+ANDROID_EXTRA_LIBS += path_to_lib/liblibthrift.so
