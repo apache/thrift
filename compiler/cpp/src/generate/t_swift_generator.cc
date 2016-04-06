@@ -440,7 +440,7 @@ void t_swift_generator::generate_swift_struct(ofstream& out,
   
   string visibility = is_private ? "private" : "public";
   
-  out << indent() << visibility << " struct " << tstruct->get_name();
+  out << indent() << visibility << " final class " << tstruct->get_name();
 
   if (tstruct->is_xception()) {
     out << " : ErrorType";
