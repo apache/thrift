@@ -117,7 +117,7 @@ abstract class AbstractThriftMojo extends AbstractMojo {
      * @parameter default-value="${localRepository}"
      * @required
      */
-    private ArtifactRepository localRepository;
+    protected ArtifactRepository localRepository;
 
     /**
      * Set this to {@code false} to disable hashing of dependent jar paths.
@@ -129,7 +129,7 @@ abstract class AbstractThriftMojo extends AbstractMojo {
      * @parameter default-value="true"
      * @required
      */
-    private boolean hashDependentPaths;
+    protected boolean hashDependentPaths;
 
     /**
      * @parameter
@@ -229,7 +229,7 @@ abstract class AbstractThriftMojo extends AbstractMojo {
         checkNotNull(generator, "generator");
         final File thriftSourceRoot = getThriftSourceRoot();
         checkNotNull(thriftSourceRoot);
-        checkArgument(!thriftSourceRoot.isFile(), "thriftSourceRoot is a file, not a diretory");
+        checkArgument(!thriftSourceRoot.isFile(), "thriftSourceRoot is a file, not a directory");
         checkNotNull(temporaryThriftFileDirectory, "temporaryThriftFileDirectory");
         checkState(!temporaryThriftFileDirectory.isFile(), "temporaryThriftFileDirectory is a file, not a directory");
         final File outputDirectory = getOutputDirectory();
@@ -268,7 +268,9 @@ abstract class AbstractThriftMojo extends AbstractMojo {
         if (temporaryThriftFileDirectory.exists()) {
             cleanDirectory(temporaryThriftFileDirectory);
         }
+
         Set<File> thriftDirectories = newHashSet();
+
         for (File classpathElementFile : classpathElementFiles) {
             // for some reason under IAM, we receive poms as dependent files
             // I am excluding .xml rather than including .jar as there may be other extensions in use (sar, har, zip)
@@ -283,18 +285,27 @@ abstract class AbstractThriftMojo extends AbstractMojo {
                     throw new IllegalArgumentException(format(
                             "%s was not a readable artifact", classpathElementFile));
                 }
+
+                /**
+                 * Copy each .thrift file found in the JAR into a temporary directory, preserving the
+                 * directory path it had relative to its containing JAR. Add the resulting root directory
+                 * (unique for each JAR processed) to the set of thrift include directories to use when
+                 * compiling.
+                 */
                 for (JarEntry jarEntry : list(classpathJar.entries())) {
                     final String jarEntryName = jarEntry.getName();
                     if (jarEntry.getName().endsWith(THRIFT_FILE_SUFFIX)) {
+                        final String truncatedJarPath = truncatePath(classpathJar.getName());
+                        final File thriftRootDirectory = new File(temporaryThriftFileDirectory, truncatedJarPath);
                         final File uncompressedCopy =
-                                new File(new File(temporaryThriftFileDirectory,
-                                        truncatePath(classpathJar.getName())), jarEntryName);
+                                new File(thriftRootDirectory, jarEntryName);
                         uncompressedCopy.getParentFile().mkdirs();
                         copyStreamToFile(new RawInputStreamFacade(classpathJar
                                 .getInputStream(jarEntry)), uncompressedCopy);
-                        thriftDirectories.add(uncompressedCopy.getParentFile());
+                        thriftDirectories.add(thriftRootDirectory);
                     }
                 }
+
             } else if (classpathElementFile.isDirectory()) {
                 File[] thriftFiles = classpathElementFile.listFiles(new FilenameFilter() {
                     public boolean accept(File dir, String name) {
@@ -307,6 +318,7 @@ abstract class AbstractThriftMojo extends AbstractMojo {
                 }
             }
         }
+
         return ImmutableSet.copyOf(thriftDirectories);
     }
 
@@ -317,15 +329,6 @@ abstract class AbstractThriftMojo extends AbstractMojo {
         		Joiner.on(",").join(includes),
         		Joiner.on(",").join(excludes));
         return ImmutableSet.copyOf(thriftFilesInDirectory);
-    }
-
-    ImmutableSet<File> findThriftFilesInDirectories(Iterable<File> directories) throws IOException {
-        checkNotNull(directories);
-        Set<File> thriftFiles = newHashSet();
-        for (File directory : directories) {
-            thriftFiles.addAll(findThriftFilesInDirectory(directory));
-        }
-        return ImmutableSet.copyOf(thriftFiles);
     }
 
     /**
