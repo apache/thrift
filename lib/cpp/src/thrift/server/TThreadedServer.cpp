@@ -99,18 +99,16 @@ void TThreadedServer::serve() {
   TServerFramework::serve();
 
   // Ensure post-condition of no active clients
-  {
-    Synchronized s(clientMonitor_);
-    while (!activeClientMap_.empty()) {
-      clientMonitor_.wait();
-    }
+  Synchronized s(clientMonitor_);
+  while (!activeClientMap_.empty()) {
+    clientMonitor_.wait();
   }
 
   drainDeadClients();
 }
 
 void TThreadedServer::drainDeadClients() {
-  Synchronized sync(clientMonitor_);
+  // we're in a monitor here
   while (!deadClientMap_.empty()) {
     ClientMap::iterator it = deadClientMap_.begin();
     it->second->join();
@@ -119,9 +117,9 @@ void TThreadedServer::drainDeadClients() {
 }
 
 void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient) {
+  Synchronized sync(clientMonitor_);
   drainDeadClients();
 
-  Synchronized sync(clientMonitor_);
   activeClientMap_.insert(ClientMap::value_type(pClient.get(), boost::make_shared<TConnectedClientRunner>(pClient)));
 
   ClientMap::iterator it = activeClientMap_.find(pClient.get());
