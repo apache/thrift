@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.List;
 import org.apache.maven.artifact.Artifact;
 import com.google.common.collect.ImmutableList;
+import org.apache.maven.artifact.repository.ArtifactRepository;
 
 /**
  * @phase generate-test-sources
@@ -70,5 +71,23 @@ public final class ThriftTestCompileMojo extends AbstractThriftMojo {
     @Override
     protected File getThriftSourceRoot() {
         return thriftTestSourceRoot;
+    }
+
+    /**
+     * Set the local maven ArtifactRepository. Exposed only to allow testing outside of Maven itself.
+     *
+     * @param localRepository local ArtifactRepository
+     */
+    public void setLocalMavenRepository(final ArtifactRepository localRepository) {
+        this.localRepository = localRepository;
+    }
+
+    /**
+     * Set the option to hash dependent JAR paths. Exposed only to allow testing outside of Maven itself.
+     *
+     * @param hashDependentPaths whether or not to hash paths to dependent JARs
+     */
+    public void setHashDependentPaths(final boolean hashDependentPaths) {
+        this.hashDependentPaths = hashDependentPaths;
     }
 }
