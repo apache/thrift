@@ -858,6 +858,7 @@ if test "$have_python" = "yes" ; then
   echo "Python Library:"
   echo "   Using Python .............. : $PYTHON"
   echo "   Using Trial ............... : $TRIAL"
+  echo "   Python3 ................... : $have_py3"
 fi
 if test "$have_php" = "yes" ; then
   echo
