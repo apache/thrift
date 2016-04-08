@@ -276,7 +276,7 @@
         "python3",
         "TestAsyncioClient.py",
         "--host=localhost",
-        "--genpydir=gen-py.asyncio"
+        "--genpydir=gen-py-asyncio"
       ]
     },
     "transports": [

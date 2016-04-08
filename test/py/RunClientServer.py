@@ -105,7 +105,8 @@ def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zli
     env = setup_pypath(libdir, os.path.join(genbase, genpydir))
     # Build command line arguments
     server_args = [sys.executable, relfile('TestServer.py')]
-    cli_args = [sys.executable, relfile('TestClient.py')]
+    cli_args = [sys.executable, relfile(
+        'Test%sClient.py' % ('Asyncio' if genpydir.endswith('asyncio') else ''))]
     for which in (server_args, cli_args):
         which.append('--protocol=%s' % proto)  # accel, binary, compact or json
         which.append('--port=%d' % port)  # default to 9090
@@ -182,19 +183,21 @@ def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zli
 
 
 class TestCases(object):
-    def __init__(self, genbase, libdir, port, gendirs, servers, verbose):
+    def __init__(self, genbase, libdir, port, gendirs, servers, protos,
+                 verbose):
         self.genbase = genbase
         self.libdir = libdir
         self.port = port
         self.verbose = verbose
         self.gendirs = gendirs
         self.servers = servers
+        self.protos = protos
 
     def default_conf(self):
         return {
             'gendir': self.gendirs[0],
             'server': self.servers[0],
-            'proto': PROTOS[0],
+            'proto': self.protos[0],
             'zlib': False,
             'ssl': False,
         }
@@ -210,6 +213,9 @@ class TestCases(object):
             return False
         # skip any servers that don't work with SSL
         if with_ssl and try_server in SKIP_SSL:
+            return False
+        if genpydir.endswith('asyncio') and try_server == 'THttpServer':
+            # FIXME: remove this when THttpClient is ported to asyncio
             return False
         if self.verbose > 0:
             print('\nTest run #%d:  (includes %s) Server=%s,  Proto=%s,  zlib=%s,  SSL=%s'
@@ -233,7 +239,10 @@ class TestCases(object):
         test_count = 0
         for try_server in self.servers:
             for genpydir in self.gendirs:
-                for try_proto in PROTOS:
+                if genpydir.endswith('asyncio') and try_server == 'THttpServer':
+                    # FIXME: remove this when THttpClient is ported to asyncio
+                    continue
+                for try_proto in self.protos:
                     for with_zlib in (False, True):
                         # skip any servers that don't work with the Zlib transport
                         if with_zlib and try_server in SKIP_ZLIB:
@@ -261,6 +270,10 @@ def main():
                       help='directory extensions for generated code, used as suffixes for \"gen-py-*\" added sys.path for individual tests')
     parser.add_option("--port", type="int", dest="port", default=9090,
                       help="port number for server to listen on")
+    parser.add_option('--scripts', type='string', dest='scripts',
+                      default=','.join(SCRIPTS), help='Scripts to be tested')
+    parser.add_option('--protos', type='string', dest='protos',
+                      default=','.join(PROTOS), help='Protocols to be tested')
     parser.add_option('-v', '--verbose', action="store_const",
                       dest="verbose", const=2,
                       help="verbose output")
@@ -276,7 +289,10 @@ def main():
 
     generated_dirs = []
     for gp_dir in options.genpydirs.split(','):
-        generated_dirs.append('gen-py-%s' % (gp_dir))
+        if gp_dir:
+            generated_dirs.append('gen-py-%s' % (gp_dir))
+    scripts = [s for s in options.scripts.split(',') if s]
+    protos = [p for p in options.protos.split(',') if p]
 
     # commandline permits a single class name to be specified to override SERVERS=[...]
     servers = default_servers()
@@ -287,23 +303,24 @@ def main():
             print('Unavailable server type "%s", please choose one of: %s' % (args[0], servers))
             sys.exit(0)
 
-    tests = TestCases(options.gen_base, options.libdir, options.port, generated_dirs, servers, options.verbose)
+    tests = TestCases(options.gen_base, options.libdir, options.port,
+                      generated_dirs, servers, protos, options.verbose)
 
     # run tests without a client/server first
     print('----------------')
     print(' Executing individual test scripts with various generated code directories')
     print(' Directories to be tested: ' + ', '.join(generated_dirs))
-    print(' Scripts to be tested: ' + ', '.join(SCRIPTS))
+    print(' Scripts to be tested: ' + ', '.join(scripts))
     print('----------------')
     for genpydir in generated_dirs:
-        for script in SCRIPTS:
+        for script in scripts:
             runScriptTest(options.libdir, options.gen_base, genpydir, script)
 
     print('----------------')
     print(' Executing Client/Server tests with various generated code directories')
     print(' Servers to be tested: ' + ', '.join(servers))
     print(' Directories to be tested: ' + ', '.join(generated_dirs))
-    print(' Protocols to be tested: ' + ', '.join(PROTOS))
+    print(' Protocols to be tested: ' + ', '.join(protos))
     print(' Options to be tested: ZLIB(yes/no), SSL(yes/no)')
     print('----------------')
 
@@ -312,7 +329,7 @@ def main():
     else:
         tests.test_feature('gendir', generated_dirs)
         tests.test_feature('server', servers)
-        tests.test_feature('proto', PROTOS)
+        tests.test_feature('proto', protos)
         tests.test_feature('zlib', [False, True])
         tests.test_feature('ssl', [False, True])
 
