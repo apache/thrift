@@ -271,7 +271,7 @@ class AbstractTest(unittest.TestCase):
         start = time.time()
         yield from self.client.testOneway(1)  # type is int, not float
         end = time.time()
-        self.assertTrue(end - start < 3,
+        self.assertTrue(end - start < 1,
                         "oneway sleep took %f sec" % (end - start))
 
     @async_test
