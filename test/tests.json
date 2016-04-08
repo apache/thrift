@@ -270,15 +270,6 @@
   {
     "comment": "Using 'python3' executable with asyncio",
     "name": "py3.asyncio",
-    "server": {
-      "extra_args": ["TSimpleServer"],
-      "command": [
-        "python3",
-        "TestAsyncioServer.py",
-        "--verbose",
-        "--genpydir=gen-py.asyncio"
-      ]
-    },
     "client": {
       "timeout": 10,
       "command": [
