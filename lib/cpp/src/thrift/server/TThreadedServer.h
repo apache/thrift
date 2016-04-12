@@ -108,7 +108,10 @@ protected:
 
   /**
    * A helper wrapper used to wrap the client in something we can use to maintain
-   * the lifetime of the connected client within a detached thread.
+   * the lifetime of the connected client within a detached thread.  We cannot simply
+   * track the threads because a shared_ptr<Thread> hangs on to the Runnable it is
+   * passed, and TServerFramework requires the runnable (TConnectedClient) to be
+   * destroyed in order to work properly.
    */
   class TConnectedClientRunner : public apache::thrift::concurrency::Runnable
   {
