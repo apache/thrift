@@ -442,7 +442,7 @@ struct_write_loop(Proto0, [{Fid, _Req, Type, _Name, _Default} | RestStructDef], 
 struct_write_loop(Proto, [], []) ->
     write_frag(Proto, field_stop).
 
--spec validate(tprot_header_val() | tprot_header_tag() | field_stop | TypeData) ->
+-spec validate(tprot_header_val() | tprot_header_tag() | tprot_empty_tag() | field_stop | TypeData) ->
     ok | {error, {invalid, Location :: [atom()], Value :: term()}} when
         TypeData :: {Type, Data},
         Type :: tprot_data_tag() | tprot_cont_tag() | {enum, _Def} | {struct, _Def},
