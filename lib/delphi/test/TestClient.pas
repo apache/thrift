@@ -19,6 +19,8 @@
 
 unit TestClient;
 
+{$I ../src/Thrift.Defines.inc}
+
 {.$DEFINE StressTest}   // activate to stress-test the server with frequent connects/disconnects
 {.$DEFINE PerfTest}     // activate to activate the performance test
 
@@ -306,7 +308,11 @@ begin
       case endpoint of
         trns_Sockets: begin
           Console.WriteLine('Using sockets ('+host+' port '+IntToStr(port)+')');
+          {$IFDEF OLD_SOCKETS}
           streamtrans := TSocketImpl.Create( host, port );
+          {$ELSE}
+          raise Exception.Create(ENDPOINT_TRANSPORTS[endpoint]+' transport not implemented');
+          {$ENDIF}
         end;
 
         trns_Http: begin
@@ -438,9 +444,10 @@ var
   arg3 : IThriftDictionary<SmallInt, string>;
   arg4 : TNumberz;
   arg5 : Int64;
+  {$IFDEF PerfTest}
   StartTick : Cardinal;
   k : Integer;
-  proc : TThreadProcedure;
+  {$ENDIF}
   hello, goodbye : IXtruct;
   crazy : IInsanity;
   looney : IInsanity;
@@ -950,7 +957,7 @@ begin
   // call time
   {$IFDEF PerfTest}
   StartTestGroup( 'Test Calltime()');
-  StartTick := GetTIckCount;
+  StartTick := GetTickCount;
   for k := 0 to 1000 - 1 do
   begin
     client.testVoid();
@@ -1172,7 +1179,8 @@ begin
     // We have a failed test!
     // -> issue DebugBreak ONLY if a debugger is attached,
     // -> unhandled DebugBreaks would cause Windows to terminate the app otherwise
-    if IsDebuggerPresent then asm int 3 end;
+    if IsDebuggerPresent
+    then {$IFDEF CPUX64} DebugBreak {$ELSE} asm int 3 end {$ENDIF};
   end;
 end;
 

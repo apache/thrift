@@ -44,19 +44,19 @@ var
   args : array of string;
   i : Integer;
   arg : string;
-  s : string;
 
 begin
   try
     Writeln( 'Delphi TestClient '+Thrift.Version);
     nParamCount := ParamCount;
     SetLength( args, nParamCount);
-    for i := 1 to nParamCount do
-    begin
+    for i := 1 to nParamCount do begin
       arg := ParamStr( i );
       args[i-1] := arg;
     end;
+
     ExitCode := TTestClient.Execute( args);
+
   except
     on E: EAbort do begin
       ExitCode := $FF;

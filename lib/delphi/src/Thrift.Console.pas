@@ -21,8 +21,7 @@ unit Thrift.Console;
 
 interface
 
-uses
-  StdCtrls;
+uses Classes;
 
 type
   TThriftConsole = class
@@ -34,13 +33,13 @@ type
   TGUIConsole = class( TThriftConsole )
   private
     FLineBreak : Boolean;
-    FMemo : TMemo;
+    FMemo : TStrings;
 
     procedure InternalWrite( const S: string; bWriteLine: Boolean);
   public
     procedure Write( const S: string); override;
     procedure WriteLine( const S: string); override;
-    constructor Create( AMemo: TMemo);
+    constructor Create( AMemo: TStrings);
   end;
 
 function Console: TThriftConsole;
@@ -82,7 +81,7 @@ end;
 
 { TGUIConsole }
 
-constructor TGUIConsole.Create( AMemo: TMemo);
+constructor TGUIConsole.Create( AMemo: TStrings);
 begin
   inherited Create;
   FMemo := AMemo;
@@ -95,15 +94,15 @@ var
 begin
   if FLineBreak then
   begin
-    FMemo.Lines.Add( S );
+    FMemo.Add( S );
   end else
   begin
-    idx := FMemo.Lines.Count - 1;
+    idx := FMemo.Count - 1;
     if idx < 0 then
     begin
-      FMemo.Lines.Add( S );
+      FMemo.Add( S );
     end;
-    FMemo.Lines[idx] := FMemo.Lines[idx] + S;
+    FMemo[idx] := FMemo[idx] + S;
   end;
   FLineBreak := bWriteLine;
 end;
@@ -130,4 +129,5 @@ begin
 end;
 
 end.
+
 

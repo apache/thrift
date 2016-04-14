@@ -19,19 +19,17 @@
 
  unit Thrift.Server;
 
+{$I Thrift.Defines.inc}
 {$I-}  // prevent annoying errors with default log delegate and no console
-{$IF CompilerVersion >= 23.0}
-  {$LEGACYIFEND ON}
-{$IFEND}
 
 interface
 
 uses
-  {$IF CompilerVersion < 23.0}
-    Windows, SysUtils,
+  {$IFDEF OLD_UNIT_NAMES}
+  Windows, SysUtils,
   {$ELSE}
-    Winapi.Windows, System.SysUtils,
-  {$IFEND}
+  Winapi.Windows, System.SysUtils,
+  {$ENDIF}
   Thrift,
   Thrift.Protocol,
   Thrift.Transport;
