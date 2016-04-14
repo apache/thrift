@@ -19,11 +19,18 @@
 unit Thrift.Transport.Pipes;
 
 {$WARN SYMBOL_PLATFORM OFF}
+{$IF CompilerVersion >= 23.0}
+  {$LEGACYIFEND ON}
+{$IFEND}
 
 interface
 
 uses
+{$IF CompilerVersion < 23.0}
   Windows, SysUtils, Math, AccCtrl, AclAPI, SyncObjs,
+{$ELSE}
+  Winapi.Windows, System.SysUtils, System.Math, Winapi.AccCtrl, Winapi.AclAPI, System.SyncObjs,
+{$IFEND}
   Thrift.Transport,
   Thrift.Utils,
   Thrift.Stream;
@@ -896,9 +903,14 @@ end;
 
 
 function TNamedPipeServerTransportImpl.Handle : THandle;
+{$IFDEF WIN64}
+var
+  Hndl: Integer;
+{$ENDIF}
 begin
   {$IFDEF WIN64}
-  result := THandle( InterlockedExchangeAdd64( Integer(FHandle), 0));
+  Hndl := Integer(FHandle);
+  result := THandle( InterlockedExchangeAdd( Hndl, 0));
   {$ELSE}
   result := THandle( InterlockedExchangeAdd( Integer(FHandle), 0));
   {$ENDIF}
@@ -946,6 +958,7 @@ begin
     sa.bInheritHandle       := FALSE;
 
     // Create an instance of the named pipe
+{$IF CompilerVersion < 23.0}
     result := Windows.CreateNamedPipe( PChar( FPipeName),        // pipe name
                                        PIPE_ACCESS_DUPLEX or     // read/write access
                                        FILE_FLAG_OVERLAPPED,     // async mode
@@ -956,6 +969,18 @@ begin
                                        FBufSize,                 // input buffer size
                                        FTimeout,                 // time-out, see MSDN
                                        @sa);                     // default security attribute
+{$ELSE}
+    result := Winapi.Windows.CreateNamedPipe( PChar( FPipeName),        // pipe name
+                                       PIPE_ACCESS_DUPLEX or     // read/write access
+                                       FILE_FLAG_OVERLAPPED,     // async mode
+                                       PIPE_TYPE_BYTE or         // byte type pipe
+                                       PIPE_READMODE_BYTE,       // byte read mode
+                                       FMaxConns,                // max. instances
+                                       FBufSize,                 // output buffer size
+                                       FBufSize,                 // input buffer size
+                                       FTimeout,                 // time-out, see MSDN
+                                       @sa);                     // default security attribute
+{$IFEND}
 
     if( result <> INVALID_HANDLE_VALUE)
     then InterlockedExchangePointer( Pointer(FHandle), Pointer(result))
