@@ -19,10 +19,6 @@
 
 unit Thrift.Stream;
 
-{$IF CompilerVersion >= 23.0}
-  {$LEGACYIFEND ON}
-{$IFEND}
-
 interface
 
 uses
@@ -30,12 +26,8 @@ uses
   SysUtils,
   SysConst,
   RTLConsts,
-  {$IF CompilerVersion < 23.0}
-    ActiveX,
-  {$ELSE}
-    Winapi.ActiveX,
-  {$IFEND}
-  Thrift.Utils;
+  Thrift.Utils,
+  ActiveX;
 
 type
 
@@ -148,7 +140,7 @@ function TThriftStreamAdapterCOM.ToArray: TBytes;
 var
   statstg: TStatStg;
   len : Integer;
-  NewPos : {$IF CompilerVersion >= 29.0} UInt64 {$ELSE} Int64  {$IFEND};
+  NewPos : {$IF CompilerVersion >= 30.0} UInt64 {$ELSE} Int64  {$IFEND};
   cbRead : Integer;
 begin
   FillChar( statstg, SizeOf( statstg), 0);

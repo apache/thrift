@@ -21,16 +21,8 @@ unit Thrift.Utils;
 
 interface
 
-{$IF CompilerVersion >= 23.0}
-  {$LEGACYIFEND ON}
-{$IFEND}
-
 uses
-{$IF CompilerVersion < 23.0}
   Classes, Windows, SysUtils, Character, SyncObjs;
-{$ELSE}
-  System.Classes, Winapi.Windows, System.SysUtils, System.Character, System.SyncObjs;
-{$IFEND}
 
 type
   IOverlappedHelper = interface
@@ -207,11 +199,7 @@ begin
   {$IF RTLVersion  >= 28.0}  // XE7+
   result := c.IsHighSurrogate();
   {$ELSE}
-    {$IF CompilerVersion < 23.0}
-      result := Character.IsHighSurrogate( c);
-    {$ELSE}
-      result := c.IsHighSurrogate;
-    {$IFEND}
+  result := Character.IsHighSurrogate( c);
   {$IFEND}
 end;
 
@@ -221,11 +209,7 @@ begin
   {$IF RTLVersion  >= 28.0}  // XE7+
   result := c.IsLowSurrogate();
   {$ELSE}
-    {$IF CompilerVersion < 23.0}
-      result := Character.IsLowSurrogate( c);
-    {$ELSE}
-      result := c.IsLowSurrogate;
-    {$IFEND}
+  result := Character.IsLowSurrogate( c);
   {$IFEND}
 end;
 
