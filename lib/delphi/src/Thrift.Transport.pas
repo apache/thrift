@@ -17,7 +17,10 @@
  * under the License.
  *)
 
- {$SCOPEDENUMS ON}
+{$SCOPEDENUMS ON}
+{$IF CompilerVersion >= 23.0}
+  {$LEGACYIFEND ON}
+{$IFEND}
 
 {$IF CompilerVersion < 28.0}
   {$DEFINE OLD_SOCKETS}   // TODO: add socket support for CompilerVersion >= 28.0
@@ -32,16 +35,20 @@ uses
   Classes,
   SysUtils,
   Math,
-  WinSock,
-  {$IFDEF OLD_SOCKETS}
-  Sockets,
-  {$ENDIF}
   Generics.Collections,
+{$IF CompilerVersion < 23.0}
+  ActiveX, msxml, WinSock, Sockets,
+{$ELSE}
+  Winapi.ActiveX, Winapi.msxml, Winapi.WinSock,
+  {$IF CompilerVersion < 28.0}
+    Web.Win.Sockets,
+  {$ELSE}
+    System.Win.ScktComp,
+  {$IFEND}
+{$IFEND}
   Thrift.Collections,
   Thrift.Utils,
-  Thrift.Stream,
-  ActiveX,
-  msxml;
+  Thrift.Stream;
 
 type
   ITransport = interface
@@ -1253,7 +1260,11 @@ begin
   wsaError := 0;
   try
 {$IFDEF MSWINDOWS}
+  {$IF CompilerVersion < 23.0}
     result := WinSock.select(socket + 1, ReadFdsptr, WriteFdsptr, ExceptFdsptr, Timeptr);
+  {$ELSE}
+    result := Winapi.WinSock.select(socket + 1, ReadFdsptr, WriteFdsptr, ExceptFdsptr, Timeptr);
+  {$IFEND}
 {$ENDIF}
 {$IFDEF LINUX}
     result := Libc.select(socket + 1, ReadFdsptr, WriteFdsptr, ExceptFdsptr, Timeptr);
@@ -1293,7 +1304,11 @@ begin
 
   // recv() returns the number of bytes received, or -1 if an error occurred.
   // The return value will be 0 when the peer has performed an orderly shutdown.
+{$IF CompilerVersion < 23.0}
   retval := recv( FTcpClient.Handle, pBuf^, DesiredBytes, WinSock.MSG_PEEK);
+{$ELSE}
+  retval := recv( FTcpClient.Handle, pBuf^, DesiredBytes, Winapi.WinSock.MSG_PEEK);
+{$IFEND}
   if retval <= 0
   then Exit( TWaitForData.wfd_Error);
 

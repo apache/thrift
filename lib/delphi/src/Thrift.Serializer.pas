@@ -18,10 +18,18 @@
  *)
 unit Thrift.Serializer;
 
+{$IF CompilerVersion >= 23.0}
+  {$LEGACYIFEND ON}
+{$IFEND}
+
 interface
 
 uses
-  Classes, Windows, SysUtils,
+  {$IF CompilerVersion < 23.0}
+    Classes, Windows, SysUtils,
+  {$ELSE}
+    System.Classes, Winapi.Windows, System.SysUtils,
+  {$IFEND}
   Thrift.Protocol,
   Thrift.Transport,
   Thrift.Stream;
