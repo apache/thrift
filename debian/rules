@@ -199,8 +199,8 @@ binary-common:
 	dh_installexamples
 	dh_installman
 	dh_link
-	dh_strip -ppython-thrift --dbg=python-thrift-dbg
-	dh_strip -ppython3-thrift --dbg=python3-thrift-dbg
+	dh_strip -ppython-thrift --dbg-package=python-thrift-dbg
+	dh_strip -ppython3-thrift --dbg-package=python3-thrift-dbg
 	dh_strip -pthrift-compiler -plibthrift0
 	dh_compress
 	dh_fixperms
