@@ -19,12 +19,17 @@
 
  unit Thrift.Server;
 
+{$I Thrift.Defines.inc}
 {$I-}  // prevent annoying errors with default log delegate and no console
 
 interface
 
 uses
+  {$IFDEF OLD_UNIT_NAMES}
   Windows, SysUtils,
+  {$ELSE}
+  Winapi.Windows, System.SysUtils,
+  {$ENDIF}
   Thrift,
   Thrift.Protocol,
   Thrift.Transport;

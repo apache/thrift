@@ -19,6 +19,8 @@
 
 unit Thrift.Stream;
 
+{$I Thrift.Defines.inc}
+
 interface
 
 uses
@@ -26,8 +28,12 @@ uses
   SysUtils,
   SysConst,
   RTLConsts,
-  Thrift.Utils,
-  ActiveX;
+  {$IFDEF OLD_UNIT_NAMES}
+  ActiveX,
+  {$ELSE}
+  Winapi.ActiveX,
+  {$ENDIF}
+  Thrift.Utils;
 
 type
 
@@ -104,10 +110,8 @@ end;
 
 procedure TThriftStreamAdapterCOM.Flush;
 begin
-  if IsOpen then
-  begin
-    if FStream <> nil then
-    begin
+  if IsOpen then begin
+    if FStream <> nil then begin
       FStream.Commit( STGC_DEFAULT );
     end;
   end;
@@ -120,17 +124,15 @@ end;
 
 procedure TThriftStreamAdapterCOM.Open;
 begin
-
+  // nothing to do
 end;
 
 function TThriftStreamAdapterCOM.Read( var buffer: TBytes; offset: Integer; count: Integer): Integer;
 begin
   inherited;
   Result := 0;
-  if FStream <> nil then
-  begin
-    if count > 0 then
-    begin
+  if FStream <> nil then begin
+    if count > 0 then begin
       FStream.Read( @buffer[offset], count, @Result);
     end;
   end;
@@ -140,39 +142,32 @@ function TThriftStreamAdapterCOM.ToArray: TBytes;
 var
   statstg: TStatStg;
   len : Integer;
-  NewPos : {$IF CompilerVersion >= 30.0} UInt64 {$ELSE} Int64  {$IFEND};
+  NewPos : {$IF CompilerVersion >= 29.0} UInt64 {$ELSE} Int64  {$IFEND};
   cbRead : Integer;
 begin
   FillChar( statstg, SizeOf( statstg), 0);
   len := 0;
-  if IsOpen then
-  begin
-    if Succeeded( FStream.Stat( statstg, STATFLAG_NONAME )) then
-    begin
+  if IsOpen then begin
+    if Succeeded( FStream.Stat( statstg, STATFLAG_NONAME )) then begin
       len := statstg.cbSize;
     end;
   end;
 
   SetLength( Result, len );
 
-  if len > 0 then
-  begin
-    if Succeeded( FStream.Seek( 0, STREAM_SEEK_SET, NewPos) ) then
-    begin
+  if len > 0 then begin
+    if Succeeded( FStream.Seek( 0, STREAM_SEEK_SET, NewPos) ) then begin
       FStream.Read( @Result[0], len, @cbRead);
     end;
   end;
 end;
 
 procedure TThriftStreamAdapterCOM.Write( const buffer: TBytes; offset: Integer; count: Integer);
-var
-  nWritten : Integer;
+var nWritten : Integer;
 begin
   inherited;
-  if IsOpen then
-  begin
-    if count > 0 then
-    begin
+  if IsOpen then begin
+    if count > 0 then begin
       FStream.Write( @buffer[0], count, @nWritten);
     end;
   end;
@@ -185,22 +180,18 @@ procedure TThriftStreamImpl.CheckSizeAndOffset(const buffer: TBytes; offset,
 var
   len : Integer;
 begin
-  if count > 0 then
-  begin
+  if count > 0 then begin
     len := Length( buffer );
-    if (offset < 0) or ( offset >= len) then
-    begin
+    if (offset < 0) or ( offset >= len) then begin
       raise ERangeError.Create( SBitsIndexError );
     end;
-    if count > len then
-    begin
+    if count > len then begin
       raise ERangeError.Create( SBitsIndexError );
     end;
   end;
 end;
 
-function TThriftStreamImpl.Read(var buffer: TBytes; offset,
-  count: Integer): Integer;
+function TThriftStreamImpl.Read(var buffer: TBytes; offset, count: Integer): Integer;
 begin
   Result := 0;
   CheckSizeAndOffset( buffer, offset, count );
@@ -229,16 +220,15 @@ end;
 
 destructor TThriftStreamAdapterDelphi.Destroy;
 begin
-  if FOwnsStream then
-  begin
-    FStream.Free;
-  end;
+  if FOwnsStream 
+  then Close;
+  
   inherited;
 end;
 
 procedure TThriftStreamAdapterDelphi.Flush;
 begin
-
+  // nothing to do
 end;
 
 function TThriftStreamAdapterDelphi.IsOpen: Boolean;
@@ -248,7 +238,7 @@ end;
 
 procedure TThriftStreamAdapterDelphi.Open;
 begin
-
+  // nothing to do
 end;
 
 function TThriftStreamAdapterDelphi.Read(var buffer: TBytes; offset,
@@ -256,8 +246,7 @@ function TThriftStreamAdapterDelphi.Read(var buffer: TBytes; offset,
 begin
   inherited;
   Result := 0;
-  if count > 0 then
-  begin
+  if count > 0 then begin
     Result := FStream.Read( Pointer(@buffer[offset])^, count)
   end;
 end;
@@ -291,8 +280,7 @@ procedure TThriftStreamAdapterDelphi.Write(const buffer: TBytes; offset,
   count: Integer);
 begin
   inherited;
-  if count > 0 then
-  begin
+  if count > 0 then begin
     FStream.Write( Pointer(@buffer[offset])^, count)
   end;
 end;

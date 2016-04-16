@@ -19,11 +19,16 @@
 unit Thrift.Transport.Pipes;
 
 {$WARN SYMBOL_PLATFORM OFF}
+{$I Thrift.Defines.inc}
 
 interface
 
 uses
+  {$IFDEF OLD_UNIT_NAMES}
   Windows, SysUtils, Math, AccCtrl, AclAPI, SyncObjs,
+  {$ELSE}
+  Winapi.Windows, System.SysUtils, System.Math, Winapi.AccCtrl, Winapi.AclAPI, System.SyncObjs,
+  {$ENDIF}
   Thrift.Transport,
   Thrift.Utils,
   Thrift.Stream;
@@ -898,7 +903,7 @@ end;
 function TNamedPipeServerTransportImpl.Handle : THandle;
 begin
   {$IFDEF WIN64}
-  result := THandle( InterlockedExchangeAdd64( Integer(FHandle), 0));
+  result := THandle( InterlockedExchangeAdd64( Int64(FHandle), 0));
   {$ELSE}
   result := THandle( InterlockedExchangeAdd( Integer(FHandle), 0));
   {$ENDIF}
@@ -946,16 +951,22 @@ begin
     sa.bInheritHandle       := FALSE;
 
     // Create an instance of the named pipe
-    result := Windows.CreateNamedPipe( PChar( FPipeName),        // pipe name
-                                       PIPE_ACCESS_DUPLEX or     // read/write access
-                                       FILE_FLAG_OVERLAPPED,     // async mode
-                                       PIPE_TYPE_BYTE or         // byte type pipe
-                                       PIPE_READMODE_BYTE,       // byte read mode
-                                       FMaxConns,                // max. instances
-                                       FBufSize,                 // output buffer size
-                                       FBufSize,                 // input buffer size
-                                       FTimeout,                 // time-out, see MSDN
-                                       @sa);                     // default security attribute
+    {$IFDEF OLD_UNIT_NAMES}
+    result := Windows.CreateNamedPipe(
+    {$ELSE}
+    result := Winapi.Windows.CreateNamedPipe(
+    {$ENDIF}
+        PChar( FPipeName),        // pipe name
+        PIPE_ACCESS_DUPLEX or     // read/write access
+        FILE_FLAG_OVERLAPPED,     // async mode
+        PIPE_TYPE_BYTE or         // byte type pipe
+        PIPE_READMODE_BYTE,       // byte read mode
+        FMaxConns,                // max. instances
+        FBufSize,                 // output buffer size
+        FBufSize,                 // input buffer size
+        FTimeout,                 // time-out, see MSDN
+        @sa                       // default security attribute
+    );
 
     if( result <> INVALID_HANDLE_VALUE)
     then InterlockedExchangePointer( Pointer(FHandle), Pointer(result))

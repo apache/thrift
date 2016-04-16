@@ -21,8 +21,14 @@ unit Thrift.Utils;
 
 interface
 
+{$I Thrift.Defines.inc}
+
 uses
+  {$IFDEF OLD_UNIT_NAMES}
   Classes, Windows, SysUtils, Character, SyncObjs;
+  {$ELSE}
+  System.Classes, Winapi.Windows, System.SysUtils, System.Character, System.SyncObjs;
+  {$ENDIF}
 
 type
   IOverlappedHelper = interface
@@ -62,6 +68,9 @@ type
     class function IsLowSurrogate( const c : Char) : Boolean; static; inline;
   end;
 
+
+function InterlockedCompareExchange64( var Target : Int64; Exchange, Comparand : Int64) : Int64; stdcall;
+function InterlockedExchangeAdd64( var Addend : Int64; Value : Int64) : Int64; stdcall;
 
 
 implementation
@@ -196,23 +205,39 @@ end;
 
 class function CharUtils.IsHighSurrogate( const c : Char) : Boolean;
 begin
-  {$IF RTLVersion  >= 28.0}  // XE7+
-  result := c.IsHighSurrogate();
-  {$ELSE}
+  {$IF CompilerVersion < 23.0}
   result := Character.IsHighSurrogate( c);
+  {$ELSE}
+  result := c.IsHighSurrogate();
   {$IFEND}
 end;
 
 
 class function CharUtils.IsLowSurrogate( const c : Char) : Boolean;
 begin
-  {$IF RTLVersion  >= 28.0}  // XE7+
-  result := c.IsLowSurrogate();
-  {$ELSE}
+  {$IF CompilerVersion < 23.0}
   result := Character.IsLowSurrogate( c);
+  {$ELSE}
+  result := c.IsLowSurrogate;
   {$IFEND}
 end;
 
+
+// natively available since stone age
+function InterlockedCompareExchange64;
+external KERNEL32 name 'InterlockedCompareExchange64';
+
+
+// natively available >= Vista
+// implemented this way since there are still some people running Windows XP :-(
+function InterlockedExchangeAdd64( var Addend : Int64; Value : Int64) : Int64; stdcall;
+var old : Int64;
+begin
+  repeat
+    Old := Addend;
+  until (InterlockedCompareExchange64( Addend, Old + Value, Old) = Old);
+  result := Old;
+end;
 
 
 
