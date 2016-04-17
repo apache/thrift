@@ -118,8 +118,7 @@ void TThreadedServer::drainDeadClients() {
 
 void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient) {
   Synchronized sync(clientMonitor_);
-  activeClientMap_.insert(ClientMap::value_type(pClient.get(), boost::make_shared<TConnectedClientRunner>(pClient)));
-  ClientMap::iterator it = activeClientMap_.find(pClient.get());
+  ClientMap::iterator it = activeClientMap_.insert(ClientMap::value_type(pClient.get(), boost::make_shared<TConnectedClientRunner>(pClient))).first;
   boost::shared_ptr<apache::thrift::concurrency::Thread> pThread = threadFactory_->newThread(it->second);
   it->second->setThread(pThread);
   pThread->start();
