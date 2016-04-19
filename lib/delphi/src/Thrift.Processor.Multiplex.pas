@@ -78,7 +78,7 @@ type
     FServiceProcessorMap : TDictionary<String, IProcessor>;
 
     procedure Error( const oprot : IProtocol; const msg : IMessage;
-                     extype : TApplicationException.TExceptionType; const etxt : string);
+                     extype : TApplicationExceptionSpecializedClass; const etxt : string);
 
   public
     constructor Create;
@@ -142,12 +142,12 @@ end;
 
 
 procedure TMultiplexedProcessorImpl.Error( const oprot : IProtocol; const msg : IMessage;
-                                           extype : TApplicationException.TExceptionType;
+                                           extype : TApplicationExceptionSpecializedClass;
                                            const etxt : string);
 var appex  : TApplicationException;
     newMsg : IMessage;
 begin
-  appex := TApplicationException.Create( extype, etxt);
+  appex := extype.Create(etxt);
   try
     newMsg := TMessageImpl.Create( msg.Name, TMessageType.Exception, msg.SeqID);
 
@@ -178,7 +178,7 @@ begin
   msg := iprot.readMessageBegin();
   if not (msg.Type_ in [TMessageType.Call, TMessageType.Oneway]) then begin
     Error( oprot, msg,
-           TApplicationException.TExceptionType.InvalidMessageType,
+           TApplicationExceptionInvalidMessageType,
            ERROR_INVALID_MSGTYPE);
     Exit( FALSE);
   end;
@@ -187,7 +187,7 @@ begin
   idx := Pos( TMultiplexedProtocol.SEPARATOR, msg.Name);
   if idx < 1 then begin
     Error( oprot, msg,
-           TApplicationException.TExceptionType.InvalidProtocol,
+           TApplicationExceptionInvalidProtocol,
            Format(ERROR_INCOMPATIBLE_PROT,[msg.Name]));
     Exit( FALSE);
   end;
@@ -197,7 +197,7 @@ begin
   if not FServiceProcessorMap.TryGetValue( sService, processor)
   then begin
     Error( oprot, msg,
-           TApplicationException.TExceptionType.InternalError,
+           TApplicationExceptionInternalError,
            Format(ERROR_UNKNOWN_SERVICE,[sService]));
     Exit( FALSE);
   end;

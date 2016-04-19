@@ -350,7 +350,7 @@ begin
       if client = nil then begin
         if FStop
         then Abort  // silent exception
-        else raise TTransportException.Create( 'ServerTransport.Accept() may not return NULL' );
+        else raise TTransportExceptionUnknown.Create('ServerTransport.Accept() may not return NULL');
       end;
 
       FLogDelegate( 'Client Connected!');

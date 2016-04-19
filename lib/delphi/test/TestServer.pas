@@ -658,11 +658,7 @@ begin
       trns_Sockets : begin
         Console.WriteLine('- sockets (port '+IntToStr(port)+')');
         if (trns_Buffered in layered) then Console.WriteLine('- buffered');
-        {$IFDEF OLD_SOCKETS}
         servertrans := TServerSocketImpl.Create( Port, 0, (trns_Buffered in layered));
-        {$ELSE}
-        raise Exception.Create(ENDPOINT_TRANSPORTS[endpoint]+' server transport not implemented');
-        {$ENDIF}
       end;
 
       trns_Http : begin
