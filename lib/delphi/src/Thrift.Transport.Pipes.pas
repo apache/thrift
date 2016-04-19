@@ -348,18 +348,18 @@ begin
   if FTimeOut <> INFINITE then begin
     retries := Max( 1, Round( 1.0 * FTimeOut / INTERVAL));
     while TRUE do begin
-      if  IsOpen
-      and PeekNamedPipe( FPipe, nil, 0, nil, @bytes, nil)
-      and (bytes > 0)
-      then Break;  // there are data
-
-      dwErr := GetLastError;
-      if (dwErr = ERROR_INVALID_HANDLE)
-      or (dwErr = ERROR_BROKEN_PIPE)
-      or (dwErr = ERROR_PIPE_NOT_CONNECTED)
-      then begin
-        result := 0;  // other side closed the pipe
-        Exit;
+      if not PeekNamedPipe( FPipe, nil, 0, nil, @bytes, nil) then begin
+        dwErr := GetLastError;
+        if (dwErr = ERROR_INVALID_HANDLE)
+        or (dwErr = ERROR_BROKEN_PIPE)
+        or (dwErr = ERROR_PIPE_NOT_CONNECTED)
+        then begin
+          result := 0;  // other side closed the pipe
+          Exit;
+        end;
+      end
+      else if bytes > 0 then begin
+        Break;  // there are data
       end;
 
       Dec( retries);
