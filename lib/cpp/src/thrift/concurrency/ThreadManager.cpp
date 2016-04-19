@@ -213,8 +213,6 @@ public:
    */
   void run() {
     bool active = false;
-    bool notifyManager = false;
-
     /**
      * Increment worker semaphore and notify manager if worker count reached
      * desired max
@@ -223,18 +221,20 @@ public:
      * since that is what the manager blocks on for worker add/remove
      */
     {
-      Synchronized s(manager_->monitor_);
-      active = manager_->workerCount_ < manager_->workerMaxCount_;
-      if (active) {
-        manager_->workerCount_++;
-        notifyManager = manager_->workerCount_ == manager_->workerMaxCount_;
+      bool notifyManager = false;
+      {
+        Synchronized s(manager_->monitor_);
+        active = manager_->workerCount_ < manager_->workerMaxCount_;
+        if (active) {
+          manager_->workerCount_++;
+          notifyManager = manager_->workerCount_ == manager_->workerMaxCount_;
+        }
       }
-    }
 
-    if (notifyManager) {
-      Synchronized s(manager_->workerMonitor_);
-      manager_->workerMonitor_.notify();
-      notifyManager = false;
+      if (notifyManager) {
+        Synchronized s(manager_->workerMonitor_);
+        manager_->workerMonitor_.notify();
+      }
     }
 
     while (active) {
@@ -279,10 +279,6 @@ public:
               && manager_->tasks_.size() <= manager_->pendingTaskCountMax_ - 1) {
             manager_->maxMonitor_.notify();
           }
-        } else {
-          idle_ = true;
-          manager_->workerCount_--;
-          notifyManager = (manager_->workerCount_ == manager_->workerMaxCount_);
         }
       }
 
@@ -302,6 +298,9 @@ public:
     {
       Synchronized s(manager_->workerMonitor_);
       manager_->deadWorkers_.insert(this->thread());
+      idle_ = true;
+      manager_->workerCount_--;
+      bool notifyManager = (manager_->workerCount_ == manager_->workerMaxCount_);
       if (notifyManager) {
         manager_->workerMonitor_.notify();
       }
