@@ -33,9 +33,9 @@ uses
   {$ELSE}
     Winapi.ActiveX, Winapi.msxml, Winapi.WinSock,
     {$IFDEF OLD_SOCKETS}
-	    Web.Win.Sockets,
-	  {$ELSE}
-	    System.Win.ScktComp,
+      Web.Win.Sockets,
+    {$ELSE}
+      Thrift.Socket,
     {$ENDIF}
   {$ENDIF}
   Thrift.Collections,
@@ -79,7 +79,9 @@ type
         NotOpen,
         AlreadyOpen,
         TimedOut,
-        EndOfFile
+        EndOfFile,
+        BadArgs,
+        Interrupted
       );
   private
     FType : TExceptionType;
@@ -158,25 +160,22 @@ type
     function GetTransport( const ATrans: ITransport): ITransport; virtual;
   end;
 
-  {$IFDEF OLD_SOCKETS}
-  TThriftCustomIpClient = TCustomIpClient;
-  TThriftTcpServer      = TTcpServer;
-  TThriftTcpClient      = TTcpClient;
-  {$ELSE}
-  // TODO
-  {$ENDIF}
-
-  {$IFDEF OLD_SOCKETS}
   TTcpSocketStreamImpl = class( TThriftStreamImpl )
+{$IFDEF OLD_SOCKETS}
   private type
     TWaitForData = ( wfd_HaveData, wfd_Timeout, wfd_Error);
   private
-    FTcpClient : TThriftCustomIpClient;
+    FTcpClient : TCustomIpClient;
     FTimeout : Integer;
     function Select( ReadReady, WriteReady, ExceptFlag: PBoolean;
                      TimeOut: Integer; var wsaError : Integer): Integer;
     function WaitForData( TimeOut : Integer; pBuf : Pointer; DesiredBytes: Integer;
                           var wsaError, bytesReady : Integer): TWaitForData;
+{$ELSE}
+    FTcpClient: TSocket;
+  protected const
+    SLEEP_TIME = 200;
+{$ENDIF}
   protected
     procedure Write( const buffer: TBytes; offset: Integer; count: Integer); override;
     function Read( var buffer: TBytes; offset: Integer; count: Integer): Integer; override;
@@ -187,9 +186,12 @@ type
     function IsOpen: Boolean; override;
     function ToArray: TBytes; override;
   public
-    constructor Create( const ATcpClient: TThriftCustomIpClient; const aTimeout : Integer = 0);
+{$IFDEF OLD_SOCKETS}
+    constructor Create( const ATcpClient: TCustomIpClient; const aTimeout : Integer = 0);
+{$ELSE}
+    constructor Create( const ATcpClient: TSocket; const aTimeout : Longword = 0);
+{$ENDIF}
   end;
-  {$ENDIF}
 
   IStreamTransport = interface( ITransport )
     ['{A8479B47-2A3E-4421-A9A0-D5A9EDCC634A}']
@@ -240,24 +242,31 @@ type
     destructor Destroy; override;
   end;
 
-  {$IFDEF OLD_SOCKETS}
   TServerSocketImpl = class( TServerTransportImpl)
   private
-    FServer : TThriftTcpServer;
+{$IFDEF OLD_SOCKETS}
+    FServer : TTcpServer;
     FPort : Integer;
     FClientTimeout : Integer;
+{$ELSE}
+    FServer: TServerSocket;
+{$ENDIF}
     FUseBufferedSocket : Boolean;
     FOwnsServer : Boolean;
   protected
     function Accept( const fnAccepting: TProc) : ITransport; override;
   public
-    constructor Create( const AServer: TThriftTcpServer; AClientTimeout: Integer = 0); overload;
+{$IFDEF OLD_SOCKETS}
+    constructor Create( const AServer: TTcpServer; AClientTimeout: Integer = 0); overload;
     constructor Create( APort: Integer; AClientTimeout: Integer = 0; AUseBufferedSockets: Boolean = FALSE); overload;
+{$ELSE}
+    constructor Create( const AServer: TServerSocket; AClientTimeout: Longword = 0); overload;
+    constructor Create( APort: Integer; AClientTimeout: Longword = 0; AUseBufferedSockets: Boolean = FALSE); overload;
+{$ENDIF}
     destructor Destroy; override;
     procedure Listen; override;
     procedure Close; override;
   end;
-  {$ENDIF}
 
   TBufferedTransportImpl = class( TTransportImpl )
   private
@@ -282,29 +291,44 @@ type
     property IsOpen: Boolean read GetIsOpen;
   end;
 
-  {$IFDEF OLD_SOCKETS}
   TSocketImpl = class(TStreamTransportImpl)
   private
-    FClient : TThriftCustomIpClient;
+{$IFDEF OLD_SOCKETS}
+    FClient : TCustomIpClient;
+{$ELSE}
+    FClient: TSocket;
+{$ENDIF}
     FOwnsClient : Boolean;
     FHost : string;
     FPort : Integer;
+{$IFDEF OLD_SOCKETS}
     FTimeout : Integer;
+{$ELSE}
+    FTimeout : Longword;
+{$ENDIF}
 
     procedure InitSocket;
   protected
     function GetIsOpen: Boolean; override;
   public
     procedure Open; override;
-    constructor Create( const AClient : TThriftCustomIpClient; aOwnsClient : Boolean; ATimeout: Integer = 0); overload;
+{$IFDEF OLD_SOCKETS}
+    constructor Create( const AClient : TCustomIpClient; aOwnsClient : Boolean; ATimeout: Integer = 0); overload;
     constructor Create( const AHost: string; APort: Integer; ATimeout: Integer = 0); overload;
+{$ELSE}
+    constructor Create(const AClient: TSocket; aOwnsClient: Boolean); overload;
+    constructor Create( const AHost: string; APort: Integer; ATimeout: Longword = 0); overload;
+{$ENDIF}
     destructor Destroy; override;
     procedure Close; override;
-    property TcpClient: TThriftCustomIpClient read FClient;
+{$IFDEF OLD_SOCKETS}
+    property TcpClient: TCustomIpClient read FClient;
+{$ELSE}
+    property TcpClient: TSocket read FClient;
+{$ENDIF}
     property Host : string read FHost;
     property Port: Integer read FPort;
   end;
-  {$ENDIF}
 
   TFramedTransportImpl = class( TTransportImpl)
   private const
@@ -373,8 +397,8 @@ begin
   while got < len do begin
     ret := Read( buf, off + got, len - got);
     if ret > 0 
-	then Inc( got, ret)
-	else raise TTransportException.Create( 'Cannot read, Remote side has closed' );    
+  then Inc( got, ret)
+  else raise TTransportException.Create( 'Cannot read, Remote side has closed' );
   end;
   Result := got;
 end;
@@ -546,27 +570,44 @@ end;
 { TServerSocket }
 
 {$IFDEF OLD_SOCKETS}
-constructor TServerSocketImpl.Create( const AServer: TThriftTcpServer; AClientTimeout: Integer);
+constructor TServerSocketImpl.Create( const AServer: TTcpServer; AClientTimeout: Integer);
 begin
   inherited Create;
   FServer := AServer;
   FClientTimeout := AClientTimeout;
 end;
-
-constructor TServerSocketImpl.Create(APort, AClientTimeout: Integer; AUseBufferedSockets: Boolean);
+{$ELSE}
+constructor TServerSocketImpl.Create( const AServer: TServerSocket; AClientTimeout: Longword);
 begin
   inherited Create;
+  FServer := AServer;
+  FServer.RecvTimeout := AClientTimeout;
+  FServer.SendTimeout := AClientTimeout;
+end;
+{$ENDIF}
+
+{$IFDEF OLD_SOCKETS}
+constructor TServerSocketImpl.Create(APort, AClientTimeout: Integer; AUseBufferedSockets: Boolean);
+{$ELSE}
+constructor TServerSocketImpl.Create(APort: Integer; AClientTimeout: Longword; AUseBufferedSockets: Boolean);
+{$ENDIF}
+begin
+  inherited Create;
+{$IFDEF OLD_SOCKETS}
   FPort := APort;
   FClientTimeout := AClientTimeout;
-  FUseBufferedSocket := AUseBufferedSockets;
-  FOwnsServer := True;
-  FServer := TThriftTcpServer.Create( nil );
+  FServer := TTcpServer.Create( nil );
   FServer.BlockMode := bmBlocking;
   {$IF CompilerVersion >= 21.0}
   FServer.LocalPort := AnsiString( IntToStr( FPort));
   {$ELSE}
   FServer.LocalPort := IntToStr( FPort);
   {$IFEND}
+{$ELSE}
+  FServer := TServerSocket.Create(APort, AClientTimeout, AClientTimeout);
+{$ENDIF}
+  FUseBufferedSocket := AUseBufferedSockets;
+  FOwnsServer := True;
 end;
 
 destructor TServerSocketImpl.Destroy;
@@ -580,7 +621,11 @@ end;
 
 function TServerSocketImpl.Accept( const fnAccepting: TProc): ITransport;
 var
-  client : TThriftCustomIpClient;
+{$IFDEF OLD_SOCKETS}
+  client : TCustomIpClient;
+{$ELSE}
+  client: TSocket;
+{$ENDIF}
   trans  : IStreamTransport;
 begin
   if FServer = nil then begin
@@ -588,9 +633,10 @@ begin
                                       'No underlying server socket.');
   end;
 
+{$IFDEF OLD_SOCKETS}
   client := nil;
   try
-    client := TThriftCustomIpClient.Create(nil);
+    client := TCustomIpClient.Create(nil);
 
     if Assigned(fnAccepting)
     then fnAccepting();
@@ -619,35 +665,62 @@ begin
       raise TTransportException.Create( E.ToString );
     end;
   end;
+{$ELSE}
+  if Assigned(fnAccepting) then
+    fnAccepting();
+
+  client := FServer.Accept;
+  try
+    trans := TSocketImpl.Create(client, True);
+    client := nil;
+
+    if FUseBufferedSocket then
+      Result := TBufferedTransportImpl.Create(trans)
+    else
+      Result := trans;
+  except
+    client.Free;
+    raise;
+  end;
+{$ENDIF}
 end;
 
 procedure TServerSocketImpl.Listen;
 begin
   if FServer <> nil then
   begin
+{$IFDEF OLD_SOCKETS}
     try
       FServer.Active := True;
     except
-      on E: Exception 
+      on E: Exception
 	  do raise TTransportException.Create('Could not accept on listening socket: ' + E.Message);
     end;
+{$ELSE}
+    FServer.Listen;
+{$ENDIF}
   end;
 end;
 
 procedure TServerSocketImpl.Close;
 begin
-  if FServer <> nil
-  then try
-    FServer.Active := False;
-  except
-    on E: Exception
-    do raise TTransportException.Create('Error on closing socket : ' + E.Message);
-  end;
+  if FServer <> nil then
+{$IFDEF OLD_SOCKETS}
+    try
+      FServer.Active := False;
+    except
+      on E: Exception
+      do raise TTransportException.Create('Error on closing socket : ' + E.Message);
+    end;
+{$ELSE}
+    FServer.Close;
+{$ENDIF}
 end;
 
 { TSocket }
 
-constructor TSocketImpl.Create( const AClient : TThriftCustomIpClient; aOwnsClient : Boolean; ATimeout: Integer = 0);
+{$IFDEF OLD_SOCKETS}
+constructor TSocketImpl.Create( const AClient : TCustomIpClient; aOwnsClient : Boolean; ATimeout: Integer = 0);
 var stream : IThriftStream;
 begin
   FClient := AClient;
@@ -656,8 +729,23 @@ begin
   stream := TTcpSocketStreamImpl.Create( FClient, FTimeout);
   inherited Create( stream, stream);
 end;
+{$ELSE}
+constructor TSocketImpl.Create(const AClient: TSocket; aOwnsClient: Boolean);
+var stream : IThriftStream;
+begin
+  FClient := AClient;
+  FTimeout := AClient.RecvTimeout;
+  FOwnsClient := aOwnsClient;
+  stream := TTcpSocketStreamImpl.Create(FClient, FTimeout);
+  inherited Create(stream, stream);
+end;
+{$ENDIF}
 
+{$IFDEF OLD_SOCKETS}
 constructor TSocketImpl.Create(const AHost: string; APort, ATimeout: Integer);
+{$ELSE}
+constructor TSocketImpl.Create(const AHost: string; APort: Integer; ATimeout: Longword);
+{$ENDIF}
 begin
   inherited Create(nil,nil);
   FHost := AHost;
@@ -682,7 +770,11 @@ end;
 
 function TSocketImpl.GetIsOpen: Boolean;
 begin
+{$IFDEF OLD_SOCKETS}
   Result := (FClient <> nil) and FClient.Connected;
+{$ELSE}
+  Result := (FClient <> nil) and FClient.IsOpen
+{$ENDIF}
 end;
 
 procedure TSocketImpl.InitSocket;
@@ -693,7 +785,11 @@ begin
   then FreeAndNil( FClient)
   else FClient := nil;
 
-  FClient := TThriftTcpClient.Create( nil);
+{$IFDEF OLD_SOCKETS}
+  FClient := TTcpClient.Create( nil);
+{$ELSE}
+  FClient := TSocket.Create(FHost, FPort);
+{$ENDIF}
   FOwnsClient := True;
 
   stream := TTcpSocketStreamImpl.Create( FClient, FTimeout);
@@ -721,14 +817,17 @@ begin
   if FClient = nil
   then InitSocket;
 
+{$IFDEF OLD_SOCKETS}
   FClient.RemoteHost := TSocketHost( Host);
   FClient.RemotePort := TSocketPort( IntToStr( Port));
   FClient.Connect;
+{$ELSE}
+  FClient.Open;
+{$ENDIF}
 
   FInputStream := TTcpSocketStreamImpl.Create( FClient, FTimeout);
   FOutputStream := FInputStream;
 end;
-{$ENDIF}
 
 { TBufferedStream }
 
@@ -1140,18 +1239,30 @@ end;
 
 { TTcpSocketStreamImpl }
 
-{$IFDEF OLD_SOCKETS}
 procedure TTcpSocketStreamImpl.Close;
 begin
   FTcpClient.Close;
 end;
 
-constructor TTcpSocketStreamImpl.Create( const ATcpClient: TThriftCustomIpClient; const aTimeout : Integer);
+{$IFDEF OLD_SOCKETS}
+constructor TTcpSocketStreamImpl.Create( const ATcpClient: TCustomIpClient; const aTimeout : Integer);
 begin
   inherited Create;
   FTcpClient := ATcpClient;
   FTimeout := aTimeout;
 end;
+{$ELSE}
+constructor TTcpSocketStreamImpl.Create( const ATcpClient: TSocket; const aTimeout : Longword);
+begin
+  inherited Create;
+  FTcpClient := ATcpClient;
+  if aTimeout = 0 then
+    FTcpClient.RecvTimeout := SLEEP_TIME
+  else
+    FTcpClient.RecvTimeout := aTimeout;
+  FTcpClient.SendTimeout := aTimeout;
+end;
+{$ENDIF}
 
 procedure TTcpSocketStreamImpl.Flush;
 begin
@@ -1160,7 +1271,11 @@ end;
 
 function TTcpSocketStreamImpl.IsOpen: Boolean;
 begin
+{$IFDEF OLD_SOCKETS}
   Result := FTcpClient.Active;
+{$ELSE}
+  Result := FTcpClient.IsOpen;
+{$ENDIF}
 end;
 
 procedure TTcpSocketStreamImpl.Open;
@@ -1169,6 +1284,7 @@ begin
 end;
 
 
+{$IFDEF OLD_SOCKETS}
 function TTcpSocketStreamImpl.Select( ReadReady, WriteReady, ExceptFlag: PBoolean;
                                       TimeOut: Integer; var wsaError : Integer): Integer;
 var
@@ -1254,7 +1370,9 @@ begin
   if Assigned(ExceptFlag) then
     ExceptFlag^ := FD_ISSET(socket, ExceptFds);
 end;
+{$ENDIF}
 
+{$IFDEF OLD_SOCKETS}
 function TTcpSocketStreamImpl.WaitForData( TimeOut : Integer; pBuf : Pointer;
                                            DesiredBytes : Integer;
                                            var wsaError, bytesReady : Integer): TWaitForData;
@@ -1286,12 +1404,16 @@ begin
   bytesReady := Min( retval, DesiredBytes);
   result := TWaitForData.wfd_HaveData;
 end;
+{$ENDIF}
 
+{$IFDEF OLD_SOCKETS}
 function TTcpSocketStreamImpl.Read(var buffer: TBytes; offset, count: Integer): Integer;
+// old sockets version
 var wfd : TWaitForData;
-    wsaError, nBytes : Integer;
-    pDest : PByte;
+    wsaError,
     msecs : Integer;
+    nBytes : Integer;
+    pDest : PByte;
 begin
   inherited;
 
@@ -1337,8 +1459,8 @@ begin
 end;
 
 function TTcpSocketStreamImpl.ToArray: TBytes;
-var
-  len : Integer;
+// old sockets version
+var len : Integer;
 begin
   len := 0;
   if IsOpen then begin
@@ -1353,6 +1475,7 @@ begin
 end;
 
 procedure TTcpSocketStreamImpl.Write(const buffer: TBytes; offset, count: Integer);
+// old sockets version
 var bCanWrite, bError : Boolean;
     retval, wsaError : Integer;
 begin
@@ -1378,7 +1501,59 @@ begin
 
   FTcpClient.SendBuf( Pointer(@buffer[offset])^, count);
 end;
+
+{$ELSE}
+
+function TTcpSocketStreamImpl.Read(var buffer: TBytes; offset, count: Integer): Integer;
+// new sockets version
+var nBytes : Integer;
+    pDest : PByte;
+begin
+  inherited;
+
+  result := 0;
+  pDest := Pointer(@buffer[offset]);
+  while count > 0 do begin
+    nBytes := FTcpClient.Read(pDest^, count);
+    if nBytes = 0 then Exit;
+    Inc( pDest, nBytes);
+    Dec( count, nBytes);
+    Inc( result, nBytes);
+  end;
+end;
+
+function TTcpSocketStreamImpl.ToArray: TBytes;
+// new sockets version
+var len : Integer;
+begin
+  len := 0;
+  try
+    if FTcpClient.Peek then
+      repeat
+        SetLength(Result, Length(Result) + 1024);
+        len := FTcpClient.Read(Result[Length(Result) - 1024], 1024);
+      until len < 1024;
+  except
+    on TTransportException do begin { don't allow default exceptions } end;
+    else raise;
+  end;
+  if len > 0 then
+    SetLength(Result, Length(Result) - 1024 + len);
+end;
+
+procedure TTcpSocketStreamImpl.Write(const buffer: TBytes; offset, count: Integer);
+// new sockets version
+begin
+  inherited;
+
+  if not FTcpClient.IsOpen
+  then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen);
+
+  FTcpClient.Write(buffer[offset], count);
+end;
+
 {$ENDIF}
+
 
 {$IF CompilerVersion < 21.0}
 initialization

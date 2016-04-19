@@ -25,6 +25,7 @@ uses
   Classes, Windows, SysUtils, Generics.Collections, TypInfo,
   Thrift in '..\..\src\Thrift.pas',
   Thrift.Transport in '..\..\src\Thrift.Transport.pas',
+  Thrift.Socket in '..\..\src\Thrift.Socket.pas',
   Thrift.Protocol in '..\..\src\Thrift.Protocol.pas',
   Thrift.Protocol.JSON in '..\..\src\Thrift.Protocol.JSON.pas',
   Thrift.Collections in '..\..\src\Thrift.Collections.pas',
