@@ -494,15 +494,34 @@ end;
 
 procedure TNamedPipeStreamImpl.Open;
 var hPipe    : THandle;
+    retries, timeout, dwErr : DWORD;
+const INTERVAL = 10; // ms
 begin
   if IsOpen then Exit;
 
+  retries := Max( 1, Round( 1.0 * FTimeOut / INTERVAL));
+  timeout := FTimeOut;
+
+  // if the server hasn't gotten to the point where the pipe has been created, at least wait the timeout
+  // According to MSDN, if no instances of the specified named pipe exist, the WaitNamedPipe function
+  // returns IMMEDIATELY, regardless of the time-out value.
+  while not WaitNamedPipe( PChar(FPipeName), INTERVAL) do begin
+    dwErr := GetLastError;
+    if dwErr <> ERROR_FILE_NOT_FOUND
+    then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
+                                           'Unable to open pipe, '+SysErrorMessage(dwErr));
+
+    if timeout <> INFINITE then begin
+      if (retries > 0)
+      then Dec(retries)
+      else raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
+                                             'Unable to open pipe, timed out');
+    end;
+
+    Sleep(INTERVAL)
+  end;
+
   // open that thingy
-
-  if not WaitNamedPipe( PChar(FPipeName), FTimeout)
-  then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                         'Unable to open pipe, '+SysErrorMessage(GetLastError));
-
   hPipe := CreateFile( PChar( FPipeName),
                        GENERIC_READ or GENERIC_WRITE,
                        FShareMode,        // sharing
