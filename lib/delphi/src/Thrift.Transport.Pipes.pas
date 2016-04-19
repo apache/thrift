@@ -143,7 +143,9 @@ type
   TAnonymousPipeTransportImpl = class( TPipeTransportBase)
   public
     // Anonymous pipe constructor
-    constructor Create( const aPipeRead, aPipeWrite : THandle; aOwnsHandles : Boolean); overload;
+    constructor Create(const aPipeRead, aPipeWrite : THandle;
+                       aOwnsHandles : Boolean;
+                       const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT); overload;
   end;
 
 
@@ -192,6 +194,7 @@ type
     FClientAnonRead,
     FClientAnonWrite  : THandle;
 
+    FTimeOut: DWORD;
   protected
     function Accept(const fnAccepting: TProc): ITransport; override;
 
@@ -206,7 +209,7 @@ type
     procedure InternalClose; override;
 
   public
-    constructor Create( aBufsize : Cardinal = 4096);
+    constructor Create(aBufsize : Cardinal = 4096; aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT);
   end;
 
 
@@ -646,13 +649,15 @@ end;
 { TAnonymousPipeTransportImpl }
 
 
-constructor TAnonymousPipeTransportImpl.Create( const aPipeRead, aPipeWrite : THandle; aOwnsHandles : Boolean);
+constructor TAnonymousPipeTransportImpl.Create( const aPipeRead, aPipeWrite : THandle;
+                                                aOwnsHandles : Boolean;
+                                                const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT);
 // Anonymous pipe constructor
 begin
   inherited Create( nil, nil);
   // overlapped is not supported with AnonPipes, see MSDN
-  FInputStream  := THandlePipeStreamImpl.Create( aPipeRead, aOwnsHandles, FALSE);
-  FOutputStream := THandlePipeStreamImpl.Create( aPipeWrite, aOwnsHandles, FALSE);
+  FInputStream  := THandlePipeStreamImpl.Create( aPipeRead, aOwnsHandles, FALSE, aTimeOut);
+  FOutputStream := THandlePipeStreamImpl.Create( aPipeWrite, aOwnsHandles, FALSE, aTimeOut);
 end;
 
 
@@ -699,7 +704,7 @@ end;
 { TAnonymousPipeServerTransportImpl }
 
 
-constructor TAnonymousPipeServerTransportImpl.Create( aBufsize : Cardinal);
+constructor TAnonymousPipeServerTransportImpl.Create(aBufsize : Cardinal; aTimeOut : DWORD);
 // Anonymous pipe CTOR
 begin
   inherited Create;
@@ -708,6 +713,7 @@ begin
   FWriteHandle := INVALID_HANDLE_VALUE;
   FClientAnonRead := INVALID_HANDLE_VALUE;
   FClientAnonWrite := INVALID_HANDLE_VALUE;
+  FTimeOut := aTimeOut;
 
   // The anonymous pipe needs to be created first so that the server can
   // pass the handles on to the client before the serve (acceptImpl)
@@ -732,7 +738,7 @@ begin
                                          'TServerPipe unable to initiate pipe communication');
 
   // create the transport impl
-  result := TAnonymousPipeTransportImpl.Create( FReadHandle, FWriteHandle, FALSE);
+  result := TAnonymousPipeTransportImpl.Create( FReadHandle, FWriteHandle, FALSE, FTimeOut);
 end;
 
 
