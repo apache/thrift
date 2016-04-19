@@ -308,11 +308,7 @@ begin
       case endpoint of
         trns_Sockets: begin
           Console.WriteLine('Using sockets ('+host+' port '+IntToStr(port)+')');
-          {$IFDEF OLD_SOCKETS}
           streamtrans := TSocketImpl.Create( host, port );
-          {$ELSE}
-          raise Exception.Create(ENDPOINT_TRANSPORTS[endpoint]+' transport not implemented');
-          {$ENDIF}
         end;
 
         trns_Http: begin
