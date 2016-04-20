@@ -86,20 +86,36 @@ type
   TProtocolException = class( Exception )
   public
     const // TODO(jensg): change into enum
-      UNKNOWN : Integer = 0;
-      INVALID_DATA : Integer = 1;
-      NEGATIVE_SIZE : Integer = 2;
-      SIZE_LIMIT : Integer = 3;
-      BAD_VERSION : Integer = 4;
-      NOT_IMPLEMENTED : Integer = 5;
-      DEPTH_LIMIT : Integer = 6;
+      UNKNOWN = 0;
+      INVALID_DATA = 1;
+      NEGATIVE_SIZE = 2;
+      SIZE_LIMIT = 3;
+      BAD_VERSION = 4;
+      NOT_IMPLEMENTED = 5;
+      DEPTH_LIMIT = 6;
   protected
-    FType : Integer;
+    constructor HiddenCreate(const Msg: string);
   public
-    constructor Create; overload;
-    constructor Create( type_: Integer ); overload;
-    constructor Create( type_: Integer; const msg: string); overload;
+    // purposefully hide inherited constructor
+    class function Create(const Msg: string): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
+    class function Create: TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
+    class function Create( type_: Integer): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
+    class function Create( type_: Integer; const msg: string): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
   end;
+
+  // Needed to remove deprecation warning
+  TProtocolExceptionSpecialized = class abstract (TProtocolException)
+  public
+    constructor Create(const Msg: string);
+  end;
+
+  TProtocolExceptionUnknown = class (TProtocolExceptionSpecialized);
+  TProtocolExceptionInvalidData = class (TProtocolExceptionSpecialized);
+  TProtocolExceptionNegativeSize = class (TProtocolExceptionSpecialized);
+  TProtocolExceptionSizeLimit = class (TProtocolExceptionSpecialized);
+  TProtocolExceptionBadVersion = class (TProtocolExceptionSpecialized);
+  TProtocolExceptionNotImplemented = class (TProtocolExceptionSpecialized);
+  TProtocolExceptionDepthLimit = class (TProtocolExceptionSpecialized);
 
   IMap = interface
     ['{30531D97-7E06-4233-B800-C3F53CCD23E7}']
@@ -695,7 +711,7 @@ procedure TProtocolImpl.IncrementRecursionDepth;
 begin
   if FRecursionDepth < FRecursionLimit
   then Inc(FRecursionDepth)
-  else raise TProtocolException.Create( TProtocolException.DEPTH_LIMIT, 'Depth limit exceeded');
+  else raise TProtocolExceptionDepthLimit.Create('Depth limit exceeded');
 end;
 
 procedure TProtocolImpl.DecrementRecursionDepth;
@@ -1143,7 +1159,7 @@ begin
     version := size and Integer( VERSION_MASK);
     if ( version <> Integer( VERSION_1)) then
     begin
-      raise TProtocolException.Create(TProtocolException.BAD_VERSION, 'Bad version in ReadMessageBegin: ' + IntToStr(version) );
+      raise TProtocolExceptionBadVersion.Create('Bad version in ReadMessageBegin: ' + IntToStr(version) );
     end;
     message.Type_ := TMessageType( size and $000000ff);
     message.Name := ReadString;
@@ -1152,7 +1168,7 @@ begin
   begin
     if FStrictRead then
     begin
-      raise TProtocolException.Create( TProtocolException.BAD_VERSION, 'Missing version in readMessageBegin, old client?' );
+      raise TProtocolExceptionBadVersion.Create('Missing version in readMessageBegin, old client?' );
     end;
     message.Name := ReadStringBody( size );
     message.Type_ := TMessageType( ReadByte );
@@ -1358,22 +1374,47 @@ end;
 
 { TProtocolException }
 
-constructor TProtocolException.Create;
+constructor TProtocolException.HiddenCreate(const Msg: string);
 begin
-  inherited Create('');
-  FType := UNKNOWN;
+  inherited Create(Msg);
 end;
 
-constructor TProtocolException.Create(type_: Integer);
+class function TProtocolException.Create(const Msg: string): TProtocolException;
 begin
-  inherited Create('');
-  FType := type_;
+  Result := TProtocolExceptionUnknown.Create(Msg);
 end;
 
-constructor TProtocolException.Create(type_: Integer; const msg: string);
+class function TProtocolException.Create: TProtocolException;
 begin
-  inherited Create( msg );
-  FType := type_;
+  Result := TProtocolExceptionUnknown.Create('');
+end;
+
+class function TProtocolException.Create(type_: Integer): TProtocolException;
+begin
+{$WARN SYMBOL_DEPRECATED OFF}
+  Result := Create(type_, '');
+{$WARN SYMBOL_DEPRECATED DEFAULT}
+end;
+
+class function TProtocolException.Create(type_: Integer; const msg: string): TProtocolException;
+begin
+  case type_ of
+    INVALID_DATA:    Result := TProtocolExceptionInvalidData.Create(msg);
+    NEGATIVE_SIZE:   Result := TProtocolExceptionNegativeSize.Create(msg);
+    SIZE_LIMIT:      Result := TProtocolExceptionSizeLimit.Create(msg);
+    BAD_VERSION:     Result := TProtocolExceptionBadVersion.Create(msg);
+    NOT_IMPLEMENTED: Result := TProtocolExceptionNotImplemented.Create(msg);
+    DEPTH_LIMIT:     Result := TProtocolExceptionDepthLimit.Create(msg);
+  else
+    Result := TProtocolExceptionUnknown.Create(msg);
+  end;
+end;
+
+{ TProtocolExceptionSpecialized }
+
+constructor TProtocolExceptionSpecialized.Create(const Msg: string);
+begin
+  inherited HiddenCreate(Msg);
 end;
 
 { TThriftStringBuilder }

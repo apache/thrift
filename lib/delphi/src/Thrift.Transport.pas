@@ -84,13 +84,29 @@ type
         Interrupted
       );
   private
-    FType : TExceptionType;
+    function GetType: TExceptionType;
+  protected
+    constructor HiddenCreate(const Msg: string);
   public
-    constructor Create( AType: TExceptionType); overload;
-    constructor Create( const msg: string); overload;
-    constructor Create( AType: TExceptionType; const msg: string); overload;
-    property Type_: TExceptionType read FType;
+    class function Create( AType: TExceptionType): TTransportException; overload; deprecated 'Use specialized TTransportException types (or regenerate from IDL)';
+    class function Create( const msg: string): TTransportException; reintroduce; overload; deprecated 'Use specialized TTransportException types (or regenerate from IDL)';
+    class function Create( AType: TExceptionType; const msg: string): TTransportException; overload; deprecated 'Use specialized TTransportException types (or regenerate from IDL)';
+    property Type_: TExceptionType read GetType;
   end;
+
+  // Needed to remove deprecation warning
+  TTransportExceptionSpecialized = class abstract (TTransportException)
+  public
+    constructor Create(const Msg: string);
+  end;
+
+  TTransportExceptionUnknown = class (TTransportExceptionSpecialized);
+  TTransportExceptionNotOpen = class (TTransportExceptionSpecialized);
+  TTransportExceptionAlreadyOpen = class (TTransportExceptionSpecialized);
+  TTransportExceptionTimedOut = class (TTransportExceptionSpecialized);
+  TTransportExceptionEndOfFile = class (TTransportExceptionSpecialized);
+  TTransportExceptionBadArgs = class (TTransportExceptionSpecialized);
+  TTransportExceptionInterrupted = class (TTransportExceptionSpecialized);
 
   IHTTPClient = interface( ITransport )
     ['{0F5DB8AB-710D-4338-AAC9-46B5734C5057}']
@@ -349,10 +365,10 @@ type
         function GetTransport( const ATrans: ITransport): ITransport; override;
       end;
 
-	  {$IFDEF HAVE_CLASS_CTOR}
+    {$IFDEF HAVE_CLASS_CTOR}
     class constructor Create;
     {$ENDIF}
-	
+
     constructor Create; overload;
     constructor Create( const ATrans: ITransport); overload;
     destructor Destroy; override;
@@ -397,8 +413,8 @@ begin
   while got < len do begin
     ret := Read( buf, off + got, len - got);
     if ret > 0 
-  then Inc( got, ret)
-  else raise TTransportException.Create( 'Cannot read, Remote side has closed' );
+    then Inc( got, ret)
+    else raise TTransportExceptionNotOpen.Create( 'Cannot read, Remote side has closed' );
   end;
   Result := got;
 end;
@@ -488,15 +504,14 @@ end;
 function THTTPClientImpl.Read( var buf: TBytes; off, len: Integer): Integer;
 begin
   if FInputStream = nil then begin
-    raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                      'No request has been sent');
+    raise TTransportExceptionNotOpen.Create('No request has been sent');
   end;
 
   try
     Result := FInputStream.Read( buf, off, len )
   except
     on E: Exception
-    do raise TTransportException.Create( TTransportException.TExceptionType.Unknown, E.Message);
+    do raise TTransportExceptionUnknown.Create(E.Message);
   end;
 end;
 
@@ -542,22 +557,55 @@ end;
 
 { TTransportException }
 
-constructor TTransportException.Create(AType: TExceptionType);
+function TTransportException.GetType: TExceptionType;
+begin
+  if Self is TTransportExceptionNotOpen then Result := TExceptionType.NotOpen
+  else if Self is TTransportExceptionAlreadyOpen then Result := TExceptionType.AlreadyOpen
+  else if Self is TTransportExceptionTimedOut then Result := TExceptionType.TimedOut
+  else if Self is TTransportExceptionEndOfFile then Result := TExceptionType.EndOfFile
+  else if Self is TTransportExceptionBadArgs then Result := TExceptionType.BadArgs
+  else if Self is TTransportExceptionInterrupted then Result := TExceptionType.Interrupted
+  else Result := TExceptionType.Unknown;
+end;
+
+constructor TTransportException.HiddenCreate(const Msg: string);
+begin
+  inherited Create(Msg);
+end;
+
+class function TTransportException.Create(AType: TExceptionType): TTransportException;
 begin
   //no inherited;
-  Create( AType, '' )
+{$WARN SYMBOL_DEPRECATED OFF}
+  Result := Create(AType, '')
+{$WARN SYMBOL_DEPRECATED DEFAULT}
 end;
 
-constructor TTransportException.Create(AType: TExceptionType;
-  const msg: string);
+class function TTransportException.Create(AType: TExceptionType;
+  const msg: string): TTransportException;
 begin
-  inherited Create(msg);
-  FType := AType;
+  case AType of
+    TExceptionType.NotOpen:     Result := TTransportExceptionNotOpen.Create(msg);
+    TExceptionType.AlreadyOpen: Result := TTransportExceptionAlreadyOpen.Create(msg);
+    TExceptionType.TimedOut:    Result := TTransportExceptionTimedOut.Create(msg);
+    TExceptionType.EndOfFile:   Result := TTransportExceptionEndOfFile.Create(msg);
+    TExceptionType.BadArgs:     Result := TTransportExceptionBadArgs.Create(msg);
+    TExceptionType.Interrupted: Result := TTransportExceptionInterrupted.Create(msg);
+  else
+    Result := TTransportExceptionUnknown.Create(msg);
+  end;
 end;
 
-constructor TTransportException.Create(const msg: string);
+class function TTransportException.Create(const msg: string): TTransportException;
 begin
-  inherited Create(msg);
+  Result := TTransportExceptionUnknown.Create(Msg);
+end;
+
+{ TTransportExceptionSpecialized }
+
+constructor TTransportExceptionSpecialized.Create(const Msg: string);
+begin
+  inherited HiddenCreate(Msg);
 end;
 
 { TTransportFactoryImpl }
@@ -629,8 +677,7 @@ var
   trans  : IStreamTransport;
 begin
   if FServer = nil then begin
-    raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                      'No underlying server socket.');
+    raise TTransportExceptionNotOpen.Create('No underlying server socket.');
   end;
 
 {$IFDEF OLD_SOCKETS}
@@ -662,7 +709,7 @@ begin
   except
     on E: Exception do begin
       client.Free;
-      raise TTransportException.Create( E.ToString );
+      raise TTransportExceptionUnknown.Create(E.ToString);
     end;
   end;
 {$ELSE}
@@ -694,7 +741,7 @@ begin
       FServer.Active := True;
     except
       on E: Exception
-	  do raise TTransportException.Create('Could not accept on listening socket: ' + E.Message);
+      do raise TTransportExceptionUnknown.Create('Could not accept on listening socket: ' + E.Message);
     end;
 {$ELSE}
     FServer.Listen;
@@ -710,7 +757,7 @@ begin
       FServer.Active := False;
     except
       on E: Exception
-      do raise TTransportException.Create('Error on closing socket : ' + E.Message);
+      do raise TTransportExceptionUnknown.Create('Error on closing socket : ' + E.Message);
     end;
 {$ELSE}
     FServer.Close;
@@ -800,18 +847,15 @@ end;
 procedure TSocketImpl.Open;
 begin
   if IsOpen then begin
-    raise TTransportException.Create( TTransportException.TExceptionType.AlreadyOpen,
-                                      'Socket already connected');
+    raise TTransportExceptionAlreadyOpen.Create('Socket already connected');
   end;
 
   if FHost = '' then begin
-    raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                      'Cannot open null host');
+    raise TTransportExceptionNotOpen.Create('Cannot open null host');
   end;
 
   if Port <= 0 then begin
-    raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                      'Cannot open without port');
+    raise TTransportExceptionNotOpen.Create('Cannot open without port');
   end;
 
   if FClient = nil
@@ -973,8 +1017,7 @@ end;
 procedure TStreamTransportImpl.Flush;
 begin
   if FOutputStream = nil then begin
-    raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                      'Cannot flush null outputstream' );
+    raise TTransportExceptionNotOpen.Create('Cannot flush null outputstream' );
   end;
 
   FOutputStream.Flush;
@@ -1003,8 +1046,7 @@ end;
 function TStreamTransportImpl.Read(var buf: TBytes; off, len: Integer): Integer;
 begin
   if FInputStream = nil then begin
-    raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                      'Cannot read from null inputstream' );
+    raise TTransportExceptionNotOpen.Create('Cannot read from null inputstream' );
   end;
 
   Result := FInputStream.Read( buf, off, len );
@@ -1013,8 +1055,7 @@ end;
 procedure TStreamTransportImpl.Write(const buf: TBytes; off, len: Integer);
 begin
   if FOutputStream = nil then begin
-    raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                      'Cannot write to null outputstream' );
+    raise TTransportExceptionNotOpen.Create('Cannot write to null outputstream' );
   end;
 
   FOutputStream.Write( buf, off, len );
@@ -1145,8 +1186,7 @@ begin
 
   data_len := len - FHeaderSize;
   if (data_len < 0) then begin
-    raise TTransportException.Create( TTransportException.TExceptionType.Unknown,
-                                      'TFramedTransport.Flush: data_len < 0' );
+    raise TTransportExceptionUnknown.Create('TFramedTransport.Flush: data_len < 0' );
   end;
 
   InitWriteBuffer;
@@ -1434,8 +1474,7 @@ begin
           if (FTimeout = 0)
           then Exit
           else begin
-            raise TTransportException.Create( TTransportException.TExceptionType.TimedOut,
-                                              SysErrorMessage(Cardinal(wsaError)));
+            raise TTransportExceptionTimedOut.Create(SysErrorMessage(Cardinal(wsaError)));
 
           end;
         end;
@@ -1482,7 +1521,7 @@ begin
   inherited;
 
   if not FTcpClient.Active
-  then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen);
+  then raise TTransportExceptionNotOpen.Create('not open');
 
   // The select function returns the total number of socket handles that are ready
   // and contained in the fd_set structures, zero if the time limit expired,
@@ -1490,14 +1529,13 @@ begin
   // WSAGetLastError can be used to retrieve a specific error code.
   retval := Self.Select( nil, @bCanWrite, @bError, FTimeOut, wsaError);
   if retval = SOCKET_ERROR
-  then raise TTransportException.Create( TTransportException.TExceptionType.Unknown,
-                                         SysErrorMessage(Cardinal(wsaError)));
+  then raise TTransportExceptionUnknown.Create(SysErrorMessage(Cardinal(wsaError)));
 
   if (retval = 0)
-  then raise TTransportException.Create( TTransportException.TExceptionType.TimedOut);
+  then raise TTransportExceptionTimedOut.Create('timed out');
 
   if bError or not bCanWrite
-  then raise TTransportException.Create( TTransportException.TExceptionType.Unknown);
+  then raise TTransportExceptionUnknown.Create('unknown error');
 
   FTcpClient.SendBuf( Pointer(@buffer[offset])^, count);
 end;
