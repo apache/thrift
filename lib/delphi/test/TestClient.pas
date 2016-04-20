@@ -323,7 +323,7 @@ begin
 
         trns_NamedPipes: begin
           Console.WriteLine('Using named pipe ('+sPipeName+')');
-          streamtrans := TNamedPipeTransportClientEndImpl.Create( sPipeName, 0, nil, TIMEOUT);
+          streamtrans := TNamedPipeTransportClientEndImpl.Create( sPipeName, 0, nil, TIMEOUT, TIMEOUT);
         end;
 
         trns_AnonPipes: begin
