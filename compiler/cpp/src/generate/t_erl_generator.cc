@@ -64,7 +64,7 @@ public:
       } else if( iter->first.compare("otp16") == 0) {
         otp16_ = true;
       } else {
-        throw "unknown option erl:" + iter->first;
+        throw "unknown option erl:" + iter->first; 
       }
     }
 
