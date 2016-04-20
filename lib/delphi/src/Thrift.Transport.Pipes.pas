@@ -34,8 +34,7 @@ uses
   Thrift.Stream;
 
 const
-  DEFAULT_THRIFT_PIPE_TIMEOUT = DEFAULT_THRIFT_TIMEOUT deprecated 'use DEFAULT_THRIFT_TIMEOUT';
-
+  DEFAULT_THRIFT_PIPE_OPEN_TIMEOUT = 10;  // default: fail fast on open
 
 
 type
@@ -46,6 +45,7 @@ type
   strict protected
     FPipe    : THandle;
     FTimeout : DWORD;
+    FOpenTimeOut : DWORD;  // separate value to allow for fail-fast-on-open scenarios
     FOverlapped : Boolean;
 
     procedure Write( const buffer: TBytes; offset: Integer; count: Integer); override;
@@ -62,7 +62,9 @@ type
     function IsOpen: Boolean; override;
     function ToArray: TBytes; override;
   public
-    constructor Create( aEnableOverlapped : Boolean; const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT);
+    constructor Create( aEnableOverlapped : Boolean;
+                        const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT;
+                        const aOpenTimeOut : DWORD = DEFAULT_THRIFT_PIPE_OPEN_TIMEOUT);
     destructor Destroy;  override;
   end;
 
@@ -81,7 +83,8 @@ type
                         const aEnableOverlapped : Boolean;
                         const aShareMode: DWORD = 0;
                         const aSecurityAttributes: PSecurityAttributes = nil;
-                        const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT);  overload;
+                        const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT;
+                        const aOpenTimeOut : DWORD = DEFAULT_THRIFT_PIPE_OPEN_TIMEOUT);  overload;
   end;
 
 
@@ -125,7 +128,8 @@ type
     constructor Create( const aPipeName : string;
                         const aShareMode: DWORD = 0;
                         const aSecurityAttributes: PSecurityAttributes = nil;
-                        const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT);  overload;
+                        const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT;
+                        const aOpenTimeOut : DWORD = DEFAULT_THRIFT_PIPE_OPEN_TIMEOUT);  overload;
   end;
 
 
@@ -268,13 +272,14 @@ end;
 
 
 constructor TPipeStreamBase.Create( aEnableOverlapped : Boolean;
-                                    const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT);
+                                    const aTimeOut, aOpenTimeOut : DWORD);
 begin
   inherited Create;
-  ASSERT( aTimeout > 0);
-  FPipe       := INVALID_HANDLE_VALUE;
-  FTimeout    := aTimeOut;
-  FOverlapped := aEnableOverlapped;
+  ASSERT( aTimeout > 0);  // aOpenTimeout may be 0
+  FPipe        := INVALID_HANDLE_VALUE;
+  FTimeout     := aTimeOut;
+  FOpenTimeOut := aOpenTimeOut;
+  FOverlapped  := aEnableOverlapped;
 end;
 
 
@@ -482,9 +487,9 @@ constructor TNamedPipeStreamImpl.Create( const aPipeName : string;
                                          const aEnableOverlapped : Boolean;
                                          const aShareMode: DWORD;
                                          const aSecurityAttributes: PSecurityAttributes;
-                                         const aTimeOut : DWORD);
+                                         const aTimeOut, aOpenTimeOut : DWORD);
 begin
-  inherited Create( aEnableOverlapped, aTimeout);
+  inherited Create( aEnableOverlapped, aTimeout, aOpenTimeOut);
 
   FPipeName        := aPipeName;
   FShareMode       := aShareMode;
@@ -502,12 +507,13 @@ const INTERVAL = 10; // ms
 begin
   if IsOpen then Exit;
 
-  retries := Max( 1, Round( 1.0 * FTimeOut / INTERVAL));
-  timeout := FTimeOut;
+  retries := Max( 1, Round( 1.0 * FOpenTimeOut / INTERVAL));
+  timeout := FOpenTimeOut;
 
   // if the server hasn't gotten to the point where the pipe has been created, at least wait the timeout
   // According to MSDN, if no instances of the specified named pipe exist, the WaitNamedPipe function
   // returns IMMEDIATELY, regardless of the time-out value.
+  // Always use INTERVAL, since WaitNamedPipe(0) defaults to some other value
   while not WaitNamedPipe( PChar(FPipeName), INTERVAL) do begin
     dwErr := GetLastError;
     if dwErr <> ERROR_FILE_NOT_FOUND
@@ -605,11 +611,11 @@ end;
 
 constructor TNamedPipeTransportClientEndImpl.Create( const aPipeName : string; const aShareMode: DWORD;
                                    const aSecurityAttributes: PSecurityAttributes;
-                                   const aTimeOut : DWORD);
+                                   const aTimeOut, aOpenTimeOut : DWORD);
 // Named pipe constructor
 begin
   inherited Create( nil, nil);
-  FInputStream  := TNamedPipeStreamImpl.Create( aPipeName, TRUE, aShareMode, aSecurityAttributes, aTimeOut);
+  FInputStream  := TNamedPipeStreamImpl.Create( aPipeName, TRUE, aShareMode, aSecurityAttributes, aTimeOut, aOpenTimeOut);
   FOutputStream := FInputStream;  // true for named pipes
 end;
 
