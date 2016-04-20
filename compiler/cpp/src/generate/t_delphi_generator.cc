@@ -2131,8 +2131,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
 
       if (!(*f_iter)->get_returntype()->is_void()) {
         indent_impl(s_service_impl)
-            << "raise "
-               "TApplicationException.Create(TApplicationException.TExceptionType.MissingResult, '"
+			<< "raise TApplicationExceptionMissingResult.Create('"
             << (*f_iter)->get_name() << " failed: unknown result');" << endl;
       }
 
@@ -2255,9 +2254,8 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
   indent_impl(s_service_impl) << "TProtocolUtil.Skip(iprot, TType.Struct);" << endl;
   indent_impl(s_service_impl) << "iprot.ReadMessageEnd();" << endl;
   indent_impl(s_service_impl) << "x := "
-                                 "TApplicationException.Create(TApplicationException."
-                                 "TExceptionType.UnknownMethod, 'Invalid method name: ''' + "
-                                 "msg.Name + '''');" << endl;
+								 "TApplicationExceptionUnknownMethod.Create("
+								 "'Invalid method name: ''' + msg.Name + '''');" << endl;
   indent_impl(s_service_impl)
       << "msg := Thrift.Protocol.TMessageImpl.Create(msg.Name, TMessageType.Exception, msg.SeqID);"
       << endl;
@@ -2444,8 +2442,7 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
     indent_impl(s_service_impl) << "if events <> nil then events.UnhandledError(E);" << endl;
   }
   if (!tfunction->is_oneway()) {
-    indent_impl(s_service_impl) << "appx := TApplicationException.Create( "
-                                   "TApplicationException.TExceptionType.InternalError, E.Message);"
+	indent_impl(s_service_impl) << "appx := TApplicationExceptionInternalError.Create(E.Message);"
                                 << endl;
     indent_impl(s_service_impl) << "try" << endl;
     indent_up_impl();
@@ -3593,7 +3590,7 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out,
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
       indent_impl(code_block) << "if not _req_isset_" << prop_name(*f_iter, is_exception) << endl;
       indent_impl(code_block)
-          << "then raise TProtocolException.Create( TProtocolException.INVALID_DATA, "
+          << "then raise TProtocolExceptionInvalidData.Create("
           << "'required field " << prop_name(*f_iter, is_exception) << " not set');" 
           << endl;
     }
@@ -3714,7 +3711,7 @@ void t_delphi_generator::generate_delphi_struct_writer_impl(ostream& out,
     if (is_required && null_allowed) {
       null_allowed = false;
       indent_impl(code_block) << "if (" << fieldname << " = nil)" << endl;
-      indent_impl(code_block) << "then raise TProtocolException.Create( TProtocolException.INVALID_DATA, "
+	  indent_impl(code_block) << "then raise TProtocolExceptionInvalidData.Create("
                               << "'required field " << fieldname << " not set');" 
                               << endl;
     }
