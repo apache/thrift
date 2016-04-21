@@ -248,7 +248,7 @@ func (p *THttpClient) Flush() error {
 	req.Header = p.header
 	// http2 reads the header outside of the call to Do(), so make a new
 	// header for next time here.
-	p.header = http.Header{}
+	p.header = make(http.Header, len(req.Header))
 	// Also, I'm not sure why the headers are reused from request to request,
 	// so make a copy of them in case anyone is expecting that.
 	for k, v := range req.Header {
