@@ -28,21 +28,21 @@ parse_handler_options_test_() ->
     ].
 
 parse_service_options_test_() ->
-    CorrectServiceModuleOptionList = [{"Service1", ?MODULE}, {"Service2", ?MODULE}],
-    WrongService2ModuleOptionList  = [{"Service1", ?MODULE}, {"Service2", "thrift_service_module"}],
-    WrongServiceKeyOptionList       = [{'service1', ?MODULE}, {"Service2", ?MODULE}],
+    CorrectServiceModuleOptionList = [{"Service1", {?MODULE, 'Service1'}}, {"Service2", {?MODULE, 'Service2'}}],
+    WrongService2ModuleOptionList  = [{"Service1", {?MODULE, s1}}, {"Service2", "thrift_service_module"}],
+    WrongServiceKeyOptionList       = [{'service1', {?MODULE, s1}}, {"Service2", {?MODULE, s2}}],
     CorrectServiceModuleTestFunction = fun() ->
         ?assertMatch({thrift_socket_server,_,_,_,_,_,_,_,_,_,_,_,_,_}, thrift_socket_server:parse_options([{service, CorrectServiceModuleOptionList}])),
         {thrift_socket_server,_, ServiceModuleList,_,_,_,_,_,_,_,_,_,_,_} = thrift_socket_server:parse_options([{service, CorrectServiceModuleOptionList}]),
         lists:foreach(fun
-            ({ServiceName, ServiceModule}) ->
-                ?assertMatch({ok, ServiceModule} when is_atom(ServiceModule), thrift_multiplexed_map_wrapper:find(ServiceName, ServiceModuleList))
+            ({ServiceName, Service}) ->
+                ?assertMatch({ok, Service} when is_tuple(Service), thrift_multiplexed_map_wrapper:find(ServiceName, ServiceModuleList))
         end, CorrectServiceModuleOptionList)
     end,
     [
      {"Bad argument for the service option", ?_assertThrow(_, thrift_socket_server:parse_options([{service, []}]))},
-     {"Try to parse the service option twice", ?_assertThrow(_, thrift_socket_server:parse_options([{service, ?MODULE}, {service, CorrectServiceModuleOptionList}]))},
-     {"Parse a service module for a non multiplexed service", ?_assertMatch({thrift_socket_server,_,?MODULE,_,_,_,_,_,_,_,_,_,_,_}, thrift_socket_server:parse_options([{service, ?MODULE}]))},
+     {"Try to parse the service option twice", ?_assertThrow(_, thrift_socket_server:parse_options([{service, {?MODULE, s1}}, {service, CorrectServiceModuleOptionList}]))},
+     {"Parse a service module for a non multiplexed service", ?_assertMatch({thrift_socket_server,_,{?MODULE, s1},_,_,_,_,_,_,_,_,_,_,_}, thrift_socket_server:parse_options([{service, {?MODULE, s1}}]))},
      {"Bad service module for Service2", ?_assertThrow(_, thrift_socket_server:parse_options([{service, WrongService2ModuleOptionList}]))},
      {"Bad service key for Service1", ?_assertThrow(_, thrift_socket_server:parse_options([{service, WrongServiceKeyOptionList}]))},
      {"Try to parse a correct service option list", CorrectServiceModuleTestFunction}

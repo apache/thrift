@@ -55,7 +55,7 @@ split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn)
 
 %% Client constructor for the common-case of socket transports
 new(Host, Port, Service, Options)
-  when is_integer(Port), is_atom(Service), is_list(Options) ->
+  when is_integer(Port), is_tuple(Service), is_list(Options) ->
     {ProtoOpts, TransOpts0} = split_options(Options),
 
     {TransportModule, TransOpts2} = case lists:keytake(ssltransport, 1, TransOpts0) of

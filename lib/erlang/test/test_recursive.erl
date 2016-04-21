@@ -29,11 +29,10 @@ encode_decode_recursive_test() ->
   {ok, Protocol0} = thrift_binary_protocol:new(Transport),
   TestData = #'CoRec'{other = #'CoRec2'{other = #'CoRec'{}}},
   {Protocol1, ok} = thrift_protocol:write(Protocol0,
-    {{struct, element(2, recursive_types:struct_info('CoRec'))},
+    {{struct, struct, {recursive_types, 'CoRec'}},
       TestData}),
   {_Protocol2, {ok, Result}} = thrift_protocol:read(Protocol1,
-    {struct, element(2, recursive_types:struct_info('CoRec'))},
-    'CoRec'),
+    {struct, struct, {recursive_types, 'CoRec'}}),
   Result = TestData.
 
 encode_decode_recursive_2_test() ->
@@ -41,11 +40,10 @@ encode_decode_recursive_2_test() ->
   {ok, Protocol0} = thrift_binary_protocol:new(Transport),
   TestData = #'RecTree'{item = 42, children = [#'RecTree'{}, #'RecTree'{item = 31337, children = [#'RecTree'{}]}]},
   {Protocol1, ok} = thrift_protocol:write(Protocol0,
-    {{struct, element(2, recursive_types:struct_info('RecTree'))},
+    {{struct, struct, {recursive_types, 'RecTree'}},
       TestData}),
   {_Protocol2, {ok, Result}} = thrift_protocol:read(Protocol1,
-    {struct, element(2, recursive_types:struct_info('RecTree'))},
-    'RecTree'),
+    {struct, struct, {recursive_types, 'RecTree'}}),
   Result = TestData.
 
 -endif.

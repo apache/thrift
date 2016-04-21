@@ -28,8 +28,8 @@
 -record(tclient, {service, protocol, seqid}).
 
 
-new(Protocol, Service)
-  when is_atom(Service) ->
+new(Protocol, Service = {Module, ServiceName})
+  when is_atom(Module), is_atom(ServiceName) ->
     {ok, #tclient{protocol = Protocol,
                   service = Service,
                   seqid = 0}}.
@@ -38,8 +38,10 @@ new(Protocol, Service)
 call(Client = #tclient{}, Function, Args)
 when is_atom(Function), is_list(Args) ->
   case send_function_call(Client, Function, Args) of
-    {ok, Client1} -> receive_function_result(Client1, Function);
-    {{error, X}, Client1} -> {Client1, {error, X}};
+    {ok, Client1} ->
+      receive_function_result(Client1, Function);
+    {{error, X}, Client1} ->
+      {Client1, {error, X}};
     Else -> Else
   end.
 
@@ -66,7 +68,7 @@ close(#tclient{protocol=Protocol}) ->
 -spec send_function_call(#tclient{}, atom(), list()) -> {ok | {error, any()}, #tclient{}}.
 send_function_call(Client = #tclient{service = Service}, Function, Args) ->
   {Params, Reply} = try
-    {Service:function_info(Function, params_type), Service:function_info(Function, reply_type)}
+    {get_function_info(Service, Function, params_type), get_function_info(Service, Function, reply_type)}
   catch error:badarg -> {no_function, 0}
   end,
   MsgType = case Reply of
@@ -76,9 +78,10 @@ send_function_call(Client = #tclient{service = Service}, Function, Args) ->
   case Params of
     no_function ->
       {{error, {no_function, Function}}, Client};
-    {struct, PList} when length(PList) =/= length(Args) ->
+    {struct, _, PList} when length(PList) =/= length(Args) ->
       {{error, {bad_args, Function, Args}}, Client};
-    {struct, _PList} -> write_message(Client, Function, Args, Params, MsgType)
+    {struct, _, _PList} ->
+      write_message(Client, Function, Args, Params, MsgType)
   end.
 
 -spec write_message(#tclient{}, atom(), list(), {struct, list()}, integer()) ->
@@ -115,7 +118,7 @@ write_many(Proto, []) ->
 
 -spec receive_function_result(#tclient{}, atom()) -> {#tclient{}, {ok, any()} | {error, any()}}.
 receive_function_result(Client = #tclient{service = Service}, Function) ->
-    ResultType = Service:function_info(Function, reply_type),
+    ResultType = get_function_info(Service, Function, reply_type),
     read_result(Client, Function, ResultType).
 
 read_result(Client, _Function, oneway_void) ->
@@ -146,9 +149,11 @@ handle_reply(Client = #tclient{protocol = Proto0,
                                service = Service},
              Function,
              ReplyType) ->
-    {struct, ExceptionFields} = Service:function_info(Function, exceptions),
-    ReplyStructDef = {struct, [{0, undefined, ReplyType, undefined, undefined}] ++ ExceptionFields},
+    {struct, _, ExceptionFields} = get_function_info(Service, Function, exceptions),
+    ReplyStructDef = {struct, struct, [{0, undefined, ReplyType, undefined, undefined}] ++ ExceptionFields},
+    io:format("reply struct: ~p~n", [ReplyStructDef]),
     {Proto1, {ok, Reply}} = thrift_protocol:read(Proto0, ReplyStructDef),
+    io:format("reply: ~p~n", [Reply]),
     {Proto2, ok} = thrift_protocol:read(Proto1, message_end),
     NewClient = Client#tclient{protocol = Proto2},
     ReplyList = tuple_to_list(Reply),
@@ -157,7 +162,7 @@ handle_reply(Client = #tclient{protocol = Proto0,
     Thrown = [X || X <- ExceptionVals,
                    X =/= undefined],
     case Thrown of
-        [] when ReplyType == {struct, []} ->
+        [] when ReplyType == {struct, struct, []} ->
             {NewClient, {ok, ok}};
         [] ->
             {NewClient, {ok, hd(ReplyList)}};
@@ -173,3 +178,6 @@ handle_application_exception(Client = #tclient{protocol = Proto0}) ->
     true = is_record(XRecord, 'TApplicationException'),
     NewClient = Client#tclient{protocol = Proto2},
     throw({NewClient, {exception, XRecord}}).
+
+get_function_info({Module, ServiceName}, Function, Info) ->
+    Module:function_info(ServiceName, Function, Info).

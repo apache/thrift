@@ -13,7 +13,7 @@ unmatched_struct_test() ->
     {Protocol, {error, {invalid, [x], #'StructB'{x=1}}}},
     thrift_protocol:write(
       Protocol,
-      {{struct, element(2, thrift1151_types:struct_info('StructC'))}, S1}
+      {{struct, struct, {thrift1151_types, 'StructC'}}, S1}
     )
   ).
 
@@ -25,7 +25,31 @@ badarg_test() ->
     {Protocol, {error, {invalid, [x, x], "1"}}},
     thrift_protocol:write(
       Protocol,
-      {{struct, element(2, thrift1151_types:struct_info('StructC'))}, S2}
+      {{struct, struct, {thrift1151_types, 'StructC'}}, S2}
+    )
+  ).
+
+union_test() ->
+  S1 = {a, #'StructA'{x = 1}},
+  {ok, Transport} = thrift_memory_buffer:new(),
+  {ok, Protocol} = thrift_binary_protocol:new(Transport),
+  ?assertMatch(
+    {_Protocol, ok},
+    thrift_protocol:write(
+      Protocol,
+      {{struct, union, {thrift1151_types, 'UnionA'}}, S1}
+    )
+  ).
+
+union_badarg_test() ->
+  S1 = {a, S2 = #'StructB'{x = 42}},
+  {ok, Transport} = thrift_memory_buffer:new(),
+  {ok, Protocol} = thrift_binary_protocol:new(Transport),
+  ?assertEqual(
+    {Protocol, {error, {invalid, [a], S2}}},
+    thrift_protocol:write(
+      Protocol,
+      {{struct, union, {thrift1151_types, 'UnionA'}}, S1}
     )
   ).
 

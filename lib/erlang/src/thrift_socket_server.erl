@@ -130,15 +130,15 @@ parse_options([{service, ServiceModulePropertyList} | Rest], State) when is_list
     case State#thrift_socket_server.service of
         undefined ->
             lists:foldl(
-                fun ({ServiceName, ServiceModule}, Acc) when is_list(ServiceName), is_atom(ServiceModule) ->
-                        thrift_multiplexed_map_wrapper:store(ServiceName, ServiceModule, Acc);
+                fun ({ServiceName, Service}, Acc) when is_list(ServiceName), is_tuple(Service) ->
+                        thrift_multiplexed_map_wrapper:store(ServiceName, Service, Acc);
                     (_, _Acc) ->
                         throw("The service option is not properly configured for multiplexed services. It should be a kind of [{SericeName::list(), ServiceModule::atom()}, ...]")
                 end, thrift_multiplexed_map_wrapper:new(), ServiceModulePropertyList);
         _ -> throw("Error while parsing the service option.")
     end,
     parse_options(Rest, State#thrift_socket_server{service=ServiceModuleMap});
-parse_options([{service, Service} | Rest], State) when State#thrift_socket_server.service == undefined, is_atom(Service) ->
+parse_options([{service, Service} | Rest], State) when State#thrift_socket_server.service == undefined, is_tuple(Service) ->
     parse_options(Rest, State#thrift_socket_server{service=Service});
 
 parse_options([{max, Max} | Rest], State) ->
@@ -234,6 +234,7 @@ acceptor_loop({Server, Listen, Service, Handler, SocketOpts, Framed, SslTranspor
   when is_pid(Server), is_list(SocketOpts) ->
     case catch gen_tcp:accept(Listen) of % infinite timeout
         {ok, Socket} ->
+            io:format("~n~p: socket: ~p~n", [?MODULE, Socket]),
             gen_server:cast(Server, {accepted, self()}),
             ProtoGen = fun() ->
                                {ok, SocketTransport} = case SslTransport of
@@ -253,8 +254,10 @@ acceptor_loop({Server, Listen, Service, Handler, SocketOpts, Framed, SslTranspor
                        end,
             thrift_processor:init({Server, ProtoGen, Service, Handler});
         {error, closed} ->
+            io:format("~p: closed~n", [?MODULE]),
             exit({error, closed});
         Other ->
+            io:format("~p: error: ~p~n", [?MODULE, Other]),
             error_logger:error_report(
               [{application, thrift},
                "Accept failed error",

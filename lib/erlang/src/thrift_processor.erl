@@ -51,9 +51,9 @@ loop(State0 = #thrift_processor{protocol  = Proto0,
                                 seqid = Seqid} when Type =:= ?tMessageType_CALL; Type =:= ?tMessageType_ONEWAY ->
             case string:tokens(Function, ?MULTIPLEXED_SERVICE_SEPARATOR) of
                 [ServiceName, FunctionName] ->
-                    ServiceModule  = thrift_multiplexed_map_wrapper:fetch(ServiceName, Service),
-                    ServiceHandler = thrift_multiplexed_map_wrapper:fetch(ServiceName, Handler),
-                    case handle_function(State1#thrift_processor{service=ServiceModule, handler=ServiceHandler}, list_to_atom(FunctionName), Seqid) of
+                    SubService  = thrift_multiplexed_map_wrapper:fetch(ServiceName, Service),
+                    SubHandler = thrift_multiplexed_map_wrapper:fetch(ServiceName, Handler),
+                    case handle_function(State1#thrift_processor{service=SubService, handler=SubHandler}, list_to_atom(FunctionName), Seqid) of
                         {State2, ok} -> loop(State2#thrift_processor{service=Service, handler=Handler});
                         {_State2, {error, Reason}} ->
 							apply(ErrorHandler(Handler), handle_error, [list_to_atom(Function), Reason]),
@@ -89,7 +89,7 @@ handle_function(State0=#thrift_processor{protocol = Proto0,
                                          service = Service},
                 Function,
                 Seqid) ->
-    InParams = Service:function_info(Function, params_type),
+    InParams = get_function_info(Service, Function, params_type),
 
     {Proto1, {ok, Params}} = thrift_protocol:read(Proto0, InParams),
     State1 = State0#thrift_processor{protocol = Proto1},
@@ -107,7 +107,7 @@ handle_function(State0=#thrift_processor{protocol = Proto0,
 
 handle_function_catch(State = #thrift_processor{service = Service},
                       Function, ErrType, ErrData, Seqid) ->
-    IsOneway = Service:function_info(Function, reply_type) =:= oneway_void,
+    IsOneway = get_function_info(Service, Function, reply_type) =:= oneway_void,
 
     case {ErrType, ErrData} of
         _ when IsOneway ->
@@ -130,13 +130,13 @@ handle_success(State = #thrift_processor{service = Service},
                Function,
                Result,
                Seqid) ->
-    ReplyType  = Service:function_info(Function, reply_type),
+    ReplyType  = get_function_info(Service, Function, reply_type),
     StructName = atom_to_list(Function) ++ "_result",
 
     case Result of
         {reply, ReplyData} ->
             Reply = {
-                {struct, [{0, undefined, ReplyType, undefined, undefined}]},
+                {struct, struct, [{0, undefined, ReplyType, undefined, undefined}]},
                 {StructName, ReplyData}
             },
             send_reply(State, Function, ?tMessageType_REPLY, Reply, Seqid);
@@ -157,8 +157,8 @@ handle_exception(State = #thrift_processor{service = Service},
     %% Fetch a structure like {struct, [{-2, {struct, {Module, Type}}},
     %%                                  {-3, {struct, {Module, Type}}}]}
 
-    ReplySpec = Service:function_info(Function, exceptions),
-    {struct, XInfo} = ReplySpec,
+    ReplySpec = get_function_info(Service, Function, exceptions),
+    {struct, _, XInfo} = ReplySpec,
 
     true = is_list(XInfo),
 
@@ -168,7 +168,7 @@ handle_exception(State = #thrift_processor{service = Service},
                          ExceptionType -> Exception;
                          _ -> undefined
                      end
-                     || {_Fid, _, {struct, {_Module, Type}}, _, _} <- XInfo],
+                     || {_Fid, _, {struct, exception, {_Module, Type}}, _, _} <- XInfo],
 
     ExceptionTuple = list_to_tuple([Function | ExceptionList]),
 
@@ -220,3 +220,6 @@ send_reply(State = #thrift_processor{protocol = Proto0}, Function, ReplyMessageT
         error:{badmatch, {_, {error, _} = Error}} ->
             {State, Error}
     end.
+
+get_function_info({Module, ServiceName}, Function, Info) ->
+    Module:function_info(ServiceName, Function, Info).
