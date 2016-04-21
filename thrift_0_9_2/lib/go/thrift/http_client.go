@@ -245,8 +245,16 @@ func (p *THttpClient) Flush() error {
 	p.requestBuffer = getBuffer()
 	p.responseBuffer = nil
 	// Do the call
-	p.header.Set("Content-Type", "application/x-thrift")
 	req.Header = p.header
+	// http2 reads the header outside of the call to Do(), so make a new
+	// header for next time here.
+	p.header = http.Header{}
+	// Also, I'm not sure why the headers are reused from request to request,
+	// so make a copy of them in case anyone is expecting that.
+	for k, v := range req.Header {
+		p.header[k] = v
+	}
+	req.Header.Set("Content-Type", "application/x-thrift")
 	response, err := p.httpClient.Do(req)
 	if response != nil && response.Body != nil {
 		defer response.Body.Close()
