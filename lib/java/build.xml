@@ -404,6 +404,42 @@
     </sequential>
   </macrodef>
 
+  <macrodef name="customMvnDeploy">
+    <!-- Deploy jars to specified repo -->
+    <attribute name="file"/>
+    <attribute name="classifier" default=""/>
+    <attribute name="packaging" default="jar"/>
+    <attribute name="pom" default=""/>
+    <sequential>
+      <artifact:mvn fork="true" mavenVersion="${mvn.version}">
+        <arg value="org.apache.maven.plugins:maven-deploy-plugin:2.8.2:deploy-file"/>
+        <arg value="-DrepositoryId=${maven-repository-id}"/>
+        <arg value="-Durl=${maven-repository-url}"/>
+        <arg value="-DpomFile=@{pom}"/>
+        <arg value="-Dfile=@{file}"/>
+        <arg value="-Dclassifier=@{classifier}"/>
+        <arg value="-Dpackaging=@{packaging}"/>
+      </artifact:mvn>
+    </sequential>
+  </macrodef>
+
+  <macrodef name="customMvnInstall">
+    <!-- Install jars to local repo -->
+    <attribute name="file"/>
+    <attribute name="classifier" default=""/>
+    <attribute name="packaging" default="jar"/>
+    <attribute name="pom" default=""/>
+    <sequential>
+      <artifact:mvn fork="true" mavenVersion="${mvn.version}">
+        <arg value="org.apache.maven.plugins:maven-install-plugin:2.5.2:install-file"/>
+        <arg value="-DpomFile=@{pom}"/>
+        <arg value="-Dfile=@{file}"/>
+        <arg value="-Dclassifier=@{classifier}"/>
+        <arg value="-Dpackaging=@{packaging}"/>
+      </artifact:mvn>
+    </sequential>
+  </macrodef>
+
   <target name="publish" depends="clean,init,test,dist,javadoc,pack.src">
     <!-- Compile, package, test and then send release to apache maven repo -->
     <!-- run with: ant -Drelease=true publish-->
@@ -411,5 +447,23 @@
     <signAndDeploy file="${jar.file}" classifier="" pom="${pom.xml}"/>
     <signAndDeploy file="${javadoc.jar.file}" classifier="javadoc" pom="${pom.xml}"/>
     <signAndDeploy file="${source.jar.file}" classifier="sources" pom="${pom.xml}"/>
+  </target>
+
+  <target name="custom.mvn.deploy" depends="clean,init,test,dist,javadoc,pack.src">
+    <!-- Compile, package, test and then send release to specified repo -->
+    <!-- run with: ant -Drelease=true publish-->
+    <customMvnDeploy file="${pom.xml}" packaging="pom" classifier="" pom="${pom.xml}"/>
+    <customMvnDeploy file="${jar.file}" classifier="" pom="${pom.xml}"/>
+    <customMvnDeploy file="${javadoc.jar.file}" classifier="javadoc" pom="${pom.xml}"/>
+    <customMvnDeploy file="${source.jar.file}" classifier="sources" pom="${pom.xml}"/>
+  </target>
+
+  <target name="custom.mvn.install" depends="clean,init,test,dist,javadoc,pack.src">
+    <!-- Compile, package, test and then send release to specified repo -->
+    <!-- run with: ant -Drelease=true publish-->
+    <customMvnInstall file="${pom.xml}" packaging="pom" classifier="" pom="${pom.xml}"/>
+    <customMvnInstall file="${jar.file}" classifier="" pom="${pom.xml}"/>
+    <customMvnInstall file="${javadoc.jar.file}" classifier="javadoc" pom="${pom.xml}"/>
+    <customMvnInstall file="${source.jar.file}" classifier="sources" pom="${pom.xml}"/>
   </target>
 </project>
