@@ -543,8 +543,6 @@ validate(_Req, {bool, Value}, _Path) when is_boolean(Value) ->
     ok;
 validate(_Req, {_Type, Value}, _Path) when is_number(Value) ->
     ok;
-validate(_Req, {_Type, Value}, _Path) when is_number(Value) ->
-    ok;
 validate(_Req, {Type, Value}, Path) ->
     throw({invalid, Path, Type, Value}).
 
