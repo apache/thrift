@@ -562,7 +562,7 @@ void t_swift_generator::generate_swift_struct_hashable_extension(ofstream& out,
       t_field* tfield = *m_iter;
       string accessor = field_is_optional(tfield) ? "?." : ".";
       string defaultor = field_is_optional(tfield) ? " ?? 0" : "";
-      indent(out) << "result = prime * result + (" << tfield->get_name() << accessor <<  "hashValue" << defaultor << ")" << endl;
+      indent(out) << "result = prime &* result &+ (" << tfield->get_name() << accessor <<  "hashValue" << defaultor << ")" << endl;
     }
     
     indent(out) << "return result" << endl;
