@@ -1585,7 +1585,7 @@ begin
   inherited;
 
   if not FTcpClient.IsOpen
-  then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen);
+  then raise TTransportExceptionNotOpen.Create('not open');
 
   FTcpClient.Write(buffer[offset], count);
 end;
