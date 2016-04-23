@@ -583,7 +583,7 @@ begin
   if Error <> 0 then begin
     LogDelegate(Format('GetAddrInfoW %d: %s', [Error, SysErrorMessage(Error)]));
     Close;
-    raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, 'Could not resolve host for server socket.');
+    raise TTransportExceptionNotOpen.Create('Could not resolve host for server socket.');
   end;
 
   // Pick the ipv6 address first since ipv4 addresses can be mapped
@@ -600,7 +600,7 @@ begin
     Error := WSAGetLastError;
     LogDelegate(Format('TBaseSocket.CreateSocket() socket() %s', [SysErrorMessage(Error)]));
     Close;
-    raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, Format('socket(): %s', [SysErrorMessage(Error)]));
+    raise TTransportExceptionNotOpen.Create(Format('socket(): %s', [SysErrorMessage(Error)]));
   end;
 end;
 
@@ -705,14 +705,14 @@ begin
     if ioctlsocket(Socket, Integer(FIONBIO), One) = SOCKET_ERROR then begin
       ErrnoCopy := WSAGetLastError;
       LogDelegate(Format('TSocket.OpenConnection() ioctlsocket() %s %s', [SocketInfo, SysErrorMessage(ErrnoCopy)]));
-      raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, Format('ioctlsocket() failed: %s', [SysErrorMessage(ErrnoCopy)]));
+      raise TTransportExceptionNotOpen.Create(Format('ioctlsocket() failed: %s', [SysErrorMessage(ErrnoCopy)]));
     end;
   end
   else begin
     if ioctlsocket(Socket, Integer(FIONBIO), Zero) = SOCKET_ERROR then begin
       ErrnoCopy := WSAGetLastError;
       LogDelegate(Format('TSocket.OpenConnection() ioctlsocket() %s %s', [SocketInfo, SysErrorMessage(ErrnoCopy)]));
-      raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, Format('ioctlsocket() failed: %s', [SysErrorMessage(ErrnoCopy)]));
+      raise TTransportExceptionNotOpen.Create(Format('ioctlsocket() failed: %s', [SysErrorMessage(ErrnoCopy)]));
     end;
   end;
 
@@ -722,7 +722,7 @@ begin
   ErrnoCopy := WSAGetLastError;
   if (ErrnoCopy <> WSAEINPROGRESS) and (ErrnoCopy <> WSAEWOULDBLOCK) then begin
     LogDelegate(Format('TSocket.OpenConnection() connect() ', [SocketInfo, SysErrorMessage(ErrnoCopy)]));
-    raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, Format('connect() failed: %s', [SysErrorMessage(ErrnoCopy)]));
+    raise TTransportExceptionNotOpen.Create(Format('connect() failed: %s', [SysErrorMessage(ErrnoCopy)]));
   end;
 
   FD_ZERO(Fds);
@@ -743,23 +743,23 @@ begin
     if Ret2 = SOCKET_ERROR then begin
       ErrnoCopy := WSAGetLastError;
       LogDelegate(Format('TSocket.OpenConnection() getsockopt() ', [SocketInfo, SysErrorMessage(ErrnoCopy)]));
-      raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, Format('getsockopt(): %s', [SysErrorMessage(ErrnoCopy)]));
+      raise TTransportExceptionNotOpen.Create(Format('getsockopt(): %s', [SysErrorMessage(ErrnoCopy)]));
     end;
     // no errors on socket, go to town
     if Val = 0 then goto Done;
     LogDelegate(Format('TSocket.OpenConnection() error on socket (after select()) ', [SocketInfo, SysErrorMessage(ErrnoCopy)]));
-    raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, Format('socket OpenConnection() error: %s', [SysErrorMessage(Val)]));
+    raise TTransportExceptionNotOpen.Create(Format('socket OpenConnection() error: %s', [SysErrorMessage(Val)]));
   end
   else if Ret = 0 then begin
     // socket timed out
     LogDelegate(Format('TSocket.OpenConnection() timed out ', [SocketInfo, SysErrorMessage(ErrnoCopy)]));
-    raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, 'OpenConnection() timed out');
+    raise TTransportExceptionNotOpen.Create('OpenConnection() timed out');
   end
   else begin
     // error on select()
     ErrnoCopy := WSAGetLastError;
     LogDelegate(Format('TSocket.OpenConnection() select() ', [SocketInfo, SysErrorMessage(ErrnoCopy)]));
-    raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, Format('select() failed: %s', [SysErrorMessage(ErrnoCopy)]));
+    raise TTransportExceptionNotOpen.Create(Format('select() failed: %s', [SysErrorMessage(ErrnoCopy)]));
   end;
 
 Done:
@@ -776,7 +776,7 @@ begin
 
   // Validate port number
   if (Port < 0) or (Port > $FFFF) then
-    raise TTransportException.Create(TTransportException.TExceptionType.BadArgs, 'Specified port is invalid');
+    raise TTransportExceptionBadArgs.Create('Specified port is invalid');
 
   Res := CreateSocket(Host, Port);
 
@@ -965,7 +965,7 @@ var
   Ret: Integer;
 begin
   if Socket = INVALID_SOCKET then
-    raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, 'Called read on non-open socket');
+    raise TTransportExceptionNotOpen.Create('Called read on non-open socket');
 
   Retries := 0;
 
@@ -1010,15 +1010,15 @@ TryAgain:
         goto TryAgain;
       end;
       LogDelegate(Format('TSocket.Read() select() %s', [SysErrorMessage(ErrnoCopy)]));
-      raise TTransportException.Create(TTransportException.TExceptionType.Unknown, Format('Unknown: %s', [SysErrorMessage(ErrnoCopy)]));
+      raise TTransportExceptionUnknown.Create(Format('Unknown: %s', [SysErrorMessage(ErrnoCopy)]));
     end
     else if Ret > 0 then begin
       // Check the interruptListener
       if FD_ISSET(FInterruptListener, Fds) then
-        raise TTransportException.Create(TTransportException.TExceptionType.Interrupted, 'Interrupted');
+        raise TTransportExceptionInterrupted.Create('Interrupted');
     end
     else // Ret = 0
-      raise TTransportException.Create(TTransportException.TExceptionType.TimedOut, 'WSAEWOULDBLOCK (timed out)');
+      raise TTransportExceptionTimedOut.Create('WSAEWOULDBLOCK (timed out)');
 
     // falling through means there is something to recv and it cannot block
   end;
@@ -1030,7 +1030,7 @@ TryAgain:
     if ErrnoCopy = WSAEWOULDBLOCK then begin
       // if no timeout we can assume that resource exhaustion has occurred.
       if RecvTimeout = 0 then
-        raise TTransportException.Create(TTransportException.TExceptionType.TimedOut, 'WSAEWOULDBLOCK (unavailable resources)');
+        raise TTransportExceptionTimedOut.Create('WSAEWOULDBLOCK (unavailable resources)');
       // check if this is the lack of resources or timeout case
       ReadElapsed := MilliSecondsBetween(Now, Start);
       if (EAgainThreshold = 0) or (ReadElapsed < EAgainThreshold) then begin
@@ -1040,11 +1040,11 @@ TryAgain:
           goto TryAgain;
         end
         else
-          raise TTransportException.Create(TTransportException.TExceptionType.TimedOut, 'WSAEWOULDBLOCK (unavailable resources)');
+          raise TTransportExceptionTimedOut.Create('WSAEWOULDBLOCK (unavailable resources)');
       end
       else
         // infer that timeout has been hit
-        raise TTransportException.Create(TTransportException.TExceptionType.TimedOut, 'WSAEWOULDBLOCK (timed out)');
+        raise TTransportExceptionTimedOut.Create('WSAEWOULDBLOCK (timed out)');
     end;
 
     // If interrupted, try again
@@ -1058,17 +1058,17 @@ TryAgain:
 
     // This ish isn't open
     if ErrnoCopy = WSAENOTCONN then
-      raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, 'WSAENOTCONN');
+      raise TTransportExceptionNotOpen.Create('WSAENOTCONN');
 
     // Timed out!
     if ErrnoCopy = WSAETIMEDOUT then
-      raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, 'WSAETIMEDOUT');
+      raise TTransportExceptionNotOpen.Create('WSAETIMEDOUT');
 
     // Now it's not a try again case, but a real probblez
     LogDelegate(Format('TSocket.Read() recv() %s %s', [SocketInfo, SysErrorMessage(ErrnoCopy)]));
 
     // Some other error, whatevz
-    raise TTransportException.Create(TTransportException.TExceptionType.Unknown, Format('Unknown: %s', [SysErrorMessage(ErrnoCopy)]));
+    raise TTransportExceptionUnknown.Create(Format('Unknown: %s', [SysErrorMessage(ErrnoCopy)]));
   end;
 
   Result := Got;
@@ -1084,7 +1084,7 @@ begin
     if B = 0 then
       // This should only happen if the timeout set with SO_SNDTIMEO expired.
       // Raise an exception.
-      raise TTransportException.Create(TTransportException.TExceptionType.TimedOut, 'send timeout expired');
+      raise TTransportExceptionTimedOut.Create('send timeout expired');
     Inc(Sent, B);
   end;
 end;
@@ -1095,7 +1095,7 @@ var
   ErrnoCopy: Integer;
 begin
   if Socket = INVALID_SOCKET then
-    raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, 'Called write on non-open socket');
+    raise TTransportExceptionNotOpen.Create('Called write on non-open socket');
 
   B := send(Socket, Buf, Len, 0);
 
@@ -1109,15 +1109,15 @@ begin
 
     if (ErrnoCopy = WSAECONNRESET) or (ErrnoCopy = WSAENOTCONN) then begin
       Close;
-      raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, Format('write() send(): %s', [SysErrorMessage(ErrnoCopy)]));
+      raise TTransportExceptionNotOpen.Create(Format('write() send(): %s', [SysErrorMessage(ErrnoCopy)]));
     end;
 
-    raise TTransportException.Create(TTransportException.TExceptionType.Unknown, Format('write() send(): %s', [SysErrorMessage(ErrnoCopy)]));
+    raise TTransportExceptionUnknown.Create(Format('write() send(): %s', [SysErrorMessage(ErrnoCopy)]));
   end;
 
   // Fail on blocked send
   if B = 0 then
-    raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, 'Socket send returned 0.');
+    raise TTransportExceptionNotOpen.Create('Socket send returned 0.');
 
   Result := B;
 end;
@@ -1201,7 +1201,7 @@ begin
           Continue;
         end;
         LogDelegate(Format('TSocket.Peek() select() %s', [SysErrorMessage(ErrnoCopy)]));
-        raise TTransportException.Create(TTransportException.TExceptionType.Unknown, Format('Unknown: %s', [SysErrorMessage(ErrnoCopy)]));
+        raise TTransportExceptionUnknown.Create(Format('Unknown: %s', [SysErrorMessage(ErrnoCopy)]));
       end
       else if Ret > 0 then begin
         // Check the interruptListener
@@ -1225,7 +1225,7 @@ begin
       Exit(False);
     end;
     LogDelegate(Format('TSocket.Peek() recv() %s %s', [SocketInfo, SysErrorMessage(ErrnoCopy)]));
-    raise TTransportException.Create(TTransportException.TExceptionType.Unknown, Format('recv(): %s', [SysErrorMessage(ErrnoCopy)]));
+    raise TTransportExceptionUnknown.Create(Format('recv(): %s', [SysErrorMessage(ErrnoCopy)]));
   end;
   Result := Ret > 0;
 end;
@@ -1395,7 +1395,7 @@ begin
   end;
 
   if (Port < 0) or (Port > $FFFF) then
-    raise TTransportException.Create(TTransportException.TExceptionType.BadArgs, 'Specified port is invalid');
+    raise TTransportExceptionBadArgs.Create('Specified port is invalid');
 
   AddrInfo := CreateSocket(FAddress, Port);
 
@@ -1411,7 +1411,7 @@ begin
     if setsockopt(Socket, SOL_SOCKET, SO_SNDBUF, @FTcpSendBuffer, SizeOf(FTcpSendBuffer)) = SOCKET_ERROR then begin
       ErrnoCopy := WSAGetLastError;
       LogDelegate(Format('TServerSocket.Listen() setsockopt() SO_SNDBUF %s', [SysErrorMessage(ErrnoCopy)]));
-      raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, Format('Could not set SO_SNDBUF: %s', [SysErrorMessage(ErrnoCopy)]));
+      raise TTransportExceptionNotOpen.Create(Format('Could not set SO_SNDBUF: %s', [SysErrorMessage(ErrnoCopy)]));
     end;
   end;
 
@@ -1419,7 +1419,7 @@ begin
     if setsockopt(Socket, SOL_SOCKET, SO_RCVBUF, @FTcpRecvBuffer, SizeOf(FTcpRecvBuffer)) = SOCKET_ERROR then begin
       ErrnoCopy := WSAGetLastError;
       LogDelegate(Format('TServerSocket.Listen() setsockopt() SO_RCVBUF %s', [SysErrorMessage(ErrnoCopy)]));
-      raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, Format('Could not set SO_RCVBUF: %s', [SysErrorMessage(ErrnoCopy)]));
+      raise TTransportExceptionNotOpen.Create(Format('Could not set SO_RCVBUF: %s', [SysErrorMessage(ErrnoCopy)]));
     end;
   end;
 
@@ -1429,21 +1429,21 @@ begin
   if setsockopt(Socket, SOL_SOCKET, SO_LINGER, @Ling, SizeOf(Ling)) = SOCKET_ERROR then begin
     ErrnoCopy := WSAGetLastError;
     LogDelegate(Format('TServerSocket.Listen() setsockopt() SO_LINGER %s', [SysErrorMessage(ErrnoCopy)]));
-    raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, Format('Could not set SO_LINGER: %s', [SysErrorMessage(ErrnoCopy)]));
+    raise TTransportExceptionNotOpen.Create(Format('Could not set SO_LINGER: %s', [SysErrorMessage(ErrnoCopy)]));
   end;
 
   // TCP Nodelay, speed over bandwidth
   if setsockopt(Socket, IPPROTO_TCP, TCP_NODELAY, @One, SizeOf(One)) = SOCKET_ERROR then begin
     ErrnoCopy := WSAGetLastError;
     LogDelegate(Format('TServerSocket.Listen() setsockopt() TCP_NODELAY %s', [SysErrorMessage(ErrnoCopy)]));
-    raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, Format('Could not set TCP_NODELAY: %s', [SysErrorMessage(ErrnoCopy)]));
+    raise TTransportExceptionNotOpen.Create(Format('Could not set TCP_NODELAY: %s', [SysErrorMessage(ErrnoCopy)]));
   end;
 
   // Set NONBLOCK on the accept socket
   if ioctlsocket(Socket, Integer(FIONBIO), One) = SOCKET_ERROR then begin
     ErrnoCopy := WSAGetLastError;
     LogDelegate(Format('TServerSocket.Listen() ioctlsocket() FIONBIO %s', [SysErrorMessage(ErrnoCopy)]));
-    raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, Format('ioctlsocket() FIONBIO: %s', [SysErrorMessage(ErrnoCopy)]));
+    raise TTransportExceptionNotOpen.Create(Format('ioctlsocket() FIONBIO: %s', [SysErrorMessage(ErrnoCopy)]));
   end;
 
   // prepare the port information
@@ -1477,7 +1477,7 @@ begin
   if (Retries > FRetryLimit) then begin
     LogDelegate(Format('TServerSocket.Listen() BIND %d', [Port]));
     Close;
-    raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, Format('Could not bind: %s', [SysErrorMessage(WSAGetLastError)]));
+    raise TTransportExceptionNotOpen.Create(Format('Could not bind: %s', [SysErrorMessage(WSAGetLastError)]));
   end;
 
   if Assigned(FListenCallback) then
@@ -1487,7 +1487,7 @@ begin
   if Winapi.Winsock2.listen(Socket, FAcceptBacklog) = SOCKET_ERROR then begin
     ErrnoCopy := WSAGetLastError;
     LogDelegate(Format('TServerSocket.Listen() listen() %s', [SysErrorMessage(ErrnoCopy)]));
-    raise TTransportException.Create(TTransportException.TExceptionType.NotOpen, Format('Could not listen: %s', [SysErrorMessage(ErrnoCopy)]));
+    raise TTransportExceptionNotOpen.Create(Format('Could not listen: %s', [SysErrorMessage(ErrnoCopy)]));
   end;
 
   // The socket is now listening!
@@ -1538,14 +1538,14 @@ begin
       end;
       ErrnoCopy := WSAGetLastError;
       LogDelegate(Format('TServerSocket.Accept() select() %s', [SysErrorMessage(ErrnoCopy)]));
-      raise TTransportException.Create(TTransportException.TExceptionType.Unknown, Format('Unknown: %s', [SysErrorMessage(ErrnoCopy)]));
+      raise TTransportExceptionUnknown.Create(Format('Unknown: %s', [SysErrorMessage(ErrnoCopy)]));
     end
     else if Ret > 0 then begin
       // Check for an interrupt signal
       if (FInterruptSockReader <> INVALID_SOCKET) and FD_ISSET(FInterruptSockReader, Fds) then begin
         if recv(FInterruptSockReader, Buf, SizeOf(Buf), 0) = SOCKET_ERROR then
           LogDelegate(Format('TServerSocket.Accept() recv() interrupt %s', [SysErrorMessage(WSAGetLastError)]));
-        raise TTransportException.Create(TTransportException.TExceptionType.Interrupted);
+        raise TTransportExceptionInterrupted.Create('interrupted');
       end;
 
       // Check for the actual server socket being ready
@@ -1554,7 +1554,7 @@ begin
     end
     else begin
       LogDelegate('TServerSocket.Accept() select() 0');
-      raise TTransportException.Create(TTransportException.TExceptionType.Unknown);
+      raise TTransportExceptionUnknown.Create('unknown error');
     end;
   end;
 
@@ -1563,7 +1563,7 @@ begin
   if ClientSocket = INVALID_SOCKET then begin
     ErrnoCopy := WSAGetLastError;
     LogDelegate(Format('TServerSocket.Accept() accept() %s', [SysErrorMessage(ErrnoCopy)]));
-    raise TTransportException.Create(TTransportException.TExceptionType.Unknown, Format('accept(): %s', [SysErrorMessage(ErrnoCopy)]));
+    raise TTransportExceptionUnknown.Create(Format('accept(): %s', [SysErrorMessage(ErrnoCopy)]));
   end;
 
   // Make sure client socket is blocking
@@ -1572,7 +1572,7 @@ begin
     ErrnoCopy := WSAGetLastError;
     closesocket(ClientSocket);
     LogDelegate(Format('TServerSocket.Accept() ioctlsocket() FIONBIO %s', [SysErrorMessage(ErrnoCopy)]));
-    raise TTransportException.Create(TTransportException.TExceptionType.Unknown, Format('ioctlsocket(): %s', [SysErrorMessage(ErrnoCopy)]));
+    raise TTransportExceptionUnknown.Create(Format('ioctlsocket(): %s', [SysErrorMessage(ErrnoCopy)]));
   end;
 
   Client := CreateSocketObj(ClientSocket);
