@@ -2291,8 +2291,18 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
   indent_down_impl();
   indent_impl(s_service_impl) << "except" << endl;
   indent_up_impl();
+  indent_impl(s_service_impl) << "on TTransportExceptionTimedOut do begin" << endl;
+  indent_up_impl();
+  indent_impl(s_service_impl) << "Result := True;" << endl;
+  indent_impl(s_service_impl) << "Exit;" << endl;
+  indent_down_impl();
+  indent_impl(s_service_impl) << "end;" << endl;
+  indent_impl(s_service_impl) << "else begin" << endl;
+  indent_up_impl();
   indent_impl(s_service_impl) << "Result := False;" << endl;
   indent_impl(s_service_impl) << "Exit;" << endl;
+  indent_down_impl();
+  indent_impl(s_service_impl) << "end;" << endl;
   indent_down_impl();
   indent_impl(s_service_impl) << "end;" << endl;
   indent_impl(s_service_impl) << "Result := True;" << endl;
