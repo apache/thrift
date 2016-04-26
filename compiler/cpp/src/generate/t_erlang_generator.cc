@@ -341,7 +341,7 @@ void t_erlang_generator::generate_type_list(
   for (size_t j = 0; j < types.size();) {
     os << type_name(types[j]);
     if (++j != types.size()) {
-      os << ", " << i.nl();
+      os << "," << i.nl();
     }
   }
 
@@ -739,7 +739,7 @@ void t_erlang_generator::generate_service_metadata(ostream& os, t_service* tserv
   typedef vector<t_function*> vec;
 
   indenter i;
-  os << "functions(" << service_name(tservice) << ") -> " << i.nlup()
+  os << "functions(" << service_name(tservice) << ") ->" << i.nlup()
      << "[" << i.nlup();
 
   vec const& functions = tservice->get_functions();
