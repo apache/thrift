@@ -30,13 +30,13 @@ type TProtocolException interface {
 }
 
 const (
-	UNKNOWN_PROTOCOL_EXCEPTION = 0
-	INVALID_DATA               = 1
-	NEGATIVE_SIZE              = 2
-	SIZE_LIMIT                 = 3
-	BAD_VERSION                = 4
-	NOT_IMPLEMENTED            = 5
-	DEPTH_LIMIT                = 6
+	UNKNOWN_PROTOCOL_EXCEPTION = iota
+	INVALID_DATA
+	NEGATIVE_SIZE
+	SIZE_LIMIT
+	BAD_VERSION
+	NOT_IMPLEMENTED
+	DEPTH_LIMIT
 )
 
 type tProtocolException struct {
@@ -60,7 +60,7 @@ func NewTProtocolException(err error) TProtocolException {
 	if err == nil {
 		return nil
 	}
-	if e,ok := err.(TProtocolException); ok {
+	if e, ok := err.(TProtocolException); ok {
 		return e
 	}
 	if _, ok := err.(base64.CorruptInputError); ok {
@@ -75,4 +75,3 @@ func NewTProtocolExceptionWithType(errType int, err error) TProtocolException {
 	}
 	return &tProtocolException{errType, err.Error()}
 }
-
