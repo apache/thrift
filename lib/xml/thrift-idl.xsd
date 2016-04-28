@@ -47,14 +47,14 @@
         <element name="enum" type="tns:Enum" />
       </choice>
     </sequence>
-    <attribute name="name" type="string" />
-    <attribute name="targetNamespace" type="anyURI" />
-    <attribute name="doc" type="string" />
+    <attribute name="name" type="string" use="required" />
+    <attribute name="targetNamespace" type="anyURI" use="optional" />
+    <attribute name="doc" type="string" use="optional" />
   </complexType>
 
   <complexType name="Include">
-    <attribute name="file" type="string" />
-    <attribute name="name" type="string" />
+    <attribute name="file" type="string" use="optional" />
+    <attribute name="name" type="string" use="required" />
   </complexType>
 
   <complexType name="Namespace">
@@ -62,9 +62,9 @@
       <element name="annotation" type="tns:Annotation" 
                minOccurs="0" maxOccurs="unbounded" />
     </sequence>
-    <attribute name="name" type="string" />
-    <attribute name="value" type="string" />
-    <attribute name="doc" type="string" />
+    <attribute name="name" type="string" use="required" />
+    <attribute name="value" type="string" use="required" />
+    <attribute name="doc" type="string" use="optional" />
   </complexType>
 
   <group name="AbstractStruct">
@@ -77,8 +77,8 @@
   </group>
 
   <attributeGroup name="StructAttributes">
-    <attribute name="name" type="string" />
-    <attribute name="doc" type="string" />
+    <attribute name="name" type="string" use="required" />
+    <attribute name="doc" type="string" use="optional" />
   </attributeGroup>
 
   <complexType name="Exception">
@@ -97,7 +97,7 @@
     <attribute name="targetNamespace" type="string" use="required" />
     <attribute name="parent-module" type="string" use="optional" />
     <attribute name="parent-id" type="string" use="optional" /> 
-    <attribute name="doc" type="string" />
+    <attribute name="doc" type="string" use="optional" />
   </complexType>
 
   <complexType name="Method">
@@ -111,8 +111,8 @@
                minOccurs="0" maxOccurs="unbounded" />
     </sequence>
     <attribute name="name" type="string" use="required" />
-    <attribute name="oneway" type="boolean" />
-    <attribute name="doc" type="string" />
+    <attribute name="oneway" type="boolean" use="optional" />
+    <attribute name="doc" type="string" use="optional" />
   </complexType>
 
   <complexType name="Typedef">
@@ -123,7 +123,7 @@
                    minOccurs="0" maxOccurs="unbounded" />
         </sequence>
         <attribute name="name" type="string" use="required" />
-        <attribute name="doc" type="string" />
+        <attribute name="doc" type="string" use="optional" />
       </extension>
     </complexContent>
   </complexType>
