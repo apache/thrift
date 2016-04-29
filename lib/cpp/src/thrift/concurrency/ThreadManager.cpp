@@ -372,6 +372,9 @@ void ThreadManager::Impl::start() {
 
 void ThreadManager::Impl::stopImpl(bool join) {
   bool doStop = false;
+  if (state_ == ThreadManager::STOPPED) {
+    return;
+  }
 
   {
     Synchronized s(monitor_);
@@ -382,9 +385,13 @@ void ThreadManager::Impl::stopImpl(bool join) {
     }
   }
 
-  while (doStop && workerCount()) {
-    removeWorker(1);
+  if (doStop) {
+    removeWorker(workerCount_);
   }
+
+  // XXX
+  // should be able to block here for transition to STOPPED since we're no
+  // using shared_ptrs
 
   {
     Synchronized s(monitor_);
@@ -394,7 +401,6 @@ void ThreadManager::Impl::stopImpl(bool join) {
 
 void ThreadManager::Impl::removeWorker(size_t value) {
   std::set<shared_ptr<Thread> > removedThreads;
-  size_t goalCount = 0;
   {
     Synchronized s(monitor_);
     if (value > workerMaxCount_) {
@@ -402,7 +408,6 @@ void ThreadManager::Impl::removeWorker(size_t value) {
     }
 
     workerMaxCount_ -= value;
-    goalCount = workerMaxCount_;
 
     if (idleCount_ < value) {
       for (size_t ix = 0; ix < idleCount_; ix++) {
@@ -416,7 +421,7 @@ void ThreadManager::Impl::removeWorker(size_t value) {
   {
     Synchronized s(workerMonitor_);
 
-    while (workerCount_ > goalCount) {
+    while (workerCount_ != workerMaxCount_) {
       workerMonitor_.wait();
     }
 
