@@ -48,6 +48,7 @@ var typeNames = map[int]string{
 	VOID:   "VOID",
 	BOOL:   "BOOL",
 	BYTE:   "BYTE",
+	DOUBLE: "DOUBLE",
 	I16:    "I16",
 	I32:    "I32",
 	I64:    "I64",
