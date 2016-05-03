@@ -310,10 +310,8 @@ void t_xml_generator::iterate_program(t_program* program) {
   const vector<t_program*> includes = program->get_includes();
   vector<t_program*>::const_iterator inc_it;
   for (inc_it = includes.begin(); inc_it != includes.end(); ++inc_it) {
-    const string include_path = (*inc_it)->get_path();
     write_element_start("include");
     write_attribute("name", (*inc_it)->get_name());
-    write_attribute("file", include_path);
     write_element_end();
   }
 

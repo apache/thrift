@@ -21,6 +21,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <set>
 
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -32,6 +33,7 @@ using std::map;
 using std::ostream;
 using std::ofstream;
 using std::ostringstream;
+using std::set;
 using std::string;
 using std::stringstream;
 using std::vector;
@@ -177,6 +179,8 @@ public:
   string function_name(t_function* tfunction);
   string argument_list(t_struct* tstruct, string protocol_name, bool is_internal);
   string type_to_enum(t_type* ttype, bool qualified=false);
+  string maybe_escape_identifier(const string& identifier);
+  void populate_reserved_words();
 
 private:
   
@@ -231,6 +235,8 @@ private:
   bool async_clients_;
   bool promise_kit_;
   bool debug_descriptions_;
+
+  set<string> swift_reserved_words_;
 };
 
 /**
@@ -240,6 +246,8 @@ private:
 void t_swift_generator::init_generator() {
   // Make output directory
   MKDIR(get_out_dir().c_str());
+
+  populate_reserved_words();
 
   // we have a .swift declarations file...
   string f_decl_name = capitalize(program_name_) + ".swift";
@@ -440,7 +448,7 @@ void t_swift_generator::generate_swift_struct(ofstream& out,
   
   string visibility = is_private ? "private" : "public";
   
-  out << indent() << visibility << " struct " << tstruct->get_name();
+  out << indent() << visibility << " final class " << tstruct->get_name();
 
   if (tstruct->is_xception()) {
     out << " : ErrorType";
@@ -508,7 +516,8 @@ void t_swift_generator::generate_swift_struct_init(ofstream& out,
       else {
         out << ", ";
       }
-      out << (*m_iter)->get_name() << ": " << type_name((*m_iter)->get_type(), field_is_optional(*m_iter));
+      out << (*m_iter)->get_name() << ": "
+          << maybe_escape_identifier(type_name((*m_iter)->get_type(), field_is_optional(*m_iter)));
     }
     ++m_iter;
   }
@@ -518,7 +527,8 @@ void t_swift_generator::generate_swift_struct_init(ofstream& out,
   
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     if (all || (*m_iter)->get_req() == t_field::T_REQUIRED || (*m_iter)->get_req() == t_field::T_OPT_IN_REQ_OUT) {
-      out << indent() << "self." << (*m_iter)->get_name() << " = " << (*m_iter)->get_name() << endl;
+      out << indent() << "self." << maybe_escape_identifier((*m_iter)->get_name()) << " = "
+          << maybe_escape_identifier((*m_iter)->get_name()) << endl;
     }
   }
   
@@ -562,7 +572,8 @@ void t_swift_generator::generate_swift_struct_hashable_extension(ofstream& out,
       t_field* tfield = *m_iter;
       string accessor = field_is_optional(tfield) ? "?." : ".";
       string defaultor = field_is_optional(tfield) ? " ?? 0" : "";
-      indent(out) << "result = prime * result + (" << tfield->get_name() << accessor <<  "hashValue" << defaultor << ")" << endl;
+      indent(out) << "result = prime &* result &+ (" << maybe_escape_identifier(tfield->get_name()) << accessor
+                  <<  "hashValue" << defaultor << ")" << endl;
     }
     
     indent(out) << "return result" << endl;
@@ -610,7 +621,8 @@ void t_swift_generator::generate_swift_struct_equatable_extension(ofstream& out,
   
     for (m_iter = members.begin(); m_iter != members.end();) {
       t_field* tfield = *m_iter;
-      indent(out) << "(lhs." << tfield->get_name() << " ?== rhs." << tfield->get_name() << ")";
+      indent(out) << "(lhs." << maybe_escape_identifier(tfield->get_name())
+                  << " ?== rhs." << maybe_escape_identifier(tfield->get_name()) << ")";
       if (++m_iter != members.end()) {
         out << " &&";
       }
@@ -718,7 +730,7 @@ void t_swift_generator::generate_swift_struct_reader(ofstream& out,
   
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     bool optional = field_is_optional(*f_iter);
-    indent(out) << "var " << (*f_iter)->get_name() << " : "
+    indent(out) << "var " << maybe_escape_identifier((*f_iter)->get_name()) << " : "
                 << type_name((*f_iter)->get_type(), optional, !optional) << endl;
   }
   
@@ -746,7 +758,8 @@ void t_swift_generator::generate_swift_struct_reader(ofstream& out,
 
     indent(out) << "case (" << (*f_iter)->get_key() << ", " << type_to_enum((*f_iter)->get_type()) << "):" << endl;
     indent_up();
-    indent(out) << (*f_iter)->get_name() << " = try __proto.readValue() as " << type_name((*f_iter)->get_type()) << endl << endl;
+    indent(out) << maybe_escape_identifier((*f_iter)->get_name()) << " = try __proto.readValue() as "
+                << type_name((*f_iter)->get_type()) << endl << endl;
     indent_down();
     
   }
@@ -788,7 +801,7 @@ void t_swift_generator::generate_swift_struct_reader(ofstream& out,
     
   indent(out) << "return " << tstruct->get_name() << "(";
   for (f_iter = fields.begin(); f_iter != fields.end();) {
-    out << (*f_iter)->get_name() << ": " << (*f_iter)->get_name();
+    out << (*f_iter)->get_name() << ": " << maybe_escape_identifier((*f_iter)->get_name());
     if (++f_iter != fields.end()) {
       out << ", ";
     }
@@ -833,12 +846,13 @@ void t_swift_generator::generate_swift_struct_writer(ofstream& out,
     
     bool optional = field_is_optional(tfield);
     if (optional) {
-      indent(out) << "if let " << tfield->get_name() << " = __value." << tfield->get_name();
+      indent(out) << "if let " << maybe_escape_identifier(tfield->get_name())
+                  << " = __value." << maybe_escape_identifier(tfield->get_name());
       block_open(out);
     }
     
     indent(out) << "try __proto.writeFieldValue("
-                << (optional ? "" : "__value.") << tfield->get_name() << ", "
+                << (optional ? "" : "__value.") << maybe_escape_identifier(tfield->get_name()) << ", "
                 << "name: \"" << tfield->get_name() << "\", "
                 << "type: " << type_to_enum(tfield->get_type()) << ", "
                 << "id: " << tfield->get_key() << ")" << endl;
@@ -934,7 +948,8 @@ void t_swift_generator::generate_swift_struct_printable_extension(ofstream& out,
   vector<t_field*>::const_iterator f_iter;
 
   for (f_iter = fields.begin(); f_iter != fields.end();) {
-    indent(out) << "desc += \"" << (*f_iter)->get_name() << "=\\(self." << (*f_iter)->get_name() << ")";
+    indent(out) << "desc += \"" << (*f_iter)->get_name()
+                << "=\\(self." << maybe_escape_identifier((*f_iter)->get_name()) << ")";
     if (++f_iter != fields.end()) {
       out << ", ";
     }
@@ -1992,7 +2007,7 @@ string t_swift_generator::declare_property(t_field* tfield, bool is_private) {
   
   ostringstream render;
 
-  render << visibility << " var " << tfield->get_name();
+  render << visibility << " var " << maybe_escape_identifier(tfield->get_name());
   
   if (field_is_optional(tfield)) {
     render << " : " << type_name(tfield->get_type(), true);
@@ -2098,6 +2113,46 @@ string t_swift_generator::argument_list(t_struct* tstruct, string protocol_name,
     }
   }
   return result;
+}
+
+/**
+ * https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/LexicalStructure.html
+ *
+ */
+
+void t_swift_generator::populate_reserved_words() {
+  swift_reserved_words_.insert("Self");
+  swift_reserved_words_.insert("associatedtype");
+  swift_reserved_words_.insert("defer");
+  swift_reserved_words_.insert("deinit");
+  swift_reserved_words_.insert("dynamicType");
+  swift_reserved_words_.insert("enum");
+  swift_reserved_words_.insert("extension");
+  swift_reserved_words_.insert("fallthrough");
+  swift_reserved_words_.insert("false");
+  swift_reserved_words_.insert("func");
+  swift_reserved_words_.insert("guard");
+  swift_reserved_words_.insert("init");
+  swift_reserved_words_.insert("inout");
+  swift_reserved_words_.insert("internal");
+  swift_reserved_words_.insert("let");
+  swift_reserved_words_.insert("operator");
+  swift_reserved_words_.insert("protocol");
+  swift_reserved_words_.insert("repeat");
+  swift_reserved_words_.insert("rethrows");
+  swift_reserved_words_.insert("struct");
+  swift_reserved_words_.insert("subscript");
+  swift_reserved_words_.insert("throws");
+  swift_reserved_words_.insert("true");
+  swift_reserved_words_.insert("typealias");
+  swift_reserved_words_.insert("where");
+}
+
+string t_swift_generator::maybe_escape_identifier(const string& identifier) {
+  if (swift_reserved_words_.find(identifier) != swift_reserved_words_.end()) {
+    return "`" + identifier + "`";
+  }
+  return identifier;
 }
 
 /**
