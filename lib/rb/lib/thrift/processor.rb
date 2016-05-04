@@ -30,7 +30,7 @@ module Thrift
           send("process_#{name}", seqid, iprot, oprot)
         rescue => e
           x = ApplicationException.new(ApplicationException::INTERNAL_ERROR, 'Internal error')
-          write_error(x, oprot, name, seqid)
+          write_error(x, oprot, name, seqid, e)
         end
         true
       else
@@ -56,7 +56,8 @@ module Thrift
       oprot.trans.flush
     end
 
-    def write_error(err, oprot, name, seqid)
+    def write_error(err, oprot, name, seqid, e = nil)
+      @handler.try(:on_error,e) if e.present?
       oprot.write_message_begin(name, MessageTypes::EXCEPTION, seqid)
       err.write(oprot)
       oprot.write_message_end
