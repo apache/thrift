@@ -15,33 +15,45 @@
 # Known missing client libraries:
 #  - None
 
-FROM ubuntu:trusty
+FROM buildpack-deps:trusty-scm
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
 
 ENV DEBIAN_FRONTEND noninteractive
 
-# General dependencies
+# Add apt sources
+# Erlang
+RUN echo 'deb http://packages.erlang-solutions.com/debian trusty contrib' > /etc/apt/sources.list.d/erlang_solutions.list && \
+    curl -sSL https://packages.erlang-solutions.com/debian/erlang_solutions.asc | apt-key add -
+# Dart
+RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
+    curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
+    sed -i /etc/apt/sources.list.d/dart_stable.list -e 's/https:/http:/g'
+
+# Consider using mirror nearby when building locally
+# TODO: Provide option via --build-arg=...
+# RUN sed -i /etc/apt/sources.list -e 's!http://archive.ubuntu.com/ubuntu/!http://your/mirror/!g'
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      apt-transport-https \
-      autoconf \
-      automake \
+`# General dependencies` \
       bison \
       build-essential \
       clang \
       cmake \
-      curl \
       debhelper \
       flex \
-      g++ \
-      git \
-      libtool \
-      make \
       ninja-build \
-      pkg-config
+      pkg-config \
+`# Included in buildpack-deps` \
+`#      autoconf` \
+`#      automake` \
+`#      g++` \
+`#      git` \
+`#      libtool` \
+`#      make`
 
-# C++ dependencies
-# libevent and OpenSSL are needed by D too
 RUN apt-get update && apt-get install -y --no-install-recommends \
+`# C++ dependencies` \
+`# libevent and OpenSSL are needed by D too` \
       libboost-dev \
       libboost-filesystem-dev \
       libboost-program-options-dev \
@@ -54,19 +66,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       qtbase5-dev \
       qtbase5-dev-tools
 
-# Java dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
+`# Java dependencies` \
       ant \
       ant-optional \
       openjdk-7-jdk \
-      maven \
-    && update-java-alternatives -s java-1.7.0-openjdk-amd64
+      maven
 
-# Python dependencies
-# TODO:
-# Install twisted and zope.interface via pip. we need twisted at ./configure time, otherwise
-# py.twisted tests are skipped.
 RUN apt-get update && apt-get install -y --no-install-recommends \
+`# Python dependencies` \
+`# TODO:` \
+`# Install twisted and zope.interface via pip. we need twisted at ./configure time, otherwise` \
+`# py.twisted tests are skipped.` \
       python-all \
       python-all-dbg \
       python-all-dev \
@@ -80,64 +91,91 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       python3-setuptools \
       python3-pip
 
-# Ruby dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
+`# Ruby dependencies` \
       ruby \
       ruby-dev \
-    && gem install bundler rake
-
-# Perl dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+`# Perl dependencies` \
       libbit-vector-perl \
       libclass-accessor-class-perl \
       libcrypt-ssleay-perl \
       libio-socket-ssl-perl \
       libnet-ssleay-perl
 
-# Php dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
+`# Php dependencies` \
       php5 \
       php5-dev \
       php5-cli \
       php-pear \
       re2c \
-      phpunit
+      phpunit \
+`# GlibC dependencies` \
+      libglib2.0-dev
 
-# GlibC dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends libglib2.0-dev
-
-# Erlang dependencies
-RUN echo 'deb http://packages.erlang-solutions.com/debian trusty contrib' > /etc/apt/sources.list.d/erlang_solutions.list && \
-    curl -sSL http://packages.erlang-solutions.com/debian/erlang_solutions.asc | apt-key add - && \
-    apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+`# Erlang dependencies` \
       erlang-base \
       erlang-eunit \
       erlang-dev \
       erlang-tools \
       rebar
 
-# Go dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+`# Haskell dependencies` \
+      ghc \
+      cabal-install \
+`# Haxe dependencies` \
+      neko \
+      neko-dev \
+      libneko0
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+`# Node.js dependencies` \
+      nodejs \
+      nodejs-dev \
+      nodejs-legacy \
+      npm
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+`# CSharp dependencies` \
+      libmono-system-web2.0-cil \
+      mono-complete \
+      mono-devel \
+      mono-gmcs \
+      mono-xbuild
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+`# D dependencies` \
+      xdg-utils \
+`# Dart dependencies` \
+      dart \
+`# Lua dependencies` \
+      lua5.2 \
+      lua5.2-dev \
+`# MinGW dependencies` \
+      mingw32 \
+      mingw32-binutils \
+      mingw32-runtime \
+      nsis \
+`# Clean up` \
+    && rm -rf /var/cache/apt/* && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /tmp/* && \
+    rm -rf /var/tmp/*
+
+# Java
+RUN update-java-alternatives -s java-1.7.0-openjdk-amd64
+
+# Ruby
+RUN gem install bundler rake
+
+# Go
 RUN curl -sSL https://storage.googleapis.com/golang/go1.4.3.linux-amd64.tar.gz | tar -C /usr/local/ -xz
 ENV PATH /usr/local/go/bin:$PATH
 
-# Haskell dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      ghc \
-      cabal-install
-# Packages tend to be overwritten by build process since we're currently calling cabal update
-#       libghc-binary-dev \
-#       libghc-network-dev \
-#       libghc-http-dev \
-#       libghc-hashable-dev \
-#       libghc-unordered-containers-dev \
-#       libghc-vector-dev
-
 # Haxe
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      neko \
-      neko-dev \
-      libneko0 \
-    && mkdir -p /usr/lib/haxe && \
+RUN mkdir -p /usr/lib/haxe && \
     curl http://haxe.org/website-content/downloads/3.2.0/downloads/haxe-3.2.0-linux64.tar.gz | \
     tar -C /usr/lib/haxe --strip-components=1 -xz && \
     ln -s /usr/lib/haxe/haxe /usr/bin/haxe && \
@@ -147,24 +185,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     haxelib setup /usr/lib/haxe/lib && \
     haxelib install hxcpp
 
-# Node.js dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      nodejs \
-      nodejs-dev \
-      nodejs-legacy \
-      npm
-
-# CSharp dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      libmono-system-web2.0-cil \
-      mono-complete \
-      mono-devel \
-      mono-gmcs \
-      mono-xbuild
-
-# D dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends xdg-utils && \
-    curl -sSL http://downloads.dlang.org/releases/2.x/2.070.0/dmd_2.070.0-0_amd64.deb -o /tmp/dmd_2.070.0-0_amd64.deb && \
+# D
+RUN curl -sSL http://downloads.dlang.org/releases/2.x/2.070.0/dmd_2.070.0-0_amd64.deb -o /tmp/dmd_2.070.0-0_amd64.deb && \
     dpkg -i /tmp/dmd_2.070.0-0_amd64.deb && \
     rm /tmp/dmd_2.070.0-0_amd64.deb && \
     curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/master.tar.gz| tar xz && \
@@ -177,30 +199,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends xdg-utils && \
     chmod 755 /usr/local/bin/gcc-dmd && \
     echo 'CC=/usr/local/bin/gcc-dmd' >> /etc/dmd.conf
 
-# Dart dependencies
-RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
-    apt-get update && apt-get install -y --no-install-recommends dart
+# Dart
 ENV PATH /usr/lib/dart/bin:$PATH
-
-# Lua dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      lua5.2 \
-      lua5.2-dev
-
-# MinGW dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      mingw32 \
-      mingw32-binutils \
-      mingw32-runtime \
-      nsis
-
-# Clean up
-RUN apt-get clean && \
-    rm -rf /var/cache/apt/* && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /tmp/* && \
-    rm -rf /var/tmp/*
 
 ENV THRIFT_ROOT /thrift
 RUN mkdir -p $THRIFT_ROOT/src
