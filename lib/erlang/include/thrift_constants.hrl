@@ -41,7 +41,7 @@
 
 % TApplicationException
 -define(TApplicationException_Structure,
-        {struct, [{1, undefined, string, undefined, undefined},
+        {struct, exception, [{1, undefined, string, undefined, undefined},
                   {2, undefined, i32, undefined, undefined}]}).
 
 -record('TApplicationException', {message, type}).

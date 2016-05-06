@@ -23,7 +23,7 @@
 -define(THRIFT_PROTOCOL_BEHAVIOUR_INCLUDED, true).
 
 -spec flush_transport(state()) -> {state(), ok | {error, _Reason}}.
--spec close_transport(state()) -> {state(), ok | {error, _Reason}}.
+-spec close_transport(state()) -> {state(), any()}.
 
 -spec write(state(), any()) -> {state(), ok | {error, _Reason}}.
 

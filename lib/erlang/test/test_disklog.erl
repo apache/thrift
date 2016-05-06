@@ -37,7 +37,7 @@ disklog_test() ->
 
   % We have to make oneway calls into this client only since otherwise it
   % will try to read from the disklog and go boom.
-  {Client1, {ok, ok}} = thrift_client:call(Client0, testOneway, [16#deadbeef]),
+  {Client1, {ok, ok}} = thrift_client:call(Client0, testOneway, [16#7eadbeef]),
   io:format("Call written~n"),
 
   % Use the send_call method to write a non-oneway call into the log
@@ -76,7 +76,7 @@ disklog_base64_test() ->
 
   % We have to make oneway calls into this client only since otherwise
   % it will try to read from the disklog and go boom.
-  {Client1, {ok, ok}} = thrift_client:call(Client0, testOneway, [16#deadbeef]),
+  {Client1, {ok, ok}} = thrift_client:call(Client0, testOneway, [16#7eadbeef]),
   io:format("Call written~n"),
 
   % Use the send_call method to write a non-oneway call into the log
