@@ -19,7 +19,7 @@
 # Goal: provide a thrift-compiler Docker image
 #
 # Usage:
-#   docker run -v "${PWD}:/data" thrift/thrift-compiler  -gen cpp -o /data/ /data/test/ThriftTest.thrift
+#   docker run --rm -v ${PWD}:${PWD} --workdir ${PWD} rbkmoney/thrift-compiler $*
 #
 # further details on docker for thrift is here build/docker/
 #
