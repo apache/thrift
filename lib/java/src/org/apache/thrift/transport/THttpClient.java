@@ -29,6 +29,11 @@ import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.rbkmoney.woody.api.trace.TraceData;
+import com.rbkmoney.woody.api.trace.context.TraceContext;
+import com.rbkmoney.woody.api.interceptor.CommonInterceptor;
+import com.rbkmoney.woody.api.interceptor.EmptyCommonInterceptor;
+import com.rbkmoney.woody.api.interceptor.Interceptors;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -51,7 +56,7 @@ import org.apache.http.params.CoreConnectionPNames;
  * HttpClient to THttpClient(String url, HttpClient client) will create an
  * instance which will use HttpURLConnection.
  *
- * When using HttpClient, the following configuration leads to 5-15% 
+ * When using HttpClient, the following configuration leads to 5-15%
  * better performance than the HttpURLConnection implementation:
  *
  * http.protocol.version=HttpVersion.HTTP_1_1
@@ -80,31 +85,42 @@ public class THttpClient extends TTransport {
   private Map<String,String> customHeaders_ = null;
 
   private final HttpHost host;
-  
+
   private final HttpClient client;
-  
+
+  private final CommonInterceptor interceptor;
+
   public static class Factory extends TTransportFactory {
-    
+
     private final String url;
     private final HttpClient client;
-    
+    private final CommonInterceptor interceptor;
+
     public Factory(String url) {
-      this.url = url;
-      this.client = null;
+      this(url, (HttpClient) null);
+    }
+
+    public Factory(String url, CommonInterceptor interceptor) {
+      this(url, null, interceptor);
     }
 
     public Factory(String url, HttpClient client) {
+      this(url, client, null);
+    }
+
+    public Factory(String url, HttpClient client, CommonInterceptor interceptor) {
       this.url = url;
       this.client = client;
+      this.interceptor = interceptor == null ? new EmptyCommonInterceptor() : interceptor;
     }
-    
+
     @Override
     public TTransport getTransport(TTransport trans) {
       try {
         if (null != client) {
-          return new THttpClient(url, client);
+          return new THttpClient(url, client, interceptor);
         } else {
-          return new THttpClient(url);
+          return new THttpClient(url, interceptor);
         }
       } catch (TTransportException tte) {
         return null;
@@ -113,20 +129,30 @@ public class THttpClient extends TTransport {
   }
 
   public THttpClient(String url) throws TTransportException {
+    this(url, (CommonInterceptor) null);
+  }
+
+  public THttpClient(String url, CommonInterceptor interceptor) throws TTransportException {
     try {
       url_ = new URL(url);
       this.client = null;
       this.host = null;
+      this.interceptor = interceptor;
     } catch (IOException iox) {
       throw new TTransportException(iox);
     }
   }
 
   public THttpClient(String url, HttpClient client) throws TTransportException {
+    this(url, client, null);
+  }
+
+  public THttpClient(String url, HttpClient client, CommonInterceptor interceptor) throws TTransportException {
     try {
       url_ = new URL(url);
       this.client = client;
       this.host = new HttpHost(url_.getHost(), -1 == url_.getPort() ? url_.getDefaultPort() : url_.getPort(), url_.getProtocol());
+      this.interceptor = interceptor == null ? new EmptyCommonInterceptor() : interceptor;
     } catch (IOException iox) {
       throw new TTransportException(iox);
     }
@@ -202,19 +228,19 @@ public class THttpClient extends TTransport {
    * that doesn't have a consume.
    */
   private static void consume(final HttpEntity entity) throws IOException {
-      if (entity == null) {
-          return;
+    if (entity == null) {
+      return;
+    }
+    if (entity.isStreaming()) {
+      InputStream instream = entity.getContent();
+      if (instream != null) {
+        instream.close();
       }
-      if (entity.isStreaming()) {
-          InputStream instream = entity.getContent();
-          if (instream != null) {
-              instream.close();
-          }
-      }
+    }
   }
 
   private void flushUsingHttpClient() throws TTransportException {
-    
+
     if (null == this.client) {
       throw new TTransportException("Null HttpClient, aborting.");
     }
@@ -224,40 +250,59 @@ public class THttpClient extends TTransport {
     requestBuffer_.reset();
 
     HttpPost post = null;
-    
+
     InputStream is = null;
-    
-    try {      
+
+    try {
       // Set request to path + query string
       post = new HttpPost(this.url_.getFile());
-      
+
       //
       // Headers are added to the HttpPost instance, not
       // to HttpClient.
       //
-      
+
       post.setHeader("Content-Type", "application/x-thrift");
       post.setHeader("Accept", "application/x-thrift");
       post.setHeader("User-Agent", "Java/THttpClient/HC");
-      
+
       if (null != customHeaders_) {
         for (Map.Entry<String, String> header : customHeaders_.entrySet()) {
           post.setHeader(header.getKey(), header.getValue());
         }
       }
 
+      TraceData traceData = TraceContext.getCurrentTraceData();
+      {
+        if (!interceptor.interceptRequest(traceData, post, this.host)) {
+          Throwable reqErr = Interceptors.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
+          if (reqErr != null) {
+            throw new TTransportException("Request interception error", reqErr);
+          }
+        }
+      }
+
       post.setEntity(new ByteArrayEntity(data));
-      
+
       HttpResponse response = this.client.execute(this.host, post);
       int responseCode = response.getStatusLine().getStatusCode();
 
-      //      
+      {
+        if (!interceptor.interceptResponse(traceData, response)) {
+          Throwable respErr = Interceptors.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
+          if (respErr != null) {
+            throw new TTransportException("Response interception error", respErr);
+          }
+        }
+      }
+
+      //
       // Retrieve the inputstream BEFORE checking the status code so
       // resources get freed in the finally clause.
       //
 
       is = response.getEntity().getContent();
-      
+
       if (responseCode != HttpStatus.SC_OK) {
         throw new TTransportException("HTTP Response code: " + responseCode);
       }
@@ -268,10 +313,10 @@ public class THttpClient extends TTransport {
       // thrift struct is being read up the chain).
       // Proceeding differently might lead to exhaustion of connections and thus
       // to app failure.
-      
+
       byte[] buf = new byte[1024];
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      
+
       int len = 0;
       do {
         len = is.read(buf);
@@ -279,7 +324,7 @@ public class THttpClient extends TTransport {
           baos.write(buf, 0, len);
         }
       } while (-1 != len);
-      
+
       try {
         // Indicate we're done with the content.
         consume(response.getEntity());
@@ -287,7 +332,7 @@ public class THttpClient extends TTransport {
         // We ignore this exception, it might only mean the server has no
         // keep-alive capability.
       }
-            
+
       inputStream_ = new ByteArrayInputStream(baos.toByteArray());
     } catch (IOException ioe) {
       // Abort method so the connection gets released back to the connection manager
@@ -320,7 +365,7 @@ public class THttpClient extends TTransport {
 
     try {
       // Create connection object
-      HttpURLConnection connection = (HttpURLConnection)url_.openConnection();
+      HttpURLConnection connection = (HttpURLConnection) url_.openConnection();
 
       // Timeouts, only if explicitly set
       if (connectTimeout_ > 0) {
@@ -340,6 +385,19 @@ public class THttpClient extends TTransport {
           connection.setRequestProperty(header.getKey(), header.getValue());
         }
       }
+
+      if (interceptor != null) {
+        TraceData traceData = TraceContext.getCurrentTraceData();
+        {
+          if (!interceptor.interceptRequest(traceData, connection, url_)) {
+            Throwable reqErr = Interceptors.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
+            if (reqErr != null) {
+              throw new TTransportException("Request interception error", reqErr);
+            }
+          }
+        }
+      }
+
       connection.setDoOutput(true);
       connection.connect();
       connection.getOutputStream().write(data);
@@ -347,6 +405,16 @@ public class THttpClient extends TTransport {
       int responseCode = connection.getResponseCode();
       if (responseCode != HttpURLConnection.HTTP_OK) {
         throw new TTransportException("HTTP Response code: " + responseCode);
+      }
+
+      if (interceptor != null) {
+        TraceData traceData = TraceContext.getCurrentTraceData();
+        if (!interceptor.interceptResponse(traceData, connection)) {
+          Throwable respErr = Interceptors.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
+          if (respErr != null) {
+            throw new TTransportException("Response interception error", respErr);
+          }
+        }
       }
 
       // Read the responses

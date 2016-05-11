@@ -12,6 +12,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.rbkmoney.woody.api.interceptor.CommonInterceptor;
+import com.rbkmoney.woody.api.interceptor.EmptyCommonInterceptor;
+import com.rbkmoney.woody.api.interceptor.Interceptors;
+import com.rbkmoney.woody.api.trace.ContextUtils;
+import com.rbkmoney.woody.api.trace.MetadataProperties;
+import com.rbkmoney.woody.api.trace.TraceData;
+import com.rbkmoney.woody.api.trace.context.TraceContext;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocol;
@@ -32,16 +39,24 @@ public class TServlet extends HttpServlet {
 
   private final Collection<Map.Entry<String, String>> customHeaders;
 
-  /**
-   * @see HttpServlet#HttpServlet()
-   */
+  private  CommonInterceptor interceptor;
+
   public TServlet(TProcessor processor, TProtocolFactory inProtocolFactory,
-      TProtocolFactory outProtocolFactory) {
+                  TProtocolFactory outProtocolFactory, CommonInterceptor interceptor) {
     super();
     this.processor = processor;
     this.inProtocolFactory = inProtocolFactory;
     this.outProtocolFactory = outProtocolFactory;
     this.customHeaders = new ArrayList<Map.Entry<String, String>>();
+    this.interceptor = interceptor == null ? new EmptyCommonInterceptor() : interceptor;
+  }
+
+  /**
+   * @see HttpServlet#HttpServlet()
+   */
+  public TServlet(TProcessor processor, TProtocolFactory inProtocolFactory,
+      TProtocolFactory outProtocolFactory) {
+    this(processor, inProtocolFactory, outProtocolFactory, null);
   }
 
   /**
@@ -49,6 +64,10 @@ public class TServlet extends HttpServlet {
    */
   public TServlet(TProcessor processor, TProtocolFactory protocolFactory) {
     this(processor, protocolFactory, protocolFactory);
+  }
+
+  public TServlet(TProcessor processor, TProtocolFactory protocolFactory, CommonInterceptor interceptor) {
+    this(processor, protocolFactory, protocolFactory, interceptor);
   }
 
   /**
@@ -62,7 +81,12 @@ public class TServlet extends HttpServlet {
     TTransport inTransport = null;
     TTransport outTransport = null;
 
+    TraceData traceData = TraceContext.getCurrentTraceData();
     try {
+      if (!interceptor.interceptRequest(traceData, request, response)) {
+        Interceptors.tryThrowInterceptionError(traceData.getServiceSpan());
+      }
+
       response.setContentType("application/x-thrift");
 
       if (null != this.customHeaders) {
@@ -82,8 +106,15 @@ public class TServlet extends HttpServlet {
 
       processor.process(inProtocol, outProtocol);
       out.flush();
-    } catch (TException te) {
-      throw new ServletException(te);
+    } catch (Throwable te) {
+      ContextUtils.setCallError(traceData.getServiceSpan(), te);
+    } finally {
+      if (!interceptor.interceptResponse(traceData, response)) {
+        Throwable t = Interceptors.getInterceptionError(traceData.getServiceSpan());
+        if (t != null) {
+          throw new ServletException(t);
+        }
+      }
     }
   }
 

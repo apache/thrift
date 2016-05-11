@@ -19,6 +19,12 @@
 
 package org.apache.thrift;
 
+import com.rbkmoney.woody.api.trace.ContextUtils;
+import com.rbkmoney.woody.api.trace.MetadataProperties;
+import com.rbkmoney.woody.api.trace.TraceData;
+import com.rbkmoney.woody.api.trace.context.TraceContext;
+import com.rbkmoney.woody.api.interceptor.CommonInterceptor;
+import com.rbkmoney.woody.api.interceptor.EmptyCommonInterceptor;
 import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
@@ -31,14 +37,23 @@ public abstract class TServiceClient {
   public TServiceClient(TProtocol prot) {
     this(prot, prot);
   }
+  public TServiceClient(TProtocol prot, CommonInterceptor interceptor) {
+    this(prot, prot, interceptor);
+  }
 
   public TServiceClient(TProtocol iprot, TProtocol oprot) {
+    this(iprot, oprot, null);
+  }
+
+  public TServiceClient(TProtocol iprot, TProtocol oprot, CommonInterceptor interceptor) {
     iprot_ = iprot;
     oprot_ = oprot;
+    this.interceptor = interceptor == null ? new EmptyCommonInterceptor() : interceptor;
   }
 
   protected TProtocol iprot_;
   protected TProtocol oprot_;
+  protected CommonInterceptor interceptor;
 
   protected int seqid_;
 
@@ -58,6 +73,14 @@ public abstract class TServiceClient {
     return this.oprot_;
   }
 
+  public CommonInterceptor getInterceptor() {
+    return interceptor;
+  }
+
+  public void setInterceptor(CommonInterceptor interceptor) {
+    this.interceptor = interceptor;
+  }
+
   protected void sendBase(String methodName, TBase<?,?> args) throws TException {
     sendBase(methodName, args, TMessageType.CALL);
   }
@@ -67,7 +90,12 @@ public abstract class TServiceClient {
   }
 
   private void sendBase(String methodName, TBase<?,?> args, byte type) throws TException {
-    oprot_.writeMessageBegin(new TMessage(methodName, type, ++seqid_));
+    TMessage msg = new TMessage(methodName, type, ++seqid_);
+    TraceData traceData = TraceContext.getCurrentTraceData();
+    if (!interceptor.interceptRequest(traceData, msg)) {
+      throwInterceptionError(traceData);
+    }
+    oprot_.writeMessageBegin(msg);
     args.write(oprot_);
     oprot_.writeMessageEnd();
     oprot_.getTransport().flush();
@@ -75,6 +103,10 @@ public abstract class TServiceClient {
 
   protected void receiveBase(TBase<?,?> result, String methodName) throws TException {
     TMessage msg = iprot_.readMessageBegin();
+    TraceData traceData = TraceContext.getCurrentTraceData();
+    if (!interceptor.interceptResponse(traceData, msg)) {
+      throwInterceptionError(traceData);
+    }
     if (msg.type == TMessageType.EXCEPTION) {
       TApplicationException x = new TApplicationException();
       x.read(iprot_);
@@ -88,5 +120,11 @@ public abstract class TServiceClient {
     }
     result.read(iprot_);
     iprot_.readMessageEnd();
+  }
+
+  private void throwInterceptionError(TraceData traceData) throws TException {
+    Throwable err = traceData.getClientSpan().getMetadata().getValue(MetadataProperties.INTERCEPTION_ERROR);
+    ContextUtils.getInterceptionError(traceData.getClientSpan());
+    throw new TException("Interception error", err);
   }
 }

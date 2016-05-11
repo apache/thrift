@@ -95,7 +95,7 @@
   </target>
 
   <target name="compile" depends="init">
-    <javac srcdir="${src}" destdir="${build.dir}" source="1.5" target="1.5"
+    <javac srcdir="${src}" destdir="${build.dir}" source="1.8" target="1.8"
     debug="true" classpathref="compile.classpath" includeantruntime="false" encoding="UTF-8">
       <compilerarg value="-Xlint:unchecked"/>
     </javac>
@@ -355,6 +355,8 @@
       <dependency groupId="javax.servlet" artifactId="servlet-api" version="${servlet.version}" scope="provided"/>
       <dependency groupId="org.apache.httpcomponents" artifactId="httpclient" version="${httpclient.version}"/>
       <dependency groupId="org.apache.httpcomponents" artifactId="httpcore" version="${httpcore.version}"/>
+      <dependency groupId="com.rbkmoney.woody" artifactId="woody-api" version="${woody.version}"/>
+
     </artifact:pom>
 
     <!-- Generate the pom file -->
@@ -459,6 +461,15 @@
   </target>
 
   <target name="custom.mvn.install" depends="clean,init,test,dist,javadoc,pack.src">
+    <!-- Compile, package, test and then send release to specified repo -->
+    <!-- run with: ant -Drelease=true publish-->
+    <customMvnInstall file="${pom.xml}" packaging="pom" classifier="" pom="${pom.xml}"/>
+    <customMvnInstall file="${jar.file}" classifier="" pom="${pom.xml}"/>
+    <customMvnInstall file="${javadoc.jar.file}" classifier="javadoc" pom="${pom.xml}"/>
+    <customMvnInstall file="${source.jar.file}" classifier="sources" pom="${pom.xml}"/>
+  </target>
+
+  <target name="custom.mvn.install-notest" depends="clean,init,dist,javadoc,pack.src">
     <!-- Compile, package, test and then send release to specified repo -->
     <!-- run with: ant -Drelease=true publish-->
     <customMvnInstall file="${pom.xml}" packaging="pom" classifier="" pom="${pom.xml}"/>

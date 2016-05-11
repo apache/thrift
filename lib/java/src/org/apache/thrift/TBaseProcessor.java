@@ -3,6 +3,9 @@ package org.apache.thrift;
 import java.util.Collections;
 import java.util.Map;
 
+import com.rbkmoney.woody.api.trace.ContextUtils;
+import com.rbkmoney.woody.api.trace.MetadataProperties;
+import com.rbkmoney.woody.api.trace.context.TraceContext;
 import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
@@ -30,6 +33,7 @@ public abstract class TBaseProcessor<I> implements TProcessor {
       TProtocolUtil.skip(in, TType.STRUCT);
       in.readMessageEnd();
       TApplicationException x = new TApplicationException(TApplicationException.UNKNOWN_METHOD, "Invalid method name: '"+msg.name+"'");
+      ContextUtils.setCallError(TraceContext.getCurrentTraceData().getServiceSpan(), x);
       out.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));
       x.write(out);
       out.writeMessageEnd();
