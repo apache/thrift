@@ -405,7 +405,7 @@ void t_html_generator::print_doc(t_doc* tdoc) {
     if (unsafe_) {
       f_out_ << tdoc->get_doc() << "<br/>";
     } else {
-      f_out_ << escape_html(tdoc->get_doc()) << "<br/>";
+      f_out_ << "<pre>" << escape_html(tdoc->get_doc()) << "</pre><br/>";
     }
   }
 }
