@@ -14,12 +14,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.rbkmoney.woody.api.interceptor.CommonInterceptor;
 import com.rbkmoney.woody.api.interceptor.EmptyCommonInterceptor;
-import com.rbkmoney.woody.api.interceptor.Interceptors;
 import com.rbkmoney.woody.api.trace.ContextUtils;
-import com.rbkmoney.woody.api.trace.MetadataProperties;
 import com.rbkmoney.woody.api.trace.TraceData;
 import com.rbkmoney.woody.api.trace.context.TraceContext;
-import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
@@ -39,6 +36,18 @@ public class TServlet extends HttpServlet {
 
   private final Collection<Map.Entry<String, String>> customHeaders;
 
+  private final CommonInterceptor defaultInterceptor = new EmptyCommonInterceptor() {
+    @Override
+    public boolean interceptResponse(TraceData traceData, Object providerContext, Object... contextParams) {
+      Throwable t = ContextUtils.getCallError(traceData.getServiceSpan());
+      if (t != null) {
+        ContextUtils.setInterceptionError(traceData.getServiceSpan(), t);
+        return false;
+      }
+      return true;
+    }
+  };
+
   private  CommonInterceptor interceptor;
 
   public TServlet(TProcessor processor, TProtocolFactory inProtocolFactory,
@@ -48,7 +57,7 @@ public class TServlet extends HttpServlet {
     this.inProtocolFactory = inProtocolFactory;
     this.outProtocolFactory = outProtocolFactory;
     this.customHeaders = new ArrayList<Map.Entry<String, String>>();
-    this.interceptor = interceptor == null ? new EmptyCommonInterceptor() : interceptor;
+    this.interceptor = interceptor == null ? defaultInterceptor : interceptor;
   }
 
   /**
@@ -84,7 +93,7 @@ public class TServlet extends HttpServlet {
     TraceData traceData = TraceContext.getCurrentTraceData();
     try {
       if (!interceptor.interceptRequest(traceData, request, response)) {
-        Interceptors.tryThrowInterceptionError(traceData.getServiceSpan());
+        ContextUtils.tryThrowInterceptionError(traceData.getServiceSpan());
       }
 
       response.setContentType("application/x-thrift");
@@ -110,7 +119,7 @@ public class TServlet extends HttpServlet {
       ContextUtils.setCallError(traceData.getServiceSpan(), te);
     } finally {
       if (!interceptor.interceptResponse(traceData, response)) {
-        Throwable t = Interceptors.getInterceptionError(traceData.getServiceSpan());
+        Throwable t = ContextUtils.getInterceptionError(traceData.getServiceSpan());
         if (t != null) {
           throw new ServletException(t);
         }

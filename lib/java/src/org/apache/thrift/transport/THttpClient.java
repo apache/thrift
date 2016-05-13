@@ -19,21 +19,11 @@
 
 package org.apache.thrift.transport;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.IOException;
-
-import java.net.URL;
-import java.net.HttpURLConnection;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.rbkmoney.woody.api.trace.TraceData;
-import com.rbkmoney.woody.api.trace.context.TraceContext;
 import com.rbkmoney.woody.api.interceptor.CommonInterceptor;
 import com.rbkmoney.woody.api.interceptor.EmptyCommonInterceptor;
-import com.rbkmoney.woody.api.interceptor.Interceptors;
+import com.rbkmoney.woody.api.trace.ContextUtils;
+import com.rbkmoney.woody.api.trace.TraceData;
+import com.rbkmoney.woody.api.trace.context.TraceContext;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -42,6 +32,15 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.params.CoreConnectionPNames;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * HTTP implementation of the TTransport interface. Used for working with a
@@ -274,8 +273,8 @@ public class THttpClient extends TTransport {
 
       TraceData traceData = TraceContext.getCurrentTraceData();
       {
-        if (!interceptor.interceptRequest(traceData, post, this.host)) {
-          Throwable reqErr = Interceptors.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
+        if (!interceptor.interceptRequest(traceData, post, this.url_)) {
+          Throwable reqErr = ContextUtils.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
           if (reqErr != null) {
             throw new TTransportException("Request interception error", reqErr);
           }
@@ -289,7 +288,7 @@ public class THttpClient extends TTransport {
 
       {
         if (!interceptor.interceptResponse(traceData, response)) {
-          Throwable respErr = Interceptors.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
+          Throwable respErr = ContextUtils.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
           if (respErr != null) {
             throw new TTransportException("Response interception error", respErr);
           }
@@ -390,7 +389,7 @@ public class THttpClient extends TTransport {
         TraceData traceData = TraceContext.getCurrentTraceData();
         {
           if (!interceptor.interceptRequest(traceData, connection, url_)) {
-            Throwable reqErr = Interceptors.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
+            Throwable reqErr = ContextUtils.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
             if (reqErr != null) {
               throw new TTransportException("Request interception error", reqErr);
             }
@@ -410,7 +409,7 @@ public class THttpClient extends TTransport {
       if (interceptor != null) {
         TraceData traceData = TraceContext.getCurrentTraceData();
         if (!interceptor.interceptResponse(traceData, connection)) {
-          Throwable respErr = Interceptors.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
+          Throwable respErr = ContextUtils.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
           if (respErr != null) {
             throw new TTransportException("Response interception error", respErr);
           }
