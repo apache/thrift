@@ -26,12 +26,11 @@ services:
   - docker
 
 install:
-  - travis_wait docker pull thrift/$DISTRO:latest || true
   - cp -r ./build/docker/scripts/*.sh ./build/docker/$DISTRO/scripts/
   - travis_retry travis_wait docker build -q -t thrift-build build/docker/$DISTRO
 
 script:
-  - docker run -e BUILD_LIBS="$BUILD_LIBS" $BUILD_ENV -v $(pwd):/thrift/src -it thrift-build $BUILD_CMD $BUILD_ARG
+  - docker run --net=host -e BUILD_LIBS="$BUILD_LIBS" $BUILD_ENV -v $(pwd):/thrift/src -it thrift-build $BUILD_CMD $BUILD_ARG
 
 env:
   global:
