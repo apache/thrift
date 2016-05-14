@@ -127,7 +127,8 @@ RUN yum install -y \
 
 # CMake
 RUN curl -sSL https://cmake.org/files/v3.4/cmake-3.4.0.tar.gz | tar -xz && \
-    cd cmake-3.4.0 && ./bootstrap && make -j4 && make install
+    cd cmake-3.4.0 && ./bootstrap && make -j4 && make install && \
+    cd .. && rm -rf cmake-3.4.0
 
 # Clean up
 RUN rm -rf /tmp/* && \

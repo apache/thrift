@@ -1634,6 +1634,9 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
   t_field::e_req field_required;
   int32_t field_id = -1;
 
+  out << indent() << "if p != nil {" << endl;
+  indent_up();
+
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     string field_method_prefix("writeField");
     field_name = (*f_iter)->get_name();
@@ -1649,6 +1652,9 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
     out << indent() << "if err := p." << field_method_prefix << field_method_suffix
         << "(oprot); err != nil { return err }" << endl;
   }
+
+  indent_down();
+  out << indent() << "}" << endl;
 
   // Write the struct map
   out << indent() << "if err := oprot.WriteFieldStop(); err != nil {" << endl;
