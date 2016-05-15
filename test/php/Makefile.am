@@ -22,13 +22,15 @@ THRIFT = $(top_builddir)/compiler/cpp/thrift
 stubs: ../ThriftTest.thrift
 	$(THRIFT) --gen php ../ThriftTest.thrift
 	$(THRIFT) --gen php:inlined ../ThriftTest.thrift
+	$(MKDIR_P) gen-php-psr4
+	$(THRIFT) -out gen-php-psr4 --gen php:psr4 ../ThriftTest.thrift
 
 precross: stubs
 
 check: stubs
 
 clean-local:
-	$(RM) -r gen-php gen-phpi
+	$(RM) -r gen-php gen-phpi gen-php-psr4
 
 client: stubs
 	php TestClient.php
