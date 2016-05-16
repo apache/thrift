@@ -24,7 +24,7 @@ else()
   find_package(Boost 1.53.0 REQUIRED)
 endif()
 
-include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
+include_directories(${Boost_INCLUDE_DIRS})
 include_directories(src)
 
 # SYSLIBS contains libraries that need to be linked to all lib targets
@@ -104,7 +104,7 @@ if(OPENSSL_FOUND AND WITH_OPENSSL)
        src/thrift/transport/TSSLSocket.cpp
        src/thrift/transport/TSSLServerSocket.cpp
     )
-    include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
+    include_directories(${OPENSSL_INCLUDE_DIR})
     list(APPEND SYSLIBS "${OPENSSL_LIBRARIES}")
 endif()
 
@@ -177,7 +177,7 @@ endif()
 
 if(WITH_LIBEVENT)
     find_package(Libevent REQUIRED)  # Libevent comes with CMake support form upstream
-    include_directories(SYSTEM ${LIBEVENT_INCLUDE_DIRS})
+    include_directories(${LIBEVENT_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftnb ${thriftcppnb_SOURCES})
     TARGET_LINK_LIBRARIES_THRIFT(thriftnb ${SYSLIBS} ${LIBEVENT_LIBRARIES})
@@ -186,7 +186,7 @@ endif()
 
 if(WITH_ZLIB)
     find_package(ZLIB REQUIRED)
-    include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
+    include_directories(${ZLIB_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftz ${thriftcppz_SOURCES})
     TARGET_LINK_LIBRARIES_THRIFT(thriftz ${SYSLIBS} ${ZLIB_LIBRARIES})
