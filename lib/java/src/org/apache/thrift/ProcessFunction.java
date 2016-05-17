@@ -7,6 +7,7 @@ import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
+import org.apache.thrift.util.ExceptionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,8 +41,8 @@ public abstract class ProcessFunction<I, T extends TBase> {
     } catch(TException tex) {
       LOGGER.error("Internal error processing " + getMethodName(), tex);
       if (!isOneway()) {
-        TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, 
-          "Internal error processing " + getMethodName());
+        TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR,
+                "Internal error processing at RPC method "+ getMethodName() + "\n" + ExceptionUtil.dumpExceptionStack(tex));
         oprot.writeMessageBegin(new TMessage(getMethodName(), TMessageType.EXCEPTION, seqid));
         x.write(oprot);
         oprot.writeMessageEnd();
