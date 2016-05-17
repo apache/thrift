@@ -248,10 +248,8 @@ class TSocket extends TTransport
    */
   public function close()
   {
-    if (!$this->persist_) {
       @fclose($this->handle_);
       $this->handle_ = null;
-    }
   }
 
   /**
