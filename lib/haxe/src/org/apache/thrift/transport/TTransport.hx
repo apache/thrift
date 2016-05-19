@@ -86,21 +86,21 @@ class TTransport {
         var got : Int = 0;
         var ret : Int = 0;
         while (got < len) {
-			try {
-				ret = read(buf, off+got, len-got);
-				if (ret <= 0) {
-				  throw new TTransportException(TTransportException.UNKNOWN,
-											"Cannot read. Remote side has closed. Tried to read "
-											+ len + " bytes, but only got " + got + " bytes.");
-				}
-			}
-			catch (eof : Eof) {
-				throw new TTransportException(TTransportException.END_OF_FILE, 'Can\'t read $len bytes!');
-			}
-            got += ret;
+          try {
+            ret = read(buf, off+got, len-got);
+            if (ret <= 0) {
+              throw new TTransportException(TTransportException.UNKNOWN,
+                          "Cannot read. Remote side has closed. Tried to read "
+                          + len + " bytes, but only got " + got + " bytes.");
+            }
+          }
+          catch (eof : Eof) {
+            throw new TTransportException(TTransportException.END_OF_FILE, 'Can\'t read $len bytes!');
+          }
+          got += ret;
         }
         return got;
-      }
+    }
 
     /**
      * Writes the buffer to the output

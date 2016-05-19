@@ -25,23 +25,23 @@ package org.apache.thrift.transport;
 */
 class TWrappingServerTransport extends TServerTransport {
 
-    private var transport(default,null) : TTransport;
+  private var transport(default,null) : TTransport;
 
-    public function new(transport : TTransport) {
-        this.transport = transport;
-    }
+  public function new(transport : TTransport) {
+    this.transport = transport;
+  }
 
-    public override function Listen() : Void
-    {
-    }
+  public override function Listen() : Void
+  {
+  }
 
-    private override function AcceptImpl() : TTransport
-    {
-		return transport;
-    }
+  private override function AcceptImpl() : TTransport
+  {
+    return transport;
+  }
 
-    public override function Close() : Void
-    {
+  public override function Close() : Void
+  {
 
-    }
+  }
 }
