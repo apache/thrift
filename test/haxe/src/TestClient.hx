@@ -212,7 +212,9 @@ class TestClient {
             case socket:
                 transport = new TSocket(args.host, args.port);
             case http:
-                transport = new THttpClient(args.host);
+                var uri = 'http://${args.host}:${args.port}';
+                trace('- http client : ${uri}');
+                transport = new THttpClient(uri);
             default:
                 throw "Unhandled transport";
         }
