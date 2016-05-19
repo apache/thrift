@@ -32,6 +32,7 @@
 
 #define OUT_FILE_SUFFIX "_thrift"
 #define SERVICE_FUNC_TYPE_SUFFIX "_service_functions"
+#define ERROR_SPEC "(_) -> no_return()."
 
 using std::map;
 using std::ofstream;
@@ -279,6 +280,13 @@ void t_erlang_generator::init_generator() {
               << render_export_type("exception_name", 0)
               << render_export_type("service_name", 0)
               << render_export_type("function_name", 0)
+              << endl
+              // The following 2 types are not supposed to be used externally.
+              // They are exported to trick Dialyzer in cases, when there are
+              // no enums/structs/exceptions defined.
+              // @ToDo: handle thouse cases in types generation routines instead.
+              << render_export_type("enum_info", 0)
+              << render_export_type("struct_info", 0)
               << endl;
 
   generate_typespecs(f_erl_file_);
@@ -386,9 +394,8 @@ void t_erlang_generator::render_export_specific_types(
   if (types.size() > 0) {
     os << "-export_type([";
     iterate_type(os, types, "/0,", "/0", i);
-    os << "]).";
+    os << "])." << endl;
   }
-  os << endl;
 }
 
 template <class Type>
@@ -529,7 +536,11 @@ void t_erlang_generator::generate_type_list(
   std::ostream& os, std::string function_name, std::string el_type, vector<Type*> types
 ) {
   indenter i;
-  os << "-spec " << function_name << "() -> [" << el_type << "]." << endl << endl
+  os << "-spec " << function_name << "() -> [";
+  if (types.size() > 0) {
+    os << el_type;
+  }
+  os << "]." << endl << endl
      << function_name << "() ->" << i.nlup()
      << "[";
   iterate_type(os, types, ",", "", i);
@@ -572,13 +583,18 @@ void t_erlang_generator::generate_typedef(t_typedef* ttypedef) {
 
 void t_erlang_generator::generate_typedef_metadata(std::ostream& erl) {
   typedef vector<t_typedef*> vec;
-
-  erl << "-spec typedef_info(typedef_name()) -> field_type() | no_return()." << endl << endl;
   vec const& tdefs = get_program()->get_typedefs();
-  for(vec::const_iterator it = tdefs.begin(); it != tdefs.end(); ++it) {
-    generate_typedef_info(erl, *it);
-  }
 
+  erl << "-spec typedef_info";
+  if (tdefs.size() > 0) {
+    erl <<"(typedef_name()) -> field_type() | no_return()." << endl << endl;
+    for(vec::const_iterator it = tdefs.begin(); it != tdefs.end(); ++it) {
+      generate_typedef_info(erl, *it);
+    }
+  }
+  else {
+    erl << ERROR_SPEC << endl << endl;
+  }
   erl << "typedef_info(_) -> erlang:error(badarg)." << endl << endl;
 }
 
@@ -622,13 +638,17 @@ void t_erlang_generator::generate_enum_info(std::ostream& buf, t_enum* tenum) {
 
 void t_erlang_generator::generate_enum_metadata(std::ostream& os) {
   typedef vector<t_enum*> vec;
-
-  os << "-spec enum_info(enum_name()) -> enum_info() | no_return()." << endl << endl;
   vec const& enums = get_program()->get_enums();
-  for(vec::const_iterator it = enums.begin(); it != enums.end(); ++it) {
-    generate_enum_info(os, *it);
-  }
 
+  os << "-spec enum_info";
+  if (enums.size() > 0) {
+    os << "(enum_name()) -> enum_info() | no_return()." << endl << endl;
+    for(vec::const_iterator it = enums.begin(); it != enums.end(); ++it) {
+      generate_enum_info(os, *it);
+    }
+  } else {
+    os << ERROR_SPEC << endl << endl;
+  }
   os << "enum_info(_) -> erlang:error(badarg)." << endl << endl;
 }
 
@@ -853,20 +873,24 @@ void t_erlang_generator::generate_struct(t_struct* tstruct) {
 
 void t_erlang_generator::generate_struct_metadata(std::ostream& erl, std::ostream& hrl) {
   typedef vector<t_struct*> vec;
-
-  erl << "-spec struct_info(struct_name()) -> struct_info() | no_return()." << endl << endl;
   vec const& structs = get_program()->get_structs();
   vec const& xceptions = get_program()->get_xceptions();
-  for(vec::const_iterator it = structs.begin(); it != xceptions.end();) {
-    generate_struct_info(erl, *it);
-    if (!(*it)->is_union()) {
-      generate_struct_definition(hrl, *it);
-    }
-    if (++it == structs.end()) {
-      it = xceptions.begin();
-    }
-  }
 
+  erl << "-spec struct_info";
+  if (structs.size() > 0 || xceptions.size() > 0) {
+    erl << "(struct_name()) -> struct_info() | no_return()." << endl << endl;
+    for(vec::const_iterator it = structs.begin(); it != xceptions.end();) {
+      generate_struct_info(erl, *it);
+      if (!(*it)->is_union()) {
+        generate_struct_definition(hrl, *it);
+      }
+      if (++it == structs.end()) {
+        it = xceptions.begin();
+      }
+    }
+  } else {
+    erl << ERROR_SPEC << endl << endl;
+  }
   erl << "struct_info(_) -> erlang:error(badarg)." << endl << endl;
 }
 
@@ -964,19 +988,46 @@ void t_erlang_generator::generate_service(t_service* tservice) {
 void t_erlang_generator::generate_service_metadata(ostream& os) {
   typedef vector<t_service*> vec;
   vec const& services = get_program()->get_services();
+  vec::const_iterator it;
+  bool empty = false;
 
-  os << "-spec functions(service_name()) -> [function_name()] | no_return()." << endl << endl;
-  for(vec::const_iterator it = services.begin(); it != services.end(); ++it) {
+  os << "-spec functions";
+  if (services.size() > 0) {
+    bool no_functions = true;
+    os << "(service_name()) -> [";
+    for(it = services.begin(); it != services.end(); ++it) {
+      if ((*it)->get_functions().size() > 0) {
+        no_functions = false;
+        break;
+      }
+    }
+    if (no_functions) {
+      empty = true;
+    } else {
+      os << "function_name()";
+    }
+    os << "] | no_return()." << endl << endl;
+  } else {
+    empty = true;
+    os << ERROR_SPEC << endl << endl;
+  }
+
+  for(it = services.begin(); it != services.end(); ++it) {
     generate_service_metadata(os, *it);
   }
   os << "functions(_) -> error(badarg)." << endl << endl;
 
   indenter i;
-  os << "-spec function_info(service_name(), function_name(), params_type | reply_type | exceptions) ->"
-     << i.nlup()
-     << "struct_info() | no_return()." << endl << endl;
-  for(vec::const_iterator it = services.begin(); it != services.end(); ++it) {
-    generate_service_interface(os, *it);
+  os << "-spec function_info";
+  if (empty) {
+    os << "(_,_,_) -> no_return()." << endl << endl;
+  } else {
+    os << "(service_name(), function_name(), params_type | reply_type | exceptions) ->"
+       << i.nlup()
+       << "struct_info() | no_return()." << endl << endl;
+    for(vec::const_iterator it = services.begin(); it != services.end(); ++it) {
+      generate_service_interface(os, *it);
+    }
   }
   os << "function_info(_Service, _Function, _InfoType) -> erlang:error(badarg)." << endl;
 }
