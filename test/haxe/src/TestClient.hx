@@ -212,7 +212,9 @@ class TestClient {
             case socket:
                 transport = new TSocket(args.host, args.port);
             case http:
-                transport = new THttpClient(args.host);
+				var uri = 'http://${args.host}:${args.port}';
+				trace('- http client : ${uri}');
+                transport = new THttpClient(uri);
             default:
                 throw "Unhandled transport";
         }
@@ -444,6 +446,7 @@ class TestClient {
         }
         catch (e : Dynamic)
         {
+			trace(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
             rslt.Expect( false, 'testException("Xception")  -  $e');
         }
 
