@@ -27,7 +27,7 @@ BIN_PHP_WEB = bin/php-web-server/Main-debug.php
 gen-haxe/tutorial/calculator.hx gen-haxe/shared/shared_service.hx: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen haxe -r $<
 
-all-local: $(BIN_CPP) $(BIN_PHP)
+all-local: $(BIN_CPP) $(BIN_PHP) $(BIN_PHP_WEB)
 
 check: gen-haxe/tutorial/calculator.hx
 
@@ -42,6 +42,12 @@ $(BIN_PHP): \
 		../../lib/haxe/src/org/apache/thrift/**/*.hx \
 		gen-haxe/tutorial/calculator.hx
 	$(HAXE) --cwd .  php.hxml
+
+$(BIN_PHP_WEB): \
+		src/*.hx \
+		../../lib/haxe/src/org/apache/thrift/**/*.hx \
+		gen-haxe/tutorial/calculator.hx
+	$(HAXE) --cwd .  php-web-server.hxml
 
 tutorialserver: all
 	$(BIN_CPP) server
@@ -66,6 +72,12 @@ tutorialsecureclient: all
 
 tutorialsecureclient_php: all
 	php -f $(BIN_PHP) secure
+
+tutorialserver_php_http: all
+	php -S 127.0.0.1:9090 router.php
+
+tutorialclient_http: all
+	$(BIN_CPP) client http
 
 clean-local:
 	$(RM) -r gen-haxe bin

@@ -51,7 +51,8 @@ class Main {
     private static var targetPort : Int = 9090;
 
     static function main() {
-        #if ! (flash || js)
+
+        #if ! (flash || js || phpwebserver)
         try {
               ParseArgs();
         } catch (e : String) {
@@ -59,6 +60,35 @@ class Main {
             trace(GetHelp());
             return;
         }
+
+		#elseif  phpwebserver
+		//forcing server
+		server = true;
+		trns = http;
+
+		//remap trace to error log
+		haxe.Log.trace = function(v:Dynamic, ?infos:haxe.PosInfos) 
+		{ 
+			// handle trace 
+			var newValue : Dynamic;
+			if (infos != null && infos.customParams!=null) {
+				var extra:String = "";
+				for( v in infos.customParams )
+					extra += "," + v;
+				newValue = v + extra;
+			}
+			else {
+				newValue = v;
+			}
+			var msg = infos != null ? infos.fileName + ':' + infos.lineNumber + ': ' : '';
+			Sys.stderr().writeString('${msg}${v}\n');
+		}
+
+		//check method
+		if(php.Web.getMethod() != 'POST') {
+			Sys.println('http endpoint for thrift test server');
+			return;
+		}
         #end
 
         try {
@@ -154,8 +184,9 @@ class Main {
              trace('- socket transport $targetHost:$targetPort');
             transport = new TSocket( targetHost, targetPort);
         case http:
-             trace('- HTTP transport $targetHost');
-            transport = new THttpClient( targetHost);
+			var uri = 'http://${targetHost}:${targetPort}';
+            trace('- HTTP transport $uri');
+			transport = new THttpClient(uri);
         default:
             throw "Unhandled transport";
         }
@@ -267,9 +298,20 @@ class Main {
             transport = new TServerSocket( targetPort);
             #end
         case http:
-            throw "HTTP server not implemented yet";
+			#if !phpwebserver
+			throw "HTTP server not implemented yet";
              //trace("- http transport");
              //transport = new THttpClient( targetHost);
+			#else
+            trace("- http transport");
+			transport =	new TWrappingServerTransport(
+							new TStreamTransport(
+								new TFileStream("php://input", Read),
+								new TFileStream("php://output", Append)
+								)
+							);
+
+			#end
         default:
             throw "Unhandled transport";
         }
@@ -301,6 +343,10 @@ class Main {
         var handler = new CalculatorHandler();
         var processor = new CalculatorProcessor(handler);
         var server = new TSimpleServer( processor, transport, transfactory, protfactory);
+		#if phpwebserver
+		server.runOnce = true;
+		#end
+
         return server;
     }
 
