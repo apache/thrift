@@ -62,6 +62,8 @@ $(BIN_PHP_WEB): \
 clean-local:
 	$(RM) -r gen-haxe bin
 
+.NOTPARALLEL:
+
 check: check_cpp \
 	check_php \
 	check_php_web 
