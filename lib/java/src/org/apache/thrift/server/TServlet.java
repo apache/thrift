@@ -79,6 +79,15 @@ public class TServlet extends HttpServlet {
     this(processor, protocolFactory, protocolFactory, interceptor);
   }
 
+  @Override
+  protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    if (interceptor != defaultInterceptor) {
+      doPost(req, resp);
+    } else {
+      super.service(req, resp);
+    }
+  }
+
   /**
    * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse
    *      response)
