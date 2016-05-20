@@ -54,7 +54,6 @@
 -define(JSON_DOUBLE_PRECISION, 16).
 
 typeid_to_json(?tType_BOOL) -> "tf";
-typeid_to_json(?tType_BYTE) -> "i8";
 typeid_to_json(?tType_DOUBLE) -> "dbl";
 typeid_to_json(?tType_I8) -> "i8";
 typeid_to_json(?tType_I16) -> "i16";

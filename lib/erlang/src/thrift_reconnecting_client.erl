@@ -115,9 +115,9 @@ handle_call( { call, Op, Args },
              _From,
              State=#state{ client = Client } ) ->
 
-  Start = now(),
+  Start = os:timestamp(),
   Result = ( catch thrift_client:call( Client, Op, Args) ),
-  Time = timer:now_diff( now(), Start ),
+  Time = timer:now_diff( os:timestamp(), Start ),
 
   case Result of
     { C, { ok, Reply } } ->
