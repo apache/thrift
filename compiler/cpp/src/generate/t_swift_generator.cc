@@ -1920,7 +1920,7 @@ void t_swift_generator::render_const_value(ostream& out,
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
-    out << definition_name(value->get_identifier());
+    out << definition_name(value->get_identifier_with_parent());
   } else if (type->is_struct() || type->is_xception()) {
     
     out << type_name(type) << "(";
