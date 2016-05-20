@@ -162,6 +162,6 @@ close(Transport) -> thrift_membuffer_transport:close(Transport).
 
 close_test_() ->
   {"close membuffer", ?_assertMatch(
-    {{t_membuffer, _}, ok},
+    {{t_membuffer, _}, {ok, <<>>}},
     close({t_membuffer, <<>>})
   )}.

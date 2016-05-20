@@ -393,7 +393,7 @@ close_test_() ->
         [],
         []
       },
-      ok
+      {ok, <<>>}
     },
     close({t_framed,
       {t_transport, thrift_membuffer_transport, {t_membuffer, <<>>}},

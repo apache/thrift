@@ -74,8 +74,10 @@ when is_list(Data); is_binary(Data) ->
   {State#t_membuffer{buffer = <<Buf/binary, (iolist_to_binary(Data))/binary>>}, ok}.
 
 
-flush(State) -> {State, ok}.
+flush(State = #t_membuffer{}) ->
+  {State, ok}.
 
 
-close(State) -> {State, ok}.
+close(State = #t_membuffer{buffer = Buf}) ->
+  {State, {ok, Buf}}.
 

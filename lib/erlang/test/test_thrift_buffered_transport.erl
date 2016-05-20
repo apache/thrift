@@ -349,7 +349,7 @@ close_test_() ->
         {t_transport, thrift_membuffer_transport, {t_membuffer, <<>>}},
         []
       },
-      ok
+      {ok, <<>>}
     },
     close({t_buffered,
       {t_transport, thrift_membuffer_transport, {t_membuffer, <<>>}},
