@@ -32,24 +32,7 @@ class Main
 {
     static function main() {
         #if phpwebserver
-        //remap trace to error log
-        haxe.Log.trace = function(v:Dynamic, ?infos:haxe.PosInfos) 
-        { 
-          // handle trace 
-          var newValue : Dynamic;
-          if (infos != null && infos.customParams!=null) {
-            var extra:String = "";
-            for( v in infos.customParams )
-              extra += "," + v;
-            newValue = v + extra;
-          }
-          else {
-            newValue = v;
-          }
-          var msg = infos != null ? infos.fileName + ':' + infos.lineNumber + ': ' : '';
-          Sys.stderr().writeString('${msg}${newValue}\n');
-        }
-
+        initPhpWebServer();
         //check method
         if(php.Web.getMethod() != 'POST') {
           Sys.println('http endpoint for thrift test server');
@@ -73,5 +56,28 @@ class Main
             trace(e);
         }
     }
+
+    #if phpwebserver
+    private static function initPhpWebServer() 
+    {
+        //remap trace to error log
+        haxe.Log.trace = function(v:Dynamic, ?infos:haxe.PosInfos) 
+        { 
+          // handle trace 
+          var newValue : Dynamic;
+          if (infos != null && infos.customParams!=null) {
+            var extra:String = "";
+            for( v in infos.customParams )
+              extra += "," + v;
+            newValue = v + extra;
+          }
+          else {
+            newValue = v;
+          }
+          var msg = infos != null ? infos.fileName + ':' + infos.lineNumber + ': ' : '';
+          Sys.stderr().writeString('${msg}${newValue}\n');
+        }
+    }
+    #end
 
 }
