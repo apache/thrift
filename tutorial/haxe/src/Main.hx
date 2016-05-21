@@ -81,7 +81,7 @@ class Main {
             newValue = v;
           }
           var msg = infos != null ? infos.fileName + ':' + infos.lineNumber + ': ' : '';
-          Sys.stderr().writeString('${msg}${v}\n');
+          Sys.stderr().writeString('${msg}${newValue}\n');
         }
 
         //check method
