@@ -92,4 +92,9 @@ class TMemoryBuffer extends TTransport
   {
     return TStringFuncFactory::create()->strlen($this->buf_);
   }
+
+  public function putBack($data)
+  {
+    $this->buf_ = $data.$this->buf_;
+  }
 }
