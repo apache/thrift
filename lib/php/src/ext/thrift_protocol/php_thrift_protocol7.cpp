@@ -959,18 +959,19 @@ PHP_FUNCTION(thrift_protocol_write_binary) {
 }
 
 
-// 3 params: $transport $response_typename $strict_read
+// 4 params: $transport $response_Typename $strict_read $buffer_size
 PHP_FUNCTION(thrift_protocol_read_binary) {
   zval *protocol;
   zend_string *obj_typename;
   zend_bool strict_read;
+  size_t buffer_size = 8192;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "oSb", &protocol, &obj_typename, &strict_read) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "oSb|l", &protocol, &obj_typename, &strict_read, &buffer_size) == FAILURE) {
     return;
   }
 
   try {
-    PHPInputTransport transport(protocol);
+    PHPInputTransport transport(protocol, buffer_size);
     int8_t messageType = 0;
     int32_t sz = transport.readI32();
 
