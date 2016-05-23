@@ -964,14 +964,10 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
   zval *protocol;
   zend_string *obj_typename;
   zend_bool strict_read;
-  size_t buffer_size;
+  size_t buffer_size = 8192;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS(), "oSb|l", &protocol, &obj_typename, &strict_read, &buffer_size) == FAILURE) {
     return;
-  }
-
-  if (buffer_size == NULL) {
-    buffer_size = 8192;
   }
 
   try {
