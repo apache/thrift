@@ -48,7 +48,7 @@ func NewTFramedTransportFactory(factory TTransportFactory) TTransportFactory {
 }
 
 func NewTFramedTransportFactoryMaxLength(factory TTransportFactory, maxLength uint32) TTransportFactory {
-        return &tFramedTransportFactory{factory: factory, maxLength: maxLength}
+	return &tFramedTransportFactory{factory: factory, maxLength: maxLength}
 }
 
 func (p *tFramedTransportFactory) GetTransport(base TTransport) TTransport {
@@ -135,15 +135,15 @@ func (p *TFramedTransport) Flush() error {
 	size := p.buf.Len()
 	buf := p.buffer[:4]
 	binary.BigEndian.PutUint32(buf, uint32(size))
-	_, err := p.transport.Write(buf)
-	if err != nil {
-		return NewTTransportExceptionFromError(err)
-	}
+	buffer := bytes.NewBuffer(buf)
 	if size > 0 {
-		if n, err := p.buf.WriteTo(p.transport); err != nil {
+		if n, err := p.buf.WriteTo(buffer); err != nil {
 			print("Error while flushing write buffer of size ", size, " to transport, only wrote ", n, " bytes: ", err.Error(), "\n")
 			return NewTTransportExceptionFromError(err)
 		}
+	}
+	if _, err := buffer.WriteTo(p.transport); err != nil {
+		return NewTTransportExceptionFromError(err)
 	}
 	err = p.transport.Flush()
 	return NewTTransportExceptionFromError(err)
@@ -164,4 +164,3 @@ func (p *TFramedTransport) readFrameHeader() (uint32, error) {
 func (p *TFramedTransport) RemainingBytes() (num_bytes uint64) {
 	return uint64(p.frameSize)
 }
-
