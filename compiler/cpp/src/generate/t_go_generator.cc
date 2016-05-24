@@ -93,7 +93,7 @@ public:
       } else if( iter->first.compare("ignore_initialisms") == 0) {
         ignore_initialisms_ =  true;
       } else {
-        throw "unknown option go:" + iter->first; 
+        throw "unknown option go:" + iter->first;
       }
     }
 
@@ -879,6 +879,7 @@ string t_go_generator::go_imports_begin(bool consts) {
       "\t\"bytes\"\n"
       + extra +
       "\t\"fmt\"\n"
+      "\t\"sync\"\n"
       "\t\"" + gen_thrift_import_ + "\"\n");
 }
 
@@ -894,7 +895,8 @@ string t_go_generator::go_imports_end() {
       "// (needed to ensure safety because of naive import list construction.)\n"
       "var _ = thrift.ZERO\n"
       "var _ = fmt.Printf\n"
-      "var _ = bytes.Equal\n\n");
+      "var _ = bytes.Equal\n"
+      "var _ = sync.NewCond\n\n");
 }
 
 /**
@@ -2673,6 +2675,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
   vector<t_field*>::const_iterator x_iter;
   f_types_ << indent() << "type " << processorName << " struct {" << endl;
   f_types_ << indent() << "  handler " << publicize(tservice->get_name()) << endl;
+  f_types_ << indent() << "  mu sync.Mutex" << endl;
   f_types_ << indent() << "}" << endl << endl;
   f_types_ << indent() << "func (p *" << processorName
              << ") Process(seqId int32, iprot, oprot thrift.TProtocol) (success bool, err "
@@ -2695,6 +2698,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
   f_types_ << indent() << "}" << endl << endl;
   f_types_ << indent() << "iprot.ReadMessageEnd()" << endl;
 
+  f_types_ << indent() << "go func() {" << endl;
   if (!tfunction->is_oneway()) {
     f_types_ << indent() << "result := " << resultname << "{}" << endl;
   }
@@ -2751,14 +2755,16 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
     f_types_ << indent() << "  x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "
                               "\"Internal error processing " << escape_string(tfunction->get_name())
                << ": \" + err2.Error())" << endl;
+    f_types_ << indent() << " p.mu.Lock()" << endl;
     f_types_ << indent() << "  oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name())
                << "\", thrift.EXCEPTION, seqId)" << endl;
     f_types_ << indent() << "  x.Write(oprot)" << endl;
     f_types_ << indent() << "  oprot.WriteMessageEnd()" << endl;
     f_types_ << indent() << "  oprot.Flush()" << endl;
+    f_types_ << indent() << " p.mu.Unlock()" << endl;
   }
 
-  f_types_ << indent() << "  return true, err2" << endl;
+  f_types_ << indent() << "  return" << endl;
 
   if (!x_fields.empty()) {
     f_types_ << indent() << "}" << endl;
@@ -2780,6 +2786,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
     } else {
       f_types_ << endl;
     }
+    f_types_ << indent() << "p.mu.Lock()" << endl;
     f_types_ << indent() << "if err2 = oprot.WriteMessageBegin(\""
                << escape_string(tfunction->get_name()) << "\", thrift.REPLY, seqId); err2 != nil {"
                << endl;
@@ -2795,6 +2802,8 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
     f_types_ << indent() << "if err2 = oprot.Flush(); err == nil && err2 != nil {" << endl;
     f_types_ << indent() << "  err = err2" << endl;
     f_types_ << indent() << "}" << endl;
+    f_types_ << indent() << "p.mu.Unlock()" << endl;
+    f_types_ << indent() << "}()" << endl;
     f_types_ << indent() << "if err != nil {" << endl;
     f_types_ << indent() << "  return" << endl;
     f_types_ << indent() << "}" << endl;
@@ -3463,8 +3472,8 @@ string t_go_generator::module_name(t_type* ttype) {
   t_program* program = ttype->get_program();
 
   if (program != NULL && program != program_) {
-    if (program->get_namespace("go").empty() || 
-        program_->get_namespace("go").empty() || 
+    if (program->get_namespace("go").empty() ||
+        program_->get_namespace("go").empty() ||
         program->get_namespace("go") != program_->get_namespace("go")) {
       string module(get_real_go_module(program));
       // for namespaced includes, only keep part after dot.
