@@ -141,7 +141,7 @@ handle_success(State = #thrift_processor{service = Service},
             },
             send_reply(State, Function, ?tMessageType_REPLY, Reply, Seqid);
 
-        ok when ReplyType == {struct, []} ->
+        ok when ReplyType == {struct, struct, []} ->
             send_reply(State, Function, ?tMessageType_REPLY, {ReplyType, {StructName}}, Seqid);
 
         ok when ReplyType == oneway_void ->

@@ -22,7 +22,7 @@
 -export([start/0, start/1, start_link/2, handle_function/2]).
 
 -include("thrift_constants.hrl").
--include("gen-erlang/thrift_test_thrift_test_types.hrl").
+-include("gen-erlang/thrift_test_thrift.hrl").
 
 -record(options, {port = 9090,
                   server_opts = []}).
@@ -69,7 +69,7 @@ start(Args) ->
 
 start_link(Port, ServerOpts) ->
     thrift_socket_server:start([{handler, ?MODULE},
-                                {service, thrift_test_thrift_test_thrift_test_service},
+                                {service, {thrift_test_thrift, 'ThriftTest'}},
                                 {port, Port}] ++
                                ServerOpts).
 

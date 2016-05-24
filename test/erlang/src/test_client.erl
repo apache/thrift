@@ -21,7 +21,7 @@
 
 -export([start/0, start/1]).
 
--include("gen-erlang/thrift_test_thrift_test_types.hrl").
+-include("gen-erlang/thrift_test_thrift.hrl").
 
 -record(options, {port = 9090,
                   client_opts = []}).
@@ -66,7 +66,7 @@ start() -> start(init:get_plain_arguments()).
 start(Args) ->
   #options{port = Port, client_opts = ClientOpts} = parse_args(Args),
   {ok, Client0} = thrift_client_util:new(
-    "127.0.0.1", Port, thrift_test_thrift_test_thrift_test_service, ClientOpts),
+    "127.0.0.1", Port, {thrift_test_thrift, 'ThriftTest'}, ClientOpts),
 
   DemoXtruct = #'Xtruct'{
     string_thing = <<"Zero">>,
