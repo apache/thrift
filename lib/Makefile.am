@@ -17,7 +17,7 @@
 # under the License.
 #
 
-SUBDIRS = json xml 
+SUBDIRS = json xml
 PRECROSS_TARGET =
 
 if WITH_CPP
@@ -38,7 +38,7 @@ SUBDIRS += java
 PRECROSS_TARGET += precross-java
 # JavaScript unit test depends on java
 # so test only if java, ant & co is available
-SUBDIRS += js/test
+SUBDIRS += js
 endif
 
 if WITH_PYTHON

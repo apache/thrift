@@ -134,8 +134,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
       nodejs \
       nodejs-dev \
-      nodejs-legacy \
-      npm
+      nodejs-legacy
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 `# CSharp dependencies` \
@@ -184,6 +183,9 @@ RUN mkdir -p /usr/lib/haxe && \
     chmod -R 777 /usr/lib/haxe/lib && \
     haxelib setup /usr/lib/haxe/lib && \
     haxelib install hxcpp
+
+# Node.js
+RUN curl -sSL https://www.npmjs.com/install.sh | sh
 
 # D
 RUN curl -sSL http://downloads.dlang.org/releases/2.x/2.070.0/dmd_2.070.0-0_amd64.deb -o /tmp/dmd_2.070.0-0_amd64.deb && \
