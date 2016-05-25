@@ -544,7 +544,7 @@ void t_dart_generator::generate_consts(std::vector<t_const*> consts) {
 
   // Print header
   f_consts << autogen_comment() << dart_library(file_name) << endl;
-  f_consts << service_imports() << dart_thrift_imports() << endl;
+  f_consts << dart_thrift_imports() << endl;
 
   export_class_to_library(file_name, class_name);
   indent(f_consts) << "class " << class_name;
