@@ -21,6 +21,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:convert' show Utf8Codec;
 import 'dart:typed_data' show ByteData;
+import 'dart:typed_data' show Endianness;
 import 'dart:typed_data' show Uint8List;
 
 import 'package:crypto/crypto.dart' show CryptoUtils;
