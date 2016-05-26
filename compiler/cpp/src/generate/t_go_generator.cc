@@ -2578,6 +2578,7 @@ void t_go_generator::generate_service_server(t_service* tservice) {
     f_types_ << indent() << "type " << serviceName << "Processor struct {" << endl;
     f_types_ << indent() << "  processorMap map[string]thrift.TProcessorFunction" << endl;
     f_types_ << indent() << "  handler " << serviceName << endl;
+    f_types_ << indent() << "  mu *sync.Mutex " << endl;
     f_types_ << indent() << "}" << endl << endl;
     f_types_ << indent() << "func (p *" << serviceName
                << "Processor) AddToProcessorMap(key string, processor thrift.TProcessorFunction) {"
@@ -2598,14 +2599,14 @@ void t_go_generator::generate_service_server(t_service* tservice) {
                << ") *" << serviceName << "Processor {" << endl << endl;
     f_types_
         << indent() << "  " << self << " := &" << serviceName
-        << "Processor{handler:handler, processorMap:make(map[string]thrift.TProcessorFunction)}"
+        << "Processor{handler:handler, processorMap:make(map[string]thrift.TProcessorFunction), mu: new(sync.Mutex)}"
         << endl;
 
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
       string escapedFuncName(escape_string((*f_iter)->get_name()));
       f_types_ << indent() << "  " << self << ".processorMap[\"" << escapedFuncName << "\"] = &"
                  << pServiceName << "Processor" << publicize((*f_iter)->get_name())
-                 << "{handler:handler}" << endl;
+                 << "{handler:handler, mu: " << self << ".mu}" << endl;
     }
 
     string x(tmp("x"));
@@ -2624,10 +2625,12 @@ void t_go_generator::generate_service_server(t_service* tservice) {
     f_types_ << indent() << "  " << x
                << " := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, \"Unknown function "
                   "\" + name)" << endl;
+    f_types_ << indent() << "  p.mu.Lock()" << endl;
     f_types_ << indent() << "  oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)" << endl;
     f_types_ << indent() << "  " << x << ".Write(oprot)" << endl;
     f_types_ << indent() << "  oprot.WriteMessageEnd()" << endl;
     f_types_ << indent() << "  oprot.Flush()" << endl;
+    f_types_ << indent() << "  p.mu.Unlock()" << endl;
     f_types_ << indent() << "  return false, " << x << endl;
     f_types_ << indent() << "" << endl;
     f_types_ << indent() << "}" << endl << endl;
@@ -2675,7 +2678,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
   vector<t_field*>::const_iterator x_iter;
   f_types_ << indent() << "type " << processorName << " struct {" << endl;
   f_types_ << indent() << "  handler " << publicize(tservice->get_name()) << endl;
-  f_types_ << indent() << "  mu sync.Mutex" << endl;
+  f_types_ << indent() << "  mu *sync.Mutex" << endl;
   f_types_ << indent() << "}" << endl << endl;
   f_types_ << indent() << "func (p *" << processorName
              << ") Process(seqId int32, iprot, oprot thrift.TProtocol) (success bool, err "
@@ -2688,11 +2691,13 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
     f_types_ << indent()
                << "  x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())"
                << endl;
+    f_types_ << indent() << " p.mu.Lock()" << endl;
     f_types_ << indent() << "  oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name())
                << "\", thrift.EXCEPTION, seqId)" << endl;
     f_types_ << indent() << "  x.Write(oprot)" << endl;
     f_types_ << indent() << "  oprot.WriteMessageEnd()" << endl;
     f_types_ << indent() << "  oprot.Flush()" << endl;
+    f_types_ << indent() << " p.mu.Unlock()" << endl;
   }
   f_types_ << indent() << "  return false, err" << endl;
   f_types_ << indent() << "}" << endl << endl;
