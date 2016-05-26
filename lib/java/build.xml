@@ -401,7 +401,7 @@
         <arg value="-Dfile=@{file}"/>
         <arg value="-Dclassifier=@{classifier}"/>
         <arg value="-Dpackaging=@{packaging}"/>
-        <arg value="-Pgpg"/>
+        <arg value="-Dgpg.skip"/>
       </artifact:mvn>
     </sequential>
   </macrodef>
@@ -452,6 +452,15 @@
   </target>
 
   <target name="custom.mvn.deploy" depends="clean,init,test,dist,javadoc,pack.src">
+    <!-- Compile, package, test and then send release to specified repo -->
+    <!-- run with: ant -Drelease=true publish-->
+    <customMvnDeploy file="${pom.xml}" packaging="pom" classifier="" pom="${pom.xml}"/>
+    <customMvnDeploy file="${jar.file}" classifier="" pom="${pom.xml}"/>
+    <customMvnDeploy file="${javadoc.jar.file}" classifier="javadoc" pom="${pom.xml}"/>
+    <customMvnDeploy file="${source.jar.file}" classifier="sources" pom="${pom.xml}"/>
+  </target>
+
+  <target name="custom.mvn.deploy-notest" depends="clean,init,dist,javadoc,pack.src">
     <!-- Compile, package, test and then send release to specified repo -->
     <!-- run with: ant -Drelease=true publish-->
     <customMvnDeploy file="${pom.xml}" packaging="pom" classifier="" pom="${pom.xml}"/>
