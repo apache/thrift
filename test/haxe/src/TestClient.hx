@@ -258,7 +258,7 @@ class TestClient {
     {
         // We need to test a few basic things used in the ClientTest
         // Anything else beyond this scope should go into /lib/haxe/ instead
-        rslt.StartTestGroup( 0);
+        rslt.StartTestGroup( TestResults.EXITCODE_FAILBIT_BASETYPES);
 
         var map32 = new IntMap<Int32>();
         var map64 = new Int64Map<Int32>();
