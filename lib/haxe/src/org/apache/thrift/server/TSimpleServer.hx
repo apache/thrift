@@ -29,6 +29,10 @@ class TSimpleServer extends TServer  {
 
     private var stop : Bool = false;
 
+    //stops just after input transport returns EOF 
+    //useful for limited scenarios, like embeding into php server
+    public var runOnce : Bool = false;
+
     public function new( processor : TProcessor,
                          serverTransport : TServerTransport,
                          transportFactory : TTransportFactory = null,
@@ -102,13 +106,21 @@ class TSimpleServer extends TServer  {
             catch( ttx : TTransportException)
             {
                 // Usually a client disconnect, expected
+                if(runOnce && ttx.errorID == TTransportException.END_OF_FILE) {
+                  //input returns eof, exit
+                  //follows lib/cpp/src/thrift/server/TServerFramework.cpp
+                  Stop();
+                }
             }
             catch( pex : TProtocolException)
             {
+                //trace(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
                 logDelegate('$pex ${pex.errorID} ${pex.errorMsg}'); // Unexpected
             }
             catch( e : Dynamic)
             {
+                //trace(e);
+                //trace(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
                 logDelegate(e); // Unexpected
             }
 
