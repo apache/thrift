@@ -47,14 +47,10 @@ class ZigZag {
     public static function ToInt( n : UInt) : Int {
         #if php
 
-        var convertedLong = ToLong(n);
-        //if overflow return high
-        if( convertedLong.high != convertedLong.low >> 31 ) {
-            return convertedLong.high;
-        } else {
-            return convertedLong.low;
-        }
-
+        var a = (0x7FFFFFFF & cast(n >> 1,Int));
+        var b = (cast(n & 1,Int));
+        b = -b;  // workaround for https://github.com/HaxeFoundation/haxe/issues/5288
+        return a ^ b;
 
         #else
 
@@ -91,6 +87,9 @@ class ZigZag {
     private static function Test32( test : Int) : Void {
         var a : UInt = ZigZag.FromInt( test);
         var b : Int = ZigZag.ToInt(a);
+        #if php
+        test = test & 0xFFFFFFFF;  // workaround for https://github.com/HaxeFoundation/haxe/issues/5289
+        #end
         if( test != b)
             throw 'ZigZag.Test32($test) failed: a = $a, b = $b';
     }
@@ -112,22 +111,28 @@ class ZigZag {
     public static function UnitTest() : Void {
       var u1 : UInt = 0xFFFFFFFE;
       var u2 : UInt = 0xFFFFFFFF;
+      var i1 : Int = 2147483647;
+      var i2 : Int = -2147483648;
+
+      #if php
+      i2 = i2 & 0xFFFFFFFF;  // workaround for https://github.com/HaxeFoundation/haxe/issues/5289
+      #end
 
       // protobuf testcases
       if( FromInt(0)  != 0) throw 'pb #1 to ZigZag';
       if( FromInt(-1) != 1) throw 'pb #2 to ZigZag';
       if( FromInt(1)  != 2) throw 'pb #3 to ZigZag';
       if( FromInt(-2) != 3) throw 'pb #4 to ZigZag';
-      if( FromInt(2147483647) != u1) throw 'pb #5 to ZigZag';
-      if( FromInt(-2147483648) != u2) throw 'pb #6 to ZigZag';
+      if( FromInt(i1) != u1) throw 'pb #5 to ZigZag';
+      if( FromInt(i2) != u2) throw 'pb #6 to ZigZag';
 
       // protobuf testcases
       if( ToInt(0) != 0) throw 'pb #1 from ZigZag';
       if( ToInt(1) != -1) throw 'pb #2 from ZigZag';
       if( ToInt(2) != 1) throw 'pb #3 from ZigZag';
       if( ToInt(3) != -2) throw 'pb #4 from ZigZag';
-      if( ToInt(u1) != 2147483647) throw 'pb #5 from ZigZag, got ${ToInt(u1)}';
-      if( ToInt(u2) != -2147483648) throw 'pb #6 from ZigZag, got ${ToInt(u2)}';
+      if( ToInt(u1) != i1) throw 'pb #5 from ZigZag, got ${ToInt(u1)} expected $i1';
+      if( ToInt(u2) != i2) throw 'pb #6 from ZigZag, got ${ToInt(u2)} expected $i2';
 
       // back and forth 32
       Test32( 0);
