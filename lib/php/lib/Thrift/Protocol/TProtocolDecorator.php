@@ -298,4 +298,9 @@ abstract class TProtocolDecorator extends TProtocol
         }
         return true;
     }
+
+    public function isBinaryAccelerated()
+    {
+        return $this->concreteProtocol_->isBinaryAccelerated();
+    }
 }
