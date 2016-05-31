@@ -50,7 +50,7 @@ import org.apache.thrift.transport.TNonblockingServerSocket;
 
 import thrift.test.Insanity;
 import thrift.test.Numberz;
-import thrift.test.ThriftTest;
+import thrift.test.ThriftTestSrv;
 import thrift.test.Xception;
 import thrift.test.Xception2;
 import thrift.test.Xtruct;
@@ -186,8 +186,8 @@ public class TestServer {
       // Processor
       TestHandler testHandler =
         new TestHandler();
-      ThriftTest.Processor testProcessor =
-        new ThriftTest.Processor(testHandler);
+      ThriftTestSrv.Processor testProcessor =
+        new ThriftTestSrv.Processor(testHandler);
 
       // Protocol factory
       TProtocolFactory tProtocolFactory = null;

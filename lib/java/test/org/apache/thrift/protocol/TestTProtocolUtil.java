@@ -35,7 +35,7 @@ import thrift.test.CompactProtoTestStruct;
 import thrift.test.HolyMoley;
 import thrift.test.Nesting;
 import thrift.test.OneOfEach;
-import thrift.test.Srv;
+import thrift.test.SrvSrv;
 import thrift.test.GuessProtocolStruct;
 
 public class TestTProtocolUtil extends TestCase {
@@ -75,7 +75,7 @@ public class TestTProtocolUtil extends TestCase {
   public void testGuessProtocolFactory_Compact() throws Exception {
     // Check that a first byte > 0x10 is reported as Compact
     byte[] buf = new byte[3];
-    buf[0] = 0x11; 
+    buf[0] = 0x11;
     TProtocolFactory factory = TProtocolUtil.guessProtocolFactory(buf, new TBinaryProtocol.Factory());
     assertTrue(factory instanceof TCompactProtocol.Factory);
 

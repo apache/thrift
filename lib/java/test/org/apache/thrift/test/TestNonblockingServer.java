@@ -26,7 +26,7 @@ import org.apache.thrift.server.THsHaServer.Args;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.server.ServerTestBase.TestHandler;
 
-import thrift.test.ThriftTest;
+import thrift.test.ThriftTestSrv;
 
 
 public class TestNonblockingServer extends TestServer {
@@ -47,8 +47,8 @@ public class TestNonblockingServer extends TestServer {
       // Processor
       TestHandler testHandler =
         new TestHandler();
-      ThriftTest.Processor testProcessor =
-        new ThriftTest.Processor(testHandler);
+      ThriftTestSrv.Processor testProcessor =
+        new ThriftTestSrv.Processor(testHandler);
 
       // Transport
       TNonblockingServerSocket tServerSocket =

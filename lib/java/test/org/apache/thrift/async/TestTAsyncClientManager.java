@@ -42,8 +42,8 @@ import org.apache.thrift.transport.TNonblockingSocket;
 
 import thrift.test.CompactProtoTestStruct;
 import thrift.test.ExceptionWithAMap;
-import thrift.test.Srv;
-import thrift.test.Srv.Iface;
+import thrift.test.SrvSrv;
+import thrift.test.SrvSrv.Iface;
 
 public class TestTAsyncClientManager extends TestCase {
 
@@ -54,7 +54,7 @@ public class TestTAsyncClientManager extends TestCase {
   public void setUp() throws Exception {
     server_ = new THsHaServer(new Args(new TNonblockingServerSocket(
       new TNonblockingServerSocket.NonblockingAbstractServerSocketArgs().port(ServerTestBase.PORT))).
-      processor(new Srv.Processor(new SrvHandler())));
+      processor(new SrvSrv.Processor(new SrvHandler())));
     serverThread_ = new Thread(new Runnable() {
       public void run() {
         server_.serve();
@@ -72,12 +72,12 @@ public class TestTAsyncClientManager extends TestCase {
   }
 
   public void testBasicCall() throws Exception {
-    Srv.AsyncClient client = getClient();
+    SrvSrv.AsyncClient client = getClient();
     basicCall(client);
   }
 
   public void testBasicCallWithTimeout() throws Exception {
-    Srv.AsyncClient client = getClient();
+    SrvSrv.AsyncClient client = getClient();
     client.setTimeout(5000);
     basicCall(client);
   }
@@ -126,16 +126,16 @@ public class TestTAsyncClientManager extends TestCase {
   }
 
   public void testUnexpectedRemoteExceptionCall() throws Exception {
-    new ErrorCallTest<Srv.AsyncClient, Boolean>() {
+    new ErrorCallTest<SrvSrv.AsyncClient, Boolean>() {
       @Override
-      Srv.AsyncClient executeErroringCall(AsyncMethodCallback<Boolean> callback) throws Exception {
-        Srv.AsyncClient client = getClient();
+      SrvSrv.AsyncClient executeErroringCall(AsyncMethodCallback<Boolean> callback) throws Exception {
+        SrvSrv.AsyncClient client = getClient();
         client.declaredExceptionMethod(false, callback);
         return client;
       }
 
       @Override
-      void validateError(Srv.AsyncClient client, Exception error) {
+      void validateError(SrvSrv.AsyncClient client, Exception error) {
         assertFalse(client.hasTimeout());
         assertTrue(error instanceof TException);
       }
@@ -143,16 +143,16 @@ public class TestTAsyncClientManager extends TestCase {
   }
 
   public void testDeclaredRemoteExceptionCall() throws Exception {
-    new ErrorCallTest<Srv.AsyncClient, Boolean>() {
+    new ErrorCallTest<SrvSrv.AsyncClient, Boolean>() {
       @Override
-      Srv.AsyncClient executeErroringCall(AsyncMethodCallback<Boolean> callback) throws Exception {
-        Srv.AsyncClient client = getClient();
+      SrvSrv.AsyncClient executeErroringCall(AsyncMethodCallback<Boolean> callback) throws Exception {
+        SrvSrv.AsyncClient client = getClient();
         client.declaredExceptionMethod(true, callback);
         return client;
       }
 
       @Override
-      void validateError(Srv.AsyncClient client, Exception error) {
+      void validateError(SrvSrv.AsyncClient client, Exception error) {
         assertFalse(client.hasTimeout());
         assertEquals(ExceptionWithAMap.class, error.getClass());
         ExceptionWithAMap exceptionWithAMap = (ExceptionWithAMap) error;
@@ -163,17 +163,17 @@ public class TestTAsyncClientManager extends TestCase {
   }
 
   public void testTimeoutCall() throws Exception {
-    new ErrorCallTest<Srv.AsyncClient, Integer>() {
+    new ErrorCallTest<SrvSrv.AsyncClient, Integer>() {
       @Override
-      Srv.AsyncClient executeErroringCall(AsyncMethodCallback<Integer> callback) throws Exception {
-        Srv.AsyncClient client = getClient();
+      SrvSrv.AsyncClient executeErroringCall(AsyncMethodCallback<Integer> callback) throws Exception {
+        SrvSrv.AsyncClient client = getClient();
         client.setTimeout(100);
         client.primitiveMethod(callback);
         return client;
       }
 
       @Override
-      void validateError(Srv.AsyncClient client, Exception error) {
+      void validateError(SrvSrv.AsyncClient client, Exception error) {
         assertTrue(client.hasTimeout());
         assertTrue(error instanceof TimeoutException);
       }
@@ -183,7 +183,7 @@ public class TestTAsyncClientManager extends TestCase {
   public void testVoidCall() throws Exception {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean returned = new AtomicBoolean(false);
-    Srv.AsyncClient client = getClient();
+    SrvSrv.AsyncClient client = getClient();
     client.voidMethod(new FailureLessCallback<Void>() {
       @Override
       public void onComplete(Void response) {
@@ -198,7 +198,7 @@ public class TestTAsyncClientManager extends TestCase {
   public void testOnewayCall() throws Exception {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean returned = new AtomicBoolean(false);
-    Srv.AsyncClient client = getClient();
+    SrvSrv.AsyncClient client = getClient();
     client.onewayMethod(new FailureLessCallback<Void>() {
       @Override
       public void onComplete(Void response) {
@@ -233,12 +233,12 @@ public class TestTAsyncClientManager extends TestCase {
     assertEquals(numThreads * numCallsPerThread, numSuccesses);
   }
 
-  private Srv.AsyncClient getClient() throws IOException {
+  private SrvSrv.AsyncClient getClient() throws IOException {
     TNonblockingSocket clientSocket = new TNonblockingSocket(ServerTestBase.HOST, ServerTestBase.PORT);
-    return new Srv.AsyncClient(new TBinaryProtocol.Factory(), clientManager_, clientSocket);
+    return new SrvSrv.AsyncClient(new TBinaryProtocol.Factory(), clientManager_, clientSocket);
   }
 
-  private void basicCall(Srv.AsyncClient client) throws Exception {
+  private void basicCall(SrvSrv.AsyncClient client) throws Exception {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean returned = new AtomicBoolean(false);
     client.Janky(1, new FailureLessCallback<Integer>() {
@@ -325,7 +325,7 @@ public class TestTAsyncClientManager extends TestCase {
   private class JankyRunnable implements Runnable {
     private int numCalls_;
     private int numSuccesses_ = 0;
-    private Srv.AsyncClient client_;
+    private SrvSrv.AsyncClient client_;
 
     public JankyRunnable(int numCalls) throws Exception {
       numCalls_ = numCalls;

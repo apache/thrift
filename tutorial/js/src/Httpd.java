@@ -79,8 +79,8 @@ import java.util.HashMap;
  * Please note the purpose of this application is demonstrate the usage of
  * HttpCore APIs. It is NOT intended to demonstrate the most efficient way of
  * building an HTTP file server.
- * 
- * 
+ *
+ *
  */
 public class Httpd {
 
@@ -115,11 +115,11 @@ public class Httpd {
                 HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
                 byte[] entityContent = EntityUtils.toByteArray(entity);
                 System.out.println("Incoming content: " + new String(entityContent));
-                
+
                 final String output = this.thriftRequest(entityContent);
-                
+
                 System.out.println("Outgoing content: "+output);
-                
+
                 EntityTemplate body = new EntityTemplate(new ContentProducer() {
 
                     public void writeTo(final OutputStream outstream) throws IOException {
@@ -181,33 +181,33 @@ public class Httpd {
                 }
             }
         }
-        
+
         private String thriftRequest(byte[] input){
             try{
-            
+
                 //Input
-                TMemoryBuffer inbuffer = new TMemoryBuffer(input.length);           
-                inbuffer.write(input);              
-                TProtocol  inprotocol   = new TJSONProtocol(inbuffer);                   
-                
+                TMemoryBuffer inbuffer = new TMemoryBuffer(input.length);
+                inbuffer.write(input);
+                TProtocol  inprotocol   = new TJSONProtocol(inbuffer);
+
                 //Output
-                TMemoryBuffer outbuffer = new TMemoryBuffer(100);           
+                TMemoryBuffer outbuffer = new TMemoryBuffer(100);
                 TProtocol outprotocol   = new TJSONProtocol(outbuffer);
-                
-                TProcessor processor = new Calculator.Processor(new CalculatorHandler());      
+
+                TProcessor processor = new CalculatorSrv.Processor(new CalculatorHandler());
                 processor.process(inprotocol, outprotocol);
-                
+
                 byte[] output = new byte[outbuffer.length()];
                 outbuffer.readAll(output, 0, output.length);
-            
+
                 return new String(output,"UTF-8");
             }catch(Throwable t){
                 return "Error:"+t.getMessage();
             }
-             
-                     
+
+
         }
-        
+
     }
 
     static class RequestListenerThread extends Thread {
@@ -239,7 +239,7 @@ public class Httpd {
         public void run() {
             System.out.println("Listening on port " + this.serversocket.getLocalPort());
             System.out.println("Point your browser to http://localhost:8088/tutorial/js/tutorial.html");
-            
+
             while (!Thread.interrupted()) {
                 try {
                     // Set up HTTP connection

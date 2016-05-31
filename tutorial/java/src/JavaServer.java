@@ -36,18 +36,18 @@ public class JavaServer {
 
   public static CalculatorHandler handler;
 
-  public static Calculator.Processor processor;
+  public static CalculatorSrv.Processor processor;
 
   public static void main(String [] args) {
     try {
       handler = new CalculatorHandler();
-      processor = new Calculator.Processor(handler);
+      processor = new CalculatorSrv.Processor(handler);
 
       Runnable simple = new Runnable() {
         public void run() {
           simple(processor);
         }
-      };      
+      };
       Runnable secure = new Runnable() {
         public void run() {
           secure(processor);
@@ -61,7 +61,7 @@ public class JavaServer {
     }
   }
 
-  public static void simple(Calculator.Processor processor) {
+  public static void simple(CalculatorSrv.Processor processor) {
     try {
       TServerTransport serverTransport = new TServerSocket(9090);
       TServer server = new TSimpleServer(new Args(serverTransport).processor(processor));
@@ -76,12 +76,12 @@ public class JavaServer {
     }
   }
 
-  public static void secure(Calculator.Processor processor) {
+  public static void secure(CalculatorSrv.Processor processor) {
     try {
       /*
        * Use TSSLTransportParameters to setup the required SSL parameters. In this example
        * we are setting the keystore and the keystore password. Other things like algorithms,
-       * cipher suites, client auth etc can be set. 
+       * cipher suites, client auth etc can be set.
        */
       TSSLTransportParameters params = new TSSLTransportParameters();
       // The Keystore contains the private key
@@ -91,9 +91,9 @@ public class JavaServer {
        * Use any of the TSSLTransportFactory to get a server transport with the appropriate
        * SSL configuration. You can use the default settings if properties are set in the command line.
        * Ex: -Djavax.net.ssl.keyStore=.keystore and -Djavax.net.ssl.keyStorePassword=thrift
-       * 
+       *
        * Note: You need not explicitly call open(). The underlying server socket is bound on return
-       * from the factory class. 
+       * from the factory class.
        */
       TServerTransport serverTransport = TSSLTransportFactory.getServerSocket(9091, 0, null, params);
       TServer server = new TSimpleServer(new Args(serverTransport).processor(processor));
