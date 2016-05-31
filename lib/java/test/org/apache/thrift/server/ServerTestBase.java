@@ -45,7 +45,7 @@ import org.apache.thrift.transport.TFramedTransport.Factory;
 
 import thrift.test.Insanity;
 import thrift.test.Numberz;
-import thrift.test.ThriftTest;
+import thrift.test.ThriftTestSrv;
 import thrift.test.Xception;
 import thrift.test.Xception2;
 import thrift.test.Xtruct;
@@ -53,14 +53,14 @@ import thrift.test.Xtruct2;
 
 public abstract class ServerTestBase extends TestCase {
 
-  public static class TestHandler implements ThriftTest.Iface {
-  
+  public static class TestHandler implements ThriftTestSrv.Iface {
+
     public TestHandler() {}
-  
+
     public void testVoid() {
       System.out.print("testVoid()\n");
     }
-  
+
     public String testString(String thing) {
       System.out.print("testString(\"" + thing + "\")\n");
       return thing;
@@ -70,22 +70,22 @@ public abstract class ServerTestBase extends TestCase {
       System.out.print("testBool(" + thing + ")\n");
       return thing;
     }
-  
+
     public byte testByte(byte thing) {
       System.out.print("testByte(" + thing + ")\n");
       return thing;
     }
-  
+
     public int testI32(int thing) {
       System.out.print("testI32(" + thing + ")\n");
       return thing;
     }
-  
+
     public long testI64(long thing) {
       System.out.print("testI64(" + thing + ")\n");
       return thing;
     }
-  
+
     public double testDouble(double thing) {
       System.out.print("testDouble(" + thing + ")\n");
       return thing;
@@ -110,7 +110,7 @@ public abstract class ServerTestBase extends TestCase {
                        thing.i64_thing + "})\n");
       return thing;
     }
-  
+
     public Xtruct2 testNest(Xtruct2 nest) {
       Xtruct thing = nest.struct_thing;
       System.out.print("testNest({" +
@@ -122,7 +122,7 @@ public abstract class ServerTestBase extends TestCase {
                        nest.i32_thing + "})\n");
       return nest;
     }
-  
+
     public Map<Integer,Integer> testMap(Map<Integer,Integer> thing) {
       System.out.print("testMap({");
       System.out.print(thing);
@@ -136,7 +136,7 @@ public abstract class ServerTestBase extends TestCase {
       System.out.print("})\n");
       return thing;
     }
-  
+
     public Set<Integer> testSet(Set<Integer> thing) {
       System.out.print("testSet({");
       boolean first = true;
@@ -151,7 +151,7 @@ public abstract class ServerTestBase extends TestCase {
       System.out.print("})\n");
       return thing;
     }
-  
+
     public List<Integer> testList(List<Integer> thing) {
       System.out.print("testList({");
       boolean first = true;
@@ -166,58 +166,58 @@ public abstract class ServerTestBase extends TestCase {
       System.out.print("})\n");
       return thing;
     }
-  
+
     public Numberz testEnum(Numberz thing) {
       System.out.print("testEnum(" + thing + ")\n");
       return thing;
     }
-  
+
     public long testTypedef(long thing) {
       System.out.print("testTypedef(" + thing + ")\n");
       return thing;
     }
-  
+
     public Map<Integer,Map<Integer,Integer>> testMapMap(int hello) {
       System.out.print("testMapMap(" + hello + ")\n");
       Map<Integer,Map<Integer,Integer>> mapmap =
         new HashMap<Integer,Map<Integer,Integer>>();
-  
+
       HashMap<Integer,Integer> pos = new HashMap<Integer,Integer>();
       HashMap<Integer,Integer> neg = new HashMap<Integer,Integer>();
       for (int i = 1; i < 5; i++) {
         pos.put(i, i);
         neg.put(-i, -i);
       }
-  
+
       mapmap.put(4, pos);
       mapmap.put(-4, neg);
-  
+
       return mapmap;
     }
-  
+
     public Map<Long, Map<Numberz,Insanity>> testInsanity(Insanity argument) {
       System.out.print("testInsanity()\n");
-  
+
       HashMap<Numberz,Insanity> first_map = new HashMap<Numberz, Insanity>();
       HashMap<Numberz,Insanity> second_map = new HashMap<Numberz, Insanity>();;
-  
+
       first_map.put(Numberz.TWO, argument);
       first_map.put(Numberz.THREE, argument);
-  
+
       Insanity looney = new Insanity();
       second_map.put(Numberz.SIX, looney);
-  
+
       Map<Long,Map<Numberz,Insanity>> insane =
         new HashMap<Long, Map<Numberz,Insanity>>();
       insane.put((long)1, first_map);
       insane.put((long)2, second_map);
-  
+
       return insane;
     }
-  
+
     public Xtruct testMulti(byte arg0, int arg1, long arg2, Map<Short,String> arg3, Numberz arg4, long arg5) {
       System.out.print("testMulti()\n");
-  
+
       Xtruct hello = new Xtruct();;
       hello.string_thing = "Hello2";
       hello.byte_thing = arg0;
@@ -225,7 +225,7 @@ public abstract class ServerTestBase extends TestCase {
       hello.i64_thing = arg2;
       return hello;
     }
-  
+
     public void testException(String arg) throws Xception, TException {
       System.out.print("testException("+arg+")\n");
       if ("Xception".equals(arg)) {
@@ -241,7 +241,7 @@ public abstract class ServerTestBase extends TestCase {
       }
       return;
     }
-  
+
     public Xtruct testMultiException(String arg0, String arg1) throws Xception, Xception2 {
       System.out.print("testMultiException(" + arg0 + ", " + arg1 + ")\n");
       if (arg0.equals("Xception")) {
@@ -256,12 +256,12 @@ public abstract class ServerTestBase extends TestCase {
         x.struct_thing.string_thing = "This is an Xception2";
         throw x;
       }
-  
+
       Xtruct result = new Xtruct();
       result.string_thing = arg1;
       return result;
     }
-  
+
     public void testOneway(int sleepFor) {
       System.out.println("testOneway(" + Integer.toString(sleepFor) +
                          ") => sleeping...");
@@ -295,24 +295,24 @@ public abstract class ServerTestBase extends TestCase {
 
   public abstract TTransport getClientTransport(TTransport underlyingTransport) throws Exception;
 
-  private void testBool(ThriftTest.Client testClient) throws TException {
+  private void testBool(ThriftTestSrv.Client testClient) throws TException {
     boolean t = testClient.testBool(true);
     assertEquals(true, t);
     boolean f = testClient.testBool(false);
     assertEquals(false, f);
   }
 
-  private void testByte(ThriftTest.Client testClient) throws TException {
+  private void testByte(ThriftTestSrv.Client testClient) throws TException {
     byte i8 = testClient.testByte((byte)1);
     assertEquals(1, i8);
   }
 
-  private void testDouble(ThriftTest.Client testClient) throws TException {
+  private void testDouble(ThriftTestSrv.Client testClient) throws TException {
     double dub = testClient.testDouble(5.325098235);
     assertEquals(5.325098235, dub);
   }
 
-  private void testEnum(ThriftTest.Client testClient) throws TException {
+  private void testEnum(ThriftTestSrv.Client testClient) throws TException {
     assertEquals(Numberz.ONE, testClient.testEnum(Numberz.ONE));
     assertEquals(Numberz.TWO, testClient.testEnum(Numberz.TWO));
     assertEquals(Numberz.THREE, testClient.testEnum(Numberz.THREE));
@@ -320,20 +320,20 @@ public abstract class ServerTestBase extends TestCase {
     assertEquals(Numberz.EIGHT, testClient.testEnum(Numberz.EIGHT));
   }
 
-  private void testI32(ThriftTest.Client testClient) throws TException {
+  private void testI32(ThriftTestSrv.Client testClient) throws TException {
     int i32 = testClient.testI32(-1);
     assertEquals(i32, -1);
   }
 
-  private void testI64(ThriftTest.Client testClient) throws TException {
+  private void testI64(ThriftTestSrv.Client testClient) throws TException {
     long i64 = testClient.testI64(-34359738368L);
     assertEquals(i64, -34359738368L);
   }
 
   // todo: add assertions
-  private void testInsanity(ThriftTest.Client testClient) throws TException {
+  private void testInsanity(ThriftTestSrv.Client testClient) throws TException {
     Insanity insane;
-  
+
     insane = new Insanity();
     insane.userMap = new HashMap<Numberz, Long>();
     insane.userMap.put(Numberz.FIVE, (long)5000);
@@ -351,7 +351,7 @@ public abstract class ServerTestBase extends TestCase {
     for (long key : whoa.keySet()) {
       Map<Numberz,Insanity> val = whoa.get(key);
       System.out.print(key + " => {");
-  
+
       for (Numberz k2 : val.keySet()) {
         Insanity v2 = val.get(k2);
         System.out.print(k2 + " => {");
@@ -363,7 +363,7 @@ public abstract class ServerTestBase extends TestCase {
           }
         }
         System.out.print("}, ");
-  
+
         List<Xtruct> xtructs = v2.xtructs;
         System.out.print("{");
         if (xtructs != null) {
@@ -372,7 +372,7 @@ public abstract class ServerTestBase extends TestCase {
           }
         }
         System.out.print("}");
-  
+
         System.out.print("}, ");
       }
       System.out.print("}, ");
@@ -387,7 +387,7 @@ public abstract class ServerTestBase extends TestCase {
   public void testIt() throws Exception {
 
     for (TProtocolFactory protoFactory : getProtocols()) {
-      TProcessor processor = useAsyncProcessor() ? new ThriftTest.AsyncProcessor(new AsyncTestHandler()) : new ThriftTest.Processor(new TestHandler());
+      TProcessor processor = useAsyncProcessor() ? new ThriftTestSrv.AsyncProcessor(new AsyncTestHandler()) : new ThriftTestSrv.Processor(new TestHandler());
 
       startServer(processor, protoFactory);
 
@@ -396,7 +396,7 @@ public abstract class ServerTestBase extends TestCase {
       TTransport transport = getClientTransport(socket);
 
       TProtocol protocol = protoFactory.getProtocol(transport);
-      ThriftTest.Client testClient = new ThriftTest.Client(protocol);
+      ThriftTestSrv.Client testClient = new ThriftTestSrv.Client(protocol);
 
       open(transport);
       testVoid(testClient);
@@ -430,10 +430,10 @@ public abstract class ServerTestBase extends TestCase {
   }
 
   public List<TProtocolFactory> getProtocols() {
-    return PROTOCOLS;  
+    return PROTOCOLS;
   }
 
-  private void testList(ThriftTest.Client testClient) throws TException {
+  private void testList(ThriftTestSrv.Client testClient) throws TException {
     List<Integer> listout = new ArrayList<Integer>();
     for (int i = -2; i < 3; ++i) {
       listout.add(i);
@@ -442,7 +442,7 @@ public abstract class ServerTestBase extends TestCase {
     assertEquals(listout, listin);
   }
 
-  private void testMap(ThriftTest.Client testClient) throws TException {
+  private void testMap(ThriftTestSrv.Client testClient) throws TException {
     Map<Integer,Integer> mapout = new HashMap<Integer,Integer>();
     for (int i = 0; i < 5; ++i) {
       mapout.put(i, i-10);
@@ -451,7 +451,7 @@ public abstract class ServerTestBase extends TestCase {
     assertEquals(mapout, mapin);
   }
 
-  private void testStringMap(ThriftTest.Client testClient) throws TException {
+  private void testStringMap(ThriftTestSrv.Client testClient) throws TException {
     Map<String,String> mapout = new HashMap<String,String>();
     mapout.put("a", "123");
     mapout.put(" x y ", " with spaces ");
@@ -461,37 +461,37 @@ public abstract class ServerTestBase extends TestCase {
     assertEquals(mapout, mapin);
   }
 
-  private void testNestedMap(ThriftTest.Client testClient) throws TException {
+  private void testNestedMap(ThriftTestSrv.Client testClient) throws TException {
     Map<Integer,Map<Integer,Integer>> mm =
       testClient.testMapMap(1);
     Map<Integer,Map<Integer,Integer>> mapmap =
       new HashMap<Integer,Map<Integer,Integer>>();
-  
+
     HashMap<Integer,Integer> pos = new HashMap<Integer,Integer>();
     HashMap<Integer,Integer> neg = new HashMap<Integer,Integer>();
     for (int i = 1; i < 5; i++) {
       pos.put(i, i);
       neg.put(-i, -i);
     }
-  
+
     mapmap.put(4, pos);
     mapmap.put(-4, neg);
     assertEquals(mapmap, mm);
   }
 
-  private void testNestedStruct(ThriftTest.Client testClient) throws TException {
+  private void testNestedStruct(ThriftTestSrv.Client testClient) throws TException {
     Xtruct2 in2 = testClient.testNest(XSTRUCT2);
     assertEquals(XSTRUCT2, in2);
   }
 
-  private void testOneway(ThriftTest.Client testClient) throws Exception {
+  private void testOneway(ThriftTestSrv.Client testClient) throws Exception {
     long begin = System.currentTimeMillis();
     testClient.testOneway(1);
     long elapsed = System.currentTimeMillis() - begin;
     assertTrue(elapsed < 500);
   }
 
-  private void testSet(ThriftTest.Client testClient) throws TException {
+  private void testSet(ThriftTestSrv.Client testClient) throws TException {
     Set<Integer> setout = new HashSet<Integer>();
     for (int i = -2; i < 3; ++i) {
       setout.add(i);
@@ -500,20 +500,20 @@ public abstract class ServerTestBase extends TestCase {
     assertEquals(setout, setin);
   }
 
-  private void testString(ThriftTest.Client testClient) throws TException {
+  private void testString(ThriftTestSrv.Client testClient) throws TException {
     String s = testClient.testString("Test");
     assertEquals("Test", s);
   }
 
-  private void testStruct(ThriftTest.Client testClient) throws TException {
+  private void testStruct(ThriftTestSrv.Client testClient) throws TException {
     assertEquals(XSTRUCT, testClient.testStruct(XSTRUCT));
   }
 
-  private void testTypedef(ThriftTest.Client testClient) throws TException {
+  private void testTypedef(ThriftTestSrv.Client testClient) throws TException {
     assertEquals(309858235082523L, testClient.testTypedef(309858235082523L));
   }
 
-  private void testVoid(ThriftTest.Client testClient) throws TException {
+  private void testVoid(ThriftTestSrv.Client testClient) throws TException {
     testClient.testVoid();
   }
 
@@ -535,7 +535,7 @@ public abstract class ServerTestBase extends TestCase {
   public void testTransportFactory() throws Exception {
     for (TProtocolFactory protoFactory : getProtocols()) {
       TestHandler handler = new TestHandler();
-      ThriftTest.Processor processor = new ThriftTest.Processor(handler);
+      ThriftTestSrv.Processor processor = new ThriftTestSrv.Processor(handler);
 
       final CallCountingTransportFactory factory = new CallCountingTransportFactory(new TFramedTransport.Factory());
 
@@ -548,14 +548,14 @@ public abstract class ServerTestBase extends TestCase {
       open(transport);
 
       TProtocol protocol = protoFactory.getProtocol(transport);
-      ThriftTest.Client testClient = new ThriftTest.Client(protocol);
+      ThriftTestSrv.Client testClient = new ThriftTestSrv.Client(protocol);
       assertEquals(0, testClient.testByte((byte) 0));
       assertEquals(2, factory.count);
       stopServer();
     }
   }
 
-  private void testException(ThriftTest.Client testClient) throws TException, Xception {
+  private void testException(ThriftTestSrv.Client testClient) throws TException, Xception {
     try {
       testClient.testException("Xception");
       assert false;
@@ -572,7 +572,7 @@ public abstract class ServerTestBase extends TestCase {
   }
 
 
-  public static class AsyncTestHandler implements ThriftTest.AsyncIface {
+  public static class AsyncTestHandler implements ThriftTestSrv.AsyncIface {
 
     TestHandler handler = new TestHandler();
 

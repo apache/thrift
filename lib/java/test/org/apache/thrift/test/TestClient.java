@@ -166,8 +166,8 @@ public class TestClient {
       tProtocol = new TBinaryProtocol(transport);
     }
 
-    ThriftTest.Client testClient =
-      new ThriftTest.Client(tProtocol);
+    ThriftTestSrv.Client testClient =
+      new ThriftTestSrv.Client(tProtocol);
     Insanity insane = new Insanity();
 
     long timeMin = 0;

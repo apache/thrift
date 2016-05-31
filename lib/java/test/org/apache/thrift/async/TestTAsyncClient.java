@@ -4,8 +4,8 @@ import junit.framework.TestCase;
 
 import org.apache.thrift.TException;
 
-import thrift.test.Srv;
-import thrift.test.Srv.AsyncClient;
+import thrift.test.SrvSrv;
+import thrift.test.SrvSrv.AsyncClient;
 
 public class TestTAsyncClient extends TestCase {
   public void testRaisesExceptionWhenUsedConcurrently() throws Exception {
@@ -16,7 +16,7 @@ public class TestTAsyncClient extends TestCase {
       }
     };
 
-    Srv.AsyncClient c = new AsyncClient(null, mockClientManager, null);
+    SrvSrv.AsyncClient c = new AsyncClient(null, mockClientManager, null);
     c.Janky(0, null);
     try {
       c.checkReady();

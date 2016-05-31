@@ -35,7 +35,7 @@ import thrift.test.CompactProtoTestStruct;
 import thrift.test.HolyMoley;
 import thrift.test.Nesting;
 import thrift.test.OneOfEach;
-import thrift.test.Srv;
+import thrift.test.SrvSrv;
 
 public abstract class ProtocolTestBase extends TestCase {
 
@@ -305,7 +305,7 @@ public abstract class ProtocolTestBase extends TestCase {
   }
 
   public void testServerRequest() throws Exception {
-    Srv.Iface handler = new Srv.Iface() {
+    SrvSrv.Iface handler = new SrvSrv.Iface() {
       public int Janky(int i32arg) throws TException {
         return i32arg * 2;
       }
@@ -334,14 +334,14 @@ public abstract class ProtocolTestBase extends TestCase {
       }
     };
 
-    Srv.Processor testProcessor = new Srv.Processor(handler);
+    SrvSrv.Processor testProcessor = new SrvSrv.Processor(handler);
 
     TMemoryBuffer clientOutTrans = new TMemoryBuffer(0);
     TProtocol clientOutProto = getFactory().getProtocol(clientOutTrans);
     TMemoryBuffer clientInTrans = new TMemoryBuffer(0);
     TProtocol clientInProto = getFactory().getProtocol(clientInTrans);
 
-    Srv.Client testClient = new Srv.Client(clientInProto, clientOutProto);
+    SrvSrv.Client testClient = new SrvSrv.Client(clientInProto, clientOutProto);
 
     testClient.send_Janky(1);
     // System.out.println(clientOutTrans.inspect());
@@ -409,7 +409,7 @@ public abstract class ProtocolTestBase extends TestCase {
       }
       long serEnd = System.currentTimeMillis();
       long serElapsed = serEnd - serStart;
-      System.out.println("Ser:\t" + serElapsed + "ms\t" 
+      System.out.println("Ser:\t" + serElapsed + "ms\t"
           + ((double)serElapsed / NUM_REPS) + "ms per serialization");
 
       HolyMoley cpts = new HolyMoley();
@@ -420,7 +420,7 @@ public abstract class ProtocolTestBase extends TestCase {
       }
       long deserEnd = System.currentTimeMillis();
       long deserElapsed = deserEnd - deserStart;
-      System.out.println("Des:\t" + deserElapsed + "ms\t" 
+      System.out.println("Des:\t" + deserElapsed + "ms\t"
           + ((double)deserElapsed / NUM_REPS) + "ms per deserialization");
     }
   }

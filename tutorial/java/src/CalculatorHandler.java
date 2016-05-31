@@ -25,7 +25,7 @@ import shared.*;
 
 import java.util.HashMap;
 
-public class CalculatorHandler implements Calculator.Iface {
+public class CalculatorHandler implements CalculatorSrv.Iface {
 
   private HashMap<Integer,SharedStruct> log;
 
