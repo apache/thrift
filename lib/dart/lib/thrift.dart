@@ -51,6 +51,9 @@ part 'src/protocol/t_set.dart';
 part 'src/protocol/t_struct.dart';
 part 'src/protocol/t_type.dart';
 
+part 'src/serializer/t_deserializer.dart';
+part 'src/serializer/t_serializer.dart';
+
 part 'src/transport/t_buffered_transport.dart';
 part 'src/transport/t_framed_transport.dart';
 part 'src/transport/t_http_transport.dart';
