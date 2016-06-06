@@ -68,13 +68,13 @@ start(Args) ->
   {ok, Client0} = thrift_client_util:new(
     "127.0.0.1", Port, thrift_test_thrift, ClientOpts),
 
-  DemoXtruct = #'Xtruct'{
-    string_thing = <<"Zero">>,
-    byte_thing = 1,
-    i32_thing = 9128361,
-    i64_thing = 9223372036854775807},
+  DemoXtruct = #'thrift.test.Xtruct'{
+                  string_thing = <<"Zero">>,
+                  byte_thing = 1,
+                  i32_thing = 9128361,
+                  i64_thing = 9223372036854775807},
 
-  DemoNest = #'Xtruct2'{
+  DemoNest = #'thrift.test.Xtruct2'{
     byte_thing = 7,
     struct_thing = DemoXtruct,
     % Note that we don't set i32_thing, it will come back as undefined
@@ -86,9 +86,9 @@ start(Args) ->
   DemoDict = dict:from_list([ {Key, Key-10} || Key <- lists:seq(0,10) ]),
   DemoSet = sets:from_list([ Key || Key <- lists:seq(-3,3) ]),
 
-  DemoInsane = #'Insanity'{
+  DemoInsane = #'thrift.test.Insanity'{
     userMap = dict:from_list([{?THRIFT_TEST_NUMBERZ_FIVE, 5000}]),
-    xtructs = [#'Xtruct'{ string_thing = <<"Truck">>, byte_thing = 8, i32_thing = 8, i64_thing = 8}]},
+    xtructs = [#'thrift.test.Xtruct'{ string_thing = <<"Truck">>, byte_thing = 8, i32_thing = 8, i64_thing = 8}]},
 
   error_logger:info_msg("testVoid"),
   {Client01, {ok, ok}} = thrift_client:call(Client0, testVoid, []),
@@ -126,7 +126,7 @@ start(Args) ->
   {Client16, {ok, InsaneResult}}    = thrift_client:call(Client15, testInsanity, [DemoInsane]),
   io:format("~p~n", [InsaneResult]),
 
-  {Client17, {ok, #'Xtruct'{string_thing = <<"Message">>}}} =
+  {Client17, {ok, #'thrift.test.Xtruct'{string_thing = <<"Message">>}}} =
     thrift_client:call(Client16, testMultiException, ["Safe", "Message"]),
 
   Client18 =
@@ -135,10 +135,10 @@ start(Args) ->
       io:format("Unexpected return! ~p~n", [Result1]),
       ClientS1
     catch
-      throw:{ClientS2, {exception, ExnS1 = #'Xception'{}}} ->
-        #'Xception'{errorCode = 1001, message = <<"This is an Xception">>} = ExnS1,
+      throw:{ClientS2, {exception, ExnS1 = #'thrift.test.Xception'{}}} ->
+        #'thrift.test.Xception'{errorCode = 1001, message = <<"This is an Xception">>} = ExnS1,
         ClientS2;
-      throw:{ClientS2, {exception, _ExnS1 = #'Xception2'{}}} ->
+      throw:{ClientS2, {exception, _ExnS1 = #'thrift.test.Xception2'{}}} ->
         io:format("Wrong exception type!~n", []),
         ClientS2
     end,
@@ -149,12 +149,12 @@ start(Args) ->
       io:format("Unexpected return! ~p~n", [Result2]),
       ClientS3
     catch
-      throw:{ClientS4, {exception, _ExnS2 = #'Xception'{}}} ->
+      throw:{ClientS4, {exception, _ExnS2 = #'thrift.test.Xception'{}}} ->
         io:format("Wrong exception type!~n", []),
         ClientS4;
-      throw:{ClientS4, {exception, ExnS2 = #'Xception2'{}}} ->
-        #'Xception2'{errorCode = 2002,
-                   struct_thing = #'Xtruct'{
+      throw:{ClientS4, {exception, ExnS2 = #'thrift.test.Xception2'{}}} ->
+        #'thrift.test.Xception2'{errorCode = 2002,
+                   struct_thing = #'thrift.test.Xtruct'{
                      string_thing = <<"This is an Xception2">>}} = ExnS2,
         ClientS4
     end,
