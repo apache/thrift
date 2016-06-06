@@ -56,8 +56,6 @@ public:
     legacy_names_ = false;
     maps_ = false;
     otp16_ = false;
-    erl_namespace_ = program->get_namespace("erl");
-
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("legacynames") == 0) {
         legacy_names_ = true;
@@ -66,7 +64,7 @@ public:
       } else if( iter->first.compare("otp16") == 0) {
         otp16_ = true;
       } else {
-        throw "unknown option erl:" + iter->first;
+        throw "unknown option erl:" + iter->first; 
       }
     }
 
@@ -182,8 +180,6 @@ private:
   /* if true use non-namespaced dict and set instead of dict:dict and sets:set */
   bool otp16_;
 
-  /* A namespace that gets appended to our generated structs. */
-  std::string erl_namespace_;
   /**
    * add function to export list
    */
@@ -231,7 +227,6 @@ private:
    */
   std::vector<std::string> v_struct_names_;
   std::vector<std::string> v_enum_names_;
-  std::vector<std::string> v_exception_names_;
   std::vector<t_enum*> v_enums_;
 };
 
@@ -344,7 +339,6 @@ void t_erl_generator::close_generator() {
   export_types_string("enum_info", 1);
   export_types_string("enum_names", 0);
   export_types_string("struct_names", 0);
-  export_types_string("exception_names", 0);
 
   f_types_file_ << "-export([" << export_types_lines_.str() << "])." << endl << endl;
 
@@ -357,7 +351,6 @@ void t_erl_generator::close_generator() {
   generate_type_metadata("struct_names", v_struct_names_);
   generate_enum_metadata();
   generate_type_metadata("enum_names", v_enum_names_);
-  generate_type_metadata("exception_names", v_exception_names_);
 
   hrl_footer(f_types_hrl_file_, string("BOGUS"));
 
@@ -376,7 +369,7 @@ void t_erl_generator::generate_type_metadata(std::string function_name, vector<s
 
 
   for(size_t i=0; i < num_structs; i++) {
-    f_types_file_ << names.at(i);
+    f_types_file_ << atomify(names.at(i));
 
     if (i < num_structs - 1) {
       f_types_file_ << ", ";
@@ -407,7 +400,7 @@ void t_erl_generator::generate_enum(t_enum* tenum) {
   vector<t_enum_value*>::iterator c_iter;
 
   v_enums_.push_back(tenum);
-  v_enum_names_.push_back(atomify(tenum->get_name()));
+  v_enum_names_.push_back(tenum->get_name());
 
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
@@ -504,7 +497,7 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
     indent(out) << value->get_integer();
 
   } else if (type->is_struct() || type->is_xception()) {
-    out << "#" << type_name(type) << "{";
+    out << "#" << atomify(type->get_name()) << "{";
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
     const map<t_const_value*, t_const_value*>& val = value->get_map();
@@ -589,7 +582,7 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
 string t_erl_generator::render_default_value(t_field* field) {
   t_type* type = field->get_type();
   if (type->is_struct() || type->is_xception()) {
-    return "#" + type_name(type) + "{}";
+    return "#" + atomify(type->get_name()) + "{}";
   } else if (type->is_map()) {
     if (maps_) {
       return "#{}";
@@ -627,7 +620,7 @@ string t_erl_generator::render_member_type(t_field* field) {
   } else if (type->is_enum()) {
     return "integer()";
   } else if (type->is_struct() || type->is_xception()) {
-    return type_name(type) + "()";
+    return atomify(type->get_name()) + "()";
   } else if (type->is_map()) {
     if (maps_) {
       return "#{}";
@@ -664,7 +657,7 @@ string t_erl_generator::render_member_requiredness(t_field* field) {
  * Generates a struct
  */
 void t_erl_generator::generate_struct(t_struct* tstruct) {
-  v_struct_names_.push_back(type_name(tstruct));
+  v_struct_names_.push_back(tstruct->get_name());
   generate_erl_struct(tstruct, false);
 }
 
@@ -675,7 +668,6 @@ void t_erl_generator::generate_struct(t_struct* tstruct) {
  * @param txception The struct definition
  */
 void t_erl_generator::generate_xception(t_struct* txception) {
-  v_exception_names_.push_back(type_name(txception));
   generate_erl_struct(txception, true);
 }
 
@@ -1017,10 +1009,6 @@ string t_erl_generator::argument_list(t_struct* tstruct) {
 
 string t_erl_generator::type_name(t_type* ttype) {
   string prefix = "";
-  if (erl_namespace_.length() > 0) {
-    prefix = erl_namespace_ + ".";
-  }
-
   string name = ttype->get_name();
 
   if (ttype->is_struct() || ttype->is_xception() || ttype->is_service()) {
