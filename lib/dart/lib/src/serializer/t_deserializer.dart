@@ -19,32 +19,22 @@ part of thrift;
 
 class TDeserializer {
   final message = new TMessage('Deserializer', TMessageType.ONEWAY, 1);
-  TTransport transport;
+  TBufferedTransport transport;
   TProtocol protocol;
 
   TDeserializer() {
     this.transport = new TBufferedTransport();
-    this.protocol = new TBinaryProtocolFactory().getProtocol(transport);
+    this.protocol = new TBinaryProtocolFactory().getProtocol(this.transport);
   }
 
   void read(TBase msg, Uint8List data) {
-    protocol.writeMessageBegin(message);
+    transport.setReadBuffer(data);
     
-    protocol.writeBinary(data);
-    
-    protocol.writeMessageEnd();
-
     msg.read(protocol);
   }
 
   void readString(TBase msg, String data) {
-    protocol.writeMessageBegin(message);
-    
-    protocol.writeString(data);
-
-    protocol.writeMessageEnd();
-    
-    transport.flush();
+    transport.setReadBuffer(BASE64.decode(data));
 
     msg.read(protocol);
   }

@@ -19,7 +19,7 @@ library thrift;
 
 import 'dart:async';
 import 'dart:collection';
-import 'dart:convert' show Utf8Codec;
+import 'dart:convert' show Utf8Codec, BASE64;
 import 'dart:typed_data' show ByteData;
 import 'dart:typed_data' show Endianness;
 import 'dart:typed_data' show Uint8List;

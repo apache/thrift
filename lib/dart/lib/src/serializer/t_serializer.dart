@@ -19,7 +19,7 @@ part of thrift;
 
 class TSerializer {
   final message = new TMessage('Serializer', TMessageType.ONEWAY, 1);
-  TTransport transport;
+  TBufferedTransport transport;
   TProtocol protocol;
 
   TSerializer() {
@@ -28,26 +28,16 @@ class TSerializer {
   }
 
   Uint8List write(TBase msg) {
-//    protocol.writeMessageBegin(message);
-    
     msg.write(protocol);
     
-//    protocol.writeMessageEnd();
-    
-    protocol.transport.flush();
-
-    return protocol.readBinary();
+    return transport.consumeWriteBuffer();
   }
 
   String writeString(TBase msg) {
-    protocol.writeMessageBegin(message);
-
     msg.write(protocol);
     
-    protocol.writeMessageEnd();
-
-    protocol.transport.flush();
-
-    return protocol.readString();
+    Uint8List bytes = transport.consumeWriteBuffer();
+    
+    return BASE64.encode(bytes);
   }
 }

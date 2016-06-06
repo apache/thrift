@@ -44,7 +44,7 @@ class THttpClientTransport extends TBufferedTransport {
   }
 
   Future flush() {
-    var requestBody = CryptoUtils.bytesToBase64(_consumeWriteBuffer());
+    var requestBody = CryptoUtils.bytesToBase64(consumeWriteBuffer());
 
     // Use a sync completer to ensure that the buffer can be read immediately
     // after the read buffer is set, and avoid a race condition where another
@@ -63,7 +63,7 @@ class THttpClientTransport extends TBufferedTransport {
             "Expected a Base 64 encoded string.");
       }
 
-      _setReadBuffer(data);
+      setReadBuffer(data);
       completer.complete();
     });
 

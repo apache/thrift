@@ -74,42 +74,42 @@ void main() {
 
     test('JSON Protocol String', () {
       serializer.protocol = new TJsonProtocol(serializer.transport);
-      deserializer.protocol = new TJsonProtocol(serializer.transport);
+      deserializer.protocol = new TJsonProtocol(deserializer.transport);
       
       runWriteStringTest();
     });
 
     test('JSON Protocol', () {
       serializer.protocol = new TJsonProtocol(serializer.transport);
-      deserializer.protocol = new TJsonProtocol(serializer.transport);
+      deserializer.protocol = new TJsonProtocol(deserializer.transport);
 
       runWriteTest();
     });
 
     test('Binary Protocol String', () {
       serializer.protocol = new TBinaryProtocol(serializer.transport);
-      deserializer.protocol = new TBinaryProtocol(serializer.transport);
+      deserializer.protocol = new TBinaryProtocol(deserializer.transport);
 
       runWriteStringTest();
     });
 
     test('Binary Protocol', () {
       serializer.protocol = new TBinaryProtocol(serializer.transport);
-      deserializer.protocol = new TBinaryProtocol(serializer.transport);
+      deserializer.protocol = new TBinaryProtocol(deserializer.transport);
 
       runWriteTest();
     });
 
     test('Compact Protocol String', () {
       serializer.protocol = new TCompactProtocol(serializer.transport);
-      deserializer.protocol = new TCompactProtocol(serializer.transport);
+      deserializer.protocol = new TCompactProtocol(deserializer.transport);
 
       runWriteStringTest();
     });
 
     test('Compact Protocol', () {
       serializer.protocol = new TCompactProtocol(serializer.transport);
-      deserializer.protocol = new TCompactProtocol(serializer.transport);
+      deserializer.protocol = new TCompactProtocol(deserializer.transport);
 
       runWriteTest();
     });
