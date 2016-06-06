@@ -24,7 +24,6 @@ import 'dart:typed_data' show ByteData;
 import 'dart:typed_data' show Endianness;
 import 'dart:typed_data' show Uint8List;
 
-import 'package:crypto/crypto.dart' show CryptoUtils;
 import 'package:fixnum/fixnum.dart';
 import 'package:http/http.dart' show Client;
 import 'package:logging/logging.dart';
