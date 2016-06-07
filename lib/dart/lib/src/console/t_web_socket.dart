@@ -18,10 +18,10 @@
 library thrift.src.console.t_web_socket;
 
 import 'dart:async';
+import 'dart:convert' show BASE64;
 import 'dart:io';
 import 'dart:typed_data' show Uint8List;
 
-import 'package:crypto/crypto.dart' show CryptoUtils;
 import 'package:thrift/thrift.dart';
 
 /// A [TSocket] backed by a [WebSocket] from dart:io
@@ -67,13 +67,13 @@ class TWebSocket implements TSocket {
   }
 
   void send(Uint8List data) {
-    _socket.add(CryptoUtils.bytesToBase64(data));
+    _socket.add(BASE64.encode(data));
   }
 
   void _onMessage(String message) {
     try {
       Uint8List data =
-          new Uint8List.fromList(CryptoUtils.base64StringToBytes(message));
+          new Uint8List.fromList(BASE64.decode(message));
       _onMessageController.add(data);
     } on FormatException catch (_) {
       var error = new TProtocolError(TProtocolErrorType.INVALID_DATA,
