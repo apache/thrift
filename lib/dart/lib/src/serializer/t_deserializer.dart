@@ -22,20 +22,29 @@ class TDeserializer {
   TBufferedTransport transport;
   TProtocol protocol;
 
-  TDeserializer() {
+  TDeserializer({TProtocolFactory protocolFactory}) {
     this.transport = new TBufferedTransport();
-    this.protocol = new TBinaryProtocolFactory().getProtocol(this.transport);
-  }
-
-  void read(TBase msg, Uint8List data) {
-    transport.setReadBuffer(data);
     
-    msg.read(protocol);
+    if (protocolFactory == null) {
+        protocolFactory = new TBinaryProtocolFactory();
+    }
+    
+    this.protocol = protocolFactory.getProtocol(this.transport);
   }
 
-  void readString(TBase msg, String data) {
-    transport.setReadBuffer(BASE64.decode(data));
+  void read(TBase base, Uint8List data) {
+    transport.writeAll(data);
+    
+    transport.flush();
+    
+    base.read(protocol);
+  }
 
-    msg.read(protocol);
+  void readString(TBase base, String data) {
+    transport.writeAll(BASE64.decode(data));
+    
+    transport.flush();
+
+    base.read(protocol);
   }
 }

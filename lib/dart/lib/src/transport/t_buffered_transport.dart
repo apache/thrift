@@ -28,7 +28,7 @@ class TBufferedTransport extends TTransport {
     return buffer;
   }
 
-  void setReadBuffer(Uint8List readBuffer) {
+  void _setReadBuffer(Uint8List readBuffer) {
     _readIterator = readBuffer != null ? readBuffer.iterator : null;
   }
 

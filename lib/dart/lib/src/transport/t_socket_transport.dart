@@ -56,7 +56,7 @@ abstract class TSocketTransport extends TBufferedTransport {
 
   /// Make an incoming message available to read from the transport.
   void handleIncomingMessage(Uint8List messageBytes) {
-    setReadBuffer(messageBytes);
+    _setReadBuffer(messageBytes);
   }
 }
 

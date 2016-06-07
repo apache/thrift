@@ -22,19 +22,24 @@ class TSerializer {
   TBufferedTransport transport;
   TProtocol protocol;
 
-  TSerializer() {
+  TSerializer({TProtocolFactory protocolFactory}) {
     this.transport = new TBufferedTransport();
-    this.protocol = new TBinaryProtocolFactory().getProtocol(transport);
+    
+    if (protocolFactory == null) {
+      protocolFactory = new TBinaryProtocolFactory();
+    }
+
+    this.protocol = protocolFactory.getProtocol(this.transport);
   }
 
-  Uint8List write(TBase msg) {
-    msg.write(protocol);
+  Uint8List write(TBase base) {
+    base.write(protocol);
     
     return transport.consumeWriteBuffer();
   }
 
-  String writeString(TBase msg) {
-    msg.write(protocol);
+  String writeString(TBase base) {
+    base.write(protocol);
     
     Uint8List bytes = transport.consumeWriteBuffer();
     

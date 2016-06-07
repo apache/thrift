@@ -63,7 +63,7 @@ class THttpClientTransport extends TBufferedTransport {
             "Expected a Base 64 encoded string.");
       }
 
-      setReadBuffer(data);
+      _setReadBuffer(data);
       completer.complete();
     });
 
