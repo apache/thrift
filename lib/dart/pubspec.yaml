@@ -23,9 +23,8 @@ author: Apache Thrift Developers <dev@thrift.apache.org>
 homepage: http://thrift.apache.org
 documentation: http://thrift.apache.org
 environment:
-  sdk: ">=1.12.0 <2.0.0"
+  sdk: ">=1.13.0 <2.0.0"
 dependencies:
-  crypto: "^0.9.0"
   fixnum: "^0.10.2"
   http: "^0.11.3"
   logging: "^0.11.0"

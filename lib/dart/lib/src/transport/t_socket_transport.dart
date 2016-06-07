@@ -71,7 +71,7 @@ class TClientSocketTransport extends TSocketTransport {
   TClientSocketTransport(TSocket socket) : super(socket);
 
   Future flush() {
-    Uint8List bytes = _consumeWriteBuffer();
+    Uint8List bytes = consumeWriteBuffer();
 
     // Use a sync completer to ensure that the buffer can be read immediately
     // after the read buffer is set, and avoid a race condition where another
@@ -116,7 +116,7 @@ class TAsyncClientSocketTransport extends TSocketTransport {
         super(socket);
 
   Future flush() {
-    Uint8List bytes = _consumeWriteBuffer();
+    Uint8List bytes = consumeWriteBuffer();
     TMessage message = messageReader.readMessage(bytes);
     int seqid = message.seqid;
 
@@ -163,7 +163,7 @@ class TServerSocketTransport extends TSocketTransport {
         super(socket);
 
   Future flush() async {
-    Uint8List message = _consumeWriteBuffer();
+    Uint8List message = consumeWriteBuffer();
     socket.send(message);
   }
 
