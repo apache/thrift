@@ -1152,7 +1152,7 @@ string t_erlang_generator::render_attribute(string type, string content) {
 }
 
 string t_erlang_generator::render_namespaced(const t_program* program, string const& s) {
-  string ns = program->get_namespace("erl");
+  string ns = program->get_namespace("erlang");
   if (strip_unsafe(ns).size() > 0) {
     return ns + "_" + s;
   }
