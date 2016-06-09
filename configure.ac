@@ -730,6 +730,7 @@ AC_CONFIG_FILES([
   lib/haxe/test/Makefile
   lib/hs/Makefile
   lib/java/Makefile
+  lib/js/Makefile
   lib/js/test/Makefile
   lib/json/Makefile
   lib/json/test/Makefile

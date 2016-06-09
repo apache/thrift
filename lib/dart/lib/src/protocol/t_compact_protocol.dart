@@ -187,7 +187,7 @@ class TCompactProtocol extends TProtocol {
 
   void writeDouble(double d) {
     if (d == null) d = 0.0;
-    tempBD.setFloat64(0, d);
+    tempBD.setFloat64(0, d, Endianness.LITTLE_ENDIAN);
     transport.write(tempBD.buffer.asUint8List(), 0, 8);
   }
 
@@ -364,7 +364,7 @@ class TCompactProtocol extends TProtocol {
 
   double readDouble() {
     transport.readAll(tempList, 0, 8);
-    return tempList.buffer.asByteData().getFloat64(0);
+    return tempList.buffer.asByteData().getFloat64(0, Endianness.LITTLE_ENDIAN);
   }
 
   String readString() {
