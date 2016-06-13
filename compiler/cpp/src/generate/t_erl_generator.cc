@@ -226,6 +226,7 @@ private:
    * Metadata containers
    */
   std::vector<std::string> v_struct_names_;
+  std::vector<std::string> v_exception_names_;
   std::vector<std::string> v_enum_names_;
   std::vector<t_enum*> v_enums_;
 };
@@ -339,6 +340,7 @@ void t_erl_generator::close_generator() {
   export_types_string("enum_info", 1);
   export_types_string("enum_names", 0);
   export_types_string("struct_names", 0);
+  export_types_string("exception_names", 0);
 
   f_types_file_ << "-export([" << export_types_lines_.str() << "])." << endl << endl;
 
@@ -349,6 +351,7 @@ void t_erl_generator::close_generator() {
   f_types_file_ << "struct_info_ext(_) -> erlang:error(function_clause)." << endl << endl;
 
   generate_type_metadata("struct_names", v_struct_names_);
+  generate_type_metadata("exception_names", v_exception_names_);
   generate_enum_metadata();
   generate_type_metadata("enum_names", v_enum_names_);
 
@@ -668,6 +671,7 @@ void t_erl_generator::generate_struct(t_struct* tstruct) {
  * @param txception The struct definition
  */
 void t_erl_generator::generate_xception(t_struct* txception) {
+  v_exception_names_.push_back(txception->get_name());
   generate_erl_struct(txception, true);
 }
 
