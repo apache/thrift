@@ -107,10 +107,10 @@ handle_function(testBinary, {S}) when is_binary(S) ->
     {reply, S};
 
 handle_function(testStruct,
-                {Struct = #'Xtruct'{string_thing = String,
-                                 byte_thing = Byte,
-                                 i32_thing = I32,
-                                 i64_thing = I64}})
+                {Struct = #'thrift.test.Xtruct'{string_thing = String,
+                                                byte_thing = Byte,
+                                                i32_thing = I32,
+                                                i64_thing = I64}})
 when is_binary(String),
      is_integer(Byte),
      is_integer(I32),
@@ -119,8 +119,8 @@ when is_binary(String),
     {reply, Struct};
 
 handle_function(testNest,
-                {Nest}) when is_record(Nest, 'Xtruct2'),
-                             is_record(Nest#'Xtruct2'.struct_thing, 'Xtruct') ->
+                {Nest}) when is_record(Nest, 'thrift.test.Xtruct2'),
+                             is_record(Nest#'thrift.test.Xtruct2'.struct_thing, 'thrift.test.Xtruct') ->
     io:format("testNest: ~p~n", [Nest]),
     {reply, Nest};
 
@@ -159,22 +159,22 @@ handle_function(testMapMap, {Hello}) ->
                              {-4, dict:from_list(NegList)}]),
     {reply, MapMap};
 
-handle_function(testInsanity, {Insanity}) when is_record(Insanity, 'Insanity') ->
-    Hello = #'Xtruct'{string_thing = <<"Hello2">>,
-                    byte_thing = 2,
-                    i32_thing = 2,
-                    i64_thing = 2},
+handle_function(testInsanity, {Insanity}) when is_record(Insanity, 'thrift.test.Insanity') ->
+    Hello = #'thrift.test.Xtruct'{string_thing = <<"Hello2">>,
+                                  byte_thing = 2,
+                                  i32_thing = 2,
+                                  i64_thing = 2},
 
-    Goodbye = #'Xtruct'{string_thing = <<"Goodbye4">>,
-                      byte_thing = 4,
-                      i32_thing = 4,
-                      i64_thing = 4},
-    Crazy = #'Insanity'{
-      userMap = dict:from_list([{?THRIFT_TEST_NUMBERZ_EIGHT, 8}]),
-      xtructs = [Goodbye]
-      },
+    Goodbye = #'thrift.test.Xtruct'{string_thing = <<"Goodbye4">>,
+                                   byte_thing = 4,
+                                    i32_thing = 4,
+                                    i64_thing = 4},
+    Crazy = #'thrift.test.Insanity'{
+               userMap = dict:from_list([{?THRIFT_TEST_NUMBERZ_EIGHT, 8}]),
+               xtructs = [Goodbye]
+              },
 
-    Looney = #'Insanity'{},
+    Looney = #'thrift.test.Insanity'{},
 
     FirstMap = dict:from_list([{?THRIFT_TEST_NUMBERZ_TWO, Insanity},
                                {?THRIFT_TEST_NUMBERZ_THREE, Insanity}]),
@@ -196,16 +196,16 @@ handle_function(testMulti, Args = {Arg0, Arg1, Arg2, _Arg3, Arg4, Arg5})
        is_integer(Arg5) ->
 
     io:format("testMulti(~p)~n", [Args]),
-    {reply, #'Xtruct'{string_thing = <<"Hello2">>,
-                    byte_thing = Arg0,
-                    i32_thing = Arg1,
-                    i64_thing = Arg2}};
+    {reply, #'thrift.test.Xtruct'{string_thing = <<"Hello2">>,
+                                  byte_thing = Arg0,
+                                  i32_thing = Arg1,
+                                  i64_thing = Arg2}};
 
 handle_function(testException, {String}) when is_binary(String) ->
     io:format("testException(~p)~n", [String]),
     case String of
         <<"Xception">> ->
-            throw(#'Xception'{errorCode = 1001,
+            throw(#'thrift.test.Xception'{errorCode = 1001,
                             message = String});
         <<"TException">> ->
             throw({?TApplicationException_Structure});
@@ -217,14 +217,14 @@ handle_function(testMultiException, {Arg0, Arg1}) ->
     io:format("testMultiException(~p, ~p)~n", [Arg0, Arg1]),
     case Arg0 of
         <<"Xception">> ->
-            throw(#'Xception'{errorCode = 1001,
+            throw(#'thrift.test.Xception'{errorCode = 1001,
                                    message = <<"This is an Xception">>});
         <<"Xception2">> ->
-            throw(#'Xception2'{errorCode = 2002,
+            throw(#'thrift.test.Xception2'{errorCode = 2002,
                                     struct_thing =
-                                    #'Xtruct'{string_thing = <<"This is an Xception2">>}});
+                                    #'thrift.test.Xtruct'{string_thing = <<"This is an Xception2">>}});
         _ ->
-            {reply, #'Xtruct'{string_thing = Arg1}}
+            {reply, #'thrift.test.Xtruct'{string_thing = Arg1}}
     end;
 
 handle_function(testOneway, {Seconds}) ->
