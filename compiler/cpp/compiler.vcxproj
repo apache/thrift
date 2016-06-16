@@ -26,7 +26,6 @@
     <ClInclude Include="src\generate\t_html_generator.h" />
     <ClInclude Include="src\globals.h" />
     <ClInclude Include="src\main.h" />
-    <ClInclude Include="src\md5.h" />
     <ClInclude Include="src\parse\t_base_type.h" />
     <ClInclude Include="src\parse\t_const.h" />
     <ClInclude Include="src\parse\t_const_value.h" />
@@ -51,7 +50,7 @@
     <ClInclude Include="src\windows\version.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\audit\t_audit.cpp"/>
+    <ClCompile Include="src\audit\t_audit.cpp" />
     <ClCompile Include="src\generate\t_as3_generator.cc" />
     <ClCompile Include="src\generate\t_cocoa_generator.cc" />
     <ClCompile Include="src\generate\t_cpp_generator.cc" />
@@ -78,11 +77,10 @@
     <ClCompile Include="src\generate\t_py_generator.cc" />
     <ClCompile Include="src\generate\t_rb_generator.cc" />
     <ClCompile Include="src\generate\t_st_generator.cc" />
-	<ClCompile Include="src\generate\t_swift_generator.cc" />
+    <ClCompile Include="src\generate\t_swift_generator.cc" />
     <ClCompile Include="src\generate\t_xml_generator.cc" />
     <ClCompile Include="src\generate\t_xsd_generator.cc" />
     <ClCompile Include="src\main.cc" />
-    <ClCompile Include="src\md5.c" />
     <ClCompile Include="src\parse\parse.cc" />
     <ClCompile Include="src\parse\t_typedef.cc" />
     <ClCompile Include="src\thriftl.cc" />

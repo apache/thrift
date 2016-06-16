@@ -442,8 +442,8 @@ private:
 
 private {
   timeval toTimeval(const(Duration) dur) {
-    timeval tv = {tv_sec: cast(int)dur.total!"seconds"(),
-      tv_usec: dur.total!"usecs"};
+    timeval tv;
+    dur.split!("seconds", "usecs")(tv.tv_sec, tv.tv_usec);
     return tv;
   }
 

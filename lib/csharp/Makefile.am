@@ -103,8 +103,11 @@ EXTRA_DIST = \
              $(THRIFTCODE) \
              ThriftMSBuildTask \
              src/Thrift.csproj \
+             src/Thrift.45.csproj \
              src/Thrift.sln \
              src/Transport/TSilverlightSocket.cs \
+             src/Transport/THttpTaskAsyncHandler.cs \
+             src/TAsyncProcessor.cs \
              test \
              coding_standards.md \
              README.md

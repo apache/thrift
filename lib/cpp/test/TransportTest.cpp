@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "config.h"
+#include <thrift/thrift-config.h>
 
 #include <stdlib.h>
 #include <time.h>

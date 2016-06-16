@@ -212,7 +212,7 @@ void THttpTransport::refill() {
   httpBuf_[httpBufLen_] = '\0';
 
   if (got == 0) {
-    throw TTransportException("Could not refill buffer");
+    throw TTransportException(TTransportException::END_OF_FILE, "Could not refill buffer");
   }
 }
 

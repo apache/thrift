@@ -23,23 +23,18 @@ Makefile-perl.mk : Makefile.PL
 	$(PERL) Makefile.PL MAKEFILE=Makefile-perl.mk INSTALLDIRS=$(INSTALLDIRS) INSTALL_BASE=$(PERL_PREFIX)
 
 all-local: Makefile-perl.mk
-	$(MAKE) -f Makefile-perl.mk
+	$(MAKE) -f $<
 	find blib -name 'Makefile*' -exec rm -f {} \;
 
-check-local:
-	$(PERL) -Iblib/lib -I@abs_srcdir@ -I@builddir@/test/gen-perl \
-		-I@builddir@/test/gen-perl/BenchmarkTest \
-		-I@builddir@/test/gen-perl/Aggr \
-		@abs_srcdir@/test.pl @abs_srcdir@/test/*.t
-
 install-exec-local: Makefile-perl.mk
-	$(MAKE) -f Makefile-perl.mk install DESTDIR=$(DESTDIR)/
+	$(MAKE) -f $< install DESTDIR=$(DESTDIR)/
 
 clean-local:
 	if test -f Makefile-perl.mk ; then \
 		$(MAKE) -f Makefile-perl.mk clean ; \
 	fi
-	rm -f Makefile-perl.mk.old
+	$(RM) Makefile-perl.mk.old
+	$(RM) -r gen-perl gen-perl2
 
 EXTRA_DIST = \
 	coding_standards.md \
@@ -62,5 +57,49 @@ EXTRA_DIST = \
 	lib/Thrift/Socket.pm \
 	lib/Thrift/SSLSocket.pm \
 	lib/Thrift/SSLServerSocket.pm \
+	lib/Thrift/UnixServerSocket.pm \
+	lib/Thrift/UnixSocket.pm \
 	lib/Thrift/Transport.pm \
 	README.md
+
+THRIFT = @top_builddir@/compiler/cpp/thrift
+THRIFT_IF = @top_srcdir@/test/ThriftTest.thrift
+NAME_BENCHMARKSERVICE =  @top_srcdir@/lib/rb/benchmark/Benchmark.thrift
+NAME_AGGR = @top_srcdir@/contrib/async-test/aggr.thrift
+
+THRIFTTEST_GEN = \
+	gen-perl/ThriftTest/Constants.pm \
+	gen-perl/ThriftTest/SecondService.pm \
+	gen-perl/ThriftTest/ThriftTest.pm \
+	gen-perl/ThriftTest/Types.pm
+
+BENCHMARK_GEN = \
+	gen-perl/BenchmarkService.pm \
+	gen-perl/Constants.pm \
+	gen-perl/Types.pm
+
+AGGR_GEN = \
+	gen-perl2/Aggr.pm \
+	gen-perl2/Constants.pm \
+	gen-perl2/Types.pm
+
+PERL_GEN = \
+	$(THRIFTTEST_GEN) \
+	$(BENCHMARK_GEN) \
+	$(AGGR_GEN)
+
+BUILT_SOURCES = $(PERL_GEN)
+
+check-local: $(PERL_GEN)
+	$(PERL) -Iblib/lib -I@abs_srcdir@ -I@builddir@/gen-perl2 -I@builddir@/gen-perl \
+		@abs_srcdir@/test.pl @abs_srcdir@/test/*.t
+
+$(THRIFTTEST_GEN): $(THRIFT_IF) $(THRIFT)
+	$(THRIFT) --gen perl $<
+
+$(BENCHMARK_GEN): $(NAME_BENCHMARKSERVICE) $(THRIFT)
+	$(THRIFT) --gen perl $<
+
+$(AGGR_GEN): $(NAME_AGGR) $(THRIFT)
+	$(MKDIR_P) gen-perl2
+	$(THRIFT) -out gen-perl2 --gen perl $<

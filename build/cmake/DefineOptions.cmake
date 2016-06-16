@@ -149,7 +149,7 @@ MESSAGE_DEP(HAVE_COMPILER "Disabled because BUILD_THRIFT=OFF and no valid THRIFT
 message(STATUS "  Build Thrift libraries:                     ${BUILD_LIBRARIES}")
 message(STATUS " Language libraries:")
 message(STATUS "  Build C++ library:                          ${BUILD_CPP}")
-MESSAGE_DEP(WITH_CPP "Disabled by via WITH_CCP=OFF")
+MESSAGE_DEP(WITH_CPP "Disabled by via WITH_CPP=OFF")
 MESSAGE_DEP(Boost_FOUND "Boost headers missing")
 message(STATUS "  Build C (GLib) library:                     ${BUILD_C_GLIB}")
 MESSAGE_DEP(WITH_C_GLIB "Disabled by via WITH_C_GLIB=OFF")

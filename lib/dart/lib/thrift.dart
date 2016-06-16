@@ -19,11 +19,11 @@ library thrift;
 
 import 'dart:async';
 import 'dart:collection';
-import 'dart:convert' show Utf8Codec;
+import 'dart:convert' show Utf8Codec, BASE64;
 import 'dart:typed_data' show ByteData;
+import 'dart:typed_data' show Endianness;
 import 'dart:typed_data' show Uint8List;
 
-import 'package:crypto/crypto.dart' show CryptoUtils;
 import 'package:fixnum/fixnum.dart';
 import 'package:http/http.dart' show Client;
 import 'package:logging/logging.dart';
@@ -49,6 +49,9 @@ part 'src/protocol/t_protocol_util.dart';
 part 'src/protocol/t_set.dart';
 part 'src/protocol/t_struct.dart';
 part 'src/protocol/t_type.dart';
+
+part 'src/serializer/t_deserializer.dart';
+part 'src/serializer/t_serializer.dart';
 
 part 'src/transport/t_buffered_transport.dart';
 part 'src/transport/t_framed_transport.dart';

@@ -42,8 +42,18 @@ class TestServer
                 transport = new TServerSocket( args.port);
             case http:
                 trace("- http");
-                throw "HTTP server not implemented yet";
+                #if !phpwebserver
+                  throw "HTTP server not implemented yet";
                  //transport = new THttpServer( targetHost);
+                #else
+                transport =    new TWrappingServerTransport(
+                        new TStreamTransport(
+                          new TFileStream("php://input", Read),
+                          new TFileStream("php://output", Append)
+                          )
+                        );
+
+                #end
             default:
                 throw "Unhandled transport";
             }
@@ -84,7 +94,12 @@ class TestServer
             switch( args.servertype)
             {
             case simple:
-                server = new TSimpleServer( processor, transport, transfactory, protfactory);
+                var simpleServer = new TSimpleServer( processor, transport, transfactory, protfactory);
+                #if phpwebserver
+                simpleServer.runOnce = true;
+                #end
+                server = simpleServer;
+
             default:
                 throw "Unhandled server type";
             }
@@ -106,7 +121,7 @@ class TestServer
         }
         catch (x : TException)
         {
-			trace('$x ${x.errorID} ${x.errorMsg}');
+            trace('$x ${x.errorID} ${x.errorMsg}');
         }
         catch (x : Dynamic)
         {

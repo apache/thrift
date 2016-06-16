@@ -96,7 +96,7 @@ func (p *ThriftTestHandler) TestStringMap(thing map[string]string) (r map[string
 	return thing, nil
 }
 
-func (p *ThriftTestHandler) TestSet(thing map[int32]bool) (r map[int32]bool, err error) {
+func (p *ThriftTestHandler) TestSet(thing map[int32]struct{}) (r map[int32]struct{}, err error) {
 	return thing, nil
 }
 

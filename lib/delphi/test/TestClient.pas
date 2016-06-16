@@ -19,6 +19,8 @@
 
 unit TestClient;
 
+{$I ../src/Thrift.Defines.inc}
+
 {.$DEFINE StressTest}   // activate to stress-test the server with frequent connects/disconnects
 {.$DEFINE PerfTest}     // activate to activate the performance test
 
@@ -321,7 +323,7 @@ begin
 
         trns_NamedPipes: begin
           Console.WriteLine('Using named pipe ('+sPipeName+')');
-          streamtrans := TNamedPipeTransportClientEndImpl.Create( sPipeName, 0, nil, TIMEOUT);
+          streamtrans := TNamedPipeTransportClientEndImpl.Create( sPipeName, 0, nil, TIMEOUT, TIMEOUT);
         end;
 
         trns_AnonPipes: begin
@@ -438,9 +440,10 @@ var
   arg3 : IThriftDictionary<SmallInt, string>;
   arg4 : TNumberz;
   arg5 : Int64;
+  {$IFDEF PerfTest}
   StartTick : Cardinal;
   k : Integer;
-  proc : TThreadProcedure;
+  {$ENDIF}
   hello, goodbye : IXtruct;
   crazy : IInsanity;
   looney : IInsanity;
@@ -490,10 +493,10 @@ begin
     on e:Exception do Expect( FALSE, 'Unexpected exception type "'+e.ClassName+'"');
   end;
 
-  {
+
   if FTransport.IsOpen then FTransport.Close;
   FTransport.Open;   // re-open connection, server has already closed
-  }
+
 
   // case 3: no exception
   try
@@ -950,7 +953,7 @@ begin
   // call time
   {$IFDEF PerfTest}
   StartTestGroup( 'Test Calltime()');
-  StartTick := GetTIckCount;
+  StartTick := GetTickCount;
   for k := 0 to 1000 - 1 do
   begin
     client.testVoid();
@@ -1172,7 +1175,8 @@ begin
     // We have a failed test!
     // -> issue DebugBreak ONLY if a debugger is attached,
     // -> unhandled DebugBreaks would cause Windows to terminate the app otherwise
-    if IsDebuggerPresent then asm int 3 end;
+    if IsDebuggerPresent
+    then {$IFDEF CPUX64} DebugBreak {$ELSE} asm int 3 end {$ENDIF};
   end;
 end;
 

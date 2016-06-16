@@ -19,12 +19,17 @@
 
  unit Thrift.Server;
 
+{$I Thrift.Defines.inc}
 {$I-}  // prevent annoying errors with default log delegate and no console
 
 interface
 
 uses
+  {$IFDEF OLD_UNIT_NAMES}
   Windows, SysUtils,
+  {$ELSE}
+  Winapi.Windows, System.SysUtils,
+  {$ENDIF}
   Thrift,
   Thrift.Protocol,
   Thrift.Transport;
@@ -345,7 +350,7 @@ begin
       if client = nil then begin
         if FStop
         then Abort  // silent exception
-        else raise TTransportException.Create( 'ServerTransport.Accept() may not return NULL' );
+        else raise TTransportExceptionUnknown.Create('ServerTransport.Accept() may not return NULL');
       end;
 
       FLogDelegate( 'Client Connected!');

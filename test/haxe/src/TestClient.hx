@@ -43,6 +43,8 @@ import cpp.vm.Thread;
 import thrift.test.*;  // generated code
 
 
+using StringTools;
+
 class TestResults {
     private var successCnt : Int = 0;
     private var errorCnt : Int = 0;
@@ -102,7 +104,7 @@ class TestResults {
         if ( errorCnt > 0)
         {
             trace('===========================');
-              trace('FAILED TESTS: $failedTests');
+            trace('FAILED TESTS: $failedTests');
         }
         trace('===========================');
     }
@@ -118,20 +120,15 @@ class TestClient {
         {
             var difft = Timer.stamp();
 
-            if( args.numThreads > 1) {
-                var threads = new List<Thread>();
-                for( test in 0 ... args.numThreads) {
-                    threads.add( StartThread( args));
-                }
-                exitCode = 0;
-                for( thread in threads) {
-                    exitCode |= Thread.readMessage(true);
-                }
+            if ( args.numThreads > 1) {
+                #if cpp
+                exitCode = MultiThreadClient(args);
+                #else
+                trace('Threads not supported/implemented for this platform.');
+                exitCode = SingleThreadClient(args);
+                #end
             } else {
-                var rslt = new TestResults(true);
-                RunClient(args,rslt);
-                rslt.PrintSummary();
-                exitCode = rslt.CalculateExitCode();
+                exitCode = SingleThreadClient(args);
             }
 
             difft = Math.round( 1000 * (Timer.stamp() - difft)) / 1000;
@@ -154,6 +151,31 @@ class TestClient {
     }
 
 
+    public static function SingleThreadClient(args : Arguments) :  Int
+    {
+        var rslt = new TestResults(true);
+        RunClient(args,rslt);
+        rslt.PrintSummary();
+        return rslt.CalculateExitCode();
+    }
+
+
+    #if cpp
+    public static function MultiThreadClient(args : Arguments) :  Int
+    {
+        var threads = new List<Thread>();
+        for( test in 0 ... args.numThreads) {
+            threads.add( StartThread( args));
+        }
+        var exitCode : Int = 0;
+        for( thread in threads) {
+            exitCode |= Thread.readMessage(true);
+        }
+        return exitCode;
+    }
+    #end
+
+    #if cpp
     private static function StartThread(args : Arguments) : Thread {
         var thread = Thread.create(
             function() : Void {
@@ -179,6 +201,7 @@ class TestClient {
         thread.sendMessage(Thread.current());
         return thread;
     }
+    #end
 
 
     public static function RunClient(args : Arguments, rslt : TestResults)
@@ -189,7 +212,9 @@ class TestClient {
             case socket:
                 transport = new TSocket(args.host, args.port);
             case http:
-                transport = new THttpClient(args.host);
+                var uri = 'http://${args.host}:${args.port}';
+                trace('- http client : ${uri}');
+                transport = new THttpClient(uri);
             default:
                 throw "Unhandled transport";
         }
@@ -235,7 +260,7 @@ class TestClient {
     {
         // We need to test a few basic things used in the ClientTest
         // Anything else beyond this scope should go into /lib/haxe/ instead
-        rslt.StartTestGroup( 0);
+        rslt.StartTestGroup( TestResults.EXITCODE_FAILBIT_BASETYPES);
 
         var map32 = new IntMap<Int32>();
         var map64 = new Int64Map<Int32>();
@@ -297,8 +322,9 @@ class TestClient {
         rslt.Expect( c32 == c64, "Int64Map<Int32> Test #30");
         rslt.Expect( '$ksum64' == '$ksum32', '$ksum64 == $ksum32   Test #31');
 
-        var s32 = map32.toString();
-        var s64 = map64.toString();
+        //compare without spaces because differ in php and cpp
+        var s32 = map32.toString().replace(' ', '');
+        var s64 = map64.toString().replace(' ', '');
         rslt.Expect( s32 == s64, "Int64Map<Int32>.toString(): " + ' ("$s32" == "$s64") Test #32');
 
         map32.remove( 42);
@@ -322,8 +348,8 @@ class TestClient {
 
     // core module unit tests
     public static function ModuleUnitTests( args : Arguments, rslt : TestResults) : Void {
-		#if debug
-		
+        #if debug
+
         try {
             BitConverter.UnitTest();
             rslt.Expect( true, 'BitConverter.UnitTest  Test #100');
@@ -339,8 +365,8 @@ class TestClient {
         catch( e : Dynamic) {
             rslt.Expect( false, 'ZigZag.UnitTest: $e  Test #101');
         }
-		
-		#end
+
+        #end
     }
 
 
@@ -464,11 +490,11 @@ class TestClient {
         trace('testBool(${true})');
         var b = client.testBool(true);
         trace(' = $b');
-		rslt.Expect(b, '$b == "${true}"');
+        rslt.Expect(b, '$b == "${true}"');
         trace('testBool(${false})');
         b = client.testBool(false);
         trace(' = $b');
-		rslt.Expect( ! b, '$b == "${false}"');
+        rslt.Expect( ! b, '$b == "${false}"');
 
         trace('testString("Test")');
         var s = client.testString("Test");
