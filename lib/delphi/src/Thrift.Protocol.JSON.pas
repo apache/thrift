@@ -310,7 +310,7 @@ begin
     TType.Set_:     result := NAME_SET;
     TType.List:     result := NAME_LIST;
   else
-    raise TProtocolException.Create( TProtocolException.NOT_IMPLEMENTED, 'Unrecognized type ('+IntToStr(Ord(typeID))+')');
+    raise TProtocolExceptionNotImplemented.Create('Unrecognized type ('+IntToStr(Ord(typeID))+')');
   end;
 end;
 
@@ -328,7 +328,7 @@ begin
   else if name = NAME_MAP    then result := TType.Map
   else if name = NAME_LIST   then result := TType.List
   else if name = NAME_SET    then result := TType.Set_
-  else raise TProtocolException.Create( TProtocolException.NOT_IMPLEMENTED, 'Unrecognized type ('+name+')');
+  else raise TProtocolExceptionNotImplemented.Create('Unrecognized type ('+name+')');
 end;
 
 
@@ -506,7 +506,7 @@ var ch : Byte;
 begin
   ch := FReader.Read;
   if (ch <> b)
-  then raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Unexpected character ('+Char(ch)+')');
+  then raise TProtocolExceptionInvalidData.Create('Unexpected character ('+Char(ch)+')');
 end;
 
 
@@ -516,7 +516,7 @@ begin
   i := StrToIntDef( '$0'+Char(ch), -1);
   if (0 <= i) and (i < $10)
   then result := i
-  else raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Expected hex character ('+Char(ch)+')');
+  else raise TProtocolExceptionInvalidData.Create('Expected hex character ('+Char(ch)+')');
 end;
 
 
@@ -853,7 +853,7 @@ begin
       then begin
         off := Pos( Char(ch), ESCAPE_CHARS);
         if off < 1
-        then raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Expected control char');
+        then raise TProtocolExceptionInvalidData.Create('Expected control char');
         ch := Byte( ESCAPE_CHAR_VALS[off]);
         buffer.Write( ch, 1);
         Continue;
@@ -870,12 +870,12 @@ begin
       // we need to make UTF8 bytes from it, to be decoded later
       if CharUtils.IsHighSurrogate(char(wch)) then begin
         if highSurogate <> #0
-        then raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Expected low surrogate char');
+        then raise TProtocolExceptionInvalidData.Create('Expected low surrogate char');
         highSurogate := char(wch);
       end
       else if CharUtils.IsLowSurrogate(char(wch)) then begin
         if highSurogate = #0
-        then TProtocolException.Create( TProtocolException.INVALID_DATA, 'Expected high surrogate char');
+        then TProtocolExceptionInvalidData.Create('Expected high surrogate char');
         surrogatePairs[0] := highSurogate;
         surrogatePairs[1] := char(wch);
         tmp := TEncoding.UTF8.GetBytes(surrogatePairs);
@@ -889,7 +889,7 @@ begin
     end;
 
     if highSurogate <> #0
-    then raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Expected low surrogate char');
+    then raise TProtocolExceptionInvalidData.Create('Expected low surrogate char');
 
     SetLength( result, buffer.Size);
     if buffer.Size > 0 then Move( buffer.Memory^, result[0], Length(result));
@@ -943,8 +943,7 @@ begin
     result := StrToInt64(str);
   except
     on e:Exception do begin
-      raise TProtocolException.Create( TProtocolException.INVALID_DATA,
-                                       'Bad data encounted in numeric data ('+str+') ('+e.Message+')');
+      raise TProtocolExceptionInvalidData.Create('Bad data encounted in numeric data ('+str+') ('+e.Message+')');
     end;
   end;
 end;
@@ -966,7 +965,7 @@ begin
     and not Math.IsInfinite(dub)
     then begin
       // Throw exception -- we should not be in a string in  Self case
-      raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Numeric data unexpectedly quoted');
+      raise TProtocolExceptionInvalidData.Create('Numeric data unexpectedly quoted');
     end;
     result := dub;
     Exit;
@@ -981,8 +980,7 @@ begin
     result := StrToFloat( str, INVARIANT_CULTURE);
   except
     on e:Exception
-    do raise TProtocolException.Create( TProtocolException.INVALID_DATA,
-                                       'Bad data encounted in numeric data ('+str+') ('+e.Message+')');
+    do raise TProtocolExceptionInvalidData.Create('Bad data encounted in numeric data ('+str+') ('+e.Message+')');
   end;
 end;
 
@@ -1061,7 +1059,7 @@ begin
   ReadJSONArrayStart;
 
   if ReadJSONInteger <> VERSION
-  then raise TProtocolException.Create( TProtocolException.BAD_VERSION, 'Message contained bad version.');
+  then raise TProtocolExceptionBadVersion.Create('Message contained bad version.');
 
   result.Name  := SysUtils.TEncoding.UTF8.GetString( ReadJSONString( FALSE));
   result.Type_ := TMessageType( ReadJSONInteger);

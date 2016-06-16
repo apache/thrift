@@ -36,7 +36,7 @@ struct Doubles {
 struct OneOfEach {
   1: bool im_true,
   2: bool im_false,
-  3: byte a_bite = 0x7f,
+  3: i8 a_bite = 0x7f,
   4: i16 integer16 = 0x7fff,
   5: i32 integer32,
   6: i64 integer64 = 10000000000,
@@ -45,7 +45,7 @@ struct OneOfEach {
   9: string zomg_unicode,
   10: bool what_who,
   11: binary base64,
-  12: list<byte> byte_list = [1, 2, 3],
+  12: list<i8> byte_list = [1, 2, 3],
   13: list<i16> i16_list = [1,2,3],
   14: list<i64> i64_list = [1,2,3]
 }
@@ -105,7 +105,7 @@ struct Base64 {
 
 struct CompactProtoTestStruct {
   // primitive fields
-  1: byte   a_byte;
+  1: i8     a_byte;
   2: i16    a_i16;
   3: i32    a_i32;
   4: i64    a_i64;
@@ -117,7 +117,7 @@ struct CompactProtoTestStruct {
   10: Empty empty_struct_field;
 
   // primitives in lists
-  11: list<byte>    byte_list;
+  11: list<i8>      byte_list;
   12: list<i16>     i16_list;
   13: list<i32>     i32_list;
   14: list<i64>     i64_list;
@@ -128,7 +128,7 @@ struct CompactProtoTestStruct {
   19: list<Empty>   struct_list;
 
   // primitives in sets
-  20: set<byte>     byte_set;
+  20: set<i8>       byte_set;
   21: set<i16>      i16_set;
   22: set<i32>      i32_set;
   23: set<i64>      i64_set;
@@ -140,30 +140,30 @@ struct CompactProtoTestStruct {
 
   // maps
   // primitives as keys
-  29: map<byte, byte>             byte_byte_map;
-  30: map<i16, byte>              i16_byte_map;
-  31: map<i32, byte>              i32_byte_map;
-  32: map<i64, byte>              i64_byte_map;
-  33: map<double, byte>           double_byte_map;
-  34: map<string, byte>           string_byte_map;
-  35: map<binary, byte>           binary_byte_map;
-  36: map<bool, byte>             boolean_byte_map;
+  29: map<i8, i8>               byte_byte_map;
+  30: map<i16, i8>              i16_byte_map;
+  31: map<i32, i8>              i32_byte_map;
+  32: map<i64, i8>              i64_byte_map;
+  33: map<double, i8>           double_byte_map;
+  34: map<string, i8>           string_byte_map;
+  35: map<binary, i8>           binary_byte_map;
+  36: map<bool, i8>             boolean_byte_map;
   // primitives as values
-  37: map<byte, i16>              byte_i16_map;
-  38: map<byte, i32>              byte_i32_map;
-  39: map<byte, i64>              byte_i64_map;
-  40: map<byte, double>           byte_double_map;
-  41: map<byte, string>           byte_string_map;
-  42: map<byte, binary>           byte_binary_map;
-  43: map<byte, bool>             byte_boolean_map;
+  37: map<i8, i16>              byte_i16_map;
+  38: map<i8, i32>              byte_i32_map;
+  39: map<i8, i64>              byte_i64_map;
+  40: map<i8, double>           byte_double_map;
+  41: map<i8, string>           byte_string_map;
+  42: map<i8, binary>           byte_binary_map;
+  43: map<i8, bool>             byte_boolean_map;
   // collections as keys
-  44: map<list<byte> (python.immutable = ""), byte>       list_byte_map;
-  45: map<set<byte> (python.immutable = ""), byte>        set_byte_map;
-  46: map<map<byte,byte> (python.immutable = ""), byte>   map_byte_map;
+  44: map<list<i8> (python.immutable = ""), i8>       list_byte_map;
+  45: map<set<i8> (python.immutable = ""), i8>        set_byte_map;
+  46: map<map<i8,i8> (python.immutable = ""), i8>     map_byte_map;
   // collections as values
-  47: map<byte, map<byte,byte>>   byte_map_map;
-  48: map<byte, set<byte>>        byte_set_map;
-  49: map<byte, list<byte>>       byte_list_map;
+  47: map<i8, map<i8,i8>>     byte_map_map;
+  48: map<i8, set<i8>>        byte_set_map;
+  49: map<i8, list<i8>>       byte_list_map;
 }
 
 // To be used to test the serialization of an empty map
@@ -248,6 +248,8 @@ service Srv {
   void methodWithDefaultArgs(1: i32 something = MYCONST);
 
   oneway void onewayMethod();
+
+  bool declaredExceptionMethod(1: bool shouldThrow) throws (1: ExceptionWithAMap xwamap);
 }
 
 service Inherited extends Srv {

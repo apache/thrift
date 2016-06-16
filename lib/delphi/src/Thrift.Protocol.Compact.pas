@@ -651,14 +651,14 @@ begin
 
   protocolId := Byte( ReadByte);
   if (protocolId <> PROTOCOL_ID)
-  then raise TProtocolException.Create( 'Expected protocol id ' + IntToHex(PROTOCOL_ID,2)
-                                      + ' but got ' + IntToHex(protocolId,2));
+  then raise TProtocolExceptionBadVersion.Create( 'Expected protocol id ' + IntToHex(PROTOCOL_ID,2)
+                                                + ' but got ' + IntToHex(protocolId,2));
 
   versionAndType := Byte( ReadByte);
   version        := Byte( versionAndType and VERSION_MASK);
   if (version <> VERSION)
-  then raise TProtocolException.Create( 'Expected version ' +IntToStr(VERSION)
-                                      + ' but got ' + IntToStr(version));
+  then raise TProtocolExceptionBadVersion.Create( 'Expected version ' +IntToStr(VERSION)
+                                                + ' but got ' + IntToStr(version));
 
   type_ := Byte( (versionAndType shr TYPE_SHIFT_AMOUNT) and TYPE_BITS);
   seqid := Integer( ReadVarint32);
@@ -960,7 +960,7 @@ begin
   tct := Types( type_ and $0F);
   if tct in [Low(Types)..High(Types)]
   then result := tcompactTypeToType[tct]
-  else raise TProtocolException.Create('don''t know what type: '+IntToStr(Ord(tct)));
+  else raise TProtocolExceptionInvalidData.Create('don''t know what type: '+IntToStr(Ord(tct)));
 end;
 
 
@@ -969,7 +969,7 @@ class function TCompactProtocolImpl.getCompactType( const ttype : TType) : Byte;
 begin
   if ttype in VALID_TTYPES
   then result := Byte( ttypeToCompactType[ttype])
-  else raise TProtocolException.Create('don''t know what type: '+IntToStr(Ord(ttype)));
+  else raise TProtocolExceptionInvalidData.Create('don''t know what type: '+IntToStr(Ord(ttype)));
 end;
 
 

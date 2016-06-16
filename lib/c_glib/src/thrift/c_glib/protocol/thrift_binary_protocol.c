@@ -645,8 +645,8 @@ thrift_binary_protocol_read_bool (ThriftProtocol *protocol, gboolean *value,
   g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret = 
-       thrift_transport_read (protocol->transport,
-                              b, 1, error)) < 0)
+       thrift_transport_read_all (protocol->transport,
+                                  b, 1, error)) < 0)
   {
     return -1;
   }
@@ -664,8 +664,8 @@ thrift_binary_protocol_read_byte (ThriftProtocol *protocol, gint8 *value,
   g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret =
-       thrift_transport_read (protocol->transport,
-                              b, 1, error)) < 0)
+       thrift_transport_read_all (protocol->transport,
+                                  b, 1, error)) < 0)
   {
     return -1;
   }
@@ -687,8 +687,8 @@ thrift_binary_protocol_read_i16 (ThriftProtocol *protocol, gint16 *value,
   g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret =
-       thrift_transport_read (protocol->transport,
-                              b.byte_array, 2, error)) < 0)
+       thrift_transport_read_all (protocol->transport,
+                                  b.byte_array, 2, error)) < 0)
   {
     return -1;
   }
@@ -710,8 +710,8 @@ thrift_binary_protocol_read_i32 (ThriftProtocol *protocol, gint32 *value,
   g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret =
-       thrift_transport_read (protocol->transport,
-                              b.byte_array, 4, error)) < 0)
+       thrift_transport_read_all (protocol->transport,
+                                  b.byte_array, 4, error)) < 0)
   {
     return -1;
   }
@@ -733,8 +733,8 @@ thrift_binary_protocol_read_i64 (ThriftProtocol *protocol, gint64 *value,
   g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret =
-       thrift_transport_read (protocol->transport,
-                              b.byte_array, 8, error)) < 0)
+       thrift_transport_read_all (protocol->transport,
+                                  b.byte_array, 8, error)) < 0)
   {
     return -1;
   }
@@ -756,8 +756,8 @@ thrift_binary_protocol_read_double (ThriftProtocol *protocol,
   g_return_val_if_fail (THRIFT_IS_BINARY_PROTOCOL (protocol), -1);
 
   if ((ret =
-       thrift_transport_read (protocol->transport,
-                              b.byte_array, 8, error)) < 0)
+       thrift_transport_read_all (protocol->transport,
+                                  b.byte_array, 8, error)) < 0)
   {
     return -1;
   }
@@ -790,8 +790,8 @@ thrift_binary_protocol_read_string (ThriftProtocol *protocol,
     len = (guint32) read_len + 1; /* space for null terminator */
     *str = g_new0 (gchar, len);
     if ((ret =
-         thrift_transport_read (protocol->transport,
-                                *str, read_len, error)) < 0)
+         thrift_transport_read_all (protocol->transport,
+                                    *str, read_len, error)) < 0)
     {
       g_free (*str);
       *str = NULL;
@@ -831,8 +831,8 @@ thrift_binary_protocol_read_binary (ThriftProtocol *protocol,
     *len = (guint32) read_len;
     *buf = g_new (guchar, *len);
     if ((ret =
-         thrift_transport_read (protocol->transport,
-                                *buf, *len, error)) < 0)
+         thrift_transport_read_all (protocol->transport,
+                                    *buf, *len, error)) < 0)
     {
       g_free (*buf);
       *buf = NULL;

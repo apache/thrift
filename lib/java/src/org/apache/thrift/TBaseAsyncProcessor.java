@@ -19,6 +19,7 @@
 package org.apache.thrift;
 
 import org.apache.thrift.protocol.*;
+import org.apache.thrift.async.AsyncMethodCallback;
 
 import org.apache.thrift.server.AbstractNonblockingServer.*;
 import org.slf4j.Logger;
@@ -53,35 +54,47 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
         if (fn == null) {
             TProtocolUtil.skip(in, TType.STRUCT);
             in.readMessageEnd();
-            TApplicationException x = new TApplicationException(TApplicationException.UNKNOWN_METHOD, "Invalid method name: '"+msg.name+"'");
-            out.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));
-            x.write(out);
-            out.writeMessageEnd();
-            out.getTransport().flush();
+            if (!fn.isOneway()) {
+              TApplicationException x = new TApplicationException(TApplicationException.UNKNOWN_METHOD, "Invalid method name: '"+msg.name+"'");
+              out.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));
+              x.write(out);
+              out.writeMessageEnd();
+              out.getTransport().flush();
+            }
             fb.responseReady();
             return true;
         }
 
         //Get Args
-        TBase args = (TBase)fn.getEmptyArgsInstance();
+        TBase args = fn.getEmptyArgsInstance();
 
         try {
             args.read(in);
         } catch (TProtocolException e) {
             in.readMessageEnd();
-            TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-            out.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));
-            x.write(out);
-            out.writeMessageEnd();
-            out.getTransport().flush();
+            if (!fn.isOneway()) {
+              TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+              out.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));
+              x.write(out);
+              out.writeMessageEnd();
+              out.getTransport().flush();
+            }
             fb.responseReady();
             return true;
         }
         in.readMessageEnd();
 
+        if (fn.isOneway()) {
+          fb.responseReady();
+        }
 
         //start off processing function
-        fn.start(iface, args,fn.getResultHandler(fb,msg.seqid));
+        AsyncMethodCallback resultHandler = fn.getResultHandler(fb, msg.seqid);
+        try {
+          fn.start(iface, args, resultHandler);
+        } catch (Exception e) {
+          resultHandler.onError(e);
+        }
         return true;
     }
 

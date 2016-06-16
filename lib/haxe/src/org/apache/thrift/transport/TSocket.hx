@@ -73,7 +73,7 @@ class TSocket extends TTransport  {
     private var output : Output = null;
     #end
 
-    private static inline var DEFAULT_TIMEOUT = 5.0;
+    private var timeout : Float = 30;
 
     private var obuffer : BytesOutput = new BytesOutput();
     private var ioCallback : TException->Void = null;
@@ -92,7 +92,8 @@ class TSocket extends TTransport  {
     #if ! (flash || js)
     // used by TSocketServer
     public static function fromSocket( socket : Socket) : TSocket  {
-        var result = new TSocket("",0);
+        var socketHost = socket.host();
+        var result = new TSocket(socketHost.host.toString(), socketHost.port);
         result.assignSocket(socket);
         return result;
     }
@@ -240,7 +241,7 @@ class TSocket extends TTransport  {
         }
         catch (e : TException)
         {
-            trace('TException $e');
+            trace('TException $e, message : ${e.errorMsg}');
             if(ioCallback != null) {
                 ioCallback(e);
             }
@@ -270,11 +271,17 @@ class TSocket extends TTransport  {
         var socket = new Socket();
         socket.connect(host, port);
 
+        #elseif php
+        var socket = new Socket();
+        socket.connect(host, port);
+        socket.setBlocking(true);
+        socket.setTimeout(timeout);
+
         #else
         var socket = new Socket();
         socket.setBlocking(true);
         socket.setFastSend(true);
-        socket.setTimeout( DEFAULT_TIMEOUT);
+        socket.setTimeout(timeout);
         socket.connect(host, port);
 
         #end
@@ -299,6 +306,13 @@ class TSocket extends TTransport  {
         input = socket.input;
 
         #end
+    }
+
+    public function setTimeout( timeout : Float ) : Void {
+        if(isOpen()) {
+            socket.setTimeout(timeout);
+        }
+        this.timeout = timeout;
     }
 
 }

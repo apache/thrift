@@ -19,6 +19,7 @@
 
 unit TestServer;
 
+{$I ../src/Thrift.Defines.inc}
 {$WARN SYMBOL_PLATFORM OFF}
 
 {.$DEFINE RunEndless}   // activate to interactively stress-test the server stop routines via Ctrl+C
@@ -661,7 +662,7 @@ begin
       end;
 
       trns_Http : begin
-        raise Exception.Create('HTTP server transport not implemented');
+        raise Exception.Create(ENDPOINT_TRANSPORTS[endpoint]+' server transport not implemented');
       end;
 
       trns_NamedPipes : begin

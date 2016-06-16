@@ -1130,7 +1130,7 @@ void TNonblockingServer::listenSocket(THRIFT_SOCKET s) {
 
   if (listen(s, LISTEN_BACKLOG) == -1) {
     ::THRIFT_CLOSESOCKET(s);
-    throw TException("TNonblockingServer::serve() listen");
+    throw TTransportException(TTransportException::NOT_OPEN, "TNonblockingServer::serve() listen");
   }
 
   // Cool, this socket is good to go, set it as the serverSocket_
@@ -1436,16 +1436,16 @@ bool TNonblockingIOThread::notify(TNonblockingServer::TConnection* conn) {
   }
 
   fd_set wfds, efds;
-  int ret = -1;
-  int kSize = sizeof(conn);
-  const char* pos = (const char*)const_cast_sockopt(&conn);
+  long ret = -1;
+  long kSize = sizeof(conn);
+  const char* pos = reinterpret_cast<const char*>(&conn);
 
   while (kSize > 0) {
     FD_ZERO(&wfds);
     FD_ZERO(&efds);
     FD_SET(fd, &wfds);
     FD_SET(fd, &efds);
-    ret = select(fd + 1, NULL, &wfds, &efds, NULL);
+    ret = select(static_cast<int>(fd + 1), NULL, &wfds, &efds, NULL);
     if (ret < 0) {
       return false;
     } else if (ret == 0) {

@@ -18,22 +18,34 @@
  */
 package org.apache.thrift.async;
 
-
+/**
+ * A handler interface asynchronous clients can implement to receive future
+ * notice of the results of an asynchronous method call.
+ *
+ * @param <T> The return type of the asynchronously invoked method.
+ */
 public interface AsyncMethodCallback<T> {
   /**
    * This method will be called when the remote side has completed invoking
-   * your method call and the result is fully read. For oneway method calls,
-   * this method will be called as soon as we have completed writing out the
-   * request.
-   * @param response
+   * your method call and the result is fully read. For {@code oneway} method
+   * calls, this method will be called as soon as we have completed writing out
+   * the request.
+   *
+   * @param response The return value of the asynchronously invoked method;
+   *                 {@code null} for void methods which includes
+   *                 {@code oneway} methods.
    */
-  public void onComplete(T response);
+  void onComplete(T response);
 
   /**
-   * This method will be called when there is an unexpected clientside
-   * exception. This does not include application-defined exceptions that
-   * appear in the IDL, but rather things like IOExceptions.
-   * @param exception
+   * This method will be called when there is either an unexpected client-side
+   * exception like an IOException or else when the remote method raises an
+   * exception, either declared in the IDL or due to an unexpected server-side
+   * error.
+   *
+   * @param exception The exception encountered processing the the asynchronous
+   *                  method call, may be a local exception or an unmarshalled
+   *                  remote exception.
    */
-  public void onError(Exception exception);
+  void onError(Exception exception);
 }

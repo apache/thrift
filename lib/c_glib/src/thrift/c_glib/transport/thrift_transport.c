@@ -85,6 +85,14 @@ thrift_transport_flush (ThriftTransport *transport, GError **error)
   return THRIFT_TRANSPORT_GET_CLASS (transport)->flush (transport, error);
 }
 
+gint32
+thrift_transport_read_all (ThriftTransport *transport, gpointer buf,
+                           guint32 len, GError **error)
+{
+  return THRIFT_TRANSPORT_GET_CLASS (transport)->read_all (transport, buf,
+                                                           len, error);
+}
+
 /* by default, peek returns true if and only if the transport is open */
 static gboolean
 thrift_transport_real_peek (ThriftTransport *transport, GError **error)
@@ -92,6 +100,33 @@ thrift_transport_real_peek (ThriftTransport *transport, GError **error)
   THRIFT_UNUSED_VAR (error);
 
   return THRIFT_TRANSPORT_GET_CLASS (transport)->is_open (transport);
+}
+
+static gint32
+thrift_transport_real_read_all (ThriftTransport *transport, gpointer buf,
+                                guint32 len, GError **error)
+{
+  ThriftTransportClass *ttc;
+  guint32 have;
+  gint32 ret;
+  gint8 *bytes;
+
+  THRIFT_UNUSED_VAR (error);
+
+  ttc = THRIFT_TRANSPORT_GET_CLASS (transport);
+  have = 0;
+  ret = 0;
+  bytes = (gint8*) buf;
+
+  while (have < len) {
+    if ((ret = ttc->read (transport, (gpointer) (bytes + have), len - have,
+                          error)) < 0) {
+      return ret;
+    }
+    have += ret;
+  }
+
+  return have;
 }
 
 /* define the GError domain for Thrift transports */
@@ -115,8 +150,9 @@ thrift_transport_class_init (ThriftTransportClass *cls)
   cls->write_end = thrift_transport_write_end;
   cls->flush = thrift_transport_flush;
 
-  /* provide a default implementation for the peek method */
+  /* provide a default implementation for the peek and read_all methods */
   cls->peek = thrift_transport_real_peek;
+  cls->read_all = thrift_transport_real_read_all;
 }
 
 static void

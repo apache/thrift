@@ -30,7 +30,7 @@ class TMultiplexedProcessor(TProcessor):
 
     def process(self, iprot, oprot):
         (name, type, seqid) = iprot.readMessageBegin()
-        if type != TMessageType.CALL & type != TMessageType.ONEWAY:
+        if type != TMessageType.CALL and type != TMessageType.ONEWAY:
             raise TException("TMultiplex protocol only supports CALL & ONEWAY")
 
         index = name.find(TMultiplexedProtocol.SEPARATOR)

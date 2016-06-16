@@ -418,19 +418,24 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
   }
 
   case T_STRING: {
+    ScopedPyObject nval;
+
     if (PyUnicode_Check(value)) {
-      value = PyUnicode_AsUTF8String(value);
-      if (!value) {
+      nval.reset(PyUnicode_AsUTF8String(value));
+      if (!nval) {
         return false;
       }
+    } else {
+      Py_INCREF(value);
+      nval.reset(value);
     }
 
-    Py_ssize_t len = PyBytes_Size(value);
+    Py_ssize_t len = PyBytes_Size(nval.get());
     if (!detail::check_ssize_t_32(len)) {
       return false;
     }
 
-    impl()->writeString(value, static_cast<int32_t>(len));
+    impl()->writeString(nval.get(), static_cast<int32_t>(len));
     return true;
   }
 

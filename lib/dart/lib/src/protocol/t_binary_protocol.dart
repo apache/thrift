@@ -124,11 +124,15 @@ class TBinaryProtocol extends TProtocol {
     transport.write(_i32Out.buffer.asUint8List(), 0, 4);
   }
 
-  final ByteData _i64Out = new ByteData(8);
+  final Uint8List _i64Out = new Uint8List(8);
   void writeI64(int i64) {
     if (i64 == null) i64 = 0;
-    _i64Out.setInt64(0, i64);
-    transport.write(_i64Out.buffer.asUint8List(), 0, 8);
+    var i = new Int64(i64);
+    var bts = i.toBytes();
+    for (var j = 0; j < 8; j++) {
+      _i64Out[j] = bts[8 - j - 1];
+    }
+    transport.write(_i64Out, 0, 8);
   }
 
   void writeString(String s) {
@@ -247,7 +251,8 @@ class TBinaryProtocol extends TProtocol {
   final Uint8List _i64In = new Uint8List(8);
   int readI64() {
     transport.readAll(_i64In, 0, 8);
-    return _i64In.buffer.asByteData().getInt64(0);
+    var i = new Int64.fromBytesBigEndian(_i64In);
+    return i.toInt();
   }
 
   final Uint8List _doubleIn = new Uint8List(8);

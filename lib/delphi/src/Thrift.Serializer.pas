@@ -18,10 +18,16 @@
  *)
 unit Thrift.Serializer;
 
+{$I Thrift.Defines.inc}
+
 interface
 
 uses
+  {$IFDEF OLD_UNIT_NAMES}
   Classes, Windows, SysUtils,
+  {$ELSE}
+  System.Classes, Winapi.Windows, System.SysUtils,
+  {$ENDIF}
   Thrift.Protocol,
   Thrift.Transport,
   Thrift.Stream;

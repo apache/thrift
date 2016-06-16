@@ -19,12 +19,14 @@
 
 EXTRA_DIST = \
 	coding_standards.md \
+	CMakeLists.txt \
 	LICENSE \
 	README.md \
 	Setup.lhs \
 	TODO \
 	Thrift.cabal \
-	src
+	src \
+	test
 
 all-local:
 	$(CABAL) update

@@ -176,10 +176,11 @@ public:
 
   void generate_function_helpers(t_function* tfunction);
   std::string get_cap_name(std::string name);
-  std::string get_field_name(std::string name);
+  std::string get_member_name(std::string name);
   std::string get_args_class_name(std::string name);
   std::string get_result_class_name(std::string name);
   std::string get_file_name(std::string name);
+  std::string get_constants_class_name(std::string name);
   std::string generate_isset_check(t_field* field);
   std::string generate_isset_check(std::string field);
   void generate_isset_set(ofstream& out, t_field* field);
@@ -534,7 +535,7 @@ void t_dart_generator::generate_consts(std::vector<t_const*> consts) {
     return;
   }
 
-  string class_name = get_cap_name(program_name_) + "Constants";
+  string class_name = get_constants_class_name(program_name_);
   string file_name = get_file_name(class_name);
 
   string f_consts_name = src_dir_ + "/" + file_name + ".dart";
@@ -543,6 +544,7 @@ void t_dart_generator::generate_consts(std::vector<t_const*> consts) {
 
   // Print header
   f_consts << autogen_comment() << dart_library(file_name) << endl;
+  f_consts << dart_thrift_imports() << endl;
 
   export_class_to_library(file_name, class_name);
   indent(f_consts) << "class " << class_name;
@@ -593,8 +595,8 @@ void t_dart_generator::print_const_value(std::ofstream& out,
     vector<t_field*>::const_iterator f_iter;
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
-    out << type_name(type) << " " << name << " = new " << type_name(type) << "();"
-        << endl;
+    out << type_name(type) << " " << name << " = new " << type_name(type) << "()";
+    indent_up();
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       t_type* field_type = NULL;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -606,10 +608,11 @@ void t_dart_generator::print_const_value(std::ofstream& out,
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
       string val = render_const_value(out, name, field_type, v_iter->second);
-      indent(out) << name << ".";
-      out << v_iter->first->get_string() << " = " << val << ";" << endl;
+      out << endl;
+      indent(out) << ".." << v_iter->first->get_string() << " = " << val;
     }
-    out << endl;
+    indent_down();
+    out << ";" << endl;
   } else if (type->is_map()) {
     if (!defval) {
       out << type_name(type) << " ";
@@ -798,7 +801,7 @@ void t_dart_generator::generate_dart_struct_definition(ofstream& out,
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     generate_dart_doc(out, *m_iter);
     indent(out) << type_name((*m_iter)->get_type()) + " _"
-                << get_field_name((*m_iter)->get_name()) << ";" << endl;
+                << get_member_name((*m_iter)->get_name()) << ";" << endl;
 
     indent(out) << "static const int " << upcase_string((*m_iter)->get_name())
                 << " = " << (*m_iter)->get_key() << ";" << endl;
@@ -810,7 +813,7 @@ void t_dart_generator::generate_dart_struct_definition(ofstream& out,
   if (members.size() > 0) {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if (!type_can_be_null((*m_iter)->get_type())) {
-        string field_name = get_field_name((*m_iter)->get_name());
+        string field_name = get_member_name((*m_iter)->get_name());
         indent(out) << "bool __isset_" << field_name << " = false;" << endl;
       }
     }
@@ -825,7 +828,7 @@ void t_dart_generator::generate_dart_struct_definition(ofstream& out,
     t_type* t = get_true_type((*m_iter)->get_type());
     if ((*m_iter)->get_value() != NULL) {
       print_const_value(out,
-                        "this." + get_field_name((*m_iter)->get_name()),
+                        "this." + get_member_name((*m_iter)->get_name()),
                         t,
                         (*m_iter)->get_value(),
                         true,
@@ -927,7 +930,7 @@ void t_dart_generator::generate_dart_struct_reader(ofstream& out, t_struct* tstr
                  "checked in the validate method" << endl;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED && !type_can_be_null((*f_iter)->get_type())) {
-      string field_name = get_field_name((*f_iter)->get_name());
+      string field_name = get_member_name((*f_iter)->get_name());
       indent(out) << "if (!__isset_" << field_name << ")";
       scope_up(out);
       indent(out) << "  throw new TProtocolError(TProtocolErrorType.UNKNOWN, \"Required field '"
@@ -955,7 +958,7 @@ void t_dart_generator::generate_dart_validator(ofstream& out, t_struct* tstruct)
   indent(out) << "// check for required fields" << endl;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
-      string field_name = get_field_name((*f_iter)->get_name());
+      string field_name = get_member_name((*f_iter)->get_name());
       if (type_can_be_null((*f_iter)->get_type())) {
         indent(out) << "if (" << field_name << " == null)";
         scope_up(out);
@@ -977,7 +980,7 @@ void t_dart_generator::generate_dart_validator(ofstream& out, t_struct* tstruct)
     t_type* type = field->get_type();
     // if field is an enum, check that its value is valid
     if (type->is_enum()) {
-      string field_name = get_field_name(field->get_name());
+      string field_name = get_member_name(field->get_name());
       indent(out) << "if (" << generate_isset_check(field) << " && !" << get_ttype_class_name(type)
                   << ".VALID_VALUES.contains(" << field_name << "))";
       scope_up(out);
@@ -1000,7 +1003,6 @@ void t_dart_generator::generate_dart_struct_writer(ofstream& out, t_struct* tstr
   out << indent() << "write(TProtocol oprot)";
   scope_up(out);
 
-  string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
 
@@ -1010,7 +1012,7 @@ void t_dart_generator::generate_dart_struct_writer(ofstream& out, t_struct* tstr
   indent(out) << "oprot.writeStructBegin(_STRUCT_DESC);" << endl;
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    string field_name = get_field_name((*f_iter)->get_name());
+    string field_name = get_member_name((*f_iter)->get_name());
     bool could_be_unset = (*f_iter)->get_req() == t_field::T_OPTIONAL;
     if (could_be_unset) {
       indent(out) << "if (" << generate_isset_check(*f_iter) << ")";
@@ -1057,7 +1059,6 @@ void t_dart_generator::generate_dart_struct_result_writer(ofstream& out, t_struc
   indent(out) << "write(TProtocol oprot)";
   scope_up(out);
 
-  string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
 
@@ -1108,7 +1109,7 @@ void t_dart_generator::generate_generic_field_getters(std::ofstream& out,
   vector<t_field*>::const_iterator f_iter;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field* field = *f_iter;
-    std::string field_name = get_field_name(field->get_name());
+    std::string field_name = get_member_name(field->get_name());
 
     indent(out) << "case " << upcase_string(field_name) << ":" << endl;
     indent_up();
@@ -1140,7 +1141,7 @@ void t_dart_generator::generate_generic_field_setters(std::ofstream& out,
   vector<t_field*>::const_iterator f_iter;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field* field = *f_iter;
-    std::string field_name = get_field_name(field->get_name());
+    std::string field_name = get_member_name(field->get_name());
 
     indent(out) << "case " << upcase_string(field_name) << ":" << endl;
     indent_up();
@@ -1213,7 +1214,7 @@ void t_dart_generator::generate_dart_bean_boilerplate(ofstream& out,
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field* field = *f_iter;
     t_type* type = get_true_type(field->get_type());
-    std::string field_name = get_field_name(field->get_name());
+    std::string field_name = get_member_name(field->get_name());
     std::string cap_name = get_cap_name(field_name);
 
     indent(out) << "// " << field_name << endl;
@@ -1275,7 +1276,7 @@ void t_dart_generator::generate_dart_struct_tostring(ofstream& out,
     }
 
     t_field* field = (*f_iter);
-    std::string field_name = get_field_name(field->get_name());
+    std::string field_name = get_member_name(field->get_name());
 
     if (!first) {
       indent(out) << "ret.write(\", \");" << endl;
@@ -1493,8 +1494,6 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::const_iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    string funname = (*f_iter)->get_name();
-
     // Open function
     indent(f_service_) << function_signature(*f_iter) << " async";
     scope_up(f_service_);
@@ -1507,13 +1506,13 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
     const vector<t_field*>& fields = arg_struct->get_members();
 
     // Serialize the request
-    indent(f_service_) << "oprot.writeMessageBegin(new TMessage(\"" << funname << "\", "
+    indent(f_service_) << "oprot.writeMessageBegin(new TMessage(\"" << (*f_iter)->get_name() << "\", "
                << ((*f_iter)->is_oneway() ? "TMessageType.ONEWAY" : "TMessageType.CALL")
                << ", nextSeqid()));" << endl;
     indent(f_service_) << argsname << " args = new " << argsname << "();" << endl;
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-      string arg_field_name = get_field_name((*fld_iter)->get_name());
+      string arg_field_name = get_member_name((*fld_iter)->get_name());
       indent(f_service_) << "args." << arg_field_name << " = "
                  << arg_field_name << ";" << endl;
     }
@@ -1549,7 +1548,7 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
       const std::vector<t_field*>& xceptions = xs->get_members();
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-        string result_field_name = get_field_name((*x_iter)->get_name());
+        string result_field_name = get_member_name((*x_iter)->get_name());
         indent(f_service_) << "if (result." << result_field_name << " != null)";
         scope_up(f_service_);
         indent(f_service_) << "throw result." << result_field_name << ";" << endl;
@@ -1613,7 +1612,7 @@ void t_dart_generator::generate_service_server(t_service* tservice) {
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     indent(f_service_) << "PROCESS_MAP[\"" << (*f_iter)->get_name()
-               << "\"] = " << (*f_iter)->get_name() << ";" << endl;
+               << "\"] = " << get_member_name((*f_iter)->get_name()) << ";" << endl;
   }
   scope_down(f_service_, endl2);
 
@@ -1690,7 +1689,7 @@ void t_dart_generator::generate_process_function(t_service* tservice, t_function
 
   bool await_result = (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void());
 
-  indent(f_service_) << tfunction->get_name() << "(int seqid, TProtocol iprot, TProtocol oprot)";
+  indent(f_service_) << get_member_name(tfunction->get_name()) << "(int seqid, TProtocol iprot, TProtocol oprot)";
   if (await_result) {
     f_service_ << " async";
   }
@@ -1725,7 +1724,7 @@ void t_dart_generator::generate_process_function(t_service* tservice, t_function
   if (await_result) {
     f_service_ << "result.success = await ";
   }
-  f_service_ << "iface_." << tfunction->get_name() << "(";
+  f_service_ << "iface_." << get_member_name(tfunction->get_name()) << "(";
   bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if (first) {
@@ -1733,13 +1732,13 @@ void t_dart_generator::generate_process_function(t_service* tservice, t_function
     } else {
       f_service_ << ", ";
     }
-    f_service_ << "args." << get_field_name((*f_iter)->get_name());
+    f_service_ << "args." << get_member_name((*f_iter)->get_name());
   }
   f_service_ << ");" << endl;
 
   if (!tfunction->is_oneway() && xceptions.size() > 0) {
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-      string result_field_name = get_field_name((*x_iter)->get_name());
+      string result_field_name = get_member_name((*x_iter)->get_name());
       scope_down(f_service_, "");
       f_service_ << " on " << type_name((*x_iter)->get_type())
               << " catch(" << result_field_name << ")";
@@ -1786,7 +1785,7 @@ void t_dart_generator::generate_process_function(t_service* tservice, t_function
  */
 void t_dart_generator::generate_deserialize_field(ofstream& out, t_field* tfield, string prefix) {
   t_type* type = get_true_type(tfield->get_type());
-  string field_name = get_field_name(tfield->get_name());
+  string field_name = get_member_name(tfield->get_name());
 
   if (type->is_void()) {
     throw "CANNOT GENERATE DESERIALIZE CODE FOR void TYPE: " + prefix + field_name;
@@ -1968,7 +1967,7 @@ void t_dart_generator::generate_deserialize_list_element(ofstream& out,
  */
 void t_dart_generator::generate_serialize_field(ofstream& out, t_field* tfield, string prefix) {
   t_type* type = get_true_type(tfield->get_type());
-  string field_name = get_field_name(tfield->get_name());
+  string field_name = get_member_name(tfield->get_name());
 
   // Do nothing for void types
   if (type->is_void()) {
@@ -2189,7 +2188,7 @@ string t_dart_generator::base_type_name(t_base_type* type) {
  * @param ttype The type
  */
 string t_dart_generator::declare_field(t_field* tfield, bool init) {
-  string field_name = get_field_name(tfield->get_name());
+  string field_name = get_member_name(tfield->get_name());
   string result = type_name(tfield->get_type()) + " " + field_name;
   if (init) {
     t_type* ttype = get_true_type(tfield->get_type());
@@ -2246,7 +2245,8 @@ string t_dart_generator::function_signature(t_function* tfunction) {
     returntype = "Future<" + type_name(tfunction->get_returntype()) + ">";
   }
 
-  std::string result = returntype + " "  + tfunction->get_name() + "(" + arguments + ")";
+  std::string result = returntype + " " + get_member_name(tfunction->get_name()) +
+                       "(" + arguments + ")";
   return result;
 }
 
@@ -2265,7 +2265,7 @@ string t_dart_generator::argument_list(t_struct* tstruct) {
     } else {
       result += ", ";
     }
-    string field_name = get_field_name((*f_iter)->get_name());
+    string field_name = get_member_name((*f_iter)->get_name());
     result += type_name((*f_iter)->get_type()) + " " + field_name;
   }
   return result;
@@ -2317,7 +2317,7 @@ std::string t_dart_generator::get_cap_name(std::string name) {
   return name;
 }
 
-std::string t_dart_generator::get_field_name(std::string name) {
+std::string t_dart_generator::get_member_name(std::string name) {
   name[0] = tolower(name[0]);
   return name;
 }
@@ -2358,6 +2358,29 @@ std::string t_dart_generator::get_file_name(std::string name) {
   }
 
   return ret;
+}
+
+std::string t_dart_generator::get_constants_class_name(std::string name) {
+  // e.g. change my_great_model to MyGreatModelConstants
+  string ret;
+  const char* tmp = name.c_str();
+  bool is_prev_underscore = true;
+
+  for (unsigned int i = 0; i < name.length(); i++) {
+    if (tmp[i] == '_') {
+      is_prev_underscore = true;
+    } else {
+      if (is_prev_underscore) {
+        ret += toupper(tmp[i]);
+      } else {
+        ret += tmp[i];
+      }
+
+      is_prev_underscore = false;
+    }
+  }
+
+  return ret + "Constants";
 }
 
 string t_dart_generator::constant_name(string name) {
@@ -2402,7 +2425,7 @@ void t_dart_generator::generate_dart_doc(ofstream& out, t_function* tfunction) {
     vector<t_field*>::const_iterator p_iter;
     for (p_iter = fields.begin(); p_iter != fields.end(); ++p_iter) {
       t_field* p = *p_iter;
-      string field_name = get_field_name(p->get_name());
+      string field_name = get_member_name(p->get_name());
       ss << "\n@param " << field_name;
       if (p->has_doc()) {
         ss << " " << p->get_doc();
@@ -2413,7 +2436,7 @@ void t_dart_generator::generate_dart_doc(ofstream& out, t_function* tfunction) {
 }
 
 std::string t_dart_generator::generate_isset_check(t_field* field) {
-  string field_name = get_field_name(field->get_name());
+  string field_name = get_member_name(field->get_name());
   return generate_isset_check(field_name);
 }
 
@@ -2423,7 +2446,7 @@ std::string t_dart_generator::generate_isset_check(std::string field_name) {
 
 void t_dart_generator::generate_isset_set(ofstream& out, t_field* field) {
   if (!type_can_be_null(field->get_type())) {
-    string field_name = get_field_name(field->get_name());
+    string field_name = get_member_name(field->get_name());
     indent(out) << "this.__isset_" << field_name << " = true;" << endl;
   }
 }

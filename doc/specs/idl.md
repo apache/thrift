@@ -98,7 +98,7 @@ N.B.: The `xsd_all` keyword has some purpose internal to Facebook but serves no 
 
 ### Union
 
-Unions are similar to structs, except that they provide a means to transport exactly one field of a possible set of fields, just like union {} in C++. Consequently, union members cannot be required fields.
+Unions are similar to structs, except that they provide a means to transport exactly one field of a possible set of fields, just like union {} in C++. Consequently, union members are implicitly considered optional (see requiredness).
 
     [13] Union          ::=  'union' Identifier 'xsd_all'? '{' Field* '}'
 
@@ -126,7 +126,43 @@ A service provides the interface for a set of functionality provided by a Thrift
 
 ### Field Requiredness
 
-    [18] FieldReq        ::=  'required' | 'optional'
+There are two explicit requiredness values, and a third one that is applied implicity if neither  *required* nor *optional* are given: *default* requiredness.
+
+    [18] FieldReq        ::=  'required' | 'optional' 
+
+The general rules for requiredness are as follows:
+
+#### required
+
+- Write: Required fields are always written and are expected to be set.
+- Read: Required fields are always read and are expected to be contained in the input stream.
+- Defaults values: are always written
+
+If a required field is missing during read, the expected behaviour is to indicate an unsuccessful read operation to the caller, e.g. by throwing an exception or returning an error. 
+
+Because of this behaviour, required fields drastically limit the options with regard to soft versioning. Because they must be present on read, the fields cannot be deprecated. If a required field would be removed (or changed to optional), the data are no longer compatible between versions.
+	
+#### optional
+
+- Write: Optional fields are only written when they are set
+- Read: Optional fields may, or may not be part of the input stream. 
+- Default values: are written when the isset flag is set
+
+Most language implementations use the recommended pratice of so-called "isset" flags to indicate whether a particular optional field is set or not. Only fields with this flag set are written, and conversely the flag is only set when a field value has been read from the input stream. 
+	
+#### default requiredness (implicit)
+
+- Write: In theory, the fields are always written. There are some exceptions to that rule, see below.
+- Read: Like optional, the field may, or may not be part of the input stream. 
+- Default values: may not be written (see next section)
+
+Default requiredess is a good starting point. The desired behaviour is a mix of optional and required, hence the internal name "opt-in, req-out". Although in theory these fields are supposed to be written ("req-out"), in reality unset fields are not always written. This is especially the case, when the field contains a <null> value, which by definition cannot be transported through thrift. The only way to achieve this is by not writing that field at all, and that's what most languages do.
+	
+#### Semantics of Default Values
+
+There are ongoing discussions about that topic, see JIRA for details. Not all implementations treat default values in the very same way, but the current status quo is more or less that default fields are typically set at initialization time. Therefore, a value that equals the default may not be written, because the read end will set the value implicitly. On the other hand, an implementation is free to write the default value anyways, as there is no hard restriction that prevents this. 
+
+The major point to keep in mind here is the fact, that any unwritten default value implicitly becomes part of the interface version. If that default is changed, the interface changes. If, in contrast, the default value is written into the output data, the default in the IDL can change at any time without affecting serialized data.
 
 ### XSD Options
 
