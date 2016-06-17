@@ -201,6 +201,7 @@ private:
   static std::string erl_autogen_comment();
 
   std::string type_name(t_type* ttype);
+  std::string scoped_type_name(t_type* ttype);
   std::string service_name(t_service* ttype);
   std::string service_name(t_service* ttype, bool do_atomify);
   std::string idiomify(const std::string& str);
@@ -563,7 +564,7 @@ void t_erlang_generator::generate_struct_types(std::ostream& os) {
         os << "%% struct ";
       }
       os << type_name(*it) << endl;
-      os << "-type " + type_name(*it) << "() :: #" + type_name(*it) + "{}." << endl << endl;
+      os << "-type " + type_name(*it) << "() :: #" + scoped_type_name(*it) + "{}." << endl << endl;
     }
     if (++it == structs.end()) {
       it = xceptions.begin();
@@ -721,7 +722,7 @@ string t_erlang_generator::render_const_value(t_type* type, std::string name, t_
       out << render_const_value(field_type, name + "." + v_iter->first->get_string(), v_iter->second, ind);
       out << ind.nldown() << "}";
   } else if (type->is_struct() || type->is_xception()) {
-    out << "#" << type_name(type) << "{";
+    out << "#" << scoped_type_name(type) << "{";
     if (value->get_map().size() > 0) {
       out << ind.nlup();
       const vector<t_field*>& fields = ((t_struct*)type)->get_members();
@@ -933,7 +934,7 @@ void t_erlang_generator::generate_struct_definition(ostream& out, t_struct* tstr
     out << "%% struct ";
   }
   out << type_name(tstruct) << endl
-      << "-record(" << type_name(tstruct) << ", {";
+      << "-record(" << scoped_type_name(tstruct) << ", {";
   vector<t_field*> const& members = tstruct->get_members();
   if (members.size() > 0) {
     out << ind.nlup();
@@ -1200,6 +1201,12 @@ std::string t_erlang_generator::render_string(Type const& v) {
 }
 
 string t_erlang_generator::type_name(t_type* ttype) {
+  string const& n = ttype->get_name();
+  string result = idiomatic_names_ ? underscore(n) : n;
+  return atomify(result);
+}
+
+string t_erlang_generator::scoped_type_name(t_type* ttype) {
   string const& n = ttype->get_name();
   string result = idiomatic_names_ ? underscore(n) : n;
   return atomify(scopify(result));
