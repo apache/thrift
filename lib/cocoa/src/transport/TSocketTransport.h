@@ -28,6 +28,8 @@ NS_ASSUME_NONNULL_BEGIN
 -(id) initWithHostname:(NSString *)hostname
                   port:(int)port;
 
+-(id) initWithPath:(NSString *)path;
+
 @end
 
 
