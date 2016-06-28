@@ -1,6 +1,6 @@
 -module(test_thrift_1151).
 
--include("gen-erlang/thrift1151_types.hrl").
+-include("gen-erlang/thrift1151_thrift.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -13,7 +13,7 @@ unmatched_struct_test() ->
     {Protocol, {error, {invalid, [x], #'StructB'{x=1}}}},
     thrift_protocol:write(
       Protocol,
-      {{struct, struct, {thrift1151_types, 'StructC'}}, S1}
+      {{struct, struct, {thrift1151_thrift, 'StructC'}}, S1}
     )
   ).
 
@@ -25,7 +25,7 @@ badarg_test() ->
     {Protocol, {error, {invalid, [x, x], "1"}}},
     thrift_protocol:write(
       Protocol,
-      {{struct, struct, {thrift1151_types, 'StructC'}}, S2}
+      {{struct, struct, {thrift1151_thrift, 'StructC'}}, S2}
     )
   ).
 
@@ -37,7 +37,7 @@ union_test() ->
     {_Protocol, ok},
     thrift_protocol:write(
       Protocol,
-      {{struct, union, {thrift1151_types, 'UnionA'}}, S1}
+      {{struct, union, {thrift1151_thrift, 'UnionA'}}, S1}
     )
   ).
 
@@ -49,7 +49,7 @@ union_badarg_test() ->
     {Protocol, {error, {invalid, [a], S2}}},
     thrift_protocol:write(
       Protocol,
-      {{struct, union, {thrift1151_types, 'UnionA'}}, S1}
+      {{struct, union, {thrift1151_thrift, 'UnionA'}}, S1}
     )
   ).
 

@@ -11,8 +11,8 @@ start_multiplexed_server_test() ->
 
     Port = 9090,
     Services = [
-                {"Multiplexing_Calculator",    {multiplexing_types, 'Multiplexing_Calculator'}},
-                {"Multiplexing_WeatherReport", {multiplexing_types, 'Multiplexing_WeatherReport'}}
+                {"Multiplexing_Calculator",    {multiplexing_thrift, 'Multiplexing_Calculator'}},
+                {"Multiplexing_WeatherReport", {multiplexing_thrift, 'Multiplexing_WeatherReport'}}
                ],
 
     {ok, Pid} = thrift_socket_server:start([

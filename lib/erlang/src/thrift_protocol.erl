@@ -144,7 +144,7 @@ read(IProto, Type) ->
 
 read_frag(IProto, {struct, _, {Module, StructureName}}) when is_atom(Module),
                                                      is_atom(StructureName) ->
-    read(IProto, Module:struct_info(StructureName), StructureName);
+    read(IProto, Module:struct_info(StructureName), Module:record_name(StructureName));
 
 read_frag(IProto, S={struct, _, Structure}) when is_list(Structure) ->
     read(IProto, S, undefined);
@@ -369,30 +369,34 @@ write(Proto, TypeData) ->
         Error -> {Proto, Error}
     end.
 
-write_frag(Proto0, {{struct, union, StructDef}, {StructName, {Name, Value}}})
+write_frag(Proto0, {{struct, union, StructDef}, {Name, Value}}, StructName)
   when is_list(StructDef) ->
     {Proto1, ok} = write_frag(Proto0, #protocol_struct_begin{name = StructName}),
     {Proto2, ok} = struct_write_loop(Proto1, [lists:keyfind(Name, 4, StructDef)], [Value]),
     {Proto3, ok} = write_frag(Proto2, struct_end),
     {Proto3, ok};
 
+write_frag(Proto0, {{struct, _, StructDef}, Data}, StructName)
+  when is_list(StructDef), is_tuple(Data), length(StructDef) == size(Data) - 1 ->
+    [_ | Elems] = tuple_to_list(Data),
+    {Proto1, ok} = write_frag(Proto0, #protocol_struct_begin{name = StructName}),
+    {Proto2, ok} = struct_write_loop(Proto1, StructDef, Elems),
+    {Proto3, ok} = write_frag(Proto2, struct_end),
+    {Proto3, ok}.
+
+%% thrift client specific stuff
 write_frag(Proto0, {{struct, _, StructDef}, Data})
   when is_list(StructDef), is_tuple(Data), length(StructDef) == size(Data) - 1 ->
-
     [StructName | Elems] = tuple_to_list(Data),
     {Proto1, ok} = write_frag(Proto0, #protocol_struct_begin{name = StructName}),
     {Proto2, ok} = struct_write_loop(Proto1, StructDef, Elems),
     {Proto3, ok} = write_frag(Proto2, struct_end),
     {Proto3, ok};
 
-write_frag(Proto, {{struct, union, {Module, StructureName}}, Data})
-  when is_atom(Module),
-       is_atom(StructureName) ->
-    write_frag(Proto, {Module:struct_info(StructureName), {StructureName, Data}});
 write_frag(Proto, {{struct, _, {Module, StructureName}}, Data})
   when is_atom(Module),
        is_atom(StructureName) ->
-    write_frag(Proto, {Module:struct_info(StructureName), Data});
+    write_frag(Proto, {Module:struct_info(StructureName), Data}, StructureName);
 
 write_frag(Proto, {{enum, Fields}, Data}) when is_list(Fields), is_atom(Data) ->
     {Data, IVal} = lists:keyfind(Data, 1, Fields),
@@ -526,9 +530,14 @@ validate(_Req, {{struct, union, StructDef} = Type, Data = {Name, Value}}, Path)
         false ->
             throw({invalid, Path, Type, Data})
     end;
-validate(Req, {{struct, _Flavour, {Mod, Name}}, Data}, Path)
-  when element(1, Data) =:= Name ->
-    validate(Req, {Mod:struct_info(Name), Data}, Path);
+validate(Req, {{struct, _Flavour, {Mod, Name} = Type}, Data}, Path)
+  when is_tuple(Data) ->
+    case Mod:record_name(Name) of
+      RName when RName =:= element(1, Data) ->
+        validate(Req, {Mod:struct_info(Name), Data}, Path);
+      _ ->
+        throw({invalid, Path, Type, Data})
+    end;
 validate(_Req, {{struct, _Flavour, StructDef}, Data}, Path)
   when is_list(StructDef) andalso tuple_size(Data) =:= length(StructDef) + 1 ->
     [_ | Elems] = tuple_to_list(Data),

@@ -22,7 +22,7 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
--include("gen-erlang/name_conflict_test_types.hrl").
+-include("gen-erlang/name_conflict_test_thrift.hrl").
 
 record_generation_test_() ->
   [
@@ -108,26 +108,26 @@ struct_info_test_() ->
         {1, undefined, double, single, undefined},
         {2, undefined, double, integer, undefined}
       ]},
-      name_conflict_test_types:struct_info(using)
+      name_conflict_test_thrift:struct_info(using)
     )},
     {"delegate extended definition", ?_assertEqual(
       {struct, struct, [
         {1, undefined, string, partial, undefined},
-        {2, undefined, {struct, struct, {name_conflict_test_types, delegate}}, delegate, undefined}
+        {2, undefined, {struct, struct, {name_conflict_test_thrift, delegate}}, delegate, undefined}
       ]},
-      name_conflict_test_types:struct_info(delegate)
+      name_conflict_test_thrift:struct_info(delegate)
     )},
     {"get extended definition", ?_assertEqual(
       {struct, struct, [{1, undefined, bool, sbyte, undefined}]},
-      name_conflict_test_types:struct_info(get)
+      name_conflict_test_thrift:struct_info(get)
     )},
     {"partial extended definition", ?_assertEqual(
       {struct, struct, [
-        {1, undefined, {struct, struct, {name_conflict_test_types, using}}, using, #using{}},
+        {1, undefined, {struct, struct, {name_conflict_test_thrift, using}}, using, undefined},
         {2, undefined, bool, read, undefined},
         {3, undefined, bool, write, undefined}
       ]},
-      name_conflict_test_types:struct_info(partial)
+      name_conflict_test_thrift:struct_info(partial)
     )},
     {"ClassAndProp extended definition", ?_assertEqual(
       {struct, struct, [
@@ -136,7 +136,7 @@ struct_info_test_() ->
         {3, undefined, bool, 'ClassAndProp__', undefined},
         {4, undefined, bool, 'ClassAndProper', undefined}
       ]},
-      name_conflict_test_types:struct_info('ClassAndProp')
+      name_conflict_test_thrift:struct_info('ClassAndProp')
     )},
     {"second_chance extended definition", ?_assertEqual(
       {struct, struct, [
@@ -145,7 +145,7 @@ struct_info_test_() ->
         {3, undefined, bool, 'SECOND_CHANCE__', undefined},
         {4, undefined, bool, 'SECOND_CHANCES', undefined}
       ]},
-      name_conflict_test_types:struct_info(second_chance)
+      name_conflict_test_thrift:struct_info(second_chance)
     )},
     {"NOW_EAT_THIS extended definition", ?_assertEqual(
       {struct, struct, [
@@ -154,7 +154,7 @@ struct_info_test_() ->
         {3, undefined, bool, now_eat_this__, undefined},
         {4, undefined, bool, now_eat_this_and_this, undefined}
       ]},
-      name_conflict_test_types:struct_info('NOW_EAT_THIS')
+      name_conflict_test_thrift:struct_info('NOW_EAT_THIS')
     )},
     {"TheEdgeCase extended definition", ?_assertEqual(
       {struct, struct, [
@@ -165,77 +165,77 @@ struct_info_test_() ->
         {5, undefined, bool, 'TheEdgeCase_', undefined},
         {6, undefined, bool, 'TheEdgeCase__', undefined}
       ]},
-      name_conflict_test_types:struct_info('TheEdgeCase')
+      name_conflict_test_thrift:struct_info('TheEdgeCase')
     )},
     {"Tricky_ extended definition", ?_assertEqual(
       {struct, struct, [
         {1, undefined, bool, tricky, undefined},
         {2, undefined, bool, 'Tricky', undefined}
       ]},
-      name_conflict_test_types:struct_info('Tricky_')
+      name_conflict_test_thrift:struct_info('Tricky_')
     )},
     {"Nested extended definition", ?_assertEqual(
       {struct, struct, [
         {1, undefined, {struct, struct, {
-          name_conflict_test_types,
+          name_conflict_test_thrift,
           'ClassAndProp'
-        }}, 'ClassAndProp', #'ClassAndProp'{}},
+        }}, 'ClassAndProp', undefined},
         {2, undefined, {struct, struct, {
-          name_conflict_test_types,
+          name_conflict_test_thrift,
           second_chance
-        }}, second_chance, #second_chance{}},
+        }}, second_chance, undefined},
         {3, undefined, {struct, struct, {
-          name_conflict_test_types,
+          name_conflict_test_thrift,
           'NOW_EAT_THIS'
-        }}, 'NOW_EAT_THIS', #'NOW_EAT_THIS'{}},
+        }}, 'NOW_EAT_THIS', undefined},
         {4, undefined, {struct, struct, {
-          name_conflict_test_types,
+          name_conflict_test_thrift,
           'TheEdgeCase'
-        }}, 'TheEdgeCase', #'TheEdgeCase'{}},
+        }}, 'TheEdgeCase', undefined},
         {5, undefined, {struct, struct, {
-          name_conflict_test_types,
+          name_conflict_test_thrift,
           'Tricky_'
-        }}, 'Tricky_', #'Tricky_'{}},
+        }}, 'Tricky_', undefined},
         {6, undefined, {struct, struct, {
-          name_conflict_test_types,
+          name_conflict_test_thrift,
           'Nested'
         }}, 'Nested', undefined}
       ]},
-      name_conflict_test_types:struct_info('Nested')
+      name_conflict_test_thrift:struct_info('Nested')
     )},
     {"Problem_ extended definition", ?_assertEqual(
       {struct, exception, [
         {1, undefined, bool, problem, undefined},
         {2, undefined, bool, 'Problem', undefined}
       ]},
-      name_conflict_test_types:struct_info('Problem_')
+      name_conflict_test_thrift:struct_info('Problem_')
     )}
   ].
 
 service_info_test_() ->
   [
     {"event params", ?_assertEqual(
-      {struct, struct, [{1, undefined, {struct, struct, {name_conflict_test_types, partial}}, 'get', #'partial'{}}]},
-      name_conflict_test_types:function_info(extern, event, params_type)
+      {struct, struct, [{1, undefined, {struct, struct, {name_conflict_test_thrift, partial}}, 'get', undefined}]},
+      name_conflict_test_thrift:function_info(extern, event, params_type)
     )},
     {"event reply", ?_assertEqual(
-      {struct, struct, {name_conflict_test_types, delegate}},
-      name_conflict_test_types:function_info(extern, event, reply_type)
+      {struct, struct, {name_conflict_test_thrift, delegate}},
+      name_conflict_test_thrift:function_info(extern, event, reply_type)
     )},
     {"event exceptions", ?_assertEqual(
       {struct, struct, []},
-      name_conflict_test_types:function_info(extern, event, exceptions)
+      name_conflict_test_thrift:function_info(extern, event, exceptions)
     )},
     {"Foo params", ?_assertEqual(
-      {struct, struct, [{1, undefined, {struct, struct, {name_conflict_test_types, 'Nested'}}, 'Foo_args', #'Nested'{}}]},
-      name_conflict_test_types:function_info(extern, 'Foo', params_type)
+      {struct, struct, [{1, undefined, {struct, struct, {name_conflict_test_thrift, 'Nested'}}, 'Foo_args', undefined}]},
+      name_conflict_test_thrift:function_info(extern, 'Foo', params_type)
     )},
     {"Foo reply", ?_assertEqual(
       {struct, struct, []},
-      name_conflict_test_types:function_info(extern, 'Foo', reply_type)
+      name_conflict_test_thrift:function_info(extern, 'Foo', reply_type)
     )},
     {"Foo exceptions", ?_assertEqual(
-      {struct, struct, [{1, undefined, {struct, exception, {name_conflict_test_types, 'Problem_'}}, 'Foo_result', #'Problem_'{}}]},
-      name_conflict_test_types:function_info(extern, 'Foo', exceptions)
+      {struct, struct, [{1, undefined, {struct, exception, {name_conflict_test_thrift, 'Problem_'}}, 'Foo_result', undefined}]},
+      name_conflict_test_thrift:function_info(extern, 'Foo', exceptions)
     )}
   ].

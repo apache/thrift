@@ -136,6 +136,7 @@ private:
   /**
    * Helper rendering functions
    */
+  static std::string render_namespace(const t_program*);
   static std::string render_namespaced(const t_program*, std::string const& s);
   static std::string render_member_requiredness(t_field* field);
   static std::string render_include(std::string);
@@ -162,6 +163,8 @@ private:
   /**
    * Struct generation code
    */
+  void generate_namespace_type(std::ostream& out);
+  void generate_namespace_definition(std::ostream& out);
   void generate_union_definition(std::ostream& out, t_struct* tstruct);
   void generate_struct_definition(std::ostream& out, t_struct* tstruct);
   void generate_struct_member(std::ostream& out, std::string name, t_field* tmember, indenter& ind);
@@ -179,7 +182,11 @@ private:
   void generate_struct_types(std::ostream& os);
   void generate_typedef_metadata(std::ostream& erlout);
   void generate_struct_metadata(std::ostream& erlout, std::ostream& hrlout);
+  void generate_record_metadata(std::ostream& erlout);
   void generate_enum_metadata(std::ostream& out);
+
+
+  void gather_struct_types(const t_program*, std::vector<t_struct*>&);
 
   template <class Type>
   void iterate_type(std::ostream& os, vector<Type*> type, std::string delim, std::string end, indenter& i);
@@ -265,16 +272,19 @@ void t_erlang_generator::init_generator() {
   f_hrl_file_ << render_hrl_header(base_name) << endl
               << render_includes() << endl;
 
-  f_erl_file_ << render_export("enums", 0)
+  f_erl_file_ << render_export("namespace", 0)
+              << render_export("enums", 0)
               << render_export("typedefs", 0)
               << render_export("structs", 0)
               << render_export("services", 0)
               << render_export("typedef_info", 1)
               << render_export("enum_info", 1)
               << render_export("struct_info", 1)
+              << render_export("record_name", 1)
               << render_export("functions", 1)
               << render_export("function_info", 3)
               << endl
+              << render_export_type("namespace", 0)
               << render_export_type("typedef_name", 0)
               << render_export_type("enum_name", 0)
               << render_export_type("struct_name", 0)
@@ -324,9 +334,11 @@ void t_erlang_generator::close_generator() {
   generate_type_list(f_erl_file_, "structs", "struct_name()", get_program()->get_structs());
   generate_type_list(f_erl_file_, "services", "service_name()", get_program()->get_services());
 
+  generate_namespace_definition(f_erl_file_);
   generate_typedef_metadata(f_erl_file_);
   generate_enum_metadata(f_erl_file_);
   generate_struct_metadata(f_erl_file_, f_hrl_file_);
+  generate_record_metadata(f_erl_file_);
   generate_service_metadata(f_erl_file_);
 
   f_hrl_file_ << render_hrl_footer();
@@ -341,6 +353,7 @@ void t_erlang_generator::generate_typespecs(std::ostream& os) {
   render_export_specific_types(os, get_program()->get_enums());
   render_export_specific_types(os, get_program()->get_structs());
   render_export_specific_types(os, get_program()->get_xceptions());
+  generate_namespace_type(os);
   os << endl << comment_title("typedefs");
   generate_typespec_list(os, "typedef_name", get_program()->get_typedefs());
   generate_typedef_types(os);
@@ -387,6 +400,15 @@ string t_erlang_generator::comment_title(const std::string& title) {
   return "%%" + endl + "%% " + title + endl + "%%" + endl;
 }
 
+std::string t_erlang_generator::render_namespace(const t_program* p) {
+  return atomify(p->get_namespace("erlang"));
+}
+
+void t_erlang_generator::generate_namespace_type(std::ostream& os) {
+  os << endl;
+  os << "-type namespace() :: " << render_namespace(get_program()) << "." << endl;
+}
+
 template <class Type>
 void t_erlang_generator::render_export_specific_types(
   std::ostream& os, vector<Type*> types
@@ -410,6 +432,15 @@ void t_erlang_generator::generate_typespec_list(
     os << " none()." << i.nldown();
   }
   os << endl;
+}
+
+void t_erlang_generator::generate_namespace_definition(std::ostream& os) {
+  indenter i;
+  os << "-spec namespace() -> namespace()." << i.nl()
+    << i.nl();
+  os << "namespace() ->" << i.nlup()
+     << render_namespace(get_program()) << "." << i.nldown()
+     << i.nl();
 }
 
 void t_erlang_generator::generate_typedef_types(std::ostream& os) {
@@ -872,6 +903,19 @@ void t_erlang_generator::generate_struct(t_struct* tstruct) {
   (void)tstruct;
 }
 
+void t_erlang_generator::gather_struct_types(const t_program* p, std::vector<t_struct*>& v) {
+
+  struct filter {
+    bool operator () (t_struct* s) {return s->is_union(); }
+  };
+
+  std::vector<t_struct*> const& structs = p->get_structs();
+  std::vector<t_struct*> const& xceptions = p->get_xceptions();
+  std::remove_copy_if(structs.begin(), structs.end(), std::back_inserter(v), filter());
+  std::copy(xceptions.begin(), xceptions.end(), std::back_inserter(v));
+
+}
+
 void t_erlang_generator::generate_struct_metadata(std::ostream& erl, std::ostream& hrl) {
   typedef vector<t_struct*> vec;
   vec const& structs = get_program()->get_structs();
@@ -893,6 +937,34 @@ void t_erlang_generator::generate_struct_metadata(std::ostream& erl, std::ostrea
     erl << ERROR_SPEC << endl << endl;
   }
   erl << "struct_info(_) -> erlang:error(badarg)." << endl << endl;
+}
+
+void t_erlang_generator::generate_record_metadata(std::ostream& erl) {
+  typedef vector<t_struct*> vec;
+
+  vec structs;
+  gather_struct_types(get_program(), structs);
+  std::string const& ns = get_program()->get_namespace("erlang");
+
+  indenter i;
+  if (structs.size() > 0 && scoped_typenames_ && !ns.empty()) {
+    erl << "-spec record_name(struct_name()) -> atom() | no_return()." << i.nl()
+        << i.nl();
+    for(vec::const_iterator it = structs.begin(); it != structs.end(); ++it) {
+      erl << "record_name(" << type_name(*it) << ") ->" << i.nlup()
+          << scoped_type_name(*it) << ";" << i.nldown()
+          << i.nl();
+    }
+    erl << "record_name(_) -> error(badarg)." << i.nl()
+        << i.nl();
+  }
+  else {
+    erl << "-spec record_name(struct_name()) -> atom()."
+        << i.nl() << i.nl();
+    erl << "record_name(Name) ->" << i.nlup()
+        << "Name." << i.nldown()
+        << i.nl();
+  }
 }
 
 /**

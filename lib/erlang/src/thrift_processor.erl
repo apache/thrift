@@ -164,11 +164,11 @@ handle_exception(State = #thrift_processor{service = Service},
 
     %% Assuming we had a type1 exception, we'd get: [undefined, Exception, undefined]
     %% e.g.: [{-1, type0}, {-2, type1}, {-3, type2}]
-    ExceptionList = [case Type of
+    ExceptionList = [case Module:record_name(Type) of
                          ExceptionType -> Exception;
                          _ -> undefined
                      end
-                     || {_Fid, _, {struct, exception, {_Module, Type}}, _, _} <- XInfo],
+                     || {_Fid, _, {struct, exception, {Module, Type}}, _, _} <- XInfo],
 
     ExceptionTuple = list_to_tuple([Function | ExceptionList]),
 
