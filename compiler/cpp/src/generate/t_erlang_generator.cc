@@ -79,7 +79,7 @@ public:
   }
 
   struct indenter {
-    indenter() : indenter(4) {}
+    indenter() : indent(0), indent_str(4, ' ') {}
     indenter(size_t size) : indent(0), indent_str(size, ' ') {}
 
     std::string nl() {
@@ -906,12 +906,12 @@ void t_erlang_generator::generate_struct(t_struct* tstruct) {
 void t_erlang_generator::gather_struct_types(const t_program* p, std::vector<t_struct*>& v) {
 
   struct filter {
-    bool operator () (t_struct* s) {return s->is_union(); }
+    static bool check (const t_struct* s) { return s->is_union(); }
   };
 
   std::vector<t_struct*> const& structs = p->get_structs();
   std::vector<t_struct*> const& xceptions = p->get_xceptions();
-  std::remove_copy_if(structs.begin(), structs.end(), std::back_inserter(v), filter());
+  std::remove_copy_if(structs.begin(), structs.end(), std::back_inserter(v), &filter::check);
   std::copy(xceptions.begin(), xceptions.end(), std::back_inserter(v));
 
 }
