@@ -74,8 +74,10 @@ class Main
             switch( tests) {
                 case Normal:
                     StreamTest.Run(server);
+                #if !js
                 case Multiplex:
                     MultiplexTest.Run(server);
+                #end
                 default:
                     throw "Unhandled test mode $tests";
             }
@@ -85,6 +87,7 @@ class Main
         catch( e: Dynamic)
         {
             trace('$e');
+            trace(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
             #if sys
             Sys.exit(1);  // indicate error
             #end

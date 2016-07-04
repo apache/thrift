@@ -29,7 +29,7 @@ import haxe.io.Output;
 import haxe.io.Eof;
 
 //import flash.net.ServerSocket; - not yet available on Haxe 3.1.3
-#if ! (flash || html5)
+#if ! (flash || html5 || js)
 
 import sys.net.Host;
 

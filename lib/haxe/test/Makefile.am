@@ -25,6 +25,7 @@ BENCHMARK = $(top_srcdir)/lib/rb/benchmark/Benchmark.thrift
 
 BIN_CPP = bin/Main-debug
 BIN_PHP = bin/php/Main-debug.php
+BIN_JS = bin/Main.js
 
 gen-haxe/thrift/test/ThriftTest.hx: $(THRIFTTEST)
 	$(THRIFTCMD) $(THRIFTTEST)
@@ -35,30 +36,33 @@ gen-haxe/thrift/test/Aggr.hx: $(AGGR)
 gen-haxe/thrift/test/BenchmarkService.hx: $(BENCHMARK)
 	$(THRIFTCMD) $(BENCHMARK)
 
-all-local: $(BIN_CPP) $(BIN_PHP)
+all-local: $(BIN_CPP) $(BIN_PHP) $(BIN_JS)
 
-$(BIN_CPP): \
-		src/*.hx \
+HX_SRC = src/*.hx \
 		../src/org/apache/thrift/**/*.hx \
 		gen-haxe/thrift/test/ThriftTest.hx \
 		gen-haxe/thrift/test/Aggr.hx \
 		gen-haxe/thrift/test/BenchmarkService.hx
+
+$(BIN_CPP): $(HX_SRC) \
+		cpp.hxml
 	$(HAXE) --cwd .  cpp.hxml
 
-$(BIN_PHP): \
-		src/*.hx \
-		../src/org/apache/thrift/**/*.hx \
-		gen-haxe/thrift/test/ThriftTest.hx \
-		gen-haxe/thrift/test/Aggr.hx \
-		gen-haxe/thrift/test/BenchmarkService.hx
+$(BIN_PHP): $(HX_SRC) \
+		php.hxml
 	$(HAXE) --cwd .  php.hxml
+
+$(BIN_JS): $(HX_SRC) \
+		javascript.hxml
+	haxelib install hxnodejs
+	$(HAXE) --cwd .  javascript.hxml
+	
 
 
 #TODO: other haxe targets
 #    $(HAXE)  --cwd .  csharp
 #    $(HAXE)  --cwd .  flash
 #    $(HAXE)  --cwd .  java
-#    $(HAXE)  --cwd .  javascript
 #    $(HAXE)  --cwd .  neko
 #    $(HAXE)  --cwd .  python  # needs Haxe 3.2.0
 
@@ -66,9 +70,10 @@ $(BIN_PHP): \
 clean-local:
 	$(RM) -r gen-haxe bin
 
-check: $(BIN_CPP) $(BIN_PHP)
+check: $(BIN_CPP) $(BIN_PHP) $(BIN_JS)
 	$(BIN_CPP)
 	php -f $(BIN_PHP)
+	node $(BIN_JS) 
 
 EXTRA_DIST = \
              src \
