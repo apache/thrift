@@ -1,7 +1,7 @@
 Thrift Protocol Encoding for BinaryProtocol and CompactProtocol
 ====================================================================
 
-Last Modified: 2016-Jun-29
+Last Modified: 2016-Jul-5
 
 ! WARNING !
 
