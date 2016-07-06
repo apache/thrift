@@ -21,10 +21,10 @@
 #include <io.h>
 #include <fcntl.h>
 #include <cstdio>
-#define THRIFT_POPEN _popen
+#define THRIFT_POPEN(cmd) _popen(cmd, "wb")
 #define THRIFT_PCLOSE _pclose
 #else
-#define THRIFT_POPEN popen
+#define THRIFT_POPEN(cmd) popen(cmd, "w")
 #define THRIFT_PCLOSE pclose
 #endif
 
@@ -365,7 +365,7 @@ bool delegateToPlugin(t_program* program, const std::string& options) {
   t_generator::parse_options(options, language, parsed_options);
   std::string cmd = "thrift-gen-";
   cmd.append(language);
-  FILE* fd = THRIFT_POPEN(cmd.c_str(), "wb");
+  FILE* fd = THRIFT_POPEN(cmd.c_str());
   if (fd) {
 #ifdef _WIN32
     _setmode(fileno(fd), _O_BINARY);
