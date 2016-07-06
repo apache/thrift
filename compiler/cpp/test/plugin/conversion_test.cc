@@ -96,7 +96,6 @@ void init_const_values() {
     t_const_value* x = new t_const_value;
     x->set_map();
     x->add_map(const_values[0], const_values[1]);
-    x->add_map(const_values[1], const_values[0]);
     const_values.push_back(x);
   }
   {
@@ -269,6 +268,8 @@ void test_const_value(t_const_value* sut) {
 #undef T_CONST_VALUE_CASE
   case t_const_value::CV_MAP:
     BOOST_CHECK_EQUAL(sut->get_map().size(), sut2->get_map().size());
+    // NOTE This test only works with map with a single entry because we can't
+    // rely on map ordering with pointers as key.
     BOOST_CHECK_EQUAL(sut->get_map().begin()->first->get_type(),
                       sut2->get_map().begin()->first->get_type());
     BOOST_CHECK_EQUAL(sut->get_map().begin()->second->get_type(),
