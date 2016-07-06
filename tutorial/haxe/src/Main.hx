@@ -28,7 +28,6 @@ import org.apache.thrift.meta_data.*;
 import tutorial.*;
 import shared.*;
 
-
 enum Prot {
     binary;
     json;
@@ -38,6 +37,14 @@ enum Trns {
     socket;
     http;
 }
+
+#if js
+@:keep
+@:jsRequire("xmlhttprequest", "XMLHttpRequest")
+extern class XMLHttpRequest {
+  function new();
+}
+#end
 
 class Main {
 
@@ -52,7 +59,7 @@ class Main {
 
     static function main() {
 
-        #if ! (flash || js || phpwebserver)
+        #if ! (flash || phpwebserver)
         try {
               ParseArgs();
         } catch (e : String) {
@@ -71,6 +78,21 @@ class Main {
           Sys.println('http endpoint for thrift test server');
           return;
         }
+        //support json proto via url
+        if(php.Web.getURI() == '/json') {
+            prot = json;
+        }
+        #elseif js
+        if(js.Browser.supported) {
+            trns = http;
+        } else 
+            try {
+                  ParseArgs();
+            } catch (e : String) {
+                trace(e);
+                trace(GetHelp());
+                return;
+            }
         #end
 
         try {
@@ -109,7 +131,7 @@ class Main {
     #end
 
 
-    #if ! (flash || js)
+    #if ! (flash)
 
     private static function GetHelp() : String {
         return Sys.executablePath()+"  modus  trnsOption  transport  protocol\n"
@@ -190,6 +212,14 @@ class Main {
             transport = new TSocket( targetHost, targetPort);
         case http:
             var uri = 'http://${targetHost}:${targetPort}';
+            #if js
+            if(!js.Browser.supported) {
+                var xhr = new XMLHttpRequest();
+            }
+            if(prot == json) {
+                uri += '/json';
+            }
+            #end
             trace('- HTTP transport $uri');
             transport = new THttpClient(uri);
         default:
@@ -236,8 +266,10 @@ class Main {
             trace("ping() successful");
         } catch(error : TException) {
             trace('ping() failed: $error');
+             trace(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
         } catch(error : Dynamic) {
             trace('ping() failed: $error');
+            trace(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
         }
 
         try {

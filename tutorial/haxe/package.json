@@ -1,0 +1,7 @@
+{
+  "name": "thrift-haxe-js-node-test",
+  "version": "1.0.0",
+  "dependencies": {
+    "xmlhttprequest": "*"
+  }
+}

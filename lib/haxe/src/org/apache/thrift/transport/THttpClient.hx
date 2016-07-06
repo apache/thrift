@@ -43,7 +43,10 @@ class THttpClient extends TTransport {
 
 
     public function new( requestUrl : String) : Void {
-          request_ = new Http(requestUrl);
+        request_ = new Http(requestUrl);
+        #if js
+        request_.async = false;
+        #end
         request_.addHeader( "contentType", "application/x-thrift");
     }
 

@@ -54,7 +54,7 @@ $(BIN_PHP): $(HX_SRC) \
 
 $(BIN_JS): $(HX_SRC) \
 		javascript.hxml
-	haxelib install hxnodejs
+	haxelib list | grep hxnodejs > /dev/null || haxelib install hxnodejs
 	$(HAXE) --cwd .  javascript.hxml
 	
 
