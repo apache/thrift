@@ -20,6 +20,7 @@
 #ifndef T_ENUM_VALUE_H
 #define T_ENUM_VALUE_H
 
+#include <map>
 #include <string>
 #include "t_doc.h"
 

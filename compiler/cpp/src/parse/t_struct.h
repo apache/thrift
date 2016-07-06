@@ -147,6 +147,16 @@ public:
     return NULL;
   }
 
+  const t_field* get_field_by_name(std::string field_name) const {
+    members_type::const_iterator m_iter;
+    for (m_iter = members_in_id_order_.begin(); m_iter != members_in_id_order_.end(); ++m_iter) {
+      if ((*m_iter)->get_name() == field_name) {
+        return *m_iter;
+      }
+    }
+    return NULL;
+  }
+
 private:
   members_type members_;
   members_type members_in_id_order_;
