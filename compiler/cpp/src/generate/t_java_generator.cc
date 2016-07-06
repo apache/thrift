@@ -3359,7 +3359,7 @@ void t_java_generator::generate_process_async_function(t_service* tservice, t_fu
     resultname = "org.apache.thrift.TBase";
   }
 
-  string resulttype = type_name(tfunction->get_returntype(), true);
+  string resulttype = type_name(tfunction->get_returntype(), true, false, false, true);
 
   (void)tservice;
   // Open class
@@ -4156,8 +4156,8 @@ string t_java_generator::type_name(t_type* ttype,
     } else {
       prefix = "Map";
     }
-    return prefix + (skip_generic ? "" : "<" + type_name(tmap->get_key_type(), true) + ","
-                                         + type_name(tmap->get_val_type(), true) + ">");
+    return prefix + (skip_generic ? "" : "<" + type_name(tmap->get_key_type(), true, false, false, force_namespace) + ","
+                                         + type_name(tmap->get_val_type(), true, false, false, force_namespace) + ">");
   } else if (ttype->is_set()) {
     t_set* tset = (t_set*)ttype;
     if (in_init) {
@@ -4169,7 +4169,7 @@ string t_java_generator::type_name(t_type* ttype,
     } else {
       prefix = "Set";
     }
-    return prefix + (skip_generic ? "" : "<" + type_name(tset->get_elem_type(), true) + ">");
+    return prefix + (skip_generic ? "" : "<" + type_name(tset->get_elem_type(), true, false, false, force_namespace) + ">");
   } else if (ttype->is_list()) {
     t_list* tlist = (t_list*)ttype;
     if (in_init) {
@@ -4177,7 +4177,7 @@ string t_java_generator::type_name(t_type* ttype,
     } else {
       prefix = "List";
     }
-    return prefix + (skip_generic ? "" : "<" + type_name(tlist->get_elem_type(), true) + ">");
+    return prefix + (skip_generic ? "" : "<" + type_name(tlist->get_elem_type(), true, false, false, force_namespace) + ">");
   }
 
   // Check for namespacing
