@@ -18,15 +18,15 @@
 #
 
 
-# Find required packages
-set(Boost_USE_STATIC_LIBS ON) # Force the use of static boost test framework
-find_package(Boost 1.53.0 REQUIRED COMPONENTS unit_test_framework)
-include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
-
-#Make sure gen-cpp files can be included
-include_directories("${CMAKE_CURRENT_BINARY_DIR}")
-
 if(${WITH_PLUGIN})
+    # Find required packages
+    set(Boost_USE_STATIC_LIBS ON) # Force the use of static boost test framework
+    find_package(Boost 1.53.0 REQUIRED COMPONENTS unit_test_framework)
+    include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
+
+    #Make sure gen-cpp files can be included
+    include_directories("${CMAKE_CURRENT_BINARY_DIR}")
+
     set(plugintest_SOURCES
         plugin/conversion_test.cc
     )

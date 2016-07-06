@@ -44,6 +44,7 @@ noinst_PROGRAMS = thrift-bootstrap
 thrift_bootstrap_SOURCES = \
                  common.h \
                  common.cc \
+                 audit/t_audit.cpp \
                  generate/t_generator.cc \
                  generate/t_generator_registry.h \
                  globals.h \

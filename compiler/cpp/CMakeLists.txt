@@ -154,6 +154,7 @@ if(${WITH_PLUGIN})
 
     add_custom_command(OUTPUT ${PLUGIN_GEN_SOURCES}
         DEPENDS thrift-bootstrap src/plugin/plugin.thrift
+        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/plugin
         COMMAND thrift-bootstrap -gen cpp
         -out ${CMAKE_CURRENT_BINARY_DIR}/plugin
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/plugin.thrift
