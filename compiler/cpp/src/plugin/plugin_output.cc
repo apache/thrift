@@ -340,7 +340,6 @@ void clear_global_cache() {
 }
 
 THRIFT_CONVERSION(t_program) {
-  clear_global_cache();
   THRIFT_ASSIGN_CONVERT(t_scope, scope(), scope);
   THRIFT_ASSIGN(path);
   THRIFT_ASSIGN(out_path);
@@ -375,6 +374,7 @@ bool delegateToPlugin(t_program* program, const std::string& options) {
     TBinaryProtocol proto(transport);
     plugin::GeneratorInput input;
     input.__set_parsed_options(parsed_options);
+    clear_global_cache();
     convert(program, input.program);
     get_global_cache(input.type_registry);
 
