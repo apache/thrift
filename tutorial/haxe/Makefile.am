@@ -98,7 +98,7 @@ tutorialclient_nodejs_http_json: all
 
 
 clean-local:
-	$(RM) -r gen-haxe bin
+	$(RM) -r gen-haxe bin node_modules
 
 EXTRA_DIST = \
              src \
