@@ -27,22 +27,26 @@ import (
 	"net/url"
 	"strconv"
 	"sync"
+	"time"
 )
 
 type THttpClient struct {
 	// the most recent response, if any
-	responseBuffer     *bytes.Buffer
-	url                *url.URL
-	requestBuffer      *bytes.Buffer
-	header             http.Header
+	responseBuffer *bytes.Buffer
+	url            *url.URL
+	requestBuffer  *bytes.Buffer
+	header         http.Header
+	timeout        time.Duration
+	// TODO what are these timeouts for?
 	nsecConnectTimeout int64
 	nsecReadTimeout    int64
 	httpClient         *http.Client
 }
 
 type THttpClientTransportFactory struct {
-	url    string
-	isPost bool
+	url     string
+	isPost  bool
+	timeout time.Duration
 }
 
 func (p *THttpClientTransportFactory) GetTransport(trans TTransport) TTransport {
@@ -50,39 +54,40 @@ func (p *THttpClientTransportFactory) GetTransport(trans TTransport) TTransport 
 		t, ok := trans.(*THttpClient)
 		if ok && t.url != nil {
 			if t.requestBuffer != nil {
-				t2, _ := NewTHttpPostClient(t.url.String())
+				t2, _ := NewTHttpPostClient(t.url.String(), t.timeout)
 				return t2
 			}
-			t2, _ := NewTHttpClient(t.url.String())
+			t2, _ := NewTHttpClient(t.url.String(), t.timeout)
 			return t2
 		}
 	}
 	if p.isPost {
-		s, _ := NewTHttpPostClient(p.url)
+		s, _ := NewTHttpPostClient(p.url, p.timeout)
 		return s
 	}
-	s, _ := NewTHttpClient(p.url)
+	s, _ := NewTHttpClient(p.url, p.timeout)
 	return s
 }
 
-func NewTHttpClientTransportFactory(url string) *THttpClientTransportFactory {
-	return &THttpClientTransportFactory{url: url, isPost: false}
+func NewTHttpClientTransportFactory(url string, timeout time.Duration) *THttpClientTransportFactory {
+	return &THttpClientTransportFactory{url: url, isPost: false, timeout: timeout}
 }
 
-func NewTHttpPostClientTransportFactory(url string) *THttpClientTransportFactory {
-	return &THttpClientTransportFactory{url: url, isPost: true}
+func NewTHttpPostClientTransportFactory(url string, timeout time.Duration) *THttpClientTransportFactory {
+	return &THttpClientTransportFactory{url: url, isPost: true, timeout: timeout}
 }
 
-func newHttpClient() *http.Client {
+func newHttpClient(timeout time.Duration) *http.Client {
 	return &http.Client{
 		// Setting a non-nil Transport means that each client will get its own
 		// idle connection pool.  This is way more stable than sharing a single
 		// pool for this entire server.
-		Transport: &http.Transport{}, // TODO set dial and TLS timeouts?
+		Transport: &http.Transport{}, // TODO set additional (TLS?) timeouts?
+		Timeout:   timeout,
 	}
 }
 
-func NewTHttpClient(urlstr string) (TTransport, error) {
+func NewTHttpClient(urlstr string, timeout time.Duration) (TTransport, error) {
 	parsedURL, err := url.Parse(urlstr)
 	if err != nil {
 		return nil, err
@@ -103,7 +108,8 @@ func NewTHttpClient(urlstr string) (TTransport, error) {
 	return &THttpClient{
 		responseBuffer: buf,
 		url:            parsedURL,
-		httpClient:     newHttpClient(),
+		httpClient:     newHttpClient(timeout),
+		timeout:        timeout,
 	}, nil
 }
 
@@ -123,7 +129,7 @@ func getBuffer() *bytes.Buffer {
 	return buf
 }
 
-func NewTHttpPostClient(urlstr string) (TTransport, error) {
+func NewTHttpPostClient(urlstr string, timeout time.Duration) (TTransport, error) {
 	parsedURL, err := url.Parse(urlstr)
 	if err != nil {
 		return nil, err
@@ -132,7 +138,7 @@ func NewTHttpPostClient(urlstr string) (TTransport, error) {
 		url:           parsedURL,
 		requestBuffer: getBuffer(),
 		header:        http.Header{},
-		httpClient:    newHttpClient(),
+		httpClient:    newHttpClient(timeout),
 	}, nil
 }
 
