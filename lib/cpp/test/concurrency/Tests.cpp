@@ -28,7 +28,6 @@
 int main(int argc, char** argv) {
 
   std::string arg;
-
   std::vector<std::string> args(argc - 1 > 1 ? argc - 1 : 1);
 
   args[0] = "all";
@@ -45,25 +44,25 @@ int main(int argc, char** argv) {
 
     std::cout << "ThreadFactory tests..." << std::endl;
 
-    size_t count = 1000;
+    int count = 1000;
     size_t floodLoops = 1;
     size_t floodCount = 100000;
 
     std::cout << "\t\tThreadFactory reap N threads test: N = " << count << std::endl;
 
-    assert(threadFactoryTests.reapNThreads(count));
+    threadFactoryTests.reapNThreads(count);				// throws if something goes wrong
 
     std::cout << "\t\tThreadFactory floodN threads test: N = " << floodCount << std::endl;
 
-    assert(threadFactoryTests.floodNTest(floodLoops, floodCount));
+    if (!threadFactoryTests.floodNTest(floodLoops, floodCount)) { exit(1); }
 
     std::cout << "\t\tThreadFactory synchronous start test" << std::endl;
 
-    assert(threadFactoryTests.synchStartTest());
+    threadFactoryTests.synchStartTest();				// throws if something goes wrong
 
     std::cout << "\t\tThreadFactory monitor timeout test" << std::endl;
 
-    assert(threadFactoryTests.monitorTimeoutTest());
+    if (!threadFactoryTests.monitorTimeoutTest()) { exit(1); }
   }
 
   if (runAll || args[0].compare("util") == 0) {
@@ -97,7 +96,7 @@ int main(int argc, char** argv) {
 
     TimerManagerTests timerManagerTests;
 
-    assert(timerManagerTests.test00());
+    timerManagerTests.test00();		// throws if something goes wrong
   }
 
   if (runAll || args[0].compare("thread-manager") == 0) {
@@ -117,12 +116,12 @@ int main(int argc, char** argv) {
 
       ThreadManagerTests threadManagerTests;
 
-      assert(threadManagerTests.loadTest(taskCount, delay, workerCount));
+      if (!threadManagerTests.loadTest(taskCount, delay, workerCount)) { std::cerr << "loadTest returned false" << std::endl << std::flush; exit(1); }
 
       std::cout << "\t\tThreadManager block test: worker count: " << workerCount
                 << " delay: " << delay << std::endl;
 
-      assert(threadManagerTests.blockTest(delay, workerCount));
+      if (!threadManagerTests.blockTest(delay, workerCount)) { std::cerr << "blockTest returned false" << std::endl << std::flush; exit(1); }
     }
   }
 

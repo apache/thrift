@@ -22,6 +22,7 @@
 #include <sstream>
 #include <boost/algorithm/string.hpp>
 
+#include <thrift/config.h>
 #include <thrift/transport/THttpClient.h>
 #include <thrift/transport/TSocket.h>
 
@@ -102,7 +103,7 @@ void THttpClient::flush() {
   std::ostringstream h;
   h << "POST " << path_ << " HTTP/1.1" << CRLF << "Host: " << host_ << CRLF
     << "Content-Type: application/x-thrift" << CRLF << "Content-Length: " << len << CRLF
-    << "Accept: application/x-thrift" << CRLF << "User-Agent: Thrift/" << VERSION
+    << "Accept: application/x-thrift" << CRLF << "User-Agent: Thrift/" << PACKAGE_VERSION
     << " (C++/THttpClient)" << CRLF << CRLF;
   string header = h.str();
 

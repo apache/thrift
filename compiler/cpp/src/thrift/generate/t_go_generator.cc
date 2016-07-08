@@ -25,6 +25,9 @@
  * guide for ensuring uniformity and readability.
  */
 
+#define __STDC_LIMIT_MACROS
+
+#include <assert.h>
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -39,6 +42,12 @@
 #include "thrift/platform.h"
 #include "thrift/version.h"
 #include "thrift/generate/t_generator.h"
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#elif HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
 
 using std::map;
 using std::ofstream;
@@ -433,7 +442,9 @@ std::string t_go_generator::camelcase(const std::string& value) const {
       if (islower(value2[i + 1])) {
         value2.replace(i, 2, 1, toupper(value2[i + 1]));
       }
-      fix_common_initialism(value2, i);
+
+      assert(i <= INT32_MAX);
+      fix_common_initialism(value2, static_cast<int>(i));
     }
   }
 
@@ -2302,7 +2313,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     f_remote << indent() << "}" << endl;
 
     for (std::vector<t_field*>::size_type i = 0; i < num_args; ++i) {
-      int flagArg = i + 1;
+      std::vector<t_field*>::size_type flagArg = i + 1;
       t_type* the_type(args[i]->get_type());
       t_type* the_type2(get_true_type(the_type));
 

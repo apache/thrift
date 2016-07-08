@@ -33,6 +33,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/gen-cpp")
 include_directories("${PROJECT_SOURCE_DIR}/lib/cpp/src")
 
+add_definitions("-D__STDC_LIMIT_MACROS")
 
 set(crosstestgencpp_SOURCES
     gen-cpp/ThriftTest.cpp
