@@ -50,13 +50,7 @@ $(BIN_PHP_WEB): $(HX_SRC) \
 		php-web-server.hxml
 	$(HAXE) --cwd .  php-web-server.hxml
 
-NODE_XMLHTTPREQUEST = node_modules/xmlhttprequest/lib/XMLHttpRequest.js
-
-$(NODE_XMLHTTPREQUEST) :
-	npm install
-
 $(BIN_NODE_JS): $(HX_SRC) \
-		$(NODE_XMLHTTPREQUEST) \
 		nodejs.hxml
 	haxelib list | grep hxnodejs > /dev/null || haxelib install hxnodejs
 	$(HAXE) --cwd .  nodejs.hxml

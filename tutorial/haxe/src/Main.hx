@@ -38,14 +38,6 @@ enum Trns {
     http;
 }
 
-#if nodejs
-@:keep
-@:jsRequire("xmlhttprequest", "XMLHttpRequest")
-extern class XMLHttpRequest {
-  function new();
-}
-#end
-
 #if js
 @:expose
 @:keep
@@ -103,6 +95,7 @@ class Main {
         return;
         #end
 
+        #if ! (flash || (js && !nodejs))
         try {
             if (server)
                 RunServer();
@@ -113,6 +106,7 @@ class Main {
         }
 
         trace("Completed.");
+        #end
     }
     #if (js && !nodejs)
     private static function initJsBrowser()
@@ -252,9 +246,6 @@ class Main {
         case http:
             var uri = 'http://${targetHost}:${targetPort}';
             #if js
-            #if nodejs
-            var xhr = new XMLHttpRequest();
-            #end
             if(haxe.Json.stringify(prot) == haxe.Json.stringify(json)) {
                 uri += '/json';
             }

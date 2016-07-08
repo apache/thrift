@@ -27,7 +27,14 @@ import haxe.io.BytesInput;
 
 import haxe.Http;
 
+#if nodejs
+import js.node.Fs;
+import js.Node;
+import js.node.ChildProcess;
+import js.Node.process;
+#end
 
+using StringTools;
 
 /**
 * HTTP implementation of the TTransport interface. Used for working with a
@@ -137,6 +144,7 @@ class JsHttp extends Http {
     public dynamic function onBinaryData( data : Bytes ) {
     }
 
+    #if !nodejs
 	public override function request( ?post : Bool ) : Void {
 		var me = this;
 		me.responseData = null;
@@ -287,6 +295,109 @@ class JsHttp extends Http {
 		if( !async )
 			onreadystatechange(null);
     }
+    #elseif nodejs
+	public override function request( ?post : Bool ) : Void {
+
+        var url_regexp = ~/^(https?:\/\/)?([a-zA-Z\.0-9_-]+)(:[0-9]+)?(.*)$/;
+		if( !url_regexp.match(url) ) {
+			onError("Invalid URL");
+			return;
+		}
+		var ssl = (url_regexp.matched(1) == "https://");
+		var host = url_regexp.matched(2);
+		var portString = url_regexp.matched(3);
+		var request = url_regexp.matched(4);
+		if( request == "" )
+			request = "/";
+		var port = if ( portString == null || portString == "" ) ssl ? 443 : 80 else Std.parseInt(portString.substr(1, portString.length - 1));
+
+        var options = {
+            "hostname":host,
+            "port":port,
+            "path":request,
+            "method":post ? "POST" : "GET",
+            "agent":false,
+            "withCredentials":#if (haxe_ver >= 3.3) me.withCredentials #else false #end
+        };
+
+        var headersCode = "";
+		for( h in headers )
+			headersCode += 'req.setHeader("${h.header}","${h.value}");';
+
+        // stringify data
+        var sendCode = "";
+        var data = binaryPostData;
+
+        if(data != null) {
+            var bufStr = haxe.Json.stringify(js.node.buffer.Buffer.hxFromBytes(data)).replace("'", "\\'");
+            sendCode = "var dataObj = JSON.parse('" + bufStr + "', "
+            + " function(key, value) {"
+                + "return value && value.type === 'Buffer'"
+                + "? new Buffer(value.data)"
+                + ": value;"
+            + "});";
+            sendCode += "req.write(dataObj);";
+        }
+
+        var responseEncoding = 'binary';
+ 
+        // The async request the other Node process executes
+        var execString = "var http = require('http'), https = require('https'), fs = require('fs');"
+          + "var doRequest = http" + (ssl ? "s" : "") + ".request;"
+          + "var options = " + haxe.Json.stringify(options) + ";"
+          + "var responseText = '';"
+          + "var req = doRequest(options, function(response) {"
+          + "response.setEncoding(" + (responseEncoding != null ? "'" + responseEncoding + "'" : responseEncoding) + ");"
+          + "response.on('data', function(chunk) {"
+          + "  responseText += chunk;"
+          + "});"
+          + "response.on('end', function() {"
+          + "if(responseText.length) {"
+          + "  responseText = JSON.stringify(new Buffer(responseText, " + (responseEncoding != null ? "'" + responseEncoding + "'" : responseEncoding) + "));"
+          + "}"
+          + "process.stdout.write(JSON.stringify({err: null, data: {statusCode: response.statusCode, headers: response.headers, text: responseText}}));"
+          + "});"
+          + "response.on('error', function(error) {"
+          + "process.stdout.write(JSON.stringify({err: error, errorMessage : error.message}));"
+          + "});"
+          + "}).on('error', function(error) {"
+          + "process.stdout.write(JSON.stringify({err: error, errorMessage : error.message}));"
+          + "});"
+          + headersCode
+          + sendCode 
+          + "req.end();";
+
+        // Start the other Node Process, executing this string
+        //Fs.writeFileSync("codetorun.js", execString, "binary");
+
+        var subProcess = ChildProcess.spawnSync(Node.process.argv[0], ["-e", execString], {stdio: "pipe"});
+
+        if(subProcess.status != 0 || subProcess.stderr != '') {
+            this.onError('Execution of js is failed : ${execString}\n error : ${subProcess.stderr}');
+        }
+
+        var responseBody = subProcess.stdout; 
+        var resp = haxe.Json.parse(responseBody);
+
+        //trace(responseBody);
+  
+        if (resp.err != null) {
+            this.onError(resp.errorMessage);
+        } else {
+            var response = resp.data;
+            //self.status = resp.data.statusCode;
+            var responseBuffer = haxe.Json.parse(resp.data.text);
+            //trace(responseBuffer);
+            var buffer = new js.node.buffer.Buffer(responseBuffer.data);
+            this.onBinaryData(buffer.hxToBytes());
+
+            //self.responseText = responseBuffer.toString(responseEncoding);
+            //                me.onBinaryData(resBytes);
+
+        }
+    }
+    #end
+
 }
 #end
     
