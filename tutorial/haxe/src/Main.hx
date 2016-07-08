@@ -38,7 +38,7 @@ enum Trns {
     http;
 }
 
-#if js
+#if nodejs
 @:keep
 @:jsRequire("xmlhttprequest", "XMLHttpRequest")
 extern class XMLHttpRequest {
@@ -46,6 +46,10 @@ extern class XMLHttpRequest {
 }
 #end
 
+#if js
+@:expose
+@:keep
+#end
 class Main {
 
     private static var server : Bool = false;
@@ -59,7 +63,7 @@ class Main {
 
     static function main() {
 
-        #if ! (flash || phpwebserver)
+        #if ! (flash || phpwebserver || (js && !nodejs))
         try {
               ParseArgs();
         } catch (e : String) {
@@ -69,6 +73,19 @@ class Main {
         }
 
         #elseif  phpwebserver
+        //support json proto via url
+        var uri = php.Web.getURI();
+        if(uri == '/json') {
+            prot = json;
+        } else if (uri != '/' && uri.length > 0) {
+            //work as simple web server for files in directory
+            Sys.stderr().writeString('${uri}\n');
+            var path = uri.substr(1); //remove trailing /
+            if(sys.FileSystem.exists(path) && !sys.FileSystem.isDirectory(path)) {
+                php.Lib.printFile(path);
+                return;
+            }
+        }
         //forcing server
         server = true;
         trns = http;
@@ -78,21 +95,12 @@ class Main {
           Sys.println('http endpoint for thrift test server');
           return;
         }
-        //support json proto via url
-        if(php.Web.getURI() == '/json') {
-            prot = json;
-        }
-        #elseif js
-        if(js.Browser.supported) {
-            trns = http;
-        } else 
-            try {
-                  ParseArgs();
-            } catch (e : String) {
-                trace(e);
-                trace(GetHelp());
-                return;
-            }
+        //provide content type
+        #elseif (js && !nodejs)
+        trns = http;
+        prot = json;
+        initJsBrowser();
+        return;
         #end
 
         try {
@@ -106,6 +114,29 @@ class Main {
 
         trace("Completed.");
     }
+    #if (js && !nodejs)
+    private static function initJsBrowser()
+    {
+        //remap trace to div
+        haxe.Log.trace = function(v:Dynamic, ?infos:haxe.PosInfos)
+        {
+          // handle trace
+          var newValue : Dynamic;
+          if (infos != null && infos.customParams!=null) {
+            var extra:String = "";
+            for( v in infos.customParams )
+              extra += "," + v;
+            newValue = v + extra;
+          }
+          else {
+            newValue = v;
+          }
+          var msg = infos != null ? infos.fileName + ':' + infos.lineNumber + ': ' : '';
+          var traceDiv = new js.JQuery('#trace');
+          traceDiv.html(traceDiv.html() + '<br />${msg}${newValue}');
+        }
+    }
+    #end
 
     #if phpwebserver
     private static function initPhpWebServer()
@@ -131,7 +162,7 @@ class Main {
     #end
 
 
-    #if ! (flash)
+    #if ! (flash || (js && !nodejs))
 
     private static function GetHelp() : String {
         return Sys.executablePath()+"  modus  trnsOption  transport  protocol\n"
@@ -200,6 +231,14 @@ class Main {
 
     #end
 
+    public static function setProtJson() {
+        prot = json;
+    }
+
+    public static function setProtBinary() {
+        prot = binary;
+    }
+
     private static function ClientSetup() : Calculator {
          trace("Client configuration:");
 
@@ -213,10 +252,10 @@ class Main {
         case http:
             var uri = 'http://${targetHost}:${targetPort}';
             #if js
-            if(!js.Browser.supported) {
-                var xhr = new XMLHttpRequest();
-            }
-            if(prot == json) {
+            #if nodejs
+            var xhr = new XMLHttpRequest();
+            #end
+            if(haxe.Json.stringify(prot) == haxe.Json.stringify(json)) {
                 uri += '/json';
             }
             #end

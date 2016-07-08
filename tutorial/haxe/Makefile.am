@@ -29,7 +29,7 @@ BIN_NODE_JS = bin/nodejs/Main.js
 gen-haxe/tutorial/calculator.hx gen-haxe/shared/shared_service.hx: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen haxe -r $<
 
-all-local: $(BIN_CPP) $(BIN_PHP) $(BIN_PHP_WEB) $(BIN_NODE_JS)
+all-local: $(BIN_CPP) $(BIN_PHP) $(BIN_PHP_WEB) $(BIN_NODE_JS) $(BIN_JS)
 
 check: gen-haxe/tutorial/calculator.hx
 
@@ -60,8 +60,10 @@ $(BIN_NODE_JS): $(HX_SRC) \
 		nodejs.hxml
 	haxelib list | grep hxnodejs > /dev/null || haxelib install hxnodejs
 	$(HAXE) --cwd .  nodejs.hxml
-	sed -i 's/window\.location\.protocol\.toLowerCase()/"http"/g' $(BIN_NODE_JS)
 
+$(BIN_JS): $(HX_SRC) \
+		javascript.hxml
+	$(HAXE) --cwd .  javascript.hxml
 
 tutorialserver: all
 	$(BIN_CPP) server
