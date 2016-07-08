@@ -45,6 +45,8 @@ abstract class TBase
 
   abstract public function write($output);
 
+  abstract protected static function _tspec();
+
   public function __construct($spec=null, $vals=null)
   {
     if (is_array($spec) && is_array($vals)) {
