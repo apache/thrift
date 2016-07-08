@@ -41,10 +41,8 @@ TThreadedServer::TThreadedServer(const shared_ptr<TProcessorFactory>& processorF
                                  const shared_ptr<TTransportFactory>& transportFactory,
                                  const shared_ptr<TProtocolFactory>& protocolFactory,
                                  const shared_ptr<ThreadFactory>& threadFactory)
-  : TThreadPoolServer(processorFactory, serverTransport, transportFactory, protocolFactory,
-          apache::thrift::concurrency::ThreadManager::newSimpleThreadManager(0, 0)) {
-    threadManager_->threadFactory(threadFactory);
-    threadManager_->start();
+  : TServerFramework(processorFactory, serverTransport, transportFactory, protocolFactory),
+    threadFactory_(threadFactory) {
 }
 
 TThreadedServer::TThreadedServer(const shared_ptr<TProcessor>& processor,
@@ -52,10 +50,8 @@ TThreadedServer::TThreadedServer(const shared_ptr<TProcessor>& processor,
                                  const shared_ptr<TTransportFactory>& transportFactory,
                                  const shared_ptr<TProtocolFactory>& protocolFactory,
                                  const shared_ptr<ThreadFactory>& threadFactory)
-  : TThreadPoolServer(processor, serverTransport, transportFactory, protocolFactory,
-          apache::thrift::concurrency::ThreadManager::newSimpleThreadManager(0, 0)) {
-    threadManager_->threadFactory(threadFactory);
-    threadManager_->start();
+  : TServerFramework(processor, serverTransport, transportFactory, protocolFactory),
+    threadFactory_(threadFactory) {
 }
 
 TThreadedServer::TThreadedServer(const shared_ptr<TProcessorFactory>& processorFactory,
@@ -65,15 +61,13 @@ TThreadedServer::TThreadedServer(const shared_ptr<TProcessorFactory>& processorF
                                  const shared_ptr<TProtocolFactory>& inputProtocolFactory,
                                  const shared_ptr<TProtocolFactory>& outputProtocolFactory,
                                  const shared_ptr<ThreadFactory>& threadFactory)
-  : TThreadPoolServer(processorFactory,
-                      serverTransport,
-                      inputTransportFactory,
-                      outputTransportFactory,
-                      inputProtocolFactory,
-                      outputProtocolFactory,
-                      apache::thrift::concurrency::ThreadManager::newSimpleThreadManager(0, 0)) {
-    threadManager_->threadFactory(threadFactory);
-    threadManager_->start();
+  : TServerFramework(processorFactory,
+                     serverTransport,
+                     inputTransportFactory,
+                     outputTransportFactory,
+                     inputProtocolFactory,
+                     outputProtocolFactory),
+    threadFactory_(threadFactory) {
 }
 
 TThreadedServer::TThreadedServer(const shared_ptr<TProcessor>& processor,
@@ -83,29 +77,44 @@ TThreadedServer::TThreadedServer(const shared_ptr<TProcessor>& processor,
                                  const shared_ptr<TProtocolFactory>& inputProtocolFactory,
                                  const shared_ptr<TProtocolFactory>& outputProtocolFactory,
                                  const shared_ptr<ThreadFactory>& threadFactory)
-  : TThreadPoolServer(processor,
-                      serverTransport,
-                      inputTransportFactory,
-                      outputTransportFactory,
-                      inputProtocolFactory,
-                      outputProtocolFactory,
-                      apache::thrift::concurrency::ThreadManager::newSimpleThreadManager(0, 0)) {
-    threadManager_->threadFactory(threadFactory);
-    threadManager_->start();
+  : TServerFramework(processor,
+                     serverTransport,
+                     inputTransportFactory,
+                     outputTransportFactory,
+                     inputProtocolFactory,
+                     outputProtocolFactory),
+    threadFactory_(threadFactory) {
 }
 
 TThreadedServer::~TThreadedServer() {
 }
 
-void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient) {
-  if (!threadManager_->idleWorkerCount())
-  {
-    threadManager_->addWorker();
-  }
+void TThreadedServer::serve() {
+  TServerFramework::serve();
 
-  TThreadPoolServer::onClientConnected(pClient);
+  // Drain all clients - no more will arrive
+  try {
+    Synchronized s(clientsMonitor_);
+    while (getConcurrentClientCount() > 0) {
+      clientsMonitor_.wait();
+    }
+  } catch (TException& tx) {
+    string errStr = string("TThreadedServer: Exception joining workers: ") + tx.what();
+    GlobalOutput(errStr.c_str());
+  }
 }
 
+void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient) {
+  threadFactory_->newThread(pClient)->start();
+}
+
+void TThreadedServer::onClientDisconnected(TConnectedClient* pClient) {
+  THRIFT_UNUSED_VARIABLE(pClient);
+  Synchronized s(clientsMonitor_);
+  if (getConcurrentClientCount() == 0) {
+    clientsMonitor_.notify();
+  }
+}
 }
 }
 } // apache::thrift::server
