@@ -709,10 +709,10 @@ void t_php_generator::generate_php_struct_spec(ofstream& out, t_struct* tstruct)
   indent(out) << "static protected function _tspec() {" << endl;
   indent_up();
 
-  indent(out) << "if (!isset(self::$_tspec)) {" << endl;
+  indent(out) << "if (!isset(self::$_TSPEC)) {" << endl;
   indent_up();
 
-  indent(out) << "self::$_tspec = array(" << endl;
+  indent(out) << "self::$_TSPEC = array(" << endl;
   indent_up();
 
   const vector<t_field*>& members = tstruct->get_members();
