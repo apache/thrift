@@ -262,8 +262,9 @@ BOOST_AUTO_TEST_CASE(test_json_proto_8) {
   ":[\"i8\",3,1,2,3]},\"13\":{\"lst\":[\"i16\",3,1,2,3]},\"14\":{\"lst\":[\"i64"
   "\",3,1,2,3]}}";
 
+  const std::size_t bufSiz = strlen(json_string) * sizeof(char);
   boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
-    (uint8_t*)(json_string), strlen(json_string)*sizeof(char)));
+    (uint8_t*)(json_string), static_cast<uint32_t>(bufSiz)));
   boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
 
   OneOfEach ooe2;

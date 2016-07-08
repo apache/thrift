@@ -71,8 +71,7 @@ public:
 class ServerThread {
 public:
   ServerThread(const boost::shared_ptr<ServerState>& state, bool autoStart)
-    : helper_(new Helper(this)),
-      port_(0),
+    : port_(0),
       running_(false),
       serving_(false),
       error_(false),

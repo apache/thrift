@@ -17,8 +17,6 @@
  * under the License.
  */
 
-#define __STDC_FORMAT_MACROS
-
 #include <thrift/thrift-config.h>
 
 #include <thrift/server/TNonblockingServer.h>
@@ -64,13 +62,12 @@
 #define AF_LOCAL AF_UNIX
 #endif
 
-#if !defined(PRIu32)
-#define PRIu32 "I32u"
-#define PRIu64 "I64u"
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
 #endif
 
-#if defined(_WIN32) && (_WIN32_WINNT < 0x0600)
-  #define AI_ADDRCONFIG 0x0400
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
 #endif
 
 namespace apache {

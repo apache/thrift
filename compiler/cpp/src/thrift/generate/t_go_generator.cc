@@ -25,9 +25,10 @@
  * guide for ensuring uniformity and readability.
  */
 
-#include <string>
 #include <fstream>
 #include <iostream>
+#include <limits>
+#include <string>
 #include <vector>
 
 #include <stdlib.h>
@@ -433,7 +434,11 @@ std::string t_go_generator::camelcase(const std::string& value) const {
       if (islower(value2[i + 1])) {
         value2.replace(i, 2, 1, toupper(value2[i + 1]));
       }
-      fix_common_initialism(value2, i);
+
+      if (i > static_cast<std::string::size_type>(std::numeric_limits<int>().max())) {
+        throw "integer overflow in t_go_generator::camelcase, value = " + value;
+      }
+      fix_common_initialism(value2, static_cast<int>(i));
     }
   }
 
@@ -2308,7 +2313,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     f_remote << indent() << "}" << endl;
 
     for (std::vector<t_field*>::size_type i = 0; i < num_args; ++i) {
-      int flagArg = i + 1;
+      std::vector<t_field*>::size_type flagArg = i + 1;
       t_type* the_type(args[i]->get_type());
       t_type* the_type2(get_true_type(the_type));
 
