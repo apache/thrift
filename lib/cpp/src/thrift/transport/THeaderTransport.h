@@ -135,8 +135,9 @@ public:
   void transform(uint8_t* ptr, uint32_t sz);
 
   uint16_t getNumTransforms() const {
-    int trans = writeTrans_.size();
-    return trans;
+    std::vector<uint16_t>::size_type trans = writeTrans_.size();
+    assert(trans <= UINT16_MAX);
+    return static_cast<uint16_t>(trans);
   }
 
   void setTransform(uint16_t transId) { writeTrans_.push_back(transId); }
@@ -204,7 +205,7 @@ protected:
   /**
    * Returns the maximum number of bytes that write k/v headers can take
    */
-  size_t getMaxWriteHeadersSize() const;
+  uint32_t getMaxWriteHeadersSize() const;
 
   struct infoIdType {
     enum idType {

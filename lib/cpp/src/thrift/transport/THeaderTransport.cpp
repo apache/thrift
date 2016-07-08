@@ -252,7 +252,9 @@ void THeaderTransport::readHeaderFormat(uint16_t headerSize, uint32_t sz) {
   }
 
   // Untransform the data section.  rBuf will contain result.
-  untransform(data, sz - (data - rBuf_.get())); // ignore header in size calc
+  ptrdiff_t unsz = static_cast<ptrdiff_t>(sz) - (data - rBuf_.get());	// ignore header in size calc
+  assert(unsz <= UINT32_MAX);
+  untransform(data, static_cast<uint32_t>(unsz)); 
 }
 
 void THeaderTransport::untransform(uint8_t* ptr, uint32_t sz) {
@@ -375,7 +377,9 @@ void THeaderTransport::resetProtocol() {
 }
 
 uint32_t THeaderTransport::getWriteBytes() {
-  return wBase_ - wBuf_.get();
+  ptrdiff_t wb = wBase_ - wBuf_.get();
+  assert(wb <= UINT32_MAX);
+  return static_cast<uint32_t>(wb);
 }
 
 /**
@@ -384,8 +388,9 @@ uint32_t THeaderTransport::getWriteBytes() {
  * Automatically advances ptr to after the written portion
  */
 void THeaderTransport::writeString(uint8_t*& ptr, const string& str) {
-  uint32_t strLen = str.length();
-  ptr += writeVarint32(strLen, ptr);
+  string::size_type strLen = str.length();
+  assert(strLen <= INT32_MAX);
+  ptr += writeVarint32(static_cast<int32_t>(strLen), ptr);
   memcpy(ptr, str.c_str(), strLen); // no need to write \0
   ptr += strLen;
 }
@@ -394,7 +399,7 @@ void THeaderTransport::setHeader(const string& key, const string& value) {
   writeHeaders_[key] = value;
 }
 
-size_t THeaderTransport::getMaxWriteHeadersSize() const {
+uint32_t THeaderTransport::getMaxWriteHeadersSize() const {
   size_t maxWriteHeadersSize = 0;
   THeaderTransport::StringToStringMap::const_iterator it;
   for (it = writeHeaders_.begin(); it != writeHeaders_.end(); ++it) {
@@ -402,7 +407,8 @@ size_t THeaderTransport::getMaxWriteHeadersSize() const {
     // 2 varints32 + the strings themselves
     maxWriteHeadersSize += 5 + 5 + (it->first).length() + (it->second).length();
   }
-  return maxWriteHeadersSize;
+  assert(maxWriteHeadersSize <= UINT32_MAX);
+  return static_cast<uint32_t>(maxWriteHeadersSize);
 }
 
 void THeaderTransport::clearHeaders() {
@@ -431,7 +437,7 @@ void THeaderTransport::flush() {
   if (clientType == THRIFT_HEADER_CLIENT_TYPE) {
     // header size will need to be updated at the end because of varints.
     // Make it big enough here for max varint size, plus 4 for padding.
-    int headerSize = (2 + getNumTransforms()) * THRIFT_MAX_VARINT32_BYTES + 4;
+    uint32_t headerSize = (2 + getNumTransforms()) * THRIFT_MAX_VARINT32_BYTES + 4;
     // add approximate size of info headers
     headerSize += getMaxWriteHeadersSize();
 
@@ -479,11 +485,12 @@ void THeaderTransport::flush() {
     // write info headers
 
     // for now only write kv-headers
-    uint16_t headerCount = writeHeaders_.size();
+    StringToStringMap::size_type headerCount = writeHeaders_.size();
+    assert(headerCount <= INT32_MAX);
     if (headerCount > 0) {
       pkt += writeVarint32(infoIdType::KEYVALUE, pkt);
       // Write key-value headers count
-      pkt += writeVarint32(headerCount, pkt);
+      pkt += writeVarint32(static_cast<int32_t>(headerCount), pkt);
       // Write info headers
       map<string, string>::const_iterator it;
       for (it = writeHeaders_.begin(); it != writeHeaders_.end(); ++it) {
@@ -494,7 +501,9 @@ void THeaderTransport::flush() {
     }
 
     // Fixups after varint size calculations
-    headerSize = (pkt - headerStart);
+    ptrdiff_t ptrSize = pkt - headerStart;
+    assert(ptrSize <= UINT32_MAX);
+    headerSize = static_cast<uint32_t>(ptrSize);
     uint8_t padding = 4 - (headerSize % 4);
     headerSize += padding;
 
@@ -504,8 +513,10 @@ void THeaderTransport::flush() {
     }
 
     // Pkt size
+    ptrdiff_t szHbp = (headerStart - pktStart - 4);
+    assert(szHbp <= UINT32_MAX - (headerSize + haveBytes));
     szHbo = headerSize + haveBytes          // thrift header + payload
-            + (headerStart - pktStart - 4); // common header section
+            + static_cast<uint32_t>(szHbp); // common header section
     headerSizeN = htons(headerSize / 4);
     memcpy(headerSizePtr, &headerSizeN, sizeof(headerSizeN));
 

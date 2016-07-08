@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <assert.h>
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -968,10 +969,11 @@ void t_erl_generator::export_string(string name, int num) {
 }
 
 void t_erl_generator::export_types_function(t_function* tfunction, string prefix) {
-
+  t_struct::members_type::size_type num = tfunction->get_arglist()->get_members().size();
+  assert(num <= INT32_MAX);
   export_types_string(prefix + tfunction->get_name(),
                       1 // This
-                      + ((tfunction->get_arglist())->get_members()).size());
+                      + static_cast<int>(num));
 }
 
 void t_erl_generator::export_types_string(string name, int num) {
@@ -984,10 +986,11 @@ void t_erl_generator::export_types_string(string name, int num) {
 }
 
 void t_erl_generator::export_function(t_function* tfunction, string prefix) {
-
+  t_struct::members_type::size_type num = tfunction->get_arglist()->get_members().size();
+  assert(num <= INT32_MAX);
   export_string(prefix + tfunction->get_name(),
                 1 // This
-                + ((tfunction->get_arglist())->get_members()).size());
+                + static_cast<int>(num));
 }
 
 /**

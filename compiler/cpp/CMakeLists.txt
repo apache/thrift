@@ -20,6 +20,15 @@
 # Windows has a different header
 if(MSVC)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/windows/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/version.h)
+    
+    # The winflexbison generator outputs some macros that conflict with the Visual Studio 2010 copy of stdint.h
+    # This might be fixed in later versions of Visual Studio, but an easy solution is to include stdint.h first
+    if(HAVE_STDINT_H)
+        add_definitions(/FI"stdint.h")
+    endif(HAVE_STDINT_H)
+
+    # The generated code also causes a size type warning we cannot work around easily
+    set_source_files_properties(thriftl.cc PROPERTIES COMPILE_FLAGS /wd4267)
 else()
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/version.h)
 endif()
