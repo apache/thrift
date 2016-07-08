@@ -98,6 +98,8 @@ tutorialclient_http: all
 tutorialclient_nodejs_http_json: all
 	node $(BIN_NODE_JS) client http json
 
+tutorialclient_nodejs_http: all
+	node $(BIN_NODE_JS) client http
 
 clean-local:
 	$(RM) -r gen-haxe bin node_modules

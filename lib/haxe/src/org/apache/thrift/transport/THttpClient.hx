@@ -53,7 +53,9 @@ class THttpClient extends TTransport {
         request_ = new JsHttp(requestUrl);
         request_.async = false;
         #end
-        request_.addHeader( "Content-Type", "application/x-thrift");
+        request_.addHeader("Content-Type", "application/x-thrift");
+        request_.addHeader("Accept", "application/x-thrift");
+        request_.addHeader("User-Agent", "Haxe/THttpClient");
     }
 
 
@@ -233,6 +235,8 @@ class JsHttp extends Http {
         //XHR binary charset opt by Marcus Granado 2006 [http://mgran.blogspot.com]
         #if !nodejs
         req.overrideMimeType("text\\/plain; charset=x-user-defined");
+        #else
+        untyped __js__('{0}.setResponseEncoding("binary");', req);
         #end
 
         #if (haxe_ver >= 3.3)
@@ -247,7 +251,7 @@ class JsHttp extends Http {
 		if( jsData != null ) {
             //r.responseType = js.html.XMLHttpRequestResponseType.ARRAYBUFFER;
             //trace(jsData.length);
-            //trace(jsData.toString());
+            //trace(jsData.toString().length);
             #if !nodejs
             //var arrayBuffer = new js.html.ArrayBuffer(jsData.length);
             //var bytesArray = new js.html.Uint8Array(arrayBuffer);
@@ -255,7 +259,26 @@ class JsHttp extends Http {
             //r.send(new js.html.Blob([jsData.toString()], {type: 'text/plain'}));
             r.send(jsData.getData());
             #else
-            r.send(jsData.toString());
+            /* 
+            var hexString = '';
+            for(i in 0 ... jsData.length) {
+                hexString += String.fromCharCode(jsData.get(i)); //'\\0x' + StringTools.hex(jsData.get(i), 2);
+            }
+            r.send(hexString);
+            */
+            var buf = js.node.buffer.Buffer.hxFromBytes(jsData);
+            //trace(untyped __typeof__(buf));
+            r.send(buf);
+            //var arr = buf.subarray(0, jsData.length);
+            //trace(untyped __typeof__(arr));
+            //r.send(arr);
+            //var binString = buf.toString('binary');
+            //trace(binString.length);
+            //r.send(binString);
+            //var arrayBuff = new js.html.ArrayBuffer(binString);
+
+            //r.send(jsData.toString());
+            //r.send(jsData.toHex());
             #end
         } else {
             r.send(uri);
