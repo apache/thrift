@@ -92,7 +92,6 @@ class Main {
         trns = http;
         prot = json;
         initJsBrowser();
-        return;
         #end
 
         #if ! (flash || (js && !nodejs))

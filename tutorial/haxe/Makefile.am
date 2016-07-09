@@ -89,6 +89,9 @@ tutorialserver_php_http: all
 tutorialclient_http: all
 	$(BIN_CPP) client http
 
+tutorialclient_php_http: all
+	php -f $(BIN_PHP) client http
+
 tutorialclient_nodejs_http_json: all
 	node $(BIN_NODE_JS) client http json
 

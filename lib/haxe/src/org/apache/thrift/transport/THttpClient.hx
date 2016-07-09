@@ -129,8 +129,7 @@ class THttpClient extends TTransport {
 }
 
 #if js
-/*supports sending/receiving binary data (browser) 
-  and removes dependency on browser (for node) 
+/*supports sending/receiving binary/json data (browser, nodejs) 
   implemented atop https://github.com/HaxeFoundation/haxe/blob/development/std/haxe/Http.hx
   */
 class JsHttp extends Http {
@@ -153,7 +152,6 @@ class JsHttp extends Http {
 			if( r.readyState != 4 )
 				return;
 			var s = try r.status catch( e : Dynamic ) null;
-            #if !nodejs
 			if ( s != null && untyped __js__('"undefined" !== typeof window') ) {
 				// If the request is local and we have data: assume a success (jQuery approach):
                 var protocol = js.Browser.location.protocol.toLowerCase();
@@ -163,17 +161,13 @@ class JsHttp extends Http {
 					s = r.responseText != null ? 200 : 404;
 				}
 			}
-            #end
 			if( s == untyped __js__("undefined") )
 				s = null;
 			if( s != null )
 				me.onStatus(s);
 			if( s != null && s >= 200 && s < 400 ) {
 				me.req = null;
-                //trace(r.response);
-                //trace(r.responseText);
                 var len = r.responseText.length;
-                //trace(len);
                 var bytes = new BytesOutput();
                 bytes.prepare(len);
                 for(i in 0 ... len) {
@@ -181,19 +175,10 @@ class JsHttp extends Http {
                     if(byte >= 128) {
                         byte -= 256;
                     }
-                    //trace(byte);
                     bytes.writeInt8(byte);
                 }
-                //bytes.writeString(r.responseText);
-                /* 
-                var arrayBuff = new js.html.ArrayBuffer(r.response);
-                trace(arrayBuff.byteLength);
-                var resBytes = Bytes.ofData(arrayBuff);
-                 */
                 var resBytes = bytes.getBytes();
-                //trace(resBytes.length);
 				me.onBinaryData(resBytes);
-				//me.onData(me.responseData = r.responseText);
 			}
 			else if ( s == null ) {
 				me.req = null;
@@ -241,11 +226,7 @@ class JsHttp extends Http {
 		}
 
         //XHR binary charset opt by Marcus Granado 2006 [http://mgran.blogspot.com]
-        #if !nodejs
         req.overrideMimeType("text\\/plain; charset=x-user-defined");
-        #else
-        untyped __js__('{0}.setResponseEncoding("binary");', req);
-        #end
 
         #if (haxe_ver >= 3.3)
 		r.withCredentials = me.withCredentials;
@@ -257,37 +238,7 @@ class JsHttp extends Http {
 			r.setRequestHeader(h.header,h.value);
 
 		if( jsData != null ) {
-            //r.responseType = js.html.XMLHttpRequestResponseType.ARRAYBUFFER;
-            //trace(jsData.length);
-            //trace(jsData.toString().length);
-            #if !nodejs
-            //var arrayBuffer = new js.html.ArrayBuffer(jsData.length);
-            //var bytesArray = new js.html.Uint8Array(arrayBuffer);
-            //r.send(arrayBuffer);
-            //r.send(new js.html.Blob([jsData.toString()], {type: 'text/plain'}));
             r.send(jsData.getData());
-            #else
-            /* 
-            var hexString = '';
-            for(i in 0 ... jsData.length) {
-                hexString += String.fromCharCode(jsData.get(i)); //'\\0x' + StringTools.hex(jsData.get(i), 2);
-            }
-            r.send(hexString);
-            */
-            var buf = js.node.buffer.Buffer.hxFromBytes(jsData);
-            //trace(untyped __typeof__(buf));
-            r.send(buf);
-            //var arr = buf.subarray(0, jsData.length);
-            //trace(untyped __typeof__(arr));
-            //r.send(arr);
-            //var binString = buf.toString('binary');
-            //trace(binString.length);
-            //r.send(binString);
-            //var arrayBuff = new js.html.ArrayBuffer(binString);
-
-            //r.send(jsData.toString());
-            //r.send(jsData.toHex());
-            #end
         } else {
             r.send(uri);
         }
@@ -367,9 +318,9 @@ class JsHttp extends Http {
           + sendCode 
           + "req.end();";
 
-        // Start the other Node Process, executing this string
         //Fs.writeFileSync("codetorun.js", execString, "binary");
 
+        // Start the other Node Process, executing this string
         var subProcess = ChildProcess.spawnSync(Node.process.argv[0], ["-e", execString], {stdio: "pipe"});
 
         if(subProcess.status != 0 || subProcess.stderr != '') {
@@ -378,22 +329,13 @@ class JsHttp extends Http {
 
         var responseBody = subProcess.stdout; 
         var resp = haxe.Json.parse(responseBody);
-
-        //trace(responseBody);
   
         if (resp.err != null) {
             this.onError(resp.errorMessage);
         } else {
-            var response = resp.data;
-            //self.status = resp.data.statusCode;
             var responseBuffer = haxe.Json.parse(resp.data.text);
-            //trace(responseBuffer);
             var buffer = new js.node.buffer.Buffer(responseBuffer.data);
             this.onBinaryData(buffer.hxToBytes());
-
-            //self.responseText = responseBuffer.toString(responseEncoding);
-            //                me.onBinaryData(resBytes);
-
         }
     }
     #end
