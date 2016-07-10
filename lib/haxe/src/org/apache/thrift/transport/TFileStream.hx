@@ -125,7 +125,7 @@ class TFileStream implements TStream {
         var copyJsBuf = new js.node.Buffer(count);
         bytesRead = Fs.readSync(Input, copyJsBuf, 0, count, lastInputOffset);
         if(bytesRead > 0) {
-			lastInputOffset += bytesRead;
+            lastInputOffset += bytesRead;
             var readBuf = copyJsBuf.hxToBytes();
             buf.blit(offset, readBuf, 0, bytesRead);
         }
