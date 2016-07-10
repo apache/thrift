@@ -36,6 +36,7 @@ enter the following commands after installing Haxe:
     haxelib install hxcpp
     haxelib install hxjava
     haxelib install hxcs
+    haxelib install hxnodejs
 
 For other targets, please consult the Haxe documentation whether or not any additional
 target libraries need to be installed and how to achieve this.
@@ -95,6 +96,7 @@ Current status
 ========================
 - tested with Haxe C++ target
 - tested with Haxe PHP target (console/web server, binary protocols)
+- tested with Haxe Javascript target (node/webjs, client only, json/binary over HTTP)
 - transports: Socket, HTTP (servers run inside PHP server/PHP target only), Stream
 - protocols: Binary, JSON, Multiplex, Compact
 - tutorial client and server available
@@ -113,9 +115,6 @@ Known restrictions
 
 Although designed with maximum portability in mind, for technical reasons some platforms
 may only support parts of the library, or not be compatible at all.
-
-Javascript:
-- tutorial fails to build because of unsupported Sys.args
 
 PHP HTTP Server notes
 ========================
@@ -161,4 +160,10 @@ transport =	new TWrappingServerTransport(
 var server = new TSimpleServer( processor, transport, transfactory, protfactory);
 server.runOnce = true;
 ```
+
+Javascript notes
+========================
+
+- non async HTTP requests are used (for Node.js every request is run in separate process and ~20x slower over javascript in browser)
+- tutorial for js uses PHP server. Please check details at [README](../../tutorial/haxe/README.md)
 
