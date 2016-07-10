@@ -62,7 +62,9 @@ class THttpClient extends TTransport {
         #end
         request_.addHeader("Content-Type", "application/x-thrift");
         request_.addHeader("Accept", "application/x-thrift");
+        #if !(js && !nodejs)
         request_.addHeader("User-Agent", "Haxe/THttpClient");
+        #end
     }
 
 
@@ -238,7 +240,7 @@ class JsHttp extends Http {
 			r.setRequestHeader(h.header,h.value);
 
 		if( jsData != null ) {
-            r.send(jsData.getData());
+            r.send(new js.html.Uint8Array(jsData.getData()));
         } else {
             r.send(uri);
         }

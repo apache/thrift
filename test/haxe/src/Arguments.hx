@@ -84,6 +84,8 @@ class Arguments
             server = true;
             transport = http;
           #end
+        #elseif js
+            transport = http;
         #else
         trace("WN: Platform does not support program arguments, using defaults.");
         #end

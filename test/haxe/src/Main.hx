@@ -46,7 +46,7 @@ class Main
             if( args.printHelpOnly)
                 return;
 
-            #if nodejs
+            #if js
                 TestClient.Execute(args);
             #else
             if (args.server)
