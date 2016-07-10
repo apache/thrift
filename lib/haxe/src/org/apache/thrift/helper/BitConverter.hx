@@ -136,15 +136,18 @@ class BitConverter {
         TestPair( 1.2345678901234569E+000,  Int64.make(cast(0x3FF3C0CA,Int),cast(0x428C59FC,Int)));
         TestPair( 1.2345678901234569E+150,  Int64.make(cast(0x5F182344,Int),cast(0xCD3CDF9F,Int)));
         TestPair( 1.2345678901234569E+300,  Int64.make(cast(0x7E3D7EE8,Int),cast(0xBCBBD352,Int)));
+        TestPair( 0.0000000000000000E+000,  Int64.make(cast(0x00000000,Int),cast(0x00000000,Int)));
+        
+        #if !js //js doesn't support values over 2^52
         TestPair( -1.7976931348623157E+308, Int64.make(cast(0xFFEFFFFF,Int),cast(0xFFFFFFFF,Int)));
         TestPair( 1.7976931348623157E+308,  Int64.make(cast(0x7FEFFFFF,Int),cast(0xFFFFFFFF,Int)));
         TestPair( 4.9406564584124654E-324,  Int64.make(cast(0x00000000,Int),cast(0x00000001,Int)));
-        TestPair( 0.0000000000000000E+000,  Int64.make(cast(0x00000000,Int),cast(0x00000000,Int)));
         TestPair( 4.94065645841247E-324,    Int64.make(cast(0x00000000,Int),cast(0x00000001,Int)));
         TestPair( 3.2378592100206092E-319,  Int64.make(cast(0x00000000,Int),cast(0x0000FFFF,Int)));
         TestPair( 1.3906711615669959E-309,  Int64.make(cast(0x0000FFFF,Int),cast(0xFFFFFFFF,Int)));
         TestPair( Math.NEGATIVE_INFINITY,   Int64.make(cast(0xFFF00000,Int),cast(0x00000000,Int)));
         TestPair( Math.POSITIVE_INFINITY,   Int64.make(cast(0x7FF00000,Int),cast(0x00000000,Int)));
+        #end
 
         // NaN is special
         var i64nan = DoubleToInt64Bits( Math.NaN);
@@ -152,6 +155,7 @@ class BitConverter {
         if ( ! Math.isNaN( Int64BitsToDouble( i64cmp)))
             throw 'BitConverter NaN-Test #1: expected NaN';
 
+        #if !js //js doesn't support values over 2^52
         // For doubles, a quiet NaN is a bit pattern
         // between 7FF8000000000000 and 7FFFFFFFFFFFFFFF
         //      or FFF8000000000000 and FFFFFFFFFFFFFFFF
@@ -163,6 +167,7 @@ class BitConverter {
         var ok2 =  (Int64.compare( min2, i64nan) <= 0) && (Int64.compare( i64nan, max2) <= 0);
         if( ! (ok1 || ok2))
             throw 'BitConverter NaN-Test #2: failed';
+        #end
     }
     #end
 

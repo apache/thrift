@@ -288,6 +288,9 @@ class JsHttp extends Http {
                 + ": value;"
             + "});";
             sendCode += "req.write(dataObj);";
+			headersCode += 'req.setHeader("Content-Length",${data.length});';
+        } else {
+			headersCode += 'req.setHeader("Content-Length", 0);';
         }
 
         var responseEncoding = 'binary';
@@ -333,9 +336,13 @@ class JsHttp extends Http {
         if (resp.err != null) {
             this.onError(resp.errorMessage);
         } else {
-            var responseBuffer = haxe.Json.parse(resp.data.text);
-            var buffer = new js.node.buffer.Buffer(responseBuffer.data);
-            this.onBinaryData(buffer.hxToBytes());
+            if(resp.data.text != '') {
+                var responseBuffer = haxe.Json.parse(resp.data.text);
+                var buffer = new js.node.buffer.Buffer(responseBuffer.data);
+                this.onBinaryData(buffer.hxToBytes());
+            } else {
+                this.onBinaryData(Bytes.alloc(0));
+            }
         }
     }
     #end

@@ -24,30 +24,34 @@ THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 BIN_CPP = bin/Main-debug
 BIN_PHP = bin/php/Main-debug.php
 BIN_PHP_WEB = bin/php-web-server/Main-debug.php
+BIN_NODE_JS = bin/nodejs/Main.js
 
 gen-haxe/thrift/test/ThriftTest.hx: $(THRIFTTEST)
 	$(THRIFTCMD) $(THRIFTTEST)
 
 all-local: $(BIN_CPP) $(BIN_PHP) $(BIN_PHP_WEB)
 
-$(BIN_CPP): \
+HX_SRC = \
 		src/*.hx \
 		../../lib/haxe/src/org/apache/thrift/**/*.hx \
 		gen-haxe/thrift/test/ThriftTest.hx
+
+$(BIN_CPP): $(HX_SRC) \
+		cpp.hxml
 	$(HAXE) --cwd .  cpp.hxml
 
-$(BIN_PHP): \
-		src/*.hx \
-		../../lib/haxe/src/org/apache/thrift/**/*.hx \
-		gen-haxe/thrift/test/ThriftTest.hx
+$(BIN_PHP): $(HX_SRC) \
+		php.hxml
 	$(HAXE) --cwd .  php.hxml
 
-$(BIN_PHP_WEB): \
-		src/*.hx \
-		../../lib/haxe/src/org/apache/thrift/**/*.hx \
-		gen-haxe/thrift/test/ThriftTest.hx
+$(BIN_PHP_WEB): $(HX_SRC) \
+		php-web-server.hxml
 	$(HAXE) --cwd .  php-web-server.hxml
 
+$(BIN_NODE_JS): $(HX_SRC) \
+		nodejs.hxml
+	haxelib list | grep hxnodejs > /dev/null || haxelib install hxnodejs
+	$(HAXE) --cwd .  nodejs.hxml
 
 
 #TODO: other haxe targets
@@ -66,7 +70,8 @@ clean-local:
 
 check: check_cpp \
 	check_php \
-	check_php_web 
+	check_php_web \
+	check_node_web
 
 check_cpp: $(BIN_CPP) 
 	timeout 20 $(BIN_CPP) server &
@@ -86,6 +91,21 @@ check_php_web: $(BIN_PHP_WEB) $(BIN_CPP)
 	$(BIN_CPP) client --transport http
 	sleep 10
 
+check_node_web: $(BIN_NODE_JS)
+	timeout 20 php -S 127.0.0.1:9090 router.php &
+	sleep 1
+	node $(BIN_NODE_JS) client --transport http --skip-speed-test
+	sleep 10
+
+nodejs_client_http: $(BIN_NODE_JS)
+	node $(BIN_NODE_JS) client --transport http --skip-speed-test
+
+php_client_http: $(BIN_PHP)
+	php -f $(BIN_PHP) client --transport http
+
+cpp_client_http: $(BIN_CPP)
+	$(BIN_CPP) client --transport http
+
 
 EXTRA_DIST = \
              src \
@@ -94,6 +114,7 @@ EXTRA_DIST = \
              flash.hxml \
              java.hxml \
              javascript.hxml \
+             nodejs.hxml \
              neko.hxml \
              php.hxml \
              python.hxml \

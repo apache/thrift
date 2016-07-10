@@ -46,11 +46,14 @@ class Main
             if( args.printHelpOnly)
                 return;
 
+            #if nodejs
+                TestClient.Execute(args);
+            #else
             if (args.server)
                 TestServer.Execute(args);
             else
                 TestClient.Execute(args);
-
+            #end
             trace("Completed.");
         } catch (e : String) {
             trace(e);

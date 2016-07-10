@@ -71,7 +71,7 @@ class Arguments
 
 
     public function new() {
-        #if sys
+        #if (sys || nodejs)
           #if !phpwebserver
           try {
               ParseArgs();
@@ -89,7 +89,7 @@ class Arguments
         #end
     }
 
-    #if sys
+    #if (sys || nodejs)
 
     private static function GetHelp() : String {
         var sProg = Path.withoutDirectory( Sys.executablePath());
