@@ -78,7 +78,7 @@ describe 'Thrift::HTTPClientTransport' do
         end
       end
 
-      @client.flush rescue
+      @client.flush  rescue
       @client.instance_variable_get(:@outbuf).should eq(Thrift::Bytes.empty_byte_buffer)
     end
 
