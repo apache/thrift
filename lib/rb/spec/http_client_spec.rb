@@ -67,6 +67,21 @@ describe 'Thrift::HTTPClientTransport' do
       end
       @client.flush
     end
+
+    it 'should reset the outbuf on HTTP failures' do
+      @client.write "test"
+
+      Net::HTTP.should_receive(:new).with("my.domain.com", 80).and_return do
+        mock("Net::HTTP").tap do |http|
+          http.should_receive(:use_ssl=).with(false)
+          http.should_receive(:post).with("/path/to/service?param=value", "test", {"Content-Type"=>"application/x-thrift"}) { raise Net::ReadTimeout }
+        end
+      end
+
+      @client.flush  rescue
+      @client.instance_variable_get(:@outbuf).should eq(Thrift::Bytes.empty_byte_buffer)
+    end
+
   end
 
   describe 'ssl enabled' do
