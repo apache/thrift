@@ -34,8 +34,8 @@
 
 -define(ID_NONE, 16#10000).
 -define(CBOOL_NONE, 0).
--define(CBOOL_FALSE, 1).
--define(CBOOL_TRUE, 2).
+-define(CBOOL_TRUE, 1).
+-define(CBOOL_FALSE, 2).
 
 -record(t_compact, {transport,
                            % state for pending boolean fields
