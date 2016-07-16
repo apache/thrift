@@ -273,9 +273,10 @@ class JsHttp extends Http {
             "withCredentials":#if (haxe_ver >= 3.3) me.withCredentials #else false #end
         };
 
-        var headersCode = "";
-        for( h in headers )
-            headersCode += 'req.setHeader("${h.header}","${h.value}");';
+        var headersArray = [];
+        for( h in headers ) {
+            headersArray.push({header : h.header, value : h.value});
+        }
 
         // stringify data
         var sendCode = "";
@@ -290,9 +291,9 @@ class JsHttp extends Http {
                 + ": value;"
             + "});";
             sendCode += "req.write(dataObj);";
-            headersCode += 'req.setHeader("Content-Length",${data.length});';
+            headersArray.push({header : "Content-Length", value : Std.string(data.length)});
         } else {
-            headersCode += 'req.setHeader("Content-Length", 0);';
+            headersArray.push({header : "Content-Length", value : '0'});
         }
 
         var responseEncoding = 'binary';
@@ -319,7 +320,10 @@ class JsHttp extends Http {
           + "}).on('error', function(error) {"
           + "process.stdout.write(JSON.stringify({err: error, errorMessage : error.message}));"
           + "});"
-          + headersCode
+          + "var headersArr = JSON.parse('" + haxe.Json.stringify(headersArray) + "');"
+          + "for(i = 0; i > headersArr.length; i++) {"
+          + "req.setHeader(headersArr[i].header, headersArr[i].value);"
+          + "}"
           + sendCode 
           + "req.end();";
 
