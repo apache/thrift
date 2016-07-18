@@ -22,6 +22,7 @@ namespace cpp apache.thrift.plugin
 namespace csharp Thrift.Plugin
 namespace d thrift.plugin
 namespace delphi Thrift.Plugin
+namespace erl thrift.plugin
 namespace go thrift
 namespace haxe org.apache.thrift.plugin
 namespace hs Thrift.Plugin
