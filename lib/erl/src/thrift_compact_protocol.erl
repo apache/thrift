@@ -219,7 +219,7 @@ write(This, {i32, Value}) when is_integer(Value) ->
 write(This, {i64, Value}) when is_integer(Value) -> write(This, to_varint(to_zigzag(Value), []));
 
 write(This, {double, Double}) ->
-  write(This, <<Double:64/little-signed-float>>);
+  write(This, <<Double:64/float-signed-little>>);
 
 write(This0, {string, Str}) when is_list(Str) ->
   % TODO: limit length
