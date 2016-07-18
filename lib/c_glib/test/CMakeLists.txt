@@ -21,8 +21,7 @@
 set(TEST_PREFIX "c_glib")
 
 # Find required packages
-set(Boost_USE_STATIC_LIBS ON) # Force the use of static boost test framework
-find_package(Boost 1.53.0 REQUIRED COMPONENTS unit_test_framework)
+find_package(Boost 1.53.0 REQUIRED)
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 #Make sure gen-cpp and gen-c_glib files can be included
