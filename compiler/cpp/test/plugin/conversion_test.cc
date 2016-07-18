@@ -18,6 +18,7 @@
  */
 
 #define BOOST_TEST_ALTERNATIVE_INIT_API
+#include <map>
 #include <vector>
 
 #include <boost/preprocessor.hpp>
@@ -96,6 +97,7 @@ void init_const_values() {
     t_const_value* x = new t_const_value;
     x->set_map();
     x->add_map(const_values[0], const_values[1]);
+    x->add_map(const_values[1], const_values[0]);
     const_values.push_back(x);
   }
   {
@@ -218,7 +220,11 @@ void init() {
 struct GlobalFixture {
   ~GlobalFixture() { test_data::cleanup(); }
 };
+#if (BOOST_VERSION >= 105900)
 BOOST_GLOBAL_FIXTURE(GlobalFixture);
+#else
+BOOST_GLOBAL_FIXTURE(GlobalFixture)
+#endif
 
 void migrate_global_cache() {
   plugin::TypeRegistry reg;
@@ -268,12 +274,20 @@ void test_const_value(t_const_value* sut) {
 #undef T_CONST_VALUE_CASE
   case t_const_value::CV_MAP:
     BOOST_CHECK_EQUAL(sut->get_map().size(), sut2->get_map().size());
-    // NOTE This test only works with map with a single entry because we can't
-    // rely on map ordering with pointers as key.
-    BOOST_CHECK_EQUAL(sut->get_map().begin()->first->get_type(),
-                      sut2->get_map().begin()->first->get_type());
-    BOOST_CHECK_EQUAL(sut->get_map().begin()->second->get_type(),
-                      sut2->get_map().begin()->second->get_type());
+    {
+      std::map<t_const_value::t_const_value_type, t_const_value::t_const_value_type> sut_values;
+      for (std::map<t_const_value*, t_const_value*>::const_iterator it = sut->get_map().begin();
+           it != sut->get_map().end(); it++) {
+        sut_values[it->first->get_type()] = it->second->get_type();
+      }
+      std::map<t_const_value::t_const_value_type, t_const_value::t_const_value_type> sut2_values;
+      for (std::map<t_const_value*, t_const_value*>::const_iterator it = sut2->get_map().begin();
+           it != sut2->get_map().end(); it++) {
+        sut2_values[it->first->get_type()] = it->second->get_type();
+      }
+      BOOST_CHECK_EQUAL(sut_values.begin()->first, sut2_values.begin()->first);
+      BOOST_CHECK_EQUAL(sut_values.begin()->second, sut2_values.begin()->second);
+    }
     break;
   case t_const_value::CV_LIST:
     BOOST_CHECK_EQUAL(sut->get_list().size(), sut2->get_list().size());
