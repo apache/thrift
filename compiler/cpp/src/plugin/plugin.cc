@@ -402,6 +402,13 @@ THRIFT_CONVERSION(t_program, from.path, from.name) {
   boost::for_each(from.services | boost::adaptors::transformed(&resolve_service),
                   boost::bind(&::t_program::add_service, to, _1));
 
+  for (std::vector<t_program>::const_iterator it = from.includes.begin();
+       it != from.includes.end();
+       it++) {
+    ::t_program* tmp = new ::t_program((*it).path, (*it).name);
+    convert<t_program, ::t_program>((*it), tmp);
+    to->add_include(tmp);
+  }
   std::for_each(from.c_includes.begin(),
                 from.c_includes.end(),
                 boost::bind(&::t_program::add_c_include, to, _1));

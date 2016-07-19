@@ -248,6 +248,10 @@ public:
 
   // Includes
 
+  void add_include(t_program* program) {
+    includes_.push_back(program);
+  }
+
   void add_include(std::string path, std::string include_site) {
     t_program* program = new t_program(path);
 
