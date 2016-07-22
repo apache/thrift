@@ -114,7 +114,7 @@ write_field_begin(This0 = #t_compact{write_stack=[LastId|T]}, CompactType, Id) -
   end.
 
 -spec to_zigzag(integer()) -> non_neg_integer().
-to_zigzag(Value) -> (Value bsl 1) bxor (Value bsr 63).
+to_zigzag(Value) -> 16#FFFFFFFFFFFFFFFF band ((Value bsl 1) bxor (Value bsr 63)).
 
 -spec from_zigzag(non_neg_integer()) -> integer().
 from_zigzag(Value) -> (Value bsr 1) bxor -(Value band 1).
