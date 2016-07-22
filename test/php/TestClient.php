@@ -110,6 +110,12 @@ $transport->open();
 
 $start = microtime(true);
 
+define(ERR_BASETYPES, 1);
+// ERR_STRUCTS = 2;
+// ERR_CONTAINERS = 4;
+// ERR_EXCEPTIONS = 8;
+// ERR_UNKNOWN = 64;
+$exitcode = 0;
 /**
  * VOID TEST
  */
@@ -117,40 +123,41 @@ print_r("testVoid()");
 $testClient->testVoid();
 print_r(" = void\n");
 
+function roundtrip($testClient, $method, $value) {
+  global $exitcode;
+  print_r("$method($value)");
+  $ret = $testClient->$method($value);
+  print_r(" = \"$ret\"\n");
+  if ($value != $ret) {
+    print_r("*** FAILED ***\n");
+    $exitcode |= ERR_BASETYPES;
+  }
+}
+
 /**
  * STRING TEST
  */
-print_r("testString(\"Test\")");
-$s = $testClient->testString("Test");
-print_r(" = \"$s\"\n");
+roundtrip($testClient, 'testString', "Test");
 
 /**
  * BYTE TEST
  */
-print_r("testByte(1)");
-$u8 = $testClient->testByte(1);
-print_r(" = $u8\n");
+roundtrip($testClient, 'testByte', 1);
 
 /**
  * I32 TEST
  */
-print_r("testI32(-1)");
-$i32 = $testClient->testI32(-1);
-print_r(" = $i32\n");
+roundtrip($testClient, 'testI32', -1);
 
 /**
  * I64 TEST
  */
-print_r("testI64(-34359738368)");
-$i64 = $testClient->testI64(-34359738368);
-print_r(" = $i64\n");
+roundtrip($testClient, 'testI64', -34359738368);
 
 /**
  * DOUBLE TEST
  */
-print_r("testDouble(-852.234234234)");
-$dub = $testClient->testDouble(-852.234234234);
-print_r(" = $dub\n");
+roundtrip($testClient, 'testDouble', -852.234234234);
 
 /**
  * BINARY TEST  --  TODO
@@ -396,32 +403,19 @@ print_r("Total time: $elp ms\n");
 
 // Max I32
 $num = pow(2, 30) + (pow(2, 30) - 1);
-$num2 = $testClient->testI32($num);
-if ($num != $num2) {
-  print "Missed $num = $num2\n";
-}
+roundtrip($testClient, testI32, $num);
 
 // Min I32
 $num = 0 - pow(2, 31);
-$num2 = $testClient->testI32($num);
-if ($num != $num2) {
-  print "Missed $num = $num2\n";
-}
+roundtrip($testClient, testI32, $num);
 
 // Max I64
 $num = pow(2, 62) + (pow(2, 62) - 1);
-$num2 = $testClient->testI64($num);
-if ($num != $num2) {
-  print "Missed $num = $num2\n";
-}
+roundtrip($testClient, testI64, $num);
 
 // Min I64
-$num = 0 - pow(2, 63);
-$num2 = $testClient->testI64($num);
-if ($num != $num2) {
-  print "Missed $num = $num2\n";
-}
+$num = 0 - pow(2, 62) - pow(2, 62);
+roundtrip($testClient, testI64, $num);
 
 $transport->close();
-return;
-
+exit($exitcode);
