@@ -28,6 +28,8 @@ all-local: gen-dart/tutorial/lib/tutorial.dart pub-get
 
 clean-local:
 	$(RM) -r gen-*
+	find . -type d -name "packages" | xargs $(RM) -r
+	find . -type f -name ".packages" | xargs $(RM)
 
 pub-get: pub-get-gen pub-get-client pub-get-console-client pub-get-server
 

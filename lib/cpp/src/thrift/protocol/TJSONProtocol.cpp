@@ -19,14 +19,15 @@
 
 #include <thrift/protocol/TJSONProtocol.h>
 
+#include <boost/lexical_cast.hpp>
+#include <boost/locale.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
+
+#include <cmath>
 #include <limits>
 #include <locale>
 #include <sstream>
-#include <cmath>
-
-#include <boost/math/special_functions/fpclassify.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/locale.hpp>
+#include <stdexcept>
 
 #include <thrift/protocol/TBase64Utils.h>
 #include <thrift/transport/TTransportException.h>
@@ -651,7 +652,9 @@ uint32_t TJSONProtocol::writeMapBegin(const TType keyType,
 }
 
 uint32_t TJSONProtocol::writeMapEnd() {
-  return writeJSONObjectEnd() + writeJSONArrayEnd();
+  uint32_t result = writeJSONObjectEnd();
+  result += writeJSONArrayEnd();
+  return result;
 }
 
 uint32_t TJSONProtocol::writeListBegin(const TType elemType, const uint32_t size) {
@@ -1015,7 +1018,9 @@ uint32_t TJSONProtocol::readMapBegin(TType& keyType, TType& valType, uint32_t& s
 }
 
 uint32_t TJSONProtocol::readMapEnd() {
-  return readJSONObjectEnd() + readJSONArrayEnd();
+  uint32_t result = readJSONObjectEnd();
+  result += readJSONArrayEnd();
+  return result;
 }
 
 uint32_t TJSONProtocol::readListBegin(TType& elemType, uint32_t& size) {
