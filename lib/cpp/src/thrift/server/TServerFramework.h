@@ -123,8 +123,8 @@ public:
 
 protected:
   /**
-   * A client has connected.  The implementation is responsible for storing
-   * and processing the client.  This is called during the serve() thread,
+   * A client has connected.  The implementation is responsible for managing the
+   * lifetime of the client object.  This is called during the serve() thread,
    * therefore a failure to return quickly will result in new client connection
    * delays.
    *
@@ -134,9 +134,10 @@ protected:
 
   /**
    * A client has disconnected.
-   * The server no longer tracks the client.
-   * The client TTransport has already been closed.
-   * The implementation must not delete the pointer.
+   * When called:
+   *   The server no longer tracks the client.
+   *   The client TTransport has already been closed.
+   *   The implementation must not delete the pointer.
    *
    * \param[in]  pClient  the disconnected client
    */
