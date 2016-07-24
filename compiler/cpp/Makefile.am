@@ -49,8 +49,6 @@ compiler_core =  src/common.h \
                  src/globals.h \
                  src/platform.h \
                  src/logging.h \
-                 src/audit/t_audit.cpp \
-                 src/audit/t_audit.h \
                  src/parse/t_doc.h \
                  src/parse/t_type.h \
                  src/parse/t_base_type.h \
@@ -78,7 +76,9 @@ compiler_core =  src/common.h \
                  src/windows/version.h
 
 thrift_SOURCES = src/main.h \
-                 src/main.cc
+                 src/main.cc \
+                 src/audit/t_audit.cpp \
+                 src/audit/t_audit.h
 
 # Specific client generator source
 thrift_SOURCES += src/generate/t_c_glib_generator.cc \

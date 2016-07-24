@@ -54,7 +54,6 @@ set( compiler_core
     src/generate/t_generator_registry.h
     src/globals.h
     src/platform.h
-    src/audit/t_audit.cpp
     src/parse/t_doc.h
     src/parse/t_type.h
     src/parse/t_base_type.h
@@ -85,6 +84,7 @@ set( compiler_core
 set(thrift-compiler_SOURCES
     src/main.h
     src/main.cc
+    src/audit/t_audit.cpp
 )
 
 # This macro adds an option THRIFT_COMPILER_${NAME}
@@ -141,6 +141,7 @@ if(${WITH_PLUGIN})
     add_executable(thrift-bootstrap ${compiler_core}
         src/main.h
         src/main.cc
+        src/audit/t_audit.cpp
         src/generate/t_cpp_generator.cc
     )
     target_link_libraries(thrift-bootstrap libparse)
