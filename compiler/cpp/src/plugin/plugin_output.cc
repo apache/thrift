@@ -297,7 +297,7 @@ THRIFT_CONVERSION(t_type) {
 #define T_CONVERT_UNION_N(name, type)                                                              \
   else if (from->is_##name()) {                                                                    \
     to.__isset.name##_val = true;                                                                  \
-    convert(reinterpret_cast<::type*>(from), to.name##_val);                                       \
+    convert(reinterpret_cast< ::type*>(from), to.name##_val);                                      \
   }
 #define T_CONVERT_UNION(name) T_CONVERT_UNION_N(name, t_##name)
   if (false) {
