@@ -42,5 +42,10 @@ thrift_gen_mycpp_SOURCES = plugin/cpp_plugin.cc \
 thrift_gen_mycpp_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/compiler/cpp -I$(top_srcdir)/compiler/cpp/src/generate
 thrift_gen_mycpp_LDADD = $(top_builddir)/compiler/cpp/libthriftc.la
 
-TESTS = $(check_PROGRAMS) cpp_plugin.sh
+cpp_plugin_test.sh: thrift-gen-mycpp
+TESTS = $(check_PROGRAMS) cpp_plugin_test.sh
+
+clean-local:
+	$(RM) -rf gen-cpp gen-mycpp
+
 endif

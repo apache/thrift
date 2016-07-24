@@ -20,5 +20,8 @@
 #
 
 # this file is intended to be invoked by make.
-mkdir -p gen-mycpp
-PATH="$PATH":. ../thrift -out gen-mycpp -gen mycpp ../../../test/ThriftTest.thrift
+set -e
+mkdir -p gen-cpp gen-mycpp
+PATH=.:"$PATH" ../thrift -r -out gen-cpp -gen cpp ../../../test/Include.thrift
+PATH=.:"$PATH" ../thrift -r -out gen-mycpp -gen mycpp ../../../test/Include.thrift
+diff -urN gen-cpp gen-mycpp

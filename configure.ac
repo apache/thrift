@@ -523,7 +523,6 @@ if test "$enable_plugin" = "no"; then
   have_plugin="no"
 fi
 if test "$have_plugin" = "yes" ; then
-  AC_CONFIG_LINKS([compiler/cpp/test/cpp_plugin.sh:compiler/cpp/test/cpp_plugin.sh])
   AC_CONFIG_LINKS([compiler/cpp/test/plugin/t_cpp_generator.cc:compiler/cpp/src/generate/t_cpp_generator.cc])
 fi
 AM_CONDITIONAL(WITH_PLUGIN, [test "$have_plugin" = "yes"])

@@ -35,7 +35,7 @@ if(${WITH_PLUGIN})
         thriftc
         ${Boost_LIBRARIES}
     )
-    add_test(NAME plugintest COMMAND plugintest)
+    add_test(NAME PluginTest COMMAND plugintest)
 
     set(thrift-gen-mycpp_SOURCES
         ../src/generate/t_cpp_generator.cc
@@ -47,4 +47,13 @@ if(${WITH_PLUGIN})
     else()
         target_link_libraries(thrift-gen-mycpp thriftc_static thrift_static)
     endif()
+
+    add_test(
+          NAME cmake_trying_to_be_not_shit
+          COMMAND ${CMAKE_COMMAND}
+              -DTHRIFT_COMPILER=${THRIFT_COMPILER}
+              -DBINDIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+              -DCURDIR=${CMAKE_CURRENT_BINARY_DIR}
+              -DSRCDIR=${CMAKE_CURRENT_SOURCE_DIR}
+              -P ${CMAKE_CURRENT_SOURCE_DIR}/cpp_plugin_test.cmake)
 endif()
