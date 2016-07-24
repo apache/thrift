@@ -171,7 +171,7 @@ THRIFT_CONVERSION(t_typedef) {
 }
 
 THRIFT_CONVERSION(t_enum_value) {
-  THRIFT_ASSIGN(doc);
+  THRIFT_ASSIGN_OPT(doc);
   THRIFT_ASSIGN(name);
   THRIFT_ASSIGN(value);
 }
@@ -216,13 +216,13 @@ THRIFT_CONVERSION(t_const_value) {
   }
 }
 THRIFT_CONVERSION(t_const) {
-  THRIFT_ASSIGN(doc);
+  THRIFT_ASSIGN_OPT(doc);
   THRIFT_ASSIGN(name);
   THRIFT_ASSIGN_ID(type);
   THRIFT_ASSIGN_CONVERT(t_const_value, get_value(), value);
 }
 THRIFT_CONVERSION(t_field) {
-  THRIFT_ASSIGN(doc);
+  THRIFT_ASSIGN_OPT(doc);
   THRIFT_ASSIGN(name);
   THRIFT_ASSIGN(key);
   THRIFT_ASSIGN_N(get_req(), req, (plugin::Requiredness::type));
@@ -237,7 +237,7 @@ THRIFT_CONVERSION(t_struct) {
   THRIFT_ASSIGN_N(is_xception(), is_xception, );
 }
 THRIFT_CONVERSION(t_function) {
-  THRIFT_ASSIGN(doc);
+  THRIFT_ASSIGN_OPT(doc);
   THRIFT_ASSIGN(name);
   THRIFT_ASSIGN_ID(returntype);
   THRIFT_ASSIGN_N(is_oneway(), is_oneway, );
@@ -297,7 +297,7 @@ THRIFT_CONVERSION(t_type) {
 #define T_CONVERT_UNION_N(name, type)                                                              \
   else if (from->is_##name()) {                                                                    \
     to.__isset.name##_val = true;                                                                  \
-    convert<type>(reinterpret_cast<type*>(from), to.name##_val);                                   \
+    convert(reinterpret_cast<::type*>(from), to.name##_val);                                       \
   }
 #define T_CONVERT_UNION(name) T_CONVERT_UNION_N(name, t_##name)
   if (false) {
