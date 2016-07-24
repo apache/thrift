@@ -20,22 +20,23 @@
 #include "plugin/plugin.h"
 
 #ifdef _WIN32
-#include <io.h>
 #include <fcntl.h>
+#include <io.h>
 #endif
 
 #include <cassert>
+#include <iostream>
 
 #include <boost/bind.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/smart_ptr.hpp>
 
-#include "plugin/type_util.h"
 #include "generate/t_generator.h"
-#include "thrift/transport/TFDTransport.h"
-#include "thrift/transport/TBufferTransports.h"
+#include "plugin/type_util.h"
 #include "thrift/protocol/TBinaryProtocol.h"
+#include "thrift/transport/TBufferTransports.h"
+#include "thrift/transport/TFDTransport.h"
 
 #include "plugin/plugin_types.h"
 
@@ -74,7 +75,7 @@ using apache::thrift::transport::TFramedTransport;
 
 #define THRIFT_CONVERSION(from_type, ...)                                                          \
   THRIFT_CONVERT_FORWARD(from_type) {                                                              \
-    (void) from;                                                                                   \
+    (void)from;                                                                                    \
     return new ToType<from_type>::type(__VA_ARGS__);                                               \
   }                                                                                                \
   THRIFT_CONVERT_COMPLETE(from_type)
@@ -246,8 +247,7 @@ THRIFT_CONVERSION(t_const_value, ) {
   if (from.__isset.map_val) {
     to->set_map();
     for (std::map<t_const_value, t_const_value>::const_iterator it = from.map_val.begin();
-         it != from.map_val.end();
-         it++) {
+         it != from.map_val.end(); it++) {
       to->add_map(convert(it->first), convert(it->second));
     }
   } else if (from.__isset.list_val) {
@@ -402,22 +402,18 @@ THRIFT_CONVERSION(t_program, from.path, from.name) {
   boost::for_each(from.services | boost::adaptors::transformed(&resolve_service),
                   boost::bind(&::t_program::add_service, to, _1));
 
-  for (std::vector<t_program>::const_iterator it = from.includes.begin();
-       it != from.includes.end();
+  for (std::vector<t_program>::const_iterator it = from.includes.begin(); it != from.includes.end();
        it++) {
     ::t_program* tmp = new ::t_program((*it).path, (*it).name);
     convert<t_program, ::t_program>((*it), tmp);
     to->add_include(tmp);
   }
-  std::for_each(from.c_includes.begin(),
-                from.c_includes.end(),
+  std::for_each(from.c_includes.begin(), from.c_includes.end(),
                 boost::bind(&::t_program::add_c_include, to, _1));
-  std::for_each(from.cpp_includes.begin(),
-                from.cpp_includes.end(),
+  std::for_each(from.cpp_includes.begin(), from.cpp_includes.end(),
                 boost::bind(&::t_program::add_cpp_include, to, _1));
   for (std::map<std::string, std::string>::const_iterator it = from.namespaces.begin();
-       it != from.namespaces.end();
-       it++) {
+       it != from.namespaces.end(); it++) {
     to->set_namespace(it->first, it->second);
   }
 
