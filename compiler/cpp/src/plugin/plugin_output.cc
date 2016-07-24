@@ -18,9 +18,10 @@
  */
 
 #ifdef _WIN32
-#include <io.h>
-#include <fcntl.h>
 #include <cstdio>
+#include <fcntl.h>
+#include <io.h>
+#include <iostream>
 #define THRIFT_POPEN(cmd) _popen(cmd, "wb")
 #define THRIFT_PCLOSE _pclose
 #else
@@ -30,14 +31,14 @@
 
 #include "plugin/plugin_output.h"
 
-#include <boost/smart_ptr.hpp>
-#include <boost/range/algorithm/transform.hpp>
-#include <boost/range/algorithm/copy.hpp>
 #include <boost/range/adaptor/map.hpp>
+#include <boost/range/algorithm/copy.hpp>
+#include <boost/range/algorithm/transform.hpp>
+#include <boost/smart_ptr.hpp>
 
+#include "generate/t_generator.h"
 #include "plugin/plugin.h"
 #include "plugin/type_util.h"
-#include "generate/t_generator.h"
 #include "thrift/protocol/TBinaryProtocol.h"
 #include "thrift/transport/TBufferTransports.h"
 #include "thrift/transport/TFDTransport.h"
@@ -384,10 +385,14 @@ bool delegateToPlugin(t_program* program, const std::string& options) {
     } catch (std::exception& err) {
       std::cerr << "Error while sending data to plugin: " << err.what() << std::endl;
     }
+// TODO: Explicitly wait for child process
 // TODO: be prepared for hang or crash of child process
 // It seems that windows _pclose crashes if the process has already completed.
 #ifndef _WIN32
-    THRIFT_PCLOSE(fd);
+    int ret = THRIFT_PCLOSE(fd);
+    if (!ret) {
+      std::cerr << "plugin returned non zero exit code: " << ret << std::endl;
+    }
 #endif
     return true;
   }
