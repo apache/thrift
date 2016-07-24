@@ -47,42 +47,15 @@ set(libparse_SOURCES
 add_library(libparse STATIC ${libparse_SOURCES})
 
 # Create the thrift compiler
-set( compiler_core
-    src/common.h
+set(compiler_core
     src/common.cc
     src/generate/t_generator.cc
-    src/generate/t_generator_registry.h
-    src/globals.h
-    src/platform.h
-    src/parse/t_doc.h
-    src/parse/t_type.h
-    src/parse/t_base_type.h
-    src/parse/t_enum.h
-    src/parse/t_enum_value.h
-    src/parse/t_typedef.h
     src/parse/t_typedef.cc
-    src/parse/t_container.h
-    src/parse/t_list.h
-    src/parse/t_set.h
-    src/parse/t_map.h
-    src/parse/t_struct.h
-    src/parse/t_field.h
-    src/parse/t_service.h
-    src/parse/t_function.h
-    src/parse/t_program.h
-    src/parse/t_scope.h
-    src/parse/t_const.h
-    src/parse/t_const_value.h
     src/parse/parse.cc
-    src/generate/t_generator.h
-    src/generate/t_oop_generator.h
-    src/generate/t_html_generator.h
-    src/windows/config.h
-    version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/version.h
 )
 
 set(thrift-compiler_SOURCES
-    src/main.h
     src/main.cc
     src/audit/t_audit.cpp
 )
@@ -139,7 +112,6 @@ add_executable(thrift-compiler ${thrift-compiler_SOURCES})
 
 if(${WITH_PLUGIN})
     add_executable(thrift-bootstrap ${compiler_core}
-        src/main.h
         src/main.cc
         src/audit/t_audit.cpp
         src/generate/t_cpp_generator.cc
@@ -168,9 +140,7 @@ if(${WITH_PLUGIN})
         ${compiler_core}
         ${PLUGIN_GEN_SOURCES}
         src/logging.cc
-        src/plugin/plugin_output.h
         src/plugin/plugin_output.cc
-        src/plugin/plugin.h
         src/plugin/plugin.cc
     )
     target_include_directories(thriftc PUBLIC ${Boost_INCLUDE_DIRS})
