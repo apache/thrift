@@ -30,10 +30,10 @@ plugin_gen = plugin_types.h \
              plugin_constants.cpp
 
 BUILT_SOURCES = $(plugin_gen)
-gen.stamp: $(top_builddir)/compiler/cpp/src/thrift-bootstrap
+gen.stamp: plugin.thrift $(top_builddir)/compiler/cpp/src/thrift-bootstrap
 	@$(RM) -f gen.tmp
 	@touch gen.tmp
-	$(top_builddir)/compiler/cpp/src/thrift-bootstrap -gen cpp -out . plugin.thrift
+	$(top_builddir)/compiler/cpp/src/thrift-bootstrap -gen cpp -out . $<
 	@mv -f gen.tmp $@
 
 $(plugin_gen): gen.stamp
