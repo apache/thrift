@@ -33,6 +33,7 @@ namespace php thrift.plugin
 namespace py thrift.plugin
 namespace rb Thrift
 
+typedef i64 t_program_id
 typedef i64 t_type_id
 typedef i64 t_const_id
 typedef i64 t_service_id
@@ -51,6 +52,7 @@ enum t_base {
 
 struct TypeMetadata {
   1: required string name
+  2: required t_program_id program_id
   99: optional map<string, string> annotations
   100: optional string doc
 }
@@ -172,23 +174,24 @@ struct TypeRegistry {
 
 struct t_program {
   1: required string name
-  2: required string path
-  3: required string namespace_
-  4: required string out_path
-  5: required bool out_path_is_absolute
-  7: required list<t_program> includes
-  8: required string include_prefix
-  9: required t_scope scope
+  2: required t_program_id program_id
+  3: required string path
+  4: required string namespace_
+  5: required string out_path
+  6: required bool out_path_is_absolute
+  8: required list<t_program> includes
+  9: required string include_prefix
+  10: required t_scope scope
 
-  10: required list<t_type_id> typedefs
-  11: required list<t_type_id> enums
-  12: required list<t_const_id> consts
-  13: required list<t_type_id> objects
-  14: required list<t_service_id> services
+  11: required list<t_type_id> typedefs
+  12: required list<t_type_id> enums
+  13: required list<t_const_id> consts
+  14: required list<t_type_id> objects
+  15: required list<t_service_id> services
 
-  15: required map<string, string> namespaces
-  16: required list<string> cpp_includes
-  17: required list<string> c_includes
+  16: required map<string, string> namespaces
+  17: required list<string> cpp_includes
+  18: required list<string> c_includes
   100: optional string doc
 }
 

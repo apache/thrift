@@ -155,6 +155,7 @@ T_STORE(service)
   } while (0)
 
 THRIFT_CONVERSION_N(::t_type, plugin::TypeMetadata) {
+  to.program_id = reinterpret_cast<int64_t>(from->get_program());
   THRIFT_ASSIGN_N(annotations_, annotations, );
   if (from->has_doc()) {
     to.__set_doc(from->get_doc());
@@ -357,6 +358,7 @@ THRIFT_CONVERSION(t_program) {
   THRIFT_ASSIGN_LIST_ID(t_const, const);
   THRIFT_ASSIGN_LIST_ID(t_service, service);
   THRIFT_ASSIGN_LIST_N(t_program, get_includes(), includes);
+  to.program_id = reinterpret_cast<plugin::t_program_id>(from);
 }
 
 bool delegateToPlugin(t_program* program, const std::string& options) {

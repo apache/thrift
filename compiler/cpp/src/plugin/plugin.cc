@@ -138,6 +138,7 @@ private:
     convert(cit->second, (*this)[k]);
   }
 };
+std::map<int64_t, ::t_program*> g_program_cache;
 TypeCache< ::t_type, t_type> g_type_cache;
 TypeCache< ::t_const, t_const> g_const_cache;
 TypeCache< ::t_service, t_service> g_service_cache;
@@ -171,7 +172,7 @@ THRIFT_CONVERT_FORWARD(t_base_type) {
     t = ::t_base_type::TYPE_##type;                                                                \
     break
 
-  ::t_base_type::t_base t;
+  ::t_base_type::t_base t = ::t_base_type::TYPE_VOID;
   bool is_binary = false;
   switch (from.value) {
     T_BASETYPE_CASE(VOID);
@@ -199,9 +200,10 @@ THRIFT_CONVERT_COMPLETE(t_base_type) {
 THRIFT_CONVERT_FORWARD(t_typedef) {
   ::t_typedef* to;
   if (from.forward) {
-    to = new ::t_typedef(g_program, from.symbolic, true);
+    to = new ::t_typedef(g_program_cache[from.metadata.program_id], from.symbolic, true);
   } else {
-    to = new ::t_typedef(g_program, resolve_type< ::t_type>(from.type), from.symbolic);
+    to = new ::t_typedef(g_program_cache[from.metadata.program_id],
+                         resolve_type< ::t_type>(from.type), from.symbolic);
   }
   return to;
 }
@@ -212,7 +214,7 @@ THRIFT_CONVERSION(t_enum_value, from.name, from.value) {
   assert(to);
   THRIFT_ASSIGN_ANNOTATIONS();
 }
-THRIFT_CONVERSION(t_enum, g_program) {
+THRIFT_CONVERSION(t_enum, g_program_cache[from.metadata.program_id]) {
   assert(to);
   THRIFT_ASSIGN_METADATA();
   boost::for_each(from.constants | boost::adaptors::transformed(convert<t_enum_value>),
@@ -274,7 +276,7 @@ THRIFT_CONVERSION(t_field, resolve_type< ::t_type>(from.type), from.name, from.k
     to->set_value(convert(from.value));
   }
 }
-THRIFT_CONVERSION(t_struct, g_program) {
+THRIFT_CONVERSION(t_struct, g_program_cache[from.metadata.program_id]) {
   assert(to);
   THRIFT_ASSIGN_METADATA();
   to->set_union(from.is_union);
@@ -290,13 +292,6 @@ THRIFT_CONVERSION(t_const,
   THRIFT_ASSIGN_DOC();
 }
 
-::t_struct* function_arglist(const std::vector<t_field>& f) {
-  ::t_struct* to = new ::t_struct(g_program);
-  boost::for_each(f | boost::adaptors::transformed(convert<t_field>),
-                  boost::bind(&::t_struct::append, to, _1));
-  return to;
-}
-
 THRIFT_CONVERSION(t_function,
                   resolve_type< ::t_type>(from.returntype),
                   from.name,
@@ -307,9 +302,10 @@ THRIFT_CONVERSION(t_function,
   THRIFT_ASSIGN_DOC();
 }
 
-THRIFT_CONVERSION(t_service, g_program) {
+THRIFT_CONVERSION(t_service, g_program_cache[from.metadata.program_id]) {
   assert(to);
-  assert(g_program);
+  assert(from.metadata.program_id);
+  assert(g_program_cache[from.metadata.program_id]);
   THRIFT_ASSIGN_METADATA();
 
   boost::for_each(from.functions | boost::adaptors::transformed(convert<t_function>),
@@ -376,7 +372,16 @@ THRIFT_CONVERSION(t_scope, ) {
 #undef T_SCOPE_RESOLVE
 }
 
-THRIFT_CONVERSION(t_program, from.path, from.name) {
+THRIFT_CONVERT_FORWARD(t_program) {
+  ::t_program* to = new ::t_program(from.path, from.name);
+  for (std::vector<t_program>::const_iterator it = from.includes.begin(); it != from.includes.end();
+       it++) {
+    to->add_include(convert_forward(*it));
+  }
+  g_program_cache[from.program_id] = to;
+  return to;
+}
+THRIFT_CONVERT_COMPLETE(t_program) {
   assert(to);
   g_program = to;
   convert<t_scope, ::t_scope>(from.scope, to->scope());
@@ -404,9 +409,7 @@ THRIFT_CONVERSION(t_program, from.path, from.name) {
 
   for (std::vector<t_program>::const_iterator it = from.includes.begin(); it != from.includes.end();
        it++) {
-    ::t_program* tmp = new ::t_program((*it).path, (*it).name);
-    convert<t_program, ::t_program>((*it), tmp);
-    to->add_include(tmp);
+    convert(*it, g_program_cache[it->program_id]);
   }
   std::for_each(from.c_includes.begin(), from.c_includes.end(),
                 boost::bind(&::t_program::add_c_include, to, _1));
