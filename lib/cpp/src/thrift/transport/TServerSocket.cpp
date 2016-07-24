@@ -276,15 +276,16 @@ void TServerSocket::listen() {
     throw TTransportException(TTransportException::BAD_ARGS, "Specified port is invalid");
   }
 
-  struct addrinfo hints;
   const struct addrinfo *res;
   int error;
   char port[sizeof("65535")];
+  snprintf(port, sizeof(port), "%d", port_);
+
+  struct addrinfo hints;
   std::memset(&hints, 0, sizeof(hints));
   hints.ai_family = PF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
-  snprintf(port, sizeof("65535"), "%d", port_);
 
   // If address is not specified use wildcard address (NULL)
   TGetAddrInfoWrapper info(address_.empty() ? NULL : &address_[0], port, &hints);
@@ -523,9 +524,9 @@ void TServerSocket::listen() {
   if (retries > retryLimit_) {
     char errbuf[1024];
     if (!path_.empty()) {
-      snprintf(errbuf, 1024, "TServerSocket::listen() PATH %s", path_.c_str());
+      snprintf(errbuf, sizeof(errbuf), "TServerSocket::listen() PATH %s", path_.c_str());
     } else {
-      snprintf(errbuf, 1024, "TServerSocket::listen() BIND %d", port_);
+      snprintf(errbuf, sizeof(errbuf), "TServerSocket::listen() BIND %d", port_);
     }
     GlobalOutput(errbuf);
     close();
