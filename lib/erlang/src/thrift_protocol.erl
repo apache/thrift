@@ -142,8 +142,11 @@ read(IProto, Type) ->
             Result
     end.
 
-read_frag(IProto, {struct, _, {Module, StructureName}}) when is_atom(Module),
-                                                     is_atom(StructureName) ->
+read_frag(IProto, {struct, union, {Module, StructureName}}) when
+  is_atom(Module), is_atom(StructureName) ->
+    read(IProto, Module:struct_info(StructureName), undefined);
+read_frag(IProto, {struct, _, {Module, StructureName}}) when
+  is_atom(Module), is_atom(StructureName) ->
     read(IProto, Module:struct_info(StructureName), Module:record_name(StructureName));
 
 read_frag(IProto, S={struct, _, Structure}) when is_list(Structure) ->
