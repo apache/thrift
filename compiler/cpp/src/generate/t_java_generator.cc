@@ -635,7 +635,7 @@ void t_java_generator::print_const_value(std::ofstream& out,
     }
     out << endl;
   } else if (type->is_map()) {
-    out << name << " = new  /*1002*/ " << type_name(type, false, true) << "();" << endl;
+    out << name << " = new  " << type_name(type, false, true) << "();" << endl;
     if (!in_static) {
       indent(out) << "static {" << endl;
       indent_up();
