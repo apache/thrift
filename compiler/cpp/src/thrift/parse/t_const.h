@@ -17,27 +17,34 @@
  * under the License.
  */
 
-#include "thrift/plugin/plugin.h"
-#include "thrift/generate/t_generator.h"
+#ifndef T_CONST_H
+#define T_CONST_H
 
-namespace apache {
-namespace thrift {
-namespace plugin {
+#include "thrift/parse/t_type.h"
+#include "thrift/parse/t_const_value.h"
 
-class MyCppGenerator : public GeneratorPlugin {
-  virtual int generate(::t_program* program,
-                       const std::map<std::string, std::string>& parsed_options) {
-    t_generator* gen = t_generator_registry::get_generator(program, "cpp", parsed_options, "");
-    gen->generate_program();
-    delete gen;
-    return 0;
-  }
+/**
+ * A const is a constant value defined across languages that has a type and
+ * a value. The trick here is that the declared type might not match the type
+ * of the value object, since that is not determined until after parsing the
+ * whole thing out.
+ *
+ */
+class t_const : public t_doc {
+public:
+  t_const(t_type* type, std::string name, t_const_value* value)
+    : type_(type), name_(name), value_(value) {}
+
+  t_type* get_type() const { return type_; }
+
+  std::string get_name() const { return name_; }
+
+  t_const_value* get_value() const { return value_; }
+
+private:
+  t_type* type_;
+  std::string name_;
+  t_const_value* value_;
 };
-}
-}
-}
 
-int main(int argc, char* argv[]) {
-  apache::thrift::plugin::MyCppGenerator p;
-  return p.exec(argc, argv);
-}
+#endif

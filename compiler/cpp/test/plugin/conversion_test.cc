@@ -17,9 +17,9 @@
  * under the License.
  */
 
-#include "parse/t_program.h"
-#include "plugin/type_util.h"
-#include "plugin/plugin_types.h"
+#include "thrift/parse/t_program.h"
+#include "thrift/plugin/type_util.h"
+#include "thrift/plugin/plugin_types.h"
 
 #include <map>
 #include <vector>
