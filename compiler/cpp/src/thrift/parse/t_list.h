@@ -17,27 +17,25 @@
  * under the License.
  */
 
-#include "thrift/plugin/plugin.h"
-#include "thrift/generate/t_generator.h"
+#ifndef T_LIST_H
+#define T_LIST_H
 
-namespace apache {
-namespace thrift {
-namespace plugin {
+#include "thrift/parse/t_container.h"
 
-class MyCppGenerator : public GeneratorPlugin {
-  virtual int generate(::t_program* program,
-                       const std::map<std::string, std::string>& parsed_options) {
-    t_generator* gen = t_generator_registry::get_generator(program, "cpp", parsed_options, "");
-    gen->generate_program();
-    delete gen;
-    return 0;
-  }
+/**
+ * A list is a lightweight container type that just wraps another data type.
+ *
+ */
+class t_list : public t_container {
+public:
+  t_list(t_type* elem_type) : elem_type_(elem_type) {}
+
+  t_type* get_elem_type() const { return elem_type_; }
+
+  bool is_list() const { return true; }
+
+private:
+  t_type* elem_type_;
 };
-}
-}
-}
 
-int main(int argc, char* argv[]) {
-  apache::thrift::plugin::MyCppGenerator p;
-  return p.exec(argc, argv);
-}
+#endif

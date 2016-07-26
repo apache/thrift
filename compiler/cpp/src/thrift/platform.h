@@ -17,27 +17,31 @@
  * under the License.
  */
 
-#include "thrift/plugin/plugin.h"
-#include "thrift/generate/t_generator.h"
+/**
+ * define for mkdir,since the method signature
+ * is different for the non-POSIX MinGW
+ */
 
-namespace apache {
-namespace thrift {
-namespace plugin {
+#ifdef _MSC_VER
+#include "thrift/windows/config.h"
+#endif
 
-class MyCppGenerator : public GeneratorPlugin {
-  virtual int generate(::t_program* program,
-                       const std::map<std::string, std::string>& parsed_options) {
-    t_generator* gen = t_generator_registry::get_generator(program, "cpp", parsed_options, "");
-    gen->generate_program();
-    delete gen;
-    return 0;
-  }
-};
-}
-}
-}
+#ifdef _WIN32
+#include <direct.h>
+#include <io.h>
+#else
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
 
-int main(int argc, char* argv[]) {
-  apache::thrift::plugin::MyCppGenerator p;
-  return p.exec(argc, argv);
-}
+#ifdef _WIN32
+#define MKDIR(x) mkdir(x)
+#else
+#define MKDIR(x) mkdir(x, S_IRWXU | S_IRWXG | S_IRWXO)
+#endif
+
+#ifdef PATH_MAX
+#define THRIFT_PATH_MAX PATH_MAX
+#else
+#define THRIFT_PATH_MAX MAX_PATH
+#endif

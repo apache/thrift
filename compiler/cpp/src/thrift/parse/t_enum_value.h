@@ -17,27 +17,34 @@
  * under the License.
  */
 
-#include "thrift/plugin/plugin.h"
-#include "thrift/generate/t_generator.h"
+#ifndef T_ENUM_VALUE_H
+#define T_ENUM_VALUE_H
 
-namespace apache {
-namespace thrift {
-namespace plugin {
+#include <map>
+#include <string>
+#include "thrift/parse/t_doc.h"
 
-class MyCppGenerator : public GeneratorPlugin {
-  virtual int generate(::t_program* program,
-                       const std::map<std::string, std::string>& parsed_options) {
-    t_generator* gen = t_generator_registry::get_generator(program, "cpp", parsed_options, "");
-    gen->generate_program();
-    delete gen;
-    return 0;
-  }
+/**
+ * A constant. These are used inside of enum definitions. Constants are just
+ * symbol identifiers that may or may not have an explicit value associated
+ * with them.
+ *
+ */
+class t_enum_value : public t_doc {
+public:
+  t_enum_value(std::string name, int value) : name_(name), value_(value) {}
+
+  ~t_enum_value() {}
+
+  const std::string& get_name() const { return name_; }
+
+  int get_value() const { return value_; }
+
+  std::map<std::string, std::string> annotations_;
+
+private:
+  std::string name_;
+  int value_;
 };
-}
-}
-}
 
-int main(int argc, char* argv[]) {
-  apache::thrift::plugin::MyCppGenerator p;
-  return p.exec(argc, argv);
-}
+#endif

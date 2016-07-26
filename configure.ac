@@ -528,7 +528,7 @@ if test "$enable_plugin" = "no"; then
   have_plugin="no"
 fi
 if test "$have_plugin" = "yes" ; then
-  AC_CONFIG_LINKS([compiler/cpp/test/plugin/t_cpp_generator.cc:compiler/cpp/src/generate/t_cpp_generator.cc])
+  AC_CONFIG_LINKS([compiler/cpp/test/plugin/t_cpp_generator.cc:compiler/cpp/src/thrift/generate/t_cpp_generator.cc])
 fi
 AM_CONDITIONAL(WITH_PLUGIN, [test "$have_plugin" = "yes"])
 
@@ -729,10 +729,10 @@ AC_CONFIG_FILES([
   Makefile
   compiler/cpp/Makefile
   compiler/cpp/src/Makefile
-  compiler/cpp/src/plugin/Makefile
+  compiler/cpp/src/thrift/plugin/Makefile
   compiler/cpp/test/Makefile
-  compiler/cpp/src/version.h
-  compiler/cpp/src/windows/version.h
+  compiler/cpp/src/thrift/version.h
+  compiler/cpp/src/thrift/windows/version.h
   lib/Makefile
   lib/cpp/Makefile
   lib/cpp/test/Makefile
