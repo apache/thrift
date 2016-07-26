@@ -17,27 +17,29 @@
  * under the License.
  */
 
-#include "thrift/plugin/plugin.h"
-#include "thrift/generate/t_generator.h"
+#ifndef T_MAP_H
+#define T_MAP_H
 
-namespace apache {
-namespace thrift {
-namespace plugin {
+#include "thrift/parse/t_container.h"
 
-class MyCppGenerator : public GeneratorPlugin {
-  virtual int generate(::t_program* program,
-                       const std::map<std::string, std::string>& parsed_options) {
-    t_generator* gen = t_generator_registry::get_generator(program, "cpp", parsed_options, "");
-    gen->generate_program();
-    delete gen;
-    return 0;
-  }
+/**
+ * A map is a lightweight container type that just wraps another two data
+ * types.
+ *
+ */
+class t_map : public t_container {
+public:
+  t_map(t_type* key_type, t_type* val_type) : key_type_(key_type), val_type_(val_type) {}
+
+  t_type* get_key_type() const { return key_type_; }
+
+  t_type* get_val_type() const { return val_type_; }
+
+  bool is_map() const { return true; }
+
+private:
+  t_type* key_type_;
+  t_type* val_type_;
 };
-}
-}
-}
 
-int main(int argc, char* argv[]) {
-  apache::thrift::plugin::MyCppGenerator p;
-  return p.exec(argc, argv);
-}
+#endif

@@ -25,63 +25,63 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 AM_YFLAGS = -d
 
-BUILT_SOURCES = thrifty.cc
+BUILT_SOURCES = thrift/thrifty.cc
 
-noinst_LIBRARIES = libparse.a
+noinst_LIBRARIES = thrift/libparse.a
 
-libparse_a_CPPFLAGS = -I$(srcdir)
-libparse_a_CXXFLAGS = -Wall -Wno-sign-compare -Wno-unused
+thrift_libparse_a_CPPFLAGS = -I$(srcdir)
+thrift_libparse_a_CXXFLAGS = -Wall -Wno-sign-compare -Wno-unused
 
-libparse_a_SOURCES = thrifty.yy \
-                     thriftl.ll
+thrift_libparse_a_SOURCES = thrift/thrifty.yy \
+                     thrift/thriftl.ll
 
 clean-local:
-	$(RM) thriftl.cc thrifty.cc thrifty.h thrifty.hh
+	$(RM) thrift/thriftl.cc thrift/thrifty.cc thrift/thrifty.h thrift/thrifty.hh
 
 if WITH_PLUGIN
-noinst_PROGRAMS = thrift-bootstrap
+noinst_PROGRAMS = thrift/thrift-bootstrap
 
-thrift_bootstrap_SOURCES = \
-                 common.h \
-                 common.cc \
-                 audit/t_audit.h \
-                 audit/t_audit.cpp \
-                 generate/t_generator.cc \
-                 generate/t_generator_registry.h \
-                 globals.h \
-                 platform.h \
-                 logging.h \
-                 parse/t_doc.h \
-                 parse/t_type.h \
-                 parse/t_base_type.h \
-                 parse/t_enum.h \
-                 parse/t_enum_value.h \
-                 parse/t_typedef.h \
-                 parse/t_typedef.cc \
-                 parse/t_container.h \
-                 parse/t_list.h \
-                 parse/t_set.h \
-                 parse/t_map.h \
-                 parse/t_struct.h \
-                 parse/t_field.h \
-                 parse/t_service.h \
-                 parse/t_function.h \
-                 parse/t_program.h \
-                 parse/t_scope.h \
-                 parse/t_const.h \
-                 parse/t_const_value.h \
-                 parse/parse.cc \
-                 generate/t_generator.h \
-                 generate/t_oop_generator.h \
-                 generate/t_html_generator.h \
-                 windows/config.h \
-                 windows/version.h \
-                 generate/t_cpp_generator.cc \
-                 main.h \
-                 main.cc
+thrift_thrift_bootstrap_SOURCES = \
+                 thrift/common.h \
+                 thrift/common.cc \
+                 thrift/audit/t_audit.h \
+                 thrift/audit/t_audit.cpp \
+                 thrift/generate/t_generator.cc \
+                 thrift/generate/t_generator_registry.h \
+                 thrift/globals.h \
+                 thrift/platform.h \
+                 thrift/logging.h \
+                 thrift/parse/t_doc.h \
+                 thrift/parse/t_type.h \
+                 thrift/parse/t_base_type.h \
+                 thrift/parse/t_enum.h \
+                 thrift/parse/t_enum_value.h \
+                 thrift/parse/t_typedef.h \
+                 thrift/parse/t_typedef.cc \
+                 thrift/parse/t_container.h \
+                 thrift/parse/t_list.h \
+                 thrift/parse/t_set.h \
+                 thrift/parse/t_map.h \
+                 thrift/parse/t_struct.h \
+                 thrift/parse/t_field.h \
+                 thrift/parse/t_service.h \
+                 thrift/parse/t_function.h \
+                 thrift/parse/t_program.h \
+                 thrift/parse/t_scope.h \
+                 thrift/parse/t_const.h \
+                 thrift/parse/t_const_value.h \
+                 thrift/parse/parse.cc \
+                 thrift/generate/t_generator.h \
+                 thrift/generate/t_oop_generator.h \
+                 thrift/generate/t_html_generator.h \
+                 thrift/windows/config.h \
+                 thrift/windows/version.h \
+                 thrift/generate/t_cpp_generator.cc \
+                 thrift/main.h \
+                 thrift/main.cc
 
 main.cc: version.h
 
-thrift_bootstrap_CXXFLAGS = -Wall -Wextra -pedantic
-thrift_bootstrap_LDADD = @LEXLIB@ libparse.a
+thrift_thrift_bootstrap_CXXFLAGS = -Wall -Wextra -pedantic
+thrift_thrift_bootstrap_LDADD = @LEXLIB@ thrift/libparse.a
 endif
