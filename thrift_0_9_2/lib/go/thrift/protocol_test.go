@@ -120,7 +120,7 @@ func ReadWriteProtocolTest(t *testing.T, protocolFactory TProtocolFactory) {
 		NewTMemoryBufferTransportFactory(1024),
 		NewStreamTransportFactory(buf, buf, true),
 		NewTFramedTransportFactory(NewTMemoryBufferTransportFactory(1024)),
-		NewTHttpPostClientTransportFactory("http://" + addr.String()),
+		NewTHttpPostClientTransportFactory("http://"+addr.String(), 0),
 	}
 	for _, tf := range transports {
 		trans := tf.GetTransport(nil)

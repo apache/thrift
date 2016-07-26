@@ -34,7 +34,7 @@ func TestEnsureTransportsAreRich(t *testing.T) {
 		NewTMemoryBufferTransportFactory(1024),
 		NewStreamTransportFactory(buf, buf, true),
 		NewTFramedTransportFactory(NewTMemoryBufferTransportFactory(1024)),
-		NewTHttpPostClientTransportFactory("http://127.0.0.1"),
+		NewTHttpPostClientTransportFactory("http://127.0.0.1", 0),
 	}
 	for _, tf := range transports {
 		trans := tf.GetTransport(nil)
