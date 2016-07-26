@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#include "plugin/plugin.h"
-#include "generate/t_generator.h"
+#include "thrift/plugin/plugin.h"
+#include "thrift/generate/t_generator.h"
 
 namespace apache {
 namespace thrift {

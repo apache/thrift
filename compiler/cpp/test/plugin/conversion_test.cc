@@ -25,9 +25,9 @@
 #include <boost/test/included/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 
-#include "parse/t_program.h"
-#include "plugin/type_util.h"
-#include "plugin/plugin_types.h"
+#include "thrift/parse/t_program.h"
+#include "thrift/plugin/type_util.h"
+#include "thrift/plugin/plugin_types.h"
 
 using namespace apache::thrift;
 using namespace boost::unit_test;
