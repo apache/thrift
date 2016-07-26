@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "plugin/plugin.h"
+#include "thrift/plugin/plugin.h"
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -32,13 +32,13 @@
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/smart_ptr.hpp>
 
-#include "generate/t_generator.h"
-#include "plugin/type_util.h"
+#include "thrift/generate/t_generator.h"
+#include "thrift/plugin/type_util.h"
 #include "thrift/protocol/TBinaryProtocol.h"
 #include "thrift/transport/TBufferTransports.h"
 #include "thrift/transport/TFDTransport.h"
 
-#include "plugin/plugin_types.h"
+#include "thrift/plugin/plugin_types.h"
 
 namespace apache {
 namespace thrift {

@@ -23,7 +23,7 @@
  */
 
 #ifdef _MSC_VER
-#include "windows/config.h"
+#include "thrift/windows/config.h"
 #endif
 
 #ifdef _WIN32

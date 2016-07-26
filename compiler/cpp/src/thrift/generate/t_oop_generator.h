@@ -23,8 +23,8 @@
 #include <string>
 #include <iostream>
 
-#include "common.h"
-#include "t_generator.h"
+#include "thrift/common.h"
+#include "thrift/generate/t_generator.h"
 
 #include <algorithm>
 

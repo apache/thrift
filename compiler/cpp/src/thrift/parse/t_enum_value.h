@@ -22,7 +22,7 @@
 
 #include <map>
 #include <string>
-#include "t_doc.h"
+#include "thrift/parse/t_doc.h"
 
 /**
  * A constant. These are used inside of enum definitions. Constants are just

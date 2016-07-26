@@ -25,21 +25,21 @@
 #include <vector>
 
 // For program_name()
-#include "main.h"
+#include "thrift/main.h"
 
-#include "t_doc.h"
-#include "t_scope.h"
-#include "t_base_type.h"
-#include "t_typedef.h"
-#include "t_enum.h"
-#include "t_const.h"
-#include "t_struct.h"
-#include "t_service.h"
-#include "t_list.h"
-#include "t_map.h"
-#include "t_set.h"
-#include "generate/t_generator_registry.h"
-//#include "t_doc.h"
+#include "thrift/parse/t_doc.h"
+#include "thrift/parse/t_scope.h"
+#include "thrift/parse/t_base_type.h"
+#include "thrift/parse/t_typedef.h"
+#include "thrift/parse/t_enum.h"
+#include "thrift/parse/t_const.h"
+#include "thrift/parse/t_struct.h"
+#include "thrift/parse/t_service.h"
+#include "thrift/parse/t_list.h"
+#include "thrift/parse/t_map.h"
+#include "thrift/parse/t_set.h"
+#include "thrift/generate/t_generator_registry.h"
+//#include "thrift/parse/t_doc.h"
 
 /**
  * Top level class representing an entire thrift program. A program consists

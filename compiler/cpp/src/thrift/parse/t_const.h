@@ -20,8 +20,8 @@
 #ifndef T_CONST_H
 #define T_CONST_H
 
-#include "t_type.h"
-#include "t_const_value.h"
+#include "thrift/parse/t_type.h"
+#include "thrift/parse/t_const_value.h"
 
 /**
  * A const is a constant value defined across languages that has a type and

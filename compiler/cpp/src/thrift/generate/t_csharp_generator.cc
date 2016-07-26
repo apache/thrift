@@ -33,8 +33,8 @@
 #include <sys/stat.h>
 #include <sstream>
 
-#include "platform.h"
-#include "t_oop_generator.h"
+#include "thrift/platform.h"
+#include "thrift/generate/t_oop_generator.h"
 
 using std::map;
 using std::ofstream;
@@ -83,7 +83,7 @@ public:
         wcf_ = true;
         wcf_namespace_ = iter->second;
       } else {
-        throw "unknown option csharp:" + iter->first; 
+        throw "unknown option csharp:" + iter->first;
       }
     }
 
@@ -268,7 +268,7 @@ void t_csharp_generator::init_generator() {
 
   namespace_dir_ = subdir;
   init_keywords();
-  
+
   while( ! member_mapping_scopes.empty()) {
     cleanup_member_name_mapping( member_mapping_scopes.back().scope_member);
   }
@@ -1005,7 +1005,7 @@ void t_csharp_generator::generate_csharp_struct_reader(ofstream& out, t_struct* 
 void t_csharp_generator::generate_csharp_struct_writer(ofstream& out, t_struct* tstruct) {
   out << indent() << "public void Write(TProtocol oprot) {" << endl;
   indent_up();
-  
+
   out << indent() << "oprot.IncrementRecursionDepth();" << endl;
   out << indent() << "try" << endl;
   scope_up(out);
@@ -1061,7 +1061,7 @@ void t_csharp_generator::generate_csharp_struct_writer(ofstream& out, t_struct* 
   scope_down(out);
 
   indent_down();
-  
+
   indent(out) << "}" << endl << endl;
 }
 
@@ -2857,7 +2857,7 @@ void t_csharp_generator::cleanup_member_name_mapping(void* scope) {
   if( member_mapping_scopes.empty()) {
     throw "internal error: cleanup_member_name_mapping() no scope active";
   }
-  
+
   member_mapping_scope& active = member_mapping_scopes.back();
   if (active.scope_member != scope) {
     throw "internal error: cleanup_member_name_mapping() called for wrong struct";
@@ -2874,7 +2874,7 @@ string t_csharp_generator::get_mapped_member_name(string name) {
       return iter->second;
     }
   }
-  
+
   pverbose("no mapping for member %s\n", name.c_str());
   return name;
 }

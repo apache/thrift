@@ -36,9 +36,9 @@
 #include <sstream>
 #include <algorithm>
 #include <clocale>
-#include "t_generator.h"
-#include "platform.h"
-#include "version.h"
+#include "thrift/platform.h"
+#include "thrift/version.h"
+#include "thrift/generate/t_generator.h"
 
 using std::map;
 using std::ofstream;
@@ -93,7 +93,7 @@ public:
       } else if( iter->first.compare("ignore_initialisms") == 0) {
         ignore_initialisms_ =  true;
       } else {
-        throw "unknown option go:" + iter->first; 
+        throw "unknown option go:" + iter->first;
       }
     }
 
@@ -3463,8 +3463,8 @@ string t_go_generator::module_name(t_type* ttype) {
   t_program* program = ttype->get_program();
 
   if (program != NULL && program != program_) {
-    if (program->get_namespace("go").empty() || 
-        program_->get_namespace("go").empty() || 
+    if (program->get_namespace("go").empty() ||
+        program_->get_namespace("go").empty() ||
         program->get_namespace("go") != program_->get_namespace("go")) {
       string module(get_real_go_module(program));
       // for namespaced includes, only keep part after dot.

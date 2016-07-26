@@ -20,7 +20,7 @@
 #ifndef T_COMMON_H
 #define T_COMMON_H
 
-#include "parse/t_type.h"
+#include "thrift/parse/t_type.h"
 
 /**
  * Global types for the parser to be able to reference

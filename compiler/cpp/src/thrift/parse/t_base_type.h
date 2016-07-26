@@ -21,7 +21,7 @@
 #define T_BASE_TYPE_H
 
 #include <cstdlib>
-#include "t_type.h"
+#include "thrift/parse/t_type.h"
 
 /**
  * A thrift base type, which must be one of the defined enumerated types inside

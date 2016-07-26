@@ -24,13 +24,13 @@
 #include <string>
 #include <sstream>
 
-#include "t_type.h"
-#include "t_service.h"
-#include "t_const.h"
-#include "t_const_value.h"
-#include "t_base_type.h"
-#include "t_map.h"
-#include "t_list.h"
+#include "thrift/parse/t_type.h"
+#include "thrift/parse/t_service.h"
+#include "thrift/parse/t_const.h"
+#include "thrift/parse/t_const_value.h"
+#include "thrift/parse/t_base_type.h"
+#include "thrift/parse/t_map.h"
+#include "thrift/parse/t_list.h"
 
 namespace plugin_output {
 template <typename From, typename To>

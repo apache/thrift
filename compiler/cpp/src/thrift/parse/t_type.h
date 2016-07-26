@@ -24,7 +24,7 @@
 #include <map>
 #include <cstring>
 #include <stdint.h>
-#include "t_doc.h"
+#include "thrift/parse/t_doc.h"
 
 class t_program;
 

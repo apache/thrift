@@ -22,8 +22,8 @@
 
 #include <vector>
 
-#include "t_enum_value.h"
-#include "t_type.h"
+#include "thrift/parse/t_enum_value.h"
+#include "thrift/parse/t_type.h"
 
 /**
  * An enumerated type. A list of constant objects with a name for the type.

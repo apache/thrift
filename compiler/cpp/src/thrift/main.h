@@ -23,10 +23,10 @@
 #include <string>
 #include <cstdio>
 
-#include "logging.h"
+#include "thrift/logging.h"
 
-#include "parse/t_const.h"
-#include "parse/t_field.h"
+#include "thrift/parse/t_const.h"
+#include "thrift/parse/t_field.h"
 
 /**
  * Defined in the flex library

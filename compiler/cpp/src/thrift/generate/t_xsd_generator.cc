@@ -24,9 +24,9 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sstream>
-#include "t_generator.h"
-#include "version.h"
-#include "platform.h"
+#include "thrift/version.h"
+#include "thrift/platform.h"
+#include "thrift/generate/t_generator.h"
 
 using std::map;
 using std::ofstream;
@@ -53,7 +53,7 @@ public:
 
     /* no options yet */
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
-      throw "unknown option xsd:" + iter->first; 
+      throw "unknown option xsd:" + iter->first;
     }
 
     out_dir_base_ = "gen-xsd";

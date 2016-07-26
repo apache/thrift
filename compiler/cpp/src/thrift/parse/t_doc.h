@@ -20,8 +20,8 @@
 #ifndef T_DOC_H
 #define T_DOC_H
 
-#include "globals.h"
-#include "logging.h"
+#include "thrift/globals.h"
+#include "thrift/logging.h"
 
 /**
  * Documentation stubs

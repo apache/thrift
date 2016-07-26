@@ -20,7 +20,7 @@
 #ifndef T_LIST_H
 #define T_LIST_H
 
-#include "t_container.h"
+#include "thrift/parse/t_container.h"
 
 /**
  * A list is a lightweight container type that just wraps another data type.

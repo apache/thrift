@@ -26,9 +26,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sstream>
-#include "t_generator.h"
-#include "platform.h"
-#include "version.h"
+#include "thrift/platform.h"
+#include "thrift/version.h"
+#include "thrift/generate/t_generator.h"
 
 using std::map;
 using std::ofstream;

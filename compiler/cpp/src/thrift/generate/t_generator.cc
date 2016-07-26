@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "t_generator.h"
+#include "thrift/generate/t_generator.h"
 using namespace std;
 
 /**

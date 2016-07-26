@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#include "common.h"
-#include "parse/t_base_type.h"
+#include "thrift/common.h"
+#include "thrift/parse/t_base_type.h"
 
 t_type* g_type_void;
 t_type* g_type_string;

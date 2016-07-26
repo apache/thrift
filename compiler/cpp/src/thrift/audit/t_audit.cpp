@@ -12,16 +12,16 @@
 #include <limits.h>
 
 // Careful: must include globals first for extern definitions
-#include "globals.h"
+#include "thrift/globals.h"
 
-#include "parse/t_program.h"
-#include "parse/t_scope.h"
-#include "parse/t_const.h"
-#include "parse/t_field.h"
+#include "thrift/parse/t_program.h"
+#include "thrift/parse/t_scope.h"
+#include "thrift/parse/t_const.h"
+#include "thrift/parse/t_field.h"
 
-#include "version.h"
+#include "thrift/version.h"
 
-#include "t_audit.h"
+#include "thrift/audit/t_audit.h"
 
 extern int g_warn;
 extern std::string g_curpath;
@@ -85,7 +85,7 @@ void compare_enum_values(t_enum* newEnum,t_enum* oldEnum)
          if(enumName != newEnumValue->get_name())
          {
             thrift_audit_warning(1, "Name of the value %d changed in enum %s\n", enumValue, oldEnum->get_name().c_str());
-         }      
+         }
       }
       else
       {
@@ -125,7 +125,7 @@ void compare_enums(const std::vector<t_enum*>& newEnumList, const std::vector<t_
 bool compare_type(t_type* newType, t_type* oldType)
 {
    //Comparing names of two types will work when the newType and oldType are basic types or structs or enums.
-   //However, when they are containers, get_name() returns empty for which we have to compare the type of 
+   //However, when they are containers, get_name() returns empty for which we have to compare the type of
    //their elements as well.
    if((newType->get_name()).empty() && (oldType->get_name()).empty())
    {
@@ -150,7 +150,7 @@ bool compare_type(t_type* newType, t_type* oldType)
       {
          t_type* newElementType = ((t_set*)newType)->get_elem_type();
          t_type* oldElementType = ((t_set*)oldType)->get_elem_type();
-         return compare_type(newElementType, oldElementType); 
+         return compare_type(newElementType, oldElementType);
       }
       else
       {
@@ -170,7 +170,7 @@ bool compare_type(t_type* newType, t_type* oldType)
 bool compare_pair(std::pair<t_const_value*, t_const_value*> newMapPair, std::pair<t_const_value*, t_const_value*> oldMapPair)
 {
    return compare_defaults(newMapPair.first, oldMapPair.first) && compare_defaults(newMapPair.second, oldMapPair.second);
-}   
+}
 
 // This function returns 'true' if the default values are same. Returns false if they are different.
 bool compare_defaults(t_const_value* newStructDefault, t_const_value* oldStructDefault)
@@ -259,7 +259,7 @@ void compare_single_struct(t_struct* newStruct, t_struct* oldStruct, const std::
    std::vector<t_field*>::const_iterator newStructMemberIt = newStructMembersInIdOrder.begin();
 
    // Since we have the struct members in their ID order, comparing their IDs can be done by traversing the two member
-   // lists together.  
+   // lists together.
    while(!(oldStructMemberIt == oldStructMembersInIdOrder.end() && newStructMemberIt == newStructMembersInIdOrder.end()))
    {
       if(newStructMemberIt == newStructMembersInIdOrder.end() && oldStructMemberIt != oldStructMembersInIdOrder.end())
@@ -462,5 +462,3 @@ void compare_consts(const std::vector<t_const*>& newConst, const std::vector<t_c
       }
    }
 }
-
-

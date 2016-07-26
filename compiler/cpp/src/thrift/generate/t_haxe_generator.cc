@@ -27,8 +27,8 @@
 #include <sys/stat.h>
 #include <stdexcept>
 
-#include "platform.h"
-#include "t_oop_generator.h"
+#include "thrift/platform.h"
+#include "thrift/generate/t_oop_generator.h"
 
 using std::map;
 using std::ofstream;
@@ -63,7 +63,7 @@ public:
       } else if( iter->first.compare("buildmacro") == 0) {
         buildmacro_ = (iter->second);
       } else {
-        throw "unknown option haxe:" + iter->first; 
+        throw "unknown option haxe:" + iter->first;
       }
     }
 
@@ -1007,10 +1007,10 @@ void t_haxe_generator::generate_haxe_struct_writer(ofstream& out, t_struct* tstr
       indent(out) << "}" << endl;
     }
   }
-  
+
   indent(out) << "oprot.writeFieldStop();" << endl;
   indent(out) << "oprot.writeStructEnd();" << endl;
-  
+
   indent(out) << "oprot.DecrementRecursionDepth();" << endl;
   scope_down(out);
   indent(out) << "catch(e:Dynamic)" << endl;
@@ -1018,7 +1018,7 @@ void t_haxe_generator::generate_haxe_struct_writer(ofstream& out, t_struct* tstr
   indent(out) << "oprot.DecrementRecursionDepth();" << endl;
   indent(out) << "throw e;" << endl;
   scope_down(out);
-  
+
   indent_down();
   out << indent() << "}" << endl << endl;
 }
@@ -1042,7 +1042,7 @@ void t_haxe_generator::generate_haxe_struct_result_writer(ofstream& out, t_struc
   indent(out) << "oprot.IncrementRecursionDepth();" << endl;
   indent(out) << "try" << endl;
   scope_up(out);
-  
+
   indent(out) << "oprot.writeStructBegin(STRUCT_DESC);" << endl;
 
   bool first = true;
@@ -1070,11 +1070,11 @@ void t_haxe_generator::generate_haxe_struct_result_writer(ofstream& out, t_struc
     indent_down();
     indent(out) << "}";
   }
-  
+
   indent(out) << endl;
   indent(out) << "oprot.writeFieldStop();" << endl;
   indent(out) << "oprot.writeStructEnd();" << endl;
-  
+
   indent(out) << "oprot.DecrementRecursionDepth();" << endl;
   scope_down(out);
   indent(out) << "catch(e:Dynamic)" << endl;
@@ -1082,7 +1082,7 @@ void t_haxe_generator::generate_haxe_struct_result_writer(ofstream& out, t_struc
   indent(out) << "oprot.DecrementRecursionDepth();" << endl;
   indent(out) << "throw e;" << endl;
   scope_down(out);
-  
+
   indent_down();
   out << indent() << "}" << endl << endl;
 }

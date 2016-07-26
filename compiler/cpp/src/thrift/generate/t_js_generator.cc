@@ -28,8 +28,8 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sstream>
-#include "platform.h"
-#include "version.h"
+#include "thrift/platform.h"
+#include "thrift/version.h"
 
 using std::map;
 using std::ofstream;
@@ -40,7 +40,7 @@ using std::vector;
 
 static const string endl = "\n"; // avoid ostream << std::endl flushes
 
-#include "t_oop_generator.h"
+#include "thrift/generate/t_oop_generator.h"
 
 
 /**
@@ -66,7 +66,7 @@ public:
       } else if( iter->first.compare("ts") == 0) {
         gen_ts_ = true;
       } else {
-        throw "unknown option js:" + iter->first; 
+        throw "unknown option js:" + iter->first;
       }
     }
 

@@ -32,9 +32,9 @@
 #include <sys/types.h>
 #include <sstream>
 
-#include "t_oop_generator.h"
-#include "platform.h"
-#include "version.h"
+#include "thrift/platform.h"
+#include "thrift/version.h"
+#include "thrift/generate/t_oop_generator.h"
 
 using std::map;
 using std::ofstream;
@@ -91,7 +91,7 @@ public:
       } else if( iter->first.compare("namespaced") == 0) {
         namespaced_ = true;
       } else {
-        throw "unknown option ruby:" + iter->first; 
+        throw "unknown option ruby:" + iter->first;
       }
     }
 

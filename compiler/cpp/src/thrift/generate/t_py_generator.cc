@@ -27,9 +27,9 @@
 #include <sys/types.h>
 #include <sstream>
 #include <algorithm>
-#include "t_generator.h"
-#include "platform.h"
-#include "version.h"
+#include "thrift/platform.h"
+#include "thrift/version.h"
+#include "thrift/generate/t_generator.h"
 
 using std::map;
 using std::ofstream;
@@ -112,7 +112,7 @@ public:
       } else if( iter->first.compare("coding") == 0) {
         coding_ = iter->second;
       } else {
-        throw "unknown option py:" + iter->first; 
+        throw "unknown option py:" + iter->first;
       }
     }
 

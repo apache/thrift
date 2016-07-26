@@ -20,7 +20,7 @@
 #ifndef T_CONTAINER_H
 #define T_CONTAINER_H
 
-#include "t_type.h"
+#include "thrift/parse/t_type.h"
 
 class t_container : public t_type {
 public:

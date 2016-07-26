@@ -18,8 +18,8 @@
  */
 
 #include <sstream>
-#include "t_oop_generator.h"
-#include "platform.h"
+#include "thrift/platform.h"
+#include "thrift/generate/t_oop_generator.h"
 
 using std::ofstream;
 using std::string;
@@ -46,7 +46,7 @@ public:
       if( iter->first.compare("omit_requires") == 0) {
         gen_requires_ = false;
       } else {
-        throw "unknown option lua:" + iter->first; 
+        throw "unknown option lua:" + iter->first;
       }
     }
 

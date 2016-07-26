@@ -34,8 +34,8 @@
 #include <sstream>
 #include <cctype>
 
-#include "platform.h"
-#include "t_oop_generator.h"
+#include "thrift/platform.h"
+#include "thrift/generate/t_oop_generator.h"
 
 using std::map;
 using std::ofstream;
@@ -77,7 +77,7 @@ public:
       } else if( iter->first.compare("xmldoc") == 0) {
         xmldoc_ = true;
       } else {
-        throw "unknown option delphi:" + iter->first; 
+        throw "unknown option delphi:" + iter->first;
       }
     }
 
@@ -3601,7 +3601,7 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out,
       indent_impl(code_block) << "if not _req_isset_" << prop_name(*f_iter, is_exception) << endl;
       indent_impl(code_block)
           << "then raise TProtocolExceptionInvalidData.Create("
-          << "'required field " << prop_name(*f_iter, is_exception) << " not set');" 
+          << "'required field " << prop_name(*f_iter, is_exception) << " not set');"
           << endl;
     }
   }
@@ -3641,7 +3641,7 @@ void t_delphi_generator::generate_delphi_struct_result_writer_impl(ostream& out,
 
   indent_impl(local_vars) << "tracker : IProtocolRecursionTracker;" << endl;
   indent_impl(code_block) << "tracker := oprot.NextRecursionLevel;" << endl;
-  
+
   indent_impl(code_block) << "struc := TStructImpl.Create('" << name << "');" << endl;
   indent_impl(code_block) << "oprot.WriteStructBegin(struc);" << endl;
 
@@ -3722,7 +3722,7 @@ void t_delphi_generator::generate_delphi_struct_writer_impl(ostream& out,
       null_allowed = false;
       indent_impl(code_block) << "if (" << fieldname << " = nil)" << endl;
 	  indent_impl(code_block) << "then raise TProtocolExceptionInvalidData.Create("
-                              << "'required field " << fieldname << " not set');" 
+                              << "'required field " << fieldname << " not set');"
                               << endl;
     }
     if (null_allowed) {

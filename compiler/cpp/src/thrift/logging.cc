@@ -21,8 +21,8 @@
  * Logging functions copied from main.cc to avoid link errors for plugins
  */
 
-#include "logging.h"
-#include "globals.h"
+#include "thrift/logging.h"
+#include "thrift/globals.h"
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>

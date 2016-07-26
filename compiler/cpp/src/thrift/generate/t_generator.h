@@ -24,10 +24,10 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include "parse/t_program.h"
-#include "common.h"
-#include "t_generator_registry.h"
-#include "version.h"
+#include "thrift/common.h"
+#include "thrift/version.h"
+#include "thrift/generate/t_generator_registry.h"
+#include "thrift/parse/t_program.h"
 
 /**
  * Base class for a thrift code generator. This class defines the basic

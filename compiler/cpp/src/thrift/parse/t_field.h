@@ -24,8 +24,8 @@
 #include <string>
 #include <sstream>
 
-#include "t_doc.h"
-#include "t_type.h"
+#include "thrift/parse/t_doc.h"
+#include "thrift/parse/t_type.h"
 
 // Forward declare for xsd_attrs
 class t_struct;

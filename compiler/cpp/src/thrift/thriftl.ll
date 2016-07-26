@@ -53,21 +53,21 @@
 #include <stdlib.h>
 
 #ifdef _MSC_VER
-#include "windows/config.h"
+#include "thrift/windows/config.h"
 #endif
-#include "main.h"
-#include "common.h"
-#include "globals.h"
-#include "parse/t_program.h"
+#include "thrift/main.h"
+#include "thrift/common.h"
+#include "thrift/globals.h"
+#include "thrift/parse/t_program.h"
 
 /**
  * Must be included AFTER parse/t_program.h, but I can't remember why anymore
  * because I wrote this a while ago.
  */
 #if defined(BISON_USE_PARSER_H_EXTENSION)
-#include "thrifty.h"
+#include "thrift/thrifty.h"
 #else
-#include "thrifty.hh"
+#include "thrift/thrifty.hh"
 #endif
 
 void thrift_reserved_keyword(char* keyword) {
@@ -223,7 +223,7 @@ literal_begin (['\"])
 "include"            { return tok_include;              }
 "void"               { return tok_void;                 }
 "bool"               { return tok_bool;                 }
-"byte"               { 
+"byte"               {
   emit_byte_type_warning();
   return tok_i8;
 }

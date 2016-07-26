@@ -26,9 +26,9 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sstream>
-#include "t_generator.h"
-#include "t_html_generator.h"
-#include "platform.h"
+#include "thrift/platform.h"
+#include "thrift/generate/t_generator.h"
+#include "thrift/generate/t_html_generator.h"
 
 using std::map;
 using std::ofstream;
@@ -64,7 +64,7 @@ public:
       } else if( iter->first.compare("noescape") == 0) {
         unsafe_ = true;
       } else {
-        throw "unknown option html:" + iter->first; 
+        throw "unknown option html:" + iter->first;
       }
     }
 

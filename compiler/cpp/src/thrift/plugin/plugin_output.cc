@@ -29,21 +29,21 @@
 #define THRIFT_PCLOSE pclose
 #endif
 
-#include "plugin/plugin_output.h"
+#include "thrift/plugin/plugin_output.h"
 
 #include <boost/range/adaptor/map.hpp>
 #include <boost/range/algorithm/copy.hpp>
 #include <boost/range/algorithm/transform.hpp>
 #include <boost/smart_ptr.hpp>
 
-#include "generate/t_generator.h"
-#include "plugin/plugin.h"
-#include "plugin/type_util.h"
+#include "thrift/generate/t_generator.h"
+#include "thrift/plugin/plugin.h"
+#include "thrift/plugin/type_util.h"
 #include "thrift/protocol/TBinaryProtocol.h"
 #include "thrift/transport/TBufferTransports.h"
 #include "thrift/transport/TFDTransport.h"
 
-#include "plugin/plugin_types.h"
+#include "thrift/plugin/plugin_types.h"
 
 namespace plugin_output {
 

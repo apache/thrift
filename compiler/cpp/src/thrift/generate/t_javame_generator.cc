@@ -27,8 +27,8 @@
 #include <sys/stat.h>
 #include <stdexcept>
 
-#include "platform.h"
-#include "t_oop_generator.h"
+#include "thrift/platform.h"
+#include "thrift/generate/t_oop_generator.h"
 
 using std::map;
 using std::ofstream;
@@ -55,7 +55,7 @@ public:
 
     /* no options yet */
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
-      throw "unknown option javame:" + iter->first; 
+      throw "unknown option javame:" + iter->first;
     }
 
     out_dir_base_ = "gen-javame";

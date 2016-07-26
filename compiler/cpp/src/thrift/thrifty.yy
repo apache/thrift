@@ -35,13 +35,13 @@
 #endif
 #include <limits.h>
 #ifdef _MSC_VER
-#include "windows/config.h"
+#include "thrift/windows/config.h"
 #endif
-#include "main.h"
-#include "common.h"
-#include "globals.h"
-#include "parse/t_program.h"
-#include "parse/t_scope.h"
+#include "thrift/main.h"
+#include "thrift/common.h"
+#include "thrift/globals.h"
+#include "thrift/parse/t_program.h"
+#include "thrift/parse/t_scope.h"
 
 #ifdef _MSC_VER
 //warning C4065: switch statement contains 'default' but no 'case' labels

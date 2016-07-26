@@ -26,8 +26,8 @@
 #include <sys/stat.h>
 #include <sstream>
 
-#include "t_generator.h"
-#include "platform.h"
+#include "thrift/platform.h"
+#include "thrift/generate/t_generator.h"
 
 using std::map;
 using std::ofstream;
@@ -72,7 +72,7 @@ public:
       } else if( iter->first.compare("no_namespaces") == 0) {
         should_use_namespaces_ = false;
       } else {
-        throw "unknown option xml:" + iter->first; 
+        throw "unknown option xml:" + iter->first;
       }
     }
 
@@ -102,7 +102,7 @@ private:
   bool should_use_namespaces_;
 
   std::ofstream f_xml_;
- 
+
   std::set<string> programs_;
   std::stack<string> elements_;
   bool top_element_is_empty;
@@ -188,8 +188,8 @@ void t_xml_generator::write_xml_comment(string msg) {
   close_top_element();
   // TODO: indent any EOLs that may occur with msg
   // TODO: proper msg escaping needed?
-  f_xml_ << indent() << "<!-- " << msg << " -->"  << endl;  
-  top_element_is_empty = false;  
+  f_xml_ << indent() << "<!-- " << msg << " -->"  << endl;
+  top_element_is_empty = false;
 }
 
 void t_xml_generator::close_top_element() {
@@ -238,7 +238,7 @@ void t_xml_generator::write_element_string(string name, string val) {
   }
   close_top_element();
   top_element_is_empty = false;
-  f_xml_ << indent() 
+  f_xml_ << indent()
     << "<" << name << ">" << escape_xml_string(val) << "</" << name << ">"
     << endl;
 }
@@ -287,9 +287,9 @@ void t_xml_generator::generate_program() {
   }
 
   write_xml_comment( xml_autogen_comment());
-  
+
   iterate_program(program_);
-  
+
   write_element_end();
 
   close_generator();
@@ -297,7 +297,7 @@ void t_xml_generator::generate_program() {
 }
 
 void t_xml_generator::iterate_program(t_program* program) {
-  
+
   write_element_start("document");
   write_attribute("name", program->get_name());
   if (should_use_namespaces_) {
@@ -548,7 +548,7 @@ void t_xml_generator::generate_struct(t_struct* tstruct) {
   }
 
   generate_annotations(tstruct->annotations_);
- 
+
   write_element_end();
 
 }
@@ -556,7 +556,7 @@ void t_xml_generator::generate_struct(t_struct* tstruct) {
 void t_xml_generator::generate_field(t_field* field) {
   write_attribute("name", field->get_name());
   write_int_attribute("field-id", field->get_key());
-  write_doc(field); 
+  write_doc(field);
   string requiredness;
   switch (field->get_req()) {
   case t_field::T_REQUIRED:
@@ -582,7 +582,7 @@ void t_xml_generator::generate_field(t_field* field) {
 }
 
 void t_xml_generator::generate_service(t_service* tservice) {
- 
+
   write_element_start("service");
   write_attribute("name", tservice->get_name());
 
@@ -595,7 +595,7 @@ void t_xml_generator::generate_service(t_service* tservice) {
     write_attribute("targetNamespace", tns);
     write_attribute("xmlns:tns", tns);
   }
- 
+
   if (tservice->get_extends()) {
     const t_service* extends = tservice->get_extends();
     write_attribute("parent-module", extends->get_program()->get_name());
@@ -609,15 +609,15 @@ void t_xml_generator::generate_service(t_service* tservice) {
   for (; fn_iter != functions.end(); fn_iter++) {
     generate_function(*fn_iter);
   }
-  
+
   generate_annotations(tservice->annotations_);
-  
+
   write_element_end();
 
 }
 
 void t_xml_generator::generate_function(t_function* tfunc) {
- 
+
   write_element_start("method");
 
   write_attribute("name", tfunc->get_name());
@@ -638,7 +638,7 @@ void t_xml_generator::generate_function(t_function* tfunc) {
     generate_field(*mem_iter);
     write_element_end();
   }
- 
+
   vector<t_field*> excepts = tfunc->get_xceptions()->get_members();
   vector<t_field*>::iterator ex_iter = excepts.begin();
   for (; ex_iter != excepts.end(); ex_iter++) {
@@ -648,7 +648,7 @@ void t_xml_generator::generate_function(t_function* tfunc) {
   }
 
   generate_annotations(tfunc->annotations_);
-  
+
   write_element_end();
 
 }
@@ -663,9 +663,9 @@ string t_xml_generator::get_type_name(t_type* ttype) {
   if (ttype->is_map()) {
     return "map";
   }
-  if ((ttype->is_enum()    )|| 
-      (ttype->is_struct()  )|| 
-      (ttype->is_typedef() )|| 
+  if ((ttype->is_enum()    )||
+      (ttype->is_struct()  )||
+      (ttype->is_typedef() )||
       (ttype->is_xception())){
     return "id";
   }

@@ -21,7 +21,7 @@
 #define T_TYPEDEF_H
 
 #include <string>
-#include "t_type.h"
+#include "thrift/parse/t_type.h"
 
 /**
  * A typedef is a mapping from a symbolic name to another type. In dymanically

@@ -30,8 +30,8 @@
 #include <sys/stat.h>
 #include <sstream>
 
-#include "t_generator.h"
-#include "platform.h"
+#include "thrift/platform.h"
+#include "thrift/generate/t_generator.h"
 
 using std::map;
 using std::ofstream;
@@ -61,7 +61,7 @@ public:
       if( iter->first.compare("merge") == 0) {
         should_merge_includes_ = true;
       } else {
-        throw "unknown option json:" + iter->first; 
+        throw "unknown option json:" + iter->first;
       }
     }
 

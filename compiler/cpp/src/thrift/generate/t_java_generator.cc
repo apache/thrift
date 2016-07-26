@@ -31,8 +31,8 @@
 #include <sys/stat.h>
 #include <stdexcept>
 
-#include "platform.h"
-#include "t_oop_generator.h"
+#include "thrift/platform.h"
+#include "thrift/generate/t_oop_generator.h"
 
 using std::map;
 using std::ofstream;
@@ -97,10 +97,10 @@ public:
         } else if(iter->second.compare("suppress") == 0) {
           suppress_generated_annotations_ = true;
         } else {
-          throw "unknown option java:" + iter->first + "=" + iter->second; 
+          throw "unknown option java:" + iter->first + "=" + iter->second;
         }
       } else {
-        throw "unknown option java:" + iter->first; 
+        throw "unknown option java:" + iter->first;
       }
     }
 
@@ -368,7 +368,7 @@ private:
   bool use_option_type_;
   bool undated_generated_annotations_;
   bool suppress_generated_annotations_;
-  
+
 };
 
 /**

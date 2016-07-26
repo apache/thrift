@@ -17,10 +17,10 @@
  * under the License.
  */
 
-#include "t_type.h"
-#include "t_typedef.h"
+#include "thrift/parse/t_type.h"
+#include "thrift/parse/t_typedef.h"
 
-#include "main.h"
+#include "thrift/main.h"
 
 t_type* t_type::get_true_type() {
   t_type* type = this;

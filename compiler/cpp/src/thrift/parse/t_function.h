@@ -21,9 +21,9 @@
 #define T_FUNCTION_H
 
 #include <string>
-#include "t_type.h"
-#include "t_struct.h"
-#include "t_doc.h"
+#include "thrift/parse/t_type.h"
+#include "thrift/parse/t_struct.h"
+#include "thrift/parse/t_doc.h"
 
 /**
  * Representation of a function. Key parts are return type, function name,

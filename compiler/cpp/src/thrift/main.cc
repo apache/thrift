@@ -44,20 +44,20 @@
 #endif
 
 // Careful: must include globals first for extern definitions
-#include "common.h"
-#include "globals.h"
+#include "thrift/common.h"
+#include "thrift/globals.h"
 
-#include "platform.h"
-#include "main.h"
-#include "parse/t_program.h"
-#include "parse/t_scope.h"
-#include "generate/t_generator.h"
-#include "audit/t_audit.h"
+#include "thrift/platform.h"
+#include "thrift/main.h"
+#include "thrift/parse/t_program.h"
+#include "thrift/parse/t_scope.h"
+#include "thrift/generate/t_generator.h"
+#include "thrift/audit/t_audit.h"
 #ifdef THRIFT_ENABLE_PLUGIN
-#include "plugin/plugin_output.h"
+#include "thrift/plugin/plugin_output.h"
 #endif
 
-#include "version.h"
+#include "thrift/version.h"
 
 using namespace std;
 
