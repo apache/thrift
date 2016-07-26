@@ -17,27 +17,27 @@
  * under the License.
  */
 
-#include "thrift/plugin/plugin.h"
-#include "thrift/generate/t_generator.h"
+#ifndef T_COMMON_H
+#define T_COMMON_H
 
-namespace apache {
-namespace thrift {
-namespace plugin {
+#include "thrift/parse/t_type.h"
 
-class MyCppGenerator : public GeneratorPlugin {
-  virtual int generate(::t_program* program,
-                       const std::map<std::string, std::string>& parsed_options) {
-    t_generator* gen = t_generator_registry::get_generator(program, "cpp", parsed_options, "");
-    gen->generate_program();
-    delete gen;
-    return 0;
-  }
-};
-}
-}
-}
+/**
+ * Global types for the parser to be able to reference
+ */
 
-int main(int argc, char* argv[]) {
-  apache::thrift::plugin::MyCppGenerator p;
-  return p.exec(argc, argv);
-}
+extern t_type* g_type_void;
+extern t_type* g_type_string;
+extern t_type* g_type_binary;
+extern t_type* g_type_slist;
+extern t_type* g_type_bool;
+extern t_type* g_type_i8;
+extern t_type* g_type_i16;
+extern t_type* g_type_i32;
+extern t_type* g_type_i64;
+extern t_type* g_type_double;
+
+void initGlobals();
+void clearGlobals();
+
+#endif

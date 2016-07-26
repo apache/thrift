@@ -16,28 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include <cstdio>
 
-#include "thrift/plugin/plugin.h"
-#include "thrift/generate/t_generator.h"
+#include "thrift/parse/t_typedef.h"
+#include "thrift/parse/t_program.h"
 
-namespace apache {
-namespace thrift {
-namespace plugin {
-
-class MyCppGenerator : public GeneratorPlugin {
-  virtual int generate(::t_program* program,
-                       const std::map<std::string, std::string>& parsed_options) {
-    t_generator* gen = t_generator_registry::get_generator(program, "cpp", parsed_options, "");
-    gen->generate_program();
-    delete gen;
-    return 0;
+t_type* t_typedef::get_type() const {
+  if (type_ == NULL) {
+    t_type* type = get_program()->scope()->get_type(symbolic_);
+    if (type == NULL) {
+      printf("Type \"%s\" not defined\n", symbolic_.c_str());
+      exit(1);
+    }
+    return type;
   }
-};
-}
-}
-}
-
-int main(int argc, char* argv[]) {
-  apache::thrift::plugin::MyCppGenerator p;
-  return p.exec(argc, argv);
+  return type_;
 }

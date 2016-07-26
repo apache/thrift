@@ -17,27 +17,31 @@
  * under the License.
  */
 
-#include "thrift/plugin/plugin.h"
-#include "thrift/generate/t_generator.h"
+#ifndef T_CONTAINER_H
+#define T_CONTAINER_H
 
-namespace apache {
-namespace thrift {
-namespace plugin {
+#include "thrift/parse/t_type.h"
 
-class MyCppGenerator : public GeneratorPlugin {
-  virtual int generate(::t_program* program,
-                       const std::map<std::string, std::string>& parsed_options) {
-    t_generator* gen = t_generator_registry::get_generator(program, "cpp", parsed_options, "");
-    gen->generate_program();
-    delete gen;
-    return 0;
+class t_container : public t_type {
+public:
+  t_container() : cpp_name_(), has_cpp_name_(false) {}
+
+  virtual ~t_container() {}
+
+  void set_cpp_name(std::string cpp_name) {
+    cpp_name_ = cpp_name;
+    has_cpp_name_ = true;
   }
-};
-}
-}
-}
 
-int main(int argc, char* argv[]) {
-  apache::thrift::plugin::MyCppGenerator p;
-  return p.exec(argc, argv);
-}
+  bool has_cpp_name() const { return has_cpp_name_; }
+
+  std::string get_cpp_name() const { return cpp_name_; }
+
+  bool is_container() const { return true; }
+
+private:
+  std::string cpp_name_;
+  bool has_cpp_name_;
+};
+
+#endif
