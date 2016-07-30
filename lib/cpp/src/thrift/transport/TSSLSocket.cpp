@@ -471,7 +471,7 @@ void TSSLSocket::checkHandshake() {
       }
     } while (rc == 2);
   } else {
-    /* OpenSSL < 1.0.0 does not have SSL_set_tlsext_host_name() */
+    /* OpenSSL < 0.9.8f does not have SSL_set_tlsext_host_name() */
     #if defined(SSL_set_tlsext_host_name) // set the SNI hostname
       SSL_set_tlsext_host_name(ssl_, getHost().c_str());
     #endif
