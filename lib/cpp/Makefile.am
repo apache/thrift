@@ -27,10 +27,6 @@ moc__%.cpp: %.h
 
 SUBDIRS = .
 
-if WITH_TESTS
-SUBDIRS += test
-endif
-
 pkgconfigdir = $(libdir)/pkgconfig
 
 lib_LTLIBRARIES = libthrift.la
@@ -277,7 +273,8 @@ EXTRA_DIST = \
              thrift-qt.pc.in \
              thrift-qt5.pc.in \
              src/thrift/qt/CMakeLists.txt \
-             $(WINDOWS_DIST)
+             $(WINDOWS_DIST) \
+             test
 
 style-local:
 	$(CPPSTYLE_CMD)
