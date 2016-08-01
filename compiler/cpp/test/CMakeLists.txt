@@ -38,7 +38,7 @@ if(${WITH_PLUGIN})
     add_test(NAME PluginTest COMMAND plugintest)
 
     set(thrift-gen-mycpp_SOURCES
-        ../src/generate/t_cpp_generator.cc
+        ../src/thrift/generate/t_cpp_generator.cc
         plugin/cpp_plugin.cc
     )
     add_executable(thrift-gen-mycpp ${thrift-gen-mycpp_SOURCES})

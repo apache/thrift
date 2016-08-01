@@ -19,29 +19,29 @@
 
 # Windows has a different header
 if(MSVC)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/windows/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/version.h)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/windows/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h)
 else()
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/version.h)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h)
 endif()
 
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
 
 # Create flex and bison files and build the lib parse static library
-BISON_TARGET(thrifty ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thrifty.yy ${CMAKE_CURRENT_BINARY_DIR}/thrifty.cc)
-FLEX_TARGET(thriftl ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thriftl.ll ${CMAKE_CURRENT_BINARY_DIR}/thriftl.cc)
+BISON_TARGET(thrifty ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thrifty.yy ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc)
+FLEX_TARGET(thriftl ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thriftl.ll ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc)
 ADD_FLEX_BISON_DEPENDENCY(thriftl thrifty)
 
 # HACK: Work around the fact that bison crates a .hh file but we need a .h file
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/thrifty.h
-                   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/thrifty.hh ${CMAKE_CURRENT_BINARY_DIR}/thrifty.h
-                   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/thrifty.hh
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.h
+                   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.hh ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.h
+                   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.hh
                    )
 
 set(libparse_SOURCES
-    ${CMAKE_CURRENT_BINARY_DIR}/thrifty.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/thriftl.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/thrifty.h
+    ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc
+    ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc
+    ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.h
 )
 
 add_library(libparse STATIC ${libparse_SOURCES})
@@ -52,7 +52,7 @@ set(compiler_core
     src/thrift/generate/t_generator.cc
     src/thrift/parse/t_typedef.cc
     src/thrift/parse/parse.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h
 )
 
 set(thrift-compiler_SOURCES
@@ -103,7 +103,7 @@ THRIFT_ADD_COMPILER(xml     "Enable compiler for XML" ON)
 
 # Thrift is looking for include files in the src directory
 # we also add the current binary directory for generated files
-include_directories(${CMAKE_CURRENT_BINARY_DIR} src/thrift)
+include_directories(${CMAKE_CURRENT_BINARY_DIR} src)
 
 if(NOT ${WITH_PLUGIN})
     list(APPEND thrift-compiler_SOURCES ${compiler_core})
@@ -127,7 +127,7 @@ if(${WITH_PLUGIN})
 
     add_custom_command(OUTPUT ${PLUGIN_GEN_SOURCES}
         DEPENDS thrift-bootstrap src/thrift/plugin/plugin.thrift
-        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/plugin
+        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/thrift/plugin
         COMMAND thrift-bootstrap -gen cpp
         -out ${CMAKE_CURRENT_BINARY_DIR}/thrift/plugin
         ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/plugin/plugin.thrift
@@ -166,7 +166,7 @@ if(${WITH_PLUGIN})
   install(DIRECTORY "src/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
       FILES_MATCHING PATTERN "*.h")
   # Install generated headers
-  install(FILES "${CMAKE_BINARY_DIR}/compiler/cpp/version.h" DESTINATION "${INCLUDE_INSTALL_DIR}/thrift")
+  install(FILES "${CMAKE_BINARY_DIR}/compiler/cpp/thrift/version.h" DESTINATION "${INCLUDE_INSTALL_DIR}/thrift")
 endif()
 
 if(BUILD_TESTING)
