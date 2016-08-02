@@ -177,8 +177,6 @@ include_parse_HEADERS = src/thrift/parse/t_service.h \
 
 include_plugindir = $(include_thriftdir)/plugin
 include_plugin_HEADERS = src/thrift/plugin/plugin.h \
-                         src/thrift/plugin/plugin_types.h \
-                         src/thrift/plugin/plugin_constants.h \
                          src/thrift/plugin/type_util.h \
                          src/thrift/plugin/plugin_output.h
 

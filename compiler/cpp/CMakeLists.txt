@@ -161,10 +161,59 @@ install(TARGETS thrift-compiler DESTINATION "${BIN_INSTALL_DIR}")
 
 if(${WITH_PLUGIN})
   # Install the headers
-  install(DIRECTORY "src/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
-      FILES_MATCHING PATTERN "*.h")
-  # Install generated headers
-  install(FILES "${CMAKE_BINARY_DIR}/compiler/cpp/thrift/version.h" DESTINATION "${INCLUDE_INSTALL_DIR}/thrift")
+  install(FILES
+      "src/thrift/common.h"
+      "src/thrift/globals.h"
+      "src/thrift/logging.h"
+      "src/thrift/main.h"
+      "src/thrift/platform.h"
+      DESTINATION "${INCLUDE_INSTALL_DIR}/thrift")
+  install(FILES
+      "src/thrift/audit/t_audit.h"
+      DESTINATION "${INCLUDE_INSTALL_DIR}/thrift/audit")
+  install(FILES
+      "src/thrift/generate/t_generator.h"
+      "src/thrift/generate/t_generator_registry.h"
+      "src/thrift/generate/t_html_generator.h"
+      "src/thrift/generate/t_oop_generator.h"
+      DESTINATION "${INCLUDE_INSTALL_DIR}/thrift/generate")
+  install(FILES
+      "src/thrift/parse/t_base_type.h"
+      "src/thrift/parse/t_const.h"
+      "src/thrift/parse/t_const_value.h"
+      "src/thrift/parse/t_container.h"
+      "src/thrift/parse/t_doc.h"
+      "src/thrift/parse/t_enum.h"
+      "src/thrift/parse/t_enum_value.h"
+      "src/thrift/parse/t_field.h"
+      "src/thrift/parse/t_function.h"
+      "src/thrift/parse/t_list.h"
+      "src/thrift/parse/t_map.h"
+      "src/thrift/parse/t_program.h"
+      "src/thrift/parse/t_scope.h"
+      "src/thrift/parse/t_service.h"
+      "src/thrift/parse/t_set.h"
+      "src/thrift/parse/t_struct.h"
+      "src/thrift/parse/t_typedef.h"
+      "src/thrift/parse/t_type.h"
+      DESTINATION "${INCLUDE_INSTALL_DIR}/thrift/parse")
+  install(FILES
+      "src/thrift/plugin/plugin.h"
+      "src/thrift/plugin/plugin_output.h"
+      "src/thrift/plugin/type_util.h"
+      DESTINATION "${INCLUDE_INSTALL_DIR}/thrift/plugin")
+if(MSVC)
+  install(FILES
+      "src/thrift/windows/config.h"
+      DESTINATION "${INCLUDE_INSTALL_DIR}/thrift/windows")
+  install(FILES
+      "${CMAKE_BINARY_DIR}/compiler/cpp/thrift/windows/version.h"
+      DESTINATION "${INCLUDE_INSTALL_DIR}/thrift/windows")
+else()
+  install(FILES
+      "${CMAKE_BINARY_DIR}/compiler/cpp/thrift/version.h"
+      DESTINATION "${INCLUDE_INSTALL_DIR}/thrift")
+endif()
 endif()
 
 if(BUILD_TESTING)
