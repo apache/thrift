@@ -143,8 +143,6 @@ if(${WITH_PLUGIN})
         src/thrift/plugin/plugin_output.cc
         src/thrift/plugin/plugin.cc
     )
-    target_include_directories(thriftc PUBLIC ${Boost_INCLUDE_DIRS})
-    target_include_directories(thriftc_static PUBLIC ${Boost_INCLUDE_DIRS})
     set_property(TARGET thrift-compiler APPEND
         PROPERTY COMPILE_DEFINITIONS THRIFT_ENABLE_PLUGIN)
     if(WITH_SHARED_LIB AND NOT MSVC)
