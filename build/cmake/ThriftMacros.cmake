@@ -36,6 +36,7 @@ if(WITH_SHARED_LIB)
         LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
         ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
         PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+    target_include_directories(${name} PUBLIC ${Boost_INCLUDE_DIRS})
 endif()
 
 if(WITH_STATIC_LIB)
@@ -50,6 +51,7 @@ if(WITH_STATIC_LIB)
         LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
         ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
         PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+    target_include_directories(${name}_static PUBLIC ${Boost_INCLUDE_DIRS})
 endif()
 
 endmacro(ADD_LIBRARY_THRIFT)

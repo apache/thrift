@@ -18,12 +18,14 @@
 #
 
 
-#Make sure gen-cpp and gen-c_glib files can be included
-include_directories("${CMAKE_CURRENT_BINARY_DIR}")
-
 set(TEST_PREFIX "c_glib")
 
-include_directories(${Boost_INCLUDE_DIRS})
+# Find required packages
+find_package(Boost 1.53.0 REQUIRED)
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
+
+#Make sure gen-cpp and gen-c_glib files can be included
+include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 # Create the thrift C test library
 set(testgenc_SOURCES
