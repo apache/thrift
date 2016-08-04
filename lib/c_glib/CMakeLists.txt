@@ -44,6 +44,7 @@ set(thrift_c_glib_SOURCES
     src/thrift/c_glib/transport/thrift_buffered_transport_factory.c
     src/thrift/c_glib/transport/thrift_framed_transport_factory.c
     src/thrift/c_glib/transport/thrift_socket.c
+    src/thrift/c_glib/transport/thrift_ssl_socket.c
     src/thrift/c_glib/transport/thrift_server_transport.c
     src/thrift/c_glib/transport/thrift_server_socket.c
     src/thrift/c_glib/transport/thrift_buffered_transport.c
