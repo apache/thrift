@@ -38,14 +38,12 @@
 #define MUTEX_CLEANUP(x)      CloseHandle(x)
 #define MUTEX_LOCK(x)         WaitForSingleObject((x), INFINITE)
 #define MUTEX_UNLOCK(x)       ReleaseMutex(x)
-#define THREAD_ID             GetCurrentThreadId()
 #else
 #define MUTEX_TYPE            pthread_mutex_t
 #define MUTEX_SETUP(x)        pthread_mutex_init(&(x), NULL)
 #define MUTEX_CLEANUP(x)      pthread_mutex_destroy(&(x))
 #define MUTEX_LOCK(x)         pthread_mutex_lock(&(x))
 #define MUTEX_UNLOCK(x)       pthread_mutex_unlock(&(x))
-#define THREAD_ID             pthread_self()
 #endif
 
 #define OPENSSL_VERSION_NO_THREAD_ID 0x10000000L
@@ -65,6 +63,20 @@ static SSL_CTX* thrift_ssl_socket_global_context=NULL;
 static MUTEX_TYPE *thrift_ssl_socket_global_mutex_buf=NULL;
 
 
+/**
+ * OpenSSL uniq id function.
+ *
+ * @return    thread id
+ */
+static unsigned long thrift_ssl_socket_static_id_function(void)
+{
+#if defined(WIN32)
+    return GetCurrentThreadId();
+#else
+    return ((unsigned long) pthread_self());
+#endif
+}
+
 static void thrift_ssl_socket_static_locking_callback(int mode, int n, const char* unk, int id) {
   if (mode & CRYPTO_LOCK)
     MUTEX_LOCK(thrift_ssl_socket_global_mutex_buf[n]);
@@ -81,7 +93,7 @@ static int thrift_ssl_socket_static_thread_setup(void)
     return 0;
   for (i = 0;  i < CRYPTO_num_locks(  );  i++)
     MUTEX_SETUP(thrift_ssl_socket_global_mutex_buf[i]);
-  CRYPTO_set_id_callback((unsigned long)THREAD_ID);
+  CRYPTO_set_id_callback(thrift_ssl_socket_static_id_function);
   CRYPTO_set_locking_callback(thrift_ssl_socket_static_locking_callback);
   return 1;
 }
