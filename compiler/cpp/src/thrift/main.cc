@@ -161,6 +161,7 @@ bool g_audit = false;
  */
 bool g_return_failure = false;
 bool g_audit_fatal = true;
+bool g_generator_failure = false;
 
 /**
  * Win32 doesn't have realpath, so use fallback implementation in that case,
@@ -1005,12 +1006,27 @@ void generate(t_program* program, const vector<string>& generator_strings) {
     for (iter = generator_strings.begin(); iter != generator_strings.end(); ++iter) {
       t_generator* generator = t_generator_registry::get_generator(program, *iter);
 
-      if (generator == NULL
+      if (generator == NULL) {
 #ifdef THRIFT_ENABLE_PLUGIN
-          && !plugin_output::delegateToPlugin(program, *iter)
-#endif
-          ) {
+        switch (plugin_output::delegateToPlugin(program, *iter)) {
+          case plugin_output::PLUGIN_NOT_FOUND:
+            pwarning(1, "Unable to get a generator for \"%s\".\n", iter->c_str());
+            g_generator_failure = true;
+            break;
+          case plugin_output::PLUGIN_FAILURE:
+            pwarning(1, "Plugin generator for \"%s\" failed.\n", iter->c_str());
+            g_generator_failure = true;
+            break;
+          case plugin_output::PLUGIN_SUCCEESS:
+            break;
+          default:
+            assert(false);
+            break;
+        }
+#else
         pwarning(1, "Unable to get a generator for \"%s\".\n", iter->c_str());
+        g_generator_failure = true;
+#endif
       } else if (generator) {
         pverbose("Generating \"%s\"\n", iter->c_str());
         generator->generate_program();
@@ -1282,6 +1298,9 @@ int main(int argc, char** argv) {
   // Finished
   if (g_return_failure && g_audit_fatal) {
     exit(2);
+  }
+  if (g_generator_failure) {
+    exit(3);
   }
   // Finished
   return 0;

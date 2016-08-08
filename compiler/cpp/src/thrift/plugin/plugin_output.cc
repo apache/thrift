@@ -361,7 +361,7 @@ THRIFT_CONVERSION(t_program) {
   to.program_id = reinterpret_cast<plugin::t_program_id>(from);
 }
 
-bool delegateToPlugin(t_program* program, const std::string& options) {
+PluginDelegateResult delegateToPlugin(t_program* program, const std::string& options) {
   std::string language;
   std::map<std::string, std::string> parsed_options;
   t_generator::parse_options(options, language, parsed_options);
@@ -375,30 +375,31 @@ bool delegateToPlugin(t_program* program, const std::string& options) {
     boost::shared_ptr<TFramedTransport> transport(
         new TFramedTransport(boost::make_shared<TFDTransport>(fileno(fd))));
     TBinaryProtocol proto(transport);
+
     plugin::GeneratorInput input;
     input.__set_parsed_options(parsed_options);
     clear_global_cache();
     convert(program, input.program);
     get_global_cache(input.type_registry);
-
     try {
       input.write(&proto);
-      transport->close();
+      transport->flush();
     } catch (std::exception& err) {
       std::cerr << "Error while sending data to plugin: " << err.what() << std::endl;
+      THRIFT_PCLOSE(fd);
+      return PLUGIN_FAILURE;
     }
-// TODO: Explicitly wait for child process
-// TODO: be prepared for hang or crash of child process
-// It seems that windows _pclose crashes if the process has already completed.
-#ifndef _WIN32
+
+    // TODO: be prepared for hang or crash of child process
     int ret = THRIFT_PCLOSE(fd);
     if (!ret) {
-      std::cerr << "plugin returned non zero exit code: " << ret << std::endl;
+      return PLUGIN_SUCCEESS;
+    } else {
+      std::cerr << "plugin process returned non zero exit code: " << ret << std::endl;
+      return PLUGIN_FAILURE;
     }
-#endif
-    return true;
   }
   clear_global_cache();
-  return false;
+  return PLUGIN_NOT_FOUND;
 }
 }

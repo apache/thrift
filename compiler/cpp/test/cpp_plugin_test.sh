@@ -24,5 +24,4 @@ set -e
 mkdir -p gen-cpp gen-mycpp
 PATH=.:"$PATH" ../thrift -r -out gen-cpp -gen cpp ../../../test/Include.thrift
 PATH=.:"$PATH" ../thrift -r -out gen-mycpp -gen mycpp ../../../test/Include.thrift
-sleep 0.2
 diff -urN gen-cpp gen-mycpp

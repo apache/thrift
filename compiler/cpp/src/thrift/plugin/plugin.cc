@@ -442,9 +442,11 @@ int GeneratorPlugin::exec(int, char* []) {
   ::t_program* p = g_program = convert_forward(input.program);
   set_global_cache(input.type_registry);
   convert(input.program, p);
-  generate(p, input.parsed_options);
+
+  int ret = generate(p, input.parsed_options);
   clearGlobals();
-  return 0;
+
+  return ret;
 }
 
 ::t_const_value::t_const_value_type const_value_case(const t_const_value& v) {

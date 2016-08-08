@@ -26,7 +26,13 @@ class t_program;
 
 namespace plugin_output {
 
-bool delegateToPlugin(t_program* program, const std::string& options);
+enum PluginDelegateResult {
+  PLUGIN_NOT_FOUND,
+  PLUGIN_FAILURE,
+  PLUGIN_SUCCEESS,
+};
+
+PluginDelegateResult delegateToPlugin(t_program* program, const std::string& options);
 }
 
 #endif
