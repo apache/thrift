@@ -40,6 +40,13 @@ option(BUILD_LIBRARIES "Build Thrift libraries" ON)
 # and enables the library if all are found. This means the default is to build as
 # much as possible but leaving out libraries if their dependencies are not met.
 
+option(WITH_BOOST_STATIC "Build with Boost static link library" OFF)
+set(Boost_USE_STATIC_LIBS ${WITH_BOOST_STATIC})
+if (NOT WITH_BOOST_STATIC)
+    add_definitions(-DBOOST_ALL_DYN_LINK)
+    add_definitions(-DBOOST_TEST_DYN_LINK)
+endif()
+
 # C++
 option(WITH_CPP "Build C++ Thrift library" ON)
 if(WITH_CPP)
@@ -88,6 +95,21 @@ endif()
 CMAKE_DEPENDENT_OPTION(BUILD_C_GLIB "Build C (GLib) library" ON
                        "BUILD_LIBRARIES;WITH_C_GLIB;GLIB_FOUND" OFF)
 
+if(BUILD_CPP)
+    set(boost_components)
+    if(WITH_BOOSTTHREADS OR BUILD_TESTING)
+        list(APPEND boost_components system thread)
+    endif()
+    if(BUILD_TESTING)
+        list(APPEND boost_components unit_test_framework filesystem chrono program_options)
+    endif()
+    if(boost_components)
+        find_package(Boost 1.53 QUIET REQUIRED COMPONENTS ${boost_components})
+    endif()
+elseif(BUILD_C_GLIB AND BUILD_TESTING)
+    find_package(Boost 1.53 REQUIRED)
+endif()
+
 # Java
 option(WITH_JAVA "Build Java Thrift library" ON)
 if(ANDROID)
@@ -122,8 +144,6 @@ option(WITH_STATIC_LIB "Build static libraries" ON)
 if (NOT WITH_SHARED_LIB AND NOT WITH_STATIC_LIB)
     message(FATAL_ERROR "Cannot build with both shared and static outputs disabled!")
 endif()
-
-option(WITH_DYN_LINK_TEST "Build with Boost dynamic link test library" OFF)
 
 #NOTE: C++ compiler options are defined in the lib/cpp/CMakeLists.txt
 
@@ -182,6 +202,6 @@ message(STATUS "  Build with Qt5 support:                     ${WITH_QT5}")
 message(STATUS "  Build with OpenSSL support:                 ${WITH_OPENSSL}")
 message(STATUS "  Build with Boost thread support:            ${WITH_BOOSTTHREADS}")
 message(STATUS "  Build with C++ std::thread support:         ${WITH_STDTHREADS}")
-message(STATUS "  Build with Boost dynamic link test library: ${WITH_DYN_LINK_TEST}")
+message(STATUS "  Build with Boost static link library:       ${WITH_BOOST_STATIC}")
 message(STATUS "----------------------------------------------------------")
 endmacro(PRINT_CONFIG_SUMMARY)

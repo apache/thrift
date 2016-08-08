@@ -22,8 +22,11 @@ execute_process(COMMAND ${THRIFT_COMPILER} -r -out ${CURDIR}/gen-cpp -gen cpp ${
 if(EXITCODE)
   message(FATAL_ERROR "FAILED: \"${ARGV}\": \"${EXITCODE}\"")
 endif()
-set(ENV{PATH} "${BINDIR}:$ENV{PATH}")
-message(WARNING "$ENV{PATH}")
+if(WIN32)
+    set(ENV{PATH} "${BINDIR}/${BUILDTYPE};${BINDIR};$ENV{PATH}")
+else()
+    set(ENV{PATH} "${BINDIR}:$ENV{PATH}")
+endif()
 
 file(MAKE_DIRECTORY ${CURDIR}/gen-mycpp)
 execute_process(COMMAND ${THRIFT_COMPILER} -r -out ${CURDIR}/gen-mycpp -gen mycpp ${SRCDIR}/../../../test/Include.thrift RESULT_VARIABLE EXITCODE)

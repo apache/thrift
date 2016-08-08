@@ -17,17 +17,16 @@
  * under the License.
  */
 
-#define BOOST_TEST_ALTERNATIVE_INIT_API
+#include "thrift/parse/t_program.h"
+#include "thrift/plugin/plugin_types.h"
+#include "thrift/plugin/type_util.h"
+
 #include <map>
 #include <vector>
 
 #include <boost/preprocessor.hpp>
 #include <boost/test/included/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-
-#include "thrift/parse/t_program.h"
-#include "thrift/plugin/type_util.h"
-#include "thrift/plugin/plugin_types.h"
 
 using namespace apache::thrift;
 using namespace boost::unit_test;
@@ -470,7 +469,7 @@ void test_program(t_program* sut) {
 
   BOOST_PP_LIST_FOR_EACH(THRIFT_CHECK, sut->, BOOST_PP_TUPLE_TO_LIST(2, (get_doc(), get_name())))
 }
-bool init_unit_test() {
+boost::unit_test::test_suite* do_init_unit_test_suite() {
   test_data::init();
   test_suite* ts = BOOST_TEST_SUITE("PluginConversionTest");
 
@@ -478,7 +477,20 @@ bool init_unit_test() {
   ts->add(BOOST_PARAM_TEST_CASE(test_##type, test_data::type##s.begin(), test_data::type##s.end()));
   BOOST_PP_LIST_FOR_EACH(T_TEST_CASE, _, T_TEST_TYPES)
   T_TEST_CASE(_, _, type)
+#undef T_TEST_CASE
+  return ts;
+}
 
-  framework::master_test_suite().add(ts);
+#ifdef BOOST_TEST_DYN_LINK
+bool init_unit_test_suite() {
+  framework::master_test_suite().add(do_init_unit_test_suite());
   return true;
 }
+int main(int argc, char* argv[]) {
+  return ::boost::unit_test::unit_test_main(&init_unit_test_suite, argc, argv);
+}
+#else
+boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
+  return do_init_unit_test_suite();
+}
+#endif

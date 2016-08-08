@@ -125,9 +125,9 @@ if(${WITH_PLUGIN})
         ${CMAKE_CURRENT_BINARY_DIR}/thrift/plugin/plugin_constants.cpp
     )
 
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/thrift/plugin)
     add_custom_command(OUTPUT ${PLUGIN_GEN_SOURCES}
         DEPENDS thrift-bootstrap src/thrift/plugin/plugin.thrift
-        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/thrift/plugin
         COMMAND thrift-bootstrap -gen cpp
         -out ${CMAKE_CURRENT_BINARY_DIR}/thrift/plugin
         ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/plugin/plugin.thrift

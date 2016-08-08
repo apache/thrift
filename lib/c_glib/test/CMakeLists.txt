@@ -20,8 +20,6 @@
 
 set(TEST_PREFIX "c_glib")
 
-# Find required packages
-find_package(Boost 1.53.0 REQUIRED)
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 #Make sure gen-cpp and gen-c_glib files can be included
