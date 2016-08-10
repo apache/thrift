@@ -3656,6 +3656,14 @@ string t_go_generator::type_to_spec_args(t_type* ttype) {
 }
 
 bool format_go_output(const string& file_path) {
+
+  // formatting via gofmt deactivated due to THRIFT-3893
+  // Please look at the ticket and make sure you fully understand all the implications
+  // before submitting a patch that enables this feature again. Thank you.
+  (void) file_path;
+  return false;
+  
+  /*
   const string command = "gofmt -w " + file_path;
 
   if (system(command.c_str()) == 0) {
@@ -3664,7 +3672,8 @@ bool format_go_output(const string& file_path) {
 
   fprintf(stderr, "WARNING - Running '%s' failed.\n", command.c_str());
   return false;
-}
+  */
+ }
 
 THRIFT_REGISTER_GENERATOR(go, "Go",
                           "    package_prefix=  Package prefix for generated files.\n" \
