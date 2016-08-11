@@ -614,8 +614,8 @@ class TCompactProtocol extends TProtocol
       // Shift hi and lo together.
       if ($shift >= 32) {
         $hi |= (($byte & 0x7f) << ($shift - 32));
-      } elseif ($shift > 25) {
-        $hi |= (($byte & 0x7f) >> ($shift - 25));
+      } elseif ($shift > 24) {
+        $hi |= (($byte & 0x7f) >> ($shift - 24));
       }
       if (($byte >> 7) === 0) {
         break;
@@ -635,7 +635,7 @@ class TCompactProtocol extends TProtocol
 
     // Now put $hi and $lo back together
     if (true) {
-      $isNeg = $hi  < 0;
+      $isNeg = $hi  < 0 || $hi & 0x80000000;
 
       // Check for a negative
       if ($isNeg) {
