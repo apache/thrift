@@ -543,7 +543,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
         }
         else {
           if (Z_TYPE_P(key) != IS_STRING) convert_to_string(key);
-          zend_hash_update(return_value->value.ht, Z_STRVAL_P(key), Z_STRLEN_P(key) + 1, &value, sizeof(zval *), NULL);
+          zend_symtable_update(return_value->value.ht, Z_STRVAL_P(key), Z_STRLEN_P(key) + 1, &value, sizeof(zval *), NULL);
         }
         zval_ptr_dtor(&key);
       }
@@ -589,7 +589,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
         }
         else {
           if (Z_TYPE_P(key) != IS_STRING) convert_to_string(key);
-          zend_hash_update(return_value->value.ht, Z_STRVAL_P(key), Z_STRLEN_P(key) + 1, &value, sizeof(zval *), NULL);
+          zend_symtable_update(return_value->value.ht, Z_STRVAL_P(key), Z_STRLEN_P(key) + 1, &value, sizeof(zval *), NULL);
         }
         zval_ptr_dtor(&key);
       }
