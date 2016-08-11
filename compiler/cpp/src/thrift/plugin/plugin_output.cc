@@ -366,6 +366,11 @@ PluginDelegateResult delegateToPlugin(t_program* program, const std::string& opt
   std::map<std::string, std::string> parsed_options;
   t_generator::parse_options(options, language, parsed_options);
   std::string cmd = "thrift-gen-";
+  if (language.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-0123456789")
+      != std::string::npos) {
+    std::cerr << "Invalid language name" << std::endl;
+    return PLUGIN_FAILURE;
+  }
   cmd.append(language);
   FILE* fd = THRIFT_POPEN(cmd.c_str());
   if (fd) {
