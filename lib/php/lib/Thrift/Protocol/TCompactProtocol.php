@@ -615,7 +615,7 @@ class TCompactProtocol extends TProtocol
       if ($shift >= 32) {
         $hi |= (($byte & 0x7f) << ($shift - 32));
       } elseif ($shift > 25) {
-        $hi |= (($byte & 0x7f) >> ($shift - 25));
+        $hi |= (($byte & 0x7f) >> (32 - $shift));
       }
       if (($byte >> 7) === 0) {
         break;
