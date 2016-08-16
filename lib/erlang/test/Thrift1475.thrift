@@ -3,6 +3,11 @@ struct StructB
   1: string x
 }
 
+enum EnumA {
+  choice1,
+  choice2
+}
+
 struct StructA
 {
   1: string a,
@@ -30,5 +35,6 @@ struct StructA
   23: map<string, string> string_map,
   24: required map<string, string> rsm,
   25: optional map<string, string> osm,
-  26: StructB structb
+  26: StructB structb,
+  27: optional EnumA ea = EnumA.choice2
 }

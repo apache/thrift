@@ -728,7 +728,7 @@ string t_erlang_generator::render_const_value(t_type* type, std::string name, t_
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
-    out << value->get_integer();
+    out << atomify(((t_enum *)(type))->get_constant_by_value(value->get_integer())->get_name());
   } else if (type->is_struct() && ((t_struct*)type)->is_union()) {
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     map<t_const_value*, t_const_value*>::const_iterator v_iter = val.begin();
