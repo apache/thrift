@@ -39,7 +39,7 @@ type test_unit struct {
 }
 
 var units = []test_unit{
-	{"127.0.0.1", 9090, "", "", "binary", false},
+	{"127.0.0.1", 9095, "", "", "binary", false},
 	{"127.0.0.1", 9091, "", "", "compact", false},
 	{"127.0.0.1", 9092, "", "", "binary", true},
 	{"127.0.0.1", 9093, "", "", "compact", true},
