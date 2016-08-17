@@ -69,7 +69,8 @@ This section specifies Thrift RPC behavior in more detail.
 Both the binary protocol and the compact protocol assume a transport layer that exposes a bi-directional byte stream,
 for example a TCP socket. Both use the following exchange:
 
-1. Client sends a `Message` (type `Call`). The TMessage contains some metadata and the name of the method to invoke.
+1. Client sends a `Message` (type `Call` or `Oneway`). The TMessage contains some metadata and the name of the method
+   to invoke.
 2. Client sends method arguments (a struct defined by the generate code).
 3. Server sends a `Message` (type `Reply` or `Exception`) to start the response.
 4. Server sends a struct containing the method result or exception.
@@ -146,7 +147,9 @@ An *Exception* is encoded exactly the same as a struct.
 
 ## Request struct
 
-TODO
+The struct that follows the message of type `Call` or `Oneway` contains the arguments of the service method. The
+argument ids correspond to the field ids. The name of the struct is the name of the method with `_args` appended.
+For methods without arguments an struct is sent without fields.
 
 ## Response struct
 
