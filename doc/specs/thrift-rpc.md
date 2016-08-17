@@ -142,11 +142,9 @@ The following exception types are defined in the java implementation (0.9.3):
 
 ## Comparing binary and compact protocol
 
-TODO: complete this section
-
-In the binary protocol the field header is always 3 bytes long. In the compact protocol the field header packs a lot
-more cleverness. In most cases it is 1 byte long. In special cases it can grow to 2 or 3 bytes. When your field-ids are
-very large it can even grow to 4 bytes.
+The binary protocol is fairly simple and therefore easy to process. The compact protocol needs less bytes to send the
+same data at the cost of additional processing. As bandwidth is usually the bottleneck, the compact protocol is almost
+always slightly faster.
 
 ## Compatibility
 
