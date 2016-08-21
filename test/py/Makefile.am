@@ -22,6 +22,12 @@ THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 py_unit_tests = RunClientServer.py
 
+if WITH_PY3
+
+py_unit_tests += RunAsyncioClientServer.py
+
+endif
+
 thrift_gen =                                    \
         gen-py/ThriftTest/__init__.py           \
         gen-py/DebugProtoTest/__init__.py \
@@ -36,13 +42,16 @@ thrift_gen =                                    \
         gen-py-dynamic/ThriftTest/__init__.py           \
         gen-py-dynamic/DebugProtoTest/__init__.py \
         gen-py-dynamicslots/ThriftTest/__init__.py           \
-        gen-py-dynamicslots/DebugProtoTest/__init__.py
+        gen-py-dynamicslots/DebugProtoTest/__init__.py \
+        gen-py-asyncio/ThriftTest/__init__.py \
+        gen-py-asyncio/DebugProtoTest/__init__.py
 
 precross: $(thrift_gen)
 BUILT_SOURCES = $(thrift_gen)
 
 helper_scripts=                                 \
         TestClient.py                           \
+        TestAsyncioClient.py                    \
         TestServer.py
 
 check_SCRIPTS=                                  \
@@ -80,5 +89,9 @@ gen-py-dynamicslots/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-dynamicslots || $(MKDIR_P) gen-py-dynamicslots
 	$(THRIFT) --gen py:dynamic,slots -out gen-py-dynamicslots $<
 
+gen-py-asyncio/%/__init__.py: ../%.thrift $(THRIFT)
+	test -d gen-py-asyncio || $(MKDIR_P) gen-py-asyncio
+	$(THRIFT) --gen py:asyncio -out gen-py-asyncio $<
+
 clean-local:
-	$(RM) -r gen-py gen-py-slots gen-py-default gen-py-oldstyle gen-py-no_utf8strings gen-py-dynamic gen-py-dynamicslots
+	$(RM) -r gen-py gen-py-slots gen-py-default gen-py-oldstyle gen-py-no_utf8strings gen-py-dynamic gen-py-dynamicslots gen-py-asyncio

@@ -44,6 +44,9 @@ if WITH_PYTHON
 SUBDIRS += py
 SUBDIRS += py.twisted
 SUBDIRS += py.tornado
+if WITH_PY3
+SUBDIRS += py.asyncio
+endif
 endif
 
 if WITH_RUBY
