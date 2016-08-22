@@ -78,7 +78,7 @@ public:
         json_serializable_ = true;
       } else if( iter->first.compare("nsglobal") == 0) {
         nsglobal_ = iter->second;
-      } else if ( iter->first.compare("json") == 0) {
+      } else if ( iter->first.compare("psr4") == 0) {
         psr4_ = true;
       } else {
         throw "unknown option php:" + iter->first; 
