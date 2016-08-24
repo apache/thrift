@@ -104,19 +104,27 @@ read(IProto0, {struct, union, StructDef}, _Tag)
     end;
 read(IProto0, {struct, _, StructDef}, Tag)
   when is_list(StructDef), is_atom(Tag) ->
-
-    % If we want a tagged tuple, we need to offset all the tuple indices
-    % by 1 to avoid overwriting the tag.
-    Offset = if Tag =/= undefined -> 2; true -> 1 end,
-
     {IProto1, ok} = read_frag(IProto0, struct_begin),
-    RTuple0 = erlang:make_tuple(length(StructDef) + Offset - 1, undefined),
-    RTuple1 = if Tag =/= undefined -> setelement(1, RTuple0, Tag);
-                 true              -> RTuple0
-              end,
+    {Offset, RTuple0} = construct_default_struct(Tag, StructDef),
+    {IProto2, RTuple1} = read_struct_loop(IProto1, enumerate(Offset + 1, StructDef), RTuple0),
+    {IProto2, {ok, RTuple1}}.
 
-    {IProto2, RTuple2} = read_struct_loop(IProto1, enumerate(Offset, StructDef), RTuple1),
-    {IProto2, {ok, RTuple2}}.
+construct_default_struct(Tag, StructDef) ->
+    case Tag of
+        undefined ->
+            Tuple = erlang:make_tuple(length(StructDef), undefined),
+            {0, fill_default_struct(1, StructDef, Tuple)};
+        _ ->
+            % If we want a tagged tuple, we need to offset all the tuple indices
+            % by 1 to avoid overwriting the tag.
+            Tuple = erlang:make_tuple(length(StructDef) + 1, undefined),
+            {1, fill_default_struct(2, StructDef, erlang:setelement(1, Tuple, Tag))}
+    end.
+
+fill_default_struct(_N, [], Record) ->
+    Record;
+fill_default_struct(N, [{_Fid, _Req, _Type, _Name, Default} | Rest], Record) ->
+    fill_default_struct(N + 1, Rest, erlang:setelement(N, Record, Default)).
 
 enumerate(N, [{Fid, _Req, Type, Name, _Default} | Rest]) ->
     [{N, Fid, Type, Name} | enumerate(N + 1, Rest)];
