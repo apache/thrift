@@ -349,4 +349,16 @@ abstract class TProtocol
                                    TProtocolException::INVALID_DATA);
     }
   }
+
+  /**
+   * when protocol is binary protocol and is accelerated,
+   * return true,
+   * and we can use thrift_protocal extension
+   *
+   * @return boolean
+   */
+  public function isBinaryAccelerated()
+  {
+    return false;
+  }
 }

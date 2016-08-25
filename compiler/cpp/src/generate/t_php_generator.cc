@@ -78,7 +78,7 @@ public:
       } else if( iter->first.compare("nsglobal") == 0) {
         nsglobal_ = iter->second;
       } else {
-        throw "unknown option php:" + iter->first; 
+        throw "unknown option php:" + iter->first;
       }
     }
 
@@ -1341,9 +1341,13 @@ void t_php_generator::generate_process_function(t_service* tservice, t_function*
     return;
   }
 
-  f_service_ << indent() << "$bin_accel = ($output instanceof "
-             << "TBinaryProtocolAccelerated) && function_exists('thrift_protocol_write_binary');"
+  // for compatibility, add method_exists
+  f_service_ << indent() << "$bin_accel = method_exists($output, 'isBinaryAccelerated')" << endl;
+  indent_up();
+  f_service_ << indent() << " && $output->isBinaryAccelerated()" << endl
+             << indent() << " && function_exists('thrift_protocol_write_binary');"
              << endl;
+  indent_down();
 
   f_service_ << indent() << "if ($bin_accel)" << endl;
   scope_up(f_service_);
@@ -1600,9 +1604,12 @@ void t_php_generator::generate_service_client(t_service* tservice) {
                  << (*fld_iter)->get_name() << ";" << endl;
     }
 
-    f_service_ << indent() << "$bin_accel = ($this->output_ instanceof "
-               << "TBinaryProtocolAccelerated) && function_exists('thrift_protocol_write_binary');"
+    f_service_ << indent() << "$bin_accel = method_exists($this->output_, 'isBinaryAccelerated')" << endl;
+    indent_up();
+    f_service_ << indent() << " && $this->output_->isBinaryAccelerated()" << endl
+               << indent() << " && function_exists('thrift_protocol_write_binary');"
                << endl;
+    indent_down();
 
     f_service_ << indent() << "if ($bin_accel)" << endl;
     scope_up(f_service_);
@@ -1656,13 +1663,19 @@ void t_php_generator::generate_service_client(t_service* tservice) {
                  << endl;
       scope_up(f_service_);
 
-      f_service_ << indent() << "$bin_accel = ($this->input_ instanceof "
-                 << "TBinaryProtocolAccelerated)"
-                 << " && function_exists('thrift_protocol_read_binary');" << endl;
+      f_service_ << indent() << "$bin_accel = method_exists($this->input_, 'isBinaryAccelerated')" << endl;
+      indent_up();
+      f_service_ << indent() << " && $this->input_->isBinaryAccelerated()" << endl
+                 << indent() << " && function_exists('thrift_protocol_read_binary');"
+                 << endl;
+      indent_down();
 
       f_service_ << indent()
-                 << "if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, '"
+                 << "if ($bin_accel)" << endl;
+      scope_up(f_service_);
+      f_service_ << indent() << " $result = thrift_protocol_read_binary($this->input_, '"
                  << resultname << "', $this->input_->isStrictRead());" << endl;
+      scope_down(f_service_);
       f_service_ << indent() << "else" << endl;
       scope_up(f_service_);
 

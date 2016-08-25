@@ -21,6 +21,7 @@
  */
 
 namespace Thrift\Protocol;
+
 use Thrift\Exception\TException;
 
 /**
@@ -280,5 +281,26 @@ abstract class TProtocolDecorator extends TProtocol
     public function readString(&$str)
     {
         return $this->concreteProtocol_->readString($str);
+    }
+
+    public function isStrictRead()
+    {
+        if (method_exists($this->concreteProtocol_, "isStrictRead")) {
+            return $this->concreteProtocol_->isStrictRead();
+        }
+        return false;
+    }
+
+    public function isStrictWrite()
+    {
+        if (method_exists($this->concreteProtocol_, "isStrictWrite")) {
+            return $this->concreteProtocol_->isStrictWrite();
+        }
+        return true;
+    }
+
+    public function isBinaryAccelerated()
+    {
+        return $this->concreteProtocol_->isBinaryAccelerated();
     }
 }

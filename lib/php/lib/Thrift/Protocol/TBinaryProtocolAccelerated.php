@@ -62,4 +62,9 @@ class TBinaryProtocolAccelerated extends TBinaryProtocol
   {
     return $this->strictWrite_;
   }
+
+  public function isBinaryAccelerated()
+  {
+    return true;
+  }
 }
