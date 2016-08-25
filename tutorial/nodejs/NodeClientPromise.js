@@ -22,8 +22,8 @@ var Calculator = require('./gen-nodejs/Calculator');
 var ttypes = require('./gen-nodejs/tutorial_types');
 
 
-var transport = thrift.TBufferedTransport();
-var protocol = thrift.TBinaryProtocol();
+var transport = thrift.TBufferedTransport;
+var protocol = thrift.TBinaryProtocol;
 
 var connection = thrift.createConnection("localhost", 9090, {
   transport : transport,
