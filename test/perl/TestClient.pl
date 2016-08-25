@@ -250,16 +250,16 @@ print("}\n");
 #
 # SET TEST
 #
-my $setout = [];
+my $setout = {};
 for (my $i = -2; $i < 3; ++$i) {
-    push(@$setout, $i);
+    $setout->{$i} = 1;
 }
 
-print("testSet({".join(",",@$setout)."})");
+print("testSet({".join(",",keys %$setout)."})");
 
 my $setin = $testClient->testSet($setout);
 
-print(" = {".join(",",@$setout)."}\n");
+print(" = {".join(",",keys %$setin)."}\n");
 
 #
 # LIST TEST

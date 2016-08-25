@@ -269,21 +269,8 @@ sub testStringMap() {
 sub testSet() {
   my $self = shift;
   my $thing = shift;
-  my @arr;
-  my $result = \@arr;
-  print("testSet({");
-  my $first = 1;
-  foreach my $key (keys %$thing) {
-    if ($first) {
-        $first = 0;
-    } else {
-        print(", ");
-    }
-    print("$key");
-    push($result, $key);
-  }
-  print("})\n");
-  return $result;
+  printf "testSet({%s})\n", join(', ', keys %$thing);
+  return $thing;
 }
 
 sub testList() {
