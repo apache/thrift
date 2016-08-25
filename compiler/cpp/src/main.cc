@@ -1128,7 +1128,18 @@ int main(int argc, char** argv) {
           fprintf(stderr, "Missing generator specification\n");
           usage();
         }
-        generator_strings.push_back(arg);
+
+        // -gen all option to easily test compatibility of an idl
+        if (strcmp(arg, "all") == 0) {
+		      t_generator_registry::gen_map_t gen_map = t_generator_registry::get_generator_map();
+          t_generator_registry::gen_map_t::iterator iter;
+		      for (iter = gen_map.begin(); iter != gen_map.end(); ++iter) {
+            generator_strings.push_back(iter->second->get_short_name().c_str());
+		      }
+        }
+        else {
+          generator_strings.push_back(arg);
+        }
       } else if (strcmp(arg, "-I") == 0) {
         // An argument of "-I\ asdf" is invalid and has unknown results
         arg = argv[++i];
