@@ -66,6 +66,15 @@ public:
     name_ = program_name(path);
     scope_ = new t_scope();
   }
+  
+  ~t_program()
+  {
+   if(scope_)
+   {
+     delete scope_; 
+     scope_ = NULL; 
+   }
+  }
 
   ~t_program() {
     if (scope_) {
