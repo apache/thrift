@@ -2,8 +2,9 @@
 
 namespace Thrift\Server;
 
-use Thrift\Factory\TTransportFactory;
 use Thrift\Factory\TProtocolFactory;
+use Thrift\Factory\TTransportFactory;
+use Thrift\Processor\TProcessor;
 
 /**
  * Generic class for a Thrift server.
@@ -58,7 +59,7 @@ abstract class TServer
   /**
    * Sets up all the factories, etc
    *
-   * @param object $processor
+   * @param TProcessor $processor
    * @param TServerTransport $transport
    * @param TTransportFactory $inputTransportFactory
    * @param TTransportFactory $outputTransportFactory
@@ -66,7 +67,7 @@ abstract class TServer
    * @param TProtocolFactory $outputProtocolFactory
    * @return void
    */
-  public function __construct($processor,
+  public function __construct(TProcessor $processor,
                               TServerTransport $transport,
                               TTransportFactory $inputTransportFactory,
                               TTransportFactory $outputTransportFactory,

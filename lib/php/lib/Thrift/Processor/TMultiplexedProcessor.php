@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -16,11 +17,9 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
- * @package thrift.processor
  */
 
-namespace Thrift;
+namespace Thrift\Processor;
 
 use Thrift\Exception\TException;
 use Thrift\Protocol\TProtocol;
@@ -48,10 +47,15 @@ use Thrift\Type\TMessageType;
  *
  *     $processor->process($protocol, $protocol);
  * </code></blockquote>
+ *
+ * @package thrift.processor
  */
 
-class TMultiplexedProcessor
+class TMultiplexedProcessor implements TProcessor
 {
+    /**
+     * @var TProcessor[]
+     */
     private $serviceProcessorMap_;
 
     /**
@@ -64,7 +68,7 @@ class TMultiplexedProcessor
      * @param processor Implementation of a service, usually referred to
      * as "handlers", e.g. WeatherReportHandler implementing WeatherReport.Iface.
      */
-    public function registerProcessor($serviceName, $processor)
+    public function registerProcessor($serviceName, TProcessor $processor)
     {
         $this->serviceProcessorMap_[$serviceName] = $processor;
     }
