@@ -237,7 +237,7 @@ string t_hs_generator::hs_autogen_comment() {
 string t_hs_generator::hs_imports() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = string(
-      "import Prelude (($), (.), (>>=), (==), (++))\n"
+      "import Prelude (($), (.), (>>=), (==), (++), (-))\n"
       "import qualified Prelude as P\n"
       "import qualified Control.Exception as X\n"
       "import qualified Control.Monad as M ( liftM, ap, when )\n"
