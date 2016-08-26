@@ -1120,8 +1120,8 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     out << "}";
 
   } else if (type->is_map()) {
-    t_type* ktype = ((t_map*)type)->get_key_type();
-    t_type* vtype = ((t_map*)type)->get_val_type();
+    t_type* ktype = ((t_map*)type)->get_key_type()->get_true_type();
+    t_type* vtype = ((t_map*)type)->get_val_type()->get_true_type();
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     out << "map[" << type_to_go_type(ktype) << "]" << type_to_go_type(vtype) << "{" << endl;
     indent_up();
@@ -1135,7 +1135,7 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     indent_down();
     out << indent() << "}";
   } else if (type->is_list()) {
-    t_type* etype = ((t_list*)type)->get_elem_type();
+    t_type* etype = ((t_list*)type)->get_elem_type()->get_true_type();
     const vector<t_const_value*>& val = value->get_list();
     out << "[]" << type_to_go_type(etype) << "{" << endl;
     indent_up();
@@ -1148,7 +1148,7 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     indent_down();
     out << indent() << "}";
   } else if (type->is_set()) {
-    t_type* etype = ((t_set*)type)->get_elem_type();
+    t_type* etype = ((t_set*)type)->get_elem_type()->get_true_type();
     const vector<t_const_value*>& val = value->get_list();
     out << "map[" << type_to_go_key_type(etype) << "]struct{}{" << endl;
     indent_up();
