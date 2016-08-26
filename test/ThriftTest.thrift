@@ -203,6 +203,13 @@ service ThriftTest
   Xtruct2      testNest(1: Xtruct2 thing),
 
   /**
+   * Prints 'testEmptyStruct("{%s}")' where thing has been formatted into a string of the empty struct
+   * @param EmptyStruct thing - the EmptyStruct to print
+   * @return EmptyStruct - returns the EmptyStruct 'thing'
+   */
+  EmptyStruct testEmptyStruct(1: EmptyStruct thing)
+
+  /**
    * Prints 'testMap("{%s")' where thing has been formatted into a string of  'key => value' pairs
    *  separated by commas and new lines
    * @param map<i32,i32> thing - the map<i32,i32> to print

@@ -421,38 +421,41 @@ string t_hs_generator::render_const_value(t_type* type, t_const_value* value) {
 
   } else if (type->is_struct() || type->is_xception()) {
     string cname = type_name(type);
-    out << "default_" << cname << "{";
+    out << "default_" << cname;
 
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     const map<t_const_value*, t_const_value*>& val = value->get_map();
 
     bool first = true;
-    for (map<t_const_value*, t_const_value*>::const_iterator v_iter = val.begin();
-         v_iter != val.end();
-         ++v_iter) {
-      t_field* field = NULL;
+    if (!fields.empty()) {
+      out << "{";
+      for (map<t_const_value*, t_const_value*>::const_iterator v_iter = val.begin();
+           v_iter != val.end();
+           ++v_iter) {
+        t_field* field = NULL;
 
-      for (vector<t_field*>::const_iterator f_iter = fields.begin(); f_iter != fields.end();
-           ++f_iter)
-        if ((*f_iter)->get_name() == v_iter->first->get_string())
-          field = (*f_iter);
+        for (vector<t_field*>::const_iterator f_iter = fields.begin(); f_iter != fields.end();
+             ++f_iter)
+          if ((*f_iter)->get_name() == v_iter->first->get_string())
+            field = (*f_iter);
 
-      if (field == NULL)
-        throw "type error: " + cname + " has no field " + v_iter->first->get_string();
+        if (field == NULL)
+          throw "type error: " + cname + " has no field " + v_iter->first->get_string();
 
-      string fname = v_iter->first->get_string();
-      string const_value = render_const_value(field->get_type(), v_iter->second);
+        string fname = v_iter->first->get_string();
+        string const_value = render_const_value(field->get_type(), v_iter->second);
 
-      out << (first ? "" : ", ");
-      out << field_name(cname, fname) << " = ";
-      if (field->get_req() == t_field::T_OPTIONAL || ((t_type*)field->get_type())->is_xception()) {
-        out << "P.Just ";
+        out << (first ? "" : ", ");
+        out << field_name(cname, fname) << " = ";
+        if (field->get_req() == t_field::T_OPTIONAL || ((t_type*)field->get_type())->is_xception()) {
+          out << "P.Just ";
+        }
+        out << const_value;
+        first = false;
       }
-      out << const_value;
-      first = false;
-    }
 
-    out << "}";
+      out << "}";
+    }
 
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();

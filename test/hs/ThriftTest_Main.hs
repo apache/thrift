@@ -75,6 +75,10 @@ instance Iface.ThriftTest_Iface TestHandler where
         ThriftTestUtils.serverLog $ show x
         return x
 
+    testEmptyStruct _ x = do
+        ThriftTestUtils.serverLog $ show x
+        return x
+
     testNest _ x = do
         ThriftTestUtils.serverLog $ show x
         return x
@@ -170,6 +174,9 @@ client addr = do
 
     v14 <- Client.testStruct ps (Types.Xtruct "hi" 4 5 0)
     ThriftTestUtils.clientLog $ show v14
+
+    v15 <- Client.testEmptyStruct ps (Types.EmptyStruct)
+    ThriftTestUtils.clientLog $ show v15
 
     (testException ps "bad") `Control.Exception.catch` testExceptionHandler
 
