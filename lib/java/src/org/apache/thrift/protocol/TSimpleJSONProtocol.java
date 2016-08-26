@@ -241,7 +241,8 @@ public class TSimpleJSONProtocol extends TProtocol {
   }
 
   public void writeBool(boolean b) throws TException {
-    writeByte(b ? (byte)1 : (byte)0);
+    writeContext._write();
+    _writeStringData(b ? "true" : "false");
   }
 
   public void writeByte(byte b) throws TException {
