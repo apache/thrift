@@ -807,6 +807,17 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
         << indent() << indent_str() << "return repr(self)" << endl;
   }
 
+  out << indent() << "def __hash__(self):" << endl;
+  indent_up(); 
+  indent(out) << "value = PYTHONHASHSEED" << endl; 
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) { 
+    indent(out) << "value = (value * 31) ^ hash(self." << (*m_iter)->get_name() + ")" << endl; 
+  } 
+  indent(out) << "return value" << endl; 
+  indent_down(); 
+  out << endl; 
+  
+  
   if (!gen_slots_) {
     out << endl;
     // Printing utilities so that on the command line thrift
