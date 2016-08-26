@@ -1285,12 +1285,9 @@ void t_php_generator::generate_process_function(t_service* tservice, t_function*
 
   // Declare result for non oneway function
   if (!tfunction->is_oneway()) {
-    f_service_ << indent() << "$result = new " << resultname << "();" << endl;
-  }
-
-  // Try block for a function with exceptions
-  if (xceptions.size() > 0) {
-    f_service_ << indent() << "try {" << endl;
+    f_service_ << indent() << "$result = new " << resultname << "();" << endl
+               << indent() << "$msgtype = TMessageType::REPLY;" << endl
+               << indent() << "try {" << endl;
     indent_up();
   }
 
@@ -1315,22 +1312,31 @@ void t_php_generator::generate_process_function(t_service* tservice, t_function*
   }
   f_service_ << ");" << endl;
 
-  if (!tfunction->is_oneway() && xceptions.size() > 0) {
+  // Generate catch exceptions
+  if (!tfunction->is_oneway()) {
     indent_down();
-    for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-      f_service_ << indent() << "} catch ("
-                 << php_namespace(get_true_type((*x_iter)->get_type())->get_program())
-                 << (*x_iter)->get_type()->get_name() << " $" << (*x_iter)->get_name() << ") {"
-                 << endl;
-      if (!tfunction->is_oneway()) {
+    if (xceptions.size() > 0) {
+      for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+        f_service_ << indent() << "} catch ("
+                   << php_namespace(get_true_type((*x_iter)->get_type())->get_program())
+                   << (*x_iter)->get_type()->get_name() << " $" << (*x_iter)->get_name() << ") {"
+                   << endl;
         indent_up();
         f_service_ << indent() << "$result->" << (*x_iter)->get_name() << " = $"
                    << (*x_iter)->get_name() << ";" << endl;
         indent_down();
-        f_service_ << indent();
       }
     }
-    f_service_ << "}" << endl;
+    // Catch a generic exception
+    f_service_ << indent() << "} catch (\\Exception $err) {" << endl;
+    indent_up();
+    f_service_ << indent() << "$result = new "
+               << "TApplicationException($err->getMessage().' ('.get_class($err).')', "
+               << "TApplicationException::INTERNAL_ERROR);" << endl
+               << indent() << "$msgtype = TMessageType::EXCEPTION;" << endl;
+
+    indent_down();
+    f_service_ << indent() << "}" << endl;
   }
 
   // Shortcut out here for oneway functions
@@ -1350,7 +1356,7 @@ void t_php_generator::generate_process_function(t_service* tservice, t_function*
 
   f_service_ << indent() << "thrift_protocol_write_binary($output, '" << tfunction->get_name()
              << "', "
-             << "TMessageType::REPLY, $result, $seqid, $output->isStrictWrite());" << endl;
+             << "$msgtype, $result, $seqid, $output->isStrictWrite());" << endl;
 
   scope_down(f_service_);
   f_service_ << indent() << "else" << endl;
@@ -1358,17 +1364,19 @@ void t_php_generator::generate_process_function(t_service* tservice, t_function*
 
   // Serialize the request header
   if (binary_inline_) {
-    f_service_ << indent() << "$buff = pack('N', (0x80010000 | "
-               << "TMessageType::REPLY)); " << endl << indent() << "$buff .= pack('N', strlen('"
-               << tfunction->get_name() << "'));" << endl << indent() << "$buff .= '"
-               << tfunction->get_name() << "';" << endl << indent() << "$buff .= pack('N', $seqid);"
-               << endl << indent() << "$result->write($buff);" << endl << indent()
-               << "$output->write($buff);" << endl << indent() << "$output->flush();" << endl;
+    f_service_ << indent() << "$buff = pack('N', (0x80010000 | $msgtype)); " << endl
+               << indent() << "$buff .= pack('N', strlen('" << tfunction->get_name() << "'));" << endl
+               << indent() << "$buff .= '" << tfunction->get_name() << "';" << endl
+               << indent() << "$buff .= pack('N', $seqid);" << endl
+               << indent() << "$result->write($buff);" << endl
+               << indent() << "$output->write($buff);" << endl
+               << indent() << "$output->flush();" << endl;
   } else {
     f_service_ << indent() << "$output->writeMessageBegin('" << tfunction->get_name() << "', "
-               << "TMessageType::REPLY, $seqid);" << endl << indent() << "$result->write($output);"
-               << endl << indent() << "$output->writeMessageEnd();" << endl << indent()
-               << "$output->getTransport()->flush();" << endl;
+               << "$msgtype, $seqid);" << endl
+               << indent() << "$result->write($output);" << endl
+               << indent() << "$output->writeMessageEnd();" << endl
+               << indent() << "$output->getTransport()->flush();" << endl;
   }
 
   scope_down(f_service_);
@@ -1438,7 +1446,7 @@ void t_php_generator::generate_service_interface(t_service* tservice) {
                  + tservice->get_extends()->get_name() + "If";
   }
   generate_php_doc(f_service_, tservice);
-  f_service_ << "interface " << php_namespace_declaration(tservice) << "If" << extends_if << " {"
+  f_service_ << "interface " << php_namespace_declaration(tservice) << "If" << extends_if << endl << "{"
              << endl;
   indent_up();
   vector<t_function*> functions = tservice->get_functions();
@@ -1463,14 +1471,14 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
     extends_if = " extends " + php_namespace(tservice->get_extends()->get_program())
                  + tservice->get_extends()->get_name() + "Rest";
   }
-  f_service_ << "class " << service_name_ << "Rest" << extends_if << " {" << endl;
+  f_service_ << "class " << service_name_ << "Rest" << extends_if << endl << "{" << endl;
   indent_up();
 
   if (extends.empty()) {
     f_service_ << indent() << "protected $impl_;" << endl << endl;
   }
 
-  f_service_ << indent() << "public function __construct($impl) {" << endl << indent()
+  f_service_ << indent() << "public function __construct($impl)" << endl << indent() << "{" << endl << indent()
              << "  $this->impl_ = $impl;" << endl << indent() << "}" << endl << endl;
 
   vector<t_function*> functions = tservice->get_functions();
@@ -1531,7 +1539,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
   }
 
   f_service_ << "class " << php_namespace_declaration(tservice) << "Client" << extends_client
-             << " implements " << php_namespace(tservice->get_program()) << service_name_ << "If {"
+             << " implements " << php_namespace(tservice->get_program()) << service_name_ << "If" << endl << "{"
              << endl;
   indent_up();
 
@@ -1543,7 +1551,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
   }
 
   // Constructor function
-  f_service_ << indent() << "public function __construct($input, $output=null) {" << endl;
+  f_service_ << indent() << "public function __construct($input, $output=null)" << endl << indent() << "{" << endl;
   if (!extends.empty()) {
     f_service_ << indent() << "  parent::__construct($input, $output);" << endl;
   } else {
