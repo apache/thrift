@@ -35,11 +35,6 @@ if WITH_D
 SUBDIRS += d
 endif
 
-if WITH_JAVA
-SUBDIRS += java
-SUBDIRS += js
-endif
-
 if WITH_PYTHON
 SUBDIRS += py
 SUBDIRS += py.twisted
@@ -95,4 +90,5 @@ EXTRA_DIST = \
 	php \
 	shared.thrift \
 	tutorial.thrift \
-	README.md
+	README.md \
+	java
