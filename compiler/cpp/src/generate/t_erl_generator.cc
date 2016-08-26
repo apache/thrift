@@ -56,6 +56,7 @@ public:
     legacy_names_ = false;
     maps_ = false;
     otp16_ = false;
+
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("legacynames") == 0) {
         legacy_names_ = true;
