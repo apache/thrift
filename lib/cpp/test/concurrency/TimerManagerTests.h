@@ -22,7 +22,6 @@
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/Util.h>
 
-#include <assert.h>
 #include <iostream>
 
 namespace apache {
@@ -88,7 +87,7 @@ public:
    * properly clean up itself and the remaining orphaned timeout task when the
    * manager goes out of scope and its destructor is called.
    */
-  bool test00(int64_t timeout = 1000LL) {
+  void test00(int64_t timeout = 1000LL) {
 
     shared_ptr<TimerManagerTests::Task> orphanTask
         = shared_ptr<TimerManagerTests::Task>(new TimerManagerTests::Task(_monitor, 10 * timeout));
@@ -101,7 +100,7 @@ public:
 
       timerManager.start();
 
-      assert(timerManager.state() == TimerManager::STARTED);
+      if (timerManager.state() != TimerManager::STARTED) { std::cerr << "timerManager.state() = " << static_cast<int>(timerManager.state()) << " and should be STARTED (2)" << std::endl << std::flush; exit(1); }
 
       // Don't create task yet, because its constructor sets the expected completion time, and we
       // need to delay between inserting the two tasks into the run queue.
@@ -117,8 +116,8 @@ public:
           // to adding orphanTask. We need to do this so we can verify that adding the second task
           // kicks the dispatcher out of the current wait and starts the new 1 second wait.
           _monitor.wait(1000);
-          assert(
-              0 == "ERROR: This wait should time out. TimerManager dispatcher may have a problem.");
+          std::cerr << "ERROR: This wait should time out. TimerManager dispatcher may have a problem." << std::endl << std::flush;
+          exit(1);
         } catch (TimedOutException&) {
         }
 
@@ -129,16 +128,14 @@ public:
         _monitor.wait();
       }
 
-      assert(task->_done);
+      if (!task->_done) { std::cerr << "task->_done is false" << std::endl << std::flush; exit(1); }
 
       std::cout << "\t\t\t" << (task->_success ? "Success" : "Failure") << "!" << std::endl;
     }
 
     // timerManager.stop(); This is where it happens via destructor
 
-    assert(!orphanTask->_done);
-
-    return true;
+    if (orphanTask->_done) { std::cerr << "orphanTask->_done is true" << std::endl << std::flush; exit(1); }
   }
 
   friend class TestTask;

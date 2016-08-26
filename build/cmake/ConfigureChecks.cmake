@@ -23,11 +23,11 @@ include(CheckIncludeFile)
 include(CheckIncludeFiles)
 include(CheckFunctionExists)
 
-# If AI_ADDRCONFIG is not defined we define it as 0
-check_symbol_exists(AI_ADDRCONFIG "sys/types.h;sys/socket.h;netdb.h" HAVE_AI_ADDRCONFIG)
-if(NOT HAVE_AI_ADDRCONFIG)
-set(AI_ADDRCONFIG 1)
-endif(NOT HAVE_AI_ADDRCONFIG)
+if(MSVC)
+  check_symbol_exists(AI_ADDRCONFIG "winsock2.h" HAVE_AI_ADDRCONFIG)
+else(MSVC)
+  check_symbol_exists(AI_ADDRCONFIG "sys/types.h;sys/socket.h;netdb.h" HAVE_AI_ADDRCONFIG)
+endif(MSVC)
 
 check_include_file(arpa/inet.h HAVE_ARPA_INET_H)
 check_include_file(fcntl.h HAVE_FCNTL_H)

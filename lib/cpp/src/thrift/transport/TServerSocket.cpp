@@ -60,7 +60,7 @@
 #endif // _WIN32
 #endif
 
-#if defined(_WIN32) && (_WIN32_WINNT < 0x0600)
+#if defined(_WIN32) && (_WIN32_WINNT < 0x0600) && !defined(AI_ADDRCONFIG)
   #define AI_ADDRCONFIG 0x0400
 #endif
 

@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE(test_destructor) {
 
   unsigned int num_over = 0;
   for (unsigned int n = 0; n < NUM_ITERATIONS; ++n) {
-    ftruncate(f.getFD(), 0);
+    BOOST_CHECK_EQUAL(0, ftruncate(f.getFD(), 0));
 
     TFileTransport* transport = new TFileTransport(f.getPath());
 
