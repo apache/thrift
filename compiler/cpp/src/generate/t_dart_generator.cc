@@ -175,6 +175,7 @@ public:
   void generate_dart_bean_boilerplate(std::ofstream& out, t_struct* tstruct);
 
   void generate_function_helpers(t_function* tfunction);
+  std::string init_value(t_type* ttype);
   std::string get_cap_name(std::string name);
   std::string get_member_name(std::string name);
   std::string get_args_class_name(std::string name);
@@ -801,7 +802,7 @@ void t_dart_generator::generate_dart_struct_definition(ofstream& out,
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     generate_dart_doc(out, *m_iter);
     indent(out) << type_name((*m_iter)->get_type()) + " _"
-                << get_member_name((*m_iter)->get_name()) << ";" << endl;
+                << get_member_name((*m_iter)->get_name()) << init_value((*m_iter)->get_type()) << ";" << endl;
 
     indent(out) << "static const int " << upcase_string((*m_iter)->get_name())
                 << " = " << (*m_iter)->get_key() << ";" << endl;
@@ -2310,6 +2311,34 @@ string t_dart_generator::type_to_enum(t_type* type) {
   }
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
+}
+
+std::string t_dart_generator::init_value(t_type* ttype) {
+	string result = "";
+	if (ttype->is_typedef()) {
+  	ttype = ((t_typedef*)ttype)->get_type();
+	}
+	if (ttype->is_base_type()) {
+		t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
+		switch (tbase) {
+		case t_base_type::TYPE_BOOL:
+			result += " = false";
+			break;
+		case t_base_type::TYPE_I8:
+		case t_base_type::TYPE_I16:
+		case t_base_type::TYPE_I32:
+		case t_base_type::TYPE_I64:
+			result += " = 0";
+			break;
+		case t_base_type::TYPE_DOUBLE:
+			result += " = 0.0";
+			break;
+    case t_base_type::TYPE_VOID:
+    case t_base_type::TYPE_STRING:
+      break;  // no-op
+		}
+	}
+	return result;
 }
 
 std::string t_dart_generator::get_cap_name(std::string name) {
