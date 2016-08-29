@@ -26,17 +26,16 @@ using Thrift.Server;
 using Thrift;
 using Test.Multiplex;
 
-
 namespace Test.Multiplex.Client
 {
     public class TestClient
     {
-        private void Run()
+        static void Execute(int port)
         {
             try
             {
                 TTransport trans;
-                trans = new TSocket("localhost", 9090);
+                trans = new TSocket("localhost", port);
                 trans = new TFramedTransport(trans);
                 trans.Open();
 
@@ -44,44 +43,40 @@ namespace Test.Multiplex.Client
 
                 TMultiplexedProtocol multiplex;
 
-                multiplex = new TMultiplexedProtocol( Protocol, Constants.NAME_BENCHMARKSERVICE);
-                BenchmarkService.Iface bench = new BenchmarkService.Client( multiplex);
+                multiplex = new TMultiplexedProtocol(Protocol, Constants.NAME_BENCHMARKSERVICE);
+                BenchmarkService.Iface bench = new BenchmarkService.Client(multiplex);
 
-                multiplex = new TMultiplexedProtocol( Protocol, Constants.NAME_AGGR);
-                Aggr.Iface aggr = new Aggr.Client( multiplex);
+                multiplex = new TMultiplexedProtocol(Protocol, Constants.NAME_AGGR);
+                Aggr.Iface aggr = new Aggr.Client(multiplex);
 
-                sbyte i;
-                for( i = 1; 10 >= i; ++i)
+                for (sbyte i = 1; 10 >= i; ++i)
                 {
-                    aggr.addValue( bench.fibonacci(i));
+                    aggr.addValue(bench.fibonacci(i));
                 }
 
-                foreach( int k in aggr.getValues())
+                foreach (int k in aggr.getValues())
                 {
-                    Console.Write(k.ToString()+" ");
+                    Console.Write(k.ToString() + " ");
                     Console.WriteLine("");
                 }
+                trans.Close();
             }
-            catch( Exception e)
+            catch (Exception e)
             {
-                Console.WriteLine( e.Message);
+                Console.WriteLine(e.Message);
             }
-        }
-
-
-        public static void Execute()
-        {
-            TestClient client = new TestClient();
-            client.Run();
         }
 
         static void Main(string[] args)
         {
-            Execute();
+            int port = 9090;
+            if (args.Length > 0)
+            {
+                port = ushort.Parse(args[0]);
+            }
+            Execute(port);
             Console.WriteLine("done.");
-            Console.ReadLine();
         }
-
     }
 }
 
