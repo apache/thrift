@@ -56,17 +56,20 @@ public:
     std::map<std::string, std::string>::const_iterator iter;
 
     gen_node_ = false;
+    gen_node_runtime_package_ = "thrift";
     gen_jquery_ = false;
     gen_ts_ = false;
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("node") == 0) {
         gen_node_ = true;
+      } else if( iter->first.compare("runtime_package") == 0) {
+        gen_node_runtime_package_ = iter->second;
       } else if( iter->first.compare("jquery") == 0) {
         gen_jquery_ = true;
       } else if( iter->first.compare("ts") == 0) {
         gen_ts_ = true;
       } else {
-        throw "unknown option js:" + iter->first; 
+        throw "unknown option js:" + iter->first;
       }
     }
 
@@ -297,6 +300,11 @@ private:
   bool gen_node_;
 
   /**
+   * Name of a thrift runtime package to require.
+   */
+  std::string gen_node_runtime_package_;
+
+  /**
    * True if we should generate services that use jQuery ajax (async/sync).
    */
   bool gen_jquery_;
@@ -377,7 +385,7 @@ void t_js_generator::init_generator() {
 string t_js_generator::js_includes() {
   if (gen_node_) {
     return string(
-        "var thrift = require('thrift');\n"
+        "var thrift = require('" + gen_node_runtime_package_ + "');\n"
         "var Thrift = thrift.Thrift;\n"
         "var Q = thrift.Q;\n");
   }
@@ -2228,4 +2236,5 @@ THRIFT_REGISTER_GENERATOR(js,
                           "Javascript",
                           "    jquery:          Generate jQuery compatible code.\n"
                           "    node:            Generate node.js compatible code.\n"
+                          "    runtime_package: (node.js) Name of a thrift runtime package to require in generated code.\n"
                           "    ts:              Generate TypeScript definition files.\n")
