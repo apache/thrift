@@ -66,7 +66,7 @@ public:
       } else if( iter->first.compare("ts") == 0) {
         gen_ts_ = true;
       } else {
-        throw "unknown option js:" + iter->first; 
+        throw "unknown option js:" + iter->first;
       }
     }
 
@@ -1565,10 +1565,11 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 }
 
 std::string t_js_generator::render_recv_throw(std::string var) {
+  std::string error = "new Error(" + var + ")";
   if (gen_node_) {
-    return "return callback(" + var + ");";
+    return "return callback(" + error + ");";
   } else {
-    return "throw " + var + ";";
+    return "throw " + error + ";";
   }
 }
 
