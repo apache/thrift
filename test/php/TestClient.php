@@ -15,7 +15,11 @@ if (!isset($MODE)) {
 
 $loader = new ThriftClassLoader();
 $loader->registerNamespace('Thrift', __DIR__ . '/../../lib/php/lib');
-$loader->registerDefinition('ThriftTest', $GEN_DIR);
+if ($GEN_DIR === 'gen-php-psr4') {
+  $loader->registerNamespace('ThriftTest', $GEN_DIR);
+} else {
+  $loader->registerDefinition('ThriftTest', $GEN_DIR);
+}
 $loader->register();
 
 /*
