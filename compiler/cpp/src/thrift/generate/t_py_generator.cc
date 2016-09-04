@@ -1532,7 +1532,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
   f_remote <<
     "if len(sys.argv) <= 1 or sys.argv[1] == '--help':" << endl <<
     indent_str() << "print('')" << endl <<
-    indent_str() << "print('Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] [-s[sl]] function [arg1 [arg2...]]')" << endl <<
+    indent_str() << "print('Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] [-s[sl]] [-novalidate] [-ca_certs certs] [-keyfile keyfile] [-certfile certfile] function [arg1 [arg2...]]')" << endl <<
     indent_str() << "print('')" << endl <<
     indent_str() << "print('Functions:')" << endl;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -1561,6 +1561,10 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
            << "uri = ''" << endl
            << "framed = False" << endl
            << "ssl = False" << endl
+           << "validate = True" << endl
+           << "ca_certs = None" << endl
+           << "keyfile = None" << endl
+           << "certfile = None" << endl
            << "http = False" << endl
            << "argi = 1" << endl
            << endl
@@ -1593,15 +1597,34 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
            << indent_str() << "ssl = True" << endl
            << indent_str() << "argi += 1" << endl
            << endl
+           << "if sys.argv[argi] == '-novalidate':" << endl
+           << indent_str() << "validate = False" << endl
+           << indent_str() << "argi += 1" << endl
+           << endl
+           << "if sys.argv[argi] == '-ca_certs':" << endl
+           << indent_str() << "ca_certs = sys.argv[argi+1]" << endl
+           << indent_str() << "argi += 2" << endl
+           << endl
+           << "if sys.argv[argi] == '-keyfile':" << endl
+           << indent_str() << "keyfile = sys.argv[argi+1]" << endl
+           << indent_str() << "argi += 2" << endl
+           << endl
+           << "if sys.argv[argi] == '-certfile':" << endl
+           << indent_str() << "certfile = sys.argv[argi+1]" << endl
+           << indent_str() << "argi += 2" << endl
+           << endl
            << "cmd = sys.argv[argi]" << endl
            << "args = sys.argv[argi + 1:]" << endl
            << endl
            << "if http:" << endl
            << indent_str() << "transport = THttpClient.THttpClient(host, port, uri)" << endl
            << "else:" << endl
-           << indent_str() << "socket = TSSLSocket.TSSLSocket(host, port, validate=False) if ssl else "
-              "TSocket.TSocket(host, port)"
+           << indent_str() << "if ssl:" << endl
+           << indent_str() << indent_str() << "socket = TSSLSocket.TSSLSocket(host, port, "
+              "validate=validate, ca_certs=ca_certs, keyfile=keyfile, certfile=certfile)"
            << endl
+           << indent_str() << "else:" << endl
+           << indent_str() << indent_str() << "socket = TSocket.TSocket(host, port)" << endl
            << indent_str() << "if framed:" << endl
            << indent_str() << indent_str() << "transport = TTransport.TFramedTransport(socket)" << endl
            << indent_str() << "else:" << endl
