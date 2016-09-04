@@ -35,6 +35,7 @@ function try_pull {
 
 if try_pull; then
   echo Dockerfile seems identical. No need to rebuild from scratch.
+  docker tag thrift/thrift-build:$DISTRO thrift-build:$DISTRO
 else
   echo Either Dockerfile has changed or pull failure. Need to build brand new one.
   exit 1
