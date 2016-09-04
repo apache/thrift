@@ -510,7 +510,7 @@ void TNonblockingServer::TConnection::workSocket() {
 
     // If there is no data to send, then let us move on
     if (writeBufferPos_ == writeBufferSize_) {
-      GlobalOutput("WARNING: Send state with no data to send\n");
+      GlobalOutput("WARNING: Send state with no data to send");
       transition();
       return;
     }
@@ -765,11 +765,9 @@ void TNonblockingServer::TConnection::setFlags(short eventFlags) {
   }
 
   // Delete a previously existing event
-  if (eventFlags_ != 0) {
-    if (event_del(&event_) == -1) {
-      GlobalOutput("TConnection::setFlags event_del");
-      return;
-    }
+  if (eventFlags_ && event_del(&event_) == -1) {
+    GlobalOutput.perror("TConnection::setFlags() event_del", THRIFT_GET_SOCKET_ERROR);
+    return;
   }
 
   // Update in memory structure
@@ -812,7 +810,7 @@ void TNonblockingServer::TConnection::setFlags(short eventFlags) {
 
   // Add the event
   if (event_add(&event_, 0) == -1) {
-    GlobalOutput("TConnection::setFlags(): could not event_add");
+    GlobalOutput.perror("TConnection::setFlags(): could not event_add", THRIFT_GET_SOCKET_ERROR);
   }
 }
 
@@ -820,9 +818,9 @@ void TNonblockingServer::TConnection::setFlags(short eventFlags) {
  * Closes a connection
  */
 void TNonblockingServer::TConnection::close() {
-  // Delete the registered libevent
-  if (event_del(&event_) == -1) {
+  if (eventFlags_ && event_del(&event_) == -1) {
     GlobalOutput.perror("TConnection::close() event_del", THRIFT_GET_SOCKET_ERROR);
+    return;
   }
 
   if (serverEventHandler_) {
@@ -1066,7 +1064,7 @@ void TNonblockingServer::createAndListenOnSocket() {
   if (res->ai_family == AF_INET6) {
     int zero = 0;
     if (-1 == setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, const_cast_sockopt(&zero), sizeof(zero))) {
-      GlobalOutput("TServerSocket::listen() IPV6_V6ONLY");
+      GlobalOutput.perror("TServerSocket::listen() IPV6_V6ONLY", THRIFT_GET_SOCKET_ERROR);
     }
   }
 #endif // #ifdef IPV6_V6ONLY
@@ -1486,6 +1484,7 @@ void TNonblockingIOThread::notifyHandler(evutil_socket_t fd, short which, void* 
     if (nBytes == kSize) {
       if (connection == NULL) {
         // this is the command to stop our thread, exit the handler!
+        ioThread->breakLoop(false);
         return;
       }
       connection->transition();
@@ -1496,6 +1495,7 @@ void TNonblockingIOThread::notifyHandler(evutil_socket_t fd, short which, void* 
       return;
     } else if (nBytes == 0) {
       GlobalOutput.printf("notifyHandler: Notify socket closed!");
+      ioThread->breakLoop(false);
       // exit the loop
       break;
     } else { // nBytes < 0
@@ -1520,19 +1520,15 @@ void TNonblockingIOThread::breakLoop(bool error) {
     ::abort();
   }
 
-  // sets a flag so that the loop exits on the next event
-  event_base_loopbreak(eventBase_);
-
-  // event_base_loopbreak() only causes the loop to exit the next time
-  // it wakes up.  We need to force it to wake up, in case there are
-  // no real events it needs to process.
-  //
   // If we're running in the same thread, we can't use the notify(0)
   // mechanism to stop the thread, but happily if we're running in the
   // same thread, this means the thread can't be blocking in the event
   // loop either.
   if (!Thread::is_current(threadId_)) {
     notify(NULL);
+  } else {
+    // cause the loop to stop ASAP - even if it has things to do in it
+    event_base_loopbreak(eventBase_);
   }
 }
 
@@ -1566,24 +1562,26 @@ void TNonblockingIOThread::setCurrentThreadHighPriority(bool value) {
 }
 
 void TNonblockingIOThread::run() {
-  if (eventBase_ == NULL)
+  if (eventBase_ == NULL) {
     registerEvents();
-
-  GlobalOutput.printf("TNonblockingServer: IO thread #%d entering loop...", number_);
-
+  }
   if (useHighPriority_) {
     setCurrentThreadHighPriority(true);
   }
 
-  // Run libevent engine, never returns, invokes calls to eventHandler
-  event_base_loop(eventBase_, 0);
+  if (eventBase_ != NULL)
+  {
+    GlobalOutput.printf("TNonblockingServer: IO thread #%d entering loop...", number_);
+    // Run libevent engine, never returns, invokes calls to eventHandler
+    event_base_loop(eventBase_, 0);
 
-  if (useHighPriority_) {
-    setCurrentThreadHighPriority(false);
+    if (useHighPriority_) {
+      setCurrentThreadHighPriority(false);
+    }
+
+    // cleans up our registered events
+    cleanupEvents();
   }
-
-  // cleans up our registered events
-  cleanupEvents();
 
   GlobalOutput.printf("TNonblockingServer: IO thread #%d run() done!", number_);
 }
