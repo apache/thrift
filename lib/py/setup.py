@@ -78,6 +78,14 @@ def run_setup(with_binary):
     else:
         extensions = dict()
 
+    ssl_deps = []
+    if sys.version_info[0] == 2:
+        ssl_deps.append('ipaddress')
+    if sys.hexversion < 0x03050000:
+        ssl_deps.append('backports.ssl_match_hostname>=3.5')
+    tornado_deps = ['tornado>=4.0']
+    twisted_deps = ['twisted']
+
     setup(name='thrift',
           version='1.0.0-dev',
           description='Python bindings for the Apache Thrift RPC system',
@@ -86,6 +94,12 @@ def run_setup(with_binary):
           url='http://thrift.apache.org',
           license='Apache License 2.0',
           install_requires=['six>=1.7.2'],
+          extras_require={
+              'ssl': ssl_deps,
+              'tornado': tornado_deps,
+              'twisted': twisted_deps,
+              'all': ssl_deps + tornado_deps + twisted_deps,
+          },
           packages=[
               'thrift',
               'thrift.protocol',

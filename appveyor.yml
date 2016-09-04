@@ -71,6 +71,7 @@ build_script:
 # - set PATH=%PATH%;C:\Program Files (x86)\Haskell Platform\2014.2.0.0\bin
 # - set PATH=%PATH%;C:\Program Files (x86)\Haskell Platform\2014.2.0.0\lib\extralibs\bin
 - set PATH=C:\Python27-x64\scripts;C:\Python27-x64;%PATH%
+- pip install ipaddress backports.ssl_match_hostname tornado twisted
 - mkdir cmake-build
 - cd cmake-build
 - cmake -G "Visual Studio 14 2015 Win64" -DWITH_SHARED_LIB=OFF -DLIBEVENT_ROOT=C:\libevent-2.0.22-stable -DZLIB_INCLUDE_DIR=C:\zlib-1.2.8 -DZLIB_LIBRARY=C:\zlib-1.2.8\release\zlibstatic.lib -DBOOST_ROOT="%BOOST_ROOT%" -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR%" ..
