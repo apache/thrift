@@ -53,8 +53,10 @@ endif
 if WITH_PYTHON
 SUBDIRS += py
 PRECROSS_TARGET += precross-py
-SUBDIRS += py.twisted
 SUBDIRS += py.tornado
+if WITH_TWISTED_TEST
+SUBDIRS += py.twisted
+endif
 endif
 
 if WITH_RUBY
