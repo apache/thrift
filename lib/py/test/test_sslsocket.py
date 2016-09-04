@@ -30,8 +30,6 @@ import warnings
 from contextlib import contextmanager
 
 import _import_local_thrift  # noqa
-from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket
-from thrift.transport.TTransport import TTransportException
 
 SCRIPT_DIR = os.path.realpath(os.path.dirname(__file__))
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
@@ -133,16 +131,16 @@ class TSSLSocketTest(unittest.TestCase):
 
     def _assert_connection_failure(self, server, path=None, **client_args):
         logging.disable(logging.CRITICAL)
-        with self._connectable_client(server, True, path=path, **client_args) as (acc, client):
-            try:
+        try:
+            with self._connectable_client(server, True, path=path, **client_args) as (acc, client):
                 # We need to wait for a connection failure, but not too long.  20ms is a tunable
                 # compromise between test speed and stability
                 client.setTimeout(20)
                 with self._assert_raises(TTransportException):
                     client.open()
                 self.assertTrue(acc.client is None)
-            finally:
-                logging.disable(logging.NOTSET)
+        finally:
+            logging.disable(logging.NOTSET)
 
     def _assert_raises(self, exc):
         if sys.hexversion >= 0x020700F0:
@@ -334,6 +332,8 @@ class TSSLSocketTest(unittest.TestCase):
         self._assert_connection_success(server, ssl_context=client_context)
 
 if __name__ == '__main__':
-    # import logging
-    # logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.WARN)
+    from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket
+    from thrift.transport.TTransport import TTransportException
+
     unittest.main()
