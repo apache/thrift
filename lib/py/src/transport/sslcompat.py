@@ -17,9 +17,12 @@
 # under the License.
 #
 
+import logging
 import sys
 
 from thrift.transport.TTransport import TTransportException
+
+logger = logging.getLogger(__name__)
 
 
 def legacy_validate_callback(self, cert, hostname):
@@ -61,20 +64,36 @@ def legacy_validate_callback(self, cert, hostname):
         % (hostname, cert))
 
 
-try:
-    import ipaddress  # noqa
-    _match_has_ipaddress = True
-except ImportError:
-    _match_has_ipaddress = False
+def _optional_dependencies():
+    try:
+        import ipaddress  # noqa
+        logger.debug('ipaddress module is available')
+        ipaddr = True
+    except ImportError:
+        logger.warn('ipaddress module is unavailable')
+        ipaddr = False
 
-try:
-    from backports.ssl_match_hostname import match_hostname
-    _match_hostname = match_hostname
-except ImportError:
     if sys.hexversion < 0x030500F0:
-        _match_has_ipaddress = False
+        try:
+            from backports.ssl_match_hostname import match_hostname, __version__ as ver
+            ver = list(map(int, ver.split('.')))
+            logger.debug('backports.ssl_match_hostname module is available')
+            match = match_hostname
+            if ver[0] * 10 + ver[1] >= 35:
+                return ipaddr, match
+            else:
+                logger.warn('backports.ssl_match_hostname module is too old')
+                ipaddr = False
+        except ImportError:
+            logger.warn('backports.ssl_match_hostname is unavailable')
+            ipaddr = False
     try:
         from ssl import match_hostname
-        _match_hostname = match_hostname
+        logger.debug('ssl.match_hostname is available')
+        match = match_hostname
     except ImportError:
-        _match_hostname = legacy_validate_callback
+        logger.warn('using legacy validation callback')
+        match = legacy_validate_callback
+    return ipaddr, match
+
+_match_has_ipaddress, _match_hostname = _optional_dependencies()
