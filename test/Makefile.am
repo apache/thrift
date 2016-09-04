@@ -25,6 +25,11 @@ SUBDIRS += c_glib
 PRECROSS_TARGET += precross-c_glib
 endif
 
+if WITH_MONO
+SUBDIRS += csharp
+PRECROSS_TARGET += precross-csharp
+endif
+
 if WITH_CPP
 SUBDIRS += cpp
 PRECROSS_TARGET += precross-cpp
