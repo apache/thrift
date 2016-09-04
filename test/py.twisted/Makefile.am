@@ -18,6 +18,7 @@
 #
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
+TRIAL ?= trial
 
 stubs: ../ThriftTest.thrift ../SmallTest.thrift
 	$(THRIFT) --gen py:twisted ../ThriftTest.thrift
