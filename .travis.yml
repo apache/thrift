@@ -42,15 +42,25 @@ env:
     - BUILD_LIBS="CPP C_GLIB HASKELL JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
 
   matrix:
-    # TODO: Break up by protocol types to avoid 50min limit
-    - TEST_NAME="Cross Language Tests"
+    - TEST_NAME="Cross Language Tests (Binary and Header Protocols)"
       SCRIPT="cross-test.sh"
-      BUILD_ARG="--enable-tutorial=no"
+      BUILD_ARG="-'(binary|header)'"
       BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
-    - TEST_NAME="Cross Language Tests (Debian)"
+    - TEST_NAME="Cross Language Tests (Debian) (Binary and Header Protocols)"
       SCRIPT="cross-test.sh"
-      BUILD_ARG="--enable-tutorial=no"
+      BUILD_ARG="-'(binary|header)'"
+      BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
+      DISTRO=debian
+
+    - TEST_NAME="Cross Language Tests (Compact and JSON Protocols)"
+      SCRIPT="cross-test.sh"
+      BUILD_ARG="-'(compact|json)'"
+      BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
+
+    - TEST_NAME="Cross Language Tests (Debian) (Compact and JSON Protocols)"
+      SCRIPT="cross-test.sh"
+      BUILD_ARG="-'(compact|json)'"
       BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
       DISTRO=debian
 
