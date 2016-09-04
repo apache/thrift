@@ -869,6 +869,12 @@ private:
 
   /// Actual IO Thread
   boost::shared_ptr<Thread> thread_;
+
+  /// Mutex for synchronizing stopping
+  Mutex stopMutex_;
+
+  /// Flag to check if stop was requested
+  bool isStopRequested_;
 };
 }
 }
