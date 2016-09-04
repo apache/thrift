@@ -50,5 +50,5 @@ RUN curl -sSL https://cmake.org/files/v3.4/cmake-3.4.1.tar.gz | tar -xz && \
 
 ENV THRIFT_ROOT /thrift
 RUN mkdir -p $THRIFT_ROOT/src
-COPY scripts $THRIFT_ROOT
+COPY Dockerfile $THRIFT_ROOT/
 WORKDIR $THRIFT_ROOT/src
