@@ -30,7 +30,6 @@ endif
 
 if WITH_MONO
 SUBDIRS += csharp
-PRECROSS_TARGET += precross-csharp
 endif
 
 if WITH_JAVA

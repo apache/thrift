@@ -721,7 +721,7 @@ AC_CONFIG_FILES([
   lib/c_glib/thrift_c_glib.pc
   lib/c_glib/test/Makefile
   lib/csharp/Makefile
-  lib/csharp/test/ThriftTest/Makefile
+  lib/csharp/test/Multiplex/Makefile
   lib/d/Makefile
   lib/d/test/Makefile
   lib/erl/Makefile
@@ -749,6 +749,7 @@ AC_CONFIG_FILES([
   test/features/Makefile
   test/c_glib/Makefile
   test/cpp/Makefile
+  test/csharp/Makefile
   test/erl/Makefile
   test/go/Makefile
   test/haxe/Makefile

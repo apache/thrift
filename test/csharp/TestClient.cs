@@ -59,7 +59,7 @@ namespace Test
                     {
                         if (encrypted)
                         {
-                            string certPath = "../../../../test/keys/client.p12";
+                            string certPath = "../keys/client.p12";
                             X509Certificate cert = new X509Certificate2(certPath, "thrift");
                             trans = new TTLSSocket(host, port, 0, cert, (o, c, chain, errors) => true, null, SslProtocols.Tls);
                         }
@@ -823,10 +823,13 @@ namespace Test
             }
 
             Console.Write("Test Calltime()");
-            var startt = DateTime.UtcNow;
-            for ( int k=0; k<1000; ++k )
+            var times = 50;
+            sw.Reset();
+            sw.Start();
+            for (int k = 0; k < times; ++k)
                 client.testVoid();
-            Console.WriteLine(" = " + (DateTime.UtcNow - startt).TotalSeconds.ToString() + " ms a testVoid() call" );
+            sw.Stop();
+            Console.WriteLine(" = {0} ms a testVoid() call", sw.ElapsedMilliseconds / times);
             return returnCode;
         }
     }
