@@ -6,7 +6,7 @@ set -ev
 make -j3 precross
 
 set +e
-make cross
+make cross$1
 
 RET=$?
 if [ $RET -ne 0 ]; then
