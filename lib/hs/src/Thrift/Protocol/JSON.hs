@@ -29,12 +29,12 @@ module Thrift.Protocol.JSON
     ) where
 
 import Control.Applicative
+import Control.Exception (bracket)
 import Control.Monad
 import Data.Attoparsec.ByteString as P
 import Data.Attoparsec.ByteString.Char8 as PC
 import Data.Attoparsec.ByteString.Lazy as LP
 import Data.ByteString.Base64.Lazy as B64C
-import Data.ByteString.Base64 as B64
 import Data.ByteString.Lazy.Builder as B
 import Data.ByteString.Internal (c2w, w2c)
 import Data.Functor
@@ -58,37 +58,47 @@ import qualified Data.Text.Lazy as LT
 -- encoded as a JSON 'ByteString'
 data JSONProtocol t = JSONProtocol t
                       -- ^ Construct a 'JSONProtocol' with a 'Transport'
+getTransport :: Transport t => JSONProtocol t -> t
+getTransport (JSONProtocol t) = t
 
-instance Protocol JSONProtocol where
-    getTransport (JSONProtocol t) = t
+instance Transport t => Protocol (JSONProtocol t) where
+    readByte p = tReadAll (getTransport p) 1
 
-    writeMessageBegin (JSONProtocol t) (s, ty, sq) = tWrite t $ toLazyByteString $
-      B.char8 '[' <> buildShowable (1 :: Int32) <>
-      B.string8 ",\"" <> escape (encodeUtf8 s) <> B.char8 '\"' <>
-      B.char8 ',' <> buildShowable (fromEnum ty) <>
-      B.char8 ',' <> buildShowable sq <>
-      B.char8 ','
-    writeMessageEnd (JSONProtocol t) = tWrite t "]"
-    readMessageBegin p = runParser p $ skipSpace *> do
-      _ver :: Int32 <- lexeme (PC.char8 '[') *> lexeme (signed decimal)
-      bs <- lexeme (PC.char8 ',') *> lexeme escapedString
-      case decodeUtf8' bs of
-        Left _ -> fail "readMessage: invalid text encoding"
-        Right str -> do
-          ty <- toEnum <$> (lexeme (PC.char8 ',') *> lexeme (signed decimal))
-          seqNum <- lexeme (PC.char8 ',') *> lexeme (signed decimal)
-          _ <- PC.char8 ','
-          return (str, ty, seqNum)
-    readMessageEnd p = void $ runParser p (PC.char8 ']')
+    writeMessage (JSONProtocol t) (s, ty, sq) = bracket readMessageBegin readMessageEnd . const
+      where
+        readMessageBegin = tWrite t $ toLazyByteString $
+          B.char8 '[' <> buildShowable (1 :: Int32) <>
+          B.string8 ",\"" <> escape (encodeUtf8 s) <> B.char8 '\"' <>
+          B.char8 ',' <> buildShowable (fromEnum ty) <>
+          B.char8 ',' <> buildShowable sq <>
+          B.char8 ','
+        readMessageEnd _ = do
+          tWrite t "]"
+          tFlush t
 
+    readMessage p = bracket readMessageBegin readMessageEnd
+      where
+        readMessageBegin = runParser p $ skipSpace *> do
+          _ver :: Int32 <- lexeme (PC.char8 '[') *> lexeme (signed decimal)
+          bs <- lexeme (PC.char8 ',') *> lexeme escapedString
+          case decodeUtf8' bs of
+            Left _ -> fail "readMessage: invalid text encoding"
+            Right str -> do
+              ty <- toEnum <$> (lexeme (PC.char8 ',') *> lexeme (signed decimal))
+              seqNum <- lexeme (PC.char8 ',') *> lexeme (signed decimal)
+              _ <- PC.char8 ','
+              return (str, ty, seqNum)
+        readMessageEnd _ = void $ runParser p (PC.char8 ']')
+
+    writeVal p = tWrite (getTransport p) . toLazyByteString . buildJSONValue
+    readVal p ty = runParser p $ skipSpace *> parseJSONValue ty
+
+instance Transport t => StatelessProtocol (JSONProtocol t) where
     serializeVal _ = toLazyByteString . buildJSONValue
     deserializeVal _ ty bs =
       case LP.eitherResult $ LP.parse (parseJSONValue ty) bs of
         Left s -> error s
         Right val -> val
-
-    readVal p ty = runParser p $ skipSpace *> parseJSONValue ty
-
 
 -- Writing Functions
 

@@ -187,6 +187,7 @@
       "ip"
     ],
     "protocols": [
+      "header",
       "compact",
       "binary",
       "json"
