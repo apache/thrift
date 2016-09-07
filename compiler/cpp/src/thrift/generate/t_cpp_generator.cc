@@ -107,6 +107,7 @@ public:
 
   void generate_typedef(t_typedef* ttypedef);
   void generate_enum(t_enum* tenum);
+  void generate_enum_ostream_operator(t_enum* tenum);
   void generate_forward_declaration(t_struct* tstruct);
   void generate_struct(t_struct* tstruct) { generate_cpp_struct(tstruct, false); }
   void generate_xception(t_struct* txception) { generate_cpp_struct(txception, true); }
@@ -566,6 +567,47 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
                 << tenum->get_name() << "Values"
                 << ", _k" << tenum->get_name() << "Names), "
                 << "::apache::thrift::TEnumIterator(-1, NULL, NULL));" << endl << endl;
+
+  generate_enum_ostream_operator(tenum);
+}
+
+void t_cpp_generator::generate_enum_ostream_operator(t_enum* tenum) {
+
+  // If we've been told the consuming application will provide an ostream
+  // operator definition then we only make a declaration:
+
+  if (!has_custom_ostream(tenum)) {
+    f_types_ << "inline ";
+  }
+
+  f_types_ << "std::ostream& operator<<(std::ostream& out, const ";
+  if (gen_pure_enums_) {
+    f_types_ << tenum->get_name();
+  } else {
+    f_types_ << tenum->get_name() << "::type&";
+  }
+  f_types_ << " val)";
+  if (has_custom_ostream(tenum)) {
+    f_types_ << ";";
+  } else {
+    scope_up(f_types_);
+
+    f_types_ << indent() << "std::map<int, const char*>::const_iterator it = _"
+             << tenum->get_name() << "_VALUES_TO_NAMES.find(val);" << endl;
+    f_types_ << indent() << "if (it != _" << tenum->get_name() << "_VALUES_TO_NAMES.end()) {" << endl;
+    indent_up();
+    f_types_ << indent() << "out << it->second;" << endl;
+    indent_down();
+    f_types_ << indent() << "} else {" << endl;
+    indent_up();
+    f_types_ << indent() << "out << static_cast<int>(val);" << endl;
+    indent_down();
+    f_types_ << indent() << "}" << endl;
+
+    f_types_ << indent() << "return out;" << endl;
+    scope_down(f_types_);
+  }
+  f_types_ << endl;
 }
 
 /**
