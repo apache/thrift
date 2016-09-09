@@ -530,7 +530,7 @@ int main(int argc, char** argv) {
       return_code |= ERR_BASETYPES;
     }
     cout << "testBinary([-128..127]) = {" << flush;
-    const char bin_data[256]
+    const signed char bin_data[256]
         = {-128, -127, -126, -125, -124, -123, -122, -121, -120, -119, -118, -117, -116, -115, -114,
            -113, -112, -111, -110, -109, -108, -107, -106, -105, -104, -103, -102, -101, -100, -99,
            -98,  -97,  -96,  -95,  -94,  -93,  -92,  -91,  -90,  -89,  -88,  -87,  -86,  -85,  -84,
@@ -551,7 +551,7 @@ int main(int argc, char** argv) {
            127};
     try {
       string bin_result;
-      testClient.testBinary(bin_result, string(bin_data, 256));
+      testClient.testBinary(bin_result, string(reinterpret_cast<const char *>(bin_data), 256));
       if (bin_result.size() != 256) {
         cout << endl << "*** FAILED ***" << endl;
         cout << "invalid length: " << bin_result.size() << endl;
