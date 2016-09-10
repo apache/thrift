@@ -17,34 +17,28 @@
  * under the License.
  */
 
-#ifndef T_ENUM_VALUE_H
-#define T_ENUM_VALUE_H
+#ifndef T_PLUGIN_PLUGIN_H
+#define T_PLUGIN_PLUGIN_H
 
-#include <map>
-#include <string>
-#include "t_doc.h"
+#include "thrift/Thrift.h"
 
-/**
- * A constant. These are used inside of enum definitions. Constants are just
- * symbol identifiers that may or may not have an explicit value associated
- * with them.
- *
- */
-class t_enum_value : public t_doc {
-public:
-  t_enum_value(std::string name, int value) : name_(name), value_(value) {}
+class t_program;
 
-  ~t_enum_value() {}
+namespace apache {
+namespace thrift {
+namespace plugin {
 
-  const std::string& get_name() const { return name_; }
-
-  int get_value() const { return value_; }
-
-  std::map<std::string, std::string> annotations_;
-
-private:
-  std::string name_;
-  int value_;
+struct ThriftPluginError : public apache::thrift::TException {
+  ThriftPluginError(const std::string& msg) : apache::thrift::TException(msg) {}
 };
+
+class GeneratorPlugin {
+public:
+  int exec(int argc, char* argv[]);
+  virtual int generate(::t_program*, const std::map<std::string, std::string>&) = 0;
+};
+}
+}
+}
 
 #endif
