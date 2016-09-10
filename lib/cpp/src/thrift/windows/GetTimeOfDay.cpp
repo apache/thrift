@@ -21,8 +21,6 @@
 #include <thrift/thrift-config.h>
 
 // win32
-#include <time.h>
-
 #if defined(__MINGW32__)
   #include <sys/time.h>
 #endif

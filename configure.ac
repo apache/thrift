@@ -516,6 +516,22 @@ if test "$enable_tests" = "no"; then
 fi
 AM_CONDITIONAL(WITH_TESTS, [test "$have_tests" = "yes"])
 
+AC_ARG_ENABLE([plugin],
+  AS_HELP_STRING([--enable-plugin], [build compiler plugin support [default=yes]]),
+  [], enable_plugin=yes
+)
+have_plugin=yes
+if test "$have_cpp" = "no" ; then
+  have_plugin="no"
+fi
+if test "$enable_plugin" = "no"; then
+  have_plugin="no"
+fi
+if test "$have_plugin" = "yes" ; then
+  AC_CONFIG_LINKS([compiler/cpp/test/plugin/t_cpp_generator.cc:compiler/cpp/src/generate/t_cpp_generator.cc])
+fi
+AM_CONDITIONAL(WITH_PLUGIN, [test "$have_plugin" = "yes"])
+
 AC_ARG_ENABLE([tutorial],
   AS_HELP_STRING([--enable-tutorial], [build tutorial [default=yes]]),
   [], enable_tutorial=yes
@@ -712,7 +728,10 @@ AH_BOTTOM([
 AC_CONFIG_FILES([
   Makefile
   compiler/cpp/Makefile
-  compiler/cpp/version.h
+  compiler/cpp/src/Makefile
+  compiler/cpp/src/plugin/Makefile
+  compiler/cpp/test/Makefile
+  compiler/cpp/src/version.h
   compiler/cpp/src/windows/version.h
   lib/Makefile
   lib/cpp/Makefile
@@ -823,6 +842,7 @@ AC_OUTPUT
 echo
 echo "$PACKAGE $VERSION"
 echo
+echo "Building Plugin Support ...... : $have_plugin"
 echo "Building C++ Library ......... : $have_cpp"
 echo "Building C (GLib) Library .... : $have_c_glib"
 echo "Building Java Library ........ : $have_java"

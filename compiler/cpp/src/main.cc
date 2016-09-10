@@ -44,6 +44,7 @@
 #endif
 
 // Careful: must include globals first for extern definitions
+#include "common.h"
 #include "globals.h"
 
 #include "platform.h"
@@ -52,6 +53,9 @@
 #include "parse/t_scope.h"
 #include "generate/t_generator.h"
 #include "audit/t_audit.h"
+#ifdef THRIFT_ENABLE_PLUGIN
+#include "plugin/plugin_output.h"
+#endif
 
 #include "version.h"
 
@@ -61,21 +65,6 @@ using namespace std;
  * Global program tree
  */
 t_program* g_program;
-
-/**
- * Global types
- */
-
-t_type* g_type_void;
-t_type* g_type_string;
-t_type* g_type_binary;
-t_type* g_type_slist;
-t_type* g_type_bool;
-t_type* g_type_i8;
-t_type* g_type_i16;
-t_type* g_type_i32;
-t_type* g_type_i64;
-t_type* g_type_double;
 
 /**
  * Global scope
@@ -143,16 +132,9 @@ char* g_time_str;
 char* g_doctext;
 
 /**
- * The location of the last parsed doctext comment.
- */
-int g_doctext_lineno;
-
-/**
  * The First doctext comment
  */
 char* g_program_doctext_candidate;
-int g_program_doctext_lineno = 0;
-PROGDOCTEXT_STATUS g_program_doctext_status = INVALID;
 
 /**
  * Whether or not negative field keys are accepted.
@@ -179,6 +161,7 @@ bool g_audit = false;
  */
 bool g_return_failure = false;
 bool g_audit_fatal = true;
+bool g_generator_failure = false;
 
 /**
  * Win32 doesn't have realpath, so use fallback implementation in that case,
@@ -1024,8 +1007,27 @@ void generate(t_program* program, const vector<string>& generator_strings) {
       t_generator* generator = t_generator_registry::get_generator(program, *iter);
 
       if (generator == NULL) {
+#ifdef THRIFT_ENABLE_PLUGIN
+        switch (plugin_output::delegateToPlugin(program, *iter)) {
+          case plugin_output::PLUGIN_NOT_FOUND:
+            pwarning(1, "Unable to get a generator for \"%s\".\n", iter->c_str());
+            g_generator_failure = true;
+            break;
+          case plugin_output::PLUGIN_FAILURE:
+            pwarning(1, "Plugin generator for \"%s\" failed.\n", iter->c_str());
+            g_generator_failure = true;
+            break;
+          case plugin_output::PLUGIN_SUCCEESS:
+            break;
+          default:
+            assert(false);
+            break;
+        }
+#else
         pwarning(1, "Unable to get a generator for \"%s\".\n", iter->c_str());
-      } else {
+        g_generator_failure = true;
+#endif
+      } else if (generator) {
         pverbose("Generating \"%s\"\n", iter->c_str());
         generator->generate_program();
         delete generator;
@@ -1208,18 +1210,7 @@ int main(int argc, char** argv) {
   }
 
   // Initialize global types
-  g_type_void = new t_base_type("void", t_base_type::TYPE_VOID);
-  g_type_string = new t_base_type("string", t_base_type::TYPE_STRING);
-  g_type_binary = new t_base_type("string", t_base_type::TYPE_STRING);
-  ((t_base_type*)g_type_binary)->set_binary(true);
-  g_type_slist = new t_base_type("string", t_base_type::TYPE_STRING);
-  ((t_base_type*)g_type_slist)->set_string_list(true);
-  g_type_bool = new t_base_type("bool", t_base_type::TYPE_BOOL);
-  g_type_i8 = new t_base_type("i8", t_base_type::TYPE_I8);
-  g_type_i16 = new t_base_type("i16", t_base_type::TYPE_I16);
-  g_type_i32 = new t_base_type("i32", t_base_type::TYPE_I32);
-  g_type_i64 = new t_base_type("i64", t_base_type::TYPE_I64);
-  g_type_double = new t_base_type("double", t_base_type::TYPE_DOUBLE);
+  initGlobals();
 
   if (g_audit) {
     // Audit operation
@@ -1302,19 +1293,14 @@ int main(int argc, char** argv) {
   // Clean up. Who am I kidding... this program probably orphans heap memory
   // all over the place, but who cares because it is about to exit and it is
   // all referenced and used by this wacky parse tree up until now anyways.
-
-  delete g_type_void;
-  delete g_type_string;
-  delete g_type_bool;
-  delete g_type_i8;
-  delete g_type_i16;
-  delete g_type_i32;
-  delete g_type_i64;
-  delete g_type_double;
+  clearGlobals();
 
   // Finished
   if (g_return_failure && g_audit_fatal) {
     exit(2);
+  }
+  if (g_generator_failure) {
+    exit(3);
   }
   // Finished
   return 0;

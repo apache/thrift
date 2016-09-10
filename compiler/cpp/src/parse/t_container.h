@@ -33,9 +33,9 @@ public:
     has_cpp_name_ = true;
   }
 
-  bool has_cpp_name() { return has_cpp_name_; }
+  bool has_cpp_name() const { return has_cpp_name_; }
 
-  std::string get_cpp_name() { return cpp_name_; }
+  std::string get_cpp_name() const { return cpp_name_; }
 
   bool is_container() const { return true; }
 

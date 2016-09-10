@@ -38,6 +38,7 @@
 #include "windows/config.h"
 #endif
 #include "main.h"
+#include "common.h"
 #include "globals.h"
 #include "parse/t_program.h"
 #include "parse/t_scope.h"

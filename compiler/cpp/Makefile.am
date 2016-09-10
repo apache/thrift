@@ -21,25 +21,34 @@
 # Please see doc/old-thrift-license.txt in the Thrift distribution for
 # details.
 
-AM_YFLAGS = -d
-LIBS =
-BUILT_SOURCES = src/thrifty.cc
+AUTOMAKE_OPTIONS = subdir-objects
+
+# Note on why we have src and src/plugin directories:
+# Since Automake supports only one set of BUILT_SOURCES per file and does not allow
+# SUBDIRS built before BUILT_SOURCES, we end up separate Makefile.am for each source
+# code generation, i.e. lex-yacc and Thrift, to achieve stable parallel make.
+
+SUBDIRS = src src/plugin .
+if WITH_TESTS
+SUBDIRS += test
+endif
 
 bin_PROGRAMS = thrift
 
-noinst_LIBRARIES = libparse.a
-
 thrift_OBJDIR = obj
 
-thrift_SOURCES = src/main.cc \
+plugin_gen = src/plugin/plugin_types.h \
+             src/plugin/plugin_types.cpp \
+             src/plugin/plugin_constants.h \
+             src/plugin/plugin_constants.cpp
+
+compiler_core =  src/common.h \
+                 src/common.cc \
                  src/generate/t_generator.cc \
                  src/generate/t_generator_registry.h \
                  src/globals.h \
-                 src/main.h \
                  src/platform.h \
                  src/logging.h \
-                 src/audit/t_audit.cpp \
-                 src/audit/t_audit.h \
                  src/parse/t_doc.h \
                  src/parse/t_type.h \
                  src/parse/t_base_type.h \
@@ -65,6 +74,11 @@ thrift_SOURCES = src/main.cc \
                  src/generate/t_html_generator.h \
                  src/windows/config.h \
                  src/windows/version.h
+
+thrift_SOURCES = src/main.h \
+                 src/main.cc \
+                 src/audit/t_audit.cpp \
+                 src/audit/t_audit.h
 
 # Specific client generator source
 thrift_SOURCES += src/generate/t_c_glib_generator.cc \
@@ -98,13 +112,32 @@ thrift_SOURCES += src/generate/t_c_glib_generator.cc \
 
 thrift_CPPFLAGS = -I$(srcdir)/src
 thrift_CXXFLAGS = -Wall -Wextra -pedantic
-thrift_LDADD = @LEXLIB@ libparse.a
+thrift_LDADD = @LEXLIB@ src/libparse.a
 
-libparse_a_CPPFLAGS = -I$(srcdir)/src
-libparse_a_CXXFLAGS = -Wall -Wno-sign-compare -Wno-unused
+if !WITH_PLUGIN
+thrift_SOURCES += $(compiler_core)
+else
 
-libparse_a_SOURCES = src/thrifty.yy \
-                     src/thriftl.ll
+lib_LTLIBRARIES = libthriftc.la
+
+thrift_CPPFLAGS += -DTHRIFT_ENABLE_PLUGIN=1
+thrift_LDADD += libthriftc.la
+
+nodist_libthriftc_la_SOURCES = $(plugin_gen)
+libthriftc_la_SOURCES = $(compiler_core) \
+                        src/plugin/type_util.h \
+                        src/plugin/plugin.h \
+                        src/plugin/plugin.cc \
+                        src/plugin/plugin_output.h \
+                        src/plugin/plugin_output.cc \
+                        src/plugin/plugin.thrift \
+                        src/logging.cc
+
+
+libthriftc_la_CPPFLAGS = -I$(srcdir)/src -Isrc -I$(top_builddir)/lib/cpp/src -DTHRIFT_ENABLE_PLUGIN=1
+libthriftc_la_CXXFLAGS = -Wall -Wextra -pedantic
+libthriftc_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
+endif
 
 WINDOWS_DIST = \
              compiler.sln \
@@ -118,9 +151,9 @@ EXTRA_DIST = \
              $(WINDOWS_DIST)
 
 clean-local:
-	$(RM) thriftl.cc thrifty.cc thrifty.h thrifty.hh version.h windows/version.h
+	$(RM) version.h windows/version.h $(plugin_gen)
 
-src/main.cc: version.h
+src/main.cc: src/version.h
 
 style-local:
 	$(CPPSTYLE_CMD)

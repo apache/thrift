@@ -20,8 +20,6 @@
 # Contains the thrift specific LINK_AGAINST_THRIFT_LIBRARY
 include(ThriftMacros)
 
-set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost 1.53.0 REQUIRED COMPONENTS program_options system filesystem)
 include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 
 find_package(OpenSSL REQUIRED)

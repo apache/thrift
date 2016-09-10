@@ -31,6 +31,7 @@ class t_doc {
 
 public:
   t_doc() : has_doc_(false) {}
+  virtual ~t_doc() {}
 
   void set_doc(const std::string& doc) {
     doc_ = doc;

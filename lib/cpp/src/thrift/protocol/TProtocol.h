@@ -20,6 +20,11 @@
 #ifndef _THRIFT_PROTOCOL_TPROTOCOL_H_
 #define _THRIFT_PROTOCOL_TPROTOCOL_H_ 1
 
+#ifdef _WIN32
+// Need to come before any Windows.h includes
+#include <Winsock2.h>
+#endif
+
 #include <thrift/transport/TTransport.h>
 #include <thrift/protocol/TProtocolException.h>
 
