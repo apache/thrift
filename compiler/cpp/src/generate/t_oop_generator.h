@@ -23,7 +23,7 @@
 #include <string>
 #include <iostream>
 
-#include "globals.h"
+#include "common.h"
 #include "t_generator.h"
 
 #include <algorithm>

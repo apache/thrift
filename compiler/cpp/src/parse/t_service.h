@@ -51,6 +51,8 @@ public:
 
   t_service* get_extends() { return extends_; }
 
+  const t_service* get_extends() const { return extends_; }
+
 private:
   std::vector<t_function*> functions_;
   t_service* extends_;

@@ -29,3 +29,11 @@ t_type* t_type::get_true_type() {
   }
   return type;
 }
+
+const t_type* t_type::get_true_type() const {
+  const t_type* type = this;
+  while (type->is_typedef()) {
+    type = ((t_typedef*)type)->get_type();
+  }
+  return type;
+}

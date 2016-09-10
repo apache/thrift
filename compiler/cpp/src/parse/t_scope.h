@@ -32,6 +32,11 @@
 #include "t_map.h"
 #include "t_list.h"
 
+namespace plugin_output {
+template <typename From, typename To>
+void convert(From*, To&);
+}
+
 /**
  * This represents a variable scope used for looking up predefined types and
  * services. Typically, a scope is associated with a t_program. Scopes are not
@@ -167,6 +172,10 @@ private:
 
   // Map of names to services
   std::map<std::string, t_service*> services_;
+
+  // to list map entries
+  template <typename From, typename To>
+    friend void plugin_output::convert(From*, To&);
 };
 
 #endif

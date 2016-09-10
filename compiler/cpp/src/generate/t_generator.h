@@ -25,7 +25,7 @@
 #include <fstream>
 #include <sstream>
 #include "parse/t_program.h"
-#include "globals.h"
+#include "common.h"
 #include "t_generator_registry.h"
 #include "version.h"
 
@@ -65,6 +65,9 @@ public:
                                   const std::string& line_prefix,
                                   const std::string& contents,
                                   const std::string& comment_end);
+
+  static void parse_options(const std::string& options, std::string& language,
+                     std::map<std::string, std::string>& parsed_options);
 
   /**
    * check whether sub-namespace declaraction is used by generator.
@@ -257,6 +260,7 @@ public:
   /**
    * Get the true type behind a series of typedefs.
    */
+  static const t_type* get_true_type(const t_type* type) { return type->get_true_type(); }
   static t_type* get_true_type(t_type* type) { return type->get_true_type(); }
 
 protected:

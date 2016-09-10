@@ -17,34 +17,27 @@
  * under the License.
  */
 
-#ifndef T_ENUM_VALUE_H
-#define T_ENUM_VALUE_H
+#ifndef T_COMMON_H
+#define T_COMMON_H
 
-#include <map>
-#include <string>
-#include "t_doc.h"
+#include "parse/t_type.h"
 
 /**
- * A constant. These are used inside of enum definitions. Constants are just
- * symbol identifiers that may or may not have an explicit value associated
- * with them.
- *
+ * Global types for the parser to be able to reference
  */
-class t_enum_value : public t_doc {
-public:
-  t_enum_value(std::string name, int value) : name_(name), value_(value) {}
 
-  ~t_enum_value() {}
+extern t_type* g_type_void;
+extern t_type* g_type_string;
+extern t_type* g_type_binary;
+extern t_type* g_type_slist;
+extern t_type* g_type_bool;
+extern t_type* g_type_i8;
+extern t_type* g_type_i16;
+extern t_type* g_type_i32;
+extern t_type* g_type_i64;
+extern t_type* g_type_double;
 
-  const std::string& get_name() const { return name_; }
-
-  int get_value() const { return value_; }
-
-  std::map<std::string, std::string> annotations_;
-
-private:
-  std::string name_;
-  int value_;
-};
+void initGlobals();
+void clearGlobals();
 
 #endif

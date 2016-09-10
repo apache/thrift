@@ -20,8 +20,10 @@
 #ifndef T_ENUM_H
 #define T_ENUM_H
 
-#include "t_enum_value.h"
 #include <vector>
+
+#include "t_enum_value.h"
+#include "t_type.h"
 
 /**
  * An enumerated type. A list of constant objects with a name for the type.
@@ -35,7 +37,7 @@ public:
 
   void append(t_enum_value* constant) { constants_.push_back(constant); }
 
-  const std::vector<t_enum_value*>& get_constants() { return constants_; }
+  const std::vector<t_enum_value*>& get_constants() const { return constants_; }
 
   t_enum_value* get_constant_by_name(const std::string& name) {
     const std::vector<t_enum_value*>& enum_values = get_constants();

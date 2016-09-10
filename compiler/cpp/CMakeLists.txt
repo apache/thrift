@@ -21,7 +21,7 @@
 if(MSVC)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/windows/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/version.h)
 else()
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/version.h)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/version.h)
 endif()
 
 find_package(FLEX REQUIRED)
@@ -47,39 +47,17 @@ set(libparse_SOURCES
 add_library(libparse STATIC ${libparse_SOURCES})
 
 # Create the thrift compiler
-set( thrift_SOURCES
-    src/main.cc
+set(compiler_core
+    src/common.cc
     src/generate/t_generator.cc
-    src/generate/t_generator_registry.h
-    src/globals.h
-    src/main.h
-    src/platform.h
-    src/audit/t_audit.cpp
-    src/parse/t_doc.h
-    src/parse/t_type.h
-    src/parse/t_base_type.h
-    src/parse/t_enum.h
-    src/parse/t_enum_value.h
-    src/parse/t_typedef.h
     src/parse/t_typedef.cc
-    src/parse/t_container.h
-    src/parse/t_list.h
-    src/parse/t_set.h
-    src/parse/t_map.h
-    src/parse/t_struct.h
-    src/parse/t_field.h
-    src/parse/t_service.h
-    src/parse/t_function.h
-    src/parse/t_program.h
-    src/parse/t_scope.h
-    src/parse/t_const.h
-    src/parse/t_const_value.h
     src/parse/parse.cc
-    src/generate/t_generator.h
-    src/generate/t_oop_generator.h
-    src/generate/t_html_generator.h
-    src/windows/config.h
-    version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/version.h
+)
+
+set(thrift-compiler_SOURCES
+    src/main.cc
+    src/audit/t_audit.cpp
 )
 
 # This macro adds an option THRIFT_COMPILER_${NAME}
@@ -89,7 +67,7 @@ macro(THRIFT_ADD_COMPILER name description initial)
     set(src "src/generate/t_${name}_generator.cc")
     option(${enabler} ${description} ${initial})
     if(${enabler})
-        list(APPEND thrift_SOURCES ${src})
+        list(APPEND thrift-compiler_SOURCES ${src})
     endif()
 endmacro()
 
@@ -127,9 +105,56 @@ THRIFT_ADD_COMPILER(xml     "Enable compiler for XML" ON)
 # we also add the current binary directory for generated files
 include_directories(${CMAKE_CURRENT_BINARY_DIR} src)
 
-add_executable(thrift-compiler ${thrift_SOURCES})
+if(NOT ${WITH_PLUGIN})
+    list(APPEND thrift-compiler_SOURCES ${compiler_core})
+endif()
+add_executable(thrift-compiler ${thrift-compiler_SOURCES})
+
+if(${WITH_PLUGIN})
+    add_executable(thrift-bootstrap ${compiler_core}
+        src/main.cc
+        src/audit/t_audit.cpp
+        src/generate/t_cpp_generator.cc
+    )
+    target_link_libraries(thrift-bootstrap libparse)
+
+    set(PLUGIN_GEN_SOURCES
+        ${CMAKE_CURRENT_BINARY_DIR}/plugin/plugin_types.h
+        ${CMAKE_CURRENT_BINARY_DIR}/plugin/plugin_types.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/plugin/plugin_constants.h
+        ${CMAKE_CURRENT_BINARY_DIR}/plugin/plugin_constants.cpp
+    )
+
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/plugin)
+    add_custom_command(OUTPUT ${PLUGIN_GEN_SOURCES}
+        DEPENDS thrift-bootstrap src/plugin/plugin.thrift
+        COMMAND thrift-bootstrap -gen cpp
+        -out ${CMAKE_CURRENT_BINARY_DIR}/plugin
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/plugin.thrift
+    )
+
+    include_directories(../../lib/cpp/src)
+
+    include(ThriftMacros)
+    ADD_LIBRARY_THRIFT(thriftc
+        ${compiler_core}
+        ${PLUGIN_GEN_SOURCES}
+        src/logging.cc
+        src/plugin/plugin_output.cc
+        src/plugin/plugin.cc
+    )
+    TARGET_INCLUDE_DIRECTORIES_THRIFT(thriftc PUBLIC ${Boost_INCLUDE_DIRS})
+    TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftc thrift PUBLIC)
+    target_compile_definitions(thrift-compiler PUBLIC THRIFT_ENABLE_PLUGIN)
+    LINK_AGAINST_THRIFT_LIBRARY(thrift-compiler thriftc)
+endif()
+
 set_target_properties(thrift-compiler PROPERTIES OUTPUT_NAME thrift)
 
 target_link_libraries(thrift-compiler libparse)
 
 install(TARGETS thrift-compiler DESTINATION "${BIN_INSTALL_DIR}")
+
+if(BUILD_TESTING)
+    add_subdirectory(test)
+endif()

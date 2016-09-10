@@ -195,14 +195,14 @@ public:
   std::string render_require_thrift();
   std::string render_includes();
   std::string declare_field(t_field* tfield);
-  std::string type_name(t_type* ttype);
-  std::string full_type_name(t_type* ttype);
+  std::string type_name(const t_type* ttype);
+  std::string full_type_name(const t_type* ttype);
   std::string function_signature(t_function* tfunction, std::string prefix = "");
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
   std::string rb_namespace_to_path_prefix(std::string rb_namespace);
 
-  std::vector<std::string> ruby_modules(t_program* p) {
+  std::vector<std::string> ruby_modules(const t_program* p) {
     std::string ns = p->get_namespace("rb");
     std::vector<std::string> modules;
     if (ns.empty()) {
@@ -1101,7 +1101,7 @@ string t_rb_generator::argument_list(t_struct* tstruct) {
   return result;
 }
 
-string t_rb_generator::type_name(t_type* ttype) {
+string t_rb_generator::type_name(const t_type* ttype) {
   string prefix = "";
 
   string name = ttype->get_name();
@@ -1112,7 +1112,7 @@ string t_rb_generator::type_name(t_type* ttype) {
   return prefix + name;
 }
 
-string t_rb_generator::full_type_name(t_type* ttype) {
+string t_rb_generator::full_type_name(const t_type* ttype) {
   string prefix = "::";
   vector<std::string> modules = ruby_modules(ttype->get_program());
   for (vector<std::string>::iterator m_iter = modules.begin(); m_iter != modules.end(); ++m_iter) {

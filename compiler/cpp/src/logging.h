@@ -20,7 +20,9 @@
 #ifndef T_LOGGING_H
 #define T_LOGGING_H
 
-#include <string>
+extern int g_debug;
+extern int g_warn;
+extern int g_verbose;
 
 /**
  * Parse debugging output, used to print helpful info

@@ -81,6 +81,10 @@ public:
   static void register_generator(t_generator_factory* factory);
 
   static t_generator* get_generator(t_program* program, const std::string& options);
+  static t_generator* get_generator(t_program* program,
+                                    const std::string& laugnage,
+                                    const std::map<std::string, std::string>& parsed_options,
+                                    const std::string& options);
 
   typedef std::map<std::string, t_generator_factory*> gen_map_t;
   static gen_map_t& get_generator_map();
