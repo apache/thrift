@@ -227,11 +227,14 @@ public:
     return (nsglobal_.size() ? NSGLOBAL_AB : NSGLOBAL_B) + (ns.size() ? (ns + "\\") : "");
   }
 
-  // setting the namespace of a file: my\namespace
+  // return the namespace of a file:
+  // global\ns\sub\ns or global\ns or sub\ns
   string php_namespace_suffix(const t_program* p) {
     string ns = php_namespace_base(p);
 
-    return (nsglobal_.size() ? NSGLOBAL_B : NSGLOBAL) + ns;
+    return NSGLOBAL
+      + (ns.size() && NSGLOBAL.size() ? "\\" : "")
+      + ns;
   }
 
   // add a directory to already existing namespace
