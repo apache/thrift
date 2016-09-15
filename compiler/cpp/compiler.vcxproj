@@ -57,6 +57,7 @@
     <ClCompile Include="src\thrift\generate\t_cocoa_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_cpp_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_csharp_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_netcore_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_c_glib_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_d_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_dart_generator.cc" />
