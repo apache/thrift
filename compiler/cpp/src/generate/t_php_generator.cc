@@ -1799,10 +1799,6 @@ void t_php_generator::generate_service_client(t_service* tservice) {
         generate_deserialize_field(f_service_client, &fseqid, "", true);
       } else {
         f_service_client << indent() << "$this->input_->readMessageBegin($fname, $mtype, $rseqid);"
-                         << endl << indent() << "if($rseqid != $this->seqid_) {"
-                         << endl << indent() << "  throw new TApplicationException('" << (*f_iter)->get_name()
-                         << " sequence id not match' " << "TApplicationException::BAD_SEQUENCE_ID);"
-                         << endl << indent() << "}"
                          << endl << indent() << "if ($mtype == "
                          << "TMessageType::EXCEPTION) {" << endl << indent() << "  $x = new "
                          << "TApplicationException();" << endl << indent() << "  $x->read($this->input_);"

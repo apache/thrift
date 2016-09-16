@@ -255,6 +255,16 @@ class TSocket extends TTransport
   }
 
   /**
+   * Close the socket and try to
+   */
+  public function reconnect()
+  {
+    @fclose($this->handle_);
+    $this->handle_ = null;
+    $this->open();
+  }
+
+  /**
    * Read from the socket at most $len bytes.
    *
    * This method will not wait for all the requested data, it will return as
