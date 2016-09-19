@@ -27,7 +27,7 @@ import (
 
 // Simple, non-concurrent server for testing.
 type TSimpleServer struct {
-	quit chan struct{}
+	quit    chan struct{}
 	stopped int64
 
 	processorFactory       TProcessorFactory
