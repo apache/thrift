@@ -183,6 +183,9 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 			log.Printf("error processing request: %s", err)
 			return err
 		}
+		if err, ok := err.(TApplicationException); ok && err.TypeId() == UNKNOWN_METHOD {
+			continue
+		}
 		if !ok {
 			break
 		}
