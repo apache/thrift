@@ -17,70 +17,48 @@
  * specific language governing permissions and limitations
  * under the License.
  *
- * @package thrift.transport
  */
 
 namespace Thrift\Server;
 
-use Thrift\Transport\TSocket;
+use Thrift\Transport\TSSLSocket;
 
 /**
  * Socket implementation of a server agent.
  *
  * @package thrift.transport
  */
-class TServerSocket extends TServerTransport
+class TSSLServerSocket extends TServerSocket
 {
   /**
-   * Handle for the listener socket
+   * Remote port
    *
    * @var resource
    */
-  protected $listener_;
-
-  /**
-   * Port for the listener to listen on
-   *
-   * @var int
-   */
-  protected $port_;
-
-  /**
-   * Timeout when listening for a new client
-   *
-   * @var int
-   */
-  protected $acceptTimeout_ = 30000;
-
-  /**
-   * Host to listen on
-   *
-   * @var string
-   */
-  protected $host_;
+  protected $context_ = null;
 
   /**
    * ServerSocket constructor
    *
    * @param string $host        Host to listen on
    * @param int $port           Port to listen on
+   * @param resource   $context      Stream context
    * @return void
    */
-  public function __construct($host = 'localhost', $port = 9090)
+  public function __construct($host = 'localhost', $port = 9090, $context = null)
   {
-    $this->host_ = $host;
-    $this->port_ = $port;
+    $ssl_host = $this->getSSLHost($host);
+    parent::__construct($ssl_host, $port);
+    $this->context_ = $context;
   }
 
-  /**
-   * Sets the accept timeout
-   *
-   * @param int $acceptTimeout
-   * @return void
-   */
-  public function setAcceptTimeout($acceptTimeout)
+  public function getSSLHost($host)
   {
-    $this->acceptTimeout_ = $acceptTimeout;
+    $transport_protocol_loc = strpos($host, "://");
+    if ($transport_protocol_loc === false) {
+      $host = 'ssl://'.$host;
+    }
+    return $host;
   }
 
   /**
@@ -90,18 +68,12 @@ class TServerSocket extends TServerTransport
    */
   public function listen()
   {
-    $this->listener_ = stream_socket_server('tcp://' . $this->host_ . ':' . $this->port_);
-  }
-
-  /**
-   * Closes the socket server handle
-   *
-   * @return void
-   */
-  public function close()
-  {
-    @fclose($this->listener_);
-    $this->listener_ = null;
+    $this->listener_ = @stream_socket_server(
+      $this->host_ . ':' . $this->port_,
+      $errno,
+      $errstr,
+      STREAM_SERVER_BIND|STREAM_SERVER_LISTEN,
+      $this->context_);
   }
 
   /**
@@ -114,7 +86,7 @@ class TServerSocket extends TServerTransport
     $handle = @stream_socket_accept($this->listener_, $this->acceptTimeout_ / 1000.0);
     if(!$handle) return null;
 
-    $socket = new TSocket();
+    $socket = new TSSLSocket();
     $socket->setHandle($handle);
 
     return $socket;
