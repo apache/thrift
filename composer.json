@@ -1,5 +1,5 @@
 {
-    "name": "shopping24/thrift",
+    "name": "apache/thrift",
     "description": "Apache Thrift RPC system",
     "homepage": "http://thrift.apache.org/",
     "type": "library",
