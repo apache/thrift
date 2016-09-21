@@ -3,6 +3,7 @@ Thrift Protocol Structure
 
 Last Modified: 2007-Jun-29
 
+<!--
 --------------------------------------------------------------------
 
 Licensed to the Apache Software Foundation (ASF) under one
@@ -23,6 +24,7 @@ specific language governing permissions and limitations
 under the License.
 
 --------------------------------------------------------------------
+-->
 
 This document describes the structure of the Thrift protocol
 without specifying the encoding. Thus, the order of elements
