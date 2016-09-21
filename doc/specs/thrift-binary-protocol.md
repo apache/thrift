@@ -1,6 +1,7 @@
 Thrift Binary protocol encoding 
 ===============================
 
+<!--
 --------------------------------------------------------------------
 
 Licensed to the Apache Software Foundation (ASF) under one
@@ -21,6 +22,7 @@ specific language governing permissions and limitations
 under the License.
 
 --------------------------------------------------------------------
+-->
 
 This documents describes the wire encoding for RPC using the older Thrift *binary protocol*.
 

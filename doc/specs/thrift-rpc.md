@@ -1,6 +1,7 @@
 Thrift Remote Procedure Call
 ============================
 
+<!--
 --------------------------------------------------------------------
 
 Licensed to the Apache Software Foundation (ASF) under one
@@ -21,6 +22,7 @@ specific language governing permissions and limitations
 under the License.
 
 --------------------------------------------------------------------
+-->
 
 This document describes the high level message exchange between the Thrift RPC client and server.
 See [thrift-binary-protocol.md] and [thrift-compact-protocol.md] for a description of how the exchanges are encoded on
