@@ -124,6 +124,7 @@ public:
                                       t_struct* tstruct,
                                       bool is_xception = false,
                                       bool is_result = false);
+  void generate_php_struct_wakeup(ofstream& out);
   void generate_php_struct_reader(std::ofstream& out, t_struct* tstruct, bool is_result);
   void generate_php_struct_writer(std::ofstream& out, t_struct* tstruct, bool is_result);
   void generate_php_function_helpers(t_service* tservice, t_function* tfunction);
@@ -757,6 +758,9 @@ void t_php_generator::generate_php_type_spec(ofstream& out, t_type* t) {
  * type information to generalize serialization routines.
  */
 void t_php_generator::generate_php_struct_spec(ofstream& out, t_struct* tstruct) {
+  indent(out) << "static protected function _tspec() {" << endl;
+  indent_up();
+
   indent(out) << "if (!isset(self::$_TSPEC)) {" << endl;
   indent_up();
 
@@ -779,6 +783,28 @@ void t_php_generator::generate_php_struct_spec(ofstream& out, t_struct* tstruct)
   indent(out) << "  );" << endl;
   indent_down();
   indent(out) << "}" << endl;
+
+  indent_down();
+  indent(out) << "}" << endl;
+}
+
+/**
+ * Generates the wakeup method, which populates struct specification structure
+ * on class de-serialization
+ */
+void t_php_generator::generate_php_struct_wakeup(ofstream& out) {
+  indent(out) << "public function __wakeup() {" << endl;
+  indent_up();
+
+  indent(out) << "self::_tspec();" << endl;
+  if (oop_) {
+    indent(out) << "parent::__wakeup()" << endl;
+  } else {
+    indent(out) << "self::_tspec();" << endl;
+  }
+
+  indent_down();
+  indent(out) << "}" << endl << endl;
 }
 
 /**
@@ -824,12 +850,14 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
 
   out << endl;
 
+  generate_php_struct_wakeup(out);
+
   // Generate constructor from array
   string param = (members.size() > 0) ? "$vals=null" : "";
   out << indent() << "public function __construct(" << param << ") {" << endl;
   indent_up();
 
-  generate_php_struct_spec(out, tstruct);
+  out << indent() << "self::_tspec();" << endl;
 
   if (members.size() > 0) {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
