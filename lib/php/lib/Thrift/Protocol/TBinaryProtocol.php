@@ -22,6 +22,7 @@
 
 namespace Thrift\Protocol;
 
+use Thrift\Exception\TApplicationException;
 use Thrift\Type\TType;
 use Thrift\Exception\TProtocolException;
 use Thrift\Factory\TStringFuncFactory;
@@ -38,6 +39,15 @@ class TBinaryProtocol extends TProtocol
   protected $strictRead_ = false;
   protected $strictWrite_ = true;
 
+  /**
+   * Sequence ID
+   *
+   * Used to determine if the given Sequence ID is equals to the received one
+   *
+   * @var mixed
+   */
+  protected $seqid_ = null;
+
   public function __construct($trans, $strictRead=false, $strictWrite=true)
   {
     parent::__construct($trans);
@@ -47,6 +57,7 @@ class TBinaryProtocol extends TProtocol
 
   public function writeMessageBegin($name, $type, $seqid)
   {
+    $this->seqid_ = $seqid;
     if ($this->strictWrite_) {
       $version = self::VERSION_1 | $type;
 
@@ -244,6 +255,10 @@ class TBinaryProtocol extends TProtocol
           $this->readByte($type) +
           $this->readI32($seqid);
       }
+    }
+
+    if ($seqid != $this->seqid_) {
+      throw new TApplicationException("TBinaryProtocol::ReadMessageBegin received SequenceID: $seqid not matches requested ID: $this->seqid_ " . TApplicationException::BAD_SEQUENCE_ID);
     }
 
     return $result;

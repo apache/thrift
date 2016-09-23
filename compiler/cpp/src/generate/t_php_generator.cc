@@ -1720,6 +1720,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
                << "TBinaryProtocolAccelerated) && function_exists('thrift_protocol_write_binary');"
                << endl;
 
+    f_service_client << indent() << "$this->seqid_ = rand();" << endl;
     f_service_client << indent() << "if ($bin_accel)" << endl;
     scope_up(f_service_client);
 
