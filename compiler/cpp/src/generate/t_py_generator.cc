@@ -21,12 +21,15 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <list>
+#include <map>
 
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sstream>
 #include <algorithm>
+
 #include "t_generator.h"
 #include "platform.h"
 #include "version.h"
@@ -39,6 +42,58 @@ using std::stringstream;
 using std::vector;
 
 static const string endl = "\n"; // avoid ostream << std::endl flushes
+
+// calculate object dependent graph
+class Graph {
+private:
+    std::vector<int> degree;
+    std::vector<std::vector<int> > edge;
+    std::vector<int> topo;
+    int n;
+    bool circle;
+public:
+    Graph(int n) : n(n) {
+      degree.resize(n);
+      edge.resize(n);
+      topo.resize(n);
+      circle = false;
+    }
+
+    void add_edge(int u, int v) {
+      if (u < 0 || u >= n || v < 0 || v >= n) {
+        throw "node index out of range";
+      }
+      edge[u].push_back(v);
+      degree[v]++;
+    }
+
+    void topological_sort() {
+      int l = 0, r = 0;
+      for (int i = 0; i < n; i++) {
+        if (degree[i] == 0) {
+          topo[r++] = i;
+        }
+      }
+      while (l != r) {
+        int u = topo[l++];
+        for (size_t j = 0; j < edge[u].size(); j++) {
+          int v = edge[u][j];
+          if (--degree[v] == 0) {
+            topo[r++] = v;
+          }
+        }
+      }
+      circle = r != n;
+    }
+
+    bool has_circle() {
+      return circle;
+    }
+
+    std::vector<int> get_order() {
+      return topo;
+    }
+};
 
 /**
  * Python code generator.
@@ -141,6 +196,7 @@ public:
 
   void init_generator();
   void close_generator();
+  void construct_object_dependent_graph();
 
   /**
    * Program-level generation functions
@@ -266,8 +322,11 @@ public:
   }
 
 private:
+    map<t_struct*, int> object_ids_;
+    map<int, std::pair<t_struct*, bool> > pending_objects_;
+    std::list<int> object_order_;
 
-  /**
+    /**
    * True if we should generate new-style classes.
    */
   bool gen_newstyle_;
@@ -384,6 +443,52 @@ void t_py_generator::init_generator() {
     py_autogen_comment() << endl <<
     py_imports() << endl <<
     "from .ttypes import *" << endl;
+
+  construct_object_dependent_graph();
+}
+
+/**
+ * Construct object dependent graph to determine object generate order
+ * if cycle dependent is detected, generate process will be aborted
+ * object dependent example
+ * struct A {
+ * 1: B b;
+ * }
+ * struct B {
+ * }
+ *
+ * then B should be generated before A in ttypes.py, otherwise runtime error exception will be thrown
+ * in generated python code
+ */
+void t_py_generator::construct_object_dependent_graph() {
+  const std::vector<t_struct*>& objects = program_->get_objects();
+  for (size_t i = 0; i < objects.size(); ++i) {
+    object_ids_[objects[i]] = i;
+  }
+
+  Graph dependent_graph(objects.size());
+  for (size_t i = 0; i < objects.size(); i++) {
+    const vector<t_field*>& members = objects[i]->get_members();
+    for(vector<t_field*>::const_iterator m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      t_type* type = get_true_type((*m_iter)->get_type());
+      if (!type->is_struct() && !type->is_xception()) {
+        continue;
+      }
+      map<t_struct*, int>::const_iterator it = object_ids_.find((t_struct*)type);
+      if (it != object_ids_.end()) {
+        dependent_graph.add_edge(it->second, i);
+      }
+    }
+  }
+
+  dependent_graph.topological_sort();
+  // check cycle dependent
+  if (dependent_graph.has_circle()) {
+    throw "type error: cycel dependent found in " + program_->get_path();
+  }
+
+  // calculate struct generate order
+  object_order_ = std::list<int>(dependent_graph.get_order().begin(), dependent_graph.get_order().end());
 }
 
 /**
@@ -631,7 +736,25 @@ void t_py_generator::generate_xception(t_struct* txception) {
  * Generates a python struct
  */
 void t_py_generator::generate_py_struct(t_struct* tstruct, bool is_exception) {
-  generate_py_struct_definition(f_types_, tstruct, is_exception);
+  map<t_struct*, int>::const_iterator it = object_ids_.find(tstruct);
+  if (it == object_ids_.end()) {
+    // should never happen
+    std::cout << "struct " << tstruct->get_name() << " not found in object_ids dict" << std::endl;
+    return;
+  }
+  pending_objects_[it->second] = std::pair<t_struct*, bool>(tstruct, is_exception);
+  for (;;) {
+    if (object_order_.empty()){
+      break;
+    }
+    map<int, std::pair<t_struct*, bool> >::iterator it = pending_objects_.find(object_order_.front());
+    if (it == pending_objects_.end()) {
+      break;
+    }
+    generate_py_struct_definition(f_types_, it->second.first, it->second.second);
+    object_order_.pop_front();
+    pending_objects_.erase(it);
+  }
 }
 
 /**
