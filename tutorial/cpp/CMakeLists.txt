@@ -18,7 +18,7 @@
 #
 
 find_package(Boost 1.53.0 REQUIRED)
-include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
+include_directories(${Boost_INCLUDE_DIRS})
 
 #Make sure gen-cpp files can be included
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
