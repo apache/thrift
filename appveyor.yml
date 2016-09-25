@@ -56,7 +56,7 @@ install:
 - move WIN32-Code\event2\* include\event2\
 - move *.h include\
 - cd ..
-- cinst winflexbison
+- appveyor-retry cinst -y winflexbison
 - appveyor DownloadFile http://www.us.apache.org/dist/ant/binaries/apache-ant-%ANT_VERSION%-bin.zip
 - 7z x apache-ant-%ANT_VERSION%-bin.zip > nul
 - cd %APPVEYOR_BUILD_FOLDER%
