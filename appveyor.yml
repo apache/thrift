@@ -31,7 +31,7 @@ environment:
   BOOST_LIBRARYDIR: C:\Libraries\boost_1_59_0\lib64-msvc-14.0
   # Unfurtunately, these versions need manual update because old versions are quickly deleted.
   ANT_VERSION: 1.9.7
-  OPENSSL_VERSION: 1_0_2h
+  OPENSSL_VERSION: 1_0_2i
 
 install:
 - '"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64'
