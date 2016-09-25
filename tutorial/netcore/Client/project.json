@@ -10,12 +10,7 @@
     "Microsoft.NETCore.App": {
       "version": "1.0.0"
     },
-    "Thrift": "1.0.0-*",
-    "Serilog.Extensions.Logging": "1.2.0",
-    "Serilog.Sinks.Literate": "2.0.0",
-    "Serilog.Sinks.ColoredConsole": "2.0.0",
-    "Serilog.Enrichers.Thread": "2.0.0"
-  },
+    "Thrift": "1.0.0-*" },
 
   "runtimes": {
     "win10-x64": {},

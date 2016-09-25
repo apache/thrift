@@ -1,4 +1,21 @@
-﻿using System;
+﻿// Licensed to the Apache Software Foundation(ASF) under one
+// or more contributor license agreements.See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License. You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,8 +24,7 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using Serilog;
-using Serilog.Core;
+using Microsoft.Extensions.Logging;
 using Thrift;
 using Thrift.Protocols;
 using Thrift.Samples;
@@ -19,30 +35,7 @@ namespace Client
 {
     public class Program
     {
-        static readonly Logger Logger = new LoggerConfiguration()
-            .MinimumLevel.Verbose()
-            .Enrich.WithThreadId()
-            .WriteTo.ColoredConsole(
-                outputTemplate:
-                "{Timestamp:yyyy-MM-dd HH:mm:ss:fff} [{Level}] [ThreadId:{ThreadId}] {SourceContext:l} {Message}{NewLine}{Exception}")
-            .CreateLogger();
-
-        private enum Transport
-        {
-            Tcp,
-            NamedPipe,
-            Http,
-            TcpBuffered,
-            Framed,
-            TcpTls
-        }
-
-        private enum Protocol
-        {
-            Binary,
-            Compact,
-            Json,
-        }
+        private static readonly ILogger Logger = new LoggerFactory().CreateLogger(nameof(Client));
 
         private static void DisplayHelp()
         {
@@ -93,11 +86,11 @@ Sample:
         {
             var clientTransport = GetTransport(args);
 
-            Logger.Information($"Selected client transport: {clientTransport}");
+            Logger.LogInformation($"Selected client transport: {clientTransport}");
 
             var clientProtocol = GetProtocol(args, clientTransport);
 
-            Logger.Information($"Selected client protocol: {clientProtocol}");
+            Logger.LogInformation($"Selected client protocol: {clientProtocol}");
 
             await RunClientAsync(clientProtocol, cancellationToken);
         }
@@ -116,14 +109,16 @@ Sample:
                     case Transport.NamedPipe:
                         return new TNamedPipeClientTransport(".test");
                     case Transport.Http:
-                        return new THttpClientTransport(new Uri("http://localhost:9090"));
+                        return new THttpClientTransport(new Uri("http://localhost:9090"), null);
                     case Transport.TcpBuffered:
-                        return new TBufferedClientTransport(new TSocketClientTransport(IPAddress.Loopback, 9090));
+                        return
+                            new TBufferedClientTransport(
+                                new TSocketClientTransport(IPAddress.Loopback, 9090));
                     case Transport.TcpTls:
-                        return new TTlsSocketClientTransport(IPAddress.Loopback, 9090, GetCertificate(), CertValidator, LocalCertificateSelectionCallback);
+                        return new TTlsSocketClientTransport(IPAddress.Loopback, 9090,
+                            GetCertificate(), CertValidator, LocalCertificateSelectionCallback);
                     case Transport.Framed:
                         throw new NotSupportedException("Framed is not ready for samples");
-                    
                 }
             }
 
@@ -140,22 +135,28 @@ Sample:
         private static string GetCertPath(DirectoryInfo di, int maxCount = 6)
         {
             var topDir = di;
-            var certFile = topDir.EnumerateFiles("ThriftTest.pfx", SearchOption.AllDirectories).FirstOrDefault();
+            var certFile =
+                topDir.EnumerateFiles("ThriftTest.pfx", SearchOption.AllDirectories)
+                    .FirstOrDefault();
             if (certFile == null)
             {
-                if (maxCount == 0) throw new FileNotFoundException("Cannot find file in directories");
+                if (maxCount == 0)
+                    throw new FileNotFoundException("Cannot find file in directories");
                 return GetCertPath(di.Parent, maxCount - 1);
             }
 
             return certFile.FullName;
         }
 
-        private static X509Certificate LocalCertificateSelectionCallback(object sender, string targetHost, X509CertificateCollection localCertificates, X509Certificate remoteCertificate, string[] acceptableIssuers)
+        private static X509Certificate LocalCertificateSelectionCallback(object sender,
+            string targetHost, X509CertificateCollection localCertificates,
+            X509Certificate remoteCertificate, string[] acceptableIssuers)
         {
             return GetCertificate();
         }
 
-        private static bool CertValidator(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        private static bool CertValidator(object sender, X509Certificate certificate,
+            X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             return true;
         }
@@ -181,7 +182,8 @@ Sample:
             return new TBinaryProtocol(transport);
         }
 
-        private static async Task RunClientAsync(TProtocol protocol, CancellationToken cancellationToken)
+        private static async Task RunClientAsync(TProtocol protocol,
+            CancellationToken cancellationToken)
         {
             try
             {
@@ -192,12 +194,12 @@ Sample:
                 {
                     // Async version
 
-                    Logger.Information("PingAsync()");
+                    Logger.LogInformation("PingAsync()");
                     await client.PingAsync(cancellationToken);
 
-                    Logger.Information("AddAsync(1,1)");
+                    Logger.LogInformation("AddAsync(1,1)");
                     var sum = await client.AddAsync(1, 1, cancellationToken);
-                    Logger.Information($"AddAsync(1,1)={sum}");
+                    Logger.LogInformation($"AddAsync(1,1)={sum}");
 
                     var work = new Work
                     {
@@ -208,13 +210,13 @@ Sample:
 
                     try
                     {
-                        Logger.Information("CalculateAsync(1)");
+                        Logger.LogInformation("CalculateAsync(1)");
                         await client.CalculateAsync(1, work, cancellationToken);
-                        Logger.Information("Whoa we can divide by 0");
+                        Logger.LogInformation("Whoa we can divide by 0");
                     }
                     catch (InvalidOperation io)
                     {
-                        Logger.Information(io, "Invalid operation: " + io.Why);
+                        Logger.LogInformation("Invalid operation: " + io);
                     }
 
                     work.Op = Operation.Substract;
@@ -223,26 +225,25 @@ Sample:
 
                     try
                     {
-                        Logger.Information("CalculateAsync(1)");
+                        Logger.LogInformation("CalculateAsync(1)");
                         var diff = await client.CalculateAsync(1, work, cancellationToken);
-                        Logger.Information($"15-10={diff}");
+                        Logger.LogInformation($"15-10={diff}");
                     }
                     catch (InvalidOperation io)
                     {
-                        Logger.Information(io, "Invalid operation: " + io.Why);
+                        Logger.LogInformation("Invalid operation: " + io);
                     }
 
-                    Logger.Information("GetStructAsync(1)");
+                    Logger.LogInformation("GetStructAsync(1)");
                     var log = await client.GetStructAsync(1, cancellationToken);
-                    Logger.Information($"Check log: {log.Value}");
+                    Logger.LogInformation($"Check log: {log.Value}");
 
-                    Logger.Information("ZipAsync() with delay 100mc on server side");
+                    Logger.LogInformation("ZipAsync() with delay 100mc on server side");
                     await client.ZipAsync(cancellationToken);
-
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error(ex, "Error");
+                    Logger.LogError(ex.ToString());
                 }
                 finally
                 {
@@ -251,8 +252,25 @@ Sample:
             }
             catch (TApplicationException x)
             {
-                Logger.Error(x, x.StackTrace);
+                Logger.LogError(x.ToString());
             }
+        }
+
+        private enum Transport
+        {
+            Tcp,
+            NamedPipe,
+            Http,
+            TcpBuffered,
+            Framed,
+            TcpTls
+        }
+
+        private enum Protocol
+        {
+            Binary,
+            Compact,
+            Json,
         }
     }
 }

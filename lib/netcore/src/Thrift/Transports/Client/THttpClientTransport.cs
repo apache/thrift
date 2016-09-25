@@ -1,23 +1,19 @@
-﻿/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
- *
- *
- */
+﻿// Licensed to the Apache Software Foundation(ASF) under one
+// or more contributor license agreements.See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License. You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations
+// under the License.
 
 using System;
 using System.Collections.Concurrent;
@@ -36,22 +32,24 @@ namespace Thrift.Transports.Client
     // ReSharper disable once InconsistentNaming
     public class THttpClientTransport : TClientTransport
     {
-        private readonly Uri _uri;
         private readonly X509Certificate[] _certificates;
-        private Stream _inputStream;
-        private MemoryStream _outputStream = new MemoryStream();
-        public IDictionary<string, string> CustomHeaders { get; }
-        private HttpClient _httpClient;
+        private readonly Uri _uri;
 
         // Timeouts in milliseconds
         private int _connectTimeout = 30000;
+        private HttpClient _httpClient;
+        private Stream _inputStream;
+
+        private bool _isDisposed;
+        private MemoryStream _outputStream = new MemoryStream();
 
         public THttpClientTransport(Uri u, IDictionary<string, string> customHeaders)
             : this(u, Enumerable.Empty<X509Certificate>(), customHeaders)
         {
         }
 
-        public THttpClientTransport(Uri u, IEnumerable<X509Certificate> certificates, IDictionary<string, string> customHeaders)
+        public THttpClientTransport(Uri u, IEnumerable<X509Certificate> certificates,
+            IDictionary<string, string> customHeaders)
         {
             _uri = u;
             _certificates = (certificates ?? Enumerable.Empty<X509Certificate>()).ToArray();
@@ -59,8 +57,10 @@ namespace Thrift.Transports.Client
 
             // due to current bug with performance of Dispose in netcore https://github.com/dotnet/corefx/issues/8809
             // this can be switched to default way (create client->use->dispose per flush) later
-            _httpClient = CreateClient(); 
+            _httpClient = CreateClient();
         }
+
+        public IDictionary<string, string> CustomHeaders { get; }
 
         public int ConnectTimeout
         {
@@ -98,7 +98,8 @@ namespace Thrift.Transports.Client
             }
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length,
+            CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -134,7 +135,7 @@ namespace Thrift.Transports.Client
                 await Task.FromCanceled(cancellationToken);
             }
 
-            await _outputStream.WriteAsync(buffer, offset, length,cancellationToken);
+            await _outputStream.WriteAsync(buffer, offset, length, cancellationToken);
         }
 
         private HttpClient CreateClient()
@@ -152,9 +153,12 @@ namespace Thrift.Transports.Client
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-thrift"));
             httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("THttpClientTransport", "1.0.0"));
 
-            foreach (var item in CustomHeaders)
+            if (CustomHeaders != null)
             {
-                httpClient.DefaultRequestHeaders.Add(item.Key, item.Value);
+                foreach (var item in CustomHeaders)
+                {
+                    httpClient.DefaultRequestHeaders.Add(item.Key, item.Value);
+                }
             }
 
             return httpClient;
@@ -185,7 +189,7 @@ namespace Thrift.Transports.Client
 
                         _inputStream = await msg.Content.ReadAsStreamAsync();
                         if (_inputStream.CanSeek)
-                        { 
+                        {
                             _inputStream.Seek(0, SeekOrigin.Begin);
                         }
                     }
@@ -196,7 +200,8 @@ namespace Thrift.Transports.Client
                 }
                 catch (WebException wx)
                 {
-                    throw new TTransportException(TTransportException.ExceptionType.Unknown, "Couldn't connect to server: " + wx);
+                    throw new TTransportException(TTransportException.ExceptionType.Unknown,
+                        "Couldn't connect to server: " + wx);
                 }
             }
             finally
@@ -204,8 +209,6 @@ namespace Thrift.Transports.Client
                 _outputStream = new MemoryStream();
             }
         }
-        
-        private bool _isDisposed;
 
         // IDisposable
         protected override void Dispose(bool disposing)

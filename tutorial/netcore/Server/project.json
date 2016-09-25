@@ -14,12 +14,7 @@
     "Microsoft.AspNetCore.Http": "1.0.0",
     "Microsoft.AspNetCore.Server.IISIntegration": "1.0.0",
     "Microsoft.AspNetCore.Server.Kestrel": "1.0.0",
-    "Microsoft.Extensions.Configuration.FileExtensions": "1.0.0",
-    "Serilog.Extensions.Logging": "1.2.0",
-    "Serilog.Sinks.Literate": "2.0.0",
-    "Serilog.Sinks.ColoredConsole": "2.0.0",
-    "Serilog.Enrichers.Thread": "2.0.0"
-  },
+    "Microsoft.Extensions.Configuration.FileExtensions": "1.0.0" },
   "runtimes": {
     "win10-x64": {},
     "osx.10.11-x64": {},

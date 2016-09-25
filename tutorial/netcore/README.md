@@ -7,6 +7,8 @@ Details:
 
 # Running of samples 
 
+Please install Thrift C# .NET Core library or copy sources and build them to correcly build and run samples 
+
 # NetCore Server
 
 Usage: 

@@ -1,25 +1,19 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
- *
- * Contains some contributions under the Thrift Software License.
- * Please see doc/old-thrift-license.txt in the Thrift distribution for
- * details.
- */
+// Licensed to the Apache Software Foundation(ASF) under one
+// or more contributor license agreements.See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License. You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations
+// under the License.
 
 using System;
 using System.IO.Pipes;
@@ -32,13 +26,14 @@ namespace Thrift.Transports.Server
     public class TNamedPipeServerTransport : TServerTransport
     {
         /// <summary>
-        /// This is the address of the Pipe on the localhost.
+        ///     This is the address of the Pipe on the localhost.
         /// </summary>
         private readonly string _pipeAddress;
 
-        private NamedPipeServerStream _stream = null;
         private bool _asyncMode = true;
         private volatile bool _isPending = true;
+
+        private NamedPipeServerStream _stream = null;
 
         public TNamedPipeServerTransport(string pipeAddress)
         {
@@ -94,7 +89,8 @@ namespace Thrift.Transports.Server
                     if (_asyncMode)
                     {
                         options &= (~PipeOptions.Asynchronous);
-                        _stream = new NamedPipeServerStream(_pipeAddress, direction, maxconn, mode, options, inbuf, outbuf);
+                        _stream = new NamedPipeServerStream(_pipeAddress, direction, maxconn, mode, options, inbuf,
+                            outbuf);
                         _asyncMode = false;
                     }
                     else
@@ -156,7 +152,8 @@ namespace Thrift.Transports.Server
                 _stream?.Dispose();
             }
 
-            public override async Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+            public override async Task<int> ReadAsync(byte[] buffer, int offset, int length,
+                CancellationToken cancellationToken)
             {
                 if (_stream == null)
                 {
@@ -166,7 +163,8 @@ namespace Thrift.Transports.Server
                 return await _stream.ReadAsync(buffer, offset, length, cancellationToken);
             }
 
-            public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+            public override async Task WriteAsync(byte[] buffer, int offset, int length,
+                CancellationToken cancellationToken)
             {
                 if (_stream == null)
                 {

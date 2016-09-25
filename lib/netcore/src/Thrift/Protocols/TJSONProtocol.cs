@@ -1,21 +1,19 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
+// Licensed to the Apache Software Foundation(ASF) under one
+// or more contributor license agreements.See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License. You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations
+// under the License.
 
 using System;
 using System.Collections.Generic;
@@ -33,28 +31,18 @@ namespace Thrift.Protocols
     //TODO: implementation of TProtocol
 
     /// <summary>
-    /// JSON protocol implementation for thrift.
-    ///
-    /// This is a full-featured protocol supporting Write and Read.
-    ///
-    /// Please see the C++ class header for a detailed description of the
-    /// protocol's wire format.
-    ///
-    /// Adapted from the Java version.
+    ///     JSON protocol implementation for thrift.
+    ///     This is a full-featured protocol supporting Write and Read.
+    ///     Please see the C++ class header for a detailed description of the
+    ///     protocol's wire format.
+    ///     Adapted from the Java version.
     /// </summary>
     // ReSharper disable once InconsistentNaming
     public class TJsonProtocol : TProtocol
     {
-        /// <summary>
-        /// Factory for JSON protocol objects
-        /// </summary>
-        public class Factory : ITProtocolFactory
-        {
-            public TProtocol GetProtocol(TClientTransport trans)
-            {
-                return new TJsonProtocol(trans);
-            }
-        }
+        private const long Version = 1;
+
+        private const int DefStringSize = 16;
 
         private static readonly byte[] Comma = {(byte) ','};
         private static readonly byte[] Colon = {(byte) ':'};
@@ -64,26 +52,6 @@ namespace Thrift.Protocols
         private static readonly byte[] Rbracket = {(byte) ']'};
         private static readonly byte[] Quote = {(byte) '"'};
         private static readonly byte[] Backslash = {(byte) '\\'};
-
-        private readonly byte[] _escseq = {(byte) '\\', (byte) 'u', (byte) '0', (byte) '0'};
-
-        private const long Version = 1;
-
-        private readonly byte[] _jsonCharTable =
-        {
-            0, 0, 0, 0, 0, 0, 0, 0, (byte) 'b', (byte) 't', (byte) 'n', 0, (byte) 'f', (byte) 'r', 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            1, 1, (byte) '"', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-        };
-
-        private readonly char[] _escapeChars = "\"\\/bfnrt".ToCharArray();
-
-        private readonly byte[] _escapeCharVals =
-        {
-            (byte) '"', (byte) '\\', (byte) '/', (byte) '\b', (byte) '\f', (byte) '\n', (byte) '\r', (byte) '\t'
-        };
-
-        private const int DefStringSize = 16;
 
         private static readonly byte[] NameBool = {(byte) 't', (byte) 'f'};
         private static readonly byte[] NameByte = {(byte) 'i', (byte) '8'};
@@ -96,6 +64,49 @@ namespace Thrift.Protocols
         private static readonly byte[] NameMap = {(byte) 'm', (byte) 'a', (byte) 'p'};
         private static readonly byte[] NameList = {(byte) 'l', (byte) 's', (byte) 't'};
         private static readonly byte[] NameSet = {(byte) 's', (byte) 'e', (byte) 't'};
+
+        private readonly char[] _escapeChars = "\"\\/bfnrt".ToCharArray();
+
+        private readonly byte[] _escapeCharVals =
+        {
+            (byte) '"', (byte) '\\', (byte) '/', (byte) '\b', (byte) '\f', (byte) '\n', (byte) '\r', (byte) '\t'
+        };
+
+        private readonly byte[] _escseq = {(byte) '\\', (byte) 'u', (byte) '0', (byte) '0'};
+
+        private readonly byte[] _jsonCharTable =
+        {
+            0, 0, 0, 0, 0, 0, 0, 0, (byte) 'b', (byte) 't', (byte) 'n', 0, (byte) 'f', (byte) 'r', 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            1, 1, (byte) '"', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+        };
+
+        // Temporary buffer used by several methods
+        private readonly byte[] _tempBuffer = new byte[4];
+
+        // Current context that we are in
+        protected JsonBaseContext Context;
+
+        // Stack of nested contexts that we may be in
+        protected Stack<JsonBaseContext> ContextStack = new Stack<JsonBaseContext>();
+
+        // Reader that manages a 1-byte buffer
+        protected LookaheadReader Reader;
+
+        // Default encoding
+        protected Encoding Utf8Encoding = Encoding.UTF8;
+
+        /// <summary>
+        ///     TJsonProtocol Constructor
+        /// </summary>
+        public TJsonProtocol(TClientTransport trans)
+            : base(trans)
+        {
+            //throw new NotImplementedException("TJsonProtocol is not fully ready for usage");
+
+            Context = new JsonBaseContext(this);
+            Reader = new LookaheadReader(this);
+        }
 
         private static byte[] GetTypeNameForTypeId(TType typeId)
         {
@@ -186,249 +197,41 @@ namespace Thrift.Protocols
             return result;
         }
 
-        ///<summary>
-        /// Base class for tracking JSON contexts that may require
-        /// inserting/Reading additional JSON syntax characters
-        /// This base context does nothing.
-        ///</summary>
-        protected class JsonBaseContext
-        {
-            protected TJsonProtocol Proto;
-
-            public JsonBaseContext(TJsonProtocol proto)
-            {
-                Proto = proto;
-            }
-
-            public virtual async Task WriteAsync(CancellationToken cancellationToken)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    await Task.FromCanceled(cancellationToken);
-                }
-            }
-
-            public virtual async Task ReadAsync(CancellationToken cancellationToken)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    await Task.FromCanceled(cancellationToken);
-                }
-            }
-
-            public virtual bool EscapeNumbers()
-            {
-                return false;
-            }
-        }
-
-        ///<summary>
-        /// Context for JSON lists. Will insert/Read commas before each item except
-        /// for the first one
-        ///</summary>
-        protected class JsonListContext : JsonBaseContext
-        {
-            public JsonListContext(TJsonProtocol protocol)
-                : base(protocol)
-            {
-            }
-
-            private bool _first = true;
-
-            public override async Task WriteAsync(CancellationToken cancellationToken)
-            {
-                if (_first)
-                {
-                    _first = false;
-                }
-                else
-                {
-                    await Proto.Trans.WriteAsync(Comma, cancellationToken);
-                }
-            }
-
-            public override async Task ReadAsync(CancellationToken cancellationToken)
-            {
-                if (_first)
-                {
-                    _first = false;
-                }
-                else
-                {
-                    await Proto.ReadJsonSyntaxCharAsync(Comma, cancellationToken);
-                }
-            }
-        }
-
-        ///<summary>
-        /// Context for JSON records. Will insert/Read colons before the value portion
-        /// of each record pair, and commas before each key except the first. In
-        /// addition, will indicate that numbers in the key position need to be
-        /// escaped in quotes (since JSON keys must be strings).
-        ///</summary>
-        protected class JsonPairContext : JsonBaseContext
-        {
-            public JsonPairContext(TJsonProtocol proto)
-                : base(proto)
-            {
-            }
-
-            private bool _first = true;
-            private bool _colon = true;
-
-            public override async Task WriteAsync(CancellationToken cancellationToken)
-            {
-                if (_first)
-                {
-                    _first = false;
-                    _colon = true;
-                }
-                else
-                {
-                    await Proto.Trans.WriteAsync(_colon ? Colon : Comma, cancellationToken);
-                    _colon = !_colon;
-                }
-            }
-
-            public override async Task ReadAsync(CancellationToken cancellationToken)
-            {
-                if (_first)
-                {
-                    _first = false;
-                    _colon = true;
-                }
-                else
-                {
-                    await Proto.ReadJsonSyntaxCharAsync(_colon ? Colon : Comma, cancellationToken);
-                    _colon = !_colon;
-                }
-            }
-
-            public override bool EscapeNumbers()
-            {
-                return _colon;
-            }
-        }
-
-        ///<summary>
-        /// Holds up to one byte from the transport
-        ///</summary>
-        protected class LookaheadReader
-        {
-            protected TJsonProtocol Proto;
-
-            public LookaheadReader(TJsonProtocol proto)
-            {
-                Proto = proto;
-            }
-
-            private bool _hasData;
-            private readonly byte[] _data = new byte[1];
-
-            ///<summary>
-            /// Return and consume the next byte to be Read, either taking it from the
-            /// data buffer if present or getting it from the transport otherwise.
-            ///</summary>
-            public async Task<byte> ReadAsync(CancellationToken cancellationToken)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return await Task.FromCanceled<byte>(cancellationToken);
-                }
-
-                if (_hasData)
-                {
-                    _hasData = false;
-                }
-                else
-                {
-                    await Proto.Trans.ReadAllAsync(_data, 0, 1, cancellationToken);
-                }
-                return _data[0];
-            }
-
-            ///<summary>
-            /// Return the next byte to be Read without consuming, filling the data
-            /// buffer if it has not been filled alReady.
-            ///</summary>
-            public async Task<byte> PeekAsync(CancellationToken cancellationToken)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return await Task.FromCanceled<byte>(cancellationToken);
-                }
-
-                if (!_hasData)
-                {
-                    await Proto.Trans.ReadAllAsync(_data, 0, 1, cancellationToken);
-                }
-                _hasData = true;
-                return _data[0];
-            }
-        }
-
-        // Default encoding
-        protected Encoding Utf8Encoding = Encoding.UTF8;
-
-        // Stack of nested contexts that we may be in
-        protected Stack<JsonBaseContext> ContextStack = new Stack<JsonBaseContext>();
-
-        // Current context that we are in
-        protected JsonBaseContext Context;
-
-        // Reader that manages a 1-byte buffer
-        protected LookaheadReader Reader;
-
-        ///<summary>
-        /// Push a new JSON context onto the stack.
-        ///</summary>
+        /// <summary>
+        ///     Push a new JSON context onto the stack.
+        /// </summary>
         protected void PushContext(JsonBaseContext c)
         {
             ContextStack.Push(Context);
             Context = c;
         }
 
-        ///<summary>
-        /// Pop the last JSON context off the stack
-        ///</summary>
+        /// <summary>
+        ///     Pop the last JSON context off the stack
+        /// </summary>
         protected void PopContext()
         {
             Context = ContextStack.Pop();
         }
 
-        ///<summary>
-        /// TJsonProtocol Constructor
-        ///</summary>
-        public TJsonProtocol(TClientTransport trans)
-            : base(trans)
-        {
-            //throw new NotImplementedException("TJsonProtocol is not fully ready for usage");
-
-            Context = new JsonBaseContext(this);
-            Reader = new LookaheadReader(this);
-        }
-
-        // Temporary buffer used by several methods
-        private readonly byte[] _tempBuffer = new byte[4];
-
-        ///<summary>
-        /// Read a byte that must match b[0]; otherwise an exception is thrown.
-        /// Marked protected to avoid synthetic accessor in JSONListContext.Read
-        /// and JSONPairContext.Read
-        ///</summary>
+        /// <summary>
+        ///     Read a byte that must match b[0]; otherwise an exception is thrown.
+        ///     Marked protected to avoid synthetic accessor in JSONListContext.Read
+        ///     and JSONPairContext.Read
+        /// </summary>
         protected async Task ReadJsonSyntaxCharAsync(byte[] b, CancellationToken cancellationToken)
         {
             var ch = await Reader.ReadAsync(cancellationToken);
             if (ch != b[0])
             {
-                throw new TProtocolException(TProtocolException.INVALID_DATA, $"Unexpected character: {(char)ch}");
+                throw new TProtocolException(TProtocolException.INVALID_DATA, $"Unexpected character: {(char) ch}");
             }
         }
 
-        ///<summary>
-        /// Convert a byte containing a hex char ('0'-'9' or 'a'-'f') into its
-        /// corresponding hex value
-        ///</summary>
+        /// <summary>
+        ///     Convert a byte containing a hex char ('0'-'9' or 'a'-'f') into its
+        ///     corresponding hex value
+        /// </summary>
         private static byte HexVal(byte ch)
         {
             if ((ch >= '0') && (ch <= '9'))
@@ -445,9 +248,9 @@ namespace Thrift.Protocols
             throw new TProtocolException(TProtocolException.INVALID_DATA, "Expected hex character");
         }
 
-        ///<summary>
-        /// Convert a byte containing a hex value to its corresponding hex character
-        ///</summary>
+        /// <summary>
+        ///     Convert a byte containing a hex value to its corresponding hex character
+        /// </summary>
         private static byte HexChar(byte val)
         {
             val &= 0x0F;
@@ -459,9 +262,9 @@ namespace Thrift.Protocols
             return (byte) ((char) val + 'a');
         }
 
-        ///<summary>
-        /// Write the bytes in array buf as a JSON characters, escaping as needed
-        ///</summary>
+        /// <summary>
+        ///     Write the bytes in array buf as a JSON characters, escaping as needed
+        /// </summary>
         private async Task WriteJsonStringAsync(byte[] b, CancellationToken cancellationToken)
         {
             await Context.WriteAsync(cancellationToken);
@@ -480,7 +283,7 @@ namespace Thrift.Protocols
                     else
                     {
                         await Trans.WriteAsync(b, i, 1, cancellationToken);
-                    } 
+                    }
                 }
                 else
                 {
@@ -506,10 +309,10 @@ namespace Thrift.Protocols
             await Trans.WriteAsync(Quote, cancellationToken);
         }
 
-        ///<summary>
-        /// Write out number as a JSON value. If the context dictates so, it will be
-        /// wrapped in quotes to output as a JSON string.
-        ///</summary>
+        /// <summary>
+        ///     Write out number as a JSON value. If the context dictates so, it will be
+        ///     wrapped in quotes to output as a JSON string.
+        /// </summary>
         private async Task WriteJsonIntegerAsync(long num, CancellationToken cancellationToken)
         {
             await Context.WriteAsync(cancellationToken);
@@ -529,10 +332,10 @@ namespace Thrift.Protocols
             }
         }
 
-        ///<summary>
-        /// Write out a double as a JSON value. If it is NaN or infinity or if the
-        /// context dictates escaping, Write out as JSON string.
-        ///</summary>
+        /// <summary>
+        ///     Write out a double as a JSON value. If it is NaN or infinity or if the
+        ///     context dictates escaping, Write out as JSON string.
+        /// </summary>
         private async Task WriteJsonDoubleAsync(double num, CancellationToken cancellationToken)
         {
             await Context.WriteAsync(cancellationToken);
@@ -569,10 +372,10 @@ namespace Thrift.Protocols
             }
         }
 
-        ///<summary>
-        /// Write out contents of byte array b as a JSON string with base-64 encoded
-        /// data
-        ///</summary>
+        /// <summary>
+        ///     Write out contents of byte array b as a JSON string with base-64 encoded
+        ///     data
+        /// </summary>
         private async Task WriteJsonBase64Async(byte[] b, CancellationToken cancellationToken)
         {
             await Context.WriteAsync(cancellationToken);
@@ -642,7 +445,7 @@ namespace Thrift.Protocols
             var b = Utf8Encoding.GetBytes(message.Name);
             await WriteJsonStringAsync(b, cancellationToken);
 
-            await WriteJsonIntegerAsync((long)message.Type, cancellationToken);
+            await WriteJsonIntegerAsync((long) message.Type, cancellationToken);
             await WriteJsonIntegerAsync(message.SeqID, cancellationToken);
         }
 
@@ -761,10 +564,10 @@ namespace Thrift.Protocols
             await WriteJsonBase64Async(b, cancellationToken);
         }
 
-        ///<summary>
-        /// Read in a JSON string, unescaping as appropriate.. Skip Reading from the
-        /// context if skipContext is true.
-        ///</summary>
+        /// <summary>
+        ///     Read in a JSON string, unescaping as appropriate.. Skip Reading from the
+        ///     context if skipContext is true.
+        /// </summary>
         private async Task<byte[]> ReadJsonStringAsync(bool skipContext, CancellationToken cancellationToken)
         {
             using (var buffer = new MemoryStream())
@@ -853,9 +656,9 @@ namespace Thrift.Protocols
             }
         }
 
-        ///<summary>
-        /// Return true if the given byte could be a valid part of a JSON number.
-        ///</summary>
+        /// <summary>
+        ///     Return true if the given byte could be a valid part of a JSON number.
+        /// </summary>
         private static bool IsJsonNumeric(byte b)
         {
             switch (b)
@@ -881,10 +684,10 @@ namespace Thrift.Protocols
             return false;
         }
 
-        ///<summary>
-        /// Read in a sequence of characters that are all valid in JSON numbers. Does
-        /// not do a complete regex check to validate that this is actually a number.
-        ///</summary>
+        /// <summary>
+        ///     Read in a sequence of characters that are all valid in JSON numbers. Does
+        ///     not do a complete regex check to validate that this is actually a number.
+        /// </summary>
         private async Task<string> ReadJsonNumericCharsAsync(CancellationToken cancellationToken)
         {
             var strbld = new StringBuilder();
@@ -900,9 +703,9 @@ namespace Thrift.Protocols
             return strbld.ToString();
         }
 
-        ///<summary>
-        /// Read in a JSON number. If the context dictates, Read in enclosing quotes.
-        ///</summary>
+        /// <summary>
+        ///     Read in a JSON number. If the context dictates, Read in enclosing quotes.
+        /// </summary>
         private async Task<long> ReadJsonIntegerAsync(CancellationToken cancellationToken)
         {
             await Context.ReadAsync(cancellationToken);
@@ -927,10 +730,10 @@ namespace Thrift.Protocols
             }
         }
 
-        ///<summary>
-        /// Read in a JSON double value. Throw if the value is not wrapped in quotes
-        /// when expected or if wrapped in quotes when not expected.
-        ///</summary>
+        /// <summary>
+        ///     Read in a JSON double value. Throw if the value is not wrapped in quotes
+        ///     when expected or if wrapped in quotes when not expected.
+        /// </summary>
         private async Task<double> ReadJsonDoubleAsync(CancellationToken cancellationToken)
         {
             await Context.ReadAsync(cancellationToken);
@@ -964,16 +767,16 @@ namespace Thrift.Protocols
             }
         }
 
-        ///<summary>
-        /// Read in a JSON string containing base-64 encoded data and decode it.
-        ///</summary>
+        /// <summary>
+        ///     Read in a JSON string containing base-64 encoded data and decode it.
+        /// </summary>
         private async Task<byte[]> ReadJsonBase64Async(CancellationToken cancellationToken)
         {
             var b = await ReadJsonStringAsync(false, cancellationToken);
             var len = b.Length;
             var off = 0;
             var size = 0;
-            
+
             // reduce len to ignore fill bytes
             while ((len > 0) && (b[len - 1] == '='))
             {
@@ -989,7 +792,7 @@ namespace Thrift.Protocols
                 len -= 4;
                 size += 3;
             }
-            
+
             // Don't decode if we hit the end or got a single leftover byte (invalid
             // base64 but legal for skip of regular string exType)
             if (len > 1)
@@ -998,7 +801,7 @@ namespace Thrift.Protocols
                 TBase64Utils.Decode(b, off, len, b, size); // NB: decoded in place
                 size += len - 1;
             }
-            
+
             // Sadly we must copy the byte[] (any way around this?)
             var result = new byte[size];
             Array.Copy(b, 0, result, 0, size);
@@ -1042,8 +845,8 @@ namespace Thrift.Protocols
 
             var buf = await ReadJsonStringAsync(false, cancellationToken);
             message.Name = Utf8Encoding.GetString(buf, 0, buf.Length);
-            message.Type = (TMessageType)await ReadJsonIntegerAsync(cancellationToken);
-            message.SeqID = (int)await ReadJsonIntegerAsync(cancellationToken);
+            message.Type = (TMessageType) await ReadJsonIntegerAsync(cancellationToken);
+            message.SeqID = (int) await ReadJsonIntegerAsync(cancellationToken);
             return message;
         }
 
@@ -1091,10 +894,9 @@ namespace Thrift.Protocols
             await ReadJsonArrayStartAsync(cancellationToken);
             map.KeyType = GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken));
             map.ValueType = GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken));
-            map.Count = (int)await ReadJsonIntegerAsync(cancellationToken);
+            map.Count = (int) await ReadJsonIntegerAsync(cancellationToken);
             await ReadJsonObjectStartAsync(cancellationToken);
             return map;
-
         }
 
         public override async Task ReadMapEndAsync(CancellationToken cancellationToken)
@@ -1108,7 +910,7 @@ namespace Thrift.Protocols
             var list = new TList();
             await ReadJsonArrayStartAsync(cancellationToken);
             list.ElementType = GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken));
-            list.Count = (int)await ReadJsonIntegerAsync(cancellationToken);
+            list.Count = (int) await ReadJsonIntegerAsync(cancellationToken);
             return list;
         }
 
@@ -1122,7 +924,7 @@ namespace Thrift.Protocols
             var set = new TSet();
             await ReadJsonArrayStartAsync(cancellationToken);
             set.ElementType = GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken));
-            set.Count = (int)await ReadJsonIntegerAsync(cancellationToken);
+            set.Count = (int) await ReadJsonIntegerAsync(cancellationToken);
             return set;
         }
 
@@ -1138,17 +940,17 @@ namespace Thrift.Protocols
 
         public override async Task<sbyte> ReadByteAsync(CancellationToken cancellationToken)
         {
-            return (sbyte)await ReadJsonIntegerAsync(cancellationToken);
+            return (sbyte) await ReadJsonIntegerAsync(cancellationToken);
         }
 
         public override async Task<short> ReadI16Async(CancellationToken cancellationToken)
         {
-            return (short)await ReadJsonIntegerAsync(cancellationToken);
+            return (short) await ReadJsonIntegerAsync(cancellationToken);
         }
 
         public override async Task<int> ReadI32Async(CancellationToken cancellationToken)
         {
-            return (int)await ReadJsonIntegerAsync(cancellationToken);
+            return (int) await ReadJsonIntegerAsync(cancellationToken);
         }
 
         public override async Task<long> ReadI64Async(CancellationToken cancellationToken)
@@ -1170,6 +972,199 @@ namespace Thrift.Protocols
         public override async Task<byte[]> ReadBinaryAsync(CancellationToken cancellationToken)
         {
             return await ReadJsonBase64Async(cancellationToken);
+        }
+
+        /// <summary>
+        ///     Factory for JSON protocol objects
+        /// </summary>
+        public class Factory : ITProtocolFactory
+        {
+            public TProtocol GetProtocol(TClientTransport trans)
+            {
+                return new TJsonProtocol(trans);
+            }
+        }
+
+        /// <summary>
+        ///     Base class for tracking JSON contexts that may require
+        ///     inserting/Reading additional JSON syntax characters
+        ///     This base context does nothing.
+        /// </summary>
+        protected class JsonBaseContext
+        {
+            protected TJsonProtocol Proto;
+
+            public JsonBaseContext(TJsonProtocol proto)
+            {
+                Proto = proto;
+            }
+
+            public virtual async Task WriteAsync(CancellationToken cancellationToken)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    await Task.FromCanceled(cancellationToken);
+                }
+            }
+
+            public virtual async Task ReadAsync(CancellationToken cancellationToken)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    await Task.FromCanceled(cancellationToken);
+                }
+            }
+
+            public virtual bool EscapeNumbers()
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        ///     Context for JSON lists. Will insert/Read commas before each item except
+        ///     for the first one
+        /// </summary>
+        protected class JsonListContext : JsonBaseContext
+        {
+            private bool _first = true;
+
+            public JsonListContext(TJsonProtocol protocol)
+                : base(protocol)
+            {
+            }
+
+            public override async Task WriteAsync(CancellationToken cancellationToken)
+            {
+                if (_first)
+                {
+                    _first = false;
+                }
+                else
+                {
+                    await Proto.Trans.WriteAsync(Comma, cancellationToken);
+                }
+            }
+
+            public override async Task ReadAsync(CancellationToken cancellationToken)
+            {
+                if (_first)
+                {
+                    _first = false;
+                }
+                else
+                {
+                    await Proto.ReadJsonSyntaxCharAsync(Comma, cancellationToken);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Context for JSON records. Will insert/Read colons before the value portion
+        ///     of each record pair, and commas before each key except the first. In
+        ///     addition, will indicate that numbers in the key position need to be
+        ///     escaped in quotes (since JSON keys must be strings).
+        /// </summary>
+        protected class JsonPairContext : JsonBaseContext
+        {
+            private bool _colon = true;
+
+            private bool _first = true;
+
+            public JsonPairContext(TJsonProtocol proto)
+                : base(proto)
+            {
+            }
+
+            public override async Task WriteAsync(CancellationToken cancellationToken)
+            {
+                if (_first)
+                {
+                    _first = false;
+                    _colon = true;
+                }
+                else
+                {
+                    await Proto.Trans.WriteAsync(_colon ? Colon : Comma, cancellationToken);
+                    _colon = !_colon;
+                }
+            }
+
+            public override async Task ReadAsync(CancellationToken cancellationToken)
+            {
+                if (_first)
+                {
+                    _first = false;
+                    _colon = true;
+                }
+                else
+                {
+                    await Proto.ReadJsonSyntaxCharAsync(_colon ? Colon : Comma, cancellationToken);
+                    _colon = !_colon;
+                }
+            }
+
+            public override bool EscapeNumbers()
+            {
+                return _colon;
+            }
+        }
+
+        /// <summary>
+        ///     Holds up to one byte from the transport
+        /// </summary>
+        protected class LookaheadReader
+        {
+            private readonly byte[] _data = new byte[1];
+
+            private bool _hasData;
+            protected TJsonProtocol Proto;
+
+            public LookaheadReader(TJsonProtocol proto)
+            {
+                Proto = proto;
+            }
+
+            /// <summary>
+            ///     Return and consume the next byte to be Read, either taking it from the
+            ///     data buffer if present or getting it from the transport otherwise.
+            /// </summary>
+            public async Task<byte> ReadAsync(CancellationToken cancellationToken)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return await Task.FromCanceled<byte>(cancellationToken);
+                }
+
+                if (_hasData)
+                {
+                    _hasData = false;
+                }
+                else
+                {
+                    await Proto.Trans.ReadAllAsync(_data, 0, 1, cancellationToken);
+                }
+                return _data[0];
+            }
+
+            /// <summary>
+            ///     Return the next byte to be Read without consuming, filling the data
+            ///     buffer if it has not been filled alReady.
+            /// </summary>
+            public async Task<byte> PeekAsync(CancellationToken cancellationToken)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return await Task.FromCanceled<byte>(cancellationToken);
+                }
+
+                if (!_hasData)
+                {
+                    await Proto.Trans.ReadAllAsync(_data, 0, 1, cancellationToken);
+                }
+                _hasData = true;
+                return _data[0];
+            }
         }
     }
 }

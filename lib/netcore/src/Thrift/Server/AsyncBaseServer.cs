@@ -1,28 +1,19 @@
-
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
- *
- * Contains some contributions under the Thrift Software License.
- * Please see doc/old-thrift-license.txt in the Thrift distribution for
- * details.
- */
-
-//TODO: replacement for TThreadPoolServer
+// Licensed to the Apache Software Foundation(ASF) under one
+// or more contributor license agreements.See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License. You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations
+// under the License.
 
 using System;
 using System.Threading;
@@ -38,11 +29,11 @@ namespace Thrift.Server
     // ReSharper disable once InconsistentNaming
     public class AsyncBaseServer : TBaseServer
     {
-        private volatile Task _serverTask;
         private readonly int _clientWaitingDelay;
+        private volatile Task _serverTask;
 
-        public AsyncBaseServer(ITAsyncProcessor processor, TServerTransport serverTransport, 
-            ITProtocolFactory inputProtocolFactory, ITProtocolFactory outputProtocolFactory, 
+        public AsyncBaseServer(ITAsyncProcessor processor, TServerTransport serverTransport,
+            ITProtocolFactory inputProtocolFactory, ITProtocolFactory outputProtocolFactory,
             ILoggerFactory loggerFactory, int clientWaitingDelay = 10)
             : this(new SingletonTProcessorFactory(processor), serverTransport,
                 new TTransportFactory(), new TTransportFactory(),
@@ -51,7 +42,7 @@ namespace Thrift.Server
         {
         }
 
-        public AsyncBaseServer(ITProcessorFactory itProcessorFactory, TServerTransport serverTransport, 
+        public AsyncBaseServer(ITProcessorFactory itProcessorFactory, TServerTransport serverTransport,
             TTransportFactory inputTransportFactory, TTransportFactory outputTransportFactory,
             ITProtocolFactory inputProtocolFactory, ITProtocolFactory outputProtocolFactory,
             ILogger logger, int clientWaitingDelay = 10)
@@ -66,7 +57,8 @@ namespace Thrift.Server
             try
             {
                 // cancelation token
-                _serverTask = Task.Factory.StartNew(() => StartListening(cancellationToken), TaskCreationOptions.LongRunning);
+                _serverTask = Task.Factory.StartNew(() => StartListening(cancellationToken),
+                    TaskCreationOptions.LongRunning);
                 await _serverTask;
             }
             catch (Exception ex)
@@ -144,7 +136,8 @@ namespace Thrift.Server
 
                 if (ServerEventHandler != null)
                 {
-                    connectionContext = await ServerEventHandler.CreateContextAsync(inputProtocol, outputProtocol, cancellationToken);
+                    connectionContext =
+                        await ServerEventHandler.CreateContextAsync(inputProtocol, outputProtocol, cancellationToken);
                 }
 
                 while (!cancellationToken.IsCancellationRequested)
@@ -156,7 +149,8 @@ namespace Thrift.Server
 
                     if (ServerEventHandler != null)
                     {
-                        await ServerEventHandler.ProcessContextAsync(connectionContext, inputTransport, cancellationToken);
+                        await
+                            ServerEventHandler.ProcessContextAsync(connectionContext, inputTransport, cancellationToken);
                     }
 
                     if (!await processor.ProcessAsync(inputProtocol, outputProtocol, cancellationToken))
@@ -176,7 +170,9 @@ namespace Thrift.Server
 
             if (ServerEventHandler != null)
             {
-                await ServerEventHandler.DeleteContextAsync(connectionContext, inputProtocol, outputProtocol, cancellationToken);
+                await
+                    ServerEventHandler.DeleteContextAsync(connectionContext, inputProtocol, outputProtocol,
+                        cancellationToken);
             }
 
             inputTransport?.Close();
@@ -184,6 +180,5 @@ namespace Thrift.Server
 
             Logger.LogTrace("Completed client request processing");
         }
-
     }
 }

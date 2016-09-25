@@ -1,25 +1,19 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
- *
- * Contains some contributions under the Thrift Software License.
- * Please see doc/old-thrift-license.txt in the Thrift distribution for
- * details.
- */
+// Licensed to the Apache Software Foundation(ASF) under one
+// or more contributor license agreements.See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License. You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations
+// under the License.
 
 using System;
 using System.Collections.Generic;
@@ -82,14 +76,6 @@ namespace Thrift.Protocols
             TTypeToCompactType[(int) TType.Struct] = Types.Struct;
         }
 
-        public class Factory : ITProtocolFactory
-        {
-            public TProtocol GetProtocol(TClientTransport trans)
-            {
-                return new TCompactProtocol(trans);
-            }
-        }
-
         public void Reset()
         {
             _lastField.Clear();
@@ -103,10 +89,13 @@ namespace Thrift.Protocols
                 return;
             }
 
-            await Trans.WriteAsync(new[] { ProtocolId }, cancellationToken);
-            await Trans.WriteAsync(new[] { (byte)((Version & VersionMask) | (((uint)message.Type << TypeShiftAmount) & TypeMask)) }, cancellationToken);
+            await Trans.WriteAsync(new[] {ProtocolId}, cancellationToken);
+            await
+                Trans.WriteAsync(
+                    new[] {(byte) ((Version & VersionMask) | (((uint) message.Type << TypeShiftAmount) & TypeMask))},
+                    cancellationToken);
 
-            var bufferTuple = CreateWriteVarInt32((uint)message.SeqID);
+            var bufferTuple = CreateWriteVarInt32((uint) message.SeqID);
             await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken);
 
             await WriteStringAsync(message.Name, cancellationToken);
@@ -146,7 +135,8 @@ namespace Thrift.Protocols
             _lastFieldId = _lastField.Pop();
         }
 
-        private async Task WriteFieldBeginInternalAsync(TField field, byte typeOverride, CancellationToken cancellationToken)
+        private async Task WriteFieldBeginInternalAsync(TField field, byte typeOverride,
+            CancellationToken cancellationToken)
         {
             // if there's a exType override, use that.
             var typeToWrite = typeOverride == 0xFF ? GetCompactType(field.Type) : typeOverride;
@@ -154,14 +144,14 @@ namespace Thrift.Protocols
             // check if we can use delta encoding for the field id
             if ((field.ID > _lastFieldId) && (field.ID - _lastFieldId <= 15))
             {
-                var b = (byte)(((field.ID - _lastFieldId) << 4) | typeToWrite);
+                var b = (byte) (((field.ID - _lastFieldId) << 4) | typeToWrite);
                 // Write them together
-                await Trans.WriteAsync(new[] { b }, cancellationToken);
+                await Trans.WriteAsync(new[] {b}, cancellationToken);
             }
             else
             {
                 // Write them separate
-                await Trans.WriteAsync(new[] { typeToWrite }, cancellationToken);
+                await Trans.WriteAsync(new[] {typeToWrite}, cancellationToken);
                 await WriteI16Async(field.ID, cancellationToken);
             }
 
@@ -195,7 +185,7 @@ namespace Thrift.Protocols
                 return;
             }
 
-            await Trans.WriteAsync(new[] { Types.Stop }, cancellationToken);
+            await Trans.WriteAsync(new[] {Types.Stop}, cancellationToken);
         }
 
         protected async Task WriteCollectionBeginAsync(TType elemType, int size, CancellationToken cancellationToken)
@@ -212,13 +202,13 @@ namespace Thrift.Protocols
 
             if (size <= 14)
             {
-                await Trans.WriteAsync(new[] { (byte)((size << 4) | GetCompactType(elemType)) }, cancellationToken);
+                await Trans.WriteAsync(new[] {(byte) ((size << 4) | GetCompactType(elemType))}, cancellationToken);
             }
             else
             {
-                await Trans.WriteAsync(new[] { (byte)(0xf0 | GetCompactType(elemType)) }, cancellationToken);
+                await Trans.WriteAsync(new[] {(byte) (0xf0 | GetCompactType(elemType))}, cancellationToken);
 
-                var bufferTuple = CreateWriteVarInt32((uint)size);
+                var bufferTuple = CreateWriteVarInt32((uint) size);
                 await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken);
             }
         }
@@ -245,6 +235,7 @@ namespace Thrift.Protocols
 
             await WriteCollectionBeginAsync(set.ElementType, set.Count, cancellationToken);
         }
+
         public override async Task WriteSetEndAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
@@ -270,13 +261,15 @@ namespace Thrift.Protocols
             if (_booleanField != null)
             {
                 // we haven't written the field header yet
-                await WriteFieldBeginInternalAsync(_booleanField.Value, b ? Types.BooleanTrue : Types.BooleanFalse, cancellationToken);
+                await
+                    WriteFieldBeginInternalAsync(_booleanField.Value, b ? Types.BooleanTrue : Types.BooleanFalse,
+                        cancellationToken);
                 _booleanField = null;
             }
             else
             {
                 // we're not part of a field, so just Write the value.
-                await Trans.WriteAsync(new[] { b ? Types.BooleanTrue : Types.BooleanFalse }, cancellationToken);
+                await Trans.WriteAsync(new[] {b ? Types.BooleanTrue : Types.BooleanFalse}, cancellationToken);
             }
         }
 
@@ -287,7 +280,7 @@ namespace Thrift.Protocols
                 return;
             }
 
-            await Trans.WriteAsync(new[] { (byte)b }, cancellationToken);
+            await Trans.WriteAsync(new[] {(byte) b}, cancellationToken);
         }
 
         public override async Task WriteI16Async(short i16, CancellationToken cancellationToken)
@@ -311,11 +304,11 @@ namespace Thrift.Protocols
             {
                 if ((n & ~0x7F) == 0)
                 {
-                    i32Buf[idx++] = (byte)n;
+                    i32Buf[idx++] = (byte) n;
                     break;
                 }
 
-                i32Buf[idx++] = (byte)((n & 0x7F) | 0x80);
+                i32Buf[idx++] = (byte) ((n & 0x7F) | 0x80);
                 n >>= 7;
             }
 
@@ -341,12 +334,12 @@ namespace Thrift.Protocols
 
             while (true)
             {
-                if ((n & ~(ulong)0x7FL) == 0)
+                if ((n & ~(ulong) 0x7FL) == 0)
                 {
-                    buf[idx++] = (byte)n;
+                    buf[idx++] = (byte) n;
                     break;
                 }
-                buf[idx++] = (byte)((n & 0x7F) | 0x80);
+                buf[idx++] = (byte) ((n & 0x7F) | 0x80);
                 n >>= 7;
             }
 
@@ -385,7 +378,7 @@ namespace Thrift.Protocols
 
             var bytes = Encoding.UTF8.GetBytes(str);
 
-            var bufferTuple = CreateWriteVarInt32((uint)bytes.Length);
+            var bufferTuple = CreateWriteVarInt32((uint) bytes.Length);
             await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken);
             await Trans.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
         }
@@ -397,7 +390,7 @@ namespace Thrift.Protocols
                 return;
             }
 
-            var bufferTuple = CreateWriteVarInt32((uint)b.Length);
+            var bufferTuple = CreateWriteVarInt32((uint) b.Length);
             await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken);
             await Trans.WriteAsync(b, 0, b.Length, cancellationToken);
         }
@@ -411,13 +404,16 @@ namespace Thrift.Protocols
 
             if (map.Count == 0)
             {
-                await Trans.WriteAsync(new[] { (byte)0 }, cancellationToken);
+                await Trans.WriteAsync(new[] {(byte) 0}, cancellationToken);
             }
             else
             {
-                var bufferTuple = CreateWriteVarInt32((uint)map.Count);
+                var bufferTuple = CreateWriteVarInt32((uint) map.Count);
                 await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken);
-                await Trans.WriteAsync(new[] { (byte)((GetCompactType(map.KeyType) << 4) | GetCompactType(map.ValueType)) }, cancellationToken);
+                await
+                    Trans.WriteAsync(
+                        new[] {(byte) ((GetCompactType(map.KeyType) << 4) | GetCompactType(map.ValueType))},
+                        cancellationToken);
             }
         }
 
@@ -443,18 +439,18 @@ namespace Thrift.Protocols
             }
 
             var versionAndType = (byte) await ReadByteAsync(cancellationToken);
-            var version = (byte)(versionAndType & VersionMask);
+            var version = (byte) (versionAndType & VersionMask);
 
             if (version != Version)
             {
                 throw new TProtocolException($"Expected version {Version} but got {version}");
             }
 
-            var type = (byte)((versionAndType >> TypeShiftAmount) & TypeBits);
-            var seqid = (int)await ReadVarInt32Async(cancellationToken);
+            var type = (byte) ((versionAndType >> TypeShiftAmount) & TypeBits);
+            var seqid = (int) await ReadVarInt32Async(cancellationToken);
             var messageName = await ReadStringAsync(cancellationToken);
 
-            return new TMessage(messageName, (TMessageType)type, seqid);
+            return new TMessage(messageName, (TMessageType) type, seqid);
         }
 
         public override async Task ReadMessageEndAsync(CancellationToken cancellationToken)
@@ -499,7 +495,7 @@ namespace Thrift.Protocols
         public override async Task<TField> ReadFieldBeginAsync(CancellationToken cancellationToken)
         {
             // Read a field header off the wire.
-            var type = (byte)await ReadByteAsync(cancellationToken);
+            var type = (byte) await ReadByteAsync(cancellationToken);
             // if it's a stop, then we can return immediately, as the struct is over.
             if (type == Types.Stop)
             {
@@ -508,21 +504,21 @@ namespace Thrift.Protocols
 
             short fieldId;
             // mask off the 4 MSB of the exType header. it could contain a field id delta.
-            var modifier = (short)((type & 0xf0) >> 4);
+            var modifier = (short) ((type & 0xf0) >> 4);
             if (modifier == 0)
             {
                 fieldId = await ReadI16Async(cancellationToken);
             }
             else
             {
-                fieldId = (short)(_lastFieldId + modifier);
+                fieldId = (short) (_lastFieldId + modifier);
             }
 
-            var field = new TField(string.Empty, GetTType((byte)(type & 0x0f)), fieldId);
+            var field = new TField(string.Empty, GetTType((byte) (type & 0x0f)), fieldId);
             // if this happens to be a boolean field, the value is encoded in the exType
             if (IsBoolType(type))
             {
-                _boolValue = (byte)(type & 0x0f) == Types.BooleanTrue;
+                _boolValue = (byte) (type & 0x0f) == Types.BooleanTrue;
             }
 
             // push the new field onto the field stack so we can keep the deltas going.
@@ -552,8 +548,8 @@ namespace Thrift.Protocols
             */
 
             var size = (int) await ReadVarInt32Async(cancellationToken);
-            var keyAndValueType = size == 0 ? (byte)0 : (byte)await ReadByteAsync(cancellationToken);
-            return new TMap(GetTType((byte)(keyAndValueType >> 4)), GetTType((byte)(keyAndValueType & 0xf)), size);
+            var keyAndValueType = size == 0 ? (byte) 0 : (byte) await ReadByteAsync(cancellationToken);
+            return new TMap(GetTType((byte) (keyAndValueType >> 4)), GetTType((byte) (keyAndValueType & 0xf)), size);
         }
 
         public override async Task ReadMapEndAsync(CancellationToken cancellationToken)
@@ -609,7 +605,7 @@ namespace Thrift.Protocols
             // Read a single byte off the wire. Nothing interesting here.
             var buf = new byte[1];
             await Trans.ReadAllAsync(buf, 0, 1, cancellationToken);
-            return (sbyte)buf[0];
+            return (sbyte) buf[0];
         }
 
         public override async Task<short> ReadI16Async(CancellationToken cancellationToken)
@@ -619,8 +615,8 @@ namespace Thrift.Protocols
                 return await Task.FromCanceled<short>(cancellationToken);
             }
 
-            return (short)ZigzagToInt(await ReadVarInt32Async(cancellationToken));
-       }
+            return (short) ZigzagToInt(await ReadVarInt32Async(cancellationToken));
+        }
 
         public override async Task<int> ReadI32Async(CancellationToken cancellationToken)
         {
@@ -663,7 +659,7 @@ namespace Thrift.Protocols
             }
 
             // Reads a byte[] (via ReadBinary), and then UTF-8 decodes it.
-            var length = (int)await ReadVarInt32Async(cancellationToken);
+            var length = (int) await ReadVarInt32Async(cancellationToken);
 
             if (length == 0)
             {
@@ -694,7 +690,7 @@ namespace Thrift.Protocols
             await Trans.ReadAllAsync(buf, 0, length, cancellationToken);
             return buf;
         }
-        
+
         public override async Task<TList> ReadListBeginAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
@@ -709,11 +705,11 @@ namespace Thrift.Protocols
             true size.
             */
 
-            var sizeAndType = (byte)await ReadByteAsync(cancellationToken);
+            var sizeAndType = (byte) await ReadByteAsync(cancellationToken);
             var size = (sizeAndType >> 4) & 0x0f;
             if (size == 15)
             {
-                size = (int)await ReadVarInt32Async(cancellationToken);
+                size = (int) await ReadVarInt32Async(cancellationToken);
             }
 
             var type = GetTType(sizeAndType);
@@ -734,26 +730,6 @@ namespace Thrift.Protocols
             {
                 await Task.FromCanceled(cancellationToken);
             }
-        }
-
-        /// <summary>
-        ///     All of the on-wire exType codes.
-        /// </summary>
-        private static class Types
-        {
-            public const byte Stop = 0x00;
-            public const byte BooleanTrue = 0x01;
-            public const byte BooleanFalse = 0x02;
-            public const byte Byte = 0x03;
-            public const byte I16 = 0x04;
-            public const byte I32 = 0x05;
-            public const byte I64 = 0x06;
-            public const byte Double = 0x07;
-            public const byte Binary = 0x08;
-            public const byte List = 0x09;
-            public const byte Set = 0x0A;
-            public const byte Map = 0x0B;
-            public const byte Struct = 0x0C;
         }
 
         private static byte GetCompactType(TType ttype)
@@ -781,7 +757,7 @@ namespace Thrift.Protocols
             while (true)
             {
                 var b = (byte) await ReadByteAsync(cancellationToken);
-                result |= (uint)(b & 0x7f) << shift;
+                result |= (uint) (b & 0x7f) << shift;
                 if ((b & 0x80) != 0x80)
                 {
                     break;
@@ -809,7 +785,7 @@ namespace Thrift.Protocols
             while (true)
             {
                 var b = (byte) await ReadByteAsync(cancellationToken);
-                result |= (ulong)(b & 0x7f) << shift;
+                result |= (ulong) (b & 0x7f) << shift;
                 if ((b & 0x80) != 0x80)
                 {
                     break;
@@ -913,6 +889,34 @@ namespace Thrift.Protocols
             buf[off + 5] = (byte) ((n >> 40) & 0xff);
             buf[off + 6] = (byte) ((n >> 48) & 0xff);
             buf[off + 7] = (byte) ((n >> 56) & 0xff);
+        }
+
+        public class Factory : ITProtocolFactory
+        {
+            public TProtocol GetProtocol(TClientTransport trans)
+            {
+                return new TCompactProtocol(trans);
+            }
+        }
+
+        /// <summary>
+        ///     All of the on-wire exType codes.
+        /// </summary>
+        private static class Types
+        {
+            public const byte Stop = 0x00;
+            public const byte BooleanTrue = 0x01;
+            public const byte BooleanFalse = 0x02;
+            public const byte Byte = 0x03;
+            public const byte I16 = 0x04;
+            public const byte I32 = 0x05;
+            public const byte I64 = 0x06;
+            public const byte Double = 0x07;
+            public const byte Binary = 0x08;
+            public const byte List = 0x09;
+            public const byte Set = 0x0A;
+            public const byte Map = 0x0B;
+            public const byte Struct = 0x0C;
         }
     }
 }

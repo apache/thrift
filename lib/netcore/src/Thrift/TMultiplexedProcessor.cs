@@ -1,25 +1,19 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
- *
- * Contains some contributions under the Thrift Software License.
- * Please see doc/old-thrift-license.txt in the Thrift distribution for
- * details.
- */
+// Licensed to the Apache Software Foundation(ASF) under one
+// or more contributor license agreements.See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License. You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations
+// under the License.
 
 using System;
 using System.Collections.Generic;
@@ -36,51 +30,8 @@ namespace Thrift
     {
         //TODO: Localization
 
-        private readonly Dictionary<string, ITAsyncProcessor> _serviceProcessorMap = new Dictionary<string, ITAsyncProcessor>();
-
-        public void RegisterProcessor(string serviceName, ITAsyncProcessor processor)
-        {
-            if (_serviceProcessorMap.ContainsKey(serviceName))
-            {
-                throw new InvalidOperationException($"Processor map already contains processor with name: '{serviceName}'");
-            }
-
-            _serviceProcessorMap.Add(serviceName, processor);
-        }
-        
-        private async Task FailAsync(TProtocol oprot, TMessage message, TApplicationException.ExceptionType extype,
-            string etxt, CancellationToken cancellationToken)
-        {
-            var appex = new TApplicationException(extype, etxt);
-
-            var newMessage = new TMessage(message.Name, TMessageType.Exception, message.SeqID);
-
-            await oprot.WriteMessageBeginAsync(newMessage, cancellationToken);
-            await appex.WriteAsync(oprot, cancellationToken);
-            await oprot.WriteMessageEndAsync(cancellationToken);
-            await oprot.Transport.FlushAsync(cancellationToken);
-        }
-
-        private class StoredMessageProtocol : TProtocolDecorator
-        {
-            readonly TMessage _msgBegin;
-
-            public StoredMessageProtocol(TProtocol protocol, TMessage messageBegin)
-                : base(protocol)
-            {
-                _msgBegin = messageBegin;
-            }
-
-            public override async Task<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return await Task.FromCanceled<TMessage>(cancellationToken);
-                }
-
-                return _msgBegin;
-            }
-        }
+        private readonly Dictionary<string, ITAsyncProcessor> _serviceProcessorMap =
+            new Dictionary<string, ITAsyncProcessor>();
 
         public async Task<bool> ProcessAsync(TProtocol iprot, TProtocol oprot)
         {
@@ -141,6 +92,51 @@ namespace Thrift
             catch (IOException)
             {
                 return false; // similar to all other processors
+            }
+        }
+
+        public void RegisterProcessor(string serviceName, ITAsyncProcessor processor)
+        {
+            if (_serviceProcessorMap.ContainsKey(serviceName))
+            {
+                throw new InvalidOperationException(
+                    $"Processor map already contains processor with name: '{serviceName}'");
+            }
+
+            _serviceProcessorMap.Add(serviceName, processor);
+        }
+
+        private async Task FailAsync(TProtocol oprot, TMessage message, TApplicationException.ExceptionType extype,
+            string etxt, CancellationToken cancellationToken)
+        {
+            var appex = new TApplicationException(extype, etxt);
+
+            var newMessage = new TMessage(message.Name, TMessageType.Exception, message.SeqID);
+
+            await oprot.WriteMessageBeginAsync(newMessage, cancellationToken);
+            await appex.WriteAsync(oprot, cancellationToken);
+            await oprot.WriteMessageEndAsync(cancellationToken);
+            await oprot.Transport.FlushAsync(cancellationToken);
+        }
+
+        private class StoredMessageProtocol : TProtocolDecorator
+        {
+            readonly TMessage _msgBegin;
+
+            public StoredMessageProtocol(TProtocol protocol, TMessage messageBegin)
+                : base(protocol)
+            {
+                _msgBegin = messageBegin;
+            }
+
+            public override async Task<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return await Task.FromCanceled<TMessage>(cancellationToken);
+                }
+
+                return _msgBegin;
             }
         }
     }

@@ -1,4 +1,21 @@
-﻿using System;
+﻿// Licensed to the Apache Software Foundation(ASF) under one
+// or more contributor license agreements.See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License. You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,8 +28,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Serilog;
-using Serilog.Core;
 using Thrift;
 using Thrift.Protocols;
 using Thrift.Samples;
@@ -24,29 +39,7 @@ namespace Server
 {
     public class Program
     {
-        static readonly Logger Logger = new LoggerConfiguration()
-            .MinimumLevel.Verbose()
-            .Enrich.WithThreadId()
-            .WriteTo.ColoredConsole(
-                outputTemplate:
-                "{Timestamp:yyyy-MM-dd HH:mm:ss:fff} [{Level}] [ThreadId:{ThreadId}] {SourceContext:l} {Message}{NewLine}{Exception}")
-            .CreateLogger();
-
-        private enum Transport
-        {
-            Tcp,
-            TcpBuffered,
-            NamedPipe,
-            Http,
-            TcpTls
-        }
-
-        private enum Protocol
-        {
-            Binary,
-            Compact,
-            Json,
-        }
+        private static readonly ILogger Logger = new LoggerFactory().CreateLogger(nameof(Server));
 
         public static void Main(string[] args)
         {
@@ -62,7 +55,7 @@ namespace Server
             {
                 RunAsync(args, source.Token).GetAwaiter().GetResult();
 
-                Logger.Information("Press any key to stop...");
+                Logger.LogInformation("Press any key to stop...");
 
                 Console.ReadLine();
                 source.Cancel();
@@ -108,7 +101,9 @@ Sample:
             }
             else
             {
-                await RunSelectedConfigurationAsync(selectedTransport, selectedProtocol, cancellationToken);
+                await
+                    RunSelectedConfigurationAsync(selectedTransport, selectedProtocol,
+                        cancellationToken);
             }
         }
 
@@ -132,27 +127,30 @@ Sample:
             return selectedTransport;
         }
 
-        private static async Task RunSelectedConfigurationAsync(Transport transport, Protocol protocol, CancellationToken cancellationToken)
+        private static async Task RunSelectedConfigurationAsync(Transport transport,
+            Protocol protocol, CancellationToken cancellationToken)
         {
-            var fabric = new LoggerFactory().AddSerilog(Logger);
+            var fabric = new LoggerFactory();
             var handler = new CalculatorAsyncHandler();
             var processor = new Calculator.AsyncProcessor(handler);
 
             TServerTransport serverTransport = null;
-            
+
             switch (transport)
             {
                 case Transport.Tcp:
                     serverTransport = new TServerSocketTransport(9090);
                     break;
                 case Transport.TcpBuffered:
-                    serverTransport = new TServerSocketTransport(port: 9090, clientTimeout: 10000, useBufferedSockets:true);
+                    serverTransport = new TServerSocketTransport(port: 9090, clientTimeout: 10000,
+                        useBufferedSockets: true);
                     break;
                 case Transport.NamedPipe:
                     serverTransport = new TNamedPipeServerTransport(".test");
                     break;
                 case Transport.TcpTls:
-                    serverTransport = new TTlsServerSocketTransport(9090, false, GetCertificate(), ClientCertValidator, LocalCertificateSelectionCallback);
+                    serverTransport = new TTlsServerSocketTransport(9090, false, GetCertificate(),
+                        ClientCertValidator, LocalCertificateSelectionCallback);
                     break;
             }
 
@@ -163,21 +161,21 @@ Sample:
             {
                 case Protocol.Binary:
                 {
-                        inputProtocolFactory = new TBinaryProtocol.Factory();
-                        outputProtocolFactory = new TBinaryProtocol.Factory();
-                    }
+                    inputProtocolFactory = new TBinaryProtocol.Factory();
+                    outputProtocolFactory = new TBinaryProtocol.Factory();
+                }
                     break;
                 case Protocol.Compact:
                 {
-                        inputProtocolFactory = new TCompactProtocol.Factory();
-                        outputProtocolFactory = new TCompactProtocol.Factory();
-                    }
+                    inputProtocolFactory = new TCompactProtocol.Factory();
+                    outputProtocolFactory = new TCompactProtocol.Factory();
+                }
                     break;
                 case Protocol.Json:
                 {
-                        inputProtocolFactory = new TJsonProtocol.Factory();
-                        outputProtocolFactory = new TJsonProtocol.Factory();
-                    }
+                    inputProtocolFactory = new TJsonProtocol.Factory();
+                    outputProtocolFactory = new TJsonProtocol.Factory();
+                }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(protocol), protocol, null);
@@ -185,20 +183,21 @@ Sample:
 
             try
             {
-                Logger.Information($"Selected TAsyncServer with {serverTransport} transport and {inputProtocolFactory} protocol factories");
+                Logger.LogInformation(
+                    $"Selected TAsyncServer with {serverTransport} transport and {inputProtocolFactory} protocol factories");
 
-                var server = new AsyncBaseServer(processor, serverTransport, inputProtocolFactory, outputProtocolFactory, fabric);
+                var server = new AsyncBaseServer(processor, serverTransport, inputProtocolFactory,
+                    outputProtocolFactory, fabric);
 
-                Logger.Information("Starting the server...");
+                Logger.LogInformation("Starting the server...");
                 await server.ServeAsync(cancellationToken);
-
             }
             catch (Exception x)
             {
-                Logger.Information(x, "Error");
+                Logger.LogInformation(x.ToString());
             }
 
-            Logger.Information("Server stopped.");
+            Logger.LogInformation("Server stopped.");
         }
 
         private static X509Certificate2 GetCertificate()
@@ -211,24 +210,46 @@ Sample:
         private static string GetCertPath(DirectoryInfo di, int maxCount = 6)
         {
             var topDir = di;
-            var certFile = topDir.EnumerateFiles("ThriftTest.pfx", SearchOption.AllDirectories).FirstOrDefault();
+            var certFile =
+                topDir.EnumerateFiles("ThriftTest.pfx", SearchOption.AllDirectories)
+                    .FirstOrDefault();
             if (certFile == null)
             {
-                if (maxCount == 0) throw new FileNotFoundException("Cannot find file in directories");
+                if (maxCount == 0)
+                    throw new FileNotFoundException("Cannot find file in directories");
                 return GetCertPath(di.Parent, maxCount - 1);
             }
 
             return certFile.FullName;
         }
 
-        private static X509Certificate LocalCertificateSelectionCallback(object sender, string targetHost, X509CertificateCollection localCertificates, X509Certificate remoteCertificate, string[] acceptableIssuers)
+        private static X509Certificate LocalCertificateSelectionCallback(object sender,
+            string targetHost, X509CertificateCollection localCertificates,
+            X509Certificate remoteCertificate, string[] acceptableIssuers)
         {
             return GetCertificate();
         }
 
-        private static bool ClientCertValidator(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        private static bool ClientCertValidator(object sender, X509Certificate certificate,
+            X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             return true;
+        }
+
+        private enum Transport
+        {
+            Tcp,
+            TcpBuffered,
+            NamedPipe,
+            Http,
+            TcpTls
+        }
+
+        private enum Protocol
+        {
+            Binary,
+            Compact,
+            Json,
         }
 
         public class HttpServerSample
@@ -273,9 +294,9 @@ Sample:
                 }
 
                 // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-                public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+                public void Configure(IApplicationBuilder app, IHostingEnvironment env,
+                    ILoggerFactory loggerFactory)
                 {
-                    loggerFactory.AddSerilog(Logger);
                     app.UseMiddleware<THttpServerTransport>();
                 }
             }
@@ -290,27 +311,29 @@ Sample:
                 _log = new Dictionary<int, SharedStruct>();
             }
 
-            public async Task<SharedStruct> GetStructAsync(int key, CancellationToken cancellationToken)
+            public async Task<SharedStruct> GetStructAsync(int key,
+                CancellationToken cancellationToken)
             {
-                Logger.Information("GetStructAsync({0})", key);
+                Logger.LogInformation("GetStructAsync({0})", key);
                 return await Task.FromResult(_log[key]);
             }
 
             public async Task PingAsync(CancellationToken cancellationToken)
             {
-                Logger.Information("PingAsync()");
+                Logger.LogInformation("PingAsync()");
                 await Task.CompletedTask;
             }
 
             public async Task<int> AddAsync(int num1, int num2, CancellationToken cancellationToken)
             {
-                Logger.Information($"AddAsync({num1},{num2})");
+                Logger.LogInformation($"AddAsync({num1},{num2})");
                 return await Task.FromResult(num1 + num2);
             }
 
-            public async Task<int> CalculateAsync(int logid, Work w, CancellationToken cancellationToken)
+            public async Task<int> CalculateAsync(int logid, Work w,
+                CancellationToken cancellationToken)
             {
-                Logger.Information($"CalculateAsync({logid}, [{w.Op},{w.Num1},{w.Num2}])");
+                Logger.LogInformation($"CalculateAsync({logid}, [{w.Op},{w.Num1},{w.Num2}])");
 
                 var val = 0;
                 switch (w.Op)
@@ -324,7 +347,7 @@ Sample:
                         break;
 
                     case Operation.Multiply:
-                        val = w.Num1 * w.Num2;
+                        val = w.Num1*w.Num2;
                         break;
 
                     case Operation.Divide:
@@ -332,25 +355,25 @@ Sample:
                         {
                             var io = new InvalidOperation
                             {
-                                WhatOp = (int)w.Op,
+                                WhatOp = (int) w.Op,
                                 Why = "Cannot divide by 0"
                             };
 
                             throw io;
                         }
-                        val = w.Num1 / w.Num2;
+                        val = w.Num1/w.Num2;
                         break;
 
                     default:
+                    {
+                        var io = new InvalidOperation
                         {
-                            var io = new InvalidOperation
-                            {
-                                WhatOp = (int)w.Op,
-                                Why = "Unknown operation"
-                            };
+                            WhatOp = (int) w.Op,
+                            Why = "Unknown operation"
+                        };
 
-                            throw io;
-                        }
+                        throw io;
+                    }
                 }
 
                 var entry = new SharedStruct
@@ -366,7 +389,7 @@ Sample:
 
             public async Task ZipAsync(CancellationToken cancellationToken)
             {
-                Logger.Information("ZipAsync() with delay 100mc");
+                Logger.LogInformation("ZipAsync() with delay 100mc");
                 await Task.Delay(100, CancellationToken.None);
             }
         }

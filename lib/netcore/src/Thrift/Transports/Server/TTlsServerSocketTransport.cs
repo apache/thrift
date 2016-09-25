@@ -1,21 +1,19 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
+// Licensed to the Apache Software Foundation(ASF) under one
+// or more contributor license agreements.See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License. You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations
+// under the License.
 
 using System;
 using System.Net;
@@ -29,18 +27,17 @@ using Thrift.Transports.Client;
 
 namespace Thrift.Transports.Server
 {
-
     // ReSharper disable once InconsistentNaming
     public class TTlsServerSocketTransport : TServerTransport
     {
-        private TcpListener _server;
-        private readonly int _port;
-        private readonly int _clientTimeout = 0;
-        private readonly bool _useBufferedSockets;
-        private readonly X509Certificate2 _serverCertificate;
         private readonly RemoteCertificateValidationCallback _clientCertValidator;
+        private readonly int _clientTimeout = 0;
         private readonly LocalCertificateSelectionCallback _localCertificateSelectionCallback;
+        private readonly int _port;
+        private readonly X509Certificate2 _serverCertificate;
         private readonly SslProtocols _sslProtocols;
+        private readonly bool _useBufferedSockets;
+        private TcpListener _server;
 
         public TTlsServerSocketTransport(int port, X509Certificate2 certificate)
             : this(port, false, certificate)
@@ -57,7 +54,8 @@ namespace Thrift.Transports.Server
         {
             if (!certificate.HasPrivateKey)
             {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, "Your server-certificate needs to have a private key");
+                throw new TTransportException(TTransportException.ExceptionType.Unknown,
+                    "Your server-certificate needs to have a private key");
             }
 
             _port = port;
@@ -119,7 +117,8 @@ namespace Thrift.Transports.Server
                 client.SendTimeout = client.ReceiveTimeout = _clientTimeout;
 
                 //wrap the client in an SSL Socket passing in the SSL cert
-                var tTlsSocket = new TTlsSocketClientTransport(client, _serverCertificate, true, _clientCertValidator, _localCertificateSelectionCallback, _sslProtocols);
+                var tTlsSocket = new TTlsSocketClientTransport(client, _serverCertificate, true, _clientCertValidator,
+                    _localCertificateSelectionCallback, _sslProtocols);
 
                 await tTlsSocket.SetupTlsAsync();
 

@@ -1,25 +1,19 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
- *
- * Contains some contributions under the Thrift Software License.
- * Please see doc/old-thrift-license.txt in the Thrift distribution for
- * details.
- */
+// Licensed to the Apache Software Foundation(ASF) under one
+// or more contributor license agreements.See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License. You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations
+// under the License.
 
 using System;
 using System.Text;
@@ -43,28 +37,6 @@ namespace Thrift.Protocols
         protected bool StrictRead;
         protected bool StrictWrite;
 
-        public class Factory : ITProtocolFactory
-        {
-            protected bool StrictRead;
-            protected bool StrictWrite;
-
-            public Factory()
-                : this(false, true)
-            {
-            }
-
-            public Factory(bool strictRead, bool strictWrite)
-            {
-                StrictRead = strictRead;
-                StrictWrite = strictWrite;
-            }
-
-            public TProtocol GetProtocol(TClientTransport trans)
-            {
-                return new TBinaryProtocol(trans, StrictRead, StrictWrite);
-            }
-        }
-
         public TBinaryProtocol(TClientTransport trans)
             : this(trans, false, true)
         {
@@ -86,15 +58,15 @@ namespace Thrift.Protocols
 
             if (StrictWrite)
             {
-                var version = Version1 | (uint)message.Type;
-                await WriteI32Async((int)version, cancellationToken);
+                var version = Version1 | (uint) message.Type;
+                await WriteI32Async((int) version, cancellationToken);
                 await WriteStringAsync(message.Name, cancellationToken);
                 await WriteI32Async(message.SeqID, cancellationToken);
             }
             else
             {
                 await WriteStringAsync(message.Name, cancellationToken);
-                await WriteByteAsync((sbyte)message.Type, cancellationToken);
+                await WriteByteAsync((sbyte) message.Type, cancellationToken);
                 await WriteI32Async(message.SeqID, cancellationToken);
             }
         }
@@ -130,7 +102,7 @@ namespace Thrift.Protocols
                 return;
             }
 
-            await WriteByteAsync((sbyte)field.Type, cancellationToken);
+            await WriteByteAsync((sbyte) field.Type, cancellationToken);
             await WriteI16Async(field.ID, cancellationToken);
         }
 
@@ -141,6 +113,7 @@ namespace Thrift.Protocols
                 await Task.FromCanceled(cancellationToken);
             }
         }
+
         public override async Task WriteFieldStopAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
@@ -148,7 +121,7 @@ namespace Thrift.Protocols
                 return;
             }
 
-            await WriteByteAsync((sbyte)TType.Stop, cancellationToken);
+            await WriteByteAsync((sbyte) TType.Stop, cancellationToken);
         }
 
         public override async Task WriteMapBeginAsync(TMap map, CancellationToken cancellationToken)
@@ -158,8 +131,8 @@ namespace Thrift.Protocols
                 return;
             }
 
-            await WriteByteAsync((sbyte)map.KeyType, cancellationToken);
-            await WriteByteAsync((sbyte)map.ValueType, cancellationToken);
+            await WriteByteAsync((sbyte) map.KeyType, cancellationToken);
+            await WriteByteAsync((sbyte) map.ValueType, cancellationToken);
             await WriteI32Async(map.Count, cancellationToken);
         }
 
@@ -178,7 +151,7 @@ namespace Thrift.Protocols
                 return;
             }
 
-            await WriteByteAsync((sbyte)list.ElementType, cancellationToken);
+            await WriteByteAsync((sbyte) list.ElementType, cancellationToken);
             await WriteI32Async(list.Count, cancellationToken);
         }
 
@@ -197,7 +170,7 @@ namespace Thrift.Protocols
                 return;
             }
 
-            await WriteByteAsync((sbyte)set.ElementType, cancellationToken);
+            await WriteByteAsync((sbyte) set.ElementType, cancellationToken);
             await WriteI32Async(set.Count, cancellationToken);
         }
 
@@ -216,14 +189,14 @@ namespace Thrift.Protocols
                 return;
             }
 
-            await WriteByteAsync(b ? (sbyte)1 : (sbyte)0, cancellationToken);
+            await WriteByteAsync(b ? (sbyte) 1 : (sbyte) 0, cancellationToken);
         }
 
         protected internal static byte[] CreateWriteByte(sbyte b)
         {
             var bout = new byte[1];
 
-            bout[0] = (byte)b;
+            bout[0] = (byte) b;
 
             return bout;
         }
@@ -243,12 +216,12 @@ namespace Thrift.Protocols
         {
             var i16Out = new byte[2];
 
-            i16Out[0] = (byte)(0xff & (s >> 8));
-            i16Out[1] = (byte)(0xff & s);
+            i16Out[0] = (byte) (0xff & (s >> 8));
+            i16Out[1] = (byte) (0xff & s);
 
             return i16Out;
         }
-        
+
         public override async Task WriteI16Async(short i16, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
@@ -264,10 +237,10 @@ namespace Thrift.Protocols
         {
             var i32Out = new byte[4];
 
-            i32Out[0] = (byte)(0xff & (i32 >> 24));
-            i32Out[1] = (byte)(0xff & (i32 >> 16));
-            i32Out[2] = (byte)(0xff & (i32 >> 8));
-            i32Out[3] = (byte)(0xff & i32);
+            i32Out[0] = (byte) (0xff & (i32 >> 24));
+            i32Out[1] = (byte) (0xff & (i32 >> 16));
+            i32Out[2] = (byte) (0xff & (i32 >> 8));
+            i32Out[3] = (byte) (0xff & i32);
 
             return i32Out;
         }
@@ -287,14 +260,14 @@ namespace Thrift.Protocols
         {
             var i64Out = new byte[8];
 
-            i64Out[0] = (byte)(0xff & (i64 >> 56));
-            i64Out[1] = (byte)(0xff & (i64 >> 48));
-            i64Out[2] = (byte)(0xff & (i64 >> 40));
-            i64Out[3] = (byte)(0xff & (i64 >> 32));
-            i64Out[4] = (byte)(0xff & (i64 >> 24));
-            i64Out[5] = (byte)(0xff & (i64 >> 16));
-            i64Out[6] = (byte)(0xff & (i64 >> 8));
-            i64Out[7] = (byte)(0xff & i64);
+            i64Out[0] = (byte) (0xff & (i64 >> 56));
+            i64Out[1] = (byte) (0xff & (i64 >> 48));
+            i64Out[2] = (byte) (0xff & (i64 >> 40));
+            i64Out[3] = (byte) (0xff & (i64 >> 32));
+            i64Out[4] = (byte) (0xff & (i64 >> 24));
+            i64Out[5] = (byte) (0xff & (i64 >> 16));
+            i64Out[6] = (byte) (0xff & (i64 >> 8));
+            i64Out[7] = (byte) (0xff & i64);
 
             return i64Out;
         }
@@ -342,12 +315,13 @@ namespace Thrift.Protocols
             var size = await ReadI32Async(cancellationToken);
             if (size < 0)
             {
-                var version = (uint)size & VersionMask;
+                var version = (uint) size & VersionMask;
                 if (version != Version1)
                 {
-                    throw new TProtocolException(TProtocolException.BAD_VERSION, $"Bad version in ReadMessageBegin: {version}");
+                    throw new TProtocolException(TProtocolException.BAD_VERSION,
+                        $"Bad version in ReadMessageBegin: {version}");
                 }
-                message.Type = (TMessageType)(size & 0x000000ff);
+                message.Type = (TMessageType) (size & 0x000000ff);
                 message.Name = await ReadStringAsync(cancellationToken);
                 message.SeqID = await ReadI32Async(cancellationToken);
             }
@@ -355,10 +329,11 @@ namespace Thrift.Protocols
             {
                 if (StrictRead)
                 {
-                    throw new TProtocolException(TProtocolException.BAD_VERSION, "Missing version in ReadMessageBegin, old client?");
+                    throw new TProtocolException(TProtocolException.BAD_VERSION,
+                        "Missing version in ReadMessageBegin, old client?");
                 }
                 message.Name = await ReadStringBodyAsync(size, cancellationToken);
-                message.Type = (TMessageType)await ReadByteAsync(cancellationToken);
+                message.Type = (TMessageType) await ReadByteAsync(cancellationToken);
                 message.SeqID = await ReadI32Async(cancellationToken);
             }
             return message;
@@ -428,8 +403,8 @@ namespace Thrift.Protocols
 
             var map = new TMap
             {
-                KeyType = (TType)await ReadByteAsync(cancellationToken),
-                ValueType = (TType)await ReadByteAsync(cancellationToken),
+                KeyType = (TType) await ReadByteAsync(cancellationToken),
+                ValueType = (TType) await ReadByteAsync(cancellationToken),
                 Count = await ReadI32Async(cancellationToken)
             };
 
@@ -453,7 +428,7 @@ namespace Thrift.Protocols
 
             var list = new TList
             {
-                ElementType = (TType)await ReadByteAsync(cancellationToken),
+                ElementType = (TType) await ReadByteAsync(cancellationToken),
                 Count = await ReadI32Async(cancellationToken)
             };
 
@@ -477,7 +452,7 @@ namespace Thrift.Protocols
 
             var set = new TSet
             {
-                ElementType = (TType)await ReadByteAsync(cancellationToken),
+                ElementType = (TType) await ReadByteAsync(cancellationToken),
                 Count = await ReadI32Async(cancellationToken)
             };
 
@@ -511,7 +486,7 @@ namespace Thrift.Protocols
 
             var bin = new byte[1];
             await Trans.ReadAllAsync(bin, 0, 1, cancellationToken); //TODO: why readall ?
-            return (sbyte)bin[0];
+            return (sbyte) bin[0];
         }
 
         public override async Task<short> ReadI16Async(CancellationToken cancellationToken)
@@ -523,7 +498,7 @@ namespace Thrift.Protocols
 
             var i16In = new byte[2];
             await Trans.ReadAllAsync(i16In, 0, 2, cancellationToken);
-            var result = (short)(((i16In[0] & 0xff) << 8) | i16In[1] & 0xff);
+            var result = (short) (((i16In[0] & 0xff) << 8) | i16In[1] & 0xff);
             return result;
         }
 
@@ -536,7 +511,8 @@ namespace Thrift.Protocols
 
             var i32In = new byte[4];
             await Trans.ReadAllAsync(i32In, 0, 4, cancellationToken);
-            var result = ((i32In[0] & 0xff) << 24) | ((i32In[1] & 0xff) << 16) | ((i32In[2] & 0xff) << 8) | i32In[3] & 0xff;
+            var result = ((i32In[0] & 0xff) << 24) | ((i32In[1] & 0xff) << 16) | ((i32In[2] & 0xff) << 8) |
+                         i32In[3] & 0xff;
             return result;
         }
 
@@ -545,13 +521,13 @@ namespace Thrift.Protocols
         protected internal long CreateReadI64(byte[] buf)
         {
             var result =
-                ((long)(buf[0] & 0xff) << 56) |
-                ((long)(buf[1] & 0xff) << 48) |
-                ((long)(buf[2] & 0xff) << 40) |
-                ((long)(buf[3] & 0xff) << 32) |
-                ((long)(buf[4] & 0xff) << 24) |
-                ((long)(buf[5] & 0xff) << 16) |
-                ((long)(buf[6] & 0xff) << 8) |
+                ((long) (buf[0] & 0xff) << 56) |
+                ((long) (buf[1] & 0xff) << 48) |
+                ((long) (buf[2] & 0xff) << 40) |
+                ((long) (buf[3] & 0xff) << 32) |
+                ((long) (buf[4] & 0xff) << 24) |
+                ((long) (buf[5] & 0xff) << 16) |
+                ((long) (buf[6] & 0xff) << 8) |
                 buf[7] & 0xff;
 
             return result;
@@ -579,7 +555,7 @@ namespace Thrift.Protocols
             }
 
             var d = await ReadI64Async(cancellationToken);
-            return BitConverter.Int64BitsToDouble(d); 
+            return BitConverter.Int64BitsToDouble(d);
         }
 
         public override async Task<byte[]> ReadBinaryAsync(CancellationToken cancellationToken)
@@ -605,6 +581,28 @@ namespace Thrift.Protocols
             var buf = new byte[size];
             await Trans.ReadAllAsync(buf, 0, size, cancellationToken);
             return Encoding.UTF8.GetString(buf, 0, buf.Length);
+        }
+
+        public class Factory : ITProtocolFactory
+        {
+            protected bool StrictRead;
+            protected bool StrictWrite;
+
+            public Factory()
+                : this(false, true)
+            {
+            }
+
+            public Factory(bool strictRead, bool strictWrite)
+            {
+                StrictRead = strictRead;
+                StrictWrite = strictWrite;
+            }
+
+            public TProtocol GetProtocol(TClientTransport trans)
+            {
+                return new TBinaryProtocol(trans, StrictRead, StrictWrite);
+            }
         }
     }
 }
