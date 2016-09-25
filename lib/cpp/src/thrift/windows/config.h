@@ -30,6 +30,7 @@
 
 // use std::thread in MSVC11 (2012) or newer
 #if _MSC_VER >= 1700
+#define HAVE_STDINT_H 1
 #define USE_STD_THREAD 1
 // otherwise use boost threads
 #else
