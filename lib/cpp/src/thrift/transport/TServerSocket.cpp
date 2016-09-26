@@ -16,7 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
+#if _MSC_VER
+#define snprintf _snprintf
+#endif
 #include <thrift/thrift-config.h>
 
 #include <cstring>
