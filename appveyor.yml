@@ -29,9 +29,8 @@ os:
 environment:
   BOOST_ROOT: C:\Libraries\boost_1_59_0
   BOOST_LIBRARYDIR: C:\Libraries\boost_1_59_0\lib64-msvc-14.0
-  # Unfurtunately, these versions need manual update because old versions are quickly deleted.
+  # Unfurtunately, this version needs manual update because old versions are quickly deleted.
   ANT_VERSION: 1.9.7
-  OPENSSL_VERSION: 1_0_2i
 
 install:
 - '"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64'
@@ -44,8 +43,8 @@ install:
 - cmake --build . --config release
 - cd ..
   # OpenSSL
-- appveyor DownloadFile https://slproweb.com/download/Win64OpenSSL-%OPENSSL_VERSION%.exe
-- ps: Start-Process "Win64OpenSSL-${env:OPENSSL_VERSION}.exe" -ArgumentList "/silent /verysilent /sp- /suppressmsgboxes" -Wait
+- C:\Python35-x64\python %APPVEYOR_BUILD_FOLDER%\build\appveyor\download_openssl.py
+- ps: Start-Process "Win64OpenSSL.exe" -ArgumentList "/silent /verysilent /sp- /suppressmsgboxes" -Wait
   # Libevent
 - appveyor DownloadFile https://github.com/libevent/libevent/releases/download/release-2.0.22-stable/libevent-2.0.22-stable.tar.gz
 - 7z x libevent-2.0.22-stable.tar.gz -so | 7z x -si -ttar > nul
