@@ -105,7 +105,7 @@ class THttpClient(TTransportBase):
             self.__http = http_client.HTTPSConnection(self.host, self.port)
             if self.using_proxy():
                 self.__http.set_tunnel(self.realhost, self.realport,
-                                       { "Proxy-Authorization": self.proxy_auth })
+                                       {"Proxy-Authorization": self.proxy_auth})
 
     def close(self):
         self.__http.close()
