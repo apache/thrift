@@ -279,7 +279,7 @@ void TServerSocket::listen() {
   const struct addrinfo *res;
   int error;
   char port[sizeof("65535")];
-  snprintf(port, sizeof(port), "%d", port_);
+  THRIFT_SNPRINTF(port, sizeof(port), "%d", port_);
 
   struct addrinfo hints;
   std::memset(&hints, 0, sizeof(hints));
@@ -524,9 +524,9 @@ void TServerSocket::listen() {
   if (retries > retryLimit_) {
     char errbuf[1024];
     if (!path_.empty()) {
-      snprintf(errbuf, sizeof(errbuf), "TServerSocket::listen() PATH %s", path_.c_str());
+      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() PATH %s", path_.c_str());
     } else {
-      snprintf(errbuf, sizeof(errbuf), "TServerSocket::listen() BIND %d", port_);
+      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() BIND %d", port_);
     }
     GlobalOutput(errbuf);
     close();
