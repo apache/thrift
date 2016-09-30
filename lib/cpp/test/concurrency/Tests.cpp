@@ -45,25 +45,38 @@ int main(int argc, char** argv) {
 
     std::cout << "ThreadFactory tests..." << std::endl;
 
-    size_t count = 1000;
-    size_t floodLoops = 1;
-    size_t floodCount = 100000;
+    int reapLoops = 20;
+    int reapCount = 1000;
+    size_t floodLoops = 3;
+    size_t floodCount = 20000;
 
-    std::cout << "\t\tThreadFactory reap N threads test: N = " << count << std::endl;
+    std::cout << "\t\tThreadFactory reap N threads test: N = " << reapLoops << "x" << reapCount << std::endl;
 
-    assert(threadFactoryTests.reapNThreads(count));
+    if (!threadFactoryTests.reapNThreads(reapLoops, reapCount)) {
+      std::cerr << "\t\ttThreadFactory reap N threads FAILED" << std::endl;
+      return 1;
+    }
 
-    std::cout << "\t\tThreadFactory floodN threads test: N = " << floodCount << std::endl;
+    std::cout << "\t\tThreadFactory flood N threads test: N = " << floodLoops << "x" << floodCount << std::endl;
 
-    assert(threadFactoryTests.floodNTest(floodLoops, floodCount));
+    if (!threadFactoryTests.floodNTest(floodLoops, floodCount)) {
+      std::cerr << "\t\ttThreadFactory flood N threads FAILED" << std::endl;
+      return 1;
+    }
 
     std::cout << "\t\tThreadFactory synchronous start test" << std::endl;
 
-    assert(threadFactoryTests.synchStartTest());
+    if (!threadFactoryTests.synchStartTest()) {
+      std::cerr << "\t\ttThreadFactory synchronous start FAILED" << std::endl;
+      return 1;
+    }
 
     std::cout << "\t\tThreadFactory monitor timeout test" << std::endl;
 
-    assert(threadFactoryTests.monitorTimeoutTest());
+    if (!threadFactoryTests.monitorTimeoutTest()) {
+      std::cerr << "\t\ttThreadFactory monitor timeout FAILED" << std::endl;
+      return 1;
+    }
   }
 
   if (runAll || args[0].compare("util") == 0) {
@@ -97,7 +110,10 @@ int main(int argc, char** argv) {
 
     TimerManagerTests timerManagerTests;
 
-    assert(timerManagerTests.test00());
+    if (!timerManagerTests.test00()) {
+      std::cerr << "\t\tTimerManager tests FAILED" << std::endl;
+      return 1;
+    }
   }
 
   if (runAll || args[0].compare("thread-manager") == 0) {
@@ -105,24 +121,34 @@ int main(int argc, char** argv) {
     std::cout << "ThreadManager tests..." << std::endl;
 
     {
-
       size_t workerCount = 100;
-
-      size_t taskCount = 100000;
-
+      size_t taskCount = 50000;
       int64_t delay = 10LL;
+
+      ThreadManagerTests threadManagerTests;
+
+      std::cout << "\t\tThreadManager api test:" << std::endl;
+
+      if (!threadManagerTests.apiTest()) {
+        std::cerr << "\t\tThreadManager apiTest FAILED" << std::endl;
+        return 1;
+      }
 
       std::cout << "\t\tThreadManager load test: worker count: " << workerCount
                 << " task count: " << taskCount << " delay: " << delay << std::endl;
 
-      ThreadManagerTests threadManagerTests;
-
-      assert(threadManagerTests.loadTest(taskCount, delay, workerCount));
+      if (!threadManagerTests.loadTest(taskCount, delay, workerCount)) {
+        std::cerr << "\t\tThreadManager loadTest FAILED" << std::endl;
+        return 1;
+      }
 
       std::cout << "\t\tThreadManager block test: worker count: " << workerCount
                 << " delay: " << delay << std::endl;
 
-      assert(threadManagerTests.blockTest(delay, workerCount));
+      if (!threadManagerTests.blockTest(delay, workerCount)) {
+        std::cerr << "\t\tThreadManager blockTest FAILED" << std::endl;
+        return 1;
+      }
     }
   }
 
@@ -134,13 +160,13 @@ int main(int argc, char** argv) {
 
       size_t minWorkerCount = 2;
 
-      size_t maxWorkerCount = 512;
+      size_t maxWorkerCount = 64;
 
       size_t tasksPerWorker = 1000;
 
-      int64_t delay = 10LL;
+      int64_t delay = 5LL;
 
-      for (size_t workerCount = minWorkerCount; workerCount < maxWorkerCount; workerCount *= 2) {
+      for (size_t workerCount = minWorkerCount; workerCount < maxWorkerCount; workerCount *= 4) {
 
         size_t taskCount = workerCount * tasksPerWorker;
 
@@ -149,8 +175,15 @@ int main(int argc, char** argv) {
 
         ThreadManagerTests threadManagerTests;
 
-        threadManagerTests.loadTest(taskCount, delay, workerCount);
+        if (!threadManagerTests.loadTest(taskCount, delay, workerCount))
+        {
+          std::cerr << "\t\tThreadManager loadTest FAILED" << std::endl;
+          return 1;
+        }
       }
     }
   }
+
+  std::cout << "ALL TESTS PASSED" << std::endl;
+  return 0;
 }

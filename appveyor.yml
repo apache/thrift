@@ -89,6 +89,5 @@ build_script:
 # CTest fails to invoke ant seemingly due to "ant.bat" v.s. "ant" (shell script) conflict.
 # Currently, everything that involves OpenSSL seems to hang forever on our Appveyor setup.
 # Also a few C++ tests hang (on Appveyor or on Windows in general).
-- ctest -C Release --timeout 600 -VV -E "(concurrency_test|processor_test|TInterruptTest|StressTestNonBlocking|OpenSSLManualInitTest|SecurityTest|PythonTestSSLSocket|python_test$|^Java)"
-
-#TODO make it perfect ;-r
+- ctest -C Release --timeout 600 -VV -E "(StressTestNonBlocking|PythonTestSSLSocket|python_test$|^Java)"
+# TODO make it perfect ;-r

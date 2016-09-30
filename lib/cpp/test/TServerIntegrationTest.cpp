@@ -156,9 +156,9 @@ public:
                               boost::shared_ptr<TTransportFactory>(new TTransportFactory),
                               boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory))),
       pEventHandler(boost::shared_ptr<TServerReadyEventHandler>(new TServerReadyEventHandler)),
-	  bStressDone(false),
-	  bStressConnectionCount(0),
-	  bStressRequestCount(0) {
+    bStressDone(false),
+    bStressConnectionCount(0),
+    bStressRequestCount(0) {
     pServer->setServerEventHandler(pEventHandler);
   }
 
@@ -170,8 +170,8 @@ public:
                           boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory))),
       pEventHandler(boost::shared_ptr<TServerReadyEventHandler>(new TServerReadyEventHandler)),
       bStressDone(false),
-	  bStressConnectionCount(0),
-	  bStressRequestCount(0) {
+    bStressConnectionCount(0),
+    bStressRequestCount(0) {
     pServer->setServerEventHandler(pEventHandler);
   }
 
@@ -217,10 +217,10 @@ public:
    * \param[in]  purpose  a description of the test for logging purposes
    */
   void baseline(int64_t numToMake, int64_t expectedHWM, const std::string& purpose) {
-	BOOST_TEST_MESSAGE(boost::format("Testing %1%: %2% with %3% clients, expect %4% HWM")
-						% typeid(TServerType).name() % purpose % numToMake % expectedHWM);
+    BOOST_TEST_MESSAGE(boost::format("Testing %1%: %2% with %3% clients, expect %4% HWM")
+            % typeid(TServerType).name() % purpose % numToMake % expectedHWM);
 
-	startServer();
+    startServer();
 
     std::vector<boost::shared_ptr<TSocket> > holdSockets;
     std::vector<boost::shared_ptr<boost::thread> > holdThreads;
@@ -303,14 +303,14 @@ public:
    * Helper method to stress the system
    */
   void stressor() {
-	while (!bStressDone) {
+  while (!bStressDone) {
       boost::shared_ptr<TSocket> pSocket(new TSocket("localhost", getServerPort()), autoSocketCloser);
       boost::shared_ptr<TProtocol> pProtocol(new TBinaryProtocol(pSocket));
       ParentServiceClient client(pProtocol);
       pSocket->open();
       bStressConnectionCount.fetch_add(1, boost::memory_order_relaxed);
       for (int i = 0; i < rand() % 1000; ++i) {
-    	client.incrementGeneration();
+      client.incrementGeneration();
         bStressRequestCount.fetch_add(1, boost::memory_order_relaxed);
       }
     }
@@ -459,7 +459,7 @@ BOOST_AUTO_TEST_CASE(test_stop_with_interruptable_clients_connected) {
 BOOST_AUTO_TEST_CASE(test_stop_with_uninterruptable_clients_connected) {
   // This tests pre-THRIFT-2441 behavior: stopping the server blocks until clients
   // disconnect.
-	  BOOST_TEST_MESSAGE("Testing stop with uninterruptable clients");
+    BOOST_TEST_MESSAGE("Testing stop with uninterruptable clients");
 
   boost::dynamic_pointer_cast<TServerSocket>(pServer->getServerTransport())
       ->setInterruptableChildren(false); // returns to pre-THRIFT-2441 behavior

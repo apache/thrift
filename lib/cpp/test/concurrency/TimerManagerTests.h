@@ -34,8 +34,6 @@ using namespace apache::thrift::concurrency;
 
 class TimerManagerTests {
 
-  static const double TEST_TOLERANCE;
-
 public:
   class Task : public Runnable {
   public:
@@ -52,25 +50,11 @@ public:
     void run() {
 
       _endTime = Util::currentTime();
-
-      // Figure out error percentage
-
-      int64_t delta = _endTime - _startTime;
-
-      delta = delta > _timeout ? delta - _timeout : _timeout - delta;
-
-      double error = double(delta) / _timeout;
-
-      if (error < TEST_TOLERANCE) {
-        _success = true;
-      }
-
-      _done = true;
-
-      std::cout << "\t\t\tTimerManagerTests::Task[" << this << "] done" << std::endl; // debug
+      _success = (_endTime - _startTime) >= _timeout;
 
       {
         Synchronized s(_monitor);
+        _done = true;
         _monitor.notifyAll();
       }
     }
@@ -147,7 +131,6 @@ public:
   Monitor _monitor;
 };
 
-const double TimerManagerTests::TEST_TOLERANCE = .20;
 }
 }
 }
