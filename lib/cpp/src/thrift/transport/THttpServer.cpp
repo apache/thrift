@@ -21,6 +21,7 @@
 #include <sstream>
 #include <iostream>
 
+#include <thrift/config.h>
 #include <thrift/transport/THttpServer.h>
 #include <thrift/transport/TSocket.h>
 #if defined(_MSC_VER) || defined(__MINGW32__)
@@ -124,7 +125,7 @@ void THttpServer::flush() {
   // Construct the HTTP header
   std::ostringstream h;
   h << "HTTP/1.1 200 OK" << CRLF << "Date: " << getTimeRFC1123() << CRLF << "Server: Thrift/"
-    << VERSION << CRLF << "Access-Control-Allow-Origin: *" << CRLF
+    << PACKAGE_VERSION << CRLF << "Access-Control-Allow-Origin: *" << CRLF
     << "Content-Type: application/x-thrift" << CRLF << "Content-Length: " << len << CRLF
     << "Connection: Keep-Alive" << CRLF << CRLF;
   string header = h.str();

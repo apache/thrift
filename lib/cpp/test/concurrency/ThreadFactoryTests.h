@@ -23,7 +23,6 @@
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/Util.h>
 
-#include <assert.h>
 #include <iostream>
 #include <set>
 
@@ -98,7 +97,7 @@ public:
     int& _count;
   };
 
-  bool reapNThreads(int loop = 1, int count = 10) {
+  void reapNThreads(int loop = 1, int count = 10) {
 
     PlatformThreadFactory threadFactory = PlatformThreadFactory();
 
@@ -148,8 +147,6 @@ public:
     }
 
     std::cout << "\t\t\tSuccess!" << std::endl;
-
-    return true;
   }
 
   class SynchStartTask : public Runnable {
@@ -186,7 +183,7 @@ public:
     volatile STATE& _state;
   };
 
-  bool synchStartTest() {
+  void synchStartTest() {
 
     Monitor monitor;
 
@@ -213,7 +210,7 @@ public:
       }
     }
 
-    assert(state != SynchStartTask::STARTING);
+    if (state == SynchStartTask::STARTING) { std::cerr << "state = STARTING and should not" << std::endl << std::flush; exit(1); }
 
     {
       Synchronized s(monitor);
@@ -235,13 +232,7 @@ public:
       }
     }
 
-    assert(state == SynchStartTask::STOPPED);
-
-    bool success = true;
-
-    std::cout << "\t\t\t" << (success ? "Success" : "Failure") << "!" << std::endl;
-
-    return true;
+    if (state != SynchStartTask::STOPPED) { std::cerr << "state = " << static_cast<int>(state) << " and should be STOPPED (4)" << std::endl << std::flush; exit(1); }
   }
 
   /** See how accurate monitor timeout is. */

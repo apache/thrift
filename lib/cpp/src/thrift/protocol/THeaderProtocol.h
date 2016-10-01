@@ -46,7 +46,7 @@ public:
   explicit THeaderProtocol(const boost::shared_ptr<TTransport>& trans,
                            uint16_t protoId = T_COMPACT_PROTOCOL)
     : TVirtualProtocol<THeaderProtocol>(boost::shared_ptr<TTransport>(new THeaderTransport(trans))),
-      trans_(boost::dynamic_pointer_cast<THeaderTransport>(this->getTransport())),
+      trans_(boost::dynamic_pointer_cast<THeaderTransport>(getTransport())),
       protoId_(protoId) {
     trans_->setProtocolId(protoId);
     resetProtocol();
@@ -57,7 +57,7 @@ public:
                   uint16_t protoId = T_COMPACT_PROTOCOL)
     : TVirtualProtocol<THeaderProtocol>(
           boost::shared_ptr<TTransport>(new THeaderTransport(inTrans, outTrans))),
-      trans_(boost::dynamic_pointer_cast<THeaderTransport>(this->getTransport())),
+      trans_(boost::dynamic_pointer_cast<THeaderTransport>(getTransport())),
       protoId_(protoId) {
     trans_->setProtocolId(protoId);
     resetProtocol();

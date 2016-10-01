@@ -68,6 +68,9 @@ if(MSVC)
       message (FATAL_ERROR "Windows build does not support shared library output yet, please set -DWITH_SHARED_LIB=off")
     endif()
 
+    add_definitions("/MP") # parallel build
+    add_definitions("/W3") # warning level 3
+
 elseif(UNIX)
   find_program( MEMORYCHECK_COMMAND valgrind )
   set( MEMORYCHECK_COMMAND_OPTIONS "--gen-suppressions=all --leak-check=full" )
