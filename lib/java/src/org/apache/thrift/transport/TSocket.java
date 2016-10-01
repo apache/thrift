@@ -40,27 +40,27 @@ public class TSocket extends TIOStreamTransport {
   /**
    * Wrapped Socket object
    */
-  private Socket socket_ = null;
+  private Socket socket_;
 
   /**
    * Remote host
    */
-  private String host_  = null;
+  private String host_;
 
   /**
    * Remote port
    */
-  private int port_ = 0;
+  private int port_;
 
   /**
    * Socket timeout - read timeout on the socket
    */
-  private int socketTimeout_ = 0;
+  private int socketTimeout_;
 
   /**
    * Connection timeout
    */
-  private int connectTimeout_ = 0;
+  private int connectTimeout_;
 
   /**
    * Constructor that takes an already created socket.
@@ -206,11 +206,11 @@ public class TSocket extends TIOStreamTransport {
       throw new TTransportException(TTransportException.ALREADY_OPEN, "Socket already connected.");
     }
 
-    if (host_.length() == 0) {
+    if (host_ == null || host_.length() == 0) {
       throw new TTransportException(TTransportException.NOT_OPEN, "Cannot open null host.");
     }
-    if (port_ <= 0) {
-      throw new TTransportException(TTransportException.NOT_OPEN, "Cannot open without port.");
+    if (port_ <= 0 || port_ > 65535) {
+      throw new TTransportException(TTransportException.NOT_OPEN, "Invalid port " + port_);
     }
 
     if (socket_ == null) {
