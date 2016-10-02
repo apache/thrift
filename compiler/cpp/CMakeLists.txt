@@ -17,12 +17,7 @@
 # under the License.
 #
 
-# Windows has a different header
-if(MSVC)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/windows/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h)
-else()
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h)
-endif()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h)
 
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
@@ -163,6 +158,7 @@ if(${WITH_PLUGIN})
       "src/thrift/logging.h"
       "src/thrift/main.h"
       "src/thrift/platform.h"
+      "${CMAKE_BINARY_DIR}/compiler/cpp/thrift/version.h"
       DESTINATION "${INCLUDE_INSTALL_DIR}/thrift")
   install(FILES
       "src/thrift/audit/t_audit.h"
@@ -202,13 +198,6 @@ if(MSVC)
   install(FILES
       "src/thrift/windows/config.h"
       DESTINATION "${INCLUDE_INSTALL_DIR}/thrift/windows")
-  install(FILES
-      "${CMAKE_BINARY_DIR}/compiler/cpp/thrift/windows/version.h"
-      DESTINATION "${INCLUDE_INSTALL_DIR}/thrift/windows")
-else()
-  install(FILES
-      "${CMAKE_BINARY_DIR}/compiler/cpp/thrift/version.h"
-      DESTINATION "${INCLUDE_INSTALL_DIR}/thrift")
 endif()
 endif()
 
