@@ -71,9 +71,7 @@ compiler_core =  src/thrift/common.h \
                  src/thrift/parse/parse.cc \
                  src/thrift/generate/t_generator.h \
                  src/thrift/generate/t_oop_generator.h \
-                 src/thrift/generate/t_html_generator.h \
-                 src/thrift/windows/config.h \
-                 src/thrift/windows/version.h
+                 src/thrift/generate/t_html_generator.h
 
 thrift_SOURCES = src/thrift/main.h \
                  src/thrift/main.cc \
@@ -181,8 +179,7 @@ include_plugin_HEADERS = src/thrift/plugin/plugin.h \
                          src/thrift/plugin/plugin_output.h
 
 include_windowsdir = $(include_thriftdir)/windows
-include_windows_HEADERS = src/thrift/windows/version.h \
-                          src/thrift/windows/config.h
+include_windows_HEADERS = src/thrift/windows/config.h
 endif
 
 WINDOWS_DIST = \
@@ -197,7 +194,7 @@ EXTRA_DIST = \
              $(WINDOWS_DIST)
 
 clean-local:
-	$(RM) version.h windows/version.h $(plugin_gen)
+	$(RM) version.h $(plugin_gen)
 
 src/thrift/main.cc: src/thrift/version.h
 
