@@ -43,7 +43,7 @@ namespace Thrift.Transport
         /// <summary>
         /// Timeout for the created server socket
         /// </summary>
-        private int clientTimeout = 0;
+        private readonly int clientTimeout;
 
         /// <summary>
         /// Whether or not to wrap new TSocket connections in buffers
@@ -117,6 +117,7 @@ namespace Thrift.Transport
             }
 
             this.port = port;
+            this.clientTimeout = clientTimeout;
             this.serverCertificate = certificate;
             this.useBufferedSockets = useBufferedSockets;
             this.clientCertValidator = clientCertValidator;

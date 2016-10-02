@@ -57,7 +57,7 @@ class TBinarySerializer
     return $transport->getBuffer();
   }
 
-  public static function deserialize($string_object, $class_name)
+  public static function deserialize($string_object, $class_name, $buffer_size  = 8192)
   {
      $transport = new TMemoryBuffer();
      $protocol = new TBinaryProtocolAccelerated($transport);
@@ -72,7 +72,8 @@ class TBinarySerializer
        $protocolTransport->flush();
 
        return thrift_protocol_read_binary($protocol, $class_name,
-                                          $protocol->isStrictRead());
+                                          $protocol->isStrictRead(),
+                                          $buffer_size);
      } else {
        $transport->write($string_object);
        $object = new $class_name();
