@@ -1189,7 +1189,8 @@ void t_javame_generator::generate_java_struct_equality(ofstream& out, t_struct* 
 
   out << indent() << "public boolean equals(" << tstruct->get_name() << " that) {" << endl;
   indent_up();
-  out << indent() << "if (that == null)" << endl << indent() << "  return false;" << endl;
+  out << indent() << "if (that == null)" << endl << indent() << "  return false;" << endl
+      << indent() << "if (this == that)" << endl << indent() << "  return true;"  << endl;
 
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
