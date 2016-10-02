@@ -732,7 +732,6 @@ AC_CONFIG_FILES([
   compiler/cpp/src/thrift/plugin/Makefile
   compiler/cpp/test/Makefile
   compiler/cpp/src/thrift/version.h
-  compiler/cpp/src/thrift/windows/version.h
   lib/Makefile
   lib/cpp/Makefile
   lib/cpp/test/Makefile
