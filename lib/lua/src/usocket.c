@@ -58,13 +58,14 @@ T_ERRCODE socket_wait(p_socket sock, int mode, int timeout) {
 
   end = __gettime() + timeout/1000;
   do {
+    FD_ZERO(&rfds);
+    FD_ZERO(&wfds);
+
     // Specify what I/O operations we care about
     if (mode & WAIT_MODE_R) {
-      FD_ZERO(&rfds);
       FD_SET(*sock, &rfds);
     }
     if (mode & WAIT_MODE_W) {
-      FD_ZERO(&wfds);
       FD_SET(*sock, &wfds);
     }
 
@@ -131,8 +132,8 @@ T_ERRCODE socket_bind(p_socket sock, p_sa addr, int addr_len) {
 
 T_ERRCODE socket_get_info(p_socket sock, short *port, char *buf, size_t len) {
   struct sockaddr_in sa;
-  socklen_t addrlen;
   memset(&sa, 0, sizeof(sa));
+  socklen_t addrlen = sizeof(sa);
   int rc = getsockname(*sock, (struct sockaddr*)&sa, &addrlen);
   if (!rc) {
     char *addr = inet_ntoa(sa.sin_addr);
