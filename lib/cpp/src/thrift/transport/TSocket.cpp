@@ -81,8 +81,8 @@ using namespace std;
 TSocket::TSocket(const string& host, int port)
   : host_(host),
     port_(port),
-    path_(""),
     socket_(THRIFT_INVALID_SOCKET),
+    peerPort_(0),
     connTimeout_(0),
     sendTimeout_(0),
     recvTimeout_(0),
@@ -94,10 +94,10 @@ TSocket::TSocket(const string& host, int port)
 }
 
 TSocket::TSocket(const string& path)
-  : host_(""),
-    port_(0),
+  : port_(0),
     path_(path),
     socket_(THRIFT_INVALID_SOCKET),
+    peerPort_(0),
     connTimeout_(0),
     sendTimeout_(0),
     recvTimeout_(0),
@@ -110,10 +110,9 @@ TSocket::TSocket(const string& path)
 }
 
 TSocket::TSocket()
-  : host_(""),
-    port_(0),
-    path_(""),
+  : port_(0),
     socket_(THRIFT_INVALID_SOCKET),
+    peerPort_(0),
     connTimeout_(0),
     sendTimeout_(0),
     recvTimeout_(0),
@@ -126,10 +125,9 @@ TSocket::TSocket()
 }
 
 TSocket::TSocket(THRIFT_SOCKET socket)
-  : host_(""),
-    port_(0),
-    path_(""),
+  : port_(0),
     socket_(socket),
+    peerPort_(0),
     connTimeout_(0),
     sendTimeout_(0),
     recvTimeout_(0),
@@ -148,10 +146,9 @@ TSocket::TSocket(THRIFT_SOCKET socket)
 }
 
 TSocket::TSocket(THRIFT_SOCKET socket, boost::shared_ptr<THRIFT_SOCKET> interruptListener)
-  : host_(""),
-    port_(0),
-    path_(""),
+  : port_(0),
     socket_(socket),
+    peerPort_(0),
     interruptListener_(interruptListener),
     connTimeout_(0),
     sendTimeout_(0),

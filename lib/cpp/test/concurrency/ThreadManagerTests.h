@@ -45,7 +45,7 @@ public:
 
   public:
     Task(Monitor& monitor, size_t& count, int64_t timeout)
-      : _monitor(monitor), _count(count), _timeout(timeout), _done(false) {}
+      : _monitor(monitor), _count(count), _timeout(timeout), _startTime(0), _endTime(0), _done(false) {}
 
     void run() {
 
