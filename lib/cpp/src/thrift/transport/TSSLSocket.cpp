@@ -642,7 +642,15 @@ unsigned int TSSLSocket::waitForEvent(bool wantRead) {
     fds[1].events = THRIFT_POLLIN;
   }
 
-  int ret = THRIFT_POLL(fds, interruptListener_ ? 2 : 1, -1);
+  int timeout = -1;
+  if (wantRead && recvTimeout_) {
+    timeout = recvTimeout_;
+  }
+  if (!wantRead && sendTimeout_) {
+    timeout = sendTimeout_;
+  }
+
+  int ret = THRIFT_POLL(fds, interruptListener_ ? 2 : 1, timeout);
 
   if (ret < 0) {
     // error cases
