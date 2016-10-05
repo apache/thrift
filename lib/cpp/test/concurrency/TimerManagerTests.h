@@ -42,6 +42,7 @@ public:
     Task(Monitor& monitor, int64_t timeout)
       : _timeout(timeout),
         _startTime(Util::currentTime()),
+        _endTime(0),
         _monitor(monitor),
         _success(false),
         _done(false) {}

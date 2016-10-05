@@ -272,15 +272,6 @@ protected:
   /** Host to connect to */
   std::string host_;
 
-  /** Peer hostname */
-  std::string peerHost_;
-
-  /** Peer address */
-  std::string peerAddress_;
-
-  /** Peer port */
-  int peerPort_;
-
   /** Port number to connect on */
   int port_;
 
@@ -289,6 +280,15 @@ protected:
 
   /** Underlying socket handle */
   THRIFT_SOCKET socket_;
+
+  /** Peer hostname */
+  std::string peerHost_;
+
+  /** Peer address */
+  std::string peerAddress_;
+
+  /** Peer port */
+  int peerPort_;
 
   /**
    * A shared socket pointer that will interrupt a blocking read if data

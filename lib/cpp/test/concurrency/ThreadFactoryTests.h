@@ -102,7 +102,7 @@ public:
 
     PlatformThreadFactory threadFactory = PlatformThreadFactory();
 
-    Monitor* monitor = new Monitor();
+    shared_ptr<Monitor> monitor(new Monitor);
 
     for (int lix = 0; lix < loop; lix++) {
 
