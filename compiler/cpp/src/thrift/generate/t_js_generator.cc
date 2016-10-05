@@ -58,6 +58,9 @@ public:
     gen_node_ = false;
     gen_jquery_ = false;
     gen_ts_ = false;
+
+    bool with_ns_ = false;
+
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("node") == 0) {
         gen_node_ = true;
@@ -65,6 +68,8 @@ public:
         gen_jquery_ = true;
       } else if( iter->first.compare("ts") == 0) {
         gen_ts_ = true;
+      } else if( iter->first.compare("with_ns") == 0) {
+        with_ns_ = true;
       } else {
         throw "unknown option js:" + iter->first;
       }
@@ -79,10 +84,16 @@ public:
             "js:jquery]";
     }
 
+    if (!gen_node_ && with_ns_) {
+      throw "Invalid switch: [-gen js:with_ns] is only valid when using node.js";
+    }
+
     if (gen_node_) {
       out_dir_base_ = "gen-nodejs";
+      no_ns_ = !with_ns_;
     } else {
       out_dir_base_ = "gen-js";
+      no_ns_ = false;
     }
 
     escape_['\''] = "\\'";
@@ -197,6 +208,10 @@ public:
     std::string::size_type loc;
     std::vector<std::string> pieces;
 
+    if (no_ns_) {
+      return pieces;
+    }
+
     if (ns.size() > 0) {
       while ((loc = ns.find(".")) != std::string::npos) {
         pieces.push_back(ns.substr(0, loc));
@@ -229,11 +244,17 @@ public:
   }
 
   bool has_js_namespace(t_program* p) {
+    if (no_ns_) {
+      return false;
+    }
     std::string ns = p->get_namespace("js");
     return (ns.size() > 0);
   }
 
   std::string js_namespace(t_program* p) {
+    if (no_ns_) {
+      return "";
+    }
     std::string ns = p->get_namespace("js");
     if (ns.size() > 0) {
       ns += ".";
@@ -310,6 +331,11 @@ private:
    * The name of the defined module(s), for TypeScript Definition Files.
    */
   string ts_module_;
+
+  /**
+   * True if we should not generate namespace objects for node.
+   */
+  bool no_ns_;
 
   /**
    * File streams
@@ -2228,4 +2254,5 @@ THRIFT_REGISTER_GENERATOR(js,
                           "Javascript",
                           "    jquery:          Generate jQuery compatible code.\n"
                           "    node:            Generate node.js compatible code.\n"
-                          "    ts:              Generate TypeScript definition files.\n")
+                          "    ts:              Generate TypeScript definition files.\n"
+                          "    with_ns:         Create global namespace objects when using node.js\n")
