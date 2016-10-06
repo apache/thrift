@@ -668,9 +668,9 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
 
   if (gen_node_ && is_exception) {
     out << indent() << "Thrift.TException.call(this, \"" << js_namespace(tstruct->get_program())
-        << tstruct->get_name() << "\")" << endl;
+        << tstruct->get_name() << "\");" << endl;
     out << indent() << "this.name = \"" << js_namespace(tstruct->get_program())
-        << tstruct->get_name() << "\"" << endl;
+        << tstruct->get_name() << "\";" << endl;
   }
 
   // members with arguments
@@ -994,14 +994,15 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
 
   scope_up(f_service_);
 
-  f_service_ << indent() << "this._handler = handler" << endl;
+  f_service_ << indent() << "this._handler = handler;" << endl;
 
   scope_down(f_service_);
+  f_service_ << ";" << endl;
 
   if (tservice->get_extends() != NULL) {
     indent(f_service_) << "Thrift.inherits(" << js_namespace(tservice->get_program())
                        << service_name_ << "Processor, " << tservice->get_extends()->get_name()
-                       << "Processor)" << endl;
+                       << "Processor);" << endl;
   }
 
   // Generate the server implementation
@@ -1024,7 +1025,7 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
              << indent() << "}" << endl;
 
   scope_down(f_service_);
-  f_service_ << endl;
+  f_service_ << ";" << endl;
 
   // Generate the process subfunctions
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -1070,9 +1071,9 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
       f_service_ << "args." << (*f_iter)->get_name();
     }
 
-    f_service_ << ")" << endl;
+    f_service_ << ");" << endl;
     scope_down(f_service_);
-    f_service_ << endl;
+    f_service_ << ";" << endl;
     return;
   }
 
@@ -1089,14 +1090,15 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   indent_up();
   indent(f_service_) << ".then(function(result) {" << endl;
   indent_up();
-  f_service_ << indent() << "var result = new " << resultname << "({success: result});" << endl
+  f_service_ << indent() << "var result_obj = new " << resultname << "({success: result});" << endl
              << indent() << "output.writeMessageBegin(\"" << tfunction->get_name()
              << "\", Thrift.MessageType.REPLY, seqid);" << endl << indent()
-             << "result.write(output);" << endl << indent() << "output.writeMessageEnd();" << endl
+             << "result_obj.write(output);" << endl << indent() << "output.writeMessageEnd();" << endl
              << indent() << "output.flush();" << endl;
   indent_down();
   indent(f_service_) << "}, function (err) {" << endl;
   indent_up();
+  indent(f_service_) << "var result;" << endl;
 
   bool has_exception = false;
   t_struct* exceptions = tfunction->get_xceptions();
@@ -1120,7 +1122,7 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   if (has_exception) {
     f_service_ << ") {" << endl;
     indent_up();
-    f_service_ << indent() << "var result = new " << resultname << "(err);" << endl << indent()
+    f_service_ << indent() << "result = new " << resultname << "(err);" << endl << indent()
                << "output.writeMessageBegin(\"" << tfunction->get_name()
                << "\", Thrift.MessageType.REPLY, seqid);" << endl;
 
@@ -1129,7 +1131,7 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
     indent_up();
   }
 
-  f_service_ << indent() << "var result = new "
+  f_service_ << indent() << "result = new "
                             "Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN,"
                             " err.message);" << endl << indent() << "output.writeMessageBegin(\""
              << tfunction->get_name() << "\", Thrift.MessageType.EXCEPTION, seqid);" << endl;
@@ -1155,8 +1157,9 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
 
   f_service_ << "function (err, result) {" << endl;
   indent_up();
+  indent(f_service_) << "var result_obj;" << endl;
 
-  indent(f_service_) << "if (err == null";
+  indent(f_service_) << "if ((err === null || typeof err === 'undefined')";
   if (has_exception) {
     const vector<t_field*>& members = exceptions->get_members();
     for (vector<t_field*>::const_iterator it = members.begin(); it != members.end(); ++it) {
@@ -1168,27 +1171,27 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   }
   f_service_ << ") {" << endl;
   indent_up();
-  f_service_ << indent() << "var result = new " << resultname
-             << "((err != null ? err : {success: result}));" << endl << indent()
+  f_service_ << indent() << "result_obj = new " << resultname
+             << "((err !== null || typeof err === 'undefined') ? err : {success: result});" << endl << indent()
              << "output.writeMessageBegin(\"" << tfunction->get_name()
              << "\", Thrift.MessageType.REPLY, seqid);" << endl;
   indent_down();
   indent(f_service_) << "} else {" << endl;
   indent_up();
-  f_service_ << indent() << "var result = new "
+  f_service_ << indent() << "result_obj = new "
                             "Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN,"
                             " err.message);" << endl << indent() << "output.writeMessageBegin(\""
              << tfunction->get_name() << "\", Thrift.MessageType.EXCEPTION, seqid);" << endl;
   indent_down();
-  f_service_ << indent() << "}" << endl << indent() << "result.write(output);" << endl << indent()
+  f_service_ << indent() << "}" << endl << indent() << "result_obj.write(output);" << endl << indent()
              << "output.writeMessageEnd();" << endl << indent() << "output.flush();" << endl;
 
   indent_down();
   indent(f_service_) << "});" << endl;
   indent_down();
   indent(f_service_) << "}" << endl;
-  scope_down(f_service_);
-  f_service_ << endl;
+  indent_down();
+  indent(f_service_) << "};" << endl;
 }
 
 /**
@@ -1316,9 +1319,9 @@ void t_js_generator::generate_service_client(t_service* tservice) {
   // utils for multiplexed services
   if (gen_node_) {
     indent(f_service_) << js_namespace(tservice->get_program()) << service_name_
-                       << "Client.prototype.seqid = function() { return this._seqid; }" << endl
+                       << "Client.prototype.seqid = function() { return this._seqid; };" << endl
                        << js_namespace(tservice->get_program()) << service_name_
-                       << "Client.prototype.new_seqid = function() { return this._seqid += 1; }"
+                       << "Client.prototype.new_seqid = function() { return this._seqid += 1; };"
                        << endl;
   }
   // Generate client method implementations
@@ -1547,7 +1550,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
                    << endl;
       } else {
         if (gen_node_) {
-          indent(f_service_) << "callback(null)" << endl;
+          indent(f_service_) << "callback(null);" << endl;
         } else {
           indent(f_service_) << "return;" << endl;
         }
