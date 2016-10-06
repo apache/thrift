@@ -438,21 +438,6 @@ void TSSLSocket::checkHandshake() {
 
   ssl_ = ctx_->createSSL();
 
-  //set read and write bios to non-blocking
-  BIO* wbio =  BIO_new(BIO_s_mem());
-  if (wbio == NULL) {
-    throw TSSLException("SSL_get_wbio returns NULL");
-  }
-  BIO_set_nbio(wbio, 1);
-
-  BIO* rbio = BIO_new(BIO_s_mem());
-  if (rbio == NULL) {
-    throw TSSLException("SSL_get_rbio returns NULL");
-  }
-  BIO_set_nbio(rbio, 1);
-
-  SSL_set_bio(ssl_, rbio, wbio);
-
   SSL_set_fd(ssl_, static_cast<int>(socket_));
   int rc;
   if (server()) {
