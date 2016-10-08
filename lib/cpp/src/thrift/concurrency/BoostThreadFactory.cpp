@@ -48,7 +48,7 @@ public:
   static void* threadMain(void* arg);
 
 private:
-  std::auto_ptr<boost::thread> thread_;
+  std::unique_ptr<boost::thread> thread_;
   STATE state_;
   weak_ptr<BoostThread> self_;
   bool detached_;
@@ -80,8 +80,8 @@ public:
 
     state_ = starting;
 
-    thread_
-        = std::auto_ptr<boost::thread>(new boost::thread(boost::bind(threadMain, (void*)selfRef)));
+    thread_ = std::unique_ptr<boost::thread>(
+        new boost::thread(boost::bind(threadMain, (void*)selfRef)));
 
     if (detached_)
       thread_->detach();

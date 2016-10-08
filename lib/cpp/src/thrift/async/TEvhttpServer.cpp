@@ -118,7 +118,7 @@ void TEvhttpServer::process(struct evhttp_request* req) {
 
 void TEvhttpServer::complete(RequestContext* ctx, bool success) {
   (void)success;
-  std::auto_ptr<RequestContext> ptr(ctx);
+  std::unique_ptr<RequestContext> ptr(ctx);
 
   int code = success ? 200 : 400;
   const char* reason = success ? "OK" : "Bad Request";
