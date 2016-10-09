@@ -364,6 +364,34 @@
     "workdir": "csharp"
   },
   {
+    "name": "netcore",
+    "transports": [
+      "buffered",
+      "framed"
+    ],
+    "sockets": [
+      "ip",
+      "ip-ssl"
+    ],
+    "protocols": [
+      "binary",
+      "compact",
+      "json"
+    ],
+    "server": {
+      "command": [
+        "dotnet restore && dotnet run server"
+      ]
+    },
+    "client": {
+      "timeout": 10,
+      "command": [
+        "dotnet run client"
+      ]
+    },
+    "workdir": "netcore/ThriftTest"
+  },
+  {
     "name": "perl",
     "transports": [
       "buffered",
