@@ -366,9 +366,15 @@ void t_js_generator::init_generator() {
     string f_types_ts_name = outdir + program_->get_name() + "_types.d.ts";
     f_types_ts_.open(f_types_ts_name.c_str());
   }
-
+  
   // Print header
-  f_types_ << autogen_comment() << js_includes() << endl << render_includes() << endl;
+  f_types_ << autogen_comment();
+  
+  if (gen_node_ && no_ns_) {
+    f_types_ << "\"use strict\";" << endl << endl;
+  }
+
+  f_types_ << js_includes() << endl << render_includes() << endl;
 
   if (gen_ts_) {
     f_types_ts_ << autogen_comment() << endl;
@@ -958,7 +964,13 @@ void t_js_generator::generate_service(t_service* tservice) {
     f_service_ts_.open(f_service_ts_name.c_str());
   }
 
-  f_service_ << autogen_comment() << js_includes() << endl << render_includes() << endl;
+  f_service_ << autogen_comment();
+  
+  if (gen_node_ && no_ns_) {
+    f_service_ << "\"use strict\";" << endl << endl;
+  }
+  
+  f_service_ << js_includes() << endl << render_includes() << endl;
 
   if (gen_ts_) {
     if (tservice->get_extends() != NULL) {
