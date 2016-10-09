@@ -303,7 +303,11 @@ namespace Test
                     Xtructs = new List<Xtruct> {goodbye}
                 };
 
-                var looney = new Insanity {UserMap = {[Numberz.FIVE] = 5}};
+                var looney = new Insanity
+                {
+                    UserMap = new Dictionary<Numberz, long> { [Numberz.FIVE] = 5},
+                    Xtructs = new List<Xtruct>()
+                };
 
                 looney.Xtructs.Add(hello);
 

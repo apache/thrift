@@ -47,7 +47,6 @@ namespace Test
             public bool framed;
             public string protocol;
             public bool encrypted = false;
-            protected bool _isFirstTransport = true;
 
             public TClientTransport CreateTransport()
             {
@@ -83,14 +82,6 @@ namespace Test
                     if (framed)
                     {
                         trans = new TFramedClientTransport(trans);
-                    }
-
-                    if (_isFirstTransport)
-                    {
-                        //ensure proper open/close of transport
-                        trans.OpenAsync().GetAwaiter().GetResult();
-                        trans.Close();
-                        _isFirstTransport = false;
                     }
 
                     return trans;
@@ -436,14 +427,14 @@ namespace Test
 
             // binary equals? only with hashcode option enabled ...
             Console.WriteLine("Test CrazyNesting");
-            if (typeof(CrazyNesting).GetElementType().GetMethod("Equals").DeclaringType == typeof(CrazyNesting))
+            var one = new CrazyNesting();
+            var two = new CrazyNesting();
+            one.String_field = "crazy";
+            two.String_field = "crazy";
+            one.Binary_field = new byte[] { 0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF };
+            two.Binary_field = new byte[10] { 0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF };
+            if (typeof(CrazyNesting).GetMethod("Equals")?.DeclaringType == typeof(CrazyNesting))
             {
-                var one = new CrazyNesting();
-                var two = new CrazyNesting();
-                one.String_field = "crazy";
-                two.String_field = "crazy";
-                one.Binary_field = new byte[] { 0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF };
-                two.Binary_field = new byte[10] { 0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF };
                 if (!one.Equals(two))
                 {
                     Console.WriteLine("*** FAILED ***");

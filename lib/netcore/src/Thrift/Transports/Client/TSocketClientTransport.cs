@@ -104,6 +104,11 @@ namespace Thrift.Transports.Client
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen, "Cannot open without port");
             }
 
+            if (TcpClient == null)
+            {
+                throw new InvalidOperationException("Invalid or not initialized tcp client");
+            }
+
             await TcpClient.ConnectAsync(Host, Port);
 
             InputStream = TcpClient.GetStream();
