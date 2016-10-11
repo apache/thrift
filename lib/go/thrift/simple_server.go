@@ -155,6 +155,7 @@ func (p *TSimpleServer) Stop() error {
 	q := func() {
 		p.quit <- struct{}{}
 		p.serverTransport.Interrupt()
+		p.serverTransport.Close()
 	}
 	once.Do(q)
 	return nil
