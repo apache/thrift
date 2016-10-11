@@ -58,6 +58,9 @@ public:
     gen_node_ = false;
     gen_jquery_ = false;
     gen_ts_ = false;
+
+    bool with_ns_ = false;
+
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("node") == 0) {
         gen_node_ = true;
@@ -65,6 +68,8 @@ public:
         gen_jquery_ = true;
       } else if( iter->first.compare("ts") == 0) {
         gen_ts_ = true;
+      } else if( iter->first.compare("with_ns") == 0) {
+        with_ns_ = true;
       } else {
         throw "unknown option js:" + iter->first;
       }
@@ -79,10 +84,16 @@ public:
             "js:jquery]";
     }
 
+    if (!gen_node_ && with_ns_) {
+      throw "Invalid switch: [-gen js:with_ns] is only valid when using node.js";
+    }
+
     if (gen_node_) {
       out_dir_base_ = "gen-nodejs";
+      no_ns_ = !with_ns_;
     } else {
       out_dir_base_ = "gen-js";
+      no_ns_ = false;
     }
 
     escape_['\''] = "\\'";
@@ -197,6 +208,10 @@ public:
     std::string::size_type loc;
     std::vector<std::string> pieces;
 
+    if (no_ns_) {
+      return pieces;
+    }
+
     if (ns.size() > 0) {
       while ((loc = ns.find(".")) != std::string::npos) {
         pieces.push_back(ns.substr(0, loc));
@@ -229,11 +244,17 @@ public:
   }
 
   bool has_js_namespace(t_program* p) {
+    if (no_ns_) {
+      return false;
+    }
     std::string ns = p->get_namespace("js");
     return (ns.size() > 0);
   }
 
   std::string js_namespace(t_program* p) {
+    if (no_ns_) {
+      return "";
+    }
     std::string ns = p->get_namespace("js");
     if (ns.size() > 0) {
       ns += ".";
@@ -312,6 +333,11 @@ private:
   string ts_module_;
 
   /**
+   * True if we should not generate namespace objects for node.
+   */
+  bool no_ns_;
+
+  /**
    * File streams
    */
   std::ofstream f_types_;
@@ -340,9 +366,15 @@ void t_js_generator::init_generator() {
     string f_types_ts_name = outdir + program_->get_name() + "_types.d.ts";
     f_types_ts_.open(f_types_ts_name.c_str());
   }
-
+  
   // Print header
-  f_types_ << autogen_comment() << js_includes() << endl << render_includes() << endl;
+  f_types_ << autogen_comment();
+  
+  if (gen_node_ && no_ns_) {
+    f_types_ << "\"use strict\";" << endl << endl;
+  }
+
+  f_types_ << js_includes() << endl << render_includes() << endl;
 
   if (gen_ts_) {
     f_types_ts_ << autogen_comment() << endl;
@@ -932,7 +964,13 @@ void t_js_generator::generate_service(t_service* tservice) {
     f_service_ts_.open(f_service_ts_name.c_str());
   }
 
-  f_service_ << autogen_comment() << js_includes() << endl << render_includes() << endl;
+  f_service_ << autogen_comment();
+  
+  if (gen_node_ && no_ns_) {
+    f_service_ << "\"use strict\";" << endl << endl;
+  }
+  
+  f_service_ << js_includes() << endl << render_includes() << endl;
 
   if (gen_ts_) {
     if (tservice->get_extends() != NULL) {
@@ -2231,4 +2269,5 @@ THRIFT_REGISTER_GENERATOR(js,
                           "Javascript",
                           "    jquery:          Generate jQuery compatible code.\n"
                           "    node:            Generate node.js compatible code.\n"
-                          "    ts:              Generate TypeScript definition files.\n")
+                          "    ts:              Generate TypeScript definition files.\n"
+                          "    with_ns:         Create global namespace objects when using node.js\n")
