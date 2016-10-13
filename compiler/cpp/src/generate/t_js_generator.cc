@@ -1870,7 +1870,7 @@ void t_js_generator::generate_serialize_container(ofstream& out, t_type* ttype, 
   if (ttype->is_map()) {
     indent(out) << "output.writeMapBegin(" << type_to_enum(((t_map*)ttype)->get_key_type()) << ", "
                 << type_to_enum(((t_map*)ttype)->get_val_type()) << ", "
-                << "Thrift.objectLength(" << prefix << "));" << endl;
+                << prefix << ".size);" << endl;
   } else if (ttype->is_set()) {
     indent(out) << "output.writeSetBegin(" << type_to_enum(((t_set*)ttype)->get_elem_type()) << ", "
                 << prefix << ".length);" << endl;
@@ -1884,13 +1884,9 @@ void t_js_generator::generate_serialize_container(ofstream& out, t_type* ttype, 
   if (ttype->is_map()) {
     string kiter = tmp("kiter");
     string viter = tmp("viter");
-    indent(out) << "for (var " << kiter << " in " << prefix << ")" << endl;
+    indent(out) << "for (var [" << kiter << ", " << viter << "] of " << prefix << ")" << endl;
     scope_up(out);
-    indent(out) << "if (" << prefix << ".hasOwnProperty(" << kiter << "))" << endl;
-    scope_up(out);
-    indent(out) << "var " << viter << " = " << prefix << "[" << kiter << "];" << endl;
     generate_serialize_map_element(out, (t_map*)ttype, kiter, viter);
-    scope_down(out);
     scope_down(out);
 
   } else if (ttype->is_set()) {
