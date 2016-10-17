@@ -447,8 +447,7 @@ string t_java_generator::java_type_imports() {
          + "import java.util.HashMap;\n" + "import java.util.EnumMap;\n" + "import java.util.Set;\n"
          + "import java.util.HashSet;\n" + "import java.util.EnumSet;\n" + tree_set_and_map
          + "import java.util.Collections;\n" + "import java.util.BitSet;\n"
-         + "import java.nio.ByteBuffer;\n"
-         + "import java.util.Arrays;\n" + annotation_generated
+         + "import java.nio.ByteBuffer;\n" + annotation_generated
          + "import org.slf4j.Logger;\n" + "import org.slf4j.LoggerFactory;\n\n";
 }
 
@@ -923,7 +922,7 @@ void t_java_generator::generate_union_constructor(ofstream& out, t_struct* tstru
       indent(out) << "  " << type_name(tstruct) << " x = new " << type_name(tstruct) << "();"
                   << endl;
       indent(out) << "  x.set" << get_cap_name((*m_iter)->get_name())
-                  << "(ByteBuffer.wrap(Arrays.copyOf(value, value.length)));" << endl;
+                  << "(ByteBuffer.wrap(value.clone()));" << endl;
       indent(out) << "  return x;" << endl;
       indent(out) << "}" << endl << endl;
     }
@@ -1002,7 +1001,7 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
       indent(out) << "public void set" << get_cap_name(field->get_name()) << "(byte[] value) {"
                   << endl;
       indent(out) << "  set" << get_cap_name(field->get_name())
-                  << "(ByteBuffer.wrap(Arrays.copyOf(value, value.length)));" << endl;
+                  << "(ByteBuffer.wrap(value.clone()));" << endl;
       indent(out) << "}" << endl;
 
       out << endl;
@@ -2443,8 +2442,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
       }
       out << " set" << cap_name << "(byte[] " << field_name << ") {" << endl;
       indent(out) << "  this." << field_name << " = " << field_name << " == null ? (ByteBuffer)null"
-                  << " : ByteBuffer.wrap(Arrays.copyOf(" << field_name << ", " << field_name
-                  << ".length));" << endl;
+                  << " : ByteBuffer.wrap(" << field_name << ".clone());" << endl;
       if (!bean_style_) {
         indent(out) << "  return this;" << endl;
       }
