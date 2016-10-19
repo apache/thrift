@@ -2,7 +2,7 @@ thrift (0.10.0) stable; urgency=low
 
   * update to 0.10.0
 
- -- Jake Farrell <jfarrell@apache.org> Mon, 25 Sep 2016 12:00:00 -0500
+ -- Jake Farrell <jfarrell@apache.org>  Wed, 19 Oct 2016 12:00:00 -0500
 
 thrift (0.9.0) stable; urgency=low
 
