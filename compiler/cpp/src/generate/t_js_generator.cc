@@ -1884,10 +1884,13 @@ void t_js_generator::generate_serialize_container(ofstream& out, t_type* ttype, 
   if (ttype->is_map()) {
     string kiter = tmp("kiter");
     string viter = tmp("viter");
-    indent(out) << "for (var [" << kiter << ", " << viter << "] of " << prefix << ")" << endl;
-    scope_up(out);
+    string serialize_func = tmp("func");
+    indent(out) << "var " << serialize_func << " = function(" << viter << ", " << kiter << ") {" << endl;
+    indent_up();
     generate_serialize_map_element(out, (t_map*)ttype, kiter, viter);
-    scope_down(out);
+    indent_down();
+    indent(out) << "};" << endl;
+    indent(out) << prefix << ".forEach(" << serialize_func << ");" << endl;
 
   } else if (ttype->is_set()) {
     string iter = tmp("iter");
