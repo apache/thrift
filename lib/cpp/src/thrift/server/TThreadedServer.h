@@ -118,17 +118,14 @@ protected:
   public:
     TConnectedClientRunner(const boost::shared_ptr<TConnectedClient>& pClient);
     virtual ~TConnectedClientRunner();
-    void join();
     void run() /* override */;
-    void setThread(const boost::shared_ptr<apache::thrift::concurrency::Thread>& pThread);
   private:
     boost::shared_ptr<TConnectedClient> pClient_;
-    boost::shared_ptr<apache::thrift::concurrency::Thread> pThread_;
   };
 
   apache::thrift::concurrency::Monitor clientMonitor_;
 
-  typedef std::map<TConnectedClient *, boost::shared_ptr<TConnectedClientRunner> > ClientMap;
+  typedef std::map<TConnectedClient *, boost::shared_ptr<apache::thrift::concurrency::Thread> > ClientMap;
 
   /**
    * A map of active clients
