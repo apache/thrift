@@ -893,7 +893,7 @@ void t_java_generator::generate_union_constructor(ofstream& out, t_struct* tstru
   indent_down();
   indent(out) << "}" << endl << endl;
 
-  indent(out) << "public " << type_name(tstruct) << "(_Fields setField, Object value) {" << endl;
+  indent(out) << "public " << type_name(tstruct) << "(_Fields setField, java.lang.Object value) {" << endl;
   indent(out) << "  super(setField, value);" << endl;
   indent(out) << "}" << endl << endl;
 
@@ -1067,7 +1067,7 @@ void t_java_generator::generate_union_abstract_methods(ofstream& out, t_struct* 
 void t_java_generator::generate_check_type(ofstream& out, t_struct* tstruct) {
   indent(out) << "@Override" << endl;
   indent(out)
-      << "protected void checkType(_Fields setField, Object value) throws ClassCastException {"
+      << "protected void checkType(_Fields setField, java.lang.Object value) throws ClassCastException {"
       << endl;
   indent_up();
 
@@ -1103,7 +1103,7 @@ void t_java_generator::generate_check_type(ofstream& out, t_struct* tstruct) {
 
 void t_java_generator::generate_standard_scheme_read_value(ofstream& out, t_struct* tstruct) {
   indent(out) << "@Override" << endl;
-  indent(out) << "protected Object standardSchemeReadValue(org.apache.thrift.protocol.TProtocol "
+  indent(out) << "protected java.lang.Object standardSchemeReadValue(org.apache.thrift.protocol.TProtocol "
                  "iprot, org.apache.thrift.protocol.TField field) throws "
                  "org.apache.thrift.TException {" << endl;
 
@@ -1196,7 +1196,7 @@ void t_java_generator::generate_standard_scheme_write_value(ofstream& out, t_str
 
 void t_java_generator::generate_tuple_scheme_read_value(ofstream& out, t_struct* tstruct) {
   indent(out) << "@Override" << endl;
-  indent(out) << "protected Object tupleSchemeReadValue(org.apache.thrift.protocol.TProtocol "
+  indent(out) << "protected java.lang.Object tupleSchemeReadValue(org.apache.thrift.protocol.TProtocol "
                  "iprot, short fieldID) throws org.apache.thrift.TException {" << endl;
 
   indent_up();
@@ -1315,7 +1315,7 @@ void t_java_generator::generate_get_struct_desc(ofstream& out, t_struct* tstruct
 
 void t_java_generator::generate_union_comparisons(ofstream& out, t_struct* tstruct) {
   // equality
-  indent(out) << "public boolean equals(Object other) {" << endl;
+  indent(out) << "public boolean equals(java.lang.Object other) {" << endl;
   indent(out) << "  if (other instanceof " << tstruct->get_name() << ") {" << endl;
   indent(out) << "    return equals((" << tstruct->get_name() << ")other);" << endl;
   indent(out) << "  } else {" << endl;
@@ -1348,12 +1348,12 @@ void t_java_generator::generate_union_hashcode(ofstream& out, t_struct* tstruct)
   (void)tstruct;
   indent(out) << "@Override" << endl;
   indent(out) << "public int hashCode() {" << endl;
-  indent(out) << "  List<Object> list = new ArrayList<Object>();" << endl;
+  indent(out) << "  List<java.lang.Object> list = new ArrayList<java.lang.Object>();" << endl;
   indent(out) << "  list.add(this.getClass().getName());" << endl;
   indent(out) << "  org.apache.thrift.TFieldIdEnum setField = getSetField();" << endl;
   indent(out) << "  if (setField != null) {" << endl;
   indent(out) << "    list.add(setField.getThriftFieldId());" << endl;
-  indent(out) << "    Object value = getFieldValue();" << endl;
+  indent(out) << "    java.lang.Object value = getFieldValue();" << endl;
   indent(out) << "    if (value instanceof org.apache.thrift.TEnum) {" << endl;
   indent(out) << "      list.add(((org.apache.thrift.TEnum)getFieldValue()).getValue());" << endl;
   indent(out) << "    } else {" << endl;
@@ -1850,7 +1850,7 @@ void t_java_generator::generate_java_struct_parcelable(ofstream& out, t_struct* 
  * @param tstruct The struct definition
  */
 void t_java_generator::generate_java_struct_equality(ofstream& out, t_struct* tstruct) {
-  out << indent() << "@Override" << endl << indent() << "public boolean equals(Object that) {"
+  out << indent() << "@Override" << endl << indent() << "public boolean equals(java.lang.Object that) {"
       << endl;
   indent_up();
   out << indent() << "if (that == null)" << endl << indent() << "  return false;" << endl
@@ -2181,14 +2181,14 @@ void t_java_generator::generate_generic_field_getters_setters(std::ofstream& out
 
   // create the setter
 
-  indent(out) << "public void setFieldValue(_Fields field, Object value) {" << endl;
+  indent(out) << "public void setFieldValue(_Fields field, java.lang.Object value) {" << endl;
   indent(out) << "  switch (field) {" << endl;
   out << setter_stream.str();
   indent(out) << "  }" << endl;
   indent(out) << "}" << endl << endl;
 
   // create the getter
-  indent(out) << "public Object getFieldValue(_Fields field) {" << endl;
+  indent(out) << "public java.lang.Object getFieldValue(_Fields field) {" << endl;
   indent_up();
   indent(out) << "switch (field) {" << endl;
   out << getter_stream.str();
