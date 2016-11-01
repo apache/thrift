@@ -19,33 +19,38 @@
 
 package org.apache.thrift.test;
 
-// Generated code
-import thrift.test.*;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.THttpClient;
-import org.apache.thrift.transport.TFramedTransport;
-import org.apache.thrift.transport.TFastFramedTransport;
-import org.apache.thrift.transport.TTransportException;
-import org.apache.thrift.transport.TSSLTransportFactory;
-import org.apache.thrift.transport.TSSLTransportFactory.TSSLTransportParameters;
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.protocol.TJSONProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.protocol.TJSONProtocol;
+import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TSimpleJSONProtocol;
+import org.apache.thrift.transport.TFastFramedTransport;
+import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.transport.THttpClient;
+import org.apache.thrift.transport.TSSLTransportFactory;
+import org.apache.thrift.transport.TSocket;
+import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ArrayList;
+// Generated code
+import thrift.test.Insanity;
+import thrift.test.Numberz;
+import thrift.test.ThriftTest;
+import thrift.test.Xception;
+import thrift.test.Xception2;
+import thrift.test.Xtruct;
+import thrift.test.Xtruct2;
 
 /**
  * Test Java client for thrift. Essentially just a copy of the C++ version,
