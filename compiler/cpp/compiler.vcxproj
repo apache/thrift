@@ -79,6 +79,7 @@
     <ClCompile Include="src\thrift\generate\t_php_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_py_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_rb_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_rs_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_st_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_swift_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_xml_generator.cc" />
