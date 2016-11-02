@@ -128,6 +128,7 @@ if test "$enable_libs" = "no"; then
   with_d="no"
   with_nodejs="no"
   with_lua="no"
+  with_rs="no"
 fi
 
 
@@ -409,6 +410,16 @@ if test "$with_go" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_GO, [test "$have_go" = "yes"])
 
+AX_THRIFT_LIB(rs, [Rust], yes)
+have_rs="no"
+if test "$with_rs" = "yes";  then
+  AC_PATH_PROG([CARGO], [cargo])
+  if [[ -x "$CARGO" ]] ; then
+      # FIXME: check rustc version
+      have_rs="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_RS, [test "$have_rs" = "yes"])
 
 AX_THRIFT_LIB(haxe, [Haxe], yes)
 if test "$with_haxe" = "yes";  then
@@ -765,6 +776,7 @@ AC_CONFIG_FILES([
   lib/dart/Makefile
   lib/py/Makefile
   lib/rb/Makefile
+  lib/rs/Makefile
   lib/lua/Makefile
   lib/xml/Makefile
   lib/xml/test/Makefile
@@ -785,6 +797,7 @@ AC_CONFIG_FILES([
   test/py.twisted/Makefile
   test/py.tornado/Makefile
   test/rb/Makefile
+  test/rs/Makefile
   tutorial/Makefile
   tutorial/c_glib/Makefile
   tutorial/cpp/Makefile
@@ -834,6 +847,8 @@ if test "$have_erlang" = "yes" ; then MAYBE_ERLANG="erl" ; else MAYBE_ERLANG="" 
 AC_SUBST([MAYBE_ERLANG])
 if test "$have_lua" = "yes" ; then MAYBE_LUA="lua" ; else MAYBE_LUA="" ; fi
 AC_SUBST([MAYBE_LUA])
+if test "$have_rs" = "yes" ; then MAYBE_RS="rs" ; else MAYBE_RS="" ; fi
+AC_SUBST([MAYBE_RS])
 
 AC_OUTPUT
 
@@ -858,6 +873,7 @@ echo "Building Go Library .......... : $have_go"
 echo "Building D Library ........... : $have_d"
 echo "Building NodeJS Library ...... : $have_nodejs"
 echo "Building Lua Library ......... : $have_lua"
+echo "Building Rust Library ........ : $have_rs"
 
 if test "$have_cpp" = "yes" ; then
   echo
@@ -952,6 +968,12 @@ if test "$have_lua" = "yes" ; then
   echo
   echo "Lua Library:"
   echo "   Using Lua .............. : $LUA"
+fi
+if test "$have_rs" = "yes" ; then
+  echo
+  echo "Rust Library:"
+  echo "   Using Cargo................ : $CARGO"
+  #echo "   Using Rust version......... : $($CARGO rustc -- --version)" # FIXME: does not work
 fi
 echo
 echo "If something is missing that you think should be present,"

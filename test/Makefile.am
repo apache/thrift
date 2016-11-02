@@ -87,6 +87,11 @@ SUBDIRS += lua
 PRECROSS_TARGET += precross-lua
 endif
 
+if WITH_RS
+SUBDIRS += rs
+PRECROSS_TARGET += precross-rs
+endif
+
 #
 # generate html for ThriftTest.thrift
 #
@@ -113,6 +118,7 @@ EXTRA_DIST = \
 	py.twisted \
 	py.tornado \
 	rb \
+	rs \
 	threads \
 	AnnotationTest.thrift \
 	BrokenConstants.thrift \
