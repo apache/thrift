@@ -253,6 +253,8 @@ erl_crash.dump
 /lib/erl/logs/
 /lib/go/test/gopath/
 /lib/go/test/ThriftTest.thrift
+/lib/rs/target/
+/lib/rs/Cargo.lock
 /libtool
 /ltmain.sh
 /missing
@@ -287,6 +289,8 @@ erl_crash.dump
 /test/hs/TestServer
 /test/py.twisted/_trial_temp/
 /test/rb/Gemfile.lock
+/test/rs/gen-rs/
+/test/rs/target/
 /tutorial/cpp/TutorialClient
 /tutorial/cpp/TutorialServer
 /tutorial/c_glib/tutorial_client
