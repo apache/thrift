@@ -74,6 +74,10 @@ if WITH_DART
 SUBDIRS += dart
 endif
 
+if WITH_RS
+SUBDIRS += rs
+endif
+
 #
 # generate html for ThriftTest.thrift
 #
