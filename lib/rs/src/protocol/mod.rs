@@ -29,7 +29,7 @@ mod multiplexed;
 
 /// Implemented by Thrift protocols to write/read
 /// a Thrift object to/from its serialized representation.
-trait TProtocol {
+pub trait TProtocol {
 
     //
     // Methods to write a thrift type into its serialized form.
