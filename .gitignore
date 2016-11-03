@@ -289,7 +289,7 @@ erl_crash.dump
 /test/hs/TestServer
 /test/py.twisted/_trial_temp/
 /test/rb/Gemfile.lock
-/test/rs/gen-rs/
+/test/rs/src/thrift_test.rs
 /test/rs/target/
 /tutorial/cpp/TutorialClient
 /tutorial/cpp/TutorialServer
