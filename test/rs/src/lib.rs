@@ -15,11 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-extern crate rift_test;
+extern crate rift;
 
-use rift_test::*;
+mod thrift_test;
 
-fn main() {
-    let x = Numberz::ONE;
-    println!("Hello, I'm the test client! {:?}", x);
-}
+pub use thrift_test::*;
