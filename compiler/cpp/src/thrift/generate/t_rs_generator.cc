@@ -86,12 +86,17 @@ void t_rs_generator::init_generator() {
     // add standard includes
     f_gen_code_ << "extern crate rift;" << endl;
     f_gen_code_ << endl;
+    f_gen_code_ << "use std::collections::{HashMap, HashSet};" << endl;
+    f_gen_code_ << endl;
+    f_gen_code_ << "use rift::{Error, Result};" << endl;
+    f_gen_code_ << "use rift::protocol::TProtocol;" << endl;
+    f_gen_code_ << endl;
 }
 
 string t_rs_generator::autogen_comment() {
   return std::string("") +
     "// " + autogen_summary() + "\n" +
-    "// DO NOT EDIT UNLESS YOU ARE SURE YOU KNOW WHAT YOU ARE DOING\n" +
+    "// DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING\n" +
     "\n";
 }
 
@@ -106,7 +111,7 @@ void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
 
 // TODO: handle values and mapping (?)
 void t_rs_generator::generate_enum(t_enum* tenum) {
-    // actual enum struct
+    // enum definition
     f_gen_code_ << "#[derive(Copy, Clone, Debug)]" << endl;
     f_gen_code_ << "pub enum " << tenum->get_name() << " {" << endl;
 
@@ -121,14 +126,42 @@ void t_rs_generator::generate_enum(t_enum* tenum) {
     f_gen_code_ << "}" << endl << endl;
 
     // let x = Foo::Bar as u32;
+    // int -> enum reverse matching
+    // TODO: avoid double loops
 }
 
 void t_rs_generator::generate_const(t_const* tconst) {
-
+    // constants can be complex types
 }
 
 void t_rs_generator::generate_struct(t_struct* tstruct) {
+    // the struct itself
+    f_gen_code_ << "#[derive(Debug)]" << endl;
+    f_gen_code_ << "pub struct " << tstruct->get_name() << " {" << endl;
+    f_gen_code_ << "}" << endl;
+    f_gen_code_ << endl;
 
+    // struct impl
+    f_gen_code_ << "impl " << tstruct->get_name() << " {" << endl;
+    indent_up();
+
+    f_gen_code_ << indent() << "pub fn serialize<P: TProtocol>(o: P) -> Result<()> {" << endl;
+    indent_up();
+    f_gen_code_ << indent() << "Ok(())" << endl;
+    indent_down();
+    f_gen_code_ << indent() << "}" << endl;
+
+    f_gen_code_ << endl;
+
+    f_gen_code_ << indent() << "pub fn deserialze<P: TProtocol>(i: P) -> Result<()> {" << endl;
+    indent_up();
+    f_gen_code_ << indent() << "Ok(())" << endl;
+    indent_down();
+    f_gen_code_ << indent() << "}" << endl;
+
+    indent_down();
+    f_gen_code_ << "}" << endl;
+    f_gen_code_ << endl;
 }
 
 void t_rs_generator::generate_xception(t_struct* txception) {
