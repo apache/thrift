@@ -20,7 +20,7 @@
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 stubs: ../ThriftTest.thrift $(THRIFT)
-	$(THRIFT) --gen rs $<
+	$(THRIFT) -out src --gen rs $<
 
 precross: stubs
 	$(CARGO) build
