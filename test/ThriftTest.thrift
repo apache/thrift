@@ -67,7 +67,7 @@ typedef i64 UserId
 struct Bonk
 {
   1: string message,
-  2: i32 type
+  2: i32 typo
 }
 
 typedef map<string,Bonk> MapType
