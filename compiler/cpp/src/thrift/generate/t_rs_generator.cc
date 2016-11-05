@@ -101,7 +101,7 @@ void t_rs_generator::init_generator() {
   // add standard includes
   f_gen_code_ << "extern crate rift;" << endl;
   f_gen_code_ << endl;
-  f_gen_code_ << "use std::collections::{HashMap, HashSet};" << endl;
+  f_gen_code_ << "use std::collections::{BTreeMap, BTreeSet};" << endl;
   f_gen_code_ << endl;
   f_gen_code_ << "use rift::{Error, Result};" << endl;
   f_gen_code_ << "use rift::protocol::TProtocol;" << endl;
@@ -116,6 +116,10 @@ void t_rs_generator::init_generator() {
     }
     f_gen_code_ << endl;
   }
+
+  // now turn off some warnings
+  f_gen_code_ << "#[allow(non_snake_case)]" << endl;
+  f_gen_code_ << endl;
 }
 
 string t_rs_generator::autogen_comment() {
@@ -138,7 +142,7 @@ void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
 // TODO: handle values and mapping (?)
 void t_rs_generator::generate_enum(t_enum* tenum) {
   // enum definition
-  f_gen_code_ << "#[derive(Copy, Clone, Debug)]" << endl;
+  f_gen_code_ << "#[derive(Copy, Clone, Debug, PartialEq)]" << endl;
   f_gen_code_ << "pub enum " << tenum->get_name() << " {" << endl;
 
   indent_up();
@@ -175,7 +179,7 @@ void t_rs_generator::render_rust_struct(t_struct* tstruct) {
   vector<t_field*> members = tstruct->get_sorted_members();
 
   // the struct itself
-  f_gen_code_ << "#[derive(Debug, Eq, PartialEq)]" << endl;
+  f_gen_code_ << "#[derive(Debug, PartialEq)]" << endl;
   f_gen_code_ << "pub struct " << tstruct->get_name() << " {" << endl;
   if (!members.empty()) {
     indent_up();
@@ -284,11 +288,11 @@ void t_rs_generator::render_rust_union(t_struct* tstruct) {
 }
 
 string t_rs_generator::render_rust_map(const t_map* tmap) {
-  return "HashMap<" + render_rust_type(tmap->get_key_type()) + ", " + render_rust_type(tmap->get_val_type()) + ">";
+  return "BTreeMap<" + render_rust_type(tmap->get_key_type()) + ", " + render_rust_type(tmap->get_val_type()) + ">";
 }
 
 string t_rs_generator::render_rust_set(const t_set* tset) {
-  return "HashSet<" + render_rust_type(tset->get_elem_type()) + ">";
+  return "BTreeSet<" + render_rust_type(tset->get_elem_type()) + ">";
 }
 
 string t_rs_generator::render_rust_list(const t_list* tlist) {
