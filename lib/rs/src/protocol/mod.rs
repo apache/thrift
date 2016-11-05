@@ -84,7 +84,7 @@ pub trait TProtocol {
 /// in its corresponding protocol representation.
 #[derive(Debug)]
 pub struct TMessageIdentifier {
-    pub name: String,
+    pub name: String, // FIXME: allow usage of &str
     pub message_type: TMessageType,
     pub sequence_number: i32,
 }
@@ -93,14 +93,14 @@ pub struct TMessageIdentifier {
 /// in its corresponding protocol representation.
 #[derive(Debug)]
 pub struct TStructIdentifier {
-    pub name: String,
+    pub name: String, // FIXME: allow usage of &str
 }
 
 /// Identifies an instance of a Thrift field
 /// in its corresponding protocol representation.
 #[derive(Debug)]
 pub struct TFieldIdentifier {
-    pub name: Option<String>,
+    pub name: Option<String>, // FIXME: allow usage of &str
     pub field_type: TFieldType,
     pub id: i16,
 }
