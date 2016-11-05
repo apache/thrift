@@ -78,13 +78,15 @@ private:
   void render_rust_union(t_struct* tstruct);
 
   // Return the rust string that
-  string render_rust_type(const t_type* ttype);
+  string render_rust_type(t_type* ttype);
 
-  string render_rust_map(const t_map* tmap);
-  string render_rust_set(const t_set* tset);
-  string render_rust_list(const t_list* tlist);
+  string render_rust_map(t_map* tmap);
+  string render_rust_set(t_set* tset);
+  string render_rust_list(t_list* tlist);
   string wrap_with_req_qualifier(const string& rust_type, t_field::e_req req);
-  string render_namespaced_rust_type(const t_type* ttype);
+  string render_namespaced_rust_type(t_type* ttype);
+  void render_rust_sync_service_client(t_service* tservice);
+  void render_rust_sync_service_server(t_service* tservice);
 };
 
 // TODO: ensure errors handled properly
@@ -96,7 +98,14 @@ void t_rs_generator::init_generator() {
   // create the file into which we're going to write the generated code
   string f_gen_code_name = gen_code_dir_ + "/" + underscore(get_program()->get_name()) + ".rs";
   f_gen_code_.open(f_gen_code_name.c_str());
+
+  // write the header comment
   f_gen_code_ << autogen_comment();
+
+  // turn off some warnings
+  f_gen_code_ << "#![allow(unused_imports)]" << endl; // I always include BTreeMap/BTreeSet
+  f_gen_code_ << "#![allow(non_snake_case)]" << endl; // I keep the user-defined names (should I change to underscore?)
+  f_gen_code_ << endl;
 
   // add standard includes
   f_gen_code_ << "extern crate rift;" << endl;
@@ -104,7 +113,7 @@ void t_rs_generator::init_generator() {
   f_gen_code_ << "use std::collections::{BTreeMap, BTreeSet};" << endl;
   f_gen_code_ << endl;
   f_gen_code_ << "use rift::{Error, Result};" << endl;
-  f_gen_code_ << "use rift::protocol::TProtocol;" << endl;
+  f_gen_code_ << "use rift::protocol::{TFieldIdentifier, TMessageIdentifier, TProtocol, TStructIdentifier};" << endl;
   f_gen_code_ << endl;
 
   // add thrift includes
@@ -116,10 +125,6 @@ void t_rs_generator::init_generator() {
     }
     f_gen_code_ << endl;
   }
-
-  // now turn off some warnings
-  f_gen_code_ << "#[allow(non_snake_case)]" << endl;
-  f_gen_code_ << endl;
 }
 
 string t_rs_generator::autogen_comment() {
@@ -139,7 +144,6 @@ void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
   f_gen_code_ << endl;
 }
 
-// TODO: handle values and mapping (?)
 void t_rs_generator::generate_enum(t_enum* tenum) {
   // enum definition
   f_gen_code_ << "#[derive(Copy, Clone, Debug, PartialEq)]" << endl;
@@ -153,7 +157,8 @@ void t_rs_generator::generate_enum(t_enum* tenum) {
   }
 
   indent_down();
-  f_gen_code_ << "}" << endl << endl;
+  f_gen_code_ << "}" << endl;
+  f_gen_code_ << endl;
 
   // let x = Foo::Bar as u32;
   // int -> enum reverse matching
@@ -161,7 +166,13 @@ void t_rs_generator::generate_enum(t_enum* tenum) {
 }
 
 void t_rs_generator::generate_const(t_const* tconst) {
-  // constants can be complex types
+  /*
+  f_gen_code_
+    << "const " << tconst->get_name() << ": " << render_rust_type(tconst->get_type())
+    << " = 1" << ";" // FIXME: WTF is going on with constants?!
+    << endl;
+  f_gen_code_ << endl;
+  */
 }
 
 void t_rs_generator::generate_struct(t_struct* tstruct) {
@@ -175,12 +186,12 @@ void t_rs_generator::generate_struct(t_struct* tstruct) {
 }
 
 void t_rs_generator::render_rust_struct(t_struct* tstruct) {
-  // get the members - we'll need it a few times
+  string name = tstruct->get_name();
   vector<t_field*> members = tstruct->get_sorted_members();
 
   // the struct itself
   f_gen_code_ << "#[derive(Debug, PartialEq)]" << endl;
-  f_gen_code_ << "pub struct " << tstruct->get_name() << " {" << endl;
+  f_gen_code_ << "pub struct " << name << " {" << endl;
   if (!members.empty()) {
     indent_up();
     vector<t_field*>::iterator members_iter;
@@ -199,29 +210,60 @@ void t_rs_generator::render_rust_struct(t_struct* tstruct) {
   f_gen_code_ << endl;
 
   // struct impl
-  f_gen_code_ << "impl " << tstruct->get_name() << " {" << endl;
+  f_gen_code_ << "impl " << name << " {" << endl;
   indent_up();
 
-  f_gen_code_ << indent() << "pub fn serialize<P: TProtocol>(o: P) -> Result<()> {" << endl;
+  // write the serialization function
+  f_gen_code_
+    << indent()
+    << "pub fn write_struct<P: TProtocol>(s: &" << name << ", out_prot: &mut P) -> Result<()> {"
+    << endl;
   indent_up();
+
+  // write struct header to output protocol
+  f_gen_code_
+    << indent()
+    << "let struct_ident = TStructIdentifier { name: \"" + name + "\".to_owned() };"
+    << endl;
+  f_gen_code_
+    << indent()
+    << "try!(out_prot.write_struct_begin(&struct_ident));"
+    << endl;
+
+  // write struct members to output protocol
+  if (!members.empty()) {
+    f_gen_code_ << endl;
+    vector<t_field*>::iterator members_iter;
+    for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
+      t_field* tfield = (*members_iter);
+      t_type* ttype = get_true_type(tfield->get_type());
+      t_field::e_req req = tfield->get_req();
+    }
+  }
+
+  // write struct footer to output protocol
+  f_gen_code_ << indent() << "try!(out_prot.write_struct_end());" << endl;
   f_gen_code_ << indent() << "Ok(())" << endl;
   indent_down();
   f_gen_code_ << indent() << "}" << endl;
 
-  f_gen_code_ << endl;
+  //f_gen_code_ << endl;
 
-  f_gen_code_ << indent() << "pub fn deserialze<P: TProtocol>(i: P) -> Result<()> {" << endl;
+  // read struct fields from the input protocol
+  /*
+  f_gen_code_ << indent() << "pub fn readStruct<P: TProtocol>(in_prot: P) -> Result<" << name << "> {" << endl;
   indent_up();
   f_gen_code_ << indent() << "Ok(())" << endl;
   indent_down();
   f_gen_code_ << indent() << "}" << endl;
+  */
 
   indent_down();
   f_gen_code_ << "}" << endl;
   f_gen_code_ << endl;
 }
 
-string t_rs_generator::render_rust_type(const t_type* ttype) {
+string t_rs_generator::render_rust_type(t_type* ttype) {
   if (ttype->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
     switch (tbase) {
@@ -259,7 +301,7 @@ string t_rs_generator::render_rust_type(const t_type* ttype) {
   throw "Unsupported type " + ttype->get_name();
 }
 
-string t_rs_generator::render_namespaced_rust_type(const t_type* ttype) {
+string t_rs_generator::render_namespaced_rust_type(t_type* ttype) {
   if (ttype->is_enum() || ttype->is_struct() || ttype->is_typedef()) {
     string type_namespace = ttype->get_program()->get_name();
     if (type_namespace != get_program()->get_name()) {
@@ -287,24 +329,55 @@ string t_rs_generator::wrap_with_req_qualifier(const string& rust_type, t_field:
 void t_rs_generator::render_rust_union(t_struct* tstruct) {
 }
 
-string t_rs_generator::render_rust_map(const t_map* tmap) {
+string t_rs_generator::render_rust_map(t_map* tmap) {
   return "BTreeMap<" + render_rust_type(tmap->get_key_type()) + ", " + render_rust_type(tmap->get_val_type()) + ">";
 }
 
-string t_rs_generator::render_rust_set(const t_set* tset) {
+string t_rs_generator::render_rust_set(t_set* tset) {
   return "BTreeSet<" + render_rust_type(tset->get_elem_type()) + ">";
 }
 
-string t_rs_generator::render_rust_list(const t_list* tlist) {
+string t_rs_generator::render_rust_list(t_list* tlist) {
   return "Vec<" + render_rust_type(tlist->get_elem_type()) + ">";
 }
 
 void t_rs_generator::generate_xception(t_struct* txception) {
-
+  //render_rust_struct(txception);
 }
 
-void t_rs_generator::generate_service(t_service* t_service) {
+void t_rs_generator::generate_service(t_service* tservice) {
+  render_rust_sync_service_client(tservice);
+  render_rust_sync_service_server(tservice);
+}
 
+void t_rs_generator::render_rust_sync_service_client(t_service* tservice) {
+  string client_trait_name = "TAbstract" + tservice->get_name() + "SyncClient";
+  string client_impl_struct_name = "T" + tservice->get_name() + "SyncClient";
+
+  // render the trait
+  // although not strictly necessary, I'm doing this to make testing easier
+  // this way users can pass in anything that implements the client facade
+  f_gen_code_ << "pub trait " << client_trait_name << " {" << endl;
+  f_gen_code_ << "}" << endl;
+  f_gen_code_ << endl;
+
+  // render the implementing struct
+  f_gen_code_ << "pub struct " << client_impl_struct_name << " {" << endl;
+  f_gen_code_ << "}" << endl;
+  f_gen_code_ << endl;
+
+  // render the factory functions for the implementing struct
+  f_gen_code_ << "impl " << client_impl_struct_name << " {" << endl;
+  f_gen_code_ << "}" << endl;
+  f_gen_code_ << endl;
+
+  // now render all the service methods for the implementing struct
+  f_gen_code_ << "impl " << client_trait_name << " for " << client_impl_struct_name << " {" << endl;
+  f_gen_code_ << "}" << endl;
+  f_gen_code_ << endl;
+}
+
+void t_rs_generator::render_rust_sync_service_server(t_service* tservice) {
 }
 
 THRIFT_REGISTER_GENERATOR(
