@@ -47,11 +47,13 @@ pub trait TProtocol {
     // fn write_list_end(&mut self) -> Result<()>;
     // fn write_set_begin(&mut self) -> Result<()>; // etype, size
     // fn write_set_end(&mut self) -> Result<()>;
-    // fn write_bool(&mut self, b: bool) -> Result<()>;
+    fn write_bool(&mut self, b: bool) -> Result<()>;
     fn write_byte<I: convert::Into<u8>>(&mut self, b: I) -> Result<()>;
     fn write_bytes(&mut self, b: &[u8]) -> Result<()>;
+    fn write_i8(&mut self, i: i8) -> Result<()>;
     fn write_i16(&mut self, i: i16) -> Result<()>;
     fn write_i32(&mut self, i: i32) -> Result<()>;
+    fn write_i64(&mut self, i: i64) -> Result<()>;
     fn write_double(&mut self, d: f64) -> Result<()>;
     fn write_string(&mut self, s: &str) -> Result<()>;
 
@@ -71,11 +73,13 @@ pub trait TProtocol {
     // fn read_list_end(&mut self) -> Result<()>;
     // fn read_set_begin(&mut self) -> Result<()>; // etype, size
     // fn read_set_end(&mut self) -> Result<()>;
-    // fn read_bool(&mut self) -> Result<bool>;
+    fn read_bool(&mut self) -> Result<bool>;
     fn read_byte(&mut self) -> Result<u8>;
     fn read_bytes(&mut self) -> Result<Vec<u8>>;
+    fn read_i8(&mut self) -> Result<i8>;
     fn read_i16(&mut self) -> Result<i16>;
     fn read_i32(&mut self) -> Result<i32>;
+    fn read_i64(&mut self) -> Result<i64>;
     fn read_double(&mut self) -> Result<f64>;
     fn read_string(&mut self) -> Result<String>;
 }

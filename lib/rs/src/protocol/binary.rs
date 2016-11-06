@@ -75,9 +75,7 @@ impl TProtocol for TBinaryProtocol {
     }
 
     fn write_byte<I: convert::Into<u8>>(&mut self, b: I) -> Result<()> {
-        let mut bytes = vec![];
-        try!(bytes.write_u8(b.into()));
-        self.write_transport(&bytes)
+        self.transport.write_u8(b.into()).map_err(convert::From::from)
     }
 
     fn write_bytes(&mut self, b: &[u8]) -> Result<()> {
@@ -85,22 +83,32 @@ impl TProtocol for TBinaryProtocol {
         self.write_transport(b)
     }
 
+    fn write_bool(&mut self, b: bool) -> Result<()> {
+        if b {
+            self.write_i8(1)
+        } else {
+            self.write_i8(0)
+        }
+    }
+
+    fn write_i8(&mut self, i: i8) -> Result<()> {
+        self.transport.write_i8(i).map_err(convert::From::from)
+    }
+
     fn write_i16(&mut self, i: i16) -> Result<()> {
-        let mut bytes = vec![];
-        try!(bytes.write_i16::<BigEndian>(i));
-        self.write_transport(&bytes)
+        self.transport.write_i16::<BigEndian>(i).map_err(convert::From::from)
     }
 
     fn write_i32(&mut self, i: i32) -> Result<()> {
-        let mut bytes = vec![];
-        try!(bytes.write_i32::<BigEndian>(i));
-        self.write_transport(&bytes)
+        self.transport.write_i32::<BigEndian>(i).map_err(convert::From::from)
+    }
+
+    fn write_i64(&mut self, i: i64) -> Result<()> {
+        self.transport.write_i64::<BigEndian>(i).map_err(convert::From::from)
     }
 
     fn write_double(&mut self, d: f64) -> Result<()> {
-        let mut bytes = vec![];
-        try!(bytes.write_f64::<BigEndian>(d));
-        self.write_transport(&bytes)
+        self.transport.write_f64::<BigEndian>(d).map_err(convert::From::from)
     }
 
     fn write_string(&mut self, s: &str) -> Result<()> {
@@ -189,12 +197,29 @@ impl TProtocol for TBinaryProtocol {
         self.transport.read_exact(&mut buf).map(|_| buf).map_err(convert::From::from)
     }
 
+    fn read_bool(&mut self) -> Result<bool> {
+        let b = try!(self.read_i8());
+        match b {
+            0 => Ok(false),
+            1 => Ok(true),
+            _ => Err(Error::PlaceHolder) // FIXME: put in an actual error val
+        }
+    }
+
+    fn read_i8(&mut self) -> Result<i8> {
+        self.transport.read_i8().map_err(convert::From::from)
+    }
+
     fn read_i16(&mut self) -> Result<i16> {
         self.transport.read_i16::<BigEndian>().map_err(convert::From::from)
     }
 
     fn read_i32(&mut self) -> Result<i32> {
         self.transport.read_i32::<BigEndian>().map_err(convert::From::from)
+    }
+
+    fn read_i64(&mut self) -> Result<i64> {
+        self.transport.read_i64::<BigEndian>().map_err(convert::From::from)
     }
 
     fn read_double(&mut self) -> Result<f64> {
@@ -205,6 +230,8 @@ impl TProtocol for TBinaryProtocol {
         let bytes = try!(self.read_bytes());
         String::from_utf8(bytes).map_err(convert::From::from)
     }
+
+
 }
 
 impl TBinaryProtocol {
