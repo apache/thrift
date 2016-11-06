@@ -26,6 +26,7 @@
 #include "thrift/generate/t_generator.h"
 
 using std::ofstream;
+using std::ostringstream;
 using std::string;
 using std::vector;
 
@@ -89,6 +90,8 @@ private:
   void render_rust_sync_service_server(t_service* tservice);
   void render_rust_protocol_write(const string& prefix, t_field* tfield);
   void render_rust_protocol_field_write(const string& field_prefix, t_field* tfield);
+  void render_rust_const_value(t_const_value* tconstvalue);
+  string t_type_to_rust_field_type(t_type* ttype);
 };
 
 // TODO: ensure errors handled properly
@@ -115,7 +118,7 @@ void t_rs_generator::init_generator() {
   f_gen_code_ << "use std::collections::{BTreeMap, BTreeSet};" << endl;
   f_gen_code_ << endl;
   f_gen_code_ << "use rift::{Error, Result};" << endl;
-  f_gen_code_ << "use rift::protocol::{TFieldIdentifier, TMessageIdentifier, TProtocol, TStructIdentifier};" << endl;
+  f_gen_code_ << "use rift::protocol::{TFieldIdentifier, TFieldType, TMessageIdentifier, TProtocol, TStructIdentifier};" << endl;
   f_gen_code_ << endl;
 
   // add thrift includes
@@ -175,6 +178,10 @@ void t_rs_generator::generate_const(t_const* tconst) {
     << endl;
   f_gen_code_ << endl;
   */
+}
+
+void t_rs_generator::render_rust_const_value(t_const_value* tconstvalue) {
+
 }
 
 void t_rs_generator::generate_struct(t_struct* tstruct) {
@@ -349,26 +356,76 @@ void t_rs_generator::render_rust_protocol_write(const string& prefix, t_field* t
     field_prefix = prefix + ".";
   }
 
+  ostringstream field_stream;
+  field_stream
+    << "let field_ident = TFieldIdentifier {"
+    << "name: Some(\"" << tfield->get_name() << "\".to_owned()" << "), "
+    << "field_type: " << t_type_to_rust_field_type(tfield->get_type()) << ", "
+    << "id: " << tfield->get_key() << " "
+    << "};";
+  string field_ident_string = field_stream.str();
 
   if (tfield->get_req() == t_field::T_OPTIONAL || tfield->get_req() == t_field::T_OPT_IN_REQ_OUT) {
     string field_name = field_prefix + tfield->get_name();
     f_gen_code_ << indent() << "if " << field_name << ".is_some() {" << endl;
     indent_up();
+    f_gen_code_ << indent() << field_ident_string << endl;
+    f_gen_code_ << indent() << "try!(out_prot.write_field_begin(&field_ident));" << endl;
     render_rust_protocol_field_write(field_prefix, tfield);
+    f_gen_code_ << indent() << "try!(out_prot.write_field_end());" << endl;
+    f_gen_code_ << indent() << "()" << endl;
     indent_down();
     f_gen_code_ << indent() << "} else {" << endl;
     indent_up();
-    // optional:
-    // if there's a default, use that if none, otherwise nothing
-
-    // opt-in-req-out
-    // if there's a default, use that if none, otherwise...what?!
+    if (tfield->get_req() == t_field::T_OPT_IN_REQ_OUT) {
+      f_gen_code_ << indent() << field_ident_string << endl;
+      f_gen_code_ << indent() << "try!(out_prot.write_field_begin(&field_ident));" << endl;
+      f_gen_code_ << indent() << "try!(out_prot.write_field_end());" << endl;
+    }
     f_gen_code_ << indent() << "()" << endl;
     indent_down();
     f_gen_code_ << indent() << "}" << endl;
   } else {
     render_rust_protocol_field_write(field_prefix, tfield);
   }
+}
+
+string t_rs_generator::t_type_to_rust_field_type(t_type* ttype) {
+  ttype = get_true_type(ttype);
+
+  if (ttype->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
+    switch (tbase) {
+    case t_base_type::TYPE_VOID:
+      throw "will not generate TFieldType for void";
+    case t_base_type::TYPE_STRING:
+      return "TFieldType::String";
+    case t_base_type::TYPE_BOOL:
+      return "TFieldType::Bool";
+    case t_base_type::TYPE_I8:
+      return "TFieldType::I08";
+    case t_base_type::TYPE_I16:
+      return "TFieldType::I16";
+    case t_base_type::TYPE_I32:
+      return "TFieldType::I32";
+    case t_base_type::TYPE_I64:
+      return "TFieldType::I64";
+    case t_base_type::TYPE_DOUBLE:
+      return "TFieldType::Double";
+    }
+  } else if (ttype->is_enum()) {
+    return "TFieldType::I32";
+  } else if (ttype->is_struct() || ttype->is_xception()) {
+    return "TFieldType::Struct";
+  } else if (ttype->is_map()) {
+    return "TFieldType::Map";
+  } else if (ttype->is_set()) {
+    return "TFieldType::Set";
+  } else if (ttype->is_list()) {
+    return "TFieldType::List";
+  }
+
+  throw "cannot find TFieldType for " + ttype->get_name();
 }
 
 void t_rs_generator::render_rust_protocol_field_write(const string& field_prefix, t_field* tfield) {
