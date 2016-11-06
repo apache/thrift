@@ -87,6 +87,8 @@ private:
   string render_namespaced_rust_type(t_type* ttype);
   void render_rust_sync_service_client(t_service* tservice);
   void render_rust_sync_service_server(t_service* tservice);
+  void render_rust_protocol_write(const string& prefix, t_field* tfield);
+  void render_rust_protocol_field_write(const string& field_prefix, t_field* tfield);
 };
 
 // TODO: ensure errors handled properly
@@ -189,7 +191,10 @@ void t_rs_generator::render_rust_struct(t_struct* tstruct) {
   string name = tstruct->get_name();
   vector<t_field*> members = tstruct->get_sorted_members();
 
-  // the struct itself
+  //
+  // struct
+  //
+
   f_gen_code_ << "#[derive(Debug, PartialEq)]" << endl;
   f_gen_code_ << "pub struct " << name << " {" << endl;
   if (!members.empty()) {
@@ -209,14 +214,28 @@ void t_rs_generator::render_rust_struct(t_struct* tstruct) {
   f_gen_code_ << "}" << endl;
   f_gen_code_ << endl;
 
+  //
   // struct impl
+  //
+
   f_gen_code_ << "impl " << name << " {" << endl;
   indent_up();
 
-  // write the serialization function
+  //
+  // write function
+  //
+
+  // struct variable we'll use in the write function
+  string struct_var;
+  if (members.empty()) {
+    struct_var = "_"; // denotes an unused variable
+  } else {
+    struct_var = "s";
+  }
+
   f_gen_code_
     << indent()
-    << "pub fn write_struct<P: TProtocol>(s: &" << name << ", out_prot: &mut P) -> Result<()> {"
+    << "pub fn write_to_protocol<P: TProtocol>(" + struct_var + ": &" << name << ", out_prot: &mut P) -> Result<()> {"
     << endl;
   indent_up();
 
@@ -232,12 +251,10 @@ void t_rs_generator::render_rust_struct(t_struct* tstruct) {
 
   // write struct members to output protocol
   if (!members.empty()) {
-    f_gen_code_ << endl;
     vector<t_field*>::iterator members_iter;
     for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
       t_field* tfield = (*members_iter);
-      t_type* ttype = get_true_type(tfield->get_type());
-      t_field::e_req req = tfield->get_req();
+      render_rust_protocol_write("s", tfield);
     }
   }
 
@@ -324,6 +341,94 @@ string t_rs_generator::wrap_with_req_qualifier(const string& rust_type, t_field:
     return "Option<" + rust_type + ">";
   }
   throw "Unsupported e_req " + req;
+}
+
+void t_rs_generator::render_rust_protocol_write(const string& prefix, t_field* tfield) {
+  string field_prefix = "";
+  if (!prefix.empty()) {
+    field_prefix = prefix + ".";
+  }
+
+
+  if (tfield->get_req() == t_field::T_OPTIONAL || tfield->get_req() == t_field::T_OPT_IN_REQ_OUT) {
+    string field_name = field_prefix + tfield->get_name();
+    f_gen_code_ << indent() << "if " << field_name << ".is_some() {" << endl;
+    indent_up();
+    render_rust_protocol_field_write(field_prefix, tfield);
+    indent_down();
+    f_gen_code_ << indent() << "} else {" << endl;
+    indent_up();
+    // optional:
+    // if there's a default, use that if none, otherwise nothing
+
+    // opt-in-req-out
+    // if there's a default, use that if none, otherwise...what?!
+    f_gen_code_ << indent() << "()" << endl;
+    indent_down();
+    f_gen_code_ << indent() << "}" << endl;
+  } else {
+    render_rust_protocol_field_write(field_prefix, tfield);
+  }
+}
+
+void t_rs_generator::render_rust_protocol_field_write(const string& field_prefix, t_field* tfield) {
+  bool optional = false;
+  if (tfield->get_req() == t_field::T_OPTIONAL || tfield->get_req() == t_field::T_OPT_IN_REQ_OUT) {
+    optional = true;
+  }
+
+  t_type* ttype = tfield->get_type();
+  if (ttype->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
+
+    string field_name;
+    if (optional) {
+      if (tbase == t_base_type::TYPE_STRING) {
+         field_name = field_prefix + tfield->get_name() + ".as_ref().unwrap()";
+      } else {
+         field_name = field_prefix + tfield->get_name() + ".unwrap()";
+      }
+    } else {
+     field_name = field_prefix + tfield->get_name();
+    }
+
+    switch (tbase) {
+    case t_base_type::TYPE_STRING:
+      f_gen_code_ << indent() << "try!(out_prot.write_string(&" + field_name + "));" << endl;
+      return;
+    case t_base_type::TYPE_BOOL:
+      f_gen_code_ << indent() << "try!(out_prot.write_bool(" + field_name + "));" << endl;
+      return;
+    case t_base_type::TYPE_I8:
+      f_gen_code_ << indent() << "try!(out_prot.write_i8(" + field_name + "));" << endl;
+      return;
+    case t_base_type::TYPE_I16:
+      f_gen_code_ << indent() << "try!(out_prot.write_i16(" + field_name + "));" << endl;
+      return;
+    case t_base_type::TYPE_I32:
+      f_gen_code_ << indent() << "try!(out_prot.write_i32(" + field_name + "));" << endl;
+      return;
+    case t_base_type::TYPE_I64:
+      f_gen_code_ << indent() << "try!(out_prot.write_i64(" + field_name + "));" << endl;
+      return;
+    case t_base_type::TYPE_DOUBLE:
+      f_gen_code_ << indent() << "try!(out_prot.write_double(" + field_name + "));" << endl;
+      return;
+    }
+  } else if (ttype->is_enum()) {
+    return;
+  } else if (ttype->is_struct()) {
+    return;
+  } else if (ttype->is_map()) {
+    return;
+  } else if (ttype->is_set()) {
+    return;
+  } else if (ttype->is_list()) {
+    return;
+  }
+
+  throw "Unsupported type " + ttype->get_name();
+
 }
 
 void t_rs_generator::render_rust_union(t_struct* tstruct) {
