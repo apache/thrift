@@ -56,6 +56,7 @@ pub trait TProtocol {
     fn write_i64(&mut self, i: i64) -> Result<()>;
     fn write_double(&mut self, d: f64) -> Result<()>;
     fn write_string(&mut self, s: &str) -> Result<()>;
+    fn flush(&mut self) -> Result<()>;
 
     //
     // Methods to read a thrift type from its serialized form.

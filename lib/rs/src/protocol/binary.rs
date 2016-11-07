@@ -41,9 +41,9 @@ impl TProtocol for TBinaryProtocol {
 
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> Result<()> {
         if self.strict {
-            try!(self.write_bytes(&BINARY_PROTOCOL_VERSION_1)); // TODO: how can I avoid 3 calls here?
+            try!(self.write_bytes(&BINARY_PROTOCOL_VERSION_1)); // FIXME: how can I avoid 3 calls here?
             try!(self.write_byte(0x00));
-            try!(self.write_byte(identifier.message_type)); // TODO: previously I did u8::from; how does this syntax work?
+            try!(self.write_byte(identifier.message_type)); // FIXME: previously I did u8::from; how does this syntax work?
             try!(self.write_string(&identifier.name));
             self.write_i32(identifier.sequence_number)
         } else {
@@ -113,6 +113,10 @@ impl TProtocol for TBinaryProtocol {
 
     fn write_string(&mut self, s: &str) -> Result<()> {
         self.write_bytes(s.as_bytes())
+    }
+
+    fn flush(&mut self) -> Result<()> {
+        self.transport.flush().map_err(convert::From::from)
     }
 
     //
@@ -193,7 +197,7 @@ impl TProtocol for TBinaryProtocol {
 
     fn read_bytes(&mut self) -> Result<Vec<u8>> {
         let num_bytes = try!(self.transport.read_i32::<BigEndian>()) as usize;
-        let mut buf: Vec<u8> = Vec::with_capacity(num_bytes); // TODO: how do I specify u8 as part of call?
+        let mut buf: Vec<u8> = Vec::with_capacity(num_bytes); // FIXME: how do I specify u8 as part of call?
         self.transport.read_exact(&mut buf).map(|_| buf).map_err(convert::From::from)
     }
 
