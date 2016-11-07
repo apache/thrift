@@ -84,6 +84,8 @@ private:
   // Return a string representing the protocol::TFieldType given a t_type.
   string t_type_to_rust_field_type_enum(t_type* ttype);
 
+  string rust_sync_client_trait_name(t_service* tservice);
+
   string render_rust_map(t_map* tmap);
   string render_rust_set(t_set* tset);
   string render_rust_list(t_list* tlist);
@@ -197,11 +199,16 @@ void t_rs_generator::generate_struct(t_struct* tstruct) {
 }
 
 void t_rs_generator::render_rust_struct(t_struct* tstruct) {
-  vector<t_field*> members = tstruct->get_sorted_members();
+  // struct comment demarcation
+  f_gen_ << "//" << endl;
+  f_gen_ << "// " << tstruct->get_name() << endl;
+  f_gen_ << "//" << endl;
+  f_gen_ << endl;
 
   // struct
   f_gen_ << "#[derive(Debug, PartialEq)]" << endl;
   f_gen_ << "pub struct " << tstruct->get_name() << " {" << endl;
+  vector<t_field*> members = tstruct->get_sorted_members();
   if (!members.empty()) {
     indent_up();
     vector<t_field*>::iterator members_iter;
@@ -292,7 +299,6 @@ string t_rs_generator::wrap_with_req_qualifier(const string& rust_type, t_field:
   case t_field::T_OPT_IN_REQ_OUT:
     return "Option<" + rust_type + ">";
   }
-  throw "Unsupported e_req " + req;
 }
 
 void t_rs_generator::render_rust_protocol_write(const string& prefix, t_field* tfield) {
@@ -358,6 +364,8 @@ void t_rs_generator::render_rust_protocol_field_write(const string& field_prefix
   if (ttype->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
     switch (tbase) {
+    case t_base_type::TYPE_VOID:
+      throw "Cannot write field of type TYPE_VOID to output protocol";
     case t_base_type::TYPE_STRING:
       f_gen_ << indent() << "try!(out_prot.write_string(&" + field_name + "));" << endl;
       return;
@@ -421,30 +429,87 @@ void t_rs_generator::generate_service(t_service* tservice) {
 }
 
 void t_rs_generator::render_rust_sync_service_client(t_service* tservice) {
-  string client_trait_name = "TAbstract" + tservice->get_name() + "SyncClient";
+  string client_trait_name = rust_sync_client_trait_name(tservice);
   string client_impl_struct_name = "T" + tservice->get_name() + "SyncClient";
+
+  string extension = "";
+  if (tservice->get_extends() != NULL) {
+    t_service* extends = tservice->get_extends();
+    extension = " : " + extends->get_program()->get_namespace() + "::" + rust_sync_client_trait_name(extends);
+  }
+
+  const std::vector<t_function*> functions = tservice->get_functions();
+  std::vector<t_function*>::const_iterator func_iter;
+
+  // service comment demarcation
+  f_gen_ << "//" << endl;
+  f_gen_ << "// service " << tservice->get_name() << endl;
+  f_gen_ << "//" << endl;
+  f_gen_ << endl;
 
   // render the trait
   // although not strictly necessary, I'm doing this to make testing easier
   // this way users can pass in anything that implements the client facade
-  f_gen_ << "pub trait " << client_trait_name << " {" << endl;
-  f_gen_ << "}" << endl;
+  f_gen_ << "pub trait " << client_trait_name << extension << " {" << endl;
+  indent_up();
+  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
+    t_function* func = (*func_iter);
+    f_gen_
+      << indent()
+      << "fn "
+      << func->get_name()
+      << "(&self)"
+      << " -> "
+      << "Result<"
+      << t_type_to_rust_type(func->get_returntype())
+      << ">;"
+      << endl;
+  }
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
   f_gen_ << endl;
 
   // render the implementing struct
   f_gen_ << "pub struct " << client_impl_struct_name << " {" << endl;
+  indent_up();
+  f_gen_ << indent() << "sequence_number: i32," << endl;
+  indent_down();
   f_gen_ << "}" << endl;
   f_gen_ << endl;
 
   // render the factory functions for the implementing struct
   f_gen_ << "impl " << client_impl_struct_name << " {" << endl;
+  indent_up();
+  indent_down();
   f_gen_ << "}" << endl;
   f_gen_ << endl;
 
   // now render all the service methods for the implementing struct
   f_gen_ << "impl " << client_trait_name << " for " << client_impl_struct_name << " {" << endl;
+  indent_up();
+  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
+    t_function* func = (*func_iter);
+    f_gen_
+      << indent()
+      << "fn "
+      << func->get_name()
+      << "(&self)"
+      << " -> "
+      << "Result<"
+      << t_type_to_rust_type(func->get_returntype())
+      << "> {"
+      << endl;
+    indent_up();
+    indent_down();
+    f_gen_ << indent() << "}" << endl;
+  }
+  indent_down();
   f_gen_ << "}" << endl;
   f_gen_ << endl;
+}
+
+string t_rs_generator::rust_sync_client_trait_name(t_service* tservice) {
+  return "TAbstract" + tservice->get_name() + "SyncClient";
 }
 
 void t_rs_generator::render_rust_sync_service_server(t_service* tservice) {
@@ -456,7 +521,7 @@ string t_rs_generator::t_type_to_rust_type(t_type* ttype) {
     t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_VOID:
-      throw "will not generate rust type for TYPE_VOID";
+      return "()";
     case t_base_type::TYPE_STRING:
       return "String";
     case t_base_type::TYPE_BOOL:
