@@ -107,6 +107,7 @@ private:
   void render_rust_protocol_write(const string& prefix, t_field* tfield);
   void render_rust_sync_send_recv_wrapper(t_function* tfunc);
   void render_rust_sync_send(t_function* tfunc);
+  void render_rust_sync_recv(t_function* tfunc);
 };
 
 // TODO: ensure errors handled properly
@@ -488,9 +489,9 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
   f_gen_ << "impl " << client_impl_struct_name << " {" << endl;
   indent_up();
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
-    t_function* func = (*func_iter);
-    render_rust_sync_send(func);
-    //render_rust_sync_recv(func);
+    t_function* tfunc = (*func_iter);
+    render_rust_sync_send(tfunc);
+    render_rust_sync_recv(tfunc);
   }
   indent_down();
   f_gen_ << "}" << endl;
@@ -518,13 +519,14 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
 
 void t_rs_generator::render_rust_sync_send_recv_wrapper(t_function* tfunc) {
   string func_name = tfunc->get_name();
-  string func_args = rust_sync_client_call_args(tfunc, true);
+  string func_decl_args = rust_sync_client_call_args(tfunc, true);
+  string func_call_args = rust_sync_client_call_args(tfunc, false);
   string func_return = t_type_to_rust_type(tfunc->get_returntype());
 
-  f_gen_ << indent() << "fn " << func_name <<  func_args << " -> Result<" << func_return << "> {" << endl;
+  f_gen_ << indent() << "fn " << func_name <<  func_decl_args << " -> Result<" << func_return << "> {" << endl;
   indent_up();
-  //f_gen_ << indent() << "try!();"
-  //f_gen_ << indent() << "recv_"
+  f_gen_ << indent() << "try!(self.send_" << func_name << func_call_args << ");" << endl;
+  f_gen_ << indent() << "self.recv_" << func_name << "()" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 }
@@ -532,9 +534,18 @@ void t_rs_generator::render_rust_sync_send_recv_wrapper(t_function* tfunc) {
 void t_rs_generator::render_rust_sync_send(t_function* tfunc) {
   string func_name = "send_" + tfunc->get_name();
   string func_args = rust_sync_client_call_args(tfunc, true);
-  string func_return = t_type_to_rust_type(tfunc->get_returntype());
 
   f_gen_ << indent() << "fn " << func_name <<  func_args << " -> Result<()> {" << endl;
+  indent_up();
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+}
+
+void t_rs_generator::render_rust_sync_recv(t_function* tfunc) {
+  string func_name = "recv_" + tfunc->get_name();
+  string func_return = t_type_to_rust_type(tfunc->get_returntype());
+
+  f_gen_ << indent() << "fn " << func_name << "(&mut self) -> Result<" << func_return << "> {" << endl;
   indent_up();
   indent_down();
   f_gen_ << indent() << "}" << endl;
@@ -546,12 +557,13 @@ string t_rs_generator::rust_sync_client_trait_name(t_service* tservice) {
 
 string t_rs_generator::rust_sync_client_call_args(t_function* tfunc, bool is_declaration) {
   ostringstream func_args;
-  func_args << "(&mut self";
+  func_args << (is_declaration ? "(&mut self" : "(");
 
   // service call args are packed into a struct.
   // unpack them and expand into a valid rust function arg list.
   // types that can be passed by value are, and those that can't
   // will be prepended with '&' so that they can be passed by ref
+  int is_first_arg = true;
   if (tfunc->get_arglist() != NULL && !(tfunc->get_arglist()->get_sorted_members().empty())) {
     t_struct* args = tfunc->get_arglist();
     std::vector<t_field*> fields = args->get_sorted_members();
@@ -560,7 +572,15 @@ string t_rs_generator::rust_sync_client_call_args(t_function* tfunc, bool is_dec
       t_field* tfield = (*field_iter);
       string rust_type = t_type_to_rust_type(tfield->get_type());
       string tfield_string = (can_t_type_be_passed_by_value(tfield->get_type()) ? "" : "&") + rust_type;
-      func_args << ", " << tfield->get_name() << (is_declaration ? ": " + tfield_string : "");
+      if (is_first_arg) { // FIXME: remove conditional
+        if (is_declaration) {
+          func_args << ", ";
+        }
+        is_first_arg = false;
+      } else {
+        func_args << ", ";
+      }
+      func_args << tfield->get_name() << (is_declaration ? ": " + tfield_string : "");
     }
   }
 
