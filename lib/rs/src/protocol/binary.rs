@@ -234,8 +234,6 @@ impl TProtocol for TBinaryProtocol {
         let bytes = try!(self.read_bytes());
         String::from_utf8(bytes).map_err(convert::From::from)
     }
-
-
 }
 
 impl TBinaryProtocol {
