@@ -73,7 +73,12 @@ private:
   string autogen_comment();
 
   // Write the rust representation of a thrift struct to the generated file.
-  void render_rust_struct(t_struct* tstruct);
+  // Set `is_args_struct` to `true` if rendering the struct used to pack
+  // arguments for a service call. When `true` the struct and its members have
+  // private visibility, and all fields are required. When `false` the
+  // struct and its members have public visibility and fields are optional
+  // if set as such in their thrift definition.
+  void render_rust_struct(t_struct* tstruct, bool is_args_struct);
 
   // Write the rust representation of a thrift enum to the generated file.
   void render_rust_union(t_struct* tstruct);
@@ -101,18 +106,19 @@ private:
   // by an `Option<TYPE_NAME>`, `false` otherwise.
   bool is_field_optional(t_field* tfield);
 
+  bool is_req_optional(t_field::e_req req);
+
   bool does_service_call_have_args(t_function* tfunc);
 
   string render_rust_map(t_map* tmap);
   string render_rust_set(t_set* tset);
   string render_rust_list(t_list* tlist);
-  string wrap_with_req_qualifier(const string& rust_type, t_field::e_req req);
   string render_namespaced_rust_type(t_type* ttype);
-  void render_rust_protocol_field_write(const string& field_prefix, t_field* tfield);
+  void render_rust_struct_write(const string& prefix, t_field* tfield, t_field::e_req req);
+  void render_rust_struct_field_write(const string& field_prefix, t_field* tfield, t_field::e_req req);
   void render_rust_const_value(t_const_value* tconstvalue);
   void render_rust_sync_client(t_service* tservice);
   void render_rust_sync_server(t_service* tservice);
-  void render_rust_protocol_write(const string& prefix, t_field* tfield);
   void render_rust_sync_send_recv_wrapper(t_function* tfunc);
   void render_rust_sync_send(t_function* tfunc);
   void render_rust_sync_recv(t_function* tfunc);
@@ -210,7 +216,7 @@ void t_rs_generator::render_rust_const_value(t_const_value* tconstvalue) {
 
 void t_rs_generator::generate_struct(t_struct* tstruct) {
   if (tstruct->is_struct()) {
-    render_rust_struct(tstruct);
+    render_rust_struct(tstruct, false);
   } else if (tstruct->is_union()) {
     render_rust_union(tstruct);
   } else {
@@ -218,27 +224,36 @@ void t_rs_generator::generate_struct(t_struct* tstruct) {
   }
 }
 
-void t_rs_generator::render_rust_struct(t_struct* tstruct) {
+void t_rs_generator::render_rust_struct(t_struct* tstruct, bool is_args_struct) {
+  string comment;
+  string visibility;
+  if (is_args_struct) {
+    comment = "args_struct ";
+    visibility = "";
+  } else {
+    comment = "struct ";
+    visibility = "pub ";
+  }
+
   // struct comment demarcation
   f_gen_ << "//" << endl;
-  f_gen_ << "// " << tstruct->get_name() << endl;
+  f_gen_ << "// " << comment << tstruct->get_name() << endl;
   f_gen_ << "//" << endl;
   f_gen_ << endl;
 
   // struct
   f_gen_ << "#[derive(Debug, PartialEq)]" << endl;
-  f_gen_ << "pub struct " << tstruct->get_name() << " {" << endl;
+  f_gen_ << visibility << "struct " << tstruct->get_name() << " {" << endl;
   vector<t_field*> members = tstruct->get_sorted_members();
   if (!members.empty()) {
     indent_up();
     vector<t_field*>::iterator members_iter;
     for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
       t_field* tfield = (*members_iter);
-      t_field::e_req req = tfield->get_req();
-      f_gen_
-        << indent()
-        << tfield->get_name() << ": " << wrap_with_req_qualifier(t_type_to_rust_type(tfield->get_type()), req) << ","
-        << endl;
+      t_field::e_req req = is_args_struct ? t_field::T_REQUIRED : tfield->get_req();
+      string rust_type = t_type_to_rust_type(tfield->get_type());
+      rust_type = is_req_optional(req) ? "Option<" + rust_type + ">" : rust_type;
+      f_gen_ << indent() << visibility << tfield->get_name() << ": " << rust_type << "," << endl;
     }
     indent_down();
   }
@@ -251,7 +266,8 @@ void t_rs_generator::render_rust_struct(t_struct* tstruct) {
 
   f_gen_
     << indent()
-    << "pub fn write_to_protocol<O: TProtocol>(&self, o_prot: &mut O) -> Result<()> {"
+    << visibility
+    << "fn write_to_protocol<O: TProtocol>(&self, o_prot: &mut O) -> Result<()> {"
     << endl;
   indent_up();
 
@@ -270,7 +286,8 @@ void t_rs_generator::render_rust_struct(t_struct* tstruct) {
     vector<t_field*>::iterator members_iter;
     for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
       t_field* tfield = (*members_iter);
-      render_rust_protocol_write("self", tfield);
+      t_field::e_req req = is_args_struct ? t_field::T_REQUIRED : tfield->get_req();
+      render_rust_struct_write("self", tfield, req);
     }
   }
 
@@ -309,18 +326,7 @@ string t_rs_generator::render_namespaced_rust_type(t_type* ttype) {
   throw "Unsupported namespaced type " + ttype->get_name();
 }
 
-string t_rs_generator::wrap_with_req_qualifier(const string& rust_type, t_field::e_req req) {
-  switch(req) {
-  case t_field::T_REQUIRED:
-    return rust_type;
-  case t_field::T_OPTIONAL:
-    return "Option<" + rust_type + ">";
-  case t_field::T_OPT_IN_REQ_OUT:
-    return "Option<" + rust_type + ">";
-  }
-}
-
-void t_rs_generator::render_rust_protocol_write(const string& prefix, t_field* tfield) {
+void t_rs_generator::render_rust_struct_write(const string& prefix, t_field* tfield, t_field::e_req req) {
   string field_prefix = "";
   if (!prefix.empty()) {
     field_prefix = prefix + ".";
@@ -335,19 +341,19 @@ void t_rs_generator::render_rust_protocol_write(const string& prefix, t_field* t
     << "};";
   string field_ident_string = field_stream.str();
 
-  if (tfield->get_req() == t_field::T_OPTIONAL || tfield->get_req() == t_field::T_OPT_IN_REQ_OUT) {
+  if (is_req_optional(req)) {
     string field_name = field_prefix + tfield->get_name();
     f_gen_ << indent() << "if " << field_name << ".is_some() {" << endl;
     indent_up();
     f_gen_ << indent() << field_ident_string << endl;
     f_gen_ << indent() << "try!(o_prot.write_field_begin(&field_ident));" << endl;
-    render_rust_protocol_field_write(field_prefix, tfield);
+    render_rust_struct_field_write(field_prefix, tfield, req);
     f_gen_ << indent() << "try!(o_prot.write_field_end());" << endl;
     f_gen_ << indent() << "()" << endl;
     indent_down();
     f_gen_ << indent() << "} else {" << endl;
     indent_up();
-    if (tfield->get_req() == t_field::T_OPT_IN_REQ_OUT) {
+    if (req == t_field::T_OPT_IN_REQ_OUT) {
       f_gen_ << indent() << field_ident_string << endl;
       f_gen_ << indent() << "try!(o_prot.write_field_begin(&field_ident));" << endl;
       f_gen_ << indent() << "try!(o_prot.write_field_end());" << endl;
@@ -356,21 +362,15 @@ void t_rs_generator::render_rust_protocol_write(const string& prefix, t_field* t
     indent_down();
     f_gen_ << indent() << "}" << endl;
   } else {
-    render_rust_protocol_field_write(field_prefix, tfield);
+    render_rust_struct_field_write(field_prefix, tfield, req);
   }
 }
-void t_rs_generator::render_rust_protocol_field_write(const string& field_prefix, t_field* tfield) {
-  bool optional;
-  if (tfield->get_req() == t_field::T_OPTIONAL || tfield->get_req() == t_field::T_OPT_IN_REQ_OUT) {
-    optional = true;
-  } else {
-    optional = false;
-  }
 
+void t_rs_generator::render_rust_struct_field_write(const string& field_prefix, t_field* tfield, t_field::e_req req) {
   t_type* ttype = tfield->get_type();
 
   string field_name;
-  if (optional) {
+  if (is_req_optional(req)) {
     if (ttype->is_base_type() && !ttype->is_string()) {
       field_name = field_prefix + tfield->get_name() + ".unwrap()";
     } else {
@@ -537,7 +537,7 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
   // generate structs for those too
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
     t_function* func = (*func_iter);
-    render_rust_struct(func->get_arglist());
+    render_rust_struct(func->get_arglist(), true);
   }
 }
 
@@ -632,7 +632,6 @@ string t_rs_generator::rust_sync_client_call_args(t_function* tfunc, bool is_dec
     for (field_iter = fields.begin(); field_iter != fields.end(); ++field_iter) {
       t_field* tfield = (*field_iter);
       string rust_type = t_type_to_rust_type(tfield->get_type());
-      string tfield_string = (can_t_type_be_passed_by_value(tfield->get_type()) ? "" : "&") + rust_type;
       if (is_first_arg) { // FIXME: remove conditional
         if (is_declaration) {
           func_args << ", ";
@@ -641,7 +640,7 @@ string t_rs_generator::rust_sync_client_call_args(t_function* tfunc, bool is_dec
       } else {
         func_args << ", ";
       }
-      func_args << tfield->get_name() << (is_declaration ? ": " + tfield_string : "");
+      func_args << tfield->get_name() << (is_declaration ? ": " + rust_type : "");
     }
   }
 
@@ -657,7 +656,11 @@ bool t_rs_generator::does_service_call_have_args(t_function* tfunc) {
 }
 
 bool t_rs_generator::is_field_optional(t_field* tfield) {
-  return tfield->get_req() == t_field::T_OPTIONAL || tfield->get_req() == t_field::T_OPT_IN_REQ_OUT;
+  return is_req_optional(tfield->get_req());
+}
+
+bool t_rs_generator::is_req_optional(t_field::e_req req) {
+  return req == t_field::T_OPTIONAL || req == t_field::T_OPT_IN_REQ_OUT;
 }
 
 bool t_rs_generator::can_t_type_be_passed_by_value(t_type* ttype) {
