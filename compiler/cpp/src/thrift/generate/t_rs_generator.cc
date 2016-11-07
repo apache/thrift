@@ -84,18 +84,29 @@ private:
   // Return a string representing the protocol::TFieldType given a t_type.
   string t_type_to_rust_field_type_enum(t_type* ttype);
 
+  // Return the client trait name given a t_service name.
   string rust_sync_client_trait_name(t_service* tservice);
+
+  string rust_sync_client_call_args(t_function* tfunc, bool is_declaration);
+
+  // Return 'true' if the rust type can be passed by value, 'false' otherwise.
+  bool can_t_type_be_passed_by_value(t_type* ttype);
+
+  // Return 'true' if this struct field is optional and need to be wrapped by 'Option<...>', 'false' otherwise.
+  bool is_field_optional(t_field* tfield);
 
   string render_rust_map(t_map* tmap);
   string render_rust_set(t_set* tset);
   string render_rust_list(t_list* tlist);
   string wrap_with_req_qualifier(const string& rust_type, t_field::e_req req);
   string render_namespaced_rust_type(t_type* ttype);
-  void render_rust_sync_service_client(t_service* tservice);
-  void render_rust_sync_service_server(t_service* tservice);
-  void render_rust_protocol_write(const string& prefix, t_field* tfield);
   void render_rust_protocol_field_write(const string& field_prefix, t_field* tfield);
   void render_rust_const_value(t_const_value* tconstvalue);
+  void render_rust_sync_client(t_service* tservice);
+  void render_rust_sync_server(t_service* tservice);
+  void render_rust_protocol_write(const string& prefix, t_field* tfield);
+  void render_rust_sync_send_recv_wrapper(t_function* tfunc);
+  void render_rust_sync_send(t_function* tfunc);
 };
 
 // TODO: ensure errors handled properly
@@ -214,11 +225,10 @@ void t_rs_generator::render_rust_struct(t_struct* tstruct) {
     vector<t_field*>::iterator members_iter;
     for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
       t_field* tfield = (*members_iter);
-      t_type* ttype = get_true_type(tfield->get_type());
       t_field::e_req req = tfield->get_req();
       f_gen_
         << indent()
-        << tfield->get_name() << ": " << wrap_with_req_qualifier(t_type_to_rust_type(ttype), req) << ","
+        << tfield->get_name() << ": " << wrap_with_req_qualifier(t_type_to_rust_type(tfield->get_type()), req) << ","
         << endl;
     }
     indent_down();
@@ -424,11 +434,11 @@ void t_rs_generator::generate_xception(t_struct* txception) {
 }
 
 void t_rs_generator::generate_service(t_service* tservice) {
-  render_rust_sync_service_client(tservice);
-  render_rust_sync_service_server(tservice);
+  render_rust_sync_client(tservice);
+  render_rust_sync_server(tservice);
 }
 
-void t_rs_generator::render_rust_sync_service_client(t_service* tservice) {
+void t_rs_generator::render_rust_sync_client(t_service* tservice) {
   string client_trait_name = rust_sync_client_trait_name(tservice);
   string client_impl_struct_name = "T" + tservice->get_name() + "SyncClient";
 
@@ -453,66 +463,120 @@ void t_rs_generator::render_rust_sync_service_client(t_service* tservice) {
   f_gen_ << "pub trait " << client_trait_name << extension << " {" << endl;
   indent_up();
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
-    t_function* func = (*func_iter);
-    f_gen_
-      << indent()
-      << "fn "
-      << func->get_name()
-      << "(&self)"
-      << " -> "
-      << "Result<"
-      << t_type_to_rust_type(func->get_returntype())
-      << ">;"
-      << endl;
+    t_function* tfunc = (*func_iter);
+    string func_name = tfunc->get_name();
+    string func_args = rust_sync_client_call_args(tfunc, true);
+    string func_return = t_type_to_rust_type(tfunc->get_returntype());
+    f_gen_ << indent() << "fn " << func_name <<  func_args << " -> Result<" << func_return << ">;" << endl;
   }
   indent_down();
   f_gen_ << indent() << "}" << endl;
   f_gen_ << endl;
 
   // render the implementing struct
+  //f_gen_ << "pub struct " << client_impl_struct_name << "<I: TProtocol, O: TProtocol> {" << endl;
   f_gen_ << "pub struct " << client_impl_struct_name << " {" << endl;
   indent_up();
+  //f_gen_ << indent() << "in_prot: I," << endl;
+  //f_gen_ << indent() << "out_prot: O," << endl;
   f_gen_ << indent() << "sequence_number: i32," << endl;
   indent_down();
   f_gen_ << "}" << endl;
   f_gen_ << endl;
 
-  // render the factory functions for the implementing struct
+  // render the factory function that creates the sender as well as helper functions
   f_gen_ << "impl " << client_impl_struct_name << " {" << endl;
-  indent_up();
-  indent_down();
-  f_gen_ << "}" << endl;
-  f_gen_ << endl;
-
-  // now render all the service methods for the implementing struct
-  f_gen_ << "impl " << client_trait_name << " for " << client_impl_struct_name << " {" << endl;
   indent_up();
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
     t_function* func = (*func_iter);
-    f_gen_
-      << indent()
-      << "fn "
-      << func->get_name()
-      << "(&self)"
-      << " -> "
-      << "Result<"
-      << t_type_to_rust_type(func->get_returntype())
-      << "> {"
-      << endl;
-    indent_up();
-    indent_down();
-    f_gen_ << indent() << "}" << endl;
+    render_rust_sync_send(func);
+    //render_rust_sync_recv(func);
   }
   indent_down();
   f_gen_ << "}" << endl;
   f_gen_ << endl;
+
+  // render all the service methods for the implementing struct
+  f_gen_ << "impl " << client_trait_name << " for " << client_impl_struct_name << " {" << endl;
+  indent_up();
+  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
+    t_function* func = (*func_iter);
+    render_rust_sync_send_recv_wrapper(func);
+  }
+  indent_down();
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
+
+  // finally, thrift args for service calls are packed
+  // into a struct that's transmitted over the wire, so
+  // generate structs for those too
+  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
+    t_function* func = (*func_iter);
+    render_rust_struct(func->get_arglist());
+  }
+}
+
+void t_rs_generator::render_rust_sync_send_recv_wrapper(t_function* tfunc) {
+  string func_name = tfunc->get_name();
+  string func_args = rust_sync_client_call_args(tfunc, true);
+  string func_return = t_type_to_rust_type(tfunc->get_returntype());
+
+  f_gen_ << indent() << "fn " << func_name <<  func_args << " -> Result<" << func_return << "> {" << endl;
+  indent_up();
+  //f_gen_ << indent() << "try!();"
+  //f_gen_ << indent() << "recv_"
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+}
+
+void t_rs_generator::render_rust_sync_send(t_function* tfunc) {
+  string func_name = "send_" + tfunc->get_name();
+  string func_args = rust_sync_client_call_args(tfunc, true);
+  string func_return = t_type_to_rust_type(tfunc->get_returntype());
+
+  f_gen_ << indent() << "fn " << func_name <<  func_args << " -> Result<()> {" << endl;
+  indent_up();
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
 }
 
 string t_rs_generator::rust_sync_client_trait_name(t_service* tservice) {
   return "TAbstract" + tservice->get_name() + "SyncClient";
 }
 
-void t_rs_generator::render_rust_sync_service_server(t_service* tservice) {
+string t_rs_generator::rust_sync_client_call_args(t_function* tfunc, bool is_declaration) {
+  ostringstream func_args;
+  func_args << "(&mut self";
+
+  // service call args are packed into a struct.
+  // unpack them and expand into a valid rust function arg list.
+  // types that can be passed by value are, and those that can't
+  // will be prepended with '&' so that they can be passed by ref
+  if (tfunc->get_arglist() != NULL && !(tfunc->get_arglist()->get_sorted_members().empty())) {
+    t_struct* args = tfunc->get_arglist();
+    std::vector<t_field*> fields = args->get_sorted_members();
+    std::vector<t_field*>::iterator field_iter;
+    for (field_iter = fields.begin(); field_iter != fields.end(); ++field_iter) {
+      t_field* tfield = (*field_iter);
+      string rust_type = t_type_to_rust_type(tfield->get_type());
+      string tfield_string = (can_t_type_be_passed_by_value(tfield->get_type()) ? "" : "&") + rust_type;
+      func_args << ", " << tfield->get_name() << (is_declaration ? ": " + tfield_string : "");
+    }
+  }
+
+  func_args << ")";
+  return func_args.str();
+}
+
+void t_rs_generator::render_rust_sync_server(t_service* tservice) {
+}
+
+bool t_rs_generator::is_field_optional(t_field* tfield) {
+  return tfield->get_req() == t_field::T_OPTIONAL || tfield->get_req() == t_field::T_OPT_IN_REQ_OUT;
+}
+
+bool t_rs_generator::can_t_type_be_passed_by_value(t_type* ttype) {
+  return ttype->is_base_type();
 }
 
 string t_rs_generator::t_type_to_rust_type(t_type* ttype) {
