@@ -84,7 +84,7 @@ private:
   void render_rust_union(t_struct* tstruct);
 
   // Return a string representing the rust type given a `t_type`.
-  string t_type_to_rust_type(t_type* ttype);
+  string to_rust_type(t_type* ttype);
 
   // Return a string representing the rift `protocol::TFieldType` given a `t_type`.
   string t_type_to_rust_field_type_enum(t_type* ttype);
@@ -100,22 +100,20 @@ private:
   string rust_sync_client_call_args(t_function* tfunc, bool is_declaration);
 
   // Return `true` if the rust type can be passed by value, `false` otherwise.
-  bool can_t_type_be_passed_by_value(t_type* ttype);
+  bool can_pass_by_value(t_type* ttype);
 
   // Return `true` if this struct field is optional and needs to be wrapped
   // by an `Option<TYPE_NAME>`, `false` otherwise.
-  bool is_field_optional(t_field* tfield);
+  bool is_optional(t_field* tfield);
 
-  bool is_req_optional(t_field::e_req req);
+  bool is_optional(t_field::e_req req);
 
-  bool does_service_call_have_args(t_function* tfunc);
+  bool has_args(t_function* tfunc);
 
-  string render_rust_map(t_map* tmap);
-  string render_rust_set(t_set* tset);
-  string render_rust_list(t_list* tlist);
-  string render_namespaced_rust_type(t_type* ttype);
-  void render_rust_struct_write(const string& prefix, t_field* tfield, t_field::e_req req);
-  void render_rust_struct_field_write(const string& field_prefix, t_field* tfield, t_field::e_req req);
+  string rust_field_write(const string& field_prefix, t_field* tfield, t_field::e_req req);
+
+  string to_namespaced_rust_type(t_type* ttype);
+  void render_rust_struct_field_write(const string& prefix, t_field* tfield, t_field::e_req req);
   void render_rust_const_value(t_const_value* tconstvalue);
   void render_rust_sync_client(t_service* tservice);
   void render_rust_sync_server(t_service* tservice);
@@ -174,7 +172,7 @@ void t_rs_generator::close_generator() {
 }
 
 void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
-  std::string actual_type = t_type_to_rust_type(ttypedef->get_type());
+  std::string actual_type = to_rust_type(ttypedef->get_type());
   f_gen_ << "type " << ttypedef->get_symbolic() << " = " << actual_type << ";" << endl;
   f_gen_ << endl;
 }
@@ -203,7 +201,7 @@ void t_rs_generator::generate_enum(t_enum* tenum) {
 void t_rs_generator::generate_const(t_const* tconst) {
   /*
   f_gen_
-    << "const " << tconst->get_name() << ": " << t_type_to_rust_type(tconst->get_type())
+    << "const " << tconst->get_name() << ": " << to_rust_type(tconst->get_type())
     << " = 1" << ";" // FIXME: WTF is going on with constants?!
     << endl;
   f_gen_ << endl;
@@ -251,8 +249,8 @@ void t_rs_generator::render_rust_struct(t_struct* tstruct, bool is_args_struct) 
     for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
       t_field* tfield = (*members_iter);
       t_field::e_req req = is_args_struct ? t_field::T_REQUIRED : tfield->get_req();
-      string rust_type = t_type_to_rust_type(tfield->get_type());
-      rust_type = is_req_optional(req) ? "Option<" + rust_type + ">" : rust_type;
+      string rust_type = to_rust_type(tfield->get_type());
+      rust_type = is_optional(req) ? "Option<" + rust_type + ">" : rust_type;
       f_gen_ << indent() << visibility << tfield->get_name() << ": " << rust_type << "," << endl;
     }
     indent_down();
@@ -287,7 +285,7 @@ void t_rs_generator::render_rust_struct(t_struct* tstruct, bool is_args_struct) 
     for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
       t_field* tfield = (*members_iter);
       t_field::e_req req = is_args_struct ? t_field::T_REQUIRED : tfield->get_req();
-      render_rust_struct_write("self", tfield, req);
+      render_rust_struct_field_write("self", tfield, req);
     }
   }
 
@@ -313,20 +311,7 @@ void t_rs_generator::render_rust_struct(t_struct* tstruct, bool is_args_struct) 
   f_gen_ << endl;
 }
 
-string t_rs_generator::render_namespaced_rust_type(t_type* ttype) {
-  if (ttype->is_enum() || ttype->is_struct() || ttype->is_typedef()) {
-    string type_namespace = ttype->get_program()->get_name();
-    if (type_namespace != get_program()->get_name()) {
-      return type_namespace + "::" + ttype->get_name();
-    } else {
-      return ttype->get_name();
-    }
-  }
-
-  throw "Unsupported namespaced type " + ttype->get_name();
-}
-
-void t_rs_generator::render_rust_struct_write(const string& prefix, t_field* tfield, t_field::e_req req) {
+void t_rs_generator::render_rust_struct_field_write(const string& prefix, t_field* tfield, t_field::e_req req) {
   string field_prefix = "";
   if (!prefix.empty()) {
     field_prefix = prefix + ".";
@@ -341,13 +326,13 @@ void t_rs_generator::render_rust_struct_write(const string& prefix, t_field* tfi
     << "};";
   string field_ident_string = field_stream.str();
 
-  if (is_req_optional(req)) {
+  if (is_optional(req)) {
     string field_name = field_prefix + tfield->get_name();
     f_gen_ << indent() << "if " << field_name << ".is_some() {" << endl;
     indent_up();
     f_gen_ << indent() << field_ident_string << endl;
     f_gen_ << indent() << "try!(o_prot.write_field_begin(&field_ident));" << endl;
-    render_rust_struct_field_write(field_prefix, tfield, req);
+    f_gen_ << indent() << rust_field_write(field_prefix, tfield, req) << endl;
     f_gen_ << indent() << "try!(o_prot.write_field_end());" << endl;
     f_gen_ << indent() << "()" << endl;
     indent_down();
@@ -362,15 +347,15 @@ void t_rs_generator::render_rust_struct_write(const string& prefix, t_field* tfi
     indent_down();
     f_gen_ << indent() << "}" << endl;
   } else {
-    render_rust_struct_field_write(field_prefix, tfield, req);
+    f_gen_ << indent() << rust_field_write(field_prefix, tfield, req) << endl;
   }
 }
 
-void t_rs_generator::render_rust_struct_field_write(const string& field_prefix, t_field* tfield, t_field::e_req req) {
+string t_rs_generator::rust_field_write(const string& field_prefix, t_field* tfield, t_field::e_req req) {
   t_type* ttype = tfield->get_type();
 
   string field_name;
-  if (is_req_optional(req)) {
+  if (is_optional(req)) {
     if (ttype->is_base_type() && !ttype->is_string()) {
       field_name = field_prefix + tfield->get_name() + ".unwrap()";
     } else {
@@ -386,56 +371,36 @@ void t_rs_generator::render_rust_struct_field_write(const string& field_prefix, 
     case t_base_type::TYPE_VOID:
       throw "Cannot write field of type TYPE_VOID to output protocol";
     case t_base_type::TYPE_STRING:
-      f_gen_ << indent() << "try!(o_prot.write_string(&" + field_name + "));" << endl;
-      return;
+      return "try!(o_prot.write_string(&" + field_name + "));";
     case t_base_type::TYPE_BOOL:
-      f_gen_ << indent() << "try!(o_prot.write_bool(" + field_name + "));" << endl;
-      return;
+      return "try!(o_prot.write_bool(" + field_name + "));";
     case t_base_type::TYPE_I8:
-      f_gen_ << indent() << "try!(o_prot.write_i8(" + field_name + "));" << endl;
-      return;
+      return "try!(o_prot.write_i8(" + field_name + "));";
     case t_base_type::TYPE_I16:
-      f_gen_ << indent() << "try!(o_prot.write_i16(" + field_name + "));" << endl;
-      return;
+      return "try!(o_prot.write_i16(" + field_name + "));";
     case t_base_type::TYPE_I32:
-      f_gen_ << indent() << "try!(o_prot.write_i32(" + field_name + "));" << endl;
-      return;
+      return "try!(o_prot.write_i32(" + field_name + "));";
     case t_base_type::TYPE_I64:
-      f_gen_ << indent() << "try!(o_prot.write_i64(" + field_name + "));" << endl;
-      return;
+      return "try!(o_prot.write_i64(" + field_name + "));";
     case t_base_type::TYPE_DOUBLE:
-      f_gen_ << indent() << "try!(o_prot.write_double(" + field_name + "));" << endl;
-      return;
+      return "try!(o_prot.write_double(" + field_name + "));";
     }
   } else if (ttype->is_enum()) {
-    return;
+    return "";
   } else if (ttype->is_struct()) {
-    f_gen_ << indent() << "try!(" << field_name << ".write_to_protocol(o_prot));" << endl;
-    return;
+    return "try!(" +  field_name + ".write_to_protocol(o_prot));";
   } else if (ttype->is_map()) {
-    return;
+    return "";
   } else if (ttype->is_set()) {
-    return;
+    return "";
   } else if (ttype->is_list()) {
-    return;
+    return "";
   }
 
   throw "Unsupported type " + ttype->get_name();
 }
 
 void t_rs_generator::render_rust_union(t_struct* tstruct) {
-}
-
-string t_rs_generator::render_rust_map(t_map* tmap) {
-  return "BTreeMap<" + t_type_to_rust_type(tmap->get_key_type()) + ", " + t_type_to_rust_type(tmap->get_val_type()) + ">";
-}
-
-string t_rs_generator::render_rust_set(t_set* tset) {
-  return "BTreeSet<" + t_type_to_rust_type(tset->get_elem_type()) + ">";
-}
-
-string t_rs_generator::render_rust_list(t_list* tlist) {
-  return "Vec<" + t_type_to_rust_type(tlist->get_elem_type()) + ">";
 }
 
 void t_rs_generator::generate_xception(t_struct* txception) {
@@ -475,7 +440,7 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
     t_function* tfunc = (*func_iter);
     string func_name = tfunc->get_name();
     string func_args = rust_sync_client_call_args(tfunc, true);
-    string func_return = t_type_to_rust_type(tfunc->get_returntype());
+    string func_return = to_rust_type(tfunc->get_returntype());
     f_gen_ << indent() << "fn " << func_name <<  func_args << " -> Result<" << func_return << ">;" << endl;
   }
   indent_down();
@@ -545,7 +510,7 @@ void t_rs_generator::render_rust_sync_send_recv_wrapper(t_function* tfunc) {
   string func_name = tfunc->get_name();
   string func_decl_args = rust_sync_client_call_args(tfunc, true);
   string func_call_args = rust_sync_client_call_args(tfunc, false);
-  string func_return = t_type_to_rust_type(tfunc->get_returntype());
+  string func_return = to_rust_type(tfunc->get_returntype());
 
   f_gen_ << indent() << "fn " << func_name <<  func_decl_args << " -> Result<" << func_return << "> {" << endl;
   indent_up();
@@ -604,7 +569,7 @@ void t_rs_generator::render_rust_sync_send(t_function* tfunc) {
 
 void t_rs_generator::render_rust_sync_recv(t_function* tfunc) {
   string func_name = "recv_" + tfunc->get_name();
-  string func_return = t_type_to_rust_type(tfunc->get_returntype());
+  string func_return = to_rust_type(tfunc->get_returntype());
 
   f_gen_ << indent() << "fn " << func_name << "(&mut self) -> Result<" << func_return << "> {" << endl;
   indent_up();
@@ -625,13 +590,13 @@ string t_rs_generator::rust_sync_client_call_args(t_function* tfunc, bool is_dec
   // types that can be passed by value are, and those that can't
   // will be prepended with '&' so that they can be passed by ref
   int is_first_arg = true;
-  if (does_service_call_have_args(tfunc)) {
+  if (has_args(tfunc)) {
     t_struct* args = tfunc->get_arglist();
     std::vector<t_field*> fields = args->get_sorted_members();
     std::vector<t_field*>::iterator field_iter;
     for (field_iter = fields.begin(); field_iter != fields.end(); ++field_iter) {
       t_field* tfield = (*field_iter);
-      string rust_type = t_type_to_rust_type(tfield->get_type());
+      string rust_type = to_rust_type(tfield->get_type());
       if (is_first_arg) { // FIXME: remove conditional
         if (is_declaration) {
           func_args << ", ";
@@ -651,23 +616,23 @@ string t_rs_generator::rust_sync_client_call_args(t_function* tfunc, bool is_dec
 void t_rs_generator::render_rust_sync_server(t_service* tservice) {
 }
 
-bool t_rs_generator::does_service_call_have_args(t_function* tfunc) {
+bool t_rs_generator::has_args(t_function* tfunc) {
   return tfunc->get_arglist() != NULL && !tfunc->get_arglist()->get_sorted_members().empty();
 }
 
-bool t_rs_generator::is_field_optional(t_field* tfield) {
-  return is_req_optional(tfield->get_req());
+bool t_rs_generator::is_optional(t_field* tfield) {
+  return is_optional(tfield->get_req());
 }
 
-bool t_rs_generator::is_req_optional(t_field::e_req req) {
+bool t_rs_generator::is_optional(t_field::e_req req) {
   return req == t_field::T_OPTIONAL || req == t_field::T_OPT_IN_REQ_OUT;
 }
 
-bool t_rs_generator::can_t_type_be_passed_by_value(t_type* ttype) {
+bool t_rs_generator::can_pass_by_value(t_type* ttype) {
   return ttype->is_base_type();
 }
 
-string t_rs_generator::t_type_to_rust_type(t_type* ttype) {
+string t_rs_generator::to_rust_type(t_type* ttype) {
   ttype = get_true_type(ttype);
   if (ttype->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
@@ -690,20 +655,36 @@ string t_rs_generator::t_type_to_rust_type(t_type* ttype) {
       return "f64";
     }
   } else if (ttype->is_enum()) {
-    return render_namespaced_rust_type(ttype);
+    return to_namespaced_rust_type(ttype);
   } else if (ttype->is_struct()) {
-    return render_namespaced_rust_type(ttype);
+    return to_namespaced_rust_type(ttype);
   } else if (ttype->is_typedef()) {
-    return render_namespaced_rust_type(ttype);
+    return to_namespaced_rust_type(ttype);
   } else if (ttype->is_map()) {
-    return render_rust_map((t_map*)ttype);
+    t_map* tmap = (t_map*)ttype;
+    return "BTreeMap<" + to_rust_type(tmap->get_key_type()) + ", " + to_rust_type(tmap->get_val_type()) + ">";
   } else if (ttype->is_set()) {
-    return render_rust_set((t_set*)ttype);
+    t_set* tset = (t_set*)ttype;
+    return "BTreeSet<" + to_rust_type(tset->get_elem_type()) + ">";
   } else if (ttype->is_list()) {
-    return render_rust_list((t_list*)ttype);
+    t_list* tlist = (t_list*)ttype;
+    return "Vec<" + to_rust_type(tlist->get_elem_type()) + ">";
   }
 
   throw "cannot find rust type for " + ttype->get_name();
+}
+
+string t_rs_generator::to_namespaced_rust_type(t_type* ttype) {
+  if (!ttype->is_enum() && !ttype->is_struct() && !ttype->is_typedef()) {
+    throw "Unsupported namespaced type " + ttype->get_name();
+  }
+
+  string type_namespace = ttype->get_program()->get_name();
+  if (type_namespace != get_program()->get_name()) {
+    return type_namespace + "::" + ttype->get_name();
+  } else {
+    return ttype->get_name();
+  }
 }
 
 string t_rs_generator::t_type_to_rust_field_type_enum(t_type* ttype) {
