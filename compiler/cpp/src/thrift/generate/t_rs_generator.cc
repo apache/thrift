@@ -112,7 +112,6 @@ private:
 
   string rust_field_write(const string& field_prefix, t_field* tfield, t_field::e_req req);
 
-  string to_namespaced_rust_type(t_type* ttype);
   void render_rust_struct_field_write(const string& prefix, t_field* tfield, t_field::e_req req);
   void render_rust_const_value(t_const_value* tconstvalue);
   void render_rust_sync_client(t_service* tservice);
@@ -654,12 +653,12 @@ string t_rs_generator::to_rust_type(t_type* ttype) {
     case t_base_type::TYPE_DOUBLE:
       return "f64";
     }
-  } else if (ttype->is_enum()) {
-    return to_namespaced_rust_type(ttype);
-  } else if (ttype->is_struct()) {
-    return to_namespaced_rust_type(ttype);
-  } else if (ttype->is_typedef()) {
-    return to_namespaced_rust_type(ttype);
+  } else if (ttype->is_enum() || ttype->is_struct() || ttype->is_typedef()) {
+    if (ttype->get_program()->get_name() != get_program()->get_name()) {
+      return ttype->get_program()->get_name() + "::" + ttype->get_name();
+    } else {
+      return ttype->get_name();
+    }
   } else if (ttype->is_map()) {
     t_map* tmap = (t_map*)ttype;
     return "BTreeMap<" + to_rust_type(tmap->get_key_type()) + ", " + to_rust_type(tmap->get_val_type()) + ">";
@@ -672,19 +671,6 @@ string t_rs_generator::to_rust_type(t_type* ttype) {
   }
 
   throw "cannot find rust type for " + ttype->get_name();
-}
-
-string t_rs_generator::to_namespaced_rust_type(t_type* ttype) {
-  if (!ttype->is_enum() && !ttype->is_struct() && !ttype->is_typedef()) {
-    throw "Unsupported namespaced type " + ttype->get_name();
-  }
-
-  string type_namespace = ttype->get_program()->get_name();
-  if (type_namespace != get_program()->get_name()) {
-    return type_namespace + "::" + ttype->get_name();
-  } else {
-    return ttype->get_name();
-  }
 }
 
 string t_rs_generator::t_type_to_rust_field_type_enum(t_type* ttype) {
