@@ -71,6 +71,9 @@ private:
   // File to which generated code is written.
   std::ofstream f_gen_;
 
+  void render_attributes_and_includes();
+  void render_free_standing_helpers();
+
   // Write the rust representation of a thrift struct to the generated file.
   // Set `is_args_struct` to `true` if rendering the struct used to pack
   // arguments for a service call. When `true` the struct and its members have
@@ -125,6 +128,8 @@ private:
   bool has_args(t_function* tfunc);
 };
 
+// FIXME: who writes the thrift::STOP?!
+
 void t_rs_generator::init_generator() {
   // make output directory for this thrift program
   MKDIR(gen_dir_.c_str());
@@ -138,6 +143,11 @@ void t_rs_generator::init_generator() {
   f_gen_ << "// DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING" << endl;
   f_gen_ << endl;
 
+  render_attributes_and_includes();
+  render_free_standing_helpers();
+}
+
+void t_rs_generator::render_attributes_and_includes() {
   // turn off some warnings
   f_gen_ << "#![allow(unused_imports)]" << endl; // generated code always includes BTreeMap/BTreeSet
   f_gen_ << "#![allow(non_snake_case)]" << endl; // generated code keeps user-specified names (FIXME: change to underscore?)
@@ -148,7 +158,6 @@ void t_rs_generator::init_generator() {
   f_gen_ << endl;
   f_gen_ << "use std::collections::{BTreeMap, BTreeSet};" << endl;
   f_gen_ << endl;
-  f_gen_ << "use rift::{Error, Result};" << endl;
   f_gen_ << "use rift::protocol::{TFieldIdentifier, TFieldType, TMessageIdentifier, TMessageType, TProtocol, TStructIdentifier};" << endl;
   f_gen_ << endl;
 
@@ -161,6 +170,56 @@ void t_rs_generator::init_generator() {
     }
     f_gen_ << endl;
   }
+}
+
+void t_rs_generator::render_free_standing_helpers() {
+  // check that the sequence number is what you expect
+  f_gen_ << "fn verify_expected_sequence_number(expected: i32, actual: i32) -> rift::Result<()> {" << endl;
+  indent_up();
+  f_gen_ << indent() << "if expected == actual {" << endl;
+  indent_up();
+  f_gen_ << indent() << "Ok(())" << endl;
+  indent_down();
+  f_gen_ << indent() << "} else {" << endl;
+  indent_up();
+  f_gen_ << indent() << "Err(rift::Error::OutOfOrderThriftMessage(expected, actual))" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
+
+  // check that the message type is what you expect
+  f_gen_ << "fn verify_expected_message_type(expected: TMessageType, actual: TMessageType) -> rift::Result<()> {" << endl;
+  indent_up();
+  f_gen_ << indent() << "if expected == actual {" << endl;
+  indent_up();
+  f_gen_ << indent() << "Ok(())" << endl;
+  indent_down();
+  f_gen_ << indent() << "} else {" << endl;
+  indent_up();
+  f_gen_ << indent() << "Err(rift::Error::UnexpectedThriftMessageType(expected, actual))" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
+
+  // check that the method name is what you expect
+  f_gen_ << "fn verify_expected_call_method(expected: &str, actual: &str) -> rift::Result<()> {" << endl;
+  indent_up();
+  f_gen_ << indent() << "if expected == actual {" << endl;
+  indent_up();
+  f_gen_ << indent() << "Ok(())" << endl;
+  indent_down();
+  f_gen_ << indent() << "} else {" << endl;
+  indent_up();
+  f_gen_ << indent() << "Err(rift::Error::WrongServiceCall(String::from(expected), String::from(actual)))" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
 }
 
 void t_rs_generator::close_generator() {
@@ -258,7 +317,7 @@ void t_rs_generator::render_rust_struct_write_to_out_protocol(t_struct* tstruct,
   f_gen_
     << indent()
     << visibility_qualifier(struct_type)
-    << "fn write_to_out_protocol<O: TProtocol>(&self, o_prot: &mut O) -> Result<()> {"
+    << "fn write_to_out_protocol<O: TProtocol>(&self, o_prot: &mut O) -> rift::Result<()> {"
     << endl;
   indent_up();
 
@@ -383,9 +442,17 @@ void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct,
   f_gen_
     << indent()
     << visibility_qualifier(struct_type)
-    << "fn read_from_in_protocol<I: TProtocol>(i_prot: &mut I) -> Result<" << tstruct->get_name() << "> {"
+    << "fn read_from_in_protocol<I: TProtocol>(i_prot: &mut I) -> rift::Result<" << tstruct->get_name() << "> {"
     << endl;
   indent_up();
+  // read message start
+  // check method name
+  // check method type (unexpected message type, unexpected exception)
+  // check sequence id)
+  // if it's an exception, return Err(...)
+  // if it's not an exception: let ret = Struct.read_from_in_protocol(...)
+  // read message end
+  // Ok(ret)
   indent_down();
   f_gen_ << indent() << "}" << endl;
 }
@@ -394,7 +461,7 @@ void t_rs_generator::render_rust_union(t_struct* tstruct) {
 }
 
 void t_rs_generator::generate_xception(t_struct* txception) {
-  //render_rust_struct(txception);
+  render_rust_struct(txception, t_rs_generator::T_EXCEPTION);
 }
 
 void t_rs_generator::generate_service(t_service* tservice) {
@@ -431,7 +498,7 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
     string func_name = tfunc->get_name();
     string func_args = rust_sync_client_call_args(tfunc, true);
     string func_return = to_rust_type(tfunc->get_returntype());
-    f_gen_ << indent() << "fn " << func_name <<  func_args << " -> Result<" << func_return << ">;" << endl;
+    f_gen_ << indent() << "fn " << func_name <<  func_args << " -> rift::Result<" << func_return << ">;" << endl;
   }
   indent_down();
   f_gen_ << indent() << "}" << endl;
@@ -502,7 +569,7 @@ void t_rs_generator::render_rust_sync_send_recv_wrapper(t_function* tfunc) {
   string func_call_args = rust_sync_client_call_args(tfunc, false);
   string func_return = to_rust_type(tfunc->get_returntype());
 
-  f_gen_ << indent() << "fn " << func_name <<  func_decl_args << " -> Result<" << func_return << "> {" << endl;
+  f_gen_ << indent() << "fn " << func_name <<  func_decl_args << " -> rift::Result<" << func_return << "> {" << endl;
   indent_up();
   f_gen_ << indent() << "try!(self.send_" << func_name << func_call_args << ");" << endl;
   f_gen_ << indent() << "self.recv_" << func_name << "()" << endl;
@@ -515,7 +582,7 @@ void t_rs_generator::render_rust_sync_send(t_function* tfunc) {
   string func_args = rust_sync_client_call_args(tfunc, true);
 
   // declaration
-  f_gen_ << indent() << "fn " << func_name <<  func_args << " -> Result<()> {" << endl;
+  f_gen_ << indent() << "fn " << func_name <<  func_args << " -> rift::Result<()> {" << endl;
   indent_up();
 
   // increment the sequence number and generate the call header
@@ -561,7 +628,7 @@ void t_rs_generator::render_rust_sync_recv(t_function* tfunc) {
   string func_name = "recv_" + tfunc->get_name();
   string func_return = to_rust_type(tfunc->get_returntype());
 
-  f_gen_ << indent() << "fn " << func_name << "(&mut self) -> Result<" << func_return << "> {" << endl;
+  f_gen_ << indent() << "fn " << func_name << "(&mut self) -> rift::Result<" << func_return << "> {" << endl;
   indent_up();
   indent_down();
   f_gen_ << indent() << "}" << endl;
