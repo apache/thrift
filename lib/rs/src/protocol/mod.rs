@@ -109,7 +109,7 @@ pub struct TFieldIdentifier {
 }
 
 /// Thrift message type.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TMessageType {
     Call,
     Reply,
@@ -146,7 +146,7 @@ impl try_from::TryFrom<u8> for TMessageType {
 }
 
 /// Thrift field type.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum TFieldType {
     Stop,
     Void,

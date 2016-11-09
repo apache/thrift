@@ -23,6 +23,8 @@ use std::{convert, error, fmt, io, string};
 pub mod protocol;
 pub mod transport;
 
+use protocol::TMessageType;
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug)]
@@ -33,6 +35,10 @@ pub enum Error {
     UnknownThriftMessageType(u8),
     UnknownThriftFieldType(u8),
     InvalidBooleanValue(i8),
+    OutOfOrderThriftMessage(i32, i32), // expected, actual
+    UnexpectedThriftMessageType(TMessageType, TMessageType),
+    WrongServiceCall(String, String),
+    UnexpectedApplicationError, // FIXME: should box the error
     Unknown(String), // FIXME: make this take &str
     Application(Box<error::Error + Send + Sync>),
 }
@@ -46,6 +52,10 @@ impl error::Error for Error {
             Error::UnknownThriftMessageType(_) => "invalid thrift message type",
             Error::UnknownThriftFieldType(_) => "invalid thrift field type",
             Error::InvalidBooleanValue(_) => "invalid boolean value",
+            Error::OutOfOrderThriftMessage(_, _) => "received out-of-order thrift message",
+            Error::UnexpectedThriftMessageType(_, _) => "received unexpected thrift message",
+            Error::WrongServiceCall(_, _) => "received wrong service call",
+            Error::UnexpectedApplicationError => "received unexpected remote application error",
             Error::Unknown(ref s) => &s,
             Error::Application(ref err) => err.description(),
         }
