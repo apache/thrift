@@ -18,7 +18,8 @@
 use std::cmp;
 use std::io;
 
-use super::{Error, Result, TTransport, TTransportState};
+use ::Result;
+use super::{TTransport, TTransportState};
 
 /// Maximum length of the read buffer.
 const DEFAULT_RBUFFER_SIZE: usize = 4096;
@@ -29,7 +30,7 @@ const DEFAULT_WBUFFER_SIZE: usize = 4096;
 /// A Thrift transport that performs I/O operations
 /// to/from an intermediate buffer to avoid hitting
 /// the underlying transport unnecessarily.
-pub struct TBufferedTransport {
+pub struct TBufferedTransport<T: TTransport> {
     /// Buffer into which data is read and from which reads are served.
     rbuffer: Vec<u8>,
     /// Buffer into which data is written and from which
@@ -37,34 +38,33 @@ pub struct TBufferedTransport {
     /// `io::Write::flush()` is called.
     wbuffer: Vec<u8>,
     /// Underlying `TTransport` over which bytes are transferred.
-    underlying_transport: Box<TTransport>,
+    underlying: T
 }
 
-impl TBufferedTransport {
-    pub fn new(underlying_transport: Box<TTransport>) -> TBufferedTransport {
+impl<T: TTransport> TBufferedTransport<T> {
+    pub fn new(underlying: T) -> TBufferedTransport<T> {
         TBufferedTransport {
             rbuffer: Vec::with_capacity(DEFAULT_RBUFFER_SIZE),
             wbuffer: Vec::with_capacity(DEFAULT_WBUFFER_SIZE),
-            underlying_transport: underlying_transport,
+            underlying: underlying,
         }
     }
 
     fn check_transport_open(&self) -> io::Result<()> {
         match self.state() {
             TTransportState::OPEN => Ok(()),
-            _ => Err(io::Error::new(io::ErrorKind::NotConnected, "underlying transport unavailable"))
-
+            _ => Err(io::Error::new(io::ErrorKind::NotConnected, "underlying unavailable"))
         }
     }
 }
 
-impl io::Read for TBufferedTransport {
+impl<T: TTransport> io::Read for TBufferedTransport<T> {
     fn read(&mut self, _: &mut [u8]) -> io::Result<usize> {
         unimplemented!()
     }
 }
 
-impl io::Write for TBufferedTransport {
+impl<T: TTransport> io::Write for TBufferedTransport<T> {
     fn write(&mut self, b: &[u8]) -> io::Result<usize> { // FIXME: avoid copying
         try!(self.check_transport_open());
         let copy_count = cmp::min(b.len(), self.wbuffer.capacity() - self.wbuffer.len());
@@ -75,23 +75,23 @@ impl io::Write for TBufferedTransport {
 
     fn flush(&mut self) -> io::Result<()> {
         try!(self.check_transport_open());
-        try!(self.underlying_transport.write_all(&self.wbuffer));
-        try!(self.underlying_transport.flush());
+        try!(self.underlying.write_all(&self.wbuffer));
+        try!(self.underlying.flush());
         self.wbuffer.clear();
         Ok(())
     }
 }
 
-impl TTransport for TBufferedTransport {
+impl<T: TTransport> TTransport for TBufferedTransport<T> {
     fn open(&mut self) -> Result<()> {
-        self.underlying_transport.open()
+        self.underlying.open()
     }
 
     fn close(&mut self) -> Result<()> {
-        self.underlying_transport.close()
+        self.underlying.close()
     }
 
     fn state(&self) -> TTransportState {
-        self.underlying_transport.state()
+        self.underlying.state()
     }
 }

@@ -17,7 +17,7 @@
 
 use std::io;
 
-use super::{Error, Result, TTransport, TTransportState};
+use super::{TTransport, TTransportState};
 
 pub struct TTcpIpSocket {
 
@@ -28,13 +28,13 @@ impl TTcpIpSocket {
 }
 
 impl io::Read for TTcpIpSocket {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+    fn read(&mut self, _: &mut [u8]) -> io::Result<usize> {
         unimplemented!()
     }
 }
 
 impl io::Write for TTcpIpSocket {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+    fn write(&mut self, _: &[u8]) -> io::Result<usize> {
         unimplemented!()
     }
 
@@ -44,11 +44,11 @@ impl io::Write for TTcpIpSocket {
 }
 
 impl TTransport for TTcpIpSocket {
-    fn open(&mut self) -> Result<()> {
+    fn open(&mut self) -> ::Result<()> {
         unimplemented!()
     }
 
-    fn close(&mut self) -> Result<()> {
+    fn close(&mut self) -> ::Result<()> {
         unimplemented!()
     }
 

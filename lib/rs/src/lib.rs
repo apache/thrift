@@ -25,37 +25,47 @@ pub mod transport;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+#[derive(Debug)]
 pub enum Error {
-    PlaceHolder,
+    IoError(io::Error),
+    Utf8ConversionError(string::FromUtf8Error),
+    InvalidThriftMessageHeader,
+    UnknownThriftMessageType(u8),
+    UnknownThriftFieldType(u8),
+    InvalidBooleanValue(i8),
+    Unknown(String), // FIXME: make this take &str
+    Application(Box<error::Error + Send + Sync>),
 }
 
 impl error::Error for Error {
     fn description(&self) -> &str {
-        unimplemented!()
-    }
-}
-
-impl fmt::Debug for Error {
-    fn fmt(&self, _: &mut fmt::Formatter) -> fmt::Result {
-        unimplemented!()
+        match *self {
+            Error::IoError(ref err) => err.description(),
+            Error::Utf8ConversionError(ref err) => err.description(),
+            Error::InvalidThriftMessageHeader => "invalid thrift message header",
+            Error::UnknownThriftMessageType(_) => "invalid thrift message type",
+            Error::UnknownThriftFieldType(_) => "invalid thrift field type",
+            Error::InvalidBooleanValue(_) => "invalid boolean value",
+            Error::Unknown(ref s) => &s,
+            Error::Application(ref err) => err.description(),
+        }
     }
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, _: &mut fmt::Formatter) -> fmt::Result {
-        unimplemented!()
+       unimplemented!()
     }
 }
 
 impl convert::From<io::Error> for Error {
-    fn from(_: io::Error) -> Self {
-        unimplemented!()
+    fn from(err: io::Error) -> Self {
+        Error::IoError(err)
     }
 }
 
 impl convert::From<string::FromUtf8Error> for Error {
-    fn from(_: string::FromUtf8Error) -> Self {
-        unimplemented!()
+    fn from(err: string::FromUtf8Error) -> Self {
+        Error::Utf8ConversionError(err)
     }
 }
-

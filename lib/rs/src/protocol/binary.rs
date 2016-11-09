@@ -19,7 +19,9 @@ use std::convert;
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt, WriteBytesExt};
 use try_from;
 
-use super::{Error, Result, TFieldIdentifier, TFieldType, TMessageIdentifier, TMessageType, TProtocol, TStructIdentifier, TTransport};
+use ::{Error, Result};
+use ::transport::TTransport;
+use super::{TFieldIdentifier, TFieldType, TMessageIdentifier, TMessageType, TProtocol, TStructIdentifier};
 
 /// Identifies the serialized message as conforming to Thrift binary protocol version 1.
 const BINARY_PROTOCOL_VERSION_1: [u8; 2] = [0x80, 0x01];
@@ -134,7 +136,7 @@ impl TProtocol for TBinaryProtocol {
             // apparently we got a protocol-version header - check
             // it, and if it matches, read the rest of the fields
             if first_bytes[0..1] != BINARY_PROTOCOL_VERSION_1 {
-                Err(Error::PlaceHolder) // FIXME: return an actual protocol error
+                Err(Error::InvalidThriftMessageHeader)
             } else {
                 let message_type: TMessageType = try!(try_from::TryFrom::try_from(first_bytes[3]));
                 let name = try!(self.read_string());
@@ -147,7 +149,7 @@ impl TProtocol for TBinaryProtocol {
             if self.strict {
                 // we're in strict mode however, and that always
                 // requires the protocol-version header to be written first
-                Err(Error::PlaceHolder) // FIXME: this is a bad version header
+                Err(Error::InvalidThriftMessageHeader) // FIXME: this is a bad version header
             } else {
                 // in the non-strict version the first message field
                 // is the message name. strings (byte arrays) are length-prefixed,
@@ -206,7 +208,7 @@ impl TProtocol for TBinaryProtocol {
         match b {
             0 => Ok(false),
             1 => Ok(true),
-            _ => Err(Error::PlaceHolder) // FIXME: put in an actual error val
+            v => Err(Error::InvalidBooleanValue(v))
         }
     }
 

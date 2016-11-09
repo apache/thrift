@@ -18,9 +18,7 @@
 use std::convert;
 use try_from;
 
-pub use super::Error; // FIXME: don't redefine this here
-pub use super::Result; // FIXME: don't redefine this here
-pub use super::transport::TTransport; // FIXME: don't redefine this here
+use ::{Error, Result};
 pub use self::binary::TBinaryProtocol;
 
 mod binary;
@@ -40,7 +38,7 @@ pub trait TProtocol {
     fn write_struct_begin(&mut self, identifier: &TStructIdentifier) -> Result<()>;
     fn write_struct_end(&mut self) -> Result<()>;
     fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> Result<()>;
-    fn write_field_end(&mut self) -> Result<()>;
+    fn write_field_end(&mut self) -> ::Result<()>;
     // fn write_map_begin(&mut self) -> Result<()>; // ktype, vtype, size
     // fn write_map_end(&mut self) -> Result<()>;
     // fn write_list_begin(&mut self) -> Result<()>; // etype, size (element_type)
@@ -142,7 +140,7 @@ impl try_from::TryFrom<u8> for TMessageType {
             0x02 => Ok(TMessageType::Reply),
             0x03 => Ok(TMessageType::Exception),
             0x04 => Ok(TMessageType::OneWay),
-            _ => Err(Error::PlaceHolder) // FIXME: return an actual error
+            unkn => Err(Error::UnknownThriftMessageType(unkn))
         }
     }
 }
@@ -218,7 +216,7 @@ impl try_from::TryFrom<u8> for TFieldType {
             0x0E => Ok(TFieldType::List),
             0x0F => Ok(TFieldType::Utf8),
             0x11 => Ok(TFieldType::Utf16),
-            _ => Err(Error::PlaceHolder) // FIXME: return an actual error
+            unkn => Err(Error::UnknownThriftFieldType(unkn))
         }
     }
 }

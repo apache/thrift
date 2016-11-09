@@ -22,8 +22,7 @@
 
 use std::io;
 
-pub use super::Error; // FIXME: don't redefine this here
-pub use super::Result; // FIXME: don't redefine this here
+use ::Result; // IMPORTANT: absolute path wrt. crate root
 
 mod buffered;
 mod framed;
