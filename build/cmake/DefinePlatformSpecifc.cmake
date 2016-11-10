@@ -37,6 +37,7 @@ if(MSVC)
     # For Debug build types, append a "d" to the library names.
     set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix" FORCE)
     set(CMAKE_RELEASE_POSTFIX "" CACHE STRING "Set release library postfix" FORCE)
+    set(CMAKE_RELWITHDEBINFO_POSTFIX "" CACHE STRING "Set release library postfix" FORCE)
 
     # Build using /MT option instead of /MD if the WITH_MT options is set
     if(WITH_MT)
@@ -44,9 +45,11 @@ if(MSVC)
                 CMAKE_CXX_FLAGS
                 CMAKE_CXX_FLAGS_DEBUG
                 CMAKE_CXX_FLAGS_RELEASE
+                CMAKE_CXX_FLAGS_RELWITHDEBINFO
                 CMAKE_C_FLAGS
                 CMAKE_C_FLAGS_DEBUG
                 CMAKE_C_FLAGS_RELEASE
+                CMAKE_C_FLAGS_RELWITHDEBINFO
                 )
         foreach(CompilerFlag ${CompilerFlags})
           string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
