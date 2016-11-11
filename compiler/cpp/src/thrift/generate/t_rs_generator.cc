@@ -433,7 +433,7 @@ void t_rs_generator::render_rust_result_struct_to_result_method(t_struct* tstruc
   vector<t_field*>::const_iterator members_iter;
 
   // find out what the call's expected return type was
-  string rust_return_type = "()"; // default is the unit return
+  string rust_return_type = "()";
   for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
     t_field* tfield = (*members_iter);
     if (tfield->get_name() == service_call_result_variable) {
@@ -442,40 +442,61 @@ void t_rs_generator::render_rust_result_struct_to_result_method(t_struct* tstruc
     }
   }
 
-  // FIXME: how do I deal with Box::new!
+  // NOTE: ideally I would generate the branches and render them separately
+  // I tried this however, and the resulting code was harder to understand
+  // maintaining a rendered branch count while a little ugly, got me the
+  // rendering I wanted with code that was reasonably understandable
 
-  // now actually render the "ok_or" method
   f_gen_ << indent() << "fn ok_or(self) -> rift::Result<" << rust_return_type << "> {" << endl;
   indent_up();
 
+  int rendered_branch_count = 0;
+
+  // render the exception branches
   for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
     t_field* tfield = (*members_iter);
     if (tfield->get_name() != service_call_result_variable) {
-      // the remaining fields must be potential exceptions
       string field_name = "self." + tfield->get_name();
-      f_gen_ << indent() << "if " << field_name << ".is_some() {" << endl;
+      string branch_statement = rendered_branch_count == 0 ? "if" : "} else if";
+
+      // FIXME: does Box::new copy structs properly?
+      f_gen_ << indent() << branch_statement << " " << field_name << ".is_some() {" << endl;
       indent_up();
-      f_gen_ << indent() << "return Err(rift::Error::ApplicationError(Box::new(" << field_name << ".unwrap())))" << endl;
+      f_gen_ << indent() << "Err(rift::Error::ApplicationError(Box::new(" << field_name << ".unwrap())))" << endl;
       indent_down();
-      f_gen_ << indent() << "}" << endl;
+
+      rendered_branch_count++;
     }
   }
 
+  // render the return value branches
   if (rust_return_type == "()") {
-    f_gen_ << indent() << "Ok(())" << endl;
+    if (rendered_branch_count == 0) {
+      // we have the unit return and this service call has no user-defined
+      // exceptions. this means that we've a trivial return (happens with oneways)
+      f_gen_ << indent() << "Ok(())" << endl;
+    } else {
+      // we have the unit return, but there are user-defined exceptions
+      // if we've gotten this far then we have the default return (i.e. call successful)
+      f_gen_ << indent() << "} else {" << endl;
+      indent_up();
+      f_gen_ << indent() << "Ok(())" << endl;
+      indent_down();
+      f_gen_ << indent() << "}" << endl;
+    }
   } else {
-    members_iter = members.begin();
-    f_gen_ << indent() << "if self." << service_call_result_variable << ".is_some() {" << endl;
+    string branch_statement = rendered_branch_count == 0 ? "if" : "} else if";
+    f_gen_ << indent() << branch_statement << " self." << service_call_result_variable << ".is_some() {" << endl;
     indent_up();
-    f_gen_ << indent() << "return Ok(self." << service_call_result_variable << ".unwrap())" << endl;
+    f_gen_ << indent() << "Ok(self." << service_call_result_variable << ".unwrap())" << endl;
     indent_down();
     f_gen_ << indent() << "} else {" << endl;
     indent_up();
-    // if we have not found a valid return value *or* a user exception
+    // if we haven't found a valid return value *or* a user exception
     // then we're in trouble; return a default error
     f_gen_
       << indent()
-      << "return Err(rift::Error::MissingServiceCallReturnValue("
+      << "Err(rift::Error::MissingServiceCallReturnValue("
       << "\"" << service_call_name << "\".to_owned()"
       << "))"
       << endl;
