@@ -104,7 +104,7 @@ pub struct TStructIdentifier {
 #[derive(Debug)]
 pub struct TFieldIdentifier {
     pub name: Option<String>, // FIXME: allow usage of &str
-    pub field_type: TFieldType,
+    pub field_type: TType,
     pub id: i16,
 }
 
@@ -147,7 +147,7 @@ impl try_from::TryFrom<u8> for TMessageType {
 
 /// Thrift field type.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum TFieldType {
+pub enum TType {
     Stop,
     Void,
     Bool,
@@ -169,53 +169,53 @@ pub enum TFieldType {
 
 // Converts a Thrift field-type enum into its
 // byte representation for encoding into its serialized form.
-impl convert::From<TFieldType> for u8 {
-    fn from(field_type: TFieldType) -> Self {
+impl convert::From<TType> for u8 {
+    fn from(field_type: TType) -> Self {
         match field_type {
-            TFieldType::Stop => 0x00,
-            TFieldType::Void => 0x01,
-            TFieldType::Bool => 0x02,
-            TFieldType::Byte => 0x03,
-            TFieldType::I08 => 0x04,
-            TFieldType::Double => 0x05,
-            TFieldType::I16 => 0x06,
-            TFieldType::I32 => 0x07,
-            TFieldType::I64 => 0x08,
-            TFieldType::String => 0x09,
-            TFieldType::Utf7 => 0x0A,
-            TFieldType::Struct => 0x0B,
-            TFieldType::Map => 0x0C,
-            TFieldType::Set => 0x0D,
-            TFieldType::List => 0x0E,
-            TFieldType::Utf8 => 0x0F,
-            TFieldType::Utf16 => 0x11,
+            TType::Stop => 0x00,
+            TType::Void => 0x01,
+            TType::Bool => 0x02,
+            TType::Byte => 0x03,
+            TType::I08 => 0x04,
+            TType::Double => 0x05,
+            TType::I16 => 0x06,
+            TType::I32 => 0x07,
+            TType::I64 => 0x08,
+            TType::String => 0x09,
+            TType::Utf7 => 0x0A,
+            TType::Struct => 0x0B,
+            TType::Map => 0x0C,
+            TType::Set => 0x0D,
+            TType::List => 0x0E,
+            TType::Utf8 => 0x0F,
+            TType::Utf16 => 0x11,
         }
     }
 }
 
 // Converts the serialized representation of a
 // Thrift field type into its enum form.
-impl try_from::TryFrom<u8> for TFieldType {
+impl try_from::TryFrom<u8> for TType {
     type Err = Error;
     fn try_from(b: u8) -> Result<Self> {
         match b {
-            0x00 => Ok(TFieldType::Stop),
-            0x01 => Ok(TFieldType::Void),
-            0x02 => Ok(TFieldType::Bool),
-            0x03 => Ok(TFieldType::Byte),
-            0x04 => Ok(TFieldType::I08),
-            0x05 => Ok(TFieldType::Double),
-            0x06 => Ok(TFieldType::I16),
-            0x07 => Ok(TFieldType::I32),
-            0x08 => Ok(TFieldType::I64),
-            0x09 => Ok(TFieldType::String),
-            0x0A => Ok(TFieldType::Utf7),
-            0x0B => Ok(TFieldType::Struct),
-            0x0C => Ok(TFieldType::Map),
-            0x0D => Ok(TFieldType::Set),
-            0x0E => Ok(TFieldType::List),
-            0x0F => Ok(TFieldType::Utf8),
-            0x11 => Ok(TFieldType::Utf16),
+            0x00 => Ok(TType::Stop),
+            0x01 => Ok(TType::Void),
+            0x02 => Ok(TType::Bool),
+            0x03 => Ok(TType::Byte),
+            0x04 => Ok(TType::I08),
+            0x05 => Ok(TType::Double),
+            0x06 => Ok(TType::I16),
+            0x07 => Ok(TType::I32),
+            0x08 => Ok(TType::I64),
+            0x09 => Ok(TType::String),
+            0x0A => Ok(TType::Utf7),
+            0x0B => Ok(TType::Struct),
+            0x0C => Ok(TType::Map),
+            0x0D => Ok(TType::Set),
+            0x0E => Ok(TType::List),
+            0x0F => Ok(TType::Utf8),
+            0x11 => Ok(TType::Utf16),
             unkn => Err(Error::UnknownThriftFieldType(unkn))
         }
     }

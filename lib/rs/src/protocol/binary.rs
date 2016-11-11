@@ -21,7 +21,7 @@ use try_from;
 
 use ::{Error, Result};
 use ::transport::TTransport;
-use super::{TFieldIdentifier, TFieldType, TMessageIdentifier, TMessageType, TProtocol, TStructIdentifier};
+use super::{TFieldIdentifier, TType, TMessageIdentifier, TMessageType, TProtocol, TStructIdentifier};
 
 /// Identifies the serialized message as conforming to Thrift binary protocol version 1.
 const BINARY_PROTOCOL_VERSION_1: [u8; 2] = [0x80, 0x01];
@@ -183,7 +183,7 @@ impl TProtocol for TBinaryProtocol {
         let field_type_byte = try!(self.read_byte());
         let field_type = try!(try_from::TryFrom::try_from(field_type_byte));
         let id = try!(match field_type {
-            TFieldType::Stop => Ok(0),
+            TType::Stop => Ok(0),
             _ => self.read_i16()
         });
         Ok(TFieldIdentifier { name: None, field_type: field_type, id: id })

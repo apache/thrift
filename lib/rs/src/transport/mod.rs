@@ -15,46 +15,47 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//! Defines thrift transport implementations. Each thrift
-//! transport implementation controls how thrift-generated types
-//! and service calls are transmitted between a caller and
-//! a receiver.
+//! Traits and type definitions for performing I/O operations.
+//! Each transport implementation controls bytes are transmitted
+//! between an sender and a receiver.
+//!
+//! The core type exposed here is [`TTransport`][ttransport], which
+//! can by used by a [`TProtocol`][tprotocol] to send and
+//! receive messages to/from a source.
+//!
+//! [ttransport] trait.TTransport.html
+//! [tprotocol] trait.TProtocol.html
+//!
+//! Specific implementations include:
+//! * [`TBufferedTransport`][tbuffered]: wraps an underlying transport
+//!   with a buffer, reducing the number of I/O operations
+//! * [`TFramedTransport`][tframed]: prefixes outgoing messages with a message header
+//! * [`TcpIpSocketTransport`][ttcp]: sends messages over a TCP socket
+//!
+//! [tbuffered] trait.TBufferedTransport.html
+//! [tframed] trait.TFramedTransport.html
+//! [ttcp] trait.TTcpIpSocketTransport.html
 
 use std::io;
-
-use ::Result; // IMPORTANT: absolute path wrt. crate root
 
 mod buffered;
 mod framed;
 mod socket;
 
-pub use self::buffered::TBufferedTransport;
-pub use self::socket::TTcpIpSocket;
+#[cfg(test)]
+mod membuffer;
 
-/// Marker trait implemented by each transport implementation.
+pub use self::buffered::TBufferedTransport;
+pub use self::socket::TTcpTransport;
+
+/// Interface through which a `TProtocol` can perform I/O operations.
 pub trait TTransport: io::Read + io::Write {
     /// Open the transport. This *must* be called
     /// before the transport is used for either reads
     /// or writes.
-    fn open(&mut self) -> Result<()>;
+    fn open(&mut self) -> io::Result<()>;
     /// Close the transport. After this point this
     /// transport cannot be used for either reads or
     /// writes.
-    fn close(&mut self) -> Result<()>;
-    /// Current state of the transport.
-    fn state(&self) -> TTransportState; // FIXME: make this private to this module
-}
-
-/// The valid states a `TTransport` can be in.
-#[derive(Clone, Copy, Debug)]
-pub enum TTransportState { // FIXME: make this private to this module
-    /// The transport was just created. It
-    /// cannot be used for reads or writes yet.
-    CREATED,
-    /// The transport is now open, and can
-    /// be used for reads and writes.
-    OPEN,
-    /// The transport is now closed, and can
-    /// no longer be used for reads and writes.
-    CLOSED,
+    fn close(&mut self) -> io::Result<()>;
 }
