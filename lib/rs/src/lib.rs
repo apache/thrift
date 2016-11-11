@@ -27,6 +27,8 @@ use protocol::TMessageType;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// Errors that can be generated while sending, receiving
+/// or processing thrift messages and service calls.
 #[derive(Debug)]
 pub enum Error {
     IoError(io::Error),
@@ -38,9 +40,10 @@ pub enum Error {
     OutOfOrderThriftMessage(i32, i32), // expected, actual
     UnexpectedThriftMessageType(TMessageType, TMessageType),
     WrongServiceCall(String, String),
+    MissingServiceCallReturnValue(String), // service call
     UnexpectedApplicationError, // FIXME: should box the error
     Unknown(String), // FIXME: make this take &str
-    Application(Box<error::Error + Send + Sync>),
+    ApplicationError(Box<error::Error + Send + Sync>),
 }
 
 impl error::Error for Error {
@@ -56,8 +59,9 @@ impl error::Error for Error {
             Error::UnexpectedThriftMessageType(_, _) => "received unexpected thrift message",
             Error::WrongServiceCall(_, _) => "received wrong service call",
             Error::UnexpectedApplicationError => "received unexpected remote application error",
+            Error::MissingServiceCallReturnValue(_) => "missing return value for service call",
             Error::Unknown(ref s) => &s,
-            Error::Application(ref err) => err.description(),
+            Error::ApplicationError(ref err) => err.description(),
         }
     }
 }
