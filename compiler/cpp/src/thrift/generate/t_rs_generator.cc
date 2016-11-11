@@ -347,23 +347,8 @@ void t_rs_generator::render_rust_struct(t_struct* tstruct, t_rs_generator::e_str
 }
 
 void t_rs_generator::render_rust_struct_comment(t_struct* tstruct, t_rs_generator::e_struct_type struct_type) {
-  string struct_descriptor;
-  switch (struct_type) {
-  case t_rs_generator::T_ARGS:
-    struct_descriptor = "(args)";
-    break;
-  case t_rs_generator::T_RESULT:
-    struct_descriptor = "(result)";
-    break;
-  case t_rs_generator::T_EXCEPTION:
-    struct_descriptor = "(exception)";
-    break;
-  default:
-    struct_descriptor = "";
-  }
-
   f_gen_ << "//" << endl;
-  f_gen_ << "// " << tstruct->get_name() << " " << struct_descriptor << endl;
+  f_gen_ << "// " << tstruct->get_name() << endl;
   f_gen_ << "//" << endl;
   f_gen_ << endl;
 }
@@ -538,14 +523,6 @@ void t_rs_generator::render_rust_struct_field_write(const string& prefix, t_fiel
   string field_prefix = "";
   if (!prefix.empty()) {
     field_prefix = prefix + ".";
-  }
-
-  // FIXME: this is a hack
-  // Basically, I'm ignoring void fields
-  // this is because I'm still encoding an empty return type
-  // in the return struct (ugh)
-  if (is_void(tfield->get_type())) {
-    return; // we don't need to write anything out for void fields
   }
 
   ostringstream field_stream;
@@ -763,7 +740,9 @@ void t_rs_generator::render_rust_result_value_struct(t_function* tfunc) {
 
   t_field return_value(tfunc->get_returntype(), service_call_result_variable, 0);
   return_value.set_req(t_field::T_OPTIONAL);
-  result.append(&return_value);
+  if (!tfunc->get_returntype()->is_void()) {
+    result.append(&return_value);
+  }
 
   t_struct* exceptions = tfunc->get_xceptions();
   const vector<t_field*>& exception_types = exceptions->get_members();
