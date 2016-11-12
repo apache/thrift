@@ -299,7 +299,7 @@ void checkNoEvents(const boost::shared_ptr<EventLog>& log) {
  */
 uint32_t checkNewConnEvents(const boost::shared_ptr<EventLog>& log) {
   // Check for an ET_CONN_CREATED event
-  Event event = log->waitForEvent();
+  Event event = log->waitForEvent(2500);
   BOOST_CHECK_EQUAL(EventLog::ET_CONN_CREATED, event.type);
 
   // Some servers call the processContext() hook immediately.

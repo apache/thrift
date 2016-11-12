@@ -746,7 +746,7 @@ int main(int argc, char** argv) {
 
   if (server.get() != NULL) {
     if (protocol_type == "header") {
-      // Tell the server to use the same protocol for input / output 
+      // Tell the server to use the same protocol for input / output
       // if using header
       server->setOutputProtocolFactory(boost::shared_ptr<TProtocolFactory>());
     }

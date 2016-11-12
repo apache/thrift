@@ -116,53 +116,17 @@ void StdThread::threadMain(boost::shared_ptr<StdThread> thread) {
   return;
 }
 
-/**
- * std::thread factory implementation
- */
-class StdThreadFactory::Impl {
-
-private:
-  bool detached_;
-
-public:
-  Impl(bool detached) : detached_(detached) {}
-
-  /**
-   * Creates a new std::thread to run the runnable object
-   *
-   * @param runnable A runnable object
-   */
-  boost::shared_ptr<Thread> newThread(boost::shared_ptr<Runnable> runnable) const {
-    boost::shared_ptr<StdThread> result
-        = boost::shared_ptr<StdThread>(new StdThread(detached_, runnable));
-    runnable->thread(result);
-    return result;
-  }
-
-  bool isDetached() const { return detached_; }
-
-  void setDetached(bool value) { detached_ = value; }
-
-  Thread::id_t getCurrentThreadId() const { return std::this_thread::get_id(); }
-};
-
-StdThreadFactory::StdThreadFactory(bool detached) : impl_(new StdThreadFactory::Impl(detached)) {
+StdThreadFactory::StdThreadFactory(bool detached) : ThreadFactory(detached) {
 }
 
 boost::shared_ptr<Thread> StdThreadFactory::newThread(boost::shared_ptr<Runnable> runnable) const {
-  return impl_->newThread(runnable);
-}
-
-bool StdThreadFactory::isDetached() const {
-  return impl_->isDetached();
-}
-
-void StdThreadFactory::setDetached(bool value) {
-  impl_->setDetached(value);
+  boost::shared_ptr<StdThread> result = boost::shared_ptr<StdThread>(new StdThread(isDetached(), runnable));
+  runnable->thread(result);
+  return result;
 }
 
 Thread::id_t StdThreadFactory::getCurrentThreadId() const {
-  return impl_->getCurrentThreadId();
+  return std::this_thread::get_id();
 }
 }
 }

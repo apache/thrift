@@ -126,54 +126,19 @@ void* BoostThread::threadMain(void* arg) {
   return (void*)0;
 }
 
-/**
- * POSIX Thread factory implementation
- */
-class BoostThreadFactory::Impl {
-
-private:
-  bool detached_;
-
-public:
-  Impl(bool detached) : detached_(detached) {}
-
-  /**
-   * Creates a new POSIX thread to run the runnable object
-   *
-   * @param runnable A runnable object
-   */
-  shared_ptr<Thread> newThread(shared_ptr<Runnable> runnable) const {
-    shared_ptr<BoostThread> result = shared_ptr<BoostThread>(new BoostThread(detached_, runnable));
-    result->weakRef(result);
-    runnable->thread(result);
-    return result;
-  }
-
-  bool isDetached() const { return detached_; }
-
-  void setDetached(bool value) { detached_ = value; }
-
-  Thread::id_t getCurrentThreadId() const { return boost::this_thread::get_id(); }
-};
-
 BoostThreadFactory::BoostThreadFactory(bool detached)
-  : impl_(new BoostThreadFactory::Impl(detached)) {
+  : ThreadFactory(detached) {
 }
 
 shared_ptr<Thread> BoostThreadFactory::newThread(shared_ptr<Runnable> runnable) const {
-  return impl_->newThread(runnable);
-}
-
-bool BoostThreadFactory::isDetached() const {
-  return impl_->isDetached();
-}
-
-void BoostThreadFactory::setDetached(bool value) {
-  impl_->setDetached(value);
+  shared_ptr<BoostThread> result = shared_ptr<BoostThread>(new BoostThread(isDetached(), runnable));
+  result->weakRef(result);
+  runnable->thread(result);
+  return result;
 }
 
 Thread::id_t BoostThreadFactory::getCurrentThreadId() const {
-  return impl_->getCurrentThreadId();
+  return boost::this_thread::get_id();
 }
 }
 }

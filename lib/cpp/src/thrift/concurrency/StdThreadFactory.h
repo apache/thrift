@@ -52,21 +52,8 @@ public:
 
   // From ThreadFactory;
   Thread::id_t getCurrentThreadId() const;
-
-  /**
-   * Sets detached mode of threads
-   */
-  virtual void setDetached(bool detached);
-
-  /**
-   * Gets current detached mode
-   */
-  virtual bool isDetached() const;
-
-private:
-  class Impl;
-  boost::shared_ptr<Impl> impl_;
 };
+
 }
 }
 } // apache::thrift::concurrency

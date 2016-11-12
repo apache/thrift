@@ -95,7 +95,6 @@ TThreadedServer::~TThreadedServer() {
 }
 
 void TThreadedServer::serve() {
-  threadFactory_->setDetached(false);
   TServerFramework::serve();
 
   // Ensure post-condition of no active clients
@@ -126,7 +125,7 @@ void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pCli
 
 void TThreadedServer::onClientDisconnected(TConnectedClient* pClient) {
   Synchronized sync(clientMonitor_);
-  drainDeadClients();	// use the outgoing thread to do some maintenance on our dead client backlog
+  drainDeadClients(); // use the outgoing thread to do some maintenance on our dead client backlog
   ClientMap::iterator it = activeClientMap_.find(pClient);
   ClientMap::iterator end = it;
   deadClientMap_.insert(it, ++end);
@@ -153,7 +152,7 @@ void TThreadedServer::TConnectedClientRunner::run() /* override */ {
 }
 
 void TThreadedServer::TConnectedClientRunner::setThread(
-		const boost::shared_ptr<apache::thrift::concurrency::Thread>& pThread) {
+    const boost::shared_ptr<apache::thrift::concurrency::Thread>& pThread) {
   pThread_ = pThread;
 }
 
