@@ -63,7 +63,7 @@ static void interruptWorker(TPipeServer *pipe) {
 }
 
 BOOST_AUTO_TEST_CASE(stress_pipe_accept_interruption) {
-  int interruptIters = 100;
+  int interruptIters = 10;
 
   for (int i = 0; i < interruptIters; ++i)
   {

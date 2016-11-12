@@ -96,7 +96,7 @@ TThreadPoolServer::~TThreadPoolServer() {
 
 void TThreadPoolServer::serve() {
   TServerFramework::serve();
-  threadManager_->join();
+  threadManager_->stop();
 }
 
 int64_t TThreadPoolServer::getTimeout() const {

@@ -214,149 +214,104 @@ void* PthreadThread::threadMain(void* arg) {
 }
 
 /**
- * POSIX Thread factory implementation
+ * Converts generic posix thread schedule policy enums into pthread
+ * API values.
  */
-class PosixThreadFactory::Impl {
-
-private:
-  POLICY policy_;
-  PRIORITY priority_;
-  int stackSize_;
-  bool detached_;
-
-  /**
-   * Converts generic posix thread schedule policy enums into pthread
-   * API values.
-   */
-  static int toPthreadPolicy(POLICY policy) {
-    switch (policy) {
-    case OTHER:
-      return SCHED_OTHER;
-    case FIFO:
-      return SCHED_FIFO;
-    case ROUND_ROBIN:
-      return SCHED_RR;
-    }
+static int toPthreadPolicy(PosixThreadFactory::POLICY policy) {
+  switch (policy) {
+  case PosixThreadFactory::OTHER:
     return SCHED_OTHER;
+  case PosixThreadFactory::FIFO:
+    return SCHED_FIFO;
+  case PosixThreadFactory::ROUND_ROBIN:
+    return SCHED_RR;
   }
+  return SCHED_OTHER;
+}
 
-  /**
-   * Converts relative thread priorities to absolute value based on posix
-   * thread scheduler policy
-   *
-   *  The idea is simply to divide up the priority range for the given policy
-   * into the correpsonding relative priority level (lowest..highest) and
-   * then pro-rate accordingly.
-   */
-  static int toPthreadPriority(POLICY policy, PRIORITY priority) {
-    int pthread_policy = toPthreadPolicy(policy);
-    int min_priority = 0;
-    int max_priority = 0;
+/**
+ * Converts relative thread priorities to absolute value based on posix
+ * thread scheduler policy
+ *
+ *  The idea is simply to divide up the priority range for the given policy
+ * into the correpsonding relative priority level (lowest..highest) and
+ * then pro-rate accordingly.
+ */
+static int toPthreadPriority(PosixThreadFactory::POLICY policy, PosixThreadFactory::PRIORITY priority) {
+  int pthread_policy = toPthreadPolicy(policy);
+  int min_priority = 0;
+  int max_priority = 0;
 #ifdef HAVE_SCHED_GET_PRIORITY_MIN
-    min_priority = sched_get_priority_min(pthread_policy);
+  min_priority = sched_get_priority_min(pthread_policy);
 #endif
 #ifdef HAVE_SCHED_GET_PRIORITY_MAX
-    max_priority = sched_get_priority_max(pthread_policy);
+  max_priority = sched_get_priority_max(pthread_policy);
 #endif
-    int quanta = (HIGHEST - LOWEST) + 1;
-    float stepsperquanta = (float)(max_priority - min_priority) / quanta;
+  int quanta = (PosixThreadFactory::HIGHEST - PosixThreadFactory::LOWEST) + 1;
+  float stepsperquanta = (float)(max_priority - min_priority) / quanta;
 
-    if (priority <= HIGHEST) {
-      return (int)(min_priority + stepsperquanta * priority);
-    } else {
-      // should never get here for priority increments.
-      assert(false);
-      return (int)(min_priority + stepsperquanta * NORMAL);
-    }
+  if (priority <= PosixThreadFactory::HIGHEST) {
+    return (int)(min_priority + stepsperquanta * priority);
+  } else {
+    // should never get here for priority increments.
+    assert(false);
+    return (int)(min_priority + stepsperquanta * PosixThreadFactory::NORMAL);
   }
-
-public:
-  Impl(POLICY policy, PRIORITY priority, int stackSize, bool detached)
-    : policy_(policy), priority_(priority), stackSize_(stackSize), detached_(detached) {}
-
-  /**
-   * Creates a new POSIX thread to run the runnable object
-   *
-   * @param runnable A runnable object
-   */
-  shared_ptr<Thread> newThread(shared_ptr<Runnable> runnable) const {
-    shared_ptr<PthreadThread> result
-        = shared_ptr<PthreadThread>(new PthreadThread(toPthreadPolicy(policy_),
-                                                      toPthreadPriority(policy_, priority_),
-                                                      stackSize_,
-                                                      detached_,
-                                                      runnable));
-    result->weakRef(result);
-    runnable->thread(result);
-    return result;
-  }
-
-  int getStackSize() const { return stackSize_; }
-
-  void setStackSize(int value) { stackSize_ = value; }
-
-  PRIORITY getPriority() const { return priority_; }
-
-  /**
-   * Sets priority.
-   *
-   *  XXX
-   *  Need to handle incremental priorities properly.
-   */
-  void setPriority(PRIORITY value) { priority_ = value; }
-
-  bool isDetached() const { return detached_; }
-
-  void setDetached(bool value) { detached_ = value; }
-
-  Thread::id_t getCurrentThreadId() const {
-
-#ifndef _WIN32
-    return (Thread::id_t)pthread_self();
-#else
-    return (Thread::id_t)pthread_self().p;
-#endif // _WIN32
-  }
-};
+}
 
 PosixThreadFactory::PosixThreadFactory(POLICY policy,
                                        PRIORITY priority,
                                        int stackSize,
                                        bool detached)
-  : impl_(new PosixThreadFactory::Impl(policy, priority, stackSize, detached)) {
+  : ThreadFactory(detached),
+    policy_(policy),
+    priority_(priority),
+    stackSize_(stackSize) {
+}
+
+PosixThreadFactory::PosixThreadFactory(bool detached)
+  : ThreadFactory(detached),
+    policy_(ROUND_ROBIN),
+    priority_(NORMAL),
+    stackSize_(1) {
 }
 
 shared_ptr<Thread> PosixThreadFactory::newThread(shared_ptr<Runnable> runnable) const {
-  return impl_->newThread(runnable);
+  shared_ptr<PthreadThread> result
+      = shared_ptr<PthreadThread>(new PthreadThread(toPthreadPolicy(policy_),
+                                                    toPthreadPriority(policy_, priority_),
+                                                    stackSize_,
+                                                    isDetached(),
+                                                    runnable));
+  result->weakRef(result);
+  runnable->thread(result);
+  return result;
 }
 
 int PosixThreadFactory::getStackSize() const {
-  return impl_->getStackSize();
+  return stackSize_;
 }
 
 void PosixThreadFactory::setStackSize(int value) {
-  impl_->setStackSize(value);
+  stackSize_ = value;
 }
 
 PosixThreadFactory::PRIORITY PosixThreadFactory::getPriority() const {
-  return impl_->getPriority();
+  return priority_;
 }
 
-void PosixThreadFactory::setPriority(PosixThreadFactory::PRIORITY value) {
-  impl_->setPriority(value);
-}
-
-bool PosixThreadFactory::isDetached() const {
-  return impl_->isDetached();
-}
-
-void PosixThreadFactory::setDetached(bool value) {
-  impl_->setDetached(value);
+void PosixThreadFactory::setPriority(PRIORITY value) {
+  priority_ = value;
 }
 
 Thread::id_t PosixThreadFactory::getCurrentThreadId() const {
-  return impl_->getCurrentThreadId();
+#ifndef _WIN32
+  return (Thread::id_t)pthread_self();
+#else
+  return (Thread::id_t)pthread_self().p;
+#endif // _WIN32
 }
+
 }
 }
 } // apache::thrift::concurrency
