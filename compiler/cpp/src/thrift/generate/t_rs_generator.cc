@@ -120,7 +120,7 @@ private:
   // Return a string representing the rust type given a `t_type`.
   string to_rust_type(t_type* ttype);
 
-  // Return a string representing the rift `protocol::TFieldType` given a `t_type`.
+  // Return a string representing the rift `protocol::TType` given a `t_type`.
   string to_rust_field_type_enum(t_type* ttype);
 
   // Return `true` if this type is a void, and should be
@@ -190,7 +190,7 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "use std::fmt;" << endl;
   f_gen_ << "use std::fmt::{Display, Formatter};" << endl;
   f_gen_ << endl;
-  f_gen_ << "use rift::protocol::{TFieldIdentifier, TFieldType, TMessageIdentifier, TMessageType, TProtocol, TStructIdentifier};" << endl;
+  f_gen_ << "use rift::protocol::{TFieldIdentifier, TMessageIdentifier, TMessageType, TProtocol, TStructIdentifier, TType};" << endl;
   f_gen_ << endl;
 
   // add thrift includes
@@ -960,35 +960,35 @@ string t_rs_generator::to_rust_field_type_enum(t_type* ttype) {
     t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_VOID:
-      throw "will not generate protocol::TFieldType for TYPE_VOID";
+      throw "will not generate protocol::TType for TYPE_VOID";
     case t_base_type::TYPE_STRING:
-      return "TFieldType::String";
+      return "TType::String";
     case t_base_type::TYPE_BOOL:
-      return "TFieldType::Bool";
+      return "TType::Bool";
     case t_base_type::TYPE_I8:
-      return "TFieldType::I08";
+      return "TType::I08";
     case t_base_type::TYPE_I16:
-      return "TFieldType::I16";
+      return "TType::I16";
     case t_base_type::TYPE_I32:
-      return "TFieldType::I32";
+      return "TType::I32";
     case t_base_type::TYPE_I64:
-      return "TFieldType::I64";
+      return "TType::I64";
     case t_base_type::TYPE_DOUBLE:
-      return "TFieldType::Double";
+      return "TType::Double";
     }
   } else if (ttype->is_enum()) {
-    return "TFieldType::I32";
+    return "TType::I32";
   } else if (ttype->is_struct() || ttype->is_xception()) {
-    return "TFieldType::Struct";
+    return "TType::Struct";
   } else if (ttype->is_map()) {
-    return "TFieldType::Map";
+    return "TType::Map";
   } else if (ttype->is_set()) {
-    return "TFieldType::Set";
+    return "TType::Set";
   } else if (ttype->is_list()) {
-    return "TFieldType::List";
+    return "TType::List";
   }
 
-  throw "cannot find TFieldType for " + ttype->get_name();
+  throw "cannot find TType for " + ttype->get_name();
 }
 
 bool t_rs_generator::is_void(t_type* ttype) {
