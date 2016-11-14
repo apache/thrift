@@ -95,3 +95,12 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -Wall -Wextra")
   endif()
 endif()
+
+# If gcc older than 4.8 is detected, disable new compiler plug-in support (see THRIFT-3937)
+set(PLUGIN_COMPILER_NOT_TOO_OLD ON) # simplifies messaging in DefineOptions summary
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8" AND WITH_PLUGIN)
+  message(STATUS "Disabling compiler plug-in support to work with older gcc compiler")
+  set(WITH_PLUGIN OFF)
+  set(PLUGIN_COMPILER_NOT_TOO_OLD OFF)
+endif()
+
