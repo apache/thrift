@@ -84,7 +84,8 @@ void TConnectedClient::run() {
     } catch (const TException& tex) {
       string errStr = string("TConnectedClient processing exception: ") + tex.what();
       GlobalOutput(errStr.c_str());
-      // Continue processing
+      // Disconnect from client, because we could not process the message.
+      done = true;
     }
   }
 
