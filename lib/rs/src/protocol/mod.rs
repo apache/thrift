@@ -39,6 +39,7 @@ pub trait TProtocol {
     fn write_struct_end(&mut self) -> Result<()>;
     fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> Result<()>;
     fn write_field_end(&mut self) -> ::Result<()>;
+    fn write_field_stop(&mut self) -> ::Result<()>; // FIXME: do I actually need this?
     // fn write_map_begin(&mut self) -> Result<()>; // ktype, vtype, size
     // fn write_map_end(&mut self) -> Result<()>;
     // fn write_list_begin(&mut self) -> Result<()>; // etype, size (element_type)
@@ -105,7 +106,7 @@ pub struct TStructIdentifier {
 pub struct TFieldIdentifier {
     pub name: Option<String>, // FIXME: allow usage of &str
     pub field_type: TType,
-    pub id: i16,
+    pub id: Option<i16>, // FIXME: this sucks that this is an option (only required for Field::Stop)
 }
 
 /// Thrift message type.

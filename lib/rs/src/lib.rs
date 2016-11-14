@@ -33,6 +33,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     IoError(io::Error),
     Utf8ConversionError(string::FromUtf8Error),
+    InvalidArgument(String),
     InvalidThriftMessageHeader,
     UnknownThriftMessageType(u8),
     UnknownThriftFieldType(u8),
@@ -51,6 +52,7 @@ impl error::Error for Error {
         match *self {
             Error::IoError(ref err) => err.description(),
             Error::Utf8ConversionError(ref err) => err.description(),
+            Error::InvalidArgument(_) => "bad user argument",
             Error::InvalidThriftMessageHeader => "invalid thrift message header",
             Error::UnknownThriftMessageType(_) => "invalid thrift message type",
             Error::UnknownThriftFieldType(_) => "invalid thrift field type",

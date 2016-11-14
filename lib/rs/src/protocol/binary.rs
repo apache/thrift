@@ -68,12 +68,24 @@ impl TProtocol for TBinaryProtocol {
     }
 
     fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> Result<()> {
+        if identifier.id.is_none() && identifier.field_type != TType::Stop {
+            return Err(::Error::InvalidArgument("missing sequence id for field".to_owned()))
+        }
+
         try!(self.write_byte(identifier.field_type));
-        self.write_i16(identifier.id)
+        if let Some(id) = identifier.id {
+            self.write_i16(id)
+        } else {
+            Ok(())
+        }
     }
 
     fn write_field_end(&mut self) -> Result<()> {
         Ok(()) // nothing written to mark field end
+    }
+
+    fn write_field_stop(&mut self) -> Result<()> {
+        self.write_byte(TType::Stop)
     }
 
     fn write_byte<I: convert::Into<u8>>(&mut self, b: I) -> Result<()> {
@@ -186,7 +198,7 @@ impl TProtocol for TBinaryProtocol {
             TType::Stop => Ok(0),
             _ => self.read_i16()
         });
-        Ok(TFieldIdentifier { name: None, field_type: field_type, id: id })
+        Ok(TFieldIdentifier { name: None, field_type: field_type, id: Some(id) })
     }
 
     fn read_field_end(&mut self) -> Result<()> {

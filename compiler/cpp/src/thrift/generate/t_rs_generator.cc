@@ -532,8 +532,9 @@ void t_rs_generator::render_rust_struct_write_to_out_protocol(t_struct* tstruct,
   }
 
   // write struct footer to output protocol
-  // FIXME: seqid, name are options f_gen_ << indent() << "try!(o_prot.write_field_stop());" << endl;
+  f_gen_ << indent() << "try!(o_prot.write_field_stop());" << endl;
   f_gen_ << indent() << "try!(o_prot.write_struct_end());" << endl;
+  f_gen_ << indent() << "try!(o_prot.flush());" << endl;
   f_gen_ << indent() << "Ok(())" << endl;
 
   indent_down();
@@ -551,7 +552,7 @@ void t_rs_generator::render_rust_struct_field_write(const string& prefix, t_fiel
     << "let field_ident = TFieldIdentifier {"
     << "name: Some(\"" << tfield->get_name() << "\".to_owned()" << "), "
     << "field_type: " << to_rust_field_type_enum(tfield->get_type()) << ", "
-    << "id: " << tfield->get_key() << " "
+    << "id: Some(" << tfield->get_key() << ") "
     << "};";
   string field_ident_string = field_stream.str();
 
