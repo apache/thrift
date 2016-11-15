@@ -680,7 +680,7 @@ void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct,
   }
 
   // now loop through the fields we've received
-  f_gen_ << indent() << "loop {" << endl;
+  f_gen_ << indent() << "loop {" << endl; // start loop
   indent_up();
 
   // break out if you've found the Stop field
@@ -693,7 +693,7 @@ void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct,
 
   // now read all the fields found
   f_gen_ << indent() << "let field_id = try!(field_id(&field_ident));" << endl;
-  f_gen_ << indent() << "match field_id {" << endl;
+  f_gen_ << indent() << "match field_id {" << endl; // start match
   indent_up();
 
   for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
@@ -705,13 +705,18 @@ void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct,
     f_gen_ << indent() << "}," << endl;
   }
 
-  f_gen_ << indent() << "_ => try!(i_prot.skip(field_ident.field_type))," << endl;
+  // default case (skip fields)
+  f_gen_ << indent() << "_ => {" << endl;
+  indent_up();
+  f_gen_ << indent() << "try!(i_prot.skip(field_ident.field_type));" << endl;
+  indent_down();
+  f_gen_ << indent() << "}," << endl;
 
   indent_down();
-  f_gen_ << indent() << "}" << endl;
+  f_gen_ << indent() << "}" << endl; // finish match
 
   indent_down();
-  f_gen_ << indent() << "}" << endl;
+  f_gen_ << indent() << "}" << endl; // finish loop
 
   // finish reading the message from the wire
   f_gen_ << indent() << "try!(i_prot.read_struct_end());" << endl;
@@ -770,8 +775,8 @@ void t_rs_generator::render_rust_struct_field_read(t_field* tfield) {
   if (read_expression.size() == 0) { // FIXME: remove this check once I've implemented all types
     f_gen_ << indent() << "f" << tfield->get_key() << " = None;" << endl;
   } else {
-    f_gen_ << indent() << "let ret = " << read_expression << ";" << endl;
-    f_gen_ << indent() << "f" << tfield->get_key() << " = Some(ret);" << endl;
+    f_gen_ << indent() << "let val = " << read_expression << ";" << endl;
+    f_gen_ << indent() << "f" << tfield->get_key() << " = Some(val);" << endl;
   }
 }
 
