@@ -248,6 +248,10 @@ impl TProtocol for TBinaryProtocol {
         let bytes = try!(self.read_bytes());
         String::from_utf8(bytes).map_err(convert::From::from)
     }
+
+    fn skip(&mut self, field_type: TType) -> Result<()> {
+        unimplemented!()
+    }
 }
 
 impl TBinaryProtocol {

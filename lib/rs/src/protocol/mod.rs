@@ -55,6 +55,7 @@ pub trait TProtocol {
     fn write_i64(&mut self, i: i64) -> Result<()>;
     fn write_double(&mut self, d: f64) -> Result<()>;
     fn write_string(&mut self, s: &str) -> Result<()>;
+
     fn flush(&mut self) -> Result<()>;
 
     //
@@ -63,7 +64,7 @@ pub trait TProtocol {
 
     fn read_message_begin(&mut self) -> Result<TMessageIdentifier>;
     fn read_message_end(&mut self) -> Result<()>;
-    fn read_struct_begin(&mut self) -> Result<Option<TStructIdentifier>>; // FIXME: should I make all of them options?
+    fn read_struct_begin(&mut self) -> Result<Option<TStructIdentifier>>;
     fn read_struct_end(&mut self) -> Result<()>;
     fn read_field_begin(&mut self) -> Result<TFieldIdentifier>;
     fn read_field_end(&mut self) -> Result<()>;
@@ -82,6 +83,8 @@ pub trait TProtocol {
     fn read_i64(&mut self) -> Result<i64>;
     fn read_double(&mut self) -> Result<f64>;
     fn read_string(&mut self) -> Result<String>;
+
+    fn skip(&mut self, field_type: TType) -> Result<()>;
 }
 
 /// Identifies an instance of a Thrift message
