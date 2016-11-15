@@ -36,11 +36,13 @@ pub enum Error {
     InvalidArgument(String),
     InvalidThriftMessageHeader,
     UnknownThriftMessageType(u8),
+    InvalidThriftFieldHeader(String),
     UnknownThriftFieldType(u8),
     InvalidBooleanValue(i8),
     OutOfOrderThriftMessage(i32, i32), // expected, actual
-    UnexpectedThriftMessageType(TMessageType, TMessageType),
-    WrongServiceCall(String, String),
+    UnexpectedThriftMessageType(TMessageType, TMessageType), // expected, actual
+    WrongServiceCall(String, String), // expected, actual
+    MissingRequiredField(String), // field name
     MissingServiceCallReturnValue(String), // service call
     UnexpectedApplicationError, // FIXME: should box the error
     Unknown(String), // FIXME: make this take &str
@@ -55,11 +57,13 @@ impl error::Error for Error {
             Error::InvalidArgument(_) => "bad user argument",
             Error::InvalidThriftMessageHeader => "invalid thrift message header",
             Error::UnknownThriftMessageType(_) => "invalid thrift message type",
+            Error::InvalidThriftFieldHeader(_) => "invalid thrift field header",
             Error::UnknownThriftFieldType(_) => "invalid thrift field type",
             Error::InvalidBooleanValue(_) => "invalid boolean value",
             Error::OutOfOrderThriftMessage(_, _) => "received out-of-order thrift message",
             Error::UnexpectedThriftMessageType(_, _) => "received unexpected thrift message",
             Error::WrongServiceCall(_, _) => "received wrong service call",
+            Error::MissingRequiredField(_) => "struct missing required field",
             Error::UnexpectedApplicationError => "received unexpected remote application error",
             Error::MissingServiceCallReturnValue(_) => "missing return value for service call",
             Error::Unknown(ref s) => &s,
