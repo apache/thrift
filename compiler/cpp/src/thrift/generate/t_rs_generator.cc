@@ -180,6 +180,7 @@ void t_rs_generator::render_attributes_and_includes() {
   // turn off some warnings
   f_gen_ << "#![allow(unused_imports)]" << endl; // generated code always includes BTreeMap/BTreeSet
   f_gen_ << "#![allow(non_snake_case)]" << endl; // generated code keeps user-specified names (FIXME: change to underscore?)
+  f_gen_ << "#![allow(non_camel_case_types)]" << endl; // generated code keeps user-specified names for types
   f_gen_ << endl;
 
   // add standard includes
@@ -249,6 +250,27 @@ void t_rs_generator::render_free_standing_helpers() {
   f_gen_ << indent() << "Err(rift::Error::UnexpectedThriftMessageType(expected, actual))" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
+
+  // check that a required field exists
+  f_gen_ << "fn verify_required_field_exists<T>(field_name: &str, field: &Option<T>) -> rift::Result<()> {" << endl;
+  indent_up();
+  f_gen_ << indent() << "match *field {" << endl;
+  indent_up();
+  f_gen_ << indent() << "Some(_) => Ok(())," << endl;
+  f_gen_ << indent() << "None => Err(rift::Error::MissingRequiredField(field_name.to_owned()))," << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
+
+  // check that the field id exists; return the id if it does
+  f_gen_ << "fn field_id(field_ident: &TFieldIdentifier) -> rift::Result<i16> {" << endl;
+  indent_up();
+  f_gen_ << indent() << "field_ident.id.ok_or(rift::Error::InvalidThriftFieldHeader(\"missing field id\".to_owned()))" << endl;
   indent_down();
   f_gen_ << "}" << endl;
   f_gen_ << endl;
@@ -384,7 +406,7 @@ void t_rs_generator::render_rust_exception_struct_error_trait_impls(t_struct* ts
   indent_up();
   f_gen_ << indent() << "fn description(&self) -> &str {" << endl;
   indent_up();
-  f_gen_ << indent() << "\"" << "remote service threw " << tstruct->get_name() << "\";" << endl;
+  f_gen_ << indent() << "\"" << "remote service threw " << tstruct->get_name() << "\"" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
   indent_down();
@@ -637,7 +659,95 @@ void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct,
     << "fn read_from_in_protocol<I: TProtocol>(i_prot: &mut I) -> rift::Result<" << tstruct->get_name() << "> {"
     << endl;
   indent_up();
-  // check struct begin, end, fields
+
+  f_gen_ << indent() << "try!(i_prot.read_struct_begin());" << endl;
+
+  // create temporary variables: one for each field in the struct
+  const vector<t_field*> members = tstruct->get_sorted_members();
+  vector<t_field*>::const_iterator members_iter;
+  for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
+    t_field* tfield = (*members_iter);
+    f_gen_
+      << indent()
+      << "let mut f" << tfield->get_key()
+      << ": Option<" << to_rust_type(tfield->get_type())
+      << "> = None;"
+      << endl;
+  }
+
+  // now loop through the fields we've received
+  f_gen_ << indent() << "loop {" << endl;
+  indent_up();
+
+  // break out if you've found the Stop field
+  f_gen_ << indent() << "let field_ident = try!(i_prot.read_field_begin());" << endl;
+  f_gen_ << indent() << "if field_ident.field_type == TType::Stop {" << endl;
+  indent_up();
+  f_gen_ << indent() << "break;" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
+  // now read all the fields found
+  f_gen_ << indent() << "let field_id = try!(field_id(&field_ident));" << endl;
+  f_gen_ << indent() << "match field_id {" << endl;
+  indent_up();
+
+  f_gen_ << indent() << "_ => ()," << endl; // FIXME! (should be skip)
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
+  // finish reading the message from the wire
+  f_gen_ << indent() << "try!(i_prot.read_struct_end());" << endl;
+
+  // verify that all required fields exist
+  for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
+    t_field* tfield = (*members_iter);
+    t_field::e_req req = struct_type == t_rs_generator::T_ARGS ? t_field::T_REQUIRED : tfield->get_req();
+    if (!is_optional(req)) {
+      f_gen_
+        << indent()
+        << "try!(verify_required_field_exists("
+        << "\"" << tstruct->get_name()<< "." << tfield->get_name() << "\""
+        << ", "
+        << "&f" << tfield->get_key()
+        << "));" << endl;
+    }
+  }
+
+  // construct the struct
+  if (members.size() == 0) {
+    f_gen_ << indent() << "let ret = " << tstruct->get_name() << " {};" << endl;
+  } else {
+    f_gen_ << indent() << "let ret = " << tstruct->get_name() << " {" << endl;
+    indent_up();
+
+    for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
+      t_field* tfield = (*members_iter);
+      t_field::e_req req = struct_type == t_rs_generator::T_ARGS ? t_field::T_REQUIRED : tfield->get_req();
+      if (is_optional(req)) {
+        f_gen_ << indent() << tfield->get_name() << ": f" << tfield->get_key() << "," << endl;
+      } else {
+        f_gen_
+          << indent()
+          << tfield->get_name()
+          << ": f" << tfield->get_key()
+          << ".expect(\"auto-generated code should have checked for presence of required fields\")"
+          << ","
+          << endl;
+      }
+    }
+
+    indent_down();
+    f_gen_ << indent() << "};" << endl;
+  }
+
+  // return the constructed value
+  f_gen_ << indent() << "Ok(ret)" << endl;
+
   indent_down();
   f_gen_ << indent() << "}" << endl;
 }
@@ -865,7 +975,7 @@ void t_rs_generator::render_rust_sync_recv(t_function* tfunc) {
   // otherwise...
   // check that it's the message type
   f_gen_ << indent() << "try!(verify_expected_message_type(TMessageType::Reply, message_ident.message_type));" << endl;
-  f_gen_ << indent() << "let mut result = try!(" << service_call_result_struct_name(tfunc) << "::read_from_in_protocol(&mut self.i_prot));" << endl;
+  f_gen_ << indent() << "let result = try!(" << service_call_result_struct_name(tfunc) << "::read_from_in_protocol(&mut self.i_prot));" << endl;
   f_gen_ << indent() << "try!(self.i_prot.read_message_end());" << endl;
   f_gen_ << indent() << "result.ok_or()" << endl;
   indent_down();
