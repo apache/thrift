@@ -96,6 +96,8 @@ private:
   void render_rust_struct_write_to_out_protocol(t_struct* tstruct, t_rs_generator::e_struct_type struct_type);
   void render_rust_struct_field_write(const string& prefix, t_field* tfield, t_field::e_req req);
   void render_rust_struct_read_from_in_protocol(t_struct* tstruct, t_rs_generator::e_struct_type struct_type);
+  void render_rust_struct_field_read(t_field* tfield);
+
   void render_rust_result_value_struct(t_function* tfunc);
 
   // Write the rust representation of a thrift enum to the generated file.
@@ -107,6 +109,8 @@ private:
   void render_rust_sync_send_recv_wrapper(t_function* tfunc);
   void render_rust_sync_send(t_function* tfunc);
   void render_rust_sync_recv(t_function* tfunc);
+
+  string rust_struct_field_read(t_field* tfield);
 
   string rust_field_write(const string& field_prefix, t_field* tfield, t_field::e_req req);
 
@@ -692,7 +696,16 @@ void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct,
   f_gen_ << indent() << "match field_id {" << endl;
   indent_up();
 
-  f_gen_ << indent() << "_ => ()," << endl; // FIXME! (should be skip)
+  for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
+    t_field* tfield = (*members_iter);
+    f_gen_ << indent() << tfield->get_key() << " => {" << endl;
+    indent_up();
+    render_rust_struct_field_read(tfield);
+    indent_down();
+    f_gen_ << indent() << "}," << endl;
+  }
+
+  f_gen_ << indent() << "_ => try!(i_prot.skip(field_ident.field_type))," << endl;
 
   indent_down();
   f_gen_ << indent() << "}" << endl;
@@ -750,6 +763,54 @@ void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct,
 
   indent_down();
   f_gen_ << indent() << "}" << endl;
+}
+
+void t_rs_generator::render_rust_struct_field_read(t_field* tfield) {
+  string read_expression = rust_struct_field_read(tfield);
+  if (read_expression.size() == 0) { // FIXME: remove this check once I've implemented all types
+    f_gen_ << indent() << "f" << tfield->get_key() << " = None;" << endl;
+  } else {
+    f_gen_ << indent() << "let ret = " << read_expression << ";" << endl;
+    f_gen_ << indent() << "f" << tfield->get_key() << " = Some(ret);" << endl;
+  }
+}
+
+string t_rs_generator::rust_struct_field_read(t_field* tfield) {
+  t_type* ttype = tfield->get_type();
+
+  if (ttype->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
+    switch (tbase) {
+    case t_base_type::TYPE_VOID:
+      throw "Cannot read field of type TYPE_VOID from input protocol";
+    case t_base_type::TYPE_STRING:
+      return "try!(i_prot.read_string())";
+    case t_base_type::TYPE_BOOL:
+      return "try!(i_prot.read_bool())";
+    case t_base_type::TYPE_I8:
+      return "try!(i_prot.read_i8())";
+    case t_base_type::TYPE_I16:
+      return "try!(i_prot.read_i16())";
+    case t_base_type::TYPE_I32:
+      return "try!(i_prot.read_i32())";
+    case t_base_type::TYPE_I64:
+      return "try!(i_prot.read_i64())";
+    case t_base_type::TYPE_DOUBLE:
+      return "try!(i_prot.read_double())";
+    }
+  } else if (ttype->is_enum()) {
+    return "";
+  } else if (ttype->is_struct() || ttype->is_xception()) {
+    return "try!(" +  to_rust_type(ttype) + "::read_from_in_protocol(i_prot));";
+  } else if (ttype->is_map()) {
+    return "";
+  } else if (ttype->is_set()) {
+    return "";
+  } else if (ttype->is_list()) {
+    return "";
+  }
+
+  throw "Unsupported type " + ttype->get_name();
 }
 
 //-----------------------------------------------------------------------------
