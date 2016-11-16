@@ -18,12 +18,14 @@
 use std::convert;
 use try_from;
 
-use ::{Error, Result};
 pub use self::binary::TBinaryProtocol;
 
 mod binary;
 mod compact;
 mod multiplexed;
+
+/// Maximum depth to which we will skip a Thrift field.
+const MAXIMUM_SKIP_DEPTH: i8 = 64;
 
 /// Implemented by Thrift protocols to write/read
 /// a Thrift object to/from its serialized representation.
@@ -33,58 +35,127 @@ pub trait TProtocol {
     // Methods to write a thrift type into its serialized form.
     //
 
-    fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> Result<()>;
-    fn write_message_end(&mut self) -> Result<()>;
-    fn write_struct_begin(&mut self, identifier: &TStructIdentifier) -> Result<()>;
-    fn write_struct_end(&mut self) -> Result<()>;
-    fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> Result<()>;
+    fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()>;
+    fn write_message_end(&mut self) -> ::Result<()>;
+    fn write_struct_begin(&mut self, identifier: &TStructIdentifier) -> ::Result<()>;
+    fn write_struct_end(&mut self) -> ::Result<()>;
+    fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> ::Result<()>;
     fn write_field_end(&mut self) -> ::Result<()>;
     fn write_field_stop(&mut self) -> ::Result<()>; // FIXME: do I actually need this?
-    // fn write_map_begin(&mut self) -> Result<()>; // ktype, vtype, size
-    // fn write_map_end(&mut self) -> Result<()>;
-    // fn write_list_begin(&mut self) -> Result<()>; // etype, size (element_type)
-    // fn write_list_end(&mut self) -> Result<()>;
-    // fn write_set_begin(&mut self) -> Result<()>; // etype, size
-    // fn write_set_end(&mut self) -> Result<()>;
-    fn write_bool(&mut self, b: bool) -> Result<()>;
-    fn write_byte<I: convert::Into<u8>>(&mut self, b: I) -> Result<()>;
-    fn write_bytes(&mut self, b: &[u8]) -> Result<()>;
-    fn write_i8(&mut self, i: i8) -> Result<()>;
-    fn write_i16(&mut self, i: i16) -> Result<()>;
-    fn write_i32(&mut self, i: i32) -> Result<()>;
-    fn write_i64(&mut self, i: i64) -> Result<()>;
-    fn write_double(&mut self, d: f64) -> Result<()>;
-    fn write_string(&mut self, s: &str) -> Result<()>;
+    fn write_bool(&mut self, b: bool) -> ::Result<()>;
+    fn write_byte<I: convert::Into<u8>>(&mut self, b: I) -> ::Result<()>;
+    fn write_bytes(&mut self, b: &[u8]) -> ::Result<()>;
+    fn write_i8(&mut self, i: i8) -> ::Result<()>;
+    fn write_i16(&mut self, i: i16) -> ::Result<()>;
+    fn write_i32(&mut self, i: i32) -> ::Result<()>;
+    fn write_i64(&mut self, i: i64) -> ::Result<()>;
+    fn write_double(&mut self, d: f64) -> ::Result<()>;
+    fn write_string(&mut self, s: &str) -> ::Result<()>;
+    fn write_list_begin(&mut self, identifier: &TListIdentifier) -> ::Result<()>;
+    fn write_list_end(&mut self) -> ::Result<()>;
+    fn write_set_begin(&mut self, identifier: &TSetIdentifier) -> ::Result<()>;
+    fn write_set_end(&mut self) -> ::Result<()>;
+    fn write_map_begin(&mut self, identifier: &TMapIdentifier) -> ::Result<()>;
+    fn write_map_end(&mut self) -> ::Result<()>;
 
-    fn flush(&mut self) -> Result<()>;
+    fn flush(&mut self) -> ::Result<()>;
 
     //
     // Methods to read a thrift type from its serialized form.
     //
 
-    fn read_message_begin(&mut self) -> Result<TMessageIdentifier>;
-    fn read_message_end(&mut self) -> Result<()>;
-    fn read_struct_begin(&mut self) -> Result<Option<TStructIdentifier>>;
-    fn read_struct_end(&mut self) -> Result<()>;
-    fn read_field_begin(&mut self) -> Result<TFieldIdentifier>;
-    fn read_field_end(&mut self) -> Result<()>;
-    // fn read_map_begin(&mut self) -> Result<()>; // k, v, size
-    // fn read_map_end(&mut self) -> Result<()>;
-    // fn read_list_begin(&mut self) -> Result<()>; // etype, size
-    // fn read_list_end(&mut self) -> Result<()>;
-    // fn read_set_begin(&mut self) -> Result<()>; // etype, size
-    // fn read_set_end(&mut self) -> Result<()>;
-    fn read_bool(&mut self) -> Result<bool>;
-    fn read_byte(&mut self) -> Result<u8>;
-    fn read_bytes(&mut self) -> Result<Vec<u8>>;
-    fn read_i8(&mut self) -> Result<i8>;
-    fn read_i16(&mut self) -> Result<i16>;
-    fn read_i32(&mut self) -> Result<i32>;
-    fn read_i64(&mut self) -> Result<i64>;
-    fn read_double(&mut self) -> Result<f64>;
-    fn read_string(&mut self) -> Result<String>;
+    fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier>;
+    fn read_message_end(&mut self) -> ::Result<()>;
+    fn read_struct_begin(&mut self) -> ::Result<Option<TStructIdentifier>>;
+    fn read_struct_end(&mut self) -> ::Result<()>;
+    fn read_field_begin(&mut self) -> ::Result<TFieldIdentifier>;
+    fn read_field_end(&mut self) -> ::Result<()>;
+    fn read_bool(&mut self) -> ::Result<bool>;
+    fn read_byte(&mut self) -> ::Result<u8>;
+    fn read_bytes(&mut self) -> ::Result<Vec<u8>>;
+    fn read_i8(&mut self) -> ::Result<i8>;
+    fn read_i16(&mut self) -> ::Result<i16>;
+    fn read_i32(&mut self) -> ::Result<i32>;
+    fn read_i64(&mut self) -> ::Result<i64>;
+    fn read_double(&mut self) -> ::Result<f64>;
+    fn read_string(&mut self) -> ::Result<String>;
+    fn read_list_begin(&mut self) -> ::Result<TListIdentifier>;
+    fn read_list_end(&mut self) -> ::Result<()>;
+    fn read_set_begin(&mut self) -> ::Result<TSetIdentifier>;
+    fn read_set_end(&mut self) -> ::Result<()>;
+    fn read_map_begin(&mut self) -> ::Result<TMapIdentifier>;
+    fn read_map_end(&mut self) -> ::Result<()>;
 
-    fn skip(&mut self, field_type: TType) -> Result<()>;
+    fn skip(&mut self, field_type: TType) -> ::Result<()> {
+        self.skip_till_depth(field_type, MAXIMUM_SKIP_DEPTH)
+    }
+
+    fn skip_till_depth(&mut self, field_type: TType, remaining_depth: i8) -> ::Result<()> {
+        if remaining_depth == 0 {
+           return Err(::Error::GeneralProtocolError("maximum skip depth reached".to_owned()))
+        }
+
+        match field_type {
+            TType::Bool => {
+                self.read_bool().map(|_| ())
+            },
+            TType::Byte => {
+                self.read_byte().map(|_| ())
+            },
+            TType::I08 => {
+                self.read_i8().map(|_| ())
+            },
+            TType::I16 => {
+                self.read_i16().map(|_| ())
+            },
+            TType::I32 => {
+                self.read_i32().map(|_| ())
+            },
+            TType::I64 => {
+                self.read_i64().map(|_| ())
+            },
+            TType::Double => {
+                self.read_double().map(|_| ())
+            },
+            TType::String => {
+                self.read_string().map(|_| ())
+            },
+            TType::Struct => {
+                try!(self.read_struct_begin());
+                loop {
+                    let field_ident = try!(self.read_field_begin());
+                    if field_ident.field_type == TType::Stop { break; }
+                    try!(self.skip_till_depth(field_ident.field_type, remaining_depth - 1));
+                }
+                self.read_struct_end()
+            },
+            TType::List => {
+                let list_ident = try!(self.read_list_begin());
+                for _ in 0..list_ident.size {
+                    try!(self.skip_till_depth(list_ident.element_type, remaining_depth - 1));
+                }
+                self.read_list_end()
+            },
+            TType::Set => {
+                let set_ident = try!(self.read_set_begin());
+                for _ in 0..set_ident.size {
+                    try!(self.skip_till_depth(set_ident.element_type, remaining_depth - 1));
+                }
+                self.read_set_end()
+            },
+            TType::Map => {
+                let map_ident = try!(self.read_map_begin());
+                for _ in 0..map_ident.size {
+                    try!(self.skip_till_depth(map_ident.key_type, remaining_depth - 1));
+                    try!(self.skip_till_depth(map_ident.value_type, remaining_depth - 1));
+                }
+                self.read_map_end()
+            },
+            _ => {
+                Err(::Error::InvalidArgument("cannot skip requested field type".to_owned()))
+            },
+        }
+    }
 }
 
 /// Identifies an instance of a Thrift message
@@ -112,6 +183,31 @@ pub struct TFieldIdentifier {
     pub id: Option<i16>, // FIXME: this sucks that this is an option (only required for Field::Stop)
 }
 
+/// Identifies an instance of a list
+/// in its protocol representation.
+#[derive(Debug)]
+pub struct TListIdentifier {
+    pub element_type: TType,
+    pub size: i32,
+}
+
+/// Identifies an instance of a set
+/// in its protocol representation.
+#[derive(Debug)]
+pub struct TSetIdentifier {
+    pub element_type: TType,
+    pub size: i32,
+}
+
+/// Identifies an instance of a map
+/// in its protocol representation.
+#[derive(Debug)]
+pub struct TMapIdentifier {
+    pub key_type: TType,
+    pub value_type: TType,
+    pub size: i32,
+}
+
 /// Thrift message type.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TMessageType {
@@ -137,14 +233,14 @@ impl convert::From<TMessageType> for u8 {
 // Converts the serialized representation of a
 // Thrift message type into its enum form.
 impl try_from::TryFrom<u8> for TMessageType {
-    type Err = Error;
-    fn try_from(b: u8) -> Result<Self> {
+    type Err = ::Error;
+    fn try_from(b: u8) -> ::Result<Self> {
         match b {
             0x01 => Ok(TMessageType::Call),
             0x02 => Ok(TMessageType::Reply),
             0x03 => Ok(TMessageType::Exception),
             0x04 => Ok(TMessageType::OneWay),
-            unkn => Err(Error::UnknownThriftMessageType(unkn))
+            unkn => Err(::Error::UnknownThriftMessageType(unkn))
         }
     }
 }
@@ -200,8 +296,8 @@ impl convert::From<TType> for u8 {
 // Converts the serialized representation of a
 // Thrift field type into its enum form.
 impl try_from::TryFrom<u8> for TType {
-    type Err = Error;
-    fn try_from(b: u8) -> Result<Self> {
+    type Err = ::Error;
+    fn try_from(b: u8) -> ::Result<Self> {
         match b {
             0x00 => Ok(TType::Stop),
             0x01 => Ok(TType::Void),
@@ -220,7 +316,7 @@ impl try_from::TryFrom<u8> for TType {
             0x0E => Ok(TType::List),
             0x0F => Ok(TType::Utf8),
             0x11 => Ok(TType::Utf16),
-            unkn => Err(Error::UnknownThriftFieldType(unkn))
+            unkn => Err(::Error::UnknownThriftFieldType(unkn))
         }
     }
 }

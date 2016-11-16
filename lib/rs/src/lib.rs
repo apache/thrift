@@ -44,6 +44,7 @@ pub enum Error {
     WrongServiceCall(String, String), // expected, actual
     MissingRequiredField(String), // field name
     MissingServiceCallReturnValue(String), // service call
+    GeneralProtocolError(String),
     UnexpectedApplicationError, // FIXME: should box the error
     Unknown(String), // FIXME: make this take &str
     ApplicationError(Box<error::Error + Send + Sync>),
@@ -64,8 +65,9 @@ impl error::Error for Error {
             Error::UnexpectedThriftMessageType(_, _) => "received unexpected thrift message",
             Error::WrongServiceCall(_, _) => "received wrong service call",
             Error::MissingRequiredField(_) => "struct missing required field",
-            Error::UnexpectedApplicationError => "received unexpected remote application error",
             Error::MissingServiceCallReturnValue(_) => "missing return value for service call",
+            Error::GeneralProtocolError(_) => "unexpected protocol error",
+            Error::UnexpectedApplicationError => "received unexpected remote application error",
             Error::Unknown(ref s) => &s,
             Error::ApplicationError(ref err) => err.description(),
         }
@@ -89,3 +91,6 @@ impl convert::From<string::FromUtf8Error> for Error {
         Error::Utf8ConversionError(err)
     }
 }
+
+// FIXME: TProcessor
+// FIXME: TMultiplexedProcessor (see multiplexed_protocol.go)
