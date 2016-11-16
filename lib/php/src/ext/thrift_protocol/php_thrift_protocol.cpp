@@ -1123,4 +1123,61 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
   }
 }
 
+
+// 4 params: $transport $response_Typename $strict_read $buffer_size
+PHP_FUNCTION(thrift_protocol_read_binary) {
+  int argc = ZEND_NUM_ARGS();
+
+  if (argc < 3) {
+    WRONG_PARAM_COUNT;
+  }
+
+  zval ***args = (zval***) emalloc(argc * sizeof(zval**));
+  zend_get_parameters_array_ex(argc, args);
+
+  if (Z_TYPE_PP(args[0]) != IS_OBJECT) {
+    php_error_docref(NULL TSRMLS_CC, E_ERROR, "1st parameter is not an object (transport)");
+    efree(args);
+    RETURN_NULL();
+  }
+
+  if (Z_TYPE_PP(args[1]) != IS_STRING) {
+    php_error_docref(NULL TSRMLS_CC, E_ERROR, "2nd parameter is not a string (typename of expected response struct)");
+    efree(args);
+    RETURN_NULL();
+  }
+
+  if (argc == 4 && Z_TYPE_PP(args[3]) != IS_LONG) {
+    php_error_docref(NULL TSRMLS_CC, E_ERROR, "4nd parameter is not an integer (typename of expected buffer size)");
+    efree(args);
+    RETURN_NULL();
+  }
+
+  try {
+    size_t buffer_size = 8192;
+    if (argc == 4) {
+      buffer_size = Z_LVAL_PP(args[3]);
+    }
+
+    PHPInputTransport transport(*args[0], buffer_size);
+    char* obj_typename = Z_STRVAL_PP(args[1]);
+    convert_to_boolean(*args[2]);
+    bool strict_read = Z_BVAL_PP(args[2]);
+    efree(args);
+    args = NULL;
+
+    createObject(obj_typename, return_value);
+    zval* spec = zend_read_static_property(zend_get_class_entry(return_value TSRMLS_CC), "_TSPEC", 6, false TSRMLS_CC);
+    binary_deserialize_spec(return_value, transport, Z_ARRVAL_P(spec));
+  } catch (const PHPExceptionWrapper& ex) {
+    zend_throw_exception_object(ex TSRMLS_CC);
+    RETURN_NULL();
+  } catch (const std::exception& ex) {
+    throw_zend_exception_from_std_exception(ex TSRMLS_CC);
+    RETURN_NULL();
+  }
+}
+
+
+
 #endif /* PHP_VERSION_ID < 70000 && PHP_VERSION_ID > 50000 */
