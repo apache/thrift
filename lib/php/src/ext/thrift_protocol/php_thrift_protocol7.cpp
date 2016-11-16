@@ -1082,8 +1082,6 @@ PHP_FUNCTION(thrift_protocol_read_binary_after_message_begin) {
 
   try {
     PHPInputTransport transport(protocol, buffer_size);
-    int8_t messageType = 0;
-    int32_t sz = transport.readI32();
 
     createObject(ZSTR_VAL(obj_typename), return_value);
     zval* spec = zend_read_static_property(Z_OBJCE_P(return_value), "_TSPEC", sizeof("_TSPEC")-1, false);
