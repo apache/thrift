@@ -31,7 +31,7 @@ pub struct TTcpTransport {
 }
 
 impl TTcpTransport {
-    fn new(remote_address: &str) -> TTcpTransport {
+    pub fn new(remote_address: &str) -> TTcpTransport {
        TTcpTransport {
            remote_address: remote_address.to_owned(),
            stream: None,
