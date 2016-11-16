@@ -24,7 +24,14 @@ stubs: ../ThriftTest.thrift $(THRIFT)
 
 precross: stubs
 	$(CARGO) build
+	[ -d bin ] || mkdir bin
+	cp target/debug/test_server bin/test_server
+	cp target/debug/test_client bin/test_client
 
 clean-local:
 	-$(RM) -r gen-rs
 	$(CARGO) clean
+
+EXTRA_DIST = \
+	bin
+
