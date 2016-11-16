@@ -88,6 +88,7 @@ const int BAD_VERSION = 4;
 static zend_function_entry thrift_protocol_functions[] = {
   PHP_FE(thrift_protocol_write_binary, nullptr)
   PHP_FE(thrift_protocol_read_binary, nullptr)
+  PHP_FE(thrift_protocol_read_binary_after_message_begin, nullptr)
   {nullptr, nullptr, nullptr}
 };
 
