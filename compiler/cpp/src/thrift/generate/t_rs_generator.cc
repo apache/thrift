@@ -306,7 +306,7 @@ void t_rs_generator::render_rust_const_value(t_const_value* tconstvalue) {
 
 void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
   std::string actual_type = to_rust_type(ttypedef->get_type());
-  f_gen_ << "type " << ttypedef->get_symbolic() << " = " << actual_type << ";" << endl;
+  f_gen_ << "pub type " << ttypedef->get_symbolic() << " = " << actual_type << ";" << endl;
   f_gen_ << endl;
 }
 
