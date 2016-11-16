@@ -15,6 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+#![crate_type = "lib"]
+
 extern crate byteorder;
 extern crate try_from;
 
