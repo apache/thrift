@@ -105,10 +105,11 @@ private:
 
   void render_rust_const_value(t_const_value* tconstvalue);
   void render_rust_sync_client(t_service* tservice);
-  void render_rust_sync_server(t_service* tservice);
+  void render_rust_sync_client_lifecycle_functions(const string& client_struct);
   void render_rust_sync_send_recv_wrapper(t_function* tfunc);
   void render_rust_sync_send(t_function* tfunc);
   void render_rust_sync_recv(t_function* tfunc);
+  void render_rust_sync_server(t_service* tservice);
 
   string rust_struct_field_read(t_field* tfield);
 
@@ -191,9 +192,11 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "extern crate rift;" << endl;
   f_gen_ << endl;
   f_gen_ << "use std::collections::{BTreeMap, BTreeSet};" << endl;
+  f_gen_ << "use std::cell::RefCell;" << endl;
   f_gen_ << "use std::error::Error;" << endl;
   f_gen_ << "use std::fmt;" << endl;
   f_gen_ << "use std::fmt::{Display, Formatter};" << endl;
+  f_gen_ << "use std::rc::Rc;" << endl;
   f_gen_ << endl;
   f_gen_ << "use rift::protocol::{TFieldIdentifier, TMessageIdentifier, TMessageType, TProtocol, TStructIdentifier, TType};" << endl;
   f_gen_ << endl;
@@ -538,7 +541,7 @@ void t_rs_generator::render_rust_struct_write_to_out_protocol(t_struct* tstruct,
   f_gen_
     << indent()
     << visibility_qualifier(struct_type)
-    << "fn write_to_out_protocol<O: TProtocol>(&self, o_prot: &mut O) -> rift::Result<()> {"
+    << "fn write_to_out_protocol<P: TProtocol>(&self, o_prot: &mut P) -> rift::Result<()> {"
     << endl;
   indent_up();
 
@@ -660,7 +663,7 @@ void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct,
   f_gen_
     << indent()
     << visibility_qualifier(struct_type)
-    << "fn read_from_in_protocol<I: TProtocol>(i_prot: &mut I) -> rift::Result<" << tstruct->get_name() << "> {"
+    << "fn read_from_in_protocol<P: TProtocol>(i_prot: &mut P) -> rift::Result<" << tstruct->get_name() << "> {"
     << endl;
   indent_up();
 
@@ -881,10 +884,10 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
   // even more annoyingly, those bounds have to be added on *every* impl block for the struct
 
   // render the implementing struct
-  f_gen_ << "pub struct " << client_impl_struct_name << "<I: TProtocol, O: TProtocol> {" << endl;
+  f_gen_ << "pub struct " << client_impl_struct_name << "<P: TProtocol> {" << endl;
   indent_up();
-  f_gen_ << indent() << "i_prot: I," << endl;
-  f_gen_ << indent() << "o_prot: O," << endl;
+  f_gen_ << indent() << "i_prot: Rc<RefCell<Box<P>>>," << endl;
+  f_gen_ << indent() << "o_prot: Rc<RefCell<Box<P>>>," << endl;
   f_gen_ << indent() << "sequence_number: i32," << endl;
   indent_down();
   f_gen_ << "}" << endl;
@@ -892,8 +895,9 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
 
   // render the struct implementation
   // this includes the new() function as well as the helper send/recv methods for each service call
-  f_gen_ << "impl<I: TProtocol, O: TProtocol> " << client_impl_struct_name << "<I, O> {" << endl;
+  f_gen_ << "impl<P: TProtocol> " << client_impl_struct_name << "<P> {" << endl;
   indent_up();
+  render_rust_sync_client_lifecycle_functions(client_impl_struct_name);
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
     t_function* tfunc = (*func_iter);
     render_rust_sync_send(tfunc);
@@ -906,7 +910,7 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
   f_gen_ << endl;
 
   // render all the service methods for the implementing struct
-  f_gen_ << "impl<I: TProtocol, O:TProtocol>" << client_trait_name << " for " << client_impl_struct_name << "<I, O> {" << endl;
+  f_gen_ << "impl<P: TProtocol>" << client_trait_name << " for " << client_impl_struct_name << "<P> {" << endl;
   indent_up();
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
     t_function* func = (*func_iter);
@@ -931,6 +935,25 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
       render_rust_result_value_struct(tfunc);
     }
   }
+}
+
+void t_rs_generator::render_rust_sync_client_lifecycle_functions(const string& client_struct) {
+  // constructor (shared protocol)
+  f_gen_ << indent() << "pub fn new(protocol: P) -> " << client_struct << "<P> {" << endl;
+  indent_up();
+  f_gen_ << indent() << "let p = Rc::new(RefCell::new(Box::new(protocol)));" << endl;
+  f_gen_ << indent() << client_struct << " { i_prot: p.clone(), o_prot: p.clone(), sequence_number: 0 }" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
+  // constructor (separate protcols)
+  f_gen_ << indent() << "pub fn with_separate_protocols(input_protocol: P, output_protocol: P) -> " << client_struct << "<P> {" << endl;
+  indent_up();
+  f_gen_ << indent() << client_struct << " { i_prot: Rc::new(RefCell::new(Box::new(input_protocol))), o_prot: Rc::new(RefCell::new(Box::new(output_protocol))), sequence_number: 0 }" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
+  // FIXME: render open and close methods (have to consider case when transport is shared between protocols)
 }
 
 void t_rs_generator::render_rust_result_value_struct(t_function* tfunc) {
@@ -1011,9 +1034,9 @@ void t_rs_generator::render_rust_sync_send(t_function* tfunc) {
     << " };"
     << endl;
   // write everything over the wire
-  f_gen_ << indent() << "try!(self.o_prot.write_message_begin(&message_ident));" << endl;
-  f_gen_ << indent() << "try!(call_args.write_to_out_protocol(&mut self.o_prot));" << endl; // written even if we have 0 args
-  f_gen_ << indent() << "try!(self.o_prot.write_message_end());" << endl;
+  f_gen_ << indent() << "try!(self.o_prot.borrow_mut().write_message_begin(&message_ident));" << endl;
+  f_gen_ << indent() << "try!(call_args.write_to_out_protocol(&mut **self.o_prot.borrow_mut()));" << endl; // written even if we have 0 args
+  f_gen_ << indent() << "try!(self.o_prot.borrow_mut().write_message_end());" << endl;
   f_gen_ << indent() << "Ok(())" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
@@ -1033,7 +1056,7 @@ void t_rs_generator::render_rust_sync_recv(t_function* tfunc) {
 
   f_gen_ << indent() << "fn " << func_name << "(&mut self) -> rift::Result<" << func_return << "> {" << endl;
   indent_up();
-  f_gen_ << indent() << "let message_ident = try!(self.i_prot.read_message_begin());" << endl;
+  f_gen_ << indent() << "let message_ident = try!(self.i_prot.borrow_mut().read_message_begin());" << endl;
   f_gen_ << indent() << "try!(verify_expected_sequence_number(self.sequence_number, message_ident.sequence_number));" << endl;
   f_gen_ << indent() << "try!(verify_expected_service_call(\"" << tfunc->get_name() <<"\", &message_ident.name));" << endl;
   // FIXME: check if exception or not
@@ -1041,8 +1064,8 @@ void t_rs_generator::render_rust_sync_recv(t_function* tfunc) {
   // otherwise...
   // check that it's the message type
   f_gen_ << indent() << "try!(verify_expected_message_type(TMessageType::Reply, message_ident.message_type));" << endl;
-  f_gen_ << indent() << "let result = try!(" << service_call_result_struct_name(tfunc) << "::read_from_in_protocol(&mut self.i_prot));" << endl;
-  f_gen_ << indent() << "try!(self.i_prot.read_message_end());" << endl;
+  f_gen_ << indent() << "let result = try!(" << service_call_result_struct_name(tfunc) << "::read_from_in_protocol(&mut **self.i_prot.borrow_mut()));" << endl;
+  f_gen_ << indent() << "try!(self.i_prot.borrow_mut().read_message_end());" << endl;
   f_gen_ << indent() << "result.ok_or()" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
