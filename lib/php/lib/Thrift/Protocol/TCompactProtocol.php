@@ -371,25 +371,29 @@ class TCompactProtocol extends TProtocol
 
   public function readFieldBegin(&$name, &$field_type, &$field_id)
   {
-    $result = $this->readUByte($field_type);
+    $result = $this->readUByte($compact_type_and_delta);
 
-    if (($field_type & 0x0f) == TType::STOP) {
+    $compact_type = $compact_type_and_delta & 0x0f;
+
+    if ($compact_type == TType::STOP) {
+      $field_type = $compact_type;
       $field_id = 0;
 
       return $result;
     }
-    $delta = $field_type >> 4;
+    $delta = $compact_type_and_delta >> 4;
     if ($delta == 0) {
       $result += $this->readI16($field_id);
     } else {
       $field_id = $this->lastFid + $delta;
     }
     $this->lastFid = $field_id;
-    $field_type = $this->getTType($field_type & 0x0f);
-    if ($field_type == TCompactProtocol::COMPACT_TRUE) {
+    $field_type = $this->getTType($compact_type);
+
+    if ($compact_type == TCompactProtocol::COMPACT_TRUE) {
       $this->state = TCompactProtocol::STATE_BOOL_READ;
       $this->boolValue = true;
-    } elseif ($field_type == TCompactProtocol::COMPACT_FALSE) {
+    } elseif ($compact_type == TCompactProtocol::COMPACT_FALSE) {
       $this->state = TCompactProtocol::STATE_BOOL_READ;
       $this->boolValue = false;
     } else {
@@ -661,10 +665,11 @@ class TCompactProtocol extends TProtocol
       $lo += 0x80000000;
     }
 
-    $value = $hi * 4294967296 + $lo;
+    // Create as negative value first, since we can store -2^63 but not 2^63
+    $value = -$hi * 4294967296 - $lo;
 
-    if ($isNeg) {
-      $value = 0 - $value;
+    if (!$isNeg) {
+      $value = -$value;
     }
 
     return $idx;

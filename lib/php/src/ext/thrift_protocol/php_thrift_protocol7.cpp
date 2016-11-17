@@ -626,7 +626,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
 
       for (uint32_t s = 0; s < size; ++s) {
         zval key, value;
-        ZVAL_UNDEF(&value);
+        ZVAL_TRUE(&value);
 
         binary_deserialize(type, transport, &key, elemspec);
 
