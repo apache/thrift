@@ -416,12 +416,12 @@
       ],
       "command": [
         "php",
-	"-dextension_dir=../../lib/php/src/ext/thrift_protocol/modules/",
-	"--php-ini=../../lib/php/thrift_protocol.ini",
-	"--no-php-ini",
-	"-ddisplay_errors=stderr",
-	"-dlog_errors=0",
-	"-derror_reporting=E_ALL",
+        "-dextension_dir=../../lib/php/src/ext/thrift_protocol/modules/",
+        "--php-ini=../../lib/php/thrift_protocol.ini",
+        "--no-php-ini",
+        "-ddisplay_errors=stderr",
+        "-dlog_errors=0",
+        "-derror_reporting=E_ALL",
         "TestClient.php"
       ]
     },
