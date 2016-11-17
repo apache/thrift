@@ -3,5 +3,8 @@ name = "rift-test"
 version = "0.1.0"
 authors = ["Allen George <allen.george@gmail.com>"]
 
+[dependencies]
+clap = "2.18.0"
+
 [dependencies.rift]
 path = "../../lib/rs"
