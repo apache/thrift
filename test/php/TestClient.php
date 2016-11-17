@@ -44,6 +44,7 @@ $loader->register();
 /** Include the Thrift base */
 /** Include the protocols */
 use Thrift\Protocol\TBinaryProtocol;
+use Thrift\Protocol\TBinaryProtocolAccelerated;
 use Thrift\Protocol\TCompactProtocol;
 use Thrift\Protocol\TJSONProtocol;
 
@@ -63,9 +64,16 @@ function makeProtocol($transport, $PROTO)
     return new TCompactProtocol($transport);
   } else if ($PROTO == 'json') {
     return new TJSONProtocol($transport);
+  } else if ($PROTO == 'accel') {
+    if (!function_exists('thrift_protocol_write_binary')) {
+      echo "Acceleration extension is not loaded\n";
+      exit(1);
+    }
+    return new TBinaryProtocolAccelerated($transport);
   }
 
-  die ("--protocol must be one of {binary|compact|json}");
+  echo "--protocol must be one of {binary|compact|json|accel}\n";
+  exit(1);
 }
 
 $host = 'localhost';
@@ -114,11 +122,11 @@ $transport->open();
 
 $start = microtime(true);
 
-define(ERR_BASETYPES, 1);
-// ERR_STRUCTS = 2;
-// ERR_CONTAINERS = 4;
-// ERR_EXCEPTIONS = 8;
-// ERR_UNKNOWN = 64;
+define('ERR_BASETYPES', 1);
+define('ERR_STRUCTS', 2);
+define('ERR_CONTAINERS', 4);
+define('ERR_EXCEPTIONS', 8);
+define('ERR_UNKNOWN', 64);
 $exitcode = 0;
 /**
  * VOID TEST
@@ -132,7 +140,7 @@ function roundtrip($testClient, $method, $value) {
   print_r("$method($value)");
   $ret = $testClient->$method($value);
   print_r(" = \"$ret\"\n");
-  if ($value != $ret) {
+  if ($value !== $ret) {
     print_r("*** FAILED ***\n");
     $exitcode |= ERR_BASETYPES;
   }
@@ -144,9 +152,18 @@ function roundtrip($testClient, $method, $value) {
 roundtrip($testClient, 'testString', "Test");
 
 /**
+ * BOOL TEST
+ */
+roundtrip($testClient, 'testBool', true);
+roundtrip($testClient, 'testBool', false);
+
+/**
  * BYTE TEST
  */
 roundtrip($testClient, 'testByte', 1);
+roundtrip($testClient, 'testByte', -1);
+roundtrip($testClient, 'testByte', 127);
+roundtrip($testClient, 'testByte', -128);
 
 /**
  * I32 TEST
@@ -156,6 +173,9 @@ roundtrip($testClient, 'testI32', -1);
 /**
  * I64 TEST
  */
+roundtrip($testClient, 'testI64', 0);
+roundtrip($testClient, 'testI64', 1);
+roundtrip($testClient, 'testI64', -1);
 roundtrip($testClient, 'testI64', -34359738368);
 
 /**
@@ -182,6 +202,11 @@ print_r(" = {\"".$in->string_thing."\", ".
         $in->i32_thing.", ".
         $in->i64_thing."}\n");
 
+if ($in != $out) {
+    echo "**FAILED**\n";
+    $exitcode |= ERR_STRUCTS;
+}
+
 /**
  * NESTED STRUCT TEST
  */
@@ -198,6 +223,11 @@ print_r(" = {".$in2->byte_thing.", {\"".
         $in->i32_thing.", ".
         $in->i64_thing."}, ".
         $in2->i32_thing."}\n");
+
+if ($in2 != $out2) {
+    echo "**FAILED**\n";
+    $exitcode |= ERR_STRUCTS;
+}
 
 /**
  * MAP TEST
@@ -231,36 +261,36 @@ foreach ($mapin as $key => $val) {
 }
 print_r("}\n");
 
+if ($mapin != $mapout) {
+    echo "**FAILED**\n";
+    $exitcode |= ERR_CONTAINERS;
+}
+
 /**
  * SET TEST
  */
 $setout = array();;
 for ($i = -2; $i < 3; ++$i) {
-  $setout []= $i;
+  $setout[$i]= true;
 }
 print_r("testSet({");
-$first = true;
-foreach ($setout as $val) {
-  if ($first) {
-    $first = false;
-  } else {
-    print_r(", ");
-  }
-  print_r($val);
-}
+echo implode(',', array_keys($setout));
 print_r("})");
 $setin = $testClient->testSet($setout);
 print_r(" = {");
-$first = true;
-foreach ($setin as $val) {
-  if ($first) {
-    $first = false;
-  } else {
-    print_r(", ");
-  }
-  print_r($val);
-}
+echo implode(', ', array_keys($setin));
 print_r("}\n");
+// Order of keys in set does not matter
+ksort($setin);
+if ($setout !== $setin) {
+    echo "**FAILED**\n";
+    $exitcode |= ERR_CONTAINERS;
+}
+// Regression test for corrupted array
+if ($setin[2] !== $setout[2] || is_int($setin[2])) {
+    echo "**FAILED**\n";
+    $exitcode |= ERR_CONTAINERS;
+}
 
 /**
  * LIST TEST
@@ -292,6 +322,10 @@ foreach ($listin as $val) {
   print_r($val);
 }
 print_r("}\n");
+if ($listin !== $listout) {
+    echo "**FAILED**\n";
+    $exitcode |= ERR_CONTAINERS;
+}
 
 /**
  * ENUM TEST
@@ -299,22 +333,42 @@ print_r("}\n");
 print_r("testEnum(ONE)");
 $ret = $testClient->testEnum(\ThriftTest\Numberz::ONE);
 print_r(" = $ret\n");
+if ($ret != \ThriftTest\Numberz::ONE) {
+    echo "**FAILED**\n";
+    $exitcode |= ERR_STRUCTS;
+}
 
 print_r("testEnum(TWO)");
 $ret = $testClient->testEnum(\ThriftTest\Numberz::TWO);
 print_r(" = $ret\n");
+if ($ret != \ThriftTest\Numberz::TWO) {
+    echo "**FAILED**\n";
+    $exitcode |= ERR_STRUCTS;
+}
 
 print_r("testEnum(THREE)");
 $ret = $testClient->testEnum(\ThriftTest\Numberz::THREE);
 print_r(" = $ret\n");
+if ($ret != \ThriftTest\Numberz::THREE) {
+    echo "**FAILED**\n";
+    $exitcode |= ERR_STRUCTS;
+}
 
 print_r("testEnum(FIVE)");
 $ret = $testClient->testEnum(\ThriftTest\Numberz::FIVE);
 print_r(" = $ret\n");
+if ($ret != \ThriftTest\Numberz::FIVE) {
+    echo "**FAILED**\n";
+    $exitcode |= ERR_STRUCTS;
+}
 
 print_r("testEnum(EIGHT)");
 $ret = $testClient->testEnum(\ThriftTest\Numberz::EIGHT);
 print_r(" = $ret\n");
+if ($ret != \ThriftTest\Numberz::EIGHT) {
+    echo "**FAILED**\n";
+    $exitcode |= ERR_STRUCTS;
+}
 
 /**
  * TYPEDEF TEST
@@ -322,6 +376,10 @@ print_r(" = $ret\n");
 print_r("testTypedef(309858235082523)");
 $uid = $testClient->testTypedef(309858235082523);
 print_r(" = $uid\n");
+if ($uid !== 309858235082523) {
+    echo "**FAILED**\n";
+    $exitcode |= ERR_STRUCTS;
+}
 
 /**
  * NESTED MAP TEST
@@ -337,6 +395,14 @@ foreach ($mm as $key => $val) {
   print_r("}, ");
 }
 print_r("}\n");
+$expected_mm = [
+  -4 => [-4 => -4, -3 => -3, -2 => -2, -1 => -1],
+  4 => [4 => 4, 3 => 3, 2 => 2, 1 => 1],
+];
+if ($mm != $expected_mm) {
+    echo "**FAILED**\n";
+    $exitcode |= ERR_CONTAINERS;
+}
 
 /**
  * INSANITY TEST
@@ -388,6 +454,7 @@ print_r("testException('Xception')");
 try {
   $testClient->testException('Xception');
   print_r("  void\nFAILURE\n");
+  $exitcode |= ERR_EXCEPTIONS;
 } catch (\ThriftTest\Xception $x) {
   print_r(' caught xception '.$x->errorCode.': '.$x->message."\n");
 }
@@ -407,19 +474,19 @@ print_r("Total time: $elp ms\n");
 
 // Max I32
 $num = pow(2, 30) + (pow(2, 30) - 1);
-roundtrip($testClient, testI32, $num);
+roundtrip($testClient, 'testI32', $num);
 
 // Min I32
 $num = 0 - pow(2, 31);
-roundtrip($testClient, testI32, $num);
+roundtrip($testClient, 'testI32', $num);
 
 // Max I64
 $num = pow(2, 62) + (pow(2, 62) - 1);
-roundtrip($testClient, testI64, $num);
+roundtrip($testClient, 'testI64', $num);
 
 // Min I64
 $num = 0 - pow(2, 62) - pow(2, 62);
-roundtrip($testClient, testI64, $num);
+roundtrip($testClient, 'testI64', $num);
 
 $transport->close();
 exit($exitcode);
