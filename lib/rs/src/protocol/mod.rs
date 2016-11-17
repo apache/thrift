@@ -43,7 +43,7 @@ pub trait TProtocol {
     fn write_field_end(&mut self) -> ::Result<()>;
     fn write_field_stop(&mut self) -> ::Result<()>; // FIXME: do I actually need this?
     fn write_bool(&mut self, b: bool) -> ::Result<()>;
-    fn write_byte<I: convert::Into<u8>>(&mut self, b: I) -> ::Result<()>;
+    fn write_byte(&mut self, b: u8) -> ::Result<()>;
     fn write_bytes(&mut self, b: &[u8]) -> ::Result<()>;
     fn write_i8(&mut self, i: i8) -> ::Result<()>;
     fn write_i16(&mut self, i: i16) -> ::Result<()>;

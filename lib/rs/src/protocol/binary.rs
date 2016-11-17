@@ -26,15 +26,15 @@ use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifie
 const BINARY_PROTOCOL_VERSION_1: [u8; 2] = [0x80, 0x01];
 
 /// Implementation of the Thrift binary protocol.
-pub struct TBinaryProtocol {
+pub struct TBinaryProtocol<T: TTransport> {
     /// Set to `true` if the strict binary protocol is to be used.
     pub strict: bool,
 
     /// Underlying transport used to read protocol bytes from, and write protocol bytes to.
-    pub transport: TTransport,
+    pub transport: T, // FIXME: has to take an Rc<RefCell<Box<TTransport>>>
 }
 
-impl TProtocol for TBinaryProtocol {
+impl <T: TTransport> TProtocol for TBinaryProtocol<T> {
 
     //
     // write methods follow
@@ -44,12 +44,12 @@ impl TProtocol for TBinaryProtocol {
         if self.strict {
             try!(self.write_bytes(&BINARY_PROTOCOL_VERSION_1)); // FIXME: how can I avoid 3 calls here?
             try!(self.write_byte(0x00));
-            try!(self.write_byte(identifier.message_type)); // FIXME: previously I did u8::from; how does this syntax work?
+            try!(self.write_byte(identifier.message_type.into())); // FIXME: previously I did u8::from; how does this syntax work?
             try!(self.write_string(&identifier.name));
             self.write_i32(identifier.sequence_number)
         } else {
             try!(self.write_string(&identifier.name));
-            try!(self.write_byte(identifier.message_type));
+            try!(self.write_byte(identifier.message_type.into()));
             self.write_i32(identifier.sequence_number)
         }
     }
@@ -71,7 +71,7 @@ impl TProtocol for TBinaryProtocol {
             return Err(::Error::InvalidArgument("missing sequence id for field".to_owned()))
         }
 
-        try!(self.write_byte(identifier.field_type));
+        try!(self.write_byte(identifier.field_type.into()));
         if let Some(id) = identifier.id {
             self.write_i16(id)
         } else {
@@ -84,11 +84,11 @@ impl TProtocol for TBinaryProtocol {
     }
 
     fn write_field_stop(&mut self) -> ::Result<()> {
-        self.write_byte(TType::Stop)
+        self.write_byte(TType::Stop.into())
     }
 
-    fn write_byte<I: convert::Into<u8>>(&mut self, b: I) -> ::Result<()> {
-        self.transport.write_u8(b.into()).map_err(convert::From::from)
+    fn write_byte(&mut self, b: u8) -> ::Result<()> {
+        self.transport.write_u8(b).map_err(convert::From::from)
     }
 
     fn write_bytes(&mut self, b: &[u8]) -> ::Result<()> {
@@ -129,7 +129,7 @@ impl TProtocol for TBinaryProtocol {
     }
 
     fn write_list_begin(&mut self, identifier: &TListIdentifier) -> ::Result<()> {
-        try!(self.write_byte(identifier.element_type));
+        try!(self.write_byte(identifier.element_type.into()));
         self.write_i32(identifier.size)
     }
 
@@ -138,7 +138,7 @@ impl TProtocol for TBinaryProtocol {
     }
 
     fn write_set_begin(&mut self, identifier: &TSetIdentifier) -> ::Result<()> {
-        try!(self.write_byte(identifier.element_type));
+        try!(self.write_byte(identifier.element_type.into()));
         self.write_i32(identifier.size)
     }
 
@@ -147,8 +147,8 @@ impl TProtocol for TBinaryProtocol {
     }
 
     fn write_map_begin(&mut self, identifier: &TMapIdentifier) -> ::Result<()> {
-        try!(self.write_byte(identifier.key_type));
-        try!(self.write_byte(identifier.value_type));
+        try!(self.write_byte(identifier.key_type.into()));
+        try!(self.write_byte(identifier.value_type.into()));
         self.write_i32(identifier.size)
     }
 
@@ -311,7 +311,7 @@ impl TProtocol for TBinaryProtocol {
     }
 }
 
-impl TBinaryProtocol {
+impl <T: TTransport> TBinaryProtocol<T> {
     fn write_transport(&mut self, buf: &[u8]) -> ::Result<()> {
         self.transport.write(buf).map(|_| ()).map_err(convert::From::from)
     }
