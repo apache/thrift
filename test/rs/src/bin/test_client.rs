@@ -20,6 +20,9 @@ extern crate clap;
 extern crate rift;
 extern crate rift_test; // huh. I have to do this to use my lib
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use rift::transport::TTransport;
 use rift_test::*;
 
@@ -61,8 +64,10 @@ fn main() {
         unmatched => panic!(format!("unsupported transport {}", unmatched)),
     };
 
+    let t = Rc::new(RefCell::new(Box::new(t)));
+
     let p = match protocol {
-        "binary" => rift::protocol::TBinaryProtocol { strict: true, transport: t},
+        "binary" => rift::protocol::TBinaryProtocol { strict: true, transport: t.clone() },
         unmatched => panic!(format!("unsupported protocol {}", unmatched)),
     };
 
