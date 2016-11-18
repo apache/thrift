@@ -43,7 +43,7 @@ mod framed;
 mod socket;
 
 #[cfg(test)]
-mod membuffer;
+pub mod membuffer;
 
 pub use self::buffered::TBufferedTransport;
 pub use self::socket::TTcpTransport;

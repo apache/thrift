@@ -15,7 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use std::cell::RefCell;
 use std::convert;
+use std::rc::Rc;
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt, WriteBytesExt};
 use try_from;
 
@@ -31,13 +33,13 @@ pub struct TBinaryProtocol<T: TTransport> {
     pub strict: bool,
 
     /// Underlying transport used to read protocol bytes from, and write protocol bytes to.
-    pub transport: T, // FIXME: has to take an Rc<RefCell<Box<TTransport>>>
+    pub transport: Rc<RefCell<Box<T>>>,
 }
 
-impl <T: TTransport> TProtocol for TBinaryProtocol<T> {
+impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
 
     //
-    // write methods follow
+    // write methods
     //
 
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
@@ -88,7 +90,7 @@ impl <T: TTransport> TProtocol for TBinaryProtocol<T> {
     }
 
     fn write_byte(&mut self, b: u8) -> ::Result<()> {
-        self.transport.write_u8(b).map_err(convert::From::from)
+        self.transport.borrow_mut().write_u8(b).map_err(convert::From::from)
     }
 
     fn write_bytes(&mut self, b: &[u8]) -> ::Result<()> {
@@ -105,23 +107,23 @@ impl <T: TTransport> TProtocol for TBinaryProtocol<T> {
     }
 
     fn write_i8(&mut self, i: i8) -> ::Result<()> {
-        self.transport.write_i8(i).map_err(convert::From::from)
+        self.transport.borrow_mut().write_i8(i).map_err(convert::From::from)
     }
 
     fn write_i16(&mut self, i: i16) -> ::Result<()> {
-        self.transport.write_i16::<BigEndian>(i).map_err(convert::From::from)
+        self.transport.borrow_mut().write_i16::<BigEndian>(i).map_err(convert::From::from)
     }
 
     fn write_i32(&mut self, i: i32) -> ::Result<()> {
-        self.transport.write_i32::<BigEndian>(i).map_err(convert::From::from)
+        self.transport.borrow_mut().write_i32::<BigEndian>(i).map_err(convert::From::from)
     }
 
     fn write_i64(&mut self, i: i64) -> ::Result<()> {
-        self.transport.write_i64::<BigEndian>(i).map_err(convert::From::from)
+        self.transport.borrow_mut().write_i64::<BigEndian>(i).map_err(convert::From::from)
     }
 
     fn write_double(&mut self, d: f64) -> ::Result<()> {
-        self.transport.write_f64::<BigEndian>(d).map_err(convert::From::from)
+        self.transport.borrow_mut().write_f64::<BigEndian>(d).map_err(convert::From::from)
     }
 
     fn write_string(&mut self, s: &str) -> ::Result<()> {
@@ -157,16 +159,16 @@ impl <T: TTransport> TProtocol for TBinaryProtocol<T> {
     }
 
     fn flush(&mut self) -> ::Result<()> {
-        self.transport.flush().map_err(convert::From::from)
+        self.transport.borrow_mut().flush().map_err(convert::From::from)
     }
 
     //
-    // read methods follow
+    // read methods
     //
 
     fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier> {
         let mut first_bytes = Vec::with_capacity(4);
-        try!(self.transport.read_exact(&mut first_bytes));
+        try!(self.transport.borrow_mut().read_exact(&mut first_bytes));
 
         // the thrift version header is intentionally negative
         // so the first check we'll do is see if the sign bit is set
@@ -195,7 +197,7 @@ impl <T: TTransport> TProtocol for TBinaryProtocol<T> {
                 // so we've just read the length in the first 4 bytes
                 let name_size = BigEndian::read_i32(&first_bytes) as usize;
                 let mut name_buf: Vec<u8> = Vec::with_capacity(name_size);
-                try!(self.transport.read_exact(&mut name_buf));
+                try!(self.transport.borrow_mut().read_exact(&mut name_buf));
                 let name = try!(String::from_utf8(name_buf));
 
                 // read the rest of the fields
@@ -233,13 +235,13 @@ impl <T: TTransport> TProtocol for TBinaryProtocol<T> {
     }
 
     fn read_byte(&mut self) -> ::Result<u8> {
-        self.transport.read_u8().map_err(convert::From::from)
+        self.transport.borrow_mut().read_u8().map_err(convert::From::from)
     }
 
     fn read_bytes(&mut self) -> ::Result<Vec<u8>> {
-        let num_bytes = try!(self.transport.read_i32::<BigEndian>()) as usize;
+        let num_bytes = try!(self.transport.borrow_mut().read_i32::<BigEndian>()) as usize;
         let mut buf: Vec<u8> = Vec::with_capacity(num_bytes); // FIXME: how do I specify u8 as part of call?
-        self.transport.read_exact(&mut buf).map(|_| buf).map_err(convert::From::from)
+        self.transport.borrow_mut().read_exact(&mut buf).map(|_| buf).map_err(convert::From::from)
     }
 
     fn read_bool(&mut self) -> ::Result<bool> {
@@ -252,23 +254,23 @@ impl <T: TTransport> TProtocol for TBinaryProtocol<T> {
     }
 
     fn read_i8(&mut self) -> ::Result<i8> {
-        self.transport.read_i8().map_err(convert::From::from)
+        self.transport.borrow_mut().read_i8().map_err(convert::From::from)
     }
 
     fn read_i16(&mut self) -> ::Result<i16> {
-        self.transport.read_i16::<BigEndian>().map_err(convert::From::from)
+        self.transport.borrow_mut().read_i16::<BigEndian>().map_err(convert::From::from)
     }
 
     fn read_i32(&mut self) -> ::Result<i32> {
-        self.transport.read_i32::<BigEndian>().map_err(convert::From::from)
+        self.transport.borrow_mut().read_i32::<BigEndian>().map_err(convert::From::from)
     }
 
     fn read_i64(&mut self) -> ::Result<i64> {
-        self.transport.read_i64::<BigEndian>().map_err(convert::From::from)
+        self.transport.borrow_mut().read_i64::<BigEndian>().map_err(convert::From::from)
     }
 
     fn read_double(&mut self) -> ::Result<f64> {
-        self.transport.read_f64::<BigEndian>().map_err(convert::From::from)
+        self.transport.borrow_mut().read_f64::<BigEndian>().map_err(convert::From::from)
     }
 
     fn read_string(&mut self) -> ::Result<String> {
@@ -311,14 +313,33 @@ impl <T: TTransport> TProtocol for TBinaryProtocol<T> {
     }
 }
 
-impl <T: TTransport> TBinaryProtocol<T> {
+impl<T: TTransport> TBinaryProtocol<T> {
     fn write_transport(&mut self, buf: &[u8]) -> ::Result<()> {
-        self.transport.write(buf).map(|_| ()).map_err(convert::From::from)
+        self.transport.borrow_mut().write(buf).map(|_| ()).map_err(convert::From::from)
     }
 }
 
 #[cfg(test)]
 mod tests {
+
+    use std::rc::Rc;
+    use std::cell::RefCell;
+
+    use super::*;
+    use ::protocol::{TMessageIdentifier, TMessageType, TProtocol};
+    use ::transport::membuffer::TMemBufferTransport;
+
     #[test]
-    fn it_works() {}
+    fn must_write_correct_strict_call_message_header() {
+        let t = Rc::new(RefCell::new(Box::new(TMemBufferTransport::with_capacity(10, 10))));
+        let mut b = TBinaryProtocol { strict: true, transport: t.clone() };
+
+        let message_ident = TMessageIdentifier { name: "test".to_owned(), message_type: TMessageType::Call, sequence_number: 0 };
+        assert!(b.write_message_begin(&message_ident).is_ok());
+
+        {
+            let memtrans = t.borrow();
+            let wbuf = memtrans.write_buffer();
+        }
+    }
 }

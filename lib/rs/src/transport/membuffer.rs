@@ -24,6 +24,7 @@ use super::TTransport;
 pub struct TMemBufferTransport {
     rbuf: Box<[u8]>,
     rpos: usize,
+    ridx: usize,
     rcap: usize,
     wbuf: Box<[u8]>,
     wpos: usize,
@@ -41,6 +42,7 @@ impl TMemBufferTransport {
     pub fn with_capacity(read_buffer_size: usize, write_buffer_size: usize) -> TMemBufferTransport {
         TMemBufferTransport {
             rbuf: vec![0; read_buffer_size].into_boxed_slice(),
+            ridx: 0,
             rpos: 0,
             rcap: read_buffer_size,
             wbuf: vec![0; write_buffer_size].into_boxed_slice(),
@@ -50,12 +52,15 @@ impl TMemBufferTransport {
         }
     }
 
-    pub fn read_buffer(&self) -> &[u8] {
-        &self.rbuf[..self.rpos]
+    pub fn set_read_buffer(&mut self, buf: &[u8]) {
+        let max_bytes = cmp::min(self.rcap, buf.len());
+        self.rbuf[..].clone_from_slice(&buf[0..max_bytes]);
+        self.ridx = max_bytes;
     }
 
     pub fn reset_read_buffer(&mut self) {
         self.rpos = 0;
+        self.ridx = 0;
     }
 
     pub fn write_buffer(&self) -> &[u8] {
@@ -69,7 +74,7 @@ impl TMemBufferTransport {
 
 impl io::Read for TMemBufferTransport {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        let nread = cmp::min(buf.len(), self.rcap - self.rpos);
+        let nread = cmp::min(buf.len(), self.ridx - self.rpos);
         buf[..nread].clone_from_slice(&self.rbuf[self.rpos..self.rpos + nread]);
         self.rpos += nread;
         Ok(nread)
