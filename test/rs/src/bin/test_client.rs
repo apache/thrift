@@ -21,6 +21,7 @@ extern crate rift;
 extern crate rift_test; // huh. I have to do this to use my lib
 
 use std::cell::RefCell;
+use std::fmt::Debug;
 use std::rc::Rc;
 
 use rift::transport::TTransport;
@@ -87,5 +88,63 @@ fn main() {
 }
 
 fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result<(), rift::Error> {
-    client.testVoid()
+    try!(client.testVoid());
+
+    try!(verify_expected_result(client.testString("thing".to_owned()), "thing".to_owned()));
+    try!(verify_expected_result(client.testBool(true), true));
+    try!(verify_expected_result(client.testBool(false), false));
+    try!(verify_expected_result(client.testBool(false), false));
+    try!(verify_expected_result(client.testByte(42), 42));
+    try!(verify_expected_result(client.testI32(1159348374), 1159348374));
+    try!(verify_expected_result(client.testI64(-8651829879438294565), -8651829879438294565));
+    try!(verify_expected_result(client.testDouble(42.42), 42.42));
+
+    {
+ //       let b:[u8; 10] = [0x77, 0x30, 0x30, 0x74, 0x21, 0x20, 0x52, 0x75, 0x73, 0x74];
+//        try!(verify_expected_result(client.testBinary(&b), &b)); // FIXME: BROKEN
+    }
+
+    // Xtruct
+    {
+        let x_snd = Xtruct { string_thing: Some("foo".to_owned()), byte_thing: Some(12), i32_thing: Some(219129), i64_thing: Some(12938492818) };
+        let x_cmp = Xtruct { string_thing: Some("foo".to_owned()), byte_thing: Some(12), i32_thing: Some(219129), i64_thing: Some(12938492818) };
+        try!(verify_expected_result(client.testStruct(x_snd), x_cmp));
+    }
+
+    // FIXME: structs should be taken by reference
+    // FIXME: apparently optional values are broken
+    // Xtruct again (some things null)
+    {
+        //let x_snd = Xtruct { string_thing: Some("foo".to_owned()), byte_thing: None, i32_thing: None, i64_thing: Some(12938492818) };
+        //let x_cmp = Xtruct { string_thing: Some("foo".to_owned()), byte_thing: None, i32_thing: None, i64_thing: Some(12938492818) };
+        //try!(verify_expected_result(client.testStruct(x_snd), x_cmp));
+    }
+
+    // Xtruct2
+    {
+
+    }
+
+    // Exception
+    // multi-exception
+
+    try!(client.testOneway(2));
+
+    // final test to verify that the connection is still writable after the one-way call
+    try!(client.testVoid());
+    Ok(())
+}
+
+fn verify_expected_result<T: Debug + PartialEq + Sized>(actual: Result<T, rift::Error>, expected: T) -> Result<(), rift::Error> {
+    match actual {
+        Ok(v) => {
+            if v == expected {
+               Ok(())
+            } else {
+                // FIXME: find a way to use ApplicationError
+                Err(rift::Error::Unknown(format!("expected {:?} got {:?}", expected, v)))
+            }
+        },
+        Err(e) => Err(e)
+    }
 }
