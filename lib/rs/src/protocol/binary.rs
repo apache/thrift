@@ -25,7 +25,7 @@ use ::transport::TTransport;
 use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TProtocol, TSetIdentifier, TStructIdentifier, TType};
 
 /// Identifies the serialized message as conforming to Thrift binary protocol version 1.
-const BINARY_PROTOCOL_VERSION_1: [u8; 2] = [0x80, 0x01];
+const BINARY_PROTOCOL_VERSION_1: u32 = 0x80010000;
 
 /// Implementation of the Thrift binary protocol.
 pub struct TBinaryProtocol<T: TTransport> {
@@ -44,9 +44,9 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
 
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
         if self.strict {
-            try!(self.write_bytes(&BINARY_PROTOCOL_VERSION_1)); // FIXME: how can I avoid 3 calls here?
-            try!(self.write_byte(0x00));
-            try!(self.write_byte(identifier.message_type.into())); // FIXME: previously I did u8::from; how does this syntax work?
+            let message_type: u8 = identifier.message_type.into();
+            let header = BINARY_PROTOCOL_VERSION_1 | (message_type as u32);
+            try!(self.transport.borrow_mut().write_u32::<BigEndian>(header));
             try!(self.write_string(&identifier.name));
             self.write_i32(identifier.sequence_number)
         } else {
@@ -167,8 +167,8 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
     //
 
     fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier> {
-        let mut first_bytes = Vec::with_capacity(4);
-        try!(self.transport.borrow_mut().read_exact(&mut first_bytes));
+        let mut first_bytes = vec![0; 4];
+        try!(self.transport.borrow_mut().read_exact(&mut first_bytes[..]));
 
         // the thrift version header is intentionally negative
         // so the first check we'll do is see if the sign bit is set
@@ -176,7 +176,7 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
         if first_bytes[0] >= 8 {
             // apparently we got a protocol-version header - check
             // it, and if it matches, read the rest of the fields
-            if first_bytes[0..1] != BINARY_PROTOCOL_VERSION_1 {
+            if first_bytes[0..2] != [0x80, 0x01] {
                 Err(::Error::InvalidThriftMessageHeader)
             } else {
                 let message_type: TMessageType = try!(try_from::TryFrom::try_from(first_bytes[3]));
@@ -240,7 +240,7 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
 
     fn read_bytes(&mut self) -> ::Result<Vec<u8>> {
         let num_bytes = try!(self.transport.borrow_mut().read_i32::<BigEndian>()) as usize;
-        let mut buf: Vec<u8> = Vec::with_capacity(num_bytes); // FIXME: how do I specify u8 as part of call?
+        let mut buf = vec![0u8; num_bytes];
         self.transport.borrow_mut().read_exact(&mut buf).map(|_| buf).map_err(convert::From::from)
     }
 
