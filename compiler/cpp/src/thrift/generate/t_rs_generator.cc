@@ -1008,12 +1008,13 @@ void t_rs_generator::render_rust_sync_send(t_function* tfunc) {
   indent_up();
 
   // increment the sequence number and generate the call header
+  string message_type = tfunc->is_oneway() ? "TMessageType::OneWay" : "TMessageType::Call";
   f_gen_ << indent() << "self.sequence_number = self.sequence_number + 1;" << endl;
   f_gen_
     << indent()
     << "let message_ident = "
     << "TMessageIdentifier { name:\"" << tfunc->get_name() << "\".to_owned(), "
-    << "message_type: TMessageType::Call, "
+    << "message_type: " << message_type << ", "
     << "sequence_number: self.sequence_number };"
     << endl;
   // pack the arguments into the containing struct that we'll write out over the wire
