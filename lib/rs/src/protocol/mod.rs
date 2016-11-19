@@ -160,7 +160,7 @@ pub trait TProtocol {
 
 /// Identifies an instance of a Thrift message
 /// in its corresponding protocol representation.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct TMessageIdentifier {
     pub name: String, // FIXME: allow usage of &str
     pub message_type: TMessageType,
@@ -169,14 +169,14 @@ pub struct TMessageIdentifier {
 
 /// Identifies an instance of a Thrift struct
 /// in its corresponding protocol representation.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct TStructIdentifier {
     pub name: String, // FIXME: allow usage of &str
 }
 
 /// Identifies an instance of a Thrift field
 /// in its corresponding protocol representation.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct TFieldIdentifier {
     pub name: Option<String>, // FIXME: allow usage of &str
     pub field_type: TType,
@@ -185,7 +185,7 @@ pub struct TFieldIdentifier {
 
 /// Identifies an instance of a list
 /// in its protocol representation.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct TListIdentifier {
     pub element_type: TType,
     pub size: i32,
@@ -193,7 +193,7 @@ pub struct TListIdentifier {
 
 /// Identifies an instance of a set
 /// in its protocol representation.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct TSetIdentifier {
     pub element_type: TType,
     pub size: i32,
@@ -201,7 +201,7 @@ pub struct TSetIdentifier {
 
 /// Identifies an instance of a map
 /// in its protocol representation.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct TMapIdentifier {
     pub key_type: TType,
     pub value_type: TType,
