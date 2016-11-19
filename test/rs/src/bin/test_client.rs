@@ -71,14 +71,14 @@ fn main() {
         unmatched => panic!(format!("unsupported protocol {}", unmatched)),
     };
 
-    println!("connecting to {}:{} with {}//{} stack", host, port, protocol, transport);
+    println!("connecting to {}:{} with {}+{} stack", host, port, protocol, transport);
 
     let mut client = TThriftTestSyncClient::new(p);
 
     for _ in 0..testloops {
         match make_thrift_calls(&mut client) {
-            Err(_) => {
-
+            Err(e) => {
+                println!("test failed with error {:?}", e);
                 std::process::exit(1)
             },
             Ok(()) => (),
