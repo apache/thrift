@@ -89,10 +89,6 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
         self.write_byte(TType::Stop.into())
     }
 
-    fn write_byte(&mut self, b: u8) -> ::Result<()> {
-        self.transport.borrow_mut().write_u8(b).map_err(convert::From::from)
-    }
-
     fn write_bytes(&mut self, b: &[u8]) -> ::Result<()> {
         try!(self.write_i32(b.len() as i32));
         self.write_transport(b)
@@ -234,10 +230,6 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
         Ok(()) // nothing has to be read for field end
     }
 
-    fn read_byte(&mut self) -> ::Result<u8> {
-        self.transport.borrow_mut().read_u8().map_err(convert::From::from)
-    }
-
     fn read_bytes(&mut self) -> ::Result<Vec<u8>> {
         let num_bytes = try!(self.transport.borrow_mut().read_i32::<BigEndian>()) as usize;
         let mut buf = vec![0u8; num_bytes];
@@ -310,6 +302,18 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
 
     fn read_map_end(&mut self) -> ::Result<()> {
         Ok(()) // nothing to be read for map end
+    }
+
+    //
+    // utility
+    //
+
+    fn write_byte(&mut self, b: u8) -> ::Result<()> {
+        self.transport.borrow_mut().write_u8(b).map_err(convert::From::from)
+    }
+
+    fn read_byte(&mut self) -> ::Result<u8> {
+        self.transport.borrow_mut().read_u8().map_err(convert::From::from)
     }
 }
 

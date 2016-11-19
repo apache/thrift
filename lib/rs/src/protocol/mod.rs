@@ -43,7 +43,6 @@ pub trait TProtocol {
     fn write_field_end(&mut self) -> ::Result<()>;
     fn write_field_stop(&mut self) -> ::Result<()>; // FIXME: do I actually need this?
     fn write_bool(&mut self, b: bool) -> ::Result<()>;
-    fn write_byte(&mut self, b: u8) -> ::Result<()>;
     fn write_bytes(&mut self, b: &[u8]) -> ::Result<()>;
     fn write_i8(&mut self, i: i8) -> ::Result<()>;
     fn write_i16(&mut self, i: i16) -> ::Result<()>;
@@ -71,7 +70,6 @@ pub trait TProtocol {
     fn read_field_begin(&mut self) -> ::Result<TFieldIdentifier>;
     fn read_field_end(&mut self) -> ::Result<()>;
     fn read_bool(&mut self) -> ::Result<bool>;
-    fn read_byte(&mut self) -> ::Result<u8>;
     fn read_bytes(&mut self) -> ::Result<Vec<u8>>;
     fn read_i8(&mut self) -> ::Result<i8>;
     fn read_i16(&mut self) -> ::Result<i16>;
@@ -86,6 +84,8 @@ pub trait TProtocol {
     fn read_map_begin(&mut self) -> ::Result<TMapIdentifier>;
     fn read_map_end(&mut self) -> ::Result<()>;
 
+
+
     fn skip(&mut self, field_type: TType) -> ::Result<()> {
         self.skip_till_depth(field_type, MAXIMUM_SKIP_DEPTH)
     }
@@ -98,9 +98,6 @@ pub trait TProtocol {
         match field_type {
             TType::Bool => {
                 self.read_bool().map(|_| ())
-            },
-            TType::Byte => {
-                self.read_byte().map(|_| ())
             },
             TType::I08 => {
                 self.read_i8().map(|_| ())
@@ -156,6 +153,13 @@ pub trait TProtocol {
             },
         }
     }
+
+    //
+    // utility (DO NOT USE IN GENERATED CODE!!!!)
+    //
+
+    fn write_byte(&mut self, b: u8) -> ::Result<()>;
+    fn read_byte(&mut self) -> ::Result<u8>;
 }
 
 /// Identifies an instance of a Thrift message
@@ -251,7 +255,6 @@ pub enum TType {
     Stop,
     Void,
     Bool,
-    Byte,
     I08,
     Double,
     I16,
@@ -275,19 +278,18 @@ impl convert::From<TType> for u8 {
             TType::Stop => 0x00,
             TType::Void => 0x01,
             TType::Bool => 0x02,
-            TType::Byte => 0x03,
-            TType::I08 => 0x04,
-            TType::Double => 0x05,
+            TType::I08 => 0x03, // equivalent to TType::Byte
+            TType::Double => 0x04,
             TType::I16 => 0x06,
-            TType::I32 => 0x07,
-            TType::I64 => 0x08,
-            TType::String => 0x09,
-            TType::Utf7 => 0x0A,
-            TType::Struct => 0x0B,
-            TType::Map => 0x0C,
-            TType::Set => 0x0D,
-            TType::List => 0x0E,
-            TType::Utf8 => 0x0F,
+            TType::I32 => 0x08,
+            TType::I64 => 0x0A,
+            TType::String => 0x0B,
+            TType::Utf7 => 0x0B,
+            TType::Struct => 0x0C,
+            TType::Map => 0x0D,
+            TType::Set => 0x0E,
+            TType::List => 0x0F,
+            TType::Utf8 => 0x10,
             TType::Utf16 => 0x11,
         }
     }
@@ -302,19 +304,17 @@ impl try_from::TryFrom<u8> for TType {
             0x00 => Ok(TType::Stop),
             0x01 => Ok(TType::Void),
             0x02 => Ok(TType::Bool),
-            0x03 => Ok(TType::Byte),
-            0x04 => Ok(TType::I08),
-            0x05 => Ok(TType::Double),
+            0x03 => Ok(TType::I08), // Equivalent to TType::Byte
+            0x04 => Ok(TType::Double),
             0x06 => Ok(TType::I16),
-            0x07 => Ok(TType::I32),
-            0x08 => Ok(TType::I64),
-            0x09 => Ok(TType::String),
-            0x0A => Ok(TType::Utf7),
-            0x0B => Ok(TType::Struct),
-            0x0C => Ok(TType::Map),
-            0x0D => Ok(TType::Set),
-            0x0E => Ok(TType::List),
-            0x0F => Ok(TType::Utf8),
+            0x08 => Ok(TType::I32),
+            0x0A => Ok(TType::I64),
+            0x0B => Ok(TType::String), // technically, also a UTF7, but we'll treat it as string
+            0x0C => Ok(TType::Struct),
+            0x0D => Ok(TType::Map),
+            0x0E => Ok(TType::Set),
+            0x0F => Ok(TType::List),
+            0x10 => Ok(TType::Utf8),
             0x11 => Ok(TType::Utf16),
             unkn => Err(::Error::UnknownThriftFieldType(unkn))
         }
