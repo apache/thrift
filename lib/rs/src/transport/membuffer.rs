@@ -52,10 +52,11 @@ impl TMemBufferTransport {
         }
     }
 
-    pub fn set_read_buffer(&mut self, buf: &[u8]) {
+    pub fn set_read_buffer(&mut self, buf: &[u8]) -> usize {
         let max_bytes = cmp::min(self.rcap, buf.len());
-        self.rbuf[..].clone_from_slice(&buf[0..max_bytes]);
+        self.rbuf[..max_bytes].clone_from_slice(&buf[..max_bytes]);
         self.ridx = max_bytes;
+        max_bytes
     }
 
     pub fn reset_read_buffer(&mut self) {
