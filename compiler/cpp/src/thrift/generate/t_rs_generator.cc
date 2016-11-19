@@ -578,18 +578,18 @@ void t_rs_generator::render_rust_struct_field_write(const string& prefix, t_fiel
 
   ostringstream field_stream;
   field_stream
-    << "let field_ident = TFieldIdentifier {"
+    << "TFieldIdentifier {"
     << "name: Some(\"" << tfield->get_name() << "\".to_owned()" << "), "
     << "field_type: " << to_rust_field_type_enum(tfield->get_type()) << ", "
     << "id: Some(" << tfield->get_key() << ") "
-    << "};";
+    << "}";
   string field_ident_string = field_stream.str();
 
   if (is_optional(req)) {
     string field_name = field_prefix + tfield->get_name();
     f_gen_ << indent() << "if " << field_name << ".is_some() {" << endl;
     indent_up();
-    f_gen_ << indent() << field_ident_string << endl;
+    f_gen_ << indent() << "let field_ident = " << field_ident_string << ";" << endl;
     f_gen_ << indent() << "try!(o_prot.write_field_begin(&field_ident));" << endl;
     f_gen_ << indent() << rust_field_write(field_prefix, tfield, req) << endl;
     f_gen_ << indent() << "try!(o_prot.write_field_end());" << endl;
@@ -598,7 +598,7 @@ void t_rs_generator::render_rust_struct_field_write(const string& prefix, t_fiel
     f_gen_ << indent() << "} else {" << endl;
     indent_up();
     if (req == t_field::T_OPT_IN_REQ_OUT) {
-      f_gen_ << indent() << field_ident_string << endl;
+      f_gen_ << indent() << "let field_ident = " << field_ident_string << ";" << endl;
       f_gen_ << indent() << "try!(o_prot.write_field_begin(&field_ident));" << endl;
       f_gen_ << indent() << "try!(o_prot.write_field_end());" << endl;
     }
@@ -606,7 +606,9 @@ void t_rs_generator::render_rust_struct_field_write(const string& prefix, t_fiel
     indent_down();
     f_gen_ << indent() << "}" << endl;
   } else {
+    f_gen_ << indent() << "try!(o_prot.write_field_begin(&" << field_ident_string << "));" << endl;
     f_gen_ << indent() << rust_field_write(field_prefix, tfield, req) << endl;
+    f_gen_ << indent() << "try!(o_prot.write_field_end());" << endl;
   }
 }
 
@@ -716,7 +718,9 @@ void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct,
   f_gen_ << indent() << "}," << endl;
 
   indent_down();
-  f_gen_ << indent() << "}" << endl; // finish match
+  f_gen_ << indent() << "};" << endl; // finish match
+
+  f_gen_ << indent() << "try!(i_prot.read_field_end());" << endl;
 
   indent_down();
   f_gen_ << indent() << "}" << endl; // finish loop
