@@ -107,7 +107,14 @@ private:
   void render_rust_sync_client(t_service* tservice);
   void render_rust_sync_client_lifecycle_functions(const string& client_struct);
   void render_rust_sync_send_recv_wrapper(t_function* tfunc);
+
+  // Render the `send` functionality for a Thrift service call represented
+  // by a `t_service->t_function`.
   void render_rust_sync_send(t_function* tfunc);
+
+  // Render the `recv` functionality for a Thrift service call represented
+  // by a `t_service->t_function`. This method is only rendered if the function
+  // is *not* oneway.
   void render_rust_sync_recv(t_function* tfunc);
   void render_rust_sync_server(t_service* tservice);
 
@@ -161,8 +168,6 @@ private:
   // and user-defined exceptions for the thrift service call.
   string service_call_result_struct_name(t_function* tfunc);
 };
-
-// FIXME: who writes the thrift::STOP?!
 
 void t_rs_generator::init_generator() {
   // make output directory for this thrift program
@@ -488,7 +493,6 @@ void t_rs_generator::render_rust_result_struct_to_result_method(t_struct* tstruc
       string field_name = "self." + tfield->get_name();
       string branch_statement = rendered_branch_count == 0 ? "if" : "} else if";
 
-      // FIXME: does Box::new copy structs properly?
       f_gen_ << indent() << branch_statement << " " << field_name << ".is_some() {" << endl;
       indent_up();
       f_gen_ << indent() << "Err(rift::Error::ApplicationError(Box::new(" << field_name << ".unwrap())))" << endl;
@@ -597,11 +601,12 @@ void t_rs_generator::render_rust_struct_field_write(const string& prefix, t_fiel
     indent_down();
     f_gen_ << indent() << "} else {" << endl;
     indent_up();
+    /* FIXME: rethink how I deal with OPT_IN_REQ_OUT
     if (req == t_field::T_OPT_IN_REQ_OUT) {
       f_gen_ << indent() << "let field_ident = " << field_ident_string << ";" << endl;
       f_gen_ << indent() << "try!(o_prot.write_field_begin(&field_ident));" << endl;
       f_gen_ << indent() << "try!(o_prot.write_field_end());" << endl;
-    }
+    }*/
     f_gen_ << indent() << "()" << endl;
     indent_down();
     f_gen_ << indent() << "}" << endl;
@@ -918,7 +923,7 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
   indent_up();
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
     t_function* func = (*func_iter);
-    render_rust_sync_send_recv_wrapper(func); // FIXME: don't generate recv for oneway
+    render_rust_sync_send_recv_wrapper(func);
   }
   indent_down();
   f_gen_ << "}" << endl;
@@ -1050,24 +1055,19 @@ void t_rs_generator::render_rust_sync_send(t_function* tfunc) {
 void t_rs_generator::render_rust_sync_recv(t_function* tfunc) {
   string func_name = "recv_" + tfunc->get_name();
   string func_return = to_rust_type(tfunc->get_returntype());
-
-  // check method name
-  // check method type (unexpected message type, unexpected exception)
-  // check sequence id)
-  // if it's an exception, return Err(...)
-  // if it's not an exception: let ret = Struct.read_from_in_protocol(...)
-  // read message end
-  // Ok(ret)
-
   f_gen_ << indent() << "fn " << func_name << "(&mut self) -> rift::Result<" << func_return << "> {" << endl;
   indent_up();
   f_gen_ << indent() << "let message_ident = try!(self.i_prot.borrow_mut().read_message_begin());" << endl;
   f_gen_ << indent() << "try!(verify_expected_sequence_number(self.sequence_number, message_ident.sequence_number));" << endl;
   f_gen_ << indent() << "try!(verify_expected_service_call(\"" << tfunc->get_name() <<"\", &message_ident.name));" << endl;
-  // FIXME: check if exception or not
-  // if it's an exception, return the application exception (WTF is the type?!)
-  // otherwise...
-  // check that it's the message type
+  // FIXME: replace with a "try" block
+  f_gen_ << indent() << "if message_ident.message_type == TMessageType::Exception {" << endl;
+  indent_up();
+  f_gen_ << indent() << "let remote_error = try!(rift::Error::read_from_in_protocol(&mut **self.i_prot.borrow_mut()));" << endl;
+  f_gen_ << indent() << "try!(self.i_prot.borrow_mut().read_message_end());" << endl;
+  f_gen_ << indent() << "return Err(remote_error)" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
   f_gen_ << indent() << "try!(verify_expected_message_type(TMessageType::Reply, message_ident.message_type));" << endl;
   f_gen_ << indent() << "let result = try!(" << service_call_result_struct_name(tfunc) << "::read_from_in_protocol(&mut **self.i_prot.borrow_mut()));" << endl;
   f_gen_ << indent() << "try!(self.i_prot.borrow_mut().read_message_end());" << endl;

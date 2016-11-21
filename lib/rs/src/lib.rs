@@ -25,9 +25,11 @@ use std::{convert, error, fmt, io, string};
 pub mod protocol;
 pub mod transport;
 
-use protocol::TMessageType;
+use protocol::{TMessageType, TProtocol};
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+// FIXME: oh hi, hello - that means everyone has to share the same error types; WTF
 
 /// Errors that can be generated while sending, receiving
 /// or processing thrift messages and service calls.
@@ -50,6 +52,16 @@ pub enum Error {
     UnexpectedApplicationError, // FIXME: should box the error
     Unknown(String), // FIXME: make this take &str
     ApplicationError(Box<error::Error + Send + Sync>),
+}
+
+impl Error {
+    pub fn read_from_in_protocol(i: &mut TProtocol) -> self::Result<self::Error> {
+        unimplemented!()
+    }
+
+    pub fn write_to_out_protocol(&self, o: &mut TProtocol) -> self::Result<()> {
+        unimplemented!()
+    }
 }
 
 impl error::Error for Error {
