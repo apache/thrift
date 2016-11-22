@@ -245,7 +245,7 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
             TType::Stop => Ok(0),
             _ => self.read_i16()
         });
-        Ok(TFieldIdentifier { name: None, field_type: field_type, id: Some(id) } )
+        Ok(TFieldIdentifier { name: None, field_type: field_type, id: Some(id) })
     }
 
     fn read_field_end(&mut self) -> ::Result<()> {
