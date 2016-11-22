@@ -115,9 +115,9 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
     // FIXME: apparently optional values are broken
     // Xtruct again (some things null)
     {
-        //let x_snd = Xtruct { string_thing: Some("foo".to_owned()), byte_thing: None, i32_thing: None, i64_thing: Some(12938492818) };
-        //let x_cmp = Xtruct { string_thing: Some("foo".to_owned()), byte_thing: None, i32_thing: None, i64_thing: Some(12938492818) };
-        //try!(verify_expected_result(client.testStruct(x_snd), x_cmp));
+        let x_snd = Xtruct { string_thing: Some("foo".to_owned()), byte_thing: None, i32_thing: None, i64_thing: Some(12938492818) };
+        let x_cmp = Xtruct { string_thing: Some("foo".to_owned()), byte_thing: Some(0), i32_thing: Some(0), i64_thing: Some(12938492818) }; // the C++ server is responding correctly
+        try!(verify_expected_result(client.testStruct(x_snd), x_cmp));
     }
 
     // Xtruct2
@@ -141,8 +141,7 @@ fn verify_expected_result<T: Debug + PartialEq + Sized>(actual: Result<T, rift::
             if v == expected {
                Ok(())
             } else {
-                // FIXME: find a way to use ApplicationError
-                Err(rift::Error::Unknown(format!("expected {:?} got {:?}", expected, v)))
+                Err(rift::Error::User(format!("expected {:?} but got {:?}", &expected, &v).into()))
             }
         },
         Err(e) => Err(e)

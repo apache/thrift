@@ -203,6 +203,7 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "use std::fmt::{Display, Formatter};" << endl;
   f_gen_ << "use std::rc::Rc;" << endl;
   f_gen_ << endl;
+  f_gen_ << "use rift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind};" << endl;
   f_gen_ << "use rift::protocol::{TFieldIdentifier, TMessageIdentifier, TMessageType, TProtocol, TStructIdentifier, TType};" << endl;
   f_gen_ << endl;
 
@@ -227,7 +228,15 @@ void t_rs_generator::render_free_standing_helpers() {
   indent_down();
   f_gen_ << indent() << "} else {" << endl;
   indent_up();
-  f_gen_ << indent() << "Err(rift::Error::OutOfOrderThriftMessage(expected, actual))" << endl;
+  f_gen_ << indent() << "Err(" << endl;
+  indent_up();
+  f_gen_ << indent() << "rift::Error::Application(" << endl;
+  indent_up();
+  f_gen_ << indent() << "ApplicationError { kind: ApplicationErrorKind::BadSequenceId, message: format!(\"expected {} got {}\", expected, actual) }" << endl;
+  indent_down();
+  f_gen_ << indent() << ")" << endl;
+  indent_down();
+  f_gen_ << indent() << ")" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
   indent_down();
@@ -243,7 +252,15 @@ void t_rs_generator::render_free_standing_helpers() {
   indent_down();
   f_gen_ << indent() << "} else {" << endl;
   indent_up();
-  f_gen_ << indent() << "Err(rift::Error::WrongServiceCall(String::from(expected), String::from(actual)))" << endl;
+  f_gen_ << indent() << "Err(" << endl;
+  indent_up();
+  f_gen_ << indent() << "rift::Error::Application(" << endl;
+  indent_up();
+  f_gen_ << indent() << "ApplicationError { kind: ApplicationErrorKind::WrongMethodName, message: format!(\"expected {} got {}\", expected, actual) }" << endl;
+  indent_down();
+  f_gen_ << indent() << ")" << endl;
+  indent_down();
+  f_gen_ << indent() << ")" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
   indent_down();
@@ -259,7 +276,15 @@ void t_rs_generator::render_free_standing_helpers() {
   indent_down();
   f_gen_ << indent() << "} else {" << endl;
   indent_up();
-  f_gen_ << indent() << "Err(rift::Error::UnexpectedThriftMessageType(expected, actual))" << endl;
+  f_gen_ << indent() << "Err(" << endl;
+  indent_up();
+  f_gen_ << indent() << "rift::Error::Application(" << endl;
+  indent_up();
+  f_gen_ << indent() << "ApplicationError { kind: ApplicationErrorKind::InvalidMessageType, message: format!(\"expected {} got {}\", expected, actual) }" << endl;
+  indent_down();
+  f_gen_ << indent() << ")" << endl;
+  indent_down();
+  f_gen_ << indent() << ")" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
   indent_down();
@@ -272,7 +297,15 @@ void t_rs_generator::render_free_standing_helpers() {
   f_gen_ << indent() << "match *field {" << endl;
   indent_up();
   f_gen_ << indent() << "Some(_) => Ok(())," << endl;
-  f_gen_ << indent() << "None => Err(rift::Error::MissingRequiredField(field_name.to_owned()))," << endl;
+  f_gen_ << indent() << "None => Err(" << endl;
+  indent_up();
+  f_gen_ << indent() << "rift::Error::Protocol(" << endl;
+  indent_up();
+  f_gen_ << indent() << "ProtocolError { kind: ProtocolErrorKind::Unknown, message: format!(\"missing required field {}\", field_name) }" << endl;
+  indent_down();
+  f_gen_ << indent() << ")" << endl;
+  indent_down();
+  f_gen_ << indent() << ")," << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
   indent_down();
@@ -282,7 +315,15 @@ void t_rs_generator::render_free_standing_helpers() {
   // check that the field id exists; return the id if it does
   f_gen_ << "fn field_id(field_ident: &TFieldIdentifier) -> rift::Result<i16> {" << endl;
   indent_up();
-  f_gen_ << indent() << "field_ident.id.ok_or(rift::Error::InvalidThriftFieldHeader(\"missing field id\".to_owned()))" << endl;
+  f_gen_ << indent() << "field_ident.id.ok_or(" << endl;
+  indent_up();
+  f_gen_ << indent() << "rift::Error::Protocol(" << endl;
+  indent_up();
+  f_gen_ << indent() << "ProtocolError { kind: ProtocolErrorKind::Unknown, message: format!(\"missing field in in {:?}\", field_ident) }" << endl;
+  indent_down();
+  f_gen_ << indent() << ")" << endl;
+  indent_down();
+  f_gen_ << indent() << ")" << endl;
   indent_down();
   f_gen_ << "}" << endl;
   f_gen_ << endl;
@@ -495,7 +536,7 @@ void t_rs_generator::render_rust_result_struct_to_result_method(t_struct* tstruc
 
       f_gen_ << indent() << branch_statement << " " << field_name << ".is_some() {" << endl;
       indent_up();
-      f_gen_ << indent() << "Err(rift::Error::ApplicationError(Box::new(" << field_name << ".unwrap())))" << endl;
+      f_gen_ << indent() << "Err(rift::Error::User(Box::new(" << field_name << ".unwrap())))" << endl;
       indent_down();
 
       rendered_branch_count++;
@@ -527,12 +568,15 @@ void t_rs_generator::render_rust_result_struct_to_result_method(t_struct* tstruc
     indent_up();
     // if we haven't found a valid return value *or* a user exception
     // then we're in trouble; return a default error
-    f_gen_
-      << indent()
-      << "Err(rift::Error::MissingServiceCallReturnValue("
-      << "\"" << service_call_name << "\".to_owned()"
-      << "))"
-      << endl;
+    f_gen_ << indent() << "Err(" << endl;
+    indent_up();
+    f_gen_ << indent() << "rift::Error::Application(" << endl;
+    indent_up();
+    f_gen_ << indent() << "ApplicationError { kind: ApplicationErrorKind::MissingResult, message: " << "\"no result received for " << service_call_name << "\".to_owned() }" << endl;
+    indent_down();
+    f_gen_ << indent() << ")" << endl;
+    indent_down();
+    f_gen_ << indent() << ")" << endl;
     indent_down();
     f_gen_ << indent() << "}" << endl;
   }
@@ -1063,9 +1107,9 @@ void t_rs_generator::render_rust_sync_recv(t_function* tfunc) {
   // FIXME: replace with a "try" block
   f_gen_ << indent() << "if message_ident.message_type == TMessageType::Exception {" << endl;
   indent_up();
-  f_gen_ << indent() << "let remote_error = try!(rift::Error::read_from_in_protocol(&mut **self.i_prot.borrow_mut()));" << endl;
+  f_gen_ << indent() << "let remote_error = try!(rift::Error::read_application_error_from_in_protocol(&mut **self.i_prot.borrow_mut()));" << endl;
   f_gen_ << indent() << "try!(self.i_prot.borrow_mut().read_message_end());" << endl;
-  f_gen_ << indent() << "return Err(remote_error)" << endl;
+  f_gen_ << indent() << "return Err(rift::Error::Application(remote_error))" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
   f_gen_ << indent() << "try!(verify_expected_message_type(TMessageType::Reply, message_ident.message_type));" << endl;

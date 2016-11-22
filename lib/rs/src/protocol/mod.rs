@@ -15,8 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use std::convert;
-use try_from;
+use std::fmt;
+use std::fmt::{Display, Formatter};
+use std::convert::From;
+use try_from::TryFrom;
 
 use ::{ProtocolError, ProtocolErrorKind};
 
@@ -235,9 +237,20 @@ pub enum TMessageType {
     OneWay,
 }
 
+impl Display for TMessageType {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match *self {
+            TMessageType::Call => write!(f, "Call"),
+            TMessageType::Reply => write!(f, "Reply"),
+            TMessageType::Exception => write!(f, "Exception"),
+            TMessageType::OneWay => write!(f, "OneWay"),
+        }
+    }
+}
+
 // Converts a Thrift message-type enum into its
 // byte representation for encoding into its serialized form.
-impl convert::From<TMessageType> for u8 {
+impl From<TMessageType> for u8 {
     fn from(message_type: TMessageType) -> Self {
         match message_type {
             TMessageType::Call => 0x01,
@@ -250,7 +263,7 @@ impl convert::From<TMessageType> for u8 {
 
 // Converts the serialized representation of a
 // Thrift message type into its enum form.
-impl try_from::TryFrom<u8> for TMessageType {
+impl TryFrom<u8> for TMessageType {
     type Err = ::Error;
     fn try_from(b: u8) -> ::Result<Self> {
         match b {
@@ -291,9 +304,32 @@ pub enum TType {
     Utf16,
 }
 
+impl Display for TType {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match *self {
+            TType::Stop => write!(f, "STOP"),
+            TType::Void => write!(f, "void"),
+            TType::Bool => write!(f, "bool"),
+            TType::I08 => write!(f, "i08"),
+            TType::Double => write!(f, "double"),
+            TType::I16 => write!(f, "i16"),
+            TType::I32 => write!(f, "i32"),
+            TType::I64 => write!(f, "i64"),
+            TType::String => write!(f, "string"),
+            TType::Utf7 => write!(f, "UTF7"),
+            TType::Struct => write!(f, "struct"),
+            TType::Map => write!(f, "map"),
+            TType::Set => write!(f, "set"),
+            TType::List => write!(f, "list"),
+            TType::Utf8 => write!(f, "UTF8"),
+            TType::Utf16 => write!(f, "UTF16"),
+        }
+    }
+}
+
 // Converts a Thrift field-type enum into its
 // byte representation for encoding into its serialized form.
-impl convert::From<TType> for u8 {
+impl From<TType> for u8 {
     fn from(field_type: TType) -> Self {
         match field_type {
             TType::Stop => 0x00,
@@ -318,7 +354,7 @@ impl convert::From<TType> for u8 {
 
 // Converts the serialized representation of a
 // Thrift field type into its enum form.
-impl try_from::TryFrom<u8> for TType {
+impl TryFrom<u8> for TType {
     type Err = ::Error;
     fn try_from(b: u8) -> ::Result<Self> {
         match b {
