@@ -18,6 +18,8 @@
 use std::convert;
 use try_from;
 
+use ::{ProtocolError, ProtocolErrorKind};
+
 pub use self::binary::TBinaryProtocol;
 
 mod binary;
@@ -84,15 +86,20 @@ pub trait TProtocol {
     fn read_map_begin(&mut self) -> ::Result<TMapIdentifier>;
     fn read_map_end(&mut self) -> ::Result<()>;
 
-
-
     fn skip(&mut self, field_type: TType) -> ::Result<()> {
         self.skip_till_depth(field_type, MAXIMUM_SKIP_DEPTH)
     }
 
     fn skip_till_depth(&mut self, field_type: TType, remaining_depth: i8) -> ::Result<()> {
         if remaining_depth == 0 {
-           return Err(::Error::GeneralProtocolError("maximum skip depth reached".to_owned()))
+           return Err(
+               ::Error::Protocol(
+                   ProtocolError {
+                       kind: ProtocolErrorKind::DepthLimit,
+                       message: format!("cannot parse past {:?}", field_type),
+                   }
+               )
+           )
         }
 
         match field_type {
@@ -148,8 +155,15 @@ pub trait TProtocol {
                 }
                 self.read_map_end()
             },
-            _ => {
-                Err(::Error::InvalidArgument("cannot skip requested field type".to_owned()))
+            u => {
+                Err(
+                    ::Error::Protocol(
+                        ProtocolError {
+                            kind: ProtocolErrorKind::Unknown,
+                            message: format!("cannot skip field type {:?}", &u),
+                        }
+                    )
+                )
             },
         }
     }
@@ -244,7 +258,14 @@ impl try_from::TryFrom<u8> for TMessageType {
             0x02 => Ok(TMessageType::Reply),
             0x03 => Ok(TMessageType::Exception),
             0x04 => Ok(TMessageType::OneWay),
-            unkn => Err(::Error::UnknownThriftMessageType(unkn))
+            unkn => Err(
+                ::Error::Protocol(
+                    ProtocolError {
+                        kind: ProtocolErrorKind::InvalidData,
+                        message: format!("cannot convert {} to TMessageType", unkn),
+                    }
+                )
+            )
         }
     }
 }
@@ -316,7 +337,14 @@ impl try_from::TryFrom<u8> for TType {
             0x0F => Ok(TType::List),
             0x10 => Ok(TType::Utf8),
             0x11 => Ok(TType::Utf16),
-            unkn => Err(::Error::UnknownThriftFieldType(unkn))
+            unkn => Err(
+                ::Error::Protocol(
+                    ProtocolError {
+                        kind: ProtocolErrorKind::InvalidData,
+                        message: format!("cannot convert {} to TType", unkn),
+                    }
+                )
+            )
         }
     }
 }

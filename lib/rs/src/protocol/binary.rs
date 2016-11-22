@@ -21,6 +21,7 @@ use std::rc::Rc;
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt, WriteBytesExt};
 use try_from;
 
+use ::{ProtocolError, ProtocolErrorKind};
 use ::transport::TTransport;
 use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TProtocol, TSetIdentifier, TStructIdentifier, TType};
 
@@ -70,7 +71,14 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
 
     fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> ::Result<()> {
         if identifier.id.is_none() && identifier.field_type != TType::Stop {
-            return Err(::Error::InvalidArgument("missing sequence id for field".to_owned()))
+            return Err(
+                ::Error::Protocol(
+                    ProtocolError {
+                        kind: ProtocolErrorKind::Unknown,
+                        message: format!("cannot write identifier {:?} without sequence number", &identifier),
+                    }
+                )
+            )
         }
 
         try!(self.write_byte(identifier.field_type.into()));
@@ -173,7 +181,14 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
             // apparently we got a protocol-version header - check
             // it, and if it matches, read the rest of the fields
             if first_bytes[0..2] != [0x80, 0x01] {
-                Err(::Error::InvalidThriftMessageHeader)
+                Err(
+                    ::Error::Protocol(
+                        ProtocolError {
+                            kind: ProtocolErrorKind::BadVersion,
+                            message: format!("received bad version: {:?}", &first_bytes[0..2]),
+                        }
+                    )
+                )
             } else {
                 let message_type: TMessageType = try!(try_from::TryFrom::try_from(first_bytes[3]));
                 let name = try!(self.read_string());
@@ -186,7 +201,14 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
             if self.strict {
                 // we're in strict mode however, and that always
                 // requires the protocol-version header to be written first
-                Err(::Error::InvalidThriftMessageHeader) // FIXME: this is a bad version header
+                Err(
+                    ::Error::Protocol(
+                        ProtocolError {
+                            kind: ProtocolErrorKind::BadVersion,
+                            message: format!("received bad version: {:?}", &first_bytes[0..2]),
+                        }
+                    )
+                )
             } else {
                 // in the non-strict version the first message field
                 // is the message name. strings (byte arrays) are length-prefixed,
@@ -223,7 +245,7 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
             TType::Stop => Ok(0),
             _ => self.read_i16()
         });
-        Ok(TFieldIdentifier { name: None, field_type: field_type, id: Some(id) })
+        Ok(TFieldIdentifier { name: None, field_type: field_type, id: Some(id) } )
     }
 
     fn read_field_end(&mut self) -> ::Result<()> {
@@ -240,8 +262,7 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
         let b = try!(self.read_i8());
         match b {
             0 => Ok(false),
-            1 => Ok(true),
-            v => Err(::Error::InvalidBooleanValue(v))
+            _ => Ok(true),
         }
     }
 

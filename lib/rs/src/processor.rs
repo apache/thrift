@@ -15,23 +15,5 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//! Rust Thrift implementation layer.
-//!
-//! This crate provides the layers on which you can build a Thrift implementation.
-
-#![crate_type = "lib"]
-
-extern crate byteorder;
-extern crate try_from;
-
-pub mod processor;
-pub mod protocol;
-pub mod transport;
-
-mod errors;
-pub use errors::*;
-
-/// Result type returned by all rift functions.
-/// As is convention, this is a typedef of `std::result::Result`
-/// with `E` defined as the rift `Error` type.
-pub type Result<T> = std::result::Result<T, self::Error>;
+// FIXME: TProcessor
+// FIXME: TMultiplexedProcessor (see multiplexed_protocol.go)
