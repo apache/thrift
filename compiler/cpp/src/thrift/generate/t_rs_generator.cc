@@ -73,7 +73,7 @@ private:
   std::ofstream f_gen_;
 
   void render_attributes_and_includes();
-  void render_free_standing_helpers();
+  void render_utility_functions();
 
   // Write the rust representation of a thrift struct to the generated file.
   // Set `is_args_struct` to `true` if rendering the struct used to pack
@@ -95,8 +95,17 @@ private:
 
   void render_rust_struct_write_to_out_protocol(t_struct* tstruct, t_rs_generator::e_struct_type struct_type);
   void render_rust_struct_field_write(const string& prefix, t_field* tfield, t_field::e_req req);
+  void render_rust_type_write(const string& field_prefix, t_field* tfield, t_field::e_req req);
+  void render_rust_list_write(const string& field_name, t_list* tlist);
+  void render_rust_set_write(const string& field_name, t_set* tset);
+  void render_rust_map_write(const string& field_name, t_map* tset);
+
   void render_rust_struct_read_from_in_protocol(t_struct* tstruct, t_rs_generator::e_struct_type struct_type);
   void render_rust_struct_field_read(t_field* tfield);
+  bool render_rust_type_read(t_field* tfield, const string& field_var); // FIXME: return void
+  void render_rust_list_read(t_list* tlist, const string& list_var);
+  void render_rust_set_read(t_set* tset, const string& set_var);
+  void render_rust_map_read(t_map* tmap, const string& map_var);
 
   void render_rust_result_value_struct(t_function* tfunc);
 
@@ -117,10 +126,6 @@ private:
   // is *not* oneway.
   void render_rust_sync_recv(t_function* tfunc);
   void render_rust_sync_server(t_service* tservice);
-
-  string rust_struct_field_read(t_field* tfield);
-
-  string rust_field_write(const string& field_prefix, t_field* tfield, t_field::e_req req);
 
   // Return a string containing all the unpacked service call args
   // given a service call function `t_function`.
@@ -183,7 +188,7 @@ void t_rs_generator::init_generator() {
   f_gen_ << endl;
 
   render_attributes_and_includes();
-  render_free_standing_helpers();
+  render_utility_functions();
 }
 
 void t_rs_generator::render_attributes_and_includes() {
@@ -204,7 +209,7 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "use std::rc::Rc;" << endl;
   f_gen_ << endl;
   f_gen_ << "use rift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind};" << endl;
-  f_gen_ << "use rift::protocol::{TFieldIdentifier, TMessageIdentifier, TMessageType, TProtocol, TStructIdentifier, TType};" << endl;
+  f_gen_ << "use rift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
   f_gen_ << endl;
 
   // add thrift includes
@@ -218,7 +223,7 @@ void t_rs_generator::render_attributes_and_includes() {
   }
 }
 
-void t_rs_generator::render_free_standing_helpers() {
+void t_rs_generator::render_utility_functions() {
   // check that the sequence number is what you expect
   f_gen_ << "fn verify_expected_sequence_number(expected: i32, actual: i32) -> rift::Result<()> {" << endl;
   indent_up();
@@ -361,7 +366,7 @@ void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
 
 void t_rs_generator::generate_enum(t_enum* tenum) {
   // enum definition
-  f_gen_ << "#[derive(Copy, Clone, Debug, PartialEq)]" << endl;
+  f_gen_ << "#[derive(Copy, Clone, Debug, Eq, PartialEq)]" << endl;
   f_gen_ << "pub enum " << tenum->get_name() << " {" << endl;
 
   indent_up();
@@ -380,17 +385,8 @@ void t_rs_generator::generate_enum(t_enum* tenum) {
   // TODO: avoid double loops
 }
 
-//-----------------------------------------------------------------------------
-//
-// Collections
-//
-//-----------------------------------------------------------------------------
-
-
 void t_rs_generator::render_rust_union(t_struct* tstruct) {
 }
-
-// FIXME!!!
 
 //-----------------------------------------------------------------------------
 //
@@ -429,7 +425,7 @@ void t_rs_generator::render_rust_struct_comment(t_struct* tstruct, t_rs_generato
 }
 
 void t_rs_generator::render_rust_struct_definition(t_struct* tstruct, t_rs_generator::e_struct_type struct_type) {
-  f_gen_ << "#[derive(Debug, PartialEq)]" << endl;
+  f_gen_ << "#[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]" << endl;
   f_gen_ << visibility_qualifier(struct_type) << "struct " << tstruct->get_name() << " {" << endl;
 
   // render the members
@@ -637,9 +633,8 @@ void t_rs_generator::render_rust_struct_field_write(const string& prefix, t_fiel
     string field_name = field_prefix + tfield->get_name();
     f_gen_ << indent() << "if " << field_name << ".is_some() {" << endl;
     indent_up();
-    f_gen_ << indent() << "let field_ident = " << field_ident_string << ";" << endl;
-    f_gen_ << indent() << "try!(o_prot.write_field_begin(&field_ident));" << endl;
-    f_gen_ << indent() << rust_field_write(field_prefix, tfield, req) << endl;
+    f_gen_ << indent() << "try!(o_prot.write_field_begin(&" << field_ident_string << "));" << endl;
+    render_rust_type_write(field_prefix, tfield, req);
     f_gen_ << indent() << "try!(o_prot.write_field_end());" << endl;
     f_gen_ << indent() << "()" << endl;
     indent_down();
@@ -656,12 +651,12 @@ void t_rs_generator::render_rust_struct_field_write(const string& prefix, t_fiel
     f_gen_ << indent() << "}" << endl;
   } else {
     f_gen_ << indent() << "try!(o_prot.write_field_begin(&" << field_ident_string << "));" << endl;
-    f_gen_ << indent() << rust_field_write(field_prefix, tfield, req) << endl;
+    render_rust_type_write(field_prefix, tfield, req);
     f_gen_ << indent() << "try!(o_prot.write_field_end());" << endl;
   }
 }
 
-string t_rs_generator::rust_field_write(const string& field_prefix, t_field* tfield, t_field::e_req req) {
+void t_rs_generator::render_rust_type_write(const string& field_prefix, t_field* tfield, t_field::e_req req) {
   t_type* ttype = tfield->get_type();
 
   string field_name;
@@ -680,34 +675,127 @@ string t_rs_generator::rust_field_write(const string& field_prefix, t_field* tfi
     switch (tbase) {
     case t_base_type::TYPE_VOID:
       throw "Cannot write field of type TYPE_VOID to output protocol";
+      return;
     case t_base_type::TYPE_STRING:
-      return "try!(o_prot.write_string(&" + field_name + "));";
+      f_gen_ << indent() << "try!(o_prot.write_string(&" + field_name + "));" << endl;
+      return;
     case t_base_type::TYPE_BOOL:
-      return "try!(o_prot.write_bool(" + field_name + "));";
+      f_gen_ << indent() << "try!(o_prot.write_bool(" + field_name + "));" << endl;
+      return;
     case t_base_type::TYPE_I8:
-      return "try!(o_prot.write_i8(" + field_name + "));";
+      f_gen_ << indent() << "try!(o_prot.write_i8(" + field_name + "));" << endl;
+      return;
     case t_base_type::TYPE_I16:
-      return "try!(o_prot.write_i16(" + field_name + "));";
+      f_gen_ << indent() << "try!(o_prot.write_i16(" + field_name + "));" << endl;
+      return;
     case t_base_type::TYPE_I32:
-      return "try!(o_prot.write_i32(" + field_name + "));";
+      f_gen_ << indent() << "try!(o_prot.write_i32(" + field_name + "));" << endl;
+      return;
     case t_base_type::TYPE_I64:
-      return "try!(o_prot.write_i64(" + field_name + "));";
+      f_gen_ << indent() << "try!(o_prot.write_i64(" + field_name + "));" << endl;
+      return;
     case t_base_type::TYPE_DOUBLE:
-      return "try!(o_prot.write_double(" + field_name + "));";
+      f_gen_ << indent() << "try!(o_prot.write_double(" + field_name + "));" << endl;
+      return;
     }
   } else if (ttype->is_enum()) {
-    return "";
+    return;
   } else if (ttype->is_struct() || ttype->is_xception()) {
-    return "try!(" +  field_name + ".write_to_out_protocol(o_prot));";
+    f_gen_ << indent() << "try!(" +  field_name + ".write_to_out_protocol(o_prot));" << endl;
+    return;
   } else if (ttype->is_map()) {
-    return "";
+    render_rust_map_write(field_name, (t_map*)ttype);
+    return;
   } else if (ttype->is_set()) {
-    return "";
+    render_rust_set_write(field_name, (t_set*)ttype);
+    return;
   } else if (ttype->is_list()) {
-    return "";
+    render_rust_list_write(field_name, (t_list*)ttype);
+    return;
   }
 
   throw "Unsupported type " + ttype->get_name();
+}
+
+void t_rs_generator::render_rust_list_write(const string& field_name, t_list* tlist) {
+  t_type* elem_type = tlist->get_elem_type();
+
+  f_gen_
+    << indent()
+    << "try!(o_prot.write_list_begin("
+    << "&TListIdentifier {"
+    << " element_type: " << to_rust_field_type_enum(elem_type)
+    << ", size: " << field_name << ".len() as i32"
+    << " }"
+    << "));" << endl;
+
+  f_gen_ << indent() << "for e in " << field_name << ".iter() {" << endl;
+  indent_up();
+
+  string prefix = (elem_type->is_base_type() && !elem_type->is_string()) ? "*e" : "e";
+  t_field elem_field(elem_type, "");
+  render_rust_type_write(prefix, &elem_field, t_field::e_req::T_REQUIRED);
+
+  f_gen_ << indent() << "try!(o_prot.write_list_end());" << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+}
+
+void t_rs_generator::render_rust_set_write(const string& field_name, t_set* tset) {
+  t_type* elem_type = tset->get_elem_type();
+
+  f_gen_
+    << indent()
+    << "try!(o_prot.write_set_begin("
+    << "&TSetIdentifier {"
+    << " element_type: " << to_rust_field_type_enum(elem_type)
+    << ", size: " << field_name << ".len() as i32"
+    << " }"
+    << "));" << endl;
+
+  f_gen_ << indent() << "for e in " << field_name << ".iter() {" << endl;
+  indent_up();
+
+  string prefix = (elem_type->is_base_type() && !elem_type->is_string()) ? "*e" : "e";
+  t_field elem_field(elem_type, "");
+  render_rust_type_write(prefix, &elem_field, t_field::e_req::T_REQUIRED);
+
+  f_gen_ << indent() << "try!(o_prot.write_set_end());" << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+}
+
+void t_rs_generator::render_rust_map_write(const string& field_name, t_map* tmap) {
+  t_type* key_type = tmap->get_key_type();
+  t_type* val_type = tmap->get_val_type();
+
+  f_gen_
+    << indent()
+    << "try!(o_prot.write_map_begin("
+    << "&TMapIdentifier {"
+    << " key_type: " << to_rust_field_type_enum(key_type)
+    << ", value_type: " << to_rust_field_type_enum(val_type)
+    << ", size: " << field_name << ".len() as i32"
+    << " }"
+    << "));" << endl;
+
+  f_gen_ << indent() << "for (k, v) in " << field_name << ".iter() {" << endl;
+  indent_up();
+
+  string key_prefix = (key_type->is_base_type() && !key_type->is_string()) ? "*k" : "k";
+  t_field key_field(key_type, "");
+  render_rust_type_write(key_prefix, &key_field, t_field::e_req::T_REQUIRED);
+
+  string val_prefix = (val_type->is_base_type() && !val_type->is_string()) ? "*v" : "v";
+  t_field val_field(val_type, "");
+  render_rust_type_write(val_prefix, &val_field, t_field::e_req::T_REQUIRED);
+
+  f_gen_ << indent() << "try!(o_prot.write_map_end());" << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
 }
 
 void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct, t_rs_generator::e_struct_type struct_type) {
@@ -827,16 +915,15 @@ void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct,
 }
 
 void t_rs_generator::render_rust_struct_field_read(t_field* tfield) {
-  string read_expression = rust_struct_field_read(tfield);
-  if (read_expression.size() == 0) { // FIXME: remove this check once I've implemented all types
-    f_gen_ << indent() << "f" << tfield->get_key() << " = None;" << endl;
-  } else {
-    f_gen_ << indent() << "let val = " << read_expression << ";" << endl;
+  bool rendered = render_rust_type_read(tfield, "val");
+  if (rendered) { // FIXME: remove this when I support all types
     f_gen_ << indent() << "f" << tfield->get_key() << " = Some(val);" << endl;
+  } else {
+    f_gen_ << indent() << "f" << tfield->get_key() << " = None;" << endl;
   }
 }
 
-string t_rs_generator::rust_struct_field_read(t_field* tfield) {
+bool t_rs_generator::render_rust_type_read(t_field* tfield, const string& field_var) {
   t_type* ttype = tfield->get_type();
 
   if (ttype->is_base_type()) {
@@ -845,38 +932,121 @@ string t_rs_generator::rust_struct_field_read(t_field* tfield) {
     case t_base_type::TYPE_VOID:
       throw "Cannot read field of type TYPE_VOID from input protocol";
     case t_base_type::TYPE_STRING:
-      return "try!(i_prot.read_string())";
+      f_gen_ << indent() << "let " << field_var << " = try!(i_prot.read_string());" << endl;
+      return true;
     case t_base_type::TYPE_BOOL:
-      return "try!(i_prot.read_bool())";
+      f_gen_ << indent() << "let " << field_var << " = try!(i_prot.read_bool());" << endl;
+      return true;
     case t_base_type::TYPE_I8:
-      return "try!(i_prot.read_i8())";
+      f_gen_ << indent() << "let " << field_var << " = try!(i_prot.read_i8());" << endl;
+      return true;
     case t_base_type::TYPE_I16:
-      return "try!(i_prot.read_i16())";
+      f_gen_ << indent() << "let " << field_var << " = try!(i_prot.read_i16());" << endl;
+      return true;
     case t_base_type::TYPE_I32:
-      return "try!(i_prot.read_i32())";
+      f_gen_ << indent() << "let " << field_var << " = try!(i_prot.read_i32());" << endl;
+      return true;
     case t_base_type::TYPE_I64:
-      return "try!(i_prot.read_i64())";
+      f_gen_ << indent() << "let " << field_var << " = try!(i_prot.read_i64());" << endl;
+      return true;
     case t_base_type::TYPE_DOUBLE:
-      return "try!(i_prot.read_double())";
+      f_gen_ << indent() << "let " << field_var << " = try!(i_prot.read_double());" << endl;
+      return true;
     }
   } else if (ttype->is_enum()) {
-    return "";
+    return false;
   } else if (ttype->is_struct() || ttype->is_xception()) {
-    return "try!(" +  to_rust_type(ttype) + "::read_from_in_protocol(i_prot));";
+    f_gen_ << indent() << "let " << field_var << " = try!(" <<  to_rust_type(ttype) << "::read_from_in_protocol(i_prot));" << endl;
+    return true;
   } else if (ttype->is_map()) {
-    return "";
+    render_rust_map_read((t_map*) ttype, field_var);
+    return true;
   } else if (ttype->is_set()) {
-    return "";
+    render_rust_set_read((t_set*) ttype, field_var);
+    return true;
   } else if (ttype->is_list()) {
-    return "";
+    render_rust_list_read((t_list*) ttype, field_var);
+    return true;
   }
 
   throw "Unsupported type " + ttype->get_name();
 }
 
+void t_rs_generator::render_rust_list_read(t_list* tlist, const string& list_var) {
+  t_type* elem_type = tlist->get_elem_type();
+
+  f_gen_ << indent() << "let list_ident = try!(i_prot.read_list_begin());" << endl;
+  f_gen_ << indent() << "let mut " << list_var << ": " << to_rust_type((t_type*) tlist) << " = Vec::with_capacity(list_ident.size as usize);" << endl;
+  f_gen_ << indent() << "for _ in 0..list_ident.size {" << endl;
+
+  indent_up();
+
+  t_field elem_field(elem_type, "");
+  elem_field.set_req(t_field::e_req::T_REQUIRED);
+  string list_elem_var = tmp("list_elem_");
+  bool rendered = render_rust_type_read(&elem_field, list_elem_var);
+  if (rendered) { f_gen_ << indent() << list_var << ".push(" << list_elem_var << ");" << endl; }
+
+  indent_down();
+
+  f_gen_ << indent() << "}" << endl;
+  f_gen_ << indent() << "try!(i_prot.read_list_end());" << endl;
+}
+
+void t_rs_generator::render_rust_set_read(t_set* tset, const string& set_var) {
+  t_type* elem_type = tset->get_elem_type();
+
+  f_gen_ << indent() << "let set_ident = try!(i_prot.read_set_begin());" << endl;
+  f_gen_ << indent() << "let mut " << set_var << ": " << to_rust_type((t_type*) tset) << " = BTreeSet::new();" << endl;
+  f_gen_ << indent() << "for _ in 0..set_ident.size {" << endl;
+
+  indent_up();
+
+  t_field elem_field(elem_type, "");
+  elem_field.set_req(t_field::e_req::T_REQUIRED);
+  string set_elem_var = tmp("set_elem_");
+  bool rendered = render_rust_type_read(&elem_field, set_elem_var);
+  if (rendered) { f_gen_ << indent() << set_var << ".insert(" << set_elem_var << ");" << endl; }
+
+  indent_down();
+
+  f_gen_ << indent() << "}" << endl;
+  f_gen_ << indent() << "try!(i_prot.read_set_end());" << endl;
+}
+
+void t_rs_generator::render_rust_map_read(t_map* tmap, const string& map_var) {
+  t_type* key_type = tmap->get_key_type();
+  t_type* val_type = tmap->get_val_type();
+
+  f_gen_ << indent() << "let map_ident = try!(i_prot.read_map_begin());" << endl;
+  f_gen_ << indent() << "let mut " << map_var << ": " << to_rust_type((t_type*) tmap) << " = BTreeMap::new();" << endl;
+  f_gen_ << indent() << "for _ in 0..map_ident.size {" << endl;
+
+  indent_up();
+
+  t_field key_field(key_type, "");
+  key_field.set_req(t_field::e_req::T_REQUIRED);
+  string key_elem_var = tmp("map_key_");
+  bool rendered_key = render_rust_type_read(&key_field, key_elem_var);
+
+  t_field val_field(val_type, "");
+  val_field.set_req(t_field::e_req::T_REQUIRED);
+  string val_elem_var = tmp("map_val_");
+  bool rendered_val = render_rust_type_read(&val_field, val_elem_var);
+
+  if (rendered_key && rendered_val) {
+    f_gen_ << indent() << map_var << ".insert(" << key_elem_var << ", " << val_elem_var << ");" << endl;
+  }
+
+  indent_down();
+
+  f_gen_ << indent() << "}" << endl;
+  f_gen_ << indent() << "try!(i_prot.read_map_end());" << endl;
+}
+
 //-----------------------------------------------------------------------------
 //
-// Sync Client and Server
+// Sync Client
 //
 //-----------------------------------------------------------------------------
 
@@ -1151,6 +1321,12 @@ string t_rs_generator::rust_sync_client_call_args(t_function* tfunc, bool is_dec
   func_args << ")";
   return func_args.str();
 }
+
+//-----------------------------------------------------------------------------
+//
+// Sync Server
+//
+//-----------------------------------------------------------------------------
 
 void t_rs_generator::render_rust_sync_server(t_service* tservice) {
 }
