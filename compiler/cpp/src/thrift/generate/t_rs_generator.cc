@@ -105,7 +105,7 @@ private:
 
   void render_rust_struct_read_from_in_protocol(t_struct* tstruct, t_rs_generator::e_struct_type struct_type);
   void render_rust_struct_field_read(t_field* tfield);
-  bool render_rust_type_read(t_type* ttype, const string& type_var); // FIXME: return void
+  void render_rust_type_read(t_type* ttype, const string& type_var);
   void render_rust_list_read(t_list* tlist, const string& list_var);
   void render_rust_set_read(t_set* tset, const string& set_var);
   void render_rust_map_read(t_map* tmap, const string& map_var);
@@ -1020,16 +1020,12 @@ void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct,
 }
 
 void t_rs_generator::render_rust_struct_field_read(t_field* tfield) {
-  bool rendered = render_rust_type_read(tfield->get_type(), "val");
-  if (rendered) { // FIXME: remove this when I support all types
-    f_gen_ << indent() << "f" << tfield->get_key() << " = Some(val);" << endl;
-  } else {
-    f_gen_ << indent() << "f" << tfield->get_key() << " = None;" << endl;
-  }
+  render_rust_type_read(tfield->get_type(), "val");
+  f_gen_ << indent() << "f" << tfield->get_key() << " = Some(val);" << endl;
 }
 
 // Construct the rust representation of all supported types from the wire.
-bool t_rs_generator::render_rust_type_read(t_type* ttype, const string& type_var) {
+void t_rs_generator::render_rust_type_read(t_type* ttype, const string& type_var) {
   if (ttype->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
     switch (tbase) {
@@ -1037,42 +1033,42 @@ bool t_rs_generator::render_rust_type_read(t_type* ttype, const string& type_var
       throw "Cannot read field of type TYPE_VOID from input protocol";
     case t_base_type::TYPE_STRING:
       f_gen_ << indent() << "let " << type_var << " = try!(i_prot.read_string());" << endl;
-      return true;
+      return;
     case t_base_type::TYPE_BOOL:
       f_gen_ << indent() << "let " << type_var << " = try!(i_prot.read_bool());" << endl;
-      return true;
+      return;
     case t_base_type::TYPE_I8:
       f_gen_ << indent() << "let " << type_var << " = try!(i_prot.read_i8());" << endl;
-      return true;
+      return;
     case t_base_type::TYPE_I16:
       f_gen_ << indent() << "let " << type_var << " = try!(i_prot.read_i16());" << endl;
-      return true;
+      return;
     case t_base_type::TYPE_I32:
       f_gen_ << indent() << "let " << type_var << " = try!(i_prot.read_i32());" << endl;
-      return true;
+      return;
     case t_base_type::TYPE_I64:
       f_gen_ << indent() << "let " << type_var << " = try!(i_prot.read_i64());" << endl;
-      return true;
+      return;
     case t_base_type::TYPE_DOUBLE:
       f_gen_ << indent() << "let " << type_var << " = try!(i_prot.read_double());" << endl;
-      return true;
+      return;
     }
   } else if (ttype->is_typedef()) {
     t_typedef* ttypedef = (t_typedef*) ttype;
     render_rust_type_read(ttypedef->get_type(), type_var);
-    return true;
+    return;
   } else if (ttype->is_enum() || ttype->is_struct() || ttype->is_xception()) {
     f_gen_ << indent() << "let " << type_var << " = try!(" <<  to_rust_type(ttype) << "::read_from_in_protocol(i_prot));" << endl;
-    return true;
+    return;
   } else if (ttype->is_map()) {
     render_rust_map_read((t_map*) ttype, type_var);
-    return true;
+    return;
   } else if (ttype->is_set()) {
     render_rust_set_read((t_set*) ttype, type_var);
-    return true;
+    return;
   } else if (ttype->is_list()) {
     render_rust_list_read((t_list*) ttype, type_var);
-    return true;
+    return;
   }
 
   throw "Cannot read unsupported type " + ttype->get_name();
@@ -1089,8 +1085,8 @@ void t_rs_generator::render_rust_list_read(t_list* tlist, const string& list_var
   indent_up();
 
   string list_elem_var = tmp("list_elem_");
-  bool rendered = render_rust_type_read(elem_type, list_elem_var);
-  if (rendered) { f_gen_ << indent() << list_var << ".push(" << list_elem_var << ");" << endl; }
+  render_rust_type_read(elem_type, list_elem_var);
+  f_gen_ << indent() << list_var << ".push(" << list_elem_var << ");" << endl;
 
   indent_down();
 
@@ -1109,8 +1105,8 @@ void t_rs_generator::render_rust_set_read(t_set* tset, const string& set_var) {
   indent_up();
 
   string set_elem_var = tmp("set_elem_");
-  bool rendered = render_rust_type_read(elem_type, set_elem_var);
-  if (rendered) { f_gen_ << indent() << set_var << ".insert(" << set_elem_var << ");" << endl; }
+  render_rust_type_read(elem_type, set_elem_var);
+  f_gen_ << indent() << set_var << ".insert(" << set_elem_var << ");" << endl;
 
   indent_down();
 
@@ -1130,14 +1126,10 @@ void t_rs_generator::render_rust_map_read(t_map* tmap, const string& map_var) {
   indent_up();
 
   string key_elem_var = tmp("map_key_");
-  bool rendered_key = render_rust_type_read(key_type, key_elem_var);
-
+  render_rust_type_read(key_type, key_elem_var);
   string val_elem_var = tmp("map_val_");
-  bool rendered_val = render_rust_type_read(val_type, val_elem_var);
-
-  if (rendered_key && rendered_val) {
-    f_gen_ << indent() << map_var << ".insert(" << key_elem_var << ", " << val_elem_var << ");" << endl;
-  }
+  render_rust_type_read(val_type, val_elem_var);
+  f_gen_ << indent() << map_var << ".insert(" << key_elem_var << ", " << val_elem_var << ");" << endl;
 
   indent_down();
 
