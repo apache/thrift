@@ -407,22 +407,7 @@ void t_rs_generator::render_rust_enum_impl(t_enum* tenum) {
     << "pub fn write_to_out_protocol<P: TProtocol>(&self, o_prot: &mut P) -> rift::Result<()> {"
     << endl;
   indent_up();
-
-  f_gen_ << indent() << "let enum_val = match *self {" << endl;
-  indent_up();
-  for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
-    f_gen_
-      << indent()
-      << tenum->get_name() << "::" << (*constants_iter)-> get_name()
-      << " => "
-      << tenum->get_name() << "::" << (*constants_iter)-> get_name()
-      << " as i32" << "," << endl;
-  }
-  indent_down();
-  f_gen_ << indent() << "};" << endl;
-  f_gen_ << indent() << "o_prot.write_i32(enum_val)" << endl;
-  // FIXME: f_gen_ << indent() << "o_prot.write_i32(*self as i32)" << endl;
-
+  f_gen_ << indent() << "o_prot.write_i32(*self as i32)" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
