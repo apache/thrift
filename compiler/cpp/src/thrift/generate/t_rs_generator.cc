@@ -75,6 +75,9 @@ private:
   void render_attributes_and_includes();
   void render_utility_functions();
 
+  void render_rust_enum_definition(t_enum* tenum);
+  void render_rust_enum_impl(t_enum* tenum);
+
   // Write the rust representation of a thrift struct to the generated file.
   // Set `is_args_struct` to `true` if rendering the struct used to pack
   // arguments for a service call. When `true` the struct and its members have
@@ -372,11 +375,15 @@ void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
 }
 
 void t_rs_generator::generate_enum(t_enum* tenum) {
-  // enum definition
+  render_rust_enum_definition(tenum);
+  render_rust_enum_impl(tenum);
+}
+
+void t_rs_generator::render_rust_enum_definition(t_enum* tenum) {
   f_gen_ << "#[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]" << endl;
   f_gen_ << "pub enum " << tenum->get_name() << " {" << endl;
-
   indent_up();
+
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator constants_iter;
   for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
@@ -386,10 +393,73 @@ void t_rs_generator::generate_enum(t_enum* tenum) {
   indent_down();
   f_gen_ << "}" << endl;
   f_gen_ << endl;
+}
 
-  // let x = Foo::Bar as u32;
-  // int -> enum reverse matching
-  // TODO: avoid double loops
+void t_rs_generator::render_rust_enum_impl(t_enum* tenum) {
+  vector<t_enum_value*> constants = tenum->get_constants();
+  vector<t_enum_value*>::iterator constants_iter;
+
+  f_gen_ << "impl " << tenum->get_name() << " {" << endl;
+  indent_up();
+
+  f_gen_
+    << indent()
+    << "pub fn write_to_out_protocol<P: TProtocol>(&self, o_prot: &mut P) -> rift::Result<()> {"
+    << endl;
+  indent_up();
+
+  f_gen_ << indent() << "let enum_val = match *self {" << endl;
+  indent_up();
+  for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
+    f_gen_
+      << indent()
+      << tenum->get_name() << "::" << (*constants_iter)-> get_name()
+      << " => "
+      << tenum->get_name() << "::" << (*constants_iter)-> get_name()
+      << " as i32" << "," << endl;
+  }
+  indent_down();
+  f_gen_ << indent() << "};" << endl;
+  f_gen_ << indent() << "o_prot.write_i32(enum_val)" << endl;
+  // FIXME: f_gen_ << indent() << "o_prot.write_i32(*self as i32)" << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
+  f_gen_
+    << indent()
+    << "pub fn read_from_in_protocol<P: TProtocol>(i_prot: &mut P) -> rift::Result<" << tenum->get_name() << "> {"
+    << endl;
+  indent_up();
+
+  f_gen_ << indent() << "let enum_value = try!(i_prot.read_i32());" << endl;
+  f_gen_ << indent() << "match enum_value {" << endl;
+  indent_up();
+  for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
+    f_gen_
+      << indent()
+      << (*constants_iter)->get_value()
+      << " => Ok(" << tenum->get_name() << "::" << (*constants_iter)->get_name() << "),"
+      << endl;
+  }
+  f_gen_ << indent() << "_ => Err(" << endl;
+  indent_up();
+  f_gen_ << indent() << "rift::Error::Protocol(" << endl;
+  indent_up();
+  f_gen_ << indent() << "ProtocolError { kind: ProtocolErrorKind::InvalidData, message: format!(\"cannot convert enum constant {} to " << tenum->get_name() << "\", enum_value) }" << endl;
+  indent_down();
+  f_gen_ << indent() << ")" << endl;
+  indent_down();
+  f_gen_ << indent() << ")," << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
+  indent_down();
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
 }
 
 void t_rs_generator::render_rust_union(t_struct* tstruct) {
@@ -716,10 +786,7 @@ void t_rs_generator::render_rust_type_write(const string& field_prefix, t_field*
     t_field typedef_field(ttypedef->get_type(), tfield->get_name());
     render_rust_type_write(field_prefix, &typedef_field, req);
     return;
-  } else if (ttype->is_enum()) {
-    //f_gen_ << indent() << "try!(" +  field_name + ".write_to_out_protocol(o_prot));" << endl;
-    return;
-  } else if (ttype->is_struct() || ttype->is_xception()) {
+  } else if (ttype->is_enum() || ttype->is_struct() || ttype->is_xception()) {
     f_gen_ << indent() << "try!(" +  field_name + ".write_to_out_protocol(o_prot));" << endl;
     return;
   } else if (ttype->is_map()) {
@@ -994,10 +1061,7 @@ bool t_rs_generator::render_rust_type_read(t_type* ttype, const string& type_var
     t_typedef* ttypedef = (t_typedef*) ttype;
     render_rust_type_read(ttypedef->get_type(), type_var);
     return true;
-  } else if (ttype->is_enum()) {
-    //f_gen_ << indent() << "let " << field_var << " = try!(" <<  to_rust_type(ttype) << "::read_from_in_protocol(i_prot));" << endl;
-    return false;
-  } else if (ttype->is_struct() || ttype->is_xception()) {
+  } else if (ttype->is_enum() || ttype->is_struct() || ttype->is_xception()) {
     f_gen_ << indent() << "let " << type_var << " = try!(" <<  to_rust_type(ttype) << "::read_from_in_protocol(i_prot));" << endl;
     return true;
   } else if (ttype->is_map()) {
