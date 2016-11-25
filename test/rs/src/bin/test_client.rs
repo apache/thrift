@@ -269,8 +269,34 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
     }
 
     // Insanity
+    // returns:
+    // { 1 => { 2 => argument,
+    //          3 => argument,
+    //        },
+    //   2 => { 6 => <empty Insanity struct>, },
+    // }
     {
+        /*
+        let mut arg_map_usermap: BTreeMap<Numberz, i64> = BTreeMap::new();
+        let mut arg_vec_xtructs: Vec<Xtruct>::new();
 
+        let insanity = Insanity {
+            userMap: Some(arg_map_usermap),
+            xtructs: Some(arg_vec_xtructs),
+        };
+
+        let mut s_cmp: BTreeMap<UserId, BTreeMap<Numberz, Insanity>> = BTreeMap::new();
+
+        let mut s_cmp_nested_1: BTreeMap<Numberz, Insanity> = BTreeMap::new();
+        s_cmp_nested_1.insert(Numberz::TWO, s);
+        s_cmp_nested_1.insert(Numberz::THREE, s);
+
+        let mut s_cmp_nested_2: BTreeMap<Numberz, Insanity> = BTreeMap::new();
+        s_cmp_nested_2.insert(Numberz::SIX, empty_insanity);
+
+        s_cmp.insert(1 as UserId, s_cmp_nested_1);
+        s_cmp.insert(2 as UserId, s_cmp_nested_2);
+        */
     }
 
     // Exception (expect an Xception to be thrown)
@@ -295,18 +321,16 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
     }
 
     // Exception (expect an Error::Application)
-    /*
     {
         let r = client.testException("TException".to_owned());
         try!(match r {
             Err(rift::Error::Application(ref e)) => {
-                println!("received a {:?}", e);
+                println!("received an {:?}", e);
                 Ok(())
             },
             _ => Err(rift::Error::User("did not get exception".into())),
         });
     }
-    */
 
     // Exception (expect nothing)
     {
@@ -356,9 +380,9 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
             struct_thing: Some(
                 Xtruct {
                     string_thing: Some("This is an Xception2".to_owned()),
-                    byte_thing: Some(0), // OPT_IN_REQ_OUT weirdness
-                    i32_thing: Some(0), // OPT_IN_REQ_OUT weirdness
-                    i64_thing: Some(0), // OPT_IN_REQ_OUT weirdness
+                    byte_thing: Some(0), // since this is an OPT_IN_REQ_OUT field the sender sets a default
+                    i32_thing: Some(0), // since this is an OPT_IN_REQ_OUT field the sender sets a default
+                    i64_thing: Some(0), // since this is an OPT_IN_REQ_OUT field the sender sets a default
                 }
             ),
         };
@@ -376,15 +400,15 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
 
         let x_cmp = Xtruct {
             string_thing: Some("RETURNED".to_owned()),
-            byte_thing: Some(0), // OPT_IN_REQ_OUT weirdness
-            i32_thing: Some(0), // OPT_IN_REQ_OUT weirdness
-            i64_thing: Some(0), // OPT_IN_REQ_OUT weirdness
+            byte_thing: Some(0), // since this is an OPT_IN_REQ_OUT field the sender sets a default
+            i32_thing: Some(0), // since this is an OPT_IN_REQ_OUT field the sender sets a default
+            i64_thing: Some(0), // since this is an OPT_IN_REQ_OUT field the sender sets a default
         };
 
         try!(verify_expected_result(Ok(x), x_cmp));
     }
 
-    // one-way (delays for 2 seconds
+    // one-way (delays for 2 seconds)
     {
         try!(client.testOneway(2));
     }
