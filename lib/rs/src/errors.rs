@@ -21,9 +21,10 @@ use std::fmt::{Debug, Display, Formatter};
 use std::{error, fmt, io, string};
 use try_from::TryFrom;
 
-use ::protocol::TProtocol;
+use ::protocol::{TFieldIdentifier, TProtocol, TStructIdentifier, TType};
 
 // FIXME: should all my error structs impl error::Error as well?
+// FIXME: should all fields in TransportError, ProtocolError and ApplicationError be optional?
 pub enum Error {
     Transport(TransportError),
     Protocol(ProtocolError),
@@ -33,11 +34,58 @@ pub enum Error {
 
 impl Error {
     pub fn read_application_error_from_in_protocol(i: &mut TProtocol) -> ::Result<ApplicationError> {
-        unimplemented!()
+        let mut message = "unknown remote error".to_owned();
+        let mut kind = ApplicationErrorKind::Unknown;
+
+        try!(i.read_struct_begin());
+
+        loop {
+            let field_ident = try!(i.read_field_begin());
+
+            if field_ident.field_type == TType::Stop {
+                break;
+            }
+
+            let id = field_ident.id.expect("sender should always specify id for non-STOP field");
+
+            match id {
+                1 => {
+                    let remote_message = try!(i.read_string());
+                    try!(i.read_field_end());
+                    message = remote_message;
+                },
+                2 => {
+                    let remote_type_as_int = try!(i.read_i32());
+                    let remote_kind: ApplicationErrorKind = TryFrom::try_from(remote_type_as_int).unwrap_or(ApplicationErrorKind::Unknown);
+                    try!(i.read_field_end());
+                    kind = remote_kind;
+                },
+                _ => {
+                    try!(i.skip(field_ident.field_type));
+                },
+            }
+        }
+
+        try!(i.read_struct_end());
+
+        Ok(ApplicationError { kind: kind, message: message })
     }
 
     pub fn write_application_error_to_out_protocol(e: &ApplicationError, o: &mut TProtocol) -> ::Result<()> {
-        unimplemented!()
+        try!(o.write_struct_begin(&TStructIdentifier { name: "TApplicationException".to_owned() }));
+
+        try!(o.write_field_begin(&TFieldIdentifier { name: Some("message".to_owned()), field_type: TType::String, id: Some(1) }));
+        try!(o.write_string(&e.message));
+        try!(o.write_field_end());
+
+        try!(o.write_field_begin(&TFieldIdentifier { name: Some("type".to_owned()), field_type: TType::I32, id: Some(2) }));
+        try!(o.write_i32(e.kind as i32));
+        try!(o.write_field_end());
+
+        try!(o.write_field_stop());
+        try!(o.write_struct_end());
+
+        Ok(())
     }
 }
 
@@ -74,14 +122,13 @@ impl Display for Error {
     }
 }
 
-
 #[derive(Debug)]
 pub struct TransportError {
     pub kind: TransportErrorKind,
     pub message: String,
 }
 
-#[derive(Eq, Debug, PartialEq)]
+#[derive(Clone, Copy, Eq, Debug, PartialEq)]
 pub enum TransportErrorKind {
     Unknown      = 0,
     NotOpen      = 1,
@@ -181,7 +228,7 @@ pub struct ProtocolError {
     pub message: String,
 }
 
-#[derive(Eq, Debug, PartialEq)]
+#[derive(Clone, Copy, Eq, Debug, PartialEq)]
 pub enum ProtocolErrorKind {
     Unknown        = 0,
     InvalidData    = 1,
@@ -233,7 +280,7 @@ pub struct ApplicationError {
     pub message: String,
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ApplicationErrorKind {
     Unknown               = 0,
     UnknownMethod         = 1,
