@@ -24,8 +24,8 @@
 extern crate byteorder;
 extern crate try_from;
 
-pub mod processor;
 pub mod protocol;
+pub mod server;
 pub mod transport;
 
 mod errors;

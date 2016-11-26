@@ -14,3 +14,15 @@
 // KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
+use ::protocol::TProtocol;
+
+mod simple;
+
+pub use self::simple::TSimpleServer;
+
+pub trait TProcessor {
+    fn process(&mut self, i: &TProtocol, o: &TProtocol) -> ::Result<()>;
+}
+
+// FIXME: TMultiplexedProcessor (see multiplexed_protocol.go)

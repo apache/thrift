@@ -38,6 +38,13 @@ impl TTcpTransport {
        }
     }
 
+    pub fn using_stream(stream: TcpStream) -> TTcpTransport {
+       TTcpTransport {
+           remote_address: "".to_owned(), // FIXME!
+           stream: Some(stream),
+       }
+    }
+
     fn if_set<F, T>(&mut self, mut stream_operation: F) -> io::Result<T>
         where F: FnMut(&mut TcpStream) -> io::Result<T> {
 

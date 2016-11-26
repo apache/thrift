@@ -15,12 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use std::cell::RefCell;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::convert::From;
+use std::rc::Rc;
 use try_from::TryFrom;
 
 use ::{ProtocolError, ProtocolErrorKind};
+use ::transport::RcTTransport;
 
 pub use self::binary::TBinaryProtocol;
 
@@ -31,6 +34,7 @@ mod multiplexed;
 /// Maximum depth to which we will skip a Thrift field.
 const MAXIMUM_SKIP_DEPTH: i8 = 64;
 
+// FIXME: consider splitting apart the read and write methods -> makes ownership easier
 /// Implemented by Thrift protocols to write/read
 /// a Thrift object to/from its serialized representation.
 pub trait TProtocol {
@@ -176,6 +180,12 @@ pub trait TProtocol {
 
     fn write_byte(&mut self, b: u8) -> ::Result<()>;
     fn read_byte(&mut self) -> ::Result<u8>;
+}
+
+pub type RcTProtocol = Rc<RefCell<Box<TProtocol>>>;
+
+pub trait TProtocolFactory<P: TProtocol> {
+    fn new(&self, transport: RcTTransport) -> P;
 }
 
 /// Identifies an instance of a Thrift message

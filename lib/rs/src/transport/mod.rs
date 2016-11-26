@@ -36,7 +36,9 @@
 //! [tframed] trait.TFramedTransport.html
 //! [ttcp] trait.TTcpIpSocketTransport.html
 
+use std::cell::RefCell;
 use std::io;
+use std::rc::Rc;
 
 mod buffered;
 mod framed;
@@ -58,4 +60,10 @@ pub trait TTransport: io::Read + io::Write {
     /// transport cannot be used for either reads or
     /// writes.
     fn close(&mut self) -> io::Result<()>;
+}
+
+pub type RcTTransport = Rc<RefCell<Box<TTransport>>>;
+
+pub trait TTransportFactory<T: TTransport> {
+    fn new(&self, inner: RcTTransport) -> T;
 }
