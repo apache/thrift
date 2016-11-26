@@ -66,6 +66,8 @@ public:
 private:
   enum e_struct_type { T_REGULAR, T_ARGS, T_RESULT, T_EXCEPTION };
 
+  enum e_trait_type { T_CLIENT, T_HANDLER };
+
   // Directory to which generated code is written.
   string gen_dir_;
 
@@ -86,7 +88,7 @@ private:
   // if set as such in their thrift definition.
   void render_rust_struct(t_struct* tstruct, t_rs_generator::e_struct_type struct_type);
 
-  void render_rust_struct_comment(t_struct* tstruct, t_rs_generator::e_struct_type struct_type);
+  void render_rust_struct_comment(t_struct* tstruct);
 
   void render_rust_struct_definition(t_struct* tstruct, t_rs_generator::e_struct_type struct_type);
 
@@ -130,12 +132,16 @@ private:
   void render_rust_sync_recv(t_function* tfunc);
   void render_rust_sync_server(t_service* tservice);
 
+  void render_rust_service_trait(t_service* tservice, t_rs_generator::e_trait_type trait_type);
+
+  void render_rust_service_call_structs(t_service* tservice);
+
   // Return a string containing all the unpacked service call args
   // given a service call function `t_function`.
   // If `is_declaration` is `true` we prepend the args with `&mut self`
   // and include the arg types in the returned string. If `false` we omit
   // the `self` qualifier and only use the arg names.
-  string rust_sync_client_call_args(t_function* tfunc, bool is_declaration);
+  string rust_sync_service_call_args(t_function* tfunc, bool is_declaration);
 
   // Return a string representing the rust type given a `t_type`.
   string to_rust_type(t_type* ttype);
@@ -175,6 +181,9 @@ private:
 
   // Return the trait name for the sync service client given a `t_service` name.
   string rust_sync_client_trait_name(t_service* tservice); // FIXME: remove
+
+  // Return the trait name for the sync service processor given a `t_service` name.
+  string rust_sync_handler_trait_name(t_service* tservice); // FIXME: remove
 
   // Return the name of the struct used to pack arguments for the thrift service call.
   string service_call_args_struct_name(t_function* tfunc);
@@ -448,6 +457,7 @@ void t_rs_generator::render_rust_enum_impl(t_enum* tenum) {
 }
 
 void t_rs_generator::render_rust_union(t_struct* tstruct) {
+  // FIXME!
 }
 
 //-----------------------------------------------------------------------------
@@ -471,7 +481,7 @@ void t_rs_generator::generate_struct(t_struct* tstruct) {
 }
 
 void t_rs_generator::render_rust_struct(t_struct* tstruct, t_rs_generator::e_struct_type struct_type) {
-  render_rust_struct_comment(tstruct, struct_type);
+  render_rust_struct_comment(tstruct);
   render_rust_struct_definition(tstruct, struct_type);
   render_rust_struct_impl(tstruct, struct_type);
   if (struct_type == t_rs_generator::T_EXCEPTION) {
@@ -479,7 +489,7 @@ void t_rs_generator::render_rust_struct(t_struct* tstruct, t_rs_generator::e_str
   }
 }
 
-void t_rs_generator::render_rust_struct_comment(t_struct* tstruct, t_rs_generator::e_struct_type struct_type) {
+void t_rs_generator::render_rust_struct_comment(t_struct* tstruct) {
   f_gen_ << "//" << endl;
   f_gen_ << "// " << tstruct->get_name() << endl;
   f_gen_ << "//" << endl;
@@ -1131,42 +1141,18 @@ void t_rs_generator::render_rust_map_read(t_map* tmap, const string& map_var) {
 void t_rs_generator::generate_service(t_service* tservice) {
   render_rust_sync_client(tservice);
   render_rust_sync_server(tservice);
+  render_rust_service_call_structs(tservice);
 }
 
 void t_rs_generator::render_rust_sync_client(t_service* tservice) {
-  string client_trait_name = rust_sync_client_trait_name(tservice);
-  string client_impl_struct_name = "T" + tservice->get_name() + "SyncClient";
-
-  string extension = "";
-  if (tservice->get_extends() != NULL) {
-    t_service* extends = tservice->get_extends();
-    extension = " : " + extends->get_program()->get_namespace() + "::" + rust_sync_client_trait_name(extends);
-  }
-
-  const std::vector<t_function*> functions = tservice->get_functions();
-  std::vector<t_function*>::const_iterator func_iter;
-
   // service comment demarcation
   f_gen_ << "//" << endl;
-  f_gen_ << "// service " << tservice->get_name() << endl;
+  f_gen_ << "// " << tservice->get_name() << " service client "<< endl;
   f_gen_ << "//" << endl;
   f_gen_ << endl;
 
-  // render the trait
-  // although not strictly necessary, I'm doing this to make testing easier
-  // this way users can pass in anything that implements the client facade
-  f_gen_ << "pub trait " << client_trait_name << extension << " {" << endl;
-  indent_up();
-  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
-    t_function* tfunc = (*func_iter);
-    string func_name = tfunc->get_name();
-    string func_args = rust_sync_client_call_args(tfunc, true);
-    string func_return = to_rust_type(tfunc->get_returntype());
-    f_gen_ << indent() << "fn " << func_name <<  func_args << " -> rift::Result<" << func_return << ">;" << endl;
-  }
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
-  f_gen_ << endl;
+  // render the trait through which the service calls will be mad
+  render_rust_service_trait(tservice, t_rs_generator::e_trait_type::T_CLIENT);
 
   // [sigh] this is annoying
   // to create a parameterized rust struct I have to declare the type parameters twice
@@ -1184,6 +1170,8 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
   //
   // even more annoyingly, those bounds have to be added on *every* impl block for the struct
 
+  string client_impl_struct_name = "T" + tservice->get_name() + "SyncClient";
+
   // render the implementing struct
   f_gen_ << "pub struct " << client_impl_struct_name << "<P: TProtocol> {" << endl;
   indent_up();
@@ -1193,6 +1181,9 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
   indent_down();
   f_gen_ << "}" << endl;
   f_gen_ << endl;
+
+  const std::vector<t_function*> functions = tservice->get_functions();
+  std::vector<t_function*>::const_iterator func_iter;
 
   // render the struct implementation
   // this includes the new() function as well as the helper send/recv methods for each service call
@@ -1211,7 +1202,7 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
   f_gen_ << endl;
 
   // render all the service methods for the implementing struct
-  f_gen_ << "impl<P: TProtocol>" << client_trait_name << " for " << client_impl_struct_name << "<P> {" << endl;
+  f_gen_ << "impl<P: TProtocol>" << rust_sync_client_trait_name(tservice) << " for " << client_impl_struct_name << "<P> {" << endl;
   indent_up();
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
     t_function* func = (*func_iter);
@@ -1220,22 +1211,6 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
   indent_down();
   f_gen_ << "}" << endl;
   f_gen_ << endl;
-
-  // thrift args for service calls are packed
-  // into a struct that's transmitted over the wire, so
-  // generate structs for those too
-  //
-  // thrift returns are *also* packed into a struct
-  // that's passed over the wire, so, generate the struct
-  // for that too. Note that this result struct *also*
-  // contains the exceptions as well
-  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
-    t_function* tfunc = (*func_iter);
-    render_rust_struct(tfunc->get_arglist(), t_rs_generator::T_ARGS);
-    if (!tfunc->is_oneway()) {
-      render_rust_result_value_struct(tfunc);
-    }
-  }
 }
 
 void t_rs_generator::render_rust_sync_client_lifecycle_functions(const string& client_struct) {
@@ -1280,8 +1255,8 @@ void t_rs_generator::render_rust_result_value_struct(t_function* tfunc) {
 
 void t_rs_generator::render_rust_sync_send_recv_wrapper(t_function* tfunc) {
   string func_name = tfunc->get_name();
-  string func_decl_args = rust_sync_client_call_args(tfunc, true);
-  string func_call_args = rust_sync_client_call_args(tfunc, false);
+  string func_decl_args = rust_sync_service_call_args(tfunc, true);
+  string func_call_args = rust_sync_service_call_args(tfunc, false);
   string func_return = to_rust_type(tfunc->get_returntype());
 
   f_gen_ << indent() << "fn " << func_name <<  func_decl_args << " -> rift::Result<" << func_return << "> {" << endl;
@@ -1298,7 +1273,7 @@ void t_rs_generator::render_rust_sync_send_recv_wrapper(t_function* tfunc) {
 
 void t_rs_generator::render_rust_sync_send(t_function* tfunc) {
   string func_name = "send_" + tfunc->get_name();
-  string func_args = rust_sync_client_call_args(tfunc, true);
+  string func_args = rust_sync_service_call_args(tfunc, true);
 
   // declaration
   f_gen_ << indent() << "fn " << func_name <<  func_args << " -> rift::Result<()> {" << endl;
@@ -1368,7 +1343,7 @@ void t_rs_generator::render_rust_sync_recv(t_function* tfunc) {
   f_gen_ << indent() << "}" << endl;
 }
 
-string t_rs_generator::rust_sync_client_call_args(t_function* tfunc, bool is_declaration) {
+string t_rs_generator::rust_sync_service_call_args(t_function* tfunc, bool is_declaration) {
   ostringstream func_args;
   func_args << (is_declaration ? "(&mut self" : "(");
 
@@ -1407,7 +1382,92 @@ string t_rs_generator::rust_sync_client_call_args(t_function* tfunc, bool is_dec
 //-----------------------------------------------------------------------------
 
 void t_rs_generator::render_rust_sync_server(t_service* tservice) {
-  // FIXME
+  // service comment demarcation
+  f_gen_ << "//" << endl;
+  f_gen_ << "// " << tservice->get_name() << " service handler "<< endl;
+  f_gen_ << "//" << endl;
+  f_gen_ << endl;
+
+  // render the trait through which the service calls will be mad
+  render_rust_service_trait(tservice, t_rs_generator::e_trait_type::T_HANDLER);
+}
+
+//-----------------------------------------------------------------------------
+//
+// Service Utility
+//
+//-----------------------------------------------------------------------------
+
+void t_rs_generator::render_rust_service_trait(t_service* tservice, t_rs_generator::e_trait_type trait_type) {
+  string trait_name;
+  switch (trait_type) {
+    case e_trait_type::T_CLIENT:
+      trait_name = rust_sync_client_trait_name(tservice);
+      break;
+    case e_trait_type::T_HANDLER:
+      trait_name = rust_sync_handler_trait_name(tservice);
+      break;
+    default:
+      throw "unknown trait type while generating service trait name";
+  }
+
+  string extension = "";
+  if (tservice->get_extends() != NULL) {
+    t_service* extends = tservice->get_extends();
+
+    string extension_trait_name;
+    switch (trait_type) {
+    case e_trait_type::T_CLIENT:
+      extension_trait_name = rust_sync_client_trait_name(extends);
+      break;
+    case e_trait_type::T_HANDLER:
+      extension_trait_name = rust_sync_handler_trait_name(extends);
+      break;
+    default:
+      throw "unknown trait type while generating extension trait name";
+    }
+
+    extension = " : " + extends->get_program()->get_namespace() + "::" + extension_trait_name;
+  }
+
+  const std::vector<t_function*> functions = tservice->get_functions();
+  std::vector<t_function*>::const_iterator func_iter;
+  // render the trait
+  // although not strictly necessary, I'm doing this to make testing easier
+  // this way users can pass in anything that implements the client facade
+  f_gen_ << "pub trait " << trait_name << extension << " {" << endl;
+  indent_up();
+  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
+    t_function* tfunc = (*func_iter);
+    string func_name = tfunc->get_name();
+    string func_args = rust_sync_service_call_args(tfunc, true);
+    string func_return = to_rust_type(tfunc->get_returntype());
+    f_gen_ << indent() << "fn " << func_name <<  func_args << " -> rift::Result<" << func_return << ">;" << endl;
+  }
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  f_gen_ << endl;
+}
+
+void t_rs_generator::render_rust_service_call_structs(t_service* tservice) {
+  const std::vector<t_function*> functions = tservice->get_functions();
+  std::vector<t_function*>::const_iterator func_iter;
+
+  // thrift args for service calls are packed
+  // into a struct that's transmitted over the wire, so
+  // generate structs for those too
+  //
+  // thrift returns are *also* packed into a struct
+  // that's passed over the wire, so, generate the struct
+  // for that too. Note that this result struct *also*
+  // contains the exceptions as well
+  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
+    t_function* tfunc = (*func_iter);
+    render_rust_struct(tfunc->get_arglist(), t_rs_generator::T_ARGS);
+    if (!tfunc->is_oneway()) {
+      render_rust_result_value_struct(tfunc);
+    }
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -1517,6 +1577,10 @@ bool t_rs_generator::has_args(t_function* tfunc) {
 
 string t_rs_generator::rust_sync_client_trait_name(t_service* tservice) {
   return "TAbstract" + tservice->get_name() + "SyncClient";
+}
+
+string t_rs_generator::rust_sync_handler_trait_name(t_service* tservice) {
+  return tservice->get_name() + "SyncHandler";
 }
 
 string t_rs_generator::service_call_args_struct_name(t_function* tfunc) {
