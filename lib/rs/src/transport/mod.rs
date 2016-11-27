@@ -54,9 +54,6 @@ pub use self::socket::TTcpTransport;
 /// can be used to send/receive Thrift messages.
 pub trait TTransport: io::Read + io::Write { }
 
-/// Convenience type-alias for a ref-counted `TTransport`.
-pub type RcTTransport = Rc<RefCell<Box<TTransport>>>;
-
 /// Blanket implementation of `TTransport` that allows
 /// any object `I` that implements both `io::Read` and
 /// `io::Write` to be represented as a `TTransport`.

@@ -23,7 +23,7 @@ use std::rc::Rc;
 use try_from::TryFrom;
 
 use ::{ProtocolError, ProtocolErrorKind};
-use ::transport::RcTTransport;
+use ::transport::TTransport;
 
 pub use self::binary::TBinaryProtocol;
 
@@ -182,10 +182,8 @@ pub trait TProtocol {
     fn read_byte(&mut self) -> ::Result<u8>;
 }
 
-pub type RcTProtocol = Rc<RefCell<Box<TProtocol>>>;
-
 pub trait TProtocolFactory<P: TProtocol> {
-    fn new(&self, transport: RcTTransport) -> P;
+    fn new<T: TTransport>(&self, transport: Rc<RefCell<Box<T>>>) -> P;
 }
 
 /// Identifies an instance of a Thrift message
