@@ -74,7 +74,7 @@ impl <TI, TFI, PI, PFI, TO, TFO, PO, PFO, PR> TSimpleServer<TI, TFI, PI, PFI, TO
                     self.handle_incoming_connection(s)
                 },
                 Err(e) => {
-                    println!("failed to accept remote connection with error {:?}", e)
+                    warn!("failed to accept remote connection with error: {:?}", e)
                 }
             }
         }
@@ -83,7 +83,7 @@ impl <TI, TFI, PI, PFI, TO, TFO, PO, PFO, PR> TSimpleServer<TI, TFI, PI, PFI, TO
             ::Error::Application(
                 ApplicationError {
                     kind: ApplicationErrorKind::Unknown,
-                    message: "aborted listening loop".into()
+                    message: "aborted listen loop".into()
                 }
             )
         )
@@ -110,10 +110,7 @@ impl <TI, TFI, PI, PFI, TO, TFO, PO, PFO, PR> TSimpleServer<TI, TFI, PI, PFI, TO
             let r = self.processor.process(&i_prot, &o_prot);
             match r {
                 Err(e) => {
-                    println!("processor failed with error {:?}", e);
-//                    if let Err(e) = ref_stream.borrow_mut().close() {
-//                        println!("error {:?} while closing stream", e);
-//                    }
+                    warn!("processor failed with error {:?}", e); // FIXME: close the TTcpTransport
                     break;
                 },
                 Ok(_) => {
