@@ -63,9 +63,8 @@ pub type RcTTransport = Rc<RefCell<Box<TTransport>>>;
 impl <I: io::Read + io::Write> TTransport for I { }
 
 /// A trait for objects that can construct a `TTransport`.
-pub trait TTransportFactory<T: TTransport> {
-    /// Construct a `TTransport` that wraps an
-    /// `inner` transport, thus creating a transport
-    /// stack.
-    fn new(&self, inner: RcTTransport) -> T;
+pub trait TTransportFactory<O: TTransport> {
+    /// Construct a `TTransport` that wraps an `inner`
+    /// transport, thus creating a transport stack.
+    fn new<I: TTransport>(&self, inner: Rc<RefCell<Box<I>>>) -> O;
 }

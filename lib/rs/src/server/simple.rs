@@ -92,8 +92,7 @@ impl <TI, TFI, PI, PFI, TO, TFO, PO, PFO, PR> TSimpleServer<TI, TFI, PI, PFI, TO
     fn handle_incoming_connection(&mut self, stream: TcpStream) {
         // create the base transport (both input/output share this underlying stream)
         let stream = TTcpTransport::using_stream(stream);
-        let box_stream: Box<TTransport> = Box::new(stream);
-        let ref_stream = Rc::new(RefCell::new(box_stream));
+        let ref_stream = Rc::new(RefCell::new(Box::new(stream)));
 
         // input protocol and transport
         let i_tran = self.i_trans_factory.new(ref_stream.clone());
@@ -110,7 +109,10 @@ impl <TI, TFI, PI, PFI, TO, TFO, PO, PFO, PR> TSimpleServer<TI, TFI, PI, PFI, TO
             let r = self.processor.process(&i_prot, &o_prot);
             match r {
                 Err(e) => {
-                    warn!("processor failed with error {:?}", e); // FIXME: close the TTcpTransport
+                    warn!("processor failed with error: {:?}", e);
+                    if let Err(e) = ref_stream.borrow_mut().close() {
+                        warn!("failed to close stream with error: {:?}", e);
+                    }
                     break;
                 },
                 Ok(_) => {
