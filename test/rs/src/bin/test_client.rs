@@ -25,7 +25,6 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 use std::rc::Rc;
 
-use rift::transport::TTransport;
 use rift_test::*;
 
 // FIXME: take structs by reference
@@ -57,8 +56,8 @@ fn main() {
 
     let t = match transport {
         "buffered" => {
-            let mut t = rift::transport::TTcpTransport::new(&format!("{}:{}", host, port));
-            match t.open() {
+            let mut t = rift::transport::TTcpTransport::new();
+            match t.open(&format!("{}:{}", host, port)) {
                 Ok(()) => t,
                 Err(e) => { // FIXME: expose "open" through the client interface so I don't have to early open the transport
                     println!("failed to open transport: {:?}", e);
