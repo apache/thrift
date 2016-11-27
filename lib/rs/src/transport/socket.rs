@@ -100,7 +100,7 @@ impl Write for TTcpTransport {
     }
 }
 
-// Do I have to implement the Drop trait here? TcpStream closes the socket on drop.
+// Do I have to implement the Drop trait? TcpStream closes the socket on drop.
 impl Drop for TTcpTransport {
     fn drop(&mut self) {
         if let Err(e) = self.close() {

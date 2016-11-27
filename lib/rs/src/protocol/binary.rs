@@ -15,10 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use byteorder::{BigEndian, ByteOrder, ReadBytesExt, WriteBytesExt};
 use std::cell::RefCell;
 use std::convert;
 use std::rc::Rc;
-use byteorder::{BigEndian, ByteOrder, ReadBytesExt, WriteBytesExt};
 use try_from;
 
 use ::{ProtocolError, ProtocolErrorKind};
@@ -33,7 +33,7 @@ pub struct TBinaryProtocol<T: TTransport> {
     /// Set to `true` if the strict binary protocol is to be used.
     pub strict: bool,
 
-    /// Underlying transport used to read protocol bytes from, and write protocol bytes to.
+    /// Underlying transport used for byte-level operations.
     pub transport: Rc<RefCell<Box<T>>>,
 }
 
@@ -64,15 +64,15 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
     }
 
     fn write_message_end(&mut self) -> ::Result<()> {
-        Ok(()) // nothing written to mark message end
+        Ok(())
     }
 
     fn write_struct_begin(&mut self, _: &TStructIdentifier) -> ::Result<()> {
-        Ok(()) // nothing written to mark struct beginning
+        Ok(())
     }
 
     fn write_struct_end(&mut self) -> ::Result<()> {
-        Ok(()) // nothing written to mark struct end
+        Ok(())
     }
 
     fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> ::Result<()> {
@@ -96,7 +96,7 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
     }
 
     fn write_field_end(&mut self) -> ::Result<()> {
-        Ok(()) // nothing written to mark field end
+        Ok(())
     }
 
     fn write_field_stop(&mut self) -> ::Result<()> {
@@ -146,7 +146,7 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
     }
 
     fn write_list_end(&mut self) -> ::Result<()> {
-        Ok(()) // nothing to be written to map list end
+        Ok(())
     }
 
     fn write_set_begin(&mut self, identifier: &TSetIdentifier) -> ::Result<()> {
@@ -155,7 +155,7 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
     }
 
     fn write_set_end(&mut self) -> ::Result<()> {
-        Ok(()) // nothing to be written to map set end
+        Ok(())
     }
 
     fn write_map_begin(&mut self, identifier: &TMapIdentifier) -> ::Result<()> {
@@ -165,7 +165,7 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
     }
 
     fn write_map_end(&mut self) -> ::Result<()> {
-        Ok(()) // nothing to be written to mark map end
+        Ok(())
     }
 
     fn flush(&mut self) -> ::Result<()> {
@@ -233,15 +233,15 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
     }
 
     fn read_message_end(&mut self) -> ::Result<()> {
-        Ok(()) // nothing has to be read for message end
+        Ok(())
     }
 
     fn read_struct_begin(&mut self) -> ::Result<Option<TStructIdentifier>> {
-        Ok(None) // nothing has to be read for struct begin
+        Ok(None)
     }
 
     fn read_struct_end(&mut self) -> ::Result<()> {
-        Ok(()) // nothing has to be read for struct end
+        Ok(())
     }
 
     fn read_field_begin(&mut self) -> ::Result<TFieldIdentifier> {
@@ -255,7 +255,7 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
     }
 
     fn read_field_end(&mut self) -> ::Result<()> {
-        Ok(()) // nothing has to be read for field end
+        Ok(())
     }
 
     fn read_bytes(&mut self) -> ::Result<Vec<u8>> {
@@ -305,7 +305,7 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
     }
 
     fn read_list_end(&mut self) -> ::Result<()> {
-        Ok(()) // nothing to be read for list end
+        Ok(())
     }
 
     fn read_set_begin(&mut self) -> ::Result<TSetIdentifier> {
@@ -316,7 +316,7 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
     }
 
     fn read_set_end(&mut self) -> ::Result<()> {
-        Ok(()) // nothing to be read for set end
+        Ok(())
     }
 
     fn read_map_begin(&mut self) -> ::Result<TMapIdentifier> {
@@ -328,7 +328,7 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
     }
 
     fn read_map_end(&mut self) -> ::Result<()> {
-        Ok(()) // nothing to be read for map end
+        Ok(())
     }
 
     //
