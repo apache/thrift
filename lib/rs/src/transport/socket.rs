@@ -15,53 +15,53 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use std::convert::From;
 use std::io;
 use std::io::ErrorKind;
 use std::net::{Shutdown, TcpStream};
 
-/// Implementation of [`TTransport`][ttransport] that
-/// sends and receives data over TCP.
-///
-/// [ttransport] traits.TTransport.html
+use ::{TransportError, TransportErrorKind};
+
 pub struct TTcpTransport {
-    remote_address: String,
     stream: Option<TcpStream>,
 }
 
 impl TTcpTransport {
-    pub fn new(remote_address: &str) -> TTcpTransport {
+    pub fn new() -> TTcpTransport {
        TTcpTransport {
-           remote_address: remote_address.to_owned(),
            stream: None,
        }
     }
 
     pub fn using_stream(stream: TcpStream) -> TTcpTransport {
        TTcpTransport {
-           remote_address: "".to_owned(), // FIXME!
            stream: Some(stream),
        }
     }
 
-    pub fn open(&mut self) -> io::Result<()> {
+    pub fn open(&mut self, remote_address: &str) -> ::Result<()> {
         if let Some(_) = self.stream {
-            Err(io::Error::new(ErrorKind::AlreadyExists, "transport opened previously"))
+            Err(
+                ::Error::Transport(
+                    TransportError {
+                        kind: TransportErrorKind::AlreadyOpen,
+                        message: "transport previously opened".to_owned()
+                    }
+                )
+            )
         } else {
-            // note: I have to do this because rust does not
-            // do auto-deref coercion during trait matching
-            // see: http://stackoverflow.com/questions/30412011/coercing-string-to-strI
-            match TcpStream::connect(&self.remote_address[..]) {
+            match TcpStream::connect(&remote_address) {
                 Ok(s) => {
                     self.stream = Some(s);
                     Ok(())
                 }
-                Err(e) => Err(e)
+                Err(e) => Err(From::from(e))
             }
         }
     }
 
-    pub fn close(&mut self) -> io::Result<()> {
-        self.if_set(|s| s.shutdown(Shutdown::Both))
+    pub fn close(&mut self) -> ::Result<()> {
+        self.if_set(|s| s.shutdown(Shutdown::Both)).map_err(From::from)
     }
 
     fn if_set<F, T>(&mut self, mut stream_operation: F) -> io::Result<T>
