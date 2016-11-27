@@ -141,13 +141,21 @@ pub enum TransportErrorKind {
 
 impl TransportError {
     fn description(&self) -> &str {
-        unimplemented!()
+        match self.kind {
+            TransportErrorKind::Unknown => "transport error",
+            TransportErrorKind::NotOpen => "not open",
+            TransportErrorKind::AlreadyOpen => "already open",
+            TransportErrorKind::TimedOut => "timed out",
+            TransportErrorKind::EndOfFile => "end of file",
+            TransportErrorKind::NegativeSize => "negative size message",
+            TransportErrorKind::SizeLimit => "message too long",
+        }
     }
 }
 
 impl Display for TransportError {
-    fn fmt(&self, _: &mut Formatter) -> fmt::Result {
-        unimplemented!()
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}", self.description())
     }
 }
 
@@ -241,13 +249,21 @@ pub enum ProtocolErrorKind {
 
 impl ProtocolError {
     fn description(&self) -> &str {
-        unimplemented!()
+        match self.kind {
+            ProtocolErrorKind::Unknown => "protocol error",
+            ProtocolErrorKind::InvalidData => "bad data",
+            ProtocolErrorKind::NegativeSize => "negative message size",
+            ProtocolErrorKind::SizeLimit => "message too long",
+            ProtocolErrorKind::BadVersion => "invalid thrift version",
+            ProtocolErrorKind::NotImplemented => "protocol method not implemented",
+            ProtocolErrorKind::DepthLimit => "maximum skip depth reached",
+        }
     }
 }
 
 impl Display for ProtocolError {
-    fn fmt(&self, _: &mut Formatter) -> fmt::Result {
-        unimplemented!()
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}", self.description())
     }
 }
 
@@ -297,13 +313,25 @@ pub enum ApplicationErrorKind {
 
 impl ApplicationError {
     fn description(&self) -> &str {
-        unimplemented!()
+        match self.kind {
+            ApplicationErrorKind::Unknown => "service error",
+            ApplicationErrorKind::UnknownMethod => "unknown service method",
+            ApplicationErrorKind::InvalidMessageType => "wrong message type received",
+            ApplicationErrorKind::WrongMethodName => "unknown method reply received",
+            ApplicationErrorKind::BadSequenceId => "out of order sequence id",
+            ApplicationErrorKind::MissingResult => "missing method result",
+            ApplicationErrorKind::InternalError => "remote service threw exception",
+            ApplicationErrorKind::ProtocolError => "protocol error",
+            ApplicationErrorKind::InvalidTransform => "invalid transform",
+            ApplicationErrorKind::InvalidProtocol => "invalid protocol requested",
+            ApplicationErrorKind::UnsupportedClientType => "unsupported protocol client",
+        }
     }
 }
 
 impl Display for ApplicationError {
-    fn fmt(&self, _: &mut Formatter) -> fmt::Result {
-        unimplemented!()
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}", self.description())
     }
 }
 
