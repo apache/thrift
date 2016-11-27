@@ -17,22 +17,31 @@
 
 use std::convert::From;
 use std::io;
-use std::io::ErrorKind;
+use std::io::{ErrorKind, Read, Write};
 use std::net::{Shutdown, TcpStream};
+use std::ops::Drop;
 
 use ::{TransportError, TransportErrorKind};
 
+/// Sends and receives bytes over a TCP socket.
 pub struct TTcpTransport {
     stream: Option<TcpStream>,
 }
 
 impl TTcpTransport {
+    /// Creates an uninitialized `TTcpTransport`.
+    /// This instance must be opened using `open(...)`
+    /// before it can be used.
     pub fn new() -> TTcpTransport {
        TTcpTransport {
            stream: None,
        }
     }
 
+    /// Creates a `TTcpTransport` that wraps an
+    /// existing `TcpStream`. The stream is assumed
+    /// to have been opened and ready before being
+    /// wrapped in a `TTcpTransport` instance.
     pub fn using_stream(stream: TcpStream) -> TTcpTransport {
        TTcpTransport {
            stream: Some(stream),
@@ -75,18 +84,27 @@ impl TTcpTransport {
     }
 }
 
-impl io::Read for TTcpTransport {
+impl Read for TTcpTransport {
     fn read(&mut self, b: &mut [u8]) -> io::Result<usize> {
         self.if_set(|s| s.read(b))
     }
 }
 
-impl io::Write for TTcpTransport {
+impl Write for TTcpTransport {
     fn write(&mut self, b: &[u8]) -> io::Result<usize> {
         self.if_set(|s| s.write(b))
     }
 
     fn flush(&mut self) -> io::Result<()> {
         self.if_set(|s| s.flush())
+    }
+}
+
+// Do I have to implement the Drop trait here? TcpStream closes the socket on drop.
+impl Drop for TTcpTransport {
+    fn drop(&mut self) {
+        if let Err(e) = self.close() {
+            warn!("error while closing socket transport: {:?}", e)
+        }
     }
 }
