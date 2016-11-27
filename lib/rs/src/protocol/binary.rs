@@ -37,6 +37,12 @@ pub struct TBinaryProtocol<T: TTransport> {
     pub transport: Rc<RefCell<Box<T>>>,
 }
 
+impl<T: TTransport> TBinaryProtocol<T> {
+    fn write_transport(&mut self, buf: &[u8]) -> ::Result<()> {
+        self.transport.borrow_mut().write(buf).map(|_| ()).map_err(convert::From::from)
+    }
+}
+
 impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
 
     //
@@ -335,12 +341,6 @@ impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
 
     fn read_byte(&mut self) -> ::Result<u8> {
         self.transport.borrow_mut().read_u8().map_err(convert::From::from)
-    }
-}
-
-impl<T: TTransport> TBinaryProtocol<T> {
-    fn write_transport(&mut self, buf: &[u8]) -> ::Result<()> {
-        self.transport.borrow_mut().write(buf).map(|_| ()).map_err(convert::From::from)
     }
 }
 

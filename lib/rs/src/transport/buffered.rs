@@ -15,8 +15,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use std::cell::RefCell;
 use std::cmp;
 use std::io;
+use std::io::{Read, Write};
+use std::rc::Rc;
 
 use super::TTransport;
 
@@ -43,16 +46,16 @@ pub struct TBufferedTransport<T: TTransport> {
     /// is called.
     wbuf: Vec<u8>,
     /// Underlying `TTransport` over which bytes are transferred.
-    inner: T
+    inner: Rc<RefCell<Box<T>>>,
 }
 
 impl<T: TTransport> TBufferedTransport<T> {
-    pub fn new(inner: T) -> TBufferedTransport<T> {
+    pub fn new(inner: Rc<RefCell<Box<T>>>) -> TBufferedTransport<T> {
         TBufferedTransport::with_capacity(DEFAULT_RBUFFER_SIZE, DEFAULT_WBUFFER_SIZE, inner)
     }
 
     // ugh. no function overloading
-    pub fn with_capacity(read_buffer_size: usize, write_buffer_size: usize, inner: T) -> TBufferedTransport<T> {
+    pub fn with_capacity(read_buffer_size: usize, write_buffer_size: usize, inner: Rc<RefCell<Box<T>>>) -> TBufferedTransport<T> {
         TBufferedTransport {
             rbuf: Vec::with_capacity(read_buffer_size),
             rpos: 0,
@@ -65,7 +68,7 @@ impl<T: TTransport> TBufferedTransport<T> {
     fn get_bytes(&mut self) -> io::Result<&[u8]> {
         if self.rpos == self.rbuf.len() {
             self.rpos = 0;
-            self.rcap = try!(self.inner.read(&mut self.rbuf));
+            self.rcap = try!(self.inner.borrow_mut().read(&mut self.rbuf));
         }
 
         Ok(&self.rbuf[self.rpos..self.rcap])
@@ -76,7 +79,7 @@ impl<T: TTransport> TBufferedTransport<T> {
     }
 }
 
-impl<T: TTransport> io::Read for TBufferedTransport<T> {
+impl<T: TTransport> Read for TBufferedTransport<T> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let mut bytes_read = 0;
 
@@ -101,7 +104,7 @@ impl<T: TTransport> io::Read for TBufferedTransport<T> {
     }
 }
 
-impl<T: TTransport> io::Write for TBufferedTransport<T> {
+impl<T: TTransport> Write for TBufferedTransport<T> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         let copy_count = cmp::min(buf.len(), self.wbuf.capacity() - self.wbuf.len());
         self.wbuf.extend_from_slice(&buf[..copy_count]);
@@ -110,8 +113,8 @@ impl<T: TTransport> io::Write for TBufferedTransport<T> {
     }
 
     fn flush(&mut self) -> io::Result<()> {
-        try!(self.inner.write_all(&self.wbuf));
-        try!(self.inner.flush());
+        try!(self.inner.borrow_mut().write_all(&self.wbuf));
+        try!(self.inner.borrow_mut().flush());
         self.wbuf.clear();
         Ok(())
     }
@@ -119,14 +122,17 @@ impl<T: TTransport> io::Write for TBufferedTransport<T> {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
     use std::io::{Read, Write};
+    use std::rc::Rc;
 
     use super::*;
     use ::transport::mem::TBufferTransport;
 
     #[test]
     fn return_zero_if_nothing_can_be_read() {
-        let mut t = TBufferedTransport::with_capacity(10, 10, TBufferTransport::with_capacity(10, 5));
+        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(10, 5))));
+        let mut t = TBufferedTransport::with_capacity(10, 10, i);
 
         let mut b = vec![0; 10];
         let r = t.read(&mut b);
@@ -137,7 +143,8 @@ mod tests {
 
     #[test]
     fn return_zero_if_nothing_can_be_written() {
-        let mut t = TBufferedTransport::with_capacity(0, 0, TBufferTransport::with_capacity(0, 0));
+        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(0, 0))));
+        let mut t = TBufferedTransport::with_capacity(0, 0, i);
 
         let mut b = vec![0; 10];
         let r = t.write(&mut b);
@@ -148,16 +155,18 @@ mod tests {
 
     #[test]
     fn only_write_on_flush() {
-        let mut t = TBufferedTransport::new(TBufferTransport::with_capacity(10, 10));
+        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(10, 10))));
+        let mut t = TBufferedTransport::new(i);
 
         let b: [u8; 5] = [0, 1, 2, 3, 4];
         assert!(t.write(&b).is_ok());
-        assert_eq!(t.inner.write_buffer().len(), 0);
+        assert_eq!(t.inner.borrow_mut().write_buffer().len(), 0);
 
         assert!(t.flush().is_ok());
 
         {
-            let underlying_buffer = t.inner.write_buffer();
+            let inner = t.inner.borrow_mut();
+            let underlying_buffer = inner.write_buffer();
             assert_eq!(b, underlying_buffer);
         }
     }
