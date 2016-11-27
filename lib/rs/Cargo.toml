@@ -7,5 +7,6 @@ authors = ["Allen George <allen.george@gmail.com>"]
 readme = "README.md"
 
 [dependencies]
+log = "~0.3.6"
 byteorder = "0.5.3"
 try_from = "0.2.0"

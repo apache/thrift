@@ -24,6 +24,9 @@
 extern crate byteorder;
 extern crate try_from;
 
+#[macro_use]
+extern crate log;
+
 pub mod protocol;
 pub mod server;
 pub mod transport;
