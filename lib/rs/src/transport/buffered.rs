@@ -117,56 +117,38 @@ impl<T: TTransport> io::Write for TBufferedTransport<T> {
     }
 }
 
-impl<T: TTransport> TTransport for TBufferedTransport<T> {
-    fn open(&mut self) -> io::Result<()> {
-        self.inner.open()
-    }
-
-    fn close(&mut self) -> io::Result<()> {
-        self.inner.close()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::io::{Read, Write};
 
     use super::*;
-    use ::transport::membuffer::TMemBufferTransport;
-    use ::transport::TTransport;
+    use ::transport::mem::TBufferTransport;
 
     #[test]
     fn return_zero_if_nothing_can_be_read() {
-        let mut t = TBufferedTransport::with_capacity(10, 10, TMemBufferTransport::with_capacity(10, 5));
-        assert!(t.open().is_ok());
+        let mut t = TBufferedTransport::with_capacity(10, 10, TBufferTransport::with_capacity(10, 5));
 
         let mut b = vec![0; 10];
         let r = t.read(&mut b);
 
         assert!(r.is_ok());
         assert_eq!(r.unwrap(), 0);
-
-        assert!(t.close().is_ok());
     }
 
     #[test]
     fn return_zero_if_nothing_can_be_written() {
-        let mut t = TBufferedTransport::with_capacity(0, 0, TMemBufferTransport::with_capacity(0, 0));
-        assert!(t.open().is_ok());
+        let mut t = TBufferedTransport::with_capacity(0, 0, TBufferTransport::with_capacity(0, 0));
 
         let mut b = vec![0; 10];
         let r = t.write(&mut b);
 
         assert!(r.is_ok());
         assert_eq!(r.unwrap(), 0);
-
-        assert!(t.close().is_ok());
     }
 
     #[test]
     fn only_write_on_flush() {
-        let mut t = TBufferedTransport::new(TMemBufferTransport::with_capacity(10, 10));
-        assert!(t.open().is_ok());
+        let mut t = TBufferedTransport::new(TBufferTransport::with_capacity(10, 10));
 
         let b: [u8; 5] = [0, 1, 2, 3, 4];
         assert!(t.write(&b).is_ok());
@@ -178,8 +160,6 @@ mod tests {
             let underlying_buffer = t.inner.write_buffer();
             assert_eq!(b, underlying_buffer);
         }
-
-        assert!(t.close().is_ok());
     }
 
     #[test]

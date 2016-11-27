@@ -352,14 +352,11 @@ mod tests {
 
     use super::*;
     use ::protocol::{TMessageIdentifier, TMessageType, TProtocol};
-    use ::transport::TTransport;
-    use ::transport::membuffer::TMemBufferTransport;
+    use ::transport::mem::TBufferTransport;
 
     #[test]
     fn must_write_correct_strict_call_message_header() {
-        let transport = Rc::new(RefCell::new(Box::new(TMemBufferTransport::with_capacity(40, 40))));
-        assert!(transport.borrow_mut().open().is_ok());
-
+        let transport = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(40, 40))));
         let mut protocol = TBinaryProtocol { strict: true, transport: transport.clone() };
 
         let sent_ident = TMessageIdentifier { name: "test".to_owned(), message_type: TMessageType::Call, sequence_number: 1 };
@@ -379,7 +376,5 @@ mod tests {
         let received_ident_result = protocol.read_message_begin();
         assert!(received_ident_result.is_ok());
         assert_eq!(received_ident_result.unwrap(), sent_ident);
-
-        assert!(transport.borrow_mut().close().is_ok());
     }
 }

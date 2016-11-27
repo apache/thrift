@@ -15,6 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+/*
 use std::cell::RefCell;
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::rc::Rc;
@@ -23,6 +24,7 @@ use ::{ApplicationError, ApplicationErrorKind};
 use ::protocol::TProtocolFactory;
 use ::transport::{TTransport, TTcpTransport, TTransportFactory};
 use super::TProcessor;
+*/
 
 pub struct TSimpleServer {}
 

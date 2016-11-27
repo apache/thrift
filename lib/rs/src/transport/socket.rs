@@ -19,8 +19,6 @@ use std::io;
 use std::io::ErrorKind;
 use std::net::{Shutdown, TcpStream};
 
-use super::TTransport;
-
 /// Implementation of [`TTransport`][ttransport] that
 /// sends and receives data over TCP.
 ///
@@ -43,6 +41,27 @@ impl TTcpTransport {
            remote_address: "".to_owned(), // FIXME!
            stream: Some(stream),
        }
+    }
+
+    pub fn open(&mut self) -> io::Result<()> {
+        if let Some(_) = self.stream {
+            Err(io::Error::new(ErrorKind::AlreadyExists, "transport opened previously"))
+        } else {
+            // note: I have to do this because rust does not
+            // do auto-deref coercion during trait matching
+            // see: http://stackoverflow.com/questions/30412011/coercing-string-to-strI
+            match TcpStream::connect(&self.remote_address[..]) {
+                Ok(s) => {
+                    self.stream = Some(s);
+                    Ok(())
+                }
+                Err(e) => Err(e)
+            }
+        }
+    }
+
+    pub fn close(&mut self) -> io::Result<()> {
+        self.if_set(|s| s.shutdown(Shutdown::Both))
     }
 
     fn if_set<F, T>(&mut self, mut stream_operation: F) -> io::Result<T>
@@ -69,28 +88,5 @@ impl io::Write for TTcpTransport {
 
     fn flush(&mut self) -> io::Result<()> {
         self.if_set(|s| s.flush())
-    }
-}
-
-impl TTransport for TTcpTransport {
-    fn open(&mut self) -> io::Result<()> {
-        if let Some(_) = self.stream {
-            Err(io::Error::new(ErrorKind::AlreadyExists, "transport opened previously"))
-        } else {
-            // note: I have to do this because rust does not
-            // do auto-deref coercion during trait matching
-            // see: http://stackoverflow.com/questions/30412011/coercing-string-to-strI
-            match TcpStream::connect(&self.remote_address[..]) {
-                Ok(s) => {
-                    self.stream = Some(s);
-                    Ok(())
-                }
-                Err(e) => Err(e)
-            }
-        }
-    }
-
-    fn close(&mut self) -> io::Result<()> {
-        self.if_set(|s| s.shutdown(Shutdown::Both))
     }
 }

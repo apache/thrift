@@ -17,11 +17,8 @@
 
 use std::cmp;
 use std::io;
-use std::io::ErrorKind;
 
-use super::TTransport;
-
-pub struct TMemBufferTransport {
+pub struct TBufferTransport {
     rbuf: Box<[u8]>,
     rpos: usize,
     ridx: usize,
@@ -29,18 +26,11 @@ pub struct TMemBufferTransport {
     wbuf: Box<[u8]>,
     wpos: usize,
     wcap: usize,
-    state: TransportState,
 }
 
-enum TransportState {
-    NEW,
-    OPEN,
-    CLOSED,
-}
-
-impl TMemBufferTransport {
-    pub fn with_capacity(read_buffer_size: usize, write_buffer_size: usize) -> TMemBufferTransport {
-        TMemBufferTransport {
+impl TBufferTransport {
+    pub fn with_capacity(read_buffer_size: usize, write_buffer_size: usize) -> TBufferTransport {
+        TBufferTransport {
             rbuf: vec![0; read_buffer_size].into_boxed_slice(),
             ridx: 0,
             rpos: 0,
@@ -48,7 +38,6 @@ impl TMemBufferTransport {
             wbuf: vec![0; write_buffer_size].into_boxed_slice(),
             wpos: 0,
             wcap: write_buffer_size,
-            state: TransportState::NEW,
         }
     }
 
@@ -73,7 +62,7 @@ impl TMemBufferTransport {
     }
 }
 
-impl io::Read for TMemBufferTransport {
+impl io::Read for TBufferTransport {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let nread = cmp::min(buf.len(), self.ridx - self.rpos);
         buf[..nread].clone_from_slice(&self.rbuf[self.rpos..self.rpos + nread]);
@@ -82,7 +71,7 @@ impl io::Read for TMemBufferTransport {
     }
 }
 
-impl io::Write for TMemBufferTransport {
+impl io::Write for TBufferTransport {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         let nwrite = cmp::min(buf.len(), self.wcap - self.wpos);
         self.wbuf[self.wpos..self.wpos + nwrite].clone_from_slice(&buf[..nwrite]);
@@ -92,31 +81,5 @@ impl io::Write for TMemBufferTransport {
 
     fn flush(&mut self) -> io::Result<()> {
         Ok(()) // nothing to do on flush
-    }
-}
-
-impl TTransport for TMemBufferTransport {
-    fn open(&mut self) -> io::Result<()> {
-        match self.state {
-            TransportState::NEW => {
-                self.state = TransportState::OPEN;
-                Ok(())
-            },
-            TransportState::OPEN => {
-                Err(io::Error::new(ErrorKind::AlreadyExists, "transport already opened"))
-            },
-            TransportState::CLOSED => {
-                Err(io::Error::new(ErrorKind::NotConnected, "transport already closed"))
-            },
-        }
-    }
-
-    fn close(&mut self) -> io::Result<()> {
-        match self.state {
-            _ => {
-                self.state = TransportState::CLOSED;
-                Ok(())
-            },
-        }
     }
 }

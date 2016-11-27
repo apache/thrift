@@ -15,26 +15,26 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//! Traits and type definitions for performing I/O operations.
-//! Each transport implementation controls bytes are transmitted
-//! between an sender and a receiver.
+//! Traits and type definitions for sending/receiving
+//! bytes over an I/O channel.
 //!
-//! The core type exposed here is [`TTransport`][ttransport], which
-//! can by used by a [`TProtocol`][tprotocol] to send and
-//! receive messages to/from a source.
-//!
-//! [ttransport] trait.TTransport.html
-//! [tprotocol] trait.TProtocol.html
+//! The core type exposed here is [`TTransport`][ttransport],
+//! which can by used by a [`TProtocol`][tprotocol]. While `TProtocol`
+//! exposes a typed interface for sending/receiving messages,
+//! `TTransport` deals only with bytes.
 //!
 //! Specific implementations include:
 //! * [`TBufferedTransport`][tbuffered]: wraps an underlying transport
 //!   with a buffer, reducing the number of I/O operations
-//! * [`TFramedTransport`][tframed]: prefixes outgoing messages with a message header
-//! * [`TcpIpSocketTransport`][ttcp]: sends messages over a TCP socket
+//! * [`TFramedTransport`][tframed]: wraps an underlying transport and prefixes
+//!   outgoing messages with a message-framing header
+//! * [`TTcpTransport`][ttcp]: sends messages over a TCP socket
 //!
+//! [ttransport] trait.TTransport.html
+//! [tprotocol] trait.TProtocol.html
 //! [tbuffered] trait.TBufferedTransport.html
 //! [tframed] trait.TFramedTransport.html
-//! [ttcp] trait.TTcpIpSocketTransport.html
+//! [ttcp] trait.TTcpTransport.html
 
 use std::cell::RefCell;
 use std::io;
@@ -45,25 +45,27 @@ mod framed;
 mod socket;
 
 #[cfg(test)]
-pub mod membuffer;
+pub mod mem;
 
 pub use self::buffered::TBufferedTransport;
 pub use self::socket::TTcpTransport;
 
-/// Interface through which a `TProtocol` can perform I/O operations.
-pub trait TTransport: io::Read + io::Write {
-    /// Open the transport. This *must* be called
-    /// before the transport is used for either reads
-    /// or writes.
-    fn open(&mut self) -> io::Result<()>;
-    /// Close the transport. After this point this
-    /// transport cannot be used for either reads or
-    /// writes.
-    fn close(&mut self) -> io::Result<()>;
-}
+/// Marker trait identifying a `TTransport` that
+/// can be used to send/receive Thrift messages.
+pub trait TTransport: io::Read + io::Write { }
 
+/// Convenience type-alias for a ref-counted `TTransport`.
 pub type RcTTransport = Rc<RefCell<Box<TTransport>>>;
 
+/// Blanket implementation of `TTransport` that allows
+/// any object `I` that implements both `io::Read` and
+/// `io::Write` to be represented as a `TTransport`.
+impl <I: io::Read + io::Write> TTransport for I { }
+
+/// A trait for objects that can construct a `TTransport`.
 pub trait TTransportFactory<T: TTransport> {
+    /// Construct a `TTransport` that wraps an
+    /// `inner` transport, thus creating a transport
+    /// stack.
     fn new(&self, inner: RcTTransport) -> T;
 }
