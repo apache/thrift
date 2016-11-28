@@ -370,11 +370,16 @@ mod tests {
             b
         };
 
-        let bytes_copied = transport.borrow_mut().set_read_buffer(&buf);
+        let bytes_copied = transport.borrow_mut().set_readable_bytes(&buf);
         assert_eq!(bytes_copied, buf.len());
 
         let received_ident_result = protocol.read_message_begin();
         assert!(received_ident_result.is_ok());
         assert_eq!(received_ident_result.unwrap(), sent_ident);
+    }
+
+    #[test]
+    fn must_write_correct_message_end() {
+
     }
 }
