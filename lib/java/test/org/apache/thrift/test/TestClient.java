@@ -581,7 +581,7 @@ public class TestClient {
           goodbye.string_thing = "Goodbye4";
           goodbye.byte_thing = (byte)4;
           goodbye.i32_thing = 4;
-          goodbye.i64_thing = 4;
+          goodbye.i64_thing = (long)4;
 
           insane.userMap = new HashMap<Numberz, Long>();
           insane.userMap.put(Numberz.EIGHT, (long)8);

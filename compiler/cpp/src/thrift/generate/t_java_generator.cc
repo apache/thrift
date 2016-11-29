@@ -926,7 +926,7 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
           << "    return org.apache.thrift.TBaseHelper.copyBinary((java.nio.ByteBuffer)getFieldValue());"
           << endl;
       indent(out) << "  } else {" << endl;
-      indent(out) << "    throw new RuntimeException(\"Cannot get field '" << field->get_name()
+      indent(out) << "    throw new java.lang.RuntimeException(\"Cannot get field '" << field->get_name()
                   << "' because union is currently set to \" + getFieldDesc(getSetField()).name);"
                   << endl;
       indent(out) << "  }" << endl;
@@ -942,7 +942,7 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
       indent(out) << "    return (" << type_name(field->get_type(), true) << ")getFieldValue();"
                   << endl;
       indent(out) << "  } else {" << endl;
-      indent(out) << "    throw new RuntimeException(\"Cannot get field '" << field->get_name()
+      indent(out) << "    throw new java.lang.RuntimeException(\"Cannot get field '" << field->get_name()
                   << "' because union is currently set to \" + getFieldDesc(getSetField()).name);"
                   << endl;
       indent(out) << "  }" << endl;
@@ -970,7 +970,7 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
     indent(out) << "public void set" << get_cap_name(field->get_name()) << "("
                 << type_name(field->get_type()) << " value) {" << endl;
     if (type_can_be_null(field->get_type())) {
-      indent(out) << "  if (value == null) throw new NullPointerException();" << endl;
+      indent(out) << "  if (value == null) throw new java.lang.NullPointerException();" << endl;
     }
     indent(out) << "  setField_ = _Fields." << constant_name(field->get_name()) << ";" << endl;
     indent(out) << "  value_ = value;" << endl;
@@ -1025,7 +1025,7 @@ void t_java_generator::generate_union_abstract_methods(ofstream& out, t_struct* 
 void t_java_generator::generate_check_type(ofstream& out, t_struct* tstruct) {
   indent(out) << "@Override" << endl;
   indent(out)
-      << "protected void checkType(_Fields setField, java.lang.Object value) throws ClassCastException {"
+      << "protected void checkType(_Fields setField, java.lang.Object value) throws java.lang.ClassCastException {"
       << endl;
   indent_up();
 
@@ -1043,14 +1043,14 @@ void t_java_generator::generate_check_type(ofstream& out, t_struct* tstruct) {
                 << ") {" << endl;
     indent(out) << "    break;" << endl;
     indent(out) << "  }" << endl;
-    indent(out) << "  throw new ClassCastException(\"Was expecting value of type "
+    indent(out) << "  throw new java.lang.ClassCastException(\"Was expecting value of type "
                 << type_name(field->get_type(), true, false) << " for field '" << field->get_name()
                 << "', but got \" + value.getClass().getSimpleName());" << endl;
     // do the real check here
   }
 
   indent(out) << "default:" << endl;
-  indent(out) << "  throw new IllegalArgumentException(\"Unknown field id \" + setField);" << endl;
+  indent(out) << "  throw new java.lang.IllegalArgumentException(\"Unknown field id \" + setField);" << endl;
 
   indent_down();
   indent(out) << "}" << endl;
@@ -1097,7 +1097,7 @@ void t_java_generator::generate_standard_scheme_read_value(ofstream& out, t_stru
   }
 
   indent(out) << "default:" << endl;
-  indent(out) << "  throw new IllegalStateException(\"setField wasn't null, but didn't match any "
+  indent(out) << "  throw new java.lang.IllegalStateException(\"setField wasn't null, but didn't match any "
                  "of the case statements!\");" << endl;
 
   indent_down();
@@ -1141,7 +1141,7 @@ void t_java_generator::generate_standard_scheme_write_value(ofstream& out, t_str
   }
 
   indent(out) << "default:" << endl;
-  indent(out) << "  throw new IllegalStateException(\"Cannot write union with unknown field \" + "
+  indent(out) << "  throw new java.lang.IllegalStateException(\"Cannot write union with unknown field \" + "
                  "setField_);" << endl;
 
   indent_down();
@@ -1181,7 +1181,7 @@ void t_java_generator::generate_tuple_scheme_read_value(ofstream& out, t_struct*
   }
 
   indent(out) << "default:" << endl;
-  indent(out) << "  throw new IllegalStateException(\"setField wasn't null, but didn't match any "
+  indent(out) << "  throw new java.lang.IllegalStateException(\"setField wasn't null, but didn't match any "
                  "of the case statements!\");" << endl;
 
   indent_down();
@@ -1224,7 +1224,7 @@ void t_java_generator::generate_tuple_scheme_write_value(ofstream& out, t_struct
   }
 
   indent(out) << "default:" << endl;
-  indent(out) << "  throw new IllegalStateException(\"Cannot write union with unknown field \" + "
+  indent(out) << "  throw new java.lang.IllegalStateException(\"Cannot write union with unknown field \" + "
                  "setField_);" << endl;
 
   indent_down();
@@ -1254,7 +1254,7 @@ void t_java_generator::generate_get_field_desc(ofstream& out, t_struct* tstruct)
   }
 
   indent(out) << "default:" << endl;
-  indent(out) << "  throw new IllegalArgumentException(\"Unknown field id \" + setField);" << endl;
+  indent(out) << "  throw new java.lang.IllegalArgumentException(\"Unknown field id \" + setField);" << endl;
 
   indent_down();
   indent(out) << "}" << endl;
@@ -2151,7 +2151,7 @@ void t_java_generator::generate_generic_field_getters_setters(std::ofstream& out
   indent(out) << "switch (field) {" << endl;
   out << getter_stream.str();
   indent(out) << "}" << endl;
-  indent(out) << "throw new IllegalStateException();" << endl;
+  indent(out) << "throw new java.lang.IllegalStateException();" << endl;
   indent_down();
   indent(out) << "}" << endl << endl;
 }
@@ -2167,7 +2167,7 @@ void t_java_generator::generate_generic_isset_method(std::ofstream& out, t_struc
   indent(out) << "public boolean isSet(_Fields field) {" << endl;
   indent_up();
   indent(out) << "if (field == null) {" << endl;
-  indent(out) << "  throw new IllegalArgumentException();" << endl;
+  indent(out) << "  throw new java.lang.IllegalArgumentException();" << endl;
   indent(out) << "}" << endl << endl;
 
   indent(out) << "switch (field) {" << endl;
@@ -2181,7 +2181,7 @@ void t_java_generator::generate_generic_isset_method(std::ofstream& out, t_struc
   }
 
   indent(out) << "}" << endl;
-  indent(out) << "throw new IllegalStateException();" << endl;
+  indent(out) << "throw new java.lang.IllegalStateException();" << endl;
   indent_down();
   indent(out) << "}" << endl << endl;
 }
@@ -3122,7 +3122,7 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
     f_service_
         << indent()
         << "if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {"
-        << endl << indent() << "  throw new IllegalStateException(\"Method call not finished!\");"
+        << endl << indent() << "  throw new java.lang.IllegalStateException(\"Method call not finished!\");"
         << endl << indent() << "}" << endl << indent()
         << "org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new "
            "org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());" << endl
@@ -3364,7 +3364,7 @@ void t_java_generator::generate_process_async_function(t_service* tservice, t_fu
                << endl
                << indent() << "fb.close();" << endl;
     indent_down();
-    indent(f_service_) << "} catch (Exception e) {" << endl;
+    indent(f_service_) << "} catch (java.lang.Exception e) {" << endl;
     indent_up();
     f_service_ << indent() << "_LOGGER.error(\"Exception writing to internal frame buffer\", e);"
                << endl
@@ -3375,7 +3375,7 @@ void t_java_generator::generate_process_async_function(t_service* tservice, t_fu
   indent_down();
   indent(f_service_) << "}" << endl;
 
-  indent(f_service_) << "public void onError(Exception e) {" << endl;
+  indent(f_service_) << "public void onError(java.lang.Exception e) {" << endl;
   indent_up();
 
   if (tfunction->is_oneway()) {
@@ -3446,7 +3446,7 @@ void t_java_generator::generate_process_async_function(t_service* tservice, t_fu
     f_service_ << indent() << "}" << endl
                << indent() << "try {" << endl
                << indent() << "  fcall.sendResponse(fb,msg,msgType,seqid);" << endl
-               << indent() << "} catch (Exception ex) {" << endl
+               << indent() << "} catch (java.lang.Exception ex) {" << endl
                << indent() << "  _LOGGER.error(\"Exception writing to internal frame buffer\", ex);"
                << endl
                << indent() << "  fb.close();" << endl
@@ -4775,7 +4775,7 @@ void t_java_generator::generate_field_name_constants(ofstream& out, t_struct* ts
   indent(out) << " */" << endl;
   indent(out) << "public static _Fields findByThriftIdOrThrow(int fieldId) {" << endl;
   indent(out) << "  _Fields fields = findByThriftId(fieldId);" << endl;
-  indent(out) << "  if (fields == null) throw new IllegalArgumentException(\"Field \" + fieldId + "
+  indent(out) << "  if (fields == null) throw new java.lang.IllegalArgumentException(\"Field \" + fieldId + "
                  "\" doesn't exist!\");" << endl;
   indent(out) << "  return fields;" << endl;
   indent(out) << "}" << endl << endl;
@@ -4921,7 +4921,7 @@ void t_java_generator::generate_java_struct_write_object(ofstream& out, t_struct
 // generates java method to serialize (in the Java sense) the object
 void t_java_generator::generate_java_struct_read_object(ofstream& out, t_struct* tstruct) {
   indent(out) << "private void readObject(java.io.ObjectInputStream in) throws "
-                 "java.io.IOException, ClassNotFoundException {" << endl;
+                 "java.io.IOException, java.lang.ClassNotFoundException {" << endl;
   indent(out) << "  try {" << endl;
   if (!tstruct->is_union()) {
     switch (needs_isset(tstruct)) {

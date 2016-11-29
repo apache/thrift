@@ -81,6 +81,10 @@ struct Object {
   7: Map somemap,
 }
 
+exception Exception {
+  1: string msg
+}
+
 service AsyncNonblockingService {
   Object mymethod(
     1: Integer integer,
@@ -90,5 +94,5 @@ service AsyncNonblockingService {
     5: Byte bite,
     6: map<i32, Integer> intmap,
     7: Map somemap,
-  );
+  ) throws (1:Exception ex);
 }
