@@ -23,52 +23,43 @@ use std::rc::Rc;
 
 use super::TTransport;
 
-/// Maximum length of the read buffer in bytes.
-const DEFAULT_RBUFFER_SIZE: usize = 4096;
+/// Default capacity of the read buffer in bytes.
+const DEFAULT_RBUFFER_CAPACITY: usize = 4096;
 
-/// Maximum length of the write buffer in bytes..
-const DEFAULT_WBUFFER_SIZE: usize = 4096;
+/// Default capacity of the write buffer in bytes..
+const DEFAULT_WBUFFER_CAPACITY: usize = 4096;
 
 /// A Thrift transport that performs I/O operations
 /// to/from an intermediate buffer to avoid hitting
 /// the underlying transport unnecessarily.
-pub struct TBufferedTransport<T: TTransport> {
-    /// Buffer into which data is read from the underlying
-    /// transport, and from which reads are served.
+pub struct TBufferedTransport<W: TTransport> {
     rbuf: Vec<u8>,
-    /// Position to which callers have read bytes from the
-    /// read buffer.
     rpos: usize,
     rcap: usize,
-    /// Buffer into which data is copied and from which
-    /// writes are pushed to the underlying transport. This
-    /// buffer is not emptied until `io::Write::flush()`
-    /// is called.
     wbuf: Vec<u8>,
-    /// Underlying `TTransport` over which bytes are transferred.
-    inner: Rc<RefCell<Box<T>>>,
+    tran: Rc<RefCell<Box<W>>>,
 }
 
-impl<T: TTransport> TBufferedTransport<T> {
-    pub fn new(inner: Rc<RefCell<Box<T>>>) -> TBufferedTransport<T> {
-        TBufferedTransport::with_capacity(DEFAULT_RBUFFER_SIZE, DEFAULT_WBUFFER_SIZE, inner)
+impl<W: TTransport> TBufferedTransport<W> {
+    pub fn new(wrapped: Rc<RefCell<Box<W>>>) -> TBufferedTransport<W> {
+        TBufferedTransport::with_capacity(DEFAULT_RBUFFER_CAPACITY, DEFAULT_WBUFFER_CAPACITY, wrapped)
     }
 
     // ugh. no function overloading
-    pub fn with_capacity(read_buffer_size: usize, write_buffer_size: usize, inner: Rc<RefCell<Box<T>>>) -> TBufferedTransport<T> {
+    pub fn with_capacity(read_buffer_capacity: usize, write_buffer_capacity: usize, wrapped: Rc<RefCell<Box<W>>>) -> TBufferedTransport<W> {
         TBufferedTransport {
-            rbuf: Vec::with_capacity(read_buffer_size),
+            rbuf: Vec::with_capacity(read_buffer_capacity),
             rpos: 0,
             rcap: 0,
-            wbuf: Vec::with_capacity(write_buffer_size),
-            inner: inner,
+            wbuf: Vec::with_capacity(write_buffer_capacity),
+            tran: wrapped,
         }
     }
 
     fn get_bytes(&mut self) -> io::Result<&[u8]> {
         if self.rpos == self.rbuf.len() {
             self.rpos = 0;
-            self.rcap = try!(self.inner.borrow_mut().read(&mut self.rbuf));
+            self.rcap = try!(self.tran.borrow_mut().read(&mut self.rbuf));
         }
 
         Ok(&self.rbuf[self.rpos..self.rcap])
@@ -79,16 +70,17 @@ impl<T: TTransport> TBufferedTransport<T> {
     }
 }
 
-impl<T: TTransport> Read for TBufferedTransport<T> {
+impl<W: TTransport> Read for TBufferedTransport<W> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let mut bytes_read = 0;
 
+        // FIXME: is there even any need for a loop?
         loop {
             let nread = {
                 let bytes = try!(self.get_bytes());
                 let remaining = buf.len() - bytes_read;
                 let nread = cmp::min(remaining, bytes.len());
-                buf[..bytes_read].copy_from_slice(&bytes[..nread]);
+                buf[bytes_read..(bytes_read + nread)].copy_from_slice(&bytes[..nread]);
                 nread
             };
 
@@ -104,7 +96,7 @@ impl<T: TTransport> Read for TBufferedTransport<T> {
     }
 }
 
-impl<T: TTransport> Write for TBufferedTransport<T> {
+impl<W: TTransport> Write for TBufferedTransport<W> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         let copy_count = cmp::min(buf.len(), self.wbuf.capacity() - self.wbuf.len());
         self.wbuf.extend_from_slice(&buf[..copy_count]);
@@ -113,8 +105,8 @@ impl<T: TTransport> Write for TBufferedTransport<T> {
     }
 
     fn flush(&mut self) -> io::Result<()> {
-        try!(self.inner.borrow_mut().write_all(&self.wbuf));
-        try!(self.inner.borrow_mut().flush());
+        try!(self.tran.borrow_mut().write_all(&self.wbuf));
+        try!(self.tran.borrow_mut().flush());
         self.wbuf.clear();
         Ok(())
     }
@@ -160,12 +152,12 @@ mod tests {
 
         let b: [u8; 5] = [0, 1, 2, 3, 4];
         assert!(t.write(&b).is_ok());
-        assert_eq!(t.inner.borrow_mut().write_buffer().len(), 0);
+        assert_eq!(t.tran.borrow_mut().write_buffer().len(), 0);
 
         assert!(t.flush().is_ok());
 
         {
-            let inner = t.inner.borrow_mut();
+            let inner = t.tran.borrow_mut();
             let underlying_buffer = inner.write_buffer();
             assert_eq!(b, underlying_buffer);
         }
