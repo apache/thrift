@@ -25,11 +25,12 @@ use try_from::TryFrom;
 use ::{ProtocolError, ProtocolErrorKind};
 use ::transport::TTransport;
 
-pub use self::binary::TBinaryProtocol;
-
 mod binary;
 mod compact;
 mod multiplexed;
+
+pub use self::binary::TBinaryProtocol;
+pub use self::multiplexed::TMultiplexedProtocol;
 
 /// Maximum depth to which we will skip a Thrift field.
 const MAXIMUM_SKIP_DEPTH: i8 = 64;
@@ -178,7 +179,7 @@ pub trait TProtocol {
     // utility (DO NOT USE IN GENERATED CODE!!!!)
     //
 
-    fn write_byte(&mut self, b: u8) -> ::Result<()>;
+    fn write_byte(&mut self, b: u8) -> ::Result<()>; // FIXME: REMOVE
     fn read_byte(&mut self) -> ::Result<u8>;
 }
 
