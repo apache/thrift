@@ -31,9 +31,13 @@ const DEFAULT_WBUFFER_CAPACITY: usize = 4096;
 
 /// A Thrift transport that performs I/O operations
 /// to/from an intermediate buffer to avoid hitting
-/// the underlying transport unnecessarily.
+/// the underlying transport unnecessarily. All writes
+/// are written to this object's intermediate
+/// buffer and only written to the underlying transport
+/// on a `flush`. All reads first fill this object's
+/// intermediate buffer, and are served from there.
 pub struct TBufferedTransport<W: TTransport> {
-    rbuf: Vec<u8>,
+    rbuf: Box<[u8]>,
     rpos: usize,
     rcap: usize,
     wbuf: Vec<u8>,
@@ -41,14 +45,19 @@ pub struct TBufferedTransport<W: TTransport> {
 }
 
 impl<I: TTransport> TBufferedTransport<I> {
+    /// Create a `TBufferedTransport` with the default
+    /// read and write buffer size that wraps the `inner`
+    /// `TTransport`.
     pub fn new(inner: Rc<RefCell<Box<I>>>) -> TBufferedTransport<I> {
         TBufferedTransport::with_capacity(DEFAULT_RBUFFER_CAPACITY, DEFAULT_WBUFFER_CAPACITY, inner)
     }
 
-    // ugh. no function overloading
+    /// Create a `TBufferedTransport` with a read buffer of size
+    /// `read_buffer_capacity` and a write buffer of size `write_buffer_capacity`
+    /// that wraps the `inner` `TTransport`.
     pub fn with_capacity(read_buffer_capacity: usize, write_buffer_capacity: usize, inner: Rc<RefCell<Box<I>>>) -> TBufferedTransport<I> {
         TBufferedTransport {
-            rbuf: Vec::with_capacity(read_buffer_capacity),
+            rbuf: vec![0; read_buffer_capacity].into_boxed_slice(),
             rpos: 0,
             rcap: 0,
             wbuf: Vec::with_capacity(write_buffer_capacity),
@@ -57,7 +66,7 @@ impl<I: TTransport> TBufferedTransport<I> {
     }
 
     fn get_bytes(&mut self) -> io::Result<&[u8]> {
-        if self.rpos == self.rbuf.len() {
+        if self.rcap - self.rpos == 0 {
             self.rpos = 0;
             self.rcap = try!(self.inner.borrow_mut().read(&mut self.rbuf));
         }
@@ -66,7 +75,8 @@ impl<I: TTransport> TBufferedTransport<I> {
     }
 
     fn consume(&mut self, consumed: usize) {
-        self.rpos += cmp::min(self.rcap, self.rpos + consumed);
+        // TODO: was a bug here += <-- test somehow
+        self.rpos = cmp::min(self.rcap, self.rpos + consumed);
     }
 }
 
@@ -74,18 +84,17 @@ impl<I: TTransport> Read for TBufferedTransport<I> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let mut bytes_read = 0;
 
-        // FIXME: is there even any need for a loop?
         loop {
             let nread = {
-                let bytes = try!(self.get_bytes());
-                let remaining = buf.len() - bytes_read;
-                let nread = cmp::min(remaining, bytes.len());
-                buf[bytes_read..(bytes_read + nread)].copy_from_slice(&bytes[..nread]);
+                let avail_bytes = try!(self.get_bytes());
+                let avail_space = buf.len() - bytes_read;
+                let nread = cmp::min(avail_space, avail_bytes.len());
+                buf[bytes_read..(bytes_read + nread)].copy_from_slice(&avail_bytes[..nread]);
                 nread
             };
 
-            bytes_read += nread;
             self.consume(nread);
+            bytes_read += nread;
 
             if bytes_read == buf.len() || nread == 0 {
                 break
@@ -98,10 +107,10 @@ impl<I: TTransport> Read for TBufferedTransport<I> {
 
 impl<I: TTransport> Write for TBufferedTransport<I> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        let copy_count = cmp::min(buf.len(), self.wbuf.capacity() - self.wbuf.len());
-        self.wbuf.extend_from_slice(&buf[..copy_count]);
+        let avail_bytes = cmp::min(buf.len(), self.wbuf.capacity() - self.wbuf.len());
+        self.wbuf.extend_from_slice(&buf[..avail_bytes]);
         assert!(self.wbuf.len() <= self.wbuf.capacity(), "copy overflowed buffer");
-        Ok(copy_count)
+        Ok(avail_bytes)
     }
 
     fn flush(&mut self) -> io::Result<()> {
@@ -122,36 +131,164 @@ mod tests {
     use ::transport::mem::TBufferTransport;
 
     #[test]
-    fn return_zero_if_nothing_can_be_read() {
-        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(10, 5))));
-        let mut t = TBufferedTransport::with_capacity(10, 10, i);
+    fn must_return_zero_if_read_buffer_is_empty() {
+        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(10, 0))));
+        let mut t = TBufferedTransport::with_capacity(10, 0, i);
 
         let mut b = vec![0; 10];
-        let r = t.read(&mut b);
+        let read_result = t.read(&mut b);
 
-        assert!(r.is_ok());
-        assert_eq!(r.unwrap(), 0);
+        assert_eq!(read_result.unwrap(), 0);
     }
 
     #[test]
-    fn return_zero_if_nothing_can_be_written() {
+    fn must_return_zero_if_caller_reads_into_zero_capacity_buffer() {
+        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(10, 0))));
+        let mut t = TBufferedTransport::with_capacity(10, 0, i);
+
+        let read_result = t.read(&mut []);
+
+        assert_eq!(read_result.unwrap(), 0);
+    }
+
+    #[test]
+    fn must_return_zero_if_nothing_more_can_be_read() {
+        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(4, 0))));
+        let mut t = TBufferedTransport::with_capacity(4, 0, i);
+
+        t.inner.borrow_mut().set_readable_bytes(&[0, 1, 2, 3]);
+
+        // read buffer is exactly the same size as bytes available
+        let mut buf = vec![0u8; 4];
+        let read_result = t.read(&mut buf);
+
+        // we've read exactly 4 bytes
+        assert_eq!(read_result.unwrap(), 4);
+        assert_eq!(&buf, &[0, 1, 2, 3]);
+
+        // try read again
+        let buf_again = vec![0u8; 4];
+        let read_result = t.read(&mut buf);
+
+        // this time, 0 bytes and we haven't changed the buffer
+        assert_eq!(read_result.unwrap(), 0);
+        assert_eq!(&buf_again, &[0, 0, 0, 0])
+    }
+
+    #[test]
+    fn must_fill_user_buffer_with_only_as_many_bytes_as_available() {
+        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(4, 0))));
+        let mut t = TBufferedTransport::with_capacity(4, 0, i);
+
+        t.inner.borrow_mut().set_readable_bytes(&[0, 1, 2, 3]);
+
+        // read buffer is much larger than the bytes available
+        let mut buf = vec![0u8; 8];
+        let read_result = t.read(&mut buf);
+
+        // we've read exactly 4 bytes
+        assert_eq!(read_result.unwrap(), 4);
+        assert_eq!(&buf[..4], &[0, 1, 2, 3]);
+
+        // try read again
+        let read_result = t.read(&mut buf[4..]);
+
+        // this time, 0 bytes and we haven't changed the buffer
+        assert_eq!(read_result.unwrap(), 0);
+        assert_eq!(&buf, &[0, 1, 2, 3, 0, 0, 0, 0])
+    }
+
+    #[test]
+    fn must_read_successfully() {
+        // this test involves a few loops within the buffered transport
+        // itself where it has to drain the underlying transport in order
+        // to service a read
+
+        // we have a much smaller buffer than the
+        // underlying transport has bytes available
+        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(10, 0))));
+        let mut t = TBufferedTransport::with_capacity(2, 0, i);
+
+        // fill the underlying transport's byte buffer
+        let mut readable_bytes = [0u8; 10];
+        for i in 0..10 { readable_bytes[i] = i as u8; }
+        t.inner.borrow_mut().set_readable_bytes(&readable_bytes);
+
+        // we ask to read into a buffer that's much larger
+        // than the one the buffered transport has; as a result
+        // it's going to have to keep asking the underlying
+        // transport for more bytes
+        let mut buf = [0u8; 8];
+        let read_result = t.read(&mut buf);
+
+        // we should have read 8 bytes
+        assert_eq!(read_result.unwrap(), 8);
+        assert_eq!(&buf, &[0, 1, 2, 3, 4, 5, 6, 7]);
+
+        // let's clear out the buffer and try read again
+        for i in 0..8 { buf[i] = 0; }
+        let read_result = t.read(&mut buf);
+
+        // this time we were only able to read 2 bytes
+        // (all that's remaining from the underlying transport)
+        // let's also check that the remaining bytes are untouched
+        assert_eq!(read_result.unwrap(), 2);
+        assert_eq!(&buf[0..2], &[8, 9]);
+        assert_eq!(&buf[2..], &[0, 0, 0, 0, 0, 0]);
+
+        // try read again (we should get 0)
+        // and all the existing bytes were untouched
+        let read_result = t.read(&mut buf);
+        assert_eq!(read_result.unwrap(), 0);
+        assert_eq!(&buf[0..2], &[8, 9]);
+        assert_eq!(&buf[2..], &[0, 0, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn must_return_zero_if_nothing_can_be_written() {
         let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(0, 0))));
         let mut t = TBufferedTransport::with_capacity(0, 0, i);
 
-        let mut b = vec![0; 10];
-        let r = t.write(&mut b);
+        let b = vec![0; 10];
+        let r = t.write(&b);
 
-        assert!(r.is_ok());
         assert_eq!(r.unwrap(), 0);
     }
 
     #[test]
-    fn only_write_on_flush() {
+    fn must_return_zero_if_caller_calls_write_with_empty_buffer() {
+        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(0, 10))));
+        let mut t = TBufferedTransport::with_capacity(0, 10, i);
+
+        let r = t.write(&[]);
+
+        assert_eq!(r.unwrap(), 0);
+        assert_eq!(t.inner.borrow_mut().write_buffer(), &[]);
+    }
+
+    #[test]
+    fn must_return_zero_if_write_buffer_full() {
+        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(0, 0))));
+        let mut t = TBufferedTransport::with_capacity(0, 4, i);
+
+        let b = [0x00, 0x01, 0x02, 0x03];
+
+        // we've now filled the write buffer
+        let r = t.write(&b);
+        assert_eq!(r.unwrap(), 4);
+
+        // try write the same bytes again - nothing should be writable
+        let r = t.write(&b);
+        assert_eq!(r.unwrap(), 0);
+    }
+
+    #[test]
+    fn must_only_write_to_inner_transport_on_flush() {
         let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(10, 10))));
         let mut t = TBufferedTransport::new(i);
 
         let b: [u8; 5] = [0, 1, 2, 3, 4];
-        assert!(t.write(&b).is_ok());
+        assert_eq!(t.write(&b).unwrap(), 5);
         assert_eq!(t.inner.borrow_mut().write_buffer().len(), 0);
 
         assert!(t.flush().is_ok());
@@ -164,5 +301,34 @@ mod tests {
     }
 
     #[test]
-    fn return_zero_if_read_called_with_zero_capacity_buffer() {}
+    fn must_write_successfully_after_flush() {
+        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(0, 5))));
+        let mut t = TBufferedTransport::with_capacity(0, 5, i);
+
+        // write and flush
+        let b: [u8; 5] = [0, 1, 2, 3, 4];
+        assert_eq!(t.write(&b).unwrap(), 5);
+        assert!(t.flush().is_ok());
+
+        // check the flushed bytes
+        {
+            let inner = t.inner.borrow_mut();
+            let underlying_buffer = inner.write_buffer();
+            assert_eq!(b, underlying_buffer);
+        }
+
+        // reset our underlying transport
+        t.inner.borrow_mut().empty_write_buffer();
+
+        // write and flush again
+        assert_eq!(t.write(&b).unwrap(), 5);
+        assert!(t.flush().is_ok());
+
+        // check the flushed bytes
+        {
+            let inner = t.inner.borrow_mut();
+            let underlying_buffer = inner.write_buffer();
+            assert_eq!(b, underlying_buffer);
+        }
+    }
 }

@@ -57,13 +57,15 @@ fn main() {
     let t = match transport {
         "buffered" => {
             let mut t = rift::transport::TTcpTransport::new();
-            match t.open(&format!("{}:{}", host, port)) {
+            let t = match t.open(&format!("{}:{}", host, port)) {
                 Ok(()) => t,
                 Err(e) => { // FIXME: expose "open" through the client interface so I don't have to early open the transport
                     println!("failed to open transport: {:?}", e);
                     std::process::exit(1)
                 }
-            }
+            };
+            let t = Rc::new(RefCell::new(Box::new(t)));
+            rift::transport::TBufferedTransport::new(t)
         },
         unmatched => panic!(format!("unsupported transport {}", unmatched)),
     };
