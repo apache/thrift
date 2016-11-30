@@ -21,199 +21,199 @@ use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifie
 /// over a single endpoint shared with other Thrift services.
 /// This construct can only be used when paired with a
 /// corresponding `TMultiplexedProcessor` at the receiver.
-pub struct TMultiplexedProtocol<P: TProtocol> {
+pub struct TMultiplexedProtocol<I: TProtocol> {
     service_name: String,
-    wrapped: P,
+    inner: I,
 }
 
-impl <P: TProtocol> TMultiplexedProtocol<P> {
+impl <I: TProtocol> TMultiplexedProtocol<I> {
     /// Create a new `TMultiplexedProtocol` that:
     ///
     /// 1. Wraps an `wrapped` `TProtocol` (to which it delegates message
     /// serialization and deserialization)
     /// 2. Identifies outgoing service calls as originating from the
     /// `service_name` Thrift service
-    pub fn new(service_name: &str, wrapped: P) -> TMultiplexedProtocol<P> {
-        TMultiplexedProtocol { service_name: service_name.to_owned(), wrapped: wrapped }
+    pub fn new(service_name: &str, wrapped: I) -> TMultiplexedProtocol<I> {
+        TMultiplexedProtocol { service_name: service_name.to_owned(), inner: wrapped }
     }
 }
 
 // FIXME: avoid passthrough methods
-impl <P: TProtocol> TProtocol for TMultiplexedProtocol<P> {
+impl <I: TProtocol> TProtocol for TMultiplexedProtocol<I> {
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
         match identifier.message_type { // FIXME: is there a better way to override identifier here?
             TMessageType::Call | TMessageType::OneWay => {
                 let identifier = TMessageIdentifier { name: format!("{}:{}", self.service_name, identifier.name), .. *identifier };
-                self.wrapped.write_message_begin(&identifier)
+                self.inner.write_message_begin(&identifier)
             },
             _ => {
-                self.wrapped.write_message_begin(&identifier)
+                self.inner.write_message_begin(&identifier)
             },
         }
     }
 
     fn write_message_end(&mut self) -> ::Result<()> {
-        self.wrapped.write_message_end()
+        self.inner.write_message_end()
     }
 
     fn write_struct_begin(&mut self, identifier: &TStructIdentifier) -> ::Result<()> {
-        self.wrapped.write_struct_begin(identifier)
+        self.inner.write_struct_begin(identifier)
     }
 
     fn write_struct_end(&mut self) -> ::Result<()> {
-        self.wrapped.write_struct_end()
+        self.inner.write_struct_end()
     }
 
     fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> ::Result<()> {
-       self.wrapped.write_field_begin(identifier)
+       self.inner.write_field_begin(identifier)
     }
 
     fn write_field_end(&mut self) -> ::Result<()> {
-        self.wrapped.write_field_end()
+        self.inner.write_field_end()
     }
 
     fn write_field_stop(&mut self) -> ::Result<()> {
-        self.wrapped.write_field_stop()
+        self.inner.write_field_stop()
     }
 
     fn write_bytes(&mut self, b: &[u8]) -> ::Result<()> {
-        self.wrapped.write_bytes(b)
+        self.inner.write_bytes(b)
     }
 
     fn write_bool(&mut self, b: bool) -> ::Result<()> {
-        self.wrapped.write_bool(b)
+        self.inner.write_bool(b)
     }
 
     fn write_i8(&mut self, i: i8) -> ::Result<()> {
-        self.wrapped.write_i8(i)
+        self.inner.write_i8(i)
     }
 
     fn write_i16(&mut self, i: i16) -> ::Result<()> {
-        self.wrapped.write_i16(i)
+        self.inner.write_i16(i)
     }
 
     fn write_i32(&mut self, i: i32) -> ::Result<()> {
-        self.wrapped.write_i32(i)
+        self.inner.write_i32(i)
     }
 
     fn write_i64(&mut self, i: i64) -> ::Result<()> {
-        self.wrapped.write_i64(i)
+        self.inner.write_i64(i)
     }
 
     fn write_double(&mut self, d: f64) -> ::Result<()> {
-        self.wrapped.write_double(d)
+        self.inner.write_double(d)
     }
 
     fn write_string(&mut self, s: &str) -> ::Result<()> {
-        self.wrapped.write_string(s)
+        self.inner.write_string(s)
     }
 
     fn write_list_begin(&mut self, identifier: &TListIdentifier) -> ::Result<()> {
-        self.wrapped.write_list_begin(identifier)
+        self.inner.write_list_begin(identifier)
     }
 
     fn write_list_end(&mut self) -> ::Result<()> {
-        self.wrapped.write_list_end()
+        self.inner.write_list_end()
     }
 
     fn write_set_begin(&mut self, identifier: &TSetIdentifier) -> ::Result<()> {
-        self.wrapped.write_set_begin(identifier)
+        self.inner.write_set_begin(identifier)
     }
 
     fn write_set_end(&mut self) -> ::Result<()> {
-        self.wrapped.write_set_end()
+        self.inner.write_set_end()
     }
 
     fn write_map_begin(&mut self, identifier: &TMapIdentifier) -> ::Result<()> {
-        self.wrapped.write_map_begin(identifier)
+        self.inner.write_map_begin(identifier)
     }
 
     fn write_map_end(&mut self) -> ::Result<()> {
-        self.wrapped.write_map_end()
+        self.inner.write_map_end()
     }
 
     fn flush(&mut self) -> ::Result<()> {
-        self.wrapped.flush()
+        self.inner.flush()
     }
 
     fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier> {
-       self.wrapped.read_message_begin()
+       self.inner.read_message_begin()
     }
 
     fn read_message_end(&mut self) -> ::Result<()> {
-        self.wrapped.read_message_end()
+        self.inner.read_message_end()
     }
 
     fn read_struct_begin(&mut self) -> ::Result<Option<TStructIdentifier>> {
-        self.wrapped.read_struct_begin()
+        self.inner.read_struct_begin()
     }
 
     fn read_struct_end(&mut self) -> ::Result<()> {
-        self.wrapped.read_struct_end()
+        self.inner.read_struct_end()
     }
 
     fn read_field_begin(&mut self) -> ::Result<TFieldIdentifier> {
-        self.wrapped.read_field_begin()
+        self.inner.read_field_begin()
     }
 
     fn read_field_end(&mut self) -> ::Result<()> {
-        self.wrapped.read_field_end()
+        self.inner.read_field_end()
     }
 
     fn read_bytes(&mut self) -> ::Result<Vec<u8>> {
-        self.wrapped.read_bytes()
+        self.inner.read_bytes()
     }
 
     fn read_bool(&mut self) -> ::Result<bool> {
-        self.wrapped.read_bool()
+        self.inner.read_bool()
     }
 
     fn read_i8(&mut self) -> ::Result<i8> {
-        self.wrapped.read_i8()
+        self.inner.read_i8()
     }
 
     fn read_i16(&mut self) -> ::Result<i16> {
-        self.wrapped.read_i16()
+        self.inner.read_i16()
     }
 
     fn read_i32(&mut self) -> ::Result<i32> {
-        self.wrapped.read_i32()
+        self.inner.read_i32()
     }
 
     fn read_i64(&mut self) -> ::Result<i64> {
-        self.wrapped.read_i64()
+        self.inner.read_i64()
     }
 
     fn read_double(&mut self) -> ::Result<f64> {
-        self.wrapped.read_double()
+        self.inner.read_double()
     }
 
     fn read_string(&mut self) -> ::Result<String> {
-        self.wrapped.read_string()
+        self.inner.read_string()
     }
 
     fn read_list_begin(&mut self) -> ::Result<TListIdentifier> {
-        self.wrapped.read_list_begin()
+        self.inner.read_list_begin()
     }
 
     fn read_list_end(&mut self) -> ::Result<()> {
-        self.wrapped.read_list_end()
+        self.inner.read_list_end()
     }
 
     fn read_set_begin(&mut self) -> ::Result<TSetIdentifier> {
-        self.wrapped.read_set_begin()
+        self.inner.read_set_begin()
     }
 
     fn read_set_end(&mut self) -> ::Result<()> {
-        self.wrapped.read_set_end()
+        self.inner.read_set_end()
     }
 
     fn read_map_begin(&mut self) -> ::Result<TMapIdentifier> {
-       self.wrapped.read_map_begin()
+       self.inner.read_map_begin()
     }
 
     fn read_map_end(&mut self) -> ::Result<()> {
-        self.wrapped.read_map_end()
+        self.inner.read_map_end()
     }
 
     //
@@ -221,10 +221,10 @@ impl <P: TProtocol> TProtocol for TMultiplexedProtocol<P> {
     //
 
     fn write_byte(&mut self, b: u8) -> ::Result<()> { // FIXME: remove
-        self.wrapped.write_byte(b)
+        self.inner.write_byte(b)
     }
 
     fn read_byte(&mut self) -> ::Result<u8> { // FIXME: remove
-        self.wrapped.read_byte()
+        self.inner.read_byte()
     }
 }
