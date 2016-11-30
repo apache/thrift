@@ -349,7 +349,7 @@ private:
 
   // conditions used to block when the buffer is full or empty
   Monitor notFull_, notEmpty_;
-  volatile bool closing_;
+  bool closing_;
 
   // To keep track of whether the buffer has been flushed
   Monitor flushed_;

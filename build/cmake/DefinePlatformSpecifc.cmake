@@ -37,6 +37,7 @@ if(MSVC)
     # For Debug build types, append a "d" to the library names.
     set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix" FORCE)
     set(CMAKE_RELEASE_POSTFIX "" CACHE STRING "Set release library postfix" FORCE)
+    set(CMAKE_RELWITHDEBINFO_POSTFIX "" CACHE STRING "Set release library postfix" FORCE)
 
     # Build using /MT option instead of /MD if the WITH_MT options is set
     if(WITH_MT)
@@ -44,9 +45,11 @@ if(MSVC)
                 CMAKE_CXX_FLAGS
                 CMAKE_CXX_FLAGS_DEBUG
                 CMAKE_CXX_FLAGS_RELEASE
+                CMAKE_CXX_FLAGS_RELWITHDEBINFO
                 CMAKE_C_FLAGS
                 CMAKE_C_FLAGS_DEBUG
                 CMAKE_C_FLAGS_RELEASE
+                CMAKE_C_FLAGS_RELWITHDEBINFO
                 )
         foreach(CompilerFlag ${CompilerFlags})
           string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
@@ -92,3 +95,12 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -Wall -Wextra")
   endif()
 endif()
+
+# If gcc older than 4.8 is detected, disable new compiler plug-in support (see THRIFT-3937)
+set(PLUGIN_COMPILER_NOT_TOO_OLD ON) # simplifies messaging in DefineOptions summary
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8" AND WITH_PLUGIN)
+  message(STATUS "Disabling compiler plug-in support to work with older gcc compiler")
+  set(WITH_PLUGIN OFF)
+  set(PLUGIN_COMPILER_NOT_TOO_OLD OFF)
+endif()
+

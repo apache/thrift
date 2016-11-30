@@ -17,13 +17,6 @@
 # under the License.
 #
 
-# Find required packages
-if(WITH_BOOSTTHREADS)
-  find_package(Boost 1.53.0 REQUIRED COMPONENTS system thread)
-else()
-  find_package(Boost 1.53.0 REQUIRED)
-endif()
-
 include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 include_directories(src)
 

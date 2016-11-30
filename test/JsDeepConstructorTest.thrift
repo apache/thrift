@@ -9,6 +9,8 @@ struct Complex {
   4: map<string,Simple> struct_map_field
   5: list<set<map<string,list<Simple>>>> struct_nested_containers_field
   6: map<string, list<map<string,Simple>> > struct_nested_containers_field2
+  7: list<list<string>> list_of_list_field
+  8: list<list<list<string>>> list_of_list_of_list_field
 }
 
 struct ComplexList {

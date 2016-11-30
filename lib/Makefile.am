@@ -21,7 +21,10 @@ SUBDIRS = json xml
 PRECROSS_TARGET =
 
 if WITH_CPP
+# cpp dir is picked directly by plugin build
+if !WITH_PLUGIN
 SUBDIRS += cpp
+endif
 endif
 
 if WITH_C_GLIB
@@ -30,7 +33,6 @@ endif
 
 if WITH_MONO
 SUBDIRS += csharp
-PRECROSS_TARGET += precross-csharp
 endif
 
 if WITH_JAVA

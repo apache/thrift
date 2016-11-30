@@ -28,7 +28,11 @@ moc__%.cpp: %.h
 SUBDIRS = .
 
 if WITH_TESTS
+# This file is needed by compiler with plugin, while test/Makefile.am needs compiler
+# So test directory is directly picked by top level Makefile.am for plugin build
+if !WITH_PLUGIN
 SUBDIRS += test
+endif
 endif
 
 pkgconfigdir = $(libdir)/pkgconfig

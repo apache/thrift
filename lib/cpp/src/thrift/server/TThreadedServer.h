@@ -34,8 +34,6 @@ namespace server {
  * Manage clients using threads - threads are created one for each client and are
  * released when the client disconnects.  This server is used to make a dynamically
  * scalable server up to the concurrent connection limit.
- *
- * The thread factory will be changed to a non-detached type.
  */
 class TThreadedServer : public TServerFramework {
 public:
@@ -46,7 +44,7 @@ public:
       const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory,
       const boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>& threadFactory
       = boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-          new apache::thrift::concurrency::PlatformThreadFactory));
+          new apache::thrift::concurrency::PlatformThreadFactory(false)));
 
   TThreadedServer(
       const boost::shared_ptr<apache::thrift::TProcessor>& processor,
@@ -55,7 +53,7 @@ public:
       const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory,
       const boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>& threadFactory
       = boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-          new apache::thrift::concurrency::PlatformThreadFactory));
+          new apache::thrift::concurrency::PlatformThreadFactory(false)));
 
   TThreadedServer(
       const boost::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
@@ -66,7 +64,7 @@ public:
       const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory,
       const boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>& threadFactory
       = boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-          new apache::thrift::concurrency::PlatformThreadFactory));
+          new apache::thrift::concurrency::PlatformThreadFactory(false)));
 
   TThreadedServer(
       const boost::shared_ptr<apache::thrift::TProcessor>& processor,
@@ -77,7 +75,7 @@ public:
       const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory,
       const boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>& threadFactory
       = boost::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-          new apache::thrift::concurrency::PlatformThreadFactory));
+          new apache::thrift::concurrency::PlatformThreadFactory(false)));
 
   virtual ~TThreadedServer();
 
@@ -118,17 +116,14 @@ protected:
   public:
     TConnectedClientRunner(const boost::shared_ptr<TConnectedClient>& pClient);
     virtual ~TConnectedClientRunner();
-    void join();
     void run() /* override */;
-    void setThread(const boost::shared_ptr<apache::thrift::concurrency::Thread>& pThread);
   private:
     boost::shared_ptr<TConnectedClient> pClient_;
-    boost::shared_ptr<apache::thrift::concurrency::Thread> pThread_;
   };
 
   apache::thrift::concurrency::Monitor clientMonitor_;
 
-  typedef std::map<TConnectedClient *, boost::shared_ptr<TConnectedClientRunner> > ClientMap;
+  typedef std::map<TConnectedClient *, boost::shared_ptr<apache::thrift::concurrency::Thread> > ClientMap;
 
   /**
    * A map of active clients

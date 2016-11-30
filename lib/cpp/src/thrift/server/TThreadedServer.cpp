@@ -95,7 +95,6 @@ TThreadedServer::~TThreadedServer() {
 }
 
 void TThreadedServer::serve() {
-  threadFactory_->setDetached(false);
   TServerFramework::serve();
 
   // Ensure post-condition of no active clients
@@ -118,15 +117,16 @@ void TThreadedServer::drainDeadClients() {
 
 void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient) {
   Synchronized sync(clientMonitor_);
-  ClientMap::iterator it = activeClientMap_.insert(ClientMap::value_type(pClient.get(), boost::make_shared<TConnectedClientRunner>(pClient))).first;
-  boost::shared_ptr<apache::thrift::concurrency::Thread> pThread = threadFactory_->newThread(it->second);
-  it->second->setThread(pThread);
+  boost::shared_ptr<TConnectedClientRunner> pRunnable = boost::make_shared<TConnectedClientRunner>(pClient);
+  boost::shared_ptr<Thread> pThread = threadFactory_->newThread(pRunnable);
+  pRunnable->thread(pThread);
+  activeClientMap_.insert(ClientMap::value_type(pClient.get(), pThread));
   pThread->start();
 }
 
 void TThreadedServer::onClientDisconnected(TConnectedClient* pClient) {
   Synchronized sync(clientMonitor_);
-  drainDeadClients();	// use the outgoing thread to do some maintenance on our dead client backlog
+  drainDeadClients(); // use the outgoing thread to do some maintenance on our dead client backlog
   ClientMap::iterator it = activeClientMap_.find(pClient);
   ClientMap::iterator end = it;
   deadClientMap_.insert(it, ++end);
@@ -143,18 +143,9 @@ TThreadedServer::TConnectedClientRunner::TConnectedClientRunner(const boost::sha
 TThreadedServer::TConnectedClientRunner::~TConnectedClientRunner() {
 }
 
-void TThreadedServer::TConnectedClientRunner::join() {
-  pThread_->join();
-}
-
 void TThreadedServer::TConnectedClientRunner::run() /* override */ {
   pClient_->run();  // Run the client
   pClient_.reset(); // The client is done - release it here rather than in the destructor for safety
-}
-
-void TThreadedServer::TConnectedClientRunner::setThread(
-		const boost::shared_ptr<apache::thrift::concurrency::Thread>& pThread) {
-  pThread_ = pThread;
 }
 
 }

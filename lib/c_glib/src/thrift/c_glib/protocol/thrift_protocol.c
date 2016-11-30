@@ -485,7 +485,7 @@ thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type, GError **error)
         result += thrift_protocol_read_struct_end (protocol, error);
         return result;
       }
-    case T_MAP:
+    case T_SET:
       {
         guint32 result = 0;
         ThriftType elem_type;
@@ -497,6 +497,22 @@ thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type, GError **error)
           result += thrift_protocol_skip (protocol, elem_type, error);
         }
         result += thrift_protocol_read_set_end (protocol, error);
+        return result;
+      }
+    case T_MAP:
+      {
+        guint32 result = 0;
+        ThriftType elem_type;
+        ThriftType key_type;
+        guint32 i, size;
+        result += thrift_protocol_read_map_begin (protocol, &key_type, &elem_type, &size,
+                                                  error);
+        for (i = 0; i < size; i++)
+        {
+          result += thrift_protocol_skip (protocol, key_type, error);
+          result += thrift_protocol_skip (protocol, elem_type, error);
+        }
+        result += thrift_protocol_read_map_end (protocol, error);
         return result;
       }
     case T_LIST:

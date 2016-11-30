@@ -21,7 +21,6 @@ DESTDIR ?= /
 
 if WITH_PY3
 py3-build:
-	$(PIP3) install -r requirements.txt || $(PIP3) install --user -r requirements.txt
 	$(PYTHON3) setup.py build
 py3-test: py3-build
 	$(PYTHON3) test/thrift_json.py
@@ -32,7 +31,6 @@ py3-test:
 endif
 
 all-local: py3-build
-	$(PIP) install -r requirements.txt || $(PIP) install --user -r requirements.txt
 	$(PYTHON) setup.py build
 
 # We're ignoring prefix here because site-packages seems to be
@@ -40,7 +38,6 @@ all-local: py3-build
 # Old version (can't put inline because it's not portable).
 #$(PYTHON) setup.py install --prefix=$(prefix) --root=$(DESTDIR) $(PYTHON_SETUPUTIL_ARGS)
 install-exec-hook:
-	$(PIP) install -r requirements.txt
 	$(PYTHON) setup.py install --root=$(DESTDIR) --prefix=$(PY_PREFIX) $(PYTHON_SETUPUTIL_ARGS)
 
 clean-local:
@@ -54,7 +51,6 @@ EXTRA_DIST = \
 	CMakeLists.txt \
 	coding_standards.md \
 	compat \
-	requirements.txt \
 	setup.py \
 	setup.cfg \
 	src \
