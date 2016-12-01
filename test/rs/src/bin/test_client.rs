@@ -25,6 +25,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 use std::rc::Rc;
 
+use rift::transport::{TBufferedTransport, TFramedTransport, TTcpTransport, TTransport};
 use rift_test::*;
 
 // FIXME: take structs by reference
@@ -54,23 +55,19 @@ fn main() {
     let transport = matches.value_of("transport").unwrap_or("buffered");
     let protocol = matches.value_of("protocol").unwrap_or("binary");
 
-    let t = match transport {
+    let t: Box<TTransport> = match transport {
         "buffered" => {
-            let mut t = rift::transport::TTcpTransport::new();
-            let t = match t.open(&format!("{}:{}", host, port)) {
-                Ok(()) => t,
-                Err(e) => { // FIXME: expose "open" through the client interface so I don't have to early open the transport
-                    println!("failed to open transport: {:?}", e);
-                    std::process::exit(1)
-                }
-            };
-            let t = Rc::new(RefCell::new(Box::new(t)));
-            rift::transport::TBufferedTransport::new(t)
+            let t = open_tcp_transport(host, port);
+            Box::new(TBufferedTransport::new(t))
+        },
+        "framed" => {
+            let t = open_tcp_transport(host, port);
+            Box::new(TFramedTransport::new(t))
         },
         unmatched => panic!(format!("unsupported transport {}", unmatched)),
     };
 
-    let t = Rc::new(RefCell::new(Box::new(t)));
+    let t = Rc::new(RefCell::new(t));
 
     let p = match protocol {
         "binary" => rift::protocol::TBinaryProtocol { strict: true, transport: t.clone() },
@@ -90,6 +87,18 @@ fn main() {
             Ok(()) => (),
         }
     }
+}
+
+fn open_tcp_transport(host: &str, port: u16) -> Rc<RefCell<Box<TTcpTransport>>> {
+    let mut t = TTcpTransport::new();
+    let t = match t.open(&format!("{}:{}", host, port)) {
+        Ok(()) => t,
+        Err(e) => { // FIXME: expose "open" through the client interface so I don't have to early open the transport
+            println!("failed to open transport: {:?}", e);
+            std::process::exit(1)
+        }
+    };
+    Rc::new(RefCell::new(Box::new(t)))
 }
 
 fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result<(), rift::Error> {
