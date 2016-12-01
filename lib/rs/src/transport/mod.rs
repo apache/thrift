@@ -48,6 +48,7 @@ mod socket;
 pub mod mem;
 
 pub use self::buffered::TBufferedTransport;
+pub use self::framed::TFramedTransport;
 pub use self::socket::TTcpTransport;
 
 /// Marker trait identifying a `TTransport` that
