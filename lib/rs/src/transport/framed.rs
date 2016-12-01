@@ -36,7 +36,6 @@ pub struct TFramedTransport<I: TTransport> {
     rcap: usize,
     wbuf: Box<[u8]>,
     wpos: usize,
-    wcap: usize,
     inner: Rc<RefCell<Box<I>>>,
 }
 
@@ -45,7 +44,6 @@ impl <I: TTransport> TFramedTransport<I> {
         TFramedTransport::with_capacity(WRITE_BUFFER_CAPACITY, DEFAULT_WBUFFER_CAPACITY, inner)
     }
 
-    /// Note: 4 bytes added for framing header to write buffer capacity
     pub fn with_capacity(read_buffer_capacity: usize, write_buffer_capacity: usize, inner: Rc<RefCell<Box<I>>>) -> TFramedTransport<I> {
         TFramedTransport {
             rbuf: vec![0; read_buffer_capacity].into_boxed_slice(),
@@ -53,7 +51,6 @@ impl <I: TTransport> TFramedTransport<I> {
             rcap: 0,
             wbuf: vec![0; write_buffer_capacity].into_boxed_slice(),
             wpos: 0,
-            wcap: 0,
             inner: inner,
         }
     }
@@ -86,11 +83,11 @@ impl <I: TTransport> Read for TFramedTransport<I> {
 
 impl <I: TTransport> Write for TFramedTransport<I> {
     fn write(&mut self, b: &[u8]) -> io::Result<usize> {
-        if b.len() > (self.wcap - self.wpos) {
+        if b.len() > (self.wbuf.len() - self.wpos) {
             return Err(
                 io::Error::new(
                     ErrorKind::Other,
-                    format!("bytes to be written ({}) exceeds buffer capacity ({})", b.len(), self.wcap - self.wpos)
+                    format!("bytes to be written ({}) exceeds buffer capacity ({})", b.len(), self.wbuf.len() - self.wpos)
                 )
             );
         }
@@ -102,7 +99,7 @@ impl <I: TTransport> Write for TFramedTransport<I> {
     }
 
     fn flush(&mut self) -> io::Result<()> {
-        let message_size = self.wcap - self.wpos;
+        let message_size = self.wpos;
 
         if let 0 = message_size {
             return Ok(())
@@ -110,21 +107,23 @@ impl <I: TTransport> Write for TFramedTransport<I> {
             try!(self.inner.borrow_mut().write_i32::<BigEndian>(message_size as i32));
         }
 
-        while (self.wcap - self.wpos) > 0 {
-            let nwrite = try!(self.inner.borrow_mut().write(&self.wbuf[self.wpos..self.wcap]));
-            self.wpos = cmp::min(self.wcap, self.wpos + nwrite);
+        let mut byte_index = 0;
+        while byte_index < self.wpos {
+            let nwrite = try!(self.inner.borrow_mut().write(&self.wbuf[byte_index..self.wpos]));
+            byte_index = cmp::min(byte_index + nwrite, self.wpos);
         }
 
+        self.wpos = 0;
         Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::io::{Read, Write};
-
-    use super::*;
-    use ::transport::mem::TBufferTransport;
+//    use std::io::{Read, Write};
+//
+//    use super::*;
+//    use ::transport::mem::TBufferTransport;
 
     #[test]
     fn foo() {
