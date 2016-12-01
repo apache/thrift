@@ -29,21 +29,21 @@ use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifie
 const BINARY_PROTOCOL_VERSION_1: u32 = 0x80010000;
 
 /// Implementation of the Thrift binary protocol.
-pub struct TBinaryProtocol<T: TTransport> {
+pub struct TBinaryProtocol {
     /// Set to `true` if the strict binary protocol is to be used.
     pub strict: bool,
 
     /// Underlying transport used for byte-level operations.
-    pub transport: Rc<RefCell<Box<T>>>,
+    pub transport: Rc<RefCell<Box<TTransport>>>,
 }
 
-impl<T: TTransport> TBinaryProtocol<T> {
+impl TBinaryProtocol {
     fn write_transport(&mut self, buf: &[u8]) -> ::Result<()> {
         self.transport.borrow_mut().write(buf).map(|_| ()).map_err(convert::From::from)
     }
 }
 
-impl<T: TTransport> TProtocol for TBinaryProtocol<T> {
+impl TProtocol for TBinaryProtocol {
 
     //
     // write methods
