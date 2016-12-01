@@ -555,7 +555,8 @@
       ]
     },
     "transports": [
-      "buffered"
+      "buffered",
+      "framed"
     ],
     "sockets": [
       "ip"
