@@ -97,16 +97,16 @@ impl <TI, TFI, PI, PFI, TO, TFO, PO, PFO, PR> TSimpleServer<TI, TFI, PI, PFI, TO
         // input protocol and transport
         let i_tran = self.i_trans_factory.new(ref_stream.clone());
         let ref_i_tran = Rc::new(RefCell::new(Box::new(i_tran)));
-        let i_prot = self.i_proto_factory.new(ref_i_tran);
+        let mut i_prot = self.i_proto_factory.new(ref_i_tran);
 
         // output protocol and transport
         let o_tran = self.o_trans_factory.new(ref_stream.clone());
         let ref_o_tran = Rc::new(RefCell::new(Box::new(o_tran)));
-        let o_prot = self.o_proto_factory.new(ref_o_tran);
+        let mut o_prot = self.o_proto_factory.new(ref_o_tran);
 
         // process loop
         loop {
-            let r = self.processor.process(&i_prot, &o_prot);
+            let r = self.processor.process(&mut i_prot, &mut o_prot);
             match r {
                 Err(e) => {
                     warn!("processor failed with error: {:?}", e);
