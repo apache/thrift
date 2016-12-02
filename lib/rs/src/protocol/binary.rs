@@ -23,7 +23,7 @@ use try_from;
 
 use ::{ProtocolError, ProtocolErrorKind};
 use ::transport::TTransport;
-use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TProtocol, TSetIdentifier, TStructIdentifier, TType};
+use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TProtocol, TProtocolFactory, TSetIdentifier, TStructIdentifier, TType};
 
 /// Identifies the serialized message as conforming to Thrift binary protocol version 1.
 const BINARY_PROTOCOL_VERSION_1: u32 = 0x80010000;
@@ -344,6 +344,16 @@ impl TProtocol for TBinaryProtocol {
     }
 }
 
+pub struct TBinaryProtocolFactory {
+    // nothing
+}
+
+impl TProtocolFactory for TBinaryProtocolFactory {
+    fn build(&self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TProtocol> {
+        Box::new(TBinaryProtocol { strict: true, transport: transport }) as Box<TProtocol>
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -352,11 +362,13 @@ mod tests {
 
     use super::*;
     use ::protocol::{TMessageIdentifier, TMessageType, TProtocol};
+    use ::transport::TTransport;
     use ::transport::mem::TBufferTransport;
 
     #[test]
     fn must_write_correct_strict_call_message_header() {
-        let transport = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(40, 40))));
+        let transport: Box<TTransport> = Box::new(TBufferTransport::with_capacity(40, 40));
+        let transport = Rc::new(RefCell::new(transport));
         let mut protocol = TBinaryProtocol { strict: true, transport: transport.clone() };
 
         let sent_ident = TMessageIdentifier { name: "test".to_owned(), message_type: TMessageType::Call, sequence_number: 1 };

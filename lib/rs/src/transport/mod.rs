@@ -47,8 +47,8 @@ mod socket;
 #[cfg(test)]
 pub mod mem;
 
-pub use self::buffered::TBufferedTransport;
-pub use self::framed::TFramedTransport;
+pub use self::buffered::{TBufferedTransport, TBufferedTransportFactory};
+pub use self::framed::{TFramedTransport, TFramedTransportFactory};
 pub use self::socket::TTcpTransport;
 
 /// Marker trait identifying a `TTransport` that
@@ -61,8 +61,8 @@ pub trait TTransport: io::Read + io::Write { }
 impl <I: io::Read + io::Write> TTransport for I { }
 
 /// A trait for objects that can construct a `TTransport`.
-pub trait TTransportFactory<O: TTransport> {
+pub trait TTransportFactory {
     /// Construct a `TTransport` that wraps an `inner`
     /// transport, thus creating a transport stack.
-    fn new<I: TTransport>(&self, inner: Rc<RefCell<Box<I>>>) -> O;
+    fn build(&self, inner: Rc<RefCell<Box<TTransport>>>) -> Box<TTransport>;
 }

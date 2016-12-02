@@ -19,7 +19,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use ::transport::TTransport;
-use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TProtocol, TSetIdentifier, TStructIdentifier};
+use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TProtocol, TProtocolFactory, TSetIdentifier, TStructIdentifier};
 
 pub struct TCompactProtocol {
     /// Underlying transport used for byte-level operations.
@@ -201,6 +201,16 @@ impl TProtocol for TCompactProtocol {
 
     fn read_byte(&mut self) -> ::Result<u8> {
         unimplemented!()
+    }
+}
+
+pub struct TCompactProtocolFactory {
+    // nothing
+}
+
+impl TProtocolFactory for TCompactProtocolFactory {
+    fn build(&self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TProtocol> {
+        Box::new(TCompactProtocol { transport: transport }) as Box<TProtocol>
     }
 }
 

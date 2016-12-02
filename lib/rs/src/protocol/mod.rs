@@ -29,8 +29,8 @@ mod binary;
 mod compact;
 mod multiplexed;
 
-pub use self::binary::TBinaryProtocol;
-pub use self::compact::TCompactProtocol;
+pub use self::binary::{TBinaryProtocol, TBinaryProtocolFactory};
+pub use self::compact::{TCompactProtocol, TCompactProtocolFactory};
 pub use self::multiplexed::TMultiplexedProtocol;
 
 /// Maximum depth to which we will skip a Thrift field.
@@ -184,8 +184,8 @@ pub trait TProtocol {
     fn read_byte(&mut self) -> ::Result<u8>;
 }
 
-pub trait TProtocolFactory<P: TProtocol> {
-    fn new<T: TTransport>(&self, transport: Rc<RefCell<Box<T>>>) -> P;
+pub trait TProtocolFactory {
+    fn build(&self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TProtocol>;
 }
 
 /// Identifies an instance of a Thrift message

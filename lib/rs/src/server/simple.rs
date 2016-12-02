@@ -16,52 +16,52 @@
 // under the License.
 
 use std::cell::RefCell;
-use std::marker::PhantomData;
 use std::net::{TcpListener, TcpStream};
 use std::rc::Rc;
 
 use ::{ApplicationError, ApplicationErrorKind};
-use ::protocol::{TProtocol, TProtocolFactory};
+use ::protocol::TProtocolFactory;
 use ::transport::{TTcpTransport, TTransport, TTransportFactory};
 use super::TProcessor;
 
-pub struct TSimpleServer<TI, TFI, PI, PFI, TO, TFO, PO, PFO, PR>
-    where TI: TTransport + 'static, TFI: TTransportFactory<TI>, PI: TProtocol + 'static, PFI: TProtocolFactory<PI>,
-          TO: TTransport + 'static, TFO: TTransportFactory<TO>, PO: TProtocol + 'static, PFO: TProtocolFactory<PO>,
-          PR: TProcessor {
-    i_trans_type: PhantomData<TI>,
-    i_trans_factory: TFI,
-    i_proto_type: PhantomData<PI>,
-    i_proto_factory: PFI,
-    o_trans_type: PhantomData<TO>,
-    o_trans_factory: TFO,
-    o_proto_type: PhantomData<PO>,
-    o_proto_factory: PFO,
+pub struct TSimpleServer<PR: TProcessor> {
+    i_trans_factory: Rc<RefCell<Box<TTransportFactory>>>,
+    i_proto_factory: Rc<RefCell<Box<TProtocolFactory>>>,
+    o_trans_factory: Rc<RefCell<Box<TTransportFactory>>>,
+    o_proto_factory: Rc<RefCell<Box<TProtocolFactory>>>,
     processor: PR,
 }
 
-impl <TI, TFI, PI, PFI, TO, TFO, PO, PFO, PR> TSimpleServer<TI, TFI, PI, PFI, TO, TFO, PO, PFO, PR>
-
-    where TI: TTransport + 'static, TFI: TTransportFactory<TI>, PI: TProtocol + 'static, PFI: TProtocolFactory<PI>,
-          TO: TTransport + 'static, TFO: TTransportFactory<TO>, PO: TProtocol + 'static, PFO: TProtocolFactory<PO>,
-          PR: TProcessor {
-
+impl <PR: TProcessor> TSimpleServer<PR> {
     pub fn new(
-        input_transport_factory: TFI,
-        input_protocol_factory: PFI,
-        output_transport_factory: TFO,
-        output_protocol_factory: PFO,
+        input_transport_factory: Box<TTransportFactory>,
+        input_protocol_factory: Box<TProtocolFactory>,
+        output_transport_factory: Box<TTransportFactory>,
+        output_protocol_factory: Box<TProtocolFactory>,
         processor: PR
-    ) -> TSimpleServer<TI, TFI, PI, PFI, TO, TFO, PO, PFO, PR> {
+    ) -> TSimpleServer<PR> {
         TSimpleServer {
-            i_trans_type: PhantomData,
-            i_trans_factory: input_transport_factory,
-            i_proto_type: PhantomData,
-            i_proto_factory: input_protocol_factory,
-            o_trans_type: PhantomData,
-            o_trans_factory: output_transport_factory,
-            o_proto_type: PhantomData,
-            o_proto_factory: output_protocol_factory,
+            i_trans_factory: Rc::new(RefCell::new(input_transport_factory)),
+            i_proto_factory: Rc::new(RefCell::new(input_protocol_factory)),
+            o_trans_factory: Rc::new(RefCell::new(output_transport_factory)),
+            o_proto_factory: Rc::new(RefCell::new(output_protocol_factory)),
+            processor: processor
+        }
+    }
+
+    pub fn with_shared(
+        transport_factory: Box<TTransportFactory>,
+        protocol_factory: Box<TProtocolFactory>,
+        processor: PR
+    ) -> TSimpleServer<PR> {
+        let transport_factory = Rc::new(RefCell::new(transport_factory));
+        let protocol_factory = Rc::new(RefCell::new(protocol_factory));
+
+        TSimpleServer {
+            i_trans_factory: transport_factory.clone(),
+            i_proto_factory: protocol_factory.clone(),
+            o_trans_factory: transport_factory.clone(),
+            o_proto_factory: protocol_factory.clone(),
             processor: processor
         }
     }
@@ -92,32 +92,28 @@ impl <TI, TFI, PI, PFI, TO, TFO, PO, PFO, PR> TSimpleServer<TI, TFI, PI, PFI, TO
     fn handle_incoming_connection(&mut self, stream: TcpStream) {
         // create the base transport (both input/output share this underlying stream)
         let stream = TTcpTransport::using_stream(stream);
-        let ref_stream = Rc::new(RefCell::new(Box::new(stream)));
+        let stream: Box<TTransport> = Box::new(stream);
+        let ref_stream = Rc::new(RefCell::new(stream));
 
         // input protocol and transport
-        let i_tran = self.i_trans_factory.new(ref_stream.clone());
-        let ref_i_tran = Rc::new(RefCell::new(Box::new(i_tran)));
-        let mut i_prot = self.i_proto_factory.new(ref_i_tran);
+        let i_tran = self.i_trans_factory.borrow_mut().build(ref_stream.clone());
+        let i_tran = Rc::new(RefCell::new(i_tran));
+        let mut i_prot = self.i_proto_factory.borrow_mut().build(i_tran);
 
         // output protocol and transport
-        let o_tran = self.o_trans_factory.new(ref_stream.clone());
-        let ref_o_tran = Rc::new(RefCell::new(Box::new(o_tran)));
-        let mut o_prot = self.o_proto_factory.new(ref_o_tran);
+        let o_tran = self.o_trans_factory.borrow_mut().build(ref_stream.clone());
+        let o_tran = Rc::new(RefCell::new(o_tran));
+        let mut o_prot = self.o_proto_factory.borrow_mut().build(o_tran);
 
         // process loop
         loop {
-            let r = self.processor.process(&mut i_prot, &mut o_prot);
+            let r = self.processor.process(&mut *i_prot, &mut *o_prot);
             match r {
                 Err(e) => {
                     warn!("processor failed with error: {:?}", e);
-                    if let Err(e) = ref_stream.borrow_mut().close() {
-                        warn!("failed to close stream with error: {:?}", e);
-                    }
-                    break;
+                    break; // FIXME: close here
                 },
-                Ok(_) => {
-                    ()
-                },
+                Ok(_) => (),
             }
         }
     }

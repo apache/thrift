@@ -22,7 +22,7 @@ use std::io;
 use std::io::{ErrorKind, Read, Write};
 use std::rc::Rc;
 
-use super::TTransport;
+use super::{TTransport, TTransportFactory};
 
 /// Default capacity of the read buffer in bytes.
 const WRITE_BUFFER_CAPACITY: usize = 4096;
@@ -30,21 +30,21 @@ const WRITE_BUFFER_CAPACITY: usize = 4096;
 /// Default capacity of the write buffer in bytes..
 const DEFAULT_WBUFFER_CAPACITY: usize = 4096;
 
-pub struct TFramedTransport<I: TTransport> {
+pub struct TFramedTransport {
     rbuf: Box<[u8]>,
     rpos: usize,
     rcap: usize,
     wbuf: Box<[u8]>,
     wpos: usize,
-    inner: Rc<RefCell<Box<I>>>,
+    inner: Rc<RefCell<Box<TTransport>>>,
 }
 
-impl <I: TTransport> TFramedTransport<I> {
-    pub fn new(inner: Rc<RefCell<Box<I>>>) -> TFramedTransport<I> {
+impl TFramedTransport {
+    pub fn new(inner: Rc<RefCell<Box<TTransport>>>) -> TFramedTransport {
         TFramedTransport::with_capacity(WRITE_BUFFER_CAPACITY, DEFAULT_WBUFFER_CAPACITY, inner)
     }
 
-    pub fn with_capacity(read_buffer_capacity: usize, write_buffer_capacity: usize, inner: Rc<RefCell<Box<I>>>) -> TFramedTransport<I> {
+    pub fn with_capacity(read_buffer_capacity: usize, write_buffer_capacity: usize, inner: Rc<RefCell<Box<TTransport>>>) -> TFramedTransport {
         TFramedTransport {
             rbuf: vec![0; read_buffer_capacity].into_boxed_slice(),
             rpos: 0,
@@ -56,7 +56,7 @@ impl <I: TTransport> TFramedTransport<I> {
     }
 }
 
-impl <I: TTransport> Read for TFramedTransport<I> {
+impl Read for TFramedTransport {
     fn read(&mut self, b: &mut [u8]) -> io::Result<usize> {
         if self.rcap - self.rpos == 0 {
             let message_size = try!(self.inner.borrow_mut().read_i32::<BigEndian>()) as usize;
@@ -81,7 +81,7 @@ impl <I: TTransport> Read for TFramedTransport<I> {
     }
 }
 
-impl <I: TTransport> Write for TFramedTransport<I> {
+impl Write for TFramedTransport {
     fn write(&mut self, b: &[u8]) -> io::Result<usize> {
         if b.len() > (self.wbuf.len() - self.wpos) {
             return Err(
@@ -115,6 +115,16 @@ impl <I: TTransport> Write for TFramedTransport<I> {
 
         self.wpos = 0;
         Ok(())
+    }
+}
+
+pub struct TFramedTransportFactory {
+
+}
+
+impl TTransportFactory for TFramedTransportFactory {
+    fn build(&self, inner: Rc<RefCell<Box<TTransport>>>) -> Box<TTransport> {
+        Box::new(TFramedTransport::new(inner)) as Box<TTransport>
     }
 }
 

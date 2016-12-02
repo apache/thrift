@@ -423,7 +423,7 @@ void t_rs_generator::render_rust_enum_impl(t_enum* tenum) {
 
   f_gen_
     << indent()
-    << "pub fn write_to_out_protocol<P: TProtocol>(&self, o_prot: &mut P) -> rift::Result<()> {"
+    << "pub fn write_to_out_protocol(&self, o_prot: &mut TProtocol) -> rift::Result<()> {"
     << endl;
   indent_up();
   f_gen_ << indent() << "o_prot.write_i32(*self as i32)" << endl;
@@ -432,7 +432,7 @@ void t_rs_generator::render_rust_enum_impl(t_enum* tenum) {
 
   f_gen_
     << indent()
-    << "pub fn read_from_in_protocol<P: TProtocol>(i_prot: &mut P) -> rift::Result<" << tenum->get_name() << "> {"
+    << "pub fn read_from_in_protocol(i_prot: &mut TProtocol) -> rift::Result<" << tenum->get_name() << "> {"
     << endl;
   indent_up();
 
@@ -673,7 +673,7 @@ void t_rs_generator::render_rust_struct_write_to_out_protocol(t_struct* tstruct,
   f_gen_
     << indent()
     << visibility_qualifier(struct_type)
-    << "fn write_to_out_protocol<P: TProtocol>(&self, o_prot: &mut P) -> rift::Result<()> {"
+    << "fn write_to_out_protocol(&self, o_prot: &mut TProtocol) -> rift::Result<()> {"
     << endl;
   indent_up();
 
@@ -912,7 +912,7 @@ void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct,
   f_gen_
     << indent()
     << visibility_qualifier(struct_type)
-    << "fn read_from_in_protocol<P: TProtocol>(i_prot: &mut P) -> rift::Result<" << tstruct->get_name() << "> {"
+    << "fn read_from_in_protocol(i_prot: &mut TProtocol) -> rift::Result<" << tstruct->get_name() << "> {"
     << endl;
   indent_up();
 
@@ -1183,10 +1183,10 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
   string client_impl_struct_name = "T" + tservice->get_name() + "SyncClient";
 
   // render the implementing struct
-  f_gen_ << "pub struct " << client_impl_struct_name << "<P: TProtocol> {" << endl;
+  f_gen_ << "pub struct " << client_impl_struct_name << " {" << endl;
   indent_up();
-  f_gen_ << indent() << "i_prot: Rc<RefCell<Box<P>>>," << endl;
-  f_gen_ << indent() << "o_prot: Rc<RefCell<Box<P>>>," << endl;
+  f_gen_ << indent() << "i_prot: Rc<RefCell<Box<TProtocol>>>," << endl;
+  f_gen_ << indent() << "o_prot: Rc<RefCell<Box<TProtocol>>>," << endl;
   f_gen_ << indent() << "sequence_number: i32," << endl;
   indent_down();
   f_gen_ << "}" << endl;
@@ -1197,7 +1197,7 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
 
   // render the struct implementation
   // this includes the new() function as well as the helper send/recv methods for each service call
-  f_gen_ << "impl<P: TProtocol> " << client_impl_struct_name << "<P> {" << endl;
+  f_gen_ << "impl " << client_impl_struct_name << " {" << endl;
   indent_up();
   render_rust_sync_client_lifecycle_functions(client_impl_struct_name);
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
@@ -1212,7 +1212,7 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
   f_gen_ << endl;
 
   // render all the service methods for the implementing struct
-  f_gen_ << "impl<P: TProtocol>" << rust_sync_client_trait_name(tservice) << " for " << client_impl_struct_name << "<P> {" << endl;
+  f_gen_ << "impl " << rust_sync_client_trait_name(tservice) << " for " << client_impl_struct_name << " {" << endl;
   indent_up();
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
     t_function* func = (*func_iter);
@@ -1250,17 +1250,17 @@ void t_rs_generator::render_rust_service_sync_client_trait(t_service* tservice) 
 
 void t_rs_generator::render_rust_sync_client_lifecycle_functions(const string& client_struct) {
   // constructor (shared protocol)
-  f_gen_ << indent() << "pub fn new(protocol: P) -> " << client_struct << "<P> {" << endl;
+  f_gen_ << indent() << "pub fn new(protocol: Box<TProtocol>) -> " << client_struct << " {" << endl;
   indent_up();
-  f_gen_ << indent() << "let p = Rc::new(RefCell::new(Box::new(protocol)));" << endl;
+  f_gen_ << indent() << "let p = Rc::new(RefCell::new(protocol));" << endl;
   f_gen_ << indent() << client_struct << " { i_prot: p.clone(), o_prot: p.clone(), sequence_number: 0 }" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
   // constructor (separate protcols)
-  f_gen_ << indent() << "pub fn with_separate_protocols(input_protocol: P, output_protocol: P) -> " << client_struct << "<P> {" << endl;
+  f_gen_ << indent() << "pub fn with_separate_protocols(input_protocol: Box<TProtocol>, output_protocol: Box<TProtocol>) -> " << client_struct << " {" << endl;
   indent_up();
-  f_gen_ << indent() << client_struct << " { i_prot: Rc::new(RefCell::new(Box::new(input_protocol))), o_prot: Rc::new(RefCell::new(Box::new(output_protocol))), sequence_number: 0 }" << endl;
+  f_gen_ << indent() << client_struct << " { i_prot: Rc::new(RefCell::new(input_protocol)), o_prot: Rc::new(RefCell::new(output_protocol)), sequence_number: 0 }" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
@@ -1494,7 +1494,7 @@ void t_rs_generator::render_rust_service_processor(t_service* tservice) {
 
   f_gen_
     << indent()
-    << "fn process<I: TProtocol, O: TProtocol>(&mut self, i_prot: &mut I, o_prot: &mut O) -> rift::Result<()> {"
+    << "fn process(&mut self, i_prot: &mut TProtocol, o_prot: &mut TProtocol) -> rift::Result<()> {"
     << endl;
   indent_up();
   f_gen_ << indent() << "let message_ident = try!(i_prot.read_message_begin());" << endl;
@@ -1528,8 +1528,8 @@ void t_rs_generator::render_rust_service_processor(t_service* tservice) {
 void t_rs_generator::render_rust_service_process_function(t_function* tfunc) {
   f_gen_
     << indent()
-    << "fn process_" << tfunc->get_name() << "<I: TProtocol, O: TProtocol>"
-    << "(&mut self, i_prot: &mut I, o_prot: &mut O) -> rift::Result<()> {"
+    << "fn process_" << tfunc->get_name()
+    << "(&mut self, i_prot: &mut TProtocol, o_prot: &mut TProtocol) -> rift::Result<()> {"
     << endl;
   indent_up();
 

@@ -21,7 +21,7 @@ use std::io;
 use std::io::{Read, Write};
 use std::rc::Rc;
 
-use super::TTransport;
+use super::{TTransport, TTransportFactory};
 
 /// Default capacity of the read buffer in bytes.
 const DEFAULT_RBUFFER_CAPACITY: usize = 4096;
@@ -36,26 +36,26 @@ const DEFAULT_WBUFFER_CAPACITY: usize = 4096;
 /// buffer and only written to the underlying transport
 /// on a `flush`. All reads first fill this object's
 /// intermediate buffer, and are served from there.
-pub struct TBufferedTransport<W: TTransport> {
+pub struct TBufferedTransport {
     rbuf: Box<[u8]>,
     rpos: usize,
     rcap: usize,
     wbuf: Vec<u8>,
-    inner: Rc<RefCell<Box<W>>>,
+    inner: Rc<RefCell<Box<TTransport>>>,
 }
 
-impl<I: TTransport> TBufferedTransport<I> {
+impl TBufferedTransport {
     /// Create a `TBufferedTransport` with the default
     /// read and write buffer size that wraps the `inner`
     /// `TTransport`.
-    pub fn new(inner: Rc<RefCell<Box<I>>>) -> TBufferedTransport<I> {
+    pub fn new(inner: Rc<RefCell<Box<TTransport>>>) -> TBufferedTransport {
         TBufferedTransport::with_capacity(DEFAULT_RBUFFER_CAPACITY, DEFAULT_WBUFFER_CAPACITY, inner)
     }
 
     /// Create a `TBufferedTransport` with a read buffer of size
     /// `read_buffer_capacity` and a write buffer of size `write_buffer_capacity`
     /// that wraps the `inner` `TTransport`.
-    pub fn with_capacity(read_buffer_capacity: usize, write_buffer_capacity: usize, inner: Rc<RefCell<Box<I>>>) -> TBufferedTransport<I> {
+    pub fn with_capacity(read_buffer_capacity: usize, write_buffer_capacity: usize, inner: Rc<RefCell<Box<TTransport>>>) -> TBufferedTransport {
         TBufferedTransport {
             rbuf: vec![0; read_buffer_capacity].into_boxed_slice(),
             rpos: 0,
@@ -80,7 +80,7 @@ impl<I: TTransport> TBufferedTransport<I> {
     }
 }
 
-impl<I: TTransport> Read for TBufferedTransport<I> {
+impl Read for TBufferedTransport {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let mut bytes_read = 0;
 
@@ -105,7 +105,7 @@ impl<I: TTransport> Read for TBufferedTransport<I> {
     }
 }
 
-impl<I: TTransport> Write for TBufferedTransport<I> {
+impl Write for TBufferedTransport {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         let avail_bytes = cmp::min(buf.len(), self.wbuf.capacity() - self.wbuf.len());
         self.wbuf.extend_from_slice(&buf[..avail_bytes]);
@@ -118,6 +118,16 @@ impl<I: TTransport> Write for TBufferedTransport<I> {
         try!(self.inner.borrow_mut().flush());
         self.wbuf.clear();
         Ok(())
+    }
+}
+
+pub struct TBufferedTransportFactory {
+    // empty
+}
+
+impl TTransportFactory for TBufferedTransportFactory {
+    fn build(&self, inner: Rc<RefCell<Box<TTransport>>>) -> Box<TTransport> {
+        Box::new(TBufferedTransport::new(inner)) as Box<TTransport>
     }
 }
 

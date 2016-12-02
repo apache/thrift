@@ -25,6 +25,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 use std::rc::Rc;
 
+use rift::protocol::TProtocol;
 use rift::transport::{TBufferedTransport, TFramedTransport, TTcpTransport, TTransport};
 use rift_test::*;
 
@@ -66,11 +67,11 @@ fn main() {
         },
         unmatched => panic!(format!("unsupported transport {}", unmatched)),
     };
-
     let t = Rc::new(RefCell::new(t));
 
-    let p = match protocol {
-        "binary" => rift::protocol::TBinaryProtocol { strict: true, transport: t.clone() },
+    let p: Box<TProtocol> = match protocol {
+        "binary" => Box::new(rift::protocol::TBinaryProtocol { strict: true, transport: t.clone() }),
+        "compact" => Box::new(rift::protocol::TCompactProtocol { transport: t.clone() }),
         unmatched => panic!(format!("unsupported protocol {}", unmatched)),
     };
 
@@ -89,7 +90,7 @@ fn main() {
     }
 }
 
-fn open_tcp_transport(host: &str, port: u16) -> Rc<RefCell<Box<TTcpTransport>>> {
+fn open_tcp_transport(host: &str, port: u16) -> Rc<RefCell<Box<TTransport>>> {
     let mut t = TTcpTransport::new();
     let t = match t.open(&format!("{}:{}", host, port)) {
         Ok(()) => t,
@@ -98,7 +99,8 @@ fn open_tcp_transport(host: &str, port: u16) -> Rc<RefCell<Box<TTcpTransport>>> 
             std::process::exit(1)
         }
     };
-    Rc::new(RefCell::new(Box::new(t)))
+    let t: Box<TTransport> = Box::new(t);
+    Rc::new(RefCell::new(t))
 }
 
 fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result<(), rift::Error> {

@@ -22,7 +22,7 @@ mod simple;
 pub use self::simple::TSimpleServer;
 
 pub trait TProcessor {
-    fn process<I: TProtocol, O: TProtocol>(&mut self, i: &mut I, o: &mut O) -> ::Result<()>;
+    fn process(&mut self, i: &mut TProtocol, o: &mut TProtocol) -> ::Result<()>;
 }
 
 // FIXME: TMultiplexedProcessor (see multiplexed_protocol.go)
