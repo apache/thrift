@@ -30,6 +30,7 @@ mod compact;
 mod multiplexed;
 
 pub use self::binary::TBinaryProtocol;
+pub use self::compact::TCompactProtocol;
 pub use self::multiplexed::TMultiplexedProtocol;
 
 /// Maximum depth to which we will skip a Thrift field.
