@@ -66,8 +66,6 @@ public:
 private:
   enum e_struct_type { T_REGULAR, T_ARGS, T_RESULT, T_EXCEPTION };
 
-  enum e_trait_type { T_CLIENT, T_HANDLER };
-
   // Directory to which generated code is written.
   string gen_dir_;
 
@@ -132,9 +130,13 @@ private:
   void render_rust_sync_recv(t_function* tfunc);
   void render_rust_sync_server(t_service* tservice);
 
-  void render_rust_service_trait(t_service* tservice, t_rs_generator::e_trait_type trait_type);
-
+  void render_rust_service_sync_client_trait(t_service* tservice);
+  void render_rust_service_sync_handler_trait(t_service* tservice);
+  void render_rust_service_server_comment(t_service* tservice);
+  void render_rust_service_process_function(t_function* tfunc);
+  void render_rust_service_processor(t_service* tservice);
   void render_rust_service_call_structs(t_service* tservice);
+  void render_rust_rift_error(const string& error_kind, const string& error_struct, const string& sub_error_kind, const string& error_message);
 
   // Return a string containing all the unpacked service call args
   // given a service call function `t_function`.
@@ -191,6 +193,8 @@ private:
   // Return the name of the struct used to pack the return value
   // and user-defined exceptions for the thrift service call.
   string service_call_result_struct_name(t_function* tfunc);
+
+  string rust_handler_function_name(t_function* tfunc);
 };
 
 void t_rs_generator::init_generator() {
@@ -229,6 +233,7 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << endl;
   f_gen_ << "use rift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind};" << endl;
   f_gen_ << "use rift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
+  f_gen_ << "use rift::server::TProcessor;" << endl;
   f_gen_ << endl;
 
   // add thrift includes
@@ -1152,7 +1157,7 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
   f_gen_ << endl;
 
   // render the trait through which the service calls will be mad
-  render_rust_service_trait(tservice, t_rs_generator::e_trait_type::T_CLIENT);
+  render_rust_service_sync_client_trait(tservice);
 
   // [sigh] this is annoying
   // to create a parameterized rust struct I have to declare the type parameters twice
@@ -1210,6 +1215,31 @@ void t_rs_generator::render_rust_sync_client(t_service* tservice) {
   }
   indent_down();
   f_gen_ << "}" << endl;
+  f_gen_ << endl;
+}
+
+void t_rs_generator::render_rust_service_sync_client_trait(t_service* tservice) {
+  string extension = "";
+  if (tservice->get_extends() != NULL) {
+    t_service* extends = tservice->get_extends();
+    extension = " : " + extends->get_program()->get_namespace() + "::" + rust_sync_client_trait_name(extends);
+  }
+
+  const std::vector<t_function*> functions = tservice->get_functions();
+  std::vector<t_function*>::const_iterator func_iter;
+
+  f_gen_ << "pub trait " << rust_sync_client_trait_name(tservice) << extension << " {" << endl;
+  indent_up();
+  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
+    t_function* tfunc = (*func_iter);
+    string func_name = tfunc->get_name();
+    string func_args = rust_sync_service_call_args(tfunc, true);
+    string func_return = to_rust_type(tfunc->get_returntype());
+    f_gen_ << indent() << "fn " << func_name <<  func_args << " -> rift::Result<" << func_return << ">;" << endl;
+  }
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
   f_gen_ << endl;
 }
 
@@ -1382,14 +1412,136 @@ string t_rs_generator::rust_sync_service_call_args(t_function* tfunc, bool is_de
 //-----------------------------------------------------------------------------
 
 void t_rs_generator::render_rust_sync_server(t_service* tservice) {
-  // service comment demarcation
+  render_rust_service_server_comment(tservice);
+  render_rust_service_sync_handler_trait(tservice);
+  render_rust_service_processor(tservice);
+}
+
+void t_rs_generator::render_rust_service_server_comment(t_service* tservice) {
   f_gen_ << "//" << endl;
-  f_gen_ << "// " << tservice->get_name() << " service handler "<< endl;
+  f_gen_ << "// " << tservice->get_name() << " service server"<< endl;
   f_gen_ << "//" << endl;
   f_gen_ << endl;
+}
 
-  // render the trait through which the service calls will be mad
-  render_rust_service_trait(tservice, t_rs_generator::e_trait_type::T_HANDLER);
+void t_rs_generator::render_rust_service_sync_handler_trait(t_service* tservice) {
+  string extension = "";
+  if (tservice->get_extends() != NULL) {
+    t_service* extends = tservice->get_extends();
+    extension = " : " + extends->get_program()->get_namespace() + "::" + rust_sync_handler_trait_name(extends);
+  }
+
+  const std::vector<t_function*> functions = tservice->get_functions();
+  std::vector<t_function*>::const_iterator func_iter;
+
+  f_gen_ << "pub trait " << rust_sync_handler_trait_name(tservice) << extension << " {" << endl;
+  indent_up();
+  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
+    t_function* tfunc = (*func_iter);
+    string func_name = rust_handler_function_name(tfunc);
+    string func_args = rust_sync_service_call_args(tfunc, true);
+    string func_return = to_rust_type(tfunc->get_returntype());
+    f_gen_ << indent() << "fn " << func_name <<  func_args << " -> rift::Result<" << func_return << ">;" << endl;
+  }
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
+  f_gen_ << endl;
+}
+
+void t_rs_generator::render_rust_service_processor(t_service* tservice) {
+  string service_processor_name = "T" + tservice->get_name() + "Processor";
+  string handler_trait_name = rust_sync_handler_trait_name(tservice);
+
+  // struct
+  f_gen_ << indent() << "pub struct " << service_processor_name << "<H: " << handler_trait_name << "> {" << endl;
+  indent_up();
+  f_gen_ << indent() << "handler: H," << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  f_gen_ << endl;
+
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator func_iter;
+
+  // impl
+  f_gen_ << indent() << "impl <H: " << handler_trait_name << "> " << service_processor_name << "<H> {" << endl;
+  indent_up();
+
+  f_gen_ << indent() << "pub fn new(handler: H) -> " << service_processor_name << "<H> {" << endl;
+  indent_up();
+  f_gen_ << indent() << service_processor_name << " { handler: handler }" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
+  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
+    t_function* tfunc = (*func_iter);
+    render_rust_service_process_function(tfunc);
+  }
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  f_gen_ << endl;
+
+  // processor impl
+  f_gen_ << indent() << "impl <H: " << handler_trait_name << "> TProcessor for " << service_processor_name << "<H> {" << endl;
+  indent_up();
+
+  f_gen_
+    << indent()
+    << "fn process<I: TProtocol, O: TProtocol>(&mut self, i_prot: &mut I, o_prot: &mut O) -> rift::Result<()> {"
+    << endl;
+  indent_up();
+  f_gen_ << indent() << "let message_ident = try!(i_prot.read_message_begin());" << endl;
+  f_gen_ << indent() << "match &*message_ident.name {" << endl; // [sigh] explicit deref coercion
+  indent_up();
+
+  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
+    t_function* tfunc = (*func_iter);
+    f_gen_ << indent() << "\"" << tfunc->get_name() << "\"" << " => {" << endl;
+    indent_up();
+    f_gen_ << indent() << "self.process_" << tfunc->get_name() << "(i_prot, o_prot)" << endl;
+    indent_down();
+    f_gen_ << indent() << "}," << endl;
+  }
+  f_gen_ << indent() << "method => {" << endl;
+  indent_up();
+  render_rust_rift_error("Application", "ApplicationError", "ApplicationErrorKind::UnknownMethod", "format!(\"unknown method {}\", method)");
+  indent_down();
+  f_gen_ << indent() << "}," << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  f_gen_ << endl;
+}
+
+void t_rs_generator::render_rust_service_process_function(t_function* tfunc) {
+  f_gen_
+    << indent()
+    << "fn process_" << tfunc->get_name() << "<I: TProtocol, O: TProtocol>"
+    << "(&mut self, i_prot: &mut I, o_prot: &mut O) -> rift::Result<()> {"
+    << endl;
+  indent_up();
+
+  f_gen_ << indent() << "let args = try!("  << tfunc->get_arglist()->get_name() << "::read_from_in_protocol(i_prot));" << endl;
+  f_gen_
+    << indent()
+    << "if let Ok(ret) = self.handler."
+    << rust_handler_function_name(tfunc)
+    << rust_sync_service_call_args(tfunc, false)
+    << " {"
+    << endl;
+  f_gen_ << indent() << "} else {" << endl;
+  f_gen_ << indent() << "}" << endl;
+  f_gen_ << indent() << "unimplemented!()" << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
 }
 
 //-----------------------------------------------------------------------------
@@ -1398,56 +1550,7 @@ void t_rs_generator::render_rust_sync_server(t_service* tservice) {
 //
 //-----------------------------------------------------------------------------
 
-void t_rs_generator::render_rust_service_trait(t_service* tservice, t_rs_generator::e_trait_type trait_type) {
-  string trait_name;
-  switch (trait_type) {
-    case e_trait_type::T_CLIENT:
-      trait_name = rust_sync_client_trait_name(tservice);
-      break;
-    case e_trait_type::T_HANDLER:
-      trait_name = rust_sync_handler_trait_name(tservice);
-      break;
-    default:
-      throw "unknown trait type while generating service trait name";
-  }
 
-  string extension = "";
-  if (tservice->get_extends() != NULL) {
-    t_service* extends = tservice->get_extends();
-
-    string extension_trait_name;
-    switch (trait_type) {
-    case e_trait_type::T_CLIENT:
-      extension_trait_name = rust_sync_client_trait_name(extends);
-      break;
-    case e_trait_type::T_HANDLER:
-      extension_trait_name = rust_sync_handler_trait_name(extends);
-      break;
-    default:
-      throw "unknown trait type while generating extension trait name";
-    }
-
-    extension = " : " + extends->get_program()->get_namespace() + "::" + extension_trait_name;
-  }
-
-  const std::vector<t_function*> functions = tservice->get_functions();
-  std::vector<t_function*>::const_iterator func_iter;
-  // render the trait
-  // although not strictly necessary, I'm doing this to make testing easier
-  // this way users can pass in anything that implements the client facade
-  f_gen_ << "pub trait " << trait_name << extension << " {" << endl;
-  indent_up();
-  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
-    t_function* tfunc = (*func_iter);
-    string func_name = tfunc->get_name();
-    string func_args = rust_sync_service_call_args(tfunc, true);
-    string func_return = to_rust_type(tfunc->get_returntype());
-    f_gen_ << indent() << "fn " << func_name <<  func_args << " -> rift::Result<" << func_return << ">;" << endl;
-  }
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
-  f_gen_ << endl;
-}
 
 void t_rs_generator::render_rust_service_call_structs(t_service* tservice) {
   const std::vector<t_function*> functions = tservice->get_functions();
@@ -1468,6 +1571,23 @@ void t_rs_generator::render_rust_service_call_structs(t_service* tservice) {
       render_rust_result_value_struct(tfunc);
     }
   }
+}
+
+void t_rs_generator::render_rust_rift_error(const string& error_kind, const string& error_struct, const string& sub_error_kind, const string& error_message) {
+  f_gen_ << indent() << "Err(" << endl;
+  indent_up();
+  f_gen_ << indent() << "rift::Error::" << error_kind << "(" << endl;
+  indent_up();
+  f_gen_ << indent() << error_struct << " {" << endl;
+  indent_up();
+  f_gen_ << indent() << "kind: " << sub_error_kind << "," << endl;
+  f_gen_ << indent() << "message: " << error_message << "," << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << indent() << ")" << endl;
+  indent_down();
+  f_gen_ << indent() << ")" << endl;
 }
 
 //-----------------------------------------------------------------------------
@@ -1580,7 +1700,7 @@ string t_rs_generator::rust_sync_client_trait_name(t_service* tservice) {
 }
 
 string t_rs_generator::rust_sync_handler_trait_name(t_service* tservice) {
-  return tservice->get_name() + "SyncHandler";
+  return "TAbstract" + tservice->get_name() + "SyncHandler";
 }
 
 string t_rs_generator::service_call_args_struct_name(t_function* tfunc) {
@@ -1589,6 +1709,10 @@ string t_rs_generator::service_call_args_struct_name(t_function* tfunc) {
 
 string t_rs_generator::service_call_result_struct_name(t_function* tfunc) {
   return tfunc->get_name() + "_result";
+}
+
+string t_rs_generator::rust_handler_function_name(t_function* tfunc) {
+  return "handle_" + tfunc->get_name();
 }
 
 string t_rs_generator::visibility_qualifier(t_rs_generator::e_struct_type struct_type) {
