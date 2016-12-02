@@ -194,8 +194,13 @@ private:
   // and user-defined exceptions for the thrift service call.
   string service_call_result_struct_name(t_function* tfunc);
 
-  string rust_handler_function_name(t_function* tfunc);
+  string rust_service_call_client_function_name(t_function* tfunc);
+  string rust_service_call_sync_send_client_function_name(t_function* tfunc);
+  string rust_service_call_sync_recv_client_function_name(t_function* tfunc);
+  string rust_service_call_handler_function_name(t_function* tfunc);
 };
+
+// FIXME: underscore field names and function parameters
 
 void t_rs_generator::init_generator() {
   // make output directory for this thrift program
@@ -1232,7 +1237,7 @@ void t_rs_generator::render_rust_service_sync_client_trait(t_service* tservice) 
   indent_up();
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
     t_function* tfunc = (*func_iter);
-    string func_name = tfunc->get_name();
+    string func_name = rust_service_call_client_function_name(tfunc);
     string func_args = rust_sync_service_call_args(tfunc, true);
     string func_return = to_rust_type(tfunc->get_returntype());
     f_gen_ << indent() << "fn " << func_name <<  func_args << " -> rift::Result<" << func_return << ">;" << endl;
@@ -1284,7 +1289,7 @@ void t_rs_generator::render_rust_result_value_struct(t_function* tfunc) {
 }
 
 void t_rs_generator::render_rust_sync_send_recv_wrapper(t_function* tfunc) {
-  string func_name = tfunc->get_name();
+  string func_name = rust_service_call_client_function_name(tfunc);
   string func_decl_args = rust_sync_service_call_args(tfunc, true);
   string func_call_args = rust_sync_service_call_args(tfunc, false);
   string func_return = to_rust_type(tfunc->get_returntype());
@@ -1302,7 +1307,7 @@ void t_rs_generator::render_rust_sync_send_recv_wrapper(t_function* tfunc) {
 }
 
 void t_rs_generator::render_rust_sync_send(t_function* tfunc) {
-  string func_name = "send_" + tfunc->get_name();
+  string func_name = rust_service_call_sync_send_client_function_name(tfunc);
   string func_args = rust_sync_service_call_args(tfunc, true);
 
   // declaration
@@ -1350,7 +1355,7 @@ void t_rs_generator::render_rust_sync_send(t_function* tfunc) {
 }
 
 void t_rs_generator::render_rust_sync_recv(t_function* tfunc) {
-  string func_name = "recv_" + tfunc->get_name();
+  string func_name = rust_service_call_sync_recv_client_function_name(tfunc);
   string func_return = to_rust_type(tfunc->get_returntype());
   f_gen_ << indent() << "fn " << func_name << "(&mut self) -> rift::Result<" << func_return << "> {" << endl;
   indent_up();
@@ -1438,7 +1443,7 @@ void t_rs_generator::render_rust_service_sync_handler_trait(t_service* tservice)
   indent_up();
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
     t_function* tfunc = (*func_iter);
-    string func_name = rust_handler_function_name(tfunc);
+    string func_name = rust_service_call_handler_function_name(tfunc);
     string func_args = rust_sync_service_call_args(tfunc, true);
     string func_return = to_rust_type(tfunc->get_returntype());
     f_gen_ << indent() << "fn " << func_name <<  func_args << " -> rift::Result<" << func_return << ">;" << endl;
@@ -1529,15 +1534,17 @@ void t_rs_generator::render_rust_service_process_function(t_function* tfunc) {
   indent_up();
 
   f_gen_ << indent() << "let args = try!("  << tfunc->get_arglist()->get_name() << "::read_from_in_protocol(i_prot));" << endl;
+  /*
   f_gen_
     << indent()
     << "if let Ok(ret) = self.handler."
-    << rust_handler_function_name(tfunc)
+    << rust_service_call_handler_function_name(tfunc)
     << rust_sync_service_call_args(tfunc, false)
     << " {"
     << endl;
   f_gen_ << indent() << "} else {" << endl;
   f_gen_ << indent() << "}" << endl;
+  */
   f_gen_ << indent() << "unimplemented!()" << endl;
 
   indent_down();
@@ -1711,8 +1718,20 @@ string t_rs_generator::service_call_result_struct_name(t_function* tfunc) {
   return tfunc->get_name() + "_result";
 }
 
-string t_rs_generator::rust_handler_function_name(t_function* tfunc) {
-  return "handle_" + tfunc->get_name();
+string t_rs_generator::rust_service_call_client_function_name(t_function* tfunc) {
+  return underscore(tfunc->get_name());
+}
+
+string t_rs_generator::rust_service_call_sync_send_client_function_name(t_function* tfunc) {
+  return "send_" + underscore(tfunc->get_name());
+}
+
+string t_rs_generator::rust_service_call_sync_recv_client_function_name(t_function* tfunc) {
+  return "recv_" + underscore(tfunc->get_name());
+}
+
+string t_rs_generator::rust_service_call_handler_function_name(t_function* tfunc) {
+  return "handle_" + underscore(tfunc->get_name());
 }
 
 string t_rs_generator::visibility_qualifier(t_rs_generator::e_struct_type struct_type) {

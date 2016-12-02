@@ -102,28 +102,28 @@ fn open_tcp_transport(host: &str, port: u16) -> Rc<RefCell<Box<TTcpTransport>>> 
 }
 
 fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result<(), rift::Error> {
-    try!(client.testVoid());
+    try!(client.test_void());
 
     // primitives
-    try!(verify_expected_result(client.testString("thing".to_owned()), "thing".to_owned()));
-    try!(verify_expected_result(client.testBool(true), true));
-    try!(verify_expected_result(client.testBool(false), false));
-    try!(verify_expected_result(client.testBool(false), false));
-    try!(verify_expected_result(client.testByte(42), 42));
-    try!(verify_expected_result(client.testI32(1159348374), 1159348374));
-    try!(verify_expected_result(client.testI64(-8651829879438294565), -8651829879438294565));
+    try!(verify_expected_result(client.test_string("thing".to_owned()), "thing".to_owned()));
+    try!(verify_expected_result(client.test_bool(true), true));
+    try!(verify_expected_result(client.test_bool(false), false));
+    try!(verify_expected_result(client.test_bool(false), false));
+    try!(verify_expected_result(client.test_byte(42), 42));
+    try!(verify_expected_result(client.test_i32(1159348374), 1159348374));
+    try!(verify_expected_result(client.test_i64(-8651829879438294565), -8651829879438294565));
     //try!(verify_expected_result(client.testDouble(42.42), 42.42));
 
     // typedef
     {
         let u_snd: UserId  = 2348;
         let u_cmp: UserId  = 2348;
-        try!(verify_expected_result(client.testTypedef(u_snd), u_cmp));
+        try!(verify_expected_result(client.test_typedef(u_snd), u_cmp));
     }
 
     // enum
     {
-        try!(verify_expected_result(client.testEnum(Numberz::TWO), Numberz::TWO));
+        try!(verify_expected_result(client.test_enum(Numberz::TWO), Numberz::TWO));
     }
 
     {
@@ -144,14 +144,14 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
     {
         let x_snd = Xtruct { string_thing: Some("foo".to_owned()), byte_thing: Some(12), i32_thing: Some(219129), i64_thing: Some(12938492818) };
         let x_cmp = Xtruct { string_thing: Some("foo".to_owned()), byte_thing: Some(12), i32_thing: Some(219129), i64_thing: Some(12938492818) };
-        try!(verify_expected_result(client.testStruct(x_snd), x_cmp));
+        try!(verify_expected_result(client.test_struct(x_snd), x_cmp));
     }
 
     // Xtruct again, with optional values
     {
         let x_snd = Xtruct { string_thing: Some("foo".to_owned()), byte_thing: None, i32_thing: None, i64_thing: Some(12938492818) };
         let x_cmp = Xtruct { string_thing: Some("foo".to_owned()), byte_thing: Some(0), i32_thing: Some(0), i64_thing: Some(12938492818) }; // the C++ server is responding correctly
-        try!(verify_expected_result(client.testStruct(x_snd), x_cmp));
+        try!(verify_expected_result(client.test_struct(x_snd), x_cmp));
     }
 
     // Xtruct2 (FIXME: try Xtruct2 with optional values)
@@ -180,7 +180,7 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
             ),
             i32_thing: Some(293481098),
         };
-        try!(verify_expected_result(client.testNest(x_snd), x_cmp));
+        try!(verify_expected_result(client.test_nest(x_snd), x_cmp));
     }
 
     // vec<i32>
@@ -195,7 +195,7 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
         v_cmp.push(238);
         v_cmp.push(32498);
 
-        try!(verify_expected_result(client.testList(v_snd), v_cmp));
+        try!(verify_expected_result(client.test_list(v_snd), v_cmp));
     }
 
     // set<i32>
@@ -210,7 +210,7 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
         s_cmp.insert(23);
         s_cmp.insert(3234);
 
-        try!(verify_expected_result(client.testSet(s_snd), s_cmp));
+        try!(verify_expected_result(client.test_set(s_snd), s_cmp));
     }
 
     // map<i32, i32>
@@ -225,7 +225,7 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
         m_cmp.insert(4, 6);
         m_cmp.insert(8, 7);
 
-        try!(verify_expected_result(client.testMap(m_snd), m_cmp));
+        try!(verify_expected_result(client.test_map(m_snd), m_cmp));
     }
 
     // map<string, string>
@@ -240,7 +240,7 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
         m_rcv.insert("4".to_owned(), "6_string".to_owned());
         m_rcv.insert("8".to_owned(), "7_string".to_owned());
 
-        try!(verify_expected_result(client.testStringMap(m_snd), m_rcv));
+        try!(verify_expected_result(client.test_string_map(m_snd), m_rcv));
     }
 
     // nested map
@@ -259,7 +259,7 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
         m_cmp.insert(-4, m_cmp_nested_0);
         m_cmp.insert(4, m_cmp_nested_1);
 
-        try!(verify_expected_result(client.testMapMap(42), m_cmp));
+        try!(verify_expected_result(client.test_map_map(42), m_cmp));
     }
 
     // multi
@@ -275,7 +275,7 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
             i64_thing: Some(-19234123981),
         };
 
-        try!(verify_expected_result(client.testMulti(1, -123948, -19234123981, m_snd, Numberz::EIGHT, 81), s_cmp));
+        try!(verify_expected_result(client.test_multi(1, -123948, -19234123981, m_snd, Numberz::EIGHT, 81), s_cmp));
     }
 
     // Insanity
@@ -311,7 +311,7 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
 
     // Exception (expect an Xception to be thrown)
     {
-        let r = client.testException("Xception".to_owned());
+        let r = client.test_exception("Xception".to_owned());
         let x = try!(match r {
             Err(rift::Error::User(ref e)) => {
                 match e.downcast_ref::<Xception>() {
@@ -332,7 +332,7 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
 
     // Exception (expect an Error::Application)
     {
-        let r = client.testException("TException".to_owned());
+        let r = client.test_exception("TException".to_owned());
         try!(match r {
             Err(rift::Error::Application(ref e)) => {
                 println!("received an {:?}", e);
@@ -344,7 +344,7 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
 
     // Exception (expect nothing)
     {
-        let r = client.testException("foo".to_owned());
+        let r = client.test_exception("foo".to_owned());
         try!(match r {
             Ok(_) => Ok(()),
             _ => Err(rift::Error::User("received an exception".into())),
@@ -353,7 +353,7 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
 
     // Multi-exception (expect an Xception to be thrown)
     {
-        let r = client.testMultiException("Xception".to_owned(), "ignored".to_owned());
+        let r = client.test_multi_exception("Xception".to_owned(), "ignored".to_owned());
         let x = try!(match r {
             Err(rift::Error::User(ref e)) => {
                 match e.downcast_ref::<Xception>() {
@@ -374,7 +374,7 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
 
     // Multi-exception (expect an Xception to be thrown)
     {
-        let r = client.testMultiException("Xception2".to_owned(), "ignored".to_owned());
+        let r = client.test_multi_exception("Xception2".to_owned(), "ignored".to_owned());
         let x = try!(match r {
             Err(rift::Error::User(ref e)) => {
                 match e.downcast_ref::<Xception2>() {
@@ -402,7 +402,7 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
 
     // Multi-exception (expect a response)
     {
-        let r = client.testMultiException("haha".to_owned(), "RETURNED".to_owned());
+        let r = client.test_multi_exception("haha".to_owned(), "RETURNED".to_owned());
         let x = try!(match r {
             Err(e) => Err(rift::Error::User(format!("received an unexpected exception {:?}", e).into())),
             _ => r,
@@ -420,11 +420,11 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
 
     // one-way (delays for 2 seconds)
     {
-        try!(client.testOneway(2));
+        try!(client.test_oneway(2));
     }
 
     // final test to verify that the connection is still writable after the one-way call
-    try!(client.testVoid());
+    try!(client.test_void());
     Ok(())
 }
 
