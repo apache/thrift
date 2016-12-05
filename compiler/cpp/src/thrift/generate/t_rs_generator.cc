@@ -436,7 +436,6 @@ void t_rs_generator::render_rust_enum_impl(t_enum* tenum) {
     << endl;
   indent_up();
   f_gen_ << indent() << "try!(o_prot.write_i32(*self as i32));" << endl;
-  f_gen_ << indent() << "o_prot.flush()" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
