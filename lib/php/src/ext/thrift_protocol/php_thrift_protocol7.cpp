@@ -596,6 +596,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
           if (Z_TYPE(key) != IS_STRING) convert_to_string(&key);
           zend_symtable_update(Z_ARR_P(return_value), Z_STR(key), &value);
         }
+        zval_dtor(&key);
       }
       return; // return_value already populated
     }
@@ -636,6 +637,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
           if (Z_TYPE(key) != IS_STRING) convert_to_string(&key);
           zend_symtable_update(Z_ARR_P(return_value), Z_STR(key), &value);
         }
+        zval_dtor(&key);
       }
       return;
     }
@@ -665,7 +667,7 @@ void binary_serialize_hashtable_key(int8_t keytype, PHPOutputTransport& transpor
   } else {
     char buf[64];
     if (res == HASH_KEY_IS_STRING) {
-      ZVAL_STR(&z, key);
+      ZVAL_STR_COPY(&z, key);
     } else {
       snprintf(buf, 64, "%ld", index);
       ZVAL_STRING(&z, buf);
@@ -822,7 +824,7 @@ void protocol_writeMessageBegin(zval* transport, zend_string* method_name, int32
   zval ret;
   zval writeMessagefn;
 
-  ZVAL_STR(&args[0], method_name);
+  ZVAL_STR_COPY(&args[0], method_name);
   ZVAL_LONG(&args[1], msgtype);
   ZVAL_LONG(&args[2], seqID);
   ZVAL_NULL(&ret);
