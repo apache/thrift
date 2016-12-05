@@ -202,6 +202,11 @@ private:
   string rust_service_call_handler_function_name(t_function* tfunc);
 
   string handler_successful_return_struct(t_function* tfunc);
+
+  string struct_name(t_struct* tstruct, t_rs_generator::e_struct_type struct_type);
+  string args_struct_name(const string& name);
+  string result_struct_name(const string& name);
+  string default_struct_name(t_struct* tstruct);
 };
 
 // FIXME: underscore field names and function parameters
@@ -1782,27 +1787,53 @@ string t_rs_generator::rust_sync_handler_trait_name(t_service* tservice) {
 }
 
 string t_rs_generator::service_call_args_struct_name(t_function* tfunc) {
-  return capitalize(tfunc->get_name()) + ARGS_STRUCT_SUFFIX;
+  return args_struct_name(tfunc->get_name());
 }
 
 string t_rs_generator::service_call_result_struct_name(t_function* tfunc) {
-  return capitalize(tfunc->get_name()) + RESULT_STRUCT_SUFFIX;
+  return result_struct_name(tfunc->get_name());
+}
+
+string t_rs_generator::struct_name(t_struct* tstruct, t_rs_generator::e_struct_type struct_type) {
+  switch(struct_type) {
+    case t_rs_generator::e_struct_type::T_ARGS:
+      return args_struct_name(tstruct->get_name());
+    case t_rs_generator::e_struct_type::T_RESULT:
+      return result_struct_name(tstruct->get_name());
+    case t_rs_generator::e_struct_type::T_EXCEPTION:
+    case t_rs_generator::e_struct_type::T_REGULAR:
+      return default_struct_name(tstruct);
+    default:
+      throw "Cannot generate struct name for unknown struct type";
+  }
+}
+
+string t_rs_generator::args_struct_name(const string& name) {
+  return capitalize(camelcase(name)) + ARGS_STRUCT_SUFFIX;
+}
+
+string t_rs_generator::result_struct_name(const string& name) {
+  return capitalize(camelcase(name)) + RESULT_STRUCT_SUFFIX;
+}
+
+string t_rs_generator::default_struct_name(t_struct* tstruct) {
+  return capitalize(camelcase(tstruct->get_name()));
 }
 
 string t_rs_generator::rust_service_call_client_function_name(t_function* tfunc) {
-  return underscore(tfunc->get_name());
+  return decapitalize(underscore(tfunc->get_name()));
 }
 
 string t_rs_generator::rust_service_call_sync_send_client_function_name(t_function* tfunc) {
-  return "send_" + underscore(tfunc->get_name());
+  return "send_" + decapitalize(underscore(tfunc->get_name()));
 }
 
 string t_rs_generator::rust_service_call_sync_recv_client_function_name(t_function* tfunc) {
-  return "recv_" + underscore(tfunc->get_name());
+  return "recv_" + decapitalize(underscore(tfunc->get_name()));
 }
 
 string t_rs_generator::rust_service_call_handler_function_name(t_function* tfunc) {
-  return "handle_" + underscore(tfunc->get_name());
+  return "handle_" + decapitalize(underscore(tfunc->get_name()));
 }
 
 string t_rs_generator::visibility_qualifier(t_rs_generator::e_struct_type struct_type) {
