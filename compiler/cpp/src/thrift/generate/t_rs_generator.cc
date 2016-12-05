@@ -31,7 +31,9 @@ using std::string;
 using std::vector;
 
 static const string endl = "\n"; // avoid ostream << std::endl flushes
-static const string service_call_result_variable = "result_value";
+static const string SERVICE_CALL_RESULT_VARIABLE = "result_value";
+static const string ARGS_STRUCT_SUFFIX = "Args";
+static const string RESULT_STRUCT_SUFFIX = "Result";
 
 // IMPORTANT: by default generator functions include extra endlines!
 
@@ -143,7 +145,7 @@ private:
   // If `is_declaration` is `true` we prepend the args with `&mut self`
   // and include the arg types in the returned string. If `false` we omit
   // the `self` qualifier and only use the arg names.
-  string rust_sync_service_call_args(t_function* tfunc, bool is_declaration);
+  string rust_sync_service_call_args(t_function* tfunc, bool is_declaration, const string& prefix = "");
 
   // Return a string representing the rust type given a `t_type`.
   string to_rust_type(t_type* ttype);
@@ -198,6 +200,8 @@ private:
   string rust_service_call_sync_send_client_function_name(t_function* tfunc);
   string rust_service_call_sync_recv_client_function_name(t_function* tfunc);
   string rust_service_call_handler_function_name(t_function* tfunc);
+
+  string handler_successful_return_struct(t_function* tfunc);
 };
 
 // FIXME: underscore field names and function parameters
@@ -426,7 +430,8 @@ void t_rs_generator::render_rust_enum_impl(t_enum* tenum) {
     << "pub fn write_to_out_protocol(&self, o_prot: &mut TProtocol) -> rift::Result<()> {"
     << endl;
   indent_up();
-  f_gen_ << indent() << "o_prot.write_i32(*self as i32)" << endl;
+  f_gen_ << indent() << "try!(o_prot.write_i32(*self as i32));" << endl;
+  f_gen_ << indent() << "o_prot.flush()" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
@@ -575,7 +580,7 @@ void t_rs_generator::render_rust_struct_impl(t_struct* tstruct, t_rs_generator::
 void t_rs_generator::render_rust_result_struct_to_result_method(t_struct* tstruct) {
   // find the service call name for this result struct
   string service_call_name = tstruct->get_name();
-  size_t index = service_call_name.find("_result", 0);
+  size_t index = service_call_name.find(RESULT_STRUCT_SUFFIX, 0);
   if (index == std::string::npos) {
     throw "result struct " + service_call_name + " missing result suffix";
   } else {
@@ -589,7 +594,7 @@ void t_rs_generator::render_rust_result_struct_to_result_method(t_struct* tstruc
   string rust_return_type = "()";
   for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
     t_field* tfield = (*members_iter);
-    if (tfield->get_name() == service_call_result_variable) {
+    if (tfield->get_name() == SERVICE_CALL_RESULT_VARIABLE) {
       rust_return_type = to_rust_type(tfield->get_type());
       break;
     }
@@ -608,7 +613,7 @@ void t_rs_generator::render_rust_result_struct_to_result_method(t_struct* tstruc
   // render the exception branches
   for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
     t_field* tfield = (*members_iter);
-    if (tfield->get_name() != service_call_result_variable) {
+    if (tfield->get_name() != SERVICE_CALL_RESULT_VARIABLE) {
       string field_name = "self." + tfield->get_name();
       string branch_statement = rendered_branch_count == 0 ? "if" : "} else if";
 
@@ -638,9 +643,9 @@ void t_rs_generator::render_rust_result_struct_to_result_method(t_struct* tstruc
     }
   } else {
     string branch_statement = rendered_branch_count == 0 ? "if" : "} else if";
-    f_gen_ << indent() << branch_statement << " self." << service_call_result_variable << ".is_some() {" << endl;
+    f_gen_ << indent() << branch_statement << " self." << SERVICE_CALL_RESULT_VARIABLE << ".is_some() {" << endl;
     indent_up();
-    f_gen_ << indent() << "Ok(self." << service_call_result_variable << ".unwrap())" << endl;
+    f_gen_ << indent() << "Ok(self." << SERVICE_CALL_RESULT_VARIABLE << ".unwrap())" << endl;
     indent_down();
     f_gen_ << indent() << "} else {" << endl;
     indent_up();
@@ -1270,7 +1275,7 @@ void t_rs_generator::render_rust_sync_client_lifecycle_functions(const string& c
 void t_rs_generator::render_rust_result_value_struct(t_function* tfunc) {
   t_struct result(program_, service_call_result_struct_name(tfunc));
 
-  t_field return_value(tfunc->get_returntype(), service_call_result_variable, 0);
+  t_field return_value(tfunc->get_returntype(), SERVICE_CALL_RESULT_VARIABLE, 0);
   return_value.set_req(t_field::T_OPTIONAL);
   if (!tfunc->get_returntype()->is_void()) {
     result.append(&return_value);
@@ -1378,7 +1383,7 @@ void t_rs_generator::render_rust_sync_recv(t_function* tfunc) {
   f_gen_ << indent() << "}" << endl;
 }
 
-string t_rs_generator::rust_sync_service_call_args(t_function* tfunc, bool is_declaration) {
+string t_rs_generator::rust_sync_service_call_args(t_function* tfunc, bool is_declaration, const string& prefix) {
   ostringstream func_args;
   func_args << (is_declaration ? "(&mut self" : "(");
 
@@ -1402,7 +1407,7 @@ string t_rs_generator::rust_sync_service_call_args(t_function* tfunc, bool is_de
       } else {
         func_args << ", ";
       }
-      func_args << tfield->get_name() << (is_declaration ? ": " + rust_type : "");
+      func_args << prefix << tfield->get_name() << (is_declaration ? ": " + rust_type : "");
     }
   }
 
@@ -1505,7 +1510,7 @@ void t_rs_generator::render_rust_service_processor(t_service* tservice) {
     t_function* tfunc = (*func_iter);
     f_gen_ << indent() << "\"" << tfunc->get_name() << "\"" << " => {" << endl;
     indent_up();
-    f_gen_ << indent() << "self.process_" << tfunc->get_name() << "(i_prot, o_prot)" << endl;
+    f_gen_ << indent() << "self.process_" << underscore(tfunc->get_name()) << "(message_ident.sequence_number, i_prot, o_prot)" << endl;
     indent_down();
     f_gen_ << indent() << "}," << endl;
   }
@@ -1528,27 +1533,93 @@ void t_rs_generator::render_rust_service_processor(t_service* tservice) {
 void t_rs_generator::render_rust_service_process_function(t_function* tfunc) {
   f_gen_
     << indent()
-    << "fn process_" << tfunc->get_name()
-    << "(&mut self, i_prot: &mut TProtocol, o_prot: &mut TProtocol) -> rift::Result<()> {"
+    << "fn process_" << underscore(tfunc->get_name())
+    << "(&mut self, incoming_sequence_number: i32, i_prot: &mut TProtocol, o_prot: &mut TProtocol) -> rift::Result<()> {"
     << endl;
   indent_up();
 
-  f_gen_ << indent() << "let args = try!("  << tfunc->get_arglist()->get_name() << "::read_from_in_protocol(i_prot));" << endl;
-  /*
   f_gen_
     << indent()
-    << "if let Ok(ret) = self.handler."
+    << "let "
+    << "args" // FIXME: deal with oneway functions and only void args
+    << " = try!("
+    << tfunc->get_arglist()->get_name()
+    << "::read_from_in_protocol(i_prot));"
+    << endl;
+  f_gen_
+    << indent()
+    << "match self.handler."
     << rust_service_call_handler_function_name(tfunc)
-    << rust_sync_service_call_args(tfunc, false)
+    << rust_sync_service_call_args(tfunc, false, "args.")
     << " {"
     << endl;
-  f_gen_ << indent() << "} else {" << endl;
-  f_gen_ << indent() << "}" << endl;
-  */
+  indent_up();
+
+  string handler_return_variable = tfunc->is_oneway() || tfunc->get_returntype()->is_void() ? "_" : "handler_return";
+
+  // OK case
+  f_gen_ << indent() << "Ok(" << handler_return_variable << ") => {" << endl;
+  indent_up();
+  if (tfunc->is_oneway()) {
+    f_gen_ << indent() << "Ok(())" << endl;
+  } else {
+    f_gen_
+      << indent()
+      << "try!(o_prot.write_message_begin(&TMessageIdentifier { "
+      << "name: \"" << tfunc->get_name() << "\".to_owned(), "
+      << "message_type: TMessageType::Reply,"
+      << "sequence_number: incoming_sequence_number }));"
+      << endl;
+    f_gen_ << indent() << "let ret = " << handler_successful_return_struct(tfunc) <<";" << endl;
+    f_gen_ << indent() << "try!(ret.write_to_out_protocol(o_prot));" << endl;
+    f_gen_ << indent() << "o_prot.write_message_end()" << endl;
+  }
+  indent_down();
+  f_gen_ << indent() << "}," << endl;
+
+  // Error case
+  f_gen_ << indent() << "Err(e) => {" << endl;
+  indent_up();
   f_gen_ << indent() << "unimplemented!()" << endl;
+  // have to check if it's a user error or a generic error
+  indent_down();
+  f_gen_ << indent() << "}," << endl;
 
   indent_down();
   f_gen_ << indent() << "}" << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+}
+
+string t_rs_generator::handler_successful_return_struct(t_function* tfunc) {
+  int member_count = 0;
+  ostringstream return_struct;
+
+  return_struct << service_call_result_struct_name(tfunc) << " { ";
+
+  // actual return
+  if (!tfunc->get_returntype()->is_void()) {
+    return_struct << "result_value: Some(handler_return)";
+    member_count++;
+  }
+
+  // any user-defined exceptions
+  if (tfunc->get_xceptions() != NULL) {
+    t_struct* txceptions = tfunc->get_xceptions();
+    const vector<t_field*> members = txceptions->get_sorted_members();
+    vector<t_field*>::const_iterator members_iter;
+    for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
+      t_field* txception = (*members_iter);
+      if (member_count > 0) { return_struct << ", "; }
+      return_struct << txception->get_name() << ": None";
+      member_count++;
+    }
+  }
+
+  return_struct << " }";
+
+  return  return_struct.str();
 }
 
 //-----------------------------------------------------------------------------
@@ -1703,19 +1774,19 @@ bool t_rs_generator::has_args(t_function* tfunc) {
 }
 
 string t_rs_generator::rust_sync_client_trait_name(t_service* tservice) {
-  return "TAbstract" + tservice->get_name() + "SyncClient";
+  return "TAbstract" + capitalize(camelcase(tservice->get_name())) + "SyncClient";
 }
 
 string t_rs_generator::rust_sync_handler_trait_name(t_service* tservice) {
-  return "TAbstract" + tservice->get_name() + "SyncHandler";
+  return "TAbstract" + capitalize(camelcase(tservice->get_name())) + "SyncHandler";
 }
 
 string t_rs_generator::service_call_args_struct_name(t_function* tfunc) {
-  return tfunc->get_name() + "_args";
+  return capitalize(tfunc->get_name()) + ARGS_STRUCT_SUFFIX;
 }
 
 string t_rs_generator::service_call_result_struct_name(t_function* tfunc) {
-  return tfunc->get_name() + "_result";
+  return capitalize(tfunc->get_name()) + RESULT_STRUCT_SUFFIX;
 }
 
 string t_rs_generator::rust_service_call_client_function_name(t_function* tfunc) {
