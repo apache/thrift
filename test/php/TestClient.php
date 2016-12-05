@@ -266,6 +266,39 @@ if ($mapin != $mapout) {
     $exitcode |= ERR_CONTAINERS;
 }
 
+$mapout = array();
+for ($i = 0; $i < 10; $i++) {
+    $mapout["key$i"] = "val$i";
+}
+print_r('testStringMap({');
+$first = true;
+foreach ($mapout as $key => $val) {
+  if ($first) {
+    $first = false;
+  } else {
+    print_r(", ");
+  }
+  print_r("\"$key\" => \"$val\"");
+}
+print_r("})");
+$mapin = $testClient->testStringMap($mapout);
+print_r(" = {");
+$first = true;
+foreach ($mapin as $key => $val) {
+  if ($first) {
+    $first = false;
+  } else {
+    print_r(", ");
+  }
+  print_r("\"$key\" => \"$val\"");
+}
+print_r("}\n");
+ksort($mapin);
+if ($mapin != $mapout) {
+    echo "**FAILED**\n";
+    $exitcode |= ERR_CONTAINERS;
+}
+
 /**
  * SET TEST
  */
@@ -459,7 +492,6 @@ try {
   print_r(' caught xception '.$x->errorCode.': '.$x->message."\n");
 }
 
-
 /**
  * Normal tests done.
  */
@@ -471,6 +503,19 @@ print_r("Total time: $elp ms\n");
 /**
  * Extraneous "I don't trust PHP to pack/unpack integer" tests
  */
+
+if ($protocol instanceof TBinaryProtocolAccelerated) {
+    // Regression check: check that method name is not double-freed
+    // Method name should not be an interned string.
+    $method_name = "Void";
+    $method_name = "test$method_name";
+
+    $seqid = 0;
+    $args = new \ThriftTest\ThriftTest_testVoid_args();
+    thrift_protocol_write_binary($protocol, $method_name, \Thrift\Type\TMessageType::CALL, $args, $seqid, $protocol->isStrictWrite());
+    $testClient->recv_testVoid();
+
+}
 
 // Max I32
 $num = pow(2, 30) + (pow(2, 30) - 1);
