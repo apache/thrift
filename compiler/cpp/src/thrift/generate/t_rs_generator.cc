@@ -768,13 +768,18 @@ void t_rs_generator::render_rust_type_write(const string& field_prefix, t_field*
   }
 
   if (ttype->is_base_type()) {
-    t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
+    t_base_type* tbase_type = (t_base_type*)ttype;
+    t_base_type::t_base tbase = tbase_type->get_base();
     switch (tbase) {
     case t_base_type::TYPE_VOID:
       throw "Cannot write field of type TYPE_VOID to output protocol";
       return;
     case t_base_type::TYPE_STRING:
-      f_gen_ << indent() << "try!(o_prot.write_string(&" + field_name + "));" << endl;
+      if (tbase_type->is_binary()) {
+        f_gen_ << indent() << "try!(o_prot.write_bytes(&" + field_name + "));" << endl;
+      } else {
+        f_gen_ << indent() << "try!(o_prot.write_string(&" + field_name + "));" << endl;
+      }
       return;
     case t_base_type::TYPE_BOOL:
       f_gen_ << indent() << "try!(o_prot.write_bool(" + field_name + "));" << endl;
@@ -1041,12 +1046,17 @@ void t_rs_generator::render_rust_struct_field_read(t_field* tfield) {
 // Construct the rust representation of all supported types from the wire.
 void t_rs_generator::render_rust_type_read(t_type* ttype, const string& type_var) {
   if (ttype->is_base_type()) {
-    t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
+    t_base_type* tbase_type = (t_base_type*)ttype;
+    t_base_type::t_base tbase = tbase_type->get_base();
     switch (tbase) {
     case t_base_type::TYPE_VOID:
       throw "Cannot read field of type TYPE_VOID from input protocol";
     case t_base_type::TYPE_STRING:
-      f_gen_ << indent() << "let " << type_var << " = try!(i_prot.read_string());" << endl;
+      if (tbase_type->is_binary()) {
+        f_gen_ << indent() << "let " << type_var << " = try!(i_prot.read_bytes());" << endl;
+      } else {
+        f_gen_ << indent() << "let " << type_var << " = try!(i_prot.read_string());" << endl;
+      }
       return;
     case t_base_type::TYPE_BOOL:
       f_gen_ << indent() << "let " << type_var << " = try!(i_prot.read_bool());" << endl;
@@ -1681,12 +1691,17 @@ void t_rs_generator::render_rust_rift_error(const string& error_kind, const stri
 string t_rs_generator::to_rust_type(t_type* ttype) {
   ttype = get_true_type(ttype);
   if (ttype->is_base_type()) {
-    t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
+    t_base_type* tbase_type = ((t_base_type*)ttype);
+    t_base_type::t_base tbase = tbase_type->get_base();
     switch (tbase) {
     case t_base_type::TYPE_VOID:
       return "()";
     case t_base_type::TYPE_STRING:
-      return "String";
+      if (tbase_type->is_binary()) {
+        return "Vec<u8>";
+      } else {
+        return "String";
+      }
     case t_base_type::TYPE_BOOL:
       return "bool";
     case t_base_type::TYPE_I8:
@@ -1727,7 +1742,7 @@ string t_rs_generator::to_rust_field_type_enum(t_type* ttype) {
     switch (tbase) {
     case t_base_type::TYPE_VOID:
       throw "will not generate protocol::TType for TYPE_VOID";
-    case t_base_type::TYPE_STRING:
+    case t_base_type::TYPE_STRING: // both strings and binary are actually encoded as TType::String
       return "TType::String";
     case t_base_type::TYPE_BOOL:
       return "TType::Bool";
