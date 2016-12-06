@@ -207,6 +207,8 @@ private:
   string args_struct_name(const string& name);
   string result_struct_name(const string& name);
   string default_struct_name(t_struct* tstruct);
+  string rust_function_parameter_name(const string& name);
+  string namespace_prefix(t_type* ttype);
 };
 
 // FIXME: underscore field names and function parameters
@@ -769,8 +771,7 @@ void t_rs_generator::render_rust_type_write(const string& field_prefix, t_field*
 
   if (ttype->is_base_type()) {
     t_base_type* tbase_type = (t_base_type*)ttype;
-    t_base_type::t_base tbase = tbase_type->get_base();
-    switch (tbase) {
+    switch (tbase_type->get_base()) {
     case t_base_type::TYPE_VOID:
       throw "Cannot write field of type TYPE_VOID to output protocol";
       return;
@@ -1047,8 +1048,7 @@ void t_rs_generator::render_rust_struct_field_read(t_field* tfield) {
 void t_rs_generator::render_rust_type_read(t_type* ttype, const string& type_var) {
   if (ttype->is_base_type()) {
     t_base_type* tbase_type = (t_base_type*)ttype;
-    t_base_type::t_base tbase = tbase_type->get_base();
-    switch (tbase) {
+    switch (tbase_type->get_base()) {
     case t_base_type::TYPE_VOID:
       throw "Cannot read field of type TYPE_VOID from input protocol";
     case t_base_type::TYPE_STRING:
@@ -1689,11 +1689,10 @@ void t_rs_generator::render_rust_rift_error(const string& error_kind, const stri
 //-----------------------------------------------------------------------------
 
 string t_rs_generator::to_rust_type(t_type* ttype) {
-  ttype = get_true_type(ttype);
+  // ttype = get_true_type(ttype); <-- recurses through as many typedef layers as necessary
   if (ttype->is_base_type()) {
     t_base_type* tbase_type = ((t_base_type*)ttype);
-    t_base_type::t_base tbase = tbase_type->get_base();
-    switch (tbase) {
+    switch (tbase_type->get_base()) {
     case t_base_type::TYPE_VOID:
       return "()";
     case t_base_type::TYPE_STRING:
@@ -1715,12 +1714,10 @@ string t_rs_generator::to_rust_type(t_type* ttype) {
     case t_base_type::TYPE_DOUBLE:
       return "f64";
     }
-  } else if (ttype->is_enum() || ttype->is_struct() || ttype->is_xception() || ttype->is_typedef()) {
-    if (ttype->get_program()->get_name() != get_program()->get_name()) {
-      return ttype->get_program()->get_name() + "::" + ttype->get_name();
-    } else {
-      return ttype->get_name();
-    }
+  } else if (ttype->is_typedef()) {
+    return namespace_prefix(ttype) + ((t_typedef*)ttype)->get_symbolic();
+  } else if (ttype->is_enum() || ttype->is_struct() || ttype->is_xception()) {
+    return namespace_prefix(ttype) + ttype->get_name();
   } else if (ttype->is_map()) {
     t_map* tmap = (t_map*)ttype;
     return "BTreeMap<" + to_rust_type(tmap->get_key_type()) + ", " + to_rust_type(tmap->get_val_type()) + ">";
@@ -1772,6 +1769,14 @@ string t_rs_generator::to_rust_field_type_enum(t_type* ttype) {
   throw "cannot find TType for " + ttype->get_name();
 }
 
+string t_rs_generator::namespace_prefix(t_type* ttype) {
+  if (ttype->get_program()->get_name() != get_program()->get_name()) {
+    return ttype->get_program()->get_name() + "::";
+  } else {
+    return "";
+  }
+}
+
 bool t_rs_generator::is_void(t_type* ttype) {
   return ttype->is_base_type() && ((t_base_type*)ttype)->get_base() == t_base_type::TYPE_VOID;
 }
@@ -1820,6 +1825,10 @@ string t_rs_generator::struct_name(t_struct* tstruct, t_rs_generator::e_struct_t
     default:
       throw "Cannot generate struct name for unknown struct type";
   }
+}
+
+string t_rs_generator::rust_function_parameter_name(const string& name) {
+  return decapitalize(underscore(name));
 }
 
 string t_rs_generator::args_struct_name(const string& name) {
