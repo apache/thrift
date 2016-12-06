@@ -129,18 +129,10 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
     }
 
     {
- //       let b:[u8; 10] = [0x77, 0x30, 0x30, 0x74, 0x21, 0x20, 0x52, 0x75, 0x73, 0x74];
-//        try!(verify_expected_result(client.testBinary(&b), &b)); // FIXME: BROKEN
+        let b_snd = vec![0x77, 0x30, 0x30, 0x74, 0x21, 0x20, 0x52, 0x75, 0x73, 0x74];
+        let b_cmp = vec![0x77, 0x30, 0x30, 0x74, 0x21, 0x20, 0x52, 0x75, 0x73, 0x74];
+        try!(verify_expected_result(client.test_binary(b_snd), b_cmp));
     }
-
-    //
-    // case t_base_type::TYPE_STRING:
-    /*
-    if (((t_base_type*)type)->is_binary() && !inkey) {
-    out << "WriteBinary(" << name << ")";
-    } else {
-    out << "WriteString(string(" << name << "))";
-    }*/
 
     // Xtruct
     {

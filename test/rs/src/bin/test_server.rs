@@ -100,63 +100,63 @@ struct ThriftTestHandler {
 
 impl TAbstractThriftTestSyncHandler for ThriftTestHandler {
     fn handle_test_void(&mut self) -> rift::Result<()> {
-        unimplemented!()
+        Ok(())
     }
 
     fn handle_test_string(&mut self, thing: String) -> rift::Result<String> {
-        unimplemented!()
+        Ok(thing)
     }
 
     fn handle_test_bool(&mut self, thing: bool) -> rift::Result<bool> {
-        unimplemented!()
+        Ok(thing)
     }
 
     fn handle_test_byte(&mut self, thing: i8) -> rift::Result<i8> {
-        unimplemented!()
+        Ok(thing)
     }
 
     fn handle_test_i32(&mut self, thing: i32) -> rift::Result<i32> {
-        unimplemented!()
+        Ok(thing)
     }
 
     fn handle_test_i64(&mut self, thing: i64) -> rift::Result<i64> {
-        unimplemented!()
+        Ok(thing)
     }
 
-    fn handle_test_binary(&mut self, thing: String) -> rift::Result<String> {
-        unimplemented!()
+    fn handle_test_binary(&mut self, thing: Vec<u8>) -> rift::Result<Vec<u8>> {
+        Ok(thing)
     }
 
     fn handle_test_struct(&mut self, thing: Xtruct) -> rift::Result<Xtruct> {
-        unimplemented!()
+        Ok(thing)
     }
 
     fn handle_test_nest(&mut self, thing: Xtruct2) -> rift::Result<Xtruct2> {
-        unimplemented!()
+        Ok(thing)
     }
 
     fn handle_test_map(&mut self, thing: BTreeMap<i32, i32>) -> rift::Result<BTreeMap<i32, i32>> {
-        unimplemented!()
+        Ok(thing)
     }
 
     fn handle_test_string_map(&mut self, thing: BTreeMap<String, String>) -> rift::Result<BTreeMap<String, String>> {
-        unimplemented!()
+        Ok(thing)
     }
 
     fn handle_test_set(&mut self, thing: BTreeSet<i32>) -> rift::Result<BTreeSet<i32>> {
-        unimplemented!()
+        Ok(thing)
     }
 
     fn handle_test_list(&mut self, thing: Vec<i32>) -> rift::Result<Vec<i32>> {
-        unimplemented!()
+        Ok(thing)
     }
 
     fn handle_test_enum(&mut self, thing: Numberz) -> rift::Result<Numberz> {
-        unimplemented!()
+        Ok(thing)
     }
 
-    fn handle_test_typedef(&mut self, thing: i64) -> rift::Result<i64> {
-        unimplemented!()
+    fn handle_test_typedef(&mut self, thing: i64) -> rift::Result<i64> { // FIXME <--- typedef is wrong
+        Ok(thing)
     }
 
     fn handle_test_map_map(&mut self, hello: i32) -> rift::Result<BTreeMap<i32, BTreeMap<i32, i32>>> {
