@@ -15,8 +15,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#![allow(unused_variables)] // FIXME: temporary
-
 #[macro_use]
 extern crate clap;
 extern crate rift;
@@ -81,7 +79,7 @@ fn main() {
 
     let processor = TThriftTestProcessor::new(ThriftTestHandler {});
 
-    let s = match &*server_type {
+    match &*server_type {
         "simple" => {
             let mut server = TSimpleServer::with_shared(transport_factory, protocol_factory, processor);
             match server.listen(&listen_address) {
@@ -181,8 +179,8 @@ impl TAbstractThriftTestSyncHandler for ThriftTestHandler {
         unimplemented!()
     }
 
-    fn handle_test_oneway(&mut self, secondsToSleep: i32) -> rift::Result<()> {
-        thread::sleep(Duration::from_secs(secondsToSleep as u64));
+    fn handle_test_oneway(&mut self, seconds_to_sleep: i32) -> rift::Result<()> {
+        thread::sleep(Duration::from_secs(seconds_to_sleep as u64));
         Ok(())
     }
 }

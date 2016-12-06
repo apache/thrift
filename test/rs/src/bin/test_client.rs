@@ -317,7 +317,7 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
         });
 
         let x_cmp = Xception {
-            errorCode: Some(1001),
+            error_code: Some(1001),
             message: Some("Xception".to_owned()),
         };
 
@@ -359,7 +359,7 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
         });
 
         let x_cmp = Xception {
-            errorCode: Some(1001),
+            error_code: Some(1001),
             message: Some("This is an Xception".to_owned()),
         };
 
@@ -380,7 +380,7 @@ fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result
         });
 
         let x_cmp = Xception2 {
-            errorCode: Some(2002),
+            error_code: Some(2002),
             struct_thing: Some(
                 Xtruct {
                     string_thing: Some("This is an Xception2".to_owned()),

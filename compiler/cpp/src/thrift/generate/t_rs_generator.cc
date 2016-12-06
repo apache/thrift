@@ -207,8 +207,9 @@ private:
   string args_struct_name(const string& name);
   string result_struct_name(const string& name);
   string default_struct_name(t_struct* tstruct);
-  string rust_function_parameter_name(const string& name);
+  string rust_snake_case(const string& name);
   string namespace_prefix(t_type* ttype);
+  string struct_field_read_variable(t_field* tfield);
 };
 
 // FIXME: underscore field names and function parameters
@@ -532,7 +533,7 @@ void t_rs_generator::render_rust_struct_definition(t_struct* tstruct, t_rs_gener
       t_field::e_req req = struct_type == t_rs_generator::T_ARGS ? t_field::T_REQUIRED : tfield->get_req();
       string rust_type = to_rust_type(tfield->get_type());
       rust_type = is_optional(req) ? "Option<" + rust_type + ">" : rust_type;
-      f_gen_ << indent() << visibility_qualifier(struct_type) << tfield->get_name() << ": " << rust_type << "," << endl;
+      f_gen_ << indent() << visibility_qualifier(struct_type) << rust_snake_case(tfield->get_name()) << ": " << rust_type << "," << endl;
     }
 
     indent_down();
@@ -620,7 +621,7 @@ void t_rs_generator::render_rust_result_struct_to_result_method(t_struct* tstruc
   for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
     t_field* tfield = (*members_iter);
     if (tfield->get_name() != SERVICE_CALL_RESULT_VARIABLE) {
-      string field_name = "self." + tfield->get_name();
+      string field_name = "self." + rust_snake_case(tfield->get_name());
       string branch_statement = rendered_branch_count == 0 ? "if" : "} else if";
 
       f_gen_ << indent() << branch_statement << " " << field_name << ".is_some() {" << endl;
@@ -729,7 +730,7 @@ void t_rs_generator::render_rust_struct_field_write(const string& prefix, t_fiel
   string field_ident_string = field_stream.str();
 
   if (is_optional(req)) {
-    string field_name = field_prefix + tfield->get_name();
+    string field_name = field_prefix + rust_snake_case(tfield->get_name());
     f_gen_ << indent() << "if " << field_name << ".is_some() {" << endl;
     indent_up();
     f_gen_ << indent() << "try!(o_prot.write_field_begin(&" << field_ident_string << "));" << endl;
@@ -761,12 +762,12 @@ void t_rs_generator::render_rust_type_write(const string& field_prefix, t_field*
   string field_name;
   if (is_optional(req)) {
     if (ttype->is_base_type() && !ttype->is_string()) {
-      field_name = field_prefix + tfield->get_name() + ".unwrap()";
+      field_name = field_prefix + rust_snake_case(tfield->get_name()) + ".unwrap()";
     } else {
-      field_name = field_prefix + tfield->get_name() + ".as_ref().unwrap()";
+      field_name = field_prefix + rust_snake_case(tfield->get_name()) + ".as_ref().unwrap()";
     }
   } else {
-    field_name = field_prefix + tfield->get_name();
+    field_name = field_prefix + rust_snake_case(tfield->get_name());
   }
 
   if (ttype->is_base_type()) {
@@ -940,7 +941,7 @@ void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct,
     t_field* tfield = (*members_iter);
     f_gen_
       << indent()
-      << "let mut f" << tfield->get_key()
+      << "let mut " << struct_field_read_variable(tfield)
       << ": Option<" << to_rust_type(tfield->get_type())
       << "> = None;"
       << endl;
@@ -998,9 +999,9 @@ void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct,
       f_gen_
         << indent()
         << "try!(verify_required_field_exists("
-        << "\"" << tstruct->get_name()<< "." << tfield->get_name() << "\""
+        << "\"" << tstruct->get_name()<< "." << rust_snake_case(tfield->get_name()) << "\""
         << ", "
-        << "&f" << tfield->get_key()
+        << "&" << struct_field_read_variable(tfield)
         << "));" << endl;
     }
   }
@@ -1015,13 +1016,16 @@ void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct,
     for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
       t_field* tfield = (*members_iter);
       t_field::e_req req = struct_type == t_rs_generator::T_ARGS ? t_field::T_REQUIRED : tfield->get_req();
+      string field_name = rust_snake_case(tfield->get_name());
+      string field_key = struct_field_read_variable(tfield);
       if (is_optional(req)) {
-        f_gen_ << indent() << tfield->get_name() << ": f" << tfield->get_key() << "," << endl;
+        f_gen_ << indent() << field_name << ": " << field_key << "," << endl;
       } else {
         f_gen_
           << indent()
-          << tfield->get_name()
-          << ": f" << tfield->get_key()
+          << field_name
+          << ": "
+          << field_key
           << ".expect(\"auto-generated code should have checked for presence of required fields\")"
           << ","
           << endl;
@@ -1039,9 +1043,10 @@ void t_rs_generator::render_rust_struct_read_from_in_protocol(t_struct* tstruct,
   f_gen_ << indent() << "}" << endl;
 }
 
+
 void t_rs_generator::render_rust_struct_field_read(t_field* tfield) {
   render_rust_type_read(tfield->get_type(), "val");
-  f_gen_ << indent() << "f" << tfield->get_key() << " = Some(val);" << endl;
+  f_gen_ << indent() << struct_field_read_variable(tfield) << " = Some(val);" << endl;
 }
 
 // Construct the rust representation of all supported types from the wire.
@@ -1350,7 +1355,7 @@ void t_rs_generator::render_rust_sync_send(t_function* tfunc) {
   vector<t_field*>::iterator members_iter;
   for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
     t_field* tfield = (*members_iter);
-    struct_definition << tfield->get_name() << ": " << tfield->get_name() << ", ";
+    struct_definition << rust_snake_case(tfield->get_name()) << ": " << rust_snake_case(tfield->get_name()) << ", ";
   }
   string struct_fields = struct_definition.str();
   if (struct_fields.size() > 0) {
@@ -1421,7 +1426,7 @@ string t_rs_generator::rust_sync_service_call_args(t_function* tfunc, bool is_de
       } else {
         func_args << ", ";
       }
-      func_args << prefix << tfield->get_name() << (is_declaration ? ": " + rust_type : "");
+      func_args << prefix << rust_snake_case(tfield->get_name()) << (is_declaration ? ": " + rust_type : "");
     }
   }
 
@@ -1827,7 +1832,7 @@ string t_rs_generator::struct_name(t_struct* tstruct, t_rs_generator::e_struct_t
   }
 }
 
-string t_rs_generator::rust_function_parameter_name(const string& name) {
+string t_rs_generator::rust_snake_case(const string& name) {
   return decapitalize(underscore(name));
 }
 
@@ -1857,6 +1862,12 @@ string t_rs_generator::rust_service_call_sync_recv_client_function_name(t_functi
 
 string t_rs_generator::rust_service_call_handler_function_name(t_function* tfunc) {
   return "handle_" + decapitalize(underscore(tfunc->get_name()));
+}
+
+string t_rs_generator::struct_field_read_variable(t_field* tfield) {
+  std::ostringstream foss;
+  foss << "f_" << tfield->get_key();
+  return foss.str();
 }
 
 string t_rs_generator::visibility_qualifier(t_rs_generator::e_struct_type struct_type) {
