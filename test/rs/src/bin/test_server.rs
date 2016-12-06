@@ -23,6 +23,8 @@ extern crate rift;
 extern crate rift_test;
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::thread;
+use std::time::Duration;
 
 use rift::protocol::{TBinaryProtocolFactory, TCompactProtocolFactory, TProtocolFactory};
 use rift::server::TSimpleServer;
@@ -95,7 +97,7 @@ fn main() {
 }
 
 struct ThriftTestHandler {
-
+    // empty
 }
 
 impl TAbstractThriftTestSyncHandler for ThriftTestHandler {
@@ -155,7 +157,7 @@ impl TAbstractThriftTestSyncHandler for ThriftTestHandler {
         Ok(thing)
     }
 
-    fn handle_test_typedef(&mut self, thing: i64) -> rift::Result<i64> { // FIXME <--- typedef is wrong
+    fn handle_test_typedef(&mut self, thing: UserId) -> rift::Result<UserId> {
         Ok(thing)
     }
 
@@ -163,11 +165,11 @@ impl TAbstractThriftTestSyncHandler for ThriftTestHandler {
         unimplemented!()
     }
 
-    fn handle_test_insanity(&mut self, argument: Insanity) -> rift::Result<BTreeMap<i64, BTreeMap<Numberz, Insanity>>> {
+    fn handle_test_insanity(&mut self, argument: Insanity) -> rift::Result<BTreeMap<UserId, BTreeMap<Numberz, Insanity>>> {
         unimplemented!()
     }
 
-    fn handle_test_multi(&mut self, arg0: i8, arg1: i32, arg2: i64, arg3: BTreeMap<i16, String>, arg4: Numberz, arg5: i64) -> rift::Result<Xtruct> {
+    fn handle_test_multi(&mut self, arg0: i8, arg1: i32, arg2: i64, arg3: BTreeMap<i16, String>, arg4: Numberz, arg5: UserId) -> rift::Result<Xtruct> {
         unimplemented!()
     }
 
@@ -180,6 +182,7 @@ impl TAbstractThriftTestSyncHandler for ThriftTestHandler {
     }
 
     fn handle_test_oneway(&mut self, secondsToSleep: i32) -> rift::Result<()> {
-        unimplemented!()
+        thread::sleep(Duration::from_secs(secondsToSleep as u64));
+        Ok(())
     }
 }
