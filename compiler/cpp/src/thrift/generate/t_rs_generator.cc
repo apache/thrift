@@ -193,9 +193,12 @@ private:
   void render_service_processor(t_service* tservice);
   void render_handler_succeeded(t_function* tfunc);
   void render_handler_failed(t_function* tfunc);
+  void render_handler_failed_user_exception_branch(t_function* tfunc);
+  void render_handler_failed_default_exception_branch(t_function* tfunc);
   void render_service_call_structs(t_service* tservice);
   string handler_successful_return_struct(t_function* tfunc);
   void render_rift_error(const string& error_kind, const string& error_struct, const string& sub_error_kind, const string& error_message);
+  void render_rift_error_struct(const string& error_struct, const string& sub_error_kind, const string& error_message);
 
   // Return a string containing all the unpacked service call args
   // given a service call function `t_function`.
@@ -281,6 +284,7 @@ void t_rs_generator::init_generator() {
 void t_rs_generator::render_attributes_and_includes() {
   // turn off some warnings
   f_gen_ << "#![allow(unused_imports)]" << endl; // generated code always includes BTreeMap/BTreeSet
+  // FIXME: consider removing these two warnings (they're no longer necessary)
   f_gen_ << "#![allow(non_snake_case)]" << endl; // generated code keeps user-specified names (FIXME: change to underscore?)
   f_gen_ << "#![allow(non_camel_case_types)]" << endl; // generated code keeps user-specified names for types
   f_gen_ << endl;
@@ -1687,7 +1691,7 @@ void t_rs_generator::render_handler_succeeded(t_function* tfunc) {
       << indent()
       << "try!(o_prot.write_message_begin(&TMessageIdentifier { "
       << "name: \"" << tfunc->get_name() << "\".to_owned(), "
-      << "message_type: TMessageType::Reply,"
+      << "message_type: TMessageType::Reply, "
       << "sequence_number: incoming_sequence_number }));"
       << endl;
     f_gen_ << indent() << "let ret = " << handler_successful_return_struct(tfunc) <<";" << endl;
@@ -1697,7 +1701,55 @@ void t_rs_generator::render_handler_succeeded(t_function* tfunc) {
 }
 
 void t_rs_generator::render_handler_failed(t_function* tfunc) {
-  f_gen_ << indent() << "unimplemented!()" << endl;
+  f_gen_ << indent() << "match e {" << endl;
+  indent_up();
+
+  // if there are any user-defined exceptions for this service call handle them first
+  if (tfunc->get_xceptions() != NULL && tfunc->get_xceptions()->get_sorted_members().size() > 0) {
+    f_gen_ << indent() << "rift::Error::User(usr_err) => {" << endl;
+    indent_up();
+    render_handler_failed_user_exception_branch(tfunc);
+    indent_down();
+    f_gen_ << indent() << "}," << endl;
+  }
+
+  // default case
+  f_gen_ << indent() << "_ => {" << endl;
+  indent_up();
+  render_handler_failed_default_exception_branch(tfunc);
+  indent_down();
+  f_gen_ << indent() << "}," << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+}
+
+void t_rs_generator::render_handler_failed_user_exception_branch(t_function* tfunc) {
+    // render exception branches...
+    //f_gen_ << indent() << "if e.downcast_ref::<>()" << endl;
+    //f_gen_ << indent() << endl;
+    f_gen_ << indent() << "unimplemented!()" << endl;
+}
+
+void t_rs_generator::render_handler_failed_default_exception_branch(t_function* tfunc) {
+  f_gen_ << indent() << "let ret_err = {" << endl;
+  indent_up();
+  render_rift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "e.description().to_owned()");
+  indent_down();
+  f_gen_ << indent() << "};" << endl;
+  if (tfunc->is_oneway()) {
+    f_gen_ << indent() << "Err(rift::Error::Application(ret_err))" << endl;
+  } else {
+    f_gen_
+      << indent()
+      << "try!(o_prot.write_message_begin(&TMessageIdentifier { "
+      << "name: \"" << tfunc->get_name() << "\".to_owned(), "
+      << "message_type: TMessageType::Exception, "
+      << "sequence_number: incoming_sequence_number }));"
+      << endl;
+    f_gen_ << indent() << "try!(rift::Error::write_application_error_to_out_protocol(&ret_err, o_prot));" << endl;
+    f_gen_ << indent() << "o_prot.write_message_end()" << endl;
+   }
 }
 
 string t_rs_generator::handler_successful_return_struct(t_function* tfunc) {
@@ -1741,16 +1793,20 @@ void t_rs_generator::render_rift_error(const string& error_kind, const string& e
   indent_up();
   f_gen_ << indent() << "rift::Error::" << error_kind << "(" << endl;
   indent_up();
+  render_rift_error_struct(error_struct, sub_error_kind, error_message);
+  indent_down();
+  f_gen_ << indent() << ")" << endl;
+  indent_down();
+  f_gen_ << indent() << ")" << endl;
+}
+
+void t_rs_generator::render_rift_error_struct(const string& error_struct, const string& sub_error_kind, const string& error_message) {
   f_gen_ << indent() << error_struct << " {" << endl;
   indent_up();
   f_gen_ << indent() << "kind: " << sub_error_kind << "," << endl;
   f_gen_ << indent() << "message: " << error_message << "," << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
-  indent_down();
-  f_gen_ << indent() << ")" << endl;
-  indent_down();
-  f_gen_ << indent() << ")" << endl;
 }
 
 string t_rs_generator::to_rust_type(t_type* ttype) {
