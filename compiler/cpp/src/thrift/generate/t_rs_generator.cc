@@ -132,7 +132,7 @@ private:
   void render_exception_struct_error_trait_impls(const string& struct_name, t_struct* tstruct);
 
   void render_struct_write_to_out_protocol(t_struct* tstruct, t_rs_generator::e_struct_type struct_type);
-  void render_struct_field_write(const string& prefix, t_field* tfield, t_field::e_req req);
+  void render_struct_field_write(t_field* tfield, t_field::e_req req);
   void render_type_write(const string& field_prefix, t_field* tfield, t_field::e_req req);
 
   // Write a list to the output protocol. `list_variable`
@@ -739,7 +739,7 @@ void t_rs_generator::render_struct_write_to_out_protocol(t_struct* tstruct, t_rs
     for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
       t_field* tfield = (*members_iter);
       t_field::e_req req = struct_type == t_rs_generator::T_ARGS ? t_field::T_REQUIRED : tfield->get_req();
-      render_struct_field_write("self", tfield, req);
+      render_struct_field_write(tfield, req);
     }
   }
 
@@ -753,12 +753,7 @@ void t_rs_generator::render_struct_write_to_out_protocol(t_struct* tstruct, t_rs
   f_gen_ << indent() << "}" << endl;
 }
 
-void t_rs_generator::render_struct_field_write(const string& prefix, t_field* tfield, t_field::e_req req) {
-  string field_prefix = "";
-  if (!prefix.empty()) {
-    field_prefix = prefix + ".";
-  }
-
+void t_rs_generator::render_struct_field_write(t_field* tfield, t_field::e_req req) {
   ostringstream field_stream;
   field_stream
     << "TFieldIdentifier {"
@@ -769,11 +764,11 @@ void t_rs_generator::render_struct_field_write(const string& prefix, t_field* tf
   string field_ident_string = field_stream.str();
 
   if (is_optional(req)) {
-    string field_name = field_prefix + rust_snake_case(tfield->get_name());
+    string field_name = "self." + rust_snake_case(tfield->get_name());
     f_gen_ << indent() << "if " << field_name << ".is_some() {" << endl;
     indent_up();
     f_gen_ << indent() << "try!(o_prot.write_field_begin(&" << field_ident_string << "));" << endl;
-    render_type_write(field_prefix, tfield, req);
+    render_type_write("self.", tfield, req);
     f_gen_ << indent() << "try!(o_prot.write_field_end());" << endl;
     f_gen_ << indent() << "()" << endl;
     indent_down();
@@ -790,11 +785,12 @@ void t_rs_generator::render_struct_field_write(const string& prefix, t_field* tf
     f_gen_ << indent() << "}" << endl;
   } else {
     f_gen_ << indent() << "try!(o_prot.write_field_begin(&" << field_ident_string << "));" << endl;
-    render_type_write(field_prefix, tfield, req);
+    render_type_write("self.", tfield, req);
     f_gen_ << indent() << "try!(o_prot.write_field_end());" << endl;
   }
 }
 
+// FIXME: refactor this when everything is done
 void t_rs_generator::render_type_write(const string& field_prefix, t_field* tfield, t_field::e_req req) {
   t_type* ttype = tfield->get_type();
 
@@ -1619,21 +1615,51 @@ void t_rs_generator::render_service_processor(t_service* tservice) {
 }
 
 void t_rs_generator::render_service_process_function(t_function* tfunc) {
+  string incoming_sequence_number_parameter("incoming_sequence_number");
+  string output_protocol_parameter("o_prot");
+
+  if (tfunc->is_oneway()) {
+    incoming_sequence_number_parameter = "_";
+    output_protocol_parameter = "_";
+  }
+
   f_gen_
     << indent()
     << "fn process_" << underscore(tfunc->get_name())
-    << "(&mut self, incoming_sequence_number: i32, i_prot: &mut TProtocol, o_prot: &mut TProtocol) -> rift::Result<()> {"
+    << "(&mut self, "
+    << incoming_sequence_number_parameter << ": i32, "
+    << "i_prot: &mut TProtocol, "
+    << output_protocol_parameter << ": &mut TProtocol) "
+    << "-> rift::Result<()> {"
     << endl;
+
   indent_up();
+
+  bool has_non_void_args = false;
+  const vector<t_field*> args = tfunc->get_arglist()->get_sorted_members();
+  vector<t_field*>::const_iterator args_iter;
+  for (args_iter = args.begin(); args_iter != args.end(); ++args_iter) {
+    t_field* tfield = (*args_iter);
+    if (!tfield->get_type()->is_void()) {
+      has_non_void_args = true;
+      break;
+    }
+  }
+
+  string args_variable("args");
+  if (!has_non_void_args) {
+    args_variable = "_";
+  }
 
   f_gen_
     << indent()
     << "let "
-    << "args" // FIXME: deal with oneway functions and only void args
+    << args_variable
     << " = try!("
     << rust_struct_name(tfunc->get_arglist())
     << "::read_from_in_protocol(i_prot));"
     << endl;
+
   f_gen_
     << indent()
     << "match self.handler."
