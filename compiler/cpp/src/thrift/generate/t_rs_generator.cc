@@ -191,6 +191,8 @@ private:
   void render_service_server_comment(t_service* tservice);
   void render_service_process_function(t_function* tfunc);
   void render_service_processor(t_service* tservice);
+  void render_handler_succeeded(t_function* tfunc);
+  void render_handler_failed(t_function* tfunc);
   void render_service_call_structs(t_service* tservice);
   string handler_successful_return_struct(t_function* tfunc);
   void render_rift_error(const string& error_kind, const string& error_struct, const string& sub_error_kind, const string& error_message);
@@ -226,6 +228,8 @@ private:
 
   // Return `true` if the service call has arguments, `false` otherwise.
   bool has_args(t_function* tfunc);
+
+  bool has_non_void_args(t_function* tfunc);
 
   // Return `pub ` (notice trailing whitespace!) if the struct
   // should be public, `` (empty string) otherwise.
@@ -301,7 +305,7 @@ void t_rs_generator::render_attributes_and_includes() {
   if (!includes.empty()) {
     vector<t_program*>::const_iterator includes_iter;
     for(includes_iter = includes.begin(); includes_iter != includes.end(); ++includes_iter) {
-      f_gen_ << "pub use " << underscore((*includes_iter)->get_name()) << ";" << endl;
+      f_gen_ << "pub use " << rust_snake_case((*includes_iter)->get_name()) << ";" << endl;
     }
     f_gen_ << endl;
   }
@@ -1594,7 +1598,7 @@ void t_rs_generator::render_service_processor(t_service* tservice) {
     t_function* tfunc = (*func_iter);
     f_gen_ << indent() << "\"" << tfunc->get_name() << "\"" << " => {" << endl;
     indent_up();
-    f_gen_ << indent() << "self.process_" << underscore(tfunc->get_name()) << "(message_ident.sequence_number, i_prot, o_prot)" << endl;
+    f_gen_ << indent() << "self.process_" << rust_snake_case(tfunc->get_name()) << "(message_ident.sequence_number, i_prot, o_prot)" << endl;
     indent_down();
     f_gen_ << indent() << "}," << endl;
   }
@@ -1615,46 +1619,31 @@ void t_rs_generator::render_service_processor(t_service* tservice) {
 }
 
 void t_rs_generator::render_service_process_function(t_function* tfunc) {
-  string incoming_sequence_number_parameter("incoming_sequence_number");
-  string output_protocol_parameter("o_prot");
+  string sequence_number_param("incoming_sequence_number");
+  string output_protocol_param("o_prot");
 
   if (tfunc->is_oneway()) {
-    incoming_sequence_number_parameter = "_";
-    output_protocol_parameter = "_";
+    sequence_number_param = "_";
+    output_protocol_param = "_";
   }
 
   f_gen_
     << indent()
-    << "fn process_" << underscore(tfunc->get_name())
+    << "fn process_" << rust_snake_case(tfunc->get_name())
     << "(&mut self, "
-    << incoming_sequence_number_parameter << ": i32, "
+    << sequence_number_param << ": i32, "
     << "i_prot: &mut TProtocol, "
-    << output_protocol_parameter << ": &mut TProtocol) "
+    << output_protocol_param << ": &mut TProtocol) "
     << "-> rift::Result<()> {"
     << endl;
 
   indent_up();
 
-  bool has_non_void_args = false;
-  const vector<t_field*> args = tfunc->get_arglist()->get_sorted_members();
-  vector<t_field*>::const_iterator args_iter;
-  for (args_iter = args.begin(); args_iter != args.end(); ++args_iter) {
-    t_field* tfield = (*args_iter);
-    if (!tfield->get_type()->is_void()) {
-      has_non_void_args = true;
-      break;
-    }
-  }
-
-  string args_variable("args");
-  if (!has_non_void_args) {
-    args_variable = "_";
-  }
-
+  // *always* read arguments from the input protocol
   f_gen_
     << indent()
     << "let "
-    << args_variable
+    << (has_non_void_args(tfunc) ? "args" : "_")
     << " = try!("
     << rust_struct_name(tfunc->get_arglist())
     << "::read_from_in_protocol(i_prot));"
@@ -1666,14 +1655,31 @@ void t_rs_generator::render_service_process_function(t_function* tfunc) {
     << service_call_handler_function_name(tfunc)
     << rust_sync_service_call_args(tfunc, false, "args.")
     << " {"
-    << endl;
+    << endl; // start match
   indent_up();
 
+  // handler succeeded
   string handler_return_variable = tfunc->is_oneway() || tfunc->get_returntype()->is_void() ? "_" : "handler_return";
-
-  // OK case
   f_gen_ << indent() << "Ok(" << handler_return_variable << ") => {" << endl;
   indent_up();
+  render_handler_succeeded(tfunc);
+  indent_down();
+  f_gen_ << indent() << "}," << endl;
+  // handler failed
+  f_gen_ << indent() << "Err(e) => {" << endl;
+  indent_up();
+  render_handler_failed(tfunc);
+  indent_down();
+  f_gen_ << indent() << "}," << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl; // end match
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl; // end function
+}
+
+void t_rs_generator::render_handler_succeeded(t_function* tfunc) {
   if (tfunc->is_oneway()) {
     f_gen_ << indent() << "Ok(())" << endl;
   } else {
@@ -1688,22 +1694,10 @@ void t_rs_generator::render_service_process_function(t_function* tfunc) {
     f_gen_ << indent() << "try!(ret.write_to_out_protocol(o_prot));" << endl;
     f_gen_ << indent() << "o_prot.write_message_end()" << endl;
   }
-  indent_down();
-  f_gen_ << indent() << "}," << endl;
+}
 
-  // Error case
-  f_gen_ << indent() << "Err(e) => {" << endl;
-  indent_up();
+void t_rs_generator::render_handler_failed(t_function* tfunc) {
   f_gen_ << indent() << "unimplemented!()" << endl;
-  // have to check if it's a user error or a generic error
-  indent_down();
-  f_gen_ << indent() << "}," << endl;
-
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
-
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
 }
 
 string t_rs_generator::handler_successful_return_struct(t_function* tfunc) {
@@ -1860,6 +1854,22 @@ bool t_rs_generator::is_optional(t_field::e_req req) {
 
 bool t_rs_generator::has_args(t_function* tfunc) {
   return tfunc->get_arglist() != NULL && !tfunc->get_arglist()->get_sorted_members().empty();
+}
+
+bool t_rs_generator::has_non_void_args(t_function* tfunc) {
+  bool has_non_void_args = false;
+
+  const vector<t_field*> args = tfunc->get_arglist()->get_sorted_members();
+  vector<t_field*>::const_iterator args_iter;
+  for (args_iter = args.begin(); args_iter != args.end(); ++args_iter) {
+    t_field* tfield = (*args_iter);
+    if (!tfield->get_type()->is_void()) {
+      has_non_void_args = true;
+      break;
+    }
+  }
+
+  return has_non_void_args;
 }
 
 string t_rs_generator::visibility_qualifier(t_rs_generator::e_struct_type struct_type) {
