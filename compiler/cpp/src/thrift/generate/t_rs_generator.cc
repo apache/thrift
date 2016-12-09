@@ -566,7 +566,7 @@ void t_rs_generator::render_struct_comment(const string& struct_name) {
 }
 
 void t_rs_generator::render_struct_definition(const string& struct_name, t_struct* tstruct, t_rs_generator::e_struct_type struct_type) {
-  f_gen_ << "#[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]" << endl;
+  f_gen_ << "#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]" << endl;
   f_gen_ << visibility_qualifier(struct_type) << "struct " << struct_name << " {" << endl;
 
   // render the members
