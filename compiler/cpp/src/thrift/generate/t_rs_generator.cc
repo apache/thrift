@@ -1689,11 +1689,12 @@ void t_rs_generator::render_handler_succeeded(t_function* tfunc) {
   } else {
     f_gen_
       << indent()
-      << "try!(o_prot.write_message_begin(&TMessageIdentifier { "
+      << "let message_ident = TMessageIdentifier { "
       << "name: \"" << tfunc->get_name() << "\".to_owned(), "
       << "message_type: TMessageType::Reply, "
-      << "sequence_number: incoming_sequence_number }));"
+      << "sequence_number: incoming_sequence_number };"
       << endl;
+    f_gen_ << indent() << "try!(o_prot.write_message_begin(&message_ident));" << endl;
     f_gen_ << indent() << "let ret = " << handler_successful_return_struct(tfunc) <<";" << endl;
     f_gen_ << indent() << "try!(ret.write_to_out_protocol(o_prot));" << endl;
     f_gen_ << indent() << "o_prot.write_message_end()" << endl;
@@ -1706,7 +1707,8 @@ void t_rs_generator::render_handler_failed(t_function* tfunc) {
 
   // if there are any user-defined exceptions for this service call handle them first
   if (tfunc->get_xceptions() != NULL && tfunc->get_xceptions()->get_sorted_members().size() > 0) {
-    f_gen_ << indent() << "rift::Error::User(usr_err) => {" << endl;
+    string user_err_var("usr_err");
+    f_gen_ << indent() << "rift::Error::User(" << user_err_var << ") => {" << endl;
     indent_up();
     render_handler_failed_user_exception_branch(tfunc);
     indent_down();
@@ -1725,10 +1727,95 @@ void t_rs_generator::render_handler_failed(t_function* tfunc) {
 }
 
 void t_rs_generator::render_handler_failed_user_exception_branch(t_function* tfunc) {
-    // render exception branches...
-    //f_gen_ << indent() << "if e.downcast_ref::<>()" << endl;
-    //f_gen_ << indent() << endl;
-    f_gen_ << indent() << "unimplemented!()" << endl;
+  if (tfunc->get_xceptions() == NULL || tfunc->get_xceptions()->get_sorted_members().size() == 0) {
+    throw "cannot render user exception branches if no user exceptions defined";
+  }
+
+  const vector<t_field*> txceptions = tfunc->get_xceptions()->get_sorted_members();
+  vector<t_field*>::const_iterator xception_iter;
+  int branches_rendered = 0;
+
+  // run through all user-defined exceptions
+  for (xception_iter = txceptions.begin(); xception_iter != txceptions.end(); ++xception_iter) {
+    t_field* txception = (*xception_iter);
+
+    string if_statement(branches_rendered == 0 ? "if usr_err" : "} else if usr_err");
+    string exception_type(rust_namespace(txception->get_type()) + rust_camel_case(txception->get_type()->get_name()));
+    f_gen_ << indent() << if_statement << ".downcast_ref::<" << exception_type << ">().is_some() {" << endl;
+    indent_up();
+
+    f_gen_
+      << indent()
+      << "let err = usr_err.downcast::<" << exception_type << ">().expect(\"downcast already checked\");"
+      << endl;
+
+    // render the members of the return struct
+    ostringstream members;
+
+    bool has_result_variable = !(tfunc->is_oneway() || tfunc->get_returntype()->is_void());
+    if (has_result_variable) {
+      members << SERVICE_CALL_RESULT_VARIABLE << ": None, ";
+    }
+
+    vector<t_field*>::const_iterator xception_members_iter;
+    for(xception_members_iter = txceptions.begin(); xception_members_iter != txceptions.end(); ++xception_members_iter) {
+      t_field* member = (*xception_members_iter);
+      string member_name(rust_snake_case(member->get_name()));
+      if (member == txception) {
+        members << member_name << ": Some(*err), ";
+      } else {
+        members << member_name << ": None, ";
+      }
+    }
+
+    string member_string = members.str();
+    member_string.replace(member_string.size() - 2, 2, " "); // trim trailing comma
+
+    // now write out the return struct
+    f_gen_ << indent() << "let ret_err = " << service_call_result_struct_name(tfunc) << "{ " << member_string << "};" << endl;
+
+    f_gen_
+      << indent()
+      << "let message_ident = "
+      << "TMessageIdentifier { "
+      << "name: \"" << tfunc->get_name() << "\".to_owned(), "
+      << "message_type: TMessageType::Reply, "
+      << "sequence_number: incoming_sequence_number };"
+      << endl;
+    f_gen_ << indent() << "try!(o_prot.write_message_begin(&message_ident));" << endl;
+    f_gen_ << indent() << "try!(ret_err.write_to_out_protocol(o_prot));" << endl;
+    f_gen_ << indent() << "o_prot.write_message_end()" << endl;
+
+    indent_down();
+
+    branches_rendered++;
+  }
+
+  // the catch all, if somehow it was a user exception that we don't support
+  f_gen_ << indent() << "} else {" << endl;
+  indent_up();
+
+  // FIXME: same as default block below
+
+  f_gen_ << indent() << "let ret_err = {" << endl;
+  indent_up();
+  render_rift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "usr_err.description().to_owned()");
+  indent_down();
+  f_gen_ << indent() << "};" << endl;
+
+  f_gen_
+      << indent()
+      << "let message_ident = TMessageIdentifier { "
+      << "name: \"" << tfunc->get_name() << "\".to_owned(), "
+      << "message_type: TMessageType::Exception, "
+      << "sequence_number: incoming_sequence_number };"
+      << endl;
+    f_gen_ << indent() << "try!(o_prot.write_message_begin(&message_ident));" << endl;
+    f_gen_ << indent() << "try!(rift::Error::write_application_error_to_out_protocol(&ret_err, o_prot));" << endl;
+    f_gen_ << indent() << "o_prot.write_message_end()" << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
 }
 
 void t_rs_generator::render_handler_failed_default_exception_branch(t_function* tfunc) {
@@ -1742,11 +1829,12 @@ void t_rs_generator::render_handler_failed_default_exception_branch(t_function* 
   } else {
     f_gen_
       << indent()
-      << "try!(o_prot.write_message_begin(&TMessageIdentifier { "
+      << "let message_ident = TMessageIdentifier { "
       << "name: \"" << tfunc->get_name() << "\".to_owned(), "
       << "message_type: TMessageType::Exception, "
-      << "sequence_number: incoming_sequence_number }));"
+      << "sequence_number: incoming_sequence_number };"
       << endl;
+    f_gen_ << indent() << "try!(o_prot.write_message_begin(&message_ident));" << endl;
     f_gen_ << indent() << "try!(rift::Error::write_application_error_to_out_protocol(&ret_err, o_prot));" << endl;
     f_gen_ << indent() << "o_prot.write_message_end()" << endl;
    }
