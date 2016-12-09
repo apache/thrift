@@ -152,29 +152,96 @@ impl TAbstractThriftTestSyncHandler for ThriftTestHandler {
     }
 
     fn handle_test_enum(&mut self, thing: Numberz) -> rift::Result<Numberz> {
+        println!("testEnum({:?})", thing);
         Ok(thing)
     }
 
     fn handle_test_typedef(&mut self, thing: UserId) -> rift::Result<UserId> {
+        println!("testTypedef({})", thing);
         Ok(thing)
     }
 
+    /// @return map<i32,map<i32,i32>> - returns a dictionary with these values:
+    /// {-4 => {-4 => -4, -3 => -3, -2 => -2, -1 => -1, }, 4 => {1 => 1, 2 => 2, 3 => 3, 4 => 4, }, }
     fn handle_test_map_map(&mut self, hello: i32) -> rift::Result<BTreeMap<i32, BTreeMap<i32, i32>>> {
-        unimplemented!()
+        println!("testMapMap({})", hello);
+
+        let mut inner_map_0: BTreeMap<i32, i32> = BTreeMap::new();
+        for i in -4..(0 as i32) {
+           inner_map_0.insert(i, i);
+        }
+
+        let mut inner_map_1: BTreeMap<i32, i32> = BTreeMap::new();
+        for i in 1..5 {
+            inner_map_1.insert(i, i);
+        }
+
+        let mut ret_map: BTreeMap<i32, BTreeMap<i32, i32>> = BTreeMap::new();
+        ret_map.insert(-4, inner_map_0);
+        ret_map.insert(4, inner_map_1);
+
+        Ok(ret_map)
     }
 
+    /// Creates a the returned map with these values and prints it out:
+    ///     { 1 => { 2 => argument,
+    ///              3 => argument,
+    ///            },
+    ///       2 => { 6 => <empty Insanity struct>, },
+    ///     }
+    /// return map<UserId, map<Numberz,Insanity>> - a map with the above values
     fn handle_test_insanity(&mut self, argument: Insanity) -> rift::Result<BTreeMap<UserId, BTreeMap<Numberz, Insanity>>> {
-        unimplemented!()
+        let mut map_0: BTreeMap<Numberz, Insanity> = BTreeMap::new();
+        map_0.insert(Numberz::TWO, argument.clone());
+        map_0.insert(Numberz::THREE, argument.clone());
+
+        let mut map_1: BTreeMap<Numberz, Insanity> = BTreeMap::new();
+        let insanity = Insanity {
+            user_map: None,
+            xtructs: None,
+        };
+        map_1.insert(Numberz::SIX, insanity);
+
+        let mut ret: BTreeMap<UserId, BTreeMap<Numberz, Insanity>> = BTreeMap::new();
+        ret.insert(1, map_0);
+        ret.insert(2, map_1);
+
+        Ok(ret)
     }
 
-    fn handle_test_multi(&mut self, arg0: i8, arg1: i32, arg2: i64, arg3: BTreeMap<i16, String>, arg4: Numberz, arg5: UserId) -> rift::Result<Xtruct> {
-        unimplemented!()
+    /// returns an Xtruct with string_thing = "Hello2", byte_thing = arg0, i32_thing = arg1 and i64_thing = arg2
+    fn handle_test_multi(&mut self, arg0: i8, arg1: i32, arg2: i64, _: BTreeMap<i16, String>, _: Numberz, _: UserId) -> rift::Result<Xtruct> {
+        let x_ret = Xtruct {
+            string_thing: Some("Hello2".to_owned()),
+            byte_thing: Some(arg0),
+            i32_thing: Some(arg1),
+            i64_thing: Some(arg2),
+        };
+
+        Ok(x_ret)
     }
 
+    /// Print 'testException(%s)' with arg as '%s'
+    /// if arg == "Xception" throw Xception with errorCode = 1001 and message = arg
+    /// else if arg == "TException" throw TException
+    /// else do not throw anything
     fn handle_test_exception(&mut self, arg: String) -> rift::Result<()> {
-        unimplemented!()
+        println!("testException({})", arg);
+        match &*arg {
+            "Xception" => Err(Xception { error_code: Some(1001), message: Some(arg) }),
+            "TException" => Err("this is a random error".into()),
+            _ => Ok(())
+        }
     }
 
+    /**
+   * Print 'testMultiException(%s, %s)' with arg0 as '%s' and arg1 as '%s'
+   * @param string arg - a string indication what type of exception to throw
+   * if arg0 == "Xception" throw Xception with errorCode = 1001 and message = "This is an Xception"
+   * else if arg0 == "Xception2" throw Xception2 with errorCode = 2002 and struct_thing.string_thing = "This is an Xception2"
+   * else do not throw anything
+   * @return Xtruct - an Xtruct with string_thing = arg1
+   */
     fn handle_test_multi_exception(&mut self, arg0: String, arg1: String) -> rift::Result<Xtruct> {
         unimplemented!()
     }
