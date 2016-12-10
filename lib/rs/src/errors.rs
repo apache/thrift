@@ -34,7 +34,7 @@ pub enum Error {
 
 impl Error {
     pub fn read_application_error_from_in_protocol(i: &mut TProtocol) -> ::Result<ApplicationError> {
-        let mut message = "unknown remote error".to_owned();
+        let mut message = "general remote error".to_owned();
         let mut kind = ApplicationErrorKind::Unknown;
 
         try!(i.read_struct_begin());
@@ -119,6 +119,30 @@ impl Display for Error {
             Error::Application(ref e) => Display::fmt(&e, f),
             Error::User(ref e) => Display::fmt(&e, f),
         }
+    }
+}
+
+// String is automatically turned into ApplicationError instances.
+impl From<String> for Error {
+    fn from(s: String) -> Self {
+       Error::Application(
+           ApplicationError {
+               kind: ApplicationErrorKind::Unknown,
+               message: s,
+           }
+       )
+    }
+}
+
+// &str is automatically turned into ApplicationError instances.
+impl<'a> From<&'a str> for Error {
+    fn from(s: &'a str) -> Self {
+       Error::Application(
+           ApplicationError {
+               kind: ApplicationErrorKind::Unknown,
+               message: String::from(s),
+           }
+       )
     }
 }
 
