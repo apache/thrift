@@ -100,54 +100,67 @@ struct ThriftTestHandler {
 
 impl TAbstractThriftTestSyncHandler for ThriftTestHandler {
     fn handle_test_void(&mut self) -> rift::Result<()> {
+        println!("testVoid()");
         Ok(())
     }
 
     fn handle_test_string(&mut self, thing: String) -> rift::Result<String> {
+        println!("testString({})", &thing);
         Ok(thing)
     }
 
     fn handle_test_bool(&mut self, thing: bool) -> rift::Result<bool> {
+        println!("testBool({})", thing);
         Ok(thing)
     }
 
     fn handle_test_byte(&mut self, thing: i8) -> rift::Result<i8> {
+        println!("testByte({})", thing);
         Ok(thing)
     }
 
     fn handle_test_i32(&mut self, thing: i32) -> rift::Result<i32> {
+        println!("testi32({})", thing);
         Ok(thing)
     }
 
     fn handle_test_i64(&mut self, thing: i64) -> rift::Result<i64> {
+        println!("testi64({})", thing);
         Ok(thing)
     }
 
     fn handle_test_binary(&mut self, thing: Vec<u8>) -> rift::Result<Vec<u8>> {
+        println!("testBinary({:?})", thing);
         Ok(thing)
     }
 
     fn handle_test_struct(&mut self, thing: Xtruct) -> rift::Result<Xtruct> {
+        println!("testStruct({:?})", thing);
         Ok(thing)
     }
 
     fn handle_test_nest(&mut self, thing: Xtruct2) -> rift::Result<Xtruct2> {
+        println!("testNest({:?})", thing);
         Ok(thing)
     }
 
     fn handle_test_map(&mut self, thing: BTreeMap<i32, i32>) -> rift::Result<BTreeMap<i32, i32>> {
+        println!("testMap({:?})", thing);
         Ok(thing)
     }
 
     fn handle_test_string_map(&mut self, thing: BTreeMap<String, String>) -> rift::Result<BTreeMap<String, String>> {
+        println!("testStringMap({:?})", thing);
         Ok(thing)
     }
 
     fn handle_test_set(&mut self, thing: BTreeSet<i32>) -> rift::Result<BTreeSet<i32>> {
+        println!("testSet({:?})", thing);
         Ok(thing)
     }
 
     fn handle_test_list(&mut self, thing: Vec<i32>) -> rift::Result<Vec<i32>> {
+        println!("testList({:?})", thing);
         Ok(thing)
     }
 
@@ -221,12 +234,12 @@ impl TAbstractThriftTestSyncHandler for ThriftTestHandler {
         Ok(x_ret)
     }
 
-    /// Print 'testException(%s)' with arg as '%s'
     /// if arg == "Xception" throw Xception with errorCode = 1001 and message = arg
     /// else if arg == "TException" throw TException
     /// else do not throw anything
     fn handle_test_exception(&mut self, arg: String) -> rift::Result<()> {
         println!("testException({})", arg);
+
         match &*arg {
             "Xception" => Err((Xception { error_code: Some(1001), message: Some(arg) }).into()),
             "TException" => Err("this is a random error".into()),
@@ -234,16 +247,43 @@ impl TAbstractThriftTestSyncHandler for ThriftTestHandler {
         }
     }
 
-    /**
-   * Print 'testMultiException(%s, %s)' with arg0 as '%s' and arg1 as '%s'
-   * @param string arg - a string indication what type of exception to throw
-   * if arg0 == "Xception" throw Xception with errorCode = 1001 and message = "This is an Xception"
-   * else if arg0 == "Xception2" throw Xception2 with errorCode = 2002 and struct_thing.string_thing = "This is an Xception2"
-   * else do not throw anything
-   * @return Xtruct - an Xtruct with string_thing = arg1
-   */
+    /// if arg0 == "Xception" throw Xception with errorCode = 1001 and message = "This is an Xception"
+    /// else if arg0 == "Xception2" throw Xception2 with errorCode = 2002 and struct_thing.string_thing = "This is an Xception2"
+    // else do not throw anything and return Xtruct with string_thing = arg1
     fn handle_test_multi_exception(&mut self, arg0: String, arg1: String) -> rift::Result<Xtruct> {
-        unimplemented!()
+        match &*arg0 {
+            "Xception" => Err(
+                (
+                    Xception {
+                        error_code: Some(1001),
+                        message: Some("This is an Xception".to_owned()),
+                    }
+                ).into()
+            ),
+            "Xception2" => Err(
+                (
+                    Xception2 {
+                        error_code: Some(2002),
+                        struct_thing: Some(
+                            Xtruct {
+                                string_thing: Some("This is an Xception2".to_owned()),
+                                byte_thing: None,
+                                i32_thing: None,
+                                i64_thing: None,
+                            }
+                        ),
+                    }
+                ).into()
+            ),
+            _ => Ok(
+                Xtruct {
+                    string_thing: Some(arg1),
+                    byte_thing: None,
+                    i32_thing: None,
+                    i64_thing: None,
+                }
+            )
+        }
     }
 
     fn handle_test_oneway(&mut self, seconds_to_sleep: i32) -> rift::Result<()> {
