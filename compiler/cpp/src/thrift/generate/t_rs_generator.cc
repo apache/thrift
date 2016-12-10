@@ -292,8 +292,9 @@ void t_rs_generator::render_attributes_and_includes() {
   // add standard includes
   f_gen_ << "extern crate rift;" << endl;
   f_gen_ << endl;
-  f_gen_ << "use std::collections::{BTreeMap, BTreeSet};" << endl;
   f_gen_ << "use std::cell::RefCell;" << endl;
+  f_gen_ << "use std::collections::{BTreeMap, BTreeSet};" << endl;
+  f_gen_ << "use std::convert::From;" << endl;
   f_gen_ << "use std::error::Error;" << endl;
   f_gen_ << "use std::fmt;" << endl;
   f_gen_ << "use std::fmt::{Display, Formatter};" << endl;
@@ -597,6 +598,18 @@ void t_rs_generator::render_exception_struct_error_trait_impls(const string& str
   f_gen_ << indent() << "fn description(&self) -> &str {" << endl;
   indent_up();
   f_gen_ << indent() << "\"" << "remote service threw " << tstruct->get_name() << "\"" << endl; // use original name
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
+
+  // convert::From trait
+  f_gen_ << "impl From<" << struct_name << "> for rift::Error {" << endl;
+  indent_up();
+  f_gen_ << indent() << "fn from(e: " << struct_name << ") -> Self {" << endl;
+  indent_up();
+  f_gen_ << indent() << "rift::Error::User(Box::new(e))" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
   indent_down();
