@@ -1459,7 +1459,7 @@ void t_rs_generator::render_sync_send(t_function* tfunc) {
   f_gen_ << indent() << "try!(self.o_prot.borrow_mut().write_message_begin(&message_ident));" << endl;
   f_gen_ << indent() << "try!(call_args.write_to_out_protocol(&mut **self.o_prot.borrow_mut()));" << endl; // written even if we have 0 args
   f_gen_ << indent() << "try!(self.o_prot.borrow_mut().write_message_end());" << endl;
-  f_gen_ << indent() << "Ok(())" << endl;
+  f_gen_ << indent() << "self.o_prot.borrow_mut().flush()" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 }
@@ -1710,7 +1710,8 @@ void t_rs_generator::render_handler_succeeded(t_function* tfunc) {
     f_gen_ << indent() << "try!(o_prot.write_message_begin(&message_ident));" << endl;
     f_gen_ << indent() << "let ret = " << handler_successful_return_struct(tfunc) <<";" << endl;
     f_gen_ << indent() << "try!(ret.write_to_out_protocol(o_prot));" << endl;
-    f_gen_ << indent() << "o_prot.write_message_end()" << endl;
+    f_gen_ << indent() << "try!(o_prot.write_message_end());" << endl;
+    f_gen_ << indent() << "o_prot.flush()" << endl;
   }
 }
 
@@ -1797,7 +1798,8 @@ void t_rs_generator::render_handler_failed_user_exception_branch(t_function* tfu
       << endl;
     f_gen_ << indent() << "try!(o_prot.write_message_begin(&message_ident));" << endl;
     f_gen_ << indent() << "try!(ret_err.write_to_out_protocol(o_prot));" << endl;
-    f_gen_ << indent() << "o_prot.write_message_end()" << endl;
+    f_gen_ << indent() << "try!(o_prot.write_message_end());" << endl;
+    f_gen_ << indent() << "o_prot.flush()" << endl;
 
     indent_down();
 
@@ -1825,7 +1827,8 @@ void t_rs_generator::render_handler_failed_user_exception_branch(t_function* tfu
       << endl;
     f_gen_ << indent() << "try!(o_prot.write_message_begin(&message_ident));" << endl;
     f_gen_ << indent() << "try!(rift::Error::write_application_error_to_out_protocol(&ret_err, o_prot));" << endl;
-    f_gen_ << indent() << "o_prot.write_message_end()" << endl;
+    f_gen_ << indent() << "try!(o_prot.write_message_end());" << endl;
+    f_gen_ << indent() << "o_prot.flush()" << endl;
 
   indent_down();
   f_gen_ << indent() << "}" << endl;
@@ -1849,7 +1852,8 @@ void t_rs_generator::render_handler_failed_default_exception_branch(t_function* 
       << endl;
     f_gen_ << indent() << "try!(o_prot.write_message_begin(&message_ident));" << endl;
     f_gen_ << indent() << "try!(rift::Error::write_application_error_to_out_protocol(&ret_err, o_prot));" << endl;
-    f_gen_ << indent() << "o_prot.write_message_end()" << endl;
+    f_gen_ << indent() << "try!(o_prot.write_message_end());" << endl;
+    f_gen_ << indent() << "o_prot.flush()" << endl;
    }
 }
 
