@@ -85,6 +85,8 @@ impl Error {
         try!(o.write_field_stop());
         try!(o.write_struct_end());
 
+        try!(o.flush());
+
         Ok(())
     }
 }
