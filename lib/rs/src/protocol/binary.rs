@@ -344,10 +344,7 @@ impl TProtocol for TBinaryProtocol {
     }
 }
 
-pub struct TBinaryProtocolFactory {
-    // nothing
-}
-
+pub struct TBinaryProtocolFactory;
 impl TProtocolFactory for TBinaryProtocolFactory {
     fn build(&self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TProtocol> {
         Box::new(TBinaryProtocol { strict: true, transport: transport }) as Box<TProtocol>

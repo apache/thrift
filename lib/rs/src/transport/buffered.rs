@@ -121,10 +121,7 @@ impl Write for TBufferedTransport {
     }
 }
 
-pub struct TBufferedTransportFactory {
-    // empty
-}
-
+pub struct TBufferedTransportFactory;
 impl TTransportFactory for TBufferedTransportFactory {
     fn build(&self, inner: Rc<RefCell<Box<TTransport>>>) -> Box<TTransport> {
         Box::new(TBufferedTransport::new(inner)) as Box<TTransport>

@@ -204,10 +204,7 @@ impl TProtocol for TCompactProtocol {
     }
 }
 
-pub struct TCompactProtocolFactory {
-    // nothing
-}
-
+pub struct TCompactProtocolFactory;
 impl TProtocolFactory for TCompactProtocolFactory {
     fn build(&self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TProtocol> {
         Box::new(TCompactProtocol { transport: transport }) as Box<TProtocol>

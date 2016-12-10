@@ -118,10 +118,7 @@ impl Write for TFramedTransport {
     }
 }
 
-pub struct TFramedTransportFactory {
-
-}
-
+pub struct TFramedTransportFactory;
 impl TTransportFactory for TFramedTransportFactory {
     fn build(&self, inner: Rc<RefCell<Box<TTransport>>>) -> Box<TTransport> {
         Box::new(TFramedTransport::new(inner)) as Box<TTransport>
