@@ -265,6 +265,9 @@
       <arg line="--gen java ${test.thrift.home}/ThriftTest.thrift"/>
     </exec>
     <exec executable="${thrift.compiler}" failonerror="true">
+      <arg line="--gen java ${test.thrift.home}/JavaTypes.thrift"/>
+    </exec>
+    <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen java ${test.thrift.home}/DebugProtoTest.thrift"/>
     </exec>
     <exec executable="${thrift.compiler}" failonerror="true">
