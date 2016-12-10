@@ -228,7 +228,7 @@ impl TAbstractThriftTestSyncHandler for ThriftTestHandler {
     fn handle_test_exception(&mut self, arg: String) -> rift::Result<()> {
         println!("testException({})", arg);
         match &*arg {
-            "Xception" => Err(Xception { error_code: Some(1001), message: Some(arg) }),
+            "Xception" => Err((Xception { error_code: Some(1001), message: Some(arg) }).into()),
             "TException" => Err("this is a random error".into()),
             _ => Ok(())
         }
