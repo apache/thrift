@@ -129,6 +129,7 @@ impl TTransportFactory for TBufferedTransportFactory {
     }
 }
 
+/*
 #[cfg(test)]
 mod tests {
     use std::cell::RefCell;
@@ -340,3 +341,4 @@ mod tests {
         }
     }
 }
+*/

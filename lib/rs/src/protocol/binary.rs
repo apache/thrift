@@ -352,6 +352,7 @@ impl TProtocolFactory for TBinaryProtocolFactory {
     }
 }
 
+/*
 #[cfg(test)]
 mod tests {
 
@@ -393,3 +394,4 @@ mod tests {
 
     }
 }
+*/
