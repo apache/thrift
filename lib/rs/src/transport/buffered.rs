@@ -121,6 +121,7 @@ impl Write for TBufferedTransport {
     }
 }
 
+/// Convenience object that can be used to create an instance of `TBufferedTransport`
 pub struct TBufferedTransportFactory;
 impl TTransportFactory for TBufferedTransportFactory {
     fn build(&self, inner: Rc<RefCell<Box<TTransport>>>) -> Box<TTransport> {

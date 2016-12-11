@@ -118,6 +118,7 @@ impl Write for TFramedTransport {
     }
 }
 
+/// Convenience object that can be used to create an instance of `TFramedTransport`.
 pub struct TFramedTransportFactory;
 impl TTransportFactory for TFramedTransportFactory {
     fn build(&self, inner: Rc<RefCell<Box<TTransport>>>) -> Box<TTransport> {

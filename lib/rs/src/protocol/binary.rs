@@ -344,6 +344,7 @@ impl TProtocol for TBinaryProtocol {
     }
 }
 
+/// Convenience object that can be used to create instances of `TBinaryProtocol`.
 pub struct TBinaryProtocolFactory;
 impl TProtocolFactory for TBinaryProtocolFactory {
     fn build(&self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TProtocol> {

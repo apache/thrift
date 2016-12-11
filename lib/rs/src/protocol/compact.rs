@@ -204,6 +204,7 @@ impl TProtocol for TCompactProtocol {
     }
 }
 
+/// Convenience object that can be used to create an instance of `TCompactProtocol`.
 pub struct TCompactProtocolFactory;
 impl TProtocolFactory for TCompactProtocolFactory {
     fn build(&self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TProtocol> {
