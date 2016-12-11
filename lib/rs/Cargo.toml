@@ -5,6 +5,7 @@ license = "Apache-2.0"
 publish = false
 authors = ["Allen George <allen.george@gmail.com>"]
 readme = "README.md"
+exclude =["Makefile*"]
 
 [dependencies]
 log = "~0.3.6"
