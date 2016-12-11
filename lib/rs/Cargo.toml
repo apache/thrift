@@ -1,5 +1,6 @@
 [package]
 name = "rift"
+description = "Rust Thrift library"
 version = "0.1.0"
 license = "Apache-2.0"
 authors = ["Allen George <allen.george@gmail.com>"]
