@@ -42,6 +42,7 @@ use std::rc::Rc;
 
 mod buffered;
 mod framed;
+mod passthru;
 mod socket;
 
 #[cfg(test)]
@@ -49,6 +50,7 @@ pub mod mem;
 
 pub use self::buffered::{TBufferedTransport, TBufferedTransportFactory};
 pub use self::framed::{TFramedTransport, TFramedTransportFactory};
+pub use self::passthru::TPassThruTransport;
 pub use self::socket::TTcpTransport;
 
 /// Marker trait identifying a `TTransport` that
