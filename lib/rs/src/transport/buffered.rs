@@ -129,7 +129,6 @@ impl TTransportFactory for TBufferedTransportFactory {
     }
 }
 
-/*
 #[cfg(test)]
 mod tests {
     use std::cell::RefCell;
@@ -137,12 +136,24 @@ mod tests {
     use std::rc::Rc;
 
     use super::*;
+    use ::transport::{TPassThruTransport, TTransport};
     use ::transport::mem::TBufferTransport;
+
+    macro_rules! new_transports {
+        ($wbc:expr, $rbc:expr) => (
+            {
+                let mem = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity($wbc, $rbc))));
+                let thru: Box<TTransport> = Box::new(TPassThruTransport { inner: mem.clone() });
+                let thru = Rc::new(RefCell::new(thru));
+                (mem, thru)
+            }
+        );
+    }
 
     #[test]
     fn must_return_zero_if_read_buffer_is_empty() {
-        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(10, 0))));
-        let mut t = TBufferedTransport::with_capacity(10, 0, i);
+        let (_, thru) = new_transports!(10, 0);
+        let mut t = TBufferedTransport::with_capacity(10, 0, thru);
 
         let mut b = vec![0; 10];
         let read_result = t.read(&mut b);
@@ -152,8 +163,8 @@ mod tests {
 
     #[test]
     fn must_return_zero_if_caller_reads_into_zero_capacity_buffer() {
-        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(10, 0))));
-        let mut t = TBufferedTransport::with_capacity(10, 0, i);
+        let (_, thru) = new_transports!(10, 0);
+        let mut t = TBufferedTransport::with_capacity(10, 0, thru);
 
         let read_result = t.read(&mut []);
 
@@ -162,10 +173,10 @@ mod tests {
 
     #[test]
     fn must_return_zero_if_nothing_more_can_be_read() {
-        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(4, 0))));
-        let mut t = TBufferedTransport::with_capacity(4, 0, i);
+        let (mem, thru) = new_transports!(4, 0);
+        let mut t = TBufferedTransport::with_capacity(4, 0, thru);
 
-        t.inner.borrow_mut().set_readable_bytes(&[0, 1, 2, 3]);
+        mem.borrow_mut().set_readable_bytes(&[0, 1, 2, 3]);
 
         // read buffer is exactly the same size as bytes available
         let mut buf = vec![0u8; 4];
@@ -186,10 +197,10 @@ mod tests {
 
     #[test]
     fn must_fill_user_buffer_with_only_as_many_bytes_as_available() {
-        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(4, 0))));
-        let mut t = TBufferedTransport::with_capacity(4, 0, i);
+        let (mem, thru) = new_transports!(4, 0);
+        let mut t = TBufferedTransport::with_capacity(4, 0, thru);
 
-        t.inner.borrow_mut().set_readable_bytes(&[0, 1, 2, 3]);
+        mem.borrow_mut().set_readable_bytes(&[0, 1, 2, 3]);
 
         // read buffer is much larger than the bytes available
         let mut buf = vec![0u8; 8];
@@ -215,13 +226,13 @@ mod tests {
 
         // we have a much smaller buffer than the
         // underlying transport has bytes available
-        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(10, 0))));
-        let mut t = TBufferedTransport::with_capacity(2, 0, i);
+        let (mem, thru) = new_transports!(10, 0);
+        let mut t = TBufferedTransport::with_capacity(2, 0, thru);
 
         // fill the underlying transport's byte buffer
         let mut readable_bytes = [0u8; 10];
         for i in 0..10 { readable_bytes[i] = i as u8; }
-        t.inner.borrow_mut().set_readable_bytes(&readable_bytes);
+        mem.borrow_mut().set_readable_bytes(&readable_bytes);
 
         // we ask to read into a buffer that's much larger
         // than the one the buffered transport has; as a result
@@ -255,8 +266,8 @@ mod tests {
 
     #[test]
     fn must_return_zero_if_nothing_can_be_written() {
-        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(0, 0))));
-        let mut t = TBufferedTransport::with_capacity(0, 0, i);
+        let (_, thru) = new_transports!(0, 0);
+        let mut t = TBufferedTransport::with_capacity(0, 0, thru);
 
         let b = vec![0; 10];
         let r = t.write(&b);
@@ -266,19 +277,19 @@ mod tests {
 
     #[test]
     fn must_return_zero_if_caller_calls_write_with_empty_buffer() {
-        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(0, 10))));
-        let mut t = TBufferedTransport::with_capacity(0, 10, i);
+        let (mem, thru) = new_transports!(0, 10);
+        let mut t = TBufferedTransport::with_capacity(0, 10, thru);
 
         let r = t.write(&[]);
 
         assert_eq!(r.unwrap(), 0);
-        assert_eq!(t.inner.borrow_mut().write_buffer(), &[]);
+        assert_eq!(mem.borrow_mut().write_buffer(), &[]);
     }
 
     #[test]
     fn must_return_zero_if_write_buffer_full() {
-        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(0, 0))));
-        let mut t = TBufferedTransport::with_capacity(0, 4, i);
+        let (_, thru) = new_transports!(0, 0);
+        let mut t = TBufferedTransport::with_capacity(0, 4, thru);
 
         let b = [0x00, 0x01, 0x02, 0x03];
 
@@ -293,17 +304,17 @@ mod tests {
 
     #[test]
     fn must_only_write_to_inner_transport_on_flush() {
-        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(10, 10))));
-        let mut t = TBufferedTransport::new(i);
+        let (mem, thru) = new_transports!(10, 10);
+        let mut t = TBufferedTransport::new(thru);
 
         let b: [u8; 5] = [0, 1, 2, 3, 4];
         assert_eq!(t.write(&b).unwrap(), 5);
-        assert_eq!(t.inner.borrow_mut().write_buffer().len(), 0);
+        assert_eq!(mem.borrow_mut().write_buffer().len(), 0);
 
         assert!(t.flush().is_ok());
 
         {
-            let inner = t.inner.borrow_mut();
+            let inner = mem.borrow_mut();
             let underlying_buffer = inner.write_buffer();
             assert_eq!(b, underlying_buffer);
         }
@@ -311,8 +322,8 @@ mod tests {
 
     #[test]
     fn must_write_successfully_after_flush() {
-        let i = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(0, 5))));
-        let mut t = TBufferedTransport::with_capacity(0, 5, i);
+        let (mem, thru) = new_transports!(0, 5);
+        let mut t = TBufferedTransport::with_capacity(0, 5, thru);
 
         // write and flush
         let b: [u8; 5] = [0, 1, 2, 3, 4];
@@ -321,13 +332,13 @@ mod tests {
 
         // check the flushed bytes
         {
-            let inner = t.inner.borrow_mut();
+            let inner = mem.borrow_mut();
             let underlying_buffer = inner.write_buffer();
             assert_eq!(b, underlying_buffer);
         }
 
         // reset our underlying transport
-        t.inner.borrow_mut().empty_write_buffer();
+        mem.borrow_mut().empty_write_buffer();
 
         // write and flush again
         assert_eq!(t.write(&b).unwrap(), 5);
@@ -335,10 +346,9 @@ mod tests {
 
         // check the flushed bytes
         {
-            let inner = t.inner.borrow_mut();
+            let inner = mem.borrow_mut();
             let underlying_buffer = inner.write_buffer();
             assert_eq!(b, underlying_buffer);
         }
     }
 }
-*/
