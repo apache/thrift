@@ -95,11 +95,17 @@ private:
   // Write the rust representation of an enum.
   void render_enum_definition(t_enum* tenum);
 
+  void render_enum_conversion(t_enum* tenum);
+
   // Write the impl block associated with the rust
   // representation of an enum. This includes methods
   // to write the enum to a protocol, read it from
   // a protocol, etc.
   void render_enum_impl(t_enum* tenum);
+
+  void render_const_value(const string& name, t_type* ttype, t_const_value* tvalue);
+  void render_const_value_holder(const string& name, t_type* ttype, t_const_value* tvalue);
+  string to_const_value(t_type* ttype, t_const_value* tvalue);
 
   // Write the rust representation of a thrift struct to the generated file.
   // Set `struct_type` to `T_ARGS` if rendering the struct used to pack
@@ -213,6 +219,9 @@ private:
   // Return a string representing the rift `protocol::TType` given a `t_type`.
   string to_rust_field_type_enum(t_type* ttype);
 
+bool can_generate_simple_const(t_type* ttype);
+bool can_generate_const_holder(t_type* ttype);
+
   // Return `true` if this type is a void, and should be
   // represented by the rust `()` type.
   bool is_void(t_type* ttype);
@@ -299,6 +308,7 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "use std::fmt;" << endl;
   f_gen_ << "use std::fmt::{Display, Formatter};" << endl;
   f_gen_ << "use std::rc::Rc;" << endl;
+  f_gen_ << "use try_from::TryFrom;" << endl;
   f_gen_ << endl;
   f_gen_ << "use rift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind};" << endl;
   f_gen_ << "use rift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
@@ -437,14 +447,122 @@ void t_rs_generator::close_generator() {
 //
 //-----------------------------------------------------------------------------
 
+// This is worse than it should be because constants
+// aren't (sensibly) limited to scalar types
 void t_rs_generator::generate_const(t_const* tconst) {
-  /*
+  string name = tconst->get_name();
+  t_type* ttype = tconst->get_type();
+  t_const_value* tvalue = tconst->get_value();
+
+  if (can_generate_simple_const(ttype)) {
+    render_const_value(name, ttype, tvalue);
+  } else if (can_generate_const_holder(ttype)) {
+    render_const_value_holder(name, ttype, tvalue);
+  } else {
+    throw "cannot generate const value for " + name;
+  }
+}
+
+void t_rs_generator::render_const_value(const string& name, t_type* ttype, t_const_value* tvalue) {
+  if (!can_generate_simple_const(ttype)) {
+    throw "cannot generate simple rust constant for " + ttype->get_name();
+  }
+
   f_gen_
-    << "const " << tconst->get_name() << ": " << to_rust_type(tconst->get_type())
-    << " = 1" << ";" // FIXME: WTF is going on with constants?!
+    << "const " << name << ": " << to_rust_type(ttype)
+    << " = "
+    << to_const_value(ttype, tvalue)
+    << ";"
     << endl;
   f_gen_ << endl;
-  */
+}
+
+void t_rs_generator::render_const_value_holder(const string& name, t_type* ttype, t_const_value* tvalue) {
+  if (!can_generate_const_holder(ttype)) {
+    throw "cannot generate rust constant holder for " + ttype->get_name();
+  }
+
+  string holder_name("Const" + rust_camel_case(name));
+
+  f_gen_ << indent() << "pub struct " << holder_name << ";" << endl;
+  f_gen_ << indent() << "impl " << holder_name << " {" << endl;
+  indent_up();
+
+  f_gen_ << indent() << "pub fn const_value() -> " << to_rust_type(ttype) << " {" << endl;
+  indent_up();
+  f_gen_ << indent() << to_const_value(ttype, tvalue) << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  f_gen_ << endl;
+}
+
+string t_rs_generator::to_const_value(t_type* ttype, t_const_value* tvalue) {
+  ostringstream value_stream;
+
+  if (ttype->is_base_type()) {
+    t_base_type* tbase_type = (t_base_type*)ttype;
+    switch (tbase_type->get_base()) {
+    case t_base_type::TYPE_VOID:
+      throw "cannot generate const value for void";
+    case t_base_type::TYPE_STRING:
+      if (tbase_type->is_binary()) {
+        throw "cannot generate const value for binary"; // FIXME
+      } else {
+        value_stream << tvalue->get_string() << ".to_owned()";
+      }
+    case t_base_type::TYPE_BOOL:
+      throw "cannot generate const value for boolean";
+    case t_base_type::TYPE_I8:
+    case t_base_type::TYPE_I16:
+    case t_base_type::TYPE_I32:
+    case t_base_type::TYPE_I64:
+      value_stream << tvalue->get_integer();
+    case t_base_type::TYPE_DOUBLE:
+      value_stream << tvalue->get_double();
+    }
+  } else if (ttype->is_typedef()) {
+    value_stream << "unimplemented!()";
+  } else if (ttype->is_enum()) {
+    value_stream
+      << to_rust_type(ttype)
+      << "::try_from("
+      << tvalue->get_integer()
+      << ").expect(\"expecting valid const value\")";
+  } else if (ttype->is_struct() || ttype->is_xception()) {
+    value_stream << "unimplemented!()";
+  } else if (ttype->is_list()) {
+    t_type* telemtype = ((t_list*)ttype)->get_elem_type();
+    const vector<t_const_value*>& elems = tvalue->get_list();
+    vector<t_const_value*>::const_iterator elem_iter;
+    for(elem_iter = elems.begin(); elem_iter != elems.end(); ++elem_iter) {
+
+    }
+    value_stream << "unimplemented!()";
+  } else if (ttype->is_set()) {
+    value_stream << "unimplemented!()";
+  } else if (ttype->is_map()) {
+    value_stream << "unimplemented!()";
+  } else {
+    throw "cannot generate const value for " + ttype->get_name();
+  }
+
+  return value_stream.str();
+}
+
+bool t_rs_generator::can_generate_simple_const(t_type* ttype) {
+  return (get_true_type(ttype))->is_base_type();
+}
+
+bool t_rs_generator::can_generate_const_holder(t_type* ttype) {
+  t_type* actualtype = get_true_type(ttype);
+  return
+    actualtype->is_enum() ||
+    actualtype->is_struct() ||
+    actualtype->is_xception() ||
+    actualtype->is_container();
 }
 
 void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
@@ -456,6 +574,7 @@ void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
 void t_rs_generator::generate_enum(t_enum* tenum) {
   render_enum_definition(tenum);
   render_enum_impl(tenum);
+  render_enum_conversion(tenum);
 }
 
 void t_rs_generator::render_enum_definition(t_enum* tenum) {
@@ -497,7 +616,29 @@ void t_rs_generator::render_enum_impl(t_enum* tenum) {
   indent_up();
 
   f_gen_ << indent() << "let enum_value = try!(i_prot.read_i32());" << endl;
-  f_gen_ << indent() << "match enum_value {" << endl;
+  f_gen_ << indent() << tenum->get_name() << "::try_from(enum_value)";
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
+  indent_down();
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
+}
+
+void t_rs_generator::render_enum_conversion(t_enum* tenum) {
+  vector<t_enum_value*> constants = tenum->get_constants();
+  vector<t_enum_value*>::iterator constants_iter;
+
+  f_gen_ << "impl TryFrom<i32> for " << tenum->get_name() << " {" << endl;
+  indent_up();
+
+  f_gen_ << indent() << "type Err = rift::Error;";
+
+  f_gen_ << indent() << "fn try_from(i: i32) -> Result<Self, Self::Err> {" << endl;
+  indent_up();
+
+  f_gen_ << indent() << "match i {" << endl;
   indent_up();
   for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
     f_gen_
@@ -506,15 +647,16 @@ void t_rs_generator::render_enum_impl(t_enum* tenum) {
       << " => Ok(" << tenum->get_name() << "::" << (*constants_iter)->get_name() << "),"
       << endl;
   }
-  f_gen_ << indent() << "_ => Err(" << endl;
+  f_gen_ << indent() << "_ => {" << endl;
   indent_up();
-  f_gen_ << indent() << "rift::Error::Protocol(" << endl;
-  indent_up();
-  f_gen_ << indent() << "ProtocolError { kind: ProtocolErrorKind::InvalidData, message: format!(\"cannot convert enum constant {} to " << tenum->get_name() << "\", enum_value) }" << endl;
+  render_rift_error(
+    "Protocol",
+    "ProtocolError",
+    "ProtocolErrorKind::InvalidData",
+    "format!(\"cannot convert enum constant {} to " + tenum->get_name() + "\", i)"
+  );
   indent_down();
-  f_gen_ << indent() << ")" << endl;
-  indent_down();
-  f_gen_ << indent() << ")," << endl;
+  f_gen_ << indent() << "}," << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
@@ -830,7 +972,7 @@ void t_rs_generator::render_type_write(const string& field_prefix, t_field* tfie
     t_base_type* tbase_type = (t_base_type*)ttype;
     switch (tbase_type->get_base()) {
     case t_base_type::TYPE_VOID:
-      throw "Cannot write field of type TYPE_VOID to output protocol";
+      throw "cannot write field of type TYPE_VOID to output protocol";
       return;
     case t_base_type::TYPE_STRING:
       if (tbase_type->is_binary()) {
@@ -877,7 +1019,7 @@ void t_rs_generator::render_type_write(const string& field_prefix, t_field* tfie
     return;
   }
 
-  throw "Cannot write unsupported type " + ttype->get_name();
+  throw "cannot write unsupported type " + ttype->get_name();
 }
 
 void t_rs_generator::render_list_write(const string& list_variable, t_list* tlist) {
@@ -1113,7 +1255,7 @@ void t_rs_generator::render_type_read(t_type* ttype, const string& type_var) {
     t_base_type* tbase_type = (t_base_type*)ttype;
     switch (tbase_type->get_base()) {
     case t_base_type::TYPE_VOID:
-      throw "Cannot read field of type TYPE_VOID from input protocol";
+      throw "cannot read field of type TYPE_VOID from input protocol";
     case t_base_type::TYPE_STRING:
       if (tbase_type->is_binary()) {
         f_gen_ << indent() << "let " << type_var << " = try!(i_prot.read_bytes());" << endl;
@@ -1158,7 +1300,7 @@ void t_rs_generator::render_type_read(t_type* ttype, const string& type_var) {
     return;
   }
 
-  throw "Cannot read unsupported type " + ttype->get_name();
+  throw "cannot read unsupported type " + ttype->get_name();
 }
 
 // Construct the rust representation of a list from the wire.
