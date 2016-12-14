@@ -20,6 +20,7 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <boost/algorithm/string/replace.hpp>
 
 #include "thrift/platform.h"
 #include "thrift/version.h"
@@ -219,8 +220,8 @@ private:
   // Return a string representing the rift `protocol::TType` given a `t_type`.
   string to_rust_field_type_enum(t_type* ttype);
 
-bool can_generate_simple_const(t_type* ttype);
-bool can_generate_const_holder(t_type* ttype);
+  bool can_generate_simple_const(t_type* ttype);
+  bool can_generate_const_holder(t_type* ttype);
 
   // Return `true` if this type is a void, and should be
   // represented by the rust `()` type.
@@ -278,7 +279,7 @@ void t_rs_generator::init_generator() {
   MKDIR(gen_dir_.c_str());
 
   // create the file into which we're going to write the generated code
-  string f_gen_name = gen_dir_ + "/" + underscore(get_program()->get_name()) + ".rs";
+  string f_gen_name = gen_dir_ + "/" + rust_snake_case(get_program()->get_name()) + ".rs";
   f_gen_.open(f_gen_name.c_str());
 
   // header comment
@@ -2226,7 +2227,9 @@ string t_rs_generator::service_call_result_struct_name(t_function* tfunc) {
 }
 
 string t_rs_generator::rust_snake_case(const string& name) {
-  return decapitalize(underscore(name));
+  string str = decapitalize(underscore(name));
+  boost::replace_all(str, "__", "_");
+  return str;
 }
 
 string t_rs_generator::rust_camel_case(const string& name) {
