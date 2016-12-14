@@ -33,19 +33,23 @@ pub use self::binary::{TBinaryProtocol, TBinaryProtocolFactory};
 pub use self::compact::{TCompactProtocol, TCompactProtocolFactory};
 pub use self::multiplexed::TMultiplexedProtocol;
 
-/// Maximum depth to which we will skip a Thrift field.
+/// Default maximum depth to which we will skip
+/// a Thrift field. Note that we have to set a
+/// default because Thrift fields may contain nested
+/// fields and so we may recurse indefinitely.
 const MAXIMUM_SKIP_DEPTH: i8 = 64;
 
 // FIXME: consider splitting apart the read and write methods -> makes ownership easier
 /// Implemented by Thrift protocols to write/read
 /// a Thrift object to/from its serialized representation.
 pub trait TProtocol {
-
-    //
-    // Methods to write a thrift type into its serialized form.
-    //
-
+    /// Write a marker identifying the
+    /// beginning of a Thrift message. The
+    /// marker may contain any or all of the
+    /// parameters in `identifier`.
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()>;
+    /// Write a marker identifying the end
+    /// of the Thrift message.
     fn write_message_end(&mut self) -> ::Result<()>;
     fn write_struct_begin(&mut self, identifier: &TStructIdentifier) -> ::Result<()>;
     fn write_struct_end(&mut self) -> ::Result<()>;

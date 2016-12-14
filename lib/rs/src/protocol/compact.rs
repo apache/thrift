@@ -21,6 +21,9 @@ use std::rc::Rc;
 use ::transport::TTransport;
 use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TProtocol, TProtocolFactory, TSetIdentifier, TStructIdentifier};
 
+/// Sends messages over an underlying transport
+/// `transport` using the Thrift Compact protocol
+/// as described in THRIFT-110.
 pub struct TCompactProtocol {
     /// Underlying transport used for byte-level operations.
     pub transport: Rc<RefCell<Box<TTransport>>>,
@@ -195,6 +198,10 @@ impl TProtocol for TCompactProtocol {
         unimplemented!()
     }
 
+    //
+    // utility
+    //
+
     fn write_byte(&mut self, _: u8) -> ::Result<()> {
         unimplemented!()
     }
@@ -204,7 +211,8 @@ impl TProtocol for TCompactProtocol {
     }
 }
 
-/// Convenience object that can be used to create an instance of `TCompactProtocol`.
+/// Convenience object that can be used to
+/// create an instance of `TCompactProtocol`.
 pub struct TCompactProtocolFactory;
 impl TProtocolFactory for TCompactProtocolFactory {
     fn build(&self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TProtocol> {

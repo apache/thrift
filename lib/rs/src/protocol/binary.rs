@@ -28,11 +28,11 @@ use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifie
 /// Identifies the serialized message as conforming to Thrift binary protocol version 1.
 const BINARY_PROTOCOL_VERSION_1: u32 = 0x80010000;
 
-/// Implementation of the Thrift binary protocol.
+/// Sends messages over an underlying transport
+/// `transport` using a simple binary protocol.
 pub struct TBinaryProtocol {
     /// Set to `true` if the strict binary protocol is to be used.
     pub strict: bool,
-
     /// Underlying transport used for byte-level operations.
     pub transport: Rc<RefCell<Box<TTransport>>>,
 }
@@ -44,10 +44,6 @@ impl TBinaryProtocol {
 }
 
 impl TProtocol for TBinaryProtocol {
-
-    //
-    // write methods
-    //
 
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
         if self.strict {
@@ -171,10 +167,6 @@ impl TProtocol for TBinaryProtocol {
     fn flush(&mut self) -> ::Result<()> {
         self.transport.borrow_mut().flush().map_err(convert::From::from)
     }
-
-    //
-    // read methods
-    //
 
     fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier> {
         let mut first_bytes = vec![0; 4];
@@ -344,7 +336,8 @@ impl TProtocol for TBinaryProtocol {
     }
 }
 
-/// Convenience object that can be used to create instances of `TBinaryProtocol`.
+/// Convenience object that can be used to
+/// create instances of `TBinaryProtocol`.
 pub struct TBinaryProtocolFactory;
 impl TProtocolFactory for TBinaryProtocolFactory {
     fn build(&self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TProtocol> {
