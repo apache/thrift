@@ -291,6 +291,10 @@ erl_crash.dump
 /test/rb/Gemfile.lock
 /test/rs/Cargo.lock
 /test/rs/src/thrift_test.rs
+/test/rs/src/base_one.rs
+/test/rs/src/base_two.rs
+/test/rs/src/midlayer.rs
+/test/rs/src/ultimate.rs
 /test/rs/bin/
 /test/rs/target/
 /tutorial/cpp/TutorialClient

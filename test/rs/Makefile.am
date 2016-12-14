@@ -19,8 +19,12 @@
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
-stubs: ../ThriftTest.thrift $(THRIFT)
-	$(THRIFT) -out src --gen rs $<
+stubs: ../ThriftTest.thrift thrifts/Base_One.thrift thrifts/Base_Two.thrift thrifts/Midlayer.thrift thrifts/Ultimate.thrift $(THRIFT)
+	$(THRIFT) -I ./thrifts -out src --gen rs ../ThriftTest.thrift
+	$(THRIFT) -I ./thrifts -out src --gen rs thrifts/Base_One.thrift
+	$(THRIFT) -I ./thrifts -out src --gen rs thrifts/Base_Two.thrift
+	$(THRIFT) -I ./thrifts -out src --gen rs thrifts/Midlayer.thrift
+	$(THRIFT) -I ./thrifts -out src --gen rs thrifts/Ultimate.thrift
 
 precross: stubs
 	$(CARGO) build
