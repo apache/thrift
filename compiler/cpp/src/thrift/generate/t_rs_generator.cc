@@ -250,13 +250,19 @@ private:
 
   string rust_namespace(t_type* ttype);
 
+  string rust_namespace(t_service* tservice);
+
   string rust_struct_name(t_struct* tstruct);
 
   // Return the trait name for the sync service client given a `t_service` name.
-  string rust_sync_client_trait_name(t_service* tservice); // FIXME: remove
+  string rust_sync_client_trait_name(t_service* tservice);
+
+  string rust_sync_client_impl_name(t_service* tservice);
 
   // Return the trait name for the sync service processor given a `t_service` name.
-  string rust_sync_handler_trait_name(t_service* tservice); // FIXME: remove
+  string rust_sync_handler_trait_name(t_service* tservice);
+
+  string rust_sync_processor_name(t_service* tservice);
 
   string service_call_client_function_name(t_function* tfunc);
 
@@ -922,7 +928,7 @@ void t_rs_generator::render_struct_field_write(t_field* tfield, t_field::e_req r
   ostringstream field_stream;
   field_stream
     << "TFieldIdentifier {"
-    << "name: Some(\"" << tfield->get_name() << "\".to_owned()" << "), "
+    << "name: Some(\"" << tfield->get_name() << "\".to_owned()" << "), " // note: use *original* name
     << "field_type: " << to_rust_field_type_enum(tfield->get_type()) << ", "
     << "id: Some(" << tfield->get_key() << ") "
     << "}";
@@ -1004,7 +1010,7 @@ void t_rs_generator::render_type_write(const string& field_prefix, t_field* tfie
     }
   } else if (ttype->is_typedef()) {
     t_typedef* ttypedef = (t_typedef*)ttype;
-    t_field typedef_field(ttypedef->get_type(), tfield->get_name());
+    t_field typedef_field(ttypedef->get_type(), tfield->get_name()); // FIXME: are the name/type correct?
     render_type_write(field_prefix, &typedef_field, req);
     return;
   } else if (ttype->is_enum() || ttype->is_struct() || ttype->is_xception()) {
@@ -1410,7 +1416,7 @@ void t_rs_generator::render_service_call_structs(t_service* tservice) {
 void t_rs_generator::render_sync_client(t_service* tservice) {
   // service comment demarcation
   f_gen_ << "//" << endl;
-  f_gen_ << "// " << tservice->get_name() << " service client "<< endl;
+  f_gen_ << "// " << tservice->get_name() << " service client "<< endl; // note: use *original* name
   f_gen_ << "//" << endl;
   f_gen_ << endl;
 
@@ -1433,7 +1439,7 @@ void t_rs_generator::render_sync_client(t_service* tservice) {
   //
   // even more annoyingly, those bounds have to be added on *every* impl block for the struct
 
-  string client_impl_struct_name = "T" + tservice->get_name() + "SyncClient";
+  string client_impl_struct_name = rust_sync_client_impl_name(tservice);
 
   // render the implementing struct
   f_gen_ << "pub struct " << client_impl_struct_name << " {" << endl;
@@ -1480,7 +1486,7 @@ void t_rs_generator::render_service_sync_client_trait(t_service* tservice) {
   string extension = "";
   if (tservice->get_extends() != NULL) {
     t_service* extends = tservice->get_extends();
-    extension = " : " + extends->get_program()->get_namespace() + "::" + rust_sync_client_trait_name(extends);
+    extension = " : " + rust_namespace(extends) + rust_sync_client_trait_name(extends);
   }
 
   const std::vector<t_function*> functions = tservice->get_functions();
@@ -1574,7 +1580,7 @@ void t_rs_generator::render_sync_send(t_function* tfunc) {
   f_gen_
     << indent()
     << "let message_ident = "
-    << "TMessageIdentifier { name:\"" << tfunc->get_name() << "\".to_owned(), "
+    << "TMessageIdentifier { name:\"" << tfunc->get_name() << "\".to_owned(), " // note: use *original* name
     << "message_type: " << message_type << ", "
     << "sequence_number: self.sequence_number };"
     << endl;
@@ -1585,7 +1591,8 @@ void t_rs_generator::render_sync_send(t_function* tfunc) {
   vector<t_field*>::iterator members_iter;
   for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
     t_field* tfield = (*members_iter);
-    struct_definition << rust_snake_case(tfield->get_name()) << ": " << rust_snake_case(tfield->get_name()) << ", ";
+    string field_name(rust_snake_case(tfield->get_name()));
+    struct_definition << field_name << ": " << field_name << ", ";
   }
   string struct_fields = struct_definition.str();
   if (struct_fields.size() > 0) {
@@ -1615,7 +1622,7 @@ void t_rs_generator::render_sync_recv(t_function* tfunc) {
   indent_up();
   f_gen_ << indent() << "let message_ident = try!(self.i_prot.borrow_mut().read_message_begin());" << endl;
   f_gen_ << indent() << "try!(verify_expected_sequence_number(self.sequence_number, message_ident.sequence_number));" << endl;
-  f_gen_ << indent() << "try!(verify_expected_service_call(\"" << tfunc->get_name() <<"\", &message_ident.name));" << endl;
+  f_gen_ << indent() << "try!(verify_expected_service_call(\"" << tfunc->get_name() <<"\", &message_ident.name));" << endl; // note: use *original* name
   // FIXME: replace with a "try" block
   f_gen_ << indent() << "if message_ident.message_type == TMessageType::Exception {" << endl;
   indent_up();
@@ -1678,7 +1685,7 @@ void t_rs_generator::render_sync_server(t_service* tservice) {
 
 void t_rs_generator::render_service_server_comment(t_service* tservice) {
   f_gen_ << "//" << endl;
-  f_gen_ << "// " << tservice->get_name() << " service server"<< endl;
+  f_gen_ << "// " << tservice->get_name() << " service server"<< endl; // note: use *original* name
   f_gen_ << "//" << endl;
   f_gen_ << endl;
 }
@@ -1687,7 +1694,7 @@ void t_rs_generator::render_service_sync_handler_trait(t_service* tservice) {
   string extension = "";
   if (tservice->get_extends() != NULL) {
     t_service* extends = tservice->get_extends();
-    extension = " : " + extends->get_program()->get_namespace() + "::" + rust_sync_handler_trait_name(extends);
+    extension = " : " + rust_namespace(extends) + rust_sync_handler_trait_name(extends);
   }
 
   const std::vector<t_function*> functions = tservice->get_functions();
@@ -1709,7 +1716,7 @@ void t_rs_generator::render_service_sync_handler_trait(t_service* tservice) {
 }
 
 void t_rs_generator::render_service_processor(t_service* tservice) {
-  string service_processor_name = "T" + tservice->get_name() + "Processor";
+  string service_processor_name = rust_sync_processor_name(tservice);
   string handler_trait_name = rust_sync_handler_trait_name(tservice);
 
   // struct
@@ -1757,7 +1764,7 @@ void t_rs_generator::render_service_processor(t_service* tservice) {
 
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
     t_function* tfunc = (*func_iter);
-    f_gen_ << indent() << "\"" << tfunc->get_name() << "\"" << " => {" << endl;
+    f_gen_ << indent() << "\"" << tfunc->get_name() << "\"" << " => {" << endl; // note: use *original* name
     indent_up();
     f_gen_ << indent() << "self.process_" << rust_snake_case(tfunc->get_name()) << "(message_ident.sequence_number, i_prot, o_prot)" << endl;
     indent_down();
@@ -1847,7 +1854,7 @@ void t_rs_generator::render_handler_succeeded(t_function* tfunc) {
     f_gen_
       << indent()
       << "let message_ident = TMessageIdentifier { "
-      << "name: \"" << tfunc->get_name() << "\".to_owned(), "
+      << "name: \"" << tfunc->get_name() << "\".to_owned(), " // note: use *original* name
       << "message_type: TMessageType::Reply, "
       << "sequence_number: incoming_sequence_number };"
       << endl;
@@ -1895,10 +1902,10 @@ void t_rs_generator::render_handler_failed_user_exception_branch(t_function* tfu
 
   // run through all user-defined exceptions
   for (xception_iter = txceptions.begin(); xception_iter != txceptions.end(); ++xception_iter) {
-    t_field* txception = (*xception_iter);
+    t_field* xception_field = (*xception_iter);
 
     string if_statement(branches_rendered == 0 ? "if usr_err" : "} else if usr_err");
-    string exception_type(rust_namespace(txception->get_type()) + rust_camel_case(txception->get_type()->get_name()));
+    string exception_type(to_rust_type(xception_field->get_type()));
     f_gen_ << indent() << if_statement << ".downcast_ref::<" << exception_type << ">().is_some() {" << endl;
     indent_up();
 
@@ -1919,7 +1926,7 @@ void t_rs_generator::render_handler_failed_user_exception_branch(t_function* tfu
     for(xception_members_iter = txceptions.begin(); xception_members_iter != txceptions.end(); ++xception_members_iter) {
       t_field* member = (*xception_members_iter);
       string member_name(rust_snake_case(member->get_name()));
-      if (member == txception) {
+      if (member == xception_field) {
         members << member_name << ": Some(*err), ";
       } else {
         members << member_name << ": None, ";
@@ -1936,7 +1943,7 @@ void t_rs_generator::render_handler_failed_user_exception_branch(t_function* tfu
       << indent()
       << "let message_ident = "
       << "TMessageIdentifier { "
-      << "name: \"" << tfunc->get_name() << "\".to_owned(), "
+      << "name: \"" << tfunc->get_name() << "\".to_owned(), " // note: use *original* name
       << "message_type: TMessageType::Reply, "
       << "sequence_number: incoming_sequence_number };"
       << endl;
@@ -1965,7 +1972,7 @@ void t_rs_generator::render_handler_failed_user_exception_branch(t_function* tfu
   f_gen_
       << indent()
       << "let message_ident = TMessageIdentifier { "
-      << "name: \"" << tfunc->get_name() << "\".to_owned(), "
+      << "name: \"" << tfunc->get_name() << "\".to_owned(), " // note: use *original* name
       << "message_type: TMessageType::Exception, "
       << "sequence_number: incoming_sequence_number };"
       << endl;
@@ -1990,7 +1997,7 @@ void t_rs_generator::render_handler_failed_default_exception_branch(t_function* 
     f_gen_
       << indent()
       << "let message_ident = TMessageIdentifier { "
-      << "name: \"" << tfunc->get_name() << "\".to_owned(), "
+      << "name: \"" << tfunc->get_name() << "\".to_owned(), " // note: use *original* name
       << "message_type: TMessageType::Exception, "
       << "sequence_number: incoming_sequence_number };"
       << endl;
@@ -2019,9 +2026,9 @@ string t_rs_generator::handler_successful_return_struct(t_function* tfunc) {
     const vector<t_field*> members = txceptions->get_sorted_members();
     vector<t_field*>::const_iterator members_iter;
     for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
-      t_field* txception = (*members_iter);
+      t_field* xception_field = (*members_iter);
       if (member_count > 0) { return_struct << ", "; }
-      return_struct << txception->get_name() << ": None";
+      return_struct << rust_snake_case(xception_field->get_name()) << ": None";
       member_count++;
     }
   }
@@ -2195,6 +2202,14 @@ string t_rs_generator::rust_namespace(t_type* ttype) {
   }
 }
 
+string t_rs_generator::rust_namespace(t_service* tservice) {
+  if (tservice->get_program()->get_name() != get_program()->get_name()) {
+    return rust_snake_case(tservice->get_program()->get_name()) + "::";
+  } else {
+    return "";
+  }
+}
+
 string t_rs_generator::rust_struct_name(t_struct* tstruct) {
   return rust_camel_case(tstruct->get_name());
 }
@@ -2203,8 +2218,16 @@ string t_rs_generator::rust_sync_client_trait_name(t_service* tservice) {
   return "TAbstract" + rust_camel_case(tservice->get_name()) + "SyncClient";
 }
 
+string t_rs_generator::rust_sync_client_impl_name(t_service* tservice) {
+  return "T" + rust_camel_case(tservice->get_name()) + "SyncClient";
+}
+
 string t_rs_generator::rust_sync_handler_trait_name(t_service* tservice) {
   return "TAbstract" + rust_camel_case(tservice->get_name()) + "SyncHandler";
+}
+
+string t_rs_generator::rust_sync_processor_name(t_service* tservice) {
+  return "T" + rust_camel_case(tservice->get_name()) + "Processor";
 }
 
 string t_rs_generator::service_call_client_function_name(t_function* tfunc) {
@@ -2228,13 +2251,15 @@ string t_rs_generator::service_call_result_struct_name(t_function* tfunc) {
 }
 
 string t_rs_generator::rust_snake_case(const string& name) {
-  string str = decapitalize(underscore(name));
+  string str(decapitalize(underscore(name)));
   boost::replace_all(str, "__", "_");
   return str;
 }
 
 string t_rs_generator::rust_camel_case(const string& name) {
-  return capitalize(camelcase(name));
+  string str(capitalize(camelcase(name)));
+  boost::replace_all(str, "_", "");
+  return str;
 }
 
 THRIFT_REGISTER_GENERATOR(
