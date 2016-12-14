@@ -301,6 +301,7 @@ void t_rs_generator::render_attributes_and_includes() {
 
   // add standard includes
   f_gen_ << "extern crate rift;" << endl;
+  f_gen_ << "extern crate try_from;" << endl;
   f_gen_ << endl;
   f_gen_ << "use std::cell::RefCell;" << endl;
   f_gen_ << "use std::collections::{BTreeMap, BTreeSet};" << endl;
