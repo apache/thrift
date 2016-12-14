@@ -163,7 +163,7 @@ class TestTObject implements TBase {
         if (value == null) {
           unsetL();
         } else {
-          this.l = value;
+          this.l = value as List<String>;
         }
         break;
 

@@ -22,7 +22,7 @@ author: Apache Thrift Developers <dev@thrift.apache.org>
 homepage: http://thrift.apache.org
 
 environment:
-  sdk: ^1.12.0
+  sdk: ">=1.13.0 <2.0.0"
 
 dependencies:
   browser: ^0.10.0
