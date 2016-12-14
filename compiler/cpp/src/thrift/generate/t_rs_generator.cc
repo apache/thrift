@@ -2189,7 +2189,7 @@ string t_rs_generator::visibility_qualifier(t_rs_generator::e_struct_type struct
 
 string t_rs_generator::rust_namespace(t_type* ttype) {
   if (ttype->get_program()->get_name() != get_program()->get_name()) {
-    return ttype->get_program()->get_name() + "::";
+    return rust_snake_case(ttype->get_program()->get_name()) + "::";
   } else {
     return "";
   }
