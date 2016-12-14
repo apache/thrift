@@ -521,6 +521,7 @@ string t_rs_generator::to_const_value(t_type* ttype, t_const_value* tvalue) {
       } else {
         value_stream << tvalue->get_string() << ".to_owned()";
       }
+      break;
     case t_base_type::TYPE_BOOL:
       throw "cannot generate const value for boolean";
     case t_base_type::TYPE_I8:
@@ -528,11 +529,13 @@ string t_rs_generator::to_const_value(t_type* ttype, t_const_value* tvalue) {
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
       value_stream << tvalue->get_integer();
+      break;
     case t_base_type::TYPE_DOUBLE:
       value_stream << tvalue->get_double();
+      break;
     }
   } else if (ttype->is_typedef()) {
-    value_stream << "unimplemented!()";
+    value_stream << to_const_value(get_true_type(ttype), tvalue);
   } else if (ttype->is_enum()) {
     value_stream
       << to_rust_type(ttype)
@@ -540,15 +543,25 @@ string t_rs_generator::to_const_value(t_type* ttype, t_const_value* tvalue) {
       << tvalue->get_integer()
       << ").expect(\"expecting valid const value\")";
   } else if (ttype->is_struct() || ttype->is_xception()) {
-    value_stream << "unimplemented!()";
+    if (((t_struct*)ttype)->is_union()) {
+      value_stream << "unimplemented!()";
+    } else {
+      value_stream << "unimplemented!()";
+    }
   } else if (ttype->is_list()) {
-    t_type* telemtype = ((t_list*)ttype)->get_elem_type();
+    t_type* elem_type = ((t_list*)ttype)->get_elem_type();
+    value_stream << indent() << "{" << endl;
+    indent_up();
+    value_stream << indent() << "let l: Vec<" << to_rust_type(elem_type) << "> = Vec::new();" << endl;
     const vector<t_const_value*>& elems = tvalue->get_list();
     vector<t_const_value*>::const_iterator elem_iter;
     for(elem_iter = elems.begin(); elem_iter != elems.end(); ++elem_iter) {
-
+      t_const_value* elem_value = (*elem_iter);
+      value_stream << "l.push(" << to_const_value(elem_type, elem_value) <<  ");" << endl;
     }
-    value_stream << "unimplemented!()";
+    value_stream << indent() << "l" << endl;
+    indent_down();
+    value_stream << indent() << "}" << endl;
   } else if (ttype->is_set()) {
     value_stream << "unimplemented!()";
   } else if (ttype->is_map()) {
