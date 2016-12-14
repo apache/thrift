@@ -531,7 +531,7 @@ string t_rs_generator::to_const_value(t_type* ttype, t_const_value* tvalue) {
       value_stream << tvalue->get_integer();
       break;
     case t_base_type::TYPE_DOUBLE:
-      value_stream << tvalue->get_double();
+      throw "cannot generate const value for double"; // FIXME
       break;
     }
   } else if (ttype->is_typedef()) {
