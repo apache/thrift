@@ -16,6 +16,7 @@
 // under the License.
 
 extern crate rift;
+extern crate try_from;
 
 mod thrift_test;
 
