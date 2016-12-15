@@ -690,7 +690,19 @@ void t_rs_generator::render_enum_conversion(t_enum* tenum) {
 }
 
 void t_rs_generator::render_union(t_struct* tstruct) {
-  // FIXME!
+  f_gen_ << "enum " << rust_camel_case(tstruct->get_name()) << " {" << endl;
+  indent_up();
+
+  const vector<t_field*>& members = tstruct->get_sorted_members();
+  vector<t_field*>::const_iterator member_iter;
+  for(member_iter = members.begin(); member_iter != members.end(); ++member_iter) {
+    t_field* field = (*member_iter);
+    f_gen_ << indent() << rust_camel_case(field->get_name()) << "(" << to_rust_type(field->get_type()) << ")," << endl;
+  }
+
+  indent_down();
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
 }
 
 //-----------------------------------------------------------------------------
@@ -704,10 +716,12 @@ void t_rs_generator::generate_xception(t_struct* txception) {
 }
 
 void t_rs_generator::generate_struct(t_struct* tstruct) {
-  if (tstruct->is_struct()) {
-    render_struct(rust_struct_name(tstruct), tstruct, t_rs_generator::T_REGULAR);
-  } else if (tstruct->is_union()) {
+  if (tstruct->is_union()) {
+    std::cout << ">>> union" << tstruct->get_name() << endl;
     render_union(tstruct);
+  } else if (tstruct->is_struct()) {
+    std::cout << ">>> struct" << tstruct->get_name() << endl;
+    render_struct(rust_struct_name(tstruct), tstruct, t_rs_generator::T_REGULAR);
   } else {
     throw "cannot generate struct for exception";
   }
