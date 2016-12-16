@@ -353,6 +353,8 @@ void t_rs_generator::close_generator() {
 //
 //-----------------------------------------------------------------------------
 
+// FIXME: consider using macros
+
 // This is worse than it should be because constants
 // aren't (sensibly) limited to scalar types
 void t_rs_generator::generate_const(t_const* tconst) {
@@ -487,32 +489,9 @@ void t_rs_generator::render_const_list(t_type* ttype, t_const_value* tvalue) {
   vector<t_const_value*>::const_iterator elem_iter;
   for(elem_iter = elems.begin(); elem_iter != elems.end(); ++elem_iter) {
     t_const_value* elem_value = (*elem_iter);
-    if (get_true_type(elem_type)->is_base_type()) {
-      f_gen_ << indent() << "l.push(";
-      render_const_value(elem_type, elem_value);
-      f_gen_ << ");" << endl;
-    } else {
-      f_gen_ << indent() << "l.push(" << endl;
-      indent_up();
-      render_const_value(elem_type, elem_value);
-      indent_down();
-      f_gen_ << indent() << ");" << endl;
-    }
+    render_container_const_value("l.push", elem_type, elem_value);
   }
   f_gen_ << indent() << "l" << endl;
-}
-
-void t_rs_generator::render_container_const_value(const string& insert_function, t_type* ttype, t_const_value* tvalue) {
-  f_gen_ << indent() << insert_function << "(";
-  if (get_true_type(ttype)->is_base_type()) {
-    render_const_value(ttype, tvalue); // actual value rendered inline
-  } else {
-    f_gen_ << endl; // newline between the insert function and the actual value
-    indent_up();
-    render_const_value(ttype, tvalue);
-    indent_down();
-  }
-  f_gen_ << indent() << ");" << endl;
 }
 
 void t_rs_generator::render_const_set(t_type* ttype, t_const_value* tvalue) {
@@ -522,17 +501,7 @@ void t_rs_generator::render_const_set(t_type* ttype, t_const_value* tvalue) {
   vector<t_const_value*>::const_iterator elem_iter;
   for(elem_iter = elems.begin(); elem_iter != elems.end(); ++elem_iter) {
     t_const_value* elem_value = (*elem_iter);
-    if (get_true_type(elem_type)->is_base_type()) {
-      f_gen_ << indent() << "s.insert(";
-      render_const_value(elem_type, elem_value);
-      f_gen_ << ");" << endl;
-    } else {
-      f_gen_ << indent() << "s.insert(" << endl;
-      indent_up();
-      render_const_value(elem_type, elem_value);
-      indent_down();
-      f_gen_ << indent() << ");" << endl;
-    }
+    render_container_const_value("s.insert", elem_type, elem_value);
   }
   f_gen_ << indent() << "s" << endl;
 }
@@ -576,6 +545,20 @@ void t_rs_generator::render_const_map(t_type* ttype, t_const_value* tvalue) {
     f_gen_ <<  indent() << "m.insert(k, v);" << endl;
   }
   f_gen_ << indent() << "m" << endl;
+}
+
+void t_rs_generator::render_container_const_value(const string& insert_function, t_type* ttype, t_const_value* tvalue) {
+  if (get_true_type(ttype)->is_base_type()) {
+    f_gen_ << indent() << insert_function << "(";
+    render_const_value(ttype, tvalue);
+    f_gen_ << ");" << endl;
+  } else {
+    f_gen_ << indent() << insert_function << "(" << endl;
+    indent_up();
+    render_const_value(ttype, tvalue);
+    indent_down();
+    f_gen_ << indent() << ");" << endl;
+  }
 }
 
 bool t_rs_generator::can_generate_simple_const(t_type* ttype) {
