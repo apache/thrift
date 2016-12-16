@@ -18,6 +18,11 @@
 extern crate rift;
 extern crate try_from;
 
-mod thrift_test;
+pub mod base_one;
+pub mod base_two;
+pub mod midlayer;
+pub mod ultimate;
 
+mod thrift_test;
 pub use thrift_test::*;
+
