@@ -26,6 +26,7 @@
 #include "thrift/version.h"
 #include "thrift/generate/t_generator.h"
 
+using std::map;
 using std::ofstream;
 using std::ostringstream;
 using std::string;
@@ -106,7 +107,7 @@ private:
 
   void render_const_value(const string& name, t_type* ttype, t_const_value* tvalue);
   void render_const_value_holder(const string& name, t_type* ttype, t_const_value* tvalue);
-  string to_const_value(t_type* ttype, t_const_value* tvalue);
+  void render_const_value(t_type* ttype, t_const_value* tvalue);
 
   // Write the rust representation of a thrift struct to the generated file.
   // Set `struct_type` to `T_ARGS` if rendering the struct used to pack
@@ -226,6 +227,10 @@ private:
   bool can_generate_simple_const(t_type* ttype);
   bool can_generate_const_holder(t_type* ttype);
 
+  void render_const_list(t_type* ttype, t_const_value* tvalue);
+  void render_const_set(t_type* ttype, t_const_value* tvalue);
+  void render_const_map(t_type* ttype, t_const_value* tvalue);
+
   // Return `true` if this type is a void, and should be
   // represented by the rust `()` type.
   bool is_void(t_type* ttype);
@@ -279,6 +284,7 @@ private:
   // and user-defined exceptions for the thrift service call.
   string service_call_result_struct_name(t_function* tfunc);
 
+  string rust_upper_case(const string& name);
   string rust_snake_case(const string& name);
   string rust_camel_case(const string& name);
 };
@@ -479,12 +485,9 @@ void t_rs_generator::render_const_value(const string& name, t_type* ttype, t_con
     throw "cannot generate simple rust constant for " + ttype->get_name();
   }
 
-  f_gen_
-    << "const " << name << ": " << to_rust_type(ttype)
-    << " = "
-    << to_const_value(ttype, tvalue)
-    << ";"
-    << endl;
+  f_gen_ << "pub const " << rust_upper_case(name) << ": " << to_rust_type(ttype) << " = ";
+  render_const_value(ttype, tvalue);
+  f_gen_ << ";" << endl;
   f_gen_ << endl;
 }
 
@@ -501,7 +504,7 @@ void t_rs_generator::render_const_value_holder(const string& name, t_type* ttype
 
   f_gen_ << indent() << "pub fn const_value() -> " << to_rust_type(ttype) << " {" << endl;
   indent_up();
-  f_gen_ << indent() << to_const_value(ttype, tvalue) << endl;
+  render_const_value(ttype, tvalue);
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
@@ -510,70 +513,174 @@ void t_rs_generator::render_const_value_holder(const string& name, t_type* ttype
   f_gen_ << endl;
 }
 
-string t_rs_generator::to_const_value(t_type* ttype, t_const_value* tvalue) {
-  ostringstream value_stream;
-
+void t_rs_generator::render_const_value(t_type* ttype, t_const_value* tvalue) {
   if (ttype->is_base_type()) {
     t_base_type* tbase_type = (t_base_type*)ttype;
     switch (tbase_type->get_base()) {
-    case t_base_type::TYPE_VOID:
-      throw "cannot generate const value for void";
     case t_base_type::TYPE_STRING:
       if (tbase_type->is_binary()) {
-        throw "cannot generate const value for binary"; // FIXME
+        f_gen_ << "\"" << tvalue->get_string() << "\""<<  ".to_owned().into_bytes()";
       } else {
-        value_stream << tvalue->get_string() << ".to_owned()";
+        f_gen_ << "\"" << tvalue->get_string() << "\""<<  ".to_owned()";
       }
       break;
     case t_base_type::TYPE_BOOL:
-      throw "cannot generate const value for boolean";
+      f_gen_ << (tvalue->get_integer() ? "true" : "false");
     case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
-      value_stream << tvalue->get_integer();
+      f_gen_ << tvalue->get_integer();
       break;
     case t_base_type::TYPE_DOUBLE:
       throw "cannot generate const value for double"; // FIXME
       break;
+    default:
+      throw "cannot generate const value for " + t_base_type::t_base_name(tbase_type->get_base());
     }
   } else if (ttype->is_typedef()) {
-    value_stream << to_const_value(get_true_type(ttype), tvalue);
+    render_const_value(get_true_type(ttype), tvalue);
   } else if (ttype->is_enum()) {
-    value_stream
+    f_gen_ << indent() << "{" << endl;
+    indent_up();
+    f_gen_
+      << indent()
       << to_rust_type(ttype)
       << "::try_from("
       << tvalue->get_integer()
-      << ").expect(\"expecting valid const value\")";
+      << ").expect(\"expecting valid const value\")"
+      << endl;
+    indent_down();
+    f_gen_ << indent() << "}" << endl;
   } else if (ttype->is_struct() || ttype->is_xception()) {
     if (((t_struct*)ttype)->is_union()) {
-      value_stream << "unimplemented!()";
+      f_gen_ << indent() << "{" << endl;
+      indent_up();
+      f_gen_ << indent() << "unimplemented!()" << endl;
+      indent_down();
+      f_gen_ << indent() << "}" << endl;
     } else {
-      value_stream << "unimplemented!()";
+      f_gen_ << indent() << "{" << endl;
+      indent_up();
+      f_gen_ << indent() << "unimplemented!()" << endl;
+      indent_down();
+      f_gen_ << indent() << "}" << endl;
     }
   } else if (ttype->is_list()) {
-    t_type* elem_type = ((t_list*)ttype)->get_elem_type();
-    value_stream << indent() << "{" << endl;
-    indent_up();
-    value_stream << indent() << "let l: Vec<" << to_rust_type(elem_type) << "> = Vec::new();" << endl;
-    const vector<t_const_value*>& elems = tvalue->get_list();
-    vector<t_const_value*>::const_iterator elem_iter;
-    for(elem_iter = elems.begin(); elem_iter != elems.end(); ++elem_iter) {
-      t_const_value* elem_value = (*elem_iter);
-      value_stream << "l.push(" << to_const_value(elem_type, elem_value) <<  ");" << endl;
-    }
-    value_stream << indent() << "l" << endl;
-    indent_down();
-    value_stream << indent() << "}" << endl;
+    render_const_list(ttype, tvalue);
   } else if (ttype->is_set()) {
-    value_stream << "unimplemented!()";
+    render_const_set(ttype, tvalue);
   } else if (ttype->is_map()) {
-    value_stream << "unimplemented!()";
+    render_const_map(ttype, tvalue);
   } else {
     throw "cannot generate const value for " + ttype->get_name();
   }
+}
 
-  return value_stream.str();
+void t_rs_generator::render_const_list(t_type* ttype, t_const_value* tvalue) {
+  t_type* elem_type = ((t_list*)ttype)->get_elem_type();
+
+  f_gen_ << indent() << "{" << endl;
+  indent_up();
+
+  f_gen_ << indent() << "let mut l: Vec<" << to_rust_type(elem_type) << "> = Vec::new();" << endl;
+  const vector<t_const_value*>& elems = tvalue->get_list();
+  vector<t_const_value*>::const_iterator elem_iter;
+  for(elem_iter = elems.begin(); elem_iter != elems.end(); ++elem_iter) {
+    t_const_value* elem_value = (*elem_iter);
+    if (get_true_type(elem_type)->is_base_type()) {
+      f_gen_ << indent() << "l.push(";
+      render_const_value(elem_type, elem_value);
+      f_gen_ << ");" << endl;
+    } else {
+      f_gen_ << indent() << "l.push(" << endl;
+      indent_up();
+      render_const_value(elem_type, elem_value);
+      indent_down();
+      f_gen_ << indent() << ");" << endl;
+    }
+  }
+  f_gen_ << indent() << "l" << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+}
+
+void t_rs_generator::render_const_set(t_type* ttype, t_const_value* tvalue) {
+  t_type* elem_type = ((t_set*)ttype)->get_elem_type();
+
+  f_gen_ << indent() << "{" << endl;
+  indent_up();
+
+  f_gen_ << indent() << "let mut s: BTreeSet<" << to_rust_type(elem_type) << "> = BTreeSet::new();" << endl;
+  const vector<t_const_value*>& elems = tvalue->get_list();
+  vector<t_const_value*>::const_iterator elem_iter;
+  for(elem_iter = elems.begin(); elem_iter != elems.end(); ++elem_iter) {
+    t_const_value* elem_value = (*elem_iter);
+    if (get_true_type(elem_type)->is_base_type()) {
+      f_gen_ << indent() << "s.insert(";
+      render_const_value(elem_type, elem_value);
+      f_gen_ << ");" << endl;
+    } else {
+      f_gen_ << indent() << "s.insert(" << endl;
+      indent_up();
+      render_const_value(elem_type, elem_value);
+      indent_down();
+      f_gen_ << indent() << ");" << endl;
+    }
+  }
+  f_gen_ << indent() << "s" << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+}
+
+void t_rs_generator::render_const_map(t_type* ttype, t_const_value* tvalue) {
+  t_type* key_type = ((t_map*)ttype)->get_key_type();
+  t_type* val_type = ((t_map*)ttype)->get_val_type();
+
+  f_gen_ << indent() << "{" << endl;
+  indent_up();
+
+  f_gen_
+    << indent()
+    << "let mut m: BTreeMap<"
+    << to_rust_type(key_type) << ", " << to_rust_type(val_type)
+    << "> = BTreeMap::new();"
+    << endl;
+  const map<t_const_value*, t_const_value*>& elems = tvalue->get_map();
+  map<t_const_value*, t_const_value*>::const_iterator elem_iter;
+  for (elem_iter = elems.begin(); elem_iter != elems.end(); ++elem_iter) {
+    t_const_value* key_value = elem_iter->first;
+    t_const_value* val_value = elem_iter->second;
+    if (get_true_type(key_type)->is_base_type()) {
+      f_gen_ << indent() << "let k = ";
+      render_const_value(key_type, key_value);
+      f_gen_ << ";" << endl;
+    } else {
+      f_gen_ << indent() << "let k = {" << endl;
+      indent_up();
+      render_const_value(key_type, key_value);
+      indent_down();
+      f_gen_ << indent() << "};" << endl;
+    }
+    if (get_true_type(val_type)->is_base_type()) {
+      f_gen_ << indent() << "let v = ";
+      render_const_value(val_type, val_value);
+      f_gen_ << ";" << endl;
+    } else {
+      f_gen_ << indent() << "let v = {" << endl;
+      indent_up();
+      render_const_value(val_type, val_value);
+      indent_down();
+      f_gen_ << indent() << "};" << endl;
+    }
+    f_gen_ <<  indent() << "m.insert(k, v);" << endl;
+  }
+  f_gen_ << indent() << "m" << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
 }
 
 bool t_rs_generator::can_generate_simple_const(t_type* ttype) {
@@ -2307,6 +2414,12 @@ string t_rs_generator::service_call_sync_recv_client_function_name(t_function* t
 
 string t_rs_generator::service_call_result_struct_name(t_function* tfunc) {
   return rust_camel_case(tfunc->get_name()) + RESULT_STRUCT_SUFFIX;
+}
+
+string t_rs_generator::rust_upper_case(const string& name) {
+  string str(uppercase(underscore(name)));
+  boost::replace_all(str, "__", "_");
+  return str;
 }
 
 string t_rs_generator::rust_snake_case(const string& name) {
