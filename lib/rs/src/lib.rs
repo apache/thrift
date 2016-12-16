@@ -62,7 +62,7 @@ pub use errors::*;
 /// with `E` defined as the rift `Error` type.
 pub type Result<T> = std::result::Result<T, self::Error>;
 
-fn verify_expected_sequence_number(expected: i32, actual: i32) -> Result<()> {
+pub fn verify_expected_sequence_number(expected: i32, actual: i32) -> Result<()> {
     if expected == actual {
         Ok(())
     } else {
@@ -77,7 +77,7 @@ fn verify_expected_sequence_number(expected: i32, actual: i32) -> Result<()> {
     }
 }
 
-fn verify_expected_service_call(expected: &str, actual: &str) -> Result<()> {
+pub fn verify_expected_service_call(expected: &str, actual: &str) -> Result<()> {
     if expected == actual {
         Ok(())
     } else {
@@ -92,7 +92,7 @@ fn verify_expected_service_call(expected: &str, actual: &str) -> Result<()> {
     }
 }
 
-fn verify_expected_message_type(expected: protocol::TMessageType, actual: protocol::TMessageType) -> Result<()> {
+pub fn verify_expected_message_type(expected: protocol::TMessageType, actual: protocol::TMessageType) -> Result<()> {
     if expected == actual {
         Ok(())
     } else {
@@ -107,7 +107,7 @@ fn verify_expected_message_type(expected: protocol::TMessageType, actual: protoc
     }
 }
 
-fn verify_required_field_exists<T>(field_name: &str, field: &Option<T>) -> Result<()> {
+pub fn verify_required_field_exists<T>(field_name: &str, field: &Option<T>) -> Result<()> {
     match *field {
         Some(_) => Ok(()),
         None => Err(
@@ -121,7 +121,7 @@ fn verify_required_field_exists<T>(field_name: &str, field: &Option<T>) -> Resul
     }
 }
 
-fn field_id(field_ident: &protocol::TFieldIdentifier) -> self::Result<i16> {
+pub fn field_id(field_ident: &protocol::TFieldIdentifier) -> self::Result<i16> {
     field_ident.id.ok_or(
         Error::Protocol(
             ProtocolError {
