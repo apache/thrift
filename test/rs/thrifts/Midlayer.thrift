@@ -28,7 +28,7 @@ const i32 BigCamper = Base_One.MyConst
 
 const map<i32, Base_One.MyTypedef> MyConstMap = { 0: 1, 1: 2, 2: 3 }
 
-const map<set<i32>, map<list<string>, string>> MyConstNestedMap = { [0, 1, 2, 3]: { ["foo"]: "bar" }, [20]: { ["nut", "ton"] : "bar" }, [30, 40]: { ["bouncy", "tinky"]: "castle" } }
+const map<set<i32>, map<list<string>, string>> MyConstNestedMap = { [0, 1, 2, 3]: { ["foo"]: "bar" }, [20]: { ["nut", "ton"] : "bar" }, [30, 40]: { ["bouncy", "tinkly"]: "castle" } }
 
 struct Meal {
   1: Base_One.Noodle noodle
