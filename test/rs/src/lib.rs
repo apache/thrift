@@ -25,4 +25,3 @@ pub mod ultimate;
 
 mod thrift_test;
 pub use thrift_test::*;
-
