@@ -329,6 +329,11 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << endl;
   f_gen_ << "use rift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind};" << endl;
   f_gen_ << "use rift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
+  f_gen_ << "use rift::protocol::verify_expected_sequence_number;" << endl;
+  f_gen_ << "use rift::protocol::verify_expected_service_call;" << endl;
+  f_gen_ << "use rift::protocol::verify_expected_message_type;" << endl;
+  f_gen_ << "use rift::protocol::verify_required_field_exists;" << endl;
+  f_gen_ << "use rift::protocol::field_id;" << endl;
   f_gen_ << "use rift::server::TProcessor;" << endl;
   f_gen_ << endl;
 
@@ -1334,7 +1339,7 @@ void t_rs_generator::render_struct_read_from_in_protocol(t_struct* tstruct, t_rs
   f_gen_ << indent() << "}" << endl;
 
   // now read all the fields found
-  f_gen_ << indent() << "let field_id = try!(rift::field_id(&field_ident));" << endl;
+  f_gen_ << indent() << "let field_id = try!(field_id(&field_ident));" << endl;
   f_gen_ << indent() << "match field_id {" << endl; // start match
   indent_up();
 
@@ -1372,7 +1377,7 @@ void t_rs_generator::render_struct_read_from_in_protocol(t_struct* tstruct, t_rs
     if (!is_optional(req)) {
       f_gen_
         << indent()
-        << "try!(rift::verify_required_field_exists("
+        << "try!(verify_required_field_exists("
         << "\"" << struct_name << "." << rust_snake_case(tfield->get_name()) << "\""
         << ", "
         << "&" << struct_field_read_temp_variable(tfield)
@@ -1787,8 +1792,8 @@ void t_rs_generator::render_sync_recv(t_function* tfunc) {
   f_gen_ << indent() << "fn " << func_name << "(&mut self) -> rift::Result<" << func_return << "> {" << endl;
   indent_up();
   f_gen_ << indent() << "let message_ident = try!(self.i_prot.borrow_mut().read_message_begin());" << endl;
-  f_gen_ << indent() << "try!(rift::verify_expected_sequence_number(self.sequence_number, message_ident.sequence_number));" << endl;
-  f_gen_ << indent() << "try!(rift::verify_expected_service_call(\"" << tfunc->get_name() <<"\", &message_ident.name));" << endl; // note: use *original* name
+  f_gen_ << indent() << "try!(verify_expected_sequence_number(self.sequence_number, message_ident.sequence_number));" << endl;
+  f_gen_ << indent() << "try!(verify_expected_service_call(\"" << tfunc->get_name() <<"\", &message_ident.name));" << endl; // note: use *original* name
   // FIXME: replace with a "try" block
   f_gen_ << indent() << "if message_ident.message_type == TMessageType::Exception {" << endl;
   indent_up();
@@ -1797,7 +1802,7 @@ void t_rs_generator::render_sync_recv(t_function* tfunc) {
   f_gen_ << indent() << "return Err(rift::Error::Application(remote_error))" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
-  f_gen_ << indent() << "try!(rift::verify_expected_message_type(TMessageType::Reply, message_ident.message_type));" << endl;
+  f_gen_ << indent() << "try!(verify_expected_message_type(TMessageType::Reply, message_ident.message_type));" << endl;
   f_gen_ << indent() << "let result = try!(" << service_call_result_struct_name(tfunc) << "::read_from_in_protocol(&mut **self.i_prot.borrow_mut()));" << endl;
   f_gen_ << indent() << "try!(self.i_prot.borrow_mut().read_message_end());" << endl;
   f_gen_ << indent() << "result.ok_or()" << endl;
