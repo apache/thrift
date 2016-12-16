@@ -220,9 +220,11 @@ private:
   bool can_generate_simple_const(t_type* ttype);
   bool can_generate_const_holder(t_type* ttype);
 
+  void render_const_struct(t_type* ttype, t_const_value* tvalue);
   void render_const_list(t_type* ttype, t_const_value* tvalue);
   void render_const_set(t_type* ttype, t_const_value* tvalue);
   void render_const_map(t_type* ttype, t_const_value* tvalue);
+  void render_container_const_value(const string& insert_function, t_type* ttype, t_const_value* tvalue);
 
   // Return `true` if this type is a void, and should be
   // represented by the rust `()` type.
@@ -322,11 +324,11 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << endl;
   f_gen_ << "use rift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind};" << endl;
   f_gen_ << "use rift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
+  f_gen_ << "use rift::protocol::field_id;" << endl;
+  f_gen_ << "use rift::protocol::verify_expected_message_type;" << endl;
   f_gen_ << "use rift::protocol::verify_expected_sequence_number;" << endl;
   f_gen_ << "use rift::protocol::verify_expected_service_call;" << endl;
-  f_gen_ << "use rift::protocol::verify_expected_message_type;" << endl;
   f_gen_ << "use rift::protocol::verify_required_field_exists;" << endl;
-  f_gen_ << "use rift::protocol::field_id;" << endl;
   f_gen_ << "use rift::server::TProcessor;" << endl;
   f_gen_ << endl;
 
@@ -347,7 +349,7 @@ void t_rs_generator::close_generator() {
 
 //-----------------------------------------------------------------------------
 //
-// Consts, Typedefs and Enums
+// Consts
 //
 //-----------------------------------------------------------------------------
 
@@ -363,7 +365,7 @@ void t_rs_generator::generate_const(t_const* tconst) {
   } else if (can_generate_const_holder(ttype)) {
     render_const_value_holder(name, ttype, tvalue);
   } else {
-    throw "cannot generate const value for " + name;
+    throw "cannot generate const for " + name;
   }
 }
 
@@ -380,7 +382,7 @@ void t_rs_generator::render_const_value(const string& name, t_type* ttype, t_con
 
 void t_rs_generator::render_const_value_holder(const string& name, t_type* ttype, t_const_value* tvalue) {
   if (!can_generate_const_holder(ttype)) {
-    throw "cannot generate rust constant holder for " + ttype->get_name();
+    throw "cannot generate constant holder for " + ttype->get_name();
   }
 
   string holder_name("Const" + rust_camel_case(name));
@@ -413,6 +415,7 @@ void t_rs_generator::render_const_value(t_type* ttype, t_const_value* tvalue) {
       break;
     case t_base_type::TYPE_BOOL:
       f_gen_ << (tvalue->get_integer() ? "true" : "false");
+      break;
     case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
@@ -421,7 +424,6 @@ void t_rs_generator::render_const_value(t_type* ttype, t_const_value* tvalue) {
       break;
     case t_base_type::TYPE_DOUBLE:
       throw "cannot generate const value for double"; // FIXME
-      break;
     default:
       throw "cannot generate const value for " + t_base_type::t_base_name(tbase_type->get_base());
     }
@@ -440,36 +442,46 @@ void t_rs_generator::render_const_value(t_type* ttype, t_const_value* tvalue) {
     indent_down();
     f_gen_ << indent() << "}" << endl;
   } else if (ttype->is_struct() || ttype->is_xception()) {
-    if (((t_struct*)ttype)->is_union()) {
-      f_gen_ << indent() << "{" << endl;
-      indent_up();
-      f_gen_ << indent() << "unimplemented!()" << endl;
-      indent_down();
-      f_gen_ << indent() << "}" << endl;
+    render_const_struct(ttype, tvalue);
+  } else if (ttype->is_container()) {
+    f_gen_ << indent() << "{" << endl;
+    indent_up();
+
+    if (ttype->is_list()) {
+      render_const_list(ttype, tvalue);
+    } else if (ttype->is_set()) {
+      render_const_set(ttype, tvalue);
+    } else if (ttype->is_map()) {
+      render_const_map(ttype, tvalue);
     } else {
-      f_gen_ << indent() << "{" << endl;
-      indent_up();
-      f_gen_ << indent() << "unimplemented!()" << endl;
-      indent_down();
-      f_gen_ << indent() << "}" << endl;
+      throw "cannot generate const container value for " + ttype->get_name();
     }
-  } else if (ttype->is_list()) {
-    render_const_list(ttype, tvalue);
-  } else if (ttype->is_set()) {
-    render_const_set(ttype, tvalue);
-  } else if (ttype->is_map()) {
-    render_const_map(ttype, tvalue);
+
+    indent_down();
+    f_gen_ << indent() << "}" << endl;
   } else {
     throw "cannot generate const value for " + ttype->get_name();
   }
 }
 
+void t_rs_generator::render_const_struct(t_type* ttype, t_const_value* tvalue) {
+  if (((t_struct*)ttype)->is_union()) {
+    f_gen_ << indent() << "{" << endl;
+    indent_up();
+    f_gen_ << indent() << "unimplemented!()" << endl;
+    indent_down();
+    f_gen_ << indent() << "}" << endl;
+  } else {
+    f_gen_ << indent() << "{" << endl;
+    indent_up();
+    f_gen_ << indent() << "unimplemented!()" << endl;
+    indent_down();
+    f_gen_ << indent() << "}" << endl;
+  }
+}
+
 void t_rs_generator::render_const_list(t_type* ttype, t_const_value* tvalue) {
   t_type* elem_type = ((t_list*)ttype)->get_elem_type();
-
-  f_gen_ << indent() << "{" << endl;
-  indent_up();
-
   f_gen_ << indent() << "let mut l: Vec<" << to_rust_type(elem_type) << "> = Vec::new();" << endl;
   const vector<t_const_value*>& elems = tvalue->get_list();
   vector<t_const_value*>::const_iterator elem_iter;
@@ -488,17 +500,23 @@ void t_rs_generator::render_const_list(t_type* ttype, t_const_value* tvalue) {
     }
   }
   f_gen_ << indent() << "l" << endl;
+}
 
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
+void t_rs_generator::render_container_const_value(const string& insert_function, t_type* ttype, t_const_value* tvalue) {
+  f_gen_ << indent() << insert_function << "(";
+  if (get_true_type(ttype)->is_base_type()) {
+    render_const_value(ttype, tvalue); // actual value rendered inline
+  } else {
+    f_gen_ << endl; // newline between the insert function and the actual value
+    indent_up();
+    render_const_value(ttype, tvalue);
+    indent_down();
+  }
+  f_gen_ << indent() << ");" << endl;
 }
 
 void t_rs_generator::render_const_set(t_type* ttype, t_const_value* tvalue) {
   t_type* elem_type = ((t_set*)ttype)->get_elem_type();
-
-  f_gen_ << indent() << "{" << endl;
-  indent_up();
-
   f_gen_ << indent() << "let mut s: BTreeSet<" << to_rust_type(elem_type) << "> = BTreeSet::new();" << endl;
   const vector<t_const_value*>& elems = tvalue->get_list();
   vector<t_const_value*>::const_iterator elem_iter;
@@ -517,18 +535,11 @@ void t_rs_generator::render_const_set(t_type* ttype, t_const_value* tvalue) {
     }
   }
   f_gen_ << indent() << "s" << endl;
-
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
 }
 
 void t_rs_generator::render_const_map(t_type* ttype, t_const_value* tvalue) {
   t_type* key_type = ((t_map*)ttype)->get_key_type();
   t_type* val_type = ((t_map*)ttype)->get_val_type();
-
-  f_gen_ << indent() << "{" << endl;
-  indent_up();
-
   f_gen_
     << indent()
     << "let mut m: BTreeMap<"
@@ -565,9 +576,6 @@ void t_rs_generator::render_const_map(t_type* ttype, t_const_value* tvalue) {
     f_gen_ <<  indent() << "m.insert(k, v);" << endl;
   }
   f_gen_ << indent() << "m" << endl;
-
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
 }
 
 bool t_rs_generator::can_generate_simple_const(t_type* ttype) {
@@ -576,18 +584,26 @@ bool t_rs_generator::can_generate_simple_const(t_type* ttype) {
 
 bool t_rs_generator::can_generate_const_holder(t_type* ttype) {
   t_type* actualtype = get_true_type(ttype);
-  return
-    actualtype->is_enum() ||
-    actualtype->is_struct() ||
-    actualtype->is_xception() ||
-    actualtype->is_container();
+  return !can_generate_simple_const(actualtype) && !actualtype->is_service();
 }
+
+//-----------------------------------------------------------------------------
+//
+// Typedefs
+//
+//-----------------------------------------------------------------------------
 
 void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
   std::string actual_type = to_rust_type(ttypedef->get_type());
   f_gen_ << "pub type " << ttypedef->get_symbolic() << " = " << actual_type << ";" << endl;
   f_gen_ << endl;
 }
+
+//-----------------------------------------------------------------------------
+//
+// Enums and Unions
+//
+//-----------------------------------------------------------------------------
 
 void t_rs_generator::generate_enum(t_enum* tenum) {
   render_enum_definition(tenum);
