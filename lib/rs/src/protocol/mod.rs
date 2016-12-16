@@ -398,3 +398,73 @@ impl TryFrom<u8> for TType {
         }
     }
 }
+
+pub fn verify_expected_sequence_number(expected: i32, actual: i32) -> ::Result<()> {
+    if expected == actual {
+        Ok(())
+    } else {
+        Err(
+            ::Error::Application(
+                ::ApplicationError {
+                    kind: ::ApplicationErrorKind::BadSequenceId,
+                    message: format!("expected {} got {}", expected, actual)
+                }
+            )
+        )
+    }
+}
+
+pub fn verify_expected_service_call(expected: &str, actual: &str) -> ::Result<()> {
+    if expected == actual {
+        Ok(())
+    } else {
+        Err(
+            ::Error::Application(
+                ::ApplicationError {
+                    kind: ::ApplicationErrorKind::WrongMethodName,
+                    message: format!("expected {} got {}", expected, actual)
+                }
+            )
+        )
+    }
+}
+
+pub fn verify_expected_message_type(expected: TMessageType, actual: TMessageType) -> ::Result<()> {
+    if expected == actual {
+        Ok(())
+    } else {
+        Err(
+            ::Error::Application(
+                ::ApplicationError {
+                    kind: ::ApplicationErrorKind::InvalidMessageType,
+                    message: format!("expected {} got {}", expected, actual)
+                }
+            )
+        )
+    }
+}
+
+pub fn verify_required_field_exists<T>(field_name: &str, field: &Option<T>) -> ::Result<()> {
+    match *field {
+        Some(_) => Ok(()),
+        None => Err(
+            ::Error::Protocol(
+                ::ProtocolError {
+                    kind: ::ProtocolErrorKind::Unknown,
+                    message: format!("missing required field {}", field_name)
+                }
+            )
+        ),
+    }
+}
+
+pub fn field_id(field_ident: &TFieldIdentifier) -> ::Result<i16> {
+    field_ident.id.ok_or(
+        ::Error::Protocol(
+            ::ProtocolError {
+                kind: ::ProtocolErrorKind::Unknown,
+                message: format!("missing field in in {:?}", field_ident)
+            }
+        )
+    )
+}
