@@ -87,13 +87,6 @@ private:
   // to the top of the auto-generated file.
   void render_attributes_and_includes();
 
-  // Write a number of common utility functions used within
-  // the generated code. This includes functions that check
-  // incoming sequence numbers, method names, etc. Generally
-  // these verification functions have a return type of
-  // Result<()>.
-  void render_utility_functions();
-
   // Write the rust representation of an enum.
   void render_enum_definition(t_enum* tenum);
 
@@ -346,117 +339,6 @@ void t_rs_generator::render_attributes_and_includes() {
     }
     f_gen_ << endl;
   }
-}
-
-void t_rs_generator::render_utility_functions() {
-  // check that the sequence number is what you expect
-  f_gen_ << "fn verify_expected_sequence_number(expected: i32, actual: i32) -> rift::Result<()> {" << endl;
-  indent_up();
-  f_gen_ << indent() << "if expected == actual {" << endl;
-  indent_up();
-  f_gen_ << indent() << "Ok(())" << endl;
-  indent_down();
-  f_gen_ << indent() << "} else {" << endl;
-  indent_up();
-  f_gen_ << indent() << "Err(" << endl;
-  indent_up();
-  f_gen_ << indent() << "rift::Error::Application(" << endl;
-  indent_up();
-  f_gen_ << indent() << "ApplicationError { kind: ApplicationErrorKind::BadSequenceId, message: format!(\"expected {} got {}\", expected, actual) }" << endl;
-  indent_down();
-  f_gen_ << indent() << ")" << endl;
-  indent_down();
-  f_gen_ << indent() << ")" << endl;
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
-  indent_down();
-  f_gen_ << "}" << endl;
-  f_gen_ << endl;
-
-  // check that the method name is what you expect
-  f_gen_ << "fn verify_expected_service_call(expected: &str, actual: &str) -> rift::Result<()> {" << endl;
-  indent_up();
-  f_gen_ << indent() << "if expected == actual {" << endl;
-  indent_up();
-  f_gen_ << indent() << "Ok(())" << endl;
-  indent_down();
-  f_gen_ << indent() << "} else {" << endl;
-  indent_up();
-  f_gen_ << indent() << "Err(" << endl;
-  indent_up();
-  f_gen_ << indent() << "rift::Error::Application(" << endl;
-  indent_up();
-  f_gen_ << indent() << "ApplicationError { kind: ApplicationErrorKind::WrongMethodName, message: format!(\"expected {} got {}\", expected, actual) }" << endl;
-  indent_down();
-  f_gen_ << indent() << ")" << endl;
-  indent_down();
-  f_gen_ << indent() << ")" << endl;
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
-  indent_down();
-  f_gen_ << "}" << endl;
-  f_gen_ << endl;
-
-  // check that the message type is what you expect
-  f_gen_ << "fn verify_expected_message_type(expected: TMessageType, actual: TMessageType) -> rift::Result<()> {" << endl;
-  indent_up();
-  f_gen_ << indent() << "if expected == actual {" << endl;
-  indent_up();
-  f_gen_ << indent() << "Ok(())" << endl;
-  indent_down();
-  f_gen_ << indent() << "} else {" << endl;
-  indent_up();
-  f_gen_ << indent() << "Err(" << endl;
-  indent_up();
-  f_gen_ << indent() << "rift::Error::Application(" << endl;
-  indent_up();
-  f_gen_ << indent() << "ApplicationError { kind: ApplicationErrorKind::InvalidMessageType, message: format!(\"expected {} got {}\", expected, actual) }" << endl;
-  indent_down();
-  f_gen_ << indent() << ")" << endl;
-  indent_down();
-  f_gen_ << indent() << ")" << endl;
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
-  indent_down();
-  f_gen_ << "}" << endl;
-  f_gen_ << endl;
-
-  // check that a required field exists
-  f_gen_ << "fn verify_required_field_exists<T>(field_name: &str, field: &Option<T>) -> rift::Result<()> {" << endl;
-  indent_up();
-  f_gen_ << indent() << "match *field {" << endl;
-  indent_up();
-  f_gen_ << indent() << "Some(_) => Ok(())," << endl;
-  f_gen_ << indent() << "None => Err(" << endl;
-  indent_up();
-  f_gen_ << indent() << "rift::Error::Protocol(" << endl;
-  indent_up();
-  f_gen_ << indent() << "ProtocolError { kind: ProtocolErrorKind::Unknown, message: format!(\"missing required field {}\", field_name) }" << endl;
-  indent_down();
-  f_gen_ << indent() << ")" << endl;
-  indent_down();
-  f_gen_ << indent() << ")," << endl;
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
-  indent_down();
-  f_gen_ << "}" << endl;
-  f_gen_ << endl;
-
-  // check that the field id exists; return the id if it does
-  f_gen_ << "fn field_id(field_ident: &TFieldIdentifier) -> rift::Result<i16> {" << endl;
-  indent_up();
-  f_gen_ << indent() << "field_ident.id.ok_or(" << endl;
-  indent_up();
-  f_gen_ << indent() << "rift::Error::Protocol(" << endl;
-  indent_up();
-  f_gen_ << indent() << "ProtocolError { kind: ProtocolErrorKind::Unknown, message: format!(\"missing field in in {:?}\", field_ident) }" << endl;
-  indent_down();
-  f_gen_ << indent() << ")" << endl;
-  indent_down();
-  f_gen_ << indent() << ")" << endl;
-  indent_down();
-  f_gen_ << "}" << endl;
-  f_gen_ << endl;
 }
 
 void t_rs_generator::close_generator() {
