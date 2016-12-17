@@ -80,10 +80,10 @@ Remarks:
 
 # How to test communication between NetCore and Python
 
-* Generate code with the latest **thrift.exe** util (reuse *.thrift files from Samples folder)
+* Generate code with the latest **thrift.exe** util
 * Ensure that **thrift.exe** util generated folder **gen-py** with generated code for Python
 * Create **client.py** and **server.py** from the code examples below and save them to the folder with previosly generated folder **gen-py**
-* Run netcore samples (client and server) and python samples (client ans server)
+* Run netcore samples (client and server) and python samples (client and server)
 
 Remarks:
 

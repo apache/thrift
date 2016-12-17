@@ -30,10 +30,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Thrift;
 using Thrift.Protocols;
-using Thrift.Samples;
 using Thrift.Server;
 using Thrift.Transports;
 using Thrift.Transports.Server;
+using tutorial;
+using shared;
 
 namespace Server
 {
@@ -311,46 +312,45 @@ Sample:
                 _log = new Dictionary<int, SharedStruct>();
             }
 
-            public async Task<SharedStruct> GetStructAsync(int key,
+            public async Task<SharedStruct> getStructAsync(int key,
                 CancellationToken cancellationToken)
             {
                 Logger.LogInformation("GetStructAsync({0})", key);
                 return await Task.FromResult(_log[key]);
             }
 
-            public async Task PingAsync(CancellationToken cancellationToken)
+            public async Task pingAsync(CancellationToken cancellationToken)
             {
                 Logger.LogInformation("PingAsync()");
                 await Task.CompletedTask;
             }
 
-            public async Task<int> AddAsync(int num1, int num2, CancellationToken cancellationToken)
+            public async Task<int> addAsync(int num1, int num2, CancellationToken cancellationToken)
             {
                 Logger.LogInformation($"AddAsync({num1},{num2})");
                 return await Task.FromResult(num1 + num2);
             }
 
-            public async Task<int> CalculateAsync(int logid, Work w,
-                CancellationToken cancellationToken)
+            public async Task<int> calculateAsync(int logid, Work w, CancellationToken cancellationToken)
             {
                 Logger.LogInformation($"CalculateAsync({logid}, [{w.Op},{w.Num1},{w.Num2}])");
 
                 var val = 0;
                 switch (w.Op)
                 {
-                    case Operation.Add:
+                    case Operation.ADD:
                         val = w.Num1 + w.Num2;
                         break;
 
-                    case Operation.Substract:
+                    case Operation.SUBTRACT:
                         val = w.Num1 - w.Num2;
                         break;
 
-                    case Operation.Multiply:
+                    case Operation.MULTIPLY:
                         val = w.Num1*w.Num2;
                         break;
 
-                    case Operation.Divide:
+                    case Operation.DIVIDE:
                         if (w.Num2 == 0)
                         {
                             var io = new InvalidOperation
@@ -387,7 +387,7 @@ Sample:
                 return await Task.FromResult(val);
             }
 
-            public async Task ZipAsync(CancellationToken cancellationToken)
+            public async Task zipAsync(CancellationToken cancellationToken)
             {
                 Logger.LogInformation("ZipAsync() with delay 100mc");
                 await Task.Delay(100, CancellationToken.None);

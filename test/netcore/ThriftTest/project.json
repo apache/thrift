@@ -1,4 +1,4 @@
-﻿{
+{
   "version": "1.0.0-*",
   "buildOptions": {
     "emitEntryPoint": true
@@ -11,6 +11,8 @@
   },
 
   "dependencies": {
+    "System.Runtime.Serialization.Primitives": "4.1.1",
+    "System.ServiceModel.Primitives": "4.0.0"
   },
 
   "frameworks": {

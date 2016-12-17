@@ -22,17 +22,19 @@
 #exit if any command fails
 #set -e
 
-pushd Tests/Thrift.PublicInterfaces.Compile.Tests
-for file in *.thrift 
-do
-    ../../../../compiler/cpp/thrift  -gen netcore:wcf   -r  "$file"
-done
-../../../../compiler/cpp/thrift  -gen netcore:wcf   -r  ../../../../contrib/fb303/if/fb303.thrift
-../../../../compiler/cpp/thrift  -gen netcore:wcf   -r  ../../../../test/ThriftTest.thrift
-popd
+cd ThriftTest
+../../../compiler/cpp/thrift  -gen netcore:wcf   -r  ../../ThriftTest.thrift
+cd ..
+
+
+# Due to a known issue with "dotnet restore" the Thrift.dll dependency cannot be resolved from cmdline
+# For details see https://github.com/dotnet/cli/issues/3199 and related tickets
+# The problem does NOT affect Visual Studio builds.
+
+# workaround for "dotnet restore" issue
+cp  -u -p -r ..\..\lib\netcore\Thrift .\Thrift  
 
 dotnet --info
-
 dotnet restore
 
 # dotnet test ./test/TEST_PROJECT_NAME -c Release -f netcoreapp1.0
@@ -46,3 +48,7 @@ dotnet build **/*/project.json -r ubuntu.16.04-x64
 #revision=$(printf "%04d" $revision) 
 
 #dotnet pack ./src/PROJECT_NAME -c Release -o ./artifacts --version-suffix=$revision  
+
+# workaround for "dotnet restore" issue
+rm -r .\Thrift  
+

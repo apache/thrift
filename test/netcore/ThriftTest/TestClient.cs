@@ -26,7 +26,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using thrift.test;
+using ThriftAsync.Test;
 using Thrift.Collections;
 using Thrift.Protocols;
 using Thrift.Transports;
@@ -41,12 +41,75 @@ namespace Test
             public int numIterations = 1;
             public IPAddress host = IPAddress.Loopback;
             public int port = 9090;
+            public int numThreads = 1;
             public string url;
             public string pipe;
             public bool buffered;
             public bool framed;
             public string protocol;
             public bool encrypted = false;
+
+            internal void Parse( List<string> args)
+            {
+                for (var i = 0; i < args.Count; ++i)
+                {
+                    if (args[i] == "-u")
+                    {
+                        url = args[++i];
+                    }
+                    else if (args[i] == "-n")
+                    {
+                        numIterations = Convert.ToInt32(args[++i]);
+                    }
+                    else if (args[i].StartsWith("--pipe="))
+                    {
+                        pipe = args[i].Substring(args[i].IndexOf("=") + 1);
+                        Console.WriteLine("Using named pipes transport");
+                    }
+                    else if (args[i].StartsWith("--host="))
+                    {
+                        // check there for ipaddress
+                        host = new IPAddress(Encoding.Unicode.GetBytes(args[i].Substring(args[i].IndexOf("=") + 1)));
+                    }
+                    else if (args[i].StartsWith("--port="))
+                    {
+                        port = int.Parse(args[i].Substring(args[i].IndexOf("=") + 1));
+                    }
+                    else if (args[i] == "-b" || args[i] == "--buffered" || args[i] == "--transport=buffered")
+                    {
+                        buffered = true;
+                        Console.WriteLine("Using buffered sockets");
+                    }
+                    else if (args[i] == "-f" || args[i] == "--framed" || args[i] == "--transport=framed")
+                    {
+                        framed = true;
+                        Console.WriteLine("Using framed transport");
+                    }
+                    else if (args[i] == "-t")
+                    {
+                        numThreads = Convert.ToInt32(args[++i]);
+                    }
+                    else if (args[i] == "--compact" || args[i] == "--protocol=compact")
+                    {
+                        protocol = "compact";
+                        Console.WriteLine("Using compact protocol");
+                    }
+                    else if (args[i] == "--json" || args[i] == "--protocol=json")
+                    {
+                        protocol = "json";
+                        Console.WriteLine("Using JSON protocol");
+                    }
+                    else if (args[i] == "--ssl")
+                    {
+                        encrypted = true;
+                        Console.WriteLine("Using encrypted transport");
+                    }
+                    else
+                    {
+                        throw new ArgumentException(args[i]);
+                    }
+                }
+            }
 
             public TClientTransport CreateTransport()
             {
@@ -106,6 +169,7 @@ namespace Test
             }
         }
 
+
         private const int ErrorBaseTypes = 1;
         private const int ErrorStructs = 2;
         private const int ErrorContainers = 4;
@@ -115,7 +179,7 @@ namespace Test
         private class ClientTest
         {
             private readonly TClientTransport transport;
-            private readonly ThriftTest.Client client;
+            private readonly ThriftAsync.Test.ThriftTest.Client client;
             private readonly int numIterations;
             private bool done;
 
@@ -124,7 +188,7 @@ namespace Test
             public ClientTest(TestParams param)
             {
                 transport = param.CreateTransport();
-                client = new ThriftTest.Client(param.CreateProtocol(transport));
+                client = new ThriftAsync.Test.ThriftTest.Client(param.CreateProtocol(transport));
                 numIterations = param.numIterations;
             }
 
@@ -180,68 +244,30 @@ namespace Test
             }
         }
 
-        public static int Execute(string[] args)
+        internal static void PrintOptionsHelp()
+        {
+            Console.WriteLine("Client options:");
+            Console.WriteLine("  -u <URL>");
+            Console.WriteLine("  -t <# of threads to run>        default = 1");
+            Console.WriteLine("  -n <# of iterations>            per thread");
+            Console.WriteLine("  --pipe=<pipe name>");
+            Console.WriteLine("  --host=<IP address>");
+            Console.WriteLine("  --port=<port number>");
+            Console.WriteLine("  --transport=<transport name>    one of buffered,framed  (defaults to none)");
+            Console.WriteLine("  --protocol=<protocol name>      one of compact,json  (defaults to binary)");
+            Console.WriteLine("  --ssl");
+            Console.WriteLine();
+        }
+
+        public static int Execute(List<string> args)
         {
             try
             {
                 var param = new TestParams();
-                var numThreads = 1;
+
                 try
                 {
-                    for (var i = 0; i < args.Length; i++)
-                    {
-                        if (args[i] == "-u")
-                        {
-                            param.url = args[++i];
-                        }
-                        else if (args[i] == "-n")
-                        {
-                            param.numIterations = Convert.ToInt32(args[++i]);
-                        }
-                        else if (args[i] == "-pipe")  // -pipe <name>
-                        {
-                            param.pipe = args[++i];
-                            Console.WriteLine("Using named pipes transport");
-                        }
-                        else if (args[i].Contains("--host="))
-                        {
-                            // check there for ipaddress
-                            param.host = new IPAddress(Encoding.Unicode.GetBytes(args[i].Substring(args[i].IndexOf("=") + 1)));
-                        }
-                        else if (args[i].Contains("--port="))
-                        {
-                            param.port = int.Parse(args[i].Substring(args[i].IndexOf("=") + 1));
-                        }
-                        else if (args[i] == "-b" || args[i] == "--buffered" || args[i] == "--transport=buffered")
-                        {
-                            param.buffered = true;
-                            Console.WriteLine("Using buffered sockets");
-                        }
-                        else if (args[i] == "-f" || args[i] == "--framed" || args[i] == "--transport=framed")
-                        {
-                            param.framed = true;
-                            Console.WriteLine("Using framed transport");
-                        }
-                        else if (args[i] == "-t")
-                        {
-                            numThreads = Convert.ToInt32(args[++i]);
-                        }
-                        else if (args[i] == "--compact" || args[i] == "--protocol=compact")
-                        {
-                            param.protocol = "compact";
-                            Console.WriteLine("Using compact protocol");
-                        }
-                        else if (args[i] == "--json" || args[i] == "--protocol=json")
-                        {
-                            param.protocol = "json";
-                            Console.WriteLine("Using JSON protocol");
-                        }
-                        else if (args[i] == "--ssl")
-                        {
-                            param.encrypted = true;
-                            Console.WriteLine("Using encrypted transport");
-                        }
-                    }
+                    param.Parse(args);
                 }
                 catch (Exception ex)
                 {
@@ -251,7 +277,7 @@ namespace Test
                     return ErrorUnknown;
                 }
 
-                var tests = Enumerable.Range(0, numThreads).Select(_ => new ClientTest(param)).ToArray();
+                var tests = Enumerable.Range(0, param.numThreads).Select(_ => new ClientTest(param)).ToArray();
 
                 //issue tests on separate threads simultaneously
                 var threads = tests.Select(test => new Thread(test.Execute)).ToArray();
@@ -320,7 +346,7 @@ namespace Test
             return retval;
         }
 
-        public static async Task<int> ExecuteClientTestAsync(ThriftTest.Client client)
+        public static async Task<int> ExecuteClientTestAsync(ThriftAsync.Test.ThriftTest.Client client)
         {
             var token = CancellationToken.None;
             var returnCode = 0;
@@ -721,9 +747,14 @@ namespace Test
             var arg2 = long.MaxValue;
             var multiDict = new Dictionary<short, string>();
             multiDict[1] = "one";
+
+            var tmpMultiDict = new List<string>();
+            foreach (var pair in multiDict)
+                tmpMultiDict.Add(pair.Key +" => "+ pair.Value);
+
             var arg4 = Numberz.FIVE;
             long arg5 = 5000000;
-            Console.Write("Test Multi(" + arg0 + "," + arg1 + "," + arg2 + "," + multiDict + "," + arg4 + "," + arg5 + ")");
+            Console.Write("Test Multi(" + arg0 + "," + arg1 + "," + arg2 + ",{" + string.Join(",", tmpMultiDict) + "}," + arg4 + "," + arg5 + ")");
             var multiResponse = await client.testMultiAsync(arg0, arg1, arg2, multiDict, arg4, arg5, token);
             Console.Write(" = Xtruct(byte_thing:" + multiResponse.Byte_thing + ",String_thing:" + multiResponse.String_thing
                           + ",i32_thing:" + multiResponse.I32_thing + ",i64_thing:" + multiResponse.I64_thing + ")\n");

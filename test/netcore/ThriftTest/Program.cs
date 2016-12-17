@@ -16,20 +16,15 @@
 // under the License.
 
 using System;
+using System.Collections.Generic;
 using Test;
 
-namespace ThirftTest
+namespace ThriftTest
 {
     public class Program
     {
         public static int Main(string[] args)
         {
-            if (args.Length == 0)
-            {
-                Console.WriteLine("must provide 'server' or 'client' arg");
-                return -1;
-            }
-
             try
             {
                 Console.SetBufferSize(Console.BufferWidth, 4096);
@@ -39,24 +34,41 @@ namespace ThirftTest
                 Console.WriteLine("Failed to grow scroll-back buffer");
             }
 
-            var subArgs = new string[args.Length - 1];
-            for (var i = 1; i < args.Length; i++)
-            {
-                subArgs[i - 1] = args[i];
+            // split mode and options
+            var subArgs = new List<string>(args);
+            var firstArg = string.Empty;
+            if (subArgs.Count > 0)
+            { 
+                firstArg = subArgs[0];
+                subArgs.RemoveAt(0);
             }
 
-            if (args[0] == "client")
+            // run whatever mode is choosen
+            switch(firstArg)
             {
-                return TestClient.Execute(subArgs);
+                case "client":
+                    return TestClient.Execute(subArgs);
+                case "server":
+                    return TestServer.Execute(subArgs);
+                case "--help":
+                    PrintHelp();
+                    return 0;
+                default:
+                    PrintHelp();
+                    return -1;
             }
+        }
 
-            if (args[0] == "server")
-            {
-                return TestServer.Execute(subArgs) ? 0 : 1;
-            }
+        private static void PrintHelp()
+        {
+            Console.WriteLine("Usage:");
+            Console.WriteLine("  ThriftTest  server  [options]'");
+            Console.WriteLine("  ThriftTest  client  [options]'");
+            Console.WriteLine("  ThriftTest  --help");
+            Console.WriteLine("");
 
-            Console.WriteLine("first argument must be 'server' or 'client'");
-            return 0;
+            TestServer.PrintOptionsHelp();
+            TestClient.PrintOptionsHelp();
         }
     }
 }

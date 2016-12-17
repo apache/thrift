@@ -36,6 +36,7 @@ node_modules
 compile
 test-driver
 erl_crash.dump
+project.lock.json
 
 .sonar
 .DS_Store
@@ -215,6 +216,10 @@ erl_crash.dump
 /lib/hs/dist
 /lib/java/build
 /lib/js/test/build
+/lib/netcore/**/.vs
+/lib/netcore/**/bin
+/lib/netcore/**/obj
+/lib/netcore/**/gen-*
 /lib/nodejs/coverage
 /lib/nodejs/node_modules/
 /lib/perl/MANIFEST
@@ -290,6 +295,11 @@ erl_crash.dump
 /test/hs/TestServer
 /test/py.twisted/_trial_temp/
 /test/rb/Gemfile.lock
+/test/netcore/**/.vs
+/test/netcore/**/bin
+/test/netcore/**/obj
+/test/netcore/**/gen-*
+/test/netcore/Thrift
 /tutorial/cpp/TutorialClient
 /tutorial/cpp/TutorialServer
 /tutorial/c_glib/tutorial_client
@@ -323,4 +333,9 @@ erl_crash.dump
 /tutorial/hs/dist/
 /tutorial/java/build/
 /tutorial/js/build/
+/tutorial/netcore/**/.vs
+/tutorial/netcore/**/bin
+/tutorial/netcore/**/obj
+/tutorial/netcore/**/gen-*
+/tutorial/netcore/Thrift
 /ylwrap

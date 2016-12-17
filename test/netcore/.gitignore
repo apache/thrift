@@ -1,5 +1,0 @@
-# generic ignores
-!gen-*
-bin/
-obj/
-*.lock.json

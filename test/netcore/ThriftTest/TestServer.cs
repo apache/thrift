@@ -23,7 +23,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using thrift.test;
+using ThriftAsync.Test;
 using Thrift;
 using Thrift.Collections;
 using Thrift.Protocols;
@@ -33,12 +33,75 @@ using Thrift.Transports.Server;
 
 namespace Test
 {
+    internal class ServerParam
+    {
+        internal bool useBufferedSockets = false;
+        internal bool useFramed = false;
+        internal bool useEncryption = false;
+        internal bool compact = false;
+        internal bool json = false;
+        internal int port = 9090;
+        internal string pipe = null;
+
+        internal void Parse(List<string> args)
+        {
+            for (var i = 0; i < args.Count; i++)
+            {
+                if (args[i].StartsWith("--pipe="))
+                {
+                    pipe = args[i].Substring(args[i].IndexOf("=") + 1);
+                }
+                else if (args[i].StartsWith("--port="))
+                {
+                    port = int.Parse(args[i].Substring(args[i].IndexOf("=") + 1));
+                }
+                else if (args[i] == "-b" || args[i] == "--buffered" || args[i] == "--transport=buffered")
+                {
+                    useBufferedSockets = true;
+                }
+                else if (args[i] == "-f" || args[i] == "--framed" || args[i] == "--transport=framed")
+                {
+                    useFramed = true;
+                }
+                else if (args[i] == "--compact" || args[i] == "--protocol=compact")
+                {
+                    compact = true;
+                }
+                else if (args[i] == "--json" || args[i] == "--protocol=json")
+                {
+                    json = true;
+                }
+                else if (args[i] == "--threaded" || args[i] == "--server-type=threaded")
+                {
+                    throw new NotImplementedException(args[i]);
+                }
+                else if (args[i] == "--threadpool" || args[i] == "--server-type=threadpool")
+                {
+                    throw new NotImplementedException(args[i]);
+                }
+                else if (args[i] == "--prototype" || args[i] == "--processor=prototype")
+                {
+                    throw new NotImplementedException(args[i]);
+                }
+                else if (args[i] == "--ssl")
+                {
+                    useEncryption = true;
+                }
+                else
+                {
+                    throw new ArgumentException(args[i]);
+                }
+            }
+
+        }
+    }
+
     public class TestServer
     {
         public static int _clientID = -1;
         public delegate void TestLogDelegate(string msg, params object[] values);
 
-        public class TradeServerEventHandler : TServerEventHandler
+        public class MyServerEventHandler : TServerEventHandler
         {
             public int callCount = 0;
 
@@ -67,88 +130,88 @@ namespace Test
             }
         };
 
-        public class TestHandlerAsync : ThriftTest.IAsync
+        public class TestHandlerAsync : ThriftAsync.Test.ThriftTest.IAsync
         {
             public TBaseServer server { get; set; }
             private int handlerID;
-            private StringBuilder reusableStringBuilder = new StringBuilder();
-            private TestLogDelegate testLogDelegate;
+            private StringBuilder sb = new StringBuilder();
+            private TestLogDelegate logger;
 
             public TestHandlerAsync()
             {
                 handlerID = Interlocked.Increment(ref _clientID);
-                testLogDelegate += testConsoleLogger;
-                testLogDelegate.Invoke("New TestHandler instance created");
+                logger += testConsoleLogger;
+                logger.Invoke("New TestHandler instance created");
             }
 
             public void testConsoleLogger(string msg, params object[] values)
             {
-                reusableStringBuilder.Clear();
-                reusableStringBuilder.AppendFormat("handler{0:D3}:", handlerID);
-                reusableStringBuilder.AppendFormat(msg, values);
-                reusableStringBuilder.AppendLine();
-                Console.Write(reusableStringBuilder.ToString());
+                sb.Clear();
+                sb.AppendFormat("handler{0:D3}:", handlerID);
+                sb.AppendFormat(msg, values);
+                sb.AppendLine();
+                Console.Write(sb.ToString());
             }
 
             public Task testVoidAsync(CancellationToken cancellationToken)
             {
-                testLogDelegate.Invoke("testVoid()");
+                logger.Invoke("testVoid()");
                 return Task.CompletedTask;
             }
 
             public Task<string> testStringAsync(string thing, CancellationToken cancellationToken)
             {
-                testLogDelegate.Invoke("testString({0})", thing);
+                logger.Invoke("testString({0})", thing);
                 return Task.FromResult(thing);
             }
 
             public Task<bool> testBoolAsync(bool thing, CancellationToken cancellationToken)
             {
-                testLogDelegate.Invoke("testBool({0})", thing);
+                logger.Invoke("testBool({0})", thing);
                 return Task.FromResult(thing);
             }
 
             public Task<sbyte> testByteAsync(sbyte thing, CancellationToken cancellationToken)
             {
-                testLogDelegate.Invoke("testByte({0})", thing);
+                logger.Invoke("testByte({0})", thing);
                 return Task.FromResult(thing);
             }
 
             public Task<int> testI32Async(int thing, CancellationToken cancellationToken)
             {
-                testLogDelegate.Invoke("testI32({0})", thing);
+                logger.Invoke("testI32({0})", thing);
                 return Task.FromResult(thing);
             }
 
             public Task<long> testI64Async(long thing, CancellationToken cancellationToken)
             {
-                testLogDelegate.Invoke("testI64({0})", thing);
+                logger.Invoke("testI64({0})", thing);
                 return Task.FromResult(thing);
             }
 
             public Task<double> testDoubleAsync(double thing, CancellationToken cancellationToken)
             {
-                testLogDelegate.Invoke("testDouble({0})", thing);
+                logger.Invoke("testDouble({0})", thing);
                 return Task.FromResult(thing);
             }
 
             public Task<byte[]> testBinaryAsync(byte[] thing, CancellationToken cancellationToken)
             {
                 var hex = BitConverter.ToString(thing).Replace("-", string.Empty);
-                testLogDelegate.Invoke("testBinary({0:X})", hex);
+                logger.Invoke("testBinary({0:X})", hex);
                 return Task.FromResult(thing);
             }
 
             public Task<Xtruct> testStructAsync(Xtruct thing, CancellationToken cancellationToken)
             {
-                testLogDelegate.Invoke("testStruct({{\"{0}\", {1}, {2}, {3}}})", thing.String_thing, thing.Byte_thing, thing.I32_thing, thing.I64_thing);
+                logger.Invoke("testStruct({{\"{0}\", {1}, {2}, {3}}})", thing.String_thing, thing.Byte_thing, thing.I32_thing, thing.I64_thing);
                 return Task.FromResult(thing);
             }
 
             public Task<Xtruct2> testNestAsync(Xtruct2 nest, CancellationToken cancellationToken)
             {
                 var thing = nest.Struct_thing;
-                testLogDelegate.Invoke("testNest({{{0}, {{\"{1}\", {2}, {3}, {4}, {5}}}}})",
+                logger.Invoke("testNest({{{0}, {{\"{1}\", {2}, {3}, {4}, {5}}}}})",
                     nest.Byte_thing,
                     thing.String_thing,
                     thing.Byte_thing,
@@ -160,8 +223,8 @@ namespace Test
 
             public Task<Dictionary<int, int>> testMapAsync(Dictionary<int, int> thing, CancellationToken cancellationToken)
             {
-                reusableStringBuilder.Clear();
-                reusableStringBuilder.Append("testMap({{");
+                sb.Clear();
+                sb.Append("testMap({{");
                 var first = true;
                 foreach (var key in thing.Keys)
                 {
@@ -171,19 +234,19 @@ namespace Test
                     }
                     else
                     {
-                        reusableStringBuilder.Append(", ");
+                        sb.Append(", ");
                     }
-                    reusableStringBuilder.AppendFormat("{0} => {1}", key, thing[key]);
+                    sb.AppendFormat("{0} => {1}", key, thing[key]);
                 }
-                reusableStringBuilder.Append("}})");
-                testLogDelegate.Invoke(reusableStringBuilder.ToString());
+                sb.Append("}})");
+                logger.Invoke(sb.ToString());
                 return Task.FromResult(thing);
             }
 
             public Task<Dictionary<string, string>> testStringMapAsync(Dictionary<string, string> thing, CancellationToken cancellationToken)
             {
-                reusableStringBuilder.Clear();
-                reusableStringBuilder.Append("testStringMap({{");
+                sb.Clear();
+                sb.Append("testStringMap({{");
                 var first = true;
                 foreach (var key in thing.Keys)
                 {
@@ -193,19 +256,19 @@ namespace Test
                     }
                     else
                     {
-                        reusableStringBuilder.Append(", ");
+                        sb.Append(", ");
                     }
-                    reusableStringBuilder.AppendFormat("{0} => {1}", key, thing[key]);
+                    sb.AppendFormat("{0} => {1}", key, thing[key]);
                 }
-                reusableStringBuilder.Append("}})");
-                testLogDelegate.Invoke(reusableStringBuilder.ToString());
+                sb.Append("}})");
+                logger.Invoke(sb.ToString());
                 return Task.FromResult(thing);
             }
 
             public Task<THashSet<int>> testSetAsync(THashSet<int> thing, CancellationToken cancellationToken)
             {
-                reusableStringBuilder.Clear();
-                reusableStringBuilder.Append("testSet({{");
+                sb.Clear();
+                sb.Append("testSet({{");
                 var first = true;
                 foreach (int elem in thing)
                 {
@@ -215,19 +278,19 @@ namespace Test
                     }
                     else
                     {
-                        reusableStringBuilder.Append(", ");
+                        sb.Append(", ");
                     }
-                    reusableStringBuilder.AppendFormat("{0}", elem);
+                    sb.AppendFormat("{0}", elem);
                 }
-                reusableStringBuilder.Append("}})");
-                testLogDelegate.Invoke(reusableStringBuilder.ToString());
+                sb.Append("}})");
+                logger.Invoke(sb.ToString());
                 return Task.FromResult(thing);
             }
 
             public Task<List<int>> testListAsync(List<int> thing, CancellationToken cancellationToken)
             {
-                reusableStringBuilder.Clear();
-                reusableStringBuilder.Append("testList({{");
+                sb.Clear();
+                sb.Append("testList({{");
                 var first = true;
                 foreach (var elem in thing)
                 {
@@ -237,30 +300,30 @@ namespace Test
                     }
                     else
                     {
-                        reusableStringBuilder.Append(", ");
+                        sb.Append(", ");
                     }
-                    reusableStringBuilder.AppendFormat("{0}", elem);
+                    sb.AppendFormat("{0}", elem);
                 }
-                reusableStringBuilder.Append("}})");
-                testLogDelegate.Invoke(reusableStringBuilder.ToString());
+                sb.Append("}})");
+                logger.Invoke(sb.ToString());
                 return Task.FromResult(thing);
             }
 
             public Task<Numberz> testEnumAsync(Numberz thing, CancellationToken cancellationToken)
             {
-                testLogDelegate.Invoke("testEnum({0})", thing);
+                logger.Invoke("testEnum({0})", thing);
                 return Task.FromResult(thing);
             }
 
             public Task<long> testTypedefAsync(long thing, CancellationToken cancellationToken)
             {
-                testLogDelegate.Invoke("testTypedef({0})", thing);
+                logger.Invoke("testTypedef({0})", thing);
                 return Task.FromResult(thing);
             }
 
             public Task<Dictionary<int, Dictionary<int, int>>> testMapMapAsync(int hello, CancellationToken cancellationToken)
             {
-                testLogDelegate.Invoke("testMapMap({0})", hello);
+                logger.Invoke("testMapMap({0})", hello);
                 var mapmap = new Dictionary<int, Dictionary<int, int>>();
 
                 var pos = new Dictionary<int, int>();
@@ -279,45 +342,27 @@ namespace Test
 
             public Task<Dictionary<long, Dictionary<Numberz, Insanity>>> testInsanityAsync(Insanity argument, CancellationToken cancellationToken)
             {
-                testLogDelegate.Invoke("testInsanity()");
+                logger.Invoke("testInsanity()");
 
-                var hello = new Xtruct
-                {
-                    String_thing = "Hello2",
-                    Byte_thing = 2,
-                    I32_thing = 2,
-                    I64_thing = 2
-                };
-
-                var goodbye = new Xtruct
-                {
-                    String_thing = "Goodbye4",
-                    Byte_thing = 4,
-                    I32_thing = 4,
-                    I64_thing = 4
-                };
-
-                var crazy = new Insanity
-                {
-                    UserMap = new Dictionary<Numberz, long> {[Numberz.EIGHT] = 8},
-                    Xtructs = new List<Xtruct> {goodbye}
-                };
-
-                var looney = new Insanity
-                {
-                    UserMap = new Dictionary<Numberz, long> { [Numberz.FIVE] = 5},
-                    Xtructs = new List<Xtruct>()
-                };
-
-                looney.Xtructs.Add(hello);
+                /** from ThriftTest.thrift:
+                 * So you think you've got this all worked, out eh?
+                 *
+                 * Creates a the returned map with these values and prints it out:
+                 *   { 1 => { 2 => argument,
+                 *            3 => argument,
+                 *          },
+                 *     2 => { 6 => <empty Insanity struct>, },
+                 *   }
+                 * @return map<UserId, map<Numberz,Insanity>> - a map with the above values
+                 */
 
                 var first_map = new Dictionary<Numberz, Insanity>();
                 var second_map = new Dictionary<Numberz, Insanity>(); ;
 
-                first_map[Numberz.TWO] = crazy;
-                first_map[Numberz.THREE] = crazy;
+                first_map[Numberz.TWO] = argument;
+                first_map[Numberz.THREE] = argument;
 
-                second_map[Numberz.SIX] = looney;
+                second_map[Numberz.SIX] = new Insanity();
 
                 var insane = new Dictionary<long, Dictionary<Numberz, Insanity>>
                 {
@@ -331,7 +376,7 @@ namespace Test
             public Task<Xtruct> testMultiAsync(sbyte arg0, int arg1, long arg2, Dictionary<short, string> arg3, Numberz arg4, long arg5,
                 CancellationToken cancellationToken)
             {
-                testLogDelegate.Invoke("testMulti()");
+                logger.Invoke("testMulti()");
 
                 var hello = new Xtruct(); ;
                 hello.String_thing = "Hello2";
@@ -343,7 +388,7 @@ namespace Test
 
             public Task testExceptionAsync(string arg, CancellationToken cancellationToken)
             {
-                testLogDelegate.Invoke("testException({0})", arg);
+                logger.Invoke("testException({0})", arg);
                 if (arg == "Xception")
                 {
                     var x = new Xception
@@ -362,7 +407,7 @@ namespace Test
 
             public Task<Xtruct> testMultiExceptionAsync(string arg0, string arg1, CancellationToken cancellationToken)
             {
-                testLogDelegate.Invoke("testMultiException({0}, {1})", arg0, arg1);
+                logger.Invoke("testMultiException({0}, {1})", arg0, arg1);
                 if (arg0 == "Xception")
                 {
                     var x = new Xception
@@ -378,20 +423,20 @@ namespace Test
                     var x = new Xception2
                     {
                         ErrorCode = 2002,
-                        Struct_thing = new Xtruct {String_thing = "This is an Xception2"}
+                        Struct_thing = new Xtruct { String_thing = "This is an Xception2" }
                     };
                     throw x;
                 }
 
-                var result = new Xtruct {String_thing = arg1};
+                var result = new Xtruct { String_thing = arg1 };
                 return Task.FromResult(result);
             }
 
             public Task testOnewayAsync(int secondsToSleep, CancellationToken cancellationToken)
             {
-                testLogDelegate.Invoke("testOneway({0}), sleeping...", secondsToSleep);
+                logger.Invoke("testOneway({0}), sleeping...", secondsToSleep);
                 Thread.Sleep(secondsToSleep * 1000);
-                testLogDelegate.Invoke("testOneway finished");
+                logger.Invoke("testOneway finished");
 
                 return Task.CompletedTask;
             }
@@ -404,80 +449,63 @@ namespace Test
             TPrototypeProcessorFactory,
         }
 
-        public static bool Execute(string[] args)
+        internal static void PrintOptionsHelp()
+        {
+            Console.WriteLine("Server options:");
+            Console.WriteLine("  --pipe=<pipe name>");
+            Console.WriteLine("  --port=<port number>");
+            Console.WriteLine("  --transport=<transport name>    one of buffered,framed  (defaults to none)");
+            Console.WriteLine("  --protocol=<protocol name>      one of compact,json  (defaults to binary)");
+            Console.WriteLine("  --server-type=<type>            one of threaded,threadpool  (defaults to simple)");
+            Console.WriteLine("  --processor=<prototype>");
+            Console.WriteLine("  --ssl");
+            Console.WriteLine();
+        }
+
+        public static int Execute(List<string> args)
         {
             var logger = new LoggerFactory().CreateLogger("Test");
 
             try
             {
-                bool useBufferedSockets = false, useFramed = false, useEncryption = false, compact = false, json = false;
+                var param = new ServerParam();
 
-                var port = 9090;
-                string pipe = null;
-                for (var i = 0; i < args.Length; i++)
+                try
                 {
-                    if (args[i] == "-pipe")  // -pipe name
-                    {
-                        pipe = args[++i];
-                    }
-                    else if (args[i].Contains("--port="))
-                    {
-                        port = int.Parse(args[i].Substring(args[i].IndexOf("=") + 1));
-                    }
-                    else if (args[i] == "-b" || args[i] == "--buffered" || args[i] == "--transport=buffered")
-                    {
-                        useBufferedSockets = true;
-                    }
-                    else if (args[i] == "-f" || args[i] == "--framed" || args[i] == "--transport=framed")
-                    {
-                        useFramed = true;
-                    }
-                    else if (args[i] == "--compact" || args[i] == "--protocol=compact")
-                    {
-                        compact = true;
-                    }
-                    else if (args[i] == "--json" || args[i] == "--protocol=json")
-                    {
-                        json = true;
-                    }
-                    else if (args[i] == "--threaded" || args[i] == "--server-type=threaded")
-                    {
-                    }
-                    else if (args[i] == "--threadpool" || args[i] == "--server-type=threadpool")
-                    {
-                    }
-                    else if (args[i] == "--prototype" || args[i] == "--processor=prototype")
-                    {
-                    }
-                    else if (args[i] == "--ssl")
-                    {
-                        useEncryption = true;
-                    }
+                    param.Parse(args);
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("*** FAILED ***");
+                    Console.WriteLine("Error while  parsing arguments");
+                    Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                    return 1;
+                }
+
 
                 // Transport
                 TServerTransport trans;
-                if (pipe != null)
+                if (param.pipe != null)
                 {
-                    trans = new TNamedPipeServerTransport(pipe);
+                    trans = new TNamedPipeServerTransport(param.pipe);
                 }
                 else
                 {
-                    if (useEncryption)
+                    if (param.useEncryption)
                     {
                         var certPath = "../keys/server.p12";
-                        trans = new TTlsServerSocketTransport(port, useBufferedSockets, new X509Certificate2(certPath, "thrift"), null, null, SslProtocols.Tls12);
+                        trans = new TTlsServerSocketTransport(param.port, param.useBufferedSockets, new X509Certificate2(certPath, "thrift"), null, null, SslProtocols.Tls12);
                     }
                     else
                     {
-                        trans = new TServerSocketTransport(port, 0, useBufferedSockets);
+                        trans = new TServerSocketTransport(param.port, 0, param.useBufferedSockets);
                     }
                 }
 
                 ITProtocolFactory proto;
-                if (compact)
+                if (param.compact)
                     proto = new TCompactProtocol.Factory();
-                else if (json)
+                else if (param.json)
                     proto = new TJsonProtocol.Factory();
                 else
                     proto = new TBinaryProtocol.Factory();
@@ -486,31 +514,31 @@ namespace Test
 
                 // Processor
                 var testHandler = new TestHandlerAsync();
-                var testProcessor = new ThriftTest.AsyncProcessor(testHandler);
+                var testProcessor = new ThriftAsync.Test.ThriftTest.AsyncProcessor(testHandler);
                 processorFactory = new SingletonTProcessorFactory(testProcessor);
-                
+
 
                 TTransportFactory transFactory;
-                //if (useFramed)
-                //    transFactory = new TFramedTransport.Factory();
-                //else
-                transFactory = new TTransportFactory();
+                if (param.useFramed)
+                    throw new NotImplementedException("framed"); // transFactory = new TFramedTransport.Factory();
+                else
+                    transFactory = new TTransportFactory();
 
                 TBaseServer serverEngine = new AsyncBaseServer(processorFactory, trans, transFactory, transFactory, proto, proto, logger);
 
                 //Server event handler
-                var serverEvents = new TradeServerEventHandler();
+                var serverEvents = new MyServerEventHandler();
                 serverEngine.SetEventHandler(serverEvents);
 
                 // Run it
-                var where = (pipe != null ? "on pipe " + pipe : "on port " + port);
-                Console.WriteLine("Starting the AsyncBaseServer " + where + 
+                var where = (! string.IsNullOrEmpty(param.pipe)) ? "on pipe " + param.pipe : "on port " + param.port;
+                Console.WriteLine("Starting the AsyncBaseServer " + where +
                                   " with processor TPrototypeProcessorFactory prototype factory " +
-                                  (useBufferedSockets ? " with buffered socket" : "") +
-                                  (useFramed ? " with framed transport" : "") +
-                                  (useEncryption ? " with encryption" : "") +
-                                  (compact ? " with compact protocol" : "") +
-                                  (json ? " with json protocol" : "") +
+                                  (param.useBufferedSockets ? " with buffered socket" : "") +
+                                  (param.useFramed ? " with framed transport" : "") +
+                                  (param.useEncryption ? " with encryption" : "") +
+                                  (param.compact ? " with compact protocol" : "") +
+                                  (param.json ? " with json protocol" : "") +
                                   "...");
                 serverEngine.ServeAsync(CancellationToken.None).GetAwaiter().GetResult();
                 Console.ReadLine();
@@ -518,10 +546,11 @@ namespace Test
             catch (Exception x)
             {
                 Console.Error.Write(x);
-                return false;
+                return 1;
             }
             Console.WriteLine("done.");
-            return true;
+            return 0;
         }
     }
+
 }

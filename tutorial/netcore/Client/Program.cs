@@ -27,9 +27,10 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Thrift;
 using Thrift.Protocols;
-using Thrift.Samples;
 using Thrift.Transports;
 using Thrift.Transports.Client;
+using tutorial;
+using shared;
 
 namespace Client
 {
@@ -195,15 +196,15 @@ Sample:
                     // Async version
 
                     Logger.LogInformation("PingAsync()");
-                    await client.PingAsync(cancellationToken);
+                    await client.pingAsync(cancellationToken);
 
                     Logger.LogInformation("AddAsync(1,1)");
-                    var sum = await client.AddAsync(1, 1, cancellationToken);
+                    var sum = await client.addAsync(1, 1, cancellationToken);
                     Logger.LogInformation($"AddAsync(1,1)={sum}");
 
                     var work = new Work
                     {
-                        Op = Operation.Divide,
+                        Op = Operation.DIVIDE,
                         Num1 = 1,
                         Num2 = 0
                     };
@@ -211,7 +212,7 @@ Sample:
                     try
                     {
                         Logger.LogInformation("CalculateAsync(1)");
-                        await client.CalculateAsync(1, work, cancellationToken);
+                        await client.calculateAsync(1, work, cancellationToken);
                         Logger.LogInformation("Whoa we can divide by 0");
                     }
                     catch (InvalidOperation io)
@@ -219,14 +220,14 @@ Sample:
                         Logger.LogInformation("Invalid operation: " + io);
                     }
 
-                    work.Op = Operation.Substract;
+                    work.Op = Operation.SUBTRACT;
                     work.Num1 = 15;
                     work.Num2 = 10;
 
                     try
                     {
                         Logger.LogInformation("CalculateAsync(1)");
-                        var diff = await client.CalculateAsync(1, work, cancellationToken);
+                        var diff = await client.calculateAsync(1, work, cancellationToken);
                         Logger.LogInformation($"15-10={diff}");
                     }
                     catch (InvalidOperation io)
@@ -235,11 +236,11 @@ Sample:
                     }
 
                     Logger.LogInformation("GetStructAsync(1)");
-                    var log = await client.GetStructAsync(1, cancellationToken);
+                    var log = await client.getStructAsync(1, cancellationToken);
                     Logger.LogInformation($"Check log: {log.Value}");
 
                     Logger.LogInformation("ZipAsync() with delay 100mc on server side");
-                    await client.ZipAsync(cancellationToken);
+                    await client.zipAsync(cancellationToken);
                 }
                 catch (Exception ex)
                 {

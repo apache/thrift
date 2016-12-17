@@ -10,11 +10,11 @@
     "Microsoft.NETCore.App": {
       "version": "1.0.0"
     },
-    "Thrift": "1.0.0-*",
     "Microsoft.AspNetCore.Http": "1.0.0",
     "Microsoft.AspNetCore.Server.IISIntegration": "1.0.0",
     "Microsoft.AspNetCore.Server.Kestrel": "1.0.0",
-    "Microsoft.Extensions.Configuration.FileExtensions": "1.0.0" },
+    "Microsoft.Extensions.Configuration.FileExtensions": "1.0.0",
+    "Thrift": "1.0.0-*" },
   "runtimes": {
     "win10-x64": {},
     "osx.10.11-x64": {},

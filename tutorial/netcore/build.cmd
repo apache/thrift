@@ -19,18 +19,27 @@ rem  * under the License.
 rem  */
 setlocal
 
-pushd Tests\Thrift.PublicInterfaces.Compile.Tests
-for %%a in (*.thrift) do thrift  -gen netcore:wcf   -r  %%a
-thrift  -gen netcore:wcf   -r  ..\..\..\..\contrib/fb303/if/fb303.thrift
-thrift  -gen netcore:wcf   -r  ..\..\..\..\test/ThriftTest.thrift
-popd
+cd Interfaces
+thrift  -gen netcore:wcf   -r  ..\..\tutorial.thrift
+cd ..
+
+rem * Due to a known issue with "dotnet restore" the Thrift.dll dependency cannot be resolved from cmdline
+rem * For details see https://github.com/dotnet/cli/issues/3199 and related tickets
+rem * The problem does NOT affect Visual Studio builds.
+
+rem * workaround for "dotnet restore" issue
+xcopy ..\..\lib\netcore\Thrift .\Thrift  /YSEI  >NUL
 
 dotnet --info
-
 dotnet restore
 
 dotnet build **/*/project.json -r win10-x64 
 dotnet build **/*/project.json -r osx.10.11-x64 
 dotnet build **/*/project.json -r ubuntu.16.04-x64 
+
+rem * workaround for "dotnet restore" issue
+del .\Thrift\*  /Q /S  >NUL
+rd  .\Thrift    /Q /S  >NUL
+
 
 :eof
