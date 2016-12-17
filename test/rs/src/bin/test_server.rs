@@ -17,9 +17,11 @@
 
 #[macro_use]
 extern crate clap;
+extern crate ordered_float;
 extern crate rift;
 extern crate rift_test;
 
+use ordered_float::OrderedFloat;
 use std::collections::{BTreeMap, BTreeSet};
 use std::thread;
 use std::time::Duration;
@@ -126,6 +128,11 @@ impl TAbstractThriftTestSyncHandler for ThriftTestHandler {
 
     fn handle_test_i64(&mut self, thing: i64) -> rift::Result<i64> {
         println!("testi64({})", thing);
+        Ok(thing)
+    }
+
+    fn handle_test_double(&mut self, thing: OrderedFloat<f64>) -> rift::Result<OrderedFloat<f64>> {
+        println!("testDouble({})", thing);
         Ok(thing)
     }
 
