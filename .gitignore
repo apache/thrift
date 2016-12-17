@@ -47,6 +47,9 @@ erl_crash.dump
 /aclocal/lt*.m4
 /autoscan.log
 /autoscan-*.log
+/cmake_*
+/compiler/cpp/compiler.VC.db
+/compiler/cpp/compiler.VC.VC.opendb
 /compiler/cpp/test/plugin/t_cpp_generator.cc
 /compiler/cpp/src/thrift/plugin/plugin_constants.cpp
 /compiler/cpp/src/thrift/plugin/plugin_constants.h
@@ -321,5 +324,3 @@ erl_crash.dump
 /tutorial/java/build/
 /tutorial/js/build/
 /ylwrap
-
-/cmake_*
