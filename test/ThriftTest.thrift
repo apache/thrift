@@ -62,6 +62,9 @@ const Numberz myNumberz = Numberz.ONE;
 // the following is expected to fail:
 // const Numberz urNumberz = ONE;
 
+typedef map<string,list<string>> StringListMapType
+const StringListMapType urNested = { "foo": ["bar", "baz"], "hey": ["nonny", "no"] };
+
 typedef i64 UserId
 
 struct Bonk
@@ -69,6 +72,8 @@ struct Bonk
   1: string message,
   2: i32 typo
 }
+
+const Bonk urBonk = { "message": "foo", "typo": 1001 };
 
 typedef map<string,Bonk> MapType
 
@@ -100,7 +105,6 @@ struct Xtruct3
   11: i64    i64_thing
 }
 
-
 struct Insanity
 {
   1: map<Numberz, UserId> userMap,
@@ -129,6 +133,15 @@ struct EmptyStruct {}
 
 struct OneField {
   1: EmptyStruct field
+}
+
+union SomeUnion {
+ 1: map<Numberz, UserId> map_thing,
+ 2: string string_thing,
+ 3: i32 i32_thing,
+ 4: Xtruct3 xtruct_thing,
+ 5: Insanity insanity_thing
+ //6: map<i64, map<string, map<Xtruct, map<string, OneField>>>> crazy_nested_thing,
 }
 
 service ThriftTest
@@ -187,7 +200,7 @@ service ThriftTest
    * @return binary  - returns the binary 'thing'
    */
   binary       testBinary(1: binary thing),
-  
+
   /**
    * Prints 'testStruct("{%s}")' where thing has been formatted into a string of comma separated values
    * @param Xtruct thing - the Xtruct to print
@@ -277,7 +290,7 @@ service ThriftTest
    * @param map<i16, string> arg3 -
    * @param Numberz arg4 -
    * @param UserId arg5 -
-   * @return Xtruct - returns an Xtruct with string_thing = "Hello2, byte_thing = arg0, i32_thing = arg1
+   * @return Xtruct - returns an Xtruct with string_thing = "Hello2", byte_thing = arg0, i32_thing = arg1
    *    and i64_thing = arg2
    */
   Xtruct testMulti(1: i8 arg0, 2: i32 arg1, 3: i64 arg2, 4: map<i16, string> arg3, 5: Numberz arg4, 6: UserId arg5),
@@ -286,7 +299,7 @@ service ThriftTest
    * Print 'testException(%s)' with arg as '%s'
    * @param string arg - a string indication what type of exception to throw
    * if arg == "Xception" throw Xception with errorCode = 1001 and message = arg
-   * elsen if arg == "TException" throw TException
+   * else if arg == "TException" throw TException
    * else do not throw anything
    */
   void testException(1: string arg) throws(1: Xception err1),
@@ -295,7 +308,7 @@ service ThriftTest
    * Print 'testMultiException(%s, %s)' with arg0 as '%s' and arg1 as '%s'
    * @param string arg - a string indication what type of exception to throw
    * if arg0 == "Xception" throw Xception with errorCode = 1001 and message = "This is an Xception"
-   * elsen if arg0 == "Xception2" throw Xception2 with errorCode = 2002 and struct_thing.string_thing = "This is an Xception2"
+   * else if arg0 == "Xception2" throw Xception2 with errorCode = 2002 and struct_thing.string_thing = "This is an Xception2"
    * else do not throw anything
    * @return Xtruct - an Xtruct with string_thing = arg1
    */
