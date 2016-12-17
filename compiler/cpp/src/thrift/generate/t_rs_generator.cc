@@ -172,7 +172,6 @@ private:
   void render_union_definition(const string& union_name, t_struct* tstruct);
   void render_union_impl(const string& union_name, t_struct* tstruct);
   void render_union_write_to_out_protocol(const string& union_name, t_struct* tstruct); // FIXME: remove
-  void render_union_field_write(t_field* tfield, t_field::e_req req); // FIXME: remove
   void render_union_read_from_in_protocol(const string& union_name, t_struct* tstruct);
 
   void render_sync_client(t_service* tservice);
@@ -304,9 +303,6 @@ void t_rs_generator::init_generator() {
 void t_rs_generator::render_attributes_and_includes() {
   // turn off some warnings
   f_gen_ << "#![allow(unused_imports)]" << endl; // generated code always includes BTreeMap/BTreeSet
-  // FIXME: consider removing these two warnings (they're no longer necessary)
-  f_gen_ << "#![allow(non_snake_case)]" << endl; // generated code keeps user-specified names (FIXME: change to underscore?)
-  f_gen_ << "#![allow(non_camel_case_types)]" << endl; // generated code keeps user-specified names for types
   f_gen_ << endl;
 
   // add standard includes
