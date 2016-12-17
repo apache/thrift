@@ -5,7 +5,9 @@ authors = ["Allen George <allen.george@gmail.com>"]
 
 [dependencies]
 clap = "2.18.0"
+ordered-float = "0.3.0"
 try_from = "0.2.0"
 
 [dependencies.rift]
 path = "../../lib/rs"
+

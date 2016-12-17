@@ -15,6 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+extern crate ordered_float;
 extern crate rift;
 extern crate try_from;
 

@@ -302,13 +302,15 @@ void t_rs_generator::init_generator() {
 
 void t_rs_generator::render_attributes_and_includes() {
   // turn off some warnings
-  f_gen_ << "#![allow(unused_imports)]" << endl; // generated code always includes BTreeMap/BTreeSet
+  f_gen_ << "#![allow(unused_imports)]" << endl; // generated code always includes BTreeMap/BTreeSet/OrderedFloat
   f_gen_ << endl;
 
   // add standard includes
+  f_gen_ << "extern crate ordered_float;" << endl;
   f_gen_ << "extern crate rift;" << endl;
   f_gen_ << "extern crate try_from;" << endl;
   f_gen_ << endl;
+  f_gen_ << "use ordered_float::OrderedFloat;" << endl;
   f_gen_ << "use std::cell::RefCell;" << endl;
   f_gen_ << "use std::collections::{BTreeMap, BTreeSet};" << endl;
   f_gen_ << "use std::convert::From;" << endl;
@@ -1074,7 +1076,7 @@ void t_rs_generator::render_type_write(const string& type_var, t_type* ttype) {
       f_gen_ << indent() << "try!(o_prot.write_i64(" + type_var + "));" << endl;
       return;
     case t_base_type::TYPE_DOUBLE:
-      f_gen_ << indent() << "try!(o_prot.write_double(" + type_var + "));" << endl;
+      f_gen_ << indent() << "try!(o_prot.write_double(" + type_var + ".into()));" << endl;
       return;
     }
   } else if (ttype->is_typedef()) {
@@ -1406,7 +1408,7 @@ void t_rs_generator::render_type_read(const string& type_var, t_type* ttype) {
       f_gen_ << indent() << "let " << type_var << " = try!(i_prot.read_i64());" << endl;
       return;
     case t_base_type::TYPE_DOUBLE:
-      f_gen_ << indent() << "let " << type_var << " = try!(i_prot.read_double());" << endl;
+      f_gen_ << indent() << "let " << type_var << " = OrderedFloat::from(try!(i_prot.read_double()));" << endl;
       return;
     }
   } else if (ttype->is_typedef()) {
@@ -2199,7 +2201,7 @@ string t_rs_generator::to_rust_type(t_type* ttype) {
     case t_base_type::TYPE_I64:
       return "i64";
     case t_base_type::TYPE_DOUBLE:
-      return "f64";
+      return "OrderedFloat<f64>";
     }
   } else if (ttype->is_typedef()) {
     return rust_namespace(ttype) + ((t_typedef*)ttype)->get_symbolic();
