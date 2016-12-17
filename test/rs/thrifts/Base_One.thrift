@@ -32,4 +32,8 @@ struct Noodle {
   2: MyTypedef bar
 }
 
+struct Pie {
+  1: optional list<Noodle> noodles
+}
+
 const Noodle CookedNoodle = { "foo": "const_foo", "bar": 10 }
