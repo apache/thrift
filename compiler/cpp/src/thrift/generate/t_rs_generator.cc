@@ -1542,22 +1542,6 @@ void t_rs_generator::render_sync_client(t_service* tservice) {
   // render the trait through which the service calls will be mad
   render_service_sync_client_trait(tservice);
 
-  // [sigh] this is annoying
-  // to create a parameterized rust struct I have to declare the type parameters twice
-  //
-  // struct declaration:
-  // struct HasFoo<I: Foo, O: Foo> {
-  //     i_foo: I,
-  //     o_foo: O,
-  // }
-  //
-  // struct implementation:
-  // impl<I: Foo, O: Foo> HasFoo<I, O> {
-  //     // code goes here ...
-  // }
-  //
-  // even more annoyingly, those bounds have to be added on *every* impl block for the struct
-
   string client_impl_struct_name = rust_sync_client_impl_name(tservice);
 
   // render the implementing struct
