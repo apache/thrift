@@ -158,7 +158,6 @@ private:
   bool needs_deref_on_container_write(t_type* ttype);
 
   void render_struct_read_from_in_protocol(const string& struct_name, t_struct* tstruct, t_rs_generator::e_struct_type struct_type);
-  void render_struct_field_read(t_field* tfield);
   void render_type_read(const string& type_var, t_type* ttype);
 
   // Read a list from the output protocol.
@@ -927,134 +926,6 @@ void t_rs_generator::render_union_impl(const string& union_name, t_struct* tstru
   f_gen_ << endl;
 }
 
-// interesting; struct type may be "union"
-// it's really the iteration over the members that changes
-void t_rs_generator::render_union_write_to_out_protocol(const string& union_name, t_struct* tstruct) { // FIXME: consolidate
-  f_gen_
-    << indent()
-    << "pub fn write_to_out_protocol(&self, o_prot: &mut TProtocol) -> rift::Result<()> {"
-    << endl;
-  indent_up();
-
-  // write struct header to output protocol
-  // note: use the *original* struct name here
-  f_gen_ << indent() << "let struct_ident = TStructIdentifier { name: \"" + tstruct->get_name() + "\".to_owned() };" << endl;
-  f_gen_ << indent() << "try!(o_prot.write_struct_begin(&struct_ident));" << endl;
-
-  vector<t_field*> members = tstruct->get_sorted_members();
-  if (!members.empty()) {
-    f_gen_ << indent() << "match *self {" << endl;
-    indent_up();
-    vector<t_field*>::iterator members_iter;
-    for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
-      t_field* tfield = (*members_iter);
-      t_field::e_req req = t_field::T_REQUIRED;
-      t_type* ttype = tfield->get_type();
-      string match_var((ttype->is_base_type() && !ttype->is_string()) ? "f" : "ref f");
-      f_gen_ << indent() << union_name << "::" << rust_camel_case(tfield->get_name()) << "(" << match_var << ") => {" << endl;
-      indent_up();
-      render_struct_field_write("f", tfield, req);
-      indent_down();
-      f_gen_ << indent() << "}," << endl;
-    }
-    indent_down();
-    f_gen_ << indent() << "}" << endl;
-  }
-
-  // write struct footer to output protocol
-  f_gen_ << indent() << "try!(o_prot.write_field_stop());" << endl;
-  f_gen_ << indent() << "try!(o_prot.write_struct_end());" << endl;
-  f_gen_ << indent() << "try!(o_prot.flush());" << endl;
-  f_gen_ << indent() << "Ok(())" << endl;
-
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
-}
-
-void t_rs_generator::render_union_read_from_in_protocol(const string& union_name, t_struct* tstruct) {
-  f_gen_
-    << indent()
-    << "pub fn read_from_in_protocol(i_prot: &mut TProtocol) -> rift::Result<" << union_name << "> {"
-    << endl;
-  indent_up();
-
-  // create temporary variables to hold the
-  // completed union as well as a count of fields read
-  f_gen_ << indent() << "let mut ret: Option<" << union_name << "> = None;" << endl;
-  f_gen_ << indent() << "let mut received_field_count = 0;" << endl;
-
-  // read the struct preamble
-  f_gen_ << indent() << "try!(i_prot.read_struct_begin());" << endl;
-
-  // now loop through the fields we've received
-  f_gen_ << indent() << "loop {" << endl; // start loop
-  indent_up();
-
-  // break out if you've found the Stop field
-  f_gen_ << indent() << "let field_ident = try!(i_prot.read_field_begin());" << endl;
-  f_gen_ << indent() << "if field_ident.field_type == TType::Stop {" << endl;
-  indent_up();
-  f_gen_ << indent() << "break;" << endl;
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
-
-  // now read all the fields found
-  f_gen_ << indent() << "let field_id = try!(field_id(&field_ident));" << endl;
-  f_gen_ << indent() << "match field_id {" << endl; // start match
-  indent_up();
-
-  const vector<t_field*> members = tstruct->get_sorted_members();
-  vector<t_field*>::const_iterator members_iter;
-  for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
-    t_field* tfield = (*members_iter);
-    f_gen_ << indent() << tfield->get_key() << " => {" << endl;
-    indent_up();
-    render_type_read("val", tfield->get_type());
-    f_gen_ << indent() << "if let None = ret {" << endl;
-    indent_up();
-    f_gen_ << indent() << "ret = Some(" << union_name << "::" << rust_camel_case(tfield->get_name()) << "(val));" << endl;
-    indent_down();
-    f_gen_ << indent() << "}" << endl;
-    f_gen_ << indent() << "received_field_count += 1;" << endl;
-    indent_down();
-    f_gen_ << indent() << "}," << endl;
-  }
-
-  // default case (skip fields)
-  f_gen_ << indent() << "_ => {" << endl;
-  indent_up();
-  f_gen_ << indent() << "try!(i_prot.skip(field_ident.field_type));" << endl;
-  f_gen_ << indent() << "received_field_count += 1;" << endl;
-  indent_down();
-  f_gen_ << indent() << "}," << endl;
-
-  indent_down();
-  f_gen_ << indent() << "};" << endl; // finish match
-  f_gen_ << indent() << "try!(i_prot.read_field_end());" << endl;
-  indent_down();
-  f_gen_ << indent() << "}" << endl; // finish loop
-  f_gen_ << indent() << "try!(i_prot.read_struct_end());" << endl; // finish reading message from wire
-
-  // return the value or an error
-  f_gen_ << indent() << "if received_field_count > 1 {" << endl;
-  indent_up();
-  render_rift_error(
-    "Protocol",
-    "ProtocolError",
-    "ProtocolErrorKind::InvalidData",
-    "\"received multiple fields from remote for union " + union_name + "\".to_owned()"
-  );
-  indent_down();
-  f_gen_ << indent() << "} else {" << endl;
-  indent_up();
-  f_gen_ << indent() << "Ok(ret.expect(\"return value should have been constructed\"))" << endl;
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
-
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
-}
-
 //-----------------------------------------------------------------------------
 //
 // Sync Write
@@ -1084,6 +955,49 @@ void t_rs_generator::render_struct_write_to_out_protocol(t_struct* tstruct, t_rs
       string field_var("self." + rust_snake_case(tfield->get_name()));
       render_struct_field_write(field_var, tfield, req);
     }
+  }
+
+  // write struct footer to output protocol
+  f_gen_ << indent() << "try!(o_prot.write_field_stop());" << endl;
+  f_gen_ << indent() << "try!(o_prot.write_struct_end());" << endl;
+  f_gen_ << indent() << "o_prot.flush()" << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+}
+
+// FIXME: consolidate this method with above
+void t_rs_generator::render_union_write_to_out_protocol(const string& union_name, t_struct* tstruct) {
+  f_gen_
+    << indent()
+    << "pub fn write_to_out_protocol(&self, o_prot: &mut TProtocol) -> rift::Result<()> {"
+    << endl;
+  indent_up();
+
+  // write struct header to output protocol
+  // note: use the *original* struct name here
+  f_gen_ << indent() << "let struct_ident = TStructIdentifier { name: \"" + tstruct->get_name() + "\".to_owned() };" << endl;
+  f_gen_ << indent() << "try!(o_prot.write_struct_begin(&struct_ident));" << endl;
+
+  // write the enum field to the output protocol
+  vector<t_field*> members = tstruct->get_sorted_members();
+  if (!members.empty()) {
+    f_gen_ << indent() << "match *self {" << endl;
+    indent_up();
+    vector<t_field*>::iterator members_iter;
+    for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
+      t_field* tfield = (*members_iter);
+      t_field::e_req req = t_field::T_REQUIRED;
+      t_type* ttype = tfield->get_type();
+      string match_var((ttype->is_base_type() && !ttype->is_string()) ? "f" : "ref f");
+      f_gen_ << indent() << union_name << "::" << rust_camel_case(tfield->get_name()) << "(" << match_var << ") => {" << endl;
+      indent_up();
+      render_struct_field_write("f", tfield, req);
+      indent_down();
+      f_gen_ << indent() << "}," << endl;
+    }
+    indent_down();
+    f_gen_ << indent() << "}" << endl;
   }
 
   // write struct footer to output protocol
@@ -1310,7 +1224,8 @@ void t_rs_generator::render_struct_read_from_in_protocol(const string& struct_na
     t_field* tfield = (*members_iter);
     f_gen_ << indent() << tfield->get_key() << " => {" << endl;
     indent_up();
-    render_struct_field_read(tfield);
+    render_type_read("val", tfield->get_type());
+    f_gen_ << indent() << struct_field_read_temp_variable(tfield) << " = Some(val);" << endl;
     indent_down();
     f_gen_ << indent() << "}," << endl;
   }
@@ -1324,14 +1239,10 @@ void t_rs_generator::render_struct_read_from_in_protocol(const string& struct_na
 
   indent_down();
   f_gen_ << indent() << "};" << endl; // finish match
-
   f_gen_ << indent() << "try!(i_prot.read_field_end());" << endl;
-
   indent_down();
   f_gen_ << indent() << "}" << endl; // finish loop
-
-  // finish reading the message from the wire
-  f_gen_ << indent() << "try!(i_prot.read_struct_end());" << endl;
+  f_gen_ << indent() << "try!(i_prot.read_struct_end());" << endl; // read message footer from the wire
 
   // verify that all required fields exist
   for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
@@ -1385,9 +1296,88 @@ void t_rs_generator::render_struct_read_from_in_protocol(const string& struct_na
   f_gen_ << indent() << "}" << endl;
 }
 
-void t_rs_generator::render_struct_field_read(t_field* tfield) {
-  render_type_read("val", tfield->get_type());
-  f_gen_ << indent() << struct_field_read_temp_variable(tfield) << " = Some(val);" << endl;
+void t_rs_generator::render_union_read_from_in_protocol(const string& union_name, t_struct* tstruct) {
+  f_gen_
+    << indent()
+    << "pub fn read_from_in_protocol(i_prot: &mut TProtocol) -> rift::Result<" << union_name << "> {"
+    << endl;
+  indent_up();
+
+  // create temporary variables to hold the
+  // completed union as well as a count of fields read
+  f_gen_ << indent() << "let mut ret: Option<" << union_name << "> = None;" << endl;
+  f_gen_ << indent() << "let mut received_field_count = 0;" << endl;
+
+  // read the struct preamble
+  f_gen_ << indent() << "try!(i_prot.read_struct_begin());" << endl;
+
+  // now loop through the fields we've received
+  f_gen_ << indent() << "loop {" << endl; // start loop
+  indent_up();
+
+  // break out if you've found the Stop field
+  f_gen_ << indent() << "let field_ident = try!(i_prot.read_field_begin());" << endl;
+  f_gen_ << indent() << "if field_ident.field_type == TType::Stop {" << endl;
+  indent_up();
+  f_gen_ << indent() << "break;" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
+  // now read all the fields found
+  f_gen_ << indent() << "let field_id = try!(field_id(&field_ident));" << endl;
+  f_gen_ << indent() << "match field_id {" << endl; // start match
+  indent_up();
+
+  const vector<t_field*> members = tstruct->get_sorted_members();
+  vector<t_field*>::const_iterator members_iter;
+  for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
+    t_field* tfield = (*members_iter);
+    f_gen_ << indent() << tfield->get_key() << " => {" << endl;
+    indent_up();
+    render_type_read("val", tfield->get_type());
+    f_gen_ << indent() << "if let None = ret {" << endl;
+    indent_up();
+    f_gen_ << indent() << "ret = Some(" << union_name << "::" << rust_camel_case(tfield->get_name()) << "(val));" << endl;
+    indent_down();
+    f_gen_ << indent() << "}" << endl;
+    f_gen_ << indent() << "received_field_count += 1;" << endl;
+    indent_down();
+    f_gen_ << indent() << "}," << endl;
+  }
+
+  // default case (skip fields)
+  f_gen_ << indent() << "_ => {" << endl;
+  indent_up();
+  f_gen_ << indent() << "try!(i_prot.skip(field_ident.field_type));" << endl;
+  f_gen_ << indent() << "received_field_count += 1;" << endl;
+  indent_down();
+  f_gen_ << indent() << "}," << endl;
+
+  indent_down();
+  f_gen_ << indent() << "};" << endl; // finish match
+  f_gen_ << indent() << "try!(i_prot.read_field_end());" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl; // finish loop
+  f_gen_ << indent() << "try!(i_prot.read_struct_end());" << endl; // finish reading message from wire
+
+  // return the value or an error
+  f_gen_ << indent() << "if received_field_count > 1 {" << endl;
+  indent_up();
+  render_rift_error(
+    "Protocol",
+    "ProtocolError",
+    "ProtocolErrorKind::InvalidData",
+    "\"received multiple fields from remote for union " + union_name + "\".to_owned()"
+  );
+  indent_down();
+  f_gen_ << indent() << "} else {" << endl;
+  indent_up();
+  f_gen_ << indent() << "Ok(ret.expect(\"return value should have been constructed\"))" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
 }
 
 // Construct the rust representation of all supported types from the wire.
