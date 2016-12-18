@@ -73,8 +73,6 @@ struct Bonk
   2: i32 typo
 }
 
-const Bonk urBonk = { "message": "foo", "typo": 1001 };
-
 typedef map<string,Bonk> MapType
 
 struct Bools {
