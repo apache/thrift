@@ -23,8 +23,12 @@
 
 include "Midlayer.thrift"
 
-struct Building {
+struct FullMeal {
   1: required Midlayer.Meal meal
   2: required Midlayer.Tower tower
+}
+
+service ServiceFullMeal extends Midlayer.ServiceMeal {
+    FullMeal getMeal()
 }
 

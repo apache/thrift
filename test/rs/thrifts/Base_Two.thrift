@@ -24,8 +24,13 @@
 const i32 AnotherConst = 2
 
 struct Ramen {
-  1: optional string foo
-  2: required i32 bar
+  1: optional string ramenType
+  2: required i32 noodleCount
+}
+
+service ServiceRamen {
+    Ramen getRamen(1: i32 requestedNoodleCount)
 }
 
 /* const struct CookedRamen = { "bar": 10 } */
+

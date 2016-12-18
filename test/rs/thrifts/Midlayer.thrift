@@ -28,7 +28,10 @@ const i32 BigCamper = Base_One.MyConst
 
 const map<i32, Base_One.MyTypedef> MyConstMap = { 0: 1, 1: 2, 2: 3 }
 
-const map<set<i32>, map<list<string>, string>> MyConstNestedMap = { [0, 1, 2, 3]: { ["foo"]: "bar" }, [20]: { ["nut", "ton"] : "bar" }, [30, 40]: { ["bouncy", "tinkly"]: "castle" } }
+const map<set<i32>, map<list<string>, string>> MyConstNestedMap = {
+    [0, 1, 2, 3]: { ["foo"]: "bar" }, [20]: { ["nut", "ton"] : "bar" },
+    [30, 40]: { ["bouncy", "tinkly"]: "castle" }
+}
 
 const list<list<i32>> MyConstNestedList = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
 
@@ -43,3 +46,8 @@ struct Tower {
   1: optional i32 topple
   2: optional string tinkle
 }
+
+service ServiceMeal extends Base_Two.ServiceRamen {
+    Meal getMeal(1: Base_One.Noodle noodle)
+}
+
