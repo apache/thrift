@@ -1305,6 +1305,8 @@ string t_rs_generator::opt_in_req_out_value(t_type* ttype) {
   if (ttype->is_base_type()) {
     t_base_type* tbase_type = ((t_base_type*)ttype);
     switch (tbase_type->get_base()) {
+    case t_base_type::TYPE_VOID:
+      throw "cannot generate OPT_IN_REQ_OUT value for void";
     case t_base_type::TYPE_STRING:
       if (tbase_type->is_binary()) {
         return "Some(Vec::new())";
