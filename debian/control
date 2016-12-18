@@ -8,7 +8,7 @@ Build-Depends: debhelper (>= 9), build-essential, mono-mcs, python-dev, ant,
     python3-all, python3-setuptools, python3-all-dev, python3-all-dbg,
     openjdk-7-jdk | openjdk-8-jdk | default-jdk,
     libboost-test-dev | libboost-test1.53-dev, libevent-dev, libssl-dev, perl (>= 5.8.0-7),
-    php5 | php-7.0, php5-dev | php-7.0-dev, libglib2.0-dev, qtbase5-dev, qtbase5-dev-tools
+    php5 | php7.0, php5-dev | php7.0-dev, libglib2.0-dev, qtbase5-dev, qtbase5-dev-tools
 Maintainer: Thrift Developer's <dev@thrift.apache.org>
 Homepage: http://thrift.apache.org/
 Vcs-Git: https://git-wip-us.apache.org/repos/asf/thrift.git
