@@ -158,6 +158,7 @@ private:
   bool needs_deref_on_container_write(t_type* ttype);
 
   void render_struct_read_from_in_protocol(const string& struct_name, t_struct* tstruct, t_rs_generator::e_struct_type struct_type);
+  string opt_in_req_out_value(t_type* ttype);
   void render_type_read(const string& type_var, t_type* ttype);
 
   // Read a list from the output protocol.
@@ -224,6 +225,8 @@ private:
   void render_const_set(t_type* ttype, t_const_value* tvalue);
   void render_const_map(t_type* ttype, t_const_value* tvalue);
   void render_container_const_value(const string& insert_function, t_type* ttype, t_const_value* tvalue);
+
+  t_field::e_req actual_field_req(t_field* tfield, t_rs_generator::e_struct_type struct_type);
 
   // Return `true` if this type is a void, and should be
   // represented by the rust `()` type.
@@ -724,7 +727,7 @@ void t_rs_generator::render_struct_definition(const string& struct_name, t_struc
     vector<t_field*>::iterator members_iter;
     for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
       t_field* tfield = (*members_iter);
-      t_field::e_req req = struct_type == t_rs_generator::T_ARGS ? t_field::T_REQUIRED : tfield->get_req();
+      t_field::e_req req = actual_field_req(tfield, struct_type);
       string rust_type = to_rust_type(tfield->get_type());
       rust_type = is_optional(req) ? "Option<" + rust_type + ">" : rust_type;
       f_gen_ << indent() << visibility_qualifier(struct_type) << rust_snake_case(tfield->get_name()) << ": " << rust_type << "," << endl;
@@ -949,7 +952,7 @@ void t_rs_generator::render_struct_write_to_out_protocol(t_struct* tstruct, t_rs
     vector<t_field*>::iterator members_iter;
     for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
       t_field* tfield = (*members_iter);
-      t_field::e_req req = struct_type == t_rs_generator::T_ARGS ? t_field::T_REQUIRED : tfield->get_req();
+      t_field::e_req req = actual_field_req(tfield, struct_type);
       string field_var("self." + rust_snake_case(tfield->get_name()));
       render_struct_field_write(field_var, tfield, req);
     }
@@ -1193,12 +1196,17 @@ void t_rs_generator::render_struct_read_from_in_protocol(const string& struct_na
   vector<t_field*>::const_iterator members_iter;
   for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
     t_field* tfield = (*members_iter);
+    t_field::e_req req = actual_field_req(tfield, struct_type);
     f_gen_
       << indent()
       << "let mut " << struct_field_read_temp_variable(tfield)
-      << ": Option<" << to_rust_type(tfield->get_type())
-      << "> = None;"
-      << endl;
+      << ": Option<" << to_rust_type(tfield->get_type()) << "> = ";
+      if (req == t_field::T_OPT_IN_REQ_OUT) {
+        f_gen_ << opt_in_req_out_value(tfield->get_type()) << ";";
+      } else {
+        f_gen_ << "None;";
+      }
+      f_gen_ << endl;
   }
 
   // now loop through the fields we've received
@@ -1245,7 +1253,7 @@ void t_rs_generator::render_struct_read_from_in_protocol(const string& struct_na
   // verify that all required fields exist
   for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
     t_field* tfield = (*members_iter);
-    t_field::e_req req = struct_type == t_rs_generator::T_ARGS ? t_field::T_REQUIRED : tfield->get_req();
+    t_field::e_req req = actual_field_req(tfield, struct_type);
     if (!is_optional(req)) {
       f_gen_
         << indent()
@@ -1266,7 +1274,7 @@ void t_rs_generator::render_struct_read_from_in_protocol(const string& struct_na
 
     for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
       t_field* tfield = (*members_iter);
-      t_field::e_req req = struct_type == t_rs_generator::T_ARGS ? t_field::T_REQUIRED : tfield->get_req();
+      t_field::e_req req = actual_field_req(tfield, struct_type);
       string field_name = rust_snake_case(tfield->get_name());
       string field_key = struct_field_read_temp_variable(tfield);
       if (is_optional(req)) {
@@ -1292,6 +1300,41 @@ void t_rs_generator::render_struct_read_from_in_protocol(const string& struct_na
 
   indent_down();
   f_gen_ << indent() << "}" << endl;
+}
+
+string t_rs_generator::opt_in_req_out_value(t_type* ttype) {
+  ttype = get_true_type(ttype);
+  if (ttype->is_base_type()) {
+    t_base_type* tbase_type = ((t_base_type*)ttype);
+    switch (tbase_type->get_base()) {
+    case t_base_type::TYPE_STRING:
+      if (tbase_type->is_binary()) {
+        return "Some(Vec::new())";
+      } else {
+        return "Some(\"\".to_owned())";
+      }
+    case t_base_type::TYPE_BOOL:
+      return "Some(false)";
+    case t_base_type::TYPE_I8:
+    case t_base_type::TYPE_I16:
+    case t_base_type::TYPE_I32:
+    case t_base_type::TYPE_I64:
+      return "Some(0)";
+    case t_base_type::TYPE_DOUBLE:
+      return "Some(OrderedFloat::from(0.0))";
+    }
+
+  } else if (ttype->is_enum() || ttype->is_struct() || ttype->is_xception()) {
+    return "None";
+  } else if (ttype->is_list()) {
+    return "Some(Vec::new())";
+  } else if (ttype->is_set()) {
+    return "Some(BTreeSet::new())";
+  } else if (ttype->is_map()) {
+    return "Some(BTreeMap::new())";
+  }
+
+  throw "cannot generate opt-in-req-out value for type " + ttype->get_name();
 }
 
 void t_rs_generator::render_union_read_from_in_protocol(const string& union_name, t_struct* tstruct) {
@@ -2278,6 +2321,10 @@ bool t_rs_generator::is_optional(t_field::e_req req) {
 
 bool t_rs_generator::has_args(t_function* tfunc) {
   return tfunc->get_arglist() != NULL && !tfunc->get_arglist()->get_sorted_members().empty();
+}
+
+t_field::e_req t_rs_generator::actual_field_req(t_field* tfield, t_rs_generator::e_struct_type struct_type) {
+  return struct_type == t_rs_generator::T_ARGS ? t_field::T_REQUIRED : tfield->get_req();
 }
 
 bool t_rs_generator::has_non_void_args(t_function* tfunc) {
