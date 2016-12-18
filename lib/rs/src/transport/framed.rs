@@ -114,7 +114,7 @@ impl Write for TFramedTransport {
         }
 
         self.wpos = 0;
-        Ok(())
+        self.inner.borrow_mut().flush()
     }
 }
 
