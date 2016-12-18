@@ -960,8 +960,7 @@ void t_rs_generator::render_struct_write_to_out_protocol(t_struct* tstruct, t_rs
 
   // write struct footer to output protocol
   f_gen_ << indent() << "try!(o_prot.write_field_stop());" << endl;
-  f_gen_ << indent() << "try!(o_prot.write_struct_end());" << endl;
-  f_gen_ << indent() << "o_prot.flush()" << endl;
+  f_gen_ << indent() << "o_prot.write_struct_end()" << endl;
 
   indent_down();
   f_gen_ << indent() << "}" << endl;
@@ -1003,8 +1002,7 @@ void t_rs_generator::render_union_write_to_out_protocol(const string& union_name
 
   // write struct footer to output protocol
   f_gen_ << indent() << "try!(o_prot.write_field_stop());" << endl;
-  f_gen_ << indent() << "try!(o_prot.write_struct_end());" << endl;
-  f_gen_ << indent() << "o_prot.flush()" << endl;
+  f_gen_ << indent() << "o_prot.write_struct_end()" << endl;
 
   indent_down();
   f_gen_ << indent() << "}" << endl;
