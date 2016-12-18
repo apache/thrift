@@ -51,7 +51,9 @@ fn main() {
     let transport = matches.value_of("transport").unwrap_or("buffered");
     let protocol = matches.value_of("protocol").unwrap_or("binary");
     let server_type = matches.value_of("server_type").unwrap_or("simple");
-    let listen_address = format!("localhost:{}", port);
+    let listen_address = format!("127.0.0.1:{}", port);
+
+    println!("binding to {}", listen_address);
 
     let transport_factory: Box<TTransportFactory> = match &*transport {
         "buffered" => {
