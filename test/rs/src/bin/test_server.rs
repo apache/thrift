@@ -213,6 +213,7 @@ impl TAbstractThriftTestSyncHandler for ThriftTestHandler {
     ///     }
     /// return map<UserId, map<Numberz,Insanity>> - a map with the above values
     fn handle_test_insanity(&mut self, argument: Insanity) -> rift::Result<BTreeMap<UserId, BTreeMap<Numberz, Insanity>>> {
+        println!("testInsanity({:?})", argument);
         let mut map_0: BTreeMap<Numberz, Insanity> = BTreeMap::new();
         map_0.insert(Numberz::TWO, argument.clone());
         map_0.insert(Numberz::THREE, argument.clone());
