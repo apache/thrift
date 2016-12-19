@@ -1402,13 +1402,22 @@ void t_rs_generator::render_union_read_from_in_protocol(const string& union_name
   f_gen_ << indent() << "try!(i_prot.read_struct_end());" << endl; // finish reading message from wire
 
   // return the value or an error
-  f_gen_ << indent() << "if received_field_count > 1 {" << endl;
+f_gen_ << indent() << "if received_field_count == 0 {" << endl;
   indent_up();
   render_rift_error(
     "Protocol",
     "ProtocolError",
     "ProtocolErrorKind::InvalidData",
-    "\"received multiple fields from remote for union " + union_name + "\".to_owned()"
+    "\"received empty union from remote " + union_name + "\".to_owned()"
+  );
+  indent_down();
+  f_gen_ << indent() << "} else if received_field_count > 1 {" << endl;
+  indent_up();
+  render_rift_error(
+    "Protocol",
+    "ProtocolError",
+    "ProtocolErrorKind::InvalidData",
+    "\"received multiple fields for union from remote " + union_name + "\".to_owned()"
   );
   indent_down();
   f_gen_ << indent() << "} else {" << endl;
