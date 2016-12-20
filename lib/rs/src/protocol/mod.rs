@@ -341,64 +341,6 @@ impl Display for TType {
     }
 }
 
-// Converts a Thrift field-type enum into its
-// byte representation for encoding into its serialized form.
-impl From<TType> for u8 {
-    fn from(field_type: TType) -> Self {
-        match field_type {
-            TType::Stop => 0x00,
-            TType::Void => 0x01,
-            TType::Bool => 0x02,
-            TType::I08 => 0x03, // equivalent to TType::Byte
-            TType::Double => 0x04,
-            TType::I16 => 0x06,
-            TType::I32 => 0x08,
-            TType::I64 => 0x0A,
-            TType::String => 0x0B,
-            TType::Utf7 => 0x0B,
-            TType::Struct => 0x0C,
-            TType::Map => 0x0D,
-            TType::Set => 0x0E,
-            TType::List => 0x0F,
-            TType::Utf8 => 0x10,
-            TType::Utf16 => 0x11,
-        }
-    }
-}
-
-// Converts the serialized representation of a
-// Thrift field type into its enum form.
-impl TryFrom<u8> for TType {
-    type Err = ::Error;
-    fn try_from(b: u8) -> ::Result<Self> {
-        match b {
-            0x00 => Ok(TType::Stop),
-            0x01 => Ok(TType::Void),
-            0x02 => Ok(TType::Bool),
-            0x03 => Ok(TType::I08), // Equivalent to TType::Byte
-            0x04 => Ok(TType::Double),
-            0x06 => Ok(TType::I16),
-            0x08 => Ok(TType::I32),
-            0x0A => Ok(TType::I64),
-            0x0B => Ok(TType::String), // technically, also a UTF7, but we'll treat it as string
-            0x0C => Ok(TType::Struct),
-            0x0D => Ok(TType::Map),
-            0x0E => Ok(TType::Set),
-            0x0F => Ok(TType::List),
-            0x10 => Ok(TType::Utf8),
-            0x11 => Ok(TType::Utf16),
-            unkn => Err(
-                ::Error::Protocol(
-                    ProtocolError {
-                        kind: ProtocolErrorKind::InvalidData,
-                        message: format!("cannot convert {} to TType", unkn),
-                    }
-                )
-            )
-        }
-    }
-}
-
 pub fn verify_expected_sequence_number(expected: i32, actual: i32) -> ::Result<()> {
     if expected == actual {
         Ok(())
