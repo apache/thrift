@@ -51,7 +51,7 @@ ARGV.each do|a|
 end
 ARGV=[]
 
-class SimpleClientTest < Test::Unit::TestCase
+class BaseClientTest < Test::Unit::TestCase
   def setup
     unless @socket
       @socket   = Thrift::Socket.new($host, $port)
@@ -83,6 +83,9 @@ class SimpleClientTest < Test::Unit::TestCase
     @socket.close
   end
 
+end
+
+class SimpleClientTest < BaseClientTest
   def test_void
     p 'test_void'
     @client.testVoid()
@@ -351,3 +354,20 @@ class SimpleClientTest < Test::Unit::TestCase
 
 end
 
+class CorruptedServer < BaseClientTest
+  def test_corrupted_server_response
+    begin
+      @client.testEnum(Thrift::Test::Numberz::EIGHT)
+      assert false, 'Should have raised Thrift::ApplicationException'
+    rescue Thrift::ApplicationException
+    end
+    # the next call and future calls raise Thrift::ProtocolException
+    # because the server's response can't be parsed by the client
+    begin
+      @client.testEnum(Thrift::Test::Numberz::EIGHT)
+      assert false, 'Should have raised Thrift::ApplicationException'
+    rescue Thrift::ApplicationException
+    end
+  end
+
+end
