@@ -16,10 +16,15 @@
 // under the License.
 
 use std::cell::RefCell;
+use std::convert::From;
 use std::rc::Rc;
+use std::io::{Read, Write};
 
 use ::transport::TTransport;
 use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TProtocol, TProtocolFactory, TSetIdentifier, TStructIdentifier};
+
+// Using the following document as a basis
+// https://issues.apache.org/jira/secure/attachment/12398366/compact-proto-spec-2.txt
 
 /// Sends messages over an underlying transport
 /// `transport` using the Thrift Compact protocol
@@ -35,7 +40,7 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn write_message_end(&mut self) -> ::Result<()> {
-        unimplemented!()
+        Ok(())
     }
 
     fn write_struct_begin(&mut self, _: &TStructIdentifier) -> ::Result<()> {
@@ -43,7 +48,7 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn write_struct_end(&mut self) -> ::Result<()> {
-        unimplemented!()
+        Ok(())
     }
 
     fn write_field_begin(&mut self, _: &TFieldIdentifier) -> ::Result<()> {
@@ -51,7 +56,7 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn write_field_end(&mut self) -> ::Result<()> {
-        unimplemented!()
+        Ok(())
     }
 
     fn write_field_stop(&mut self) -> ::Result<()> {
@@ -95,7 +100,7 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn write_list_end(&mut self) -> ::Result<()> {
-        unimplemented!()
+        Ok(())
     }
 
     fn write_set_begin(&mut self, _: &TSetIdentifier) -> ::Result<()> {
@@ -103,7 +108,7 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn write_set_end(&mut self) -> ::Result<()> {
-        unimplemented!()
+        Ok(())
     }
 
     fn write_map_begin(&mut self, _: &TMapIdentifier) -> ::Result<()> {
@@ -111,11 +116,11 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn write_map_end(&mut self) -> ::Result<()> {
-        unimplemented!()
+        Ok(())
     }
 
     fn flush(&mut self) -> ::Result<()> {
-        unimplemented!()
+        self.transport.borrow_mut().flush().map_err(From::from)
     }
 
     fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier> {
@@ -123,7 +128,7 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn read_message_end(&mut self) -> ::Result<()> {
-        unimplemented!()
+        Ok(())
     }
 
     fn read_struct_begin(&mut self) -> ::Result<Option<TStructIdentifier>> {
@@ -131,7 +136,7 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn read_struct_end(&mut self) -> ::Result<()> {
-        unimplemented!()
+        Ok(())
     }
 
     fn read_field_begin(&mut self) -> ::Result<TFieldIdentifier> {
@@ -139,7 +144,7 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn read_field_end(&mut self) -> ::Result<()> {
-        unimplemented!()
+        Ok(())
     }
 
     fn read_bool(&mut self) -> ::Result<bool> {
@@ -179,7 +184,7 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn read_list_end(&mut self) -> ::Result<()> {
-        unimplemented!()
+        Ok(())
     }
 
     fn read_set_begin(&mut self) -> ::Result<TSetIdentifier> {
@@ -187,7 +192,7 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn read_set_end(&mut self) -> ::Result<()> {
-        unimplemented!()
+        Ok(())
     }
 
     fn read_map_begin(&mut self) -> ::Result<TMapIdentifier> {
@@ -195,15 +200,16 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn read_map_end(&mut self) -> ::Result<()> {
-        unimplemented!()
+        Ok(())
     }
 
     //
     // utility
     //
 
-    fn write_byte(&mut self, _: u8) -> ::Result<()> {
-        unimplemented!()
+    fn write_byte(&mut self, b: u8) -> ::Result<()> {
+        let bytes: [u8; 1] = [b];
+        self.transport.borrow_mut().write(&bytes).map_err(From::from).map(|_| ())
     }
 
     fn read_byte(&mut self) -> ::Result<u8> {
