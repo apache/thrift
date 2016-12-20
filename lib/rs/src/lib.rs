@@ -45,6 +45,7 @@
 #![crate_type = "lib"]
 
 extern crate byteorder;
+extern crate integer_encoding;
 extern crate try_from;
 
 #[macro_use]

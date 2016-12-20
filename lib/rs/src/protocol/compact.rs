@@ -15,13 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use byteorder::{BigEndian, ByteOrder, ReadBytesExt, WriteBytesExt};
+use integer_encoding::{VarIntReader, VarIntWriter};
 use std::cell::RefCell;
 use std::convert::From;
 use std::rc::Rc;
 use std::io::{Read, Write};
 
 use ::transport::TTransport;
-use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TProtocol, TProtocolFactory, TSetIdentifier, TStructIdentifier};
+use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TProtocol, TProtocolFactory, TSetIdentifier, TStructIdentifier, TType};
 
 // Using the following document as a basis
 // https://issues.apache.org/jira/secure/attachment/12398366/compact-proto-spec-2.txt
@@ -63,36 +65,41 @@ impl TProtocol for TCompactProtocol {
         unimplemented!()
     }
 
-    fn write_bool(&mut self, _: bool) -> ::Result<()> {
-        unimplemented!()
+    fn write_bool(&mut self, b: bool) -> ::Result<()> {
+        match b {
+            true => self.write_byte(0x01),
+            false => self.write_byte(0x02),
+        }
     }
 
-    fn write_bytes(&mut self, _: &[u8]) -> ::Result<()> {
-        unimplemented!()
+    fn write_bytes(&mut self, b: &[u8]) -> ::Result<()> {
+        let size = b.len() as i32;
+        try!(self.transport.borrow_mut().write_varint(size));
+        self.transport.borrow_mut().write_all(b).map_err(From::from)
     }
 
-    fn write_i8(&mut self, _: i8) -> ::Result<()> {
-        unimplemented!()
+    fn write_i8(&mut self, i: i8) -> ::Result<()> {
+        self.write_byte(i as u8)
     }
 
-    fn write_i16(&mut self, _: i16) -> ::Result<()> {
-        unimplemented!()
+    fn write_i16(&mut self, i: i16) -> ::Result<()> {
+        self.transport.borrow_mut().write_varint(i).map_err(From::from).map(|_| ())
     }
 
-    fn write_i32(&mut self, _: i32) -> ::Result<()> {
-        unimplemented!()
+    fn write_i32(&mut self, i: i32) -> ::Result<()> {
+        self.transport.borrow_mut().write_varint(i).map_err(From::from).map(|_| ())
     }
 
-    fn write_i64(&mut self, _: i64) -> ::Result<()> {
-        unimplemented!()
+    fn write_i64(&mut self, i: i64) -> ::Result<()> {
+        self.transport.borrow_mut().write_varint(i).map_err(From::from).map(|_| ())
     }
 
-    fn write_double(&mut self, _: f64) -> ::Result<()> {
-        unimplemented!()
+    fn write_double(&mut self, d: f64) -> ::Result<()> {
+        self.transport.borrow_mut().write_f64::<BigEndian>(d).map_err(From::from)
     }
 
-    fn write_string(&mut self, _: &str) -> ::Result<()> {
-        unimplemented!()
+    fn write_string(&mut self, s: &str) -> ::Result<()> {
+        self.write_bytes(s.as_bytes())
     }
 
     fn write_list_begin(&mut self, _: &TListIdentifier) -> ::Result<()> {
@@ -156,23 +163,23 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn read_i8(&mut self) -> ::Result<i8> {
-        unimplemented!()
+        self.read_byte().map(|i| i as i8)
     }
 
     fn read_i16(&mut self) -> ::Result<i16> {
-        unimplemented!()
+        self.transport.borrow_mut().read_varint::<i16>().map_err(From::from)
     }
 
     fn read_i32(&mut self) -> ::Result<i32> {
-        unimplemented!()
+        self.transport.borrow_mut().read_varint::<i32>().map_err(From::from)
     }
 
     fn read_i64(&mut self) -> ::Result<i64> {
-        unimplemented!()
+        self.transport.borrow_mut().read_varint::<i64>().map_err(From::from)
     }
 
     fn read_double(&mut self) -> ::Result<f64> {
-        unimplemented!()
+        self.transport.borrow_mut().read_f64::<BigEndian>().map_err(From::from)
     }
 
     fn read_string(&mut self) -> ::Result<String> {
@@ -225,6 +232,28 @@ impl TProtocolFactory for TCompactProtocolFactory {
         Box::new(TCompactProtocol { transport: transport }) as Box<TProtocol>
     }
 }
+
+/*
+impl From<TType> for u8 {
+    fn from(field_type: TType) -> Self {
+        match field_type {
+            TType::Stop => 0x00,
+            TType::I08 => 0x03, // equivalent to TType::Byte
+            TType::I16 => 0x04,
+            TType::I32 => 0x05,
+            TType::I64 => 0x06,
+            TType::Double => 0x07,
+            TType::String => 0x08,
+            TType::Utf7 => 0x08,
+            TType::List => 0x09,
+            TType::Set => 0x0A,
+            TType::Map => 0x0B,
+            TType::Struct => 0x0C,
+            _ => panic!(format!("should not have attempted to convert {} to u8", field_type))
+        }
+    }
+}
+*/
 
 #[cfg(test)]
 mod tests {
