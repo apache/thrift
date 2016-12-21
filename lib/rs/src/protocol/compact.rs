@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use byteorder::{BigEndian, ByteOrder, ReadBytesExt, WriteBytesExt};
+use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use integer_encoding::{VarIntReader, VarIntWriter};
 use std::cell::RefCell;
 use std::convert::From;
@@ -25,8 +25,12 @@ use std::io::{Read, Write};
 use ::transport::TTransport;
 use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TProtocol, TProtocolFactory, TSetIdentifier, TStructIdentifier, TType};
 
-// Using the following document as a basis
-// https://issues.apache.org/jira/secure/attachment/12398366/compact-proto-spec-2.txt
+const COMPACT_PROTOCOL_ID: u8 = 0x82;
+const COMPACT_VERSION: u8 = 0x01;
+//const COMPACT_VERSION_MASK: u8 = 0x1F;
+//const COMPACT_TYPE_MASK: u8 = 0xE0;
+//const COMPACT_TYPE_BITS: u8 = 0x07; // FIXME: do I need this?
+//const COMPACT_TYPE_SHIFT_AMOUNT: u8 = 5; // FIXME: do I need this?
 
 /// Sends messages over an underlying transport
 /// `transport` using the Thrift Compact protocol
@@ -36,9 +40,30 @@ pub struct TCompactProtocol {
     pub transport: Rc<RefCell<Box<TTransport>>>,
 }
 
+fn field_type_to_u8(field_type: TType) -> u8 {
+    match field_type {
+        TType::Stop => 0x00,
+        TType::I08 => 0x03, // equivalent to TType::Byte
+        TType::I16 => 0x04,
+        TType::I32 => 0x05,
+        TType::I64 => 0x06,
+        TType::Double => 0x07,
+        TType::String => 0x08,
+        TType::Utf7 => 0x08,
+        TType::List => 0x09,
+        TType::Set => 0x0A,
+        TType::Map => 0x0B,
+        TType::Struct => 0x0C,
+        _ => panic!(format!("should not have attempted to convert {} to u8", field_type))
+    }
+}
+
 impl TProtocol for TCompactProtocol {
-    fn write_message_begin(&mut self, _: &TMessageIdentifier) -> ::Result<()> {
-        unimplemented!()
+    fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
+        try!(self.write_byte(COMPACT_PROTOCOL_ID));
+        try!(self.write_byte((u8::from(identifier.message_type) << 5) | COMPACT_VERSION));
+        try!(self.write_i32(identifier.sequence_number));
+        self.write_string(&identifier.name)
     }
 
     fn write_message_end(&mut self) -> ::Result<()> {
@@ -46,15 +71,22 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn write_struct_begin(&mut self, _: &TStructIdentifier) -> ::Result<()> {
-        unimplemented!()
+        Ok(())
     }
 
     fn write_struct_end(&mut self) -> ::Result<()> {
         Ok(())
     }
 
-    fn write_field_begin(&mut self, _: &TFieldIdentifier) -> ::Result<()> {
-        unimplemented!()
+    fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> ::Result<()> {
+ //       unimplemented!()
+        match identifier.field_type {
+            TType::Bool => Ok(()), // we're going to wait until the bool shows up
+            _ => {
+                unimplemented!()
+                // have to do delta stuffs here...
+            }
+        }
     }
 
     fn write_field_end(&mut self) -> ::Result<()> {
@@ -62,9 +94,10 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn write_field_stop(&mut self) -> ::Result<()> {
-        unimplemented!()
+        self.write_byte(field_type_to_u8(TType::Stop))
     }
 
+    // FIXME: bools handled differently depending on whether they're in a field or not
     fn write_bool(&mut self, b: bool) -> ::Result<()> {
         match b {
             true => self.write_byte(0x01),
@@ -73,8 +106,7 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn write_bytes(&mut self, b: &[u8]) -> ::Result<()> {
-        let size = b.len() as i32;
-        try!(self.transport.borrow_mut().write_varint(size));
+        try!(self.write_i32(b.len() as i32));
         self.transport.borrow_mut().write_all(b).map_err(From::from)
     }
 
@@ -102,24 +134,43 @@ impl TProtocol for TCompactProtocol {
         self.write_bytes(s.as_bytes())
     }
 
-    fn write_list_begin(&mut self, _: &TListIdentifier) -> ::Result<()> {
-        unimplemented!()
+    fn write_list_begin(&mut self, identifier: &TListIdentifier) -> ::Result<()> {
+        let elem_identifier = field_type_to_u8(identifier.element_type);
+        if identifier.size <= 14 {
+            let header = (identifier.size as u8) << 4 | elem_identifier;
+            self.write_byte(header)
+        } else {
+            let header = 0xF0 | elem_identifier;
+            try!(self.write_byte(header));
+            self.write_i32(identifier.size)
+        }
     }
 
     fn write_list_end(&mut self) -> ::Result<()> {
         Ok(())
     }
 
-    fn write_set_begin(&mut self, _: &TSetIdentifier) -> ::Result<()> {
-        unimplemented!()
+    // FIXME: same as list
+    fn write_set_begin(&mut self, identifier: &TSetIdentifier) -> ::Result<()> {
+        let elem_identifier = field_type_to_u8(identifier.element_type);
+        if identifier.size <= 14 {
+            let header = (identifier.size as u8) << 4 | elem_identifier;
+            self.write_byte(header)
+        } else {
+            let header = 0xF0 | elem_identifier;
+            try!(self.write_byte(header));
+            self.write_i32(identifier.size)
+        }
     }
 
     fn write_set_end(&mut self) -> ::Result<()> {
         Ok(())
     }
 
-    fn write_map_begin(&mut self, _: &TMapIdentifier) -> ::Result<()> {
-        unimplemented!()
+    fn write_map_begin(&mut self, identifier: &TMapIdentifier) -> ::Result<()> {
+        try!(self.write_i32(identifier.size));
+        let map_type_header = (field_type_to_u8(identifier.key_type) << 4) | field_type_to_u8(identifier.value_type);
+        self.write_byte(map_type_header)
     }
 
     fn write_map_end(&mut self) -> ::Result<()> {
@@ -139,7 +190,7 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn read_struct_begin(&mut self) -> ::Result<Option<TStructIdentifier>> {
-        unimplemented!()
+        Ok(None)
     }
 
     fn read_struct_end(&mut self) -> ::Result<()> {
@@ -155,11 +206,28 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn read_bool(&mut self) -> ::Result<bool> {
-        unimplemented!()
+        let b = try!(self.read_byte());
+        match b {
+            0x01 => Ok(true),
+            0x02 => Ok(false),
+            unkn => {
+                Err(
+                    ::Error::Protocol(
+                        ::ProtocolError {
+                            kind: ::ProtocolErrorKind::InvalidData,
+                            message: format!("cannot convert {} into a boolean", unkn)
+                        }
+                    )
+                )
+            }
+        }
     }
 
     fn read_bytes(&mut self) -> ::Result<Vec<u8>> {
-        unimplemented!()
+        let len = try!(self.read_i32());
+        let mut buf = vec![0u8; len as usize];
+        try!(self.transport.borrow_mut().read_exact(&mut buf));
+        Ok(buf)
     }
 
     fn read_i8(&mut self) -> ::Result<i8> {
@@ -183,7 +251,8 @@ impl TProtocol for TCompactProtocol {
     }
 
     fn read_string(&mut self) -> ::Result<String> {
-        unimplemented!()
+        let bytes = try!(self.read_bytes());
+        String::from_utf8(bytes).map_err(From::from)
     }
 
     fn read_list_begin(&mut self) -> ::Result<TListIdentifier> {
@@ -232,28 +301,6 @@ impl TProtocolFactory for TCompactProtocolFactory {
         Box::new(TCompactProtocol { transport: transport }) as Box<TProtocol>
     }
 }
-
-/*
-impl From<TType> for u8 {
-    fn from(field_type: TType) -> Self {
-        match field_type {
-            TType::Stop => 0x00,
-            TType::I08 => 0x03, // equivalent to TType::Byte
-            TType::I16 => 0x04,
-            TType::I32 => 0x05,
-            TType::I64 => 0x06,
-            TType::Double => 0x07,
-            TType::String => 0x08,
-            TType::Utf7 => 0x08,
-            TType::List => 0x09,
-            TType::Set => 0x0A,
-            TType::Map => 0x0B,
-            TType::Struct => 0x0C,
-            _ => panic!(format!("should not have attempted to convert {} to u8", field_type))
-        }
-    }
-}
-*/
 
 #[cfg(test)]
 mod tests {
