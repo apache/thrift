@@ -43,6 +43,55 @@ impl TBinaryProtocol {
     }
 }
 
+fn field_type_to_u8(field_type: TType) -> u8 {
+    match field_type {
+        TType::Stop => 0x00,
+        TType::Void => 0x01,
+        TType::Bool => 0x02,
+        TType::I08 => 0x03, // equivalent to TType::Byte
+        TType::Double => 0x04,
+        TType::I16 => 0x06,
+        TType::I32 => 0x08,
+        TType::I64 => 0x0A,
+        TType::String => 0x0B,
+        TType::Utf7 => 0x0B,
+        TType::Struct => 0x0C,
+        TType::Map => 0x0D,
+        TType::Set => 0x0E,
+        TType::List => 0x0F,
+        TType::Utf8 => 0x10,
+        TType::Utf16 => 0x11,
+    }
+}
+
+fn field_type_from_u8(b: u8) -> ::Result<TType> {
+    match b {
+        0x00 => Ok(TType::Stop),
+        0x01 => Ok(TType::Void),
+        0x02 => Ok(TType::Bool),
+        0x03 => Ok(TType::I08), // Equivalent to TType::Byte
+        0x04 => Ok(TType::Double),
+        0x06 => Ok(TType::I16),
+        0x08 => Ok(TType::I32),
+        0x0A => Ok(TType::I64),
+        0x0B => Ok(TType::String), // technically, also a UTF7, but we'll treat it as string
+        0x0C => Ok(TType::Struct),
+        0x0D => Ok(TType::Map),
+        0x0E => Ok(TType::Set),
+        0x0F => Ok(TType::List),
+        0x10 => Ok(TType::Utf8),
+        0x11 => Ok(TType::Utf16),
+        unkn => Err(
+            ::Error::Protocol(
+                ProtocolError {
+                    kind: ProtocolErrorKind::InvalidData,
+                    message: format!("cannot convert {} to TType", unkn),
+                }
+            )
+        )
+    }
+}
+
 impl TProtocol for TBinaryProtocol {
 
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
@@ -83,7 +132,7 @@ impl TProtocol for TBinaryProtocol {
             )
         }
 
-        try!(self.write_byte(identifier.field_type.into()));
+        try!(self.write_byte(field_type_to_u8(identifier.field_type)));
         if let Some(id) = identifier.id {
             self.write_i16(id)
         } else {
@@ -96,7 +145,7 @@ impl TProtocol for TBinaryProtocol {
     }
 
     fn write_field_stop(&mut self) -> ::Result<()> {
-        self.write_byte(TType::Stop.into())
+        self.write_byte(field_type_to_u8(TType::Stop))
     }
 
     fn write_bytes(&mut self, b: &[u8]) -> ::Result<()> {
@@ -137,7 +186,7 @@ impl TProtocol for TBinaryProtocol {
     }
 
     fn write_list_begin(&mut self, identifier: &TListIdentifier) -> ::Result<()> {
-        try!(self.write_byte(identifier.element_type.into()));
+        try!(self.write_byte(field_type_to_u8(identifier.element_type)));
         self.write_i32(identifier.size)
     }
 
@@ -146,7 +195,7 @@ impl TProtocol for TBinaryProtocol {
     }
 
     fn write_set_begin(&mut self, identifier: &TSetIdentifier) -> ::Result<()> {
-        try!(self.write_byte(identifier.element_type.into()));
+        try!(self.write_byte(field_type_to_u8(identifier.element_type)));
         self.write_i32(identifier.size)
     }
 
@@ -155,8 +204,8 @@ impl TProtocol for TBinaryProtocol {
     }
 
     fn write_map_begin(&mut self, identifier: &TMapIdentifier) -> ::Result<()> {
-        try!(self.write_byte(identifier.key_type.into()));
-        try!(self.write_byte(identifier.value_type.into()));
+        try!(self.write_byte(field_type_to_u8(identifier.key_type)));
+        try!(self.write_byte(field_type_to_u8(identifier.value_type)));
         self.write_i32(identifier.size)
     }
 
@@ -238,7 +287,7 @@ impl TProtocol for TBinaryProtocol {
 
     fn read_field_begin(&mut self) -> ::Result<TFieldIdentifier> {
         let field_type_byte = try!(self.read_byte());
-        let field_type = try!(TryFrom::try_from(field_type_byte));
+        let field_type = try!(field_type_from_u8(field_type_byte));
         let id = try!(match field_type {
             TType::Stop => Ok(0),
             _ => self.read_i16()
@@ -290,7 +339,7 @@ impl TProtocol for TBinaryProtocol {
     }
 
     fn read_list_begin(&mut self) -> ::Result<TListIdentifier> {
-        let element_type: TType = try!(self.read_byte().and_then(TryFrom::try_from));
+        let element_type: TType = try!(self.read_byte().and_then(field_type_from_u8));
         let size = try!(self.read_i32());
         let ret = TListIdentifier { element_type: element_type, size: size };
         Ok(ret)
@@ -301,7 +350,7 @@ impl TProtocol for TBinaryProtocol {
     }
 
     fn read_set_begin(&mut self) -> ::Result<TSetIdentifier> {
-        let element_type: TType = try!(self.read_byte().and_then(TryFrom::try_from));
+        let element_type: TType = try!(self.read_byte().and_then(field_type_from_u8));
         let size = try!(self.read_i32());
         let ret = TSetIdentifier { element_type: element_type, size: size };
         Ok(ret)
@@ -312,8 +361,8 @@ impl TProtocol for TBinaryProtocol {
     }
 
     fn read_map_begin(&mut self) -> ::Result<TMapIdentifier> {
-        let key_type: TType = try!(self.read_byte().and_then(TryFrom::try_from));
-        let value_type: TType = try!(self.read_byte().and_then(TryFrom::try_from));
+        let key_type: TType = try!(self.read_byte().and_then(field_type_from_u8));
+        let value_type: TType = try!(self.read_byte().and_then(field_type_from_u8));
         let size = try!(self.read_i32());
         let ret = TMapIdentifier { key_type: key_type, value_type: value_type, size: size };
         Ok(ret)
@@ -333,64 +382,6 @@ impl TProtocol for TBinaryProtocol {
 
     fn read_byte(&mut self) -> ::Result<u8> {
         self.transport.borrow_mut().read_u8().map_err(From::from)
-    }
-}
-
-// Converts a Thrift field-type enum into its
-// byte representation for encoding into its serialized form.
-impl From<TType> for u8 {
-    fn from(field_type: TType) -> Self {
-        match field_type {
-            TType::Stop => 0x00,
-            TType::Void => 0x01,
-            TType::Bool => 0x02,
-            TType::I08 => 0x03, // equivalent to TType::Byte
-            TType::Double => 0x04,
-            TType::I16 => 0x06,
-            TType::I32 => 0x08,
-            TType::I64 => 0x0A,
-            TType::String => 0x0B,
-            TType::Utf7 => 0x0B,
-            TType::Struct => 0x0C,
-            TType::Map => 0x0D,
-            TType::Set => 0x0E,
-            TType::List => 0x0F,
-            TType::Utf8 => 0x10,
-            TType::Utf16 => 0x11,
-        }
-    }
-}
-
-// Converts the serialized representation of a
-// Thrift field type into its enum form.
-impl TryFrom<u8> for TType {
-    type Err = ::Error;
-    fn try_from(b: u8) -> ::Result<Self> {
-        match b {
-            0x00 => Ok(TType::Stop),
-            0x01 => Ok(TType::Void),
-            0x02 => Ok(TType::Bool),
-            0x03 => Ok(TType::I08), // Equivalent to TType::Byte
-            0x04 => Ok(TType::Double),
-            0x06 => Ok(TType::I16),
-            0x08 => Ok(TType::I32),
-            0x0A => Ok(TType::I64),
-            0x0B => Ok(TType::String), // technically, also a UTF7, but we'll treat it as string
-            0x0C => Ok(TType::Struct),
-            0x0D => Ok(TType::Map),
-            0x0E => Ok(TType::Set),
-            0x0F => Ok(TType::List),
-            0x10 => Ok(TType::Utf8),
-            0x11 => Ok(TType::Utf16),
-            unkn => Err(
-                ::Error::Protocol(
-                    ProtocolError {
-                        kind: ProtocolErrorKind::InvalidData,
-                        message: format!("cannot convert {} to TType", unkn),
-                    }
-                )
-            )
-        }
     }
 }
 
