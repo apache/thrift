@@ -2387,15 +2387,15 @@ string t_rs_generator::rust_struct_name(t_struct* tstruct) {
 }
 
 string t_rs_generator::rust_sync_client_trait_name(t_service* tservice) {
-  return "TAbstract" + rust_camel_case(tservice->get_name()) + "SyncClient";
-}
-
-string t_rs_generator::rust_sync_client_impl_name(t_service* tservice) {
   return "T" + rust_camel_case(tservice->get_name()) + "SyncClient";
 }
 
+string t_rs_generator::rust_sync_client_impl_name(t_service* tservice) {
+  return rust_camel_case(tservice->get_name()) + "SyncClient";
+}
+
 string t_rs_generator::rust_sync_handler_trait_name(t_service* tservice) {
-  return "TAbstract" + rust_camel_case(tservice->get_name()) + "SyncHandler";
+  return "T" + rust_camel_case(tservice->get_name()) + "SyncHandler";
 }
 
 string t_rs_generator::rust_sync_processor_name(t_service* tservice) {

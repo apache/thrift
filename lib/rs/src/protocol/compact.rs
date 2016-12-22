@@ -62,7 +62,7 @@ enum WriteState {
 }
 
 impl TCompactProtocol {
-    fn new(transport: Rc<RefCell<Box<TTransport>>>) -> TCompactProtocol {
+    pub fn new(transport: Rc<RefCell<Box<TTransport>>>) -> TCompactProtocol {
        TCompactProtocol {
            write_state: WriteState::Clear,
            pending_bool_field_identifier: None,

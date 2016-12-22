@@ -73,13 +73,13 @@ fn main() {
 
     let p: Box<TProtocol> = match protocol {
         "binary" => Box::new(rift::protocol::TBinaryProtocol { strict: true, transport: t.clone() }),
-        "compact" => Box::new(rift::protocol::TCompactProtocol { transport: t.clone() }),
+        "compact" => Box::new(rift::protocol::TCompactProtocol::new(t.clone()) ),
         unmatched => panic!(format!("unsupported protocol {}", unmatched)),
     };
 
     println!("connecting to {}:{} with {}+{} stack", host, port, protocol, transport);
 
-    let mut client = TThriftTestSyncClient::new(p);
+    let mut client = ThriftTestSyncClient::new(p);
 
     for _ in 0..testloops {
         match make_thrift_calls(&mut client) {
@@ -105,7 +105,7 @@ fn open_tcp_transport(host: &str, port: u16) -> Rc<RefCell<Box<TTransport>>> {
     Rc::new(RefCell::new(t))
 }
 
-fn make_thrift_calls<C: TAbstractThriftTestSyncClient>(client: &mut C) -> Result<(), rift::Error> {
+fn make_thrift_calls(client: &mut ThriftTestSyncClient) -> Result<(), rift::Error> {
     try!(client.test_void());
 
     // primitives
