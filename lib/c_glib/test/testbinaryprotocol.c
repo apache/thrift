@@ -173,6 +173,7 @@ test_read_and_write_primitives(void)
                                                  TEST_DOUBLE, NULL) > 0);
     assert (thrift_binary_protocol_write_string (protocol,
                                                  TEST_STRING, NULL) > 0);
+    assert (thrift_binary_protocol_write_string (protocol, "", NULL) > 0);
     assert (thrift_binary_protocol_write_binary (protocol, binary, 
                                                  len, NULL) > 0);
     assert (thrift_binary_protocol_write_binary (protocol, NULL, 0, NULL) > 0);
@@ -456,6 +457,8 @@ test_read_and_write_many_frames (void)
     assert (thrift_binary_protocol_write_string (protocol,
                                                  TEST_STRING, NULL) > 0);
     thrift_transport_flush (transport, NULL);
+    assert (thrift_binary_protocol_write_string (protocol, "", NULL) > 0);
+    thrift_transport_flush (transport, NULL);
     assert (thrift_binary_protocol_write_binary (protocol, binary,
                                                  len, NULL) > 0);
     thrift_transport_flush (transport, NULL);
@@ -491,6 +494,7 @@ thrift_server_primitives (const int port)
   gint64 value_64 = 0;
   gdouble value_double = 0;
   gchar *string = NULL;
+  gchar *empty_string = NULL;
   gpointer binary = NULL;
   guint32 len = 0;
   void *comparator = (void *) TEST_STRING;
@@ -515,6 +519,8 @@ thrift_server_primitives (const int port)
   assert (thrift_binary_protocol_read_double (protocol,
                                               &value_double, NULL) > 0);
   assert (thrift_binary_protocol_read_string (protocol, &string, NULL) > 0);
+  assert (thrift_binary_protocol_read_string (protocol, &empty_string,
+                                              NULL) > 0);
   assert (thrift_binary_protocol_read_binary (protocol, &binary,
                                               &len, NULL) > 0);
 
@@ -525,12 +531,17 @@ thrift_server_primitives (const int port)
   assert (value_64 == TEST_I64);
   assert (value_double == TEST_DOUBLE);
   assert (strcmp (TEST_STRING, string) == 0);
+  assert (strcmp ("", empty_string) == 0);
   assert (memcmp (comparator, binary, len) == 0);
 
   g_free (string);
+  g_free (empty_string);
   g_free (binary);
 
-  thrift_binary_protocol_read_binary (protocol, &binary, &len, NULL);
+  assert (thrift_binary_protocol_read_binary (protocol, &binary,
+                                              &len, NULL) > 0);
+  assert (binary == NULL);
+  assert (len == 0);
   g_free (binary);
 
   transport_read_count = 0;
@@ -768,6 +779,7 @@ thrift_server_many_frames (const int port)
   gint64 value_64 = 0;
   gdouble value_double = 0;
   gchar *string = NULL;
+  gchar *empty_string = NULL;
   gpointer binary = NULL;
   guint32 len = 0;
   void *comparator = (void *) TEST_STRING;
@@ -795,6 +807,8 @@ thrift_server_many_frames (const int port)
   assert (thrift_binary_protocol_read_double (protocol,
                                               &value_double, NULL) > 0);
   assert (thrift_binary_protocol_read_string (protocol, &string, NULL) > 0);
+  assert (thrift_binary_protocol_read_string (protocol, &empty_string,
+                                              NULL) > 0);
   assert (thrift_binary_protocol_read_binary (protocol, &binary,
                                               &len, NULL) > 0);
 
@@ -805,9 +819,17 @@ thrift_server_many_frames (const int port)
   assert (value_64 == TEST_I64);
   assert (value_double == TEST_DOUBLE);
   assert (strcmp (TEST_STRING, string) == 0);
+  assert (strcmp ("", empty_string) == 0);
   assert (memcmp (comparator, binary, len) == 0);
 
   g_free (string);
+  g_free (empty_string);
+  g_free (binary);
+
+  assert (thrift_binary_protocol_read_binary (protocol, &binary,
+                                              &len, NULL) > 0);
+  assert (binary == NULL);
+  assert (len == 0);
   g_free (binary);
 
   thrift_transport_read_end (client, NULL);
