@@ -1051,7 +1051,7 @@ void t_py_generator::generate_service(t_service* tservice) {
              << import_dynbase_;
 
   if (gen_twisted_) {
-    f_service_ << "from zope.interface import Interface, implements" << endl
+    f_service_ << "from zope.interface import Interface, implementer" << endl
                << "from twisted.internet import defer" << endl
                << "from thrift.transport import TTwisted" << endl;
   } else if (gen_tornado_) {
@@ -1180,8 +1180,8 @@ void t_py_generator::generate_service_client(t_service* tservice) {
   f_service_ << endl << endl;
 
   if (gen_twisted_) {
-    f_service_ << "class Client" << extends_client << ":" << endl
-               << indent_str() << "implements(Iface)" << endl
+    f_service_ << "@implementer(Iface)" << endl
+               << "class Client" << extends_client << ":" << endl
                << endl;
   } else {
     f_service_ << "class Client(" << extends_client << "Iface):" << endl;
@@ -1720,8 +1720,8 @@ void t_py_generator::generate_service_server(t_service* tservice) {
 
   // Generate the header portion
   if (gen_twisted_) {
-    f_service_ << "class Processor(" << extends_processor << "TProcessor):" << endl
-               << indent_str() << "implements(Iface)" << endl << endl;
+    f_service_ << "@implementer(Iface)" << endl
+               << "class Processor(" << extends_processor << "TProcessor):" << endl;
   } else {
     f_service_ << "class Processor(" << extends_processor << "Iface, TProcessor):" << endl;
   }
