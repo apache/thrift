@@ -1149,8 +1149,8 @@ void t_rs_generator::render_map_write(const string& map_variable, t_map* tmap) {
     << indent()
     << "try!(o_prot.write_map_begin("
     << "&TMapIdentifier {"
-    << " key_type: " << to_rust_field_type_enum(key_type)
-    << ", value_type: " << to_rust_field_type_enum(val_type)
+    << " key_type: Some(" << to_rust_field_type_enum(key_type) << ")"
+    << ", value_type: Some(" << to_rust_field_type_enum(val_type) << ")"
     << ", size: " << map_variable << ".len() as i32"
     << " }"
     << "));" << endl;

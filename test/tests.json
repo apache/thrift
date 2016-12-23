@@ -562,7 +562,8 @@
       "ip"
     ],
     "protocols": [
-      "binary"
+      "binary",
+      "compact"
     ],
     "workdir": "rs/bin"
   }

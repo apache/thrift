@@ -162,8 +162,10 @@ pub trait TProtocol {
             TType::Map => {
                 let map_ident = try!(self.read_map_begin());
                 for _ in 0..map_ident.size {
-                    try!(self.skip_till_depth(map_ident.key_type, remaining_depth - 1));
-                    try!(self.skip_till_depth(map_ident.value_type, remaining_depth - 1));
+                    let key_type = map_ident.key_type.expect("non-zero sized map should contain key type");
+                    let val_type = map_ident.value_type.expect("non-zero sized map should contain value type");
+                    try!(self.skip_till_depth(key_type, remaining_depth - 1));
+                    try!(self.skip_till_depth(val_type, remaining_depth - 1));
                 }
                 self.read_map_end()
             },
@@ -237,8 +239,8 @@ pub struct TSetIdentifier {
 /// in its protocol representation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TMapIdentifier {
-    pub key_type: TType,
-    pub value_type: TType,
+    pub key_type: Option<TType>,
+    pub value_type: Option<TType>,
     pub size: i32,
 }
 

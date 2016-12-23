@@ -204,8 +204,10 @@ impl TProtocol for TBinaryProtocol {
     }
 
     fn write_map_begin(&mut self, identifier: &TMapIdentifier) -> ::Result<()> {
-        try!(self.write_byte(field_type_to_u8(identifier.key_type)));
-        try!(self.write_byte(field_type_to_u8(identifier.value_type)));
+        let key_type = identifier.key_type.expect("map identifier to write should contain key type");
+        try!(self.write_byte(field_type_to_u8(key_type)));
+        let val_type = identifier.value_type.expect("map identifier to write should contain value type");
+        try!(self.write_byte(field_type_to_u8(val_type)));
         self.write_i32(identifier.size)
     }
 
@@ -364,7 +366,7 @@ impl TProtocol for TBinaryProtocol {
         let key_type: TType = try!(self.read_byte().and_then(field_type_from_u8));
         let value_type: TType = try!(self.read_byte().and_then(field_type_from_u8));
         let size = try!(self.read_i32());
-        let ret = TMapIdentifier { key_type: key_type, value_type: value_type, size: size };
+        let ret = TMapIdentifier { key_type: Some(key_type), value_type: Some(value_type), size: size };
         Ok(ret)
     }
 

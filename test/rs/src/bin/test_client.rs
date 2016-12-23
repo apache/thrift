@@ -106,9 +106,9 @@ fn open_tcp_transport(host: &str, port: u16) -> Rc<RefCell<Box<TTransport>>> {
 }
 
 fn make_thrift_calls(client: &mut ThriftTestSyncClient) -> Result<(), rift::Error> {
+    println!("testVoid");
     try!(client.test_void());
 
-    // primitives
     println!("testString");
     try!(verify_expected_result(client.test_string("thing".to_owned()), "thing".to_owned()));
 
