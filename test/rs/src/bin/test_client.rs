@@ -124,8 +124,8 @@ fn make_thrift_calls(client: &mut ThriftTestSyncClient) -> Result<(), rift::Erro
     println!("testi32");
     try!(verify_expected_result(client.test_i32(1159348374), 1159348374));
 
-    println!("testi64");
-    try!(verify_expected_result(client.test_i64(-8651829879438294565), -8651829879438294565));
+    //println!("testi64");
+    //try!(verify_expected_result(client.test_i64(-8651829879438294565), -8651829879438294565));
 
     println!("testDouble");
     try!(verify_expected_result(client.test_double(OrderedFloat::from(42.42)), OrderedFloat::from(42.42)));
@@ -430,9 +430,9 @@ fn make_thrift_calls(client: &mut ThriftTestSyncClient) -> Result<(), rift::Erro
         try!(verify_expected_result(Ok(x), x_cmp));
     }
 
-    println!("testOneWay - remote sleeps for 2 seconds");
+    println!("testOneWay - remote sleeps for 1 second");
     {
-        try!(client.test_oneway(2));
+        try!(client.test_oneway(1));
     }
 
     // final test to verify that the connection is still writable after the one-way call
