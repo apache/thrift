@@ -34,7 +34,7 @@ use base qw( Thrift::ServerSocket );
 #
 # Constructor.
 # Takes a hash:
-# See Thirft::Socket for base class parameters.
+# See Thrift::Socket for base class parameters.
 # @param[in]  ca     certificate authority filename - not required
 # @param[in]  cert   certificate filename; may contain key in which case key is not required
 # @param[in]  key    private key filename for the certificate if it is not inside the cert file

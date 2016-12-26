@@ -34,7 +34,7 @@ use base qw( Thrift::Socket );
 #
 # Constructor.
 # Takes a unix domain socket filename.
-# See Thirft::Socket for base class parameters.
+# See Thrift::Socket for base class parameters.
 # @param[in]  path   path to unix socket file
 # @example    my $sock = new Thrift::UnixSocket($path);
 #
