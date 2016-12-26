@@ -97,7 +97,7 @@ impl TCompactProtocol {
 
         let element_count;
         let possible_element_count = (header & 0xF0) >> 4;
-        if possible_element_count != 0 {
+        if possible_element_count != 15 { // high bits set high if count and type encoded separately
             element_count = possible_element_count as i32;
         } else {
             element_count = try!(self.transport.borrow_mut().read_varint::<u32>()) as i32;
