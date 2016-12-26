@@ -124,8 +124,9 @@ fn make_thrift_calls(client: &mut ThriftTestSyncClient) -> Result<(), rift::Erro
     println!("testi32");
     try!(verify_expected_result(client.test_i32(1159348374), 1159348374));
 
-    //println!("testi64");
+    println!("testi64");
     //try!(verify_expected_result(client.test_i64(-8651829879438294565), -8651829879438294565));
+    try!(verify_expected_result(client.test_i64(i64::min_value()), i64::min_value()));
 
     println!("testDouble");
     try!(verify_expected_result(client.test_double(OrderedFloat::from(42.42)), OrderedFloat::from(42.42)));
