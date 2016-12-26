@@ -9,7 +9,10 @@ exclude = ["Makefile*"]
 keywords = ["thrift"]
 
 [dependencies]
-integer-encoding = "1.0.2"
+#integer-encoding = "1.0.2"
 log = "~0.3.6"
 byteorder = "0.5.3"
 try_from = "0.2.0"
+
+[dependencies.integer-encoding]
+path = "/Users/allen/src/rust_projects/integer-encoding-rs"
