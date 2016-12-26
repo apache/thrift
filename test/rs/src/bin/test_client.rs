@@ -29,6 +29,7 @@ use std::rc::Rc;
 
 use rift::protocol::TProtocol;
 use rift::transport::{TBufferedTransport, TFramedTransport, TTcpTransport, TTransport};
+use rift_test::TThriftTestSyncClient;
 use rift_test::*;
 
 // FIXME: take structs by reference
