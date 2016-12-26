@@ -90,6 +90,8 @@ private:
   // Write the rust representation of an enum.
   void render_enum_definition(t_enum* tenum);
 
+  // Write the impl blocks associated with the traits
+  // necessary to convert an enum to/from an i32.
   void render_enum_conversion(t_enum* tenum);
 
   // Write the impl block associated with the rust
@@ -98,9 +100,23 @@ private:
   // a protocol, etc.
   void render_enum_impl(t_enum* tenum);
 
+  // Write a simple rust const value (ie. `pub const FOO: foo...`).
   void render_const_value(const string& name, t_type* ttype, t_const_value* tvalue);
+
+  // Write a constant list, set, map or struct. These constants
+  // require allocation and so cannot be defined using a 'pub const'.
+  // As a result, I create a holder struct with a single
+  // `const_value` method that returns the initialized instance.
   void render_const_value_holder(const string& name, t_type* ttype, t_const_value* tvalue);
+
+  // Write the actual const value - the right side of a const definition.
   void render_const_value(t_type* ttype, t_const_value* tvalue);
+
+  void render_const_struct(t_type* ttype, t_const_value* tvalue);
+  void render_const_list(t_type* ttype, t_const_value* tvalue);
+  void render_const_set(t_type* ttype, t_const_value* tvalue);
+  void render_const_map(t_type* ttype, t_const_value* tvalue);
+  void render_container_const_value(const string& insert_function, t_type* ttype, t_const_value* tvalue);
 
   // Write the rust representation of a thrift struct to the generated file.
   // Set `struct_type` to `T_ARGS` if rendering the struct used to pack
@@ -127,12 +143,28 @@ private:
   // Additional methods may be generated depending on `struct_type`.
   void render_struct_impl(const string& struct_name, t_struct* tstruct, t_rs_generator::e_struct_type struct_type);
 
+  // Write the `ok_or` method added to all Thrift service call
+  // result structs. You can use this method to convert a struct
+  // into a `Result` and use it in a `try!` or combinator chain.
   void render_result_struct_to_result_method(t_struct* tstruct);
 
+  // Write the implementations for the `Error` and `Debug` traits.
+  // These traits are necessary for a user-defined exception to be
+  // properly handled as Rust errors.
   void render_exception_struct_error_trait_impls(const string& struct_name, t_struct* tstruct);
 
+  // Write the function that serializes a struct to its wire representation.
+  // If `struct_type` is `T_ARGS` then all fields are considered "required",
+  // if not, the default optionality is used.
   void render_struct_write_to_out_protocol(t_struct* tstruct, t_rs_generator::e_struct_type struct_type);
+
+  // Helper function that serializes a single struct field to its wire representation.
+  // Unpacks the variable (since it may be optional) and serializes according to the
+  // optionality rules required by `req`.
   void render_struct_field_write(const string& field_var, t_field* tfield, t_field::e_req req);
+
+  // Write the rust function that serializes a single type
+  // (i.e. a string, i32 etc.) to its wire representation.
   void render_type_write(const string& type_var, t_type* ttype);
 
   // Write a list to the output protocol. `list_variable`
@@ -158,22 +190,38 @@ private:
   bool needs_deref_on_container_write(t_type* ttype);
 
   void render_struct_read_from_in_protocol(const string& struct_name, t_struct* tstruct, t_rs_generator::e_struct_type struct_type);
-  string opt_in_req_out_value(t_type* ttype);
+
+  // Write the rust function that deserializes a single type
+  // (i.e. a string, i32 etc.) from its wire representation.
   void render_type_read(const string& type_var, t_type* ttype);
 
-  // Read a list from the output protocol.
+  // Read the wire represenation of a list and convert it to
+  // its corresponding rust implementation. The deserialized
+  // list is stored in `list_variable`.
   void render_list_read(t_list* tlist, const string& list_variable);
+
+  // Read the wire represenation of a set and convert it to
+  // its corresponding rust implementation. The deserialized
+  // list is stored in `set_variable`.
   void render_set_read(t_set* tset, const string& set_variable);
+
+  // Read the wire represenation of a map and convert it to
+  // its corresponding rust implementation. The deserialized
+  // list is stored in `map_variable`.
   void render_map_read(t_map* tmap, const string& map_variable);
 
+  // Return a temporary variable used to store values
+  // when deserializing nested containers.
   string struct_field_read_temp_variable(t_field* tfield);
 
-  // Write the rust representation of a thrift enum to the generated file.
+  // Write the rust representation (i.e. an enum) of a thrift union to the generated file.
   void render_union(t_struct* tstruct);
   void render_union_definition(const string& union_name, t_struct* tstruct);
   void render_union_impl(const string& union_name, t_struct* tstruct);
   void render_union_write_to_out_protocol(const string& union_name, t_struct* tstruct); // FIXME: remove
   void render_union_read_from_in_protocol(const string& union_name, t_struct* tstruct);
+
+  string opt_in_req_out_value(t_type* ttype);
 
   void render_sync_client(t_service* tservice);
   void render_sync_client_lifecycle_functions(const string& client_struct);
@@ -220,13 +268,9 @@ private:
   bool can_generate_simple_const(t_type* ttype);
   bool can_generate_const_holder(t_type* ttype);
 
-  void render_const_struct(t_type* ttype, t_const_value* tvalue);
-  void render_const_list(t_type* ttype, t_const_value* tvalue);
-  void render_const_set(t_type* ttype, t_const_value* tvalue);
-  void render_const_map(t_type* ttype, t_const_value* tvalue);
-  void render_container_const_value(const string& insert_function, t_type* ttype, t_const_value* tvalue);
-
   t_field::e_req actual_field_req(t_field* tfield, t_rs_generator::e_struct_type struct_type);
+
+  void render_rustdoc(t_doc* tdoc);
 
   // Return `true` if this type is a void, and should be
   // represented by the rust `()` type.
@@ -596,6 +640,7 @@ void t_rs_generator::generate_enum(t_enum* tenum) {
 }
 
 void t_rs_generator::render_enum_definition(t_enum* tenum) {
+  render_rustdoc((t_doc*)tenum);
   f_gen_ << "#[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]" << endl;
   f_gen_ << "pub enum " << tenum->get_name() << " {" << endl;
   indent_up();
@@ -603,7 +648,9 @@ void t_rs_generator::render_enum_definition(t_enum* tenum) {
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator constants_iter;
   for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
-    f_gen_ << indent() << (*constants_iter)-> get_name() << " = " << (*constants_iter)->get_value() << "," << endl;
+    t_enum_value* val = (*constants_iter);
+    render_rustdoc((t_doc*)val);
+    f_gen_ << indent() << val-> get_name() << " = " << val->get_value() << "," << endl;
   }
 
   indent_down();
@@ -716,6 +763,7 @@ void t_rs_generator::render_struct(const string& struct_name, t_struct* tstruct,
 }
 
 void t_rs_generator::render_struct_definition(const string& struct_name, t_struct* tstruct, t_rs_generator::e_struct_type struct_type) {
+  render_rustdoc((t_doc*)tstruct);
   f_gen_ << "#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]" << endl;
   f_gen_ << visibility_qualifier(struct_type) << "struct " << struct_name << " {" << endl;
 
@@ -730,6 +778,7 @@ void t_rs_generator::render_struct_definition(const string& struct_name, t_struc
       t_field::e_req req = actual_field_req(tfield, struct_type);
       string rust_type = to_rust_type(tfield->get_type());
       rust_type = is_optional(req) ? "Option<" + rust_type + ">" : rust_type;
+      render_rustdoc((t_doc*)tfield);
       f_gen_ << indent() << visibility_qualifier(struct_type) << rust_snake_case(tfield->get_name()) << ": " << rust_type << "," << endl;
     }
 
@@ -1300,43 +1349,6 @@ void t_rs_generator::render_struct_read_from_in_protocol(const string& struct_na
   f_gen_ << indent() << "}" << endl;
 }
 
-string t_rs_generator::opt_in_req_out_value(t_type* ttype) {
-  ttype = get_true_type(ttype);
-  if (ttype->is_base_type()) {
-    t_base_type* tbase_type = ((t_base_type*)ttype);
-    switch (tbase_type->get_base()) {
-    case t_base_type::TYPE_VOID:
-      throw "cannot generate OPT_IN_REQ_OUT value for void";
-    case t_base_type::TYPE_STRING:
-      if (tbase_type->is_binary()) {
-        return "Some(Vec::new())";
-      } else {
-        return "Some(\"\".to_owned())";
-      }
-    case t_base_type::TYPE_BOOL:
-      return "Some(false)";
-    case t_base_type::TYPE_I8:
-    case t_base_type::TYPE_I16:
-    case t_base_type::TYPE_I32:
-    case t_base_type::TYPE_I64:
-      return "Some(0)";
-    case t_base_type::TYPE_DOUBLE:
-      return "Some(OrderedFloat::from(0.0))";
-    }
-
-  } else if (ttype->is_enum() || ttype->is_struct() || ttype->is_xception()) {
-    return "None";
-  } else if (ttype->is_list()) {
-    return "Some(Vec::new())";
-  } else if (ttype->is_set()) {
-    return "Some(BTreeSet::new())";
-  } else if (ttype->is_map()) {
-    return "Some(BTreeMap::new())";
-  }
-
-  throw "cannot generate opt-in-req-out value for type " + ttype->get_name();
-}
-
 void t_rs_generator::render_union_read_from_in_protocol(const string& union_name, t_struct* tstruct) {
   f_gen_
     << indent()
@@ -1553,6 +1565,43 @@ string t_rs_generator::struct_field_read_temp_variable(t_field* tfield) {
   return foss.str();
 }
 
+string t_rs_generator::opt_in_req_out_value(t_type* ttype) {
+  ttype = get_true_type(ttype);
+  if (ttype->is_base_type()) {
+    t_base_type* tbase_type = ((t_base_type*)ttype);
+    switch (tbase_type->get_base()) {
+    case t_base_type::TYPE_VOID:
+      throw "cannot generate OPT_IN_REQ_OUT value for void";
+    case t_base_type::TYPE_STRING:
+      if (tbase_type->is_binary()) {
+        return "Some(Vec::new())";
+      } else {
+        return "Some(\"\".to_owned())";
+      }
+    case t_base_type::TYPE_BOOL:
+      return "Some(false)";
+    case t_base_type::TYPE_I8:
+    case t_base_type::TYPE_I16:
+    case t_base_type::TYPE_I32:
+    case t_base_type::TYPE_I64:
+      return "Some(0)";
+    case t_base_type::TYPE_DOUBLE:
+      return "Some(OrderedFloat::from(0.0))";
+    }
+
+  } else if (ttype->is_enum() || ttype->is_struct() || ttype->is_xception()) {
+    return "None";
+  } else if (ttype->is_list()) {
+    return "Some(Vec::new())";
+  } else if (ttype->is_set()) {
+    return "Some(BTreeSet::new())";
+  } else if (ttype->is_map()) {
+    return "Some(BTreeMap::new())";
+  }
+
+  throw "cannot generate opt-in-req-out value for type " + ttype->get_name();
+}
+
 //-----------------------------------------------------------------------------
 //
 // Sync Client
@@ -1651,6 +1700,7 @@ void t_rs_generator::render_service_sync_client_trait(t_service* tservice) {
   const std::vector<t_function*> functions = tservice->get_functions();
   std::vector<t_function*>::const_iterator func_iter;
 
+  render_rustdoc((t_doc*)tservice);
   f_gen_ << "pub trait " << rust_sync_client_trait_name(tservice) << extension << " {" << endl;
   indent_up();
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
@@ -1658,6 +1708,7 @@ void t_rs_generator::render_service_sync_client_trait(t_service* tservice) {
     string func_name = service_call_client_function_name(tfunc);
     string func_args = rust_sync_service_call_args(tfunc, true);
     string func_return = to_rust_type(tfunc->get_returntype());
+    render_rustdoc((t_doc*)tfunc);
     f_gen_ << indent() << "fn " << func_name <<  func_args << " -> rift::Result<" << func_return << ">;" << endl;
   }
   indent_down();
@@ -1861,6 +1912,7 @@ void t_rs_generator::render_service_sync_handler_trait(t_service* tservice) {
   const std::vector<t_function*> functions = tservice->get_functions();
   std::vector<t_function*>::const_iterator func_iter;
 
+  render_rustdoc((t_doc*)tservice);
   f_gen_ << "pub trait " << rust_sync_handler_trait_name(tservice) << extension << " {" << endl;
   indent_up();
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
@@ -1868,6 +1920,7 @@ void t_rs_generator::render_service_sync_handler_trait(t_service* tservice) {
     string func_name = service_call_handler_function_name(tfunc);
     string func_args = rust_sync_service_call_args(tfunc, true);
     string func_return = to_rust_type(tfunc->get_returntype());
+    render_rustdoc((t_doc*)tfunc);
     f_gen_ << indent() << "fn " << func_name <<  func_args << " -> rift::Result<" << func_return << ">;" << endl;
   }
   indent_down();
@@ -2212,6 +2265,16 @@ void t_rs_generator::render_type_comment(const string& type_name) {
   f_gen_ << endl;
 }
 
+// NOTE: do *not* put in an extra newline after doc is generated.
+// This is because rust docs have to abut the line they're documenting.
+void t_rs_generator::render_rustdoc(t_doc* tdoc) {
+  if (!tdoc->has_doc()) {
+    return;
+  }
+
+  generate_docstring_comment(f_gen_, "", "///", tdoc->get_doc(), "");
+}
+
 void t_rs_generator::render_rift_error(const string& error_kind, const string& error_struct, const string& sub_error_kind, const string& error_message) {
   f_gen_ << indent() << "Err(" << endl;
   indent_up();
@@ -2443,4 +2506,4 @@ string t_rs_generator::rust_camel_case(const string& name) {
 THRIFT_REGISTER_GENERATOR(
   rs,
   "Rust",
-  "   nodoc\n")
+  "\n")
