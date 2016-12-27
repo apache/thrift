@@ -239,6 +239,7 @@ private:
   void render_sync_server(t_service* tservice);
 
   void render_extension_marker_traits(t_service* tservice, const string& impl_struct_name);
+  string sync_client_extended_markers(t_service* tservice);
   void render_service_sync_client_marker_trait(t_service* tservice);
   void render_service_sync_client_trait(t_service* tservice);
   void render_service_sync_handler_trait(t_service* tservice);
@@ -1722,8 +1723,9 @@ void t_rs_generator::render_sync_client(t_service* tservice) {
   f_gen_ << endl;
 
   // render all the service methods for the implementing client struct
+  string marker_extension = "" + sync_client_extended_markers(tservice);
   f_gen_
-    << "impl <C: TThriftClient + " << rust_sync_client_marker_trait_name(tservice) << "> "
+    << "impl <C: TThriftClient + " << rust_sync_client_marker_trait_name(tservice) << marker_extension << "> "
     << rust_sync_client_trait_name(tservice)
     << " for C {" << endl;
   indent_up();
@@ -1734,6 +1736,18 @@ void t_rs_generator::render_sync_client(t_service* tservice) {
   indent_down();
   f_gen_ << "}" << endl;
   f_gen_ << endl;
+}
+
+string t_rs_generator::sync_client_extended_markers(t_service* tservice) {
+  string marker_extension;
+
+  t_service* extends = tservice->get_extends();
+  if (extends) {
+    marker_extension = " + " + rust_namespace(extends) + rust_sync_client_marker_trait_name(extends);
+    marker_extension = marker_extension + sync_client_extended_markers(extends);
+  }
+
+  return marker_extension;
 }
 
 void t_rs_generator::render_service_sync_client_marker_trait(t_service* tservice) {
@@ -1755,17 +1769,17 @@ void t_rs_generator::render_extension_marker_traits(t_service* tservice, const s
 }
 
 void t_rs_generator::render_service_sync_client_trait(t_service* tservice) {
-  // string extension = "";
-  // if (tservice->get_extends() != NULL) {
-  //   t_service* extends = tservice->get_extends();
-  //   extension = " : " + rust_namespace(extends) + rust_sync_client_trait_name(extends);
-  // }
+  string extension = "";
+  if (tservice->get_extends()) {
+    t_service* extends = tservice->get_extends();
+    extension = " : " + rust_namespace(extends) + rust_sync_client_trait_name(extends);
+  }
 
   const std::vector<t_function*> functions = tservice->get_functions();
   std::vector<t_function*>::const_iterator func_iter;
 
   render_rustdoc((t_doc*)tservice);
-  f_gen_ << "pub trait " << rust_sync_client_trait_name(tservice) << " {" << endl;
+  f_gen_ << "pub trait " << rust_sync_client_trait_name(tservice) << extension << " {" << endl;
   indent_up();
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
     t_function* tfunc = (*func_iter);
