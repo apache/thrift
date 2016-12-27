@@ -28,8 +28,16 @@ struct Ramen {
   2: required i32 noodleCount
 }
 
-service RamenService {
-    Ramen ramen(1: i32 requestedNoodleCount)
+struct Napkin {
+  // empty
+}
+
+service NapkinService {
+  Napkin napkin()
+}
+
+service RamenService extends NapkinService {
+  Ramen ramen(1: i32 requestedNoodleCount)
 }
 
 /* const struct CookedRamen = { "bar": 10 } */
