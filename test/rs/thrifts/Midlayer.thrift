@@ -24,9 +24,9 @@
 include "Base_One.thrift"
 include "Base_Two.thrift"
 
-const i32 BigCamper = Base_One.MyConst
+const i32 WaterBoilingPoint = Base_One.BoilingPoint
 
-const map<i32, Base_One.MyTypedef> MyConstMap = { 0: 1, 1: 2, 2: 3 }
+const map<string, Base_One.Temperature> TemperatureNames = { "freezing": 0, "boiling": 100 }
 
 const map<set<i32>, map<list<string>, string>> MyConstNestedMap = {
     [0, 1, 2, 3]: { ["foo"]: "bar" }, [20]: { ["nut", "ton"] : "bar" },
@@ -42,12 +42,12 @@ struct Meal {
   2: Base_Two.Ramen ramen
 }
 
-struct Tower {
-  1: optional i32 topple
-  2: optional string tinkle
+union Dessert  {
+  1: string port
+  2: string iceWine
 }
 
-service ServiceMeal extends Base_Two.ServiceRamen {
-    Meal getMeal(1: Base_One.Noodle noodle)
+service MealService extends Base_Two.RamenService {
+    Meal meal()
 }
 

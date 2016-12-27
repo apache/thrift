@@ -21,15 +21,15 @@
  * details.
  */
 
-const i32 AnotherConst = 2
+const i32 WaterWeight = 200
 
 struct Ramen {
   1: optional string ramenType
   2: required i32 noodleCount
 }
 
-service ServiceRamen {
-    Ramen getRamen(1: i32 requestedNoodleCount)
+service RamenService {
+    Ramen ramen(1: i32 requestedNoodleCount)
 }
 
 /* const struct CookedRamen = { "bar": 10 } */

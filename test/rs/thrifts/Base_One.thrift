@@ -21,19 +21,20 @@
  * details.
  */
 
-typedef i64 MyTypedef
+typedef i64 Temperature
 
-const i32 MyConst = 1
+const i32 BoilingPoint = 100
 
-const list<MyTypedef> MyList = [0, 1, 2, 3]
+const list<Temperature> Temperatures = [10, 11, 22, 33]
 
 struct Noodle {
-  1: string foo
-  2: MyTypedef bar
+  1: string flourType
+  2: Temperature cookTemp
 }
 
-struct Pie {
+struct Spaghetti {
   1: optional list<Noodle> noodles
 }
 
-const Noodle CookedNoodle = { "foo": "const_foo", "bar": 10 }
+const Noodle SpeltNoodle = { "flourType": "spelt", "cookTemp": 110 }
+

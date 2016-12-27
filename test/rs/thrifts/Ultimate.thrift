@@ -25,10 +25,10 @@ include "Midlayer.thrift"
 
 struct FullMeal {
   1: required Midlayer.Meal meal
-  2: required Midlayer.Tower tower
+  2: required Midlayer.Dessert dessert
 }
 
-service ServiceFullMeal extends Midlayer.ServiceMeal {
-    FullMeal getMeal()
+service FullMealService extends Midlayer.MealService {
+    FullMeal fullMeal()
 }
 
