@@ -25,23 +25,36 @@ use std::rc::Rc;
 
 use rift::protocol::{TCompactProtocol, TProtocol};
 use rift::transport::{TTcpTransport, TTransport};
-use rift_test::ultimate::*;
 use rift_test::base_two::TRamenServiceSyncClient;
-use rift_test::midlayer::TMealServiceSyncClient;
+use rift_test::midlayer::{MealServiceSyncClient, TMealServiceSyncClient};
+use rift_test::ultimate::{FullMealServiceSyncClient, TFullMealServiceSyncClient};
 
 // IMPORTANT: this code is never meant to be run; it's simply to ensure that service extension works
 fn main() {
+    // midlayer: MealService
+    {
+        let transport: Box<TTransport> = Box::new(TTcpTransport::new());
+        let transport = Rc::new(RefCell::new(transport));
+        let protocol: Box<TProtocol> = Box::new(TCompactProtocol::new(transport));
+        let mut client = MealServiceSyncClient::new(protocol);
+
+        // only the following two calls work
+        client.ramen(100);
+        client.meal();
+        // client.full_meal(); // <-- IMPORTANT: if you uncomment this, compilation *should* fail
+        // this is because the MealService struct does not contain the appropriate service marker
+    }
+
+    // ultimate: FullMealService
     {
         let transport: Box<TTransport> = Box::new(TTcpTransport::new());
         let transport = Rc::new(RefCell::new(transport));
         let protocol: Box<TProtocol> = Box::new(TCompactProtocol::new(transport));
         let mut client = FullMealServiceSyncClient::new(protocol);
-        client.full_meal();
-        client.meal();
+
+        // all
         client.ramen(100);
-    }
-
-    {
-
+        client.meal();
+        client.full_meal();
     }
 }
