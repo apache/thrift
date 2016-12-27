@@ -194,13 +194,6 @@ pub trait TProtocolFactory {
     fn build(&self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TProtocol>;
 }
 
-pub trait TThriftClient {
-    fn i_prot(&mut self) -> Rc<RefCell<Box<TProtocol>>>;
-    fn o_prot(&mut self) -> Rc<RefCell<Box<TProtocol>>>;
-    fn sequence_number(&self) -> i32;
-    fn increment_sequence_number(&mut self);
-}
-
 /// Identifies an instance of a Thrift message
 /// in its corresponding protocol representation.
 #[derive(Clone, Debug, Eq, PartialEq)]
