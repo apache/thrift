@@ -1655,17 +1655,6 @@ void t_rs_generator::render_sync_client(t_service* tservice) {
   f_gen_ << "}" << endl;
   f_gen_ << endl;
 
-  // render the helper trait for the struct
-  f_gen_ << indent() << "impl TThriftClient for " << client_impl_struct_name << " {" << endl;
-  indent_up();
-  f_gen_ << indent() << "fn i_prot(&mut self) -> Rc<RefCell<Box<TProtocol>>> { self._i_prot.clone() }" << endl;
-  f_gen_ << indent() << "fn o_prot(&mut self) -> Rc<RefCell<Box<TProtocol>>> { self._o_prot.clone() }" << endl;
-  f_gen_ << indent() << "fn sequence_number(&self) -> i32 { self._sequence_number }" << endl;
-  f_gen_ << indent() << "fn increment_sequence_number(&mut self) { self._sequence_number += 1 }" << endl;
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
-  f_gen_ << endl;
-
   const std::vector<t_function*> functions = tservice->get_functions();
   std::vector<t_function*>::const_iterator func_iter;
 
@@ -1676,6 +1665,17 @@ void t_rs_generator::render_sync_client(t_service* tservice) {
   render_sync_client_lifecycle_functions(client_impl_struct_name);
   indent_down();
   f_gen_ << "}" << endl;
+  f_gen_ << endl;
+
+  // render the helper trait for the struct
+  f_gen_ << indent() << "impl TThriftClient for " << client_impl_struct_name << " {" << endl;
+  indent_up();
+  f_gen_ << indent() << "fn i_prot(&mut self) -> Rc<RefCell<Box<TProtocol>>> { self._i_prot.clone() }" << endl;
+  f_gen_ << indent() << "fn o_prot(&mut self) -> Rc<RefCell<Box<TProtocol>>> { self._o_prot.clone() }" << endl;
+  f_gen_ << indent() << "fn sequence_number(&self) -> i32 { self._sequence_number }" << endl;
+  f_gen_ << indent() << "fn increment_sequence_number(&mut self) { self._sequence_number += 1 }" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
   f_gen_ << endl;
 
   // render all the service methods for the alternate implementing struct
