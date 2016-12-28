@@ -74,7 +74,7 @@ impl <PR: TProcessor> TSimpleServer<PR> {
                     self.handle_incoming_connection(s)
                 },
                 Err(e) => {
-                    warn!("failed to accept remote connection with error: {:?}", e)
+                    warn!("failed to accept remote connection with error {:?}", e)
                 }
             }
         }
