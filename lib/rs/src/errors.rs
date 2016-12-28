@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use std::convert::From;
+use std::convert::{From, Into};
 use std::error::Error as StdError;
 use std::fmt::{Debug, Display, Formatter};
 use std::{error, fmt, io, string};
@@ -85,9 +85,7 @@ impl Error {
         try!(o.write_field_stop());
         try!(o.write_struct_end());
 
-        try!(o.flush());
-
-        Ok(())
+        o.flush()
     }
 }
 
@@ -152,6 +150,12 @@ impl<'a> From<&'a str> for Error {
 pub struct TransportError {
     pub kind: TransportErrorKind,
     pub message: String,
+}
+
+impl TransportError {
+    pub fn new<S: Into<String>>(kind: TransportErrorKind, message: S) -> TransportError {
+        TransportError { kind: kind, message: message.into() }
+    }
 }
 
 #[derive(Clone, Copy, Eq, Debug, PartialEq)]
@@ -262,6 +266,12 @@ pub struct ProtocolError {
     pub message: String,
 }
 
+impl ProtocolError {
+    pub fn new<S: Into<String>>(kind: ProtocolErrorKind, message: S) -> ProtocolError {
+        ProtocolError { kind: kind, message: message.into() }
+    }
+}
+
 #[derive(Clone, Copy, Eq, Debug, PartialEq)]
 pub enum ProtocolErrorKind {
     Unknown        = 0,
@@ -320,6 +330,12 @@ impl TryFrom<i32> for ProtocolErrorKind {
 pub struct ApplicationError {
     pub kind: ApplicationErrorKind,
     pub message: String,
+}
+
+impl ApplicationError {
+    pub fn new<S: Into<String>>(kind: ApplicationErrorKind, message: S) -> ApplicationError {
+        ApplicationError { kind: kind, message: message.into() }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

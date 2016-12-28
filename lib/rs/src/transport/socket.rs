@@ -52,10 +52,7 @@ impl TTcpTransport {
         if let Some(_) = self.stream {
             Err(
                 ::Error::Transport(
-                    TransportError {
-                        kind: TransportErrorKind::AlreadyOpen,
-                        message: "transport previously opened".to_owned()
-                    }
+                    TransportError::new(TransportErrorKind::AlreadyOpen, "transport previously opened")
                 )
             )
         } else {

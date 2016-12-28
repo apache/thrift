@@ -198,25 +198,51 @@ pub trait TProtocolFactory {
 /// in its corresponding protocol representation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TMessageIdentifier {
-    pub name: String, // FIXME: allow usage of &str
+    pub name: String,
     pub message_type: TMessageType,
     pub sequence_number: i32,
+}
+
+impl TMessageIdentifier {
+    pub fn new<S: Into<String>>(name: S, message_type: TMessageType, sequence_number: i32) -> TMessageIdentifier {
+        TMessageIdentifier {
+            name: name.into(),
+            message_type: message_type,
+            sequence_number: sequence_number
+        }
+    }
 }
 
 /// Identifies an instance of a Thrift struct
 /// in its corresponding protocol representation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TStructIdentifier {
-    pub name: String, // FIXME: allow usage of &str
+    pub name: String,
+}
+
+impl TStructIdentifier {
+    pub fn new<S: Into<String>>(name: S) -> TStructIdentifier {
+        TStructIdentifier { name: name.into() }
+    }
 }
 
 /// Identifies an instance of a Thrift field
 /// in its corresponding protocol representation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TFieldIdentifier {
-    pub name: Option<String>, // FIXME: allow usage of &str
+    pub name: Option<String>,
     pub field_type: TType,
-    pub id: Option<i16>, // FIXME: this sucks that this is an option (only required for Field::Stop)
+    pub id: Option<i16>,
+}
+
+impl TFieldIdentifier {
+    pub fn new<S: Into<String>>(name: Option<S>, field_type: TType, id: Option<i16>) -> TFieldIdentifier {
+        TFieldIdentifier {
+            name: name.map(|n| n.into()),
+            field_type: field_type,
+            id: id
+        }
+    }
 }
 
 /// Identifies an instance of a list
@@ -227,12 +253,24 @@ pub struct TListIdentifier {
     pub size: i32,
 }
 
+impl TListIdentifier {
+    pub fn new(element_type: TType, size: i32) -> TListIdentifier {
+        TListIdentifier { element_type: element_type, size: size }
+    }
+}
+
 /// Identifies an instance of a set
 /// in its protocol representation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TSetIdentifier {
     pub element_type: TType,
     pub size: i32,
+}
+
+impl TSetIdentifier {
+    pub fn new(element_type: TType, size: i32) -> TSetIdentifier {
+        TSetIdentifier { element_type: element_type, size: size }
+    }
 }
 
 /// Identifies an instance of a map
@@ -242,6 +280,12 @@ pub struct TMapIdentifier {
     pub key_type: Option<TType>,
     pub value_type: Option<TType>,
     pub size: i32,
+}
+
+impl TMapIdentifier {
+    pub fn new(key_type: Option<TType>, value_type: Option<TType>, size: i32) -> TMapIdentifier {
+        TMapIdentifier { key_type: key_type, value_type: value_type, size: size }
+    }
 }
 
 /// Thrift message type.
