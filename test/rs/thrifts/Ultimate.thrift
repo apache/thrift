@@ -23,12 +23,27 @@
 
 include "Midlayer.thrift"
 
-struct FullMeal {
-  1: required Midlayer.Meal meal
-  2: required Midlayer.Tower tower
+enum Drink {
+  WATER,
+  WHISKEY,
+  WINE,
 }
 
-service ServiceFullMeal extends Midlayer.ServiceMeal {
-    FullMeal getMeal()
+struct FullMeal {
+  1: required Midlayer.Meal meal
+  2: required Midlayer.Dessert dessert
+}
+
+struct FullMealAndDrinks {
+  1: required FullMeal fullMeal
+  2: optional Drink drink
+}
+
+service FullMealService extends Midlayer.MealService {
+  FullMeal fullMeal()
+}
+
+service FullMealAndDrinksService extends FullMealService {
+  FullMealAndDrinks fullMealAndDrinks()
 }
 

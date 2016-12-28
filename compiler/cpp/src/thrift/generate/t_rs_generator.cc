@@ -31,6 +31,7 @@ using std::ofstream;
 using std::ostringstream;
 using std::string;
 using std::vector;
+using std::set;
 
 static const string endl = "\n"; // avoid ostream << std::endl flushes
 static const string SERVICE_CALL_RESULT_VARIABLE = "result_value";
@@ -86,6 +87,8 @@ private:
   // Write the common compiler attributes and module includes
   // to the top of the auto-generated file.
   void render_attributes_and_includes();
+
+  void add_service_referenced_modules(t_service* tservice, set<string>& referenced_modules);
 
   // Write the rust representation of an enum.
   void render_enum_definition(t_enum* tenum);
@@ -227,8 +230,6 @@ private:
   void render_sync_client_lifecycle_functions(const string& client_struct);
   void render_sync_send_recv_wrapper(t_function* tfunc);
 
-  // Render the `send` functionality for a Thrift service call represented
-  // by a `t_service->t_function`.
   void render_sync_send(t_function* tfunc);
 
   // Render the `recv` functionality for a Thrift service call represented
@@ -237,6 +238,9 @@ private:
   void render_sync_recv(t_function* tfunc);
   void render_sync_server(t_service* tservice);
 
+  void render_extension_marker_traits(t_service* tservice, const string& impl_struct_name);
+  string sync_client_extended_markers(t_service* tservice);
+  void render_service_sync_client_marker_trait(t_service* tservice);
   void render_service_sync_client_trait(t_service* tservice);
   void render_service_sync_handler_trait(t_service* tservice);
   void render_result_value_struct(t_function* tfunc);
@@ -306,6 +310,8 @@ private:
   // Return the trait name for the sync service client given a `t_service` name.
   string rust_sync_client_trait_name(t_service* tservice);
 
+  string rust_sync_client_marker_trait_name(t_service* tservice);
+
   string rust_sync_client_impl_name(t_service* tservice);
 
   // Return the trait name for the sync service processor given a `t_service` name.
@@ -367,7 +373,7 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "use std::rc::Rc;" << endl;
   f_gen_ << "use try_from::TryFrom;" << endl;
   f_gen_ << endl;
-  f_gen_ << "use rift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind};" << endl;
+  f_gen_ << "use rift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind, TThriftClient};" << endl;
   f_gen_ << "use rift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
   f_gen_ << "use rift::protocol::field_id;" << endl;
   f_gen_ << "use rift::protocol::verify_expected_message_type;" << endl;
@@ -377,14 +383,43 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "use rift::server::TProcessor;" << endl;
   f_gen_ << endl;
 
-  // add thrift includes
+  // add all the program includes
+  // NOTE: this is more involved than you would expect because of service extension
+  // Basically, I have to find the closure of all the services we have and include their modules at the top-level
+
+  set<string> referenced_modules;
+
+  // first, start by adding explicit thrift includes
   const vector<t_program*> includes = get_program()->get_includes();
-  if (!includes.empty()) {
-    vector<t_program*>::const_iterator includes_iter;
-    for(includes_iter = includes.begin(); includes_iter != includes.end(); ++includes_iter) {
-      f_gen_ << "pub use " << rust_snake_case((*includes_iter)->get_name()) << ";" << endl;
+  vector<t_program*>::const_iterator includes_iter;
+  for(includes_iter = includes.begin(); includes_iter != includes.end(); ++includes_iter) {
+    referenced_modules.insert((*includes_iter)->get_name());
+  }
+
+  // next, recursively iterate through all the services and add the names of any programs they reference
+  const vector<t_service*> services = get_program()->get_services();
+  vector<t_service*>::const_iterator service_iter;
+  for (service_iter = services.begin(); service_iter != services.end(); ++service_iter) {
+    add_service_referenced_modules(*service_iter, referenced_modules);
+  }
+
+  // finally, write all the "pub use..." declarations
+  if (!referenced_modules.empty()) {
+    set<string>::iterator module_iter;
+    for (module_iter = referenced_modules.begin(); module_iter != referenced_modules.end(); ++module_iter) {
+      f_gen_ << "use " << rust_snake_case(*module_iter) << ";" << endl;
     }
     f_gen_ << endl;
+  }
+}
+
+void t_rs_generator::add_service_referenced_modules(t_service* tservice, set<string>& referenced_modules) {
+  t_service* extends = tservice->get_extends();
+  if (extends) {
+    if (extends->get_program() != get_program()) {
+      referenced_modules.insert(extends->get_program()->get_name());
+    }
+    add_service_referenced_modules(extends, referenced_modules);
   }
 }
 
@@ -1063,7 +1098,7 @@ void t_rs_generator::render_struct_field_write(const string& field_var, t_field*
 
   ostringstream field_stream;
   field_stream
-    << "TFieldIdentifier {"
+    << "TFieldIdentifier { "
     << "name: Some(\"" << tfield->get_name() << "\".to_owned()" << "), " // note: use *original* name
     << "field_type: " << to_rust_field_type_enum(field_type) << ", "
     << "id: Some(" << tfield->get_key() << ") "
@@ -1642,17 +1677,20 @@ void t_rs_generator::render_sync_client(t_service* tservice) {
   f_gen_ << "//" << endl;
   f_gen_ << endl;
 
-  // render the trait through which the service calls will be mad
+  // render the trait specifying all the service calls available
   render_service_sync_client_trait(tservice);
 
-  string client_impl_struct_name = rust_sync_client_impl_name(tservice);
+  // render the marker trait identifying this service
+  render_service_sync_client_marker_trait(tservice);
 
-  // render the implementing struct
+  string client_impl_struct_name(rust_sync_client_impl_name(tservice));
+
+  // render the definition for the client struct
   f_gen_ << "pub struct " << client_impl_struct_name << " {" << endl;
   indent_up();
-  f_gen_ << indent() << "i_prot: Rc<RefCell<Box<TProtocol>>>," << endl;
-  f_gen_ << indent() << "o_prot: Rc<RefCell<Box<TProtocol>>>," << endl;
-  f_gen_ << indent() << "sequence_number: i32," << endl;
+  f_gen_ << indent() << "_i_prot: Rc<RefCell<Box<TProtocol>>>," << endl;
+  f_gen_ << indent() << "_o_prot: Rc<RefCell<Box<TProtocol>>>," << endl;
+  f_gen_ << indent() << "_sequence_number: i32," << endl;
   indent_down();
   f_gen_ << "}" << endl;
   f_gen_ << endl;
@@ -1665,19 +1703,31 @@ void t_rs_generator::render_sync_client(t_service* tservice) {
   f_gen_ << "impl " << client_impl_struct_name << " {" << endl;
   indent_up();
   render_sync_client_lifecycle_functions(client_impl_struct_name);
-  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
-    t_function* tfunc = (*func_iter);
-    render_sync_send(tfunc);
-    if (!tfunc->is_oneway()) {
-      render_sync_recv(tfunc);
-    }
-  }
   indent_down();
   f_gen_ << "}" << endl;
   f_gen_ << endl;
 
-  // render all the service methods for the implementing struct
-  f_gen_ << "impl " << rust_sync_client_trait_name(tservice) << " for " << client_impl_struct_name << " {" << endl;
+  // render the client helper trait for the struct
+  f_gen_ << indent() << "impl TThriftClient for " << client_impl_struct_name << " {" << endl;
+  indent_up();
+  f_gen_ << indent() << "fn i_prot(&mut self) -> Rc<RefCell<Box<TProtocol>>> { self._i_prot.clone() }" << endl;
+  f_gen_ << indent() << "fn o_prot(&mut self) -> Rc<RefCell<Box<TProtocol>>> { self._o_prot.clone() }" << endl;
+  f_gen_ << indent() << "fn sequence_number(&self) -> i32 { self._sequence_number }" << endl;
+  f_gen_ << indent() << "fn increment_sequence_number(&mut self) { self._sequence_number += 1 }" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  f_gen_ << endl;
+
+  // render the marker traits for any service(s) being extended, including the one for *this* service
+  render_extension_marker_traits(tservice, client_impl_struct_name);
+  f_gen_ << endl;
+
+  // render all the service methods for the implementing client struct
+  string marker_extension = "" + sync_client_extended_markers(tservice);
+  f_gen_
+    << "impl <C: TThriftClient + " << rust_sync_client_marker_trait_name(tservice) << marker_extension << "> "
+    << rust_sync_client_trait_name(tservice)
+    << " for C {" << endl;
   indent_up();
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
     t_function* func = (*func_iter);
@@ -1688,14 +1738,42 @@ void t_rs_generator::render_sync_client(t_service* tservice) {
   f_gen_ << endl;
 }
 
+string t_rs_generator::sync_client_extended_markers(t_service* tservice) {
+  string marker_extension;
+
+  t_service* extends = tservice->get_extends();
+  if (extends) {
+    marker_extension = " + " + rust_namespace(extends) + rust_sync_client_marker_trait_name(extends);
+    marker_extension = marker_extension + sync_client_extended_markers(extends);
+  }
+
+  return marker_extension;
+}
+
+void t_rs_generator::render_service_sync_client_marker_trait(t_service* tservice) {
+  f_gen_ << indent() << "pub trait " << rust_sync_client_marker_trait_name(tservice) << " {}" << endl;
+  f_gen_ << endl;
+}
+
+void t_rs_generator::render_extension_marker_traits(t_service* tservice, const string& impl_struct_name) {
+  f_gen_
+    << indent()
+    << "impl " << rust_namespace(tservice) << rust_sync_client_marker_trait_name(tservice)
+    << " for " << impl_struct_name
+    << " {}"
+    << endl;
+    t_service* extends = tservice->get_extends();
+    if (extends) {
+      render_extension_marker_traits(extends, impl_struct_name);
+    }
+}
+
 void t_rs_generator::render_service_sync_client_trait(t_service* tservice) {
   string extension = "";
-  /*
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends()) {
     t_service* extends = tservice->get_extends();
     extension = " : " + rust_namespace(extends) + rust_sync_client_trait_name(extends);
   }
-  */
 
   const std::vector<t_function*> functions = tservice->get_functions();
   std::vector<t_function*>::const_iterator func_iter;
@@ -1722,14 +1800,14 @@ void t_rs_generator::render_sync_client_lifecycle_functions(const string& client
   f_gen_ << indent() << "pub fn new(protocol: Box<TProtocol>) -> " << client_struct << " {" << endl;
   indent_up();
   f_gen_ << indent() << "let p = Rc::new(RefCell::new(protocol));" << endl;
-  f_gen_ << indent() << client_struct << " { i_prot: p.clone(), o_prot: p.clone(), sequence_number: 0 }" << endl;
+  f_gen_ << indent() << client_struct << " { _i_prot: p.clone(), _o_prot: p.clone(), _sequence_number: 0 }" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
   // constructor (separate protcols)
   f_gen_ << indent() << "pub fn with_separate_protocols(input_protocol: Box<TProtocol>, output_protocol: Box<TProtocol>) -> " << client_struct << " {" << endl;
   indent_up();
-  f_gen_ << indent() << client_struct << " { i_prot: Rc::new(RefCell::new(input_protocol)), o_prot: Rc::new(RefCell::new(output_protocol)), sequence_number: 0 }" << endl;
+  f_gen_ << indent() << client_struct << " { _i_prot: Rc::new(RefCell::new(input_protocol)), _o_prot: Rc::new(RefCell::new(output_protocol)), _sequence_number: 0 }" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
@@ -1766,33 +1844,37 @@ void t_rs_generator::render_sync_send_recv_wrapper(t_function* tfunc) {
 
   f_gen_ << indent() << "fn " << func_name <<  func_decl_args << " -> rift::Result<" << func_return << "> {" << endl;
   indent_up();
-  f_gen_ << indent() << "try!(self.send_" << func_name << func_call_args << ");" << endl;
+  f_gen_ << indent() << "let o_prot = self.o_prot();" << endl;
+  if (!tfunc->is_oneway()) {
+    f_gen_ << indent() << "let i_prot = self.i_prot();" << endl;
+  }
+  f_gen_ << indent() << "try!(" << endl;
+  indent_up();
+  render_sync_send(tfunc);
+  indent_down();
+  f_gen_ << indent() << ");" << endl;
   if (tfunc->is_oneway()) {
     f_gen_ << indent() << "Ok(())" << endl;
   } else {
-    f_gen_ << indent() << "self.recv_" << func_name << "()" << endl;
+    render_sync_recv(tfunc);
   }
   indent_down();
   f_gen_ << indent() << "}" << endl;
 }
 
 void t_rs_generator::render_sync_send(t_function* tfunc) {
-  string func_name = service_call_sync_send_client_function_name(tfunc);
-  string func_args = rust_sync_service_call_args(tfunc, true);
-
-  // declaration
-  f_gen_ << indent() << "fn " << func_name <<  func_args << " -> rift::Result<()> {" << endl;
+  f_gen_ << indent() << "{" << endl;
   indent_up();
 
   // increment the sequence number and generate the call header
   string message_type = tfunc->is_oneway() ? "TMessageType::OneWay" : "TMessageType::Call";
-  f_gen_ << indent() << "self.sequence_number = self.sequence_number + 1;" << endl;
+  f_gen_ << indent() << "self.increment_sequence_number();" << endl;
   f_gen_
     << indent()
     << "let message_ident = "
     << "TMessageIdentifier { name:\"" << tfunc->get_name() << "\".to_owned(), " // note: use *original* name
     << "message_type: " << message_type << ", "
-    << "sequence_number: self.sequence_number };"
+    << "sequence_number: self.sequence_number() };"
     << endl;
   // pack the arguments into the containing struct that we'll write out over the wire
   // note that this struct is generated even if we have 0 args
@@ -1817,33 +1899,31 @@ void t_rs_generator::render_sync_send(t_function* tfunc) {
     << " };"
     << endl;
   // write everything over the wire
-  f_gen_ << indent() << "try!(self.o_prot.borrow_mut().write_message_begin(&message_ident));" << endl;
-  f_gen_ << indent() << "try!(call_args.write_to_out_protocol(&mut **self.o_prot.borrow_mut()));" << endl; // written even if we have 0 args
-  f_gen_ << indent() << "try!(self.o_prot.borrow_mut().write_message_end());" << endl;
-  f_gen_ << indent() << "self.o_prot.borrow_mut().flush()" << endl;
+  f_gen_ << indent() << "try!(o_prot.borrow_mut().write_message_begin(&message_ident));" << endl;
+  f_gen_ << indent() << "try!(call_args.write_to_out_protocol(&mut **o_prot.borrow_mut()));" << endl; // written even if we have 0 args
+  f_gen_ << indent() << "try!(o_prot.borrow_mut().write_message_end());" << endl;
+  f_gen_ << indent() << "o_prot.borrow_mut().flush()" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 }
 
 void t_rs_generator::render_sync_recv(t_function* tfunc) {
-  string func_name = service_call_sync_recv_client_function_name(tfunc);
-  string func_return = to_rust_type(tfunc->get_returntype());
-  f_gen_ << indent() << "fn " << func_name << "(&mut self) -> rift::Result<" << func_return << "> {" << endl;
+  f_gen_ << indent() << "{" << endl;
   indent_up();
-  f_gen_ << indent() << "let message_ident = try!(self.i_prot.borrow_mut().read_message_begin());" << endl;
-  f_gen_ << indent() << "try!(verify_expected_sequence_number(self.sequence_number, message_ident.sequence_number));" << endl;
+  f_gen_ << indent() << "let message_ident = try!(i_prot.borrow_mut().read_message_begin());" << endl;
+  f_gen_ << indent() << "try!(verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number));" << endl;
   f_gen_ << indent() << "try!(verify_expected_service_call(\"" << tfunc->get_name() <<"\", &message_ident.name));" << endl; // note: use *original* name
   // FIXME: replace with a "try" block
   f_gen_ << indent() << "if message_ident.message_type == TMessageType::Exception {" << endl;
   indent_up();
-  f_gen_ << indent() << "let remote_error = try!(rift::Error::read_application_error_from_in_protocol(&mut **self.i_prot.borrow_mut()));" << endl;
-  f_gen_ << indent() << "try!(self.i_prot.borrow_mut().read_message_end());" << endl;
+  f_gen_ << indent() << "let remote_error = try!(rift::Error::read_application_error_from_in_protocol(&mut **i_prot.borrow_mut()));" << endl;
+  f_gen_ << indent() << "try!(i_prot.borrow_mut().read_message_end());" << endl;
   f_gen_ << indent() << "return Err(rift::Error::Application(remote_error))" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
   f_gen_ << indent() << "try!(verify_expected_message_type(TMessageType::Reply, message_ident.message_type));" << endl;
-  f_gen_ << indent() << "let result = try!(" << service_call_result_struct_name(tfunc) << "::read_from_in_protocol(&mut **self.i_prot.borrow_mut()));" << endl;
-  f_gen_ << indent() << "try!(self.i_prot.borrow_mut().read_message_end());" << endl;
+  f_gen_ << indent() << "let result = try!(" << service_call_result_struct_name(tfunc) << "::read_from_in_protocol(&mut **i_prot.borrow_mut()));" << endl;
+  f_gen_ << indent() << "try!(i_prot.borrow_mut().read_message_end());" << endl;
   f_gen_ << indent() << "result.ok_or()" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
@@ -1902,12 +1982,10 @@ void t_rs_generator::render_service_server_comment(t_service* tservice) {
 
 void t_rs_generator::render_service_sync_handler_trait(t_service* tservice) {
   string extension = "";
-  /*
   if (tservice->get_extends() != NULL) {
     t_service* extends = tservice->get_extends();
     extension = " : " + rust_namespace(extends) + rust_sync_handler_trait_name(extends);
   }
-  */
 
   const std::vector<t_function*> functions = tservice->get_functions();
   std::vector<t_function*>::const_iterator func_iter;
@@ -2451,6 +2529,10 @@ string t_rs_generator::rust_struct_name(t_struct* tstruct) {
 
 string t_rs_generator::rust_sync_client_trait_name(t_service* tservice) {
   return "T" + rust_camel_case(tservice->get_name()) + "SyncClient";
+}
+
+string t_rs_generator::rust_sync_client_marker_trait_name(t_service* tservice) {
+  return "TMarker" + rust_camel_case(tservice->get_name()) + "SyncClient";
 }
 
 string t_rs_generator::rust_sync_client_impl_name(t_service* tservice) {
