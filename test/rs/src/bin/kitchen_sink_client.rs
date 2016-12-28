@@ -16,6 +16,8 @@
 // under the License.
 
 #![allow(unused_must_use)]
+#![allow(unused_variables)]
+#![allow(dead_code)]
 
 extern crate rift;
 extern crate rift_test;
@@ -25,9 +27,9 @@ use std::rc::Rc;
 
 use rift::protocol::{TCompactProtocol, TProtocol};
 use rift::transport::{TTcpTransport, TTransport};
-use rift_test::base_two::TRamenServiceSyncClient;
-use rift_test::midlayer::{MealServiceSyncClient, TMealServiceSyncClient};
-use rift_test::ultimate::{FullMealServiceSyncClient, TFullMealServiceSyncClient};
+use rift_test::base_two::{Napkin, Ramen, TNapkinServiceSyncHandler, TRamenServiceSyncClient, TRamenServiceSyncHandler};
+use rift_test::midlayer::{Meal, MealServiceSyncClient, TMealServiceSyncClient, TMealServiceSyncHandler};
+use rift_test::ultimate::{FullMeal, FullMealServiceSyncClient, TFullMealServiceSyncClient, TFullMealServiceSyncHandler};
 
 // IMPORTANT: this code is never meant to be run; it's simply to ensure that service extension works
 fn main() {
@@ -56,5 +58,30 @@ fn main() {
         client.ramen(100);
         client.meal();
         client.full_meal();
+    }
+
+    // ultimate: server-side
+    {
+        struct Handler;
+        impl TFullMealServiceSyncHandler for Handler {
+            fn handle_full_meal(&mut self) -> rift::Result<FullMeal> {
+                unimplemented!()
+            }
+        }
+        impl TMealServiceSyncHandler for Handler {
+            fn handle_meal(&mut self) -> rift::Result<Meal> {
+                unimplemented!()
+            }
+        }
+        impl TRamenServiceSyncHandler for Handler {
+            fn handle_ramen(&mut self, requested_noodle_count: i32) -> rift::Result<Ramen> {
+                unimplemented!()
+            }
+        }
+        impl TNapkinServiceSyncHandler for Handler {
+            fn handle_napkin(&mut self) -> rift::Result<Napkin> {
+                unimplemented!()
+            }
+        }
     }
 }
