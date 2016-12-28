@@ -329,13 +329,7 @@ impl TProtocol for TCompactProtocol {
 
         self.last_read_field_id = 0;
 
-        Ok(
-            TMessageIdentifier {
-                name: service_call_name,
-                message_type: message_type,
-                sequence_number: sequence_number,
-            }
-        )
+        Ok(TMessageIdentifier::new(service_call_name, message_type, sequence_number))
     }
 
     fn read_message_end(&mut self) -> ::Result<()> {
@@ -379,7 +373,7 @@ impl TProtocol for TCompactProtocol {
 
         match field_type {
             TType::Stop => {
-                Ok(TFieldIdentifier { name: None, field_type: TType::Stop, id: None})
+                Ok(TFieldIdentifier::new::<Option<String>, String, Option<i16>>(None, TType::Stop, None))
             }
             _ => {
                 let field_id = if field_delta != 0 {
@@ -389,7 +383,7 @@ impl TProtocol for TCompactProtocol {
                     try!(self.read_i16())
                 };
 
-                Ok(TFieldIdentifier { name: None, field_type: field_type, id: Some(field_id) })
+                Ok(TFieldIdentifier::new::<Option<String>, String, i16>(None, field_type, field_id))
             }
         }
     }
@@ -454,7 +448,7 @@ impl TProtocol for TCompactProtocol {
 
     fn read_list_begin(&mut self) -> ::Result<TListIdentifier> {
         let (element_type, element_count) = try!(self.read_list_set_begin());
-        Ok(TListIdentifier { element_type: element_type, size: element_count })
+        Ok(TListIdentifier::new(element_type, element_count))
     }
 
     fn read_list_end(&mut self) -> ::Result<()> {
@@ -463,7 +457,7 @@ impl TProtocol for TCompactProtocol {
 
     fn read_set_begin(&mut self) -> ::Result<TSetIdentifier> {
         let (element_type, element_count) = try!(self.read_list_set_begin());
-        Ok(TSetIdentifier { element_type: element_type, size: element_count })
+        Ok(TSetIdentifier::new(element_type, element_count))
     }
 
     fn read_set_end(&mut self) -> ::Result<()> {
@@ -473,12 +467,12 @@ impl TProtocol for TCompactProtocol {
     fn read_map_begin(&mut self) -> ::Result<TMapIdentifier> {
         let element_count = try!(self.transport.borrow_mut().read_varint::<u32>()) as i32;
         if element_count == 0 {
-            Ok(TMapIdentifier { key_type: None, value_type: None, size: 0})
+            Ok(TMapIdentifier::new(None, None, 0))
         } else {
             let type_header = try!(self.read_byte());
             let key_type = try!(u8_to_type((type_header & 0xF0) >> 4));
             let val_type = try!(u8_to_type((type_header & 0x0F)));
-            Ok(TMapIdentifier { key_type: Some(key_type), value_type: Some(val_type), size: element_count})
+            Ok(TMapIdentifier::new(key_type, val_type, element_count))
         }
     }
 

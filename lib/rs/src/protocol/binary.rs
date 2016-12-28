@@ -38,6 +38,10 @@ pub struct TBinaryProtocol {
 }
 
 impl TBinaryProtocol {
+    pub fn new(strict: bool, transport: Rc<RefCell<Box<TTransport>>>) -> TBinaryProtocol {
+        TBinaryProtocol { strict: strict, transport: transport }
+    }
+
     fn write_transport(&mut self, buf: &[u8]) -> ::Result<()> {
         self.transport.borrow_mut().write(buf).map(|_| ()).map_err(From::from)
     }
@@ -93,7 +97,6 @@ fn field_type_from_u8(b: u8) -> ::Result<TType> {
 }
 
 impl TProtocol for TBinaryProtocol {
-
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
         if self.strict {
             let message_type: u8 = identifier.message_type.into();
@@ -242,7 +245,7 @@ impl TProtocol for TBinaryProtocol {
                 let message_type: TMessageType = try!(TryFrom::try_from(first_bytes[3]));
                 let name = try!(self.read_string());
                 let sequence_number = try!(self.read_i32());
-                Ok(TMessageIdentifier { name: name, message_type: message_type, sequence_number: sequence_number })
+                Ok(TMessageIdentifier::new(name, message_type, sequence_number))
             }
         } else {
             // apparently we didn't get a protocol-version header,
@@ -270,7 +273,7 @@ impl TProtocol for TBinaryProtocol {
                 // read the rest of the fields
                 let message_type: TMessageType = try!(self.read_byte().and_then(TryFrom::try_from));
                 let sequence_number = try!(self.read_i32());
-                Ok(TMessageIdentifier { name: name, message_type: message_type, sequence_number: sequence_number })
+                Ok(TMessageIdentifier::new(name, message_type, sequence_number))
             }
         }
     }
@@ -294,7 +297,7 @@ impl TProtocol for TBinaryProtocol {
             TType::Stop => Ok(0),
             _ => self.read_i16()
         });
-        Ok(TFieldIdentifier { name: None, field_type: field_type, id: Some(id) })
+        Ok(TFieldIdentifier::new::<Option<String>, String, i16>(None, field_type, id))
     }
 
     fn read_field_end(&mut self) -> ::Result<()> {
@@ -343,8 +346,7 @@ impl TProtocol for TBinaryProtocol {
     fn read_list_begin(&mut self) -> ::Result<TListIdentifier> {
         let element_type: TType = try!(self.read_byte().and_then(field_type_from_u8));
         let size = try!(self.read_i32());
-        let ret = TListIdentifier { element_type: element_type, size: size };
-        Ok(ret)
+        Ok(TListIdentifier::new(element_type, size))
     }
 
     fn read_list_end(&mut self) -> ::Result<()> {
@@ -354,8 +356,7 @@ impl TProtocol for TBinaryProtocol {
     fn read_set_begin(&mut self) -> ::Result<TSetIdentifier> {
         let element_type: TType = try!(self.read_byte().and_then(field_type_from_u8));
         let size = try!(self.read_i32());
-        let ret = TSetIdentifier { element_type: element_type, size: size };
-        Ok(ret)
+        Ok(TSetIdentifier::new(element_type, size))
     }
 
     fn read_set_end(&mut self) -> ::Result<()> {
@@ -366,8 +367,7 @@ impl TProtocol for TBinaryProtocol {
         let key_type: TType = try!(self.read_byte().and_then(field_type_from_u8));
         let value_type: TType = try!(self.read_byte().and_then(field_type_from_u8));
         let size = try!(self.read_i32());
-        let ret = TMapIdentifier { key_type: Some(key_type), value_type: Some(value_type), size: size };
-        Ok(ret)
+        Ok(TMapIdentifier::new(key_type, value_type, size))
     }
 
     fn read_map_end(&mut self) -> ::Result<()> {

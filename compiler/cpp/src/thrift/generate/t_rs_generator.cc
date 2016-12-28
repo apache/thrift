@@ -37,6 +37,8 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
 static const string SERVICE_CALL_RESULT_VARIABLE = "result_value";
 static const string RESULT_STRUCT_SUFFIX = "Result";
 
+// FIXME: extract common TMessageIdentifier function
+// FIXME: remove "to_owned" from error constructors
 // IMPORTANT: by default generator functions include extra endlines!
 
 class t_rs_generator : public t_generator {
@@ -1027,7 +1029,7 @@ void t_rs_generator::render_struct_write_to_out_protocol(t_struct* tstruct, t_rs
 
   // write struct header to output protocol
   // note: use the *original* struct name here
-  f_gen_ << indent() << "let struct_ident = TStructIdentifier { name: \"" + tstruct->get_name() + "\".to_owned() };" << endl;
+  f_gen_ << indent() << "let struct_ident = TStructIdentifier::new(\"" + tstruct->get_name() + "\");" << endl;
   f_gen_ << indent() << "try!(o_prot.write_struct_begin(&struct_ident));" << endl;
 
   // write struct members to output protocol
@@ -1060,7 +1062,7 @@ void t_rs_generator::render_union_write_to_out_protocol(const string& union_name
 
   // write struct header to output protocol
   // note: use the *original* struct name here
-  f_gen_ << indent() << "let struct_ident = TStructIdentifier { name: \"" + tstruct->get_name() + "\".to_owned() };" << endl;
+  f_gen_ << indent() << "let struct_ident = TStructIdentifier::new(\"" + tstruct->get_name() + "\");" << endl;
   f_gen_ << indent() << "try!(o_prot.write_struct_begin(&struct_ident));" << endl;
 
   // write the enum field to the output protocol
@@ -1098,11 +1100,10 @@ void t_rs_generator::render_struct_field_write(const string& field_var, t_field*
 
   ostringstream field_stream;
   field_stream
-    << "TFieldIdentifier { "
-    << "name: Some(\"" << tfield->get_name() << "\".to_owned()" << "), " // note: use *original* name
-    << "field_type: " << to_rust_field_type_enum(field_type) << ", "
-    << "id: Some(" << tfield->get_key() << ") "
-    << "}";
+    << "TFieldIdentifier::new("
+    << "\"" << tfield->get_name() << "\"" << ", " // note: use *original* name
+    << to_rust_field_type_enum(field_type) << ", "
+    << tfield->get_key() << ")";
   string field_ident_string = field_stream.str();
 
   if (is_optional(req)) {
@@ -1191,10 +1192,9 @@ void t_rs_generator::render_list_write(const string& list_variable, t_list* tlis
   f_gen_
     << indent()
     << "try!(o_prot.write_list_begin("
-    << "&TListIdentifier {"
-    << " element_type: " << to_rust_field_type_enum(elem_type)
-    << ", size: " << list_variable << ".len() as i32"
-    << " }"
+    << "&TListIdentifier::new("
+    << to_rust_field_type_enum(elem_type) << ", "
+    << list_variable << ".len() as i32" << ")"
     << "));" << endl;
 
   f_gen_ << indent() << "for e in " << list_variable << ".iter() {" << endl;
@@ -1211,10 +1211,9 @@ void t_rs_generator::render_set_write(const string& set_variable, t_set* tset) {
   f_gen_
     << indent()
     << "try!(o_prot.write_set_begin("
-    << "&TSetIdentifier {"
-    << " element_type: " << to_rust_field_type_enum(elem_type)
-    << ", size: " << set_variable << ".len() as i32"
-    << " }"
+    << "&TSetIdentifier::new("
+    << to_rust_field_type_enum(elem_type) << ", "
+    << set_variable << ".len() as i32" << ")"
     << "));" << endl;
 
   f_gen_ << indent() << "for e in " << set_variable << ".iter() {" << endl;
@@ -1232,11 +1231,10 @@ void t_rs_generator::render_map_write(const string& map_variable, t_map* tmap) {
   f_gen_
     << indent()
     << "try!(o_prot.write_map_begin("
-    << "&TMapIdentifier {"
-    << " key_type: Some(" << to_rust_field_type_enum(key_type) << ")"
-    << ", value_type: Some(" << to_rust_field_type_enum(val_type) << ")"
-    << ", size: " << map_variable << ".len() as i32"
-    << " }"
+    << "&TMapIdentifier::new("
+    << to_rust_field_type_enum(key_type) << ", "
+    << to_rust_field_type_enum(val_type) << ", "
+    << map_variable << ".len() as i32)"
     << "));" << endl;
 
   f_gen_ << indent() << "for (k, v) in " << map_variable << ".iter() {" << endl;
@@ -1872,9 +1870,9 @@ void t_rs_generator::render_sync_send(t_function* tfunc) {
   f_gen_
     << indent()
     << "let message_ident = "
-    << "TMessageIdentifier { name:\"" << tfunc->get_name() << "\".to_owned(), " // note: use *original* name
-    << "message_type: " << message_type << ", "
-    << "sequence_number: self.sequence_number() };"
+    << "TMessageIdentifier::new(\"" << tfunc->get_name() << "\", " // note: use *original* name
+    << message_type << ", "
+    << "self.sequence_number());"
     << endl;
   // pack the arguments into the containing struct that we'll write out over the wire
   // note that this struct is generated even if we have 0 args
@@ -2145,10 +2143,10 @@ void t_rs_generator::render_handler_succeeded(t_function* tfunc) {
   } else {
     f_gen_
       << indent()
-      << "let message_ident = TMessageIdentifier { "
-      << "name: \"" << tfunc->get_name() << "\".to_owned(), " // note: use *original* name
-      << "message_type: TMessageType::Reply, "
-      << "sequence_number: incoming_sequence_number };"
+      << "let message_ident = TMessageIdentifier::new("
+      << "\"" << tfunc->get_name() << "\", " // note: use *original* name
+      << "TMessageType::Reply, "
+      << "incoming_sequence_number);"
       << endl;
     f_gen_ << indent() << "try!(o_prot.write_message_begin(&message_ident));" << endl;
     f_gen_ << indent() << "let ret = " << handler_successful_return_struct(tfunc) <<";" << endl;
@@ -2234,10 +2232,10 @@ void t_rs_generator::render_handler_failed_user_exception_branch(t_function* tfu
     f_gen_
       << indent()
       << "let message_ident = "
-      << "TMessageIdentifier { "
-      << "name: \"" << tfunc->get_name() << "\".to_owned(), " // note: use *original* name
-      << "message_type: TMessageType::Reply, "
-      << "sequence_number: incoming_sequence_number };"
+      << "TMessageIdentifier::new("
+      << "\"" << tfunc->get_name() << "\", " // note: use *original* name
+      << "TMessageType::Reply, "
+      << "incoming_sequence_number);"
       << endl;
     f_gen_ << indent() << "try!(o_prot.write_message_begin(&message_ident));" << endl;
     f_gen_ << indent() << "try!(ret_err.write_to_out_protocol(o_prot));" << endl;
@@ -2263,10 +2261,10 @@ void t_rs_generator::render_handler_failed_user_exception_branch(t_function* tfu
 
   f_gen_
       << indent()
-      << "let message_ident = TMessageIdentifier { "
-      << "name: \"" << tfunc->get_name() << "\".to_owned(), " // note: use *original* name
-      << "message_type: TMessageType::Exception, "
-      << "sequence_number: incoming_sequence_number };"
+      << "let message_ident = TMessageIdentifier::new("
+      << "\"" << tfunc->get_name() << "\", " // note: use *original* name
+      << "TMessageType::Exception, "
+      << "incoming_sequence_number);"
       << endl;
     f_gen_ << indent() << "try!(o_prot.write_message_begin(&message_ident));" << endl;
     f_gen_ << indent() << "try!(rift::Error::write_application_error_to_out_protocol(&ret_err, o_prot));" << endl;
@@ -2288,10 +2286,10 @@ void t_rs_generator::render_handler_failed_default_exception_branch(t_function* 
   } else {
     f_gen_
       << indent()
-      << "let message_ident = TMessageIdentifier { "
-      << "name: \"" << tfunc->get_name() << "\".to_owned(), " // note: use *original* name
-      << "message_type: TMessageType::Exception, "
-      << "sequence_number: incoming_sequence_number };"
+      << "let message_ident = TMessageIdentifier::new("
+      << "\"" << tfunc->get_name() << "\", " // note: use *original* name
+      << "TMessageType::Exception, "
+      << "incoming_sequence_number);"
       << endl;
     f_gen_ << indent() << "try!(o_prot.write_message_begin(&message_ident));" << endl;
     f_gen_ << indent() << "try!(rift::Error::write_application_error_to_out_protocol(&ret_err, o_prot));" << endl;

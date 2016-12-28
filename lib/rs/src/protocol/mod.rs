@@ -236,11 +236,16 @@ pub struct TFieldIdentifier {
 }
 
 impl TFieldIdentifier {
-    pub fn new<S: Into<String>>(name: Option<S>, field_type: TType, id: Option<i16>) -> TFieldIdentifier {
+    pub fn new<N, S, I>(name: N, field_type: TType, id: I) -> TFieldIdentifier
+        where
+            N: Into<Option<S>>,
+            S: Into<String>,
+            I: Into<Option<i16>>
+    {
         TFieldIdentifier {
-            name: name.map(|n| n.into()),
+            name: name.into().map(|n| n.into()),
             field_type: field_type,
-            id: id
+            id: id.into()
         }
     }
 }
@@ -283,8 +288,12 @@ pub struct TMapIdentifier {
 }
 
 impl TMapIdentifier {
-    pub fn new(key_type: Option<TType>, value_type: Option<TType>, size: i32) -> TMapIdentifier {
-        TMapIdentifier { key_type: key_type, value_type: value_type, size: size }
+    pub fn new<K, V>(key_type: K, value_type: V, size: i32) -> TMapIdentifier
+        where
+            K: Into<Option<TType>>,
+            V: Into<Option<TType>>
+    {
+        TMapIdentifier { key_type: key_type.into(), value_type: value_type.into(), size: size }
     }
 }
 
