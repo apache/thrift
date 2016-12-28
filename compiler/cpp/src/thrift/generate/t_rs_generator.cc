@@ -1982,12 +1982,10 @@ void t_rs_generator::render_service_server_comment(t_service* tservice) {
 
 void t_rs_generator::render_service_sync_handler_trait(t_service* tservice) {
   string extension = "";
-  /*
   if (tservice->get_extends() != NULL) {
     t_service* extends = tservice->get_extends();
     extension = " : " + rust_namespace(extends) + rust_sync_handler_trait_name(extends);
   }
-  */
 
   const std::vector<t_function*> functions = tservice->get_functions();
   std::vector<t_function*>::const_iterator func_iter;
