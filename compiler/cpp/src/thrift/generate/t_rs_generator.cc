@@ -1098,7 +1098,7 @@ void t_rs_generator::render_struct_field_write(const string& field_var, t_field*
 
   ostringstream field_stream;
   field_stream
-    << "TFieldIdentifier {"
+    << "TFieldIdentifier { "
     << "name: Some(\"" << tfield->get_name() << "\".to_owned()" << "), " // note: use *original* name
     << "field_type: " << to_rust_field_type_enum(field_type) << ", "
     << "id: Some(" << tfield->get_key() << ") "
