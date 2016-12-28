@@ -407,7 +407,7 @@ void t_rs_generator::render_attributes_and_includes() {
   if (!referenced_modules.empty()) {
     set<string>::iterator module_iter;
     for (module_iter = referenced_modules.begin(); module_iter != referenced_modules.end(); ++module_iter) {
-      f_gen_ << "pub use " << rust_snake_case(*module_iter) << ";" << endl;
+      f_gen_ << "use " << rust_snake_case(*module_iter) << ";" << endl;
     }
     f_gen_ << endl;
   }
