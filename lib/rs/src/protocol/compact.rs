@@ -24,7 +24,8 @@ use std::io::{Read, Write};
 use try_from::TryFrom;
 
 use ::transport::TTransport;
-use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TProtocol, TProtocolFactory, TSetIdentifier, TStructIdentifier, TType};
+use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TInputProtocol, TInputProtocolFactory};
+use super::{TOutputProtocol, TOutputProtocolFactory, TSetIdentifier, TStructIdentifier, TType};
 
 const COMPACT_PROTOCOL_ID: u8 = 0x82;
 const COMPACT_VERSION: u8 = 0x01;
@@ -33,62 +34,27 @@ const COMPACT_VERSION_MASK: u8 = 0x1F;
 /// Sends messages over an underlying transport
 /// `transport` using the Thrift Compact protocol
 /// as described in THRIFT-110.
-pub struct TCompactProtocol {
+pub struct TCompactInputProtocol {
     /// Identifier of the last field deserialized for a struct.
     last_read_field_id: i16,
-    /// Identifier of the last field serialized for a struct.
-    last_write_field_id: i16,
     /// Stack of the last read field ids (a new entry is added each time a nested struct is read).
     read_field_id_stack: Vec<i16>,
-    /// Stack of the last written field ids (a new entry is added each time a nested struct is written).
-    write_field_id_stack: Vec<i16>,
     /// Boolean value for a field.
     /// Saved because boolean fields and their value are encoded in a single byte,
     /// and reading the field only occurs after the field id is read.
     pending_read_bool_value: Option<bool>,
-    /// Field identifier of the boolean field to be written.
-    /// Saved because boolean fields and their value are encoded in a single byte
-    pending_write_bool_field_identifier: Option<TFieldIdentifier>,
     /// Underlying transport used for byte-level operations.
-    pub transport: Rc<RefCell<Box<TTransport>>>,
+    transport: Rc<RefCell<Box<TTransport>>>,
 }
 
-impl TCompactProtocol {
-    pub fn new(transport: Rc<RefCell<Box<TTransport>>>) -> TCompactProtocol {
-       TCompactProtocol {
+impl TCompactInputProtocol {
+    pub fn new(transport: Rc<RefCell<Box<TTransport>>>) -> TCompactInputProtocol {
+       TCompactInputProtocol {
            last_read_field_id: 0,
-           last_write_field_id: 0,
            read_field_id_stack: Vec::new(),
-           write_field_id_stack: Vec::new(),
            pending_read_bool_value: None,
-           pending_write_bool_field_identifier: None,
            transport: transport
        }
-    }
-
-    // FIXME: field_type as unconstrained u8 is bad
-    fn write_field_header(&mut self, field_type: u8, field_id: i16) -> ::Result<()> {
-        let field_delta = self.last_write_field_id - field_id;
-        if field_delta > 0 && field_delta < 15 {
-            try!(self.write_byte(((field_delta as u8) << 4) | field_type));
-        } else {
-            try!(self.write_byte(field_type));
-            try!(self.write_i16(field_id));
-        }
-        self.last_write_field_id = field_id;
-        Ok(())
-    }
-
-    fn write_list_set_begin(&mut self, element_type: TType, element_count: i32) -> ::Result<()> {
-        let elem_identifier = type_to_u8(element_type);
-        if element_count <= 14 {
-            let header = (element_count as u8) << 4 | elem_identifier;
-            self.write_byte(header)
-        } else {
-            let header = 0xF0 | elem_identifier;
-            try!(self.write_byte(header));
-            self.transport.borrow_mut().write_varint(element_count as u32).map_err(From::from).map(|_| ())
-        }
     }
 
     fn read_list_set_begin(&mut self) -> ::Result<(TType, i32)> {
@@ -107,187 +73,7 @@ impl TCompactProtocol {
     }
 }
 
-fn type_to_u8(field_type: TType) -> u8 {
-    match field_type {
-        TType::Stop => 0x00,
-        TType::I08 => 0x03, // equivalent to TType::Byte
-        TType::I16 => 0x04,
-        TType::I32 => 0x05,
-        TType::I64 => 0x06,
-        TType::Double => 0x07,
-        TType::String => 0x08,
-        TType::List => 0x09,
-        TType::Set => 0x0A,
-        TType::Map => 0x0B,
-        TType::Struct => 0x0C,
-        _ => panic!(format!("should not have attempted to convert {} to u8", field_type))
-    }
-}
-
-fn u8_to_type(b: u8) -> ::Result<TType> {
-    match b {
-        0x00 => Ok(TType::Stop),
-        0x03 => Ok(TType::I08), // equivalent to TType::Byte
-        0x04 => Ok(TType::I16),
-        0x05 => Ok(TType::I32),
-        0x06 => Ok(TType::I64),
-        0x07 => Ok(TType::Double),
-        0x08 => Ok(TType::String),
-        0x09 => Ok(TType::List),
-        0x0A => Ok(TType::Set),
-        0x0B => Ok(TType::Map),
-        0x0C => Ok(TType::Struct),
-        unkn => Err(
-            ::Error::Protocol(
-                ::ProtocolError {
-                    kind: ::ProtocolErrorKind::InvalidData,
-                    message: format!("cannot convert {} into TType", unkn),
-                }
-            )
-        )
-    }
-}
-
-impl TProtocol for TCompactProtocol {
-    fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
-        try!(self.write_byte(COMPACT_PROTOCOL_ID));
-        try!(self.write_byte((u8::from(identifier.message_type) << 5) | COMPACT_VERSION));
-        try!(self.write_i32(identifier.sequence_number));
-        try!(self.write_string(&identifier.name));
-        Ok(())
-    }
-
-    fn write_message_end(&mut self) -> ::Result<()> {
-        Ok(())
-    }
-
-    fn write_struct_begin(&mut self, _: &TStructIdentifier) -> ::Result<()> {
-        self.write_field_id_stack.push(self.last_write_field_id);
-        self.last_write_field_id = 0;
-        Ok(())
-    }
-
-    fn write_struct_end(&mut self) -> ::Result<()> {
-        self.last_write_field_id = self.write_field_id_stack.pop().expect("should have previous field ids");
-        Ok(())
-    }
-
-    fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> ::Result<()> {
-        match identifier.field_type {
-            TType::Bool => {
-                if self.pending_write_bool_field_identifier.is_some() {
-                    panic!("should not have a pending bool while writing another bool with id: {:?}", identifier)
-                }
-                self.pending_write_bool_field_identifier = Some(identifier.clone());
-                Ok(())
-            },
-            _ => {
-                let field_type = type_to_u8(identifier.field_type);
-                let field_id = identifier.id.expect("non-stop field should have field id");
-                self.write_field_header(field_type, field_id)
-            }
-        }
-    }
-
-    fn write_field_end(&mut self) -> ::Result<()> {
-        Ok(())
-    }
-
-    fn write_field_stop(&mut self) -> ::Result<()> {
-        self.write_byte(type_to_u8(TType::Stop))
-    }
-
-    fn write_bool(&mut self, b: bool) -> ::Result<()> {
-        match self.pending_write_bool_field_identifier.take() {
-            Some(pending) => {
-                let field_id = pending.id.expect("bool field should have a field id");
-                let field_type_as_u8 = if b {
-                    0x01
-                } else {
-                    0x02
-                };
-                self.write_field_header(field_type_as_u8, field_id)
-            },
-            None => {
-                if b {
-                    self.write_byte(0x01)
-                } else {
-                    self.write_byte(0x02)
-                }
-            }
-        }
-    }
-
-    fn write_bytes(&mut self, b: &[u8]) -> ::Result<()> {
-        try!(self.transport.borrow_mut().write_varint(b.len() as u32));
-        self.transport.borrow_mut().write_all(b).map_err(From::from)
-    }
-
-    fn write_i8(&mut self, i: i8) -> ::Result<()> {
-        self.write_byte(i as u8)
-    }
-
-    fn write_i16(&mut self, i: i16) -> ::Result<()> {
-        self.transport.borrow_mut().write_varint(i).map_err(From::from).map(|_| ())
-    }
-
-    fn write_i32(&mut self, i: i32) -> ::Result<()> {
-        self.transport.borrow_mut().write_varint(i).map_err(From::from).map(|_| ())
-    }
-
-    fn write_i64(&mut self, i: i64) -> ::Result<()> {
-        self.transport.borrow_mut().write_varint(i).map_err(From::from).map(|_| ())
-    }
-
-    fn write_double(&mut self, d: f64) -> ::Result<()> {
-        self.transport.borrow_mut().write_f64::<BigEndian>(d).map_err(From::from)
-    }
-
-    fn write_string(&mut self, s: &str) -> ::Result<()> {
-        self.write_bytes(s.as_bytes())
-    }
-
-    fn write_list_begin(&mut self, identifier: &TListIdentifier) -> ::Result<()> {
-        self.write_list_set_begin(identifier.element_type, identifier.size)
-    }
-
-    fn write_list_end(&mut self) -> ::Result<()> {
-        Ok(())
-    }
-
-    fn write_set_begin(&mut self, identifier: &TSetIdentifier) -> ::Result<()> {
-        self.write_list_set_begin(identifier.element_type, identifier.size)
-    }
-
-    fn write_set_end(&mut self) -> ::Result<()> {
-        Ok(())
-    }
-
-    fn write_map_begin(&mut self, identifier: &TMapIdentifier) -> ::Result<()> {
-        if identifier.size == 0 {
-            self.write_byte(0)
-        } else {
-            try!(self.transport.borrow_mut().write_varint(identifier.size as u32));
-
-            let key_type = identifier.key_type.expect("map identifier to write should contain key type");
-            let key_type_byte = type_to_u8(key_type) << 4;
-
-            let val_type = identifier.value_type.expect("map identifier to write should contain value type");
-            let val_type_byte = type_to_u8(val_type);
-
-            let map_type_header = key_type_byte | val_type_byte;
-            self.write_byte(map_type_header)
-        }
-    }
-
-    fn write_map_end(&mut self) -> ::Result<()> {
-        Ok(())
-    }
-
-    fn flush(&mut self) -> ::Result<()> {
-        self.transport.borrow_mut().flush().map_err(From::from)
-    }
-
+impl TInputProtocol for TCompactInputProtocol {
     fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier> {
         let compact_id = try!(self.read_byte());
         try!(
@@ -484,10 +270,6 @@ impl TProtocol for TCompactProtocol {
     // utility
     //
 
-    fn write_byte(&mut self, b: u8) -> ::Result<()> {
-        self.transport.borrow_mut().write(&[b]).map_err(From::from).map(|_| ())
-    }
-
     fn read_byte(&mut self) -> ::Result<u8> {
         let mut buf = [0u8; 1];
         self.transport.borrow_mut().read_exact(&mut buf).map_err(From::from).map(|_| buf[0])
@@ -496,10 +278,260 @@ impl TProtocol for TCompactProtocol {
 
 /// Convenience object that can be used to
 /// create an instance of `TCompactProtocol`.
-pub struct TCompactProtocolFactory;
-impl TProtocolFactory for TCompactProtocolFactory {
-    fn build(&self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TProtocol> {
-        Box::new(TCompactProtocol::new(transport)) as Box<TProtocol>
+pub struct TCompactInputProtocolFactory;
+impl TInputProtocolFactory for TCompactInputProtocolFactory {
+    fn create(&mut self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TInputProtocol> {
+        Box::new(TCompactInputProtocol::new(transport)) as Box<TInputProtocol>
+    }
+}
+
+/// Sends messages over an underlying transport
+/// `transport` using the Thrift Compact protocol
+/// as described in THRIFT-110.
+pub struct TCompactOutputProtocol {
+    /// Identifier of the last field serialized for a struct.
+    last_write_field_id: i16,
+    /// Stack of the last written field ids (a new entry is added each time a nested struct is written).
+    write_field_id_stack: Vec<i16>,
+    /// Field identifier of the boolean field to be written.
+    /// Saved because boolean fields and their value are encoded in a single byte
+    pending_write_bool_field_identifier: Option<TFieldIdentifier>,
+    /// Underlying transport used for byte-level operations.
+    transport: Rc<RefCell<Box<TTransport>>>,
+}
+
+impl TCompactOutputProtocol {
+    pub fn new(transport: Rc<RefCell<Box<TTransport>>>) -> TCompactOutputProtocol {
+       TCompactOutputProtocol {
+           last_write_field_id: 0,
+           write_field_id_stack: Vec::new(),
+           pending_write_bool_field_identifier: None,
+           transport: transport
+       }
+    }
+
+    // FIXME: field_type as unconstrained u8 is bad
+    fn write_field_header(&mut self, field_type: u8, field_id: i16) -> ::Result<()> {
+        let field_delta = self.last_write_field_id - field_id;
+        if field_delta > 0 && field_delta < 15 {
+            try!(self.write_byte(((field_delta as u8) << 4) | field_type));
+        } else {
+            try!(self.write_byte(field_type));
+            try!(self.write_i16(field_id));
+        }
+        self.last_write_field_id = field_id;
+        Ok(())
+    }
+
+    fn write_list_set_begin(&mut self, element_type: TType, element_count: i32) -> ::Result<()> {
+        let elem_identifier = type_to_u8(element_type);
+        if element_count <= 14 {
+            let header = (element_count as u8) << 4 | elem_identifier;
+            self.write_byte(header)
+        } else {
+            let header = 0xF0 | elem_identifier;
+            try!(self.write_byte(header));
+            self.transport.borrow_mut().write_varint(element_count as u32).map_err(From::from).map(|_| ())
+        }
+    }
+}
+
+impl TOutputProtocol for TCompactOutputProtocol {
+    fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
+        try!(self.write_byte(COMPACT_PROTOCOL_ID));
+        try!(self.write_byte((u8::from(identifier.message_type) << 5) | COMPACT_VERSION));
+        try!(self.write_i32(identifier.sequence_number));
+        try!(self.write_string(&identifier.name));
+        Ok(())
+    }
+
+    fn write_message_end(&mut self) -> ::Result<()> {
+        Ok(())
+    }
+
+    fn write_struct_begin(&mut self, _: &TStructIdentifier) -> ::Result<()> {
+        self.write_field_id_stack.push(self.last_write_field_id);
+        self.last_write_field_id = 0;
+        Ok(())
+    }
+
+    fn write_struct_end(&mut self) -> ::Result<()> {
+        self.last_write_field_id = self.write_field_id_stack.pop().expect("should have previous field ids");
+        Ok(())
+    }
+
+    fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> ::Result<()> {
+        match identifier.field_type {
+            TType::Bool => {
+                if self.pending_write_bool_field_identifier.is_some() {
+                    panic!("should not have a pending bool while writing another bool with id: {:?}", identifier)
+                }
+                self.pending_write_bool_field_identifier = Some(identifier.clone());
+                Ok(())
+            },
+            _ => {
+                let field_type = type_to_u8(identifier.field_type);
+                let field_id = identifier.id.expect("non-stop field should have field id");
+                self.write_field_header(field_type, field_id)
+            }
+        }
+    }
+
+    fn write_field_end(&mut self) -> ::Result<()> {
+        Ok(())
+    }
+
+    fn write_field_stop(&mut self) -> ::Result<()> {
+        self.write_byte(type_to_u8(TType::Stop))
+    }
+
+    fn write_bool(&mut self, b: bool) -> ::Result<()> {
+        match self.pending_write_bool_field_identifier.take() {
+            Some(pending) => {
+                let field_id = pending.id.expect("bool field should have a field id");
+                let field_type_as_u8 = if b {
+                    0x01
+                } else {
+                    0x02
+                };
+                self.write_field_header(field_type_as_u8, field_id)
+            },
+            None => {
+                if b {
+                    self.write_byte(0x01)
+                } else {
+                    self.write_byte(0x02)
+                }
+            }
+        }
+    }
+
+    fn write_bytes(&mut self, b: &[u8]) -> ::Result<()> {
+        try!(self.transport.borrow_mut().write_varint(b.len() as u32));
+        self.transport.borrow_mut().write_all(b).map_err(From::from)
+    }
+
+    fn write_i8(&mut self, i: i8) -> ::Result<()> {
+        self.write_byte(i as u8)
+    }
+
+    fn write_i16(&mut self, i: i16) -> ::Result<()> {
+        self.transport.borrow_mut().write_varint(i).map_err(From::from).map(|_| ())
+    }
+
+    fn write_i32(&mut self, i: i32) -> ::Result<()> {
+        self.transport.borrow_mut().write_varint(i).map_err(From::from).map(|_| ())
+    }
+
+    fn write_i64(&mut self, i: i64) -> ::Result<()> {
+        self.transport.borrow_mut().write_varint(i).map_err(From::from).map(|_| ())
+    }
+
+    fn write_double(&mut self, d: f64) -> ::Result<()> {
+        self.transport.borrow_mut().write_f64::<BigEndian>(d).map_err(From::from)
+    }
+
+    fn write_string(&mut self, s: &str) -> ::Result<()> {
+        self.write_bytes(s.as_bytes())
+    }
+
+    fn write_list_begin(&mut self, identifier: &TListIdentifier) -> ::Result<()> {
+        self.write_list_set_begin(identifier.element_type, identifier.size)
+    }
+
+    fn write_list_end(&mut self) -> ::Result<()> {
+        Ok(())
+    }
+
+    fn write_set_begin(&mut self, identifier: &TSetIdentifier) -> ::Result<()> {
+        self.write_list_set_begin(identifier.element_type, identifier.size)
+    }
+
+    fn write_set_end(&mut self) -> ::Result<()> {
+        Ok(())
+    }
+
+    fn write_map_begin(&mut self, identifier: &TMapIdentifier) -> ::Result<()> {
+        if identifier.size == 0 {
+            self.write_byte(0)
+        } else {
+            try!(self.transport.borrow_mut().write_varint(identifier.size as u32));
+
+            let key_type = identifier.key_type.expect("map identifier to write should contain key type");
+            let key_type_byte = type_to_u8(key_type) << 4;
+
+            let val_type = identifier.value_type.expect("map identifier to write should contain value type");
+            let val_type_byte = type_to_u8(val_type);
+
+            let map_type_header = key_type_byte | val_type_byte;
+            self.write_byte(map_type_header)
+        }
+    }
+
+    fn write_map_end(&mut self) -> ::Result<()> {
+        Ok(())
+    }
+
+    fn flush(&mut self) -> ::Result<()> {
+        self.transport.borrow_mut().flush().map_err(From::from)
+    }
+
+    //
+    // utility
+    //
+
+    fn write_byte(&mut self, b: u8) -> ::Result<()> {
+        self.transport.borrow_mut().write(&[b]).map_err(From::from).map(|_| ())
+    }
+}
+
+/// Convenience object that can be used to
+/// create an instance of `TCompactProtocol`.
+pub struct TCompactOutputProtocolFactory;
+impl TOutputProtocolFactory for TCompactOutputProtocolFactory {
+    fn create(&mut self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TOutputProtocol> {
+        Box::new(TCompactOutputProtocol::new(transport)) as Box<TOutputProtocol>
+    }
+}
+
+fn type_to_u8(field_type: TType) -> u8 {
+    match field_type {
+        TType::Stop => 0x00,
+        TType::I08 => 0x03, // equivalent to TType::Byte
+        TType::I16 => 0x04,
+        TType::I32 => 0x05,
+        TType::I64 => 0x06,
+        TType::Double => 0x07,
+        TType::String => 0x08,
+        TType::List => 0x09,
+        TType::Set => 0x0A,
+        TType::Map => 0x0B,
+        TType::Struct => 0x0C,
+        _ => panic!(format!("should not have attempted to convert {} to u8", field_type))
+    }
+}
+
+fn u8_to_type(b: u8) -> ::Result<TType> {
+    match b {
+        0x00 => Ok(TType::Stop),
+        0x03 => Ok(TType::I08), // equivalent to TType::Byte
+        0x04 => Ok(TType::I16),
+        0x05 => Ok(TType::I32),
+        0x06 => Ok(TType::I64),
+        0x07 => Ok(TType::Double),
+        0x08 => Ok(TType::String),
+        0x09 => Ok(TType::List),
+        0x0A => Ok(TType::Set),
+        0x0B => Ok(TType::Map),
+        0x0C => Ok(TType::Struct),
+        unkn => Err(
+            ::Error::Protocol(
+                ::ProtocolError {
+                    kind: ::ProtocolErrorKind::InvalidData,
+                    message: format!("cannot convert {} into TType", unkn),
+                }
+            )
+        )
     }
 }
 

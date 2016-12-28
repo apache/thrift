@@ -376,7 +376,7 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "use try_from::TryFrom;" << endl;
   f_gen_ << endl;
   f_gen_ << "use rift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind, TThriftClient};" << endl;
-  f_gen_ << "use rift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
+  f_gen_ << "use rift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TInputProtocol, TOutputProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
   f_gen_ << "use rift::protocol::field_id;" << endl;
   f_gen_ << "use rift::protocol::verify_expected_message_type;" << endl;
   f_gen_ << "use rift::protocol::verify_expected_sequence_number;" << endl;
@@ -704,7 +704,7 @@ void t_rs_generator::render_enum_impl(t_enum* tenum) {
 
   f_gen_
     << indent()
-    << "pub fn write_to_out_protocol(&self, o_prot: &mut TProtocol) -> rift::Result<()> {"
+    << "pub fn write_to_out_protocol(&self, o_prot: &mut TOutputProtocol) -> rift::Result<()> {"
     << endl;
   indent_up();
   f_gen_ << indent() << "o_prot.write_i32(*self as i32)" << endl;
@@ -713,7 +713,7 @@ void t_rs_generator::render_enum_impl(t_enum* tenum) {
 
   f_gen_
     << indent()
-    << "pub fn read_from_in_protocol(i_prot: &mut TProtocol) -> rift::Result<" << tenum->get_name() << "> {"
+    << "pub fn read_from_in_protocol(i_prot: &mut TInputProtocol) -> rift::Result<" << tenum->get_name() << "> {"
     << endl;
   indent_up();
 
@@ -1023,7 +1023,7 @@ void t_rs_generator::render_struct_write_to_out_protocol(t_struct* tstruct, t_rs
   f_gen_
     << indent()
     << visibility_qualifier(struct_type)
-    << "fn write_to_out_protocol(&self, o_prot: &mut TProtocol) -> rift::Result<()> {"
+    << "fn write_to_out_protocol(&self, o_prot: &mut TOutputProtocol) -> rift::Result<()> {"
     << endl;
   indent_up();
 
@@ -1056,7 +1056,7 @@ void t_rs_generator::render_struct_write_to_out_protocol(t_struct* tstruct, t_rs
 void t_rs_generator::render_union_write_to_out_protocol(const string& union_name, t_struct* tstruct) {
   f_gen_
     << indent()
-    << "pub fn write_to_out_protocol(&self, o_prot: &mut TProtocol) -> rift::Result<()> {"
+    << "pub fn write_to_out_protocol(&self, o_prot: &mut TOutputProtocol) -> rift::Result<()> {"
     << endl;
   indent_up();
 
@@ -1265,7 +1265,7 @@ void t_rs_generator::render_struct_read_from_in_protocol(const string& struct_na
   f_gen_
     << indent()
     << visibility_qualifier(struct_type)
-    << "fn read_from_in_protocol(i_prot: &mut TProtocol) -> rift::Result<" << struct_name << "> {"
+    << "fn read_from_in_protocol(i_prot: &mut TInputProtocol) -> rift::Result<" << struct_name << "> {"
     << endl;
   indent_up();
 
@@ -1385,7 +1385,7 @@ void t_rs_generator::render_struct_read_from_in_protocol(const string& struct_na
 void t_rs_generator::render_union_read_from_in_protocol(const string& union_name, t_struct* tstruct) {
   f_gen_
     << indent()
-    << "pub fn read_from_in_protocol(i_prot: &mut TProtocol) -> rift::Result<" << union_name << "> {"
+    << "pub fn read_from_in_protocol(i_prot: &mut TInputProtocol) -> rift::Result<" << union_name << "> {"
     << endl;
   indent_up();
 
@@ -1686,8 +1686,8 @@ void t_rs_generator::render_sync_client(t_service* tservice) {
   // render the definition for the client struct
   f_gen_ << "pub struct " << client_impl_struct_name << " {" << endl;
   indent_up();
-  f_gen_ << indent() << "_i_prot: Rc<RefCell<Box<TProtocol>>>," << endl;
-  f_gen_ << indent() << "_o_prot: Rc<RefCell<Box<TProtocol>>>," << endl;
+  f_gen_ << indent() << "_i_prot: Box<TInputProtocol>," << endl;
+  f_gen_ << indent() << "_o_prot: Box<TOutputProtocol>," << endl;
   f_gen_ << indent() << "_sequence_number: i32," << endl;
   indent_down();
   f_gen_ << "}" << endl;
@@ -1708,8 +1708,8 @@ void t_rs_generator::render_sync_client(t_service* tservice) {
   // render the client helper trait for the struct
   f_gen_ << indent() << "impl TThriftClient for " << client_impl_struct_name << " {" << endl;
   indent_up();
-  f_gen_ << indent() << "fn i_prot(&mut self) -> Rc<RefCell<Box<TProtocol>>> { self._i_prot.clone() }" << endl;
-  f_gen_ << indent() << "fn o_prot(&mut self) -> Rc<RefCell<Box<TProtocol>>> { self._o_prot.clone() }" << endl;
+  f_gen_ << indent() << "fn i_prot(&mut self) -> &mut TInputProtocol { &mut *self._i_prot }" << endl;
+  f_gen_ << indent() << "fn o_prot(&mut self) -> &mut TOutputProtocol { &mut *self._o_prot }" << endl;
   f_gen_ << indent() << "fn sequence_number(&self) -> i32 { self._sequence_number }" << endl;
   f_gen_ << indent() << "fn increment_sequence_number(&mut self) { self._sequence_number += 1 }" << endl;
   indent_down();
@@ -1794,18 +1794,10 @@ void t_rs_generator::render_service_sync_client_trait(t_service* tservice) {
 }
 
 void t_rs_generator::render_sync_client_lifecycle_functions(const string& client_struct) {
-  // constructor (shared protocol)
-  f_gen_ << indent() << "pub fn new(protocol: Box<TProtocol>) -> " << client_struct << " {" << endl;
+  // constructor
+  f_gen_ << indent() << "pub fn new(input_protocol: Box<TInputProtocol>, output_protocol: Box<TOutputProtocol>) -> " << client_struct << " {" << endl;
   indent_up();
-  f_gen_ << indent() << "let p = Rc::new(RefCell::new(protocol));" << endl;
-  f_gen_ << indent() << client_struct << " { _i_prot: p.clone(), _o_prot: p.clone(), _sequence_number: 0 }" << endl;
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
-
-  // constructor (separate protcols)
-  f_gen_ << indent() << "pub fn with_separate_protocols(input_protocol: Box<TProtocol>, output_protocol: Box<TProtocol>) -> " << client_struct << " {" << endl;
-  indent_up();
-  f_gen_ << indent() << client_struct << " { _i_prot: Rc::new(RefCell::new(input_protocol)), _o_prot: Rc::new(RefCell::new(output_protocol)), _sequence_number: 0 }" << endl;
+  f_gen_ << indent() << client_struct << " { _i_prot: input_protocol, _o_prot: output_protocol, _sequence_number: 0 }" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
@@ -1842,10 +1834,6 @@ void t_rs_generator::render_sync_send_recv_wrapper(t_function* tfunc) {
 
   f_gen_ << indent() << "fn " << func_name <<  func_decl_args << " -> rift::Result<" << func_return << "> {" << endl;
   indent_up();
-  f_gen_ << indent() << "let o_prot = self.o_prot();" << endl;
-  if (!tfunc->is_oneway()) {
-    f_gen_ << indent() << "let i_prot = self.i_prot();" << endl;
-  }
   f_gen_ << indent() << "try!(" << endl;
   indent_up();
   render_sync_send(tfunc);
@@ -1897,10 +1885,10 @@ void t_rs_generator::render_sync_send(t_function* tfunc) {
     << " };"
     << endl;
   // write everything over the wire
-  f_gen_ << indent() << "try!(o_prot.borrow_mut().write_message_begin(&message_ident));" << endl;
-  f_gen_ << indent() << "try!(call_args.write_to_out_protocol(&mut **o_prot.borrow_mut()));" << endl; // written even if we have 0 args
-  f_gen_ << indent() << "try!(o_prot.borrow_mut().write_message_end());" << endl;
-  f_gen_ << indent() << "o_prot.borrow_mut().flush()" << endl;
+  f_gen_ << indent() << "try!(self.o_prot().write_message_begin(&message_ident));" << endl;
+  f_gen_ << indent() << "try!(call_args.write_to_out_protocol(self.o_prot()));" << endl; // written even if we have 0 args
+  f_gen_ << indent() << "try!(self.o_prot().write_message_end());" << endl;
+  f_gen_ << indent() << "self.o_prot().flush()" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 }
@@ -1908,20 +1896,20 @@ void t_rs_generator::render_sync_send(t_function* tfunc) {
 void t_rs_generator::render_sync_recv(t_function* tfunc) {
   f_gen_ << indent() << "{" << endl;
   indent_up();
-  f_gen_ << indent() << "let message_ident = try!(i_prot.borrow_mut().read_message_begin());" << endl;
+  f_gen_ << indent() << "let message_ident = try!(self.i_prot().read_message_begin());" << endl;
   f_gen_ << indent() << "try!(verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number));" << endl;
   f_gen_ << indent() << "try!(verify_expected_service_call(\"" << tfunc->get_name() <<"\", &message_ident.name));" << endl; // note: use *original* name
   // FIXME: replace with a "try" block
   f_gen_ << indent() << "if message_ident.message_type == TMessageType::Exception {" << endl;
   indent_up();
-  f_gen_ << indent() << "let remote_error = try!(rift::Error::read_application_error_from_in_protocol(&mut **i_prot.borrow_mut()));" << endl;
-  f_gen_ << indent() << "try!(i_prot.borrow_mut().read_message_end());" << endl;
+  f_gen_ << indent() << "let remote_error = try!(rift::Error::read_application_error_from_in_protocol(self.i_prot()));" << endl;
+  f_gen_ << indent() << "try!(self.i_prot().read_message_end());" << endl;
   f_gen_ << indent() << "return Err(rift::Error::Application(remote_error))" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
   f_gen_ << indent() << "try!(verify_expected_message_type(TMessageType::Reply, message_ident.message_type));" << endl;
-  f_gen_ << indent() << "let result = try!(" << service_call_result_struct_name(tfunc) << "::read_from_in_protocol(&mut **i_prot.borrow_mut()));" << endl;
-  f_gen_ << indent() << "try!(i_prot.borrow_mut().read_message_end());" << endl;
+  f_gen_ << indent() << "let result = try!(" << service_call_result_struct_name(tfunc) << "::read_from_in_protocol(self.i_prot()));" << endl;
+  f_gen_ << indent() << "try!(self.i_prot().read_message_end());" << endl;
   f_gen_ << indent() << "result.ok_or()" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
@@ -2045,7 +2033,7 @@ void t_rs_generator::render_service_processor(t_service* tservice) {
 
   f_gen_
     << indent()
-    << "fn process(&mut self, i_prot: &mut TProtocol, o_prot: &mut TProtocol) -> rift::Result<()> {"
+    << "fn process(&mut self, i_prot: &mut TInputProtocol, o_prot: &mut TOutputProtocol) -> rift::Result<()> {"
     << endl;
   indent_up();
   f_gen_ << indent() << "let message_ident = try!(i_prot.read_message_begin());" << endl;
@@ -2090,8 +2078,8 @@ void t_rs_generator::render_service_process_function(t_function* tfunc) {
     << "fn process_" << rust_snake_case(tfunc->get_name())
     << "(&mut self, "
     << sequence_number_param << ": i32, "
-    << "i_prot: &mut TProtocol, "
-    << output_protocol_param << ": &mut TProtocol) "
+    << "i_prot: &mut TInputProtocol, "
+    << output_protocol_param << ": &mut TOutputProtocol) "
     << "-> rift::Result<()> {"
     << endl;
 

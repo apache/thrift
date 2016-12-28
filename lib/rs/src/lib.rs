@@ -58,10 +58,7 @@ pub mod transport;
 mod errors;
 pub use errors::*;
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
-use self::protocol::TProtocol;
+use self::protocol::{TInputProtocol, TOutputProtocol};
 
 /// Result type returned by all rift functions.
 /// As is convention, this is a typedef of `std::result::Result`
@@ -69,8 +66,8 @@ use self::protocol::TProtocol;
 pub type Result<T> = std::result::Result<T, self::Error>;
 
 pub trait TThriftClient {
-    fn i_prot(&mut self) -> Rc<RefCell<Box<TProtocol>>>;
-    fn o_prot(&mut self) -> Rc<RefCell<Box<TProtocol>>>;
+    fn i_prot(&mut self) -> &mut TInputProtocol;
+    fn o_prot(&mut self) -> &mut TOutputProtocol;
     fn sequence_number(&self) -> i32;
     fn increment_sequence_number(&mut self);
 }

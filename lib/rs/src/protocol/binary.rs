@@ -18,210 +18,34 @@
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt, WriteBytesExt};
 use std::cell::RefCell;
 use std::convert::From;
+use std::io::{Read, Write};
 use std::rc::Rc;
 use try_from::TryFrom;
 
 use ::{ProtocolError, ProtocolErrorKind};
 use ::transport::TTransport;
-use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TProtocol, TProtocolFactory, TSetIdentifier, TStructIdentifier, TType};
+use super::{TFieldIdentifier, TInputProtocol, TInputProtocolFactory, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType};
+use super::{TOutputProtocol, TOutputProtocolFactory, TSetIdentifier, TStructIdentifier, TType};
 
 /// Identifies the serialized message as conforming to Thrift binary protocol version 1.
 const BINARY_PROTOCOL_VERSION_1: u32 = 0x80010000;
 
 /// Sends messages over an underlying transport
 /// `transport` using a simple binary protocol.
-pub struct TBinaryProtocol {
+pub struct TBinaryInputProtocol {
     /// Set to `true` if the strict binary protocol is to be used.
-    pub strict: bool,
+    strict: bool,
     /// Underlying transport used for byte-level operations.
-    pub transport: Rc<RefCell<Box<TTransport>>>,
+    transport: Rc<RefCell<Box<TTransport>>>,
 }
 
-impl TBinaryProtocol {
-    pub fn new(strict: bool, transport: Rc<RefCell<Box<TTransport>>>) -> TBinaryProtocol {
-        TBinaryProtocol { strict: strict, transport: transport }
-    }
-
-    fn write_transport(&mut self, buf: &[u8]) -> ::Result<()> {
-        self.transport.borrow_mut().write(buf).map(|_| ()).map_err(From::from)
+impl TBinaryInputProtocol {
+    pub fn new(strict: bool, transport: Rc<RefCell<Box<TTransport>>>) -> TBinaryInputProtocol {
+        TBinaryInputProtocol { strict: strict, transport: transport }
     }
 }
 
-fn field_type_to_u8(field_type: TType) -> u8 {
-    match field_type {
-        TType::Stop => 0x00,
-        TType::Void => 0x01,
-        TType::Bool => 0x02,
-        TType::I08 => 0x03, // equivalent to TType::Byte
-        TType::Double => 0x04,
-        TType::I16 => 0x06,
-        TType::I32 => 0x08,
-        TType::I64 => 0x0A,
-        TType::String => 0x0B,
-        TType::Utf7 => 0x0B,
-        TType::Struct => 0x0C,
-        TType::Map => 0x0D,
-        TType::Set => 0x0E,
-        TType::List => 0x0F,
-        TType::Utf8 => 0x10,
-        TType::Utf16 => 0x11,
-    }
-}
-
-fn field_type_from_u8(b: u8) -> ::Result<TType> {
-    match b {
-        0x00 => Ok(TType::Stop),
-        0x01 => Ok(TType::Void),
-        0x02 => Ok(TType::Bool),
-        0x03 => Ok(TType::I08), // Equivalent to TType::Byte
-        0x04 => Ok(TType::Double),
-        0x06 => Ok(TType::I16),
-        0x08 => Ok(TType::I32),
-        0x0A => Ok(TType::I64),
-        0x0B => Ok(TType::String), // technically, also a UTF7, but we'll treat it as string
-        0x0C => Ok(TType::Struct),
-        0x0D => Ok(TType::Map),
-        0x0E => Ok(TType::Set),
-        0x0F => Ok(TType::List),
-        0x10 => Ok(TType::Utf8),
-        0x11 => Ok(TType::Utf16),
-        unkn => Err(
-            ::Error::Protocol(
-                ProtocolError {
-                    kind: ProtocolErrorKind::InvalidData,
-                    message: format!("cannot convert {} to TType", unkn),
-                }
-            )
-        )
-    }
-}
-
-impl TProtocol for TBinaryProtocol {
-    fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
-        if self.strict {
-            let message_type: u8 = identifier.message_type.into();
-            let header = BINARY_PROTOCOL_VERSION_1 | (message_type as u32);
-            try!(self.transport.borrow_mut().write_u32::<BigEndian>(header));
-            try!(self.write_string(&identifier.name));
-            self.write_i32(identifier.sequence_number)
-        } else {
-            try!(self.write_string(&identifier.name));
-            try!(self.write_byte(identifier.message_type.into()));
-            self.write_i32(identifier.sequence_number)
-        }
-    }
-
-    fn write_message_end(&mut self) -> ::Result<()> {
-        Ok(())
-    }
-
-    fn write_struct_begin(&mut self, _: &TStructIdentifier) -> ::Result<()> {
-        Ok(())
-    }
-
-    fn write_struct_end(&mut self) -> ::Result<()> {
-        Ok(())
-    }
-
-    fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> ::Result<()> {
-        if identifier.id.is_none() && identifier.field_type != TType::Stop {
-            return Err(
-                ::Error::Protocol(
-                    ProtocolError {
-                        kind: ProtocolErrorKind::Unknown,
-                        message: format!("cannot write identifier {:?} without sequence number", &identifier),
-                    }
-                )
-            )
-        }
-
-        try!(self.write_byte(field_type_to_u8(identifier.field_type)));
-        if let Some(id) = identifier.id {
-            self.write_i16(id)
-        } else {
-            Ok(())
-        }
-    }
-
-    fn write_field_end(&mut self) -> ::Result<()> {
-        Ok(())
-    }
-
-    fn write_field_stop(&mut self) -> ::Result<()> {
-        self.write_byte(field_type_to_u8(TType::Stop))
-    }
-
-    fn write_bytes(&mut self, b: &[u8]) -> ::Result<()> {
-        try!(self.write_i32(b.len() as i32));
-        self.write_transport(b)
-    }
-
-    fn write_bool(&mut self, b: bool) -> ::Result<()> {
-        if b {
-            self.write_i8(1)
-        } else {
-            self.write_i8(0)
-        }
-    }
-
-    fn write_i8(&mut self, i: i8) -> ::Result<()> {
-        self.transport.borrow_mut().write_i8(i).map_err(From::from)
-    }
-
-    fn write_i16(&mut self, i: i16) -> ::Result<()> {
-        self.transport.borrow_mut().write_i16::<BigEndian>(i).map_err(From::from)
-    }
-
-    fn write_i32(&mut self, i: i32) -> ::Result<()> {
-        self.transport.borrow_mut().write_i32::<BigEndian>(i).map_err(From::from)
-    }
-
-    fn write_i64(&mut self, i: i64) -> ::Result<()> {
-        self.transport.borrow_mut().write_i64::<BigEndian>(i).map_err(From::from)
-    }
-
-    fn write_double(&mut self, d: f64) -> ::Result<()> {
-        self.transport.borrow_mut().write_f64::<BigEndian>(d).map_err(From::from)
-    }
-
-    fn write_string(&mut self, s: &str) -> ::Result<()> {
-        self.write_bytes(s.as_bytes())
-    }
-
-    fn write_list_begin(&mut self, identifier: &TListIdentifier) -> ::Result<()> {
-        try!(self.write_byte(field_type_to_u8(identifier.element_type)));
-        self.write_i32(identifier.size)
-    }
-
-    fn write_list_end(&mut self) -> ::Result<()> {
-        Ok(())
-    }
-
-    fn write_set_begin(&mut self, identifier: &TSetIdentifier) -> ::Result<()> {
-        try!(self.write_byte(field_type_to_u8(identifier.element_type)));
-        self.write_i32(identifier.size)
-    }
-
-    fn write_set_end(&mut self) -> ::Result<()> {
-        Ok(())
-    }
-
-    fn write_map_begin(&mut self, identifier: &TMapIdentifier) -> ::Result<()> {
-        let key_type = identifier.key_type.expect("map identifier to write should contain key type");
-        try!(self.write_byte(field_type_to_u8(key_type)));
-        let val_type = identifier.value_type.expect("map identifier to write should contain value type");
-        try!(self.write_byte(field_type_to_u8(val_type)));
-        self.write_i32(identifier.size)
-    }
-
-    fn write_map_end(&mut self) -> ::Result<()> {
-        Ok(())
-    }
-
-    fn flush(&mut self) -> ::Result<()> {
-        self.transport.borrow_mut().flush().map_err(From::from)
-    }
-
+impl TInputProtocol for TBinaryInputProtocol {
     fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier> {
         let mut first_bytes = vec![0; 4];
         try!(self.transport.borrow_mut().read_exact(&mut first_bytes[..]));
@@ -378,21 +202,225 @@ impl TProtocol for TBinaryProtocol {
     // utility
     //
 
-    fn write_byte(&mut self, b: u8) -> ::Result<()> {
-        self.transport.borrow_mut().write_u8(b).map_err(From::from)
-    }
-
     fn read_byte(&mut self) -> ::Result<u8> {
         self.transport.borrow_mut().read_u8().map_err(From::from)
     }
 }
 
-/// Convenience object that can be used to
-/// create instances of `TBinaryProtocol`.
-pub struct TBinaryProtocolFactory;
-impl TProtocolFactory for TBinaryProtocolFactory {
-    fn build(&self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TProtocol> {
-        Box::new(TBinaryProtocol { strict: true, transport: transport }) as Box<TProtocol>
+pub struct TBinaryInputProtocolFactory;
+impl TInputProtocolFactory for TBinaryInputProtocolFactory {
+    fn create(&mut self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TInputProtocol> {
+        Box::new(TBinaryInputProtocol::new(true, transport)) as Box<TInputProtocol>
+    }
+}
+
+/// Sends messages over an underlying transport
+/// `transport` using a simple binary protocol.
+pub struct TBinaryOutputProtocol {
+    /// Set to `true` if the strict binary protocol is to be used.
+    strict: bool,
+    /// Underlying transport used for byte-level operations.
+    transport: Rc<RefCell<Box<TTransport>>>,
+}
+
+impl TBinaryOutputProtocol {
+    pub fn new(strict: bool, transport: Rc<RefCell<Box<TTransport>>>) -> TBinaryOutputProtocol {
+        TBinaryOutputProtocol { strict: strict, transport: transport }
+    }
+
+    fn write_transport(&mut self, buf: &[u8]) -> ::Result<()> {
+        self.transport.borrow_mut().write(buf).map(|_| ()).map_err(From::from)
+    }
+}
+
+impl TOutputProtocol for TBinaryOutputProtocol {
+    fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
+        if self.strict {
+            let message_type: u8 = identifier.message_type.into();
+            let header = BINARY_PROTOCOL_VERSION_1 | (message_type as u32);
+            try!(self.transport.borrow_mut().write_u32::<BigEndian>(header));
+            try!(self.write_string(&identifier.name));
+            self.write_i32(identifier.sequence_number)
+        } else {
+            try!(self.write_string(&identifier.name));
+            try!(self.write_byte(identifier.message_type.into()));
+            self.write_i32(identifier.sequence_number)
+        }
+    }
+
+    fn write_message_end(&mut self) -> ::Result<()> {
+        Ok(())
+    }
+
+    fn write_struct_begin(&mut self, _: &TStructIdentifier) -> ::Result<()> {
+        Ok(())
+    }
+
+    fn write_struct_end(&mut self) -> ::Result<()> {
+        Ok(())
+    }
+
+    fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> ::Result<()> {
+        if identifier.id.is_none() && identifier.field_type != TType::Stop {
+            return Err(
+                ::Error::Protocol(
+                    ProtocolError {
+                        kind: ProtocolErrorKind::Unknown,
+                        message: format!("cannot write identifier {:?} without sequence number", &identifier),
+                    }
+                )
+            )
+        }
+
+        try!(self.write_byte(field_type_to_u8(identifier.field_type)));
+        if let Some(id) = identifier.id {
+            self.write_i16(id)
+        } else {
+            Ok(())
+        }
+    }
+
+    fn write_field_end(&mut self) -> ::Result<()> {
+        Ok(())
+    }
+
+    fn write_field_stop(&mut self) -> ::Result<()> {
+        self.write_byte(field_type_to_u8(TType::Stop))
+    }
+
+    fn write_bytes(&mut self, b: &[u8]) -> ::Result<()> {
+        try!(self.write_i32(b.len() as i32));
+        self.write_transport(b)
+    }
+
+    fn write_bool(&mut self, b: bool) -> ::Result<()> {
+        if b {
+            self.write_i8(1)
+        } else {
+            self.write_i8(0)
+        }
+    }
+
+    fn write_i8(&mut self, i: i8) -> ::Result<()> {
+        self.transport.borrow_mut().write_i8(i).map_err(From::from)
+    }
+
+    fn write_i16(&mut self, i: i16) -> ::Result<()> {
+        self.transport.borrow_mut().write_i16::<BigEndian>(i).map_err(From::from)
+    }
+
+    fn write_i32(&mut self, i: i32) -> ::Result<()> {
+        self.transport.borrow_mut().write_i32::<BigEndian>(i).map_err(From::from)
+    }
+
+    fn write_i64(&mut self, i: i64) -> ::Result<()> {
+        self.transport.borrow_mut().write_i64::<BigEndian>(i).map_err(From::from)
+    }
+
+    fn write_double(&mut self, d: f64) -> ::Result<()> {
+        self.transport.borrow_mut().write_f64::<BigEndian>(d).map_err(From::from)
+    }
+
+    fn write_string(&mut self, s: &str) -> ::Result<()> {
+        self.write_bytes(s.as_bytes())
+    }
+
+    fn write_list_begin(&mut self, identifier: &TListIdentifier) -> ::Result<()> {
+        try!(self.write_byte(field_type_to_u8(identifier.element_type)));
+        self.write_i32(identifier.size)
+    }
+
+    fn write_list_end(&mut self) -> ::Result<()> {
+        Ok(())
+    }
+
+    fn write_set_begin(&mut self, identifier: &TSetIdentifier) -> ::Result<()> {
+        try!(self.write_byte(field_type_to_u8(identifier.element_type)));
+        self.write_i32(identifier.size)
+    }
+
+    fn write_set_end(&mut self) -> ::Result<()> {
+        Ok(())
+    }
+
+    fn write_map_begin(&mut self, identifier: &TMapIdentifier) -> ::Result<()> {
+        let key_type = identifier.key_type.expect("map identifier to write should contain key type");
+        try!(self.write_byte(field_type_to_u8(key_type)));
+        let val_type = identifier.value_type.expect("map identifier to write should contain value type");
+        try!(self.write_byte(field_type_to_u8(val_type)));
+        self.write_i32(identifier.size)
+    }
+
+    fn write_map_end(&mut self) -> ::Result<()> {
+        Ok(())
+    }
+
+    fn flush(&mut self) -> ::Result<()> {
+        self.transport.borrow_mut().flush().map_err(From::from)
+    }
+
+    //
+    // utility
+    //
+
+    fn write_byte(&mut self, b: u8) -> ::Result<()> {
+        self.transport.borrow_mut().write_u8(b).map_err(From::from)
+    }
+}
+
+pub struct TBinaryOutputProtocolFactory;
+impl TOutputProtocolFactory for TBinaryOutputProtocolFactory {
+    fn create(&mut self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TOutputProtocol> {
+        Box::new(TBinaryOutputProtocol::new(true, transport)) as Box<TOutputProtocol>
+    }
+}
+
+fn field_type_to_u8(field_type: TType) -> u8 {
+    match field_type {
+        TType::Stop => 0x00,
+        TType::Void => 0x01,
+        TType::Bool => 0x02,
+        TType::I08 => 0x03, // equivalent to TType::Byte
+        TType::Double => 0x04,
+        TType::I16 => 0x06,
+        TType::I32 => 0x08,
+        TType::I64 => 0x0A,
+        TType::String => 0x0B,
+        TType::Utf7 => 0x0B,
+        TType::Struct => 0x0C,
+        TType::Map => 0x0D,
+        TType::Set => 0x0E,
+        TType::List => 0x0F,
+        TType::Utf8 => 0x10,
+        TType::Utf16 => 0x11,
+    }
+}
+
+fn field_type_from_u8(b: u8) -> ::Result<TType> {
+    match b {
+        0x00 => Ok(TType::Stop),
+        0x01 => Ok(TType::Void),
+        0x02 => Ok(TType::Bool),
+        0x03 => Ok(TType::I08), // Equivalent to TType::Byte
+        0x04 => Ok(TType::Double),
+        0x06 => Ok(TType::I16),
+        0x08 => Ok(TType::I32),
+        0x0A => Ok(TType::I64),
+        0x0B => Ok(TType::String), // technically, also a UTF7, but we'll treat it as string
+        0x0C => Ok(TType::Struct),
+        0x0D => Ok(TType::Map),
+        0x0E => Ok(TType::Set),
+        0x0F => Ok(TType::List),
+        0x10 => Ok(TType::Utf8),
+        0x11 => Ok(TType::Utf16),
+        unkn => Err(
+            ::Error::Protocol(
+                ProtocolError {
+                    kind: ProtocolErrorKind::InvalidData,
+                    message: format!("cannot convert {} to TType", unkn),
+                }
+            )
+        )
     }
 }
 

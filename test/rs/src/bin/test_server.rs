@@ -26,7 +26,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::thread;
 use std::time::Duration;
 
-use rift::protocol::{TBinaryProtocolFactory, TCompactProtocolFactory, TProtocolFactory};
+use rift::protocol::{TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory, TCompactInputProtocolFactory, TCompactOutputProtocolFactory, TInputProtocolFactory, TOutputProtocolFactory};
 use rift::server::TSimpleServer;
 use rift::transport::{TBufferedTransportFactory, TFramedTransportFactory, TTransportFactory};
 use rift_test::*;
@@ -55,12 +55,18 @@ fn main() {
 
     println!("binding to {}", listen_address);
 
-    let transport_factory: Box<TTransportFactory> = match &*transport {
+    let (i_transport_factory, o_transport_factory): (Box<TTransportFactory>, Box<TTransportFactory>) = match &*transport {
         "buffered" => {
-            Box::new(TBufferedTransportFactory {})
+            (
+                Box::new(TBufferedTransportFactory {}),
+                Box::new(TBufferedTransportFactory {})
+            )
         },
         "framed" => {
-            Box::new(TFramedTransportFactory {})
+            (
+                Box::new(TFramedTransportFactory {}),
+                Box::new(TFramedTransportFactory {})
+            )
         },
         unknown => {
             println!("unsupported transport type {}", unknown);
@@ -68,12 +74,18 @@ fn main() {
         }
     };
 
-    let protocol_factory: Box<TProtocolFactory> = match &*protocol {
+    let (i_protocol_factory, o_protocol_factory): (Box<TInputProtocolFactory>, Box<TOutputProtocolFactory>) = match &*protocol {
         "binary" => {
-            Box::new(TBinaryProtocolFactory {})
+            (
+                Box::new(TBinaryInputProtocolFactory {}),
+                Box::new(TBinaryOutputProtocolFactory {})
+            )
         },
         "compact" => {
-            Box::new(TCompactProtocolFactory {})
+            (
+                Box::new(TCompactInputProtocolFactory {}),
+                Box::new(TCompactOutputProtocolFactory {})
+            )
         },
         unknown => {
             println!("unsupported transport type {}", unknown);
@@ -85,7 +97,13 @@ fn main() {
 
     match &*server_type {
         "simple" => {
-            let mut server = TSimpleServer::with_shared(transport_factory, protocol_factory, processor);
+            let mut server = TSimpleServer::new(
+                i_transport_factory,
+                i_protocol_factory,
+                o_transport_factory,
+                o_protocol_factory,
+                processor
+            );
             match server.listen(&listen_address) {
                 Ok(_) => println!("listen completed successfully"),
                 Err(e) => println!("listen failed with error {:?}", e),

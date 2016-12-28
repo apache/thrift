@@ -27,7 +27,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 use std::rc::Rc;
 
-use rift::protocol::TProtocol;
+use rift::protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TCompactInputProtocol, TCompactOutputProtocol, TInputProtocol, TOutputProtocol};
 use rift::transport::{TBufferedTransport, TFramedTransport, TTcpTransport, TTransport};
 use rift_test::*;
 
@@ -58,28 +58,37 @@ fn main() {
     let transport = matches.value_of("transport").unwrap_or("buffered");
     let protocol = matches.value_of("protocol").unwrap_or("binary");
 
+    let t = open_tcp_transport(host, port);
     let t: Box<TTransport> = match transport {
         "buffered" => {
-            let t = open_tcp_transport(host, port);
             Box::new(TBufferedTransport::new(t))
         },
         "framed" => {
-            let t = open_tcp_transport(host, port);
             Box::new(TFramedTransport::new(t))
         },
         unmatched => panic!(format!("unsupported transport {}", unmatched)),
     };
     let t = Rc::new(RefCell::new(t));
 
-    let p: Box<TProtocol> = match protocol {
-        "binary" => Box::new(rift::protocol::TBinaryProtocol { strict: true, transport: t.clone() }),
-        "compact" => Box::new(rift::protocol::TCompactProtocol::new(t.clone()) ),
+    let (i_prot, o_prot): (Box<TInputProtocol>, Box<TOutputProtocol>) = match protocol {
+        "binary" => {
+            (
+                Box::new(TBinaryInputProtocol::new(true, t.clone())),
+                Box::new(TBinaryOutputProtocol::new(true, t.clone()))
+            )
+        },
+        "compact" => {
+            (
+                Box::new(TCompactInputProtocol::new(t.clone())),
+                Box::new(TCompactOutputProtocol::new(t.clone())),
+            )
+        }
         unmatched => panic!(format!("unsupported protocol {}", unmatched)),
     };
 
     println!("connecting to {}:{} with {}+{} stack", host, port, protocol, transport);
 
-    let mut client = ThriftTestSyncClient::new(p);
+    let mut client = ThriftTestSyncClient::new(i_prot, o_prot);
 
     for _ in 0..testloops {
         match make_thrift_calls(&mut client) {

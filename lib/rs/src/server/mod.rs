@@ -15,14 +15,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use ::protocol::TProtocol;
+use ::protocol::{TInputProtocol, TOutputProtocol};
 
 mod simple;
 
 pub use self::simple::TSimpleServer;
 
 pub trait TProcessor {
-    fn process(&mut self, i: &mut TProtocol, o: &mut TProtocol) -> ::Result<()>;
+    fn process(&mut self, i: &mut TInputProtocol, o: &mut TOutputProtocol) -> ::Result<()>;
 }
 
 // FIXME: TMultiplexedProcessor (see multiplexed_protocol.go)

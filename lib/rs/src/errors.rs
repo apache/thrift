@@ -21,7 +21,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::{error, fmt, io, string};
 use try_from::TryFrom;
 
-use ::protocol::{TFieldIdentifier, TProtocol, TStructIdentifier, TType};
+use ::protocol::{TFieldIdentifier, TInputProtocol, TOutputProtocol, TStructIdentifier, TType};
 
 // FIXME: should all my error structs impl error::Error as well?
 // FIXME: should all fields in TransportError, ProtocolError and ApplicationError be optional?
@@ -33,7 +33,7 @@ pub enum Error {
 }
 
 impl Error {
-    pub fn read_application_error_from_in_protocol(i: &mut TProtocol) -> ::Result<ApplicationError> {
+    pub fn read_application_error_from_in_protocol(i: &mut TInputProtocol) -> ::Result<ApplicationError> {
         let mut message = "general remote error".to_owned();
         let mut kind = ApplicationErrorKind::Unknown;
 
@@ -71,7 +71,7 @@ impl Error {
         Ok(ApplicationError { kind: kind, message: message })
     }
 
-    pub fn write_application_error_to_out_protocol(e: &ApplicationError, o: &mut TProtocol) -> ::Result<()> {
+    pub fn write_application_error_to_out_protocol(e: &ApplicationError, o: &mut TOutputProtocol) -> ::Result<()> {
         try!(o.write_struct_begin(&TStructIdentifier { name: "TApplicationException".to_owned() }));
 
         try!(o.write_field_begin(&TFieldIdentifier { name: Some("message".to_owned()), field_type: TType::String, id: Some(1) }));

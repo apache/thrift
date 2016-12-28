@@ -27,11 +27,11 @@ use ::transport::TTransport;
 
 mod binary;
 mod compact;
-mod multiplexed;
+//mod multiplexed;
 
-pub use self::binary::{TBinaryProtocol, TBinaryProtocolFactory};
-pub use self::compact::{TCompactProtocol, TCompactProtocolFactory};
-pub use self::multiplexed::TMultiplexedProtocol;
+pub use self::binary::{TBinaryInputProtocol, TBinaryInputProtocolFactory, TBinaryOutputProtocol, TBinaryOutputProtocolFactory};
+pub use self::compact::{TCompactInputProtocol, TCompactInputProtocolFactory, TCompactOutputProtocol, TCompactOutputProtocolFactory};
+//pub use self::multiplexed::{TMultiplexedInputProtocol, TMultiplexedOutputProtocol};
 
 /// Default maximum depth to which we will skip
 /// a Thrift field. Note that we have to set a
@@ -39,44 +39,7 @@ pub use self::multiplexed::TMultiplexedProtocol;
 /// fields and so we may recurse indefinitely.
 const MAXIMUM_SKIP_DEPTH: i8 = 64;
 
-// FIXME: consider splitting apart the read and write methods -> makes ownership easier
-/// Implemented by Thrift protocols to write/read
-/// a Thrift object to/from its serialized representation.
-pub trait TProtocol {
-    /// Write a marker identifying the
-    /// beginning of a Thrift message. The
-    /// marker may contain any or all of the
-    /// parameters in `identifier`.
-    fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()>;
-    /// Write a marker identifying the end
-    /// of the Thrift message.
-    fn write_message_end(&mut self) -> ::Result<()>;
-    fn write_struct_begin(&mut self, identifier: &TStructIdentifier) -> ::Result<()>;
-    fn write_struct_end(&mut self) -> ::Result<()>;
-    fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> ::Result<()>;
-    fn write_field_end(&mut self) -> ::Result<()>;
-    fn write_field_stop(&mut self) -> ::Result<()>;
-    fn write_bool(&mut self, b: bool) -> ::Result<()>;
-    fn write_bytes(&mut self, b: &[u8]) -> ::Result<()>;
-    fn write_i8(&mut self, i: i8) -> ::Result<()>;
-    fn write_i16(&mut self, i: i16) -> ::Result<()>;
-    fn write_i32(&mut self, i: i32) -> ::Result<()>;
-    fn write_i64(&mut self, i: i64) -> ::Result<()>;
-    fn write_double(&mut self, d: f64) -> ::Result<()>;
-    fn write_string(&mut self, s: &str) -> ::Result<()>;
-    fn write_list_begin(&mut self, identifier: &TListIdentifier) -> ::Result<()>;
-    fn write_list_end(&mut self) -> ::Result<()>;
-    fn write_set_begin(&mut self, identifier: &TSetIdentifier) -> ::Result<()>;
-    fn write_set_end(&mut self) -> ::Result<()>;
-    fn write_map_begin(&mut self, identifier: &TMapIdentifier) -> ::Result<()>;
-    fn write_map_end(&mut self) -> ::Result<()>;
-
-    fn flush(&mut self) -> ::Result<()>;
-
-    //
-    // Methods to read a thrift type from its serialized form.
-    //
-
+pub trait TInputProtocol {
     fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier>;
     fn read_message_end(&mut self) -> ::Result<()>;
     fn read_struct_begin(&mut self) -> ::Result<Option<TStructIdentifier>>;
@@ -186,12 +149,53 @@ pub trait TProtocol {
     // utility (DO NOT USE IN GENERATED CODE!!!!)
     //
 
-    fn write_byte(&mut self, b: u8) -> ::Result<()>; // FIXME: REMOVE
     fn read_byte(&mut self) -> ::Result<u8>;
 }
 
-pub trait TProtocolFactory {
-    fn build(&self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TProtocol>;
+pub trait TOutputProtocol {
+    /// Write a marker identifying the
+    /// beginning of a Thrift message. The
+    /// marker may contain any or all of the
+    /// parameters in `identifier`.
+    fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()>;
+    /// Write a marker identifying the end
+    /// of the Thrift message.
+    fn write_message_end(&mut self) -> ::Result<()>;
+    fn write_struct_begin(&mut self, identifier: &TStructIdentifier) -> ::Result<()>;
+    fn write_struct_end(&mut self) -> ::Result<()>;
+    fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> ::Result<()>;
+    fn write_field_end(&mut self) -> ::Result<()>;
+    fn write_field_stop(&mut self) -> ::Result<()>;
+    fn write_bool(&mut self, b: bool) -> ::Result<()>;
+    fn write_bytes(&mut self, b: &[u8]) -> ::Result<()>;
+    fn write_i8(&mut self, i: i8) -> ::Result<()>;
+    fn write_i16(&mut self, i: i16) -> ::Result<()>;
+    fn write_i32(&mut self, i: i32) -> ::Result<()>;
+    fn write_i64(&mut self, i: i64) -> ::Result<()>;
+    fn write_double(&mut self, d: f64) -> ::Result<()>;
+    fn write_string(&mut self, s: &str) -> ::Result<()>;
+    fn write_list_begin(&mut self, identifier: &TListIdentifier) -> ::Result<()>;
+    fn write_list_end(&mut self) -> ::Result<()>;
+    fn write_set_begin(&mut self, identifier: &TSetIdentifier) -> ::Result<()>;
+    fn write_set_end(&mut self) -> ::Result<()>;
+    fn write_map_begin(&mut self, identifier: &TMapIdentifier) -> ::Result<()>;
+    fn write_map_end(&mut self) -> ::Result<()>;
+
+    fn flush(&mut self) -> ::Result<()>;
+
+    //
+    // utility (DO NOT USE IN GENERATED CODE!!!!)
+    //
+
+    fn write_byte(&mut self, b: u8) -> ::Result<()>; // FIXME: REMOVE
+}
+
+pub trait TInputProtocolFactory {
+    fn create(&mut self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TInputProtocol>;
+}
+
+pub trait TOutputProtocolFactory {
+    fn create(&mut self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TOutputProtocol>;
 }
 
 /// Identifies an instance of a Thrift message

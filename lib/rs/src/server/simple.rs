@@ -20,48 +20,31 @@ use std::net::{TcpListener, TcpStream};
 use std::rc::Rc;
 
 use ::{ApplicationError, ApplicationErrorKind};
-use ::protocol::TProtocolFactory;
+use ::protocol::{TInputProtocolFactory, TOutputProtocolFactory};
 use ::transport::{TTcpTransport, TTransport, TTransportFactory};
 use super::TProcessor;
 
 pub struct TSimpleServer<PR: TProcessor> {
-    i_trans_factory: Rc<RefCell<Box<TTransportFactory>>>,
-    i_proto_factory: Rc<RefCell<Box<TProtocolFactory>>>,
-    o_trans_factory: Rc<RefCell<Box<TTransportFactory>>>,
-    o_proto_factory: Rc<RefCell<Box<TProtocolFactory>>>,
+    i_trans_factory: Box<TTransportFactory>,
+    i_proto_factory: Box<TInputProtocolFactory>,
+    o_trans_factory: Box<TTransportFactory>,
+    o_proto_factory: Box<TOutputProtocolFactory>,
     processor: PR,
 }
 
 impl <PR: TProcessor> TSimpleServer<PR> {
     pub fn new(
         input_transport_factory: Box<TTransportFactory>,
-        input_protocol_factory: Box<TProtocolFactory>,
+        input_protocol_factory: Box<TInputProtocolFactory>,
         output_transport_factory: Box<TTransportFactory>,
-        output_protocol_factory: Box<TProtocolFactory>,
+        output_protocol_factory: Box<TOutputProtocolFactory>,
         processor: PR
     ) -> TSimpleServer<PR> {
         TSimpleServer {
-            i_trans_factory: Rc::new(RefCell::new(input_transport_factory)),
-            i_proto_factory: Rc::new(RefCell::new(input_protocol_factory)),
-            o_trans_factory: Rc::new(RefCell::new(output_transport_factory)),
-            o_proto_factory: Rc::new(RefCell::new(output_protocol_factory)),
-            processor: processor
-        }
-    }
-
-    pub fn with_shared(
-        transport_factory: Box<TTransportFactory>,
-        protocol_factory: Box<TProtocolFactory>,
-        processor: PR
-    ) -> TSimpleServer<PR> {
-        let transport_factory = Rc::new(RefCell::new(transport_factory));
-        let protocol_factory = Rc::new(RefCell::new(protocol_factory));
-
-        TSimpleServer {
-            i_trans_factory: transport_factory.clone(),
-            i_proto_factory: protocol_factory.clone(),
-            o_trans_factory: transport_factory.clone(),
-            o_proto_factory: protocol_factory.clone(),
+            i_trans_factory: input_transport_factory,
+            i_proto_factory: input_protocol_factory,
+            o_trans_factory: output_transport_factory,
+            o_proto_factory: output_protocol_factory,
             processor: processor
         }
     }
@@ -96,14 +79,14 @@ impl <PR: TProcessor> TSimpleServer<PR> {
         let stream = Rc::new(RefCell::new(stream));
 
         // input protocol and transport
-        let i_tran = self.i_trans_factory.borrow_mut().build(stream.clone());
+        let i_tran = self.i_trans_factory.build(stream.clone());
         let i_tran = Rc::new(RefCell::new(i_tran));
-        let mut i_prot = self.i_proto_factory.borrow_mut().build(i_tran);
+        let mut i_prot = self.i_proto_factory.create(i_tran);
 
         // output protocol and transport
-        let o_tran = self.o_trans_factory.borrow_mut().build(stream.clone());
+        let o_tran = self.o_trans_factory.build(stream.clone());
         let o_tran = Rc::new(RefCell::new(o_tran));
-        let mut o_prot = self.o_proto_factory.borrow_mut().build(o_tran);
+        let mut o_prot = self.o_proto_factory.create(o_tran);
 
         // process loop
         loop {
