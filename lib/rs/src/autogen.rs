@@ -24,8 +24,8 @@ pub trait TThriftClient {
     fn increment_sequence_number(&mut self);
 }
 
-pub trait TServiceHandler {}
+pub trait TThriftHandler {}
 
-pub trait TThriftServer<H: TServiceHandler> {
+pub trait TThriftServer<H: TThriftHandler> {
     fn handler(&self) -> H;
 }

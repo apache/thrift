@@ -245,9 +245,12 @@ private:
   void render_service_sync_client_marker_trait(t_service* tservice);
   void render_service_sync_client_trait(t_service* tservice);
   void render_service_sync_handler_trait(t_service* tservice);
+  void render_service_functions(t_service* tservice, const string& handler_type);
+  void render_service_indirection_functions(t_service* tservice);
+  void render_service_match_statements(t_service* tservice);
   void render_result_value_struct(t_function* tfunc);
   void render_service_server_comment(t_service* tservice);
-  void render_service_process_function(t_function* tfunc);
+  void render_service_process_function(t_function* tfunc, const string& handler_type);
   void render_service_processor(t_service* tservice);
   void render_handler_succeeded(t_function* tfunc);
   void render_handler_failed(t_function* tfunc);
@@ -321,6 +324,10 @@ private:
 
   string rust_sync_processor_name(t_service* tservice);
 
+  string rust_sync_actual_processor_name(t_service* tservice);
+
+  string rust_sync_actual_processor_variable_name(t_service* tservice);
+
   string service_call_client_function_name(t_function* tfunc);
 
   string service_call_handler_function_name(t_function* tfunc);
@@ -375,7 +382,7 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "use std::rc::Rc;" << endl;
   f_gen_ << "use try_from::TryFrom;" << endl;
   f_gen_ << endl;
-  f_gen_ << "use rift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind, TThriftClient};" << endl;
+  f_gen_ << "use rift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind, TThriftClient, TThriftHandler};" << endl;
   f_gen_ << "use rift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TInputProtocol, TOutputProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
   f_gen_ << "use rift::protocol::field_id;" << endl;
   f_gen_ << "use rift::protocol::verify_expected_message_type;" << endl;
@@ -1989,7 +1996,6 @@ void t_rs_generator::render_service_sync_handler_trait(t_service* tservice) {
   }
   indent_down();
   f_gen_ << indent() << "}" << endl;
-
   f_gen_ << endl;
 }
 
@@ -2005,24 +2011,30 @@ void t_rs_generator::render_service_processor(t_service* tservice) {
   f_gen_ << indent() << "}" << endl;
   f_gen_ << endl;
 
-  vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator func_iter;
-
-  // impl
+  // indirecting impl
   f_gen_ << indent() << "impl <H: " << handler_trait_name << "> " << service_processor_name << "<H> {" << endl;
   indent_up();
-
   f_gen_ << indent() << "pub fn new(handler: H) -> " << service_processor_name << "<H> {" << endl;
   indent_up();
-  f_gen_ << indent() << service_processor_name << " { handler: handler }" << endl;
+  f_gen_ << indent() << service_processor_name << " {" << endl;
+  indent_up();
+  f_gen_ << indent() << "handler: handler," << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  render_service_indirection_functions(tservice);
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  f_gen_ << endl;
 
-  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
-    t_function* tfunc = (*func_iter);
-    render_service_process_function(tfunc);
-  }
-
+  // actual impl
+  string service_actual_processor_name = rust_sync_actual_processor_name(tservice);
+  f_gen_ << indent() << "pub struct " << service_actual_processor_name << ";" << endl;
+  f_gen_ << endl;
+  f_gen_ << indent() << "impl " << service_actual_processor_name << " {" << endl;
+  indent_up();
+  render_service_functions(tservice, handler_trait_name);
   indent_down();
   f_gen_ << indent() << "}" << endl;
   f_gen_ << endl;
@@ -2039,15 +2051,7 @@ void t_rs_generator::render_service_processor(t_service* tservice) {
   f_gen_ << indent() << "let message_ident = try!(i_prot.read_message_begin());" << endl;
   f_gen_ << indent() << "match &*message_ident.name {" << endl; // [sigh] explicit deref coercion
   indent_up();
-
-  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
-    t_function* tfunc = (*func_iter);
-    f_gen_ << indent() << "\"" << tfunc->get_name() << "\"" << " => {" << endl; // note: use *original* name
-    indent_up();
-    f_gen_ << indent() << "self.process_" << rust_snake_case(tfunc->get_name()) << "(message_ident.sequence_number, i_prot, o_prot)" << endl;
-    indent_down();
-    f_gen_ << indent() << "}," << endl;
-  }
+  render_service_match_statements(tservice);
   f_gen_ << indent() << "method => {" << endl;
   indent_up();
   render_rift_error("Application", "ApplicationError", "ApplicationErrorKind::UnknownMethod", "format!(\"unknown method {}\", method)");
@@ -2064,7 +2068,75 @@ void t_rs_generator::render_service_processor(t_service* tservice) {
   f_gen_ << endl;
 }
 
-void t_rs_generator::render_service_process_function(t_function* tfunc) {
+void t_rs_generator::render_service_indirection_functions(t_service* tservice) {
+  string actual_processor(rust_namespace(tservice) + rust_sync_actual_processor_name(tservice));
+
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator func_iter;
+  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
+    t_function* tfunc = (*func_iter);
+    string function_name("process_" + rust_snake_case(tfunc->get_name()));
+    f_gen_
+      << indent()
+      << "fn " << function_name
+      << "(&mut self, "
+      << "incoming_sequence_number: i32, "
+      << "i_prot: &mut TInputProtocol, "
+      << "o_prot: &mut TOutputProtocol) "
+      << "-> rift::Result<()> {"
+      << endl;
+    indent_up();
+
+    f_gen_
+      << indent()
+      << actual_processor
+      << "::" << function_name
+      << "("
+      << "&mut self.handler, "
+      << "incoming_sequence_number, "
+      << "i_prot, "
+      << "o_prot"
+      << ")"
+      << endl;
+
+    indent_down();
+    f_gen_ << indent() << "}" << endl;
+  }
+
+  t_service* extends = tservice->get_extends();
+  if (extends) {
+    render_service_indirection_functions(extends);
+  }
+}
+
+void t_rs_generator::render_service_functions(t_service* tservice, const string& handler_type) {
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator func_iter;
+  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
+    t_function* tfunc = (*func_iter);
+    render_service_process_function(tfunc, handler_type);
+  }
+}
+
+void t_rs_generator::render_service_match_statements(t_service* tservice) {
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator func_iter;
+  for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
+    t_function* tfunc = (*func_iter);
+    f_gen_ << indent() << "\"" << tfunc->get_name() << "\"" << " => {" << endl; // note: use *original* name
+    indent_up();
+    f_gen_ << indent() << "self.process_" << rust_snake_case(tfunc->get_name()) << "(message_ident.sequence_number, i_prot, o_prot)" << endl;
+    indent_down();
+    f_gen_ << indent() << "}," << endl;
+  }
+
+  t_service* extends = tservice->get_extends();
+  if (extends) {
+    render_service_match_statements(extends);
+  }
+}
+
+void t_rs_generator::render_service_process_function(t_function* tfunc, const string& handler_type) {
   string sequence_number_param("incoming_sequence_number");
   string output_protocol_param("o_prot");
 
@@ -2075,8 +2147,9 @@ void t_rs_generator::render_service_process_function(t_function* tfunc) {
 
   f_gen_
     << indent()
-    << "fn process_" << rust_snake_case(tfunc->get_name())
-    << "(&mut self, "
+    << "pub fn process_" << rust_snake_case(tfunc->get_name())
+    << "<H: " << handler_type << ">"
+    << "(handler: &mut H, "
     << sequence_number_param << ": i32, "
     << "i_prot: &mut TInputProtocol, "
     << output_protocol_param << ": &mut TOutputProtocol) "
@@ -2097,7 +2170,7 @@ void t_rs_generator::render_service_process_function(t_function* tfunc) {
 
   f_gen_
     << indent()
-    << "match self.handler."
+    << "match handler."
     << service_call_handler_function_name(tfunc)
     << rust_sync_service_call_args(tfunc, false, "args.")
     << " {"
@@ -2531,6 +2604,14 @@ string t_rs_generator::rust_sync_handler_trait_name(t_service* tservice) {
 
 string t_rs_generator::rust_sync_processor_name(t_service* tservice) {
   return "T" + rust_camel_case(tservice->get_name()) + "Processor";
+}
+
+string t_rs_generator::rust_sync_actual_processor_name(t_service* tservice) {
+  return "T" + rust_camel_case(tservice->get_name()) + "ActualProcessor";
+}
+
+string t_rs_generator::rust_sync_actual_processor_variable_name(t_service* tservice) {
+  return rust_snake_case(tservice->get_name()) + "_actual_processor";
 }
 
 string t_rs_generator::service_call_client_function_name(t_function* tfunc) {
