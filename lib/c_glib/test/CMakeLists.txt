@@ -108,14 +108,6 @@ add_test(NAME testoptionalrequired COMMAND testoptionalrequired)
 
 include_directories("${PROJECT_SOURCE_DIR}/test/c_glib/src" "${CMAKE_CURRENT_BINARY_DIR}/gen-c_glib")
 
-add_executable(testtransportsslsocket testtransportsslsocket.c
-    ${PROJECT_SOURCE_DIR}/test/c_glib/src/thrift_test_handler.c
-    ${PROJECT_SOURCE_DIR}/test/c_glib/src/thrift_test_handler.h
-    gen-c_glib/t_test_thrift_test_types.h)
-target_link_libraries(testthrifttest testgenc)
-add_test(NAME testthrifttest COMMAND testthrifttest)
-
-
 
 if(BUILD_CPP)
 
