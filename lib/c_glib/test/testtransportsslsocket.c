@@ -258,9 +258,9 @@ read_from_file(char *buffer, long size, const char *file_name)
 	   fclose(fp);
 }
 
-#define ISSUER_CN_PINNING "Level2"
-#define SUBJECT_CN_PINNING "owncloud.level2crm.com"
-#define CERT_SERIAL_NUMBER "3"
+#define ISSUER_CN_PINNING "The Apache Software Foundation"
+#define SUBJECT_CN_PINNING "localhost"
+#define CERT_SERIAL_NUMBER "1"
 
 gboolean verify_certificate_sn(X509 *cert, const unsigned char *serial_number)
 {
@@ -362,7 +362,7 @@ gboolean my_access_manager(ThriftTransport * transport, X509 *cert, struct socka
 
 
 
-
+#ifdef BUILD_SERVER
 static void
 test_ssl_authorization_manager(void)
 {
@@ -389,11 +389,11 @@ test_ssl_authorization_manager(void)
 	sleep (1);
 
 	// Test against level2 owncloud certificate
-	tSSLsocket = thrift_ssl_socket_new_with_host(SSLTLS, "owncloud.level2crm.com", port, &error);
+	tSSLsocket = thrift_ssl_socket_new_with_host(SSLTLS, "localhost", port, &error);
 	thrift_ssl_socket_set_manager(tSSLsocket, my_access_manager); 					// Install pinning manager
 	//thrift_ssl_load_cert_from_file(tSSLsocket, "./owncloud.level2crm.pem");
 	unsigned char cert_buffer[65534];
-	read_from_file(cert_buffer, 65534, "./owncloud.level2crm.pem");
+	read_from_file(cert_buffer, 65534, "../../keys/client.pem");
 	if(!thrift_ssl_load_cert_from_buffer(tSSLsocket, cert_buffer)){
 		g_warning("Certificates cannot be loaded!");
 	}
@@ -418,6 +418,7 @@ test_ssl_authorization_manager(void)
 	assert ( status == 0 );
 	//  }
 }
+#endif
 
 
 /* test ThriftSocket's peek() implementation */
@@ -567,7 +568,8 @@ main(int argc, char *argv[])
 	g_test_add_func ("/testtransportsslsocket/CreateAndDestroy", test_ssl_create_and_destroy);
 	g_test_add_func ("/testtransportsslsocket/CreateAndSetProperties", test_ssl_create_and_set_properties);
 	g_test_add_func ("/testtransportsslsocket/OpenAndClose", test_ssl_open_and_close);
-	g_test_add_func ("/testtransportsslsocket/AuthorizationManagerPinning", test_ssl_authorization_manager);
+	// This test is disabled because server is not ready
+	// g_test_add_func ("/testtransportsslsocket/AuthorizationManagerPinning", test_ssl_authorization_manager);
 	//  g_test_add_func ("/testtransportsslsocket/Peek", test_ssl_peek);
 
 	retval = g_test_run ();

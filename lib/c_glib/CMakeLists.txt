@@ -44,7 +44,6 @@ set(thrift_c_glib_SOURCES
     src/thrift/c_glib/transport/thrift_buffered_transport_factory.c
     src/thrift/c_glib/transport/thrift_framed_transport_factory.c
     src/thrift/c_glib/transport/thrift_socket.c
-    src/thrift/c_glib/transport/thrift_ssl_socket.c
     src/thrift/c_glib/transport/thrift_server_transport.c
     src/thrift/c_glib/transport/thrift_server_socket.c
     src/thrift/c_glib/transport/thrift_buffered_transport.c
@@ -54,6 +53,17 @@ set(thrift_c_glib_SOURCES
     src/thrift/c_glib/server/thrift_server.c
     src/thrift/c_glib/server/thrift_simple_server.c
 )
+
+# If OpenSSL is not found just ignore the OpenSSL stuff
+find_package(OpenSSL)
+if(OPENSSL_FOUND AND WITH_OPENSSL)
+    list( APPEND thriftcpp_SOURCES
+	    src/thrift/c_glib/transport/thrift_ssl_socket.c
+    )
+    include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
+    list(APPEND SYSLIBS "${OPENSSL_LIBRARIES}")
+endif()
+
 
 # Contains the thrift specific ADD_LIBRARY_THRIFT and TARGET_LINK_LIBRARIES_THRIFT
 include(ThriftMacros)
