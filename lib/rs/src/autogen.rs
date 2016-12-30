@@ -44,39 +44,3 @@ pub trait TThriftClient {
     /// number has been sent to the remote Thrift server.
     fn increment_sequence_number(&mut self) -> i32;
 }
-
-pub trait TProcessor {
-    fn process(&mut self, i: &mut TInputProtocol, o: &mut TOutputProtocol) -> ::Result<()>;
-}
-
-pub use self::multiplexed::TMultiplexedProcessor;
-
-mod multiplexed {
-    use std::collections::HashMap;
-    use std::convert::Into;
-
-    use ::autogen::TProcessor;
-    use ::protocol::{TInputProtocol, TOutputProtocol};
-
-    pub struct TMultiplexedProcessor {
-        processors: HashMap<String, Box<TProcessor>>
-    }
-
-    impl TMultiplexedProcessor {
-        pub fn register_processor<S: Into<String>>(&mut self, service_name: S, processor: Box<TProcessor>) -> bool {
-            let name = service_name.into();
-            if self.processors.contains_key(&name) {
-                false
-            } else {
-                self.processors.insert(name, processor);
-                true
-            }
-        }
-    }
-
-    impl TProcessor for TMultiplexedProcessor {
-        fn process(&mut self, _: &mut TInputProtocol, _: &mut TOutputProtocol) -> ::Result<()> {
-            unimplemented!()
-        }
-    }
-}

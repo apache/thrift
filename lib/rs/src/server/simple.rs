@@ -65,9 +65,10 @@ use std::net::{TcpListener, TcpStream};
 use std::rc::Rc;
 
 use ::{ApplicationError, ApplicationErrorKind};
-use ::autogen::TProcessor;
 use ::protocol::{TInputProtocolFactory, TOutputProtocolFactory};
 use ::transport::{TTcpTransport, TTransport, TTransportFactory};
+
+use super::TProcessor;
 
 pub struct TSimpleServer<PR: TProcessor> {
     i_trans_factory: Box<TTransportFactory>,

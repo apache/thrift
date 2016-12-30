@@ -380,13 +380,14 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "use std::rc::Rc;" << endl;
   f_gen_ << "use try_from::TryFrom;" << endl;
   f_gen_ << endl;
-  f_gen_ << "use rift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind, TProcessor, TThriftClient};" << endl;
+  f_gen_ << "use rift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind, TThriftClient};" << endl;
   f_gen_ << "use rift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TInputProtocol, TOutputProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
   f_gen_ << "use rift::protocol::field_id;" << endl;
   f_gen_ << "use rift::protocol::verify_expected_message_type;" << endl;
   f_gen_ << "use rift::protocol::verify_expected_sequence_number;" << endl;
   f_gen_ << "use rift::protocol::verify_expected_service_call;" << endl;
   f_gen_ << "use rift::protocol::verify_required_field_exists;" << endl;
+  f_gen_ << "use rift::server::TProcessor;" << endl;
   f_gen_ << endl;
 
   // add all the program includes
