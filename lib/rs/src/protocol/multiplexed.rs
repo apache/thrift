@@ -15,31 +15,141 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TProtocol, TSetIdentifier, TStructIdentifier};
+use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TInputProtocol, TOutputProtocol, TSetIdentifier, TStructIdentifier};
 
 /// A `TProtocol` that can send Thrift messages
 /// over a single endpoint shared with other Thrift services.
 /// This construct can only be used when paired with a
 /// corresponding `TMultiplexedProcessor` at the receiver.
-pub struct TMultiplexedProtocol<I: TProtocol> {
-    service_name: String,
-    inner: I,
+pub struct TMultiplexedInputProtocol {
+    inner: Box<TInputProtocol>,
 }
 
-impl <I: TProtocol> TMultiplexedProtocol<I> {
-    /// Create a new `TMultiplexedProtocol` that:
+impl TMultiplexedInputProtocol {
+    /// Create a new `TMultiplexedInputProtocol` that:
     ///
     /// 1. Wraps an `wrapped` `TProtocol` (to which it delegates message
     /// serialization and deserialization)
     /// 2. Identifies outgoing service calls as originating from the
     /// `service_name` Thrift service
-    pub fn new(service_name: &str, wrapped: I) -> TMultiplexedProtocol<I> {
-        TMultiplexedProtocol { service_name: service_name.to_owned(), inner: wrapped }
+    pub fn new(wrapped: Box<TInputProtocol>) -> TMultiplexedInputProtocol {
+        TMultiplexedInputProtocol { inner: wrapped }
+    }
+}
+
+impl TInputProtocol for TMultiplexedInputProtocol {
+    fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier> {
+       self.inner.read_message_begin()
+    }
+
+    fn read_message_end(&mut self) -> ::Result<()> {
+        self.inner.read_message_end()
+    }
+
+    fn read_struct_begin(&mut self) -> ::Result<Option<TStructIdentifier>> {
+        self.inner.read_struct_begin()
+    }
+
+    fn read_struct_end(&mut self) -> ::Result<()> {
+        self.inner.read_struct_end()
+    }
+
+    fn read_field_begin(&mut self) -> ::Result<TFieldIdentifier> {
+        self.inner.read_field_begin()
+    }
+
+    fn read_field_end(&mut self) -> ::Result<()> {
+        self.inner.read_field_end()
+    }
+
+    fn read_bytes(&mut self) -> ::Result<Vec<u8>> {
+        self.inner.read_bytes()
+    }
+
+    fn read_bool(&mut self) -> ::Result<bool> {
+        self.inner.read_bool()
+    }
+
+    fn read_i8(&mut self) -> ::Result<i8> {
+        self.inner.read_i8()
+    }
+
+    fn read_i16(&mut self) -> ::Result<i16> {
+        self.inner.read_i16()
+    }
+
+    fn read_i32(&mut self) -> ::Result<i32> {
+        self.inner.read_i32()
+    }
+
+    fn read_i64(&mut self) -> ::Result<i64> {
+        self.inner.read_i64()
+    }
+
+    fn read_double(&mut self) -> ::Result<f64> {
+        self.inner.read_double()
+    }
+
+    fn read_string(&mut self) -> ::Result<String> {
+        self.inner.read_string()
+    }
+
+    fn read_list_begin(&mut self) -> ::Result<TListIdentifier> {
+        self.inner.read_list_begin()
+    }
+
+    fn read_list_end(&mut self) -> ::Result<()> {
+        self.inner.read_list_end()
+    }
+
+    fn read_set_begin(&mut self) -> ::Result<TSetIdentifier> {
+        self.inner.read_set_begin()
+    }
+
+    fn read_set_end(&mut self) -> ::Result<()> {
+        self.inner.read_set_end()
+    }
+
+    fn read_map_begin(&mut self) -> ::Result<TMapIdentifier> {
+       self.inner.read_map_begin()
+    }
+
+    fn read_map_end(&mut self) -> ::Result<()> {
+        self.inner.read_map_end()
+    }
+
+    //
+    // utility
+    //
+
+    fn read_byte(&mut self) -> ::Result<u8> {
+        self.inner.read_byte()
+    }
+}
+
+/// A `TProtocol` that can send Thrift messages
+/// over a single endpoint shared with other Thrift services.
+/// This construct can only be used when paired with a
+/// corresponding `TMultiplexedProcessor` at the receiver.
+pub struct TMultiplexedOutputProtocol {
+    service_name: String,
+    inner: Box<TOutputProtocol>,
+}
+
+impl TMultiplexedOutputProtocol {
+    /// Create a new `TMultiplexedOutputProtocol` that:
+    ///
+    /// 1. Wraps an `wrapped` `TProtocol` (to which it delegates message
+    /// serialization and deserialization)
+    /// 2. Identifies outgoing service calls as originating from the
+    /// `service_name` Thrift service
+    pub fn new(service_name: &str, wrapped: Box<TOutputProtocol>) -> TMultiplexedOutputProtocol {
+        TMultiplexedOutputProtocol { service_name: service_name.to_owned(), inner: wrapped }
     }
 }
 
 // FIXME: avoid passthrough methods
-impl <I: TProtocol> TProtocol for TMultiplexedProtocol<I> {
+impl TOutputProtocol for TMultiplexedOutputProtocol {
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
         match identifier.message_type { // FIXME: is there a better way to override identifier here?
             TMessageType::Call | TMessageType::OneWay => {
@@ -136,95 +246,12 @@ impl <I: TProtocol> TProtocol for TMultiplexedProtocol<I> {
         self.inner.flush()
     }
 
-    fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier> {
-       self.inner.read_message_begin()
-    }
-
-    fn read_message_end(&mut self) -> ::Result<()> {
-        self.inner.read_message_end()
-    }
-
-    fn read_struct_begin(&mut self) -> ::Result<Option<TStructIdentifier>> {
-        self.inner.read_struct_begin()
-    }
-
-    fn read_struct_end(&mut self) -> ::Result<()> {
-        self.inner.read_struct_end()
-    }
-
-    fn read_field_begin(&mut self) -> ::Result<TFieldIdentifier> {
-        self.inner.read_field_begin()
-    }
-
-    fn read_field_end(&mut self) -> ::Result<()> {
-        self.inner.read_field_end()
-    }
-
-    fn read_bytes(&mut self) -> ::Result<Vec<u8>> {
-        self.inner.read_bytes()
-    }
-
-    fn read_bool(&mut self) -> ::Result<bool> {
-        self.inner.read_bool()
-    }
-
-    fn read_i8(&mut self) -> ::Result<i8> {
-        self.inner.read_i8()
-    }
-
-    fn read_i16(&mut self) -> ::Result<i16> {
-        self.inner.read_i16()
-    }
-
-    fn read_i32(&mut self) -> ::Result<i32> {
-        self.inner.read_i32()
-    }
-
-    fn read_i64(&mut self) -> ::Result<i64> {
-        self.inner.read_i64()
-    }
-
-    fn read_double(&mut self) -> ::Result<f64> {
-        self.inner.read_double()
-    }
-
-    fn read_string(&mut self) -> ::Result<String> {
-        self.inner.read_string()
-    }
-
-    fn read_list_begin(&mut self) -> ::Result<TListIdentifier> {
-        self.inner.read_list_begin()
-    }
-
-    fn read_list_end(&mut self) -> ::Result<()> {
-        self.inner.read_list_end()
-    }
-
-    fn read_set_begin(&mut self) -> ::Result<TSetIdentifier> {
-        self.inner.read_set_begin()
-    }
-
-    fn read_set_end(&mut self) -> ::Result<()> {
-        self.inner.read_set_end()
-    }
-
-    fn read_map_begin(&mut self) -> ::Result<TMapIdentifier> {
-       self.inner.read_map_begin()
-    }
-
-    fn read_map_end(&mut self) -> ::Result<()> {
-        self.inner.read_map_end()
-    }
-
     //
     // utility
     //
 
-    fn write_byte(&mut self, b: u8) -> ::Result<()> { // FIXME: remove
+    fn write_byte(&mut self, b: u8) -> ::Result<()> {
         self.inner.write_byte(b)
     }
-
-    fn read_byte(&mut self) -> ::Result<u8> { // FIXME: remove
-        self.inner.read_byte()
-    }
 }
+

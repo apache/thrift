@@ -27,11 +27,11 @@ use ::transport::TTransport;
 
 mod binary;
 mod compact;
-//mod multiplexed;
+mod multiplexed;
 
 pub use self::binary::{TBinaryInputProtocol, TBinaryInputProtocolFactory, TBinaryOutputProtocol, TBinaryOutputProtocolFactory};
 pub use self::compact::{TCompactInputProtocol, TCompactInputProtocolFactory, TCompactOutputProtocol, TCompactOutputProtocolFactory};
-//pub use self::multiplexed::{TMultiplexedInputProtocol, TMultiplexedOutputProtocol};
+pub use self::multiplexed::{TMultiplexedInputProtocol, TMultiplexedOutputProtocol};
 
 /// Default maximum depth to which we will skip
 /// a Thrift field. Note that we have to set a
