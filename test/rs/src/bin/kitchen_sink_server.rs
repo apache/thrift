@@ -30,59 +30,37 @@ use std::rc::Rc;
 use rift::transport::{TTcpTransport, TTransport};
 use rift_test::base_two::{Napkin, Ramen, TNapkinServiceSyncHandler, TRamenServiceSyncClient, TRamenServiceSyncHandler};
 use rift_test::midlayer::{Meal, MealServiceSyncClient, TMealServiceSyncClient, TMealServiceSyncHandler};
-use rift_test::ultimate::{FullMeal, FullMealServiceSyncClient, TFullMealServiceSyncClient, TFullMealServiceSyncHandler};
+use rift_test::ultimate::{FullMeal, FullMealAndDrinks, FullMealServiceSyncClient, TFullMealServiceSyncClient, TFullMealServiceSyncHandler};
+use rift_test::ultimate::{TFullMealAndDrinksServiceSyncHandler, TFullMealAndDrinksServiceProcessor};
 
 // IMPORTANT: this code is never meant to be run; it's simply to ensure that service extension works
 fn main() {
-    // midlayer: MealService
-//    {
-//        let transport: Box<TTransport> = Box::new(TTcpTransport::new());
-//        let transport = Rc::new(RefCell::new(transport));
-//        let protocol: Box<TProtocol> = Box::new(TCompactProtocol::new(transport));
-//        let mut client = MealServiceSyncClient::new(protocol);
-//
-//        // only the following two calls work
-//        client.ramen(100);
-//        client.meal();
-//        // client.full_meal(); // <-- IMPORTANT: if you uncomment this, compilation *should* fail
-//        // this is because the MealService struct does not contain the appropriate service marker
-//    }
-//
-//    // ultimate: FullMealService
-//    {
-//        let transport: Box<TTransport> = Box::new(TTcpTransport::new());
-//        let transport = Rc::new(RefCell::new(transport));
-//        let protocol: Box<TProtocol> = Box::new(TCompactProtocol::new(transport));
-//        let mut client = FullMealServiceSyncClient::new(protocol);
-//
-//        // all
-//        client.ramen(100);
-//        client.meal();
-//        client.full_meal();
-//    }
-//
-//    // ultimate: server-side
-//    {
-//        struct Handler;
-//        impl TFullMealServiceSyncHandler for Handler {
-//            fn handle_full_meal(&mut self) -> rift::Result<FullMeal> {
-//                unimplemented!()
-//            }
-//        }
-//        impl TMealServiceSyncHandler for Handler {
-//            fn handle_meal(&mut self) -> rift::Result<Meal> {
-//                unimplemented!()
-//            }
-//        }
-//        impl TRamenServiceSyncHandler for Handler {
-//            fn handle_ramen(&mut self, requested_noodle_count: i32) -> rift::Result<Ramen> {
-//                unimplemented!()
-//            }
-//        }
-//        impl TNapkinServiceSyncHandler for Handler {
-//            fn handle_napkin(&mut self) -> rift::Result<Napkin> {
-//                unimplemented!()
-//            }
-//        }
-//    }
+    let processor = TFullMealAndDrinksServiceProcessor::new(Handler {});
+}
+
+struct Handler;
+impl TFullMealAndDrinksServiceSyncHandler for Handler {
+    fn handle_full_meal_and_drinks(&mut self) -> rift::Result<FullMealAndDrinks> {
+        unimplemented!()
+    }
+}
+impl TFullMealServiceSyncHandler for Handler {
+    fn handle_full_meal(&mut self) -> rift::Result<FullMeal> {
+        unimplemented!()
+    }
+}
+impl TMealServiceSyncHandler for Handler {
+    fn handle_meal(&mut self) -> rift::Result<Meal> {
+        unimplemented!()
+    }
+}
+impl TRamenServiceSyncHandler for Handler {
+    fn handle_ramen(&mut self, requested_noodle_count: i32) -> rift::Result<Ramen> {
+        unimplemented!()
+    }
+}
+impl TNapkinServiceSyncHandler for Handler {
+    fn handle_napkin(&mut self) -> rift::Result<Napkin> {
+        unimplemented!()
+    }
 }
