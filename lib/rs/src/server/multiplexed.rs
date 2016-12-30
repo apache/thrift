@@ -15,14 +15,31 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use std::collections::HashMap;
+use std::convert::Into;
+
 use ::protocol::{TInputProtocol, TOutputProtocol};
 
-mod simple;
-mod multiplexed;
+use super::TProcessor;
 
-pub use self::simple::TSimpleServer;
-pub use self::multiplexed::TMultiplexedProcessor;
+pub struct TMultiplexedProcessor {
+    processors: HashMap<String, Box<TProcessor>>
+}
 
-pub trait TProcessor {
-    fn process(&mut self, i: &mut TInputProtocol, o: &mut TOutputProtocol) -> ::Result<()>;
+impl TMultiplexedProcessor {
+    pub fn register_processor<S: Into<String>>(&mut self, service_name: S, processor: Box<TProcessor>) -> bool {
+        let name = service_name.into();
+        if self.processors.contains_key(&name) {
+            false
+        } else {
+            self.processors.insert(name, processor);
+            true
+        }
+    }
+}
+
+impl TProcessor for TMultiplexedProcessor {
+    fn process(&mut self, _: &mut TInputProtocol, _: &mut TOutputProtocol) -> ::Result<()> {
+        unimplemented!()
+    }
 }
