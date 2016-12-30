@@ -79,12 +79,12 @@ impl <PR: TProcessor> TSimpleServer<PR> {
         let stream = Rc::new(RefCell::new(stream));
 
         // input protocol and transport
-        let i_tran = self.i_trans_factory.build(stream.clone());
+        let i_tran = self.i_trans_factory.create(stream.clone());
         let i_tran = Rc::new(RefCell::new(i_tran));
         let mut i_prot = self.i_proto_factory.create(i_tran);
 
         // output protocol and transport
-        let o_tran = self.o_trans_factory.build(stream.clone());
+        let o_tran = self.o_trans_factory.create(stream.clone());
         let o_tran = Rc::new(RefCell::new(o_tran));
         let mut o_prot = self.o_proto_factory.create(o_tran);
 

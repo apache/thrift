@@ -66,5 +66,5 @@ impl <I: io::Read + io::Write> TTransport for I { }
 pub trait TTransportFactory {
     /// Construct a `TTransport` that wraps an `inner`
     /// transport, thus creating a transport stack.
-    fn build(&self, inner: Rc<RefCell<Box<TTransport>>>) -> Box<TTransport>;
+    fn create(&self, inner: Rc<RefCell<Box<TTransport>>>) -> Box<TTransport>;
 }
