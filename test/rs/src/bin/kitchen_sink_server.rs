@@ -15,7 +15,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#![allow(unused_imports)]
 #![allow(unused_must_use)]
 #![allow(unused_variables)]
 #![allow(dead_code)]
@@ -26,15 +25,10 @@ extern crate clap;
 extern crate rift;
 extern crate rift_test;
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
-//use rift::protocol::{TCompactProtocol, TProtocol};
-use rift::transport::{TTcpTransport, TTransport};
-use rift_test::base_two::{Napkin, Ramen, TNapkinServiceSyncHandler, TRamenServiceSyncClient, TRamenServiceSyncHandler};
-use rift_test::midlayer::{Meal, MealServiceSyncClient, TMealServiceSyncClient, TMealServiceSyncHandler};
-use rift_test::ultimate::{FullMeal, FullMealAndDrinks, FullMealServiceSyncClient, TFullMealServiceSyncClient, TFullMealServiceSyncHandler};
-use rift_test::ultimate::{TFullMealAndDrinksServiceSyncHandler, FullMealAndDrinksServiceSyncProcessor};
+use rift_test::base_two::{Napkin, Ramen, NapkinServiceSyncHandler, RamenServiceSyncHandler};
+use rift_test::midlayer::{Meal, MealServiceSyncHandler};
+use rift_test::ultimate::{FullMeal, FullMealAndDrinks, FullMealServiceSyncHandler};
+use rift_test::ultimate::{FullMealAndDrinksServiceSyncHandler, FullMealAndDrinksServiceSyncProcessor};
 
 // IMPORTANT: this code is never meant to be run; it's simply to ensure that service extension works
 fn main() {
@@ -51,27 +45,27 @@ fn main() {
 }
 
 struct Handler;
-impl TFullMealAndDrinksServiceSyncHandler for Handler {
+impl FullMealAndDrinksServiceSyncHandler for Handler {
     fn handle_full_meal_and_drinks(&mut self) -> rift::Result<FullMealAndDrinks> {
         unimplemented!()
     }
 }
-impl TFullMealServiceSyncHandler for Handler {
+impl FullMealServiceSyncHandler for Handler {
     fn handle_full_meal(&mut self) -> rift::Result<FullMeal> {
         unimplemented!()
     }
 }
-impl TMealServiceSyncHandler for Handler {
+impl MealServiceSyncHandler for Handler {
     fn handle_meal(&mut self) -> rift::Result<Meal> {
         unimplemented!()
     }
 }
-impl TRamenServiceSyncHandler for Handler {
+impl RamenServiceSyncHandler for Handler {
     fn handle_ramen(&mut self, requested_noodle_count: i32) -> rift::Result<Ramen> {
         unimplemented!()
     }
 }
-impl TNapkinServiceSyncHandler for Handler {
+impl NapkinServiceSyncHandler for Handler {
     fn handle_napkin(&mut self) -> rift::Result<Napkin> {
         unimplemented!()
     }

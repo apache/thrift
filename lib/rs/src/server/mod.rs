@@ -15,14 +15,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use ::protocol::{TInputProtocol, TOutputProtocol};
+//! Types required to implement the server half of a Thrift service. Provides
+//! the following implementations:
+//!
+//! 1. `TSimpleServer`: single-threaded socket server
 
 mod simple;
-mod multiplexed;
 
 pub use self::simple::TSimpleServer;
-pub use self::multiplexed::TMultiplexedProcessor;
-
-pub trait TProcessor {
-    fn process(&mut self, i: &mut TInputProtocol, o: &mut TOutputProtocol) -> ::Result<()>;
-}

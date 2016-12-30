@@ -93,7 +93,7 @@ fn main() {
         }
     };
 
-    let processor = ThriftTestSyncProcessor::new(ThriftTestSyncHandler {});
+    let processor = ThriftTestSyncProcessor::new(ThriftTestSyncHandlerImpl {});
 
     match &*server_type {
         "simple" => {
@@ -116,11 +116,8 @@ fn main() {
     };
 }
 
-struct ThriftTestSyncHandler {
-    // empty
-}
-
-impl TThriftTestSyncHandler for ThriftTestSyncHandler {
+struct ThriftTestSyncHandlerImpl;
+impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
     fn handle_test_void(&mut self) -> rift::Result<()> {
         println!("testVoid()");
         Ok(())

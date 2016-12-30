@@ -15,11 +15,68 @@
 // specific language governing permissions and limitations
 // under the License.
 
+//! Thrift compiler auto-generated support.
+//!
+//!
+//! Types and functions used internally by the Thrift compiler's Rust plugin
+//! to implement required functionality. Users should never have to use code
+//! in this module directly.
+
 use ::protocol::{TInputProtocol, TOutputProtocol};
 
+/// Identifies an auto-generated Thrift client and specifies the minimum
+/// set of functions implementations should provide for auto-generated code
+/// to properly send and receive messages to/from a Thrift server.
 pub trait TThriftClient {
-    fn i_prot(&mut self) -> &mut TInputProtocol;
-    fn o_prot(&mut self) -> &mut TOutputProtocol;
-    fn sequence_number(&self) -> i32;
-    fn increment_sequence_number(&mut self);
+    /// Returns the input protocol used to read serialized Thrift messages
+    /// from the remote Thrift server.
+    fn i_prot_mut(&mut self) -> &mut TInputProtocol;
+    /// Returns the output protocol used to write serialized Thrift messages
+    /// to the remote Thrift server.
+    fn o_prot_mut(&mut self) -> &mut TOutputProtocol;
+    /// Returns the sequence number of the last message written to the remote
+    /// Thrift server. Returns `0` if no messages have been written. Sequence
+    /// numbers should *never* be negative; this method returns an `i32`
+    /// because the Thrift protocol encodes sequence numbers as `i32` on the
+    /// wire.
+    fn sequence_number(&self) -> i32; // FIXME: consider returning a u32
+    /// Increments the sequence number, indicating that a message with that
+    /// number has been sent to the remote Thrift server.
+    fn increment_sequence_number(&mut self) -> i32;
+}
+
+pub trait TProcessor {
+    fn process(&mut self, i: &mut TInputProtocol, o: &mut TOutputProtocol) -> ::Result<()>;
+}
+
+pub use self::multiplexed::TMultiplexedProcessor;
+
+mod multiplexed {
+    use std::collections::HashMap;
+    use std::convert::Into;
+
+    use ::autogen::TProcessor;
+    use ::protocol::{TInputProtocol, TOutputProtocol};
+
+    pub struct TMultiplexedProcessor {
+        processors: HashMap<String, Box<TProcessor>>
+    }
+
+    impl TMultiplexedProcessor {
+        pub fn register_processor<S: Into<String>>(&mut self, service_name: S, processor: Box<TProcessor>) -> bool {
+            let name = service_name.into();
+            if self.processors.contains_key(&name) {
+                false
+            } else {
+                self.processors.insert(name, processor);
+                true
+            }
+        }
+    }
+
+    impl TProcessor for TMultiplexedProcessor {
+        fn process(&mut self, _: &mut TInputProtocol, _: &mut TOutputProtocol) -> ::Result<()> {
+            unimplemented!()
+        }
+    }
 }

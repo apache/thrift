@@ -15,14 +15,59 @@
 // specific language governing permissions and limitations
 // under the License.
 
+//! Single-threaded blocking Thrift socket server. This implementation listens
+//! on the given host/port pair and accepts a single connection on the main
+//! thread. It processes messages from the remote, executes the user's handler
+//! code and sends responses back to the remote all on this thread. It allows
+//! different `TProtocol` and `TTransport` implementations to be used for the
+//! input and output halves of communication.
+//!
+//! # Examples
+//!
+//! Creating and running a `TSimpleServer` using Thrift-compiler-generated
+//! service code.
+//!
+//! ```no_run
+//! use rift::protocol::{TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory, TInputProtocolFactory, TOutputProtocolFactory};
+//! use rift::server::TSimpleServer;
+//! use rift::transport::{TBufferedTransportFactory, TTransportFactory};
+//! use generated::{ServiceSyncProcessor, ServiceSyncHandler};
+//!
+//! struct ServiceSyncHandlerImpl;
+//! impl ServiceSyncHandler for ServiceSyncHandlerImpl {
+//!   fn service_call(&mut self, ...) -> Result<()> {
+//!     // ...
+//!   }
+//! }
+//!
+//! let i_trans_factory = TBufferedTransportFactory {};
+//! let i_proto_factory = TBinaryInputProtocolFactory {};
+//! let o_trans_factory = TBufferedTransportFactory {};
+//! let o_proto_factory = TBinaryOutputProtocolFactory {};
+//!
+//! let processor = ServiceSyncProcessor::new(ServiceSyncHandlerImpl {});
+//! let server = TSimpleServer::new(
+//!   i_trans_factory,
+//!   i_proto_factory,
+//!   o_trans_factory,
+//!   o_proto_factory,
+//!   processor
+//! );
+//!
+//! match server.listen("127.0.0.1:8080") {
+//!   Ok(_)  => println!("listen completed"),
+//!   Err(e) => println!("listen failed with error {:?}", e),
+//! }
+//! ```
+
 use std::cell::RefCell;
 use std::net::{TcpListener, TcpStream};
 use std::rc::Rc;
 
 use ::{ApplicationError, ApplicationErrorKind};
+use ::autogen::TProcessor;
 use ::protocol::{TInputProtocolFactory, TOutputProtocolFactory};
 use ::transport::{TTcpTransport, TTransport, TTransportFactory};
-use super::TProcessor;
 
 pub struct TSimpleServer<PR: TProcessor> {
     i_trans_factory: Box<TTransportFactory>,

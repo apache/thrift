@@ -26,11 +26,10 @@ extern crate rift_test;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-//use rift::protocol::{TCompactProtocol, TProtocol};
 use rift::transport::{TTcpTransport, TTransport};
-use rift_test::base_two::{Napkin, Ramen, TNapkinServiceSyncHandler, TRamenServiceSyncClient, TRamenServiceSyncHandler};
-use rift_test::midlayer::{Meal, MealServiceSyncClient, TMealServiceSyncClient, TMealServiceSyncHandler};
-use rift_test::ultimate::{FullMeal, FullMealServiceSyncClient, TFullMealServiceSyncClient, TFullMealServiceSyncHandler};
+use rift_test::base_two::{Napkin, Ramen, TRamenServiceSyncClient};
+use rift_test::midlayer::{Meal, MealServiceSyncClient, TMealServiceSyncClient};
+use rift_test::ultimate::{FullMeal, FullMealServiceSyncClient, TFullMealServiceSyncClient};
 
 // IMPORTANT: this code is never meant to be run; it's simply to ensure that service extension works
 fn main() {

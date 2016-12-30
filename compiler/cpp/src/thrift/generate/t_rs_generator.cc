@@ -380,14 +380,13 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "use std::rc::Rc;" << endl;
   f_gen_ << "use try_from::TryFrom;" << endl;
   f_gen_ << endl;
-  f_gen_ << "use rift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind, TThriftClient};" << endl;
+  f_gen_ << "use rift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind, TProcessor, TThriftClient};" << endl;
   f_gen_ << "use rift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TInputProtocol, TOutputProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
   f_gen_ << "use rift::protocol::field_id;" << endl;
   f_gen_ << "use rift::protocol::verify_expected_message_type;" << endl;
   f_gen_ << "use rift::protocol::verify_expected_sequence_number;" << endl;
   f_gen_ << "use rift::protocol::verify_expected_service_call;" << endl;
   f_gen_ << "use rift::protocol::verify_required_field_exists;" << endl;
-  f_gen_ << "use rift::server::TProcessor;" << endl;
   f_gen_ << endl;
 
   // add all the program includes
@@ -1713,10 +1712,10 @@ void t_rs_generator::render_sync_client(t_service* tservice) {
   // render the client helper trait for the struct
   f_gen_ << indent() << "impl TThriftClient for " << client_impl_struct_name << " {" << endl;
   indent_up();
-  f_gen_ << indent() << "fn i_prot(&mut self) -> &mut TInputProtocol { &mut *self._i_prot }" << endl;
-  f_gen_ << indent() << "fn o_prot(&mut self) -> &mut TOutputProtocol { &mut *self._o_prot }" << endl;
+  f_gen_ << indent() << "fn i_prot_mut(&mut self) -> &mut TInputProtocol { &mut *self._i_prot }" << endl;
+  f_gen_ << indent() << "fn o_prot_mut(&mut self) -> &mut TOutputProtocol { &mut *self._o_prot }" << endl;
   f_gen_ << indent() << "fn sequence_number(&self) -> i32 { self._sequence_number }" << endl;
-  f_gen_ << indent() << "fn increment_sequence_number(&mut self) { self._sequence_number += 1 }" << endl;
+  f_gen_ << indent() << "fn increment_sequence_number(&mut self) -> i32 { self._sequence_number += 1; self._sequence_number }" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
   f_gen_ << endl;
@@ -1890,10 +1889,10 @@ void t_rs_generator::render_sync_send(t_function* tfunc) {
     << " };"
     << endl;
   // write everything over the wire
-  f_gen_ << indent() << "try!(self.o_prot().write_message_begin(&message_ident));" << endl;
-  f_gen_ << indent() << "try!(call_args.write_to_out_protocol(self.o_prot()));" << endl; // written even if we have 0 args
-  f_gen_ << indent() << "try!(self.o_prot().write_message_end());" << endl;
-  f_gen_ << indent() << "self.o_prot().flush()" << endl;
+  f_gen_ << indent() << "try!(self.o_prot_mut().write_message_begin(&message_ident));" << endl;
+  f_gen_ << indent() << "try!(call_args.write_to_out_protocol(self.o_prot_mut()));" << endl; // written even if we have 0 args
+  f_gen_ << indent() << "try!(self.o_prot_mut().write_message_end());" << endl;
+  f_gen_ << indent() << "self.o_prot_mut().flush()" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 }
@@ -1901,20 +1900,20 @@ void t_rs_generator::render_sync_send(t_function* tfunc) {
 void t_rs_generator::render_sync_recv(t_function* tfunc) {
   f_gen_ << indent() << "{" << endl;
   indent_up();
-  f_gen_ << indent() << "let message_ident = try!(self.i_prot().read_message_begin());" << endl;
+  f_gen_ << indent() << "let message_ident = try!(self.i_prot_mut().read_message_begin());" << endl;
   f_gen_ << indent() << "try!(verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number));" << endl;
   f_gen_ << indent() << "try!(verify_expected_service_call(\"" << tfunc->get_name() <<"\", &message_ident.name));" << endl; // note: use *original* name
   // FIXME: replace with a "try" block
   f_gen_ << indent() << "if message_ident.message_type == TMessageType::Exception {" << endl;
   indent_up();
-  f_gen_ << indent() << "let remote_error = try!(rift::Error::read_application_error_from_in_protocol(self.i_prot()));" << endl;
-  f_gen_ << indent() << "try!(self.i_prot().read_message_end());" << endl;
+  f_gen_ << indent() << "let remote_error = try!(rift::Error::read_application_error_from_in_protocol(self.i_prot_mut()));" << endl;
+  f_gen_ << indent() << "try!(self.i_prot_mut().read_message_end());" << endl;
   f_gen_ << indent() << "return Err(rift::Error::Application(remote_error))" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
   f_gen_ << indent() << "try!(verify_expected_message_type(TMessageType::Reply, message_ident.message_type));" << endl;
-  f_gen_ << indent() << "let result = try!(" << service_call_result_struct_name(tfunc) << "::read_from_in_protocol(self.i_prot()));" << endl;
-  f_gen_ << indent() << "try!(self.i_prot().read_message_end());" << endl;
+  f_gen_ << indent() << "let result = try!(" << service_call_result_struct_name(tfunc) << "::read_from_in_protocol(self.i_prot_mut()));" << endl;
+  f_gen_ << indent() << "try!(self.i_prot_mut().read_message_end());" << endl;
   f_gen_ << indent() << "result.ok_or()" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
@@ -2597,7 +2596,7 @@ string t_rs_generator::rust_sync_client_impl_name(t_service* tservice) {
 }
 
 string t_rs_generator::rust_sync_handler_trait_name(t_service* tservice) {
-  return "T" + rust_camel_case(tservice->get_name()) + "SyncHandler";
+  return rust_camel_case(tservice->get_name()) + "SyncHandler";
 }
 
 string t_rs_generator::rust_sync_processor_name(t_service* tservice) {
@@ -2605,7 +2604,7 @@ string t_rs_generator::rust_sync_processor_name(t_service* tservice) {
 }
 
 string t_rs_generator::rust_sync_processor_impl_struct(t_service* tservice) {
-  return "T" + rust_camel_case(tservice->get_name()) + "ProcessImpls";
+  return "T" + rust_camel_case(tservice->get_name()) + "ProcessFunctions";
 }
 
 string t_rs_generator::service_call_client_function_name(t_function* tfunc) {
