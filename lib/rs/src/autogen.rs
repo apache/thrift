@@ -23,9 +23,3 @@ pub trait TThriftClient {
     fn sequence_number(&self) -> i32;
     fn increment_sequence_number(&mut self);
 }
-
-pub trait TThriftHandler {}
-
-pub trait TThriftServer<H: TThriftHandler> {
-    fn handler(&self) -> H;
-}

@@ -93,7 +93,7 @@ fn main() {
         }
     };
 
-    let processor = TThriftTestProcessor::new(ThriftTestSyncHandler {});
+    let processor = ThriftTestSyncProcessor::new(ThriftTestSyncHandler {});
 
     match &*server_type {
         "simple" => {

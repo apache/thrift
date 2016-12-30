@@ -20,6 +20,9 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
+#[macro_use]
+extern crate clap;
+
 extern crate rift;
 extern crate rift_test;
 
@@ -31,11 +34,20 @@ use rift::transport::{TTcpTransport, TTransport};
 use rift_test::base_two::{Napkin, Ramen, TNapkinServiceSyncHandler, TRamenServiceSyncClient, TRamenServiceSyncHandler};
 use rift_test::midlayer::{Meal, MealServiceSyncClient, TMealServiceSyncClient, TMealServiceSyncHandler};
 use rift_test::ultimate::{FullMeal, FullMealAndDrinks, FullMealServiceSyncClient, TFullMealServiceSyncClient, TFullMealServiceSyncHandler};
-use rift_test::ultimate::{TFullMealAndDrinksServiceSyncHandler, TFullMealAndDrinksServiceProcessor};
+use rift_test::ultimate::{TFullMealAndDrinksServiceSyncHandler, FullMealAndDrinksServiceSyncProcessor};
 
 // IMPORTANT: this code is never meant to be run; it's simply to ensure that service extension works
 fn main() {
-    let processor = TFullMealAndDrinksServiceProcessor::new(Handler {});
+    let matches = clap_app!(rust_kitchen_sink_server =>
+        (version: "1.0")
+        (author: "Allen George <allen.george@gmail.com>")
+        (about: "Rust Thrift kitchen sink test server")
+        (@arg server_type: --server +takes_value "server type to use (\"minimal\", \"ultimate\")")
+    ).get_matches();
+
+    let server_type = matches.value_of("server").unwrap_or("ultimate");
+
+    let processor = FullMealAndDrinksServiceSyncProcessor::new(Handler {});
 }
 
 struct Handler;
