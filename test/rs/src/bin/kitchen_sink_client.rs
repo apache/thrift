@@ -15,10 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#![allow(unused_imports)]
-#![allow(unused_must_use)]
-#![allow(unused_variables)]
-#![allow(dead_code)]
+#[macro_use]
+extern crate clap;
 
 extern crate rift;
 extern crate rift_test;
@@ -26,62 +24,95 @@ extern crate rift_test;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use rift::transport::{TTcpTransport, TTransport};
-use rift_test::base_two::{Napkin, Ramen, TRamenServiceSyncClient};
-use rift_test::midlayer::{Meal, MealServiceSyncClient, TMealServiceSyncClient};
-use rift_test::ultimate::{FullMeal, FullMealServiceSyncClient, TFullMealServiceSyncClient};
+use rift::transport::{TFramedTransport, TTcpTransport, TTransport};
+use rift::protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TCompactInputProtocol, TCompactOutputProtocol, TInputProtocol, TOutputProtocol};
+use rift_test::base_two::TRamenServiceSyncClient;
+use rift_test::midlayer::{MealServiceSyncClient, TMealServiceSyncClient};
+use rift_test::ultimate::{FullMealServiceSyncClient, TFullMealServiceSyncClient};
 
 // IMPORTANT: this code is never meant to be run; it's simply to ensure that service extension works
 fn main() {
-    // midlayer: MealService
-//    {
-//        let transport: Box<TTransport> = Box::new(TTcpTransport::new());
-//        let transport = Rc::new(RefCell::new(transport));
-//        let protocol: Box<TProtocol> = Box::new(TCompactProtocol::new(transport));
-//        let mut client = MealServiceSyncClient::new(protocol);
-//
-//        // only the following two calls work
-//        client.ramen(100);
-//        client.meal();
-//        // client.full_meal(); // <-- IMPORTANT: if you uncomment this, compilation *should* fail
-//        // this is because the MealService struct does not contain the appropriate service marker
-//    }
-//
-//    // ultimate: FullMealService
-//    {
-//        let transport: Box<TTransport> = Box::new(TTcpTransport::new());
-//        let transport = Rc::new(RefCell::new(transport));
-//        let protocol: Box<TProtocol> = Box::new(TCompactProtocol::new(transport));
-//        let mut client = FullMealServiceSyncClient::new(protocol);
-//
-//        // all
-//        client.ramen(100);
-//        client.meal();
-//        client.full_meal();
-//    }
-//
-//    // ultimate: server-side
-//    {
-//        struct Handler;
-//        impl TFullMealServiceSyncHandler for Handler {
-//            fn handle_full_meal(&mut self) -> rift::Result<FullMeal> {
-//                unimplemented!()
-//            }
-//        }
-//        impl TMealServiceSyncHandler for Handler {
-//            fn handle_meal(&mut self) -> rift::Result<Meal> {
-//                unimplemented!()
-//            }
-//        }
-//        impl TRamenServiceSyncHandler for Handler {
-//            fn handle_ramen(&mut self, requested_noodle_count: i32) -> rift::Result<Ramen> {
-//                unimplemented!()
-//            }
-//        }
-//        impl TNapkinServiceSyncHandler for Handler {
-//            fn handle_napkin(&mut self) -> rift::Result<Napkin> {
-//                unimplemented!()
-//            }
-//        }
-//    }
+    let matches = clap_app!(rust_test_client =>
+        (version: "1.0")
+        (author: "Allen George <allen.george@gmail.com>")
+        (about: "Rust Thrift Kitchen Sink client")
+        (@arg host: --host +takes_value "Host on which the Thrift test server is located")
+        (@arg port: --port +takes_value "Port on which the Thrift test server is listening")
+        (@arg protocol: --protocol +takes_value "Thrift protocol implementation to use")
+        (@arg service: --service +takes_value "Service type to contact (part, full)")
+    ).get_matches();
+
+    let host = matches.value_of("host").unwrap_or("127.0.0.1");
+    let port = value_t!(matches, "port", u16).unwrap_or(9090);
+    let protocol = matches.value_of("protocol").unwrap_or("compact");
+    let service = matches.value_of("service").unwrap_or("part");
+
+    let t = open_tcp_transport(host, port);
+    let t: Box<TTransport> = Box::new(TFramedTransport::new(t));
+    let t = Rc::new(RefCell::new(t));
+
+    let (i_prot, o_prot): (Box<TInputProtocol>, Box<TOutputProtocol>) = match protocol {
+        "binary" => {
+            (
+                Box::new(TBinaryInputProtocol::new(true, t.clone())),
+                Box::new(TBinaryOutputProtocol::new(true, t.clone()))
+            )
+        },
+        "compact" => {
+            (
+                Box::new(TCompactInputProtocol::new(t.clone())),
+                Box::new(TCompactOutputProtocol::new(t.clone())),
+            )
+        }
+        unmatched => panic!(format!("unsupported protocol {}", unmatched)),
+    };
+
+    match run(service, i_prot, o_prot) {
+        Ok(_)  => println!("succeeded"),
+        Err(_) => println!("failed"),
+    }
+}
+
+fn run(service: &str, i_prot: Box<TInputProtocol>, o_prot: Box<TOutputProtocol>) -> rift::Result<()> {
+    match service {
+        "full" => run_full_meal_service(i_prot, o_prot),
+        "part" => run_meal_service(i_prot, o_prot),
+        _  => Err(rift::Error::from(format!("unknown service type {}", service)))
+    }
+}
+
+fn open_tcp_transport(host: &str, port: u16) -> Rc<RefCell<Box<TTransport>>> {
+    let mut t = TTcpTransport::new();
+    let t = match t.open(&format!("{}:{}", host, port)) {
+        Ok(()) => t,
+        Err(e) => {
+            println!("failed to open transport: {:?}", e);
+            std::process::exit(1)
+        }
+    };
+    let t: Box<TTransport> = Box::new(t);
+    Rc::new(RefCell::new(t))
+}
+
+fn run_meal_service(i_prot: Box<TInputProtocol>, o_prot: Box<TOutputProtocol>) -> rift::Result<()> {
+    let mut client = MealServiceSyncClient::new(i_prot, o_prot);
+
+    // client.full_meal(); // <-- IMPORTANT: if you uncomment this, compilation *should* fail
+    // this is because the MealService struct does not contain the appropriate service marker
+
+    // only the following two calls work
+    try!(client.ramen(100));
+    try!(client.meal());
+
+    Ok(())
+}
+
+fn run_full_meal_service(i_prot: Box<TInputProtocol>, o_prot: Box<TOutputProtocol>) -> rift::Result<()> {
+    let mut client = FullMealServiceSyncClient::new(i_prot, o_prot);
+
+    try!(client.ramen(100));
+    try!(client.meal());
+    try!(client.full_meal());
+
+    Ok(())
 }
