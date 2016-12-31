@@ -38,8 +38,8 @@ fn main() {
         (about: "Rust Thrift Kitchen Sink client")
         (@arg host: --host +takes_value "Host on which the Thrift test server is located")
         (@arg port: --port +takes_value "Port on which the Thrift test server is listening")
-        (@arg protocol: --protocol +takes_value "Thrift protocol implementation to use")
-        (@arg service: --service +takes_value "Service type to contact (part, full)")
+        (@arg protocol: --protocol +takes_value "Thrift protocol implementation to use (\"binary\", \"compact\")")
+        (@arg service: --service +takes_value "Service type to contact (\"part\", \"full\")")
     ).get_matches();
 
     let host = matches.value_of("host").unwrap_or("127.0.0.1");
