@@ -15,6 +15,28 @@
 // specific language governing permissions and limitations
 // under the License.
 
+//! Types used to send and receive primitives to/from a remote Thrift
+//! server or client.
+//!
+//! Defines the following important high-level types:
+//!
+//! 1. `TInputProtocol`: Minimum set of operations necessary to read primitives
+//!    from their wire representation to their corresponding Rust format.
+//! 2. `TOutputProtocol`: Minimum set of operations necessary to write
+//!    primitives from their Rust format to their corresponding wire
+//!    representation.
+//!
+//! As well as major implementations:
+//!
+//! 1. `TBinaryInputProtocol`/`TBinaryOutputProtocol`: Read and write primitives
+//!    in the simple Thrift binary protocol from/to the underlying I/O transport.
+//! 2. `TCompactInputProtocol`/`TCompactOutputProtocol`: Read and write
+//!    primitives in the compact binary protocol from/to the underlying I/O
+//!    transport.
+//!
+//! This module also defines a number of auxiliary types used to support both
+//! `TInputProtocol` and `TOutputProtocol`.
+
 use std::cell::RefCell;
 use std::fmt;
 use std::fmt::{Display, Formatter};
@@ -33,12 +55,13 @@ pub use self::binary::{TBinaryInputProtocol, TBinaryInputProtocolFactory, TBinar
 pub use self::compact::{TCompactInputProtocol, TCompactInputProtocolFactory, TCompactOutputProtocol, TCompactOutputProtocolFactory};
 pub use self::multiplexed::{TMultiplexedInputProtocol, TMultiplexedOutputProtocol};
 
-/// Default maximum depth to which we will skip
-/// a Thrift field. Note that we have to set a
-/// default because Thrift fields may contain nested
-/// fields and so we may recurse indefinitely.
+/// Default maximum depth to which `TInputProtocol::skip` will skip a Thrift
+/// field. A default is necessary because Thrift structs or collections may
+/// contain nested structs and collections, which could result in indefinite
+/// recursion.
 const MAXIMUM_SKIP_DEPTH: i8 = 64;
 
+///
 pub trait TInputProtocol {
     fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier>;
     fn read_message_end(&mut self) -> ::Result<()>;

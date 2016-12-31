@@ -15,51 +15,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//! Single-threaded blocking Thrift socket server. This implementation listens
-//! on the given host/port pair and accepts a single connection on the main
-//! thread. It processes messages from the remote, executes the user's handler
-//! code and sends responses back to the remote all on this thread. It allows
-//! different `TProtocol` and `TTransport` implementations to be used for the
-//! input and output halves of communication.
-//!
-//! # Examples
-//!
-//! Creating and running a `TSimpleServer` using Thrift-compiler-generated
-//! service code.
-//!
-//! ```no_run
-//! use rift::protocol::{TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory, TInputProtocolFactory, TOutputProtocolFactory};
-//! use rift::server::TSimpleServer;
-//! use rift::transport::{TBufferedTransportFactory, TTransportFactory};
-//! use generated::{ServiceSyncProcessor, ServiceSyncHandler};
-//!
-//! struct ServiceSyncHandlerImpl;
-//! impl ServiceSyncHandler for ServiceSyncHandlerImpl {
-//!   fn service_call(&mut self, ...) -> Result<()> {
-//!     // ...
-//!   }
-//! }
-//!
-//! let i_trans_factory = TBufferedTransportFactory {};
-//! let i_proto_factory = TBinaryInputProtocolFactory {};
-//! let o_trans_factory = TBufferedTransportFactory {};
-//! let o_proto_factory = TBinaryOutputProtocolFactory {};
-//!
-//! let processor = ServiceSyncProcessor::new(ServiceSyncHandlerImpl {});
-//! let server = TSimpleServer::new(
-//!   i_trans_factory,
-//!   i_proto_factory,
-//!   o_trans_factory,
-//!   o_proto_factory,
-//!   processor
-//! );
-//!
-//! match server.listen("127.0.0.1:8080") {
-//!   Ok(_)  => println!("listen completed"),
-//!   Err(e) => println!("listen failed with error {:?}", e),
-//! }
-//! ```
-
 use std::cell::RefCell;
 use std::net::{TcpListener, TcpStream};
 use std::rc::Rc;
@@ -70,6 +25,51 @@ use ::transport::{TTcpTransport, TTransport, TTransportFactory};
 
 use super::TProcessor;
 
+/// Single-threaded blocking Thrift socket server.
+///
+/// This implementation listens on the given host/port pair and accepts a
+/// single connection on the main thread. It processes messages from the remote,
+/// executes the user's handler code and sends responses back to the remote all
+/// on this thread. It allows different `TProtocol` and `TTransport`
+/// implementations to be used for the input and output halves of communication.
+///
+/// # Examples
+///
+/// Creating and running a `TSimpleServer` using Thrift-compiler-generated
+/// service code.
+///
+/// ```no_run
+/// use rift::protocol::{TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory, TInputProtocolFactory, TOutputProtocolFactory};
+/// use rift::server::TSimpleServer;
+/// use rift::transport::{TBufferedTransportFactory, TTransportFactory};
+/// use generated::{ServiceSyncProcessor, ServiceSyncHandler};
+///
+/// struct ServiceSyncHandlerImpl;
+/// impl ServiceSyncHandler for ServiceSyncHandlerImpl {
+///   fn service_call(&mut self, ...) -> Result<()> {
+///     // ...
+///   }
+/// }
+///
+/// let i_trans_factory = TBufferedTransportFactory {};
+/// let i_proto_factory = TBinaryInputProtocolFactory {};
+/// let o_trans_factory = TBufferedTransportFactory {};
+/// let o_proto_factory = TBinaryOutputProtocolFactory {};
+///
+/// let processor = ServiceSyncProcessor::new(ServiceSyncHandlerImpl {});
+/// let server = TSimpleServer::new(
+///   i_trans_factory,
+///   i_proto_factory,
+///   o_trans_factory,
+///   o_proto_factory,
+///   processor
+/// );
+///
+/// match server.listen("127.0.0.1:8080") {
+///   Ok(_)  => println!("listen completed"),
+///   Err(e) => println!("listen failed with error {:?}", e),
+/// }
+/// ```
 pub struct TSimpleServer<PR: TProcessor> {
     i_trans_factory: Box<TTransportFactory>,
     i_proto_factory: Box<TInputProtocolFactory>,
@@ -79,6 +79,11 @@ pub struct TSimpleServer<PR: TProcessor> {
 }
 
 impl <PR: TProcessor> TSimpleServer<PR> {
+    /// Create a new server. The incoming transport channel and wire protocol
+    /// implementations are constructed using `input_transport_factory` and
+    /// `input_protocol_factory` respectively. The outgoing transport channel
+    /// and wire protocol implementations are constructed using
+    /// `output_transport_factory` and `output_protocol_factory` respectively.
     pub fn new(
         input_transport_factory: Box<TTransportFactory>,
         input_protocol_factory: Box<TInputProtocolFactory>,
@@ -95,6 +100,20 @@ impl <PR: TProcessor> TSimpleServer<PR> {
         }
     }
 
+    /// Listen for incoming connections on `listening_address`, which usually
+    /// takes the form `host:port`, for example: `127.0.0.1:8080`.
+    ///
+    /// Returns `()` when the listen completes successfully. Returns an `Err`
+    /// when the server cannot bind to the requested address, or there was an
+    /// unrecoverable error.
+    ///
+    /// ```no_run
+    /// let server = TSimpleServer(...);
+    /// match server.listen("127.0.0.1:8080") {
+    ///   Ok(_)  => println!("listen completed"),
+    ///   Err(e) => println!("listen failed with error {:?}", e),
+    /// }
+    /// ```
     pub fn listen(&mut self, listening_address: &str) -> ::Result<()> {
         let listener = try!(TcpListener::bind(listening_address));
         for stream in listener.incoming() {

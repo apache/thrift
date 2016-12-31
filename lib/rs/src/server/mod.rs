@@ -15,8 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//! Types required to implement the server half of a Thrift service. Provides
-//! the following implementations:
+//! Types required to implement the server half of a Thrift service.
+//!
+//! Provides the following implementations:
 //!
 //! 1. `TSimpleServer`: single-threaded socket server
 //! 2. `TProcessor`: service-call demultiplexer for a single Thrift service

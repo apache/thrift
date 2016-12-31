@@ -15,10 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//! Traits and type definitions for sending/receiving
-//! bytes over an I/O channel.
+//! Types required to send and receive bytes over an I/O channel.
 //!
-//! The core type exposed here is [`TTransport`][ttransport],
+//! The core type exposed here is a `TTransport`,
 //! which can by used by a [`TProtocol`][tprotocol]. While `TProtocol`
 //! exposes a typed interface for sending/receiving messages,
 //! `TTransport` deals only with bytes.
