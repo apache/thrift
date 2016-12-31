@@ -1005,7 +1005,7 @@ void t_rs_generator::render_result_struct_to_result_method(t_struct* tstruct) {
       "Application",
       "ApplicationError",
       "ApplicationErrorKind::MissingResult",
-      "\"no result received for " + service_call_name + "\".to_owned()"
+      "\"no result received for " + service_call_name + "\""
     );
     indent_down();
     f_gen_ << indent() << "}" << endl;
@@ -1512,7 +1512,7 @@ f_gen_ << indent() << "if received_field_count == 0 {" << endl;
     "Protocol",
     "ProtocolError",
     "ProtocolErrorKind::InvalidData",
-    "\"received empty union from remote " + union_name + "\".to_owned()"
+    "\"received empty union from remote " + union_name + "\""
   );
   indent_down();
   f_gen_ << indent() << "} else if received_field_count > 1 {" << endl;
@@ -1521,7 +1521,7 @@ f_gen_ << indent() << "if received_field_count == 0 {" << endl;
     "Protocol",
     "ProtocolError",
     "ProtocolErrorKind::InvalidData",
-    "\"received multiple fields for union from remote " + union_name + "\".to_owned()"
+    "\"received multiple fields for union from remote " + union_name + "\""
   );
   indent_down();
   f_gen_ << indent() << "} else {" << endl;
@@ -2405,7 +2405,7 @@ void t_rs_generator::render_handler_failed_user_exception_branch(t_function* tfu
 
   f_gen_ << indent() << "let ret_err = {" << endl;
   indent_up();
-  render_rift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "usr_err.description().to_owned()");
+  render_rift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "usr_err.description()");
   indent_down();
   f_gen_ << indent() << "};" << endl;
   render_handler_send_exception_response(tfunc, "ret_err");
@@ -2428,7 +2428,7 @@ void t_rs_generator::render_handler_failed_application_exception_branch(
 void t_rs_generator::render_handler_failed_default_exception_branch(t_function* tfunc) {
   f_gen_ << indent() << "let ret_err = {" << endl;
   indent_up();
-  render_rift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "e.description().to_owned()");
+  render_rift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "e.description()");
   indent_down();
   f_gen_ << indent() << "};" << endl;
   if (tfunc->is_oneway()) {
@@ -2527,12 +2527,12 @@ void t_rs_generator::render_rift_error_struct(
   const string& sub_error_kind,
   const string& error_message
 ) {
-  f_gen_ << indent() << error_struct << " {" << endl;
+  f_gen_ << indent() << error_struct << "::new(" << endl;
   indent_up();
-  f_gen_ << indent() << "kind: " << sub_error_kind << "," << endl;
-  f_gen_ << indent() << "message: " << error_message << "," << endl;
+  f_gen_ << indent() << sub_error_kind << "," << endl;
+  f_gen_ << indent() << error_message << endl;
   indent_down();
-  f_gen_ << indent() << "}" << endl;
+  f_gen_ << indent() << ")" << endl;
 }
 
 string t_rs_generator::to_rust_type(t_type* ttype) {
