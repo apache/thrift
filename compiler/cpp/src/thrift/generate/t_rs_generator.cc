@@ -36,6 +36,7 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
 static const string SERVICE_RESULT_VARIABLE = "result_value";
 static const string RESULT_STRUCT_SUFFIX = "Result";
 
+// FIXME: consolidate comment functions for sync client/server
 // FIXME: extract common TMessageIdentifier function
 // FIXME: remove "to_owned" from error constructors
 
@@ -356,7 +357,6 @@ void t_rs_generator::init_generator() {
   f_gen_ << endl;
 
   render_attributes_and_includes();
-  //render_utility_functions();
 }
 
 void t_rs_generator::render_attributes_and_includes() {
@@ -419,7 +419,10 @@ void t_rs_generator::render_attributes_and_includes() {
   }
 }
 
-void t_rs_generator::compute_service_referenced_modules(t_service *tservice, set<string> &referenced_modules) {
+void t_rs_generator::compute_service_referenced_modules(
+  t_service *tservice,
+  set<string> &referenced_modules
+) {
   t_service* extends = tservice->get_extends();
   if (extends) {
     if (extends->get_program() != get_program()) {
@@ -437,9 +440,9 @@ void t_rs_generator::close_generator() {
 //
 // Consts
 //
+// NOTE: consider using macros to generate constants
+//
 //-----------------------------------------------------------------------------
-
-// FIXME: consider using macros
 
 // This is worse than it should be because constants
 // aren't (sensibly) limited to scalar types
@@ -1036,7 +1039,7 @@ void t_rs_generator::render_union_impl(const string& union_name, t_struct* tstru
 
 //-----------------------------------------------------------------------------
 //
-// Sync Write
+// Sync Struct Write
 //
 //-----------------------------------------------------------------------------
 
@@ -1284,7 +1287,7 @@ bool t_rs_generator::needs_deref_on_container_write(t_type* ttype) {
 
 //-----------------------------------------------------------------------------
 //
-// Sync Read
+// Sync Struct Read
 //
 //-----------------------------------------------------------------------------
 
@@ -1718,7 +1721,7 @@ void t_rs_generator::render_service_call_structs(t_service* tservice) {
 }
 
 void t_rs_generator::render_sync_client(t_service* tservice) {
-  // service comment demarcation
+  // service client comment demarcation
   f_gen_ << "//" << endl;
   f_gen_ << "// " << tservice->get_name() << " service client "<< endl; // note: use *original* name
   f_gen_ << "//" << endl;
