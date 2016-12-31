@@ -27,6 +27,8 @@ const i32 BoilingPoint = 100
 
 const list<Temperature> Temperatures = [10, 11, 22, 33]
 
+const double MealsPerDay = 2.5;
+
 struct Noodle {
   1: string flourType
   2: Temperature cookTemp
