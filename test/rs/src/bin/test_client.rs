@@ -308,27 +308,50 @@ fn make_thrift_calls(client: &mut ThriftTestSyncClient) -> Result<(), rift::Erro
     //   2 => { 6 => <empty Insanity struct>, },
     // }
     {
-        /*
         let mut arg_map_usermap: BTreeMap<Numberz, i64> = BTreeMap::new();
-        let mut arg_vec_xtructs: Vec<Xtruct>::new();
+        arg_map_usermap.insert(Numberz::ONE, 4289);
+        arg_map_usermap.insert(Numberz::EIGHT, 19);
 
-        let insanity = Insanity {
-            userMap: Some(arg_map_usermap),
-            xtructs: Some(arg_vec_xtructs),
-        };
-
-        let mut s_cmp: BTreeMap<UserId, BTreeMap<Numberz, Insanity>> = BTreeMap::new();
+        let mut arg_vec_xtructs: Vec<Xtruct> = Vec::new();
+        arg_vec_xtructs.push(
+            Xtruct {
+                string_thing: Some("foo".to_owned()),
+                byte_thing: Some(8),
+                i32_thing: Some(29),
+                i64_thing: Some(92384),
+            }
+        );
+        arg_vec_xtructs.push(
+            Xtruct {
+                string_thing: Some("bar".to_owned()),
+                byte_thing: Some(28),
+                i32_thing: Some(2),
+                i64_thing: Some(-1281),
+            }
+        );
+        arg_vec_xtructs.push(
+            Xtruct {
+                string_thing: Some("baz".to_owned()),
+                byte_thing: Some(0),
+                i32_thing: Some(3948539),
+                i64_thing: Some(-12938492),
+            }
+        );
 
         let mut s_cmp_nested_1: BTreeMap<Numberz, Insanity> = BTreeMap::new();
-        s_cmp_nested_1.insert(Numberz::TWO, s);
-        s_cmp_nested_1.insert(Numberz::THREE, s);
+        let insanity = Insanity { user_map: Some(arg_map_usermap), xtructs: Some(arg_vec_xtructs) };
+        s_cmp_nested_1.insert(Numberz::TWO, insanity.clone());
+        s_cmp_nested_1.insert(Numberz::THREE, insanity.clone());
 
         let mut s_cmp_nested_2: BTreeMap<Numberz, Insanity> = BTreeMap::new();
+        let empty_insanity = Insanity { user_map: Some(BTreeMap::new()), xtructs: Some(Vec::new())};
         s_cmp_nested_2.insert(Numberz::SIX, empty_insanity);
 
+        let mut s_cmp: BTreeMap<UserId, BTreeMap<Numberz, Insanity>> = BTreeMap::new();
         s_cmp.insert(1 as UserId, s_cmp_nested_1);
         s_cmp.insert(2 as UserId, s_cmp_nested_2);
-        */
+
+        try!(verify_expected_result(client.test_insanity(insanity.clone()), s_cmp));
     }
 
     println!("testException - remote throws Xception");
