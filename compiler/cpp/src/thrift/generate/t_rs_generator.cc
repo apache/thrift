@@ -274,7 +274,9 @@ private:
   void render_handler_succeeded(t_function* tfunc);
   void render_handler_failed(t_function* tfunc);
   void render_handler_failed_user_exception_branch(t_function* tfunc);
+  void render_handler_failed_application_exception_branch(t_function* tfunc, const string& app_err_var);
   void render_handler_failed_default_exception_branch(t_function* tfunc);
+  void render_handler_send_exception_response(t_function* tfunc, const string& err_var);
   void render_service_call_structs(t_service* tservice);
   void render_result_value_struct(t_function* tfunc);
 
@@ -2290,7 +2292,9 @@ void t_rs_generator::render_handler_succeeded(t_function* tfunc) {
 }
 
 void t_rs_generator::render_handler_failed(t_function* tfunc) {
-  f_gen_ << indent() << "match e {" << endl;
+  string err_var("e");
+
+  f_gen_ << indent() << "match " << err_var << " {" << endl;
   indent_up();
 
   // if there are any user-defined exceptions for this service call handle them first
@@ -2302,6 +2306,14 @@ void t_rs_generator::render_handler_failed(t_function* tfunc) {
     indent_down();
     f_gen_ << indent() << "}," << endl;
   }
+
+  // application error
+  string app_err_var("app_err");
+  f_gen_ << indent() << "rift::Error::Application(" << app_err_var << ") => {" << endl;
+  indent_up();
+  render_handler_failed_application_exception_branch(tfunc, app_err_var);
+  indent_down();
+  f_gen_ << indent() << "}," << endl;
 
   // default case
   f_gen_ << indent() << "_ => {" << endl;
@@ -2396,21 +2408,21 @@ void t_rs_generator::render_handler_failed_user_exception_branch(t_function* tfu
   render_rift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "usr_err.description().to_owned()");
   indent_down();
   f_gen_ << indent() << "};" << endl;
-
-  f_gen_
-      << indent()
-      << "let message_ident = TMessageIdentifier::new("
-      << "\"" << tfunc->get_name() << "\", " // note: use *original* name
-      << "TMessageType::Exception, "
-      << "incoming_sequence_number);"
-      << endl;
-    f_gen_ << indent() << "try!(o_prot.write_message_begin(&message_ident));" << endl;
-    f_gen_ << indent() << "try!(rift::Error::write_application_error_to_out_protocol(&ret_err, o_prot));" << endl;
-    f_gen_ << indent() << "try!(o_prot.write_message_end());" << endl;
-    f_gen_ << indent() << "o_prot.flush()" << endl;
+  render_handler_send_exception_response(tfunc, "ret_err");
 
   indent_down();
   f_gen_ << indent() << "}" << endl;
+}
+
+void t_rs_generator::render_handler_failed_application_exception_branch(
+  t_function* tfunc,
+  const string& app_err_var
+) {
+  if (tfunc->is_oneway()) {
+    f_gen_ << indent() << "Err(rift::Error::Application(" << app_err_var << "))" << endl;
+  } else {
+    render_handler_send_exception_response(tfunc, app_err_var);
+  }
 }
 
 void t_rs_generator::render_handler_failed_default_exception_branch(t_function* tfunc) {
@@ -2422,18 +2434,22 @@ void t_rs_generator::render_handler_failed_default_exception_branch(t_function* 
   if (tfunc->is_oneway()) {
     f_gen_ << indent() << "Err(rift::Error::Application(ret_err))" << endl;
   } else {
-    f_gen_
+    render_handler_send_exception_response(tfunc, "ret_err");
+  }
+}
+
+void t_rs_generator::render_handler_send_exception_response(t_function* tfunc, const string& err_var) {
+  f_gen_
       << indent()
       << "let message_ident = TMessageIdentifier::new("
       << "\"" << tfunc->get_name() << "\", " // note: use *original* name
       << "TMessageType::Exception, "
       << "incoming_sequence_number);"
       << endl;
-    f_gen_ << indent() << "try!(o_prot.write_message_begin(&message_ident));" << endl;
-    f_gen_ << indent() << "try!(rift::Error::write_application_error_to_out_protocol(&ret_err, o_prot));" << endl;
-    f_gen_ << indent() << "try!(o_prot.write_message_end());" << endl;
-    f_gen_ << indent() << "o_prot.flush()" << endl;
-   }
+  f_gen_ << indent() << "try!(o_prot.write_message_begin(&message_ident));" << endl;
+  f_gen_ << indent() << "try!(rift::Error::write_application_error_to_out_protocol(&" << err_var << ", o_prot));" << endl;
+  f_gen_ << indent() << "try!(o_prot.write_message_end());" << endl;
+  f_gen_ << indent() << "o_prot.flush()" << endl;
 }
 
 string t_rs_generator::handler_successful_return_struct(t_function* tfunc) {
