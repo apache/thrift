@@ -36,9 +36,7 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
 static const string SERVICE_RESULT_VARIABLE = "result_value";
 static const string RESULT_STRUCT_SUFFIX = "Result";
 
-// FIXME: consolidate comment functions for sync client/server
 // FIXME: extract common TMessageIdentifier function
-// FIXME: remove "to_owned" from error constructors
 
 class t_rs_generator : public t_generator {
 public:
@@ -536,7 +534,11 @@ void t_rs_generator::render_const_value(t_type* ttype, t_const_value* tvalue) {
       f_gen_ << tvalue->get_integer();
       break;
     case t_base_type::TYPE_DOUBLE:
-      throw "cannot generate const value for double"; // FIXME
+      f_gen_
+        << indent()
+        << "OrderedFloat::from(" << tvalue->get_double() << ")"
+        << endl;
+      break;
     default:
       throw "cannot generate const value for " + t_base_type::t_base_name(tbase_type->get_base());
     }
@@ -677,7 +679,13 @@ void t_rs_generator::render_container_const_value(
 }
 
 bool t_rs_generator::can_generate_simple_const(t_type* ttype) {
-  return (get_true_type(ttype))->is_base_type();
+  t_type* actual_type = get_true_type(ttype);
+  if (actual_type->is_base_type()) {
+    t_base_type* tbase_type = (t_base_type*)actual_type;
+    return !(tbase_type->get_base() == t_base_type::t_base::TYPE_DOUBLE);
+  } else {
+    return false;
+  }
 }
 
 bool t_rs_generator::can_generate_const_holder(t_type* ttype) {
