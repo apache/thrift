@@ -17,21 +17,11 @@
 
 use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TInputProtocol, TOutputProtocol, TSetIdentifier, TStructIdentifier};
 
-/// A `TProtocol` that can send Thrift messages
-/// over a single endpoint shared with other Thrift services.
-/// This construct can only be used when paired with a
-/// corresponding `TMultiplexedProcessor` at the receiver.
 pub struct TMultiplexedInputProtocol {
     inner: Box<TInputProtocol>,
 }
 
 impl TMultiplexedInputProtocol {
-    /// Create a new `TMultiplexedInputProtocol` that:
-    ///
-    /// 1. Wraps an `wrapped` `TProtocol` (to which it delegates message
-    /// serialization and deserialization)
-    /// 2. Identifies outgoing service calls as originating from the
-    /// `service_name` Thrift service
     pub fn new(wrapped: Box<TInputProtocol>) -> TMultiplexedInputProtocol {
         TMultiplexedInputProtocol { inner: wrapped }
     }
@@ -127,22 +117,12 @@ impl TInputProtocol for TMultiplexedInputProtocol {
     }
 }
 
-/// A `TProtocol` that can send Thrift messages
-/// over a single endpoint shared with other Thrift services.
-/// This construct can only be used when paired with a
-/// corresponding `TMultiplexedProcessor` at the receiver.
 pub struct TMultiplexedOutputProtocol {
     service_name: String,
     inner: Box<TOutputProtocol>,
 }
 
 impl TMultiplexedOutputProtocol {
-    /// Create a new `TMultiplexedOutputProtocol` that:
-    ///
-    /// 1. Wraps an `wrapped` `TProtocol` (to which it delegates message
-    /// serialization and deserialization)
-    /// 2. Identifies outgoing service calls as originating from the
-    /// `service_name` Thrift service
     pub fn new(service_name: &str, wrapped: Box<TOutputProtocol>) -> TMultiplexedOutputProtocol {
         TMultiplexedOutputProtocol { service_name: service_name.to_owned(), inner: wrapped }
     }

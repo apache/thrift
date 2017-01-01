@@ -27,15 +27,11 @@ use ::transport::TTransport;
 use super::{TFieldIdentifier, TInputProtocol, TInputProtocolFactory, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType};
 use super::{TOutputProtocol, TOutputProtocolFactory, TSetIdentifier, TStructIdentifier, TType};
 
-/// Identifies the serialized message as conforming to Thrift binary protocol version 1.
 const BINARY_PROTOCOL_VERSION_1: u32 = 0x80010000;
 
-/// Sends messages over an underlying transport
-/// `transport` using a simple binary protocol.
+/// Reads messages encoded using the Thrift simple binary encoding.
 pub struct TBinaryInputProtocol {
-    /// Set to `true` if the strict binary protocol is to be used.
     strict: bool,
-    /// Underlying transport used for byte-level operations.
     transport: Rc<RefCell<Box<TTransport>>>,
 }
 
@@ -207,6 +203,8 @@ impl TInputProtocol for TBinaryInputProtocol {
     }
 }
 
+/// Creates instances of `TBinaryInputProtocol` that use the strict Thrift
+/// binary encoding.
 pub struct TBinaryInputProtocolFactory;
 impl TInputProtocolFactory for TBinaryInputProtocolFactory {
     fn create(&mut self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TInputProtocol> {
@@ -214,12 +212,9 @@ impl TInputProtocolFactory for TBinaryInputProtocolFactory {
     }
 }
 
-/// Sends messages over an underlying transport
-/// `transport` using a simple binary protocol.
+/// Encodes messages using the Thrift simple binary encoding.
 pub struct TBinaryOutputProtocol {
-    /// Set to `true` if the strict binary protocol is to be used.
     strict: bool,
-    /// Underlying transport used for byte-level operations.
     transport: Rc<RefCell<Box<TTransport>>>,
 }
 
@@ -368,6 +363,8 @@ impl TOutputProtocol for TBinaryOutputProtocol {
     }
 }
 
+/// Creates instances of `TBinaryOutputProtocol` that use the strict Thrift
+/// binary encoding.
 pub struct TBinaryOutputProtocolFactory;
 impl TOutputProtocolFactory for TBinaryOutputProtocolFactory {
     fn create(&mut self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TOutputProtocol> {

@@ -31,9 +31,7 @@ const COMPACT_PROTOCOL_ID: u8 = 0x82;
 const COMPACT_VERSION: u8 = 0x01;
 const COMPACT_VERSION_MASK: u8 = 0x1F;
 
-/// Sends messages over an underlying transport
-/// `transport` using the Thrift Compact protocol
-/// as described in THRIFT-110.
+/// Reads messages encoded in the Thrift compact protocol.
 pub struct TCompactInputProtocol {
     /// Identifier of the last field deserialized for a struct.
     last_read_field_id: i16,
@@ -276,8 +274,7 @@ impl TInputProtocol for TCompactInputProtocol {
     }
 }
 
-/// Convenience object that can be used to
-/// create an instance of `TCompactProtocol`.
+/// Creates instances of `TCompactInputProtocol`.
 pub struct TCompactInputProtocolFactory;
 impl TInputProtocolFactory for TCompactInputProtocolFactory {
     fn create(&mut self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TInputProtocol> {
@@ -285,9 +282,7 @@ impl TInputProtocolFactory for TCompactInputProtocolFactory {
     }
 }
 
-/// Sends messages over an underlying transport
-/// `transport` using the Thrift Compact protocol
-/// as described in THRIFT-110.
+/// Encodes messages in the Thrift compact protocol.
 pub struct TCompactOutputProtocol {
     /// Identifier of the last field serialized for a struct.
     last_write_field_id: i16,
@@ -485,8 +480,7 @@ impl TOutputProtocol for TCompactOutputProtocol {
     }
 }
 
-/// Convenience object that can be used to
-/// create an instance of `TCompactProtocol`.
+/// Creates instances of `TCompactOutputProtocol`.
 pub struct TCompactOutputProtocolFactory;
 impl TOutputProtocolFactory for TCompactOutputProtocolFactory {
     fn create(&mut self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TOutputProtocol> {
