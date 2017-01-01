@@ -38,7 +38,7 @@ use super::TProcessor;
 /// Creating and running a `TSimpleServer` using Thrift-compiler-generated
 /// service code.
 ///
-/// ```no_run
+/// ```text
 /// use rift::protocol::{TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory, TInputProtocolFactory, TOutputProtocolFactory};
 /// use rift::server::TSimpleServer;
 /// use rift::transport::{TBufferedTransportFactory, TTransportFactory};
@@ -107,7 +107,7 @@ impl <PR: TProcessor> TSimpleServer<PR> {
     /// when the server cannot bind to the requested address, or there was an
     /// unrecoverable error.
     ///
-    /// ```no_run
+    /// ```text
     /// let server = TSimpleServer(...);
     /// match server.listen("127.0.0.1:8080") {
     ///   Ok(_)  => println!("listen completed"),

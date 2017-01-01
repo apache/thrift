@@ -43,7 +43,7 @@ pub use self::multiplexed::TMultiplexedProcessor;
 /// Create and start a server using the auto-generated `TProcessor` for
 /// a Thrift service `SimpleService`.
 ///
-/// ```no_run
+/// ```text
 /// use generated::{SimpleServiceSyncProcessor, SimpleServiceSyncHandler};
 ///
 /// struct SimpleServiceHandlerImpl;

@@ -64,6 +64,7 @@ mod autogen;
 pub use autogen::*;
 
 /// Result type returned by all rift functions.
+///
 /// As is convention this is a typedef of `std::result::Result`
 /// with `E` defined as the `rift::Error` type.
 pub type Result<T> = std::result::Result<T, self::Error>;
