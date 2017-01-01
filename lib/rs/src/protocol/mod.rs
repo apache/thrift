@@ -28,14 +28,55 @@
 //!
 //! As well as major implementations:
 //!
-//! 1. `TBinaryInputProtocol`/`TBinaryOutputProtocol`: Read and write primitives
-//!    in the simple Thrift binary protocol from/to the underlying I/O transport.
-//! 2. `TCompactInputProtocol`/`TCompactOutputProtocol`: Read and write
-//!    primitives in the compact binary protocol from/to the underlying I/O
-//!    transport.
+//! 1. `TBinaryInputProtocol`/`TBinaryOutputProtocol`: Communicate with a
+//!    remote Thrift endpoint using a simple uncompressed binary encoding.
+//! 2. `TCompactInputProtocol`/`TCompactOutputProtocol`: Communicate with a
+//!    remote Thrift endpoint using a compact binary encoding.
 //!
 //! This module also defines a number of auxiliary types used to support both
 //! `TInputProtocol` and `TOutputProtocol`.
+//!
+//! # Examples
+//!
+//! Using a `TOutputProtocol`
+//!
+//! ```no_run
+//! use std::cell::RefCell;
+//! use std::rc::Rc;
+//!
+//! use rift::protocol::{TBinaryOutputProtocol, TFieldIdentifier, TOutputProtocol, TType};
+//! use rift::transport::{TTcpTransport, TTransport};
+//!
+//! let mut transport = TTcpTransport::new();
+//! transport.open("127.0.0.1:9090");
+//! let transport = Rc::new(RefCell::new(Box::new(transport) as Box<TTransport>));
+//!
+//! let mut o_prot = TBinaryOutputProtocol::new(true, transport.clone());
+//!
+//! o_prot.write_field_begin(&TFieldIdentifier::new("string_thing", TType::String, 1));
+//! o_prot.write_string("foo");
+//! o_prot.write_field_end();
+//! ```
+//!
+//! Using a `TInputProtocol`
+//!
+//! ```no_run
+//! use std::cell::RefCell;
+//! use std::rc::Rc;
+//!
+//! use rift::protocol::{TBinaryInputProtocol, TInputProtocol, TType};
+//! use rift::transport::{TTcpTransport, TTransport};
+//!
+//! let mut transport = TTcpTransport::new();
+//! transport.open("127.0.0.1:9090");
+//! let transport = Rc::new(RefCell::new(Box::new(transport) as Box<TTransport>));
+//!
+//! let mut i_prot = TBinaryInputProtocol::new(true, transport.clone());
+//!
+//! let field_identifier = i_prot.read_field_begin().unwrap();
+//! let field_contents = i_prot.read_string().unwrap();
+//! let field_end = i_prot.read_field_end().unwrap();
+//! ```
 
 use std::cell::RefCell;
 use std::fmt;
@@ -72,6 +113,28 @@ const MAXIMUM_SKIP_DEPTH: i8 = 64;
 /// All methods return a `rift::Result`. If a method returns an `Err` the
 /// underlying transport or protocol should be considered suspect, and the
 /// channel should be terminated.
+///
+/// # Examples
+///
+/// Using a `TInputProtocol`
+///
+/// ```no_run
+/// use std::cell::RefCell;
+/// use std::rc::Rc;
+///
+/// use rift::protocol::{TBinaryInputProtocol, TInputProtocol, TType};
+/// use rift::transport::{TTcpTransport, TTransport};
+///
+/// let mut transport = TTcpTransport::new();
+/// transport.open("127.0.0.1:9090");
+/// let transport = Rc::new(RefCell::new(Box::new(transport) as Box<TTransport>));
+///
+/// let mut i_prot = TBinaryInputProtocol::new(true, transport.clone());
+///
+/// let field_identifier = i_prot.read_field_begin().unwrap();
+/// let field_contents = i_prot.read_string().unwrap();
+/// let field_end = i_prot.read_field_end().unwrap();
+/// ```
 pub trait TInputProtocol {
     /// Read the beginning of a Thrift message from the wire.
     fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier>;
@@ -211,7 +274,7 @@ pub trait TInputProtocol {
 }
 
 /// Contains the minimum set of functions necessary to write a Thrift service
-/// call, primitive or container from the wire.
+/// call, primitive or container to the wire.
 ///
 /// This trait does not deal with higher-level types like structs or exceptions
 /// - only with primitives, message or container boundaries. The write methods
@@ -225,6 +288,28 @@ pub trait TInputProtocol {
 /// All methods return a `rift::Result`. If a method returns an `Err` the
 /// underlying transport or protocol should be considered suspect, and the
 /// channel should be terminated.
+///
+/// # Examples
+///
+/// Using a `TOutputProtocol`
+///
+/// ```no_run
+/// use std::cell::RefCell;
+/// use std::rc::Rc;
+///
+/// use rift::protocol::{TBinaryOutputProtocol, TFieldIdentifier, TOutputProtocol, TType};
+/// use rift::transport::{TTcpTransport, TTransport};
+///
+/// let mut transport = TTcpTransport::new();
+/// transport.open("127.0.0.1:9090");
+/// let transport = Rc::new(RefCell::new(Box::new(transport) as Box<TTransport>));
+///
+/// let mut o_prot = TBinaryOutputProtocol::new(true, transport.clone());
+///
+/// o_prot.write_field_begin(&TFieldIdentifier::new("string_thing", TType::String, 1));
+/// o_prot.write_string("foo");
+/// o_prot.write_field_end();
+/// ```
 pub trait TOutputProtocol {
     /// Write the beginning of a Thrift message to the wire.
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()>;
@@ -282,19 +367,62 @@ pub trait TOutputProtocol {
     fn write_byte(&mut self, b: u8) -> ::Result<()>; // FIXME: REMOVE
 }
 
+/// Helper type required by a `TSimpleServer` to create `TInputProtocol`
+/// instances with which to read messages from accepted client connections.
+///
+/// # Examples
+///
+/// ```no_run
+/// use std::cell::RefCell;
+/// use std::rc::Rc;
+///
+/// use rift::protocol::{TBinaryInputProtocolFactory, TInputProtocolFactory};
+/// use rift::transport::{TTcpTransport, TTransport};
+///
+/// let mut transport = TTcpTransport::new();
+/// transport.open("127.0.0.1:9090");
+/// let transport = Rc::new(RefCell::new(Box::new(transport) as Box<TTransport>));
+///
+/// let mut i_proto_factory = TBinaryInputProtocolFactory {};
+/// let mut i_prot = i_proto_factory.create(transport);
+/// ```
 pub trait TInputProtocolFactory {
+    /// Create an instance of a `TInputProtocol`.
     fn create(&mut self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TInputProtocol>;
 }
 
+/// Helper type required by a `TSimpleServer` to create `TOutputProtocol`
+/// instances with which to write messages to accepted client connections.
+///
+/// # Examples
+///
+/// ```no_run
+/// use std::cell::RefCell;
+/// use std::rc::Rc;
+///
+/// use rift::protocol::{TBinaryOutputProtocolFactory, TOutputProtocolFactory};
+/// use rift::transport::{TTcpTransport, TTransport};
+///
+/// let mut transport = TTcpTransport::new();
+/// transport.open("127.0.0.1:9090");
+/// let transport = Rc::new(RefCell::new(Box::new(transport) as Box<TTransport>));
+///
+/// let mut o_proto_factory = TBinaryOutputProtocolFactory {};
+/// let mut o_prot = o_proto_factory.create(transport);
+/// ```
 pub trait TOutputProtocolFactory {
+    /// Create an instance of a `TOutputProtocol`.
     fn create(&mut self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TOutputProtocol>;
 }
 
 /// Identifies a Thrift message.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TMessageIdentifier {
+    /// Service call for which this message was generated and sent.
     pub name: String,
+    /// Message type. One of `TMessageType`.
     pub message_type: TMessageType,
+    /// Numeric id.
     pub sequence_number: i32,
 }
 
@@ -312,6 +440,7 @@ impl TMessageIdentifier {
 /// Identifies a Thrift struct.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TStructIdentifier {
+    /// Name of the encoded Thrift struct.
     pub name: String,
 }
 
@@ -325,8 +454,14 @@ impl TStructIdentifier {
 /// Identifies a Thrift field.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TFieldIdentifier {
+    /// Name of the encoded Thrift field.
+    ///
+    /// This field **should** be set be callers of `TOutputProtocol`. It
+    /// **may not** be set on received field identifiers.
     pub name: Option<String>,
+    /// Field type. One of `TType`.
     pub field_type: TType,
+    /// Thrift field id. `None` only if `field_type` is `TType::Stop`.
     pub id: Option<i16>,
 }
 
@@ -349,7 +484,9 @@ impl TFieldIdentifier {
 /// Identifies a list.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TListIdentifier {
+    /// Type of the elements contained in this list. One of `TType`.
     pub element_type: TType,
+    /// Number of elements contained in this list.
     pub size: i32,
 }
 
@@ -363,7 +500,9 @@ impl TListIdentifier {
 /// Identifies a set.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TSetIdentifier {
+    /// Type of the elements contained in this set. One of `TType`.
     pub element_type: TType,
+    /// Number of elements contained in this set.
     pub size: i32,
 }
 
@@ -377,8 +516,11 @@ impl TSetIdentifier {
 /// Identifies a map.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TMapIdentifier {
+    /// Type of the map key. One of `TType`.
     pub key_type: Option<TType>,
+    /// Type of the map value. One of `TType`.
     pub value_type: Option<TType>,
+    /// Number of entries contained in this map.
     pub size: i32,
 }
 
@@ -508,6 +650,11 @@ impl Display for TType {
     }
 }
 
+/// Convenience method for comparing the expected message sequence number
+/// `expected` with the actual message sequence number `actual` received from
+/// the remote Thrift endpoint.
+///
+/// Returns `()` if `actual == expected`, `Err` otherwise.
 pub fn verify_expected_sequence_number(expected: i32, actual: i32) -> ::Result<()> {
     if expected == actual {
         Ok(())
@@ -523,6 +670,11 @@ pub fn verify_expected_sequence_number(expected: i32, actual: i32) -> ::Result<(
     }
 }
 
+/// Convenience method for comparing the expected service call name `expected`
+/// with the actual service call name `actual` received from the remote Thrift
+/// endpoint.
+///
+/// Returns `()` if `actual == expected`, `Err` otherwise.
 pub fn verify_expected_service_call(expected: &str, actual: &str) -> ::Result<()> {
     if expected == actual {
         Ok(())
@@ -538,6 +690,10 @@ pub fn verify_expected_service_call(expected: &str, actual: &str) -> ::Result<()
     }
 }
 
+/// Convenience method for comparing the expected message type `expected` with
+/// the actual message type `actual` received from the remote Thrift endpoint.
+///
+/// Returns `()` if `actual == expected`, `Err` otherwise.
 pub fn verify_expected_message_type(expected: TMessageType, actual: TMessageType) -> ::Result<()> {
     if expected == actual {
         Ok(())
@@ -553,6 +709,9 @@ pub fn verify_expected_message_type(expected: TMessageType, actual: TMessageType
     }
 }
 
+/// Convenience method for verifying if a required Thrift struct field exists.
+///
+/// Returns `()` if it does, `Err` otherwise.
 pub fn verify_required_field_exists<T>(field_name: &str, field: &Option<T>) -> ::Result<()> {
     match *field {
         Some(_) => Ok(()),
@@ -567,6 +726,9 @@ pub fn verify_required_field_exists<T>(field_name: &str, field: &Option<T>) -> :
     }
 }
 
+/// Convenience method for extracting the id from a non-stop Thrift field.
+///
+/// Returns `TFieldIdentifier.id` if one exists, `Err` otherwise.
 pub fn field_id(field_ident: &TFieldIdentifier) -> ::Result<i16> {
     field_ident.id.ok_or(
         ::Error::Protocol(

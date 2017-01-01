@@ -17,23 +17,16 @@
 
 //! Types required to send and receive bytes over an I/O channel.
 //!
-//! The core type exposed here is a `TTransport`,
-//! which can by used by a [`TProtocol`][tprotocol]. While `TProtocol`
-//! exposes a typed interface for sending/receiving messages,
-//! `TTransport` deals only with bytes.
+//! The core type exposed here is a `TTransport`, which can by used by a
+//! `TProtocol`. While `TProtocol` exposes a typed interface for communicating
+//! primitives, `TTransport` only deals with bytes.
 //!
 //! Specific implementations include:
-//! * [`TBufferedTransport`][tbuffered]: wraps an underlying transport
-//!   with a buffer, reducing the number of I/O operations
-//! * [`TFramedTransport`][tframed]: wraps an underlying transport and prefixes
-//!   outgoing messages with a message-framing header
-//! * [`TTcpTransport`][ttcp]: sends messages over a TCP socket
-//!
-//! [ttransport] trait.TTransport.html
-//! [tprotocol] trait.TProtocol.html
-//! [tbuffered] trait.TBufferedTransport.html
-//! [tframed] trait.TFramedTransport.html
-//! [ttcp] trait.TTcpTransport.html
+//! * `TBufferedTransport`: wraps an underlying transport with a buffer,
+//!   reducing the number of I/O operations
+//! * `TFramedTransport`: wraps an underlying transport and prefixes outgoing
+//!   messages with a message-framing header
+//! * `TTcpTransport`: sends messages over a TCP socket
 
 use std::cell::RefCell;
 use std::io;
@@ -52,18 +45,15 @@ pub use self::framed::{TFramedTransport, TFramedTransportFactory};
 pub use self::passthru::TPassThruTransport;
 pub use self::socket::TTcpTransport;
 
-/// Marker trait identifying a `TTransport` that
-/// can be used to send/receive Thrift messages.
+/// Marker trait identifying a channel that can be used to send/receive bytes.
 pub trait TTransport: io::Read + io::Write { }
 
-/// Blanket implementation of `TTransport` that allows
-/// any object `I` that implements both `io::Read` and
-/// `io::Write` to be represented as a `TTransport`.
 impl <I: io::Read + io::Write> TTransport for I { }
 
-/// A trait for objects that can construct a `TTransport`.
+/// Helper type required by a `TSimpleServer` to create `TTransport`
+/// instances with which to communicate with accepted client connections.
 pub trait TTransportFactory {
-    /// Construct a `TTransport` that wraps an `inner`
-    /// transport, thus creating a transport stack.
+    /// Construct a `TTransport` that wraps an `inner` transport, creating
+    /// a transport stack.
     fn create(&self, inner: Rc<RefCell<Box<TTransport>>>) -> Box<TTransport>;
 }
