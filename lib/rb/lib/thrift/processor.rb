@@ -50,6 +50,7 @@ module Thrift
     end
 
     def write_result(result, oprot, name, seqid)
+      result.validate
       oprot.write_message_begin(name, MessageTypes::REPLY, seqid)
       result.write(oprot)
       oprot.write_message_end
