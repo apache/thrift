@@ -208,6 +208,7 @@ literal_begin (['\"])
 "java_package"       { error_unsupported_namespace_decl("java_package", "java"); /* do nothing */ }
 "cocoa_prefix"       { error_unsupported_namespace_decl("cocoa_prefix", "cocoa"); /* do nothing */ }
 "csharp_namespace"   { error_unsupported_namespace_decl("csharp"); /* do nothing */ }
+"netcore_namespace"  { error_unsupported_namespace_decl("netcore"); /* do nothing */ }
 "delphi_namespace"   { error_unsupported_namespace_decl("delphi"); /* do nothing */ }
 "php_namespace"      { error_unsupported_namespace_decl("php"); /* do nothing */ }
 "py_module"          { error_unsupported_namespace_decl("py_module", "py"); /* do nothing */ }
