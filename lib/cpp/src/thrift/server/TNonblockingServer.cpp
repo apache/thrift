@@ -1324,7 +1324,7 @@ TNonblockingIOThread::~TNonblockingIOThread() {
     ownEventBase_ = false;
   }
 
-  if (listenSocket_ >= 0) {
+  if (listenSocket_ >= 0 && listenSocket_ != THRIFT_INVALID_SOCKET) {
     if (0 != ::THRIFT_CLOSESOCKET(listenSocket_)) {
       GlobalOutput.perror("TNonblockingIOThread listenSocket_ close(): ", THRIFT_GET_SOCKET_ERROR);
     }
@@ -1390,7 +1390,7 @@ void TNonblockingIOThread::registerEvents() {
                         event_base_get_method(eventBase_));
   }
 
-  if (listenSocket_ >= 0) {
+  if (listenSocket_ >= 0 && listenSocket_ != THRIFT_INVALID_SOCKET) {
     // Register the server event
     event_set(&serverEvent_,
               listenSocket_,
@@ -1593,7 +1593,7 @@ void TNonblockingIOThread::run() {
 
 void TNonblockingIOThread::cleanupEvents() {
   // stop the listen socket, if any
-  if (listenSocket_ >= 0) {
+  if (listenSocket_ >= 0 && listenSocket_ != THRIFT_INVALID_SOCKET) {
     if (event_del(&serverEvent_) == -1) {
       GlobalOutput.perror("TNonblockingIOThread::stop() event_del: ", THRIFT_GET_SOCKET_ERROR);
     }
