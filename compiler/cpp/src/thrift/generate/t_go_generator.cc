@@ -1527,9 +1527,15 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
       thriftFieldTypeId = "thrift.STRING";
     }
 
-    out << indent() << "if err := p." << field_method_prefix << field_method_suffix << "(iprot); err != nil {"
+    out << indent() << "if fieldTypeId == " << thriftFieldTypeId << " {" << endl;
+    out << indent() << "  if err := p." << field_method_prefix << field_method_suffix << "(iprot); err != nil {"
         << endl;
-    out << indent() << "  return err" << endl;
+    out << indent() << "    return err" << endl;
+    out << indent() << "  }" << endl;
+    out << indent() << "} else {" << endl;
+    out << indent() << "  if err := iprot.Skip(fieldTypeId); err != nil {" << endl;
+    out << indent() << "    return err" << endl;
+    out << indent() << "  }" << endl;
     out << indent() << "}" << endl;
 
     // Mark required field as read
