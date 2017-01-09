@@ -346,7 +346,7 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
         TSSLBase.__init__(self, True, None, kwargs)
         TSocket.TServerSocket.__init__(self, host, port, unix_socket)
         if self._should_verify and not _match_has_ipaddress:
-            raise ValueError('Need ipaddress and backports.ssl_match_hostname'
+            raise ValueError('Need ipaddress and backports.ssl_match_hostname '
                              'module to verify client certificate')
 
     def setCertfile(self, certfile):

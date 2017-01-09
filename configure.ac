@@ -119,6 +119,7 @@ if test "$enable_libs" = "no"; then
   with_ruby="no"
   with_haskell="no"
   with_haxe="no"
+  with_dotnetcore="no"
   with_perl="no"
   with_php="no"
   with_php_extension="no"
@@ -280,20 +281,25 @@ AM_CONDITIONAL(WITH_LUA, [test "$have_lua" = "yes"])
 AM_PATH_PYTHON(2.6,, :)
 AX_THRIFT_LIB(python, [Python], yes)
 if test "$with_python" = "yes";  then
-  AC_PATH_PROG([PIP], [pip])
-  AC_PATH_PROG([TRIAL], [trial])
-  if test -n "$TRIAL" && test "x$PYTHON" != "x" && test "x$PYTHON" != "x:" ; then
+  if test -n "$PYTHON"; then
     have_python="yes"
+  fi
+  AC_PATH_PROG([TRIAL], [trial])
+  if test -n "$TRIAL"; then
+    have_trial="yes"
   fi
 fi
 AM_CONDITIONAL(WITH_PYTHON, [test "$have_python" = "yes"])
+AM_CONDITIONAL(WITH_TWISTED_TEST, [test "$have_trial" = "yes"])
 
 # Find "python3" executable.
 # It's distro specific and far from ideal but needed to cross test py2-3 at once.
-AC_PATH_PROG([PYTHON3], [python3])
-AC_PATH_PROG([PIP3], [pip3])
-if test "x$PYTHON3" != "x" && test "x$PYTHON3" != "x:" && test "x$PIP3" != "x" ; then
-  have_py3="yes"
+# TODO: find "python2" if it's 3.x
+if python --version 2>&1 | grep -q "Python 2"; then
+  AC_PATH_PROGS([PYTHON3], [python3 python3.5 python35 python3.4 python34])
+  if test -n "$PYTHON3"; then
+    have_py3="yes"
+  fi
 fi
 AM_CONDITIONAL(WITH_PY3, [test "$have_py3" = "yes"])
 
@@ -415,6 +421,16 @@ fi
 AM_CONDITIONAL(WITH_HAXE, [test "$have_haxe" = "yes"])
 
 
+AX_THRIFT_LIB(dotnetcore, [.NET Core], yes)
+if test "$with_dotnetcore" = "yes";  then
+  AC_PATH_PROG([DOTNETCORE], [dotnet])
+  if [[ -x "$DOTNETCORE" ]] ; then
+    AX_PROG_DOTNETCORE_VERSION( [1.0.0], have_dotnetcore="yes", have_dotnetcore="no")
+  fi
+fi
+AM_CONDITIONAL(WITH_DOTNETCORE, [test "$have_dotnetcore" = "yes"])
+
+
 AX_THRIFT_LIB(d, [D], yes)
 if test "$with_d" = "yes";  then
   AX_DMD
@@ -510,6 +526,22 @@ if test "$enable_tests" = "no"; then
   have_tests="no"
 fi
 AM_CONDITIONAL(WITH_TESTS, [test "$have_tests" = "yes"])
+
+AC_ARG_ENABLE([plugin],
+  AS_HELP_STRING([--enable-plugin], [build compiler plugin support [default=yes]]),
+  [], enable_plugin=yes
+)
+have_plugin=yes
+if test "$have_cpp" = "no" ; then
+  have_plugin="no"
+fi
+if test "$enable_plugin" = "no"; then
+  have_plugin="no"
+fi
+if test "$have_plugin" = "yes" ; then
+  AC_CONFIG_LINKS([compiler/cpp/test/plugin/t_cpp_generator.cc:compiler/cpp/src/thrift/generate/t_cpp_generator.cc])
+fi
+AM_CONDITIONAL(WITH_PLUGIN, [test "$have_plugin" = "yes"])
 
 AC_ARG_ENABLE([tutorial],
   AS_HELP_STRING([--enable-tutorial], [build tutorial [default=yes]]),
@@ -707,8 +739,10 @@ AH_BOTTOM([
 AC_CONFIG_FILES([
   Makefile
   compiler/cpp/Makefile
-  compiler/cpp/version.h
-  compiler/cpp/src/windows/version.h
+  compiler/cpp/src/Makefile
+  compiler/cpp/src/thrift/plugin/Makefile
+  compiler/cpp/test/Makefile
+  compiler/cpp/src/thrift/version.h
   lib/Makefile
   lib/cpp/Makefile
   lib/cpp/test/Makefile
@@ -721,7 +755,7 @@ AC_CONFIG_FILES([
   lib/c_glib/thrift_c_glib.pc
   lib/c_glib/test/Makefile
   lib/csharp/Makefile
-  lib/csharp/test/ThriftTest/Makefile
+  lib/csharp/test/Multiplex/Makefile
   lib/d/Makefile
   lib/d/test/Makefile
   lib/erl/Makefile
@@ -734,6 +768,7 @@ AC_CONFIG_FILES([
   lib/js/test/Makefile
   lib/json/Makefile
   lib/json/test/Makefile
+  lib/netcore/Makefile
   lib/nodejs/Makefile
   lib/perl/Makefile
   lib/perl/test/Makefile
@@ -749,11 +784,13 @@ AC_CONFIG_FILES([
   test/features/Makefile
   test/c_glib/Makefile
   test/cpp/Makefile
+  test/csharp/Makefile
   test/erl/Makefile
   test/go/Makefile
   test/haxe/Makefile
   test/hs/Makefile
   test/lua/Makefile
+  test/netcore/Makefile
   test/php/Makefile
   test/dart/Makefile
   test/perl/Makefile
@@ -770,6 +807,7 @@ AC_CONFIG_FILES([
   tutorial/hs/Makefile
   tutorial/java/Makefile
   tutorial/js/Makefile
+  tutorial/netcore/Makefile
   tutorial/nodejs/Makefile
   tutorial/dart/Makefile
   tutorial/py/Makefile
@@ -817,10 +855,12 @@ AC_OUTPUT
 echo
 echo "$PACKAGE $VERSION"
 echo
+echo "Building Plugin Support ...... : $have_plugin"
 echo "Building C++ Library ......... : $have_cpp"
 echo "Building C (GLib) Library .... : $have_c_glib"
 echo "Building Java Library ........ : $have_java"
 echo "Building C# Library .......... : $have_csharp"
+echo "Building .NET Core Library ... : $have_dotnetcore"
 echo "Building Python Library ...... : $have_python"
 echo "Building Ruby Library ........ : $have_ruby"
 echo "Building Haxe Library ........ : $have_haxe"
@@ -854,11 +894,22 @@ if test "$have_csharp" = "yes" ; then
   echo "C# Library:"
   echo "   Using .NET 3.5 ............ : $net_3_5"
 fi
+if test "$have_dotnetcore" = "yes" ; then
+  echo
+  echo ".NET Core Library:"
+  echo "   Using .NET Core ........... : $DOTNETCORE"
+  echo "   Using .NET Core version ... : $DOTNETCORE_VERSION"
+fi
 if test "$have_python" = "yes" ; then
   echo
   echo "Python Library:"
   echo "   Using Python .............. : $PYTHON"
-  echo "   Using Trial ............... : $TRIAL"
+  if test "$have_py3" = "yes" ; then
+  echo "   Using Python3 ............. : $PYTHON3"
+  fi
+  if test "$have_trial" = "yes"; then
+  echo "   Using trial ............... : $TRIAL"
+  fi
 fi
 if test "$have_php" = "yes" ; then
   echo

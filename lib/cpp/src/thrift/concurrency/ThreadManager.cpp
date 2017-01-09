@@ -26,8 +26,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <assert.h>
-#include <queue>
+#include <stdexcept>
+#include <deque>
 #include <set>
 
 #if defined(DEBUG)
@@ -49,6 +49,9 @@ using boost::dynamic_pointer_cast;
  * it maintains statistics on number of idle threads, number of active threads,
  * task backlog, and average wait and service times.
  *
+ * There are three different monitors used for signaling different conditions
+ * however they all share the same mutex_.
+ *
  * @version $Id:$
  */
 class ThreadManager::Impl : public ThreadManager {
@@ -62,25 +65,26 @@ public:
       expiredCount_(0),
       state_(ThreadManager::UNINITIALIZED),
       monitor_(&mutex_),
-      maxMonitor_(&mutex_) {}
+      maxMonitor_(&mutex_),
+      workerMonitor_(&mutex_) {}
 
   ~Impl() { stop(); }
 
   void start();
-
-  void stop() { stopImpl(false); }
-
-  void join() { stopImpl(true); }
+  void stop();
 
   ThreadManager::STATE state() const { return state_; }
 
   shared_ptr<ThreadFactory> threadFactory() const {
-    Synchronized s(monitor_);
+    Guard g(mutex_);
     return threadFactory_;
   }
 
   void threadFactory(shared_ptr<ThreadFactory> value) {
-    Synchronized s(monitor_);
+    Guard g(mutex_);
+    if (threadFactory_ && threadFactory_->isDetached() != value->isDetached()) {
+      throw InvalidArgumentException();
+    }
     threadFactory_ = value;
   }
 
@@ -91,38 +95,34 @@ public:
   size_t idleWorkerCount() const { return idleCount_; }
 
   size_t workerCount() const {
-    Synchronized s(monitor_);
+    Guard g(mutex_);
     return workerCount_;
   }
 
   size_t pendingTaskCount() const {
-    Synchronized s(monitor_);
+    Guard g(mutex_);
     return tasks_.size();
   }
 
   size_t totalTaskCount() const {
-    Synchronized s(monitor_);
+    Guard g(mutex_);
     return tasks_.size() + workerCount_ - idleCount_;
   }
 
   size_t pendingTaskCountMax() const {
-    Synchronized s(monitor_);
+    Guard g(mutex_);
     return pendingTaskCountMax_;
   }
 
   size_t expiredTaskCount() {
-    Synchronized s(monitor_);
-    size_t result = expiredCount_;
-    expiredCount_ = 0;
-    return result;
+    Guard g(mutex_);
+    return expiredCount_;
   }
 
   void pendingTaskCountMax(const size_t value) {
-    Synchronized s(monitor_);
+    Guard g(mutex_);
     pendingTaskCountMax_ = value;
   }
-
-  bool canSleep();
 
   void add(shared_ptr<Runnable> value, int64_t timeout, int64_t expiration);
 
@@ -130,12 +130,30 @@ public:
 
   shared_ptr<Runnable> removeNextPending();
 
-  void removeExpiredTasks();
+  void removeExpiredTasks() {
+    removeExpired(false);
+  }
 
   void setExpireCallback(ExpireCallback expireCallback);
 
 private:
-  void stopImpl(bool join);
+  /**
+   * Remove one or more expired tasks.
+   * \param[in]  justOne  if true, try to remove just one task and return
+   */
+  void removeExpired(bool justOne);
+
+  /**
+   * \returns whether it is acceptable to block, depending on the current thread id
+   */
+  bool canSleep() const;
+
+  /**
+   * Lowers the maximum worker count and blocks until enough worker threads complete
+   * to get to the new maximum worker limit.  The caller is responsible for acquiring
+   * a lock on the class mutex_.
+   */
+  void removeWorkersUnderLock(size_t value);
 
   size_t workerCount_;
   size_t workerMaxCount_;
@@ -148,11 +166,12 @@ private:
   shared_ptr<ThreadFactory> threadFactory_;
 
   friend class ThreadManager::Task;
-  std::queue<shared_ptr<Task> > tasks_;
+  typedef std::deque<shared_ptr<Task> > TaskQueue;
+  TaskQueue tasks_;
   Mutex mutex_;
   Monitor monitor_;
   Monitor maxMonitor_;
-  Monitor workerMonitor_;
+  Monitor workerMonitor_;       // used to synchronize changes in worker count
 
   friend class ThreadManager::Worker;
   std::set<shared_ptr<Thread> > workers_;
@@ -163,7 +182,7 @@ private:
 class ThreadManager::Task : public Runnable {
 
 public:
-  enum STATE { WAITING, EXECUTING, CANCELLED, COMPLETE };
+  enum STATE { WAITING, EXECUTING, TIMEDOUT, COMPLETE };
 
   Task(shared_ptr<Runnable> runnable, int64_t expiration = 0LL)
     : runnable_(runnable),
@@ -194,7 +213,7 @@ class ThreadManager::Worker : public Runnable {
   enum STATE { UNINITIALIZED, STARTING, STARTED, STOPPING, STOPPED };
 
 public:
-  Worker(ThreadManager::Impl* manager) : manager_(manager), state_(UNINITIALIZED), idle_(false) {}
+  Worker(ThreadManager::Impl* manager) : manager_(manager), state_(UNINITIALIZED) {}
 
   ~Worker() {}
 
@@ -212,78 +231,82 @@ public:
    * execute.
    */
   void run() {
-    bool active = false;
+    Guard g(manager_->mutex_);
+
+    /**
+     * This method has three parts; one is to check for and account for
+     * admitting a task which happens under a lock.  Then the lock is released
+     * and the task itself is executed.  Finally we do some accounting
+     * under lock again when the task completes.
+     */
+
+    /**
+     * Admitting
+     */
+
     /**
      * Increment worker semaphore and notify manager if worker count reached
      * desired max
-     *
-     * Note: We have to release the monitor and acquire the workerMonitor
-     * since that is what the manager blocks on for worker add/remove
      */
-    {
-      bool notifyManager = false;
-      {
-        Synchronized s(manager_->monitor_);
-        active = manager_->workerCount_ < manager_->workerMaxCount_;
-        if (active) {
-          manager_->workerCount_++;
-          notifyManager = manager_->workerCount_ == manager_->workerMaxCount_;
-        }
-      }
-
-      if (notifyManager) {
-        Synchronized s(manager_->workerMonitor_);
+    bool active = manager_->workerCount_ < manager_->workerMaxCount_;
+    if (active) {
+      if (++manager_->workerCount_ == manager_->workerMaxCount_) {
         manager_->workerMonitor_.notify();
       }
     }
 
     while (active) {
+      /**
+        * While holding manager monitor block for non-empty task queue (Also
+        * check that the thread hasn't been requested to stop). Once the queue
+        * is non-empty, dequeue a task, release monitor, and execute. If the
+        * worker max count has been decremented such that we exceed it, mark
+        * ourself inactive, decrement the worker count and notify the manager
+        * (technically we're notifying the next blocked thread but eventually
+        * the manager will see it.
+        */
+      active = isActive();
+
+      while (active && manager_->tasks_.empty()) {
+        manager_->idleCount_++;
+        manager_->monitor_.wait();
+        active = isActive();
+        manager_->idleCount_--;
+      }
+
       shared_ptr<ThreadManager::Task> task;
 
-      /**
-       * While holding manager monitor block for non-empty task queue (Also
-       * check that the thread hasn't been requested to stop). Once the queue
-       * is non-empty, dequeue a task, release monitor, and execute. If the
-       * worker max count has been decremented such that we exceed it, mark
-       * ourself inactive, decrement the worker count and notify the manager
-       * (technically we're notifying the next blocked thread but eventually
-       * the manager will see it.
-       */
-      {
-        Guard g(manager_->mutex_);
-        active = isActive();
-
-        while (active && manager_->tasks_.empty()) {
-          manager_->idleCount_++;
-          idle_ = true;
-          manager_->monitor_.wait();
-          active = isActive();
-          idle_ = false;
-          manager_->idleCount_--;
+      if (active) {
+        if (!manager_->tasks_.empty()) {
+          task = manager_->tasks_.front();
+          manager_->tasks_.pop_front();
+          if (task->state_ == ThreadManager::Task::WAITING) {
+            // If the state is changed to anything other than EXECUTING or TIMEDOUT here
+            // then the execution loop needs to be changed below.
+            task->state_ =
+                (task->getExpireTime() && task->getExpireTime() < Util::currentTime()) ?
+                    ThreadManager::Task::TIMEDOUT :
+                    ThreadManager::Task::EXECUTING;
+          }
         }
 
-        if (active) {
-          manager_->removeExpiredTasks();
-
-          if (!manager_->tasks_.empty()) {
-            task = manager_->tasks_.front();
-            manager_->tasks_.pop();
-            if (task->state_ == ThreadManager::Task::WAITING) {
-              task->state_ = ThreadManager::Task::EXECUTING;
-            }
-          }
-
-          /* If we have a pending task max and we just dropped below it, wakeup any
-             thread that might be blocked on add. */
-          if (manager_->pendingTaskCountMax_ != 0
-              && manager_->tasks_.size() <= manager_->pendingTaskCountMax_ - 1) {
-            manager_->maxMonitor_.notify();
-          }
+        /* If we have a pending task max and we just dropped below it, wakeup any
+            thread that might be blocked on add. */
+        if (manager_->pendingTaskCountMax_ != 0
+            && manager_->tasks_.size() <= manager_->pendingTaskCountMax_ - 1) {
+          manager_->maxMonitor_.notify();
         }
       }
 
+      /**
+       * Execution - not holding a lock
+       */
       if (task) {
         if (task->state_ == ThreadManager::Task::EXECUTING) {
+
+          // Release the lock so we can run the task without blocking the thread manager
+          manager_->mutex_.unlock();
+
           try {
             task->run();
           } catch (const std::exception& e) {
@@ -291,29 +314,31 @@ public:
           } catch (...) {
             GlobalOutput.printf("[ERROR] task->run() raised an unknown exception");
           }
+
+          // Re-acquire the lock to proceed in the thread manager
+          manager_->mutex_.lock();
+
+        } else if (manager_->expireCallback_) {
+          // The only other state the task could have been in is TIMEDOUT (see above)
+          manager_->expireCallback_(task->getRunnable());
+          manager_->expiredCount_++;
         }
       }
     }
 
-    {
-      Synchronized s(manager_->workerMonitor_);
-      manager_->deadWorkers_.insert(this->thread());
-      idle_ = true;
-      manager_->workerCount_--;
-      bool notifyManager = (manager_->workerCount_ == manager_->workerMaxCount_);
-      if (notifyManager) {
-        manager_->workerMonitor_.notify();
-      }
+    /**
+     * Final accounting for the worker thread that is done working
+     */
+    manager_->deadWorkers_.insert(this->thread());
+    if (--manager_->workerCount_ == manager_->workerMaxCount_) {
+      manager_->workerMonitor_.notify();
     }
-
-    return;
   }
 
 private:
   ThreadManager::Impl* manager_;
   friend class ThreadManager::Impl;
   STATE state_;
-  bool idle_;
 };
 
 void ThreadManager::Impl::addWorker(size_t value) {
@@ -324,11 +349,9 @@ void ThreadManager::Impl::addWorker(size_t value) {
     newThreads.insert(threadFactory_->newThread(worker));
   }
 
-  {
-    Synchronized s(monitor_);
-    workerMaxCount_ += value;
-    workers_.insert(newThreads.begin(), newThreads.end());
-  }
+  Guard g(mutex_);
+  workerMaxCount_ += value;
+  workers_.insert(newThreads.begin(), newThreads.end());
 
   for (std::set<shared_ptr<Thread> >::iterator ix = newThreads.begin(); ix != newThreads.end();
        ++ix) {
@@ -339,103 +362,92 @@ void ThreadManager::Impl::addWorker(size_t value) {
     idMap_.insert(std::pair<const Thread::id_t, shared_ptr<Thread> >((*ix)->getId(), *ix));
   }
 
-  {
-    Synchronized s(workerMonitor_);
-    while (workerCount_ != workerMaxCount_) {
-      workerMonitor_.wait();
-    }
+  while (workerCount_ != workerMaxCount_) {
+    workerMonitor_.wait();
   }
 }
 
 void ThreadManager::Impl::start() {
-
+  Guard g(mutex_);
   if (state_ == ThreadManager::STOPPED) {
     return;
   }
 
-  {
-    Synchronized s(monitor_);
-    if (state_ == ThreadManager::UNINITIALIZED) {
-      if (!threadFactory_) {
-        throw InvalidArgumentException();
-      }
-      state_ = ThreadManager::STARTED;
-      monitor_.notifyAll();
+  if (state_ == ThreadManager::UNINITIALIZED) {
+    if (!threadFactory_) {
+      throw InvalidArgumentException();
     }
+    state_ = ThreadManager::STARTED;
+    monitor_.notifyAll();
+  }
 
-    while (state_ == STARTING) {
-      monitor_.wait();
-    }
+  while (state_ == STARTING) {
+    monitor_.wait();
   }
 }
 
-void ThreadManager::Impl::stopImpl(bool join) {
+void ThreadManager::Impl::stop() {
+  Guard g(mutex_);
   bool doStop = false;
-  if (state_ == ThreadManager::STOPPED) {
-    return;
-  }
 
-  {
-    Synchronized s(monitor_);
-    if (state_ != ThreadManager::STOPPING && state_ != ThreadManager::JOINING
-        && state_ != ThreadManager::STOPPED) {
-      doStop = true;
-      state_ = join ? ThreadManager::JOINING : ThreadManager::STOPPING;
-    }
+  if (state_ != ThreadManager::STOPPING && state_ != ThreadManager::JOINING
+      && state_ != ThreadManager::STOPPED) {
+    doStop = true;
+    state_ = ThreadManager::JOINING;
   }
 
   if (doStop) {
-    removeWorker(workerCount_);
+    removeWorkersUnderLock(workerCount_);
   }
 
-  // XXX
-  // should be able to block here for transition to STOPPED since we're no
-  // using shared_ptrs
-
-  {
-    Synchronized s(monitor_);
-    state_ = ThreadManager::STOPPED;
-  }
+  state_ = ThreadManager::STOPPED;
 }
 
 void ThreadManager::Impl::removeWorker(size_t value) {
-  std::set<shared_ptr<Thread> > removedThreads;
-  {
-    Synchronized s(monitor_);
-    if (value > workerMaxCount_) {
-      throw InvalidArgumentException();
-    }
-
-    workerMaxCount_ -= value;
-
-    if (idleCount_ < value) {
-      for (size_t ix = 0; ix < idleCount_; ix++) {
-        monitor_.notify();
-      }
-    } else {
-      monitor_.notifyAll();
-    }
-  }
-
-  {
-    Synchronized s(workerMonitor_);
-
-    while (workerCount_ != workerMaxCount_) {
-      workerMonitor_.wait();
-    }
-
-    for (std::set<shared_ptr<Thread> >::iterator ix = deadWorkers_.begin();
-         ix != deadWorkers_.end();
-         ++ix) {
-      idMap_.erase((*ix)->getId());
-      workers_.erase(*ix);
-    }
-
-    deadWorkers_.clear();
-  }
+  Guard g(mutex_);
+  removeWorkersUnderLock(value);
 }
 
-bool ThreadManager::Impl::canSleep() {
+void ThreadManager::Impl::removeWorkersUnderLock(size_t value) {
+  if (value > workerMaxCount_) {
+    throw InvalidArgumentException();
+  }
+
+  workerMaxCount_ -= value;
+
+  if (idleCount_ > value) {
+    // There are more idle workers than we need to remove,
+    // so notify enough of them so they can terminate.
+    for (size_t ix = 0; ix < value; ix++) {
+      monitor_.notify();
+    }
+  } else {
+    // There are as many or less idle workers than we need to remove,
+    // so just notify them all so they can terminate.
+    monitor_.notifyAll();
+  }
+
+  while (workerCount_ != workerMaxCount_) {
+    workerMonitor_.wait();
+  }
+
+  for (std::set<shared_ptr<Thread> >::iterator ix = deadWorkers_.begin();
+       ix != deadWorkers_.end();
+       ++ix) {
+
+    // when used with a joinable thread factory, we join the threads as we remove them
+    if (!threadFactory_->isDetached()) {
+      (*ix)->join();
+    }
+
+    idMap_.erase((*ix)->getId());
+    workers_.erase(*ix);
+  }
+
+  deadWorkers_.clear();
+}
+
+bool ThreadManager::Impl::canSleep() const {
   const Thread::id_t id = threadFactory_->getCurrentThreadId();
   return idMap_.find(id) == idMap_.end();
 }
@@ -453,7 +465,11 @@ void ThreadManager::Impl::add(shared_ptr<Runnable> value, int64_t timeout, int64
         "not started");
   }
 
-  removeExpiredTasks();
+  // if we're at a limit, remove an expired task to see if the limit clears
+  if (pendingTaskCountMax_ > 0 && (tasks_.size() >= pendingTaskCountMax_)) {
+    removeExpired(true);
+  }
+
   if (pendingTaskCountMax_ > 0 && (tasks_.size() >= pendingTaskCountMax_)) {
     if (canSleep() && timeout >= 0) {
       while (pendingTaskCountMax_ > 0 && tasks_.size() >= pendingTaskCountMax_) {
@@ -465,7 +481,7 @@ void ThreadManager::Impl::add(shared_ptr<Runnable> value, int64_t timeout, int64
     }
   }
 
-  tasks_.push(shared_ptr<ThreadManager::Task>(new ThreadManager::Task(value, expiration)));
+  tasks_.push_back(shared_ptr<ThreadManager::Task>(new ThreadManager::Task(value, expiration)));
 
   // If idle thread is available notify it, otherwise all worker threads are
   // running and will get around to this task in time.
@@ -475,12 +491,20 @@ void ThreadManager::Impl::add(shared_ptr<Runnable> value, int64_t timeout, int64
 }
 
 void ThreadManager::Impl::remove(shared_ptr<Runnable> task) {
-  (void)task;
-  Synchronized s(monitor_);
+  Guard g(mutex_);
   if (state_ != ThreadManager::STARTED) {
     throw IllegalStateException(
         "ThreadManager::Impl::remove ThreadManager not "
         "started");
+  }
+
+  for (TaskQueue::iterator it = tasks_.begin(); it != tasks_.end(); ++it)
+  {
+    if ((*it)->getRunnable() == task)
+    {
+      tasks_.erase(it);
+      return;
+    }
   }
 }
 
@@ -497,35 +521,40 @@ boost::shared_ptr<Runnable> ThreadManager::Impl::removeNextPending() {
   }
 
   shared_ptr<ThreadManager::Task> task = tasks_.front();
-  tasks_.pop();
+  tasks_.pop_front();
 
   return task->getRunnable();
 }
 
-void ThreadManager::Impl::removeExpiredTasks() {
-  int64_t now = 0LL; // we won't ask for the time untile we need it
+void ThreadManager::Impl::removeExpired(bool justOne) {
+  // this is always called under a lock
+  int64_t now = 0LL;
 
-  // note that this loop breaks at the first non-expiring task
-  while (!tasks_.empty()) {
-    shared_ptr<ThreadManager::Task> task = tasks_.front();
-    if (task->getExpireTime() == 0LL) {
-      break;
-    }
+  for (TaskQueue::iterator it = tasks_.begin(); it != tasks_.end(); )
+  {
     if (now == 0LL) {
       now = Util::currentTime();
     }
-    if (task->getExpireTime() > now) {
-      break;
+
+    if ((*it)->getExpireTime() > 0LL && (*it)->getExpireTime() < now) {
+      if (expireCallback_) {
+        expireCallback_((*it)->getRunnable());
+      }
+      it = tasks_.erase(it);
+      ++expiredCount_;
+      if (justOne) {
+        return;
+      }
     }
-    if (expireCallback_) {
-      expireCallback_(task->getRunnable());
+    else
+    {
+      ++it;
     }
-    tasks_.pop();
-    expiredCount_++;
   }
 }
 
 void ThreadManager::Impl::setExpireCallback(ExpireCallback expireCallback) {
+  Guard g(mutex_);
   expireCallback_ = expireCallback;
 }
 
@@ -544,7 +573,6 @@ public:
 private:
   const size_t workerCount_;
   const size_t pendingTaskCountMax_;
-  Monitor monitor_;
 };
 
 shared_ptr<ThreadManager> ThreadManager::newThreadManager() {

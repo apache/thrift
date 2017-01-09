@@ -59,8 +59,8 @@ struct GlobalFixtureSSL
 
 #ifdef __linux__
       // OpenSSL calls send() without MSG_NOSIGPIPE so writing to a socket that has
-		// disconnected can cause a SIGPIPE signal...
-		signal(SIGPIPE, SIG_IGN);
+      // disconnected can cause a SIGPIPE signal...
+      signal(SIGPIPE, SIG_IGN);
 #endif
 
       TSSLSocketFactory::setManualOpenSSLInitialization(true);
@@ -98,7 +98,7 @@ void readerWorker(boost::shared_ptr<TTransport> tt, uint32_t expectedResult) {
     tt->read(buf, 1);
     BOOST_CHECK_EQUAL(expectedResult, tt->read(buf, 4));
   } catch (const TTransportException& tx) {
-    BOOST_CHECK_EQUAL(TTransportException::INTERNAL_ERROR, tx.getType());
+    BOOST_CHECK_EQUAL(TTransportException::TIMED_OUT, tx.getType());
   }
 }
 
@@ -177,7 +177,6 @@ BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_read) {
 }
 
 BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_read) {
-  std::cout << "An error message from SSL_Shutdown on the console is expected:" << std::endl;
   boost::shared_ptr<TSSLSocketFactory> pServerSocketFactory = createServerSocketFactory();
   TSSLServerSocket sock1("localhost", 0, pServerSocketFactory);
   sock1.setInterruptableChildren(false); // returns to pre-THRIFT-2441 behavior
@@ -187,6 +186,7 @@ BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_read) {
   boost::shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
   clientSock->open();
   boost::shared_ptr<TTransport> accepted = sock1.accept();
+  boost::static_pointer_cast<TSSLSocket>(accepted)->setRecvTimeout(1000);
   boost::thread readThread(boost::bind(readerWorker, accepted, 0));
   clientSock->write((const uint8_t*)"0", 1);
   boost::this_thread::sleep(boost::posix_time::milliseconds(50));
@@ -195,10 +195,10 @@ BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_read) {
   BOOST_CHECK_MESSAGE(!readThread.try_join_for(boost::chrono::milliseconds(200)),
                       "server socket interruptChildren interrupted child read");
 
-  // only way to proceed is to have the client disconnect
-  clientSock->close();
+  // wait for receive timeout to kick in
   readThread.join();
   accepted->close();
+  clientSock->close();
   sock1.close();
 }
 
@@ -212,9 +212,12 @@ BOOST_AUTO_TEST_CASE(test_ssl_cannot_change_after_listen) {
 
 void peekerWorker(boost::shared_ptr<TTransport> tt, bool expectedResult) {
   uint8_t buf[400];
-
-  tt->read(buf, 1);
-  BOOST_CHECK_EQUAL(expectedResult, tt->peek());
+  try {
+    tt->read(buf, 1);
+    tt->peek();
+  } catch (const TTransportException& tx) {
+    BOOST_CHECK_EQUAL(TTransportException::TIMED_OUT, tx.getType());
+  }
 }
 
 void peekerWorkerInterrupt(boost::shared_ptr<TTransport> tt) {
@@ -228,7 +231,6 @@ void peekerWorkerInterrupt(boost::shared_ptr<TTransport> tt) {
 }
 
 BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_peek) {
-  std::cout << "An error message from SSL_Shutdown on the console is expected:" << std::endl;
   boost::shared_ptr<TSSLSocketFactory> pServerSocketFactory = createServerSocketFactory();
   TSSLServerSocket sock1("localhost", 0, pServerSocketFactory);
   sock1.listen();
@@ -237,7 +239,6 @@ BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_peek) {
   boost::shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
   clientSock->open();
   boost::shared_ptr<TTransport> accepted = sock1.accept();
-  // peek() will return false if child is interrupted
   boost::thread peekThread(boost::bind(peekerWorkerInterrupt, accepted));
   clientSock->write((const uint8_t*)"0", 1);
   boost::this_thread::sleep(boost::posix_time::milliseconds(50));
@@ -245,16 +246,12 @@ BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_peek) {
   sock1.interruptChildren();
   BOOST_CHECK_MESSAGE(peekThread.try_join_for(boost::chrono::milliseconds(200)),
                       "server socket interruptChildren did not interrupt child peek");
-#ifdef __linux__
-  signal(SIGPIPE, SIG_IGN);
-#endif
-  clientSock->close();
   accepted->close();
+  clientSock->close();
   sock1.close();
 }
 
 BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_peek) {
-  std::cout << "An error message from SSL_Shutdown on the console is expected:" << std::endl;
   boost::shared_ptr<TSSLSocketFactory> pServerSocketFactory = createServerSocketFactory();
   TSSLServerSocket sock1("localhost", 0, pServerSocketFactory);
   sock1.setInterruptableChildren(false); // returns to pre-THRIFT-2441 behavior
@@ -264,9 +261,8 @@ BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_peek) {
   boost::shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
   clientSock->open();
   boost::shared_ptr<TTransport> accepted = sock1.accept();
-  // peek() will return false when remote side is closed
+  boost::static_pointer_cast<TSSLSocket>(accepted)->setRecvTimeout(1000);
   boost::thread peekThread(boost::bind(peekerWorker, accepted, false));
-  //boost::thread peekThread(boost::bind(peekerWorkerRead, clientSock, false));
   clientSock->write((const uint8_t*)"0", 1);
   boost::this_thread::sleep(boost::posix_time::milliseconds(50));
   // peekThread is practically guaranteed to be blocking now
@@ -274,13 +270,10 @@ BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_peek) {
   BOOST_CHECK_MESSAGE(!peekThread.try_join_for(boost::chrono::milliseconds(200)),
                       "server socket interruptChildren interrupted child peek");
 
-  // only way to proceed is to have the client disconnect
-#ifdef __linux__
-  signal(SIGPIPE, SIG_IGN);
-#endif
-  clientSock->close();
+  // wait for the receive timeout to kick in
   peekThread.join();
   accepted->close();
+  clientSock->close();
   sock1.close();
 }
 

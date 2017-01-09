@@ -98,7 +98,7 @@ public:
    * Converts struct timeval to arbitrary-sized ticks since epoch
    */
   static void toTicks(int64_t& result, const struct timeval& value, int64_t ticksPerSec) {
-    return toTicks(result, value.tv_sec, value.tv_usec, US_PER_S, ticksPerSec);
+    return toTicks(result, (unsigned long)value.tv_sec, (unsigned long)value.tv_usec, US_PER_S, ticksPerSec);
   }
 
   /**

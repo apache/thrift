@@ -32,6 +32,7 @@
 
 #include <cstdint>
 #include <stdexcept>
+#include <algorithm>
 
 #ifndef bswap_64
 #define	bswap_64(x)     (((uint64_t)(x) << 56) | \
@@ -625,7 +626,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
 
       for (uint32_t s = 0; s < size; ++s) {
         zval key, value;
-        ZVAL_UNDEF(&value);
+        ZVAL_TRUE(&value);
 
         binary_deserialize(type, transport, &key, elemspec);
 
@@ -896,7 +897,7 @@ void binary_serialize_spec(zval* zthis, PHPOutputTransport& transport, HashTable
        (val_ptr = zend_hash_get_current_data_ex(spec, &key_ptr)) != nullptr;
        zend_hash_move_forward_ex(spec, &key_ptr)) {
 
-    ulong fieldno;
+    zend_ulong fieldno;
     if (zend_hash_get_current_key_ex(spec, nullptr, &fieldno, &key_ptr) != HASH_KEY_IS_LONG) {
       throw_tprotocolexception("Bad keytype in TSPEC (expected 'long')", INVALID_DATA);
       return;
@@ -959,18 +960,19 @@ PHP_FUNCTION(thrift_protocol_write_binary) {
 }
 
 
-// 3 params: $transport $response_typename $strict_read
+// 4 params: $transport $response_Typename $strict_read $buffer_size
 PHP_FUNCTION(thrift_protocol_read_binary) {
   zval *protocol;
   zend_string *obj_typename;
   zend_bool strict_read;
+  size_t buffer_size = 8192;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "oSb", &protocol, &obj_typename, &strict_read) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "oSb|l", &protocol, &obj_typename, &strict_read, &buffer_size) == FAILURE) {
     return;
   }
 
   try {
-    PHPInputTransport transport(protocol);
+    PHPInputTransport transport(protocol, buffer_size);
     int8_t messageType = 0;
     int32_t sz = transport.readI32();
 

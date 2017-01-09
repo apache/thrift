@@ -37,10 +37,9 @@ namespace concurrency {
 
 #ifndef THRIFT_NO_CONTENTION_PROFILING
 
-static sig_atomic_t mutexProfilingSampleRate = 0;
+static int32_t mutexProfilingCounter = 0;
+static int32_t mutexProfilingSampleRate = 0;
 static MutexWaitCallback mutexProfilingCallback = 0;
-
-volatile static sig_atomic_t mutexProfilingCounter = 0;
 
 void enableMutexProfiling(int32_t profilingSampleRate, MutexWaitCallback callback) {
   mutexProfilingSampleRate = profilingSampleRate;

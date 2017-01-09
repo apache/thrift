@@ -40,6 +40,13 @@ option(BUILD_LIBRARIES "Build Thrift libraries" ON)
 # and enables the library if all are found. This means the default is to build as
 # much as possible but leaving out libraries if their dependencies are not met.
 
+CMAKE_DEPENDENT_OPTION(WITH_BOOST_STATIC "Build with Boost static link library" OFF "NOT MSVC" ON)
+set(Boost_USE_STATIC_LIBS ${WITH_BOOST_STATIC})
+if (NOT WITH_BOOST_STATIC)
+    add_definitions(-DBOOST_ALL_DYN_LINK)
+    add_definitions(-DBOOST_TEST_DYN_LINK)
+endif()
+
 # C++
 option(WITH_CPP "Build C++ Thrift library" ON)
 if(WITH_CPP)
@@ -77,6 +84,8 @@ if(WITH_CPP)
 endif()
 CMAKE_DEPENDENT_OPTION(BUILD_CPP "Build C++ library" ON
                        "BUILD_LIBRARIES;WITH_CPP;Boost_FOUND" OFF)
+CMAKE_DEPENDENT_OPTION(WITH_PLUGIN "Build compiler plugin support" ON
+                       "BUILD_COMPILER;BUILD_CPP" OFF)
 
 # C GLib
 option(WITH_C_GLIB "Build C (GLib) Thrift library" ON)
@@ -85,6 +94,21 @@ if(WITH_C_GLIB)
 endif()
 CMAKE_DEPENDENT_OPTION(BUILD_C_GLIB "Build C (GLib) library" ON
                        "BUILD_LIBRARIES;WITH_C_GLIB;GLIB_FOUND" OFF)
+
+if(BUILD_CPP)
+    set(boost_components)
+    if(WITH_BOOSTTHREADS OR BUILD_TESTING)
+        list(APPEND boost_components system thread)
+    endif()
+    if(BUILD_TESTING)
+        list(APPEND boost_components unit_test_framework filesystem chrono program_options)
+    endif()
+    if(boost_components)
+        find_package(Boost 1.53 REQUIRED COMPONENTS ${boost_components})
+    endif()
+elseif(BUILD_C_GLIB AND BUILD_TESTING)
+    find_package(Boost 1.53 REQUIRED)
+endif()
 
 # Java
 option(WITH_JAVA "Build Java Thrift library" ON)
@@ -103,9 +127,8 @@ endif()
 option(WITH_PYTHON "Build Python Thrift library" ON)
 find_package(PythonInterp QUIET) # for Python executable
 find_package(PythonLibs QUIET) # for Python.h
-find_package(Pip QUIET)
 CMAKE_DEPENDENT_OPTION(BUILD_PYTHON "Build Python library" ON
-                       "BUILD_LIBRARIES;WITH_PYTHON;PYTHONLIBS_FOUND;PIP_FOUND" OFF)
+                       "BUILD_LIBRARIES;WITH_PYTHON;PYTHONLIBS_FOUND" OFF)
 
 # Haskell
 option(WITH_HASKELL "Build Haskell Thrift library" ON)
@@ -120,8 +143,6 @@ option(WITH_STATIC_LIB "Build static libraries" ON)
 if (NOT WITH_SHARED_LIB AND NOT WITH_STATIC_LIB)
     message(FATAL_ERROR "Cannot build with both shared and static outputs disabled!")
 endif()
-
-option(WITH_DYN_LINK_TEST "Build with Boost dynamic link test library" OFF)
 
 #NOTE: C++ compiler options are defined in the lib/cpp/CMakeLists.txt
 
@@ -142,6 +163,8 @@ message(STATUS "Thrift version:                               ${thrift_VERSION} 
 message(STATUS "Thrift package version:                       ${PACKAGE_VERSION}")
 message(STATUS "Build configuration Summary")
 message(STATUS "  Build Thrift compiler:                      ${BUILD_COMPILER}")
+message(STATUS "  Build compiler plugin support:              ${WITH_PLUGIN}")
+MESSAGE_DEP(PLUGIN_COMPILER_NOT_TOO_OLD "Disabled due to older compiler")
 message(STATUS "  Build with unit tests:                      ${BUILD_TESTING}")
 MESSAGE_DEP(HAVE_COMPILER "Disabled because BUILD_THRIFT=OFF and no valid THRIFT_COMPILER is given")
 message(STATUS "  Build examples:                             ${BUILD_EXAMPLES}")
@@ -149,13 +172,13 @@ MESSAGE_DEP(HAVE_COMPILER "Disabled because BUILD_THRIFT=OFF and no valid THRIFT
 message(STATUS "  Build Thrift libraries:                     ${BUILD_LIBRARIES}")
 message(STATUS " Language libraries:")
 message(STATUS "  Build C++ library:                          ${BUILD_CPP}")
-MESSAGE_DEP(WITH_CPP "Disabled by via WITH_CPP=OFF")
+MESSAGE_DEP(WITH_CPP "Disabled by WITH_CPP=OFF")
 MESSAGE_DEP(Boost_FOUND "Boost headers missing")
 message(STATUS "  Build C (GLib) library:                     ${BUILD_C_GLIB}")
-MESSAGE_DEP(WITH_C_GLIB "Disabled by via WITH_C_GLIB=OFF")
+MESSAGE_DEP(WITH_C_GLIB "Disabled by WITH_C_GLIB=OFF")
 MESSAGE_DEP(GLIB_FOUND "GLib missing")
 message(STATUS "  Build Java library:                         ${BUILD_JAVA}")
-MESSAGE_DEP(WITH_JAVA "Disabled by via WITH_JAVA=OFF")
+MESSAGE_DEP(WITH_JAVA "Disabled by WITH_JAVA=OFF")
 if(ANDROID)
     MESSAGE_DEP(GRADLE_FOUND "Gradle missing")
 else()
@@ -163,10 +186,10 @@ else()
     MESSAGE_DEP(ANT_FOUND "Ant missing")
 endif()
 message(STATUS "  Build Python library:                       ${BUILD_PYTHON}")
-MESSAGE_DEP(WITH_PYTHON "Disabled by via WITH_PYTHON=OFF")
+MESSAGE_DEP(WITH_PYTHON "Disabled by WITH_PYTHON=OFF")
 MESSAGE_DEP(PYTHONLIBS_FOUND "Python libraries missing")
 message(STATUS "  Build Haskell library:                      ${BUILD_HASKELL}")
-MESSAGE_DEP(WITH_HASKELL "Disabled by via WITH_HASKELL=OFF")
+MESSAGE_DEP(WITH_HASKELL "Disabled by WITH_HASKELL=OFF")
 MESSAGE_DEP(GHC_FOUND "GHC missing")
 MESSAGE_DEP(CABAL_FOUND "Cabal missing")
 message(STATUS " Library features:")
@@ -179,6 +202,9 @@ message(STATUS "  Build with Qt5 support:                     ${WITH_QT5}")
 message(STATUS "  Build with OpenSSL support:                 ${WITH_OPENSSL}")
 message(STATUS "  Build with Boost thread support:            ${WITH_BOOSTTHREADS}")
 message(STATUS "  Build with C++ std::thread support:         ${WITH_STDTHREADS}")
-message(STATUS "  Build with Boost dynamic link test library: ${WITH_DYN_LINK_TEST}")
+message(STATUS "  Build with Boost static link library:       ${WITH_BOOST_STATIC}")
+if(MSVC)
+    message(STATUS "    - Enabled for Visual C++")
+endif()
 message(STATUS "----------------------------------------------------------")
 endmacro(PRINT_CONFIG_SUMMARY)

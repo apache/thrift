@@ -42,11 +42,11 @@ build: build-arch build-indep
 build-arch: build-arch-stamp
 $(CURDIR)/compiler/cpp/thrift build-arch-stamp: configure-stamp
 
-	# Compile compiler
-	$(MAKE) -C $(CURDIR)/compiler/cpp
-
 	# Compile C++ library
 	$(MAKE) -C $(CURDIR)/lib/cpp
+
+	# Compile compiler
+	$(MAKE) -C $(CURDIR)/compiler/cpp
 
 	# Compile C (glib) library
 	$(MAKE) -C $(CURDIR)/lib/c_glib
@@ -96,13 +96,15 @@ clean:
 	# Add here commands to clean up after the build process.
 	-$(MAKE) clean
 
+	$(CURDIR)/cleanup.sh
+
 	dh_clean
 
 install: install-indep install-arch
 install-indep:
 	dh_testdir
 	dh_testroot
-	dh_clean -k -i
+	dh_prep -i
 	dh_installdirs -i
 
 	# Add here commands to install the indep part of the package into

@@ -331,7 +331,7 @@
   {
     "name": "csharp",
     "env": {
-      "MONO_PATH": "../.."
+      "MONO_PATH": "../../lib/csharp/"
     },
     "transports": [
       "buffered",
@@ -361,7 +361,35 @@
         "client"
       ]
     },
-    "workdir": "../lib/csharp/test/ThriftTest"
+    "workdir": "csharp"
+  },
+  {
+    "name": "netcore",
+    "transports": [
+      "buffered",
+      "framed"
+    ],
+    "sockets": [
+      "ip",
+      "ip-ssl"
+    ],
+    "protocols": [
+      "binary",
+      "compact",
+      "json"
+    ],
+    "server": {
+      "command": [
+        "dotnet restore && dotnet run server"
+      ]
+    },
+    "client": {
+      "timeout": 10,
+      "command": [
+        "dotnet run client"
+      ]
+    },
+    "workdir": "netcore/ThriftTest"
   },
   {
     "name": "perl",
@@ -416,6 +444,12 @@
       ],
       "command": [
         "php",
+        "-dextension_dir=../../lib/php/src/ext/thrift_protocol/modules/",
+        "--php-ini=../../lib/php/thrift_protocol.ini",
+        "--no-php-ini",
+        "-ddisplay_errors=stderr",
+        "-dlog_errors=0",
+        "-derror_reporting=E_ALL",
         "TestClient.php"
       ]
     },

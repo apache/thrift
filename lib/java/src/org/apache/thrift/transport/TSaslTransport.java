@@ -224,7 +224,7 @@ abstract class TSaslTransport extends TTransport {
    */
   protected TTransportException sendAndThrowMessage(NegotiationStatus status, String message) throws TTransportException {
     try {
-      sendSaslMessage(status, message.getBytes());
+      sendSaslMessage(status, message.getBytes("UTF-8"));
     } catch (Exception e) {
       LOGGER.warn("Could not send failure response", e);
       message += "\nAlso, could not send response: " + e.toString();

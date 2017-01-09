@@ -69,7 +69,6 @@ TThreadPoolServer::TThreadPoolServer(const shared_ptr<TProcessorFactory>& proces
                      inputProtocolFactory,
                      outputProtocolFactory),
     threadManager_(threadManager),
-    stop_(false),
     timeout_(0),
     taskExpiration_(0) {
 }
@@ -88,7 +87,6 @@ TThreadPoolServer::TThreadPoolServer(const shared_ptr<TProcessor>& processor,
                      inputProtocolFactory,
                      outputProtocolFactory),
     threadManager_(threadManager),
-    stop_(false),
     timeout_(0),
     taskExpiration_(0) {
 }
@@ -98,7 +96,7 @@ TThreadPoolServer::~TThreadPoolServer() {
 
 void TThreadPoolServer::serve() {
   TServerFramework::serve();
-  threadManager_->join();
+  threadManager_->stop();
 }
 
 int64_t TThreadPoolServer::getTimeout() const {
@@ -117,17 +115,18 @@ void TThreadPoolServer::setTaskExpiration(int64_t value) {
   taskExpiration_ = value;
 }
 
-boost::shared_ptr<apache::thrift::concurrency::ThreadManager> TThreadPoolServer::getThreadManager()
-    const {
+boost::shared_ptr<apache::thrift::concurrency::ThreadManager>
+TThreadPoolServer::getThreadManager() const {
   return threadManager_;
 }
 
 void TThreadPoolServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient) {
-  threadManager_->add(pClient, timeout_, taskExpiration_);
+  threadManager_->add(pClient, getTimeout(), getTaskExpiration());
 }
 
 void TThreadPoolServer::onClientDisconnected(TConnectedClient*) {
 }
+
 }
 }
 } // apache::thrift::server

@@ -22,15 +22,22 @@ description: >
 author: Apache Thrift Developers <dev@thrift.apache.org>
 homepage: http://thrift.apache.org
 documentation: http://thrift.apache.org
+
 environment:
   sdk: ">=1.13.0 <2.0.0"
+
 dependencies:
-  fixnum: "^0.10.2"
-  http: "^0.11.3"
-  logging: "^0.11.0"
+  fixnum: ^0.10.2
+  http: ^0.11.3
+  logging: ^0.11.0
+
 dev_dependencies:
-  coverage: "^0.7.2"
-  dart_dev: "^1.0.1"
-  dart_style: "^0.2.0"
-  mockito: "^0.11.0"
-  test: "^0.12.0"
+  # test
+  mockito: ^1.0.0
+  test: ^0.12.0
+
+  # dart_dev - https://github.com/Workiva/dart_dev
+  dart_dev: ^1.5.0
+  coverage: ^0.7.3
+  dart_style: ">=0.2.4 <0.3.0"
+  dartdoc: ^0.9.0

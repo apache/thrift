@@ -56,9 +56,11 @@ RUN yum install -y \
 # Python Dependencies
 RUN yum install -y \
       python-devel \
+      python-pip \
       python-setuptools \
-      python-twisted-web \
-      python-pip
+      python-six \
+      python-twisted-web && \
+    pip install -U backports.ssl_match_hostname ipaddress tornado
 
 # Ruby Dependencies
 RUN yum install -y \
@@ -136,5 +138,5 @@ RUN rm -rf /tmp/* && \
 
 ENV THRIFT_ROOT /thrift
 RUN mkdir -p $THRIFT_ROOT/src
-COPY scripts $THRIFT_ROOT
+COPY Dockerfile $THRIFT_ROOT/
 WORKDIR $THRIFT_ROOT/src

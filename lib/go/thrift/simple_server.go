@@ -22,6 +22,7 @@ package thrift
 import (
 	"log"
 	"runtime/debug"
+	"sync"
 )
 
 // Simple, non-concurrent server for testing.
@@ -148,9 +149,14 @@ func (p *TSimpleServer) Serve() error {
 	return nil
 }
 
+var once sync.Once
+
 func (p *TSimpleServer) Stop() error {
-	p.quit <- struct{}{}
-	p.serverTransport.Interrupt()
+	q := func() {
+		p.quit <- struct{}{}
+		p.serverTransport.Interrupt()
+	}
+	once.Do(q)
 	return nil
 }
 
@@ -179,7 +185,10 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 			log.Printf("error processing request: %s", err)
 			return err
 		}
-		if !ok {
+		if err, ok := err.(TApplicationException); ok && err.TypeId() == UNKNOWN_METHOD {
+			continue
+		}
+ 		if !ok {
 			break
 		}
 	}

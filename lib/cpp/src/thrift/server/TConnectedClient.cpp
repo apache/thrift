@@ -64,29 +64,28 @@ void TConnectedClient::run() {
       }
     } catch (const TTransportException& ttx) {
       switch (ttx.getType()) {
-      case TTransportException::TIMED_OUT:
-        // Receive timeout - continue processing.
-        continue;
+        case TTransportException::END_OF_FILE:
+        case TTransportException::INTERRUPTED:
+        case TTransportException::TIMED_OUT:
+          // Client disconnected or was interrupted or did not respond within the receive timeout.
+          // No logging needed.  Done.
+          done = true;
+          break;
 
-      case TTransportException::END_OF_FILE:
-      case TTransportException::INTERRUPTED:
-        // Client disconnected or was interrupted.  No logging needed.  Done.
-        done = true;
-        break;
-
-      default: {
-        // All other transport exceptions are logged.
-        // State of connection is unknown.  Done.
-        string errStr = string("TConnectedClient died: ") + ttx.what();
-        GlobalOutput(errStr.c_str());
-        done = true;
-        break;
-      }
+        default: {
+          // All other transport exceptions are logged.
+          // State of connection is unknown.  Done.
+          string errStr = string("TConnectedClient died: ") + ttx.what();
+          GlobalOutput(errStr.c_str());
+          done = true;
+          break;
+        }
       }
     } catch (const TException& tex) {
       string errStr = string("TConnectedClient processing exception: ") + tex.what();
       GlobalOutput(errStr.c_str());
-      // Continue processing
+      // Disconnect from client, because we could not process the message.
+      done = true;
     }
   }
 

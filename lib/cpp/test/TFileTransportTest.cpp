@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE(test_destructor) {
 
   unsigned int num_over = 0;
   for (unsigned int n = 0; n < NUM_ITERATIONS; ++n) {
-    ftruncate(f.getFD(), 0);
+    BOOST_CHECK_EQUAL(0, ftruncate(f.getFD(), 0));
 
     TFileTransport* transport = new TFileTransport(f.getPath());
 
@@ -392,21 +392,21 @@ void parse_args(int argc, char* argv[]) {
 #ifdef BOOST_TEST_DYN_LINK
 static int myArgc = 0;
 static char **myArgv = NULL;
- 
+
 bool init_unit_test_suite() {
   boost::unit_test::framework::master_test_suite().p_name.value = "TFileTransportTest";
- 
+
   // Parse arguments
   parse_args(myArgc,myArgv);
   return true;
 }
- 
+
 int main( int argc, char* argv[] ) {
   myArgc = argc;
   myArgv = argv;
   return ::boost::unit_test::unit_test_main(&init_unit_test_suite,argc,argv);
 }
-#else 
+#else
 boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   boost::unit_test::framework::master_test_suite().p_name.value = "TFileTransportTest";
 

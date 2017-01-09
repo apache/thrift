@@ -265,6 +265,9 @@
       <arg line="--gen java ${test.thrift.home}/ThriftTest.thrift"/>
     </exec>
     <exec executable="${thrift.compiler}" failonerror="true">
+      <arg line="--gen java ${test.thrift.home}/JavaTypes.thrift"/>
+    </exec>
+    <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen java ${test.thrift.home}/DebugProtoTest.thrift"/>
     </exec>
     <exec executable="${thrift.compiler}" failonerror="true">
@@ -276,15 +279,11 @@
     <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen java ${test.thrift.home}/ManyOptionals.thrift"/>
     </exec>
-    <exec executable="mkdir" failonerror="true">
-      <arg line="-p ${genfullcamel}"/>
-    </exec>
+  	<mkdir dir="${genfullcamel}"/>
     <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen java:fullcamel -out ${genfullcamel} ${test.thrift.home}/FullCamelTest.thrift"/>
     </exec>
-    <exec executable="mkdir" failonerror="true">
-      <arg line="-p ${genreuse}"/>
-    </exec>
+  	<mkdir dir="${genreuse}"/>
     <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen java:reuse-objects -out ${genreuse} ${test.thrift.home}/ReuseObjects.thrift"/>
     </exec>

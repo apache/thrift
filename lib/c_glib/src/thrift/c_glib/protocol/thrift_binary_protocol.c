@@ -784,11 +784,18 @@ thrift_binary_protocol_read_string (ThriftProtocol *protocol,
   }
   xfer += ret;
 
-  if (read_len > 0)
-  {
-    /* allocate the memory for the string */
-    len = (guint32) read_len + 1; /* space for null terminator */
-    *str = g_new0 (gchar, len);
+  if (read_len < 0) {
+    g_set_error (error, THRIFT_PROTOCOL_ERROR,
+                 THRIFT_PROTOCOL_ERROR_NEGATIVE_SIZE,
+                 "got negative size of %d", read_len);
+    *str = NULL;
+    return -1;
+  }
+
+  /* allocate the memory for the string */
+  len = (guint32) read_len + 1; /* space for null terminator */
+  *str = g_new0 (gchar, len);
+  if (read_len > 0) {
     if ((ret =
          thrift_transport_read_all (protocol->transport,
                                     *str, read_len, error)) < 0)
@@ -800,7 +807,7 @@ thrift_binary_protocol_read_string (ThriftProtocol *protocol,
     }
     xfer += ret;
   } else {
-    *str = NULL;
+    **str = 0;
   }
 
   return xfer;
