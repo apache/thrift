@@ -27,7 +27,6 @@ import com.rbkmoney.woody.api.trace.context.TraceContext;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
@@ -41,11 +40,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
 
 /**
  * HTTP implementation of the TTransport interface. Used for working with a
  * Thrift web services implementation (using for example TServlet).
- *
+ * <p>
  * This class offers two implementations of the HTTP transport.
  * One uses HttpURLConnection instances, the other HttpClient from Apache
  * Http Components.
@@ -54,15 +55,15 @@ import java.util.Map;
  * Using the THttpClient(String url) constructor or passing null as the
  * HttpClient to THttpClient(String url, HttpClient client) will create an
  * instance which will use HttpURLConnection.
- *
+ * <p>
  * When using HttpClient, the following configuration leads to 5-15%
  * better performance than the HttpURLConnection implementation:
- *
+ * <p>
  * http.protocol.version=HttpVersion.HTTP_1_1
  * http.protocol.content-charset=UTF-8
  * http.protocol.expect-continue=false
  * http.connection.stalecheck=false
- *
+ * <p>
  * Also note that under high load, the HttpURLConnection implementation
  * may exhaust the open file descriptor limit.
  *
@@ -81,7 +82,7 @@ public class THttpClient extends TTransport {
 
   private int readTimeout_ = 0;
 
-  private Map<String,String> customHeaders_ = null;
+  private Map<String, String> customHeaders_ = null;
 
   private final HttpHost host;
 
@@ -175,7 +176,7 @@ public class THttpClient extends TTransport {
     }
   }
 
-  public void setCustomHeaders(Map<String,String> headers) {
+  public void setCustomHeaders(Map<String, String> headers) {
     customHeaders_ = headers;
   }
 
@@ -186,7 +187,8 @@ public class THttpClient extends TTransport {
     customHeaders_.put(key, value);
   }
 
-  public void open() {}
+  public void open() {
+  }
 
   public void close() {
     if (null != inputStream_) {
@@ -238,6 +240,33 @@ public class THttpClient extends TTransport {
     }
   }
 
+  private void setMainHeaders(BiConsumer<String, String> hSetter) {
+    hSetter.accept("Content-Type", "application/x-thrift");
+    hSetter.accept("Accept", "application/x-thrift");
+    hSetter.accept("User-Agent", "Java/THttpClient/HC");
+  }
+
+  private void setCustomHeaders(BiConsumer<String, String> hSetter) {
+    if (null != customHeaders_) {
+      for (Map.Entry<String, String> header : customHeaders_.entrySet()) {
+        hSetter.accept(header.getKey(), header.getValue());
+      }
+    }
+  }
+
+  private void intercept(BooleanSupplier interception, String errMsg) throws TTransportException {
+    if (!interception.getAsBoolean()) {
+      Throwable reqErr = ContextUtils.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
+      if (reqErr != null) {
+        if (reqErr instanceof RuntimeException) {
+          throw (RuntimeException) reqErr;
+        } else {
+          throw new TTransportException(errMsg, reqErr);
+        }
+      }
+    }
+  }
+
   private void flushUsingHttpClient() throws TTransportException {
 
     if (null == this.client) {
@@ -247,10 +276,7 @@ public class THttpClient extends TTransport {
     // Extract request and reset buffer
     byte[] data = requestBuffer_.toByteArray();
     requestBuffer_.reset();
-
     HttpPost post = null;
-
-    InputStream is = null;
 
     try {
       // Set request to path + query string
@@ -260,94 +286,60 @@ public class THttpClient extends TTransport {
       // Headers are added to the HttpPost instance, not
       // to HttpClient.
       //
+      HttpPost newPost = post;
+      setMainHeaders((key, val) -> newPost.setHeader(key, val));
 
-      post.setHeader("Content-Type", "application/x-thrift");
-      post.setHeader("Accept", "application/x-thrift");
-      post.setHeader("User-Agent", "Java/THttpClient/HC");
-
-      if (null != customHeaders_) {
-        for (Map.Entry<String, String> header : customHeaders_.entrySet()) {
-          post.setHeader(header.getKey(), header.getValue());
-        }
-      }
+      setCustomHeaders((key, val) -> newPost.setHeader(key, val));
 
       TraceData traceData = TraceContext.getCurrentTraceData();
-      {
-        if (!interceptor.interceptRequest(traceData, post, this.url_)) {
-          Throwable reqErr = ContextUtils.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
-          if (reqErr != null) {
-            throw new TTransportException("Request interception error", reqErr);
-          }
-        }
-      }
+
+      intercept(() -> interceptor.interceptRequest(traceData, newPost, this.url_), "Request interception error");
 
       post.setEntity(new ByteArrayEntity(data));
 
       HttpResponse response = this.client.execute(this.host, post);
-      int responseCode = response.getStatusLine().getStatusCode();
 
-      {
-        if (!interceptor.interceptResponse(traceData, response)) {
-          Throwable respErr = ContextUtils.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
-          if (respErr != null) {
-            throw new TTransportException("Response interception error", respErr);
-          }
-        }
-      }
+      intercept(() -> interceptor.interceptResponse(traceData, response), "Response interception error");
 
       //
       // Retrieve the inputstream BEFORE checking the status code so
       // resources get freed in the finally clause.
       //
 
-      is = response.getEntity().getContent();
+      try (InputStream is = response.getEntity().getContent()) {
 
-      if (responseCode != HttpStatus.SC_OK) {
-        throw new TTransportException("HTTP Response code: " + responseCode);
-      }
+        // Read the responses into a byte array so we can release the connection
+        // early. This implies that the whole content will have to be read in
+        // memory, and that momentarily we might use up twice the memory (while the
+        // thrift struct is being read up the chain).
+        // Proceeding differently might lead to exhaustion of connections and thus
+        // to app failure.
 
-      // Read the responses into a byte array so we can release the connection
-      // early. This implies that the whole content will have to be read in
-      // memory, and that momentarily we might use up twice the memory (while the
-      // thrift struct is being read up the chain).
-      // Proceeding differently might lead to exhaustion of connections and thus
-      // to app failure.
+        byte[] buf = new byte[1024];
+        int len;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-      byte[] buf = new byte[1024];
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-      int len = 0;
-      do {
-        len = is.read(buf);
-        if (len > 0) {
+        while ((len = is.read(buf)) != -1) {
           baos.write(buf, 0, len);
         }
-      } while (-1 != len);
 
-      try {
-        // Indicate we're done with the content.
-        consume(response.getEntity());
-      } catch (IOException ioe) {
-        // We ignore this exception, it might only mean the server has no
-        // keep-alive capability.
+        try {
+          // Indicate we're done with the content.
+          consume(response.getEntity());
+        } catch (IOException ioe) {
+          // We ignore this exception, it might only mean the server has no
+          // keep-alive capability.
+        }
+
+        inputStream_ = new ByteArrayInputStream(baos.toByteArray());
       }
 
-      inputStream_ = new ByteArrayInputStream(baos.toByteArray());
     } catch (IOException ioe) {
       // Abort method so the connection gets released back to the connection manager
       if (null != post) {
         post.abort();
       }
       throw new TTransportException(ioe);
-    } finally {
-      if (null != is) {
-        // Close the entity's input stream, this will release the underlying connection
-        try {
-          is.close();
-        } catch (IOException ioe) {
-          throw new TTransportException(ioe);
-        }
-      }
     }
   }
 
@@ -376,45 +368,19 @@ public class THttpClient extends TTransport {
 
       // Make the request
       connection.setRequestMethod("POST");
-      connection.setRequestProperty("Content-Type", "application/x-thrift");
-      connection.setRequestProperty("Accept", "application/x-thrift");
-      connection.setRequestProperty("User-Agent", "Java/THttpClient");
-      if (customHeaders_ != null) {
-        for (Map.Entry<String, String> header : customHeaders_.entrySet()) {
-          connection.setRequestProperty(header.getKey(), header.getValue());
-        }
-      }
+      setMainHeaders((key, val) -> connection.setRequestProperty(key, val));
 
-      if (interceptor != null) {
-        TraceData traceData = TraceContext.getCurrentTraceData();
-        {
-          if (!interceptor.interceptRequest(traceData, connection, url_)) {
-            Throwable reqErr = ContextUtils.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
-            if (reqErr != null) {
-              throw new TTransportException("Request interception error", reqErr);
-            }
-          }
-        }
-      }
+      setCustomHeaders((key, val) -> connection.setRequestProperty(key, val));
+
+      TraceData traceData = TraceContext.getCurrentTraceData();
+
+      intercept(() -> interceptor.interceptRequest(traceData, connection, url_), "Request interception error");
 
       connection.setDoOutput(true);
       connection.connect();
       connection.getOutputStream().write(data);
 
-      int responseCode = connection.getResponseCode();
-      if (responseCode != HttpURLConnection.HTTP_OK) {
-        throw new TTransportException("HTTP Response code: " + responseCode);
-      }
-
-      if (interceptor != null) {
-        TraceData traceData = TraceContext.getCurrentTraceData();
-        if (!interceptor.interceptResponse(traceData, connection)) {
-          Throwable respErr = ContextUtils.getInterceptionError(TraceContext.getCurrentTraceData().getClientSpan());
-          if (respErr != null) {
-            throw new TTransportException("Response interception error", respErr);
-          }
-        }
-      }
+      intercept(() -> interceptor.interceptResponse(traceData, connection), "Response interception error");
 
       // Read the responses
       inputStream_ = connection.getInputStream();

@@ -1,17 +1,5 @@
 package org.apache.thrift.server;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import com.rbkmoney.woody.api.interceptor.CommonInterceptor;
 import com.rbkmoney.woody.api.interceptor.EmptyCommonInterceptor;
 import com.rbkmoney.woody.api.trace.ContextUtils;
@@ -22,6 +10,16 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TIOStreamTransport;
 import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
 
 /**
  * Servlet implementation class ThriftServer
@@ -51,12 +49,12 @@ public class TServlet extends HttpServlet {
   private  CommonInterceptor interceptor;
 
   public TServlet(TProcessor processor, TProtocolFactory inProtocolFactory,
-                  TProtocolFactory outProtocolFactory, CommonInterceptor interceptor) {
+                   TProtocolFactory outProtocolFactory, CommonInterceptor interceptor) {
     super();
     this.processor = processor;
     this.inProtocolFactory = inProtocolFactory;
     this.outProtocolFactory = outProtocolFactory;
-    this.customHeaders = new ArrayList<Map.Entry<String, String>>();
+    this.customHeaders = new ArrayList<>();
     this.interceptor = interceptor == null ? defaultInterceptor : interceptor;
   }
 
@@ -64,7 +62,7 @@ public class TServlet extends HttpServlet {
    * @see HttpServlet#HttpServlet()
    */
   public TServlet(TProcessor processor, TProtocolFactory inProtocolFactory,
-      TProtocolFactory outProtocolFactory) {
+                   TProtocolFactory outProtocolFactory) {
     this(processor, inProtocolFactory, outProtocolFactory, null);
   }
 
@@ -81,11 +79,7 @@ public class TServlet extends HttpServlet {
 
   @Override
   protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    if (interceptor != defaultInterceptor) {
-      doPost(req, resp);
-    } else {
-      super.service(req, resp);
-    }
+    doPost(req, resp);
   }
 
   /**
@@ -94,18 +88,17 @@ public class TServlet extends HttpServlet {
    */
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException {
+          throws ServletException, IOException {
 
     TTransport inTransport = null;
     TTransport outTransport = null;
 
     TraceData traceData = TraceContext.getCurrentTraceData();
     try {
+      response.setContentType("application/x-thrift");
       if (!interceptor.interceptRequest(traceData, request, response)) {
         ContextUtils.tryThrowInterceptionError(traceData.getServiceSpan());
       }
-
-      response.setContentType("application/x-thrift");
 
       if (null != this.customHeaders) {
         for (Map.Entry<String, String> header : this.customHeaders) {
@@ -141,24 +134,12 @@ public class TServlet extends HttpServlet {
    *      response)
    */
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException {
+          throws ServletException, IOException {
     doPost(request, response);
   }
 
   public void addCustomHeader(final String key, final String value) {
-    this.customHeaders.add(new Map.Entry<String, String>() {
-      public String getKey() {
-        return key;
-      }
-
-      public String getValue() {
-        return value;
-      }
-
-      public String setValue(String value) {
-        return null;
-      }
-    });
+    this.customHeaders.add(new AbstractMap.SimpleImmutableEntry(key, value));
   }
 
   public void setCustomHeaders(Collection<Map.Entry<String, String>> headers) {
