@@ -37,8 +37,6 @@ namespace Thrift.Transports.Client
 
         public TFramedClientTransport(TClientTransport transport)
         {
-            throw new NotImplementedException("TFramedClientTransport is not fully ready for usage");
-
             if (transport == null)
             {
                 throw new ArgumentNullException(nameof(transport));
