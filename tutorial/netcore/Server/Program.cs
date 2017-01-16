@@ -40,7 +40,7 @@ namespace Server
 {
     public class Program
     {
-        private static readonly ILogger Logger = new LoggerFactory().CreateLogger(nameof(Server));
+        private static readonly ILogger Logger = new LoggerFactory().AddConsole(LogLevel.Trace).AddDebug(LogLevel.Trace).CreateLogger(nameof(Server));
 
         public static void Main(string[] args)
         {
@@ -61,11 +61,13 @@ namespace Server
                 Console.ReadLine();
                 source.Cancel();
             }
+
+            Logger.LogInformation("Server stopped");
         }
 
         private static void DisplayHelp()
         {
-            Console.WriteLine(@"
+            Logger.LogInformation(@"
 Usage: 
     Server.exe -h
         will diplay help information 
@@ -80,6 +82,7 @@ Options:
         namedpipe - namedpipe transport will be used (pipe address - "".test"")
         http - http transport will be used (http address - ""localhost:9090"")
         tcptls - tcp transport with tls will be used (host - ""localhost"", port - 9090)
+        framed - tcp framed transport will be used (host - ""localhost"", port - 9090)
 
     -p (protocol): 
         binary - (default) binary protocol will be used
@@ -102,9 +105,7 @@ Sample:
             }
             else
             {
-                await
-                    RunSelectedConfigurationAsync(selectedTransport, selectedProtocol,
-                        cancellationToken);
+                await RunSelectedConfigurationAsync(selectedTransport, selectedProtocol, cancellationToken);
             }
         }
 
@@ -128,10 +129,9 @@ Sample:
             return selectedTransport;
         }
 
-        private static async Task RunSelectedConfigurationAsync(Transport transport,
-            Protocol protocol, CancellationToken cancellationToken)
+        private static async Task RunSelectedConfigurationAsync(Transport transport, Protocol protocol, CancellationToken cancellationToken)
         {
-            var fabric = new LoggerFactory();
+            var fabric = new LoggerFactory().AddConsole(LogLevel.Trace).AddDebug(LogLevel.Trace);
             var handler = new CalculatorAsyncHandler();
             var processor = new Calculator.AsyncProcessor(handler);
 
@@ -143,15 +143,16 @@ Sample:
                     serverTransport = new TServerSocketTransport(9090);
                     break;
                 case Transport.TcpBuffered:
-                    serverTransport = new TServerSocketTransport(port: 9090, clientTimeout: 10000,
-                        useBufferedSockets: true);
+                    serverTransport = new TServerSocketTransport(port: 9090, clientTimeout: 10000, useBufferedSockets: true);
                     break;
                 case Transport.NamedPipe:
                     serverTransport = new TNamedPipeServerTransport(".test");
                     break;
                 case Transport.TcpTls:
-                    serverTransport = new TTlsServerSocketTransport(9090, false, GetCertificate(),
-                        ClientCertValidator, LocalCertificateSelectionCallback);
+                    serverTransport = new TTlsServerSocketTransport(9090, false, GetCertificate(), ClientCertValidator, LocalCertificateSelectionCallback);
+                    break;
+                case Transport.Framed:
+                    serverTransport = new TServerFramedTransport(9090);
                     break;
             }
 
@@ -187,8 +188,7 @@ Sample:
                 Logger.LogInformation(
                     $"Selected TAsyncServer with {serverTransport} transport and {inputProtocolFactory} protocol factories");
 
-                var server = new AsyncBaseServer(processor, serverTransport, inputProtocolFactory,
-                    outputProtocolFactory, fabric);
+                var server = new AsyncBaseServer(processor, serverTransport, inputProtocolFactory, outputProtocolFactory, fabric);
 
                 Logger.LogInformation("Starting the server...");
                 await server.ServeAsync(cancellationToken);
@@ -197,8 +197,6 @@ Sample:
             {
                 Logger.LogInformation(x.ToString());
             }
-
-            Logger.LogInformation("Server stopped.");
         }
 
         private static X509Certificate2 GetCertificate()
@@ -243,7 +241,8 @@ Sample:
             TcpBuffered,
             NamedPipe,
             Http,
-            TcpTls
+            TcpTls,
+            Framed
         }
 
         private enum Protocol
@@ -305,11 +304,10 @@ Sample:
 
         public class CalculatorAsyncHandler : Calculator.IAsync
         {
-            Dictionary<int, SharedStruct> _log;
+            private readonly Dictionary<int, SharedStruct> _log = new Dictionary<int, SharedStruct>();
 
             public CalculatorAsyncHandler()
             {
-                _log = new Dictionary<int, SharedStruct>();
             }
 
             public async Task<SharedStruct> getStructAsync(int key,
@@ -347,7 +345,7 @@ Sample:
                         break;
 
                     case Operation.MULTIPLY:
-                        val = w.Num1*w.Num2;
+                        val = w.Num1 * w.Num2;
                         break;
 
                     case Operation.DIVIDE:
@@ -361,7 +359,7 @@ Sample:
 
                             throw io;
                         }
-                        val = w.Num1/w.Num2;
+                        val = w.Num1 / w.Num2;
                         break;
 
                     default:
