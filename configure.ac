@@ -528,8 +528,8 @@ fi
 AM_CONDITIONAL(WITH_TESTS, [test "$have_tests" = "yes"])
 
 AC_ARG_ENABLE([plugin],
-  AS_HELP_STRING([--enable-plugin], [build compiler plugin support [default=yes]]),
-  [], enable_plugin=yes
+  AS_HELP_STRING([--enable-plugin], [build compiler plugin support [default=no]]),
+  [], enable_plugin=no
 )
 have_plugin=yes
 if test "$have_cpp" = "no" ; then
@@ -538,9 +538,7 @@ fi
 if test "$enable_plugin" = "no"; then
   have_plugin="no"
 fi
-if test "$have_plugin" = "yes" ; then
-  AC_CONFIG_LINKS([compiler/cpp/test/plugin/t_cpp_generator.cc:compiler/cpp/src/thrift/generate/t_cpp_generator.cc])
-fi
+AC_CONFIG_LINKS([compiler/cpp/test/plugin/t_cpp_generator.cc:compiler/cpp/src/thrift/generate/t_cpp_generator.cc])
 AM_CONDITIONAL(WITH_PLUGIN, [test "$have_plugin" = "yes"])
 
 AC_ARG_ENABLE([tutorial],

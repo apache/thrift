@@ -84,7 +84,7 @@ if(WITH_CPP)
 endif()
 CMAKE_DEPENDENT_OPTION(BUILD_CPP "Build C++ library" ON
                        "BUILD_LIBRARIES;WITH_CPP;Boost_FOUND" OFF)
-CMAKE_DEPENDENT_OPTION(WITH_PLUGIN "Build compiler plugin support" ON
+CMAKE_DEPENDENT_OPTION(WITH_PLUGIN "Build compiler plugin support" OFF
                        "BUILD_COMPILER;BUILD_CPP" OFF)
 
 # C GLib
@@ -164,7 +164,6 @@ message(STATUS "Thrift package version:                       ${PACKAGE_VERSION}
 message(STATUS "Build configuration Summary")
 message(STATUS "  Build Thrift compiler:                      ${BUILD_COMPILER}")
 message(STATUS "  Build compiler plugin support:              ${WITH_PLUGIN}")
-MESSAGE_DEP(PLUGIN_COMPILER_NOT_TOO_OLD "Disabled due to older compiler")
 message(STATUS "  Build with unit tests:                      ${BUILD_TESTING}")
 MESSAGE_DEP(HAVE_COMPILER "Disabled because BUILD_THRIFT=OFF and no valid THRIFT_COMPILER is given")
 message(STATUS "  Build examples:                             ${BUILD_EXAMPLES}")

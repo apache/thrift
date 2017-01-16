@@ -108,11 +108,8 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID 
   endif()
 endif()
 
-# If gcc older than 4.8 is detected, disable new compiler plug-in support (see THRIFT-3937)
-set(PLUGIN_COMPILER_NOT_TOO_OLD ON) # simplifies messaging in DefineOptions summary
+# If gcc older than 4.8 is detected and plugin support was requested, fail fast
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8" AND WITH_PLUGIN)
-  message(STATUS "Disabling compiler plug-in support to work with older gcc compiler")
-  set(WITH_PLUGIN OFF)
-  set(PLUGIN_COMPILER_NOT_TOO_OLD OFF)
+  message(SEND_ERROR "Thrift compiler plug-in support is not possible with older gcc ( < 4.8 ) compiler")
 endif()
 
