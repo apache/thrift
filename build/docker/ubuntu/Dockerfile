@@ -95,6 +95,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 `# Ruby dependencies` \
       ruby \
       ruby-dev \
+      ruby-bundler \
 `# Perl dependencies` \
       libbit-vector-perl \
       libclass-accessor-class-perl \
