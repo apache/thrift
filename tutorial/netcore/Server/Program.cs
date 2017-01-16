@@ -88,6 +88,7 @@ Options:
         binary - (default) binary protocol will be used
         compact - compact protocol will be used
         json - json protocol will be used
+        multiplexed - multiplexed protocol will be used
 
 Sample:
     Server.exe -t:tcp 
@@ -133,7 +134,7 @@ Sample:
         {
             var fabric = new LoggerFactory().AddConsole(LogLevel.Trace).AddDebug(LogLevel.Trace);
             var handler = new CalculatorAsyncHandler();
-            var processor = new Calculator.AsyncProcessor(handler);
+            ITAsyncProcessor processor = null;
 
             TServerTransport serverTransport = null;
 
@@ -165,18 +166,39 @@ Sample:
                 {
                     inputProtocolFactory = new TBinaryProtocol.Factory();
                     outputProtocolFactory = new TBinaryProtocol.Factory();
+                    processor = new Calculator.AsyncProcessor(handler);
                 }
                     break;
                 case Protocol.Compact:
                 {
                     inputProtocolFactory = new TCompactProtocol.Factory();
                     outputProtocolFactory = new TCompactProtocol.Factory();
+                    processor = new Calculator.AsyncProcessor(handler);
                 }
                     break;
                 case Protocol.Json:
                 {
                     inputProtocolFactory = new TJsonProtocol.Factory();
                     outputProtocolFactory = new TJsonProtocol.Factory();
+                    processor = new Calculator.AsyncProcessor(handler);
+                }
+                    break;
+                case Protocol.Multiplexed:
+                {
+                    inputProtocolFactory = new TBinaryProtocol.Factory();
+                    outputProtocolFactory = new TBinaryProtocol.Factory();
+
+                    var calcHandler = new CalculatorAsyncHandler();
+                    var calcProcessor = new Calculator.AsyncProcessor(calcHandler);
+
+                    var sharedServiceHandler = new SharedServiceAsyncHandler();
+                    var sharedServiceProcessor = new SharedService.AsyncProcessor(sharedServiceHandler);
+
+                    var multiplexedProcessor = new TMultiplexedProcessor();
+                    multiplexedProcessor.RegisterProcessor(nameof(Calculator), calcProcessor);
+                    multiplexedProcessor.RegisterProcessor(nameof(SharedService), sharedServiceProcessor);
+
+                    processor = multiplexedProcessor;
                 }
                     break;
                 default:
@@ -186,7 +208,7 @@ Sample:
             try
             {
                 Logger.LogInformation(
-                    $"Selected TAsyncServer with {serverTransport} transport and {inputProtocolFactory} protocol factories");
+                    $"Selected TAsyncServer with {serverTransport} transport, {processor} processor and {inputProtocolFactory} protocol factories");
 
                 var server = new AsyncBaseServer(processor, serverTransport, inputProtocolFactory, outputProtocolFactory, fabric);
 
@@ -250,6 +272,7 @@ Sample:
             Binary,
             Compact,
             Json,
+            Multiplexed
         }
 
         public class HttpServerSample
@@ -389,6 +412,19 @@ Sample:
             {
                 Logger.LogInformation("ZipAsync() with delay 100mc");
                 await Task.Delay(100, CancellationToken.None);
+            }
+        }
+
+        public class SharedServiceAsyncHandler : SharedService.IAsync
+        {
+            public async Task<SharedStruct> getStructAsync(int key, CancellationToken cancellationToken)
+            {
+                Logger.LogInformation("GetStructAsync({0})", key);
+                return await Task.FromResult(new SharedStruct()
+                {
+                    Key = key,
+                    Value = "GetStructAsync"
+                });
             }
         }
     }

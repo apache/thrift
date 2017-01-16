@@ -18,8 +18,7 @@ Notes: dotnet run supports passing arguments to app after -- symbols (https://do
 
 - build 
 - go to folder (Client/Server) 
-- get help with command **dotnet run -- -h** 
-- execute **dotnet run -- YOUR ARGUMENTS** (example: dotnet run -- -t:tcp)
+- run with specifying of correct parameters **dotnet run -t:tcp -p:multiplexed**, **dotnet run -help** (later, after migration to csproj and latest SDK will be possibility to use more usable form **dotnet run -- arguments**)
 
 #Notes
 - No Silverlight support - no longer supported by Microsoft

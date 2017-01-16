@@ -61,6 +61,7 @@ Options:
         binary - (default) binary protocol will be used
         compact - compact protocol will be used
         json - json protocol will be used
+        multiplexed - multiplexed protocol will be used
 
     -mc (multiple clients):
         count - (default - 1) count of multiple clients to connect to server (max 100)
@@ -103,14 +104,14 @@ Sample:
             
             Logger.LogInformation($"Selected client transport: {transports[0]}");
 
-            var protocols = new TProtocol[count];
+            var protocols = new Tuple<Protocol, TProtocol>[count];
             for (int i = 0; i < count; i++)
             {
                 var p = GetProtocol(args, transports[i]);
                 protocols[i] = p;
             }
 
-            Logger.LogInformation($"Selected client protocol: {protocols[0]}");
+            Logger.LogInformation($"Selected client protocol: {protocols[0].Item1}");
 
             var tasks = new Task[count];
             for (int i = 0; i < count; i++)
@@ -204,7 +205,7 @@ Sample:
             return true;
         }
 
-        private static TProtocol GetProtocol(string[] args, TClientTransport transport)
+        private static Tuple<Protocol, TProtocol> GetProtocol(string[] args, TClientTransport transport)
         {
             var protocol = args.FirstOrDefault(x => x.StartsWith("-p"))?.Split(':')?[1];
 
@@ -214,78 +215,52 @@ Sample:
                 switch (selectedProtocol)
                 {
                     case Protocol.Binary:
-                        return new TBinaryProtocol(transport);
+                        return new Tuple<Protocol, TProtocol>(selectedProtocol, new TBinaryProtocol(transport));
                     case Protocol.Compact:
-                        return new TCompactProtocol(transport);
+                        return new Tuple<Protocol, TProtocol>(selectedProtocol, new TCompactProtocol(transport));
                     case Protocol.Json:
-                        return new TJsonProtocol(transport);
+                        return new Tuple<Protocol, TProtocol>(selectedProtocol, new TJsonProtocol(transport));
+                    case Protocol.Multiplexed:
+                        // it returns BinaryProtocol to avoid making wrapped protocol as public in TProtocolDecorator (in RunClientAsync it will be wrapped into Multiplexed protocol)
+                        return new Tuple<Protocol, TProtocol>(selectedProtocol, new TBinaryProtocol(transport));
                 }
             }
 
-            return new TBinaryProtocol(transport);
+            return new Tuple<Protocol, TProtocol>(selectedProtocol, new TBinaryProtocol(transport));
         }
 
-        private static async Task RunClientAsync(TProtocol protocol, CancellationToken cancellationToken)
+        private static async Task RunClientAsync(Tuple<Protocol, TProtocol> protocolTuple, CancellationToken cancellationToken)
         {
             try
             {
-                var client = new Calculator.Client(protocol);
-                await client.OpenTransportAsync(cancellationToken);
+                var protocol = protocolTuple.Item2;
+                var protocolType = protocolTuple.Item1;
+
+                TBaseClient client = null;
 
                 try
                 {
-                    // Async version
-
-                    Logger.LogInformation($"{client.ClientId} PingAsync()");
-                    await client.pingAsync(cancellationToken);
-
-                    Logger.LogInformation($"{client.ClientId} AddAsync(1,1)");
-                    var sum = await client.addAsync(1, 1, cancellationToken);
-                    Logger.LogInformation($"{client.ClientId} AddAsync(1,1)={sum}");
-
-                    var work = new Work
+                    if (protocolType != Protocol.Multiplexed)
                     {
-                        Op = Operation.DIVIDE,
-                        Num1 = 1,
-                        Num2 = 0
-                    };
 
-                    try
-                    {
-                        Logger.LogInformation($"{client.ClientId} CalculateAsync(1)");
-                        await client.calculateAsync(1, work, cancellationToken);
-                        Logger.LogInformation($"{client.ClientId} Whoa we can divide by 0");
+                        client = new Calculator.Client(protocol);
+                        await ExecuteCalculatorClientOperations(cancellationToken, (Calculator.Client)client);
                     }
-                    catch (InvalidOperation io)
+                    else
                     {
-                        Logger.LogInformation($"{client.ClientId} Invalid operation: " + io);
+                        // it uses binary protocol there  to create Multiplexed protocols
+                        var multiplex = new TMultiplexedProtocol(protocol, nameof(Calculator));
+                        client = new Calculator.Client(multiplex);
+                        await ExecuteCalculatorClientOperations(cancellationToken, (Calculator.Client)client);
+
+                        multiplex = new TMultiplexedProtocol(protocol, nameof(SharedService));
+                        client = new SharedService.Client(multiplex);
+                        await ExecuteSharedServiceClientOperations(cancellationToken, (SharedService.Client)client);
                     }
-
-                    work.Op = Operation.SUBTRACT;
-                    work.Num1 = 15;
-                    work.Num2 = 10;
-
-                    try
-                    {
-                        Logger.LogInformation($"{client.ClientId} CalculateAsync(1)");
-                        var diff = await client.calculateAsync(1, work, cancellationToken);
-                        Logger.LogInformation($"{client.ClientId} 15-10={diff}");
-                    }
-                    catch (InvalidOperation io)
-                    {
-                        Logger.LogInformation($"{client.ClientId} Invalid operation: " + io);
-                    }
-
-                    Logger.LogInformation($"{client.ClientId} GetStructAsync(1)");
-                    var log = await client.getStructAsync(1, cancellationToken);
-                    Logger.LogInformation($"{client.ClientId} Check log: {log.Value}");
-
-                    Logger.LogInformation($"{client.ClientId} ZipAsync() with delay 100mc on server side");
-                    await client.zipAsync(cancellationToken);
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError($"{client.ClientId} " + ex.ToString());
+                    Logger.LogError($"{client?.ClientId} " + ex);
                 }
                 finally
                 {
@@ -297,6 +272,71 @@ Sample:
                 Logger.LogError(x.ToString());
             }
         }
+
+        private static async Task ExecuteCalculatorClientOperations(CancellationToken cancellationToken, Calculator.Client client)
+        {
+            await client.OpenTransportAsync(cancellationToken);
+
+            // Async version
+
+            Logger.LogInformation($"{client.ClientId} PingAsync()");
+            await client.pingAsync(cancellationToken);
+
+            Logger.LogInformation($"{client.ClientId} AddAsync(1,1)");
+            var sum = await client.addAsync(1, 1, cancellationToken);
+            Logger.LogInformation($"{client.ClientId} AddAsync(1,1)={sum}");
+
+            var work = new Work
+            {
+                Op = Operation.DIVIDE,
+                Num1 = 1,
+                Num2 = 0
+            };
+
+            try
+            {
+                Logger.LogInformation($"{client.ClientId} CalculateAsync(1)");
+                await client.calculateAsync(1, work, cancellationToken);
+                Logger.LogInformation($"{client.ClientId} Whoa we can divide by 0");
+            }
+            catch (InvalidOperation io)
+            {
+                Logger.LogInformation($"{client.ClientId} Invalid operation: " + io);
+            }
+
+            work.Op = Operation.SUBTRACT;
+            work.Num1 = 15;
+            work.Num2 = 10;
+
+            try
+            {
+                Logger.LogInformation($"{client.ClientId} CalculateAsync(1)");
+                var diff = await client.calculateAsync(1, work, cancellationToken);
+                Logger.LogInformation($"{client.ClientId} 15-10={diff}");
+            }
+            catch (InvalidOperation io)
+            {
+                Logger.LogInformation($"{client.ClientId} Invalid operation: " + io);
+            }
+
+            Logger.LogInformation($"{client.ClientId} GetStructAsync(1)");
+            var log = await client.getStructAsync(1, cancellationToken);
+            Logger.LogInformation($"{client.ClientId} Check log: {log.Value}");
+
+            Logger.LogInformation($"{client.ClientId} ZipAsync() with delay 100mc on server side");
+            await client.zipAsync(cancellationToken);
+        }
+        private static async Task ExecuteSharedServiceClientOperations(CancellationToken cancellationToken, SharedService.Client client)
+        {
+            await client.OpenTransportAsync(cancellationToken);
+
+            // Async version
+
+            Logger.LogInformation($"{client.ClientId} SharedService GetStructAsync(1)");
+            var log = await client.getStructAsync(1, cancellationToken);
+            Logger.LogInformation($"{client.ClientId} SharedService Value: {log.Value}");
+        }
+
 
         private enum Transport
         {
@@ -313,6 +353,7 @@ Sample:
             Binary,
             Compact,
             Json,
+            Multiplexed
         }
     }
 }

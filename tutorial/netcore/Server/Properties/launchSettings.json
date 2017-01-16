@@ -2,7 +2,7 @@
   "profiles": {
     "Server": {
       "commandName": "Project",
-      "commandLineArgs": "-t:tcptls"
+      "commandLineArgs": "-p:multiplexed"
     }
   }
 }
