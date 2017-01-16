@@ -2,7 +2,7 @@
   "profiles": {
     "Client": {
       "commandName": "Project",
-      "commandLineArgs": "-t:tcptls"
+      "commandLineArgs": "-p:multiplexed"
     }
   }
 }
