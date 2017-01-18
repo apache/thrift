@@ -2782,7 +2782,7 @@ void t_java_generator::generate_field_value_meta_data(std::ofstream& out, t_type
             indent(out)
                 << "new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, "
                 << type_name(((t_typedef*)type)->get_type()) << ".class";
-      } else if (((t_typedef*)type)->get_type()->is_struct() || ((t_typedef*)type)->get_type()->is_xception()) {
+      } else {
             indent(out) << "new "
                 "org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType."
                 "STRUCT, " << type_name(type) << ".class";
