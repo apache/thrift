@@ -173,6 +173,18 @@ protected:
   void indent_down() { --indent_; }
 
   /**
+  * Indentation validation helper
+  */
+  int indent_count() { return indent_; }
+
+  void indent_validate( int expected, const char * func_name) {
+    if (indent_ != expected) { 
+      pverbose("Wrong indent count in %s: difference = %i \n", func_name, (expected - indent_));
+    }
+  }
+
+
+  /**
    * Indentation print function
    */
   std::string indent() {

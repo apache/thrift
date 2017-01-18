@@ -72,6 +72,10 @@ if WITH_HAXE
 SUBDIRS += haxe
 endif
 
+if WITH_DOTNETCORE
+SUBDIRS += netcore
+endif
+
 if WITH_GO
 SUBDIRS += go
 PRECROSS_TARGET += precross-go
@@ -124,6 +128,7 @@ EXTRA_DIST = \
 	FullCamelTest.thrift \
 	Include.thrift \
 	JavaBeansTest.thrift \
+	JavaTypes.thrift \
 	JsDeepConstructorTest.thrift \
 	ManyOptionals.thrift \
 	ManyTypedefs.thrift \

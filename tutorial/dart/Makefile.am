@@ -30,6 +30,7 @@ clean-local:
 	$(RM) -r gen-*
 	find . -type d -name "packages" | xargs $(RM) -r
 	find . -type f -name ".packages" | xargs $(RM)
+	find . -type f -name "pubspec.lock" | xargs $(RM)
 
 pub-get: pub-get-gen pub-get-client pub-get-console-client pub-get-server
 

@@ -119,6 +119,7 @@ if test "$enable_libs" = "no"; then
   with_ruby="no"
   with_haskell="no"
   with_haxe="no"
+  with_dotnetcore="no"
   with_perl="no"
   with_php="no"
   with_php_extension="no"
@@ -418,6 +419,16 @@ if test "$with_haxe" = "yes";  then
   fi
 fi
 AM_CONDITIONAL(WITH_HAXE, [test "$have_haxe" = "yes"])
+
+
+AX_THRIFT_LIB(dotnetcore, [.NET Core], yes)
+if test "$with_dotnetcore" = "yes";  then
+  AC_PATH_PROG([DOTNETCORE], [dotnet])
+  if [[ -x "$DOTNETCORE" ]] ; then
+    AX_PROG_DOTNETCORE_VERSION( [1.0.0], have_dotnetcore="yes", have_dotnetcore="no")
+  fi
+fi
+AM_CONDITIONAL(WITH_DOTNETCORE, [test "$have_dotnetcore" = "yes"])
 
 
 AX_THRIFT_LIB(d, [D], yes)
@@ -757,6 +768,7 @@ AC_CONFIG_FILES([
   lib/js/test/Makefile
   lib/json/Makefile
   lib/json/test/Makefile
+  lib/netcore/Makefile
   lib/nodejs/Makefile
   lib/perl/Makefile
   lib/perl/test/Makefile
@@ -778,6 +790,7 @@ AC_CONFIG_FILES([
   test/haxe/Makefile
   test/hs/Makefile
   test/lua/Makefile
+  test/netcore/Makefile
   test/php/Makefile
   test/dart/Makefile
   test/perl/Makefile
@@ -794,6 +807,7 @@ AC_CONFIG_FILES([
   tutorial/hs/Makefile
   tutorial/java/Makefile
   tutorial/js/Makefile
+  tutorial/netcore/Makefile
   tutorial/nodejs/Makefile
   tutorial/dart/Makefile
   tutorial/py/Makefile
@@ -846,6 +860,7 @@ echo "Building C++ Library ......... : $have_cpp"
 echo "Building C (GLib) Library .... : $have_c_glib"
 echo "Building Java Library ........ : $have_java"
 echo "Building C# Library .......... : $have_csharp"
+echo "Building .NET Core Library ... : $have_dotnetcore"
 echo "Building Python Library ...... : $have_python"
 echo "Building Ruby Library ........ : $have_ruby"
 echo "Building Haxe Library ........ : $have_haxe"
@@ -878,6 +893,12 @@ if test "$have_csharp" = "yes" ; then
   echo
   echo "C# Library:"
   echo "   Using .NET 3.5 ............ : $net_3_5"
+fi
+if test "$have_dotnetcore" = "yes" ; then
+  echo
+  echo ".NET Core Library:"
+  echo "   Using .NET Core ........... : $DOTNETCORE"
+  echo "   Using .NET Core version ... : $DOTNETCORE_VERSION"
 fi
 if test "$have_python" = "yes" ; then
   echo

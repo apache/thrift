@@ -823,7 +823,7 @@ begin
     end;
 
   else
-    ASSERT( FALSE); // any new types?
+    raise TProtocolExceptionInvalidData.Create('Unexpected type '+IntToStr(Ord(type_)));
   end;
 end;
 
