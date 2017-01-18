@@ -338,17 +338,6 @@ public:
 
   std::string make_java_service_name_fix(std::string const& srvName);
 
-  bool is_typedef_type_enum_or_struct(t_type* type) {
-    if (type->is_typedef()) {
-        t_typedef* ttype = (t_typedef*)type;
-        if (ttype->get_type()->is_typedef()) {
-            return is_typedef_type_enum_or_struct(ttype->get_type());
-        }
-        return ttype->get_type()->is_enum() || ttype->get_type()->is_struct() || ttype->get_type()->is_xception();
-    }
-    return false;
-  }
-
   t_type* get_leaf_type_in_typedef(t_typedef* t_tdef) {
     if (t_tdef->get_type()->is_typedef()) {
         return get_leaf_type_in_typedef((t_typedef*) t_tdef->get_type());
@@ -2759,6 +2748,9 @@ void t_java_generator::generate_field_value_meta_data(std::ofstream& out, t_type
   out << endl;
   indent_up();
   indent_up();
+  if (type->is_typedef()) {
+    type = get_leaf_type_in_typedef(((t_typedef*)type));
+  }
   if (type->is_struct() || type->is_xception()) {
     indent(out) << "new "
                    "org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType."
@@ -2787,23 +2779,10 @@ void t_java_generator::generate_field_value_meta_data(std::ofstream& out, t_type
     indent(out)
         << "new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, "
         << type_name(type) << ".class";
-  } else if (is_typedef_type_enum_or_struct(type)) {
-      t_type* typeLeaf = get_leaf_type_in_typedef(((t_typedef*)type));
-      if (typeLeaf->is_enum()) {
-            indent(out)
-                << "new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, "
-                << type_name(typeLeaf) << ".class";
-      } else {
-            indent(out) << "new "
-                "org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType."
-                "STRUCT, " << type_name(typeLeaf) << ".class";
-      }
   } else {
     indent(out) << "new org.apache.thrift.meta_data.FieldValueMetaData("
                 << get_java_type_string(type);
-    if (type->is_typedef()) {
-      indent(out) << ", \"" << ((t_typedef*)type)->get_symbolic() << "\"";
-    } else if (((t_base_type*)type)->is_binary()) {
+    if (((t_base_type*)type)->is_binary()) {
       indent(out) << ", true";
     }
   }
