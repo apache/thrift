@@ -26,7 +26,7 @@ import org.apache.thrift.protocol.TType;
  * the value(s) of a field
  */
 public class FieldValueMetaData implements java.io.Serializable {
-  public final byte type;  
+  public final byte type;
 
   private final boolean isTypedefType;
   private final String typedefName;
@@ -50,6 +50,10 @@ public class FieldValueMetaData implements java.io.Serializable {
     this.isBinary = false;
   }
 
+  public int getType() {
+    return type;
+  }
+
   public boolean isTypedef() {
     return isTypedefType;
   }
@@ -59,7 +63,7 @@ public class FieldValueMetaData implements java.io.Serializable {
   }
 
   public boolean isStruct() {
-    return type == TType.STRUCT; 
+    return type == TType.STRUCT;
   }
 
   public boolean isContainer() {
