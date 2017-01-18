@@ -19,7 +19,7 @@
 
 package Thrift;
 
-our $VERSION = '1.0.0-dev';
+our $VERSION = '0.10.0';
 
 require 5.6.0;
 use strict;
