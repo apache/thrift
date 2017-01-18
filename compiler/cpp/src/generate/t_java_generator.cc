@@ -851,6 +851,9 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
 
   f_struct << endl;
 
+  generate_java_struct_get_fields(f_struct);
+  generate_java_struct_get_metadata(f_struct);
+
   generate_java_struct_field_by_id(f_struct, tstruct);
 
   f_struct << endl;
