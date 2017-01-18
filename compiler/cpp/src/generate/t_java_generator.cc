@@ -341,9 +341,19 @@ public:
   bool is_typedef_type_enum_or_struct(t_type* type) {
     if (type->is_typedef()) {
         t_typedef* ttype = (t_typedef*)type;
-        return ttype->get_type()->is_enum() || (ttype->get_type()->is_struct() || ttype->get_type()->is_xception());
+        if (ttype->get_type()->is_typedef()) {
+            return is_typedef_type_enum_or_struct(ttype->get_type());
+        }
+        return ttype->get_type()->is_enum() || ttype->get_type()->is_struct() || ttype->get_type()->is_xception();
     }
     return false;
+  }
+
+  t_type* get_leaf_type_in_typedef(t_typedef* t_tdef) {
+    if (t_tdef->get_type()->is_typedef()) {
+        return get_leaf_type_in_typedef((t_typedef*) t_tdef->get_type());
+    }
+    return t_tdef->get_type();
   }
 
   bool type_can_be_null(t_type* ttype) {
@@ -2778,14 +2788,15 @@ void t_java_generator::generate_field_value_meta_data(std::ofstream& out, t_type
         << "new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, "
         << type_name(type) << ".class";
   } else if (is_typedef_type_enum_or_struct(type)) {
-        if (((t_typedef*)type)->get_type()->is_enum()) {
+      t_type* typeLeaf = get_leaf_type_in_typedef(((t_typedef*)type));
+      if (typeLeaf->is_enum()) {
             indent(out)
                 << "new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, "
-                << type_name(((t_typedef*)type)->get_type()) << ".class";
+                << type_name(typeLeaf) << ".class";
       } else {
             indent(out) << "new "
                 "org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType."
-                "STRUCT, " << type_name(type) << ".class";
+                "STRUCT, " << type_name(typeLeaf) << ".class";
       }
   } else {
     indent(out) << "new org.apache.thrift.meta_data.FieldValueMetaData("
