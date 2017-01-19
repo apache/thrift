@@ -18,6 +18,8 @@
 #
 cmake_minimum_required(VERSION 2.8.12)
 
+set(BIN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/bin)
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h)
 if(MSVC)
     # The winflexbison generator outputs some macros that conflict with the Visual Studio 2010 copy of stdint.h
@@ -107,6 +109,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} src)
 if(NOT ${WITH_PLUGIN})
     list(APPEND thrift-compiler_SOURCES ${compiler_core})
 endif()
+
 add_executable(thrift-compiler ${thrift-compiler_SOURCES})
 
 if(${WITH_PLUGIN})
@@ -152,7 +155,7 @@ set_target_properties(thrift-compiler PROPERTIES OUTPUT_NAME thrift)
 
 target_link_libraries(thrift-compiler libparse)
 
-install(TARGETS thrift-compiler DESTINATION "${BIN_INSTALL_DIR}")
+install(TARGETS thrift-compiler DESTINATION bin)
 
 if(${WITH_PLUGIN})
   # Install the headers
