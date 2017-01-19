@@ -36,16 +36,10 @@ BISON_TARGET(thrifty ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thrifty.yy ${CMAKE_C
 FLEX_TARGET(thriftl ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thriftl.ll ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc)
 ADD_FLEX_BISON_DEPENDENCY(thriftl thrifty)
 
-# HACK: Work around the fact that bison crates a .hh file but we need a .h file
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.h
-                   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.hh ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.h
-                   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.hh
-                   )
-
 set(libparse_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc
     ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.h
+    ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.hh
 )
 
 add_library(libparse STATIC ${libparse_SOURCES})
