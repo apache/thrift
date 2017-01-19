@@ -165,6 +165,8 @@ public:
   void generate_field_value_meta_data(std::ofstream& out, t_type* type);
   std::string get_java_type_string(t_type* type);
   void generate_java_struct_field_by_id(ofstream& out, t_struct* tstruct);
+  void generate_java_struct_get_fields(ofstream& out);
+  void generate_java_struct_get_metadata(ofstream& out);
   void generate_reflection_setters(std::ostringstream& out,
                                    t_type* type,
                                    std::string field_name,
@@ -335,6 +337,13 @@ public:
   std::string make_valid_java_identifier(std::string const& fromName);
 
   std::string make_java_service_name_fix(std::string const& srvName);
+
+  t_type* get_leaf_type_in_typedef(t_typedef* t_tdef) {
+    if (t_tdef->get_type()->is_typedef()) {
+        return get_leaf_type_in_typedef((t_typedef*) t_tdef->get_type());
+    }
+    return t_tdef->get_type();
+  }
 
   bool type_can_be_null(t_type* ttype) {
     ttype = get_true_type(ttype);
@@ -840,6 +849,9 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
   generate_union_abstract_methods(f_struct, tstruct);
 
   f_struct << endl;
+
+  generate_java_struct_get_fields(f_struct);
+  generate_java_struct_get_metadata(f_struct);
 
   generate_java_struct_field_by_id(f_struct, tstruct);
 
@@ -1612,6 +1624,8 @@ void t_java_generator::generate_java_struct_definition(ofstream& out,
   generate_java_struct_equality(out, tstruct);
   generate_java_struct_compare_to(out, tstruct);
   generate_java_struct_field_by_id(out, tstruct);
+  generate_java_struct_get_fields(out);
+  generate_java_struct_get_metadata(out);
 
   generate_java_struct_reader(out, tstruct);
   if (is_result) {
@@ -2121,6 +2135,18 @@ void t_java_generator::generate_java_struct_field_by_id(ofstream& out, t_struct*
   (void)tstruct;
   indent(out) << "public _Fields fieldForId(int fieldId) {" << endl;
   indent(out) << "  return _Fields.findByThriftId(fieldId);" << endl;
+  indent(out) << "}" << endl << endl;
+}
+
+void t_java_generator::generate_java_struct_get_fields(ofstream& out) {
+  indent(out) << "public _Fields[] getFields() {" << endl;
+  indent(out) << "  return _Fields.values();" << endl;
+  indent(out) << "}" << endl << endl;
+}
+
+void t_java_generator::generate_java_struct_get_metadata(ofstream& out) {
+  indent(out) << "public Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> getFieldMetaData() {" << endl;
+  indent(out) << "  return metaDataMap;" << endl;
   indent(out) << "}" << endl << endl;
 }
 
@@ -2722,6 +2748,9 @@ void t_java_generator::generate_field_value_meta_data(std::ofstream& out, t_type
   out << endl;
   indent_up();
   indent_up();
+  if (type->is_typedef()) {
+    type = get_leaf_type_in_typedef(((t_typedef*)type));
+  }
   if (type->is_struct() || type->is_xception()) {
     indent(out) << "new "
                    "org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType."
@@ -2753,9 +2782,7 @@ void t_java_generator::generate_field_value_meta_data(std::ofstream& out, t_type
   } else {
     indent(out) << "new org.apache.thrift.meta_data.FieldValueMetaData("
                 << get_java_type_string(type);
-    if (type->is_typedef()) {
-      indent(out) << ", \"" << ((t_typedef*)type)->get_symbolic() << "\"";
-    } else if (((t_base_type*)type)->is_binary()) {
+    if (((t_base_type*)type)->is_binary()) {
       indent(out) << ", true";
     }
   }
