@@ -33,6 +33,9 @@ endif()
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
 
+# create directory for thrifty and thriftl
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/thrift/)
+
 # Create flex and bison files and build the lib parse static library
 BISON_TARGET(thrifty ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thrifty.yy ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc)
 FLEX_TARGET(thriftl ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thriftl.ll ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc)
