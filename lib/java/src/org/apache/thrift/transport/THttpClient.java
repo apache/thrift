@@ -111,7 +111,7 @@ public class THttpClient extends TTransport {
     public Factory(String url, HttpClient client, CommonInterceptor interceptor) {
       this.url = url;
       this.client = client;
-      this.interceptor = interceptor == null ? new EmptyCommonInterceptor() : interceptor;
+      this.interceptor = interceptor;
     }
 
     @Override
@@ -137,7 +137,7 @@ public class THttpClient extends TTransport {
       url_ = new URL(url);
       this.client = null;
       this.host = null;
-      this.interceptor = interceptor;
+      this.interceptor = interceptor == null ? new EmptyCommonInterceptor() : interceptor;
     } catch (IOException iox) {
       throw new TTransportException(iox);
     }

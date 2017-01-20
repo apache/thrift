@@ -10,7 +10,6 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TIOStreamTransport;
 import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -19,7 +18,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Servlet implementation class ThriftServer
@@ -90,42 +92,40 @@ public class TServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
           throws ServletException, IOException {
 
-    TTransport inTransport = null;
-    TTransport outTransport = null;
-
     TraceData traceData = TraceContext.getCurrentTraceData();
+    OutputStream out = null;
     try {
-      response.setContentType("application/x-thrift");
-      if (!interceptor.interceptRequest(traceData, request, response)) {
-        ContextUtils.tryThrowInterceptionError(traceData.getServiceSpan());
-      }
-
-      if (null != this.customHeaders) {
-        for (Map.Entry<String, String> header : this.customHeaders) {
-          response.addHeader(header.getKey(), header.getValue());
-        }
-      }
       InputStream in = request.getInputStream();
-      OutputStream out = response.getOutputStream();
+      out = response.getOutputStream();
+        response.setContentType("application/x-thrift");
+        if (!interceptor.interceptRequest(traceData, request, response)) {
+          ContextUtils.tryThrowInterceptionError(traceData.getServiceSpan());
+        }
 
-      TTransport transport = new TIOStreamTransport(in, out);
-      inTransport = transport;
-      outTransport = transport;
+        if (null != this.customHeaders) {
+          for (Map.Entry<String, String> header : this.customHeaders) {
+            response.addHeader(header.getKey(), header.getValue());
+          }
+        }
 
-      TProtocol inProtocol = inProtocolFactory.getProtocol(inTransport);
-      TProtocol outProtocol = outProtocolFactory.getProtocol(outTransport);
+        TTransport transport = new TIOStreamTransport(in, out);
 
-      processor.process(inProtocol, outProtocol);
-      out.flush();
+        TProtocol inProtocol = inProtocolFactory.getProtocol(transport);
+        TProtocol outProtocol = outProtocolFactory.getProtocol(transport);
+
+        processor.process(inProtocol, outProtocol);
     } catch (Throwable te) {
       ContextUtils.setCallError(traceData.getServiceSpan(), te);
     } finally {
-      if (!interceptor.interceptResponse(traceData, response)) {
-        Throwable t = ContextUtils.getInterceptionError(traceData.getServiceSpan());
-        if (t != null) {
-          throw new ServletException(t);
+        if (!interceptor.interceptResponse(traceData, response)) {
+            Throwable t = ContextUtils.getInterceptionError(traceData.getServiceSpan());
+            if (t != null) {
+                throw new ServletException(t);
+            }
         }
-      }
+        if (out != null) {
+            out.flush();
+        }
     }
   }
 

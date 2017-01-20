@@ -20,7 +20,7 @@
 package org.apache.thrift;
 
 import com.rbkmoney.woody.api.interceptor.CommonInterceptor;
-import com.rbkmoney.woody.api.trace.TraceData;
+import com.rbkmoney.woody.api.trace.MetadataProperties;
 import com.rbkmoney.woody.api.trace.context.TraceContext;
 import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TMessageType;
@@ -80,7 +80,6 @@ public abstract class TServiceClient {
 
   private void sendBase(String methodName, TBase<?,?> args, byte type) throws TException {
     TMessage msg = new TMessage(methodName, type, ++seqid_);
-    TraceData traceData = TraceContext.getCurrentTraceData();
     oprot_.writeMessageBegin(msg);
     args.write(oprot_);
     oprot_.writeMessageEnd();
@@ -88,8 +87,10 @@ public abstract class TServiceClient {
   }
 
   protected void receiveBase(TBase<?,?> result, String methodName) throws TException {
+    if (TraceContext.getCurrentTraceData().getActiveSpan().getMetadata().containsKey(MetadataProperties.RESPONSE_SKIP_READING_FLAG)){
+      return;
+    }
     TMessage msg = iprot_.readMessageBegin();
-    TraceData traceData = TraceContext.getCurrentTraceData();
     if (msg.type == TMessageType.EXCEPTION) {
       TApplicationException x = new TApplicationException();
       x.read(iprot_);
