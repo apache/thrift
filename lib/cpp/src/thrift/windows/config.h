@@ -36,6 +36,9 @@
 #define USE_BOOST_THREAD 1
 #endif
 
+// Something that defines PRId64 is required to build
+#define HAVE_INTTYPES_H 1
+
 // VS2010 or later has stdint.h
 #if _MSC_VER >= 1600
 #define HAVE_STDINT_H 1
@@ -65,7 +68,6 @@
 
 #pragma warning(disable : 4996) // Deprecated posix name.
 
-#define VERSION "1.0.0-dev"
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_SYS_STAT_H 1
 
