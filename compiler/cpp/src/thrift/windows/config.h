@@ -34,9 +34,13 @@
 
 #define strtoll(begin_ptr, end_ptr, length) _strtoi64(begin_ptr, end_ptr, length)
 
-#define PRIu64 "I64d"
-#define PRIi64 "I64d"
+#ifndef PRIu64
+#define PRIu64 "I64u"
+#endif
 
+#ifndef PRIi64
+#define PRIi64 "I64i"
+#endif
 // squelch deprecation warnings
 #pragma warning(disable : 4996)
 // squelch bool conversion performance warning

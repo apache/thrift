@@ -35,6 +35,8 @@ void ServerThread::start() {
   assert(!running_);
   running_ = true;
 
+  helper_.reset(new Helper(this));
+
   // Start the other thread
   concurrency::PlatformThreadFactory threadFactory;
   threadFactory.setDetached(false);

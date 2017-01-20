@@ -39,9 +39,15 @@
 #endif
 
 #ifdef _MSC_VER
-//warning C4102: 'find_rule' : unreferenced label
-#pragma warning(disable:4102)
-//avoid isatty redefinition
+#pragma warning( push )
+
+// warning C4102: 'find_rule' : unreferenced label
+#pragma warning( disable : 4102 )
+
+// warning C4267: 'argument' : conversion from 'size_t' to 'int', possible loss of data
+#pragma warning( disable : 4267 )
+
+// avoid isatty redefinition
 #define YY_NEVER_INTERACTIVE 1
 
 #define YY_NO_UNISTD_H 1
@@ -458,6 +464,10 @@ literal_begin (['\"])
 }
 
 %%
+
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 
 /* vim: filetype=lex
 */

@@ -17,13 +17,19 @@
  * under the License.
  */
 
-#define __STDC_FORMAT_MACROS
-
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE // needed for getopt_long
 #endif
 
+#if (_MSC_VER <= 1700)
+// polynomial and std::fill_t warning happens in MSVC 2010, 2013, maybe others
+// https://svn.boost.org/trac/boost/ticket/11426
+#pragma warning(disable:4996)
+#endif
+
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
