@@ -42,9 +42,6 @@ install:
 - cmake -G "Visual Studio 14 2015 Win64" .
 - cmake --build . --config release
 - cd ..
-  # OpenSSL
-- C:\Python35-x64\python %APPVEYOR_BUILD_FOLDER%\build\appveyor\download_openssl.py
-- ps: Start-Process "Win64OpenSSL.exe" -ArgumentList "/silent /verysilent /sp- /suppressmsgboxes" -Wait
   # Libevent
 - appveyor DownloadFile https://github.com/libevent/libevent/releases/download/release-2.0.22-stable/libevent-2.0.22-stable.tar.gz
 - 7z x libevent-2.0.22-stable.tar.gz -so | 7z x -si -ttar > nul
