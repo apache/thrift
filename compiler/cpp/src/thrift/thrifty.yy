@@ -1,3 +1,6 @@
+%code requires {
+#include "thrift/parse/t_program.h"
+}
 %{
 /*
  * Licensed to the Apache Software Foundation (ASF) under one

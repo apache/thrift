@@ -1,35 +1,47 @@
 # Build compiler using CMake
 
+## build on Unix-like System
+
+### build using cmake
+
 Use the following steps to build using cmake:
 
-    mkdir cmake-build
-    cd cmake-build
-    cmake ..
-    make
-
+```
+mkdir cmake-build
+cd cmake-build
+cmake ..
+make
+```
 
 ### Create an eclipse project
 
-    mkdir cmake-ec && cd cmake-ec
-    cmake -G "Eclipse CDT4 - Unix Makefiles" ..
-    make
+```
+mkdir cmake-ec && cd cmake-ec
+cmake -G "Eclipse CDT4 - Unix Makefiles" ..
+make
+```
 
 Now open the folder cmake-ec using eclipse.
 
 
-### Cross compile using mingw32 and generate a Windows Installer with CPack
+## Cross compile using mingw32 and generate a Windows Installer with CPack
 
-    mkdir cmake-mingw32 && cd cmake-mingw32
-    cmake -DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF ..
-    cpack
+```
+mkdir cmake-mingw32 && cd cmake-mingw32
+cmake -DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF ..
+cpack
+```
 
-## Build on windows
+# Build on windows
 
 ### using Git Bash
+
 Git Bash provides flex and bison, so you just need to do this:
 
-    mkdir cmake-vs && cd cmake-vs
-    cmake -DWITH_SHARED_LIB=off ..
+```
+mkdir cmake-vs && cd cmake-vs
+cmake -DWITH_SHARED_LIB=off ..
+```
 
 ### using Win flex-bison
 
@@ -65,17 +77,23 @@ Open compiler.sln and remove the Pre-build commands under the project's
  Properties -> Build Events -> Pre-Build Events.
 
 From a command prompt:
-> cd thrift/compiler/cpp
-> flex -osrc\thrift\thriftl.cc src\thrift\thriftl.ll
+```
+cd thrift/compiler/cpp
+flex -osrc\thrift\thriftl.cc src\thrift\thriftl.ll
+```
 In the generated thriftl.cc, comment out #include <unistd.h>
 
 Place a copy of bison.simple in thrift/compiler/cpp
-> bison -y -o "src/thrift/thrifty.cc" --defines src/thrift/thrifty.yy
-> move src\thrift\thrifty.cc.hh  src\thrift\thrifty.hh
+```
+bison -y -o "src/thrift/thrifty.cc" --defines src/thrift/thrifty.yy
+move src\thrift\thrifty.cc.hh  src\thrift\thrifty.hh
+```
 
 Bison might generate the yacc header file "thrifty.cc.h" with just one h ".h" extension; in this case you'll have to rename to "thrifty.h".
 
-> move src\thrift\version.h.in src\thrift\version.h
+```
+move src\thrift\version.h.in src\thrift\version.h
+```
 
 Download inttypes.h from the interwebs and place it in an include path
 location (e.g. thrift/compiler/cpp/src).
