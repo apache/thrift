@@ -16,6 +16,9 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+cmake_minimum_required(VERSION 2.8.12)
+
+set(BIN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/bin)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h)
 if(MSVC)
@@ -30,24 +33,21 @@ endif()
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
 
+# create directory for thrifty and thriftl
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/thrift/)
+
 # Create flex and bison files and build the lib parse static library
 BISON_TARGET(thrifty ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thrifty.yy ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc)
 FLEX_TARGET(thriftl ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thriftl.ll ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc)
 ADD_FLEX_BISON_DEPENDENCY(thriftl thrifty)
 
-# HACK: Work around the fact that bison crates a .hh file but we need a .h file
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.h
-                   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.hh ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.h
-                   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.hh
-                   )
-
-set(libparse_SOURCES
+set(parse_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc
     ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.h
+    ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.hh
 )
 
-add_library(libparse STATIC ${libparse_SOURCES})
+add_library(parse STATIC ${parse_SOURCES})
 
 # Create the thrift compiler
 set(compiler_core
@@ -112,6 +112,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} src)
 if(NOT ${WITH_PLUGIN})
     list(APPEND thrift-compiler_SOURCES ${compiler_core})
 endif()
+
 add_executable(thrift-compiler ${thrift-compiler_SOURCES})
 
 if(${WITH_PLUGIN})
@@ -120,7 +121,7 @@ if(${WITH_PLUGIN})
         src/thrift/audit/t_audit.cpp
         src/thrift/generate/t_cpp_generator.cc
     )
-    target_link_libraries(thrift-bootstrap libparse)
+    target_link_libraries(thrift-bootstrap parse)
 
     set(PLUGIN_GEN_SOURCES
         ${CMAKE_CURRENT_BINARY_DIR}/thrift/plugin/plugin_types.h
@@ -153,11 +154,12 @@ if(${WITH_PLUGIN})
     LINK_AGAINST_THRIFT_LIBRARY(thrift-compiler thriftc)
 endif()
 
+set_target_properties(thrift-compiler PROPERTIES RUNTIME_OUTPUT_DIRECTORY bin/)
 set_target_properties(thrift-compiler PROPERTIES OUTPUT_NAME thrift)
 
-target_link_libraries(thrift-compiler libparse)
+target_link_libraries(thrift-compiler parse)
 
-install(TARGETS thrift-compiler DESTINATION "${BIN_INSTALL_DIR}")
+install(TARGETS thrift-compiler DESTINATION bin)
 
 if(${WITH_PLUGIN})
   # Install the headers
