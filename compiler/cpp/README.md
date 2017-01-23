@@ -99,3 +99,64 @@ Download inttypes.h from the interwebs and place it in an include path
 location (e.g. thrift/compiler/cpp/src).
 
 Build the compiler in Visual Studio.
+
+# Generate poject for Visual Studio 2017 RC with CMake and building the Thrift IDL compiler in Windows
+
+Download Visual Studio 2017 RC from https://www.visualstudio.com/vs/visual-studio-2017-rc/
+- Ensure that you installed workload "Desktop Development with C++" for VS2017 RC
+
+#### Manual installation of components
+- Download CMake from https://cmake.org/download/
+- Ensure that Flex and Bison installed at PC or download them from http://sourceforge.net/projects/winflexbison/ and install
+
+#### Installation of components with **chocolatey** on Windows 
+- Install **chocolatey** from https://chocolatey.org/
+- Run commands from PowerShell to install components with **chocolatey**:
+```
+    choco install cmake 
+    choco install winflexbison 
+```
+
+#### Generation of VS2017RC project with CMake and build on Windows
+- Go to **thrift\compiler\cpp**
+- Modify **CMakeLists.txt** (add the following line to file for CMake):
+```cmake
+add cmake_minimum_required(VERSION 2.8.12)
+```
+- Run commands in command line:
+```
+mkdir cmake-vs
+cd cmake-vs
+cmake -G "Visual Studio 15 2017" -DBIN_INSTALL_DIR="<PATH TO BIN INSTALL DIR>" ..
+```
+- After creation of solution for VS2017RC, open it and add existing source files to project **thrift-compiler**
+```
+common.cc
+t_generator.cc
+parse/parse.cc
+parse/t_typedef.cc
+```
+- Build solution and use executable
+
+# Generation of XCode project with CMake and build on MacOS
+- Install XCode
+- Install/update bison and cmake with brew
+```
+brew install cmake
+brew install bison
+```
+- Go to **thrift\compiler\cpp**
+- Run commands in command line:
+```
+mkdir cmake-build && cd cmake-build
+cmake -G "Xcode" -DBIN_INSTALL_DIR="<PATH TO BIN INSTALL DIR>" ..
+```
+- After creation of solution for XCode, open it and add existing source files to project **thrift-compiler**
+```
+common.cc
+t_generator.cc
+parse/parse.cc
+parse/t_typedef.cc
+```
+- Open Properties of project in XCode, select **thrift-compiler**, then select Tab **Build phases**, then add recently added 4 files to **Compile Sources** list
+- Build solution and use executable

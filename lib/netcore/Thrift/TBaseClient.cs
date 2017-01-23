@@ -35,6 +35,7 @@ namespace Thrift
         private readonly TProtocol _outputProtocol;
         private bool _isDisposed;
         private int _seqId;
+        public readonly Guid ClientId = Guid.NewGuid();
 
         protected TBaseClient(TProtocol inputProtocol, TProtocol outputProtocol)
         {
