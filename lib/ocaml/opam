@@ -1,0 +1,8 @@
+opam-version: "1.0.0-dev"
+maintainer: "Apache Thrift <dev@thrift.apache.org>"
+build: [
+  [make]
+  [make "install"]
+]
+remove: [["ocamlfind" "remove" "thrift"]]
+depends: ["ocamlfind"]
