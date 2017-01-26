@@ -100,8 +100,8 @@
 
   <target name="compile" description="compile the test suite" depends="init, generate, resolve">
     <!-- //TODO enable <compilerarg value="-Xlint"/>-->
-    <javac includeantruntime="false" srcdir="${genjava}" destdir="${build}/test" classpathref="libs.classpath"/>
-    <javac includeantruntime="false" srcdir="${src}" destdir="${build}/test" classpathref="libs.classpath"/>
+    <javac compiler="modern" includeantruntime="false" srcdir="${genjava}" destdir="${build}/test" classpathref="libs.classpath"/>
+    <javac compiler="modern" includeantruntime="false" srcdir="${src}" destdir="${build}/test" classpathref="libs.classpath"/>
   </target>
 
   <target name="jstest" description="create the test suite jar file" depends="compile">

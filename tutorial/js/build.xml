@@ -51,13 +51,13 @@
   </target>
 
   <target name="compile" depends="init">
-    <javac includeantruntime="false" srcdir="${gen}" destdir="${build}" classpathref="libs.classpath" />
-    <javac includeantruntime="false" srcdir="${javasrc}" destdir="${build}" classpathref="build.classpath">
+    <javac compiler="modern" includeantruntime="false" srcdir="${gen}" destdir="${build}" classpathref="libs.classpath" />
+    <javac compiler="modern" includeantruntime="false" srcdir="${javasrc}" destdir="${build}" classpathref="build.classpath">
       <exclude name="JavaClient.java"/>
       <exclude name="JavaServer.java"/>
       <include name="CalculatorHandler.java"/>
     </javac>
-    <javac includeantruntime="false" srcdir="${src}" destdir="${build}" classpathref="build.classpath">
+    <javac compiler="modern" includeantruntime="false" srcdir="${src}" destdir="${build}" classpathref="build.classpath">
       <compilerarg value="-Xlint:all"/>
     </javac>
   </target>
