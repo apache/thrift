@@ -29,7 +29,7 @@ configure-stamp:
 
 	# Add here commands to configure the package.
 	if [ -f bootstrap.sh ]; then $(CURDIR)/bootstrap.sh; fi
-	$(CURDIR)/configure --prefix=/usr
+	$(CURDIR)/configure --prefix=/usr --enable-plugin=no
 
 	touch configure-stamp
 
@@ -42,11 +42,11 @@ build: build-arch build-indep
 build-arch: build-arch-stamp
 $(CURDIR)/compiler/cpp/thrift build-arch-stamp: configure-stamp
 
-	# Compile C++ library
-	$(MAKE) -C $(CURDIR)/lib/cpp
-
 	# Compile compiler
 	$(MAKE) -C $(CURDIR)/compiler/cpp
+
+	# Compile C++ library
+	$(MAKE) -C $(CURDIR)/lib/cpp
 
 	# Compile C (glib) library
 	$(MAKE) -C $(CURDIR)/lib/c_glib
