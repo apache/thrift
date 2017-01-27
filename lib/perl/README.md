@@ -20,8 +20,21 @@ KIND, either express or implied. See the License for the
 specific language governing permissions and limitations
 under the License.
 
+Summary
+=======
+
+Apache Thrift is a software framework for scalable cross-language services development.
+It combines a software stack with a code generation engine to build services that work
+efficiently and seamlessly between many programming languages.  A language-neutral IDL
+is used to generate functioning client libraries and server-side handling frameworks.
+
+For More Information
+====================
+
+See the [Apache Thrift Web Site](http://thrift.apache.org/) for more information.
+
 Using Thrift with Perl
-=====================
+======================
 
 Thrift requires Perl >= 5.6.0
 
