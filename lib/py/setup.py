@@ -117,6 +117,7 @@ def run_setup(with_binary):
               'Topic :: Software Development :: Libraries',
               'Topic :: System :: Networking'
           ],
+          zip_safe=False,
           **extensions
           )
 
