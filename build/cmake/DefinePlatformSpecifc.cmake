@@ -37,6 +37,7 @@ if(MSVC)
     # For Debug build types, append a "d" to the library names.
     set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix" FORCE)
     set(CMAKE_RELEASE_POSTFIX "" CACHE STRING "Set release library postfix" FORCE)
+    set(CMAKE_RELWITHDEBINFO_POSTFIX "" CACHE STRING "Set release library postfix" FORCE)
 
     # Build using /MT option instead of /MD if the WITH_MT options is set
     if(WITH_MT)
@@ -44,9 +45,11 @@ if(MSVC)
                 CMAKE_CXX_FLAGS
                 CMAKE_CXX_FLAGS_DEBUG
                 CMAKE_CXX_FLAGS_RELEASE
+                CMAKE_CXX_FLAGS_RELWITHDEBINFO
                 CMAKE_C_FLAGS
                 CMAKE_C_FLAGS_DEBUG
                 CMAKE_C_FLAGS_RELEASE
+                CMAKE_C_FLAGS_RELWITHDEBINFO
                 )
         foreach(CompilerFlag ${CompilerFlags})
           string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
@@ -68,11 +71,23 @@ if(MSVC)
       message (FATAL_ERROR "Windows build does not support shared library output yet, please set -DWITH_SHARED_LIB=off")
     endif()
 
+    add_definitions("/MP") # parallel build
+    add_definitions("/W3") # warning level 3
+
+    # VS2010 does not provide inttypes which we need for "PRId64" used in many places
+    find_package(Inttypes)
+    if (Inttypes_FOUND)
+      include_directories(${INTTYPES_INCLUDE_DIRS})
+      # OpenSSL conflicts with the definition of PRId64 unless it is defined first
+      add_definitions("/FIinttypes.h")
+    endif ()
 elseif(UNIX)
   find_program( MEMORYCHECK_COMMAND valgrind )
   set( MEMORYCHECK_COMMAND_OPTIONS "--gen-suppressions=all --leak-check=full" )
   set( MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/test/valgrind.suppress" )
 endif()
+
+add_definitions("-D__STDC_FORMAT_MACROS")
 
 # WITH_*THREADS selects which threading library to use
 if(WITH_BOOSTTHREADS)
@@ -92,3 +107,9 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -Wall -Wextra")
   endif()
 endif()
+
+# If gcc older than 4.8 is detected and plugin support was requested, fail fast
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8" AND WITH_PLUGIN)
+  message(SEND_ERROR "Thrift compiler plug-in support is not possible with older gcc ( < 4.8 ) compiler")
+endif()
+

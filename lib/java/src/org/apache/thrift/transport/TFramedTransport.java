@@ -45,7 +45,8 @@ public class TFramedTransport extends TTransport {
   /**
    * Buffer for input
    */
-  private TMemoryInputTransport readBuffer_ = new TMemoryInputTransport(new byte[0]);
+  private final TMemoryInputTransport readBuffer_ =
+    new TMemoryInputTransport(new byte[0]);
 
   public static class Factory extends TTransportFactory {
     private int maxLength_;
@@ -90,11 +91,9 @@ public class TFramedTransport extends TTransport {
   }
 
   public int read(byte[] buf, int off, int len) throws TTransportException {
-    if (readBuffer_ != null) {
-      int got = readBuffer_.read(buf, off, len);
-      if (got > 0) {
-        return got;
-      }
+    int got = readBuffer_.read(buf, off, len);
+    if (got > 0) {
+      return got;
     }
 
     // Read another frame of data
@@ -121,6 +120,10 @@ public class TFramedTransport extends TTransport {
   @Override
   public void consumeBuffer(int len) {
     readBuffer_.consumeBuffer(len);
+  }
+
+  public void clear() {
+    readBuffer_.clear();
   }
 
   private final byte[] i32buf = new byte[4];

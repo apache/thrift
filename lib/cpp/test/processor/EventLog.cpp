@@ -19,22 +19,26 @@
 #include "EventLog.h"
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 using namespace std;
 using namespace apache::thrift::concurrency;
 
 namespace {
 
+// Define environment variable DEBUG_EVENTLOG to enable debug logging
+// ex: $ DEBUG_EVENTLOG=1 processor_test
+static const char * DEBUG_EVENTLOG = getenv("DEBUG_EVENTLOG");
+
 void debug(const char* fmt, ...) {
-  // Comment out this return to enable debug logs from the test code.
-  return;
+  if (DEBUG_EVENTLOG) {
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
 
-  va_list ap;
-  va_start(ap, fmt);
-  vfprintf(stderr, fmt, ap);
-  va_end(ap);
-
-  fprintf(stderr, "\n");
+    fprintf(stderr, "\n");
+  }
 }
 }
 

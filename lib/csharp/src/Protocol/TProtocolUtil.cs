@@ -95,6 +95,8 @@ namespace Thrift.Protocol
                         }
                         prot.ReadListEnd();
                         break;
+                    default:
+                        throw new TProtocolException(TProtocolException.INVALID_DATA, "Unknown data type " + type.ToString("d"));
                 }
 
             }

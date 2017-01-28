@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -17,8 +17,6 @@
  * under the License.
  */
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 #include <limits>
 #include <locale>
 #include <ios>
@@ -34,6 +32,13 @@
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/async/TEvhttpClientChannel.h>
 #include <thrift/server/TNonblockingServer.h> // <event.h>
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
 
 #include <boost/shared_ptr.hpp>
 #include <boost/program_options.hpp>
@@ -355,6 +360,10 @@ int main(int argc, char** argv) {
     }
 
     try {
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4566 )
+#endif
       string str(
           "}{Afrikaans, Alemannisch, Aragonés, العربية, مصرى, "
           "Asturianu, Aymar aru, Azərbaycan, Башҡорт, Boarisch, Žemaitėška, "
@@ -381,6 +390,9 @@ int main(int argc, char** argv) {
           "Türkçe, Татарча/Tatarça, Українська, اردو, Tiếng Việt, Volapük, "
           "Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文, "
           "Bân-lâm-gú, 粵語");
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
       cout << "testString(" << str << ") = " << flush;
       testClient.testString(s, str);
       cout << s << endl;
@@ -457,10 +469,10 @@ int main(int argc, char** argv) {
     BASETYPE_IDENTITY_TEST(testI64, (int64_t)-1);
     BASETYPE_IDENTITY_TEST(testI64, (int64_t)7000000000000000123LL);
     BASETYPE_IDENTITY_TEST(testI64, (int64_t)-7000000000000000123LL);
-    BASETYPE_IDENTITY_TEST(testI64, (int64_t)pow(2LL, 32));
-    BASETYPE_IDENTITY_TEST(testI64, (int64_t)-pow(2LL, 32));
-    BASETYPE_IDENTITY_TEST(testI64, (int64_t)pow(2LL, 32) + 1);
-    BASETYPE_IDENTITY_TEST(testI64, (int64_t)-pow(2LL, 32) - 1);
+    BASETYPE_IDENTITY_TEST(testI64, (int64_t)pow(static_cast<double>(2LL), 32));
+    BASETYPE_IDENTITY_TEST(testI64, (int64_t)-pow(static_cast<double>(2LL), 32));
+    BASETYPE_IDENTITY_TEST(testI64, (int64_t)pow(static_cast<double>(2LL), 32) + 1);
+    BASETYPE_IDENTITY_TEST(testI64, (int64_t)-pow(static_cast<double>(2LL), 32) - 1);
     BASETYPE_IDENTITY_TEST(testI64, numeric_limits<int64_t>::max());
     BASETYPE_IDENTITY_TEST(testI64, numeric_limits<int64_t>::min());
 
@@ -472,19 +484,19 @@ int main(int argc, char** argv) {
     BASETYPE_IDENTITY_TEST(testDouble, -1.0);
     BASETYPE_IDENTITY_TEST(testDouble, -5.2098523);
     BASETYPE_IDENTITY_TEST(testDouble, -0.000341012439638598279);
-    BASETYPE_IDENTITY_TEST(testDouble, pow(2, 32));
-    BASETYPE_IDENTITY_TEST(testDouble, pow(2, 32) + 1);
-    BASETYPE_IDENTITY_TEST(testDouble, pow(2, 53) - 1);
-    BASETYPE_IDENTITY_TEST(testDouble, -pow(2, 32));
-    BASETYPE_IDENTITY_TEST(testDouble, -pow(2, 32) - 1);
-    BASETYPE_IDENTITY_TEST(testDouble, -pow(2, 53) + 1);
+    BASETYPE_IDENTITY_TEST(testDouble, pow(static_cast<double>(2), 32));
+    BASETYPE_IDENTITY_TEST(testDouble, pow(static_cast<double>(2), 32) + 1);
+    BASETYPE_IDENTITY_TEST(testDouble, pow(static_cast<double>(2), 53) - 1);
+    BASETYPE_IDENTITY_TEST(testDouble, -pow(static_cast<double>(2), 32));
+    BASETYPE_IDENTITY_TEST(testDouble, -pow(static_cast<double>(2), 32) - 1);
+    BASETYPE_IDENTITY_TEST(testDouble, -pow(static_cast<double>(2), 53) + 1);
 
     try {
-      double expected = pow(10, 307);
+      double expected = pow(static_cast<double>(10), 307);
       cout << "testDouble(" << expected << ") = " << flush;
       double actual = testClient.testDouble(expected);
       cout << "(" << actual << ")" << endl;
-      if (expected - actual > pow(10, 292)) {
+      if (expected - actual > pow(static_cast<double>(10), 292)) {
         cout << "*** FAILED ***" << endl
              << "Expected: " << expected << " but got: " << actual << endl;
       }
@@ -496,11 +508,11 @@ int main(int argc, char** argv) {
     }
 
     try {
-      double expected = pow(10, -292);
+      double expected = pow(static_cast<double>(10), -292);
       cout << "testDouble(" << expected << ") = " << flush;
       double actual = testClient.testDouble(expected);
       cout << "(" << actual << ")" << endl;
-      if (expected - actual > pow(10, -307)) {
+      if (expected - actual > pow(static_cast<double>(10), -307)) {
         cout << "*** FAILED ***" << endl
              << "Expected: " << expected << " but got: " << actual << endl;
       }
@@ -530,7 +542,7 @@ int main(int argc, char** argv) {
       return_code |= ERR_BASETYPES;
     }
     cout << "testBinary([-128..127]) = {" << flush;
-    const char bin_data[256]
+    const signed char bin_data[256]
         = {-128, -127, -126, -125, -124, -123, -122, -121, -120, -119, -118, -117, -116, -115, -114,
            -113, -112, -111, -110, -109, -108, -107, -106, -105, -104, -103, -102, -101, -100, -99,
            -98,  -97,  -96,  -95,  -94,  -93,  -92,  -91,  -90,  -89,  -88,  -87,  -86,  -85,  -84,
@@ -551,7 +563,7 @@ int main(int argc, char** argv) {
            127};
     try {
       string bin_result;
-      testClient.testBinary(bin_result, string(bin_data, 256));
+      testClient.testBinary(bin_result, string(reinterpret_cast<const char *>(bin_data), 256));
       if (bin_result.size() != 256) {
         cout << endl << "*** FAILED ***" << endl;
         cout << "invalid length: " << bin_result.size() << endl;

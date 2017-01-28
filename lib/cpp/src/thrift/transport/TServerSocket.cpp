@@ -60,10 +60,6 @@
 #endif // _WIN32
 #endif
 
-#if defined(_WIN32) && (_WIN32_WINNT < 0x0600)
-  #define AI_ADDRCONFIG 0x0400
-#endif
-
 template <class T>
 inline const SOCKOPT_CAST_T* const_cast_sockopt(const T* v) {
   return reinterpret_cast<const SOCKOPT_CAST_T*>(v);
@@ -279,7 +275,7 @@ void TServerSocket::listen() {
   const struct addrinfo *res;
   int error;
   char port[sizeof("65535")];
-  snprintf(port, sizeof(port), "%d", port_);
+  THRIFT_SNPRINTF(port, sizeof(port), "%d", port_);
 
   struct addrinfo hints;
   std::memset(&hints, 0, sizeof(hints));
@@ -524,9 +520,9 @@ void TServerSocket::listen() {
   if (retries > retryLimit_) {
     char errbuf[1024];
     if (!path_.empty()) {
-      snprintf(errbuf, sizeof(errbuf), "TServerSocket::listen() PATH %s", path_.c_str());
+      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() PATH %s", path_.c_str());
     } else {
-      snprintf(errbuf, sizeof(errbuf), "TServerSocket::listen() BIND %d", port_);
+      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() BIND %d", port_);
     }
     GlobalOutput(errbuf);
     close();

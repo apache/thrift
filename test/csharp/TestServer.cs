@@ -273,39 +273,24 @@ namespace Test
                 return mapmap;
             }
 
+            // Insanity
+            // returns:
+            // { 1 => { 2 => argument,
+            //          3 => argument,
+            //        },
+            //   2 => { 6 => <empty Insanity struct>, },
+            // }
             public Dictionary<long, Dictionary<Numberz, Insanity>> testInsanity(Insanity argument)
             {
                 testLogDelegate.Invoke("testInsanity()");
 
-                Xtruct hello = new Xtruct();
-                hello.String_thing = "Hello2";
-                hello.Byte_thing = 2;
-                hello.I32_thing = 2;
-                hello.I64_thing = 2;
-
-                Xtruct goodbye = new Xtruct();
-                goodbye.String_thing = "Goodbye4";
-                goodbye.Byte_thing = (sbyte)4;
-                goodbye.I32_thing = 4;
-                goodbye.I64_thing = (long)4;
-
-                Insanity crazy = new Insanity();
-                crazy.UserMap = new Dictionary<Numberz, long>();
-                crazy.UserMap[Numberz.EIGHT] = (long)8;
-                crazy.Xtructs = new List<Xtruct>();
-                crazy.Xtructs.Add(goodbye);
-
-                Insanity looney = new Insanity();
-                crazy.UserMap[Numberz.FIVE] = (long)5;
-                crazy.Xtructs.Add(hello);
-
                 Dictionary<Numberz, Insanity> first_map = new Dictionary<Numberz, Insanity>();
                 Dictionary<Numberz, Insanity> second_map = new Dictionary<Numberz, Insanity>(); ;
 
-                first_map[Numberz.TWO] = crazy;
-                first_map[Numberz.THREE] = crazy;
+                first_map[Numberz.TWO] = argument;
+                first_map[Numberz.THREE] = argument;
 
-                second_map[Numberz.SIX] = looney;
+                second_map[Numberz.SIX] = new Insanity();
 
                 Dictionary<long, Dictionary<Numberz, Insanity>> insane =
                   new Dictionary<long, Dictionary<Numberz, Insanity>>();

@@ -29,9 +29,8 @@ os:
 environment:
   BOOST_ROOT: C:\Libraries\boost_1_59_0
   BOOST_LIBRARYDIR: C:\Libraries\boost_1_59_0\lib64-msvc-14.0
-  # Unfurtunately, these versions need manual update because old versions are quickly deleted.
-  ANT_VERSION: 1.9.7
-  OPENSSL_VERSION: 1_0_2h
+  # Unfurtunately, this version needs manual update because old versions are quickly deleted.
+  ANT_VERSION: 1.9.8
 
 install:
 - '"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64'
@@ -43,9 +42,6 @@ install:
 - cmake -G "Visual Studio 14 2015 Win64" .
 - cmake --build . --config release
 - cd ..
-  # OpenSSL
-- appveyor DownloadFile https://slproweb.com/download/Win64OpenSSL-%OPENSSL_VERSION%.exe
-- ps: Start-Process "Win64OpenSSL-${env:OPENSSL_VERSION}.exe" -ArgumentList "/silent /verysilent /sp- /suppressmsgboxes" -Wait
   # Libevent
 - appveyor DownloadFile https://github.com/libevent/libevent/releases/download/release-2.0.22-stable/libevent-2.0.22-stable.tar.gz
 - 7z x libevent-2.0.22-stable.tar.gz -so | 7z x -si -ttar > nul
@@ -56,7 +52,7 @@ install:
 - move WIN32-Code\event2\* include\event2\
 - move *.h include\
 - cd ..
-- cinst winflexbison
+- appveyor-retry cinst -y winflexbison
 - appveyor DownloadFile http://www.us.apache.org/dist/ant/binaries/apache-ant-%ANT_VERSION%-bin.zip
 - 7z x apache-ant-%ANT_VERSION%-bin.zip > nul
 - cd %APPVEYOR_BUILD_FOLDER%
@@ -90,6 +86,5 @@ build_script:
 # CTest fails to invoke ant seemingly due to "ant.bat" v.s. "ant" (shell script) conflict.
 # Currently, everything that involves OpenSSL seems to hang forever on our Appveyor setup.
 # Also a few C++ tests hang (on Appveyor or on Windows in general).
-- ctest -C Release --timeout 600 -VV -E "(concurrency_test|processor_test|TInterruptTest|StressTestNonBlocking|OpenSSLManualInitTest|SecurityTest|PythonTestSSLSocket|python_test$|^Java)"
-
-#TODO make it perfect ;-r
+- ctest -C Release --timeout 600 -VV -E "(StressTestNonBlocking|PythonTestSSLSocket|python_test$|^Java)"
+# TODO make it perfect ;-r

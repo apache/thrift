@@ -17,16 +17,15 @@
 # under the License.
 #
 
-# Find required packages
-set(Boost_USE_STATIC_LIBS ON) # Force the use of static boost test framework
-find_package(Boost 1.53.0 REQUIRED COMPONENTS chrono filesystem system thread unit_test_framework)
 include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
+
+add_definitions("-D__STDC_LIMIT_MACROS")
 
 if (WITH_DYN_LINK_TEST)
     add_definitions( -DBOOST_TEST_DYN_LINK )
 endif()
 
-#Make sure gen-cpp files can be included
+# Make sure gen-cpp files can be included
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 # Create the thrift C++ test library
@@ -60,7 +59,6 @@ set(testgencpp_cob_SOURCES
     gen-cpp/proc_types.h
 )
 add_library(testgencpp_cob STATIC ${testgencpp_cob_SOURCES})
-
 
 add_executable(Benchmark Benchmark.cpp)
 target_link_libraries(Benchmark testgencpp)

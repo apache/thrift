@@ -21,7 +21,10 @@ SUBDIRS = json xml
 PRECROSS_TARGET =
 
 if WITH_CPP
+# cpp dir is picked directly by plugin build
+if !WITH_PLUGIN
 SUBDIRS += cpp
+endif
 endif
 
 if WITH_C_GLIB
@@ -68,6 +71,10 @@ if WITH_DART
 SUBDIRS += dart
 endif
 
+if WITH_DOTNETCORE
+SUBDIRS += netcore
+endif
+
 if WITH_GO
 SUBDIRS += go
 endif
@@ -84,6 +91,10 @@ endif
 
 if WITH_LUA
 SUBDIRS += lua
+endif
+
+if WITH_RS
+SUBDIRS += rs
 endif
 
 # All of the libs that don't use Automake need to go in here

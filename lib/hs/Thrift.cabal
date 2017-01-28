@@ -40,7 +40,7 @@ Library
   Hs-Source-Dirs:
     src
   Build-Depends:
-    base >= 4, base < 5, containers, ghc-prim, attoparsec, binary, bytestring >= 0.10, base64-bytestring, hashable, HTTP, text, unordered-containers >= 0.2.6, vector, QuickCheck >= 2.8.2, split
+    base >= 4, base < 5, containers, ghc-prim, attoparsec, binary, bytestring >= 0.10, base64-bytestring, hashable, HTTP, text, unordered-containers >= 0.2.6, vector >= 0.10.12.2, QuickCheck >= 2.8.2, split
   if flag(network-uri)
      build-depends: network-uri >= 2.6, network >= 2.6
   else

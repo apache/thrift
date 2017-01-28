@@ -81,12 +81,12 @@ public:
    * execute the given callback.  Note that the 'void*' return value is ignored.
    */
   FunctionRunner(PthreadFuncPtr func, void* arg)
-    : func_(apache::thrift::stdcxx::bind(pthread_func_wrapper, func, arg)) {}
+    : func_(apache::thrift::stdcxx::bind(pthread_func_wrapper, func, arg)), intervalMs_(-1) {}
 
   /**
    * Given a generic callback, this FunctionRunner will execute it.
    */
-  FunctionRunner(const VoidFunc& cob) : func_(cob) {}
+  FunctionRunner(const VoidFunc& cob) : func_(cob), intervalMs_(-1) {}
 
   /**
    * Given a bool foo(...) type callback, FunctionRunner will execute

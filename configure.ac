@@ -119,6 +119,7 @@ if test "$enable_libs" = "no"; then
   with_ruby="no"
   with_haskell="no"
   with_haxe="no"
+  with_dotnetcore="no"
   with_perl="no"
   with_php="no"
   with_php_extension="no"
@@ -128,6 +129,7 @@ if test "$enable_libs" = "no"; then
   with_d="no"
   with_nodejs="no"
   with_lua="no"
+  with_rs="no"
 fi
 
 
@@ -409,6 +411,29 @@ if test "$with_go" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_GO, [test "$have_go" = "yes"])
 
+AX_THRIFT_LIB(rs, [Rust], yes)
+have_rs="no"
+if test "$with_rs" = "yes";  then
+  AC_PATH_PROG([CARGO], [cargo])
+  AC_PATH_PROG([RUSTC], [rustc])
+  if [[ -x "$CARGO" ]] && [[ -x "$RUSTC" ]]; then
+      min_rustc_version="1.13"
+
+      AC_MSG_CHECKING([for rustc version])
+      rustc_version=`$RUSTC --version 2>&1 | $SED -e 's/\(rustc \)\([0-9]\)\.\([0-9][0-9]*\)\.\([0-9][0-9]*\).*/\2.\3/'`
+      AC_MSG_RESULT($rustc_version)
+      AC_SUBST([rustc_version],[$rustc_version])
+
+      AX_COMPARE_VERSION([$min_rustc_version],[le],[$rustc_version],[
+      :
+        have_rs="yes"
+      ],[
+      :
+        have_rs="no"
+      ])
+  fi
+fi
+AM_CONDITIONAL(WITH_RS, [test "$have_rs" = "yes"])
 
 AX_THRIFT_LIB(haxe, [Haxe], yes)
 if test "$with_haxe" = "yes";  then
@@ -418,6 +443,16 @@ if test "$with_haxe" = "yes";  then
   fi
 fi
 AM_CONDITIONAL(WITH_HAXE, [test "$have_haxe" = "yes"])
+
+
+AX_THRIFT_LIB(dotnetcore, [.NET Core], yes)
+if test "$with_dotnetcore" = "yes";  then
+  AC_PATH_PROG([DOTNETCORE], [dotnet])
+  if [[ -x "$DOTNETCORE" ]] ; then
+    AX_PROG_DOTNETCORE_VERSION( [1.0.0], have_dotnetcore="yes", have_dotnetcore="no")
+  fi
+fi
+AM_CONDITIONAL(WITH_DOTNETCORE, [test "$have_dotnetcore" = "yes"])
 
 
 AX_THRIFT_LIB(d, [D], yes)
@@ -515,6 +550,20 @@ if test "$enable_tests" = "no"; then
   have_tests="no"
 fi
 AM_CONDITIONAL(WITH_TESTS, [test "$have_tests" = "yes"])
+
+AC_ARG_ENABLE([plugin],
+  AS_HELP_STRING([--enable-plugin], [build compiler plugin support [default=no]]),
+  [], enable_plugin=no
+)
+have_plugin=yes
+if test "$have_cpp" = "no" ; then
+  have_plugin="no"
+fi
+if test "$enable_plugin" = "no"; then
+  have_plugin="no"
+fi
+AC_CONFIG_LINKS([compiler/cpp/test/plugin/t_cpp_generator.cc:compiler/cpp/src/thrift/generate/t_cpp_generator.cc])
+AM_CONDITIONAL(WITH_PLUGIN, [test "$have_plugin" = "yes"])
 
 AC_ARG_ENABLE([tutorial],
   AS_HELP_STRING([--enable-tutorial], [build tutorial [default=yes]]),
@@ -712,8 +761,10 @@ AH_BOTTOM([
 AC_CONFIG_FILES([
   Makefile
   compiler/cpp/Makefile
-  compiler/cpp/version.h
-  compiler/cpp/src/windows/version.h
+  compiler/cpp/src/Makefile
+  compiler/cpp/src/thrift/plugin/Makefile
+  compiler/cpp/test/Makefile
+  compiler/cpp/src/thrift/version.h
   lib/Makefile
   lib/cpp/Makefile
   lib/cpp/test/Makefile
@@ -739,6 +790,7 @@ AC_CONFIG_FILES([
   lib/js/test/Makefile
   lib/json/Makefile
   lib/json/test/Makefile
+  lib/netcore/Makefile
   lib/nodejs/Makefile
   lib/perl/Makefile
   lib/perl/test/Makefile
@@ -747,6 +799,8 @@ AC_CONFIG_FILES([
   lib/dart/Makefile
   lib/py/Makefile
   lib/rb/Makefile
+  lib/rs/Makefile
+  lib/rs/test/Makefile
   lib/lua/Makefile
   lib/xml/Makefile
   lib/xml/test/Makefile
@@ -760,6 +814,7 @@ AC_CONFIG_FILES([
   test/haxe/Makefile
   test/hs/Makefile
   test/lua/Makefile
+  test/netcore/Makefile
   test/php/Makefile
   test/dart/Makefile
   test/perl/Makefile
@@ -767,6 +822,7 @@ AC_CONFIG_FILES([
   test/py.twisted/Makefile
   test/py.tornado/Makefile
   test/rb/Makefile
+  test/rs/Makefile
   tutorial/Makefile
   tutorial/c_glib/Makefile
   tutorial/cpp/Makefile
@@ -776,12 +832,14 @@ AC_CONFIG_FILES([
   tutorial/hs/Makefile
   tutorial/java/Makefile
   tutorial/js/Makefile
+  tutorial/netcore/Makefile
   tutorial/nodejs/Makefile
   tutorial/dart/Makefile
   tutorial/py/Makefile
   tutorial/py.twisted/Makefile
   tutorial/py.tornado/Makefile
   tutorial/rb/Makefile
+  tutorial/rs/Makefile
 ])
 
 if test "$have_cpp" = "yes" ; then MAYBE_CPP="cpp" ; else MAYBE_CPP="" ; fi
@@ -816,6 +874,8 @@ if test "$have_erlang" = "yes" ; then MAYBE_ERLANG="erl" ; else MAYBE_ERLANG="" 
 AC_SUBST([MAYBE_ERLANG])
 if test "$have_lua" = "yes" ; then MAYBE_LUA="lua" ; else MAYBE_LUA="" ; fi
 AC_SUBST([MAYBE_LUA])
+if test "$have_rs" = "yes" ; then MAYBE_RS="rs" ; else MAYBE_RS="" ; fi
+AC_SUBST([MAYBE_RS])
 
 AC_OUTPUT
 
@@ -823,10 +883,12 @@ AC_OUTPUT
 echo
 echo "$PACKAGE $VERSION"
 echo
+echo "Building Plugin Support ...... : $have_plugin"
 echo "Building C++ Library ......... : $have_cpp"
 echo "Building C (GLib) Library .... : $have_c_glib"
 echo "Building Java Library ........ : $have_java"
 echo "Building C# Library .......... : $have_csharp"
+echo "Building .NET Core Library ... : $have_dotnetcore"
 echo "Building Python Library ...... : $have_python"
 echo "Building Ruby Library ........ : $have_ruby"
 echo "Building Haxe Library ........ : $have_haxe"
@@ -839,6 +901,7 @@ echo "Building Go Library .......... : $have_go"
 echo "Building D Library ........... : $have_d"
 echo "Building NodeJS Library ...... : $have_nodejs"
 echo "Building Lua Library ......... : $have_lua"
+echo "Building Rust Library ........ : $have_rs"
 
 if test "$have_cpp" = "yes" ; then
   echo
@@ -859,6 +922,12 @@ if test "$have_csharp" = "yes" ; then
   echo
   echo "C# Library:"
   echo "   Using .NET 3.5 ............ : $net_3_5"
+fi
+if test "$have_dotnetcore" = "yes" ; then
+  echo
+  echo ".NET Core Library:"
+  echo "   Using .NET Core ........... : $DOTNETCORE"
+  echo "   Using .NET Core version ... : $DOTNETCORE_VERSION"
 fi
 if test "$have_python" = "yes" ; then
   echo
@@ -933,6 +1002,13 @@ if test "$have_lua" = "yes" ; then
   echo
   echo "Lua Library:"
   echo "   Using Lua .............. : $LUA"
+fi
+if test "$have_rs" = "yes" ; then
+  echo
+  echo "Rust Library:"
+  echo "   Using Cargo................ : $CARGO"
+  echo "   Using rustc................ : $RUSTC"
+  echo "   Using Rust version......... : $($RUSTC --version)"
 fi
 echo
 echo "If something is missing that you think should be present,"

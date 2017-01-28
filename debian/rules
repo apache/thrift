@@ -29,7 +29,7 @@ configure-stamp:
 
 	# Add here commands to configure the package.
 	if [ -f bootstrap.sh ]; then $(CURDIR)/bootstrap.sh; fi
-	$(CURDIR)/configure --prefix=/usr
+	$(CURDIR)/configure --prefix=/usr --enable-plugin=no
 
 	touch configure-stamp
 
@@ -96,13 +96,15 @@ clean:
 	# Add here commands to clean up after the build process.
 	-$(MAKE) clean
 
+	$(CURDIR)/cleanup.sh
+
 	dh_clean
 
 install: install-indep install-arch
 install-indep:
 	dh_testdir
 	dh_testroot
-	dh_clean -k -i
+	dh_prep -i
 	dh_installdirs -i
 
 	# Add here commands to install the indep part of the package into

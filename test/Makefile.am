@@ -72,6 +72,10 @@ if WITH_HAXE
 SUBDIRS += haxe
 endif
 
+if WITH_DOTNETCORE
+SUBDIRS += netcore
+endif
+
 if WITH_GO
 SUBDIRS += go
 PRECROSS_TARGET += precross-go
@@ -85,6 +89,11 @@ endif
 if WITH_LUA
 SUBDIRS += lua
 PRECROSS_TARGET += precross-lua
+endif
+
+if WITH_RS
+SUBDIRS += rs
+PRECROSS_TARGET += precross-rs
 endif
 
 #
@@ -113,6 +122,7 @@ EXTRA_DIST = \
 	py.twisted \
 	py.tornado \
 	rb \
+	rs \
 	threads \
 	AnnotationTest.thrift \
 	BrokenConstants.thrift \
@@ -124,6 +134,7 @@ EXTRA_DIST = \
 	FullCamelTest.thrift \
 	Include.thrift \
 	JavaBeansTest.thrift \
+	JavaTypes.thrift \
 	JsDeepConstructorTest.thrift \
 	ManyOptionals.thrift \
 	ManyTypedefs.thrift \

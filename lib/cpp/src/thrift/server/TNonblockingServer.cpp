@@ -17,8 +17,6 @@
  * under the License.
  */
 
-#define __STDC_FORMAT_MACROS
-
 #include <thrift/thrift-config.h>
 
 #include <thrift/server/TNonblockingServer.h>
@@ -64,13 +62,12 @@
 #define AF_LOCAL AF_UNIX
 #endif
 
-#if !defined(PRIu32)
-#define PRIu32 "I32u"
-#define PRIu64 "I64u"
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
 #endif
 
-#if defined(_WIN32) && (_WIN32_WINNT < 0x0600)
-  #define AI_ADDRCONFIG 0x0400
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
 #endif
 
 namespace apache {
@@ -1324,7 +1321,7 @@ TNonblockingIOThread::~TNonblockingIOThread() {
     ownEventBase_ = false;
   }
 
-  if (listenSocket_ >= 0) {
+  if (listenSocket_ != THRIFT_INVALID_SOCKET) {
     if (0 != ::THRIFT_CLOSESOCKET(listenSocket_)) {
       GlobalOutput.perror("TNonblockingIOThread listenSocket_ close(): ", THRIFT_GET_SOCKET_ERROR);
     }
@@ -1390,7 +1387,7 @@ void TNonblockingIOThread::registerEvents() {
                         event_base_get_method(eventBase_));
   }
 
-  if (listenSocket_ >= 0) {
+  if (listenSocket_ != THRIFT_INVALID_SOCKET) {
     // Register the server event
     event_set(&serverEvent_,
               listenSocket_,
@@ -1593,7 +1590,7 @@ void TNonblockingIOThread::run() {
 
 void TNonblockingIOThread::cleanupEvents() {
   // stop the listen socket, if any
-  if (listenSocket_ >= 0) {
+  if (listenSocket_ != THRIFT_INVALID_SOCKET) {
     if (event_del(&serverEvent_) == -1) {
       GlobalOutput.perror("TNonblockingIOThread::stop() event_del: ", THRIFT_GET_SOCKET_ERROR);
     }

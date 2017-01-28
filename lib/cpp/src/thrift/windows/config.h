@@ -25,15 +25,23 @@
 #endif // _MSC_VER
 
 #ifndef _WIN32
-#error This is a MSVC header only.
+#error "This is a Windows header only"
 #endif
 
 // use std::thread in MSVC11 (2012) or newer
 #if _MSC_VER >= 1700
 #define USE_STD_THREAD 1
-// otherwise use boost threads
 #else
+// otherwise use boost threads
 #define USE_BOOST_THREAD 1
+#endif
+
+// Something that defines PRId64 is required to build
+#define HAVE_INTTYPES_H 1
+
+// VS2010 or later has stdint.h
+#if _MSC_VER >= 1600
+#define HAVE_STDINT_H 1
 #endif
 
 #ifndef TARGET_WIN_XP
@@ -60,10 +68,10 @@
 
 #pragma warning(disable : 4996) // Deprecated posix name.
 
-#define VERSION "1.0.0-dev"
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_SYS_STAT_H 1
 
+// Must be using VS2010 or later, or boost, so that C99 types are defined in the global namespace
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #else

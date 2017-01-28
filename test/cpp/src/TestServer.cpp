@@ -17,9 +17,6 @@
  * under the License.
  */
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/protocol/TBinaryProtocol.h>
@@ -40,6 +37,13 @@
 #include <thrift/transport/THttpTransport.h>
 #include <thrift/transport/TTransportUtils.h>
 #include "ThriftTest.h"
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
 
 #include <iostream>
 #include <stdexcept>
@@ -746,7 +750,7 @@ int main(int argc, char** argv) {
 
   if (server.get() != NULL) {
     if (protocol_type == "header") {
-      // Tell the server to use the same protocol for input / output 
+      // Tell the server to use the same protocol for input / output
       // if using header
       server->setOutputProtocolFactory(boost::shared_ptr<TProtocolFactory>());
     }

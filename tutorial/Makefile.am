@@ -58,6 +58,10 @@ if WITH_HAXE
 SUBDIRS += haxe
 endif
 
+if WITH_DOTNETCORE
+SUBDIRS += netcore
+endif
+
 if WITH_GO
 SUBDIRS += go
 endif
@@ -68,6 +72,10 @@ endif
 
 if WITH_DART
 SUBDIRS += dart
+endif
+
+if WITH_RS
+SUBDIRS += rs
 endif
 
 #
