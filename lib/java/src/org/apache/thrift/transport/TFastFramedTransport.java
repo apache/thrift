@@ -65,7 +65,8 @@ public class TFastFramedTransport extends TTransport {
 
   private final TTransport underlying;
   private final AutoExpandingBufferWriteTransport writeBuffer;
-  private final AutoExpandingBufferReadTransport readBuffer;
+  private AutoExpandingBufferReadTransport readBuffer;
+  private final int initialBufferCapacity;
   private final byte[] i32buf = new byte[4];
   private final int maxLength;
 
@@ -104,6 +105,7 @@ public class TFastFramedTransport extends TTransport {
   public TFastFramedTransport(TTransport underlying, int initialBufferCapacity, int maxLength) {
     this.underlying = underlying;
     this.maxLength = maxLength;
+    this.initialBufferCapacity = initialBufferCapacity;
     writeBuffer = new AutoExpandingBufferWriteTransport(initialBufferCapacity, 1.5);
     readBuffer = new AutoExpandingBufferReadTransport(initialBufferCapacity, 1.5);
   }
@@ -162,6 +164,10 @@ public class TFastFramedTransport extends TTransport {
   @Override
   public void consumeBuffer(int len) {
     readBuffer.consumeBuffer(len);
+  }
+
+  public void clear() {
+    readBuffer = new AutoExpandingBufferReadTransport(initialBufferCapacity, 1.5);
   }
 
   @Override

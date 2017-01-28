@@ -19,6 +19,8 @@
 package org.apache.thrift.transport;
 
 public class TestTFastFramedTransport extends TestTFramedTransport {
+  protected final static int INITIAL_CAPACITY = 50;
+
   @Override
   protected TTransport getTransport(TTransport underlying) {
     return new TFastFramedTransport(underlying, 50, 10 * 1024 * 1024);

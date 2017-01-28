@@ -123,6 +123,12 @@ public class TFramedTransport extends TTransport {
     readBuffer_.consumeBuffer(len);
   }
 
+  public void clear() {
+    if (readBuffer_ != null) {
+      readBuffer_.clear();
+    }
+  }
+
   private final byte[] i32buf = new byte[4];
 
   private void readFrame() throws TTransportException {
