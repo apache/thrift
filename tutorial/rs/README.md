@@ -35,13 +35,12 @@ extern crate thrift;
 extern crate try_from;
 
 // generated Rust module
-mod tutorial;
+use tutorial;
 
-use std::cell::RefCell;
-use std::rc::Rc;
-use thrift::protocol::{TInputProtocol, TOutputProtocol};
 use thrift::protocol::{TCompactInputProtocol, TCompactOutputProtocol};
-use thrift::transport::{TFramedTransport, TTcpTransport, TTransport};
+use thrift::protocol::{TInputProtocol, TOutputProtocol};
+use thrift::transport::{TFramedReadTransport, TFramedWriteTransport};
+use thrift::transport::{TIoChannel, TTcpChannel};
 use tutorial::{CalculatorSyncClient, TCalculatorSyncClient};
 use tutorial::{Operation, Work};
 
@@ -61,28 +60,16 @@ fn run() -> thrift::Result<()> {
     //
 
     println!("connect to server on 127.0.0.1:9090");
-    let mut t = TTcpTransport::new();
-    let t = match t.open("127.0.0.1:9090") {
-        Ok(()) => t,
-        Err(e) => {
-            return Err(
-                format!("failed to connect with {:?}", e).into()
-            );
-        }
-    };
+    let mut c = TTcpTransport::new();
+    c.open("127.0.0.1:9090")?;
 
-    let t = Rc::new(RefCell::new(
-        Box::new(t) as Box<TTransport>
-    ));
-    let t = Rc::new(RefCell::new(
-        Box::new(TFramedTransport::new(t)) as Box<TTransport>
-    ));
-
-    let i_prot: Box<TInputProtocol> = Box::new(
-        TCompactInputProtocol::new(t.clone())
+    let (i_chan, o_chan) = c.split()?;
+    
+    let i_prot = TCompactInputProtocol::new(
+        TFramedReadTransport::new(i_chan)
     );
-    let o_prot: Box<TOutputProtocol> = Box::new(
-        TCompactOutputProtocol::new(t.clone())
+    let o_prot = TCompactOutputProtocol::new(
+        TFramedWriteTransport::new(o_chan)
     );
 
     let client = CalculatorSyncClient::new(i_prot, o_prot);
@@ -177,10 +164,10 @@ A typedef is translated to a `pub type` declaration.
 ```thrift
 typedef i64 UserId
 
-typedef map<string, Bonk> MapType
+typedef map<string, UserId> MapType
 ```
 ```rust
-pub type UserId = 164;
+pub type UserId = i64;
 
 pub type MapType = BTreeMap<String, Bonk>;
 ```

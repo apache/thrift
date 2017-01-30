@@ -21,13 +21,11 @@ extern crate clap;
 extern crate kitchen_sink;
 extern crate thrift;
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use kitchen_sink::base_two::{TNapkinServiceSyncClient, TRamenServiceSyncClient};
 use kitchen_sink::midlayer::{MealServiceSyncClient, TMealServiceSyncClient};
 use kitchen_sink::ultimate::{FullMealServiceSyncClient, TFullMealServiceSyncClient};
-use thrift::transport::{TFramedTransport, TTcpTransport, TTransport};
+use thrift::transport::{ReadHalf, TFramedReadTransport, TFramedWriteTransport, TIoChannel,
+                        TTcpChannel, WriteHalf};
 use thrift::protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TCompactInputProtocol,
                        TCompactOutputProtocol, TInputProtocol, TOutputProtocol};
 
@@ -50,24 +48,25 @@ fn run() -> thrift::Result<()> {
         (@arg port: --port +takes_value "Port on which the Thrift test server is listening")
         (@arg protocol: --protocol +takes_value "Thrift protocol implementation to use (\"binary\", \"compact\")")
         (@arg service: --service +takes_value "Service type to contact (\"part\", \"full\")")
-    ).get_matches();
+    )
+            .get_matches();
 
     let host = matches.value_of("host").unwrap_or("127.0.0.1");
     let port = value_t!(matches, "port", u16).unwrap_or(9090);
     let protocol = matches.value_of("protocol").unwrap_or("compact");
     let service = matches.value_of("service").unwrap_or("part");
 
-    let t = open_tcp_transport(host, port)?;
-    let t = Rc::new(RefCell::new(Box::new(TFramedTransport::new(t)) as Box<TTransport>));
+    let (i_chan, o_chan) = tcp_channel(host, port)?;
+    let (i_tran, o_tran) = (TFramedReadTransport::new(i_chan), TFramedWriteTransport::new(o_chan));
 
     let (i_prot, o_prot): (Box<TInputProtocol>, Box<TOutputProtocol>) = match protocol {
         "binary" => {
-            (Box::new(TBinaryInputProtocol::new(t.clone(), true)),
-             Box::new(TBinaryOutputProtocol::new(t.clone(), true)))
+            (Box::new(TBinaryInputProtocol::new(i_tran, true)),
+             Box::new(TBinaryOutputProtocol::new(o_tran, true)))
         }
         "compact" => {
-            (Box::new(TCompactInputProtocol::new(t.clone())),
-             Box::new(TCompactOutputProtocol::new(t.clone())))
+            (Box::new(TCompactInputProtocol::new(i_tran)),
+             Box::new(TCompactOutputProtocol::new(o_tran)))
         }
         unmatched => return Err(format!("unsupported protocol {}", unmatched).into()),
     };
@@ -75,28 +74,31 @@ fn run() -> thrift::Result<()> {
     run_client(service, i_prot, o_prot)
 }
 
-fn run_client(service: &str,
-              i_prot: Box<TInputProtocol>,
-              o_prot: Box<TOutputProtocol>)
-              -> thrift::Result<()> {
+fn run_client(
+    service: &str,
+    i_prot: Box<TInputProtocol>,
+    o_prot: Box<TOutputProtocol>,
+) -> thrift::Result<()> {
     match service {
         "full" => run_full_meal_service(i_prot, o_prot),
         "part" => run_meal_service(i_prot, o_prot),
-        _ => Err(thrift::Error::from(format!("unknown service type {}", service))),
+        _ => Err(thrift::Error::from(format!("unknown service type {}", service)),),
     }
 }
 
-fn open_tcp_transport(host: &str, port: u16) -> thrift::Result<Rc<RefCell<Box<TTransport>>>> {
-    let mut t = TTcpTransport::new();
-    match t.open(&format!("{}:{}", host, port)) {
-        Ok(()) => Ok(Rc::new(RefCell::new(Box::new(t) as Box<TTransport>))),
-        Err(e) => Err(e),
-    }
+fn tcp_channel(
+    host: &str,
+    port: u16,
+) -> thrift::Result<(ReadHalf<TTcpChannel>, WriteHalf<TTcpChannel>)> {
+    let mut c = TTcpChannel::new();
+    c.open(&format!("{}:{}", host, port))?;
+    c.split()
 }
 
-fn run_meal_service(i_prot: Box<TInputProtocol>,
-                    o_prot: Box<TOutputProtocol>)
-                    -> thrift::Result<()> {
+fn run_meal_service(
+    i_prot: Box<TInputProtocol>,
+    o_prot: Box<TOutputProtocol>,
+) -> thrift::Result<()> {
     let mut client = MealServiceSyncClient::new(i_prot, o_prot);
 
     // client.full_meal(); // <-- IMPORTANT: if you uncomment this, compilation *should* fail
@@ -110,9 +112,10 @@ fn run_meal_service(i_prot: Box<TInputProtocol>,
     Ok(())
 }
 
-fn run_full_meal_service(i_prot: Box<TInputProtocol>,
-                         o_prot: Box<TOutputProtocol>)
-                         -> thrift::Result<()> {
+fn run_full_meal_service(
+    i_prot: Box<TInputProtocol>,
+    o_prot: Box<TOutputProtocol>,
+) -> thrift::Result<()> {
     let mut client = FullMealServiceSyncClient::new(i_prot, o_prot);
 
     execute_call("full", "ramen", || client.ramen(100))?;
@@ -124,17 +127,20 @@ fn run_full_meal_service(i_prot: Box<TInputProtocol>,
 }
 
 fn execute_call<F, R>(service_type: &str, call_name: &str, mut f: F) -> thrift::Result<()>
-    where F: FnMut() -> thrift::Result<R>
+where
+    F: FnMut() -> thrift::Result<R>,
 {
     let res = f();
 
     match res {
         Ok(_) => println!("{}: completed {} call", service_type, call_name),
         Err(ref e) => {
-            println!("{}: failed {} call with error {:?}",
-                     service_type,
-                     call_name,
-                     e)
+            println!(
+                "{}: failed {} call with error {:?}",
+                service_type,
+                call_name,
+                e
+            )
         }
     }
 

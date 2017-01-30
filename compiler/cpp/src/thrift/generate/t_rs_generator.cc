@@ -31,10 +31,9 @@ using std::string;
 using std::vector;
 using std::set;
 
-static const string endl = "\n"; // avoid ostream << std::endl flushes
-
-static const string SERVICE_RESULT_VARIABLE = "result_value";
-static const string RESULT_STRUCT_SUFFIX = "Result";
+static const string endl("\n"); // avoid ostream << std::endl flushes
+static const string SERVICE_RESULT_VARIABLE("result_value");
+static const string RESULT_STRUCT_SUFFIX("Result");
 static const string RUST_RESERVED_WORDS[] = {
   "abstract", "alignof", "as", "become",
   "box", "break", "const", "continue",
@@ -54,6 +53,9 @@ const set<string> RUST_RESERVED_WORDS_SET(
   RUST_RESERVED_WORDS,
   RUST_RESERVED_WORDS + sizeof(RUST_RESERVED_WORDS)/sizeof(RUST_RESERVED_WORDS[0])
 );
+
+static const string SYNC_CLIENT_GENERIC_BOUND_VARS("<IP, OP>");
+static const string SYNC_CLIENT_GENERIC_BOUNDS("where IP: TInputProtocol, OP: TOutputProtocol");
 
 // FIXME: extract common TMessageIdentifier function
 // FIXME: have to_rust_type deal with Option
@@ -364,9 +366,10 @@ private:
   );
 
   // Return a string containing all the unpacked service call args given a service call function
-  // `t_function`. Prepends the args with `&mut self` and includes the arg types in the returned string,
-  // for example: `fn foo(&mut self, field_0: String)`.
-  string rust_sync_service_call_declaration(t_function* tfunc);
+  // `t_function`. Prepends the args with either `&mut self` or `&self` and includes the arg types
+  // in the returned string, for example:
+  // `fn foo(&mut self, field_0: String)`.
+  string rust_sync_service_call_declaration(t_function* tfunc, bool self_is_mutable);
 
   // Return a string containing all the unpacked service call args given a service call function
   // `t_function`. Only includes the arg names, each of which is prefixed with the optional prefix
@@ -512,6 +515,9 @@ void t_rs_generator::render_attributes_and_includes() {
   // constructors take *all* struct parameters, which can trigger the "too many arguments" warning
   // some auto-gen'd types can be deeply nested. clippy recommends factoring them out which is hard to autogen
   f_gen_ << "#![cfg_attr(feature = \"cargo-clippy\", allow(too_many_arguments, type_complexity))]" << endl;
+  // prevent rustfmt from running against this file
+  // lines are too long, code is (thankfully!) not visual-indented, etc.
+  f_gen_ << "#![cfg_attr(rustfmt, rustfmt_skip)]" << endl;
   f_gen_ << endl;
 
   // add standard includes
@@ -2050,7 +2056,7 @@ void t_rs_generator::render_sync_client_trait(t_service *tservice) {
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
     t_function* tfunc = (*func_iter);
     string func_name = service_call_client_function_name(tfunc);
-    string func_args = rust_sync_service_call_declaration(tfunc);
+    string func_args = rust_sync_service_call_declaration(tfunc, true);
     string func_return = to_rust_type(tfunc->get_returntype());
     render_rustdoc((t_doc*) tfunc);
     f_gen_ << indent() << "fn " << func_name <<  func_args << " -> thrift::Result<" << func_return << ">;" << endl;
@@ -2069,8 +2075,14 @@ void t_rs_generator::render_sync_client_marker_trait(t_service *tservice) {
 void t_rs_generator::render_sync_client_marker_trait_impls(t_service *tservice, const string &impl_struct_name) {
   f_gen_
     << indent()
-    << "impl " << rust_namespace(tservice) << rust_sync_client_marker_trait_name(tservice)
-    << " for " << impl_struct_name
+    << "impl "
+    << SYNC_CLIENT_GENERIC_BOUND_VARS
+    << " "
+    << rust_namespace(tservice) << rust_sync_client_marker_trait_name(tservice)
+    << " for "
+    << impl_struct_name << SYNC_CLIENT_GENERIC_BOUND_VARS
+    << " "
+    << SYNC_CLIENT_GENERIC_BOUNDS
     << " {}"
     << endl;
 
@@ -2081,11 +2093,19 @@ void t_rs_generator::render_sync_client_marker_trait_impls(t_service *tservice, 
 }
 
 void t_rs_generator::render_sync_client_definition_and_impl(const string& client_impl_name) {
+
   // render the definition for the client struct
-  f_gen_ << "pub struct " << client_impl_name << " {" << endl;
+  f_gen_
+    << "pub struct "
+    << client_impl_name
+    << SYNC_CLIENT_GENERIC_BOUND_VARS
+    << " "
+    << SYNC_CLIENT_GENERIC_BOUNDS
+    << " {"
+    << endl;
   indent_up();
-  f_gen_ << indent() << "_i_prot: Box<TInputProtocol>," << endl;
-  f_gen_ << indent() << "_o_prot: Box<TOutputProtocol>," << endl;
+  f_gen_ << indent() << "_i_prot: IP," << endl;
+  f_gen_ << indent() << "_o_prot: OP," << endl;
   f_gen_ << indent() << "_sequence_number: i32," << endl;
   indent_down();
   f_gen_ << "}" << endl;
@@ -2093,7 +2113,16 @@ void t_rs_generator::render_sync_client_definition_and_impl(const string& client
 
   // render the struct implementation
   // this includes the new() function as well as the helper send/recv methods for each service call
-  f_gen_ << "impl " << client_impl_name << " {" << endl;
+  f_gen_
+    << "impl "
+    << SYNC_CLIENT_GENERIC_BOUND_VARS
+    << " "
+    << client_impl_name
+    << SYNC_CLIENT_GENERIC_BOUND_VARS
+    << " "
+    << SYNC_CLIENT_GENERIC_BOUNDS
+    << " {"
+    << endl;
   indent_up();
   render_sync_client_lifecycle_functions(client_impl_name);
   indent_down();
@@ -2104,8 +2133,9 @@ void t_rs_generator::render_sync_client_definition_and_impl(const string& client
 void t_rs_generator::render_sync_client_lifecycle_functions(const string& client_struct) {
   f_gen_
     << indent()
-    << "pub fn new(input_protocol: Box<TInputProtocol>, output_protocol: Box<TOutputProtocol>) -> "
+    << "pub fn new(input_protocol: IP, output_protocol: OP) -> "
     << client_struct
+    << SYNC_CLIENT_GENERIC_BOUND_VARS
     << " {"
     << endl;
   indent_up();
@@ -2121,11 +2151,20 @@ void t_rs_generator::render_sync_client_lifecycle_functions(const string& client
 }
 
 void t_rs_generator::render_sync_client_tthriftclient_impl(const string &client_impl_name) {
-  f_gen_ << indent() << "impl TThriftClient for " << client_impl_name << " {" << endl;
+  f_gen_
+    << indent()
+    << "impl "
+    << SYNC_CLIENT_GENERIC_BOUND_VARS
+    << " TThriftClient for "
+    << client_impl_name
+    << SYNC_CLIENT_GENERIC_BOUND_VARS
+    << " "
+    << SYNC_CLIENT_GENERIC_BOUNDS
+    << " {" << endl;
   indent_up();
 
-  f_gen_ << indent() << "fn i_prot_mut(&mut self) -> &mut TInputProtocol { &mut *self._i_prot }" << endl;
-  f_gen_ << indent() << "fn o_prot_mut(&mut self) -> &mut TOutputProtocol { &mut *self._o_prot }" << endl;
+  f_gen_ << indent() << "fn i_prot_mut(&mut self) -> &mut TInputProtocol { &mut self._i_prot }" << endl;
+  f_gen_ << indent() << "fn o_prot_mut(&mut self) -> &mut TOutputProtocol { &mut self._o_prot }" << endl;
   f_gen_ << indent() << "fn sequence_number(&self) -> i32 { self._sequence_number }" << endl;
   f_gen_
     << indent()
@@ -2172,7 +2211,7 @@ string t_rs_generator::sync_client_marker_traits_for_extension(t_service *tservi
 
 void t_rs_generator::render_sync_send_recv_wrapper(t_function* tfunc) {
   string func_name = service_call_client_function_name(tfunc);
-  string func_decl_args = rust_sync_service_call_declaration(tfunc);
+  string func_decl_args = rust_sync_service_call_declaration(tfunc, true);
   string func_call_args = rust_sync_service_call_invocation(tfunc);
   string func_return = to_rust_type(tfunc->get_returntype());
 
@@ -2268,12 +2307,17 @@ void t_rs_generator::render_sync_recv(t_function* tfunc) {
   f_gen_ << indent() << "}" << endl;
 }
 
-string t_rs_generator::rust_sync_service_call_declaration(t_function* tfunc) {
+string t_rs_generator::rust_sync_service_call_declaration(t_function* tfunc, bool self_is_mutable) {
   ostringstream func_args;
-  func_args << "(&mut self";
+
+  if (self_is_mutable) {
+    func_args << "(&mut self";
+  } else {
+    func_args << "(&self";
+  }
 
   if (has_args(tfunc)) {
-    func_args << ", "; // put comma after "&mut self"
+    func_args << ", "; // put comma after "self"
     func_args << struct_to_declaration(tfunc->get_arglist(), T_ARGS);
   }
 
@@ -2388,7 +2432,7 @@ void t_rs_generator::render_sync_handler_trait(t_service *tservice) {
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
     t_function* tfunc = (*func_iter);
     string func_name = service_call_handler_function_name(tfunc);
-    string func_args = rust_sync_service_call_declaration(tfunc);
+    string func_args = rust_sync_service_call_declaration(tfunc, false);
     string func_return = to_rust_type(tfunc->get_returntype());
     render_rustdoc((t_doc*) tfunc);
     f_gen_
@@ -2472,7 +2516,7 @@ void t_rs_generator::render_sync_processor_definition_and_impl(t_service *tservi
 
   f_gen_
     << indent()
-    << "fn process(&mut self, i_prot: &mut TInputProtocol, o_prot: &mut TOutputProtocol) -> thrift::Result<()> {"
+    << "fn process(&self, i_prot: &mut TInputProtocol, o_prot: &mut TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
   f_gen_ << indent() << "let message_ident = i_prot.read_message_begin()?;" << endl;
@@ -2511,7 +2555,7 @@ void t_rs_generator::render_sync_process_delegation_functions(t_service *tservic
     f_gen_
       << indent()
       << "fn " << function_name
-      << "(&mut self, "
+      << "(&self, "
       << "incoming_sequence_number: i32, "
       << "i_prot: &mut TInputProtocol, "
       << "o_prot: &mut TOutputProtocol) "
@@ -2524,7 +2568,7 @@ void t_rs_generator::render_sync_process_delegation_functions(t_service *tservic
       << actual_processor
       << "::" << function_name
       << "("
-      << "&mut self.handler, "
+      << "&self.handler, "
       << "incoming_sequence_number, "
       << "i_prot, "
       << "o_prot"
@@ -2576,7 +2620,7 @@ void t_rs_generator::render_sync_process_function(t_function *tfunc, const strin
     << indent()
     << "pub fn process_" << rust_snake_case(tfunc->get_name())
     << "<H: " << handler_type << ">"
-    << "(handler: &mut H, "
+    << "(handler: &H, "
     << sequence_number_param << ": i32, "
     << "i_prot: &mut TInputProtocol, "
     << output_protocol_param << ": &mut TOutputProtocol) "
