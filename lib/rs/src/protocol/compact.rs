@@ -17,15 +17,12 @@
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use integer_encoding::{VarIntReader, VarIntWriter};
-use std::cell::RefCell;
 use std::convert::From;
-use std::rc::Rc;
-use std::io::{Read, Write};
 use try_from::TryFrom;
 
-use ::transport::TTransport;
-use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType,
-            TInputProtocol, TInputProtocolFactory};
+use transport::{TReadTransport, TWriteTransport};
+use super::{TFieldIdentifier, TInputProtocol, TInputProtocolFactory, TListIdentifier,
+            TMapIdentifier, TMessageIdentifier, TMessageType};
 use super::{TOutputProtocol, TOutputProtocolFactory, TSetIdentifier, TStructIdentifier, TType};
 
 const COMPACT_PROTOCOL_ID: u8 = 0x82;
@@ -39,21 +36,22 @@ const COMPACT_VERSION_MASK: u8 = 0x1F;
 /// Create and use a `TCompactInputProtocol`.
 ///
 /// ```no_run
-/// use std::cell::RefCell;
-/// use std::rc::Rc;
 /// use thrift::protocol::{TCompactInputProtocol, TInputProtocol};
-/// use thrift::transport::{TTcpTransport, TTransport};
+/// use thrift::transport::TTcpChannel;
 ///
-/// let mut transport = TTcpTransport::new();
-/// transport.open("localhost:9090").unwrap();
-/// let transport = Rc::new(RefCell::new(Box::new(transport) as Box<TTransport>));
+/// let mut channel = TTcpChannel::new();
+/// channel.open("localhost:9090").unwrap();
 ///
-/// let mut i_prot = TCompactInputProtocol::new(transport);
+/// let mut protocol = TCompactInputProtocol::new(channel);
 ///
-/// let recvd_bool = i_prot.read_bool().unwrap();
-/// let recvd_string = i_prot.read_string().unwrap();
+/// let recvd_bool = protocol.read_bool().unwrap();
+/// let recvd_string = protocol.read_string().unwrap();
 /// ```
-pub struct TCompactInputProtocol<'a> {
+#[derive(Debug)]
+pub struct TCompactInputProtocol<T>
+where
+    T: TReadTransport,
+{
     // Identifier of the last field deserialized for a struct.
     last_read_field_id: i16,
     // Stack of the last read field ids (a new entry is added each time a nested struct is read).
@@ -63,12 +61,15 @@ pub struct TCompactInputProtocol<'a> {
     // and reading the field only occurs after the field id is read.
     pending_read_bool_value: Option<bool>,
     // Underlying transport used for byte-level operations.
-    transport: Rc<RefCell<Box<TTransport + 'a>>>,
+    transport: T,
 }
 
-impl<'a> TCompactInputProtocol<'a> {
+impl<T> TCompactInputProtocol<T>
+where
+    T: TReadTransport,
+{
     /// Create a `TCompactInputProtocol` that reads bytes from `transport`.
-    pub fn new(transport: Rc<RefCell<Box<TTransport + 'a>>>) -> TCompactInputProtocol<'a> {
+    pub fn new(transport: T) -> TCompactInputProtocol<T> {
         TCompactInputProtocol {
             last_read_field_id: 0,
             read_field_id_stack: Vec::new(),
@@ -87,21 +88,28 @@ impl<'a> TCompactInputProtocol<'a> {
             // high bits set high if count and type encoded separately
             element_count = possible_element_count as i32;
         } else {
-            element_count = self.transport.borrow_mut().read_varint::<u32>()? as i32;
+            element_count = self.transport.read_varint::<u32>()? as i32;
         }
 
         Ok((element_type, element_count))
     }
 }
 
-impl<'a> TInputProtocol for TCompactInputProtocol<'a> {
+impl<T> TInputProtocol for TCompactInputProtocol<T>
+where
+    T: TReadTransport,
+{
     fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier> {
         let compact_id = self.read_byte()?;
         if compact_id != COMPACT_PROTOCOL_ID {
-            Err(::Error::Protocol(::ProtocolError {
-                kind: ::ProtocolErrorKind::BadVersion,
-                message: format!("invalid compact protocol header {:?}", compact_id),
-            }))
+            Err(
+                ::Error::Protocol(
+                    ::ProtocolError {
+                        kind: ::ProtocolErrorKind::BadVersion,
+                        message: format!("invalid compact protocol header {:?}", compact_id),
+                    },
+                ),
+            )
         } else {
             Ok(())
         }?;
@@ -109,11 +117,17 @@ impl<'a> TInputProtocol for TCompactInputProtocol<'a> {
         let type_and_byte = self.read_byte()?;
         let received_version = type_and_byte & COMPACT_VERSION_MASK;
         if received_version != COMPACT_VERSION {
-            Err(::Error::Protocol(::ProtocolError {
-                kind: ::ProtocolErrorKind::BadVersion,
-                message: format!("cannot process compact protocol version {:?}",
-                                 received_version),
-            }))
+            Err(
+                ::Error::Protocol(
+                    ::ProtocolError {
+                        kind: ::ProtocolErrorKind::BadVersion,
+                        message: format!(
+                            "cannot process compact protocol version {:?}",
+                            received_version
+                        ),
+                    },
+                ),
+            )
         } else {
             Ok(())
         }?;
@@ -125,7 +139,7 @@ impl<'a> TInputProtocol for TCompactInputProtocol<'a> {
 
         self.last_read_field_id = 0;
 
-        Ok(TMessageIdentifier::new(service_call_name, message_type, sequence_number))
+        Ok(TMessageIdentifier::new(service_call_name, message_type, sequence_number),)
     }
 
     fn read_message_end(&mut self) -> ::Result<()> {
@@ -165,9 +179,13 @@ impl<'a> TInputProtocol for TCompactInputProtocol<'a> {
 
         match field_type {
             TType::Stop => {
-                Ok(TFieldIdentifier::new::<Option<String>, String, Option<i16>>(None,
-                                                                                TType::Stop,
-                                                                                None))
+                Ok(
+                    TFieldIdentifier::new::<Option<String>, String, Option<i16>>(
+                        None,
+                        TType::Stop,
+                        None,
+                    ),
+                )
             }
             _ => {
                 if field_delta != 0 {
@@ -176,11 +194,13 @@ impl<'a> TInputProtocol for TCompactInputProtocol<'a> {
                     self.last_read_field_id = self.read_i16()?;
                 };
 
-                Ok(TFieldIdentifier {
-                    name: None,
-                    field_type: field_type,
-                    id: Some(self.last_read_field_id),
-                })
+                Ok(
+                    TFieldIdentifier {
+                        name: None,
+                        field_type: field_type,
+                        id: Some(self.last_read_field_id),
+                    },
+                )
             }
         }
     }
@@ -198,10 +218,14 @@ impl<'a> TInputProtocol for TCompactInputProtocol<'a> {
                     0x01 => Ok(true),
                     0x02 => Ok(false),
                     unkn => {
-                        Err(::Error::Protocol(::ProtocolError {
-                            kind: ::ProtocolErrorKind::InvalidData,
-                            message: format!("cannot convert {} into bool", unkn),
-                        }))
+                        Err(
+                            ::Error::Protocol(
+                                ::ProtocolError {
+                                    kind: ::ProtocolErrorKind::InvalidData,
+                                    message: format!("cannot convert {} into bool", unkn),
+                                },
+                            ),
+                        )
                     }
                 }
             }
@@ -209,9 +233,12 @@ impl<'a> TInputProtocol for TCompactInputProtocol<'a> {
     }
 
     fn read_bytes(&mut self) -> ::Result<Vec<u8>> {
-        let len = self.transport.borrow_mut().read_varint::<u32>()?;
+        let len = self.transport.read_varint::<u32>()?;
         let mut buf = vec![0u8; len as usize];
-        self.transport.borrow_mut().read_exact(&mut buf).map_err(From::from).map(|_| buf)
+        self.transport
+            .read_exact(&mut buf)
+            .map_err(From::from)
+            .map(|_| buf)
     }
 
     fn read_i8(&mut self) -> ::Result<i8> {
@@ -219,19 +246,21 @@ impl<'a> TInputProtocol for TCompactInputProtocol<'a> {
     }
 
     fn read_i16(&mut self) -> ::Result<i16> {
-        self.transport.borrow_mut().read_varint::<i16>().map_err(From::from)
+        self.transport.read_varint::<i16>().map_err(From::from)
     }
 
     fn read_i32(&mut self) -> ::Result<i32> {
-        self.transport.borrow_mut().read_varint::<i32>().map_err(From::from)
+        self.transport.read_varint::<i32>().map_err(From::from)
     }
 
     fn read_i64(&mut self) -> ::Result<i64> {
-        self.transport.borrow_mut().read_varint::<i64>().map_err(From::from)
+        self.transport.read_varint::<i64>().map_err(From::from)
     }
 
     fn read_double(&mut self) -> ::Result<f64> {
-        self.transport.borrow_mut().read_f64::<BigEndian>().map_err(From::from)
+        self.transport
+            .read_f64::<BigEndian>()
+            .map_err(From::from)
     }
 
     fn read_string(&mut self) -> ::Result<String> {
@@ -258,7 +287,7 @@ impl<'a> TInputProtocol for TCompactInputProtocol<'a> {
     }
 
     fn read_map_begin(&mut self) -> ::Result<TMapIdentifier> {
-        let element_count = self.transport.borrow_mut().read_varint::<u32>()? as i32;
+        let element_count = self.transport.read_varint::<u32>()? as i32;
         if element_count == 0 {
             Ok(TMapIdentifier::new(None, None, 0))
         } else {
@@ -278,7 +307,10 @@ impl<'a> TInputProtocol for TCompactInputProtocol<'a> {
 
     fn read_byte(&mut self) -> ::Result<u8> {
         let mut buf = [0u8; 1];
-        self.transport.borrow_mut().read_exact(&mut buf).map_err(From::from).map(|_| buf[0])
+        self.transport
+            .read_exact(&mut buf)
+            .map_err(From::from)
+            .map(|_| buf[0])
     }
 }
 
@@ -294,8 +326,8 @@ impl TCompactInputProtocolFactory {
 }
 
 impl TInputProtocolFactory for TCompactInputProtocolFactory {
-    fn create<'a>(&mut self, transport: Rc<RefCell<Box<TTransport + 'a>>>) -> Box<TInputProtocol + 'a> {
-        Box::new(TCompactInputProtocol::new(transport)) as Box<TInputProtocol + 'a>
+    fn create(&self, transport: Box<TReadTransport + Send>) -> Box<TInputProtocol + Send> {
+        Box::new(TCompactInputProtocol::new(transport))
     }
 }
 
@@ -306,35 +338,39 @@ impl TInputProtocolFactory for TCompactInputProtocolFactory {
 /// Create and use a `TCompactOutputProtocol`.
 ///
 /// ```no_run
-/// use std::cell::RefCell;
-/// use std::rc::Rc;
 /// use thrift::protocol::{TCompactOutputProtocol, TOutputProtocol};
-/// use thrift::transport::{TTcpTransport, TTransport};
+/// use thrift::transport::TTcpChannel;
 ///
-/// let mut transport = TTcpTransport::new();
-/// transport.open("localhost:9090").unwrap();
-/// let transport = Rc::new(RefCell::new(Box::new(transport) as Box<TTransport>));
+/// let mut channel = TTcpChannel::new();
+/// channel.open("localhost:9090").unwrap();
 ///
-/// let mut o_prot = TCompactOutputProtocol::new(transport);
+/// let mut protocol = TCompactOutputProtocol::new(channel);
 ///
-/// o_prot.write_bool(true).unwrap();
-/// o_prot.write_string("test_string").unwrap();
+/// protocol.write_bool(true).unwrap();
+/// protocol.write_string("test_string").unwrap();
 /// ```
-pub struct TCompactOutputProtocol<'a> {
+#[derive(Debug)]
+pub struct TCompactOutputProtocol<T>
+where
+    T: TWriteTransport,
+{
     // Identifier of the last field serialized for a struct.
     last_write_field_id: i16,
-    // Stack of the last written field ids (a new entry is added each time a nested struct is written).
+    // Stack of the last written field ids (new entry added each time a nested struct is written).
     write_field_id_stack: Vec<i16>,
     // Field identifier of the boolean field to be written.
     // Saved because boolean fields and their value are encoded in a single byte
     pending_write_bool_field_identifier: Option<TFieldIdentifier>,
     // Underlying transport used for byte-level operations.
-    transport: Rc<RefCell<Box<TTransport + 'a>>>,
+    transport: T,
 }
 
-impl<'a> TCompactOutputProtocol<'a> {
+impl<T> TCompactOutputProtocol<T>
+where
+    T: TWriteTransport,
+{
     /// Create a `TCompactOutputProtocol` that writes bytes to `transport`.
-    pub fn new(transport: Rc<RefCell<Box<TTransport + 'a>>>) -> TCompactOutputProtocol<'a> {
+    pub fn new(transport: T) -> TCompactOutputProtocol<T> {
         TCompactOutputProtocol {
             last_write_field_id: 0,
             write_field_id_stack: Vec::new(),
@@ -365,7 +401,6 @@ impl<'a> TCompactOutputProtocol<'a> {
             let header = 0xF0 | elem_identifier;
             self.write_byte(header)?;
             self.transport
-                .borrow_mut()
                 .write_varint(element_count as u32)
                 .map_err(From::from)
                 .map(|_| ())
@@ -379,7 +414,10 @@ impl<'a> TCompactOutputProtocol<'a> {
     }
 }
 
-impl<'a> TOutputProtocol for TCompactOutputProtocol<'a> {
+impl<T> TOutputProtocol for TCompactOutputProtocol<T>
+where
+    T: TWriteTransport,
+{
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
         self.write_byte(COMPACT_PROTOCOL_ID)?;
         self.write_byte((u8::from(identifier.message_type) << 5) | COMPACT_VERSION)?;
@@ -401,8 +439,9 @@ impl<'a> TOutputProtocol for TCompactOutputProtocol<'a> {
 
     fn write_struct_end(&mut self) -> ::Result<()> {
         self.assert_no_pending_bool_write();
-        self.last_write_field_id =
-            self.write_field_id_stack.pop().expect("should have previous field ids");
+        self.last_write_field_id = self.write_field_id_stack
+            .pop()
+            .expect("should have previous field ids");
         Ok(())
     }
 
@@ -410,16 +449,20 @@ impl<'a> TOutputProtocol for TCompactOutputProtocol<'a> {
         match identifier.field_type {
             TType::Bool => {
                 if self.pending_write_bool_field_identifier.is_some() {
-                    panic!("should not have a pending bool while writing another bool with id: \
+                    panic!(
+                        "should not have a pending bool while writing another bool with id: \
                             {:?}",
-                           identifier)
+                        identifier
+                    )
                 }
                 self.pending_write_bool_field_identifier = Some(identifier.clone());
                 Ok(())
             }
             _ => {
                 let field_type = type_to_u8(identifier.field_type);
-                let field_id = identifier.id.expect("non-stop field should have field id");
+                let field_id = identifier
+                    .id
+                    .expect("non-stop field should have field id");
                 self.write_field_header(field_type, field_id)
             }
         }
@@ -453,8 +496,8 @@ impl<'a> TOutputProtocol for TCompactOutputProtocol<'a> {
     }
 
     fn write_bytes(&mut self, b: &[u8]) -> ::Result<()> {
-        self.transport.borrow_mut().write_varint(b.len() as u32)?;
-        self.transport.borrow_mut().write_all(b).map_err(From::from)
+        self.transport.write_varint(b.len() as u32)?;
+        self.transport.write_all(b).map_err(From::from)
     }
 
     fn write_i8(&mut self, i: i8) -> ::Result<()> {
@@ -462,19 +505,30 @@ impl<'a> TOutputProtocol for TCompactOutputProtocol<'a> {
     }
 
     fn write_i16(&mut self, i: i16) -> ::Result<()> {
-        self.transport.borrow_mut().write_varint(i).map_err(From::from).map(|_| ())
+        self.transport
+            .write_varint(i)
+            .map_err(From::from)
+            .map(|_| ())
     }
 
     fn write_i32(&mut self, i: i32) -> ::Result<()> {
-        self.transport.borrow_mut().write_varint(i).map_err(From::from).map(|_| ())
+        self.transport
+            .write_varint(i)
+            .map_err(From::from)
+            .map(|_| ())
     }
 
     fn write_i64(&mut self, i: i64) -> ::Result<()> {
-        self.transport.borrow_mut().write_varint(i).map_err(From::from).map(|_| ())
+        self.transport
+            .write_varint(i)
+            .map_err(From::from)
+            .map(|_| ())
     }
 
     fn write_double(&mut self, d: f64) -> ::Result<()> {
-        self.transport.borrow_mut().write_f64::<BigEndian>(d).map_err(From::from)
+        self.transport
+            .write_f64::<BigEndian>(d)
+            .map_err(From::from)
     }
 
     fn write_string(&mut self, s: &str) -> ::Result<()> {
@@ -501,13 +555,15 @@ impl<'a> TOutputProtocol for TCompactOutputProtocol<'a> {
         if identifier.size == 0 {
             self.write_byte(0)
         } else {
-            self.transport.borrow_mut().write_varint(identifier.size as u32)?;
+            self.transport.write_varint(identifier.size as u32)?;
 
-            let key_type = identifier.key_type
+            let key_type = identifier
+                .key_type
                 .expect("map identifier to write should contain key type");
             let key_type_byte = collection_type_to_u8(key_type) << 4;
 
-            let val_type = identifier.value_type
+            let val_type = identifier
+                .value_type
                 .expect("map identifier to write should contain value type");
             let val_type_byte = collection_type_to_u8(val_type);
 
@@ -521,14 +577,17 @@ impl<'a> TOutputProtocol for TCompactOutputProtocol<'a> {
     }
 
     fn flush(&mut self) -> ::Result<()> {
-        self.transport.borrow_mut().flush().map_err(From::from)
+        self.transport.flush().map_err(From::from)
     }
 
     // utility
     //
 
     fn write_byte(&mut self, b: u8) -> ::Result<()> {
-        self.transport.borrow_mut().write(&[b]).map_err(From::from).map(|_| ())
+        self.transport
+            .write(&[b])
+            .map_err(From::from)
+            .map(|_| ())
     }
 }
 
@@ -544,8 +603,8 @@ impl TCompactOutputProtocolFactory {
 }
 
 impl TOutputProtocolFactory for TCompactOutputProtocolFactory {
-    fn create(&mut self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TOutputProtocol> {
-        Box::new(TCompactOutputProtocol::new(transport)) as Box<TOutputProtocol>
+    fn create(&self, transport: Box<TWriteTransport + Send>) -> Box<TOutputProtocol + Send> {
+        Box::new(TCompactOutputProtocol::new(transport))
     }
 }
 
@@ -594,10 +653,14 @@ fn u8_to_type(b: u8) -> ::Result<TType> {
         0x0B => Ok(TType::Map),
         0x0C => Ok(TType::Struct),
         unkn => {
-            Err(::Error::Protocol(::ProtocolError {
-                kind: ::ProtocolErrorKind::InvalidData,
-                message: format!("cannot convert {} into TType", unkn),
-            }))
+            Err(
+                ::Error::Protocol(
+                    ::ProtocolError {
+                        kind: ::ProtocolErrorKind::InvalidData,
+                        message: format!("cannot convert {} into TType", unkn),
+                    },
+                ),
+            )
         }
     }
 }
@@ -605,54 +668,65 @@ fn u8_to_type(b: u8) -> ::Result<TType> {
 #[cfg(test)]
 mod tests {
 
-    use std::rc::Rc;
-    use std::cell::RefCell;
-
-    use ::protocol::{TFieldIdentifier, TMessageIdentifier, TMessageType, TInputProtocol,
-                     TListIdentifier, TMapIdentifier, TOutputProtocol, TSetIdentifier,
-                     TStructIdentifier, TType};
-    use ::transport::{TPassThruTransport, TTransport};
-    use ::transport::mem::TBufferTransport;
+    use protocol::{TFieldIdentifier, TInputProtocol, TListIdentifier, TMapIdentifier,
+                   TMessageIdentifier, TMessageType, TOutputProtocol, TSetIdentifier,
+                   TStructIdentifier, TType};
+    use transport::{ReadHalf, TBufferChannel, TIoChannel, WriteHalf};
 
     use super::*;
 
     #[test]
     fn must_write_message_begin_0() {
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         assert_success!(o_prot.write_message_begin(&TMessageIdentifier::new("foo", TMessageType::Call, 431)));
 
-        let expected: [u8; 8] =
-            [0x82 /* protocol ID */, 0x21 /* message type | protocol version */, 0xDE,
-             0x06 /* zig-zag varint sequence number */, 0x03 /* message-name length */,
-             0x66, 0x6F, 0x6F /* "foo" */];
+        let expected: [u8; 8] = [
+            0x82, /* protocol ID */
+            0x21, /* message type | protocol version */
+            0xDE,
+            0x06, /* zig-zag varint sequence number */
+            0x03, /* message-name length */
+            0x66,
+            0x6F,
+            0x6F /* "foo" */,
+        ];
 
-        assert_eq!(trans.borrow().write_buffer_as_ref(), &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
     fn must_write_message_begin_1() {
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
-        assert_success!(o_prot.write_message_begin(&TMessageIdentifier::new("bar", TMessageType::Reply, 991828)));
+        assert_success!(
+            o_prot.write_message_begin(&TMessageIdentifier::new("bar", TMessageType::Reply, 991828))
+        );
 
-        let expected: [u8; 9] =
-            [0x82 /* protocol ID */, 0x41 /* message type | protocol version */, 0xA8,
-             0x89, 0x79 /* zig-zag varint sequence number */,
-             0x03 /* message-name length */, 0x62, 0x61, 0x72 /* "bar" */];
+        let expected: [u8; 9] = [
+            0x82, /* protocol ID */
+            0x41, /* message type | protocol version */
+            0xA8,
+            0x89,
+            0x79, /* zig-zag varint sequence number */
+            0x03, /* message-name length */
+            0x62,
+            0x61,
+            0x72 /* "bar" */,
+        ];
 
-        assert_eq!(trans.borrow().write_buffer_as_ref(), &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
     fn must_round_trip_message_begin() {
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         let ident = TMessageIdentifier::new("service_call", TMessageType::Call, 1283948);
 
         assert_success!(o_prot.write_message_begin(&ident));
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         let res = assert_success!(i_prot.read_message_begin());
         assert_eq!(&res, &ident);
@@ -668,7 +742,7 @@ mod tests {
 
     #[test]
     fn must_write_struct_with_delta_fields() {
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         // no bytes should be written however
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
@@ -692,20 +766,20 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        // get bytes written
-        let buf = trans.borrow_mut().write_buffer_to_vec();
+        let expected: [u8; 5] = [
+            0x03, /* field type */
+            0x00, /* first field id */
+            0x44, /* field delta (4) | field type */
+            0x59, /* field delta (5) | field type */
+            0x00 /* field stop */,
+        ];
 
-        let expected: [u8; 5] = [0x03 /* field type */, 0x00 /* first field id */,
-                                 0x44 /* field delta (4) | field type */,
-                                 0x59 /* field delta (5) | field type */,
-                                 0x00 /* field stop */];
-
-        assert_eq!(&buf, &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
     fn must_round_trip_struct_with_delta_fields() {
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         // no bytes should be written however
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
@@ -732,40 +806,57 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         // read the struct back
         assert_success!(i_prot.read_struct_begin());
 
         let read_ident_1 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_1,
-                   TFieldIdentifier { name: None, ..field_ident_1 });
+        assert_eq!(
+            read_ident_1,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_1
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_2 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_2,
-                   TFieldIdentifier { name: None, ..field_ident_2 });
+        assert_eq!(
+            read_ident_2,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_2
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_3 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_3,
-                   TFieldIdentifier { name: None, ..field_ident_3 });
+        assert_eq!(
+            read_ident_3,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_3
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_4 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_4,
-                   TFieldIdentifier {
-                       name: None,
-                       field_type: TType::Stop,
-                       id: None,
-                   });
+        assert_eq!(
+            read_ident_4,
+            TFieldIdentifier {
+                name: None,
+                field_type: TType::Stop,
+                id: None,
+            }
+        );
 
         assert_success!(i_prot.read_struct_end());
     }
 
     #[test]
     fn must_write_struct_with_non_zero_initial_field_and_delta_fields() {
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         // no bytes should be written however
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
@@ -789,20 +880,19 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        // get bytes written
-        let buf = trans.borrow_mut().write_buffer_to_vec();
+        let expected: [u8; 4] = [
+            0x15, /* field delta (1) | field type */
+            0x1A, /* field delta (1) | field type */
+            0x48, /* field delta (4) | field type */
+            0x00 /* field stop */,
+        ];
 
-        let expected: [u8; 4] = [0x15 /* field delta (1) | field type */,
-                                 0x1A /* field delta (1) | field type */,
-                                 0x48 /* field delta (4) | field type */,
-                                 0x00 /* field stop */];
-
-        assert_eq!(&buf, &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
     fn must_round_trip_struct_with_non_zero_initial_field_and_delta_fields() {
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         // no bytes should be written however
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
@@ -829,40 +919,57 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         // read the struct back
         assert_success!(i_prot.read_struct_begin());
 
         let read_ident_1 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_1,
-                   TFieldIdentifier { name: None, ..field_ident_1 });
+        assert_eq!(
+            read_ident_1,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_1
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_2 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_2,
-                   TFieldIdentifier { name: None, ..field_ident_2 });
+        assert_eq!(
+            read_ident_2,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_2
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_3 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_3,
-                   TFieldIdentifier { name: None, ..field_ident_3 });
+        assert_eq!(
+            read_ident_3,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_3
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_4 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_4,
-                   TFieldIdentifier {
-                       name: None,
-                       field_type: TType::Stop,
-                       id: None,
-                   });
+        assert_eq!(
+            read_ident_4,
+            TFieldIdentifier {
+                name: None,
+                field_type: TType::Stop,
+                id: None,
+            }
+        );
 
         assert_success!(i_prot.read_struct_end());
     }
 
     #[test]
     fn must_write_struct_with_long_fields() {
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         // no bytes should be written however
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
@@ -885,21 +992,23 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        // get bytes written
-        let buf = trans.borrow_mut().write_buffer_to_vec();
+        let expected: [u8; 8] = [
+            0x05, /* field type */
+            0x00, /* first field id */
+            0x06, /* field type */
+            0x20, /* zig-zag varint field id */
+            0x0A, /* field type */
+            0xC6,
+            0x01, /* zig-zag varint field id */
+            0x00 /* field stop */,
+        ];
 
-        let expected: [u8; 8] =
-            [0x05 /* field type */, 0x00 /* first field id */,
-             0x06 /* field type */, 0x20 /* zig-zag varint field id */,
-             0x0A /* field type */, 0xC6, 0x01 /* zig-zag varint field id */,
-             0x00 /* field stop */];
-
-        assert_eq!(&buf, &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
     fn must_round_trip_struct_with_long_fields() {
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         // no bytes should be written however
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
@@ -925,40 +1034,57 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         // read the struct back
         assert_success!(i_prot.read_struct_begin());
 
         let read_ident_1 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_1,
-                   TFieldIdentifier { name: None, ..field_ident_1 });
+        assert_eq!(
+            read_ident_1,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_1
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_2 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_2,
-                   TFieldIdentifier { name: None, ..field_ident_2 });
+        assert_eq!(
+            read_ident_2,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_2
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_3 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_3,
-                   TFieldIdentifier { name: None, ..field_ident_3 });
+        assert_eq!(
+            read_ident_3,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_3
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_4 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_4,
-                   TFieldIdentifier {
-                       name: None,
-                       field_type: TType::Stop,
-                       id: None,
-                   });
+        assert_eq!(
+            read_ident_4,
+            TFieldIdentifier {
+                name: None,
+                field_type: TType::Stop,
+                id: None,
+            }
+        );
 
         assert_success!(i_prot.read_struct_end());
     }
 
     #[test]
     fn must_write_struct_with_mix_of_long_and_delta_fields() {
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         // no bytes should be written however
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
@@ -989,22 +1115,25 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        // get bytes written
-        let buf = trans.borrow_mut().write_buffer_to_vec();
+        let expected: [u8; 10] = [
+            0x16, /* field delta (1) | field type */
+            0x85, /* field delta (8) | field type */
+            0x0A, /* field type */
+            0xD0,
+            0x0F, /* zig-zag varint field id */
+            0x0A, /* field type */
+            0xA2,
+            0x1F, /* zig-zag varint field id */
+            0x3A, /* field delta (3) | field type */
+            0x00 /* field stop */,
+        ];
 
-        let expected: [u8; 10] =
-            [0x16 /* field delta (1) | field type */,
-             0x85 /* field delta (8) | field type */, 0x0A /* field type */, 0xD0,
-             0x0F /* zig-zag varint field id */, 0x0A /* field type */, 0xA2,
-             0x1F /* zig-zag varint field id */,
-             0x3A /* field delta (3) | field type */, 0x00 /* field stop */];
-
-        assert_eq!(&buf, &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
     fn must_round_trip_struct_with_mix_of_long_and_delta_fields() {
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         // no bytes should be written however
         let struct_ident = TStructIdentifier::new("foo");
@@ -1041,43 +1170,70 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         // read the struct back
         assert_success!(i_prot.read_struct_begin());
 
         let read_ident_1 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_1,
-                   TFieldIdentifier { name: None, ..field_ident_1 });
+        assert_eq!(
+            read_ident_1,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_1
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_2 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_2,
-                   TFieldIdentifier { name: None, ..field_ident_2 });
+        assert_eq!(
+            read_ident_2,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_2
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_3 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_3,
-                   TFieldIdentifier { name: None, ..field_ident_3 });
+        assert_eq!(
+            read_ident_3,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_3
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_4 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_4,
-                   TFieldIdentifier { name: None, ..field_ident_4 });
+        assert_eq!(
+            read_ident_4,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_4
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_5 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_5,
-                   TFieldIdentifier { name: None, ..field_ident_5 });
+        assert_eq!(
+            read_ident_5,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_5
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_6 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_6,
-                   TFieldIdentifier {
-                       name: None,
-                       field_type: TType::Stop,
-                       id: None,
-                   });
+        assert_eq!(
+            read_ident_6,
+            TFieldIdentifier {
+                name: None,
+                field_type: TType::Stop,
+                id: None,
+            }
+        );
 
         assert_success!(i_prot.read_struct_end());
     }
@@ -1087,7 +1243,7 @@ mod tests {
         // last field of the containing struct is a delta
         // first field of the the contained struct is a delta
 
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         // start containing struct
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
@@ -1123,17 +1279,17 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        // get bytes written
-        let buf = trans.borrow_mut().write_buffer_to_vec();
+        let expected: [u8; 7] = [
+            0x16, /* field delta (1) | field type */
+            0x85, /* field delta (8) | field type */
+            0x73, /* field delta (7) | field type */
+            0x07, /* field type */
+            0x30, /* zig-zag varint field id */
+            0x00, /* field stop - contained */
+            0x00 /* field stop - containing */,
+        ];
 
-        let expected: [u8; 7] =
-            [0x16 /* field delta (1) | field type */,
-             0x85 /* field delta (8) | field type */,
-             0x73 /* field delta (7) | field type */, 0x07 /* field type */,
-             0x30 /* zig-zag varint field id */, 0x00 /* field stop - contained */,
-             0x00 /* field stop - containing */];
-
-        assert_eq!(&buf, &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
@@ -1141,7 +1297,7 @@ mod tests {
         // last field of the containing struct is a delta
         // first field of the the contained struct is a delta
 
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         // start containing struct
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
@@ -1181,52 +1337,76 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         // read containing struct back
         assert_success!(i_prot.read_struct_begin());
 
         let read_ident_1 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_1,
-                   TFieldIdentifier { name: None, ..field_ident_1 });
+        assert_eq!(
+            read_ident_1,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_1
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_2 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_2,
-                   TFieldIdentifier { name: None, ..field_ident_2 });
+        assert_eq!(
+            read_ident_2,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_2
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         // read contained struct back
         assert_success!(i_prot.read_struct_begin());
 
         let read_ident_3 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_3,
-                   TFieldIdentifier { name: None, ..field_ident_3 });
+        assert_eq!(
+            read_ident_3,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_3
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_4 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_4,
-                   TFieldIdentifier { name: None, ..field_ident_4 });
+        assert_eq!(
+            read_ident_4,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_4
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         // end contained struct
         let read_ident_6 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_6,
-                   TFieldIdentifier {
-                       name: None,
-                       field_type: TType::Stop,
-                       id: None,
-                   });
+        assert_eq!(
+            read_ident_6,
+            TFieldIdentifier {
+                name: None,
+                field_type: TType::Stop,
+                id: None,
+            }
+        );
         assert_success!(i_prot.read_struct_end());
 
         // end containing struct
         let read_ident_7 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_7,
-                   TFieldIdentifier {
-                       name: None,
-                       field_type: TType::Stop,
-                       id: None,
-                   });
+        assert_eq!(
+            read_ident_7,
+            TFieldIdentifier {
+                name: None,
+                field_type: TType::Stop,
+                id: None,
+            }
+        );
         assert_success!(i_prot.read_struct_end());
     }
 
@@ -1235,7 +1415,7 @@ mod tests {
         // last field of the containing struct is a delta
         // first field of the the contained struct is a full write
 
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         // start containing struct
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
@@ -1271,17 +1451,17 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        // get bytes written
-        let buf = trans.borrow_mut().write_buffer_to_vec();
+        let expected: [u8; 7] = [
+            0x16, /* field delta (1) | field type */
+            0x85, /* field delta (8) | field type */
+            0x07, /* field type */
+            0x30, /* zig-zag varint field id */
+            0x33, /* field delta (3) | field type */
+            0x00, /* field stop - contained */
+            0x00 /* field stop - containing */,
+        ];
 
-        let expected: [u8; 7] =
-            [0x16 /* field delta (1) | field type */,
-             0x85 /* field delta (8) | field type */, 0x07 /* field type */,
-             0x30 /* zig-zag varint field id */,
-             0x33 /* field delta (3) | field type */, 0x00 /* field stop - contained */,
-             0x00 /* field stop - containing */];
-
-        assert_eq!(&buf, &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
@@ -1289,7 +1469,7 @@ mod tests {
         // last field of the containing struct is a delta
         // first field of the the contained struct is a full write
 
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         // start containing struct
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
@@ -1329,52 +1509,76 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         // read containing struct back
         assert_success!(i_prot.read_struct_begin());
 
         let read_ident_1 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_1,
-                   TFieldIdentifier { name: None, ..field_ident_1 });
+        assert_eq!(
+            read_ident_1,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_1
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_2 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_2,
-                   TFieldIdentifier { name: None, ..field_ident_2 });
+        assert_eq!(
+            read_ident_2,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_2
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         // read contained struct back
         assert_success!(i_prot.read_struct_begin());
 
         let read_ident_3 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_3,
-                   TFieldIdentifier { name: None, ..field_ident_3 });
+        assert_eq!(
+            read_ident_3,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_3
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_4 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_4,
-                   TFieldIdentifier { name: None, ..field_ident_4 });
+        assert_eq!(
+            read_ident_4,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_4
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         // end contained struct
         let read_ident_6 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_6,
-                   TFieldIdentifier {
-                       name: None,
-                       field_type: TType::Stop,
-                       id: None,
-                   });
+        assert_eq!(
+            read_ident_6,
+            TFieldIdentifier {
+                name: None,
+                field_type: TType::Stop,
+                id: None,
+            }
+        );
         assert_success!(i_prot.read_struct_end());
 
         // end containing struct
         let read_ident_7 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_7,
-                   TFieldIdentifier {
-                       name: None,
-                       field_type: TType::Stop,
-                       id: None,
-                   });
+        assert_eq!(
+            read_ident_7,
+            TFieldIdentifier {
+                name: None,
+                field_type: TType::Stop,
+                id: None,
+            }
+        );
         assert_success!(i_prot.read_struct_end());
     }
 
@@ -1383,7 +1587,7 @@ mod tests {
         // last field of the containing struct is a full write
         // first field of the the contained struct is a delta write
 
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         // start containing struct
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
@@ -1419,21 +1623,22 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        // get bytes written
-        let buf = trans.borrow_mut().write_buffer_to_vec();
+        let expected: [u8; 7] = [
+            0x16, /* field delta (1) | field type */
+            0x08, /* field type */
+            0x2A, /* zig-zag varint field id */
+            0x77, /* field delta(7) | field type */
+            0x33, /* field delta (3) | field type */
+            0x00, /* field stop - contained */
+            0x00 /* field stop - containing */,
+        ];
 
-        let expected: [u8; 7] =
-            [0x16 /* field delta (1) | field type */, 0x08 /* field type */,
-             0x2A /* zig-zag varint field id */, 0x77 /* field delta(7) | field type */,
-             0x33 /* field delta (3) | field type */, 0x00 /* field stop - contained */,
-             0x00 /* field stop - containing */];
-
-        assert_eq!(&buf, &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
     fn must_round_trip_nested_structs_2() {
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         // start containing struct
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
@@ -1473,52 +1678,76 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         // read containing struct back
         assert_success!(i_prot.read_struct_begin());
 
         let read_ident_1 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_1,
-                   TFieldIdentifier { name: None, ..field_ident_1 });
+        assert_eq!(
+            read_ident_1,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_1
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_2 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_2,
-                   TFieldIdentifier { name: None, ..field_ident_2 });
+        assert_eq!(
+            read_ident_2,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_2
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         // read contained struct back
         assert_success!(i_prot.read_struct_begin());
 
         let read_ident_3 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_3,
-                   TFieldIdentifier { name: None, ..field_ident_3 });
+        assert_eq!(
+            read_ident_3,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_3
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_4 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_4,
-                   TFieldIdentifier { name: None, ..field_ident_4 });
+        assert_eq!(
+            read_ident_4,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_4
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         // end contained struct
         let read_ident_6 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_6,
-                   TFieldIdentifier {
-                       name: None,
-                       field_type: TType::Stop,
-                       id: None,
-                   });
+        assert_eq!(
+            read_ident_6,
+            TFieldIdentifier {
+                name: None,
+                field_type: TType::Stop,
+                id: None,
+            }
+        );
         assert_success!(i_prot.read_struct_end());
 
         // end containing struct
         let read_ident_7 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_7,
-                   TFieldIdentifier {
-                       name: None,
-                       field_type: TType::Stop,
-                       id: None,
-                   });
+        assert_eq!(
+            read_ident_7,
+            TFieldIdentifier {
+                name: None,
+                field_type: TType::Stop,
+                id: None,
+            }
+        );
         assert_success!(i_prot.read_struct_end());
     }
 
@@ -1527,7 +1756,7 @@ mod tests {
         // last field of the containing struct is a full write
         // first field of the the contained struct is a full write
 
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         // start containing struct
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
@@ -1563,17 +1792,18 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        // get bytes written
-        let buf = trans.borrow_mut().write_buffer_to_vec();
+        let expected: [u8; 8] = [
+            0x16, /* field delta (1) | field type */
+            0x08, /* field type */
+            0x2A, /* zig-zag varint field id */
+            0x07, /* field type */
+            0x2A, /* zig-zag varint field id */
+            0x63, /* field delta (6) | field type */
+            0x00, /* field stop - contained */
+            0x00 /* field stop - containing */,
+        ];
 
-        let expected: [u8; 8] =
-            [0x16 /* field delta (1) | field type */, 0x08 /* field type */,
-             0x2A /* zig-zag varint field id */, 0x07 /* field type */,
-             0x2A /* zig-zag varint field id */,
-             0x63 /* field delta (6) | field type */, 0x00 /* field stop - contained */,
-             0x00 /* field stop - containing */];
-
-        assert_eq!(&buf, &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
@@ -1581,7 +1811,7 @@ mod tests {
         // last field of the containing struct is a full write
         // first field of the the contained struct is a full write
 
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         // start containing struct
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
@@ -1621,58 +1851,82 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         // read containing struct back
         assert_success!(i_prot.read_struct_begin());
 
         let read_ident_1 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_1,
-                   TFieldIdentifier { name: None, ..field_ident_1 });
+        assert_eq!(
+            read_ident_1,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_1
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_2 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_2,
-                   TFieldIdentifier { name: None, ..field_ident_2 });
+        assert_eq!(
+            read_ident_2,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_2
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         // read contained struct back
         assert_success!(i_prot.read_struct_begin());
 
         let read_ident_3 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_3,
-                   TFieldIdentifier { name: None, ..field_ident_3 });
+        assert_eq!(
+            read_ident_3,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_3
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         let read_ident_4 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_4,
-                   TFieldIdentifier { name: None, ..field_ident_4 });
+        assert_eq!(
+            read_ident_4,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_4
+            }
+        );
         assert_success!(i_prot.read_field_end());
 
         // end contained struct
         let read_ident_6 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_6,
-                   TFieldIdentifier {
-                       name: None,
-                       field_type: TType::Stop,
-                       id: None,
-                   });
+        assert_eq!(
+            read_ident_6,
+            TFieldIdentifier {
+                name: None,
+                field_type: TType::Stop,
+                id: None,
+            }
+        );
         assert_success!(i_prot.read_struct_end());
 
         // end containing struct
         let read_ident_7 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_7,
-                   TFieldIdentifier {
-                       name: None,
-                       field_type: TType::Stop,
-                       id: None,
-                   });
+        assert_eq!(
+            read_ident_7,
+            TFieldIdentifier {
+                name: None,
+                field_type: TType::Stop,
+                id: None,
+            }
+        );
         assert_success!(i_prot.read_struct_end());
     }
 
     #[test]
     fn must_write_bool_field() {
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         // no bytes should be written however
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
@@ -1703,20 +1957,22 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        // get bytes written
-        let buf = trans.borrow_mut().write_buffer_to_vec();
+        let expected: [u8; 7] = [
+            0x11, /* field delta (1) | true */
+            0x82, /* field delta (8) | false */
+            0x01, /* true */
+            0x34, /* field id */
+            0x02, /* false */
+            0x5A, /* field id */
+            0x00 /* stop field */,
+        ];
 
-        let expected: [u8; 7] = [0x11 /* field delta (1) | true */,
-                                 0x82 /* field delta (8) | false */, 0x01 /* true */,
-                                 0x34 /* field id */, 0x02 /* false */,
-                                 0x5A /* field id */, 0x00 /* stop field */];
-
-        assert_eq!(&buf, &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
     fn must_round_trip_bool_field() {
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         // no bytes should be written however
         let struct_ident = TStructIdentifier::new("foo");
@@ -1752,46 +2008,68 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         // read the struct back
         assert_success!(i_prot.read_struct_begin());
 
         let read_ident_1 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_1,
-                   TFieldIdentifier { name: None, ..field_ident_1 });
+        assert_eq!(
+            read_ident_1,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_1
+            }
+        );
         let read_value_1 = assert_success!(i_prot.read_bool());
         assert_eq!(read_value_1, true);
         assert_success!(i_prot.read_field_end());
 
         let read_ident_2 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_2,
-                   TFieldIdentifier { name: None, ..field_ident_2 });
+        assert_eq!(
+            read_ident_2,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_2
+            }
+        );
         let read_value_2 = assert_success!(i_prot.read_bool());
         assert_eq!(read_value_2, false);
         assert_success!(i_prot.read_field_end());
 
         let read_ident_3 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_3,
-                   TFieldIdentifier { name: None, ..field_ident_3 });
+        assert_eq!(
+            read_ident_3,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_3
+            }
+        );
         let read_value_3 = assert_success!(i_prot.read_bool());
         assert_eq!(read_value_3, true);
         assert_success!(i_prot.read_field_end());
 
         let read_ident_4 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_4,
-                   TFieldIdentifier { name: None, ..field_ident_4 });
+        assert_eq!(
+            read_ident_4,
+            TFieldIdentifier {
+                name: None,
+                ..field_ident_4
+            }
+        );
         let read_value_4 = assert_success!(i_prot.read_bool());
         assert_eq!(read_value_4, false);
         assert_success!(i_prot.read_field_end());
 
         let read_ident_5 = assert_success!(i_prot.read_field_begin());
-        assert_eq!(read_ident_5,
-                   TFieldIdentifier {
-                       name: None,
-                       field_type: TType::Stop,
-                       id: None,
-                   });
+        assert_eq!(
+            read_ident_5,
+            TFieldIdentifier {
+                name: None,
+                field_type: TType::Stop,
+                id: None,
+            }
+        );
 
         assert_success!(i_prot.read_struct_end());
     }
@@ -1799,7 +2077,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn must_fail_if_write_field_end_without_writing_bool_value() {
-        let (_, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
         assert_success!(o_prot.write_field_begin(&TFieldIdentifier::new("foo", TType::Bool, 1)));
         o_prot.write_field_end().unwrap();
@@ -1808,7 +2086,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn must_fail_if_write_stop_field_without_writing_bool_value() {
-        let (_, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
         assert_success!(o_prot.write_field_begin(&TFieldIdentifier::new("foo", TType::Bool, 1)));
         o_prot.write_field_stop().unwrap();
@@ -1817,7 +2095,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn must_fail_if_write_struct_end_without_writing_bool_value() {
-        let (_, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
         assert_success!(o_prot.write_struct_begin(&TStructIdentifier::new("foo")));
         assert_success!(o_prot.write_field_begin(&TFieldIdentifier::new("foo", TType::Bool, 1)));
         o_prot.write_struct_end().unwrap();
@@ -1826,7 +2104,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn must_fail_if_write_struct_end_without_any_fields() {
-        let (_, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
         o_prot.write_struct_end().unwrap();
     }
 
@@ -1837,24 +2115,24 @@ mod tests {
 
     #[test]
     fn must_write_small_sized_list_begin() {
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         assert_success!(o_prot.write_list_begin(&TListIdentifier::new(TType::I64, 4)));
 
         let expected: [u8; 1] = [0x46 /* size | elem_type */];
 
-        assert_eq!(trans.borrow().write_buffer_as_ref(), &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
     fn must_round_trip_small_sized_list_begin() {
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         let ident = TListIdentifier::new(TType::I08, 10);
 
         assert_success!(o_prot.write_list_begin(&ident));
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         let res = assert_success!(i_prot.read_list_begin());
         assert_eq!(&res, &ident);
@@ -1862,26 +2140,29 @@ mod tests {
 
     #[test]
     fn must_write_large_sized_list_begin() {
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         let res = o_prot.write_list_begin(&TListIdentifier::new(TType::List, 9999));
         assert!(res.is_ok());
 
-        let expected: [u8; 3] = [0xF9 /* 0xF0 | elem_type */, 0x8F,
-                                 0x4E /* size as varint */];
+        let expected: [u8; 3] = [
+            0xF9, /* 0xF0 | elem_type */
+            0x8F,
+            0x4E /* size as varint */,
+        ];
 
-        assert_eq!(trans.borrow().write_buffer_as_ref(), &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
     fn must_round_trip_large_sized_list_begin() {
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         let ident = TListIdentifier::new(TType::Set, 47381);
 
         assert_success!(o_prot.write_list_begin(&ident));
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         let res = assert_success!(i_prot.read_list_begin());
         assert_eq!(&res, &ident);
@@ -1894,24 +2175,24 @@ mod tests {
 
     #[test]
     fn must_write_small_sized_set_begin() {
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         assert_success!(o_prot.write_set_begin(&TSetIdentifier::new(TType::Struct, 2)));
 
         let expected: [u8; 1] = [0x2C /* size | elem_type */];
 
-        assert_eq!(trans.borrow().write_buffer_as_ref(), &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
     fn must_round_trip_small_sized_set_begin() {
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         let ident = TSetIdentifier::new(TType::I16, 7);
 
         assert_success!(o_prot.write_set_begin(&ident));
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         let res = assert_success!(i_prot.read_set_begin());
         assert_eq!(&res, &ident);
@@ -1919,25 +2200,29 @@ mod tests {
 
     #[test]
     fn must_write_large_sized_set_begin() {
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         assert_success!(o_prot.write_set_begin(&TSetIdentifier::new(TType::Double, 23891)));
 
-        let expected: [u8; 4] = [0xF7 /* 0xF0 | elem_type */, 0xD3, 0xBA,
-                                 0x01 /* size as varint */];
+        let expected: [u8; 4] = [
+            0xF7, /* 0xF0 | elem_type */
+            0xD3,
+            0xBA,
+            0x01 /* size as varint */,
+        ];
 
-        assert_eq!(trans.borrow().write_buffer_as_ref(), &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
     fn must_round_trip_large_sized_set_begin() {
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         let ident = TSetIdentifier::new(TType::Map, 3928429);
 
         assert_success!(o_prot.write_set_begin(&ident));
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         let res = assert_success!(i_prot.read_set_begin());
         assert_eq!(&res, &ident);
@@ -1950,53 +2235,58 @@ mod tests {
 
     #[test]
     fn must_write_zero_sized_map_begin() {
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         assert_success!(o_prot.write_map_begin(&TMapIdentifier::new(TType::String, TType::I32, 0)));
 
         let expected: [u8; 1] = [0x00]; // since size is zero we don't write anything
 
-        assert_eq!(trans.borrow().write_buffer_as_ref(), &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
     fn must_read_zero_sized_map_begin() {
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         assert_success!(o_prot.write_map_begin(&TMapIdentifier::new(TType::Double, TType::I32, 0)));
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         let res = assert_success!(i_prot.read_map_begin());
-        assert_eq!(&res,
-                   &TMapIdentifier {
-                       key_type: None,
-                       value_type: None,
-                       size: 0,
-                   });
+        assert_eq!(
+            &res,
+            &TMapIdentifier {
+                 key_type: None,
+                 value_type: None,
+                 size: 0,
+             }
+        );
     }
 
     #[test]
     fn must_write_map_begin() {
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         assert_success!(o_prot.write_map_begin(&TMapIdentifier::new(TType::Double, TType::String, 238)));
 
-        let expected: [u8; 3] = [0xEE, 0x01 /* size as varint */,
-                                 0x78 /* key type | val type */];
+        let expected: [u8; 3] = [
+            0xEE,
+            0x01, /* size as varint */
+            0x78 /* key type | val type */,
+        ];
 
-        assert_eq!(trans.borrow().write_buffer_as_ref(), &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
     fn must_round_trip_map_begin() {
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         let ident = TMapIdentifier::new(TType::Map, TType::List, 1928349);
 
         assert_success!(o_prot.write_map_begin(&ident));
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         let res = assert_success!(i_prot.read_map_begin());
         assert_eq!(&res, &ident);
@@ -2009,23 +2299,26 @@ mod tests {
 
     #[test]
     fn must_write_map_with_bool_key_and_value() {
-        let (trans, _, mut o_prot) = test_objects();
+        let (_, mut o_prot) = test_objects();
 
         assert_success!(o_prot.write_map_begin(&TMapIdentifier::new(TType::Bool, TType::Bool, 1)));
         assert_success!(o_prot.write_bool(true));
         assert_success!(o_prot.write_bool(false));
         assert_success!(o_prot.write_map_end());
 
-        let expected: [u8; 4] = [0x01 /* size as varint */,
-                                 0x11 /* key type | val type */, 0x01 /* key: true */,
-                                 0x02 /* val: false */];
+        let expected: [u8; 4] = [
+            0x01, /* size as varint */
+            0x11, /* key type | val type */
+            0x01, /* key: true */
+            0x02 /* val: false */,
+        ];
 
-        assert_eq!(trans.borrow().write_buffer_as_ref(), &expected);
+        assert_eq_written_bytes!(o_prot, expected);
     }
 
     #[test]
     fn must_round_trip_map_with_bool_value() {
-        let (trans, mut i_prot, mut o_prot) = test_objects();
+        let (mut i_prot, mut o_prot) = test_objects();
 
         let map_ident = TMapIdentifier::new(TType::Bool, TType::Bool, 2);
         assert_success!(o_prot.write_map_begin(&map_ident));
@@ -2035,7 +2328,7 @@ mod tests {
         assert_success!(o_prot.write_bool(true));
         assert_success!(o_prot.write_map_end());
 
-        trans.borrow_mut().copy_write_buffer_to_read_buffer();
+        copy_write_buffer_to_read_buffer!(o_prot);
 
         // map header
         let rcvd_ident = assert_success!(i_prot.read_map_begin());
@@ -2058,28 +2351,30 @@ mod tests {
 
     #[test]
     fn must_read_map_end() {
-        let (_, mut i_prot, _) = test_objects();
+        let (mut i_prot, _) = test_objects();
         assert!(i_prot.read_map_end().is_ok()); // will blow up if we try to read from empty buffer
     }
 
-    fn test_objects<'a>
-        ()
-        -> (Rc<RefCell<Box<TBufferTransport>>>, TCompactInputProtocol<'a>, TCompactOutputProtocol<'a>)
+    fn test_objects()
+        -> (TCompactInputProtocol<ReadHalf<TBufferChannel>>,
+            TCompactOutputProtocol<WriteHalf<TBufferChannel>>)
     {
-        let mem = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(80, 80))));
+        let mem = TBufferChannel::with_capacity(80, 80);
 
-        let inner: Box<TTransport> = Box::new(TPassThruTransport { inner: mem.clone() });
-        let inner = Rc::new(RefCell::new(inner));
+        let (r_mem, w_mem) = mem.split().unwrap();
 
-        let i_prot = TCompactInputProtocol::new(inner.clone());
-        let o_prot = TCompactOutputProtocol::new(inner.clone());
+        let i_prot = TCompactInputProtocol::new(r_mem);
+        let o_prot = TCompactOutputProtocol::new(w_mem);
 
-        (mem, i_prot, o_prot)
+        (i_prot, o_prot)
     }
 
-    fn assert_no_write<F: FnMut(&mut TCompactOutputProtocol) -> ::Result<()>>(mut write_fn: F) {
-        let (trans, _, mut o_prot) = test_objects();
+    fn assert_no_write<F>(mut write_fn: F)
+    where
+        F: FnMut(&mut TCompactOutputProtocol<WriteHalf<TBufferChannel>>) -> ::Result<()>,
+    {
+        let (_, mut o_prot) = test_objects();
         assert!(write_fn(&mut o_prot).is_ok());
-        assert_eq!(trans.borrow().write_buffer_as_ref().len(), 0);
+        assert_eq!(o_prot.transport.write_bytes().len(), 0);
     }
 }

@@ -11,8 +11,9 @@ exclude = ["Makefile*", "test/**"]
 keywords = ["thrift"]
 
 [dependencies]
+byteorder = "0.5.3"
 integer-encoding = "1.0.3"
 log = "~0.3.6"
-byteorder = "0.5.3"
+threadpool = "1.0"
 try_from = "0.2.0"
 

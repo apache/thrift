@@ -15,15 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//! Types required to implement a Thrift server.
+//! Types used to implement a Thrift server.
 
-use ::protocol::{TInputProtocol, TOutputProtocol};
+use protocol::{TInputProtocol, TOutputProtocol};
 
-mod simple;
 mod multiplexed;
+mod threaded;
 
-pub use self::simple::TSimpleServer;
 pub use self::multiplexed::TMultiplexedProcessor;
+pub use self::threaded::TServer;
 
 /// Handles incoming Thrift messages and dispatches them to the user-defined
 /// handler functions.
@@ -56,14 +56,14 @@ pub use self::multiplexed::TMultiplexedProcessor;
 ///
 /// // `TProcessor` implementation for `SimpleService`
 /// impl TProcessor for SimpleServiceSyncProcessor {
-///     fn process(&mut self, i: &mut TInputProtocol, o: &mut TOutputProtocol) -> thrift::Result<()> {
+///     fn process(&self, i: &mut TInputProtocol, o: &mut TOutputProtocol) -> thrift::Result<()> {
 ///         unimplemented!();
 ///     }
 /// }
 ///
 /// // service functions for SimpleService
 /// trait SimpleServiceSyncHandler {
-///     fn service_call(&mut self) -> thrift::Result<()>;
+///     fn service_call(&self) -> thrift::Result<()>;
 /// }
 ///
 /// //
@@ -73,7 +73,7 @@ pub use self::multiplexed::TMultiplexedProcessor;
 /// // define a handler that will be invoked when `service_call` is received
 /// struct SimpleServiceHandlerImpl;
 /// impl SimpleServiceSyncHandler for SimpleServiceHandlerImpl {
-///     fn service_call(&mut self) -> thrift::Result<()> {
+///     fn service_call(&self) -> thrift::Result<()> {
 ///         unimplemented!();
 ///     }
 /// }
@@ -82,7 +82,7 @@ pub use self::multiplexed::TMultiplexedProcessor;
 /// let processor = SimpleServiceSyncProcessor::new(SimpleServiceHandlerImpl {});
 ///
 /// // at this point you can pass the processor to the server
-/// // let server = TSimpleServer::new(..., processor);
+/// // let server = TServer::new(..., processor);
 /// ```
 pub trait TProcessor {
     /// Process a Thrift service call.
@@ -91,5 +91,5 @@ pub trait TProcessor {
     /// the response to `o`.
     ///
     /// Returns `()` if the handler was executed; `Err` otherwise.
-    fn process(&mut self, i: &mut TInputProtocol, o: &mut TOutputProtocol) -> ::Result<()>;
+    fn process(&self, i: &mut TInputProtocol, o: &mut TOutputProtocol) -> ::Result<()>;
 }

@@ -22,7 +22,7 @@ extern crate kitchen_sink;
 extern crate thrift;
 
 use kitchen_sink::base_one::Noodle;
-use kitchen_sink::base_two::{Napkin, Ramen, NapkinServiceSyncHandler, RamenServiceSyncHandler};
+use kitchen_sink::base_two::{Napkin, NapkinServiceSyncHandler, Ramen, RamenServiceSyncHandler};
 use kitchen_sink::midlayer::{Dessert, Meal, MealServiceSyncHandler, MealServiceSyncProcessor};
 use kitchen_sink::ultimate::{Drink, FullMeal, FullMealAndDrinks,
                              FullMealAndDrinksServiceSyncProcessor, FullMealServiceSyncHandler};
@@ -30,8 +30,9 @@ use kitchen_sink::ultimate::FullMealAndDrinksServiceSyncHandler;
 use thrift::protocol::{TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory,
                        TCompactInputProtocolFactory, TCompactOutputProtocolFactory,
                        TInputProtocolFactory, TOutputProtocolFactory};
-use thrift::transport::{TFramedTransportFactory, TTransportFactory};
-use thrift::server::TSimpleServer;
+use thrift::transport::{TFramedReadTransportFactory, TFramedWriteTransportFactory,
+                        TReadTransportFactory, TWriteTransportFactory};
+use thrift::server::TServer;
 
 fn main() {
     match run() {
@@ -52,7 +53,8 @@ fn run() -> thrift::Result<()> {
         (@arg port: --port +takes_value "port on which the test server listens")
         (@arg protocol: --protocol +takes_value "Thrift protocol implementation to use (\"binary\", \"compact\")")
         (@arg service: --service +takes_value "Service type to contact (\"part\", \"full\")")
-    ).get_matches();
+    )
+            .get_matches();
 
     let port = value_t!(matches, "port", u16).unwrap_or(9090);
     let protocol = matches.value_of("protocol").unwrap_or("compact");
@@ -61,9 +63,8 @@ fn run() -> thrift::Result<()> {
 
     println!("binding to {}", listen_address);
 
-    let (i_transport_factory, o_transport_factory): (Box<TTransportFactory>,
-                                                     Box<TTransportFactory>) =
-        (Box::new(TFramedTransportFactory {}), Box::new(TFramedTransportFactory {}));
+    let r_transport_factory = TFramedReadTransportFactory::new();
+    let w_transport_factory = TFramedWriteTransportFactory::new();
 
     let (i_protocol_factory, o_protocol_factory): (Box<TInputProtocolFactory>,
                                                    Box<TOutputProtocolFactory>) =
@@ -93,51 +94,75 @@ fn run() -> thrift::Result<()> {
     // Since what I'm doing is uncommon I'm just going to duplicate the code
     match &*service {
         "part" => {
-            run_meal_server(&listen_address,
-                            i_transport_factory,
-                            i_protocol_factory,
-                            o_transport_factory,
-                            o_protocol_factory)
+            run_meal_server(
+                &listen_address,
+                r_transport_factory,
+                i_protocol_factory,
+                w_transport_factory,
+                o_protocol_factory,
+            )
         }
         "full" => {
-            run_full_meal_server(&listen_address,
-                                 i_transport_factory,
-                                 i_protocol_factory,
-                                 o_transport_factory,
-                                 o_protocol_factory)
+            run_full_meal_server(
+                &listen_address,
+                r_transport_factory,
+                i_protocol_factory,
+                w_transport_factory,
+                o_protocol_factory,
+            )
         }
         unknown => Err(format!("unsupported service type {}", unknown).into()),
     }
 }
 
-fn run_meal_server(listen_address: &str,
-                   i_transport_factory: Box<TTransportFactory>,
-                   i_protocol_factory: Box<TInputProtocolFactory>,
-                   o_transport_factory: Box<TTransportFactory>,
-                   o_protocol_factory: Box<TOutputProtocolFactory>)
-                   -> thrift::Result<()> {
+fn run_meal_server<RTF, IPF, WTF, OPF>(
+    listen_address: &str,
+    r_transport_factory: RTF,
+    i_protocol_factory: IPF,
+    w_transport_factory: WTF,
+    o_protocol_factory: OPF,
+) -> thrift::Result<()>
+where
+    RTF: TReadTransportFactory + 'static,
+    IPF: TInputProtocolFactory + 'static,
+    WTF: TWriteTransportFactory + 'static,
+    OPF: TOutputProtocolFactory + 'static,
+{
     let processor = MealServiceSyncProcessor::new(PartHandler {});
-    let mut server = TSimpleServer::new(i_transport_factory,
-                                        i_protocol_factory,
-                                        o_transport_factory,
-                                        o_protocol_factory,
-                                        processor);
+    let mut server = TServer::new(
+        r_transport_factory,
+        i_protocol_factory,
+        w_transport_factory,
+        o_protocol_factory,
+        processor,
+        1,
+    );
 
     server.listen(listen_address)
 }
 
-fn run_full_meal_server(listen_address: &str,
-                        i_transport_factory: Box<TTransportFactory>,
-                        i_protocol_factory: Box<TInputProtocolFactory>,
-                        o_transport_factory: Box<TTransportFactory>,
-                        o_protocol_factory: Box<TOutputProtocolFactory>)
-                        -> thrift::Result<()> {
+fn run_full_meal_server<RTF, IPF, WTF, OPF>(
+    listen_address: &str,
+    r_transport_factory: RTF,
+    i_protocol_factory: IPF,
+    w_transport_factory: WTF,
+    o_protocol_factory: OPF,
+) -> thrift::Result<()>
+where
+    RTF: TReadTransportFactory + 'static,
+    IPF: TInputProtocolFactory + 'static,
+    WTF: TWriteTransportFactory + 'static,
+    OPF: TOutputProtocolFactory + 'static,
+{
     let processor = FullMealAndDrinksServiceSyncProcessor::new(FullHandler {});
-    let mut server = TSimpleServer::new(i_transport_factory,
-                                        i_protocol_factory,
-                                        o_transport_factory,
-                                        o_protocol_factory,
-                                        processor);
+    let mut server = TServer::new(
+        r_transport_factory,
+        i_protocol_factory,
+        w_transport_factory,
+        o_protocol_factory,
+        processor,
+        1,
+    );
 
     server.listen(listen_address)
 }
@@ -145,21 +170,21 @@ fn run_full_meal_server(listen_address: &str,
 struct PartHandler;
 
 impl MealServiceSyncHandler for PartHandler {
-    fn handle_meal(&mut self) -> thrift::Result<Meal> {
+    fn handle_meal(&self) -> thrift::Result<Meal> {
         println!("part: handling meal call");
         Ok(meal())
     }
 }
 
 impl RamenServiceSyncHandler for PartHandler {
-    fn handle_ramen(&mut self, _: i32) -> thrift::Result<Ramen> {
+    fn handle_ramen(&self, _: i32) -> thrift::Result<Ramen> {
         println!("part: handling ramen call");
         Ok(ramen())
     }
 }
 
 impl NapkinServiceSyncHandler for PartHandler {
-    fn handle_napkin(&mut self) -> thrift::Result<Napkin> {
+    fn handle_napkin(&self) -> thrift::Result<Napkin> {
         println!("part: handling napkin call");
         Ok(napkin())
     }
@@ -171,34 +196,34 @@ impl NapkinServiceSyncHandler for PartHandler {
 struct FullHandler;
 
 impl FullMealAndDrinksServiceSyncHandler for FullHandler {
-    fn handle_full_meal_and_drinks(&mut self) -> thrift::Result<FullMealAndDrinks> {
+    fn handle_full_meal_and_drinks(&self) -> thrift::Result<FullMealAndDrinks> {
         Ok(FullMealAndDrinks::new(full_meal(), Drink::WHISKEY))
     }
 }
 
 impl FullMealServiceSyncHandler for FullHandler {
-    fn handle_full_meal(&mut self) -> thrift::Result<FullMeal> {
+    fn handle_full_meal(&self) -> thrift::Result<FullMeal> {
         println!("full: handling full meal call");
         Ok(full_meal())
     }
 }
 
 impl MealServiceSyncHandler for FullHandler {
-    fn handle_meal(&mut self) -> thrift::Result<Meal> {
+    fn handle_meal(&self) -> thrift::Result<Meal> {
         println!("full: handling meal call");
         Ok(meal())
     }
 }
 
 impl RamenServiceSyncHandler for FullHandler {
-    fn handle_ramen(&mut self, _: i32) -> thrift::Result<Ramen> {
+    fn handle_ramen(&self, _: i32) -> thrift::Result<Ramen> {
         println!("full: handling ramen call");
         Ok(ramen())
     }
 }
 
 impl NapkinServiceSyncHandler for FullHandler {
-    fn handle_napkin(&mut self) -> thrift::Result<Napkin> {
+    fn handle_napkin(&self) -> thrift::Result<Napkin> {
         println!("full: handling napkin call");
         Ok(napkin())
     }

@@ -48,6 +48,9 @@ mod tests {
 
     #[test]
     fn must_be_able_to_use_defaults() {
-        let _ = midlayer::Meal { noodle: Some(base_one::Noodle::default()), ..Default::default() };
+        let _ = midlayer::Meal {
+            noodle: Some(base_one::Noodle::default()),
+            ..Default::default()
+        };
     }
 }
