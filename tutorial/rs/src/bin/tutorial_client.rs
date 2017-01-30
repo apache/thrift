@@ -21,15 +21,12 @@ extern crate clap;
 extern crate thrift;
 extern crate thrift_tutorial;
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
-use thrift::protocol::{TInputProtocol, TOutputProtocol};
 use thrift::protocol::{TCompactInputProtocol, TCompactOutputProtocol};
-use thrift::transport::{TFramedTransport, TTcpTransport, TTransport};
+use thrift::transport::{ReadHalf, TFramedReadTransport, TFramedWriteTransport, TIoChannel,
+                        TTcpChannel, WriteHalf};
 
 use thrift_tutorial::shared::TSharedServiceSyncClient;
-use thrift_tutorial::tutorial::{CalculatorSyncClient, TCalculatorSyncClient, Operation, Work};
+use thrift_tutorial::tutorial::{CalculatorSyncClient, Operation, TCalculatorSyncClient, Work};
 
 fn main() {
     match run() {
@@ -73,7 +70,8 @@ fn run() -> thrift::Result<()> {
     let logid = 32;
 
     // let's do...a multiply!
-    let res = client.calculate(logid, Work::new(7, 8, Operation::MULTIPLY, None))?;
+    let res = client
+        .calculate(logid, Work::new(7, 8, Operation::MULTIPLY, None))?;
     println!("multiplied 7 and 8 and got {}", res);
 
     // let's get the log for it
@@ -102,34 +100,31 @@ fn run() -> thrift::Result<()> {
     Ok(())
 }
 
-fn new_client(host: &str, port: u16) -> thrift::Result<CalculatorSyncClient> {
-    let mut t = TTcpTransport::new();
+type ClientInputProtocol = TCompactInputProtocol<TFramedReadTransport<ReadHalf<TTcpChannel>>>;
+type ClientOutputProtocol = TCompactOutputProtocol<TFramedWriteTransport<WriteHalf<TTcpChannel>>>;
+
+fn new_client
+    (
+    host: &str,
+    port: u16,
+) -> thrift::Result<CalculatorSyncClient<ClientInputProtocol, ClientOutputProtocol>> {
+    let mut c = TTcpChannel::new();
 
     // open the underlying TCP stream
     println!("connecting to tutorial server on {}:{}", host, port);
-    let t = match t.open(&format!("{}:{}", host, port)) {
-        Ok(()) => t,
-        Err(e) => {
-            return Err(format!("failed to open tcp stream to {}:{} error:{:?}",
-                               host,
-                               port,
-                               e)
-                .into());
-        }
-    };
+    c.open(&format!("{}:{}", host, port))?;
 
-    // refcounted because it's shared by both input and output transports
-    let t = Rc::new(RefCell::new(Box::new(t) as Box<TTransport>));
+    // clone the TCP channel into two halves, one which
+    // we'll use for reading, the other for writing
+    let (i_chan, o_chan) = c.split()?;
 
-    // wrap a raw socket (slow) with a buffered transport of some kind
-    let t = Box::new(TFramedTransport::new(t)) as Box<TTransport>;
-
-    // refcounted again because it's shared by both input and output protocols
-    let t = Rc::new(RefCell::new(t));
+    // wrap the raw sockets (slow) with a buffered transport of some kind
+    let i_tran = TFramedReadTransport::new(i_chan);
+    let o_tran = TFramedWriteTransport::new(o_chan);
 
     // now create the protocol implementations
-    let i_prot = Box::new(TCompactInputProtocol::new(t.clone())) as Box<TInputProtocol>;
-    let o_prot = Box::new(TCompactOutputProtocol::new(t.clone())) as Box<TOutputProtocol>;
+    let i_prot = TCompactInputProtocol::new(i_tran);
+    let o_prot = TCompactOutputProtocol::new(o_tran);
 
     // we're done!
     Ok(CalculatorSyncClient::new(i_prot, o_prot))
