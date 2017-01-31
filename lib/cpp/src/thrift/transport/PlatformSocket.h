@@ -78,6 +78,9 @@
 #    define THRIFT_POLLOUT POLLOUT
 #  endif //WINVER
 #  define THRIFT_SHUT_RDWR SD_BOTH
+#  if _WIN32_WINNT < 0x0600
+#    define AI_ADDRCONFIG 0
+#  endif
 #else //not _WIN32
 #  include <errno.h>
 #  define THRIFT_GET_SOCKET_ERROR errno
