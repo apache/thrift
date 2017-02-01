@@ -58,10 +58,11 @@ class TTransportBase(object):
         have = 0
         while (have < sz):
             chunk = self.read(sz - have)
-            have += len(chunk)
+            chunkLen = len(chunk)
+            have += chunkLen
             buff += chunk
 
-            if len(chunk) == 0:
+            if chunkLen == 0:
                 raise EOFError()
 
         return buff
