@@ -111,7 +111,7 @@ public class TServerSocket extends TServerTransport {
   }
 
   public void listen() throws TTransportException {
-    // Make sure not to block on accept
+    // Make sure to block on accept
     if (serverSocket_ != null) {
       try {
         serverSocket_.setSoTimeout(0);
