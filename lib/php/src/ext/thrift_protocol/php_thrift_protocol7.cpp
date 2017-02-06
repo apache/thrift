@@ -594,7 +594,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
           zend_hash_index_update(Z_ARR_P(return_value), Z_LVAL(key), &value);
         } else {
           if (Z_TYPE(key) != IS_STRING) convert_to_string(&key);
-          zend_hash_update(Z_ARR_P(return_value), Z_STR(key), &value);
+          zend_symtable_update(Z_ARR_P(return_value), Z_STR(key), &value);
         }
       }
       return; // return_value already populated
@@ -634,7 +634,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
           zend_hash_index_update(Z_ARR_P(return_value), Z_LVAL(key), &value);
         } else {
           if (Z_TYPE(key) != IS_STRING) convert_to_string(&key);
-          zend_hash_update(Z_ARR_P(return_value), Z_STR(key), &value);
+          zend_symtable_update(Z_ARR_P(return_value), Z_STR(key), &value);
         }
       }
       return;
