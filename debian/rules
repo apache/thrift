@@ -130,7 +130,8 @@ install-indep:
 
 	# Perl
 	$(MAKE) -C $(CURDIR)/lib/perl install DESTDIR=$(CURDIR)/debian/libthrift-perl
-	mv $(CURDIR)/debian/libthrift-perl/usr/local/lib/perl5 $(CURDIR)/debian/libthrift-perl/usr/lib
+	mkdir -p $(CURDIR)/debian/libthrift-perl/usr/share
+	mv $(CURDIR)/debian/libthrift-perl/usr/local/lib/perl5 $(CURDIR)/debian/libthrift-perl/usr/share
 	rmdir $(CURDIR)/debian/libthrift-perl/usr/local/lib
 	rmdir $(CURDIR)/debian/libthrift-perl/usr/local
 
