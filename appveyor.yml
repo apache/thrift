@@ -52,18 +52,22 @@ install:
 - move WIN32-Code\event2\* include\event2\
 - move *.h include\
 - cd ..
-- appveyor-retry cinst -y winflexbison
-- appveyor DownloadFile http://www.us.apache.org/dist/ant/binaries/apache-ant-%ANT_VERSION%-bin.zip
-- 7z x apache-ant-%ANT_VERSION%-bin.zip > nul
+- appveyor-retry cinst -y ant
+- appveyor-retry cinst -y winflexbison3
+## appveyor DownloadFile http://www.us.apache.org/dist/ant/binaries/apache-ant-%ANT_VERSION%-bin.zip
+# 7z x apache-ant-%ANT_VERSION%-bin.zip > nul
 - cd %APPVEYOR_BUILD_FOLDER%
 # TODO: Enable Haskell build
 # - cinst HaskellPlatform -version 2014.2.0.0
 
 
 build_script:
-- set PATH=C:\ProgramData\chocolatey\bin;C:\apache-ant-%ANT_VERSION%\bin;%PATH%
-- set JAVA_HOME=C:\Program Files\Java\jdk1.7.0
-- set PATH=%JAVA_HOME%\bin;%PATH%
+- echo PATH=%PATH%
+- set PATH=C:\ProgramData\chocolatey\bin;%PATH%
+## installation of ant brings in the latest jdk and sets JAVA_HOME
+- echo JAVA_HOME=%JAVA_HOME%
+## set JAVA_HOME=C:\Program Files\Java\jdk1.7.0
+## set PATH=%JAVA_HOME%\bin;%PATH%
 # - set PATH=%PATH%;C:\Program Files (x86)\Haskell Platform\2014.2.0.0\bin
 # - set PATH=%PATH%;C:\Program Files (x86)\Haskell Platform\2014.2.0.0\lib\extralibs\bin
 - set PATH=C:\Python27-x64\scripts;C:\Python27-x64;%PATH%
