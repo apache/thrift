@@ -84,6 +84,13 @@ class TCurlClient extends TTransport
   protected $timeout_;
 
   /**
+   * http headers
+   *
+   * @var array
+   */
+  protected $headers_;
+
+  /**
    * Make a new HTTP client.
    *
    * @param string $host
@@ -102,6 +109,7 @@ class TCurlClient extends TTransport
     $this->request_ = '';
     $this->response_ = null;
     $this->timeout_ = null;
+    $this->headers_ = array();
   }
 
   /**
@@ -193,9 +201,14 @@ class TCurlClient extends TTransport
     $host = $this->host_.($this->port_ != 80 ? ':'.$this->port_ : '');
     $fullUrl = $this->scheme_."://".$host.$this->uri_;
 
-    $headers = array('Accept: application/x-thrift',
-                     'Content-Type: application/x-thrift',
-                     'Content-Length: '.TStringFuncFactory::create()->strlen($this->request_));
+    $headers = array();
+    $defaultHeaders = array('Accept' => 'application/x-thrift',
+                     'Content-Type' => 'application/x-thrift',
+                     'Content-Length' => TStringFuncFactory::create()->strlen($this->request_));
+    foreach (array_merge($defaultHeaders, $this->headers_) as $key => $value) {
+      $headers[] = "$key: $value";
+    }
+
     curl_setopt(self::$curlHandle, CURLOPT_HTTPHEADER, $headers);
 
     if ($this->timeout_ > 0) {
@@ -226,6 +239,11 @@ class TCurlClient extends TTransport
     } catch (\Exception $x) {
       error_log('There was an error closing the curl handle: ' . $x->getMessage());
     }
+  }
+
+  public function addHeaders($headers)
+  {
+    $this->headers_ = array_merge($this->headers_, $headers);
   }
 
 }
