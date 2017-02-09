@@ -26,8 +26,9 @@
 
 #include <cassert>
 
-#include <boost/weak_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/thread.hpp>
+#include <boost/weak_ptr.hpp>
 
 namespace apache {
 namespace thrift {
@@ -48,7 +49,7 @@ public:
   static void* threadMain(void* arg);
 
 private:
-  std::auto_ptr<boost::thread> thread_;
+  boost::scoped_ptr<boost::thread> thread_;
   STATE state_;
   weak_ptr<BoostThread> self_;
   bool detached_;
@@ -80,8 +81,7 @@ public:
 
     state_ = starting;
 
-    thread_
-        = std::auto_ptr<boost::thread>(new boost::thread(boost::bind(threadMain, (void*)selfRef)));
+    thread_.reset(new boost::thread(boost::bind(threadMain, (void*)selfRef)));
 
     if (detached_)
       thread_->detach();

@@ -24,6 +24,16 @@
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/concurrency/FunctionRunner.h>
 
+#include <boost/scoped_ptr.hpp>
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 105700)
+#include <boost/move/unique_ptr.hpp>
+using boost::movelib::unique_ptr;
+#else
+#include <boost/interprocess/smart_ptr/unique_ptr.hpp>
+using boost::interprocess::unique_ptr;
+#endif
+
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
@@ -52,9 +62,12 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
-using boost::scoped_ptr;
 using boost::shared_ptr;
-using namespace std;
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::min;
+using std::string;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::concurrency;
 
@@ -192,6 +205,14 @@ void TFileTransport::write(const uint8_t* buf, uint32_t len) {
   enqueueEvent(buf, len);
 }
 
+// this is needed until boost 1.57 as the older unique_ptr implementation
+// has no default deleter in interprocess
+template <class _T>
+struct uniqueDeleter
+{
+  void operator()(_T *ptr) const { delete ptr; }
+};
+
 void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen) {
   // can't enqueue more events if file is going to close
   if (closing_) {
@@ -209,7 +230,7 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen) {
     return;
   }
 
-  std::auto_ptr<eventInfo> toEnqueue(new eventInfo());
+  unique_ptr<eventInfo, uniqueDeleter<eventInfo> > toEnqueue(new eventInfo());
   toEnqueue->eventBuff_ = new uint8_t[(sizeof(uint8_t) * eventLen) + 4];
 
   // first 4 bytes is the event length

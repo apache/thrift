@@ -20,10 +20,10 @@
 #include <thrift/async/TEvhttpServer.h>
 #include <thrift/async/TAsyncBufferProcessor.h>
 #include <thrift/transport/TBufferTransports.h>
+#include <boost/scoped_ptr.hpp>
 #include <evhttp.h>
 #include <event2/buffer.h>
 #include <event2/buffer_compat.h>
-
 #include <iostream>
 
 #ifndef HTTP_INTERNAL // libevent < 2
@@ -118,7 +118,7 @@ void TEvhttpServer::process(struct evhttp_request* req) {
 
 void TEvhttpServer::complete(RequestContext* ctx, bool success) {
   (void)success;
-  std::auto_ptr<RequestContext> ptr(ctx);
+  boost::scoped_ptr<RequestContext> ptr(ctx);
 
   int code = success ? 200 : 400;
   const char* reason = success ? "OK" : "Bad Request";
