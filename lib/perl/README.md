@@ -47,6 +47,14 @@ to wrap eval{} statments around any code that contains exceptions.
 
 Please see tutoral and test dirs for examples.
 
+The Perl ForkingServer ignores SIGCHLD allowing the forks to be
+reaped by the operating system naturally when they exit.  This means
+one cannot use a custom SIGCHLD handler in the consuming perl
+implementation that calls serve().  It is acceptable to use
+a custom SIGCHLD handler within a thrift handler implementation
+as the ForkingServer resets the forked child process to use
+default signal handling.
+
 Dependencies
 ============
 
