@@ -642,7 +642,15 @@ void t_perl_generator::generate_service(t_service* tservice) {
       ///      "package "<<service_name_<<";"<<endl<<
       autogen_comment() << perl_includes();
 
-  f_service_ << "use " << perl_namespace(tservice->get_program()) << "Types;" << endl;
+  t_program* current = tservice->get_program();
+  std::vector<t_program*>& currInc = current->get_includes();
+  std::vector<t_program*>::size_type numInc = currInc.size();
+  f_service_ << "use " << perl_namespace(current) << "Types;" << endl;
+  for (std::vector<t_program*>::size_type i = 0; i < numInc; ++i)
+  {
+    t_program* incProgram = currInc.at(i);
+    f_service_ << "use " << perl_namespace(incProgram) << "Types;" << std::endl;
+  }
 
   t_service* extends_s = tservice->get_extends();
   if (extends_s != NULL) {
