@@ -445,10 +445,6 @@ void t_java_generator::generate_enum(t_enum* tenum) {
   // Comment and package it
   f_enum << autogen_comment() << java_package() << endl;
 
-  // Add java imports
-  f_enum << string() + "import java.util.Map;\n" + "import java.util.HashMap;\n"
-            + "import org.apache.thrift.TEnum;" << endl << endl;
-
   generate_java_doc(f_enum, tenum);
   if (is_deprecated) {
     indent(f_enum) << "@Deprecated" << endl;
