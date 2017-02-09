@@ -63,7 +63,7 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
-DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) struct TOverlappedWorkItem : public SLIST_ENTRY {
+struct DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) TOverlappedWorkItem : public SLIST_ENTRY {
   TOverlappedWorkItem();
 
   enum action_t {
