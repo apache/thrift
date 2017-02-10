@@ -366,6 +366,10 @@ thrift_ssl_socket_create_ssl_context(ThriftTransport * transport, GError **error
  */
 gboolean thrift_ssl_load_cert_from_file(ThriftSSLSocket *ssl_socket, const char *file_name)
 {
+  if (!thrift_ssl_socket_openssl_initialized) {
+    g_warning("openssl not initialized yet");
+    return FALSE;
+  }
   int rc = SSL_CTX_load_verify_locations(ssl_socket->ctx, file_name, NULL);
   if (rc != 1) { /*verify authentication result*/
     g_warning("Load of certificates failed!: %s", X509_verify_cert_error_string(ERR_get_error()));

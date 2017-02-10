@@ -12,6 +12,9 @@
     "client": {
       "command": [
         "test_client"
+      ],
+      "sockets": [
+        "ip-ssl"
       ]
     },
     "transports": [
