@@ -168,6 +168,10 @@ RUN gem install bundler --no-ri --no-rdoc
 RUN pip2 install -U ipaddress backports.ssl_match_hostname tornado
 RUN pip3 install -U backports.ssl_match_hostname tornado
 
+# Python optional dependencies
+RUN pip2 install -U ipaddress backports.ssl_match_hostname tornado
+RUN pip3 install -U backports.ssl_match_hostname tornado
+
 # Go
 RUN curl -sSL https://storage.googleapis.com/golang/go1.4.3.linux-amd64.tar.gz | tar -C /usr/local/ -xz
 ENV PATH /usr/local/go/bin:$PATH
