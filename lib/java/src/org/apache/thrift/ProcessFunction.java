@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.apache.thrift;
 
 import org.apache.thrift.protocol.TMessage;
@@ -39,13 +36,12 @@ public abstract class ProcessFunction<I, T extends TBase> {
       result = getResult(iface, args);
     } catch(TException tex) {
       LOGGER.error("Internal error processing " + getMethodName(), tex);
-      if (!isOneway()) {
-        TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, 
-          "Internal error processing " + getMethodName());
-        oprot.writeMessageBegin(new TMessage(getMethodName(), TMessageType.EXCEPTION, seqid));
-        x.write(oprot);
-        oprot.writeMessageEnd();
-        oprot.getTransport().flush();
+      handleException(seqid, oprot);
+      return;
+    } catch(RuntimeException rex) {
+      LOGGER.error("Internal error processing " + getMethodName(), rex);
+      if (handleRuntimeExceptions()) {
+        handleException(seqid, oprot);
       }
       return;
     }
@@ -56,6 +52,21 @@ public abstract class ProcessFunction<I, T extends TBase> {
       oprot.writeMessageEnd();
       oprot.getTransport().flush();
     }
+  }
+
+  private void handleException(int seqid, TProtocol oprot) throws TException {
+    if (!isOneway()) {
+      TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR,
+        "Internal error processing " + getMethodName());
+      oprot.writeMessageBegin(new TMessage(getMethodName(), TMessageType.EXCEPTION, seqid));
+      x.write(oprot);
+      oprot.writeMessageEnd();
+      oprot.getTransport().flush();
+    }
+  }
+
+  protected boolean handleRuntimeExceptions() {
+    return false;
   }
 
   protected abstract boolean isOneway();
