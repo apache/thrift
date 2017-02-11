@@ -151,23 +151,21 @@ thrift_ssl_socket_peek (ThriftTransport *transport, GError **error)
 {
   gboolean retval = FALSE;
   ThriftSSLSocket *ssl_socket = THRIFT_SSL_SOCKET (transport);
-  if(ssl_socket!=NULL && THRIFT_SSL_SOCKET_GET_CLASS(ssl_socket)->handle_handshake(transport, error)){
-      if (thrift_ssl_socket_is_open (transport))
-	{
-	  int rc;
-	  gchar byte;
-	  rc = SSL_peek(ssl_socket->ssl, &byte, 1);
-	  if (rc < 0) {
-	      g_set_error (error,
-			   THRIFT_TRANSPORT_ERROR,
-			   THRIFT_SSL_SOCKET_ERROR_SSL,
-			   "failed to peek at socket - id?");
-	  }
-	  if (rc == 0) {
-	      ERR_clear_error();
-	  }
-	  retval = (rc > 0);
-	}
+  if (thrift_ssl_socket_is_open (transport))
+  {
+    int rc;
+    gchar byte;
+    rc = SSL_peek(ssl_socket->ssl, &byte, 1);
+    if (rc < 0) {
+        g_set_error (error,
+         THRIFT_TRANSPORT_ERROR,
+         THRIFT_SSL_SOCKET_ERROR_SSL,
+         "failed to peek at socket - id?");
+    }
+    if (rc == 0) {
+        ERR_clear_error();
+    }
+    retval = (rc > 0);
   }
   return retval;
 }
@@ -176,7 +174,17 @@ thrift_ssl_socket_peek (ThriftTransport *transport, GError **error)
 gboolean
 thrift_ssl_socket_open (ThriftTransport *transport, GError **error)
 {
-  return thrift_socket_open(transport, error);
+  if (!thrift_socket_open(transport, error)) {
+    return FALSE;
+  }
+
+  if (!THRIFT_SSL_SOCKET_GET_CLASS(transport)->handle_handshake(transport, error)) {
+    GError *tmperr;
+    thrift_socket_close(transport, &tmperr);
+    return FALSE;
+  }
+
+  return TRUE;
 }
 
 /* implements thrift_transport_close */
@@ -187,7 +195,7 @@ thrift_ssl_socket_close (ThriftTransport *transport, GError **error)
   if(THRIFT_SSL_SOCKET(transport)->ssl) {
       int rc = SSL_shutdown(THRIFT_SSL_SOCKET(transport)->ssl);
       if (rc < 0) {
-	  int errno_copy = THRIFT_SSL_SOCKET_ERROR_SSL;
+    int errno_copy = THRIFT_SSL_SOCKET_ERROR_SSL;
       }
       SSL_free(THRIFT_SSL_SOCKET(transport)->ssl);
       THRIFT_SSL_SOCKET(transport)->ssl = NULL;
@@ -199,28 +207,26 @@ thrift_ssl_socket_close (ThriftTransport *transport, GError **error)
 /* implements thrift_transport_read */
 gint32
 thrift_ssl_socket_read (ThriftTransport *transport, gpointer buf,
-			guint32 len, GError **error)
+      guint32 len, GError **error)
 {
   guint maxRecvRetries_ = 10;
   ThriftSSLSocket *ssl_socket = THRIFT_SSL_SOCKET (transport);
   guint bytes = 0;
   guint retries = 0;
-  if(ssl_socket!=NULL && THRIFT_SSL_SOCKET_GET_CLASS(ssl_socket)->handle_handshake(transport, error)){
-      for (retries=0; retries < maxRecvRetries_; retries++) {
-	  bytes = SSL_read(ssl_socket->ssl, buf, len);
-	  if (bytes >= 0)
-	    break;
-	  int errno_copy = THRIFT_GET_SOCKET_ERROR;
-	  if (SSL_get_error(ssl_socket->ssl, bytes) == SSL_ERROR_SYSCALL) {
-	      if (ERR_get_error() == 0 && errno_copy == THRIFT_EINTR) {
-		  continue;
-	      }
-	  }
-	  g_set_error (error, THRIFT_TRANSPORT_ERROR,
-		       THRIFT_TRANSPORT_ERROR_RECEIVE,
-		       "failed to read %d bytes - %s", len, strerror(errno));
-	  return -1;
-      }
+  for (retries=0; retries < maxRecvRetries_; retries++) {
+    bytes = SSL_read(ssl_socket->ssl, buf, len);
+    if (bytes >= 0)
+      break;
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    if (SSL_get_error(ssl_socket->ssl, bytes) == SSL_ERROR_SYSCALL) {
+        if (ERR_get_error() == 0 && errno_copy == THRIFT_EINTR) {
+      continue;
+        }
+    }
+    g_set_error (error, THRIFT_TRANSPORT_ERROR,
+           THRIFT_TRANSPORT_ERROR_RECEIVE,
+           "failed to read %d bytes - %s", len, strerror(errno));
+    return -1;
   }
   return bytes;
 }
@@ -239,30 +245,27 @@ thrift_ssl_socket_read_end (ThriftTransport *transport, GError **error)
 /* implements thrift_transport_write */
 gboolean
 thrift_ssl_socket_write (ThriftTransport *transport, const gpointer buf,
-			 const guint32 len, GError **error)
+       const guint32 len, GError **error)
 {
   ThriftSSLSocket *ssl_socket = THRIFT_SSL_SOCKET (transport);
   gint ret = 0;
   guint sent = 0;
-  if(THRIFT_SSL_SOCKET_GET_CLASS(ssl_socket)->handle_handshake(transport, error)){
+  ThriftSocket *socket = THRIFT_SSL_SOCKET (transport);
+  g_return_val_if_fail (socket->sd != THRIFT_INVALID_SOCKET, FALSE);
 
-      ThriftSocket *socket = THRIFT_SSL_SOCKET (transport);
-      g_return_val_if_fail (socket->sd != THRIFT_INVALID_SOCKET, FALSE);
-
-      while (sent < len)
-	{
-	  ret = SSL_write (ssl_socket->ssl, (guint8 *)buf + sent, len - sent);
-	  if (ret < 0)
-	    {
-	      g_set_error (error, THRIFT_TRANSPORT_ERROR,
-			   THRIFT_TRANSPORT_ERROR_SEND,
-			   "failed to send %d bytes - %s", len, strerror(errno));
-	      return FALSE;
-	    }
-	  sent += ret;
-	}
-
+  while (sent < len)
+  {
+    ret = SSL_write (ssl_socket->ssl, (guint8 *)buf + sent, len - sent);
+    if (ret < 0)
+      {
+        g_set_error (error, THRIFT_TRANSPORT_ERROR,
+         THRIFT_TRANSPORT_ERROR_SEND,
+         "failed to send %d bytes - %s", len, strerror(errno));
+        return FALSE;
+      }
+    sent += ret;
   }
+
   return sent==len;
 }
 
@@ -285,22 +288,18 @@ thrift_ssl_socket_flush (ThriftTransport *transport, GError **error)
   ThriftSSLSocket *ssl_socket = THRIFT_SSL_SOCKET (transport);
   gint ret = 0;
   guint sent = 0;
-  if(THRIFT_SSL_SOCKET_GET_CLASS(ssl_socket)->handle_handshake(transport, error)){
-
-      BIO* bio = SSL_get_wbio(ssl_socket->ssl);
-      if (bio == NULL) {
-	  g_set_error (error, THRIFT_TRANSPORT_ERROR,
-		       THRIFT_TRANSPORT_ERROR_SEND,
-		       "failed to flush, wbio returned null");
-	  return FALSE;
+  BIO* bio = SSL_get_wbio(ssl_socket->ssl);
+  if (bio == NULL) {
+    g_set_error (error, THRIFT_TRANSPORT_ERROR,
+           THRIFT_TRANSPORT_ERROR_SEND,
+           "failed to flush, wbio returned null");
+    return FALSE;
       }
       if (BIO_flush(bio) != 1) {
-	  g_set_error (error, THRIFT_TRANSPORT_ERROR,
-		       THRIFT_TRANSPORT_ERROR_SEND,
-		       "failed to flush it returned error");
-	  return FALSE;
-      }
-
+    g_set_error (error, THRIFT_TRANSPORT_ERROR,
+           THRIFT_TRANSPORT_ERROR_SEND,
+           "failed to flush it returned error");
+    return FALSE;
   }
   return TRUE;
 }
@@ -313,23 +312,19 @@ thrift_ssl_socket_handle_handshake(ThriftTransport * transport, GError **error)
   ThriftSocket *socket = THRIFT_SOCKET (transport);
   g_return_val_if_fail (thrift_transport_is_open (transport), FALSE);
 
-  if(ssl_socket==NULL || ssl_socket->ssl!=NULL){
-      return TRUE;
-  }
-
   if(THRIFT_SSL_SOCKET_GET_CLASS(ssl_socket)->create_ssl_context(transport, error)){
       /*Context created*/
       SSL_set_fd(ssl_socket->ssl, socket->sd);
       int rc;
       if(ssl_socket->server){
-	  rc = SSL_accept(ssl_socket->ssl);
+    rc = SSL_accept(ssl_socket->ssl);
       }else{
-	  rc = SSL_connect(ssl_socket->ssl);
+    rc = SSL_connect(ssl_socket->ssl);
       }
       if (rc <= 0) {
-	  fprintf(stderr,"The error returned was %d\n", SSL_get_error(ssl_socket->ssl, rc));
-	  thrift_ssl_socket_get_error(error, "Not possible to connect", THRIFT_SSL_SOCKET_ERROR_CIPHER_NOT_AVAILABLE);
-	  return FALSE;
+    fprintf(stderr,"The error returned was %d\n", SSL_get_error(ssl_socket->ssl, rc));
+    thrift_ssl_socket_get_error(error, "Not possible to connect", THRIFT_SSL_SOCKET_ERROR_CIPHER_NOT_AVAILABLE);
+    return FALSE;
       }
   }else
     return FALSE;
@@ -344,15 +339,15 @@ thrift_ssl_socket_create_ssl_context(ThriftTransport * transport, GError **error
 
   if(socket->ctx!=NULL){
       if(socket->ssl!=NULL) {
-	  return TRUE;
+    return TRUE;
       }
 
       socket->ssl = SSL_new(socket->ctx);
       if (socket->ssl == NULL) {
-	  g_set_error (error, THRIFT_TRANSPORT_ERROR,
-		       THRIFT_SSL_SOCKET_ERROR_TRANSPORT,
-		       "Unable to create SSL context");
-	  return FALSE;
+    g_set_error (error, THRIFT_TRANSPORT_ERROR,
+           THRIFT_SSL_SOCKET_ERROR_TRANSPORT,
+           "Unable to create SSL context");
+    return FALSE;
       }
   }
 
@@ -398,13 +393,13 @@ gboolean thrift_ssl_load_cert_from_buffer(ThriftSSLSocket *ssl_socket, const cha
   if(cert_store!=NULL){
       int index = 0;
       while ((cacert = PEM_read_bio_X509(mem, NULL, 0, NULL))!=NULL) {
-	  if(cacert) {
-	      g_debug("Our certificate name is %s", cacert->name);
-	      X509_STORE_add_cert(cert_store, cacert);
-	      X509_free(cacert);
-	      cacert=NULL;
-	  } /* Free immediately */
-	  index++;
+    if(cacert) {
+        g_debug("Our certificate name is %s", cacert->name);
+        X509_STORE_add_cert(cert_store, cacert);
+        X509_free(cacert);
+        cacert=NULL;
+    } /* Free immediately */
+    index++;
       }
       retval=TRUE;
   }
@@ -419,48 +414,49 @@ thrift_ssl_socket_authorize(ThriftTransport * transport, GError **error)
   ThriftSSLSocket *ssl_socket = THRIFT_SSL_SOCKET (transport);
   ThriftSSLSocketClass *cls = THRIFT_SSL_SOCKET_GET_CLASS(ssl_socket);
   gboolean authorization_result = FALSE;
-  /* We still don't support it */
-  if(cls!=NULL && ssl_socket->ssl!=NULL){
-      int rc = SSL_get_verify_result(ssl_socket->ssl);
-      if (rc != X509_V_OK) { /* verify authentication result */
-	  if(rc==X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT && ssl_socket->allow_selfsigned){
-	      g_warning("The certificate is a selfsinged certificate and configuration allows it!");
-	  }else{
-	    g_warning("The certificate verification failed: %s! %d", X509_verify_cert_error_string(rc), rc);
-	    return authorization_result;
-	  }
-      }
-      X509* cert = SSL_get_peer_certificate(ssl_socket->ssl);
-      if (cert == NULL) {
-	  /* certificate is not present */
-	  if (SSL_get_verify_mode(ssl_socket->ssl) & SSL_VERIFY_FAIL_IF_NO_PEER_CERT) {
-	      g_warning("There's no certificate present!");
-	      return authorization_result;
-	  }
-	  /* certificate was optional: didn't intend to authorize remote */
-	  if (ssl_socket->server && cls->authorize_peer != NULL) {
-	      g_warning("Certificate required for authorization!");
-	      return authorization_result;
-	  }
-	  return authorization_result;
-      }
-      /* certificate is present, since we don't support access manager we are done */
-      if (cls->authorize_peer == NULL) {
-	  X509_free(cert);
-	  return authorization_result;
-      }else{
-	  /* both certificate and access manager are present */
-	  struct sockaddr_storage sa;
-	  socklen_t saLength = sizeof(struct sockaddr_storage);
 
-	  if (getpeername(socket->sd, (struct sockaddr*)&sa, &saLength) != 0) {
-	      sa.ss_family = AF_UNSPEC;
-	  }
-	  authorization_result = cls->authorize_peer(transport, cert, &sa, error);
+  if(cls!=NULL && ssl_socket->ssl!=NULL){
+    int rc = SSL_get_verify_result(ssl_socket->ssl);
+    if (rc != X509_V_OK) { /* verify authentication result */
+      if (rc == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT && ssl_socket->allow_selfsigned) {
+        g_debug("The certificate is a self-signed certificate and configuration allows it");
+      } else {
+        g_error("The certificate verification failed: %s (%d)", X509_verify_cert_error_string(rc), rc);
+        return FALSE;
       }
-      if(cert!=NULL){
-	  X509_free(cert);
+    }
+
+    X509* cert = SSL_get_peer_certificate(ssl_socket->ssl);
+    if (cert == NULL) {
+      if (SSL_get_verify_mode(ssl_socket->ssl) & SSL_VERIFY_FAIL_IF_NO_PEER_CERT) {
+        g_error("No certificate present");
+        return FALSE;
       }
+
+      g_debug("No certificate required");
+      return TRUE;
+    }
+
+    /* certificate is present, since we don't support access manager we are done */
+    if (cls->authorize_peer == NULL) {
+      X509_free(cert);
+      g_debug("Certificate presented but we're not checking it");
+      return TRUE;
+    } else {
+      /* both certificate and access manager are present */
+      struct sockaddr_storage sa;
+      socklen_t saLength = sizeof(struct sockaddr_storage);
+
+      if (getpeername(socket->sd, (struct sockaddr*)&sa, &saLength) != 0) {
+        sa.ss_family = AF_UNSPEC;
+      }
+
+      authorization_result = cls->authorize_peer(transport, cert, &sa, error);
+    }
+
+    if(cert != NULL) {
+      X509_free(cert);
+    }
   }
 
   return authorization_result;
@@ -477,8 +473,8 @@ thrift_ssl_socket_init (ThriftSSLSocket *socket)
   if(socket->ctx == NULL) {
       g_info("The SSL context was not automatically initialized with protocol %d", LATEST);
       if(error!=NULL){
-	  g_info("Reported reason %s", error->message);
-	  g_error_free (error);
+    g_info("Reported reason %s", error->message);
+    g_error_free (error);
       }
   }
   socket->server = FALSE;
@@ -513,7 +509,7 @@ thrift_ssl_socket_finalize (GObject *object)
 /* property accessor */
 void
 thrift_ssl_socket_get_property (GObject *object, guint property_id,
-				GValue *value, GParamSpec *pspec)
+        GValue *value, GParamSpec *pspec)
 {
   ThriftSSLSocket *socket = THRIFT_SSL_SOCKET (object);
   THRIFT_UNUSED_VAR (pspec);
@@ -529,7 +525,7 @@ thrift_ssl_socket_get_property (GObject *object, guint property_id,
 /* property mutator */
 void
 thrift_ssl_socket_set_property (GObject *object, guint property_id,
-				const GValue *value, GParamSpec *pspec)
+        const GValue *value, GParamSpec *pspec)
 {
   ThriftSSLSocket *socket = THRIFT_SSL_SOCKET (object);
 
@@ -538,8 +534,8 @@ thrift_ssl_socket_set_property (GObject *object, guint property_id,
   {
     case PROP_THRIFT_SSL_SOCKET_CONTEXT:
       if(socket->ctx!=NULL){
-	  g_debug("Freeing the context since we are setting a new one");
-	  SSL_CTX_free(socket->ctx);
+    g_debug("Freeing the context since we are setting a new one");
+    SSL_CTX_free(socket->ctx);
       }
       socket->ctx = g_value_get_pointer(value); // We copy the context
       break;
@@ -618,18 +614,18 @@ thrift_ssl_socket_class_init (ThriftSSLSocketClass *cls)
   gobject_class->get_property = thrift_ssl_socket_get_property;
   gobject_class->set_property = thrift_ssl_socket_set_property;
   param_spec = g_param_spec_pointer ("ssl_context",
-				     "SSLContext",
-				     "Set the SSL context for handshake with the remote host",
-				     G_PARAM_READWRITE);
+             "SSLContext",
+             "Set the SSL context for handshake with the remote host",
+             G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class, PROP_THRIFT_SSL_SOCKET_CONTEXT,
-				   param_spec);
+           param_spec);
   param_spec = g_param_spec_boolean ("ssl_accept_selfsigned",
-				     "Accept Self Signed",
-				     "Whether or not accept self signed certificate",
-				     FALSE,
-				     G_PARAM_READWRITE);
+             "Accept Self Signed",
+             "Whether or not accept self signed certificate",
+             FALSE,
+             G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class, PROP_THRIFT_SSL_SELF_SIGNED,
-				   param_spec);
+           param_spec);
 
   // This must be supported in future
   //  param_spec = g_param_spec_uint ("port",
@@ -673,8 +669,8 @@ thrift_ssl_socket_new(ThriftSSLSocketProtocol ssl_protocol, GError **error)
   /* Create the context */
   if(thrift_ssl_socket_global_context==NULL){
       if((thrift_ssl_socket_global_context=thrift_ssl_socket_context_initialize(ssl_protocol, error))==NULL){
-	  // FIXME Do error control
-	  return thriftSSLSocket;
+    // FIXME Do error control
+    return thriftSSLSocket;
       }
   }
 
@@ -699,8 +695,8 @@ thrift_ssl_socket_new_with_host(ThriftSSLSocketProtocol ssl_protocol, gchar *hos
   /* Create the context */
   if(thrift_ssl_socket_global_context==NULL){
       if((thrift_ssl_socket_global_context=thrift_ssl_socket_context_initialize(ssl_protocol, error))==NULL){
-	  // FIXME Do error control
-	  return thriftSSLSocket;
+    // FIXME Do error control
+    return thriftSSLSocket;
       }
   }
   /* FIXME if the protocol is different? */
@@ -731,8 +727,8 @@ thrift_ssl_socket_context_initialize(ThriftSSLSocketProtocol ssl_protocol, GErro
       break;
     default:
       g_set_error (error, THRIFT_TRANSPORT_ERROR,
-		   THRIFT_SSL_SOCKET_ERROR_CIPHER_NOT_AVAILABLE,
-		   "The SSL protocol is unknown for %d", ssl_protocol);
+       THRIFT_SSL_SOCKET_ERROR_CIPHER_NOT_AVAILABLE,
+       "The SSL protocol is unknown for %d", ssl_protocol);
       return NULL;
       break;
   }
@@ -759,13 +755,13 @@ void thrift_ssl_socket_get_error(GError **error, const guchar *error_msg, guint 
   while ((error_code = ERR_get_error()) != 0) {
       const char* reason = ERR_reason_error_string(error_code);
       if (reason == NULL) {
-	  g_set_error (error, THRIFT_TRANSPORT_ERROR,
-		       thrift_error_no,
-		       "SSL error %lX: %s", error_code, error_msg);
+    g_set_error (error, THRIFT_TRANSPORT_ERROR,
+           thrift_error_no,
+           "SSL error %lX: %s", error_code, error_msg);
       }else{
-	  g_set_error (error, THRIFT_TRANSPORT_ERROR,
-		       thrift_error_no,
-		       "SSL error %lX %s: %s", error_code,reason, error_msg);
+    g_set_error (error, THRIFT_TRANSPORT_ERROR,
+           thrift_error_no,
+           "SSL error %lX %s: %s", error_code,reason, error_msg);
       }
   }
 }
