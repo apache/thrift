@@ -205,6 +205,7 @@ main (int argc, char **argv)
                          NULL);
   if (ssl && !thrift_ssl_load_cert_from_file(THRIFT_SSL_SOCKET(socket), "../keys/client.crt")) {
     fprintf(stderr, "Unable to load client certificate test/keys/client.crt\n");
+    g_object_unref (socket);
     return 253;
   }
 
@@ -1597,6 +1598,7 @@ main (int argc, char **argv)
     }
     else {
       printf ("Connect failed: %s\n", error->message);
+      g_object_unref (socket);
       g_error_free (error);
       error = NULL;
 
