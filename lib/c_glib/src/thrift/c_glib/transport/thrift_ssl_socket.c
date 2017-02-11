@@ -52,7 +52,8 @@
 /* object properties */
 enum _ThriftSSLSocketProperties
 {
-  PROP_THRIFT_SSL_SOCKET_CONTEXT = 3
+  PROP_THRIFT_SSL_SOCKET_CONTEXT = 3,
+  PROP_THRIFT_SSL_SELF_SIGNED
 };
 
 /* To hold a global state management of openssl for all instances */
@@ -422,8 +423,12 @@ thrift_ssl_socket_authorize(ThriftTransport * transport, GError **error)
   if(cls!=NULL && ssl_socket->ssl!=NULL){
       int rc = SSL_get_verify_result(ssl_socket->ssl);
       if (rc != X509_V_OK) { /* verify authentication result */
-	  g_warning("The certificate verification failed!: %s", X509_verify_cert_error_string(rc));
-	  return authorization_result;
+	  if(rc==X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT && ssl_socket->allow_selfsigned){
+	      g_warning("The certificate is a selfsinged certificate and configuration allows it!");
+	  }else{
+	    g_warning("The certificate verification failed: %s! %d", X509_verify_cert_error_string(rc), rc);
+	    return authorization_result;
+	  }
       }
       X509* cert = SSL_get_peer_certificate(ssl_socket->ssl);
       if (cert == NULL) {
@@ -477,6 +482,7 @@ thrift_ssl_socket_init (ThriftSSLSocket *socket)
       }
   }
   socket->server = FALSE;
+  socket->allow_selfsigned = FALSE;
 
 }
 
@@ -536,6 +542,10 @@ thrift_ssl_socket_set_property (GObject *object, guint property_id,
 	  SSL_CTX_free(socket->ctx);
       }
       socket->ctx = g_value_get_pointer(value); // We copy the context
+      break;
+
+    case PROP_THRIFT_SSL_SELF_SIGNED:
+      socket->allow_selfsigned = g_value_get_boolean(value);
       break;
     default:
       g_warning("Trying to set property %i that doesn't exists!", property_id);
@@ -608,11 +618,19 @@ thrift_ssl_socket_class_init (ThriftSSLSocketClass *cls)
   gobject_class->get_property = thrift_ssl_socket_get_property;
   gobject_class->set_property = thrift_ssl_socket_set_property;
   param_spec = g_param_spec_pointer ("ssl_context",
-				     "ssl_context (construct)",
+				     "SSLContext",
 				     "Set the SSL context for handshake with the remote host",
 				     G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class, PROP_THRIFT_SSL_SOCKET_CONTEXT,
 				   param_spec);
+  param_spec = g_param_spec_boolean ("ssl_accept_selfsigned",
+				     "Accept Self Signed",
+				     "Whether or not accept self signed certificate",
+				     FALSE,
+				     G_PARAM_READWRITE);
+  g_object_class_install_property (gobject_class, PROP_THRIFT_SSL_SELF_SIGNED,
+				   param_spec);
+
   // This must be supported in future
   //  param_spec = g_param_spec_uint ("port",
   //                                  "port (construct)",

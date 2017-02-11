@@ -202,6 +202,7 @@ main (int argc, char **argv)
   socket = g_object_new (socket_type,
                          "hostname", host,
                          "port",     port,
+			 "ssl_accept_selfsigned", TRUE,
                          NULL);
   if (ssl && !thrift_ssl_load_cert_from_file(THRIFT_SSL_SOCKET(socket), "../keys/client.crt")) {
     fprintf(stderr, "Unable to load client certificate test/keys/client.crt\n");
@@ -300,10 +301,11 @@ main (int argc, char **argv)
         printf (" = void\n");
       }
       else {
+	if(error!=NULL){
         printf ("%s\n", error->message);
-        g_error_free (error);
-        error = NULL;
-
+	  g_error_free (error);
+	  error = NULL;
+	}
         fail_count++;
       }
 

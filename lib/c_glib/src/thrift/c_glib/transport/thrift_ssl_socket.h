@@ -71,6 +71,7 @@ struct _ThriftSSLSocket
   SSL *ssl;
   SSL_CTX* ctx;
   gboolean server;
+  gboolean allow_selfsigned;
 };
 
 typedef struct _ThriftSSLSocketClass ThriftSSLSocketClass;
