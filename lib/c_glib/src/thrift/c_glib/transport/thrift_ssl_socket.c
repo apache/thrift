@@ -366,13 +366,15 @@ thrift_ssl_socket_create_ssl_context(ThriftTransport * transport, GError **error
  */
 gboolean thrift_ssl_load_cert_from_file(ThriftSSLSocket *ssl_socket, const char *file_name)
 {
+  char error_buffer[255];
   if (!thrift_ssl_socket_openssl_initialized) {
-    g_warning("openssl not initialized yet");
+    g_error("OpenSSL is not initialized yet");
     return FALSE;
   }
   int rc = SSL_CTX_load_verify_locations(ssl_socket->ctx, file_name, NULL);
   if (rc != 1) { /*verify authentication result*/
-    g_warning("Load of certificates failed!: %s", X509_verify_cert_error_string(ERR_get_error()));
+	ERR_error_string_n(ERR_get_error(), error_buffer, 254);
+	g_warning("Load of certificates failed: %s!", error_buffer);
     return FALSE;
   }
   return TRUE;
@@ -464,9 +466,18 @@ thrift_ssl_socket_authorize(ThriftTransport * transport, GError **error)
 static void
 thrift_ssl_socket_init (ThriftSSLSocket *socket)
 {
-  socket->ssl = NULL;
-  socket->ctx = NULL;
-  socket->server = FALSE;
+	GError *error = NULL;
+	socket->ssl = NULL;
+	socket->ctx = thrift_ssl_socket_context_initialize(LATEST, &error);
+	if(socket->ctx == NULL) {
+		g_info("The SSL context was not automatically initialized with protocol %d", LATEST);
+		if(error!=NULL){
+			g_info("Reported reason %s", error->message);
+			g_error_free (error);
+		}
+	}
+	socket->server = FALSE;
+
 }
 
 /* destructor */
@@ -479,7 +490,11 @@ thrift_ssl_socket_finalize (GObject *object)
   {
     thrift_ssl_socket_close(THRIFT_TRANSPORT(object), &error);
     socket->ssl=NULL;
-    socket->ctx=NULL;
+	if(socket->ctx!=NULL){
+		g_debug("Freeing the context for the instance");
+		SSL_CTX_free(socket->ctx);
+	}
+	socket->ctx=NULL;
   }
 }
 
@@ -510,8 +525,12 @@ thrift_ssl_socket_set_property (GObject *object, guint property_id,
   switch (property_id)
   {
   case PROP_THRIFT_SSL_SOCKET_CONTEXT:
-    socket->ctx = g_value_get_pointer(value); /* We copy the context */
-    break;
+	if(socket->ctx!=NULL){
+		g_debug("Freeing the context since we are setting a new one");
+		SSL_CTX_free(socket->ctx);
+	}
+	socket->ctx = g_value_get_pointer(value); // We copy the context
+	break;
   default:
     g_warning("Trying to set property %i that doesn't exists!", property_id);
 /*    thrift_socket_set_property(object, property_id, value, pspec); */
@@ -577,14 +596,14 @@ thrift_ssl_socket_class_init (ThriftSSLSocketClass *cls)
   ThriftTransportClass *ttc = THRIFT_TRANSPORT_CLASS (cls);
   GObjectClass *gobject_class = G_OBJECT_CLASS (cls);
   GParamSpec *param_spec = NULL;
-  g_test_message("Init of class\n");
+
+  g_debug("Initialization of ThriftSSLSocketClass");
   /* setup accessors and mutators */
   gobject_class->get_property = thrift_ssl_socket_get_property;
   gobject_class->set_property = thrift_ssl_socket_set_property;
   param_spec = g_param_spec_pointer ("ssl_context",
       "ssl_context (construct)",
-      "Set the ssl context for handshake with the remote host",
-      G_PARAM_CONSTRUCT_ONLY |
+      "Set the SSL context for handshake with the remote host",
       G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class, PROP_THRIFT_SSL_SOCKET_CONTEXT,
       param_spec);
@@ -628,12 +647,13 @@ thrift_ssl_socket_new(ThriftSSLSocketProtocol ssl_protocol, GError **error)
 {
   ThriftSSLSocket *thriftSSLSocket = NULL;
   /* Create the context */
-  if(thrift_ssl_socket_global_context==NULL){
-    if(!thrift_ssl_socket_context_initialize(ssl_protocol, error)){
-      /* FIXME Do error control */
-      return thriftSSLSocket;
-    }
-  }
+	if(thrift_ssl_socket_global_context==NULL){
+		if((thrift_ssl_socket_global_context=thrift_ssl_socket_context_initialize(ssl_protocol, error))==NULL){
+			// FIXME Do error control
+			return thriftSSLSocket;
+		}
+	}
+
   /* FIXME if the protocol is different? */
   thriftSSLSocket = g_object_new (THRIFT_TYPE_SSL_SOCKET, "ssl_context", thrift_ssl_socket_global_context, NULL);
   return thriftSSLSocket;
@@ -651,64 +671,63 @@ void thrift_ssl_socket_set_manager(ThriftSSLSocket *ssl_socket, AUTHORIZATION_MA
 ThriftSSLSocket*
 thrift_ssl_socket_new_with_host(ThriftSSLSocketProtocol ssl_protocol, gchar *hostname, guint port, GError **error)
 {
-  ThriftSSLSocket *thriftSSLSocket = NULL;
-  /* Create the context */
-  if(thrift_ssl_socket_global_context==NULL){
-    if(!thrift_ssl_socket_context_initialize(ssl_protocol, error)){
-      /* FIXME Do error control */
-      return thriftSSLSocket;
-    }
-  }
-  /* FIXME if the protocol is different? */
-  thriftSSLSocket = g_object_new (THRIFT_TYPE_SSL_SOCKET, "ssl_context", thrift_ssl_socket_global_context, "hostname", hostname, "port", port, NULL);
-  return thriftSSLSocket;
+	ThriftSSLSocket *thriftSSLSocket = NULL;
+	/* Create the context */
+	if(thrift_ssl_socket_global_context==NULL){
+		if((thrift_ssl_socket_global_context=thrift_ssl_socket_context_initialize(ssl_protocol, error))==NULL){
+			// FIXME Do error control
+			return thriftSSLSocket;
+		}
+	}
+	/* FIXME if the protocol is different? */
+	thriftSSLSocket = g_object_new (THRIFT_TYPE_SSL_SOCKET, "ssl_context", thrift_ssl_socket_global_context, "hostname", hostname, "port", port, NULL);
+	return thriftSSLSocket;
 }
 
-gboolean
+
+SSL_CTX*
 thrift_ssl_socket_context_initialize(ThriftSSLSocketProtocol ssl_protocol, GError **error)
 {
-  switch(ssl_protocol){
-  case SSLTLS:
-    thrift_ssl_socket_global_context = SSL_CTX_new(SSLv23_method());
-    break;
-  case SSLv3:
-    thrift_ssl_socket_global_context = SSL_CTX_new(SSLv3_method());
-    break;
-  case TLSv1_0:
-    thrift_ssl_socket_global_context = SSL_CTX_new(TLSv1_method());
-    break;
-  case TLSv1_1:
-    thrift_ssl_socket_global_context = SSL_CTX_new(TLSv1_1_method());
-    break;
-  case TLSv1_2:
-    thrift_ssl_socket_global_context = SSL_CTX_new(TLSv1_2_method());
-    break;
-  default:
-    g_set_error (error, THRIFT_TRANSPORT_ERROR,
-        THRIFT_SSL_SOCKET_ERROR_CIPHER_NOT_AVAILABLE,
-        "The SSL protocol is unknown for %d", ssl_protocol);
-    return FALSE;
-    break;
-  }
+	SSL_CTX* context = NULL;
+	switch(ssl_protocol){
+	case SSLTLS:
+		context = SSL_CTX_new(SSLv23_method());
+		break;
+	case SSLv3:
+		context = SSL_CTX_new(SSLv3_method());
+		break;
+	case TLSv1_0:
+		context = SSL_CTX_new(TLSv1_method());
+		break;
+	case TLSv1_1:
+		context = SSL_CTX_new(TLSv1_1_method());
+		break;
+	case TLSv1_2:
+		context = SSL_CTX_new(TLSv1_2_method());
+		break;
+	default:
+		g_set_error (error, THRIFT_TRANSPORT_ERROR,
+				THRIFT_SSL_SOCKET_ERROR_CIPHER_NOT_AVAILABLE,
+				"The SSL protocol is unknown for %d", ssl_protocol);
+		return NULL;
+		break;
+	}
 
-  if (thrift_ssl_socket_global_context == NULL) {
-    thrift_ssl_socket_get_error(error, "No cipher overlay", THRIFT_SSL_SOCKET_ERROR_CIPHER_NOT_AVAILABLE);
-    return FALSE;
-  }
-  SSL_CTX_set_mode(thrift_ssl_socket_global_context, SSL_MODE_AUTO_RETRY);
+	if (context == NULL) {
+		thrift_ssl_socket_get_error(error, "No cipher overlay", THRIFT_SSL_SOCKET_ERROR_CIPHER_NOT_AVAILABLE);
+		return NULL;
+	}
+	SSL_CTX_set_mode(context, SSL_MODE_AUTO_RETRY);
 
-  /*
-  Disable horribly insecure SSLv2 and SSLv3 protocols but allow a handshake
-  with older clients so they get a graceful denial.
-  */
-  if (ssl_protocol == SSLTLS) {
-    SSL_CTX_set_options(thrift_ssl_socket_global_context, SSL_OP_NO_SSLv2);
-    SSL_CTX_set_options(thrift_ssl_socket_global_context, SSL_OP_NO_SSLv3);   /* THRIFT-3164 */
-  }
+	// Disable horribly insecure SSLv2 and SSLv3 protocols but allow a handshake
+	// with older clients so they get a graceful denial.
+	if (ssl_protocol == SSLTLS) {
+		SSL_CTX_set_options(context, SSL_OP_NO_SSLv2);
+		SSL_CTX_set_options(context, SSL_OP_NO_SSLv3);   // THRIFT-3164
+	}
 
-  return TRUE;
+	return context;
 }
-
 
 void thrift_ssl_socket_get_error(GError **error, const guchar *error_msg, guint thrift_error_no)
 {

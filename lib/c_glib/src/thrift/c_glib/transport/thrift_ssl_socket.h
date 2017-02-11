@@ -105,7 +105,7 @@ typedef enum _ThriftSSLSocketProtocol ThriftSSLSocketProtocol;
 
 
 /* Internal functions */
-gboolean
+SSL_CTX*
 thrift_ssl_socket_context_initialize(ThriftSSLSocketProtocol ssl_protocol, GError **error);
 
 

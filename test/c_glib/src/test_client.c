@@ -173,6 +173,7 @@ main (int argc, char **argv)
   if (ssl) {
     socket_type = THRIFT_TYPE_SSL_SOCKET;
     socket_name = "ip-ssl";
+    printf("Type name %s\n", g_type_name (socket_type));
   }
 
   if (!options_valid)
