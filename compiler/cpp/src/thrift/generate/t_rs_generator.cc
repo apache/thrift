@@ -1449,8 +1449,12 @@ void t_rs_generator::render_union_definition(const string& union_name, t_struct*
 }
 
 void t_rs_generator::render_union_impl(const string& union_name, t_struct* tstruct) {
-  f_gen_ << "impl " << union_name << " {" << endl;
-  indent_up();
+
+    f_gen_
+    << indent()
+    << "impl TThriftProtocolSerializable for "
+    << union_name << " {" << endl;
+    indent_up();
 
   render_union_sync_read(union_name, tstruct);
   render_union_sync_write(union_name, tstruct);
