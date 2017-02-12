@@ -102,9 +102,6 @@ private:
 
     // provides rust formatted namespace
     string namespace_preamble();
-    // provides rust formatted preamble of the current namespace & file from
-    // which it came
-    string namespace_origin_preamble();
 
   // Write the common compiler attributes and module includes to the top of the auto-generated file.
   void render_attributes_and_includes();
@@ -508,20 +505,6 @@ string t_rs_generator::namespace_preamble() {
     }
     return p;
 }
-
-string namespace_origin_preamble() {
-    string p("");
-    string ns = get_program()->get_namespace("rs");
-    if (ns.length()>0) {
-        p += "::" + ns + "::";
-    }
-    string pn = t->get_program()->get_name();
-        if (pn.length()>0) {
-            p += pn + "::";
-        }
-    return p;
-}
-
 
 void t_rs_generator::render_attributes_and_includes() {
   // turn off some compiler/clippy warnings
@@ -3082,19 +3065,29 @@ string t_rs_generator::visibility_qualifier(t_rs_generator::e_struct_type struct
 }
 
 string t_rs_generator::rust_namespace(t_service* tservice) {
-  if (tservice->get_program()->get_name() != get_program()->get_name()) {
-    return rust_snake_case(tservice->get_program()->get_name()) + "::";
-  } else {
-    return "";
-  }
+    string p("");
+    string ns = get_program()->get_namespace("rs");
+    if (ns.length()>0) {
+        p += "::" + ns + "::";
+    }
+    if (tservice->get_program()->get_name() != get_program()->get_name()) {
+        p += tservice->get_program()->get_name() + "::";
+    }
+
+    return p;
 }
 
 string t_rs_generator::rust_namespace(t_type* ttype) {
-  if (ttype->get_program()->get_name() != get_program()->get_name()) {
-    return rust_snake_case(ttype->get_program()->get_name()) + "::";
-  } else {
-    return "";
-  }
+    string p("");
+    string ns = get_program()->get_namespace("rs");
+    if (ns.length()>0) {
+        p += "::" + ns + "::";
+    }
+    if (ttype->get_program()->get_name() != get_program()->get_name()) {
+        p += ttype->get_program()->get_name() + "::";
+    }
+
+    return p;
 }
 
 bool t_rs_generator::is_reserved(const string& name) {
