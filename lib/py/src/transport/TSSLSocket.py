@@ -28,10 +28,21 @@ from .sslcompat import _match_hostname, _match_has_ipaddress
 from thrift.transport import TSocket
 from thrift.transport.TTransport import TTransportException
 
+# if the version of Python is sufficient, allow for a SSLv23
+# handshake but do not allow negotiation of SSLv2 or SSLv3.
+# Documentation says Python 2.7.9 has this, however it turns
+# out some distributions like Ubuntu 14.04 have backported
+# ability to disable SSLv3 to Python 2.7.6
+has_secure_ssl_handshake = 0
+try:
+    from OpenSSL.SSL import OP_NO_SSLv3
+    has_secure_ssl_handshake = 1
+except ImportError:
+    has_secure_ssl_handshake = 0
+
 logger = logging.getLogger(__name__)
 warnings.filterwarnings(
     'default', category=DeprecationWarning, module=__name__)
-
 
 class TSSLBase(object):
     # SSLContext is not available for Python < 2.7.9
@@ -41,7 +52,10 @@ class TSSLBase(object):
     _has_ciphers = sys.hexversion >= 0x020700F0
 
     # SSL 2.0 and 3.0 are disabled via ssl.OP_NO_SSLv2 and ssl.OP_NO_SSLv3
-    _default_protocol = ssl.PROTOCOL_SSLv23
+    if (has_secure_ssl_handshake):
+        _default_protocol = ssl.PROTOCOL_SSLv23
+    else:
+        _default_protocol = ssl.PROTOCOL_TLSv1
 
     def _init_context(self, ssl_version):
         if self._has_ssl_context:
