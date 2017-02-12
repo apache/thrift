@@ -100,6 +100,12 @@ private:
   // File to which generated code is written.
   std::ofstream f_gen_;
 
+    // provides rust formatted namespace
+    string namespace_preamble();
+    // provides rust formatted preamble of the current namespace & file from
+    // which it came
+    string namespace_origin_preamble();
+
   // Write the common compiler attributes and module includes to the top of the auto-generated file.
   void render_attributes_and_includes();
 
@@ -494,6 +500,29 @@ void t_rs_generator::init_generator() {
   render_attributes_and_includes();
 }
 
+string t_rs_generator::namespace_preamble() {
+    string p("");
+    string ns = get_program()->get_namespace("rs");
+    if (ns.length()>0) {
+        p += "::" + ns + "::";
+    }
+    return p;
+}
+
+string namespace_origin_preamble() {
+    string p("");
+    string ns = get_program()->get_namespace("rs");
+    if (ns.length()>0) {
+        p += "::" + ns + "::";
+    }
+    string pn = t->get_program()->get_name();
+        if (pn.length()>0) {
+            p += pn + "::";
+        }
+    return p;
+}
+
+
 void t_rs_generator::render_attributes_and_includes() {
   // turn off some compiler/clippy warnings
 
@@ -505,10 +534,14 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << endl;
 
   // add standard includes
+  // actually, the models go into a packages which is responsible for the
+  // according externs so should we include this?
   f_gen_ << "extern crate ordered_float;" << endl;
   f_gen_ << "extern crate thrift;" << endl;
   f_gen_ << "extern crate try_from;" << endl;
   f_gen_ << endl;
+
+
   f_gen_ << "use ordered_float::OrderedFloat;" << endl;
   f_gen_ << "use std::cell::RefCell;" << endl;
   f_gen_ << "use std::collections::{BTreeMap, BTreeSet};" << endl;
@@ -551,13 +584,16 @@ void t_rs_generator::render_attributes_and_includes() {
   }
 
   // finally, write all the "pub use..." declarations
-  if (!referenced_modules.empty()) {
-    set<string>::iterator module_iter;
-    for (module_iter = referenced_modules.begin(); module_iter != referenced_modules.end(); ++module_iter) {
-      f_gen_ << "use " << rust_snake_case(*module_iter) << ";" << endl;
+  // we have to respect the namespaces here so people can include the models
+  // into packages
+    if (!referenced_modules.empty()) {
+        set<string>::iterator module_iter;
+        for (module_iter = referenced_modules.begin(); module_iter != referenced_modules.end(); ++module_iter) {
+
+            f_gen_ << "use " << namespace_preamble() + rust_snake_case(*module_iter) << ";" << endl;
+        }
+        f_gen_ << endl;
     }
-    f_gen_ << endl;
-  }
 }
 
 void t_rs_generator::compute_service_referenced_modules(
@@ -826,7 +862,7 @@ void t_rs_generator::generate_enum(t_enum* tenum) {
 
 void t_rs_generator::render_enum_definition(t_enum* tenum, const string& enum_name) {
   render_rustdoc((t_doc*) tenum);
-  f_gen_ << "#[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]" << endl;
+  f_gen_ << "#[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]" << endl;
   f_gen_ << "pub enum " << enum_name << " {" << endl;
   indent_up();
 
@@ -965,7 +1001,7 @@ void t_rs_generator::render_struct_definition(
   t_rs_generator::e_struct_type struct_type
 ) {
   render_rustdoc((t_doc*) tstruct);
-  f_gen_ << "#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]" << endl;
+  f_gen_ << "#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]" << endl;
   f_gen_ << visibility_qualifier(struct_type) << "struct " << struct_name << " {" << endl;
 
   // render the members
@@ -1311,7 +1347,7 @@ void t_rs_generator::render_union_definition(const string& union_name, t_struct*
     throw "cannot generate rust enum with 0 members"; // may be valid thrift, but it's invalid rust
   }
 
-  f_gen_ << "#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]" << endl;
+  f_gen_ << "#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]" << endl;
   f_gen_ << "pub enum " << union_name << " {" << endl;
   indent_up();
 
