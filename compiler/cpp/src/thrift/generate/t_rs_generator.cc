@@ -544,6 +544,7 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "use thrift::protocol::verify_expected_service_call;" << endl;
   f_gen_ << "use thrift::protocol::verify_required_field_exists;" << endl;
   f_gen_ << "use thrift::server::TProcessor;" << endl;
+    f_gen_ << "use thrift::TThriftProtocolSerializable;" << endl;
   f_gen_ << endl;
 
   // add all the program includes
@@ -844,58 +845,85 @@ void t_rs_generator::generate_enum(t_enum* tenum) {
 }
 
 void t_rs_generator::render_enum_definition(t_enum* tenum, const string& enum_name) {
-  render_rustdoc((t_doc*) tenum);
-  f_gen_ << "#[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]" << endl;
-  f_gen_ << "pub enum " << enum_name << " {" << endl;
-  indent_up();
+    vector<t_enum_value*> constants = tenum->get_constants();
+    vector<t_enum_value*>::iterator constants_iter;
 
-  vector<t_enum_value*> constants = tenum->get_constants();
-  vector<t_enum_value*>::iterator constants_iter;
-  for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
-    t_enum_value* val = (*constants_iter);
-    render_rustdoc((t_doc*) val);
-    f_gen_
-      << indent()
-      << uppercase(val->get_name())
-      << " = "
-      << val->get_value()
-      << ","
-      << endl;
-  }
+    // generate a convienent macro for anyone wanting to write own implementations
+    // of things
+    f_gen_ << indent() << "macro_rules! ENUM_MEMBERS_" << uppercase(enum_name)
+    << " { () => " << endl;
+    indent_up();
+    f_gen_ << indent() << "{" << endl;
+    indent_up();
+    for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
+        t_enum_value* val = (*constants_iter);
+        f_gen_
+        << indent()
+        << uppercase(val->get_name())
+        << " = "
+        << val->get_value()
+        << "," << endl;
+    }
+    indent_down();
 
-  indent_down();
-  f_gen_ << "}" << endl;
-  f_gen_ << endl;
+    f_gen_ << indent() << "}" << endl;
+    indent_down();
+    f_gen_ << indent() << "}" << endl;
+
+    render_rustdoc((t_doc*) tenum);
+    f_gen_ << "#[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]" << endl;
+    f_gen_ << "pub enum " << enum_name << " {" << endl;
+    indent_up();
+
+    for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
+        t_enum_value* val = (*constants_iter);
+        render_rustdoc((t_doc*) val);
+        f_gen_
+        << indent()
+        << uppercase(val->get_name())
+        << " = "
+        << val->get_value()
+        << ","
+        << endl;
+    }
+    
+    indent_down();
+    f_gen_ << "}" << endl;
+    f_gen_ << endl;
 }
 
 void t_rs_generator::render_enum_impl(const string& enum_name) {
-  f_gen_ << "impl " << enum_name << " {" << endl;
-  indent_up();
 
-  f_gen_
+    f_gen_
     << indent()
-    << "pub fn write_to_out_protocol(&self, o_prot: &mut TOutputProtocol) -> thrift::Result<()> {"
-    << endl;
-  indent_up();
-  f_gen_ << indent() << "o_prot.write_i32(*self as i32)" << endl;
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
+    << "impl TThriftProtocolSerializable for "
+    << enum_name << " {" << endl;
+    indent_up();
 
-  f_gen_
+    f_gen_
     << indent()
-    << "pub fn read_from_in_protocol(i_prot: &mut TInputProtocol) -> thrift::Result<" << enum_name << "> {"
+    << "fn write_to_out_protocol(&self, o_prot: &mut TOutputProtocol) -> thrift::Result<()> {"
     << endl;
-  indent_up();
+    indent_up();
+    f_gen_ << indent() << "o_prot.write_i32(*self as i32)" << endl;
+    indent_down();
+    f_gen_ << indent() << "}" << endl;
 
-  f_gen_ << indent() << "let enum_value = i_prot.read_i32()?;" << endl;
-  f_gen_ << indent() << enum_name << "::try_from(enum_value)";
+    f_gen_
+    << indent()
+    << "fn read_from_in_protocol(i_prot: &mut TInputProtocol) -> thrift::Result<" << enum_name << "> {"
+    << endl;
+    indent_up();
 
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
+    f_gen_ << indent() << "let enum_value = i_prot.read_i32()?;" << endl;
+    f_gen_ << indent() << enum_name << "::try_from(enum_value)";
 
-  indent_down();
-  f_gen_ << "}" << endl;
-  f_gen_ << endl;
+    indent_down();
+    f_gen_ << indent() << "}" << endl;
+
+    indent_down();
+    f_gen_ << "}" << endl;
+    f_gen_ << endl;
 }
 
 void t_rs_generator::render_enum_conversion(t_enum* tenum, const string& enum_name) {
@@ -982,37 +1010,69 @@ void t_rs_generator::render_struct_definition(
   const string& struct_name,
   t_struct* tstruct,
   t_rs_generator::e_struct_type struct_type
-) {
-  render_rustdoc((t_doc*) tstruct);
-  f_gen_ << "#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]" << endl;
-  f_gen_ << visibility_qualifier(struct_type) << "struct " << struct_name << " {" << endl;
+                                              ) {
+    vector<t_field*> members = tstruct->get_sorted_members();
 
-  // render the members
-  vector<t_field*> members = tstruct->get_sorted_members();
-  if (!members.empty()) {
+    // generate a convienent macro for anyone wanting to write own implementations
+    // of things
+    f_gen_ << indent() << "macro_rules! STRUCT_MEMBERS_" << uppercase(struct_name)
+    << " { () => " << endl;
+    indent_up();
+    f_gen_ << indent() << "{" << endl;
     indent_up();
 
     vector<t_field*>::iterator members_iter;
     for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
-      t_field* member = (*members_iter);
-      t_field::e_req member_req = actual_field_req(member, struct_type);
+        t_field* member = (*members_iter);
+        t_field::e_req member_req = actual_field_req(member, struct_type);
 
-      string rust_type = to_rust_type(member->get_type());
-      rust_type = is_optional(member_req) ? "Option<" + rust_type + ">" : rust_type;
+        string rust_type = to_rust_type(member->get_type());
+        rust_type = is_optional(member_req) ? "Option<" + rust_type + ">" : rust_type;
 
-      render_rustdoc((t_doc*) member);
-      f_gen_
+        f_gen_
         << indent()
-        << visibility_qualifier(struct_type)
-        << rust_field_name(member) << ": " << rust_type << ","
-        << endl;
+        << member->get_key() << " => "
+        << rust_field_name(member)
+        << " : "
+        << rust_type
+        << " ," << endl;
     }
-
     indent_down();
-  }
 
-  f_gen_ << "}" << endl;
-  f_gen_ << endl;
+    f_gen_ << indent() << "}" << endl;
+    indent_down();
+    f_gen_ << indent() << "}" << endl;
+    f_gen_ << endl;
+
+    render_rustdoc((t_doc*) tstruct);
+    f_gen_ << "#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]" << endl;
+    f_gen_ << visibility_qualifier(struct_type) << "struct " << struct_name << " {" << endl;
+
+    // render the members
+    if (!members.empty()) {
+        indent_up();
+
+        vector<t_field*>::iterator members_iter;
+        for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
+            t_field* member = (*members_iter);
+            t_field::e_req member_req = actual_field_req(member, struct_type);
+
+            string rust_type = to_rust_type(member->get_type());
+            rust_type = is_optional(member_req) ? "Option<" + rust_type + ">" : rust_type;
+
+            render_rustdoc((t_doc*) member);
+            f_gen_
+            << indent()
+            << visibility_qualifier(struct_type)
+            << rust_field_name(member) << ": " << rust_type << ","
+            << endl;
+        }
+        
+        indent_down();
+    }
+    
+    f_gen_ << "}" << endl;
+    f_gen_ << endl;
 }
 
 void t_rs_generator::render_exception_struct_error_trait_impls(const string& struct_name, t_struct* tstruct) {
@@ -1100,24 +1160,36 @@ void t_rs_generator::render_struct_impl(
   const string& struct_name,
   t_struct* tstruct,
   t_rs_generator::e_struct_type struct_type
-) {
-  f_gen_ << "impl " << struct_name << " {" << endl;
-  indent_up();
+                                        ) {
+    f_gen_ << "impl " << struct_name << " {" << endl;
+    indent_up();
 
-  if (struct_type == t_rs_generator::T_REGULAR || struct_type == t_rs_generator::T_EXCEPTION) {
-    render_struct_constructor(struct_name, tstruct, struct_type);
-  }
+    if (struct_type == t_rs_generator::T_REGULAR || struct_type == t_rs_generator::T_EXCEPTION) {
+        render_struct_constructor(struct_name, tstruct, struct_type);
+    }
 
-  render_struct_sync_read(struct_name, tstruct, struct_type);
-  render_struct_sync_write(tstruct, struct_type);
+    indent_down();
+    f_gen_ << "}" << endl << endl;
 
-  if (struct_type == t_rs_generator::T_RESULT) {
-    render_result_struct_to_result_method(tstruct);
-  }
+    f_gen_ << "impl TThriftProtocolSerializable for " << struct_name << " {" << endl;
+    indent_up();
 
-  indent_down();
-  f_gen_ << "}" << endl;
-  f_gen_ << endl;
+    render_struct_sync_read(struct_name, tstruct, struct_type);
+    render_struct_sync_write(tstruct, struct_type);
+
+    indent_down();
+    f_gen_ << "}" << endl;
+
+
+    if (struct_type == t_rs_generator::T_RESULT) {
+        f_gen_ << "impl " << struct_name << " {" << endl;
+        indent_up();
+        render_result_struct_to_result_method(tstruct);
+        indent_down();
+        f_gen_ << "}" << endl;
+    }
+    
+    f_gen_ << endl;
 }
 
 void t_rs_generator::render_struct_constructor(
@@ -1325,28 +1397,55 @@ void t_rs_generator::render_union(t_struct* tstruct) {
 }
 
 void t_rs_generator::render_union_definition(const string& union_name, t_struct* tstruct) {
-  const vector<t_field*>& members = tstruct->get_sorted_members();
-  if (members.empty()) {
-    throw "cannot generate rust enum with 0 members"; // may be valid thrift, but it's invalid rust
-  }
+    const vector<t_field*>& members = tstruct->get_sorted_members();
+    if (members.empty()) {
+        throw "cannot generate rust enum with 0 members"; // may be valid thrift, but it's invalid rust
+    }
 
-  f_gen_ << "#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]" << endl;
-  f_gen_ << "pub enum " << union_name << " {" << endl;
-  indent_up();
+    // generate a convienent macro for anyone wanting to write own implementations
+    // of things
+    f_gen_ << indent() << "macro_rules! UNION_MEMBERS_" << uppercase(union_name)
+    << " { () => " << endl;
+    indent_up();
+    f_gen_ << indent() << "{" << endl;
+    indent_up();
 
-  vector<t_field*>::const_iterator member_iter;
-  for(member_iter = members.begin(); member_iter != members.end(); ++member_iter) {
-    t_field* tfield = (*member_iter);
-    f_gen_
-      << indent()
-      << rust_union_field_name(tfield)
-      << "(" << to_rust_type(tfield->get_type()) << "),"
-      << endl;
-  }
+    vector<t_field*>::const_iterator members_iter;
+    for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
+        t_field* tfield = (*members_iter);
 
-  indent_down();
-  f_gen_ << "}" << endl;
-  f_gen_ << endl;
+        f_gen_
+        << indent()
+        << tfield->get_key() << " => "
+        << rust_union_field_name(tfield)
+        << " : "
+        << to_rust_type(tfield->get_type())
+        << " ," << endl;
+    }
+    indent_down();
+
+    f_gen_ << indent() << "}" << endl;
+    indent_down();
+    f_gen_ << indent() << "}" << endl;
+    f_gen_ << endl;
+
+    f_gen_ << "#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]" << endl;
+    f_gen_ << "pub enum " << union_name << " {" << endl;
+    indent_up();
+
+    vector<t_field*>::const_iterator member_iter;
+    for(member_iter = members.begin(); member_iter != members.end(); ++member_iter) {
+        t_field* tfield = (*member_iter);
+        f_gen_
+        << indent()
+        << rust_union_field_name(tfield)
+        << "(" << to_rust_type(tfield->get_type()) << "),"
+        << endl;
+    }
+    
+    indent_down();
+    f_gen_ << "}" << endl;
+    f_gen_ << endl;
 }
 
 void t_rs_generator::render_union_impl(const string& union_name, t_struct* tstruct) {
@@ -1373,7 +1472,7 @@ void t_rs_generator::render_struct_sync_write(
 ) {
   f_gen_
     << indent()
-    << visibility_qualifier(struct_type)
+    // << visibility_qualifier(struct_type)
     << "fn write_to_out_protocol(&self, o_prot: &mut TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
@@ -1406,7 +1505,7 @@ void t_rs_generator::render_struct_sync_write(
 void t_rs_generator::render_union_sync_write(const string &union_name, t_struct *tstruct) {
   f_gen_
     << indent()
-    << "pub fn write_to_out_protocol(&self, o_prot: &mut TOutputProtocol) -> thrift::Result<()> {"
+    << "fn write_to_out_protocol(&self, o_prot: &mut TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
 
@@ -1630,7 +1729,7 @@ void t_rs_generator::render_struct_sync_read(
 ) {
   f_gen_
     << indent()
-    << visibility_qualifier(struct_type)
+    // << visibility_qualifier(struct_type)
     << "fn read_from_in_protocol(i_prot: &mut TInputProtocol) -> thrift::Result<" << struct_name << "> {"
     << endl;
 
@@ -1753,7 +1852,7 @@ void t_rs_generator::render_struct_sync_read(
 void t_rs_generator::render_union_sync_read(const string &union_name, t_struct *tstruct) {
   f_gen_
     << indent()
-    << "pub fn read_from_in_protocol(i_prot: &mut TInputProtocol) -> thrift::Result<" << union_name << "> {"
+    << "fn read_from_in_protocol(i_prot: &mut TInputProtocol) -> thrift::Result<" << union_name << "> {"
     << endl;
   indent_up();
 
@@ -3066,24 +3165,25 @@ string t_rs_generator::visibility_qualifier(t_rs_generator::e_struct_type struct
 
 string t_rs_generator::rust_namespace(t_service* tservice) {
     string p("");
-    string ns = get_program()->get_namespace("rs");
-    if (ns.length()>0) {
-        p += "::" + ns + "::";
-    }
     if (tservice->get_program()->get_name() != get_program()->get_name()) {
+        string ns = get_program()->get_namespace("rs");
+        if (ns.length()>0) {
+            p += "::" + ns + "::";
+        }
         p += tservice->get_program()->get_name() + "::";
     }
-
+    
     return p;
 }
 
 string t_rs_generator::rust_namespace(t_type* ttype) {
     string p("");
-    string ns = get_program()->get_namespace("rs");
-    if (ns.length()>0) {
-        p += "::" + ns + "::";
-    }
     if (ttype->get_program()->get_name() != get_program()->get_name()) {
+        string ns = get_program()->get_namespace("rs");
+        if (ns.length()>0) {
+            p += "::" + ns + "::";
+        }
+
         p += ttype->get_program()->get_name() + "::";
     }
 
