@@ -41,7 +41,9 @@ RUN yum install -y epel-release && \
     && yum clean all
 
 # optional dependencies
-RUN pip install ipaddress backports.ssl_match_hostname tornado
+# skipping ipaddress and backports.ssl_match_hostname to test legacy callback
+# RUN pip install ipaddress backports.ssl_match_hostname tornado
+RUN pip install tornado
 
 # CMake
 RUN curl -sSL https://cmake.org/files/v3.4/cmake-3.4.1.tar.gz | tar -xz && \
