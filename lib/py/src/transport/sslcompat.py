@@ -25,7 +25,7 @@ from thrift.transport.TTransport import TTransportException
 logger = logging.getLogger(__name__)
 
 
-def legacy_validate_callback(self, cert, hostname):
+def legacy_validate_callback(cert, hostname):
     """legacy method to validate the peer's SSL certificate, and to check
     the commonName of the certificate to ensure it matches the hostname we
     used to make this connection.  Does not support subjectAltName records
@@ -36,7 +36,7 @@ def legacy_validate_callback(self, cert, hostname):
     if 'subject' not in cert:
         raise TTransportException(
             TTransportException.NOT_OPEN,
-            'No SSL certificate found from %s:%s' % (self.host, self.port))
+            'No SSL certificate found from %s' % hostname)
     fields = cert['subject']
     for field in fields:
         # ensure structure we get back is what we expect
@@ -57,7 +57,7 @@ def legacy_validate_callback(self, cert, hostname):
             raise TTransportException(
                 TTransportException.UNKNOWN,
                 'Hostname we connected to "%s" doesn\'t match certificate '
-                'provided commonName "%s"' % (self.host, certhost))
+                'provided commonName "%s"' % (hostname, certhost))
     raise TTransportException(
         TTransportException.UNKNOWN,
         'Could not validate SSL certificate from host "%s".  Cert=%s'
