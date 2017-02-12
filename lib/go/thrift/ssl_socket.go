@@ -48,6 +48,9 @@ func NewTSSLSocket(hostPort string, cfg *tls.Config) (*TSSLSocket, error) {
 // NewTSSLSocketTimeout creates a net.Conn-backed TTransport, given a host and port
 // it also accepts a tls Configuration and a timeout as a time.Duration
 func NewTSSLSocketTimeout(hostPort string, cfg *tls.Config, timeout time.Duration) (*TSSLSocket, error) {
+	if cfg.MinVersion == 0 {
+		cfg.MinVersion = tls.VersionTLS10
+	}
 	return &TSSLSocket{hostPort: hostPort, timeout: timeout, cfg: cfg}, nil
 }
 

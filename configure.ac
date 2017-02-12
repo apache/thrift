@@ -911,8 +911,8 @@ if test "$have_cpp" = "yes" ; then
   echo "C++ Library:"
   echo "   Build TZlibTransport ...... : $have_zlib"
   echo "   Build TNonblockingServer .. : $have_libevent"
-  echo "   Build TQTcpServer (Qt4) .... : $have_qt"
-  echo "   Build TQTcpServer (Qt5) .... : $have_qt5"
+  echo "   Build TQTcpServer (Qt4) ... : $have_qt"
+  echo "   Build TQTcpServer (Qt5) ... : $have_qt5"
 fi
 if test "$have_java" = "yes" ; then
   echo
@@ -1004,7 +1004,7 @@ fi
 if test "$have_lua" = "yes" ; then
   echo
   echo "Lua Library:"
-  echo "   Using Lua .............. : $LUA"
+  echo "   Using Lua ................. : $LUA"
 fi
 if test "$have_rs" = "yes" ; then
   echo

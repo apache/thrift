@@ -4452,4 +4452,4 @@ THRIFT_REGISTER_GENERATOR(
     "    include_prefix:  Use full include paths in generated files.\n"
     "    moveable_types:  Generate move constructors and assignment operators.\n"
     "    no_ostream_operators:\n"
-    "                     Omit generation of ostream definitions.\n");
+    "                     Omit generation of ostream definitions.\n")

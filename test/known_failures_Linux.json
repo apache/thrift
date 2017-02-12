@@ -47,6 +47,9 @@
   "csharp-d_binary_buffered-ip-ssl",
   "csharp-d_compact_buffered-ip-ssl",
   "csharp-d_json_buffered-ip-ssl",
+  "csharp-d_binary_framed-ip-ssl",
+  "csharp-d_compact_framed-ip-ssl",
+  "csharp-d_json_framed-ip-ssl",
   "csharp-erl_binary_buffered-ip-ssl",
   "csharp-erl_binary_framed-ip-ssl",
   "csharp-erl_compact_buffered-ip-ssl",
@@ -105,6 +108,7 @@
   "d-cpp_json_http-ip-ssl",
   "d-d_binary_http-ip",
   "d-d_compact_http-ip",
+  "d-d_json_http-ip",
   "d-dart_binary_framed-ip",
   "d-dart_binary_http-ip",
   "d-dart_compact_framed-ip",
@@ -220,9 +224,5 @@
   "hs-py3_json_framed-ip",
   "java-d_compact_buffered-ip",
   "java-d_compact_buffered-ip-ssl",
-  "java-d_compact_framed-ip",
-  "perl-erl_binary_buffered-ip-ssl",
-  "perl-erl_binary_framed-ip-ssl",
-  "perl-perl_binary_buffered-ip-ssl",
-  "perl-perl_binary_framed-ip-ssl"
+  "java-d_compact_framed-ip"
 ]

@@ -121,8 +121,8 @@
       "framed:fastframed"
     ],
     "sockets": [
-      "ip-ssl",
-      "ip"
+      "ip",
+      "ip-ssl"
     ],
     "protocols": [
       "compact",
@@ -415,7 +415,7 @@
         "-I../../lib/perl/lib/",
         "TestClient.pl",
         "--ca=../keys/CA.pem",
-        "--cert=../keys/client.pem",
+        "--cert=../keys/client.crt",
         "--key=../keys/client.key"
       ]
     },
@@ -425,8 +425,7 @@
         "-Igen-perl/",
         "-I../../lib/perl/lib/",
         "TestServer.pl",
-        "--ca=../keys/CA.pem",
-        "--cert=../keys/server.pem",
+        "--cert=../keys/server.crt",
         "--key=../keys/server.key"
       ]
     },
