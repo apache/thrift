@@ -469,9 +469,9 @@ thrift_ssl_socket_init (ThriftSSLSocket *socket)
 {
   GError *error = NULL;
   socket->ssl = NULL;
-  socket->ctx = thrift_ssl_socket_context_initialize(LATEST, &error);
+  socket->ctx = thrift_ssl_socket_context_initialize(SSLTLS, &error);
   if(socket->ctx == NULL) {
-      g_info("The SSL context was not automatically initialized with protocol %d", LATEST);
+      g_info("The SSL context was not automatically initialized with protocol %d", SSLTLS);
       if(error!=NULL){
     g_info("Reported reason %s", error->message);
     g_error_free (error);
@@ -713,9 +713,11 @@ thrift_ssl_socket_context_initialize(ThriftSSLSocketProtocol ssl_protocol, GErro
     case SSLTLS:
       context = SSL_CTX_new(SSLv23_method());
       break;
+#ifndef OPENSSL_NO_SSL3
     case SSLv3:
       context = SSL_CTX_new(SSLv3_method());
       break;
+#endif
     case TLSv1_0:
       context = SSL_CTX_new(TLSv1_method());
       break;
