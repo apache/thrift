@@ -206,7 +206,7 @@ class TMemoryBuffer(TTransportBase, CReadableTransport):
     TODO(dreiss): Make this work like the C++ version.
     """
 
-    def __init__(self, value=None):
+    def __init__(self, value=None, offset=0):
         """value -- a value to read from for stringio
 
         If value is set, this will be a transport for reading,
@@ -215,6 +215,8 @@ class TMemoryBuffer(TTransportBase, CReadableTransport):
             self._buffer = BufferIO(value)
         else:
             self._buffer = BufferIO()
+        if offset:
+            self._buffer.seek(offset)
 
     def isOpen(self):
         return not self._buffer.closed
