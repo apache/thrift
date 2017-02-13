@@ -30,6 +30,7 @@
 #include <thrift/c_glib/protocol/thrift_compact_protocol.h>
 #include <thrift/c_glib/transport/thrift_buffered_transport.h>
 #include <thrift/c_glib/transport/thrift_framed_transport.h>
+#include <thrift/c_glib/transport/thrift_ssl_socket.h>
 #include <thrift/c_glib/transport/thrift_socket.h>
 #include <thrift/c_glib/transport/thrift_transport.h>
 
@@ -75,29 +76,34 @@ gint32_compare (gconstpointer a, gconstpointer b)
 int
 main (int argc, char **argv)
 {
-  static gchar *host = NULL;
-  static gint   port = 9090;
-  static gchar *transport_option = NULL;
-  static gchar *protocol_option = NULL;
-  static gint   num_tests = 1;
+  static gchar *  host = NULL;
+  static gint     port = 9090;
+  static gboolean ssl  = FALSE;
+  static gchar *  transport_option = NULL;
+  static gchar *  protocol_option = NULL;
+  static gint     num_tests = 1;
 
   static
     GOptionEntry option_entries[] ={
-    { "host",            0, 0, G_OPTION_ARG_STRING,   &host,
+    { "host",            'h', 0, G_OPTION_ARG_STRING,   &host,
       "Host to connect (=localhost)", NULL },
-    { "port",            0, 0, G_OPTION_ARG_INT,      &port,
+    { "port",            'p', 0, G_OPTION_ARG_INT,      &port,
       "Port number to connect (=9090)", NULL },
-    { "transport",       0, 0, G_OPTION_ARG_STRING,   &transport_option,
+    { "ssl",             's', 0, G_OPTION_ARG_NONE,     &ssl,
+      "Enable SSL", NULL },
+    { "transport",       't', 0, G_OPTION_ARG_STRING,   &transport_option,
       "Transport: buffered, framed (=buffered)", NULL },
-    { "protocol",        0, 0, G_OPTION_ARG_STRING,   &protocol_option,
+    { "protocol",        'r', 0, G_OPTION_ARG_STRING,   &protocol_option,
       "Protocol: binary, compact (=binary)", NULL },
-    { "testloops",     'n', 0, G_OPTION_ARG_INT,      &num_tests,
+    { "testloops",       'n', 0, G_OPTION_ARG_INT,      &num_tests,
       "Number of tests (=1)", NULL },
     { NULL }
   };
 
   struct sigaction sigpipe_action;
 
+  GType  socket_type    = THRIFT_TYPE_SOCKET;
+  gchar *socket_name    = "ip";
   GType  transport_type = THRIFT_TYPE_BUFFERED_TRANSPORT;
   gchar *transport_name = "buffered";
   GType  protocol_type  = THRIFT_TYPE_BINARY_PROTOCOL;
@@ -164,12 +170,19 @@ main (int argc, char **argv)
     }
   }
 
+  if (ssl) {
+    socket_type = THRIFT_TYPE_SSL_SOCKET;
+    socket_name = "ip-ssl";
+    printf("Type name %s\n", g_type_name (socket_type));
+  }
+
   if (!options_valid)
     return 254;
 
-  printf ("Connecting (%s/%s) to: %s:%d\n",
+  printf ("Connecting (%s/%s) to: %s/%s:%d\n",
           transport_name,
           protocol_name,
+          socket_name,
           host,
           port);
 
@@ -181,11 +194,22 @@ main (int argc, char **argv)
   sigpipe_action.sa_flags = SA_RESETHAND;
   sigaction (SIGPIPE, &sigpipe_action, NULL);
 
+  if (ssl) {
+    thrift_ssl_socket_initialize_openssl();
+  }
+
   /* Establish all our connection objects */
-  socket = g_object_new (THRIFT_TYPE_SOCKET,
+  socket = g_object_new (socket_type,
                          "hostname", host,
                          "port",     port,
                          NULL);
+
+  if (ssl && !thrift_ssl_load_cert_from_file(THRIFT_SSL_SOCKET(socket), "../keys/CA.pem")) {
+    fprintf(stderr, "Unable to load validation certificate ../keys/CA.pem - did you run in the test/c_glib directory?\n");
+    g_object_unref (socket);
+    return 253;
+  }
+
   transport = g_object_new (transport_type,
                             "transport", socket,
                             NULL);
@@ -277,10 +301,11 @@ main (int argc, char **argv)
         printf (" = void\n");
       }
       else {
+  if(error!=NULL){
         printf ("%s\n", error->message);
-        g_error_free (error);
-        error = NULL;
-
+    g_error_free (error);
+    error = NULL;
+  }
         fail_count++;
       }
 
@@ -439,8 +464,8 @@ main (int argc, char **argv)
         fail_count++;
       }
 
-      // TODO: add testBinary() 	  
-	  
+      // TODO: add testBinary()
+
       /**
        * STRUCT TEST
        */
@@ -1575,6 +1600,7 @@ main (int argc, char **argv)
     }
     else {
       printf ("Connect failed: %s\n", error->message);
+      g_object_unref (socket);
       g_error_free (error);
       error = NULL;
 
@@ -1595,6 +1621,10 @@ main (int argc, char **argv)
   g_object_unref (protocol);
   g_object_unref (transport);
   g_free (host);
+
+  if (ssl) {
+    thrift_ssl_socket_finalize_openssl();
+  }
 
   return fail_count;
 }
