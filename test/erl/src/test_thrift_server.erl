@@ -51,7 +51,7 @@ parse_args([Head | Rest], Opts) ->
                 ssl:start(),
                 SslOptions =
                     {ssloptions, [
-                         {certfile, "../keys/server.crt"}
+                         {certfile, "../keys/server.pem"}
                         ,{keyfile,  "../keys/server.key"}
                     ]},
                 Opts#options{server_opts = [{ssltransport, true} | [SslOptions | Opts#options.server_opts]]};

@@ -50,7 +50,8 @@ Usage: $0 [OPTIONS]
 Options:                          (default)
   --ca                                         Certificate authority file (optional).
   --cert                                       Certificate file.
-                                               Required if using --ssl.                                               
+                                               Required if using --ssl.
+  --ciphers                                    Acceptable cipher list.
   --domain-socket <file>                       Use a unix domain socket.
   --help                                       Show usage.
   --key                                        Private key file for certificate.
@@ -60,7 +61,7 @@ Options:                          (default)
   --protocol {binary}             binary       Protocol to use.
   --ssl                                        If present, use SSL/TLS.
   --transport {buffered|framed}   buffered     Transport to use.
-                                   
+
 EOF
 }
 
@@ -73,6 +74,7 @@ my %opts = (
 GetOptions(\%opts, qw (
     ca=s
     cert=s
+    ciphers=s
     domain-socket=s
     help
     host=s
@@ -133,7 +135,7 @@ my $server = new Thrift::SimpleServer($processor, $serversocket, $transport, $pr
 print "Starting \"simple\" server ($opts{transport}/$opts{protocol}) listen on: $listening_on\n";
 $server->serve();
 
-###    
+###
 ### Test server implementation
 ###
 
@@ -148,7 +150,7 @@ sub new {
 }
 
 sub testVoid() {
-  print("testVoid()\n"); 
+  print("testVoid()\n");
 }
 
 sub testString() {
@@ -320,7 +322,7 @@ sub testTypedef() {
 sub testMapMap() {
   my $self = shift;
   my $hello = shift;
-  
+
   printf("testMapMap(%d)\n", $hello);
   my $result = { 4 => { 1 => 1, 2 => 2, 3 => 3, 4 => 4 }, -4 => { -1 => -1, -2 => -2, -3 => -3, -4 => -4 } };
   return $result;
@@ -352,7 +354,7 @@ sub testMulti() {
   my $arg3 = shift;
   my $arg4 = shift;
   my $arg5 = shift;
-  
+
   print("testMulti()\n");
   return new ThriftTest::Xtruct({string_thing => "Hello2", byte_thing => $arg0, i32_thing => $arg1, i64_thing => $arg2});
 }

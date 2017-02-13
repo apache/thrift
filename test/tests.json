@@ -414,7 +414,9 @@
         "-Igen-perl/",
         "-I../../lib/perl/lib/",
         "TestClient.pl",
-        "--cert=../keys/client.pem"
+        "--ca=../keys/CA.pem",
+        "--cert=../keys/client.pem",
+        "--key=../keys/client.key"
       ]
     },
     "server": {
@@ -423,6 +425,7 @@
         "-Igen-perl/",
         "-I../../lib/perl/lib/",
         "TestServer.pl",
+        "--ca=../keys/CA.pem",
         "--cert=../keys/server.pem",
         "--key=../keys/server.key"
       ]
