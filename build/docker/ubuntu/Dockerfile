@@ -203,6 +203,16 @@ RUN curl -sSL http://downloads.dlang.org/releases/2.x/2.070.0/dmd_2.070.0-0_amd6
 # Dart
 ENV PATH /usr/lib/dart/bin:$PATH
 
+# OCaml
+RUN echo 'deb http://ppa.launchpad.net/avsm/ppa/ubuntu trusty main' > /etc/apt/sources.list.d/avsm-official-ocaml.list && \
+    gpg --keyserver keyserver.ubuntu.com --recv 61707B09 && \
+    gpg --export --armor 61707B09 | apt-key add - && \
+    apt-get update && \
+    apt-get install -y ocaml opam && \
+    opam init && \
+    opam install oasis
+
+
 ENV THRIFT_ROOT /thrift
 RUN mkdir -p $THRIFT_ROOT/src
 COPY Dockerfile $THRIFT_ROOT/
