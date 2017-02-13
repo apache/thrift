@@ -102,6 +102,7 @@ project.lock.json
 /lib/cpp/src/thrift/stamp-h2
 /lib/cpp/test/Benchmark
 /lib/cpp/test/AllProtocolsTest
+/lib/cpp/test/AnnotationTest
 /lib/cpp/test/DebugProtoTest
 /lib/cpp/test/DenseProtoTest
 /lib/cpp/test/EnumTest
