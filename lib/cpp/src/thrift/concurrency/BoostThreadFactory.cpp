@@ -61,7 +61,7 @@ public:
   }
 
   ~BoostThread() {
-    if (!detached_) {
+    if (!detached_ && thread_->joinable()) {
       try {
         join();
       } catch (...) {
