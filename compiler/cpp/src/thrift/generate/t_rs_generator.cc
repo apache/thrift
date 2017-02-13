@@ -1413,13 +1413,16 @@ void t_rs_generator::render_union_definition(const string& union_name, t_struct*
         throw "cannot generate rust enum with 0 members"; // may be valid thrift, but it's invalid rust
     }
 
+    const string members_match_fn_prfx = "UNION_FN_ON_INNER_MATCH_";
+
     // for unions we provide a macro that constructs matches that can execute
-    // a generic function over all the members taking as first argument reference
-    // to the innter member and second key of the field. And optional list of
-    // parameters
+    // a generic function over the matched members' inner value taking as first
+    // argument reference to the inner member, as second key of the field and
+    // third its name. And optional list of parameters.
     f_gen_ << "#[macro_export]" << endl;
-    f_gen_ << "macro_rules! UNION_MEMBERS_FN_ON_INNER_MATCH_" << uppercase(union_name)
-    << " { ($applyfn:ident, $tomatch:expr, $($addarg:expr,)*) => ( match $tomatch {" << endl;
+    f_gen_ << "macro_rules! " << members_match_fn_prfx << uppercase(union_name) << endl;
+    indent_up();
+    f_gen_ <<  indent() << " { ($applyfn:ident, $tomatch:expr, $($addarg:expr,)*) => ( match $tomatch {" << endl;
     indent_up();
     vector<t_field*>::const_iterator members_iter;
     for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
@@ -1428,9 +1431,47 @@ void t_rs_generator::render_union_definition(const string& union_name, t_struct*
         f_gen_
         << indent()
         << union_name << "::" << rust_union_field_name(tfield)
-        << "(ref var) => $applyfn(var, " << tfield->get_key() << " $(,$addarg)*),"
+        << "(ref var) => $applyfn(var, "
+        << tfield->get_key() << ","
+        << '"' << rust_union_field_name(tfield) << '"' << " "
+        << " $(,$addarg)*),"
         << endl;
     }
+    indent_down();
+    f_gen_ << indent() << "})" << endl;
+    indent_down();
+    f_gen_ << indent() << "}" << endl;
+    f_gen_ << endl;
+
+    const string members_match_keyid_prfx = "UNION_FN_ON_KEY_";
+    // for unions we also provide a macro that allows construction of the
+    // correct variant of the union from the keyid of the variant
+    // the passed function is expected to deliver the correct type back
+    f_gen_ << "#[macro_export]" << endl;
+    f_gen_ << "macro_rules! " << members_match_keyid_prfx << uppercase(union_name) << endl;
+    indent_up();
+    f_gen_ << indent() << " { ($applyfn:ident, $notfounderr:expr, $tomatch:expr, " << endl;
+    f_gen_ << indent() << "    $($addarg:expr,)*) => ( match $tomatch {" << endl;
+    indent_up();
+    for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
+        t_field* tfield = (*members_iter);
+
+        f_gen_
+        << indent()
+        << tfield->get_key() << " => "
+        << "Ok(" << union_name << "::" << rust_union_field_name(tfield)
+        << "(try!($applyfn("
+        << tfield->get_key() << ","
+        << '"' << rust_union_field_name(tfield) << '"' << " "
+        << " $(,$addarg)*)))),"
+        << endl;
+    }
+
+    // final clause catching errors
+    f_gen_
+    << indent()
+    << "_ => Err($notfounderr)," << endl;
+
     indent_down();
     f_gen_ << indent() << "})" << endl;
     indent_down();
@@ -1440,12 +1481,15 @@ void t_rs_generator::render_union_definition(const string& union_name, t_struct*
     // generate a convienent macro for anyone wanting to write own implementations
     // of things
     f_gen_ << "#[macro_export]" << endl;
-    f_gen_ << "macro_rules! UNION_MEMBERS_" << uppercase(union_name)
-    << " { ($applymacro:ident) => " << endl;
+    f_gen_ << "macro_rules! UNION_MEMBERS_" << uppercase(union_name) << endl;
+    indent_up();
+    f_gen_ << indent() << " { ($applymacro:ident) => " << endl;
     indent_up();
     f_gen_ << indent() << "{ $applymacro! ( " << union_name << "," << endl;
     indent_up();
-    f_gen_ << indent() << "UNION_MEMBERS_FN_ON_INNER_MATCH_" << uppercase(union_name) << "," << endl;
+    f_gen_ << indent() << members_match_fn_prfx << uppercase(union_name) << "," << endl;
+    f_gen_ << indent() << members_match_keyid_prfx << uppercase(union_name) << "," << endl;
+
     f_gen_ << indent() << "{" << endl;
     indent_up();
     for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
@@ -1462,8 +1506,9 @@ void t_rs_generator::render_union_definition(const string& union_name, t_struct*
     indent_down();
     f_gen_ << indent() << "}" << endl;
     indent_down();
-
-    f_gen_ << indent() << ");" << endl << indent() << "}" << endl;
+    f_gen_ << indent() << ");" << endl;
+    indent_down();
+    f_gen_ << indent() << "}" << endl;
     indent_down();
     f_gen_ << indent() << "}" << endl;
     f_gen_ << endl;
