@@ -1444,6 +1444,27 @@ void t_rs_generator::render_union_definition(const string& union_name, t_struct*
     f_gen_ << indent() << "}" << endl;
     f_gen_ << endl;
 
+    // for unions we provide a macro that constructs matches that can execute
+    // a generic function over all the members
+    f_gen_ << "#[macro_export]" << endl;
+    f_gen_ << "macro_rules! UNION_MEMBERS_FN_ON_INNER_MATCH_" << uppercase(union_name)
+    << " { ($applyfn:ident) => ( match {" << endl;
+    indent_up();
+    for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
+        t_field* tfield = (*members_iter);
+
+        f_gen_
+        << indent()
+        << union_name << "::" << rust_union_field_name(tfield)
+        << "(var) => $applyfn(var),"
+        << endl;
+    }
+    indent_down();
+    f_gen_ << indent() << "})" << endl;
+    indent_down();
+    f_gen_ << indent() << "}" << endl;
+    f_gen_ << endl;
+
     f_gen_ << "#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]" << endl;
     f_gen_ << "pub enum " << union_name << " {" << endl;
     indent_up();
