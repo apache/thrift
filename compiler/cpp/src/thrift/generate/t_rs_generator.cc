@@ -850,8 +850,12 @@ void t_rs_generator::render_enum_definition(t_enum* tenum, const string& enum_na
 
     // generate a convienent macro for anyone wanting to write own implementations
     // of things
-    f_gen_ << indent() << "macro_rules! ENUM_MEMBERS_" << uppercase(enum_name)
-    << " { () => " << endl;
+    f_gen_ << "#[macro_export]" << endl;
+    f_gen_ << "macro_rules! ENUM_MEMBERS_" << uppercase(enum_name)
+    << " { ($applymacro:ident) => " << endl;
+    indent_up();
+    f_gen_ << indent() << "{ $applymacro! ( " << enum_name << "," << endl;
+
     indent_up();
     f_gen_ << indent() << "{" << endl;
     indent_up();
@@ -865,8 +869,10 @@ void t_rs_generator::render_enum_definition(t_enum* tenum, const string& enum_na
         << "," << endl;
     }
     indent_down();
-
     f_gen_ << indent() << "}" << endl;
+    indent_down();
+
+    f_gen_ << indent() << ");" << endl << indent() << "}" << endl;
     indent_down();
     f_gen_ << indent() << "}" << endl;
 
@@ -1015,12 +1021,15 @@ void t_rs_generator::render_struct_definition(
 
     // generate a convienent macro for anyone wanting to write own implementations
     // of things
-    f_gen_ << indent() << "macro_rules! STRUCT_MEMBERS_" << uppercase(struct_name)
-    << " { () => " << endl;
+    f_gen_ << "#[macro_export]" << endl;
+    f_gen_ << "macro_rules! STRUCT_MEMBERS_" << uppercase(struct_name)
+    << " { ($applymacro:ident) => " << endl;
     indent_up();
-    f_gen_ << indent() << "{" << endl;
+    f_gen_ << indent() << "{ $applymacro! ( " << struct_name << "," << endl;
     indent_up();
 
+    f_gen_ << indent() << "{" << endl;
+    indent_up();
     vector<t_field*>::iterator members_iter;
     for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
         t_field* member = (*members_iter);
@@ -1038,8 +1047,10 @@ void t_rs_generator::render_struct_definition(
         << " ," << endl;
     }
     indent_down();
-
     f_gen_ << indent() << "}" << endl;
+    indent_down();
+
+    f_gen_ << indent() << ");" << endl << indent() << "}" << endl;
     indent_down();
     f_gen_ << indent() << "}" << endl;
     f_gen_ << endl;
@@ -1404,12 +1415,14 @@ void t_rs_generator::render_union_definition(const string& union_name, t_struct*
 
     // generate a convienent macro for anyone wanting to write own implementations
     // of things
-    f_gen_ << indent() << "macro_rules! UNION_MEMBERS_" << uppercase(union_name)
-    << " { () => " << endl;
+    f_gen_ << "#[macro_export]" << endl;
+    f_gen_ << "macro_rules! UNION_MEMBERS_" << uppercase(union_name)
+    << " { ($applymacro:ident) => " << endl;
+    indent_up();
+    f_gen_ << indent() << "{ $applymacro! ( " << union_name << "," << endl;
     indent_up();
     f_gen_ << indent() << "{" << endl;
     indent_up();
-
     vector<t_field*>::const_iterator members_iter;
     for(members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
         t_field* tfield = (*members_iter);
@@ -1423,8 +1436,10 @@ void t_rs_generator::render_union_definition(const string& union_name, t_struct*
         << " ," << endl;
     }
     indent_down();
-
     f_gen_ << indent() << "}" << endl;
+    indent_down();
+
+    f_gen_ << indent() << ");" << endl << indent() << "}" << endl;
     indent_down();
     f_gen_ << indent() << "}" << endl;
     f_gen_ << endl;
