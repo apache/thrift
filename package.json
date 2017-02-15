@@ -32,12 +32,12 @@
   },
   "main": "./lib/nodejs/lib/thrift",
   "engines": {
-    "node": ">= 4.0.0"
+    "node": ">= 0.12.0"
   },
   "dependencies": {
     "node-int64": "^0.4.0",
     "q": "^1.0.0",
-    "ws": "^2.0.0"
+    "ws": "^1.0.0"
   },
   "devDependencies": {
     "buffer-equals": "^1.0.3",
