@@ -128,7 +128,8 @@
     "protocols": [
       "compact",
       "binary",
-      "json"
+      "json",
+      "multiplexed-binary"
     ],
     "workdir": "../lib/java"
   },

@@ -86,6 +86,7 @@ get_multiplexed_protocol(gchar * protocol_name, ThriftTransport *transport, gcha
   ThriftProtocol * multiplexed_protocol=NULL;
   gchar *multiplexed_protocol_name = rindex(protocol_name, '-');
   if(multiplexed_protocol_name!=NULL){
+      multiplexed_protocol_name++; // Remove the separator
       if (strncmp (multiplexed_protocol_name, "compact", 8) == 0) {
 	  multiplexed_protocol = g_object_new (THRIFT_TYPE_COMPACT_PROTOCOL,
 					       "transport", transport,
@@ -136,7 +137,7 @@ main (int argc, char **argv)
     { "transport",       't', 0, G_OPTION_ARG_STRING,   &transport_option,
       "Transport: buffered, framed (=buffered)", NULL },
     { "protocol",        'r', 0, G_OPTION_ARG_STRING,   &protocol_option,
-      "Protocol: binary, compact (=binary)", NULL },
+      "Protocol: binary, compact (=binary), multiplexed-<protocol>", NULL },
     { "testloops",       'n', 0, G_OPTION_ARG_INT,      &num_tests,
       "Number of tests (=1)", NULL },
     { NULL }
