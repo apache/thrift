@@ -26,7 +26,8 @@
     ],
     "protocols": [
       "binary",
-      "compact"
+      "compact",
+      "multiplexed-binary"
     ],
     "workdir": "c_glib"
   },
