@@ -51,8 +51,9 @@ parse_args([Head | Rest], Opts) ->
                 ssl:start(),
                 SslOptions =
                     {ssloptions, [
-                        {certfile, "../keys/client.crt"}
-                        ,{keyfile, "../keys/server.key"}
+                        {cacertfile, "../keys/CA.pem"},
+                        {certfile, "../keys/client.pem"},
+                        {keyfile, "../keys/client.key"}
                     ]},
                 Opts#options{client_opts = [{ssltransport, true} | [SslOptions | Opts#options.client_opts]]};
             "--protocol=" ++ Proto ->

@@ -31,22 +31,47 @@ package Thrift::Socket;
 
 use base qw( Thrift::Transport );
 
+#
+# Construction and usage
+#
+# my $opts = {}
+# my $socket = new Thrift::Socket(\%opts);
+#
+# options:
+#
+# host        => host to connect to
+# port        => port to connect to
+# sendTimeout => timeout used for send and for connect
+# recvTimeout => timeout used for recv
+#
+
 sub new
 {
-    my $classname    = shift;
-    my $host         = shift || "localhost";
-    my $port         = shift || 9090;
-    my $debugHandler = shift;
+    my $classname = shift;
+    my $opts      = shift;
 
+    # default settings:
     my $self = {
-        host         => $host,
-        port         => $port,
-        debugHandler => $debugHandler,
-        debug        => 0,
-        sendTimeout  => 10000,
+        host         => 'localhost',
+        port         => 9090,
         recvTimeout  => 10000,
-        handle       => undef,
+        sendTimeout  => 10000,
+
+        handle       => undef
     };
+
+    if (defined $opts and ref $opts eq ref {}) {
+
+      # argument is a hash of options so override the defaults
+      $self->{$_} = $opts->{$_} for keys %$opts;
+
+    } else {
+
+      # older style constructor takes 3 arguments, none of which are required
+      $self->{host} = $opts || 'localhost';
+      $self->{port} = shift || 9090;
+
+    }
 
     return bless($self,$classname);
 }
@@ -68,19 +93,6 @@ sub setRecvTimeout
     $self->{recvTimeout} = $timeout;
 }
 
-
-#
-#Sets debugging output on or off
-#
-# @param bool $debug
-#
-sub setDebug
-{
-    my $self  = shift;
-    my $debug = shift;
-
-    $self->{debug} = $debug;
-}
 
 #
 # Tests whether this is open
@@ -107,11 +119,6 @@ sub open
 
     my $sock = $self->__open() || do {
         my $error = ref($self).': Could not connect to '.$self->{host}.':'.$self->{port}.' ('.$!.')';
-
-        if ($self->{debug}) {
-            $self->{debugHandler}->($error);
-        }
-
         die new Thrift::TException($error);
     };
 
@@ -125,7 +132,7 @@ sub close
 {
     my $self = shift;
     if( defined $self->{handle} ) {
-    	$self->__close();
+      $self->__close();
     }
 }
 
@@ -216,7 +223,7 @@ sub write
         my $sent = $self->__send($sockets[0], $buf);
 
         if (!defined $sent || $sent == 0 ) {
-            
+
             die new Thrift::TException(ref($self).': Could not write '.length($buf).' bytes '.
                                  $self->{host}.':'.$self->{host});
 
@@ -259,7 +266,7 @@ sub __open
 #
 sub __close
 {
-	my $self = shift;
+  my $self = shift;
     CORE::close(($self->{handle}->handles())[0]);
 }
 
@@ -272,12 +279,12 @@ sub __close
 #
 sub __recv
 {
-	my $self = shift;
-	my $sock = shift;
-	my $len = shift;
-	my $buf = undef;
-	$sock->recv($buf, $len);
-	return $buf;
+  my $self = shift;
+  my $sock = shift;
+  my $len = shift;
+  my $buf = undef;
+  $sock->recv($buf, $len);
+  return $buf;
 }
 
 #
