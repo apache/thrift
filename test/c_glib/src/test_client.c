@@ -28,6 +28,7 @@
 #include <thrift/c_glib/thrift.h>
 #include <thrift/c_glib/protocol/thrift_binary_protocol.h>
 #include <thrift/c_glib/protocol/thrift_compact_protocol.h>
+#include <thrift/c_glib/protocol/thrift_multiplexed_protocol.h>
 #include <thrift/c_glib/transport/thrift_buffered_transport.h>
 #include <thrift/c_glib/transport/thrift_framed_transport.h>
 #include <thrift/c_glib/transport/thrift_ssl_socket.h>
@@ -71,6 +72,47 @@ gint32_compare (gconstpointer a, gconstpointer b)
     result = 1;
 
   return result;
+}
+
+/**
+ * It gets a multiplexed protocol based on the name
+ * @param
+ * @return
+ */
+ThriftProtocol  *
+get_multiplexed_protocol(gchar * protocol_name, ThriftTransport *transport, gchar *service_name)
+{
+  ThriftProtocol * result_protocol=NULL;
+  ThriftProtocol * multiplexed_protocol=NULL;
+  gchar *multiplexed_protocol_name = rindex(protocol_name, '-');
+  if(multiplexed_protocol_name!=NULL){
+      if (strncmp (multiplexed_protocol_name, "compact", 8) == 0) {
+	  multiplexed_protocol = g_object_new (THRIFT_TYPE_COMPACT_PROTOCOL,
+					       "transport", transport,
+					       NULL);
+      }
+      else if (strncmp (multiplexed_protocol_name, "binary", 7) == 0) {
+	  multiplexed_protocol = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL,
+					       "transport", transport,
+					       NULL);
+      }
+      else {
+	  fprintf (stderr, "Unknown protocol type %s\n", multiplexed_protocol_name);
+      }
+  }else{
+      fprintf (stderr, "The protocol is not a multiplexed protocol\n");
+  }
+
+
+  if(multiplexed_protocol!=NULL) {
+      result_protocol = g_object_new (THRIFT_TYPE_MULTIPLEXED_PROTOCOL,
+				      "transport", 	transport,
+				      "protocol", 	multiplexed_protocol,
+				      "service-name", 	service_name,
+				      NULL);
+  }
+
+  return result_protocol;
 }
 
 int
@@ -153,7 +195,14 @@ main (int argc, char **argv)
       protocol_type = THRIFT_TYPE_COMPACT_PROTOCOL;
       protocol_name = "compact";
     }
-    else if (strncmp (protocol_option, "binary", 7) != 0) {
+    else if (strncmp (protocol_option, "binary", 7) == 0) {
+      printf("We are going with default binary protocol");
+    }
+    else if (strncmp (protocol_option, "multiplexed-binary", 20) == 0) {
+      protocol_type = THRIFT_TYPE_MULTIPLEXED_PROTOCOL;
+      protocol_name = "multiplexed-binary";
+    }
+    else {
       fprintf (stderr, "Unknown protocol type %s\n", protocol_option);
       options_valid = FALSE;
     }
@@ -213,9 +262,16 @@ main (int argc, char **argv)
   transport = g_object_new (transport_type,
                             "transport", socket,
                             NULL);
-  protocol = g_object_new (protocol_type,
-                           "transport", transport,
-                           NULL);
+
+  if(protocol_type==THRIFT_TYPE_MULTIPLEXED_PROTOCOL) {
+    // The context comes from the name of the thrift file. If multiple thrift
+    // schemas are used we have to redo the way this is done.
+    protocol = get_multiplexed_protocol(protocol_name, transport, "ThriftTest");
+  }else{
+    protocol = g_object_new (protocol_type,
+			     "transport", transport,
+			     NULL);
+  }
   test_client = g_object_new (T_TEST_TYPE_THRIFT_TEST_CLIENT,
                               "input_protocol",  protocol,
                               "output_protocol", protocol,
