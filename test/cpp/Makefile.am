@@ -120,6 +120,4 @@ EXTRA_DIST = \
 	src/TestClient.cpp \
 	src/TestServer.cpp \
 	src/StressTest.cpp \
-	src/StressTestNonBlocking.cpp \
-	realloc/realloc_test.c \
-	realloc/Makefile
+	src/StressTestNonBlocking.cpp
