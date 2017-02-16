@@ -187,6 +187,10 @@ public class THttpClient extends TTransport {
     customHeaders_.put(key, value);
   }
 
+  public HttpClient getHttpClient() {
+    return client;
+  }
+
   public void open() {
   }
 
