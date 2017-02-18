@@ -42,14 +42,14 @@ env:
     - BUILD_LIBS="CPP C_GLIB HASKELL JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
 
   matrix:
-    - TEST_NAME="Cross Language Tests (Binary and Header Protocols)"
+    - TEST_NAME="Cross Language Tests (Binary, Header, Multiplexed Protocols)"
       SCRIPT="cross-test.sh"
-      BUILD_ARG="-'(binary|header)'"
+      BUILD_ARG="-'(binary|header|multiplexed)'"
       BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
-    - TEST_NAME="Cross Language Tests (Debian) (Binary and Header Protocols)"
+    - TEST_NAME="Cross Language Tests (Debian) (Binary, Header, Multiplexed Protocols)"
       SCRIPT="cross-test.sh"
-      BUILD_ARG="-'(binary|header)'"
+      BUILD_ARG="-'(binary|header|multiplexed)'"
       BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
       DISTRO=debian
 
