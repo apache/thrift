@@ -30,6 +30,7 @@ import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TJSONProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.protocol.TMultiplexedProtocol;
 import org.apache.thrift.server.ServerContext;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TServer.Args;
@@ -46,6 +47,7 @@ import org.apache.thrift.transport.TSSLTransportFactory;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportFactory;
 import org.apache.thrift.transport.TNonblockingServerSocket;
+import org.apache.thrift.TMultiplexedProcessor;
 
 
 import thrift.test.Insanity;
@@ -139,7 +141,7 @@ public class TestServer {
             System.out.println("  --help\t\t\tProduce help message");
             System.out.println("  --port=arg (=" + port + ")\tPort number to connect");
             System.out.println("  --transport=arg (=" + transport_type + ")\n\t\t\t\tTransport: buffered, framed, fastframed");
-            System.out.println("  --protocol=arg (=" + protocol_type + ")\tProtocol: binary, json, compact");
+            System.out.println("  --protocol=arg (=" + protocol_type + ")\tProtocol: binary, json, compact, multiplexed-<protocol>");
             System.out.println("  --ssl\t\t\tEncrypted Transport using SSL");
             System.out.println("  --server-type=arg (=" + server_type +")\n\t\t\t\tType of server: simple, thread-pool, nonblocking, threaded-selector");
             System.out.println("  --string-limit=arg (=" + string_limit + ")\tString read length limit");
@@ -169,6 +171,9 @@ public class TestServer {
         if (protocol_type.equals("binary")) {
         } else if (protocol_type.equals("json")) {
         } else if (protocol_type.equals("compact")) {
+        } else if (protocol_type.equals("multiplexed-compact")) {
+        } else if (protocol_type.equals("multiplexed-json")) {
+        } else if (protocol_type.equals("multiplexed-binary")) {
         } else {
           throw new Exception("Unknown protocol type! " + protocol_type);
         }
@@ -191,9 +196,9 @@ public class TestServer {
 
       // Protocol factory
       TProtocolFactory tProtocolFactory = null;
-      if (protocol_type.equals("json")) {
+      if (protocol_type.equals("json") || protocol_type.equals("multiplexed-json")) {
         tProtocolFactory = new TJSONProtocol.Factory();
-      } else if (protocol_type.equals("compact")) {
+      } else if (protocol_type.equals("compact") || protocol_type.equals("multiplexed-compact")) {
         tProtocolFactory = new TCompactProtocol.Factory(string_limit, container_limit);
       } else {
         tProtocolFactory = new TBinaryProtocol.Factory(string_limit, container_limit);
@@ -222,16 +227,37 @@ public class TestServer {
           // Nonblocking Server
           TNonblockingServer.Args tNonblockingServerArgs
               = new TNonblockingServer.Args(tNonblockingServerSocket);
-          tNonblockingServerArgs.processor(testProcessor);
+              
+              
+         if(protocol_type.startsWith("multiplexed")){
+          	/* 
+						 * We are multiplexing services in one server
+						 */
+						TMultiplexedProcessor multiplexedProcessor = new TMultiplexedProcessor();
+						multiplexedProcessor.registerProcessor("ThriftTest", testProcessor);
+						tNonblockingServerArgs.processor(multiplexedProcessor);
+          } else {
+	          tNonblockingServerArgs.processor(testProcessor);
+	        }
           tNonblockingServerArgs.protocolFactory(tProtocolFactory);
           tNonblockingServerArgs.transportFactory(tTransportFactory);
+
 
           serverEngine = new TNonblockingServer(tNonblockingServerArgs);
         } else { // server_type.equals("threaded-selector")
           // ThreadedSelector Server
           TThreadedSelectorServer.Args tThreadedSelectorServerArgs
               = new TThreadedSelectorServer.Args(tNonblockingServerSocket);
-          tThreadedSelectorServerArgs.processor(testProcessor);
+         if(protocol_type.startsWith("multiplexed")){
+          	/* 
+						 * We are multiplexing services in one server
+						 */
+						TMultiplexedProcessor multiplexedProcessor = new TMultiplexedProcessor();
+						multiplexedProcessor.registerProcessor("ThriftTest", testProcessor);
+						tThreadedSelectorServerArgs.processor(multiplexedProcessor);
+          } else {
+	          tThreadedSelectorServerArgs.processor(testProcessor);
+	        }
           tThreadedSelectorServerArgs.protocolFactory(tProtocolFactory);
           tThreadedSelectorServerArgs.transportFactory(tTransportFactory);
 
@@ -251,7 +277,16 @@ public class TestServer {
         if (server_type.equals("simple")) {
           // Simple Server
           TServer.Args tServerArgs = new TServer.Args(tServerSocket);
-          tServerArgs.processor(testProcessor);
+         if(protocol_type.startsWith("multiplexed")){
+          	/* 
+						 * We are multiplexing services in one server
+						 */
+						TMultiplexedProcessor multiplexedProcessor = new TMultiplexedProcessor();
+						multiplexedProcessor.registerProcessor("ThriftTest", testProcessor);
+						tServerArgs.processor(multiplexedProcessor);
+          } else {
+	          tServerArgs.processor(testProcessor);
+	        }
           tServerArgs.protocolFactory(tProtocolFactory);
           tServerArgs.transportFactory(tTransportFactory);
 
@@ -260,7 +295,16 @@ public class TestServer {
           // ThreadPool Server
           TThreadPoolServer.Args tThreadPoolServerArgs
               = new TThreadPoolServer.Args(tServerSocket);
-          tThreadPoolServerArgs.processor(testProcessor);
+         if(protocol_type.startsWith("multiplexed")){
+          	/* 
+						 * We are multiplexing services in one server
+						 */
+						TMultiplexedProcessor multiplexedProcessor = new TMultiplexedProcessor();
+						multiplexedProcessor.registerProcessor("ThriftTest", testProcessor);
+						tThreadPoolServerArgs.processor(multiplexedProcessor);
+          } else {
+	          tThreadPoolServerArgs.processor(testProcessor);
+	        }
           tThreadPoolServerArgs.protocolFactory(tProtocolFactory);
           tThreadPoolServerArgs.transportFactory(tTransportFactory);
 

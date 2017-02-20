@@ -26,7 +26,8 @@
     ],
     "protocols": [
       "binary",
-      "compact"
+      "compact",
+      "multiplexed-binary"
     ],
     "workdir": "c_glib"
   },
@@ -127,7 +128,8 @@
     "protocols": [
       "compact",
       "binary",
-      "json"
+      "json",
+      "multiplexed-binary"
     ],
     "workdir": "../lib/java"
   },
