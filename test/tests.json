@@ -13,6 +13,9 @@
       "command": [
         "test_client"
       ],
+      "protocols": [
+        "multiplexed"
+      ],
       "sockets": [
         "ip-ssl"
       ]
@@ -26,8 +29,7 @@
     ],
     "protocols": [
       "binary",
-      "compact",
-      "multiplexed-binary"
+      "compact"
     ],
     "workdir": "c_glib"
   },
@@ -107,7 +109,10 @@
     ],
     "server": {
       "delay": 10,
-      "extra_args": ["run-testserver"]
+      "extra_args": ["run-testserver"],
+      "protocols": [
+        "multiplexed"
+      ]
     },
     "client": {
       "timeout": 13,
@@ -122,14 +127,13 @@
       "framed:fastframed"
     ],
     "sockets": [
-      "ip-ssl",
-      "ip"
+      "ip",
+      "ip-ssl"
     ],
     "protocols": [
-      "compact",
       "binary",
-      "json",
-      "multiplexed-binary"
+      "compact",
+      "json"
     ],
     "workdir": "../lib/java"
   },

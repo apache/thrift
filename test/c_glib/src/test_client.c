@@ -75,43 +75,27 @@ gint32_compare (gconstpointer a, gconstpointer b)
 }
 
 /**
- * It gets a multiplexed protocol based on the name
- * @param
- * @return
+ * It gets a multiplexed protocol which uses binary underneath
+ * @param  transport      the underlying transport
+ * @param  service_name   the single supported service name
+ * @todo                  need to allow multiple services to fully test multiplexed
+ * @return                a multiplexed protocol wrapping the correct underlying protocol
  */
-ThriftProtocol  *
-get_multiplexed_protocol(gchar * protocol_name, ThriftTransport *transport, gchar *service_name)
+ThriftProtocol *
+get_multiplexed_protocol(ThriftTransport *transport, gchar *service_name)
 {
   ThriftProtocol * result_protocol=NULL;
   ThriftProtocol * multiplexed_protocol=NULL;
-  gchar *multiplexed_protocol_name = rindex(protocol_name, '-');
-  if(multiplexed_protocol_name!=NULL){
-      multiplexed_protocol_name++; // Remove the separator
-      if (strncmp (multiplexed_protocol_name, "compact", 8) == 0) {
-	  multiplexed_protocol = g_object_new (THRIFT_TYPE_COMPACT_PROTOCOL,
-					       "transport", transport,
-					       NULL);
-      }
-      else if (strncmp (multiplexed_protocol_name, "binary", 7) == 0) {
-	  multiplexed_protocol = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL,
-					       "transport", transport,
-					       NULL);
-      }
-      else {
-	  fprintf (stderr, "Unknown protocol type %s\n", multiplexed_protocol_name);
-      }
-  }else{
-      fprintf (stderr, "The protocol is not a multiplexed protocol\n");
-  }
 
+  multiplexed_protocol = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL,
+               "transport", transport,
+               NULL);
 
-  if(multiplexed_protocol!=NULL) {
-      result_protocol = g_object_new (THRIFT_TYPE_MULTIPLEXED_PROTOCOL,
-				      "transport", 	transport,
-				      "protocol", 	multiplexed_protocol,
-				      "service-name", 	service_name,
-				      NULL);
-  }
+  result_protocol = g_object_new (THRIFT_TYPE_MULTIPLEXED_PROTOCOL,
+          "transport",  transport,
+          "protocol",   multiplexed_protocol,
+          "service-name",   service_name,
+          NULL);
 
   return result_protocol;
 }
@@ -137,7 +121,7 @@ main (int argc, char **argv)
     { "transport",       't', 0, G_OPTION_ARG_STRING,   &transport_option,
       "Transport: buffered, framed (=buffered)", NULL },
     { "protocol",        'r', 0, G_OPTION_ARG_STRING,   &protocol_option,
-      "Protocol: binary, compact (=binary), multiplexed-<protocol>", NULL },
+      "Protocol: binary, compact, multiplexed (=binary)", NULL },
     { "testloops",       'n', 0, G_OPTION_ARG_INT,      &num_tests,
       "Number of tests (=1)", NULL },
     { NULL }
@@ -196,12 +180,12 @@ main (int argc, char **argv)
       protocol_type = THRIFT_TYPE_COMPACT_PROTOCOL;
       protocol_name = "compact";
     }
+    else if (strncmp (protocol_option, "multiplexed", 12) == 0) {
+      protocol_type = THRIFT_TYPE_MULTIPLEXED_PROTOCOL;
+      protocol_name = "multiplexed(binary)";
+    }
     else if (strncmp (protocol_option, "binary", 7) == 0) {
       printf("We are going with default binary protocol");
-    }
-    else if (strncmp (protocol_option, "multiplexed-binary", 20) == 0) {
-      protocol_type = THRIFT_TYPE_MULTIPLEXED_PROTOCOL;
-      protocol_name = "multiplexed-binary";
     }
     else {
       fprintf (stderr, "Unknown protocol type %s\n", protocol_option);
@@ -265,13 +249,19 @@ main (int argc, char **argv)
                             NULL);
 
   if(protocol_type==THRIFT_TYPE_MULTIPLEXED_PROTOCOL) {
+    // TODO: A multiplexed test should also test "Second" (see Java TestServer)
     // The context comes from the name of the thrift file. If multiple thrift
     // schemas are used we have to redo the way this is done.
-    protocol = get_multiplexed_protocol(protocol_name, transport, "ThriftTest");
+    protocol = get_multiplexed_protocol(transport, "ThriftTest");
+    if (NULL == protocol) {
+      g_object_unref (transport);
+      g_object_unref (socket);
+      return 252;
+    }
   }else{
     protocol = g_object_new (protocol_type,
-			     "transport", transport,
-			     NULL);
+           "transport", transport,
+           NULL);
   }
   test_client = g_object_new (T_TEST_TYPE_THRIFT_TEST_CLIENT,
                               "input_protocol",  protocol,

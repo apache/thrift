@@ -104,7 +104,7 @@ class TestReporter(object):
 
     def _print_bar(self, out=None):
         print(
-            '==========================================================================',
+            '===============================================================================',
             file=(out or self.out))
 
     def _print_exec_time(self):
@@ -259,14 +259,14 @@ class SummaryReporter(TestReporter):
         name = '%s-%s' % (test.server.name, test.client.name)
         trans = '%s-%s' % (test.transport, test.socket)
         if not with_result:
-            return '{:24s}{:13s}{:25s}'.format(name[:23], test.protocol[:12], trans[:24])
+            return '{:24s}{:18s}{:25s}'.format(name[:23], test.protocol[:17], trans[:24])
         else:
-            return '{:24s}{:13s}{:25s}{:s}\n'.format(name[:23], test.protocol[:12], trans[:24], self._result_string(test))
+            return '{:24s}{:18s}{:25s}{:s}\n'.format(name[:23], test.protocol[:17], trans[:24], self._result_string(test))
 
     def _print_test_header(self):
         self._print_bar()
         print(
-            '{:24s}{:13s}{:25s}{:s}'.format('server-client:', 'protocol:', 'transport:', 'result:'),
+            '{:24s}{:18s}{:25s}{:s}'.format('server-client:', 'protocol:', 'transport:', 'result:'),
             file=self.out)
 
     def _print_header(self):
