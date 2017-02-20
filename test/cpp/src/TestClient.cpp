@@ -136,8 +136,11 @@ int main(int argc, char** argv) {
   int ERR_EXCEPTIONS = 8;
   int ERR_UNKNOWN = 64;
 
-  string testDir = boost::filesystem::system_complete(argv[0]).parent_path().parent_path().parent_path().string();
-  string pemPath = testDir + "/keys/CA.pem";
+  string testDir  = boost::filesystem::system_complete(argv[0]).parent_path().parent_path().parent_path().string();
+  string caPath   = testDir + "/keys/CA.pem";
+  string certPath = testDir + "/keys/client.crt";
+  string keyPath  = testDir + "/keys/client.key";
+
 #if _WIN32
   transport::TWinsockSingleton::create();
 #endif
@@ -232,9 +235,15 @@ int main(int argc, char** argv) {
   boost::shared_ptr<TSSLSocketFactory> factory;
 
   if (ssl) {
+    cout << "Client Certificate File: " << certPath << endl;
+    cout << "Client Key         File: " << keyPath << endl;
+    cout << "CA                 File: " << caPath << endl;
+
     factory = boost::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
     factory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-    factory->loadTrustedCertificates(pemPath.c_str());
+    factory->loadTrustedCertificates(caPath.c_str());
+    factory->loadCertificate(certPath.c_str());
+    factory->loadPrivateKey(keyPath.c_str());
     factory->authenticate(true);
     socket = factory->createSocket(host, port);
   } else {

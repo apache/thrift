@@ -60,13 +60,15 @@ sub __listen
                 Proto         => 'tcp',
                 ReuseAddr     => 1};
 
+    my $verify = IO::Socket::SSL::SSL_VERIFY_PEER | IO::Socket::SSL::SSL_VERIFY_FAIL_IF_NO_PEER_CERT | IO::Socket::SSL::SSL_VERIFY_CLIENT_ONCE;
+
     $opts->{SSL_ca_file}      = $self->{ca}      if defined $self->{ca};
     $opts->{SSL_cert_file}    = $self->{cert}    if defined $self->{cert};
     $opts->{SSL_cipher_list}  = $self->{ciphers} if defined $self->{ciphers};
     $opts->{SSL_key_file}     = $self->{key}     if defined $self->{key};
     $opts->{SSL_use_cert}     = (defined $self->{cert}) ? 1 : 0;
-    $opts->{SSL_verify_mode}  = (defined $self->{ca}) ? IO::Socket::SSL::SSL_VERIFY_PEER : IO::Socket::SSL::SSL_VERIFY_NONE;
-    $opts->{SSL_version}      = (defined $self->{version}) ? $self->{version} : 'SSLv23:!SSLv2:!SSLv3';
+    $opts->{SSL_verify_mode}  = (defined $self->{ca}) ? $verify : IO::Socket::SSL::SSL_VERIFY_NONE;
+    $opts->{SSL_version}      = (defined $self->{version}) ? $self->{version} : 'SSLv23:!SSLv3:!SSLv2';
 
     return IO::Socket::SSL->new(%$opts);
 }
