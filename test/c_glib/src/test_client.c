@@ -35,6 +35,7 @@
 #include <thrift/c_glib/transport/thrift_socket.h>
 #include <thrift/c_glib/transport/thrift_transport.h>
 
+#include "../gen-c_glib/t_test_second_service.h"
 #include "../gen-c_glib/t_test_thrift_test.h"
 
 /* Handle SIGPIPE signals (indicating the server has closed the
@@ -75,29 +76,36 @@ gint32_compare (gconstpointer a, gconstpointer b)
 }
 
 /**
- * It gets a multiplexed protocol which uses binary underneath
+ * It gets a multiplexed protocol which uses a concrete protocol underneath
+ * @param  protocol_name  the fully qualified protocol path (e.g. "binary:multi")
  * @param  transport      the underlying transport
  * @param  service_name   the single supported service name
  * @todo                  need to allow multiple services to fully test multiplexed
  * @return                a multiplexed protocol wrapping the correct underlying protocol
  */
 ThriftProtocol *
-get_multiplexed_protocol(ThriftTransport *transport, gchar *service_name)
+get_multiplexed_protocol(gchar *protocol_name, ThriftTransport *transport, gchar *service_name)
 {
-  ThriftProtocol * result_protocol=NULL;
-  ThriftProtocol * multiplexed_protocol=NULL;
+  ThriftProtocol * multiplexed_protocol = NULL;
 
-  multiplexed_protocol = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL,
-               "transport", transport,
-               NULL);
+  if ( strncmp(protocol_name, "binary:", 7) == 0) {
+    multiplexed_protocol = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL,
+                 "transport", transport,
+                 NULL);
+  } else if ( strncmp(protocol_name, "compact:", 8) == 0) {
+    multiplexed_protocol = g_object_new (THRIFT_TYPE_COMPACT_PROTOCOL,
+                 "transport", transport,
+                 NULL);
+  } else {
+    fprintf(stderr, "Unknown multiplex protocol name: %s\n", protocol_name);
+    return NULL;
+  }
 
-  result_protocol = g_object_new (THRIFT_TYPE_MULTIPLEXED_PROTOCOL,
-          "transport",  transport,
-          "protocol",   multiplexed_protocol,
+  return g_object_new (THRIFT_TYPE_MULTIPLEXED_PROTOCOL,
+          "transport",      transport,
+          "protocol",       multiplexed_protocol,
           "service-name",   service_name,
           NULL);
-
-  return result_protocol;
 }
 
 int
@@ -121,7 +129,7 @@ main (int argc, char **argv)
     { "transport",       't', 0, G_OPTION_ARG_STRING,   &transport_option,
       "Transport: buffered, framed (=buffered)", NULL },
     { "protocol",        'r', 0, G_OPTION_ARG_STRING,   &protocol_option,
-      "Protocol: binary, compact, multiplexed (=binary)", NULL },
+      "Protocol: binary, compact, multi, multic (=binary)", NULL },
     { "testloops",       'n', 0, G_OPTION_ARG_INT,      &num_tests,
       "Number of tests (=1)", NULL },
     { NULL }
@@ -136,11 +144,13 @@ main (int argc, char **argv)
   GType  protocol_type  = THRIFT_TYPE_BINARY_PROTOCOL;
   gchar *protocol_name  = "binary";
 
-  ThriftSocket    *socket;
-  ThriftTransport *transport;
-  ThriftProtocol  *protocol;
+  ThriftSocket    *socket = NULL;
+  ThriftTransport *transport = NULL;
+  ThriftProtocol  *protocol = NULL;
+  ThriftProtocol  *protocol2 = NULL;            // for multiplexed tests
 
-  TTestThriftTestIf *test_client;
+  TTestThriftTestIf *test_client = NULL;
+  TTestSecondServiceIf *second_service = NULL;  // for multiplexed tests
 
   struct timeval time_start, time_stop, time_elapsed;
   guint64 time_elapsed_usec, time_total_usec = 0;
@@ -180,12 +190,16 @@ main (int argc, char **argv)
       protocol_type = THRIFT_TYPE_COMPACT_PROTOCOL;
       protocol_name = "compact";
     }
-    else if (strncmp (protocol_option, "multiplexed", 12) == 0) {
+    else if (strncmp (protocol_option, "multi", 6) == 0) {
       protocol_type = THRIFT_TYPE_MULTIPLEXED_PROTOCOL;
-      protocol_name = "multiplexed(binary)";
+      protocol_name = "binary:multi";
+    }
+    else if (strncmp (protocol_option, "multic", 7) == 0) {
+      protocol_type = THRIFT_TYPE_MULTIPLEXED_PROTOCOL;
+      protocol_name = "compact:multic";
     }
     else if (strncmp (protocol_option, "binary", 7) == 0) {
-      printf("We are going with default binary protocol");
+      printf("We are going with default protocol\n");
     }
     else {
       fprintf (stderr, "Unknown protocol type %s\n", protocol_option);
@@ -240,7 +254,7 @@ main (int argc, char **argv)
 
   if (ssl && !thrift_ssl_load_cert_from_file(THRIFT_SSL_SOCKET(socket), "../keys/CA.pem")) {
     fprintf(stderr, "Unable to load validation certificate ../keys/CA.pem - did you run in the test/c_glib directory?\n");
-    g_object_unref (socket);
+    g_clear_object (&socket);
     return 253;
   }
 
@@ -252,17 +266,26 @@ main (int argc, char **argv)
     // TODO: A multiplexed test should also test "Second" (see Java TestServer)
     // The context comes from the name of the thrift file. If multiple thrift
     // schemas are used we have to redo the way this is done.
-    protocol = get_multiplexed_protocol(transport, "ThriftTest");
+    protocol = get_multiplexed_protocol(protocol_name, transport, "ThriftTest");
     if (NULL == protocol) {
-      g_object_unref (transport);
-      g_object_unref (socket);
+      g_clear_object (&transport);
+      g_clear_object (&socket);
       return 252;
     }
+
+    // Make a second protocol and client running on the same multiplexed transport
+    protocol2 = get_multiplexed_protocol(protocol_name, transport, "SecondService");
+    second_service = g_object_new (T_TEST_TYPE_SECOND_SERVICE_CLIENT,
+                                "input_protocol",  protocol2,
+                                "output_protocol", protocol2,
+                                NULL);
+
   }else{
     protocol = g_object_new (protocol_type,
            "transport", transport,
            NULL);
   }
+
   test_client = g_object_new (T_TEST_TYPE_THRIFT_TEST_CLIENT,
                               "input_protocol",  protocol,
                               "output_protocol", protocol,
@@ -348,11 +371,11 @@ main (int argc, char **argv)
         printf (" = void\n");
       }
       else {
-  if(error!=NULL){
-        printf ("%s\n", error->message);
-    g_error_free (error);
-    error = NULL;
-  }
+        if(error!=NULL){
+          printf ("%s\n", error->message);
+          g_error_free (error);
+          error = NULL;
+        }
         fail_count++;
       }
 
@@ -377,6 +400,31 @@ main (int argc, char **argv)
         error = NULL;
 
         fail_count++;
+      }
+
+      /**
+       * Multiplexed Test - do this right in the middle of the normal Test Client run
+       */
+      if (second_service) {
+        printf ("testSecondServiceMultiplexSecondTestString(\"2nd\")");
+        if (t_test_second_service_if_secondtest_string (second_service,
+                                                        &string,
+                                                        "2nd",
+                                                        &error)) {
+          printf (" = \"%s\"\n", string);
+          if (strncmp (string, "testString(\"2nd\")", 18) != 0) {
+            ++fail_count;
+          }
+
+          g_free (string);
+          string = NULL;
+        } else {
+          printf ("%s\n", error->message);
+          g_error_free (error);
+          error = NULL;
+
+          ++fail_count;
+        }
       }
 
       /**
@@ -511,7 +559,104 @@ main (int argc, char **argv)
         fail_count++;
       }
 
-      // TODO: add testBinary()
+      /**
+       * BINARY TEST
+       */
+      printf ("testBinary(empty)");
+      GByteArray *emptyArray = g_byte_array_new();
+      GByteArray *result = NULL;
+      if (t_test_thrift_test_if_test_binary (test_client,
+                                             &result,
+                                             emptyArray,
+                                             &error)) {
+        GBytes *response = g_byte_array_free_to_bytes(result);  // frees result
+        result = NULL;
+        gsize siz = g_bytes_get_size(response);
+        if (siz == 0) {
+          printf(" = empty\n");
+        } else {
+          printf(" = not empty (%ld bytes)\n", (long)siz);
+          ++fail_count;
+        }
+        g_bytes_unref(response);
+      } else {
+        printf ("%s\n", error->message);
+        g_error_free (error);
+        error = NULL;
+
+        fail_count++;
+      }
+      g_byte_array_unref(emptyArray);
+      emptyArray = NULL;
+
+      // TODO: add testBinary() with data
+      printf ("testBinary([-128..127]) = {");
+      const signed char bin_data[256]
+        = {-128, -127, -126, -125, -124, -123, -122, -121, -120, -119, -118, -117, -116, -115, -114,
+           -113, -112, -111, -110, -109, -108, -107, -106, -105, -104, -103, -102, -101, -100, -99,
+           -98,  -97,  -96,  -95,  -94,  -93,  -92,  -91,  -90,  -89,  -88,  -87,  -86,  -85,  -84,
+           -83,  -82,  -81,  -80,  -79,  -78,  -77,  -76,  -75,  -74,  -73,  -72,  -71,  -70,  -69,
+           -68,  -67,  -66,  -65,  -64,  -63,  -62,  -61,  -60,  -59,  -58,  -57,  -56,  -55,  -54,
+           -53,  -52,  -51,  -50,  -49,  -48,  -47,  -46,  -45,  -44,  -43,  -42,  -41,  -40,  -39,
+           -38,  -37,  -36,  -35,  -34,  -33,  -32,  -31,  -30,  -29,  -28,  -27,  -26,  -25,  -24,
+           -23,  -22,  -21,  -20,  -19,  -18,  -17,  -16,  -15,  -14,  -13,  -12,  -11,  -10,  -9,
+           -8,   -7,   -6,   -5,   -4,   -3,   -2,   -1,   0,    1,    2,    3,    4,    5,    6,
+           7,    8,    9,    10,   11,   12,   13,   14,   15,   16,   17,   18,   19,   20,   21,
+           22,   23,   24,   25,   26,   27,   28,   29,   30,   31,   32,   33,   34,   35,   36,
+           37,   38,   39,   40,   41,   42,   43,   44,   45,   46,   47,   48,   49,   50,   51,
+           52,   53,   54,   55,   56,   57,   58,   59,   60,   61,   62,   63,   64,   65,   66,
+           67,   68,   69,   70,   71,   72,   73,   74,   75,   76,   77,   78,   79,   80,   81,
+           82,   83,   84,   85,   86,   87,   88,   89,   90,   91,   92,   93,   94,   95,   96,
+           97,   98,   99,   100,  101,  102,  103,  104,  105,  106,  107,  108,  109,  110,  111,
+           112,  113,  114,  115,  116,  117,  118,  119,  120,  121,  122,  123,  124,  125,  126,
+           127};
+      GByteArray *fullArray = g_byte_array_new();
+      g_byte_array_append(fullArray, (guint8 *)(&bin_data[0]), 256);
+      if (t_test_thrift_test_if_test_binary (test_client,
+                                             &result,
+                                             fullArray,
+                                             &error)) {
+        GBytes *response = g_byte_array_free_to_bytes(result);  // frees result
+        result = NULL;
+        gsize siz = g_bytes_get_size(response);
+        gconstpointer ptr = g_bytes_get_data(response, &siz);
+        if (siz == 256) {
+          gboolean first = 1;
+          gboolean failed = 0;
+          int i;
+
+          for (i = 0; i < 256; ++i) {
+            if (!first)
+              printf(",");
+            else
+              first = 0;
+            int val = ((signed char *)ptr)[i];
+            printf("%d", val);
+            if (!failed && val != i - 128) {
+              failed = 1;
+            }
+          }
+          printf("} ");
+          if (failed) {
+            printf("FAIL (bad content) size %ld OK\n", (long)siz);
+            ++fail_count;
+          } else {
+            printf("OK size %ld OK\n", (long)siz);
+          }
+        } else {
+          printf(" = bad size %ld\n", (long)siz);
+          ++fail_count;
+        }
+        g_bytes_unref(response);
+      } else {
+        printf ("%s\n", error->message);
+        g_error_free (error);
+        error = NULL;
+
+        fail_count++;
+      }
+      g_byte_array_unref(fullArray);
+      fullArray = NULL;
 
       /**
        * STRUCT TEST
@@ -546,6 +691,11 @@ main (int argc, char **argv)
             i32_thing != -3 ||
             i64_thing != (gint64)-5)
           fail_count++;
+
+        if (string) {
+          g_free (string);
+          string = NULL;
+        }
       }
       else {
         printf ("%s\n", error->message);
@@ -554,7 +704,8 @@ main (int argc, char **argv)
 
         fail_count++;
       }
-      g_object_unref (xtruct_in);
+      // g_clear_object(&xtruct_out); used below
+      g_clear_object(&xtruct_in);
 
       /**
        * NESTED STRUCT TEST
@@ -597,6 +748,11 @@ main (int argc, char **argv)
             inner_i64_thing != (gint64)-5 ||
             i32_thing != 5)
           fail_count++;
+
+        if (string) {
+          g_free(string);
+          string = NULL;
+        }
       }
       else {
         printf ("%s\n", error->message);
@@ -606,10 +762,10 @@ main (int argc, char **argv)
         fail_count++;
       }
 
-      g_object_unref (xtruct_in);
-      g_object_unref (xtruct2_in);
-      g_object_unref (xtruct2_out);
-      g_object_unref (xtruct_out);
+      g_clear_object(&xtruct_in);
+      g_clear_object(&xtruct2_in);
+      g_clear_object(&xtruct2_out);
+      g_clear_object(&xtruct_out);
 
       /**
        * MAP TEST
@@ -1352,7 +1508,7 @@ main (int argc, char **argv)
       }
 
       g_hash_table_unref (map_in);
-      g_object_unref (insanity_out);
+      g_clear_object (&insanity_out);
 
       /* test exception */
       printf ("testClient.testException(\"Xception\") =>");
@@ -1368,8 +1524,7 @@ main (int argc, char **argv)
         printf ("  {%u, \"%s\"}\n", int32, string);
         g_free (string);
 
-        g_object_unref (xception);
-        xception = NULL;
+        g_clear_object (&xception);
 
         g_error_free (error);
         error = NULL;
@@ -1405,10 +1560,7 @@ main (int argc, char **argv)
         printf ("  void\nFAILURE\n");
         fail_count++;
 
-        if (xception != NULL) {
-          g_object_unref (xception);
-          xception = NULL;
-        }
+        g_clear_object (&xception);
 
         if (error != NULL) {
           g_error_free (error);
@@ -1426,10 +1578,7 @@ main (int argc, char **argv)
         printf ("  void\nFAILURE\n");
         fail_count++;
 
-        if (xception != NULL) {
-          g_object_unref (xception);
-          xception = NULL;
-        }
+        g_clear_object (&xception);
 
         g_error_free (error);
         error = NULL;
@@ -1466,15 +1615,8 @@ main (int argc, char **argv)
         printf ("  result\nFAILURE\n");
         fail_count++;
 
-        if (xception != NULL) {
-          g_object_unref (xception);
-          xception = NULL;
-        }
-
-        if (xception2 != NULL) {
-          g_object_unref (xception2);
-          xception = NULL;
-        }
+        g_clear_object (&xception);
+        g_clear_object (&xception2);
 
         if (error != NULL) {
           g_error_free (error);
@@ -1504,11 +1646,8 @@ main (int argc, char **argv)
         printf ("  {%u, {\"%s\"}}\n", int32, string);
         g_free (string);
 
-        g_object_unref (inner_xtruct_in);
-        inner_xtruct_in = NULL;
-
-        g_object_unref (xception2);
-        xception2 = NULL;
+        g_clear_object (&inner_xtruct_in);
+        g_clear_object (&xception2);
 
         g_error_free (error);
         error = NULL;
@@ -1517,22 +1656,15 @@ main (int argc, char **argv)
         printf ("  result\nFAILURE\n");
         fail_count++;
 
-        if (xception != NULL) {
-          g_object_unref (xception);
-          xception = NULL;
-        }
-
-        if (xception2 != NULL) {
-          g_object_unref (xception2);
-          xception = NULL;
-        }
+        g_clear_object (&xception);
+        g_clear_object (&xception2);
 
         if (error != NULL) {
           g_error_free (error);
           error = NULL;
         }
       }
-      g_object_unref (xtruct_in);
+      g_clear_object (&xtruct_in);
 
       printf ("testClient.testMultiException(\"success\", \"test 3\") =>");
       xtruct_in = g_object_new (T_TEST_TYPE_XTRUCT, NULL);
@@ -1555,22 +1687,15 @@ main (int argc, char **argv)
         printf ("  result\nFAILURE\n");
         fail_count++;
 
-        if (xception != NULL) {
-          g_object_unref (xception);
-          xception = NULL;
-        }
-
-        if (xception2 != NULL) {
-          g_object_unref (xception2);
-          xception = NULL;
-        }
+        g_clear_object (&xception);
+        g_clear_object (&xception2);
 
         if (error != NULL) {
           g_error_free (error);
           error = NULL;
         }
       }
-      g_object_unref (xtruct_in);
+      g_clear_object (&xtruct_in);
 
       /* test oneway void */
       printf ("testClient.testOneway(1) =>");
@@ -1647,7 +1772,6 @@ main (int argc, char **argv)
     }
     else {
       printf ("Connect failed: %s\n", error->message);
-      g_object_unref (socket);
       g_error_free (error);
       error = NULL;
 
@@ -1657,6 +1781,7 @@ main (int argc, char **argv)
 
   /* All done---output statistics */
   puts ("\nAll tests done.");
+  printf("Number of failures: %d\n", fail_count);
 
   time_avg_usec = time_total_usec / num_tests;
 
@@ -1664,10 +1789,12 @@ main (int argc, char **argv)
   printf ("Max time: %" PRIu64 " us\n", time_max_usec);
   printf ("Avg time: %" PRIu64 " us\n", time_avg_usec);
 
-  g_object_unref (test_client);
-  g_object_unref (protocol);
-  g_object_unref (transport);
-  g_free (host);
+  g_clear_object(&second_service);
+  g_clear_object(&protocol2);
+  g_clear_object(&test_client);
+  g_clear_object(&protocol);
+  g_clear_object(&transport);
+  g_clear_object(&socket);
 
   if (ssl) {
     thrift_ssl_socket_finalize_openssl();

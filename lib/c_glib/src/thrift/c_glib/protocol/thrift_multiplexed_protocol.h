@@ -41,7 +41,7 @@ G_BEGIN_DECLS
 #define THRIFT_IS_MULTIPLEXED_PROTOCOL_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_MULTIPLEXED_PROTOCOL))
 #define THRIFT_MULTIPLEXED_PROTOCOL_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_MULTIPLEXED_PROTOCOL, ThriftMultiplexedProtocolClass))
 
-/* version numbers */
+/* constant */
 #define THRIFT_MULTIPLEXED_PROTOCOL_DEFAULT_SEPARATOR ":"
 
 typedef struct _ThriftMultiplexedProtocol ThriftMultiplexedProtocol;
@@ -56,7 +56,6 @@ struct _ThriftMultiplexedProtocol
   ThriftProtocolDecorator parent;
 
   gchar *service_name;
-  gchar *separator;
 };
 
 typedef struct _ThriftMultiplexedProtocolClass ThriftMultiplexedProtocolClass;

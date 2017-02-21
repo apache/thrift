@@ -6,15 +6,20 @@
     ],
     "server": {
       "command": [
-        "test_server"
+        "test_server",
+        "--lt-debug"
       ]
     },
     "client": {
       "command": [
-        "test_client"
+        "test_client",
+        "--lt-debug"
       ],
       "protocols": [
-        "multiplexed"
+        "multi",
+        "multic",
+        "multi:binary",
+        "multic:compact"
       ],
       "sockets": [
         "ip-ssl"
@@ -111,7 +116,12 @@
       "delay": 10,
       "extra_args": ["run-testserver"],
       "protocols": [
-        "multiplexed"
+        "binary:multi",
+        "compact:multic",
+        "json:multij",
+        "multi",
+        "multic",
+        "multij"
       ]
     },
     "client": {
