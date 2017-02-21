@@ -64,8 +64,11 @@ public class TestServer {
   //
   // For multiplexed testing we always use binary protocol underneath.
   //
-  // "ThriftTest" named service implements ThriftTest from ThriftTest.thrift
-  // "Second" named service implements "SecondService" from ThriftTest.thrift
+  // "ThriftTest" named service implements "ThriftTest" from ThriftTest.thrift
+  // "SecondService" named service implements "SecondService" from ThriftTest.thrift
+  // In addition, to support older non-multiplexed clients using the same concrete protocol
+  // the multiplexed processor is taught to use "ThriftTest" if the incoming request has no
+  // multiplexed call name decoration.
 
   static class SecondHandler implements thrift.test.SecondService.Iface {
 
@@ -160,7 +163,7 @@ public class TestServer {
             System.out.println("  --help\t\t\tProduce help message");
             System.out.println("  --port=arg (=" + port + ")\tPort number to connect");
             System.out.println("  --transport=arg (=" + transport_type + ")\n\t\t\t\tTransport: buffered, framed, fastframed");
-            System.out.println("  --protocol=arg (=" + protocol_type + ")\tProtocol: binary, compact, json, multiplexed");
+            System.out.println("  --protocol=arg (=" + protocol_type + ")\tProtocol: binary, compact, json, multi, multic, multij");
             System.out.println("  --ssl\t\t\tEncrypted Transport using SSL");
             System.out.println("  --server-type=arg (=" + server_type +")\n\t\t\t\tType of server: simple, thread-pool, nonblocking, threaded-selector");
             System.out.println("  --string-limit=arg (=" + string_limit + ")\tString read length limit");
@@ -190,7 +193,9 @@ public class TestServer {
         if (protocol_type.equals("binary")) {
         } else if (protocol_type.equals("compact")) {
         } else if (protocol_type.equals("json")) {
-        } else if (protocol_type.equals("multiplexed")) {
+        } else if (protocol_type.equals("multi")) {
+        } else if (protocol_type.equals("multic")) {
+        } else if (protocol_type.equals("multij")) {
         } else {
           throw new Exception("Unknown protocol type! " + protocol_type);
         }
@@ -214,11 +219,11 @@ public class TestServer {
 
       // Protocol factory
       TProtocolFactory tProtocolFactory = null;
-      if (protocol_type.equals("json")) {
+      if (protocol_type.equals("json") || protocol_type.equals("multij")) {
         tProtocolFactory = new TJSONProtocol.Factory();
-      } else if (protocol_type.equals("compact")) {
+      } else if (protocol_type.equals("compact") || protocol_type.equals("multic")) {
         tProtocolFactory = new TCompactProtocol.Factory(string_limit, container_limit);
-      } else { // also covers multiplexed
+      } else { // also covers multi
         tProtocolFactory = new TBinaryProtocol.Factory(string_limit, container_limit);
       }
 
@@ -236,8 +241,9 @@ public class TestServer {
 
       // If we are multiplexing services in one server...
       TMultiplexedProcessor multiplexedProcessor = new TMultiplexedProcessor();
+      multiplexedProcessor.registerDefault  (testProcessor);
       multiplexedProcessor.registerProcessor("ThriftTest", testProcessor);
-      multiplexedProcessor.registerProcessor("Second", secondProcessor);
+      multiplexedProcessor.registerProcessor("SecondService", secondProcessor);
 
       if (server_type.equals("nonblocking") ||
           server_type.equals("threaded-selector")) {
@@ -249,7 +255,7 @@ public class TestServer {
           // Nonblocking Server
           TNonblockingServer.Args tNonblockingServerArgs
               = new TNonblockingServer.Args(tNonblockingServerSocket);
-          tNonblockingServerArgs.processor(protocol_type.equals("multiplexed") ? multiplexedProcessor : testProcessor);
+          tNonblockingServerArgs.processor(protocol_type.startsWith("multi") ? multiplexedProcessor : testProcessor);
           tNonblockingServerArgs.protocolFactory(tProtocolFactory);
           tNonblockingServerArgs.transportFactory(tTransportFactory);
           serverEngine = new TNonblockingServer(tNonblockingServerArgs);
@@ -257,7 +263,7 @@ public class TestServer {
           // ThreadedSelector Server
           TThreadedSelectorServer.Args tThreadedSelectorServerArgs
               = new TThreadedSelectorServer.Args(tNonblockingServerSocket);
-          tThreadedSelectorServerArgs.processor(protocol_type.equals("multiplexed") ? multiplexedProcessor : testProcessor);
+          tThreadedSelectorServerArgs.processor(protocol_type.startsWith("multi") ? multiplexedProcessor : testProcessor);
           tThreadedSelectorServerArgs.protocolFactory(tProtocolFactory);
           tThreadedSelectorServerArgs.transportFactory(tTransportFactory);
           serverEngine = new TThreadedSelectorServer(tThreadedSelectorServerArgs);
@@ -276,7 +282,7 @@ public class TestServer {
         if (server_type.equals("simple")) {
           // Simple Server
           TServer.Args tServerArgs = new TServer.Args(tServerSocket);
-          tServerArgs.processor(protocol_type.equals("multiplexed") ? multiplexedProcessor : testProcessor);
+          tServerArgs.processor(protocol_type.startsWith("multi") ? multiplexedProcessor : testProcessor);
           tServerArgs.protocolFactory(tProtocolFactory);
           tServerArgs.transportFactory(tTransportFactory);
           serverEngine = new TSimpleServer(tServerArgs);
@@ -284,7 +290,7 @@ public class TestServer {
           // ThreadPool Server
           TThreadPoolServer.Args tThreadPoolServerArgs
               = new TThreadPoolServer.Args(tServerSocket);
-          tThreadPoolServerArgs.processor(protocol_type.equals("multiplexed") ? multiplexedProcessor : testProcessor);
+          tThreadPoolServerArgs.processor(protocol_type.startsWith("multi") ? multiplexedProcessor : testProcessor);
           tThreadPoolServerArgs.protocolFactory(tProtocolFactory);
           tThreadPoolServerArgs.transportFactory(tTransportFactory);
           serverEngine = new TThreadPoolServer(tThreadPoolServerArgs);
@@ -295,7 +301,9 @@ public class TestServer {
       serverEngine.setServerEventHandler(new TestServerEventHandler());
 
       // Run it
-      System.out.println("Starting the server on port " + port + "...");
+      System.out.println("Starting the " + (ssl ? "ssl server" : "server") +
+        " [" + protocol_type + "/" + transport_type + "/" + server_type + "] on " +
+        ((domain_socket == "") ? ("port " + port) : ("unix socket " + domain_socket)));
       serverEngine.serve();
 
     } catch (Exception x) {

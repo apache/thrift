@@ -224,12 +224,12 @@ thrift_server_socket_class_init (ThriftServerSocketClass *cls)
                                   "port (construct)",
                                   "Set the port to listen to",
                                   0, /* min */
-                                  65534, /* max */
+                                  65535, /* max */
                                   9090, /* default by convention */
                                   G_PARAM_CONSTRUCT_ONLY |
                                   G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class,
-                                   PROP_THRIFT_SERVER_SOCKET_PORT, 
+                                   PROP_THRIFT_SERVER_SOCKET_PORT,
                                    param_spec);
 
   param_spec = g_param_spec_uint ("backlog",

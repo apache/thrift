@@ -44,33 +44,28 @@ typedef struct _ThriftProtocolDecorator ThriftProtocolDecorator;
 
 
 /*!
- * Thrift Multiplexed Protocol instance.
+ * Thrift Protocol Decorator instance.
  */
 struct _ThriftProtocolDecorator
 {
-	ThriftProtocol parent;
+  ThriftProtocol parent;
 
-	ThriftProtocol *concrete_protocol;
+  ThriftProtocol *concrete_protocol;
 };
 
 typedef struct _ThriftProtocolDecoratorClass ThriftProtocolDecoratorClass;
 
 /*!
- * Thrift Multiplexed Protocol class.
+ * Thrift Protocol Decorator class.
  */
 struct _ThriftProtocolDecoratorClass
 {
-	ThriftProtocolClass parent;
+  ThriftProtocolClass parent;
 
 };
 
 /* used by THRIFT_TYPE_PROTOCOL_DECORATOR */
 GType thrift_protocol_decorator_get_type (void);
-
-
-ThriftProtocol *
-thrift_protocol_decorator_get_concrete_protocol(ThriftProtocolDecorator *protocol);
-
 
 G_END_DECLS
 
