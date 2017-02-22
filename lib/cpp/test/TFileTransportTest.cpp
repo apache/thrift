@@ -83,7 +83,7 @@ public:
   void fsync(int fd) {
     (void)fd;
     FsyncCall call;
-    gettimeofday(&call.time, NULL);
+    THRIFT_GETTIMEOFDAY(&call.time, NULL);
     calls_.push_back(call);
   }
 
@@ -100,6 +100,7 @@ class TempFile {
 public:
   TempFile(const char* directory, const char* prefix) {
   #ifdef __MINGW32__
+    ((void)directory);
     size_t path_len = strlen(prefix) + 8;
     path_ = new char[path_len];
     snprintf(path_, path_len, "%sXXXXXX", prefix);
@@ -208,9 +209,9 @@ BOOST_AUTO_TEST_CASE(test_destructor) {
     struct timeval start;
     struct timeval end;
 
-    gettimeofday(&start, NULL);
+    THRIFT_GETTIMEOFDAY(&start, NULL);
     delete transport;
-    gettimeofday(&end, NULL);
+    THRIFT_GETTIMEOFDAY(&end, NULL);
 
     int delta = time_diff(&start, &end);
 
@@ -331,13 +332,13 @@ BOOST_AUTO_TEST_CASE(test_noop_flush) {
   transport.write(buf, 1);
 
   struct timeval start;
-  gettimeofday(&start, NULL);
+  THRIFT_GETTIMEOFDAY(&start, NULL);
 
   for (unsigned int n = 0; n < 10; ++n) {
     transport.flush();
 
     struct timeval now;
-    gettimeofday(&now, NULL);
+    THRIFT_GETTIMEOFDAY(&now, NULL);
 
     // Fail if at any point we've been running for longer than half a second.
     // (With the buggy code, TFileTransport used to take 3 seconds per flush())

@@ -1727,7 +1727,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
 
   f_header_ << endl << ns_open_ << endl << endl;
 
-  f_header_ << "#ifdef _WIN32\n"
+  f_header_ << "#ifdef _MSC_VER\n"
                "  #pragma warning( push )\n"
                "  #pragma warning (disable : 4250 ) //inheriting methods via dominance \n"
                "#endif\n\n";
@@ -1783,7 +1783,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
     generate_service_async_skeleton(tservice);
   }
 
-  f_header_ << "#ifdef _WIN32\n"
+  f_header_ << "#ifdef _MSC_VER\n"
                "  #pragma warning( pop )\n"
                "#endif\n\n";
 

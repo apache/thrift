@@ -214,7 +214,7 @@ void peekerWorker(boost::shared_ptr<TTransport> tt, bool expectedResult) {
   uint8_t buf[400];
   try {
     tt->read(buf, 1);
-    tt->peek();
+    BOOST_CHECK_EQUAL(expectedResult, tt->peek());
   } catch (const TTransportException& tx) {
     BOOST_CHECK_EQUAL(TTransportException::TIMED_OUT, tx.getType());
   }

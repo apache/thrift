@@ -38,6 +38,7 @@ namespace concurrency {
 class Mutex::impl : public std::timed_mutex {};
 
 Mutex::Mutex(Initializer init) : impl_(new Mutex::impl()) {
+  ((void)init);
 }
 
 void* Mutex::getUnderlyingImpl() const {
@@ -61,6 +62,7 @@ void Mutex::unlock() const {
 }
 
 void Mutex::DEFAULT_INITIALIZER(void* arg) {
+  ((void)arg);
 }
 }
 }

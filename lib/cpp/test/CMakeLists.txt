@@ -79,7 +79,7 @@ set(UnitTest_SOURCES
     TServerTransportTest.cpp
 )
 
-if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS AND NOT MSVC)
+if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS AND NOT MSVC AND NOT MINGW)
     list(APPEND UnitTest_SOURCES RWMutexStarveTest.cpp)
 endif()
 
@@ -112,7 +112,7 @@ LINK_AGAINST_THRIFT_LIBRARY(TInterruptTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT MINGW)
 target_link_libraries(TInterruptTest -lrt)
 endif ()
-add_test(NAME TInterruptTest COMMAND TInterruptTest "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
+add_test(NAME TInterruptTest COMMAND TInterruptTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
 
 add_executable(TServerIntegrationTest TServerIntegrationTest.cpp)
 target_link_libraries(TServerIntegrationTest
@@ -317,7 +317,7 @@ LINK_AGAINST_THRIFT_LIBRARY(SecurityTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT MINGW)
 target_link_libraries(SecurityTest -lrt)
 endif ()
-add_test(NAME SecurityTest COMMAND SecurityTest "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
+add_test(NAME SecurityTest COMMAND SecurityTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
 
 endif()
 
