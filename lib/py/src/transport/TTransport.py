@@ -169,7 +169,6 @@ class TBufferedTransport(TTransportBase, CReadableTransport):
             # on exception reset wbuf so it doesn't contain a partial function call
             self.__wbuf = BufferIO()
             raise e
-        self.__wbuf.getvalue()
 
     def flush(self):
         out = self.__wbuf.getvalue()
