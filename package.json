@@ -41,13 +41,13 @@
   },
   "devDependencies": {
     "buffer-equals": "^1.0.3",
-    "bufferutil": "~2.0.0",
+    "bufferutil": "1.2.x",
     "commander": "2.1.x",
     "connect": "2.7.x",
     "istanbul": "^0.3.5",
     "run-browser": "^2.0.1",
     "tape": "~3.5.0",
-    "utf-8-validate": "~3.0.0"
+    "utf-8-validate": "1.2.x"
   },
   "scripts": {
     "cover": "lib/nodejs/test/testAll.sh COVER",
