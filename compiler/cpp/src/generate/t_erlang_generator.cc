@@ -1030,6 +1030,9 @@ void t_erlang_generator::generate_struct_member(ostream& out, std::string name, 
     out << " = " << render_member_value(name + "." + field_name(tmember), tmember, ind);
   }
   out << " :: " << render_member_type(tmember, true);
+  if (tmember->get_req() == t_field::T_OPTIONAL) {
+    out << " | undefined";
+  }
 }
 
 string t_erlang_generator::render_member_value(std::string name, t_field* field, indenter& ind) {
