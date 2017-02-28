@@ -123,6 +123,9 @@ private:
   /// Libevent object
   struct event event_;
 
+  /// Libevent object initialized
+  bool isEventInitialized_;
+
   /// Libevent flags
   short eventFlags_;
 
@@ -212,7 +215,8 @@ public:
   TConnection(THRIFT_SOCKET socket,
               TNonblockingIOThread* ioThread,
               const sockaddr* addr,
-              socklen_t addrLen) {
+              socklen_t addrLen)
+    : isEventInitialized_(false) {
     readBuffer_ = NULL;
     readBufferSize_ = 0;
 
@@ -809,6 +813,7 @@ void TNonblockingServer::TConnection::setFlags(short eventFlags) {
    */
   event_set(&event_, tSocket_->getSocketFD(), eventFlags_, TConnection::eventHandler, this);
   event_base_set(ioThread_->getEventBase(), &event_);
+  isEventInitialized_ = true;
 
   // Add the event
   if (event_add(&event_, 0) == -1) {
@@ -821,8 +826,10 @@ void TNonblockingServer::TConnection::setFlags(short eventFlags) {
  */
 void TNonblockingServer::TConnection::close() {
   // Delete the registered libevent
-  if (event_del(&event_) == -1) {
-    GlobalOutput.perror("TConnection::close() event_del", THRIFT_GET_SOCKET_ERROR);
+  if (isEventInitialized_) {
+    if (event_del(&event_) == -1) {
+      GlobalOutput.perror("TConnection::close() event_del", THRIFT_GET_SOCKET_ERROR);
+    }
   }
 
   if (serverEventHandler_) {
@@ -1307,7 +1314,8 @@ TNonblockingIOThread::TNonblockingIOThread(TNonblockingServer* server,
     listenSocket_(listenSocket),
     useHighPriority_(useHighPriority),
     eventBase_(NULL),
-    ownEventBase_(false) {
+    ownEventBase_(false),
+    isStopRequested_(false) {
   notificationPipeFDs_[0] = -1;
   notificationPipeFDs_[1] = -1;
 }
@@ -1521,7 +1529,7 @@ void TNonblockingIOThread::breakLoop(bool error) {
   }
 
   // sets a flag so that the loop exits on the next event
-  event_base_loopbreak(eventBase_);
+  event_base_loopexit(eventBase_, 0);
 
   // event_base_loopbreak() only causes the loop to exit the next time
   // it wakes up.  We need to force it to wake up, in case there are
@@ -1566,24 +1574,31 @@ void TNonblockingIOThread::setCurrentThreadHighPriority(bool value) {
 }
 
 void TNonblockingIOThread::run() {
-  if (eventBase_ == NULL)
-    registerEvents();
-
-  GlobalOutput.printf("TNonblockingServer: IO thread #%d entering loop...", number_);
-
-  if (useHighPriority_) {
-    setCurrentThreadHighPriority(true);
+  {
+    Guard g(stopMutex_);
+    if (!isStopRequested_) {
+      if (eventBase_ == NULL) {
+        registerEvents();
+      }
+      if (useHighPriority_) {
+        setCurrentThreadHighPriority(true);
+      }
+    }
   }
 
-  // Run libevent engine, never returns, invokes calls to eventHandler
-  event_base_loop(eventBase_, 0);
+  if (eventBase_ != NULL)
+  {
+    GlobalOutput.printf("TNonblockingServer: IO thread #%d entering loop...", number_);
+    // Run libevent engine, never returns, invokes calls to eventHandler
+    event_base_loop(eventBase_, 0);
 
-  if (useHighPriority_) {
-    setCurrentThreadHighPriority(false);
+    if (useHighPriority_) {
+      setCurrentThreadHighPriority(false);
+    }
+
+    // cleans up our registered events
+    cleanupEvents();
   }
-
-  // cleans up our registered events
-  cleanupEvents();
 
   GlobalOutput.printf("TNonblockingServer: IO thread #%d run() done!", number_);
 }
@@ -1600,6 +1615,8 @@ void TNonblockingIOThread::cleanupEvents() {
 }
 
 void TNonblockingIOThread::stop() {
+  Guard g(stopMutex_);
+  isStopRequested_ = true;
   // This should cause the thread to fall out of its event loop ASAP.
   breakLoop(false);
 }
