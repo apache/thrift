@@ -107,7 +107,8 @@ public:
 
   void generate_typedef(t_typedef* ttypedef);
   void generate_enum(t_enum* tenum);
-  void generate_enum_ostream_operator(t_enum* tenum);
+  void generate_enum_ostream_operator_decl(std::ofstream& out, t_enum* tenum);
+  void generate_enum_ostream_operator(std::ofstream& out, t_enum* tenum);
   void generate_forward_declaration(t_struct* tstruct);
   void generate_struct(t_struct* tstruct) { generate_cpp_struct(tstruct, false); }
   void generate_xception(t_struct* txception) { generate_cpp_struct(txception, true); }
@@ -132,7 +133,8 @@ public:
   void generate_struct_definition(std::ofstream& out,
                                   std::ofstream& force_cpp_out,
                                   t_struct* tstruct,
-                                  bool setters = true);
+                                  bool setters = true,
+                                  bool is_user_struct = false);
   void generate_copy_constructor(std::ofstream& out, t_struct* tstruct, bool is_exception);
   void generate_move_constructor(std::ofstream& out, t_struct* tstruct, bool is_exception);
   void generate_constructor_helper(std::ofstream& out,
@@ -247,6 +249,7 @@ public:
                                    const char* suffix,
                                    bool include_values);
 
+  void generate_struct_ostream_operator_decl(std::ofstream& f, t_struct* tstruct);
   void generate_struct_ostream_operator(std::ofstream& f, t_struct* tstruct);
   void generate_struct_print_method_decl(std::ofstream& f, t_struct* tstruct);
   void generate_exception_what_method_decl(std::ofstream& f,
@@ -568,46 +571,53 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
                 << ", _k" << tenum->get_name() << "Names), "
                 << "::apache::thrift::TEnumIterator(-1, NULL, NULL));" << endl << endl;
 
-  generate_enum_ostream_operator(tenum);
+  generate_enum_ostream_operator_decl(f_types_, tenum);
+  generate_enum_ostream_operator(f_types_impl_, tenum);
 }
 
-void t_cpp_generator::generate_enum_ostream_operator(t_enum* tenum) {
+void t_cpp_generator::generate_enum_ostream_operator_decl(std::ofstream& out, t_enum* tenum) {
+
+  out << "std::ostream& operator<<(std::ostream& out, const ";
+  if (gen_pure_enums_) {
+    out << tenum->get_name();
+  } else {
+    out << tenum->get_name() << "::type&";
+  }
+  out << " val);" << endl;
+  out << endl;
+}
+
+void t_cpp_generator::generate_enum_ostream_operator(std::ofstream& out, t_enum* tenum) {
 
   // If we've been told the consuming application will provide an ostream
   // operator definition then we only make a declaration:
 
   if (!has_custom_ostream(tenum)) {
-    f_types_ << "inline ";
-  }
+    out << "std::ostream& operator<<(std::ostream& out, const ";
+    if (gen_pure_enums_) {
+      out << tenum->get_name();
+    } else {
+      out << tenum->get_name() << "::type&";
+    }
+    out << " val) ";
+    scope_up(out);
 
-  f_types_ << "std::ostream& operator<<(std::ostream& out, const ";
-  if (gen_pure_enums_) {
-    f_types_ << tenum->get_name();
-  } else {
-    f_types_ << tenum->get_name() << "::type&";
-  }
-  f_types_ << " val)";
-  if (has_custom_ostream(tenum)) {
-    f_types_ << ";";
-  } else {
-    scope_up(f_types_);
-
-    f_types_ << indent() << "std::map<int, const char*>::const_iterator it = _"
+    out << indent() << "std::map<int, const char*>::const_iterator it = _"
              << tenum->get_name() << "_VALUES_TO_NAMES.find(val);" << endl;
-    f_types_ << indent() << "if (it != _" << tenum->get_name() << "_VALUES_TO_NAMES.end()) {" << endl;
+    out << indent() << "if (it != _" << tenum->get_name() << "_VALUES_TO_NAMES.end()) {" << endl;
     indent_up();
-    f_types_ << indent() << "out << it->second;" << endl;
+    out << indent() << "out << it->second;" << endl;
     indent_down();
-    f_types_ << indent() << "} else {" << endl;
+    out << indent() << "} else {" << endl;
     indent_up();
-    f_types_ << indent() << "out << static_cast<int>(val);" << endl;
+    out << indent() << "out << static_cast<int>(val);" << endl;
     indent_down();
-    f_types_ << indent() << "}" << endl;
+    out << indent() << "}" << endl;
 
-    f_types_ << indent() << "return out;" << endl;
-    scope_down(f_types_);
+    out << indent() << "return out;" << endl;
+    scope_down(out);
+    out << endl;
   }
-  f_types_ << endl;
 }
 
 /**
@@ -804,7 +814,7 @@ void t_cpp_generator::generate_forward_declaration(t_struct* tstruct) {
  */
 void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) {
   generate_struct_declaration(f_types_, tstruct, is_exception, false, true, true, true, true);
-  generate_struct_definition(f_types_impl_, f_types_impl_, tstruct);
+  generate_struct_definition(f_types_impl_, f_types_impl_, tstruct, true, true);
 
   std::ofstream& out = (gen_templates_ ? f_types_tcc_ : f_types_impl_);
   generate_struct_reader(out, tstruct);
@@ -1189,14 +1199,15 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
   }
 
   if (is_user_struct) {
-    generate_struct_ostream_operator(out, tstruct);
+    generate_struct_ostream_operator_decl(out, tstruct);
   }
 }
 
 void t_cpp_generator::generate_struct_definition(ofstream& out,
                                                  ofstream& force_cpp_out,
                                                  t_struct* tstruct,
-                                                 bool setters) {
+                                                 bool setters,
+                                                 bool is_user_struct) {
   // Get members
   vector<t_field*>::const_iterator m_iter;
   const vector<t_field*>& members = tstruct->get_members();
@@ -1237,6 +1248,9 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
       }
       out << indent() << "}" << endl;
     }
+  }
+  if (is_user_struct) {
+    generate_struct_ostream_operator(out, tstruct);
   }
   out << endl;
 }
@@ -1537,15 +1551,17 @@ void t_cpp_generator::generate_struct_swap(ofstream& out, t_struct* tstruct) {
   out << endl;
 }
 
+void t_cpp_generator::generate_struct_ostream_operator_decl(std::ofstream& out, t_struct* tstruct) {
+  out << "std::ostream& operator<<(std::ostream& out, const "
+      << tstruct->get_name()
+      << "& obj);" << endl;
+  out << endl;
+}
+
 void t_cpp_generator::generate_struct_ostream_operator(std::ofstream& out, t_struct* tstruct) {
-  if (has_custom_ostream(tstruct)) {
-    // the consuming implementation will define this behavior
-    out << "std::ostream& operator<<(std::ostream& out, const "
-        << tstruct->get_name()
-        << "& obj);" << endl;
-  } else {
+  if (!has_custom_ostream(tstruct)) {
     // thrift defines this behavior
-    out << "inline std::ostream& operator<<(std::ostream& out, const "
+    out << "std::ostream& operator<<(std::ostream& out, const "
         << tstruct->get_name()
         << "& obj)" << endl;
     scope_up(out);
