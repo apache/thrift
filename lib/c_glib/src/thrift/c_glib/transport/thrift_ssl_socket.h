@@ -143,14 +143,64 @@ void thrift_ssl_socket_get_error(GError **error, const guchar *error_msg, guint 
 void thrift_ssl_socket_set_manager(ThriftSSLSocket *ssl_socket, AUTHORIZATION_MANAGER_CALLBACK callback);
 
 /* This is the SSL API */
+/**
+ * Convenience function to create a new SSL context with the protocol specified
+ * and assign this new context to the created ThriftSSLSocket with specified host:port.
+ * @param ssl_protocol
+ * @param hostname
+ * @param port
+ * @param error
+ * @return
+ */
 ThriftSSLSocket*
 thrift_ssl_socket_new_with_host(ThriftSSLSocketProtocol ssl_protocol, gchar *hostname, guint port, GError **error);
+
+/**
+ * Convenience function to create a new SSL context with the protocol specified
+ * and assign this new context to the created ThriftSSLSocket.
+ * @param ssl_protocol
+ * @param error
+ * @return
+ */
 ThriftSSLSocket*
 thrift_ssl_socket_new(ThriftSSLSocketProtocol ssl_protocol, GError **error);
+
+/**
+ * Load a certificate chain from a PEM file.
+ * @param ssl_socket The ssl socket
+ * @param file_name The file name of the PEM certificate chain
+ * @return
+ */
 gboolean
 thrift_ssl_load_cert_from_file(ThriftSSLSocket *ssl_socket, const char *file_name);
+
+/**
+ * Load a certificate chain from memory
+ * @param ssl_socket the ssl socket
+ * @param chain_certs the buffer to load PEM from
+ * @return
+ */
 gboolean
 thrift_ssl_load_cert_from_buffer(ThriftSSLSocket *ssl_socket, const char chain_certs[]);
+
+/**
+ * Check if the ssl socket is open and ready to send and receive
+ * @param transport
+ * @return true if open
+ */
+gboolean
+thrift_ssl_socket_is_open (ThriftTransport *transport);
+
+
+/**
+ * Open connection if required and set the socket to be ready to send and receive
+ * @param transport
+ * @param error
+ * @return true if operation was correct
+ */
+gboolean
+thrift_ssl_socket_open (ThriftTransport *transport, GError **error);
+
 
 /**
  * @brief Initialization function
