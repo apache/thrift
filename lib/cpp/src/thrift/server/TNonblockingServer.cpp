@@ -1004,7 +1004,7 @@ void TNonblockingServer::handleEvent(THRIFT_SOCKET fd, short which) {
     } else {
       if (!clientConnection->notifyIOThread()) {
         GlobalOutput.perror("[ERROR] notifyIOThread failed on fresh connection, closing", errno);
-        returnConnection(clientConnection);
+        clientConnection->close();
       }
     }
 
