@@ -166,6 +166,17 @@ Description: Thrift C++ library
  This package contains the runtime libraries needed for C++ applications
  using Thrift.
 
+Package: libthrift0-dbg
+Architecture: any
+Section: debug
+Depends: ${shlibs:Depends}, ${misc:Depends}, libthrift0 (= ${binary:Version})
+Description: Thrift C++ library debug symbols
+ Thrift is a software framework for scalable cross-language services
+ development. It combines a software stack with a code generation engine to
+ build services that work efficiently and seamlessly.
+ .
+ This package contains the debug symbols for the Thrift C++ runtime libraries.
+
 Package: libthrift-dev
 Architecture: any
 Section: libdevel
