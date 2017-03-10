@@ -763,7 +763,7 @@ void TSocket::setSendTimeout(int ms) {
 void TSocket::setKeepAlive(bool keepAlive) {
   keepAlive_ = keepAlive;
 
-  if (socket_ == -1) {
+  if (socket_ == THRIFT_INVALID_SOCKET) {
     return;
   }
 

@@ -17,6 +17,8 @@
 # under the License.
 #
 
+# Uncomment this to show some basic cmake variables about platforms
+# include (NewPlatformDebug)
 
 # Visual Studio specific options
 if(MSVC)
@@ -96,16 +98,12 @@ elseif(WITH_STDTHREADS)
   add_definitions("-DUSE_STD_THREAD=1")
 endif()
 
-# GCC and Clang.
+# GCC and Clang: use C++11
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  # FIXME -pedantic can not be used at the moment because of: https://issues.apache.org/jira/browse/THRIFT-2784
-  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -Wall -Wextra -pedantic")
-  # FIXME enabling c++11 breaks some Linux builds on Travis by triggering a g++ bug, see
-  # https://travis-ci.org/apache/thrift/jobs/58017022
-  # on the other hand, both MacOSX and FreeBSD need c++11
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -Wall -Wextra")
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.6")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   endif()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -Wall -Wextra -pedantic")
 endif()
 
 # If gcc older than 4.8 is detected and plugin support was requested, fail fast

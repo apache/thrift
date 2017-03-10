@@ -74,7 +74,7 @@ else(ANDROID)
 
     if(BUILD_TESTING)
         add_test(NAME JavaTest
-                 COMMAND ${Ant_EXECUTABLE} ${ANT_FLAGS} -Dbuild.dir="${CMAKE_CURRENT_BINARY_DIR}" -Dthrift.compiler="${THRIFT_COMPILER}" -f build.xml test
+                 COMMAND ${Ant_EXECUTABLE} ${ANT_FLAGS} -Dbuild.dir=${CMAKE_CURRENT_BINARY_DIR} -Dthrift.compiler=${THRIFT_COMPILER} -f build.xml test
                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     endif()
 endif(ANDROID)

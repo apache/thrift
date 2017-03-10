@@ -66,7 +66,9 @@
 #define SIGNED_RIGHT_SHIFT_IS 1
 #endif
 
+#ifndef __MINGW32__
 #pragma warning(disable : 4996) // Deprecated posix name.
+#endif
 
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_SYS_STAT_H 1
@@ -97,11 +99,14 @@ typedef boost::uint8_t uint8_t;
 // windows
 #include <Winsock2.h>
 #include <ws2tcpip.h>
-#ifdef _WIN32_WCE
-#pragma comment(lib, "Ws2.lib")
-#else
-#pragma comment(lib, "Ws2_32.lib")
-#pragma comment(lib, "advapi32.lib") // For security APIs in TPipeServer
-#pragma comment(lib, "Shlwapi.lib")  // For StrStrIA in TPipeServer
-#endif
+#ifndef __MINGW32__
+  #ifdef _WIN32_WCE
+  #pragma comment(lib, "Ws2.lib")
+  #else
+  #pragma comment(lib, "Ws2_32.lib")
+  #pragma comment(lib, "advapi32.lib") // For security APIs in TPipeServer
+  #pragma comment(lib, "Shlwapi.lib")  // For StrStrIA in TPipeServer
+  #endif
+#endif // __MINGW32__
+
 #endif // _THRIFT_WINDOWS_CONFIG_H_

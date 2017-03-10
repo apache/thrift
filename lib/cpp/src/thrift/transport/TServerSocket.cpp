@@ -609,7 +609,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   THRIFT_SOCKET clientSocket
       = ::accept(serverSocket_, (struct sockaddr*)&clientAddress, (socklen_t*)&size);
 
-  if (clientSocket == -1) {
+  if (clientSocket == THRIFT_INVALID_SOCKET) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
     GlobalOutput.perror("TServerSocket::acceptImpl() ::accept() ", errno_copy);
     throw TTransportException(TTransportException::UNKNOWN, "accept()", errno_copy);

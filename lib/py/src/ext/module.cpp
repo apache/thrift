@@ -87,12 +87,7 @@ static PyObject* decode_impl(PyObject* args) {
   }
 
   T protocol;
-#ifdef _MSC_VER
-  // workaround strange VC++ 2015 bug where #else path does not compile
-  int32_t default_limit = INT32_MAX;
-#else
-  int32_t default_limit = std::numeric_limits<int32_t>::max();
-#endif
+  int32_t default_limit = (std::numeric_limits<int32_t>::max)();
   protocol.setStringLengthLimit(
       as_long_then_delete(PyObject_GetAttr(oprot, INTERN_STRING(string_length_limit)),
                           default_limit));

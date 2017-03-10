@@ -68,7 +68,7 @@ if (NOT WINCE)
 endif()
 
 
-if (WIN32)
+if (WIN32 AND NOT MSYS)
     list(APPEND thriftcpp_SOURCES
         src/thrift/windows/TWinsockSingleton.cpp
         src/thrift/windows/SocketPair.cpp
