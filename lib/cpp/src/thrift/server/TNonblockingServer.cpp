@@ -591,21 +591,24 @@ void TNonblockingServer::TConnection::transition() {
       // The application is now waiting on the task to finish
       appState_ = APP_WAIT_TASK;
 
+      // Set this connection idle so that libevent doesn't process more
+      // data on it while we're still waiting for the threadmanager to
+      // finish this task
+      setIdle();
+
       try {
         server_->addTask(task);
       } catch (IllegalStateException& ise) {
         // The ThreadManager is not ready to handle any more tasks (it's probably shutting down).
         GlobalOutput.printf("IllegalStateException: Server::process() %s", ise.what());
+        server_->decrementActiveProcessors();
         close();
       } catch (TimedOutException& to) {
         GlobalOutput.printf("[ERROR] TimedOutException: Server::process() %s", to.what());
+        server_->decrementActiveProcessors();
         close();
       }
 
-      // Set this connection idle so that libevent doesn't process more
-      // data on it while we're still waiting for the threadmanager to
-      // finish this task
-      setIdle();
       return;
     } else {
       try {
