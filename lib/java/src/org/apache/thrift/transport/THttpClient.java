@@ -304,6 +304,9 @@ public class THttpClient extends TTransport {
           throw new TTransportException(ioe);
         }
       }
+      if (post != null) {
+        post.releaseConnection();
+      }
     }
   }
 
