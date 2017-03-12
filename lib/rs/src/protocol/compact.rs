@@ -53,7 +53,7 @@ const COMPACT_VERSION_MASK: u8 = 0x1F;
 /// let recvd_bool = i_prot.read_bool().unwrap();
 /// let recvd_string = i_prot.read_string().unwrap();
 /// ```
-pub struct TCompactInputProtocol {
+pub struct TCompactInputProtocol<'a> {
     // Identifier of the last field deserialized for a struct.
     last_read_field_id: i16,
     // Stack of the last read field ids (a new entry is added each time a nested struct is read).
@@ -63,12 +63,12 @@ pub struct TCompactInputProtocol {
     // and reading the field only occurs after the field id is read.
     pending_read_bool_value: Option<bool>,
     // Underlying transport used for byte-level operations.
-    transport: Rc<RefCell<Box<TTransport>>>,
+    transport: Rc<RefCell<Box<TTransport + 'a>>>,
 }
 
-impl TCompactInputProtocol {
+impl<'a> TCompactInputProtocol<'a> {
     /// Create a `TCompactInputProtocol` that reads bytes from `transport`.
-    pub fn new(transport: Rc<RefCell<Box<TTransport>>>) -> TCompactInputProtocol {
+    pub fn new(transport: Rc<RefCell<Box<TTransport + 'a>>>) -> TCompactInputProtocol<'a> {
         TCompactInputProtocol {
             last_read_field_id: 0,
             read_field_id_stack: Vec::new(),
@@ -94,7 +94,7 @@ impl TCompactInputProtocol {
     }
 }
 
-impl TInputProtocol for TCompactInputProtocol {
+impl<'a> TInputProtocol for TCompactInputProtocol<'a> {
     fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier> {
         let compact_id = self.read_byte()?;
         if compact_id != COMPACT_PROTOCOL_ID {
@@ -294,8 +294,8 @@ impl TCompactInputProtocolFactory {
 }
 
 impl TInputProtocolFactory for TCompactInputProtocolFactory {
-    fn create(&mut self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TInputProtocol> {
-        Box::new(TCompactInputProtocol::new(transport)) as Box<TInputProtocol>
+    fn create<'a>(&mut self, transport: Rc<RefCell<Box<TTransport + 'a>>>) -> Box<TInputProtocol + 'a> {
+        Box::new(TCompactInputProtocol::new(transport)) as Box<TInputProtocol + 'a>
     }
 }
 
@@ -320,7 +320,7 @@ impl TInputProtocolFactory for TCompactInputProtocolFactory {
 /// o_prot.write_bool(true).unwrap();
 /// o_prot.write_string("test_string").unwrap();
 /// ```
-pub struct TCompactOutputProtocol {
+pub struct TCompactOutputProtocol<'a> {
     // Identifier of the last field serialized for a struct.
     last_write_field_id: i16,
     // Stack of the last written field ids (a new entry is added each time a nested struct is written).
@@ -329,12 +329,12 @@ pub struct TCompactOutputProtocol {
     // Saved because boolean fields and their value are encoded in a single byte
     pending_write_bool_field_identifier: Option<TFieldIdentifier>,
     // Underlying transport used for byte-level operations.
-    transport: Rc<RefCell<Box<TTransport>>>,
+    transport: Rc<RefCell<Box<TTransport + 'a>>>,
 }
 
-impl TCompactOutputProtocol {
+impl<'a> TCompactOutputProtocol<'a> {
     /// Create a `TCompactOutputProtocol` that writes bytes to `transport`.
-    pub fn new(transport: Rc<RefCell<Box<TTransport>>>) -> TCompactOutputProtocol {
+    pub fn new(transport: Rc<RefCell<Box<TTransport + 'a>>>) -> TCompactOutputProtocol<'a> {
         TCompactOutputProtocol {
             last_write_field_id: 0,
             write_field_id_stack: Vec::new(),
@@ -379,7 +379,7 @@ impl TCompactOutputProtocol {
     }
 }
 
-impl TOutputProtocol for TCompactOutputProtocol {
+impl<'a> TOutputProtocol for TCompactOutputProtocol<'a> {
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
         self.write_byte(COMPACT_PROTOCOL_ID)?;
         self.write_byte((u8::from(identifier.message_type) << 5) | COMPACT_VERSION)?;
@@ -2062,9 +2062,9 @@ mod tests {
         assert!(i_prot.read_map_end().is_ok()); // will blow up if we try to read from empty buffer
     }
 
-    fn test_objects
+    fn test_objects<'a>
         ()
-        -> (Rc<RefCell<Box<TBufferTransport>>>, TCompactInputProtocol, TCompactOutputProtocol)
+        -> (Rc<RefCell<Box<TBufferTransport>>>, TCompactInputProtocol<'a>, TCompactOutputProtocol<'a>)
     {
         let mem = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(80, 80))));
 

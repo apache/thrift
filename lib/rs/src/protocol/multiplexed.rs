@@ -53,17 +53,17 @@ use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifie
 /// let ident = TMessageIdentifier::new("svc_call", TMessageType::Call, 1);
 /// o_prot.write_message_begin(&ident).unwrap();
 /// ```
-pub struct TMultiplexedOutputProtocol {
+pub struct TMultiplexedOutputProtocol<'a> {
     service_name: String,
-    inner: Box<TOutputProtocol>,
+    inner: Box<TOutputProtocol + 'a>,
 }
 
-impl TMultiplexedOutputProtocol {
+impl<'a> TMultiplexedOutputProtocol<'a> {
     /// Create a `TMultiplexedOutputProtocol` that identifies outgoing messages
     /// as originating from a service named `service_name` and sends them over
     /// the `wrapped` `TOutputProtocol`. Outgoing messages are encoded and sent
     /// by `wrapped`, not by this instance.
-    pub fn new(service_name: &str, wrapped: Box<TOutputProtocol>) -> TMultiplexedOutputProtocol {
+    pub fn new(service_name: &str, wrapped: Box<TOutputProtocol + 'a>) -> TMultiplexedOutputProtocol<'a> {
         TMultiplexedOutputProtocol {
             service_name: service_name.to_owned(),
             inner: wrapped,
@@ -72,7 +72,7 @@ impl TMultiplexedOutputProtocol {
 }
 
 // FIXME: avoid passthrough methods
-impl TOutputProtocol for TMultiplexedOutputProtocol {
+impl<'a> TOutputProtocol for TMultiplexedOutputProtocol<'a> {
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
         match identifier.message_type { // FIXME: is there a better way to override identifier here?
             TMessageType::Call | TMessageType::OneWay => {
@@ -205,7 +205,7 @@ mod tests {
         assert_eq!(&trans.borrow().write_buffer_to_vec(), &expected);
     }
 
-    fn test_objects() -> (Rc<RefCell<Box<TBufferTransport>>>, TMultiplexedOutputProtocol) {
+    fn test_objects<'a>() -> (Rc<RefCell<Box<TBufferTransport>>>, TMultiplexedOutputProtocol<'a>) {
         let mem = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(40, 40))));
 
         let inner: Box<TTransport> = Box::new(TPassThruTransport { inner: mem.clone() });

@@ -55,17 +55,18 @@ const BINARY_PROTOCOL_VERSION_1: u32 = 0x80010000;
 /// let recvd_bool = i_prot.read_bool().unwrap();
 /// let recvd_string = i_prot.read_string().unwrap();
 /// ```
-pub struct TBinaryInputProtocol {
+pub struct TBinaryInputProtocol<'a> {
     strict: bool,
-    transport: Rc<RefCell<Box<TTransport>>>,
+    transport: Rc<RefCell<Box<TTransport + 'a>>>,
 }
 
-impl TBinaryInputProtocol {
+impl<'a> TBinaryInputProtocol<'a> {
     /// Create a `TBinaryInputProtocol` that reads bytes from `transport`.
     ///
     /// Set `strict` to `true` if all incoming messages contain the protocol
     /// version number in the protocol header.
-    pub fn new(transport: Rc<RefCell<Box<TTransport>>>, strict: bool) -> TBinaryInputProtocol {
+    pub fn new(transport: Rc<RefCell<Box<TTransport + 'a>>>,
+               strict: bool) -> TBinaryInputProtocol<'a> {
         TBinaryInputProtocol {
             strict: strict,
             transport: transport,
@@ -73,7 +74,7 @@ impl TBinaryInputProtocol {
     }
 }
 
-impl TInputProtocol for TBinaryInputProtocol {
+impl<'a> TInputProtocol for TBinaryInputProtocol<'a> {
     #[cfg_attr(feature = "cargo-clippy", allow(collapsible_if))]
     fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier> {
         let mut first_bytes = vec![0; 4];
@@ -239,8 +240,8 @@ impl TBinaryInputProtocolFactory {
 }
 
 impl TInputProtocolFactory for TBinaryInputProtocolFactory {
-    fn create(&mut self, transport: Rc<RefCell<Box<TTransport>>>) -> Box<TInputProtocol> {
-        Box::new(TBinaryInputProtocol::new(transport, true)) as Box<TInputProtocol>
+    fn create<'a>(&mut self, transport: Rc<RefCell<Box<TTransport + 'a>>>) -> Box<TInputProtocol + 'a> {
+        Box::new(TBinaryInputProtocol::new(transport, true)) as Box<TInputProtocol + 'a>
     }
 }
 
@@ -269,17 +270,18 @@ impl TInputProtocolFactory for TBinaryInputProtocolFactory {
 /// o_prot.write_bool(true).unwrap();
 /// o_prot.write_string("test_string").unwrap();
 /// ```
-pub struct TBinaryOutputProtocol {
+pub struct TBinaryOutputProtocol<'a> {
     strict: bool,
-    transport: Rc<RefCell<Box<TTransport>>>,
+    transport: Rc<RefCell<Box<TTransport + 'a>>>,
 }
 
-impl TBinaryOutputProtocol {
+impl<'a> TBinaryOutputProtocol<'a> {
     /// Create a `TBinaryOutputProtocol` that writes bytes to `transport`.
     ///
     /// Set `strict` to `true` if all outgoing messages should contain the
     /// protocol version number in the protocol header.
-    pub fn new(transport: Rc<RefCell<Box<TTransport>>>, strict: bool) -> TBinaryOutputProtocol {
+    pub fn new(transport: Rc<RefCell<Box<TTransport + 'a>>>,
+               strict: bool) -> TBinaryOutputProtocol<'a> {
         TBinaryOutputProtocol {
             strict: strict,
             transport: transport,
@@ -291,7 +293,7 @@ impl TBinaryOutputProtocol {
     }
 }
 
-impl TOutputProtocol for TBinaryOutputProtocol {
+impl<'a> TOutputProtocol for TBinaryOutputProtocol<'a> {
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
         if self.strict {
             let message_type: u8 = identifier.message_type.into();
@@ -794,10 +796,11 @@ mod tests {
         assert_eq!(&received_bytes, &bytes);
     }
 
-    fn test_objects
+    fn test_objects<'a>
         ()
-        -> (Rc<RefCell<Box<TBufferTransport>>>, TBinaryInputProtocol, TBinaryOutputProtocol)
+        -> (Rc<RefCell<Box<TBufferTransport>>>, TBinaryInputProtocol<'a>, TBinaryOutputProtocol<'a>)
     {
+
         let mem = Rc::new(RefCell::new(Box::new(TBufferTransport::with_capacity(40, 40))));
 
         let inner: Box<TTransport> = Box::new(TPassThruTransport { inner: mem.clone() });
