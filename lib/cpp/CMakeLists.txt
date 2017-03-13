@@ -17,13 +17,6 @@
 # under the License.
 #
 
-# Find required packages
-if(WITH_BOOSTTHREADS)
-  find_package(Boost 1.53.0 REQUIRED COMPONENTS system thread)
-else()
-  find_package(Boost 1.53.0 REQUIRED)
-endif()
-
 include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 include_directories(src)
 
@@ -75,7 +68,7 @@ if (NOT WINCE)
 endif()
 
 
-if (WIN32)
+if (WIN32 AND NOT MSYS)
     list(APPEND thriftcpp_SOURCES
         src/thrift/windows/TWinsockSingleton.cpp
         src/thrift/windows/SocketPair.cpp

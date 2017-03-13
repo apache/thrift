@@ -40,6 +40,11 @@ RUN yum install -y epel-release && \
       python-pip \
     && yum clean all
 
+# optional dependencies
+# skipping ipaddress and backports.ssl_match_hostname to test legacy callback
+# RUN pip install ipaddress backports.ssl_match_hostname tornado
+RUN pip install tornado
+
 # CMake
 RUN curl -sSL https://cmake.org/files/v3.4/cmake-3.4.1.tar.gz | tar -xz && \
     cd cmake-3.4.1 && ./bootstrap && make -j4 && make install && \
@@ -47,5 +52,5 @@ RUN curl -sSL https://cmake.org/files/v3.4/cmake-3.4.1.tar.gz | tar -xz && \
 
 ENV THRIFT_ROOT /thrift
 RUN mkdir -p $THRIFT_ROOT/src
-COPY scripts $THRIFT_ROOT
+COPY Dockerfile $THRIFT_ROOT/
 WORKDIR $THRIFT_ROOT/src

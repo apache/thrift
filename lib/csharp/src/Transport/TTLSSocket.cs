@@ -192,7 +192,7 @@ namespace Thrift.Transport
         /// </summary>
         private void InitSocket()
         {
-            this.client = new TcpClient();
+            client = TSocketVersionizer.CreateTcpClient();
             client.ReceiveTimeout = client.SendTimeout = timeout;
             client.Client.NoDelay = true;
         }

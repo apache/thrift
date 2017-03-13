@@ -20,6 +20,11 @@
 #ifndef _THRIFT_PROTOCOL_TPROTOCOL_H_
 #define _THRIFT_PROTOCOL_TPROTOCOL_H_ 1
 
+#ifdef _WIN32
+// Need to come before any Windows.h includes
+#include <Winsock2.h>
+#endif
+
 #include <thrift/transport/TTransport.h>
 #include <thrift/protocol/TProtocolException.h>
 
@@ -596,7 +601,7 @@ public:
 
   virtual boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> trans) = 0;
   virtual boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> inTrans,
-						   boost::shared_ptr<TTransport> outTrans) {
+               boost::shared_ptr<TTransport> outTrans) {
     (void)outTrans;
     return getProtocol(inTrans);
   }
@@ -667,7 +672,7 @@ uint32_t skip(Protocol_& prot, TType type) {
     return prot.readBool(boolv);
   }
   case T_BYTE: {
-    int8_t bytev;
+    int8_t bytev = 0;
     return prot.readByte(bytev);
   }
   case T_I16: {

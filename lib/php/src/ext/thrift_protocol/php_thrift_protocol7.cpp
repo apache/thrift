@@ -32,6 +32,7 @@
 
 #include <cstdint>
 #include <stdexcept>
+#include <algorithm>
 
 #ifndef bswap_64
 #define	bswap_64(x)     (((uint64_t)(x) << 56) | \
@@ -593,8 +594,9 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
           zend_hash_index_update(Z_ARR_P(return_value), Z_LVAL(key), &value);
         } else {
           if (Z_TYPE(key) != IS_STRING) convert_to_string(&key);
-          zend_hash_update(Z_ARR_P(return_value), Z_STR(key), &value);
+          zend_symtable_update(Z_ARR_P(return_value), Z_STR(key), &value);
         }
+        zval_dtor(&key);
       }
       return; // return_value already populated
     }
@@ -625,7 +627,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
 
       for (uint32_t s = 0; s < size; ++s) {
         zval key, value;
-        ZVAL_UNDEF(&value);
+        ZVAL_TRUE(&value);
 
         binary_deserialize(type, transport, &key, elemspec);
 
@@ -633,8 +635,9 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
           zend_hash_index_update(Z_ARR_P(return_value), Z_LVAL(key), &value);
         } else {
           if (Z_TYPE(key) != IS_STRING) convert_to_string(&key);
-          zend_hash_update(Z_ARR_P(return_value), Z_STR(key), &value);
+          zend_symtable_update(Z_ARR_P(return_value), Z_STR(key), &value);
         }
+        zval_dtor(&key);
       }
       return;
     }
@@ -664,7 +667,7 @@ void binary_serialize_hashtable_key(int8_t keytype, PHPOutputTransport& transpor
   } else {
     char buf[64];
     if (res == HASH_KEY_IS_STRING) {
-      ZVAL_STR(&z, key);
+      ZVAL_STR_COPY(&z, key);
     } else {
       snprintf(buf, 64, "%ld", index);
       ZVAL_STRING(&z, buf);
@@ -821,7 +824,7 @@ void protocol_writeMessageBegin(zval* transport, zend_string* method_name, int32
   zval ret;
   zval writeMessagefn;
 
-  ZVAL_STR(&args[0], method_name);
+  ZVAL_STR_COPY(&args[0], method_name);
   ZVAL_LONG(&args[1], msgtype);
   ZVAL_LONG(&args[2], seqID);
   ZVAL_NULL(&ret);
@@ -896,7 +899,7 @@ void binary_serialize_spec(zval* zthis, PHPOutputTransport& transport, HashTable
        (val_ptr = zend_hash_get_current_data_ex(spec, &key_ptr)) != nullptr;
        zend_hash_move_forward_ex(spec, &key_ptr)) {
 
-    ulong fieldno;
+    zend_ulong fieldno;
     if (zend_hash_get_current_key_ex(spec, nullptr, &fieldno, &key_ptr) != HASH_KEY_IS_LONG) {
       throw_tprotocolexception("Bad keytype in TSPEC (expected 'long')", INVALID_DATA);
       return;
@@ -964,7 +967,7 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
   zval *protocol;
   zend_string *obj_typename;
   zend_bool strict_read;
-  size_t buffer_size;
+  size_t buffer_size = 8192;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS(), "oSb|l", &protocol, &obj_typename, &strict_read, &buffer_size) == FAILURE) {
     return;

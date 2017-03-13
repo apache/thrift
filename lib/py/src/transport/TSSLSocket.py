@@ -40,10 +40,10 @@ class TSSLBase(object):
     # ciphers argument is not available for Python < 2.7.0
     _has_ciphers = sys.hexversion >= 0x020700F0
 
-    # For pythoon >= 2.7.9, use latest TLS that both client and server
+    # For python >= 2.7.9, use latest TLS that both client and server
     # supports.
     # SSL 2.0 and 3.0 are disabled via ssl.OP_NO_SSLv2 and ssl.OP_NO_SSLv3.
-    # For pythoon < 2.7.9, use TLS 1.0 since TLSv1_X nor OP_NO_SSLvX is
+    # For python < 2.7.9, use TLS 1.0 since TLSv1_X nor OP_NO_SSLvX is
     # unavailable.
     _default_protocol = ssl.PROTOCOL_SSLv23 if _has_ssl_context else \
         ssl.PROTOCOL_TLSv1
@@ -346,7 +346,7 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
         TSSLBase.__init__(self, True, None, kwargs)
         TSocket.TServerSocket.__init__(self, host, port, unix_socket)
         if self._should_verify and not _match_has_ipaddress:
-            raise ValueError('Need ipaddress and backports.ssl_match_hostname'
+            raise ValueError('Need ipaddress and backports.ssl_match_hostname '
                              'module to verify client certificate')
 
     def setCertfile(self, certfile):

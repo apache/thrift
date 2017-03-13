@@ -90,5 +90,27 @@
     "transports": ["buffered"],
     "sockets": ["ip"],
     "workdir": "features"
+  },
+  {
+    "name": "nosslv3",
+    "comment": "check to make sure SSLv3 is not supported",
+    "command": [
+      "nosslv3.sh"
+    ],
+    "protocols": ["binary"],
+    "transports": ["buffered"],
+    "sockets": ["ip-ssl"],
+    "workdir": "features"
+  },
+  {
+    "name": "tls",
+    "comment": "check to make sure TLSv1.0 or later is supported",
+    "command": [
+      "tls.sh"
+    ],
+    "protocols": ["binary"],
+    "transports": ["buffered"],
+    "sockets": ["ip-ssl"],
+    "workdir": "features"
   }
 ]

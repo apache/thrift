@@ -29,6 +29,7 @@
 #endif
 
 #include <thrift/thrift-config.h>
+#include <time.h>
 
 struct thrift_timespec {
   int64_t tv_sec;

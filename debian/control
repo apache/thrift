@@ -2,18 +2,18 @@ Source: thrift
 Section: devel
 Priority: extra
 Build-Depends: debhelper (>= 9), build-essential, mono-mcs, python-dev, ant,
-    mono-devel,  libmono-system-web4.0-cil, erlang-base, ruby-dev | ruby1.9.1-dev, autoconf, automake,
+    mono-devel,  libmono-system-web4.0-cil, erlang-base, ruby-dev | ruby1.9.1-dev, ruby-bundler ,autoconf, automake,
     pkg-config, libtool, bison, flex, libboost-dev | libboost1.53-dev,
     python-all, python-setuptools, python-all-dev, python-all-dbg,
     python3-all, python3-setuptools, python3-all-dev, python3-all-dbg,
     openjdk-7-jdk | openjdk-8-jdk | default-jdk,
     libboost-test-dev | libboost-test1.53-dev, libevent-dev, libssl-dev, perl (>= 5.8.0-7),
-    php5 | php-7.0, php5-dev | php-7.0-dev, libglib2.0-dev, qtbase5-dev, qtbase5-dev-tools
+    php5 | php7.0, php5-dev | php7.0-dev, libglib2.0-dev, qtchooser, qtbase5-dev-tools
 Maintainer: Thrift Developer's <dev@thrift.apache.org>
 Homepage: http://thrift.apache.org/
 Vcs-Git: https://git-wip-us.apache.org/repos/asf/thrift.git
 Vcs-Browser: https://git-wip-us.apache.org/repos/asf?p=thrift.git
-Standards-Version: 3.9.5
+Standards-Version: 3.9.7
 X-Python-Version: >= 2.6
 X-Python3-Version: >= 3.3
 
@@ -115,7 +115,7 @@ Description: Ruby bindings for Thrift
 Package: libthrift-java
 Architecture: all
 Section: java
-Depends: java-gcj-compat | java1-runtime | java2-runtime, ${misc:Depends}
+Depends: ${misc:Depends}
 Description: Java bindings for Thrift
  Thrift is a software framework for scalable cross-language services
  development. It combines a software stack with a code generation engine to
@@ -165,6 +165,17 @@ Description: Thrift C++ library
  .
  This package contains the runtime libraries needed for C++ applications
  using Thrift.
+
+Package: libthrift0-dbg
+Architecture: any
+Section: debug
+Depends: ${shlibs:Depends}, ${misc:Depends}, libthrift0 (= ${binary:Version})
+Description: Thrift C++ library debug symbols
+ Thrift is a software framework for scalable cross-language services
+ development. It combines a software stack with a code generation engine to
+ build services that work efficiently and seamlessly.
+ .
+ This package contains the debug symbols for the Thrift C++ runtime libraries.
 
 Package: libthrift-dev
 Architecture: any

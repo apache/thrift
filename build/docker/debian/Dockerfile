@@ -83,6 +83,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libio-socket-ssl-perl \
       libnet-ssleay-perl
 
+RUN echo "deb http://ftp.debian.org/debian jessie-backports main" > /etc/apt/sources.list.d/jessie-backports.list
+RUN apt-get update && apt-get -t jessie-backports install -y ruby-bundler
 RUN apt-get update && apt-get install -y --no-install-recommends \
 `# Php dependencies` \
       php5 \
@@ -121,10 +123,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN apt-get update && apt-get install -y --no-install-recommends \
 `# CSharp dependencies` \
       libmono-system-web2.0-cil \
-      mono-complete \
-      mono-devel \
-      mono-gmcs \
-      mono-xbuild
+      mono-devel
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 `# D dependencies` \
@@ -145,11 +144,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /tmp/* && \
     rm -rf /var/tmp/*
 
-# Java
-RUN update-java-alternatives -s java-1.7.0-openjdk-amd64
-
 # Ruby
-RUN gem install bundler rake
+RUN gem install bundler --no-ri --no-rdoc
+
+# Python optional dependencies
+RUN pip2 install -U ipaddress backports.ssl_match_hostname tornado
+RUN pip3 install -U backports.ssl_match_hostname tornado
 
 # Go
 RUN curl -sSL https://storage.googleapis.com/golang/go1.4.3.linux-amd64.tar.gz | tar -C /usr/local/ -xz
@@ -183,10 +183,19 @@ RUN curl -sSL http://downloads.dlang.org/releases/2.x/2.070.0/dmd_2.070.0-0_amd6
 # Dart
 ENV PATH /usr/lib/dart/bin:$PATH
 
+# OCaml
+RUN echo 'deb http://ppa.launchpad.net/avsm/ppa/ubuntu trusty main' > /etc/apt/sources.list.d/avsm-official-ocaml.list && \
+    gpg --keyserver keyserver.ubuntu.com --recv 61707B09 && \
+    gpg --export --armor 61707B09 | apt-key add - && \
+    apt-get update && \
+    apt-get install -y ocaml opam && \
+    opam init && \
+    opam install oasis
+
 # Force utf8 locale to successfully build Haskell tf-random
 ENV LC_ALL C.UTF-8
 
 ENV THRIFT_ROOT /thrift
 RUN mkdir -p $THRIFT_ROOT/src
-COPY scripts $THRIFT_ROOT
+COPY Dockerfile $THRIFT_ROOT/
 WORKDIR $THRIFT_ROOT/src

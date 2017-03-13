@@ -20,8 +20,21 @@ KIND, either express or implied. See the License for the
 specific language governing permissions and limitations
 under the License.
 
+Summary
+=======
+
+Apache Thrift is a software framework for scalable cross-language services development.
+It combines a software stack with a code generation engine to build services that work
+efficiently and seamlessly between many programming languages.  A language-neutral IDL
+is used to generate functioning client libraries and server-side handling frameworks.
+
+For More Information
+====================
+
+See the [Apache Thrift Web Site](http://thrift.apache.org/) for more information.
+
 Using Thrift with Perl
-=====================
+======================
 
 Thrift requires Perl >= 5.6.0
 
@@ -33,6 +46,14 @@ On the client side, exceptions are thrown with die, so be sure
 to wrap eval{} statments around any code that contains exceptions.
 
 Please see tutoral and test dirs for examples.
+
+The Perl ForkingServer ignores SIGCHLD allowing the forks to be
+reaped by the operating system naturally when they exit.  This means
+one cannot use a custom SIGCHLD handler in the consuming perl
+implementation that calls serve().  It is acceptable to use
+a custom SIGCHLD handler within a thrift handler implementation
+as the ForkingServer resets the forked child process to use
+default signal handling.
 
 Dependencies
 ============

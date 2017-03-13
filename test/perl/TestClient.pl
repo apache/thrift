@@ -47,15 +47,19 @@ sub usage {
 Usage: $0 [OPTIONS]
 
 Options:                          (default)
+  --ca                                         CA to validate server with.
   --cert                                       Certificate to use.
                                                Required if using --ssl.
+  --ciphers                                    Acceptable cipher list.
   --domain-socket <file>                       Use a unix domain socket.
   --help                                       Show usage.
+  --key                                        Certificate key.
+                                               Required if using --ssl.
   --port <portnum>                9090         Port to use.
   --protocol {binary}             binary       Protocol to use.
   --ssl                                        If present, use SSL.
   --transport {buffered|framed}   buffered     Transport to use.
-                                   
+
 EOF
 }
 
@@ -66,7 +70,10 @@ my %opts = (
 );
 
 GetOptions(\%opts, qw (
+    ca=s
     cert=s
+    ciphers=s
+    key=s
     domain-socket=s
     help
     host=s
@@ -81,18 +88,13 @@ if ($opts{help}) {
     exit 0;
 }
 
-if ($opts{ssl} and not defined $opts{cert}) {
-    usage();
-    exit 1;
-}
-
 my $socket = undef;
 if ($opts{"domain-socket"}) {
     $socket = new Thrift::UnixSocket($opts{"domain-socket"});
 } elsif ($opts{ssl}) {
-	$socket = new Thrift::SSLSocket($opts{host}, $opts{port});
+  $socket = new Thrift::SSLSocket(\%opts);
 } else {
-	$socket = new Thrift::Socket($opts{host}, $opts{port});
+  $socket = new Thrift::Socket($opts{host}, $opts{port});
 }
 
 my $transport;
@@ -117,7 +119,7 @@ my $testClient = new ThriftTest::ThriftTestClient($protocol);
 
 eval {
   $transport->open();
-}; 
+};
 if($@){
     die(Dumper($@));
 }

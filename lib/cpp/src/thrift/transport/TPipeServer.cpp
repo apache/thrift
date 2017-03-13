@@ -361,7 +361,7 @@ bool TNamedPipeServer::createNamedPipe(const TAutoCrit & /*lockProof*/) {
     GlobalOutput.perror("TPipeServer::TCreateNamedPipe() GLE=", lastError);
     throw TTransportException(TTransportException::NOT_OPEN,
                               "TCreateNamedPipe() failed",
-							  lastError);
+                lastError);
     return false;
   }
 
@@ -409,7 +409,7 @@ string TPipeServer::getPipename() {
 }
 
 void TPipeServer::setPipename(const std::string& pipename) {
-  if (pipename.find("\\\\") == -1)
+  if (pipename.find("\\\\") == std::string::npos)
     pipename_ = "\\\\.\\pipe\\" + pipename;
   else
     pipename_ = pipename;

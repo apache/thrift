@@ -17,20 +17,21 @@
 # under the License.
 #
 
-# Find required packages
-set(Boost_USE_STATIC_LIBS ON) # Force the use of static boost test framework
-find_package(Boost 1.53.0 REQUIRED COMPONENTS chrono filesystem system thread unit_test_framework)
 include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
+
+add_definitions("-D__STDC_LIMIT_MACROS")
 
 if (WITH_DYN_LINK_TEST)
     add_definitions( -DBOOST_TEST_DYN_LINK )
 endif()
 
-#Make sure gen-cpp files can be included
+# Make sure gen-cpp files can be included
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 # Create the thrift C++ test library
 set(testgencpp_SOURCES
+    gen-cpp/AnnotationTest_types.cpp
+    gen-cpp/AnnotationTest_types.h
     gen-cpp/DebugProtoTest_types.cpp
     gen-cpp/DebugProtoTest_types.h
     gen-cpp/EnumTest_types.cpp
@@ -61,7 +62,6 @@ set(testgencpp_cob_SOURCES
 )
 add_library(testgencpp_cob STATIC ${testgencpp_cob_SOURCES})
 
-
 add_executable(Benchmark Benchmark.cpp)
 target_link_libraries(Benchmark testgencpp)
 LINK_AGAINST_THRIFT_LIBRARY(Benchmark thrift)
@@ -79,7 +79,7 @@ set(UnitTest_SOURCES
     TServerTransportTest.cpp
 )
 
-if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS AND NOT MSVC)
+if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS AND NOT MSVC AND NOT MINGW)
     list(APPEND UnitTest_SOURCES RWMutexStarveTest.cpp)
 endif()
 
@@ -112,7 +112,7 @@ LINK_AGAINST_THRIFT_LIBRARY(TInterruptTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT MINGW)
 target_link_libraries(TInterruptTest -lrt)
 endif ()
-add_test(NAME TInterruptTest COMMAND TInterruptTest "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
+add_test(NAME TInterruptTest COMMAND TInterruptTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
 
 add_executable(TServerIntegrationTest TServerIntegrationTest.cpp)
 target_link_libraries(TServerIntegrationTest
@@ -148,6 +148,13 @@ LINK_AGAINST_THRIFT_LIBRARY(ZlibTest thriftz)
 add_test(NAME ZlibTest COMMAND ZlibTest)
 endif(WITH_ZLIB)
 
+add_executable(AnnotationTest AnnotationTest.cpp)
+target_link_libraries(AnnotationTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
+LINK_AGAINST_THRIFT_LIBRARY(AnnotationTest thrift)
+add_test(NAME AnnotationTest COMMAND AnnotationTest)
 
 add_executable(EnumTest EnumTest.cpp)
 target_link_libraries(EnumTest
@@ -310,7 +317,7 @@ LINK_AGAINST_THRIFT_LIBRARY(SecurityTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT MINGW)
 target_link_libraries(SecurityTest -lrt)
 endif ()
-add_test(NAME SecurityTest COMMAND SecurityTest "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
+add_test(NAME SecurityTest COMMAND SecurityTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
 
 endif()
 
@@ -334,8 +341,16 @@ endif()
 # Common thrift code generation rules
 #
 
+add_custom_command(OUTPUT gen-cpp/AnnotationTest_constants.cpp
+                          gen-cpp/AnnotationTest_constants.h
+                          gen-cpp/AnnotationTest_types.cpp
+                          gen-cpp/AnnotationTest_types.h
+                          gen-cpp/foo_service.cpp
+                          gen-cpp/foo_service.h
+    COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/AnnotationTest.thrift
+)
 
-add_custom_command(OUTPUT gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp  gen-cpp/EmptyService.h
+add_custom_command(OUTPUT gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp gen-cpp/EmptyService.h
     COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/DebugProtoTest.thrift
 )
 

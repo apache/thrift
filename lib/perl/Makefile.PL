@@ -18,12 +18,15 @@
 #
 
 use ExtUtils::MakeMaker;
-WriteMakefile( 'NAME' => 'Thrift',
-               'VERSION_FROM' => 'lib/Thrift.pm',
-               'PREREQ_PM'              => {
+WriteMakefile( NAME => 'Thrift',
+               VERSION_FROM => 'lib/Thrift.pm',
+               MIN_PERL_VERSION => '5.006',
+               PREREQ_PM => {
                    'Bit::Vector' => 0,
-                   'Class::Accessor' => 0
+                   'Class::Accessor' => 0,
+                   'IO::Socket::INET' => 0
                },
-               ($] >= 5.005 ?
- (                AUTHOR     => 'Apache Thrift <dev@thrift.apache.org>') : ()),
+               ($] >= 5.006 ?
+ (                AUTHOR => 'Apache Thrift <dev@thrift.apache.org>') : ()),
                );
+

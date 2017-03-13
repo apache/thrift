@@ -21,10 +21,17 @@
 #define THRIFT_TRANSPORT_THEADERTRANSPORT_H_ 1
 
 #include <bitset>
+#include <limits>
 #include <vector>
 #include <stdexcept>
 #include <string>
 #include <map>
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#elif HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
 
 #include <boost/scoped_array.hpp>
 #include <boost/shared_ptr.hpp>
@@ -135,8 +142,7 @@ public:
   void transform(uint8_t* ptr, uint32_t sz);
 
   uint16_t getNumTransforms() const {
-    int trans = writeTrans_.size();
-    return trans;
+    return safe_numeric_cast<uint16_t>(writeTrans_.size());
   }
 
   void setTransform(uint16_t transId) { writeTrans_.push_back(transId); }
@@ -204,7 +210,7 @@ protected:
   /**
    * Returns the maximum number of bytes that write k/v headers can take
    */
-  size_t getMaxWriteHeadersSize() const;
+  uint32_t getMaxWriteHeadersSize() const;
 
   struct infoIdType {
     enum idType {

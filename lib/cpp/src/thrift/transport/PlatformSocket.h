@@ -23,6 +23,7 @@
 #  define _THRIFT_TRANSPORT_PLATFORM_SOCKET_H_
 
 #ifdef _WIN32
+#  include <winsock2.h>
 #  define THRIFT_GET_SOCKET_ERROR ::WSAGetLastError()
 #  define THRIFT_ERRNO (*_errno())
 #  define THRIFT_EINPROGRESS WSAEINPROGRESS
@@ -58,7 +59,11 @@
 #    define THRIFT_GAI_STRERROR gai_strerrorA
 #  endif
 #  define THRIFT_SSIZET ptrdiff_t
-#  define THRIFT_SNPRINTF _snprintf
+#  if (_MSC_VER < 1900)
+#    define THRIFT_SNPRINTF _snprintf
+#  else
+#    define THRIFT_SNPRINTF snprintf
+#  endif
 #  define THRIFT_SLEEP_SEC thrift_sleep
 #  define THRIFT_SLEEP_USEC thrift_usleep
 #  define THRIFT_TIMESPEC thrift_timespec
@@ -74,6 +79,9 @@
 #    define THRIFT_POLLOUT POLLOUT
 #  endif //WINVER
 #  define THRIFT_SHUT_RDWR SD_BOTH
+#  if !defined(AI_ADDRCONFIG)
+#    define AI_ADDRCONFIG 0x00000400
+#  endif
 #else //not _WIN32
 #  include <errno.h>
 #  define THRIFT_GET_SOCKET_ERROR errno

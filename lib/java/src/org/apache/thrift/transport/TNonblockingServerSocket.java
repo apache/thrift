@@ -93,7 +93,7 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
       serverSocket_.bind(args.bindAddr, args.backlog);
     } catch (IOException ioe) {
       serverSocket_ = null;
-      throw new TTransportException("Could not create ServerSocket on address " + args.bindAddr.toString() + ".");
+      throw new TTransportException("Could not create ServerSocket on address " + args.bindAddr.toString() + ".", ioe);
     }
   }
 

@@ -174,13 +174,20 @@ func callEverything(client *thrifttest.ThriftTestClient) {
 		t.Fatalf("Unexpected TestStringMap() result expected %#v, got %#v ", sm, smret)
 	}
 
-	s := map[int32]struct{}{1: struct{}{}, 2: struct{}{}, 42: struct{}{}}
+	s := []int32{1, 2, 42}
 	sret, err := client.TestSet(s)
 	if err != nil {
 		t.Fatalf("Unexpected error in TestSet() call: ", err)
 	}
-	if !reflect.DeepEqual(s, sret) {
-		t.Fatalf("Unexpected TestSet() result expected %#v, got %#v ", s, sret)
+	// Sets can be in any order, but Go slices are ordered, so reflect.DeepEqual won't work.
+	stemp := map[int32]struct{}{}
+	for _, val := range s {
+		stemp[val] = struct{}{}
+	}
+	for _, val := range sret {
+		if _, ok := stemp[val]; !ok {
+			t.Fatalf("Unexpected TestSet() result expected %#v, got %#v ", s, sret)
+		}
 	}
 
 	l := []int32{1, 2, 42}
@@ -189,7 +196,7 @@ func callEverything(client *thrifttest.ThriftTestClient) {
 		t.Fatalf("Unexpected error in TestList() call: ", err)
 	}
 	if !reflect.DeepEqual(l, lret) {
-		t.Fatalf("Unexpected TestSet() result expected %#v, got %#v ", l, lret)
+		t.Fatalf("Unexpected TestList() result expected %#v, got %#v ", l, lret)
 	}
 
 	eret, err := client.TestEnum(thrifttest.Numberz_TWO)

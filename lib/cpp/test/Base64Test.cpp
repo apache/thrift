@@ -37,6 +37,10 @@ void setupTestData(int i, uint8_t* data, int& len) {
 }
 
 void checkEncoding(uint8_t* data, int len) {
+#ifdef NDEBUG
+  ((void)data);
+#endif
+
   for (int i = 0; i < len; i++) {
     BOOST_ASSERT(isalnum(data[i]) || data[i] == '/' || data[i] == '+');
   }

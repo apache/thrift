@@ -23,6 +23,7 @@
 #include <sstream>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/protocol/TJSONProtocol.h>
+#include <boost/scoped_ptr.hpp>
 #include "gen-cpp/DebugProtoTest_types.h"
 
 #define BOOST_TEST_MODULE JSONProtoTest
@@ -32,7 +33,7 @@ using namespace thrift::test::debug;
 using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::protocol::TJSONProtocol;
 
-static std::auto_ptr<OneOfEach> ooe;
+static boost::scoped_ptr<OneOfEach> ooe;
 
 void testCaseSetup_1() {
   ooe.reset(new OneOfEach);
@@ -65,7 +66,7 @@ BOOST_AUTO_TEST_CASE(test_json_proto_1) {
     "Expected:\n" << expected_result << "\nGotten:\n" << result);
 }
 
-static std::auto_ptr<Nesting> n;
+static boost::scoped_ptr<Nesting> n;
 
 void testCaseSetup_2() {
   testCaseSetup_1();
@@ -105,7 +106,7 @@ BOOST_AUTO_TEST_CASE(test_json_proto_2) {
     "Expected:\n" << expected_result << "\nGotten:\n" << result);
 }
 
-static std::auto_ptr<HolyMoley> hm;
+static boost::scoped_ptr<HolyMoley> hm;
 
 void testCaseSetup_3() {
   testCaseSetup_2();
@@ -262,8 +263,9 @@ BOOST_AUTO_TEST_CASE(test_json_proto_8) {
   ":[\"i8\",3,1,2,3]},\"13\":{\"lst\":[\"i16\",3,1,2,3]},\"14\":{\"lst\":[\"i64"
   "\",3,1,2,3]}}";
 
+  const std::size_t bufSiz = strlen(json_string) * sizeof(char);
   boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
-    (uint8_t*)(json_string), strlen(json_string)*sizeof(char)));
+    (uint8_t*)(json_string), static_cast<uint32_t>(bufSiz)));
   boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
 
   OneOfEach ooe2;

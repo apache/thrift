@@ -107,7 +107,7 @@ gen-cpp/StressTest_types.cpp gen-cpp/StressTest_constants.cpp gen-cpp/Service.cp
 	$(THRIFT) --gen cpp $<
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -Igen-cpp
-AM_CXXFLAGS = -Wall -Wextra -pedantic
+AM_CXXFLAGS = -Wall -Wextra -pedantic -D__STDC_LIMIT_MACROS
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS) $(ZLIB_LIBS)
 
 clean-local:
@@ -120,6 +120,4 @@ EXTRA_DIST = \
 	src/TestClient.cpp \
 	src/TestServer.cpp \
 	src/StressTest.cpp \
-	src/StressTestNonBlocking.cpp \
-	realloc/realloc_test.c \
-	realloc/Makefile
+	src/StressTestNonBlocking.cpp

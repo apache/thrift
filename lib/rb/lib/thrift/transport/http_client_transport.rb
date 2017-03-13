@@ -50,6 +50,7 @@ module Thrift
       data = resp.body
       data = Bytes.force_binary_encoding(data)
       @inbuf = StringIO.new data
+    ensure
       @outbuf = Bytes.empty_byte_buffer
     end
   end

@@ -29,7 +29,7 @@ configure-stamp:
 
 	# Add here commands to configure the package.
 	if [ -f bootstrap.sh ]; then $(CURDIR)/bootstrap.sh; fi
-	$(CURDIR)/configure --prefix=/usr
+	$(CURDIR)/configure --prefix=/usr --enable-plugin=no
 
 	touch configure-stamp
 
@@ -96,13 +96,15 @@ clean:
 	# Add here commands to clean up after the build process.
 	-$(MAKE) clean
 
+	$(CURDIR)/cleanup.sh
+
 	dh_clean
 
 install: install-indep install-arch
 install-indep:
 	dh_testdir
 	dh_testroot
-	dh_clean -k -i
+	dh_prep -i
 	dh_installdirs -i
 
 	# Add here commands to install the indep part of the package into
@@ -128,7 +130,8 @@ install-indep:
 
 	# Perl
 	$(MAKE) -C $(CURDIR)/lib/perl install DESTDIR=$(CURDIR)/debian/libthrift-perl
-	mv $(CURDIR)/debian/libthrift-perl/usr/local/lib/perl5 $(CURDIR)/debian/libthrift-perl/usr/lib
+	mkdir -p $(CURDIR)/debian/libthrift-perl/usr/share
+	mv $(CURDIR)/debian/libthrift-perl/usr/local/lib/perl5 $(CURDIR)/debian/libthrift-perl/usr/share
 	rmdir $(CURDIR)/debian/libthrift-perl/usr/local/lib
 	rmdir $(CURDIR)/debian/libthrift-perl/usr/local
 
@@ -199,9 +202,10 @@ binary-common:
 	dh_installexamples
 	dh_installman
 	dh_link
+	dh_strip -plibthrift0 --dbg-package=libthrift0-dbg
 	dh_strip -ppython-thrift --dbg-package=python-thrift-dbg
 	dh_strip -ppython3-thrift --dbg-package=python3-thrift-dbg
-	dh_strip -pthrift-compiler -plibthrift0
+	dh_strip -pthrift-compiler
 	dh_compress
 	dh_fixperms
 	dh_makeshlibs

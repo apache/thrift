@@ -371,25 +371,29 @@ class TCompactProtocol extends TProtocol
 
   public function readFieldBegin(&$name, &$field_type, &$field_id)
   {
-    $result = $this->readUByte($field_type);
+    $result = $this->readUByte($compact_type_and_delta);
 
-    if (($field_type & 0x0f) == TType::STOP) {
+    $compact_type = $compact_type_and_delta & 0x0f;
+
+    if ($compact_type == TType::STOP) {
+      $field_type = $compact_type;
       $field_id = 0;
 
       return $result;
     }
-    $delta = $field_type >> 4;
+    $delta = $compact_type_and_delta >> 4;
     if ($delta == 0) {
       $result += $this->readI16($field_id);
     } else {
       $field_id = $this->lastFid + $delta;
     }
     $this->lastFid = $field_id;
-    $field_type = $this->getTType($field_type & 0x0f);
-    if ($field_type == TCompactProtocol::COMPACT_TRUE) {
+    $field_type = $this->getTType($compact_type);
+
+    if ($compact_type == TCompactProtocol::COMPACT_TRUE) {
       $this->state = TCompactProtocol::STATE_BOOL_READ;
       $this->boolValue = true;
-    } elseif ($field_type == TCompactProtocol::COMPACT_FALSE) {
+    } elseif ($compact_type == TCompactProtocol::COMPACT_FALSE) {
       $this->state = TCompactProtocol::STATE_BOOL_READ;
       $this->boolValue = false;
     } else {
@@ -607,15 +611,14 @@ class TCompactProtocol extends TProtocol
       $arr = unpack('C', $x);
       $byte = $arr[1];
       $idx += 1;
-      if ($shift < 32) {
-        $lo |= (($byte & 0x7f) << $shift) &
-          0x00000000ffffffff;
-      }
       // Shift hi and lo together.
-      if ($shift >= 32) {
+      if ($shift < 28) {
+        $lo |= (($byte & 0x7f) << $shift);
+      } elseif ($shift == 28) {
+        $lo |= (($byte & 0x0f) << 28);
+        $hi |= (($byte & 0x70) >> 4);
+      } else {
         $hi |= (($byte & 0x7f) << ($shift - 32));
-      } elseif ($shift > 25) {
-        $hi |= (($byte & 0x7f) >> ($shift - 25));
       }
       if (($byte >> 7) === 0) {
         break;
@@ -634,56 +637,39 @@ class TCompactProtocol extends TProtocol
     $lo = $lo ^ $xorer;
 
     // Now put $hi and $lo back together
-    if (true) {
-      $isNeg = $hi  < 0;
+    $isNeg = $hi < 0 || $hi & 0x80000000;
 
-      // Check for a negative
-      if ($isNeg) {
-        $hi = ~$hi & (int) 0xffffffff;
-        $lo = ~$lo & (int) 0xffffffff;
+    // Check for a negative
+    if ($isNeg) {
+      $hi = ~$hi & (int) 0xffffffff;
+      $lo = ~$lo & (int) 0xffffffff;
 
-        if ($lo == (int) 0xffffffff) {
-          $hi++;
-          $lo = 0;
-        } else {
-          $lo++;
-        }
-      }
-
-      // Force 32bit words in excess of 2G to be positive - we deal with sign
-      // explicitly below
-
-      if ($hi & (int) 0x80000000) {
-        $hi &= (int) 0x7fffffff;
-        $hi += 0x80000000;
-      }
-
-      if ($lo & (int) 0x80000000) {
-        $lo &= (int) 0x7fffffff;
-        $lo += 0x80000000;
-      }
-
-      $value = $hi * 4294967296 + $lo;
-
-      if ($isNeg) {
-        $value = 0 - $value;
-      }
-    } else {
-
-      // Upcast negatives in LSB bit
-      if ($arr[2] & 0x80000000) {
-        $arr[2] = $arr[2] & 0xffffffff;
-      }
-
-      // Check for a negative
-      if ($arr[1] & 0x80000000) {
-        $arr[1] = $arr[1] & 0xffffffff;
-        $arr[1] = $arr[1] ^ 0xffffffff;
-        $arr[2] = $arr[2] ^ 0xffffffff;
-        $value = 0 - $arr[1] * 4294967296 - $arr[2] - 1;
+      if ($lo == (int) 0xffffffff) {
+        $hi++;
+        $lo = 0;
       } else {
-        $value = $arr[1] * 4294967296 + $arr[2];
+        $lo++;
       }
+    }
+
+    // Force 32bit words in excess of 2G to be positive - we deal with sign
+    // explicitly below
+
+    if ($hi & (int) 0x80000000) {
+      $hi &= (int) 0x7fffffff;
+      $hi += 0x80000000;
+    }
+
+    if ($lo & (int) 0x80000000) {
+      $lo &= (int) 0x7fffffff;
+      $lo += 0x80000000;
+    }
+
+    // Create as negative value first, since we can store -2^63 but not 2^63
+    $value = -$hi * 4294967296 - $lo;
+
+    if (!$isNeg) {
+      $value = -$value;
     }
 
     return $idx;

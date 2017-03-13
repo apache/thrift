@@ -39,7 +39,7 @@ type test_unit struct {
 }
 
 var units = []test_unit{
-	{"127.0.0.1", 9090, "", "", "binary", false},
+	{"127.0.0.1", 9095, "", "", "binary", false},
 	{"127.0.0.1", 9091, "", "", "compact", false},
 	{"127.0.0.1", 9092, "", "", "binary", true},
 	{"127.0.0.1", 9093, "", "", "compact", true},
@@ -105,7 +105,7 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 		handler.EXPECT().TestNest(&thrifttest.Xtruct2{StructThing: &thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}}).Return(&thrifttest.Xtruct2{StructThing: &thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}}, nil),
 		handler.EXPECT().TestMap(map[int32]int32{1: 2, 3: 4, 5: 42}).Return(map[int32]int32{1: 2, 3: 4, 5: 42}, nil),
 		handler.EXPECT().TestStringMap(map[string]string{"a": "2", "b": "blah", "some": "thing"}).Return(map[string]string{"a": "2", "b": "blah", "some": "thing"}, nil),
-		handler.EXPECT().TestSet(map[int32]struct{}{1: struct{}{}, 2: struct{}{}, 42: struct{}{}}).Return(map[int32]struct{}{1: struct{}{}, 2: struct{}{}, 42: struct{}{}}, nil),
+		handler.EXPECT().TestSet([]int32{1, 2, 42}).Return([]int32{1, 2, 42}, nil),
 		handler.EXPECT().TestList([]int32{1, 2, 42}).Return([]int32{1, 2, 42}, nil),
 		handler.EXPECT().TestEnum(thrifttest.Numberz_TWO).Return(thrifttest.Numberz_TWO, nil),
 		handler.EXPECT().TestTypedef(thrifttest.UserId(42)).Return(thrifttest.UserId(42), nil),
@@ -222,13 +222,20 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 		t.Errorf("Unexpected TestStringMap() result expected %#v, got %#v ", sm, smret)
 	}
 
-	s := map[int32]struct{}{1: struct{}{}, 2: struct{}{}, 42: struct{}{}}
+	s := []int32{1, 2, 42}
 	sret, err := client.TestSet(s)
 	if err != nil {
 		t.Errorf("Unexpected error in TestSet() call: ", err)
 	}
-	if !reflect.DeepEqual(s, sret) {
-		t.Errorf("Unexpected TestSet() result expected %#v, got %#v ", s, sret)
+	// Sets can be in any order, but Go slices are ordered, so reflect.DeepEqual won't work.
+	stemp := map[int32]struct{}{}
+	for _, val := range s {
+		stemp[val] = struct{}{}
+	}
+	for _, val := range sret {
+		if _, ok := stemp[val]; !ok {
+			t.Fatalf("Unexpected TestSet() result expected %#v, got %#v ", s, sret)
+		}
 	}
 
 	l := []int32{1, 2, 42}
@@ -237,7 +244,7 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 		t.Errorf("Unexpected error in TestList() call: ", err)
 	}
 	if !reflect.DeepEqual(l, lret) {
-		t.Errorf("Unexpected TestSet() result expected %#v, got %#v ", l, lret)
+		t.Errorf("Unexpected TestList() result expected %#v, got %#v ", l, lret)
 	}
 
 	eret, err := client.TestEnum(thrifttest.Numberz_TWO)
