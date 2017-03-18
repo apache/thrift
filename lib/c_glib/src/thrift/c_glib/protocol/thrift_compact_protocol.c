@@ -120,7 +120,7 @@ thrift_bitwise_cast_gdouble (const guint64 v)
 static guint64
 i64_to_zigzag (const gint64 l)
 {
-  return (l << 1) ^ (l >> 63);
+  return (((guint64)l) << 1) ^ (l >> 63);
 }
 
 /**
@@ -130,7 +130,7 @@ i64_to_zigzag (const gint64 l)
 static guint32
 i32_to_zigzag (const gint32 n)
 {
-  return (n << 1) ^ (n >> 31);
+  return (((guint32)n) << 1) ^ (n >> 31);
 }
 
 /**
