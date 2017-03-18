@@ -382,7 +382,7 @@ private:
           << (*f_iter)->get_name() << " called\");" << endl;
 
       t_base_type* rt = (t_base_type*)(*f_iter)->get_returntype();
-      if (rt->get_base() != t_base_type::TYPE_VOID) {
+      if (!rt->is_void()) {
         indent(out) << "return typeof(return).init;" << endl;
       }
 

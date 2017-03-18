@@ -4061,9 +4061,9 @@ void t_c_glib_generator::generate_deserialize_field(ofstream& out,
   // if the type is not required and this is a thrift struct (no prefix),
   // set the isset variable.  if the type is required, then set the
   // local variable indicating the value was set, so that we can do    // validation later.
-  if (tfield->get_req() != t_field::T_REQUIRED && prefix != "") {
+  if (prefix != "" && tfield->get_req() != t_field::T_REQUIRED) {
     indent(out) << prefix << "__isset_" << tfield->get_name() << suffix << " = TRUE;" << endl;
-  } else if (tfield->get_req() == t_field::T_REQUIRED && prefix != "") {
+  } else if (prefix != "" && tfield->get_req() == t_field::T_REQUIRED) {
     indent(out) << "isset_" << tfield->get_name() << " = TRUE;" << endl;
   }
 }
