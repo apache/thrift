@@ -849,6 +849,44 @@ bool ttypes_are_compatible(int8_t t1, int8_t t2) {
   return ((t1 == t2) || (ttype_is_int(t1) && ttype_is_int(t2)));
 }
 
+//is used to validate objects before serialization and after deserialization. For now, only required fields are validated.
+static
+void validate_thrift_object(zval* object) {
+    zend_class_entry* object_class_entry = Z_OBJCE_P(object);
+    zval* is_validate = zend_read_static_property(object_class_entry, "isValidate", sizeof("isValidate")-1, false);
+    zval* spec = zend_read_static_property(object_class_entry, "_TSPEC", sizeof("_TSPEC")-1, false);
+    HashPosition key_ptr;
+    zval* val_ptr;
+
+    if (Z_TYPE_INFO_P(is_validate) == IS_TRUE) {
+        for (zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(spec), &key_ptr);
+           (val_ptr = zend_hash_get_current_data_ex(Z_ARRVAL_P(spec), &key_ptr)) != nullptr;
+           zend_hash_move_forward_ex(Z_ARRVAL_P(spec), &key_ptr)) {
+
+            zend_ulong fieldno;
+            if (zend_hash_get_current_key_ex(Z_ARRVAL_P(spec), nullptr, &fieldno, &key_ptr) != HASH_KEY_IS_LONG) {
+              throw_tprotocolexception("Bad keytype in TSPEC (expected 'long')", INVALID_DATA);
+              return;
+            }
+            HashTable* fieldspec = Z_ARRVAL_P(val_ptr);
+
+            // field name
+            zval* zvarname = zend_hash_str_find(fieldspec, "var", sizeof("var")-1);
+            char* varname = Z_STRVAL_P(zvarname);
+
+            zval* is_required = zend_hash_str_find(fieldspec, "isRequired", sizeof("isRequired")-1);
+            zval rv;
+            zval* prop = zend_read_property(object_class_entry, object, varname, strlen(varname), false, &rv);
+
+            if (Z_TYPE_INFO_P(is_required) == IS_TRUE && Z_TYPE_P(prop) == IS_NULL) {
+                char errbuf[128];
+                snprintf(errbuf, 128, "Required field %s.%s is unset!", ZSTR_VAL(object_class_entry->name), varname);
+                throw_tprotocolexception(errbuf, INVALID_DATA);
+            }
+        }
+    }
+}
+
 static
 void binary_deserialize_spec(zval* zthis, PHPInputTransport& transport, HashTable* spec) {
   // SET and LIST have 'elem' => array('type', [optional] 'class')
@@ -857,6 +895,7 @@ void binary_deserialize_spec(zval* zthis, PHPInputTransport& transport, HashTabl
   while (true) {
     int8_t ttype = transport.readI8();
     if (ttype == T_STOP) {
+      validate_thrift_object(zthis);
       return;
     }
 
@@ -892,6 +931,9 @@ void binary_deserialize_spec(zval* zthis, PHPInputTransport& transport, HashTabl
 
 static
 void binary_serialize_spec(zval* zthis, PHPOutputTransport& transport, HashTable* spec) {
+
+  validate_thrift_object(zthis);
+
   HashPosition key_ptr;
   zval* val_ptr;
 

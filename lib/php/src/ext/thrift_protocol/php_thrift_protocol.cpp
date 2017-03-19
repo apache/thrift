@@ -728,6 +728,42 @@ inline bool ttypes_are_compatible(int8_t t1, int8_t t2) {
   return ((t1 == t2) || (ttype_is_int(t1) && ttype_is_int(t2)));
 }
 
+//is used to validate objects before serialization and after deserialization. For now, only required fields are validated.
+static
+void validate_thrift_object(zval* object) {
+
+  HashPosition key_ptr;
+  zval** val_ptr;
+
+  TSRMLS_FETCH();
+  zend_class_entry* object_class_entry = zend_get_class_entry(object TSRMLS_CC);
+  HashTable* spec = Z_ARRVAL_P(zend_read_static_property(object_class_entry, "_TSPEC", 6, false TSRMLS_CC));
+
+  for (zend_hash_internal_pointer_reset_ex(spec, &key_ptr); zend_hash_get_current_data_ex(spec, (void**)&val_ptr, &key_ptr) == SUCCESS; zend_hash_move_forward_ex(spec, &key_ptr)) {
+    ulong fieldno;
+    if (zend_hash_get_current_key_ex(spec, NULL, NULL, &fieldno, 0, &key_ptr) != HASH_KEY_IS_LONG) {
+      throw_tprotocolexception("Bad keytype in TSPEC (expected 'long')", INVALID_DATA);
+      return;
+    }
+    HashTable* fieldspec = Z_ARRVAL_PP(val_ptr);
+
+    // field name
+    zend_hash_find(fieldspec, "var", 4, (void**)&val_ptr);
+    char* varname = Z_STRVAL_PP(val_ptr);
+
+    zend_hash_find(fieldspec, "isRequired", 11, (void**)&val_ptr);
+    bool is_required = Z_BVAL_PP(val_ptr);
+
+    zval* prop = zend_read_property(object_class_entry, object, varname, strlen(varname), false TSRMLS_CC);
+
+    if (is_required && Z_TYPE_P(prop) == IS_NULL) {
+        char errbuf[128];
+        snprintf(errbuf, 128, "Required field %s.%s is unset!", object_class_entry->name, varname);
+        throw_tprotocolexception(errbuf, INVALID_DATA);
+    }
+  }
+}
+
 void binary_deserialize_spec(zval* zthis, PHPInputTransport& transport, HashTable* spec) {
   // SET and LIST have 'elem' => array('type', [optional] 'class')
   // MAP has 'val' => array('type', [optiona] 'class')
@@ -737,7 +773,10 @@ void binary_deserialize_spec(zval* zthis, PHPInputTransport& transport, HashTabl
     zval** val_ptr = NULL;
 
     int8_t ttype = transport.readI8();
-    if (ttype == T_STOP) return;
+    if (ttype == T_STOP) {
+      validate_thrift_object(zthis);
+      return;
+    }
     int16_t fieldno = transport.readI16();
     if (zend_hash_index_find(spec, fieldno, (void**)&val_ptr) == SUCCESS) {
       HashTable* fieldspec = Z_ARRVAL_PP(val_ptr);
@@ -903,6 +942,9 @@ void binary_serialize(int8_t thrift_typeID, PHPOutputTransport& transport, zval*
 
 
 void binary_serialize_spec(zval* zthis, PHPOutputTransport& transport, HashTable* spec) {
+
+  validate_thrift_object(zthis);
+
   HashPosition key_ptr;
   zval** val_ptr;
 
