@@ -30,9 +30,9 @@ mod framed;
 mod passthru;
 mod socket;
 
-#[cfg(test)]
 pub mod mem;
 
+pub use self::mem::TBufferTransport;
 pub use self::buffered::{TBufferedTransport, TBufferedTransportFactory};
 pub use self::framed::{TFramedTransport, TFramedTransportFactory};
 pub use self::passthru::TPassThruTransport;
