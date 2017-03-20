@@ -818,10 +818,7 @@ void TNonblockingServer::TConnection::setFlags(short eventFlags) {
  * Closes a connection
  */
 void TNonblockingServer::TConnection::close() {
-  if (eventFlags_ && event_del(&event_) == -1) {
-    GlobalOutput.perror("TConnection::close() event_del", THRIFT_GET_SOCKET_ERROR);
-    return;
-  }
+  setIdle();
 
   if (serverEventHandler_) {
     serverEventHandler_->deleteContext(connectionContext_, inputProtocol_, outputProtocol_);
