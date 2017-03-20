@@ -217,7 +217,6 @@ bool TSocket::peek() {
      * the other side
      */
     if (errno_copy == THRIFT_ECONNRESET) {
-      close();
       return false;
     }
 #endif
@@ -653,7 +652,6 @@ uint32_t TSocket::write_partial(const uint8_t* buf, uint32_t len) {
 
     if (errno_copy == THRIFT_EPIPE || errno_copy == THRIFT_ECONNRESET
         || errno_copy == THRIFT_ENOTCONN) {
-      close();
       throw TTransportException(TTransportException::NOT_OPEN, "write() send()", errno_copy);
     }
 
