@@ -25,7 +25,11 @@ import (
 	"sync"
 )
 
-// Simple, non-concurrent server for testing.
+/*
+ * This is not a typical TSimpleServer as it is not blocked after accept a socket.
+ * It is more like a TThreadedServer that can handle different connections in different goroutines.
+ * This will work if golang user implements a conn-pool like thing in client side.
+ */
 type TSimpleServer struct {
 	quit chan struct{}
 
