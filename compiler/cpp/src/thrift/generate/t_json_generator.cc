@@ -273,8 +273,12 @@ void t_json_generator::write_type_spec(t_type* ttype) {
     write_key_and_string("valueTypeId", get_type_name(vtype));
     write_type_spec_object("keyType", ktype);
     write_type_spec_object("valueType", vtype);
-  } else if (ttype->is_list() || ttype->is_set()) {
+  } else if (ttype->is_list()) {
     t_type* etype = ((t_list*)ttype)->get_elem_type();
+    write_key_and_string("elemTypeId", get_type_name(etype));
+    write_type_spec_object("elemType", etype);
+  } else if (ttype->is_set()) {
+    t_type* etype = ((t_set*)ttype)->get_elem_type();
     write_key_and_string("elemTypeId", get_type_name(etype));
     write_type_spec_object("elemType", etype);
   }

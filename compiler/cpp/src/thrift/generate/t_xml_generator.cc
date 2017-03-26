@@ -391,8 +391,13 @@ void t_xml_generator::write_type(t_type* ttype) {
   if (type == "id") {
     write_attribute("type-module", ttype->get_program()->get_name());
     write_attribute("type-id", ttype->get_name());
-  } else if (type == "list" || type == "set") {
+  } else if (type == "list") {
     t_type* etype = ((t_list*)ttype)->get_elem_type();
+    write_element_start("elemType");
+    write_type(etype);
+    write_element_end();
+  } else if (type == "set") {
+    t_type* etype = ((t_set*)ttype)->get_elem_type();
     write_element_start("elemType");
     write_type(etype);
     write_element_end();

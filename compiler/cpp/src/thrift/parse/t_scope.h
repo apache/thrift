@@ -31,6 +31,7 @@
 #include "thrift/parse/t_base_type.h"
 #include "thrift/parse/t_map.h"
 #include "thrift/parse/t_list.h"
+#include "thrift/parse/t_set.h"
 
 namespace plugin_output {
 template <typename From, typename To>
@@ -81,11 +82,17 @@ public:
         resolve_const_value(v_iter->first, ((t_map*)ttype)->get_key_type());
         resolve_const_value(v_iter->second, ((t_map*)ttype)->get_val_type());
       }
-    } else if (ttype->is_list() || ttype->is_set()) {
+    } else if (ttype->is_list()) {
       const std::vector<t_const_value*>& val = const_val->get_list();
       std::vector<t_const_value*>::const_iterator v_iter;
       for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
         resolve_const_value((*v_iter), ((t_list*)ttype)->get_elem_type());
+      }
+    } else if (ttype->is_set()) {
+      const std::vector<t_const_value*>& val = const_val->get_list();
+      std::vector<t_const_value*>::const_iterator v_iter;
+      for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+        resolve_const_value((*v_iter), ((t_set*)ttype)->get_elem_type());
       }
     } else if (ttype->is_struct()) {
       t_struct* tstruct = (t_struct*)ttype;

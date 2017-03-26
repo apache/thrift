@@ -2573,7 +2573,7 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
   }
 
   if (ttype->is_set()) {
-    t_type* tkey = get_true_type(((t_list*)ttype)->get_elem_type());
+    t_type* tkey = get_true_type(((t_set*)ttype)->get_elem_type());
     if (tkey->is_base_type()) {
       t_base_type::t_base tbase = ((t_base_type*)tkey)->get_base();
       switch (tbase) {
