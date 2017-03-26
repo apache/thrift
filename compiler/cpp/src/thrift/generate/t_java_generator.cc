@@ -2685,7 +2685,7 @@ void t_java_generator::generate_field_value_meta_data(std::ofstream& out, t_type
     } else if (type->is_set()) {
       indent(out)
           << "new org.apache.thrift.meta_data.SetMetaData(org.apache.thrift.protocol.TType.SET, ";
-      t_type* elem_type = ((t_list*)type)->get_elem_type();
+      t_type* elem_type = ((t_set*)type)->get_elem_type();
       generate_field_value_meta_data(out, elem_type);
     } else { // map
       indent(out)
@@ -3748,7 +3748,7 @@ void t_java_generator::generate_deserialize_container(ofstream& out,
     } else if (ttype->is_list()) {
       indent(out) << "org.apache.thrift.protocol.TList " << obj
                   << " = new org.apache.thrift.protocol.TList("
-                  << type_to_enum(((t_set*)ttype)->get_elem_type()) << ", iprot.readI32());"
+                  << type_to_enum(((t_list*)ttype)->get_elem_type()) << ", iprot.readI32());"
                   << endl;
     }
   }
