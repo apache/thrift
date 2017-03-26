@@ -225,7 +225,7 @@ void t_gv_generator::print_type(t_type* ttype, string struct_field_ref) {
       f_out_ << "\\>";
     }
   } else if (ttype->is_base_type()) {
-    f_out_ << (((t_base_type*)ttype)->is_binary() ? "binary" : ttype->get_name());
+    f_out_ << (ttype->is_binary() ? "binary" : ttype->get_name());
   } else {
     f_out_ << ttype->get_name();
     edges.push_back(struct_field_ref + " -> " + ttype->get_name());

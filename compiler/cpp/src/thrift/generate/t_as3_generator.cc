@@ -1251,7 +1251,7 @@ void t_as3_generator::generate_as3_struct_tostring(ofstream& out,
       indent_up();
     }
 
-    if (field->get_type()->is_base_type() && ((t_base_type*)(field->get_type()))->is_binary()) {
+    if (field->get_type()->is_binary()) {
       indent(out) << "  ret += \"BINARY\";" << endl;
     } else if (field->get_type()->is_enum()) {
       indent(out) << "var " << field->get_name()
@@ -1984,7 +1984,7 @@ void t_as3_generator::generate_deserialize_field(ofstream& out, t_field* tfield,
         throw "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        if (((t_base_type*)type)->is_binary()) {
+        if (type->is_binary()) {
           out << "readBinary();";
         } else {
           out << "readString();";
@@ -2168,7 +2168,7 @@ void t_as3_generator::generate_serialize_field(ofstream& out, t_field* tfield, s
         throw "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        if (((t_base_type*)type)->is_binary()) {
+        if (type->is_binary()) {
           out << "writeBinary(" << name << ");";
         } else {
           out << "writeString(" << name << ");";

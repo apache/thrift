@@ -1350,7 +1350,7 @@ void t_csharp_generator::generate_csharp_struct_equals(ofstream& out, t_struct* 
           << normalize_name((*f_iter)->get_name()) << ") || (";
     }
     t_type* ttype = (*f_iter)->get_type();
-    if (ttype->is_container() || (ttype->is_base_type() && (((t_base_type*)ttype)->is_binary()))) {
+    if (ttype->is_container() || ttype->is_binary()) {
       out << "TCollections.Equals(";
     } else {
       out << "System.Object.Equals(";
@@ -2468,7 +2468,7 @@ void t_csharp_generator::generate_deserialize_field(ofstream& out,
         throw "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        if (((t_base_type*)type)->is_binary()) {
+        if (type->is_binary()) {
           out << "ReadBinary();";
         } else {
           out << "ReadString();";
@@ -2645,7 +2645,7 @@ void t_csharp_generator::generate_serialize_field(ofstream& out,
         throw "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        if (((t_base_type*)type)->is_binary()) {
+        if (type->is_binary()) {
           out << "WriteBinary(";
         } else {
           out << "WriteString(";

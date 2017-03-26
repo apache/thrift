@@ -1369,11 +1369,11 @@ void t_hs_generator::generate_deserialize_type(ofstream& out, t_type* type, stri
 
   } else if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
-    if (tbase == t_base_type::TYPE_STRING && !((t_base_type*)type)->is_binary()) {
+    if (tbase == t_base_type::TYPE_STRING && !type->is_binary()) {
       out << "E.decodeUtf8 ";
     }
     out << val;
-    if (((t_base_type*)type)->is_binary()) {
+    if (type->is_binary()) {
       // Since wire type of binary is the same as string, we actually receive T.TString not
       // T.TBinary
       out << "; T.TString " << val << " -> " << val;
@@ -1448,7 +1448,7 @@ void t_hs_generator::generate_serialize_type(ofstream& out, t_type* type, string
     if (type->is_base_type()) {
       t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
       out << type_to_constructor(type) << " ";
-      if (tbase == t_base_type::TYPE_STRING && !((t_base_type*)type)->is_binary()) {
+      if (tbase == t_base_type::TYPE_STRING && !type->is_binary()) {
         out << "$ E.encodeUtf8 ";
       }
       out << name;
@@ -1550,7 +1550,7 @@ string t_hs_generator::type_to_enum(t_type* type) {
     case t_base_type::TYPE_VOID:
       return "T.T_VOID";
     case t_base_type::TYPE_STRING:
-      return ((t_base_type*)type)->is_binary() ? "T.T_BINARY" : "T.T_STRING";
+      return type->is_binary() ? "T.T_BINARY" : "T.T_STRING";
     case t_base_type::TYPE_BOOL:
       return "T.T_BOOL";
     case t_base_type::TYPE_I8:
@@ -1645,7 +1645,7 @@ string t_hs_generator::render_hs_type(t_type* type, bool needs_parens) {
     case t_base_type::TYPE_VOID:
       return "()";
     case t_base_type::TYPE_STRING:
-      return (((t_base_type*)type)->is_binary() ? "LBS.ByteString" : "LT.Text");
+      return (type->is_binary() ? "LBS.ByteString" : "LT.Text");
     case t_base_type::TYPE_BOOL:
       return "P.Bool";
     case t_base_type::TYPE_I8:
@@ -1698,7 +1698,7 @@ string t_hs_generator::type_to_constructor(t_type* type) {
     case t_base_type::TYPE_VOID:
       throw "invalid type: T_VOID";
     case t_base_type::TYPE_STRING:
-      return ((t_base_type*)type)->is_binary() ? "T.TBinary" : "T.TString";
+      return type->is_binary() ? "T.TBinary" : "T.TString";
     case t_base_type::TYPE_BOOL:
       return "T.TBool";
     case t_base_type::TYPE_I8:

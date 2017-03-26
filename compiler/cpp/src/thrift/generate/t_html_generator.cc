@@ -691,7 +691,7 @@ int t_html_generator::print_type(t_type* ttype) {
       f_out_ << "&gt;";
     }
   } else if (ttype->is_base_type()) {
-    f_out_ << (((t_base_type*)ttype)->is_binary() ? "binary" : ttype->get_name());
+    f_out_ << (ttype->is_binary() ? "binary" : ttype->get_name());
     len = ttype->get_name().size();
   } else {
     string prog_name = ttype->get_program()->get_name();

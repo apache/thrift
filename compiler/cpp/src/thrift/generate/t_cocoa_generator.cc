@@ -2174,7 +2174,7 @@ void t_cocoa_generator::generate_deserialize_field(ofstream& out,
         throw "compiler error: cannot serialize void field in a struct: " + tfield->get_name();
         break;
       case t_base_type::TYPE_STRING:
-        if (((t_base_type*)type)->is_binary()) {
+        if (type->is_binary()) {
           out << "readBinary:&" << fieldName << " error: __thriftError]";
         } else {
           out << "readString:&" << fieldName << " error: __thriftError]";
@@ -2423,7 +2423,7 @@ void t_cocoa_generator::generate_serialize_field(ofstream& out, t_field* tfield,
         throw "compiler error: cannot serialize void field in a struct: " + fieldName;
         break;
       case t_base_type::TYPE_STRING:
-        if (((t_base_type*)type)->is_binary()) {
+        if (type->is_binary()) {
           out << "writeBinary: " << fieldName << " error: __thriftError]";
         } else {
           out << "writeString: " << fieldName << " error: __thriftError]";
@@ -2824,7 +2824,7 @@ string t_cocoa_generator::render_const_value(ostream& out,
     case t_base_type::TYPE_STRING:
       // We must handle binary constant but the syntax of IDL defines
       // nothing about binary constant.
-      //   if ((t_base_type*)type)->is_binary())
+      //   if type->is_binary())
       //      // binary code
       render << "@\"" << get_escaped_string(value) << '"';
       break;

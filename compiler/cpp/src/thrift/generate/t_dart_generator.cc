@@ -1292,7 +1292,7 @@ void t_dart_generator::generate_dart_struct_tostring(ofstream& out,
       scope_up(out);
     }
 
-    if (field->get_type()->is_base_type() && ((t_base_type*)(field->get_type()))->is_binary()) {
+    if (field->get_type()->is_binary()) {
       indent(out) << "ret.write(\"BINARY\");" << endl;
     } else if (field->get_type()->is_enum()) {
       indent(out) << "String " << field_name << "_name = "
@@ -1809,7 +1809,7 @@ void t_dart_generator::generate_deserialize_field(ofstream& out, t_field* tfield
         throw "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        if (((t_base_type*)type)->is_binary()) {
+        if (type->is_binary()) {
           out << "readBinary();";
         } else {
           out << "readString();";
@@ -1991,7 +1991,7 @@ void t_dart_generator::generate_serialize_field(ofstream& out, t_field* tfield, 
         throw "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        if (((t_base_type*)type)->is_binary()) {
+        if (type->is_binary()) {
           out << "writeBinary(" << name << ");";
         } else {
           out << "writeString(" << name << ");";

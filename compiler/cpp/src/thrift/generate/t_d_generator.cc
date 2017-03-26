@@ -381,8 +381,8 @@ private:
       out << indent() << "// Your implementation goes here." << endl << indent() << "writeln(\""
           << (*f_iter)->get_name() << " called\");" << endl;
 
-      t_base_type* rt = (t_base_type*)(*f_iter)->get_returntype();
-      if (!rt->is_void()) {
+	  t_type* rt = (*f_iter)->get_returntype();
+	  if (!rt->is_void()) {
         indent(out) << "return typeof(return).init;" << endl;
       }
 
