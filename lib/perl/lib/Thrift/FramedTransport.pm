@@ -17,6 +17,7 @@
 # under the License.
 #
 
+use 5.10.0;
 use strict;
 use warnings;
 
@@ -30,8 +31,8 @@ use Thrift::Transport;
 # @package thrift.transport
 #
 package Thrift::FramedTransport;
-
 use base('Thrift::Transport');
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub new
 {
@@ -167,6 +168,7 @@ sub flush
 # FramedTransport factory creates framed transport objects from transports
 #
 package Thrift::FramedTransportFactory;
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub new {
     my $classname = shift;
@@ -188,6 +190,5 @@ sub getTransport
     my $buffered = Thrift::FramedTransport->new($trans);
     return $buffered;
 }
-
 
 1;

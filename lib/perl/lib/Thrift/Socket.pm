@@ -17,19 +17,20 @@
 # under the License.
 #
 
-require 5.6.0;
+use 5.10.0;
 use strict;
 use warnings;
 
 use Thrift;
+use Thrift::Exception;
 use Thrift::Transport;
 
 use IO::Socket::INET;
 use IO::Select;
 
 package Thrift::Socket;
-
 use base qw( Thrift::Transport );
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 #
 # Construction and usage
@@ -119,7 +120,7 @@ sub open
 
     my $sock = $self->__open() || do {
         my $error = ref($self).': Could not connect to '.$self->{host}.':'.$self->{port}.' ('.$!.')';
-        die new Thrift::TException($error);
+        die new Thrift::TTransportException($error, Thrift::TTransportException::NOT_OPEN);
     };
 
     $self->{handle} = new IO::Select( $sock );
@@ -158,8 +159,8 @@ sub readAll
 
         if (!defined $buf || $buf eq '') {
 
-            die new Thrift::TException(ref($self).': Could not read '.$len.' bytes from '.
-                               $self->{host}.':'.$self->{port});
+            die new Thrift::TTransportException(ref($self).': Could not read '.$len.' bytes from '.
+                               $self->{host}.':'.$self->{port}, Thrift::TTransportException::END_OF_FILE);
 
         } elsif ((my $sz = length($buf)) < $len) {
 
@@ -190,8 +191,8 @@ sub read
 
     if (!defined $buf || $buf eq '') {
 
-        die new TException(ref($self).': Could not read '.$len.' bytes from '.
-                           $self->{host}.':'.$self->{port});
+        die new Thrift::TTransportException(ref($self).': Could not read '.$len.' bytes from '.
+                           $self->{host}.':'.$self->{port}, Thrift::TTransportException::END_OF_FILE);
 
     }
 
@@ -216,16 +217,16 @@ sub write
         my @sockets = $self->{handle}->can_write( $self->{sendTimeout} / 1000 );
 
         if(@sockets == 0){
-            die new Thrift::TException(ref($self).': timed out writing to bytes from '.
-                                       $self->{host}.':'.$self->{port});
+            die new Thrift::TTransportException(ref($self).': timed out writing to bytes from '.
+                                       $self->{host}.':'.$self->{port}, Thrift::TTransportException::TIMED_OUT);
         }
 
         my $sent = $self->__send($sockets[0], $buf);
 
         if (!defined $sent || $sent == 0 ) {
 
-            die new Thrift::TException(ref($self).': Could not write '.length($buf).' bytes '.
-                                 $self->{host}.':'.$self->{host});
+            die new Thrift::TTransportException(ref($self).': Could not write '.length($buf).' bytes '.
+                                 $self->{host}.':'.$self->{host}, Thrift::TTransportException::END_OF_FILE);
 
         }
 
@@ -313,8 +314,8 @@ sub __wait
     my @sockets = $self->{handle}->can_read( $self->{recvTimeout} / 1000 );
 
     if (@sockets == 0) {
-        die new Thrift::TException(ref($self).': timed out reading from '.
-                                   $self->{host}.':'.$self->{port});
+        die new Thrift::TTransportException(ref($self).': timed out reading from '.
+                                   $self->{host}.':'.$self->{port}, Thrift::TTransportException::TIMED_OUT);
     }
 
     return $sockets[0];

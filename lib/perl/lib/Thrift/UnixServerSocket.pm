@@ -17,19 +17,19 @@
 # under the License.
 #
 
-require 5.6.0;
+use 5.10.0;
 use strict;
 use warnings;
 
 use Thrift;
+use Thrift::ServerSocket;
 use Thrift::UnixSocket;
 
 use IO::Socket::UNIX;
-use IO::Select;
 
 package Thrift::UnixServerSocket;
-
 use base qw( Thrift::ServerSocket );
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 #
 # Constructor.
@@ -58,7 +58,7 @@ sub new
 
 sub __client
 {
-	return new Thrift::UnixSocket();
+  return new Thrift::UnixSocket();
 }
 
 sub __listen
@@ -75,7 +75,7 @@ sub __listen
         if ($self->{debug}) {
             $self->{debugHandler}->($error);
         }
-        die new Thrift::TException($error);
+        die new Thrift::TTransportException($error, Thrift::TTransportException::NOT_OPEN);
     };
 
     return $sock;

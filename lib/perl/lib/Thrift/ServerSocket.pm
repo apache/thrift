@@ -17,18 +17,19 @@
 # under the License.
 #
 
-require 5.6.0;
+use 5.10.0;
 use strict;
 use warnings;
 
 use IO::Socket::INET;
 use IO::Select;
 use Thrift;
+use Thrift::Transport;
 use Thrift::Socket;
 
 package Thrift::ServerSocket;
-
 use base qw( Thrift::ServerTransport );
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 #
 # Constructor.
@@ -44,7 +45,7 @@ sub new
     my $classname = shift;
     my $args      = shift;
     my $self;
-    
+
     # Support both old-style "port number" construction and newer...
     if (ref($args) eq 'HASH') {
         $self = $args;
@@ -55,7 +56,7 @@ sub new
     if (not defined $self->{queue}) {
         $self->{queue} = 128;
     }
-    
+
     return bless($self, $classname);
 }
 
@@ -70,7 +71,7 @@ sub listen
             $self->{debugHandler}->($error);
         }
 
-        die new Thrift::TException($error);
+        die new Thrift::TTransportException($error, Thrift::TTransportException::NOT_OPEN);
     };
 
     $self->{handle} = $sock;
@@ -97,7 +98,7 @@ sub accept
 
 sub __client
 {
-	return new Thrift::Socket();
+  return new Thrift::Socket();
 }
 
 sub __listen

@@ -17,19 +17,18 @@
 # under the License.
 #
 
-require 5.6.0;
+use 5.10.0;
 use strict;
 use warnings;
 
 use Thrift;
-use Thrift::Transport;
+use Thrift::Socket;
 
 use IO::Socket::SSL;
-use IO::Select;
 
 package Thrift::SSLSocket;
-
 use base qw( Thrift::Socket );
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 #
 # Construction and usage
