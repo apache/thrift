@@ -2541,7 +2541,7 @@ void t_delphi_generator::generate_deserialize_field(ostream& out,
         throw "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        if (((t_base_type*)type)->is_binary()) {
+        if (type->is_binary()) {
           if (ansistr_binary_) {
             out << "ReadAnsiString();";
           } else {
@@ -2742,7 +2742,7 @@ void t_delphi_generator::generate_serialize_field(ostream& out,
         throw "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        if (((t_base_type*)type)->is_binary()) {
+        if (type->is_binary()) {
           if (ansistr_binary_) {
             out << "WriteAnsiString(";
           } else {
@@ -3268,7 +3268,7 @@ string t_delphi_generator::empty_value(t_type* type) {
     case t_base_type::TYPE_VOID:
       return "0";
     case t_base_type::TYPE_STRING:
-      if (((t_base_type*)type)->is_binary()) {
+      if (type->is_binary()) {
         if (ansistr_binary_) {
           return "''";
         } else {

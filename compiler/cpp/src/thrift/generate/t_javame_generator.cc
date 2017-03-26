@@ -1222,7 +1222,7 @@ void t_javame_generator::generate_java_struct_equality(ofstream& out, t_struct* 
         << "this_present_" << name << " && that_present_" << name << "))" << endl << indent()
         << "  return false;" << endl;
 
-    if (t->is_base_type() && ((t_base_type*)t)->is_binary()) {
+    if (t->is_binary()) {
       unequal = "TBaseHelper.compareTo(this." + name + ", that." + name + ") != 0";
     } else if (can_be_null) {
       unequal = "!this." + name + ".equals(that." + name + ")";
@@ -1740,7 +1740,7 @@ void t_javame_generator::generate_java_struct_tostring(ofstream& out, t_struct* 
       indent_up();
     }
 
-    if (field->get_type()->is_base_type() && ((t_base_type*)(field->get_type()))->is_binary()) {
+    if (field->get_type()->is_binary()) {
       indent(out) << "TBaseHelper.toString(this." << field->get_name() << ", sb);" << endl;
     } else {
       indent(out) << "sb.append(this." << (*f_iter)->get_name() << ");" << endl;
@@ -2413,7 +2413,7 @@ void t_javame_generator::generate_deserialize_field(ofstream& out, t_field* tfie
       throw "compiler error: cannot serialize void field in a struct: " + name;
       break;
     case t_base_type::TYPE_STRING:
-      if (!((t_base_type*)type)->is_binary()) {
+      if (!type->is_binary()) {
         out << "readString();";
       } else {
         out << "readBinary();";
@@ -2609,7 +2609,7 @@ void t_javame_generator::generate_serialize_field(ofstream& out, t_field* tfield
         throw "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        if (((t_base_type*)type)->is_binary()) {
+        if (type->is_binary()) {
           out << "writeBinary(" << name << ");";
         } else {
           out << "writeString(" << name << ");";
@@ -3144,7 +3144,7 @@ void t_javame_generator::generate_deep_copy_container(ofstream& out,
       }
     } else {
       // iterative copy
-      if (((t_base_type*)elem_type)->is_binary()) {
+      if (elem_type->is_binary()) {
         indent(out) << type_name(elem_type, true, false) << " temp_binary_element = ";
         generate_deep_copy_non_container(out,
                                          iterator_element_name,
@@ -3175,7 +3175,7 @@ void t_javame_generator::generate_deep_copy_non_container(ofstream& out,
                                                           t_type* type) {
   if (type->is_base_type() || type->is_enum() || type->is_typedef()) {
     // binary fields need to be copied with System.arraycopy
-    if (((t_base_type*)type)->is_binary()) {
+    if (type->is_binary()) {
       out << "new byte[" << source_name << ".length];" << endl;
       indent(out) << "System.arraycopy(" << source_name << ", 0, " << dest_name << ", 0, "
                   << source_name << ".length)";

@@ -2071,7 +2071,7 @@ void t_py_generator::generate_deserialize_field(ofstream& out,
       case t_base_type::TYPE_VOID:
         throw "compiler error: cannot serialize void field in a struct: " + name;
       case t_base_type::TYPE_STRING:
-        if (((t_base_type*)type)->is_binary()) {
+        if (type->is_binary()) {
           out << "readBinary()";
         } else if(!gen_utf8strings_) {
           out << "readString()";
@@ -2259,7 +2259,7 @@ void t_py_generator::generate_serialize_field(ofstream& out, t_field* tfield, st
         throw "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        if (((t_base_type*)type)->is_binary()) {
+        if (type->is_binary()) {
           out << "writeBinary(" << name << ")";
         } else if (!gen_utf8strings_) {
           out << "writeString(" << name << ")";
@@ -2599,7 +2599,7 @@ string t_py_generator::type_to_spec_args(t_type* ttype) {
     ttype = ((t_typedef*)ttype)->get_type();
   }
 
-  if (ttype->is_base_type() && reinterpret_cast<t_base_type*>(ttype)->is_binary()) {
+  if (ttype->is_binary()) {
     return  "'BINARY'";
   } else if (gen_utf8strings_ && ttype->is_base_type()
              && reinterpret_cast<t_base_type*>(ttype)->is_string()) {
