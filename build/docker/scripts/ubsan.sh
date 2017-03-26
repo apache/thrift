@@ -15,7 +15,7 @@ export CXX=clang++-3.8
 # undefined casting, aka "vptr".
 #
 # TODO: fix undefined vptr behavior and turn this option back on.
-export CFLAGS="-fsanitize=undefined"
+export CFLAGS="-fsanitize=undefined -fno-sanitize-recover=undefined"
 # Builds without optimization and with debugging symbols for making crash reports more
 # readable.
 export CFLAGS="${CFLAGS} -O0 -ggdb3"
