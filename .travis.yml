@@ -152,6 +152,12 @@ env:
       BUILD_ENV="-e CC=gcc -e CXX=g++"
       DISTRO=debian
 
+    # C and C++ undefined behavior. This wraps autotools.sh, but each binary crashes if
+    # undefined behavior occurs. Skips the known flaky tests.
+    - TEST_NAME="UBSan"
+      SCRIPT="ubsan.sh"
+      BUILD_ARG="--without-haskell --without-nodejs --without-perl --without-python"
+
 matrix:
   include:
     # QA jobs for code analytics and metrics

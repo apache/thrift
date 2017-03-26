@@ -48,7 +48,7 @@ public:
   t_perl_generator(t_program* program,
                    const std::map<std::string, std::string>& parsed_options,
                    const std::string& option_string)
-    : t_oop_generator(program) {
+    : t_oop_generator(program), f_types_use_includes_emitted_(false) {
     (void)option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
@@ -104,6 +104,7 @@ public:
   void generate_service_client(t_service* tservice);
   void generate_service_processor(t_service* tservice);
   void generate_process_function(t_service* tservice, t_function* tfunction);
+  void generate_use_includes(std::ostream& os, bool& done, t_type *type, bool selfish);
 
   /**
    * Serialization constructs
@@ -211,6 +212,8 @@ private:
   std::ofstream f_consts_;
   std::ofstream f_helpers_;
   std::ofstream f_service_;
+
+  bool f_types_use_includes_emitted_;
 };
 
 /**
@@ -432,6 +435,7 @@ void t_perl_generator::generate_xception(t_struct* txception) {
  * Structs can be normal or exceptions.
  */
 void t_perl_generator::generate_perl_struct(t_struct* tstruct, bool is_exception) {
+  generate_use_includes(f_types_, f_types_use_includes_emitted_, tstruct, false);
   generate_perl_struct_definition(f_types_, tstruct, is_exception);
 }
 
@@ -630,6 +634,31 @@ void t_perl_generator::generate_perl_struct_writer(ofstream& out, t_struct* tstr
 }
 
 /**
+ * Generates use clauses for included entities
+ *
+ * @param  os       The output stream
+ * @param  done     A flag reference to debounce the action
+ * @param  type     The type being processed
+ * @param  selfish  Flag to indicate if the current namespace types should be "use"d as well.
+ */
+void t_perl_generator::generate_use_includes(std::ostream& os, bool& done, t_type *type, bool selfish) {
+  t_program *current = type->get_program();
+  if (current && !done) {
+    std::vector<t_program*>& currInc = current->get_includes();
+    std::vector<t_program*>::size_type numInc = currInc.size();
+    if (selfish) {
+      os << "use " << perl_namespace(current) << "Types;" << endl;
+    }
+    for (std::vector<t_program*>::size_type i = 0; i < numInc; ++i) {
+      t_program* incProgram = currInc.at(i);
+      os << "use " << perl_namespace(incProgram) << "Types;" << endl;
+    }
+    os << endl;
+    done = true;
+  }
+}
+
+/**
  * Generates a thrift service.
  *
  * @param tservice The service definition
@@ -638,19 +667,10 @@ void t_perl_generator::generate_service(t_service* tservice) {
   string f_service_name = get_namespace_out_dir() + service_name_ + ".pm";
   f_service_.open(f_service_name.c_str());
 
-  f_service_ <<
-      ///      "package "<<service_name_<<";"<<endl<<
-      autogen_comment() << perl_includes();
+  f_service_ << autogen_comment() << perl_includes();
 
-  t_program* current = tservice->get_program();
-  std::vector<t_program*>& currInc = current->get_includes();
-  std::vector<t_program*>::size_type numInc = currInc.size();
-  f_service_ << "use " << perl_namespace(current) << "Types;" << endl;
-  for (std::vector<t_program*>::size_type i = 0; i < numInc; ++i)
-  {
-    t_program* incProgram = currInc.at(i);
-    f_service_ << "use " << perl_namespace(incProgram) << "Types;" << std::endl;
-  }
+  bool done = false;
+  generate_use_includes(f_service_, done, tservice, true);
 
   t_service* extends_s = tservice->get_extends();
   if (extends_s != NULL) {
