@@ -157,7 +157,7 @@ ENV PATH /usr/local/go/bin:$PATH
 
 # Haxe
 RUN mkdir -p /usr/lib/haxe && \
-    curl http://haxe.org/website-content/downloads/3.2.0/downloads/haxe-3.2.0-linux64.tar.gz | \
+    wget -O - https://github.com/HaxeFoundation/haxe/releases/download/3.2.1/haxe-3.2.1-linux64.tar.gz | \
     tar -C /usr/lib/haxe --strip-components=1 -xz && \
     ln -s /usr/lib/haxe/haxe /usr/bin/haxe && \
     ln -s /usr/lib/haxe/haxelib /usr/bin/haxelib && \
