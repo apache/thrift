@@ -2831,7 +2831,7 @@ void t_rs_generator::render_rustdoc(t_doc* tdoc) {
     return;
   }
 
-  generate_docstring_comment(f_gen_, "", "///", tdoc->get_doc(), "");
+  generate_docstring_comment(f_gen_, "", "/// ", tdoc->get_doc(), "");
 }
 
 void t_rs_generator::render_rift_error(
