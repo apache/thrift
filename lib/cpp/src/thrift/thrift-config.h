@@ -19,6 +19,8 @@
 
 #ifdef _WIN32
 #include <thrift/windows/config.h>
+#elif __ANDROID__
+#include <thrift/android/config.h>
 #else
 #include <thrift/config.h>
 #endif
