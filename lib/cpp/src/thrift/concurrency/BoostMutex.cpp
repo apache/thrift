@@ -33,7 +33,9 @@ namespace thrift {
 namespace concurrency {
 
 /**
- * Implementation of Mutex class using boost interprocess mutex
+ * Implementation of Mutex class using boost::timed_mutex
+ *
+ * Methods throw boost::lock_error on error.
  *
  * @version $Id:$
  */

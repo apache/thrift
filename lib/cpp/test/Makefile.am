@@ -123,7 +123,8 @@ UnitTests_SOURCES = \
 
 if !WITH_BOOSTTHREADS
 UnitTests_SOURCES += \
-    RWMutexStarveTest.cpp
+  concurrency/MutexTest.cpp \
+  concurrency/RWMutexStarveTest.cpp
 endif
 
 UnitTests_LDADD = \

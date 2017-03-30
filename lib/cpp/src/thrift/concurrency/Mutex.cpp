@@ -17,18 +17,24 @@
  * under the License.
  */
 
+// needed to test for pthread implementation capabilities:
+#define __USE_GNU
+
 #include <thrift/thrift-config.h>
 
 #include <thrift/Thrift.h>
+#include <thrift/concurrency/Exception.h>
 #include <thrift/concurrency/Mutex.h>
 #include <thrift/concurrency/Util.h>
 
 #include <assert.h>
-#ifdef HAVE_PTHREAD_H
+#include <stdlib.h>
 #include <pthread.h>
-#endif
 #include <signal.h>
+#include <string.h>
 
+#include <boost/format.hpp>
+#include <boost/shared_ptr.hpp>
 using boost::shared_ptr;
 
 namespace apache {
@@ -110,8 +116,16 @@ static inline int64_t maybeGetProfilingStartTime() {
 #define PROFILE_MUTEX_UNLOCKED()
 #endif // THRIFT_PTHREAD_MUTEX_CONTENTION_PROFILING
 
+#define EINTR_LOOP(_CALL)          int ret; do { ret = _CALL; } while (ret == EINTR)
+#define ABORT_ONFAIL(_CALL)      { EINTR_LOOP(_CALL); if (ret) { abort(); } }
+#define THROW_SRE(_CALLSTR, RET) { throw SystemResourceException(boost::str(boost::format("%1% returned %2% (%3%)") % _CALLSTR % RET % ::strerror(RET))); }
+#define THROW_SRE_ONFAIL(_CALL)  { EINTR_LOOP(_CALL); if (ret) { THROW_SRE(#_CALL, ret); } }
+#define THROW_SRE_TRYFAIL(_CALL) { EINTR_LOOP(_CALL); if (ret == 0) { return true; } else if (ret == EBUSY) { return false; } THROW_SRE(#_CALL, ret); }
+
 /**
  * Implementation of Mutex class using POSIX mutex
+ *
+ * Throws apache::thrift::concurrency::SystemResourceException on error.
  *
  * @version $Id:$
  */
@@ -128,19 +142,19 @@ public:
   ~impl() {
     if (initialized_) {
       initialized_ = false;
-      int ret = pthread_mutex_destroy(&pthread_mutex_);
-      THRIFT_UNUSED_VARIABLE(ret);
-      assert(ret == 0);
+      ABORT_ONFAIL(pthread_mutex_destroy(&pthread_mutex_));
     }
   }
 
   void lock() const {
     PROFILE_MUTEX_START_LOCK();
-    pthread_mutex_lock(&pthread_mutex_);
+    THROW_SRE_ONFAIL(pthread_mutex_lock(&pthread_mutex_));
     PROFILE_MUTEX_LOCKED();
   }
 
-  bool trylock() const { return (0 == pthread_mutex_trylock(&pthread_mutex_)); }
+  bool trylock() const {
+    THROW_SRE_TRYFAIL(pthread_mutex_trylock(&pthread_mutex_));
+  }
 
   bool timedlock(int64_t milliseconds) const {
 #if defined(_POSIX_TIMEOUTS) && _POSIX_TIMEOUTS >= 200112L
@@ -148,14 +162,16 @@ public:
 
     struct THRIFT_TIMESPEC ts;
     Util::toTimespec(ts, milliseconds + Util::currentTime());
-    int ret = pthread_mutex_timedlock(&pthread_mutex_, &ts);
+    EINTR_LOOP(pthread_mutex_timedlock(&pthread_mutex_, &ts));
     if (ret == 0) {
       PROFILE_MUTEX_LOCKED();
       return true;
+    } else if (ret == ETIMEDOUT) {
+      PROFILE_MUTEX_NOT_LOCKED();
+      return false;
     }
 
-    PROFILE_MUTEX_NOT_LOCKED();
-    return false;
+    THROW_SRE("pthread_mutex_timedlock(&pthread_mutex_, &ts)", ret);
 #else
     /* Otherwise follow solution used by Mono for Android */
     struct THRIFT_TIMESPEC sleepytime, now, to;
@@ -180,7 +196,7 @@ public:
 
   void unlock() const {
     PROFILE_MUTEX_START_UNLOCK();
-    pthread_mutex_unlock(&pthread_mutex_);
+    THROW_SRE_ONFAIL(pthread_mutex_unlock(&pthread_mutex_));
     PROFILE_MUTEX_UNLOCKED();
   }
 
@@ -219,28 +235,16 @@ void Mutex::unlock() const {
 
 void Mutex::DEFAULT_INITIALIZER(void* arg) {
   pthread_mutex_t* pthread_mutex = (pthread_mutex_t*)arg;
-  int ret = pthread_mutex_init(pthread_mutex, NULL);
-  THRIFT_UNUSED_VARIABLE(ret);
-  assert(ret == 0);
+  THROW_SRE_ONFAIL(pthread_mutex_init(pthread_mutex, NULL));
 }
 
-#if defined(PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP)                                                 \
-    || defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP)
+#if defined(PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP) || defined(PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP) || defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP)
 static void init_with_kind(pthread_mutex_t* mutex, int kind) {
   pthread_mutexattr_t mutexattr;
-  int ret = pthread_mutexattr_init(&mutexattr);
-  assert(ret == 0);
-
-  // Apparently, this can fail.  Should we really be aborting?
-  ret = pthread_mutexattr_settype(&mutexattr, kind);
-  assert(ret == 0);
-
-  ret = pthread_mutex_init(mutex, &mutexattr);
-  assert(ret == 0);
-
-  ret = pthread_mutexattr_destroy(&mutexattr);
-  assert(ret == 0);
-  THRIFT_UNUSED_VARIABLE(ret);
+  THROW_SRE_ONFAIL(pthread_mutexattr_init(&mutexattr));
+  THROW_SRE_ONFAIL(pthread_mutexattr_settype(&mutexattr, kind));
+  THROW_SRE_ONFAIL(pthread_mutex_init(mutex, &mutexattr));
+  THROW_SRE_ONFAIL(pthread_mutexattr_destroy(&mutexattr));
 }
 #endif
 
@@ -255,6 +259,12 @@ void Mutex::ADAPTIVE_INITIALIZER(void* arg) {
   // waiting for the mutex (not likely if the code within the mutex is
   // short).
   init_with_kind((pthread_mutex_t*)arg, PTHREAD_MUTEX_ADAPTIVE_NP);
+}
+#endif
+
+#ifdef PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP
+void Mutex::ERRORCHECK_INITIALIZER(void* arg) {
+  init_with_kind((pthread_mutex_t*)arg, PTHREAD_MUTEX_ERRORCHECK);
 }
 #endif
 
@@ -275,40 +285,36 @@ public:
 #ifdef THRIFT_PTHREAD_MUTEX_CONTENTION_PROFILING
     profileTime_ = 0;
 #endif
-    int ret = pthread_rwlock_init(&rw_lock_, NULL);
-    THRIFT_UNUSED_VARIABLE(ret);
-    assert(ret == 0);
+    THROW_SRE_ONFAIL(pthread_rwlock_init(&rw_lock_, NULL));
     initialized_ = true;
   }
 
   ~impl() {
     if (initialized_) {
       initialized_ = false;
-      int ret = pthread_rwlock_destroy(&rw_lock_);
-      THRIFT_UNUSED_VARIABLE(ret);
-      assert(ret == 0);
+      ABORT_ONFAIL(pthread_rwlock_destroy(&rw_lock_));
     }
   }
 
   void acquireRead() const {
     PROFILE_MUTEX_START_LOCK();
-    pthread_rwlock_rdlock(&rw_lock_);
+    THROW_SRE_ONFAIL(pthread_rwlock_rdlock(&rw_lock_));
     PROFILE_MUTEX_NOT_LOCKED(); // not exclusive, so use not-locked path
   }
 
   void acquireWrite() const {
     PROFILE_MUTEX_START_LOCK();
-    pthread_rwlock_wrlock(&rw_lock_);
+    THROW_SRE_ONFAIL(pthread_rwlock_wrlock(&rw_lock_));
     PROFILE_MUTEX_LOCKED();
   }
 
-  bool attemptRead() const { return !pthread_rwlock_tryrdlock(&rw_lock_); }
+  bool attemptRead() const { THROW_SRE_TRYFAIL(pthread_rwlock_tryrdlock(&rw_lock_)); }
 
-  bool attemptWrite() const { return !pthread_rwlock_trywrlock(&rw_lock_); }
+  bool attemptWrite() const { THROW_SRE_TRYFAIL(pthread_rwlock_trywrlock(&rw_lock_)); }
 
   void release() const {
     PROFILE_MUTEX_START_UNLOCK();
-    pthread_rwlock_unlock(&rw_lock_);
+    THROW_SRE_ONFAIL(pthread_rwlock_unlock(&rw_lock_));
     PROFILE_MUTEX_UNLOCKED();
   }
 

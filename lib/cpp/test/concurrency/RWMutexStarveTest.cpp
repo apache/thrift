@@ -17,8 +17,7 @@
  * under the License.
  */
 
-#include <iostream>
-#include <unistd.h>
+// This is linked into the UnitTests test executable
 
 #include <boost/shared_ptr.hpp>
 #include <boost/test/unit_test.hpp>

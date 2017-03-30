@@ -33,6 +33,8 @@ namespace concurrency {
 /**
  * Implementation of Mutex class using C++11 std::timed_mutex
  *
+ * Methods throw std::system_error on error.
+ *
  * @version $Id:$
  */
 class Mutex::impl : public std::timed_mutex {};

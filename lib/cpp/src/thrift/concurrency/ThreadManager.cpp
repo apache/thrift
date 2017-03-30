@@ -30,10 +30,6 @@
 #include <deque>
 #include <set>
 
-#if defined(DEBUG)
-#include <iostream>
-#endif // defined(DEBUG)
-
 namespace apache {
 namespace thrift {
 namespace concurrency {
