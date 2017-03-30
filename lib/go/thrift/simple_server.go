@@ -185,8 +185,8 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 		ok, err := processor.Process(inputProtocol, outputProtocol)
 		if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE {
 			return nil
-		} else if err != nil {
-			log.Printf("error processing request: %s", err)
+		}
+		if err != nil {
 			return err
 		}
 		if err, ok := err.(TApplicationException); ok && err.TypeId() == UNKNOWN_METHOD {
