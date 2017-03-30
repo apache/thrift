@@ -17,19 +17,22 @@
 # under the License.
 #
 
+use 5.10.0;
 use strict;
 use warnings;
 
+use Thrift;
 use Thrift::Protocol;
 
 package Thrift::ProtocolDecorator;
 use base qw(Thrift::Protocol);
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub new {
     my $classname = shift;
     my $protocol  = shift;
     my $self      = $classname->SUPER::new($protocol->getTransport());
-    
+
     $self->{concreteProtocol} = $protocol;
 
     return bless($self,$classname);
@@ -45,7 +48,7 @@ sub new {
 sub writeMessageBegin {
     my $self = shift;
     my ($name, $type, $seqid) = @_;
-     
+
       return  $self->{concreteProtocol}->writeMessageBegin($name, $type, $seqid);
 }
 
@@ -54,7 +57,7 @@ sub writeMessageBegin {
 #
 sub writeMessageEnd {
      my $self = shift;
-     
+
      return $self->{concreteProtocol}->writeMessageEnd();
 }
 
@@ -79,7 +82,7 @@ sub writeStructBegin {
 # @return int How many bytes written
 #
 sub writeStructEnd {
-    my $self = shift;    
+    my $self = shift;
 
     return $self->{concreteProtocol}->writeStructEnd();
 }
@@ -101,13 +104,13 @@ sub writeFieldBegin {
 }
 
 sub writeFieldEnd {
-    my $self = shift;    
+    my $self = shift;
 
     return $self->{concreteProtocol}->writeFieldEnd();
 }
 
 sub writeFieldStop {
-    my $self = shift;    
+    my $self = shift;
 
     return $self->{concreteProtocol}->writeFieldStop();
 }
@@ -121,7 +124,7 @@ sub writeMapBegin {
 
 sub writeMapEnd {
     my $self = shift;
-    
+
     return $self->{concreteProtocol}->writeMapEnd();
 }
 
@@ -134,7 +137,7 @@ sub writeListBegin {
 
 sub writeListEnd {
     my $self = shift;
-    
+
     return $self->{concreteProtocol}->writeListEnd();
 }
 
@@ -147,7 +150,7 @@ sub writeSetBegin {
 
 sub writeSetEnd {
     my $self = shift;
-    
+
     return $self->{concreteProtocol}->writeListEnd();
 }
 
@@ -177,7 +180,7 @@ sub writeI32 {
     my ($i32) = @_;
 
     return $self->{concreteProtocol}->writeI32($i32);
- 
+
 }
 
 sub writeI64 {
@@ -221,7 +224,7 @@ sub readMessageBegin
 #
 sub readMessageEnd
 {
-    my $self = shift;    
+    my $self = shift;
 
     return $self->{concreteProtocol}->readMessageEnd();
 }
@@ -236,7 +239,7 @@ sub readStructBegin
 
 sub readStructEnd
 {
-    my $self = shift;    
+    my $self = shift;
 
     return $self->{concreteProtocol}->readStructEnd();
 }
@@ -251,7 +254,7 @@ sub readFieldBegin
 
 sub readFieldEnd
 {
-    my $self = shift;    
+    my $self = shift;
 
     return $self->{concreteProtocol}->readFieldEnd();
 }
@@ -266,7 +269,7 @@ sub readMapBegin
 
 sub readMapEnd
 {
-    my $self = shift;    
+    my $self = shift;
 
     return $self->{concreteProtocol}->readMapEnd();
 }
@@ -281,7 +284,7 @@ sub readListBegin
 
 sub readListEnd
 {
-    my $self = shift;    
+    my $self = shift;
 
     return $self->{concreteProtocol}->readListEnd();
 }
@@ -296,7 +299,7 @@ sub readSetBegin
 
 sub readSetEnd
 {
-    my $self = shift;    
+    my $self = shift;
 
     return $self->{concreteProtocol}->readSetEnd();
 }

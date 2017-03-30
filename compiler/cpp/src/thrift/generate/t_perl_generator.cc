@@ -255,10 +255,12 @@ void t_perl_generator::init_generator() {
 string t_perl_generator::perl_includes() {
   string inc;
 
-  inc = "require 5.6.0;\n";
+  inc  = "use 5.10.0;\n";
   inc += "use strict;\n";
   inc += "use warnings;\n";
-  inc += "use Thrift;\n\n";
+  inc += "use Thrift::Exception;\n";
+  inc += "use Thrift::MessageType;\n";
+  inc += "use Thrift::Type;\n\n";
 
   return inc;
 }
@@ -546,7 +548,7 @@ void t_perl_generator::generate_perl_struct_reader(ofstream& out, t_struct* tstr
   indent(out) << "$xfer += $input->readFieldBegin(\\$fname, \\$ftype, \\$fid);" << endl;
 
   // Check for field STOP marker and break
-  indent(out) << "if ($ftype == TType::STOP) {" << endl;
+  indent(out) << "if ($ftype == Thrift::TType::STOP) {" << endl;
   indent_up();
   indent(out) << "last;" << endl;
   indent_down();
@@ -749,11 +751,11 @@ void t_perl_generator::generate_service_processor(t_service* tservice) {
              << "if (!$self->can($methodname)) {" << endl;
   indent_up();
 
-  f_service_ << indent() << "$input->skip(TType::STRUCT);" << endl << indent()
+  f_service_ << indent() << "$input->skip(Thrift::TType::STRUCT);" << endl << indent()
              << "$input->readMessageEnd();" << endl << indent()
-             << "my $x = new TApplicationException('Function '.$fname.' not implemented.', "
-                "TApplicationException::UNKNOWN_METHOD);" << endl << indent()
-             << "$output->writeMessageBegin($fname, TMessageType::EXCEPTION, $rseqid);" << endl
+             << "my $x = new Thrift::TApplicationException('Function '.$fname.' not implemented.', "
+                "Thrift::TApplicationException::UNKNOWN_METHOD);" << endl << indent()
+             << "$output->writeMessageBegin($fname, Thrift::TMessageType::EXCEPTION, $rseqid);" << endl
              << indent() << "$x->write($output);" << endl << indent()
              << "$output->writeMessageEnd();" << endl << indent()
              << "$output->getTransport()->flush();" << endl << indent() << "return;" << endl;
@@ -851,8 +853,8 @@ void t_perl_generator::generate_process_function(t_service* tservice, t_function
     f_service_ << indent() << "if ($@) {" << endl;
     indent_up();
     f_service_ << indent() << "$@ =~ s/^\\s+|\\s+$//g;" << endl
-               << indent() << "my $err = new TApplicationException(\"Unexpected Exception: \" . $@, TApplicationException::INTERNAL_ERROR);" << endl
-               << indent() << "$output->writeMessageBegin('" << tfunction->get_name() << "', TMessageType::EXCEPTION, $seqid);" << endl
+               << indent() << "my $err = new Thrift::TApplicationException(\"Unexpected Exception: \" . $@, Thrift::TApplicationException::INTERNAL_ERROR);" << endl
+               << indent() << "$output->writeMessageBegin('" << tfunction->get_name() << "', Thrift::TMessageType::EXCEPTION, $seqid);" << endl
                << indent() << "$err->write($output);" << endl
                << indent() << "$output->writeMessageEnd();" << endl
                << indent() << "$output->getTransport()->flush();" << endl
@@ -871,7 +873,7 @@ void t_perl_generator::generate_process_function(t_service* tservice, t_function
   }
 
   // Serialize the reply
-  f_service_ << indent() << "$output->writeMessageBegin('" << tfunction->get_name() << "', TMessageType::REPLY, $seqid);" << endl
+  f_service_ << indent() << "$output->writeMessageBegin('" << tfunction->get_name() << "', Thrift::TMessageType::REPLY, $seqid);" << endl
              << indent() << "$result->write($output);" << endl
              << indent() << "$output->writeMessageEnd();" << endl
              << indent() << "$output->getTransport()->flush();" << endl;
@@ -1096,7 +1098,7 @@ void t_perl_generator::generate_service_client(t_service* tservice) {
 
     // Serialize the request header
     f_service_ << indent() << "$self->{output}->writeMessageBegin('" << (*f_iter)->get_name()
-               << "', " << ((*f_iter)->is_oneway() ? "TMessageType::ONEWAY" : "TMessageType::CALL")
+               << "', " << ((*f_iter)->is_oneway() ? "Thrift::TMessageType::ONEWAY" : "Thrift::TMessageType::CALL")
                << ", $self->{seqid});" << endl;
 
     f_service_ << indent() << "my $args = new " << argsname << "();" << endl;
@@ -1132,8 +1134,8 @@ void t_perl_generator::generate_service_client(t_service* tservice) {
                  << indent() << "my $mtype = 0;" << endl << endl;
 
       f_service_ << indent() << "$self->{input}->readMessageBegin(\\$fname, \\$mtype, \\$rseqid);"
-                 << endl << indent() << "if ($mtype == TMessageType::EXCEPTION) {" << endl
-                 << indent() << "  my $x = new TApplicationException();" << endl << indent()
+                 << endl << indent() << "if ($mtype == Thrift::TMessageType::EXCEPTION) {" << endl
+                 << indent() << "  my $x = new Thrift::TApplicationException();" << endl << indent()
                  << "  $x->read($self->{input});" << endl << indent()
                  << "  $self->{input}->readMessageEnd();" << endl << indent() << "  die $x;" << endl
                  << indent() << "}" << endl;
@@ -1644,30 +1646,30 @@ string t_perl_generator::type_to_enum(t_type* type) {
     case t_base_type::TYPE_VOID:
       throw "NO T_VOID CONSTRUCT";
     case t_base_type::TYPE_STRING:
-      return "TType::STRING";
+      return "Thrift::TType::STRING";
     case t_base_type::TYPE_BOOL:
-      return "TType::BOOL";
+      return "Thrift::TType::BOOL";
     case t_base_type::TYPE_I8:
-      return "TType::BYTE";
+      return "Thrift::TType::BYTE";
     case t_base_type::TYPE_I16:
-      return "TType::I16";
+      return "Thrift::TType::I16";
     case t_base_type::TYPE_I32:
-      return "TType::I32";
+      return "Thrift::TType::I32";
     case t_base_type::TYPE_I64:
-      return "TType::I64";
+      return "Thrift::TType::I64";
     case t_base_type::TYPE_DOUBLE:
-      return "TType::DOUBLE";
+      return "Thrift::TType::DOUBLE";
     }
   } else if (type->is_enum()) {
-    return "TType::I32";
+    return "Thrift::TType::I32";
   } else if (type->is_struct() || type->is_xception()) {
-    return "TType::STRUCT";
+    return "Thrift::TType::STRUCT";
   } else if (type->is_map()) {
-    return "TType::MAP";
+    return "Thrift::TType::MAP";
   } else if (type->is_set()) {
-    return "TType::SET";
+    return "Thrift::TType::SET";
   } else if (type->is_list()) {
-    return "TType::LIST";
+    return "Thrift::TType::LIST";
   }
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
