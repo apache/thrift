@@ -333,7 +333,7 @@ module Thrift
     # "NaN" or "Infinity" or "-Infinity".
     def write_json_double(num)
       @context.write(trans)
-      # Normalize output of boost::lexical_cast for NaNs and Infinities
+      # Normalize output of thrift::to_string for NaNs and Infinities
       special = false;
       if (num.nan?)
         special = true;

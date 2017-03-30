@@ -20,9 +20,9 @@
 #ifndef _THRIFT_TRANSPORT_TZLIBTRANSPORT_H_
 #define _THRIFT_TRANSPORT_TZLIBTRANSPORT_H_ 1
 
-#include <boost/lexical_cast.hpp>
 #include <thrift/transport/TTransport.h>
 #include <thrift/transport/TVirtualTransport.h>
+#include <thrift/TToString.h>
 #include <zlib.h>
 
 struct z_stream_s;
@@ -51,7 +51,7 @@ public:
       rv += "(no message)";
     }
     rv += " (status = ";
-    rv += boost::lexical_cast<std::string>(status);
+    rv += to_string(status);
     rv += ")";
     return rv;
   }
@@ -105,7 +105,7 @@ public:
       int minimum = MIN_DIRECT_DEFLATE_SIZE;
       throw TTransportException(TTransportException::BAD_ARGS,
                                 "TZLibTransport: uncompressed write buffer must be at least"
-                                + boost::lexical_cast<std::string>(minimum) + ".");
+                                + to_string(minimum) + ".");
     }
 
     try {

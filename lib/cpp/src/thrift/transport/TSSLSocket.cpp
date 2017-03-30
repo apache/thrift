@@ -36,7 +36,6 @@
 #endif
 
 
-#include <boost/lexical_cast.hpp>
 #include <boost/shared_array.hpp>
 #include <openssl/err.h>
 #include <openssl/rand.h>
@@ -45,6 +44,7 @@
 #include <thrift/concurrency/Mutex.h>
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/PlatformSocket.h>
+#include <thrift/TToString.h>
 
 #define OPENSSL_VERSION_NO_THREAD_ID 0x10000000L
 
@@ -644,7 +644,7 @@ unsigned int TSSLSocket::waitForEvent(bool wantRead) {
   }
 
   struct THRIFT_POLLFD fds[2];
-  std::memset(fds, 0, sizeof(fds));
+  memset(fds, 0, sizeof(fds));
   fds[0].fd = fdSocket;
   fds[0].events = wantRead ? THRIFT_POLLIN : THRIFT_POLLOUT;
 
@@ -866,7 +866,7 @@ void buildErrors(string& errors, int errno_copy) {
     }
   }
   if (errors.empty()) {
-    errors = "error code: " + boost::lexical_cast<string>(errno_copy);
+    errors = "error code: " + to_string(errno_copy);
   }
 }
 
