@@ -87,10 +87,11 @@ class TJSONContext;
  * the current implementation is to match as closely as possible the behavior
  * of Java's Double.toString(), which has no precision loss.  Implementors in
  * other languages should strive to achieve that where possible. I have not
- * yet verified whether boost:lexical_cast, which is doing that work for me in
- * C++, loses any precision, but I am leaving this as a future improvement. I
- * may try to provide a C component for this, so that other languages could
- * bind to the same underlying implementation for maximum consistency.
+ * yet verified whether std::istringstream::operator>>, which is doing that
+ * work for me in C++, loses any precision, but I am leaving this as a future
+ * improvement. I may try to provide a C component for this, so that other
+ * languages could bind to the same underlying implementation for maximum
+ * consistency.
  *
  */
 class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {

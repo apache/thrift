@@ -19,12 +19,12 @@
 
 #include <thrift/protocol/TDebugProtocol.h>
 
+#include <thrift/TToString.h>
 #include <cassert>
 #include <cctype>
 #include <cstdio>
 #include <stdexcept>
 #include <boost/static_assert.hpp>
-#include <boost/lexical_cast.hpp>
 
 using std::string;
 
@@ -129,7 +129,7 @@ uint32_t TDebugProtocol::startItem() {
   case MAP_VALUE:
     return writePlain(" -> ");
   case LIST:
-    size = writeIndented("[" + boost::lexical_cast<string>(list_idx_.back()) + "] = ");
+    size = writeIndented("[" + to_string(list_idx_.back()) + "] = ");
     list_idx_.back()++;
     return size;
   default:
@@ -223,7 +223,7 @@ uint32_t TDebugProtocol::writeFieldBegin(const char* name,
                                          const TType fieldType,
                                          const int16_t fieldId) {
   // sprintf(id_str, "%02d", fieldId);
-  string id_str = boost::lexical_cast<string>(fieldId);
+  string id_str = to_string(fieldId);
   if (id_str.length() == 1)
     id_str = '0' + id_str;
 
@@ -248,7 +248,7 @@ uint32_t TDebugProtocol::writeMapBegin(const TType keyType,
   bsize += startItem();
   bsize += writePlain(
       "map<" + fieldTypeName(keyType) + "," + fieldTypeName(valType) + ">"
-      "[" + boost::lexical_cast<string>(size) + "] {\n");
+      "[" + to_string(size) + "] {\n");
   indentUp();
   write_state_.push_back(MAP_KEY);
   return bsize;
@@ -269,7 +269,7 @@ uint32_t TDebugProtocol::writeListBegin(const TType elemType, const uint32_t siz
   bsize += startItem();
   bsize += writePlain(
       "list<" + fieldTypeName(elemType) + ">"
-      "[" + boost::lexical_cast<string>(size) + "] {\n");
+      "[" + to_string(size) + "] {\n");
   indentUp();
   write_state_.push_back(LIST);
   list_idx_.push_back(0);
@@ -292,7 +292,7 @@ uint32_t TDebugProtocol::writeSetBegin(const TType elemType, const uint32_t size
   bsize += startItem();
   bsize += writePlain(
       "set<" + fieldTypeName(elemType) + ">"
-      "[" + boost::lexical_cast<string>(size) + "] {\n");
+      "[" + to_string(size) + "] {\n");
   indentUp();
   write_state_.push_back(SET);
   return bsize;
@@ -316,19 +316,19 @@ uint32_t TDebugProtocol::writeByte(const int8_t byte) {
 }
 
 uint32_t TDebugProtocol::writeI16(const int16_t i16) {
-  return writeItem(boost::lexical_cast<string>(i16));
+  return writeItem(to_string(i16));
 }
 
 uint32_t TDebugProtocol::writeI32(const int32_t i32) {
-  return writeItem(boost::lexical_cast<string>(i32));
+  return writeItem(to_string(i32));
 }
 
 uint32_t TDebugProtocol::writeI64(const int64_t i64) {
-  return writeItem(boost::lexical_cast<string>(i64));
+  return writeItem(to_string(i64));
 }
 
 uint32_t TDebugProtocol::writeDouble(const double dub) {
-  return writeItem(boost::lexical_cast<string>(dub));
+  return writeItem(to_string(dub));
 }
 
 uint32_t TDebugProtocol::writeString(const string& str) {
@@ -337,7 +337,7 @@ uint32_t TDebugProtocol::writeString(const string& str) {
   string to_show = str;
   if (to_show.length() > (string::size_type)string_limit_) {
     to_show = str.substr(0, string_prefix_size_);
-    to_show += "[...](" + boost::lexical_cast<string>(str.length()) + ")";
+    to_show += "[...](" + to_string(str.length()) + ")";
   }
 
   string output = "\"";

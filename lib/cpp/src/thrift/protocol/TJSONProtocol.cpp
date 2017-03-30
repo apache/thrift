@@ -19,9 +19,9 @@
 
 #include <thrift/protocol/TJSONProtocol.h>
 
-#include <boost/lexical_cast.hpp>
 #include <boost/locale.hpp>
 #include <boost/math/special_functions/fpclassify.hpp>
+#include <boost/math/special_functions/sign.hpp>
 
 #include <cmath>
 #include <limits>
@@ -31,6 +31,7 @@
 
 #include <thrift/protocol/TBase64Utils.h>
 #include <thrift/transport/TTransportException.h>
+#include <thrift/TToString.h>
 
 using namespace apache::thrift::transport;
 
@@ -503,7 +504,7 @@ uint32_t TJSONProtocol::writeJSONBase64(const std::string& str) {
 template <typename NumberType>
 uint32_t TJSONProtocol::writeJSONInteger(NumberType num) {
   uint32_t result = context_->write(*trans_);
-  std::string val(boost::lexical_cast<std::string>(num));
+  std::string val(to_string(num));
   bool escapeNum = context_->escapeNum();
   if (escapeNum) {
     trans_->write(&kJSONStringDelimiter, 1);
@@ -684,7 +685,7 @@ uint32_t TJSONProtocol::writeBool(const bool value) {
 }
 
 uint32_t TJSONProtocol::writeByte(const int8_t byte) {
-  // writeByte() must be handled specially because boost::lexical cast sees
+  // writeByte() must be handled specially because to_string sees
   // int8_t as a text type instead of an integer type
   return writeJSONInteger((int16_t)byte);
 }
@@ -842,6 +843,19 @@ uint32_t TJSONProtocol::readJSONNumericChars(std::string& str) {
   return result;
 }
 
+namespace {
+template <typename T>
+T fromString(const std::string& s) {
+  T t;
+  std::istringstream str(s);
+  str.imbue(std::locale::classic());
+  str >> t;
+  if (str.bad() || !str.eof())
+    throw std::runtime_error(s);
+  return t;
+}
+}
+
 // Reads a sequence of characters and assembles them into a number,
 // returning them via num
 template <typename NumberType>
@@ -853,27 +867,15 @@ uint32_t TJSONProtocol::readJSONInteger(NumberType& num) {
   std::string str;
   result += readJSONNumericChars(str);
   try {
-    num = boost::lexical_cast<NumberType>(str);
-  } catch (boost::bad_lexical_cast e) {
+    num = fromString<NumberType>(str);
+  } catch (const std::runtime_error&) {
     throw TProtocolException(TProtocolException::INVALID_DATA,
-                                 "Expected numeric value; got \"" + str + "\"");
+                             "Expected numeric value; got \"" + str + "\"");
   }
   if (context_->escapeNum()) {
     result += readJSONSyntaxChar(kJSONStringDelimiter);
   }
   return result;
-}
-
-namespace {
-double stringToDouble(const std::string& s) {
-  double d;
-  std::istringstream str(s);
-  str.imbue(std::locale::classic());
-  str >> d;
-  if (str.bad() || !str.eof())
-    throw std::runtime_error(s);
-  return d;
-}
 }
 
 // Reads a JSON number or string and interprets it as a double.
@@ -896,7 +898,7 @@ uint32_t TJSONProtocol::readJSONDouble(double& num) {
                                      "Numeric data unexpectedly quoted");
       }
       try {
-        num = stringToDouble(str);
+        num = fromString<double>(str);
       } catch (std::runtime_error e) {
         throw TProtocolException(TProtocolException::INVALID_DATA,
                                      "Expected numeric value; got \"" + str + "\"");
@@ -909,7 +911,7 @@ uint32_t TJSONProtocol::readJSONDouble(double& num) {
     }
     result += readJSONNumericChars(str);
     try {
-      num = stringToDouble(str);
+      num = fromString<double>(str);
     } catch (std::runtime_error e) {
       throw TProtocolException(TProtocolException::INVALID_DATA,
                                    "Expected numeric value; got \"" + str + "\"");
