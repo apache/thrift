@@ -272,3 +272,10 @@ OpenSSL's RAND_poll() when OpenSSL library is first initialized.
 
 The PRNG seed is key to the application security. This method should be
 overridden if it's not strong enough for you.
+
+# Breaking Changes
+
+## 0.11.0
+
+In the pthread mutex implementation, the contention profiling code was enabled
+by default in all builds.  This changed to be disabled by default.  (THRIFT-4151)
