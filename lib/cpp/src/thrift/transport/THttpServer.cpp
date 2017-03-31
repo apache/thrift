@@ -41,9 +41,11 @@ THttpServer::~THttpServer() {
 }
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
+  #define THRIFT_GMTIME(TM, TIME)             gmtime_s(&TM, &TIME)
   #define THRIFT_strncasecmp(str1, str2, len) _strnicmp(str1, str2, len)
   #define THRIFT_strcasestr(haystack, needle) StrStrIA(haystack, needle)
 #else
+  #define THRIFT_GMTIME(TM, TIME)             gmtime_r(&TIME, &TM)
   #define THRIFT_strncasecmp(str1, str2, len) strncasecmp(str1, str2, len)
   #define THRIFT_strcasestr(haystack, needle) strcasestr(haystack, needle)
 #endif
@@ -146,18 +148,20 @@ std::string THttpServer::getTimeRFC1123() {
   static const char* Months[]
       = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
   char buff[128];
+
   time_t t = time(NULL);
-  tm* broken_t = gmtime(&t);
+  struct tm tmb;
+  THRIFT_GMTIME(tmb, t);
 
   sprintf(buff,
           "%s, %d %s %d %d:%d:%d GMT",
-          Days[broken_t->tm_wday],
-          broken_t->tm_mday,
-          Months[broken_t->tm_mon],
-          broken_t->tm_year + 1900,
-          broken_t->tm_hour,
-          broken_t->tm_min,
-          broken_t->tm_sec);
+          Days[tmb.tm_wday],
+          tmb.tm_mday,
+          Months[tmb.tm_mon],
+          tmb.tm_year + 1900,
+          tmb.tm_hour,
+          tmb.tm_min,
+          tmb.tm_sec);
   return std::string(buff);
 }
 }
