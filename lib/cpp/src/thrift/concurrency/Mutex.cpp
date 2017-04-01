@@ -35,7 +35,10 @@ namespace apache {
 namespace thrift {
 namespace concurrency {
 
-#ifndef THRIFT_NO_CONTENTION_PROFILING
+// Enable this to turn on mutex contention profiling support
+// #define THRIFT_PTHREAD_MUTEX_CONTENTION_PROFILING
+
+#ifdef THRIFT_PTHREAD_MUTEX_CONTENTION_PROFILING
 
 static int32_t mutexProfilingCounter = 0;
 static int32_t mutexProfilingSampleRate = 0;
@@ -105,7 +108,7 @@ static inline int64_t maybeGetProfilingStartTime() {
 #define PROFILE_MUTEX_LOCKED()
 #define PROFILE_MUTEX_START_UNLOCK()
 #define PROFILE_MUTEX_UNLOCKED()
-#endif // THRIFT_NO_CONTENTION_PROFILING
+#endif // THRIFT_PTHREAD_MUTEX_CONTENTION_PROFILING
 
 /**
  * Implementation of Mutex class using POSIX mutex
@@ -115,7 +118,7 @@ static inline int64_t maybeGetProfilingStartTime() {
 class Mutex::impl {
 public:
   impl(Initializer init) : initialized_(false) {
-#ifndef THRIFT_NO_CONTENTION_PROFILING
+#ifdef THRIFT_PTHREAD_MUTEX_CONTENTION_PROFILING
     profileTime_ = 0;
 #endif
     init(&pthread_mutex_);
@@ -186,7 +189,7 @@ public:
 private:
   mutable pthread_mutex_t pthread_mutex_;
   mutable bool initialized_;
-#ifndef THRIFT_NO_CONTENTION_PROFILING
+#ifdef THRIFT_PTHREAD_MUTEX_CONTENTION_PROFILING
   mutable int64_t profileTime_;
 #endif
 };
@@ -269,7 +272,7 @@ void Mutex::RECURSIVE_INITIALIZER(void* arg) {
 class ReadWriteMutex::impl {
 public:
   impl() : initialized_(false) {
-#ifndef THRIFT_NO_CONTENTION_PROFILING
+#ifdef THRIFT_PTHREAD_MUTEX_CONTENTION_PROFILING
     profileTime_ = 0;
 #endif
     int ret = pthread_rwlock_init(&rw_lock_, NULL);
@@ -312,7 +315,7 @@ public:
 private:
   mutable pthread_rwlock_t rw_lock_;
   mutable bool initialized_;
-#ifndef THRIFT_NO_CONTENTION_PROFILING
+#ifdef THRIFT_PTHREAD_MUTEX_CONTENTION_PROFILING
   mutable int64_t profileTime_;
 #endif
 };
