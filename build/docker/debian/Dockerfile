@@ -113,12 +113,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       neko-dev \
       libneko0
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Node.js dependencies - THRIFT-4064 says it must be >= 4.x
+RUN curl -sL https://deb.nodesource.com/setup_4.x | bash -
+RUN apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
-      nodejs \
-      nodejs-dev \
-      nodejs-legacy \
-      npm
+      nodejs
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 `# CSharp dependencies` \
