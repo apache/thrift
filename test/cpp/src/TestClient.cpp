@@ -228,11 +228,11 @@ int main(int argc, char** argv) {
     noinsane = true;
   }
 
+  // THRIFT-4164: The factory MUST outlive any sockets it creates for correct behavior!
+  boost::shared_ptr<TSSLSocketFactory> factory;
+  boost::shared_ptr<TSocket> socket;
   boost::shared_ptr<TTransport> transport;
   boost::shared_ptr<TProtocol> protocol;
-
-  boost::shared_ptr<TSocket> socket;
-  boost::shared_ptr<TSSLSocketFactory> factory;
 
   if (ssl) {
     cout << "Client Certificate File: " << certPath << endl;

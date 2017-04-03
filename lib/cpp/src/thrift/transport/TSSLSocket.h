@@ -126,11 +126,11 @@ protected:
    */
   TSSLSocket(boost::shared_ptr<SSLContext> ctx, std::string host, int port);
     /**
-	* Constructor with an interrupt signal.
-	*
-	* @param host  Remote host name
-	* @param port  Remote port number
-	*/
+  * Constructor with an interrupt signal.
+  *
+  * @param host  Remote host name
+  * @param port  Remote port number
+  */
     TSSLSocket(boost::shared_ptr<SSLContext> ctx, std::string host, int port, boost::shared_ptr<THRIFT_SOCKET> interruptListener);
   /**
    * Authorize peer access after SSL handshake completes.
@@ -159,6 +159,20 @@ protected:
 
 /**
  * SSL socket factory. SSL sockets should be created via SSL factory.
+ * The factory will automatically initialize and cleanup openssl as long as
+ * there is a TSSLSocketFactory instantiated, and as long as the static
+ * boolean manualOpenSSLInitialization_ is set to false, the default.
+ *
+ * If you would like to initialize and cleanup openssl yourself, set
+ * manualOpenSSLInitialization_ to true and TSSLSocketFactory will no
+ * longer be responsible for openssl initialization and teardown.
+ *
+ * It is the responsibility of the code using TSSLSocketFactory to
+ * ensure that the factory lifetime exceeds the lifetime of any sockets
+ * it might create.  If this is not guaranteed, a socket may call into
+ * openssl after the socket factory has cleaned up openssl!  This
+ * guarantee is unnecessary if manualOpenSSLInitialization_ is true,
+ * however, since it would be up to the consuming application instead.
  */
 class TSSLSocketFactory {
 public:

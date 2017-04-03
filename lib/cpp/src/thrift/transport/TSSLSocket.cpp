@@ -35,8 +35,14 @@
 #include <fcntl.h>
 #endif
 
+#define OPENSSL_VERSION_NO_THREAD_ID_BEFORE    0x10000000L
+#define OPENSSL_ENGINE_CLEANUP_REQUIRED_BEFORE 0x10100000L
 
 #include <boost/shared_array.hpp>
+#include <openssl/opensslv.h>
+#if (OPENSSL_VERSION_NUMBER < OPENSSL_ENGINE_CLEANUP_REQUIRED_BEFORE)
+#include <openssl/engine.h>
+#endif
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/ssl.h>
@@ -45,8 +51,6 @@
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/TToString.h>
-
-#define OPENSSL_VERSION_NO_THREAD_ID 0x10000000L
 
 using namespace std;
 using namespace apache::thrift::concurrency;
@@ -66,13 +70,16 @@ static boost::shared_array<Mutex> mutexes;
 
 static void callbackLocking(int mode, int n, const char*, int) {
   if (mode & CRYPTO_LOCK) {
+    // assertion of (px != 0) here typically means that a TSSLSocket's lifetime
+    // exceeded the lifetime of the TSSLSocketFactory that created it, and the
+    // TSSLSocketFactory already ran cleanupOpenSSL(), which deleted "mutexes".
     mutexes[n].lock();
   } else {
     mutexes[n].unlock();
   }
 }
 
-#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
+#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID_BEFORE)
 static unsigned long callbackThreadID() {
 #ifdef _WIN32
   return (unsigned long)GetCurrentThreadId();
@@ -107,6 +114,8 @@ void initializeOpenSSL() {
   openSSLInitialized = true;
   SSL_library_init();
   SSL_load_error_strings();
+  ERR_load_crypto_strings();
+
   // static locking
   // newer versions of OpenSSL changed CRYPTO_num_locks - see THRIFT-3878
 #ifdef CRYPTO_num_locks
@@ -114,15 +123,13 @@ void initializeOpenSSL() {
 #else
   mutexes = boost::shared_array<Mutex>(new Mutex[ ::CRYPTO_num_locks()]);
 #endif
-  if (mutexes == NULL) {
-    throw TTransportException(TTransportException::INTERNAL_ERROR,
-                              "initializeOpenSSL() failed, "
-                              "out of memory while creating mutex array");
-  }
-#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
+
+#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID_BEFORE)
   CRYPTO_set_id_callback(callbackThreadID);
 #endif
+
   CRYPTO_set_locking_callback(callbackLocking);
+
   // dynamic locking
   CRYPTO_set_dynlock_create_callback(dyn_create);
   CRYPTO_set_dynlock_lock_callback(dyn_lock);
@@ -134,17 +141,18 @@ void cleanupOpenSSL() {
     return;
   }
   openSSLInitialized = false;
-#if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
-  CRYPTO_set_id_callback(NULL);
+
+  // https://wiki.openssl.org/index.php/Library_Initialization#Cleanup
+  // we purposefully do NOT call FIPS_mode_set(0) and leave it up to the enclosing application to manage FIPS entirely
+#if (OPENSSL_VERSION_NUMBER < OPENSSL_ENGINE_CLEANUP_REQUIRED_BEFORE)
+  ENGINE_cleanup();             // https://www.openssl.org/docs/man1.1.0/crypto/ENGINE_cleanup.html - cleanup call is needed before 1.1.0
 #endif
-  CRYPTO_set_locking_callback(NULL);
-  CRYPTO_set_dynlock_create_callback(NULL);
-  CRYPTO_set_dynlock_lock_callback(NULL);
-  CRYPTO_set_dynlock_destroy_callback(NULL);
-  ERR_free_strings();
+  CONF_modules_unload(1);
   EVP_cleanup();
   CRYPTO_cleanup_all_ex_data();
   ERR_remove_state(0);
+  ERR_free_strings();
+
   mutexes.reset();
 }
 
