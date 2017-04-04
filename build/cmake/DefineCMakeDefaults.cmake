@@ -68,3 +68,20 @@ set(CMAKE_MACOSX_RPATH TRUE)
 # locations and running the executables without LD_PRELOAD or similar.
 # This requires the library to be built with rpath support.
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+#
+# C++ Language Level Defaults
+#
+if (NOT DEFINED CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 11) # C++11
+  message(STATUS "Setting C++11 as the default language level.")
+  message(STATUS "To specify a different C++ language level, set CMAKE_CXX_STANDARD")
+endif()
+
+if (NOT DEFINED CMAKE_CXX_STANDARD_REQUIRED)
+  set(CMAKE_CXX_STANDARD_REQUIRED OFF) # can degrade to C++98 if compiler does not support C++11
+endif()
+
+if (NOT DEFINED CMAKE_CXX_EXTENSIONS)
+  set(CMAKE_CXX_EXTENSIONS OFF)        # use standards compliant language level for portability
+endif()

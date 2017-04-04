@@ -10,10 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Apache Thrift Docker build environment for Centos
+# Apache Thrift Docker build environment for Ubuntu
 #
 # Known missing client libraries:
-#  - None
+#  - dotnetcore
+#  - rust
 
 FROM buildpack-deps:trusty-scm
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
@@ -21,9 +22,15 @@ MAINTAINER Apache Thrift <dev@thrift.apache.org>
 ENV DEBIAN_FRONTEND noninteractive
 
 # Add apt sources
+# CMAKE
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends software-properties-common && \
+    add-apt-repository -y ppa:george-edison55/cmake-3.x
+
 # Erlang
 RUN echo 'deb http://packages.erlang-solutions.com/debian trusty contrib' > /etc/apt/sources.list.d/erlang_solutions.list && \
     curl -sSL https://packages.erlang-solutions.com/debian/erlang_solutions.asc | apt-key add -
+
 # Dart
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
@@ -51,7 +58,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 `#      libtool` \
 `#      make`
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
 `# C++ dependencies` \
 `# libevent and OpenSSL are needed by D too` \
       libboost-dev \
@@ -66,14 +73,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       qtbase5-dev \
       qtbase5-dev-tools
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
 `# Java dependencies` \
       ant \
       ant-optional \
       openjdk-7-jdk \
       maven
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
 `# Python dependencies` \
 `# TODO:` \
 `# Install twisted and zope.interface via pip. we need twisted at ./configure time, otherwise` \
@@ -91,7 +98,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       python3-setuptools \
       python3-pip
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
 `# Ruby dependencies` \
       ruby \
       ruby-dev \
@@ -103,7 +110,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libio-socket-ssl-perl \
       libnet-ssleay-perl
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
 `# Php dependencies` \
       php5 \
       php5-dev \
@@ -122,7 +129,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       erlang-tools \
       rebar
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
 `# Haskell dependencies` \
       ghc \
       cabal-install \
@@ -131,18 +138,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       neko-dev \
       libneko0
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
       nodejs \
       nodejs-dev \
       nodejs-legacy
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
 `# CSharp dependencies` \
       libmono-system-web2.0-cil \
       mono-devel
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
 `# D dependencies` \
       xdg-utils \
 `# Dart dependencies` \

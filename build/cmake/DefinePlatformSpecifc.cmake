@@ -98,12 +98,23 @@ elseif(WITH_STDTHREADS)
   add_definitions("-DUSE_STD_THREAD=1")
 endif()
 
-# GCC and Clang: use C++11
-if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.6.4")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+# C++ Language Level
+set(CXX_LANGUAGE_LEVEL "C++${CMAKE_CXX_STANDARD}")
+if (CMAKE_CXX_STANDARD_REQUIRED)
+  string(CONCAT CXX_LANGUAGE_LEVEL "${CXX_LANGUAGE_LEVEL} [compiler must support it]")
+else()
+  string(CONCAT CXX_LANGUAGE_LEVEL "${CXX_LANGUAGE_LEVEL} [fallback to earlier if compiler does not support it]")
+endif()
+if (CMAKE_CXX_EXTENSIONS)
+  string(CONCAT CXX_LANGUAGE_LEVEL "${CXX_LANGUAGE_LEVEL} [with compiler-specific extensions]")
+else()
+  if ((CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang") AND NOT MINGW)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-variadic-macros -Wno-long-long -Wno-c++11-long-long")
   endif()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -Wall -Wextra -pedantic")
+endif()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register")
 endif()
 
 # If gcc older than 4.8 is detected and plugin support was requested, fail fast
