@@ -31,44 +31,33 @@ cache:
   - C:\ProgramData\chocolatey\lib -> build\appveyor\MSVC-appveyor-install.bat
   - C:\msys64\var\cache\pacman    -> build\appveyor\MSYS-appveyor-install.bat
 
-configuration:
-# - Debug
-  - Release
-
-platform:
-# - x86
-  - x64
-
 environment:
   matrix:
+   - PROFILE: MSVC2010
+     PLATFORM: x86
+     CONFIGURATION: Debug
+     BOOST_VERSION: 1.54.0
+     LIBEVENT_VERSION: 2.0.22
+     QT_VERSION: 5.6
+     ZLIB_VERSION: 1.2.8
+     DISABLED_TESTS: StressTestNonBlocking|concurrency_test
+
    - PROFILE: MSVC2015
+     PLATFORM: x64
+     CONFIGURATION: Release
      BOOST_VERSION: 1.63.0
      LIBEVENT_VERSION: 2.0.22
      PYTHON_VERSION: 3.6
      QT_VERSION: 5.8
      ZLIB_VERSION: 1.2.11
+     DISABLED_TESTS: StressTestNonBlocking
 
    - PROFILE: MINGW
-
-#   - PROFILE: MSVC2010
-#     BOOST_VERSION: 1.59.0
-#     LIBEVENT_VERSION: 2.0.22
-#     PYTHON_VERSION: 3.3
-#     ZLIB_VERSION: 1.2.8
-
-#   - PROFILE: MSYS
+     PLATFORM: x64
+     CONFIGURATION: Release
 
 matrix:
-  allow_failures:
-    # MSVC2010 appears to be 32-bit only in appveyor
-    - platform: x64
-      PROFILE: MSVC2010
-
-    # Only have 64-bit MinGW working so far (inside MSYS2)
-    - platform: x86
-      PROFILE: MINGW
-    - platform: x86
-      PROFILE: MSYS
+  fast_finish: true
 
 install:
   - cd %APPVEYOR_BUILD_FOLDER%
@@ -83,6 +72,7 @@ test_script:
   - cd %APPVEYOR_BUILD_FOLDER%
   - call build\appveyor\%PROFILE:~0,4%-appveyor-test.bat
 
+
 # artifact capture disabled as it might increase service cost for little gain:
 #
 # artifacts:
@@ -93,3 +83,15 @@ test_script:
 #  - path: local-thrift-build\Testing
 #    name: ctest output
 #    type: zip
+
+# RDP support: use one or the other...
+#
+# enables RDP for each build job so you can inspect the environment at the beginning of the job:
+# init:
+#  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+#
+# enables RDP at the end of the build job so you can login and re-run
+# commands to see why something failed...
+# on_finish:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
