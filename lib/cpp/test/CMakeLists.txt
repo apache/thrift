@@ -80,7 +80,8 @@ set(UnitTest_SOURCES
 )
 
 if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS AND NOT MSVC AND NOT MINGW)
-    list(APPEND UnitTest_SOURCES RWMutexStarveTest.cpp)
+    list(APPEND UnitTest_SOURCES concurrency/MutexTest.cpp)
+    list(APPEND UnitTest_SOURCES concurrency/RWMutexStarveTest.cpp)
 endif()
 
 add_executable(UnitTests ${UnitTest_SOURCES})

@@ -46,6 +46,7 @@ check_include_file(sys/un.h HAVE_SYS_UN_H)
 check_include_file(sys/poll.h HAVE_SYS_POLL_H)
 check_include_file(sys/select.h HAVE_SYS_SELECT_H)
 check_include_file(sched.h HAVE_SCHED_H)
+check_include_file(string.h HAVE_STRING_H)
 check_include_file(strings.h HAVE_STRINGS_H)
 
 check_function_exists(gethostbyname HAVE_GETHOSTBYNAME)
