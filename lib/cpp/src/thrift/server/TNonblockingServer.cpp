@@ -288,6 +288,7 @@ public:
   void forceClose() {
     appState_ = APP_CLOSE_CONNECTION;
     if (!notifyIOThread()) {
+      server_->decrementActiveProcessors();
       close();
       throw TException("TConnection::forceClose: failed write on notify pipe");
     }
@@ -349,6 +350,7 @@ public:
     // Signal completion back to the libevent thread via a pipe
     if (!connection_->notifyIOThread()) {
       GlobalOutput.printf("TNonblockingServer: failed to notifyIOThread, closing.");
+      connection_->server_->decrementActiveProcessors();
       connection_->close();
       throw TException("TNonblockingServer::Task::run: failed write on notify pipe");
     }
