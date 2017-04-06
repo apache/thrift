@@ -36,12 +36,12 @@ public abstract class ProcessFunction<I, T extends TBase> {
       result = getResult(iface, args);
     } catch(TException tex) {
       LOGGER.error("Internal error processing " + getMethodName(), tex);
-      handleException(seqid, oprot);
+      handleException(seqid, oprot, tex);
       return;
     } catch(RuntimeException rex) {
       LOGGER.error("Internal error processing " + getMethodName(), rex);
       if (handleRuntimeExceptions()) {
-        handleException(seqid, oprot);
+        handleException(seqid, oprot, rex);
       }
       return;
     }
@@ -54,10 +54,10 @@ public abstract class ProcessFunction<I, T extends TBase> {
     }
   }
 
-  private void handleException(int seqid, TProtocol oprot) throws TException {
+  private void handleException(int seqid, TProtocol oprot, Exception ex) throws TException {
     if (!isOneway()) {
       TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR,
-        "Internal error processing " + getMethodName());
+        "Internal error processing " + getMethodName() + " error message:" + ex.getMessage());
       oprot.writeMessageBegin(new TMessage(getMethodName(), TMessageType.EXCEPTION, seqid));
       x.write(oprot);
       oprot.writeMessageEnd();
