@@ -1483,11 +1483,20 @@ void t_js_generator::generate_service_client(t_service* tservice) {
                  << "', " << messageType << ", this.seqid);" << endl;
     }
 
-    f_service_ << indent() << "var args = new " << argsname << "();" << endl;
-
-    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-      f_service_ << indent() << "args." << (*fld_iter)->get_name() << " = "
-                 << (*fld_iter)->get_name() << ";" << endl;
+    if (fields.size() > 0){
+      f_service_ << indent() << "var params = {" << endl;
+      for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+        f_service_ << indent() << indent() << (*fld_iter)->get_name() << ": " << (*fld_iter)->get_name();
+        if (fld_iter != fields.end()-1) {
+          f_service_ << "," << endl;
+        } else {
+          f_service_ << endl;
+        }
+      }
+      f_service_ << indent() << "};" << endl;
+      f_service_ << indent() << "var args = new " << argsname << "(params);" << endl;
+    } else {
+      f_service_ << indent() << "var args = new " << argsname << "();" << endl;
     }
 
     // Write to the stream
