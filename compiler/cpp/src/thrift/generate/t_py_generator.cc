@@ -1747,7 +1747,7 @@ void t_py_generator::generate_service_server(t_service* tservice) {
   }
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_service_ << indent() << "self._processMap[\"" << (*f_iter)->get_name()
-               << "\"] = Processor.process_" << (*f_iter)->get_name() << endl;
+               << "\"] = self.process_" << (*f_iter)->get_name() << endl;
   }
   indent_down();
   f_service_ << endl;
