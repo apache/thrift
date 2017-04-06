@@ -56,5 +56,17 @@ IF "%COMPILER%" == "vc100" (
   7z x "msinttypes-r26.zip"               || EXIT /B
 )
 
+:: appveyor build slaves do not have MSVC2010 Boost installed
+IF "%COMPILER%" == "vc100" (
+  SET BITS=64
+  IF "%PLATFORM%" == "x86" (
+    SET BITS=32
+  )
+  SET BOOSTEXEURL=https://downloads.sourceforge.net/project/boost/boost-binaries/%BOOST_VERSION%/boost_%BOOST_VERSION:.=_%-msvc-10.0-!BITS!.exe
+  SET BOOSTEXE=C:\projects\thrift\buildcache\boost_%BOOST_VERSION:.=_%-msvc-10.0-!BITS!.exe
+  appveyor DownloadFile "!BOOSTEXEURL!" -FileName "!BOOSTEXE!" || EXIT /B
+  "!BOOSTEXE!" /dir=C:\Libraries\boost_%BOOST_VERSION:.=_% /silent || EXIT /B
+)
+
 :: Haskell (GHC) and cabal
 cinst -c "%BUILDCACHE%" -y ghc            || EXIT /B

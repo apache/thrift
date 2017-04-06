@@ -22,8 +22,4 @@ CD "%BUILDDIR%"                || EXIT /B
 :: Add directories to the path to find DLLs of third party libraries so tests run
 SET PATH=%BOOST_LIBRARYDIR%;%OPENSSL_ROOT%\bin;%WIN3P%\zlib-inst\bin;%PATH%
 
-:: The stress test is long running on appveyor (2+ minutes)
-:: and not terribly useful with one core, so we disable it
-SET DISABLED_TESTS=StressTestNonBlocking
-
-ctest -C %CONFIGURATION% --timeout 600 -VV -E "(%DISABLED_TESTS%)" || EXIT /B
+ctest -C %CONFIGURATION% --timeout 300 -VV -E "(%DISABLED_TESTS%)" || EXIT /B

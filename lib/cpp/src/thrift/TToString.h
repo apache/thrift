@@ -42,21 +42,21 @@ std::string to_string(const T& t) {
 // is enabled.
 inline std::string to_string(const float& t) {
   std::ostringstream o;
-  o.precision(std::ceil(std::numeric_limits<float>::digits * std::log10(2) + 1));
+  o.precision(static_cast<std::streamsize>(std::ceil(static_cast<double>(std::numeric_limits<float>::digits * std::log10(2.0f) + 1))));
   o << t;
   return o.str();
 }
 
 inline std::string to_string(const double& t) {
   std::ostringstream o;
-  o.precision(std::ceil(std::numeric_limits<double>::digits * std::log10(2) + 1));
+  o.precision(static_cast<std::streamsize>(std::ceil(static_cast<double>(std::numeric_limits<double>::digits * std::log10(2.0f) + 1))));
   o << t;
   return o.str();
 }
 
 inline std::string to_string(const long double& t) {
   std::ostringstream o;
-  o.precision(std::ceil(std::numeric_limits<long double>::digits * std::log10(2) + 1));
+  o.precision(static_cast<std::streamsize>(std::ceil(static_cast<double>(std::numeric_limits<long double>::digits * std::log10(2.0f) + 1))));
   o << t;
   return o.str();
 }

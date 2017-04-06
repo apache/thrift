@@ -35,6 +35,7 @@ CD "%BUILDDIR%"                             || EXIT /B
     -DZLIB_LIBRARY="%WIN3P%\zlib-inst\lib\zlib%ZLIB_LIB_SUFFIX%.lib" ^
     -DZLIB_ROOT="%WIN3P%\zlib-inst" ^
     -DWITH_PYTHON=%WITH_PYTHON% ^
+    -DWITH_%THREADMODEL%THREADS=ON ^
     -DWITH_SHARED_LIB=OFF ^
     -DWITH_STATIC_LIB=ON                    || EXIT /B
 @ECHO OFF
