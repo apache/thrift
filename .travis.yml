@@ -58,12 +58,12 @@ env:
       SCRIPT="autotools.sh"
       BUILD_ARG="--without-dart --without-haskell --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-ruby"
 
-    - TEST_NAME="C C++ Plugin - GCC (automake)"
+    - TEST_NAME="C C++ Plugin Haskell Perl - GCC (automake)"
       SCRIPT="autotools.sh"
       BUILD_ARG="--enable-plugin --without-csharp --without-java --without-erlang --without-nodejs --without-lua --without-python --without-perl --without-php --without-php_extension --without-dart --without-ruby --without-haskell --without-go --without-haxe --without-d"
       BUILD_ENV="-e CC=gcc -e CXX=g++"
 
-    - TEST_NAME="Java Lua PHP Ruby Dart Haskell Node.js Python Perl (automake)"
+    - TEST_NAME="Java Lua PHP Ruby Dart Node.js Python (automake)"
       SCRIPT="autotools.sh"
       BUILD_ARG="--without-cpp --without-c_glib --without-csharp --without-d --without-erlang --without-go --without-haxe"
 
