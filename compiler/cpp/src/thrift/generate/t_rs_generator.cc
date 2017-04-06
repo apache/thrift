@@ -245,6 +245,13 @@ private:
   // rendered code is calling such a function it has to dereference `v`.
   bool needs_deref_on_container_write(t_type* ttype);
 
+  // Return the variable (including all dereferences) required to write values from a rust container
+  // to the output protocol. For example, if you were iterating through a container and using the temp
+  // variable `v` to represent each element, then `ttype` is the type stored in the container and
+  // `base_var` is "v". The return value is the actual string you will have to use to properly reference
+  // the temp variable for writing to the output protocol.
+  string string_container_write_variable(t_type* ttype, const string& base_var);
+
   // Write the code to read bytes from the wire into the given `t_struct`. `struct_name` is the
   // actual Rust name of the `t_struct`. If `struct_type` is `T_ARGS` then all struct fields are
   // necessary. Otherwise, the field's default optionality is used.
@@ -376,6 +383,9 @@ private:
 
   // Write the documentation for a struct, service-call or other documentation-annotated element.
   void render_rustdoc(t_doc* tdoc);
+
+  // Return `true` if the true type of `ttype` is a thrift double, `false` otherwise.
+  bool is_double(t_type* ttype);
 
   // Return a string representing the rust type given a `t_type`.
   string to_rust_type(t_type* ttype, bool ordered_float = true);
@@ -655,10 +665,7 @@ void t_rs_generator::render_const_value(t_type* ttype, t_const_value* tvalue) {
       f_gen_ << tvalue->get_integer();
       break;
     case t_base_type::TYPE_DOUBLE:
-      f_gen_
-        << indent()
-        << "OrderedFloat::from(" << tvalue->get_double() << ")"
-        << endl;
+      f_gen_ << "OrderedFloat::from(" << tvalue->get_double() << " as f64)";
       break;
     default:
       throw "cannot generate const value for " + t_base_type::t_base_name(tbase_type->get_base());
@@ -826,7 +833,7 @@ void t_rs_generator::generate_enum(t_enum* tenum) {
 
 void t_rs_generator::render_enum_definition(t_enum* tenum, const string& enum_name) {
   render_rustdoc((t_doc*) tenum);
-  f_gen_ << "#[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]" << endl;
+  f_gen_ << "#[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]" << endl;
   f_gen_ << "pub enum " << enum_name << " {" << endl;
   indent_up();
 
@@ -965,7 +972,7 @@ void t_rs_generator::render_struct_definition(
   t_rs_generator::e_struct_type struct_type
 ) {
   render_rustdoc((t_doc*) tstruct);
-  f_gen_ << "#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]" << endl;
+  f_gen_ << "#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]" << endl;
   f_gen_ << visibility_qualifier(struct_type) << "struct " << struct_name << " {" << endl;
 
   // render the members
@@ -1311,7 +1318,7 @@ void t_rs_generator::render_union_definition(const string& union_name, t_struct*
     throw "cannot generate rust enum with 0 members"; // may be valid thrift, but it's invalid rust
   }
 
-  f_gen_ << "#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]" << endl;
+  f_gen_ << "#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]" << endl;
   f_gen_ << "pub enum " << union_name << " {" << endl;
   indent_up();
 
@@ -1543,7 +1550,7 @@ void t_rs_generator::render_list_sync_write(const string &list_var, bool list_va
   string ref(list_var_is_ref ? "" : "&");
   f_gen_ << indent() << "for e in " << ref << list_var << " {" << endl;
   indent_up();
-  render_type_sync_write(needs_deref_on_container_write(elem_type) ? "*e" : "e", true, elem_type);
+  render_type_sync_write(string_container_write_variable(elem_type, "e"), true, elem_type);
   f_gen_ << indent() << "o_prot.write_list_end()?;" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
@@ -1564,7 +1571,7 @@ void t_rs_generator::render_set_sync_write(const string &set_var, bool set_var_i
   string ref(set_var_is_ref ? "" : "&");
   f_gen_ << indent() << "for e in " << ref << set_var << " {" << endl;
   indent_up();
-  render_type_sync_write(needs_deref_on_container_write(elem_type) ? "*e" : "e", true, elem_type);
+  render_type_sync_write(string_container_write_variable(elem_type, "e"), true, elem_type);
   f_gen_ << indent() << "o_prot.write_set_end()?;" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
@@ -1587,11 +1594,28 @@ void t_rs_generator::render_map_sync_write(const string &map_var, bool map_var_i
   string ref(map_var_is_ref ? "" : "&");
   f_gen_ << indent() << "for (k, v) in " << ref << map_var << " {" << endl;
   indent_up();
-  render_type_sync_write(needs_deref_on_container_write(key_type) ? "*k" : "k", true, key_type);
-  render_type_sync_write(needs_deref_on_container_write(val_type) ? "*v" : "v", true, val_type);
+  render_type_sync_write(string_container_write_variable(key_type, "k"), true, key_type);
+  render_type_sync_write(string_container_write_variable(val_type, "v"), true, val_type);
   f_gen_ << indent() << "o_prot.write_map_end()?;" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
+}
+
+string t_rs_generator::string_container_write_variable(t_type* ttype, const string& base_var) {
+  bool type_needs_deref = needs_deref_on_container_write(ttype);
+  bool type_is_double = is_double(ttype);
+
+  string write_variable;
+
+  if (type_is_double && type_needs_deref) {
+    write_variable = "(*" + base_var + ")";
+  } else if (type_needs_deref) {
+    write_variable = "*" + base_var;
+  } else {
+    write_variable = base_var;
+  }
+
+  return write_variable;
 }
 
 bool t_rs_generator::needs_deref_on_container_write(t_type* ttype) {
@@ -2862,6 +2886,18 @@ void t_rs_generator::render_rift_error_struct(
   f_gen_ << indent() << error_message << endl;
   indent_down();
   f_gen_ << indent() << ")" << endl;
+}
+
+bool t_rs_generator::is_double(t_type* ttype) {
+  ttype = get_true_type(ttype);
+  if (ttype->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
+    if (tbase == t_base_type::TYPE_DOUBLE) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 string t_rs_generator::to_rust_type(t_type* ttype, bool ordered_float) {
