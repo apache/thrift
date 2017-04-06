@@ -109,7 +109,7 @@ impl TBufferTransport {
         let buf = {
             let b = self.write_buffer_as_ref();
             let mut b_ret = vec![0; b.len()];
-            b_ret.copy_from_slice(&b);
+            b_ret.copy_from_slice(b);
             b_ret
         };
 
