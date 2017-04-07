@@ -28,11 +28,11 @@ CALL cl_showenv.bat                        || EXIT /B
 SET PACKAGES=^
   --needed -S bison flex ^
   make ^
-  openssl openssl-devel ^
+  mingw-w64-x86_64-openssl ^
   mingw-w64-x86_64-boost ^
   mingw-w64-x86_64-cmake ^
   mingw-w64-x86_64-toolchain ^
-  zlib zlib-devel
+  mingw-w64-x86_64-zlib
 
 :: omitting libevent-devel for now it is version 2.1.4 and doesn't play nice with MinGW
 
