@@ -57,7 +57,7 @@ set( thriftcpp_SOURCES
    src/thrift/server/TThreadedServer.cpp
 )
 
-# This files don't work on Windows CE as there is no pipe support
+# These files don't work on Windows CE as there is no pipe support
 # TODO: These files won't work with UNICODE support on windows. If fixed this can be re-added.
 if (NOT WINCE)
     list(APPEND thriftcpp_SOURCES
@@ -68,7 +68,7 @@ if (NOT WINCE)
 endif()
 
 
-if (WIN32 AND NOT MSYS)
+if (WIN32)
     list(APPEND thriftcpp_SOURCES
         src/thrift/windows/TWinsockSingleton.cpp
         src/thrift/windows/SocketPair.cpp
