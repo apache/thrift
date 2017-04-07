@@ -26,9 +26,9 @@ Download and fully upgrade msys2 following the instructions at:
 
 Install the necessary toolchain items for C++:
 
-    $ pacman -S bison flex openssl openssl-devel \
+    $ pacman --needed -S bison flex make mingw-w64-x86_64-openssl \
                 mingw-w64-x86_64-boost mingw-w64-x86_64-cmake \
-                mingw-w64-x86_64-toolchain zlib zlib-devel
+                mingw-w64-x86_64-toolchain mingw-w64-x86_64-zlib
 
 Update your msys2 bash path to include /mingw64/bin by adding a line to your ~/.bash_profiles using this command:
 
