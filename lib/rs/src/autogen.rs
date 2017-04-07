@@ -23,6 +23,7 @@
 //! in this module directly.
 
 use ::protocol::{TInputProtocol, TOutputProtocol};
+use ::Result;
 
 /// Specifies the minimum functionality an auto-generated client should provide
 /// to communicate with a Thrift server.
@@ -42,4 +43,12 @@ pub trait TThriftClient {
     /// Increments the sequence number, indicating that a message with that
     /// number has been sent to the Thrift server.
     fn increment_sequence_number(&mut self) -> i32;
+}
+
+/// This trait, when implemented, indicates that the thrift object can be
+/// serialized through input/output protocols. Auto-generated Rust code
+/// will provide implementation for all derived enums and structs.
+pub trait TThriftProtocolSerializable where Self: Sized {
+    fn read_from_in_protocol(i_prot: &mut TInputProtocol) -> Result<Self>;
+    fn write_to_out_protocol(&self, o_prot: &mut TOutputProtocol) -> Result<()>;
 }
