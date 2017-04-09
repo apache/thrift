@@ -1678,11 +1678,13 @@ void t_js_generator::generate_deserialize_field(ofstream& out,
       out << "readI32()";
     }
 
+    out << ";" << endl;
+
     if (!gen_node_) {
-      out << ".value";
+      // allow either .value, prior to 0.11.0 or direct result - 0.11.0 and up
+      indent(out) << name << " = (typeof(" << name << ") === 'object' && " << name << ".hasOwnProperty('value')) ? " << name << ".value : " << name << ";" << endl;
     }
 
-    out << ";" << endl;
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
            tfield->get_name().c_str(),
