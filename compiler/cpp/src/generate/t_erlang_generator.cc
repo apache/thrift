@@ -583,24 +583,19 @@ void t_erlang_generator::generate_struct_types(std::ostream& os) {
   typedef vector<t_struct*> vec;
 
   vec const& structs = get_program()->get_structs();
-  vec const& xceptions = get_program()->get_xceptions();
-  bool is_exception = false;
-  for(vec::const_iterator it = structs.begin(); it != xceptions.end();) {
+  for(vec::const_iterator it = structs.begin(); it != structs.end(); ++it) {
     if ((*it)->is_union()) {
       generate_union_definition(os, *it);
     } else {
-      if (is_exception) {
-        os << "%% exception ";
-      } else {
-        os << "%% struct ";
-      }
-      os << type_name(*it) << endl;
+      os << "%% struct " << type_name(*it) << endl;
       os << "-type " + type_name(*it) << "() :: #" + scoped_type_name(*it) + "{}." << endl << endl;
     }
-    if (++it == structs.end()) {
-      it = xceptions.begin();
-      is_exception = true;
-    }
+  }
+
+  vec const& xceptions = get_program()->get_xceptions();
+  for(vec::const_iterator it = xceptions.begin(); it != xceptions.end(); ++it) {
+    os << "%% exception " << type_name(*it) << endl;
+    os << "-type " + type_name(*it) << "() :: #" + scoped_type_name(*it) + "{}." << endl << endl;
   }
 }
 
@@ -924,14 +919,15 @@ void t_erlang_generator::generate_struct_metadata(std::ostream& erl, std::ostrea
   erl << "-spec struct_info";
   if (structs.size() > 0 || xceptions.size() > 0) {
     erl << "(struct_name()) -> struct_info() | no_return()." << endl << endl;
-    for(vec::const_iterator it = structs.begin(); it != xceptions.end();) {
+    for(vec::const_iterator it = structs.begin(); it != structs.end(); ++it) {
       generate_struct_info(erl, *it);
       if (!(*it)->is_union()) {
         generate_struct_definition(hrl, *it);
       }
-      if (++it == structs.end()) {
-        it = xceptions.begin();
-      }
+    }
+    for(vec::const_iterator it = xceptions.begin(); it != xceptions.end(); ++it) {
+      generate_struct_info(erl, *it);
+      generate_struct_definition(hrl, *it);
     }
   } else {
     erl << ERROR_SPEC << endl << endl;
