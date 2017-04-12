@@ -918,7 +918,7 @@ void t_erlang_generator::generate_struct_metadata(std::ostream& erl, std::ostrea
 
   erl << "-spec struct_info";
   if (structs.size() > 0 || xceptions.size() > 0) {
-    erl << "(struct_name()) -> struct_info() | no_return()." << endl << endl;
+    erl << "(struct_name() | exception_name()) -> struct_info() | no_return()." << endl << endl;
     for(vec::const_iterator it = structs.begin(); it != structs.end(); ++it) {
       generate_struct_info(erl, *it);
       if (!(*it)->is_union()) {
@@ -944,7 +944,7 @@ void t_erlang_generator::generate_record_metadata(std::ostream& erl) {
 
   indenter i;
   if (structs.size() > 0 && scoped_typenames_ && !ns.empty()) {
-    erl << "-spec record_name(struct_name()) -> atom() | no_return()." << i.nl()
+    erl << "-spec record_name(struct_name() | exception_name()) -> atom() | no_return()." << i.nl()
         << i.nl();
     for(vec::const_iterator it = structs.begin(); it != structs.end(); ++it) {
       erl << "record_name(" << type_name(*it) << ") ->" << i.nlup()
@@ -955,7 +955,7 @@ void t_erlang_generator::generate_record_metadata(std::ostream& erl) {
         << i.nl();
   }
   else {
-    erl << "-spec record_name(struct_name()) -> atom()."
+    erl << "-spec record_name(struct_name() | exception_name()) -> atom()."
         << i.nl() << i.nl();
     erl << "record_name(Name) ->" << i.nlup()
         << "Name." << i.nldown()
