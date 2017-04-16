@@ -174,9 +174,6 @@ include_concurrency_HEADERS = \
                          src/thrift/concurrency/Monitor.h \
                          src/thrift/concurrency/PlatformThreadFactory.h \
                          src/thrift/concurrency/PosixThreadFactory.h \
-                         src/thrift/concurrency/StdMonitor.cpp \
-                         src/thrift/concurrency/StdMutex.cpp \
-                         src/thrift/concurrency/StdThreadFactory.cpp \
                          src/thrift/concurrency/StdThreadFactory.h \
                          src/thrift/concurrency/Thread.h \
                          src/thrift/concurrency/ThreadManager.h \
