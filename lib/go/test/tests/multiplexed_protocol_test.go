@@ -24,7 +24,6 @@ import (
 	"net"
 	"testing"
 	"thrift"
-	"time"
 )
 
 func FindAvailableTCPServerPort() net.Addr {
