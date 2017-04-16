@@ -250,7 +250,7 @@ func (p *TJSONProtocol) ReadMessageBegin() (name string, typeId TMessageType, se
 }
 
 func (p *TJSONProtocol) ReadMessageEnd() error {
-	err := p.ParseListEnd()
+	err := p._ParseListEnd(false)
 	return err
 }
 
