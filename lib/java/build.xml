@@ -290,6 +290,9 @@
     <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen java ${test.thrift.home}/JavaDeepCopyTest.thrift"/>
     </exec>
+    <exec executable="${thrift.compiler}" failonerror="true">
+      <arg line="--gen java ${test.thrift.home}/EnumContainersTest.thrift"/>
+    </exec>
   </target>
 
   <target name="proxy" if="proxy.enabled">
