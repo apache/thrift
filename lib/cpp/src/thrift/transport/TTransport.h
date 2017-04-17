@@ -78,7 +78,6 @@ public:
   /**
    * Opens the transport for communications.
    *
-   * @return bool Whether the transport was successfully opened
    * @throws TTransportException if opening failed
    */
   virtual void open() {
