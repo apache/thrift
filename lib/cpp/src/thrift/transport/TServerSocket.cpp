@@ -516,6 +516,9 @@ void TServerSocket::listen() {
     }
   }
 
+  // free addrinfo
+  freeaddrinfo(res0);
+
   // throw an error if we failed to bind properly
   if (retries > retryLimit_) {
     char errbuf[1024];
