@@ -4191,7 +4191,7 @@ string t_java_generator::type_name(t_type* ttype,
     t_map* tmap = (t_map*)ttype;
     if (in_init) {
       if (is_enum_map(tmap)) {
-        prefix = "EnumMap";
+        prefix = "java.util.EnumMap";
       } else if (sorted_containers_) {
         prefix = "java.util.TreeMap";
       } else {
@@ -4206,7 +4206,7 @@ string t_java_generator::type_name(t_type* ttype,
     t_set* tset = (t_set*)ttype;
     if (in_init) {
       if (is_enum_set(tset)) {
-        prefix = "EnumSet";
+        prefix = "java.util.EnumSet";
       } else if (sorted_containers_) {
         prefix = "java.util.TreeSet";
       } else {
