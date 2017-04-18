@@ -36,11 +36,11 @@ type TTransportException interface {
 }
 
 const (
-	UNKNOWN_TRANSPORT_EXCEPTION = 0
-	NOT_OPEN                    = 1
-	ALREADY_OPEN                = 2
-	TIMED_OUT                   = 3
-	END_OF_FILE                 = 4
+	UNKNOWN_TRANSPORT_EXCEPTION = iota
+	NOT_OPEN
+	ALREADY_OPEN
+	TIMED_OUT
+	END_OF_FILE
 )
 
 type tTransportException struct {

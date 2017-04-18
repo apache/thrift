@@ -33,12 +33,12 @@ import (
 type _ParseContext int
 
 const (
-	_CONTEXT_IN_TOPLEVEL          _ParseContext = 1
-	_CONTEXT_IN_LIST_FIRST        _ParseContext = 2
-	_CONTEXT_IN_LIST              _ParseContext = 3
-	_CONTEXT_IN_OBJECT_FIRST      _ParseContext = 4
-	_CONTEXT_IN_OBJECT_NEXT_KEY   _ParseContext = 5
-	_CONTEXT_IN_OBJECT_NEXT_VALUE _ParseContext = 6
+	_CONTEXT_IN_TOPLEVEL _ParseContext = iota + 1
+	_CONTEXT_IN_LIST_FIRST
+	_CONTEXT_IN_LIST
+	_CONTEXT_IN_OBJECT_FIRST
+	_CONTEXT_IN_OBJECT_NEXT_KEY
+	_CONTEXT_IN_OBJECT_NEXT_VALUE
 )
 
 func (p _ParseContext) String() string {
