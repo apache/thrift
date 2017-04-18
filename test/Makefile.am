@@ -134,6 +134,7 @@ EXTRA_DIST = \
 	FullCamelTest.thrift \
 	Include.thrift \
 	JavaBeansTest.thrift \
+	JavaDeepCopyTest.thrift \
 	JavaTypes.thrift \
 	JsDeepConstructorTest.thrift \
 	ManyOptionals.thrift \

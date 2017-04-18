@@ -4657,6 +4657,7 @@ void t_java_generator::generate_deep_copy_non_container(ofstream& out,
                                                         std::string dest_name,
                                                         t_type* type) {
   (void)dest_name;
+  type = get_true_type(type);
   if (type->is_base_type() || type->is_enum() || type->is_typedef()) {
     if (type->is_binary()) {
       out << "org.apache.thrift.TBaseHelper.copyBinary(" << source_name << ")";
