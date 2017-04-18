@@ -287,6 +287,9 @@
     <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen java:reuse-objects -out ${genreuse} ${test.thrift.home}/ReuseObjects.thrift"/>
     </exec>
+    <exec executable="${thrift.compiler}" failonerror="true">
+      <arg line="--gen java ${test.thrift.home}/EnumContainersTest.thrift"/>
+    </exec>
   </target>
 
   <target name="proxy" if="proxy.enabled">

@@ -347,6 +347,44 @@ public:
     return annotations.find("deprecated") != annotations.end();
   }
 
+  bool is_enum_set(t_type* ttype) {
+    if (!sorted_containers_) {
+      ttype = get_true_type(ttype);
+      if (ttype->is_set()) {
+        t_set* tset = (t_set*)ttype;
+        t_type* elem_type = get_true_type(tset->get_elem_type());
+        return elem_type->is_enum();
+      }
+    }
+    return false;
+  }
+
+  bool is_enum_map(t_type* ttype) {
+    if (!sorted_containers_) {
+      ttype = get_true_type(ttype);
+      if (ttype->is_map()) {
+        t_map* tmap = (t_map*)ttype;
+        t_type* key_type = get_true_type(tmap->get_key_type());
+        return key_type->is_enum();
+      }
+    }
+    return false;
+  }
+
+  std::string inner_enum_type_name(t_type* ttype) {
+    ttype = get_true_type(ttype);
+    if (ttype->is_map()) {
+      t_map* tmap = (t_map*)ttype;
+      t_type* key_type = get_true_type(tmap->get_key_type());
+      return type_name(key_type, true) + ".class";
+    } else if (ttype->is_set()) {
+      t_set* tset = (t_set*)ttype;
+      t_type* elem_type = get_true_type(tset->get_elem_type());
+      return type_name(elem_type, true) + ".class";
+    }
+    return "";
+  }
+
   std::string constant_name(std::string name);
 
 private:
@@ -611,7 +649,11 @@ void t_java_generator::print_const_value(std::ofstream& out,
     }
     out << endl;
   } else if (type->is_map()) {
-    out << name << " = new " << type_name(type, false, true) << "();" << endl;
+    std::string constructor_args;
+    if (is_enum_map(type)) {
+      constructor_args = inner_enum_type_name(type);
+    }
+    out << name << " = new " << type_name(type, false, true) << "(" << constructor_args << ");" << endl;
     if (!in_static) {
       indent(out) << "static {" << endl;
       indent_up();
@@ -631,7 +673,11 @@ void t_java_generator::print_const_value(std::ofstream& out,
     }
     out << endl;
   } else if (type->is_list() || type->is_set()) {
-    out << name << " = new " << type_name(type, false, true) << "();" << endl;
+    if (is_enum_set(type)) {
+      out << name << " = " << type_name(type, false, true, true) << ".noneOf(" << inner_enum_type_name(type) << ");" << endl;
+    } else {
+      out << name << " = new " << type_name(type, false, true) << "();" << endl;
+    }
     if (!in_static) {
       indent(out) << "static {" << endl;
       indent_up();
@@ -2294,8 +2340,12 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
       indent_up();
       indent(out) << "if (this." << field_name << " == null) {" << endl;
       indent_up();
-      indent(out) << "this." << field_name << " = new " << type_name(type, false, true) << "();"
-                  << endl;
+      indent(out) << "this." << field_name;
+      if (is_enum_set(type)) {
+        out << " = " << type_name(type, false, true, true) << ".noneOf(" << inner_enum_type_name(type) << ");" << endl;
+      } else {
+        out << " = new " << type_name(type, false, true) << "();" << endl;
+      }
       indent_down();
       indent(out) << "}" << endl;
       indent(out) << "this." << field_name << ".add(elem);" << endl;
@@ -2316,7 +2366,11 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
       indent_up();
       indent(out) << "if (this." << field_name << " == null) {" << endl;
       indent_up();
-      indent(out) << "this." << field_name << " = new " << type_name(type, false, true) << "();"
+      std::string constructor_args;
+      if (is_enum_map(type)) {
+        constructor_args = inner_enum_type_name(type);
+      }
+      indent(out) << "this." << field_name << " = new " << type_name(type, false, true) << "(" << constructor_args << ");"
                   << endl;
       indent_down();
       indent(out) << "}" << endl;
@@ -3758,11 +3812,17 @@ void t_java_generator::generate_deserialize_container(ofstream& out,
     indent_up();
   }
 
-  out << indent() << prefix << " = new " << type_name(ttype, false, true);
+  if (is_enum_set(ttype)) {
+    out << indent() << prefix << " = " << type_name(ttype, false, true, true) << ".noneOf";
+  } else {
+    out << indent() << prefix << " = new " << type_name(ttype, false, true);
+  }
 
-  // size the collection correctly
-  if (sorted_containers_ && (ttype->is_map() || ttype->is_set())) {
-    // TreeSet and TreeMap don't have any constructor which takes a capactity as an argument
+  // construct the collection correctly i.e. with appropriate size/type
+  if (is_enum_set(ttype) || is_enum_map(ttype)) {
+    out << "(" << inner_enum_type_name(ttype) << ");" << endl;
+  } else if (sorted_containers_ && (ttype->is_map() || ttype->is_set())) {
+    // TreeSet and TreeMap don't have any constructor which takes a capacity as an argument
     out << "();" << endl;
   } else {
     out << "(" << (ttype->is_list() ? "" : "2*") << obj << ".size"
@@ -3824,7 +3884,16 @@ void t_java_generator::generate_deserialize_map_element(ofstream& out,
   generate_deserialize_field(out, &fkey, "", has_metadata);
   generate_deserialize_field(out, &fval, "", has_metadata);
 
+  if (get_true_type(fkey.get_type())->is_enum()) {
+    indent(out) << "if (" << key << " != null)" << endl;
+    scope_up(out);
+  }
+
   indent(out) << prefix << ".put(" << key << ", " << val << ");" << endl;
+
+  if (get_true_type(fkey.get_type())->is_enum()) {
+    scope_down(out);
+  }
 
   if (reuse_objects_ && !get_true_type(fkey.get_type())->is_base_type()) {
     indent(out) << key << " = null;" << endl;
@@ -3857,7 +3926,16 @@ void t_java_generator::generate_deserialize_set_element(ofstream& out,
 
   generate_deserialize_field(out, &felem, "", has_metadata);
 
+  if (get_true_type(felem.get_type())->is_enum()) {
+    indent(out) << "if (" << elem << " != null)" << endl;
+    scope_up(out);
+  }
+
   indent(out) << prefix << ".add(" << elem << ");" << endl;
+
+  if (get_true_type(felem.get_type())->is_enum()) {
+    scope_down(out);
+  }
 
   if (reuse_objects_ && !get_true_type(felem.get_type())->is_base_type()) {
     indent(out) << elem << " = null;" << endl;
@@ -3886,7 +3964,16 @@ void t_java_generator::generate_deserialize_list_element(ofstream& out,
 
   generate_deserialize_field(out, &felem, "", has_metadata);
 
+  if (get_true_type(felem.get_type())->is_enum()) {
+    indent(out) << "if (" << elem << " != null)" << endl;
+    scope_up(out);
+  }
+
   indent(out) << prefix << ".add(" << elem << ");" << endl;
+
+  if (get_true_type(felem.get_type())->is_enum()) {
+    scope_down(out);
+  }
 
   if (reuse_objects_ && !get_true_type(felem.get_type())->is_base_type()) {
     indent(out) << elem << " = null;" << endl;
@@ -4103,7 +4190,9 @@ string t_java_generator::type_name(t_type* ttype,
   } else if (ttype->is_map()) {
     t_map* tmap = (t_map*)ttype;
     if (in_init) {
-      if (sorted_containers_) {
+      if (is_enum_map(tmap)) {
+        prefix = "java.util.EnumMap";
+      } else if (sorted_containers_) {
         prefix = "java.util.TreeMap";
       } else {
         prefix = "java.util.HashMap";
@@ -4116,7 +4205,9 @@ string t_java_generator::type_name(t_type* ttype,
   } else if (ttype->is_set()) {
     t_set* tset = (t_set*)ttype;
     if (in_init) {
-      if (sorted_containers_) {
+      if (is_enum_set(tset)) {
+        prefix = "java.util.EnumSet";
+      } else if (sorted_containers_) {
         prefix = "java.util.TreeSet";
       } else {
         prefix = "java.util.HashSet";
@@ -4542,13 +4633,21 @@ void t_java_generator::generate_deep_copy_container(ofstream& out,
     return;
   }
 
-  std::string capacity;
-  if (!(sorted_containers_ && (container->is_map() || container->is_set()))) {
+  std::string constructor_args;
+  if (is_enum_set(container) || is_enum_map(container)) {
+    constructor_args = inner_enum_type_name(container);
+  } else if (!(sorted_containers_ && (container->is_map() || container->is_set()))) {
     // unsorted containers accept a capacity value
-    capacity = source_name + ".size()";
+    constructor_args = source_name + ".size()";
   }
-  indent(out) << type_name(type, true, false) << " " << result_name << " = new "
-              << type_name(container, false, true) << "(" << capacity << ");" << endl;
+
+  if (is_enum_set(container)) {
+    indent(out) << type_name(type, true, false) << " " << result_name << " = "
+                << type_name(container, false, true, true) << ".noneOf(" << constructor_args << ");" << endl;
+  } else {
+    indent(out) << type_name(type, true, false) << " " << result_name << " = new "
+                << type_name(container, false, true) << "(" << constructor_args << ");" << endl;
+  }
 
   std::string iterator_element_name = source_name_p1 + "_element";
   std::string result_element_name = result_name + "_copy";
