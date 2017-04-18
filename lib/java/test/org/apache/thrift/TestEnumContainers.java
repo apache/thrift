@@ -20,7 +20,7 @@
 package org.apache.thrift;
 
 import junit.framework.TestCase;
-import thrift.test.enumcontainers.EnumContainersConstants;
+import thrift.test.enumcontainers.EnumContainersTestConstants;
 import thrift.test.enumcontainers.GodBean;
 import thrift.test.enumcontainers.GreekGodGoddess;
 
@@ -72,10 +72,10 @@ public class TestEnumContainers extends TestCase {
     }
 
     public void testEnumConstants() {
-        assertEquals("lightning bolt", EnumContainersConstants.ATTRIBUTES.get(GreekGodGoddess.ZEUS));
-        assertTrue(EnumContainersConstants.ATTRIBUTES instanceof EnumMap);
+        assertEquals("lightning bolt", EnumContainersTestConstants.ATTRIBUTES.get(GreekGodGoddess.ZEUS));
+        assertTrue(EnumContainersTestConstants.ATTRIBUTES instanceof EnumMap);
 
-        assertTrue(EnumContainersConstants.BEAUTY.contains(GreekGodGoddess.APHRODITE));
-        assertTrue(EnumContainersConstants.BEAUTY instanceof EnumSet);
+        assertTrue(EnumContainersTestConstants.BEAUTY.contains(GreekGodGoddess.APHRODITE));
+        assertTrue(EnumContainersTestConstants.BEAUTY instanceof EnumSet);
     }
 }
