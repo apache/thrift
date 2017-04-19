@@ -201,7 +201,12 @@ namespace Thrift.Transport
             }
             catch (WebException wx)
             {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, "Couldn't connect to server: " + wx);
+                WebExceptionStatus status = wx.Status;
+                TTransportException.ExceptionType exceptionType = status != WebExceptionStatus.Timeout
+                    ? TTransportException.ExceptionType.Unknown
+                    : TTransportException.ExceptionType.TimedOut;
+
+                throw new TTransportException(exceptionType, "Couldn't connect to server: " + wx);
             }
         }
 #endif
