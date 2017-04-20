@@ -79,6 +79,7 @@ public:
   void close();
   uint32_t read(uint8_t* buf, uint32_t len);
   void write(const uint8_t* buf, uint32_t len);
+  uint32_t write_partial(const uint8_t* buf, uint32_t len);
   void flush();
   /**
   * Set whether to use client or server side SSL handshake protocol.
@@ -96,6 +97,14 @@ public:
    * @param manager  Instance of AccessManager
    */
   virtual void access(boost::shared_ptr<AccessManager> manager) { access_ = manager; }
+  /**
+   * Set eventSafe flag if libevent is used.
+   */
+  void setLibeventSafe() { eventSafe_ = true; }
+  /**
+   * Determines whether SSL Socket is libevent safe or not.
+   */
+  bool isLibeventSafe() const { return eventSafe_; }
 
 protected:
   /**
@@ -139,7 +148,15 @@ protected:
   /**
    * Initiate SSL handshake if not already initiated.
    */
-  void checkHandshake();
+  void initializeHandshake();
+  /**
+   * Initiate SSL handshake params.
+   */
+  void initializeHandshakeParams();
+  /**
+   * Check if  SSL handshake is completed or not.
+   */
+  bool checkHandshake();
   /**
    * Waits for an socket or shutdown event.
    *
@@ -155,6 +172,13 @@ protected:
   boost::shared_ptr<SSLContext> ctx_;
   boost::shared_ptr<AccessManager> access_;
   friend class TSSLSocketFactory;
+
+private:
+  bool handshakeCompleted_;
+  int readRetryCount_;
+  bool eventSafe_; 
+
+  void init();
 };
 
 /**
@@ -248,7 +272,7 @@ public:
    *
    * @param path Path to trusted certificate file
    */
-  virtual void loadTrustedCertificates(const char* path);
+  virtual void loadTrustedCertificates(const char* path, const char* capath = NULL);
   /**
    * Default randomize method.
    */

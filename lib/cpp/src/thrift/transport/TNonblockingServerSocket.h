@@ -17,21 +17,13 @@
  * under the License.
  */
 
-#ifndef _THRIFT_TRANSPORT_TSERVERSOCKET_H_
-#define _THRIFT_TRANSPORT_TSERVERSOCKET_H_ 1
+#ifndef _THRIFT_TRANSPORT_TNONBLOCKINGSERVERSOCKET_H_
+#define _THRIFT_TRANSPORT_TNONBLOCKINGSERVERSOCKET_H_ 1
 
-#include <thrift/transport/TServerTransport.h>
+#include <thrift/transport/TNonblockingServerTransport.h>
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/cxxfunctional.h>
 #include <boost/shared_ptr.hpp>
-
-#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
 
 namespace apache {
 namespace thrift {
@@ -39,28 +31,12 @@ namespace transport {
 
 class TSocket;
 
-class TGetAddrInfoWrapper {
-public:
-  TGetAddrInfoWrapper(const char* node, const char* service, const struct addrinfo* hints);
-
-  virtual ~TGetAddrInfoWrapper();
-
-  int init();
-  const struct addrinfo* res();
-
-private:
-  const char* node_;
-  const char* service_;
-  const struct addrinfo* hints_;
-  struct addrinfo* res_;
-};
-
 /**
- * Server socket implementation of TServerTransport. Wrapper around a unix
+ * Nonblocking Server socket implementation of TNonblockingServerTransport. Wrapper around a unix
  * socket listen and accept calls.
  *
  */
-class TServerSocket : public TServerTransport {
+class TNonblockingServerSocket : public TNonblockingServerTransport {
 public:
   typedef apache::thrift::stdcxx::function<void(THRIFT_SOCKET fd)> socket_func_t;
 
@@ -71,7 +47,7 @@ public:
    *
    * @param port    Port number to bind to
    */
-  TServerSocket(int port);
+  TNonblockingServerSocket(int port);
 
   /**
    * Constructor.
@@ -80,7 +56,7 @@ public:
    * @param sendTimeout Socket send timeout
    * @param recvTimeout Socket receive timeout
    */
-  TServerSocket(int port, int sendTimeout, int recvTimeout);
+  TNonblockingServerSocket(int port, int sendTimeout, int recvTimeout);
 
   /**
    * Constructor.
@@ -88,21 +64,20 @@ public:
    * @param address Address to bind to
    * @param port    Port number to bind to
    */
-  TServerSocket(const std::string& address, int port);
+  TNonblockingServerSocket(const std::string& address, int port);
 
   /**
    * Constructor used for unix sockets.
    *
    * @param path Pathname for unix socket.
    */
-  TServerSocket(const std::string& path);
+  TNonblockingServerSocket(const std::string& path);
 
-  virtual ~TServerSocket();
+  virtual ~TNonblockingServerSocket();
 
   void setSendTimeout(int sendTimeout);
   void setRecvTimeout(int recvTimeout);
 
-  void setAcceptTimeout(int accTimeout);
   void setAcceptBacklog(int accBacklog);
 
   void setRetryLimit(int retryLimit);
@@ -124,55 +99,34 @@ public:
   // socket, this is the place to do it.
   void setAcceptCallback(const socket_func_t& acceptCallback) { acceptCallback_ = acceptCallback; }
 
-  // When enabled (the default), new children TSockets will be constructed so
-  // they can be interrupted by TServerTransport::interruptChildren().
-  // This is more expensive in terms of system calls (poll + recv) however
-  // ensures a connected client cannot interfere with TServer::stop().
-  //
-  // When disabled, TSocket children do not incur an additional poll() call.
-  // Server-side reads are more efficient, however a client can interfere with
-  // the server's ability to shutdown properly by staying connected.
-  //
-  // Must be called before listen(); mode cannot be switched after that.
-  // \throws std::logic_error if listen() has been called
-  void setInterruptableChildren(bool enable);
-
   THRIFT_SOCKET getSocketFD() { return serverSocket_; }
 
   int getPort();
+  
+  int getListenPort();
 
   void listen();
-  void interrupt();
-  void interruptChildren();
   void close();
 
 protected:
-  boost::shared_ptr<TTransport> acceptImpl();
+  boost::shared_ptr<TSocket> acceptImpl();
   virtual boost::shared_ptr<TSocket> createSocket(THRIFT_SOCKET client);
-  bool interruptableChildren_;
-  boost::shared_ptr<THRIFT_SOCKET> pChildInterruptSockReader_; // if interruptableChildren_ this is shared with child TSockets
 
 private:
-  void notify(THRIFT_SOCKET notifySock);
-
   int port_;
+  int listenPort_;
   std::string address_;
   std::string path_;
   THRIFT_SOCKET serverSocket_;
   int acceptBacklog_;
   int sendTimeout_;
   int recvTimeout_;
-  int accTimeout_;
   int retryLimit_;
   int retryDelay_;
   int tcpSendBuffer_;
   int tcpRecvBuffer_;
   bool keepAlive_;
   bool listening_;
-
-  THRIFT_SOCKET interruptSockWriter_;                          // is notified on interrupt()
-  THRIFT_SOCKET interruptSockReader_;                          // is used in select/poll with serverSocket_ for interruptability
-  THRIFT_SOCKET childInterruptSockWriter_;                     // is notified on interruptChildren()
 
   socket_func_t listenCallback_;
   socket_func_t acceptCallback_;
@@ -181,4 +135,4 @@ private:
 }
 } // apache::thrift::transport
 
-#endif // #ifndef _THRIFT_TRANSPORT_TSERVERSOCKET_H_
+#endif // #ifndef _THRIFT_TRANSPORT_TNONBLOCKINGSERVERSOCKET_H_

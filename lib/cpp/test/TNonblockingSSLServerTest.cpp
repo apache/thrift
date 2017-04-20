@@ -17,14 +17,16 @@
  * under the License.
  */
 
-#define BOOST_TEST_MODULE TNonblockingServerTest
+#define BOOST_TEST_MODULE TNonblockingSSLServerTest
 #include <boost/test/unit_test.hpp>
 #include <boost/smart_ptr.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/format.hpp>
 
-#include "thrift/concurrency/Monitor.h"
-#include "thrift/concurrency/Thread.h"
 #include "thrift/server/TNonblockingServer.h"
-#include "thrift/transport/TNonblockingServerSocket.h"
+#include "thrift/transport/TSSLSocket.h"
+#include "thrift/transport/TNonblockingSSLServerSocket.h"
 
 #include "gen-cpp/ParentService.h"
 
@@ -35,6 +37,8 @@ using apache::thrift::concurrency::Guard;
 using apache::thrift::concurrency::Monitor;
 using apache::thrift::concurrency::Mutex;
 using apache::thrift::server::TServerEventHandler;
+using apache::thrift::transport::TSSLSocketFactory;
+using apache::thrift::transport::TSSLSocket;
 
 struct Handler : public test::ParentServiceIf {
   void addString(const std::string& s) { strings_.push_back(s); }
@@ -49,6 +53,79 @@ struct Handler : public test::ParentServiceIf {
   void exceptionWait(const std::string&) {}
   void unexpectedExceptionWait(const std::string&) {}
 };
+
+boost::filesystem::path keyDir;
+boost::filesystem::path certFile(const std::string& filename)
+{
+  return keyDir / filename;
+}
+
+struct GlobalFixtureSSL
+{
+    GlobalFixtureSSL()
+    {
+      using namespace boost::unit_test::framework;
+      for (int i = 0; i < master_test_suite().argc; ++i)
+      {
+        BOOST_TEST_MESSAGE(boost::format("argv[%1%] = \"%2%\"") % i % master_test_suite().argv[i]);
+      }
+
+#ifdef __linux__
+      // OpenSSL calls send() without MSG_NOSIGPIPE so writing to a socket that has
+      // disconnected can cause a SIGPIPE signal...
+      signal(SIGPIPE, SIG_IGN);
+#endif
+
+      TSSLSocketFactory::setManualOpenSSLInitialization(true);
+      apache::thrift::transport::initializeOpenSSL();
+
+      keyDir = boost::filesystem::current_path().parent_path().parent_path().parent_path() / "test" / "keys";
+      if (!boost::filesystem::exists(certFile("server.crt")))
+      {
+        keyDir = boost::filesystem::path(master_test_suite().argv[master_test_suite().argc - 1]);
+        if (!boost::filesystem::exists(certFile("server.crt")))
+        {
+          throw std::invalid_argument("The last argument to this test must be the directory containing the test certificate(s).");
+        }
+      }
+    }
+
+    virtual ~GlobalFixtureSSL()
+    {
+      apache::thrift::transport::cleanupOpenSSL();
+#ifdef __linux__
+      signal(SIGPIPE, SIG_DFL);
+#endif
+    }
+};
+
+#if (BOOST_VERSION >= 105900)
+BOOST_GLOBAL_FIXTURE(GlobalFixtureSSL);
+#else
+BOOST_GLOBAL_FIXTURE(GlobalFixtureSSL)
+#endif
+
+boost::shared_ptr<TSSLSocketFactory> createServerSocketFactory() {
+  boost::shared_ptr<TSSLSocketFactory> pServerSocketFactory;
+
+  pServerSocketFactory.reset(new TSSLSocketFactory());
+  pServerSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+  pServerSocketFactory->loadCertificate(certFile("server.crt").string().c_str());
+  pServerSocketFactory->loadPrivateKey(certFile("server.key").string().c_str());
+  pServerSocketFactory->server(true);
+  return pServerSocketFactory;
+}
+
+boost::shared_ptr<TSSLSocketFactory> createClientSocketFactory() {
+  boost::shared_ptr<TSSLSocketFactory> pClientSocketFactory;
+
+  pClientSocketFactory.reset(new TSSLSocketFactory());
+  pClientSocketFactory->authenticate(true);
+  pClientSocketFactory->loadCertificate(certFile("client.crt").string().c_str());
+  pClientSocketFactory->loadPrivateKey(certFile("client.key").string().c_str());
+  pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").string().c_str());
+  return pClientSocketFactory;
+}
 
 class Fixture {
 private:
@@ -72,7 +149,8 @@ private:
     boost::shared_ptr<TProcessor> processor;
     boost::shared_ptr<server::TNonblockingServer> server;
     boost::shared_ptr<ListenEventHandler> listenHandler;
-    boost::shared_ptr<transport::TNonblockingServerSocket> socket;
+    boost::shared_ptr<TSSLSocketFactory> pServerSocketFactory;
+    boost::shared_ptr<transport::TNonblockingSSLServerSocket> socket;
     Mutex mutex_;
 
     Runner() {
@@ -82,6 +160,7 @@ private:
     virtual void run() {
       // When binding to explicit port, allow retrying to workaround bind failures on ports in use
       int retryCount = port ? 10 : 0;
+      pServerSocketFactory = createServerSocketFactory();  
       startServer(retryCount);
     }
 
@@ -95,9 +174,10 @@ private:
   private:
     void startServer(int retry_count) {
       try {
-        socket.reset(new transport::TNonblockingServerSocket(port));
+        socket.reset(new transport::TNonblockingSSLServerSocket(port, pServerSocketFactory));
         server.reset(new server::TNonblockingServer(processor, socket));
-        server->setServerEventHandler(listenHandler);
+	      server->setServerEventHandler(listenHandler);
+        server->setNumIOThreads(1);
         if (userEventBase) {
           server->registerEvents(userEventBase.get());
         }
@@ -155,7 +235,8 @@ protected:
   }
 
   bool canCommunicate(int serverPort) {
-    boost::shared_ptr<transport::TSocket> socket(new transport::TSocket("localhost", serverPort));
+    boost::shared_ptr<TSSLSocketFactory> pClientSocketFactory = createClientSocketFactory();
+    boost::shared_ptr<TSSLSocket> socket = pClientSocketFactory->createSocket("localhost", serverPort);
     socket->open();
     test::ParentServiceClient client(boost::make_shared<protocol::TBinaryProtocol>(
         boost::make_shared<transport::TFramedTransport>(socket)));
@@ -175,7 +256,7 @@ private:
 
 };
 
-BOOST_AUTO_TEST_SUITE(TNonblockingServerTest)
+BOOST_AUTO_TEST_SUITE(TNonblockingSSLServerTest)
 
 BOOST_FIXTURE_TEST_CASE(get_specified_port, Fixture) {
   int specified_port = startServer(12345);
