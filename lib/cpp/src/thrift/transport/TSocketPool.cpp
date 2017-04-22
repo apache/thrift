@@ -30,7 +30,7 @@ namespace transport {
 
 using namespace std;
 
-using boost::shared_ptr;
+using stdcxx::shared_ptr;
 
 /**
  * TSocketPoolServer implementation

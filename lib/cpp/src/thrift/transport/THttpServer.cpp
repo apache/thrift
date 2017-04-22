@@ -34,7 +34,7 @@ namespace transport {
 
 using namespace std;
 
-THttpServer::THttpServer(boost::shared_ptr<TTransport> transport) : THttpTransport(transport) {
+THttpServer::THttpServer(stdcxx::shared_ptr<TTransport> transport) : THttpTransport(transport) {
 }
 
 THttpServer::~THttpServer() {

@@ -92,7 +92,7 @@ public:
    *
    * @param servers list of TSocketPoolServers
    */
-  TSocketPool(const std::vector<boost::shared_ptr<TSocketPoolServer> >& servers);
+  TSocketPool(const std::vector<stdcxx::shared_ptr<TSocketPoolServer> >& servers);
 
   /**
    * Socket pool constructor
@@ -115,17 +115,17 @@ public:
   /**
    * Add a server to the pool
    */
-  void addServer(boost::shared_ptr<TSocketPoolServer>& server);
+  void addServer(stdcxx::shared_ptr<TSocketPoolServer>& server);
 
   /**
    * Set list of servers in this pool
    */
-  void setServers(const std::vector<boost::shared_ptr<TSocketPoolServer> >& servers);
+  void setServers(const std::vector<stdcxx::shared_ptr<TSocketPoolServer> >& servers);
 
   /**
    * Get list of servers in this pool
    */
-  void getServers(std::vector<boost::shared_ptr<TSocketPoolServer> >& servers);
+  void getServers(std::vector<stdcxx::shared_ptr<TSocketPoolServer> >& servers);
 
   /**
    * Sets how many times to keep retrying a host in the connect function.
@@ -163,13 +163,13 @@ public:
   void close();
 
 protected:
-  void setCurrentServer(const boost::shared_ptr<TSocketPoolServer>& server);
+  void setCurrentServer(const stdcxx::shared_ptr<TSocketPoolServer>& server);
 
   /** List of servers to connect to */
-  std::vector<boost::shared_ptr<TSocketPoolServer> > servers_;
+  std::vector<stdcxx::shared_ptr<TSocketPoolServer> > servers_;
 
   /** Current server */
-  boost::shared_ptr<TSocketPoolServer> currentServer_;
+  stdcxx::shared_ptr<TSocketPoolServer> currentServer_;
 
   /** How many times to retry each host in connect */
   int numRetries_;

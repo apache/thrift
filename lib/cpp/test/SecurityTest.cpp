@@ -19,13 +19,11 @@
 
 #define BOOST_TEST_MODULE SecurityTest
 #include <boost/test/unit_test.hpp>
-#include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
+#include <thrift/stdcxx.h>
 #include <thrift/transport/TSSLServerSocket.h>
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TTransport.h>
@@ -42,6 +40,9 @@ using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TTransportFactory;
 
+using apache::thrift::stdcxx::bind;
+using apache::thrift::stdcxx::shared_ptr;
+
 boost::filesystem::path keyDir;
 boost::filesystem::path certFile(const std::string& filename)
 {
@@ -54,36 +55,36 @@ struct GlobalFixture
     GlobalFixture()
     {
         using namespace boost::unit_test::framework;
-		for (int i = 0; i < master_test_suite().argc; ++i)
-		{
-			BOOST_TEST_MESSAGE(boost::format("argv[%1%] = \"%2%\"") % i % master_test_suite().argv[i]);
-		}
+    for (int i = 0; i < master_test_suite().argc; ++i)
+    {
+      BOOST_TEST_MESSAGE(boost::format("argv[%1%] = \"%2%\"") % i % master_test_suite().argv[i]);
+    }
 
     #ifdef __linux__
-		// OpenSSL calls send() without MSG_NOSIGPIPE so writing to a socket that has
-		// disconnected can cause a SIGPIPE signal...
-		signal(SIGPIPE, SIG_IGN);
+    // OpenSSL calls send() without MSG_NOSIGPIPE so writing to a socket that has
+    // disconnected can cause a SIGPIPE signal...
+    signal(SIGPIPE, SIG_IGN);
     #endif
 
-		TSSLSocketFactory::setManualOpenSSLInitialization(true);
-		apache::thrift::transport::initializeOpenSSL();
+    TSSLSocketFactory::setManualOpenSSLInitialization(true);
+    apache::thrift::transport::initializeOpenSSL();
 
-		keyDir = boost::filesystem::current_path().parent_path().parent_path().parent_path() / "test" / "keys";
-		if (!boost::filesystem::exists(certFile("server.crt")))
-		{
-			keyDir = boost::filesystem::path(master_test_suite().argv[master_test_suite().argc - 1]);
-			if (!boost::filesystem::exists(certFile("server.crt")))
-			{
-				throw std::invalid_argument("The last argument to this test must be the directory containing the test certificate(s).");
-			}
-		}
+    keyDir = boost::filesystem::current_path().parent_path().parent_path().parent_path() / "test" / "keys";
+    if (!boost::filesystem::exists(certFile("server.crt")))
+    {
+      keyDir = boost::filesystem::path(master_test_suite().argv[master_test_suite().argc - 1]);
+      if (!boost::filesystem::exists(certFile("server.crt")))
+      {
+        throw std::invalid_argument("The last argument to this test must be the directory containing the test certificate(s).");
+      }
+    }
     }
 
     virtual ~GlobalFixture()
     {
-		apache::thrift::transport::cleanupOpenSSL();
+    apache::thrift::transport::cleanupOpenSSL();
 #ifdef __linux__
-		signal(SIGPIPE, SIG_DFL);
+    signal(SIGPIPE, SIG_DFL);
 #endif
     }
 };
@@ -102,8 +103,8 @@ struct SecurityFixture
         {
             boost::mutex::scoped_lock lock(mMutex);
 
-            boost::shared_ptr<TSSLSocketFactory> pServerSocketFactory;
-            boost::shared_ptr<TSSLServerSocket> pServerSocket;
+            shared_ptr<TSSLSocketFactory> pServerSocketFactory;
+            shared_ptr<TSSLServerSocket> pServerSocket;
 
             pServerSocketFactory.reset(new TSSLSocketFactory(static_cast<apache::thrift::transport::SSLProtocol>(protocol)));
             pServerSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
@@ -111,7 +112,7 @@ struct SecurityFixture
             pServerSocketFactory->loadPrivateKey(certFile("server.key").string().c_str());
             pServerSocketFactory->server(true);
             pServerSocket.reset(new TSSLServerSocket("localhost", 0, pServerSocketFactory));
-            boost::shared_ptr<TTransport> connectedClient;
+            shared_ptr<TTransport> connectedClient;
 
             try
             {
@@ -153,8 +154,8 @@ struct SecurityFixture
     {
         try
         {
-            boost::shared_ptr<TSSLSocketFactory> pClientSocketFactory;
-            boost::shared_ptr<TSSLSocket> pClientSocket;
+            shared_ptr<TSSLSocketFactory> pClientSocketFactory;
+            shared_ptr<TSSLSocket> pClientSocket;
 
             try
             {
@@ -255,10 +256,10 @@ BOOST_AUTO_TEST_CASE(ssl_security_matrix)
 
                 mConnected = false;
                 boost::thread_group threads;
-                threads.create_thread(boost::bind(&SecurityFixture::server, this, static_cast<apache::thrift::transport::SSLProtocol>(si)));
+                threads.create_thread(bind(&SecurityFixture::server, this, static_cast<apache::thrift::transport::SSLProtocol>(si)));
                 mCVar.wait(lock);           // wait for listen() to succeed
                 lock.unlock();
-                threads.create_thread(boost::bind(&SecurityFixture::client, this, static_cast<apache::thrift::transport::SSLProtocol>(ci)));
+                threads.create_thread(bind(&SecurityFixture::client, this, static_cast<apache::thrift::transport::SSLProtocol>(ci)));
                 threads.join_all();
 
                 BOOST_CHECK_MESSAGE(mConnected == matrix[ci][si],

@@ -23,11 +23,9 @@
 
 #include <thrift/concurrency/StdThreadFactory.h>
 #include <thrift/concurrency/Exception.h>
+#include <thrift/stdcxx.h>
 
 #include <cassert>
-
-#include <boost/enable_shared_from_this.hpp>
-#include <boost/weak_ptr.hpp>
 #include <thread>
 
 namespace apache {
@@ -43,11 +41,11 @@ namespace concurrency {
  *
  * @version $Id:$
  */
-class StdThread : public Thread, public boost::enable_shared_from_this<StdThread> {
+class StdThread : public Thread, public stdcxx::enable_shared_from_this<StdThread> {
 public:
   enum STATE { uninitialized, starting, started, stopping, stopped };
 
-  static void threadMain(boost::shared_ptr<StdThread> thread);
+  static void threadMain(stdcxx::shared_ptr<StdThread> thread);
 
 private:
   std::unique_ptr<std::thread> thread_;
@@ -55,7 +53,7 @@ private:
   bool detached_;
 
 public:
-  StdThread(bool detached, boost::shared_ptr<Runnable> runnable)
+  StdThread(bool detached, stdcxx::shared_ptr<Runnable> runnable)
     : state_(uninitialized), detached_(detached) {
     this->Thread::runnable(runnable);
   }
@@ -75,7 +73,7 @@ public:
       return;
     }
 
-    boost::shared_ptr<StdThread> selfRef = shared_from_this();
+    stdcxx::shared_ptr<StdThread> selfRef = shared_from_this();
     state_ = starting;
 
     thread_ = std::unique_ptr<std::thread>(new std::thread(threadMain, selfRef));
@@ -92,12 +90,12 @@ public:
 
   Thread::id_t getId() { return thread_.get() ? thread_->get_id() : std::thread::id(); }
 
-  boost::shared_ptr<Runnable> runnable() const { return Thread::runnable(); }
+  stdcxx::shared_ptr<Runnable> runnable() const { return Thread::runnable(); }
 
-  void runnable(boost::shared_ptr<Runnable> value) { Thread::runnable(value); }
+  void runnable(stdcxx::shared_ptr<Runnable> value) { Thread::runnable(value); }
 };
 
-void StdThread::threadMain(boost::shared_ptr<StdThread> thread) {
+void StdThread::threadMain(stdcxx::shared_ptr<StdThread> thread) {
   if (thread == NULL) {
     return;
   }
@@ -119,8 +117,8 @@ void StdThread::threadMain(boost::shared_ptr<StdThread> thread) {
 StdThreadFactory::StdThreadFactory(bool detached) : ThreadFactory(detached) {
 }
 
-boost::shared_ptr<Thread> StdThreadFactory::newThread(boost::shared_ptr<Runnable> runnable) const {
-  boost::shared_ptr<StdThread> result = boost::shared_ptr<StdThread>(new StdThread(isDetached(), runnable));
+stdcxx::shared_ptr<Thread> StdThreadFactory::newThread(stdcxx::shared_ptr<Runnable> runnable) const {
+  stdcxx::shared_ptr<StdThread> result = stdcxx::shared_ptr<StdThread>(new StdThread(isDetached(), runnable));
   runnable->thread(result);
   return result;
 }

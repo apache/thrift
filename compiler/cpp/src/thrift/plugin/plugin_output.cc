@@ -34,12 +34,12 @@
 #include <boost/range/adaptor/map.hpp>
 #include <boost/range/algorithm/copy.hpp>
 #include <boost/range/algorithm/transform.hpp>
-#include <boost/smart_ptr.hpp>
 
 #include "thrift/generate/t_generator.h"
 #include "thrift/plugin/plugin.h"
 #include "thrift/plugin/type_util.h"
 #include "thrift/protocol/TBinaryProtocol.h"
+#include "thrift/stdcxx.h"
 #include "thrift/transport/TBufferTransports.h"
 #include "thrift/transport/TFDTransport.h"
 
@@ -55,6 +55,8 @@ typename apache::thrift::plugin::ToType<From>::type convert(From* from) {
 }
 
 using apache::thrift::protocol::TBinaryProtocol;
+using apache::thrift::stdcxx::make_shared;
+using apache::thrift::stdcxx::shared_ptr;
 using apache::thrift::transport::TFDTransport;
 using apache::thrift::transport::TFramedTransport;
 
@@ -377,8 +379,8 @@ PluginDelegateResult delegateToPlugin(t_program* program, const std::string& opt
 #ifdef _WIN32
     _setmode(fileno(fd), _O_BINARY);
 #endif
-    boost::shared_ptr<TFramedTransport> transport(
-        new TFramedTransport(boost::make_shared<TFDTransport>(fileno(fd))));
+    shared_ptr<TFramedTransport> transport(
+        new TFramedTransport(make_shared<TFDTransport>(fileno(fd))));
     TBinaryProtocol proto(transport);
 
     plugin::GeneratorInput input;

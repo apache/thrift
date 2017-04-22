@@ -21,7 +21,7 @@
 #define _THRIFT_TRANSPORT_TSERVERWINPIPES_H_ 1
 
 #include <thrift/transport/TServerTransport.h>
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 #ifndef _WIN32
 #include <thrift/transport/TServerSocket.h>
 #endif
@@ -82,10 +82,10 @@ public:
   HANDLE getNativeWaitHandle();
 
 protected:
-  virtual boost::shared_ptr<TTransport> acceptImpl();
+  virtual stdcxx::shared_ptr<TTransport> acceptImpl();
 
 private:
-  boost::shared_ptr<TPipeServerImpl> impl_;
+  stdcxx::shared_ptr<TPipeServerImpl> impl_;
 
   std::string pipename_;
   uint32_t bufsize_;

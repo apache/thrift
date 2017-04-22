@@ -28,7 +28,7 @@
 
 #include "GenericHelpers.h"
 
-using boost::shared_ptr;
+using apache::thrift::stdcxx::shared_ptr;
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;

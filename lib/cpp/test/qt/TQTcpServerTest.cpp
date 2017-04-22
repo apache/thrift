@@ -8,12 +8,12 @@
 #include <QThread>
 
 #ifndef Q_MOC_RUN
-  #include <boost/smart_ptr.hpp>
+  #include "thrift/stdcxx.h"
   #include "thrift/protocol/TBinaryProtocol.h"
   #include "thrift/async/TAsyncProcessor.h"
   #include "thrift/qt/TQTcpServer.h"
   #include "thrift/qt/TQIODeviceTransport.h"
-  
+
   #include "gen-cpp/ParentService.h"
 #endif
 
@@ -21,25 +21,25 @@ using namespace apache::thrift;
 
 struct AsyncHandler : public test::ParentServiceCobSvIf {
   std::vector<std::string> strings;
-  virtual void addString(tcxx::function<void()> cob, const std::string& s) {
+  virtual void addString(stdcxx::function<void()> cob, const std::string& s) {
     strings.push_back(s);
     cob();
   }
-  virtual void getStrings(tcxx::function<void(std::vector<std::string> const& _return)> cob) {
+  virtual void getStrings(stdcxx::function<void(std::vector<std::string> const& _return)> cob) {
     cob(strings);
   }
 
   // Overrides not used in this test
-  virtual void incrementGeneration(tcxx::function<void(int32_t const& _return)> cob) {}
-  virtual void getGeneration(tcxx::function<void(int32_t const& _return)> cob) {}
-  virtual void getDataWait(tcxx::function<void(std::string const& _return)> cob,
+  virtual void incrementGeneration(stdcxx::function<void(int32_t const& _return)> cob) {}
+  virtual void getGeneration(stdcxx::function<void(int32_t const& _return)> cob) {}
+  virtual void getDataWait(stdcxx::function<void(std::string const& _return)> cob,
                            const int32_t length) {}
-  virtual void onewayWait(tcxx::function<void()> cob) {}
+  virtual void onewayWait(stdcxx::function<void()> cob) {}
   virtual void exceptionWait(
-      tcxx::function<void()> cob,
-      tcxx::function<void(::apache::thrift::TDelayedException* _throw)> /* exn_cob */,
+      stdcxx::function<void()> cob,
+      stdcxx::function<void(::apache::thrift::TDelayedException* _throw)> /* exn_cob */,
       const std::string& message) {}
-  virtual void unexpectedExceptionWait(tcxx::function<void()> cob, const std::string& message) {}
+  virtual void unexpectedExceptionWait(stdcxx::function<void()> cob, const std::string& message) {}
 };
 
 class TQTcpServerTest : public QObject {
@@ -51,18 +51,18 @@ private slots:
   void test_communicate();
 
 private:
-  boost::shared_ptr<QThread> serverThread;
-  boost::shared_ptr<async::TQTcpServer> server;
-  boost::shared_ptr<test::ParentServiceClient> client;
+  stdcxx::shared_ptr<QThread> serverThread;
+  stdcxx::shared_ptr<async::TQTcpServer> server;
+  stdcxx::shared_ptr<test::ParentServiceClient> client;
 };
 
 void TQTcpServerTest::initTestCase() {
   // setup server
-  boost::shared_ptr<QTcpServer> serverSocket = boost::make_shared<QTcpServer>();
+  stdcxx::shared_ptr<QTcpServer> serverSocket = stdcxx::make_shared<QTcpServer>();
   server.reset(new async::TQTcpServer(serverSocket,
-                                      boost::make_shared<test::ParentServiceAsyncProcessor>(
-                                          boost::make_shared<AsyncHandler>()),
-                                      boost::make_shared<protocol::TBinaryProtocolFactory>()));
+                                      stdcxx::make_shared<test::ParentServiceAsyncProcessor>(
+                                      stdcxx::make_shared<AsyncHandler>()),
+                                      stdcxx::make_shared<protocol::TBinaryProtocolFactory>()));
   QVERIFY(serverSocket->listen(QHostAddress::LocalHost));
   int port = serverSocket->serverPort();
   QVERIFY(port > 0);
@@ -74,9 +74,9 @@ void TQTcpServerTest::initTestCase() {
   serverThread->start();
 
   // setup client
-  boost::shared_ptr<QTcpSocket> socket = boost::make_shared<QTcpSocket>();
-  client.reset(new test::ParentServiceClient(boost::make_shared<protocol::TBinaryProtocol>(
-      boost::make_shared<transport::TQIODeviceTransport>(socket))));
+  stdcxx::shared_ptr<QTcpSocket> socket = stdcxx::make_shared<QTcpSocket>();
+  client.reset(new test::ParentServiceClient(stdcxx::make_shared<protocol::TBinaryProtocol>(
+      stdcxx::make_shared<transport::TQIODeviceTransport>(socket))));
   socket->connectToHost(QHostAddress::LocalHost, port);
   QVERIFY(socket->waitForConnected());
 }

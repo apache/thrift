@@ -29,7 +29,7 @@ using apache::thrift::transport::TServerTransport;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TTransportFactory;
-using boost::shared_ptr;
+using stdcxx::shared_ptr;
 using std::string;
 
 TSimpleServer::TSimpleServer(const shared_ptr<TProcessorFactory>& processorFactory,

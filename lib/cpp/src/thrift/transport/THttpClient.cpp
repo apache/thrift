@@ -32,14 +32,14 @@ namespace transport {
 
 using namespace std;
 
-THttpClient::THttpClient(boost::shared_ptr<TTransport> transport,
+THttpClient::THttpClient(stdcxx::shared_ptr<TTransport> transport,
                          std::string host,
                          std::string path)
   : THttpTransport(transport), host_(host), path_(path) {
 }
 
 THttpClient::THttpClient(string host, int port, string path)
-  : THttpTransport(boost::shared_ptr<TTransport>(new TSocket(host, port))),
+  : THttpTransport(stdcxx::shared_ptr<TTransport>(new TSocket(host, port))),
     host_(host),
     path_(path) {
 }

@@ -27,7 +27,7 @@
 
 namespace apache {
 namespace thrift {
-using boost::shared_ptr;
+using stdcxx::shared_ptr;
 
 namespace protocol {
 

@@ -32,7 +32,7 @@ namespace thrift {
 namespace concurrency {
 namespace test {
 
-using boost::shared_ptr;
+using stdcxx::shared_ptr;
 using namespace apache::thrift::concurrency;
 
 /**

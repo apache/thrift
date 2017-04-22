@@ -20,8 +20,8 @@
 #ifndef _THRIFT_CONCURRENCY_FUNCTION_RUNNER_H
 #define _THRIFT_CONCURRENCY_FUNCTION_RUNNER_H 1
 
-#include <thrift/cxxfunctional.h>
 #include <thrift/concurrency/Thread.h>
+#include <thrift/stdcxx.h>
 
 namespace apache {
 namespace thrift {
@@ -53,20 +53,20 @@ public:
   // This is the type of callback 'pthread_create()' expects.
   typedef void* (*PthreadFuncPtr)(void* arg);
   // This a fully-generic void(void) callback for custom bindings.
-  typedef apache::thrift::stdcxx::function<void()> VoidFunc;
+  typedef stdcxx::function<void()> VoidFunc;
 
-  typedef apache::thrift::stdcxx::function<bool()> BoolFunc;
+  typedef stdcxx::function<bool()> BoolFunc;
 
   /**
    * Syntactic sugar to make it easier to create new FunctionRunner
    * objects wrapped in shared_ptr.
    */
-  static boost::shared_ptr<FunctionRunner> create(const VoidFunc& cob) {
-    return boost::shared_ptr<FunctionRunner>(new FunctionRunner(cob));
+  static stdcxx::shared_ptr<FunctionRunner> create(const VoidFunc& cob) {
+    return stdcxx::shared_ptr<FunctionRunner>(new FunctionRunner(cob));
   }
 
-  static boost::shared_ptr<FunctionRunner> create(PthreadFuncPtr func, void* arg) {
-    return boost::shared_ptr<FunctionRunner>(new FunctionRunner(func, arg));
+  static stdcxx::shared_ptr<FunctionRunner> create(PthreadFuncPtr func, void* arg) {
+    return stdcxx::shared_ptr<FunctionRunner>(new FunctionRunner(func, arg));
   }
 
 private:
@@ -81,7 +81,7 @@ public:
    * execute the given callback.  Note that the 'void*' return value is ignored.
    */
   FunctionRunner(PthreadFuncPtr func, void* arg)
-    : func_(apache::thrift::stdcxx::bind(pthread_func_wrapper, func, arg)), intervalMs_(-1) {}
+    : func_(stdcxx::bind(pthread_func_wrapper, func, arg)), intervalMs_(-1) {}
 
   /**
    * Given a generic callback, this FunctionRunner will execute it.

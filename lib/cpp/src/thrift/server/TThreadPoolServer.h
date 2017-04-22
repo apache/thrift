@@ -34,39 +34,39 @@ namespace server {
 class TThreadPoolServer : public TServerFramework {
 public:
   TThreadPoolServer(
-      const boost::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
-      const boost::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
-      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& transportFactory,
-      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory,
-      const boost::shared_ptr<apache::thrift::concurrency::ThreadManager>& threadManager
+      const stdcxx::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
+      const stdcxx::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
+      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& transportFactory,
+      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory,
+      const stdcxx::shared_ptr<apache::thrift::concurrency::ThreadManager>& threadManager
       = apache::thrift::concurrency::ThreadManager::newSimpleThreadManager());
 
   TThreadPoolServer(
-      const boost::shared_ptr<apache::thrift::TProcessor>& processor,
-      const boost::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
-      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& transportFactory,
-      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory,
-      const boost::shared_ptr<apache::thrift::concurrency::ThreadManager>& threadManager
+      const stdcxx::shared_ptr<apache::thrift::TProcessor>& processor,
+      const stdcxx::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
+      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& transportFactory,
+      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory,
+      const stdcxx::shared_ptr<apache::thrift::concurrency::ThreadManager>& threadManager
       = apache::thrift::concurrency::ThreadManager::newSimpleThreadManager());
 
   TThreadPoolServer(
-      const boost::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
-      const boost::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
-      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& inputTransportFactory,
-      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& outputTransportFactory,
-      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
-      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory,
-      const boost::shared_ptr<apache::thrift::concurrency::ThreadManager>& threadManager
+      const stdcxx::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
+      const stdcxx::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
+      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& inputTransportFactory,
+      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& outputTransportFactory,
+      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
+      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory,
+      const stdcxx::shared_ptr<apache::thrift::concurrency::ThreadManager>& threadManager
       = apache::thrift::concurrency::ThreadManager::newSimpleThreadManager());
 
   TThreadPoolServer(
-      const boost::shared_ptr<apache::thrift::TProcessor>& processor,
-      const boost::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
-      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& inputTransportFactory,
-      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& outputTransportFactory,
-      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
-      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory,
-      const boost::shared_ptr<apache::thrift::concurrency::ThreadManager>& threadManager
+      const stdcxx::shared_ptr<apache::thrift::TProcessor>& processor,
+      const stdcxx::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
+      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& inputTransportFactory,
+      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& outputTransportFactory,
+      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
+      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory,
+      const stdcxx::shared_ptr<apache::thrift::concurrency::ThreadManager>& threadManager
       = apache::thrift::concurrency::ThreadManager::newSimpleThreadManager());
 
   virtual ~TThreadPoolServer();
@@ -83,13 +83,13 @@ public:
   virtual int64_t getTaskExpiration() const;
   virtual void setTaskExpiration(int64_t value);
 
-  virtual boost::shared_ptr<apache::thrift::concurrency::ThreadManager> getThreadManager() const;
+  virtual stdcxx::shared_ptr<apache::thrift::concurrency::ThreadManager> getThreadManager() const;
 
 protected:
-  virtual void onClientConnected(const boost::shared_ptr<TConnectedClient>& pClient) /* override */;
+  virtual void onClientConnected(const stdcxx::shared_ptr<TConnectedClient>& pClient) /* override */;
   virtual void onClientDisconnected(TConnectedClient* pClient) /* override */;
 
-  boost::shared_ptr<apache::thrift::concurrency::ThreadManager> threadManager_;
+  stdcxx::shared_ptr<apache::thrift::concurrency::ThreadManager> threadManager_;
   boost::atomic<int64_t> timeout_;
   boost::atomic<int64_t> taskExpiration_;
 };
