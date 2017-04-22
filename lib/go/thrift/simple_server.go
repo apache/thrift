@@ -31,7 +31,7 @@ import (
  * This will work if golang user implements a conn-pool like thing in client side.
  */
 type TSimpleServer struct {
-	quit chan struct{}
+	quit    chan struct{}
 
 	processorFactory       TProcessorFactory
 	serverTransport        TServerTransport
@@ -159,6 +159,7 @@ func (p *TSimpleServer) Stop() error {
 	q := func() {
 		p.quit <- struct{}{}
 		p.serverTransport.Interrupt()
+		p.serverTransport.Close()
 	}
 	once.Do(q)
 	return nil
