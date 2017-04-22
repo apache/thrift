@@ -82,9 +82,9 @@
 ///////////////////////////////////////////////////////////////////
 
 //
-// This is for debugging build issues in Travis CI:
+// This is for debugging build issues in CI:
 //
-
+#if 0
 #define STRING2(x) #x
 #define STRING(x) STRING2(x)
 #pragma message(STRING(__clang__))
@@ -94,6 +94,7 @@
 #pragma message(STRING(__GNUC_MINOR__))
 #pragma message(STRING(__GNUC_PATCHLEVEL__))
 #pragma message(STRING(__cpp_alias_templates))
+#endif
 
 #if defined(BOOST_NO_CXX11_SMART_PTR) || defined(FORCE_BOOST_SMART_PTR)
 #include <boost/smart_ptr.hpp>
@@ -123,11 +124,7 @@ namespace apache { namespace thrift { namespace stdcxx {
   using ::std::dynamic_pointer_cast;
   using ::std::enable_shared_from_this;
   using ::std::make_shared;
-  #if __cplusplus >= 201103L && (defined(__clang__) || __cpp_alias_templates >= 200704)
-    using scoped_ptr = std::unique_ptr;
-  #else
-    using ::boost::scoped_ptr;
-  #endif
+  template <typename T> using scoped_ptr = std::unique_ptr<T>;
   using ::std::shared_ptr;
   using ::std::static_pointer_cast;
   using ::std::weak_ptr;
