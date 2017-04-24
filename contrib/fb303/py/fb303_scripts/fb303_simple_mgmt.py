@@ -82,7 +82,7 @@ def service_ctrl(
         try:
             counters = fb303_wrapper('counters', port, trans_factory, prot_factory)
             for counter in counters:
-                print "%s: %d" % (counter, counters[counter])
+                print "%s: %d" % (counter.encode('utf-8'), counters[counter])
             return 0
         except:
             print "failed to get counters"
