@@ -190,8 +190,6 @@ func (p *THttpClient) Close() error {
 		p.responseBuffer = nil
 	}
 	if p.requestBuffer != nil {
-		p.requestBuffer.Reset()
-		bufPool.Put(p.requestBuffer)
 		p.requestBuffer = nil
 	}
 	return nil
