@@ -190,6 +190,9 @@ func (p *THttpClient) Close() error {
 		p.responseBuffer = nil
 	}
 	if p.requestBuffer != nil {
+		// Note: We do not return the buffer to the pool,
+		// since there is a potential race here.  It will be
+		// garbage collected.
 		p.requestBuffer = nil
 	}
 	return nil
@@ -226,6 +229,7 @@ func (p *THttpClient) WriteString(s string) (n int, err error) {
 // bufferCloser makes a bytes.Buffer into an io.Closer and returns unused
 // buffers to the pool.
 type bufferCloser struct {
+	sync.Once
 	*bytes.Buffer
 }
 
@@ -235,13 +239,15 @@ type bufferCloser struct {
 // and rely on the http transport to call Close() (and therefore
 // to call Reset() and return it to the pool).
 func (b *bufferCloser) Close() error {
-	b.Reset()
-	bufPool.Put(b.Buffer)
+	b.Once.Do(func() {
+		b.Reset()
+		bufPool.Put(b.Buffer)
+	})
 	return nil
 }
 
 func (p *THttpClient) Flush() error {
-	req, err := http.NewRequest("POST", p.url.String(), &bufferCloser{p.requestBuffer})
+	req, err := http.NewRequest("POST", p.url.String(), &bufferCloser{Buffer: p.requestBuffer})
 	if err != nil {
 		return NewTTransportExceptionFromError(err)
 	}
