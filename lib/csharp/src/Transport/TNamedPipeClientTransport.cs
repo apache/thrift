@@ -22,6 +22,7 @@
  */
 
 using System.IO.Pipes;
+using System.Threading;
 
 namespace Thrift.Transport
 {
@@ -30,17 +31,20 @@ namespace Thrift.Transport
         private NamedPipeClientStream client;
         private string ServerName;
         private string PipeName;
+        private int ConnectTimeout;
 
-        public TNamedPipeClientTransport(string pipe)
+        public TNamedPipeClientTransport(string pipe, int timeout = Timeout.Infinite)
         {
             ServerName = ".";
             PipeName = pipe;
+            ConnectTimeout = timeout;
         }
 
-        public TNamedPipeClientTransport(string server, string pipe)
+        public TNamedPipeClientTransport(string server, string pipe, int timeout = Timeout.Infinite)
         {
             ServerName = (server != "") ? server : ".";
             PipeName = pipe;
+            ConnectTimeout = timeout;
         }
 
         public override bool IsOpen
@@ -55,7 +59,7 @@ namespace Thrift.Transport
                 throw new TTransportException(TTransportException.ExceptionType.AlreadyOpen);
             }
             client = new NamedPipeClientStream(ServerName, PipeName, PipeDirection.InOut, PipeOptions.None);
-            client.Connect();
+            client.Connect(ConnectTimeout);
         }
 
         public override void Close()
