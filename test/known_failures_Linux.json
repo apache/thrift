@@ -224,5 +224,7 @@
   "hs-py3_json_framed-ip",
   "java-d_compact_buffered-ip",
   "java-d_compact_buffered-ip-ssl",
-  "java-d_compact_framed-ip"
+  "java-d_compact_framed-ip",
+  "rs-dart_binary_framed-ip",
+  "rs-dart_compact_framed-ip"
 ]

@@ -17,7 +17,8 @@
 
 //! Types used to implement a Thrift server.
 
-use protocol::{TInputProtocol, TOutputProtocol};
+use {ApplicationError, ApplicationErrorKind};
+use protocol::{TInputProtocol, TMessageIdentifier, TMessageType, TOutputProtocol};
 
 mod multiplexed;
 mod threaded;
@@ -92,4 +93,32 @@ pub trait TProcessor {
     ///
     /// Returns `()` if the handler was executed; `Err` otherwise.
     fn process(&self, i: &mut TInputProtocol, o: &mut TOutputProtocol) -> ::Result<()>;
+}
+
+/// Convenience function used in generated `TProcessor` implementations to
+/// return an `ApplicationError` if thrift message processing failed.
+pub fn handle_process_result(
+    msg_ident: &TMessageIdentifier,
+    res: ::Result<()>,
+    o_prot: &mut TOutputProtocol,
+) -> ::Result<()> {
+    if let Err(e) = res {
+        let e = match e {
+            ::Error::Application(a) => a,
+            _ => ApplicationError::new(ApplicationErrorKind::Unknown, format!("{:?}", e)),
+        };
+
+        let ident = TMessageIdentifier::new(
+            msg_ident.name.clone(),
+            TMessageType::Exception,
+            msg_ident.sequence_number,
+        );
+
+        o_prot.write_message_begin(&ident)?;
+        ::Error::write_application_error_to_out_protocol(&e, o_prot)?;
+        o_prot.write_message_end()?;
+        o_prot.flush()
+    } else {
+        Ok(())
+    }
 }

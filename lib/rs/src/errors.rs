@@ -354,7 +354,7 @@ pub fn new_transport_error<S: Into<String>>(kind: TransportErrorKind, message: S
 }
 
 /// Information about I/O errors.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct TransportError {
     /// I/O error variant.
     ///
@@ -508,7 +508,7 @@ pub fn new_protocol_error<S: Into<String>>(kind: ProtocolErrorKind, message: S) 
 }
 
 /// Information about errors that occur in the runtime library.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct ProtocolError {
     /// Protocol error variant.
     ///
@@ -605,7 +605,7 @@ pub fn new_application_error<S: Into<String>>(kind: ApplicationErrorKind, messag
 
 /// Information about errors in auto-generated code or in user-implemented
 /// service handlers.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct ApplicationError {
     /// Application error variant.
     ///

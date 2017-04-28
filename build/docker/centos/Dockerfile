@@ -119,7 +119,11 @@ RUN yum install -y \
       mono-core \
       mono-devel \
       mono-web-devel \
-      mono-extras \
+      mono-extras
+
+# Rust
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain 1.17.0
+ENV PATH /root/.cargo/bin:$PATH
 
 # MinGW Dependencies
 RUN yum install -y \

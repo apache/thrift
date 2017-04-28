@@ -55,7 +55,7 @@ where
     T: TReadTransport,
 {
     strict: bool,
-    transport: T,
+    pub transport: T, // FIXME: shouldn't be public
 }
 
 impl<'a, T> TBinaryInputProtocol<T>
