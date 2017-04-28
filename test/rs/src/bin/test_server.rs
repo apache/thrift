@@ -16,6 +16,10 @@
 // under the License.
 
 #[macro_use]
+extern crate log;
+extern crate env_logger;
+
+#[macro_use]
 extern crate clap;
 extern crate ordered_float;
 extern crate thrift;
@@ -29,17 +33,21 @@ use std::time::Duration;
 use thrift::protocol::{TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory,
                        TCompactInputProtocolFactory, TCompactOutputProtocolFactory,
                        TInputProtocolFactory, TOutputProtocolFactory};
-use thrift::server::TServer;
+use thrift::server::{TMultiplexedProcessor, TServer};
 use thrift::transport::{TBufferedReadTransportFactory, TBufferedWriteTransportFactory,
                         TFramedReadTransportFactory, TFramedWriteTransportFactory,
                         TReadTransportFactory, TWriteTransportFactory};
 use thrift_test::*;
 
 fn main() {
+    env_logger::init().expect("logger setup failed");
+
+    debug!("initialized logger - running cross-test server");
+
     match run() {
-        Ok(()) => println!("cross-test server succeeded"),
+        Ok(()) => info!("cross-test server succeeded"),
         Err(e) => {
-            println!("cross-test server failed with error {:?}", e);
+            info!("cross-test server failed with error {:?}", e);
             std::process::exit(1);
         }
     }
@@ -70,7 +78,7 @@ fn run() -> thrift::Result<()> {
     let workers = value_t!(matches, "workers", usize).unwrap_or(4);
     let listen_address = format!("127.0.0.1:{}", port);
 
-    println!("binding to {}", listen_address);
+    info!("binding to {}", listen_address);
 
     let (i_transport_factory, o_transport_factory): (Box<TReadTransportFactory>,
                                                      Box<TWriteTransportFactory>) =
@@ -91,11 +99,11 @@ fn run() -> thrift::Result<()> {
     let (i_protocol_factory, o_protocol_factory): (Box<TInputProtocolFactory>,
                                                    Box<TOutputProtocolFactory>) =
         match &*protocol {
-            "binary" => {
+            "binary" | "multi" | "multi:binary" => {
                 (Box::new(TBinaryInputProtocolFactory::new()),
                  Box::new(TBinaryOutputProtocolFactory::new()))
             }
-            "compact" => {
+            "compact" | "multic" | "multi:compact" => {
                 (Box::new(TCompactInputProtocolFactory::new()),
                  Box::new(TCompactOutputProtocolFactory::new()))
             }
@@ -104,91 +112,100 @@ fn run() -> thrift::Result<()> {
             }
         };
 
-    let processor = ThriftTestSyncProcessor::new(ThriftTestSyncHandlerImpl {});
+    let test_processor = ThriftTestSyncProcessor::new(ThriftTestSyncHandlerImpl {});
 
-    let mut server = match &*server_type {
-        "simple" => {
-            TServer::new(
-                i_transport_factory,
-                i_protocol_factory,
-                o_transport_factory,
-                o_protocol_factory,
-                processor,
-                1,
-            )
-        }
-        "thread-pool" => {
-            TServer::new(
-                i_transport_factory,
-                i_protocol_factory,
-                o_transport_factory,
-                o_protocol_factory,
-                processor,
-                workers,
-            )
-        }
-        unknown => {
-            return Err(format!("unsupported server type {}", unknown).into());
-        }
-    };
+    match &*server_type {
+        "simple" | "thread-pool" => {
+            if protocol == "multi" || protocol == "multic" {
+                let second_service_processor = SecondServiceSyncProcessor::new(SecondServiceSyncHandlerImpl {},);
 
-    server.listen(&listen_address)
+                let mut multiplexed_processor = TMultiplexedProcessor::new();
+                multiplexed_processor
+                    .register("ThriftTest", Box::new(test_processor), true)?;
+                multiplexed_processor
+                    .register("SecondService", Box::new(second_service_processor), false)?;
+
+                let mut server = TServer::new(
+                    i_transport_factory,
+                    i_protocol_factory,
+                    o_transport_factory,
+                    o_protocol_factory,
+                    multiplexed_processor,
+                    workers,
+                );
+
+                server.listen(&listen_address)
+            } else {
+                let mut server = TServer::new(
+                    i_transport_factory,
+                    i_protocol_factory,
+                    o_transport_factory,
+                    o_protocol_factory,
+                    test_processor,
+                    workers,
+                );
+
+                server.listen(&listen_address)
+            }
+        }
+        unknown => Err(format!("unsupported server type {}", unknown).into()),
+    }
 }
 
 struct ThriftTestSyncHandlerImpl;
 impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
     fn handle_test_void(&self) -> thrift::Result<()> {
-        println!("testVoid()");
+        info!("testVoid()");
         Ok(())
     }
 
     fn handle_test_string(&self, thing: String) -> thrift::Result<String> {
-        println!("testString({})", &thing);
+        info!("testString({})", &thing);
         Ok(thing)
     }
 
     fn handle_test_bool(&self, thing: bool) -> thrift::Result<bool> {
-        println!("testBool({})", thing);
+        info!("testBool({})", thing);
         Ok(thing)
     }
 
     fn handle_test_byte(&self, thing: i8) -> thrift::Result<i8> {
-        println!("testByte({})", thing);
+        info!("testByte({})", thing);
         Ok(thing)
     }
 
     fn handle_test_i32(&self, thing: i32) -> thrift::Result<i32> {
-        println!("testi32({})", thing);
+        info!("testi32({})", thing);
         Ok(thing)
     }
 
     fn handle_test_i64(&self, thing: i64) -> thrift::Result<i64> {
-        println!("testi64({})", thing);
+        info!("testi64({})", thing);
         Ok(thing)
     }
 
     fn handle_test_double(&self, thing: OrderedFloat<f64>) -> thrift::Result<OrderedFloat<f64>> {
-        println!("testDouble({})", thing);
+        info!("testDouble({})", thing);
         Ok(thing)
     }
 
     fn handle_test_binary(&self, thing: Vec<u8>) -> thrift::Result<Vec<u8>> {
-        println!("testBinary({:?})", thing);
+        info!("testBinary({:?})", thing);
         Ok(thing)
     }
 
     fn handle_test_struct(&self, thing: Xtruct) -> thrift::Result<Xtruct> {
-        println!("testStruct({:?})", thing);
+        info!("testStruct({:?})", thing);
         Ok(thing)
     }
 
     fn handle_test_nest(&self, thing: Xtruct2) -> thrift::Result<Xtruct2> {
-        println!("testNest({:?})", thing);
+        info!("testNest({:?})", thing);
         Ok(thing)
     }
 
     fn handle_test_map(&self, thing: BTreeMap<i32, i32>) -> thrift::Result<BTreeMap<i32, i32>> {
-        println!("testMap({:?})", thing);
+        info!("testMap({:?})", thing);
         Ok(thing)
     }
 
@@ -196,27 +213,27 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
         &self,
         thing: BTreeMap<String, String>,
     ) -> thrift::Result<BTreeMap<String, String>> {
-        println!("testStringMap({:?})", thing);
+        info!("testStringMap({:?})", thing);
         Ok(thing)
     }
 
     fn handle_test_set(&self, thing: BTreeSet<i32>) -> thrift::Result<BTreeSet<i32>> {
-        println!("testSet({:?})", thing);
+        info!("testSet({:?})", thing);
         Ok(thing)
     }
 
     fn handle_test_list(&self, thing: Vec<i32>) -> thrift::Result<Vec<i32>> {
-        println!("testList({:?})", thing);
+        info!("testList({:?})", thing);
         Ok(thing)
     }
 
     fn handle_test_enum(&self, thing: Numberz) -> thrift::Result<Numberz> {
-        println!("testEnum({:?})", thing);
+        info!("testEnum({:?})", thing);
         Ok(thing)
     }
 
     fn handle_test_typedef(&self, thing: UserId) -> thrift::Result<UserId> {
-        println!("testTypedef({})", thing);
+        info!("testTypedef({})", thing);
         Ok(thing)
     }
 
@@ -224,7 +241,7 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
     /// {-4 => {-4 => -4, -3 => -3, -2 => -2, -1 => -1, }, 4 => {1 => 1, 2 =>
     /// 2, 3 => 3, 4 => 4, }, }
     fn handle_test_map_map(&self, hello: i32) -> thrift::Result<BTreeMap<i32, BTreeMap<i32, i32>>> {
-        println!("testMapMap({})", hello);
+        info!("testMapMap({})", hello);
 
         let mut inner_map_0: BTreeMap<i32, i32> = BTreeMap::new();
         for i in -4..(0 as i32) {
@@ -254,7 +271,7 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
         &self,
         argument: Insanity,
     ) -> thrift::Result<BTreeMap<UserId, BTreeMap<Numberz, Insanity>>> {
-        println!("testInsanity({:?})", argument);
+        info!("testInsanity({:?})", argument);
         let mut map_0: BTreeMap<Numberz, Insanity> = BTreeMap::new();
         map_0.insert(Numberz::TWO, argument.clone());
         map_0.insert(Numberz::THREE, argument.clone());
@@ -300,7 +317,7 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
     /// else if arg == "TException" throw TException
     /// else do not throw anything
     fn handle_test_exception(&self, arg: String) -> thrift::Result<()> {
-        println!("testException({})", arg);
+        info!("testException({})", arg);
 
         match &*arg {
             "Xception" => {
@@ -368,5 +385,18 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
     fn handle_test_oneway(&self, seconds_to_sleep: i32) -> thrift::Result<()> {
         thread::sleep(Duration::from_secs(seconds_to_sleep as u64));
         Ok(())
+    }
+}
+
+struct SecondServiceSyncHandlerImpl;
+impl SecondServiceSyncHandler for SecondServiceSyncHandlerImpl {
+    fn handle_blah_blah(&self) -> thrift::Result<()> {
+        Err(thrift::new_application_error(thrift::ApplicationErrorKind::Unknown, "blahBlah"),)
+    }
+
+    fn handle_secondtest_string(&self, thing: String) -> thrift::Result<String> {
+        info!("testString({})", &thing);
+        let ret = format!("testString(\"{}\")", &thing);
+        Ok(ret)
     }
 }

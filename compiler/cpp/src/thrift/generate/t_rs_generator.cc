@@ -2519,8 +2519,10 @@ void t_rs_generator::render_sync_processor_definition_and_impl(t_service *tservi
     << "fn process(&self, i_prot: &mut TInputProtocol, o_prot: &mut TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
+
   f_gen_ << indent() << "let message_ident = i_prot.read_message_begin()?;" << endl;
-  f_gen_ << indent() << "match &*message_ident.name {" << endl; // [sigh] explicit deref coercion
+
+  f_gen_ << indent() << "let res = match &*message_ident.name {" << endl; // [sigh] explicit deref coercion
   indent_up();
   render_process_match_statements(tservice);
   f_gen_ << indent() << "method => {" << endl;
@@ -2535,7 +2537,9 @@ void t_rs_generator::render_sync_processor_definition_and_impl(t_service *tservi
   f_gen_ << indent() << "}," << endl;
 
   indent_down();
-  f_gen_ << indent() << "}" << endl;
+  f_gen_ << indent() << "};" << endl;
+  f_gen_ << indent() << "thrift::server::handle_process_result(&message_ident, res, o_prot)" << endl;
+
   indent_down();
   f_gen_ << indent() << "}" << endl;
 

@@ -598,6 +598,10 @@
   },
   {
     "name": "rs",
+    "env": {
+      "RUST_BACKTRACE": "1",
+      "RUST_LOG": "info"
+    },
     "server": {
       "command": [
         "test_server"
@@ -609,16 +613,18 @@
         "test_client"
       ]
     },
+    "sockets": [
+      "ip"
+    ],
     "transports": [
       "buffered",
       "framed"
     ],
-    "sockets": [
-      "ip"
-    ],
     "protocols": [
       "binary",
-      "compact"
+      "compact",
+      "multi",
+      "multic"
     ],
     "workdir": "rs/bin"
   }

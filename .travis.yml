@@ -42,28 +42,33 @@ env:
     - BUILD_LIBS="CPP C_GLIB HASKELL JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
 
   matrix:
-    - TEST_NAME="Cross Language Tests (Binary, Header, Multiplexed Protocols)"
+    - TEST_NAME="Cross Language Tests (Header, Multiplexed and JSON Protocols)"
       SCRIPT="cross-test.sh"
-      BUILD_ARG="-'(binary|header|multiplexed)'"
+      BUILD_ARG="-'(header|multiplexed|json)'"
       BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
-    - TEST_NAME="Cross Language Tests (Compact and JSON Protocols)"
+    - TEST_NAME="Cross Language Tests (Binary Protocol)"
       SCRIPT="cross-test.sh"
-      BUILD_ARG="-'(compact|json)'"
+      BUILD_ARG="-'(binary)'"
+      BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
+
+    - TEST_NAME="Cross Language Tests (Compact Protocol)"
+      SCRIPT="cross-test.sh"
+      BUILD_ARG="-'(compact)'"
       BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
     # TODO: Remove them once migrated to CMake
     # Autotools builds
     - TEST_NAME="C C++ C# D Erlang Haxe Go (automake)"
       SCRIPT="autotools.sh"
-      BUILD_ARG="--without-dart --without-haskell --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-ruby"
+      BUILD_ARG="--without-dart --without-haskell --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-ruby --without-rust"
 
     - TEST_NAME="C C++ Plugin Haskell Perl - GCC (automake)"
       SCRIPT="autotools.sh"
-      BUILD_ARG="--enable-plugin --without-csharp --without-java --without-erlang --without-nodejs --without-lua --without-python --without-perl --without-php --without-php_extension --without-dart --without-ruby --without-haskell --without-go --without-haxe --without-d"
+      BUILD_ARG="--enable-plugin --without-csharp --without-java --without-erlang --without-nodejs --without-lua --without-python --without-perl --without-php --without-php_extension --without-dart --without-ruby --without-haskell --without-go --without-haxe --without-d --without-rust"
       BUILD_ENV="-e CC=gcc -e CXX=g++"
 
-    - TEST_NAME="Java Lua PHP Ruby Dart Node.js Python (automake)"
+    - TEST_NAME="Java Lua PHP Ruby Dart Node.js Python Rust (automake)"
       SCRIPT="autotools.sh"
       BUILD_ARG="--without-cpp --without-c_glib --without-csharp --without-d --without-erlang --without-go --without-haxe"
 
