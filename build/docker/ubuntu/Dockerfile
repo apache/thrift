@@ -14,7 +14,6 @@
 #
 # Known missing client libraries:
 #  - dotnetcore
-#  - rust
 
 FROM buildpack-deps:trusty-scm
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
@@ -219,6 +218,9 @@ RUN echo 'deb http://ppa.launchpad.net/avsm/ppa/ubuntu trusty main' > /etc/apt/s
     opam init && \
     opam install oasis
 
+# Rust
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain 1.17.0
+ENV PATH /root/.cargo/bin:$PATH
 
 ENV THRIFT_ROOT /thrift
 RUN mkdir -p $THRIFT_ROOT/src

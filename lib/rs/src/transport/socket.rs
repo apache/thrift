@@ -19,7 +19,6 @@ use std::convert::From;
 use std::io;
 use std::io::{ErrorKind, Read, Write};
 use std::net::{Shutdown, TcpStream};
-use std::ops::Drop;
 
 use {TransportErrorKind, new_transport_error};
 use super::{ReadHalf, TIoChannel, WriteHalf};
@@ -162,14 +161,5 @@ impl Write for TTcpChannel {
 
     fn flush(&mut self) -> io::Result<()> {
         self.if_set(|s| s.flush())
-    }
-}
-
-// FIXME: Do I have to implement the Drop trait? TcpStream closes the socket on drop.
-impl Drop for TTcpChannel {
-    fn drop(&mut self) {
-        if let Err(e) = self.close() {
-            warn!("error while closing socket: {:?}", e)
-        }
     }
 }

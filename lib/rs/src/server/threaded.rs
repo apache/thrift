@@ -47,7 +47,8 @@ use super::TProcessor;
 /// use thrift::protocol::{TInputProtocolFactory, TOutputProtocolFactory};
 /// use thrift::protocol::{TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory};
 /// use thrift::protocol::{TInputProtocol, TOutputProtocol};
-/// use thrift::transport::{TBufferedReadTransportFactory, TBufferedWriteTransportFactory, TReadTransportFactory, TWriteTransportFactory};
+/// use thrift::transport::{TBufferedReadTransportFactory, TBufferedWriteTransportFactory,
+///                         TReadTransportFactory, TWriteTransportFactory};
 /// use thrift::server::{TProcessor, TServer};
 ///
 /// //
