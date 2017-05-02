@@ -194,6 +194,7 @@ public:
   void generate_service_helpers(t_service* tservice);
   void generate_service_client(t_service* tservice);
   void generate_service_async_client(t_service* tservice);
+  void generate_service_async_ssl_client(t_service* tservice);
   void generate_service_server(t_service* tservice);
   void generate_service_async_server(t_service* tservice);
   void generate_process_function(t_service* tservice, t_function* tfunction);
@@ -2740,6 +2741,7 @@ void t_java_generator::generate_service(t_service* tservice) {
   generate_service_async_interface(tservice);
   generate_service_client(tservice);
   generate_service_async_client(tservice);
+  generate_service_async_ssl_client(tservice);
   generate_service_server(tservice);
   generate_service_async_server(tservice);
   generate_service_helpers(tservice);
@@ -3140,6 +3142,172 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
   }
 
   // Close AsyncClient
+  scope_down(f_service_);
+  f_service_ << endl;
+}
+
+void t_java_generator::generate_service_async_ssl_client(t_service* tservice) {
+  string extends = "org.apache.thrift.async.TAsyncSSLClient";
+  string extends_client = "";
+  if (tservice->get_extends() != NULL) {
+    extends = type_name(tservice->get_extends()) + ".AsyncSSLClient";
+  }
+
+  indent(f_service_) << "public static class AsyncSSLClient extends " << extends
+                     << " implements AsyncIface {" << endl;
+  indent_up();
+
+  // Factory method
+  indent(f_service_) << "public static class Factory implements "
+                        "org.apache.thrift.async.TAsyncSSLClientFactory<AsyncSSLClient> {" << endl;
+  indent(f_service_) << "  private org.apache.thrift.async.TAsyncSSLClientManager clientManager;"
+                     << endl;
+  indent(f_service_) << "  private org.apache.thrift.protocol.TProtocolFactory protocolFactory;"
+                     << endl;
+  indent(f_service_) << "  public Factory(org.apache.thrift.async.TAsyncSSLClientManager "
+                        "clientManager, org.apache.thrift.protocol.TProtocolFactory "
+                        "protocolFactory) {" << endl;
+  indent(f_service_) << "    this.clientManager = clientManager;" << endl;
+  indent(f_service_) << "    this.protocolFactory = protocolFactory;" << endl;
+  indent(f_service_) << "  }" << endl;
+  indent(f_service_) << "  public AsyncSSLClient "
+                        "getAsyncSSLClient(org.apache.thrift.transport.TNonblockingSSLTransport "
+                        "transport) {" << endl;
+  indent(f_service_) << "    return new AsyncSSLClient(protocolFactory, clientManager, transport);"
+                     << endl;
+  indent(f_service_) << "  }" << endl;
+  indent(f_service_) << "}" << endl << endl;
+
+  indent(f_service_) << "public AsyncSSLClient(org.apache.thrift.protocol.TProtocolFactory "
+                        "protocolFactory, org.apache.thrift.async.TAsyncSSLClientManager "
+                        "clientManager, org.apache.thrift.transport.TNonblockingSSLTransport "
+                        "transport) {" << endl;
+  indent(f_service_) << "  super(protocolFactory, clientManager, transport);" << endl;
+  indent(f_service_) << "}" << endl << endl;
+
+  // Generate client method implementations
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::const_iterator f_iter;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    string funname = (*f_iter)->get_name();
+    string sep = "_";
+    string javaname = funname;
+    if (fullcamel_style_) {
+      sep = "";
+      javaname = as_camel_case(javaname);
+    }
+    t_type* ret_type = (*f_iter)->get_returntype();
+    t_struct* arg_struct = (*f_iter)->get_arglist();
+    string funclassname = funname + "_call";
+    const vector<t_field*>& fields = arg_struct->get_members();
+    const std::vector<t_field*>& xceptions = (*f_iter)->get_xceptions()->get_members();
+    vector<t_field*>::const_iterator fld_iter;
+    string args_name = (*f_iter)->get_name() + "_args";
+    string result_name = (*f_iter)->get_name() + "_result";
+
+    // Main method body
+    indent(f_service_) << "public " << function_signature_async(*f_iter, false)
+                       << " throws org.apache.thrift.TException {" << endl;
+    indent(f_service_) << "  checkReady();" << endl;
+    indent(f_service_) << "  " << funclassname << " method_call = new " + funclassname + "("
+                       << async_argument_list(*f_iter, arg_struct, ret_type)
+                       << ", this, ___protocolFactory, ___transport);" << endl;
+    indent(f_service_) << "  this.___currentMethod = method_call;" << endl;
+    indent(f_service_) << "  ___manager.call(method_call);" << endl;
+    indent(f_service_) << "}" << endl;
+
+    f_service_ << endl;
+
+    // TAsyncMethod object for this function call
+    indent(f_service_) << "public static class " + funclassname
+                          + " extends org.apache.thrift.async.TAsyncSSLMethodCall<"
+                          + type_name((*f_iter)->get_returntype(), true) + "> {" << endl;
+    indent_up();
+
+    // Member variables
+    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+      indent(f_service_) << "private " + type_name((*fld_iter)->get_type()) + " "
+                            + (*fld_iter)->get_name() + ";" << endl;
+    }
+
+    // NOTE since we use a new Client instance to deserialize, let's keep seqid to 0 for now
+    // indent(f_service_) << "private int seqid;" << endl << endl;
+
+    // Constructor
+    indent(f_service_) << "public " + funclassname + "("
+                          + async_argument_list(*f_iter, arg_struct, ret_type, true)
+                       << ", org.apache.thrift.async.TAsyncSSLClient client, "
+                          "org.apache.thrift.protocol.TProtocolFactory protocolFactory, "
+                          "org.apache.thrift.transport.TNonblockingSSLTransport transport) throws "
+                          "org.apache.thrift.TException {" << endl;
+    indent(f_service_) << "  super(client, protocolFactory, transport, resultHandler, "
+                       << ((*f_iter)->is_oneway() ? "true" : "false") << ");" << endl;
+
+    // Assign member variables
+    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+      indent(f_service_) << "  this." + (*fld_iter)->get_name() + " = " + (*fld_iter)->get_name()
+                            + ";" << endl;
+    }
+
+    indent(f_service_) << "}" << endl << endl;
+
+    indent(f_service_) << "public void write_args(org.apache.thrift.protocol.TProtocol prot) "
+                          "throws org.apache.thrift.TException {" << endl;
+    indent_up();
+
+    // Serialize request
+    // NOTE we are leaving seqid as 0, for now (see above)
+    f_service_ << indent() << "prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage(\""
+               << funname << "\", org.apache.thrift.protocol."
+               << ((*f_iter)->is_oneway() ? "TMessageType.ONEWAY" : "TMessageType.CALL") << ", 0));"
+               << endl << indent() << args_name << " args = new " << args_name << "();" << endl;
+
+    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+      f_service_ << indent() << "args.set" << get_cap_name((*fld_iter)->get_name()) << "("
+                 << (*fld_iter)->get_name() << ");" << endl;
+    }
+
+    f_service_ << indent() << "args.write(prot);" << endl << indent() << "prot.writeMessageEnd();"
+               << endl;
+
+    indent_down();
+    indent(f_service_) << "}" << endl << endl;
+
+    // Return method
+    indent(f_service_) << "public " + type_name(ret_type, true) + " getResult() throws ";
+    vector<t_field*>::const_iterator x_iter;
+    for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+      f_service_ << type_name((*x_iter)->get_type(), false, false) + ", ";
+    }
+    f_service_ << "org.apache.thrift.TException {" << endl;
+
+    indent_up();
+    f_service_
+        << indent()
+        << "if (getState() != org.apache.thrift.async.TAsyncSSLMethodCall.State.RESPONSE_READ) {"
+        << endl << indent() << "  throw new IllegalStateException(\"Method call not finished!\");"
+        << endl << indent() << "}" << endl << indent()
+        << "org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new "
+           "org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());" << endl
+        << indent() << "org.apache.thrift.protocol.TProtocol prot = "
+                       "client.getProtocolFactory().getProtocol(memoryTransport);" << endl;
+    indent(f_service_);
+    if (ret_type->is_void()) { // NB: Includes oneways which always return void.
+      f_service_ << "return null;" << endl;
+    } else {
+      f_service_ << "return (new Client(prot)).recv" + sep + javaname + "();" << endl;
+    }
+
+    // Close function
+    indent_down();
+    indent(f_service_) << "}" << endl;
+
+    // Close class
+    indent_down();
+    indent(f_service_) << "}" << endl << endl;
+  }
+
+  // Close AsyncSSLClient
   scope_down(f_service_);
   f_service_ << endl;
 }
