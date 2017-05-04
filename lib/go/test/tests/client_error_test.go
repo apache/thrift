@@ -678,3 +678,32 @@ func TestClientWrongMessageType(t *testing.T) {
 		t.Fatal("Expected INVALID_MESSAGE_TYPE_EXCEPTION error")
 	}
 }
+
+func TestClientSeqIdMismatch(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	transport := thrift.NewTMemoryBuffer()
+	protocol := NewMockTProtocol(mockCtrl)
+	gomock.InOrder(
+		protocol.EXPECT().WriteMessageBegin("testString", thrift.CALL, int32(1)),
+		protocol.EXPECT().WriteStructBegin("testString_args"),
+		protocol.EXPECT().WriteFieldBegin("s", thrift.TType(thrift.STRING), int16(1)),
+		protocol.EXPECT().WriteString("test"),
+		protocol.EXPECT().WriteFieldEnd(),
+		protocol.EXPECT().WriteFieldStop(),
+		protocol.EXPECT().WriteStructEnd(),
+		protocol.EXPECT().WriteMessageEnd(),
+		protocol.EXPECT().Flush(),
+		protocol.EXPECT().ReadMessageBegin().Return("testString", thrift.REPLY, int32(2), nil),
+	)
+
+	client := errortest.NewErrorTestClientProtocol(transport, protocol, protocol)
+	_, err := client.TestString("test")
+	appErr, ok := err.(thrift.TApplicationException)
+	if !ok {
+		t.Fatal("Expected TApplicationException")
+	}
+	if appErr.TypeId() != thrift.BAD_SEQUENCE_ID {
+		t.Fatal("Expected BAD_SEQUENCE_ID error")
+	}
+	mockCtrl.Finish()
+}
