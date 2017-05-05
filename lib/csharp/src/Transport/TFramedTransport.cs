@@ -171,8 +171,12 @@ namespace Thrift.Transport
             {
                 if (disposing)
                 {
-                    readBuffer.Dispose();
-                    writeBuffer.Dispose();
+                    if(readBuffer != null)
+                        readBuffer.Dispose();
+                    if(writeBuffer != null)
+                        writeBuffer.Dispose();
+                    if(transport != null)
+                        transport.Dispose();
                 }
             }
             _IsDisposed = true;
