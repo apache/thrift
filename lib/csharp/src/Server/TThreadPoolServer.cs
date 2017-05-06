@@ -87,13 +87,19 @@ namespace Thrift.Server
     {
       lock (typeof(TThreadPoolServer))
       {
-        if (!ThreadPool.SetMaxThreads(maxThreadPoolThreads, maxThreadPoolThreads))
+        if(maxThreadPoolThreads > 0)
         {
-          throw new Exception("Error: could not SetMaxThreads in ThreadPool");
+          if (!ThreadPool.SetMaxThreads(maxThreadPoolThreads, maxThreadPoolThreads))
+          {
+            throw new Exception("Error: could not SetMaxThreads in ThreadPool");
+          }
         }
-        if (!ThreadPool.SetMinThreads(minThreadPoolThreads, minThreadPoolThreads))
+        if (minThreadPoolThreads > 0)
         {
-          throw new Exception("Error: could not SetMinThreads in ThreadPool");
+          if (!ThreadPool.SetMinThreads(minThreadPoolThreads, minThreadPoolThreads))
+          {
+            throw new Exception("Error: could not SetMinThreads in ThreadPool");
+          }
         }
       }
     }
