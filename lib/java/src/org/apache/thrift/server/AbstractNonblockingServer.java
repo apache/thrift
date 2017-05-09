@@ -50,7 +50,7 @@ public abstract class AbstractNonblockingServer extends TServer {
   protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
 
   public static abstract class AbstractNonblockingServerArgs<T extends AbstractNonblockingServerArgs<T>> extends AbstractServerArgs<T> {
-    public long maxReadBufferBytes = Long.MAX_VALUE;
+    public long maxReadBufferBytes = 256 * 1024 * 1024;
 
     public AbstractNonblockingServerArgs(TNonblockingServerTransport transport) {
       super(transport);
