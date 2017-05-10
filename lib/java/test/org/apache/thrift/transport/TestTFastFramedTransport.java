@@ -30,4 +30,9 @@ public class TestTFastFramedTransport extends TestTFramedTransport {
   protected TTransport getTransport(TTransport underlying, int maxLength) {
     return new TFastFramedTransport(underlying, INITIAL_CAPACITY, maxLength);
   }
+
+  @Override
+  protected TTransport getTransport(TTransport underlying, int maxLength) {
+    return new TFastFramedTransport(underlying, 50, maxLength);
+  }
 }
