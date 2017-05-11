@@ -24,6 +24,7 @@ extern crate thrift;
 use kitchen_sink::base_one::Noodle;
 use kitchen_sink::base_two::{Napkin, NapkinServiceSyncHandler, Ramen, RamenServiceSyncHandler};
 use kitchen_sink::midlayer::{Dessert, Meal, MealServiceSyncHandler, MealServiceSyncProcessor};
+use kitchen_sink::recursive;
 use kitchen_sink::ultimate::{Drink, FullMeal, FullMealAndDrinks,
                              FullMealAndDrinksServiceSyncProcessor, FullMealServiceSyncHandler};
 use kitchen_sink::ultimate::FullMealAndDrinksServiceSyncHandler;
@@ -52,7 +53,7 @@ fn run() -> thrift::Result<()> {
         (about: "Thrift Rust kitchen sink test server")
         (@arg port: --port +takes_value "port on which the test server listens")
         (@arg protocol: --protocol +takes_value "Thrift protocol implementation to use (\"binary\", \"compact\")")
-        (@arg service: --service +takes_value "Service type to contact (\"part\", \"full\")")
+        (@arg service: --service +takes_value "Service type to contact (\"part\", \"full\", \"recursive\")")
     )
             .get_matches();
 
@@ -104,6 +105,15 @@ fn run() -> thrift::Result<()> {
         }
         "full" => {
             run_full_meal_server(
+                &listen_address,
+                r_transport_factory,
+                i_protocol_factory,
+                w_transport_factory,
+                o_protocol_factory,
+            )
+        }
+        "recursive" => {
+            run_recursive_server(
                 &listen_address,
                 r_transport_factory,
                 i_protocol_factory,
@@ -247,4 +257,48 @@ fn ramen() -> Ramen {
 
 fn napkin() -> Napkin {
     Napkin {}
+}
+
+fn run_recursive_server<RTF, IPF, WTF, OPF>(
+    listen_address: &str,
+    r_transport_factory: RTF,
+    i_protocol_factory: IPF,
+    w_transport_factory: WTF,
+    o_protocol_factory: OPF,
+) -> thrift::Result<()>
+where
+    RTF: TReadTransportFactory + 'static,
+    IPF: TInputProtocolFactory + 'static,
+    WTF: TWriteTransportFactory + 'static,
+    OPF: TOutputProtocolFactory + 'static,
+{
+    let processor = recursive::TestServiceSyncProcessor::new(RecursiveTestServerHandler {});
+    let mut server = TServer::new(
+        r_transport_factory,
+        i_protocol_factory,
+        w_transport_factory,
+        o_protocol_factory,
+        processor,
+        1,
+    );
+
+    server.listen(listen_address)
+}
+
+struct RecursiveTestServerHandler;
+impl recursive::TestServiceSyncHandler for RecursiveTestServerHandler {
+    fn handle_echo_tree(&self, tree: recursive::RecTree) -> thrift::Result<recursive::RecTree> {
+        println!("{:?}", tree);
+        Ok(tree)
+    }
+
+    fn handle_echo_list(&self, lst: recursive::RecList) -> thrift::Result<recursive::RecList> {
+        println!("{:?}", lst);
+        Ok(lst)
+    }
+
+    fn handle_echo_co_rec(&self, item: recursive::CoRec) -> thrift::Result<recursive::CoRec> {
+        println!("{:?}", item);
+        Ok(item)
+    }
 }
