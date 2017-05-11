@@ -19,11 +19,12 @@
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
-stubs: thrifts/Base_One.thrift thrifts/Base_Two.thrift thrifts/Midlayer.thrift thrifts/Ultimate.thrift $(THRIFT)
+stubs: thrifts/Base_One.thrift thrifts/Base_Two.thrift thrifts/Midlayer.thrift thrifts/Ultimate.thrift $(top_builddir)/test/Recursive.thrift $(THRIFT)
 	$(THRIFT) -I ./thrifts -out src --gen rs thrifts/Base_One.thrift
 	$(THRIFT) -I ./thrifts -out src --gen rs thrifts/Base_Two.thrift
 	$(THRIFT) -I ./thrifts -out src --gen rs thrifts/Midlayer.thrift
 	$(THRIFT) -I ./thrifts -out src --gen rs thrifts/Ultimate.thrift
+	$(THRIFT) -out src --gen rs $(top_builddir)/test/Recursive.thrift
 
 check: stubs
 	$(CARGO) build
