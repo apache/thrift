@@ -33,15 +33,39 @@ namespace Thrift.Server
   /// </summary>
   public class TThreadPoolServer : TServer
   {
-    private const int DEFAULT_MIN_THREADS = 10;
-    private const int DEFAULT_MAX_THREADS = 100;
+    private const int DEFAULT_MIN_THREADS = -1;  // use .NET ThreadPool defaults
+    private const int DEFAULT_MAX_THREADS = -1;  // use .NET ThreadPool defaults
     private volatile bool stop = false;
+
+    public struct Configuration
+    {
+      public int MinWorkerThreads;
+      public int MaxWorkerThreads;
+      public int MinIOThreads;
+      public int MaxIOThreads;
+
+      public Configuration(int min = DEFAULT_MIN_THREADS, int max = DEFAULT_MAX_THREADS)
+      {
+        MinWorkerThreads = min;
+        MaxWorkerThreads = max;
+        MinIOThreads = min;
+        MaxIOThreads = max;
+      }
+
+      public Configuration(int minWork, int maxWork, int minIO, int maxIO)
+      {
+        MinWorkerThreads = minWork;
+        MaxWorkerThreads = maxWork;
+        MinIOThreads = minIO;
+        MaxIOThreads = maxIO;
+      }
+    }
 
     public TThreadPoolServer(TProcessor processor, TServerTransport serverTransport)
         : this(new TSingletonProcessorFactory(processor), serverTransport,
          new TTransportFactory(), new TTransportFactory(),
          new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(),
-         DEFAULT_MIN_THREADS, DEFAULT_MAX_THREADS, DefaultLogDelegate)
+         new Configuration(), DefaultLogDelegate)
     {
     }
 
@@ -49,7 +73,7 @@ namespace Thrift.Server
         : this(new TSingletonProcessorFactory(processor), serverTransport,
          new TTransportFactory(), new TTransportFactory(),
          new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(),
-         DEFAULT_MIN_THREADS, DEFAULT_MAX_THREADS, logDelegate)
+         new Configuration(), logDelegate)
     {
     }
 
@@ -60,7 +84,7 @@ namespace Thrift.Server
         : this(new TSingletonProcessorFactory(processor), serverTransport,
            transportFactory, transportFactory,
            protocolFactory, protocolFactory,
-           DEFAULT_MIN_THREADS, DEFAULT_MAX_THREADS, DefaultLogDelegate)
+           new Configuration(), DefaultLogDelegate)
     {
     }
 
@@ -71,7 +95,7 @@ namespace Thrift.Server
         : this(processorFactory, serverTransport,
          transportFactory, transportFactory,
          protocolFactory, protocolFactory,
-         DEFAULT_MIN_THREADS, DEFAULT_MAX_THREADS, DefaultLogDelegate)
+         new Configuration(), DefaultLogDelegate)
     {
     }
 
@@ -82,24 +106,48 @@ namespace Thrift.Server
                  TProtocolFactory inputProtocolFactory,
                  TProtocolFactory outputProtocolFactory,
                  int minThreadPoolThreads, int maxThreadPoolThreads, LogDelegate logDel)
+        : this(processorFactory, serverTransport, inputTransportFactory, outputTransportFactory,
+         inputProtocolFactory, outputProtocolFactory,
+         new Configuration(minThreadPoolThreads, maxThreadPoolThreads),
+         logDel)
+    {
+    }
+
+    public TThreadPoolServer(TProcessorFactory processorFactory,
+                 TServerTransport serverTransport,
+                 TTransportFactory inputTransportFactory,
+                 TTransportFactory outputTransportFactory,
+                 TProtocolFactory inputProtocolFactory,
+                 TProtocolFactory outputProtocolFactory,
+                 Configuration threadConfig,
+                 LogDelegate logDel)
         : base(processorFactory, serverTransport, inputTransportFactory, outputTransportFactory,
-          inputProtocolFactory, outputProtocolFactory, logDel)
+        inputProtocolFactory, outputProtocolFactory, logDel)
     {
       lock (typeof(TThreadPoolServer))
       {
-        if(maxThreadPoolThreads > 0)
+        if ((threadConfig.MaxWorkerThreads > 0) || (threadConfig.MaxIOThreads > 0))
         {
-          if (!ThreadPool.SetMaxThreads(maxThreadPoolThreads, maxThreadPoolThreads))
-          {
+          int work, comm;
+          ThreadPool.GetMaxThreads(out work, out comm);
+          if (threadConfig.MaxWorkerThreads > 0)
+            work = threadConfig.MaxWorkerThreads;
+          if (threadConfig.MaxIOThreads > 0)
+            comm = threadConfig.MaxIOThreads;
+          if (!ThreadPool.SetMaxThreads(work, comm))
             throw new Exception("Error: could not SetMaxThreads in ThreadPool");
-          }
         }
-        if (minThreadPoolThreads > 0)
+
+        if ((threadConfig.MinWorkerThreads > 0) || (threadConfig.MinIOThreads > 0))
         {
-          if (!ThreadPool.SetMinThreads(minThreadPoolThreads, minThreadPoolThreads))
-          {
+          int work, comm;
+          ThreadPool.GetMinThreads(out work, out comm);
+          if (threadConfig.MinWorkerThreads > 0)
+            work = threadConfig.MinWorkerThreads;
+          if (threadConfig.MinIOThreads > 0)
+            comm = threadConfig.MinIOThreads;
+          if (!ThreadPool.SetMinThreads(work, comm))
             throw new Exception("Error: could not SetMinThreads in ThreadPool");
-          }
         }
       }
     }
