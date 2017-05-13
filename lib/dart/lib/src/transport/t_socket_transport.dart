@@ -79,7 +79,9 @@ class TClientSocketTransport extends TSocketTransport {
     var completer = new Completer<Uint8List>.sync();
     _completers.add(completer);
 
-    socket.send(bytes);
+    if (bytes.lengthInBytes > 0) {
+      socket.send(bytes);
+    }
 
     return completer.future;
   }
