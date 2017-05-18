@@ -39,6 +39,7 @@ type TSimpleServer struct {
 	outputTransportFactory TTransportFactory
 	inputProtocolFactory   TProtocolFactory
 	outputProtocolFactory  TProtocolFactory
+	sync.WaitGroup
 }
 
 func NewTSimpleServer2(processor TProcessor, serverTransport TServerTransport) *TSimpleServer {
@@ -135,6 +136,7 @@ func (p *TSimpleServer) AcceptLoop() error {
 			return err
 		}
 		if client != nil {
+			p.Add(1)
 			go func() {
 				if err := p.processRequests(client); err != nil {
 					log.Println("error processing request:", err)
@@ -157,14 +159,17 @@ var once sync.Once
 
 func (p *TSimpleServer) Stop() error {
 	q := func() {
-		p.quit <- struct{}{}
+		close(p.quit)
 		p.serverTransport.Interrupt()
+		p.Wait()
 	}
 	once.Do(q)
 	return nil
 }
 
 func (p *TSimpleServer) processRequests(client TTransport) error {
+	defer p.Done()
+
 	processor := p.processorFactory.GetProcessor(client)
 	inputTransport := p.inputTransportFactory.GetTransport(client)
 	outputTransport := p.outputTransportFactory.GetTransport(client)
@@ -175,6 +180,7 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 			log.Printf("panic in processor: %s: %s", e, debug.Stack())
 		}
 	}()
+
 	if inputTransport != nil {
 		defer inputTransport.Close()
 	}
@@ -182,6 +188,12 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 		defer outputTransport.Close()
 	}
 	for {
+		select {
+		case <-p.quit:
+			return nil
+		default:
+		}
+
 		ok, err := processor.Process(inputProtocol, outputProtocol)
 		if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE {
 			return nil
@@ -191,7 +203,7 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 		if err, ok := err.(TApplicationException); ok && err.TypeId() == UNKNOWN_METHOD {
 			continue
 		}
- 		if !ok {
+		if !ok {
 			break
 		}
 	}
