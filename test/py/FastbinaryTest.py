@@ -85,6 +85,10 @@ hm.big[1].a_bite = 0x22
 
 hm.contain.add(("and a one", "and a two"))
 hm.contain.add(("then a one, two", "three!", "FOUR!"))
+if sys.version_info[0] == 2 and os.environ.get('THRIFT_TEST_PY_NO_UTF8STRINGS'):
+    hm.contain.add((u"\xd7\n\a\t".encode('utf8'),))
+else:
+    hm.contain.add((u"\xd7\n\a\t",))
 hm.contain.add(())
 
 hm.bonks["nothing"] = []
