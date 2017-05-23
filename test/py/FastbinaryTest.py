@@ -74,6 +74,9 @@ ooe2.zomg_unicode = u"\xd3\x80\xe2\x85\xae\xce\x9d\x20"\
                     u"\x20\xce\x91\x74\x74\xce\xb1\xe2\x85\xbd\xce\xba"\
                     u"\xc7\x83\xe2\x80\xbc"
 
+ooe_bad = OneOfEach()
+ooe_bad.zomg_unicode = b'\xbe\xef\xff'
+
 if sys.version_info[0] == 2 and os.environ.get('THRIFT_TEST_PY_NO_UTF8STRINGS'):
     ooe1.zomg_unicode = ooe1.zomg_unicode.encode('utf8')
     ooe2.zomg_unicode = ooe2.zomg_unicode.encode('utf8')
@@ -167,6 +170,27 @@ class Test(object):
             pprint(repr(o))
             raise Exception('read value mismatch')
 
+    def _check_bad_unicode(self, o):
+        if (sys.version_info[0] == 2 and
+                os.environ.get('THRIFT_TEST_PY_NO_UTF8STRINGS')):
+            return
+
+        try:
+            prot_slow = self._slow(TTransport.TMemoryBuffer())
+            o.write(prot_slow)
+        except UnicodeError:
+            pass
+        else:
+            raise Exception('UnicodeError not raised')
+
+        try:
+            prot_fast = self._fast(TTransport.TMemoryBuffer())
+            o.write(prot_fast)
+        except UnicodeError:
+            pass
+        else:
+            raise Exception('UnicodeError not raised')
+
     def do_test(self):
         self._check_write(HolyMoley())
         self._check_read(HolyMoley())
@@ -187,6 +211,8 @@ class Test(object):
         self._check_read(my_zero)
 
         self._check_read(Backwards(**{"first_tag2": 4, "second_tag1": 2}))
+
+        self._check_bad_unicode(ooe_bad)
 
         # One case where the serialized form changes, but only superficially.
         o = Backwards(**{"first_tag2": 4, "second_tag1": 2})

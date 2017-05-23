@@ -419,6 +419,8 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
 
   case T_STRING: {
     ScopedPyObject nval;
+    Py_ssize_t len;
+    char *str;
 
     if (PyUnicode_Check(value)) {
       nval.reset(PyUnicode_AsUTF8String(value));
@@ -427,10 +429,19 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
       }
     } else {
       Py_INCREF(value);
+      if (isUtf8(typeargs)) {
+        if (PyBytes_AsStringAndSize(value, &str, &len) < 0) {
+          return false;
+        }
+        // Check that input is a valid UTF-8 string.
+        if (!PyUnicode_DecodeUTF8(str, len, 0)) {
+          return false;
+        }
+      }
       nval.reset(value);
     }
 
-    Py_ssize_t len = PyBytes_Size(nval.get());
+    len = PyBytes_Size(nval.get());
     if (!detail::check_ssize_t_32(len)) {
       return false;
     }
