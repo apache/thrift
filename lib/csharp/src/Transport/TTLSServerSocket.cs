@@ -126,13 +126,13 @@ namespace Thrift.Transport
             try
             {
                 // Create server socket
-                this.server = TSocketVersionizer.CreateTcpListener(port);
+                this.server = TSocketVersionizer.CreateTcpListener(this.port);
                 this.server.Server.NoDelay = true;
             }
             catch (Exception)
             {
                 server = null;
-                throw new TTransportException("Could not create ServerSocket on port " + port + ".");
+                throw new TTransportException("Could not create ServerSocket on port " + this.port + ".");
             }
         }
 
