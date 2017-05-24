@@ -22,9 +22,9 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.IO.Pipes;
 using System.Threading;
+using System.Security.Principal;
 
 namespace Thrift.Transport
 {
@@ -68,23 +68,32 @@ namespace Thrift.Transport
             if (stream == null)
             {
                 var direction = PipeDirection.InOut;
-                var maxconn = 254;
+                var maxconn = NamedPipeServerStream.MaxAllowedServerInstances;
                 var mode = PipeTransmissionMode.Byte;
                 var options = asyncMode ? PipeOptions.Asynchronous : PipeOptions.None;
-                var inbuf = 4096;
-                var outbuf = 4096;
-                // TODO: security
+                const int INBUF_SIZE = 4096;
+                const int OUTBUF_SIZE = 4096;
+
+                // security
+                var security = new PipeSecurity();
+                security.AddAccessRule(
+                    new PipeAccessRule(
+                        new SecurityIdentifier(WellKnownSidType.WorldSid, null),
+                        PipeAccessRights.Read | PipeAccessRights.Write | PipeAccessRights.Synchronize | PipeAccessRights.CreateNewInstance,
+                        System.Security.AccessControl.AccessControlType.Allow
+                    )
+                );
 
                 try
                 {
-                    stream = new NamedPipeServerStream(pipeAddress, direction, maxconn, mode, options, inbuf, outbuf);
+                    stream = new NamedPipeServerStream(pipeAddress, direction, maxconn, mode, options, INBUF_SIZE, OUTBUF_SIZE, security);
                 }
                 catch (NotImplementedException)  // Mono still does not support async, fallback to sync
                 {
                     if (asyncMode)
                     {
                         options &= (~PipeOptions.Asynchronous);
-                        stream = new NamedPipeServerStream(pipeAddress, direction, maxconn, mode, options, inbuf, outbuf);
+                        stream = new NamedPipeServerStream(pipeAddress, direction, maxconn, mode, options, INBUF_SIZE, OUTBUF_SIZE, security);
                         asyncMode = false;
                     }
                     else
