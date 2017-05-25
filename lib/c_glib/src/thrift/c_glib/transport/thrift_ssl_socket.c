@@ -215,7 +215,10 @@ thrift_ssl_socket_read (ThriftTransport *transport, gpointer buf,
   ThriftSSLSocket *ssl_socket = THRIFT_SSL_SOCKET (transport);
   guint bytes = 0;
   guint retries = 0;
-  for (retries=0; retries < maxRecvRetries_; retries++) {
+  ThriftSocket *socket = THRIFT_SOCKET (transport);
+  g_return_val_if_fail (socket->sd != THRIFT_INVALID_SOCKET, FALSE);
+
+    for (retries=0; retries < maxRecvRetries_; retries++) {
       bytes = SSL_read(ssl_socket->ssl, buf, len);
       if (bytes >= 0)
 	break;
