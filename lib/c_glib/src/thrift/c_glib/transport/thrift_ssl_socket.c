@@ -290,6 +290,9 @@ thrift_ssl_socket_flush (ThriftTransport *transport, GError **error)
   ThriftSSLSocket *ssl_socket = THRIFT_SSL_SOCKET (transport);
   gint ret = 0;
   guint sent = 0;
+
+  g_return_val_if_fail (socket->sd != THRIFT_INVALID_SOCKET, FALSE);
+
   BIO* bio = SSL_get_wbio(ssl_socket->ssl);
   if (bio == NULL) {
       g_set_error (error, THRIFT_TRANSPORT_ERROR,
