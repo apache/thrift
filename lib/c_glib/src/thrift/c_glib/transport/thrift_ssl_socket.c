@@ -252,7 +252,7 @@ thrift_ssl_socket_write (ThriftTransport *transport, const gpointer buf,
   ThriftSSLSocket *ssl_socket = THRIFT_SSL_SOCKET (transport);
   gint ret = 0;
   guint sent = 0;
-  ThriftSocket *socket = THRIFT_SSL_SOCKET (transport);
+  ThriftSocket *socket = THRIFT_SOCKET (transport);
   g_return_val_if_fail (socket->sd != THRIFT_INVALID_SOCKET, FALSE);
 
   while (sent < len)
@@ -291,6 +291,7 @@ thrift_ssl_socket_flush (ThriftTransport *transport, GError **error)
   gint ret = 0;
   guint sent = 0;
 
+  ThriftSocket *socket = THRIFT_SOCKET (transport);
   g_return_val_if_fail (socket->sd != THRIFT_INVALID_SOCKET, FALSE);
 
   BIO* bio = SSL_get_wbio(ssl_socket->ssl);
