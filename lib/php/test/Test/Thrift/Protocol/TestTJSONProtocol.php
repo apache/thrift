@@ -547,7 +547,7 @@ class TestTJSONProtocol_Fixtures
 
     self::$testArgsJSON['testUnicodeStringWithNonBMP'] = '{"1":{"str":"สวัสดี\/𝒯"}}';
 
-    self::$testArgsJSON['testDouble'] = '{"1":{"dbl":3.1415926535898}}';
+    self::$testArgsJSON['testDouble'] = '{"1":{"dbl":3.1415926535897931}}';
 
     self::$testArgsJSON['testByte'] = '{"1":{"i8":1}}';
 
