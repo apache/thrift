@@ -84,7 +84,7 @@ class TForkingServer extends TServer
       $outputTransport = $this->outputTransportFactory_->getTransport($transport);
       $inputProtocol = $this->inputProtocolFactory_->getProtocol($inputTransport);
       $outputProtocol = $this->outputProtocolFactory_->getProtocol($outputTransport);
-      while ($this->processor_->process($inputProtocol, $outputProtocol)) { }
+      $this->processor_->process($inputProtocol, $outputProtocol);
       @$transport->close();
     } catch (TTransportException $e) { }
 
