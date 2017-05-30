@@ -1445,7 +1445,9 @@ void t_go_generator::generate_countsetfields_helper(ofstream& out,
     if ((*f_iter)->get_req() == t_field::T_REQUIRED)
       continue;
 
-    if (!is_pointer_field(*f_iter))
+    t_type* type = (*f_iter)->get_type()->get_true_type();
+
+    if (!(is_pointer_field(*f_iter) || type->is_map() || type->is_set() || type->is_list()))
       continue;
 
     const string field_name(publicize(escape_string((*f_iter)->get_name())));
