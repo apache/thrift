@@ -1015,6 +1015,10 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
     return;
   }
 
+  if (buffer_size == NULL) {
+    buffer_size = 8192;
+  }
+
   try {
     PHPInputTransport transport(protocol, buffer_size);
     int8_t messageType = 0;
