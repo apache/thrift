@@ -22,8 +22,18 @@
 # see what we need: http://thrift.apache.org/docs/install/ubuntu
 
 # General dependencies
-sudo apt-add-repository "deb http://archive.ubuntu.com/ubuntu/ trusty main restricted" -y
+# sudo apt-add-repository "deb http://archive.ubuntu.com/ubuntu/ trusty main restricted" -y
+
+# for cmake-2.8.12 on precise
+sudo add-apt-repository ppa:smspillaz/cmake-2.8.12 -y
+
+# for qt5 development on precise
+sudo apt-add-repository ppa:ubuntu-sdk-team/ppa -y
+
 sudo apt-get update -qq
 
-sudo apt-get install -qq libpango-1.0-0 libqt4-dev qtbase5-dev qtbase5-dev-tools qt5-default libboost-dev libboost-test-dev libboost-program-options-dev libboost-system-dev libboost-filesystem-dev libboost-thread-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev make cmake git debhelper bc nsis ninja-build
+# remove cmake from ubuntu
+sudo apt-get remove cmake cmake-data
+
+sudo apt-get install libpango1.0-0 libqt4-dev qtbase5-dev qtbase5-dev-tools qt5-default libboost-dev libboost-test-dev libboost-program-options-dev libboost-system-dev libboost-filesystem-dev libboost-thread-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev make cmake git debhelper bc nsis ninja-build
 dpkg -S /usr/include/boost/version.hpp
