@@ -79,6 +79,7 @@
   <ItemGroup>
     <Compile Include="Collections\TCollections.cs" />
     <Compile Include="Collections\THashSet.cs" />
+    <Compile Include="Net35\ExtensionsNet35.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Protocol\TAbstractBase.cs" />
     <Compile Include="Protocol\TBase.cs" />
