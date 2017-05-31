@@ -195,18 +195,22 @@ namespace Thrift.Transport
                             inputStream.Seek(0, 0);
                         }
 
-                        foreach( var encoding in response.Headers.GetValues("Content-Encoding"))
+                        var encodings = response.Headers.GetValues("Content-Encoding");
+                        if (encodings != null)
                         {
-                            switch(encoding)
+                            foreach (var encoding in encodings)
                             {
-                                case "gzip":
-                                    DecompressGZipped(ref inputStream);
-                                    break;
-                                case "deflate":
-                                    DecompressDeflated(ref inputStream);
-                                    break;
-                                default:
-                                    break;
+                                switch (encoding)
+                                {
+                                    case "gzip":
+                                        DecompressGZipped(ref inputStream);
+                                        break;
+                                    case "deflate":
+                                        DecompressDeflated(ref inputStream);
+                                        break;
+                                    default:
+                                        break;
+                                }
                             }
                         }
                     }
