@@ -241,6 +241,9 @@ class TSocket extends TTransport
       }
       throw new TException($error);
     }
+
+    $socket = socket_import_stream($this->handle_);
+    socket_set_option($socket, SOL_TCP, TCP_NODELAY, 1);
   }
 
   /**
