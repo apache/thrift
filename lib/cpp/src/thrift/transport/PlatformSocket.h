@@ -66,7 +66,11 @@
 #  endif
 #  define THRIFT_SLEEP_SEC thrift_sleep
 #  define THRIFT_SLEEP_USEC thrift_usleep
-#  define THRIFT_TIMESPEC thrift_timespec
+#  ifndef timespec
+#    define THRIFT_TIMESPEC thrift_timespec
+#  else // support MinGW
+#    define THRIFT_TIMESPEC timespec
+#  endif
 #  define THRIFT_CTIME_R thrift_ctime_r
 #  define THRIFT_POLL thrift_poll
 #  if WINVER <= 0x0502 //XP, Server2003
