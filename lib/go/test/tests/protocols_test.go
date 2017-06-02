@@ -42,7 +42,10 @@ func RunSocketTestSuite(t *testing.T, protocolFactory thrift.TProtocolFactory,
 
 	// client
 	var transport thrift.TTransport = thrift.NewTSocketFromAddrTimeout(addr, TIMEOUT)
-	transport = transportFactory.GetTransport(transport)
+	transport, err = transportFactory.GetTransport(transport)
+	if err != nil {
+		t.Fatal(err)
+	}
 	var protocol thrift.TProtocol = protocolFactory.GetProtocol(transport)
 	thriftTestClient := thrifttest.NewThriftTestClientProtocol(transport, protocol, protocol)
 	err = transport.Open()

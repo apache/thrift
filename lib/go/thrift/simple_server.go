@@ -171,8 +171,14 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 	defer p.Done()
 
 	processor := p.processorFactory.GetProcessor(client)
-	inputTransport := p.inputTransportFactory.GetTransport(client)
-	outputTransport := p.outputTransportFactory.GetTransport(client)
+	inputTransport, err := p.inputTransportFactory.GetTransport(client)
+	if err != nil {
+		return err
+	}
+	outputTransport, err := p.outputTransportFactory.GetTransport(client)
+	if err != nil {
+		return err
+	}
 	inputProtocol := p.inputProtocolFactory.GetProtocol(inputTransport)
 	outputProtocol := p.outputProtocolFactory.GetProtocol(outputTransport)
 	defer func() {
