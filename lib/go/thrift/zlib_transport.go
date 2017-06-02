@@ -38,9 +38,8 @@ type TZlibTransport struct {
 }
 
 // GetTransport constructs a new instance of NewTZlibTransport
-func (p *TZlibTransportFactory) GetTransport(trans TTransport) TTransport {
-	t, _ := NewTZlibTransport(trans, p.level)
-	return t
+func (p *TZlibTransportFactory) GetTransport(trans TTransport) (TTransport, error) {
+	return NewTZlibTransport(trans, p.level)
 }
 
 // NewTZlibTransportFactory constructs a new instance of NewTZlibTransportFactory

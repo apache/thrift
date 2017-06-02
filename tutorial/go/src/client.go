@@ -90,7 +90,10 @@ func runClient(transportFactory thrift.TTransportFactory, protocolFactory thrift
 		fmt.Println("Error opening socket:", err)
 		return err
 	}
-	transport = transportFactory.GetTransport(transport)
+	transport, err = transportFactory.GetTransport(transport)
+	if err != nil {
+		return err
+	}
 	defer transport.Close()
 	if err := transport.Open(); err != nil {
 		return err
