@@ -309,6 +309,10 @@ public class TThreadPoolServer extends TServer {
           client_.close();
         }
       }
+
+      if (client_.isOpen()) {
+        client_.close();
+      }
     }
   }
 }
