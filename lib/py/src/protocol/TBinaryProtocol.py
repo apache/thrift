@@ -127,6 +127,8 @@ class TBinaryProtocol(TProtocolBase):
         self.trans.write(buff)
 
     def writeBinary(self, str):
+        if not isinstance(str, bytes):
+            str = str.encode()
         self.writeI32(len(str))
         self.trans.write(str)
 
