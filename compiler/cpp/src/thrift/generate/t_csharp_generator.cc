@@ -986,7 +986,10 @@ void t_csharp_generator::generate_csharp_struct_reader(ofstream& out, t_struct* 
     if (field_is_required((*f_iter))) {
       indent(out) << "if (!isset_" << (*f_iter)->get_name() << ")" << endl;
       indent_up();
-      indent(out) << "throw new TProtocolException(TProtocolException.INVALID_DATA);" << endl;
+      out << indent()
+          << "throw new TProtocolException(TProtocolException.INVALID_DATA, "
+          << "\"required field " << prop_name((*f_iter)) << " not set\");" 
+          << endl;
       indent_down();
     }
   }
@@ -1022,19 +1025,35 @@ void t_csharp_generator::generate_csharp_struct_writer(ofstream& out, t_struct* 
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       bool is_required = field_is_required((*f_iter));
       bool has_default = field_has_default((*f_iter));
-      if (nullable_ && !has_default && !is_required) {
-        indent(out) << "if (" << prop_name((*f_iter)) << " != null) {" << endl;
-        indent_up();
-      } else if (!is_required) {
-        bool null_allowed = type_can_be_null((*f_iter)->get_type());
+      bool null_allowed = type_can_be_null((*f_iter)->get_type());
+
+      if (is_required)
+      {
         if (null_allowed) {
-          indent(out) << "if (" << prop_name((*f_iter)) << " != null && __isset."
-                      << normalize_name((*f_iter)->get_name()) << ") {" << endl;
+          indent(out) << "if (" << prop_name((*f_iter)) << " == null)" << endl;
           indent_up();
-        } else {
-          indent(out) << "if (__isset." << normalize_name((*f_iter)->get_name()) << ") {" << endl;
-          indent_up();
+          out << indent()
+              << "throw new TProtocolException(TProtocolException.INVALID_DATA, "
+              << "\"required field " << prop_name((*f_iter)) << " not set\");"
+              << endl;
+          indent_down();
         }
+      }
+      else
+      {
+        if (nullable_ && !has_default) {
+            indent(out) << "if (" << prop_name((*f_iter)) << " != null) {" << endl;
+        }
+        else if (null_allowed) {
+          out << indent()
+              << "if (" << prop_name((*f_iter)) << " != null && __isset."
+              << normalize_name((*f_iter)->get_name()) << ") {"
+              << endl;
+        }
+        else {
+           indent(out) << "if (__isset." << normalize_name((*f_iter)->get_name()) << ") {" << endl;
+        }
+        indent_up();
       }
       indent(out) << "field.Name = \"" << (*f_iter)->get_name() << "\";" << endl;
       indent(out) << "field.Type = " << type_to_enum((*f_iter)->get_type()) << ";" << endl;
