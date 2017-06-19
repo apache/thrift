@@ -63,6 +63,7 @@ public:
     json_serializable_ = false;
     nsglobal_ = ""; // by default global namespace is empty
     psr4_ = false;
+    php56_ = false;
     for (iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if (iter->first.compare("inlined") == 0) {
         binary_inline_ = true;
@@ -80,6 +81,8 @@ public:
         nsglobal_ = iter->second;
       } else if (iter->first.compare("psr4") == 0) {
         psr4_ = true;
+      } else if (iter->first.compare("php56") == 0) {
+        php56_ = true;
       } else {
         throw "unknown option php:" + iter->first;
       }
@@ -366,6 +369,11 @@ private:
   bool psr4_;
 
   /**
+   * Whether to use PHP56 features like CONST keyword for constant variables
+   */
+  bool php56_;
+
+  /**
    * Whether to generate validator code
    */
   bool validate_;
@@ -545,30 +553,41 @@ void t_php_generator::generate_consts(vector<t_const*> consts) {
     f_consts << "final class Constant extends \\Thrift\\Type\\TConstant {" << endl;
 
     indent_up();
+    if (php56_) {
+      // Create const property
+      for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+        string name = (*c_iter)->get_name();
 
-    // Create static property
-    for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
-      string name = (*c_iter)->get_name();
+        indent(f_consts) << "public CONST $" << name << " = ";
+        generate_php_doc(f_consts, *c_iter);
+        f_consts << render_const_value((*c_iter)->get_type(), (*c_iter)->get_value());
+        f_consts << ";" << endl;
+      }
+    } else {
+      // Create static property
+      for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+        string name = (*c_iter)->get_name();
 
-      indent(f_consts) << "static protected $" << name << ";" << endl;
-    }
+        indent(f_consts) << "static protected $" << name << ";" << endl;
+      }
 
-    // Create init function
-    for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
-      string name = (*c_iter)->get_name();
+      // Create init function
+      for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+        string name = (*c_iter)->get_name();
 
-      f_consts << endl;
+        f_consts << endl;
 
-      indent(f_consts) << "static protected function init_" << name << "() {" << endl;
-      indent_up();
+        indent(f_consts) << "static protected function init_" << name << "() {" << endl;
+        indent_up();
 
-      indent(f_consts) << "return ";
-      generate_php_doc(f_consts, *c_iter);
-      f_consts << render_const_value((*c_iter)->get_type(), (*c_iter)->get_value());
-      f_consts << ";" << endl;
+        indent(f_consts) << "return ";
+        generate_php_doc(f_consts, *c_iter);
+        f_consts << render_const_value((*c_iter)->get_type(), (*c_iter)->get_value());
+        f_consts << ";" << endl;
 
-      indent_down();
-      indent(f_consts) << "}" << endl;
+        indent_down();
+        indent(f_consts) << "}" << endl;
+      }
     }
 
     indent_down();
@@ -2649,4 +2668,5 @@ THRIFT_REGISTER_GENERATOR(
     "    rest:            Generate PHP REST processors\n"
     "    nsglobal=NAME:   Set global namespace\n"
     "    validate:        Generate PHP validator methods\n"
-    "    json:            Generate JsonSerializable classes (requires PHP >= 5.4)\n")
+    "    json:            Generate JsonSerializable classes (requires PHP >= 5.4)\n"
+    "    php56:           Use PHP56 features, for example, const keyword\n")
