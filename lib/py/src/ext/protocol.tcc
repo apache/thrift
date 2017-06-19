@@ -428,16 +428,17 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
         return false;
       }
     } else {
-      Py_INCREF(value);
       if (isUtf8(typeargs)) {
         if (PyBytes_AsStringAndSize(value, &str, &len) < 0) {
           return false;
         }
         // Check that input is a valid UTF-8 string.
-        if (!PyUnicode_DecodeUTF8(str, len, 0)) {
+        nval.reset(PyUnicode_DecodeUTF8(str, len, 0));
+        if (!nval) {
           return false;
         }
       }
+      Py_INCREF(value);
       nval.reset(value);
     }
 
