@@ -44,14 +44,14 @@ class TBase(object):
         if (iprot._fast_decode is not None and
                 isinstance(iprot.trans, TTransport.CReadableTransport) and
                 self.thrift_spec is not None):
-            iprot._fast_decode(self, iprot, (self.__class__, self.thrift_spec))
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
         else:
             iprot.readStruct(self, self.thrift_spec)
 
     def write(self, oprot):
         if (oprot._fast_encode is not None and self.thrift_spec is not None):
             oprot.trans.write(
-                oprot._fast_encode(self, (self.__class__, self.thrift_spec)))
+                oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
         else:
             oprot.writeStruct(self, self.thrift_spec)
 
@@ -77,6 +77,6 @@ class TFrozenBase(TBase):
                 cls.thrift_spec is not None):
             self = cls()
             return iprot._fast_decode(None, iprot,
-                                      (self.__class__, self.thrift_spec))
+                                      [self.__class__, self.thrift_spec])
         else:
             return iprot.readStruct(cls, cls.thrift_spec, True)

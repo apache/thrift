@@ -35,6 +35,11 @@ from ThriftTest.ttypes import (
     Xtruct2,
 )
 
+from Recursive.ttypes import RecTree
+from Recursive.ttypes import RecList
+from Recursive.ttypes import CoRec
+from Recursive.ttypes import CoRec2
+from Recursive.ttypes import VectorTest
 from DebugProtoTest.ttypes import CompactProtoTestStruct, Empty
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol, TCompactProtocol, TJSONProtocol
@@ -284,6 +289,67 @@ class AbstractTest(unittest.TestCase):
 
         for value in bad_values:
             self.assertRaises(Exception, self._serialize, value)
+
+    def testRecTree(self):
+        """Ensure recursive tree node can be created."""
+        children = []
+        for idx in range(1, 5):
+            node = RecTree(item=idx, children=None)
+            children.append(node)
+
+        parent = RecTree(item=0, children=children)
+        serde_parent = self._deserialize(RecTree, self._serialize(parent))
+        self.assertEquals(0, serde_parent.item)
+        self.assertEquals(4, len(serde_parent.children))
+        for child in serde_parent.children:
+            # Cannot use assertIsInstance in python 2.6?
+            self.assertTrue(isinstance(child, RecTree))
+
+    def _buildLinkedList(self):
+        head = cur = RecList(item=0)
+        for idx in range(1, 5):
+            node = RecList(item=idx)
+            cur.nextitem = node
+            cur = node
+        return head
+
+    def _collapseLinkedList(self, head):
+        out_list = []
+        cur = head
+        while cur is not None:
+            out_list.append(cur.item)
+            cur = cur.nextitem
+        return out_list
+
+    def testRecList(self):
+        """Ensure recursive linked list can be created."""
+        rec_list = self._buildLinkedList()
+        serde_list = self._deserialize(RecList, self._serialize(rec_list))
+        out_list = self._collapseLinkedList(serde_list)
+        self.assertEquals([0, 1, 2, 3, 4], out_list)
+
+    def testCoRec(self):
+        """Ensure co-recursive structures can be created."""
+        item1 = CoRec()
+        item2 = CoRec2()
+
+        item1.other = item2
+        item2.other = item1
+
+        # NOTE [econner724,2017-06-21]: These objects cannot be serialized as serialization
+        # results in an infinite loop. fbthrift also suffers from this
+        # problem.
+
+    def testRecVector(self):
+        """Ensure a list of recursive nodes can be created."""
+        mylist = [self._buildLinkedList(), self._buildLinkedList()]
+        myvec = VectorTest(lister=mylist)
+
+        serde_vec = self._deserialize(VectorTest, self._serialize(myvec))
+        golden_list = [0, 1, 2, 3, 4]
+        for cur_list in serde_vec.lister:
+            out_list = self._collapseLinkedList(cur_list)
+            self.assertEqual(golden_list, out_list)
 
 
 class NormalBinaryTest(AbstractTest):
