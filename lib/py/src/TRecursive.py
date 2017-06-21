@@ -1,6 +1,5 @@
-
 # MODIFIED June 20, 2017, Eric Conner
-# 
+#
 #
 # Original source copyright 2014-present Facebook, Inc.
 #
@@ -24,6 +23,7 @@ from __future__ import unicode_literals
 
 from thrift.Thrift import TType
 
+
 def fix_spec(all_structs):
     for s in all_structs:
         spec = s.thrift_spec
@@ -37,6 +37,7 @@ def fix_spec(all_structs):
             elif t[1] == TType.MAP:
                 _fix_map(t[3])
 
+
 def _fix_list_or_set(element_type):
     if element_type[0] == TType.STRUCT:
         element_type[1][1] = element_type[1][0].thrift_spec
@@ -44,6 +45,7 @@ def _fix_list_or_set(element_type):
         _fix_list_or_set(element_type[1])
     elif element_type[0] == TType.MAP:
         _fix_map(element_type[1])
+
 
 def _fix_map(element_type):
     if element_type[0] == TType.STRUCT:
