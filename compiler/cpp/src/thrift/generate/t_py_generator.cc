@@ -150,7 +150,7 @@ public:
   void generate_enum(t_enum* tenum);
   void generate_const(t_const* tconst);
   void generate_struct(t_struct* tstruct);
-  void generate_forward_declaration(t_struct* tstruct) override;
+  void generate_forward_declaration(t_struct* tstruct);
   void generate_xception(t_struct* txception);
   void generate_service(t_service* tservice);
 
