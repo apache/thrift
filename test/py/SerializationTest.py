@@ -302,7 +302,8 @@ class AbstractTest(unittest.TestCase):
         self.assertEquals(0, serde_parent.item)
         self.assertEquals(4, len(serde_parent.children))
         for child in serde_parent.children:
-            self.assertIsInstance(child, RecTree)
+            # Cannot use assertIsInstance in python 2.6?
+            self.assertTrue(isinstance(child, RecTree))
 
     def _buildLinkedList(self):
         head = cur = RecList(item=0)
