@@ -698,7 +698,7 @@ void t_py_generator::generate_py_thrift_spec(ofstream& out,
     indent_down();
     indent(out) << ")" << endl;
   } else {
-    indent(out) << tstruct->get_name() << ".thrift_spec = None" << endl;
+    indent(out) << tstruct->get_name() << ".thrift_spec = ()" << endl;
   }
 }
 
@@ -926,9 +926,9 @@ void t_py_generator::generate_py_struct_reader(ofstream& out, t_struct* tstruct)
   indent_up();
 
   if (is_immutable(tstruct)) {
-    indent(out) << "return iprot._fast_decode(None, iprot, (cls, cls.thrift_spec))" << endl;
+    indent(out) << "return iprot._fast_decode(None, iprot, [cls, cls.thrift_spec])" << endl;
   } else {
-    indent(out) << "iprot._fast_decode(self, iprot, (self.__class__, self.thrift_spec))" << endl;
+    indent(out) << "iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])" << endl;
     indent(out) << "return" << endl;
   }
   indent_down();
@@ -1009,7 +1009,7 @@ void t_py_generator::generate_py_struct_writer(ofstream& out, t_struct* tstruct)
   indent_up();
 
   indent(out)
-      << "oprot.trans.write(oprot._fast_encode(self, (self.__class__, self.thrift_spec)))"
+      << "oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))"
       << endl;
   indent(out) << "return" << endl;
   indent_down();
@@ -2653,7 +2653,7 @@ string t_py_generator::type_to_spec_args(t_type* ttype) {
     return  "None";
   } else if (ttype->is_struct() || ttype->is_xception()) {
     // " + type_name(ttype) + ".thrift_spec
-    return "(" + type_name(ttype) + ", None)";
+    return "[" + type_name(ttype) + ", None]";
   } else if (ttype->is_map()) {
     return "(" + type_to_enum(((t_map*)ttype)->get_key_type()) + ", "
            + type_to_spec_args(((t_map*)ttype)->get_key_type()) + ", "
