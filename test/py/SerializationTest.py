@@ -293,7 +293,7 @@ class AbstractTest(unittest.TestCase):
     def testRecTree(self):
         """Ensure recursive tree node can be created."""
         children = []
-        for idx in xrange(1, 5):
+        for idx in range(1, 5):
             node = RecTree(item=idx, children=None)
             children.append(node)
 
@@ -307,7 +307,7 @@ class AbstractTest(unittest.TestCase):
 
     def _buildLinkedList(self):
         head = cur = RecList(item=0)
-        for idx in xrange(1, 5):
+        for idx in range(1, 5):
             node = RecList(item=idx)
             cur.nextitem = node
             cur = node
