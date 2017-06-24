@@ -137,11 +137,11 @@ RUN apt-get install -y --no-install-recommends \
       neko-dev \
       libneko0
 
+# Newer release of nodejs
+RUN curl -sL https://deb.nodesource.com/setup_6.x | bash
 RUN apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
-      nodejs \
-      nodejs-dev \
-      nodejs-legacy
+      nodejs
 
 RUN apt-get install -y --no-install-recommends \
 `# CSharp dependencies` \
@@ -191,7 +191,7 @@ RUN mkdir -p /usr/lib/haxe && \
 
 # Node.js
 # temporarily removed since this breaks the build (and is not needed to test C# code)
-#RUN curl -sSL https://www.npmjs.com/install.sh | sh
+# RUN curl -sSL https://www.npmjs.com/install.sh | sh
 
 # D
 RUN curl -sSL http://downloads.dlang.org/releases/2.x/2.070.0/dmd_2.070.0-0_amd64.deb -o /tmp/dmd_2.070.0-0_amd64.deb && \
