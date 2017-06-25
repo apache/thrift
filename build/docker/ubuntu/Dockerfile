@@ -145,6 +145,7 @@ RUN apt-get install -y --no-install-recommends \
 
 # Add mono package repository url to get latest version of mono
 RUN echo "deb http://download.mono-project.com/repo/debian trusty main" | tee /etc/apt/sources.list.d/mono.list
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A6A19B38D3D831EF
 RUN apt-get update && apt-get install -y --no-install-recommends \
 `# CSharp dependencies` \
       mono-devel
