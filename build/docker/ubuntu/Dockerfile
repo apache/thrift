@@ -143,7 +143,9 @@ RUN apt-get install -y --no-install-recommends \
       nodejs-dev \
       nodejs-legacy
 
-RUN apt-get install -y --no-install-recommends \
+# Add mono package repository url to get latest version of mono
+RUN echo "deb http://download.mono-project.com/repo/debian trusty main" | tee /etc/apt/sources.list.d/mono.list
+RUN apt-get update && apt-get install -y --no-install-recommends \
 `# CSharp dependencies` \
       libmono-system-web2.0-cil \
       mono-devel
