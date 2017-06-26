@@ -351,11 +351,11 @@
       <developer id="carl" name="Carl Yeksigian"/>
 
       <!-- Thrift dependencies list -->
-      <dependency groupId="org.slf4j" artifactId="slf4j-api" version="${slf4j.version}"/>
+      <dependency groupId="org.slf4j" artifactId="slf4j-api" version="${slf4j.version}" scope="provided"/>
       <dependency groupId="javax.servlet" artifactId="servlet-api" version="${servlet.version}" scope="provided"/>
       <dependency groupId="org.apache.httpcomponents" artifactId="httpclient" version="${httpclient.version}"/>
       <dependency groupId="org.apache.httpcomponents" artifactId="httpcore" version="${httpcore.version}"/>
-      <dependency groupId="com.rbkmoney.woody" artifactId="woody-api" version="${woody.version}"/>
+      <dependency groupId="com.rbkmoney.woody" artifactId="woody-api" version="${woody.version}" scope="provided"/>
 
     </artifact:pom>
 
