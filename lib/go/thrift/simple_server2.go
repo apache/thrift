@@ -20,10 +20,11 @@
 package thrift
 
 import (
-	"context"
 	"log"
 	"runtime/debug"
 	"sync"
+
+	"golang.org/x/net/context"
 )
 
 /*

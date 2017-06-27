@@ -19,7 +19,7 @@
 
 package thrift
 
-import "context"
+import "golang.org/x/net/context"
 
 // A processor is a generic object which operates upon an input stream and
 // writes to some output stream.
