@@ -81,6 +81,7 @@ public:
     gen_package_prefix_ = "";
     package_flag = "";
     read_write_private_ = false;
+    use_context_ = false;
     ignore_initialisms_ = false;
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("package_prefix") == 0) {
@@ -91,6 +92,8 @@ public:
         package_flag = (iter->second);
       } else if( iter->first.compare("read_write_private") == 0) {
         read_write_private_ = true;
+      } else if( iter->first.compare("use_context") == 0) {
+        use_context_ = true;
       } else if( iter->first.compare("ignore_initialisms") == 0) {
         ignore_initialisms_ =  true;
       } else {
@@ -258,7 +261,8 @@ public:
   std::string function_signature(t_function* tfunction, std::string prefix = "");
   std::string function_signature_if(t_function* tfunction,
                                     std::string prefix = "",
-                                    bool addError = false);
+                                    bool addError = false,
+                                    bool disableContext = false);
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_go_type(t_type* ttype);
@@ -284,6 +288,7 @@ private:
   std::string gen_package_prefix_;
   std::string gen_thrift_import_;
   bool read_write_private_;
+  bool use_context_;
   bool ignore_initialisms_;
 
   /**
@@ -877,6 +882,10 @@ string t_go_generator::go_imports_begin(bool consts) {
     extra =
       "\t\"database/sql/driver\"\n"
       "\t\"errors\"\n";
+  }
+  if (!consts && use_context_) {
+    extra +=
+       "\t\"golang.org/x/net/context\"\n";
   }
   return string(
       "import (\n"
@@ -1938,7 +1947,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
     // Open function
     generate_go_docstring(f_types_, (*f_iter));
     f_types_ << indent() << "func (p *" << serviceName << "Client) "
-               << function_signature_if(*f_iter, "", true) << " {" << endl;
+               << function_signature_if(*f_iter, "", true, true) << " {" << endl;
     indent_up();
     /*
     f_types_ <<
@@ -2586,31 +2595,36 @@ void t_go_generator::generate_service_server(t_service* tservice) {
   // Generate the header portion
   string self(tmp("self"));
 
+  string processorFunction("thrift.TProcessorFunction");
+  if (use_context_) {
+    processorFunction = "thrift.TProcessorFunction2";
+  }
+
   if (extends_processor.empty()) {
     f_types_ << indent() << "type " << serviceName << "Processor struct {" << endl;
-    f_types_ << indent() << "  processorMap map[string]thrift.TProcessorFunction" << endl;
+    f_types_ << indent() << "  processorMap map[string]" << processorFunction << endl;
     f_types_ << indent() << "  handler " << serviceName << endl;
     f_types_ << indent() << "}" << endl << endl;
     f_types_ << indent() << "func (p *" << serviceName
-               << "Processor) AddToProcessorMap(key string, processor thrift.TProcessorFunction) {"
+               << "Processor) AddToProcessorMap(key string, processor " << processorFunction << ") {"
                << endl;
     f_types_ << indent() << "  p.processorMap[key] = processor" << endl;
     f_types_ << indent() << "}" << endl << endl;
     f_types_ << indent() << "func (p *" << serviceName
                << "Processor) GetProcessorFunction(key string) "
-                  "(processor thrift.TProcessorFunction, ok bool) {" << endl;
+                  "(processor "<< processorFunction << ", ok bool) {" << endl;
     f_types_ << indent() << "  processor, ok = p.processorMap[key]" << endl;
     f_types_ << indent() << "  return processor, ok" << endl;
     f_types_ << indent() << "}" << endl << endl;
     f_types_ << indent() << "func (p *" << serviceName
-               << "Processor) ProcessorMap() map[string]thrift.TProcessorFunction {" << endl;
+               << "Processor) ProcessorMap() map[string]" << processorFunction << "{" << endl;
     f_types_ << indent() << "  return p.processorMap" << endl;
     f_types_ << indent() << "}" << endl << endl;
     f_types_ << indent() << "func New" << serviceName << "Processor(handler " << serviceName
                << ") *" << serviceName << "Processor {" << endl << endl;
     f_types_
         << indent() << "  " << self << " := &" << serviceName
-        << "Processor{handler:handler, processorMap:make(map[string]thrift.TProcessorFunction)}"
+        << "Processor{handler:handler, processorMap:make(map[string]" << processorFunction << ")}"
         << endl;
 
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -2620,16 +2634,24 @@ void t_go_generator::generate_service_server(t_service* tservice) {
                  << "{handler:handler}" << endl;
     }
 
+    string ctxParam("");
+    string ctxVar("");
+    if (use_context_) {
+        ctxParam = "ctx context.Context, ";
+        ctxVar = "ctx, ";
+    }
+
     string x(tmp("x"));
     f_types_ << indent() << "return " << self << endl;
     f_types_ << indent() << "}" << endl << endl;
     f_types_ << indent() << "func (p *" << serviceName
-               << "Processor) Process(iprot, oprot thrift.TProtocol) (success bool, err "
+               << "Processor) Process(" << ctxParam
+               << "iprot, oprot thrift.TProtocol) (success bool, err "
                   "thrift.TException) {" << endl;
     f_types_ << indent() << "  name, _, seqId, err := iprot.ReadMessageBegin()" << endl;
     f_types_ << indent() << "  if err != nil { return false, err }" << endl;
     f_types_ << indent() << "  if processor, ok := p.GetProcessorFunction(name); ok {" << endl;
-    f_types_ << indent() << "    return processor.Process(seqId, iprot, oprot)" << endl;
+    f_types_ << indent() << "    return processor.Process(" << ctxVar << "seqId, iprot, oprot)" << endl;
     f_types_ << indent() << "  }" << endl;
     f_types_ << indent() << "  iprot.Skip(thrift.STRUCT)" << endl;
     f_types_ << indent() << "  iprot.ReadMessageEnd()" << endl;
@@ -2682,6 +2704,13 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
                          + publicize(tfunction->get_name());
   string argsname = publicize(tfunction->get_name() + "_args", true);
   string resultname = publicize(tfunction->get_name() + "_result", true);
+
+  string ctxParam("");
+  string ctxVar("");
+  if (use_context_) {
+      ctxParam = "ctx context.Context, ";
+      ctxVar = "ctx";
+  }
   // t_struct* xs = tfunction->get_xceptions();
   // const std::vector<t_field*>& xceptions = xs->get_members();
   vector<t_field*>::const_iterator x_iter;
@@ -2689,7 +2718,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
   f_types_ << indent() << "  handler " << publicize(tservice->get_name()) << endl;
   f_types_ << indent() << "}" << endl << endl;
   f_types_ << indent() << "func (p *" << processorName
-             << ") Process(seqId int32, iprot, oprot thrift.TProtocol) (success bool, err "
+             << ") Process(" << ctxParam << "seqId int32, iprot, oprot thrift.TProtocol) (success bool, err "
                 "thrift.TException) {" << endl;
   indent_up();
   f_types_ << indent() << "args := " << argsname << "{}" << endl;
@@ -2733,9 +2762,13 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
   f_types_ << "err2 = p.handler." << publicize(tfunction->get_name()) << "(";
   bool first = true;
 
+  f_types_ << ctxVar;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if (first) {
       first = false;
+      if (use_context_) {
+        f_types_ << ", ";
+      }
     } else {
       f_types_ << ", ";
     }
@@ -3417,11 +3450,15 @@ string t_go_generator::function_signature(t_function* tfunction, string prefix) 
  * Renders an interface function signature of the form 'type name(args)'
  *
  * @param tfunction Function definition
+ * @param disableContext Client doesn't suppport context for now.
  * @return String of rendered function definition
  */
-string t_go_generator::function_signature_if(t_function* tfunction, string prefix, bool addError) {
+string t_go_generator::function_signature_if(t_function* tfunction, string prefix, bool addError, bool disableContext) {
   // TODO(mcslee): Nitpicky, no ',' if argument_list is empty
   string signature = publicize(prefix + tfunction->get_name()) + "(";
+  if (use_context_ && !disableContext) {
+    signature += "ctx context.Context, ";
+  }
   signature += argument_list(tfunction->get_arglist()) + ") (";
   t_type* ret = tfunction->get_returntype();
   t_struct* exceptions = tfunction->get_xceptions();
@@ -3678,7 +3715,7 @@ bool format_go_output(const string& file_path) {
   // before submitting a patch that enables this feature again. Thank you.
   (void) file_path;
   return false;
-  
+
   /*
   const string command = "gofmt -w " + file_path;
 
@@ -3698,4 +3735,6 @@ THRIFT_REGISTER_GENERATOR(go, "Go",
                           "    ignore_initialisms\n"
                           "                     Disable automatic spelling correction of initialisms (e.g. \"URL\")\n" \
                           "    read_write_private\n"
-                          "                     Make read/write methods private, default is public Read/Write\n")
+                          "                     Make read/write methods private, default is public Read/Write\n" \
+                          "    use_context\n"
+                          "                     Make service method receive a context as first argument.\n")

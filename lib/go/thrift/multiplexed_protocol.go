@@ -76,33 +76,11 @@ func (t *TMultiplexedProtocol) WriteMessageBegin(name string, typeId TMessageTyp
 }
 
 /*
-TMultiplexedProcessor is a TProcessor allowing
-a single TServer to provide multiple services.
+This is the non-context version for TProcessor.
 
-To do so, you instantiate the processor and then register additional
-processors with it, as shown in the following example:
+See description at file: multiplexed_processor.go
 
-var processor = thrift.NewTMultiplexedProcessor()
-
-firstProcessor :=
-processor.RegisterProcessor("FirstService", firstProcessor)
-
-processor.registerProcessor(
-  "Calculator",
-  Calculator.NewCalculatorProcessor(&CalculatorHandler{}),
-)
-
-processor.registerProcessor(
-  "WeatherReport",
-  WeatherReport.NewWeatherReportProcessor(&WeatherReportHandler{}),
-)
-
-serverTransport, err := thrift.NewTServerSocketTimeout(addr, TIMEOUT)
-if err != nil {
-  t.Fatal("Unable to create server socket", err)
-}
-server := thrift.NewTSimpleServer2(processor, serverTransport)
-server.Serve();
+Deprecated: use TMultiplexedProcessor2 for strong server programming.
 */
 
 type TMultiplexedProcessor struct {
