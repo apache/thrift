@@ -264,6 +264,15 @@ void t_json_generator::write_type_spec(t_type* ttype) {
 
   write_string(get_type_name(ttype));
 
+  if (ttype->annotations_.size() > 0) {
+    write_key_and("annotations");
+    start_object();
+    for (map<string, string>::iterator it = ttype->annotations_.begin(); it != ttype->annotations_.end(); ++it) {
+      write_key_and_string(it->first, it->second);
+    }
+    end_object();
+  }
+
   if (ttype->is_struct() || ttype->is_xception()) {
     write_key_and_string("class", get_qualified_name(ttype));
   } else if (ttype->is_map()) {
@@ -445,6 +454,14 @@ void t_json_generator::generate_typedef(t_typedef* ttypedef) {
   if (ttypedef->has_doc()) {
     write_key_and_string("doc", ttypedef->get_doc());
   }
+  if (ttypedef->annotations_.size() > 0) {
+    write_key_and("annotations");
+    start_object();
+    for (map<string, string>::iterator it = ttypedef->annotations_.begin(); it != ttypedef->annotations_.end(); ++it) {
+      write_key_and_string(it->first, it->second);
+    }
+    end_object();
+  }
   end_object();
 }
 
@@ -544,6 +561,15 @@ void t_json_generator::generate_enum(t_enum* tenum) {
     write_key_and_string("doc", tenum->get_doc());
   }
 
+  if (tenum->annotations_.size() > 0) {
+      write_key_and("annotations");
+      start_object();
+      for (map<string, string>::iterator it = tenum->annotations_.begin(); it != tenum->annotations_.end(); ++it) {
+        write_key_and_string(it->first, it->second);
+      }
+      end_object();
+  }
+
   write_key_and("members");
   start_array();
   vector<t_enum_value*> values = tenum->get_constants();
@@ -572,6 +598,15 @@ void t_json_generator::generate_struct(t_struct* tstruct) {
 
   if (tstruct->has_doc()) {
     write_key_and_string("doc", tstruct->get_doc());
+  }
+
+  if (tstruct->annotations_.size() > 0) {
+    write_key_and("annotations");
+    start_object();
+    for (map<string, string>::iterator it = tstruct->annotations_.begin(); it != tstruct->annotations_.end(); ++it) {
+      write_key_and_string(it->first, it->second);
+    }
+    end_object();
   }
 
   write_key_and_bool("isException", tstruct->is_xception());
@@ -605,6 +640,15 @@ void t_json_generator::generate_service(t_service* tservice) {
     write_key_and_string("doc", tservice->get_doc());
   }
 
+  if (tservice->annotations_.size() > 0) {
+    write_key_and("annotations");
+    start_object();
+    for (map<string, string>::iterator it = tservice->annotations_.begin(); it != tservice->annotations_.end(); ++it) {
+      write_key_and_string(it->first, it->second);
+    }
+    end_object();
+  }
+
   write_key_and("functions");
   start_array();
   vector<t_function*> functions = tservice->get_functions();
@@ -631,6 +675,15 @@ void t_json_generator::generate_function(t_function* tfunc) {
 
   if (tfunc->has_doc()) {
     write_key_and_string("doc", tfunc->get_doc());
+  }
+
+  if (tfunc->annotations_.size() > 0) {
+    write_key_and("annotations");
+    start_object();
+    for (map<string, string>::iterator it = tfunc->annotations_.begin(); it != tfunc->annotations_.end(); ++it) {
+      write_key_and_string(it->first, it->second);
+    }
+    end_object();
   }
 
   write_key_and("arguments");
@@ -668,6 +721,15 @@ void t_json_generator::generate_field(t_field* field) {
 
   if (field->has_doc()) {
     write_key_and_string("doc", field->get_doc());
+  }
+
+  if (field->annotations_.size() > 0) {
+    write_key_and("annotations");
+    start_object();
+    for (map<string, string>::iterator it = field->annotations_.begin(); it != field->annotations_.end(); ++it) {
+      write_key_and_string(it->first, it->second);
+    }
+    end_object();
   }
 
   write_key_and("required");
