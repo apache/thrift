@@ -32,6 +32,7 @@ import (
  */
 type TSimpleServer struct {
 	quit chan struct{}
+	once sync.Once
 
 	processorFactory       TProcessorFactory
 	serverTransport        TServerTransport
@@ -155,15 +156,13 @@ func (p *TSimpleServer) Serve() error {
 	return nil
 }
 
-var once sync.Once
-
 func (p *TSimpleServer) Stop() error {
 	q := func() {
 		close(p.quit)
 		p.serverTransport.Interrupt()
 		p.Wait()
 	}
-	once.Do(q)
+	p.once.Do(q)
 	return nil
 }
 
