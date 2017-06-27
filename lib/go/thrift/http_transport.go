@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"compress/gzip"
+	"context"
 	"io"
 	"net/http"
 	"strings"
@@ -35,6 +36,18 @@ func NewThriftHandlerFunc(processor TProcessor,
 
 		transport := NewStreamTransport(r.Body, w)
 		processor.Process(inPfactory.GetProtocol(transport), outPfactory.GetProtocol(transport))
+	})
+}
+
+// NewThriftHandlerFunc2 is same as NewThriftHandlerFunc but requires a Context as its first param.
+func NewThriftHandlerFunc2(ctx context.Context, processor TProcessor2,
+	inPfactory, outPfactory TProtocolFactory) func(w http.ResponseWriter, r *http.Request) {
+
+	return gz(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/x-thrift")
+
+		transport := NewStreamTransport(r.Body, w)
+		processor.Process(ctx, inPfactory.GetProtocol(transport), outPfactory.GetProtocol(transport))
 	})
 }
 
