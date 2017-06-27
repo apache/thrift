@@ -273,6 +273,13 @@
           "required": [ "functions" ]
         }
       ]
+    },
+    "annotations": {
+      "title": "Map of annotation names to values",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     }
   },
 
@@ -295,6 +302,12 @@
         "type": "string"
       },
       "uniqueItems": true
+    },
+    "namespaces": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     },
     "enums": {
       "type": "array",
@@ -326,5 +339,6 @@
         "$ref": "#/definitions/service"
       }
     }
-  }
+  },
+  "additionalProperties": false
 }
