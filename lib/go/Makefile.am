@@ -31,7 +31,7 @@ install:
 	@echo '##############################################################'
 
 check-local:
-	$(GO) test ./thrift
+	$(GO) test -race ./thrift
 
 all-local:
 	$(GO) build ./thrift
