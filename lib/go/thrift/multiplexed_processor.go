@@ -1,10 +1,9 @@
 package thrift
 
 import (
+	"context"
 	"fmt"
 	"strings"
-
-	"golang.org/x/net/context"
 )
 
 /*

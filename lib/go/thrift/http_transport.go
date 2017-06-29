@@ -21,11 +21,10 @@ package thrift
 
 import (
 	"compress/gzip"
+	"context"
 	"io"
 	"net/http"
 	"strings"
-
-	"golang.org/x/net/context"
 )
 
 // NewThriftHandlerFunc is a function that create a ready to use Apache Thrift Handler function

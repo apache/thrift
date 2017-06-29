@@ -262,7 +262,7 @@ public:
   std::string function_signature_if(t_function* tfunction,
                                     std::string prefix = "",
                                     bool addError = false,
-                                    bool disableContext = false);
+                                    bool enableContext = false);
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_go_type(t_type* ttype);
@@ -885,7 +885,7 @@ string t_go_generator::go_imports_begin(bool consts) {
   }
   if (!consts && use_context_) {
     extra +=
-       "\t\"golang.org/x/net/context\"\n";
+       "\t\"context\"\n";
   }
   return string(
       "import (\n"
@@ -1833,7 +1833,7 @@ void t_go_generator::generate_service_interface(t_service* tservice) {
 
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
       generate_go_docstring(f_types_, (*f_iter));
-      f_types_ << indent() << function_signature_if(*f_iter, "", true) << endl;
+      f_types_ << indent() << function_signature_if(*f_iter, "", true, use_context_) << endl;
     }
   }
 
@@ -1947,7 +1947,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
     // Open function
     generate_go_docstring(f_types_, (*f_iter));
     f_types_ << indent() << "func (p *" << serviceName << "Client) "
-               << function_signature_if(*f_iter, "", true, true) << " {" << endl;
+               << function_signature_if(*f_iter, "", true, false) << " {" << endl;
     indent_up();
     /*
     f_types_ <<
@@ -3453,10 +3453,10 @@ string t_go_generator::function_signature(t_function* tfunction, string prefix) 
  * @param disableContext Client doesn't suppport context for now.
  * @return String of rendered function definition
  */
-string t_go_generator::function_signature_if(t_function* tfunction, string prefix, bool addError, bool disableContext) {
+string t_go_generator::function_signature_if(t_function* tfunction, string prefix, bool addError, bool enableContext) {
   // TODO(mcslee): Nitpicky, no ',' if argument_list is empty
   string signature = publicize(prefix + tfunction->get_name()) + "(";
-  if (use_context_ && !disableContext) {
+  if (enableContext) {
     signature += "ctx context.Context, ";
   }
   signature += argument_list(tfunction->get_arglist()) + ") (";
