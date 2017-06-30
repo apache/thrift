@@ -23,6 +23,7 @@ import (
 	"log"
 	"runtime/debug"
 	"sync"
+	"sync/atomic"
 )
 
 /*
@@ -31,8 +32,9 @@ import (
  * This will work if golang user implements a conn-pool like thing in client side.
  */
 type TSimpleServer struct {
-	quit chan struct{}
-	once sync.Once
+	closed int32
+	wg     sync.WaitGroup
+	mu     sync.Mutex
 
 	processorFactory       TProcessorFactory
 	serverTransport        TServerTransport
@@ -40,7 +42,6 @@ type TSimpleServer struct {
 	outputTransportFactory TTransportFactory
 	inputProtocolFactory   TProtocolFactory
 	outputProtocolFactory  TProtocolFactory
-	sync.WaitGroup
 }
 
 func NewTSimpleServer2(processor TProcessor, serverTransport TServerTransport) *TSimpleServer {
@@ -93,7 +94,6 @@ func NewTSimpleServerFactory6(processorFactory TProcessorFactory, serverTranspor
 		outputTransportFactory: outputTransportFactory,
 		inputProtocolFactory:   inputProtocolFactory,
 		outputProtocolFactory:  outputProtocolFactory,
-		quit: make(chan struct{}, 1),
 	}
 }
 
@@ -128,22 +128,23 @@ func (p *TSimpleServer) Listen() error {
 func (p *TSimpleServer) AcceptLoop() error {
 	for {
 		client, err := p.serverTransport.Accept()
+		p.mu.Lock()
+		if atomic.LoadInt32(&p.closed) != 0 {
+			return nil
+		}
 		if err != nil {
-			select {
-			case <-p.quit:
-				return nil
-			default:
-			}
 			return err
 		}
 		if client != nil {
-			p.Add(1)
+			p.wg.Add(1)
 			go func() {
+				defer p.wg.Done()
 				if err := p.processRequests(client); err != nil {
 					log.Println("error processing request:", err)
 				}
 			}()
 		}
+		p.mu.Unlock()
 	}
 }
 
@@ -157,18 +158,18 @@ func (p *TSimpleServer) Serve() error {
 }
 
 func (p *TSimpleServer) Stop() error {
-	q := func() {
-		close(p.quit)
-		p.serverTransport.Interrupt()
-		p.Wait()
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if atomic.LoadInt32(&p.closed) != 0 {
+		return nil
 	}
-	p.once.Do(q)
+	atomic.StoreInt32(&p.closed, 1)
+	p.serverTransport.Interrupt()
+	p.wg.Wait()
 	return nil
 }
 
 func (p *TSimpleServer) processRequests(client TTransport) error {
-	defer p.Done()
-
 	processor := p.processorFactory.GetProcessor(client)
 	inputTransport, err := p.inputTransportFactory.GetTransport(client)
 	if err != nil {
@@ -193,10 +194,8 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 		defer outputTransport.Close()
 	}
 	for {
-		select {
-		case <-p.quit:
+		if atomic.LoadInt32(&p.closed) != 0 {
 			return nil
-		default:
 		}
 
 		ok, err := processor.Process(inputProtocol, outputProtocol)
