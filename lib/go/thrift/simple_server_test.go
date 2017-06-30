@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"testing"
+	"time"
 )
 
 type mockProcessor struct {
@@ -52,6 +53,14 @@ func (m *mockServerTransport) Close() error {
 
 func (m *mockServerTransport) Interrupt() error {
 	return m.InterruptFunc()
+}
+
+type mockTTransport struct {
+	TTransport
+}
+
+func (m *mockTTransport) Close() error {
+	return nil
 }
 
 func TestMultipleStop(t *testing.T) {
@@ -95,4 +104,32 @@ func TestMultipleStop(t *testing.T) {
 	if !interruptCalled {
 		t.Error("second server transport should have been interrupted")
 	}
+}
+
+func TestWaitRace(t *testing.T) {
+	proc := &mockProcessor{
+		ProcessFunc: func(in, out TProtocol) (bool, TException) {
+			return false, nil
+		},
+	}
+
+	trans := &mockServerTransport{
+		ListenFunc: func() error {
+			return nil
+		},
+		AcceptFunc: func() (TTransport, error) {
+			return &mockTTransport{}, nil
+		},
+		CloseFunc: func() error {
+			return nil
+		},
+		InterruptFunc: func() error {
+			return nil
+		},
+	}
+
+	serv := NewTSimpleServer2(proc, trans)
+	go serv.Serve()
+	time.Sleep(1)
+	serv.Stop()
 }
