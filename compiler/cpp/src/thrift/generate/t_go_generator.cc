@@ -883,13 +883,10 @@ string t_go_generator::go_imports_begin(bool consts) {
       "\t\"database/sql/driver\"\n"
       "\t\"errors\"\n";
   }
-  if (!consts && use_context_) {
-    extra +=
-       "\t\"context\"\n";
-  }
   return string(
       "import (\n"
       "\t\"bytes\"\n"
+      "\t\"context\"\n"
       "\t\"reflect\"\n"
       + extra +
       "\t\"fmt\"\n"
@@ -908,6 +905,7 @@ string t_go_generator::go_imports_end() {
       "// (needed to ensure safety because of naive import list construction.)\n"
       "var _ = thrift.ZERO\n"
       "var _ = fmt.Printf\n"
+      "var _ = context.Background\n"
       "var _ = reflect.DeepEqual\n"
       "var _ = bytes.Equal\n\n");
 }
