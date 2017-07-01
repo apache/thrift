@@ -39,5 +39,5 @@ These are only required if you choose to build the libraries for the given langu
     * Bit::Vector
     * Class::Accessor
 * Haxe 3.1.3
-* Go 1.4
+* Go 1.7
 * Delphi 2010
