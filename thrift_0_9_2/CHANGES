@@ -5,7 +5,7 @@ Thrift 0.9.2
 ## Bug
     * [THRIFT-2645] - generated Go server code always sets Success retval
     * [THRIFT-2634] - undocumented php "nsglobal" option
-    * [THRIFT-2627] - erlang backend doesn't support corecursive structs
+    * [THRIFT-2627] - erlang client doesn't support corecursive structs
     * [THRIFT-2595] - Node.js: Fix global leaks and copy-paste errors
     * [THRIFT-2594] - JS Compiler: Single quotes are not being escaped in constants.
     * [THRIFT-2610] - MSVC warning in TSocket.cpp
