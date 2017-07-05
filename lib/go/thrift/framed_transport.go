@@ -141,11 +141,13 @@ func (p *TFramedTransport) Flush() error {
 	binary.BigEndian.PutUint32(buf, uint32(size))
 	_, err := p.transport.Write(buf)
 	if err != nil {
+		p.buf.Truncate(0)
 		return NewTTransportExceptionFromError(err)
 	}
 	if size > 0 {
 		if n, err := p.buf.WriteTo(p.transport); err != nil {
 			print("Error while flushing write buffer of size ", size, " to transport, only wrote ", n, " bytes: ", err.Error(), "\n")
+			p.buf.Truncate(0)
 			return NewTTransportExceptionFromError(err)
 		}
 	}
