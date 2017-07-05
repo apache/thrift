@@ -637,7 +637,6 @@ void t_py_generator::generate_forward_declaration(t_struct* tstruct) {
  * Generates a python struct
  */
 void t_py_generator::generate_struct(t_struct* tstruct) {
-  //generate_py_struct(tstruct, false);
   generate_py_thrift_spec(f_types_, tstruct, false);
 }
 
@@ -648,7 +647,6 @@ void t_py_generator::generate_struct(t_struct* tstruct) {
  * @param txception The struct definition
  */
 void t_py_generator::generate_xception(t_struct* txception) {
-  //generate_py_struct(txception, true);
   generate_py_thrift_spec(f_types_, txception, true);
 }
 
