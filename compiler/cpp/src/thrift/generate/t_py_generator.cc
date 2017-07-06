@@ -660,7 +660,12 @@ void t_py_generator::generate_py_struct(t_struct* tstruct, bool is_exception) {
 
 /**
  * Generate the thrift_spec for a struct
- * e.g. (4, TType.LIST, 'struct_list', (TType.STRUCT, (RandomStuff, None), False), None, ),  # 4
+ * For example,
+ *   all_structs.append(Recursive)
+ *   Recursive.thrift_spec = (
+ *       None,  # 0
+ *       (1, TType.LIST, 'Children', (TType.STRUCT, (Recursive, None), False), None, ),  # 1
+ *   )
  */
 void t_py_generator::generate_py_thrift_spec(ofstream& out,
                                              t_struct* tstruct,
@@ -2650,7 +2655,6 @@ string t_py_generator::type_to_spec_args(t_type* ttype) {
   } else if (ttype->is_base_type() || ttype->is_enum()) {
     return  "None";
   } else if (ttype->is_struct() || ttype->is_xception()) {
-    // " + type_name(ttype) + ".thrift_spec
     return "[" + type_name(ttype) + ", None]";
   } else if (ttype->is_map()) {
     return "(" + type_to_enum(((t_map*)ttype)->get_key_type()) + ", "
