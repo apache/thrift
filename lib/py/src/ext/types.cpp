@@ -20,8 +20,6 @@
 #include "ext/types.h"
 #include "ext/protocol.h"
 
-#include <iostream>
-
 namespace apache {
 namespace thrift {
 namespace py {
