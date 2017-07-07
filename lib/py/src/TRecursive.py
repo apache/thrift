@@ -40,7 +40,7 @@ def fix_spec(all_structs):
 
 
 def _fix_list_or_set(element_type):
-    # For a list or set, the thrift_spec entry looks like, 
+    # For a list or set, the thrift_spec entry looks like,
     # (1, TType.LIST, 'lister', (TType.STRUCT, [RecList, None], False), None, ),  # 1
     # so ``element_type`` will be,
     # (TType.STRUCT, [RecList, None], False)
@@ -60,9 +60,9 @@ def _fix_map(element_type):
     # For a map of key -> list / set, ``element_type`` will be,
     # (TType.I16, None, TType.LIST, (TType.STRUCT, [RecMapList, None], False), False)
     # and we need to process the 3rd element as a list.
-    # 
+    #
     # For a map of key -> map, ``element_type`` will be,
-    # (TType.I16, None, TType.MAP, (TType.I16, None, TType.STRUCT, 
+    # (TType.I16, None, TType.MAP, (TType.I16, None, TType.STRUCT,
     #  [RecMapMap, None], False), False)
     # and need to process 3rd element as a map.
 
