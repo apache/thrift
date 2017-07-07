@@ -68,15 +68,19 @@ func (p *TServerSocket) Listen() error {
 
 func (p *TServerSocket) Accept() (TTransport, error) {
 	p.mu.RLock()
-	defer p.mu.RUnlock()
+	interrupted := p.interrupted
+	p.mu.RUnlock()
 
-	if p.interrupted {
+	if interrupted {
 		return nil, errTransportInterrupted
 	}
-	if p.listener == nil {
+
+	listener := p.listener
+	if listener == nil {
 		return nil, NewTTransportException(NOT_OPEN, "No underlying server socket")
 	}
-	conn, err := p.listener.Accept()
+
+	conn, err := listener.Accept()
 	if err != nil {
 		return nil, NewTTransportExceptionFromError(err)
 	}
