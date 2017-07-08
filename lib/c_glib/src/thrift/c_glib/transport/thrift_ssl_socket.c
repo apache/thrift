@@ -383,17 +383,16 @@ gboolean thrift_ssl_load_cert_from_buffer(ThriftSSLSocket *ssl_socket, const cha
   X509_STORE *cert_store = SSL_CTX_get_cert_store(ssl_socket->ctx);
 
   if(cert_store!=NULL){
-      int index = 0;
-      while ((cacert = PEM_read_bio_X509(mem, NULL, 0, NULL))!=NULL) {
-	  if(cacert) {
-	      g_debug("Our certificate name is %s", cacert->name);
-	      X509_STORE_add_cert(cert_store, cacert);
-	      X509_free(cacert);
-	      cacert=NULL;
-	  } /* Free immediately */
-	  index++;
-      }
-      retval=TRUE;
+    int index = 0;
+    while ((cacert = PEM_read_bio_X509(mem, NULL, 0, NULL))!=NULL) {
+      if(cacert) {
+        X509_STORE_add_cert(cert_store, cacert);
+        X509_free(cacert);
+        cacert=NULL;
+      } /* Free immediately */
+      index++;
+    }
+    retval=TRUE;
   }
   BIO_free(mem);
   return retval;
