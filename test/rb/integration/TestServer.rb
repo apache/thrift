@@ -28,8 +28,8 @@ require 'thrift_test_types'
 
 class SimpleHandler
   [:testVoid, :testString, :testBool, :testByte, :testI32, :testI64, :testDouble, :testBinary,
-   :testStruct, :testMap, :testStringMap, :testSet, :testList, :testNest, :testEnum, :testTypedef,
-   :testEnum, :testTypedef, :testMultiException].each do |meth|
+   :testStruct, :testMap, :testStringMap, :testSet, :testList, :testNest, :testTypedef,
+   :testTypedef, :testMultiException].each do |meth|
 
     define_method(meth) do |thing|
       p meth
@@ -37,6 +37,14 @@ class SimpleHandler
       thing
     end
 
+  end
+
+  def testEnum(thing)
+    if thing == Thrift::Test::Numberz::EIGHT then
+      # intentionally raising an invalid return value to trigger THRIFT-4018
+      return 100
+    end
+    thing
   end
 
   def testVoid()
