@@ -33,19 +33,3 @@ type TServer interface {
 	// all servers are required to be cleanly stoppable.
 	Stop() error
 }
-
-// Same as TServer but use TProcessorFactory2 as processor factory.
-type TServer2 interface {
-	ProcessorFactory() TProcessorFactory2
-	ServerTransport() TServerTransport
-	InputTransportFactory() TTransportFactory
-	OutputTransportFactory() TTransportFactory
-	InputProtocolFactory() TProtocolFactory
-	OutputProtocolFactory() TProtocolFactory
-
-	// Starts the server
-	Serve() error
-	// Stops the server. This is optional on a per-implementation basis. Not
-	// all servers are required to be cleanly stoppable.
-	Stop() error
-}

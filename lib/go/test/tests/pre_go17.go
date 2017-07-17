@@ -19,16 +19,30 @@
  * under the License.
  */
 
-package thrift
+package tests
 
-import "golang.org/x/net/context"
+import (
+	"fmt"
 
-// A processor is a generic object which operates upon an input stream and
-// writes to some output stream.
-type TProcessor interface {
-	Process(ctx context.Context, in, out TProtocol) (bool, TException)
+	"golang.org/x/net/context"
+)
+
+var defaultCtx = context.Background()
+
+type FirstImpl struct{}
+
+func (f *FirstImpl) ReturnOne(ctx context.Context) (r int64, err error) {
+	return 1, nil
 }
 
-type TProcessorFunction interface {
-	Process(ctx context.Context, seqId int32, in, out TProtocol) (bool, TException)
+type SecondImpl struct{}
+
+func (s *SecondImpl) ReturnTwo(ctx context.Context) (r int64, err error) {
+	return 2, nil
 }
+
+type impl struct{}
+
+func (i *impl) Hi(ctx context.Context, in int64, s string) (err error)        { fmt.Println("Hi!"); return }
+func (i *impl) Emptyfunc(ctx context.Context) (err error)                     { return }
+func (i *impl) EchoInt(ctx context.Context, param int64) (r int64, err error) { return param, nil }
