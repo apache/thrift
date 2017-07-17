@@ -943,7 +943,7 @@ void t_erlang_generator::generate_record_metadata(std::ostream& erl) {
   std::string const& ns = get_program()->get_namespace("erlang");
 
   indenter i;
-  if (structs.size() > 0 && scoped_typenames_ && !ns.empty()) {
+  if (structs.size() > 0) {
     erl << "-spec record_name(struct_name() | exception_name()) -> atom() | no_return()." << i.nl()
         << i.nl();
     for(vec::const_iterator it = structs.begin(); it != structs.end(); ++it) {
@@ -951,16 +951,13 @@ void t_erlang_generator::generate_record_metadata(std::ostream& erl) {
           << scoped_type_name(*it) << ";" << i.nldown()
           << i.nl();
     }
-    erl << "record_name(_) -> error(badarg)." << i.nl()
-        << i.nl();
   }
   else {
-    erl << "-spec record_name(struct_name() | exception_name()) -> atom()."
-        << i.nl() << i.nl();
-    erl << "record_name(Name) ->" << i.nlup()
-        << "Name." << i.nldown()
+    erl << "-spec record_name" << ERROR_SPEC << i.nl()
         << i.nl();
   }
+  erl << "record_name(_) -> error(badarg)." << i.nl()
+      << i.nl();
 }
 
 /**
