@@ -26,11 +26,11 @@ import (
 )
 
 type ThriftTestDriver struct {
-	client thrifttest.ThriftTest
+	client *thrifttest.ThriftTestClient
 	t      *testing.T
 }
 
-func NewThriftTestDriver(t *testing.T, client thrifttest.ThriftTest) *ThriftTestDriver {
+func NewThriftTestDriver(t *testing.T, client *thrifttest.ThriftTestClient) *ThriftTestDriver {
 	return &ThriftTestDriver{client, t}
 }
 

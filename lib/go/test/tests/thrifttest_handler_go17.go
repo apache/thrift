@@ -1,4 +1,4 @@
-// +build !go1.7
+// +build go1.7
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -22,12 +22,11 @@
 package tests
 
 import (
+	"context"
 	"errors"
 	"thrift"
 	"thrifttest"
 	"time"
-
-	"golang.org/x/net/context"
 )
 
 type SecondServiceHandler struct {

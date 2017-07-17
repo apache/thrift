@@ -102,7 +102,7 @@ RUN curl -sSL http://packages.erlang-solutions.com/rpm/centos/erlang_solutions.r
       erlang-tools
 
 # Go Dependencies
-RUN curl -sSL https://storage.googleapis.com/golang/go1.8.3.linux-amd64.tar.gz | tar -C /usr/local/ -xz
+RUN curl -sSL https://storage.googleapis.com/golang/go1.4.3.linux-amd64.tar.gz | tar -C /usr/local/ -xz
 ENV PATH /usr/local/go/bin:$PATH
 
 # Haskell Dependencies

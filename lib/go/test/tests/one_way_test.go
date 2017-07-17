@@ -20,7 +20,6 @@
 package tests
 
 import (
-	"fmt"
 	"net"
 	"onewaytest"
 	"testing"
@@ -36,12 +35,6 @@ func findPort() net.Addr {
 		return l.Addr()
 	}
 }
-
-type impl struct{}
-
-func (i *impl) Hi(in int64, s string) (err error)        { fmt.Println("Hi!"); return }
-func (i *impl) Emptyfunc() (err error)                   { return }
-func (i *impl) EchoInt(param int64) (r int64, err error) { return param, nil }
 
 const TIMEOUT = time.Second
 
