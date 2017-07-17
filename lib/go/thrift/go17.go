@@ -1,3 +1,5 @@
+// +build go1.7
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -20,44 +22,27 @@
 package thrift
 
 import (
-	"compress/gzip"
-	"io"
 	"net/http"
-	"strings"
+	"context"
 )
 
-// NewThriftHandlerFunc is a function that create a ready to use Apache Thrift Handler function
-func NewThriftHandlerFunc(processor TProcessor,
+// NewThriftHandlerFunc2 is same as NewThriftHandlerFunc but passing a context into processor.
+func NewThriftHandlerFunc2(processor TProcessor2,
 	inPfactory, outPfactory TProtocolFactory) func(w http.ResponseWriter, r *http.Request) {
 
 	return gz(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/x-thrift")
 
 		transport := NewStreamTransport(r.Body, w)
-		processor.Process(inPfactory.GetProtocol(transport), outPfactory.GetProtocol(transport))
+		processor.Process(r.Context(), inPfactory.GetProtocol(transport), outPfactory.GetProtocol(transport))
 	})
 }
 
-// gz transparently compresses the HTTP response if the client supports it.
-func gz(handler http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-			handler(w, r)
-			return
-		}
-		w.Header().Set("Content-Encoding", "gzip")
-		gz := gzip.NewWriter(w)
-		defer gz.Close()
-		gzw := gzipResponseWriter{Writer: gz, ResponseWriter: w}
-		handler(gzw, r)
-	}
+// TProcessor2 is TProcessor with ctx as its first argument.
+type TProcessor2 interface {
+	Process(ctx context.Context, in, out TProtocol) (bool, TException)
 }
 
-type gzipResponseWriter struct {
-	io.Writer
-	http.ResponseWriter
-}
-
-func (w gzipResponseWriter) Write(b []byte) (int, error) {
-	return w.Writer.Write(b)
+type TProcessorFunction2 interface {
+	Process(ctx context.Context, seqId int32, in, out TProtocol) (bool, TException)
 }

@@ -3746,4 +3746,4 @@ THRIFT_REGISTER_GENERATOR(go, "Go",
                           "    read_write_private\n"
                           "                     Make read/write methods private, default is public Read/Write\n" \
                           "    use_context\n"
-                          "                     Make service method receive a context as first argument.\n")
+                          "                     Make service method receive a context as first argument, only go1.7+ is supported.\n")
