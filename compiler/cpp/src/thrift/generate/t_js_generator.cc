@@ -2218,10 +2218,10 @@ std::string t_js_generator::ts_function_signature(t_function* tfunction, bool in
   }
 
   if (include_callback) {
-    str += "callback: Function): ";
+    str += "callback: (data: " + ts_get_type(tfunction->get_returntype()) + ")=>void): ";
 
     if (gen_jquery_) {
-      str += "JQueryXHR;";
+      str += "JQueryPromise<" + ts_get_type(tfunction->get_returntype()) +">;";
     } else {
       str += "void;";
     }
