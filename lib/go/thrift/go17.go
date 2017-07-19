@@ -21,28 +21,6 @@
 
 package thrift
 
-import (
-	"net/http"
-	"context"
-)
+import "context"
 
-// NewThriftHandlerFunc2 is same as NewThriftHandlerFunc but passing a context into processor.
-func NewThriftHandlerFunc2(processor TProcessor2,
-	inPfactory, outPfactory TProtocolFactory) func(w http.ResponseWriter, r *http.Request) {
-
-	return gz(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "application/x-thrift")
-
-		transport := NewStreamTransport(r.Body, w)
-		processor.Process(r.Context(), inPfactory.GetProtocol(transport), outPfactory.GetProtocol(transport))
-	})
-}
-
-// TProcessor2 is TProcessor with ctx as its first argument.
-type TProcessor2 interface {
-	Process(ctx context.Context, in, out TProtocol) (bool, TException)
-}
-
-type TProcessorFunction2 interface {
-	Process(ctx context.Context, seqId int32, in, out TProtocol) (bool, TException)
-}
+var defaultCtx = context.Background()
