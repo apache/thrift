@@ -3721,4 +3721,4 @@ THRIFT_REGISTER_GENERATOR(go, "Go",
                           "    read_write_private\n"
                           "                     Make read/write methods private, default is public Read/Write\n" \
                           "    legacy_context\n"
-                          "                     Use lagacy x/net/context instead of context in go<1.7.\n")
+                          "                     Use legacy x/net/context instead of context in go<1.7.\n")

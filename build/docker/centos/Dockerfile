@@ -104,7 +104,6 @@ RUN curl -sSL http://packages.erlang-solutions.com/rpm/centos/erlang_solutions.r
 # Go Dependencies
 RUN curl -sSL https://storage.googleapis.com/golang/go1.4.3.linux-amd64.tar.gz | tar -C /usr/local/ -xz
 ENV PATH /usr/local/go/bin:$PATH
-RUN go get golang.org/x/net/context
 
 # Haskell Dependencies
 RUN yum -y install haskell-platform

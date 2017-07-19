@@ -20,14 +20,15 @@
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 gen-go/tutorial/calculator.go gen-go/shared/shared_service.go: $(top_srcdir)/tutorial/tutorial.thrift
-	$(THRIFT) --gen go -r $<
+	$(THRIFT) --gen go:legacy_context -r $<
 
 all-local: gen-go/tutorial/calculator.go
 
 
 check: src/git.apache.org/thrift.git/lib/go/thrift
-	$(THRIFT) -r --gen go $(top_srcdir)/tutorial/tutorial.thrift
+	$(THRIFT) -r --gen go:legacy_context $(top_srcdir)/tutorial/tutorial.thrift
 	cp -r gen-go/* src/
+	GOPATH=`pwd` $(GO) get golang.org/x/net/context
 	GOPATH=`pwd` $(GO) build ./...
 	GOPATH=`pwd` $(GO) build -o go-tutorial src/*.go
 	GOPATH=`pwd` $(GO) build -o calculator-remote src/tutorial/calculator-remote/calculator-remote.go
@@ -40,7 +41,7 @@ tutorialserver: all
 	GOPATH=`pwd` $(GO) run src/*.go -server=true
 
 tutorialclient: all
-	GOPATH=`pwd` $(GO) run src/*.go 
+	GOPATH=`pwd` $(GO) run src/*.go
 
 tutorialsecureserver: all
 	GOPATH=`pwd` $(GO) run src/*.go -server=true -secure=true
