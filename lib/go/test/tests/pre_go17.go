@@ -1,3 +1,5 @@
+// +build !go1.7
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -20,17 +22,27 @@
 package tests
 
 import (
-	st "servicestest"
+	"fmt"
+
+	"golang.org/x/net/context"
 )
 
-//this function is never called, it will fail to compile if check is failed
-func staticCheckStructArgsResults() {
-	//Check that struct args and results are passed by reference
-	var sa *st.StructA = &st.StructA{}
-	var iface st.AServ
-	var err error
+var defaultCtx = context.Background()
 
-	sa, err = iface.StructAFunc_1structA(defaultCtx, sa)
-	_ = err
-	_ = sa
+type FirstImpl struct{}
+
+func (f *FirstImpl) ReturnOne(ctx context.Context) (r int64, err error) {
+	return 1, nil
 }
+
+type SecondImpl struct{}
+
+func (s *SecondImpl) ReturnTwo(ctx context.Context) (r int64, err error) {
+	return 2, nil
+}
+
+type impl struct{}
+
+func (i *impl) Hi(ctx context.Context, in int64, s string) (err error)        { fmt.Println("Hi!"); return }
+func (i *impl) Emptyfunc(ctx context.Context) (err error)                     { return }
+func (i *impl) EchoInt(ctx context.Context, param int64) (r int64, err error) { return param, nil }

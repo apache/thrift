@@ -36,17 +36,6 @@ func FindAvailableTCPServerPort() net.Addr {
 	}
 }
 
-type FirstImpl struct{}
-
-func (f *FirstImpl) ReturnOne() (r int64, err error) {
-	return 1, nil
-}
-
-type SecondImpl struct{}
-
-func (s *SecondImpl) ReturnTwo() (r int64, err error) {
-	return 2, nil
-}
 
 var processor = thrift.NewTMultiplexedProcessor()
 
