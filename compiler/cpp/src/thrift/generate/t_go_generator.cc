@@ -438,8 +438,17 @@ string t_go_generator::gen_opt_const_values_(t_type* type, t_base_type::t_base t
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
-      go_value_str += "int}{";
+      go_value_str += "int32}{";
       go_value_str += std::to_string(value->get_integer());
+      break;
+
+    case t_base_type::TYPE_DOUBLE:
+      go_value_str += "float64}{";
+      if (value->get_type() == t_const_value::CV_INTEGER) {
+        go_value_str +=  std::to_string(value->get_integer());
+      } else {
+        go_value_str +=  std::to_string(value->get_double());
+      }
       break;
 
     default:
