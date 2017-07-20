@@ -3434,7 +3434,7 @@ string t_go_generator::function_signature(t_function* tfunction, string prefix) 
  * Renders an interface function signature of the form 'type name(args)'
  *
  * @param tfunction Function definition
- * @param disableContext Client doesn't suppport context for now.
+ * @param enableContext Client doesn't suppport context for now.
  * @return String of rendered function definition
  */
 string t_go_generator::function_signature_if(t_function* tfunction, string prefix, bool addError, bool enableContext) {
