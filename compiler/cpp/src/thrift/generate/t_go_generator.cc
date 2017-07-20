@@ -435,10 +435,18 @@ string t_go_generator::gen_opt_const_values_(t_type* type, t_base_type::t_base t
       break;
 
     case t_base_type::TYPE_I8:
+      go_value_str += "int8}{";
+      go_value_str += std::to_string(value->get_integer());
     case t_base_type::TYPE_I16:
+      go_value_str += "int16}{";
+      go_value_str += std::to_string(value->get_integer());
+      break;
     case t_base_type::TYPE_I32:
-    case t_base_type::TYPE_I64:
       go_value_str += "int32}{";
+      go_value_str += std::to_string(value->get_integer());
+      break;
+    case t_base_type::TYPE_I64:
+      go_value_str += "int64}{";
       go_value_str += std::to_string(value->get_integer());
       break;
 
@@ -448,6 +456,15 @@ string t_go_generator::gen_opt_const_values_(t_type* type, t_base_type::t_base t
         go_value_str +=  std::to_string(value->get_integer());
       } else {
         go_value_str +=  std::to_string(value->get_double());
+      }
+      break;
+
+    case t_base_type::TYPE_STRING:
+      if (type->is_binary()) {
+        go_value_str += "[]byte(\"" + get_escaped_string(value) + "\")";
+      } else {
+        go_value_str += "string}{";
+        go_value_str += '"' + get_escaped_string(value) +'"';
       }
       break;
 
