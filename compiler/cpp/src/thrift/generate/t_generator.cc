@@ -44,7 +44,7 @@ void t_generator::generate_program() {
   for (td_iter = typedefs.begin(); td_iter != typedefs.end(); ++td_iter) {
     generate_typedef(*td_iter);
   }
-  std::cout << "======== generating structs" << "\n";
+
   // Generate structs, exceptions, and unions in declared order
   vector<t_struct*> objects = program_->get_objects();
 
@@ -62,7 +62,6 @@ void t_generator::generate_program() {
 
   // Generate constants
   vector<t_const*> consts = program_->get_consts();
-  std::cout << "Get all the constants" << "\n";
   generate_consts(consts);
 
   // Generate services

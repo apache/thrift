@@ -47,7 +47,6 @@ using std::ostringstream;
 using std::string;
 using std::stringstream;
 using std::vector;
-using std::cout;
 
 static const string endl = "\n"; // avoid ostream << std::endl flushes
 
@@ -373,7 +372,6 @@ static bool type_need_reference(t_type* type) {
 // returns false if field could not use comparison to default value as !IsSet*
 bool t_go_generator::is_pointer_field(t_field* tfield, bool in_container_value) {
   (void)in_container_value;
-  std::cout << " ===== pointer checking" << "\n";
   if (tfield->annotations_.count("cpp.ref") != 0) {
     return true;
   }
@@ -437,6 +435,7 @@ string t_go_generator::gen_opt_const_values_(t_type* type, t_base_type::t_base t
     case t_base_type::TYPE_I8:
       go_value_str += "int8}{";
       go_value_str += std::to_string(value->get_integer());
+      break;
     case t_base_type::TYPE_I16:
       go_value_str += "int16}{";
       go_value_str += std::to_string(value->get_integer());
@@ -1104,7 +1103,6 @@ void t_go_generator::generate_const(t_const* tconst) {
   t_type* type = tconst->get_type();
   string name = publicize(tconst->get_name());
   t_const_value* value = tconst->get_value();
-  std::cout << "====== generating constant" << "\n";
   if (type->is_base_type() || type->is_enum()) {
     indent(f_consts_) << "const " << name << " = " << render_const_value(type, value, name) << endl;
   } else {
@@ -1188,14 +1186,11 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
           field_type = (*f_iter)->get_type();
           is_optional = is_pointer_field(*f_iter);
         }
-        std::cout << " ===== field name" << (*f_iter)->get_name() << "\n";
-        std::cout << " ===== field is pointer: " << is_pointer_field(*f_iter) << "\n";
       }
 
       if (field_type == NULL) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
-      std::cout << " ===== value " << v_iter->second->get_string() << "\n";
       out << endl << indent() << publicize(v_iter->first->get_string()) << ": "
           << render_const_value(field_type, v_iter->second, name, is_optional) << "," << endl;
     }
@@ -1204,19 +1199,14 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     out << "}";
 
   } else if (type->is_map()) {
-    std::cout << "    ====MAP" << "\n";
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    std::cout << "    ====value true type" << vtype->get_true_type() << "\n";
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     out << "map[" << type_to_go_type(ktype) << "]" << type_to_go_type(vtype) << "{" << endl;
     indent_up();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
 
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      std::cout << "    ===MAP VALUE" << "\n";
-      std::cout << "    ===ktype" << ktype->get_name() << "\n";
-      std::cout << "    ===vtype" << vtype->get_name() << "\n";
       out << indent() << render_const_value(ktype, v_iter->first, name) << ": "
           << render_const_value(vtype, v_iter->second, name) << "," << endl;
     }
