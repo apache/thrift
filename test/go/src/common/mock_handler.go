@@ -23,267 +23,313 @@
 package common
 
 import (
-	gomock "github.com/golang/mock/gomock"
 	thrifttest "gen/thrifttest"
+	gomock "github.com/golang/mock/gomock"
+	context "golang.org/x/net/context"
 )
 
-// Mock of ThriftTest interface
+// MockThriftTest is a mock of ThriftTest interface
 type MockThriftTest struct {
 	ctrl     *gomock.Controller
-	recorder *_MockThriftTestRecorder
+	recorder *MockThriftTestMockRecorder
 }
 
-// Recorder for MockThriftTest (not exported)
-type _MockThriftTestRecorder struct {
+// MockThriftTestMockRecorder is the mock recorder for MockThriftTest
+type MockThriftTestMockRecorder struct {
 	mock *MockThriftTest
 }
 
+// NewMockThriftTest creates a new mock instance
 func NewMockThriftTest(ctrl *gomock.Controller) *MockThriftTest {
 	mock := &MockThriftTest{ctrl: ctrl}
-	mock.recorder = &_MockThriftTestRecorder{mock}
+	mock.recorder = &MockThriftTestMockRecorder{mock}
 	return mock
 }
 
-func (_m *MockThriftTest) EXPECT() *_MockThriftTestRecorder {
+// EXPECT returns an object that allows the caller to indicate expected use
+func (_m *MockThriftTest) EXPECT() *MockThriftTestMockRecorder {
 	return _m.recorder
 }
 
-func (_m *MockThriftTest) TestBool(_param0 bool) (bool, error) {
-	ret := _m.ctrl.Call(_m, "TestBool", _param0)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-func (_mr *_MockThriftTestRecorder) TestBool(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestBool", arg0)
-}
-
-
-func (_m *MockThriftTest) TestByte(_param0 int8) (int8, error) {
-	ret := _m.ctrl.Call(_m, "TestByte", _param0)
-	ret0, _ := ret[0].(int8)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-func (_mr *_MockThriftTestRecorder) TestByte(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestByte", arg0)
-}
-
-func (_m *MockThriftTest) TestDouble(_param0 float64) (float64, error) {
-	ret := _m.ctrl.Call(_m, "TestDouble", _param0)
-	ret0, _ := ret[0].(float64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-func (_mr *_MockThriftTestRecorder) TestDouble(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestDouble", arg0)
-}
-
-func (_m *MockThriftTest) TestBinary(_param0 []byte) ([]byte, error) {
-	ret := _m.ctrl.Call(_m, "TestBinary", _param0)
+// TestBinary mocks base method
+func (_m *MockThriftTest) TestBinary(_param0 context.Context, _param1 []byte) ([]byte, error) {
+	ret := _m.ctrl.Call(_m, "TestBinary", _param0, _param1)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockThriftTestRecorder) TestBinary(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestBinary", arg0)
+// TestBinary indicates an expected call of TestBinary
+func (_mr *MockThriftTestMockRecorder) TestBinary(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestBinary", arg0, arg1)
 }
 
-func (_m *MockThriftTest) TestEnum(_param0 thrifttest.Numberz) (thrifttest.Numberz, error) {
-	ret := _m.ctrl.Call(_m, "TestEnum", _param0)
+// TestBool mocks base method
+func (_m *MockThriftTest) TestBool(_param0 context.Context, _param1 bool) (bool, error) {
+	ret := _m.ctrl.Call(_m, "TestBool", _param0, _param1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TestBool indicates an expected call of TestBool
+func (_mr *MockThriftTestMockRecorder) TestBool(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestBool", arg0, arg1)
+}
+
+// TestByte mocks base method
+func (_m *MockThriftTest) TestByte(_param0 context.Context, _param1 int8) (int8, error) {
+	ret := _m.ctrl.Call(_m, "TestByte", _param0, _param1)
+	ret0, _ := ret[0].(int8)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TestByte indicates an expected call of TestByte
+func (_mr *MockThriftTestMockRecorder) TestByte(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestByte", arg0, arg1)
+}
+
+// TestDouble mocks base method
+func (_m *MockThriftTest) TestDouble(_param0 context.Context, _param1 float64) (float64, error) {
+	ret := _m.ctrl.Call(_m, "TestDouble", _param0, _param1)
+	ret0, _ := ret[0].(float64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TestDouble indicates an expected call of TestDouble
+func (_mr *MockThriftTestMockRecorder) TestDouble(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestDouble", arg0, arg1)
+}
+
+// TestEnum mocks base method
+func (_m *MockThriftTest) TestEnum(_param0 context.Context, _param1 thrifttest.Numberz) (thrifttest.Numberz, error) {
+	ret := _m.ctrl.Call(_m, "TestEnum", _param0, _param1)
 	ret0, _ := ret[0].(thrifttest.Numberz)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockThriftTestRecorder) TestEnum(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestEnum", arg0)
+// TestEnum indicates an expected call of TestEnum
+func (_mr *MockThriftTestMockRecorder) TestEnum(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestEnum", arg0, arg1)
 }
 
-func (_m *MockThriftTest) TestException(_param0 string) error {
-	ret := _m.ctrl.Call(_m, "TestException", _param0)
+// TestException mocks base method
+func (_m *MockThriftTest) TestException(_param0 context.Context, _param1 string) error {
+	ret := _m.ctrl.Call(_m, "TestException", _param0, _param1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockThriftTestRecorder) TestException(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestException", arg0)
+// TestException indicates an expected call of TestException
+func (_mr *MockThriftTestMockRecorder) TestException(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestException", arg0, arg1)
 }
 
-func (_m *MockThriftTest) TestI32(_param0 int32) (int32, error) {
-	ret := _m.ctrl.Call(_m, "TestI32", _param0)
+// TestI32 mocks base method
+func (_m *MockThriftTest) TestI32(_param0 context.Context, _param1 int32) (int32, error) {
+	ret := _m.ctrl.Call(_m, "TestI32", _param0, _param1)
 	ret0, _ := ret[0].(int32)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockThriftTestRecorder) TestI32(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestI32", arg0)
+// TestI32 indicates an expected call of TestI32
+func (_mr *MockThriftTestMockRecorder) TestI32(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestI32", arg0, arg1)
 }
 
-func (_m *MockThriftTest) TestI64(_param0 int64) (int64, error) {
-	ret := _m.ctrl.Call(_m, "TestI64", _param0)
+// TestI64 mocks base method
+func (_m *MockThriftTest) TestI64(_param0 context.Context, _param1 int64) (int64, error) {
+	ret := _m.ctrl.Call(_m, "TestI64", _param0, _param1)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockThriftTestRecorder) TestI64(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestI64", arg0)
+// TestI64 indicates an expected call of TestI64
+func (_mr *MockThriftTestMockRecorder) TestI64(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestI64", arg0, arg1)
 }
 
-func (_m *MockThriftTest) TestInsanity(_param0 *thrifttest.Insanity) (map[thrifttest.UserId]map[thrifttest.Numberz]*thrifttest.Insanity, error) {
-	ret := _m.ctrl.Call(_m, "TestInsanity", _param0)
+// TestInsanity mocks base method
+func (_m *MockThriftTest) TestInsanity(_param0 context.Context, _param1 *thrifttest.Insanity) (map[thrifttest.UserId]map[thrifttest.Numberz]*thrifttest.Insanity, error) {
+	ret := _m.ctrl.Call(_m, "TestInsanity", _param0, _param1)
 	ret0, _ := ret[0].(map[thrifttest.UserId]map[thrifttest.Numberz]*thrifttest.Insanity)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockThriftTestRecorder) TestInsanity(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestInsanity", arg0)
+// TestInsanity indicates an expected call of TestInsanity
+func (_mr *MockThriftTestMockRecorder) TestInsanity(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestInsanity", arg0, arg1)
 }
 
-func (_m *MockThriftTest) TestList(_param0 []int32) ([]int32, error) {
-	ret := _m.ctrl.Call(_m, "TestList", _param0)
+// TestList mocks base method
+func (_m *MockThriftTest) TestList(_param0 context.Context, _param1 []int32) ([]int32, error) {
+	ret := _m.ctrl.Call(_m, "TestList", _param0, _param1)
 	ret0, _ := ret[0].([]int32)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockThriftTestRecorder) TestList(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestList", arg0)
+// TestList indicates an expected call of TestList
+func (_mr *MockThriftTestMockRecorder) TestList(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestList", arg0, arg1)
 }
 
-func (_m *MockThriftTest) TestMap(_param0 map[int32]int32) (map[int32]int32, error) {
-	ret := _m.ctrl.Call(_m, "TestMap", _param0)
+// TestMap mocks base method
+func (_m *MockThriftTest) TestMap(_param0 context.Context, _param1 map[int32]int32) (map[int32]int32, error) {
+	ret := _m.ctrl.Call(_m, "TestMap", _param0, _param1)
 	ret0, _ := ret[0].(map[int32]int32)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockThriftTestRecorder) TestMap(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestMap", arg0)
+// TestMap indicates an expected call of TestMap
+func (_mr *MockThriftTestMockRecorder) TestMap(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestMap", arg0, arg1)
 }
 
-func (_m *MockThriftTest) TestMapMap(_param0 int32) (map[int32]map[int32]int32, error) {
-	ret := _m.ctrl.Call(_m, "TestMapMap", _param0)
+// TestMapMap mocks base method
+func (_m *MockThriftTest) TestMapMap(_param0 context.Context, _param1 int32) (map[int32]map[int32]int32, error) {
+	ret := _m.ctrl.Call(_m, "TestMapMap", _param0, _param1)
 	ret0, _ := ret[0].(map[int32]map[int32]int32)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockThriftTestRecorder) TestMapMap(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestMapMap", arg0)
+// TestMapMap indicates an expected call of TestMapMap
+func (_mr *MockThriftTestMockRecorder) TestMapMap(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestMapMap", arg0, arg1)
 }
 
-func (_m *MockThriftTest) TestMulti(_param0 int8, _param1 int32, _param2 int64, _param3 map[int16]string, _param4 thrifttest.Numberz, _param5 thrifttest.UserId) (*thrifttest.Xtruct, error) {
-	ret := _m.ctrl.Call(_m, "TestMulti", _param0, _param1, _param2, _param3, _param4, _param5)
+// TestMulti mocks base method
+func (_m *MockThriftTest) TestMulti(_param0 context.Context, _param1 int8, _param2 int32, _param3 int64, _param4 map[int16]string, _param5 thrifttest.Numberz, _param6 thrifttest.UserId) (*thrifttest.Xtruct, error) {
+	ret := _m.ctrl.Call(_m, "TestMulti", _param0, _param1, _param2, _param3, _param4, _param5, _param6)
 	ret0, _ := ret[0].(*thrifttest.Xtruct)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockThriftTestRecorder) TestMulti(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestMulti", arg0, arg1, arg2, arg3, arg4, arg5)
+// TestMulti indicates an expected call of TestMulti
+func (_mr *MockThriftTestMockRecorder) TestMulti(arg0, arg1, arg2, arg3, arg4, arg5, arg6 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestMulti", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
 }
 
-func (_m *MockThriftTest) TestMultiException(_param0 string, _param1 string) (*thrifttest.Xtruct, error) {
-	ret := _m.ctrl.Call(_m, "TestMultiException", _param0, _param1)
+// TestMultiException mocks base method
+func (_m *MockThriftTest) TestMultiException(_param0 context.Context, _param1 string, _param2 string) (*thrifttest.Xtruct, error) {
+	ret := _m.ctrl.Call(_m, "TestMultiException", _param0, _param1, _param2)
 	ret0, _ := ret[0].(*thrifttest.Xtruct)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockThriftTestRecorder) TestMultiException(arg0, arg1 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestMultiException", arg0, arg1)
+// TestMultiException indicates an expected call of TestMultiException
+func (_mr *MockThriftTestMockRecorder) TestMultiException(arg0, arg1, arg2 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestMultiException", arg0, arg1, arg2)
 }
 
-func (_m *MockThriftTest) TestNest(_param0 *thrifttest.Xtruct2) (*thrifttest.Xtruct2, error) {
-	ret := _m.ctrl.Call(_m, "TestNest", _param0)
+// TestNest mocks base method
+func (_m *MockThriftTest) TestNest(_param0 context.Context, _param1 *thrifttest.Xtruct2) (*thrifttest.Xtruct2, error) {
+	ret := _m.ctrl.Call(_m, "TestNest", _param0, _param1)
 	ret0, _ := ret[0].(*thrifttest.Xtruct2)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockThriftTestRecorder) TestNest(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestNest", arg0)
+// TestNest indicates an expected call of TestNest
+func (_mr *MockThriftTestMockRecorder) TestNest(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestNest", arg0, arg1)
 }
 
-func (_m *MockThriftTest) TestOneway(_param0 int32) error {
-	ret := _m.ctrl.Call(_m, "TestOneway", _param0)
+// TestOneway mocks base method
+func (_m *MockThriftTest) TestOneway(_param0 context.Context, _param1 int32) error {
+	ret := _m.ctrl.Call(_m, "TestOneway", _param0, _param1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockThriftTestRecorder) TestOneway(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestOneway", arg0)
+// TestOneway indicates an expected call of TestOneway
+func (_mr *MockThriftTestMockRecorder) TestOneway(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestOneway", arg0, arg1)
 }
 
-func (_m *MockThriftTest) TestSet(_param0 []int32) ([]int32, error) {
-	ret := _m.ctrl.Call(_m, "TestSet", _param0)
+// TestSet mocks base method
+func (_m *MockThriftTest) TestSet(_param0 context.Context, _param1 []int32) ([]int32, error) {
+	ret := _m.ctrl.Call(_m, "TestSet", _param0, _param1)
 	ret0, _ := ret[0].([]int32)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockThriftTestRecorder) TestSet(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestSet", arg0)
+// TestSet indicates an expected call of TestSet
+func (_mr *MockThriftTestMockRecorder) TestSet(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestSet", arg0, arg1)
 }
 
-func (_m *MockThriftTest) TestString(_param0 string) (string, error) {
-	ret := _m.ctrl.Call(_m, "TestString", _param0)
+// TestString mocks base method
+func (_m *MockThriftTest) TestString(_param0 context.Context, _param1 string) (string, error) {
+	ret := _m.ctrl.Call(_m, "TestString", _param0, _param1)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockThriftTestRecorder) TestString(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestString", arg0)
+// TestString indicates an expected call of TestString
+func (_mr *MockThriftTestMockRecorder) TestString(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestString", arg0, arg1)
 }
 
-func (_m *MockThriftTest) TestStringMap(_param0 map[string]string) (map[string]string, error) {
-	ret := _m.ctrl.Call(_m, "TestStringMap", _param0)
+// TestStringMap mocks base method
+func (_m *MockThriftTest) TestStringMap(_param0 context.Context, _param1 map[string]string) (map[string]string, error) {
+	ret := _m.ctrl.Call(_m, "TestStringMap", _param0, _param1)
 	ret0, _ := ret[0].(map[string]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockThriftTestRecorder) TestStringMap(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestStringMap", arg0)
+// TestStringMap indicates an expected call of TestStringMap
+func (_mr *MockThriftTestMockRecorder) TestStringMap(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestStringMap", arg0, arg1)
 }
 
-func (_m *MockThriftTest) TestStruct(_param0 *thrifttest.Xtruct) (*thrifttest.Xtruct, error) {
-	ret := _m.ctrl.Call(_m, "TestStruct", _param0)
+// TestStruct mocks base method
+func (_m *MockThriftTest) TestStruct(_param0 context.Context, _param1 *thrifttest.Xtruct) (*thrifttest.Xtruct, error) {
+	ret := _m.ctrl.Call(_m, "TestStruct", _param0, _param1)
 	ret0, _ := ret[0].(*thrifttest.Xtruct)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockThriftTestRecorder) TestStruct(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestStruct", arg0)
+// TestStruct indicates an expected call of TestStruct
+func (_mr *MockThriftTestMockRecorder) TestStruct(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestStruct", arg0, arg1)
 }
 
-func (_m *MockThriftTest) TestTypedef(_param0 thrifttest.UserId) (thrifttest.UserId, error) {
-	ret := _m.ctrl.Call(_m, "TestTypedef", _param0)
+// TestTypedef mocks base method
+func (_m *MockThriftTest) TestTypedef(_param0 context.Context, _param1 thrifttest.UserId) (thrifttest.UserId, error) {
+	ret := _m.ctrl.Call(_m, "TestTypedef", _param0, _param1)
 	ret0, _ := ret[0].(thrifttest.UserId)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockThriftTestRecorder) TestTypedef(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestTypedef", arg0)
+// TestTypedef indicates an expected call of TestTypedef
+func (_mr *MockThriftTestMockRecorder) TestTypedef(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestTypedef", arg0, arg1)
 }
 
-func (_m *MockThriftTest) TestVoid() error {
-	ret := _m.ctrl.Call(_m, "TestVoid")
+// TestVoid mocks base method
+func (_m *MockThriftTest) TestVoid(_param0 context.Context) error {
+	ret := _m.ctrl.Call(_m, "TestVoid", _param0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockThriftTestRecorder) TestVoid() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestVoid")
+// TestVoid indicates an expected call of TestVoid
+func (_mr *MockThriftTestMockRecorder) TestVoid(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TestVoid", arg0)
 }

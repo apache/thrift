@@ -216,38 +216,3 @@ func client(protocolFactory thrift.TProtocolFactory) {
 
 	done.Done()
 }
-
-type handler struct{}
-
-func (h *handler) EchoVoid() (err error) {
-	atomic.AddInt64(&counter, 1)
-	return nil
-}
-func (h *handler) EchoByte(arg int8) (r int8, err error) {
-	atomic.AddInt64(&counter, 1)
-	return arg, nil
-}
-func (h *handler) EchoI32(arg int32) (r int32, err error) {
-	atomic.AddInt64(&counter, 1)
-	return arg, nil
-}
-func (h *handler) EchoI64(arg int64) (r int64, err error) {
-	atomic.AddInt64(&counter, 1)
-	return arg, nil
-}
-func (h *handler) EchoString(arg string) (r string, err error) {
-	atomic.AddInt64(&counter, 1)
-	return arg, nil
-}
-func (h *handler) EchoList(arg []int8) (r []int8, err error) {
-	atomic.AddInt64(&counter, 1)
-	return arg, nil
-}
-func (h *handler) EchoSet(arg map[int8]struct{}) (r map[int8]struct{}, err error) {
-	atomic.AddInt64(&counter, 1)
-	return arg, nil
-}
-func (h *handler) EchoMap(arg map[int8]int8) (r map[int8]int8, err error) {
-	atomic.AddInt64(&counter, 1)
-	return arg, nil
-}

@@ -1,3 +1,5 @@
+// +build !go1.7
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -20,65 +22,13 @@
 package thrift
 
 import (
-	"context"
 	"fmt"
 	"strings"
+
+	"golang.org/x/net/context"
 )
 
-/*
-TMultiplexedProcessor2 is a TProcessor allowing
-a single TServer to provide multiple services with
-context support in TProcessor.
-
-To do so, you instantiate the processor and then register additional
-processors with it, as shown in the following example:
-
-var processor = thrift.NewTMultiplexedProcessor2()
-
-firstProcessor :=
-processor.RegisterProcessor("FirstService", firstProcessor)
-
-processor.registerProcessor(
-  "Calculator",
-  Calculator.NewCalculatorProcessor(&CalculatorHandler{}),
-)
-
-processor.registerProcessor(
-  "WeatherReport",
-  WeatherReport.NewWeatherReportProcessor(&WeatherReportHandler{}),
-)
-
-serverTransport, err := thrift.NewTServerSocketTimeout(addr, TIMEOUT)
-if err != nil {
-  t.Fatal("Unable to create server socket", err)
-}
-server := thrift.NewTSimpleServer2(processor, serverTransport)
-server.Serve();
-*/
-
-type TMultiplexedProcessor2 struct {
-	serviceProcessorMap map[string]TProcessor2
-	DefaultProcessor    TProcessor2
-}
-
-func NewTMultiplexedProcessor2() *TMultiplexedProcessor2 {
-	return &TMultiplexedProcessor2{
-		serviceProcessorMap: make(map[string]TProcessor2),
-	}
-}
-
-func (t *TMultiplexedProcessor2) RegisterDefault(processor TProcessor2) {
-	t.DefaultProcessor = processor
-}
-
-func (t *TMultiplexedProcessor2) RegisterProcessor(name string, processor TProcessor2) {
-	if t.serviceProcessorMap == nil {
-		t.serviceProcessorMap = make(map[string]TProcessor2)
-	}
-	t.serviceProcessorMap[name] = processor
-}
-
-func (t *TMultiplexedProcessor2) Process(ctx context.Context, in, out TProtocol) (bool, TException) {
+func (t *TMultiplexedProcessor) Process(ctx context.Context, in, out TProtocol) (bool, TException) {
 	name, typeId, seqid, err := in.ReadMessageBegin()
 	if err != nil {
 		return false, err

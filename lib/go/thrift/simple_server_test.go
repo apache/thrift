@@ -24,14 +24,6 @@ import (
 	"time"
 )
 
-type mockProcessor struct {
-	ProcessFunc func(in, out TProtocol) (bool, TException)
-}
-
-func (m *mockProcessor) Process(in, out TProtocol) (bool, TException) {
-	return m.ProcessFunc(in, out)
-}
-
 type mockServerTransport struct {
 	ListenFunc    func() error
 	AcceptFunc    func() (TTransport, error)
