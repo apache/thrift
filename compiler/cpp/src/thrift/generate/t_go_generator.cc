@@ -460,12 +460,8 @@ string t_go_generator::gen_opt_const_values_(t_type* type, t_base_type::t_base t
       break;
 
     case t_base_type::TYPE_STRING:
-      if (type->is_binary()) {
-        go_value_str += "[]byte(\"" + get_escaped_string(value) + "\")";
-      } else {
-        go_value_str += "string}{";
-        go_value_str += '"' + get_escaped_string(value) +'"';
-      }
+      go_value_str += "string}{";
+      go_value_str += '"' + get_escaped_string(value) +'"';
       break;
 
     default:
