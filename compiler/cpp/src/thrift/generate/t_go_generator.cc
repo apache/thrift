@@ -434,27 +434,27 @@ string t_go_generator::gen_opt_const_values_(t_base_type::t_base tbase, t_const_
 
     case t_base_type::TYPE_I8:
       go_value_str += "int8}{";
-      go_value_str += std::to_string(value->get_integer());
+      go_value_str += std::to_string((long long)value->get_integer());
       break;
     case t_base_type::TYPE_I16:
       go_value_str += "int16}{";
-      go_value_str += std::to_string(value->get_integer());
+      go_value_str += std::to_string((long long)value->get_integer());
       break;
     case t_base_type::TYPE_I32:
       go_value_str += "int32}{";
-      go_value_str += std::to_string(value->get_integer());
+      go_value_str += std::to_string((long long)value->get_integer());
       break;
     case t_base_type::TYPE_I64:
       go_value_str += "int64}{";
-      go_value_str += std::to_string(value->get_integer());
+      go_value_str += std::to_string((long long)value->get_integer());
       break;
 
     case t_base_type::TYPE_DOUBLE:
       go_value_str += "float64}{";
       if (value->get_type() == t_const_value::CV_INTEGER) {
-        go_value_str +=  std::to_string(value->get_integer());
+        go_value_str +=  std::to_string((long long)value->get_integer());
       } else {
-        go_value_str +=  std::to_string(value->get_double());
+        go_value_str +=  std::to_string((double)value->get_double());
       }
       break;
 
