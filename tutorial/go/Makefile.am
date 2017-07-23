@@ -17,15 +17,19 @@
 # under the License.
 #
 
+if GOVERSION_LT_17
+COMPILER_EXTRAFLAG=":legacy_context"
+endif
+
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 gen-go/tutorial/calculator.go gen-go/shared/shared_service.go: $(top_srcdir)/tutorial/tutorial.thrift
-	$(THRIFT) --gen go:legacy_context -r $<
+	$(THRIFT) --gen go$(COMPILER_EXTRAFLAG) -r $<
 
 all-local: gen-go/tutorial/calculator.go
 
 check: src/git.apache.org/thrift.git/lib/go/thrift thirdparty-dep
-	$(THRIFT) -r --gen go:legacy_context $(top_srcdir)/tutorial/tutorial.thrift
+	$(THRIFT) -r --gen go$(COMPILER_EXTRAFLAG) $(top_srcdir)/tutorial/tutorial.thrift
 	cp -r gen-go/* src/
 	GOPATH=`pwd` $(GO) build -o go-tutorial ./src
 	GOPATH=`pwd` $(GO) build -o calculator-remote src/tutorial/calculator-remote/calculator-remote.go

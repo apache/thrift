@@ -398,6 +398,7 @@ if test "$with_go" = "yes";  then
   if [[ -x "$GO" ]] ; then
     AS_IF([test -n "$GO"],[
       ax_go_version="1.4"
+      ax_go17_version="1.7"
 
       AC_MSG_CHECKING([for Go version])
       golang_version=`$GO version 2>&1 | $SED -e 's/\(go \)\(version \)\(go\)\(@<:@0-9@:>@.@<:@0-9@:>@.@<:@0-9@:>@\)\(@<:@\*@:>@*\).*/\4/'`
@@ -410,6 +411,13 @@ if test "$with_go" = "yes";  then
       :
         have_go="no"
       ])
+      AX_COMPARE_VERSION([$golang_version],[lt],[$ax_go17_version],[
+      :
+        go_version_lt_17="yes"
+      ],[
+      :
+        go_version_lt_17="no"
+      ])
     ],[
       AC_MSG_WARN([could not find Go ])
       have_go="no"
@@ -417,6 +425,7 @@ if test "$with_go" = "yes";  then
   fi
 fi
 AM_CONDITIONAL(WITH_GO, [test "$have_go" = "yes"])
+AM_CONDITIONAL([GOVERSION_LT_17], [test "$go_version_lt_17" = "yes"])
 
 AX_THRIFT_LIB(rs, [Rust], yes)
 have_rs="no"
