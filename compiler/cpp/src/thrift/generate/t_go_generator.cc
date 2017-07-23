@@ -261,8 +261,7 @@ public:
   std::string function_signature(t_function* tfunction, std::string prefix = "");
   std::string function_signature_if(t_function* tfunction,
                                     std::string prefix = "",
-                                    bool addError = false,
-                                    bool enableContext = false);
+                                    bool addError = false);
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_go_type(t_type* ttype);
@@ -1838,7 +1837,7 @@ void t_go_generator::generate_service_interface(t_service* tservice) {
 
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
       generate_go_docstring(f_types_, (*f_iter));
-      f_types_ << indent() << function_signature_if(*f_iter, "", true, true) << endl;
+      f_types_ << indent() << function_signature_if(*f_iter, "", true) << endl;
     }
   }
 
@@ -1952,7 +1951,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
     // Open function
     generate_go_docstring(f_types_, (*f_iter));
     f_types_ << indent() << "func (p *" << serviceName << "Client) "
-               << function_signature_if(*f_iter, "", true, false) << " {" << endl;
+               << function_signature_if(*f_iter, "", true) << " {" << endl;
     indent_up();
     /*
     f_types_ <<
@@ -3434,15 +3433,12 @@ string t_go_generator::function_signature(t_function* tfunction, string prefix) 
  * Renders an interface function signature of the form 'type name(args)'
  *
  * @param tfunction Function definition
- * @param enableContext Client doesn't suppport context for now.
  * @return String of rendered function definition
  */
-string t_go_generator::function_signature_if(t_function* tfunction, string prefix, bool addError, bool enableContext) {
+string t_go_generator::function_signature_if(t_function* tfunction, string prefix, bool addError) {
   // TODO(mcslee): Nitpicky, no ',' if argument_list is empty
   string signature = publicize(prefix + tfunction->get_name()) + "(";
-  if (enableContext) {
-    signature += "ctx context.Context, ";
-  }
+  signature += "ctx context.Context, ";
   signature += argument_list(tfunction->get_arglist()) + ") (";
   t_type* ret = tfunction->get_returntype();
   t_struct* exceptions = tfunction->get_xceptions();

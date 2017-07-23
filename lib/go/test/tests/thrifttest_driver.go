@@ -26,11 +26,11 @@ import (
 )
 
 type ThriftTestDriver struct {
-	client *thrifttest.ThriftTestClient
+	client thrifttest.ThriftTest
 	t      *testing.T
 }
 
-func NewThriftTestDriver(t *testing.T, client *thrifttest.ThriftTestClient) *ThriftTestDriver {
+func NewThriftTestDriver(t *testing.T, client thrifttest.ThriftTest) *ThriftTestDriver {
 	return &ThriftTestDriver{client, t}
 }
 
@@ -38,15 +38,15 @@ func (p *ThriftTestDriver) Start() {
 	client := p.client
 	t := p.t
 
-	if client.TestVoid() != nil {
+	if client.TestVoid(defaultCtx) != nil {
 		t.Fatal("TestVoid failed")
 	}
 
-	if r, err := client.TestString("Test"); r != "Test" || err != nil {
+	if r, err := client.TestString(defaultCtx, "Test"); r != "Test" || err != nil {
 		t.Fatal("TestString with simple text failed")
 	}
 
-	if r, err := client.TestString(""); r != "" || err != nil {
+	if r, err := client.TestString(defaultCtx, ""); r != "" || err != nil {
 		t.Fatal("TestString with empty text failed")
 	}
 
@@ -76,7 +76,7 @@ func (p *ThriftTestDriver) Start() {
 		"Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文, " +
 		"Bân-lâm-gú, 粵語"
 
-	if r, err := client.TestString(stringTest); r != stringTest || err != nil {
+	if r, err := client.TestString(defaultCtx, stringTest); r != stringTest || err != nil {
 		t.Fatal("TestString with all languages failed")
 	}
 
@@ -86,44 +86,44 @@ func (p *ThriftTestDriver) Start() {
 		" now-a-bunch-of-junk: !@#$%&()(&%$#{}{}<><><" +
 		" char-to-test-json-parsing: ]] \"]] \\\" }}}{ [[[ "
 
-	if r, err := client.TestString(specialCharacters); r != specialCharacters || err != nil {
+	if r, err := client.TestString(defaultCtx, specialCharacters); r != specialCharacters || err != nil {
 		t.Fatal("TestString with specialCharacters failed")
 	}
 
-	if r, err := client.TestByte(1); r != 1 || err != nil {
+	if r, err := client.TestByte(defaultCtx, 1); r != 1 || err != nil {
 		t.Fatal("TestByte(1) failed")
 	}
-	if r, err := client.TestByte(0); r != 0 || err != nil {
+	if r, err := client.TestByte(defaultCtx, 0); r != 0 || err != nil {
 		t.Fatal("TestByte(0) failed")
 	}
-	if r, err := client.TestByte(-1); r != -1 || err != nil {
+	if r, err := client.TestByte(defaultCtx, -1); r != -1 || err != nil {
 		t.Fatal("TestByte(-1) failed")
 	}
-	if r, err := client.TestByte(-127); r != -127 || err != nil {
+	if r, err := client.TestByte(defaultCtx, -127); r != -127 || err != nil {
 		t.Fatal("TestByte(-127) failed")
 	}
 
-	if r, err := client.TestI32(-1); r != -1 || err != nil {
+	if r, err := client.TestI32(defaultCtx, -1); r != -1 || err != nil {
 		t.Fatal("TestI32(-1) failed")
 	}
-	if r, err := client.TestI32(1); r != 1 || err != nil {
+	if r, err := client.TestI32(defaultCtx, 1); r != 1 || err != nil {
 		t.Fatal("TestI32(1) failed")
 	}
 
-	if r, err := client.TestI64(-5); r != -5 || err != nil {
+	if r, err := client.TestI64(defaultCtx, -5); r != -5 || err != nil {
 		t.Fatal("TestI64(-5) failed")
 	}
-	if r, err := client.TestI64(5); r != 5 || err != nil {
+	if r, err := client.TestI64(defaultCtx, 5); r != 5 || err != nil {
 		t.Fatal("TestI64(5) failed")
 	}
-	if r, err := client.TestI64(-34359738368); r != -34359738368 || err != nil {
+	if r, err := client.TestI64(defaultCtx, -34359738368); r != -34359738368 || err != nil {
 		t.Fatal("TestI64(-34359738368) failed")
 	}
 
-	if r, err := client.TestDouble(-5.2098523); r != -5.2098523 || err != nil {
+	if r, err := client.TestDouble(defaultCtx, -5.2098523); r != -5.2098523 || err != nil {
 		t.Fatal("TestDouble(-5.2098523) failed")
 	}
-	if r, err := client.TestDouble(-7.012052175215044); r != -7.012052175215044 || err != nil {
+	if r, err := client.TestDouble(defaultCtx, -7.012052175215044); r != -7.012052175215044 || err != nil {
 		t.Fatal("TestDouble(-7.012052175215044) failed")
 	}
 
@@ -134,7 +134,7 @@ func (p *ThriftTestDriver) Start() {
 	out.ByteThing = 1
 	out.I32Thing = -3
 	out.I64Thing = 1000000
-	if r, err := client.TestStruct(out); !reflect.DeepEqual(r, out) || err != nil {
+	if r, err := client.TestStruct(defaultCtx, out); !reflect.DeepEqual(r, out) || err != nil {
 		t.Fatal("TestStruct failed")
 	}
 
@@ -142,7 +142,7 @@ func (p *ThriftTestDriver) Start() {
 	out2.ByteThing = 1
 	out2.StructThing = out
 	out2.I32Thing = 5
-	if r, err := client.TestNest(out2); !reflect.DeepEqual(r, out2) || err != nil {
+	if r, err := client.TestNest(defaultCtx, out2); !reflect.DeepEqual(r, out2) || err != nil {
 		t.Fatal("TestNest failed")
 	}
 
@@ -150,7 +150,7 @@ func (p *ThriftTestDriver) Start() {
 	for i := int32(0); i < 5; i++ {
 		mapout[i] = i - 10
 	}
-	if r, err := client.TestMap(mapout); !reflect.DeepEqual(r, mapout) || err != nil {
+	if r, err := client.TestMap(defaultCtx, mapout); !reflect.DeepEqual(r, mapout) || err != nil {
 		t.Fatal("TestMap failed")
 	}
 
@@ -158,25 +158,25 @@ func (p *ThriftTestDriver) Start() {
 		"a": "123", "a b": "with spaces ", "same": "same", "0": "numeric key",
 		"longValue": stringTest, stringTest: "long key",
 	}
-	if r, err := client.TestStringMap(mapTestInput); !reflect.DeepEqual(r, mapTestInput) || err != nil {
+	if r, err := client.TestStringMap(defaultCtx, mapTestInput); !reflect.DeepEqual(r, mapTestInput) || err != nil {
 		t.Fatal("TestStringMap failed")
 	}
 
 	setTestInput := []int32{1, 2, 3}
-	if r, err := client.TestSet(setTestInput); !reflect.DeepEqual(r, setTestInput) || err != nil {
+	if r, err := client.TestSet(defaultCtx, setTestInput); !reflect.DeepEqual(r, setTestInput) || err != nil {
 		t.Fatal("TestSet failed")
 	}
 
 	listTest := []int32{1, 2, 3}
-	if r, err := client.TestList(listTest); !reflect.DeepEqual(r, listTest) || err != nil {
+	if r, err := client.TestList(defaultCtx, listTest); !reflect.DeepEqual(r, listTest) || err != nil {
 		t.Fatal("TestList failed")
 	}
 
-	if r, err := client.TestEnum(thrifttest.Numberz_ONE); r != thrifttest.Numberz_ONE || err != nil {
+	if r, err := client.TestEnum(defaultCtx, thrifttest.Numberz_ONE); r != thrifttest.Numberz_ONE || err != nil {
 		t.Fatal("TestEnum failed")
 	}
 
-	if r, err := client.TestTypedef(69); r != 69 || err != nil {
+	if r, err := client.TestTypedef(defaultCtx, 69); r != 69 || err != nil {
 		t.Fatal("TestTypedef failed")
 	}
 
@@ -184,7 +184,7 @@ func (p *ThriftTestDriver) Start() {
 		4:  {1: 1, 2: 2, 3: 3, 4: 4},
 		-4: {-4: -4, -3: -3, -2: -2, -1: -1},
 	}
-	if r, err := client.TestMapMap(1); !reflect.DeepEqual(r, mapMapTest) || err != nil {
+	if r, err := client.TestMapMap(defaultCtx, 1); !reflect.DeepEqual(r, mapMapTest) || err != nil {
 		t.Fatal("TestMapMap failed")
 	}
 
@@ -212,25 +212,25 @@ func (p *ThriftTestDriver) Start() {
 		1: {thrifttest.Numberz_TWO: crazy, thrifttest.Numberz_THREE: crazy},
 		2: {thrifttest.Numberz_SIX: crazyEmpty},
 	}
-	if r, err := client.TestInsanity(crazy); !reflect.DeepEqual(r, insanity) || err != nil {
+	if r, err := client.TestInsanity(defaultCtx, crazy); !reflect.DeepEqual(r, insanity) || err != nil {
 		t.Fatal("TestInsanity failed")
 	}
 
-	if err := client.TestException("TException"); err == nil {
+	if err := client.TestException(defaultCtx, "TException"); err == nil {
 		t.Fatal("TestException TException failed")
 	}
 
-	if err, ok := client.TestException("Xception").(*thrifttest.Xception); ok == false || err == nil {
+	if err, ok := client.TestException(defaultCtx, "Xception").(*thrifttest.Xception); ok == false || err == nil {
 		t.Fatal("TestException Xception failed")
 	} else if err.ErrorCode != 1001 || err.Message != "Xception" {
 		t.Fatal("TestException Xception failed")
 	}
 
-	if err := client.TestException("no Exception"); err != nil {
+	if err := client.TestException(defaultCtx, "no Exception"); err != nil {
 		t.Fatal("TestException no Exception failed")
 	}
 
-	if err := client.TestOneway(0); err != nil {
+	if err := client.TestOneway(defaultCtx, 0); err != nil {
 		t.Fatal("TestOneway failed")
 	}
 }
