@@ -2159,9 +2159,15 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
 
   string unused_protection;
 
+  string ctxPackage = "context";
+  if (legacy_context_) {
+    ctxPackage = "golang.org/x/net/context";
+  }
+
   f_remote << go_autogen_comment();
   f_remote << indent() << "package main" << endl << endl;
   f_remote << indent() << "import (" << endl;
+  f_remote << indent() << "        \"" << ctxPackage << "\"" << endl;
   f_remote << indent() << "        \"flag\"" << endl;
   f_remote << indent() << "        \"fmt\"" << endl;
   f_remote << indent() << "        \"math\"" << endl;
@@ -2501,9 +2507,11 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     f_remote << indent() << "fmt.Print(client." << pubName << "(";
     bool argFirst = true;
 
+    f_remote << "context.Background()";
     for (std::vector<t_field*>::size_type i = 0; i < num_args; ++i) {
       if (argFirst) {
         argFirst = false;
+        f_remote << ", ";
       } else {
         f_remote << ", ";
       }
