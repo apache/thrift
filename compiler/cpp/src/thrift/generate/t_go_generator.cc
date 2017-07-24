@@ -316,7 +316,6 @@ private:
   static std::string variable_name_to_go_name(const std::string& value);
   static bool is_pointer_field(t_field* tfield, bool in_container = false);
   static bool omit_initialization(t_field* tfield);
-  string gen_opt_const_values_(t_base_type::t_base base, t_const_value* value);
 };
 
 // returns true if field initialization can be omitted since it has corresponding go type zero value
@@ -422,52 +421,6 @@ bool t_go_generator::is_pointer_field(t_field* tfield, bool in_container_value) 
   }
 
   throw "INVALID TYPE IN type_to_go_type: " + type->get_name();
-}
-
-string t_go_generator::gen_opt_const_values_(t_base_type::t_base tbase, t_const_value *value) {
-  string go_value_str = "&(&struct{x ";
-  switch (tbase) {
-    case t_base_type::TYPE_BOOL:
-      go_value_str += "bool}{";
-      go_value_str += (value->get_integer() > 0 ? "true" : "false");
-      break;
-
-    case t_base_type::TYPE_I8:
-      go_value_str += "int8}{";
-      go_value_str += std::to_string(static_cast<long long>(value->get_integer()));
-      break;
-    case t_base_type::TYPE_I16:
-      go_value_str += "int16}{";
-      go_value_str += std::to_string(static_cast<long long>(value->get_integer()));
-      break;
-    case t_base_type::TYPE_I32:
-      go_value_str += "int32}{";
-      go_value_str += std::to_string(static_cast<long long>(value->get_integer()));
-      break;
-    case t_base_type::TYPE_I64:
-      go_value_str += "int64}{";
-      go_value_str += std::to_string(static_cast<long long>(value->get_integer()));
-      break;
-
-    case t_base_type::TYPE_DOUBLE:
-      go_value_str += "float64}{";
-      if (value->get_type() == t_const_value::CV_INTEGER) {
-        go_value_str +=  std::to_string(static_cast<long long>(value->get_integer()));
-      } else {
-        go_value_str +=  std::to_string(static_cast<long double>(value->get_double()));
-      }
-      break;
-
-    case t_base_type::TYPE_STRING:
-      go_value_str += "string}{";
-      go_value_str += '"' + get_escaped_string(value) +'"';
-      break;
-
-    default:
-      throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
-  }
-  go_value_str +="}).x";
-  return go_value_str;
 }
 
 std::string t_go_generator::camelcase(const std::string& value) const {
@@ -1126,7 +1079,48 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
 
     if (opt) {
-      out << gen_opt_const_values_(tbase, value);
+      out << "&(&struct{x ";
+      switch (tbase) {
+        case t_base_type::TYPE_BOOL:
+          out << "bool}{";
+          out << (value->get_integer() > 0 ? "true" : "false");
+          break;
+
+        case t_base_type::TYPE_I8:
+          out << "int8}{";
+          out << value->get_integer();
+          break;
+        case t_base_type::TYPE_I16:
+          out << "int16}{";
+          out << value->get_integer();
+          break;
+        case t_base_type::TYPE_I32:
+          out << "int32}{";
+          out << value->get_integer();
+          break;
+        case t_base_type::TYPE_I64:
+          out << "int64}{";
+          out << value->get_integer();
+          break;
+
+        case t_base_type::TYPE_DOUBLE:
+          out << "float64}{";
+          if (value->get_type() == t_const_value::CV_INTEGER) {
+            out << value->get_integer();
+          } else {
+            out << value->get_double();
+          }
+          break;
+
+        case t_base_type::TYPE_STRING:
+          out << "string}{";
+          out << '"' + get_escaped_string(value) + '"';
+          break;
+
+        default:
+          throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
+      }
+      out << "}).x";
     } else {
       switch (tbase) {
         case t_base_type::TYPE_STRING:

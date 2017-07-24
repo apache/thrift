@@ -23,7 +23,6 @@
 #include <map>
 #include <string>
 #include <vector>
-#include <iostream>
 
 // For program_name()
 #include "thrift/main.h"
