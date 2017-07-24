@@ -63,7 +63,7 @@ var xcept = &thrifttest.Xception{ErrorCode: 1001, Message: "Xception"}
 
 func callEverything(client *thrifttest.ThriftTestClient) {
 	var err error
-	if err = client.TestVoid(); err != nil {
+	if err = client.TestVoid(defaultCtx); err != nil {
 		t.Fatalf("Unexpected error in TestVoid() call: ", err)
 	}
 
