@@ -18,9 +18,12 @@
 #
 
 BUILT_SOURCES = gopath
+if GOVERSION_LT_17
+COMPILER_EXTRAFLAG=",legacy_context"
+endif
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
-THRIFTCMD = $(THRIFT) -out src/gen --gen go:thrift_import=thrift,legacy_context
+THRIFTCMD = $(THRIFT) -out src/gen --gen go:thrift_import=thrift$(COMPILER_EXTRAFLAG)
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
 precross: bin/testclient bin/testserver
@@ -52,7 +55,7 @@ clean-local:
 
 check_PROGRAMS: bin/testclient bin/testserver bin/stress
 
-check: gopath
+check: gopath genmock
 	GOPATH=`pwd` $(GO) test -v common/...
 
 genmock: gopath
