@@ -17,8 +17,12 @@
 # under the License.
 #
 
+if GOVERSION_LT_17
+COMPILER_EXTRAFLAG=",legacy_context"
+endif
+
 THRIFT = $(top_builddir)/compiler/cpp/thrift
-THRIFTARGS = -out gopath/src/ --gen go:thrift_import=thrift,legacy_context
+THRIFTARGS = -out gopath/src/ --gen go:thrift_import=thrift$(COMPILER_EXTRAFLAG)
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
 # Thrift for GO has problems with complex map keys: THRIFT-2063
