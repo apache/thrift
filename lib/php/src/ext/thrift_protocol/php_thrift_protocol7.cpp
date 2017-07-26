@@ -995,7 +995,10 @@ PHP_FUNCTION(thrift_protocol_write_binary) {
     transport.flush();
 
   } catch (const PHPExceptionWrapper& ex) {
-    zend_throw_exception_object(ex);
+    // ex will be destructed, so copy to a zval that zend_throw_exception_object can take ownership of
+    zval myex;
+    ZVAL_COPY(&myex, ex);
+    zend_throw_exception_object(&myex);
     RETURN_NULL();
   } catch (const std::exception& ex) {
     throw_zend_exception_from_std_exception(ex);
@@ -1053,7 +1056,11 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
     zval* spec = zend_read_static_property(Z_OBJCE_P(return_value), "_TSPEC", sizeof("_TSPEC")-1, false);
     binary_deserialize_spec(return_value, transport, Z_ARRVAL_P(spec));
   } catch (const PHPExceptionWrapper& ex) {
-    zend_throw_exception_object(ex);
+    // ex will be destructed, so copy to a zval that zend_throw_exception_object can ownership of
+    zval myex;
+    ZVAL_COPY(&myex, ex);
+    zval_dtor(return_value);
+    zend_throw_exception_object(&myex);
     RETURN_NULL();
   } catch (const std::exception& ex) {
     throw_zend_exception_from_std_exception(ex);
