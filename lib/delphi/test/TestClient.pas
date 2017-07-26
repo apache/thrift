@@ -39,6 +39,7 @@ uses
   Thrift.Transport,
   Thrift.Stream,
   Thrift.Test,
+  Thrift.Utils,
   Thrift.Collections,
   Thrift.Console;
 
@@ -87,6 +88,9 @@ type
     function  PrepareBinaryData( aRandomDist : Boolean = FALSE) : TBytes;
     {$IFDEF StressTest}
     procedure StressTest(const client : TThriftTest.Iface);
+    {$ENDIF}
+    {$IFDEF Win64}
+	procedure UseInterlockedExchangeAdd64;
     {$ENDIF}
   protected
     procedure Execute; override;
@@ -1014,6 +1018,18 @@ begin
 end;
 
 
+{$IFDEF Win64}
+procedure TClientThread.UseInterlockedExchangeAdd64;
+var a,b : Int64;
+begin
+  a := 1;
+  b := 2;
+  Thrift.Utils.InterlockedExchangeAdd64( a,b);
+  Expect( a = 3, 'InterlockedExchangeAdd64');
+end;
+{$ENDIF}
+
+
 procedure TClientThread.JSONProtocolReadWriteTest;
 // Tests only then read/write procedures of the JSON protocol
 // All tests succeed, if we can read what we wrote before
@@ -1249,7 +1265,11 @@ var
 begin
   // perform all tests
   try
+    {$IFDEF Win64}  
+    UseInterlockedExchangeAdd64;
+	{$ENDIF}
     JSONProtocolReadWriteTest;
+	
     for i := 0 to FNumIteration - 1 do
     begin
       ClientTest;
