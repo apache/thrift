@@ -98,7 +98,7 @@ public abstract class TAsyncMethodCall<T> {
   protected long getStartTime() {
     return startTime;
   }
-  
+
   protected long getSequenceId() {
     return sequenceId;
   }
@@ -106,11 +106,11 @@ public abstract class TAsyncMethodCall<T> {
   public TAsyncClient getClient() {
     return client;
   }
-  
+
   public boolean hasTimeout() {
     return timeout > 0;
   }
-  
+
   public long getTimeoutTimestamp() {
     return timeout + startTime;
   }
@@ -145,13 +145,21 @@ public abstract class TAsyncMethodCall<T> {
       state = State.WRITING_REQUEST_SIZE;
       key = transport.registerSelector(sel, SelectionKey.OP_WRITE);
     } else {
-      state = State.CONNECTING;
-      key = transport.registerSelector(sel, SelectionKey.OP_CONNECT);
+      if (transport.isSSL()) {
+         transport.startConnection();
+         if (!transport.isOpen())
+           throw new IOException("Unable to establish connection.");
+         state = State.WRITING_REQUEST_SIZE;
+         key = transport.registerSelector(sel, SelectionKey.OP_WRITE);
+      } else {
+        state = State.CONNECTING;
+        key = transport.registerSelector(sel, SelectionKey.OP_CONNECT);
 
-      // non-blocking connect can complete immediately,
-      // in which case we should not expect the OP_CONNECT
-      if (transport.startConnect()) {
-        registerForFirstWrite(key);
+        // non-blocking connect can complete immediately,
+        // in which case we should not expect the OP_CONNECT
+        if (transport.startConnect()) {
+          registerForFirstWrite(key);
+        }
       }
     }
 
@@ -196,7 +204,9 @@ public abstract class TAsyncMethodCall<T> {
           break;
         case READING_RESPONSE_SIZE:
           doReadingResponseSize();
-          break;
+          if (!transport.isSSL()) {
+            break;
+          }
         case READING_RESPONSE_BODY:
           doReadingResponseBody(key);
           break;

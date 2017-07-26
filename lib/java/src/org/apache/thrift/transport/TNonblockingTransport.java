@@ -27,6 +27,8 @@ import java.nio.channels.Selector;
 
 public abstract class TNonblockingTransport extends TTransport {
 
+  protected boolean isSSLEnabled;
+
   /**
    * Non-blocking connection initialization.
    * @see java.nio.channels.SocketChannel#connect(SocketAddress remote)
@@ -44,4 +46,11 @@ public abstract class TNonblockingTransport extends TTransport {
   public abstract int read(ByteBuffer buffer) throws IOException;
 
   public abstract int write(ByteBuffer buffer) throws IOException;
+
+  public abstract boolean startConnection() throws IOException;
+
+  public boolean isSSL()
+  {
+	  return isSSLEnabled;
+  }
 }
