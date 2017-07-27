@@ -103,11 +103,9 @@ read_exact(Transport = #t_transport{module = Module}, Len)
 when is_integer(Len), Len >= 0 ->
   case lists:keyfind(read_exact, 1, Module:module_info(exports)) of
     {read_exact, 2} ->
-      io:fwrite("HAS EXACT"),
       {NewState, Result} = Module:read_exact(Transport#t_transport.state, Len),
       {Transport#t_transport{state = NewState}, Result};
     _ ->
-      io:fwrite("~p NO EXACT", [Module]),
       read(Transport, Len)
   end.
 
