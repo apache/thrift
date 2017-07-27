@@ -27,8 +27,8 @@
 namespace_test() ->
   %% Verify that records produced by ConstantsDemo.thrift have the right namespace.
   io:format(user, "in namespace_test()\n", []),
-  {struct, _} = constants_demo_types:struct_info('consts.thing'),
-  {struct, _} = constants_demo_types:struct_info('consts.Blah'),
+  {struct, _} = constants_demo_types:struct_info('consts_thing'),
+  {struct, _} = constants_demo_types:struct_info('consts_Blah'),
   ok.
 
 -endif. %% TEST
