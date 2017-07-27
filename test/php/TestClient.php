@@ -492,6 +492,7 @@ try {
   print_r(' caught xception '.$x->errorCode.': '.$x->message."\n");
 }
 
+// Regression test for THRIFT-4263
 print_r("testBinarySerializer_Deserialize('foo')");
 try {
   \Thrift\Serializer\TBinarySerializer::deserialize(base64_decode('foo'), \ThriftTest\Xtruct2::class);
