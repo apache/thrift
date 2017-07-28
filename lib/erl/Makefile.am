@@ -19,6 +19,7 @@
 
 THRIFT = ../../compiler/cpp/thrift
 THRIFT_FILES = $(wildcard test/*.thrift) \
+		  ../../test/ConstantsDemo.thrift \
 		  ../../test/NameConflictTest.thrift \
 		  ../../test/ThriftTest.thrift
 
