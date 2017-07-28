@@ -118,6 +118,8 @@ public:
   void generate_type_metadata(std::string function_name, vector<string> names);
   void generate_enum_info(t_enum* tenum);
   void generate_enum_metadata();
+  void generate_const_function(t_const* tconst, ostringstream& exports, ostringstream& functions);
+  void generate_const_functions();
 
   /**
    * Service-level generation functions
@@ -136,6 +138,7 @@ public:
   std::string erl_imports();
   std::string render_includes();
   std::string type_name(t_type* ttype);
+  std::string render_const_list_values(t_type* type, t_const_value* value);
 
   std::string function_signature(t_function* tfunction, std::string prefix = "");
 
@@ -217,7 +220,9 @@ private:
   std::ofstream f_types_file_;
   std::ofstream f_types_hrl_file_;
 
-  std::ofstream f_consts_;
+  std::ofstream f_consts_file_;
+  std::ofstream f_consts_hrl_file_;
+
   std::ostringstream f_service_;
   std::ofstream f_service_file_;
   std::ofstream f_service_hrl_;
@@ -229,6 +234,7 @@ private:
   std::vector<std::string> v_enum_names_;
   std::vector<std::string> v_exception_names_;
   std::vector<t_enum*> v_enums_;
+  std::vector<t_const*> v_consts_;
 };
 
 /**
@@ -245,31 +251,41 @@ void t_erl_generator::init_generator() {
   export_lines_first_ = true;
   export_types_lines_first_ = true;
 
+  string program_module_name = make_safe_for_module_name(program_name_);
+
   // types files
-  string f_types_name = get_out_dir() + make_safe_for_module_name(program_name_) + "_types.erl";
-  string f_types_hrl_name = get_out_dir() + make_safe_for_module_name(program_name_) + "_types.hrl";
+  string f_types_name = get_out_dir() + program_module_name + "_types.erl";
+  string f_types_hrl_name = get_out_dir() + program_module_name + "_types.hrl";
 
   f_types_file_.open(f_types_name.c_str());
   f_types_hrl_file_.open(f_types_hrl_name.c_str());
 
-  hrl_header(f_types_hrl_file_, make_safe_for_module_name(program_name_) + "_types");
+  hrl_header(f_types_hrl_file_, program_module_name + "_types");
 
-  f_types_file_ << erl_autogen_comment() << endl << "-module("
-                << make_safe_for_module_name(program_name_) << "_types)." << endl << erl_imports()
+  f_types_file_ << erl_autogen_comment() << endl
+                << "-module(" << program_module_name << "_types)." << endl
+                << erl_imports() << endl;
+
+  f_types_file_ << "-include(\"" << f_types_hrl_name << "\")." << endl
                 << endl;
-
-  f_types_file_ << "-include(\"" << make_safe_for_module_name(program_name_) << "_types.hrl\")."
-                << endl << endl;
 
   f_types_hrl_file_ << render_includes() << endl;
 
-  // consts file
-  string f_consts_name = get_out_dir() + make_safe_for_module_name(program_name_)
-                         + "_constants.hrl";
-  f_consts_.open(f_consts_name.c_str());
+  // consts files
+  string f_consts_name = get_out_dir() + program_module_name + "_constants.erl";
+  string f_consts_hrl_name = get_out_dir() + program_module_name + "_constants.hrl";
 
-  f_consts_ << erl_autogen_comment() << endl << erl_imports() << endl << "-include(\""
-            << make_safe_for_module_name(program_name_) << "_types.hrl\")." << endl << endl;
+  f_consts_file_.open(f_consts_name.c_str());
+  f_consts_hrl_file_.open(f_consts_hrl_name.c_str());
+
+  f_consts_file_ << erl_autogen_comment() << endl
+                 << "-module(" << program_module_name << "_constants)." << endl
+                 << erl_imports() << endl
+                 << "-include(\"" << f_types_hrl_name << "\")." << endl
+                 << endl;
+
+  f_consts_hrl_file_ << erl_autogen_comment() << endl << erl_imports() << endl
+                     << "-include(\"" << f_types_hrl_name << "\")." << endl << endl;
 }
 
 /**
@@ -350,6 +366,8 @@ void t_erl_generator::close_generator() {
   f_types_file_ << f_info_ext_.str();
   f_types_file_ << "struct_info_ext(_) -> erlang:error(function_clause)." << endl << endl;
 
+  generate_const_functions();
+
   generate_type_metadata("struct_names", v_struct_names_);
   generate_enum_metadata();
   generate_type_metadata("enum_names", v_enum_names_);
@@ -359,7 +377,8 @@ void t_erl_generator::close_generator() {
 
   f_types_file_.close();
   f_types_hrl_file_.close();
-  f_consts_.close();
+  f_consts_file_.close();
+  f_consts_hrl_file_.close();
 }
 
 void t_erl_generator::generate_type_metadata(std::string function_name, vector<string> names) {
@@ -391,6 +410,68 @@ void t_erl_generator::generate_type_metadata(std::string function_name, vector<s
 void t_erl_generator::generate_typedef(t_typedef* ttypedef) {
   (void)ttypedef;
 }
+
+
+void t_erl_generator::generate_const_function(t_const* tconst, ostringstream& exports, ostringstream& functions) {
+  t_type* type = get_true_type(tconst->get_type());
+  string name = tconst->get_name();
+  t_const_value* value = tconst->get_value();
+
+  if (type->is_map()) {
+    t_type* ktype = ((t_map*)type)->get_key_type();
+    t_type* vtype = ((t_map*)type)->get_val_type();
+    string const_fun_name = lowercase(name);
+
+    // Emit const function export.
+    if (exports.tellp() > 0) { exports << ", "; }
+    exports << const_fun_name << "/1, " << const_fun_name << "/2";
+
+    // Emit const function definition.
+    map<t_const_value*, t_const_value*>::const_iterator i, end = value->get_map().end();
+    // The one-argument form throws an error if the key does not exist in the map.
+    for (i = value->get_map().begin(); i != end;) {
+      functions << const_fun_name << "(" << render_const_value(ktype, i->first) << ") -> "
+                << render_const_value(vtype, i->second);
+      ++i;
+      functions << (i != end ? ";\n" : ".\n\n");
+    }
+
+    // The two-argument form returns a default value if the key does not exist in the map.
+    for (i = value->get_map().begin(); i != end; ++i) {
+      functions << const_fun_name << "(" << render_const_value(ktype, i->first) << ", _) -> "
+                << render_const_value(vtype, i->second) << ";\n";
+    }
+    functions << const_fun_name << "(_, Default) -> Default.\n\n";
+  } else if (type->is_list()) {
+    string const_fun_name = lowercase(name);
+
+    if (exports.tellp() > 0) { exports << ", "; }
+    exports << const_fun_name << "/1, " << const_fun_name << "/2";
+
+    size_t list_size = value->get_list().size();
+    string rendered_list = render_const_list_values(type, value);
+    functions << const_fun_name << "(N) when N >= 1, N =< " << list_size << " ->\n"
+              << indent_str() << "element(N, {" << rendered_list << "}).\n";
+    functions << const_fun_name << "(N, _) when N >= 1, N =< " << list_size << " ->\n"
+              << indent_str() << "element(N, {" << rendered_list << "});\n"
+              << const_fun_name << "(_, Default) -> Default.\n\n";
+    indent_down();
+  }
+}
+
+void t_erl_generator::generate_const_functions() {
+  ostringstream exports;
+  ostringstream functions;
+  vector<t_const*>::iterator c_iter;
+  for (c_iter = v_consts_.begin(); c_iter != v_consts_.end(); ++c_iter) {
+    generate_const_function(*c_iter, exports, functions);
+  }
+  if (exports.tellp() > 0) {
+    f_consts_file_ << "-export([" << exports.str() << "]).\n\n"
+                   << functions.str();
+  }
+}
+
 
 /**
  * Generates code for an enumerated type. Done using a class to scope
@@ -458,8 +539,11 @@ void t_erl_generator::generate_const(t_const* tconst) {
   string name = tconst->get_name();
   t_const_value* value = tconst->get_value();
 
-  f_consts_ << "-define(" << constify(make_safe_for_module_name(program_name_)) << "_"
-            << constify(name) << ", " << render_const_value(type, value) << ")." << endl << endl;
+  // Save the tconst so that function can be emitted in generate_const_functions().
+  v_consts_.push_back(tconst);
+
+  f_consts_hrl_file_ << "-define(" << constify(make_safe_for_module_name(program_name_)) << "_"
+                     << constify(name) << ", " << render_const_value(type, value) << ")." << endl << endl;
 }
 
 /**
@@ -560,27 +644,31 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
     }
     out << "])";
   } else if (type->is_list()) {
-    t_type* etype;
-    etype = ((t_list*)type)->get_elem_type();
-    out << "[";
-
-    bool first = true;
-    const vector<t_const_value*>& val = value->get_list();
-    vector<t_const_value*>::const_iterator v_iter;
-    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      if (first) {
-        first = false;
-      } else {
-        out << ",";
-      }
-      out << render_const_value(etype, *v_iter);
-    }
-    out << "]";
+    out << "[" << render_const_list_values(type, value) << "]";
   } else {
     throw "CANNOT GENERATE CONSTANT FOR TYPE: " + type->get_name();
   }
   return out.str();
 }
+
+string t_erl_generator::render_const_list_values(t_type* type, t_const_value* value) {
+  std::ostringstream out;
+  t_type* etype = ((t_list*)type)->get_elem_type();
+
+  bool first = true;
+  const vector<t_const_value*>& val = value->get_list();
+  vector<t_const_value*>::const_iterator v_iter;
+  for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+    if (first) {
+      first = false;
+    } else {
+      out << ",";
+    }
+    out << render_const_value(etype, *v_iter);
+  }
+  return out.str();
+}
+
 
 string t_erl_generator::render_default_value(t_field* field) {
   t_type* type = field->get_type();
