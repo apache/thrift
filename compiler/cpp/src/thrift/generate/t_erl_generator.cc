@@ -188,7 +188,6 @@ private:
   void export_function(t_function* tfunction, std::string prefix = "");
   void export_string(std::string name, int num);
 
-  void export_types_function(t_function* tfunction, std::string prefix = "");
   void export_types_string(std::string name, int num);
 
   /**
@@ -966,16 +965,6 @@ void t_erl_generator::export_string(string name, int num) {
     export_lines_ << ", ";
   }
   export_lines_ << name << "/" << num;
-}
-
-void t_erl_generator::export_types_function(t_function* tfunction, string prefix) {
-  t_struct::members_type::size_type num = tfunction->get_arglist()->get_members().size();
-  if (num > static_cast<t_struct::members_type::size_type>(std::numeric_limits<int>().max())) {
-    throw "integer overflow in t_erl_generator::export_types_function, name " + tfunction->get_name();
-  }
-  export_types_string(prefix + tfunction->get_name(),
-                      1 // This
-                      + static_cast<int>(num));
 }
 
 void t_erl_generator::export_types_string(string name, int num) {
