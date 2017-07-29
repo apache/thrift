@@ -41,7 +41,6 @@
 #include "thrift/generate/t_generator_registry.h"
 //#include "thrift/parse/t_doc.h"
 
-
 /**
  * Top level class representing an entire thrift program. A program consists
  * fundamentally of the following:
@@ -104,9 +103,7 @@ public:
   // Program elements
   void add_typedef(t_typedef* td) { typedefs_.push_back(td); }
   void add_enum(t_enum* te) { enums_.push_back(te); }
-  void add_const(t_const* tc) {
-    consts_.push_back(tc);
-  }
+  void add_const(t_const* tc) { consts_.push_back(tc); }
   void add_struct(t_struct* ts) {
     objects_.push_back(ts);
     structs_.push_back(ts);

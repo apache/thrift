@@ -949,6 +949,7 @@ void parse(t_program* program, t_program* parent_program) {
 
   // reset program doctext status before parsing a new file
   reset_program_doctext_info();
+
   // Parse the program file
   g_parse_mode = PROGRAM;
   g_program = program;
