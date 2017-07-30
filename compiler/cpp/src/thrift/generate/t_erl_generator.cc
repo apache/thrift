@@ -1019,18 +1019,13 @@ string t_erl_generator::argument_list(t_struct* tstruct) {
 }
 
 string t_erl_generator::type_name(t_type* ttype) {
-  string prefix = "";
-  string erl_namespace = ttype->get_program()->get_namespace("erl");
-
-  if (erl_namespace.length() > 0) {
-    prefix = erl_namespace + ".";
+  string prefix = ttype->get_program()->get_namespace("erl");
+  size_t prefix_length = prefix.length();
+  if (prefix_length > 0 && prefix[prefix_length - 1] != '_') {
+    prefix += '.';
   }
 
   string name = ttype->get_name();
-
-  if (ttype->is_struct() || ttype->is_xception() || ttype->is_service()) {
-    name = ttype->get_name();
-  }
 
   return atomify(prefix + name);
 }
