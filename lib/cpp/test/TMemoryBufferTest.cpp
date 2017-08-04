@@ -116,4 +116,14 @@ BOOST_AUTO_TEST_CASE(test_exceptions) {
   BOOST_CHECK_NO_THROW(buf2.write((const uint8_t*)"bar", 3));
 }
 
+BOOST_AUTO_TEST_CASE(test_over_two_gb) {
+  TMemoryBuffer buf;
+  std::vector<uint8_t> small_buff(1);
+  std::vector<uint8_t> one_gb(1073741824);
+
+  buf.write(&small_buff[0], small_buff.size());
+  buf.write(&one_gb[0], one_gb.size());
+  BOOST_CHECK_THROW(buf.write(&one_gb[0], one_gb.size()), TTransportException);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
