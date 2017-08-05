@@ -398,7 +398,7 @@ private:
   bool first_;
 };
 
-TJSONProtocol::TJSONProtocol(boost::shared_ptr<TTransport> ptrans)
+TJSONProtocol::TJSONProtocol(stdcxx::shared_ptr<TTransport> ptrans)
   : TVirtualProtocol<TJSONProtocol>(ptrans),
     trans_(ptrans.get()),
     context_(new TJSONContext()),
@@ -408,7 +408,7 @@ TJSONProtocol::TJSONProtocol(boost::shared_ptr<TTransport> ptrans)
 TJSONProtocol::~TJSONProtocol() {
 }
 
-void TJSONProtocol::pushContext(boost::shared_ptr<TJSONContext> c) {
+void TJSONProtocol::pushContext(stdcxx::shared_ptr<TJSONContext> c) {
   contexts_.push(context_);
   context_ = c;
 }
@@ -576,7 +576,7 @@ uint32_t TJSONProtocol::writeJSONDouble(double num) {
 uint32_t TJSONProtocol::writeJSONObjectStart() {
   uint32_t result = context_->write(*trans_);
   trans_->write(&kJSONObjectStart, 1);
-  pushContext(boost::shared_ptr<TJSONContext>(new JSONPairContext()));
+  pushContext(stdcxx::shared_ptr<TJSONContext>(new JSONPairContext()));
   return result + 1;
 }
 
@@ -589,7 +589,7 @@ uint32_t TJSONProtocol::writeJSONObjectEnd() {
 uint32_t TJSONProtocol::writeJSONArrayStart() {
   uint32_t result = context_->write(*trans_);
   trans_->write(&kJSONArrayStart, 1);
-  pushContext(boost::shared_ptr<TJSONContext>(new JSONListContext()));
+  pushContext(stdcxx::shared_ptr<TJSONContext>(new JSONListContext()));
   return result + 1;
 }
 
@@ -923,7 +923,7 @@ uint32_t TJSONProtocol::readJSONDouble(double& num) {
 uint32_t TJSONProtocol::readJSONObjectStart() {
   uint32_t result = context_->read(reader_);
   result += readJSONSyntaxChar(kJSONObjectStart);
-  pushContext(boost::shared_ptr<TJSONContext>(new JSONPairContext()));
+  pushContext(stdcxx::shared_ptr<TJSONContext>(new JSONPairContext()));
   return result;
 }
 
@@ -936,7 +936,7 @@ uint32_t TJSONProtocol::readJSONObjectEnd() {
 uint32_t TJSONProtocol::readJSONArrayStart() {
   uint32_t result = context_->read(reader_);
   result += readJSONSyntaxChar(kJSONArrayStart);
-  pushContext(boost::shared_ptr<TJSONContext>(new JSONListContext()));
+  pushContext(stdcxx::shared_ptr<TJSONContext>(new JSONListContext()));
   return result;
 }
 

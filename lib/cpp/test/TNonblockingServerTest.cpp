@@ -19,21 +19,28 @@
 
 #define BOOST_TEST_MODULE TNonblockingServerTest
 #include <boost/test/unit_test.hpp>
-#include <boost/smart_ptr.hpp>
 
 #include "thrift/concurrency/Monitor.h"
 #include "thrift/concurrency/Thread.h"
 #include "thrift/server/TNonblockingServer.h"
+#include "thrift/stdcxx.h"
 
 #include "gen-cpp/ParentService.h"
 
 #include <event.h>
 
-using namespace apache::thrift;
 using apache::thrift::concurrency::Guard;
 using apache::thrift::concurrency::Monitor;
 using apache::thrift::concurrency::Mutex;
+using apache::thrift::concurrency::PlatformThreadFactory;
+using apache::thrift::concurrency::Runnable;
+using apache::thrift::concurrency::Thread;
+using apache::thrift::concurrency::ThreadFactory;
 using apache::thrift::server::TServerEventHandler;
+using apache::thrift::stdcxx::make_shared;
+using apache::thrift::stdcxx::shared_ptr;
+
+using namespace apache::thrift;
 
 struct Handler : public test::ParentServiceIf {
   void addString(const std::string& s) { strings_.push_back(s); }
@@ -65,12 +72,12 @@ private:
       bool ready_;
   };
 
-  struct Runner : public apache::thrift::concurrency::Runnable {
+  struct Runner : public Runnable {
     int port;
-    boost::shared_ptr<event_base> userEventBase;
-    boost::shared_ptr<TProcessor> processor;
-    boost::shared_ptr<server::TNonblockingServer> server;
-    boost::shared_ptr<ListenEventHandler> listenHandler;
+    shared_ptr<event_base> userEventBase;
+    shared_ptr<TProcessor> processor;
+    shared_ptr<server::TNonblockingServer> server;
+    shared_ptr<ListenEventHandler> listenHandler;
     Mutex mutex_;
 
     Runner() {
@@ -115,7 +122,7 @@ private:
   };
 
 protected:
-  Fixture() : processor(new test::ParentServiceProcessor(boost::make_shared<Handler>())) {}
+  Fixture() : processor(new test::ParentServiceProcessor(make_shared<Handler>())) {}
 
   ~Fixture() {
     if (server) {
@@ -131,15 +138,15 @@ protected:
   }
 
   int startServer(int port) {
-    boost::shared_ptr<Runner> runner(new Runner);
+    shared_ptr<Runner> runner(new Runner);
     runner->port = port;
     runner->processor = processor;
     runner->userEventBase = userEventBase_;
 
-    boost::scoped_ptr<apache::thrift::concurrency::ThreadFactory> threadFactory(
-        new apache::thrift::concurrency::PlatformThreadFactory(
+    shared_ptr<ThreadFactory> threadFactory(
+        new PlatformThreadFactory(
 #if !USE_BOOST_THREAD && !USE_STD_THREAD
-            concurrency::PlatformThreadFactory::OTHER, concurrency::PlatformThreadFactory::NORMAL,
+            PlatformThreadFactory::OTHER, PlatformThreadFactory::NORMAL,
             1,
 #endif
             false));
@@ -152,10 +159,10 @@ protected:
   }
 
   bool canCommunicate(int serverPort) {
-    boost::shared_ptr<transport::TSocket> socket(new transport::TSocket("localhost", serverPort));
+    shared_ptr<transport::TSocket> socket(new transport::TSocket("localhost", serverPort));
     socket->open();
-    test::ParentServiceClient client(boost::make_shared<protocol::TBinaryProtocol>(
-        boost::make_shared<transport::TFramedTransport>(socket)));
+    test::ParentServiceClient client(make_shared<protocol::TBinaryProtocol>(
+        make_shared<transport::TFramedTransport>(socket)));
     client.addString("foo");
     std::vector<std::string> strings;
     client.getStrings(strings);
@@ -163,12 +170,12 @@ protected:
   }
 
 private:
-  boost::shared_ptr<event_base> userEventBase_;
-  boost::shared_ptr<test::ParentServiceProcessor> processor;
+  shared_ptr<event_base> userEventBase_;
+  shared_ptr<test::ParentServiceProcessor> processor;
 protected:
-  boost::shared_ptr<server::TNonblockingServer> server;
+  shared_ptr<server::TNonblockingServer> server;
 private:
-  boost::shared_ptr<apache::thrift::concurrency::Thread> thread;
+  shared_ptr<concurrency::Thread> thread;
 
 };
 

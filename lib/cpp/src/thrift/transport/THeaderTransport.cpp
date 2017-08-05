@@ -22,6 +22,7 @@
 #include <thrift/protocol/TProtocolTypes.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TCompactProtocol.h>
+#include <thrift/stdcxx.h>
 
 #include <limits>
 #include <utility>
@@ -30,12 +31,14 @@
 #include <zlib.h>
 
 using std::map;
-using boost::shared_ptr;
 using std::string;
 using std::vector;
 
 namespace apache {
 namespace thrift {
+
+using stdcxx::shared_ptr;
+
 namespace transport {
 
 using namespace apache::thrift::protocol;
@@ -255,7 +258,7 @@ void THeaderTransport::readHeaderFormat(uint16_t headerSize, uint32_t sz) {
   }
 
   // Untransform the data section.  rBuf will contain result.
-  untransform(data, safe_numeric_cast<uint32_t>(static_cast<ptrdiff_t>(sz) - (data - rBuf_.get()))); 
+  untransform(data, safe_numeric_cast<uint32_t>(static_cast<ptrdiff_t>(sz) - (data - rBuf_.get())));
 }
 
 void THeaderTransport::untransform(uint8_t* ptr, uint32_t sz) {

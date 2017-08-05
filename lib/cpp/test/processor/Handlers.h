@@ -29,7 +29,7 @@ namespace test {
 
 class ParentHandler : virtual public ParentServiceIf {
 public:
-  ParentHandler(const boost::shared_ptr<EventLog>& log)
+  ParentHandler(const stdcxx::shared_ptr<EventLog>& log)
     : triggerMonitor(&mutex_), generation_(0), wait_(false), log_(log) {}
 
   int32_t incrementGeneration() {
@@ -136,7 +136,7 @@ protected:
   int32_t generation_;
   bool wait_;
   std::vector<std::string> strings_;
-  boost::shared_ptr<EventLog> log_;
+  stdcxx::shared_ptr<EventLog> log_;
 };
 
 #ifdef _WIN32
@@ -146,7 +146,7 @@ protected:
 
 class ChildHandler : public ParentHandler, virtual public ChildServiceIf {
 public:
-  ChildHandler(const boost::shared_ptr<EventLog>& log) : ParentHandler(log), value_(0) {}
+  ChildHandler(const stdcxx::shared_ptr<EventLog>& log) : ParentHandler(log), value_(0) {}
 
   int32_t setValue(const int32_t value) {
     concurrency::Guard g(mutex_);
@@ -174,13 +174,13 @@ protected:
 
 struct ConnContext {
 public:
-  ConnContext(boost::shared_ptr<protocol::TProtocol> in,
-              boost::shared_ptr<protocol::TProtocol> out,
+  ConnContext(stdcxx::shared_ptr<protocol::TProtocol> in,
+              stdcxx::shared_ptr<protocol::TProtocol> out,
               uint32_t id)
     : input(in), output(out), id(id) {}
 
-  boost::shared_ptr<protocol::TProtocol> input;
-  boost::shared_ptr<protocol::TProtocol> output;
+  stdcxx::shared_ptr<protocol::TProtocol> input;
+  stdcxx::shared_ptr<protocol::TProtocol> output;
   uint32_t id;
 };
 
@@ -196,12 +196,12 @@ public:
 
 class ServerEventHandler : public server::TServerEventHandler {
 public:
-  ServerEventHandler(const boost::shared_ptr<EventLog>& log) : nextId_(1), log_(log) {}
+  ServerEventHandler(const stdcxx::shared_ptr<EventLog>& log) : nextId_(1), log_(log) {}
 
   virtual void preServe() {}
 
-  virtual void* createContext(boost::shared_ptr<protocol::TProtocol> input,
-                              boost::shared_ptr<protocol::TProtocol> output) {
+  virtual void* createContext(stdcxx::shared_ptr<protocol::TProtocol> input,
+                              stdcxx::shared_ptr<protocol::TProtocol> output) {
     ConnContext* context = new ConnContext(input, output, nextId_);
     ++nextId_;
     log_->append(EventLog::ET_CONN_CREATED, context->id, 0);
@@ -209,8 +209,8 @@ public:
   }
 
   virtual void deleteContext(void* serverContext,
-                             boost::shared_ptr<protocol::TProtocol> input,
-                             boost::shared_ptr<protocol::TProtocol> output) {
+                             stdcxx::shared_ptr<protocol::TProtocol> input,
+                             stdcxx::shared_ptr<protocol::TProtocol> output) {
     ConnContext* context = reinterpret_cast<ConnContext*>(serverContext);
 
     if (input != context->input) {
@@ -226,7 +226,7 @@ public:
   }
 
   virtual void processContext(void* serverContext,
-                              boost::shared_ptr<transport::TTransport> transport) {
+                              stdcxx::shared_ptr<transport::TTransport> transport) {
 // TODO: We currently don't test the behavior of the processContext()
 // calls.  The various server implementations call processContext() at
 // slightly different times, and it is too annoying to try and account for
@@ -251,12 +251,12 @@ public:
 
 protected:
   uint32_t nextId_;
-  boost::shared_ptr<EventLog> log_;
+  stdcxx::shared_ptr<EventLog> log_;
 };
 
 class ProcessorEventHandler : public TProcessorEventHandler {
 public:
-  ProcessorEventHandler(const boost::shared_ptr<EventLog>& log) : nextId_(1), log_(log) {}
+  ProcessorEventHandler(const stdcxx::shared_ptr<EventLog>& log) : nextId_(1), log_(log) {}
 
   void* getContext(const char* fnName, void* serverContext) {
     ConnContext* connContext = reinterpret_cast<ConnContext*>(serverContext);
@@ -329,7 +329,7 @@ protected:
   }
 
   uint32_t nextId_;
-  boost::shared_ptr<EventLog> log_;
+  stdcxx::shared_ptr<EventLog> log_;
 };
 }
 }

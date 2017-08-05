@@ -21,8 +21,7 @@
 #define _THRIFT_CONCURRENCY_THREAD_H_ 1
 
 #include <stdint.h>
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
+#include <thrift/stdcxx.h>
 
 #include <thrift/thrift-config.h>
 
@@ -57,16 +56,16 @@ public:
    * Gets the thread object that is hosting this runnable object  - can return
    * an empty boost::shared pointer if no references remain on that thread object
    */
-  virtual boost::shared_ptr<Thread> thread() { return thread_.lock(); }
+  virtual stdcxx::shared_ptr<Thread> thread() { return thread_.lock(); }
 
   /**
    * Sets the thread that is executing this object.  This is only meant for
    * use by concrete implementations of Thread.
    */
-  virtual void thread(boost::shared_ptr<Thread> value) { thread_ = value; }
+  virtual void thread(stdcxx::shared_ptr<Thread> value) { thread_ = value; }
 
 private:
-  boost::weak_ptr<Thread> thread_;
+  stdcxx::weak_ptr<Thread> thread_;
 };
 
 /**
@@ -122,13 +121,13 @@ public:
   /**
    * Gets the runnable object this thread is hosting
    */
-  virtual boost::shared_ptr<Runnable> runnable() const { return _runnable; }
+  virtual stdcxx::shared_ptr<Runnable> runnable() const { return _runnable; }
 
 protected:
-  virtual void runnable(boost::shared_ptr<Runnable> value) { _runnable = value; }
+  virtual void runnable(stdcxx::shared_ptr<Runnable> value) { _runnable = value; }
 
 private:
-  boost::shared_ptr<Runnable> _runnable;
+  stdcxx::shared_ptr<Runnable> _runnable;
 };
 
 /**
@@ -155,7 +154,7 @@ public:
   /**
    * Create a new thread.
    */
-  virtual boost::shared_ptr<Thread> newThread(boost::shared_ptr<Runnable> runnable) const = 0;
+  virtual stdcxx::shared_ptr<Thread> newThread(stdcxx::shared_ptr<Runnable> runnable) const = 0;
 
   /**
    * Gets the current thread id or unknown_thread_id if the current thread is not a thrift thread

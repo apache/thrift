@@ -23,8 +23,9 @@
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include "thrift/transport/TBufferTransports.h"
 #include "thrift/protocol/TBinaryProtocol.h"
+#include "thrift/stdcxx.h"
+#include "thrift/transport/TBufferTransports.h"
 #include "gen-cpp/DebugProtoTest_types.h"
 
 #ifdef HAVE_SYS_TIME_H
@@ -52,7 +53,6 @@ int main() {
   using namespace thrift::test::debug;
   using namespace apache::thrift::transport;
   using namespace apache::thrift::protocol;
-  using namespace boost;
 
   OneOfEach ooe;
   ooe.im_true = true;
@@ -67,7 +67,7 @@ int main() {
   ooe.base64 = "\1\2\3\255";
 
   int num = 100000;
-  boost::shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer(num*1000));
+  apache::thrift::stdcxx::shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer(num*1000));
 
   uint8_t* data = NULL;
   uint32_t datasize = 0;
@@ -88,7 +88,7 @@ int main() {
   buf->getBuffer(&data, &datasize);
 
   {
-    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    apache::thrift::stdcxx::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
     TBinaryProtocolT<TMemoryBuffer> prot(buf2);
     OneOfEach ooe2;
     double elapsed = 0.0;
@@ -116,7 +116,7 @@ int main() {
 
   {
     OneOfEach ooe2;
-    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    apache::thrift::stdcxx::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
     TBinaryProtocolT<TMemoryBuffer, TNetworkLittleEndian> prot(buf2);
     double elapsed = 0.0;
     Timer timer;
@@ -142,7 +142,7 @@ int main() {
   }
 
   {
-    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    apache::thrift::stdcxx::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
     TBinaryProtocolT<TMemoryBuffer> prot(buf2);
     OneOfEach ooe2;
     double elapsed = 0.0;
@@ -181,7 +181,7 @@ int main() {
   buf->getBuffer(&data, &datasize);
 
   {
-    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    apache::thrift::stdcxx::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
     TBinaryProtocolT<TMemoryBuffer> prot(buf2);
     ListDoublePerf listDoublePerf2;
     double elapsed = 0.0;
@@ -205,7 +205,7 @@ int main() {
 
   {
     ListDoublePerf listDoublePerf2;
-    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    apache::thrift::stdcxx::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
     TBinaryProtocolT<TMemoryBuffer, TNetworkLittleEndian> prot(buf2);
     double elapsed = 0.0;
     Timer timer;
@@ -227,7 +227,7 @@ int main() {
   }
 
   {
-    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    apache::thrift::stdcxx::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
     TBinaryProtocolT<TMemoryBuffer> prot(buf2);
     ListDoublePerf listDoublePerf2;
     double elapsed = 0.0;

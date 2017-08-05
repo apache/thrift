@@ -36,8 +36,8 @@ namespace test {
 
 using namespace apache::thrift::concurrency;
 
-static std::deque<boost::shared_ptr<Runnable> > m_expired;
-static void expiredNotifier(boost::shared_ptr<Runnable> runnable)
+static std::deque<stdcxx::shared_ptr<Runnable> > m_expired;
+static void expiredNotifier(stdcxx::shared_ptr<Runnable> runnable)
 {
   m_expired.push_back(runnable);
 }

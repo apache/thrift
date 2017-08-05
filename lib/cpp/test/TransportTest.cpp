@@ -26,7 +26,7 @@
 #endif
 #include <sstream>
 #include <fstream>
-#include <thrift/cxxfunctional.h>
+#include <thrift/stdcxx.h>
 
 #include <boost/mpl/list.hpp>
 #include <boost/shared_array.hpp>
@@ -47,6 +47,7 @@
 #endif
 
 using namespace apache::thrift::transport;
+using namespace apache::thrift;
 
 static boost::mt19937 rng;
 
@@ -112,7 +113,7 @@ public:
   std::string describe() const { return generator_->describe(); }
 
 private:
-  boost::shared_ptr<SizeGenerator> generator_;
+  stdcxx::shared_ptr<SizeGenerator> generator_;
 };
 
 /**************************************************************************
@@ -135,8 +136,8 @@ public:
 
   CoupledTransports() : in(), out() {}
 
-  boost::shared_ptr<Transport_> in;
-  boost::shared_ptr<Transport_> out;
+  stdcxx::shared_ptr<Transport_> in;
+  stdcxx::shared_ptr<Transport_> out;
 
 private:
   CoupledTransports(const CoupledTransports&);
@@ -153,7 +154,7 @@ public:
     out = buf;
   }
 
-  boost::shared_ptr<TMemoryBuffer> buf;
+  stdcxx::shared_ptr<TMemoryBuffer> buf;
 };
 
 /**
@@ -323,11 +324,11 @@ public:
  **************************************************************************/
 
 struct TriggerInfo {
-  TriggerInfo(int seconds, const boost::shared_ptr<TTransport>& transport, uint32_t writeLength)
+  TriggerInfo(int seconds, const stdcxx::shared_ptr<TTransport>& transport, uint32_t writeLength)
     : timeoutSeconds(seconds), transport(transport), writeLength(writeLength), next(NULL) {}
 
   int timeoutSeconds;
-  boost::shared_ptr<TTransport> transport;
+  stdcxx::shared_ptr<TTransport> transport;
   uint32_t writeLength;
   TriggerInfo* next;
 };
@@ -402,7 +403,7 @@ void alarm_handler_wrapper() {
  * to the end.)
  */
 void add_trigger(unsigned int seconds,
-                 const boost::shared_ptr<TTransport>& transport,
+                 const stdcxx::shared_ptr<TTransport>& transport,
                  uint32_t write_len) {
   TriggerInfo* info = new TriggerInfo(seconds, transport, write_len);
   {
@@ -442,7 +443,7 @@ void clear_triggers() {
 }
 
 void set_trigger(unsigned int seconds,
-                 const boost::shared_ptr<TTransport>& transport,
+                 const stdcxx::shared_ptr<TTransport>& transport,
                  uint32_t write_len) {
   clear_triggers();
   add_trigger(seconds, transport, write_len);
@@ -995,7 +996,7 @@ private:
  **************************************************************************/
 
 struct global_fixture {
-  boost::shared_ptr<apache::thrift::concurrency::Thread> alarmThread_;
+  stdcxx::shared_ptr<apache::thrift::concurrency::Thread> alarmThread_;
   global_fixture() {
 #if _WIN32
     apache::thrift::transport::TWinsockSingleton::create();

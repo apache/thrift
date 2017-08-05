@@ -20,10 +20,9 @@
 #ifndef _THRIFT_TRANSPORT_TSERVERSOCKET_H_
 #define _THRIFT_TRANSPORT_TSERVERSOCKET_H_ 1
 
-#include <thrift/transport/TServerTransport.h>
+#include <thrift/stdcxx.h>
 #include <thrift/transport/PlatformSocket.h>
-#include <thrift/cxxfunctional.h>
-#include <boost/shared_ptr.hpp>
+#include <thrift/transport/TServerTransport.h>
 
 namespace apache {
 namespace thrift {
@@ -121,10 +120,10 @@ public:
   void close();
 
 protected:
-  boost::shared_ptr<TTransport> acceptImpl();
-  virtual boost::shared_ptr<TSocket> createSocket(THRIFT_SOCKET client);
+  stdcxx::shared_ptr<TTransport> acceptImpl();
+  virtual stdcxx::shared_ptr<TSocket> createSocket(THRIFT_SOCKET client);
   bool interruptableChildren_;
-  boost::shared_ptr<THRIFT_SOCKET> pChildInterruptSockReader_; // if interruptableChildren_ this is shared with child TSockets
+  stdcxx::shared_ptr<THRIFT_SOCKET> pChildInterruptSockReader_; // if interruptableChildren_ this is shared with child TSockets
 
 private:
   void notify(THRIFT_SOCKET notifySock);
