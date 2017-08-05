@@ -20,10 +20,12 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TServerTransport.h>
+#include <thrift/stdcxx.h>
 
 using apache::thrift::transport::TServerTransport;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
+using apache::thrift::stdcxx::shared_ptr;
 
 BOOST_AUTO_TEST_SUITE(TServerTransportTest)
 
@@ -36,9 +38,9 @@ public:
   bool valid_;
 
 protected:
-  boost::shared_ptr<TTransport> acceptImpl() {
-    return valid_ ? boost::shared_ptr<TestTTransport>(new TestTTransport)
-                  : boost::shared_ptr<TestTTransport>();
+  shared_ptr<TTransport> acceptImpl() {
+    return valid_ ? shared_ptr<TestTTransport>(new TestTTransport)
+                  : shared_ptr<TestTTransport>();
   }
 };
 

@@ -18,6 +18,7 @@
  */
 
 #include <thrift/Thrift.h>
+#include <thrift/stdcxx.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TBufferTransports.h>
 
@@ -27,11 +28,12 @@
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TPipedTransport;
 using apache::thrift::transport::TMemoryBuffer;
+using namespace apache::thrift;
 
 BOOST_AUTO_TEST_CASE(test_read_write) {
-  boost::shared_ptr<TMemoryBuffer> underlying(new TMemoryBuffer);
-  boost::shared_ptr<TMemoryBuffer> pipe(new TMemoryBuffer);
-  boost::shared_ptr<TPipedTransport> trans(new TPipedTransport(underlying, pipe));
+  stdcxx::shared_ptr<TMemoryBuffer> underlying(new TMemoryBuffer);
+  stdcxx::shared_ptr<TMemoryBuffer> pipe(new TMemoryBuffer);
+  stdcxx::shared_ptr<TPipedTransport> trans(new TPipedTransport(underlying, pipe));
 
   uint8_t buffer[4];
 

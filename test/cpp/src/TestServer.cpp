@@ -52,7 +52,7 @@
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
-#include <thrift/cxxfunctional.h>
+#include <thrift/stdcxx.h>
 
 #include <signal.h>
 #if _WIN32
@@ -62,11 +62,11 @@
 using namespace std;
 
 using namespace apache::thrift;
+using namespace apache::thrift::async;
 using namespace apache::thrift::concurrency;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace apache::thrift::server;
-using namespace apache::thrift::async;
 
 using namespace thrift::test;
 
@@ -371,66 +371,66 @@ class TestProcessorEventHandler : public TProcessorEventHandler {
 
 class TestHandlerAsync : public ThriftTestCobSvIf {
 public:
-  TestHandlerAsync(boost::shared_ptr<TestHandler>& handler) : _delegate(handler) {}
+  TestHandlerAsync(stdcxx::shared_ptr<TestHandler>& handler) : _delegate(handler) {}
   virtual ~TestHandlerAsync() {}
 
-  virtual void testVoid(tcxx::function<void()> cob) {
+  virtual void testVoid(stdcxx::function<void()> cob) {
     _delegate->testVoid();
     cob();
   }
 
-  virtual void testString(tcxx::function<void(std::string const& _return)> cob,
+  virtual void testString(stdcxx::function<void(std::string const& _return)> cob,
                           const std::string& thing) {
     std::string res;
     _delegate->testString(res, thing);
     cob(res);
   }
 
-  virtual void testBool(tcxx::function<void(bool const& _return)> cob, const bool thing) {
+  virtual void testBool(stdcxx::function<void(bool const& _return)> cob, const bool thing) {
     bool res = _delegate->testBool(thing);
     cob(res);
   }
 
-  virtual void testByte(tcxx::function<void(int8_t const& _return)> cob, const int8_t thing) {
+  virtual void testByte(stdcxx::function<void(int8_t const& _return)> cob, const int8_t thing) {
     int8_t res = _delegate->testByte(thing);
     cob(res);
   }
 
-  virtual void testI32(tcxx::function<void(int32_t const& _return)> cob, const int32_t thing) {
+  virtual void testI32(stdcxx::function<void(int32_t const& _return)> cob, const int32_t thing) {
     int32_t res = _delegate->testI32(thing);
     cob(res);
   }
 
-  virtual void testI64(tcxx::function<void(int64_t const& _return)> cob, const int64_t thing) {
+  virtual void testI64(stdcxx::function<void(int64_t const& _return)> cob, const int64_t thing) {
     int64_t res = _delegate->testI64(thing);
     cob(res);
   }
 
-  virtual void testDouble(tcxx::function<void(double const& _return)> cob, const double thing) {
+  virtual void testDouble(stdcxx::function<void(double const& _return)> cob, const double thing) {
     double res = _delegate->testDouble(thing);
     cob(res);
   }
 
-  virtual void testBinary(tcxx::function<void(std::string const& _return)> cob,
+  virtual void testBinary(stdcxx::function<void(std::string const& _return)> cob,
                           const std::string& thing) {
     std::string res;
     _delegate->testBinary(res, thing);
     cob(res);
   }
 
-  virtual void testStruct(tcxx::function<void(Xtruct const& _return)> cob, const Xtruct& thing) {
+  virtual void testStruct(stdcxx::function<void(Xtruct const& _return)> cob, const Xtruct& thing) {
     Xtruct res;
     _delegate->testStruct(res, thing);
     cob(res);
   }
 
-  virtual void testNest(tcxx::function<void(Xtruct2 const& _return)> cob, const Xtruct2& thing) {
+  virtual void testNest(stdcxx::function<void(Xtruct2 const& _return)> cob, const Xtruct2& thing) {
     Xtruct2 res;
     _delegate->testNest(res, thing);
     cob(res);
   }
 
-  virtual void testMap(tcxx::function<void(std::map<int32_t, int32_t> const& _return)> cob,
+  virtual void testMap(stdcxx::function<void(std::map<int32_t, int32_t> const& _return)> cob,
                        const std::map<int32_t, int32_t>& thing) {
     std::map<int32_t, int32_t> res;
     _delegate->testMap(res, thing);
@@ -438,40 +438,40 @@ public:
   }
 
   virtual void testStringMap(
-      tcxx::function<void(std::map<std::string, std::string> const& _return)> cob,
+      stdcxx::function<void(std::map<std::string, std::string> const& _return)> cob,
       const std::map<std::string, std::string>& thing) {
     std::map<std::string, std::string> res;
     _delegate->testStringMap(res, thing);
     cob(res);
   }
 
-  virtual void testSet(tcxx::function<void(std::set<int32_t> const& _return)> cob,
+  virtual void testSet(stdcxx::function<void(std::set<int32_t> const& _return)> cob,
                        const std::set<int32_t>& thing) {
     std::set<int32_t> res;
     _delegate->testSet(res, thing);
     cob(res);
   }
 
-  virtual void testList(tcxx::function<void(std::vector<int32_t> const& _return)> cob,
+  virtual void testList(stdcxx::function<void(std::vector<int32_t> const& _return)> cob,
                         const std::vector<int32_t>& thing) {
     std::vector<int32_t> res;
     _delegate->testList(res, thing);
     cob(res);
   }
 
-  virtual void testEnum(tcxx::function<void(Numberz::type const& _return)> cob,
+  virtual void testEnum(stdcxx::function<void(Numberz::type const& _return)> cob,
                         const Numberz::type thing) {
     Numberz::type res = _delegate->testEnum(thing);
     cob(res);
   }
 
-  virtual void testTypedef(tcxx::function<void(UserId const& _return)> cob, const UserId thing) {
+  virtual void testTypedef(stdcxx::function<void(UserId const& _return)> cob, const UserId thing) {
     UserId res = _delegate->testTypedef(thing);
     cob(res);
   }
 
   virtual void testMapMap(
-      tcxx::function<void(std::map<int32_t, std::map<int32_t, int32_t> > const& _return)> cob,
+      stdcxx::function<void(std::map<int32_t, std::map<int32_t, int32_t> > const& _return)> cob,
       const int32_t hello) {
     std::map<int32_t, std::map<int32_t, int32_t> > res;
     _delegate->testMapMap(res, hello);
@@ -479,14 +479,14 @@ public:
   }
 
   virtual void testInsanity(
-      tcxx::function<void(std::map<UserId, std::map<Numberz::type, Insanity> > const& _return)> cob,
+      stdcxx::function<void(std::map<UserId, std::map<Numberz::type, Insanity> > const& _return)> cob,
       const Insanity& argument) {
     std::map<UserId, std::map<Numberz::type, Insanity> > res;
     _delegate->testInsanity(res, argument);
     cob(res);
   }
 
-  virtual void testMulti(tcxx::function<void(Xtruct const& _return)> cob,
+  virtual void testMulti(stdcxx::function<void(Xtruct const& _return)> cob,
                          const int8_t arg0,
                          const int32_t arg1,
                          const int64_t arg2,
@@ -499,8 +499,8 @@ public:
   }
 
   virtual void testException(
-      tcxx::function<void()> cob,
-      tcxx::function<void(::apache::thrift::TDelayedException* _throw)> exn_cob,
+      stdcxx::function<void()> cob,
+      stdcxx::function<void(::apache::thrift::TDelayedException* _throw)> exn_cob,
       const std::string& arg) {
     try {
       _delegate->testException(arg);
@@ -512,8 +512,8 @@ public:
   }
 
   virtual void testMultiException(
-      tcxx::function<void(Xtruct const& _return)> cob,
-      tcxx::function<void(::apache::thrift::TDelayedException* _throw)> exn_cob,
+      stdcxx::function<void(Xtruct const& _return)> cob,
+      stdcxx::function<void(::apache::thrift::TDelayedException* _throw)> exn_cob,
       const std::string& arg0,
       const std::string& arg1) {
     Xtruct res;
@@ -526,13 +526,13 @@ public:
     cob(res);
   }
 
-  virtual void testOneway(tcxx::function<void()> cob, const int32_t secondsToSleep) {
+  virtual void testOneway(stdcxx::function<void()> cob, const int32_t secondsToSleep) {
     _delegate->testOneway(secondsToSleep);
     cob();
   }
 
 protected:
-  boost::shared_ptr<TestHandler> _delegate;
+  stdcxx::shared_ptr<TestHandler> _delegate;
 };
 
 namespace po = boost::program_options;
@@ -626,9 +626,9 @@ int main(int argc, char** argv) {
   }
 
   // Dispatcher
-  boost::shared_ptr<TProtocolFactory> protocolFactory;
+  stdcxx::shared_ptr<TProtocolFactory> protocolFactory;
   if (protocol_type == "json") {
-    boost::shared_ptr<TProtocolFactory> jsonProtocolFactory(new TJSONProtocolFactory());
+    stdcxx::shared_ptr<TProtocolFactory> jsonProtocolFactory(new TJSONProtocolFactory());
     protocolFactory = jsonProtocolFactory;
   } else if (protocol_type == "compact") {
     TCompactProtocolFactoryT<TBufferBase> *compactProtocolFactory = new TCompactProtocolFactoryT<TBufferBase>();
@@ -636,7 +636,7 @@ int main(int argc, char** argv) {
     compactProtocolFactory->setStringSizeLimit(string_limit);
     protocolFactory.reset(compactProtocolFactory);
   } else if (protocol_type == "header") {
-    boost::shared_ptr<TProtocolFactory> headerProtocolFactory(new THeaderProtocolFactory());
+    stdcxx::shared_ptr<TProtocolFactory> headerProtocolFactory(new THeaderProtocolFactory());
     protocolFactory = headerProtocolFactory;
   } else {
     TBinaryProtocolFactoryT<TBufferBase>* binaryProtocolFactory = new TBinaryProtocolFactoryT<TBufferBase>();
@@ -646,51 +646,51 @@ int main(int argc, char** argv) {
   }
 
   // Processor
-  boost::shared_ptr<TestHandler> testHandler(new TestHandler());
-  boost::shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
+  stdcxx::shared_ptr<TestHandler> testHandler(new TestHandler());
+  stdcxx::shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
 
   if (vm.count("processor-events")) {
     testProcessor->setEventHandler(
-        boost::shared_ptr<TProcessorEventHandler>(new TestProcessorEventHandler()));
+        stdcxx::shared_ptr<TProcessorEventHandler>(new TestProcessorEventHandler()));
   }
 
   // Transport
-  boost::shared_ptr<TSSLSocketFactory> sslSocketFactory;
-  boost::shared_ptr<TServerSocket> serverSocket;
+  stdcxx::shared_ptr<TSSLSocketFactory> sslSocketFactory;
+  stdcxx::shared_ptr<TServerSocket> serverSocket;
 
   if (ssl) {
-    sslSocketFactory = boost::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
+    sslSocketFactory = stdcxx::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
     sslSocketFactory->loadCertificate(certPath.c_str());
     sslSocketFactory->loadPrivateKey(keyPath.c_str());
     sslSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-    serverSocket = boost::shared_ptr<TServerSocket>(new TSSLServerSocket(port, sslSocketFactory));
+    serverSocket = stdcxx::shared_ptr<TServerSocket>(new TSSLServerSocket(port, sslSocketFactory));
   } else {
     if (domain_socket != "") {
       if (abstract_namespace) {
         std::string abstract_socket("\0", 1);
         abstract_socket += domain_socket;
-        serverSocket = boost::shared_ptr<TServerSocket>(new TServerSocket(abstract_socket));
+        serverSocket = stdcxx::shared_ptr<TServerSocket>(new TServerSocket(abstract_socket));
       } else {
         unlink(domain_socket.c_str());
-        serverSocket = boost::shared_ptr<TServerSocket>(new TServerSocket(domain_socket));
+        serverSocket = stdcxx::shared_ptr<TServerSocket>(new TServerSocket(domain_socket));
       }
       port = 0;
     } else {
-      serverSocket = boost::shared_ptr<TServerSocket>(new TServerSocket(port));
+      serverSocket = stdcxx::shared_ptr<TServerSocket>(new TServerSocket(port));
     }
   }
 
   // Factory
-  boost::shared_ptr<TTransportFactory> transportFactory;
+  stdcxx::shared_ptr<TTransportFactory> transportFactory;
 
   if (transport_type == "http" && server_type != "nonblocking") {
-    boost::shared_ptr<TTransportFactory> httpTransportFactory(new THttpServerTransportFactory());
+    stdcxx::shared_ptr<TTransportFactory> httpTransportFactory(new THttpServerTransportFactory());
     transportFactory = httpTransportFactory;
   } else if (transport_type == "framed") {
-    boost::shared_ptr<TTransportFactory> framedTransportFactory(new TFramedTransportFactory());
+    stdcxx::shared_ptr<TTransportFactory> framedTransportFactory(new TFramedTransportFactory());
     transportFactory = framedTransportFactory;
   } else {
-    boost::shared_ptr<TTransportFactory> bufferedTransportFactory(new TBufferedTransportFactory());
+    stdcxx::shared_ptr<TTransportFactory> bufferedTransportFactory(new TBufferedTransportFactory());
     transportFactory = bufferedTransportFactory;
   }
 
@@ -707,16 +707,16 @@ int main(int argc, char** argv) {
   cout << endl;
 
   // Server
-  boost::shared_ptr<apache::thrift::server::TServer> server;
+  stdcxx::shared_ptr<apache::thrift::server::TServer> server;
 
   if (server_type == "simple") {
     server.reset(new TSimpleServer(testProcessor, serverSocket, transportFactory, protocolFactory));
   } else if (server_type == "thread-pool") {
 
-    boost::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workers);
+    stdcxx::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workers);
 
-    boost::shared_ptr<PlatformThreadFactory> threadFactory
-        = boost::shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
+    stdcxx::shared_ptr<PlatformThreadFactory> threadFactory
+        = stdcxx::shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
     threadManager->threadFactory(threadFactory);
 
@@ -733,10 +733,10 @@ int main(int argc, char** argv) {
         new TThreadedServer(testProcessor, serverSocket, transportFactory, protocolFactory));
   } else if (server_type == "nonblocking") {
     if (transport_type == "http") {
-      boost::shared_ptr<TestHandlerAsync> testHandlerAsync(new TestHandlerAsync(testHandler));
-      boost::shared_ptr<TAsyncProcessor> testProcessorAsync(
+      stdcxx::shared_ptr<TestHandlerAsync> testHandlerAsync(new TestHandlerAsync(testHandler));
+      stdcxx::shared_ptr<TAsyncProcessor> testProcessorAsync(
           new ThriftTestAsyncProcessor(testHandlerAsync));
-      boost::shared_ptr<TAsyncBufferProcessor> testBufferProcessor(
+      stdcxx::shared_ptr<TAsyncBufferProcessor> testBufferProcessor(
           new TAsyncProtocolProcessor(testProcessorAsync, protocolFactory));
 
       // not loading nonblockingServer into "server" because
@@ -745,7 +745,7 @@ int main(int argc, char** argv) {
       TEvhttpServer nonblockingServer(testBufferProcessor, port);
       nonblockingServer.serve();
     } else {
-      boost::shared_ptr<transport::TNonblockingServerSocket> nbSocket;
+      stdcxx::shared_ptr<transport::TNonblockingServerSocket> nbSocket;
       nbSocket.reset(new transport::TNonblockingServerSocket(port));
       server.reset(new TNonblockingServer(testProcessor, protocolFactory, nbSocket));
     }
@@ -755,12 +755,12 @@ int main(int argc, char** argv) {
     if (protocol_type == "header") {
       // Tell the server to use the same protocol for input / output
       // if using header
-      server->setOutputProtocolFactory(boost::shared_ptr<TProtocolFactory>());
+      server->setOutputProtocolFactory(stdcxx::shared_ptr<TProtocolFactory>());
     }
     apache::thrift::concurrency::PlatformThreadFactory factory;
     factory.setDetached(false);
-    boost::shared_ptr<apache::thrift::concurrency::Runnable> serverThreadRunner(server);
-    boost::shared_ptr<apache::thrift::concurrency::Thread> thread
+    stdcxx::shared_ptr<apache::thrift::concurrency::Runnable> serverThreadRunner(server);
+    stdcxx::shared_ptr<apache::thrift::concurrency::Thread> thread
         = factory.newThread(serverThreadRunner);
     thread->start();
 

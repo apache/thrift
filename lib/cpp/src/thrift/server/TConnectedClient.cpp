@@ -28,7 +28,7 @@ using apache::thrift::protocol::TProtocol;
 using apache::thrift::server::TServerEventHandler;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
-using boost::shared_ptr;
+using stdcxx::shared_ptr;
 using std::string;
 
 TConnectedClient::TConnectedClient(const shared_ptr<TProcessor>& processor,

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-/* test a C client with a C++ server */
+/* test a C client with a C++ server  (that makes sense...) */
 
 #include <signal.h>
 #include <sys/types.h>
@@ -25,22 +25,33 @@
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TDebugProtocol.h>
 #include <thrift/server/TSimpleServer.h>
+#include <thrift/stdcxx.h>
 #include <thrift/transport/TServerSocket.h>
 #include "ThriftTest.h"
 #include "ThriftTest_types.h"
 
 #include <iostream>
-
-using namespace std;
-using namespace boost;
+#include <map>
+#include <set>
+#include <string>
+#include <vector>
 
 using namespace apache::thrift;
 using namespace apache::thrift::concurrency;
 using namespace apache::thrift::protocol;
-using namespace apache::thrift::transport;
 using namespace apache::thrift::server;
+using namespace apache::thrift::transport;
 
 using namespace thrift::test;
+
+using std::cout;
+using std::endl;
+using std::fixed;
+using std::make_pair;
+using std::map;
+using std::set;
+using std::string;
+using std::vector;
 
 #define TEST_PORT 9980
 
@@ -347,7 +358,7 @@ test_thrift_client (void)
   gchar *string = NULL;
   gint8 byte = 0;
   gint16 i16 = 0;
-  gint32 i32 = 0, another_i32 = 56789; 
+  gint32 i32 = 0, another_i32 = 56789;
   gint64 i64 = 0;
   double dbl = 0.0;
   TTestXtruct *xtruct_in, *xtruct_out;
@@ -356,7 +367,7 @@ test_thrift_client (void)
   GHashTable *set_in = NULL, *set_out = NULL;
   GArray *list_in = NULL, *list_out = NULL;
   TTestNumberz enum_in, enum_out;
-  TTestUserId user_id_in, user_id_out; 
+  TTestUserId user_id_in, user_id_out;
   GHashTable *insanity_in = NULL;
   TTestXtruct *xtruct1, *xtruct2;
   TTestInsanity *insanity_out = NULL;
@@ -371,7 +382,7 @@ test_thrift_client (void)
 #endif
 
   // create a C client
-  tsocket = (ThriftSocket *) g_object_new (THRIFT_TYPE_SOCKET, 
+  tsocket = (ThriftSocket *) g_object_new (THRIFT_TYPE_SOCKET,
                           "hostname", "localhost",
                           "port", TEST_PORT, NULL);
   protocol = (ThriftBinaryProtocol *) g_object_new (THRIFT_TYPE_BINARY_PROTOCOL,
@@ -607,11 +618,11 @@ main (void)
 
   if (pid == 0) /* child */
   {
-    boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
-    boost::shared_ptr<TestHandler> testHandler(new TestHandler());
-    boost::shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
-    boost::shared_ptr<TServerSocket> serverSocket(new TServerSocket(TEST_PORT));
-    boost::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+    stdcxx::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+    stdcxx::shared_ptr<TestHandler> testHandler(new TestHandler());
+    stdcxx::shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
+    stdcxx::shared_ptr<TServerSocket> serverSocket(new TServerSocket(TEST_PORT));
+    stdcxx::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
     TSimpleServer simpleServer(testProcessor, serverSocket, transportFactory, protocolFactory);
     signal (SIGALRM, bailout);
     alarm (60);

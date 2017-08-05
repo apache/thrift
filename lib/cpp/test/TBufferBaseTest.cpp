@@ -21,13 +21,14 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TShortReadTransport.h>
+#include <thrift/stdcxx.h>
 
-using std::string;
-using boost::shared_ptr;
+using apache::thrift::stdcxx::shared_ptr;
 using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::transport::TBufferedTransport;
 using apache::thrift::transport::TFramedTransport;
 using apache::thrift::transport::test::TShortReadTransport;
+using std::string;
 
 // Shamelessly copied from ZlibTransport.  TODO: refactor.
 unsigned int dist[][5000] = {

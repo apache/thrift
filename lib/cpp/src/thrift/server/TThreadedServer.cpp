@@ -17,11 +17,8 @@
  * under the License.
  */
 
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/shared_ptr.hpp>
 #include <string>
+#include <thrift/stdcxx.h>
 #include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/server/TThreadedServer.h>
 
@@ -35,11 +32,12 @@ using apache::thrift::concurrency::Thread;
 using apache::thrift::concurrency::ThreadFactory;
 using apache::thrift::protocol::TProtocol;
 using apache::thrift::protocol::TProtocolFactory;
+using apache::thrift::stdcxx::make_shared;
+using apache::thrift::stdcxx::shared_ptr;
 using apache::thrift::transport::TServerTransport;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TTransportFactory;
-using boost::shared_ptr;
 
 TThreadedServer::TThreadedServer(const shared_ptr<TProcessorFactory>& processorFactory,
                                  const shared_ptr<TServerTransport>& serverTransport,
@@ -117,8 +115,8 @@ void TThreadedServer::drainDeadClients() {
 
 void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient) {
   Synchronized sync(clientMonitor_);
-  boost::shared_ptr<TConnectedClientRunner> pRunnable = boost::make_shared<TConnectedClientRunner>(pClient);
-  boost::shared_ptr<Thread> pThread = threadFactory_->newThread(pRunnable);
+  shared_ptr<TConnectedClientRunner> pRunnable = make_shared<TConnectedClientRunner>(pClient);
+  shared_ptr<Thread> pThread = threadFactory_->newThread(pRunnable);
   pRunnable->thread(pThread);
   activeClientMap_.insert(ClientMap::value_type(pClient.get(), pThread));
   pThread->start();
@@ -136,7 +134,7 @@ void TThreadedServer::onClientDisconnected(TConnectedClient* pClient) {
   }
 }
 
-TThreadedServer::TConnectedClientRunner::TConnectedClientRunner(const boost::shared_ptr<TConnectedClient>& pClient)
+TThreadedServer::TConnectedClientRunner::TConnectedClientRunner(const shared_ptr<TConnectedClient>& pClient)
   : pClient_(pClient) {
 }
 

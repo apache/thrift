@@ -34,8 +34,6 @@
 #include <string.h>
 
 #include <boost/format.hpp>
-#include <boost/shared_ptr.hpp>
-using boost::shared_ptr;
 
 namespace apache {
 namespace thrift {

@@ -20,7 +20,7 @@
 #ifndef _THRIFT_CONCURRENCY_MUTEX_H_
 #define _THRIFT_CONCURRENCY_MUTEX_H_ 1
 
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 #include <boost/noncopyable.hpp>
 #include <stdint.h>
 
@@ -86,7 +86,7 @@ public:
 
 private:
   class impl;
-  boost::shared_ptr<impl> impl_;
+  stdcxx::shared_ptr<impl> impl_;
 };
 
 class ReadWriteMutex {
@@ -107,7 +107,7 @@ public:
 
 private:
   class impl;
-  boost::shared_ptr<impl> impl_;
+  stdcxx::shared_ptr<impl> impl_;
 };
 
 /**

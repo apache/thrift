@@ -33,8 +33,8 @@ namespace thrift {
 template <class Protocol_>
 class TDispatchProcessorT : public TProcessor {
 public:
-  virtual bool process(boost::shared_ptr<protocol::TProtocol> in,
-                       boost::shared_ptr<protocol::TProtocol> out,
+  virtual bool process(stdcxx::shared_ptr<protocol::TProtocol> in,
+                       stdcxx::shared_ptr<protocol::TProtocol> out,
                        void* connectionContext) {
     protocol::TProtocol* inRaw = in.get();
     protocol::TProtocol* outRaw = out.get();
@@ -105,8 +105,8 @@ protected:
  */
 class TDispatchProcessor : public TProcessor {
 public:
-  virtual bool process(boost::shared_ptr<protocol::TProtocol> in,
-                       boost::shared_ptr<protocol::TProtocol> out,
+  virtual bool process(stdcxx::shared_ptr<protocol::TProtocol> in,
+                       stdcxx::shared_ptr<protocol::TProtocol> out,
                        void* connectionContext) {
     std::string fname;
     protocol::TMessageType mtype;

@@ -20,6 +20,7 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TServerSocket.h>
+#include <thrift/stdcxx.h>
 #include "TTransportCheckThrow.h"
 #include <iostream>
 
@@ -27,6 +28,7 @@ using apache::thrift::transport::TServerSocket;
 using apache::thrift::transport::TSocket;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
+using apache::thrift::stdcxx::shared_ptr;
 
 BOOST_AUTO_TEST_SUITE(TServerSocketTest)
 
@@ -36,7 +38,7 @@ BOOST_AUTO_TEST_CASE(test_bind_to_address) {
   int port = sock1.getPort();
   TSocket clientSock("localhost", port);
   clientSock.open();
-  boost::shared_ptr<TTransport> accepted = sock1.accept();
+  shared_ptr<TTransport> accepted = sock1.accept();
   accepted->close();
   sock1.close();
 

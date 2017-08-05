@@ -122,7 +122,7 @@ libthriftnb_la_SOURCES = src/thrift/server/TNonblockingServer.cpp \
 
 libthriftz_la_SOURCES = src/thrift/transport/TZlibTransport.cpp \
                         src/thrift/transport/THeaderTransport.cpp \
-                        src/thrift/protocol/THeaderProtocol.cpp 
+                        src/thrift/protocol/THeaderProtocol.cpp
 
 
 libthriftqt_la_MOC = src/thrift/qt/moc_TQTcpServer.cpp
@@ -164,8 +164,8 @@ include_thrift_HEADERS = \
                          src/thrift/TProcessor.h \
                          src/thrift/TApplicationException.h \
                          src/thrift/TLogging.h \
-                         src/thrift/cxxfunctional.h \
                          src/thrift/TToString.h \
+                         src/thrift/stdcxx.h \
                          src/thrift/TBase.h
 
 include_concurrencydir = $(include_thriftdir)/concurrency

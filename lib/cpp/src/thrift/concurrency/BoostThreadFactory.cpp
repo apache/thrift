@@ -23,19 +23,20 @@
 
 #include <thrift/concurrency/BoostThreadFactory.h>
 #include <thrift/concurrency/Exception.h>
-
+#include <thrift/stdcxx.h>
 #include <cassert>
 
-#include <boost/scoped_ptr.hpp>
 #include <boost/thread.hpp>
-#include <boost/weak_ptr.hpp>
 
 namespace apache {
 namespace thrift {
-namespace concurrency {
 
-using boost::shared_ptr;
-using boost::weak_ptr;
+using stdcxx::bind;
+using stdcxx::scoped_ptr;
+using stdcxx::shared_ptr;
+using stdcxx::weak_ptr;
+
+namespace concurrency {
 
 /**
  * The boost thread class.
@@ -49,7 +50,7 @@ public:
   static void* threadMain(void* arg);
 
 private:
-  boost::scoped_ptr<boost::thread> thread_;
+  scoped_ptr<boost::thread> thread_;
   STATE state_;
   weak_ptr<BoostThread> self_;
   bool detached_;
@@ -81,7 +82,7 @@ public:
 
     state_ = starting;
 
-    thread_.reset(new boost::thread(boost::bind(threadMain, (void*)selfRef)));
+    thread_.reset(new boost::thread(bind(threadMain, (void*)selfRef)));
 
     if (detached_)
       thread_->detach();
