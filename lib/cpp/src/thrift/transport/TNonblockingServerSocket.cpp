@@ -44,7 +44,7 @@
 #endif
 
 #include <thrift/transport/TSocket.h>
-#include <thrift/transport/TServerSocket.h>
+#include <thrift/transport/TNonblockingServerSocket.h>
 #include <thrift/transport/PlatformSocket.h>
 #include <boost/shared_ptr.hpp>
 
@@ -70,11 +70,6 @@ inline SOCKOPT_CAST_T* cast_sockopt(T* v) {
   return reinterpret_cast<SOCKOPT_CAST_T*>(v);
 }
 
-void destroyer_of_fine_sockets(THRIFT_SOCKET* ssock) {
-  ::THRIFT_CLOSESOCKET(*ssock);
-  delete ssock;
-}
-
 namespace apache {
 namespace thrift {
 namespace transport {
@@ -82,175 +77,106 @@ namespace transport {
 using namespace std;
 using boost::shared_ptr;
 
-TGetAddrInfoWrapper::TGetAddrInfoWrapper(const char* node,
-                                         const char* service,
-                                         const struct addrinfo* hints)
-  : node_(node), service_(service), hints_(hints), res_(NULL) {}
-
-TGetAddrInfoWrapper::~TGetAddrInfoWrapper() {
-  if (this->res_ != NULL)
-    freeaddrinfo(this->res_);
-}
-
-int TGetAddrInfoWrapper::init() {
-  if (this->res_ == NULL)
-    return getaddrinfo(this->node_, this->service_, this->hints_, &(this->res_));
-  return 0;
-}
-
-const struct addrinfo* TGetAddrInfoWrapper::res() {
-  return this->res_;
-}
-
-TServerSocket::TServerSocket(int port)
-  : interruptableChildren_(true),
-    port_(port),
+TNonblockingServerSocket::TNonblockingServerSocket(int port)
+  : port_(port),
+    listenPort_(port),
     serverSocket_(THRIFT_INVALID_SOCKET),
     acceptBacklog_(DEFAULT_BACKLOG),
     sendTimeout_(0),
     recvTimeout_(0),
-    accTimeout_(-1),
     retryLimit_(0),
     retryDelay_(0),
     tcpSendBuffer_(0),
     tcpRecvBuffer_(0),
     keepAlive_(false),
-    listening_(false),
-    interruptSockWriter_(THRIFT_INVALID_SOCKET),
-    interruptSockReader_(THRIFT_INVALID_SOCKET),
-    childInterruptSockWriter_(THRIFT_INVALID_SOCKET) {
+    listening_(false) {
 }
 
-TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout)
-  : interruptableChildren_(true),
-    port_(port),
+TNonblockingServerSocket::TNonblockingServerSocket(int port, int sendTimeout, int recvTimeout)
+  : port_(port),
+    listenPort_(port),
     serverSocket_(THRIFT_INVALID_SOCKET),
     acceptBacklog_(DEFAULT_BACKLOG),
     sendTimeout_(sendTimeout),
     recvTimeout_(recvTimeout),
-    accTimeout_(-1),
     retryLimit_(0),
     retryDelay_(0),
     tcpSendBuffer_(0),
     tcpRecvBuffer_(0),
     keepAlive_(false),
-    listening_(false),
-    interruptSockWriter_(THRIFT_INVALID_SOCKET),
-    interruptSockReader_(THRIFT_INVALID_SOCKET),
-    childInterruptSockWriter_(THRIFT_INVALID_SOCKET) {
+    listening_(false) {
 }
 
-TServerSocket::TServerSocket(const string& address, int port)
-  : interruptableChildren_(true),
-    port_(port),
+TNonblockingServerSocket::TNonblockingServerSocket(const string& address, int port)
+  : port_(port),
+    listenPort_(port),
     address_(address),
     serverSocket_(THRIFT_INVALID_SOCKET),
     acceptBacklog_(DEFAULT_BACKLOG),
     sendTimeout_(0),
     recvTimeout_(0),
-    accTimeout_(-1),
     retryLimit_(0),
     retryDelay_(0),
     tcpSendBuffer_(0),
     tcpRecvBuffer_(0),
     keepAlive_(false),
-    listening_(false),
-    interruptSockWriter_(THRIFT_INVALID_SOCKET),
-    interruptSockReader_(THRIFT_INVALID_SOCKET),
-    childInterruptSockWriter_(THRIFT_INVALID_SOCKET) {
+    listening_(false) {
 }
 
-TServerSocket::TServerSocket(const string& path)
-  : interruptableChildren_(true),
-    port_(0),
+TNonblockingServerSocket::TNonblockingServerSocket(const string& path)
+  : port_(0),
+    listenPort_(0),
     path_(path),
     serverSocket_(THRIFT_INVALID_SOCKET),
     acceptBacklog_(DEFAULT_BACKLOG),
     sendTimeout_(0),
     recvTimeout_(0),
-    accTimeout_(-1),
     retryLimit_(0),
     retryDelay_(0),
     tcpSendBuffer_(0),
     tcpRecvBuffer_(0),
     keepAlive_(false),
-    listening_(false),
-    interruptSockWriter_(THRIFT_INVALID_SOCKET),
-    interruptSockReader_(THRIFT_INVALID_SOCKET),
-    childInterruptSockWriter_(THRIFT_INVALID_SOCKET) {
+    listening_(false) {
 }
 
-TServerSocket::~TServerSocket() {
+TNonblockingServerSocket::~TNonblockingServerSocket() {
   close();
 }
 
-void TServerSocket::setSendTimeout(int sendTimeout) {
+void TNonblockingServerSocket::setSendTimeout(int sendTimeout) {
   sendTimeout_ = sendTimeout;
 }
 
-void TServerSocket::setRecvTimeout(int recvTimeout) {
+void TNonblockingServerSocket::setRecvTimeout(int recvTimeout) {
   recvTimeout_ = recvTimeout;
 }
 
-void TServerSocket::setAcceptTimeout(int accTimeout) {
-  accTimeout_ = accTimeout;
-}
-
-void TServerSocket::setAcceptBacklog(int accBacklog) {
+void TNonblockingServerSocket::setAcceptBacklog(int accBacklog) {
   acceptBacklog_ = accBacklog;
 }
 
-void TServerSocket::setRetryLimit(int retryLimit) {
+void TNonblockingServerSocket::setRetryLimit(int retryLimit) {
   retryLimit_ = retryLimit;
 }
 
-void TServerSocket::setRetryDelay(int retryDelay) {
+void TNonblockingServerSocket::setRetryDelay(int retryDelay) {
   retryDelay_ = retryDelay;
 }
 
-void TServerSocket::setTcpSendBuffer(int tcpSendBuffer) {
+void TNonblockingServerSocket::setTcpSendBuffer(int tcpSendBuffer) {
   tcpSendBuffer_ = tcpSendBuffer;
 }
 
-void TServerSocket::setTcpRecvBuffer(int tcpRecvBuffer) {
+void TNonblockingServerSocket::setTcpRecvBuffer(int tcpRecvBuffer) {
   tcpRecvBuffer_ = tcpRecvBuffer;
 }
 
-void TServerSocket::setInterruptableChildren(bool enable) {
-  if (listening_) {
-    throw std::logic_error("setInterruptableChildren cannot be called after listen()");
-  }
-  interruptableChildren_ = enable;
-}
-
-void TServerSocket::listen() {
+void TNonblockingServerSocket::listen() {
   listening_ = true;
 #ifdef _WIN32
   TWinsockSingleton::create();
 #endif // _WIN32
-  THRIFT_SOCKET sv[2];
-  // Create the socket pair used to interrupt
-  if (-1 == THRIFT_SOCKETPAIR(AF_LOCAL, SOCK_STREAM, 0, sv)) {
-    GlobalOutput.perror("TServerSocket::listen() socketpair() interrupt", THRIFT_GET_SOCKET_ERROR);
-    interruptSockWriter_ = THRIFT_INVALID_SOCKET;
-    interruptSockReader_ = THRIFT_INVALID_SOCKET;
-  } else {
-    interruptSockWriter_ = sv[1];
-    interruptSockReader_ = sv[0];
-  }
-
-  // Create the socket pair used to interrupt all clients
-  if (-1 == THRIFT_SOCKETPAIR(AF_LOCAL, SOCK_STREAM, 0, sv)) {
-    GlobalOutput.perror("TServerSocket::listen() socketpair() childInterrupt",
-                        THRIFT_GET_SOCKET_ERROR);
-    childInterruptSockWriter_ = THRIFT_INVALID_SOCKET;
-    pChildInterruptSockReader_.reset();
-  } else {
-    childInterruptSockWriter_ = sv[1];
-    pChildInterruptSockReader_
-        = boost::shared_ptr<THRIFT_SOCKET>(new THRIFT_SOCKET(sv[0]), destroyer_of_fine_sockets);
-  }
-
+  
   // Validate port number
   if (port_ < 0 || port_ > 0xFFFF) {
     throw TTransportException(TTransportException::BAD_ARGS, "Specified port is invalid");
@@ -293,7 +219,7 @@ void TServerSocket::listen() {
 
   if (serverSocket_ == THRIFT_INVALID_SOCKET) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TServerSocket::listen() socket() ", errno_copy);
+    GlobalOutput.perror("TNonblockingServerSocket::listen() socket() ", errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN,
                               "Could not create server socket.",
@@ -312,7 +238,7 @@ void TServerSocket::listen() {
 // want to force servers to be an admin.
 #ifndef _WIN32
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TServerSocket::listen() setsockopt() THRIFT_NO_SOCKET_CACHING ",
+    GlobalOutput.perror("TNonblockingServerSocket::listen() setsockopt() THRIFT_NO_SOCKET_CACHING ",
                         errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN,
@@ -329,7 +255,7 @@ void TServerSocket::listen() {
                          cast_sockopt(&tcpSendBuffer_),
                          sizeof(tcpSendBuffer_))) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
-      GlobalOutput.perror("TServerSocket::listen() setsockopt() SO_SNDBUF ", errno_copy);
+      GlobalOutput.perror("TNonblockingServerSocket::listen() setsockopt() SO_SNDBUF ", errno_copy);
       close();
       throw TTransportException(TTransportException::NOT_OPEN,
                                 "Could not set SO_SNDBUF",
@@ -344,27 +270,13 @@ void TServerSocket::listen() {
                          cast_sockopt(&tcpRecvBuffer_),
                          sizeof(tcpRecvBuffer_))) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
-      GlobalOutput.perror("TServerSocket::listen() setsockopt() SO_RCVBUF ", errno_copy);
+      GlobalOutput.perror("TNonblockingServerSocket::listen() setsockopt() SO_RCVBUF ", errno_copy);
       close();
       throw TTransportException(TTransportException::NOT_OPEN,
                                 "Could not set SO_RCVBUF",
                                 errno_copy);
     }
   }
-
-// Defer accept
-#ifdef TCP_DEFER_ACCEPT
-  if (path_.empty()) {
-    if (-1 == setsockopt(serverSocket_, IPPROTO_TCP, TCP_DEFER_ACCEPT, &one, sizeof(one))) {
-      int errno_copy = THRIFT_GET_SOCKET_ERROR;
-      GlobalOutput.perror("TServerSocket::listen() setsockopt() TCP_DEFER_ACCEPT ", errno_copy);
-      close();
-      throw TTransportException(TTransportException::NOT_OPEN,
-                                "Could not set TCP_DEFER_ACCEPT",
-                                errno_copy);
-    }
-  }
-#endif // #ifdef TCP_DEFER_ACCEPT
 
 #ifdef IPV6_V6ONLY
   if (res->ai_family == AF_INET6 && path_.empty()) {
@@ -374,7 +286,7 @@ void TServerSocket::listen() {
                          IPV6_V6ONLY,
                          cast_sockopt(&zero),
                          sizeof(zero))) {
-      GlobalOutput.perror("TServerSocket::listen() IPV6_V6ONLY ", THRIFT_GET_SOCKET_ERROR);
+      GlobalOutput.perror("TNonblockingServerSocket::listen() IPV6_V6ONLY ", THRIFT_GET_SOCKET_ERROR);
     }
   }
 #endif // #ifdef IPV6_V6ONLY
@@ -383,30 +295,44 @@ void TServerSocket::listen() {
   struct linger ling = {0, 0};
   if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_LINGER, cast_sockopt(&ling), sizeof(ling))) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TServerSocket::listen() setsockopt() SO_LINGER ", errno_copy);
+    GlobalOutput.perror("TNonblockingServerSocket::listen() setsockopt() SO_LINGER ", errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_LINGER", errno_copy);
   }
 
+  // Keepalive to ensure full result flushing
+  if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_KEEPALIVE, const_cast_sockopt(&one), sizeof(one))) {
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    GlobalOutput.perror("TNonblockingServerSocket::listen() setsockopt() SO_KEEPALIVE ", errno_copy);
+    close();
+    throw TTransportException(TTransportException::NOT_OPEN,
+      "Could not set TCP_NODELAY",
+      errno_copy);
+  }
+
+  // Set TCP nodelay if available, MAC OS X Hack
+  // See http://lists.danga.com/pipermail/memcached/2005-March/001240.html
+#ifndef TCP_NOPUSH
   // Unix Sockets do not need that
   if (path_.empty()) {
     // TCP Nodelay, speed over bandwidth
     if (-1
         == setsockopt(serverSocket_, IPPROTO_TCP, TCP_NODELAY, cast_sockopt(&one), sizeof(one))) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
-      GlobalOutput.perror("TServerSocket::listen() setsockopt() TCP_NODELAY ", errno_copy);
+      GlobalOutput.perror("TNonblockingServerSocket::listen() setsockopt() TCP_NODELAY ", errno_copy);
       close();
       throw TTransportException(TTransportException::NOT_OPEN,
                                 "Could not set TCP_NODELAY",
                                 errno_copy);
     }
   }
+#endif
 
   // Set NONBLOCK on the accept socket
   int flags = THRIFT_FCNTL(serverSocket_, THRIFT_F_GETFL, 0);
   if (flags == -1) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TServerSocket::listen() THRIFT_FCNTL() THRIFT_F_GETFL ", errno_copy);
+    GlobalOutput.perror("TNonblockingServerSocket::listen() THRIFT_FCNTL() THRIFT_F_GETFL ", errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN,
                               "THRIFT_FCNTL() THRIFT_F_GETFL failed",
@@ -415,12 +341,25 @@ void TServerSocket::listen() {
 
   if (-1 == THRIFT_FCNTL(serverSocket_, THRIFT_F_SETFL, flags | THRIFT_O_NONBLOCK)) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TServerSocket::listen() THRIFT_FCNTL() THRIFT_O_NONBLOCK ", errno_copy);
+    GlobalOutput.perror("TNonblockingServerSocket::listen() THRIFT_FCNTL() THRIFT_O_NONBLOCK ", errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN,
                               "THRIFT_FCNTL() THRIFT_F_SETFL THRIFT_O_NONBLOCK failed",
                               errno_copy);
   }
+
+#ifdef TCP_LOW_MIN_RTO
+  if (TSocket::getUseLowMinRto()) {
+    if (-1 == setsockopt(s, IPPROTO_TCP, TCP_LOW_MIN_RTO, const_cast_sockopt(&one), sizeof(one))) {
+      int errno_copy = THRIFT_GET_SOCKET_ERROR;
+      GlobalOutput.perror("TNonblockingServerSocket::listen() setsockopt() TCP_LOW_MIN_RTO ", errno_copy);
+      close();
+      throw TTransportException(TTransportException::NOT_OPEN,
+        "Could not set TCP_NODELAY",
+        errno_copy);
+    }
+  }
+#endif
 
   // prepare the port information
   // we may want to try to bind more than once, since THRIFT_NO_SOCKET_CACHING doesn't
@@ -487,14 +426,14 @@ void TServerSocket::listen() {
       std::memset(&sa, 0, len);
       if (::getsockname(serverSocket_, reinterpret_cast<struct sockaddr*>(&sa), &len) < 0) {
         errno_copy = THRIFT_GET_SOCKET_ERROR;
-        GlobalOutput.perror("TServerSocket::getPort() getsockname() ", errno_copy);
+        GlobalOutput.perror("TNonblockingServerSocket::getPort() getsockname() ", errno_copy);
       } else {
         if (sa.ss_family == AF_INET6) {
           const struct sockaddr_in6* sin = reinterpret_cast<const struct sockaddr_in6*>(&sa);
-          port_ = ntohs(sin->sin6_port);
+          listenPort_ = ntohs(sin->sin6_port);
         } else {
           const struct sockaddr_in* sin = reinterpret_cast<const struct sockaddr_in*>(&sa);
-          port_ = ntohs(sin->sin_port);
+          listenPort_ = ntohs(sin->sin_port);
         }
       }
     }
@@ -504,9 +443,9 @@ void TServerSocket::listen() {
   if (retries > retryLimit_) {
     char errbuf[1024];
     if (!path_.empty()) {
-      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() PATH %s", path_.c_str());
+      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TNonblockingServerSocket::listen() PATH %s", path_.c_str());
     } else {
-      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() BIND %d", port_);
+      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TNonblockingServerSocket::listen() BIND %d", port_);
     }
     GlobalOutput(errbuf);
     close();
@@ -521,7 +460,7 @@ void TServerSocket::listen() {
   // Call listen
   if (-1 == ::listen(serverSocket_, acceptBacklog_)) {
     errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TServerSocket::listen() listen() ", errno_copy);
+    GlobalOutput.perror("TNonblockingServerSocket::listen() listen() ", errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN, "Could not listen", errno_copy);
   }
@@ -529,65 +468,19 @@ void TServerSocket::listen() {
   // The socket is now listening!
 }
 
-int TServerSocket::getPort() {
+int TNonblockingServerSocket::getPort() {
   return port_;
 }
 
-shared_ptr<TTransport> TServerSocket::acceptImpl() {
+int TNonblockingServerSocket::getListenPort() {
+  return listenPort_;
+}
+
+shared_ptr<TSocket> TNonblockingServerSocket::acceptImpl() {
   if (serverSocket_ == THRIFT_INVALID_SOCKET) {
-    throw TTransportException(TTransportException::NOT_OPEN, "TServerSocket not listening");
+    throw TTransportException(TTransportException::NOT_OPEN, "TNonblockingServerSocket not listening");
   }
-
-  struct THRIFT_POLLFD fds[2];
-
-  int maxEintrs = 5;
-  int numEintrs = 0;
-
-  while (true) {
-    std::memset(fds, 0, sizeof(fds));
-    fds[0].fd = serverSocket_;
-    fds[0].events = THRIFT_POLLIN;
-    if (interruptSockReader_ != THRIFT_INVALID_SOCKET) {
-      fds[1].fd = interruptSockReader_;
-      fds[1].events = THRIFT_POLLIN;
-    }
-    /*
-      TODO: if THRIFT_EINTR is received, we'll restart the timeout.
-      To be accurate, we need to fix this in the future.
-     */
-    int ret = THRIFT_POLL(fds, 2, accTimeout_);
-
-    if (ret < 0) {
-      // error cases
-      if (THRIFT_GET_SOCKET_ERROR == THRIFT_EINTR && (numEintrs++ < maxEintrs)) {
-        // THRIFT_EINTR needs to be handled manually and we can tolerate
-        // a certain number
-        continue;
-      }
-      int errno_copy = THRIFT_GET_SOCKET_ERROR;
-      GlobalOutput.perror("TServerSocket::acceptImpl() THRIFT_POLL() ", errno_copy);
-      throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
-    } else if (ret > 0) {
-      // Check for an interrupt signal
-      if (interruptSockReader_ != THRIFT_INVALID_SOCKET && (fds[1].revents & THRIFT_POLLIN)) {
-        int8_t buf;
-        if (-1 == recv(interruptSockReader_, cast_sockopt(&buf), sizeof(int8_t), 0)) {
-          GlobalOutput.perror("TServerSocket::acceptImpl() recv() interrupt ",
-                              THRIFT_GET_SOCKET_ERROR);
-        }
-        throw TTransportException(TTransportException::INTERRUPTED);
-      }
-
-      // Check for the actual server socket being ready
-      if (fds[0].revents & THRIFT_POLLIN) {
-        break;
-      }
-    } else {
-      GlobalOutput("TServerSocket::acceptImpl() THRIFT_POLL 0");
-      throw TTransportException(TTransportException::UNKNOWN);
-    }
-  }
-
+  
   struct sockaddr_storage clientAddress;
   int size = sizeof(clientAddress);
   THRIFT_SOCKET clientSocket
@@ -595,26 +488,26 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
 
   if (clientSocket == THRIFT_INVALID_SOCKET) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TServerSocket::acceptImpl() ::accept() ", errno_copy);
+    GlobalOutput.perror("TNonblockingServerSocket::acceptImpl() ::accept() ", errno_copy);
     throw TTransportException(TTransportException::UNKNOWN, "accept()", errno_copy);
   }
 
-  // Make sure client socket is blocking
+  // Explicitly set this socket to NONBLOCK mode
   int flags = THRIFT_FCNTL(clientSocket, THRIFT_F_GETFL, 0);
   if (flags == -1) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
     ::THRIFT_CLOSESOCKET(clientSocket);
-    GlobalOutput.perror("TServerSocket::acceptImpl() THRIFT_FCNTL() THRIFT_F_GETFL ", errno_copy);
+    GlobalOutput.perror("TNonblockingServerSocket::acceptImpl() THRIFT_FCNTL() THRIFT_F_GETFL ", errno_copy);
     throw TTransportException(TTransportException::UNKNOWN,
                               "THRIFT_FCNTL(THRIFT_F_GETFL)",
                               errno_copy);
   }
 
-  if (-1 == THRIFT_FCNTL(clientSocket, THRIFT_F_SETFL, flags & ~THRIFT_O_NONBLOCK)) {
+  if (-1 == THRIFT_FCNTL(clientSocket, THRIFT_F_SETFL, flags | THRIFT_O_NONBLOCK)) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
     ::THRIFT_CLOSESOCKET(clientSocket);
     GlobalOutput
-        .perror("TServerSocket::acceptImpl() THRIFT_FCNTL() THRIFT_F_SETFL ~THRIFT_O_NONBLOCK ",
+        .perror("TNonblockingServerSocket::acceptImpl() THRIFT_FCNTL() THRIFT_F_SETFL ~THRIFT_O_NONBLOCK ",
                 errno_copy);
     throw TTransportException(TTransportException::UNKNOWN,
                               "THRIFT_FCNTL(THRIFT_F_SETFL)",
@@ -639,50 +532,16 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   return client;
 }
 
-shared_ptr<TSocket> TServerSocket::createSocket(THRIFT_SOCKET clientSocket) {
-  if (interruptableChildren_) {
-    return shared_ptr<TSocket>(new TSocket(clientSocket, pChildInterruptSockReader_));
-  } else {
-    return shared_ptr<TSocket>(new TSocket(clientSocket));
-  }
+shared_ptr<TSocket> TNonblockingServerSocket::createSocket(THRIFT_SOCKET clientSocket) {
+  return shared_ptr<TSocket>(new TSocket(clientSocket));
 }
 
-void TServerSocket::notify(THRIFT_SOCKET notifySocket) {
-  if (notifySocket != THRIFT_INVALID_SOCKET) {
-    int8_t byte = 0;
-    if (-1 == send(notifySocket, cast_sockopt(&byte), sizeof(int8_t), 0)) {
-      GlobalOutput.perror("TServerSocket::notify() send() ", THRIFT_GET_SOCKET_ERROR);
-    }
-  }
-}
-
-void TServerSocket::interrupt() {
-  notify(interruptSockWriter_);
-}
-
-void TServerSocket::interruptChildren() {
-  notify(childInterruptSockWriter_);
-}
-
-void TServerSocket::close() {
+void TNonblockingServerSocket::close() {
   if (serverSocket_ != THRIFT_INVALID_SOCKET) {
     shutdown(serverSocket_, THRIFT_SHUT_RDWR);
     ::THRIFT_CLOSESOCKET(serverSocket_);
   }
-  if (interruptSockWriter_ != THRIFT_INVALID_SOCKET) {
-    ::THRIFT_CLOSESOCKET(interruptSockWriter_);
-  }
-  if (interruptSockReader_ != THRIFT_INVALID_SOCKET) {
-    ::THRIFT_CLOSESOCKET(interruptSockReader_);
-  }
-  if (childInterruptSockWriter_ != THRIFT_INVALID_SOCKET) {
-    ::THRIFT_CLOSESOCKET(childInterruptSockWriter_);
-  }
   serverSocket_ = THRIFT_INVALID_SOCKET;
-  interruptSockWriter_ = THRIFT_INVALID_SOCKET;
-  interruptSockReader_ = THRIFT_INVALID_SOCKET;
-  childInterruptSockWriter_ = THRIFT_INVALID_SOCKET;
-  pChildInterruptSockReader_.reset();
   listening_ = false;
 }
 }

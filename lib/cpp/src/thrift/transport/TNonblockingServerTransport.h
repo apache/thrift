@@ -17,10 +17,10 @@
  * under the License.
  */
 
-#ifndef _THRIFT_TRANSPORT_TSERVERTRANSPORT_H_
-#define _THRIFT_TRANSPORT_TSERVERTRANSPORT_H_ 1
+#ifndef _THRIFT_TRANSPORT_TNONBLOCKINGSERVERTRANSPORT_H_
+#define _THRIFT_TRANSPORT_TNONBLOCKINGSERVERTRANSPORT_H_ 1
 
-#include <thrift/transport/TTransport.h>
+#include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportException.h>
 #include <boost/shared_ptr.hpp>
 
@@ -34,9 +34,9 @@ namespace transport {
  * to keep track of TTransport children that it creates for purposes of
  * controlling their lifetime.
  */
-class TServerTransport {
+class TNonblockingServerTransport {
 public:
-  virtual ~TServerTransport() {}
+  virtual ~TNonblockingServerTransport() {}
 
   /**
    * Starts the server transport listening for new connections. Prior to this
@@ -56,8 +56,8 @@ public:
    * @return A new TTransport object
    * @throws TTransportException if there is an error
    */
-  boost::shared_ptr<TTransport> accept() {
-    boost::shared_ptr<TTransport> result = acceptImpl();
+  boost::shared_ptr<TSocket> accept() {
+    boost::shared_ptr<TSocket> result = acceptImpl();
     if (!result) {
       throw TTransportException("accept() may not return NULL");
     }
@@ -65,31 +65,17 @@ public:
   }
 
   /**
-   * For "smart" TServerTransport implementations that work in a multi
-   * threaded context this can be used to break out of an accept() call.
-   * It is expected that the transport will throw a TTransportException
-   * with the INTERRUPTED error code.
-   *
-   * This will not make an attempt to interrupt any TTransport children.
-   */
-  virtual void interrupt() {}
-
-  /**
-   * This will interrupt the children created by the server transport.
-   * allowing them to break out of any blocking data reception call.
-   * It is expected that the children will throw a TTransportException
-   * with the INTERRUPTED error code.
-   */
-  virtual void interruptChildren() {}
-
-  /**
   * Utility method
-  *
-  * @return server socket file descriptor
+  * 
+  * @return server socket file descriptor 
   * @throw TTransportException If an error occurs
   */
 
-  virtual THRIFT_SOCKET getSocketFD() { return -1; }
+  virtual THRIFT_SOCKET getSocketFD() = 0;
+
+  virtual int getPort() = 0;
+
+  virtual int getListenPort() = 0;
 
   /**
    * Closes this transport such that future calls to accept will do nothing.
@@ -97,7 +83,7 @@ public:
   virtual void close() = 0;
 
 protected:
-  TServerTransport() {}
+  TNonblockingServerTransport() {}
 
   /**
    * Subclasses should implement this function for accept.
@@ -105,10 +91,11 @@ protected:
    * @return A newly allocated TTransport object
    * @throw TTransportException If an error occurs
    */
-  virtual boost::shared_ptr<TTransport> acceptImpl() = 0;
+  virtual boost::shared_ptr<TSocket> acceptImpl() = 0;
+
 };
 }
 }
 } // apache::thrift::transport
 
-#endif // #ifndef _THRIFT_TRANSPORT_TSERVERTRANSPORT_H_
+#endif // #ifndef _THRIFT_TRANSPORT_TNONBLOCKINGSERVERTRANSPORT_H_

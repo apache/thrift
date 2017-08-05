@@ -33,6 +33,7 @@
 #include <thrift/server/TNonblockingServer.h>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/transport/TSocket.h>
+#include <thrift/transport/TNonblockingServerSocket.h>
 
 #include "EventLog.h"
 #include "ServerThread.h"
@@ -121,14 +122,14 @@ public:
     if (framedFactory == NULL) {
       throw TException("TNonblockingServer must use TFramedTransport");
     }
-
+    boost::shared_ptr<TNonblockingServerSocket> socket(new TNonblockingServerSocket(port));
     boost::shared_ptr<PlatformThreadFactory> threadFactory(new PlatformThreadFactory);
     boost::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(8);
     threadManager->threadFactory(threadFactory);
     threadManager->start();
 
     return boost::shared_ptr<TNonblockingServer>(
-        new TNonblockingServer(processor, protocolFactory, port, threadManager));
+        new TNonblockingServer(processor, protocolFactory, socket, threadManager));
   }
 };
 
@@ -150,10 +151,11 @@ public:
       throw TException("TNonblockingServer must use TFramedTransport");
     }
 
+    boost::shared_ptr<TNonblockingServerSocket> socket(new TNonblockingServerSocket(port));
     // Use a NULL ThreadManager
     boost::shared_ptr<ThreadManager> threadManager;
     return boost::shared_ptr<TNonblockingServer>(
-        new TNonblockingServer(processor, protocolFactory, port, threadManager));
+        new TNonblockingServer(processor, protocolFactory, socket, threadManager));
   }
 };
 
