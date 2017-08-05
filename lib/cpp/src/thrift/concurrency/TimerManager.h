@@ -24,7 +24,7 @@
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/Thread.h>
 
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 #include <map>
 #include <time.h>
 
@@ -46,9 +46,9 @@ public:
 
   virtual ~TimerManager();
 
-  virtual boost::shared_ptr<const ThreadFactory> threadFactory() const;
+  virtual stdcxx::shared_ptr<const ThreadFactory> threadFactory() const;
 
-  virtual void threadFactory(boost::shared_ptr<const ThreadFactory> value);
+  virtual void threadFactory(stdcxx::shared_ptr<const ThreadFactory> value);
 
   /**
    * Starts the timer manager service
@@ -70,7 +70,7 @@ public:
    * @param task The task to execute
    * @param timeout Time in milliseconds to delay before executing task
    */
-  virtual void add(boost::shared_ptr<Runnable> task, int64_t timeout);
+  virtual void add(stdcxx::shared_ptr<Runnable> task, int64_t timeout);
 
   /**
    * Adds a task to be executed at some time in the future by a worker thread.
@@ -78,7 +78,7 @@ public:
    * @param task The task to execute
    * @param timeout Absolute time in the future to execute task.
    */
-  virtual void add(boost::shared_ptr<Runnable> task, const struct THRIFT_TIMESPEC& timeout);
+  virtual void add(stdcxx::shared_ptr<Runnable> task, const struct THRIFT_TIMESPEC& timeout);
 
   /**
    * Adds a task to be executed at some time in the future by a worker thread.
@@ -86,7 +86,7 @@ public:
    * @param task The task to execute
    * @param timeout Absolute time in the future to execute task.
    */
-  virtual void add(boost::shared_ptr<Runnable> task, const struct timeval& timeout);
+  virtual void add(stdcxx::shared_ptr<Runnable> task, const struct timeval& timeout);
 
   /**
    * Removes a pending task
@@ -98,25 +98,25 @@ public:
    * @throws UncancellableTaskException Specified task is already being
    *                                    executed or has completed execution.
    */
-  virtual void remove(boost::shared_ptr<Runnable> task);
+  virtual void remove(stdcxx::shared_ptr<Runnable> task);
 
   enum STATE { UNINITIALIZED, STARTING, STARTED, STOPPING, STOPPED };
 
   virtual STATE state() const;
 
 private:
-  boost::shared_ptr<const ThreadFactory> threadFactory_;
+  stdcxx::shared_ptr<const ThreadFactory> threadFactory_;
   class Task;
   friend class Task;
-  std::multimap<int64_t, boost::shared_ptr<Task> > taskMap_;
+  std::multimap<int64_t, stdcxx::shared_ptr<Task> > taskMap_;
   size_t taskCount_;
   Monitor monitor_;
   STATE state_;
   class Dispatcher;
   friend class Dispatcher;
-  boost::shared_ptr<Dispatcher> dispatcher_;
-  boost::shared_ptr<Thread> dispatcherThread_;
-  typedef std::multimap<int64_t, boost::shared_ptr<TimerManager::Task> >::iterator task_iterator;
+  stdcxx::shared_ptr<Dispatcher> dispatcher_;
+  stdcxx::shared_ptr<Thread> dispatcherThread_;
+  typedef std::multimap<int64_t, stdcxx::shared_ptr<TimerManager::Task> >::iterator task_iterator;
   typedef std::pair<task_iterator, task_iterator> task_range;
 };
 }

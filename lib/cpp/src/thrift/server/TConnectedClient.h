@@ -20,7 +20,7 @@
 #ifndef _THRIFT_SERVER_TCONNECTEDCLIENT_H_
 #define _THRIFT_SERVER_TCONNECTEDCLIENT_H_ 1
 
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 #include <thrift/TProcessor.h>
 #include <thrift/protocol/TProtocol.h>
 #include <thrift/server/TServer.h>
@@ -49,11 +49,11 @@ public:
    * @param[in] client         the TTransport representing the client
    */
   TConnectedClient(
-      const boost::shared_ptr<apache::thrift::TProcessor>& processor,
-      const boost::shared_ptr<apache::thrift::protocol::TProtocol>& inputProtocol,
-      const boost::shared_ptr<apache::thrift::protocol::TProtocol>& outputProtocol,
-      const boost::shared_ptr<apache::thrift::server::TServerEventHandler>& eventHandler,
-      const boost::shared_ptr<apache::thrift::transport::TTransport>& client);
+      const stdcxx::shared_ptr<apache::thrift::TProcessor>& processor,
+      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocol>& inputProtocol,
+      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocol>& outputProtocol,
+      const stdcxx::shared_ptr<apache::thrift::server::TServerEventHandler>& eventHandler,
+      const stdcxx::shared_ptr<apache::thrift::transport::TTransport>& client);
 
   /**
    * Destructor.
@@ -92,11 +92,11 @@ protected:
   virtual void cleanup();
 
 private:
-  boost::shared_ptr<apache::thrift::TProcessor> processor_;
-  boost::shared_ptr<apache::thrift::protocol::TProtocol> inputProtocol_;
-  boost::shared_ptr<apache::thrift::protocol::TProtocol> outputProtocol_;
-  boost::shared_ptr<apache::thrift::server::TServerEventHandler> eventHandler_;
-  boost::shared_ptr<apache::thrift::transport::TTransport> client_;
+  stdcxx::shared_ptr<apache::thrift::TProcessor> processor_;
+  stdcxx::shared_ptr<apache::thrift::protocol::TProtocol> inputProtocol_;
+  stdcxx::shared_ptr<apache::thrift::protocol::TProtocol> outputProtocol_;
+  stdcxx::shared_ptr<apache::thrift::server::TServerEventHandler> eventHandler_;
+  stdcxx::shared_ptr<apache::thrift::transport::TTransport> client_;
 
   /**
    * Context acquired from the eventHandler_ if one exists.

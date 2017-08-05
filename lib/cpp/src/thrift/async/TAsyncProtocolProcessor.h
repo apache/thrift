@@ -30,23 +30,23 @@ namespace async {
 
 class TAsyncProtocolProcessor : public TAsyncBufferProcessor {
 public:
-  TAsyncProtocolProcessor(boost::shared_ptr<TAsyncProcessor> underlying,
-                          boost::shared_ptr<apache::thrift::protocol::TProtocolFactory> pfact)
+  TAsyncProtocolProcessor(stdcxx::shared_ptr<TAsyncProcessor> underlying,
+                          stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory> pfact)
     : underlying_(underlying), pfact_(pfact) {}
 
   virtual void process(apache::thrift::stdcxx::function<void(bool healthy)> _return,
-                       boost::shared_ptr<apache::thrift::transport::TBufferBase> ibuf,
-                       boost::shared_ptr<apache::thrift::transport::TBufferBase> obuf);
+                       stdcxx::shared_ptr<apache::thrift::transport::TBufferBase> ibuf,
+                       stdcxx::shared_ptr<apache::thrift::transport::TBufferBase> obuf);
 
   virtual ~TAsyncProtocolProcessor() {}
 
 private:
   static void finish(apache::thrift::stdcxx::function<void(bool healthy)> _return,
-                     boost::shared_ptr<apache::thrift::protocol::TProtocol> oprot,
+                     stdcxx::shared_ptr<apache::thrift::protocol::TProtocol> oprot,
                      bool healthy);
 
-  boost::shared_ptr<TAsyncProcessor> underlying_;
-  boost::shared_ptr<apache::thrift::protocol::TProtocolFactory> pfact_;
+  stdcxx::shared_ptr<TAsyncProcessor> underlying_;
+  stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory> pfact_;
 };
 }
 }

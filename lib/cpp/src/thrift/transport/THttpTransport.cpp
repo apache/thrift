@@ -21,17 +21,17 @@
 
 #include <thrift/transport/THttpTransport.h>
 
+using std::string;
+
 namespace apache {
 namespace thrift {
 namespace transport {
-
-using namespace std;
 
 // Yeah, yeah, hacky to put these here, I know.
 const char* THttpTransport::CRLF = "\r\n";
 const int THttpTransport::CRLF_LEN = 2;
 
-THttpTransport::THttpTransport(boost::shared_ptr<TTransport> transport)
+THttpTransport::THttpTransport(stdcxx::shared_ptr<TTransport> transport)
   : transport_(transport),
     origin_(""),
     readHeaders_(true),

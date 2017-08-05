@@ -22,17 +22,18 @@
 #include <boost/test/test_tools.hpp>
 #include <boost/test/unit_test_suite.hpp>
 
-#include <boost/bind.hpp>
 #include <boost/chrono/duration.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <boost/thread/thread.hpp>
 #include <thrift/transport/TPipe.h>
 #include <thrift/transport/TPipeServer.h>
+#include <thrift/stdcxx.h>
 
 using apache::thrift::transport::TPipeServer;
 using apache::thrift::transport::TPipe;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
+using namespace apache::thrift;
 
 BOOST_AUTO_TEST_SUITE(TPipeInterruptTest)
 
@@ -51,7 +52,7 @@ static void acceptWorker(TPipeServer *pipe) {
   {
     for (;;)
     {
-      boost::shared_ptr<TTransport> temp = pipe->accept();
+      stdcxx::shared_ptr<TTransport> temp = pipe->accept();
     }
   }
   catch (...) {/*just want to make sure nothing crashes*/ }
@@ -69,8 +70,8 @@ BOOST_AUTO_TEST_CASE(stress_pipe_accept_interruption) {
   {
     TPipeServer pipeServer("TPipeInterruptTest");
     pipeServer.listen();
-    boost::thread acceptThread(boost::bind(acceptWorker, &pipeServer));
-    boost::thread interruptThread(boost::bind(interruptWorker, &pipeServer));
+    boost::thread acceptThread(stdcxx::bind(acceptWorker, &pipeServer));
+    boost::thread interruptThread(stdcxx::bind(interruptWorker, &pipeServer));
     try
     {
       for (;;)

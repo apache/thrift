@@ -46,7 +46,6 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TNonblockingServerSocket.h>
 #include <thrift/transport/PlatformSocket.h>
-#include <boost/shared_ptr.hpp>
 
 #ifndef AF_LOCAL
 #define AF_LOCAL AF_UNIX
@@ -74,8 +73,8 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
-using namespace std;
-using boost::shared_ptr;
+using std::string;
+using stdcxx::shared_ptr;
 
 TNonblockingServerSocket::TNonblockingServerSocket(int port)
   : port_(port),

@@ -301,7 +301,7 @@ public:
   uint32_t skip(TType type) { return ::apache::thrift::protocol::skip(*this, type); }
 
 protected:
-  TProtocolDefaults(boost::shared_ptr<TTransport> ptrans) : TProtocol(ptrans) {}
+  TProtocolDefaults(stdcxx::shared_ptr<TTransport> ptrans) : TProtocol(ptrans) {}
 };
 
 /**
@@ -504,7 +504,7 @@ public:
   using Super_::readBool; // so we don't hide readBool(bool&)
 
 protected:
-  TVirtualProtocol(boost::shared_ptr<TTransport> ptrans) : Super_(ptrans) {}
+  TVirtualProtocol(stdcxx::shared_ptr<TTransport> ptrans) : Super_(ptrans) {}
 };
 }
 }

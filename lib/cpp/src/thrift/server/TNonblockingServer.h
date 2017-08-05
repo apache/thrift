@@ -21,6 +21,7 @@
 #define _THRIFT_SERVER_TNONBLOCKINGSERVER_H_ 1
 
 #include <thrift/Thrift.h>
+#include <thrift/stdcxx.h>
 #include <thrift/server/TServer.h>
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/transport/TBufferTransports.h>
@@ -159,16 +160,16 @@ private:
   event_base* userEventBase_;
 
   /// For processing via thread pool, may be NULL
-  boost::shared_ptr<ThreadManager> threadManager_;
+  stdcxx::shared_ptr<ThreadManager> threadManager_;
 
   /// Is thread pool processing?
   bool threadPoolProcessing_;
 
   // Factory to create the IO threads
-  boost::shared_ptr<PlatformThreadFactory> ioThreadFactory_;
+  stdcxx::shared_ptr<PlatformThreadFactory> ioThreadFactory_;
 
   // Vector of IOThread objects that will handle our IO
-  std::vector<boost::shared_ptr<TNonblockingIOThread> > ioThreads_;
+  std::vector<stdcxx::shared_ptr<TNonblockingIOThread> > ioThreads_;
 
   // Index of next IO Thread to be used (for round-robin)
   uint32_t nextIOThread_;
@@ -263,7 +264,7 @@ private:
 
   /*
   */
-  boost::shared_ptr<TNonblockingServerTransport> serverTransport_;
+  stdcxx::shared_ptr<TNonblockingServerTransport> serverTransport_;
 
   /**
    * Called when server socket had something happen.  We accept all waiting
@@ -300,26 +301,25 @@ private:
   }
 
 public:
-  TNonblockingServer(const boost::shared_ptr<TProcessorFactory>& processorFactory,
-                     const boost::shared_ptr<apache::thrift::transport::TNonblockingServerTransport>& serverTransport)
+  TNonblockingServer(const stdcxx::shared_ptr<TProcessorFactory>& processorFactory,
+                     const stdcxx::shared_ptr<apache::thrift::transport::TNonblockingServerTransport>& serverTransport)
     : TServer(processorFactory), serverTransport_(serverTransport) {
     init();
   }
 
-  TNonblockingServer(const boost::shared_ptr<TProcessor>& processor, 
-                     const boost::shared_ptr<apache::thrift::transport::TNonblockingServerTransport>& serverTransport)
+  TNonblockingServer(const stdcxx::shared_ptr<TProcessor>& processor,
+                     const stdcxx::shared_ptr<apache::thrift::transport::TNonblockingServerTransport>& serverTransport)
     : TServer(processor), serverTransport_(serverTransport) {
     init();
   }
 
- 
-  TNonblockingServer(const boost::shared_ptr<TProcessorFactory>& processorFactory,
-                     const boost::shared_ptr<TProtocolFactory>& protocolFactory,
-                     const boost::shared_ptr<apache::thrift::transport::TNonblockingServerTransport>& serverTransport,
-                     const boost::shared_ptr<ThreadManager>& threadManager
-                     = boost::shared_ptr<ThreadManager>())
-    : TServer(processorFactory), serverTransport_(serverTransport) {
 
+  TNonblockingServer(const stdcxx::shared_ptr<TProcessorFactory>& processorFactory,
+                     const stdcxx::shared_ptr<TProtocolFactory>& protocolFactory,
+                     const stdcxx::shared_ptr<apache::thrift::transport::TNonblockingServerTransport>& serverTransport,
+                     const stdcxx::shared_ptr<ThreadManager>& threadManager
+                     = stdcxx::shared_ptr<ThreadManager>())
+    : TServer(processorFactory), serverTransport_(serverTransport) {
     init();
 
     setInputProtocolFactory(protocolFactory);
@@ -327,14 +327,12 @@ public:
     setThreadManager(threadManager);
   }
 
-
-  TNonblockingServer(const boost::shared_ptr<TProcessor>& processor,
-                     const boost::shared_ptr<TProtocolFactory>& protocolFactory,
-                     const boost::shared_ptr<apache::thrift::transport::TNonblockingServerTransport>& serverTransport,
-                     const boost::shared_ptr<ThreadManager>& threadManager
-                     = boost::shared_ptr<ThreadManager>())
+  TNonblockingServer(const stdcxx::shared_ptr<TProcessor>& processor,
+                     const stdcxx::shared_ptr<TProtocolFactory>& protocolFactory,
+                     const stdcxx::shared_ptr<apache::thrift::transport::TNonblockingServerTransport>& serverTransport,
+                     const stdcxx::shared_ptr<ThreadManager>& threadManager
+                     = stdcxx::shared_ptr<ThreadManager>())
     : TServer(processor), serverTransport_(serverTransport) {
-
     init();
 
     setInputProtocolFactory(protocolFactory);
@@ -342,16 +340,15 @@ public:
     setThreadManager(threadManager);
   }
 
-  TNonblockingServer(const boost::shared_ptr<TProcessorFactory>& processorFactory,
-                     const boost::shared_ptr<TTransportFactory>& inputTransportFactory,
-                     const boost::shared_ptr<TTransportFactory>& outputTransportFactory,
-                     const boost::shared_ptr<TProtocolFactory>& inputProtocolFactory,
-                     const boost::shared_ptr<TProtocolFactory>& outputProtocolFactory,
-                     const boost::shared_ptr<apache::thrift::transport::TNonblockingServerTransport>& serverTransport,
-                     const boost::shared_ptr<ThreadManager>& threadManager
-                     = boost::shared_ptr<ThreadManager>())
+  TNonblockingServer(const stdcxx::shared_ptr<TProcessorFactory>& processorFactory,
+                     const stdcxx::shared_ptr<TTransportFactory>& inputTransportFactory,
+                     const stdcxx::shared_ptr<TTransportFactory>& outputTransportFactory,
+                     const stdcxx::shared_ptr<TProtocolFactory>& inputProtocolFactory,
+                     const stdcxx::shared_ptr<TProtocolFactory>& outputProtocolFactory,
+                     const stdcxx::shared_ptr<apache::thrift::transport::TNonblockingServerTransport>& serverTransport,
+                     const stdcxx::shared_ptr<ThreadManager>& threadManager
+                     = stdcxx::shared_ptr<ThreadManager>())
     : TServer(processorFactory), serverTransport_(serverTransport) {
-
     init();
 
     setInputTransportFactory(inputTransportFactory);
@@ -361,16 +358,15 @@ public:
     setThreadManager(threadManager);
   }
 
-  TNonblockingServer(const boost::shared_ptr<TProcessor>& processor,
-                     const boost::shared_ptr<TTransportFactory>& inputTransportFactory,
-                     const boost::shared_ptr<TTransportFactory>& outputTransportFactory,
-                     const boost::shared_ptr<TProtocolFactory>& inputProtocolFactory,
-                     const boost::shared_ptr<TProtocolFactory>& outputProtocolFactory,
-                     const boost::shared_ptr<apache::thrift::transport::TNonblockingServerTransport>& serverTransport,
-                     const boost::shared_ptr<ThreadManager>& threadManager
-                     = boost::shared_ptr<ThreadManager>())
+  TNonblockingServer(const stdcxx::shared_ptr<TProcessor>& processor,
+                     const stdcxx::shared_ptr<TTransportFactory>& inputTransportFactory,
+                     const stdcxx::shared_ptr<TTransportFactory>& outputTransportFactory,
+                     const stdcxx::shared_ptr<TProtocolFactory>& inputProtocolFactory,
+                     const stdcxx::shared_ptr<TProtocolFactory>& outputProtocolFactory,
+                     const stdcxx::shared_ptr<apache::thrift::transport::TNonblockingServerTransport>& serverTransport,
+                     const stdcxx::shared_ptr<ThreadManager>& threadManager
+                     = stdcxx::shared_ptr<ThreadManager>())
     : TServer(processor), serverTransport_(serverTransport) {
-
     init();
 
     setInputTransportFactory(inputTransportFactory);
@@ -382,11 +378,11 @@ public:
 
   ~TNonblockingServer();
 
-  void setThreadManager(boost::shared_ptr<ThreadManager> threadManager);
+  void setThreadManager(stdcxx::shared_ptr<ThreadManager> threadManager);
 
   int getListenPort() { return serverTransport_->getListenPort(); }
 
-  boost::shared_ptr<ThreadManager> getThreadManager() { return threadManager_; }
+  stdcxx::shared_ptr<ThreadManager> getThreadManager() { return threadManager_; }
 
   /**
    * Sets the number of IO threads used by this server. Can only be used before
@@ -425,7 +421,7 @@ public:
 
   bool isThreadPoolProcessing() const { return threadPoolProcessing_; }
 
-  void addTask(boost::shared_ptr<Runnable> task) {
+  void addTask(stdcxx::shared_ptr<Runnable> task) {
     threadManager_->add(task, 0LL, taskExpireTime_);
   }
 
@@ -684,7 +680,7 @@ public:
 
   /// Creates a socket to listen on and binds it to the local port.
   void createAndListenOnSocket();
- 
+
   /**
    * Register the optional user-provided event-base (for single-thread servers)
    *
@@ -713,7 +709,7 @@ private:
    *
    * @param task the runnable associated with the expired task.
    */
-  void expireClose(boost::shared_ptr<Runnable> task);
+  void expireClose(stdcxx::shared_ptr<Runnable> task);
 
   /**
    * Return an initialized connection object.  Creates or recovers from
@@ -725,7 +721,7 @@ private:
    * @param addrLen the length of addr
    * @return pointer to initialized TConnection object.
    */
-  TConnection* createConnection(boost::shared_ptr<TSocket> socket);
+  TConnection* createConnection(stdcxx::shared_ptr<TSocket> socket);
 
   /**
    * Returns a connection to pool or deletion.  If the connection pool
@@ -769,10 +765,10 @@ public:
   evutil_socket_t getNotificationRecvFD() const { return notificationPipeFDs_[0]; }
 
   // Returns the actual thread object associated with this IO thread.
-  boost::shared_ptr<Thread> getThread() const { return thread_; }
+  stdcxx::shared_ptr<Thread> getThread() const { return thread_; }
 
   // Sets the actual thread object associated with this IO thread.
-  void setThread(const boost::shared_ptr<Thread>& t) { thread_ = t; }
+  void setThread(const stdcxx::shared_ptr<Thread>& t) { thread_ = t; }
 
   // Used by TConnection objects to indicate processing has finished.
   bool notify(TNonblockingServer::TConnection* conn);
@@ -857,7 +853,7 @@ private:
   evutil_socket_t notificationPipeFDs_[2];
 
   /// Actual IO Thread
-  boost::shared_ptr<Thread> thread_;
+  stdcxx::shared_ptr<Thread> thread_;
 };
 }
 }

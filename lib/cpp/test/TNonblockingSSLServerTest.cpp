@@ -105,8 +105,8 @@ BOOST_GLOBAL_FIXTURE(GlobalFixtureSSL);
 BOOST_GLOBAL_FIXTURE(GlobalFixtureSSL)
 #endif
 
-boost::shared_ptr<TSSLSocketFactory> createServerSocketFactory() {
-  boost::shared_ptr<TSSLSocketFactory> pServerSocketFactory;
+stdcxx::shared_ptr<TSSLSocketFactory> createServerSocketFactory() {
+  stdcxx::shared_ptr<TSSLSocketFactory> pServerSocketFactory;
 
   pServerSocketFactory.reset(new TSSLSocketFactory());
   pServerSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
@@ -116,8 +116,8 @@ boost::shared_ptr<TSSLSocketFactory> createServerSocketFactory() {
   return pServerSocketFactory;
 }
 
-boost::shared_ptr<TSSLSocketFactory> createClientSocketFactory() {
-  boost::shared_ptr<TSSLSocketFactory> pClientSocketFactory;
+stdcxx::shared_ptr<TSSLSocketFactory> createClientSocketFactory() {
+  stdcxx::shared_ptr<TSSLSocketFactory> pClientSocketFactory;
 
   pClientSocketFactory.reset(new TSSLSocketFactory());
   pClientSocketFactory->authenticate(true);
@@ -145,12 +145,12 @@ private:
 
   struct Runner : public apache::thrift::concurrency::Runnable {
     int port;
-    boost::shared_ptr<event_base> userEventBase;
-    boost::shared_ptr<TProcessor> processor;
-    boost::shared_ptr<server::TNonblockingServer> server;
-    boost::shared_ptr<ListenEventHandler> listenHandler;
-    boost::shared_ptr<TSSLSocketFactory> pServerSocketFactory;
-    boost::shared_ptr<transport::TNonblockingSSLServerSocket> socket;
+    stdcxx::shared_ptr<event_base> userEventBase;
+    stdcxx::shared_ptr<TProcessor> processor;
+    stdcxx::shared_ptr<server::TNonblockingServer> server;
+    stdcxx::shared_ptr<ListenEventHandler> listenHandler;
+    stdcxx::shared_ptr<TSSLSocketFactory> pServerSocketFactory;
+    stdcxx::shared_ptr<transport::TNonblockingSSLServerSocket> socket;
     Mutex mutex_;
 
     Runner() {
@@ -198,7 +198,7 @@ private:
   };
 
 protected:
-  Fixture() : processor(new test::ParentServiceProcessor(boost::make_shared<Handler>())) {}
+  Fixture() : processor(new test::ParentServiceProcessor(stdcxx::make_shared<Handler>())) {}
 
   ~Fixture() {
     if (server) {
@@ -214,12 +214,12 @@ protected:
   }
 
   int startServer(int port) {
-    boost::shared_ptr<Runner> runner(new Runner);
+    stdcxx::shared_ptr<Runner> runner(new Runner);
     runner->port = port;
     runner->processor = processor;
     runner->userEventBase = userEventBase_;
 
-    boost::scoped_ptr<apache::thrift::concurrency::ThreadFactory> threadFactory(
+    apache::thrift::stdcxx::scoped_ptr<apache::thrift::concurrency::ThreadFactory> threadFactory(
         new apache::thrift::concurrency::PlatformThreadFactory(
 #if !USE_BOOST_THREAD && !USE_STD_THREAD
             concurrency::PlatformThreadFactory::OTHER, concurrency::PlatformThreadFactory::NORMAL,
@@ -235,11 +235,11 @@ protected:
   }
 
   bool canCommunicate(int serverPort) {
-    boost::shared_ptr<TSSLSocketFactory> pClientSocketFactory = createClientSocketFactory();
-    boost::shared_ptr<TSSLSocket> socket = pClientSocketFactory->createSocket("localhost", serverPort);
+    stdcxx::shared_ptr<TSSLSocketFactory> pClientSocketFactory = createClientSocketFactory();
+    stdcxx::shared_ptr<TSSLSocket> socket = pClientSocketFactory->createSocket("localhost", serverPort);
     socket->open();
-    test::ParentServiceClient client(boost::make_shared<protocol::TBinaryProtocol>(
-        boost::make_shared<transport::TFramedTransport>(socket)));
+    test::ParentServiceClient client(stdcxx::make_shared<protocol::TBinaryProtocol>(
+        stdcxx::make_shared<transport::TFramedTransport>(socket)));
     client.addString("foo");
     std::vector<std::string> strings;
     client.getStrings(strings);
@@ -247,12 +247,12 @@ protected:
   }
 
 private:
-  boost::shared_ptr<event_base> userEventBase_;
-  boost::shared_ptr<test::ParentServiceProcessor> processor;
+  stdcxx::shared_ptr<event_base> userEventBase_;
+  stdcxx::shared_ptr<test::ParentServiceProcessor> processor;
 protected:
-  boost::shared_ptr<server::TNonblockingServer> server;
+  stdcxx::shared_ptr<server::TNonblockingServer> server;
 private:
-  boost::shared_ptr<apache::thrift::concurrency::Thread> thread;
+  stdcxx::shared_ptr<apache::thrift::concurrency::Thread> thread;
 
 };
 

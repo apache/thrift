@@ -23,7 +23,7 @@
 #include <thrift/protocol/TVirtualProtocol.h>
 
 #include <stack>
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 
 namespace apache {
 namespace thrift {
@@ -74,7 +74,7 @@ protected:
   int16_t lastFieldId_;
 
 public:
-  TCompactProtocolT(boost::shared_ptr<Transport_> trans)
+  TCompactProtocolT(stdcxx::shared_ptr<Transport_> trans)
     : TVirtualProtocol<TCompactProtocolT<Transport_> >(trans),
       trans_(trans.get()),
       lastFieldId_(0),
@@ -86,7 +86,7 @@ public:
     boolValue_.hasBoolValue = false;
   }
 
-  TCompactProtocolT(boost::shared_ptr<Transport_> trans,
+  TCompactProtocolT(stdcxx::shared_ptr<Transport_> trans,
                     int32_t string_limit,
                     int32_t container_limit)
     : TVirtualProtocol<TCompactProtocolT<Transport_> >(trans),
@@ -239,8 +239,8 @@ public:
 
   void setContainerSizeLimit(int32_t container_limit) { container_limit_ = container_limit; }
 
-  boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> trans) {
-    boost::shared_ptr<Transport_> specific_trans = boost::dynamic_pointer_cast<Transport_>(trans);
+  stdcxx::shared_ptr<TProtocol> getProtocol(stdcxx::shared_ptr<TTransport> trans) {
+    stdcxx::shared_ptr<Transport_> specific_trans = stdcxx::dynamic_pointer_cast<Transport_>(trans);
     TProtocol* prot;
     if (specific_trans) {
       prot = new TCompactProtocolT<Transport_>(specific_trans, string_limit_, container_limit_);
@@ -248,7 +248,7 @@ public:
       prot = new TCompactProtocol(trans, string_limit_, container_limit_);
     }
 
-    return boost::shared_ptr<TProtocol>(prot);
+    return stdcxx::shared_ptr<TProtocol>(prot);
   }
 
 private:

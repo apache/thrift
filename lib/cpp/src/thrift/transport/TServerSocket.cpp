@@ -46,7 +46,7 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/PlatformSocket.h>
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 
 #ifndef AF_LOCAL
 #define AF_LOCAL AF_UNIX
@@ -75,12 +75,13 @@ void destroyer_of_fine_sockets(THRIFT_SOCKET* ssock) {
   delete ssock;
 }
 
+using std::string;
+
 namespace apache {
 namespace thrift {
 namespace transport {
 
-using namespace std;
-using boost::shared_ptr;
+using stdcxx::shared_ptr;
 
 TGetAddrInfoWrapper::TGetAddrInfoWrapper(const char* node,
                                          const char* service,
@@ -248,7 +249,7 @@ void TServerSocket::listen() {
   } else {
     childInterruptSockWriter_ = sv[1];
     pChildInterruptSockReader_
-        = boost::shared_ptr<THRIFT_SOCKET>(new THRIFT_SOCKET(sv[0]), destroyer_of_fine_sockets);
+        = stdcxx::shared_ptr<THRIFT_SOCKET>(new THRIFT_SOCKET(sv[0]), destroyer_of_fine_sockets);
   }
 
   // Validate port number

@@ -29,7 +29,7 @@ namespace apache {
 namespace thrift {
 namespace concurrency {
 
-using boost::shared_ptr;
+using stdcxx::shared_ptr;
 
 /**
  * TimerManager class

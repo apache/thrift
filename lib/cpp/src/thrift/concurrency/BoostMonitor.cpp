@@ -23,9 +23,9 @@
 #include <thrift/concurrency/Exception.h>
 #include <thrift/concurrency/Util.h>
 #include <thrift/transport/PlatformSocket.h>
-#include <assert.h>
+#include <thrift/stdcxx.h>
 
-#include <boost/scoped_ptr.hpp>
+#include <assert.h>
 #include <boost/thread.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -155,7 +155,7 @@ public:
 private:
   void init(Mutex* mutex) { mutex_ = mutex; }
 
-  boost::scoped_ptr<Mutex> ownedMutex_;
+  stdcxx::scoped_ptr<Mutex> ownedMutex_;
   Mutex* mutex_;
 };
 

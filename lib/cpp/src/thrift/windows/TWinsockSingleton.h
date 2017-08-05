@@ -32,7 +32,6 @@
 
 // boost
 #include <boost/noncopyable.hpp>
-#include <boost/scoped_ptr.hpp>
 
 #if USE_BOOST_THREAD
 #include <boost/thread/once.hpp>
@@ -41,6 +40,8 @@
 #else
 #error For windows you must choose USE_BOOST_THREAD or USE_STD_THREAD
 #endif
+
+#include <thrift/stdcxx.h>
 
 namespace apache {
 namespace thrift {
@@ -53,7 +54,7 @@ namespace transport {
 class TWinsockSingleton : private boost::noncopyable {
 
 public:
-  typedef boost::scoped_ptr<TWinsockSingleton> instance_ptr;
+  typedef stdcxx::shared_ptr<TWinsockSingleton> instance_ptr;
 
 private:
   TWinsockSingleton(void);

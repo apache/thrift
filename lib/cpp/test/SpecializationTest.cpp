@@ -82,8 +82,8 @@ BOOST_AUTO_TEST_CASE(test_specialization_1) {
   stage2.back().message = "nevermore";
   hm.bonks["poe"] = stage2;
 
-  boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
-  boost::shared_ptr<TProtocol> proto(new MyProtocol(buffer));
+  apache::thrift::stdcxx::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  apache::thrift::stdcxx::shared_ptr<TProtocol> proto(new MyProtocol(buffer));
 
   ooe.write(proto.get());
   OneOfEach ooe2;

@@ -20,7 +20,7 @@
 #ifndef _THRIFT_SERVER_TSERVERFRAMEWORK_H_
 #define _THRIFT_SERVER_TSERVERFRAMEWORK_H_ 1
 
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 #include <stdint.h>
 #include <thrift/TProcessor.h>
 #include <thrift/concurrency/Monitor.h>
@@ -48,32 +48,32 @@ namespace server {
 class TServerFramework : public TServer {
 public:
   TServerFramework(
-      const boost::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
-      const boost::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
-      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& transportFactory,
-      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory);
+      const stdcxx::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
+      const stdcxx::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
+      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& transportFactory,
+      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory);
 
   TServerFramework(
-      const boost::shared_ptr<apache::thrift::TProcessor>& processor,
-      const boost::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
-      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& transportFactory,
-      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory);
+      const stdcxx::shared_ptr<apache::thrift::TProcessor>& processor,
+      const stdcxx::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
+      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& transportFactory,
+      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory);
 
   TServerFramework(
-      const boost::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
-      const boost::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
-      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& inputTransportFactory,
-      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& outputTransportFactory,
-      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
-      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory);
+      const stdcxx::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
+      const stdcxx::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
+      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& inputTransportFactory,
+      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& outputTransportFactory,
+      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
+      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory);
 
   TServerFramework(
-      const boost::shared_ptr<apache::thrift::TProcessor>& processor,
-      const boost::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
-      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& inputTransportFactory,
-      const boost::shared_ptr<apache::thrift::transport::TTransportFactory>& outputTransportFactory,
-      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
-      const boost::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory);
+      const stdcxx::shared_ptr<apache::thrift::TProcessor>& processor,
+      const stdcxx::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
+      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& inputTransportFactory,
+      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& outputTransportFactory,
+      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
+      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory);
 
   virtual ~TServerFramework();
 
@@ -130,7 +130,7 @@ protected:
    *
    * \param[in]  pClient  the newly connected client
    */
-  virtual void onClientConnected(const boost::shared_ptr<TConnectedClient>& pClient) = 0;
+  virtual void onClientConnected(const stdcxx::shared_ptr<TConnectedClient>& pClient) = 0;
 
   /**
    * A client has disconnected.
@@ -149,7 +149,7 @@ private:
    * client rate limiting after onClientConnected returns by blocking the
    * serve() thread if the limit has been reached.
    */
-  void newlyConnectedClient(const boost::shared_ptr<TConnectedClient>& pClient);
+  void newlyConnectedClient(const stdcxx::shared_ptr<TConnectedClient>& pClient);
 
   /**
    * Smart pointer client deletion.

@@ -21,7 +21,7 @@
 #define _THRIFT_TRANSPORT_TTRANSPORT_H_ 1
 
 #include <thrift/Thrift.h>
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 #include <thrift/transport/TTransportException.h>
 #include <string>
 
@@ -260,7 +260,7 @@ public:
   /**
    * Default implementation does nothing, just returns the transport given.
    */
-  virtual boost::shared_ptr<TTransport> getTransport(boost::shared_ptr<TTransport> trans) {
+  virtual stdcxx::shared_ptr<TTransport> getTransport(stdcxx::shared_ptr<TTransport> trans) {
     return trans;
   }
 };

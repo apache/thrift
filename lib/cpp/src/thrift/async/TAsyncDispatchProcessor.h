@@ -35,8 +35,8 @@ template <class Protocol_>
 class TAsyncDispatchProcessorT : public TAsyncProcessor {
 public:
   virtual void process(apache::thrift::stdcxx::function<void(bool success)> _return,
-                       boost::shared_ptr<protocol::TProtocol> in,
-                       boost::shared_ptr<protocol::TProtocol> out) {
+                       stdcxx::shared_ptr<protocol::TProtocol> in,
+                       stdcxx::shared_ptr<protocol::TProtocol> out) {
     protocol::TProtocol* inRaw = in.get();
     protocol::TProtocol* outRaw = out.get();
 
@@ -107,8 +107,8 @@ public:
 class TAsyncDispatchProcessor : public TAsyncProcessor {
 public:
   virtual void process(apache::thrift::stdcxx::function<void(bool success)> _return,
-                       boost::shared_ptr<protocol::TProtocol> in,
-                       boost::shared_ptr<protocol::TProtocol> out) {
+                       stdcxx::shared_ptr<protocol::TProtocol> in,
+                       stdcxx::shared_ptr<protocol::TProtocol> out) {
     protocol::TProtocol* inRaw = in.get();
     protocol::TProtocol* outRaw = out.get();
 

@@ -22,8 +22,7 @@
 
 #include <thrift/transport/TNonblockingServerTransport.h>
 #include <thrift/transport/PlatformSocket.h>
-#include <thrift/cxxfunctional.h>
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 
 namespace apache {
 namespace thrift {
@@ -109,8 +108,8 @@ public:
   void close();
 
 protected:
-  boost::shared_ptr<TSocket> acceptImpl();
-  virtual boost::shared_ptr<TSocket> createSocket(THRIFT_SOCKET client);
+  apache::thrift::stdcxx::shared_ptr<TSocket> acceptImpl();
+  virtual apache::thrift::stdcxx::shared_ptr<TSocket> createSocket(THRIFT_SOCKET client);
 
 private:
   int port_;

@@ -28,7 +28,6 @@
 #include <openssl/evp.h>
 #include <thrift/transport/TSSLSocket.h>
 
-using namespace std;
 using namespace apache::thrift::transport;
 
 void make_isolated_sslsocketfactory() {
