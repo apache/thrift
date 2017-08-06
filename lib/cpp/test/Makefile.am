@@ -99,7 +99,8 @@ if AMX_HAVE_LIBEVENT
 noinst_PROGRAMS += \
 	processor_test
 check_PROGRAMS += \
-	TNonblockingServerTest
+	TNonblockingServerTest \
+	TNonblockingSSLServerTest
 endif
 
 TESTS_ENVIRONMENT= \
@@ -271,6 +272,21 @@ TNonblockingServerTest_LDADD = libprocessortest.la \
                                $(top_builddir)/lib/cpp/libthriftnb.la \
                                $(BOOST_TEST_LDADD) \
                                $(BOOST_LDFLAGS) \
+                               $(LIBEVENT_LIBS)
+#
+# TNonblockingSSLServerTest
+#
+TNonblockingSSLServerTest_SOURCES = TNonblockingSSLServerTest.cpp
+
+TNonblockingSSLServerTest_LDADD = libprocessortest.la \
+                               $(top_builddir)/lib/cpp/libthrift.la \
+                               $(top_builddir)/lib/cpp/libthriftnb.la \
+                               $(BOOST_TEST_LDADD) \
+                               $(BOOST_LDFLAGS) \
+                               $(BOOST_FILESYSTEM_LDADD) \
+                               $(BOOST_CHRONO_LDADD) \
+                               $(BOOST_SYSTEM_LDADD) \
+                               $(BOOST_THREAD_LDADD) \
                                $(LIBEVENT_LIBS)
 
 #

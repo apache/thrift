@@ -29,6 +29,7 @@
 #include <thrift/server/TNonblockingServer.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TSocket.h>
+#include <thrift/transport/TNonblockingServerSocket.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TFileTransport.h>
 #include <thrift/TLogging.h>
@@ -391,13 +392,15 @@ int main(int argc, char** argv) {
 
     boost::shared_ptr<Thread> serverThread;
     boost::shared_ptr<Thread> serverThread2;
+    boost::shared_ptr<transport::TNonblockingServerSocket> nbSocket1, nbSocket2;
 
     if (serverType == "simple") {
-
+      nbSocket1.reset(new transport::TNonblockingServerSocket(port));
       serverThread = threadFactory->newThread(boost::shared_ptr<TServer>(
-          new TNonblockingServer(serviceProcessor, protocolFactory, port)));
+          new TNonblockingServer(serviceProcessor, protocolFactory, nbSocket1)));
+      nbSocket2.reset(new transport::TNonblockingServerSocket(port + 1));
       serverThread2 = threadFactory->newThread(boost::shared_ptr<TServer>(
-          new TNonblockingServer(serviceProcessor, protocolFactory, port + 1)));
+          new TNonblockingServer(serviceProcessor, protocolFactory, nbSocket2)));
 
     } else if (serverType == "thread-pool") {
 
@@ -406,10 +409,12 @@ int main(int argc, char** argv) {
 
       threadManager->threadFactory(threadFactory);
       threadManager->start();
+      nbSocket1.reset(new transport::TNonblockingServerSocket(port));
       serverThread = threadFactory->newThread(boost::shared_ptr<TServer>(
-          new TNonblockingServer(serviceProcessor, protocolFactory, port, threadManager)));
+          new TNonblockingServer(serviceProcessor, protocolFactory, nbSocket1, threadManager)));
+      nbSocket2.reset(new transport::TNonblockingServerSocket(port + 1));
       serverThread2 = threadFactory->newThread(boost::shared_ptr<TServer>(
-          new TNonblockingServer(serviceProcessor, protocolFactory, port + 1, threadManager)));
+          new TNonblockingServer(serviceProcessor, protocolFactory, nbSocket2, threadManager)));
     }
 
     cerr << "Starting the server on port " << port << " and " << (port + 1) << endl;

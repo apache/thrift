@@ -33,6 +33,7 @@
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TSSLServerSocket.h>
 #include <thrift/transport/TSSLSocket.h>
+#include <thrift/transport/TNonblockingServerSocket.h>
 #include <thrift/transport/THttpServer.h>
 #include <thrift/transport/THttpTransport.h>
 #include <thrift/transport/TTransportUtils.h>
@@ -744,7 +745,9 @@ int main(int argc, char** argv) {
       TEvhttpServer nonblockingServer(testBufferProcessor, port);
       nonblockingServer.serve();
     } else {
-      server.reset(new TNonblockingServer(testProcessor, protocolFactory, port));
+      boost::shared_ptr<transport::TNonblockingServerSocket> nbSocket;
+      nbSocket.reset(new transport::TNonblockingServerSocket(port));
+      server.reset(new TNonblockingServer(testProcessor, protocolFactory, nbSocket));
     }
   }
 

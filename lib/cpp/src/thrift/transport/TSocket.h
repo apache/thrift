@@ -120,7 +120,7 @@ public:
   /**
    * Writes to the underlying socket.  Does single send() and returns result.
    */
-  uint32_t write_partial(const uint8_t* buf, uint32_t len);
+  virtual uint32_t write_partial(const uint8_t* buf, uint32_t len);
 
   /**
    * Get the host that the socket is connected to
