@@ -266,8 +266,8 @@ void t_erl_generator::init_generator() {
                 << "-module(" << program_module_name << "_types)." << endl
                 << erl_imports() << endl;
 
-  f_types_file_ << "-include(\"" << f_types_hrl_name << "\")." << endl
-                << endl;
+  f_types_file_ << "-include(\"" << program_module_name << "_types.hrl\")." << endl
+                  << endl;
 
   f_types_hrl_file_ << render_includes() << endl;
 
@@ -281,11 +281,11 @@ void t_erl_generator::init_generator() {
   f_consts_file_ << erl_autogen_comment() << endl
                  << "-module(" << program_module_name << "_constants)." << endl
                  << erl_imports() << endl
-                 << "-include(\"" << f_types_hrl_name << "\")." << endl
+                 << "-include(\"" << program_module_name << "_types.hrl\")." << endl
                  << endl;
 
   f_consts_hrl_file_ << erl_autogen_comment() << endl << erl_imports() << endl
-                     << "-include(\"" << f_types_hrl_name << "\")." << endl << endl;
+                     << "-include(\"" << program_module_name << "_types.hrl\")." << endl << endl;
 }
 
 /**
