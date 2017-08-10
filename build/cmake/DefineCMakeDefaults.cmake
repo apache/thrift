@@ -70,11 +70,17 @@ set(CMAKE_MACOSX_RPATH TRUE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 #
-# C++ Language Level Defaults
+# C++ Language Level Defaults - this depends on the compiler capabilities
 #
 if (NOT DEFINED CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 11) # C++11
-  message(STATUS "Setting C++11 as the default language level.")
+  if (MSVC AND MSVC_VERSION LESS 1800)
+    # MSVC 2012 and earlier don't support template aliases so you have to use C++98
+    set(CMAKE_CXX_STANDARD 98) 
+    message(STATUS "Setting C++98 as the default language level (for an older MSVC compiler).")
+  else()
+    set(CMAKE_CXX_STANDARD 11) # C++11
+    message(STATUS "Setting C++11 as the default language level.")
+  endif()
   message(STATUS "To specify a different C++ language level, set CMAKE_CXX_STANDARD")
 endif()
 

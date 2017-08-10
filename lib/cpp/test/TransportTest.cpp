@@ -26,7 +26,7 @@
 #endif
 #include <sstream>
 #include <fstream>
-#include <thrift/cxxfunctional.h>
+#include <thrift/stdcxx.h>
 
 #include <boost/mpl/list.hpp>
 #include <boost/shared_array.hpp>
@@ -43,10 +43,12 @@
 
 #include <thrift/concurrency/FunctionRunner.h>
 #if _WIN32
+#include <thrift/transport/TPipe.h>
 #include <thrift/windows/TWinsockSingleton.h>
 #endif
 
 using namespace apache::thrift::transport;
+using namespace apache::thrift;
 
 static boost::mt19937 rng;
 
@@ -112,7 +114,7 @@ public:
   std::string describe() const { return generator_->describe(); }
 
 private:
-  boost::shared_ptr<SizeGenerator> generator_;
+  stdcxx::shared_ptr<SizeGenerator> generator_;
 };
 
 /**************************************************************************
@@ -135,8 +137,8 @@ public:
 
   CoupledTransports() : in(), out() {}
 
-  boost::shared_ptr<Transport_> in;
-  boost::shared_ptr<Transport_> out;
+  stdcxx::shared_ptr<Transport_> in;
+  stdcxx::shared_ptr<Transport_> out;
 
 private:
   CoupledTransports(const CoupledTransports&);
@@ -153,7 +155,7 @@ public:
     out = buf;
   }
 
-  boost::shared_ptr<TMemoryBuffer> buf;
+  stdcxx::shared_ptr<TMemoryBuffer> buf;
 };
 
 /**
@@ -217,6 +219,22 @@ public:
 
     in.reset(new TFDTransport(pipes[0], TFDTransport::CLOSE_ON_DESTROY));
     out.reset(new TFDTransport(pipes[1], TFDTransport::CLOSE_ON_DESTROY));
+  }
+};
+#else
+/**
+ * Coupled pipe transports
+ */
+class CoupledPipeTransports : public CoupledTransports<TPipe> {
+public:
+  HANDLE hRead;
+  HANDLE hWrite;
+
+  CoupledPipeTransports() {
+    BOOST_REQUIRE(CreatePipe(&hRead, &hWrite, NULL, 1048576 * 2));
+    in.reset(new TPipe(hRead, hWrite));
+    in->open();
+    out = in;
   }
 };
 #endif
@@ -323,11 +341,11 @@ public:
  **************************************************************************/
 
 struct TriggerInfo {
-  TriggerInfo(int seconds, const boost::shared_ptr<TTransport>& transport, uint32_t writeLength)
+  TriggerInfo(int seconds, const stdcxx::shared_ptr<TTransport>& transport, uint32_t writeLength)
     : timeoutSeconds(seconds), transport(transport), writeLength(writeLength), next(NULL) {}
 
   int timeoutSeconds;
-  boost::shared_ptr<TTransport> transport;
+  stdcxx::shared_ptr<TTransport> transport;
   uint32_t writeLength;
   TriggerInfo* next;
 };
@@ -402,7 +420,7 @@ void alarm_handler_wrapper() {
  * to the end.)
  */
 void add_trigger(unsigned int seconds,
-                 const boost::shared_ptr<TTransport>& transport,
+                 const stdcxx::shared_ptr<TTransport>& transport,
                  uint32_t write_len) {
   TriggerInfo* info = new TriggerInfo(seconds, transport, write_len);
   {
@@ -442,7 +460,7 @@ void clear_triggers() {
 }
 
 void set_trigger(unsigned int seconds,
-                 const boost::shared_ptr<TTransport>& transport,
+                 const stdcxx::shared_ptr<TTransport>& transport,
                  uint32_t write_len) {
   clear_triggers();
   add_trigger(seconds, transport, write_len);
@@ -840,6 +858,19 @@ public:
     TEST_RW(CoupledFDTransports, 1024 * 16, 1, 1, rand4k, rand4k, fd_max_outstanding);
 
     TEST_BLOCKING_BEHAVIOR(CoupledFDTransports);
+#else
+    // TPipe tests (WIN32 only)
+    TEST_RW(CoupledPipeTransports, 1024 * 1024, 0, 0);
+    TEST_RW(CoupledPipeTransports, 1024 * 256, rand4k, rand4k);
+    TEST_RW(CoupledPipeTransports, 1024 * 256, 167, 163);
+    TEST_RW(CoupledPipeTransports, 1024 * 16, 1, 1);
+
+    TEST_RW(CoupledPipeTransports, 1024 * 256, 0, 0, rand4k, rand4k);
+    TEST_RW(CoupledPipeTransports, 1024 * 256, rand4k, rand4k, rand4k, rand4k);
+    TEST_RW(CoupledPipeTransports, 1024 * 256, 167, 163, rand4k, rand4k);
+    TEST_RW(CoupledPipeTransports, 1024 * 16, 1, 1, rand4k, rand4k);
+
+    TEST_BLOCKING_BEHAVIOR(CoupledPipeTransports);
 #endif //_WIN32
 
     // TSocket tests
@@ -945,11 +976,11 @@ private:
          << rChunkSizeGen.describe() << ", " << maxOutstanding << ")";
 
 #if (BOOST_VERSION >= 105900)
-    boost::function<void ()> test_func
+    stdcxx::function<void ()> test_func
 #else
     boost::unit_test::callback0<> test_func
 #endif
-        = apache::thrift::stdcxx::bind(test_rw<CoupledTransports>,
+        = stdcxx::bind(test_rw<CoupledTransports>,
                                        totalSize,
                                        wSizeGen,
                                        rSizeGen,
@@ -995,7 +1026,7 @@ private:
  **************************************************************************/
 
 struct global_fixture {
-  boost::shared_ptr<apache::thrift::concurrency::Thread> alarmThread_;
+  stdcxx::shared_ptr<apache::thrift::concurrency::Thread> alarmThread_;
   global_fixture() {
 #if _WIN32
     apache::thrift::transport::TWinsockSingleton::create();

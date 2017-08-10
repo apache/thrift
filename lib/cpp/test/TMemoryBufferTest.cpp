@@ -21,8 +21,9 @@
 #include <iostream>
 #include <climits>
 #include <vector>
-#include <thrift/transport/TBufferTransports.h>
 #include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/stdcxx.h>
+#include <thrift/transport/TBufferTransports.h>
 #include "gen-cpp/ThriftTest_types.h"
 
 BOOST_AUTO_TEST_SUITE(TMemoryBufferTest)
@@ -30,7 +31,7 @@ BOOST_AUTO_TEST_SUITE(TMemoryBufferTest)
 using apache::thrift::protocol::TBinaryProtocol;
 using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::transport::TTransportException;
-using boost::shared_ptr;
+using apache::thrift::stdcxx::shared_ptr;
 using std::cout;
 using std::endl;
 using std::string;

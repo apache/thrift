@@ -24,10 +24,12 @@ CD "%BUILDDIR%"                             || EXIT /B
 @ECHO ON
   cmake "%SRCDIR%" ^
     -G"%GENERATOR%" ^
+	-DBISON_EXECUTABLE=C:\ProgramData\chocolatey\lib\winflexbison3\tools\win_bison.exe ^
     -DBOOST_ROOT="%BOOST_ROOT%" ^
     -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR%" ^
     -DCMAKE_BUILD_TYPE="%CONFIGURATION%" ^
     -DCMAKE_INSTALL_PREFIX="%INSTDIR%" ^
+	-DFLEX_EXECUTABLE=C:\ProgramData\chocolatey\lib\winflexbison3\tools\win_flex.exe ^
     -DINTTYPES_ROOT="%WIN3P%\msinttypes" ^
     -DLIBEVENT_ROOT="%WIN3P%\libevent-%LIBEVENT_VERSION%-stable" ^
     -DOPENSSL_ROOT_DIR="%OPENSSL_ROOT%" ^

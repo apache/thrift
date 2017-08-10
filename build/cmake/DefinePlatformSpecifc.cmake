@@ -109,7 +109,10 @@ if (CMAKE_CXX_EXTENSIONS)
   string(CONCAT CXX_LANGUAGE_LEVEL "${CXX_LANGUAGE_LEVEL} [with compiler-specific extensions]")
 else()
   if ((CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang") AND NOT MINGW)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-variadic-macros -Wno-long-long -Wno-c++11-long-long")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-variadic-macros -Wno-long-long")
+  endif()
+  if ((CMAKE_CXX_COMPILER_ID MATCHES "Clang") AND NOT MINGW)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++11-long-long")
   endif()
 endif()
 
@@ -117,8 +120,12 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register")
 endif()
 
-# If gcc older than 4.8 is detected and plugin support was requested, fail fast
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8" AND WITH_PLUGIN)
-  message(SEND_ERROR "Thrift compiler plug-in support is not possible with older gcc ( < 4.8 ) compiler")
+# Building WITH_PLUGIN requires boost memory operations, for now, and gcc >= 4.8
+if (WITH_PLUGIN)
+  if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8")
+    message(SEND_ERROR "Thrift compiler plug-in support is not possible with older gcc ( < 4.8 ) compiler")
+  endif()
+  message(STATUS "Forcing use of boost::smart_ptr to build WITH_PLUGIN")
+  add_definitions("-DFORCE_BOOST_SMART_PTR=1")
 endif()
 

@@ -24,13 +24,15 @@
 
 #include <thrift/transport/TSocketPool.h>
 
+using std::pair;
+using std::string;
+using std::vector;
+
 namespace apache {
 namespace thrift {
 namespace transport {
 
-using namespace std;
-
-using boost::shared_ptr;
+using stdcxx::shared_ptr;
 
 /**
  * TSocketPoolServer implementation

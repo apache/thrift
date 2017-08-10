@@ -40,10 +40,9 @@
 #include <inttypes.h>
 #endif
 
-#include <boost/shared_ptr.hpp>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
-#include <thrift/cxxfunctional.h>
+#include <thrift/stdcxx.h>
 #if _WIN32
 #include <thrift/windows/TWinsockSingleton.h>
 #endif
@@ -52,10 +51,10 @@
 
 using namespace std;
 using namespace apache::thrift;
+using namespace apache::thrift::async;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace thrift::test;
-using namespace apache::thrift::async;
 
 // Current time, microseconds since the epoch
 uint64_t now() {
@@ -94,10 +93,10 @@ static void testVoid_clientReturn(event_base* base, ThriftTestCobClient* client)
     for (int testNr = 0; testNr < 10; ++testNr) {
       std::ostringstream os;
       os << "test" << testNr;
-      client->testString(tcxx::bind(testString_clientReturn,
+      client->testString(stdcxx::bind(testString_clientReturn,
                                     base,
                                     testNr,
-                                    tcxx::placeholders::_1),
+                                    stdcxx::placeholders::_1),
                        os.str());
     }
   } catch (TException& exn) {
@@ -229,17 +228,17 @@ int main(int argc, char** argv) {
   }
 
   // THRIFT-4164: The factory MUST outlive any sockets it creates for correct behavior!
-  boost::shared_ptr<TSSLSocketFactory> factory;
-  boost::shared_ptr<TSocket> socket;
-  boost::shared_ptr<TTransport> transport;
-  boost::shared_ptr<TProtocol> protocol;
+  stdcxx::shared_ptr<TSSLSocketFactory> factory;
+  stdcxx::shared_ptr<TSocket> socket;
+  stdcxx::shared_ptr<TTransport> transport;
+  stdcxx::shared_ptr<TProtocol> protocol;
 
   if (ssl) {
     cout << "Client Certificate File: " << certPath << endl;
     cout << "Client Key         File: " << keyPath << endl;
     cout << "CA                 File: " << caPath << endl;
 
-    factory = boost::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
+    factory = stdcxx::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
     factory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
     factory->loadTrustedCertificates(caPath.c_str());
     factory->loadCertificate(certPath.c_str());
@@ -251,38 +250,38 @@ int main(int argc, char** argv) {
       if (abstract_namespace) {
         std::string abstract_socket("\0", 1);
         abstract_socket += domain_socket;
-        socket = boost::shared_ptr<TSocket>(new TSocket(abstract_socket));
+        socket = stdcxx::shared_ptr<TSocket>(new TSocket(abstract_socket));
       } else {
-        socket = boost::shared_ptr<TSocket>(new TSocket(domain_socket));
+        socket = stdcxx::shared_ptr<TSocket>(new TSocket(domain_socket));
       }
       port = 0;
     } else {
-      socket = boost::shared_ptr<TSocket>(new TSocket(host, port));
+      socket = stdcxx::shared_ptr<TSocket>(new TSocket(host, port));
     }
   }
 
   if (transport_type.compare("http") == 0) {
-    boost::shared_ptr<TTransport> httpSocket(new THttpClient(socket, host, "/service"));
+    stdcxx::shared_ptr<TTransport> httpSocket(new THttpClient(socket, host, "/service"));
     transport = httpSocket;
   } else if (transport_type.compare("framed") == 0) {
-    boost::shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
+    stdcxx::shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
     transport = framedSocket;
   } else {
-    boost::shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket));
+    stdcxx::shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket));
     transport = bufferedSocket;
   }
 
   if (protocol_type.compare("json") == 0) {
-    boost::shared_ptr<TProtocol> jsonProtocol(new TJSONProtocol(transport));
+    stdcxx::shared_ptr<TProtocol> jsonProtocol(new TJSONProtocol(transport));
     protocol = jsonProtocol;
   } else if (protocol_type.compare("compact") == 0) {
-    boost::shared_ptr<TProtocol> compactProtocol(new TCompactProtocol(transport));
+    stdcxx::shared_ptr<TProtocol> compactProtocol(new TCompactProtocol(transport));
     protocol = compactProtocol;
   } else if (protocol_type == "header") {
-    boost::shared_ptr<TProtocol> headerProtocol(new THeaderProtocol(transport));
+    stdcxx::shared_ptr<TProtocol> headerProtocol(new THeaderProtocol(transport));
     protocol = headerProtocol;
   } else {
-    boost::shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol(transport));
+    stdcxx::shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol(transport));
     protocol = binaryProtocol;
   }
 
@@ -305,14 +304,14 @@ int main(int argc, char** argv) {
     cout << "Libevent Features: 0x" << hex << event_base_get_features(base) << endl;
 #endif
 
-    boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+    stdcxx::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
-    boost::shared_ptr<TAsyncChannel> channel(
+    stdcxx::shared_ptr<TAsyncChannel> channel(
         new TEvhttpClientChannel(host.c_str(), "/", host.c_str(), port, base));
     ThriftTestCobClient* client = new ThriftTestCobClient(channel, protocolFactory.get());
-    client->testVoid(tcxx::bind(testVoid_clientReturn,
+    client->testVoid(stdcxx::bind(testVoid_clientReturn,
                                 base,
-                                tcxx::placeholders::_1));
+                                stdcxx::placeholders::_1));
 
     event_base_loop(base, 0);
     return 0;

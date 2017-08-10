@@ -1,4 +1,4 @@
-#
+﻿#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -298,7 +298,21 @@ target_link_libraries(TNonblockingServerTest
 LINK_AGAINST_THRIFT_LIBRARY(TNonblockingServerTest thrift)
 LINK_AGAINST_THRIFT_LIBRARY(TNonblockingServerTest thriftnb)
 add_test(NAME TNonblockingServerTest COMMAND TNonblockingServerTest)
-endif()
+
+if(OPENSSL_FOUND AND WITH_OPENSSL)
+  set(TNonblockingSSLServerTest_SOURCES TNonblockingSSLServerTest.cpp)
+  add_executable(TNonblockingSSLServerTest ${TNonblockingSSLServerTest_SOURCES})
+  include_directories(${LIBEVENT_INCLUDE_DIRS})
+  target_link_libraries(TNonblockingSSLServerTest
+    testgencpp_cob
+    ${LIBEVENT_LIBRARIES}
+    ${Boost_LIBRARIES}
+  )
+  LINK_AGAINST_THRIFT_LIBRARY(TNonblockingSSLServerTest thrift)
+  LINK_AGAINST_THRIFT_LIBRARY(TNonblockingSSLServerTest thriftnb)
+  add_test(NAME TNonblockingSSLServerTest COMMAND TNonblockingSSLServerTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
+endif(OPENSSL_FOUND AND WITH_OPENSSL)
+endif(WITH_LIBEVENT)
 
 if(OPENSSL_FOUND AND WITH_OPENSSL)
 add_executable(OpenSSLManualInitTest OpenSSLManualInitTest.cpp)

@@ -27,17 +27,15 @@
 #include <cassert>
 #include <iostream>
 
-#include <boost/bind.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include <boost/range/algorithm/for_each.hpp>
-#include <boost/smart_ptr.hpp>
 
 #include "thrift/generate/t_generator.h"
 #include "thrift/plugin/type_util.h"
 #include "thrift/protocol/TBinaryProtocol.h"
 #include "thrift/transport/TBufferTransports.h"
 #include "thrift/transport/TFDTransport.h"
-
+#include "thrift/stdcxx.h"
 #include "thrift/plugin/plugin_types.h"
 
 namespace apache {
@@ -121,7 +119,7 @@ struct TypeCache {
 
   void compileAll() {
     boost::for_each(*source | boost::adaptors::map_keys,
-                    boost::bind(&TypeCache::compile, this, _1));
+                    stdcxx::bind(&TypeCache::compile, this, stdcxx::placeholders::_1));
   }
 
   std::map<int64_t, S> const* source;
@@ -218,7 +216,7 @@ THRIFT_CONVERSION(t_enum, g_program_cache[from.metadata.program_id]) {
   assert(to);
   THRIFT_ASSIGN_METADATA();
   boost::for_each(from.constants | boost::adaptors::transformed(convert<t_enum_value>),
-                  boost::bind(&::t_enum::append, to, _1));
+                  stdcxx::bind(&::t_enum::append, to, stdcxx::placeholders::_1));
 }
 THRIFT_CONVERSION(t_list, resolve_type< ::t_type>(from.elem_type)) {
   assert(to);
@@ -255,7 +253,7 @@ THRIFT_CONVERSION(t_const_value, ) {
   } else if (from.__isset.list_val) {
     to->set_list();
     boost::for_each(from.list_val | boost::adaptors::transformed(&convert<t_const_value>),
-                    boost::bind(&::t_const_value::add_list, to, _1));
+                    stdcxx::bind(&::t_const_value::add_list, to, stdcxx::placeholders::_1));
   } else
     T_CONST_VALUE_CASE(string);
   else T_CONST_VALUE_CASE(integer);
@@ -282,7 +280,7 @@ THRIFT_CONVERSION(t_struct, g_program_cache[from.metadata.program_id]) {
   to->set_union(from.is_union);
   to->set_xception(from.is_xception);
   boost::for_each(from.members | boost::adaptors::transformed(convert<t_field>),
-                  boost::bind(&::t_struct::append, to, _1));
+                  stdcxx::bind(&::t_struct::append, to, stdcxx::placeholders::_1));
 }
 THRIFT_CONVERSION(t_const,
                   resolve_type< ::t_type>(from.type),
@@ -309,7 +307,7 @@ THRIFT_CONVERSION(t_service, g_program_cache[from.metadata.program_id]) {
   THRIFT_ASSIGN_METADATA();
 
   boost::for_each(from.functions | boost::adaptors::transformed(convert<t_function>),
-                  boost::bind(&::t_service::add_function, to, _1));
+                  stdcxx::bind(&::t_service::add_function, to, stdcxx::placeholders::_1));
 
   if (from.__isset.extends_)
     to->set_extends(resolve_service(from.extends_));
@@ -390,9 +388,9 @@ THRIFT_CONVERT_COMPLETE(t_program) {
   to->set_out_path(from.out_path, from.out_path_is_absolute);
 
   boost::for_each(from.typedefs | boost::adaptors::transformed(&resolve_type< ::t_typedef>),
-                  boost::bind(&::t_program::add_typedef, to, _1));
+                  stdcxx::bind(&::t_program::add_typedef, to, stdcxx::placeholders::_1));
   boost::for_each(from.enums | boost::adaptors::transformed(&resolve_type< ::t_enum>),
-                  boost::bind(&::t_program::add_enum, to, _1));
+                  stdcxx::bind(&::t_program::add_enum, to, stdcxx::placeholders::_1));
   for (std::vector<int64_t>::const_iterator it = from.objects.begin(); it != from.objects.end();
        it++) {
     ::t_struct* t2 = resolve_type< ::t_struct>(*it);
@@ -403,18 +401,18 @@ THRIFT_CONVERT_COMPLETE(t_program) {
     }
   }
   boost::for_each(from.consts | boost::adaptors::transformed(&resolve_const),
-                  boost::bind(&::t_program::add_const, to, _1));
+                  stdcxx::bind(&::t_program::add_const, to, stdcxx::placeholders::_1));
   boost::for_each(from.services | boost::adaptors::transformed(&resolve_service),
-                  boost::bind(&::t_program::add_service, to, _1));
+                  stdcxx::bind(&::t_program::add_service, to, stdcxx::placeholders::_1));
 
   for (std::vector<t_program>::const_iterator it = from.includes.begin(); it != from.includes.end();
        it++) {
     convert(*it, g_program_cache[it->program_id]);
   }
   std::for_each(from.c_includes.begin(), from.c_includes.end(),
-                boost::bind(&::t_program::add_c_include, to, _1));
+                stdcxx::bind(&::t_program::add_c_include, to, stdcxx::placeholders::_1));
   std::for_each(from.cpp_includes.begin(), from.cpp_includes.end(),
-                boost::bind(&::t_program::add_cpp_include, to, _1));
+                stdcxx::bind(&::t_program::add_cpp_include, to, stdcxx::placeholders::_1));
   for (std::map<std::string, std::string>::const_iterator it = from.namespaces.begin();
        it != from.namespaces.end(); it++) {
     to->set_namespace(it->first, it->second);
@@ -428,8 +426,8 @@ int GeneratorPlugin::exec(int, char* []) {
 #ifdef _WIN32
   _setmode(fileno(stdin), _O_BINARY);
 #endif
-  boost::shared_ptr<TFramedTransport> transport(
-      new TFramedTransport(boost::make_shared<TFDTransport>(fileno(stdin))));
+  stdcxx::shared_ptr<TFramedTransport> transport(
+      new TFramedTransport(stdcxx::make_shared<TFDTransport>(fileno(stdin))));
   TBinaryProtocol proto(transport);
   GeneratorInput input;
   try {
