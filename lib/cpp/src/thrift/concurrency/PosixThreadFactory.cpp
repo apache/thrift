@@ -19,8 +19,9 @@
 
 #include <thrift/thrift-config.h>
 
-#include <thrift/concurrency/PosixThreadFactory.h>
 #include <thrift/concurrency/Exception.h>
+#include <thrift/concurrency/Mutex.h>
+#include <thrift/concurrency/PosixThreadFactory.h>
 
 #if GOOGLE_PERFTOOLS_REGISTER_THREAD
 #include <google/profiler.h>
@@ -52,6 +53,7 @@ public:
 
 private:
   pthread_t pthread_;
+  Mutex state_mutex_;
   STATE state_;
   int policy_;
   int priority_;
@@ -70,7 +72,6 @@ public:
 #ifndef _WIN32
       pthread_(0),
 #endif // _WIN32
-
       state_(uninitialized),
       policy_(policy),
       priority_(priority),
@@ -93,8 +94,20 @@ public:
     }
   }
 
+  STATE getState() const
+  {
+    Guard g(state_mutex_);
+    return state_;
+  }
+
+  void setState(STATE newState)
+  {
+    Guard g(state_mutex_);
+    state_ = newState;
+  }
+
   void start() {
-    if (state_ != uninitialized) {
+    if (getState() != uninitialized) {
       return;
     }
 
@@ -139,7 +152,7 @@ public:
     stdcxx::shared_ptr<PthreadThread>* selfRef = new stdcxx::shared_ptr<PthreadThread>();
     *selfRef = self_.lock();
 
-    state_ = starting;
+    setState(starting);
 
     if (pthread_create(&pthread_, &thread_attr, threadMain, (void*)selfRef) != 0) {
       throw SystemResourceException("pthread_create failed");
@@ -147,7 +160,7 @@ public:
   }
 
   void join() {
-    if (!detached_ && state_ != uninitialized) {
+    if (!detached_ && getState() != uninitialized) {
       void* ignore;
       /* XXX
          If join fails it is most likely due to the fact
@@ -193,7 +206,7 @@ void* PthreadThread::threadMain(void* arg) {
     return (void*)0;
   }
 
-  if (thread->state_ != starting) {
+  if (thread->getState() != starting) {
     return (void*)0;
   }
 
@@ -201,10 +214,13 @@ void* PthreadThread::threadMain(void* arg) {
   ProfilerRegisterThread();
 #endif
 
-  thread->state_ = started;
+  thread->setState(started);
+
   thread->runnable()->run();
-  if (thread->state_ != stopping && thread->state_ != stopped) {
-    thread->state_ = stopping;
+
+  STATE _s = thread->getState();
+  if (_s != stopping && _s != stopped) {
+    thread->setState(stopping);
   }
 
   return (void*)0;

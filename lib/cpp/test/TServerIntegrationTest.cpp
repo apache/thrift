@@ -320,7 +320,7 @@ public:
   shared_ptr<TServerType> pServer;
   shared_ptr<TServerReadyEventHandler> pEventHandler;
   shared_ptr<boost::thread> pServerThread;
-  bool bStressDone;
+  boost::atomic<bool> bStressDone;
   boost::atomic_int64_t bStressConnectionCount;
   boost::atomic_int64_t bStressRequestCount;
 };
