@@ -492,6 +492,25 @@ try {
   print_r(' caught xception '.$x->errorCode.': '.$x->message."\n");
 }
 
+// Regression test for THRIFT-4263
+print_r("testBinarySerializer_Deserialize('foo')");
+try {
+  \Thrift\Serializer\TBinarySerializer::deserialize(base64_decode('foo'), \ThriftTest\Xtruct2::class);
+  echo "**FAILED**\n";
+  $exitcode |= ERR_STRUCTS;
+} catch (\Thrift\Exception\TTransportException $happy_exception) {
+  // We expected this due to binary data of base64_decode('foo') is less then 4
+  // bytes and it tries to find thrift version number in the transport by
+  // reading i32() at the beginning.  Casting to string validates that
+  // exception is still accessible in memory and not corrupted.  Without patch,
+  // PHP will error log that the exception doesn't have any tostring method,
+  // which is a lie due to corrupted memory.
+  for($i=99; $i > 0; $i--) {
+    (string)$happy_exception;
+  }
+  print_r("  SUCCESS\n");
+}
+
 /**
  * Normal tests done.
  */
