@@ -123,6 +123,20 @@ int main(int argc, char** argv) {
       std::cerr << "\t\tTimerManager tests FAILED" << std::endl;
       return 1;
     }
+
+    std::cout << "\t\tTimerManager test01" << std::endl;
+
+    if (!timerManagerTests.test01()) {
+      std::cerr << "\t\tTimerManager tests FAILED" << std::endl;
+      return 1;
+    }
+
+    std::cout << "\t\tTimerManager test02" << std::endl;
+
+    if (!timerManagerTests.test02()) {
+      std::cerr << "\t\tTimerManager tests FAILED" << std::endl;
+      return 1;
+    }
   }
 
   if (runAll || args[0].compare("thread-manager") == 0) {
