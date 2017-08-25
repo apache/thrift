@@ -17,8 +17,6 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 stubs: ../ThriftTest.thrift
 	$(THRIFT) --gen php ../ThriftTest.thrift
 	$(THRIFT) --gen php:inlined ../ThriftTest.thrift

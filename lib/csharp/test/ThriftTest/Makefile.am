@@ -17,7 +17,6 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
 if MONO_MCS
 CSC=mcs
 else

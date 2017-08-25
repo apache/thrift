@@ -17,8 +17,6 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 gen-dart/tutorial/lib/tutorial.dart gen-dart/shared/lib/shared.dart: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen dart -r $<
 

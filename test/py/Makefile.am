@@ -18,8 +18,6 @@
 #
 AUTOMAKE_OPTIONS = serial-tests
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 py_unit_tests = RunClientServer.py
 
 thrift_gen =                                    \

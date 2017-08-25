@@ -17,7 +17,6 @@
 # under the License.
 #
 
-THRIFT = @top_builddir@/compiler/cpp/thrift
 THRIFT_IF = @top_srcdir@/test/ThriftTest.thrift
 NAME_BENCHMARKSERVICE =  @top_srcdir@/lib/rb/benchmark/Benchmark.thrift
 NAME_AGGR = @top_srcdir@/contrib/async-test/aggr.thrift
