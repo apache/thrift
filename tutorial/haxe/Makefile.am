@@ -17,12 +17,9 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 BIN_CPP = bin/Main-debug
 BIN_PHP = bin/php/Main-debug.php
 BIN_PHP_WEB = bin/php-web-server/Main-debug.php
-
 
 gen-haxe/tutorial/calculator.hx gen-haxe/shared/shared_service.hx: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen haxe -r $<

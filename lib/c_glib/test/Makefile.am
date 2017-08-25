@@ -237,8 +237,6 @@ nodist_libtestgencpp_la_SOURCES = \
         gen-cpp/ThriftTest_types.h
 libtestgencpp_la_CPPFLAGS = -I../../cpp/src $(BOOST_CPPFLAGS) -I./gen-cpp
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 gen-c_glib/t_test_container_test_types.c gen-c_glib/t_test_container_test_types.h gen-c_glib/t_test_container_service.c gen-c_glib/t_test_container_service.h: ContainerTest.thrift $(THRIFT)
 	$(THRIFT) --gen c_glib $<
 

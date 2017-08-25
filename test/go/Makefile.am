@@ -22,7 +22,6 @@ if GOVERSION_LT_17
 COMPILER_EXTRAFLAG=",legacy_context"
 endif
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
 THRIFTCMD = $(THRIFT) -out src/gen --gen go:thrift_import=thrift$(COMPILER_EXTRAFLAG)
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 

@@ -17,8 +17,6 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 stubs: ../../../test/ThriftTest.thrift  TestValidators.thrift
 	mkdir -p ./packages
 	$(THRIFT) --gen php -r --out ./packages ../../../test/ThriftTest.thrift
