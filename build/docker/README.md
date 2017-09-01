@@ -3,8 +3,10 @@ A set of docker containers used to build and test Apache Thrift
 
 ### Available Containers
 
-* Ubuntu - based on ubuntu:trusty (14.04)
-* Centos - based on centos:6.6
+* centos - based on CentOS 7
+* centos6 - based on CentOS 6
+* ubuntu - based on Ubuntu Trusty (14.04 LTS)
+* ubuntu1604 - based on Ubuntu Xenial (16.04 LTS)
 
 ## Dependencies
 

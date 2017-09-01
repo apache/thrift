@@ -36,6 +36,7 @@ node_modules
 compile
 test-driver
 erl_crash.dump
+package-lock.json
 project.lock.json
 
 .sonar
@@ -116,6 +117,7 @@ project.lock.json
 /lib/cpp/test/TFileTransportTest
 /lib/cpp/test/TInterruptTest
 /lib/cpp/test/TNonblockingServerTest
+/lib/cpp/test/TNonblockingSSLServerTest
 /lib/cpp/test/TPipedTransportTest
 /lib/cpp/test/TServerIntegrationTest
 /lib/cpp/test/TSocketInterruptTest
@@ -221,6 +223,7 @@ project.lock.json
 /lib/java/build
 /lib/js/dist
 /lib/js/doc
+/lib/js/package-lock.json
 /lib/js/test/build
 /lib/netcore/**/.vs
 /lib/netcore/**/bin
@@ -265,6 +268,8 @@ project.lock.json
 /lib/php/test/packages/
 /lib/py/dist/
 /lib/erl/logs/
+/lib/go/pkg
+/lib/go/src
 /lib/go/test/gopath/
 /lib/go/test/ThriftTest.thrift
 /lib/rs/target/
@@ -299,6 +304,7 @@ project.lock.json
 /test/log/
 /test/test.log
 /test/erl/.generated
+/test/erl/.rebar
 /test/erl/ebin
 /test/go/bin/
 /test/go/ThriftTest.thrift
@@ -306,6 +312,7 @@ project.lock.json
 /test/go/pkg/
 /test/go/src/code.google.com/
 /test/go/src/github.com/golang/
+/test/go/src/golang.org/
 /test/go/src/gen/
 /test/go/src/thrift
 /test/haxe/bin
