@@ -29,7 +29,7 @@ def main(args):
         time.sleep(0.05)
     else:
         value = client.get()
-        print value
+        print(value)
 
 
 if __name__ == "__main__":
