@@ -38,96 +38,54 @@ env:
     - SCRIPT="cmake.sh"
     - BUILD_ARG=""
     - BUILD_ENV="-e CC=clang -e CXX=clang++"
-    - DISTRO=ubuntu
+    - DISTRO=ubuntu-xenial
     - BUILD_LIBS="CPP C_GLIB HASKELL JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
 
   matrix:
-    - TEST_NAME="Cross Language Tests (Header, Multiplexed and JSON Protocols)"
+    - TEST_NAME="Cross Language Tests (Binary, Header, JSON Protocols)"
       SCRIPT="cross-test.sh"
-      BUILD_ARG="-'(header|multiplexed|json)'"
+      BUILD_ARG="-'(binary|header|json)'"
       BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
-    - TEST_NAME="Cross Language Tests (Binary Protocol)"
+    - TEST_NAME="Cross Language Tests (Compact and Multiplexed Protocols)"
       SCRIPT="cross-test.sh"
-      BUILD_ARG="-'(binary)'"
+      BUILD_ARG="-'(compact|multiplexed)'"
       BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
-    - TEST_NAME="Cross Language Tests (Compact Protocol)"
-      SCRIPT="cross-test.sh"
-      BUILD_ARG="-'(compact)'"
-      BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
-
-    # TODO: Remove them once migrated to CMake
     # Autotools builds
-    - TEST_NAME="C C++ C# D Erlang Haxe Go (automake)"
+    # TODO: Remove them once migrated to CMake
+    - TEST_NAME="Autotools (CentOS 7.3)"
+      DISTRO=centos-7.3
       SCRIPT="autotools.sh"
-      BUILD_ARG="--without-dart --without-haskell --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-ruby --without-rust"
-
-    - TEST_NAME="C C++ Plugin Haskell Perl - GCC (automake)"
-      SCRIPT="autotools.sh"
-      BUILD_ARG="--enable-plugin --without-csharp --without-java --without-erlang --without-nodejs --without-lua --without-python --without-perl --without-php --without-php_extension --without-dart --without-ruby --without-haskell --without-go --without-haxe --without-d --without-rust"
       BUILD_ENV="-e CC=gcc -e CXX=g++"
+      BUILD_ARG="--without-cpp --without-csharp --without-c_glib --without-d -without-dart --without-erlang --without-go --without-haskell --without-haxe"
 
-    - TEST_NAME="Java Lua PHP Ruby Dart Node.js Python Rust (automake)"
+    - TEST_NAME="Autotools (Ubuntu Xenial)"
       SCRIPT="autotools.sh"
-      BUILD_ARG="--without-cpp --without-c_glib --without-csharp --without-d --without-erlang --without-go --without-haxe"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
+      BUILD_ARG="--enable-plugin --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-py3 --without-ruby --without-rust"
 
     # CMake builds
-    - TEST_NAME="All (Debian)"
-      DISTRO=debian
+    - TEST_NAME="CMake (CentOS 7.3)"
+      DISTRO=centos-7.3
 
-    - TEST_NAME="C C++ - GCC"
-      BUILD_LIBS="CPP C_GLIB TESTING TUTORIALS"
-      BUILD_ARG="-DWITH_PYTHON=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
-      BUILD_ENV="-e CC=gcc -e CXX=g++"
+    - TEST_NAME="CMake (Ubuntu Xenial)"
 
-    - TEST_NAME="C++ (Boost Thread - GCC)"
+    # C++ specific options: compiler plug-in, threading model
+    - TEST_NAME="C++ (Boost Thread)"
       BUILD_LIBS="CPP TESTING TUTORIALS"
       BUILD_ARG="-DWITH_BOOSTTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
-      BUILD_ENV="-e CC=gcc -e CXX=g++"
 
     - TEST_NAME="C++ Plugin (Std Thread)"
       BUILD_LIBS="CPP TESTING TUTORIALS"
       BUILD_ARG="-DWITH_PLUGIN=ON -DWITH_STDTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
 
-    - TEST_NAME="Compiler (mingw)"
-      BUILD_LIBS=""
-      BUILD_ARG="-DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
-      BUILD_ENV=""
-
-    - TEST_NAME="All - GCC (CentOS)"
-      BUILD_ENV="-e CC=gcc -e CXX=g++"
-      DISTRO=centos
-
-    - TEST_NAME="C C++ - Clang (CentOS)"
-      BUILD_LIBS="CPP C_GLIB TESTING TUTORIALS"
-      BUILD_ARG="-DWITH_PYTHON=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
-      DISTRO=centos
-
-    - TEST_NAME="Python 2.6 (CentOS 6)"
-      BUILD_LIBS="PYTHON TESTING TUTORIALS"
-      BUILD_ARG="-DWITH_PYTHON=ON -DWITH_CPP=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
-      BUILD_ENV="-e CC=gcc -e CXX=g++"
-      DISTRO=centos6
-
     # Distribution
     - TEST_NAME="make dist"
       SCRIPT="make-dist.sh"
-      BUILD_ENV="-e CC=gcc -e CXX=g++"
 
     - TEST_NAME="Debian Packages"
       SCRIPT="dpkg.sh"
-      BUILD_ENV="-e CC=gcc -e CXX=g++"
-
-    - TEST_NAME="make dist (Debian)"
-      SCRIPT="make-dist.sh"
-      BUILD_ENV="-e CC=gcc -e CXX=g++"
-      DISTRO=debian
-
-    - TEST_NAME="Debian Packages (Debian)"
-      SCRIPT="dpkg.sh"
-      BUILD_ENV="-e CC=gcc -e CXX=g++"
-      DISTRO=debian
 
     # C and C++ undefined behavior. This wraps autotools.sh, but each binary crashes if
     # undefined behavior occurs. Skips the known flaky tests.

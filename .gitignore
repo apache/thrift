@@ -311,6 +311,7 @@ project.lock.json
 /test/go/gopath
 /test/go/pkg/
 /test/go/src/code.google.com/
+/test/go/src/common/mock_handler.go
 /test/go/src/github.com/golang/
 /test/go/src/golang.org/
 /test/go/src/gen/
@@ -355,11 +356,13 @@ project.lock.json
 /tutorial/delphi/DelphiClient/*.identcache
 /tutorial/delphi/DelphiServer/*.identcache
 /tutorial/delphi/DelphiServer/*.local
+/tutorial/go/gopath
 /tutorial/go/go-tutorial
 /tutorial/go/calculator-remote
 /tutorial/go/src/shared
 /tutorial/go/src/tutorial
 /tutorial/go/src/git.apache.org
+/tutorial/go/src/golang.org
 /tutorial/haxe/bin
 /tutorial/hs/dist/
 /tutorial/java/build/

@@ -120,6 +120,7 @@ if test "$enable_libs" = "no"; then
   with_java="no"
   with_csharp="no"
   with_python="no"
+  with_py3="no"
   with_ruby="no"
   with_haskell="no"
   with_haxe="no"
@@ -303,6 +304,7 @@ AM_CONDITIONAL(WITH_TWISTED_TEST, [test "$have_trial" = "yes"])
 # Find "python3" executable.
 # It's distro specific and far from ideal but needed to cross test py2-3 at once.
 # TODO: find "python2" if it's 3.x
+have_py3="no"
 if python --version 2>&1 | grep -q "Python 2"; then
   AC_PATH_PROGS([PYTHON3], [python3 python3.5 python35 python3.4 python34])
   if test -n "$PYTHON3"; then
@@ -657,7 +659,7 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
 AC_TYPE_UINT8_T
-AC_CHECK_TYPES([ptrdiff_t], [], [exit 1])
+AC_CHECK_TYPES([ptrdiff_t], [], [echo "ptrdiff_t not found or g++ not installed - cannot continue" && exit 1])
 
 AC_STRUCT_TM
 
@@ -899,107 +901,42 @@ AC_OUTPUT
 echo
 echo "$PACKAGE $VERSION"
 echo
-echo "Building Plugin Support ...... : $have_plugin"
-echo "Building C++ Library ......... : $have_cpp"
 echo "Building C (GLib) Library .... : $have_c_glib"
-echo "Building Java Library ........ : $have_java"
-echo "Building C# Library .......... : $have_csharp"
-echo "Building .NET Core Library ... : $have_dotnetcore"
-echo "Building Python Library ...... : $have_python"
-echo "Building Ruby Library ........ : $have_ruby"
-echo "Building Haxe Library ........ : $have_haxe"
-echo "Building Haskell Library ..... : $have_haskell"
-echo "Building Perl Library ........ : $have_perl"
-echo "Building PHP Library ......... : $have_php"
+echo "Building C# (Mono) Library ... : $have_csharp"
+echo "Building C++ Library ......... : $have_cpp"
+echo "Building D Library ........... : $have_d"
 echo "Building Dart Library ........ : $have_dart"
+echo "Building dotnetcore Library .. : $have_dotnetcore"
 echo "Building Erlang Library ...... : $have_erlang"
 echo "Building Go Library .......... : $have_go"
-echo "Building D Library ........... : $have_d"
-echo "Building NodeJS Library ...... : $have_nodejs"
+echo "Building Haskell Library ..... : $have_haskell"
+echo "Building Haxe Library ........ : $have_haxe"
+echo "Building Java Library ........ : $have_java"
 echo "Building Lua Library ......... : $have_lua"
+echo "Building NodeJS Library ...... : $have_nodejs"
+echo "Building Perl Library ........ : $have_perl"
+echo "Building PHP Library ......... : $have_php"
+echo "Building Plugin Support ...... : $have_plugin"
+echo "Building Python Library ...... : $have_python"
+echo "Building Py3 Library ......... : $have_py3"
+echo "Building Ruby Library ........ : $have_ruby"
 echo "Building Rust Library ........ : $have_rs"
 
-if test "$have_cpp" = "yes" ; then
-  echo
-  echo "C++ Library:"
-  echo "   Build TZlibTransport ...... : $have_zlib"
-  echo "   Build TNonblockingServer .. : $have_libevent"
-  echo "   Build TQTcpServer (Qt4) ... : $have_qt"
-  echo "   Build TQTcpServer (Qt5) ... : $have_qt5"
-fi
-if test "$have_java" = "yes" ; then
-  echo
-  echo "Java Library:"
-  echo "   Using javac ............... : $JAVAC"
-  echo "   Using java ................ : $JAVA"
-  echo "   Using ant ................. : $ANT"
-fi
 if test "$have_csharp" = "yes" ; then
   echo
   echo "C# Library:"
   echo "   Using .NET 3.5 ............ : $net_3_5"
+  echo "   Using mono version ........ : $($MCS --version | head -1)"
 fi
-if test "$have_dotnetcore" = "yes" ; then
+if test "$have_cpp" = "yes" ; then
   echo
-  echo ".NET Core Library:"
-  echo "   Using .NET Core ........... : $DOTNETCORE"
-  echo "   Using .NET Core version ... : $DOTNETCORE_VERSION"
-fi
-if test "$have_python" = "yes" ; then
-  echo
-  echo "Python Library:"
-  echo "   Using Python .............. : $PYTHON"
-  if test "$have_py3" = "yes" ; then
-  echo "   Using Python3 ............. : $PYTHON3"
-  fi
-  if test "$have_trial" = "yes"; then
-  echo "   Using trial ............... : $TRIAL"
-  fi
-fi
-if test "$have_php" = "yes" ; then
-  echo
-  echo "PHP Library:"
-  echo "   Using php-config .......... : $PHP_CONFIG"
-fi
-if test "$have_dart" = "yes" ; then
-  echo
-  echo "Dart Library:"
-  echo "   Using Dart ................ : $DART"
-  echo "   Using Pub ................. : $DARTPUB"
-fi
-if test "$have_ruby" = "yes" ; then
-  echo
-  echo "Ruby Library:"
-  echo "   Using Ruby ................ : $RUBY"
-fi
-if test "$have_haskell" = "yes" ; then
-  echo
-  echo "Haskell Library:"
-  echo "   Using Haskell ............. : $RUNHASKELL"
-  echo "   Using Cabal ............... : $CABAL"
-fi
-if test "$have_haxe" = "yes" ; then
-  echo
-  echo "Haxe Library:"
-  echo "   Using Haxe ................ : $HAXE"
-  echo "   Using Haxe version ........ : $HAXE_VERSION"
-fi
-if test "$have_perl" = "yes" ; then
-  echo
-  echo "Perl Library:"
-  echo "   Using Perl ................ : $PERL"
-fi
-if test "$have_erlang" = "yes" ; then
-  echo
-  echo "Erlang Library:"
-  echo "   Using erlc ................ : $ERLC"
-  echo "   Using rebar ............... : $REBAR"
-fi
-if test "$have_go" = "yes" ; then
-  echo
-  echo "Go Library:"
-  echo "   Using Go................... : $GO"
-  echo "   Using Go version........... : $($GO version)"
+  echo "C++ Library:"
+  echo "   C++ compiler .............. : $CXX"
+  echo "   Build TZlibTransport ...... : $have_zlib"
+  echo "   Build TNonblockingServer .. : $have_libevent"
+  echo "   Build TQTcpServer (Qt4) ... : $have_qt"
+  echo "   Build TQTcpServer (Qt5) ... : $have_qt5"
+  echo "   C++ compiler version ...... : $($CXX --version | head -1)"
 fi
 if test "$have_d" = "yes" ; then
   echo
@@ -1007,6 +944,61 @@ if test "$have_d" = "yes" ; then
   echo "   Using D Compiler .......... : $DMD"
   echo "   Building D libevent tests . : $with_d_event_tests"
   echo "   Building D SSL tests ...... : $with_d_ssl_tests"
+  echo "   Using D version ........... : $($DMD --version | head -1)"
+fi
+if test "$have_dart" = "yes" ; then
+  echo
+  echo "Dart Library:"
+  echo "   Using Dart ................ : $DART"
+  echo "   Using Pub ................. : $DARTPUB"
+  echo "   Using Dart version ........ : $($DART --version 2>&1)"
+fi
+if test "$have_dotnetcore" = "yes" ; then
+  echo
+  echo ".NET Core Library:"
+  echo "   Using .NET Core ........... : $DOTNETCORE"
+  echo "   Using .NET Core version ... : $DOTNETCORE_VERSION"
+fi
+if test "$have_erlang" = "yes" ; then
+  echo
+  echo "Erlang Library:"
+  echo "   Using erlc ................ : $ERLC"
+  echo "   Using rebar ............... : $REBAR"
+  echo "   Using erlc version ........ : $($ERL -eval 'erlang:display(erlang:system_info(otp_release)), halt().' -noshell | tr -d '\"')"
+fi
+if test "$have_go" = "yes" ; then
+  echo
+  echo "Go Library:"
+  echo "   Using Go................... : $GO"
+  echo "   Using Go version........... : $($GO version)"
+fi
+if test "$have_haskell" = "yes" ; then
+  echo
+  echo "Haskell Library:"
+  echo "   Using Cabal ............... : $CABAL"
+  echo "   Using Haskell ............. : $RUNHASKELL"
+  echo "   Using Haskell version ..... : $($RUNHASKELL --version)"
+fi
+if test "$have_haxe" = "yes" ; then
+  echo
+  echo "Haxe Library:"
+  echo "   Using Haxe ................ : $HAXE"
+  echo "   Using Haxe version ........ : $HAXE_VERSION"
+fi
+if test "$have_java" = "yes" ; then
+  echo
+  echo "Java Library:"
+  echo "   Using ant ................. : $ANT"
+  echo "   Using java ................ : $JAVA"
+  echo "   Using javac ............... : $JAVAC"
+  echo "   Using ant version ......... : $($ANT -version 2>&1)"
+  echo "   Using java version ........ : $($JAVA -version 2>&1 | grep 'version ')"
+fi
+if test "$have_lua" = "yes" ; then
+  echo
+  echo "Lua Library:"
+  echo "   Using Lua ................. : $LUA"
+  echo "   Using Lua version.......... : $($LUA -v)"
 fi
 if test "$have_nodejs" = "yes" ; then
   echo
@@ -1014,10 +1006,36 @@ if test "$have_nodejs" = "yes" ; then
   echo "   Using NodeJS .............. : $NODEJS"
   echo "   Using NodeJS version....... : $($NODEJS --version)"
 fi
-if test "$have_lua" = "yes" ; then
+if test "$have_perl" = "yes" ; then
   echo
-  echo "Lua Library:"
-  echo "   Using Lua ................. : $LUA"
+  echo "Perl Library:"
+  echo "   Using Perl ................ : $PERL"
+  echo "   Using Perl version ........ : $($PERL -v | grep 'version ')"
+fi
+if test "$have_php" = "yes" ; then
+  echo
+  echo "PHP Library:"
+  echo "   Using php-config .......... : $PHP_CONFIG"
+  echo "   Using php version ......... : $($PHP --version | head -1)"
+fi
+if test "$have_python" = "yes" ; then
+  echo
+  echo "Python Library:"
+  echo "   Using Python .............. : $PYTHON"
+  echo "   Using Python version ...... : $($PYTHON --version 2>&1)"
+  if test "$have_py3" = "yes" ; then
+  echo "   Using Python3 ............. : $PYTHON3"
+  echo "   Using Python3 version ..... : $($PYTHON3 --version)"
+  fi
+  if test "$have_trial" = "yes"; then
+  echo "   Using trial ............... : $TRIAL"
+  fi
+fi
+if test "$have_ruby" = "yes" ; then
+  echo
+  echo "Ruby Library:"
+  echo "   Using Ruby ................ : $RUBY"
+  echo "   Using Ruby version ........ : $($RUBY --version)"
 fi
 if test "$have_rs" = "yes" ; then
   echo
@@ -1030,3 +1048,4 @@ echo
 echo "If something is missing that you think should be present,"
 echo "please skim the output of configure to find the missing"
 echo "component.  Details are present in config.log."
+echo
