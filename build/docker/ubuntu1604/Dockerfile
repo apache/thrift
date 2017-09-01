@@ -31,7 +31,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends apt apt-transport-https curl wget apt-utils
 
-# csharp
+# csharp (mono)
 RUN echo "deb http://download.mono-project.com/repo/debian xenial main" | tee /etc/apt/sources.list.d/mono.list && \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A6A19B38D3D831EF
 
@@ -59,6 +59,7 @@ RUN curl -sL https://deb.nodesource.com/setup_8.x | bash
 # install general dependencies
 RUN apt-get install -y --no-install-recommends \
 `# General dependencies` \
+      bash-completion \
       bison \
       build-essential \
       clang \
@@ -91,7 +92,7 @@ RUN apt-get install -y --no-install-recommends \
       qtbase5-dev-tools
 
 RUN apt-get install -y --no-install-recommends \
-`# csharp dependencies` \
+`# csharp (mono) dependencies` \
       mono-devel
 
 RUN apt-get install -y --no-install-recommends \
@@ -130,7 +131,8 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
 `# golang (go) dependencies` \
-      golang-go
+      golang-go \
+      golang-race-detector-runtime
 
 RUN apt-get install -y --no-install-recommends \
 `# Haskell dependencies` \
