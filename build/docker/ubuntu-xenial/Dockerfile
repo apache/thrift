@@ -11,23 +11,17 @@
 # limitations under the License.
 
 # Apache Thrift Docker build environment for Ubuntu Xenial
+#
+# Known missing or disabled libraries:
+# - d: deimos for libevent and openssl omitted - not compatible / build errors
+# - dotnetcore, because netcore is for 1.0.0-preview and 2.0.0 is out
 
 FROM buildpack-deps:xenial-scm
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
 
 ENV DEBIAN_FRONTEND noninteractive
 
-# Consider using mirror nearby when building locally
-# TODO: Provide option via --build-arg=...
-# RUN sed -i /etc/apt/sources.list -e 's!http://archive.ubuntu.com/ubuntu/!http://your/mirror/!g'
-
-#              _                              
-#   __ _ _ __ | |_   _ __ ___ _ __   ___  ___ 
-#  / _` | '_ \| __| | '__/ _ \ '_ \ / _ \/ __|
-# | (_| | |_) | |_  | | |  __/ |_) | (_) \__ \
-#  \__,_| .__/ \__| |_|  \___| .__/ \___/|___/
-#       |_|                  |_|              
-#
+### Add apt repos
 
 RUN apt-get update && apt-get install -y --no-install-recommends apt apt-transport-https curl wget apt-utils
 
@@ -44,19 +38,15 @@ RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &
     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
     sed -i /etc/apt/sources.list.d/dart_stable.list -e 's/https:/http:/g'
 
-# dotnet (core)
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
-    echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main" > /etc/apt/sources.list.d/dotnetdev.list
-
-# OCaml - may not be necessary, skip for now
-#RUN echo 'deb http://ppa.launchpad.net/avsm/ppa/ubuntu xenial main' > /etc/apt/sources.list.d/avsm-official-ocaml.list && \
-#    gpg --keyserver keyserver.ubuntu.com --recv 61707B09 && \
-#    gpg --export --armor 61707B09 | apt-key add -
+# dotnet (core) 2.0.0 - project isn't ready for this yet:
+# RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
+#     echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main" > /etc/apt/sources.list.d/dotnetdev.list
 
 # node.js (this step runs apt-get update internally)
 RUN curl -sL https://deb.nodesource.com/setup_8.x | bash
 
-# install general dependencies
+
+### install general dependencies
 RUN apt-get install -y --no-install-recommends \
 `# General dependencies` \
       bash-completion \
@@ -66,16 +56,14 @@ RUN apt-get install -y --no-install-recommends \
       cmake \
       debhelper \
       flex \
+      gdb \
+      llvm \
       ninja-build \
       pkg-config \
       vim
+ENV PATH /usr/lib/llvm-3.8/bin:$PATH
 
-#  _                                               
-# | | __ _ _ __   __ _ _   _  __ _  __ _  ___  ___ 
-# | |/ _` | '_ \ / _` | | | |/ _` |/ _` |/ _ \/ __|
-# | | (_| | | | | (_| | |_| | (_| | (_| |  __/\__ \
-# |_|\__,_|_| |_|\__, |\__,_|\__,_|\__, |\___||___/
-#                |___/             |___/           
+### languages
 
 RUN apt-get install -y --no-install-recommends \
 `# C++ dependencies` \
@@ -101,21 +89,27 @@ RUN apt-get install -y --no-install-recommends \
       libevent-dev \
       libssl-dev \
       xdg-utils
-RUN curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/master.tar.gz| tar xz && \
-    curl -sSL https://github.com/D-Programming-Deimos/libevent/archive/master.tar.gz| tar xz && \
-    mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
-    mv libevent-master/deimos/* openssl-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-    mv libevent-master/C/* openssl-master/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf libevent-master openssl-master
+# libevent deimos doesn't seem to work so disabling it:
+# RUN mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
+#     curl -sSL https://github.com/D-Programming-Deimos/libevent/archive/master.tar.gz| tar xz && \
+#     mv libevent-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+#     mv libevent-master/C/* /usr/include/dmd/druntime/import/C/ && \
+#     rm -rf libevent-master
+# openssl deimos doesn't work with openssl-1.0.2 so disabling it:
+# RUN curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/master.tar.gz| tar xz && \
+#     mv openssl-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+#     mv openssl-master/C/* /usr/include/dmd/druntime/import/C/ && \
+#     rm -rf openssl-master
 
 RUN apt-get install -y --no-install-recommends \
 `# Dart dependencies` \
       dart
 ENV PATH /usr/lib/dart/bin:$PATH
 
-RUN apt-get install -y --no-install-recommends \
-`# dotnet core dependencies` \
-      dotnet-sdk-2.0.0
+# project isn't ready for this quite yet:
+# RUN apt-get install -y --no-install-recommends \
+# `# dotnet core dependencies` \
+#       dotnet-sdk-2.0.0
 
 RUN apt-get install -y --no-install-recommends \
 `# Erlang dependencies` \
@@ -145,7 +139,7 @@ RUN apt-get install -y --no-install-recommends \
       neko \
       neko-dev \
       libneko0
-RUN haxelib setup --always /usr/share/haxelib && \
+RUN haxelib setup --always /usr/share/haxe/lib && \
     haxelib install --always hxcpp
 
 RUN apt-get install -y --no-install-recommends \
@@ -157,16 +151,10 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
 `# Lua dependencies` \
-      lua5.3 \
-      lua5.3-dev
-
-# not in Xenial any more...
-#RUN apt-get install -y --no-install-recommends \
-#`# MinGW dependencies` \
-#      mingw32 \
-#      mingw32-binutils \
-#      mingw32-runtime \
-#      nsis
+      lua5.2 \
+      lua5.2-dev
+# https://bugs.launchpad.net/ubuntu/+source/lua5.3/+bug/1707212
+# lua5.3 does not install alternatives so stick with 5.2 here
 
 RUN apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
@@ -174,10 +162,10 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
 `# OCaml dependencies` \
-    ocaml \
-    opam
-RUN opam init --yes
-RUN opam install --yes oasis
+      ocaml \
+      opam && \
+    opam init --yes && \
+    opam install --yes oasis
 
 RUN apt-get install -y --no-install-recommends \
 `# Perl dependencies` \
@@ -205,15 +193,21 @@ RUN apt-get install -y --no-install-recommends \
       python-ipaddress \
       python-pip \
       python-setuptools \
+      python-six \
       python-tornado \
       python-twisted \
+      python-wheel \
       python-zope.interface \
       python3-all \
       python3-all-dbg \
       python3-all-dev \
-      python3-pip \
       python3-setuptools \
-      python3-tornado
+      python3-six \
+      python3-tornado \
+      python3-twisted \
+      python3-wheel \
+      python3-zope.interface && \
+    pip install --upgrade backports.ssl_match_hostname
 
 RUN apt-get install -y --no-install-recommends \
 `# Ruby dependencies` \
@@ -227,11 +221,11 @@ RUN apt-get install -y --no-install-recommends \
       cargo \
       rustc
 
+# Update anything else left hanging
 RUN apt-get dist-upgrade -y
 
-RUN apt-get install -y --no-install-recommends \
-`# Clean up` \
-    && rm -rf /var/cache/apt/* && \
+# Clean up
+RUN rm -rf /var/cache/apt/* && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /tmp/* && \
     rm -rf /var/tmp/*

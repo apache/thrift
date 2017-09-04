@@ -5,12 +5,6 @@ set -ex
 # Wraps autotools.sh, but each binary crashes if it exhibits undefined behavior. See
 # http://releases.llvm.org/3.8.0/tools/clang/docs/UndefinedBehaviorSanitizer.html
 
-# Install a more recent clang than default:
-sudo apt-get update
-sudo apt-get install -y --no-install-recommends clang-3.8 llvm-3.8-dev
-export CC=clang-3.8
-export CXX=clang++-3.8
-
 # Set the undefined behavior flags. This crashes on all undefined behavior except for
 # undefined casting, aka "vptr".
 #
