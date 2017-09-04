@@ -90,7 +90,8 @@ func (p *TSSLSocket) Open() error {
 	// If we have a hostname, we need to pass the hostname to tls.Dial for
 	// certificate hostname checks.
 	if p.hostPort != "" {
-		if p.conn, err = tls.Dial("tcp", p.hostPort, p.cfg); err != nil {
+		if p.conn, err = tls.DialWithDialer(&net.Dialer{
+			Timeout: p.timeout}, "tcp", p.hostPort, p.cfg); err != nil {
 			return NewTTransportException(NOT_OPEN, err.Error())
 		}
 	} else {
@@ -106,7 +107,8 @@ func (p *TSSLSocket) Open() error {
 		if len(p.addr.String()) == 0 {
 			return NewTTransportException(NOT_OPEN, "Cannot open bad address.")
 		}
-		if p.conn, err = tls.Dial(p.addr.Network(), p.addr.String(), p.cfg); err != nil {
+		if p.conn, err = tls.DialWithDialer(&net.Dialer{
+			Timeout: p.timeout}, p.addr.Network(), p.addr.String(), p.cfg); err != nil {
 			return NewTTransportException(NOT_OPEN, err.Error())
 		}
 	}
