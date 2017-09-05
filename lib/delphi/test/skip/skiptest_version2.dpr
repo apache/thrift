@@ -45,7 +45,7 @@ var list : IThriftList<IPong>;
     set_ : IHashSet<string>;
 begin
   result := TPingImpl.Create;
-  result.Version1  := Skiptest.Two.TConstants.SKIPTESTSERVICE_VERSION;
+  result.Version1  := Tskiptest_version_2Constants.SKIPTESTSERVICE_VERSION;
   result.BoolVal   := TRUE;
   result.ByteVal   := 2;
   result.DbVal     := 3;
@@ -206,7 +206,7 @@ const
   FILE_JSON   = 'pingpong.json';
 begin
   try
-    Writeln( 'Delphi SkipTest '+IntToStr(TConstants.SKIPTESTSERVICE_VERSION)+' using '+Thrift.Version);
+    Writeln( 'Delphi SkipTest '+IntToStr(Tskiptest_version_2Constants.SKIPTESTSERVICE_VERSION)+' using '+Thrift.Version);
 
     Writeln;
     Writeln('Binary protocol');

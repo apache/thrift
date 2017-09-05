@@ -2023,13 +2023,13 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
     indent_impl(s_service_impl) << "var" << endl;
     indent_up_impl();
     indent_impl(s_service_impl) << argsvar << " : " << args_intfnm << ";" << endl;
-    indent_impl(s_service_impl) << msgvar << " : Thrift.Protocol.IMessage;" << endl;
+    indent_impl(s_service_impl) << msgvar << " : Thrift.Protocol.TThriftMessage;" << endl;
     indent_down_impl();
     indent_impl(s_service_impl) << "begin" << endl;
     indent_up_impl();
 
     indent_impl(s_service_impl) << "seqid_ := seqid_ + 1;" << endl;
-    indent_impl(s_service_impl) << msgvar << " := Thrift.Protocol.TMessageImpl.Create('" << funname
+    indent_impl(s_service_impl) << "Init( " << msgvar << ", '" << funname
                                 << "', " << ((*f_iter)->is_oneway() ? "TMessageType.Oneway"
                                                                     : "TMessageType.Call")
                                 << ", seqid_);" << endl;
@@ -2076,7 +2076,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
       indent_impl(s_service_impl) << function_signature(&recv_function, full_cls) << endl;
       indent_impl(s_service_impl) << "var" << endl;
       indent_up_impl();
-      indent_impl(s_service_impl) << msgvar << " : Thrift.Protocol.IMessage;" << endl;
+      indent_impl(s_service_impl) << msgvar << " : Thrift.Protocol.TThriftMessage;" << endl;
       if (xceptions.size() > 0) {
         indent_impl(s_service_impl) << exceptvar << " : Exception;" << endl;
       }
@@ -2234,7 +2234,7 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
   ;
   indent_impl(s_service_impl) << "var" << endl;
   indent_up_impl();
-  indent_impl(s_service_impl) << "msg : Thrift.Protocol.IMessage;" << endl;
+  indent_impl(s_service_impl) << "msg : Thrift.Protocol.TThriftMessage;" << endl;
   indent_impl(s_service_impl) << "fn : TProcessFunction;" << endl;
   indent_impl(s_service_impl) << "x : TApplicationException;" << endl;
   if (events_) {
@@ -2257,7 +2257,7 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
 								 "TApplicationExceptionUnknownMethod.Create("
 								 "'Invalid method name: ''' + msg.Name + '''');" << endl;
   indent_impl(s_service_impl)
-      << "msg := Thrift.Protocol.TMessageImpl.Create(msg.Name, TMessageType.Exception, msg.SeqID);"
+      << "Init( msg, msg.Name, TMessageType.Exception, msg.SeqID);"
       << endl;
   indent_impl(s_service_impl) << "oprot.WriteMessageBegin( msg);" << endl;
   indent_impl(s_service_impl) << "x.Write(oprot);" << endl;
@@ -2373,7 +2373,7 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
   indent_up_impl();
   indent_impl(s_service_impl) << "args: " << args_intfnm << ";" << endl;
   if (!tfunction->is_oneway()) {
-    indent_impl(s_service_impl) << "msg: Thrift.Protocol.IMessage;" << endl;
+    indent_impl(s_service_impl) << "msg: Thrift.Protocol.TThriftMessage;" << endl;
     indent_impl(s_service_impl) << "ret: " << result_intfnm << ";" << endl;
     indent_impl(s_service_impl) << "appx : TApplicationException;" << endl;
   }
@@ -2459,7 +2459,7 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
     if(events_) {
       indent_impl(s_service_impl) << "if events <> nil then events.PreWrite;" << endl;
     }
-    indent_impl(s_service_impl) << "msg := Thrift.Protocol.TMessageImpl.Create('"
+    indent_impl(s_service_impl) << "Init( msg, '"
                                 << tfunction->get_name() << "', TMessageType.Exception, seqid);"
                                 << endl;
     indent_impl(s_service_impl) << "oprot.WriteMessageBegin( msg);" << endl;
@@ -2487,7 +2487,7 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
     if (events_) {
       indent_impl(s_service_impl) << "if events <> nil then events.PreWrite;" << endl;
     }
-    indent_impl(s_service_impl) << "msg := Thrift.Protocol.TMessageImpl.Create('"
+    indent_impl(s_service_impl) << "Init( msg, '"
                                 << tfunction->get_name() << "', TMessageType.Reply, seqid); "
                                 << endl;
     indent_impl(s_service_impl) << "oprot.WriteMessageBegin( msg); " << endl;
@@ -2619,11 +2619,11 @@ void t_delphi_generator::generate_deserialize_container(ostream& out,
   }
 
   if (ttype->is_map()) {
-    local_var = obj + ": IMap;";
+    local_var = obj + ": TThriftMap;";
   } else if (ttype->is_set()) {
-    local_var = obj + ": ISet;";
+    local_var = obj + ": TThriftSet;";
   } else if (ttype->is_list()) {
-    local_var = obj + ": IList;";
+    local_var = obj + ": TThriftList;";
   }
   local_vars << "  " << local_var << endl;
   counter = tmp("_i");
@@ -2803,23 +2803,23 @@ void t_delphi_generator::generate_serialize_container(ostream& out,
   string obj;
   if (ttype->is_map()) {
     obj = tmp("map");
-    local_vars << "  " << obj << " : IMap;" << endl;
-    indent_impl(out) << obj << " := TMapImpl.Create( "
+    local_vars << "  " << obj << " : TThriftMap;" << endl;
+    indent_impl(out) << "Init( " << obj << ", "
                      << type_to_enum(((t_map*)ttype)->get_key_type()) << ", "
                      << type_to_enum(((t_map*)ttype)->get_val_type()) << ", " << prefix
                      << ".Count);" << endl;
     indent_impl(out) << "oprot.WriteMapBegin( " << obj << ");" << endl;
   } else if (ttype->is_set()) {
     obj = tmp("set_");
-    local_vars << "  " << obj << " : ISet;" << endl;
-    indent_impl(out) << obj << " := TSetImpl.Create("
+    local_vars << "  " << obj << " : TThriftSet;" << endl;
+    indent_impl(out) << "Init( " << obj << ", "
                      << type_to_enum(((t_set*)ttype)->get_elem_type()) << ", " << prefix
                      << ".Count);" << endl;
     indent_impl(out) << "oprot.WriteSetBegin( " << obj << ");" << endl;
   } else if (ttype->is_list()) {
     obj = tmp("list_");
-    local_vars << "  " << obj << " : IList;" << endl;
-    indent_impl(out) << obj << " := TListImpl.Create("
+    local_vars << "  " << obj << " : TThriftList;" << endl;
+    indent_impl(out) << "Init( " << obj << ", "
                      << type_to_enum(((t_list*)ttype)->get_elem_type()) << ", " << prefix
                      << ".Count);" << endl;
     indent_impl(out) << "oprot.WriteListBegin( " << obj << ");" << endl;
@@ -3617,8 +3617,8 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out,
                    << endl;
   indent_impl(out) << "var" << endl;
   indent_up_impl();
-  indent_impl(out) << "field_ : IField;" << endl;
-  indent_impl(out) << "struc : IStruct;" << endl;
+  indent_impl(out) << "field_ : TThriftField;" << endl;
+  indent_impl(out) << "struc : TThriftStruct;" << endl;
   indent_down_impl();
   out << local_vars.str() << endl;
   out << code_block.str();
@@ -3642,11 +3642,11 @@ void t_delphi_generator::generate_delphi_struct_result_writer_impl(ostream& out,
   indent_impl(local_vars) << "tracker : IProtocolRecursionTracker;" << endl;
   indent_impl(code_block) << "tracker := oprot.NextRecursionLevel;" << endl;
 
-  indent_impl(code_block) << "struc := TStructImpl.Create('" << name << "');" << endl;
+  indent_impl(code_block) << "Init( struc, '" << name << "');" << endl;
   indent_impl(code_block) << "oprot.WriteStructBegin(struc);" << endl;
 
   if (fields.size() > 0) {
-    indent_impl(code_block) << "field_ := TFieldImpl.Create;" << endl;
+    indent_impl(code_block) << "Init( field_);" << endl;
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       indent_impl(code_block) << "if (__isset_" << prop_name(*f_iter, is_exception) << ") then"
                               << endl;
@@ -3677,10 +3677,10 @@ void t_delphi_generator::generate_delphi_struct_result_writer_impl(ostream& out,
                    << endl;
   indent_impl(out) << "var" << endl;
   indent_up_impl();
-  indent_impl(out) << "struc : IStruct;" << endl;
+  indent_impl(out) << "struc : TThriftStruct;" << endl;
 
   if (fields.size() > 0) {
-    indent_impl(out) << "field_ : IField;" << endl;
+    indent_impl(out) << "field_ : TThriftField;" << endl;
   }
 
   out << local_vars.str();
@@ -3706,11 +3706,11 @@ void t_delphi_generator::generate_delphi_struct_writer_impl(ostream& out,
   indent_impl(local_vars) << "tracker : IProtocolRecursionTracker;" << endl;
   indent_impl(code_block) << "tracker := oprot.NextRecursionLevel;" << endl;
 
-  indent_impl(code_block) << "struc := TStructImpl.Create('" << name << "');" << endl;
+  indent_impl(code_block) << "Init( struc, '" << name << "');" << endl;
   indent_impl(code_block) << "oprot.WriteStructBegin(struc);" << endl;
 
   if (fields.size() > 0) {
-    indent_impl(code_block) << "field_ := TFieldImpl.Create;" << endl;
+    indent_impl(code_block) << "Init( field_);" << endl;
   }
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -3765,9 +3765,9 @@ void t_delphi_generator::generate_delphi_struct_writer_impl(ostream& out,
                    << endl;
   indent_impl(out) << "var" << endl;
   indent_up_impl();
-  indent_impl(out) << "struc : IStruct;" << endl;
+  indent_impl(out) << "struc : TThriftStruct;" << endl;
   if (fields.size() > 0) {
-    indent_impl(out) << "field_ : IField;" << endl;
+    indent_impl(out) << "field_ : TThriftField;" << endl;
   }
   out << local_vars.str();
   indent_down_impl();

@@ -48,16 +48,16 @@ type
     FOpenTimeOut : DWORD;  // separate value to allow for fail-fast-on-open scenarios
     FOverlapped : Boolean;
 
-    procedure Write( const buffer: TBytes; offset: Integer; count: Integer); override;
-    function  Read( var buffer: TBytes; offset: Integer; count: Integer): Integer; override;
+    procedure Write( const pBuf : Pointer; offset, count : Integer); override;
+    function  Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
     //procedure Open; override; - see derived classes
     procedure Close; override;
     procedure Flush; override;
 
-    function  ReadDirect(     var buffer: TBytes; offset: Integer; count: Integer): Integer;
-    function  ReadOverlapped( var buffer: TBytes; offset: Integer; count: Integer): Integer;
-    procedure WriteDirect(     const buffer: TBytes; offset: Integer; count: Integer);
-    procedure WriteOverlapped( const buffer: TBytes; offset: Integer; count: Integer);
+    function  ReadDirect(     const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer;  overload;
+    function  ReadOverlapped( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer;  overload;
+    procedure WriteDirect(     const pBuf : Pointer; offset: Integer; count: Integer);  overload;
+    procedure WriteOverlapped( const pBuf : Pointer; offset: Integer; count: Integer);  overload;
 
     function IsOpen: Boolean; override;
     function ToArray: TBytes; override;
@@ -310,34 +310,67 @@ begin
 end;
 
 
-procedure TPipeStreamBase.Write(const buffer: TBytes; offset, count: Integer);
+procedure TPipeStreamBase.Write( const pBuf : Pointer; offset, count : Integer);
 begin
   if FOverlapped
-  then WriteOverlapped( buffer, offset, count)
-  else WriteDirect( buffer, offset, count);
+  then WriteOverlapped( pBuf, offset, count)
+  else WriteDirect( pBuf, offset, count);
 end;
 
 
-function TPipeStreamBase.Read( var buffer: TBytes; offset, count: Integer): Integer;
+function TPipeStreamBase.Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer;
 begin
   if FOverlapped
-  then result := ReadOverlapped( buffer, offset, count)
-  else result := ReadDirect( buffer, offset, count);
+  then result := ReadOverlapped( pBuf, buflen, offset, count)
+  else result := ReadDirect( pBuf, buflen, offset, count);
 end;
 
 
-procedure TPipeStreamBase.WriteDirect(const buffer: TBytes; offset, count: Integer);
+procedure TPipeStreamBase.WriteDirect( const pBuf : Pointer; offset: Integer; count: Integer);
 var cbWritten : DWORD;
 begin
   if not IsOpen
   then raise TTransportExceptionNotOpen.Create('Called write on non-open pipe');
 
-  if not WriteFile( FPipe, buffer[offset], count, cbWritten, nil)
+  if not WriteFile( FPipe, PByteArray(pBuf)^[offset], count, cbWritten, nil)
   then raise TTransportExceptionNotOpen.Create('Write to pipe failed');
 end;
 
 
-function TPipeStreamBase.ReadDirect( var buffer: TBytes; offset, count: Integer): Integer;
+procedure TPipeStreamBase.WriteOverlapped( const pBuf : Pointer; offset: Integer; count: Integer);
+var cbWritten, dwWait, dwError : DWORD;
+    overlapped : IOverlappedHelper;
+begin
+  if not IsOpen
+  then raise TTransportExceptionNotOpen.Create('Called write on non-open pipe');
+
+  overlapped := TOverlappedHelperImpl.Create;
+
+  if not WriteFile( FPipe, PByteArray(pBuf)^[offset], count, cbWritten, overlapped.OverlappedPtr)
+  then begin
+    dwError := GetLastError;
+    case dwError of
+      ERROR_IO_PENDING : begin
+        dwWait := overlapped.WaitFor(FTimeout);
+
+        if (dwWait = WAIT_TIMEOUT)
+        then raise TTransportExceptionTimedOut.Create('Pipe write timed out');
+
+        if (dwWait <> WAIT_OBJECT_0)
+        or not GetOverlappedResult( FPipe, overlapped.Overlapped, cbWritten, TRUE)
+        then raise TTransportExceptionUnknown.Create('Pipe write error');
+      end;
+
+    else
+      raise TTransportExceptionUnknown.Create(SysErrorMessage(dwError));
+    end;
+  end;
+
+  ASSERT( DWORD(count) = cbWritten);
+end;
+
+
+function TPipeStreamBase.ReadDirect(     const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer;
 var cbRead, dwErr  : DWORD;
     bytes, retries  : LongInt;
     bOk     : Boolean;
@@ -374,47 +407,14 @@ begin
   end;
 
   // read the data (or block INFINITE-ly)
-  bOk := ReadFile( FPipe, buffer[offset], count, cbRead, nil);
+  bOk := ReadFile( FPipe, PByteArray(pBuf)^[offset], count, cbRead, nil);
   if (not bOk) and (GetLastError() <> ERROR_MORE_DATA)
   then result := 0 // No more data, possibly because client disconnected.
   else result := cbRead;
 end;
 
 
-procedure TPipeStreamBase.WriteOverlapped(const buffer: TBytes; offset, count: Integer);
-var cbWritten, dwWait, dwError : DWORD;
-    overlapped : IOverlappedHelper;
-begin
-  if not IsOpen
-  then raise TTransportExceptionNotOpen.Create('Called write on non-open pipe');
-
-  overlapped := TOverlappedHelperImpl.Create;
-
-  if not WriteFile( FPipe, buffer[offset], count, cbWritten, overlapped.OverlappedPtr)
-  then begin
-    dwError := GetLastError;
-    case dwError of
-      ERROR_IO_PENDING : begin
-        dwWait := overlapped.WaitFor(FTimeout);
-
-        if (dwWait = WAIT_TIMEOUT)
-        then raise TTransportExceptionTimedOut.Create('Pipe write timed out');
-
-        if (dwWait <> WAIT_OBJECT_0)
-        or not GetOverlappedResult( FPipe, overlapped.Overlapped, cbWritten, TRUE)
-        then raise TTransportExceptionUnknown.Create('Pipe write error');
-      end;
-
-    else
-      raise TTransportExceptionUnknown.Create(SysErrorMessage(dwError));
-    end;
-  end;
-
-  ASSERT( DWORD(count) = cbWritten);
-end;
-
-
-function TPipeStreamBase.ReadOverlapped( var buffer: TBytes; offset, count: Integer): Integer;
+function TPipeStreamBase.ReadOverlapped( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer;
 var cbRead, dwWait, dwError  : DWORD;
     bOk     : Boolean;
     overlapped : IOverlappedHelper;
@@ -425,7 +425,7 @@ begin
   overlapped := TOverlappedHelperImpl.Create;
 
   // read the data
-  bOk := ReadFile( FPipe, buffer[offset], count, cbRead, overlapped.OverlappedPtr);
+  bOk := ReadFile( FPipe, PByteArray(pBuf)^[offset], count, cbRead, overlapped.OverlappedPtr);
   if not bOk then begin
     dwError := GetLastError;
     case dwError of
@@ -768,8 +768,6 @@ var sd           : PSECURITY_DESCRIPTOR;
     sa           : SECURITY_ATTRIBUTES; //TSecurityAttributes;
     hCAR, hPipeW, hCAW, hPipe : THandle;
 begin
-  result := FALSE;
-
   sd := PSECURITY_DESCRIPTOR( LocalAlloc( LPTR,SECURITY_DESCRIPTOR_MIN_LENGTH));
   try
     Win32Check( InitializeSecurityDescriptor( sd, SECURITY_DESCRIPTOR_REVISION));
@@ -779,12 +777,14 @@ begin
     sa.lpSecurityDescriptor := sd;
     sa.bInheritHandle       := TRUE; //allow passing handle to child
 
-    if not CreatePipe( hCAR, hPipeW, @sa, FBufSize) then begin   //create stdin pipe
+    Result := CreatePipe( hCAR, hPipeW, @sa, FBufSize); //create stdin pipe
+    if not Result then begin   //create stdin pipe
       raise TTransportExceptionNotOpen.Create('TServerPipe CreatePipe (anon) failed, '+SysErrorMessage(GetLastError));
       Exit;
     end;
 
-    if not CreatePipe( hPipe, hCAW, @sa, FBufSize) then begin  //create stdout pipe
+    Result := CreatePipe( hPipe, hCAW, @sa, FBufSize); //create stdout pipe
+    if not Result then begin  //create stdout pipe
       CloseHandle( hCAR);
       CloseHandle( hPipeW);
       raise TTransportExceptionNotOpen.Create('TServerPipe CreatePipe (anon) failed, '+SysErrorMessage(GetLastError));
@@ -795,9 +795,6 @@ begin
     FClientAnonWrite := hCAW;
     FReadHandle      := hPipe;
     FWriteHandle     := hPipeW;
-
-    result := TRUE;
-
   finally
     if sd <> nil then LocalFree( Cardinal(sd));
   end;
