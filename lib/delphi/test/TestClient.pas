@@ -22,7 +22,8 @@ unit TestClient;
 {$I ../src/Thrift.Defines.inc}
 
 {.$DEFINE StressTest}   // activate to stress-test the server with frequent connects/disconnects
-{.$DEFINE PerfTest}     // activate to activate the performance test
+{.$DEFINE PerfTest}     // activate the performance test
+{$DEFINE Exceptions}    // activate the exceptions test (or disable while debugging)
 
 interface
 
@@ -462,6 +463,7 @@ begin
   StressTest( client);
   {$ENDIF StressTest}
 
+  {$IFDEF Exceptions}
   // in-depth exception test
   // (1) do we get an exception at all?
   // (2) do we get the right exception?
@@ -510,6 +512,7 @@ begin
     on e:TTransportException do Expect( FALSE, 'Unexpected : "'+e.ToString+'"');
     on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'"');
   end;
+  {$ENDIF Exceptions}
 
 
   // simple things
@@ -1037,7 +1040,7 @@ procedure TClientThread.JSONProtocolReadWriteTest;
 // other clients or servers expect as the real JSON. This is beyond the scope of this test.
 var prot   : IProtocol;
     stm    : TStringStream;
-    list   : IList;
+    list   : TThriftList;
     binary, binRead : TBytes;
     i,iErr : Integer;
 const
@@ -1068,7 +1071,8 @@ begin
                 nil, TThriftStreamAdapterDelphi.Create( stm, FALSE)));
 
     // write
-    prot.WriteListBegin( TListImpl.Create( TType.String_, 9));
+    Init( list, TType.String_, 9);
+    prot.WriteListBegin( list);
     prot.WriteBool( TRUE);
     prot.WriteBool( FALSE);
     prot.WriteByte( TEST_SHORT);
