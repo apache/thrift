@@ -62,7 +62,7 @@ pkgconfig_DATA += thrift-qt5.pc
 endif
 
 AM_CXXFLAGS = -Wall -Wextra -pedantic
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) -I$(srcdir)/src -D__STDC_LIMIT_MACROS
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) -I$(srcdir)/src -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
 
 # Define the source files for the module
 

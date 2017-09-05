@@ -79,7 +79,7 @@ Open compiler.sln and remove the Pre-build commands under the project's
 From a command prompt:
 ```
 cd thrift/compiler/cpp
-flex -osrc\thrift\thriftl.cc src\thrift\thriftl.ll
+flex -o src\thrift\thriftl.cc src\thrift\thriftl.ll
 ```
 In the generated thriftl.cc, comment out #include <unistd.h>
 

@@ -19,6 +19,7 @@
 
 include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 
+add_definitions("-D__STDC_FORMAT_MACROS")
 add_definitions("-D__STDC_LIMIT_MACROS")
 
 if (WITH_DYN_LINK_TEST)

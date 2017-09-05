@@ -177,7 +177,7 @@ unittest/.directory:
 	touch $@
 
 unittest/debug/%: src/%.d $(all_targets) unittest/emptymain.d
-	$(DMD) -gc -of$(subst /,$(DMD_OF_DIRSEP),$@) $(d_test_flags) $^
+	$(DMD) -g -of$(subst /,$(DMD_OF_DIRSEP),$@) $(d_test_flags) $^
 
 unittest/release/%: src/%.d $(all_targets) unittest/emptymain.d
 	$(DMD) -O -release -of$(subst /,$(DMD_OF_DIRSEP),$@) $(d_test_flags) $^
