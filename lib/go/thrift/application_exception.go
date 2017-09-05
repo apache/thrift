@@ -30,6 +30,17 @@ const (
 	PROTOCOL_ERROR                 = 7
 )
 
+var defaultApplicationExceptionMessage = map[int32]string{
+	UNKNOWN_APPLICATION_EXCEPTION:  "unknown application exception",
+	UNKNOWN_METHOD:                 "unknown method",
+	INVALID_MESSAGE_TYPE_EXCEPTION: "invalid message type",
+	WRONG_METHOD_NAME:              "wrong method name",
+	BAD_SEQUENCE_ID:                "bad sequence ID",
+	MISSING_RESULT:                 "missing result",
+	INTERNAL_ERROR:                 "unknown internal error",
+	PROTOCOL_ERROR:                 "unknown protocol error",
+}
+
 // Application level Thrift exception
 type TApplicationException interface {
 	TException
@@ -44,7 +55,10 @@ type tApplicationException struct {
 }
 
 func (e tApplicationException) Error() string {
-	return e.message
+	if e.message != "" {
+		return e.message
+	}
+	return defaultApplicationExceptionMessage[e.type_]
 }
 
 func NewTApplicationException(type_ int32, message string) TApplicationException {
