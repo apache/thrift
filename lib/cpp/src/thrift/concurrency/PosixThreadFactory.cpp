@@ -20,7 +20,7 @@
 #include <thrift/thrift-config.h>
 
 #include <thrift/concurrency/Exception.h>
-#include <thrift/concurrency/Mutex.h>
+#include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/PosixThreadFactory.h>
 
 #if GOOGLE_PERFTOOLS_REGISTER_THREAD
@@ -53,8 +53,8 @@ public:
 
 private:
   pthread_t pthread_;
-  Mutex state_mutex_;
-  STATE state_;
+  Monitor monitor_;		// guard to protect state_ and also notification
+  STATE state_;         // to protect proper thread start behavior
   int policy_;
   int priority_;
   int stackSize_;
@@ -96,14 +96,20 @@ public:
 
   STATE getState() const
   {
-    Guard g(state_mutex_);
+    Synchronized sync(monitor_);
     return state_;
   }
 
   void setState(STATE newState)
   {
-    Guard g(state_mutex_);
+    Synchronized sync(monitor_);
     state_ = newState;
+
+    // unblock start() with the knowledge that the thread has actually
+    // started running, which avoids a race in detached threads.
+    if (newState == started) {
+	  monitor_.notify();
+    }
   }
 
   void start() {
@@ -154,9 +160,18 @@ public:
 
     setState(starting);
 
+	Synchronized sync(monitor_);
+	
     if (pthread_create(&pthread_, &thread_attr, threadMain, (void*)selfRef) != 0) {
       throw SystemResourceException("pthread_create failed");
     }
+    
+    // The caller may not choose to guarantee the scope of the Runnable
+    // being used in the thread, so we must actually wait until the thread
+    // starts before we return.  If we do not wait, it would be possible
+    // for the caller to start destructing the Runnable and the Thread,
+    // and we would end up in a race.  This was identified with valgrind.
+    monitor_.wait();
   }
 
   void join() {
@@ -174,8 +189,6 @@ public:
       if (res != 0) {
         GlobalOutput.printf("PthreadThread::join(): fail with code %d", res);
       }
-    } else {
-      GlobalOutput.printf("PthreadThread::join(): detached thread");
     }
   }
 
@@ -201,14 +214,6 @@ public:
 void* PthreadThread::threadMain(void* arg) {
   stdcxx::shared_ptr<PthreadThread> thread = *(stdcxx::shared_ptr<PthreadThread>*)arg;
   delete reinterpret_cast<stdcxx::shared_ptr<PthreadThread>*>(arg);
-
-  if (thread == NULL) {
-    return (void*)0;
-  }
-
-  if (thread->getState() != starting) {
-    return (void*)0;
-  }
 
 #if GOOGLE_PERFTOOLS_REGISTER_THREAD
   ProfilerRegisterThread();

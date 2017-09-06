@@ -10,11 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Apache Thrift Docker build environment for Centos
+# Apache Thrift Docker build environment for CentOS
 #
 # Known missing client libraries:
 #  - dotnet (will update to 2.0.0 separately)
-#  - haxe (not in debian stretch)
+#  - haxe (not in centos)
 
 FROM centos:7.3.1611
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
@@ -33,12 +33,14 @@ RUN yum install -y \
       flex \
       gcc \
       gcc-c++ \
+      gdb \
       git \
       libtool \
       m4 \
       make \
       tar \
       unzip \
+      valgrind \
       wget && \
       ln -s /usr/bin/cmake3 /usr/bin/cmake && \
       ln -s /usr/bin/cpack3 /usr/bin/cpack && \

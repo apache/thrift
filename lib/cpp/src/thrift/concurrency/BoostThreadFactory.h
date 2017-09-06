@@ -20,8 +20,8 @@
 #ifndef _THRIFT_CONCURRENCY_BOOSTTHREADFACTORY_H_
 #define _THRIFT_CONCURRENCY_BOOSTTHREADFACTORY_H_ 1
 
+#include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/Thread.h>
-
 #include <thrift/stdcxx.h>
 
 namespace apache {

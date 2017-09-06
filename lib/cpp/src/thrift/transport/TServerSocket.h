@@ -20,6 +20,7 @@
 #ifndef _THRIFT_TRANSPORT_TSERVERSOCKET_H_
 #define _THRIFT_TRANSPORT_TSERVERSOCKET_H_ 1
 
+#include <thrift/concurrency/Mutex.h>
 #include <thrift/stdcxx.h>
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/transport/TServerTransport.h>
@@ -169,6 +170,7 @@ private:
   bool keepAlive_;
   bool listening_;
 
+  concurrency::Mutex rwMutex_;                                 // thread-safe interrupt
   THRIFT_SOCKET interruptSockWriter_;                          // is notified on interrupt()
   THRIFT_SOCKET interruptSockReader_;                          // is used in select/poll with serverSocket_ for interruptability
   THRIFT_SOCKET childInterruptSockWriter_;                     // is notified on interruptChildren()

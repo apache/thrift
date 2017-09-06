@@ -109,7 +109,7 @@ public:
     shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workerCount);
 
     shared_ptr<PlatformThreadFactory> threadFactory
-        = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
+        = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory(false));
 
 #if !USE_BOOST_THREAD && !USE_STD_THREAD
     threadFactory->setPriority(PosixThreadFactory::HIGHEST);

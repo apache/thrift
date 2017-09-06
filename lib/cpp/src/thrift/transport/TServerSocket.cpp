@@ -658,14 +658,21 @@ void TServerSocket::notify(THRIFT_SOCKET notifySocket) {
 }
 
 void TServerSocket::interrupt() {
-  notify(interruptSockWriter_);
+  concurrency::Guard g(rwMutex_);
+  if (interruptSockWriter_ != THRIFT_INVALID_SOCKET) {
+    notify(interruptSockWriter_);
+  }
 }
 
 void TServerSocket::interruptChildren() {
-  notify(childInterruptSockWriter_);
+  concurrency::Guard g(rwMutex_);
+  if (childInterruptSockWriter_ != THRIFT_INVALID_SOCKET) {
+    notify(childInterruptSockWriter_);
+  }
 }
 
 void TServerSocket::close() {
+  concurrency::Guard g(rwMutex_);
   if (serverSocket_ != THRIFT_INVALID_SOCKET) {
     shutdown(serverSocket_, THRIFT_SHUT_RDWR);
     ::THRIFT_CLOSESOCKET(serverSocket_);
