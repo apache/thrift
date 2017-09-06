@@ -60,6 +60,7 @@ RUN apt-get install -y --no-install-recommends \
       llvm \
       ninja-build \
       pkg-config \
+      valgrind \
       vim
 ENV PATH /usr/lib/llvm-3.8/bin:$PATH
 

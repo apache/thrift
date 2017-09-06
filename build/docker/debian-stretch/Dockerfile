@@ -56,6 +56,7 @@ RUN apt-get install -y --no-install-recommends \
       gdb \
       ninja-build \
       pkg-config \
+      valgrind \
       vim
 
 
