@@ -2820,6 +2820,8 @@ void t_csharp_generator::generate_csharp_property(ofstream& out,
       }
       if (ttype->is_base_type()) {
         use_nullable = ((t_base_type*)ttype)->get_base() != t_base_type::TYPE_STRING;
+      } else if (ttype->is_enum()) {
+        use_nullable = true;
       }
     }
     indent(out) << "return " << fieldPrefix + tfield->get_name() << ";" << endl;
