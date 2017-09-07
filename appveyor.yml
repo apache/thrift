@@ -40,7 +40,7 @@ environment:
      LIBEVENT_VERSION: 2.0.22
      QT_VERSION: 5.6
      ZLIB_VERSION: 1.2.8
-     DISABLED_TESTS: StressTestNonBlocking|concurrency_test
+     DISABLED_TESTS: StressTestNonBlocking
 
    - PROFILE: MSVC2015
      PLATFORM: x64

@@ -21,8 +21,9 @@
 
 #if USE_STD_THREAD
 
-#include <thrift/concurrency/StdThreadFactory.h>
 #include <thrift/concurrency/Exception.h>
+#include <thrift/concurrency/Monitor.h>
+#include <thrift/concurrency/StdThreadFactory.h>
 #include <thrift/stdcxx.h>
 
 #include <cassert>
@@ -49,6 +50,7 @@ public:
 
 private:
   std::unique_ptr<std::thread> thread_;
+  Monitor monitor_;
   STATE state_;
   bool detached_;
 
@@ -68,18 +70,42 @@ public:
     }
   }
 
+  STATE getState() const
+  {
+    Synchronized sync(monitor_);
+    return state_;
+  }
+
+  void setState(STATE newState)
+  {
+    Synchronized sync(monitor_);
+    state_ = newState;
+
+    // unblock start() with the knowledge that the thread has actually
+    // started running, which avoids a race in detached threads.
+    if (newState == started) {
+	  monitor_.notify();
+    }
+  }
+
   void start() {
-    if (state_ != uninitialized) {
+    if (getState() != uninitialized) {
       return;
     }
 
     stdcxx::shared_ptr<StdThread> selfRef = shared_from_this();
-    state_ = starting;
+    setState(starting);
 
+    Synchronized sync(monitor_);
     thread_ = std::unique_ptr<std::thread>(new std::thread(threadMain, selfRef));
 
     if (detached_)
       thread_->detach();
+    
+    // Wait for the thread to start and get far enough to grab everything
+    // that it needs from the calling context, thus absolving the caller
+    // from being required to hold on to runnable indefinitely.
+    monitor_.wait();
   }
 
   void join() {
@@ -96,22 +122,16 @@ public:
 };
 
 void StdThread::threadMain(stdcxx::shared_ptr<StdThread> thread) {
-  if (thread == NULL) {
-    return;
-  }
+#if GOOGLE_PERFTOOLS_REGISTER_THREAD
+  ProfilerRegisterThread();
+#endif
 
-  if (thread->state_ != starting) {
-    return;
-  }
-
-  thread->state_ = started;
+  thread->setState(started);
   thread->runnable()->run();
 
-  if (thread->state_ != stopping && thread->state_ != stopped) {
-    thread->state_ = stopping;
+  if (thread->getState() != stopping && thread->getState() != stopped) {
+    thread->setState(stopping);
   }
-
-  return;
 }
 
 StdThreadFactory::StdThreadFactory(bool detached) : ThreadFactory(detached) {

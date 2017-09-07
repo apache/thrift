@@ -21,11 +21,12 @@
 #include <thrift/concurrency/Thread.h>
 #include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
+#include <thrift/concurrency/Mutex.h>
 #include <thrift/concurrency/Util.h>
 
 #include <assert.h>
 #include <iostream>
-#include <set>
+#include <vector>
 
 namespace apache {
 namespace thrift {
@@ -78,13 +79,13 @@ public:
 
       int* activeCount = new int(count);
 
-      std::set<shared_ptr<Thread> > threads;
+      std::vector<shared_ptr<Thread> > threads;
 
       int tix;
 
       for (tix = 0; tix < count; tix++) {
         try {
-          threads.insert(
+          threads.push_back(
               threadFactory.newThread(shared_ptr<Runnable>(new ReapNTask(*monitor, *activeCount))));
         } catch (SystemResourceException& e) {
           std::cout << "\t\t\tfailed to create " << lix* count + tix << " thread " << e.what()
@@ -94,7 +95,7 @@ public:
       }
 
       tix = 0;
-      for (std::set<shared_ptr<Thread> >::const_iterator thread = threads.begin();
+      for (std::vector<shared_ptr<Thread> >::const_iterator thread = threads.begin();
            thread != threads.end();
            tix++, ++thread) {
 
@@ -113,6 +114,7 @@ public:
           monitor->wait(1000);
         }
       }
+      
       delete activeCount;
       std::cout << "\t\t\treaped " << lix* count << " threads" << std::endl;
     }
@@ -253,19 +255,22 @@ public:
 
   class FloodTask : public Runnable {
   public:
-    FloodTask(const size_t id) : _id(id) {}
+    FloodTask(const size_t id, Monitor& mon) : _id(id), _mon(mon) {}
     ~FloodTask() {
       if (_id % 10000 == 0) {
+		Synchronized sync(_mon);
         std::cout << "\t\tthread " << _id << " done" << std::endl;
       }
     }
 
     void run() {
       if (_id % 10000 == 0) {
+		Synchronized sync(_mon);
         std::cout << "\t\tthread " << _id << " started" << std::endl;
       }
     }
     const size_t _id;
+    Monitor& _mon;
   };
 
   void foo(PlatformThreadFactory* tf) { (void)tf; }
@@ -273,7 +278,8 @@ public:
   bool floodNTest(size_t loop = 1, size_t count = 100000) {
 
     bool success = false;
-
+    Monitor mon;
+	
     for (size_t lix = 0; lix < loop; lix++) {
 
       PlatformThreadFactory threadFactory = PlatformThreadFactory();
@@ -283,10 +289,8 @@ public:
 
         try {
 
-          shared_ptr<FloodTask> task(new FloodTask(lix * count + tix));
-
+          shared_ptr<FloodTask> task(new FloodTask(lix * count + tix, mon));
           shared_ptr<Thread> thread = threadFactory.newThread(task);
-
           thread->start();
 
         } catch (TException& e) {
@@ -298,8 +302,8 @@ public:
         }
       }
 
+      Synchronized sync(mon);
       std::cout << "\t\t\tflooded " << (lix + 1) * count << " threads" << std::endl;
-
       success = true;
     }
 

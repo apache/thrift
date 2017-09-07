@@ -51,6 +51,7 @@ public:
 
 private:
   scoped_ptr<boost::thread> thread_;
+  Monitor monitor_;
   STATE state_;
   weak_ptr<BoostThread> self_;
   bool detached_;
@@ -71,25 +72,46 @@ public:
     }
   }
 
-  void start() {
-    if (state_ != uninitialized) {
-      return;
-    }
+  STATE getState() const
+  {
+    Synchronized sync(monitor_);
+    return state_;
+  }
 
+  void setState(STATE newState)
+  {
+    Synchronized sync(monitor_);
+    state_ = newState;
+
+    // unblock start() with the knowledge that the thread has actually
+    // started running, which avoids a race in detached threads.
+    if (newState == started) {
+	  monitor_.notify();
+    }
+  }
+
+  void start() {
     // Create reference
     shared_ptr<BoostThread>* selfRef = new shared_ptr<BoostThread>();
     *selfRef = self_.lock();
 
-    state_ = starting;
+    setState(starting);
 
+	Synchronized sync(monitor_);
+	
     thread_.reset(new boost::thread(bind(threadMain, (void*)selfRef)));
 
     if (detached_)
       thread_->detach();
+    
+    // Wait for the thread to start and get far enough to grab everything
+    // that it needs from the calling context, thus absolving the caller
+    // from being required to hold on to runnable indefinitely.
+    monitor_.wait();
   }
 
   void join() {
-    if (!detached_ && state_ != uninitialized) {
+    if (!detached_ && getState() != uninitialized) {
       thread_->join();
     }
   }
@@ -110,19 +132,11 @@ void* BoostThread::threadMain(void* arg) {
   shared_ptr<BoostThread> thread = *(shared_ptr<BoostThread>*)arg;
   delete reinterpret_cast<shared_ptr<BoostThread>*>(arg);
 
-  if (!thread) {
-    return (void*)0;
-  }
-
-  if (thread->state_ != starting) {
-    return (void*)0;
-  }
-
-  thread->state_ = started;
+  thread->setState(started);
   thread->runnable()->run();
 
-  if (thread->state_ != stopping && thread->state_ != stopped) {
-    thread->state_ = stopping;
+  if (thread->getState() != stopping && thread->getState() != stopped) {
+    thread->setState(stopping);
   }
   return (void*)0;
 }

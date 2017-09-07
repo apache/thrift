@@ -25,6 +25,10 @@
 #include "TimerManagerTests.h"
 #include "ThreadManagerTests.h"
 
+// The test weight, where 10 is 10 times more threads than baseline
+// and the baseline is optimized for running in valgrind
+static size_t WEIGHT = 10;
+
 int main(int argc, char** argv) {
 
   std::string arg;
@@ -37,6 +41,11 @@ int main(int argc, char** argv) {
     args[ix - 1] = std::string(argv[ix]);
   }
 
+  if (getenv("VALGRIND") != 0) {
+	  // lower the scale of every test
+	  WEIGHT = 1;
+  }
+  
   bool runAll = args[0].compare("all") == 0;
 
   if (runAll || args[0].compare("thread-factory") == 0) {
@@ -45,10 +54,10 @@ int main(int argc, char** argv) {
 
     std::cout << "ThreadFactory tests..." << std::endl;
 
-    int reapLoops = 20;
-    int reapCount = 1000;
+    int reapLoops = 2 * WEIGHT;
+    int reapCount = 100 * WEIGHT;
     size_t floodLoops = 3;
-    size_t floodCount = 20000;
+    size_t floodCount = 500 * WEIGHT;
 
     std::cout << "\t\tThreadFactory reap N threads test: N = " << reapLoops << "x" << reapCount << std::endl;
 
@@ -121,8 +130,8 @@ int main(int argc, char** argv) {
     std::cout << "ThreadManager tests..." << std::endl;
 
     {
-      size_t workerCount = 100;
-      size_t taskCount = 50000;
+      size_t workerCount = 10 * WEIGHT;
+      size_t taskCount = 500 * WEIGHT;
       int64_t delay = 10LL;
 
       ThreadManagerTests threadManagerTests;
@@ -160,13 +169,13 @@ int main(int argc, char** argv) {
 
       size_t minWorkerCount = 2;
 
-      size_t maxWorkerCount = 64;
+      size_t maxWorkerCount = 8;
 
-      size_t tasksPerWorker = 1000;
+      size_t tasksPerWorker = 100 * WEIGHT;
 
       int64_t delay = 5LL;
 
-      for (size_t workerCount = minWorkerCount; workerCount < maxWorkerCount; workerCount *= 4) {
+      for (size_t workerCount = minWorkerCount; workerCount <= maxWorkerCount; workerCount *= 4) {
 
         size_t taskCount = workerCount * tasksPerWorker;
 
