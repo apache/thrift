@@ -259,7 +259,7 @@ begin
         if      s = 'buffered' then Include( layered, trns_Buffered)
         else if s = 'framed'   then Include( layered, trns_Framed)
         else if s = 'http'     then endpoint := trns_Http
-        else if s = 'evhttp'   then endpoint := trns_AnonPipes
+        else if s = 'evhttp'   then endpoint := trns_EvHttp
         else InvalidArgs;
       end
       else if s = '--protocol' then begin
