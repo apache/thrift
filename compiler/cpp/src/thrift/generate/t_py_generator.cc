@@ -58,6 +58,7 @@ public:
     gen_dynbase_ = false;
     gen_slots_ = false;
     gen_tornado_ = false;
+    gen_zope_interface_ = false;
     gen_twisted_ = false;
     gen_dynamic_ = false;
     coding_ = "";
@@ -105,8 +106,11 @@ public:
       } else if( iter->first.compare("dynimport") == 0) {
         gen_dynbase_ = true;
         import_dynbase_ = (iter->second);
+      } else if( iter->first.compare("zope.interface") == 0) {
+        gen_zope_interface_ = true;
       } else if( iter->first.compare("twisted") == 0) {
         gen_twisted_ = true;
+        gen_zope_interface_ = true;
       } else if( iter->first.compare("tornado") == 0) {
         gen_tornado_ = true;
       } else if( iter->first.compare("coding") == 0) {
@@ -291,6 +295,11 @@ private:
   std::string copy_options_;
 
   /**
+   * True if we should generate code for use with zope.interface.
+   */
+  bool gen_zope_interface_;
+
+  /**
    * True if we should generate Twisted-friendly RPC services.
    */
   bool gen_twisted_;
@@ -425,7 +434,7 @@ string t_py_generator::py_imports() {
      << endl
      << "from thrift.protocol.TProtocol import TProtocolException"
      << endl
-     << "from thrift.TRecursive import fix_spec" 
+     << "from thrift.TRecursive import fix_spec"
      << endl;
 
   if (gen_utf8strings_) {
@@ -623,10 +632,10 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
   return out.str();
 }
 
-/** 
+/**
  * Generates the "forward declarations" for python structs.
  * These are actually full class definitions so that calls to generate_struct
- * can add the thrift_spec field.  This is needed so that all thrift_spec 
+ * can add the thrift_spec field.  This is needed so that all thrift_spec
  * definitions are grouped at the end of the file to enable co-recursive structs.
  */
 void t_py_generator::generate_forward_declaration(t_struct* tstruct) {
@@ -1091,10 +1100,12 @@ void t_py_generator::generate_service(t_service* tservice) {
              << "from thrift.Thrift import TProcessor" << endl
              << "from thrift.transport import TTransport" << endl
              << import_dynbase_;
+  if (gen_zope_interface_) {
+    f_service_ << "from zope.interface import Interface, implementer" << endl;
+  }
 
   if (gen_twisted_) {
-    f_service_ << "from zope.interface import Interface, implementer" << endl
-               << "from twisted.internet import defer" << endl
+    f_service_ << "from twisted.internet import defer" << endl
                << "from thrift.transport import TTwisted" << endl;
   } else if (gen_tornado_) {
     f_service_ << "from tornado import gen" << endl;
@@ -1171,7 +1182,7 @@ void t_py_generator::generate_service_interface(t_service* tservice) {
     extends = type_name(tservice->get_extends());
     extends_if = "(" + extends + ".Iface)";
   } else {
-    if (gen_twisted_) {
+    if (gen_zope_interface_) {
       extends_if = "(Interface)";
     } else if (gen_newstyle_ || gen_dynamic_ || gen_tornado_) {
       extends_if = "(object)";
@@ -1214,20 +1225,20 @@ void t_py_generator::generate_service_client(t_service* tservice) {
   string extends_client = "";
   if (tservice->get_extends() != NULL) {
     extends = type_name(tservice->get_extends());
-    if (gen_twisted_) {
+    if (gen_zope_interface_) {
       extends_client = "(" + extends + ".Client)";
     } else {
       extends_client = extends + ".Client, ";
     }
   } else {
-    if (gen_twisted_ && (gen_newstyle_ || gen_dynamic_)) {
+    if (gen_zope_interface_ && (gen_newstyle_ || gen_dynamic_)) {
       extends_client = "(object)";
     }
   }
 
   f_service_ << endl << endl;
 
-  if (gen_twisted_) {
+  if (gen_zope_interface_) {
     f_service_ << "@implementer(Iface)" << endl
                << "class Client" << extends_client << ":" << endl
                << endl;
@@ -1767,7 +1778,7 @@ void t_py_generator::generate_service_server(t_service* tservice) {
   f_service_ << endl << endl;
 
   // Generate the header portion
-  if (gen_twisted_) {
+  if (gen_zope_interface_) {
     f_service_ << "@implementer(Iface)" << endl
                << "class Processor(" << extends_processor << "TProcessor):" << endl;
   } else {
@@ -1779,7 +1790,7 @@ void t_py_generator::generate_service_server(t_service* tservice) {
   indent(f_service_) << "def __init__(self, handler):" << endl;
   indent_up();
   if (extends.empty()) {
-    if (gen_twisted_) {
+    if (gen_zope_interface_) {
       f_service_ << indent() << "self._handler = Iface(handler)" << endl;
     } else {
       f_service_ << indent() << "self._handler = handler" << endl;
@@ -1787,7 +1798,7 @@ void t_py_generator::generate_service_server(t_service* tservice) {
 
     f_service_ << indent() << "self._processMap = {}" << endl;
   } else {
-    if (gen_twisted_) {
+    if (gen_zope_interface_) {
       f_service_ << indent() << extends << ".Processor.__init__(self, Iface(handler))" << endl;
     } else {
       f_service_ << indent() << extends << ".Processor.__init__(self, handler)" << endl;
@@ -2536,7 +2547,7 @@ string t_py_generator::function_signature(t_function* tfunction, bool interface)
   vector<string> post;
   string signature = tfunction->get_name() + "(";
 
-  if (!(gen_twisted_ && interface)) {
+  if (!(gen_zope_interface_ && interface)) {
     pre.push_back("self");
   }
 
@@ -2680,6 +2691,7 @@ string t_py_generator::type_to_spec_args(t_type* ttype) {
 THRIFT_REGISTER_GENERATOR(
     py,
     "Python",
+    "    zope.interface:  Generate code for use with zope.interface.\n"
     "    twisted:         Generate Twisted-friendly RPC services.\n"
     "    tornado:         Generate code for use with Tornado.\n"
     "    no_utf8strings:  Do not Encode/decode strings using utf8 in the generated code. Basically no effect for Python 3.\n"
