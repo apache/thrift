@@ -2029,7 +2029,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
     indent_up_impl();
 
     indent_impl(s_service_impl) << "seqid_ := seqid_ + 1;" << endl;
-    indent_impl(s_service_impl) << "Init( " << msgvar << ", '" << funname
+    indent_impl(s_service_impl) << "Thrift.Protocol.Init( " << msgvar << ", '" << funname
                                 << "', " << ((*f_iter)->is_oneway() ? "TMessageType.Oneway"
                                                                     : "TMessageType.Call")
                                 << ", seqid_);" << endl;
@@ -2257,7 +2257,7 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
 								 "TApplicationExceptionUnknownMethod.Create("
 								 "'Invalid method name: ''' + msg.Name + '''');" << endl;
   indent_impl(s_service_impl)
-      << "Init( msg, msg.Name, TMessageType.Exception, msg.SeqID);"
+      << "Thrift.Protocol.Init( msg, msg.Name, TMessageType.Exception, msg.SeqID);"
       << endl;
   indent_impl(s_service_impl) << "oprot.WriteMessageBegin( msg);" << endl;
   indent_impl(s_service_impl) << "x.Write(oprot);" << endl;
@@ -2459,7 +2459,7 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
     if(events_) {
       indent_impl(s_service_impl) << "if events <> nil then events.PreWrite;" << endl;
     }
-    indent_impl(s_service_impl) << "Init( msg, '"
+    indent_impl(s_service_impl) << "Thrift.Protocol.Init( msg, '"
                                 << tfunction->get_name() << "', TMessageType.Exception, seqid);"
                                 << endl;
     indent_impl(s_service_impl) << "oprot.WriteMessageBegin( msg);" << endl;
@@ -2487,7 +2487,7 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
     if (events_) {
       indent_impl(s_service_impl) << "if events <> nil then events.PreWrite;" << endl;
     }
-    indent_impl(s_service_impl) << "Init( msg, '"
+    indent_impl(s_service_impl) << "Thrift.Protocol.Init( msg, '"
                                 << tfunction->get_name() << "', TMessageType.Reply, seqid); "
                                 << endl;
     indent_impl(s_service_impl) << "oprot.WriteMessageBegin( msg); " << endl;
@@ -2804,7 +2804,7 @@ void t_delphi_generator::generate_serialize_container(ostream& out,
   if (ttype->is_map()) {
     obj = tmp("map");
     local_vars << "  " << obj << " : TThriftMap;" << endl;
-    indent_impl(out) << "Init( " << obj << ", "
+    indent_impl(out) << "Thrift.Protocol.Init( " << obj << ", "
                      << type_to_enum(((t_map*)ttype)->get_key_type()) << ", "
                      << type_to_enum(((t_map*)ttype)->get_val_type()) << ", " << prefix
                      << ".Count);" << endl;
@@ -2812,14 +2812,14 @@ void t_delphi_generator::generate_serialize_container(ostream& out,
   } else if (ttype->is_set()) {
     obj = tmp("set_");
     local_vars << "  " << obj << " : TThriftSet;" << endl;
-    indent_impl(out) << "Init( " << obj << ", "
+    indent_impl(out) << "Thrift.Protocol.Init( " << obj << ", "
                      << type_to_enum(((t_set*)ttype)->get_elem_type()) << ", " << prefix
                      << ".Count);" << endl;
     indent_impl(out) << "oprot.WriteSetBegin( " << obj << ");" << endl;
   } else if (ttype->is_list()) {
     obj = tmp("list_");
     local_vars << "  " << obj << " : TThriftList;" << endl;
-    indent_impl(out) << "Init( " << obj << ", "
+    indent_impl(out) << "Thrift.Protocol.Init( " << obj << ", "
                      << type_to_enum(((t_list*)ttype)->get_elem_type()) << ", " << prefix
                      << ".Count);" << endl;
     indent_impl(out) << "oprot.WriteListBegin( " << obj << ");" << endl;
@@ -3548,7 +3548,7 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out,
                             << ") then begin" << endl;
     indent_up_impl();
 
-    generate_deserialize_field(code_block, is_exception, *f_iter, "", local_vars);
+    generate_deserialize_field(code_block, is_exception, *f_iter, "Self.", local_vars);
 
     // required field?
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
@@ -3642,11 +3642,11 @@ void t_delphi_generator::generate_delphi_struct_result_writer_impl(ostream& out,
   indent_impl(local_vars) << "tracker : IProtocolRecursionTracker;" << endl;
   indent_impl(code_block) << "tracker := oprot.NextRecursionLevel;" << endl;
 
-  indent_impl(code_block) << "Init( struc, '" << name << "');" << endl;
+  indent_impl(code_block) << "Thrift.Protocol.Init( struc, '" << name << "');" << endl;
   indent_impl(code_block) << "oprot.WriteStructBegin(struc);" << endl;
 
   if (fields.size() > 0) {
-    indent_impl(code_block) << "Init( field_);" << endl;
+    indent_impl(code_block) << "Thrift.Protocol.Init( field_);" << endl;
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       indent_impl(code_block) << "if (__isset_" << prop_name(*f_iter, is_exception) << ") then"
                               << endl;
@@ -3657,7 +3657,7 @@ void t_delphi_generator::generate_delphi_struct_result_writer_impl(ostream& out,
                               << endl;
       indent_impl(code_block) << "field_.ID := " << (*f_iter)->get_key() << ";" << endl;
       indent_impl(code_block) << "oprot.WriteFieldBegin(field_);" << endl;
-      generate_serialize_field(code_block, is_exception, *f_iter, "", local_vars);
+      generate_serialize_field(code_block, is_exception, *f_iter, "Self.", local_vars);
       indent_impl(code_block) << "oprot.WriteFieldEnd();" << endl;
       indent_down_impl();
     }
@@ -3706,11 +3706,11 @@ void t_delphi_generator::generate_delphi_struct_writer_impl(ostream& out,
   indent_impl(local_vars) << "tracker : IProtocolRecursionTracker;" << endl;
   indent_impl(code_block) << "tracker := oprot.NextRecursionLevel;" << endl;
 
-  indent_impl(code_block) << "Init( struc, '" << name << "');" << endl;
+  indent_impl(code_block) << "Thrift.Protocol.Init( struc, '" << name << "');" << endl;
   indent_impl(code_block) << "oprot.WriteStructBegin(struc);" << endl;
 
   if (fields.size() > 0) {
-    indent_impl(code_block) << "Init( field_);" << endl;
+    indent_impl(code_block) << "Thrift.Protocol.Init( field_);" << endl;
   }
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -3720,13 +3720,13 @@ void t_delphi_generator::generate_delphi_struct_writer_impl(ostream& out,
     bool has_isset = (!is_required);
     if (is_required && null_allowed) {
       null_allowed = false;
-      indent_impl(code_block) << "if (" << fieldname << " = nil)" << endl;
+      indent_impl(code_block) << "if (Self." << fieldname << " = nil)" << endl;
 	  indent_impl(code_block) << "then raise TProtocolExceptionInvalidData.Create("
                               << "'required field " << fieldname << " not set');"
                               << endl;
     }
     if (null_allowed) {
-      indent_impl(code_block) << "if (" << fieldname << " <> nil)";
+      indent_impl(code_block) << "if (Self." << fieldname << " <> nil)";
       if (has_isset) {
         code_block << " and __isset_" << fieldname;
       }
@@ -3743,7 +3743,7 @@ void t_delphi_generator::generate_delphi_struct_writer_impl(ostream& out,
                             << endl;
     indent_impl(code_block) << "field_.ID := " << (*f_iter)->get_key() << ";" << endl;
     indent_impl(code_block) << "oprot.WriteFieldBegin(field_);" << endl;
-    generate_serialize_field(code_block, is_exception, *f_iter, "", local_vars);
+    generate_serialize_field(code_block, is_exception, *f_iter, "Self.", local_vars);
     indent_impl(code_block) << "oprot.WriteFieldEnd();" << endl;
     if (null_allowed || has_isset) {
       indent_down_impl();
@@ -3825,7 +3825,7 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out,
     bool null_allowed = type_can_be_null((*f_iter)->get_type());
     bool is_optional = ((*f_iter)->get_req() != t_field::T_REQUIRED);
     if (null_allowed) {
-      indent_impl(out) << "if (" << prop_name((*f_iter), is_exception) << " <> nil)";
+      indent_impl(out) << "if (Self." << prop_name((*f_iter), is_exception) << " <> nil)";
       if (is_optional) {
         out << " and __isset_" << prop_name(*f_iter, is_exception);
       }
@@ -3857,14 +3857,14 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out,
     }
 
     if (ttype->is_xception() || ttype->is_struct()) {
-      indent_impl(out) << "if (" << prop_name((*f_iter), is_exception) << " = nil) then " << tmp_sb
-                       << ".Append('<null>') else " << tmp_sb << ".Append("
+      indent_impl(out) << "if (Self." << prop_name((*f_iter), is_exception) << " = nil) then " << tmp_sb
+                       << ".Append('<null>') else " << tmp_sb << ".Append( Self."
                        << prop_name((*f_iter), is_exception) << ".ToString());" << endl;
     } else if (ttype->is_enum()) {
-      indent_impl(out) << tmp_sb << ".Append(Integer(" << prop_name((*f_iter), is_exception)
+      indent_impl(out) << tmp_sb << ".Append(Integer( Self." << prop_name((*f_iter), is_exception)
                        << "));" << endl;
     } else {
-      indent_impl(out) << tmp_sb << ".Append(" << prop_name((*f_iter), is_exception) << ");"
+      indent_impl(out) << tmp_sb << ".Append( Self." << prop_name((*f_iter), is_exception) << ");"
                        << endl;
     }
 

@@ -35,6 +35,7 @@ uses
   Thrift.Serializer in '..\..\src\Thrift.Serializer.pas',
   Thrift.Stream in '..\..\src\Thrift.Stream.pas',
   Thrift.TypeRegistry in '..\..\src\Thrift.TypeRegistry.pas',
+  ReservedKeywords,
   DebugProtoTest,
   TestSerializer.Data;
 
