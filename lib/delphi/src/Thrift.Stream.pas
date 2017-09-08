@@ -197,7 +197,9 @@ end;
 
 function TThriftStreamImpl.Read(var buffer: TBytes; offset, count: Integer): Integer;
 begin
-  Result := Read( @buffer[0], Length(buffer), offset, count);
+  if Length(buffer) > 0
+  then Result := Read( @buffer[0], Length(buffer), offset, count)
+  else Result := 0;
 end;
 
 function TThriftStreamImpl.Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer;
@@ -208,7 +210,8 @@ end;
 
 procedure TThriftStreamImpl.Write(const buffer: TBytes; offset, count: Integer);
 begin
-  Write( @buffer[0], offset, count);
+  if Length(buffer) > 0
+  then Write( @buffer[0], offset, count);
 end;
 
 procedure TThriftStreamImpl.Write( const pBuf : Pointer; offset: Integer; count: Integer);

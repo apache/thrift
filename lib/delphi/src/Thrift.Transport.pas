@@ -414,22 +414,28 @@ end;
 
 function TTransportImpl.Read(var buf: TBytes; off: Integer; len: Integer): Integer;
 begin
-  result := Read( @buf[0], Length(buf), off, len);
+  if Length(buf) > 0
+  then result := Read( @buf[0], Length(buf), off, len)
+  else result := 0;
 end;
 
 function TTransportImpl.ReadAll(var buf: TBytes; off: Integer; len: Integer): Integer;
 begin
-  result := ReadAll( @buf[0], Length(buf), off, len);
+  if Length(buf) > 0
+  then result := ReadAll( @buf[0], Length(buf), off, len)
+  else result := 0;
 end;
 
 procedure TTransportImpl.Write( const buf: TBytes);
 begin
-  Write( @buf[0], 0, Length(buf));
+  if Length(buf) > 0
+  then Write( @buf[0], 0, Length(buf));
 end;
 
 procedure TTransportImpl.Write( const buf: TBytes; off: Integer; len: Integer);
 begin
-  Write( @buf[0], off, len);
+  if Length(buf) > 0
+  then Write( @buf[0], off, len);
 end;
 
 function TTransportImpl.ReadAll(const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer;
@@ -1282,7 +1288,8 @@ begin
   FTransport.ReadAll( buff, 0, size );
   FReadBuffer.Free;
   FReadBuffer := TMemoryStream.Create;
-  FReadBuffer.Write( Pointer(@buff[0])^, size );
+  if Length(buff) > 0
+  then FReadBuffer.Write( Pointer(@buff[0])^, size );
   FReadBuffer.Position := 0;
 end;
 
