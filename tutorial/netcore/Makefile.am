@@ -19,8 +19,6 @@
 
 SUBDIRS = . 
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 GENDIR = Interfaces/gen-netcore
 
 # Due to a known issue with "dotnet restore" the Thrift.dll dependency cannot be resolved from cmdline.

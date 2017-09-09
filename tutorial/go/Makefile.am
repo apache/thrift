@@ -21,8 +21,6 @@ if GOVERSION_LT_17
 COMPILER_EXTRAFLAG=":legacy_context"
 endif
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 gen-go/tutorial/calculator.go gen-go/shared/shared_service.go: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen go$(COMPILER_EXTRAFLAG) -r $<
 

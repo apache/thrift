@@ -24,8 +24,6 @@ GENERATED = \
 
 BUILT_SOURCES = $(GENERATED)
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 gen-csharp/Aggr.cs: $(top_srcdir)/contrib/async-test/aggr.thrift
 	$(THRIFT) --gen csharp $<
 

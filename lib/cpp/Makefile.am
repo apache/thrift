@@ -265,8 +265,6 @@ include_qt_HEADERS = \
                   src/thrift/qt/TQIODeviceTransport.h \
                   src/thrift/qt/TQTcpServer.h
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 WINDOWS_DIST = \
              src/thrift/windows \
              thrift.sln \

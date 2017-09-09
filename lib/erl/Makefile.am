@@ -17,7 +17,6 @@
 # under the License.
 #
 
-THRIFT = ../../compiler/cpp/thrift
 THRIFT_OMIT_FILE = test/Thrift_omit_without.thrift
 THRIFT_FILES = $(wildcard test/*.thrift) \
 		  $(THRIFT_OMIT_FILE) \

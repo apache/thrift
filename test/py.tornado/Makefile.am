@@ -17,8 +17,6 @@
 # under the License.
 #
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
-
 thrift_gen: ../ThriftTest.thrift ../SmallTest.thrift
 	$(THRIFT) --gen py:tornado ../ThriftTest.thrift
 	$(THRIFT) --gen py:tornado ../SmallTest.thrift

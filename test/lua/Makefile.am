@@ -17,8 +17,6 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 # Remove "MapType =" line to ignore some map bug for now
 stubs: ../ThriftTest.thrift $(THRIFT)
 	$(THRIFT) --gen lua $<

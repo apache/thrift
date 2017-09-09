@@ -17,8 +17,6 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 THRIFT_FILES = $(wildcard ../*.thrift)
 
 if ERLANG_OTP16

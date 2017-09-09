@@ -19,8 +19,6 @@
 
 export CLASSPATH
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 all-local:
 	$(ANT) $(ANT_FLAGS)
 

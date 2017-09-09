@@ -19,8 +19,6 @@
 
 SUBDIRS = . 
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 TESTDIR = Tests/Thrift.PublicInterfaces.Compile.Tests
 GENDIR = $(TESTDIR)/gen-netcore
 
