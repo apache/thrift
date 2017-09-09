@@ -83,6 +83,9 @@ AS_IF([test "x$D_IMPORT_PREFIX" = x], [D_IMPORT_PREFIX="${includedir}/d2"])
 AC_ARG_VAR([DMD_LIBEVENT_FLAGS], [DMD flags for linking libevent (auto-detected if not set).])
 AC_ARG_VAR([DMD_OPENSSL_FLAGS], [DMD flags for linking OpenSSL (auto-detected if not set).])
 
+AC_ARG_VAR([THRIFT], [Path to the thrift tool (needed for cross-compilation).])
+AS_IF([test "x$THRIFT" = x], [THRIFT=`pwd`/compiler/cpp/thrift])
+
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_CXX

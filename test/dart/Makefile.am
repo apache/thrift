@@ -17,8 +17,6 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 gen-dart/thrift_test/lib/thrift_test.dart: ../ThriftTest.thrift
 	$(THRIFT) --gen dart ../ThriftTest.thrift
 

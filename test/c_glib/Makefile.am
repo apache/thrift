@@ -54,8 +54,6 @@ test_server_LDADD = \
 #
 # Common thrift code generation rules
 #
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 gen-c_glib/t_test_second_service.c  gen-c_glib/t_test_second_service.h  gen-c_glib/t_test_thrift_test.c  gen-c_glib/t_test_thrift_test.h  gen-c_glib/t_test_thrift_test_types.c  gen-c_glib/t_test_thrift_test_types.h: $(top_srcdir)/test/ThriftTest.thrift $(THRIFT)
 	$(THRIFT) --gen c_glib -r $<
 

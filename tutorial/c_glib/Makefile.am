@@ -28,8 +28,6 @@ AM_CFLAGS = -g -Wall -Wextra -pedantic $(GLIB_CFLAGS) $(GOBJECT_CFLAGS) $(OPENSS
 AM_CPPFLAGS = -I$(top_srcdir)/lib/c_glib/src -Igen-c_glib
 AM_LDFLAGS = $(GLIB_LIBS) $(GOBJECT_LIBS) $(OPENSSL_LDFLAGS) $(OPENSSL_LIBS) @GCOV_LDFLAGS@
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 noinst_LTLIBRARIES = \
 	libtutorialgencglib.la
 

@@ -62,8 +62,6 @@ endif
 
 LIBDIR = $(top_builddir)/lib/csharp
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 $(GENERATED): $(top_srcdir)/test/ThriftTest.thrift $(THRIFT)
 	$(THRIFT) --gen csharp -o . $<
 

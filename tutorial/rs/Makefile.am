@@ -17,8 +17,6 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 gen-rs/tutorial.rs gen-rs/shared.rs: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) -out src --gen rs -r $<
 
