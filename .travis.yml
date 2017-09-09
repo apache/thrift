@@ -42,9 +42,14 @@ env:
     - BUILD_LIBS="CPP C_GLIB HASKELL JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
 
   matrix:
-    - TEST_NAME="Cross Language Tests (Binary, Header, JSON Protocols)"
+    - TEST_NAME="Cross Language Tests (Binary Protocol)"
       SCRIPT="cross-test.sh"
-      BUILD_ARG="-'(binary|header|json)'"
+      BUILD_ARG="-'(binary)'"
+      BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
+
+    - TEST_NAME="Cross Language Tests (Header, JSON Protocols)"
+      SCRIPT="cross-test.sh"
+      BUILD_ARG="-'(header|json)'"
       BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
     - TEST_NAME="Cross Language Tests (Compact and Multiplexed Protocols)"
@@ -58,12 +63,12 @@ env:
       DISTRO=centos-7.3
       SCRIPT="autotools.sh"
       BUILD_ENV="-e CC=gcc -e CXX=g++"
-      BUILD_ARG="--without-cpp --without-csharp --without-c_glib --without-d -without-dart --without-erlang --without-go --without-haskell --without-haxe"
+      BUILD_ARG="--without-cpp --without-csharp --without-c_glib --without-d -without-dart --without-erlang --without-go --without-haskell --without-haxe --without-nodejs"
 
     - TEST_NAME="Autotools (Ubuntu Xenial)"
       SCRIPT="autotools.sh"
       BUILD_ENV="-e CC=gcc -e CXX=g++"
-      BUILD_ARG="--enable-plugin --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-py3 --without-ruby --without-rust"
+      BUILD_ARG="--enable-plugin --without-java --without-lua --without-perl --without-php --without-php_extension --without-python --without-py3 --without-ruby --without-rust"
 
     # CMake builds
     - TEST_NAME="CMake (CentOS 7.3)"
@@ -89,11 +94,15 @@ env:
 
     # C and C++ undefined behavior. This wraps autotools.sh, but each binary crashes if
     # undefined behavior occurs. Skips the known flaky tests.
+    # Unstable: THRIFT-4064 needs to be fixed perhaps
     - TEST_NAME="UBSan"
       SCRIPT="ubsan.sh"
-      BUILD_ARG="--without-haskell --without-nodejs --without-perl --without-python"
+      BUILD_ARG="--without-haskell --without-js --without-nodejs --without-perl --without-python"
+      UNSTABLE=true
 
 matrix:
+  allow_failures:
+    - env: UNSTABLE=true
   include:
     # QA jobs for code analytics and metrics
     #
