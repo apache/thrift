@@ -126,6 +126,17 @@ describe 'BaseTransport' do
       btrans = Thrift::BufferedTransport.new(trans)
       btrans.flush
     end
+
+    it "should reset read buffer on flush even if there's data left in it" do
+      trans = mock("Transport")
+      trans.should_receive(:flush)
+      trans.should_receive(:read).and_return("abc", "xyz")
+
+      btrans = Thrift::BufferedTransport.new(trans)
+      btrans.read(1).should == "a"
+      btrans.flush
+      btrans.read(1).should == "x"
+    end
   end
 
   describe Thrift::BufferedTransportFactory do
