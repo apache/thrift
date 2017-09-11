@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
 	  // lower the scale of every test
 	  WEIGHT = 1;
   }
-  
+
   bool runAll = args[0].compare("all") == 0;
 
   if (runAll || args[0].compare("thread-factory") == 0) {
@@ -134,6 +134,20 @@ int main(int argc, char** argv) {
     std::cout << "\t\tTimerManager test02" << std::endl;
 
     if (!timerManagerTests.test02()) {
+      std::cerr << "\t\tTimerManager tests FAILED" << std::endl;
+      return 1;
+    }
+
+    std::cout << "\t\tTimerManager test03" << std::endl;
+
+    if (!timerManagerTests.test03()) {
+      std::cerr << "\t\tTimerManager tests FAILED" << std::endl;
+      return 1;
+    }
+
+    std::cout << "\t\tTimerManager test04" << std::endl;
+
+    if (!timerManagerTests.test04()) {
       std::cerr << "\t\tTimerManager tests FAILED" << std::endl;
       return 1;
     }
