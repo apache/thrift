@@ -118,7 +118,7 @@ AC_DEFUN([AX_CHECK_JAVA_CLASS],
 AC_DEFUN([AX_CHECK_ANT_VERSION],
          [
           AC_MSG_CHECKING(for ant version > $2)
-          ANT_VALID=`expr $($1 -version 2>/dev/null | sed -n 's/.*version \(@<:@0-9\.@:>@*\).*/\1/p') \>= $2`
+          ANT_VALID=`expr "x$(printf "$2\n$($1 -version 2>/dev/null | sed -n 's/.*version \(@<:@0-9\.@:>@*\).*/\1/p')" | sort -t '.' -k 1,1 -k 2,2 -k 3,3 -g | sed -n 1p)" = "x$2"`
           if test "x$ANT_VALID" = "x1" ; then
             AC_MSG_RESULT(yes)
           else
