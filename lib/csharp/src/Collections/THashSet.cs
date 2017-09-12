@@ -29,10 +29,12 @@ namespace Thrift.Collections
 {
 #if SILVERLIGHT
     [DataContract]
+#elif THRIFTCORE
+
 #else
-    [Serializable]
+   [Serializable]
 #endif
-    public class THashSet<T> : ICollection<T>
+   public class THashSet<T> : ICollection<T>
     {
 #if NET_2_0 || SILVERLIGHT
 #if SILVERLIGHT

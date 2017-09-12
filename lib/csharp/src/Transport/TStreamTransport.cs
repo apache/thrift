@@ -64,12 +64,16 @@ namespace Thrift.Transport
         {
             if (inputStream != null)
             {
-                inputStream.Close();
+#if !NETSTANDARD
+            inputStream.Close();
+#endif
                 inputStream = null;
             }
             if (outputStream != null)
             {
+#if !NETSTANDARD
                 outputStream.Close();
+#endif
                 outputStream = null;
             }
         }
@@ -105,7 +109,7 @@ namespace Thrift.Transport
         }
 
 
-    #region " IDisposable Support "
+#region " IDisposable Support "
     private bool _IsDisposed;
 
     // IDisposable
@@ -123,6 +127,6 @@ namespace Thrift.Transport
       }
       _IsDisposed = true;
     }
-    #endregion
+#endregion
   }
 }
