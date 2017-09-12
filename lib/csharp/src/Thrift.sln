@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.12
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thrift", "Thrift.csproj", "{499EB63C-D74C-47E8-AE48-A2FC94538E9D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThriftTest", "..\test\ThriftTest\ThriftTest.csproj", "{48DD757F-CA95-4DD7-BDA4-58DB6F108C2C}"
@@ -10,6 +12,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thrift.45", "Thrift.45.csproj", "{EBCE35DA-CF6A-42BC-A357-A9C09B534299}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThriftMVCTest", "..\test\ThriftMVCTest\ThriftMVCTest.csproj", "{891B4487-C7BA-427E-BBC8-4C596C229A10}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThriftNetStandard", "ThriftNetStandard.csproj", "{2DFDA60B-072C-4265-9CE0-956A3B5131DD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,9 +41,16 @@ Global
 		{891B4487-C7BA-427E-BBC8-4C596C229A10}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{891B4487-C7BA-427E-BBC8-4C596C229A10}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{891B4487-C7BA-427E-BBC8-4C596C229A10}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2DFDA60B-072C-4265-9CE0-956A3B5131DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2DFDA60B-072C-4265-9CE0-956A3B5131DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2DFDA60B-072C-4265-9CE0-956A3B5131DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2DFDA60B-072C-4265-9CE0-956A3B5131DD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {56011C04-B3F6-4D82-A325-E6DB70E21605}
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		        StartupItem = Thrift.csproj

@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard1.4;netstandard1.6;net451</TargetFrameworks>
+    <SignAssembly>False</SignAssembly>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <DefineConstants>THRIFTCORE</DefineConstants>
+    
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
+    
+    <PackageId>Apache.Thrift</PackageId>
+    <Version>1.0.2</Version>
+    <Authors>The Apache Software Foundation. Custom build by @aloneguid</Authors>
+    <Copyright>The Apache Software Foundation</Copyright>
+    <RepositoryType>GitHub</RepositoryType>
+    <PackageReleaseNotes>This cusom build only includes the minimum code to run Thrift, with no dependencies on any libraries.</PackageReleaseNotes>
+
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard1.4' or '$(TargetFramework)' == 'netstandard1.6' ">
+    <DefineConstants>$(DefineConstants);NETSTANDARD</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="AssemblyInfo.cs" />
+    <Compile Remove="Server/**/*" />
+    <Compile Remove="TControllingHandler.cs" />
+    <Compile Remove="Transport/*Http*.cs" />
+    <Compile Remove="Transport/*NamedPipe*.cs" />
+    <Compile Remove="Transport/*TLS*.cs" />
+    <Compile Remove="Transport/*Socket*.cs" />
+    <Compile Remove="Transport/TMemoryBuffer.cs" />
+    <Compile Remove="Transport/TFramedTransport.cs" />
+    <Compile Remove="Transport/TBufferedTransport.cs" />
+    <Compile Remove="TProcessorFactory.cs" />
+    <Compile Remove="TPrototypeProcessorFactory.cs" />
+    <Compile Remove="TSingletonProcessorFactory.cs" />
+  </ItemGroup>
+</Project>
