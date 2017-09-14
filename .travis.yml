@@ -63,12 +63,12 @@ env:
       DISTRO=centos-7.3
       SCRIPT="autotools.sh"
       BUILD_ENV="-e CC=gcc -e CXX=g++"
-      BUILD_ARG="--without-cpp --without-csharp --without-c_glib --without-d -without-dart --without-erlang --without-go --without-haskell --without-haxe --without-nodejs"
+      BUILD_ARG="--without-cpp --without-csharp --without-c_glib --without-d -without-dart --without-erlang --without-go --without-haskell --without-haxe"
 
     - TEST_NAME="Autotools (Ubuntu Xenial)"
       SCRIPT="autotools.sh"
       BUILD_ENV="-e CC=gcc -e CXX=g++"
-      BUILD_ARG="--enable-plugin --without-java --without-lua --without-perl --without-php --without-php_extension --without-python --without-py3 --without-ruby --without-rust"
+      BUILD_ARG="--enable-plugin --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-py3 --without-ruby --without-rust"
 
     # CMake builds
     - TEST_NAME="CMake (CentOS 7.3)"
