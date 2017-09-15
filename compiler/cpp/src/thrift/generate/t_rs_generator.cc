@@ -529,6 +529,8 @@ void t_rs_generator::render_attributes_and_includes() {
 
   // code always includes BTreeMap/BTreeSet/OrderedFloat
   f_gen_ << "#![allow(unused_imports)]" << endl;
+  // code might not include imports from crates
+  f_gen_ << "#![allow(unused_extern_crates)]" << endl;
   // constructors take *all* struct parameters, which can trigger the "too many arguments" warning
   // some auto-gen'd types can be deeply nested. clippy recommends factoring them out which is hard to autogen
   f_gen_ << "#![cfg_attr(feature = \"cargo-clippy\", allow(too_many_arguments, type_complexity))]" << endl;
