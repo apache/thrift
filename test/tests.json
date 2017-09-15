@@ -8,6 +8,12 @@
       "command": [
         "test_server",
         "--lt-debug"
+      ],
+      "protocols": [
+        "binary:multi",
+        "compact:multic",
+        "multi",
+        "multic"
       ]
     },
     "client": {

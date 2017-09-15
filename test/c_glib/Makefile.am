@@ -45,6 +45,8 @@ test_client_LDADD = \
 test_server_SOURCES = \
 	src/thrift_test_handler.c \
 	src/thrift_test_handler.h \
+	src/thrift_second_service_handler.c \
+	src/thrift_second_service_handler.h \
 	src/test_server.c
 
 test_server_LDADD = \
