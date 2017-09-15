@@ -95,6 +95,25 @@ thrift_socket_peek (ThriftTransport *transport, GError **error)
   return result;
 }
 
+
+/* implements thrift_transport_close */
+gboolean
+thrift_socket_close (ThriftTransport *transport, GError **error)
+{
+  ThriftSocket *socket = THRIFT_SOCKET (transport);
+
+  if (close (socket->sd) == -1)
+  {
+    g_set_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_CLOSE,
+                 "unable to close socket - %s",
+                 strerror(errno));
+    return FALSE;
+  }
+
+  socket->sd = THRIFT_INVALID_SOCKET;
+  return TRUE;
+}
+
 /* implements thrift_transport_open */
 gboolean
 thrift_socket_open (ThriftTransport *transport, GError **error)
@@ -128,7 +147,7 @@ thrift_socket_open (ThriftTransport *transport, GError **error)
   /* create a socket structure */
   memset (&pin, 0, sizeof(pin));
   pin.sin_family = AF_INET;
-  pin.sin_addr.s_addr = ((struct in_addr *) (hp->h_addr))->s_addr;
+  pin.sin_addr.s_addr = ((struct in_addr *) (hp->h_addr_list[0]))->s_addr;
   pin.sin_port = htons (tsocket->port);
 
   /* create the socket */
@@ -144,7 +163,8 @@ thrift_socket_open (ThriftTransport *transport, GError **error)
   /* open a connection */
   if (connect (tsocket->sd, (struct sockaddr *) &pin, sizeof(pin)) == -1)
   {
-    g_set_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_CONNECT,
+      thrift_socket_close(tsocket, NULL);
+      g_set_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_CONNECT,
                  "failed to connect to host %s:%d - %s",
                  tsocket->hostname, tsocket->port, strerror(errno));
     return FALSE;
@@ -153,23 +173,6 @@ thrift_socket_open (ThriftTransport *transport, GError **error)
   return TRUE;
 }
 
-/* implements thrift_transport_close */
-gboolean
-thrift_socket_close (ThriftTransport *transport, GError **error)
-{
-  ThriftSocket *socket = THRIFT_SOCKET (transport);
-
-  if (close (socket->sd) == -1)
-  {
-    g_set_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_CLOSE,
-                 "unable to close socket - %s",
-                 strerror(errno));
-    return FALSE;
-  }
-
-  socket->sd = THRIFT_INVALID_SOCKET;
-  return TRUE;
-}
 
 /* implements thrift_transport_read */
 gint32
