@@ -269,7 +269,8 @@ bool TSSLSocket::peek() {
           }
         case SSL_ERROR_WANT_READ:
         case SSL_ERROR_WANT_WRITE:
-          waitForEvent(error == SSL_ERROR_WANT_READ);
+		// in the case of SSL_ERROR_SYSCALL we want to wait for an read event again
+          waitForEvent(error != SSL_ERROR_WANT_WRITE);
               continue;
         default:;// do nothing
       }
@@ -309,6 +310,7 @@ void TSSLSocket::close() {
               }
             case SSL_ERROR_WANT_READ:
             case SSL_ERROR_WANT_WRITE:
+				// in the case of SSL_ERROR_SYSCALL we want to wait for an write/read event again
               waitForEvent(error == SSL_ERROR_WANT_READ);
               rc = 2;
             default:;// do nothing
@@ -339,36 +341,47 @@ void TSSLSocket::close() {
 uint32_t TSSLSocket::read(uint8_t* buf, uint32_t len) {
   checkHandshake();
   int32_t bytes = 0;
-  for (int32_t retries = 0; retries < maxRecvRetries_; retries++) {
+  int32_t retries = 0;
+  while ( retries < maxRecvRetries_) {
     ERR_clear_error();
+	retries++;
     bytes = SSL_read(ssl_, buf, len);
     if (bytes >= 0)
       break;
     int32_t errno_copy = THRIFT_GET_SOCKET_ERROR;
     int32_t error = SSL_get_error(ssl_, bytes);
+	unsigned int waitEventReturn;
     switch (error) {
       case SSL_ERROR_SYSCALL:
         if ((errno_copy != THRIFT_EINTR)
             && (errno_copy != THRIFT_EAGAIN)) {
               break;
         }
-        if (retries++ >= maxRecvRetries_) {
+        if (retries >= maxRecvRetries_) {
           // THRIFT_EINTR needs to be handled manually and we can tolerate
           // a certain number
           break;
         }
       case SSL_ERROR_WANT_READ:
       case SSL_ERROR_WANT_WRITE:
-        if (waitForEvent(error == SSL_ERROR_WANT_READ) == TSSL_EINTR ) {
+		 // in the case of SSL_ERROR_SYSCALL we want to wait for an read event again
+        if ((waitEventReturn = waitForEvent(error != SSL_ERROR_WANT_WRITE)) == TSSL_EINTR ) {
           // repeat operation
-          if (retries++ < maxRecvRetries_) {
+          if (retries < maxRecvRetries_) {
             // THRIFT_EINTR needs to be handled manually and we can tolerate
             // a certain number
             continue;
-          }
+		  } 
           throw TTransportException(TTransportException::INTERNAL_ERROR, "too much recv retries");
-        }
-        continue;
+        } else if (waitEventReturn == TSSL_DATA) {
+			// in case of SSL and huge thrift packets, there may be a number of 
+			// socket operations, before any data becomes available by SSL_read(). 
+			// Therefore the number of retries should not be increased and 
+			// the operation should be repeated.
+			retries--;
+			continue;
+		}
+		throw TTransportException(TTransportException::INTERNAL_ERROR, "unhandled waitForEvent return value");
       default:;// do nothing
     }
     string errors;
@@ -396,6 +409,7 @@ void TSSLSocket::write(const uint8_t* buf, uint32_t len) {
           }
         case SSL_ERROR_WANT_READ:
         case SSL_ERROR_WANT_WRITE:
+		  // in the case of SSL_ERROR_SYSCALL we want to wait for an write event again
           waitForEvent(error == SSL_ERROR_WANT_READ);
           continue;
         default:;// do nothing
@@ -477,6 +491,7 @@ void TSSLSocket::checkHandshake() {
             }
           case SSL_ERROR_WANT_READ:
           case SSL_ERROR_WANT_WRITE:
+			// in the case of SSL_ERROR_SYSCALL we want to wait for an write/read event again
             waitForEvent(error == SSL_ERROR_WANT_READ);
             rc = 2;
           default:;// do nothing
@@ -499,6 +514,7 @@ void TSSLSocket::checkHandshake() {
             }
           case SSL_ERROR_WANT_READ:
           case SSL_ERROR_WANT_WRITE:
+			// in the case of SSL_ERROR_SYSCALL we want to wait for an write/read event again
             waitForEvent(error == SSL_ERROR_WANT_READ);
                 rc = 2;
           default:;// do nothing
@@ -643,7 +659,9 @@ unsigned int TSSLSocket::waitForEvent(bool wantRead) {
   struct THRIFT_POLLFD fds[2];
   std::memset(fds, 0, sizeof(fds));
   fds[0].fd = fdSocket;
-  fds[0].events = wantRead ? THRIFT_POLLIN : THRIFT_POLLOUT;
+  // use POLLIN also on write operations too, this is needed for operations
+  // which requires read and write on the socket.
+  fds[0].events = wantRead ? THRIFT_POLLIN : THRIFT_POLLIN | THRIFT_POLLOUT;
 
   if (interruptListener_) {
     fds[1].fd = *(interruptListener_.get());
