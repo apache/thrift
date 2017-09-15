@@ -33,9 +33,12 @@ set(thrift_c_glib_SOURCES
     src/thrift/c_glib/thrift_application_exception.c
     src/thrift/c_glib/processor/thrift_processor.c
     src/thrift/c_glib/processor/thrift_dispatch_processor.c
+    src/thrift/c_glib/processor/thrift_multiplexed_processor.c
     src/thrift/c_glib/protocol/thrift_protocol.c
     src/thrift/c_glib/protocol/thrift_protocol_factory.c
+    src/thrift/c_glib/protocol/thrift_protocol_decorator.c
     src/thrift/c_glib/protocol/thrift_binary_protocol.c
+    src/thrift/c_glib/protocol/thrift_stored_message_protocol.c
     src/thrift/c_glib/protocol/thrift_binary_protocol_factory.c
     src/thrift/c_glib/protocol/thrift_compact_protocol.c
     src/thrift/c_glib/protocol/thrift_compact_protocol_factory.c

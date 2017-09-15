@@ -486,13 +486,11 @@ thrift_protocol_decorator_set_property (GObject      *object,
     GParamSpec   *pspec)
 {
   ThriftProtocolDecorator *self = THRIFT_PROTOCOL_DECORATOR (object);
-  g_debug("Is protocol decorator %i", THRIFT_IS_PROTOCOL_DECORATOR(object));
 
   switch (property_id)
   {
   case PROP_THRIFT_TYPE_PROTOCOL_DECORATOR_CONCRETE_PROTOCOL:
     self->concrete_protocol = g_value_dup_object (value);
-    g_debug("Setting concrete protocol %p to %p in %s", (void *)self, (void *)self->concrete_protocol, g_type_name(G_TYPE_FROM_INSTANCE(object)));
     break;
 
   default:
@@ -509,7 +507,6 @@ thrift_protocol_decorator_get_property (GObject    *object,
     GParamSpec *pspec)
 {
   ThriftProtocolDecorator *self = THRIFT_PROTOCOL_DECORATOR (object);
-  g_debug("Is protocol decorator %i", THRIFT_IS_PROTOCOL_DECORATOR(object));
 
   switch (property_id)
   {
