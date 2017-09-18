@@ -28,7 +28,7 @@ p(X) ->
     ok.
 
 t() ->
-    Port = 9999,
+    Port = 9090,
 
     {ok, Client0} = thrift_client_util:new("127.0.0.1",
                                            Port,
