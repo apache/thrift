@@ -19,7 +19,7 @@
 #include <string>
 #include <algorithm>
 
-#include "platform.h"
+#include "thrift/platform.h"
 #include "t_oop_generator.h"
 using namespace std;
 
@@ -168,11 +168,7 @@ void t_cl_generator::generate_enum(t_enum* tenum) {
   indent_up();
   f_types_ << indent() << "(";
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    if ((*c_iter)->has_value()) {
-      value = (*c_iter)->get_value();
-    } else {
-      ++value;
-    }
+    value = (*c_iter)->get_value();
 
     if(c_iter != constants.begin()) f_types_ << endl << indent() << " ";
 
@@ -211,7 +207,7 @@ string t_cl_generator::render_const_value(t_type* type, t_const_value* value) {
     case t_base_type::TYPE_BOOL:
       out << (value->get_integer() > 0 ? "t" : "nil");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
