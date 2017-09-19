@@ -1,5 +1,3 @@
-;;; -*- Mode: lisp; Syntax: ansi-common-lisp; Base: 10; Package: org.apache.thrift.implementation; -*-
-
 (in-package :org.apache.thrift.implementation)
 
 ;;; This file defines codec operators for ieee short and long float data for the `org.apache.thrift` library.

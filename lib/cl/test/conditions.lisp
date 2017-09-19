@@ -1,5 +1,3 @@
-;;; -*- Mode: lisp; Syntax: ansi-common-lisp; Base: 10; Package: thrift-test; -*-
-
 (in-package :thrift-test)
 
 ;;; this file defines tests for exception classes.
