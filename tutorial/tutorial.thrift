@@ -62,6 +62,8 @@ include "shared.thrift"
  * Thrift files can namespace, package, or prefix their output in various
  * target languages.
  */
+
+namespace cl tutorial
 namespace cpp tutorial
 namespace d tutorial
 namespace dart tutorial
