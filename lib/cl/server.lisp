@@ -78,11 +78,14 @@
   (:documentation "The server class which combines services with a listening socket."))
 
 
-(defclass thrift (puri:uri)
-  ()
-  (:documentation "A specialized URI class to distinguish Thrift locations when constructing a
- server."))
+(defun thriftp (uri)
+  "Check whether the URI is a Thrift URI."
+  (eql :thrift (puri:uri-scheme uri)))
 
+;;; A special type to easily distinguish Thrift URIs.
+(deftype thrift () '(and
+		     puri:uri
+		     (satisfies thriftp)))
 
 ;;;
 ;;; service operators
@@ -147,7 +150,7 @@
   (:documentation "Accept to a CONNECTION-SERVER, configure the CLIENT's transport and protocol
  in combination with the connection, and process messages until the connection closes.")
 
-  (:method ((location thrift) service)
+  (:method ((location puri:uri) service)
     "Given a basic thrift uri, open a binary socket server and listen on the port."
     (let ((server (make-instance 'socket-server
                     :socket (usocket:socket-listen (puri:uri-host location) (puri:uri-port location)
