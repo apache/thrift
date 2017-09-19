@@ -119,6 +119,7 @@ if test "$enable_libs" = "no"; then
   have_libs="no"
   with_cpp="no"
   with_c_glib="no"
+  with_cl="no"
   with_java="no"
   with_csharp="no"
   with_python="no"
@@ -455,6 +456,16 @@ if test "$with_rs" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_RS, [test "$have_rs" = "yes"])
 
+AX_THRIFT_LIB(cl, [Common Lisp], yes)
+have_cl="no"
+if test "$with_cl" = "yes";  then
+  AC_PATH_PROG([SBCL], [sbcl])
+  if test "x$SBCL" != "x"; then
+    have_cl="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_CL, [test "$have_cl" = "yes"])
+
 AX_THRIFT_LIB(haxe, [Haxe], yes)
 if test "$with_haxe" = "yes";  then
   AC_PATH_PROG([HAXE], [haxe])
@@ -786,6 +797,7 @@ AC_CONFIG_FILES([
   compiler/cpp/test/Makefile
   compiler/cpp/src/thrift/version.h
   lib/Makefile
+  lib/cl/Makefile
   lib/cpp/Makefile
   lib/cpp/test/Makefile
   lib/cpp/thrift-nb.pc
@@ -827,6 +839,7 @@ AC_CONFIG_FILES([
   test/Makefile
   test/features/Makefile
   test/c_glib/Makefile
+  test/cl/Makefile
   test/cpp/Makefile
   test/csharp/Makefile
   test/erl/Makefile
@@ -845,6 +858,7 @@ AC_CONFIG_FILES([
   test/rs/Makefile
   tutorial/Makefile
   tutorial/c_glib/Makefile
+  tutorial/cl/Makefile
   tutorial/cpp/Makefile
   tutorial/d/Makefile
   tutorial/go/Makefile
@@ -898,6 +912,8 @@ if test "$have_rs" = "yes" ; then MAYBE_RS="rs" ; else MAYBE_RS="" ; fi
 AC_SUBST([MAYBE_RS])
 if test "$have_dotnetcore" = "yes" ; then MAYBE_DOTNETCORE="netcore" ; else MAYBE_DOTNETCORE="" ; fi
 AC_SUBST([MAYBE_DOTNETCORE])
+if test "$have_cl" = "yes" ; then MAYBE_CL="cl" ; else MAYBE_CL="" ; fi
+AC_SUBST([MAYBE_CL])
 
 AC_OUTPUT
 
@@ -908,6 +924,7 @@ echo
 echo "Building C (GLib) Library .... : $have_c_glib"
 echo "Building C# (Mono) Library ... : $have_csharp"
 echo "Building C++ Library ......... : $have_cpp"
+echo "Building Common Lisp Library.. : $have_cl"
 echo "Building D Library ........... : $have_d"
 echo "Building Dart Library ........ : $have_dart"
 echo "Building dotnetcore Library .. : $have_dotnetcore"
@@ -941,6 +958,12 @@ if test "$have_cpp" = "yes" ; then
   echo "   Build TQTcpServer (Qt4) ... : $have_qt"
   echo "   Build TQTcpServer (Qt5) ... : $have_qt5"
   echo "   C++ compiler version ...... : $($CXX --version | head -1)"
+fi
+if test "$have_cl" = "yes" ; then
+  echo
+  echo "Common Lisp Library:"
+  echo "   Using Common Lisp ......... : $SBCL"
+  echo "   Using Common Lisp version . : $($SBCL --version)"
 fi
 if test "$have_d" = "yes" ; then
   echo

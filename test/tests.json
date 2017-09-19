@@ -638,5 +638,22 @@
       "multic"
     ],
     "workdir": "rs/bin"
+  },
+  {
+    "name": "cl",
+    "server": {
+      "command": ["TestServer"],
+      "workdir": "cl",
+      "protocols": ["binary", "multi"],
+      "transports": ["buffered", "framed"],
+      "sockets": ["ip"]
+    },
+    "client": {
+      "command": ["TestClient"],
+      "workdir": "cl",
+      "protocols": ["binary", "multi"],
+      "transports": ["buffered", "framed"],
+      "sockets": ["ip"]
+    }
   }
 ]
