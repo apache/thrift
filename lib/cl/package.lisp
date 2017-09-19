@@ -1,5 +1,3 @@
-;;; -*- Mode: lisp; Syntax: ansi-common-lisp; Base: 10; Package: common-lisp-user; -*-
-
 (in-package :common-lisp-user)
 
 ;;; This file defines the packages for the `org.apache.thrift` library.

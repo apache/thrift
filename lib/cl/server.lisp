@@ -1,5 +1,3 @@
-;;; -*- Mode: lisp; Syntax: ansi-common-lisp; Base: 10; Package: org.apache.thrift.implementation; -*-
-
 (in-package :org.apache.thrift.implementation)
 
 ;;; This file implements service instance and a server interface for the `org.apache.thrift` library.
