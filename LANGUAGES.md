@@ -1,6 +1,6 @@
 # Apache Thrift Language Support #
 
-Last Modified: 2017-10-05<br>
+Last Modified: 2018-01-13<br>
 Version: 0.10.0+
 
 Thrift supports many programming languages and has an impressive test suite that exercises most of the languages, protocols, and transports that represents a matrix of thousands of possible combinations.  Each language typically has a minimum required version as well as support libraries - some mandatory and some optional.  All of this information is provided below to help you assess whether you can use Apache Thrift with your project.  Obviously this is a complex matrix to maintain and may not be correct in all cases - if you spot an error please inform the developers using the mailing list.
@@ -80,6 +80,16 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 <!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
 <td align=left><a href="https://issues.apache.org/jira/browse/THRIFT/component/12312398">Cocoa</a></td>
+</tr>
+<tr align=center>
+<td align=left><a href="lib/cl/README.md">Common Lisp</a></td>
+<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Language Levels -------><td colspan=2>unknown</td>
+<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td></td>
+<td align=left><a href="https://issues.apache.org/jira/browse/THRIFT-82">Common Lisp</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="lib/d/README.md">D</a></td>

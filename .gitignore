@@ -101,6 +101,9 @@ project.lock.json
 /contrib/fb303/py/fb303/ttypes.py
 /depcomp
 /install-sh
+/lib/cl/backport-update.zip
+/lib/cl/lib
+/lib/cl/run-tests
 /lib/cpp/Debug/
 /lib/cpp/Debug-mt/
 /lib/cpp/Release/
@@ -307,6 +310,8 @@ project.lock.json
 /test/results.json
 /test/c_glib/test_client
 /test/c_glib/test_server
+/test/cl/TestServer
+/test/cl/TestClient
 /test/cpp/StressTest
 /test/cpp/StressTestNonBlocking
 /test/cpp/TestClient
@@ -348,6 +353,8 @@ project.lock.json
 /test/rs/target/
 /test/rs/*.iml
 /test/rs/**/*.iml
+/tutorial/cl/TutorialClient
+/tutorial/cl/TutorialServer
 /tutorial/cpp/TutorialClient
 /tutorial/cpp/TutorialServer
 /tutorial/c_glib/tutorial_client
@@ -395,3 +402,7 @@ project.lock.json
 /tutorial/rs/target
 /tutorial/rs/Cargo.lock
 /ylwrap
+/lib/cl/quicklisp.lisp
+/lib/cl/externals/
+/lib/cl/run-tests
+/lib/cl/quicklisp/
