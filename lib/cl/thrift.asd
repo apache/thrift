@@ -25,8 +25,9 @@
 
 (asdf:defsystem :thrift
   :depends-on (;; use this puri version to support thrift uri class
-               #-:asdf.hierarchical-names :puri-ppcre
-               #+:asdf.hierarchical-names :com.b9.puri.puri-ppcre
+               ;; #-:asdf.hierarchical-names :puri-ppcre
+               ;; #+:asdf.hierarchical-names :com.b9.puri.puri-ppcre
+	       :puri
                :usocket
                :closer-mop 
                :trivial-utf-8)

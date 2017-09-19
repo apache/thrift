@@ -198,10 +198,10 @@
 
   (:shadowing-import-from :common-lisp :byte :set :list :map :type-of :float)
   
-  (:import-from :de.setf.utility
-                :stream-reader
-                :stream-writer
-                )
+  ;; (:import-from :de.setf.utility
+  ;;               :stream-reader
+  ;;               :stream-writer
+  ;;               )
   #+ccl
   (:import-from :ccl
                 :stream-write-byte :stream-read-byte
