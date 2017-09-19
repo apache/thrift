@@ -94,6 +94,10 @@ RUN apt-get install -y --no-install-recommends \
 
 ENV D_VERSION 2.077.1-0.1
 RUN apt-get install -y --no-install-recommends \
+`# Common Lisp (sbcl) dependencies` \
+      sbcl
+
+RUN apt-get install -y --no-install-recommends \
       `# D dependencies` \
       dmd-bin=$D_VERSION \
       libphobos2-dev=$D_VERSION \

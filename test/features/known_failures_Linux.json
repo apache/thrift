@@ -1,6 +1,8 @@
 [
     "c_glib-limit_container_length_binary_buffered-ip",
     "c_glib-limit_string_length_binary_buffered-ip",
+    "cl-limit_string_length_binary_buffered-ip",
+    "cl-limit_container_length_binary_buffered-ip",
     "cpp-theader_framed_binary_multih-header_buffered-ip",
     "cpp-theader_framed_compact_multih-header_buffered-ip",
     "cpp-theader_unframed_binary_multih-header_buffered-ip",
