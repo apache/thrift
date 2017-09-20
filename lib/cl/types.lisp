@@ -29,7 +29,7 @@
 
 (deftype bool () 'boolean)
 (deftype thrift:byte () '(signed-byte 8))
-(deftype i08 () '(signed-byte 8))
+(deftype i8 () '(signed-byte 8))
 (deftype i16 () '(signed-byte 16))
 (deftype i32 () '(signed-byte 32))
 (deftype i64 () '(signed-byte 64))
@@ -38,7 +38,7 @@
   'single-float)
 ;; string is standard
 (deftype double () 'double-float)
-;;; this is not what the spec says (it claims i08), but that makes no sense
+;;; this is not what the spec says (it claims i8), but that makes no sense
 (deftype binary () '(array (unsigned-byte 8) (*)))
 
 
@@ -63,7 +63,7 @@
 
 (deftype base-type ()
   "Indicates the union of thrift base (atomic) types."
-  '(member bool thrift:byte i08 i16 i32 i64 double thrift:float string binary))
+  '(member bool thrift:byte i8 i16 i32 i64 double thrift:float string binary))
 
 (defun base-type-p (type)
   (typep type 'base-type))
@@ -133,7 +133,7 @@
     'bool)
   (:method ((value integer))
     (etypecase value
-      (i08 'thrift:byte)
+      (i8 'i8)
       (i16 'i16)
       (i32 'i32)
       (i64 'i64)))
@@ -173,7 +173,11 @@
 
   (:method ((type symbol)) type)
 
-  (:method ((type cons)) (first type)))
+  (:method ((type cons))
+    (let ((first (first type)))
+      (if (eql first 'thrift:enum)
+	  'i32
+	  first))))
 
 ;;;
 ;;; primitive constructors

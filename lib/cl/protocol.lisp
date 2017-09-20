@@ -44,7 +44,7 @@
 ;;; Type comparisons - both at compile-time and as run-time validation, are according to nominal equality.
 ;;; As the Thrift type system permits no sub-typing, primtive types are a finite set and the struct/exception
 ;;; classes permit no super-types.
-;;; The only variation would be to to permit integer subtypes for integer container elements, eg i08 sent
+;;; The only variation would be to to permit integer subtypes for integer container elements, eg i8 sent
 ;;; where i32 was declared, but that would matter only if supporting a compact protocol.
 ;;;
 ;;; Names exists in two domains:
@@ -62,7 +62,7 @@
 (defgeneric stream-read-type (protocol))
 (defgeneric stream-read-message-type (protocol))
 (defgeneric stream-read-bool (protocol))
-(defgeneric stream-read-i08 (protocol))
+(defgeneric stream-read-i8 (protocol))
 (defgeneric stream-read-i16 (protocol))
 (defgeneric stream-read-i32 (protocol))
 (defgeneric stream-read-i64 (protocol))
@@ -92,7 +92,7 @@
 (defgeneric stream-write-type (protocol type-name))
 (defgeneric stream-write-message-type (protocol type-name))
 (defgeneric stream-write-bool (protocol value))
-(defgeneric stream-write-i08 (protocol value))
+(defgeneric stream-write-i8 (protocol value))
 (defgeneric stream-write-i16 (protocol value))
 (defgeneric stream-write-i32 (protocol value))
 (defgeneric stream-write-i64 (protocol value))
@@ -505,8 +505,8 @@
  This version recognizes the layout established by the compact protocol, whereby the first byte is the
  protocol id and subsequent to that is specific to the protocol."
 
-  (let* ((id (logand (stream-read-i08 protocol) #xff))          ; actually unsigned
-         (ver (logand (stream-read-i08 protocol) #xff))         ; actually unsigned
+  (let* ((id (logand (stream-read-i8 protocol) #xff))          ; actually unsigned
+         (ver (logand (stream-read-i8 protocol) #xff))         ; actually unsigned
          (type-name (stream-read-message-type protocol)))
     (unless (and (= (protocol-version-id protocol) id) (= (protocol-version-number protocol) ver))
       (invalid-protocol-version protocol id ver))
@@ -687,10 +687,10 @@
   (:method ((protocol protocol) (type-code (eql 'bool)))
     (stream-read-bool protocol))
   (:method ((protocol protocol) (type-code (eql 'thrift:byte)))
-    ;; call through the i08 methods as byte ops are transport, not protocol methods
-    (stream-read-i08 protocol))
-  (:method ((protocol protocol) (type-code (eql 'i08)))
-    (stream-read-i08 protocol))
+    ;; call through the i8 methods as byte ops are transport, not protocol methods
+    (stream-read-i8 protocol))
+  (:method ((protocol protocol) (type-code (eql 'i8)))
+    (stream-read-i8 protocol))
   (:method ((protocol protocol) (type-code (eql 'i16)))
     (stream-read-i16 protocol))
   (:method ((protocol protocol) (type-code (eql 'enum)))
@@ -904,8 +904,8 @@
 
 
 (defmethod stream-write-message-begin ((protocol protocol) name type sequence)
-  (stream-write-i08 protocol (protocol-version-id protocol))
-  (stream-write-i08 protocol (protocol-version-number protocol))
+  (stream-write-i8 protocol (protocol-version-id protocol))
+  (stream-write-i8 protocol (protocol-version-number protocol))
   (stream-write-message-type protocol type)
   (stream-write-string protocol name)
   (stream-write-i32 protocol sequence))
@@ -1047,7 +1047,7 @@
     (stream-write-bool protocol value))
   (:method ((protocol protocol) (value integer))
     (etypecase value
-     (i08 (stream-write-i08 protocol value))
+     (i8 (stream-write-i8 protocol value))
      (i16 (stream-write-i16 protocol value))
      (i32 (stream-write-i32 protocol value))
      (i64 (stream-write-i64 protocol value))))
@@ -1077,9 +1077,9 @@
   (:method ((protocol protocol) (value t) (type (eql 'bool)))
     (stream-write-bool protocol value))
   (:method ((protocol protocol) (value integer) (type (eql 'thrift:byte)))
-    (stream-write-i08 protocol value))
-  (:method ((protocol protocol) (value integer) (type (eql 'i08)))
-    (stream-write-i08 protocol value))
+    (stream-write-i8 protocol value))
+  (:method ((protocol protocol) (value integer) (type (eql 'i8)))
+    (stream-write-i8 protocol value))
   (:method ((protocol protocol) (value integer) (type (eql 'i16)))
     (stream-write-i16 protocol value))
   (:method ((protocol protocol) (value integer) (type (eql 'enum)))

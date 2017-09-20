@@ -70,7 +70,7 @@
 (defmethod stream-read-bool ((protocol binary-protocol))
   (= (stream-read-byte (protocol-input-transport protocol)) 1))
 
-(defmethod stream-read-i08 ((protocol binary-protocol))
+(defmethod stream-read-i8 ((protocol binary-protocol))
   (stream-read-byte (protocol-input-transport protocol)))
 
 (macrolet ((read-and-decode-integer (protocol byte-count &aux (bit-count (* byte-count 8)))
@@ -181,7 +181,7 @@
   1)
 
 
-(defmethod stream-write-i08 ((protocol binary-protocol) val)
+(defmethod stream-write-i8 ((protocol binary-protocol) val)
   (stream-write-byte (protocol-output-transport protocol) val)
   1)
 

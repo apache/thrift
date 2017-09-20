@@ -27,7 +27,7 @@
     (void . 1)
     (bool . 2)
     (thrift:byte . 3)
-    (i08  . 3)
+    (i8  . 3)
     (double . 4)
     (thrift:float . 5)                         ; this is not standard
     (i16 . 6)
@@ -58,7 +58,7 @@
     (void . null)
     (bool . symbol)
     (thrift:byte . fixnum)
-    (i08  . fixnum)
+    (i8  . fixnum)
     (double . float)
     (i16 . fixnum)
     (enum . fixnum)

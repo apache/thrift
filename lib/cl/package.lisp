@@ -81,7 +81,7 @@
    :field-type-error
    :float
    :method-definition
-   :i08
+   :i8
    :i16
    :i32
    :i64
@@ -117,7 +117,7 @@
    :stream-read-field-begin
    :stream-read-field-end
    :stream-read-float
-   :stream-read-i08
+   :stream-read-i8
    :stream-read-i16
    :stream-read-i32
    :stream-read-i64
@@ -145,7 +145,7 @@
    :stream-write-double
    :stream-write-field
    :stream-write-float
-   :stream-write-i08
+   :stream-write-i8
    :stream-write-i16
    :stream-write-i32
    :stream-write-i64
