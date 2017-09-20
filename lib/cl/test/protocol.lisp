@@ -31,7 +31,7 @@
            `((stream-read-bool stream-write-bool t nil)
              (stream-read-type stream-write-type thrift:byte thrift:map thrift:list thrift:set struct)
              (stream-read-message-type stream-write-message-type call)
-             (stream-read-i08 stream-write-i08 ,(- (expt 2 7))  -1 0 1 ,(1- (expt 2 7)))
+             (stream-read-i8 stream-write-i8 ,(- (expt 2 7))  -1 0 1 ,(1- (expt 2 7)))
              (stream-read-i16 stream-write-i16 ,(- (expt 2 15))  -1 0 1 ,(1- #x70f0) ,(1- (expt 2 15)))
              (stream-read-i32 stream-write-i32 ,(- (expt 2 31))  -1 0 1 ,(1- #x7700ff00) ,(1- (expt 2 31)))
              (stream-read-i64 stream-write-i64 ,(- (expt 2 63))  -1 0 1 ,(1- #x77770000ffff0000) ,(1- (expt 2 63)))))))

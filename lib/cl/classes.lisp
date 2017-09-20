@@ -328,7 +328,7 @@
                           'bool
                           literal-type))
                 (signed-byte (ecase (second literal-type)
-                               (8 'i08)
+                               (8 'i8)
                                (16 'i16)
                                (32 'i32)
                                (64 'i64)))
