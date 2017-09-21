@@ -529,7 +529,7 @@
 
             ;; export the service name only
             (eval-when (:compile-toplevel :load-toplevel :execute)
-              (export ',name (symbol-package ',name)))
+              (export ',name))
 
             ;; construct and bind the global service instance
             (defparameter ,name
