@@ -65,6 +65,7 @@ public:
     gen_templates_only_ = false;
     gen_moveable_ = false;
     gen_no_ostream_operators_ = false;
+    gen_no_skeleton_ = false;
 
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("pure_enums") == 0) {
@@ -84,6 +85,8 @@ public:
         gen_moveable_ = true;
       } else if ( iter->first.compare("no_ostream_operators") == 0) {
         gen_no_ostream_operators_ = true;
+      } else if ( iter->first.compare("no_skeleton") == 0) {
+        gen_no_skeleton_ = true;
       } else {
         throw "unknown option cpp:" + iter->first;
       }
@@ -337,6 +340,11 @@ private:
    * True if we should omit generating the default opeartors ==, != and <.
    */
   bool gen_no_default_operators_;
+
+   /**
+   * True if we should generate skeleton.
+   */
+  bool gen_no_skeleton_;
 
   /**
    * Strings for namespace, computed once up front then used directly
@@ -1769,8 +1777,12 @@ void t_cpp_generator::generate_service(t_service* tservice) {
   generate_service_client(tservice, "");
   generate_service_processor(tservice, "");
   generate_service_multiface(tservice);
-  generate_service_skeleton(tservice);
   generate_service_client(tservice, "Concurrent");
+
+  // Generate skeleton
+  if (!gen_no_skeleton_) {
+      generate_service_skeleton(tservice);
+  }
 
   // Generate all the cob components
   if (gen_cob_style_) {
@@ -1780,7 +1792,11 @@ void t_cpp_generator::generate_service(t_service* tservice) {
     generate_service_null(tservice, "CobSv");
     generate_service_client(tservice, "Cob");
     generate_service_processor(tservice, "Cob");
-    generate_service_async_skeleton(tservice);
+
+    if (!gen_no_skeleton_) {
+      generate_service_async_skeleton(tservice);
+    }
+   
   }
 
   f_header_ << "#ifdef _MSC_VER\n"
@@ -4466,4 +4482,5 @@ THRIFT_REGISTER_GENERATOR(
     "    include_prefix:  Use full include paths in generated files.\n"
     "    moveable_types:  Generate move constructors and assignment operators.\n"
     "    no_ostream_operators:\n"
-    "                     Omit generation of ostream definitions.\n")
+    "                     Omit generation of ostream definitions.\n"
+    "    no_skeleton:     Omits generation of skeleton.\n")
