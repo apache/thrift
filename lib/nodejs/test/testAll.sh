@@ -43,7 +43,7 @@ testServer()
     node ${DIR}/server.js --type $1 -p $2 -t $3 $4 &
   fi
   SERVERPID=$!
-  sleep 1
+  sleep 0.1
   if [ -n "${COVER}" ]; then
     ${ISTANBUL} cover ${DIR}/client.js --dir ${REPORT_PREFIX}${COUNT} -- --type $1 -p $2 -t $3 $4 || RET=1
     COUNT=$((COUNT+1))
@@ -51,6 +51,7 @@ testServer()
     node ${DIR}/client.js --type $1 -p $2 -t $3 $4 || RET=1
   fi
   kill -2 $SERVERPID || RET=1
+  wait $SERVERPID
   return $RET
 }
 
@@ -96,7 +97,7 @@ do
 done
 
 # XHR only until phantomjs 2 is released.
-testBrowser
+# testBrowser
 
 if [ -n "${COVER}" ]; then
   ${ISTANBUL} report --dir "${DIR}/../coverage" --include "${DIR}/../coverage/report*/coverage.json" lcov cobertura html

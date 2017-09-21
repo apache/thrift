@@ -43,7 +43,8 @@ RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &
 #     echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main" > /etc/apt/sources.list.d/dotnetdev.list
 
 # node.js (this step runs apt-get update internally)
-RUN curl -sL https://deb.nodesource.com/setup_8.x | bash
+# note: node 8.5 introduced some issues with directory handling / jsdoc / something... using 7.x for now
+RUN curl -sL https://deb.nodesource.com/setup_7.x | bash
 
 
 ### install general dependencies
