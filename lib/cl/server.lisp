@@ -108,7 +108,7 @@
         (values fun service)
         (dolist (base-service (service-base-services service))
           (multiple-value-bind (fun service)
-                               (method-definition identifier base-service)
+                               (method-definition base-service identifier)
             (when fun (return-from method-definition (values fun service)))))))))
 
 (defgeneric (setf method-definition) (function service identifier)
