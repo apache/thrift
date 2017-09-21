@@ -155,6 +155,9 @@ public class THsHaServer extends TNonblockingServer {
     return invoker;
   }
 
+  protected static ExecutorService getInvoker() {
+    return invoker;
+  }
 
   protected void gracefullyShutdownInvokerPool() {
     // try to gracefully shut down the executor service
