@@ -155,7 +155,7 @@ public class THsHaServer extends TNonblockingServer {
     return invoker;
   }
 
-  protected static ExecutorService getInvoker() {
+  protected ExecutorService getInvoker() {
     return invoker;
   }
 
