@@ -30,6 +30,8 @@ precross: bin/testclient bin/testserver
 ThriftTest.thrift: $(THRIFTTEST)
 	grep -v list.*map.*list.*map $(THRIFTTEST) > ThriftTest.thrift
 
+.PHONY: gopath
+
 # Thrift for GO has problems with complex map keys: THRIFT-2063
 gopath: $(THRIFT) ThriftTest.thrift
 	mkdir -p src/gen
