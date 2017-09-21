@@ -22,8 +22,9 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	"git.apache.org/thrift.git/lib/go/thrift"
 	"tutorial"
+
+	"git.apache.org/thrift.git/lib/go/thrift"
 )
 
 func handleClient(client *tutorial.CalculatorClient) (err error) {
@@ -98,5 +99,7 @@ func runClient(transportFactory thrift.TTransportFactory, protocolFactory thrift
 	if err := transport.Open(); err != nil {
 		return err
 	}
-	return handleClient(tutorial.NewCalculatorClientFactory(transport, protocolFactory))
+	iprot := protocolFactory.GetProtocol(transport)
+	oprot := protocolFactory.GetProtocol(transport)
+	return handleClient(tutorial.NewCalculatorClient(thrift.NewTStandardClient(iprot, oprot)))
 }

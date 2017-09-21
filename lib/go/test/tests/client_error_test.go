@@ -20,11 +20,12 @@
 package tests
 
 import (
-	"github.com/golang/mock/gomock"
 	"errors"
 	"errortest"
 	"testing"
 	"thrift"
+
+	"github.com/golang/mock/gomock"
 )
 
 // TestCase: Comprehensive call and reply workflow in the client.
@@ -397,7 +398,6 @@ func prepareClientCallReply(protocol *MockTProtocol, failAt int, failWith error)
 // Expecting TTransportError on fail.
 func TestClientReportTTransportErrors(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	transport := thrift.NewTMemoryBuffer()
 
 	thing := errortest.NewTestStruct()
 	thing.M = make(map[string]string)
@@ -411,7 +411,7 @@ func TestClientReportTTransportErrors(t *testing.T) {
 		if !prepareClientCallReply(protocol, i, err) {
 			return
 		}
-		client := errortest.NewErrorTestClientProtocol(transport, protocol, protocol)
+		client := errortest.NewErrorTestClient(thrift.NewTStandardClient(protocol, protocol))
 		_, retErr := client.TestStruct(defaultCtx, thing)
 		mockCtrl.Finish()
 		err2, ok := retErr.(thrift.TTransportException)
@@ -429,7 +429,6 @@ func TestClientReportTTransportErrors(t *testing.T) {
 // Expecting TTProtocolErrors on fail.
 func TestClientReportTProtocolErrors(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	transport := thrift.NewTMemoryBuffer()
 
 	thing := errortest.NewTestStruct()
 	thing.M = make(map[string]string)
@@ -443,7 +442,7 @@ func TestClientReportTProtocolErrors(t *testing.T) {
 		if !prepareClientCallReply(protocol, i, err) {
 			return
 		}
-		client := errortest.NewErrorTestClientProtocol(transport, protocol, protocol)
+		client := errortest.NewErrorTestClient(thrift.NewTStandardClient(protocol, protocol))
 		_, retErr := client.TestStruct(defaultCtx, thing)
 		mockCtrl.Finish()
 		err2, ok := retErr.(thrift.TProtocolException)
@@ -557,14 +556,13 @@ func prepareClientCallException(protocol *MockTProtocol, failAt int, failWith er
 // TestCase: call and reply with exception workflow in the client.
 func TestClientCallException(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	transport := thrift.NewTMemoryBuffer()
 
 	err := thrift.NewTTransportException(thrift.TIMED_OUT, "test")
 	for i := 0; ; i++ {
 		protocol := NewMockTProtocol(mockCtrl)
 		willComplete := !prepareClientCallException(protocol, i, err)
 
-		client := errortest.NewErrorTestClientProtocol(transport, protocol, protocol)
+		client := errortest.NewErrorTestClient(thrift.NewTStandardClient(protocol, protocol))
 		_, retErr := client.TestString(defaultCtx, "test")
 		mockCtrl.Finish()
 
@@ -592,7 +590,6 @@ func TestClientCallException(t *testing.T) {
 // TestCase: Mismatching sequence id has been received in the client.
 func TestClientSeqIdMismatch(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	transport := thrift.NewTMemoryBuffer()
 	protocol := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
 		protocol.EXPECT().WriteMessageBegin("testString", thrift.CALL, int32(1)),
@@ -607,7 +604,7 @@ func TestClientSeqIdMismatch(t *testing.T) {
 		protocol.EXPECT().ReadMessageBegin().Return("testString", thrift.REPLY, int32(2), nil),
 	)
 
-	client := errortest.NewErrorTestClientProtocol(transport, protocol, protocol)
+	client := errortest.NewErrorTestClient(thrift.NewTStandardClient(protocol, protocol))
 	_, err := client.TestString(defaultCtx, "test")
 	mockCtrl.Finish()
 	appErr, ok := err.(thrift.TApplicationException)
@@ -622,7 +619,6 @@ func TestClientSeqIdMismatch(t *testing.T) {
 // TestCase: Wrong method name has been received in the client.
 func TestClientWrongMethodName(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	transport := thrift.NewTMemoryBuffer()
 	protocol := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
 		protocol.EXPECT().WriteMessageBegin("testString", thrift.CALL, int32(1)),
@@ -637,7 +633,7 @@ func TestClientWrongMethodName(t *testing.T) {
 		protocol.EXPECT().ReadMessageBegin().Return("unknown", thrift.REPLY, int32(1), nil),
 	)
 
-	client := errortest.NewErrorTestClientProtocol(transport, protocol, protocol)
+	client := errortest.NewErrorTestClient(thrift.NewTStandardClient(protocol, protocol))
 	_, err := client.TestString(defaultCtx, "test")
 	mockCtrl.Finish()
 	appErr, ok := err.(thrift.TApplicationException)
@@ -652,7 +648,6 @@ func TestClientWrongMethodName(t *testing.T) {
 // TestCase: Wrong message type has been received in the client.
 func TestClientWrongMessageType(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	transport := thrift.NewTMemoryBuffer()
 	protocol := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
 		protocol.EXPECT().WriteMessageBegin("testString", thrift.CALL, int32(1)),
@@ -667,7 +662,7 @@ func TestClientWrongMessageType(t *testing.T) {
 		protocol.EXPECT().ReadMessageBegin().Return("testString", thrift.INVALID_TMESSAGE_TYPE, int32(1), nil),
 	)
 
-	client := errortest.NewErrorTestClientProtocol(transport, protocol, protocol)
+	client := errortest.NewErrorTestClient(thrift.NewTStandardClient(protocol, protocol))
 	_, err := client.TestString(defaultCtx, "test")
 	mockCtrl.Finish()
 	appErr, ok := err.(thrift.TApplicationException)
