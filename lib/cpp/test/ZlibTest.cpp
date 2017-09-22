@@ -332,6 +332,12 @@ void test_no_write() {
   BOOST_CHECK_EQUAL(membuf->available_read(), (uint32_t)0);
 }
 
+void test_get_underlying_transport() {
+  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
+  BOOST_CHECK_EQUAL(membuf.get(), zlib_trans->getUnderlyingTransport().get());
+}
+
 /*
  * Initialization
  */
@@ -436,6 +442,7 @@ bool init_unit_test_suite() {
   add_tests(suite, gen_random_buffer(buf_len), buf_len, "random");
 
   suite->add(BOOST_TEST_CASE(test_no_write));
+  suite->add(BOOST_TEST_CASE(test_get_underlying_transport));
 
   return true;
 }
