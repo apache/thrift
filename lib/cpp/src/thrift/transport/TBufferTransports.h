@@ -448,6 +448,9 @@ class TMemoryBuffer : public TVirtualTransport<TMemoryBuffer, TBufferBase> {
 private:
   // Common initialization done by all constructors.
   void initCommon(uint8_t* buf, uint32_t size, bool owner, uint32_t wPos) {
+
+    maxBufferSize_ = std::numeric_limits<uint32_t>::max();
+
     if (buf == NULL && size != 0) {
       assert(owner);
       buf = (uint8_t*)std::malloc(size);
@@ -673,6 +676,29 @@ public:
    */
   uint32_t readAll(uint8_t* buf, uint32_t len) { return TBufferBase::readAll(buf, len); }
 
+  //! \brief Get the current buffer size
+  //! \returns the current buffer size
+  uint32_t getBufferSize() const {
+    return bufferSize_;
+  }
+
+  //! \brief Get the current maximum buffer size
+  //! \returns the current maximum buffer size
+  uint32_t getMaxBufferSize() const {
+    return maxBufferSize_;
+  }
+
+  //! \brief Change the maximum buffer size
+  //! \param[in]  maxSize  the new maximum buffer size allowed to grow to
+  //! \throws  TTransportException(BAD_ARGS) if maxSize is less than the current buffer size
+  void setMaxBufferSize(uint32_t maxSize) {
+    if (maxSize < bufferSize_) {
+      throw TTransportException(TTransportException::BAD_ARGS,
+                                "Maximum buffer size would be less than current buffer size");
+    }
+    maxBufferSize_ = maxSize;
+  }
+
 protected:
   void swap(TMemoryBuffer& that) {
     using std::swap;
@@ -704,6 +730,9 @@ protected:
 
   // Allocated buffer size
   uint32_t bufferSize_;
+
+  // Maximum allowed size
+  uint32_t maxBufferSize_;
 
   // Is this object the owner of the buffer?
   bool owner_;

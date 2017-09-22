@@ -117,17 +117,52 @@ BOOST_AUTO_TEST_CASE(test_exceptions) {
   BOOST_CHECK_NO_THROW(buf2.write((const uint8_t*)"bar", 3));
 }
 
-#ifndef _WIN32
-// We can't allocate 1 GB of memory in 32-bit environments.
-BOOST_AUTO_TEST_CASE(test_over_two_gb) {
-  TMemoryBuffer buf;
-  std::vector<uint8_t> small_buff(1);
-  std::vector<uint8_t> one_gb(1073741824);
-
-  buf.write(&small_buff[0], small_buff.size());
-  buf.write(&one_gb[0], one_gb.size());
-  BOOST_CHECK_THROW(buf.write(&one_gb[0], one_gb.size()), TTransportException);
+BOOST_AUTO_TEST_CASE(test_default_maximum_buffer_size)
+{
+  BOOST_CHECK_EQUAL(std::numeric_limits<uint32_t>::max(), TMemoryBuffer().getMaxBufferSize());
 }
-#endif
+
+BOOST_AUTO_TEST_CASE(test_default_buffer_size)
+{
+  BOOST_CHECK_EQUAL(1024, TMemoryBuffer().getBufferSize());
+}
+
+BOOST_AUTO_TEST_CASE(test_error_set_max_buffer_size_too_small)
+{
+  TMemoryBuffer buf;
+  BOOST_CHECK_THROW(buf.setMaxBufferSize(buf.getBufferSize() - 1), TTransportException);
+}
+
+BOOST_AUTO_TEST_CASE(test_maximum_buffer_size)
+{
+  TMemoryBuffer buf;
+  buf.setMaxBufferSize(8192);
+  std::vector<uint8_t> small_buff(1);
+
+  for (size_t i = 0; i < 8192; ++i)
+  {
+    buf.write(&small_buff[0], 1);
+  }
+
+  BOOST_CHECK_THROW(buf.write(&small_buff[0], 1), TTransportException);
+}
+
+BOOST_AUTO_TEST_CASE(test_memory_buffer_to_get_sizeof_objects)
+{
+  // This is a demonstration of how to use TMemoryBuffer to determine
+  // the serialized size of a thrift object in the Binary protocol.
+  // See THRIFT-3480
+
+  shared_ptr<TMemoryBuffer> memBuffer(new TMemoryBuffer());
+  shared_ptr<TBinaryProtocol> binaryProtcol(new TBinaryProtocol(memBuffer));
+
+  thrift::test::Xtruct object;
+  object.i32_thing = 10;
+  object.i64_thing = 30;
+  object.string_thing = "who's your daddy?";
+
+  uint32_t size = object.write(binaryProtcol.get());
+  BOOST_CHECK_EQUAL(47, size);
+}
 
 BOOST_AUTO_TEST_SUITE_END()
