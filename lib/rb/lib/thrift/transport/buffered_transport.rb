@@ -101,7 +101,8 @@ module Thrift
         @transport.write(@wbuf)
         @wbuf = Bytes.empty_byte_buffer
       end
-      
+
+      @rbuf = Bytes.empty_byte_buffer unless @rbuf.empty?
       @transport.flush
     end
   end
