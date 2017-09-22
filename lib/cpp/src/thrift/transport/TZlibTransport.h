@@ -180,6 +180,8 @@ public:
   static const int DEFAULT_UWBUF_SIZE = 128;
   static const int DEFAULT_CWBUF_SIZE = 1024;
 
+  stdcxx::shared_ptr<TTransport> getUnderlyingTransport() const { return transport_; }
+
 protected:
   inline void checkZlibRv(int status, const char* msg);
   inline void checkZlibRvNothrow(int status, const char* msg);
