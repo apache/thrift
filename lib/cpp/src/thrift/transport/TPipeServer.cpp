@@ -296,6 +296,10 @@ shared_ptr<TTransport> TNamedPipeServer::acceptImpl() {
   // if we got here, then we are in an error / shutdown case
   DWORD gle = GetLastError(); // save error before doing cleanup
   GlobalOutput.perror("TPipeServer ConnectNamedPipe GLE=", gle);
+  if(gle == ERROR_OPERATION_ABORTED) {
+    TAutoCrit lock(pipe_protect_);    	// Needed to insure concurrent thread to be out of interrupt.
+    throw TTransportException(TTransportException::INTERRUPTED, "TPipeServer: server interupted");
+  }
   throw TTransportException(TTransportException::NOT_OPEN, "TPipeServer: client connection failed");
 }
 
