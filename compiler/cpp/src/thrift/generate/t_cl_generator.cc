@@ -37,6 +37,18 @@ class t_cl_generator : public t_oop_generator {
       const std::string& option_string)
     : t_oop_generator(program)
   {
+    no_asd = false;
+
+    std::map<std::string, std::string>::const_iterator iter;
+    
+    for(iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if(iter->first.compare("no_asd") == 0) {
+        no_asd = true;
+      } else {
+        throw "unknown option cl:" + iter->first;
+      }
+    }
+    
     out_dir_base_ = "gen-cl";
   }
 
@@ -55,12 +67,14 @@ class t_cl_generator : public t_oop_generator {
   std::string render_const_value(t_type* type, t_const_value* value);
 
   std::string cl_autogen_comment();
+  void asdf_def(std::ofstream &out, std::string name);
   void package_def(std::ofstream &out, std::string name);
   void package_in(std::ofstream &out, std::string name);
   std::string generated_package();
   std::string prefix(std::string name);
   std::string package_of(t_program* program);
   std::string package();
+  std::string render_includes();
 
   std::string type_name(t_type* ttype);
   std::string typespec (t_type *t);
@@ -75,8 +89,11 @@ class t_cl_generator : public t_oop_generator {
   /**
    * Isolate the variable definitions, as they can require structure definitions
    */
+  std::ofstream f_asd_;
   std::ofstream f_types_;
   std::ofstream f_vars_;
+
+  bool no_asd;
 
 };
 
@@ -99,6 +116,27 @@ void t_cl_generator::init_generator() {
   package_def(f_types_, program_name_);
   package_in(f_types_, program_name_);
   package_in(f_vars_, program_name_);
+
+  if (!no_asd) {
+    string f_asd_name = program_dir+"/thrift-gen-"+program_name_+".asd";
+    f_asd_.open(f_asd_name.c_str());
+    f_asd_ << cl_autogen_comment() << endl;
+    asdf_def(f_asd_, program_name_);
+  }
+}
+
+/**
+ * Renders all the imports necessary for including another Thrift program
+ */
+string t_cl_generator::render_includes() {
+  const vector<t_program*>& includes = program_->get_includes();
+  string result = "";
+  result += ":depends-on (:thrift";
+  for (size_t i = 0; i < includes.size(); ++i) {
+    result += " :thrift-gen-" + underscore(includes[i]->get_name());
+  }
+  result += ")\n";
+  return result;
 }
 
 string t_cl_generator::package_of(t_program* program) {
@@ -127,12 +165,24 @@ string t_cl_generator::cl_docstring(string raw) {
 
 
 void t_cl_generator::close_generator() {
+  f_asd_.close();
   f_types_.close();
   f_vars_.close();
 }
 
 string t_cl_generator::generated_package() {
   return program_->get_namespace("cpp");
+}
+
+void t_cl_generator::asdf_def(std::ofstream &out, string name) {
+  out << "(asdf:defsystem #:thrift-gen-" << program_name_ << endl;
+  indent_up();
+  out << indent() << render_includes()
+      << indent() << ":serial t" << endl
+      << indent() << ":components ("
+      << "(:file \"" << program_name_ << "-types\") "
+      << "(:file \"" << program_name_ << "-vars\")))" << endl;
+  indent_down();
 }
 
 /***
@@ -470,4 +520,7 @@ string t_cl_generator::type_name(t_type* ttype) {
   return prefix + name;
 }
 
-THRIFT_REGISTER_GENERATOR(cl, "Common Lisp", "");
+THRIFT_REGISTER_GENERATOR(
+    cl,
+    "Common Lisp",
+    "    no_asd:          Do not generate .asd files with ASDF system definitions.\n")
