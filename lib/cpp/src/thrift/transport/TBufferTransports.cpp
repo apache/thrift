@@ -364,9 +364,9 @@ void TMemoryBuffer::ensureCanWrite(uint32_t len) {
   uint64_t new_size = bufferSize_;
   while (len > avail) {
     new_size = new_size > 0 ? new_size * 2 : 1;
-    if (new_size > std::numeric_limits<uint32_t>::max()) {
+    if (new_size > maxBufferSize_) {
       throw TTransportException(TTransportException::BAD_ARGS,
-                                "Internal buffer size exceeded 2GB");
+                                "Internal buffer size overflow");
     }
     avail = available_write() + (new_size - bufferSize_);
   }
