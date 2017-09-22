@@ -465,8 +465,8 @@
       ],
       "command": [
         "php",
-        "-dextension_dir=../../lib/php/src/ext/thrift_protocol/modules/",
-        "--php-ini=../../lib/php/thrift_protocol.ini",
+        "-dextension_dir=php_ext_dir",
+        "--php-ini=test_php.ini",
         "--no-php-ini",
         "-ddisplay_errors=stderr",
         "-dlog_errors=0",
