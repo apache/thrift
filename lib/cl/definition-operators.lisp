@@ -98,7 +98,9 @@
        
        (unless (find-package ,implementation-name)
          (defpackage ,implementation-name
-           (:use :thrift)
+           (:use :thrift :common-lisp)
+	   (:shadowing-import-from :thrift
+				   :float :list :set :map :byte :type-of)
            (:documentation ,(format nil "This is the implementation package for ~a.
  It uses the generic THRIFT package for access to the library interface." name))))
        
