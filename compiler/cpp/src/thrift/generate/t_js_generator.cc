@@ -1510,16 +1510,20 @@ void t_js_generator::generate_service_client(t_service* tservice) {
         f_service_ << indent() << "return this.output.getTransport().flush(callback);" << endl;
       } else {
         f_service_ << indent() << "if (callback) {" << endl;
-        f_service_ << indent() << "  var self = this;" << endl;
-        f_service_ << indent() << "  this.output.getTransport().flush(true, function() {" << endl;
-        f_service_ << indent() << "    var result = null;" << endl;
-        f_service_ << indent() << "    try {" << endl;
-        f_service_ << indent() << "      result = self.recv_" << funname << "();" << endl;
-        f_service_ << indent() << "    } catch (e) {" << endl;
-        f_service_ << indent() << "      result = e;" << endl;
-        f_service_ << indent() << "    }" << endl;
-        f_service_ << indent() << "    callback(result);" << endl;
-        f_service_ << indent() << "  });" << endl;
+        if((*f_iter)->is_oneway()) {
+          f_service_ << indent() << "  this.output.getTransport().flush(true, null);" << endl;
+        } else {
+          f_service_ << indent() << "  var self = this;" << endl;
+          f_service_ << indent() << "  this.output.getTransport().flush(true, function() {" << endl;
+          f_service_ << indent() << "    var result = null;" << endl;
+          f_service_ << indent() << "    try {" << endl;
+          f_service_ << indent() << "      result = self.recv_" << funname << "();" << endl;
+          f_service_ << indent() << "    } catch (e) {" << endl;
+          f_service_ << indent() << "      result = e;" << endl;
+          f_service_ << indent() << "    }" << endl;
+          f_service_ << indent() << "    callback(result);" << endl;
+          f_service_ << indent() << "  });" << endl;
+        }
         f_service_ << indent() << "} else {" << endl;
         f_service_ << indent() << "  return this.output.getTransport().flush();" << endl;
         f_service_ << indent() << "}" << endl;
