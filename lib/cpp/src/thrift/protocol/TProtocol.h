@@ -753,6 +753,8 @@ uint32_t skip(Protocol_& prot, TType type) {
   case T_UTF8:
   case T_UTF16:
     break;
+  default:
+    throw TProtocolException(TProtocolException::INVALID_DATA);
   }
   return 0;
 }
