@@ -138,7 +138,7 @@ RUN apt-get install -y --no-install-recommends \
       libneko0
 
 # Newer release of nodejs
-RUN curl -sL https://deb.nodesource.com/setup_6.x | bash
+RUN curl -sL https://deb.nodesource.com/setup_4.x | bash
 RUN apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
       nodejs
