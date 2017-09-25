@@ -28,7 +28,8 @@
 	       :puri
                :usocket
                :closer-mop 
-               :trivial-utf-8)
+               :trivial-utf-8
+	       :ieee-floats)
   :description "org.apache.thrift implements a Common Lisp binding for the Apache Thrift cross-language
  services protocol."
   :serial t
@@ -37,7 +38,6 @@
                (:file "types")
                (:file "parameters")
                (:file "classes")
-               (:file "float")
                (:file "definition-operators")
                (:file "transport")
                (:file "conditions")
