@@ -42,7 +42,11 @@ type TZlibTransport struct {
 func (p *TZlibTransportFactory) GetTransport(trans TTransport) (TTransport, error) {
 	if p.factory != nil {
 		// wrap other factory
-		trans = p.TTransportFactory.GetTransport(trans)
+		var err error
+		trans, err = p.factory.GetTransport(trans)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return NewTZlibTransport(trans, p.level)
 }
@@ -54,7 +58,7 @@ func NewTZlibTransportFactory(level int) *TZlibTransportFactory {
 
 // NewTZlibTransportFactory constructs a new instance of NewTZlibTransportFactory
 // as a wrapper over existing transport factory
-func NewTZlibTransportFactory(level int, factory TTransportFactory) *TZlibTransportFactory {
+func NewTZlibTransportFactoryWithFactory(level int, factory TTransportFactory) *TZlibTransportFactory {
 	return &TZlibTransportFactory{level: level, factory: factory}
 }
 
