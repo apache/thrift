@@ -68,9 +68,9 @@ class t_cl_generator : public t_oop_generator {
   std::string render_const_value(t_type* type, t_const_value* value);
 
   std::string cl_autogen_comment();
-  void asdf_def(std::ofstream &out, std::string name);
-  void package_def(std::ofstream &out, std::string name);
-  void package_in(std::ofstream &out, std::string name);
+  void asdf_def(std::ofstream &out);
+  void package_def(std::ofstream &out);
+  void package_in(std::ofstream &out);
   std::string generated_package();
   std::string prefix(std::string name);
   std::string package_of(t_program* program);
@@ -116,15 +116,15 @@ void t_cl_generator::init_generator() {
   f_vars_.open(f_vars_name.c_str());
   f_vars_ << cl_autogen_comment() << endl;
 
-  package_def(f_types_, program_name_);
-  package_in(f_types_, program_name_);
-  package_in(f_vars_, program_name_);
+  package_def(f_types_);
+  package_in(f_types_);
+  package_in(f_vars_);
 
   if (!no_asd) {
     string f_asd_name = program_dir+"/thrift-gen-"+program_name_+".asd";
     f_asd_.open(f_asd_name.c_str());
     f_asd_ << cl_autogen_comment() << endl;
-    asdf_def(f_asd_, program_name_);
+    asdf_def(f_asd_);
   }
 }
 
@@ -178,7 +178,7 @@ string t_cl_generator::generated_package() {
   return program_->get_namespace("cpp");
 }
 
-void t_cl_generator::asdf_def(std::ofstream &out, string name) {
+void t_cl_generator::asdf_def(std::ofstream &out) {
   out << "(asdf:defsystem #:thrift-gen-" << program_name_ << endl;
   indent_up();
   out << indent() << render_includes()
@@ -192,7 +192,7 @@ void t_cl_generator::asdf_def(std::ofstream &out, string name) {
 /***
  * Generate a package definition. Add use references equivalent to the idl file's include statements.
  */
-void t_cl_generator::package_def(std::ofstream &out, string name) {
+void t_cl_generator::package_def(std::ofstream &out) {
   const vector<t_program*>& includes = program_->get_includes();
 
   out << "(thrift:def-package :" << package();
@@ -206,11 +206,18 @@ void t_cl_generator::package_def(std::ofstream &out, string name) {
   out << ")" << endl << endl;
 }
 
-void t_cl_generator::package_in(std::ofstream &out, string name) {
+void t_cl_generator::package_in(std::ofstream &out) {
   out << "(cl:in-package :" << package() << ")" << endl << endl;
 }
 
-void t_cl_generator::generate_typedef(t_typedef* ttypedef) {}
+/**
+ * Generates a typedef. This is not done in Common Lisp, types are all implicit.
+ *
+ * @param ttypedef The type definition
+ */
+void t_cl_generator::generate_typedef(t_typedef* ttypedef) {
+  (void)ttypedef;
+}
 
 void t_cl_generator::generate_enum(t_enum* tenum) {
   f_types_ << "(thrift:def-enum " << prefix(tenum->get_name()) << endl;
@@ -358,6 +365,7 @@ void t_cl_generator::generate_xception(t_struct* txception) {
 }
 
 void t_cl_generator::generate_cl_struct_internal(std::ofstream& out, t_struct* tstruct, bool is_exception) {
+  (void)is_exception;
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
 
