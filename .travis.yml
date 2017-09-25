@@ -59,35 +59,36 @@ env:
 
     # Autotools builds
     # TODO: Remove them once migrated to CMake
-    # centos-7.3 build jobs appear to be unstable/hang...
-    # TEST_NAME="Autotools (CentOS 7.3)"
-    # DISTRO=centos-7.3
-    # SCRIPT="autotools.sh"
-    # BUILD_ENV="-e CC=gcc -e CXX=g++"
-    # BUILD_ARG="--without-cpp --without-csharp --without-c_glib --without-d -without-dart --without-erlang --without-go --without-haskell --without-haxe"
+
+    - TEST_NAME="Autotools (Ubuntu Trusty)"
+      DISTRO=ubuntu-trusty
+      SCRIPT="autotools.sh"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
 
     - TEST_NAME="Autotools (Ubuntu Xenial)"
       SCRIPT="autotools.sh"
       BUILD_ENV="-e CC=gcc -e CXX=g++"
-      BUILD_ARG="--enable-plugin" # --without-java --without-lua --without-nodejs --without-perl --without-php --without-php_extension --without-python --without-py3 --without-ruby --without-rust"
+      BUILD_ARG="--enable-plugin"
 
     # CMake builds
-    # centos-7.3 build jobs appear to be unstable/hang...
-    # TEST_NAME="CMake (CentOS 7.3)"
-    # DISTRO=centos-7.3
+
+    - TEST_NAME="CMake (Ubuntu Trusty)"
+      DISTRO=ubuntu-trusty
 
     - TEST_NAME="CMake (Ubuntu Xenial)"
 
     # C++ specific options: compiler plug-in, threading model
-    - TEST_NAME="C++ (Boost Thread)"
+
+    - TEST_NAME="C++98 (Boost Thread)"
       BUILD_LIBS="CPP TESTING TUTORIALS"
-      BUILD_ARG="-DWITH_BOOSTTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+      BUILD_ARG="-DCMAKE_CXX_STANDARD=98 -DCMAKE_CXX_STANDARD_REQUIRED=ON -DCMAKE_CXX_EXTENSIONS=OFF --DWITH_BOOSTTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
 
     - TEST_NAME="C++ (Std Thread) and Plugin"
       BUILD_LIBS="CPP TESTING TUTORIALS"
       BUILD_ARG="-DWITH_PLUGIN=ON -DWITH_STDTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
 
     # Distribution
+
     - TEST_NAME="make dist"
       SCRIPT="make-dist.sh"
 
@@ -96,6 +97,7 @@ env:
 
     # C and C++ undefined behavior. This wraps autotools.sh, but each binary crashes if
     # undefined behavior occurs. Skips the known flaky tests.
+
     - TEST_NAME="UBSan"
       SCRIPT="ubsan.sh"
       BUILD_ARG="--without-haskell --without-nodejs --without-perl --without-python"
