@@ -118,7 +118,7 @@
                                                               `(aref buffer ,i)
                                                               `(+ (ash value 8) (aref buffer ,i))))))))
                 (unpack-buffer)
-                (ieee-754-64-integer-to-float value))))
+                (ieee-floats:decode-float64 value))))
 
 (defmethod stream-read-float ((protocol binary-protocol))
   "As a special for for use with rdf - not part of the thrift. used just for specifically
@@ -138,7 +138,7 @@
                                                     `(aref buffer ,i)
                                                     `(+ (ash value 8) (aref buffer ,i))))))))
       (unpack-buffer)
-      (ieee-754-32-integer-to-float value))))
+      (ieee-floats:decode-float32 value))))
 
             
 (defmethod stream-read-string ((protocol binary-protocol))
@@ -217,7 +217,7 @@
               (stream-write-byte protocol b))
   ;; distinct from i64, as it's unsigned
   #-allegro (let ((buffer (make-array 8 :element-type '(unsigned-byte 8)))
-                  (int-value (ieee-754-64-float-to-integer val)))
+                  (int-value (ieee-floats:encode-float64 val)))
               (declare (dynamic-extent buffer)
                        (type (simple-array (unsigned-byte 8) (8)) buffer)
                        (type (unsigned-byte 64) int-value))
@@ -237,7 +237,7 @@
   " Not part of the spec, but is useful elsewhere"
   ;; distinct from i34, as it's unsigned
   (let ((buffer (make-array 4 :element-type '(unsigned-byte 8)))
-        (int-value (ieee-754-32-float-to-integer val)))
+        (int-value (ieee-floats:encode-float32 val)))
     (declare (dynamic-extent buffer)
              (type (simple-array (unsigned-byte 8) (4)) buffer)
              (type (unsigned-byte 32) int-value))
