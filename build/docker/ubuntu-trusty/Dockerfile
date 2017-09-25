@@ -138,7 +138,7 @@ RUN apt-get install -y --no-install-recommends \
       libneko0
 
 # Newer release of nodejs
-RUN curl -sL https://deb.nodesource.com/setup_6.x | bash
+RUN curl -sL https://deb.nodesource.com/setup_4.x | bash
 RUN apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
       nodejs
@@ -188,8 +188,8 @@ RUN mkdir -p /usr/lib/haxe && \
     ln -s /usr/lib/haxe/haxelib /usr/bin/haxelib && \
     mkdir -p /usr/lib/haxe/lib  && \
     chmod -R 777 /usr/lib/haxe/lib && \
-    haxelib setup /usr/lib/haxe/lib && \
-    haxelib install hxcpp
+    haxelib setup --always /usr/lib/haxe/lib && \
+    haxelib install --always hxcpp 3.4.64
 
 # Node.js
 # temporarily removed since this breaks the build (and is not needed to test C# code)
