@@ -32,14 +32,11 @@ func TestZlibTransport(t *testing.T) {
 	TransportTest(t, trans, trans)
 }
 
-
-
-type DummyTransportFactory struct {}
+type DummyTransportFactory struct{}
 
 func (p *DummyTransportFactory) GetTransport(trans TTransport) (TTransport, error) {
 	return NewTMemoryBuffer(), nil
 }
-
 
 func TestZlibFactoryTransport(t *testing.T) {
 	factory := NewTZlibTransportFactoryWithFactory(
