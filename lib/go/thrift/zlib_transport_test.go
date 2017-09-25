@@ -38,11 +38,21 @@ func (p *DummyTransportFactory) GetTransport(trans TTransport) (TTransport, erro
 	return NewTMemoryBuffer(), nil
 }
 
-func TestZlibFactoryTransport(t *testing.T) {
+func TestZlibFactoryTransportWithFactory(t *testing.T) {
 	factory := NewTZlibTransportFactoryWithFactory(
 		zlib.BestCompression,
 		&DummyTransportFactory{},
 	)
+	buffer := NewTMemoryBuffer()
+	trans, err := factory.GetTransport(buffer)
+	if err != nil {
+		t.Fatal(err)
+	}
+	TransportTest(t, trans, trans)
+}
+
+func TestZlibFactoryTransportWithoutFactory(t *testing.T) {
+	factory := NewTZlibTransportFactoryWithFactory(zlib.BestCompression, nil)
 	buffer := NewTMemoryBuffer()
 	trans, err := factory.GetTransport(buffer)
 	if err != nil {
