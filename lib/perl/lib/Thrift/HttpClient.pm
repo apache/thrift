@@ -45,6 +45,7 @@ sub new
         out          => $out,
         timeout      => 100,
         handle       => undef,
+        headers      => {},
     };
 
     return bless($self,$classname);
@@ -72,6 +73,14 @@ sub setSendTimeout
     warn "setSendTimeout is deprecated - use setTimeout instead";
 
     $self->setTimeout($timeout);
+}
+
+sub setHeader
+{
+    my $self = shift;
+    my ($name, $value) = @_;
+
+    $self->{headers}->{$name} = $value;
 }
 
 #
@@ -176,6 +185,7 @@ sub flush
     my $buf = join('', <$out>);
 
     my $request = new HTTP::Request(POST => $self->{url}, undef, $buf);
+    map { $request->header($_ => $self->{headers}->{$_}) } keys %{$self->{headers}};
     my $response = $ua->request($request);
     my $content_ref = $response->content_ref;
 
