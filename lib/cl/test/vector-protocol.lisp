@@ -11,13 +11,13 @@
          (buffer (make-array 2 :element-type thrift::*binary-transport-element-type*))
          (outstream (make-instance 'vector-output-stream :vector buffer))
          (instream (make-instance 'vector-input-stream :vector nil)))
-    (write-sequence data outstream)
+    (stream-write-sequence outstream data)
     (cl:map nil #'(lambda (c) (stream-write-byte outstream (char-code c))) "asdf")
     (and (every #'eql
                 (concatenate 'vector data (cl:map 'vector #'char-code "asdf"))
                 (subseq (thrift.implementation::get-vector-stream-vector outstream)
                         0
-                        (stream-position outstream)))
+                        (thrift.implementation::stream-position outstream)))
          (let ((data2 (make-array (length data)))
                (data3 (make-array 4)))
            (thrift.implementation::setf-vector-stream-vector (thrift.implementation::get-vector-stream-vector outstream)
