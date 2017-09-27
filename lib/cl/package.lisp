@@ -177,6 +177,7 @@
    :unknown-method-error
    :vector-input-stream
    :vector-output-stream
+   :vector-stream
    :vector-stream-transport
    :vector-stream-vector
    :void
