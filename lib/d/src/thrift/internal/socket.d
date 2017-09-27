@@ -34,15 +34,15 @@ version (FreeBSD) {
   enum connresetOnPeerShutdown = false;
 }
 
-version (Win32) {
-  import std.c.windows.winsock : WSAGetLastError, WSAEINTR, WSAEWOULDBLOCK;
+version (Windows) {
+  import core.sys.windows.winsock2;//: WSAGetLastError, WSAEINTR, WSAEWOULDBLOCK;
   import std.windows.syserror : sysErrorString;
 
   // These are unfortunately not defined in std.c.windows.winsock, see
   // http://msdn.microsoft.com/en-us/library/ms740668.aspx.
-  enum WSAECONNRESET = 10054;
-  enum WSAENOTCONN = 10057;
-  enum WSAETIMEDOUT = 10060;
+  // enum WSAECONNRESET = 10054;
+  // enum WSAENOTCONN = 10057;
+  // enum WSAETIMEDOUT = 10060;
 } else {
   import core.stdc.errno : errno, EAGAIN, ECONNRESET, EINPROGRESS, EINTR,
     ENOTCONN, EPIPE;
@@ -60,7 +60,7 @@ version (Win32) {
  * isSocetCloseErrno(errno): returns true if errno indicates that the socket
  *   is logically in closed state now.
  */
-version (Win32) {
+version (Windows) {
   alias WSAGetLastError getSocketErrno;
   enum CONNECT_INPROGRESS_ERRNO = WSAEWOULDBLOCK;
   enum INTERRUPTED_ERRNO = WSAEINTR;
@@ -88,7 +88,7 @@ version (Win32) {
 }
 
 string socketErrnoString(uint errno) {
-  version (Win32) {
+  version (Windows) {
     return sysErrorString(errno);
   } else {
     return to!string(strerror(errno));

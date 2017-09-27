@@ -213,7 +213,7 @@ private:
     if (ssl_ !is null) return;
     ssl_ = context_.createSSL();
 
-    SSL_set_fd(ssl_, socketHandle);
+    SSL_set_fd(ssl_, cast(int)socketHandle);
     int rc;
     if (serverSide_) {
       rc = SSL_accept(ssl_);
