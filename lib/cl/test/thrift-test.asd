@@ -2,12 +2,13 @@
 
 (asdf:defsystem :thrift-test
   :depends-on (:thrift
-               :bordeaux-threads)
+               :bordeaux-threads
+	       :cl-ppcre)
   :description "tests for com.apache.thrift"
   :serial t
   :components ((:file "package")
-               (:file "vector-protocol")
-               (:file "test")
+	       (:file "test")
+	       (:file "vector-protocol")
                (:file "conditions")
                (:file "definition-operators")
                (:file "protocol")
