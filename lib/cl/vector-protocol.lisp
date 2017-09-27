@@ -26,7 +26,7 @@
   (:default-initargs
     #+CormanLisp :element-type #+CormanLisp 'character))
 
-(defClass vector-input-stream (vector-stream
+(defclass vector-input-stream (vector-stream
                                #+ALLEGRO excl::fundamental-binary-input-stream
                                #+LispWorks stream:fundamental-stream
                                #+(and MCL digitool) ccl::input-binary-stream
@@ -38,7 +38,7 @@
   ()
   (:default-initargs :direction :input))
 
-(defClass vector-output-stream (vector-stream
+(defclass vector-output-stream (vector-stream
                                 #+ALLEGRO excl::fundamental-binary-output-stream
                                 #+LispWorks stream:fundamental-stream
                                 #+(and MCL digitool) ccl::output-binary-stream
