@@ -17,8 +17,15 @@
       (rewind protocol)
       (let ((read (funcall reader protocol)))
         (unless (equalp read value)
-        (format *trace-output* "failed: ~a/~a ~s ~s ~s"
-                reader writer value read (subseq (get-vector-stream-vector transport) 0 (stream-position transport)))
+	  (format *trace-output*
+		  "failed: ~a/~a ~s ~s ~s"
+		  reader
+		  writer
+		  value
+		  read
+		  (subseq (get-vector-stream-vector transport)
+			  0
+			  (thrift.implementation::stream-position transport)))
         (return nil))))))
 
 
