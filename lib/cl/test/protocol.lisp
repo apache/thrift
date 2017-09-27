@@ -23,7 +23,7 @@
 		  writer
 		  value
 		  read
-		  (subseq (get-vector-stream-vector transport)
+		  (subseq (thrift.implementation::get-vector-stream-vector transport)
 			  0
 			  (thrift.implementation::stream-position transport)))
         (return nil))))))
