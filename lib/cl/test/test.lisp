@@ -158,7 +158,7 @@
     protocol)
   
   (:method ((stream vector-stream))
-    (stream-position stream 0)
+    (thrift.implementation::stream-position stream 0)
     stream))
 
 (defgeneric reset (stream)
@@ -168,7 +168,7 @@
     protocol)
 
   (:method ((stream vector-stream))
-    (fill (get-vector-stream-vector stream) 0)
+    (fill (thrift.implementation::get-vector-stream-vector stream) 0)
     stream))
 
 
