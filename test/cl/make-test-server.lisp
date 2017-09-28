@@ -1,6 +1,7 @@
 (in-package :cl-user)
 
 (require "asdf")
+(load (merge-pathnames "../../lib/cl/load-locally.lisp" *load-truename*))
 (load (merge-pathnames "externals/bundle.lisp" *load-truename*))
 (asdf:load-system :net.didierverna.clon)
 
