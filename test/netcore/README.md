@@ -6,12 +6,12 @@ Tests for Thrift client library ported to Microsoft .Net Core
 - ThriftTest - tests for Thrift library 
 
 # Reused components 
-- NET Core Standard 1.6 (SDK 1.0.0-preview2-003121)
-- NET Core App 1.1
+- NET Core Standard 1.6 (SDK 2.0.0)
 
-# How to build
-- Download and install .NET Core SDK for your platform https://www.microsoft.com/net/core#windowsvs2015 (archive for SDK 1.0.0-preview2-003121 located by: https://github.com/dotnet/core/blob/master/release-notes/download-archive.md)
-- Ensure that you have thrift.exe which supports netcore lib and it added to PATH 
-- Go to current folder 
-- Run **build.sh** or **build.cmd** from the root of cloned repository
+# How to build on Windows
+- Open ThriftTest.sln in Visual Studio and build
+
+# How to build on Unix
+- Ensure you have .NET Core 2.0.0 SDK installed or use the Ubuntu Xenial docker image
+- Follow common build practice for Thrift: bootstrap, configure, and make precross
 

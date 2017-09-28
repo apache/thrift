@@ -63,6 +63,10 @@ namespace Test
                 {
                     useFramed = true;
                 }
+                else if (args[i] == "--binary" || args[i] == "--protocol=binary")
+                {
+                    // nothing needed
+                }
                 else if (args[i] == "--compact" || args[i] == "--protocol=compact")
                 {
                     compact = true;
@@ -493,8 +497,8 @@ namespace Test
                 {
                     if (param.useEncryption)
                     {
-                        var certPath = "../keys/server.p12";
-                        trans = new TTlsServerSocketTransport(param.port, param.useBufferedSockets, new X509Certificate2(certPath, "thrift"), null, null, SslProtocols.Tls12);
+                        var certPath = "../../keys/server.p12";
+                        trans = new TTlsServerSocketTransport(param.port, param.useBufferedSockets, new X509Certificate2(certPath, "thrift"), null, null, SslProtocols.Tls);
                     }
                     else
                     {

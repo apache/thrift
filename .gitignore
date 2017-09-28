@@ -327,6 +327,7 @@ project.lock.json
 /test/netcore/**/obj
 /test/netcore/**/gen-*
 /test/netcore/Thrift
+/test/php/php_ext_dir/
 /test/rs/Cargo.lock
 /test/rs/src/thrift_test.rs
 /test/rs/bin/

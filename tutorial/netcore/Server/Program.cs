@@ -292,7 +292,7 @@ Sample:
                     .UseStartup<Startup>()
                     .Build();
 
-                host.Run(cancellationToken);
+                host.StartAsync(cancellationToken); // was Run() in earlier .NET Core SDKs?
             }
 
             public class Startup
