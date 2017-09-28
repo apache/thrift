@@ -14,7 +14,6 @@
 #
 # Known missing or disabled libraries:
 # - d: deimos for libevent and openssl omitted - not compatible / build errors
-# - dotnetcore, because netcore is for 1.0.0-preview and 2.0.0 is out
 
 FROM buildpack-deps:xenial-scm
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
@@ -38,9 +37,9 @@ RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &
     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
     sed -i /etc/apt/sources.list.d/dart_stable.list -e 's/https:/http:/g'
 
-# dotnet (core) 2.0.0 - project isn't ready for this yet:
-# RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
-#     echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main" > /etc/apt/sources.list.d/dotnetdev.list
+# dotnet (core) 2.0.0
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
+    echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main" > /etc/apt/sources.list.d/dotnetdev.list
 
 # node.js (this step runs apt-get update internally)
 # note: node 8.5 introduced some issues with directory handling / jsdoc / something... using 7.x for now
@@ -108,10 +107,9 @@ RUN apt-get install -y --no-install-recommends \
       dart
 ENV PATH /usr/lib/dart/bin:$PATH
 
-# project isn't ready for this quite yet:
-# RUN apt-get install -y --no-install-recommends \
-# `# dotnet core dependencies` \
-#       dotnet-sdk-2.0.0
+RUN apt-get install -y --no-install-recommends \
+`# dotnet core dependencies` \
+      dotnet-sdk-2.0.0
 
 RUN apt-get install -y --no-install-recommends \
 `# Erlang dependencies` \
@@ -233,6 +231,7 @@ RUN rm -rf /var/cache/apt/* && \
     rm -rf /tmp/* && \
     rm -rf /var/tmp/*
 
+ENV DOTNET_CLI_TELEMETRY_OPTOUT 1
 ENV THRIFT_ROOT /thrift
 RUN mkdir -p $THRIFT_ROOT/src
 COPY Dockerfile $THRIFT_ROOT/

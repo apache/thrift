@@ -57,7 +57,10 @@ namespace Thrift
 
         public TProtocol OutputProtocol => _outputProtocol;
 
-        public int SeqId => _seqId;
+        public int SeqId
+        {
+            get { return ++_seqId; }
+        }
 
         public virtual async Task OpenTransportAsync()
         {

@@ -89,6 +89,11 @@ namespace Test
                     {
                         numThreads = Convert.ToInt32(args[++i]);
                     }
+                    else if (args[i] == "--binary" || args[i] == "--protocol=binary")
+                    {
+                        protocol = "binary";
+                        Console.WriteLine("Using binary protocol");
+                    }
                     else if (args[i] == "--compact" || args[i] == "--protocol=compact")
                     {
                         protocol = "compact";

@@ -85,9 +85,7 @@ Thrift.dll: $(THRIFTCODE)
 	$(THRIFT)  -gen netcore:wcf   -r  -out $(GENDIR)  $(top_srcdir)/contrib/fb303/if/fb303.thrift
 	$(DOTNETCORE) --info
 	$(DOTNETCORE) restore
-	$(DOTNETCORE) build **/*/project.json -r win10-x64 
-	$(DOTNETCORE) build **/*/project.json -r osx.10.11-x64 
-	$(DOTNETCORE) build **/*/project.json -r ubuntu.16.04-x64 
+	$(DOTNETCORE) build
 
 clean-local:
 	$(RM) Thrift.dll
@@ -99,10 +97,7 @@ clean-local:
 
 EXTRA_DIST = \
 			 $(THRIFTCODE) \
-			 global.json \
 			 Thrift.sln \
-			 Thrift/project.json \
-			 Thrift/Thrift.xproj \
 			 Tests \
 			 README.md
 			 

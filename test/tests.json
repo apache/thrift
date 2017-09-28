@@ -397,15 +397,25 @@
       "compact",
       "json"
     ],
-    "server": {
+    "server-disabled": {
       "command": [
-        "dotnet restore && dotnet run server"
+        "dotnet",
+        "run",
+	"--no-build",
+	"--no-restore",
+	"--",
+        "server"
       ]
     },
     "client": {
       "timeout": 10,
       "command": [
-        "dotnet run client"
+        "dotnet",
+        "run",
+	"--no-build",
+	"--no-restore",
+	"--",
+        "client"
       ]
     },
     "workdir": "netcore/ThriftTest"

@@ -43,13 +43,9 @@ all-local: \
 Client.exe: $(THRIFTCODE)
 	$(MKDIR_P) $(GENDIR)
 	$(THRIFT)  -gen netcore:wcf   -r  -out $(GENDIR)  $(top_srcdir)/tutorial/tutorial.thrift
-	$(MKDIR_P) ./Thrift
-	$(COPYCMD)  $(top_srcdir)/lib/netcore/Thrift/*  ./Thrift
 	$(DOTNETCORE) --info
 	$(DOTNETCORE) restore
-	$(DOTNETCORE) build **/*/project.json -r win10-x64 
-	$(DOTNETCORE) build **/*/project.json -r osx.10.11-x64 
-	$(DOTNETCORE) build **/*/project.json -r ubuntu.16.04-x64 
+	$(DOTNETCORE) build
 
 clean-local:
 	$(RM) Client.exe
@@ -62,20 +58,15 @@ clean-local:
 	$(RM) -r Server/obj
 	$(RM) -r Interfaces/bin
 	$(RM) -r Interfaces/obj
-	$(RM) -r Thrift
 
 EXTRA_DIST = \
 			 $(THRIFTCODE) \
-			 global.json \
 			 Tutorial.sln \
-			 Interfaces/project.json \
-			 Interfaces/Interfaces.xproj \
-			 Server/project.json \
-			 Server/Server.xproj \
-			 Server/ThriftTest.pfx \
-			 Client/project.json \
-			 Client/Client.xproj \
+			 Interfaces/Interfaces.csproj \
+			 Client/Client.csproj \
 			 Client/ThriftTest.pfx \
+			 Server/Server.csproj \
+			 Server/ThriftTest.pfx \
 			 build.cmd \
 			 build.sh \
 			 README.md
