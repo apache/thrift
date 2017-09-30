@@ -26,8 +26,8 @@
   '((stop . 0)
     (void . 1)
     (bool . 2)
-    (thrift:byte . 3)
     (i8  . 3)
+    (thrift:byte . 3)
     (double . 4)
     (thrift:float . 5)                         ; this is not standard
     (i16 . 6)
