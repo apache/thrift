@@ -54,39 +54,33 @@ public:
 
     void run() {
       Synchronized s(_monitor);
-
-      _count--;
-
-      // std::cout << "\t\t\tthread count: " << _count << std::endl;
-
-      if (_count == 0) {
+      
+      if (--_count == 0) {
         _monitor.notify();
       }
     }
 
     Monitor& _monitor;
-
     int& _count;
   };
 
   bool reapNThreads(int loop = 1, int count = 10) {
 
     PlatformThreadFactory threadFactory = PlatformThreadFactory();
-
     shared_ptr<Monitor> monitor(new Monitor);
 
     for (int lix = 0; lix < loop; lix++) {
 
-      int* activeCount = new int(count);
+      int activeCount = 0;
 
       std::vector<shared_ptr<Thread> > threads;
-
       int tix;
 
       for (tix = 0; tix < count; tix++) {
         try {
+          ++activeCount;
           threads.push_back(
-              threadFactory.newThread(shared_ptr<Runnable>(new ReapNTask(*monitor, *activeCount))));
+              threadFactory.newThread(shared_ptr<Runnable>(new ReapNTask(*monitor, activeCount))));
         } catch (SystemResourceException& e) {
           std::cout << "\t\t\tfailed to create " << lix* count + tix << " thread " << e.what()
                     << std::endl;
@@ -110,17 +104,15 @@ public:
 
       {
         Synchronized s(*monitor);
-        while (*activeCount > 0) {
+        while (activeCount > 0) {
           monitor->wait(1000);
         }
       }
       
-      delete activeCount;
       std::cout << "\t\t\treaped " << lix* count << " threads" << std::endl;
     }
 
     std::cout << "\t\t\tSuccess!" << std::endl;
-
     return true;
   }
 

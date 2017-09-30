@@ -2909,6 +2909,7 @@ void t_csharp_generator::prepare_member_name_mapping(void* scope,
                                                      const string& structname) {
   // begin new scope
   member_mapping_scope dummy;
+  dummy.scope_member = 0;
   member_mapping_scopes.push_back(dummy);
   member_mapping_scope& active = member_mapping_scopes.back();
   active.scope_member = scope;

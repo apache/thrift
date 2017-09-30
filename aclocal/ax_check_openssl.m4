@@ -1,5 +1,5 @@
 # ===========================================================================
-#     http://www.gnu.org/software/autoconf-archive/ax_check_openssl.html
+#     https://www.gnu.org/software/autoconf-archive/ax_check_openssl.html
 # ===========================================================================
 #
 # SYNOPSIS
@@ -32,7 +32,7 @@
 #   and this notice are preserved. This file is offered as-is, without any
 #   warranty.
 
-#serial 8
+#serial 10
 
 AU_ALIAS([CHECK_SSL], [AX_CHECK_OPENSSL])
 AC_DEFUN([AX_CHECK_OPENSSL], [
@@ -51,7 +51,7 @@ AC_DEFUN([AX_CHECK_OPENSSL], [
         ], [
             # if pkg-config is installed and openssl has installed a .pc file,
             # then use that information and don't search ssldirs
-            AC_PATH_PROG([PKG_CONFIG], [pkg-config])
+            AC_CHECK_TOOL([PKG_CONFIG], [pkg-config])
             if test x"$PKG_CONFIG" != x""; then
                 OPENSSL_LDFLAGS=`$PKG_CONFIG openssl --libs-only-L 2>/dev/null`
                 if test $? = 0; then

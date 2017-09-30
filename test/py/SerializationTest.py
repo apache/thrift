@@ -452,5 +452,6 @@ def suite():
     suite.addTest(loader.loadTestsFromTestCase(SerializersTest))
     return suite
 
+
 if __name__ == "__main__":
     unittest.main(defaultTest="suite", testRunner=unittest.TextTestRunner(verbosity=2))

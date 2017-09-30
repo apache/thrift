@@ -1415,12 +1415,12 @@ void t_hs_generator::generate_deserialize_container(ofstream& out, t_type* ttype
 
   } else if (ttype->is_set()) {
     out << "(Set.fromList $ P.map (\\" << val << " -> ";
-    generate_deserialize_type(out, ((t_map*)ttype)->get_key_type(), val);
+    generate_deserialize_type(out, ((t_set*)ttype)->get_elem_type(), val);
     out << ") " << arg << ")";
 
   } else if (ttype->is_list()) {
     out << "(Vector.fromList $ P.map (\\" << val << " -> ";
-    generate_deserialize_type(out, ((t_map*)ttype)->get_key_type(), val);
+    generate_deserialize_type(out, ((t_list*)ttype)->get_elem_type(), val);
     out << ") " << arg << ")";
   }
 }
@@ -1488,9 +1488,9 @@ void t_hs_generator::generate_serialize_container(ofstream& out, t_type* ttype, 
     out << ")) $ Map.toList " << prefix;
 
   } else if (ttype->is_set()) {
-    out << "T.TSet " << type_to_enum(((t_list*)ttype)->get_elem_type());
+    out << "T.TSet " << type_to_enum(((t_set*)ttype)->get_elem_type());
     out << " $ P.map (\\" << v << " -> ";
-    generate_serialize_type(out, ((t_list*)ttype)->get_elem_type(), v);
+    generate_serialize_type(out, ((t_set*)ttype)->get_elem_type(), v);
     out << ") $ Set.toList " << prefix;
 
   } else if (ttype->is_list()) {
@@ -1577,7 +1577,7 @@ string t_hs_generator::type_to_enum(t_type* type) {
     return "(T.T_MAP " + ktype + " " + vtype + ")";
 
   } else if (type->is_set()) {
-    return "(T.T_SET " + type_to_enum(((t_list*)type)->get_elem_type()) + ")";
+    return "(T.T_SET " + type_to_enum(((t_set*)type)->get_elem_type()) + ")";
 
   } else if (type->is_list()) {
     return "(T.T_LIST " + type_to_enum(((t_list*)type)->get_elem_type()) + ")";

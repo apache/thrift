@@ -50,6 +50,7 @@ class TDevNullTransport(TTransport.TTransportBase):
     def isOpen(self):
         return True
 
+
 ooe1 = OneOfEach()
 ooe1.im_true = True
 ooe1.im_false = False

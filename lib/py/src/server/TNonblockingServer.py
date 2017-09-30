@@ -62,6 +62,7 @@ class Worker(threading.Thread):
                 logger.exception("Exception while processing request", exc_info=True)
                 callback(False, b'')
 
+
 WAIT_LEN = 0
 WAIT_MESSAGE = 1
 WAIT_PROCESS = 2

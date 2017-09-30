@@ -121,6 +121,7 @@ def run_setup(with_binary):
           **extensions
           )
 
+
 try:
     with_binary = True
     run_setup(with_binary)

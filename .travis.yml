@@ -19,134 +19,193 @@
 
 # build Apache Thrift on Travis CI - https://travis-ci.org/
 
+#
+# Docker Integration
+# 
+# DOCKER_REPO
+#   [required] The repository name (within your account).
+# DOCKER_PASS
+#   [optional, secure] Your docker account password.
+#   If you do not set this, each build job in the "test"
+#   stage might rebuild the docker image and extend build
+#   time by about 10 minutes per job.  If you do set this
+#   then each build job in the "docker" stage" will build
+#   the docker image if Dockerfile has changed, and then
+#   push the new tag up to your docker hub account.
+# DOCKER_USER
+#   [required] Your docker hub account name.
+#
+# The resulting tag is:
+#   $DOCKER_USER/$DOCKER_REPO:$DISTRO
+# example (and the default):
+#   apache/thrift:ubuntu-xenial
+#
+
 sudo: required
 dist: trusty
+language: cpp
 
 services:
   - docker
 
 install:
-  - (travis_wait ./build/docker/check_unmodified.sh $DISTRO && touch .unmodified) || true
-  - if [ ! -f .unmodified ]; then travis_retry travis_wait docker build -q -t thrift-build:$DISTRO build/docker/$DISTRO; fi
+  - if [[ `uname` == "Linux" ]]; then build/docker/refresh.sh; fi
 
-script:
-  - docker run --net=host -e BUILD_LIBS="$BUILD_LIBS" $BUILD_ENV -v $(pwd):/thrift/src -it thrift-build:$DISTRO build/docker/scripts/$SCRIPT $BUILD_ARG
+stages:
+# - osx       # up front for now (for testing)
+  - docker    # docker images
+  - thrift    # thrift build jobs
 
 env:
   global:
-    - TEST_NAME=""
     - SCRIPT="cmake.sh"
     - BUILD_ARG=""
     - BUILD_ENV="-e CC=clang -e CXX=clang++"
     - DISTRO=ubuntu-xenial
     - BUILD_LIBS="CPP C_GLIB HASKELL JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
+    - TRAVIS_BUILD_STAGE=test
+    - DEFAULT_DOCKER_USER="apache"
+    - DEFAULT_DOCKER_REPO="thrift"
 
-  matrix:
-    - TEST_NAME="Cross Language Tests (Binary Protocol)"
-      SCRIPT="cross-test.sh"
-      BUILD_ARG="-'(binary)'"
-      BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
+jobs:
+  include:
+    # ------------------------- phase: osx --------------------------
+    # - stage: osx
+    #   os: osx
+    #   osx_image: xcode9
+    #   script: build/docker/scripts/autotools.sh
 
-    - TEST_NAME="Cross Language Tests (Header, JSON Protocols)"
-      SCRIPT="cross-test.sh"
-      BUILD_ARG="-'(header|json)'"
-      BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
+    # ========================= stage: docker =========================
+    - stage: docker
+      script: true
+      env:
+        - JOB="Docker Build ubuntu-trusty 14.04"
+        - DISTRO=ubuntu-trusty
+        - TRAVIS_BUILD_STAGE=docker
+    - script: true
+      env:
+        - JOB="Docker Build ubuntu-xenial 16.04"
+        - DISTRO=ubuntu-xenial
+        - TRAVIS_BUILD_STAGE=docker
+    - script: true
+      env:
+        - JOB="Docker Build ubuntu-artful 17.10"
+        - DISTRO=ubuntu-artful
+        - TRAVIS_BUILD_STAGE=docker
 
-    - TEST_NAME="Cross Language Tests (Compact and Multiplexed Protocols)"
-      SCRIPT="cross-test.sh"
-      BUILD_ARG="-'(compact|multiplexed)'"
-      BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
+    # ========================= stage: thrift =======================
+    # ------------------------- phase: cross ------------------------
+    # apache/thrift official PR builds can exceed 50 minutes per job so combine all cross tests
+    - stage: thrift
+      script: build/docker/run.sh
+      if: repo = apache/thrift
+      env:
+        - JOB="Cross Language Tests"
+        - SCRIPT="cross-test.sh"
+        - BUILD_ARG=""
+        - BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
-    # Autotools builds
-    # TODO: Remove them once migrated to CMake
+    # fork based PR builds cannot exceed 50 minutes per job
+    - stage: thrift
+      script: build/docker/run.sh
+      if: repo != apache/thrift
+      env:
+        - JOB="Cross Language Tests (Binary Protocol)"
+        - SCRIPT="cross-test.sh"
+        - BUILD_ARG="-'(binary)'"
+        - BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
-    - TEST_NAME="Autotools (Ubuntu Trusty)"
-      DISTRO=ubuntu-trusty
-      SCRIPT="autotools.sh"
-      BUILD_ENV="-e CC=gcc -e CXX=g++"
+    - stage: thrift
+      script: build/docker/run.sh
+      if: repo != apache/thrift
+      env:
+        - JOB="Cross Language Tests (Header, JSON Protocols)"
+        - SCRIPT="cross-test.sh"
+        - BUILD_ARG="-'(header|json)'"
+        - BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
-    - TEST_NAME="Autotools (Ubuntu Xenial)"
-      SCRIPT="autotools.sh"
-      BUILD_ENV="-e CC=gcc -e CXX=g++"
-      BUILD_ARG="--enable-plugin"
+    - stage: thrift
+      script: build/docker/run.sh
+      if: repo != apache/thrift
+      env:
+        - JOB="Cross Language Tests (Compact and Multiplexed Protocols)"
+        - SCRIPT="cross-test.sh"
+        - BUILD_ARG="-'(compact|multiplexed)'"
+        - BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
-    # CMake builds
+    # ------------------------- phase: sca --------------------------
+    # QA jobs for code analytics and metrics
+    - stage: thrift
+      script: build/docker/run.sh
+      env:
+        - JOB="Static Code Analysis"
+        - SCRIPT="sca.sh"
+        - DISTRO=ubuntu-artful
 
-    - TEST_NAME="CMake (Ubuntu Trusty)"
-      DISTRO=ubuntu-trusty
+    # C and C++ undefined behavior.
+    # A binary crashes if undefined behavior occurs and produces a stack trace.
+    # python is disabled, see: THRIFT-4360
+    - script: build/docker/run.sh
+      env:
+        - JOB="UBSan"
+        - SCRIPT="ubsan.sh"
+        - DISTRO=ubuntu-artful
+        - BUILD_ARG="--without-python --without-py3"
 
-    - TEST_NAME="CMake (Ubuntu Xenial)"
+    # ------------------------- phase: cmake ------------------------
+    - script: build/docker/run.sh
+      env:
+        - JOB="CMake (Ubuntu Xenial)"
 
     # C++ specific options: compiler plug-in, threading model
+    - script: build/docker/run.sh
+      env:
+        - JOB="C++98 (Boost Thread)"
+        - SCRIPT="cmake.sh"
+        - BUILD_LIBS="CPP TESTING TUTORIALS"
+        - BUILD_ARG="-DCMAKE_CXX_STANDARD=98 -DCMAKE_CXX_STANDARD_REQUIRED=ON -DCMAKE_CXX_EXTENSIONS=OFF --DWITH_BOOSTTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+        - BUILD_ENV=""
 
-    - TEST_NAME="C++98 (Boost Thread)"
-      BUILD_LIBS="CPP TESTING TUTORIALS"
-      BUILD_ARG="-DCMAKE_CXX_STANDARD=98 -DCMAKE_CXX_STANDARD_REQUIRED=ON -DCMAKE_CXX_EXTENSIONS=OFF --DWITH_BOOSTTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+    - script: build/docker/run.sh
+      env:
+        - JOB="C++ (Std Thread) and Plugin"
+        - SCRIPT="cmake.sh"
+        - BUILD_LIBS="CPP TESTING TUTORIALS"
+        - BUILD_ARG="-DWITH_PLUGIN=ON -DWITH_STDTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+        - BUILD_ENV="-e CC=clang -e CXX=clang++"
 
-    - TEST_NAME="C++ (Std Thread) and Plugin"
-      BUILD_LIBS="CPP TESTING TUTORIALS"
-      BUILD_ARG="-DWITH_PLUGIN=ON -DWITH_STDTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+    # ------------------------- phase: autotools --------------------
+    # TODO: Remove them once migrated to CMake
+    - script: build/docker/run.sh
+      env:
+        - JOB="Autotools (Ubuntu Artful)"
+        - DISTRO=ubuntu-artful
+        - SCRIPT="autotools.sh"
+        - BUILD_ENV="-e CC=gcc -e CXX=g++"
 
-    # Distribution
+    - script: build/docker/run.sh
+      env:
+        - JOB="Autotools (Ubuntu Xenial)"
+        - DISTRO=ubuntu-xenial
+        - SCRIPT="autotools.sh"
+        - BUILD_ENV="-e CC=gcc -e CXX=g++"
 
-    - TEST_NAME="make dist"
-      SCRIPT="make-dist.sh"
+    - script: build/docker/run.sh
+      env:
+        - JOB="Autotools (Ubuntu Trusty)"
+        - DISTRO=ubuntu-trusty
+        - SCRIPT="autotools.sh"
+        - BUILD_ENV="-e CC=gcc -e CXX=g++"
 
-    - TEST_NAME="Debian Packages"
-      SCRIPT="dpkg.sh"
+    # ------------------------- phase: dist -------------------------
+    - script: build/docker/run.sh
+      env:
+        - JOB="make dist"
+        - SCRIPT="make-dist.sh"
+        - BUILD_ENV="-e CC=gcc -e CXX=g++"
 
-    # C and C++ undefined behavior. This wraps autotools.sh, but each binary crashes if
-    # undefined behavior occurs. Skips the known flaky tests.
-
-    - TEST_NAME="UBSan"
-      SCRIPT="ubsan.sh"
-      BUILD_ARG="--without-haskell --without-nodejs --without-perl --without-python"
-      UNSTABLE=true
-
-matrix:
-  allow_failures:
-    - env: UNSTABLE=true
-  include:
-    # QA jobs for code analytics and metrics
-    #
-    # C/C++ static code analysis with cppcheck
-    # add --error-exitcode=1 to --enable=all as soon as everything is fixed
-    #
-    # Python code style check with flake8
-    #
-    # search for TODO etc within source tree
-    # some statistics about the code base
-    # some info about the build machine
-    - env: TEST_NAME="cppcheck, flake8, TODO FIXME HACK, LoC and system info"
-      install:
-        - travis_retry sudo apt-get update
-        - travis_retry sudo apt-get install -ym cppcheck sloccount python-flake8
-      script:
-        # Compiler cppcheck (All)
-        - cppcheck --force --quiet --inline-suppr --enable=all -j2 compiler/cpp/src
-        # C++ cppcheck (All)
-        - cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
-        # C Glib cppcheck (All)
-        - cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
-        # Silent error checks
-        - cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 compiler/cpp/src
-        - cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
-        - cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
-        # Python code style
-        - flake8 --ignore=E501 lib/py
-        - flake8 tutorial/py
-        - flake8 --ignore=E501 test/py
-        - flake8 test/py.twisted
-        - flake8 test/py.tornado
-        - flake8 --ignore=E501 test/test.py
-        - flake8 --ignore=E501 test/crossrunner
-        - flake8 test/features
-        # TODO etc
-        - grep -r TODO *
-        - grep -r FIXME *
-        - grep -r HACK *
-        # LoC
-        - sloccount .
-        # System Info
-        - dpkg -l
-        - uname -a
+    - script: build/docker/run.sh
+      env:
+        - JOB="Debian Packages"
+        - SCRIPT="dpkg.sh"
+        - BUILD_ENV="-e CC=gcc -e CXX=g++"

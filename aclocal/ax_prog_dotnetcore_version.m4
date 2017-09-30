@@ -1,6 +1,6 @@
-# ==============================================================================
-#  http://www.gnu.org/software/autoconf-archive/ax_prog_dotnetcore_version.html
-# ==============================================================================
+# ===============================================================================
+#  https://www.gnu.org/software/autoconf-archive/ax_prog_dotnetcore_version.html
+# ===============================================================================
 #
 # SYNOPSIS
 #
@@ -33,7 +33,7 @@
 #   and this notice are preserved. This file is offered as-is, without any
 #   warranty.
 
-#serial 1
+#serial 2
 
 AC_DEFUN([AX_PROG_DOTNETCORE_VERSION],[
     AC_REQUIRE([AC_PROG_SED])

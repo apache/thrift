@@ -111,7 +111,7 @@ thrift_SOURCES += src/thrift/generate/t_c_glib_generator.cc \
                   src/thrift/generate/t_rs_generator.cc
 
 thrift_CPPFLAGS = -I$(srcdir)/src
-thrift_CXXFLAGS = -Wall -Wextra -pedantic
+thrift_CXXFLAGS = -Wall -Wextra -pedantic -Werror
 thrift_LDADD = @LEXLIB@ src/thrift/libparse.a
 
 if !WITH_PLUGIN
