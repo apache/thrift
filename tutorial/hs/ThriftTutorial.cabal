@@ -27,7 +27,7 @@ Synopsis:       Thrift Tutorial library package
 Homepage:       http://thrift.apache.org
 Bug-Reports:    https://issues.apache.org/jira/browse/THRIFT
 Maintainer:     dev@thrift.apache.org
-License-File:   ../../LICENSE
+License-File:   LICENSE
 
 Description:
   Haskell tutorial for the Apache Thrift RPC system. Requires the use of the thrift code generator.

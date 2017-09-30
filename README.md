@@ -33,6 +33,13 @@ level processing. The code generation system takes a simple definition
 language as its input and generates code across programming languages that
 uses the abstracted stack to build interoperable RPC clients and servers.
 
+![Apache Thrift Layered Architecture](doc/images/thrift-layers.png)
+
+Thrift makes it easy for programs written in different programming
+languages to share data and call remote procedures.  With support 
+for over 20 programming languages, chances are Thrift supports the ones 
+that you currently use.
+
 Thrift is specifically designed to support non-atomic version changes
 across client and server code.
 
@@ -40,8 +47,8 @@ For more details on Thrift's design and implementation, take a gander at
 the Thrift whitepaper included in this distribution or at the README.md files
 in your particular subdirectory of interest.
 
-Hierarchy
-=========
+Project Hierarchy
+=================
 
 thrift/
 
@@ -60,6 +67,7 @@ thrift/
     php/
     py/
     rb/
+    ...
 
   test/
 

@@ -19,10 +19,11 @@
 
 # Make sure this doesn't fail if ant is not configured.
 
+if HAVE_NPM
 SUBDIRS = test
 
 check-local: all
-	npm install
-	npm list
+	$(NPM) install
+	$(NPM) list
 	./node_modules/.bin/grunt
-
+endif

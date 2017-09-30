@@ -20,7 +20,7 @@ stubs: $(top_srcdir)/test/ThriftTest.thrift
 	$(THRIFT) --gen js:node -o test/ $(top_srcdir)/test/ThriftTest.thrift
 
 deps: $(top_srcdir)/package.json
-	$(NPM) install --no-bin-links $(top_srcdir)/
+	$(NPM) install $(top_srcdir)/
 
 all-local: deps
 

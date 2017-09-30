@@ -18,25 +18,29 @@
 # under the License.
 #
 
-# Download prebuilt docker image and compare Dockerfile hash values
+#
+# Check Dockerfile hash values.
+# If the values have changed, rebuild the image.
+#
 
-set -ex
+set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DISTRO=$1
 SRC_IMG=thrift/thrift-build:$DISTRO
 
-function try_pull {
-  docker pull $SRC_IMG
-  cd ${SCRIPT_DIR}/$DISTRO
+function dockerfile_changed {
   docker run $SRC_IMG bash -c 'cd .. && sha512sum Dockerfile' > .Dockerfile.sha512
   sha512sum -c .Dockerfile.sha512
 }
 
-if try_pull; then
-  echo Dockerfile seems identical. No need to rebuild from scratch.
-  docker tag thrift/thrift-build:$DISTRO thrift-build:$DISTRO
-else
-  echo Either Dockerfile has changed or pull failure. Need to build brand new one.
-  exit 1
+pushd ${SCRIPT_DIR}/$DISTRO
+if dockerfile_changed; then
+  echo Dockerfile has not changed.  No need to rebuild.
+  exit 0
 fi
+popd
+
+echo Dockerfile has changed.  Rebuilding docker image $DISTRO.
+docker build --tag $SRC_IMG build/docker/$DISTRO
+

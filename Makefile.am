@@ -43,7 +43,7 @@ dist-hook:
 	find $(distdir) -type d \( -iname ".svn" -or -iname ".git" \) | xargs rm -rf
 
 print-version:
-	@echo $(VERSION)
+	@echo $(PACKAGE_VERSION)
 
 .PHONY: precross cross
 precross-%: all
