@@ -35,9 +35,11 @@ gopath: $(THRIFT) ThriftTest.thrift
 	mkdir -p src/gen
 	$(THRIFTCMD) ThriftTest.thrift
 	$(THRIFTCMD) ../StressTest.thrift
-	ln -nfs ../../../lib/go/thrift src/thrift
-	GOPATH=`pwd` $(GO) get github.com/golang/mock/gomock
 	GOPATH=`pwd` $(GO) get golang.org/x/net/context
+	GOPATH=`pwd` $(GO) get github.com/golang/mock/gomock || true
+	sed -i 's/\"context\"/\"golang.org\/x\/net\/context\"/g' src/github.com/golang/mock/gomock/controller.go || true
+	GOPATH=`pwd` $(GO) get github.com/golang/mock/gomock
+	ln -nfs ../../../lib/go/thrift src/thrift
 	touch gopath
 
 bin/testclient: gopath

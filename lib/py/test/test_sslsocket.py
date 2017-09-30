@@ -334,6 +334,7 @@ class TSSLSocketTest(unittest.TestCase):
 
         self._assert_connection_success(server, ssl_context=client_context)
 
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.WARN)
     from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket, _match_has_ipaddress

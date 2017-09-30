@@ -320,6 +320,7 @@ project.lock.json
 /test/haxe/bin
 /test/hs/TestClient
 /test/hs/TestServer
+/test/php/php_ext_dir/
 /test/py.twisted/_trial_temp/
 /test/rb/Gemfile.lock
 /test/netcore/**/.vs

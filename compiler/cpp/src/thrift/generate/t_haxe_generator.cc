@@ -2556,6 +2556,7 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
         if (!(tkey->is_binary())) {
           return "StringMap< " + type_name(tval) + ">";
         }
+        break; // default to ObjectMap<>
       case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
@@ -2581,6 +2582,7 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
         if (!(tkey->is_binary())) {
           return "StringSet";
         }
+        break; // default to ObjectSet
       case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:

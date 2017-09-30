@@ -96,4 +96,5 @@ def _optional_dependencies():
         match = legacy_validate_callback
     return ipaddr, match
 
+
 _match_has_ipaddress, _match_hostname = _optional_dependencies()

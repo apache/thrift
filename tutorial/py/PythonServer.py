@@ -82,6 +82,7 @@ class CalculatorHandler:
     def zip(self):
         print('zip()')
 
+
 if __name__ == '__main__':
     handler = CalculatorHandler()
     processor = Calculator.Processor(handler)

@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -14,29 +16,15 @@
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
+#
 
-# We call npm twice to work around npm issues
+set -e
 
-stubs: $(top_srcdir)/test/ThriftTest.thrift
-	$(THRIFT) --gen js:node -o test/ $(top_srcdir)/test/ThriftTest.thrift
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. $SCRIPT_DIR/vars.sh
 
-deps: $(top_srcdir)/package.json
-	$(NPM) install $(top_srcdir)/ || $(NPM) install $(top_srcdir)/
+printenv | sort
 
-all-local: deps
+docker run --net=host -e BUILD_LIBS="$BUILD_LIBS" $BUILD_ENV -v $(pwd):/thrift/src \
+	-it $DOCKER_TAG build/docker/scripts/$SCRIPT $BUILD_ARG
 
-precross: deps stubs
-
-check: deps
-	cd $(top_srcdir) && $(NPM) test && cd lib/nodejs
-
-clean-local:
-	$(RM) -r test/gen-nodejs
-	$(RM) -r $(top_srcdir)/node_modules
-
-EXTRA_DIST = \
-	examples \
-	lib \
-	test \
-	coding_standards.md \
-	README.md

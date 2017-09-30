@@ -33,7 +33,7 @@
 class t_typedef : public t_type {
 public:
   t_typedef(t_program* program, t_type* type, const std::string& symbolic)
-    : t_type(program, symbolic), type_(type), symbolic_(symbolic), forward_(false), seen_(false) {}
+    : t_type(program, symbolic), type_(type), symbolic_(symbolic), forward_(false) {}
 
   /**
    * This constructor is used to refer to a type that is lazily
@@ -44,8 +44,8 @@ public:
     : t_type(program, symbolic),
       type_(NULL),
       symbolic_(symbolic),
-      forward_(forward),
-      seen_(false) {}
+      forward_(forward)
+  {}
 
   ~t_typedef() {}
 
@@ -61,7 +61,6 @@ private:
   t_type* type_;
   std::string symbolic_;
   bool forward_;
-  mutable bool seen_;
 };
 
 #endif

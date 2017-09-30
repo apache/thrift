@@ -106,7 +106,6 @@ AX_CXX_COMPILE_STDCXX_11([noext], [optional])
 if test "$ac_success" = "no"; then
   CXXFLAGS="$CXXFLAGS -Wno-variadic-macros -Wno-long-long -Wno-c++11-long-long"
 fi
-CXXFLAGS="$CXXFLAGS -Wno-deprecated-register"
 
 AM_EXTRA_RECURSIVE_TARGETS([style])
 AC_SUBST(CPPSTYLE_CMD, 'find . -type f \( -iname "*.h" -or -iname "*.cpp" -or -iname "*.cc" -or -iname "*.tcc" \) -printf "Reformatting: %h/%f\n" -exec clang-format -i {} \;')

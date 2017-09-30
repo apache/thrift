@@ -46,5 +46,6 @@ class TestJSONString(unittest.TestCase):
             unicode_text = unicode_text.encode('utf8')
         self.assertEqual(protocol.readString(), unicode_text)
 
+
 if __name__ == '__main__':
     unittest.main()
