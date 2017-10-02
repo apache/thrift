@@ -69,7 +69,7 @@
 
 (defun test-insanity (argument)
   (let ((result `((1 . ((2 . ,argument) (3 . ,argument)))
-		  (2 . ((6 . ,(thrift.test::make-insanity)))))))
+		  (2 . ((6 . ,(thrift.test::make-insanity :user-map nil :xtructs nil)))))))
     (format t "~a~%" result)
     result))
 
@@ -97,8 +97,14 @@
 				     :message "This is an Xception"))
     ((string= arg0 "Xception2") (error 'thrift.test:xception2
 				     :error-code 2002
-				     :struct-thing (thrift.test:make-xtruct :string-thing "This is an Xception2"))))
-  (thrift.test:make-xtruct :string-thing arg1))
+				     :struct-thing (thrift.test:make-xtruct :string-thing "This is an Xception2"
+									    :byte-thing 0
+									    :i32-thing 0
+									    :i64-thing 0))))
+  (thrift.test:make-xtruct :string-thing arg1
+			   :byte-thing 0
+			   :i32-thing 0
+			   :i64-thing 0))
 
 (defun blah-blah ()
   )
