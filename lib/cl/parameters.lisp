@@ -31,8 +31,8 @@
     (double . 4)
     (thrift:float . 5)                         ; this is not standard
     (i16 . 6)
-    (enum . 6)
     (i32 . 8)
+    (enum . 8)
     (u64 . 9)
     (i64 . 10)
     (string . 11)

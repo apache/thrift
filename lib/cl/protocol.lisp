@@ -1084,10 +1084,10 @@
     (stream-write-i16 protocol value))
   (:method ((protocol protocol) (value integer) (type (eql 'enum)))
     ;; as a fall-back
-    (stream-write-i16 protocol value))
+    (stream-write-i32 protocol value))
   (:method ((protocol protocol) (value integer) (type cons))
     ;; as a fall-back
-    (stream-write-i16 protocol value))
+    (stream-write-i32 protocol value))
   (:method ((protocol protocol) (value integer) (type (eql 'i32)))
     (stream-write-i32 protocol value))
   (:method ((protocol protocol) (value integer) (type (eql 'i64)))
@@ -1158,7 +1158,7 @@
     (struct-type
      `(stream-write-struct ,protocol ,value ',(str-sym (second type))))
     (enum-type
-     `(stream-write-i16 ,protocol ,value))))
+     `(stream-write-i32 ,protocol ,value))))
 
 
 (defgeneric stream-write-typed-value (protocol value)
