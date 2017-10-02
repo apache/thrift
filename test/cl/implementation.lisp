@@ -106,6 +106,11 @@
 			   :i32-thing 0
 			   :i64-thing 0))
 
+(defun test-oneway (seconds)
+  (format t "testOneway(~a): Sleeping...~%" seconds)
+  (sleep seconds)
+  (format t "testOneway(~a): done sleeping!~%" seconds))
+
 (defun blah-blah ()
   )
 
