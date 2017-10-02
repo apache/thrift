@@ -76,7 +76,7 @@
 (defun test-multi (arg0 arg1 arg2 arg3 arg4 arg5)
   (declare (ignorable arg3 arg4 arg5))
   (format t "testMulti()~%")
-  (thrift.test:make-xtruct :string-thing "Hello"
+  (thrift.test:make-xtruct :string-thing "Hello2"
 			   :byte-thing arg0
 			   :i32-thing arg1
 			   :i64-thing arg2))
