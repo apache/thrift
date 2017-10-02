@@ -127,8 +127,7 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
 `# golang (go) dependencies` \
-      golang-go \
-      golang-race-detector-runtime
+      golang-1.9-go
 
 RUN apt-get install -y --no-install-recommends \
 `# Haskell dependencies` \
