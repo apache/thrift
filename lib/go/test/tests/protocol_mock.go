@@ -24,6 +24,7 @@ package tests
 
 import (
 	thrift "thrift"
+
 	gomock "github.com/golang/mock/gomock"
 )
 

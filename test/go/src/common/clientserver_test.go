@@ -21,6 +21,7 @@ package common
 
 import (
 	"errors"
+	"fmt"
 	"gen/thrifttest"
 	"reflect"
 	"testing"
@@ -48,8 +49,10 @@ var units = []test_unit{
 func TestAllConnection(t *testing.T) {
 	certPath = "../../../keys"
 	for _, unit := range units {
-		t.Logf("%#v", unit)
-		doUnit(t, &unit)
+		unit := unit
+		t.Run(fmt.Sprintf("%#v", unit), func(t *testing.T) {
+			doUnit(t, &unit)
+		})
 	}
 }
 
@@ -62,17 +65,15 @@ func doUnit(t *testing.T, unit *test_unit) {
 
 	server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
 	if err = server.Listen(); err != nil {
-		t.Errorf("Unable to start server", err)
-		t.FailNow()
+		t.Fatalf("Unable to start server: %v", err)
 	}
 	go server.AcceptLoop()
 	defer server.Stop()
-	client, err := StartClient(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl)
+	client, trans, err := StartClient(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl)
 	if err != nil {
-		t.Errorf("Unable to start client", err)
-		t.FailNow()
+		t.Fatalf("Unable to start client: %v", err)
 	}
-	defer client.Transport.Close()
+	defer trans.Close()
 	callEverythingWithMock(t, client, handler)
 }
 
@@ -273,7 +274,7 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 
 	xxsret, err := client.TestMulti(defaultCtx, 42, 4242, 424242, map[int16]string{1: "blah", 2: "thing"}, thrifttest.Numberz_EIGHT, thrifttest.UserId(24))
 	if err != nil {
-		t.Errorf("Unexpected error in TestMulti() call: ", err)
+		t.Errorf("Unexpected error in TestMulti() call: %v", err)
 	}
 	if !reflect.DeepEqual(xxs, xxsret) {
 		t.Errorf("Unexpected TestMulti() result expected %#v, got %#v ", xxs, xxsret)
@@ -289,9 +290,12 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 
 	// TODO: connection is being closed on this
 	err = client.TestException(defaultCtx, "TException")
-	tex, ok := err.(thrift.TApplicationException)
-	if err == nil || !ok || tex.TypeId() != thrift.INTERNAL_ERROR {
-		t.Errorf("Unexpected TestException() result expected ApplicationError, got %#v ", err)
+	if err == nil {
+		t.Error("expected exception got nil")
+	} else if tex, ok := err.(thrift.TApplicationException); !ok {
+		t.Errorf("Unexpected TestException() result expected ApplicationError, got %T ", err)
+	} else if tex.TypeId() != thrift.INTERNAL_ERROR {
+		t.Errorf("expected internal_error got %v", tex.TypeId())
 	}
 
 	ign, err := client.TestMultiException(defaultCtx, "Xception", "ignoreme")

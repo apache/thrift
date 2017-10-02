@@ -47,7 +47,7 @@ sudo apt-get install -qq erlang-base erlang-eunit erlang-dev erlang-tools rebar
 
 # GO dependencies
 echo "golang-go golang-go/dashboard boolean false" | debconf-set-selections
-sudo apt-get -y install -qq golang golang-go
+sudo apt-get -y install -qq golang-1.7 golang-1.7-go
 
 # Haskell dependencies
 sudo add-apt-repository -y ppa:hvr/ghc

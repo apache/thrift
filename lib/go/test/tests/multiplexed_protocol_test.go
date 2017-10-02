@@ -36,15 +36,22 @@ func FindAvailableTCPServerPort() net.Addr {
 	}
 }
 
+func createTransport(addr net.Addr) (thrift.TTransport, error) {
+	socket := thrift.NewTSocketFromAddrTimeout(addr, TIMEOUT)
+	transport := thrift.NewTFramedTransport(socket)
+	err := transport.Open()
+	if err != nil {
+		return nil, err
+	}
+	return transport, nil
+}
 
-var processor = thrift.NewTMultiplexedProcessor()
-
-func TestInitTwoServers(t *testing.T) {
-	var err error
+func TestMultiplexedProtocol(t *testing.T) {
+	processor := thrift.NewTMultiplexedProcessor()
 	protocolFactory := thrift.NewTBinaryProtocolFactoryDefault()
 	transportFactory := thrift.NewTTransportFactory()
 	transportFactory = thrift.NewTFramedTransportFactory(transportFactory)
-	addr = FindAvailableTCPServerPort()
+	addr := FindAvailableTCPServerPort()
 	serverTransport, err := thrift.NewTServerSocketTimeout(addr.String(), TIMEOUT)
 	if err != nil {
 		t.Fatal("Unable to create server socket", err)
@@ -57,92 +64,80 @@ func TestInitTwoServers(t *testing.T) {
 	secondProcessor := multiplexedprotocoltest.NewSecondProcessor(&SecondImpl{})
 	processor.RegisterProcessor("SecondService", secondProcessor)
 
+	defer server.Stop()
 	go server.Serve()
 	time.Sleep(10 * time.Millisecond)
-}
 
-var firstClient *multiplexedprotocoltest.FirstClient
+	t.Run("CallFirst", func(t *testing.T) {
+		transport, err := createTransport(addr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer transport.Close()
+		protocol := thrift.NewTMultiplexedProtocol(thrift.NewTBinaryProtocolTransport(transport), "FirstService")
 
-func TestInitClient1(t *testing.T) {
-	socket := thrift.NewTSocketFromAddrTimeout(addr, TIMEOUT)
-	transport := thrift.NewTFramedTransport(socket)
-	var protocol thrift.TProtocol = thrift.NewTBinaryProtocolTransport(transport)
-	protocol = thrift.NewTMultiplexedProtocol(protocol, "FirstService")
-	firstClient = multiplexedprotocoltest.NewFirstClientProtocol(transport, protocol, protocol)
-	err := transport.Open()
-	if err != nil {
-		t.Fatal("Unable to open client socket", err)
-	}
-}
+		client := multiplexedprotocoltest.NewFirstClient(thrift.NewTStandardClient(protocol, protocol))
 
-var secondClient *multiplexedprotocoltest.SecondClient
+		ret, err := client.ReturnOne(defaultCtx)
+		if err != nil {
+			t.Fatal("Unable to call first server:", err)
+		} else if ret != 1 {
+			t.Fatal("Unexpected result from server: ", ret)
+		}
+	})
 
-func TestInitClient2(t *testing.T) {
-	socket := thrift.NewTSocketFromAddrTimeout(addr, TIMEOUT)
-	transport := thrift.NewTFramedTransport(socket)
-	var protocol thrift.TProtocol = thrift.NewTBinaryProtocolTransport(transport)
-	protocol = thrift.NewTMultiplexedProtocol(protocol, "SecondService")
-	secondClient = multiplexedprotocoltest.NewSecondClientProtocol(transport, protocol, protocol)
-	err := transport.Open()
-	if err != nil {
-		t.Fatal("Unable to open client socket", err)
-	}
-}
+	t.Run("CallSecond", func(t *testing.T) {
+		transport, err := createTransport(addr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer transport.Close()
+		protocol := thrift.NewTMultiplexedProtocol(thrift.NewTBinaryProtocolTransport(transport), "SecondService")
 
-//create client without service prefix
-func createLegacyClient(t *testing.T) *multiplexedprotocoltest.SecondClient {
-	socket := thrift.NewTSocketFromAddrTimeout(addr, TIMEOUT)
-	transport := thrift.NewTFramedTransport(socket)
-	var protocol thrift.TProtocol = thrift.NewTBinaryProtocolTransport(transport)
-	legacyClient := multiplexedprotocoltest.NewSecondClientProtocol(transport, protocol, protocol)
-	err := transport.Open()
-	if err != nil {
-		t.Fatal("Unable to open client socket", err)
-	}
-	return legacyClient
-}
+		client := multiplexedprotocoltest.NewSecondClient(thrift.NewTStandardClient(protocol, protocol))
 
-func TestCallFirst(t *testing.T) {
-	ret, err := firstClient.ReturnOne(defaultCtx)
-	if err != nil {
-		t.Fatal("Unable to call first server:", err)
-	}
-	if ret != 1 {
-		t.Fatal("Unexpected result from server: ", ret)
-	}
-}
+		ret, err := client.ReturnTwo(defaultCtx)
+		if err != nil {
+			t.Fatal("Unable to call second server:", err)
+		} else if ret != 2 {
+			t.Fatal("Unexpected result from server: ", ret)
+		}
+	})
 
-func TestCallSecond(t *testing.T) {
-	ret, err := secondClient.ReturnTwo(defaultCtx)
-	if err != nil {
-		t.Fatal("Unable to call second server:", err)
-	}
-	if ret != 2 {
-		t.Fatal("Unexpected result from server: ", ret)
-	}
-}
+	t.Run("CallLegacy", func(t *testing.T) {
+		transport, err := createTransport(addr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer transport.Close()
 
-func TestCallLegacy(t *testing.T) {
-	legacyClient := createLegacyClient(t)
-	ret, err := legacyClient.ReturnTwo(defaultCtx)
-	//expect error since default processor is not registered
-	if err == nil {
-		t.Fatal("Expecting error")
-	}
-	//register default processor and call again
-	processor.RegisterDefault(multiplexedprotocoltest.NewSecondProcessor(&SecondImpl{}))
-	legacyClient = createLegacyClient(t)
-	ret, err = legacyClient.ReturnTwo(defaultCtx)
-	if err != nil {
-		t.Fatal("Unable to call legacy server:", err)
-	}
-	if ret != 2 {
-		t.Fatal("Unexpected result from server: ", ret)
-	}
-}
+		protocol := thrift.NewTBinaryProtocolTransport(transport)
+		client := multiplexedprotocoltest.NewSecondClient(thrift.NewTStandardClient(protocol, protocol))
 
-func TestShutdownServerAndClients(t *testing.T) {
-	firstClient.Transport.Close()
-	secondClient.Transport.Close()
-	server.Stop()
+		ret, err := client.ReturnTwo(defaultCtx)
+		//expect error since default processor is not registered
+		if err == nil {
+			t.Fatal("Expecting error")
+		}
+
+		//register default processor and call again
+		processor.RegisterDefault(multiplexedprotocoltest.NewSecondProcessor(&SecondImpl{}))
+		transport, err = createTransport(addr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer transport.Close()
+
+		protocol = thrift.NewTBinaryProtocolTransport(transport)
+		client = multiplexedprotocoltest.NewSecondClient(thrift.NewTStandardClient(protocol, protocol))
+
+		ret, err = client.ReturnTwo(defaultCtx)
+		if err != nil {
+			t.Fatal("Unable to call legacy server:", err)
+		}
+		if ret != 2 {
+			t.Fatal("Unexpected result from server: ", ret)
+		}
+	})
+
 }
