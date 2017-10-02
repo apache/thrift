@@ -474,7 +474,9 @@ void t_cl_generator::generate_service(t_service* tservice) {
 string t_cl_generator::typespec(t_type *t) {
   t = get_true_type(t);
 
-  if (t->is_base_type()) {
+  if (t -> is_binary()){
+    return "binary";
+  } else if (t->is_base_type()) {
     return type_name(t);
   } else if (t->is_map()) {
     t_map *m = (t_map*) t;
