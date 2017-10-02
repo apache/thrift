@@ -125,9 +125,10 @@ RUN apt-get install -y --no-install-recommends \
 `# GlibC dependencies` \
       libglib2.0-dev
 
+RUN add-apt-repository ppa:hnakamur/golang-1.9 && apt-get update
 RUN apt-get install -y --no-install-recommends \
 `# golang (go) dependencies` \
-      golang-1.9-go
+      golang-go golang-1.9-doc
 
 RUN apt-get install -y --no-install-recommends \
 `# Haskell dependencies` \
