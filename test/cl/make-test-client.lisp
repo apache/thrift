@@ -10,6 +10,16 @@
 
 (net.didierverna.clon:nickname-package)
 
+(defpackage :thrift-cross
+  (:use :common-lisp :fiasco)
+  (:export :cross-test))
+
+(in-package :thrift-cross)
+
+(defparameter *prot* nil)
+
+(load (merge-pathnames "tests.lisp" *load-truename*))
+
 (clon:defsynopsis ()
   (text :contents "The Common Lisp client for Thrift's cross-language test suite.")
   (group (:header "Allowed options:")
@@ -48,12 +58,10 @@
       (if (string= name "port")
 	  (setf port value)))
     (terpri)
-    (thrift:with-client (prot (puri:parse-uri (concatenate 'string
-							   "thrift://"
-							   host
-							   ":"
-							   port)))
-      ))
-  (clon:exit))
+    (setf *prot* (thrift.implementation::client (puri:parse-uri
+			       (concatenate 'string "thrift://" host ":" port))))
+    (let ((result (cross-test)))
+      (thrift.implementation::close *prot*)
+      (clon:exit result))))
 
 (clon:dump "TestClient" main)
