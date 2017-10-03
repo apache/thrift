@@ -210,6 +210,17 @@ public:
   std::string type_to_enum(t_type* ttype);
   std::string type_to_phpdoc(t_type* ttype);
 
+  bool php_is_scalar(t_type *ttype) {
+    ttype = ttype->get_true_type();
+    if(ttype->is_base_type()) {
+      return true;
+    } else if(ttype->is_enum()) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   std::string php_namespace_base(const t_program* p) {
     std::string ns = p->get_namespace("php");
     const char* delimiter = "\\";
@@ -1332,11 +1343,24 @@ void t_php_generator::generate_process_function(std::ofstream& out, t_service* t
   string resultname = php_namespace(tservice->get_program()) + service_name_ + "_"
                       + tfunction->get_name() + "_result";
 
+  out << indent() << "$bin_accel = ($input instanceof "
+             << "TBinaryProtocolAccelerated) && function_exists('thrift_protocol_read_binary_after_message_begin');"
+             << endl;
+  out << indent() << "if ($bin_accel)" << endl;
+  scope_up(out);
+
+  out << indent() << "$args = thrift_protocol_read_binary_after_message_begin($input, '" << argsname
+             << "', $input->isStrictRead());" << endl;
+
+  scope_down(out);
+  out << indent() << "else" << endl;
+  scope_up(out);
   out << indent() << "$args = new " << argsname << "();" << endl << indent()
              << "$args->read($input);" << endl;
   if (!binary_inline_) {
     out << indent() << "$input->readMessageEnd();" << endl;
   }
+  scope_down(out);
 
   t_struct* xs = tfunction->get_xceptions();
   const std::vector<t_field*>& xceptions = xs->get_members();
@@ -2093,11 +2117,12 @@ void t_php_generator::generate_deserialize_set_element(ofstream& out, t_set* tse
 
   generate_deserialize_field(out, &felem);
 
-  indent(out) << "if (is_scalar($" << elem << ")) {" << endl;
-  indent(out) << "  $" << prefix << "[$" << elem << "] = true;" << endl;
-  indent(out) << "} else {" << endl;
-  indent(out) << "  $" << prefix << " []= $" << elem << ";" << endl;
-  indent(out) << "}" << endl;
+  t_type* elem_type = tset->get_elem_type();
+  if(php_is_scalar(elem_type)) {
+    indent(out) << "$" << prefix << "[$" << elem << "] = true;" << endl;
+  } else {
+    indent(out) << "$" << prefix << "[] = $" << elem << ";" << endl;
+  }
 }
 
 void t_php_generator::generate_deserialize_list_element(ofstream& out,
@@ -2285,11 +2310,13 @@ void t_php_generator::generate_serialize_container(ofstream& out, t_type* ttype,
     string iter_val = tmp("iter");
     indent(out) << "foreach ($" << prefix << " as $" << iter << " => $" << iter_val << ")" << endl;
     scope_up(out);
-    indent(out) << "if (is_scalar($" << iter_val << ")) {" << endl;
-    generate_serialize_set_element(out, (t_set*)ttype, iter);
-    indent(out) << "} else {" << endl;
-    generate_serialize_set_element(out, (t_set*)ttype, iter_val);
-    indent(out) << "}" << endl;
+
+    t_type* elem_type = ((t_set*)ttype)->get_elem_type();
+    if(php_is_scalar(elem_type)) {
+      generate_serialize_set_element(out, (t_set*)ttype, iter);
+    } else {
+      generate_serialize_set_element(out, (t_set*)ttype, iter_val);
+    }
     scope_down(out);
   } else if (ttype->is_list()) {
     string iter = tmp("iter");
