@@ -87,7 +87,9 @@
     ((string= arg "Xception") (error 'thrift.test:xception
 				     :error-code 1001
 				     :message arg))
-    ((string= arg "TException") (print "TODO!"))))
+    ((string= arg "TException") (error 'thrift.test:xception
+				       :error-code 0
+				       :message "Stuff!"))))
 
 (defun test-multi-exception (arg0 arg1)
   (format t "testMultiException(~a, ~a)~%" arg0 arg1)
