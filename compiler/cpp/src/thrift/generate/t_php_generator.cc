@@ -1332,11 +1332,24 @@ void t_php_generator::generate_process_function(std::ofstream& out, t_service* t
   string resultname = php_namespace(tservice->get_program()) + service_name_ + "_"
                       + tfunction->get_name() + "_result";
 
+  out << indent() << "$bin_accel = ($input instanceof "
+             << "TBinaryProtocolAccelerated) && function_exists('thrift_protocol_read_binary_after_message_begin');"
+             << endl;
+  out << indent() << "if ($bin_accel)" << endl;
+  scope_up(out);
+
+  out << indent() << "$args = thrift_protocol_read_binary_after_message_begin($input, '" << argsname
+             << "', $input->isStrictRead());" << endl;
+
+  scope_down(out);
+  out << indent() << "else" << endl;
+  scope_up(out);
   out << indent() << "$args = new " << argsname << "();" << endl << indent()
              << "$args->read($input);" << endl;
   if (!binary_inline_) {
     out << indent() << "$input->readMessageEnd();" << endl;
   }
+  scope_down(out);
 
   t_struct* xs = tfunction->get_xceptions();
   const std::vector<t_field*>& xceptions = xs->get_members();
