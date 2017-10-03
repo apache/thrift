@@ -133,7 +133,6 @@ EXTRA_DIST = \
   src/autoload.php \
   src/ext/thrift_protocol/config.m4 \
   src/ext/thrift_protocol/config.w32 \
-  src/ext/thrift_protocol/php_thrift_protocol7.cpp \
   src/ext/thrift_protocol/php_thrift_protocol.cpp \
   src/ext/thrift_protocol/php_thrift_protocol.h \
   src/ext/thrift_protocol/run-tests.php \
