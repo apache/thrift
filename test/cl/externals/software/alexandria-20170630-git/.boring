@@ -1,0 +1,13 @@
+# Boring file regexps:
+~$
+^_darcs
+^\{arch\}
+^.arch-ids
+\#
+\.dfsl$
+\.ppcf$
+\.fasl$
+\.x86f$
+\.fas$
+\.lib$
+^public_html
