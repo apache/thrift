@@ -1,6 +1,8 @@
 [
   "c_glib-limit_container_length_binary_buffered-ip",
   "c_glib-limit_string_length_binary_buffered-ip",
+  "cl-limit_string_length_binary_buffered-ip",
+  "cl-limit_container_length_binary_buffered-ip",
   "csharp-limit_container_length_binary_buffered-ip",
   "csharp-limit_container_length_compact_buffered-ip",
   "csharp-limit_string_length_binary_buffered-ip",
