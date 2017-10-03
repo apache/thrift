@@ -24,8 +24,10 @@ stubs: ../ThriftTest.thrift
 
 precross: stubs
 	$(SBCL) --script make-test-server.lisp
+	$(SBCL) --script make-test-client.lisp
 
 clean-local:
 	$(RM) -r gen-cl
 	$(RM) TestServer
+	$(RM) TestClient
 

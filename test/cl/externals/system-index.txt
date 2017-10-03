@@ -1,3 +1,5 @@
+software/alexandria-20170630-git/alexandria-tests.asd
+software/alexandria-20170630-git/alexandria.asd
 software/cffi_0.19.0/cffi-examples.asd
 software/cffi_0.19.0/cffi-grovel.asd
 software/cffi_0.19.0/cffi-libffi.asd
@@ -9,3 +11,4 @@ software/clon-1.0b24/core/net.didierverna.clon.core.asd
 software/clon-1.0b24/net.didierverna.clon.asd
 software/clon-1.0b24/setup/net.didierverna.clon.setup.asd
 software/clon-1.0b24/termio/net.didierverna.clon.termio.asd
+software/fiasco-20161031-git/fiasco.asd
