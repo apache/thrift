@@ -87,7 +87,41 @@
 
 (in-package :structs)
 
+(defparameter *test-struct* (thrift.test:make-xtruct :string-thing "Hell is empty."
+						:byte-thing -2
+						:i32-thing 42
+						:i64-thing 42424242))
 
+(defparameter *test-nest* (thrift.test:make-xtruct2 :byte-thing 42
+						    :struct-thing *test-struct*
+						    :i32-thing -42))
+
+(deftest struct-test ()
+  (let ((rec-struct (thrift.test:test-struct thrift-cross::*prot* *test-struct*)))
+    (is (string= (thrift.test:xtruct-string-thing *test-struct*)
+		 (thrift.test:xtruct-string-thing rec-struct)))
+    (is (= (thrift.test:xtruct-byte-thing *test-struct*)
+	   (thrift.test:xtruct-byte-thing rec-struct)))
+    (is (= (thrift.test:xtruct-i32-thing *test-struct*)
+	   (thrift.test:xtruct-i32-thing rec-struct)))
+    (is (= (thrift.test:xtruct-i64-thing *test-struct*)
+	   (thrift.test:xtruct-i64-thing rec-struct)))))
+
+(deftest nest-test ()
+  (let* ((rec-nest (thrift.test:test-nest thrift-cross::*prot* *test-nest*))
+	 (rec-struct (thrift.test:xtruct2-struct-thing rec-nest)))
+    (is (string= (thrift.test:xtruct-string-thing *test-struct*)
+		 (thrift.test:xtruct-string-thing rec-struct)))
+    (is (= (thrift.test:xtruct-byte-thing *test-struct*)
+	   (thrift.test:xtruct-byte-thing rec-struct)))
+    (is (= (thrift.test:xtruct-i32-thing *test-struct*)
+	   (thrift.test:xtruct-i32-thing rec-struct)))
+    (is (= (thrift.test:xtruct-i64-thing *test-struct*)
+	   (thrift.test:xtruct-i64-thing rec-struct)))
+    (is (= (thrift.test:xtruct2-byte-thing *test-nest*)
+	   (thrift.test:xtruct2-byte-thing rec-nest)))
+    (is (= (thrift.test:xtruct2-i32-thing *test-nest*)
+	   (thrift.test:xtruct2-i32-thing rec-nest)))))
 
 (fiasco:define-test-package :containers)
 
