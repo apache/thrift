@@ -31,16 +31,16 @@
 
 #include <sys/types.h>
 #if defined( WIN32 ) || defined( _WIN64 )
-typedef int  int32_t; 
+typedef int  int32_t;
 typedef signed char int8_t;
 typedef unsigned char   uint8_t;
 typedef unsigned short  uint16_t;
 typedef long long  int64_t;
-typedef unsigned   uint32_t; 
-typedef short  int16_t; 
+typedef unsigned   uint32_t;
+typedef short  int16_t;
 typedef unsigned long long   uint64_t;
 #else
-#include <arpa/inet.h> 
+#include <arpa/inet.h>
 #endif
 #include <stdexcept>
 
@@ -152,6 +152,11 @@ protected:
     ZVAL_NULL(t);
     TSRMLS_FETCH();
     call_user_function(EG(function_table), &p, &gettransport, t, 0, NULL TSRMLS_CC);
+    if (EG(exception)) {
+      zval* ex = EG(exception);
+      EG(exception) = NULL;
+      throw PHPExceptionWrapper(ex);
+    }
   }
   ~PHPTransport() {
     efree(buffer);
@@ -241,6 +246,11 @@ protected:
     TSRMLS_FETCH();
     call_user_function(EG(function_table), &t, &flushfn, &ret, 0, NULL TSRMLS_CC);
     zval_dtor(&ret);
+    if (EG(exception)) {
+      zval* ex = EG(exception);
+      EG(exception) = NULL;
+      throw PHPExceptionWrapper(ex);
+    }
   }
   void directWrite(const char* data, size_t len) {
     zval writefn;
@@ -295,6 +305,11 @@ public:
       call_user_function(EG(function_table), &t, &putbackfn, &ret, 1, args TSRMLS_CC);
       zval_ptr_dtor(args);
       zval_dtor(&ret);
+      if (EG(exception)) {
+        zval* ex = EG(exception);
+        EG(exception) = NULL;
+        throw PHPExceptionWrapper(ex);
+      }
     }
     buffer_used = 0;
     buffer_ptr = buffer;
@@ -408,6 +423,11 @@ void createObject(const char* obj_typename, zval* return_value, int nargs = 0, z
   zval* ctor_rv = NULL;
   zend_call_method(&return_value, ce, &constructor, NULL, 0, &ctor_rv, nargs, arg1, arg2 TSRMLS_CC);
   zval_ptr_dtor(&ctor_rv);
+  if (EG(exception)) {
+    zval* ex = EG(exception);
+    EG(exception) = NULL;
+    throw PHPExceptionWrapper(ex);
+  }
 }
 
 void throw_tprotocolexception(const char* what, long errorcode) {
@@ -686,6 +706,11 @@ void protocol_writeMessageBegin(zval* transport, const char* method_name, int32_
   zval_ptr_dtor(&args[1]);
   zval_ptr_dtor(&args[2]);
   zval_dtor(&ret);
+  if (EG(exception)) {
+    zval* ex = EG(exception);
+    EG(exception) = NULL;
+    throw PHPExceptionWrapper(ex);
+  }
 }
 
 void binary_serialize_hashtable_key(int8_t keytype, PHPOutputTransport& transport, HashTable* ht, HashPosition& ht_pos) {

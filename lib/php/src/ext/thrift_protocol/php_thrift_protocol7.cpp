@@ -153,6 +153,12 @@ protected:
 
     zval_dtor(&gettransport);
 
+    if (EG(exception)) {
+      zend_object *ex = EG(exception);
+      EG(exception) = nullptr;
+      throw PHPExceptionWrapper(ex);
+    }
+
     assert(Z_TYPE(t) == IS_OBJECT);
   }
 
@@ -238,6 +244,11 @@ protected:
     call_user_function(EG(function_table), &(this->t), &flushfn, &ret, 0, nullptr);
     zval_dtor(&flushfn);
     zval_dtor(&ret);
+    if (EG(exception)) {
+      zend_object *ex = EG(exception);
+      EG(exception) = nullptr;
+      throw PHPExceptionWrapper(ex);
+    }
   }
   void directWrite(const char* data, size_t len) {
     zval args[1], ret, writefn;
@@ -281,6 +292,11 @@ public:
       zval_dtor(&putbackfn);
       zval_dtor(&ret);
       zval_dtor(&args[0]);
+      if (EG(exception)) {
+        zend_object *ex = EG(exception);
+        EG(exception) = nullptr;
+        throw PHPExceptionWrapper(ex);
+      }
     }
     buffer_used = 0;
     buffer_ptr = buffer;
@@ -397,6 +413,11 @@ void createObject(const char* obj_typename, zval* return_value, int nargs = 0, z
   zval ctor_rv;
   zend_call_method(return_value, ce, &constructor, NULL, 0, &ctor_rv, nargs, arg1, arg2);
   zval_dtor(&ctor_rv);
+  if (EG(exception)) {
+    zend_object *ex = EG(exception);
+    EG(exception) = nullptr;
+    throw PHPExceptionWrapper(ex);
+  }
 }
 
 static
@@ -840,6 +861,11 @@ void protocol_writeMessageBegin(zval* transport, zend_string* method_name, int32
   zval_dtor(&writeMessagefn);
   zval_dtor(&args[2]); zval_dtor(&args[1]); zval_dtor(&args[0]);
   zval_dtor(&ret);
+  if (EG(exception)) {
+    zend_object *ex = EG(exception);
+    EG(exception) = nullptr;
+    throw PHPExceptionWrapper(ex);
+  }
 }
 
 static inline
