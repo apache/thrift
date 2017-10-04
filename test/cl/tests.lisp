@@ -87,14 +87,23 @@
 
 (in-package :structs)
 
+
+
 (fiasco:define-test-package :containers)
 
 (in-package :containers)
+
+
 
 (fiasco:define-test-package :exceptions)
 
 (in-package :exceptions)
 
+
+
 (fiasco:define-test-package :misc)
 
 (in-package :misc)
+
+(deftest oneway-test ()
+  (is (null (thrift.test:test-oneway thrift-cross::*prot* 1))))
