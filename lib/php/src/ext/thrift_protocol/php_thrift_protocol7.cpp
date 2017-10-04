@@ -513,6 +513,11 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
       }
 
       zval* spec = zend_read_static_property(Z_OBJCE_P(return_value), "_TSPEC", sizeof("_TSPEC")-1, false);
+      if (EG(exception)) {
+        zend_object *ex = EG(exception);
+        EG(exception) = nullptr;
+        throw PHPExceptionWrapper(ex);
+      }
       if (Z_TYPE_P(spec) != IS_ARRAY) {
         char errbuf[128];
         snprintf(errbuf, 128, "spec for %s is wrong type: %d\n", structType, Z_TYPE_P(spec));
@@ -688,8 +693,8 @@ void binary_serialize(int8_t thrift_typeID, PHPOutputTransport& transport, zval*
       if (Z_TYPE_P(value) != IS_OBJECT) {
         throw_tprotocolexception("Attempt to send non-object type as a T_STRUCT", INVALID_DATA);
       }
-      zval* spec = zend_read_static_property(Z_OBJCE_P(value), "_TSPEC", sizeof("_TSPEC")-1, false);
-      if (Z_TYPE_P(spec) != IS_ARRAY) {
+      zval* spec = zend_read_static_property(Z_OBJCE_P(value), "_TSPEC", sizeof("_TSPEC")-1, true);
+      if (!spec || Z_TYPE_P(spec) != IS_ARRAY) {
         throw_tprotocolexception("Attempt to send non-Thrift object as a T_STRUCT", INVALID_DATA);
       }
       binary_serialize_spec(value, transport, Z_ARRVAL_P(spec));
@@ -854,7 +859,7 @@ static
 void validate_thrift_object(zval* object) {
     zend_class_entry* object_class_entry = Z_OBJCE_P(object);
     zval* is_validate = zend_read_static_property(object_class_entry, "isValidate", sizeof("isValidate")-1, true);
-    zval* spec = zend_read_static_property(object_class_entry, "_TSPEC", sizeof("_TSPEC")-1, false);
+    zval* spec = zend_read_static_property(object_class_entry, "_TSPEC", sizeof("_TSPEC")-1, true);
     HashPosition key_ptr;
     zval* val_ptr;
 
@@ -976,17 +981,17 @@ PHP_FUNCTION(thrift_protocol_write_binary) {
   long msgtype, seqID;
   zend_bool strict_write;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "oSlolb",
-        &protocol, &method_name, &msgtype,
-        &request_struct, &seqID, &strict_write) == FAILURE) {
-		return;
-	}
+  if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "oSlolb",
+    &protocol, &method_name, &msgtype,
+    &request_struct, &seqID, &strict_write) == FAILURE) {
+      return;
+  }
 
   try {
-    zval* spec = zend_read_static_property(Z_OBJCE_P(request_struct), "_TSPEC", sizeof("_TSPEC")-1, false);
+    zval* spec = zend_read_static_property(Z_OBJCE_P(request_struct), "_TSPEC", sizeof("_TSPEC")-1, true);
 
-    if (Z_TYPE_P(spec) != IS_ARRAY) {
-       throw_tprotocolexception("Attempt to send non-Thrift object", INVALID_DATA);
+    if (!spec || Z_TYPE_P(spec) != IS_ARRAY) {
+      throw_tprotocolexception("Attempt serialize from non-Thrift object", INVALID_DATA);
     }
 
     PHPOutputTransport transport(protocol);
@@ -1048,12 +1053,20 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
       zval ex;
       createObject("\\Thrift\\Exception\\TApplicationException", &ex);
       zval* spec = zend_read_static_property(Z_OBJCE(ex), "_TSPEC", sizeof("_TPSEC")-1, false);
+      if (EG(exception)) {
+        zend_object *ex = EG(exception);
+        EG(exception) = nullptr;
+        throw PHPExceptionWrapper(ex);
+      }
       binary_deserialize_spec(&ex, transport, Z_ARRVAL_P(spec));
       throw PHPExceptionWrapper(&ex);
     }
 
     createObject(ZSTR_VAL(obj_typename), return_value);
-    zval* spec = zend_read_static_property(Z_OBJCE_P(return_value), "_TSPEC", sizeof("_TSPEC")-1, false);
+    zval* spec = zend_read_static_property(Z_OBJCE_P(return_value), "_TSPEC", sizeof("_TSPEC")-1, true);
+    if (!spec || Z_TYPE_P(spec) != IS_ARRAY) {
+      throw_tprotocolexception("Attempt deserialize to non-Thrift object", INVALID_DATA);
+    }
     binary_deserialize_spec(return_value, transport, Z_ARRVAL_P(spec));
   } catch (const PHPExceptionWrapper& ex) {
     // ex will be destructed, so copy to a zval that zend_throw_exception_object can ownership of
