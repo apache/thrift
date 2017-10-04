@@ -853,12 +853,12 @@ bool ttypes_are_compatible(int8_t t1, int8_t t2) {
 static
 void validate_thrift_object(zval* object) {
     zend_class_entry* object_class_entry = Z_OBJCE_P(object);
-    zval* is_validate = zend_read_static_property(object_class_entry, "isValidate", sizeof("isValidate")-1, false);
+    zval* is_validate = zend_read_static_property(object_class_entry, "isValidate", sizeof("isValidate")-1, true);
     zval* spec = zend_read_static_property(object_class_entry, "_TSPEC", sizeof("_TSPEC")-1, false);
     HashPosition key_ptr;
     zval* val_ptr;
 
-    if (Z_TYPE_INFO_P(is_validate) == IS_TRUE) {
+    if (is_validate && Z_TYPE_INFO_P(is_validate) == IS_TRUE) {
         for (zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(spec), &key_ptr);
            (val_ptr = zend_hash_get_current_data_ex(Z_ARRVAL_P(spec), &key_ptr)) != nullptr;
            zend_hash_move_forward_ex(Z_ARRVAL_P(spec), &key_ptr)) {
