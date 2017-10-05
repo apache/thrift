@@ -127,7 +127,33 @@
 
 (in-package :containers)
 
+(deftest list-test ()
+  (is (null (thrift.test:test-list thrift-cross::*prot* nil)))
+  (is (equal (thrift.test:test-list thrift-cross::*prot* '(42 -42 0 5)) '(42 -42 0 5))))
 
+(deftest set-test ()
+  (is (null (thrift.test:test-set thrift-cross::*prot* nil)))
+  (is (equal (sort (thrift.test:test-set thrift-cross::*prot* (list 42 -42 0 5)) #'<)
+	     '(-42 0 5 42))))
+
+(defun map= (map1 map2 &key (car-predicate #'equal) (cdr-predicate #'equal))
+  "Compare two assoc maps according to the predicates given."
+  (not (set-exclusive-or map1 map2 :test (lambda (el1 el2)
+                                           (and (funcall car-predicate
+                                                         (car el1)
+                                                         (car el2))
+                                                (funcall cdr-predicate
+                                                         (cdr el1)
+                                                         (cdr el2)))))))
+
+(deftest map-test ()
+  (is (null (thrift.test:test-map thrift-cross::*prot* nil)))
+  (is (map= (thrift.test:test-map thrift-cross::*prot* '((0 . 1) (42 . -42) (5 . 5)))
+            '((0 . 1) (42 . -42) (5 . 5))))
+  (is (map= (thrift.test:test-map-map thrift-cross::*prot* 42)
+            '((-4 . ((-4 . -4) (-3 . -3) (-2 . -2) (-1 . -1)))
+              (4 . ((1 . 1) (2 . 2) (3 . 3) (4 . 4))))
+            :cdr-predicate #'map=)))
 
 (fiasco:define-test-package :exceptions)
 
