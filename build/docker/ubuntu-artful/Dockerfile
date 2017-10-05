@@ -11,17 +11,19 @@
 # limitations under the License.
 
 #
-# Apache Thrift Docker build environment for Ubuntu Trusty
-# Using all stock Ubuntu Trusty packaging except for:
-# - d: does not come with Ubuntu so we're installing 2.070.0
-# - dart: does not come with Ubuntu so we're installing 1.20.1
-# - dotnetcore, disabled because netcore is for 1.0.0-preview and 2.0.0 is out
-# - haxe, disabled because the distro comes with 3.0.0 and it cores while installing
-# - node.js, disabled because it is at 0.10.0 in the distro which is too old (need 4+)
-# - ocaml, disabled because it fails to install properly
+# Apache Thrift Docker build environment for Ubuntu Artful
+# Using all stock Ubuntu Artful packaging except for:
+# - d: does not come with Ubuntu so we're installing the latest
 #
 
-FROM buildpack-deps:trusty-scm
+#
+# Known missing or disabled libraries:
+# - d: deimos for libevent and openssl omitted - not compatible / build errors
+# - dart: dart repository doesn't work with apt 1.4 in artful
+# - dotnetcore, because netcore is for 1.0.0-preview and 2.0.0 is out
+#
+
+FROM buildpack-deps:artful-scm
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -36,6 +38,19 @@ RUN apt-get update && \
       software-properties-common \
       wget
 
+# csharp (mono) - if we ever want a later version
+# RUN echo "deb http://download.mono-project.com/repo/debian xenial main" | tee /etc/apt/sources.list.d/mono.list && \
+#     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A6A19B38D3D831EF
+
+# dotnet (core) 2.0.0 - project isn't ready for this yet:
+# RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
+#     echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main" > /etc/apt/sources.list.d/dotnetdev.list
+
+# node.js (this step runs apt-get update internally) - if we ever want a later version
+# note: node 8.5 introduced some issues with directory handling / jsdoc / something... using 7.x for now
+# RUN curl -sL https://deb.nodesource.com/setup_7.x | bash
+
+### install general dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
 `# General dependencies` \
       bash-completion \
@@ -53,9 +68,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       vim
 ENV PATH /usr/lib/llvm-3.8/bin:$PATH
 
+# boost-1.62 has a terrible bug in boost::test, see https://svn.boost.org/trac10/ticket/12507
 RUN apt-get install -y --no-install-recommends \
 `# C++ dependencies` \
-      libboost-all-dev \
+      libboost1.63-all-dev \
       libevent-dev \
       libssl-dev \
       qt5-default \
@@ -71,30 +87,40 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E &&
     wget -qO - https://dlang.org/d-keyring.gpg | apt-key add - && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-`# D dependencies` \
-      dmd-bin=2.070.2-0 \
-      libphobos2-dev=2.070.2-0 \
+      `# D dependencies` \
+      dmd-bin \
+      libphobos2-dev \
       dub \
       dfmt \
       dscanner \
+      libevent-dev \
+      libssl-dev \
       xdg-utils
+# libevent deimos doesn't seem to work so not enabling it:
 # RUN mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
 #     curl -sSL https://github.com/D-Programming-Deimos/libevent/archive/master.tar.gz| tar xz && \
 #     mv libevent-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
 #     mv libevent-master/C/* /usr/include/dmd/druntime/import/C/ && \
 #     rm -rf libevent-master
+# openssl deimos doesn't work with openssl-1.0.2 so not enabling it:
 # RUN curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/master.tar.gz| tar xz && \
 #     mv openssl-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
 #     mv openssl-master/C/* /usr/include/dmd/druntime/import/C/ && \
 #     rm -rf openssl-master
 
-RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-`# Dart dependencies` \
-      dart=1.20.1-1
-ENV PATH /usr/lib/dart/bin:$PATH
+# dart is disabled because the repository won't sync properly with apt 1.4
+# RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
+#     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
+#     apt-get update && \
+#     apt-get install -y --no-install-recommends \
+#       `# Dart dependencies` \
+#       dart
+# ENV PATH /usr/lib/dart/bin:$PATH
+
+# project isn't ready for this quite yet:
+# RUN apt-get install -y --no-install-recommends \
+# `# dotnet core dependencies` \
+#       dotnet-sdk-2.0.0
 
 RUN apt-get install -y --no-install-recommends \
 `# Erlang dependencies` \
@@ -110,47 +136,51 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
 `# golang (go) dependencies` \
-      golang-go
+      golang-go \
+      golang-race-detector-runtime
 
 RUN apt-get install -y --no-install-recommends \
 `# Haskell dependencies` \
       ghc \
       cabal-install
 
-# disabled because it cores while installing
+# THRIFT-4352: disabled haxe
 # RUN apt-get install -y --no-install-recommends \
 # `# Haxe dependencies` \
 #       haxe \
 #       neko \
-#       neko-dev && \
-#     haxelib setup /usr/share/haxe/lib && \
-#     haxelib install hxcpp 3.2.102
+#       neko-dev
+# RUN haxelib setup --always /usr/share/haxe/lib && \
+#     haxelib install --always hxcpp 3.4.64
+# note: hxcpp 3.4.185 (latest) no longer ships static libraries, and caused a build failure
 
 RUN apt-get install -y --no-install-recommends \
 `# Java dependencies` \
       ant \
       ant-optional \
-      openjdk-7-jdk \
+      openjdk-8-jdk \
       maven
 
 RUN apt-get install -y --no-install-recommends \
 `# Lua dependencies` \
-      lua5.1 \
-      lua5.1-dev
+      lua5.3 \
+      lua5.3-dev && \
+    ln -s /usr/bin/lua5.3 /usr/bin/lua && \
+    ln -s /usr/bin/luac5.3 /usr/bin/luac
+# https://bugs.launchpad.net/ubuntu/+source/lua5.3/+bug/1707212
+# lua5.3 does not install alternatives!
 
-# disabled because it is too old
-# RUN apt-get install -y --no-install-recommends \
-# `# Node.js dependencies` \
-#       nodejs \
-#       npm
+RUN apt-get install -y --no-install-recommends \
+`# Node.js dependencies` \
+      nodejs \
+      npm
 
-# disabled because it fails to install properly
-# RUN apt-get install -y --no-install-recommends \
-# `# OCaml dependencies` \
-#       ocaml \
-#       opam && \
-#     opam init --yes && \
-#     opam install --yes oasis
+RUN apt-get install -y --no-install-recommends \
+`# OCaml dependencies` \
+      ocaml \
+      opam && \
+    opam init --yes && \
+    opam install --yes oasis
 
 RUN apt-get install -y --no-install-recommends \
 `# Perl dependencies` \
@@ -162,9 +192,9 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
 `# Php dependencies` \
-      php5 \
-      php5-cli \
-      php5-dev \
+      php \
+      php-cli \
+      php-dev \
       php-pear \
       re2c \
       phpunit
@@ -174,24 +204,25 @@ RUN apt-get install -y --no-install-recommends \
       python-all \
       python-all-dbg \
       python-all-dev \
+      python-backports.ssl-match-hostname \
+      python-ipaddress \
       python-pip \
       python-setuptools \
       python-six \
+      python-tornado \
       python-twisted \
       python-wheel \
       python-zope.interface \
       python3-all \
       python3-all-dbg \
       python3-all-dev \
-      python3-pip \
       python3-setuptools \
       python3-six \
+      python3-tornado \
+      python3-twisted \
       python3-wheel \
       python3-zope.interface && \
-    pip install -U ipaddress backports.ssl_match_hostname tornado && \
-    pip3 install -U backports.ssl_match_hostname tornado 
-# installing tornado by pip/pip3 instead of debian package
-# if we install the debian package, the build fails in py2
+    pip install --upgrade backports.ssl_match_hostname
 
 RUN apt-get install -y --no-install-recommends \
 `# Ruby dependencies` \

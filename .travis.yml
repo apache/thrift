@@ -25,12 +25,39 @@ dist: trusty
 services:
   - docker
 
+before_install:
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - sudo apt-get update
+  - sudo apt-get -y install docker-ce
+
 install:
-  - (travis_wait ./build/docker/check_unmodified.sh $DISTRO && touch .unmodified) || true
-  - if [ ! -f .unmodified ]; then travis_retry travis_wait docker build -q -t thrift-build:$DISTRO build/docker/$DISTRO; fi
+  - docker pull thrift/thrift-build:$DISTRO || true
+  - build/docker/refresh.sh $DISTRO
 
 script:
-  - docker run --net=host -e BUILD_LIBS="$BUILD_LIBS" $BUILD_ENV -v $(pwd):/thrift/src -it thrift-build:$DISTRO build/docker/scripts/$SCRIPT $BUILD_ARG
+  - set
+  - docker run --net=host -e BUILD_LIBS="$BUILD_LIBS" $BUILD_ENV -v $(pwd):/thrift/src -it thrift/thrift-build:$DISTRO build/docker/scripts/$SCRIPT $BUILD_ARG
+
+stages:
+  - docker    # build the docker images separately so we're not doing it 5 times
+  - test      # test everything (this is the matrix)
+
+jobs:
+  include:
+    - stage: docker
+      script: echo ""
+      env:
+        - JOB="Docker Build ubuntu-trusty 14.04"
+        - DISTRO=ubuntu-trusty
+    - script: echo ""
+      env:
+        - JOB="Docker Build ubuntu-xenial 16.04"
+        - DISTRO=ubuntu-xenial
+    - script: echo ""
+      env:
+        - JOB="Docker Build ubuntu-artful 17.10"
+        - DISTRO=ubuntu-artful
 
 env:
   global:
@@ -59,7 +86,7 @@ env:
 
     # Autotools builds
     # TODO: Remove them once migrated to CMake
-
+ 
     - TEST_NAME="Autotools (Ubuntu Trusty)"
       DISTRO=ubuntu-trusty
       SCRIPT="autotools.sh"
@@ -67,33 +94,42 @@ env:
 
     - TEST_NAME="Autotools (Ubuntu Xenial)"
       SCRIPT="autotools.sh"
-      BUILD_ENV="-e CC=gcc -e CXX=g++"
       BUILD_ARG="--enable-plugin"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
+
+    - TEST_NAME="Autotools (Ubuntu Artful)"
+      DISTRO=ubuntu-artful
+      SCRIPT="autotools.sh"
+      BUILD_ARG="--enable-plugin"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
 
     # CMake builds
-
-    - TEST_NAME="CMake (Ubuntu Trusty)"
-      DISTRO=ubuntu-trusty
 
     - TEST_NAME="CMake (Ubuntu Xenial)"
 
     # C++ specific options: compiler plug-in, threading model
 
     - TEST_NAME="C++98 (Boost Thread)"
+      SCRIPT="cmake.sh"
       BUILD_LIBS="CPP TESTING TUTORIALS"
       BUILD_ARG="-DCMAKE_CXX_STANDARD=98 -DCMAKE_CXX_STANDARD_REQUIRED=ON -DCMAKE_CXX_EXTENSIONS=OFF --DWITH_BOOSTTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+      BUILD_ENV=""
 
     - TEST_NAME="C++ (Std Thread) and Plugin"
+      SCRIPT="cmake.sh"
       BUILD_LIBS="CPP TESTING TUTORIALS"
       BUILD_ARG="-DWITH_PLUGIN=ON -DWITH_STDTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+      BUILD_ENV="-e CC=clang -e CXX=clang++"
 
     # Distribution
-
+ 
     - TEST_NAME="make dist"
       SCRIPT="make-dist.sh"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
 
     - TEST_NAME="Debian Packages"
       SCRIPT="dpkg.sh"
+      BUILD_ENV="-e CC=gcc -e CXX=g++"
 
     # C and C++ undefined behavior. This wraps autotools.sh, but each binary crashes if
     # undefined behavior occurs. Skips the known flaky tests.
@@ -101,11 +137,8 @@ env:
     - TEST_NAME="UBSan"
       SCRIPT="ubsan.sh"
       BUILD_ARG="--without-haskell --without-nodejs --without-perl --without-python"
-      UNSTABLE=true
 
 matrix:
-  allow_failures:
-    - env: UNSTABLE=true
   include:
     # QA jobs for code analytics and metrics
     #

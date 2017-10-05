@@ -37,3 +37,6 @@ tutorialserver: all
 
 tutorialclient: all
 	dist/build/HaskellClient/HaskellClient
+
+EXTRA_DIST = \
+	LICENSE
