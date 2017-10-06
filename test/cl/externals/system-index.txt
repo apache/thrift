@@ -1,0 +1,11 @@
+software/cffi_0.19.0/cffi-examples.asd
+software/cffi_0.19.0/cffi-grovel.asd
+software/cffi_0.19.0/cffi-libffi.asd
+software/cffi_0.19.0/cffi-tests.asd
+software/cffi_0.19.0/cffi-toolchain.asd
+software/cffi_0.19.0/cffi-uffi-compat.asd
+software/cffi_0.19.0/cffi.asd
+software/clon-1.0b24/core/net.didierverna.clon.core.asd
+software/clon-1.0b24/net.didierverna.clon.asd
+software/clon-1.0b24/setup/net.didierverna.clon.setup.asd
+software/clon-1.0b24/termio/net.didierverna.clon.termio.asd

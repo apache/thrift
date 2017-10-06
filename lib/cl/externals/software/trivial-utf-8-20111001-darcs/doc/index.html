@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>Trivial UTF-8</title>
+  <link rel="stylesheet" type="text/css" href="style.css"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"/>
+</head>
+
+<body>
+ <div class="header">
+   <h1>Trivial UTF-8</h1>
+ </div>
+
+<p>Trivial UTF-8 is a small library for doing UTF-8-based in- and
+output <em>on a Lisp implementation that already supports Unicode</em>
+-- meaning <tt>char-code</tt> and <tt>code-char</tt> deal with Unicode
+character codes.</p>
+
+<p>The rationale for the existence of this library is that while
+Unicode-enabled implementations usually do provide some kind of
+interface to dealing with character encodings, these are typically not
+terribly flexible or uniform.</p>
+
+<p>The <a href="http://common-lisp.net/project/babel/">Babel</a>
+library solves a similar problem while understanding more encodings.
+Trivial UTF-8 was written before Babel existed, but for new projects
+you might be better off going with Babel. The one plus that Trivial
+UTF-8 has is that it doesn't depend on any other libraries.</p>
+
+<h2>Download and installation</h2>
+
+<p>Trivial-utf-8 is released under a BSD-style license (see source
+file). The latest release can be downloaded from <a
+href="http://common-lisp.net/project/trivial-utf-8/trivial-utf-8.tgz">http://common-lisp.net/project/trivial-utf-8/trivial-utf-8.tgz</a>,
+or installed with <a
+href="http://www.cliki.net/ASDF-Install">asdf-install</a>.</p>
+
+<p>A <a href="http://www.darcs.net/">darcs</a> repository with the most recent changes can be checked out with:</p>
+
+<pre>&gt; darcs get http://common-lisp.net/project/trivial-utf-8/darcs/trivial-utf-8</pre>
+
+<p>Or look at it <a
+href="http://common-lisp.net/cgi-bin/darcsweb/darcsweb.cgi?r=trivial-utf-8-trivial-utf-8;a=summary">online</a>.</p>
+
+<h2>Support and mailing lists</h2>
+
+<p>The <a href="http://common-lisp.net/mailman/listinfo/trivial-utf-8-devel">trivial-utf-8-devel</a> mailing list can be used for any questions, discussion, bug-reports, patches, or anything else relating to this library. Or mail the author/maintainer directly: <a href="mailto:marijnh@gmail.com">Marijn Haverbeke</a>.</p>
+
+<h2>Reference</h2>
+
+<p class="def">function <tt>string-to-utf-8-bytes</tt> (string) => array of (unsigned-byte 8)</p>
+
+<p class="desc">Convert a string into an array of unsigned bytes containing its
+utf-8 representation.</p>
+
+<p class="def">function <tt>utf-8-bytes-to-string</tt> (bytes) => string</p>
+
+<p class="desc">Convert a byte array containing utf-8 encoded characters into the
+string it encodes.</p>
+
+<p class="def">function <tt>write-utf-8-bytes</tt> (string output &amp;key null-terminate)</p>
+
+<p class="desc">Write a string to a byte-stream, encoding it as utf-8.</p>
+
+<p class="def">function <tt>read-utf-8-string</tt> (input &amp;key null-terminated stop-at-eof char-length byte-length)</p>
+
+<p class="desc">Read utf-8 encoded data from a byte stream and
+construct a string with the characters found. When
+<code>null-terminated</code> is given it will stop reading at a null
+character, <code>stop-at-eof</code> tells it to stop at the end of
+file without raising an error, and the <code>char-length</code> and
+<code>byte-length</code> parameters can be used to specify the maximum
+amount of characters or bytes to read.</p>
+
+<p class="def">function <tt>utf-8-byte-length</tt> (string) => integer</p>
+
+<p class="desc">Calculate the amount of bytes needed to encode a string.</p>
+
+<p class="def">function <tt>utf-8-group-size</tt> (byte) => integer</p>
+
+<p class="desc">Determine the amount of bytes that are part of the character
+starting with a given byte.</p>
+
+<p class="def">condition <tt>utf-8-decoding-error</tt></p>
+
+<p class="desc">A condition of this type is raised whenever an incorrectly encoded
+character is encountered.</p>
+
+<hr/>
+
+<p>Back to <a href="http://common-lisp.net/">Common-lisp.net</a>.</p>
+
+ <div class="check">
+   <a href="http://validator.w3.org/check/referer">Valid XHTML 1.0 Strict</a>
+ </div>
+</body>
+</html>

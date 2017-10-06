@@ -1,0 +1,46 @@
+
+
+(require :sock)
+
+accept-connection 	(sock passive-socket) &key wait 	Generic function. 
+dotted-to-ipaddr 	dotted &key errorp 	Function.
+ipaddr-to-dotted 	ipaddr &key values 	Function.
+ipaddr-to-hostname 	ipaddr 	Function.
+lookup-hostname 	hostname
+lookup-port 	portname protocol 	Function.
+make-socket 	&key type format address-family connect &allow-other-keys 	Function.
+with-pending-connect 	&body body 	Macro.
+receive-from 	(sock datagram-socket) size &key buffer extract 	Generic function.
+send-to 	sock &key
+shutdown 	sock &key direction 
+socket-control 	stream &key output-chunking output-chunking-eof input-chunking 
+socket-os-fd 	sock 	Generic function.
+
+remote-host 	socket 	Generic function.
+local-host 	socket 	Generic function.
+local-port 	socket
+
+remote-filename 	socket
+local-filename 	socket
+remote-port 	socket
+socket-address-family 	socket
+socket-connect 	socket
+socket-format 	socket
+socket-type 	socket
+
+errors
+
+:address-in-use 	Local socket address already in use
+:address-not-available 	Local socket address not available
+:network-down 	Network is down
+:network-reset 	Network has been reset
+:connection-aborted 	Connection aborted
+:connection-reset 	Connection reset by peer
+:no-buffer-space 	No buffer space
+:shutdown 	Connection shut down
+:connection-timed-out 	Connection timed out
+:connection-refused 	Connection refused
+:host-down 	Host is down
+:host-unreachable 	Host is unreachable
+:unknown 	Unknown error
+

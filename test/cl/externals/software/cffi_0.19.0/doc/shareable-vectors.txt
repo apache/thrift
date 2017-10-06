@@ -1,0 +1,44 @@
+
+# Shareable Byte Vectors
+
+Function: make-shareable-byte-vector size
+
+Create a vector of element type (UNSIGNED-BYTE 8) suitable for passing
+to WITH-POINTER-TO-VECTOR-DATA.
+
+;; Minimal implementation:
+(defun make-shareable-byte-vector (size)
+  (make-array size :element-type '(unsigned-byte 8)))
+
+
+Macro: with-pointer-to-vector-data (ptr-var vector) &body body
+
+Bind PTR-VAR to a pointer to the data contained in a shareable byte
+vector.
+
+VECTOR must be a shareable vector created by MAKE-SHAREABLE-BYTE-VECTOR.
+
+PTR-VAR may point directly into the Lisp vector data, or it may point
+to a temporary block of foreign memory which will be copied to and
+from VECTOR.
+
+Both the pointer object in PTR-VAR and the memory it points to have
+dynamic extent.  The results are undefined if foreign code attempts to
+access this memory outside this dynamic contour.
+
+The implementation must guarantee the memory pointed to by PTR-VAR
+will not be moved during the dynamic contour of this operator, either
+by creating the vector in a static area or temporarily disabling the
+garbage collector.
+
+;; Minimal (copying) implementation:
+(defmacro with-pointer-to-vector-data ((ptr-var vector) &body body)
+  (let ((vector-var (gensym))
+        (size-var (gensym)))
+    `(let* ((,vector-var ,vector)
+            (,size-var (length ,vector-var)))
+       (with-foreign-ptr (,ptr-var ,size-var)
+         (mem-write-vector ,vector-var ,ptr :uint8)
+         (prog1
+             (progn ,@body)
+           (mem-read-vector ,vector-var ,ptr-var :uint8 ,size-var))))))

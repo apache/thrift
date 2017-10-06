@@ -1,0 +1,75 @@
+
+# Block Memory Operations
+
+Function: mem-fill ptr type count value &optional (offset 0)
+
+Fill COUNT objects of TYPE, starting at PTR plus offset, with VALUE.
+
+;; Equivalent to (but possibly more efficient than):
+(loop for i below count
+      for off from offset by (%foreign-type-size type)
+      do (setf (%mem-ref ptr type off) value))
+
+Function: mem-read-vector vector ptr type count &optional (offset 0)
+
+Copy COUNT objects of TYPE from foreign memory at PTR plus OFFSET into
+VECTOR.  If VECTOR is not large enough to contain COUNT objects, it
+will copy as many objects as necessary to fill the vector.  The
+results are undefined if the foreign memory block is not large enough
+to supply the data to copy.
+
+TYPE must be a built-in foreign type (integer, float, double, or
+pointer).
+
+Returns the number of objects copied.
+
+;; Equivalent to (but possibly more efficient than):
+(loop for i below (min count (length vector))
+      for off from offset by (%foreign-type-size type)
+      do (setf (aref vector i) (%mem-ref ptr type off))
+      finally (return i))
+
+
+Function: mem-read-c-string string ptr &optional (offset 0)
+
+Copy a null-terminated C string from PTR plus OFFSET into STRING, a
+Lisp string.  If STRING is not large enough to contain the data at PTR
+it will be truncated.
+
+Returns the number of characters copied into STRING.
+
+;; Equivalent to (but possibly more efficient than):
+(loop for i below (length string)
+      for off from offset
+      for char = (%mem-ref ptr :char off)
+      until (zerop char)
+      do (setf (char string i) char)
+      finally (return i))
+
+Function: mem-write-vector vector ptr type &optional
+                           (count (length vector)) (offset 0)
+
+Copy COUNT objects from VECTOR into objects of TYPE in foreign memory,
+starting at PTR plus OFFSET.  The results are undefined if PTR does
+not point to a memory block large enough to hold the data copied.
+
+TYPE must be a built-in type (integer, float, double, or pointer).
+
+Returns the number of objects copied from VECTOR to PTR.
+
+;; Equivalent to (but possibly more efficient than):
+(loop for i below count
+      for off from offset by (%foreign-type-size type)
+      do (setf (%mem-ref ptr type off) (aref vector i))
+      finally (return i))
+
+
+Function: mem-write-c-string string ptr &optional (offset 0)
+
+Copy the characters from a Lisp STRING to PTR plus OFFSET, adding a
+final null terminator at the end.  The results are undefined if the
+memory at PTR is not large enough to accomodate the data.
+
+This interface is currently equivalent to MEM-WRITE-VECTOR with a TYPE
+of :CHAR, but will be useful when proper support for Unicode strings
+is implemented.

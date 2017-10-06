@@ -1,0 +1,20 @@
+EADDRINUSE 48 address-in-use-error
+EADDRNOTAVAIL 49 address-not-available-error
+EAGAIN interrupted-error  ;; not 1 error code: bsd == 11; non-bsd == 35
+EBADF 9 bad-file-descriptor-error
+ECONNREFUSED 61 connection-refused-error
+EINTR 4 interrupted-error
+EINVAL 22 invalid-argument-error
+ENOBUFS 55 no-buffers-error
+ENOMEM 12 out-of-memory-error
+EOPNOTSUPP 45 operation-not-supported-error
+EPERM 1 operation-not-permitted-error
+EPROTONOSUPPORT 43 protocol-not-supported-error
+ESOCKTNOSUPPORT 44 socket-type-not-supported-error
+ENETUNREACH 51 network-unreachable-error
+ENETDOWN 50 network-down-error
+ENETRESET 52 network-reset-error
+ESHUTDOWN 58 already-shutdown-error
+ETIMEDOUT 60 connection-timeout-error
+EHOSTDOWN 64 host-down-error
+EHOSTUNREACH 65 host-unreachable-error
