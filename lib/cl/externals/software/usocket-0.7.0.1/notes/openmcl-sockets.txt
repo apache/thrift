@@ -1,0 +1,27 @@
+http://openmcl.clozure.com/Doc/sockets.html
+
+    make-socket [Function]
+    accept-connection [Function]
+    dotted-to-ipaddr [Function]
+    ipaddr-to-dotted [Function]
+    ipaddr-to-hostname [Function]
+    lookup-hostname [Function]
+    lookup-port [Function]
+    receive-from [Function]
+    send-to [Function]
+    shutdown [Function]
+    socket-os-fd [Function]
+    remote-port [Function]
+    local-host [Function]
+    local-port [Function]
+
+        socket-address-family [Function]
+
+    socket-connect [Function]
+    socket-format [Function]
+    socket-type [Function]
+    socket-error [Class]
+    socket-error-code [Function]
+    socket-error-identifier [Function]
+    socket-error-situation [Function]
+    close [method]

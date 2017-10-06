@@ -1,0 +1,41 @@
+
+$Id$
+
+http://www.lispworks.com/reference/lwu41/lwref/LWRM_37.HTM
+
+Package: COMM
+
+ip-address-string
+socket-stream-address
+socket-stream-peer-address
+start-up-server
+start-up-server-and-mp
+string-ip-address
+with-noticed-socket-stream
+
+Needed components for usocket:
+
+comm::get-fd-from-socket socket-fd
+  => socket-fd
+
+comm::accept-connection-to-socket socket-fd
+  => socket-fd
+
+comm::close-socket
+comm::create-tcp-socket-for-service
+  => socket-fd
+
+open-tcp-stream peer-host peer-port &key direction element-type
+  => socket-stream
+
+get-host-entry (see http://www.lispworks.com/documentation/lw445/LWRM/html/lwref-30.htm#pgfId-897837)
+get-socket-address
+
+get-socket-peer-address
+  => address, port
+
+socket-stream socket-fd
+  => stream
+
+socket socket-stream (guessed from http://www.lispworks.com/documentation/lw445/LWRM/html/lwref-43.htm)
+  => socket-fd

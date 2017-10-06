@@ -1,0 +1,107 @@
+-*- Text -*-
+
+This is a collection of TODO items and ideas in no particular order.
+
+### Testing
+
+-> Test uffi-compat with more UFFI libraries.
+-> Write more FOREIGN-GLOBALS.SET.* tests.
+-> Finish tests/random-tester.lisp
+-> Write benchmarks comparing CFFI vs. native FFIs and also demonstrating
+   performance of each platform.
+-> Write more STRUCT.ALIGNMENT.* tests (namely involving the :LONG-LONG
+   and :UNSIGNED-LONG-LONG types) and test them in more ABIs.
+-> Run tests with the different kinds of shared libraries available on
+   MacOS X.
+
+### Ports
+
+-> Finish GCL port, port to MCL.
+-> Update Corman port. [2007-02-22 LO]
+
+### Features
+
+-> Implement a declarative interface for FOREIGN-FUNCALL-PTR, similar to
+   DEFCUN/FOREIGN-FUNCALL.
+-> Implement the proposed interfaces (see doc/).
+-> Extend FOREIGN-SLOT-VALUE and make it accept multiple "indices" for
+   directly accessing structs inside structs, arrays inside structs, etc...
+-> Implement EXPLAIN-FOREIGN-SLOT-VALUE.
+-> Implement :in/:out/:in-out for DEFCFUN (and FOREIGN-FUNCALL?).
+-> Add support for multiple memory allocation schemes (like CLISP), namely
+   support for allocating with malloc() (so that it can be freed on the C
+   side)>
+-> Extend DEFCVAR's symbol macro in order to handle memory (de)allocation
+   automatically (see CLISP).
+-> Implement byte swapping routines (see /usr/include/linux/byteorder)
+-> Warn about :void in places where it doesn't make sense.
+
+### Underspecified Semantics
+
+-> (setf (mem-ref ptr <aggregate-type> offset) <value>)
+-> Review the interface for coherence across Lisps with regard to
+   behaviour in "exceptional" situations. Eg: threads, dumping cores,
+   accessing foreign symbols that don't exist, etc...
+-> On Lispworks a Lisp float is a double and therefore won't necessarily
+   fit in a C float. Figure out a way to handle this.
+-> Allegro: callbacks' return values.
+-> Lack of uniformity with regard to pointers. Allegro: 0 -> NULL.
+   CLISP/Lispworks: NIL -> NULL.
+-> Some lisps will accept a lisp float being passed to :double
+   and a lisp double to :float. We should either coerce on lisps that
+   don't accept this or check-type on lisps that do. Probably the former
+   is better since on lispworks/x86 double == float.
+
+### Possible Optimizations
+
+-> More compiler macros on some of the CFFI-SYS implementations.
+-> Optimize UFFI-COMPAT when the vector stuff is implemented.
+-> Being able to declare that some C int will always fit in a Lisp
+   fixnum. Allegro has a :fixnum ftype and CMUCL/SBCL can use
+   (unsigned-byte 29) others could perhaps behave like :int?
+-> An option for defcfun to expand into a compiler macro which would
+   allow the macroexpansion-time translators to look at the forms
+   passed to the functions.
+
+### Known Issues
+
+-> CLISP FASL portability is broken. Fix this by placing LOAD-TIME-VALUE
+   forms in the right places and moving other calculations to load-time.
+   (eg: calculating struct size/alignment.) Ideally we'd only move them
+   to load-time when we actually care about fasl portability.
+     (defmacro maybe-load-time-value (form)
+       (if <we care about fasl portability>
+           `(load-time-value ,form)
+           form))
+-> cffi-tests.asd's :c-test-lib component is causing the whole testsuite
+   to be recompiled everytime. Figure that out.
+-> The (if (constantp foo) (do-something-with (eval foo)) ...) pattern
+   used in many places throughout the code is apparently not 100% safe.
+-> On ECL platforms without DFFI we need to build a non-linked version
+   of libtest.
+-> foreign-enum-keyword/value should have their own error condition?
+   <http://article.gmane.org/gmane.lisp.cffi.devel/975> [2007-02-22 LO]
+
+### Documentation
+
+-> Fill the missing sections in the CFFI User Manual.
+-> Update the CFFI-SYS Specification.
+-> have two versions of the manual on the website
+
+### CFFI-Grovel
+
+-> Look into making the C output more concise.
+
+### CFFI-Toolchain
+
+-> Port the toolchain parameter detection to more implementations
+-> Port the static linking support to more implementations
+-> Add a mechanism to configure and/or detect dynamic libraries against
+   which to link for instance.
+   It could be a variable in which flags are accumulated,
+   or an autodetection after loading everything, see
+    https://github.com/borodust/cl-bodge/blob/0.3.0/distribution/build.lisp#L79
+
+### Other
+
+-> Type-checking pointer interface.

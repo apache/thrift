@@ -1,0 +1,69 @@
+http://cvs2.cons.org/ftp-area/cmucl/doc/cmu-user/internet.html
+
+$Id$
+
+extensions:lookup-host-entry host
+
+[structure]
+host-entry    
+
+    name aliases addr-type addr-list
+
+[Function]
+extensions:create-inet-listener port &optional kind &key :reuse-address :backlog :interface
+  => socket fd
+
+[Function]
+extensions:accept-tcp-connection unconnected
+  => socket fd, address
+
+[Function]
+extensions:connect-to-inet-socket host port &optional kind
+  => socket fd
+
+[Function]
+extensions:close-socket socket
+
+
+
+[Private function]
+extensions::get-peer-host-and-port socket-fd
+
+[Private function]
+extentsions::get-socket-host-and-port socket-fd
+
+
+
+There's currently only 1 condition to be raised:
+
+  SOCKET-ERROR (derived from SIMPLE-ERROR)
+    which has a SOCKET-ERRNO slot containing the unix error number.
+
+
+
+
+[Function]
+extensions:add-oob-handler fd char handler
+
+[Function]
+extensions:remove-oob-handler fd char
+
+[Function]
+extensions:remove-all-oob-handlers fd
+
+[Function]
+extensions:send-character-out-of-band fd char
+
+[Function]
+extensions:create-inet-socket &optional type
+  => socket fd
+
+[Function]
+extensions:get-socket-option socket level optname
+
+[Function]
+extensions:set-socket-option socket level optname optval
+
+[Function]
+extensions:ip-string addr    
+

@@ -1,0 +1,73 @@
+
+                                                           -*- text -*-
+
+Step 2 of the master plan: Implementing (get-local-address sock) and
+(get-peer-address sock).
+
+
+Step 2 is about implementing:
+
+ (get-local-address sock) -> ip
+ (get-peer-address sock) -> ip
+ (get-local-port sock) -> port
+ (get-peer-port sock) -> port
+ (get-local-name sock) -> ip, port
+ (get-peer-name sock) -> ip, port
+
+
+ABCL
+====
+
+ FFI / J-calls to "getLocalAddress"+"getAddress", "getLocalPort" (local)
+ FFI / J-calls to "getInetAddress"+"getAddress", "getPort" (peer)
+
+ (see SLIME / swank-abcl.lisp for an example on how to do that)
+
+
+Allegro
+=======
+
+ (values (socket:remote-host sock)
+         (socket:remote-port)) -> 32bit ip, port
+
+ (values (socket:local-host sock)
+         (socket:local-port sock)) -> 32bit ip, port
+
+CLISP
+=====
+
+ (socket:socket-stream-local sock nil) -> address (as dotted quad), port
+ (socket:socket-stream-peer sock nil) -> address (as dotted quad), port
+
+
+CMUCL
+=====
+
+ (ext:get-peer-host-and-port sock-fd) -> 32-bit-addr, port (peer)
+ (ext:get-socket-host-and-port sock-fd) -> 32-bit-addr, port (local)
+
+
+LispWorks
+=========
+
+ (comm:socket-stream-address sock-stream) -> 32-bit-addr, port
+   or: (comm:get-socket-address sock) -> 32-bit-addr, port
+
+ (comm:socket-stream-peer-address sock-stream) -> 32-bit-addr, port
+   or: (comm:get-socket-peer-address sock) -> 32-bit-addr, port
+
+
+OpenMCL
+=======
+
+ (values (ccl:local-host sock) (ccl:local-port sock)) -> 32-bit ip, port
+ (values (ccl:remote-host sock) (ccl:remote-port sock)) -> 32-bit ip, port
+
+
+SBCL
+====
+
+ (sb-bsd-sockets:socket-name sock) -> vector-quad, port
+ (sb-bsd-sockets:socket-peer-name sock) -> vector-quad, port
+
+

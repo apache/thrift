@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- $Id: gendocs_template,v 1.7 2005/05/15 00:00:08 karl Exp $ -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+
+<!--
+
+ This template was adapted from Texinfo:
+ http://savannah.gnu.org/cgi-bin/viewcvs/texinfo/texinfo/util/gendocs_template
+
+-->
+
+
+<head>
+<title>%%TITLE%%</title>
+<meta http-equiv="content-type" content='text/html; charset=utf-8' />
+<!-- <link rel="stylesheet" type="text/css" href="/gnu.css" /> -->
+<!-- <link rev="made" href="webmasters@gnu.org" /> -->
+<style>
+/* CSS style taken from http://gnu.org/gnu.css */
+
+html, body { 
+	background-color: #FFFFFF; 
+	color: #000000;
+	font-family: sans-serif;
+}
+
+a:link { 
+ 	color: #1f00ff; 
+	background-color: transparent;
+	text-decoration: underline;
+ 	}
+
+a:visited { 
+ 	color: #9900dd; 
+	background-color: transparent;
+	text-decoration: underline;
+ 	}
+
+a:hover { 
+ 	color: #9900dd; 
+	background-color: transparent;
+	text-decoration: none;
+ 	}
+
+.center {
+	text-align: center;
+}
+
+.italic { 
+ 	font-style: italic; 
+ 	}
+
+.bold {
+        font-weight: bold;
+        }
+
+.quote {
+	margin-left: 40px;
+	margin-right: 40px;
+}
+
+.hrsmall {
+	width: 80px;
+	height: 1px;
+	margin-left: 20px;
+}
+
+.td_title {
+	border-color: #3366cc;
+	border-style: solid;
+	border-width: thin;
+	color: #3366cc;
+	background-color : #f2f2f9; 
+	font-weight: bold; 
+}
+
+.td_con {
+	padding-top: 3px; 
+	padding-left: 8px; 
+	padding-bottom: 3px; 
+	color : #303030; 
+	background-color : #fefefe; 
+	font-size: smaller;
+}
+
+.translations {
+	background-color: transparent; 
+	color: black;
+	font-family: serif;
+	font-size: smaller;
+}
+
+.fsflink {
+	font-size: smaller; 
+	font-family: monospace; 
+	color : #000000; 
+	border-left: #3366cc thin solid; 
+	border-bottom: #3366cc thin solid; 
+	padding-left: 5px; 
+	padding-bottom: 5px;
+}
+
+/*
+ * rtl stands for right-to-left layout, as in farsi/persian,
+ * arabic, etc. See also trans_rtl.
+ */
+.fsflink_rtl {
+	font-size: smaller; 
+	font-family: monospace; 
+	color : #000000; 
+	border-right: #3366cc thin solid; 
+	border-bottom: #3366cc thin solid; 
+	padding-right: 5px; 
+	padding-bottom: 5px;
+}
+
+.trans {
+	font-size: smaller; 
+	color : #000000; 
+	border-left: #3366cc thin solid; 
+	padding-left: 20px; 
+}
+
+.trans_rtl {
+	font-size: smaller; 
+	color : #000000; 
+	border-right: #3366cc thin solid; 
+	padding-right: 20px; 
+}
+
+img {
+	border: none 0;
+}
+
+td.side {
+	color: #3366cc;
+/*	background: #f2f2f9; 
+	border-color: #3366cc;
+	border-style: solid;
+	border-width: thin; */
+	border-color: white;
+	border-style: none;
+	vertical-align: top;
+	width: 150px;
+}
+
+div.copyright {
+	font-size: 80%; 
+	border: 2px solid #3366cc; 
+	padding: 4px;
+	background: #f2f2f9;
+	border-style: solid;
+	border-width: thin;
+}
+
+.footnoteref {
+	font-size: smaller; 
+	vertical-align: text-top;
+}
+</style>
+</head>
+
+<!-- This document is in XML, and xhtml 1.0 -->
+<!-- Please make sure to properly nest your tags -->
+<!-- and ensure that your final document validates -->
+<!-- consistent with W3C xhtml 1.0 and CSS standards -->
+<!-- See validator.w3.org -->
+
+<body>
+
+<h3>%%TITLE%%</h3>
+
+<!-- <address>Free Software Foundation</address> -->
+<address>last updated %%DATE%%</address>
+
+<!--
+<p>
+<a href="/graphics/gnu-head.jpg">
+	<img src="/graphics/gnu-head-sm.jpg"
+	alt=" [image of the head of a GNU] "
+	width="129" height="122" />
+</a>
+<a href="/philosophy/gif.html">(no gifs due to patent problems)</a>
+</p>
+-->
+
+<hr />
+
+<p>This document <!--(%%PACKAGE%%)--> is available in the following formats:</p>
+
+<ul>
+  <li><a href="%%PACKAGE%%.html">HTML 
+      (%%HTML_MONO_SIZE%%K characters)</a> - entirely on one web page.</li>
+  <li><a href="html_node/index.html">HTML</a> - with one web page per
+      node.</li>
+  <li><a href="%%PACKAGE%%.html.gz">HTML compressed
+      (%%HTML_MONO_GZ_SIZE%%K gzipped characters)</a> - entirely on 
+      one web page.</li>
+  <li><a href="%%PACKAGE%%.html_node.tar.gz">HTML compressed
+      (%%HTML_NODE_TGZ_SIZE%%K gzipped tar file)</a> -
+      with one web page per node.</li>
+  <li><a href="%%PACKAGE%%.info.tar.gz">Info document
+      (%%INFO_TGZ_SIZE%%K characters gzipped tar file)</a>.</li>
+  <li><a href="%%PACKAGE%%.txt">ASCII text
+      (%%ASCII_SIZE%%K characters)</a>.</li>
+  <li><a href="%%PACKAGE%%.txt.gz">ASCII text compressed
+      (%%ASCII_GZ_SIZE%%K gzipped characters)</a>.</li>
+  <li><a href="%%PACKAGE%%.dvi.gz">TeX dvi file
+      (%%DVI_GZ_SIZE%%K characters gzipped)</a>.</li>
+  <li><a href="%%PACKAGE%%.ps.gz">PostScript file
+      (%%PS_GZ_SIZE%%K characters gzipped)</a>.</li>
+  <li><a href="%%PACKAGE%%.pdf">PDF file
+      (%%PDF_SIZE%%K characters)</a>.</li>
+  <li><a href="%%PACKAGE%%.texi.tar.gz">Texinfo source
+      (%%TEXI_TGZ_SIZE%%K characters gzipped tar file)</a></li>
+</ul>
+
+<p>(This page was generated by the <a href="%%SCRIPTURL%%">%%SCRIPTNAME%%
+script</a>.)</p>
+
+<div class="copyright">
+<p>
+Return to <a href="/project/cffi/">CFFI's home page</a>.
+</p>
+
+<!--
+<p>
+Please send FSF &amp; GNU inquiries to 
+<a href="mailto:gnu@gnu.org"><em>gnu@gnu.org</em></a>.
+There are also <a href="/home.html#ContactInfo">other ways to contact</a> 
+the FSF.
+<br />
+Please send broken links and other corrections (or suggestions) to
+<a href="mailto:webmasters@gnu.org"><em>webmasters@gnu.org</em></a>.
+</p>
+-->
+
+<p>
+Copyright (C) 2005 James Bielman  &lt;jamesjb at jamesjb.com&gt;<br />
+Copyright (C) 2005 Lu&iacute;s Oliveira  &lt;loliveira at common-lisp.net&gt;
+<!--
+<br />
+Verbatim copying and distribution of this entire article is
+permitted in any medium, provided this notice is preserved.
+-->
+</p>
+
+<p>
+Updated: %%DATE%%
+<!-- timestamp start -->
+<!-- $Date: 2005/05/15 00:00:08 $ $Author: karl $ -->
+<!-- timestamp end -->
+</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,117 @@
+0.7.0:
+
+* General: Separated USOCKET and USOCKET-SERVER systems (only the server part depends on Portable-threads)
+* General: USOCKET now depends on SPLIT-SEQUENCE (the exactly same vendor code is removed from usocket code base)
+* New feature: [LW] (SOCKET-OPTION :TCP-NODELAY) and its SETF version now works on LispWorks 4/5/6/7.
+* New feature: [LW] SOCKET-CONNECT now supports setting "tcp_nodelay" in version 4.x and 5.0.
+* Bugfix: [CCL] fixed issues in SOCKET-SHUTDOWN
+* Bugfix: [CLISP] fixed issues in WAIT-FOR-INPUT (Thanks to a patch by @vibs29, #27)
+* Bugfix: [LW] fixed loading in version <= 6.0 (actually 0.6.5 only fixed loading in LW 6.1)
+* Bugfix: [ECL] all compilation warnings were checked and fixed.
+
+0.6.5:
+
+* New feature: SOCKET-OPTION and (setf SOCKET-OPTION) for :SEND-TIMEOUT (thanks to John Pallister)
+* Bugfix: Let (WAIT-FOR-INPUT NIL &TIMEOUT) return NIL with respect to TIMEOUT.
+* Bugfix: [LW] fixed loading in LispWorks 5.x & 6.x.
+* Bugfix: [LW] fixed SOCKET-SHUTDOWN in all versions.
+* Bugfix: [ABCL] Fixed incorrect IPv6 addresses (#26), patch from Elias Mårtenson (lokedhs)
+
+0.6.4:
+
+* New feature: [SBCL] IPv6 support (patch from Guillaume LE VAILLANT, #15)
+* New feature: [API] SOCKET-SHUTDOWN added (patch from Thayne McCombs #9)
+* New feature: [Corman] minimal initial support of this platform
+* Bugfix: [SBCL/win32] wait-for-input nil-timeout bug (patch from Michal Herda, #13)
+* Bugfix: [ECL] included unistd.h for gethostname() (patch from Daniel Kochmanski, #7)
+* Bugfix: [LispWorks] SOCKET-RECEIVE now updates %READ-P (patch from Frank James)
+
+0.6.3:
+
+* Bugfix: [CCL] Further fixed CCL-1.11 compatibility and a typo in SOCKET-CONNECT for CCL-1.10.
+* Bugfix: [ECL] Fixed build in some versions.
+* Bugfix: [LispWorks] SOCKET-SEND and SOCKET-RECEIVE now throw conditions if something goes wrong.
+
+0.6.2:
+
+* Bugfix: [CCL] Fixed CCL-1.11 compatibility.
+* Bugfix: [ECL] Fixed compatibility on recent versions.
+* Bugfix: [LispWorks] Added support address-in-use-error condition on LW/Win32. (patch from Sergey Katrevich).
+
+0.6.1:
+
+* New feature: [MOCL] Initial MOCL support (TCP only, no W-F-I, patch from github.com/Wukix/usocket).
+* New feature: [MCL] Initial UDP support for Macintosh Common Lisp (MCL/RMCL).
+* New feature: Added TCP-NO-DELAY (TCP_NODELAY) support in SOCKET-OPTION, for TCP client
+* Bugfix: [CCL] Added (:external-format ccl:*default-external-format*) to SOCKET-CONNECT, to prevent it fallback to ISO-8859-1 on NIL. (Patch from Vsevolod Dyomkin)
+* Bugfix: [CCL] Performance improved WAIT-FOR-INPUT and other fixes. (patch from Faré <fahree@gmail.com>)
+
+0.6.0:
+
+* New feature: SOCKET-OPTION and (setf SOCKET-OPTION) for seting and geting various socket options.
+* New feature: SOCKET-SEND now support an CCL-like OFFSET keyword for sending only parts of the whole buffer.
+* New feature: [ECL] Added support for ECL DFFI mode on Windows. (no need for C compilers now)
+* Bugfix: [ECL] ECL now list sb-bsd-sockets as a dependency but relies on REQUIRE. (patched by Juanjo)
+* Bugfix: [ABCL] Make USOCKET compile warning-free on ABCL again: MAKE-IMMEDIATE-OBJECT was deprecated a while ago in favor of 2 predefined constants.
+* Bugfix: [LispWorks] remove redundant call to hcl:flag-special-free-action. (reported by Kamil Shakirov)
+* Bugfix: [CLISP] improved HANDLE-CONDITION for more CLISP environments.
+
+0.5.5:
+
+* Enhancement: SOCKET-CONNECT argument :nodelay can now set to :if-supported (patch from Anton Vodonosov).
+* Enhancement: [Server] adding *remote-host* *remote-port* to socket-server stream handler functions (suggested by Matthew Curry)
+* Bugfix: [LispWorks] Fixed UDP support for LispWorks 6.1 (patch from Camille Troillard by Martin Simmons).
+* Bugfix: [LispWorks] Stop using hcl:add-special-free-action for reclaiming unused UDP socket fds to improve multi-threading stablity (suggested by Camille Troillard).
+* Bugfix: [LispWorks] Fixed SOCKET-CONNECT on Windows, now LOCAL-PORT never have *auto-port* (0) as default value.
+
+0.5.4:
+
+* Bugfix: [ECL] Fixed for ECL's MAKE-BUILD by removing some unecessary code (reported by Juan Jose Garcia-Ripoll, the ECL maintainer)
+* Bugfix: [ACL] Fixed for Allegro CL modern mode.
+* Bugfix: [SBCL] SOCKET-CONNECT on TCP won't call bind() when keyword arguments LOCAL-HOST or LOCAL-PORT is not set. (reported by Robert Brown)
+
+0.5.3:
+
+* Bugfix: [MCL] Fixed SOCKET-LISTEN on vector addresses like #(0 0 0 0)
+* Bugfix: [MCL] Fixed WAIT-FOR-INPUT on passive sockets (stream-server-usocket)
+* Bugfix: [LispWorks] Fixed using OPEN-UDP-SOCKET in delivered applications (thanks to Camille Troillard and Martin Simmons, this fix is from LispWorks-UDP project).
+* Bugfix: [SBCL] Fixed for "SBCL data flush problem", reported by Robert Brown and confirmed by Nikodemus Siivola.
+
+0.5.2:
+
+* General: [SBCL] SOCKET-CONNECT's TIMEOUT argument was limited on non-Windows platforms.
+* Bugfix: [CLISP] WAIT-FOR-INPUT now functions right (with/without READY-ONLY), this made Hunchentoot working on CLISP. (Thanks to Anton Vodonosov <avodonosov@yandex.ru>)
+* Bugfix: [ABCL] Fix SOCKET-ACCEPT to follow the documented API so that when called without an :ELEMENT-TYPE argument. (Thanks to Mark Evenson, the ABCL developer)
+* Bugfix: [LispWorks] Fixed SOCKET-ACCEPT (Windows only) on WAIT-FOR-INPUTed sockets.
+* Bugfix: [SBCL, ECL] Fixed wrongly STATE set/unset for WAIT-FOR-INPUT on Windows (report by Elliott Slaughter)
+* Enhancement: Additional NAME keyword argument for SOCKET-SERVER for setting the server thread name.
+* Enhancement: [ABCL] GET-ADDRESS now works with underlying IP6 addresses.
+* Enhancement: [CLISP] missing GET-LOCAL-* methods for STREAM-SERVER-USOCKET was now added.
+
+0.5.1:
+
+* New feature: [CLISP] UDP (Datagram) support based on FFI (Win/Mac/Linux), no RAWSOCK needed.
+* Enhancement: SOCKET-SERVER return a second value (socket) when calling in new-thread mode.
+* Enhancement: [CLISP] Full support of DNS helper functions (GET-HOST-BY-NAME, ...) added.
+* Enhancement: [CLISP] Better network error type detection based on OS error code.
+* Enhancement: [LispWorks] Better network error type detection based on OS error code.
+* Bugfix: Fixed wrong macro expansions of {IP|PORT}-{FROM|TO}-OCTET-BUFFER functions (since 0.4.0)
+* Bugfix: SOCKET-CONNECT didn't set CONNECTED-P for datagram usockets on most backends.
+* Bugfix: [SBCL] Fixes for "SBCL/Win32: finalizer problem, etc", by Anton Kovalenko <anton@sw4me.com>
+* Bugfix: [SBCL] Fixed SOCKET-SERVER (UDP) on SBCL due to a issue in SOCKET-CONNECT when HOST is NIL.
+* Bugfix: [SBCL] SOCKET-CONNECT's TIMEOUT argument now works as a "connection timeout".
+* Bugfix: [CMUCL] Fixed SOCKET-SEND on unconnected usockets under Unicode version of CMUCL.
+* Bugfix: [CLISP] Fixed and confirmed UDP (Datagram) support (RAWSOCK version).
+
+0.5.0:
+
+* New supported platform: Macintosh Common Lisp (5.0 and up, plus RMCL)
+* Support for UDP (datagram-usocket) was added (for all supported platform except MCL)
+* Add WAIT-FOR-INPUT support for SBCL and ECL on win32.
+* Simple TCP and UDP server API: SOCKET-SERVER
+* Completely rewritten full-feature ABCL backends using latest Java interfaces
+* Lots of bug fixed since 0.4.1
+
+[TODO]
+
+* New feature: CLISP support some advanced TCP features which CLISP's SOCKET interface not provide

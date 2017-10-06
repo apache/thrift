@@ -1,0 +1,36 @@
+branches:
+  only:
+    - master
+
+language: lisp
+
+env:
+  matrix:
+    #- LISP=abcl
+    #- LISP=allegro
+    - LISP=sbcl
+    - LISP=sbcl32
+    - LISP=ccl
+    - LISP=ccl32
+    #- LISP=clisp
+    #- LISP=clisp32
+    #- LISP=cmucl
+    #- LISP=ecl
+
+matrix:
+  allow_failures:
+    - env: LISP=ccl32
+
+install:
+  - curl -L https://github.com/luismbo/cl-travis/raw/master/install.sh | sh
+  - if [ "${LISP:(-2)}" = "32" ]; then
+      sudo apt-get install -y libc6-dev-i386 libffi-dev:i386;
+    fi
+  - git clone --depth=1 git://github.com/trivial-features/trivial-features.git ~/lisp/trivial-features
+  - git clone https://gitlab.common-lisp.net/alexandria/alexandria.git ~/lisp/alexandria
+  - git clone --depth=1 git://github.com/cl-babel/babel.git ~/lisp/babel
+
+script:
+  - cl -e '(ql:quickload :cffi-tests)
+           (when (cffi-tests:run-all-cffi-tests)
+             (uiop:quit 1))'
