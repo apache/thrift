@@ -558,7 +558,7 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
   } else if (type->is_enum()) {
     out << value->get_integer();
   } else if (type->is_struct() || type->is_xception()) {
-    out << "new " << js_type_namespace(type->get_program()) << type->get_name() << "({" << endl;
+    out << "new " << js_type_namespace(type->get_program()) << type->get_name() << "({";
     indent_up();
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -576,12 +576,12 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
       }
       if (v_iter != val.begin())
         out << ",";
-      out << render_const_value(g_type_string, v_iter->first);
+      out << endl << indent() << render_const_value(g_type_string, v_iter->first);
       out << " : ";
       out << render_const_value(field_type, v_iter->second);
     }
-
-    out << "})";
+    indent_down();
+    out << endl << indent() << "})";
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
 
@@ -600,9 +600,8 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
       out << " : ";
       out << render_const_value(vtype, v_iter->second);
     }
-
     indent_down();
-    out << endl << "}";
+    out << endl << indent() << "}";
   } else if (type->is_list() || type->is_set()) {
     t_type* etype;
     if (type->is_list()) {
