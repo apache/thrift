@@ -378,7 +378,7 @@
 
   (:method ((class thrift-exception-class) &rest initargs)
     (declare (dynamic-extent initargs))
-    (apply #'make-condition class initargs)))
+    (apply #'make-condition (class-condition-class class) initargs)))
 
 (defgeneric struct-name (class)
   (:method ((class class))
