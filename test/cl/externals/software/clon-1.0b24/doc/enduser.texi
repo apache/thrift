@@ -1,0 +1,2069 @@
+\input texinfo
+
+@c enduser.texi --- End-user manual
+
+@c Copyright (C) 2010-2012, 2015 Didier Verna
+
+@c Author: Didier Verna <didier@didierverna.net>
+
+@c This file is part of Clon.
+
+@c Permission to use, copy, modify, and distribute this software for any
+@c purpose with or without fee is hereby granted, provided that the above
+@c copyright notice and this permission notice appear in all copies.
+
+@c THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+@c WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+@c MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+@c ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+@c WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+@c ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+@c OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+@c Commentary:
+
+@c Contents management by FCM version 0.1.
+
+
+@c ====================================================================
+@c Header
+@c ====================================================================
+@c %**start of header
+@setfilename clon-enduser.info
+@settitle The Clon End-User Manual
+@afourpaper
+@c %**end of header
+
+
+
+@c ====================================================================
+@c Settings
+@c ====================================================================
+@set VERSION 1.0 beta 24 "Michael Brecker"
+@set COPYRIGHT_DATE 2010-2012, 2015
+@setchapternewpage odd
+@documentdescription
+The Clon End-User Manual for version @value{VERSION}.
+@end documentdescription
+
+
+
+@c ====================================================================
+@c New Commands
+@c ====================================================================
+
+@macro clon
+@t{Clon}
+@end macro
+
+@macro cl
+Common Lisp
+@end macro
+
+@macro tty
+@t{tty}
+@end macro
+
+@macro etc
+@i{etc.}
+@end macro
+
+@macro eg
+@i{e.g.}
+@end macro
+
+@macro ie
+@i{i.e.}
+@end macro
+
+@macro perse
+@i{per-se}
+@end macro
+
+@macro cmdline
+command-line
+@end macro
+
+@macro CmdLine
+Command-Line
+@end macro
+
+@macro bioption{name}
+@option{--clon-\name\}
+@end macro
+
+
+@c The following 3 macros are here to circumvent the info filenames
+@c changes, when referencing the user manual:
+
+@c #### NOTE: Texinfo sucks bones. Before 5.2, I could use @ifinfo
+@c anywhere. Now, it's only allowed at the beginning of a line, so I
+@c cannot effectively use it within a macro (even at the beginning of a
+@c line) if the macro in question is to be used in the middle of some
+@c text. As a consequence, I need to duplicate the macro definition code
+@c below.
+@ifinfo
+@macro pxuserref{node}
+@pxref{\node\, , , clon-user, The Clon User Manual}
+@end macro
+@end ifinfo
+@ifnotinfo
+@macro pxuserref{node}
+@pxref{\node\, , , user, The Clon User Manual}
+@end macro
+@end ifnotinfo
+
+@ifinfo
+@macro xuserref{node}
+@xref{\node\, , , clon-user, The Clon User Manual}
+@end macro
+@end ifinfo
+@ifnotinfo
+@macro xuserref{node}
+@xref{\node\, , , user, The Clon User Manual}
+@end macro
+@end ifnotinfo
+
+@ifinfo
+@macro userref{node}
+@ref{\node\, , , clon-user, The Clon User Manual}
+@end macro
+@end ifinfo
+@ifnotinfo
+@macro userref{node}
+@ref{\node\, , , user, The Clon User Manual}
+@end macro
+@end ifnotinfo
+
+
+@c ---------------
+@c Indexing macros
+@c ---------------
+
+@c Concept index
+@c -------------
+
+@c Built-in options
+@macro bioindex{opt}
+@cindex @t{--clon-\opt\}
+@cindex Built-In Options, @t{--clon-\opt\}
+@cindex Options, built-in, @t{--clon-\opt\}
+@end macro
+
+@c Environment variables
+@macro evindex{name}
+@cindex @t{\name\}
+@cindex Environment, @t{\name\}
+@end macro
+
+@c Built-in environment variables
+@macro bievindex{var}
+@evindex{CLON_\var\}
+@end macro
+
+
+
+@c ====================================================================
+@c Info Category and Directory
+@c ====================================================================
+@dircategory Common Lisp
+@direntry
+* Clon End-User: (clon-enduser).        The Clon End-User Manual.
+@end direntry
+
+
+
+@c ====================================================================
+@c Copying
+@c ====================================================================
+@copying
+@quotation
+Copyright @copyright{} @value{COPYRIGHT_DATE} Didier Verna
+
+Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+@ignore
+Permission is granted to process this file through TeX and print the
+results, provided the printed document carries a copying permission
+notice identical to this one except for the removal of this paragraph
+(this paragraph not being relevant to the printed manual).
+
+@end ignore
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that the
+section entitled ``Copying'' is included exactly as in the original.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions,
+except that this permission notice may be translated as well.
+@end quotation
+@end copying
+
+
+
+@c ====================================================================
+@c Title Page
+@c ====================================================================
+@titlepage
+@title The Clon End-User Manual
+@subtitle The @CmdLine{} Options Nuker, Version @value{VERSION}
+@vskip 2cm
+@image{splash,16cm}
+@author Didier Verna <@email{didier@@didierverna.net}>
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+
+@flushright
+Cover art by Alexis Angelidis.
+@end flushright
+@end titlepage
+
+
+
+@c ====================================================================
+@c Table of Contents
+@c ====================================================================
+@contents
+
+
+
+@c ====================================================================
+@c Master Menu
+@c ====================================================================
+@ifnottex
+@node Top, Copying, (dir), (dir)
+@top The Clon End-User Manual
+
+This is the @clon{} End-User Manual for @clon{} version @value{VERSION}:
+it describes the use of applications powered by @clon{}.
+
+@menu
+* Copying::             The BSD license
+* Introduction::        What Clon is all about
+* Clonification::       Determining whether a program is powered by Clon
+* The Command Line::    Making use of @clon{}'s @cmdline{} features
+* Output::              Understanding and customizing @clon{}'s output
+* Conclusion::          That's all folks
+* Concept Index::       Concept Index
+@end menu
+
+@insertcopying
+@end ifnottex
+
+
+
+@c ====================================================================
+@c Copying
+@c ====================================================================
+@node Copying, Introduction, Top, Top
+@unnumbered Copying
+
+@quotation
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+@end quotation
+
+
+
+@c ====================================================================
+@c Introduction
+@c ====================================================================
+@node Introduction, Clonification, Copying, Top
+@chapter Introduction
+
+@clon{} is a library for managing @cmdline{} options in standalone @cl{}
+applications. It provides a unified option syntax with both short and
+long names, automatic completion of partial names and automatic
+retrieval/conversion of option arguments from the @cmdline{}, associated
+environment variables, fallback or default values. @clon{} comes with a
+set of extensible option types (switches, paths, strings @etc{}).
+@clon{} also provides automatic generation and formatting of help
+strings, with support for highlighting on @tty{}'s through ISO/IEC 6429
+SGR. This formatting is customizable through @emph{themes}.
+
+Depending on the target audience, @clon{} stands for either ``The
+@CmdLine{} Options Nuker'' or ``The @cl{} Options Nuker''. @clon{} also
+has a recursive acronym: ``@clon{} Likes Options Nuking'', and a reverse
+one: ``Never Omit to Link with @clon{}''. Other possible expansions of
+the acronym are still being investigated.
+
+This manual is for the @clon{} @emph{end-user}, that is, the user of an
+application powered by @clon{}. It describes how to use the @cmdline{}
+of clonified@footnote{An application using @clon{} for its @cmdline{}
+option management is said to be @emph{clonified}. It is also possible to
+say @emph{clonfiscated}. However, we advise against using
+@emph{clonistified}. The term @emph{clonificated} is also considered bad
+style, and the use of @emph{clonificationated} is strictly prohibited.}
+applications and how to customize @clon{}'s output. Everybody should
+read this manual first. If you want to use @clon{} in one of your
+applications, then you are considered a @clon{} @emph{user}, as opposed
+to a @clon{} @emph{end-user}, and you should then read the corresponding
+manual (@pxuserref{Top}).
+
+@ref{Clonification} shows how to verify that an application is powered
+by @clon{}. @ref{The Command Line} explains how to use the @cmdline{} of
+a clonified application, and @ref{Output} describes how to customize the
+output of @clon{}.
+
+
+
+@c ====================================================================
+@c Clonification
+@c ====================================================================
+@node Clonification, The Command Line, Introduction, Top
+@chapter Clonification
+@bioindex{help}
+@bioindex{banner}
+@bioindex{version}
+Given this wonderful standalone @cl{} application, how do I know if it
+uses @clon{} for handing the @cmdline{}? Perhaps the simplest way to
+know is to type
+
+@example
+program --clon-help
+@end example
+
+@cindex Built-in Options
+@cindex Options, built-in
+and see what happens. If you get an error, then you are out of luck.
+Otherwise, you will get a list of @clon{}-specific options. Every
+clonified application has these options built-in, and they are all
+called @t{--clon-}@i{something}. We will describe most of them when
+appropriate in this manual, but here's already the description for a
+couple of them (in addition to @bioption{help} that we've just
+mentioned).
+
+@c #### NOTE: Texinfo sucks bones. Before 5.2, I was able to use
+@c @bioption as the formatter below. Now, only built-in formatters are
+@c supported, which means that I have to duplicate the @bioption logic.
+@table @option
+@item --clon--banner
+When given this option, the application outputs a whole bunch of
+information, including the version of @clon{} it is using, and
+@clon{}-specific copyright information.
+
+@item --clon-version
+This option makes the application output the version of @clon{} it is
+using. By default (or by using it like this: @bioption{version=long}),
+this information is provided in @emph{long} form (release number, status
+and name; just try it). If you ask for @bioption{version=short}, you'll
+get a more compact version information, and if you try
+@bioption{version=number}, you will end up with a purely numerical
+version number. For more information on @clon{} version numbering, see
+@userref{Version Numbering}.
+
+@item --clon-lisp-information
+Finally, this option displays some information about the underlying Lisp
+implementation that was used to create this executable.
+@end table
+
+
+
+@c ====================================================================
+@c The Command Line
+@c ====================================================================
+@node The Command Line, Output, Clonification, Top
+@chapter The Command Line
+@cindex Command-Line
+
+@clon{} provides applications with usual @cmdline{} features such as
+option names coming in short (@eg{} @samp{-h}) or long (@eg{}
+@samp{--help}) form. @clon{} also comes with a set of more specific
+features, such as @emph{packs} or abbreviated forms, that you might want
+to become familiar with in order to use an application's @cmdline{} to
+its full extent.
+
+@menu
+* Option Calls::        Different ways to specify options
+* Option Packs::        Grouping option calls together
+* Option Separator::    Telling @clon{} to mind it's own business
+* Option Retrieval::    How @clon{} computes the value of an option
+@end menu
+
+
+@c -------------
+@c Option Calls
+@c -------------
+@node Option Calls, Option Packs, The Command Line, The Command Line
+@section Option Calls
+@cindex Command-Line, options
+@cindex Options, command-line
+
+@clon{} offers a set of precise syntactic rules that every clonified
+application follows implicitly, making them work in a homogeneous way.
+Although application programmers have the ability to extend @clon{} by
+defining their own option @emph{types}, even those new options obey the
+same syntactic rules as the built-in ones.
+
+@menu
+* Option Names::        Long, short or abbreviated
+* Option Arguments::    None, mandatory or optional
+@end menu
+
+@node Option Names, Option Arguments, Option Calls, Option Calls
+@subsection Option Names
+@cindex Options, names
+An option can come with either a short name, a long name, or both. It is
+also possible to abbreviate long names.
+
+@menu
+* Full Names::          Long or short
+* Abbreviations::       Shorter long names
+@end menu
+
+@node Full Names, Abbreviations, Option Names, Option Names
+@subsubsection Full Names
+@cindex Long Form
+@cindex Short Form
+@cindex Command-Line, options, long form
+@cindex Command-Line, options, short form
+@cindex Options, names, full
+@cindex Options, names, long
+@cindex Options, names, short
+@cindex Options, command-line, long form
+@cindex Options, command-line, short form
+To provide an option by short name, use a @emph{short form}: a single
+dash followed by the option's short name (@eg{} @samp{-h}). To provide
+an option by long name, use a @emph{long form}: two dashes followed by
+the option's long name (@eg{} @samp{--help}).
+
+Short names typically consist of a single character. They are concise
+but more difficult to remember. Long names can be whole words, or even
+word sequences (usually separated by dashes). They are easier to
+remember but longer to type on the @cmdline{}.
+
+You should be aware of the fact that in a clonified application, neither
+short names nor long ones are restricted in length. In fact, it would
+be perfectly possible to have an option's short name longer than the
+corresponding long one, although that would make little sense. The only
+real difference is whether you use one or two dashes. Some other
+differences also come into play when an option expects an argument
+(@pxref{Option Arguments}) though (it would be no fun otherwise).
+
+@node Abbreviations, , Full Names, Option Names
+@subsubsection Abbreviations
+@cindex Abbreviated Form
+@cindex Abbreviated Long Form
+@cindex Long Form, abbreviated
+@cindex Options, names, abbreviated
+@cindex Options, names, long, abbreviated
+@cindex Command-Line, options, abbreviated form
+@cindex Command-Line, options, abbreviated long form
+@cindex Command-Line, options, long form, abbreviated
+@cindex Options, command-line, abbreviated form
+@cindex Options, command-line, abbreviated long form
+@cindex Options, command-line, long form, abbreviated
+When calling an option by long form, it is possible to abbreviate its
+name, at the risk of being ambiguous. An abbreviation is simply the
+beginning of the option's name (for instance, @samp{--he} can stand for
+@samp{--help}). In case of ambiguity, @clon{} always chooses the option
+which is ``closest'' to the abbreviation (here, the ``distance'' between
+an abbreviation and an option's name is the number of missing
+characters).
+
+@node Option Arguments, , Option Names, Option Calls
+@subsection Option Arguments
+@cindex Arguments
+@cindex Options, arguments
+In @clon{}, there are different kinds of options: in addition to having
+a short and/or long name, an option may or may not take an argument. For
+those taking one, the argument may be either mandatory or optional.
+Then, there is also an additional, extended call syntax for some of
+them. But then again, that is not the whole story about getting an
+option's value (@pxref{Option Retrieval}). If everything goes well, you
+are now wondering whether you really want to use a @cmdline{} at all.
+
+@menu
+* Flags::                       Options with no argument
+* Valued Options::              Options with arguments
+* Switches::                    Options with Boolean arguments
+@end menu
+
+@node Flags, Valued Options, Option Arguments, Option Arguments
+@subsubsection Flags
+@cindex Flags
+@cindex Options, types, flags
+First of all, some options don't take an argument at all. In the @clon{}
+jargon, these options are called @emph{flags}. Flags just stand for
+themselves: either they are present on the @cmdline{}, or they are not
+(as a matter of fact, this is a lie, @pxref{Option Retrieval}). A
+typical example of a flag would be displayed like this in a standard
+help string (but @pxref{Output}):
+
+@example
+  -h, --help        Print this help and exit.
+@end example
+
+@node Valued Options, Switches, Flags, Option Arguments
+@subsubsection Valued Options
+@cindex Valued Options
+@cindex Options, types, valued
+@cindex Values
+@cindex Options, values
+Options taking an argument are said to be @emph{valued}. We need a bit
+of terminology here: and option's @emph{argument} is typically what you
+provide on the @cmdline{} (or elsewhere, @pxref{Option Retrieval}). An
+option's argument is thus a string. An option's @emph{value} is what
+results from the conversion of the option's argument to the proper type
+(the same string, a number, whatever).
+
+@cindex Sticky Arguments
+@cindex Arguments, sticky
+@cindex Options, arguments, sticky
+@cindex Mandatory Arguments
+@cindex Arguments, mandatory
+@cindex Options, arguments, mandatory
+@cindex Optional Arguments
+@cindex Arguments, optional
+@cindex Options, arguments, optional
+In @clon{}, a valued option's argument can be either mandatory or
+optional. We know that valued options, just like flags, may be provided
+in short or long form. When using the long form, the proper way of
+providing an argument is to append it after an @samp{=} sign, like this:
+@samp{--phone=01020304}. When using the short form, the proper way of
+providing an argument is to stick it right behind the option's name,
+like this: @samp{-p01020304}. In both long and short form, we call these
+arguments ``sticky''. All this should look familiar.
+
+@cindex Separated Arguments
+@cindex Arguments, separated
+@cindex Options, arguments, separated
+When the option's argument is mandatory, you also have the ability to
+provide it in the next @cmdline{} item instead of sticking it to the
+option's name. These arguments are said to be ``separated''. Back to the
+previous example, this means that you can also say @samp{--phone
+01020304} or @samp{-p 01020304}. Keep in mind that this is not possible
+when the argument is optional (in the general case, it is not possible
+to decide whether the next @cmdline{} item is an option's argument, a
+new option or something else).
+
+@cindex Arguments, looking like options
+@cindex Options, as argument to other options
+@cindex Options, arguments, looking like options
+There is also another case where you can't use this alternate syntax,
+even when the argument is mandatory: that is when the argument itself
+looks like an option. @clon{} will think it is, and consequently will
+also think that the previous one lacks its mandatory argument.
+
+The phone example above would look like this in a standard help string
+(but @pxref{Output}):
+
+@example
+  -p, --phone=NUM    Set phone number to NUM.
+@end example
+
+And here is an example illustrating a typical output when the argument
+is optional:
+
+@example
+  -f, --fax[=NUM]    Set fax number to NUM, or same as phone.
+@end example
+
+@node Switches, , Valued Options, Option Arguments
+@subsubsection Switches
+@cindex Switches
+@cindex Options, types, switches
+For those of you who are not satisfied with short and long forms,
+@clon{} provides a specific option type for Boolean values, along with
+an additional call syntax. These options are called @emph{switches}.
+
+Just like any other kind of valued option, a switch can have a short
+and/or a long name, and its argument may be mandatory or optional.
+However, the possible arguments for a switch are restricted to true or
+false. In fact, you can freely use @samp{yes}, @samp{on}, @samp{true},
+@samp{yup}, @samp{yeah} and @samp{no}, @samp{off}, @samp{false},
+@samp{nope}, @samp{nah} respectively.@footnote{If you want more, a very
+modest additional fee will be charged.}
+
+@cindex Negated Form
+@cindex Negated Short Form
+@cindex Short Form, negated
+@cindex Options, command-line, negated form
+@cindex Options, command-line, negated short form
+@cindex Options, command-line, short form, negated
+@cindex Command-Line, options, negated form
+@cindex Command-Line, options, negated short form
+@cindex Command-Line, options, short form, negated
+In addition to the standard short and long forms, a switch can be
+provided in @emph{negated form}, that is, by appending its short name
+behind a @samp{+} character. This form never takes any argument and
+always means false (turn the switch off, if you prefer).
+
+Although an application might do something different, the intended usage
+for switches is to take an optional argument that defaults to true. A
+typical example would look like this in a standard help string (but
+@pxref{Output}):
+
+@example
+  -(+)d, --debug[=yes/no]    Whether to enable debugging.
+@end example
+
+Given such an option, you can turn debugging on by saying just @samp{-d}
+or @samp{--debug} (but you can also provide an explicit argument like
+this: @samp{-dyes} or that: @samp{--debug=yes}). Similarly, to turn
+debugging off, use @samp{+d} or @samp{--debug=no}.
+
+One last word about switches: @clon{} lets application developers create
+new options based on (but not limited to) switches. These options
+typically accept Boolean arguments as well as some other value(s). As
+soon as an option is switch-based (and has a short name), the negated
+form becomes automatically available, and this should be advertised in
+the application's help string.
+
+
+@c ------------
+@c Option Packs
+@c ------------
+@node Option Packs,  Option Separator, Option Calls, The Command Line
+@section Option Packs
+@cindex Packs
+@cindex Command-Line, packs
+@cindex Options, command-line, packed
+
+In addition to using options individually (@pxref{Option Calls}),
+@clon{} offers the possibility to group option calls together under some
+circumstances. This feature is know as option @emph{packs}. @clon{}
+offers two kinds of packs.
+
+@menu
+* Short Packs::         Grouping short forms together
+* Negated Packs::       Grouping negated forms together
+@end menu
+
+@node Short Packs, Negated Packs, Option Packs, Option Packs
+@subsection Short Packs
+@cindex Short packs
+@cindex Packs, short
+@cindex Command-Line, short packs
+@cindex Command-Line, packs, short
+A short pack allows you to group multiple short forms in a single
+@cmdline{} item. For instance, instead of calling your program like
+this: @samp{program -c -u -p}, you can directly use: @samp{program
+-cup}.
+
+@cindex Options, names, short, one character
+A short pack can only contain options the short names of which are
+exactly one character long. Also, it should be obvious that you cannot
+provide an argument to an option in a pack. As a consequence, only flags
+and options with optional (and not provided) arguments may appear in a
+short pack.
+
+There is one exception however: it @emph{is} possible to provide an
+argument to the @emph{last} option in the pack. If provided, this
+argument must be located in the next @cmdline{} item. It cannot be
+sticked to the option, so this means in particular that this option's
+argument is mandatory (@pxref{Valued Options}).
+
+Beware that using short packs comes at the risk of ambiguity. When
+@clon{} parses a @cmdline{} item beginning with only one dash, it tries
+to detect options first, options with a sticky argument next, and then
+short packs. For that reason, you cannot possibly start a pack with a
+valued option. Indeed, suppose that the option @samp{-c} takes an
+argument. What you @emph{think} is a short pack (@samp{-cup}) will in
+fact be interpreted as the option @samp{-c} with a sticky (and maybe
+invalid) argument @samp{up}. On the other hand, if the option @samp{-u}
+is only a flag (@pxref{Flags}), then you can safely pack your options in
+a different order, like this: @samp{-ucp}.
+
+A single @cmdline{} may contain as many short packs as you like, and
+they can also be intermixed with regular option calls.
+
+@node Negated Packs, , Short Packs, Option Packs
+@subsection Negated Packs
+@cindex Negated packs
+@cindex Negated Short Packs
+@cindex Negated packs, short
+@cindex Packs, negated
+@cindex Packs, short, negated
+@cindex Command-Line, negated packs
+@cindex Command-Line, negated short packs
+@cindex Command-Line, short packs, negated
+@cindex Command-Line, packs, negated
+@cindex Command-Line, packs, short, negated
+In a very similar way, a negated pack allows you to group multiple
+negated forms in a single @cmdline{} item. As such, this feature only
+applies to switches or switch-based options (@pxref{Switches}). For
+instance, instead of calling your program like this: @samp{program +c +u
++p}, you can directly use: @samp{program +cup}.
+
+@cindex Options, names, short, one character
+A negated pack can only contain options the short names of which are
+exactly one character long. Also, remember that negated forms never take
+any argument.
+
+Beware that using negated packs comes at the risk of ambiguity (although
+much less than with short packs). When @clon{} parses a @cmdline{} item
+beginning with a @samp{+}, it tries to detect options first, and then
+negated packs. For that reason, the order in which you specify the
+options in the pack is important. Indeed, suppose that your application
+has a @samp{+cup} switch (this would be a very bad idea, but
+still@dots{}). If you want to provide the same pack as above, then you
+need to modify the options order, like this: @samp{+ucp}.
+
+A single @cmdline{} may contain as many negated packs as you like, and
+they can also be intermixed with regular option calls or short packs.
+
+
+@c ----------------
+@c Option Separator
+@c ----------------
+@node Option Separator, Option Retrieval, Option Packs, The Command Line
+@section Option Separator
+@cindex Separator
+@cindex Command-Line, separator
+@cindex Postfix
+@cindex Command-Line, postfix
+
+@clon{} separates the @cmdline{} in two parts. The left part contains
+option calls and packs while the right part contains the rest. The right
+part is also called the @emph{postfix}).
+
+@cindex Explicit separator
+@cindex Separator, explicit
+@cindex Command-Line, explicit separator
+@cindex Command-Line, separator, explicit
+You can force this distinction by using the special construct @samp{--}
+on the @cmdline{}. Everything that follows it will be completely ignored
+by @clon{} (not necessarily by the application itself though).
+
+@cindex Implicit separator
+@cindex Separator, implicit
+@cindex Command-Line, implicit separator
+@cindex Command-Line, separator, implicit
+In the case you don't split your @cmdline{} explicitly, @clon{} does
+this for you automatically by noticing where the last option (or its
+potential argument) stands. The behavior is different from that of
+explicit splitting in one regard however: if the application is not
+expecting any postfix and there's an implicit one, then @clon{} will
+throw an error at your face.
+
+@cindex Postfix, options in
+@cindex Options, in postfix
+@cindex Command-Line, postfix, options in
+@cindex Command-Line, options, in postfix
+One final note on @cmdline{} separation: in the case an application's
+postfix is supposed to contain something looking like an option (perhaps
+real options to pass on to another program), you @strong{need} an
+explicit separator. Otherwise, @clon{} will be confused: it could for
+instance wrongly detect unknown options, junk on the @cmdline{} @etc{}
+
+You don't want to confuse @clon{}. @clon{} is nasty when it is scared.
+
+
+
+@c ----------------
+@c Option Retrieval
+@c ----------------
+@node Option Retrieval, , Option Separator, The Command Line
+@section Option Retrieval
+
+@cindex Retrieval
+@cindex Options, retrieval
+The process of getting a value for a specific option is called
+@dfn{retrieval}. This section explains how it works.
+
+@menu
+* Value Sources::       The command-line, and more
+* Error Management::    What to do when something goes wrong
+@end menu
+
+@node Value Sources, Error Management, Option Retrieval, Option Retrieval
+@subsection Value Sources
+The @cmdline{} is not the only place where @clon{} looks for option
+@emph{values}. Other sources for option values are: @emph{fallback}
+values, @emph{environment} variables and @emph{default} values. The
+existence of a fallback value, environment variable or default value
+should be advertised in the application's help string (@pxref{Output}).
+
+@itemize @bullet
+@item
+@cindex Fallback values
+@cindex Values, fallback
+@cindex Retrieval, from fallback value
+@cindex Options, retrieval, from fallback value
+Fallback values are used when an option exists on the @cmdline{} without
+a corresponding argument (so this applies only to options taking
+@emph{optional} arguments only).
+@item
+@cindex Environment
+@cindex Retrieval, from environment
+@cindex Options, retrieval, from environment
+Applications may also associate an option with a specific environment
+variable which contains a value for it.
+@item
+@cindex Default values
+@cindex Values, default
+@cindex Retrieval, from default value
+@cindex Options, retrieval, from default value
+Finally, default values are used when every other source has failed.
+@end itemize
+
+When @clon{} attempts to retrieve a value for a particular option, it
+always does so in a specific order: first, the @cmdline{} is searched.
+If an argument is present, it is used. Otherwise, a fallback or default
+value is used in that order (note that when an option's argument is
+optional, the option is required to provide at least a fallback or a
+default value). Next, an environment variable is tried (when
+appropriate). Finally, when everything else fails, the option's default
+value is used (if any).
+
+@cindex Retrieval, from command-line
+@cindex Command-Line, retrieval
+@cindex Options, retrieval, from command-line
+@clon{} always scans the @cmdline{} from left to right, and stops at the
+first match. Please note that the match in question may be a regular
+option call or a pack, depending on what appears first on the
+@cmdline{}. There is no concept of priority amongst option forms.
+
+@cindex Options, multiple calls
+Also, note that it is possible to provide several calls to the same
+option on a single @cmdline{}. Some applications may take advantage of
+this: every consecutive request for an option will use the next match on
+the @cmdline{} until there is none left.
+
+@cindex Flags
+@cindex Options, types, flags
+@cindex Environment
+@cindex Retrieval, from environment
+@cindex Options, retrieval, from environment
+Finally, note that fallback or default values don't make any sense for
+flags, but flags can still be associated with environment variables. In
+such a case, the very @emph{existence} of the variable in the
+environment, regardless of its value, stands for the presence of the
+corresponding option on the @cmdline{}.
+
+@node Error Management, , Value Sources, Option Retrieval
+@subsection Error Management
+@cindex Error Management
+@cindex Retrieval, errors
+@cindex Options, retrieval, errors
+OK, now you're completely overwhelmed by the power and flexibility of
+@clon{}, to the point that the fact that you didn't write it (because
+@emph{I} did) even starts to upset you. So I know what you're thinking:
+``there's gotta be a way to break it''. I don't know, like, giving a
+value to a flag, using an unknown option, providing an invalid value for
+an option, using an equal sign in a negated call @etc{}
+
+Unfortunately for you, @clon{} is like a pitbull. Whatever you do to
+beat it, it @emph{will} fight back. The behavior of @clon{} with respect
+to error management during option retrieval is well defined, but
+contrary to the traditional approach, @emph{you}, the end-user have
+control over it. Not the application. Error handling may occur when the
+@cmdline{} is parsed, but also when environment variables are used.
+
+@bioindex{error-handler}
+@bievindex{ERROR_HANDLER}
+The error management behavior of @clon{} is controlled by a built-in
+option named @bioption{error-handler}, and its accompanying environment
+variable @code{CLON_ERROR_HANDLER}. Possibles values for it are
+currently the following.
+
+@table @t
+@item quit
+@cindex Error Management, quitting
+This is the default. It means that when @clon{} encounters an error
+related to option retrieval, it prints an informative message about the
+error and terminates the application immediately (with an exit status of
+1). This is the behavior of most programs out there I guess.
+@item interactive
+When interactive error handling is selected and an error is signaled,
+you are presented with a list of possible options to ``fix'' the
+problem. Such options include notably the ability to modify an option's
+name or value (handy in case of @cmdline{} typo), discard the call
+altogether and many others, depending on the exact error.
+
+When the error implies a bad value for a particular option, you will
+notice that some of the choices that @clon{} proposes in order to fix
+the problem involve providing another @emph{value} or another
+@emph{argument}. Again, you need to remember the terminology here
+(@pxref{Valued Options}). The argument is what you provide on the
+@cmdline{}, and the value is the conversion of the argument to the
+proper type. This means that most of the time, you will want to use the
+``argument'' choice. If you know the @cl{} language (see below), you can
+also provide a value directly, in which case what you type in is in fact
+@cl{} code.
+@item none
+@cindex Debugger
+@cindex Error Management, interactive debugging
+@i{Using this option is not encouraged, unless you are the author of the
+application and you are debugging it.} A value of @code{none} literally
+means no particular error handler. Here, I must apologize because I need
+to go into some technical details about @cl{}, the language in which
+applications using @clon{} are written. @cl{} mandates the existence of
+a @dfn{debugger} in which you are dropped in when an unhandled error
+condition is thrown. However some @cl{} implementations may disable the
+debugger when creating standalone programs. So the situation when the
+@clon{} error handler is set to @code{none} depends on the application.
+@end table
+
+One last note about the @bioption{error-handler} option: we have a
+chicken-and-egg problem with it. The error handler must be known for
+parsing the @cmdline{}, but in order to get it, we need to retrieve the
+option which implies parsing the @cmdline{}@dots{} Whoops. Because of
+this problem, the option is treated in a very special way.
+
+@enumerate
+@item
+First of all, a built-in default value of @code{quit} is used initially.
+@item
+However, if the @code{CLON_ERROR_HANDLER} environment variable is set,
+its value will be used immediately, even before trying to get the option
+on the @cmdline{} (if an error happens when trying the environment
+variable, the @code{quit} handler is used).
+@item
+Finally, if the option is found on the @cmdline{} during the parsing of
+it, its value is updated immediately (so it also applies for parsing the
+rest of the @cmdline{}).
+@end enumerate
+
+Now you need to get some rest.
+
+
+
+@c ====================================================================
+@c Output
+@c ====================================================================
+@node Output, Conclusion, The Command Line, Top
+@chapter Output
+
+In the previous chapter, we have seen how to make the best usage of a
+clonified application's command-line. The second aspect we need to look
+at is @clon{}'s output, typically what you get when you type
+@command{program --help}. From an end-user perspective, one key feature
+of @clon{} is that control on the formatting of the help strings is
+given to @emph{you} instead of being the programmer's responsibility.
+What this means is that @emph{you} get to choose the way you want help
+strings to be formatted, and all of a sudden, every clonified
+application you use will conform to your specifications.
+
+@ref{Output Elements} surveys the different items composing a @clon{}
+help string by looking at examples in a default setting. @ref{Theme
+Mechanism} explains how to switch between predefined layouts.
+@ref{Global Control} describe two built-in options that give you some
+control over the layout on a global scale. Finally, @ref{Theme Creation}
+describes how to build your own layouts.
+
+@menu
+* Output Elements::     What appears in help strings
+* Theme Mechanism::     Switching between available layouts
+* Global Control::      Line width and highlighting
+* Theme Creation::      Building your own layouts
+@end menu
+
+@c ---------------
+@c Output Elements
+@c ---------------
+@node Output Elements, Theme Mechanism, Output, Output
+@section Output Elements
+Let's look at the output of @command{program --help} in a default
+setting first:
+
+@cartouche
+@verbatim
+Usage: program [-hdF] [+d] [OPTIONS] FILES...
+
+A clonified program.
+
+  -h, --help                  Print this help and exit.
+Runtime options:
+  -(+)d, --debug[=yes/no]     Turn debugging on or off.
+                              Fallback: yes
+                              Environment: DEBUG
+                              Default: no
+  --simulate=yes/no           Simulate only. Nothing will happen for real,
+                              except for log messages.
+User identification:
+  -f, --first-name=STR        Set the user's first name to STR.
+  -F, --family-name[=NAME]    Set the user's family name to NAME.
+                              Fallback: unknown
+@end verbatim
+@end cartouche
+
+@cindex Synopsis
+@cindex Output, synopsis
+@cindex Postfix
+@cindex Short packs
+@cindex Packs, short
+@cindex Negated packs
+@cindex Negated Short Packs
+@cindex Negated packs, short
+@cindex Packs, negated
+@cindex Packs, short, negated
+The first line of output is what's called the @emph{synopsis}. This
+synopsis indicates that the program accepts a number of options and also
+a postfix consisting of file names. The set of available options is not
+detailed in the synopsis but for convenience, @clon{} shows the
+available short and negated packs explicitly.
+
+@cindex Text
+@cindex Arbitrary Text
+@cindex Text, arbitrary
+The next non-empty line is just text. A clonified application is free to
+put arbitrary text anywhere in its help string. This can be used to
+describe what the application is about for instance.
+
+@cindex Groups
+@cindex Arbitrary Text, in groups
+@cindex Text, in groups
+@cindex Options, in groups
+@cindex Groups, in groups
+@cindex Groups, titles
+Two other lines in the help string look like arbitrary text, but in fact
+are not: ``Runtime options:'' and ``User identification:''. These are
+not arbitrary text, but @emph{group titles}. A group is a way of putting
+help string items together, for instance because they are related to the
+same topic. A group has an optional title, and may contain options,
+arbitrary text or even sub-groups.
+
+@cindex Groups
+@cindex Groups, built-in
+@bioindex{help}
+In addition to displaying the full help string, a clonified application
+may display a group's help string only (in such a case, you don't get to
+see the synopsis). This is what happens when you type @command{program
+--clon-help} for instance. @clon{}'s built-in options belong to a
+reserved built-in group.
+
+@cindex Flags
+@cindex Options, types, flags
+@cindex Valued Options
+@cindex Options, types, valued
+@cindex Switches
+@cindex Options, types, switches
+@cindex Long Form
+@cindex Short Form
+@cindex Command-Line, options, long form
+@cindex Command-Line, options, short form
+@cindex Negated Form
+@cindex Negated Short Form
+@cindex Short Form, negated
+@cindex Options, command-line, negated form
+@cindex Options, command-line, negated short form
+@cindex Options, command-line, short form, negated
+@cindex Command-Line, options, negated form
+@cindex Command-Line, options, negated short form
+@cindex Command-Line, options, short form, negated
+Let's have a look at the options now. In the first column, you can see
+that depending on the option, the long, short and negated forms are
+advertised. Valued options also advertise their argument, enclosed in
+square brackets when it is optional. In this example, @samp{-h} is a
+flag, @samp{-d} and @samp{--simulate} are switches with different
+settings, while @samp{-f} and @samp{-F} are standard valued options.
+
+@cindex Options, description
+The second column of the help string provides each option's
+@emph{description}. Descriptions can span across several lines, as in
+the case of @samp{--simulate}. @clon{} takes care of properly aligning
+all the material that needs to be displayed.
+
+@cindex Fallback values
+@cindex Values, fallback
+@cindex Environment
+@cindex Default values
+@cindex Values, default
+Finally, you can see that potential fallback values, environment
+variables and default values are also advertised in that order, when
+appropriate.
+
+
+
+@c ---------------
+@c Theme Mechanism
+@c ---------------
+@node Theme Mechanism, Global Control, Output Elements, Output
+@section Theme Mechanism
+@cindex Theme Mechanism
+
+@cindex Themes
+@cindex Themes, built-in
+@cindex Themes, built-in, @t{raw}
+@cindex Built-in themes
+@cindex Built-in themes, @t{raw}
+The output of @command{program --help} that we have seen in the previous
+section corresponds to a default setting, but is really just one
+possibility. As the user of a clonified application, you have the
+ability to customize the appearance of @clon{}'s output. The way things
+look is specified by so-called @emph{themes}. @clon{} has a theme named
+@t{raw} which every clonified application has built-in.
+
+@cindex Themes, files
+@cindex Themes, files, @t{cth} extension
+@cindex @t{cth} extension
+@cindex File Extension
+@cindex File Extension, @t{cth}
+Other themes are stored in files the standard extension of which is
+@samp{cth} (as in @b{C}lon @b{TH}eme). In fact, theme files can be named
+as you like; this is just a convention.
+
+@menu
+* Standard Themes::     Some example themes are provided
+* Search Path::         Where to find theme files
+* Theme Selection::     How to select a theme
+@end menu
+
+@node Standard Themes, Search Path, Theme Mechanism, Theme Mechanism
+@subsection Standard Themes
+@cindex Themes, files, standard
+@cindex Standard Themes
+@cindex Standard Themes, files
+@clon{} comes with several standard themes in files that can be used
+as-is or serve as the basis for creating new ones (@pxref{Theme
+Creation}). The list is given below.
+
+@table @t
+@item raw
+@cindex Standard Themes, files, @file{raw.cth}
+@cindex Themes, files, standard, @file{raw.cth}
+Exactly the same as the built-in one, only copied into a theme file.
+@item optlist
+@cindex Standard Themes, files, @file{optlist.cth}
+@cindex Themes, files, standard, @file{optlist.cth}
+Displays only a list of available options, one per line, without any
+description, group indication or arbitrary text. This can be used to
+quickly remember the name or the syntax of an option.
+@item refcard
+@cindex Standard Themes, files, @file{refcard.cth}
+@cindex Themes, files, standard, @file{refcard.cth}
+Displays a very compact help string. The synopsis is there, so are the
+group titles and arbitrary texts, but the options are displayed without
+any description, and the lines are filled as much as possible. The
+intent of this theme is to produce some sort of ``reference card'' that
+could be printed.
+@item roomy
+@cindex Standard Themes, files, @file{roomy.cth}
+@cindex Themes, files, standard, @file{roomy.cth}
+Displays a full help string occupying more space than the @t{raw} theme.
+Option descriptions don't start @emph{after} the option's name, but
+@emph{under} it. As a result, they occupy more horizontal space. Also,
+sub-groups are indented to the right.
+@item dvl
+@cindex Standard Themes, files, @file{dvl.cth}
+@cindex Themes, files, standard, @file{dvl.cth}
+This is my personal theme that I personally use myself in person.
+@item christmas
+@cindex Standard Themes, files, @file{christmas.cth}
+@cindex Themes, files, standard, @file{christmas.cth}
+This one is full of bells and whistles, which makes it essentially
+unusable. It exists only to provide a concrete example of all the
+available formatting and highlighting features of @clon{}. The
+@t{christmas} theme is only available once a year, at exactly 23:59:59
+on December the 24th.
+@end table
+
+@node Search Path, Theme Selection, Standard Themes, Theme Mechanism
+@subsection Search Path
+@cindex Search Path
+@cindex Search Path, themes
+@cindex Themes, search path
+@clon{} maintains a search path for looking up files. Theme files are
+supposed to be located in a @file{themes} directory of every
+directory in the search path. By default, the search path is as follows:
+@itemize @w{}
+@item
+@t{~/.clon/}
+@item
+@t{~/Library/Application Support/Clon/} (MacOS only)
+@item
+@t{~/share/clon/}
+@item
+@t{/Library/Application Support/Clon/} (MacOS only)
+@item
+@t{/usr/local/share/clon/}
+@item
+@t{/usr/share/clon/}
+@end itemize
+
+@bioindex{search-path}
+@bievindex{SEARCH_PATH}
+The search path can be modified with the @bioption{search-path} built-in
+option or its accompanying @env{CLON_SEARCH_PATH} environment variable.
+It takes a list of colon-separated directories as argument. This
+argument is in fact optional. Not providing an argument is equivalent to
+providing an empty one, which basically reduces the search path to the
+application's current directory.
+
+
+@node Theme Selection, , Search Path, Theme Mechanism
+@subsection Theme Selection
+@bioindex{theme}
+@bievindex{THEME}
+In order to select a theme, you can use the built-in option
+@bioption{theme} or its accompanying environment variable
+@env{CLON_THEME}. Just provide it with the theme name, and the
+corresponding theme file will be looked up in the search path
+(@pxref{Search Path}), stopping at the first match.
+
+@cindex File Extension, @t{cth}
+@cindex @t{cth} extension
+@cindex Themes, files, @t{cth} extension
+You can omit the @samp{cth} extension: @clon{} looks for a file named
+exactly as you said first and attempts to add the theme extension next.
+Note that searching with or without extension has priority over the
+search path. For instance, suppose that the following files exist:
+@itemize @w{}
+@item
+@t{/usr/local/share/clon/themes/foobar}
+@item
+@t{/usr/share/clon/themes/foobar.cth}
+@end itemize
+Using @bioption{theme=foobar} will match the first one while
+@bioption{theme=foobar.cth} will match the second.
+
+Now suppose that the following files exist:
+@itemize @w{}
+@item
+@t{/usr/local/share/clon/themes/foobar.cth}
+@item
+@t{/usr/share/clon/themes/foobar}
+@end itemize
+Using either @bioption{theme=foobar} or @bioption{theme=foobar.cth} will
+always match the first file. Which brings us to the next point (how
+clever).
+
+It is possible to bypass the search path when looking for a theme: just
+provide @bioption{theme} with a theme name starting with a path
+component (@ie{} @samp{/}, @samp{./} or @samp{../}). Even in that case,
+you can still omit the @samp{cth} extension.
+
+@cindex Built-in themes, @t{raw}
+@cindex Themes, built-in, @t{raw}
+@cindex Standard Themes, files, @file{raw.cth}
+@cindex Themes, files, standard, @file{raw.cth}
+Finally, here is an important precision about @bioption{theme}. This
+option has a fallback of @t{nil} and a default of @t{raw}. This means
+that if you don't use the option at all, a theme named @t{raw} will be
+looked up in the search path. This theme exists in the standard
+distribution and you are free to modify it. On the other hand, since
+this option has a fallback, it means that its argument is optional. If
+you don't provide any argument (that is, if you just use
+@bioption{theme}), then the @emph{built-in} raw theme will be used. This
+theme is originally identical to the one provided in the file
+@file{raw.cth} but since it is built in every clonified application, you
+cannot change it.
+
+
+@c --------------
+@c Global Control
+@c --------------
+@node Global Control, Theme Creation, Theme Mechanism, Output
+@section Global Control
+
+In addition to selecting the appropriate theme, @clon{} provides two
+built-in options that give you additional control on the output. These
+options are orthogonal to themes: all themes implicitly honor them.
+Since their description is pretty self-explanatory, they are given
+below.
+
+The first one allows you to control the output's line width:
+@bioindex{line-width}
+@bievindex{LINE_WIDTH}
+@evindex{COLUMNS}
+@verbatim
+  --clon-line-width=WIDTH     Set Clon's output line width.
+                              If not given, the value of the COLUMNS
+                              environment variable, the terminal size,
+                              or a default of 80 columns will be used.
+                              Environment: CLON_LINE_WIDTH
+@end verbatim
+
+The second one deals with @emph{highlighting} (@pxref{Highlight}).
+@clon{} has the ability to highlight the output through ISO/IEC 6429 SGR
+escape sequences. The built-in raw theme doesn't do highlighting but
+other do.
+@bioindex{highlight}
+@bievindex{HIGHLIGHT}
+
+@verbatim
+  --clon-highlight[=ARG]      Set Clon's output highlighting to on/off/auto.
+                              Auto (the default) means on for tty output and
+                              off otherwise.
+                              Fallback: yes
+                              Default: auto
+                              Environment: CLON_HIGHLIGHT
+@end verbatim
+
+A word of caution is in order here. For technical reasons (in fact, the
+potential inability to detect a terminal properly), it is possible that
+the @code{auto} setting for @bioption{highlight}, which happens to be
+the default, doesn't work. In such a case, highlight is switched off,
+and you need to use @bioption{highlight=yes} explicitely to force it.
+
+For the same technical reason, it may be impossible to detect a terminal
+line width from time to time, in which case it would fall back to 80
+columns. This particular problem is much less likely to bite you because
+the @code{COLUMNS} environment variable should be set all the time.
+
+Both of these problems may or may not occur for specific applications,
+depending on their underlying implementation.
+
+
+@c ---------------
+@c Theme Creation
+@c ---------------
+@node Theme Creation, , Global Control, Output
+@section Theme Creation
+Perhaps the most exciting thing in Computer Science is to spend more
+time hacking a tool than actually using it. After reading this section,
+you will find yourselves spending days customizing theme files instead
+of using clonified applications.
+
+@menu
+* Theme Elements::      Faces, properties, comments
+* Faces::               Boy, you look just like your mother
+* Highlight::           Text Appearance
+* Layout::              Text geometry
+* Implicit Faces::      Missing definitions and siblings
+@end menu
+
+@node Theme Elements, Faces, Theme Creation, Theme Creation
+@subsection Theme Elements
+@cindex Faces
+@cindex Face Properties
+@cindex Themes, faces
+@cindex Themes, faces, properties
+Hear hear! If you understand what @command{M-x all-hail-[x]emacs} means,
+you're going to get quite comfy here. @clon{} themes are articulated
+around two basic concepts: @emph{faces} and (face) @emph{properties}. A
+property describes some visual attribute for some piece of text, for
+instance bold, red, indented by 2 columns to the right. A face is more
+or less a set of properties (but there's more to it than that; please
+hold your post). Every piece of text in @clon{}'s output is associated
+with a face, which in turn defines specific values for specific
+properties.
+
+@cindex Layout Properties
+@cindex Faces, properties, layout
+@cindex Themes, faces, properties, layout
+@cindex Highlight Properties
+@cindex Faces, properties, highlight
+@cindex Themes, faces, properties, highlight
+There are two property types in @clon{}: @emph{highlight properties},
+which describe the visual appearance of characters (color, font @etc{}),
+and @emph{layout properties}, which describe the text geometry (line
+width, indentation @etc{}). Please see @ref{Highlight Properties} and
+@ref{Layout Properties} for an exhaustive list of them.
+
+Let's have a look at a very simple theme file now.
+
+@cartouche
+@verbatim
+;; A very simple theme file.
+
+:background black
+;; ...
+
+:face (synopsis :foreground red
+                ;; ...
+                :face (header :bold t #| ...|#)
+                #| ... |#)
+;; ...
+@end verbatim
+@end cartouche
+
+@cindex Themes, files, comments
+The first line is a comment. Comments begin with a semi-colon and extend
+to the end of the line. There is another syntax for comments, as show
+later in the file: a comment can be opened with @samp{#|} and closed
+with @samp{|#}. This form allows you to create comments that span across
+several lines, or just part of a single line.@footnote{By now, you have
+realized that a theme file is just a piece of @cl{} code@dots{} No,
+wait! Don't go!}
+
+@cindex Face Properties
+@cindex Themes, faces, properties
+@cindex Themes, files, keywords
+@cindex Themes, files, keywords, @t{:background}
+@cindex Faces, @t{toplevel}
+@cindex Themes, faces, @t{toplevel}
+The next line sets the @samp{background} property to @samp{black}. It
+means that @clon{}'s output will be displayed over a black background
+(no kidding). Every property in @clon{} has a name, which you specify by
+using a @emph{keyword} (@ie{} the name prepended with a colon). But
+wait, properties are supposed to belong to faces, right? So what is that
+property doing, floating around like that in the file? That's right,
+clever. In fact, the whole output of @clon{} is wrapped in a global face
+called @samp{toplevel}. You will never need to mention this face
+explicitly, though, because the contents of theme files is always
+enclosed in that face.
+
+@cindex Themes, files, keywords
+@cindex Themes, files, keywords, @t{:face}
+@cindex Themes, files, keywords, @t{:foreground}
+@cindex Themes, files, keywords, @t{:bold}
+@cindex Faces, @t{synopsis}
+@cindex Themes, faces, @t{synopsis}
+@cindex Faces, @t{header}
+@cindex Themes, faces, @t{header}
+Later in the file, you find yourself contemplating a face specification.
+Faces are specified by using the keyword @samp{:face}. What follows is a
+list beginning with the face name, and continuing with property
+specifications. In this particular example, we're specifying that the
+synopsis line (the one that says ``Usage: blah blah'') should appear in
+red, although as you can see, the story does not stop there.
+
+@cindex Faces, nesting
+@cindex Themes, faces, nesting
+@cindex Face properties, inheritance
+Indeed, there is also a @samp{header} face specification @emph{within}
+the @samp{synopsis} one. What it says it that the header part (the
+``Usage:'' portion of the synopsis line) should additionally be
+displayed in bold font. So it turns out that face specifications can be
+nested. In fact, @emph{all} the faces you specify are sub-faces of the
+@samp{toplevel} face at some level. In this example, the @samp{header}
+face is a sub-face of the @samp{synopsis} one. This is important for two
+reasons:
+@enumerate
+@item
+face nesting leads to the notion of property inheritance
+(@pxref{Highlight Inheritance}),
+@item
+@clon{} makes use of faces with the same name in different (nesting)
+contexts. For instance, there are many places where the @samp{header}
+face is used (@pxref{Faces}), but this face can have very different
+specifications according to where it appears in a face tree.
+@end enumerate
+
+@node Faces, Highlight, Theme Elements, Theme Creation
+@subsection Faces
+@cindex Faces
+@cindex Themes, faces
+
+@cindex Built-in themes, @t{raw}
+@cindex Themes, built-in, @t{raw}
+@cindex Standard Themes, files, @file{raw.cth}
+@cindex Themes, files, standard, @file{raw.cth}
+@cindex Faces, @t{synopsis}
+@cindex Faces, @t{header}
+@cindex Faces, @t{program}
+@cindex Faces, @t{short-pack}
+@cindex Faces, @t{negated-pack}
+@cindex Faces, @t{options}
+@cindex Faces, @t{postfix}
+@cindex Faces, @t{text}
+@cindex Faces, @t{option}
+@cindex Faces, @t{syntax}
+@cindex Faces, @t{short}
+@cindex Faces, @t{name}
+@cindex Faces, @t{argument}
+@cindex Faces, @t{long}
+@cindex Faces, @t{usage}
+@cindex Faces, @t{description}
+@cindex Faces, @t{fallback}
+@cindex Faces, @t{value}
+@cindex Faces, @t{default}
+@cindex Faces, @t{environment}
+@cindex Faces, @t{variable}
+@cindex Themes, faces, @t{synopsis}
+@cindex Themes, faces, @t{header}
+@cindex Themes, faces, @t{program}
+@cindex Themes, faces, @t{short-pack}
+@cindex Themes, faces, @t{negated-pack}
+@cindex Themes, faces, @t{options}
+@cindex Themes, faces, @t{postfix}
+@cindex Themes, faces, @t{text}
+@cindex Themes, faces, @t{option}
+@cindex Themes, faces, @t{syntax}
+@cindex Themes, faces, @t{short}
+@cindex Themes, faces, @t{name}
+@cindex Themes, faces, @t{argument}
+@cindex Themes, faces, @t{long}
+@cindex Themes, faces, @t{usage}
+@cindex Themes, faces, @t{description}
+@cindex Themes, faces, @t{fallback}
+@cindex Themes, faces, @t{value}
+@cindex Themes, faces, @t{default}
+@cindex Themes, faces, @t{environment}
+@cindex Themes, faces, @t{variable}
+The following figure shows the full face tree defined by @clon{}. In
+fact, it is extracted from the theme file @file{raw.cth} (property
+specifications have been removed). By the way, that is why it is a good
+idea to start from this one when you want to create a new theme: all the
+faces are in there. It should be pretty easy to figure out what portion
+of text each face applies to.
+
+@cartouche
+@verbatim
+;; Remember that everything in here belongs to the toplevel face.
+:face (synopsis :face header
+		:face program
+		:face short-pack
+		:face negated-pack
+		:face options
+		:face postfix)
+:face text
+:face (option :face (syntax :face (short :face name
+					 :face argument)
+			    :face (long  :face name
+					 :face argument))
+	      :face (usage :face description
+			   :face (fallback :face header
+					   :face value)
+			   :face (default :face header
+					  :face value)
+			   :face (environment :face header
+					      :face variable)))
+:face (group :face header
+             :face (items #| :face text :face option :face group |#))
+@end verbatim
+@end cartouche
+
+As mentioned earlier, you can see that faces of the same name may appear
+at different places in the tree (@eg{} the @samp{header} one) and hence
+may have different specifications, depending on the context (their
+branch in the tree).
+
+Pushing this idea one step further, note the peculiarity of the
+@samp{group} face: since group items may be arbitrary text, options or
+even sub-groups, you can specify as many levels of group nesting as you
+want. In fact, you can spend your whole life specifying sub-groups,
+although it is very unlikely that a clonified application provides more
+than two or three levels of group imbrication.
+
+One last point to note: you might be surprised to find @emph{empty} face
+specifications like this one: @samp{:face description}. This @emph{is} a
+valid specification, and this @emph{is} different from not mentioning
+the face at all, or specifying some properties explicitly. See
+@ref{Layout Inheritance} for an explanation.
+
+
+@node Highlight, Layout, Faces, Theme Creation
+@subsection Highlight
+The first category of properties that we are going to describe deals
+with @emph{highlighting}, that is, modifying the visual aspect of
+characters in the output.
+
+@menu
+* Highlight Properties::        What is available
+* Highlight Inheritance::       What happens in a face tree
+@end menu
+
+@node Highlight Properties, Highlight Inheritance, Highlight, Highlight
+@subsubsection Highlight Properties
+@cindex Highlight Properties
+@cindex Faces, properties, highlight
+@cindex Themes, faces, properties, highlight
+@clon{} supports 10 highlight properties defined by the ISO/IEC 6429 SGR
+standard (under the assumption that your favorite terminal program
+supports them). Their description is given below.
+
+@table @t
+@item :foreground
+@cindex Face Properties, highlight, @t{foreground}
+@cindex Themes, faces, properties, highlight, @t{foreground}
+@cindex Themes, files, keywords, @t{:foreground}
+@item :background
+@cindex Face Properties, highlight, @t{background}
+@cindex Themes, faces, properties, highlight, @t{background}
+@cindex Themes, files, keywords, @t{:background}
+The face's foreground and background colors. Possible values are
+@t{black}, @t{red}, @t{green}, @t{yellow}, @t{blue}, @t{magenta},
+@t{cyan} and @t{white}. It is also possible to use the special values
+@t{nil} or @t{reset} to reset the color to the terminal's default value.
+@item :intensity
+@cindex Face Properties, highlight, @t{intensity}
+@cindex Themes, faces, properties, highlight, @t{intensity}
+@cindex Themes, files, keywords, @t{:intensity}
+The face's intensity. Possible values are @t{bold}, @t{normal} (or
+@t{nil}) and @t{faint}. Please note that @t{faint} is usually not very
+well supported.
+@cindex Face Properties, highlight, @t{bold}
+@cindex Themes, faces, properties, highlight, @t{bold}
+@cindex Themes, files, keywords, @t{:bold}
+For convenience, a @t{:bold} Boolean property is also provided which
+will set the face's intensity to @t{bold} if true (@t{t}) and @t{normal}
+if false (@t{nil}).
+@item :italic
+@cindex Face Properties, highlight, @t{italic}
+@cindex Themes, faces, properties, highlight, @t{italic}
+@cindex Themes, files, keywords, @t{:italic}
+Whether to display the face's contents in italics. This is a Boolean
+property. Possible values are @t{t} or @t{nil}. The effect of this
+property depends a lot on the font you use in your terminal application.
+@item :underline
+@cindex Face Properties, highlight, @t{underline}
+@cindex Themes, faces, properties, highlight, @t{underline}
+@cindex Themes, files, keywords, @t{:underline}
+Whether to underline the face's contents. Possible values are @t{single}
+(or @t{on} or @t{t}), @t{double} and @t{none} (or @t{off} or @t{nil}).
+Please note that @t{double} is usually not very well supported.
+@item :blink
+@cindex Face Properties, highlight, @t{blink}
+@cindex Themes, faces, properties, highlight, @t{blink}
+@cindex Themes, files, keywords, @t{:blink}
+The face's blink speed. Possible values are @t{slow} (or @t{on} or
+@t{t}), @t{rapid} and @t{off} (or @t{nil}). Please note that @t{rapid}
+is usually not very well supported.
+@item :inverse
+@cindex Face Properties, highlight, @t{inverse}
+@cindex Themes, faces, properties, highlight, @t{inverse}
+@cindex Themes, files, keywords, @t{:inverse}
+Whether to display the face's contents in inverse video. This is a
+Boolean property. Possible values are @t{t} or @t{nil}.
+@item :crossed-out
+@cindex Face Properties, highlight, @t{crossed-out}
+@cindex Themes, faces, properties, highlight, @t{crossed-out}
+@cindex Themes, files, keywords, @t{:crossed-out}
+Whether to display the face's contents crossed out. This is a Boolean
+property. Possible values are @t{t} or @t{nil}.
+@item :framed
+@cindex Face Properties, highlight, @t{framed}
+@cindex Themes, faces, properties, highlight, @t{framed}
+@cindex Themes, files, keywords, @t{:framed}
+Whether to display the face's contents framed or encircled. This is a
+Boolean property. Possible values are @t{t} or @t{nil}.
+@item :concealed
+@cindex Face Properties, highlight, @t{concealed}
+@cindex Themes, faces, properties, highlight, @t{concealed}
+@cindex Themes, files, keywords, @t{:concealed}
+Whether to conceal the face's contents. This is a Boolean property.
+Possible values are @t{t} or @t{nil}. In case it is not obvious,
+concealing means that the face's contents is not displayed, but still
+occupies its normal space, so this is different from hiding it
+(@pxref{Layout Properties}).
+@cindex Face Properties, highlight, @t{revealed}
+@cindex Themes, faces, properties, highlight, @t{revealed}
+@cindex Themes, files, keywords, @t{:revealed}
+Alternately, you can also use the opposite Boolean property named
+@t{:revealed}.
+@end table
+
+@node Highlight Inheritance, , Highlight Properties, Highlight
+@subsubsection Highlight Inheritance
+@cindex Face Properties, inheritance
+@cindex Face Properties, highlight, inheritance
+@cindex Themes, faces, properties, inheritance
+@cindex Themes, faces, properties, highlight, inheritance
+@cindex Themes, built-in, @t{raw}
+@cindex Built-in themes, @t{raw}
+By default (this is also the case in the @samp{raw} theme), all
+highlight properties are turned off: text is output in whatever way is
+standard on the current terminal.
+
+When you set a face's highlight property however, it is inherited by all
+the sub-faces. This is in fact the most natural behavior. For instance,
+if you set the foreground of the @samp{synopsis} face to red, you
+probably expect the whole synopsis line to be output in red, including
+the header, program @etc{} parts. If not, you need to explicitly
+neutralize the unwanted effect, for instance by saying something like
+this:
+
+@verbatim
+:face (synopsis :foreground red
+                :face (program :foreground reset)
+                :face (postfix :foreground cyan))
+@end verbatim
+
+In other words, you can consider that the way some piece of text is
+output is not specified exactly by its associated face, but rather by
+the merging of all active properties from the whole corresponding face
+tree. This is exactly how Emacs faces work by the way.
+
+@node Layout, Implicit Faces, Highlight, Theme Creation
+@subsection Layout
+The second category of properties that we are going to describe deals
+with @emph{layout}, that is, modifying the placement of text in the
+output.
+
+@menu
+* Layout Properties::   What is available
+* Layout Inheritance::  What happens in a face tree
+@end menu
+
+@node Layout Properties, Layout Inheritance, Layout, Layout
+@subsubsection Layout Properties
+@cindex Layout Properties
+@cindex Faces, properties, layout
+@cindex Themes, faces, properties, layout
+In addition to the 10 highlight properties described in the previous
+section, @clon{} defines 6 layout properties. Here are the first 4 of
+them, along with their description and default value.
+
+@table @t
+@item :visible
+@cindex Face Properties, layout, @t{visible}
+@cindex Themes, faces, properties, layout, @t{visible}
+@cindex Themes, files, keywords, @t{:visible}
+@cindex Face Properties, layout, @t{hidden}
+@cindex Themes, faces, properties, layout, @t{hidden}
+@cindex Themes, files, keywords, @t{:hidden}
+@cindex Standard Themes, files, @file{optlist.cth}
+@cindex Themes, files, standard, @file{optlist.cth}
+@cindex Standard Themes, files, @file{refcard.cth}
+@cindex Themes, files, standard, @file{refcard.cth}
+Whether the face's contents is visible. Possible values are @t{t} (the
+default), or @t{nil}. You can also use the opposite property named
+@t{:hidden}. The @samp{optlist} and @samp{refcard} themes make use of
+this to avoid printing the options descriptions.
+@cindex Face Properties, highlight, @t{display}
+@cindex Themes, faces, properties, highlight, @t{display}
+@cindex Themes, files, keywords, @t{:display}
+Since the notions of hiding, concealing or making text visible are
+somewhat intermixed, @clon{} also provides a ``bastard'' property which,
+depending on its value, would be considered either a layout, or a
+highlight one. This property is named @t{:display}. Possible values are:
+@t{visible} (or @t{revealed} or @t{t}), @t{concealed} and @t{hidden} (or
+@t{nil}).
+@item :padding-top
+@cindex Face Properties, layout, @t{padding-top}
+@cindex Themes, faces, properties, layout, @t{padding-top}
+@cindex Themes, files, keywords, @t{:padding-top}
+The face's top padding, that is, the number of lines to skip before
+opening it and displaying its contents. This property can take the
+following forms.
+@table @t
+@item nil
+This face may be opened anywhere, including on the current line. This is
+the default.
+@item 0
+This face should be opened on the next line.
+@item <num> @r{(positive)}
+This face should be opened after skipping @t{<num>} empty lines. Note
+that the empty lines are displayed in the enclosing face, @emph{not} the
+face which specifies the top padding.
+@end table
+@item :padding-bottom
+@cindex Face Properties, layout, @t{padding-bottom}
+@cindex Themes, faces, properties, layout, @t{padding-bottom}
+@cindex Themes, files, keywords, @t{:padding-bottom}
+This face's bottom padding, that is, the number of lines to skip before
+opening the next face and displaying its contents. This property can
+take the following forms.
+@table @t
+@item nil
+The next face may be opened anywhere, including on the current line.
+This is the default.
+@item 0
+The next face should be opened on the next line.
+@item <num> @r{(positive)}
+The next face should be opened after skipping @t{<num>} lines. Note that
+the empty lines are displayed in the enclosing face, @emph{not} the face
+which specifies the bottom padding.
+@end table
+@item :item-separator
+@cindex Face Properties, layout, @t{item-separator}
+@cindex Themes, faces, properties, layout, @t{item-separator}
+@cindex Themes, files, keywords, @t{:item-separator}
+The face's item separator, that is, a piece of text to insert between
+every sub-face's contents. The default value is @t{#\space} (a space
+character).
+@end table
+@cindex Themes, built-in, @t{raw}
+@cindex Built-in Themes, @t{raw}
+The default values above have been chosen because they are convenient
+for the majority of the faces, but not necessarily all the time. Let us
+now review some examples of non-default settings in the @samp{raw}
+theme.
+@itemize @bullet
+@item
+The @samp{synopsis} face has its bottom padding set to 1, which means to
+leave an empty line below it. Note that this line does not belong to the
+synopsis. It is output in the @samp{toplevel} face.
+@item
+The @samp{text}, @samp{option} and @samp{group} faces have both their
+top and bottom paddings set to 0. This means that all these items should
+start and end on lines of their own.
+@item
+Finally, the @samp{syntax} face has its item separator set to
+@w{@t{", "}}, which in this context is used to separate the short and
+long name syntax, as in @w{@samp{-h, --help}}.
+@end itemize
+
+@cindex Frames
+@cindex Layout, frames
+In order to describe the last two layout properties, we need to
+introduce the notion of @emph{frame} first. A frame is a rectangle in
+which @clon{} prints something. When @clon{} opens a face for printing
+its contents, it associates a frame with it. Usually, @clon{} doesn't
+know the frame's height because it doesn't know in advance how many
+lines of output will be necessary to display the face's contents.
+However, @clon{} usually knows the frame's width: a frame starts at a
+certain column (the left one) and stops at another (the right one).
+
+There is an isomorphic relation between frames and faces: when a face is
+a sub-face of a super-face, the corresponding frame is a sub-frame of
+the corresponding super-frame. Sub-frames are geometrically enclosed
+within their super-frames: a sub-frame can only draw in an equally large
+or narrower band than its super-frame. That's how @clon{} handles
+vertical alignment of text.
+
+In order to give you control on the starting and ending columns of every
+frame (in fact, every face), the following two layout properties are
+defined.
+
+@table @t
+@item :padding-left
+@cindex Face Properties, layout, @t{padding-left}
+@cindex Themes, faces, properties, layout, @t{padding-left}
+@cindex Themes, files, keywords, @t{:padding-left}
+A face's left padding determines its starting column. This property can
+take the following forms.
+@table @t
+@item <num>
+Skip @t{<num>} columns relatively to the enclosing face. The default
+value is 0, meaning to open this face at the same column number as the
+enclosing one.
+@item (<num> :relative-to <face>)
+As above, but relatively to a @emph{parent} face named @t{<face>}
+instead of just the enclosing one. This lets you go more than one level
+up in the face tree.
+@item (<num> absolute)
+Open this face exactly at column @t{<num>}.
+@item self
+This face may be opened anywhere, and when it is, its left column is set
+to the current column number.
+@end table
+@item :padding-right
+@cindex Face Properties, layout, @t{padding-right}
+@cindex Themes, faces, properties, layout, @t{padding-right}
+@cindex Themes, files, keywords, @t{:padding-right}
+A face's right padding, determines its ending column. This property can
+take the following forms.
+@table @t
+@item <num>
+Close this face @t{<num>} columns before the enclosing one.
+@item (<num> :relative-to <face>)
+As above, but relatively to a @emph{parent} face named @t{<face>}
+instead of just the enclosing one. This lets you go more than one level
+up in the face tree.
+@item (<num> absolute)
+Close this face exactly at column @t{<num>}.
+@item self
+This face may be closed anywhere. This is the default.
+@end table
+@end table
+@cindex Themes, built-in, @t{raw}
+@cindex Built-in Themes, @t{raw}
+The default values above have been chosen because they are convenient
+for the majority of the faces, but not necessarily all the time. Let us
+now review some examples of non-default settings in the @samp{raw}
+theme.
+@itemize @bullet
+@item
+The @samp{option} face has its left padding set to 2. Since all
+super-faces default to 0, this essentially mean an indentation of 2
+columns.
+@item
+The @samp{usage} face has its left padding set to @t{(30 absolute)}
+which means that the descriptive texts for all options start aligned at
+column 30.
+@end itemize
+
+@cindex Faces, self-ending
+There is one important point to understand about self-ending faces
+(which, again, is the default setting). A self-ending face typically
+doesn't know at which column it stops until it stops. In fact, this is
+not completely true: if the face's contents needs to span across several
+lines, then the ending column will be known at the end of the first
+line, when the ending column of the enclosing face is reached. However,
+for a piece of contents that fits on a single line, the point holds.
+
+Because of that, it is impossible for a face's right padding to be
+relative to a self-ending face. This would be like saying ``stop 2
+columns before I don't know where''. Here are two examples of such
+invalid settings (an error will be thrown if you try that in a theme):
+
+@verbatim
+:face (option :face (syntax :padding-right 2))
+:face (option
+        :face (syntax
+                :face (short
+                        :padding-right (2 :relative-to option))))
+@end verbatim
+
+@node Layout Inheritance, , Layout Properties, Layout
+@subsubsection Layout Inheritance
+@cindex Face Properties, inheritance
+@cindex Face Properties, layout, inheritance
+@cindex Themes, faces, properties, inheritance
+@cindex Themes, faces, properties, layout, inheritance
+This section is a misnomer. Contrary to highlight properties, there is
+@emph{no} inheritance for layout properties across a face tree. In other
+words, every missing layout property in a face specification has the
+property in question set to its default value.
+
+Again, this design decision has been adopted because it is the most
+natural thing to do. If you're not convinced, consider this: when you
+specify that the @samp{option} face has a top padding of 0, you mean
+that every option should be described on a line of its own. However, you
+probably do @emph{not} mean that every individual sub-part of the
+option's description (syntax part, usage part @etc{}) should also start
+on its own line.
+
+Now that we know all about highlight and layout inheritance, we are able
+to explain the face specification shortcut mentioned earlier, when a
+face is specified directly by name, without any explicit property
+specification:
+
+@verbatim
+:face description
+@end verbatim
+
+This syntactic shortcut actually lets you specify a face which gets all
+default values for layout properties, and inherits all current values
+from its super-faces for highlight properties. This is in fact a
+shortcut for this:
+
+@verbatim
+:face (description)
+@end verbatim
+
+This, however, does not explain why you would want to issue such a
+specification instead of just not mentioning the face at all. See
+@ref{Implicit Faces} for an explanation.
+
+
+@node Implicit Faces, , Layout, Theme Creation
+@subsection Implicit Faces
+@cindex Implicit Faces
+@cindex Faces, implicit
+@cindex Themes, faces, implicit
+@cindex Built-in themes, @t{raw}
+@cindex Themes, built-in, @t{raw}
+In order to fully understand how themes work, we need to tackle one last
+aspect of their conception: the case of @emph{implicit faces}. Although
+@clon{} itself needs a completely defined face tree to perform output
+correctly, a theme file is not required to define all of them (that is
+impossible by the way: because of group nesting, a complete theme file
+would be infinitely big). In fact, a theme file can be totally empty, in
+which case the output will effectively conform to the built-in
+@samp{raw} theme. When a face is ``missing'' from a theme, @clon{}
+arranges to define it in a sensible way. Such a face is said to be
+@emph{implicit}. The exact rules for defining implicit faces is what
+this section is all about.
+
+@menu
+* Face Tree Reuse::     Substituting previously specified faces
+* Sibling Faces::       Substituting built-in faces
+@end menu
+
+@node Face Tree Reuse, Sibling Faces, Implicit Faces, Implicit Faces
+@subsubsection Face Tree Reuse
+@cindex Faces, reuse
+@cindex Themes, faces, reuse
+Suppose that @clon{} needs to display an option's description, and that
+option belongs to a group. The corresponding face in a theme file would
+be the following one:
+
+@verbatim
+:face (group :face (items :face (option  #| ... |#)))
+@end verbatim
+
+This face describes how options belonging to a level 1 group are to be
+displayed. As such, it is not applicable to toplevel options. When this
+face is missing from the theme file, @clon{} tries to find a @emph{more
+general} one. In that particular case, the theme file might define a
+``toplevel'' @samp{option} face like this:
+
+@verbatim
+:face (option #| ... |#)
+@end verbatim
+
+This face is more general because it lies at the toplevel. As such, it
+is considered applicable to toplevel options, but also to options
+belonging to groups at any level. In the same vein, specifying an
+@samp{option} face within a @samp{group} face implicitly makes it
+applicable at any higher group level.
+
+This face reuse mechanism applies to @emph{any} face in a theme; not
+only to the ones used in the examples above. For instance, if you decide
+that all headers in @clon{}'s output should be displayed in the same
+way, you can very well specify a @samp{header} face at the toplevel of a
+theme file (although @clon{} never has anything to display in a
+@samp{header} face at the toplevel), and this face will be used in
+synopsis headers, group headers, fallback headers @etc{}.
+
+@cindex Faces, tree, reuse
+@cindex Themes, faces, tree, reuse
+Now, I must confess that the face reuse mechanism described above was
+over-simplified. What really happens is not exactly face reuse, but
+@emph{face tree} reuse. Here is a more complicated example to clarify
+things a little.
+
+Suppose @clon{} needs to display the syntax part of an option that
+belongs to a level 1 group. The corresponding face in a theme file would
+be the following:
+
+@verbatim
+:face (group :face (items :face (option :face (syntax #| ... |#))))
+@end verbatim
+
+If that face is missing, then @clon{} will in fact attempt to find a
+more general one @emph{while preserving as much context as possible}. In
+other words, the following specifications will be tried, in that order:
+
+@verbatim
+:face (items :face (option :face (syntax #| ... |#)))
+:face (option :face (syntax #| ... |#))
+:face (syntax #| ... |#)
+@end verbatim
+
+I hope this makes sense to you because again, it is the most natural
+thing to do. What this roughly means is that when you are looking for a
+way to display an option's syntax part, you should reuse a more general
+option's syntax face first, and only as a very last resort fall back to
+a @samp{syntax} face specification that would be floating around on its
+own.
+
+@node Sibling Faces, , Face Tree Reuse, Implicit Faces
+@subsubsection Sibling Faces
+@cindex Sibling Faces
+@cindex Faces, siblings
+@cindex Themes, faces, siblings
+@cindex Built-in themes, @t{raw}
+@cindex Themes, built-in, @t{raw}
+Now, what happens when the face you're looking for is not specified
+@emph{at all}, not even at a more general level? In such a situation,
+@clon{} uses a @emph{sibling}. A sibling face is a face that plays the
+same role as the one you're looking for, only it is extracted from the
+built-in @samp{raw} theme. The built-in @samp{raw} theme ensures that
+every face is defined at least once, so all faces will eventually be
+found. When a sibling face is not found in the exact context in which it
+is needed (for instance, the @samp{group} face is empty in the
+@samp{raw} theme), then the same process of face tree reuse as described
+in the previous section occurs on the sibling face tree.
+
+
+
+@c ====================================================================
+@c Conclusion
+@c ====================================================================
+@node Conclusion,  Concept Index, Output, Top
+@chapter Conclusion
+So that's it I guess. Enjoy using clonified applications, don't spend
+too much time hacking themes, and please contribute to the @cl{} world
+by developing standalone programs with @clon{}. Read @userref{Top} to
+learn how to do that.
+
+Hmmm. What kind of conclusion was that@dots{}
+
+
+
+@c ====================================================================
+@c Concept Index
+@c ====================================================================
+@node Concept Index, , Conclusion, Top
+@unnumbered Concept Index
+
+@printindex cp
+
+@bye
+
+@c  LocalWords:  Clon clon cmdline Clonification tty emph CmdLine clonified SGR
+@c  LocalWords:  clonfiscated clonistified clonificated clonificationated samp
+@c  LocalWords:  cindex subsubsection pxref Didier Nuker postfix Runtime cth
+@c  LocalWords:  cartouche toplevel prepended IEC
+
+@c enduser.texi ends here

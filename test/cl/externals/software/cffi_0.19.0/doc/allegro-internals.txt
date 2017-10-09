@@ -1,0 +1,132 @@
+July 2005
+These details were kindly provided by Duane Rettig of Franz.
+
+Regarding the following snippet of the macro expansion of
+FF:DEF-FOREIGN-CALL:
+
+  (SYSTEM::FF-FUNCALL
+    (LOAD-TIME-VALUE (EXCL::DETERMINE-FOREIGN-ADDRESS
+                      '("foo" :LANGUAGE :C)  2 NIL))
+    '(:INT (INTEGER * *)) ARG1
+    '(:DOUBLE (DOUBLE-FLOAT * *)) ARG2
+    '(:INT (INTEGER * *)))
+
+"
+... in Allegro CL, if you define a foreign call FOO with C entry point
+"foo" and with :call-direct t in the arguments, and if other things are
+satisfied, then if a lisp function BAR is compiled which has a call to
+FOO, that call will not go through ff-funcall (and thus a large amount
+of argument manipulation and processing) but will instead set up its
+arguments directly on the stack, and will then perform the "call" more
+or less directly, through the "entry vec" (a small structure which
+keeps track of a foreign entry's address and status)."
+
+This is the code that generates what the compiler expects to see:
+
+(setq call-direct-form
+      (if* call-direct
+       then `(setf (get ',lispname 'sys::direct-ff-call)
+             (list ',external-name
+                   ,callback
+                   ,convention
+                   ',returning
+                   ',arg-types
+                   ,arg-checking
+                   ,entry-vec-flags))
+       else `(remprop ',lispname 'sys::direct-ff-call)))
+
+Thus generating something like:
+
+        (EVAL-WHEN (COMPILE LOAD EVAL)
+          (SETF (GET 'FOO 'SYSTEM::DIRECT-FF-CALL)
+                (LIST '("foo" :LANGUAGE :C) T :C
+                      '(:INT (INTEGER * *))
+                      '((:INT (INTEGER * *))
+                        (:FLOAT (SINGLE-FLOAT * *)))
+                      T
+                      2 ; this magic value is explained later
+                      )))
+
+"
+(defun determine-foreign-address (name &optional (flags 0) method-index)
+  ;; return an entry-vec struct suitable for the foreign-call of name.
+  ;;
+  ;; name is either a string, which is taken without conversion, or
+  ;; a list consisting of a string to convert or a conversion function
+  ;; call.
+  ;; flags is an integer representing the flags to place into the entry-vec.
+  ;; method-index, if non-nil, is a word-index into a vtbl (virtual table).
+  ;; If method-index is true, then the name must be a string uniquely
+  ;; represented by the index and by the flags field.
+
+Note that not all architectures implement the :method-index argument
+to def-foreign-call, but your interface likely won't support it
+anyway, so just leave it nil.  As for the flags, they are constants
+stored into the entry-vec returned by d-f-a and are given here:
+
+(defconstant ep-flag-call-semidirect 1) ; Real address stored in alt-address slot
+(defconstant ep-flag-never-release 2)   ; Never release the heap
+(defconstant ep-flag-always-release 4)  ; Always release the heap
+(defconstant ep-flag-release-when-ok 8) ; Release the heap unless without-interrupts
+
+(defconstant ep-flag-tramp-calls #x70) ; Make calls through special trampolines
+(defconstant ep-flag-tramp-shift 4)
+
+(defconstant ep-flag-variable-address #x100) ; Entry-point contains address of C var
+(defconstant ep-flag-strings-convert #x200)	 ; Convert strings automatically
+
+(defconstant ep-flag-get-errno #x1000)      ;; [rfe5060]: Get errno value after call
+(defconstant ep-flag-get-last-error #x2000) ;; [rfe5060]: call GetLastError after call
+;; Leave #x4000 and #x8000 open for expansion
+
+Mostly, you'll give the value 2 (never release the heap), but if you
+give 4 or 8, then d-f-a will automatically set the 1 bit as well,
+which takes the call through a heap-release/reacquire process.
+
+Some docs for entry-vec are:
+
+;; -- entry vec --
+;;  An entry-vec is an entry-point descriptor, usually a pointer into
+;; a shared-library.  It is represented as a 5-element struct of type
+;; foreign-vector.  The reason for this represntation is
+;; that it allows the entry point to be stored in a table, called
+;; the .saved-entry-points. table, and to be used by a foreign
+;; function.  When the location of the foreign function to which the entry
+;; point refers changes, it is simply a matter of changing the value in entry
+;; point vector and the foreign call code sees it immediately.  There is
+;; even an address that can be put in the entry point vector that denotes
+;; a missing foreign function, thus lookup can happen dynamically.
+
+(defstruct (entry-vec
+	    (:type (vector excl::foreign (*)))
+	    (:constructor make-entry-vec-boa ()))
+  name               ; entry point name
+  (address 0)        ; jump address for foreign code
+  (handle 0)         ; shared-lib handle
+  (flags 0)          ; ep-* flags
+  (alt-address 0)    ; sometimes holds the real func addr
+  )
+
+[...]
+"
+
+Regarding the arguments to SYSTEM::FF-FUNCALL:
+  '(:int (integer * *)) argN
+
+"The type-spec is as it is given in the def-foreign-call
+syntax, with a C type optionally followed by a lisp type,
+followed optionally by a user-conversion function name[...]"
+
+
+Getting the alignment:
+
+CL-USER(2): (ff:get-foreign-type :int)
+#S(FOREIGN-FUNCTIONS::IFOREIGN-TYPE
+   :ATTRIBUTES NIL
+   :SFTYPE
+    #S(FOREIGN-FUNCTIONS::SIZED-FTYPE-PRIM
+       :KIND :INT
+       :WIDTH 4
+       :OFFSET 0
+       :ALIGN 4)
+   ...)

@@ -1,0 +1,60 @@
+                                                                -*- text -*-
+
+$Id$
+
+A document to describe which APIs a backend should implement.
+
+
+Each backend should implement:
+
+Functions:
+
+ - handle-condition
+ - socket-connect
+ - socket-listen
+ - get-hosts-by-name [ optional ]
+ - get-host-by-address [ optional ]
+
+ - wait-for-input-internal (new in 0.4.x)
+
+Methods:
+
+ - socket-close
+ - socket-accept
+ - get-local-name
+ - get-peer-name
+
+ and - for ip sockets - these methods:
+
+ - get-local-address
+ - get-local-port
+ - get-peer-address
+ - get-peer-port
+
+
+An error-handling function, resolving implementation specific errors
+to this list of errors:
+
+ - address-in-use-error
+ - address-not-available-error
+ - bad-file-descriptor-error
+ - connection-refused-error
+ - invalid-argument-error
+ - no-buffers-error
+ - operation-not-supported-error
+ - operation-not-permitted-error
+ - protocol-not-supported-error
+ - socket-type-not-supported-error
+ - network-unreachable-error
+ - network-down-error
+ - network-reset-error
+ - host-down-error
+ - host-unreachable-error
+ - shutdown-error
+ - timeout-error
+ - unkown-error
+
+and these conditions:
+
+ - interrupted-condition
+ - unkown-condition

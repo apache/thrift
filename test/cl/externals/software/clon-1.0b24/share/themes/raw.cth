@@ -1,0 +1,73 @@
+;;; raw.cth --- Raw theme                                        -*- lisp -*-
+
+;; Copyright (C) 2010, 2011, 2015 Didier Verna
+
+;; Author: Didier Verna <didier@didierverna.net>
+
+;; This file is part of Clon.
+
+;; Permission to use, copy, modify, and distribute this software for any
+;; purpose with or without fee is hereby granted, provided that the above
+;; copyright notice and this permission notice appear in all copies.
+
+;; THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+;; WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+;; MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+;; ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+;; WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+;; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+;;; Commentary:
+
+;; Contents management by FCM version 0.1.
+
+;; This is the equivalent of the default theme used internally by Clon when no
+;; other theme is specified or can be found. Options have an indentation of 2
+;; columns and their descriptions start at column 30. Groups are indented left
+;; by 2 columns from level 2. Note that this theme provides a complete face
+;; tree, apart from the implicit TOPLEVEL face.
+
+
+;;; Code:
+
+:face (synopsis :padding-bottom 1
+		:face header
+		:face program
+		:face short-pack
+		:face negated-pack
+		:face options
+		:face postfix)
+
+:face (text :padding-top 0 :padding-bottom 0)
+
+:face (option :padding-left 2 :padding-top 0 :padding-bottom 0
+	      :face (syntax :item-separator ", "
+			    :face (short :item-separator nil
+					 :face name
+					 :face argument)
+			    :face (long :item-separator nil
+					:face name
+					:face argument))
+	      :face (usage :padding-left (30 absolute)
+			   :face description
+			   :face (fallback :padding-top 0
+					   :face header
+					   :face value)
+			   :face (default :padding-top 0
+					  :face header
+					  :face value)
+			   :face (environment :padding-top 0
+					      :face header
+					      :face variable)))
+
+:face (group :padding-top 0 :padding-bottom 0
+	     :face (header :padding-top 0 :padding-bottom 0)
+	     :face (items :padding-top 0 :padding-bottom 0
+			  :face (group :padding-top 0
+				       :padding-bottom 0
+				       :padding-left 2)
+			  #| :face text :face option |#))
+
+;;; raw.cth ends here

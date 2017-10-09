@@ -1,0 +1,32 @@
+language: lisp
+sudo: required
+
+env:
+  matrix:
+#    - LISP=abcl
+#    - LISP=allegro
+    - LISP=sbcl
+#    - LISP=sbcl32
+#    - LISP=ccl
+#    - LISP=ccl32
+#    - LISP=clisp
+#    - LISP=clisp32
+#    - LISP=cmucl
+#    - LISP=ecl
+
+matrix:
+  allow_failures:
+    # CIM not available for CMUCL
+    - env: LISP=cmucl
+
+install:
+  - curl https://raw.githubusercontent.com/luismbo/cl-travis/master/install.sh | sh;
+
+script:
+  - cl -e '(push *default-pathname-defaults* ql:*local-project-directories*)
+           (ql:quickload :fiasco)
+           (ql:quickload :fiasco-self-tests)
+           (unless (fiasco:run-package-tests :packages
+                       (quote (:fiasco-basic-self-tests
+                               :fiasco-intro-example)))
+             (uiop:quit 1))'

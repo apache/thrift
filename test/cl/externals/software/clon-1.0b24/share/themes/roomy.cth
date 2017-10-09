@@ -1,0 +1,55 @@
+;;; roomy.cth --- Roomy theme                                    -*- lisp -*-
+
+;; Copyright (C) 2010, 2011, 2015 Didier Verna
+
+;; Author: Didier Verna <didier@didierverna.net>
+
+;; This file is part of Clon.
+
+;; Permission to use, copy, modify, and distribute this software for any
+;; purpose with or without fee is hereby granted, provided that the above
+;; copyright notice and this permission notice appear in all copies.
+
+;; THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+;; WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+;; MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+;; ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+;; WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+;; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+;;; Commentary:
+
+;; Contents management by FCM version 0.1.
+
+;; This theme has a lot of space in it. Option descriptions start on their own
+;; line, groups and plain texts are separated by empty lines. Group titles
+;; appear in bold font, and option syntax is underlined.
+
+
+;;; Code:
+
+:face (synopsis :padding-bottom 1)
+
+:face (text :padding-top 1 :padding-bottom 1)
+
+:face (option :padding-left 2 :padding-top 0 :padding-bottom 0
+	      :item-separator #\newline
+	      :face (syntax :item-separator ", "
+			    :underline t
+			    :face (short :item-separator nil)
+			    :face (long  :item-separator nil))
+	      :face (usage :padding-left 5
+			   :item-separator #\newline
+			   :face (fallback :face (header :bold nil))
+			   :face (default :face (header :bold nil))))
+
+:face (group :padding-top 1 :padding-bottom 1
+	     :item-separator #\newline
+	     :face (header :bold t)
+	     :face (group :padding-left 2 :padding-top 0 :padding-bottom 0
+			  :item-separator #\newline))
+
+
+;;; roomy.cth ends here

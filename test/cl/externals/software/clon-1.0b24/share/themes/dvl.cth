@@ -1,0 +1,57 @@
+;;; dvl.cth --- My personal theme                                 -*- lisp -*-
+
+;; Copyright (C) 2010, 2011, 2015 Didier Verna
+
+;; Author: Didier Verna <didier@didierverna.net>
+
+;; This file is part of Clon.
+
+;; Permission to use, copy, modify, and distribute this software for any
+;; purpose with or without fee is hereby granted, provided that the above
+;; copyright notice and this permission notice appear in all copies.
+
+;; THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+;; WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+;; MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+;; ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+;; WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+;; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+;;; Commentary:
+
+;; Contents management by FCM version 0.1.
+
+
+;;; Code:
+
+:face (header :bold t)
+
+:face (synopsis :padding-bottom 1
+		:face (short-pack :foreground cyan :bold t)
+		:face (negated-pack :foreground cyan :bold t))
+
+:face (text :padding-top 0 :padding-bottom 0 :foreground green)
+
+:face (option :padding-left 2 :padding-top 0 :padding-bottom 0
+	      :face (syntax :item-separator ", "
+			    :foreground cyan
+			    :face (short :item-separator nil
+					 :face (name :bold t))
+			    :face (long :item-separator nil
+					:face (name :bold t)))
+	      :face (usage :padding-left (30 absolute)
+			   :face (fallback :padding-top 0 :foreground yellow)
+			   :face (default :padding-top 0 :foreground yellow)
+			   :face (environment :padding-top 0
+					      :foreground yellow)))
+
+:face (group :padding-top 0 :padding-bottom 0
+	     :face (items :padding-top 0 :padding-bottom 0
+			  :face (group :padding-top 0
+				       :padding-bottom 0
+				       :padding-left 2)
+			  #| :face text :face option |#))
+
+;;; dvl.cth ends here

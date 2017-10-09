@@ -1,0 +1,314 @@
+\input texinfo   @c -*-texinfo-*-
+@c %**start of header
+@setfilename cffi-sys.info
+@settitle CFFI-SYS Interface Specification
+
+@c Show types in the same index as the functions.
+@synindex tp fn
+
+@copying
+Copyright @copyright{} 2005-2006, James Bielman  <jamesjb at jamesjb.com>
+
+@quotation
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the ``Software''), to deal in the Software without
+restriction, including without limitation the rights to use, copy,
+modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+@sc{The software is provided ``as is'', without warranty of any kind,
+express or implied, including but not limited to the warranties of
+merchantability, fitness for a particular purpose and
+noninfringement.  In no event shall the authors or copyright
+holders be liable for any claim, damages or other liability,
+whether in an action of contract, tort or otherwise, arising from,
+out of or in connection with the software or the use or other
+dealings in the software.}
+@end quotation
+@end copying
+
+@macro impnote {text}
+@emph{Implementor's note: \text\}
+@end macro
+@c %**end of header
+
+@dircategory Software development
+@direntry
+* CFFI Sys spec: (cffi-sys-spec).       CFFI Sys spec.
+@end direntry
+
+@titlepage
+@title CFFI-SYS Interface Specification
+@c @subtitle Version X.X
+@c @author James Bielman
+
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@contents
+
+@ifnottex
+@node Top
+@top cffi-sys
+@insertcopying
+@end ifnottex
+
+@menu
+* Introduction::                
+* Built-In Foreign Types::      
+* Operations on Foreign Types::  
+* Basic Pointer Operations::    
+* Foreign Memory Allocation::   
+* Memory Access::               
+* Foreign Function Calling::    
+* Loading Foreign Libraries::   
+* Foreign Globals::             
+* Symbol Index::                
+@end menu
+
+@node Introduction
+@chapter Introduction
+
+@acronym{CFFI}, the Common Foreign Function Interface, purports to be
+a portable foreign function interface for Common Lisp.
+
+This specification defines a set of low-level primitives that must be
+defined for each Lisp implementation supported by @acronym{CFFI}.
+These operators are defined in the @code{CFFI-SYS} package.
+
+The @code{CFFI} package uses the @code{CFFI-SYS} interface
+to implement an extensible foreign type system with support for
+typedefs, structures, and unions, a declarative interface for
+defining foreign function calls, and automatic conversion of
+foreign function arguments to/from Lisp types.
+
+Please note the following conventions that apply to everything in
+@code{CFFI-SYS}:
+
+@itemize @bullet
+@item
+Functions in @code{CFFI-SYS} that are low-level versions of functions
+exported from the @code{CFFI} package begin with a leading
+percent-sign (eg. @code{%mem-ref}).
+
+@item
+Where ``foreign type'' is mentioned as the kind of an argument, the
+meaning is restricted to that subset of all foreign types defined in
+@ref{Built-In Foreign Types}.  Support for higher-level types is
+always defined in terms of those lower-level types in @code{CFFI}
+proper.
+@end itemize
+
+
+@node Built-In Foreign Types
+@chapter Built-In Foreign Types
+
+@deftp {Foreign Type} :char
+@deftpx {Foreign Type} :unsigned-char
+@deftpx {Foreign Type} :short
+@deftpx {Foreign Type} :unsigned-short
+@deftpx {Foreign Type} :int
+@deftpx {Foreign Type} :unsigned-int
+@deftpx {Foreign Type} :long
+@deftpx {Foreign Type} :unsigned-long
+@deftpx {Foreign Type} :long-long
+@deftpx {Foreign Type} :unsigned-long-long
+These types correspond to the native C integer types according to the
+ABI of the system the Lisp implementation is compiled against.
+@end deftp
+
+@deftp {Foreign Type} :int8
+@deftpx {Foreign Type} :uint8
+@deftpx {Foreign Type} :int16
+@deftpx {Foreign Type} :uint16
+@deftpx {Foreign Type} :int32
+@deftpx {Foreign Type} :uint32
+@deftpx {Foreign Type} :int64
+@deftpx {Foreign Type} :uint64
+Foreign integer types of specific sizes, corresponding to the C types
+defined in @code{stdint.h}.
+@end deftp
+
+@deftp {Foreign Type} :size
+@deftpx {Foreign Type} :ssize
+@deftpx {Foreign Type} :ptrdiff
+@deftpx {Foreign Type} :time
+Foreign integer types corresponding to the standard C types (without
+the @code{_t} suffix).
+@end deftp
+
+@impnote{I'm sure there are more of these that could be useful, let's
+add any types that can't be defined portably to this list as
+necessary.}
+
+@deftp {Foreign Type} :float
+@deftpx {Foreign Type} :double
+The @code{:float} type represents a C @code{float} and a Lisp
+@code{single-float}. @code{:double} represents a C @code{double} and a
+Lisp @code{double-float}.
+@end deftp
+
+@deftp {Foreign Type} :pointer
+A foreign pointer to an object of any type, corresponding to
+@code{void *}.
+@end deftp
+
+@deftp {Foreign Type} :void
+No type at all. Only valid as the return type of a function.
+@end deftp
+
+
+@node Operations on Foreign Types
+@chapter Operations on Built-in Foreign Types
+
+@defun %foreign-type-size type @result{} size
+Return the @var{size}, in bytes, of objects having foreign type
+@var{type}. An error is signalled if @var{type} is not a known
+built-in foreign type.
+@end defun
+
+@defun %foreign-type-alignment type @result{} alignment
+Return the default alignment in bytes for structure members of foreign
+type @var{type}. An error is signalled if @var{type} is not a known
+built-in foreign type.
+
+@impnote{Maybe this should take an optional keyword argument specifying an
+alternate alignment system, eg. :mac68k for 68000-compatible alignment
+on Darwin.}
+@end defun
+
+
+@node Basic Pointer Operations
+@chapter Basic Pointer Operations
+
+@defun pointerp ptr @result{} boolean
+Return true if @var{ptr} is a foreign pointer.
+@end defun
+
+@defun null-pointer @result{} pointer
+Return a null foreign pointer.
+@end defun
+
+@defun null-pointer-p ptr @result{} boolean
+Return true if @var{ptr} is a null foreign pointer.
+@end defun
+
+@defun make-pointer address @result{} pointer
+Return a pointer corresponding to the numeric integer @var{address}.
+@end defun
+
+@defun inc-pointer ptr offset @result{} pointer
+Return the result of numerically incrementing @var{ptr} by @var{offset}.
+@end defun
+
+
+@node Foreign Memory Allocation
+@chapter Foreign Memory Allocation
+
+@defun foreign-alloc size @result{} pointer
+Allocate @var{size} bytes of foreign-addressable memory and return
+a @var{pointer} to the allocated block. An implementation-specific
+error is signalled if the memory cannot be allocated.
+@end defun
+
+@defun foreign-free ptr @result{} unspecified
+Free a pointer @var{ptr} allocated by @code{foreign-alloc}. The
+results are undefined if @var{ptr} is used after being freed.
+@end defun
+
+@defmac with-foreign-pointer (var size &optional size-var) &body body
+Bind @var{var} to a pointer to @var{size} bytes of
+foreign-accessible memory during @var{body}.  Both @var{ptr} and the
+memory block it points to have dynamic extent and may be stack
+allocated if supported by the implementation. If @var{size-var} is
+supplied, it will be bound to @var{size} during @var{body}.
+@end defmac
+
+
+@node Memory Access
+@chapter Memory Access
+
+@deffn {Accessor} %mem-ref ptr type &optional offset
+Dereference a pointer @var{offset} bytes from @var{ptr} to an object
+for reading (or writing when used with @code{setf}) of built-in type
+@var{type}.
+@end deffn
+
+@heading Example
+
+@lisp
+;; An impractical example, since time returns the time as well,
+;; but it demonstrates %MEM-REF. Better (simple) examples wanted!
+(with-foreign-pointer (p (foreign-type-size :time))
+  (foreign-funcall "time" :pointer p :time)
+  (%mem-ref p :time))
+@end lisp
+
+
+@node Foreign Function Calling
+@chapter Foreign Function Calling
+
+@defmac %foreign-funcall name @{arg-type arg@}* &optional result-type @result{} object
+@defmacx %foreign-funcall-pointer ptr @{arg-type arg@}* &optional result-type @result{} object
+Invoke a foreign function called @var{name} in the foreign source code.
+
+Each @var{arg-type} is a foreign type specifier, followed by
+@var{arg}, Lisp data to be converted to foreign data of type
+@var{arg-type}.  @var{result-type} is the foreign type of the
+function's return value, and is assumed to be @code{:void} if not
+supplied.
+
+@code{%foreign-funcall-pointer} takes a pointer @var{ptr} to the
+function, as returned by @code{foreign-symbol-pointer}, rather than a
+string @var{name}.
+@end defmac
+
+@heading Examples
+
+@lisp
+;; Calling a standard C library function:
+(%foreign-funcall "sqrtf" :float 16.0 :float) @result{} 4.0
+@end lisp
+
+@lisp
+;; Dynamic allocation of a buffer and passing to a function:
+(with-foreign-ptr (buf 255 buf-size)
+  (%foreign-funcall "gethostname" :pointer buf :size buf-size :int)
+  ;; Convert buf to a Lisp string using MAKE-STRING and %MEM-REF or
+  ;; a portable CFFI function such as CFFI:FOREIGN-STRING-TO-LISP.
+  )
+@end lisp
+
+
+@node Loading Foreign Libraries
+@chapter Loading Foreign Libraries
+
+@defun %load-foreign-library name @result{} unspecified
+Load the foreign shared library @var{name}.
+
+@impnote{There is a lot of behavior to decide here.  Currently I lean
+toward not requiring NAME to be a full path to the library so
+we can search the system library directories (maybe even get
+LD_LIBRARY_PATH from the environment) as necessary.}
+@end defun
+
+
+@node Foreign Globals
+@chapter Foreign Globals
+
+@defun foreign-symbol-pointer name @result{} pointer
+Return a pointer to a foreign symbol @var{name}.
+@end defun
+
+@node Symbol Index
+@unnumbered Symbol Index
+@printindex fn
+
+@bye

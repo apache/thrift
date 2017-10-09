@@ -1,0 +1,161 @@
+							-*- mode: outline -*-
+
+* Copyright (C) 2010, 2011, 2013, 2015 Didier Verna
+
+This file is part of Clon.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+
+* Competition
+Look at the alternative and provide a comparative chart.
+
+* I18N
+
+* Have a look at CMUCL
+It has built-in search-lists and wildcard match that could be useful for the
+path options.
+
+* Provide a do-cmdline-option (without the s) macro
+for repeatedly getting one specific option (and doing BODY on it) until none
+is left on the command-line. This could be useful for processing options
+appearing several times (for instance, some programs like to have several
+calls to -v in order to increase the verbosity level).
+
+Maybe also provide a getopt-last, or a key to getopt that would trigger
+warnings if an option is used several times but it's not supposed to. In such
+a case, the key would let the programmer decide on whether to discard the
+first or last ones.
+
+* Support for option aliases
+An option could have several names instead of just one.
+
+* Support for multiple environment variables
+An option could be associated with a list of environment variables instead of
+just one. Possible uses would be handling both DEBUG and NDEBUG (see below),
+but also program-specific versions of otherwise general variables, like trying
+MYPROG_NDEBUG first, and NDEBUG next.
+
+* Support for value post-processing
+I'm especially thinking about multiple environment variable support, but maybe
+elsewhere. For instance, we could implement a --debug opton associated with
+a DEBUG env var, and also/or with a NDEBUG env var for which we should
+complement the conversion. Now the question is do we want to post-process the
+conversion value, the initial string value, or both ?
+
+Another related thought: value post-processing could mean value
+canonicalization (especially useful when in the debugger, you're invited to
+provide another value). For instance, in path options, the converter handles
+~/ abbreviations. However, this is not valid when typing a value directly,
+which is a shame.
+
+And another post-processing-related idea: a :variable property to
+automatically setf a variable to the value of an option once it is retrieved.
+
+Now if all options have post-processing, a simple (do-all-cmdline-options)
+macro could do all the work (just getopt and execute the associated
+post-process).
+
+* Support for resource files ala X11
+This could be used to provide values for options depending on the
+application's class/name.
+
+* Treat empty env vars as options called without their (optional) argument
+With the restriction that there's no notion of an env var set without
+argument. There's only empty arguments. This will lead to problems if the
+option is supposed to accept empty strings.
+
+* Support for dynamic default value / fallback
+computed at run-time from a lambda expression for instance. But is this
+different from supporting post-processing ?
+Cf. also current bug in clon-search-path default computation, which is done at
+compile time if defsynopsis is used as a toplevel form.
+
+* Improve advanced usage support
+Maybe we need a way to support declarative definition of a synopsis *tree* for
+applications wanting to do things like "prog [options] cmd [options]" or even
+more complicated stuff.
+
+There is also the problem that built-in options are duplicated every time we
+create new contexts (see section 5 "Advanced Usage" in the Clon User Manual).
+We would like those built-in options to apply on all sub-contexts (hint: we
+need a true notion of sub-context), but also with the ability to be overridden
+in those sub-contexts. This could also be extended to non built-in options.
+
+* Extend abbreviated option matching to dash-parts
+e.g. --f-n == --family-name.
+
+* Extend the path option class to accept wildcards in pathnames
+and expand them into actual directories.
+
+* Extend the path option class to not ignore a final colon
+Like TeX variables, this would mean to append the built-in path after the
+user-specified part.
+
+* Study POSIX behavior for cmdline options
+See if we can provide a POSIX compliant mode, that would be triggered by
+POSIXLY_CORRECT, POSIX_ME_HARDER, or other means (cmdline options?)
+
+* Support for shell completion
+Implement automatic generation of whatever is needed for shell completion of
+options (zsh in particular, zcomp I think it is).
+
+* Finer grain for conversion errors
+Currently, converters are supposed to raise an invalid-argument error, but we
+might want something more powerful (like handling a whole conversion-error
+hierarchy). For instance, when a path is wrong, we would like to provide a
+restart for modifying just the faulty path element. However, this is not
+currently possible because invalid-argument errors are trapped and converted
+to invalid-cmdline-argument or invalid-environment-value ones. So we can't
+benefit from all the restarts that we could define at the lower-level.
+
+* Better detection of short packs
+When parsing a short call, we try a known option, a known option with a sticky
+argument, a pack, and then barf. Sometimes, a pack can be mistaken for a known
+option with a sticky (however invalid) argument. For instance, suppose we have
+a -d switch and a -v flag. Using -dv will lead to an invalid argument to -d,
+whereas the user probably meant -v -d (or -vd which works). We could improve
+the detection of this situation by catching the invalid argument error, and
+then trying a pack instead of immediately reporting the error.
+
+* Better advertisement of short packs
+[ See also above ] When Clon computes the pack string for the synopsis, we
+should put flags first in the pack, because it does not make nay sense to
+start a pack with a valued option (the pack would be seen as an option with a
+sticky argument first).
+
+* Extend the [items-]separator face property
+Item separation would ideally depend on what's before or/and after the item
+being displayed.
+
+* Special --no-<name> option for switches
+(and probably switch-based options).
+For instance, you would have -d / --debug and +d / --no-debug. 
+
+* Support help string formatting for more than ttys
+For instance, it would be good to be able to generate texinfo, man (groff)
+etc. Currently, it is not very clear to me where exactly the limit between
+themes and format "drivers" stands. I think that what's in a theme depends on
+the driver you use (e.g. colors make sense for a tty driver, but not for a
+groff one).
+
+* Support for GUI-based options browsing
+I'm quite proud of this idea ;-) Joe uses program for the first time, so he
+types "program --gui-help" and gets a GUI with all available options, their
+help strings as bubbles, the possibility to select them, provide values etc. 
+He plays around and then clicks "Go", and the program continues with with the
+appropriate command-line (you can already have different contexts in Clon). 
+Cool hey ?
+
+* Provide a negated long form as well ?
+++debug
+
+* Store all release names in a hashtable
+and provide a short bio, with option --clon-about=RELEASE
+
+* Pascal would like a simple way to declare options ala lambda list
+For instance define-main-function (&key opt1 opt2 ...), and be done with it.
+
+* Cf. ECL's asdf implementation of make-build.

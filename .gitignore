@@ -294,6 +294,8 @@ project.lock.json
 /test/results.json
 /test/c_glib/test_client
 /test/c_glib/test_server
+/test/cl/TestServer
+/test/cl/TestClient
 /test/cpp/StressTest
 /test/cpp/StressTestNonBlocking
 /test/cpp/TestClient

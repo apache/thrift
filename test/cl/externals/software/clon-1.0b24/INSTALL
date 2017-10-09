@@ -1,0 +1,170 @@
+
+2 Installation
+**************
+
+Clon currently works on Unix (including MacOS X) and Windows (Cygwin or
+MinGW) with SBCL (> 1.0.56), CMUCL (> 20b), CCL, ECL, CLISP, ABCL (>
+1.1.0), Allegro (both standard and modern) and LispWorks.  Clon is
+provided as an ASDF 3 system, but has no mandatory dependency.  CFFI may
+optionally be used with CLISP, Allegro and LispWorks.  *Note Supported
+Platforms::, for more information.
+
+   In order to install and load the bare Lisp library, unpack it
+somewhere in the ASDF 3 source registry and type this at the REPL:
+(asdf:load-system :net.didierverna.clon)
+   Alternatively, if you just want to use the core library without all
+the platform-dependent bells and whistles (*note Technical Notes::), you
+can also just load the ‘net.didierverna.clon.core’ system.
+
+   In the general case, and if you are using SBCL, you may want to make
+sure that the ‘CC’ environment variable is set to your favorite C
+compiler in your init file.  Otherwise, Clon will run in restricted mode
+(*note Technical Notes::).  For instance, put this in your ‘.sbclrc’:
+(require :sb-posix)
+(sb-posix:setenv "CC" "gcc" 1)
+
+   In addition to the library itself, the Clon distribution offers
+documentation in the form of 3 different manuals, some data files like
+sample themes (*note (clon-enduser)Theme Creation::), and a couple of
+demonstration programs.  If you want to benefit from all those wonders,
+some bits of manual installation are needed.  After unpacking somewhere
+in the ASDF 3 source registry, please perform the following steps, in
+order.
+
+  1. Edit ‘make/config.make’ to your specific needs.
+
+  2. Type ‘make’ to compile the documentation and the demo programs
+     (end-user manual, user manual and possibly reference manual).  By
+     default, the documentation is built in info, PDF and HTML formats.
+     If you want other formats (DVI and PostScript are available), type
+     ‘make all-formats’.  You can also type individually ‘make dvi’
+     and/or ‘make ps’ in order to get the corresponding format.
+
+  3. As documented in ‘make/config.make’, the reference manual is only
+     generated if you have SBCL and the Declt library at hand (see
+     <http://www.lrde.epita.fr/~didier/software/lisp/misc.php#declt>).
+
+  4. Type ‘make install’ to install both the documentation and the data
+     files.  If you have compiled the documentation in DVI and
+     PostScript format, those will be installed as well.  The same goes
+     for the reference manual.  The demo programs are not installed
+     anywhere.
+
+   Type ‘make uninstall’ to uninstall the library.
+
+
+A.1 Configuration
+=================
+
+Some aspects of Clon’s behavior can be configured _before_ the library
+is actually loaded.  Clon stores its user-level configuration (along
+with some other setup parameters) in another ASDF system called
+‘net.didierverna.clon.setup’ (and the eponym package).  In order to
+configure the library (I repeat, prior to loading it), you will
+typically do something like this:
+(require "asdf")
+(asdf:load-system :net.didierverna.clon.setup)
+(net.didierverna.clon.setup:configure <option> <value>)
+
+ -- Function: configure KEY VALUE
+     Set KEY to VALUE in the current Clon configuration.
+
+   Out of curiosity, you can also inquire the current configuration for
+specific options with the following function.
+ -- Function: configuration KEY
+     Return KEY’s value in the current Clon configuration.
+
+   Currently, the following options are provided.
+:swank-eval-in-emacs
+     This option is only useful if you use Slime, and mostly if you plan
+     on hacking Clon itself.  The library provides indentation
+     information for some of its functions directly embedded in the
+     code.  This information can be automatically transmitted to
+     (X)Emacs when the ASDF system is loaded if you set this option to
+     ‘t’.  However, note that for this to work, the Slime variable
+     ‘slime-enable-evaluate-in-emacs’ must also be set to ‘t’ in your
+     (X)Emacs session.  If you’re interested to know how this process
+     works, I have described it in the following blog entry:
+     <http://www.didierverna.com/sciblog/index.php?post/2011/07/20/One-more-indentation-hack>.
+:restricted
+     Some non-ANSI features of Clon require external functionality that
+     may not be available in all contexts.  Normally, Clon should
+     autodetect this and switch to so-called _restricted mode_ at
+     build-time (*note Non-ANSI Features::).  If Clon has failed to
+     autodetect the problem (in which case I would like to know), or if
+     for some reason, you explicitly want to disable those features, you
+     may set the ‘:restricted’ configuration option to ‘t’.  Another way
+     to do it, without even bothering with configuration is to just use
+     the ‘com.svlsoft.clon.core’ system instead of the regular one.
+:dump
+     This option is only used by the ABCL port.  *note Dumping
+     Executables::, provides more information on its use.
+
+
+A.2 Non-ANSI Features
+=====================
+
+One feature of Clon that is beyond the ANSI standard is terminal
+autodetection (it requires an ‘ioctl’ call and hence a foreign function
+interface).  Terminal autodetection is used in several situations, for
+turning on highlighting automatically and for detecting a terminal line
+width.
+
+   If, for some reason, terminal autodetection is not available, Clon
+will work in so-called _restricted mode_.  This means that
+‘--clon-highlight=auto’ won’t work (highlighting will _not_ be turned on
+automatically on a tty).  For the same reason, unless otherwise
+specified via either the ‘COLUMNS’ environment variable or the
+‘--clon-line-width’ option, terminal output will be formatted for 80
+columns regardless of the actual terminal width (*note
+(clon-enduser)Global Control::).
+
+
+A.3 Supported Platforms
+=======================
+
+Clon currently works on Unix (including MacOS X) and Windows (Cygwin or
+MinGW) and has been ported to 8 Common Lisp implementations.  The
+following table lists the supported platforms.
+
+Compiler   Minimum Version   Dependencies
+-------------------------------------------------
+SBCL       1.0.56
+CMU-CL     20b
+CCL
+ECL        11.1.2(1)
+CLISP                        ‘cffi’ (optional)
+ABCL       1.1.0(2)
+Allegro(3)                   ‘cffi’ (optional)
+LispWorks                    ‘cffi’ (optional)
+
+CLISP, Allegro and LispWorks specificities
+------------------------------------------
+
+As mentioned in the above table, CLISP, Allegro and LispWorks dependency
+on ‘cffi’ is optional.  They need ‘cffi’ in order to implement terminal
+autodetection only (note that many other implementations come with their
+own foreign function interface).  If ‘cffi’ cannot be found when the
+ASDF system is loaded (or in the case of CLISP, if it has been compiled
+without ‘ffi’ support), you get a big red blinking light and a warning
+but that’s all.  Clon will still work, although in restricted mode.
+
+ABCL specificities
+------------------
+
+Clon’s ABCL port currently has two limitations:
+   • It only works in restricted mode (*note Non-ANSI Features::).
+   • Since Java doesn’t have a ‘putenv’ or ‘setenv’ function (!!), the
+     ‘modify-environment’ restart, normally proposed when an environment
+     variable is set to a bogus value, is unavailable (*note
+     (clon-enduser)Error Management::).
+
+   ---------- Footnotes ----------
+
+   (1) more precisely, git revision
+3e2e5f9dc3c5176ef6ef8d7794bfa43f1af8f8db
+
+   (2) more precisely, svn trunk revision 140640
+
+   (3) both standard and modern images are supported
+

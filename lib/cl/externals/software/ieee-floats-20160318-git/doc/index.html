@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>IEEE Floats</title>
+  <link rel="stylesheet" type="text/css" href="style.css"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"/>
+</head>
+
+<body>
+ <div class="header">
+   <h1>IEEE Floats</h1>
+ </div>
+
+<p>IEEE-Floats provides a way of converting values of type
+<tt>float</tt> and <tt>double-float</tt> to and from their binary
+representation as defined by IEEE 754 (which is commonly used by
+processors and network protocols).</p>
+
+<p>The library defines encoding and decoding functions for the common
+32-bit and 64-bit formats, and a macro for defining similar functions
+for other formats. The default functions do not detect the special
+cases for NaN or infinity, but functions can be generated which do, in
+which case the keywords <tt>:not-a-number</tt>,
+<tt>:positive-infinity</tt>, and <tt>:negative-infinity</tt> are used
+to represent them.</p>
+
+<h2>Download and installation</h2>
+
+<p>IEEE-Floats is released under a BSD-style license. The latest
+release can be downloaded
+from <a href="https://github.com/marijnh/ieee-floats/zipball/current">https://github.com/marijnh/ieee-floats/zipball/current</a>.</p>
+
+<p>A git repository with the most recent changes can be checked out with:</p>
+
+<pre>&gt; git clone https://github.com/marijnh/ieee-floats.git</pre>
+
+<p>Or look at it <a href="https://github.com/marijnh/ieee-floats">on
+github</a>.</p>
+
+<h2>Support and mailing lists</h2>
+
+<p>The <a
+href="http://common-lisp.net/mailman/listinfo/ieee-floats-devel">ieee-floats-devel</a>
+mailing list can be used for any questions, discussion, bug-reports,
+patches, or anything else relating to this library. You can also e-mail the author/maintainer, <a href="mailto:marijnh@gmail.com">Marijn Haverbeke</a>, directly.</p>
+
+<h2>Reference</h2>
+
+<p class="def">function <tt>encode-float32</tt> (float) => integer</p>
+
+<p class="desc">Convert a float into its 32-bit binary
+representation.</p>
+
+<p class="def">function <tt>decode-float32</tt> (integer) => float</p>
+
+<p class="desc">Create a float from a 32-bit binary representation.</p>
+
+<p class="def">function <tt>encode-float64</tt> (float) => integer</p>
+
+<p class="desc">Convert a float into its 64-bit binary
+representation.</p>
+
+<p class="def">function <tt>decode-float64</tt> (integer) => double-float</p>
+
+<p class="desc">Create a float from a 64-bit binary representation.</p>
+
+<p class="def">macro <tt>make-float-converters</tt> (encoder-name decoder-name exponent-bits significand-bits support-nan-and-infinity-p)</p>
+
+<p class="desc">Writes an encoder and decoder function for floating
+point numbers with the given amount of exponent and significand bits
+(plus an extra sign bit). If support-nan-and-infinity-p is true, the
+decoders will also understand these special cases. NaN is represented
+as :not-a-number, and the infinities as :positive-infinity and
+:negative-infinity. Note that this means that the in- or output of
+these functions is not just floating point numbers anymore, but also
+keywords.</p>
+
+<hr/>
+
+<p>Back to <a href="http://common-lisp.net/">Common-lisp.net</a>.</p>
+
+ <div class="check">
+   <a href="http://validator.w3.org/check/referer">Valid XHTML 1.0 Strict</a>
+ </div>
+</body>
+</html>

@@ -1,0 +1,165 @@
+cl-puri (1:1.5.6-1) unstable; urgency=medium
+
+  * Removed uri.htm from distribution as is copyright by Franz, Inc
+  * Added link to online documentation URL in README (closes:668918)
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Sat, 29 Aug 2015 18:35:14 -0600
+
+cl-puri (1.5.5-1) unstable; urgency=low
+
+  * New upstream
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Fri, 07 May 2010 12:04:31 -0600
+
+cl-puri (1.5.4-1) unstable; urgency=low
+
+  * New upstream
+  * Switch to dpkg-source 3.0 (quilt) format
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Fri, 09 Apr 2010 10:42:28 -0600
+
+cl-puri (1.5.3-1) unstable; urgency=low
+
+  * New upstream
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Thu, 28 Jan 2010 09:05:26 -0700
+
+cl-puri (1.5.2-1) unstable; urgency=low
+
+  * New upstream
+  * Add doc-base file
+  
+ -- Kevin M. Rosenberg <kmr@debian.org>  Wed, 11 Nov 2009 12:14:39 -0700
+
+cl-puri (1.5.1-3) unstable; urgency=low
+
+  * Build with debhelper extension dh-lisp
+  * control: Add Vcs-Browser field. Fix Depends field.
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Mon, 03 Aug 2009 18:47:36 -0600
+
+cl-puri (1.5.1-2) unstable; urgency=low
+
+  * debian/watch: New file
+  * debian/control: Require debhelper 7. Change to new lisp section.
+  Add Vcs-Git and Homepage fields.
+  * debian/compat: Update to version 7
+  * debian/rules: Update for debhelper 7, architecture-independent build
+  * debian/{prerm,postrm}: Remove path from binary function
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Sun, 02 Aug 2009 01:36:28 -0600
+
+cl-puri (1.5.1-1) unstable; urgency=low
+
+  * New upstream
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Sat,  2 Dec 2006 08:42:15 -0700
+
+cl-puri (1.5-1) unstable; urgency=low
+
+  * Incorporate updates from latest Franz release
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Mon, 14 Aug 2006 18:52:21 -0600
+
+cl-puri (1.4-1) unstable; urgency=low
+
+  * New upstream: no longer depend on simple strings; fix bugs to correspond
+  to Franz delimited-string-to-list and parse-uri
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Thu, 26 Jan 2006 15:54:30 -0700
+
+cl-puri (1.3.1.3-1) unstable; urgency=low
+
+  * New upstream
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Mon,  7 Nov 2005 10:33:45 -0700
+
+cl-puri (1.3.1.2-2) unstable; urgency=low
+
+  * Reupload with correct changelog date
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Wed, 25 May 2005 10:28:34 -0600
+
+cl-puri (1.3.1.2-1) unstable; urgency=low
+
+  * Fix broken html documentation (closes:310639)
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Wed, 25 May 2005 10:27:33 -0600
+
+cl-puri (1.3.1.1-2) unstable; urgency=low
+
+  * Fix description
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Fri, 27 Aug 2004 19:03:12 -0600
+
+cl-puri (1.3.1.1-1) unstable; urgency=low
+
+  * Use #:net.uri nickname on non-Allegro platforms
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Tue, 16 Mar 2004 18:32:10 -0700
+
+cl-puri (1.3.1-1) unstable; urgency=low
+
+  * New upstream
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Mon, 21 Jul 2003 05:18:27 -0600
+
+cl-puri (1.3.0-1) unstable; urgency=low
+
+  * Change parse-error condition to uri-parse-error for
+    cross-implementation compatibility.
+  * Invoke renamed ptester module
+  
+ -- Kevin M. Rosenberg <kmr@debian.org>  Sun, 20 Jul 2003 13:04:45 -0600
+
+cl-puri (1.2.5-1) unstable; urgency=low
+
+  * add shrink vector, AllegroCL fixes
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Sat, 19 Jul 2003 07:33:57 -0600
+
+cl-puri (1.2.4-1) unstable; urgency=low
+
+  * Fix typo for non-Allegro / non-SBCL platforms
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Fri, 18 Jul 2003 21:11:54 -0600
+
+cl-puri (1.2.3-1) unstable; urgency=low
+
+  * Include uri.html documentation file.
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Fri, 18 Jul 2003 19:57:03 -0600
+
+cl-puri (1.2.2-1) unstable; urgency=low
+
+  * Improve tests.lisp
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Fri, 18 Jul 2003 17:32:11 -0600
+
+cl-puri (1.2.1-1) unstable; urgency=low
+
+  * Package name fixes, .asd files
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Fri, 18 Jul 2003 17:06:35 -0600
+
+cl-puri (1.2-1) unstable; urgency=low
+
+  * More porting fixes. Now passes 126/126 regression tests.
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Fri, 18 Jul 2003 13:59:51 -0600
+
+cl-puri (1.1-1) unstable; urgency=low
+
+  * Fix some porting issues
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Fri, 18 Jul 2003 08:59:04 -0600
+
+cl-puri (1.0) unstable; urgency=low
+
+  * Initial upload
+  * Changes compared to upstream: 
+     - Added .asd file for use with ASDF
+     - Include if* source in the uri-src.lisp file
+     - Ported from AllegroCL specific functions
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Thu, 17 Jul 2003 21:39:34 -0600

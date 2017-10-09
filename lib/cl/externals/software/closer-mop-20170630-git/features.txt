@@ -1,0 +1,170 @@
+Features that don't adhere to AMOP in various CLOS MOP implementations, and whether and how they are resolved in Closer to MOP.
+
+Allegro Common Lisp 8.2 & 9.0
+
+- CLASS-DIRECT-DEFAULT-INITARGS and CLASS-DEFAULT-INITARGS don't return canonicalized default initargs as specified. Not fixed.
+- FUNCALLABLE-STANDARD-OBJECT is not used as the default superclass for classes with :metaclass FUNCALLABLE-STANDARD-CLASS.
+- DEFGENERIC does not call FIND-METHOD-COMBINATION. Not fixed.
+- DEFMETHOD doesn't call MAKE-METHOD-LAMBDA. Fixed.
+- The dependent protocol for generic functions doesn't work fully. Fixed.
+- GENERIC-FUNCTION-ARGUMENT-PRECEDENCE-ORDER doesn't return only the required arguments. Fixed.
+- The function invocation protocol doesn't call COMPUTE-APPLICABLE-METHODS, COMPUTE-APPLICABLE-METHODS-USING-CLASSES and COMPUTE-EFFECTIVE-METHOD. Fixed.
+- The :ALLOCATION type cannot be extended. Fixed.
+- MAKE-METHOD-LAMBDA is not provided. Fixed.
+- Method functions don't take parameters as specified in AMOP, but instead just the parameters that the generic function receives. Fixed.
+- REINITIALIZE-INSTANCE doesn't determine a new discriminating function. Fixed.
+- (SETF CLASS-NAME) and (SETF GENERIC-FUNCTION-NAME) do not use REINITIALIZE-INSTANCE for changing the names. Not fixed.
+- SLOT-MAKUNBOUND-USING-CLASS is not specialized on slot definition metaobjects, but on symbols. Fixed.
+- STANDARD-CLASS and FUNCALLABLE-STANDARD-CLASS are not compatible. Not fixed.
+- VALIDATE-SUPERCLASS doesn't recognize T as a valid superclass. Not fixed.
+- Subclasses of BUILT-IN-CLASS, FORWARD-REFERENCED-CLASS, FUNCALLABLE-STANDARD-CLASS, METHOD-COMBINATION, STANDARD-ACCESSOR-METHOD, STANDARD-CLASS, STANDARD-DIRECT-SLOT-DEFINITION, STANDARD-EFFECTIVE-SLOT-DEFINITION, STANDARD-GENERIC-FUNCTION, STANDARD-METHOD, STANDARD-READER-METHOD, STANDARD-SLOT-DEFINITION and STANDARD-WRITER-METHOD will inherit slots whose names are exported symbols and/or accessible in the package common-lisp-user. Not fixed.
+
+Allegro Common Lisp 10.0 & 10.1
+
+- CLASS-DIRECT-DEFAULT-INITARGS and CLASS-DEFAULT-INITARGS don't return canonicalized default initargs as specified. Not fixed.
+- DEFGENERIC does not call FIND-METHOD-COMBINATION. Not fixed.
+- DEFMETHOD doesn't call MAKE-METHOD-LAMBDA. Fixed.
+- The dependent protocol for generic functions doesn't work fully. Fixed.
+- GENERIC-FUNCTION-ARGUMENT-PRECEDENCE-ORDER doesn't return only the required arguments. Fixed.
+- The function invocation protocol doesn't call COMPUTE-APPLICABLE-METHODS, COMPUTE-APPLICABLE-METHODS-USING-CLASSES and COMPUTE-EFFECTIVE-METHOD. Fixed.
+- The :ALLOCATION type cannot be extended. Fixed.
+- MAKE-METHOD-LAMBDA is not provided. Fixed.
+- Method functions don't take parameters as specified in AMOP, but instead just the parameters that the generic function receives. Fixed.
+- REINITIALIZE-INSTANCE doesn't determine a new discriminating function. Fixed.
+- (SETF CLASS-NAME) and (SETF GENERIC-FUNCTION-NAME) do not use REINITIALIZE-INSTANCE for changing the names. Not fixed.
+- SLOT-MAKUNBOUND-USING-CLASS is not specialized on slot definition metaobjects, but on symbols. Fixed.
+- VALIDATE-SUPERCLASS doesn't recognize T as a valid superclass. Not fixed.
+- Subclasses of BUILT-IN-CLASS, FORWARD-REFERENCED-CLASS, FUNCALLABLE-STANDARD-CLASS, METHOD-COMBINATION, STANDARD-ACCESSOR-METHOD, STANDARD-CLASS, STANDARD-DIRECT-SLOT-DEFINITION, STANDARD-EFFECTIVE-SLOT-DEFINITION, STANDARD-GENERIC-FUNCTION, STANDARD-METHOD, STANDARD-READER-METHOD, STANDARD-SLOT-DEFINITION and STANDARD-WRITER-METHOD will inherit slots whose names are exported symbols and/or accessible in the package common-lisp-user. Not fixed.
+
+Armed Bear Common Lisp 1.5.0
+
+All features implemented. (However, there are currently still some glitches that are not reported by MOP Feature Tests.)
+
+CLisp 2.49
+
+- Methods are not initialized with :function. Not fixed.
+- ADD-METHOD, REMOVE-METHOD, INITIALIZE-INSTANCE and REINITIALIZE-INSTANCE do not determine a new discriminating function. This is postponed until function invocation instead, so shouldn't be a problem in practice.
+- The slot order requested by a primary method for COMPUTE-SLOTS is not honoured by this MOP. Not fixed.
+- DEFMETHOD does not call MAKE-METHOD-LAMBDA. Fixed.
+- A FORWARD-REFERENCED-CLASS is not changed via CHANGE-CLASS (but is correctly reinitialized via REINITIALIZE-INSTANCE).
+- MAKE-METHOD-LAMBDA is not provided. Fixed.
+- Subclasses of METHOD-COMBINATION will inherit slots whose names are exported symbols and/or accessible in the package common-lisp-user. Not fixed.
+
+Clozure Common Lisp 1.11
+
+- ADD-METHOD, REMOVE-METHOD, INITIALIZE-INSTANCE and REINITIALIZE-INSTANCE don't call COMPUTE-DISCRIMINATING-FUNCTION. Fixed.
+- DEFMETHOD doesn't call GENERIC-FUNCTION-METHOD-CLASS or MAKE-METHOD-LAMBDA. Fixed.
+- Discriminating functions cannot be determined, and thus cannot be closures and cannot be funcalled. Fixed.
+- Geveric function invocation doesn't call COMPUTE-APPLICABLE-METHODS, COMPUTE-APPLICABLE-METHODS-USING-CLASSES, or COMPUTE-EFFECTIVE-METHOD. Fixed.
+- Generic functions cannot be empty when called. Fixed.
+- MAKE-METHOD-LAMBDA is not supported. Fixed.
+- Reinitialization of a lambda list doesn't update the argument precedence order. Fixed.
+- The slot order requested by a primary method for COMPUTE-SLOTS is not honoured by this MOP. Not fixed.
+- DOCUMENTATION doesn't return the documentation strings for slot definition metaobjects. Fixed.
+- REINITIALIZE-INSTANCE of a class metaobject doesn't invoke FINALIZE-INHERITANCE again. Fixed.
+- Subclasses of DIRECT-SLOT-DEFINITION, EFFECTIVE-SLOT-DEFINITION, GENERIC-FUNCTION, SLOT-DEFINITION, STANDARD-ACCESSOR-METHOD, STANDARD-DIRECT-SLOT-DEFINITION, STANDARD-EFFECTIVE-SLOT-DEFINITION, STANDARD-GENERIC-FUNCTION, STANDARD-METHOD, STANDARD-READER-METHOD, STANDARD-SLOT-DEFINITION and STANDARD-WRITER-METHOD will inherit slots whose names are exported symbols and/or accessible in the package common-lisp-user. Not fixed.
+
+CMUCL 21b
+
+- CLASS-DIRECT-DEFAULT-INITARGS and CLASS-DEFAULT-INITARGS don't return canonicalized default initargs as specified. Not fixed.
+- Accessor methods are not initialized with :function, :lambda-list, :slot-definition and :specializers. Fixed.
+- Classes cannot be anonymous. Fixed.
+- Class initialization doesn't call READER-METHOD-CLASS and WRITER-METHOD-CLASS for accessor methods. Fixed.
+- The object returned by compute-discriminating-function cannot be a closure. Likewise, the second parameter to set-funcallable-instance-function cannot be a closure, but only a "pure" function/thunk. Not fixed.
+- Effective slot definitions are not initialized with :documentation, and EFFECTIVE-SLOT-DEFINITION-CLASS also doesn't receive that initarg. Not fixed.
+- The :ALLOCATION type cannot be extended. Not fixed.
+- Calling DOCUMENTATION on effective slot definition metaobjects don't return their documentation as specified in ANSI Common Lisp. Fixed.
+- Methods are not initialized with :function. Not fixed.
+- Multiple slot options are not passed as lists to DIRECT-SLOT-DEFINITION-CLASS. Not fixed, but use FIX-SLOT-INITARGS as a workaround.
+- REINITIALIZE-INSTANCE doesn't determine a new discriminating function. Fixed.
+- REINITIALIZE-INSTANCE of a class metaobject doesn't invoke FINALIZE-INHERITANCE again. Not fixed.
+- (SETF CLASS-NAME) and (SETF GENERIC-FUNCTION-NAME) do not use REINITIALIZE-INSTANCE for changing the names. Fixed.
+- STANDARD-CLASS and FUNCALLABLE-STANDARD-CLASS are not compatible. Not fixed.
+- Subclasses of BUILT-IN-CLASS, CLASS, DIRECT-SLOT-DEFINITION, EFFECTIVE-SLOT-DEFINITION, EQL-SPECIALIZER, FORWARD-REFERENCED-CLASS, FUNCALLABLE-STANDARD-CLASS, SLOT-DEFINITION, SPECIALIZER, STANDARD-ACCESSOR-METHOD, STANDARD-CLASS, STANDARD-DIRECT-SLOT-DEFINITION, STANDARD-EFFECTIVE-SLOT-DEFINITION, STANDARD-GENERIC-FUNCTION, STANDARD-METHOD, STANDARD-READER-METHOD, STANDARD-SLOT-DEFINITION and STANDARD-WRITER-METHOD will inherit slots whose names are exported symbols and/or accessible in the package common-lisp-user. Not fixed.
+
+Embeddable Common Lisp 16.1.3
+
+- Class initialization doesn't call READER-METHOD-CLASS and WRITER-METHOD-CLASS for accessor methods. However, ECL merely delays invocation of those two functions until a class is finalized, so this shouldn't be a problem in practice.
+- Subclasses of BUILT-IN-CLASS, CLASS, DIRECT-SLOT-DEFINITION, EFFECTIVE-SLOT-DEFINITION, FORWARD-REFERENCED-CLASS, FUNCALLABLE-STANDARD-CLASS, SLOT-DEFINITION, STANDARD-ACCESSOR-METHOD, STANDARD-CLASS, STANDARD-DIRECT-SLOT-DEFINITION, STANDARD-EFFECTIVE-SLOT-DEFINITION, STANDARD-GENERIC-FUNCTION, STANDARD-METHOD, STANDARD-READER-METHOD, STANDARD-SLOT-DEFINITION, and STANDARD-WRITER-METHOD will inherit slots whose names are exported symbols and/or accessible in the package common-lisp-user. Not fixed.
+
+LispWorks 5.1.2 Personal & Professional Edition
+
+- CLASS-DIRECT-DEFAULT-INITARGS and CLASS-DEFAULT-INITARGS don't return canonicalized default initargs as specified. Not fixed.
+- ADD-METHOD, REMOVE-METHOD, INITIALIZE-INSTANCE and REINITIALIZE-INSTANCE do not determine a new discriminating function. This is postponed until function invocation instead, so shouldn't be a problem in practice.
+- COMPUTE-APPLICABLE-METHODS-USING-CLASSES doesn't exist. Fixed.
+- COMPUTE-DEFAULT-INITARGS doesn't exist. Not fixed.
+- DEFGENERIC does not call FIND-METHOD-COMBINATION. Not fixed.
+- EQL-SPECIALIZER, EQL-SPECIALIZER-OBJECT and INTERN-EQL-SPECIALIZER don't exist. In LispWorks, eql specializers are lists not objects. I have provided EQL-SPECIALIZER as a type (not as a class) and EQL-SPECIALIZER-OBJECT and INTERN-EQL-SPECIALIZER to work on lists, and a class EQL-SPECIALIZER* and corresponding EQL-SPECIALIZER-OBJECT* and INTERN-EQL-SPECILAIZER* to soften the incompatibilities.
+- Before LispWorks 5.1, the :ALLOCATION type cannot be extended. Not fixed.
+- FIND-METHOD-COMBINATION doesn't exist. Fixed, but fixed version doesn't work with method combination options.
+- FUNCALLABLE-STANDARD-INSTANCE-ACCESS and STANDARD-INSTANCE-ACCESS don't exist. Fixed.
+- The function invocation protocol doesn't call COMPUTE-APPLICABLE-METHODS and COMPUTE-APPLICABLE-METHODS-USING-CLASSES. Fixed.
+- MAKE-METHOD-LAMBDA expects other parameters than specified. Fixed.
+- Method functions don't take parameters as specified in AMOP, but instead just the parameters that the generic function receives. Fixed.
+- The slot methods (SLOT-VALUE-USING-CLASS, etc.) are not specialized on effective slot definitions, but on slot names. Fixed.
+- The generated accessor methods don't use the slot methods for accessing slots. Fixed. (Don't use :optimize-slot-access to deoptimize slot access, or otherwise the fixed slot access protocol doesn't work anymore!)
+- SPECIALIZER doesn't exist. Not fixed.
+- SPECIALIZER-DIRECT-GENERIC-FUNCTIONS doesn't exist. Fixed.
+- STANDARD-CLASS and FUNCALLABLE-STANDARD-CLASS are not compatible. Not fixed.
+- Subclasses of BUILT-IN-CLASS (fixed), CLASS (fixed), DIRECT-SLOT-DEFINITION, EFFECTIVE-SLOT-DEFINITION, FORWARD-REFERENCED-CLASS (fixed), FUNCALLABLE-STANDARD-CLASS (fixed), SLOT-DEFINITION, STANDARD-ACCESSOR-METHOD, STANDARD-CLASS (fixed), STANDARD-DIRECT-SLOT-DEFINITION, STANDARD-EFFECTIVE-SLOT-DEFINITION, STANDARD-GENERIC-FUNCTION, STANDARD-METHOD, STANDARD-READER-METHOD, STANDARD-SLOT-DEFINITION and STANDARD-WRITER-METHOD will inherit slots whose names are exported symbols and/or accessible in the package common-lisp-user. Not fixed, except where indicated otherwise.
+
+LispWorks 6.0.1 Enterprise Edition, 6.1 & 6.1.1 Professional Edition, & 7.0 Hobbyist Edition
+
+- CLASS-DIRECT-DEFAULT-INITARGS and CLASS-DEFAULT-INITARGS don't return canonicalized default initargs as specified. Not fixed.
+- ADD-METHOD, REMOVE-METHOD, INITIALIZE-INSTANCE and REINITIALIZE-INSTANCE do not determine a new discriminating function. This is postponed until function invocation instead, so shouldn't be a problem in practice.
+- COMPUTE-APPLICABLE-METHODS-USING-CLASSES doesn't exist. Fixed.
+- DEFGENERIC does not call FIND-METHOD-COMBINATION. Not fixed.
+- EQL-SPECIALIZER, EQL-SPECIALIZER-OBJECT and INTERN-EQL-SPECIALIZER don't exist. In LispWorks, eql specializers are lists not objects. I have provided EQL-SPECIALIZER as a type (not as a class) and EQL-SPECIALIZER-OBJECT and INTERN-EQL-SPECIALIZER to work on lists, and a class EQL-SPECIALIZER* and corresponding EQL-SPECIALIZER-OBJECT* and INTERN-EQL-SPECILAIZER* to soften the incompatibilities.
+- Before LispWorks 5.1, the :ALLOCATION type cannot be extended. Not fixed.
+- FIND-METHOD-COMBINATION doesn't exist. Fixed, but fixed version doesn't work with method combination options.
+- FUNCALLABLE-STANDARD-INSTANCE-ACCESS and STANDARD-INSTANCE-ACCESS don't exist. Fixed.
+- The function invocation protocol doesn't call COMPUTE-APPLICABLE-METHODS and COMPUTE-APPLICABLE-METHODS-USING-CLASSES. Fixed.
+- MAKE-METHOD-LAMBDA expects other parameters than specified. Fixed.
+- Method functions don't take parameters as specified in AMOP, but instead just the parameters that the generic function receives. Fixed.
+- The slot methods (SLOT-VALUE-USING-CLASS, etc.) are not specialized on effective slot definitions, but on slot names. Fixed.
+- The generated accessor methods don't use the slot methods for accessing slots. Fixed. (Don't use :optimize-slot-access to deoptimize slot access, or otherwise the fixed slot access protocol doesn't work anymore!)
+- SPECIALIZER-DIRECT-GENERIC-FUNCTIONS doesn't exist. Fixed.
+- STANDARD-CLASS and FUNCALLABLE-STANDARD-CLASS are not compatible. Not fixed.
+- Subclasses of BUILT-IN-CLASS (fixed), CLASS (fixed), DIRECT-SLOT-DEFINITION, EFFECTIVE-SLOT-DEFINITION, FORWARD-REFERENCED-CLASS (fixed), FUNCALLABLE-STANDARD-CLASS (fixed), SLOT-DEFINITION, STANDARD-ACCESSOR-METHOD, STANDARD-CLASS (fixed), STANDARD-DIRECT-SLOT-DEFINITION, STANDARD-EFFECTIVE-SLOT-DEFINITION, STANDARD-GENERIC-FUNCTION, STANDARD-METHOD, STANDARD-READER-METHOD, STANDARD-SLOT-DEFINITION and STANDARD-WRITER-METHOD will inherit slots whose names are exported symbols and/or accessible in the package common-lisp-user. Not fixed, except where indicated otherwise.
+
+MCL 5.2.1
+
+In MCL, generic functions work completely differently than specified. The specific incompatibilities are not listed and are not fixed.
+
+- The slot order requested by a primary method for COMPUTE-SLOTS is not honoured by this MOP. Not fixed.
+- FUNCALLABLE-STANDARD-OBJECT is not exported. Fixed.
+- REINITIALIZE-INSTANCE of a class metaobject doesn't invoke FINALIZE-INHERITANCE again. Not fixed.
+- The automatically created accessor methods in DEFCLASS forms don't call SLOT-VALUE-USING-CLASS and (SETF SLOT-VALUE-USING-CLASS). Fixed.
+- Subclasses of DIRECT-SLOT-DEFINITION, EFFECTIVE-SLOT-DEFINITION, SLOT-DEFINITION, STANDARD-ACCESSOR-METHOD, STANDARD-DIRECT-SLOT-DEFINITION, STANDARD-EFFECTIVE-SLOT-DEFINITION, STANDARD-GENERIC-FUNCTION, STANDARD-METHOD, STANDARD-READER-METHOD, STANDARD-SLOT-DEFINITION and STANDARD-WRITER-METHOD will inherit slots whose names are exported symbols and/or accessible in the package common-lisp-user. Not fixed.
+
+SBCL 1.3.18
+
+All features implemented. (In SBCL 1.0.47, there is a glitch with methods on slot-boundp-using-class, which may not work in all cases.)
+
+SCL 1.3.9
+
+- The functions ADD-DIRECT-METHOD and REMOVE-DIRECT-METHOD don't exist, and thus are also not called. Partially fixed.
+- CLASS-DEFAULT-INITARGS and CLASS-DIRECT-DEFAULT-INITARGS don't exist. Not fixed.
+- COMPUTE-EFFECTIVE-METHOD doesn't exist and isn't called. Not fixed.
+- MAKE-METHOD-LAMBDA doesn't exist and isn't used. Not fixed.
+- The dependent protocols for classes and generic functions are not implemented. Fixed.
+- Discriminating functions cannot be funcalled, and it's unclear whether your own discriminating functions may be closures or not. COMPUTE-DISCRIMINATING-FUNCTION exists, but requires an extra 'cache' parameter, whose purpose is not specified. Not fixed.
+- EQL-SPECIALIZER is not a class, but only a type. Not fixed, but the implemented behavior should be sufficient for most cases.
+- Allocations other than :CLASS and :INSTANCE are not supported. Not fixed.
+- STANDARD-INSTANCE-ACCESS and FUNCALLABLE-STANDARD-INSTANCE-ACCESS don't exist. Not fixed.
+- COMPUTE-APPLICABLE-METHODS is not invoked when generic functions are called. Not fixed.
+- Multiple slot options are not passed as lists to DIRECT-SLOT-DEFINITION-CLASS. Not fixed, but use FIX-SLOT-INITARGS as a workaround.
+- Reinitialization of a generic function doesn't trigger recomputing its discriminating function. Not fixed.
+- (SETF CLASS-NAME) and (SETF GENERIC-FUNCTION-NAME) are not implemented by way of calling REINITIALIZE-INSTANCE. Not fixed.
+- The class SPECIALIZER doesn't exist. Not fixed.
+- STANDARD-CLASS and FUNCALLABLE-STANDARD-CLASS are not compatible.
+- Subclasses of BUILT-IN-CLASS, CLASS, FORWARD-REFERENCED-CLASS, FUNCALLABLE-STANDARD-CLASS, METHOD-COMBINATION, STANDARD-ACCESSOR-METHOD, STANDARD-CLASS, STANDARD-DIRECT-SLOT-DEFINITION, STANDARD-EFFECTIVE-SLOT-DEFINITION, STANDARD-GENERIC-FUNCTION, STANDARD-METHOD, STANDARD-READER-METHOD, STANDARD-SLOT-DEFINITION, STANDARD-WRITER-METHOD will inherit slots whose names are exported symbols and/or accessible in the package common-lisp-user. Not fixed.
+
+Some extra notes:
+
+- Don't rely on FIND-METHOD-COMBINATION to do its job correctly, only when you don't provide method combination options.
+- MAKE-METHOD-LAMBDA works in Allegro, CLisp, Clozure Common Lisp, CMUCL, LispWorks and SBCL as specified (but make sure that the respective generic function and method metaobject classes and make-method-lambda definitions are part of your compilation enviroment).
+- Specialize the methods for the dependent protocol on the class or generic function metaobject class. The example in AMOP doesn't do this but that is fragile code.
+- Don't rely on methods being initialized with the specified initargs from inside the MOP.
+- If you specialize DIRECT-SLOT-DEFINITION-CLASS, use FIX-SLOT-INITARGS in portable code.
+- AMOP specifies that :declarations is used when initializing generic functions, whereas ANSI Common Lisp specifies that 'declare is used. Since almost all MOP implementations adhere to AMOP in this regard, I have also chosen that path.

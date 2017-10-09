@@ -1,0 +1,51 @@
+PURI - Portable URI Library
+===========================
+
+AUTHORS
+-------
+Franz, Inc <http://www.franz.com>
+Kevin Rosenberg <kevin@rosenberg.net>
+
+
+DOWNLOAD
+--------
+Puri home: http://files.kpe.io/puri/
+Portable tester home: http://files.kpe.io/tester/
+
+
+SUPPORTED PLATFORMS
+-------------------
+   AllegroCL, CLISP, CMUCL, Lispworks, OpenMCL, SBCL
+
+DOCUMENTATION
+----------
+Franz, Inc. has online documenation for the URI package upon which
+PURI is based:
+   http://franz.com/support/documentation/current/doc/uri.htm
+
+OVERVIEW
+--------
+This is portable Universal Resource Identifier library for Common Lisp
+programs. It parses URI according to the RFC 2396 specification. It's
+is based on Franz, Inc's opensource URI package and has been ported to
+work other CL implementations. It is licensed under the LLGPL which
+is included in this distribution.
+
+A regression suite is included which uses Franz's open-source tester
+library. I've ported that library for use on other CL
+implementations. Puri completes 126/126 regression tests successfully.
+
+Franz's unmodified documentation file is included in the file
+uri.html. 
+
+
+DIFFERENCES BETWEEN PURI and NET.URI
+------------------------------------
+
+* Puri uses the package 'puri while NET.URI uses the package 'net.uri
+
+* To signal an error parsing a URI, Puri uses the condition
+  :uri-parse-error while NET.URI uses the condition :parse-error. This
+  divergence occurs because Franz's parse-error condition uses
+  :format-control and :format-arguments slots which are not in the ANSI
+  specification for the parse-error condition.

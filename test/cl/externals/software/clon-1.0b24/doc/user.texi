@@ -1,0 +1,3320 @@
+\input texinfo
+
+@c user.texi --- User manual
+
+@c Copyright (C) 2010-2012, 2015 Didier Verna
+
+@c Author: Didier Verna <didier@didierverna.net>
+
+@c This file is part of Clon.
+
+@c Permission to use, copy, modify, and distribute this software for any
+@c purpose with or without fee is hereby granted, provided that the above
+@c copyright notice and this permission notice appear in all copies.
+
+@c THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+@c WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+@c MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+@c ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+@c WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+@c ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+@c OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+@c Commentary:
+
+@c Contents management by FCM version 0.1.
+
+
+@c ====================================================================
+@c Header
+@c ====================================================================
+@c %**start of header
+@setfilename clon-user.info
+@settitle The Clon User Manual
+@afourpaper
+@documentencoding UTF-8
+@c %**end of header
+
+
+
+@c ====================================================================
+@c Settings
+@c ====================================================================
+@set VERSION 1.0 beta 24 "Michael Brecker"
+@set COPYRIGHT_DATE 2010-2012, 2015
+@setchapternewpage odd
+@documentdescription
+The Clon User Manual for version @value{VERSION}.
+@end documentdescription
+
+
+
+@c ====================================================================
+@c New Commands
+@c ====================================================================
+
+@macro clon
+@t{Clon}
+@end macro
+
+@macro cl
+Common Lisp
+@end macro
+
+@macro tty
+@t{tty}
+@end macro
+
+@macro etc
+@i{etc.}
+@end macro
+
+@macro eg
+@i{e.g.}
+@end macro
+
+@macro ie
+@i{i.e.}
+@end macro
+
+@macro perse
+@i{per-se}
+@end macro
+
+@macro cmdline
+command-line
+@end macro
+
+@macro CmdLine
+Command-Line
+@end macro
+
+@macro bioption{name}
+@option{--clon-\name\}
+@end macro
+
+
+@c --------------------------------
+@c Manuals cross-referencing macros
+@c --------------------------------
+@c The following 3 macros are here to circumvent the info filenames
+@c changes, when referencing the end-user manual:
+
+@c #### NOTE: Texinfo sucks bones. Before 5.2, I could use @ifinfo
+@c anywhere. Now, it's only allowed at the beginning of a line, so I
+@c cannot effectively use it within a macro (even at the beginning of a
+@c line) if the macro in question is to be used in the middle of some
+@c text. As a consequence, I need to duplicate the macro definition code
+@c below.
+@ifinfo
+@macro pxenduserref{node}
+@pxref{\node\, , , clon-enduser, The Clon End-User Manual}
+@end macro
+@end ifinfo
+@ifnotinfo
+@macro pxenduserref{node}
+@pxref{\node\, , , enduser, The Clon End-User Manual}
+@end macro
+@end ifnotinfo
+
+@ifinfo
+@macro xenduserref{node}
+@xref{\node\, , , clon-enduser, The Clon End-User Manual}
+@end macro
+@end ifinfo
+@ifnotinfo
+@macro xenduserref{node}
+@xref{\node\, , , enduser, The Clon End-User Manual}
+@end macro
+@end ifnotinfo
+
+@ifinfo
+@macro enduserref{node}
+@ref{\node\, , , clon-enduser, The Clon End-User Manual}
+@end macro
+@end ifinfo
+@ifnotinfo
+@macro enduserref{node}
+@ref{\node\, , , enduser, The Clon End-User Manual}
+@end macro
+@end ifnotinfo
+
+
+@c ---------------
+@c Indexing macros
+@c ---------------
+
+@c Concept index
+@c -------------
+
+@c Built-in options
+@macro bioindex{opt}
+@cindex @t{--clon-\opt\}
+@cindex Built-In Options, @t{--clon-\opt\}
+@cindex Options, built-in, @t{--clon-\opt\}
+@end macro
+
+@c Common option properties
+@macro copindex{prop}
+@cindex Options, common properties, @t{\prop\}
+@cindex Common Option Properties, @t{\prop\}
+@end macro
+
+@c Options
+@c #### NOTE: not an alias because of argument syntax.
+@macro oindex{name,class}
+@cindex \name\ (@t{\class\})
+@cindex Options, \name\ (@t{\class\})
+@ocindex{\class\}
+@end macro
+
+@c Valued options
+@macro voindex{name,class}
+@cindex \name\ (@t{\class\})
+@cindex Valued Options, \name\ (@t{\class\})
+@cindex Options, valued, \name\ (@t{\class\})
+@ocindex{\class\}
+@end macro
+
+@c Common valued option properties
+@macro cvopindex{prop}
+@cindex Valued Options, common properties, @t{\prop\}
+@cindex Common Valued Option Properties, @t{\prop\}
+@cindex Options, valued, common properties, @t{\prop\}
+@end macro
+
+@c Valued option properties
+@macro vopindex{name,class,prop}
+@cindex \name\ (@t{\class\}), properties, @t{\prop\}
+@cindex Valued Options, \name\ (@t{\class\}), properties, @t{\prop\}
+@cindex Options, valued, \name\ (@t{\class\}), properties, @t{\prop\}
+@end macro
+
+@c Configuration options
+@macro coindex{name}
+@cindex Configuration Option, @t{:\name\}
+@cindex @t{:\name\}
+@end macro
+
+
+@c Functions index
+@c ---------------
+
+@c Function options
+@macro foindex{func,opt}
+@findex \func\@r{, options, }\opt\
+@end macro
+
+@c Function items
+@macro fiindex{func,item}
+@findex \func\@r{, items, }\item\
+@end macro
+
+@c Function keys
+@macro fkindex{func,key}
+@findex \func\@r{, keys, }\key\
+@end macro
+
+@c Function initargs
+@macro fiaindex{func,arg}
+@findex \func\@r{, initargs, }\arg\
+@end macro
+
+@c Generic functions sub-index
+@macro gfsubindex{func}
+@findex @r{Generic Functions, }\func\
+@end macro
+
+@c Generic functions
+@macro gfindex{func}
+@findex \func\
+@gfsubindex{\func\}
+@end macro
+
+@c Generic function methods
+@macro gfmindex{func,method}
+@findex \func\@r{, methods, }\method\
+@findex @r{Generic Functions, }\func\@r{, methods, }\method\
+@end macro
+
+@c #### FIXME: I need this because when using @defun, the function is
+@c referenced directly but not under the Constructors sub-index. This
+@c sucks because what I would like is the ability to define my own
+@c @defXXX macros, which apparently I can't. Besides, doing this
+@c produces 2 separate index entries, instead of only one with two pagerefs.
+@c This problem stands for @gfsubindex (see above), @rfsubindex (see
+@c below) and @ecsubindex (see below) as well.
+@c Constructor functions sub-index
+@macro cfsubindex{func}
+@findex @r{Constructors, }\func\
+@end macro
+
+@c Constructor functions
+@macro cfindex{func}
+@findex \func\
+@cfsubindex{\func\}
+@end macro
+
+@c Constructor function initargs
+@macro cfiaindex{func,arg}
+@fiaindex{\func\, \arg\}
+@findex @r{Constructors, }\func\@r{, initargs, }\arg\
+@end macro
+
+@c Reader functions subindex
+@macro rfsubindex{func}
+@findex @r{Readers, }\func\
+@end macro
+
+@c Reader functions
+@macro rfindex{func}
+@findex \func\
+@rfsubindex{\func\}
+@end macro
+
+
+@c Variables index
+@c ---------------
+
+@c Environment variables
+@macro evindex{var}
+@vindex \var\
+@vindex @r{Environment, }\var\
+@end macro
+
+@c Built-in environment variables
+@macro bievindex{var}
+@evindex{CLON_\var\}
+@end macro
+
+
+@c Data Types index
+@c ----------------
+
+@c Classes
+@macro clsindex{cls}
+@tpindex \cls\
+@tpindex @r{Classes, }\cls\
+@end macro
+
+@c Class slots
+@macro clssindex{cls,slot}
+@tpindex \cls\@r{, slots, }\slot\
+@tpindex @r{Classes, }\cls\@r{, slots, }\slot\
+@end macro
+
+@c Class initargs
+@macro clsiaindex{cls,arg}
+@tpindex \cls\@r{, initargs, }\arg\
+@tpindex @r{Classes, }\cls\@r{, initargs, }\arg\
+@end macro
+
+@c Option classes
+@macro ocindex{cls}
+@clsindex{\cls\}
+@tpindex @r{Option Classes, }\cls\
+@end macro
+
+@c Error conditions subindex
+@macro ecsubindex{cond}
+@tpindex @r{Error Conditions, }\cond\
+@end macro
+
+@c Error conditions
+@macro ecindex{cond}
+@tpindex \cond\
+@ecsubindex{\cond\}
+@end macro
+
+@c Error condition slots
+@macro ecsindex{cond,slot}
+@tpindex \cond\@r{, slots, }\slot\
+@tpindex @r{Error Conditions, }\cond\@r{, slots, }\slot\
+@end macro
+
+@c Packages
+@macro pkgindex{name}
+@tpindex \name\
+@tpindex @r{Packages, }\name\
+@end macro
+
+@c Systems
+@macro sysindex{name}
+@tpindex \name\
+@tpindex @r{Systems, }\name\
+@end macro
+
+
+
+@c ====================================================================
+@c Info Category and Directory
+@c ====================================================================
+@dircategory Common Lisp
+@direntry
+* Clon User: (clon-user).               The Clon User Manual.
+@end direntry
+
+
+
+@c ====================================================================
+@c Copying
+@c ====================================================================
+@copying
+@quotation
+Copyright @copyright{} @value{COPYRIGHT_DATE} Didier Verna
+
+Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+@ignore
+Permission is granted to process this file through TeX and print the
+results, provided the printed document carries a copying permission
+notice identical to this one except for the removal of this paragraph
+(this paragraph not being relevant to the printed manual).
+
+@end ignore
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that the
+section entitled ``Copying'' is included exactly as in the original.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions,
+except that this permission notice may be translated as well.
+@end quotation
+@end copying
+
+
+
+@c ====================================================================
+@c Title Page
+@c ====================================================================
+@titlepage
+@title The Clon User Manual
+@subtitle The @CmdLine{} Options Nuker, Version @value{VERSION}
+@vskip 2cm
+@image{splash,16cm}
+@author Didier Verna <@email{didier@@didierverna.net}>
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+
+@flushright
+Cover art by Alexis Angelidis.
+@end flushright
+@end titlepage
+
+
+
+@c ====================================================================
+@c Table of Contents
+@c ====================================================================
+@contents
+
+
+
+@c ====================================================================
+@c Master Menu
+@c ====================================================================
+@ifnottex
+@node Top, Copying, (dir), (dir)
+@top The Clon User Manual
+
+This is the @clon{} User Manual for @clon{} version @value{VERSION}:
+it explains how to use @clon{} in your application.
+
+@menu
+* Copying::                 The BSD license
+* Introduction::            What Clon is all about
+* Installation::            Library, documentation and sample code
+* Quick Start::             For the brave and the impatient
+* Using Clon::              Clonificating your application
+* Extending Clon::          Creating your own option types
+* Advanced Usage::          Things rarely needed
+* Conclusion::              That's all folks
+* Technical Notes::         Configuration, platforms and portability
+* API Quick Reference::     The Complete protocols
+* Indexes::                 Concept, Function and Variable
+* Acknowledgments::         Hall of Pride
+@end menu
+
+@insertcopying
+@end ifnottex
+
+
+
+@c ====================================================================
+@c Copying
+@c ====================================================================
+@node Copying, Introduction, Top, Top
+@unnumbered Copying
+
+@quotation
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+@end quotation
+
+
+
+@c ====================================================================
+@c Introduction
+@c ====================================================================
+@node Introduction, Installation, Copying, Top
+@chapter Introduction
+
+@clon{} is a library for managing @cmdline{} options in standalone @cl{}
+applications. It provides a unified option syntax with both short and
+long names, automatic completion of partial names and automatic
+retrieval/conversion of option arguments from the @cmdline{}, associated
+environment variables, fallback or default values. @clon{} comes with a
+set of extensible option types (switches, paths, strings @etc{}).
+@clon{} also provides automatic generation and formatting of help
+strings, with support for highlighting on @tty{}'s through ISO/IEC 6429
+SGR. This formatting is customizable through @emph{themes}.
+
+Depending on the target audience, @clon{} stands for either ``The
+@CmdLine{} Options Nuker'' or ``The @cl{} Options Nuker''. @clon{} also
+has a recursive acronym: ``@clon{} Likes Options Nuking'', and a reverse
+one: ``Never Omit to Link with @clon{}''. Other possible expansions of
+the acronym are still being investigated.
+
+This manual is for the @clon{} @emph{user}, that is, the developer of a
+@cl{} application who wants to use @clon{} for @cmdline{} option
+management@footnote{An application using @clon{} for its @cmdline{}
+option management is said to be @emph{clonified}. It is also possible to
+say @emph{clonfiscated}. However, we advise against using
+@emph{clonistified}. The term @emph{clonificated} is also considered bad
+style, and the use of @emph{clonificationated} is strictly prohibited.}.
+As opposed to the user of the @emph{library}, the user of an
+@emph{application} powered by @clon{} is called an @emph{end-user}.
+@clon{} provides both a user manual (this one) and an end-user manual
+(@pxenduserref{Top}). Everybody should read the end-user manual first.
+
+@ref{Quick Start} provides a very short example in order to give an
+overview of what's coming next. @ref{Using Clon} explains in detail how
+to clonify your application, and @ref{Extending Clon} describe how to
+extend @clon{} with your own option types.
+
+
+
+@c ====================================================================
+@c Installation
+@c ====================================================================
+@node Installation, Quick Start, Introduction, Top
+@chapter Installation
+@clon{} currently works on Unix (including MacOS X) and Windows (Cygwin
+or MinGW) with SBCL (> 1.0.56), CMUCL (> 20b), CCL, ECL, CLISP, ABCL (>
+1.1.0), Allegro (both standard and modern) and LispWorks. @clon{} is
+provided as an ASDF 3 system, but has no mandatory dependency. CFFI may
+optionally be used with CLISP, Allegro and LispWorks. @xref{Supported
+Platforms}, for more information.
+
+In order to install and load the bare Lisp library, unpack it somewhere
+in the ASDF 3 source registry and type this at the REPL:
+@sysindex{net.didierverna.clon}
+@verbatim
+(asdf:load-system :net.didierverna.clon)
+@end verbatim
+@sysindex{net.didierverna.clon.core}
+Alternatively, if you just want to use the core library without all the
+platform-dependent bells and whistles (@pxref{Technical Notes}), you can
+also just load the @samp{net.didierverna.clon.core} system.
+
+In the general case, and if you are using SBCL, you may want to make
+sure that the @code{CC} environment variable is set to your favorite C
+compiler in your init file. Otherwise, @clon{} will run in restricted
+mode (@pxref{Technical Notes}). For instance, put this in your
+@file{.sbclrc}:
+@verbatim
+(require :sb-posix)
+(sb-posix:setenv "CC" "gcc" 1)
+@end verbatim
+
+In addition to the library itself, the Clon distribution offers
+documentation in the form of 3 different manuals, some data files like
+sample themes (@pxenduserref{Theme Creation}), and a couple of
+demonstration programs. If you want to benefit from all those wonders,
+some bits of manual installation are needed. After unpacking somewhere
+in the ASDF 3 source registry, please perform the following steps, in
+order.
+
+@enumerate
+@item
+Edit @file{make/config.make} to your specific needs.
+
+@item
+Type @command{make} to compile the documentation and the demo programs
+(end-user manual, user manual and possibly reference manual). By
+default, the documentation is built in info, PDF and HTML formats. If
+you want other formats (DVI and PostScript are available), type
+@command{make all-formats}. You can also type individually @command{make
+dvi} and/or @command{make ps} in order to get the corresponding format.
+
+@item
+As documented in @file{make/config.make}, the reference manual is only
+generated if you have SBCL and the Declt library at hand (see
+@uref{http://www.lrde.epita.fr/~didier/software/lisp/misc.php#declt}).
+
+@item
+Type @command{make install} to install both the documentation and the
+data files. If you have compiled the documentation in DVI and PostScript
+format, those will be installed as well. The same goes for the reference
+manual. The demo programs are not installed anywhere.
+@end enumerate
+
+Type @command{make uninstall} to uninstall the library.
+
+
+
+@c ====================================================================
+@c Quick Start
+@c ====================================================================
+@node Quick Start, Using Clon, Installation, Top
+@chapter Quick Start
+In this chapter, we assume that you have properly installed @clon{}
+(@pxref{Technical Notes}), and we build a very short program to get you
+started. Let's call it @file{quickstart.lisp}.
+
+@menu
+* Full Source::         The complete source code
+* Explanation::         Step-by-step code walking
+@end menu
+
+
+@c -----------
+@c Full Source
+@c -----------
+@node Full Source, Explanation, Quick Start, Quick Start
+@section Full Source
+For cut'n paste convenience, the complete source code is given below.
+For a slightly longer example, have a look at the demonstration program
+called @file{simple} in the distribution.
+
+@cartouche
+@verbatim
+(in-package :cl-user)
+
+(require "asdf")
+(asdf:load-system :net.didierverna.clon)
+(use-package :net.didierverna.clon)
+
+(defsynopsis (:postfix "FILES...")
+  (text :contents "A very short program.")
+  (group (:header "Immediate exit options:")
+    (flag :short-name "h" :long-name "help"
+          :description "Print this help and exit.")
+    (flag :short-name "v" :long-name "version"
+          :description "Print version number and exit.")))
+
+(defun main ()
+  "Entry point for our standalone application."
+  (make-context)
+  (when (getopt :short-name "h")
+    (help)
+    (exit))
+  (do-cmdline-options (option name value source)
+    (print (list option name value source)))
+  (terpri)
+  (exit))
+
+(dump "quickstart" main)
+@end verbatim
+@end cartouche
+
+
+@c -----------
+@c Explanation
+@c -----------
+@node Explanation, , Full Source, Quick Start
+@section Explanation
+Let's examine this program step-by-step now.
+
+@pkgindex{net.didierverna.clon}@c
+@sysindex{net.didierverna.clon}@c
+First, we put ourselves in the @cl{} user package, and load @clon{} from
+its ASDF system @samp{net.didierverna.clon}. Next, we use the @clon{}
+package, also named @samp{net.didierverna.clon}.
+
+@cartouche
+@verbatim
+(in-package :cl-user)
+
+(require "asdf")
+(asdf:load-system :net.didierverna.clon)
+(use-package :net.didierverna.clon)
+@end verbatim
+@end cartouche
+
+In fact, using the @clon{} package directly is done here for simplicity,
+but is not recommended. In case you find the package name too long to
+prefix every symbol with, @clon{} provides a utility function that
+allows you to add (and use) a shorter nickname instead (the
+demonstration programs in the distribution show how to use it):
+
+@cindex Package, nicknames
+@defun nickname-package &optional NICKNAME
+Add NICKNAME (:CLON by default) to the :NET.DIDIERVERNA.CLON package.
+@end defun
+
+@cindex Synopsis
+@findex defsynopsis
+@cindex Postfix
+@cindex Text, in synopsis
+@cindex Options, in synopsis
+@cindex Groups, in synopsis
+@cindex Help String
+The next thing you want to do is to create a set of options, groups or
+texts that your application will recognize and/or display in its help
+string. The structure of your @cmdline{} is known to @clon{} as the
+@dfn{synopsis}. In order to create it, use the macro @code{defsynopsis}.
+
+@foindex{defsynopsis,:postfix}
+@fiindex{defsynopsis,text}
+@fiindex{defsynopsis,options}
+@fiindex{defsynopsis,group}
+@cartouche
+@verbatim
+(defsynopsis (:postfix "FILES...")
+  (text :contents "A very short program.")
+  (group (:header "Immediate exit options:")
+    (flag :short-name "h" :long-name "help"
+          :description "Print this help and exit.")
+    (flag :short-name "v" :long-name "version"
+          :description "Print version number and exit.")))
+@end verbatim
+@end cartouche
+
+Note that the synopsis has a double role: it not only serves to define
+the options recognized by your application, but also the order in which
+every element appears in the help string. In that particular example, we
+define a line of text and a group with a header and two flags.
+
+@cindex Context
+@cfindex{make-context}
+Now, we are going to define a function @code{main} for our standalone
+application. The first thing that we need to do is create a
+@dfn{context}. A context is an object that @clon{} uses to store various
+things, including some state related to the parsing of the @cmdline{}.
+You create a context with the function @code{make-context}.
+
+@cartouche
+@verbatim
+(defun main ()
+  "Entry point for our standalone application."
+  (make-context)
+@end verbatim
+@end cartouche
+
+@cindex Options Retrieval, explicit
+@cindex Retrieval, of options, explicit
+@findex getopt
+@cindex Help String, display
+@findex help
+At that point, @clon{} is ready to retrieve the options you want from
+the @cmdline{}. Let's first see if the user has called the option
+@option{-h}, and give him the help string. Option retrieval is done with
+the function @code{getopt}, and automatic help string output with the
+function @code{help}. Note that what we do here is @emph{not} process
+the @cmdline{} in sequence, but look directly for a specific option by
+name (this retrieval method is said to be @dfn{explicit}).
+
+@fkindex{getopt,:short-name}
+@cartouche
+@verbatim
+  (when (getopt :short-name "h")
+    (help)
+    (exit))
+@end verbatim
+@end cartouche
+
+@findex exit
+The @code{exit} function is a wrapper around an
+implementation-dependent way to exit (shall I say quit?) the @cl{}
+environment, hence the program. It takes an optional argument that
+stands for the exit status.
+
+@cindex Options Retrieval, sequential
+@cindex Retrieval, of options, sequential
+@findex do-cmdline-options
+And now, we are going to retrieve the other options and simply print
+them. This time however, we process the @cmdline{} sequentially (so this
+retrieval method is said to be @dfn{sequential}). This is done with the
+@code{do-cmdline-options} macro. We also close the @code{main} function.
+
+@cartouche
+@verbatim
+  (do-cmdline-options (option name value source)
+    (print (list option name value source)))
+  (terpri)
+  (exit))
+@end verbatim
+@end cartouche
+
+Finally, time to save the Lisp image.
+
+@cindex Dumping
+@findex dump
+@cartouche
+@verbatim
+(dump "quickstart" main)
+@end verbatim
+@end cartouche
+
+The first argument to @code{dump} is the name of the executable to
+produce, and the second argument is the name of the function to call
+automatically at startup. In fact, @code{dump} also accepts a
+@code{&rest} argument that just be passed on to the underlying
+(implementation-specific) dumping facility.
+
+In order to get a standalone executable from this program, all you need
+to do now is to type @samp{CC=gcc sbcl --script quickstart.lisp}. Note
+that the actual way of dumping executables is compiler-dependent. For
+more information on the proper way to do it and on the compilers
+currently supported, see @ref{Dumping Executables}.
+
+Note also that it is possible to use @clon{} without actually dumping a
+standalone executable (@pxref{Not Dumping Executables}).
+
+
+
+@c ====================================================================
+@c Using Clon
+@c ====================================================================
+@node Using Clon, Extending Clon, Quick Start, Top
+@chapter Using Clon
+
+Using @clon{} in your application is a two stages process. In phase 1,
+you create a @dfn{synopsis}, which is a description of your
+application's @cmdline{} and a @dfn{context}, which describes this
+specific execution of the program. In phase 2, you retrieve the option
+values and possibly display help strings. Phase 1 is called the
+@dfn{initialization phase}, while phase 2 is called the @dfn{runtime
+phase}.
+
+@menu
+* Synopsis Definition:: Describing your command-line
+* Context Creation::    Instantiating your command-line
+* Integrity Checks::    Verifying the Clon semantics
+* Option Retrieval::    Getting the options values
+* Help::                Generating the help string
+@end menu
+
+
+@c -------------------
+@c Synopsis Definition
+@c -------------------
+@node Synopsis Definition, Context Creation, Using Clon, Using Clon
+@section Synopsis Definition
+
+@cindex Initialization Phase
+@cindex Phase, initialization
+@cindex Synopsis
+@cindex Help String
+Step one of the @clon{} initialization phase consists in defining a
+@dfn{synopsis}. A synopsis is essentially a description of your
+application's @cmdline{}: it describes what are the available options,
+whether your application has a postfix @etc{} The synopsis, however,
+plays a second role: it also describes the contents of your
+application's help string. When you create a synopsis, you describe the
+@cmdline{} and the help string at the same time.
+
+@menu
+* Synopsis Items::              Defsynopsis and its contents
+* Built-In Option Types::       The exhaustive list
+* Advanced Synopsis Creation::  The non-declarative way
+@end menu
+
+@node Synopsis Items, Built-In Option Types, Synopsis Definition, Synopsis Definition
+@subsection Synopsis Items
+Look again at the synopsis definition provided in @ref{Quick Start}.
+
+@cartouche
+@verbatim
+(defsynopsis (:postfix "FILES...")
+  (text :contents "A very short program.")
+  (group (:header "Immediate exit options:")
+    (flag :short-name "h" :long-name "help"
+          :description "Print this help and exit.")
+    (flag :short-name "v" :long-name "version"
+          :description "Print version number and exit.")))
+@end verbatim
+@end cartouche
+
+You define a synopsis with the @code{defsynopsis} macro.
+
+@defmac defsynopsis ([OPTIONS@dots{}]) ITEMS@dots{}
+Define a new synopsis and return it. @var{OPTIONS} are key/value pairs.
+@var{ITEMS} are text, group or option descriptions.
+
+The following @var{OPTIONS} are currently available.
+@table @t
+@item :postfix
+@cindex Postfix
+@foindex{defsynopsis,:postfix}@c
+@cindex Command-Line, remainder
+@cindex Remainder, of command-line
+A string which will appear at the end of the synopsis line in the help
+string. When you provide a postfix, you also implicitely tell @clon{}
+that your application accepts non-option arguments at the end of the
+@cmdline{} (this is called the @dfn{remainder} of the @cmdline{}). See
+@enduserref{Option Separator} for more information on the behavior of
+@clon{} with respect to postfixes. Also, see @ref{Command-Line
+Remainder} on how to access the @cmdline{} remainder.
+@end table
+@end defmac
+
+We now examine the syntax for each possible @var{ITEM}.
+@menu
+* Text::        Adding arbitrary text
+* Options::     Adding options
+* Groups::      Adding groups
+@end menu
+
+@node Text, Options, Synopsis Items, Synopsis Items
+@subsubsection Text
+@cindex Text
+@cindex Text, in synopsis
+@fiindex{defsynopsis,text}
+In order to add arbitrary text to your help string, use the following
+form:
+
+@noindent
+@t{(text} [@var{OPTIONS@dots{}}]@t{)}
+
+@var{OPTIONS} are key/value pairs. The following @var{OPTIONS} are
+currently available.
+@table @t
+@item :contents
+@cindex Text, contents
+The actual text string. Try to make proper sentences when adding
+arbitrary text. You can use explicit newline characters in your text if
+you really want to go next line, but in general, you should not worry
+about the formatting because the themes are here to do so. In
+particular, don't finish your text with a newline. This would break
+potential theme specifications.
+@item :hidden
+@cindex Hidden Text
+@cindex Text, hidden
+@cindex Help String
+When non-@code{nil}, the text won't appear in the help string. Hidden
+texts can still be displayed individually though (@pxref{Help}).
+@end table
+
+@node Options, Groups, Text, Synopsis Items
+@subsubsection Options
+@cindex Options
+@cindex Options, in synopsis
+@fiindex{defsynopsis,options}
+In order to add an option to your help string, you must provide a list
+beginning with the option type and followed by key/value pairs
+describing the option's properties. For instance, to add a flag with a
+short name and a description, you could do this:
+
+@verbatim
+(flag :short-name "h" :description "Print this help and exit.")
+@end verbatim
+
+Option properties vary depending on the option type. The exact list of
+available option types, and the corresponding properties are described
+in @ref{Built-In Option Types}.
+
+@node Groups, , Options, Synopsis Items
+@subsubsection Groups
+@cindex Groups
+@cindex Groups, in synopsis
+@fiindex{defsynopsis,group}
+In order to add a group to your help string, use the following form:
+
+@noindent
+@t{(group} ([@var{OPTIONS@dots{}}]) @var{ITEMS@dots{}}@t{)}
+
+@cindex Text, in groups
+@cindex Options, in groups
+@cindex Groups, in groups
+@var{OPTIONS} are key/value pairs. @var{ITEMS} simply are arbitrary
+text, option or sub-group descriptions as we've just seen.
+
+The following @var{OPTIONS} are currently available.
+@table @t
+@item :header
+@cindex Group Header
+@cindex Header, in group
+@foindex{defgroup,:header}@c
+A string which will be displayed above the group's contents in the help
+string. The same formatting recommendations as for arbitrary text apply
+(@pxref{Text}).
+@item :hidden
+@cindex Hidden Groups
+@cindex Groups, hidden
+@foindex{defgroup,:hidden}@c
+@cindex Help String
+@cindex Built-In Groups
+@cindex Groups, built-in
+@bioindex{help}
+When non-@code{nil}, the group won't appear in the help string. Hidden
+groups can still be displayed individually though (@pxref{Help}). For
+instance, the @clon{} built-in group is hidden in the regular help
+string, but the @bioption{help} option still displays it individually.
+@end table
+
+@node Built-In Option Types, Advanced Synopsis Creation, Synopsis Items, Synopsis Definition
+@subsection Built-In Option Types
+@cindex Built-In Option Types
+@cindex Options, built-in types
+@cindex Option Types, built-in
+In this section, we will review all the built-in option types that
+@clon{} provides, along with their corresponding properties. You can use
+them directly in your synopsis description. For adding personal option
+types to @clon{}, see @ref{New Option Types}.
+
+@menu
+* Common Properties::                   For all options
+* Flags::                               Built-in options without arguments
+* Common Valued Option Properties::     For all valued options
+* Built-In Valued Options::             Built-in options with arguments
+@end menu
+
+@node Common Properties, Flags, Built-In Option Types, Built-In Option Types
+@subsubsection Common Properties
+@cindex Options, common properties
+@cindex Common Option Properties
+@clsindex{option}
+All option types in @clon{}, including those you define yourself
+(@pxref{New Option Types}), have a set of basic, common properties. Here
+is a list of them.
+
+@table @code
+@item :short-name
+@copindex{:short-name}
+The option's short name. A string or @code{nil}.
+@item :long-name
+@copindex{:long-name}
+The option's long name. A string or @code{nil}.
+@item :description
+@copindex{:description}
+The option's descriptive text. A string or @code{nil}. The same
+formatting recommendations as for arbitrary text apply (@pxref{Text}).
+@item :env-var
+@copindex{:env-var}
+The option's associated environment variable. A string or @code{nil}.
+@item :hidden
+@copindex{:hidden}
+@cindex Hidden Options
+@cindex Options, hidden
+@cindex Help String
+When non-@code{nil}, the option won't appear in the help string. Hidden
+options can still be displayed individually though (@pxref{Help}).
+@end table
+
+Note that an option is required to have at least one name (either short
+or long). Non-@code{nil} but empty names are also prohibited, and of
+course, a short name cannot begin with a dash (otherwise, it would be
+mistaken for a long name, but did I really need to mention this?).
+
+@node Flags, Common Valued Option Properties, Common Properties, Built-In Option Types
+@subsubsection Flags
+@oindex{Flags,flag}
+In @clon{}, options that don't take any argument are of type
+@code{flag}. These options don't provide additional properties on top of
+the common set described in @ref{Common Properties}. All properties
+default to @code{nil}.
+
+@node Common Valued Option Properties, Built-In Valued Options, Flags, Built-In Option Types
+@subsubsection Common Valued Option Properties
+@cindex Valued Options
+@cindex Options, valued
+@clsindex{valued-option}
+All non-flag options in @clon{} are said to be @dfn{valued}. All valued
+options, including those you define yourself (@pxref{New Option Types}),
+share a set of additional properties. Here is a list of them.
+
+@cindex Valued Options, common properties
+@cindex Common Valued Option Properties
+@cindex Options, valued, common properties
+@table @code
+@item :argument-name
+@cvopindex{:argument-name}
+The name of the option's argument, as it appears in the help string. It
+defaults to @code{"ARG"}, so that for instance, a @samp{name} option
+would appear like this: @samp{--name=ARG}.
+@item :argument-type
+@cvopindex{:argument-type}
+The status of the argument. Possible values are @code{:required} (the
+default) and @code{:mandatory} which are synonyms, or @code{:optional}.
+@item :fallback-value
+@cvopindex{:fallback-value}
+@cindex Values, source, fallback
+@item :default-value
+@cvopindex{:default-value}
+@cindex Values, source, default
+The option's fallback and default values. Remember that a fallback value
+only makes sense when the argument is optional. Besides, also when the
+argument is optional, you need to provide at least a fallback or a
+default value (or both of course; see @enduserref{Value Sources}).
+@end table
+
+@node Built-In Valued Options, , Common Valued Option Properties, Built-In Option Types
+@subsubsection Built-In Valued Options
+@cindex Option Types, valued
+@cindex Built-In Option Types, valued
+@cindex Options, built-in types, valued
+@cindex Option Types, built-in, valued
+@clon{} currently defines 6 built-in valued option types. These option
+types may change the default value for some common properties, and / or
+provide additional properties of their own. All of this is described
+below.
+
+@table @code
+@item stropt
+@voindex{Strings,stropt}@c
+@cvopindex{:argument-name}@c
+This option type is for options taking strings as their argument. String
+options don't provide any additional properties, but their default
+argument name is changed from @code{"ARG"} to @code{"STR"}.
+@item lispobj
+@voindex{Lisp Objects,lispobj}@c
+@cvopindex{:argument-name}@c
+@vopindex{Lisp Objects,lispobj,:typespec}@c
+@bioindex{line-width}@c
+This option type is for options taking any kind of Lisp object as their
+argument. @code{lispobj} options change their default argument name from
+@code{"ARG"} to @code{"OBJ"}. Also, they provide an additional property
+called @code{:typespec} which must be a @cl{} type specifier that the
+argument must satisfy. It defaults to @code{t}. Look at the
+@bioption{line-width} built-in option for an example.
+@item enum
+@voindex{Enumerations,enum}@c
+@cvopindex{:argument-name}@c
+@vopindex{Enumerations,enum,:enum}@c
+@bioindex{version}@c
+This option type is for options taking values from an enumerated set of
+keywords. @code{enum} options change their default argument name from
+@code{"ARG"} to @code{"TYPE"}. Also, they provide an additional property
+called @code{:enum} to store the list of @cl{} keywords enumerating the
+possible values. The end-user does not use a colon when providing an
+argument to an @code{enum} option. Only the keyword's name. The end-user
+also has the ability to abbreviate the possible values. An empty
+argument is considered as an abbreviation for the first element in the
+set. Look at the @bioption{version} built-in option for an example.
+@item path
+@bioindex{search-path}@c
+@bioindex{theme}@c
+@voindex{Paths,path}@c
+@cvopindex{:argument-name}@c
+@vopindex{Paths,path,:type}@c
+This option type is for options taking a colon-separated list of
+pathnames as argument. @code{path} options change their default argument
+name from @code{"ARG"} to @code{"PATH"}. Also, they provide an
+additional property called @code{:type} which specifies the kind of path
+which is expected. Possible values are: @code{:file}, @code{:directory},
+@code{:file-list}, @code{:directory-list} or @code{nil} (meaning that
+anything is allowed). Null paths are allowed, and may be provided by an
+empty argument. Look at the @bioption{search-path} and
+@bioption{theme} built-in options for examples.
+@item switch
+@voindex{Switches,switch}@c
+@cvopindex{:argument-name}@c
+@cvopindex{:argument-type}@c
+@vopindex{Switches,switch,:argument-style}@c
+This option type is for Boolean options. @code{switch} options change
+their default argument type from required to optional and provide a
+fallback value of @code{t} automatically for optional arguments.
+@code{switch} options provide a new property called
+@code{:argument-style}. Possible values are @code{:yes/no} (the
+default), @code{:on/off}, @code{:true/false}, @code{:yup/nope},
+@code{:yeah/nah}. This property affects the way the argument name and
+true or false values are advertized in help strings. However, all
+possible arguments forms (@pxenduserref{Switches}) are always available
+to all switches.
+@item xswitch
+@voindex{Extended Switches,xswitch}@c
+@cvopindex{:argument-name}@c
+@cvopindex{:argument-type}@c
+@vopindex{Extended Switches,xswitch,:argument-style}@c
+@vopindex{Extended Switches,xswitch,:enum}@c
+@bioindex{highlight}@c
+This option type stands for @dfn{extended} switch. Extended switches
+result from the mating of a male switch and a female enumeration, or the
+other way around (elementary decency prevents me from describing this
+mating process in detail): their possible values are either Boolean or
+from an @code{:enum} property as in the case of @code{enum} options. As
+simple switches, @code{xswitch} options change their default argument
+type from required to optional and provide a fallback value of @code{t}
+automatically for optional arguments. They also provide the
+@code{:argument-style} property. Contrary to switches, however, this
+property does not affect the argument name. It only affects the way true
+or false values are displayed in help strings. Look at the
+@bioption{highlight} built-in option for an example.
+@end table
+
+@node Advanced Synopsis Creation, , Built-In Option Types, Synopsis Definition
+@subsection Advanced Synopsis Creation
+@findex defsynopsis
+The fact that @code{defsynopsis} lets you define things in a
+@emph{declarative} way has not escaped you. Declarative is nice but
+sometimes it gets in the way, so it is time to see how things work under
+the hood. Every item in a synopsis is in fact implemented as an object
+(an instance of some class), so it turns out that @code{defsynopsis}
+simply is a convenience wrapper around the corresponding constructor
+functions for all such objects. Instead of using @code{defsynopsis}, you
+can then use those constructor functions explicitely.
+
+@menu
+* Constructors::        The expansion of defsynopsis
+* Advantages::          Yes, but why?
+* Group Definition::    The declarative way
+@end menu
+
+@node Constructors, Advantages, Advanced Synopsis Creation, Advanced Synopsis Creation
+@subsubsection Constructors
+Let's have a look at the expansion of @code{defsynopsis} from the quick
+start example (@pxref{Quick Start}).
+
+The original code is like this:
+
+@cartouche
+@verbatim
+(defsynopsis (:postfix "FILES...")
+  (text :contents "A very short program.")
+  (group (:header "Immediate exit options:")
+    (flag :short-name "h" :long-name "help"
+          :description "Print this help and exit.")
+    (flag :short-name "v" :long-name "version"
+          :description "Print version number and exit.")))
+@end verbatim
+@end cartouche
+
+And once the macro is expanded, it will look like this:
+
+@cfindex make-synopsis
+@cfindex make-text
+@cfindex make-group
+@cfindex make-flag
+@findex defsynopsis@r{, expansion}
+@cartouche
+@verbatim
+(make-synopsis :postfix "FILES..."
+  :item (make-text :contents "A very short program.")
+  :item (make-group :header "Immediate exit options:"
+          :item (make-flag :short-name "h"
+                           :long-name "help"
+                           :description "Print this help and exit.")
+          :item (make-flag :short-name "v"
+                           :long-name "version"
+                           :description "Print version number and exit.")))
+@end verbatim
+@end cartouche
+
+As you can see, every synopsis element has a corresponding
+@code{make-@var{SOMETHING}} constructor, and the keywords used here and
+there in @code{defsynopsis} are in fact initargs to those constructors.
+We now examine those constructors in greater detail.
+
+@cindex Options, creation
+@defun make-text [@code{:hidden} BOOL] @code{:contents} STRING
+@cfsubindex{make-text}
+@cfiaindex{make-text,:contents}
+@cfiaindex{make-text,:hidden}
+Create an arbitrary text object, possibly hidden, whose contents is
+@var{STRING}.
+@end defun
+
+@c #### FIXME: I would like an environment without indexing here.
+@defun make-@var{OPTION} :INITARG INITVAL@dots{}
+@cfsubindex{make-@var{OPTION}}
+@cfindex make-flag
+@cfindex make-stropt
+@cfindex make-lispobj
+@cfindex make-enum
+@cfindex make-path
+@cfindex make-switch
+@cfindex make-xswitch
+Create a new @var{OPTION} object, @var{OPTION} being any built-in option
+type (@code{flag}, @code{stropt} @etc{}, see @ref{Built-In Valued
+Options}) or user-defined one (@pxref{New Option Types}). For a list of
+available initialization arguments (depending on the option type), see
+@ref{Built-In Option Types}.
+@end defun
+
+@defun make-group [@code{:header} STRING @code{:hidden} BOOL] @
+@code{:item} ITEM1 @code{:item} ITEM2@dots{}
+@cfsubindex{make-group}
+@cfiaindex{make-group,:header}
+@cfiaindex{make-group,:hidden}
+@cfiaindex{make-group,:item}
+@cindex Help String
+Create a group object, possibly hidden, whose header is @var{STRING}.
+Every @var{ITEM} is an arbitrary text object, option object or group
+object. The order is important as it determines the display of the help
+string.
+@end defun
+
+@defun make-synopsis [@code{:postfix} STRING] @
+@code{:item} ITEM1 @code{:item} ITEM2@dots{}
+@cfsubindex{make-synopsis}
+@cfiaindex{make-synopsis,:postfix}
+@cfiaindex{make-synopsis,:item}
+@cindex Help String
+Create a synopsis object whose postfix is @var{STRING}. Every @var{ITEM} is
+an arbitrary text object, option object or group object. The order is
+important as it determines the display of the help string.
+@end defun
+
+In fact, the @code{defsynopsis} macro allows you to freely mix
+declarative forms, constructor calls or whatever Lisp code you may want
+to use. The way this works is as follows: if a synopsis @var{ITEM}
+(@pxref{Synopsis Items}) is a list whose @code{car} is @code{text},
+@code{group}, or any option type (inluding those you define yourselves;
+see @ref{New Option Types}), then the @var{ITEM} is expanded as
+explained earlier. Otherwise, it is just left @emph{as-is}.
+
+To sum up, here's a example of things you can do in @code{defsynopsis}.
+
+@cartouche
+@verbatim
+(net.didierverna.clon:defsynopsis ()
+  (flag #| ... |#)
+  *my-great-option*
+  (setq *another-option* (net.didierverna.clon:make-switch #| ... |#)))
+@end verbatim
+@end cartouche
+
+
+@node Advantages, Group Definition, Constructors, Advanced Synopsis Creation
+@subsubsection Advantages
+@findex defsynopsis
+So, why would you want to use constructors directly or mix declarative
+and imperative forms in @code{defsynopsis}? There are several reasons
+for doing so.
+@enumerate
+@item
+Some people prefer to declare (or should I say, create) their arbitrary
+texts, options and groups locally, in files, modules or ASDF components
+where they belong. In such a case, you need to keep references to the
+corresponding objects in order to compute the synopsis in the end.
+@item
+Since using constructors explicitly allows you to keep references to
+the created objects, these objects can be @emph{reused}. For instance,
+you can use the same text at different places, you can also use a single
+option several times, or even a single group several times so that its
+items appear in different places @etc{} Note that @clon{} knows its way
+around multiple occurrences of the same object: even if you use the same
+option object several times in a synopsis, @clon{} only maintains a
+single option definition.
+@end enumerate
+
+@node Group Definition, , Advantages, Advanced Synopsis Creation
+@subsubsection Group Definition
+There is one last point we need to address in order to complete this
+section. There might be times when you need to manipulate an explicit
+group object, but the object itself can still be created in a
+declarative (or mixed) way because you don't need to keep references on
+its items. For this, @clon{} provides a macro called @code{defgroup}.
+
+@defmac defgroup (OPTIONS@dots{}) ITEMS@dots{}
+@cindex Groups, in synopsis
+@fiindex{defsynopsis,group}
+@foindex{defgroup,:header}
+@foindex{defgroup,:hidden}
+Define a new group and return it. This macro behaves exactly like the
+@code{group} form in a call to @code{defsynopsis} (@pxref{Groups}). In
+fact, an intermediate step in the expansion of the @code{defsynopsis}
+macro is to transform @code{group} forms into @code{defgroup} macro
+calls. As for @code{defsynopsis}, @code{defgroup} allows you to mix
+declarative forms, constructor calls or any kind of Lisp code.
+@end defmac
+
+
+
+@c ----------------
+@c Context Creation
+@c ----------------
+@node Context Creation, Integrity Checks, Synopsis Definition, Using Clon
+@section Context Creation
+
+@cindex Initialization Phase
+@cindex Phase, initialization
+@cindex Context
+Step two of the @clon{} initialization phase consists in creating a
+@dfn{context}. A context is an object representing a particular instance
+of your program, for example (and most notably) with an actual
+@cmdline{} as the user typed it.
+
+@menu
+* Making A Context::            The Constructor function
+* Contextual Information::      Interesting context slots
+@end menu
+
+@node Making A Context, Contextual Information, Context Creation, Context Creation
+@subsection Making A Context
+
+@cfindex{make-context}
+You create a context with the @code{make-context} function.
+
+@defun make-context
+@cfsubindex{make-context}
+Create a new context. That's it.
+@end defun
+
+@node Contextual Information, , Making A Context, Context Creation
+@subsection Contextual Information
+
+Once a context object is created, you have access to some interesting
+contextual information.
+
+@menu
+* Program Name::                As it appear on the command-line
+* Command-Line Remainder::      The non-options part
+* Command-Line Polling::        Whether something is left
+@end menu
+
+@node Program Name, Command-Line Remainder, Contextual Information, Contextual Information
+@subsubsection Program Name
+The application's program name, as it appears on the @cmdline{}, may be
+accessed from @clon{}. You may find it easier to do this way, as @clon{}
+wraps around implementation-dependent access methods to @code{argv[0]}.
+
+@findex progname
+In order to retrieve @code{argv[0]}, use the @code{progname} function
+like this: @code{(progname)}.
+
+@node Command-Line Remainder, Command-Line Polling, Program Name, Contextual Information
+@subsubsection Command-Line Remainder
+@cindex Remainder, of command-line
+@cindex Command-Line, remainder
+In the case your @cmdline{} has a remainder (that is, a non-options
+part; see @enduserref{Option Separator} and @ref{Synopsis Items}), you
+may need to access it in order to process it independently from @clon{}.
+Since @clon{} is responsible for parsing the @cmdline{}, it is also in
+charge of figuring out where the remainder of the @cmdline{} begins.
+
+@findex remainder
+The @cmdline{} remainder is known to @clon{} as soon as a context is
+created. You can retrieve it by using the @code{remainder} function like
+this: @code{(remainder)}. The remainder is provided as a list of strings.
+
+@node Command-Line Polling, , Command-Line Remainder, Contextual Information
+@subsubsection Command-Line Polling
+@cindex Polling, of command-line
+@cindex Command-Line, polling
+
+@clon{} provides two utility functions to inquire on the current status
+of the @cmdline{}.
+
+@findex cmdline-options-p
+@findex cmdnline-p
+The function @code{cmdline-options-p} returns true if there are still
+unprocessed options on the @cmdline{}. The function @code{cmdline-p}
+returns true if there's @emph{anything} left on the @cmdline{}, that is,
+either unprocessed options, or a remainder. A potential use of
+@code{cmdline-p} at a very early stage of your application could be to
+automatically display a help string if the @cmdline{} is effectively
+empty.
+
+
+@c ----------------
+@c Integrity Checks
+@c ----------------
+@node Integrity Checks, Option Retrieval, Context Creation, Using Clon
+@section Integrity Checks
+@findex defsynopsis
+@cfindex{make-context}
+At this point, you know about the two necessary steps to initialize
+@clon{}: defining a synopsis and creating a context. If you paid
+attention to the quick start application (@pxref{Quick Start}), you may
+have noticed that @code{defsynopsis} was called as a top-level form
+whereas @code{make-context} was called from the function @code{main}. So
+why the difference?
+
+First, I hope that you see why a context cannot be created as a toplevel
+form. If you do that, you will end-up creating a context relevant to the
+Lisp environment from which the application is created, not run.
+
+The synopsis, on the other hand, could be defined either as a toplevel
+form, as done in the quick start and the demo programs, or in the
+function @code{main}, just before making a context. There is a very good
+reason to prefer a toplevel form however: that reason is called
+``integrity checks''.
+
+When you define a synopsis (or any synopsis item, for that matter),
+@clon{} performs a number of checks to make sure that you're making a
+sensible use of the library. In fact, the number of semantic mistakes
+that you can make is quite puzzling. You could for instance define
+several options with identical names, forget to provide a fallback or
+default value when it is required, provide invalid fallback or default
+values, and the list goes on and on. These are just a few examples but
+there are many more, and @clon{} checks all of those (I think).
+
+Since those mistakes relate to the definition of the application itself,
+they do not depend on a particular execution of it. Consequently, the
+sooner @clon{} catches them, the better. If you define your
+application's synopsis as a toplevel form, @clon{} will be able to
+perform its integrity checks when the application is created, not only
+when it is used. In other words, you won't be able to get a working
+application until your use of @clon{} is semantically correct.
+
+This is why it is strongly recommended to create synopsis from toplevel
+forms, and this also explains why @clon{} chooses @emph{not} to provide
+an @code{initialize} function that would wrap around @code{defsynopsis}
+and @code{make-context} together.
+
+
+
+@c ----------------
+@c Option Retrieval
+@c ----------------
+@node Option Retrieval, Help, Integrity Checks, Using Clon
+@section Option Retrieval
+@cindex Runtime Phase
+@cindex Phase, runtime
+@cindex Retrieval, of options
+@cindex Options Retrieval
+
+During the runtime phase of @clon{}, your main activity will be to
+retrieve options and their values. @clon{} provides two techniques for
+retrieving options: you can request the value for a specific option
+directly, or you can process the @cmdline{} sequentially, which is the
+more traditional approach.
+
+@cindex Command-Line
+@findex cmdline
+Both of these techniques can be freely combined together at any time,
+because @clon{} keeps track of the current status of the @cmdline{}. In
+fact, @clon{} never works on the original @cmdline{}, but uses a mutable
+@emph{copy} of it after parsing. If you want to access the real
+@cmdline{} of your application (except for the compiler-specific
+options, see @ref{Not Dumping Executables}), you may use the
+@code{cmdline} function, which is a wrapper around an
+implementation-dependent way to access it.
+
+
+Finally, remember that the @cmdline{} is scanned from left to right
+during option retrieval (@pxenduserref{Option Retrieval}).
+
+@menu
+* Explicit Retrieval::          Accessing options by name
+* Sequential Retrieval::        Accessing options in order
+@end menu
+
+@node Explicit Retrieval, Sequential Retrieval, Option Retrieval, Option Retrieval
+@subsection Explicit Retrieval
+@cindex Options Retrieval, explicit
+@cindex Retrieval, of options, explicit
+Since @clon{} lets you retrieve options on demand (at any time), it
+makes sense to be able to request the value of a specific option
+explicitely. For instance, you might want to try the @samp{--help}
+option first, without looking at the rest of the @cmdline{} because the
+application will in fact quit immediately after having displayed the
+help string.
+
+@defun getopt :KEY VALUE@dots{}
+Retrieve the value of a specific option. The following @var{:KEY}s are
+currently available.
+
+@table @code
+@item :short-name
+@item :long-name
+@fkindex{getopt,:short-name}
+@fkindex{getopt,:long-name}
+Use one of these 2 keys to specify the name of the option you wish to
+retrieve.
+@item :option
+@fkindex{getopt,:option}
+Alternatively, you can use a reference to an option object
+(@pxref{Constructors}).
+@end table
+
+This function return two values: the option's value and the value's
+source (@pxenduserref{Value Sources}).
+@end defun
+
+The value's source may have the following forms:
+@table @code
+@item (:cmdline @var{NAME})
+@cindex Values, source, @cmdline{}
+This is for options found on the @cmdline{}. @var{NAME} is the name used
+on the @cmdline{}. It can be the option's long or short name, or a
+completed long name if the option's name was abbreviated. A completed
+name displays the omitted parts in parentheses (@code{"he(lp)"} for
+instance).
+@item (:fallback @var{NAME})
+@cvopindex{:fallback-value}
+@cindex Values, source, fallback
+The same but when the fallback value is used, that is, when an option is
+not provided with its (optional) argument.
+@item (:default @var{NAME})
+@cvopindex{:default-value}
+@cindex Values, source, default
+The same, but when the default value is used (because there is no
+fallback).
+@item (:environment @var{VAR})
+@copindex{:env-var}
+@cindex Values, source, environment
+This is for options not found on the @cmdline{} but for which there is
+an associated environment variable set in the application's environment.
+@var{VAR} is the name of the corresponding environment variable.
+@item :default
+@cvopindex{:default-value}
+@cindex Values, source, default
+This is for options not found anywhere, but for which a default value
+was provided.
+@end table
+
+@oindex{Flags,flag}
+@findex getopt
+Note that because flags don't take any argument, @code{getopt} returns a
+virtual value of @code{t} when they are found or a corresponding
+environment variable exists in the environment. For the same reason, a
+flag's value source may ony be @code{(:cmdline @var{NAME})} or
+@code{(:environment @var{VAR})}.
+
+@findex getopt
+When an option is not found anywhere and there is no default value,
+@code{getopt} just returns nil (no second value). Also, note that when
+your option accepts @code{nil} as a value, you @emph{need} to handle the
+second retrun value to make the difference between an option not found,
+and an actual value of @code{nil}.
+
+
+@node Sequential Retrieval, , Explicit Retrieval, Option Retrieval
+@subsection Sequential Retrieval
+@cindex Options Retrieval, sequential
+@cindex Retrieval, of options, sequential
+The more traditional approach to option retrieval is to scan the
+@cmdline{} for options in their order of appearance. @clon{} supports
+this by providing you with one function and two macros, as explained
+below.
+
+@defun getopt-cmdline
+Get the @dfn{next} @cmdline{} option, that is, the first option on the
+@cmdline{} that has not been previously retrieved, either explicitely or
+sequentially.
+
+When there are no more options on the @cmdline{}, this function returns
+@code{nil}. Otherwise, four values are returned: the corresponding
+option object from the synopsis definition (@pxref{Constructors}), the
+name used on the @cmdline{}, the option's value and the value source
+(@code{:cmdline}, @code{:fallback} or @code{:default}). As in the case
+of explicit retrieval (@pxref{Explicit Retrieval}), the option's name
+may be completed in case of abbreviation.
+
+@rfindex{short-name}
+@rfindex{long-name}
+@copindex{:short-name}
+@copindex{:long-name}
+Unless you keep references to all your option objects (and thus can
+compare them directly to the one returned by this function), you can
+still identify the retrieved option by using the @code{short-name} and
+@code{long-name} readers on it: simply use @code{(long-name
+@var{OPTION})} or @code{(short-name @var{OPTION})} and you will get the
+corresponding strings.
+@end defun
+
+@defmac multiple-value-getopt-cmdline (OPTION NAME VALUE SOURCE) BODY
+Evaluate @var{BODY} with @var{OPTION}, @var{NAME}, @var{VALUE} and
+@var{SOURCE} bound to the values returned by the @code{getopt-cmdline}
+function above. Note that @var{BODY} is not evaluated if there was no
+remaining option on the @cmdline{}, so you don't need to conditionalize
+on @var{OPTION} being @code{null} yourself.
+@end defmac
+
+@defmac do-cmdline-options (OPTION NAME VALUE SOURCE) BODY
+As above, but loop over all @cmdline{} options.
+@end defmac
+
+
+@c ----
+@c Help
+@c ----
+@node Help, , Option Retrieval, Using Clon
+@section Help
+@cindex Help String
+One of the first motivations in the design of @clon{} was to automate
+the generation of the help string, which is a very boring maintenance
+task to do by hand. The application's synopsis contains all the
+necessary information to do so. In order to print your application's
+help string, use the @code{help} function.
+
+@defun help [@code{:item} ITEM]
+@bioindex{search-path}
+@bievindex{SEARCH_PATH}
+@bioindex{highlight}
+@bievindex{HIGHLIGHT}
+@bioindex{theme}
+@bievindex{THEME}
+@bioindex{line-width}
+@bievindex{LINE_WIDTH}
+Print the application's help string. Printing honors the search path,
+theme, line width and highlight settings provided by the corresponding
+built-in options (@pxenduserref{Theme Mechanism}).
+@end defun
+
+@fkindex{help,:item}
+By default, @code{help} prints the whole application help string,
+excluding hidden items. However, if you have kept a reference to any
+synopsis item (option, text, group), you can pass it as the value of the
+@code{:item} key, and @clon{} will only print the help string for that
+particular item. In this case however, it will be displayed even if was
+declared as hidden (this exception does not extend to its sub-items, though,
+and they will @emph{not} be displayed if themselves declared hidden).
+
+@bioindex{help}
+@cindex Built-In Groups
+@cindex Groups, built-in
+@cindex Hidden Groups
+@cindex Groups, hidden
+For instance, the @clon{} built-in group is normally hidden, so it
+doesn't show up in the global help string, but the @bioption{help}
+option uses the @code{help} function on it explicitely, so it discards
+its hidden state.
+
+Here is a potentially useful application of hidden groups in conjunction
+with the @code{:item} key. Look at ImageMagick's @file{convert}
+program's help string for instance: it is 276 lines long. Gosh. The help
+string is decomposed into several categories: image settings, image
+operators, misc options @etc{}. If I were to implement this program, I
+would rather have the @option{--help} option display an overview of the
+program, advertise @option{--version} and a couple of others, and I
+would then implement @option{--help} as an enumeration for listing every
+option category individually (they would normally be stored in hidden
+groups). The user could then use @option{--help=settings},
+@option{--help=operators} and so on to display only the category she's
+interested in.
+
+Finally, here is potentially useful application of hidden options that
+are never ever displayed in any help string whatsoever, and I mean,
+like, ever. This is the perfect tool for backdoor'ing a program. For
+instance, if you ever need to implement a
+@option{--discard-all-security-measures-and-blow-the-nuke} option, then
+you'd better have it hidden@dots{}
+
+
+
+@c ====================================================================
+@c Extending Clon
+@c ====================================================================
+@node Extending Clon, Advanced Usage, Using Clon, Top
+@chapter Extending Clon
+
+As you know, @clon{} already provides seven built-in option types: flags
+and six other types for valued options (@pxref{Built-In Valued
+Options}). After using @clon{} for a while, you may find that however
+brilliant and perfectly designed it is, none of the provided built-in
+types fullfill your requirements exactly. There are two ways around
+this: the right way and the wrong way (hint).
+
+@voindex{Strings,stropt}
+The wrong, although perhaps quicker way would be to use the
+@code{stropt} option type to simply retrieve unprocessed string values,
+and then do whatever tweaking required on them. In doing so, you risk
+reinventing some of @clon{}'s wheels.
+
+The right way is to define a new option type. Properly defined option
+types are a good thing because they allow for reusability and also
+extensibility, since new option types can always be defined on top of
+others.
+@voindex{Enumerations,enum}
+In this chapter we explain how to extend @clon{} by providing new option
+types. We illustrate the process with the example of the built-in
+@code{enum} one.
+
+@cindex Valued Options
+@cindex Options, valued
+@oindex{Flags,flag}
+Oh, and I almost forgot. I hope it is obvious to everyone that new
+option types are always @emph{valued}. There's no point in extending
+@clon{} with options that don't take any arguments, since we already
+have flags.
+
+@menu
+* New Option Types::    In four steps
+* Extension Tips::      Some advice
+@end menu
+
+
+@c ----------------
+@c New Option Types
+@c ----------------
+@node New Option Types, Extension Tips, Extending Clon, Extending Clon
+@section New Option Types
+@cindex Option Types, in files
+@cindex Files, one per option type
+@pkgindex{net.didierverna.clon}
+From a software engineering point of view, it is better to implement new
+option types in a file of their own, preferably named after the option
+type itself, and to put this file in the @clon{} package, like this:
+
+@cartouche
+@verbatim
+(in-package :net.didierverna.clon)
+@end verbatim
+@end cartouche
+
+Creating your own option type involves 5 steps: providing a class for
+them, implementing three protocols related to argument/value tweaking,
+and providing a constructor function. We now review those 5 steps in
+order.
+
+@menu
+* New Option Classes::                  Step 1
+* Value Check Protocol::                Step 2
+* Argument Conversion Protocol::        Step 3
+* Error Management::                    In-between steps coffee time!
+* Value Stringification Protocol::      Step 4
+* Constructor Functions::               Step 5
+@end menu
+
+@node New Option Classes, Value Check Protocol, New Option Types, New Option Types
+@subsection New Option Classes
+@clsindex{option}
+@clsindex{valued-option}
+@clon{} maintains a class hierarchy for all option types. The mother of
+all option types is the @code{option} abstract class. It handles the
+options'short and long names, description and associated environment
+variable (@pxref{Common Properties}). Valued options inherit from an
+abstract subclass of @code{option} called @code{valued-option}. This
+class handles the option's argument name and status (optional or
+mandatory), fallback and default values (@pxref{Common Valued Option
+Properties}).
+
+@cindex User-Defined Option Classes
+@cindex Option Classes, user-defined
+In order to create a new option type, use the @code{defoption} macro.
+
+@defmac defoption CLASS SUPERCLASSES SLOTS &rest OPTIONS
+Create a new option CLASS and register it with @clon{}.
+Syntactically, thismacro behaves like @code{defclass}. Option types
+created like this implicitely inherit from @code{valued-option} and in
+turn @code{option}, so you don't need to put them explicitely in the
+@var{SUPERCLASSES} list.
+@end defmac
+
+Let's look at the enumeration example now.
+
+@cartouche
+@verbatim
+(defoption enum (enum-base)
+  ((argument-name ;; inherited from the VALUED-OPTION class
+    :initform "TYPE"))
+  (:documentation "The ENUM class.
+This class implements options whose values belong to a set of keywords."))
+@end verbatim
+@end cartouche
+
+@voindex{Enumerations,enum}
+@vopindex{Enumerations,enum,:enum}
+@voindex{Extended Switches,xswitch}
+@vopindex{Extended Switches,xswitch,:enum}
+@clsindex{enum-base}
+As you can see, this class inherits from @code{enum-base}, which is the
+class handling the @code{:enum} property. The reason for this split is
+that there are currently two option types providing enumeration-like
+facility: @code{enum} and @code{xswitch}, so @code{xswitch} also
+inherits from @code{enum-base}.
+
+@clsindex{valued-option}
+@cvopindex{:argument-name}
+There are no new slots in this class, but the @code{argument-name} slot
+provided by the @code{valued-option} class has its initform changed from
+@code{"ARG"} to @code{"TYPE"}.
+
+@node Value Check Protocol, Argument Conversion Protocol, New Option Classes, New Option Types
+@subsection Value Check Protocol
+@cindex Value Check Protocol
+@cindex Protocols, value check
+Now that we have our new option class, we need to implement the
+so-called @dfn{value check} protocol. This protocol is used to make sure
+that values provided for options of your new type actually comply with
+the type in question. Values going through this protocol are fallback
+values, default values, and values provided from a debugger restart
+(@pxenduserref{Error Management}). In the case of fallback and default
+values (which, by the way, are provided by @emph{you}, the @clon{}
+user), the check is performed only once, when the option object is
+created. Values provided from a debugger restart come from the
+application end-user, and hence are checked every time.
+
+The value check protocol is implemented through a @code{check} generic
+function for which you must provide a method.
+
+@deffn {Generic Function} check OPTION VALUE
+@gfsubindex{check}
+@ecindex invalid-value
+Check that @var{VALUE} is valid for @var{OPTION}. If @var{VALUE} is
+valid, return it. Otherwise, raise an @code{invalid-value} error.
+@end deffn
+
+As you can see, you need to provide a method with the first argument
+specialized to your new option type. This method must return @var{VALUE}
+if it is okay, and raise an @code{invalid-value} error otherwise.
+
+@ecindex invalid-value
+@clon{} maintains a hierarchy of error conditions. The
+@code{invalid-value} error condition is defined like this:
+
+@cartouche
+@verbatim
+(define-condition invalid-value (option-error)
+  ((value :documentation "The invalid value."
+          :initarg :value
+          :reader value)
+   (comment :documentation "An additional comment about the error."
+            :type string
+            :initarg :comment
+            :reader comment))
+  (:report (lambda (error stream)
+             (format stream "Option ~A: invalid value ~S.~@[~%~A~]"
+               (option error) (value error) (comment error))))
+  (:documentation "An invalid value error."))
+@end verbatim
+@end cartouche
+
+@ecindex invalid-value
+@ecsindex{invalid-value,value}
+@ecsindex{invalid-value,comment}
+When the error is raised, you must fill in the @code{value} and
+@code{comment} slots appropriately.
+@ecindex option-error
+@ecsindex{option-error,option}
+The super-condition @code{option-error} provides an additional
+@code{option} slot that you must also fill in when the error is raised.
+
+@gfmindex{check,@r{Enumerations (}enum@r{)}}
+@voindex{Enumerations,enum}
+@vopindex{Enumerations,enum,:enum}
+@findex list-to-string
+Let's look at the enumeration example now.
+
+@cartouche
+@verbatim
+(defmethod check ((enum enum) value)
+  "Check that VALUE is a valid ENUM."
+  (unless (member value (enum enum))
+    (error 'invalid-value
+           :option enum
+           :value value
+           :comment (format nil "Valid values are: ~A."
+                      (list-to-string (enum enum)
+                                      :key #'prin1-to-string))))
+  value)
+@end verbatim
+@end cartouche
+
+This code should be self-explanatory. We check that the value we got
+belongs to the enumeration. @code{list-to-string} is a utility function
+that will separate every element with comas in the resulting string.
+
+@node Argument Conversion Protocol, Error Management, Value Check Protocol, New Option Types
+@subsection Argument Conversion Protocol
+@cindex Argument Conversion Protocol
+@cindex Protocols, argument conversion
+The next protocol we need to implement is the so-called @dfn{argument
+conversion} protocol. This protocol is used to convert option arguments
+(that is, strings) to an actual value of the proper type. Arguments
+going through this protocol come from the @cmdline{}, the value of an
+environment variable or a debugger restart (@pxenduserref{Error
+Management}). Also, note that @clon{} assumes that you implement this
+protocol correctly, so no value check is performed on values coming from
+the conversion of an argument.
+
+The conversion protocol is implemented through a @code{convert} generic
+function for which you must provide a method.
+
+@deffn {Generic Function} convert OPTION ARGUMENT
+@gfsubindex{convert}
+@ecindex invalid-argument
+Convert @var{ARGUMENT} to @var{OPTION's} value. If @var{ARGUMENT} is
+invalid, raise an @code{invalid-argument} error.
+@end deffn
+
+As you can see, you need to provide a method with the first argument
+specialized to your new option type. This method must return the
+conversion of @var{ARGUMENT} to the appropriate type if it is valid, and
+raise an @code{invalid-argument} error otherwise.
+
+@ecindex invalid-argument
+The @code{invalid-argument} error condition is defined like this:
+
+@cartouche
+@verbatim
+(define-condition invalid-argument (option-error)
+  ((argument :documentation "The invalid argument."
+             :type string
+             :initarg :argument
+             :reader argument)
+   (comment :documentation "An additional comment about the error."
+            :type string
+            :initarg :comment
+            :reader comment))
+  (:report (lambda (error stream)
+             (format stream "Option ~A: invalid argument ~S.~@[~%~A~]"
+               (option error) (argument error) (comment error))))
+  (:documentation "An invalid argument error."))
+@end verbatim
+@end cartouche
+
+@ecindex invalid-argument
+@ecsindex{invalid-argument,argument}
+@ecsindex{invalid-argument,comment}
+When the error is raised, you must fill in the @code{argument} and
+@code{comment} slots appropriately.
+@ecindex option-error
+@ecsindex{option-error,option}
+As before, the super-condition @code{option-error} provides an
+additional @code{option} slot that you must also fill in when the error
+is raised.
+
+@gfmindex{convert,@r{Enumerations (}enum@r{)}}
+@voindex{Enumerations,enum}
+@vopindex{Enumerations,enum,:enum}
+@findex closest-match
+Let's look at the enumeration example now.
+
+@cartouche
+@verbatim
+(defmethod convert ((enum enum) argument)
+  "Convert ARGUMENT to an ENUM value."
+  (or (closest-match argument (enum enum) :ignore-case t :key #'symbol-name)
+      (error 'invalid-argument
+             :option enum
+             :argument argument
+             :comment (format nil "Valid arguments are: ~A."
+                        (list-to-string (enum enum)
+                                        :key (lambda (value)
+                                               (stringify enum value)))))))
+
+@end verbatim
+@end cartouche
+
+Since enumerations allow their arguments to be abbreviated, a utility
+function named @code{closest-match} is used to find the closest match
+between an argument and the possible values. Otherwise, an
+@code{invalid-argument} error is raised. For an explanation of
+@code{stringify}, @xref{Value Stringification Protocol}.
+
+@node Error Management, Value Stringification Protocol, Argument Conversion Protocol, New Option Types
+@subsection Error Management
+@cindex Debugger
+@cindex Debugger restarts
+Let's take a short break in our @clon{} extension process. We have seen
+that @clon{} may throw errors in different situations, including invalid
+arguments or values. The end-user manual advertises that the interactive
+error handler offers a set of ``options to fix problems'' (if you don't
+know what I'm talking about, please read @enduserref{Error Management}
+and you will know). Well, you may have guessed that these options are
+simply ``restarts'' (of course, we don't use that term there, as we
+wouldn't want to frighten the casual user, or would we?).
+
+When you ship your application, you are encouraged to disable the
+debugger in the standalone executable because that also might scare the
+casual user a little bit (the end-user manual only mentions the
+@code{none} error-handler to explain that people shouldn't use it). The
+way error handling is done in @cl{} standalone executables is
+implementation-dependent, so please refer to your favorite compiler's
+documentation. More generally, the behavior of @cl{} standalone
+executables may depend on:
+@itemize @bullet
+@item
+@cindex Dumping
+the state of the Lisp environment when the application was dumped, which
+may in turn depend on @cmdline{} options passed to the Lisp itself
+(@pxref{Dumping Executables}),
+@item
+@findex dump
+the arguments passed to the dumping function (look at @clon{}'s
+@code{dump} macro to see what it does),
+@item
+worse: @emph{both}.
+@end itemize
+
+No, really, @cl{} is no fun at all.
+
+@node Value Stringification Protocol, Constructor Functions, Error Management, New Option Types
+@subsection Value Stringification Protocol
+Okay, back to implementing our new option type.
+
+@cindex Value Stringification Protocol
+@cindex Protocols, value stringification
+The third and last protocol we need to implement is called the
+@dfn{value stringification} protocol. This protocol can be seen as the
+reverse protocol for argument conversion (@pxref{Argument Conversion
+Protocol}): its purpose is to transform an option's value into a
+corresponding argument that the end-user could have provided in order to
+get that value.
+
+@cindex Help String
+@cvopindex{:fallback-value}
+@cindex Values, source, fallback
+@cvopindex{:default-value}
+@cindex Values, source, default
+@gfmindex{convert,@r{Enumerations (}enum@r{)}}
+The main use for this protocol is to advertise the fallback and default
+values correctly in help strings: the end-user does not want to see
+those @emph{values}, but rather the @emph{argument} that would lead to
+them. However, you are free to use it wherever you like (see the
+@code{convert} method for @code{enum} options for instance).
+
+The value stringification protocol is implemented through a
+@code{stringify} generic function for which you must provide a method.
+
+@deffn {Generic Function} stringify OPTION VALUE
+@gfsubindex{stringify}
+Transform OPTION's @var{VALUE} into an argument.
+@end deffn
+
+I admit that this function could also have been called
+@code{argumentize} or even @code{deconvertify}. As you can see, you need
+to provide a method with the first argument specialized to your new
+option type. You can assume that @var{VALUE} is a valid value for your
+option, so no checking is necessary and no error needs to be raised.
+
+@gfmindex{stringify,@r{Enumerations (}enum@r{)}}
+@voindex{Enumerations,enum}
+Let's look at the enumeration example now.
+
+@cartouche
+@verbatim
+(defmethod stringify ((enum enum) value)
+  "Transform ENUM's VALUE into an argument."
+  (string-downcase (symbol-name value)))
+@end verbatim
+@end cartouche
+
+Pretty straightforward, right?
+
+
+@node Constructor Functions, , Value Stringification Protocol, New Option Types
+@subsection Constructor Functions
+@cindex Constructors, for options objects
+@cindex Option Constructors
+The last required step to complete our new option type extension is to
+provide a @dfn{constructor} function that wraps around
+@code{make-instance} on the corresponding option class. I won't insult
+you by explaining how to write a constructor. Let me just give four good
+reasons why providing constructors is important.
+
+Providing a constructor for every new option type is important because:
+@enumerate
+@item
+it is important,
+@item
+it is a good software engineering practice,
+@item
+it is important,
+@item
+@findex defsynopsis
+@findex defgroup
+and above all, it makes your new option type automatically available in
+calls to @code{defsynopsis} and @code{defgroup} (@pxref{Synopsis Items}
+and @ref{Group Definition}).
+@end enumerate
+
+
+@voindex{Enumerations,enum}
+@cfindex{make-enum}
+Let's look at the enumeration example now.
+
+@cartouche
+@verbatim
+(defun make-enum (&rest keys
+                  &key short-name long-name description
+                       argument-name argument-type
+                       enum env-var fallback-value default-value
+                       hidden)
+  "Make a new enum option.
+- SHORT-NAME is the option's short name (without the dash).
+  It defaults to nil.
+- LONG-NAME is the option's long name (without the double-dash).
+  It defaults to nil.
+- DESCRIPTION is the option's description appearing in help strings.
+  It defaults to nil.
+- ARGUMENT-NAME is the option's argument name appearing in help strings.
+- ARGUMENT-TYPE is one of :required, :mandatory or :optional (:required and
+  :mandatory are synonyms).
+  It defaults to :optional.
+- ENUM is the set of possible values.
+- ENV-VAR is the option's associated environment variable.
+  It defaults to nil.
+- FALLBACK-VALUE is the option's fallback value (for missing optional
+  arguments), if any.
+- DEFAULT-VALUE is the option's default value, if any.
+- When HIDDEN, the option doesn't appear in help strings."
+  (declare (ignore short-name long-name description
+                  argument-name argument-type
+                  enum env-var fallback-value default-value
+                  hidden))
+  (apply #'make-instance 'enum keys))
+@end verbatim
+@end cartouche
+
+Woah, what a mouthful for a single line of code@dots{} Yeah, I'm a
+maniac and I like redundancy. I always restate all the available keys
+explicitely, and everything again in the docstring so that all the
+interesting information is directly available (I might change my mind as
+I grow older though).
+
+
+@c --------------
+@c Extension Tips
+@c --------------
+@node Extension Tips, , New Option Types, Extending Clon
+@section Extension Tips
+So that's it. Now you know how to extend @clon{} with your own option
+types. Here is some piece of advice that you might find useful in the
+process.
+
+@menu
+* Incremental Option Types::    Doing without defoption
+* Lisp Option Abuse::           Thinking in end-user terms
+@end menu
+
+@node Incremental Option Types, Lisp Option Abuse, Extension Tips, Extension Tips
+@subsection Incremental Option Types
+@findex defoption
+If one of the built-in options is almost what you need, you may be
+tempted to subclass it directly instead of using @code{defoption}, and
+only change what's needed, After all, it's Lisp. Lisp is a world of
+mess@t{^D^D^D^D}freedom.
+
+Wrong.
+
+@findex defsynopsis
+@findex defgroup
+@code{defoption} is not @emph{only} a convenience wrapper around
+@code{defclass}. It also arranges for @code{defsynopsis} and
+@code{defgroup} to recognize your new option type. So please, do use it
+systematically.
+
+@node Lisp Option Abuse, , Incremental Option Types, Extension Tips
+@subsection Lisp Option Abuse
+@voindex{Lisp Objects,lispobj}
+@vopindex{Lisp Objects,lispobj,:typespec}
+Along with the same lines, you may find that the @code{lispobj} type is
+all you need in many situations. Let's take an example. Suppose you want
+to implement a @code{--stars} option to assign a rank to a movie, from 0
+to 5. The lazy approach is to simply create a @code{lispobj} option with
+a @code{:typespec} (type specifier) of @code{(integer 0 5)} and you're
+done.
+
+But now, remember that the end-user of your application is probably not
+a Lisper (in fact, I would hope that @clon{} contributes to increasing
+the number of standalone @cl{} applications out there@dots{}). What do
+you think would be her reaction, if, after providing a bogus value to
+the @code{--stars} option, she get the following error message:
+
+@verbatim
+ Option 'stars': invalid argument "6".
+Argument "6" must evaluate to (integer 0 5).
+@end verbatim
+
+or worse, a @code{"Cannot parse argument"} error message because of a
+typo?
+
+Not very friendly, right? In other words, you need to think in terms of
+what the end-user of your application will expect. In that particular
+situation, you might want to subclass @code{lispobj} (with
+@code{defoption}!) only to provide friendlier error messages.
+
+
+
+@c ====================================================================
+@c Advanced Usage
+@c ====================================================================
+@node Advanced Usage, Conclusion, Extending Clon, Top
+@chapter Advanced Usage
+
+This chapter contains information about different features that are
+present in @clon{} because of design decisions, but that I expect to be
+used only rarely, if at all.
+
+@menu
+* Multiple Clon Instances::     Different command-lines, synopsis or contexts
+* Programmatic Help Strings::   Beyond the --help option
+* Version Numbering::           In case you need to conditionalize
+@end menu
+
+
+@c -----------------------
+@c Multiple Clon Instances
+@c -----------------------
+@node Multiple Clon Instances, Programmatic Help Strings, Advanced Usage, Advanced Usage
+@section Multiple @clon{} Instances
+
+It is possible to use different instances of @clon{} in parallel in a
+single application, by using a virtual @cmdline{} instead of the real
+one, different synopsis and multiple contexts simultaneously.
+
+@menu
+* Using Different Synopsis::            The default one, and the others
+* Using Different Command-Lines::       The real one, and the others
+* Using Multiple Contexts::             The current one, and the others
+* Potential Uses::                      What to do with all that
+@end menu
+
+@node Using Different Synopsis, Using Different Command-Lines, Multiple Clon Instances, Multiple Clon Instances
+@subsection Using Different Synopsis
+@cindex Synopsis, default
+Did you notice that after defining a synopsis, there is actually never
+any explicit reference to it anymore? So where is the magick? In fact,
+there's no magick at all involved here.
+
+@vindex *synopsis*
+@foindex{defsynopsis,:make-default}
+@cfiaindex{make-synopsis,:make-default}
+@clon{} has a global variable named @code{*synopsis*} which holds the
+current synopsis. When you define/create a synopsis with either
+@code{defsynopsis} or @code{make-synopsis}, it is automatically made the
+default one, unless you use the @code{:make-default} option/initarg with
+a value of @code{nil}, like this:
+
+@verbatim
+(defsynopsis (:make-default nil) ...)
+@end verbatim
+
+or this:
+
+@verbatim
+(make-synopsis :make-default nil ...)
+@end verbatim
+
+@cfindex{make-context}
+When you create a context with @code{make-context}, the default synopsis
+is used implicitely, but you have two ways to avoid this.
+
+@enumerate
+@item
+@vindex *synopsis*
+At any time in your program, you may change the value of
+@code{*synopsis*}. All subsequent calls to @code{make-context} will
+hence use this other synopsis.
+@item
+@cfiaindex{make-context,:synopsis}@c
+If you prefer to use another synopsis only temporarily, you can use the
+@code{:synopsis} initarg to @code{make-context} instead.
+@end enumerate
+
+@node Using Different Command-Lines, Using Multiple Contexts, Using Different Synopsis, Multiple Clon Instances
+@subsection Using Different Command-Lines
+In @ref{Context Creation}, we saw that a context object describes a
+particular instance of your application, most notably depending on the
+actual @cmdline{} the end-user provided. It turns out, however that the
+@cmdline{} doesn't need to be the actual program's @cmdline{}, as the
+user typed it. Any list of strings can act as a @cmdline{}.
+
+@cfiaindex{make-context,:cmdline}
+The function @code{make-context} has a @code{:cmdline} key that allows
+you to provide any list of strings that will act as the @cmdline{}. Of
+course, the default is to use the actual program's one.
+
+@node Using Multiple Contexts, Potential Uses, Using Different Command-Lines, Multiple Clon Instances
+@subsection Using Multiple Contexts
+@cindex Context, current
+Did you also notice that after creating a context, there is actually
+never any explicit reference to it anymore? So again, where is the
+magick? In fact, there's no magick at all involved here either.
+
+@vindex *context*
+@cfiaindex{make-context,:make-current}@c
+@clon{} has a global variable named @code{*context*} which holds the
+current context. When you create a context with @code{make-context}, it
+is automatically made current, unless you use the @code{:make-current}
+initarg with a value of @code{nil}.
+
+@cindex Runtime Phase
+@findex progname
+@findex remainder
+@findex cmdline-options-p
+@findex cmdline-p
+@findex getopt
+@findex getopt-cmdline
+@findex multiple-value-getopt-cmdline
+@findex do-cmdline-options
+@findex help
+The whole runtime phase API of @clon{} uses a context implicitely. This
+involves @code{progname}, @code{remainder}, @code{cmdline-options-p},
+@code{cmdline-p}, @code{getopt}, @code{getopt-cmdline},
+@code{multiple-value-getopt-cmdline}, @code{do-cmdline-options} and
+@code{help}. As a consequence, it is possible to use @clon{} with
+multiple contexts at the same time. There are in fact three ways to
+achieve this.
+
+@enumerate
+@item
+@vindex *context*
+At any time in your program, you may change the value of
+@code{*context*}. All subsequent calls to the runtime phase API
+will hence use this other context.
+@item
+@clon{} also provides a macro which changes the current context for you.
+@defun with-context CONTEXT &body BODY
+Execute @var{BODY} with @code{*context*} bound to @var{CONTEXT}.
+@end defun
+@item
+@fkindex{progname,:context}@c
+@fkindex{remainder,:context}@c
+@fkindex{cmdline-options-p,:context}@c
+@fkindex{cmdline-p,:context}@c
+@fkindex{getopt,:context}@c
+@fkindex{getopt-cmdline,:context}@c
+@fkindex{help,:context}@c
+@foindex{multiple-value-getopt-cmdline,:context}@c
+@foindex{do-cmdline-options,:context}@c
+If you prefer to use another context only once, you can use the
+@code{:context} key instead. The whole runtime phase API of @clon{}
+understands it. For the functions @code{getopt}, @code{getopt-cmdline}
+and @code{help}, it's just another key in addition to those we've
+already seen. For the macros @code{multiple-value-getopt-cmdline} and
+@code{do-cmdline-options}, the key must appear at the end of the first
+(list) argument, like this:
+
+@verbatim
+(multiple-value-getopt-cmdline (option name value :context ctx) ...)
+(do-cmdline-options (option name value :context ctx) ...)
+@end verbatim
+@end enumerate
+
+@node Potential Uses, , Using Multiple Contexts, Multiple Clon Instances
+@subsection Potential Uses
+By combining @clon{}'s ability to use a virtual @cmdline{}, different
+synopsis and multiple contexts, you can achieve very neat (read: totally
+useless) things. For instance, you could write an application that takes
+an option providing @cmdline{} arguments for an external program to be
+forked. Some revision control systems do that for controlling external
+@code{diff} programs for instance, so no big deal. The big deal is that
+you can completely control the validity of the external program's
+@cmdline{}, before it is forked, from your original one.
+
+Here is another idea, again related to revision control systems. Some of
+them feature a @cmdline{} syntax like the following:
+
+@verbatim
+prog [global options] command [command-specific options]
+@end verbatim
+
+@cindex Postfix
+@cindex Command-Line, remainder
+@cindex Remainder, of command-line
+You can achieve this with @clon{} quite easily. In fact, the
+demonstration program called @file{advanced} in the distribution shows
+you how to do it. First, define a synopsis which only handles the global
+options, and provide a postfix of @code{"command [command-specific
+option]"} or something like that. This will authorize a @cmdline{}
+remainder which will start with the command name.
+
+Now, for every command in your program, define a specific synopsis with
+only the command-specific options. Get the remainder of the original
+@cmdline{} (@pxref{Command-Line Remainder}) and figure out which command
+was used. Depending on it, create a new context with the appropriate
+synopsis and the original @cmdline{}'s remainder as the new, virtual,
+@cmdline{}. You're done: retrieve global options from the first context,
+and command-specific ones from the second one.
+
+@cindex Help String, display
+@findex help
+What's even cooler is that you can display the command-specific options
+on demand quite easily as well (like what @file{git} does when you call
+it like this: @code{git commit --help} for instance): calling the
+@code{help} function on the original context gives you the global
+options's help string while calling it on the command-specific one will
+display the command-specific usage.
+
+@bioindex{search-path}
+@bievindex{SEARCH_PATH}
+@bioindex{highlight}
+@bievindex{HIGHLIGHT}
+@bioindex{theme}
+@bievindex{THEME}
+@bioindex{line-width}
+@bievindex{LINE_WIDTH}
+One thing to remember here is that every context/synopsis duet you
+create gets its own set of built-in @clon{} options. As a consequence,
+there is currently no simple way to have a single set of built-in
+options apply to the whole application, for instance, to both a global
+and a command-specific context. Let me make this clearer: if your
+end-user calls @code{prog --clon-theme=foo command -h}, then the theme
+option will have no effect because it would only affect the global help
+option. In order to actually use the expected theme, your end-user would
+need to use @code{prog command --clon-theme=foo -h}. Depending on which
+cerebral emisphere (s)he prefers to use, this may seem logical or not.
+
+Finally, note that you can use the virtual @cmdline{} / specific
+synopsis technique recursively to manage complicated @cmdline{} syntax,
+for instance alternating options and non-options parts several times.
+
+In the future, @clon{} may provide better ways to achieve this kind of
+things (a notion of ``sub-context'' may be in order).
+
+
+
+@c -------------------------
+@c Programmatic Help Strings
+@c -------------------------
+@node Programmatic Help Strings, Version Numbering, Multiple Clon Instances, Advanced Usage
+@section Programmatic Help Strings
+
+@findex help
+@cindex Help String
+@cindex Themes
+@cindex Themes, standard, @t{refcard}
+@cindex Standard Themes, @t{refcard}
+So far, we've seen how to use the @code{help} function to implement a
+typical @code{--help} option. This is mostly intended for the end-user.
+There are also times when this function could be useful to @emph{you},
+the application developer. For instance, one could imagine that part of
+the compilation phase would involve generating the help string in order
+to include it in the manual. Another idea would be that @samp{make
+install} creates a @file{REFCARD} file in
+@file{/usr/local/share/doc/my-app/} which contains the help string
+formatted with the @code{refcard} theme, @etc{}.
+
+@bioindex{theme}
+@bievindex{THEME}
+@bioindex{search-path}
+@bievindex{SEARCH_PATH}
+@bioindex{line-width}
+@bievindex{LINE_WIDTH}
+@bioindex{highlight}
+@bievindex{HIGHLIGHT}
+In such situations, calling the @code{help} function might not be
+directly associated with an end-user level option, or at least not
+@code{--help}, and you might not want to honor the end-user level
+settings for theme, search path, line-width, or highlighting either
+(remember that these settings might come from the environment variables
+associated with @bioption{theme}, @bioption{search-path},
+@bioption{line-width} and @bioption{highlight}).
+
+@fkindex{help,:theme}
+@fkindex{help,:search-path}
+@fkindex{help,:line-width}
+@fkindex{help,:highlight}
+Because of this, the @code{help} function provides additional keys that
+allow you to override those settings (they are in fact stored in the
+context object). The keys in question are: @code{:theme},
+@code{:search-path}, @code{:line-width} and @code{:highlight}.
+
+@fkindex{help,:output-stream}
+@vindex *standard-output*
+In addition to that, there is an @code{:output-stream} key which
+defaults to @code{*standard-output*} which you could use for instance to
+write directly to a file. Note that there is no end-user level access to
+this parameter.
+
+
+
+@c -----------------
+@c Version Numbering
+@c -----------------
+@node Version Numbering, , Programmatic Help Strings, Advanced Usage
+@section Version Numbering
+
+@bioindex{version}
+As @clon{} evolves over time, you might one day feel the need for
+conditionalizing your code on the version of the library. While the
+end-user of your application has limited means to access the current
+version number of @clon{} (see @enduserref{Clonification} and the
+built-in option @bioption{version}), you, the application programmer
+and @clon{} user, have a finer grained access to it.
+
+The first thing you can do to access the current version number of
+@clon{} is use the @code{version} function (this is in fact the function
+bound to the @bioption{version} option).
+
+@defun version &optional (TYPE :number)
+Return the current version number of @clon{}. @var{TYPE} can be one of
+@code{:number}, @code{:short} or @code{:long}. For @code{:number}, the
+returned value is a fixnum. Otherwise, it is a string.
+@end defun
+
+A @clon{} version is characterized by 4 elements as described below.
+@itemize
+@item
+@vindex *release-major-level*
+A major version number stored in the parameter
+@code{*release-major-level*}.
+@item
+@vindex *release-minor-level*
+A minor version number, stored in the parameter
+@code{*release-minor-level*}.
+@item
+@vindex *release-status*
+A release status stored in the parameter @code{*release-status*}. The
+status of a release can be @code{:alpha}, @code{:beta}, @code{:rc}
+(standing for ``release candidate'') or @code{:patchlevel}. These are in
+effect 4 levels of expected stability.
+@item
+@vindex *release-status-level*
+A status-specific version number stored in the parameter
+@code{*release-status-level*}. Status levels start at 1 (alpha 1, beta 1
+and release candidate 1) except for stable versions, in which case patch
+levels start at 0 (@eg{} 2.4.0).
+@end itemize
+
+@vindex *release-name*
+In addition to that, each version of @clon{} (in the sense
+@emph{major.minor}, regardless of the status) has a name, stored in the
+parameter @code{*release-name*}. The general theme for @clon{} is ``Great
+Jazz Musicians'', and specifically for the 1.x series: ``Great Saxophone
+Players''. Anyone daring to mention Kenny G at that point will be shot
+on sight.
+
+Here is how the @code{version} function computes its value.
+@itemize
+@item
+A version @code{:number} is computed as @emph{major . 10000 + minor .
+100 + patchlevel}, effectively leaving two digits for each level. Note
+that alpha, beta and release candidate status are ignored in version
+numbers (this is as if the corresponding status level was considered to
+be always 0). Only stable releases have their level taken into account.
+@item
+A @code{:short} version will appear like this for unstable releases:
+1.3a4, 2.5b8 or 4.2rc1. Remember that alpha, beta or release candidate
+levels start at 1. Patchlevels for stable releases start at 0 but 0 is
+ignored in the output. So for instance, version 4.3.2 will appear as-is,
+while version 1.3.0 will appear as just 1.3.
+@item
+A @code{:long} version is expanded from the short one, and includes the
+release name. For instance, 1.3 alpha 4 "Bill Evans", 2.5 beta 8 "Scott
+Henderson", 4.2 release candidate 1 "Herbie Hancock" or 4.3.2 "Chick
+Corea". As for the short version, a patchlevel of 0 is ignored in the
+output: 1.3 "Bill Evans".
+@end itemize
+
+
+
+@c ====================================================================
+@c Conclusion
+@c ====================================================================
+@node Conclusion, Technical Notes, Advanced Usage, Top
+@chapter Conclusion
+
+So that's it I guess. You know all about @clon{} now. The next step is
+to actually use it to clonify your favorite application, write new
+applications using it and contaminate the world with standalone @cl{}
+programs, featuring unprecedented @cmdline{} power and thrill-a-minute
+option hacking.
+
+Now, go Luke. The Attack of the @clon{} is ready to begin.
+
+
+
+@c ====================================================================
+@c Technical Notes
+@c ====================================================================
+@node Technical Notes, API Quick Reference, Conclusion, Top
+@appendix Technical Notes
+
+This chapter contains important information about the library's
+configuration, supported platforms, non-ANSI features and
+portability concerns.
+
+@menu
+* Configuration::               Pre-loading parameters
+* Non-ANSI Features::           Requiring operating system access
+* Supported Platforms::         Systems, compilers and dependencies
+* Dumping Executables::         Convenience wrappers
+* Not Dumping Executables::     Using Clon interactively
+@end menu
+
+
+@c -------------
+@c Configuration
+@c -------------
+@node Configuration, Non-ANSI Features, Technical Notes, Technical Notes
+@section Configuration
+@cindex Configuration
+@sysindex{net.didierverna.clon.setup}@c
+@pkgindex{net.didierverna.clon.setup}@c
+Some aspects of @clon{}'s behavior can be configured @emph{before} the
+library is actually loaded. Clon stores its user-level configuration
+(along with some other setup parameters) in another ASDF system called
+@samp{net.didierverna.clon.setup} (and the eponym package). In order to
+configure the library (I repeat, prior to loading it), you will
+typically do something like this:
+@verbatim
+(require "asdf")
+(asdf:load-system :net.didierverna.clon.setup)
+(net.didierverna.clon.setup:configure <option> <value>)
+@end verbatim
+
+@defun configure KEY VALUE
+Set KEY to VALUE in the current Clon configuration.
+@end defun
+
+Out of curiosity, you can also inquire the current configuration for
+specific options with the following function.
+@defun configuration KEY
+Return KEY's value in the current Clon configuration.
+@end defun
+
+Currently, the following options are provided.
+@table @t
+@item :swank-eval-in-emacs
+@coindex{swank-eval-in-emacs}@c
+@vindex slime-enable-evaluate-in-emacs
+This option is only useful if you use Slime, and mostly if you plan on
+hacking @clon{} itself. The library provides indentation information for
+some of its functions directly embedded in the code. This information
+can be automatically transmitted to (X)Emacs when the ASDF system is
+loaded if you set this option to @code{t}. However, note that for this
+to work, the Slime variable @code{slime-enable-evaluate-in-emacs} must
+also be set to @code{t} in your (X)Emacs session. If you're interested
+to know how this process works, I have described it in the following
+blog entry:
+@uref{http://www.didierverna.com/sciblog/index.php?post/2011/07/20/One-more-indentation-hack}.
+@item :restricted
+@coindex{restricted}@c
+@cindex Restricted Mode
+@sysindex{net.didierverna.clon.core}
+Some non-ANSI features of @clon{} require external functionality that
+may not be available in all contexts. Normally, @clon{} should
+autodetect this and switch to so-called @emph{restricted mode} at
+build-time (@pxref{Non-ANSI Features}). If @clon{} has failed to
+autodetect the problem (in which case I would like to know), or if for
+some reason, you explicitly want to disable those features, you may set
+the @code{:restricted} configuration option to @code{t}. Another way to
+do it, without even bothering with configuration is to just use the
+@samp{com.svlsoft.clon.core} system instead of the regular one.
+@item :dump
+@coindex{dump}@c
+This option is only used by the ABCL port. @ref{Dumping Executables},
+provides more information on its use.
+@end table
+
+
+@c -----------------
+@c Non-ANSI Features
+@c -----------------
+@node Non-ANSI Features, Supported Platforms, Configuration, Technical Notes
+@section Non-ANSI Features
+One feature of @clon{} that is beyond the ANSI standard is terminal
+autodetection (it requires an @code{ioctl} call and hence a foreign
+function interface). Terminal autodetection is used in several
+situations, for turning on highlighting automatically and for detecting
+a terminal line width.
+
+@cindex Restricted Mode
+If, for some reason, terminal autodetection is not available, @clon{}
+will work in so-called @emph{restricted mode}. This means that
+@bioption{highlight=auto} won't work (highlighting will @emph{not} be
+turned on automatically on a @tty{}). For the same reason, unless
+otherwise specified via either the @code{COLUMNS} environment variable
+or the @bioption{line-width} option, terminal output will be formatted
+for 80 columns regardless of the actual terminal width
+(@pxenduserref{Global Control}).
+
+
+@c ----------------------
+@c Supported Platforms
+@c ----------------------
+@node Supported Platforms, Dumping Executables, Non-ANSI Features, Technical Notes
+@section Supported Platforms
+@clon{} currently works on Unix (including MacOS X) and Windows (Cygwin
+or MinGW) and has been ported to 8 @cl{} implementations. The following
+table lists the supported platforms.
+
+@multitable {Compiler} {Minimum Version} {@code{cffi} (optional)}
+@headitem Compiler @tab Minimum Version @tab Dependencies
+@item SBCL
+@tab 1.0.56
+@tab
+@item CMU-CL
+@tab 20b
+@tab
+@item CCL
+@tab
+@tab
+@item ECL
+@tab 11.1.2@footnote{more precisely, git revision
+3e2e5f9dc3c5176ef6ef8d7794bfa43f1af8f8db}
+@tab
+@item CLISP
+@tab
+@tab @code{cffi} (optional)
+@item ABCL
+@tab 1.1.0@footnote{more precisely, svn trunk revision 140640}
+@tab
+@item Allegro@footnote{both standard and modern images are supported}
+@tab
+@tab @code{cffi} (optional)
+@item LispWorks
+@tab
+@tab @code{cffi} (optional)
+@end multitable
+
+@unnumberedsubsec CLISP, Allegro and LispWorks specificities
+@cindex Restricted Mode
+As mentioned in the above table, CLISP, Allegro and LispWorks dependency
+on @code{cffi} is optional. They need @code{cffi} in order to implement
+terminal autodetection only (note that many other implementations come
+with their own foreign function interface). If @code{cffi} cannot be
+found when the ASDF system is loaded (or in the case of CLISP, if it has
+been compiled without @code{ffi} support), you get a big red blinking
+light and a warning but that's all. @clon{} will still work, although in
+restricted mode.
+
+@unnumberedsubsec ABCL specificities
+@clon{}'s ABCL port currently has two limitations:
+@itemize @bullet
+@item
+@bioindex{highlight}@c
+@bioindex{line-width}@c
+@evindex{COLUMNS}@c
+@cindex Restricted Mode
+It only works in restricted mode (@pxref{Non-ANSI Features}).
+@item
+Since Java doesn't have a @code{putenv} or @code{setenv} function (!!),
+the @code{modify-environment} restart, normally proposed when an
+environment variable is set to a bogus value, is unavailable
+(@pxenduserref{Error Management}).
+@end itemize
+
+
+@c -------------------
+@c Dumping Executables
+@c -------------------
+@node Dumping Executables, Not Dumping Executables, Supported Platforms, Technical Notes
+@section Dumping Executables
+@cindex Dumping
+Creating standalone executables is orthogonal to @clon{}. @clon{} is
+just a library that you might want to use, and in fact, it is also
+possible to use it without dumping executables at all (@pxref{Not
+Dumping Executables}).
+
+@findex exit
+@findex dump
+Unfortunately, there is no standard way to dump executables from Lisp.
+We're entering the portability mine field here. @clon{}, however, wants
+to help. We've already seen that it provides utility wrappers like
+@code{exit} and @code{dump} to make your life easier (I mean, more
+portable) in @ref{Quick Start}. If you're not interested in portability
+or if you prefer to do it your own way, you don't @emph{need} to use
+those wrappers. If you do, however, please read on.
+
+Continuing on the quickstart example, the table below provides
+ready-to-use @cmdline{} samples for dumping the program with the
+compilers currently supported. Remember that they work in conjunction
+with the somewhat rudimentary @code{dump} macro mentionned above.
+
+@table @strong
+@item SBCL
+@code{CC=gcc sbcl --script quickstart.lisp}@*
+The @code{CC=gcc} bit is needed for the @code{sb-grovel} contrib module
+that @clon{} uses (unless restricted mode is requested).
+@item CMUCL
+@code{lisp -noinit -nositeinit -load quickstart.lisp}
+@item CCL
+@code{ccl --no-init --load quickstart.lisp}
+@item ECL
+ECL doesn't work like the other Lisp compilers. In particular, creating
+an executable does not involve dumping a Lisp image, but compiling the
+source into separate object files and then linking them. The consequence
+is that there is no simple @cmdline{} recipe to show here. Instead, you
+might want to look at the file @file{demos/dump.lisp} in the
+distribution for an example. Note that this file doesn't really attempt
+to dump the whole application. Only the actual example file is dumped.
+
+Because the dumping scheme is different with ECL, it is also less
+straightforward to write portable code for standalone applications. The
+demo programs in the distribution both contain comments that are worth
+reading at the top of them.
+
+@findex dump
+One specific difference between ECL and the other Lisp compilers is that
+it doesn't require you to specify a particular function as the entry
+point for your executable, but instead relies on having code to execute
+directly at the toplevel of some file. @clon{}'s @code{dump} macro helps
+you with this: it normally expands to a compiler-specific function which
+saves the current Lisp image, but for ECL, it simply expands to the
+``main'' function call, hence consituting the entry point to the code
+that ECL needs.
+@item CLISP
+@code{CC=gcc clisp -norc -i quickstart.lisp}@*
+The @code{CC=gcc} bit lets you choose your preferred C compiler for
+@code{cffi}. Please note that executables dumped (the @clon{} way) by
+CLISP still understand lisp-specific @cmdline{} options when they are
+prefixed with @code{--clisp-}, so you should obviously avoid defining
+options by those names.
+@item ABCL
+ABCL is a totally different beast because it's a Java-based @cl{}
+implementation. Most notably, you don't create standalone executables in
+Java, so the normal way of running ABCL is by telling it to load some
+lisp code. If you want to run the quickstart program in the usual way,
+you will typically type this:
+@verbatim
+abcl --noinform --noinit --nosystem --load quickstart.lisp
+@end verbatim
+Note that for this to work, the @code{dump} macro expands to the
+``main'' function call for ABCL, just as for ECL.
+
+There's more to it than that though. It is possible to get closer to
+standalone executables with ABCL by 1/ providing your whole application
+in a @code{jar} file directly, and 2/ overriding ABCL's entry point by
+providing your own interpreter which runs your main function
+automatically. I have described this process in more details in the
+following blog entry:
+@uref{http://www.didierverna.com/sciblog/index.php?post/2011/01/22/Towards-ABCL-Standalone-Executables}.
+
+@coindex{dump}@c
+@clon{} helps you to do this to some extend. If the @code{:dump}
+configuration option is set (@pxref{Configuration}), then the
+@code{dump} macro doesn't expand to a call to the ``main'' function, but
+instead dumps a Java file containing an alternate ABCL interpreter that
+you can compile and add to the original ABCL @code{jar} file, along with
+@file{quickstart.lisp}. If you want more details on this, you will need
+to look at the @file{Makefile} in the @code{demo} directory and also at
+the file @file{make/config.make}.
+@item Allegro
+@findex dumplisp
+Dumping a complete application with Allegro is complicated, but more
+importantly only possible in the Enterprise edition. Because of that,
+@clon{}'s dumping facility only makes use of the @code{dumplisp} feature
+which just dumps a Lisp image. You can perform this operation with a
+@cmdline{} such as @samp{alisp -qq -L quickstart.lisp}. The Makefile
+infrastructure in the @file{demo} directory also creates shell script
+wrappers around this image to simplify their use.
+@item LispWorks
+@code{lispworks -init - -siteinit - -load quickstart.lisp}@*
+Please note that dumping a complete application with LispWorks is only
+possible in the Professional or Enterprise editions.
+@end table
+
+
+@c -----------------------
+@c Not Dumping Executables
+@c -----------------------
+@node Not Dumping Executables, , Dumping Executables, Technical Notes
+@section Not Dumping Executables
+Although @cmdline{} processing really makes sense for standalone
+executables, you may want to preserve interactivity with your
+application during the development phase, for instance for testing or
+debugging purposes.
+
+It is possible to use @clon{} interactively, that is, within a regular
+Lisp REPL, without dumping anything. First of all, we have already seen
+that it is possible to use a virtual @cmdline{} (@pxref{Using Different
+Command-Lines}). You can also use @clon{} interactively with the actual
+Lisp invocation's @cmdline{}, although a word of advice is in order
+here.
+
+@findex cmdline
+@findex dump
+As you might expect, the problem in that situation lies in the way the
+different Lisp implementations treat their own @cmdline{}. Guess what,
+it's a mess. When you dump an executable the @clon{} way, the
+@code{cmdline} function will always contain user options only (the
+@code{dump} macro instructs the compilers to @emph{not} process the
+@cmdline{} at all). When you use @clon{} interactively and mix
+compiler-specific options with application ones when invoking your Lisp
+environment, the situation is as follows:
+
+@table @strong
+@item SBCL
+SBCL processes its own options and leaves the others unprocessed on the
+@cmdline{}. This means that as long as there is no overlap between
+SBCL's options and yours, you can just put them all together on the
+@cmdline{}. In case of overlap however, you need to separate SBCL's
+options from yours with a call to @code{--end-toplevel-options} (that's
+an SBCL specific option separator).
+@item CMUCL
+@cindex Command-Line, remainder
+@cindex Remainder, of command-line
+CMUCL processes its own options, issues a warning about the options it
+doesn't know about, but in any case, it eats the whole @cmdline{}.
+Consequently, if you want to provide options to your application, you
+need to put them after a @code{--} separator. Note that you can still
+use a second such separator to provide @clon{} with both some options
+and a remainder (@pxenduserref{Option Separator}).
+@item CCL
+@itemx ECL
+@itemx CLISP
+CCL, ECL and CLISP all process their own options but will abort on
+unknown ones. Consequently, if you want to provide options to your
+application, you need to put them after a @code{--} separator. Note that
+you can still use a second such separator to provide @clon{} with both
+some options and a remainder (@pxenduserref{Option Separator}).
+@item ABCL
+ABCL processes its own options and leaves the others unprocessed on the
+@cmdline{}. This means that as long as there is no overlap between
+ABCL's options and yours, you can just put them all together on the
+@cmdline{}. In case of overlap however, you need to separate ABCL's
+options from yours with a @code{--} separator. Note that you can still
+use a second such separator to provide @clon{} with both some options
+and a remainder (@pxenduserref{Option Separator}).
+@item Allegro
+Allegro processes its own options, issues only a warning about options
+it doesn't know of, and leaves anything after a @code{--} alone.
+Consequently, if you want to provide options to your application, you
+need to put them after a @code{--} separator. Note that you can still
+use a second such separator to provide @clon{} with both some options
+and a remainder (@pxenduserref{Option Separator}).
+@item LispWorks
+LispWorks processes its own options and ignores the other ones, but
+always leaves everything on the command-line. It does not currently
+support @code{--} as an option separator either. Consequently, if you
+want to provide options to your application, you need to put them after
+a @code{--} separator, although you @emph{will} get into trouble if any
+option there is recognized by LispWorks itself. Note that you can still
+use a second such separator to provide @clon{} with both some options
+and a remainder (@pxenduserref{Option Separator}).
+@end table
+
+
+
+@c ====================================================================
+@c API Quick Reference
+@c ====================================================================
+@node API Quick Reference, Indexes, Technical Notes, Top
+@appendix API Quick Reference
+
+@menu
+* Setup::                       Preload configuration
+* Utilities::                   Miscellaneous stuff
+* Initialization Phase API::    Synopsis, items and context creation
+* Runtime Phase API::           Option retrieval and help formatting
+* Extension API::               New option types
+* Versioning API::              Release identification
+@end menu
+
+
+@c -----
+@c Setup
+@c -----
+@node Setup, Utilities, API Quick Reference, API Quick Reference
+@section Setup
+
+@defun configure KEY VALUE
+See @ref{Configuration}.
+@end defun
+
+@defun configuration KEY
+See @ref{Configuration}.
+@end defun
+
+
+@c ---------
+@c Utilities
+@c ---------
+@node Utilities, Initialization Phase API, Setup, API Quick Reference
+@section Utilities
+
+@defmac dump NAME FUNCTION &rest ARGS
+See @ref{Quick Start}.
+@end defmac
+
+@defun exit &optional (STATUS 0)
+See @ref{Quick Start}.
+@end defun
+
+@cindex Command-Line
+@defun cmdline
+See @ref{Option Retrieval}.
+@end defun
+
+@cindex Package, nicknames
+@defun nickname-package &optional NICKNAME
+See @ref{Quick Start}.
+@end defun
+
+
+@c ------------------------
+@c Initialization Phase API
+@c ------------------------
+@node Initialization Phase API, Runtime Phase API, Utilities, API Quick Reference
+@section Initialization Phase API
+
+@defun make-text &key CONTENTS HIDDEN
+@cfsubindex{make-text}
+@cfiaindex{make-text,:contents}
+@cfiaindex{make-text,:hidden}
+@defunx make-@var{OPTION} :INITARG INITVAL@dots{}
+@cfsubindex{make-@var{OPTION}}
+@cfindex make-flag
+@cfindex make-stropt
+@cfindex make-lispobj
+@cfindex make-enum
+@cfindex make-path
+@cfindex make-switch
+@cfindex make-xswitch
+@defunx make-group &key HEADER HIDDEN ITEM
+@cfsubindex{make-group}
+@cfiaindex{make-group,:header}
+@cfiaindex{make-group,:hidden}
+@cfiaindex{make-group,:item}
+@defunx make-synopsis &key POSTFIX ITEM (MAKE-DEFAULT t)
+@cfsubindex{make-synopsis}
+@cfiaindex{make-synopsis,:postfix}
+@cfiaindex{make-synopsis,:item}
+@cfiaindex{make-synopsis,:make-default}
+See @ref{Constructors} and @ref{Using Different Synopsis}.
+@end defun
+
+@defmac defgroup (&key HEADER HIDDEN) &body FORMS
+@foindex{defgroup,:header}
+@foindex{defgroup,:hidden}
+@xref{Group Definition}.
+@end defmac
+
+@defmac defsynopsis (&key POSTFIX MAKE-DEFAULT) &body FORMS
+@foindex{defsynopsis,:postfix}
+@foindex{defsynopsis,:make-default}
+@fiindex{defsynopsis,text}
+@fiindex{defsynopsis,options}
+@fiindex{defsynopsis,group}
+See @ref{Synopsis Definition} and @ref{Using Different Synopsis}.
+@end defmac
+
+@defopt *synopsis*
+@xref{Using Different Synopsis}.
+@end defopt
+
+@defun make-context &key (SYNOPSIS *synopsis*) CMDLINE @
+(MAKE-CURRENT t)
+@cfsubindex{make-context}
+@cfiaindex{make-context,:synopsis}
+@cfiaindex{make-context,:cmdline}
+@cfiaindex{make-context,:make-current}
+@xref{Context Creation}, @ref{Using Different Synopsis} and @ref{Using
+Different Command-Lines}.
+@end defun
+
+
+
+@c -----------------
+@c Runtime Phase API
+@c -----------------
+@node Runtime Phase API, Extension API, Initialization Phase API, API Quick Reference
+@section Runtime Phase API
+
+@defopt *context*
+@xref{Using Multiple Contexts}.
+@end defopt
+
+@defun with-context CONTEXT &body BODY
+@xref{Using Multiple Contexts}.
+@end defun
+
+@defun progname &key (CONTEXT *context*)
+@fkindex{progname,:context}
+See @ref{Contextual Information} and @ref{Using Multiple Contexts}.
+@end defun
+
+@defun remainder &key (CONTEXT *context*)
+@fkindex{remainder,:context}
+See @ref{Contextual Information} and @ref{Using Multiple Contexts}.
+@end defun
+
+@defun cmdline-options-p &key (CONTEXT *context*)
+@fkindex{cmdline-options-p,:context}
+See @ref{Command-Line Polling} and @ref{Using Multiple Contexts}.
+@end defun
+
+@defun cmdline-p &key (CONTEXT *context*)
+@fkindex{cmdline-p,:context}
+See @ref{Command-Line Polling} and @ref{Using Multiple Contexts}.
+@end defun
+
+@defun getopt &key (CONTEXT *context*) SHORT-NAME LONG-NAME @
+OPTION
+@fkindex{getopt,:context}
+@fkindex{getopt,:short-name}
+@fkindex{getopt,:long-name}
+@fkindex{getopt,:option}
+@vindex *context*
+See @ref{Explicit Retrieval} and @ref{Using Multiple Contexts}.
+@end defun
+
+@defun getopt-cmdline &key (CONTEXT *context*)
+@fkindex{getopt-cmdline,:context}
+@vindex *context*
+See @ref{Sequential Retrieval} and @ref{Using Multiple Contexts}.
+@end defun
+
+@defmac multiple-value-getopt-cmdline (OPTION NAME VALUE SOURCE &key CONTEXT) @
+&body BODY
+@defmacx do-cmdline-options (OPTION NAME VALUE SOURCE &key CONTEXT) @
+&body BODY
+@foindex{multiple-value-getopt-cmdline,:context}
+@foindex{do-cmdline-options,:context}
+See @ref{Sequential Retrieval} and @ref{Using Multiple Contexts}.
+@end defmac
+
+@deffn Reader short-name OPTION
+@rfsubindex{short-name}
+@deffnx Reader long-name OPTION
+@rfsubindex long-name
+@xref{Sequential Retrieval}.
+@end deffn
+
+@defun help &key (CONTEXT *context*) @
+(ITEM (synopsis context)) @
+(OUTPUT-STREAM *standard-output*) @
+(SEARCH-PATH (search-path context)) @
+(THEME (theme context)) @
+(LINE-WIDTH (line-width context)) @
+(HIGHLIGHT (highlight context)))
+@fkindex{help,:context}
+@fkindex{help,:item}
+@fkindex{help,:output-stream}
+@fkindex{help,:theme}
+@fkindex{help,:search-path}
+@fkindex{help,:line-width}
+@fkindex{help,:highlight}
+@vindex *context*
+@vindex *standard-output*
+@xref{Help}, @ref{Using Multiple Contexts} and @ref{Programmatic Help
+Strings}.
+@end defun
+
+
+@c -------------
+@c Extension API
+@c -------------
+@node Extension API, Versioning API, Runtime Phase API, API Quick Reference
+@section Extension API
+
+@defmac defoption CLASS SUPERCLASSES SLOTS &rest OPTIONS
+@pxref{New Option Classes}
+@end defmac
+
+@deffn {Generic Function} check OPTION VALUE
+@gfsubindex{check}
+@xref{Value Check Protocol}.
+@end deffn
+
+@deftp {Error Condition} option-error OPTION
+@ecsubindex{option-error}
+@ecsindex{option-error,option}
+@deftpx {Error Condition} invalid-value VALUE COMMENT
+@ecsubindex{invalid-value}
+@ecsindex{invalid-value,value}
+@ecsindex{invalid-value,comment}
+@xref{Value Check Protocol}.
+@end deftp
+
+@deffn {Generic Function} convert OPTION ARGUMENT
+@gfsubindex{convert}
+@xref{Argument Conversion Protocol}.
+@end deffn
+
+@deftp {Error Condition} invalid-argument ARGUMENT COMMENT
+@ecsubindex{invalid-argument}
+@ecsindex{invalid-argument,argument}
+@ecsindex{invalid-argument,comment}
+@xref{Argument Conversion Protocol}.
+@end deftp
+
+@deffn {Generic Function} stringify OPTION VALUE
+@gfsubindex{stringify}
+@xref{Value Stringification Protocol}.
+@end deffn
+
+
+@c --------------
+@c Versioning API
+@c --------------
+@node Versioning API, , Extension API, API Quick Reference
+@section Versioning API
+
+@defun version &optional (TYPE :number)
+@xref{Version Numbering}.
+@end defun
+
+@defvr Parameter *release-major-level*
+@defvrx Parameter *release-minor-level*
+@defvrx Parameter *release-status*
+@defvrx Parameter *release-status-level*
+@defvrx Parameter *release-name*
+@xref{Version Numbering}.
+@end defvr
+
+
+
+@c ====================================================================
+@c Indexes
+@c ====================================================================
+@node Indexes, Acknowledgments, API Quick Reference, Top
+@appendix Indexes
+
+@menu
+* Concept Index::       Well, the concept index
+* Function Index::      Well, the function index
+* Variable Index::      Well, the variable index
+* Data Type Index::     Well, the data type index
+@end menu
+
+
+@c --------------
+@c Concept Index
+@c --------------
+@node Concept Index, Function Index, Indexes, Indexes
+@section Concepts
+@printindex cp
+@page
+
+
+@c --------------
+@c Function Index
+@c --------------
+@node Function Index, Variable Index, Concept Index, Indexes
+@section Functions
+@printindex fn
+@page
+
+
+@c --------------
+@c Variable Index
+@c --------------
+@node Variable Index, Data Type Index, Function Index, Indexes
+@section Variables
+@printindex vr
+@page
+
+
+@c ---------------
+@c Data Type Index
+@c ---------------
+@node Data Type Index, , Variable Index, Indexes
+@section Data Types
+@printindex tp
+
+
+
+@c ====================================================================
+@c Acknowledgments
+@c ====================================================================
+@node Acknowledgments, , Indexes, Top
+@appendix Acknowledgments
+The following people have contributed bug reports or fixes, suggestions,
+compiler support or any other kind of help. You have my gratitude!
+
+@multitable @columnfractions .99
+@item Alessio Stalla@*
+@item Antony @emph{something}@*
+@item Erik Huelsmann@*
+@item Erik Winkels@*
+@item François-René Rideau@*
+@item Jan Moringen@*
+@item James Wright@*
+@item Martin Simmons@*
+@item Nikodemus Siivola@*
+@item Sam Steingold@*
+@end multitable
+
+
+@bye
+
+@c  LocalWords:  Clon clon cmdline Clonification tty emph CmdLine clonified SGR
+@c  LocalWords:  clonfiscated clonistified clonificated clonificationated samp
+@c  LocalWords:  cindex subsubsection pxref Didier Nuker postfix Runtime cth
+@c  LocalWords:  cartouche toplevel prepended IEC
+
+@c user.texi ends here

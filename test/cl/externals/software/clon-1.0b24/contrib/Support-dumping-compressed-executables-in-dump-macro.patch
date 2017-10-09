@@ -1,0 +1,107 @@
+From 7ec1ca5e29c1337355186129da7e9f2778fdf9d1 Mon Sep 17 00:00:00 2001
+From: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+Date: Fri, 13 Jul 2012 12:43:29 +0200
+Subject: [PATCH] Support dumping compressed executables in dump macro
+
+The interface is rather generic wict safe behaviors for implementations
+which do not support compression.
+
+Currently, compression is only supported in SBCL.
+---
+ src/util.lisp |   51 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ 1 files changed, 49 insertions(+), 2 deletions(-)
+
+diff --git a/src/util.lisp b/src/util.lisp
+index 911caf2..9c82637 100644
+--- a/src/util.lisp
++++ b/src/util.lisp
+@@ -420,9 +420,29 @@ public class ~A
+ }~%"
+   "Main class template for ABCL.")
+ 
+-(defmacro dump (name function)
++(defmacro dump (name function
++	        &key
++		compression
++		(if-compression-not-supported :warn))
+   "Dump a standalone executable named NAME starting with FUNCTION.
+ 
++COMPRESSION controls whether and to which extend the produced
++executable should be compressed. Valid values are:
++
++  nil      Do not compress the executable.
++  :DEFAULT Use default compression.
++  :FASTEST Use fastest compression, possibly increasing executable size.
++  :BEST    Use most compact compression, possibly
++           increasing (de)compression time.
++
++IF-COMPRESSION specifies the behavior in case compression is
++requested, but not available in an implementation. Valid values are:
++
++  :CONTINUE Continue without compressing the executable.
++  :WARN     Continue without compressing the executable and signal a
++            warning.
++  :ERROR    Signal an error.
++
+ Since executable dumping is not available in all supported implementations,
+ this function behaves differently in some cases, as described below.
+ 
+@@ -436,12 +456,39 @@ this function behaves differently in some cases, as described below.
+   ;; #### PORTME.
+   #+ecl     (declare (ignore name))
+   #+allegro (declare (ignore function))
++
++  (check-type compression (member nil :default :fastest :best)
++	      "one of nil, :DEFAULT, :FASTEST or :BEST")
++
++  (check-type if-compression-not-supported
++	      (member :continue :warn :error)
++	      "one of :CONTINUE, :WARN or :ERROR")
++
++  #+(or (and sbcl (not sb-core-compression))
++	(not sbcl))
++  (when compression
++    (ecase if-compression-not-supported
++      (:continue)
++      (:warn
++       (warn "~@<Dumping compressed executables is not supported in this implementation.~@:>"))
++      (:error
++       (cerror "~@<Dump an uncompressed executable instead.~@:>"
++	       "~@<Dumping compressed executables is not supported in this implementation.~@:>"))))
++
++  ;; #### PORTME.
+   #+sbcl    `(progn
+ 	       (setq *executablep* t) ; not used but here for correctness
+ 	       (sb-ext:save-lisp-and-die ,name
+ 		 :toplevel #',function
+ 		 :executable t
+-		 :save-runtime-options t))
++		 :save-runtime-options t
++		 #+sb-core-compression
++		 :compression
++		 #+sb-core-compression
++		 ,(case compression
++		    (:default -1)
++		    (:fastest 0)
++		    (:best 9))))
+   #+cmu     `(progn
+ 	       (setq *executablep* t)
+ 	       (ext:save-lisp ,name
+-- 
+1.7.0.4
+
+
+  Hi Jan!
+
+Thank you for the patch. What worries me a little is that DUMP was never
+really intended to be a universal wrapper around implementation-specific
+dumping facilities. Your patch is sort of opening the door to this (who
+knows how many vendor options I will need to support in the future?) and
+I fear that it may become a Rube Goldberg machine.
+
+I would rather be enclined to just change it to
+
+DUMP (NAME FUNCTION &REST <or &KEY> ARGS)
+
+so that ARGS is blindly passed to the underlying implementation. I still
+haven't made up my mind completely...
