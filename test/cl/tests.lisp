@@ -159,7 +159,44 @@
 
 (in-package :exceptions)
 
+(defun test-xception (expected-code expected-message function &rest args)
+  "A helper function to test whether xception is signalled, and whether its fields have the expected values."
+  (handler-case (progn (apply function args)
+		       nil)
+    (thrift.test:xception (ex) (and (= (thrift.test::xception-error-code ex) expected-code)
+				    (string= (thrift.test::xception-message ex) expected-message)))))
 
+(defun test-xception2 (expected-code expected-message function &rest args)
+  "A helper function to test whether xception2 is signalled, and whether its fields have the expected values."
+  (handler-case (progn (apply function args)
+		       nil)
+    (thrift.test:xception2 (ex) (and (= (thrift.test::xception2-error-code ex) expected-code)
+				     (string= (thrift.test::xtruct-string-thing
+					       (thrift.test::xception2-struct-thing ex))
+					      expected-message)))))
+
+(deftest exception-test ()
+  (is (test-xception 1001 "Xception" #'thrift.test:test-exception thrift-cross::*prot* "Xception"))
+  (signals thrift:application-error (thrift.test:test-exception thrift-cross::*prot* "TException"))
+  (finishes (thrift.test:test-exception thrift-cross::*prot* "success")))
+
+(deftest multi-exception-test ()
+  (is (test-xception 1001
+		     "This is an Xception"
+		     #'thrift.test:test-multi-exception
+		     thrift-cross::*prot*
+		     "Xception"
+		     "meaningless"))
+  (is (test-xception2 2002
+		      "This is an Xception2"
+		      #'thrift.test:test-multi-exception
+		      thrift-cross::*prot*
+		      "Xception2"
+		      "meaningless too!"))
+  (is (string= "foobar" (thrift.test:xtruct-string-thing
+			 (thrift.test:test-multi-exception thrift-cross::*prot*
+							   "success!"
+							   "foobar")))))
 
 (fiasco:define-test-package :misc)
 
