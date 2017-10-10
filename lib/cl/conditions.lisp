@@ -54,8 +54,6 @@
   (:method ((error thrift-error))
     (list (type-of error) (thrift-error-type error))))
 
-
-
 (define-condition protocol-error (thrift-error)
   ((protocol :initarg :protocol :initform nil
              :reader protocol-error-protocol)))
@@ -68,11 +66,7 @@
   (append (call-next-method)
           (list (protocol-error-protocol error))))
 
-
-
 (define-condition transport-error (thrift-error) ())
-
-
 
 (define-condition application-error (protocol-error)
   ((type :initform *application-ex-unknown*)
@@ -86,10 +80,8 @@
   (append (call-next-method)
           (list (application-error-condition error))))
 
-
 (defmethod thrift:type-of ((value thrift-error))
   'struct)
-
 
 ;;;
 ;;; general exception response
@@ -115,8 +107,6 @@
   (append (call-next-method)
           (list (class-not-found-error-identifier error))))
 
-
-
 (define-condition protocol-version-error (protocol-error type-error)
   ((type :initform *protocol-ex-bad-version*)))
 
@@ -127,9 +117,6 @@
 (defmethod thrift-error-format-arguments ((error protocol-version-error))
   (append (call-next-method)
           (list (type-error-datum error) (type-error-expected-type error))))
-
-
-
 
 (define-condition element-type-error (protocol-error type-error)
   ((type :initform *protocol-ex-invalid-data*)
@@ -146,8 +133,6 @@
                 (element-type-error-element-type error)
                 (type-error-expected-type error))))
 
-
-
 (define-condition enum-type-error (protocol-error type-error)
   ((type :initform *protocol-ex-invalid-data*)))
 
@@ -158,8 +143,6 @@
 (defmethod thrift-error-format-arguments ((error enum-type-error))
   (append (call-next-method)
           (list (type-error-datum error) (type-error-expected-type error))))
-
-
 
 (define-condition field-size-error (protocol-error type-error cell-error)
   ((type :initform *protocol-ex-size-limit*)
@@ -176,8 +159,6 @@
                 (cell-error-name error) 
                 (type-error-datum error)
                 (type-error-expected-type error))))
-
-
 
 (define-condition field-type-error (protocol-error type-error cell-error)
   ((type :initform *protocol-ex-invalid-data*)
@@ -196,8 +177,6 @@
                 (cell-error-name error) 
                 (type-error-datum error))))
 
-
-
 (define-condition sequence-number-error (application-error)
   ((type :initform *application-ex-bad-sequence-id*)
    (number :initarg :number :reader sequence-number-error-number)
@@ -211,9 +190,6 @@
 (defmethod thrift-error-format-arguments ((error sequence-number-error))
   (append (call-next-method)
           (list (sequence-number-error-number error) (sequence-number-error-expected-number error))))
-
-
-
 
 (define-condition unknown-field-error (protocol-error cell-error)
   ((type :initform *protocol-ex-invalid-data*)
@@ -232,8 +208,6 @@
                 (cell-error-name error) 
                 (unknown-field-error-datum error))))
 
-
-
 (define-condition unknown-method-error (protocol-error )
   ((type :initform *application-ex-unknown-method*)
    (identifier :initarg :identifier :reader unknown-method-error-identifier)
@@ -247,8 +221,6 @@
   (append (call-next-method)
           (list (unknown-method-error-identifier error)
                 (unknown-method-error-request error))))
-
-
 
 (define-condition struct-type-error (protocol-error type-error)
   ((type :initform *protocol-ex-invalid-data*)))

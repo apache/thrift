@@ -359,8 +359,7 @@
            (stream-write-struct ,gprot (thrift:list ,@(mapcar #'(lambda (id name) `(cons ,id ,name)) parameter-ids parameter-names))
                                 ',(str-sym call-struct))
            (stream-write-message-end ,gprot)
-           ,(if oneway-p
-              nil
+           ,(unless oneway-p
               `(multiple-value-bind (request-message-identifier type sequence)
                                     (stream-read-message-begin ,gprot)
                  (unless (eql sequence (protocol-sequence-number ,gprot))
@@ -382,7 +381,7 @@
                           `((cond
                              ,@(mapcar #'(lambda (ex) `(,ex (response-exception ,gprot request-message-identifier sequence ,ex)))
                                        exception-names))))
-                      ,(if (eq return-type 'void) nil success )))
+                      ,(unless (eq return-type 'void) success )))
                    ((call oneway)
                     ;; received a call/oneway when expecting a response
                     (unexpected-request ,gprot request-message-identifier sequence
