@@ -1,8 +1,6 @@
-;;; -*- Mode: lisp; Syntax: ansi-common-lisp; Base: 10; Package: cl-user; -*-
-
 (in-package :cl-user)
 
-#+(or ccl sbcl sbcl) /development/source/library/
+#+(or ccl sbcl) /development/source/library/
 (load "build-init.lisp")
 
 ;;; ! first, select the api version in the cassandra system definition
