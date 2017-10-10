@@ -940,7 +940,7 @@ echo "Building Python Library ...... : $have_python"
 echo "Building Py3 Library ......... : $have_py3"
 echo "Building Ruby Library ........ : $have_ruby"
 echo "Building Rust Library ........ : $have_rs"
-echo "Preparing Common Lisp tests... : $have_cl"
+echo "Building Common Lisp Library.. : $have_cl"
 
 if test "$have_csharp" = "yes" ; then
   echo
