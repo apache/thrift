@@ -98,27 +98,21 @@
 
 
 (defmethod stream-read-double ((protocol binary-protocol))
-  #+allegro (let* ((buffer (make-array 8 :element-type *binary-transport-element-type*))
-                   (b (stream-read-sequence protocol buffer)))
-              (declare (dynamic-extent buffer))
-              (apply #'excl:shorts-to-double-float
-                     (mapcar #'bytes-int (list (subseq b 0 2) (subseq b 2 4)
-                                               (subseq b 4 6) (subseq b 6 8)))))
-  #-allegro (let ((value 0)
-                  (buffer (make-array 8 :element-type '(unsigned-byte 8))))
-              (declare (dynamic-extent buffer)
-                       (type (simple-array (unsigned-byte 8) (8)) buffer)
-                       (type (unsigned-byte 64) value))
-              (stream-read-sequence (protocol-input-transport protocol) buffer)
-              ;; it it matters, could unwrap it with fewer intermediates saves
-              (macrolet ((unpack-buffer ()
-                           `(progn
-                              ,@(loop for i from 0 below 8
-                                      collect `(setf value ,(if (= i 0)
-                                                              `(aref buffer ,i)
+  (let ((value 0)
+	(buffer (make-array 8 :element-type '(unsigned-byte 8))))
+    (declare (dynamic-extent buffer)
+	     (type (simple-array (unsigned-byte 8) (8)) buffer)
+	     (type (unsigned-byte 64) value))
+    (stream-read-sequence (protocol-input-transport protocol) buffer)
+    ;; it it matters, could unwrap it with fewer intermediates saves
+    (macrolet ((unpack-buffer ()
+		 `(progn
+		    ,@(loop for i from 0 below 8
+			 collect `(setf value ,(if (= i 0)
+						   `(aref buffer ,i)
                                                               `(+ (ash value 8) (aref buffer ,i))))))))
-                (unpack-buffer)
-                (ieee-floats:decode-float64 value))))
+      (unpack-buffer)
+      (ieee-floats:decode-float64 value))))
 
 (defmethod stream-read-float ((protocol binary-protocol))
   "As a special for for use with rdf - not part of the thrift. used just for specifically
@@ -211,27 +205,23 @@
 
 
 (defmethod stream-write-double ((protocol binary-protocol) val)
-  #+allegro (dolist (b (mapcar #'(lambda (x) (int-bytes x 2))
-                               (multiple-value-list (excl:double-float-to-shorts
-                                                     (coerce val 'double-float)))))
-              (stream-write-byte protocol b))
   ;; distinct from i64, as it's unsigned
-  #-allegro (let ((buffer (make-array 8 :element-type '(unsigned-byte 8)))
-                  (int-value (ieee-floats:encode-float64 val)))
-              (declare (dynamic-extent buffer)
-                       (type (simple-array (unsigned-byte 8) (8)) buffer)
-                       (type (unsigned-byte 64) int-value))
+  (let ((buffer (make-array 8 :element-type '(unsigned-byte 8)))
+	(int-value (ieee-floats:encode-float64 val)))
+    (declare (dynamic-extent buffer)
+	     (type (simple-array (unsigned-byte 8) (8)) buffer)
+	     (type (unsigned-byte 64) int-value))
               ;; if the conversion is correct, this is redundant, sbcl eliminate it
-              (assert  (typep int-value '(unsigned-byte 64)) ()
-                       'type-error :datum int-value :expected-type '(unsigned-byte 64))
-              ;; (format *trace-output* "~%(out 0x~16,'0x)" int-value)
-              (macrolet ((pack-buffer ()
-                           `(progn ,@(loop for i from 7 downto 0
-                                           append `((setf (aref buffer ,i) (logand #xff int-value))
+    (assert  (typep int-value '(unsigned-byte 64)) ()
+	     'type-error :datum int-value :expected-type '(unsigned-byte 64))
+    ;; (format *trace-output* "~%(out 0x~16,'0x)" int-value)
+    (macrolet ((pack-buffer ()
+		 `(progn ,@(loop for i from 7 downto 0
+			      append `((setf (aref buffer ,i) (logand #xff int-value))
                                                     (setf int-value (ash int-value -8)))))))
                 (pack-buffer))
-              (stream-write-sequence (protocol-output-transport protocol) buffer)
-              8))
+    (stream-write-sequence (protocol-output-transport protocol) buffer)
+    8))
 
 (defmethod stream-write-float ((protocol binary-protocol) val)
   " Not part of the spec, but is useful elsewhere"
